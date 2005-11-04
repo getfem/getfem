@@ -86,6 +86,7 @@ namespace getfem {
 
   class slicer_action;
   class stored_mesh_slice;
+ 
 
   /** @brief Apply a serie a slicing operations to a mesh.
       
@@ -134,11 +135,12 @@ namespace getfem {
     }
     void simplex_orientation(slice_simplex& s);
     /**@brief build a new mesh_slice.
-       @param nrefine number of refinments for each convex of the original mesh
+       @param nrefine number of refinments for each convex of the original mesh (size_type or a vector indexed by the convex number)
        @param cvlst the list of convex numbers (or convex faces) of m that will 
        be taken into account for the slice
     */
     void exec(size_type nrefine, const mesh_region& cvlst); 
+    void exec(const std::vector<short_type> &nrefine, const mesh_region& cvlst); 
     void exec(size_type nrefine = 1);
     /**
        @brief build a new mesh slice.
@@ -152,6 +154,8 @@ namespace getfem {
      */
      void exec(const std::vector<base_node>& pts);
   private:
+    void exec_(const short_type *pnrefine, int nref_stride, 
+	       const mesh_region& cvlst);
     void update_cv_data(size_type cv_, size_type f_ = size_type(-1));
     void init_indexes();
     void apply_slicers();

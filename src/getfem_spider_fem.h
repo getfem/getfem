@@ -148,7 +148,7 @@ namespace getfem {
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
 	//	cout << "blocked dofs = " <<  blocked_dof << endl;
 
-	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof);
+	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof, false);
       }
     void check() {
       const interpolated_fem &ife = dynamic_cast<const interpolated_fem&>(*final_fem);

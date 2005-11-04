@@ -72,6 +72,7 @@ namespace getfem {
     struct convex_info {
       pgetfem_mesh pmesh;
       zoneset zones;
+      mesh_region ls_border_faces;
       convex_info() : pmesh(0) {}
     };
 
@@ -139,8 +140,6 @@ namespace getfem {
     void adapt(void);
     void merge_zoneset(zoneset &zones1, const zoneset &zones2) const;
     void merge_zoneset(zoneset &zones1, const std::string &subz) const;
-    bool convex_is_cut(size_type cv) const
-    { return (cut_cv.find(cv) != cut_cv.end()); }
     const std::string &primary_zone_of_convex(size_type cv) const
     { return *(zones_of_convexes[cv]); }
     const zoneset &zoneset_of_convex(size_type cv) const {

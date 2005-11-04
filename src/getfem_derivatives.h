@@ -117,9 +117,21 @@ namespace getfem
   /**Compute the Von-Mises stress of a field.
    */
   template <typename VEC1, typename VEC2>
-  void interpolation_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
-			       const getfem::mesh_fem &mf_vm, VEC2 &VM,
+  void interpolation_von_mises(const getfem::mesh_fem &mf_u, 
+			       const getfem::mesh_fem &mf_vm, 
+			       const VEC1 &U, VEC2 &VM,
 			       scalar_type mu=1) {
+    dal::bit_vector bv; bv.add(0, mf_vm.nb_dof());
+    interpolation_von_mises(mf_u, mf_vm, U, VM, bv, mu);
+  }
+
+  template <typename VEC1, typename VEC2>
+  void interpolation_von_mises(const getfem::mesh_fem &mf_u, 
+			       const getfem::mesh_fem &mf_vm, 
+			       const VEC1 &U, VEC2 &VM,
+			       const dal::bit_vector &mf_vm_dofs,
+			       scalar_type mu=1) {
+
     assert(mf_vm.get_qdim() == 1); 
     unsigned N = mf_u.linked_mesh().dim(); assert(N == mf_u.get_qdim());
     std::vector<scalar_type> DU(mf_vm.nb_dof() * N * N);
@@ -127,7 +139,7 @@ namespace getfem
     getfem::compute_gradient(mf_u, mf_vm, U, DU);
     
     scalar_type vm_min, vm_max;
-    for (size_type i=0; i < mf_vm.nb_dof(); ++i) {
+    for (dal::bv_visitor i(mf_vm_dofs); !i.finished(); ++i) {
       VM[i] = 0;
       scalar_type sdiag = 0.;
       for (unsigned j=0; j < N; ++j) {

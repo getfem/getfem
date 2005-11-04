@@ -133,12 +133,12 @@ namespace getfem
 
   void vtk_export::exporting(const stored_mesh_slice& sl) {
     psl = &sl; dim_ = sl.dim();
-    if (psl->dim() > 3) DAL_THROW(dal::failure_error, "4D slices and more are not supported");
+    if (psl->dim() > 3) DAL_THROW(dal::failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
   }
   
   void vtk_export::exporting(const getfem_mesh& m) {
     dim_ = m.dim();
-    if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
+    if (dim_ > 3) DAL_THROW(dal::failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
     pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf);
@@ -146,7 +146,7 @@ namespace getfem
 
   void vtk_export::exporting(const mesh_fem& mf) {
     dim_ = mf.linked_mesh().dim();
-    if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
+    if (dim_ > 3) DAL_THROW(dal::failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
     if (&mf != pmf.get())
       pmf.reset(new mesh_fem(mf.linked_mesh(),1));
     /* initialize pmf with finite elements suitable for VTK (which only knows

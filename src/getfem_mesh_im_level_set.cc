@@ -86,7 +86,7 @@ namespace getfem {
     std::vector<mesher_level_set> mesherls1(mls.nb_level_sets());
     dal::bit_vector convexes_arein;
 
-    std::fstream totof("totof", std::ios::out | std::ios::app);
+    //std::fstream totof("totof", std::ios::out | std::ios::app);
 
     if (integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
       for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
@@ -156,7 +156,6 @@ namespace getfem {
 	      lisin = lisin && (gmm::abs((mesherls0[ils])
 		     (mesh.points_of_face_of_convex(i, f)[ipt])) < 1E-7);
 	    }
-	    cout << "lisin = " << lisin << endl;
 	    if (lisin) { isin = ils; break; }
 	  }
 	  if (isin ==  unsigned(-1)) continue;
@@ -185,20 +184,23 @@ namespace getfem {
 	    un /= gmm::vect_norm2(un);
 	    gmm::mult(cc.B(), un, up);
 	    nnup = gmm::vect_norm2(up);
-	    cout << "nnup = " << nnup << endl;
+	    //cout << "nnup = " << nnup << endl;
 	  }
 	  new_approx->add_point(c.xreal(), pai->coeff_on_face(f, j)
 				* gmm::abs(c.J()) * nup * nnup, ff);
 
 	  if (integrate_where == INTEGRATE_BOUNDARY) {
-	    static double ssum = 0.0;
+	    /*static double ssum = 0.0;
 	    ssum += pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup;
 	    cout << "add crack point " << c.xreal() << " : "
 		 << pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup << " sum = " << ssum << endl;
-
+	    */
+	    /*
 	    cc.set_xref(c.xreal());
 	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\t" << cc.xreal()[2] << "\n";
+	    */
 	  }
+
 	} 
       }
     }

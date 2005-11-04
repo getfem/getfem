@@ -699,6 +699,7 @@ namespace getfem {
       const mesh_im& mi = mfcomp.get_im();
       pintegration_method pim2;
       bgeot::pgeometric_trans pgt2;
+      bool fem_changed = false;
       pgt2 = mi.linked_mesh().trans_of_convex(cv);
       pim2 = mi.int_method_of_element(cv);
       // cerr << "computed tensor cv=" << cv << " f=" << int(face) << "\n";
@@ -711,20 +712,29 @@ namespace getfem {
         shape_updated_ = shape_updated_ || child(i).is_shape_updated();
       for (size_type i=0; shape_updated_ == false && i < mfcomp.size(); ++i) {
 	if (mfcomp[i].pmf == 0) continue;
-	if  (current_cv == size_type(-1) || 
-	     (mfcomp[i].pmf->fem_of_element(current_cv) != mfcomp[i].pmf->fem_of_element(cv) ||
-	      mfcomp[i].pmf->nb_dof_of_element(current_cv) != mfcomp[i].pmf->nb_dof_of_element(cv))) /* for FEM with non-constant nb_dof.. */ 
-	  shape_updated_ = true;
+	if  (current_cv == size_type(-1)) {
+	  shape_updated_ = true; fem_changed = true;
+	} else {
+	  fem_changed = fem_changed || 
+	    (mfcomp[i].pmf->fem_of_element(current_cv) != 
+	     mfcomp[i].pmf->fem_of_element(cv));
+	  /* for FEM with non-constant nb_dof.. */ 
+	  shape_updated_ = shape_updated_ ||
+	    (mfcomp[i].pmf->nb_dof_of_element(current_cv) != 
+	     mfcomp[i].pmf->nb_dof_of_element(cv)); 
+	}
       }
       if (shape_updated_) {
         r_.resize(0);
         /* get the new ranges */
         for (unsigned i=0; i < mfcomp.size(); ++i) 
           mfcomp[i].push_back_dimensions(cv, r_, true);
+      }
+      if (fem_changed || shape_updated_) {
         /* build the new mat_elem structure */      
         update_pmat_elem(cv);
       }
-      if (shape_updated_ || pgt != pgt2 || pim != pim2) {
+      if (shape_updated_ || fem_changed || pgt != pgt2 || pim != pim2) {
 	pgt = pgt2; pim = pim2;
 	pmec = mat_elem(pme, pim, pgt, has_inline_reduction);
       }
@@ -1550,13 +1560,19 @@ namespace getfem {
     for (size_type i=0; i < atn_tensors.size(); ++i) {
       atn_tensors[i]->check_shape_update(cv,face);
       update_shapes =  (update_shapes || atn_tensors[i]->is_shape_updated());
-      /*      if (atn_tensors[i]->is_shape_updated()) {
+      /*if (atn_tensors[i]->is_shape_updated()) {
 	cerr << "[cv=" << cv << ",f=" << int(face) << "], shape_updated: " //<< typeid(*atn_tensors[i]).name() 
-             << " [" << atn_tensors[i]->name() << "]\n  -> r=" << atn_tensors[i]->ranges() << endl;
-      }
-      */
+             << " [" << atn_tensors[i]->name() << "]\n  -> r=" << atn_tensors[i]->ranges() << "\n    ";
+	     }*/
     }
+
     if (update_shapes) {
+
+      /*cerr << "updated shapes: cv=" << cv << " face=" << int(face) << ": ";
+      for (size_type k=0; k < mftab.size(); ++k)
+	cerr << mftab[k]->nb_dof_of_element(cv) << " "; cerr << "\n";
+      */
+
       for (size_type i=0; i < atn_tensors.size(); ++i) {
 	atn_tensors[i]->init_required_shape();
       }
@@ -1584,11 +1600,22 @@ namespace getfem {
     cv_fem_compare(const std::deque<const mesh_fem *>& mf_) : mf(mf_) {}
     bool operator()(size_type a, size_type b) {
       for (size_type i=0; i < mf.size(); ++i) {
-	if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b))
+	/*
+	  if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b))
 	  return true;
 	if (mf[i]->fem_of_element(a) == mf[i]->fem_of_element(b) &&
 	    mf[i]->nb_dof_of_element(a) < mf[i]->nb_dof_of_element(b))
 	  return true;
+	*/
+
+	/* sort by nb_dof and then by fem */
+	if (mf[i]->nb_dof_of_element(a) < mf[i]->nb_dof_of_element(b)) {
+	  return true;
+	}
+	if (mf[i]->nb_dof_of_element(a) == mf[i]->nb_dof_of_element(b) && 
+	    mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b)) {
+	  return true;
+	}
       }
       return false;
     }

@@ -20,6 +20,45 @@
 #include <bgeot_poly.h>
 #include <ftool.h>
 
+std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi, bgeot::short_type k, 
+			 bgeot::short_type de) {
+  char s[1024];
+  const char *xyz = "xyzabcdefghijklmnop";
+  if (k == 0) {
+    sprintf(s, "P[%d]", int(mi.global_index()));
+    return s;
+  } else {
+    std::string str;
+    //T v = (*(it+k-1)), res = T(0);
+    for (mi[k-1] = degree - de; mi[k-1] != bgeot::short_type(-1); (mi[k-1])--) {
+      //res = horner(mi, k-1, de + mi[k-1], it) + v * res;
+      if (str.size())
+	sprintf(s, "%s + %c*(%s)", horner_print(degree, mi,k-1,de+mi[k-1]).c_str(), xyz[k-1], str.c_str());
+      else 
+	sprintf(s, "%s", horner_print(degree, mi,k-1,de+mi[k-1]).c_str());
+      str = s;
+    }
+    mi[k-1] = 0;
+    return str;
+  }
+}
+
+
+void dump_poly_eval() {
+  for (unsigned dim = 1; dim <= 3; ++dim) {
+    cout << "case " << dim << ": {\n";
+    for (unsigned k=0; k < dim; ++k) {
+      cout << "T " << "xyzZ"[k] << " = it[" << k << "];\n";
+    }
+    for (unsigned dg=2; dg <= 6; ++dg) {
+      cout << "  if (deg == " << dg << ") ";
+      bgeot::power_index mi(dim);
+      cout << "    return " << horner_print(dg, mi, dim, 0) << ";\n";
+    }
+    cout << "} break;\n";
+  }
+}
+
 int main(void)
 {
   try {
@@ -53,12 +92,38 @@ int main(void)
     P += bgeot::polynomial<double>(3,1,1);
     P *= bgeot::polynomial<double>(3,1,2);
     P += bgeot::polynomial<double>(3,1,0);
-    cout << "P = " << P << endl;
+    cout << "P = " << P << " : degree=" << P.degree() << endl;
     
     
     double tab[3]; tab[0] = 1.0; tab[1] = 2.0; tab[2] = -1.0;
     
     cout << "P(1.0, 2.0) = " << P.eval(&(tab[0])) << endl;
+
+    for (unsigned dg=0; dg <= 6; ++dg) {
+      for (unsigned dim=0; dim <= 3; ++dim) {
+	bgeot::polynomial<double> PP(dim, dg);
+	for (unsigned i=0; i < PP.size(); ++i) 
+	  PP[i] = rand()/(double)RAND_MAX;
+	std::vector<double> X(dim); 
+	for (unsigned i=0; i < dim; ++i) X[i] = 
+	  rand()/(double)RAND_MAX;
+	double a = PP.eval(X.begin());
+	bgeot::power_index mi(dim);
+	double b = PP.horner(mi,dim,0,X.begin());
+
+	cout << "[d=" << dim << ", dg=" << PP.degree() 
+	  //<< ", P=" << PP << " -> " 
+	     << a << " == " << b 
+	     << "?\n";
+	assert(gmm::abs(a-b) < 1e-14);
+	
+	//cout << "Horner: " << PP.horner_print(mi,dim,0) << "\n";
+      }
+    }
+    cout << "\n--------------------------------------------------------\n";
+    dump_poly_eval();
+    cout << "\n--------------------------------------------------------\n";
+
     
     Q = P;
     P *= Q;

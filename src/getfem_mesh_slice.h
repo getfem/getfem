@@ -167,7 +167,6 @@ namespace getfem {
 	       size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
     void build(const getfem::getfem_mesh& m, const slicer_action *a, const slicer_action *b, const slicer_action *c, 
 	       size_type nrefine);
-    
       
     /** @brief Apply the listed slicer_action(s) to the slice object.
 

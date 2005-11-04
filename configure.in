@@ -214,7 +214,7 @@ if test $acx_blas_ok = no; then
                 [AC_CHECK_LIB(f77blas, $sgemm,
                 [AC_CHECK_LIB(cblas, cblas_dgemm,
                         [acx_blas_ok=yes
-                         BLAS_LIBS="-lcblas -lf77blas -latlas -lg2c"],
+                         BLAS_LIBS="-lf77blas -latlas -lg2c"],
                         [], [-lf77blas -latlas])],
                         [], [-latlas])])
 fi
@@ -269,9 +269,9 @@ if test $acx_blas_ok = no; then
 fi
 
 # Generic BLAS library?
-#if test $acx_blas_ok = no; then
-#        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
-#fi
+if test $acx_blas_ok = no; then
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
+fi
 
 AC_SUBST(BLAS_LIBS)
 

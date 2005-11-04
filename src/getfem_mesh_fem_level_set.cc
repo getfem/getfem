@@ -84,7 +84,7 @@ namespace getfem {
       bool touch_cut = false;
       for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
 	   it != ct.end(); ++it)
-	if (mls.convex_is_cut(*it)) { touch_cut = true; break; }
+	if (mls.is_convex_cut(*it)) { touch_cut = true; break; }
       
 
       if (touch_cut) {
@@ -92,7 +92,7 @@ namespace getfem {
 	
 	for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
 	     it != ct.end(); ++it) {
-	  if (mls.convex_is_cut(*it)) {
+	  if (mls.is_convex_cut(*it)) {
 	    mls.merge_zoneset(zones, mls.zoneset_of_convex(*it));
 	  }
 	  else {

@@ -136,7 +136,7 @@ namespace gmm {
       z = T(gmm::real(Tri_val[d])); Tri_val[d] = z;
       if (gmm::abs(z) <= max_pivot) {
 	Tri_val[d] = z = T(1);
-	DAL_WARNING(2, "pivot " << k << " is too small");
+	DAL_WARNING(2, "pivot " << k << " is too small [" << gmm::abs(z) << "]");
       }
       max_pivot = std::max(max_pivot, std::min(gmm::abs(z) * prec, R(1)));
       

@@ -462,9 +462,27 @@ void crack_problem::init(void) {
   exact_sol.init(1, lambda, mu, ls);
 }
 
-/**************************************************************************/
-/*  Model.                                                                */
-/**************************************************************************/
+
+base_small_vector ls_function(const base_node P, int num = 0) {
+  scalar_type x = P[0], y = P[1];
+  base_small_vector res(2);
+  switch (num) {
+    case 0: {
+      res[0] = y;
+      res[1] = -.5 + x;
+    } break;
+    case 1: {
+      res[0] = gmm::vect_dist2(P, base_node(0.5, 0.)) - .25;
+      res[1] = gmm::vect_dist2(P, base_node(0.25, 0.0)) - 0.27;
+    } break;
+    case 2: {
+      res[0] = x - 0.25;
+      res[1] = gmm::vect_dist2(P, base_node(0.25, 0.0)) - 0.35;
+    } break;
+    default: assert(0);
+  }
+  return res;
+}
 
 bool crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -473,26 +491,23 @@ bool crack_problem::solve(plain_vector &U) {
   ls.reinit();  
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
-    ls.values(1)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[0];
+    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
+    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
   }
   ls.touch();
 
   if (add_crack) {
     ls2.reinit();
     for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
-      ls2.values(0)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d),
-					 base_node(0.5, 0.0)) - 0.25;
-      ls2.values(1)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d),
-					 base_node(0.25, 0.0)) - 0.27;
+      ls2.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 1)[0];
+      ls2.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 1)[1];
     }
     ls2.touch();
     
     ls3.reinit();
     for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
-      ls3.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[0] - 0.25;
-      ls3.values(1)[d] = gmm::vect_dist2(ls3.get_mesh_fem().point_of_dof(d),
-					 base_node(0.25, 0.0)) - 0.35;
+      ls3.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[0];
+      ls3.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[1];
     }
     ls3.touch();
   }
@@ -629,7 +644,8 @@ int main(int argc, char *argv[]) {
     {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
-      getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
+      unsigned Q = p.mf_u().get_qdim();
+      getfem::mesh_fem mf(mcut, Q);
       mf.set_classical_discontinuous_finite_element(2, 0.001);
       // mf.set_finite_element
       //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
@@ -639,71 +655,119 @@ int main(int argc, char *argv[]) {
 
       getfem::stored_mesh_slice sl;
       getfem::getfem_mesh mcut_refined;
+
       unsigned NX = p.PARAM.int_value("NX"), nn;
       if (NX < 6) nn = 24;
       else if (NX < 12) nn = 8;
-      else if (NX < 30) nn = 4;
-      else nn = 2;
+      else if (NX < 30) nn = 3;
+      else nn = 1;
+
+      std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
+      for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
+	scalar_type dmin, d;
+	base_node Pmin,P;
+	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+	  P = mcut.points_of_convex(cv)[i];
+	  d = gmm::vect_norm2(ls_function(P));
+	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+	}
+
+	if (dmin < 1e-5)
+	  nrefine[cv] = nn*8;
+	else if (dmin < .1) 
+	  nrefine[cv] = nn*2;
+	else nrefine[cv] = nn;
+	if (dmin < .01)
+	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
+      }
+
+      {
+	getfem::mesh_slicer slicer(mcut); 
+	getfem::slicer_build_mesh bmesh(mcut_refined);
+	slicer.push_back_action(bmesh);
+	slicer.exec(nrefine, getfem::mesh_region::all_convexes());
+      }
+      /*
       sl.build(mcut, 
-	       getfem::slicer_build_mesh(mcut_refined), nn);
+      getfem::slicer_build_mesh(mcut_refined), nrefine);*/
+
       getfem::mesh_im mim_refined(mcut_refined); 
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 ("IM_TRIANGLE(6)"));
 
-      getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
-      mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
+      getfem::mesh_fem mf_refined(mcut_refined, Q);
+      mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
       plain_vector W(mf_refined.nb_dof());
-
-
-
-      /*assert(U.size() == p.mf_u().nb_dof());
-      {
-	for (unsigned d=0; d < p.mf_u().nb_dof(); ++d) {
-	  const base_node P = p.mf_u().point_of_dof(d);
-	  U.at(d) = (d&1) ? 0 : 1;
-	  //cerr << "d = " << d << ", P=" << P << "\n";
-	}
-      }
-      cerr << "LLLLLLLLLLLLLLLLLLL2 = " << gmm::sqr(getfem::asm_L2_norm(p.mim, p.mf_u(), U)) << "\n";
-      */
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
-      p.exact_sol.mf.set_qdim(2);
+      p.exact_sol.mf.set_qdim(Q);
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
 			    p.exact_sol.U, EXACT);
 
+      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
+
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
+	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
+	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.0001);
+	cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
+	plain_vector VM(mf_refined_vm.nb_dof());
+
+	cout << "computing von mises\n";
+	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
+
+	plain_vector D(mf_refined_vm.nb_dof() * Q), 
+	  DN(mf_refined_vm.nb_dof());
+	
+	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
+	for (unsigned i=0; i < DN.size(); ++i) {
+	  DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q)));
+	}
+
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
 			       p.PARAM.int_value("VTK_EXPORT")==1);
 	exp.exporting(mf_refined); 
+	//exp.write_point_data(mf_refined_vm, DN, "error");
+	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-	// exp.exporting(mf); 
-	// exp.write_point_data(mf, V, "elastostatic_displacement");
-	cout << "export done, you can view the data file with (for example)\n"
-	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
-	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       
+	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
+
+
+	/*getfem::mesh_fem_global_function mf(mcut_refined,Q);
+	std::vector<getfem::pglobal_function> cfun(4);
+	for (unsigned j=0; j < 4; ++j)
+	  cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
+	mf.set_functions(cfun);
+	getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U, VM_EXACT);*/
+
+
+	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
 	getfem::vtk_export exp2("crack_exact.vtk");
 	exp2.exporting(mf_refined);
+	exp2.write_point_data(mf_refined_vm, VM_EXACT, "exact von mises stress");
 	exp2.write_point_data(mf_refined, EXACT, "reference solution");
+	
+	cout << "export done, you can view the data file with (for example)\n"
+	  "mayavi -d " << p.datafilename << ".vtk -f "
+	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
 
       cout << "L2 ERROR:" << getfem::asm_L2_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U) << endl
 	   << "H1 ERROR:" << getfem::asm_H1_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
 	   << "\n";
       
-      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
-      cout << "OLD ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
+      /*cout << "OLD ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
 	   << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,EXACT,mf_refined,W)
 	   << "\n";
 
       cout << "ex = " << p.exact_sol.U << "\n";
       cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
+      */
 
     }
 

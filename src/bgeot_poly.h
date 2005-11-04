@@ -234,9 +234,9 @@ namespace bgeot
     polynomial(void) : std::vector<T>(1)
       { n = 0; d = 0; (*this)[0] = 0.0; }
     /// Constructor.
-    polynomial(short_type nn, short_type dd);
-    /// Constructor.
-    polynomial(short_type nn, short_type dd, short_type k);
+    polynomial(short_type dim_, short_type degree_);
+    /// Constructor for the polynomial 'x' (k=0), 'y' (k=1), 'z' (k=2) etc.
+    polynomial(short_type dim_, short_type degree_, short_type k);
   };
 
   template<typename T> polynomial<T>::polynomial(short_type nn, short_type dd)
@@ -406,18 +406,90 @@ namespace bgeot
     }
   }
 
+
   template<typename T> template<typename ITER>
-    T polynomial<T>::eval(const ITER &it) const {
-    switch (degree()) {
-    case 0: return (*this)[0];
-    case 1: { T s = (*this)[0];
-      for (size_type i=0; i < dim(); ++i) s += it[i]*(*this)[i+1];
-      return s; }
-    default: {
-      power_index mi(dim());
-      return horner(mi, dim(), 0, it);
+  T polynomial<T>::eval(const ITER &it) const {
+    /* direct evaluation for common low degree polynomials */
+    unsigned deg = degree();
+    const_iterator P = this->begin();
+    if (deg == 0) return P[0];
+    else if (deg == 1) {
+      T s = P[0];
+      for (size_type i=0; i < dim(); ++i) s += it[i]*P[i+1];
+      return s;
     }
+ 
+    switch (dim()) {
+      case 1: {
+	T x = it[0];
+	if (deg == 2)     return P[0] + x*(P[1] + x*(P[2]));
+	if (deg == 3)     return P[0] + x*(P[1] + x*(P[2] + x*(P[3])));
+	if (deg == 4)     return P[0] + x*(P[1] + x*(P[2] + x*(P[3] + x*(P[4]))));
+	if (deg == 5)     return P[0] + x*(P[1] + x*(P[2] + x*(P[3] + x*(P[4] + x*(P[5])))));
+	if (deg == 6)     return P[0] + x*(P[1] + x*(P[2] + x*(P[3] + x*(P[4] + x*(P[5] + x*(P[6]))))));
+      } break;
+      case 2: {
+	T x = it[0];
+	T y = it[1];
+	if (deg == 2)     return P[0] + x*(P[1] + x*(P[3])) + y*(P[2] + x*(P[4]) + y*(P[5]));
+	if (deg == 3)     return P[0] + x*(P[1] + x*(P[3] + x*(P[6]))) + y*(P[2] + x*(P[4] + x*(P[7])) + y*(P[5] + x*(P[8]) + y*(P[9])));
+	if (deg == 4)     return P[0] + x*(P[1] + x*(P[3] + x*(P[6] + x*(P[10])))) + y*(P[2] + x*(P[4] + x*(P[7] + x*(P[11]))) + y*(P[5] + x*(P[8] + x*(P[12])) + y*(P[9] + x*(P[13]) + y*(P[14]))));
+	if (deg == 5)     return P[0] + x*(P[1] + x*(P[3] + x*(P[6] + x*(P[10] + x*(P[15]))))) + y*(P[2] + x*(P[4] + x*(P[7] + x*(P[11] + x*(P[16])))) + y*(P[5] + x*(P[8] + x*(P[12] + x*(P[17]))) + y*(P[9] + x*(P[13] + x*(P[18])) + y*(P[14] + x*(P[19]) + y*(P[20])))));
+	if (deg == 6)     return P[0] + x*(P[1] + x*(P[3] + x*(P[6] + x*(P[10] + x*(P[15] + x*(P[21])))))) + y*(P[2] + x*(P[4] + x*(P[7] + x*(P[11] + x*(P[16] + x*(P[22]))))) + y*(P[5] + x*(P[8] + x*(P[12] + x*(P[17] + x*(P[23])))) + y*(P[9] + x*(P[13] + x*(P[18] + x*(P[24]))) + y*(P[14] + x*(P[19] + x*(P[25])) + y*(P[20] + x*(P[26]) + y*(P[27]))))));
+      } break;
+      case 3: {
+	T x = it[0];
+	T y = it[1];
+	T z = it[2];
+	if (deg == 2)     return P[0] + x*(P[1] + x*(P[4])) + y*(P[2] + x*(P[5]) + y*(P[7])) + z*(P[3] + x*(P[6]) + y*(P[8]) + z*(P[9]));
+	if (deg == 3)     return P[0] + x*(P[1] + x*(P[4] + x*(P[10]))) + y*(P[2] + x*(P[5] + x*(P[11])) + y*(P[7] + x*(P[13]) + y*(P[16]))) + z*(P[3] + x*(P[6] + x*(P[12])) + y*(P[8] + x*(P[14]) + y*(P[17])) + z*(P[9] + x*(P[15]) + y*(P[18]) + z*(P[19])));
+	if (deg == 4)     return P[0] + x*(P[1] + x*(P[4] + x*(P[10] + x*(P[20])))) + y*(P[2] + x*(P[5] + x*(P[11] + x*(P[21]))) + y*(P[7] + x*(P[13] + x*(P[23])) + y*(P[16] + x*(P[26]) + y*(P[30])))) + z*(P[3] + x*(P[6] + x*(P[12] + x*(P[22]))) + y*(P[8] + x*(P[14] + x*(P[24])) + y*(P[17] + x*(P[27]) + y*(P[31]))) + z*(P[9] + x*(P[15] + x*(P[25])) + y*(P[18] + x*(P[28]) + y*(P[32])) + z*(P[19] + x*(P[29]) + y*(P[33]) + z*(P[34]))));
+	if (deg == 5)     return P[0] + x*(P[1] + x*(P[4] + x*(P[10] + x*(P[20] + x*(P[35]))))) + y*(P[2] + x*(P[5] + x*(P[11] + x*(P[21] + x*(P[36])))) + y*(P[7] + x*(P[13] + x*(P[23] + x*(P[38]))) + y*(P[16] + x*(P[26] + x*(P[41])) + y*(P[30] + x*(P[45]) + y*(P[50]))))) + z*(P[3] + x*(P[6] + x*(P[12] + x*(P[22] + x*(P[37])))) + y*(P[8] + x*(P[14] + x*(P[24] + x*(P[39]))) + y*(P[17] + x*(P[27] + x*(P[42])) + y*(P[31] + x*(P[46]) + y*(P[51])))) + z*(P[9] + x*(P[15] + x*(P[25] + x*(P[40]))) + y*(P[18] + x*(P[28] + x*(P[43])) + y*(P[32] + x*(P[47]) + y*(P[52]))) + z*(P[19] + x*(P[29] + x*(P[44])) + y*(P[33] + x*(P[48]) + y*(P[53])) + z*(P[34] + x*(P[49]) + y*(P[54]) + z*(P[55])))));
+	if (deg == 6)     return P[0] + x*(P[1] + x*(P[4] + x*(P[10] + x*(P[20] + x*(P[35] + x*(P[56])))))) + y*(P[2] + x*(P[5] + x*(P[11] + x*(P[21] + x*(P[36] + x*(P[57]))))) + y*(P[7] + x*(P[13] + x*(P[23] + x*(P[38] + x*(P[59])))) + y*(P[16] + x*(P[26] + x*(P[41] + x*(P[62]))) + y*(P[30] + x*(P[45] + x*(P[66])) + y*(P[50] + x*(P[71]) + y*(P[77])))))) + z*(P[3] + x*(P[6] + x*(P[12] + x*(P[22] + x*(P[37] + x*(P[58]))))) + y*(P[8] + x*(P[14] + x*(P[24] + x*(P[39] + x*(P[60])))) + y*(P[17] + x*(P[27] + x*(P[42] + x*(P[63]))) + y*(P[31] + x*(P[46] + x*(P[67])) + y*(P[51] + x*(P[72]) + y*(P[78]))))) + z*(P[9] + x*(P[15] + x*(P[25] + x*(P[40] + x*(P[61])))) + y*(P[18] + x*(P[28] + x*(P[43] + x*(P[64]))) + y*(P[32] + x*(P[47] + x*(P[68])) + y*(P[52] + x*(P[73]) + y*(P[79])))) + z*(P[19] + x*(P[29] + x*(P[44] + x*(P[65]))) + y*(P[33] + x*(P[48] + x*(P[69])) + y*(P[53] + x*(P[74]) + y*(P[80]))) + z*(P[34] + x*(P[49] + x*(P[70])) + y*(P[54] + x*(P[75]) + y*(P[81])) + z*(P[55] + x*(P[76]) + y*(P[82]) + z*(P[83]))))));
+      } break;
     }
+
+    /*
+    switch (deg) {
+      case 0: return (*this)[0];
+      case 1: { 
+	T s = (*this)[0];
+	for (size_type i=0; i < dim(); ++i) s += it[i]*(*this)[i+1];
+	return s; 
+      }
+      case 2:
+      case 3: { 
+	if (dim() == 1) {
+	  const T &x = it[0]; 
+	  if      (deg == 2) return p[0] + x*(p[1] + x*p[2]);
+	  else if (deg == 3) return p[0] + x*(p[1] + x*(p[2]+x*p[3]));
+	} else if (dim() == 2) {
+	  const T &x = it[0]; 
+	  const T &y = it[1]; 
+	  if      (deg == 2) 
+	    return p[0] + p[1]*x + p[2]*y + p[3]*x*x + p[4]*x*y + p[5]*y*y;
+	  else if (deg == 3)
+	    return p[0] + p[1]*x + p[2]*y + p[3]*x*x + p[4]*x*y + p[5]*y*y + 
+	      p[6]*x*x*x + p[7]*x*x*y + p[8]*x*y*y + p[9]*y*y*y;
+	} else if (dim() == 3) {
+	  const T &x = it[0]; 
+	  const T &y = it[1]; 
+	  const T &z = it[2]; 
+	  if (deg == 2)
+	    return p[0] + p[1]*x + p[2]*y + p[3]*z + p[4]*x*x + p[5]*x*y + p[6]*x*z +
+	      p[7]*y*y + p[8]*y*z + p[9]*z*z;
+	  else if (deg == 3)
+	    return p[0] + p[1]*x + p[2]*y + p[3]*z + p[4]*x*x + p[5]*x*y + p[6]*x*z +
+	      p[7]*y*y + p[8]*y*z + p[9]*z*z + 
+	      p[10]*x*x*x + p[11]*x*x*y + p[12]*x*x*z + p[13]*x*y*y + p[14]*x*y*z + p[15]*x*z*z +
+	      p[16]*y*y*y + p[17]*y*y*z + p[18]*y*z*z + 
+	      p[19]*z*z*z;
+	}
+      }
+      }*/
+    /* for other polynomials, Horner evaluation (quite slow..) */
+    power_index mi(dim());
+    return horner(mi, dim(), 0, it);
   }
 
   template<typename ITER>

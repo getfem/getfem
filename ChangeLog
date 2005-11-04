@@ -1,3 +1,14 @@
+2005-11-04  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/bgeot_poly.h (bgeot): optimized common polynomial evaluation
+	(dim <= 3, degree <= 6).
+
+2005-10-24  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_assembling_tensors.cc: optimization of the assembly
+	for xfem-type problems (i.e. when the FEM changes often on the
+	elements).
+
 2005-06-30  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_import.cc: updated the gmsh import such that it uses

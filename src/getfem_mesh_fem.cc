@@ -199,7 +199,11 @@ namespace getfem {
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
-    if (fe_convex.card() == 0) return;
+    if (fe_convex.card() == 0) {
+      dof_enumeration_made = true;
+      nb_total_dof = 0;
+      return;
+    }
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
     // double t = ftool::uclock_sec();
 
@@ -264,8 +268,8 @@ namespace getfem {
     dof_enumeration_made = true;
     nb_total_dof = nbdof;
     
-    // enumerate_dof_time += ftool::uclock_sec() - t;
-    // cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec\n";
+//    enumerate_dof_time += ftool::uclock_sec() - t;
+//    cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec [nbd=" << nbdof << "]\n";
   }
 
 

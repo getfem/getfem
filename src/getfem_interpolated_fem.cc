@@ -68,7 +68,8 @@ namespace getfem {
     
 
     cerr << "interpolated_fem::update from context : convex_index = " << mim.convex_index() << "\n";
-    elements = std::vector<elt_interpolation_data>(mim.convex_index().last_true() + 1);
+    std::vector<elt_interpolation_data> vv(mim.convex_index().last_true() + 1);
+    elements.swap(vv);
     base_node gpt;
     ind_dof.resize(mf.nb_dof()); 
     dal::bit_vector alldofs;

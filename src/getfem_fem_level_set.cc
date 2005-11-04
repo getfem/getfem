@@ -68,7 +68,6 @@ namespace getfem {
     }
     
     init_cvs_node();
-    cout << "creating fem_level_set:\n";
     for (size_type k = 0; k < bfem->nb_dof(0); ++k) {
       if (!dofzones[k]) {
 	add_node(bfem->dof_types()[k], bfem->node_of_dof(0,k));
@@ -80,7 +79,6 @@ namespace getfem {
 	}
       }
     }
-    cout << "done (nb_dof=" << nb_dof(0) << ")\n";
   }
 
   void fem_level_set::base_value(const base_node &, 

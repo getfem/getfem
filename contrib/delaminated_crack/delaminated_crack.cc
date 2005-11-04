@@ -224,8 +224,10 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     const base_node P = ls.get_mesh_fem().point_of_dof(d);
-    ls.values(0)[d] = P[N-1];
-    ls.values(1)[d] = -P[0] + .2 - P[1]; //+ 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
+    scalar_type x = P[0], y = P[1], z = P[N-1];
+    ls.values(0)[d] = z;
+    ls.values(1)[d] = -x + .2 - y; 
+    //+ 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
   }
   ls.touch();
 
@@ -250,9 +252,6 @@ bool crack_problem::solve(plain_vector &U) {
 
   
   cerr << "CV INDEX: " << mim_crack.convex_index() << "\n";
-  for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
-    cerr << "     !!!!!!!!!!!!!!!!!!! " << mim_crack.int_method_of_element(i) << "\n";
-
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
   for (size_type i = 0; i < 4; ++i)
@@ -260,6 +259,23 @@ bool crack_problem::solve(plain_vector &U) {
   
   mf_sing_u.set_functions(vfunc);
 
+
+  for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
+    if (mls.is_convex_cut(i)) {
+      cerr << i << " primary zone: " << mls.primary_zone_of_convex(i) << " sz.size=" << mls.zoneset_of_convex(i).size() << " " << dal::mean_value(mls.linked_mesh().points_of_convex(i)) << "\n";
+      if (mls.zoneset_of_convex(i).size() == 1) {
+      }
+    }
+
+  dal::bit_vector crack_tip_convexes;
+  for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
+    if (mls.is_convex_cut(i)) {
+      // chuis pas sur sur du test..
+      if (mls.zoneset_of_convex(i).size() == 1) {
+	crack_tip_convexes.add(i); 
+      }
+    }
+  cerr << "crack_tip_convexes = " << crack_tip_convexes << "\n";
 
   switch (enrichment_option) {
   case 1 :
@@ -275,6 +291,17 @@ bool crack_problem::solve(plain_vector &U) {
 	if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
 	  enriched_dofs.add(j);
       }
+      for (dal::bv_visitor cv(crack_tip_convexes); !cv.finished(); ++cv) {
+	for (unsigned j=0; j < mf_partition_of_unity.nb_dof_of_element(cv); ++j) {
+	  size_type d = mf_partition_of_unity.ind_dof_of_element(cv)[j];
+	  if (!enriched_dofs.is_in(d)) {
+	    enriched_dofs.add(d);
+	    cerr << "added supplementary cracktip dof " << d << ", distance is:"
+		 << sqrt(gmm::sqr(X[d]) + gmm::sqr(Y[d])) << "\n";
+	  }
+	}
+      }
+
       if (enriched_dofs.card() < 3)
 	DAL_WARNING(0, "There is " << enriched_dofs.card() <<
 		    " enriched dofs for the crack tip");
@@ -360,9 +387,46 @@ int main(int argc, char *argv[]) {
 
       getfem::stored_mesh_slice sl;
       getfem::getfem_mesh mcut_refined;
-      sl.build(mcut, /*getfem::slicer_boundary(mcut), */getfem::slicer_build_mesh(mcut_refined), 2);
+      //sl.build(mcut, /*getfem::slicer_boundary(mcut), */getfem::slicer_build_mesh(mcut_refined), 2);
 
-      getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
+
+      getfem::mesh_slicer slicer(mcut);
+      getfem::slicer_build_stored_mesh_slice sbuild(sl);
+      //getfem::slicer_build_mesh sbmesh(mcut_refined);
+      slicer.push_back_action(sbuild);
+      //slicer.push_back_action(sbmesh);
+      cout << "mcut.region(0) = " << mcut.region(0) << "\n";
+
+      getfem::mesh_region border_faces;
+      getfem::outer_faces_of_mesh(mcut, border_faces);
+      // merge outer_faces with faces of the crack
+      for (getfem::mr_visitor i(mcut.region(0)); !i.finished(); ++i) 
+	border_faces.add(i.cv(), i.f());
+      slicer.exec(3, border_faces);
+
+      getfem::mesh_fem mfcut(mcut, p.mf_u().get_qdim());
+      getfem::mesh_fem mfcut_vm(mcut, 1);
+      mfcut.set_classical_discontinuous_finite_element(3, 0.001);
+      mfcut_vm.set_classical_discontinuous_finite_element(2, 0.001);
+      plain_vector V(mfcut.nb_dof()), VonMises(mfcut_vm.nb_dof());
+      getfem::interpolation(p.mf_u(), mfcut, U, V);
+      getfem::interpolation_von_mises(mfcut, mfcut_vm, V, VonMises, p.mu);
+
+      //getfem::interpolation(mfcut, sl, U, W);
+
+      if (p.PARAM.int_value("VTK_EXPORT")) {
+	cout << "export to " << p.datafilename + ".vtk" << "..\n";
+	getfem::vtk_export exp(p.datafilename + ".vtk",
+			       p.PARAM.int_value("VTK_EXPORT")==1);
+	exp.exporting(sl); 
+	exp.write_point_data(mfcut_vm, VonMises, "Von Mises Stress");
+	exp.write_point_data(mfcut, V, "elastostatic_displacement");
+	cout << "export done, you can view the data file with (for example)\n"
+	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	  "WarpVector -m BandedSurfaceMap -m Outline\n";
+      }
+
+      /*getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
       mf_refined.set_classical_discontinuous_finite_element(1, 0.001);
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
@@ -377,6 +441,7 @@ int main(int argc, char *argv[]) {
 	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
+      */
 
     }
 
