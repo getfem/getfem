@@ -491,12 +491,15 @@ struct Chrono {
       run_delaunay(fixed_points, simplexes, fixed_points_constraints);
 
       getfem_mesh &mesh(*(cut_cv[cv].pmesh));
+
       mesh_region &ls_border_faces(cut_cv[cv].ls_border_faces);
-      mesh.clear();
+
+      mesh.clear(); 
+
       for (size_type i = 0; i <  fixed_points.size(); ++i) {
 	size_type j = mesh.add_point(fixed_points[i], false);
 	assert(j == i);
-      }      
+      }
 
       std::vector<base_node> cvpts;
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
@@ -539,16 +542,22 @@ struct Chrono {
 	      }
 	    }
 	  }
-	  if (K > 1) {
-	    bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
-	    cvpts.resize(pgt2->nb_points());
-	    for (size_type k=0; k < pgt2->nb_points(); ++k) {
-	      cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
-		(pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
-	    }
-	    mesh.sup_convex(j);
-	    mesh.add_convex_by_points(pgt2, cvpts.begin());
+	}
+      }
+
+      if (K>1) {
+	for (dal::bv_visitor_c j(mesh.convex_index()); !j.finished(); ++j) {
+	  bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
+	  cvpts.resize(pgt2->nb_points());
+	  for (size_type k=0; k < pgt2->nb_points(); ++k) {
+	    cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
+	      (pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
 	  }
+	  mesh.sup_convex(j);
+	  /* some new point will be added to the mesh, but the initial ones (those on the
+	     convex vertices) are kepts */
+	  size_type jj = mesh.add_convex_by_points(pgt2, cvpts.begin());
+	  assert(jj == j);
 	}
       }
 
@@ -561,6 +570,30 @@ struct Chrono {
 	exp.exporting_mesh_edges();
 	exp.write_mesh();
       }
+
+      /* detect the faces lying on level_set boundaries
+	 (not exact, some other faces maybe be found, use this only for vizualistion) */
+      for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+	for (size_type f = 0; f <= n; ++f) {
+	  bgeot::ind_ref_mesh_point_ind_ct fpts
+	    = mesh.ind_points_of_face_of_convex(i, f);
+	  
+	  dal::bit_vector cts; bool first = true;
+	  for (unsigned k=0; k < fpts.size(); ++k) {
+	    if (fpts[k] >= fixed_points_constraints.size()) {
+	      assert(K>1);
+	      continue; /* ignore additional point inserted when K>1 */
+	    }
+	    if (first) { cts = fixed_points_constraints[fpts[k]]; first = false; }
+	    else cts &= fixed_points_constraints[fpts[k]];
+	  }
+	  for (dal::bv_visitor ii(cts); !ii.finished(); ++ii) {
+	    if (ii >= nbeltconstraints)
+	      ls_border_faces.add(i, f);
+	  }
+	}
+      }
+
       
       if (K > 1) { // à ne faire que sur les convexes concernés ..
 	dal::bit_vector ptdone;
@@ -581,24 +614,6 @@ struct Chrono {
 #ifdef DEBUG_LS
 	    interpolate_face_chrono.toc();
 #endif
-	  }
-	}
-      }
-
-      /* detect the faces lying on level_set boundaries
-	 (not exact, some other faces maybe be found, use this only for vizualistion) */
-      for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	for (size_type f = 0; f <= n; ++f) {
-	  bgeot::ind_ref_mesh_point_ind_ct fpts
-	    = mesh.ind_points_of_face_of_convex(i, f);
-	  dal::bit_vector cts;
-	  for (unsigned k=0; k < fpts.size(); ++k) {
-	    if (k == 0) cts = fixed_points_constraints[fpts[k]];
-	    else cts &= fixed_points_constraints[fpts[k]];
-	  }
-	  for (dal::bv_visitor ii(cts); !ii.finished(); ++ii) {
-	    if (ii >= nbeltconstraints)
-	      ls_border_faces.add(i, f);
 	  }
 	}
       }

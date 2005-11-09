@@ -223,8 +223,8 @@ where now \cpp{itp} is an iterator on an array of points. For example\\[0.5cm]
 \begin{cppcode}
   std::vector<bgeot::base\_node> pts(3);
   pts[0] = bgeot::base\_node(0.0, 0.0, 0.0);
-  pts[0] = bgeot::base\_node(0.0, 1.0, 0.0);
-  pts[0] = bgeot::base\_node(0.0, 0.0, 1.0);
+  pts[1] = bgeot::base\_node(0.0, 1.0, 0.0);
+  pts[2] = bgeot::base\_node(0.0, 0.0, 1.0);
   mesh.add\_convex\_by\_points(bgeot::simplex\_trans(2,1), pts.begin());
 \end{cppcode}
 Still add a triangle to the mesh.
@@ -482,7 +482,7 @@ The following is an example of how to load a mesh and extract information on it.
     try \{ 
      
       // read the mesh from the file name given by the first argument 
-      mesh.read\_from\_file(std::string(argv[0])); 
+      mesh.read\_from\_file(std::string(argv[1])); 
      
       // List all the convexes
       dal::bit\_vector nn = mesh.convex\_index(); 
