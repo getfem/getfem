@@ -54,7 +54,10 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
-enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, NONREFLECTIVE_BOUNDARY_NUM };
+enum {
+  DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1,
+  NONREFLECTIVE_BOUNDARY_NUM
+};
 
 
 struct problem_definition;
@@ -270,7 +273,7 @@ struct problem_rotating_cylinder : public problem_definition {
     if (gmm::abs(x-p.BBmax[0]) < 1e-7) on_cylinder = false;
     if (gmm::abs(y-p.BBmax[1]) < 1e-7) on_cylinder = false;
     if (!on_cylinder) {
-      if (!(gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1]) < 1e-7))
+      if (!(gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1])< 1e-7))
 	r[0] = 1;
     } else {
       r[0] = -2.*alpha*y; /* HYPOTHESIS: cylinder centered at (0,0) */
@@ -296,12 +299,15 @@ struct problem_rotating_cylinder : public problem_definition {
   
   void validate_solution(navier_stokes_problem &p, scalar_type t) {
     cout << "Validate_solution : t = " << t << " , |u| = " 
-	 << gmm::vect_norm2(p.Un1) << ", |p|=" << gmm::vect_norm2(p.Pn1) << "\n";
+	 << gmm::vect_norm2(p.Un1) << ", |p|="
+	 << gmm::vect_norm2(p.Pn1) << "\n";
   }
-  virtual base_small_vector initial_velocity(navier_stokes_problem &, const base_node &) {
+  virtual base_small_vector initial_velocity(navier_stokes_problem &,
+					     const base_node &) {
     base_small_vector r(2); r[0] = 1; r[1] = 0; return r;
   }
-  virtual scalar_type initial_pressure(navier_stokes_problem &, const base_node &) {
+  virtual scalar_type initial_pressure(navier_stokes_problem &,
+				       const base_node &) {
     return 0.;
   }
   problem_rotating_cylinder(scalar_type aa) : alpha(aa) {}
@@ -346,7 +352,7 @@ void navier_stokes_problem::init(void) {
   }
   mesh.bounding_box(BBmin, BBmax);
   cout << "mesh bounding box: " << BBmin << " ... " << BBmax << "\n";
-  datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
+  datafilename = PARAM.string_value("ROOTFILENAME","Data files base name.");
   residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosity");
@@ -436,7 +442,8 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 
   // Velocity brick.
   getfem::mdbrick_abstract<> *previous;
-  getfem::mdbrick_scalar_elliptic<> velocity(mim, mf_u, mf_coef, nu); previous = &velocity;
+  getfem::mdbrick_scalar_elliptic<> velocity(mim, mf_u, mf_coef, nu);
+  previous = &velocity;
 
   
   std::auto_ptr<getfem::mdbrick_NS_uuT<> > velocity_nonlin;
@@ -451,11 +458,13 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 					   plain_vector(mf_rhs.nb_dof()*N));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs,
+					   DIRICHLET_BOUNDARY_NUM);
  
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
-					     NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
+					     NONREFLECTIVE_BOUNDARY_NUM,
+					     dt, nu);
  
   // Dynamic brick.
   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
