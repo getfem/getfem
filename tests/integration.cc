@@ -63,25 +63,58 @@ public:
   std::vector<std::string> im_names;
 };
 
-std::map<std::pair<bgeot::pgeometric_trans,size_type>, matrix_collection> ME;
+struct pgt_K_f_idx {
+  bgeot::pgeometric_trans pgt;
+  size_type K;
+  int f;
+  pgt_K_f_idx(bgeot::pgeometric_trans pgt_, size_type K_, int f_ = -1) :
+    pgt(pgt_), K(K_), f(f_) {}
+  bool operator<(const pgt_K_f_idx& other) const {
+    if (pgt->dim() < other.pgt->dim()) return true;
+    if (pgt->dim() > other.pgt->dim()) return false;
+    if (pgt->nb_points() < other.pgt->nb_points()) return true;
+    if (pgt->nb_points() > other.pgt->nb_points()) return false;
+    if (pgt < other.pgt) return true;
+    if (!(pgt == other.pgt)) return false;
+    if (K < other.K) return true;
+    if (K > other.K) return false;
+    if (f < other.f) return true;
+    if (f > other.f) return false;
+    return false;
+  }
+};
+
+std::map<pgt_K_f_idx, matrix_collection> ME;
 
 static void check_method(const std::string& im_name, getfem::pintegration_method ppi, size_type k, bgeot::pgeometric_trans pgt) {
+
   getfem::getfem_mesh m; 
   getfem::mesh_fem mf1(m);
   getfem::mesh_fem mf2(m);
   assert(ppi!=0); assert(pgt!=0);
-  cout << "checking " << im_name << "...\n" << std::flush; 
+  cout << "checking " << im_name << "..." << std::flush; 
   m.add_convex_by_points(pgt, pgt->convex_ref()->points().begin());
   mf1.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,k/2));
   mf2.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,(k-k/2)));
 
-  matrix_collection &mc = ME[std::make_pair(pgt,k)];
   getfem::pmat_elem_type pme = getfem::mat_elem_product(getfem::mat_elem_base(mf1.fem_of_element(0)),getfem::mat_elem_base(mf2.fem_of_element(0)));
   getfem::pmat_elem_computation pmec = getfem::mat_elem(pme, ppi, pgt);
   base_tensor t;
+
+  matrix_collection &mc = ME[pgt_K_f_idx(pgt,k)];
   pmec->gen_compute(t, m.points_of_convex(0), 0);
   mc.lst.push_back(t);
   mc.im_names.push_back(im_name);
+  
+  for (unsigned f = 0; f < m.structure_of_convex(0)->nb_faces(); ++f) {
+    pmec->gen_compute_on_face(t, m.points_of_convex(0), f, 0);
+    std::stringstream s; s << im_name << "/FACE" << f;
+    matrix_collection &mcf = ME[pgt_K_f_idx(pgt,k,f)];
+    mcf.lst.push_back(t);
+    mcf.im_names.push_back(s.str());
+    cout << "F" << f << std::flush;
+  }
+  cout << "\n";
 }
 
 static void check_im_order(const std::string& s/*, size_type expected_pk=size_type(-1), size_type expected_qk=size_type(-1)*/) {
@@ -323,26 +356,38 @@ static void check_methods() {
     cerr << "FIXME:  structured_mesh not implemented for prisms\n";
     /*sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_NC_PRISM(3,3),2)");
       check_method(s, getfem::int_method_descriptor(s), 2, bgeot::prism_geotrans(3,1));*/
+    sprintf(s, "IM_QUASI_POLAR(IM_GAUSS_PARALLELEPIPED(2,8), 2)");
+    check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(2,1));
+    sprintf(s, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 2, 3)");
+    check_method(s, getfem::int_method_descriptor(s), 1, bgeot::simplex_geotrans(3,1));
+    /*sprintf(s, "IM_QUASI_POLAR(IM_TETRAHEDRON(5), 2)");
+    check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(3,1));*/
   }
 }
 
 static int inspect_results() {
   static int failcnt = 0;
-  for (std::map< std::pair<bgeot::pgeometric_trans,size_type>, matrix_collection>::const_iterator it = ME.begin();
+  for (std::map<pgt_K_f_idx, matrix_collection>::const_iterator it = ME.begin();
        it != ME.end(); ++it) {
-    size_type K = (*it).first.second;
-    bgeot::pgeometric_trans pgt = (*it).first.first;
+    size_type K = (*it).first.K;
+    int f = (*it).first.f;
+    bgeot::pgeometric_trans pgt = (*it).first.pgt;
     const matrix_collection &mc = (*it).second;
-    cout << "inspecting " << bgeot::name_of_geometric_trans(pgt) << "/K=" << K << "\n";
+    if (f == -1) {
+      cout << "inspecting " << bgeot::name_of_geometric_trans(pgt) << "/K=" << K << "\n";
+      cout << "  VOLUME:\n";
+    } else {
+      cout << "  FACE " << f << ":\n";
+    }
     //<< " : " << mc.im_names.size() << " integration results\n";
-    scalar_type sumref = std::accumulate(mc.lst[0].begin(), mc.lst[0].end(),0.);
-    cout << " reference " << std::setw(70) << mc.im_names[0] << " : sum= " << std::setw(6) << sumref << "\n";    
+    scalar_type sumref = std::accumulate(mc.lst.at(0).begin(), mc.lst[0].end(),0.);
+    cout << "    reference" << std::setw(70) << mc.im_names[0] << " : sum= " << std::setw(6) << sumref << "\n";    
     for (size_type i = 1; i < mc.im_names.size(); ++i) {
       scalar_type sum = std::accumulate(mc.lst[0].begin(), mc.lst[0].end(),0.);
       scalar_type dist = bgeot::vect_dist2(mc.lst[0],mc.lst[i]);
-      bool ok  = (gmm::abs(sum-sumref) < 1e-10 && gmm::abs(dist) < 1e-6);
-      if (ok)  cout << "  [OK]     ";
-      else     cout << "  [ERROR!] ";
+      bool ok  = (gmm::abs(sum-sumref) < 1e-10 && gmm::abs(dist) < 1e-5);
+      if (ok)  cout << "    [OK]     ";
+      else     cout << "    [ERROR!] ";
       cout << std::setw(70) << mc.im_names[i] << " : sum= " << std::setw(6) << sum << ", dist=" << std::setw(9) << dist << "\n";
       if (!ok) {
 	// cerr << mc.lst[0] << "\n" << mc.lst[i] << "\n";
@@ -357,14 +402,14 @@ static int inspect_results() {
 
 static void print_some_methods() {
   char meth[500];
-  cout.precision(60);
+  cout.precision(8);
     
   for (size_type i = 1; i < 15; ++i) {
     sprintf(meth, "IM_GAUSS1D(%d)", int(2*(i - 1)));
     print_method(getfem::int_method_descriptor(meth));
   }
 
-  sprintf(meth, "IM_PRODUCT(IM_GAUSS1D(2),IM_GAUSS1D(2))");
+  /*sprintf(meth, "IM_PRODUCT(IM_GAUSS1D(2),IM_GAUSS1D(2))");
   print_method(getfem::int_method_descriptor(meth));
     
   for (size_type n = 1; n < 6; n++) {
@@ -382,8 +427,10 @@ static void print_some_methods() {
 
   sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_QUAD(2),3)");
   print_method(getfem::int_method_descriptor(meth));
+  */
 
-  sprintf(meth, "IM_TRIANGLE(3)");
+  //sprintf(meth, "IM_QUASI_POLAR(IM_GAUSS_PARALLELEPIPED(2, 5),2)");
+  sprintf(meth, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 2, 3)");
   print_method(getfem::int_method_descriptor(meth));
 
   print_method(getfem::classical_approx_im(bgeot::simplex_geotrans(3,2), 3));
@@ -414,7 +461,7 @@ int main(int argc, char **argv)
       ok = 1;
     }
     if (!ok) throw(dal::failure_error("IM_NONE failed..\n"));
-    //print_some_methods();
+    print_some_methods();
     check_methods();
     int failcnt = inspect_results();
     cout << "\nOrders of some approximate integration methods:\n";

@@ -48,16 +48,30 @@
                                          on prisms
    - "IM_GAUSS_PARALLELEPIPED(N,K)"    : product of Gauss1D integration
                                          on parallelepipeds (K=1,3,..99)
-   - "IM_TRIANGLE(K)"                  : Gauss methods on triangles (K=1..10,13,17,19)
+   - "IM_TRIANGLE(K)"                  : Gauss methods on triangles
+                                         (K=1..10,13,17,19)
    - "IM_QUAD(K)"                      : Gauss methods on quadrilaterons
                                          (K=2, 3, 5, 7, 9, 17)
-   - "IM_HEXAHEDRON(K)"                : Gauss methods on hexahedrons (K=5,9,11)
+   - "IM_HEXAHEDRON(K)"                : Gauss methods on hexahedrons
+                                         (K=5,9,11)
    - "IM_TETRAHEDRON(K)"               : Gauss methods on tetrahedrons
                                          (K=1, 2, 3, 5, 6, or 8)
-   - "IM_SIMPLEX4D(3)"                 : Gauss method on a 4-dimensional simplex.
-   - "IM_CUBE4D(K)"                    : Gauss method on a 4-dimensional cube (K=5,9).
+   - "IM_SIMPLEX4D(3)"                 : Gauss method on a 4-dimensional
+                                         simplex.
+   - "IM_CUBE4D(K)"                    : Gauss method on a 4-dimensional cube
+                                         (K=5,9).
    - "IM_STRUCTURED_COMPOSITE(IM1, K)" : Composite method on a grid with
                                          K divisions
+   - "IM_QUASI_POLAR(IM1, IP1)"        : if IM1 is an integration method on a
+               square, gives an integration method on a triangle which is
+	       close to a polar integration with respect to vertex IP1.
+	       if IM1 is an integration method on a tetrahedron, gives an
+	       integration method on a tetrahedron which is close to a
+	       cylindrical integration with respect to vertex IP1.
+   - "IM_QUASI_POLAR(IM1, IP1, IP2)"   : IM1 should be an integration method
+               on a prism. Gives an integration method on a tetrahedron which
+	       is close to a cylindrical integration with respect to IP1-IP2
+	       axis.
 */
 #ifndef GETFEM_INTEGRATION_H__
 #define GETFEM_INTEGRATION_H__

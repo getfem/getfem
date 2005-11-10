@@ -55,7 +55,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = mesh.trans_of_convex(j);
       bounding_box(min, max, mesh.points_of_convex(j), pgt);
       for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
-      gic.init(mesh.convex(j), pgt);
+      gic.init(mesh.points_of_convex(j), pgt);
       points_in_box(boxpts, min, max);
       for (size_type l = 0; l < boxpts.size(); ++l) {
 	size_type ind = boxpts[l].i;

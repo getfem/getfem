@@ -33,6 +33,7 @@
 #include <dal_naming_system.h>
 #include <gmm_dense_lu.h>
 #include <bgeot_permutations.h>
+#include <bgeot_geotrans_inv.h>
 #include <getfem_im_list.h>
 
 namespace getfem
@@ -846,6 +847,179 @@ namespace getfem
   }
 
   /* ******************************************************************** */
+  /*    Quasi-polar integration                                           */
+  /* ******************************************************************** */
+
+  struct quasi_polar_integration : public approx_integration {
+    quasi_polar_integration(papprox_integration base_im, 
+			    size_type ip1, size_type ip2=size_type(-1)) : 
+      approx_integration(bgeot::simplex_of_reference(base_im->dim()))  {
+      size_type N = base_im->dim();
+
+      enum { SQUARE, PRISM, PYRAMID } what;
+      if (N == 2) what = SQUARE;
+      else if (base_im->structure() == bgeot::prism_structure(3)) what = PRISM;
+      else if (base_im->structure() == bgeot::simplex_structure(3)) what = PYRAMID;
+      else DAL_THROW(failure_error, "Incoherent integration method");
+
+      if (N < 2 || N > 3)
+	DAL_THROW(to_be_done_error, "Sorry, no polar integration for dimension " << N);
+
+      if (what == PRISM && (ip1 == ip2 || ip2 == size_type(-1)))
+	DAL_THROW(failure_error, "Incoherent parameters");
+
+      // First geometric transformation which collapse a face of a parallelepiped
+      bgeot::pgeometric_trans pgt1 = bgeot::parallelepiped_geotrans(N,1);
+
+      std::vector<base_node> nodes1 = pgt1->convex_ref()->points();
+      if (N == 2) {
+	nodes1[3] = nodes1[1];
+      } else {
+	nodes1[4] = nodes1[0];
+	nodes1[5] = nodes1[1];
+      }
+
+      base_node vertex_pyramid(sqrt(2.0)/2.0, 0.5, 0.25);
+
+      // Second geometric transformation choosing the orientation
+      bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
+      std::vector<base_node> nodes2 = pgt2->convex_ref()->points();
+      switch (what) {
+	case SQUARE : {
+	  nodes2[0] =  pgt2->convex_ref()->points()[(4-ip1) % 3];
+	  nodes2[1] =  pgt2->convex_ref()->points()[(5-ip1) % 3];
+	  nodes2[2] =  pgt2->convex_ref()->points()[(6-ip1) % 3];
+	} break;
+	case PRISM : {
+	  nodes2[ip1] = pgt1->convex_ref()->points()[0];
+	  nodes2[ip2] = pgt1->convex_ref()->points()[1];
+	  size_type j = 2;
+	  for (size_type i = 0; i <= N; ++i)
+	    if (i != ip1 && i != ip2) {
+	      nodes2[i] = pgt1->convex_ref()->points()[j];
+	      j = 6;
+	    }
+	} break;
+	case PYRAMID : {
+	  nodes2[ip1] = pgt1->convex_ref()->points()[0];
+	  size_type j = 2;
+	  for (size_type i = 0; i <= N; ++i)
+	    if (i != ip1 && i != ip2) {
+	      if (j != 12)
+		nodes2[i] = pgt1->convex_ref()->points()[j];
+	      else
+		nodes2[i] = vertex_pyramid;
+	      if (j == 2) j = 6; else j = 12;
+	    }
+	} break;
+      }
+
+      cout << "nodes2 = " << nodes2 << endl;
+
+      //  bgeot::pgeotrans_precomp pgp = geotrans_precomp(pgt, &im_pts);
+      base_matrix G1; bgeot::vectors_to_base_matrix(G1, nodes1);
+      base_matrix G2; bgeot::vectors_to_base_matrix(G2, nodes2);
+      base_matrix K(N, N), grad(N, N);
+      base_node normal1(N), normal2(N);
+      bgeot::geotrans_inv_convex gic(nodes2, pgt2);
+
+
+      for (size_type nc = 0; nc < 4; ++nc) {
+	base_matrix PY(N, N);
+	if (what == PYRAMID) {
+	  PY(0, 2) = sqrt(2.0) * 0.5;
+	  PY(1, 0) = (nc < 2) ? 0.5 : -0.5;
+	  PY(2, 0) = (nc & 1) ? 0.5 : -0.5;
+	  PY(1, 1) = PY(2, 0); PY(2, 1) = -PY(1, 0);
+	}
+
+	for (size_type i=0; i <  base_im->nb_points(); ++i) {
+	  size_type fp = size_type(-1);
+	  if (i >= base_im->nb_points_on_convex()) {
+	    size_type ii = i - base_im->nb_points_on_convex();
+	    for (size_type ff = 0; ff < pgt1->structure()->nb_faces(); ++ff) {
+	      if (ii < base_im->nb_points_on_face(ff)) { fp = ff; break; }
+	      else ii -= base_im->nb_points_on_face(ff);
+	    }
+	    normal1 = pgt1->convex_ref()->normals()[fp];
+	  }
+
+	  base_node P = base_im->point(i);
+	  if (what == PYRAMID) {
+	    base_node Q(N);
+	    gmm::mult(PY, P, Q); P = Q + base_node(0, 0.5, 0.5);
+	  }
+
+	  base_node P1 = pgt1->transform(P, nodes1), P2(N);
+	  pgt1->gradient(P, grad);
+	  
+	  gmm::mult(gmm::transposed(grad), gmm::transposed(G1), K);
+	  scalar_type J1 = gmm::abs(gmm::lu_det(K));
+	  if (what == PYRAMID) J1 *= (fp == size_type(-1)) ? (sqrt(2.0) * 0.25) : 0.5;
+	  if (fp != size_type(-1) && J1 > 1E-10) {
+	    gmm::lu_inverse(K);
+	    gmm::mult(K, normal1, normal2);
+	    J1 *= gmm::vect_norm2(normal2);
+	    normal2 /= gmm::vect_norm2(normal2);
+	  }
+	  
+	  gic.invert(P1, P2);
+	  if (pgt2->convex_ref()->is_in(P2) > 1E-8) 
+	    DAL_INTERNAL_ERROR("Point not in the convex ref : " << P2 << " P1 = " << P1 << " P = " << base_im->point(i) << " Pbis = " << P);
+	  
+	  
+	  pgt2->gradient(P2, grad);
+	  gmm::mult(gmm::transposed(grad), gmm::transposed(G2), K);
+	  scalar_type J2 = gmm::abs(gmm::lu_det(K));
+	  
+	  if (i <  base_im->nb_points_on_convex())
+	    add_point(P2,base_im->coeff(i)*J1/J2, short_type(-1));
+	  else if (J1 > 1E-10) {
+	    size_type f = size_type(-1);
+	    for (size_type ff = 0; ff <= N; ++ff)
+	      if (gmm::abs(pgt2->convex_ref()->is_in_face(ff, P2)) < 1E-8) {
+		if (f != size_type(-1))
+		  DAL_THROW(failure_error, "An integration point is common to two faces");
+		f = ff;
+	      }
+	    if (f != size_type(-1)) {
+	      gmm::mult(K, normal2, normal1);
+	      add_point(P2,base_im->coeff(i)*J1*gmm::vect_norm2(normal1)/J2, f);
+	    }
+	  }  
+	}
+	if (what != PYRAMID) break;
+      }
+      valid_method();
+    }
+  };
+
+
+  static pintegration_method quasi_polar(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() < 2 || params.size() > 3)
+      DAL_THROW(failure_error, 
+          "Bad number of parameters : " << params.size() << " should be 2 or 3.");
+    if (params[0].type() != 1 || params[1].type() != 0 || params.back().type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pintegration_method a = params[0].method();
+    if (a->type() != IM_APPROX) 
+      DAL_THROW(failure_error, "need an approximate integration method");
+
+    int ip1 = int(::floor(params[1].num() + 0.01));
+    int ip2 = int(::floor(params.back().num() + 0.01));
+    int N = a->approx_method()->dim();
+    if (N < 2 || N > 3 || ip1 < 0 || ip2 < 0 || ip1 > N || ip2 > N )
+      DAL_THROW(failure_error, "Bad parameters");
+    integration_method *p
+      = new integration_method(new quasi_polar_integration(a->approx_method(), ip1, ip2));
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(&(p->approx_method()->integration_points()));
+    return p;
+  }
+
+
+  /* ******************************************************************** */
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
@@ -864,9 +1038,7 @@ namespace getfem
       add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
       add_suffix("NC_PRISM", Newton_Cotes_prism);
       add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
-      // add_suffix("TRIANGLE", approx_triangle);
-      // add_suffix("QUAD", approx_quad);
-      // add_suffix("TETRAHEDRON", approx_tetra);
+      add_suffix("QUASI_POLAR", quasi_polar);
       add_suffix("STRUCTURED_COMPOSITE",
                  structured_composite_int_method);
       add_generic_function(im_list_integration);

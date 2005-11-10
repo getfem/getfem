@@ -68,9 +68,11 @@ namespace bgeot {
     template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv,
 					    pgeometric_trans pgt_, 
                                             scalar_type e=10e-12)
-      : N(0), P(0), pgt(0), EPS(e) { init(cv,pgt_); }
-    template<class TAB> void init(const convex<base_node, TAB> &cv,
-				  pgeometric_trans pgt_);
+      : N(0), P(0), pgt(0), EPS(e) { init(cv.points(),pgt_); }
+    geotrans_inv_convex(const std::vector<base_node> &nodes,
+			pgeometric_trans pgt_, scalar_type e=10e-12)
+      : N(0), P(0), pgt(0), EPS(e) { init(nodes,pgt_); }
+    template<class TAB> void init(const TAB &nodes, pgeometric_trans pgt_);
     
     /**
        given the node on the real element, returns the node
@@ -96,19 +98,18 @@ namespace bgeot {
   };
 
   template<class TAB>
-  void geotrans_inv_convex::init(const convex<base_node, TAB> &cv,
-				 pgeometric_trans pgt_) {
+  void geotrans_inv_convex::init(const TAB &nodes,  pgeometric_trans pgt_) {
     bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
-    if (!cv.points().size()) DAL_INTERNAL_ERROR("empty points!");
-    if (N != cv.points()[0].size())
-      { N = cv.points()[0].size(); geotrans_changed = true; }
+    if (nodes.empty()) DAL_INTERNAL_ERROR("empty points!");
+    if (N != nodes[0].size())
+      { N = nodes[0].size(); geotrans_changed = true; }
     if (geotrans_changed) {
       P = pgt->structure()->dim();
       pc.resize(pgt->nb_points() , P);
       K.resize(N,P); B.resize(N,P); CS.resize(P,P);
       G.resize(N, pgt->nb_points());
     }
-    vectors_to_base_matrix(G, cv.points());
+    vectors_to_base_matrix(G, nodes);
     if (pgt->is_linear()) {
       if (geotrans_changed) {
 	base_node Dummy(P);
@@ -118,9 +119,7 @@ namespace bgeot {
       update_B();
     } else { /* not much to precompute for non-linear geometric
 		transformations .. */
-      cvpts.resize(cv.nb_points());
-      for (size_type j = 0; j < pgt->nb_points(); ++j) 
-        cvpts[j] = cv.points()[j];
+      cvpts.assign(nodes.begin(), nodes.end());
     }
   }
 
@@ -202,7 +201,7 @@ namespace bgeot {
     kdtree_tab_type boxpts;
     bounding_box(min, max, cv.points(), pgt);
     for (size_type k=0; k < min.size(); ++k) { min[k] -= EPS; max[k] += EPS; }
-    gic.init(cv,pgt);
+    gic.init(cv.points(),pgt);
     /* get the points in a box enclosing the convex */
     if (!bruteforce) points_in_box(boxpts, min, max);
     else boxpts = tree.points();

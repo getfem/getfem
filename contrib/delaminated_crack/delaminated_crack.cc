@@ -422,7 +422,7 @@ int main(int argc, char *argv[]) {
 	exp.write_point_data(mfcut_vm, VonMises, "Von Mises Stress");
 	exp.write_point_data(mfcut, V, "elastostatic_displacement");
 	cout << "export done, you can view the data file with (for example)\n"
-	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	  "mayavi -d " << p.datafilename << ".vtk -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
 
