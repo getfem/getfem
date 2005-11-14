@@ -360,8 +360,8 @@ static void check_methods() {
     check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(2,1));
     sprintf(s, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 2, 3)");
     check_method(s, getfem::int_method_descriptor(s), 1, bgeot::simplex_geotrans(3,1));
-    /*sprintf(s, "IM_QUASI_POLAR(IM_TETRAHEDRON(5), 2)");
-    check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(3,1));*/
+    sprintf(s, "IM_QUASI_POLAR(IM_TETRAHEDRON(5), 2)");
+    check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(3,1));
   }
 }
 
