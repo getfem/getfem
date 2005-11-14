@@ -908,13 +908,12 @@ namespace getfem {
 	  nodes2[i] = nodes1[other_nodes.back()];
 	  other_nodes.pop_back();
 	}
-      if (!(other_nodes.empty())) DAL_INTERNAL_ERROR("");
 
       base_matrix G1, G2, G3; 
       base_matrix K(N, N), grad(N, N), K3(N, N);
       base_node normal1(N), normal2(N);
       bgeot::geotrans_inv_convex gic(nodes2, pgt2);
-      scalar_type J1, J2, J3(0);
+      scalar_type J1, J2, J3(1);
 
       bgeot::vectors_to_base_matrix(G1, nodes1);
       bgeot::vectors_to_base_matrix(G2, nodes2);
@@ -943,11 +942,11 @@ namespace getfem {
 	  base_node P = base_im->point(i);
 	  if (what == PYRAMID) P = pgt3->transform(P, nodes3);
 	  base_node P1 = pgt1->transform(P, nodes1), P2(N);
+	  if (what == PYRAMID) { cout << "P1 = " << P1 << endl; }
 	  pgt1->gradient(P, grad);
-	  
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G1), K);
-	  J1 = gmm::abs(gmm::lu_det(K));
-	  if (what == PYRAMID) J1 *= J3;
+	  J1 = gmm::abs(gmm::lu_det(K)) * J3;
+
 	  if (fp != size_type(-1) && J1 > 1E-10) {
 	    if (what == PYRAMID) {
 	      gmm::mult(K3, normal1, normal2);
