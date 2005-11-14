@@ -360,7 +360,9 @@ static void check_methods() {
     check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(2,1));
     sprintf(s, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 2, 3)");
     check_method(s, getfem::int_method_descriptor(s), 1, bgeot::simplex_geotrans(3,1));
-    sprintf(s, "IM_QUASI_POLAR(IM_TETRAHEDRON(5), 2)");
+    sprintf(s, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 1)");
+    check_method(s, getfem::int_method_descriptor(s), 1, bgeot::simplex_geotrans(3,1));
+    sprintf(s, "IM_QUASI_POLAR(IM_TETRAHEDRON(8), 2)");
     check_method(s, getfem::int_method_descriptor(s), 2, bgeot::simplex_geotrans(3,1));
   }
 }
@@ -383,9 +385,9 @@ static int inspect_results() {
     scalar_type sumref = std::accumulate(mc.lst.at(0).begin(), mc.lst[0].end(),0.);
     cout << "    reference" << std::setw(70) << mc.im_names[0] << " : sum= " << std::setw(6) << sumref << "\n";    
     for (size_type i = 1; i < mc.im_names.size(); ++i) {
-      scalar_type sum = std::accumulate(mc.lst[0].begin(), mc.lst[0].end(),0.);
+      scalar_type sum = std::accumulate(mc.lst[i].begin(), mc.lst[i].end(),0.);
       scalar_type dist = bgeot::vect_dist2(mc.lst[0],mc.lst[i]);
-      bool ok  = (gmm::abs(sum-sumref) < 1e-10 && gmm::abs(dist) < 1e-5);
+      bool ok  = (gmm::abs(sum-sumref) < 1e-5 && gmm::abs(dist) < 1e-5);
       if (ok)  cout << "    [OK]     ";
       else     cout << "    [ERROR!] ";
       cout << std::setw(70) << mc.im_names[i] << " : sum= " << std::setw(6) << sum << ", dist=" << std::setw(9) << dist << "\n";
@@ -430,7 +432,9 @@ static void print_some_methods() {
   */
 
   //sprintf(meth, "IM_QUASI_POLAR(IM_GAUSS_PARALLELEPIPED(2, 5),2)");
-  sprintf(meth, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 2, 3)");
+  //sprintf(meth, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 2, 3)");
+  //sprintf(meth, "IM_QUASI_POLAR(IM_TETRAHEDRON(3), 2)");
+  sprintf(meth, "IM_QUASI_POLAR(IM_PRODUCT(IM_TRIANGLE(4), IM_GAUSS1D(4)), 1)");
   print_method(getfem::int_method_descriptor(meth));
 
   print_method(getfem::classical_approx_im(bgeot::simplex_geotrans(3,2), 3));

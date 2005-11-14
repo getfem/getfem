@@ -1392,14 +1392,14 @@ namespace getfem {
 
   extern "C" {
 # include <qhull/qhull.h>
-# include <qhull/mem.h>
+//# include <qhull/mem.h>
 # include <qhull/qset.h>
-# include <qhull/geom.h>
-# include <qhull/merge.h>
-# include <qhull/poly.h>
-# include <qhull/io.h>
-# include <qhull/stat.h>
-  }
+//# include <qhull/geom.h>
+//# include <qhull/merge.h>
+//# include <qhull/poly.h>
+//# include <qhull/io.h>
+//# include <qhull/stat.h>
+}
 
   void delaunay(const std::vector<base_node> &pts,
 		gmm::dense_matrix<size_type>& simplexes) {

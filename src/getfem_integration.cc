@@ -855,16 +855,13 @@ namespace getfem {
       approx_integration(bgeot::simplex_of_reference(base_im->dim()))  {
       size_type N = base_im->dim();
 
-      enum { SQUARE, PRISM, PYRAMID } what;
+      enum { SQUARE, PRISM, PYRAMID, PRISM2 } what;
       if (N == 2) what = SQUARE;
       else if (base_im->structure() == bgeot::prism_structure(3))
-	what = PRISM;
+	what = (ip2 == size_type(-1) || ip1 == ip2) ? PRISM2 : PRISM;
       else if (base_im->structure() == bgeot::simplex_structure(3))
 	what = PYRAMID;
       else DAL_THROW(failure_error, "Incoherent integration method");
-
-      if (what == PRISM && (ip1 == ip2 || ip2 == size_type(-1)))
-	DAL_THROW(failure_error, "Incoherent parameters");
 
       // The first geometric transformation collapse a face of
       // a parallelepiped.
@@ -878,28 +875,34 @@ namespace getfem {
       std::vector<size_type> other_nodes;
 
       switch (what) {
-      case SQUARE :
-	nodes1[3] = nodes1[1];
-	nodes2[ip1] = nodes1[1]; ip2 = ip1;
-	other_nodes.push_back(0);
-	other_nodes.push_back(2);
-	break;
-      case PRISM :
-	nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
-	nodes2[ip1] = nodes1[0];
-	nodes2[ip2] = nodes1[1];
-	other_nodes.push_back(2);
-	other_nodes.push_back(6);
-	break;
-      case PYRAMID :
-	nodes3[0] = nodes1[0]; nodes3[1] = nodes1[4];
-	nodes3[2] = nodes1[6]; nodes3[3] = nodes1[5];
-	nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
-	nodes2[ip1] = nodes1[0]; ip2 = ip1;
-	other_nodes.push_back(1);
-	other_nodes.push_back(2);
-	other_nodes.push_back(6);
-	break;
+	case SQUARE :
+	  nodes1[3] = nodes1[1];
+	  nodes2[ip1] = nodes1[1]; ip2 = ip1;
+	  other_nodes.push_back(0);
+	  other_nodes.push_back(2);
+	  break;
+	case PRISM :
+	  nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
+	  nodes2[ip1] = nodes1[0];
+	  nodes2[ip2] = nodes1[1];
+	  other_nodes.push_back(2);
+	  other_nodes.push_back(6);
+	  break;
+	case PYRAMID :
+	  nodes3[0] = nodes1[0]; nodes3[1] = nodes1[1];
+	  nodes3[2] = nodes1[2]; nodes3[3] = nodes1[4];
+	  // nodes1[4] = nodes1[0]; nodes1[7] = base_node(1.0, 1.0, 2.0);
+	  nodes2[ip1] = nodes1[1]; ip2 = ip1;
+	  other_nodes.push_back(0);
+	  other_nodes.push_back(2);
+	  other_nodes.push_back(4);
+	  break;
+	case PRISM2 :
+	  nodes2[ip1] = nodes1[4];
+	  other_nodes.push_back(0);
+	  other_nodes.push_back(1);
+	  other_nodes.push_back(2);
+	  break;
       }
 
       for (size_type i = 0; i <= N; ++i)
@@ -909,21 +912,24 @@ namespace getfem {
 	  other_nodes.pop_back();
 	}
 
+      cout << "nodes2 = " << nodes2 << endl;
+
       base_matrix G1, G2, G3; 
-      base_matrix K(N, N), grad(N, N), K3(N, N);
+      base_matrix K(N, N), grad(N, N), K3(N, N), K4(N, N);
       base_node normal1(N), normal2(N);
       bgeot::geotrans_inv_convex gic(nodes2, pgt2);
-      scalar_type J1, J2, J3(1);
-
+      scalar_type J1, J2, J3(1), J4(1);
+      
+      gmm::copy(gmm::identity_matrix(), K4);
       bgeot::vectors_to_base_matrix(G1, nodes1);
       bgeot::vectors_to_base_matrix(G2, nodes2);
 
       for (size_type nc = 0; nc < 2; ++nc) {
 	
 	if (what == PYRAMID) {
-	  if (nc == 1) nodes3[1] = nodes1[2];
+	  if (nc == 1) nodes3[0] = nodes1[3];
 	  bgeot::vectors_to_base_matrix(G3, nodes3);
-	  pgt3->gradient(base_node(0.0, 0.0, 0.0), grad);
+	  pgt3->gradient(nodes1[0], grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G3), K3);
 	  J3 = gmm::abs(gmm::lu_inverse(K3)); /* = 1 */
 	}
@@ -940,29 +946,46 @@ namespace getfem {
 	  }
 
 	  base_node P = base_im->point(i);
-	  if (what == PYRAMID) P = pgt3->transform(P, nodes3);
+	  if (what == PYRAMID) { 
+	    P = pgt3->transform(P, nodes3);
+	    scalar_type x = P[0], y = P[1], one_minus_z = 1.0 - P[2];
+	    K4(0, 1) = - y / one_minus_z;
+	    K4(1, 1) = 1.0 - x / one_minus_z;
+	    K4(2, 1) = - x * y / gmm::sqr(one_minus_z);
+	    J4 = gmm::abs(gmm::lu_det(K4));
+	    P[1] *= (1.0 - x / one_minus_z);
+	  }
+	  if (what == PRISM2) {
+	     scalar_type x = P[0], y = P[1], one_minus_z = 1.0 - P[2];
+	     K4(0,0) = one_minus_z; K4(2,0) = -x;
+	     K4(1,1) = one_minus_z; K4(2,1) = -y;
+	     J4 = gmm::abs(gmm::lu_det(K4));
+	     P[0] *= one_minus_z;
+	     P[1] *= one_minus_z;
+	  }
+
 	  base_node P1 = pgt1->transform(P, nodes1), P2(N);
-	  if (what == PYRAMID) { cout << "P1 = " << P1 << endl; }
 	  pgt1->gradient(P, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G1), K);
-	  J1 = gmm::abs(gmm::lu_det(K)) * J3;
+	  J1 = gmm::abs(gmm::lu_det(K)) * J3 * J4;
 
-	  if (fp != size_type(-1) && J1 > 1E-10) {
+	  if (fp != size_type(-1) && J1 > 1E-10 && J4 > 1E-10) {
 	    if (what == PYRAMID) {
 	      gmm::mult(K3, normal1, normal2);
 	      normal1 = normal2;
-	      J1 *= gmm::vect_norm2(normal2);
-	      normal1 /= gmm::vect_norm2(normal1);
 	    }
+	    gmm::lu_inverse(K4);
 	    gmm::lu_inverse(K);
-	    gmm::mult(K, normal1, normal2);
+	    gmm::mult(K4, normal1, normal2);
+	    gmm::mult(K, normal2, normal1);
+	    normal2 = normal1;
 	    J1 *= gmm::vect_norm2(normal2);
 	    normal2 /= gmm::vect_norm2(normal2);
 	  }
 	  
 	  gic.invert(P1, P2);
 	  if (pgt2->convex_ref()->is_in(P2) > 1E-8) 
-	    DAL_INTERNAL_ERROR("Point not in the convex ref : " << P2 );
+	    DAL_INTERNAL_ERROR("Point not in the convex ref : " << P2);
 	  
 	  pgt2->gradient(P2, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G2), K);
@@ -982,6 +1005,9 @@ namespace getfem {
 	    if (f != size_type(-1)) {
 	      gmm::mult(K, normal2, normal1);
 	      add_point(P2, base_im->coeff(i)*J1*gmm::vect_norm2(normal1)/J2,f);
+	    }
+	    else {
+	      cout << "Point " << P2 << " eliminated" << endl;
 	    }
 	  }  
 	}
