@@ -908,6 +908,7 @@ namespace getfem {
 	  nodes2[i] = nodes1[other_nodes.back()];
 	  other_nodes.pop_back();
 	}
+      if (!(other_nodes.empty())) DAL_INTERNAL_ERROR("");
 
       base_matrix G1, G2, G3; 
       base_matrix K(N, N), grad(N, N), K3(N, N);
