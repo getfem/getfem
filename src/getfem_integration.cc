@@ -863,80 +863,65 @@ namespace getfem {
 	what = PYRAMID;
       else DAL_THROW(failure_error, "Incoherent integration method");
 
-      if (N < 2 || N > 3)
-	DAL_THROW(to_be_done_error,
-		  "Sorry, no polar integration for dimension " << N);
-
       if (what == PRISM && (ip1 == ip2 || ip2 == size_type(-1)))
 	DAL_THROW(failure_error, "Incoherent parameters");
 
-      // First geometric transformation which collapse a face of
-      // a parallelepiped
+      // The first geometric transformation collapse a face of
+      // a parallelepiped.
+      // The second geometric transformation chooses the orientation.
+      // The third is used for the PYRAMID case only.
       bgeot::pgeometric_trans pgt1 = bgeot::parallelepiped_geotrans(N,1);
-
-      std::vector<base_node> nodes1 = pgt1->convex_ref()->points();
-      if (N == 2) {
-	nodes1[3] = nodes1[1];
-      } else {
-	nodes1[4] = nodes1[0];
-	nodes1[5] = nodes1[1];
-      }
-
-      // Second geometric transformation choosing the orientation
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(N, 1);
-      std::vector<base_node> nodes2 = pgt2->convex_ref()->points();
+      bgeot::pgeometric_trans pgt3 = bgeot::simplex_geotrans(N, 1);
+      std::vector<base_node> nodes1 = pgt1->convex_ref()->points();
+      std::vector<base_node> nodes2(N+1), nodes3(N+1);
+      std::vector<size_type> other_nodes;
+
       switch (what) {
-	case SQUARE : {
-	  nodes2[0] =  pgt2->convex_ref()->points()[(4-ip1) % 3];
-	  nodes2[1] =  pgt2->convex_ref()->points()[(5-ip1) % 3];
-	  nodes2[2] =  pgt2->convex_ref()->points()[(6-ip1) % 3];
-	} break;
-	case PRISM : {
-	  nodes2[ip1] = pgt1->convex_ref()->points()[0];
-	  nodes2[ip2] = pgt1->convex_ref()->points()[1];
-	  size_type j = 2;
-	  for (size_type i = 0; i <= N; ++i)
-	    if (i != ip1 && i != ip2) {
-	      nodes2[i] = pgt1->convex_ref()->points()[j];
-	      j = 6;
-	    }
-	} break;
-	case PYRAMID : {
-	  nodes2[ip1] = pgt1->convex_ref()->points()[0];
-	  size_type j = 1;
-	  for (size_type i = 0; i <= N; ++i)
-	    if (i != ip1) {
-	      nodes2[i] = pgt1->convex_ref()->points()[j];
-	      if (j == 1) j = 2; else j = 6;
-	    }
-	} break;
+      case SQUARE :
+	nodes1[3] = nodes1[1];
+	nodes2[ip1] = nodes1[1]; ip2 = ip1;
+	other_nodes.push_back(0);
+	other_nodes.push_back(2);
+	break;
+      case PRISM :
+	nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
+	nodes2[ip1] = nodes1[0];
+	nodes2[ip2] = nodes1[1];
+	other_nodes.push_back(2);
+	other_nodes.push_back(6);
+	break;
+      case PYRAMID :
+	nodes3[0] = nodes1[0]; nodes3[1] = nodes1[4];
+	nodes3[2] = nodes1[6]; nodes3[3] = nodes1[5];
+	nodes1[4] = nodes1[0]; nodes1[5] = nodes1[1];
+	nodes2[ip1] = nodes1[0]; ip2 = ip1;
+	other_nodes.push_back(1);
+	other_nodes.push_back(2);
+	other_nodes.push_back(6);
+	break;
       }
 
-      // cout << "nodes2 = " << nodes2 << endl;
+      for (size_type i = 0; i <= N; ++i)
+	if (i != ip1 && i != ip2) {
+	  if (other_nodes.empty()) DAL_INTERNAL_ERROR("");
+	  nodes2[i] = nodes1[other_nodes.back()];
+	  other_nodes.pop_back();
+	}
 
-      //  bgeot::pgeotrans_precomp pgp = geotrans_precomp(pgt, &im_pts);
-      base_matrix G1, G2, G3;
-      bgeot::vectors_to_base_matrix(G1, nodes1);
-      bgeot::vectors_to_base_matrix(G2, nodes2);
-      
+      base_matrix G1, G2, G3; 
       base_matrix K(N, N), grad(N, N), K3(N, N);
       base_node normal1(N), normal2(N);
       bgeot::geotrans_inv_convex gic(nodes2, pgt2);
       scalar_type J1, J2, J3(0);
 
-      bgeot::pgeometric_trans pgt3 = bgeot::simplex_geotrans(N, 1);
-      std::vector<base_node> nodes3(N+1);
-      if (what == PYRAMID) {
-	nodes3[0] = pgt1->convex_ref()->points()[0];
-	nodes3[1] = pgt1->convex_ref()->points()[4];
-	nodes3[2] = pgt1->convex_ref()->points()[6];
-	nodes3[3] = pgt1->convex_ref()->points()[5];
-      }
+      bgeot::vectors_to_base_matrix(G1, nodes1);
+      bgeot::vectors_to_base_matrix(G2, nodes2);
 
       for (size_type nc = 0; nc < 2; ++nc) {
 	
 	if (what == PYRAMID) {
-	  if (nc == 1) nodes3[1] = pgt1->convex_ref()->points()[2];
+	  if (nc == 1) nodes3[1] = nodes1[2];
 	  bgeot::vectors_to_base_matrix(G3, nodes3);
 	  pgt3->gradient(base_node(0.0, 0.0, 0.0), grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G3), K3);
