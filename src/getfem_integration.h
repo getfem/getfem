@@ -68,6 +68,9 @@
 	       if IM1 is an integration method on a tetrahedron, gives an
 	       integration method on a tetrahedron which is close to a
 	       cylindrical integration with respect to vertex IP1.
+	       if IM1 is an integration method on a prism. Gives an integration
+               method on a tetrahedron which is close to a
+	       cylindrical integration with respect to vertex IP1.
    - "IM_QUASI_POLAR(IM1, IP1, IP2)"   : IM1 should be an integration method
                on a prism. Gives an integration method on a tetrahedron which
 	       is close to a cylindrical integration with respect to IP1-IP2
