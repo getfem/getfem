@@ -283,8 +283,11 @@ namespace getfem {
     size_type add_segment(size_type a, size_type b);
     /** Add a segment to the mesh, given the coordinates of its vertices. */
     size_type add_segment_by_points(const base_node &pt1,
-				    const base_node &pt2)
-    { return add_segment(add_point(pt1), add_point(pt2)); }
+				    const base_node &pt2) {
+      size_type ipt1 = add_point(pt1);
+      size_type ipt2 = add_point(pt2);
+      return add_segment(ipt1, ipt2);
+    }
     /** Add a triangle to the mesh, given the point id of its vertices. */
     size_type add_triangle(size_type a,size_type b, size_type c);
     /** Add a triangle to the mesh, given the coordinates of its vertices. */
