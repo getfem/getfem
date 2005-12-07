@@ -23,8 +23,8 @@ EXTENSION = 0.0;
 MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
 %MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 4;            	          % space step.
-NZ = 10;
+NX = 2;            	          % space step.
+NZ = 5;
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 

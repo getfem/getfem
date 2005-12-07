@@ -75,7 +75,7 @@ namespace getfem {
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = false;
       this->proper_is_symmetric_ = false;
-      this->update_from_context();
+      this->force_update();
     }
 
     // Constructor which homogeneous diagonal Q
@@ -206,7 +206,7 @@ namespace getfem {
     void init_(void) {
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = false;
-      this->update_from_context();
+      this->force_update();
     }
 
     mdbrick_NS_nonref1(mdbrick_abstract<MODEL_STATE> &problem,

@@ -309,13 +309,13 @@ bool plate_problem::solve(plain_vector &U) {
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
-    ELAS1(mim, mim_subint, mf_ut, mf_u3, mf_theta, mf_coef, lambda,
+    ELAS1(mim, mim_subint, mf_ut, mf_u3, mf_theta, lambda,
 	  mu, epsilon);
 
   if (mitc) ELAS1.set_mitc();
   
   getfem::mdbrick_mixed_isotropic_linearized_plate<>
-    ELAS2(mim, mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon,
+    ELAS2(mim, mf_ut, mf_u3, mf_theta, lambda, mu, epsilon,
 	  symmetrized);
 
   if (mixed) ELAS = &ELAS2; else ELAS = &ELAS1;
@@ -356,9 +356,9 @@ bool plate_problem::solve(plain_vector &U) {
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_simple_support<> SIMPLE0
-    (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM, 0, 1);
+    (VOL_F, SIMPLY_FIXED_BOUNDARY_NUM, 0, true);
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
-    (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM, 0, 1);
+    (VOL_F, SIMPLY_FIXED_BOUNDARY_NUM, 0, true);
     
   if (sol_ref == 0) SIMPLE = &SIMPLE0 ;
   if (sol_ref == 1) SIMPLE = &SIMPLE1 ;

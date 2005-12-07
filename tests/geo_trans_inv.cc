@@ -95,7 +95,7 @@ void test_inversion(bgeot::pgeometric_trans pgt, bool verbose) {
     }
   }
   bgeot::geotrans_inv_convex gic;
-  gic.init(bgeot::convex<base_node>(pgt->structure(),cvpts),pgt);
+  gic.init(cvpts,pgt);
   for (size_type i=0; i < cvpts.size(); ++i) {
     check_inversion(pgt,cvpts,gic,cvpts[i],pgt->convex_ref()->points()[i],true,verbose);
   }
@@ -116,7 +116,7 @@ void test0() {
   cvpts[2] = base_node(2.5, 1.8);
   cvpts[3] = base_node(3.2, 1.5);
   bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor("GT_QK(2,1)");
-  gic.init(bgeot::convex<base_node>(pgt->structure(),cvpts),pgt);
+  gic.init(cvpts,pgt);
   base_node X(3.132, 1.617), Xref;
   gic.invert(X, Xref);
   cout << "Xref=" << Xref << "\n";

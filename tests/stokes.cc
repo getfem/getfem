@@ -69,7 +69,6 @@ struct stokes_problem {
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type nu;            /* Lamé coefficients.                           */
 
   scalar_type residu;        /* max residu for the iterative solvers         */
@@ -80,7 +79,7 @@ struct stokes_problem {
   bool solve(plain_vector &U);
   void init(void);
   stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
-			 mf_rhs(mesh), mf_coef(mesh) {}
+			 mf_rhs(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -146,12 +145,6 @@ void stokes_problem::init(void) {
 			      getfem::fem_descriptor(data_fem_name));
   }
   
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
-
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -186,7 +179,7 @@ bool stokes_problem::solve(plain_vector &U) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, 0.0, nu);
+    ELAS(mim, mf_u, 0.0, nu);
 
   // Pressure term
   getfem::mdbrick_linear_incomp<> INCOMP(ELAS, mf_p);
@@ -204,8 +197,8 @@ bool stokes_problem::solve(plain_vector &U) {
   gmm::clear(F);
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(VOL_F, mf_rhs,
-					  F, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
+  final_model.rhs().set(mf_rhs,F);
 
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;

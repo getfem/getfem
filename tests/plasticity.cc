@@ -69,7 +69,6 @@ struct plasticity_problem {
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
   scalar_type residu;        /* max residu for the iterative solvers         */
@@ -83,8 +82,7 @@ struct plasticity_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  plasticity_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh),
-			     mf_coef(mesh) {}
+  plasticity_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -164,12 +162,6 @@ void plasticity_problem::init(void)
     mf_rhs.set_finite_element(mesh.convex_index(), getfem::fem_descriptor(data_fem_name));
   }
 
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
-
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -206,14 +198,14 @@ bool plasticity_problem::solve(plain_vector &U) {
 
   plain_vector F(nb_dof_rhs * N);
   getfem::VM_projection proj(flag_hyp);
-  getfem::mdbrick_plasticity<> PLAS(mim, mf_u, mf_coef, lambda, mu,
-				    stress_threshold, proj);
+  getfem::mdbrick_plasticity<> PLAS(mim, mf_u, lambda, mu, stress_threshold, proj);
   
   // Neumann condition brick
   getfem::mdbrick_source_term<> NEUMANN(PLAS, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
-					  F, DIRICHLET_BOUNDARY_NUM, false);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM, false);
+  final_model.rhs().set(mf_rhs, F);
+
   getfem::standard_model_state MS(final_model);
 
   const size_type Nb_t=1;
@@ -239,7 +231,7 @@ bool plasticity_problem::solve(plain_vector &U) {
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
 
-    NEUMANN.set_rhs(F);
+    NEUMANN.source_term().set(F);
     
     // Generic solve.
     cout << "Number of variables : " << final_model.nb_dof() << endl;

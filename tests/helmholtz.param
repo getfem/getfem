@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-WAVENUM_R = 3;   	% Real part of the wave number.
+WAVENUM_R = 1;   	% Real part of the wave number.
 WAVENUM_I = 0;         % Imaginary part of the wave number.
 R0 = 2.;
 R1 = 10.;
@@ -11,8 +11,8 @@ R1 = 10.;
 %%%%%   discretisation parameters  :                     	      %%%%%
 GTDEGREE = 3
 NTHETA = 16
-NR = 20;            	          % space step.
-DIRICHLET_WITH_MULTIPLIERS = 0;
+NR = 5;            	          % space step.
+DIRICHLET_WITH_MULTIPLIERS = 1;
 
 FEM_TYPE = 'FEM_QK(2,4)';  % P1 for triangles
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles

@@ -33,7 +33,7 @@
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
-#include <getfem_nonlinear_elasticity.h>
+#include <getfem_nonlinear_elasticity2.h>
 #include <getfem_superlu.h>
 #include <gmm.h>
 
@@ -407,6 +407,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   if (N>2)
     f[2] = PARAM.real_value("FORCEZ","Amplitude of the gravity");
   plain_vector F(nb_dof_rhs * N);
+  plain_vector F2(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i) {
     gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   }
@@ -416,13 +417,10 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
 
-  plain_vector F2(nb_dof_rhs * N);
-  gmm::clear(F2);
-
   // Dirichlet condition
-  getfem::mdbrick_Dirichlet<> final_model(VOL_F, mf_rhs,
-					  F2, DIRICHLET_BOUNDARY_NUM,
-					  PARAM.int_value("USE_MULTIPLIERS"));
+  getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
+  final_model.rhs().set(mf_rhs, F2);
+  final_model.use_multipliers(PARAM.int_value("USE_MULTIPLIERS"));
 
   // Generic solver.
   getfem::standard_model_state MS(final_model);
@@ -445,7 +443,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     plain_vector DF(F);
 
     gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
-    VOL_F.set_rhs(DF);
+    VOL_F.source_term().set(DF);
 
     if (N>2) {
       /* Apply the gradual torsion/extension */
@@ -464,7 +462,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
       }
     }
     /* update the imposed displacement  */
-    final_model.set_rhs(F2);
+    final_model.rhs().set(F2);
 
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);

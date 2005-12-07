@@ -70,6 +70,9 @@
 #include <set>
 #include <dal_backtrace.h>
 
+// #define LOG
+#define MD_TRACE(a) { cerr << a << endl; }
+
 namespace getfem {
 
   /**@defgroup bricks Model Bricks
@@ -341,18 +344,8 @@ namespace getfem {
     PARAM_MAP parameters;
     friend class mdbrick_abstract_parameter;
     
-    void parameters_set_uptodate(void) {
-      for (PARAM_MAP::iterator it = parameters.begin(); it != parameters.end(); ++it)
-	it->second->set_uptodate();
-    }
-
-    bool parameters_is_any_modified(void) const {
-      for (PARAM_MAP::const_iterator it = parameters.begin(); it != parameters.end(); ++it)
-	if (it->second->is_modified()) return true;
-      return false;
-    }
-
-   
+    void parameters_set_uptodate(void);
+    bool parameters_is_any_modified(void) const;
 
     /** the brick-specific update procedure */
     virtual void proper_update(void) = 0;
@@ -360,61 +353,7 @@ namespace getfem {
     inline void proper_update_(void) { proper_update(); }
 
     /** method inherited from getfem::context_dependencies */
-    void update_from_context(void) const {
-      cerr << "update_from_context[" << this << " : " <<  dal::demangle(typeid(*this).name()) << "]\n";
-      nb_total_dof = 0;
-      nb_total_constraints = 0;
-      total_mixed_variables.clear();
-      is_linear_ = proper_is_linear_;
-      is_symmetric_ = proper_is_symmetric_;
-      is_coercive_ = proper_is_coercive_;
-      mesh_fems.resize(0); mesh_ims.resize(0); mesh_fem_positions.resize(0);
-      /* get information from parent bricks */
-      for (size_type i = 0; i < sub_bricks.size(); ++i) {
-	for (size_type j = 0; j < sub_bricks[i]->mesh_fems.size(); ++j) {
-	  mesh_fems.push_back(sub_bricks[i]->mesh_fems[j]);
-	  mesh_fems_info.push_back(sub_bricks[i]->mesh_fems_info[j]);
-	  mesh_fem_positions.push_back(nb_total_dof 
-				       + sub_bricks[i]->mesh_fem_positions[j]);
-	}
-	for (size_type j = 0; j < sub_bricks[i]->mesh_ims.size(); ++j) {
-	  mesh_ims.push_back(sub_bricks[i]->mesh_ims[j]);
-	}
-	is_linear_ = is_linear_ && sub_bricks[i]->is_linear();
-	is_symmetric_ = is_symmetric_ && sub_bricks[i]->is_symmetric();
-	is_coercive_ = is_coercive_ && sub_bricks[i]->is_coercive();
-	if (i == 0)
-	  total_mixed_variables |= sub_bricks[i]->total_mixed_variables;
-	else {
-	  for (dal::bv_visitor k(sub_bricks[i]->total_mixed_variables);
-	       !k.finished(); ++k)
-	    total_mixed_variables.add(k+nb_total_dof);
-	}
-	nb_total_dof += sub_bricks[i]->nb_total_dof;
-	nb_total_constraints += sub_bricks[i]->nb_total_constraints;
-      }
-      /* merge with information from this brick */
-      for (size_type j = 0; j < proper_mesh_fems.size(); ++j) {
-	mesh_fems.push_back(proper_mesh_fems[j]);
-	mesh_fems_info.push_back(proper_mesh_fems_info[j]);
-	mesh_fem_positions.push_back(nb_total_dof);
-	nb_total_dof += proper_mesh_fems[j]->nb_dof();
-      }
-      for (size_type j = 0; j < proper_mesh_ims.size(); ++j)
-	mesh_ims.push_back(proper_mesh_ims[j]);
-      for (size_type j = 0; j < proper_boundary_cond_info.size(); ++j) {
-	mesh_fems_info[proper_boundary_cond_info[j].num_fem]
-	  .add_boundary(proper_boundary_cond_info[j].num_bound,
-			proper_boundary_cond_info[j].bc);
-      }
-      /* call the customizable update procedure */
-      const_cast<mdbrick_abstract_common_base *>(this)->proper_update_();
-      nb_total_dof += proper_additional_dof;
-      nb_total_constraints += proper_nb_constraints;
-      total_mixed_variables |= proper_mixed_variables;
-      cerr << " nb_total_dof         = " << nb_total_dof  << " (" << proper_additional_dof << ")\n";
-      cerr << " nb_total_constraints = " << nb_total_constraints  << " (" << proper_nb_constraints << ")\n";
-    }
+    void update_from_context(void) const;
 
     void force_update(void)
     { if (!this->context_check()) update_from_context(); }
@@ -451,32 +390,33 @@ namespace getfem {
 
 
   public :
-    virtual void update_notification(const mdbrick_abstract_parameter *) {}
 
     mesh_fem_info_ &get_mesh_fem_info(size_type i)
-    { return mesh_fems_info[i]; }
-    mesh_fem &get_mesh_fem(size_type i) { return *(mesh_fems[i]); }
+    { context_check(); return mesh_fems_info[i]; }
+    mesh_fem &get_mesh_fem(size_type i)
+    { context_check(); return *(mesh_fems[i]); }
     size_type get_mesh_fem_position(size_type i)
-    { return mesh_fem_positions[i]; }
-    size_type nb_mesh_fems(void) { return mesh_fems.size(); }
+    { context_check(); return mesh_fem_positions[i]; }
+    size_type nb_mesh_fems(void) { context_check(); return mesh_fems.size(); }
 
-    dim_type dim(void) { return mesh_fems[0]->linked_mesh().dim(); }
+    dim_type dim(void)
+    { context_check(); return mesh_fems[0]->linked_mesh().dim(); }
     /** total number of variables including the variables of the
 	sub-problem(s) if any */
-    size_type nb_dof(void) { return nb_total_dof; }
+    size_type nb_dof(void) { context_check(); return nb_total_dof; }
 
     /** number of linear constraints on the system including the
 	constraints defined in the sub-problem(s) if any. */
-    size_type nb_constraints(void) { return nb_total_constraints; };
+    size_type nb_constraints(void)
+    { context_check(); return nb_total_constraints; };
 
-    bool is_linear(void) const { return is_linear_; }
-    bool is_symmetric(void) const { return is_symmetric_; }
-    bool is_coercive(void) const { return is_coercive_; }
+    bool is_linear(void) const { context_check(); return is_linear_; }
+    bool is_symmetric(void) const { context_check(); return is_symmetric_; }
+    bool is_coercive(void) const { context_check(); return is_coercive_; }
     const dal::bit_vector &mixed_variables(void) const
-    { return total_mixed_variables; };
+    { context_check(); return total_mixed_variables; };
     mdbrick_abstract_common_base(void) : proper_additional_dof(0), proper_nb_constraints(0), 
-					 MS_i0(0)
-    { 
+					 MS_i0(0) { 
       proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; 
       nb_total_constraints = nb_total_dof = 1000000000;
       proper_additional_dof = proper_nb_constraints = 0;
@@ -534,7 +474,6 @@ namespace getfem {
 				   size_type j0) = 0;
     void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 			size_type j0 = 0, bool first = true) {
-      cerr << " ---> compute_residu[" << typeid(this).name() << "]\n";
       this->context_check();
       size_type i1 = MS_i0 = i0, j1 = j0;
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
@@ -557,10 +496,15 @@ namespace getfem {
 
 
   class mdbrick_abstract_parameter {
+  protected:
     mdbrick_abstract_common_base *brick_;
     const mesh_fem *pmf_;
     bgeot::multi_index sizes_;
-    enum { UNINITIALIZED, MODIFIED, UPTODATE } state;
+    bool initialized;
+    enum { MODIFIED, UPTODATE } state;
+
+    void update_notify() { initialized = true; state = MODIFIED; }
+
   public:
     const mesh_fem &mf() const { 
       if (!pmf_) DAL_THROW(dal::failure_error, "no mesh fem assigned");
@@ -576,7 +520,7 @@ namespace getfem {
     size_type fdim() const { return sizes_.size(); }
     mdbrick_abstract_parameter(const std::string &name,
 			       mdbrick_abstract_common_base *b) {
-      brick_ = b; pmf_ = 0; state = UNINITIALIZED;
+      brick_ = b; pmf_ = 0; state = MODIFIED; initialized = false;
       b->parameters[name] = this;
     }
     mdbrick_abstract_parameter(const std::string &name,
@@ -585,12 +529,13 @@ namespace getfem {
 			       size_type N=0, size_type M=0) {
       brick_ = b; pmf_ = &mf_; b->add_dependency(*pmf_);
       if (N) { sizes_.push_back(N); if (M) sizes_.push_back(M); }
-      state = UNINITIALIZED;
+      state = MODIFIED; initialized = false;
       b->parameters[name] = this;
     }
     void change_mf(const mesh_fem &mf_) {
       if (&mf_ != pmf_) {
-	brick_->add_dependency(mf_); pmf_ = &mf_; brick().change_context();
+	brick_->add_dependency(mf_); pmf_ = &mf_; state = MODIFIED;
+	brick_->change_context();
       }
     }
     virtual void reshape(size_type N=0, size_type M=0) {
@@ -601,7 +546,7 @@ namespace getfem {
     virtual ~mdbrick_abstract_parameter() {}
     mdbrick_abstract_common_base &brick() { return *brick_; }
     bool is_modified() const { return state != UPTODATE; }
-    bool is_initialized() const { return state != UNINITIALIZED; }
+    bool is_initialized() const { return initialized; }
     void set_uptodate(void) { state = UPTODATE; }
   };
 
@@ -609,11 +554,6 @@ namespace getfem {
   class mdbrick_parameter : public mdbrick_abstract_parameter {
     typedef typename gmm::linalg_traits<VEC>::value_type T;
     VEC value_;
-
-    void update_notify() {
-      /* brick().change_context(); */ state = MODIFIED;
-      /* brick().update_notification(this); */
-    }
 
     template <typename W> void set_diagonal_(const W &w, gmm::linalg_false) {
       size_type n = fdim() == 2 ? fsizes()[0] : 1;
@@ -732,13 +672,13 @@ namespace getfem {
     }
 
     const T_MATRIX &get_K(void) {
-      this->context_check(); 
-      if (!K_uptodate || !parameters_is_any_modified()) {
+      this->context_check();
+      if (!K_uptodate || this->parameters_is_any_modified()) {
 	gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
 	gmm::clear(K);
 	proper_update_K();
 	K_uptodate = true;
-	parameters_set_uptodate();
+	this->parameters_set_uptodate();
       }
       return K; 
     }
@@ -755,7 +695,7 @@ namespace getfem {
       : mim(mim_), mf_u(mf_u_) {
       this->add_proper_mesh_fem(mf_u, brick_id);
       this->add_proper_mesh_im(mim);
-      this->update_from_context();
+      this->force_update();
     }
    };
 
@@ -781,6 +721,7 @@ namespace getfem {
     void proper_update_K(void) {
       if (&lambda_.mf() != &mu_.mf()) 
 	DAL_THROW(failure_error, "lambda and mu should share the same mesh_fem");
+      MD_TRACE("Assembling stiffness matrix for linear elasticity");
       asm_stiffness_matrix_for_linear_elasticity
 	(this->K, this->mim, this->mf_u, lambda_.mf(), lambda_.get(), mu_.get(),
 	 this->mf_u.linked_mesh().get_mpi_region());
@@ -827,6 +768,7 @@ namespace getfem {
     mdbrick_parameter<VECTOR> rho_;
 
     void proper_update_K(void) {
+      MD_TRACE("Assembling mass matrix for mdbrick_mass_matrix");
       asm_mass_matrix_param(this->K, this->mim, this->mf_u, rho().mf(), rho().get(), 
 			    this->mf_u.linked_mesh().get_mpi_region());
     }
@@ -838,7 +780,7 @@ namespace getfem {
     /// constructor for a homogeneous material (constant lambda and mu)
     mdbrick_mass_matrix(mesh_im &mim_, mesh_fem &mf_u_, value_type rhoi=1)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_MASS_MATRIX),
-	rho_(mf_u_.linked_mesh(), this) {
+	rho_("rho", mf_u_.linked_mesh(), this) {
       rho_.set(rhoi);
     }
   };
@@ -876,7 +818,7 @@ namespace getfem {
     /// constructor for a homogeneous material (constant lambda and mu)
     mdbrick_Helmholtz(mesh_im &mim_, mesh_fem &mf_u_, value_type k=1)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_HELMHOLTZ),
-	wave_number_(mf_u_.linked_mesh(), this) {
+	wave_number_("wave_number", mf_u_.linked_mesh(), this) {
       wave_number_.set(k);
     }
    };
@@ -935,9 +877,9 @@ namespace getfem {
     const mdbrick_parameter<VECTOR> &coeff() const { return  coeff_; }
 
     /// constructor for a homogeneous material (constant lambda and mu)
-    mdbrick_generic_elliptic(mesh_im &mim_, mesh_fem &mf_u_, value_type k=1)
+    mdbrick_generic_elliptic(mesh_im &mim_, mesh_fem &mf_u_, value_type k = 1.)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_GENERIC_ELLIPTIC),
-	coeff_(mf_u_.linked_mesh(), this) {
+	coeff_("coeff", mf_u_.linked_mesh(), this) {
       coeff_.set(k);
     }
   };
@@ -987,15 +929,18 @@ namespace getfem {
     /// gives the right hand side of the linear system (does no contain the auxilary part).
     const VECTOR &get_F(void) { 
       this->context_check();
-      if (!F_uptodate) {
+      if (!F_uptodate || this->parameters_is_any_modified()) {
 	mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	F_uptodate = true;
+	MD_TRACE("Assembling a source term");
+
 #ifdef GMM_USES_MPI 
 	asm_source_term(F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
 			mf_u.linked_mesh().get_mpi_sub_region(boundary));
 #else
 	asm_source_term(F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(), boundary);	     
 #endif
+	this->parameters_set_uptodate();
       }
       return F_;
     }
@@ -1022,12 +967,12 @@ namespace getfem {
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 			mesh_fem &mf_data_, const VECTOR &B__ = VECTOR(),
 			size_type bound = size_type(-1), size_type num_fem_=0)
-      : B_(mf_data_, this), boundary(bound),
+      : B_("source_term", mf_data_, this), boundary(bound),
 	num_fem(num_fem_), have_auxF(false) {
       this->add_sub_brick(problem);
       if (bound != size_type(-1))
 	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
-      this->update_from_context();
+      this->force_update();
       B_.reshape(this->mesh_fems.at(num_fem)->get_qdim());
       if (gmm::vect_size(B__)) B_.set(B__);
     }
@@ -1074,12 +1019,14 @@ namespace getfem {
     mdbrick_parameter<VECTOR> &Q() { return Q_; }
 
     const T_MATRIX& get_K() {
-      if (!K_uptodate) {
+      this->context_check();
+      if (!K_uptodate || this->parameters_is_any_modified()) {
 	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	gmm::clear(K);
 	gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
 	asm_qu_term(K, *(this->mesh_ims[0]), mf_u, Q().mf(), Q().get(), boundary);
 	K_uptodate = true;
+	this->parameters_set_uptodate();
       }
       return K;
     }
@@ -1101,14 +1048,14 @@ namespace getfem {
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    value_type vQ = 0,
 		    size_type bound = size_type(-1), size_type num_fem_=0)
-      : sub_problem(problem), Q_(this), boundary(bound),
+      : sub_problem(problem), Q_("Q", this), boundary(bound),
 	num_fem(num_fem_) {
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = false;
       if (boundary != size_type(-1))
 	this->add_proper_boundary_info(num_fem,boundary,MDBRICK_FOURIER_ROBIN);
 
-      this->update_from_context();
+      this->force_update();
       size_type q = this->mesh_fems[num_fem]->get_qdim();
       Q().change_mf(classical_mesh_fem(this->mesh_fems[num_fem]->linked_mesh(),0));
       Q().reshape(q, q);
@@ -1159,7 +1106,7 @@ namespace getfem {
 
     void update_M_and_B(void) {
       this->context_check();
-      if (!BM_uptodate) {
+      if (!BM_uptodate || this->parameters_is_any_modified()) {
 	mesh_fem &mf_u = *(this->mesh_fems.at(num_fem));
 	size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
 	gmm::clear(B); gmm::resize(B, ndd, nd);
@@ -1176,6 +1123,7 @@ namespace getfem {
 	this->proper_mixed_variables.add(sub_problem.nb_dof(), mf_p.nb_dof());
 
 	BM_uptodate = true;
+	this->parameters_set_uptodate();
       }
     }
 
@@ -1223,7 +1171,7 @@ namespace getfem {
       this->add_proper_mesh_fem(mf_p, MDBRICK_LINEAR_INCOMP);
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = false;
-      this->update_from_context();
+      this->force_update();
     }
 
     /// Constructor for the incompressibility condition
@@ -1271,27 +1219,22 @@ namespace getfem {
     gmm::sub_index SUB_CT;
     size_type i1, nbd;
     bool mfdata_set;
-    bool H_uptodate, R_uptodate;
     
     mesh_fem &mf_u() { return *(this->mesh_fems[num_fem]); }
 
-    virtual void update_notification(const mdbrick_abstract_parameter *p) {
-      if (p == &R_) R_uptodate = false;
-      if (p == &H_) H_uptodate = false;
-    }
+    void compute_constraints(unsigned version = 0) {
+      if (H_.is_modified()) { version |= ASMDIR_BUILDH; }
+      if (R_.is_modified()) { version |= ASMDIR_BUILDR; }
 
-    void compute_constraints() {
+      if (version == 0) return;
+
       i1 = this->mesh_fem_positions[num_fem];
       nbd = mf_u().nb_dof();
       // size_type Q = mf_u.get_qdim();
       size_type nd = mf_u().nb_dof(); //  ndd = mf_data.nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(nd, nd);
       VECTOR V(nd);
-
-      unsigned version = ASMDIR_BUILDR;
-      if (!H_uptodate) {
-	version |= ASMDIR_BUILDH;
-      }
+      
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
       
       if (!H_.is_initialized()) {
@@ -1303,6 +1246,7 @@ namespace getfem {
 	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), rhs().mf(),
 				    R_.get(), boundary, version);
 #else
+	MD_TRACE("Assembling Dirichlet constraints with no H and version " << version);
 	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), rhs().mf(),
 				  R_.get(), boundary, version);    
 #endif
@@ -1316,11 +1260,12 @@ namespace getfem {
 	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), mf_data, H().mf(), rhs().mf(),
 				    H_.get(), R_.get(), boundary, version);
 #else
+	MD_TRACE("Assembling Dirichlet constraints with H and version " << version);
 	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), H().mf(), rhs().mf(),
 				  H_.get(), R_.get(), boundary, version);
 #endif
       }
-
+      
       if (version & ASMDIR_BUILDH) {
 	R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
 	gmm::clean(M, tol);
@@ -1347,7 +1292,7 @@ namespace getfem {
       cerr << "G: " << gmm::mat_nrows(G) << "x" << gmm::mat_ncols(G) << ", n=" << gmm::mat_norminf(G) << ":" << gmm::mat_norm1(G) << "\n";
       cerr << "CRHS: "<< gmm::vect_size(CRHS) << ", n=" << gmm::vect_norm2(CRHS) << "\n";
 
-      H_uptodate = R_uptodate = true;
+      this->parameters_set_uptodate();
     }
 
     virtual void proper_update(void) {
@@ -1360,9 +1305,8 @@ namespace getfem {
       }
       R_.reshape(mf_u().get_qdim());
       H_.reshape(mf_u().get_qdim(), mf_u().get_qdim());
-      R_uptodate = false; H_uptodate = false;
       /* compute_constraints has to be done here because 'nb_const' must be known.. */
-      compute_constraints();
+      compute_constraints(ASMDIR_BUILDR | ASMDIR_BUILDH);
       this->proper_mixed_variables.clear();
       this->proper_additional_dof = with_multipliers ? nb_const : 0;
       this->proper_nb_constraints = with_multipliers ? 0 : nb_const;
@@ -1374,7 +1318,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type j0) {
-      if ( !H_uptodate || !R_uptodate) compute_constraints();
+      compute_constraints();
       if (with_multipliers) {
 	gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), nb_const);
 	gmm::sub_interval SUBJ(i0+i1, nbd);
@@ -1391,11 +1335,13 @@ namespace getfem {
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				   size_type j0) {
-       if ( !H_uptodate || !R_uptodate) compute_constraints();
+      compute_constraints();
       if (with_multipliers) {
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), nb_const);
 	gmm::sub_interval SUBJ(i0+i1, nbd);
-	
+
+	cerr << "State: " << MS.state().size() << ", residu: " << MS.residu().size() << "\n";
+
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
@@ -1428,9 +1374,11 @@ namespace getfem {
 
     bool is_using_multipliers() const { return with_multipliers; }
     void use_multipliers(bool v) {
-      with_multipliers = v; 
-      this->proper_is_coercive_ = !with_multipliers;
-      this->change_context();
+      if (v != with_multipliers) {
+	with_multipliers = v; 
+	this->proper_is_coercive_ = !with_multipliers;
+	this->change_context();
+      }
     }
 
     /** Constructor which does not define the rhs (i.e. which sets an homogeneous Dirichlet condition)
@@ -1444,15 +1392,14 @@ namespace getfem {
       : sub_problem(problem), R_("R", this), H_("H", this), boundary(bound),
 	num_fem(num_fem_) {
       this->add_sub_brick(sub_problem);
-      use_multipliers(false);
+      with_multipliers = false;
+      this->proper_is_coercive_ = true;
       this->add_proper_boundary_info(num_fem, boundary, MDBRICK_DIRICHLET);
       mfdata_set = false;
-      this->update_from_context();
+      this->force_update();
     }
   };
 
-
-#if TESTALACON
 
   /* ******************************************************************** */
   /*	                 Constraint brick.                                */
@@ -1495,7 +1442,7 @@ namespace getfem {
     void init_(void) {
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = !with_multipliers;
-      this->update_from_context();
+      this->force_update();
     }
 
   public :
@@ -1548,6 +1495,12 @@ namespace getfem {
       }
     }
 
+    void use_multipliers(bool v) {
+      with_multipliers = v; 
+      this->proper_is_coercive_ = !with_multipliers;
+      this->change_context();
+    }
+
     template <class MAT, class VEC>
     void set_constraints(const MAT &G_, const VEC &RHS) {
       set_constraints_(G_, RHS);
@@ -1577,23 +1530,38 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
 
     mdbrick_abstract<MODEL_STATE> &sub_problem;
-    mesh_fem &mf_data, *mf_u;
-    VECTOR RHO_, DF;
+    mesh_fem *mf_u;
+    mdbrick_parameter<VECTOR> RHO_;
+    VECTOR DF;
     T_MATRIX M_;
     size_type num_fem;
     value_type Mcoef, Kcoef;
-    gmm::unsorted_sub_index SUBS;
-    std::vector<size_type> ind;
-    bool have_subs;
+    std::set<size_type> boundary_sup;
+    bool M_uptodate;
 
     virtual void proper_update(void) {
       mf_u = this->mesh_fems[num_fem];
-      gmm::clear(M_); gmm::resize(M_, mf_u->nb_dof(), mf_u->nb_dof());
-      asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, mf_data, RHO_);
-      if (have_subs) {
+      M_uptodate = false;
+    }
+
+    void proper_update_M(void) {
+      MD_TRACE("Assembling mass matrix for mdbrick_dynamic");
+      asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, RHO_.mf(), RHO_.get());
+
+      if (!(boundary_sup.empty())) {
+	gmm::unsorted_sub_index SUBS;
+	std::vector<size_type> ind;
+	std::set<size_type> ind_set;
+	for (std::set<size_type>::const_iterator it = boundary_sup.begin();
+	     it != boundary_sup.end(); ++it) {
+	  dal::bit_vector bv = mf_u->dof_on_set(*it);
+	  for (dal::bv_visitor i(bv); !i.finished(); ++i) ind_set.insert(i);
+	}
+	ind.assign(ind_set.begin(), ind_set.end());
+	SUBS = gmm::unsorted_sub_index(ind);
 	gmm::sub_interval SUBI(0, mf_u->nb_dof());
 	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
-	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));	
+	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));
       }
     }
 
@@ -1604,7 +1572,7 @@ namespace getfem {
       gmm::sub_interval
 	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
       if (Kcoef != value_type(1)) gmm::scale(MS.tangent_matrix(), Kcoef);
-      gmm::add(gmm::scaled(M_, Mcoef),
+      gmm::add(gmm::scaled(get_M(), Mcoef),
 	       gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
@@ -1614,7 +1582,7 @@ namespace getfem {
       if (Kcoef != value_type(1))  gmm::scale(MS.residu(), Kcoef);
       gmm::add(gmm::scaled(DF, -value_type(1)),
 	       gmm::sub_vector(MS.residu(), SUBI));
-      gmm::mult_add(M_, gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Mcoef),
+      gmm::mult_add(get_M(), gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Mcoef),
 		    gmm::sub_vector(MS.residu(), SUBI));
     }
 
@@ -1622,45 +1590,38 @@ namespace getfem {
     template <class VEC> void set_DF(const VEC &DF_)
     { gmm::resize(DF, gmm::vect_size(DF_)); gmm::copy(DF_, DF); }
 
-    const T_MATRIX &mass_matrix(void) const
-    { this->context_check(); return M_; }
+    const T_MATRIX &get_M(void) {
+      this->context_check();
+      if (!M_uptodate || this->parameters_is_any_modified()) {
+	gmm::clear(M_);
+	gmm::resize(M_, mf_u->nb_dof(), mf_u->nb_dof());
+	proper_update_M();
+	M_uptodate = true;
+	this->parameters_set_uptodate();
+      }
+      return M_; 
+    }
 
     void init(void) {
       Mcoef = Kcoef = value_type(1);
-      have_subs = false;
-      this->add_dependency(mf_data);
       this->add_sub_brick(sub_problem);
-      this->update_from_context();
+      this->force_update();
     }
 
     void no_mass_on_boundary(size_type b) {
-      dal::bit_vector bv = mf_u->dof_on_set(b);
-      for (dal::bv_visitor i(bv); !i.finished(); ++i)
-	ind.push_back(i);
-      SUBS = gmm::unsorted_sub_index(ind);
-      have_subs = true;
-      if (!(this->context_check())) {
-	gmm::sub_interval SUBI(0, mf_u->nb_dof());
-	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
-	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));
+      if (boundary_sup.find(b) == boundary_sup.end()) {
+	boundary_sup.insert(b);
+	this->force_update();
       }
     }
 
-    template <class VEC>
-    mdbrick_dynamic(mdbrick_abstract<MODEL_STATE> &problem, mesh_fem &mf_data_,
-		    const VEC &RHO__, size_type num_fem_=0)
-      : sub_problem(problem), mf_data(mf_data_), num_fem(num_fem_)
-    { gmm::resize(RHO_, mf_data.nb_dof()); gmm::copy(RHO__, RHO_); init();  }
-
-    mdbrick_dynamic(mdbrick_abstract<MODEL_STATE> &problem, mesh_fem &mf_data_,
+    mdbrick_dynamic(mdbrick_abstract<MODEL_STATE> &problem,
 		    value_type RHO__, size_type num_fem_=0)
-      : sub_problem(problem), mf_data(mf_data_), num_fem(num_fem_) {
-      gmm::resize(RHO_, mf_data.nb_dof());
-      std::fill(RHO_.begin(), RHO_.end(), RHO__);
+      : sub_problem(problem), RHO_("rho", this), num_fem(num_fem_) {
       init();
+      RHO_.set(classical_mesh_fem(mf_u->linked_mesh(), 0), RHO__);
     }
   };
-#endif
 
   /* ******************************************************************** */
   /*		Generic solvers.                                          */

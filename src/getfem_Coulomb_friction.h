@@ -259,7 +259,7 @@ namespace getfem {
       r = value_type(1);
       beta = value_type(1);
       alpha = value_type(1);
-      this->update_from_context();
+      this->force_update();
     }
 
     void set_stationary(bool b) { stationary = b; }

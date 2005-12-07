@@ -664,7 +664,7 @@ int main(int argc, char *argv[]) {
 
       std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
       for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
-	scalar_type dmin, d;
+	scalar_type dmin=0, d;
 	base_node Pmin,P;
 	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
 	  P = mcut.points_of_convex(cv)[i];

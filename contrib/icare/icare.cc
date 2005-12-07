@@ -73,7 +73,6 @@ struct navier_stokes_problem {
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type Re;            /* Reynolds number */
   scalar_type nu;            /* 1/Re */
   scalar_type dt, T, dt_export;
@@ -111,7 +110,7 @@ struct navier_stokes_problem {
   void solve_PREDICTION_CORRECTION();
   void init(void);
   navier_stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
-				mf_rhs(mesh), mf_coef(mesh) {}
+				mf_rhs(mesh) {}
 };
 
 struct problem_definition {
@@ -401,11 +400,6 @@ void navier_stokes_problem::init(void) {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
   }
-  
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_classical_finite_element(0);
 
   /* set boundary conditions */
   cout << "Choosing boundaries\n";
@@ -442,7 +436,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 
   // Velocity brick.
   getfem::mdbrick_abstract<> *previous;
-  getfem::mdbrick_scalar_elliptic<> velocity(mim, mf_u, mf_coef, nu);
+  getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
   previous = &velocity;
 
   
@@ -458,8 +452,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 					   plain_vector(mf_rhs.nb_dof()*N));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs,
-					   DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
  
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
@@ -467,14 +460,14 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 					     dt, nu);
  
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
+  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
   // definition of the second problem
   //
 
-  getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, mf_coef, 1./dt);
+  getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, 1./dt);
   
   // Pressure term
   getfem::mdbrick_linear_incomp<>mixed_p(mixed, mf_p);
@@ -486,16 +479,16 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   getfem::mdbrick_constraint<> set_pressure(mixed_p, G, gr, 1);
     
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, mf_rhs, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, DIRICHLET_BOUNDARY_NUM);
   {
     plain_vector H(mf_rhs.nb_dof()*N*N);
     pdef->dirichlet_condition_h(*this, 0, H);
-    velocity_dir.set_H(H);
-    mixed_dir.set_H(H);
+    velocity_dir.H().set(mf_rhs, H);
+    mixed_dir.H().set(mf_rhs, H);
   }
 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> mixed_dyn(mixed_dir, mf_coef, 1.);
+  getfem::mdbrick_dynamic<> mixed_dyn(mixed_dir, 1.);
   mixed_dyn.set_dynamic_coeff(0.0, 1.0);
 
   // 
@@ -514,20 +507,20 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 
     if (!stokes_only) velocity_nonlin->set_U0(Un0);
     pdef->source_term(*this, t, F);
-    velocity_f.set_rhs(F);
+    velocity_f.source_term().set(F);
     pdef->dirichlet_condition(*this, t, F);
-    velocity_dir.set_rhs(F);
+    velocity_dir.rhs().set(mf_rhs, F);
     nonreflective.set_Un(Un0);
     
-    gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un0, 1./dt), DF);
+    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
     velocity_dyn.set_DF(DF);
     iter.init();
     getfem::standard_solve(MSL, velocity_dyn, iter);
 
     gmm::copy(velocity.get_solution(MSL), Un1);
-    gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un1, 1./dt), DF);
+    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un1, 1./dt), DF);
     mixed_dyn.set_DF(DF);
-    mixed_dir.set_rhs(F);
+    mixed_dir.rhs().set(mf_rhs, F);
     iter.init();
     getfem::standard_solve(MSM, mixed_dyn, iter);
     gmm::copy(mixed.get_solution(MSM), Un1);
@@ -559,14 +552,14 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
 					   plain_vector(mf_rhs.nb_dof()*N));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
 					     NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
+  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
@@ -585,12 +578,12 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
 
   
     pdef->source_term(*this, t, F);
-    velocity_f.set_rhs(F);
+    velocity_f.source_term().set(F);
     pdef->dirichlet_condition(*this, t, F);
-    velocity_dir.set_rhs(F);
+    velocity_dir.rhs().set(mf_rhs, F);
     nonreflective.set_Un(Un0);
 
-    gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un0, 1./dt), DF);
+    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
     velocity_dyn.set_DF(DF);
     iter.init();
     getfem::standard_solve(MSL, velocity_dyn, iter);
@@ -608,7 +601,7 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
 
 void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   // Velocity brick.  
-  getfem::mdbrick_scalar_elliptic<> velocity(mim, mf_u, mf_coef, nu);
+  getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
   getfem::mdbrick_NS_uuT<> velocity_nonlin(velocity);
 
   // Volumic source term
@@ -617,21 +610,21 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
 					   plain_vector(mf_rhs.nb_dof()*N));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
 					      NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
 
   // Dynamic brick.
-    getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
+    getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
   // Poisson problem for prediction correction scheme
   //
   
-  getfem::mdbrick_scalar_elliptic<> poisson(mim, mf_p, mf_coef, 1.0);
+  getfem::mdbrick_generic_elliptic<> poisson(mim, mf_p, 1.0);
   sparse_matrix G(1, mf_p.nb_dof()); G(0,0) = 1.;  
   getfem::mdbrick_constraint<> poisson_setonedof(poisson, G, plain_vector(1));
   getfem::mdbrick_source_term<> poisson_source(poisson_setonedof,
@@ -659,11 +652,11 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     velocity_nonlin.set_U0(Un0);
     nonreflective.set_Un(Un0);
     pdef->source_term(*this, t, F);
-    velocity_f.set_rhs(F);
+    velocity_f.source_term().set(F);
     pdef->dirichlet_condition(*this, t, F);
-    velocity_dir.set_rhs(F);
+    velocity_dir.rhs().set(mf_rhs, F);
     
-    gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un0, 1./dt), DF);
+    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
     gmm::mult_add(gmm::transposed(B), gmm::scaled(Pn0, -1.), DF);
     velocity_dyn.set_DF(DF);
     iter.init();
@@ -678,7 +671,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     gmm::mult(gmm::transposed(B), gmm::scaled(poisson.get_solution(MSM), -1.), USTARbis);
 
     gmm::iteration iter2 = iter; iter2.reduce_noisy(); iter2.init();
-    gmm::cg(velocity_dyn.mass_matrix(), Un1, USTARbis,
+    gmm::cg(velocity_dyn.get_M(), Un1, USTARbis,
 	    gmm::identity_matrix(), iter2);
 
     gmm::add(USTAR, Un1);

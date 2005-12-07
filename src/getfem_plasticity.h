@@ -402,10 +402,10 @@ namespace getfem {
       TYPEDEF_MODEL_STATE_TYPES;
 
       mesh_im &mim;
-      mesh_fem &mf_u, &mf_data;
-      VECTOR lambda_, mu_;
+      mesh_fem &mf_u;
+      mdbrick_parameter<VECTOR> lambda_, mu_;
       bool homogeneous;
-      VECTOR stress_threshold_;
+      mdbrick_parameter<VECTOR> stress_threshold_;
 
       // flag_hyp=0 : 3D case, or '2D plane'
       // other cases : to implement
@@ -416,22 +416,18 @@ namespace getfem {
       
       const type_proj &t_proj;
 
-      void fill_coeff(VECTOR &lambda, VECTOR &mu, VECTOR &stress_threshold) {
-	if (homogeneous) 
-	  for (size_type i=0; i < mf_data.nb_dof(); ++i) {
-	    lambda[i]=lambda_[0];
-	    mu[i]=mu_[0];
-	    stress_threshold[i] = stress_threshold_[0];
-	  }
-	else {
-	  gmm::copy(lambda_, lambda); gmm::copy(mu_, mu);
-	  gmm::copy(stress_threshold_, stress_threshold);
-	}
-      }
-
       void proper_update(void) {}
 
       public:
+
+      mdbrick_parameter<VECTOR> &lambda(void) { return lambda_; }
+      const mdbrick_parameter<VECTOR> &lambda(void) const { return lambda_; }
+      mdbrick_parameter<VECTOR> &mu(void) { return mu_; }
+      const mdbrick_parameter<VECTOR> &mu(void) const { return mu_; }
+      mdbrick_parameter<VECTOR> &stress_threshold(void) { return stress_threshold_; }
+      const mdbrick_parameter<VECTOR> &stress_threshold(void) const { return stress_threshold_; }
+
+
       
       SUBVECTOR get_solution(MODEL_STATE &MS) {
 	gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
@@ -450,96 +446,66 @@ namespace getfem {
 					     size_type) {
 	gmm::sub_interval SUBI(i0, mf_u.nb_dof());      
 	T_MATRIX K(mf_u.nb_dof(), mf_u.nb_dof());
-	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
-	  stress_threshold(mf_data.nb_dof());
 
-	fill_coeff(lambda, mu, stress_threshold);
-	
-	plasticity_projection gradproj(mim, mf_u, mf_data, MS.state(),
-				       stress_threshold, lambda, mu, &t_proj,
+	plasticity_projection gradproj(mim, mf_u, lambda_.mf(), MS.state(),
+				       stress_threshold_.get(), lambda_.get(), mu_.get(), &t_proj,
 				       sigma_bar, saved_proj, 1, false);
 	
 	/* Calculate the actual matrix */
-	asm_lhs_for_plasticity(K, mim, mf_u, mf_data, lambda, mu, &gradproj);
+	MD_TRACE("Assembling plasticity tangent matrix");
+	asm_lhs_for_plasticity(K, mim, mf_u, lambda_.mf(), lambda_.get(), mu_.get(), &gradproj);
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
       
       virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
-	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
-	  stress_threshold(mf_data.nb_dof());
-	fill_coeff(lambda, mu, stress_threshold);
-
 	gmm::sub_interval SUBI(i0, mf_u.nb_dof());        
 	VECTOR K(mf_u.nb_dof());
-	plasticity_projection proj(mim, mf_u, mf_data, MS.state(),
-				   stress_threshold,
-				   lambda, mu, &t_proj, sigma_bar,
+	plasticity_projection proj(mim, mf_u, lambda_.mf(), MS.state(),
+				   stress_threshold_.get(),
+				   lambda_.get(), mu_.get(), &t_proj, sigma_bar,
 				   saved_proj, 0, false);
 	
 	/* Calculate the actual vector */
-	asm_rhs_for_plasticity(K, mim, mf_u, mf_data, &proj);
+	MD_TRACE("Assembling plasticity rhs");
+	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
 	gmm::copy(K, gmm::sub_vector(MS.residu(), SUBI));
       }
       
       void compute_constraints(MODEL_STATE &MS) {
-	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
-	  stress_threshold(mf_data.nb_dof());
-	fill_coeff(lambda, mu, stress_threshold);
 	VECTOR K(mf_u.nb_dof());
 	
-	plasticity_projection proj(mim, mf_u, mf_data, MS.state(),
-				   stress_threshold,
-				   lambda, mu, &t_proj, sigma_bar,
+	plasticity_projection proj(mim, mf_u, lambda_.mf(), MS.state(),
+				   stress_threshold_.get(),
+				   lambda_.get(), mu_.get(), &t_proj, sigma_bar,
 				   saved_proj, 0, true);
 	
 	/* Calculate the actual vector */
-	asm_rhs_for_plasticity(K, mim, mf_u, mf_data, &proj);
-      }
-      
-      void set_coeff(value_type lambdai, value_type mui,
-			  value_type stress_threshold) {
-	homogeneous = true;
-	gmm::resize(lambda_, 1); lambda_[0] = lambdai;
-	gmm::resize(mu_, 1); mu_[0] = mui;
-	gmm::resize(stress_threshold_, 1);
-	stress_threshold_[0] = stress_threshold;
-      }
-      
-      void set_coeff(const VECTOR &lambdai, const VECTOR &mui,
-			  const VECTOR &stress_threshold) {
-	homogeneous = false;
-	gmm::resize(lambda_, mf_data.nb_dof()); gmm::copy(lambdai, lambda_);
-	gmm::resize(mu_, mf_data.nb_dof()); gmm::copy(mui, mu_);
-	gmm::resize(stress_threshold_, mf_data.nb_dof());
-	gmm::copy(stress_threshold, stress_threshold_);
+	MD_TRACE("Assembling plasticity rhs");
+	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
       }
 
       void init_(void) {
-	this->add_dependency(mf_data);
 	this->add_proper_mesh_im(mim);
 	this->add_proper_mesh_fem(mf_u, MDBRICK_SMALL_DEF_PLASTICITY);
 	this->proper_is_coercive_ = this->proper_is_linear_ = false;
 	this->proper_is_symmetric_ = true;
-	N = mf_data.linked_mesh().dim();
-	this->update_from_context();
+	N = mf_u.linked_mesh().dim();
+	this->force_update();
       }
 
       /** constructor for a homogeneous material (constant lambda, mu and
 	  stress_threshold */
-      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
+      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_,
 			 value_type lambdai, value_type mui,
-			 value_type stress_threshold,
+			 value_type stress_th,
 			 const type_proj &t_proj_) 
-	: mim(mim_), mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
-      { set_coeff(lambdai, mui, stress_threshold); init_(); }
-
-      /// constructor for a non-homogeneous material
-      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
-			 const VECTOR &lambdai, const VECTOR &mui,
-			 const VECTOR &stress_threshold,
-			 const type_proj &t_proj_)
-      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
-      { set_coeff(lambdai, mui, stress_threshold); init_(); }
+	: mim(mim_), mf_u(mf_u_), lambda_("lambda", mf_u_.linked_mesh(), this),
+	  mu_("mu", mf_u_.linked_mesh(), this),
+	  stress_threshold_("stress_threshold", mf_u_.linked_mesh(), this),
+	  t_proj(t_proj_) {
+	lambda_.set(lambdai); mu_.set(mui); stress_threshold_.set(stress_th);
+	init_();
+      }
 
     };
 

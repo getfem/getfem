@@ -96,20 +96,16 @@ namespace getfem {
 
   /** Internal brick for mdbrick_pre_navier_stokes */
   template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_pre_navier_stokes : public mdbrick_abstract<MODEL_STATE> {
+  class mdbrick_pre_navier_stokes : public mdbrick_abstract_linear_pde<MODEL_STATE> {
 
     TYPEDEF_MODEL_STATE_TYPES;
 
-    mesh_im &mim;
-    mesh_fem &mf_u;
     value_type nu;
-    T_MATRIX K;
 
-    virtual void proper_update(void) {
-      gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
-      gmm::clear(K);
-      asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(K, mim, mf_u);
-      gmm::scale(K, nu);
+    virtual void proper_update_K(void) {
+      MD_TRACE("Assembling laplacian for mdbrick_pre_navier_stokes");
+      asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(this->K, this->mim, this->mf_u);
+      gmm::scale(this->K, nu);
     }
 
   public :
@@ -117,33 +113,25 @@ namespace getfem {
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
-      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      gmm::copy(this->get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_navier_stokes_tgm(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
-			    mim, mf_u, gmm::sub_vector(MS.state(), SUBI));
+			    this->mim, this->mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
-      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+      gmm::mult(this->get_K(), gmm::sub_vector(MS.state(), SUBI),
 		gmm::sub_vector(MS.residu(), SUBI));
-      asm_navier_stokes_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
-			    mf_u, gmm::sub_vector(MS.state(), SUBI));
-    }
-
-    SUBVECTOR get_solution(MODEL_STATE &MS) {
-      gmm::sub_interval SUBU(this->first_index(), this->nb_dof());
-      return gmm::sub_vector(MS.state(), SUBU);
-    }
-
-    void init_(void) {
-      this->add_proper_mesh_fem(mf_u, MDBRICK_NAVIER_STOKES);
-      this->add_proper_mesh_im(mim);
-      this->proper_is_linear_ = false;
-      this->proper_is_coercive_ = this->proper_is_symmetric_ = false;
-      this->update_from_context();
+      asm_navier_stokes_rhs(gmm::sub_vector(MS.residu(), SUBI), this->mim,
+			    this->mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
 
     mdbrick_pre_navier_stokes(mesh_im &mim_, mesh_fem &mf_u_, value_type nu_)
-      : mim(mim_), mf_u(mf_u_), nu(nu_) { init_(); }
+      : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_NAVIER_STOKES),
+	nu(nu_) {
+      this->proper_is_linear_ = false;
+      this->proper_is_coercive_ = this->proper_is_symmetric_ = false;
+      this->force_update();
+    }
 
   };
 
@@ -183,7 +171,7 @@ namespace getfem {
 			  value_type nu)
       : velocity_part(mim, mf_u, nu), sub_problem(velocity_part, mf_p) {
       this->add_sub_brick(sub_problem);
-      this->update_from_context();
+      this->force_update();
     }
     
   };

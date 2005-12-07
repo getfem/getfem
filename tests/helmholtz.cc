@@ -66,7 +66,6 @@ struct Helmholtz_problem {
   getfem::mesh_im mim;     /* the integration methods */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   complex_type wave_number;
 
   scalar_type residu;        /* max residu for the iterative solvers         */
@@ -78,7 +77,7 @@ struct Helmholtz_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  Helmholtz_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  Helmholtz_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh) {}
 };
 
 complex_type incoming_field(const base_node &P, scalar_type k) {
@@ -157,10 +156,6 @@ void Helmholtz_problem::init(void) {
     mf_rhs.set_finite_element(getfem::fem_descriptor(data_fem_name));
   }
   
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(getfem::classical_fem(pgt,0));
 
   /* select boundaries */
   cout << "Selecting Robin and Dirichlet boundaries\n";
@@ -184,11 +179,11 @@ typedef getfem::standard_complex_model_state MODELSTATE;
 bool Helmholtz_problem::solve(plain_vector &U) {
 
   // Helmholtz brick.
-  getfem::mdbrick_Helmholtz<MODELSTATE> WAVE(mim, mf_u, mf_coef, wave_number);
+  getfem::mdbrick_Helmholtz<MODELSTATE> WAVE(mim, mf_u, wave_number);
   
   // (homogeneous) Robin condition
   getfem::mdbrick_QU_term<MODELSTATE> 
-    ROBIN(WAVE, mf_rhs, wave_number * complex_type(0,1.), ROBIN_BOUNDARY_NUM);
+    ROBIN(WAVE, wave_number * complex_type(0,1.), ROBIN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -198,8 +193,11 @@ bool Helmholtz_problem::solve(plain_vector &U) {
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<MODELSTATE> 
-    final_model(ROBIN, mf_rhs, F, DIRICHLET_BOUNDARY_NUM, with_mult);
+    final_model(ROBIN, DIRICHLET_BOUNDARY_NUM, 0);
+  final_model.use_multipliers(with_mult);
+  final_model.rhs().set(mf_rhs, F);
   
+
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
   cout << "Number of constraints : " << final_model.nb_constraints() << endl;

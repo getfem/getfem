@@ -466,7 +466,7 @@ namespace getfem {
 
       mf__key_ key(mesh, o);
       mesh_fem_tab::iterator it = mfs.find(key);
-      assert(it == mfs.end() || it->second->context_valid());
+      assert(it == mfs.end() || it->second->is_context_valid());
       
       if (it == mfs.end()) {
 	// the list of mesh pointers should be sorted ...

@@ -168,8 +168,8 @@ namespace getfem {
 
     mesh_im &mim, &mim_subint;
     mesh_fem &mf_ut, &mf_u3, &mf_theta;
-    value_type epsilon;
     mdbrick_parameter<VECTOR> lambda_, mu_;
+    value_type epsilon;
     bool homogeneous, mitc, K_uptodate;
     T_MATRIX K;
     size_type nbdof;
@@ -183,7 +183,7 @@ namespace getfem {
 
     const T_MATRIX &get_K(void) {
       this->context_check(); 
-      if (!K_uptodate) {
+      if (!K_uptodate || this->parameters_is_any_modified()) {
 	if (&lambda_.mf() != &mu_.mf()) 
 	DAL_THROW(failure_error,
 		  "lambda and mu should share the same mesh_fem");
@@ -192,28 +192,29 @@ namespace getfem {
 	gmm::sub_interval I1(0, mf_ut.nb_dof());
 	gmm::sub_interval I2(mf_ut.nb_dof(), mf_u3.nb_dof()+mf_theta.nb_dof());
 	gmm::sub_interval I3(mf_ut.nb_dof()+mf_u3.nb_dof(),mf_theta.nb_dof());
-	VECTOR lambda(lambda_.get()), mu(mu_.get());
+	VECTOR vlambda(lambda_.get()), vmu(mu_.get());
 	gmm::scale(lambda, value_type(2) * epsilon);
 	gmm::scale(mu, value_type(2) * epsilon);
 	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(), lambda, mu,
+	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(), vlambda, vmu,
 	   mf_ut.linked_mesh().get_mpi_region());
 	// gmm::scale(mu, value_type(1) / value_type(2));
 	if (mitc) 
 	  asm_stiffness_matrix_for_plate_transverse_shear_mitc
 	    (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
-	     mu, mf_ut.linked_mesh().get_mpi_region());
+	     vmu, mf_ut.linked_mesh().get_mpi_region());
 	else
 	  asm_stiffness_matrix_for_plate_transverse_shear
 	    (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
-	     mu, mf_ut.linked_mesh().get_mpi_region());
-	gmm::scale(lambda, epsilon * epsilon / value_type(3));
+	     vmu, mf_ut.linked_mesh().get_mpi_region());
+	gmm::scale(vlambda, epsilon * epsilon / value_type(3));
 	// gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
-	gmm::scale(mu, epsilon * epsilon / value_type(3));
+	gmm::scale(vmu, epsilon * epsilon / value_type(3));
 	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda, mu,
+	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), vlambda, vmu,
 	   mf_ut.linked_mesh().get_mpi_region());
 	K_uptodate = true;
+	this->parameters_set_uptodate();
       }
     }
 
@@ -279,7 +280,7 @@ namespace getfem {
       this->add_proper_mesh_fem(mf_ut, MDBRICK_LINEAR_PLATE, 1);
       this->add_proper_mesh_fem(mf_u3, MDBRICK_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_LINEAR_PLATE, 0);
-      this->update_from_context();
+      this->force_update();
     }
 
     /** constructor for a homogeneous material (constant lambda and mu).
@@ -289,8 +290,8 @@ namespace getfem {
     (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
      value_type lambdai, value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-      mf_theta(mf_theta_), lambda_(mf_ut_.linked_mesh(), this),
-      mu_(mf_ut_.linked_mesh(), this), epsilon(epsilon_)
+	mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
+	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
     { lambda_.set(lambdai); mu_.set(mui); init_(); }
 
     /** constructor for a homogeneous material (constant lambda and mu) with
@@ -301,8 +302,8 @@ namespace getfem {
     (mesh_im &mim_, mesh_im &mim_subint_, mesh_fem &mf_ut_, mesh_fem &mf_u3_,
      mesh_fem &mf_theta_, value_type lambdai, value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), lambda_(mf_ut_.linked_mesh(), this),
-      mu_(mf_ut_.linked_mesh(), this), epsilon(epsilon_)
+	mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
+	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
     {  lambda_.set(lambdai); mu_.set(mui); init_(); }
  
   };
@@ -367,8 +368,8 @@ namespace getfem {
 
     mesh_im &mim;
     mesh_fem &mf_ut, &mf_u3, &mf_theta;
-    value_type epsilon;
     mdbrick_parameter<VECTOR> lambda_, mu_;
+    value_type epsilon;
     bool homogeneous, symmetrized, K_uptodate;
     T_MATRIX K;
     size_type nbdof;
@@ -382,7 +383,7 @@ namespace getfem {
 
     const T_MATRIX &get_K(void) {
       this->context_check(); 
-      if (!K_uptodate) {
+      if (!K_uptodate || this->parameters_is_any_modified()) {
 	gmm::clear(K);
 	gmm::resize(K, nbdof, nbdof);
 	size_type nd1=mf_ut.nb_dof(), nd2=mf_u3.nb_dof(),nd3=mf_theta.nb_dof();
@@ -391,7 +392,7 @@ namespace getfem {
 	
 	asm_stiffness_matrix_for_linear_elasticity
 	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(),
-	   lambda.get(), mu_.get());
+	   lambda_.get(), mu_.get());
 	gmm::scale(gmm::sub_matrix(K, I1), value_type(2) * epsilon);
 	
 	
@@ -401,7 +402,7 @@ namespace getfem {
 		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
 	
 	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda.get(),
+	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda_.get(),
 	   mu_.get());
 	//   gmm::scale(gmm::sub_matrix(K, I3),
 	//  	 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
@@ -457,7 +458,9 @@ namespace getfem {
 	this->proper_mixed_variables.add(nbdof - mf_u3.nb_dof()*2,
 					 mf_u3.nb_dof()*2);
 	K_uptodate = true;
+	this->parameters_set_uptodate();
       }
+      return K;
     }
     
   public :
@@ -513,7 +516,7 @@ namespace getfem {
       this->add_proper_mesh_fem(mf_u3, MDBRICK_MIXED_LINEAR_PLATE, 0);
       this->proper_is_symmetric_ = symmetrized;
       this->proper_is_coercive_ = false;
-      this->update_from_context();
+      this->force_update();
     }
 
     // constructor for a homogeneous material (constant lambda and mu)
@@ -522,8 +525,8 @@ namespace getfem {
      value_type lambdai, value_type mui,
      double epsilon_, bool sym = false)
       : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
-	mf_data(mf_data_), lambda_(mf_ut_.linked_mesh(), this),
-      mu_(mf_ut_.linked_mesh(), this), epsilon(epsilon_), symmetrized(sym)
+	lambda_("lambda", mf_ut_.linked_mesh(), this),
+	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_), symmetrized(sym)
     { lambda_.set(lambdai); mu_.set(mui); init_(); }
  
   };
@@ -540,6 +543,7 @@ namespace getfem {
       *phi_part, *sub_problem;
     
     mdbrick_parameter<VECTOR> B_;
+    bool mixed, symmetrized;
 
     virtual void proper_update(void) {
       size_type n = B_.mf().nb_dof();
@@ -580,10 +584,10 @@ namespace getfem {
 			      const VECTOR &M__,
 			      size_type bound = size_type(-1),
 			      size_type num_fem = 0)
-      :  B_(mf_data_, this, 3) {
+      :  B_("B", mf_data, this, 3) {
       B_.set(B__);
       ut_part = phi_part = u3_part = theta_part = 0;
-      bool mixed = false, symmetrized = false;
+      mixed = false; symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
 	  == MDBRICK_LINEAR_PLATE)
 	{ mixed = false; symmetrized = false; } 
@@ -619,7 +623,7 @@ namespace getfem {
 	this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_NEUMANN);
       }
 
-      this->update_from_context();
+      this->force_update();
     }
 
     ~mdbrick_plate_source_term() {
@@ -655,9 +659,13 @@ namespace getfem {
 				 size_type bound, size_type num_fem = 0,
 				 bool with_mult = false) : phi_part(0) {
       ut_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	(problem, bound, num_fem, with_mult);
+	(problem, bound, num_fem);
+      ut_part->use_multipliers(with_mult);
+
       u3_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	(*ut_part, bound, num_fem+1, with_mult);
+	(*ut_part, bound, num_fem+1);
+      u3_part->use_multipliers(with_mult);
+
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
 	  == MDBRICK_LINEAR_PLATE)
@@ -673,15 +681,16 @@ namespace getfem {
 	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
 	DAL_THROW(failure_error, "The mesh_fem number is not correct");
 
-      if (mixed)
-	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	  (*u3_part, mf_data, bound, num_fem+4, with_mult);
+      if (mixed) {
+	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>(*u3_part, bound, num_fem+4);
+	sub_problem->use_multipliers(with_mult);
+      }
       else sub_problem = u3_part;
       this->add_sub_brick(*sub_problem);
       this->add_proper_boundary_info(num_fem, bound, MDBRICK_SIMPLE_SUPPORT);
       this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_SIMPLE_SUPPORT);
       this->add_proper_boundary_info(num_fem+2, bound, MDBRICK_SIMPLE_SUPPORT);
-      this->update_from_context();
+      this->force_update();
     }
 
     virtual ~mdbrick_plate_simple_support() {
@@ -714,10 +723,14 @@ namespace getfem {
     mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
 				  size_type bound, size_type num_fem = 0,
 				  bool with_mult = false)
-      : ut_part(problem, bound, num_fem, with_mult),
-	u3_part(ut_part, bound, num_fem+1, with_mult),
-	theta_part(u3_part, bound, num_fem+2, with_mult),
+      : ut_part(problem, bound, num_fem),
+	u3_part(ut_part, bound, num_fem+1),
+	theta_part(u3_part, bound, num_fem+2),
 	phi_part(0) {
+
+      ut_part.use_multipliers(with_mult);
+      u3_part.use_multipliers(with_mult);
+      theta_part.use_multipliers(with_mult);
 
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
@@ -736,7 +749,8 @@ namespace getfem {
 
       if (mixed) {
 	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	  (theta_part, bound, num_fem+4, with_mult);
+	  (theta_part, bound, num_fem+4);
+	sub_problem->use_multipliers(with_mult);
 	this->add_sub_brick(*phi_part);
       }
       else { 
@@ -747,7 +761,7 @@ namespace getfem {
       this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_CLAMPED_SUPPORT);
       this->add_proper_boundary_info(num_fem+2, bound, MDBRICK_CLAMPED_SUPPORT);
 
-      this->update_from_context();
+      this->force_update();
     }
 
     ~mdbrick_plate_clamped_support() { if (phi_part) delete phi_part; }
@@ -980,7 +994,7 @@ namespace getfem {
 
 
       this->add_sub_brick(problem);
-      this->update_from_context();
+      this->force_update();
     }
     
   };
