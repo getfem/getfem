@@ -84,7 +84,6 @@ struct crack_problem {
   
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type neumann_force;
@@ -106,7 +105,7 @@ struct crack_problem {
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
 			mf_u_sum(mesh),
-			mf_rhs(mesh), mf_coef(mesh),  ls(mesh, 1, true) {}
+			mf_rhs(mesh), ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -187,13 +186,6 @@ void crack_problem::init(void) {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
   }
-  
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
-
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
@@ -317,8 +309,7 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u(), mf_coef, lambda, mu);
+  getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u(), lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N); 
@@ -332,13 +323,14 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::scale(F, neumann_force);
  
   // Neumann condition brick.
-  getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
   gmm::clear(F);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs, F,
-					  DIRICHLET_BOUNDARY_NUM, 0,
-					  dir_with_mult);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN,
+					  DIRICHLET_BOUNDARY_NUM, 0);
+  final_model.use_multipliers(dir_with_mult);
+  // final_model.rhs().set(mf_rhs, F);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;

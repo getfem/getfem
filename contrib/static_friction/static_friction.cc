@@ -65,7 +65,6 @@ struct friction_problem {
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
   getfem::mesh_fem mf_l;     /* mesh_fem for the multipliers.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type rho, PG;       /* density, and gravity                         */
@@ -86,7 +85,7 @@ struct friction_problem {
   void solve(void);
   void init(void);
   friction_problem(void)
-    : mim(mesh), mf_u(mesh), mf_l(mesh), mf_rhs(mesh), mf_coef(mesh),
+    : mim(mesh), mf_u(mesh), mf_l(mesh), mf_rhs(mesh),
       mf_vm(mesh) {}
 };
 
@@ -177,9 +176,6 @@ void friction_problem::init(void) {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
   }
-  
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
 
   /* set boundary conditions */
   base_node center(0.,0.,20.);
@@ -456,7 +452,7 @@ void friction_problem::solve(void) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu);
+    ELAS(mim, mf_u, lambda, mu);
 
   // Defining the volumic source term brick.
   plain_vector F(nb_dof_rhs * N);
@@ -478,8 +474,9 @@ void friction_problem::solve(void) {
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
-  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F, mf_rhs, F,
+  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F,
 					DIRICHLET_BOUNDARY);
+  DIRICHLET.rhs().set(mf_rhs, F);
   
   // contact condition for Lagrange elements
   dal::bit_vector cn, dn;
