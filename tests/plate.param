@@ -34,11 +34,11 @@ ETA = 0.0;             % only usefull if SOL_REF = 2 :
 %%%%% parameters for computation :
 
 
-NX = 20;                % number of element on an edge.
+NX = 40;                % number of element on an edge.
 RESIDU = 1E-9;     	% residu for iterative methods.
-MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED = 0;
-MITC = 0;
+MITC = 1;
 SYMMETRIZED = 0;
 
 %%%%% parameters for quadrangles

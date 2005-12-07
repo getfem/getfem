@@ -57,7 +57,6 @@ struct crackPlate_problem{
   getfem::mesh_fem& mf_theta() { return mf_theta_sum; }
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   getfem::level_set ls;      /* The two level sets defining the crack.       */
  
   scalar_type residu;       /* max residu for the iterative solvers        */
@@ -81,7 +80,7 @@ struct crackPlate_problem{
 			mf_u3_product(mf_partition_of_unity, mf_sing_u3),
 			mf_theta_product(mf_partition_of_unity, mf_sing_theta),
 			mf_ut_sum(mesh), mf_u3_sum(mesh), mf_theta_sum(mesh),
-			mf_rhs(mesh),  mf_coef(mesh),
+			mf_rhs(mesh),
 			ls(mesh, 1, true) {} 
 
 };
@@ -166,12 +165,6 @@ void crackPlate_problem::init(void) {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
   }
-  
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
 
   /* set boundary conditions : Dirichlet on the right face */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -274,7 +267,7 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
-    ELAS1(mim, mim, mf_ut(), mf_u3(), mf_theta(), mf_coef, lambda,
+    ELAS1(mim, mim, mf_ut(), mf_u3(), mf_theta(), lambda,
 	  mu, epsilon);
   if (mitc) ELAS1.set_mitc();  
   ELAS = &ELAS1;
@@ -290,7 +283,7 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
-    (VOL_F, mf_rhs, DIRICHLET_BOUNDARY_NUM, 0, 1);
+    (VOL_F, DIRICHLET_BOUNDARY_NUM, 0, 1);
        
   SIMPLE = &SIMPLE1 ;
   

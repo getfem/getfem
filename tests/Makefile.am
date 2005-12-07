@@ -37,7 +37,6 @@ check_PROGRAMS =                 \
 	schwarz_additive         \
 	$(optprogs)              \
 	plasticity               \
-	navier_stokes            \
 	dynamic_friction
 
 CLEANFILES = \
@@ -75,7 +74,6 @@ test_slice_SOURCES = test_slice.cc
 test_norm_SOURCES = test_norm.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
-navier_stokes_SOURCES = navier_stokes.cc
 if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
@@ -115,7 +113,6 @@ TESTS = \
 	$(top_srcdir)/tests/stokes.pl                  \
 	$(top_srcdir)/tests/plate.pl                   \
 	$(optpl)                                       \
-	$(top_srcdir)/tests/navier_stokes.pl           \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl  \
 	$(top_srcdir)/tests/dynamic_friction.pl        \
 	$(top_srcdir)/tests/plasticity.pl              \
@@ -134,8 +131,6 @@ EXTRA_DIST = \
 	laplacian.pl                      \
 	elastostatic.pl                   \
 	stokes.pl                         \
-	navier_stokes.pl                  \
-	navier_stokes.param               \
 	helmholtz.pl                      \
 	integration.pl                    \
 	poly.pl                           \

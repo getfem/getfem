@@ -309,7 +309,6 @@ struct crack_problem {
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   exact_solution exact_sol;
   
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
@@ -338,7 +337,7 @@ struct crack_problem {
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
 			mf_u_sum(mesh), mf_us(mesh),
-			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
+			mf_rhs(mesh), mf_p(mesh), 
 			exact_sol(mesh),  ls(mesh, 1, true),
 			ls2(mesh, 1, true), ls3(mesh, 1, true) {}
 };
@@ -444,12 +443,6 @@ void crack_problem::init(void) {
 			      getfem::fem_descriptor(data_fem_name));
   }
   
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
-
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -574,13 +567,15 @@ bool crack_problem::solve(plain_vector &U) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u(), mf_coef, mixed_pressure ? 0.0 : lambda, mu);
+    ELAS(mim, mf_u(), mixed_pressure ? 0.0 : lambda, mu);
 
   getfem::mdbrick_abstract<> *pINCOMP;
-  if (mixed_pressure)
-    pINCOMP = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p, mf_coef,
-						  1.0/lambda);
-  else pINCOMP = &ELAS;
+  if (mixed_pressure) {
+    getfem::mdbrick_linear_incomp<> *incomp
+      = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
+    incomp->penalization_coeff().set(1.0/lambda);
+    pINCOMP = incomp;
+  } else pINCOMP = &ELAS;
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -602,9 +597,9 @@ bool crack_problem::solve(plain_vector &U) {
   //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
   //assert(toto.mf.nb_dof() == 1);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, exact_sol.mf, exact_sol.U, 
-					  DIRICHLET_BOUNDARY_NUM, 0,
-					  dir_with_mult);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM);
+  final_model.rhs().set(exact_sol.mf, exact_sol.U);
+  final_model.use_multipliers(dir_with_mult);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;

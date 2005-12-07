@@ -46,14 +46,15 @@ namespace getfem {
   template<class MAT, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear
   (const MAT &RM, const mesh_im &mim, const mesh_fem &mf_u3,
-   const mesh_fem &mf_theta, const mesh_fem &mfdata, const VECT &MU) {
+   const mesh_fem &mf_theta, const mesh_fem &mfdata, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     gmm::sub_interval I1(0, mf_u3.nb_dof());
     gmm::sub_interval I2(mf_u3.nb_dof(), mf_theta.nb_dof());
     
     asm_stiffness_matrix_for_plate_transverse_shear
       (gmm::sub_matrix(RM, I1), gmm::sub_matrix(RM, I1, I2),
        gmm::transposed(gmm::sub_matrix(RM, I2, I1)),
-       gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU);
+       gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU, rg);
   }
 
   /**@ingroup asm*/
@@ -92,14 +93,15 @@ namespace getfem {
   template<class MAT, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear_mitc
   (const MAT &RM, const mesh_im &mim, const mesh_fem &mf_u3,
-   const mesh_fem &mf_theta, const mesh_fem &mfdata, const VECT &MU) {
+   const mesh_fem &mf_theta, const mesh_fem &mfdata, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     gmm::sub_interval I1(0, mf_u3.nb_dof());
     gmm::sub_interval I2(mf_u3.nb_dof(), mf_theta.nb_dof());
     
     asm_stiffness_matrix_for_plate_transverse_shear_mitc
       (gmm::sub_matrix(RM, I1), gmm::sub_matrix(RM, I1, I2),
        gmm::transposed(gmm::sub_matrix(RM, I2, I1)),
-       gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU);
+       gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU, rg);
   }
 
   /**@ingroup asm*/
@@ -193,8 +195,8 @@ namespace getfem {
 	gmm::sub_interval I2(mf_ut.nb_dof(), mf_u3.nb_dof()+mf_theta.nb_dof());
 	gmm::sub_interval I3(mf_ut.nb_dof()+mf_u3.nb_dof(),mf_theta.nb_dof());
 	VECTOR vlambda(lambda_.get()), vmu(mu_.get());
-	gmm::scale(lambda, value_type(2) * epsilon);
-	gmm::scale(mu, value_type(2) * epsilon);
+	gmm::scale(vlambda, value_type(2) * epsilon);
+	gmm::scale(vmu, value_type(2) * epsilon);
 	asm_stiffness_matrix_for_linear_elasticity
 	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(), vlambda, vmu,
 	   mf_ut.linked_mesh().get_mpi_region());
@@ -216,6 +218,7 @@ namespace getfem {
 	K_uptodate = true;
 	this->parameters_set_uptodate();
       }
+      return K;
     }
 
     mdbrick_parameter<VECTOR> &lambda(void) { return lambda_; }
