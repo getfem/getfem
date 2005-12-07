@@ -62,7 +62,7 @@ namespace getfem {
 
     dal::dynamic_array<const std::string *> zones_of_convexes;
     getfem_mesh *linked_mesh_;
-    mutable bool is_valid_, is_adapted_;
+    mutable bool is_adapted_;
 
     typedef level_set *plevel_set;
     std::vector<plevel_set> level_sets; // set of level set
@@ -82,7 +82,6 @@ namespace getfem {
     /// Get number of level-sets referenced in this object.
     size_type nb_level_sets(void) const { return level_sets.size(); }
     plevel_set get_level_set(size_type i) const { return level_sets[i]; }
-    bool is_valid() const { return is_valid_; }
     void update_from_context(void) const { is_adapted_= false; }
     bool is_convex_cut(size_type i) const
     { return (cut_cv.find(i) != cut_cv.end()); }

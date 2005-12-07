@@ -67,7 +67,7 @@ struct Chrono {
   void mesh_level_set::receipt(const MESH_CLEAR &)
   { clear(); is_adapted_ = false; }
   void mesh_level_set::receipt(const MESH_DELETE &) {
-    clear(); is_valid_ = false; is_adapted_ = false;
+    clear(); is_adapted_ = false;
     sup_sender(linked_mesh_->lmsg_sender());
   }
   void mesh_level_set::receipt(const MESH_SUP_CONVEX &m) { 
@@ -86,11 +86,11 @@ struct Chrono {
 
 
   mesh_level_set::mesh_level_set(getfem_mesh &me) {
-    linked_mesh_ = &me; is_valid_ = true; is_adapted_ = false;
+    linked_mesh_ = &me; is_adapted_ = false;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
-	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
-	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_DELETE()));
+	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
+	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID));
   }
 
   mesh_level_set::~mesh_level_set() {}

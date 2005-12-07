@@ -56,12 +56,37 @@ namespace bgeot {
   typedef std::vector<index_node_pair> kdtree_tab_type;
 
   /** Balanced tree over a set of points.
-   *
-   * Once the tree have been built, it is possible to query very
-   * quickly for the list of points lying in a given box. Note that
-   * this is not a dynamic structure: once you start to call
-   * kdtree::points_in_box, you should not use anymore kdtree::add_point.
-   */
+   
+  Once the tree have been built, it is possible to query very
+  quickly for the list of points lying in a given box. Note that
+  this is not a dynamic structure: once you start to call
+  kdtree::points_in_box, you should not use anymore kdtree::add_point.
+  
+  Here is an example of use (which tries to find the mapping between
+  the dof of the mesh_fem and the node numbers of its mesh):
+  
+  @code
+  void dof_to_nodes(const getfem::mesh_fem &mf) {
+    const getfem::getfem_mesh &m = mf.linked_mesh();
+    bgeot::kdtree tree;
+    for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
+      tree.add_point_with_id(m.points()[ip], ip);
+    }
+    bgeot::kdtree_tab_type t;
+    for (size_type d = 0; d < mf.nb_dof(); ++d) {
+      getfem::base_node P(mf.point_of_dof(d)), P2(P);
+      for (unsigned i=0; i < P.size(); ++i) {
+        P[i] -= 1e-12; P2[i]+= 1e-12;
+      }
+      tree.points_in_box(t, P, P2);
+      if (t.size()) {
+        assert(t.size() == 1);
+	cout << " dof " << d << " maps to mesh node " << t[0].i << "\n";
+      }
+    } 
+  }
+  @endcode
+  */
   class kdtree : public boost::noncopyable {
     dim_type N; /* dimension of points */
     kdtree_elt_base *tree;

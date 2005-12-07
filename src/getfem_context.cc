@@ -96,10 +96,10 @@ namespace getfem {
   }
  
   context_dependencies::~context_dependencies() {
-//     cout << "destruction de " << this << endl;
-//     cout << "state = " << state << endl;
-//     cout << "nb dep = " << dependent.size() << endl;
-//     cout << "nb depies = " << dependencies.size() << endl;
+    //cout << "destruction de " << this <<  " " << typeid(*this).name() << endl;
+    //cout << "state = " << state << endl;
+    //cout << "nb dep = " << dependent.size() << endl;
+    //cout << "nb depies = " << dependencies.size() << endl;
     invalid_context();
     iterator_list it = dependencies.begin(), ite = dependencies.end();
     for (; it != ite; ++it) (*it)->sup_dependent_(*this);

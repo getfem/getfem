@@ -208,6 +208,18 @@ namespace gmm {
   inline bool is_const_reference(linalg_const) { return true; }  
 
 
+  template <typename T> struct is_gmm_interfaced_ {
+    typedef linalg_true result;
+  };
+  
+  template<> struct is_gmm_interfaced_<abstract_null_type> {
+    typedef linalg_false result;
+  };
+  
+  template <typename T> struct is_gmm_interfaced {
+    typedef typename is_gmm_interfaced_<typename gmm::linalg_traits<T>::this_type >::result result;
+  };
+
   /* ******************************************************************** */
   /*  types to deal with const object representing a modifiable reference */
   /* ******************************************************************** */

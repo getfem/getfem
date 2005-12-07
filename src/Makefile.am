@@ -178,7 +178,8 @@ SRC =                                      \
 	getfem_interpolation.cc            \
 	getfem_export.cc                   \
 	getfem_assembling_tensors.cc       \
-	getfem_mesher.cc
+	getfem_mesher.cc		   \
+	getfem_modeling.cc
 
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)

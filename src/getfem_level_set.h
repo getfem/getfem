@@ -34,7 +34,6 @@
 #ifndef GETFEM_LEVEL_SET_H__
 #define GETFEM_LEVEL_SET_H__
 
-#include <dal_shared_ptr.h>
 #include <getfem_mesh_fem.h>
 #include <getfem_mesher.h>
 
@@ -51,12 +50,9 @@ namespace getfem {
   class level_set : public context_dependencies {
 
   protected :
-    typedef dal::shared_ptr<mesh_fem> pmesh_fem;
-    pmesh_fem add_mesh_fem(getfem_mesh &mesh, dim_type o);
-    void sup_mesh_fem(getfem_mesh &mesh, dim_type o);
     getfem_mesh *pmesh;
     dim_type degree_;
-    pmesh_fem mf;
+    const mesh_fem *mf;
     std::vector<scalar_type> primary_, secondary_;
     bool with_secondary;
 
@@ -72,18 +68,16 @@ namespace getfem {
     mesher_level_set mls_of_convex(size_type cv, unsigned lsnum = 0,
 				   bool inverted = false) const;
     bool has_secondary(void) const { return with_secondary; }
-    mesh_fem &get_mesh_fem(void) { return *mf; }
+    const mesh_fem &get_mesh_fem(void) { return *mf; }
     dim_type degree() const { return degree_; }
     level_set(getfem_mesh &mesh, dim_type deg = dim_type(1),
 	      bool with_secondary_ = false)
-      : pmesh(&mesh), degree_(deg), mf(add_mesh_fem(mesh, deg)),
+      : pmesh(&mesh), degree_(deg), mf(&classical_mesh_fem(mesh, deg)),
 	with_secondary(with_secondary_) {
       primary_.resize(mf->nb_dof());
       secondary_.resize(mf->nb_dof());
       this->add_dependency(*mf);
     }
-    
-    ~level_set() { sup_mesh_fem(*pmesh, degree_); }
 
   };
  

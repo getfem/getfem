@@ -83,8 +83,6 @@ namespace getfem {
 
     void sup_dependent_(const context_dependencies &cd) const;
     void sup_dependency_(const context_dependencies &cd) const;
-    void change_context(void) const
-    { if (state == CONTEXT_NORMAL) { state = CONTEXT_CHANGED; touch(); } }
     void invalid_context(void) const;
 
   public :
@@ -93,6 +91,8 @@ namespace getfem {
 	the context is modified. */
     virtual void update_from_context(void) const = 0;
 
+    void change_context(void) const
+    { if (state == CONTEXT_NORMAL) { state = CONTEXT_CHANGED; touch(); } }
     void add_dependency(const context_dependencies &cd);
     void sup_dependency(const context_dependencies &cd)
     { cd.sup_dependent_(*this); sup_dependency_(cd); }

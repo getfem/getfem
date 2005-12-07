@@ -634,7 +634,6 @@ namespace getfem {
     for (mr_visitor it(cvlst); !it.finished(); ++it) {
       bool revert_orientation = false;
       size_type nrefine = pnrefine[it.cv()*nref_stride];
-      cerr << "cv=" << it.cv() << ", nrefine = " << nrefine << "\n";
       update_cv_data(it.cv(),it.f());      
       /* update structure-dependent data */
       if (prev_cvr != cvr || nrefine != prev_nrefine) {

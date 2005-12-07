@@ -167,82 +167,85 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
 
     mesh_im &mim, &mim_subint;
-    mesh_fem &mf_ut, &mf_u3, &mf_theta, &mf_data;
+    mesh_fem &mf_ut, &mf_u3, &mf_theta;
     value_type epsilon;
-    VECTOR lambda_, mu_;
-    bool homogeneous, mitc;
+    mdbrick_parameter<VECTOR> lambda_, mu_;
+    bool homogeneous, mitc, K_uptodate;
     T_MATRIX K;
     size_type nbdof;
 
     virtual void proper_update(void) {
-      gmm::clear(K);
+      K_uptodate = false;
       nbdof = mf_ut.nb_dof() + mf_u3.nb_dof() + mf_theta.nb_dof();
-      gmm::resize(K, nbdof, nbdof);
-      VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
-      if (homogeneous) {
-	std::fill(lambda.begin(), lambda.end(), value_type(lambda_[0]));
-	std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
-      }
-      else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
-      gmm::sub_interval I1(0, mf_ut.nb_dof());
-      gmm::sub_interval I2(mf_ut.nb_dof(), mf_u3.nb_dof()+mf_theta.nb_dof());
-      gmm::sub_interval I3(mf_ut.nb_dof() + mf_u3.nb_dof(), mf_theta.nb_dof());
-      gmm::scale(lambda, value_type(2) * epsilon);
-      gmm::scale(mu, value_type(2) * epsilon);
-      asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I1), mim, mf_ut, mf_data, lambda, mu);
-      // gmm::scale(mu, value_type(1) / value_type(2));
-      if (mitc) 
-	asm_stiffness_matrix_for_plate_transverse_shear_mitc
-	  (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
-      else
-	asm_stiffness_matrix_for_plate_transverse_shear
-	  (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
-      gmm::scale(lambda, epsilon * epsilon / value_type(3));
-      // gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
-      gmm::scale(mu, epsilon * epsilon / value_type(3));
-      asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I3), mim, mf_theta, mf_data, lambda, mu);
     }
 
-    void set_Lame_coeff_(value_type lambdai, value_type mui) {
-      homogeneous = true;
-      gmm::resize(lambda_, 1); lambda_[0] = lambdai;
-      gmm::resize(mu_, 1); mu_[0] = mui;
-    }
-
-    void set_Lame_coeff_(const VECTOR &lambdai, const VECTOR &mui) {
-      homogeneous = false;
-      gmm::resize(lambda_, mf_data.nb_dof()); gmm::copy(lambdai, lambda_);
-      gmm::resize(mu_, mf_data.nb_dof()); gmm::copy(mui, mu_);
-    }
-    
   public :
+
+    const T_MATRIX &get_K(void) {
+      this->context_check(); 
+      if (!K_uptodate) {
+	if (&lambda_.mf() != &mu_.mf()) 
+	DAL_THROW(failure_error,
+		  "lambda and mu should share the same mesh_fem");
+	gmm::resize(K, nbdof, nbdof);
+	gmm::clear(K);
+	gmm::sub_interval I1(0, mf_ut.nb_dof());
+	gmm::sub_interval I2(mf_ut.nb_dof(), mf_u3.nb_dof()+mf_theta.nb_dof());
+	gmm::sub_interval I3(mf_ut.nb_dof()+mf_u3.nb_dof(),mf_theta.nb_dof());
+	VECTOR lambda(lambda_.get()), mu(mu_.get());
+	gmm::scale(lambda, value_type(2) * epsilon);
+	gmm::scale(mu, value_type(2) * epsilon);
+	asm_stiffness_matrix_for_linear_elasticity
+	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(), lambda, mu,
+	   mf_ut.linked_mesh().get_mpi_region());
+	// gmm::scale(mu, value_type(1) / value_type(2));
+	if (mitc) 
+	  asm_stiffness_matrix_for_plate_transverse_shear_mitc
+	    (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
+	     mu, mf_ut.linked_mesh().get_mpi_region());
+	else
+	  asm_stiffness_matrix_for_plate_transverse_shear
+	    (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
+	     mu, mf_ut.linked_mesh().get_mpi_region());
+	gmm::scale(lambda, epsilon * epsilon / value_type(3));
+	// gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
+	gmm::scale(mu, epsilon * epsilon / value_type(3));
+	asm_stiffness_matrix_for_linear_elasticity
+	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda, mu,
+	   mf_ut.linked_mesh().get_mpi_region());
+	K_uptodate = true;
+      }
+    }
+
+    mdbrick_parameter<VECTOR> &lambda(void) { return lambda_; }
+    const mdbrick_parameter<VECTOR> &lambda(void) const { return lambda_; }
+    mdbrick_parameter<VECTOR> &mu(void) { return mu_; }
+    const mdbrick_parameter<VECTOR> &mu(void) const { return mu_; }
+
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
-      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
-      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+      gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
 		gmm::sub_vector(MS.residu(), SUBI));
     }
 
-    void set_Lame_coeff(value_type lambdai, value_type mui)
-    { set_Lame_coeff_(lambdai, mui); this->force_update(); }
-
-    void set_Lame_coeff(const VECTOR &lambdai, const VECTOR &mui)
-    { set_Lame_coeff_(lambdai, mui); this->force_update(); }
-
     void set_elastic_coeff(value_type E, value_type nu) {
-      set_Lame_coeff(nu * E / (value_type(1) - nu*nu),
-		     E/(value_type(2)*(value_type(1)+nu)));
+      lambda_.set(nu * E / (value_type(1) - nu*nu));
+      mu_.set(E/(value_type(2)*(value_type(1)+nu)));
     }
 
-    void set_mitc(void) { mitc = true; this->force_update(); }
+    void set_mitc(void) {
+      if (!mitc) {
+	mitc = true;  K_uptodate = false;
+	this->change_context();
+      }
+    }
 
     SUBVECTOR get_solution(MODEL_STATE &MS) {
       gmm::sub_interval SUBU(this->first_index(), nbdof);
@@ -276,46 +279,31 @@ namespace getfem {
       this->add_proper_mesh_fem(mf_ut, MDBRICK_LINEAR_PLATE, 1);
       this->add_proper_mesh_fem(mf_u3, MDBRICK_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_LINEAR_PLATE, 0);
-      this->add_dependency(mf_data);
       this->update_from_context();
     }
 
-    // constructor for a homogeneous material (constant lambda and mu)
+    /** constructor for a homogeneous material (constant lambda and mu).
+     * @param epsilon the thickness of the plate.
+     */
     mdbrick_isotropic_linearized_plate
     (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
-     mesh_fem &mf_data_, value_type lambdai, value_type mui,
-     double epsilon_)
+     value_type lambdai, value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), mf_data(mf_data_), epsilon(epsilon_)
-    { set_Lame_coeff_(lambdai, mui); init_(); }
+      mf_theta(mf_theta_), lambda_(mf_ut_.linked_mesh(), this),
+      mu_(mf_ut_.linked_mesh(), this), epsilon(epsilon_)
+    { lambda_.set(lambdai); mu_.set(mui); init_(); }
 
-    // constructor for a non-homogeneous material
-    mdbrick_isotropic_linearized_plate
-    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
-     mesh_fem &mf_data_, const VECTOR &lambdai, const VECTOR &mui,
-     double epsilon_)
-      : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), mf_data(mf_data_), epsilon(epsilon_)
-    { set_Lame_coeff_(lambdai, mui); init_(); }
- 
-    // constructor for a homogeneous material (constant lambda and mu) with
-    // sub integration
+    /** constructor for a homogeneous material (constant lambda and mu) with
+     * sub integration.
+     * @param epsilon the thickness of the plate.
+     */
     mdbrick_isotropic_linearized_plate
     (mesh_im &mim_, mesh_im &mim_subint_, mesh_fem &mf_ut_, mesh_fem &mf_u3_,
-     mesh_fem &mf_theta_, mesh_fem &mf_data_, value_type lambdai,
-     value_type mui, double epsilon_)
+     mesh_fem &mf_theta_, value_type lambdai, value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), mf_data(mf_data_), epsilon(epsilon_)
-    { set_Lame_coeff_(lambdai, mui); init_(); }
-
-    // constructor for a non-homogeneous material
-    mdbrick_isotropic_linearized_plate
-    (mesh_im &mim_, mesh_im &mim_subint_, mesh_fem &mf_ut_, mesh_fem &mf_u3_,
-     mesh_fem &mf_theta_, mesh_fem &mf_data_, const VECTOR &lambdai,
-     const VECTOR &mui, double epsilon_)
-      : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), mf_data(mf_data_), epsilon(epsilon_)
-    { set_Lame_coeff_(lambdai, mui); init_(); }
+	mf_theta(mf_theta_), lambda_(mf_ut_.linked_mesh(), this),
+      mu_(mf_ut_.linked_mesh(), this), epsilon(epsilon_)
+    {  lambda_.set(lambdai); mu_.set(mui); init_(); }
  
   };
 
@@ -378,129 +366,116 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
 
     mesh_im &mim;
-    mesh_fem &mf_ut, &mf_u3, &mf_theta, &mf_data;
+    mesh_fem &mf_ut, &mf_u3, &mf_theta;
     value_type epsilon;
-    VECTOR lambda_, mu_;
-    bool homogeneous, symmetrized;
+    mdbrick_parameter<VECTOR> lambda_, mu_;
+    bool homogeneous, symmetrized, K_uptodate;
     T_MATRIX K;
     size_type nbdof;
 
-    void proper_update(void) {
-      gmm::clear(K);
+    virtual void proper_update(void) {
+      K_uptodate = false;
       nbdof = mf_ut.nb_dof() + mf_u3.nb_dof()*3 + mf_theta.nb_dof();
-      gmm::resize(K, nbdof, nbdof);
-      VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
-      if (homogeneous) {
-	std::fill(lambda.begin(), lambda.end(), value_type(lambda_[0]));
-	std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
-      }
-      else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
-      size_type nd1=mf_ut.nb_dof(), nd2=mf_u3.nb_dof(), nd3=mf_theta.nb_dof();
-      gmm::sub_interval I1(0, nd1), I2(nd1, nd2), I3(nd1 + nd2, nd3);
-      gmm::sub_interval I4(nd1 + nd2 + nd3, nd2), I5(nd1 + 2*nd2 + nd3, nd2);
-      
-      asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I1), mim, mf_ut, mf_data, lambda, mu);
-      gmm::scale(gmm::sub_matrix(K, I1), value_type(2) * epsilon);
-      
-      
-      asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I2),
-						     mim, mf_u3);
-      gmm::scale(gmm::sub_matrix(K, I2),
-		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
-      
-      asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I3), mim, mf_theta, mf_data, lambda, mu);
-      //   gmm::scale(gmm::sub_matrix(K, I3),
-      //  	 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
-      
-      
-      asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mim, mf_u3, mf_theta);
-      gmm::scale(gmm::sub_matrix(K, I2, I3),
-		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
-
-      //       cout << "\n\nval p de I2 I3 ";
-      //       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
+    }
 
 
-      asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3), mim, mf_u3, mf_theta);
-      gmm::scale(gmm::sub_matrix(K, I4, I3), epsilon*epsilon/value_type(3));
 
-      //       cout << "\n\nval p de I4 I3 ";
-      //       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
-     
-
-      asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)), mim,
-			    mf_u3, mf_theta);
-      gmm::scale(gmm::sub_matrix(K, I3, I4), epsilon*epsilon/value_type(3));
-
-
-      asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I5)), mim,
-			   mf_u3, mf_theta);
-      gmm::scale(gmm::sub_matrix(K, I3, I5), epsilon*epsilon/value_type(3));
-
-      if (!symmetrized)
-	asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I5),
+    const T_MATRIX &get_K(void) {
+      this->context_check(); 
+      if (!K_uptodate) {
+	gmm::clear(K);
+	gmm::resize(K, nbdof, nbdof);
+	size_type nd1=mf_ut.nb_dof(), nd2=mf_u3.nb_dof(),nd3=mf_theta.nb_dof();
+	gmm::sub_interval I1(0, nd1), I2(nd1, nd2), I3(nd1 + nd2, nd3);
+	gmm::sub_interval I4(nd1 + nd2 + nd3, nd2), I5(nd1 + 2*nd2 + nd3, nd2);
+	
+	asm_stiffness_matrix_for_linear_elasticity
+	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(),
+	   lambda.get(), mu_.get());
+	gmm::scale(gmm::sub_matrix(K, I1), value_type(2) * epsilon);
+	
+	
+	asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I2),
 						       mim, mf_u3);
-      if (symmetrized) {
-	asm_mass_matrix(gmm::sub_matrix(K, I3), mim, mf_theta);
-	asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)), mim,
+	gmm::scale(gmm::sub_matrix(K, I2),
+		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
+	
+	asm_stiffness_matrix_for_linear_elasticity
+	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda.get(),
+	   mu_.get());
+	//   gmm::scale(gmm::sub_matrix(K, I3),
+	//  	 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
+	
+	
+	asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mim, mf_u3, mf_theta);
+	gmm::scale(gmm::sub_matrix(K, I2, I3),
+		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
+	
+	//       cout << "\n\nval p de I2 I3 ";
+	//       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
+	
+	
+	asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3),mim, mf_u3, mf_theta);
+	gmm::scale(gmm::sub_matrix(K, I4, I3), epsilon*epsilon/value_type(3));
+	
+	//       cout << "\n\nval p de I4 I3 ";
+	//       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
+	
+	
+	asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)), mim,
+			      mf_u3, mf_theta);
+	gmm::scale(gmm::sub_matrix(K, I3, I4), epsilon*epsilon/value_type(3));
+	
+	
+	asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I5)), mim,
 			     mf_u3, mf_theta);
-	gmm::scale(gmm::sub_matrix(K, I3, I2),
-		   value_type(2) * epsilon * epsilon * epsilon / value_type(3));
-
-	asm_stiffness_matrix_for_homogeneous_laplacian
-	  (gmm::sub_matrix(K, I2, I5), mim, mf_u3);
-	gmm::scale(gmm::sub_matrix(K, I2, I5), epsilon*epsilon/value_type(3));
-	asm_stiffness_matrix_for_homogeneous_laplacian
-	  (gmm::sub_matrix(K, I5, I2), mim, mf_u3);
-	gmm::scale(gmm::sub_matrix(K, I5, I2), epsilon*epsilon/value_type(3));
-	asm_coupling_u3theta(gmm::sub_matrix(K, I5, I3), mim, mf_u3, mf_theta);
-	gmm::scale(gmm::sub_matrix(K, I5, I3), epsilon*epsilon/value_type(3));
+	gmm::scale(gmm::sub_matrix(K, I3, I5), epsilon*epsilon/value_type(3));
+	
+	if (!symmetrized)
+	  asm_stiffness_matrix_for_homogeneous_laplacian
+	    (gmm::sub_matrix(K, I5), mim, mf_u3);
+	if (symmetrized) {
+	  asm_mass_matrix(gmm::sub_matrix(K, I3), mim, mf_theta);
+	  asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)),
+			       mim, mf_u3, mf_theta);
+	  gmm::scale(gmm::sub_matrix(K, I3, I2),
+		     value_type(2)*epsilon*epsilon*epsilon / value_type(3));
+	  
+	  asm_stiffness_matrix_for_homogeneous_laplacian
+	    (gmm::sub_matrix(K, I2, I5), mim, mf_u3);
+	  gmm::scale(gmm::sub_matrix(K, I2, I5),epsilon*epsilon/value_type(3));
+	  asm_stiffness_matrix_for_homogeneous_laplacian
+	    (gmm::sub_matrix(K, I5, I2), mim, mf_u3);
+	  gmm::scale(gmm::sub_matrix(K, I5, I2),epsilon*epsilon/value_type(3));
+	  asm_coupling_u3theta(gmm::sub_matrix(K, I5, I3),mim,mf_u3, mf_theta);
+	  gmm::scale(gmm::sub_matrix(K, I5, I3),epsilon*epsilon/value_type(3));
+	}
+	gmm::scale(gmm::sub_matrix(K, I3),
+		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
+	
+	this->proper_mixed_variables.clear();
+	this->proper_mixed_variables.add(nbdof - mf_u3.nb_dof()*2,
+					 mf_u3.nb_dof()*2);
+	K_uptodate = true;
       }
-      gmm::scale(gmm::sub_matrix(K, I3),
- 		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
-
-      this->proper_mixed_variables.clear();
-      this->proper_mixed_variables.add(nbdof - mf_u3.nb_dof()*2,
-				       mf_u3.nb_dof()*2);
     }
-
-    void set_Lame_coeff_(value_type lambdai, value_type mui) {
-      homogeneous = true;
-      gmm::resize(lambda_, 1); lambda_[0] = lambdai;
-      gmm::resize(mu_, 1); mu_[0] = mui;
-    }
-
-    void set_Lame_coeff_(const VECTOR &lambdai, const VECTOR &mui) {
-      homogeneous = false;
-      gmm::resize(lambda_, mf_data.nb_dof()); gmm::copy(lambdai, lambda_);
-      gmm::resize(mu_, mf_data.nb_dof()); gmm::copy(mui, mu_);
-    }
-    
     
   public :
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
-      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
-      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+      gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
 		gmm::sub_vector(MS.residu(), SUBI));
     }
 
-    void set_Lame_coeff(value_type lambdai, value_type mui)
-    { set_Lame_coeff(lambdai, mui); this->force_update(); }
-
-    void set_Lame_coeff(const VECTOR &lambdai, const VECTOR &mui)
-    { set_Lame_coeff(lambdai, mui); this->force_update(); }
-
     void set_elastic_coeff(value_type E, value_type nu) {
-      set_Lame_coeff(nu * E / (value_type(1) - nu*nu),
-		     E/(value_type(2)*(value_type(1)+nu)));
+      lambda_.set(nu * E / (value_type(1) - nu*nu));
+      mu_.set(E/(value_type(2)*(value_type(1)+nu)));
     }
 
     SUBVECTOR get_solution(MODEL_STATE &MS) {
@@ -536,7 +511,6 @@ namespace getfem {
       this->add_proper_mesh_fem(mf_theta, MDBRICK_MIXED_LINEAR_PLATE, 0); 
       this->add_proper_mesh_fem(mf_u3, MDBRICK_MIXED_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_u3, MDBRICK_MIXED_LINEAR_PLATE, 0);
-      this->add_dependency(mf_data);
       this->proper_is_symmetric_ = symmetrized;
       this->proper_is_coercive_ = false;
       this->update_from_context();
@@ -545,27 +519,18 @@ namespace getfem {
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_mixed_isotropic_linearized_plate
     (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
-     mesh_fem &mf_data_, value_type lambdai, value_type mui,
+     value_type lambdai, value_type mui,
      double epsilon_, bool sym = false)
       : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
-	mf_data(mf_data_), epsilon(epsilon_), symmetrized(sym)
-    { set_Lame_coeff_(lambdai, mui); init_(); }
-
-    // constructor for a non-homogeneous material
-    mdbrick_mixed_isotropic_linearized_plate
-    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
-     mesh_fem &mf_data_, const VECTOR &lambdai, const VECTOR &mui,
-     double epsilon_, bool sym = false)
-      : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
-	mf_data(mf_data_), epsilon(epsilon_), symmetrized(sym)
-    { set_Lame_coeff_(lambdai, mui); init_(); }
+	mf_data(mf_data_), lambda_(mf_ut_.linked_mesh(), this),
+      mu_(mf_ut_.linked_mesh(), this), epsilon(epsilon_), symmetrized(sym)
+    { lambda_.set(lambdai); mu_.set(mui); init_(); }
  
   };
 
-
   /**
-     Plate source term brick.
-  */
+   *  Plate source term brick.
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_source_term : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -573,20 +538,50 @@ namespace getfem {
 
     mdbrick_source_term<MODEL_STATE> *ut_part, *theta_part, *u3_part,
       *phi_part, *sub_problem;
+    
+    mdbrick_parameter<VECTOR> B_;
 
-    virtual void proper_update(void) {}
+    virtual void proper_update(void) {
+      size_type n = B_.mf().nb_dof();
+      VECTOR Bt(2*n);
+
+      gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(0, n, 3)),
+		gmm::sub_vector(Bt, gmm::sub_slice(0, n, 2)));
+      gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(1, n, 3)),
+		gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
+     
+      ut_part->source_term().set(Bt);
+      
+      VECTOR Bn(n);
+      gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(2, n, 3)), Bn);
+      if (!mixed || symmetrized)
+	u3_part->source_term().set(Bn);
+      
+      if (mixed && !symmetrized)
+	phi_part->source_term().set(Bn);
+    }
 
   public :
+
+    mdbrick_parameter<VECTOR> &B(void) { return B_; }
+    const mdbrick_parameter<VECTOR> &B(void) const { return B_; }
+    mdbrick_parameter<VECTOR> &M(void) { return ut_part->source_term(); }
+    const mdbrick_parameter<VECTOR> &M(void) const
+    { return  ut_part->source_term(); }
+
+
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					   size_type) { }
     virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) { }
 
     mdbrick_plate_source_term(mdbrick_abstract<MODEL_STATE> &problem,
-			      mesh_fem &mf_data, const VECTOR &B,
-			      const VECTOR &M,
+			      mesh_fem &mf_data, const VECTOR &B__,
+			      const VECTOR &M__,
 			      size_type bound = size_type(-1),
-			      size_type num_fem = 0) {
+			      size_type num_fem = 0)
+      :  B_(mf_data_, this, 3) {
+      B_.set(B__);
       ut_part = phi_part = u3_part = theta_part = 0;
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
@@ -603,32 +598,27 @@ namespace getfem {
 	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
 	DAL_THROW(failure_error, "The mesh_fem number is not correct");
 
-      size_type n = gmm::vect_size(B) / 3;
-      VECTOR Bt(2*n);
-      gmm::copy(gmm::sub_vector(B, gmm::sub_slice(0, n, 3)),
-		gmm::sub_vector(Bt, gmm::sub_slice(0, n, 2)));
-      gmm::copy(gmm::sub_vector(B, gmm::sub_slice(1, n, 3)),
-		gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
       theta_part = new mdbrick_source_term<MODEL_STATE>
-	(problem, mf_data, M, bound, num_fem+2);
+	(problem, mf_data, M__, bound, num_fem+2);
 
       ut_part = sub_problem = new mdbrick_source_term<MODEL_STATE>
-	(*theta_part, mf_data, Bt, bound, num_fem);
-      VECTOR Bn(n);
-      gmm::copy(gmm::sub_vector(B, gmm::sub_slice(2, n, 3)), Bn);
+	(*theta_part, mf_data, VECTOR(), bound, num_fem);
+    
       if (!mixed || symmetrized)
 	sub_problem = u3_part = new mdbrick_source_term<MODEL_STATE>
-	  (*ut_part, mf_data, Bn, bound, num_fem+1);
+	  (*ut_part, mf_data, VECTOR(), bound, num_fem+1);
       
       if (mixed && !symmetrized)
 	sub_problem = phi_part = new mdbrick_source_term<MODEL_STATE>
-	  (*sub_problem, mf_data, Bn, bound, num_fem+4);
+	  (*sub_problem, mf_data, VECTOR(), bound, num_fem+4);
 
       this->add_sub_brick(*sub_problem);
+
       if (bound != size_type(-1)) {
 	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
 	this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_NEUMANN);
       }
+
       this->update_from_context();
     }
 
@@ -662,13 +652,12 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &, size_type ,size_type) {}
 
     mdbrick_plate_simple_support(mdbrick_abstract<MODEL_STATE> &problem,
-				 mesh_fem &mf_data, size_type bound,
-				 size_type num_fem = 0,
+				 size_type bound, size_type num_fem = 0,
 				 bool with_mult = false) : phi_part(0) {
       ut_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	(problem, mf_data, bound, num_fem, with_mult);
+	(problem, bound, num_fem, with_mult);
       u3_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	(*ut_part, mf_data, bound, num_fem+1, with_mult);
+	(*ut_part, bound, num_fem+1, with_mult);
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
 	  == MDBRICK_LINEAR_PLATE)
@@ -704,8 +693,8 @@ namespace getfem {
 
 
   /**
-     Clamped condition for plate model brick.
-  */
+   *  Clamped condition for plate model brick.
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_clamped_support: public mdbrick_abstract<MODEL_STATE> {
     
@@ -723,12 +712,11 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) {}
 
     mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
-				  mesh_fem &mf_data, size_type bound,
-				  size_type num_fem = 0,
+				  size_type bound, size_type num_fem = 0,
 				  bool with_mult = false)
-      : ut_part(problem, mf_data, bound, num_fem, with_mult),
-	u3_part(ut_part, mf_data, bound, num_fem+1, with_mult),
-	theta_part(u3_part, mf_data, bound, num_fem+2, with_mult),
+      : ut_part(problem, bound, num_fem, with_mult),
+	u3_part(ut_part, bound, num_fem+1, with_mult),
+	theta_part(u3_part, bound, num_fem+2, with_mult),
 	phi_part(0) {
 
       bool mixed = false, symmetrized = false;
@@ -748,7 +736,7 @@ namespace getfem {
 
       if (mixed) {
 	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	  (theta_part, mf_data, bound, num_fem+4, with_mult);
+	  (theta_part, bound, num_fem+4, with_mult);
 	this->add_sub_brick(*phi_part);
       }
       else { 
@@ -784,7 +772,7 @@ namespace getfem {
   }
 
   /**
-     Free edges condition for mixed plate model brick.
+   *  Free edges condition for mixed plate model brick.
    */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_closing: public mdbrick_abstract<MODEL_STATE> {
@@ -804,7 +792,7 @@ namespace getfem {
       std::vector<size_type> cv_nums;
       std::vector<short_type> face_nums;
       
-      getfem_mesh *mesh = &(mf_theta->linked_mesh());
+      const getfem_mesh *mesh = &(mf_theta->linked_mesh());
     
       getfem::mesh_region border_faces;
       getfem::outer_faces_of_mesh(*mesh, border_faces);

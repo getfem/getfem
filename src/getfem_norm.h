@@ -88,7 +88,7 @@ namespace getfem
       /* coordinates on the ref convex of each mesh */
       std::vector<base_node> nodes1(im->nb_points_on_convex()), 
 	nodes2(im->nb_points_on_convex());
-      gti.init(m2.convex(slmcv), pgt2);
+      gti.init(m2.convex(slmcv).points(), pgt2);
       //cout << "hello, doing cv " << ms.cv << " <-> " << slmcv << " [" << ms.splx_in.card() << " simplexes]\n";
       for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
 	const slice_simplex &s = ms.simplexes[is];

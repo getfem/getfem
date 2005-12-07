@@ -56,25 +56,31 @@ namespace getfem {
   /*									   */
   /* ********************************************************************* */
 
-  struct MESH_CLEAR  /* clear message for the structure.                   */
-  { operator int(void) const { return 0; } };
-  struct MESH_DELETE  /* clear message for the structure.                  */
-  { operator int(void) const { return 1; } };
+  class getfem_mesh;
+
+  struct MESH_CLEAR { /* clear message for the structure.                  */
+    enum { ID = 0 }; 
+  };
+  struct MESH_DELETE { /* clear message for the structure.                  */
+    enum { ID = 1 }; 
+    const getfem_mesh *mesh;
+    MESH_DELETE(const getfem_mesh &m) : mesh(&m) {}
+  };
   struct MESH_ADD_CONVEX { 
+    enum { ID = 5 }; 
     size_t icv;
-    operator int(void) const { return 5; }
     MESH_ADD_CONVEX(size_t i) { icv = i; }
     MESH_ADD_CONVEX(void) {}
   };
   struct MESH_SUP_CONVEX { 
+    enum { ID = 6 }; 
     size_t icv;
-    operator int(void) const { return 6; }
     MESH_SUP_CONVEX(size_t i) { icv = i; }
     MESH_SUP_CONVEX(void) {}
   };
   struct MESH_SWAP_CONVEX { 
+    enum { ID = 7 }; 
     size_t icv1, icv2;
-    operator int(void) const { return 7; }
     MESH_SWAP_CONVEX(size_t i, size_t j) { icv1 = i; icv2 = j; }
     MESH_SWAP_CONVEX(void) {}
   };
@@ -158,7 +164,7 @@ namespace getfem {
      * copy_from method! */
     
     double eps_p;  /* infinity distance under wich two points are equal. */
-    msg_sender lkmsg; /* gestionnaire de msg.                            */
+    mutable msg_sender lkmsg; /* gestionnaire de msg.                    */
     dal::dynamic_array<bgeot::pgeometric_trans> gtab;
     dal::bit_vector trans_exists;
     
@@ -175,14 +181,14 @@ namespace getfem {
     dal::bit_vector valid_sub_regions;
 
     void touch(void) { modified = true; cuthill_mckee_uptodate = false; context_dependencies::touch(); }    
-    void compute_mpi_region(void);
-    void compute_mpi_sub_region(size_type);
+    void compute_mpi_region(void) const ;
+    void compute_mpi_sub_region(size_type) const;
 
   public :
     
-    const mesh_region& get_mpi_region(void)
+    const mesh_region& get_mpi_region(void) const
     { if (modified) compute_mpi_region(); return mpi_region; }
-    const mesh_region& get_mpi_sub_region(size_type n) {
+    const mesh_region& get_mpi_sub_region(size_type n) const {
       if (modified) compute_mpi_region();
       if (n == size_type(-1)) return mpi_region;
       if (!(valid_sub_regions.is_in(n))) compute_mpi_sub_region(n);
@@ -191,9 +197,9 @@ namespace getfem {
 #else
     void touch(void) { cuthill_mckee_uptodate = false; context_dependencies::touch(); }
   public :
-    const mesh_region get_mpi_region(void)
+    const mesh_region get_mpi_region(void) const 
     { return mesh_region::all_convexes(); }
-    const mesh_region get_mpi_sub_region(size_type n) {
+    const mesh_region get_mpi_sub_region(size_type n) const {
       if (n == size_type(-1)) return get_mpi_region();
       return cvf_sets[n];
     }
@@ -203,8 +209,7 @@ namespace getfem {
     /// Constructor.
     getfem_mesh(dim_type NN = dim_type(-1)); 
     double eps(void) const { return eps_p; }
-    const msg_sender &lmsg_sender(void) const { return lkmsg; }
-    msg_sender &lmsg_sender(void) { return lkmsg; }
+    msg_sender &lmsg_sender(void) const { return lkmsg; }
     void update_from_context(void) const {}
     
     /** Add the point pt to the mesh and return the index of the
@@ -463,7 +468,7 @@ namespace getfem {
     /** Clone a mesh */
     void copy_from(const getfem_mesh& m); /* might be the copy constructor */
     size_type memsize() const;
-    ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
+    ~getfem_mesh() { lmsg_sender().send(MESH_DELETE(*this)); }
 
     friend class mesh_region;
   private:

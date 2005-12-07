@@ -64,13 +64,17 @@ namespace getfem {
   }
   
   void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
-  void mesh_fem::receipt(const MESH_DELETE &) {
-    clear(); is_valid_ = false;
-    sup_sender(linked_mesh_->lmsg_sender());
-  }
+  void mesh_fem::receipt(const MESH_DELETE &) { clear(); }
   void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
     if (fe_convex[m.icv])
       { fe_convex[m.icv] = false; dof_enumeration_made = false; }
+  }
+  void mesh_fem::receipt(const MESH_ADD_CONVEX &m) {
+    if (auto_add_elt_K != size_type(-1)) {
+      pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(m.icv), 
+				      auto_add_elt_K);
+      set_finite_element(m.icv, pf);
+    }
   }
   void mesh_fem::receipt(const MESH_SWAP_CONVEX &m) { 
     fe_convex.swap(m.icv1, m.icv2);
@@ -273,107 +277,7 @@ namespace getfem {
   }
 
 
-//     typedef dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort_type;
 
-//   static size_type add_vect_dof_to_dof_sort(dof_sort_type &dof_sort, fem_dof &fd, dim_type Qdim) {
-//     pdof_description paux = fd.pnd;
-//     size_type j0(0), j;
-//     bool present = false;
-//     for (size_type k = 0; k < Qdim; ++k) {
-//       fd.pnd = to_coord_dof(paux, k);
-      
-//       if (dof_linkable(fd.pnd))
-// 	j = dof_sort.add_norepeat(fd, false, &present);
-//       else
-// 	j = dof_sort.add(fd);
-//       if (k == 0) { 
-// 	j0 = j;
-// 	if (present) {
-// 	  bool ok = true;
-// 	  for (size_type l = 1; l < Qdim; ++l)
-// 	    if (coord_index_of_dof(dof_sort[j+l].pnd) != l) ok = false;
-// 	  if (ok) break;
-// 	}
-//       }
-//       else if (j != j0 + k) dof_sort.swap(j, j0+k);
-//     }
-//     return j0;
-//   }
-
-//   static double enumerate_dof_time = 0;
-
-//   /// Enumeration of dofs
-//   void mesh_fem::enumerate_dof(void) const {
-//     if (fe_convex.card() == 0) return;
-//     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
-//     double t = ftool::uclock_sec();
-
-//     dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort;
-//     dal::bit_vector encountered_global_dof;
-//     dal::dynamic_array<size_type> ind_global_dof;
-//     std::vector<size_type> tab;
-
-//     size_type cv = fe_convex.first_true();
-//     fem_dof fd;
-
-//     dof_structure.clear();
-//     encountered_global_dof.clear();
-
-//     bgeot::pstored_point_tab pspt_old = 0;
-//     bgeot::pgeometric_trans pgt_old = 0;
-//     bgeot::pgeotrans_precomp pgp = 0;
-//     for (size_type icv=0; icv < cmk.size(); ++icv) {
-//       cv = cmk[icv];
-//       if (!fe_convex.is_in(cv)) continue;
-//       pfem pf = fem_of_element(cv);
-//       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-//       bgeot::pstored_point_tab pspt = pf->node_tab(cv);
-//       if (pgt != pgt_old || pspt != pspt_old)
-// 	pgp = bgeot::geotrans_precomp(pgt, pspt);
-//       pgt_old = pgt; pspt_old = pspt;
-      
-//       size_type nbd = pf->nb_dof(cv); 
-//       pdof_description andof = global_dof(pf->dim());
-//       tab.resize(nbd);
-
-//       for (size_type i = 0; i < nbd; i++) {
-// 	fd.P.resize(linked_mesh().dim()); 
-// 	fd.pnd = pf->dof_types()[i];
-	
-// 	if (dof_linkable(fd.pnd))
-// 	  pgp->transform(linked_mesh().points_of_convex(cv), i, fd.P);
-// 	else fd.P = linked_mesh().points_of_convex(cv)[0];
- 
-// 	if (fd.pnd == andof) {
-// 	  // cout << "detecting a specialdof\n";
-// 	  size_type num = pf->index_of_global_dof(cv, i);
-// 	  if (!(encountered_global_dof[num])) {
-// 	    if (pf->target_dim() == 1 && Qdim != 1)
-// 	      ind_global_dof[num] = add_vect_dof_to_dof_sort(dof_sort, fd, Qdim);
-// 	    else
-// 	      ind_global_dof[num] = dof_sort.add(fd);
-// 	    encountered_global_dof[num] = true;
-// 	  }
-// 	  tab[i] = ind_global_dof[num];
-// 	} else if (pf->target_dim() == 1 && Qdim != 1) {
-// 	  tab[i] = add_vect_dof_to_dof_sort(dof_sort, fd, Qdim);
-// 	} else {
-// 	  if (dof_linkable(fd.pnd))
-// 	    tab[i] = dof_sort.add_norepeat(fd);
-// 	  else
-// 	    tab[i] = dof_sort.add(fd);
-// 	}
-//       }
-      
-//       dof_structure.add_convex_noverif(pf->structure(cv), tab.begin(), cv);
-//    }
-    
-//     dof_enumeration_made = true;
-//     nb_total_dof = (dof_sort.card() == 0) ? 0 : dof_sort.index().last_true()+1;
-
-//     enumerate_dof_time += ftool::uclock_sec() - t;
-//     cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec\n";
-//   }
 
 
   void mesh_fem::clear(void) {
@@ -383,14 +287,14 @@ namespace getfem {
     dof_structure.clear();
   }
 
-  mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q)
-    : dof_enumeration_made(false), Qdim(Q) {
+  mesh_fem::mesh_fem(const getfem_mesh &me, dim_type Q)
+    : dof_enumeration_made(false), auto_add_elt_K(size_type(-1)), Qdim(Q) {
     linked_mesh_ = &me;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
-	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
-	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_DELETE()));
-    is_valid_ = true;
+	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
+	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID) |
+	       lmsg::mask(MESH_ADD_CONVEX::ID));
   }
 
   mesh_fem::~mesh_fem() {}
@@ -524,6 +428,76 @@ namespace getfem {
     write_to_file(o);
     o.close();
   }
+
+  struct mf__key_ {
+    const getfem_mesh *pmesh;
+    dim_type order;
+    mf__key_(const getfem_mesh &mesh, dim_type o) : pmesh(&mesh),order(o) {}
+    bool operator <(const mf__key_ &a) const {
+    if (pmesh < a.pmesh) return true; else
+      if (a.pmesh < pmesh) return false; else
+	if (order < a.order) return true; else return false;
+    }
+  };
+
+
+  class classical_mesh_fem_pool : public getfem_mesh_receiver {
+
+    typedef const mesh_fem * pmesh_fem;
+    typedef std::map<mf__key_, pmesh_fem> mesh_fem_tab;
+
+    mesh_fem_tab mfs;
+
+    // void receipt(const MESH_CLEAR &) {}
+    void receipt(const MESH_DELETE &M) {
+      for (mesh_fem_tab::iterator it = mfs.begin(); it != mfs.end(); ) {
+	mesh_fem_tab::iterator it2 = it; it2 ++;
+	if (it->first.pmesh == M.mesh) mfs.erase(it);
+	it = it2;
+      }
+    }
+//     void receipt(const MESH_ADD_CONVEX &m) {}
+//     void receipt(const MESH_SUP_CONVEX &m) {}
+//     void receipt(const MESH_SWAP_CONVEX &m) {}
+
+  public :
+
+    const mesh_fem &operator()(const getfem_mesh &mesh, dim_type o) {
+
+      mf__key_ key(mesh, o);
+      mesh_fem_tab::iterator it = mfs.find(key);
+      assert(it == mfs.end() || it->second->context_valid());
+      
+      if (it == mfs.end()) {
+	// the list of mesh pointers should be sorted ...
+	for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
+	  if (itt->first.pmesh == &mesh) goto nothing_to_do;
+	add_sender(mesh.lmsg_sender(), *this, lmsg::mask(MESH_DELETE::ID));
+	
+      nothing_to_do :
+	
+	mesh_fem *pmf = new mesh_fem(mesh);
+	pmf->set_auto_add(o);
+	pmf->set_classical_finite_element(o);
+	return *(mfs[key] = pmf);
+      }
+      else return *(it->second);
+    }
+    
+  };
+
+  const mesh_fem &classical_mesh_fem(const getfem_mesh &mesh,
+				     dim_type o) {
+    classical_mesh_fem_pool &pool
+      = dal::singleton<classical_mesh_fem_pool>::instance();
+    return pool(mesh, o);
+  }
+
+
+
+
+
+
 }  /* end of namespace getfem.                                             */
 
 

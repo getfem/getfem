@@ -33,49 +33,9 @@
 
 namespace getfem {
 
-  typedef dal::shared_ptr<mesh_fem> pmesh_fem;
-
-  struct mf__key_ {
-    getfem_mesh *pmesh;
-    dim_type order;
-    mf__key_(getfem_mesh &mesh, dim_type o) : pmesh(&mesh),order(o) {}
-    bool operator <(const mf__key_ &a) const {
-    if (pmesh < a.pmesh) return true; else
-      if (a.pmesh < pmesh) return false; else
-	if (order < a.order) return true; else return false;
-    }
-  };
-
-  typedef std::map<mf__key_, pmesh_fem> mesh_fem_tab;
-
-  dal::shared_ptr<mesh_fem> level_set::add_mesh_fem(getfem_mesh &mesh,
-						    dim_type o) {
-    mesh_fem_tab& mesh_fems = dal::singleton<mesh_fem_tab>::instance();
-    mf__key_ key(mesh, o);
-    mesh_fem_tab::iterator it = mesh_fems.find(key);
-    if (it != mesh_fems.end() && !(it->second->is_valid()))
-      { mesh_fems.erase(key); it = mesh_fems.end(); }
-    if (it == mesh_fems.end()) {
-      mesh_fem *pmf = new mesh_fem(mesh);
-      pmf->set_classical_finite_element(o);
-      return (mesh_fems[key] = pmesh_fem(pmf));
-    }
-    else return it->second;
-  }
-
   void level_set::reinit(void) {
-    mf->set_classical_finite_element(degree_);
     primary_.resize(mf->nb_dof());
     if (has_secondary()) secondary_.resize(mf->nb_dof());
-  }
-
-  void level_set::sup_mesh_fem(getfem_mesh &mesh, dim_type o) {
-    mesh_fem_tab& mesh_fems = dal::singleton<mesh_fem_tab>::instance();
-    mf__key_ key(mesh, o);
-    mesh_fem_tab::iterator it = mesh_fems.find(key);
-    if (it != mesh_fems.end()) {
-      if (it->second.use_count() <= 2) mesh_fems.erase(key);
-    }
   }
 
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,

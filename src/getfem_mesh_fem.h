@@ -1,3 +1,4 @@
+
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
@@ -156,11 +157,12 @@ namespace getfem
     
     dal::dynamic_array<pfem> f_elems;
     dal::bit_vector fe_convex;
-    getfem_mesh *linked_mesh_;
+    const getfem_mesh *linked_mesh_;
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
-    bool is_valid_;
+    size_type auto_add_elt_K; /* Degree of the fem for automatic addition */
+                       /* of element option. (-1 = no automatic addition) */
     dim_type Qdim; /* this is the "global" target_dim */
     
   public :
@@ -168,15 +170,20 @@ namespace getfem
     typedef base_node point_type;
     void update_from_context(void) const {}
 
-    bool is_valid(void) { return is_valid_; }
-
     /** Get the set of convexes where a finite element has been assigned.
      */
     inline const dal::bit_vector &convex_index(void) const
       { return fe_convex; }
     
     /// Return a reference to the underlying mesh.
-    getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
+    const getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
+
+    /** Set the degree of the fem for automatic addition
+     *  of element option. K=-1 disables the automatic addition.
+     */
+    void set_auto_add(size_type K) {
+      auto_add_elt_K = K;
+    }
 
     /** Return the Q dimension. A mesh_fem used for scalar fields has
 	Q=1, for vector fields, Q is typically equal to
@@ -345,7 +352,7 @@ namespace getfem
     */
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) {getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX &m);
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
     
@@ -358,7 +365,7 @@ namespace getfem
 	@param me the linked mesh.
 	@param Q the Q dimension (see mesh_fem::get_qdim).
     */
-    mesh_fem(getfem_mesh &me, dim_type Q = 1);
+    explicit mesh_fem(const getfem_mesh &me, dim_type Q = 1);
     virtual ~mesh_fem();
     void clear(void);
     /** Read the mesh_fem from a stream. 
@@ -384,36 +391,12 @@ namespace getfem
   mesh_fem::dof_on_boundary(const mesh_region &b) const
   { b.from_mesh(linked_mesh()); return dof_on_set(b); }
 
-  inline void 
-  mesh_fem::add_boundary_elt(size_type b, size_type c, short_type f) 
-  { linked_mesh().region(b).add(c, f); }
-  inline bool 
-  mesh_fem::is_convex_on_boundary(size_type c, size_type b) const 
-  { return linked_mesh().region(b).is_in(c); }
-  inline bool 
-  mesh_fem::is_face_on_boundary(size_type b, size_type c, short_type f)
-    const  { return linked_mesh().region(b).is_in(c,f); }
-  inline const dal::bit_vector &
-  mesh_fem::convex_on_boundary(size_type b) const 
-  { return linked_mesh().region(b).index(); }
-  inline mesh_region::face_bitset
-  mesh_fem::faces_of_convex_on_boundary(size_type c, size_type b) const 
-  { return linked_mesh().region(b).faces_of_convex(c); }
-  inline const dal::bit_vector &
-  mesh_fem::get_valid_boundaries() const 
-  { return linked_mesh().regions_index(); }
-  inline void 
-  mesh_fem::sup_boundaries_of_convex(size_type c)  
-  { linked_mesh().sup_convex_from_regions(c); }
-  inline void 
-  mesh_fem::sup_boundary_elt(size_type b, size_type c, short_type f)
-  { linked_mesh().region(b).sup(c,f); }
-  inline void 
-  mesh_fem::sup_boundary(size_type b) 
-  { linked_mesh().sup_region(b); }
-  /*inline void 
-  mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) 
-  { linked_mesh().swap_convex_in_sets(c1, c2); }*/
+
+  /** Gives the descriptor of a classical finite element method of degree K
+   *  on mesh.  
+   */
+  const mesh_fem &classical_mesh_fem(const getfem_mesh &mesh,
+				      dim_type o);
 
 }  /* end of namespace getfem.                                             */
 

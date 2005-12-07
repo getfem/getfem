@@ -125,7 +125,7 @@ namespace lmsg
     typename RECEIVERTAB::const_tas_iterator it = receivers.tas_begin(),
       ite = receivers.tas_end();
     for (; it != ite; ++it)
-      if ((masks[it.index()])[int(msg)]) (*it)->receipt(msg);
+      if ((masks[it.index()])[T::ID]) (*it)->receipt(msg);
   }
 
   template<class RECEIVER>

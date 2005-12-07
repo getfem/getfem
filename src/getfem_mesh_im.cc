@@ -91,8 +91,8 @@ namespace getfem {
     linked_mesh_ = &me; is_valid_ = true;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
-	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
-	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_DELETE()));
+	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
+	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID));
   }
 
   mesh_im::~mesh_im() {}
