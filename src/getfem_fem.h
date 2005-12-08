@@ -44,6 +44,9 @@
    - "FEM_QK_DISCONTINUOUS(N,K,alpha)" : discontinuous Lagrange
    element QK on a parallelepiped.
 
+   - "FEM_Q2_INCOMPLETE" : incomplete Q2 element with 8 dof (serendipity
+                           Quad 8 element) 
+
    - "FEM_PK_PRISM(N,K)" : classical Lagrange element PK on a prism.
 
    - "FEM_PK_PRISM_DISCONTINUOUS(N,K,alpha)" : classical discontinuous
@@ -55,7 +58,7 @@
    - "FEM_PRODUCT(FEM1,FEM2)" : tensorial product of two polynomial
    elements
 
-   -  "FEM_P1_NONCONFORMING" : Nonconforming P1 method on a
+   - "FEM_P1_NONCONFORMING" : Nonconforming P1 method on a
    triangle.
 
    - "FEM_P1_BUBBLE_FACE(N)" : P1 method on a simplex with an
@@ -82,6 +85,8 @@
    - "FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite
    element with S subdivisions and a hierarchical basis on both degree
    and subdivision
+
+   
 */
 
 #ifndef GETFEM_FEM_H__

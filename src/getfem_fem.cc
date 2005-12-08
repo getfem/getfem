@@ -859,6 +859,55 @@ namespace getfem
     return p;
   }
 
+
+  /* ******************************************************************** */
+  /*	Quad8 SERENDIPITY ELEMENT (dim 2) (incomplete Q2)                 */
+  /* ******************************************************************** */
+
+  // local dof numeration:
+  // 6--5--4 
+  // |     |
+  // 7     3
+  // |     |
+  // 0--1--2
+
+   static pfem incomplete_Q2_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    fem<base_poly> *p = new fem<base_poly>;
+    p->mref_convex() = bgeot::parallelepiped_of_reference(2);
+    p->dim() = 2;
+    p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
+    p->estimated_degree() = 2;
+    p->init_cvs_node();
+    base_poly one(2, 0), x(2, 1, 0), y(2, 1, 1); one.one();
+    p->base().resize(8);
+
+    p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.0));
+    p->base()[0] = one - x*x*y*2.0 - x*y*y*2.0 + x*x*2.0 + x*y*5.0
+      + y*y*2.0 - x*3.0 - y*3.0;
+    p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
+    p->base()[1] = (x*x*y - x*x - x*y + x)*4.0;
+    p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.0));
+    p->base()[2] = x*y*y*2.0 - x*x*y*2.0 + x*x*2.0 - x*y - x;
+    p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.5));
+    p->base()[3] = (x*y - x*y*y) * 4.0;
+    p->add_node(lagrange_dof(2), base_small_vector(1.0, 1.0));
+    p->base()[4] = x*x*y*2.0 + x*y*y*2.0 - x*y*3.0;
+    p->add_node(lagrange_dof(2), base_small_vector(0.5, 1.0));
+    p->base()[5] = (x*y - x*x*y)*4.0;
+    p->add_node(lagrange_dof(2), base_small_vector(0.0, 1.0));
+    p->base()[6] = x*x*y*2.0 - x*y*y*2.0 - x*y + y*y*2.0 - y;
+    p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.5));
+    p->base()[7] = (x*y*y - x*y - y*y + y) * 4.0;
+   
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+
+    return p;
+  }
+
    /* ******************************************************************** */
    /*	P1 element with a bubble base fonction on a face                   */
    /* ******************************************************************** */
@@ -1247,6 +1296,7 @@ namespace getfem
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
 		 PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
+      add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
     }
   };
   
