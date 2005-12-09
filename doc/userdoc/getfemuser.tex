@@ -174,8 +174,18 @@ name on the command line:
 \begin{alltt}
   ./configure CXX=mycompiler
 \end{alltt}
+
+If you want to use a specific BLAS library, you may have to supply the necessary link flags & libs to the configure script with 
+\begin{alltt}
+  ./configure BLAS_LIBS="-L/path/to/lib -lfoo -lbar ....etc"
+\end{alltt}
+
+
 More specific instructions can be found in the \texttt{README*} files of
 the distribution.
+
+
+If you want to use MUMPS as the default sparse direct solver instead of SuperLU, see the indication of section \ref{sec:linalgproc}.
 
 \section{Build a mesh}
 \index{mesh}
@@ -1384,32 +1394,31 @@ The following additional methods are available on this brick:
 
 \subsection{Helmholtz brick}
 This brick represent the complex or real Helmholtz problem \\
-$$ \Delta u + k^2 u = 0; $$
+$$ \Delta u + k^2 u = ... $$
 where $k$ the wave number is a real or complex value. For a complex version, a complex model state variable has to be used (for example \cpp{getfem::standard_complex_model_state}, see \cpp{helmholtz.cc} in the tests directory)
 
 The constructor is
 \begin{cppcode}
-  getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mim, mf_u, mf_data, k);
+  getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mim, mf_u, k);
 \end{cppcode}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the wave number. \cpp{k} is a real or a vector of type \cpp{MODEL_STATE::vector_type} defining the wave number. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} describe the finite element method used for the unknown. \cpp{k} is the (homogeneous) wave_number.
+It can be changed to a non-homogeneous wave number afterwards, with \cpp{brick.wave_number().set(mf_k, k)} etc.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_wave_number(k)} & with \cpp{k} ia a real or a vector of type
-  \cpp{MODEL_STATE::vector_type}.  \\ \hline
-
+  \cpp{brick.wave_number()} & gives access to the brick parameter $k$.\\ \hline
   \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
   model state variable MS and put it in the vector V. \\ \hline
 \end{ctableau}
 
 \subsection{linear incompressibility (or nearly incompressibility) brick}
-This brick allows to add a linear incompressibility condition (or a nearly incompressible condition) in a problem of type\\
+This brick adds a linear incompressibility condition (or a nearly incompressible condition) in a problem of type\\
 $$ \mbox{div}(u) = 0,\ \ (or \mbox{div}(u) = \varepsilon p)$$
 
-For this, multipliers representing the pressure are introduced in a mixed formulation.
+This constraint is enforced with Lagrange multipliers representing the pressure, introduced in a mixed formulation.
 
-The constructor for the incompessibility condition is:
+The constructor for the incompressibility condition is:
 \begin{cppcode}
   getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
 \end{cppcode}
@@ -1418,15 +1427,14 @@ where  \cpp{problem} is the problem on which the incompressibility condition is 
 
 For the nearly incompressibility condition, the constructor is:
 \begin{cppcode}
-  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, mf_data, epsilon, numfem);
+  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, epsilon, numfem);
 \end{cppcode}
-where \cpp{mf_data} is the finite element description on which the penalization parameter is descibed and \cpp{epsilon} is either a (small) real or a vector of type \cpp{gmm::vector<scalar_type>}. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
+
+where \cpp{epsilon} is a (small) scalar penalization coefficient. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.set_coeff(epsilon)} & with \cpp{epsilon} either a real or
-  a vector of type \cpp{MODEL_STATE::vector_type}, set the penalization
-  parameter in the nearly incompressible case. \\ \hline
+  \cpp{brick.epsilon()} & gives access to the penalization coefficient \cpp{epsilon} of the nearly incompressible case.\\ \hline
 \end{ctableau}
 ~\\
 
@@ -1439,7 +1447,7 @@ For instance, the following program defines a Stokes problem with a source term 
 
   double mu = 1.0;
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    stokes(mim, mf_u, mf_coef, 0.0, mu);
+    stokes(mim, mf_u, 0.0, mu);
 
   getfem::mdbrick_linear_incomp<> incomp(stokes, mf_p);
   
@@ -1448,7 +1456,8 @@ For instance, the following program defines a Stokes problem with a source term 
   getfem::mdbrick_source_term<> volumic_source_term(incomp, mf_data, F);
   
   gmm::clear(F);
-  getfem::mdbrick_Dirichlet<> final_model(volumic_source_term, mf_data, F, 0);
+  getfem::mdbrick_Dirichlet<> final_model(volumic_source_term, 0);
+  final_model.rhs().set(mf_data, F);
 
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residu, 1, 40000);
@@ -1532,14 +1541,14 @@ The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of 
 This brick allows to add an incompressibility condition in a large strain problem of type\\
 $$ \mbox{det}(I+\nabla u) = 1, $$
 
-For this, multipliers representing the pressure are introduced in a mixed formulation.
+For this, Lagrange multipliers representing the pressure are introduced in a mixed formulation.
 
 The constructor is:
 \begin{cppcode}
   getfem::mdbrick_nonlinear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
 \end{cppcode}
 
-where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
+where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB (Ladyzhenskaja-Babuska-Brezzi) inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of use of this brick.
 
