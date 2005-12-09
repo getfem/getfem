@@ -707,7 +707,7 @@ Once an integration method is defined on a mesh, it is possible to obtain inform
 
 
 
-\section{Linear algebra procedures}
+\section{Linear algebra procedures} \label{sec:linalgproc}
 The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}{GMM++ user documentation}.\\
 
 Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 ( \texttt{http://crd.lbl.gov/\verb+~+xiaoye/SuperLU/} ), hence a direct sparse solver is available out of the box.\\
@@ -1249,8 +1249,8 @@ by default).
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.coeff()} & give the access to the parameter \cpp{k} (see
-  apropriated section ...).  \\ \hline
+  \cpp{brick.coeff()} & gives the access to the parameter \cpp{k} (see
+  section on bricks parameters).  \\ \hline
   
   \cpp{brick.set_coeff_dimension(d)} & Set the tensor dimension of
   \cpp{k}. $d=1$ for laplacian operator, $d=2$ for generic scalar
@@ -1279,45 +1279,79 @@ where \cpp{problem} is the problem on which the source term will be added (a sca
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_rhs(F)} & change the value of the source term.  \\ \hline
+  \cpp{brick.source_term()} &  gives the access to the parameter \cpp{F} defining the source term (see section on bricks parameters for how to change the value of the parameter)  \\ \hline
 \end{ctableau}
 
 
 \subsection{Dirichlet condition brick}
-This brick allows to define a Dirichlet condition on a boundary of the domain (i.e. set the value of the unknown on this boundary $u = F$). Two means are available to take into account a Dirichlet condition : with Lagrange multipliers or with a reduction of the linear system. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:
+This brick allows to define a Dirichlet condition on a boundary of the
+domain (i.e. set the value of the unknown on this boundary $u = R$).
+The Dirichlet condition is applied either adding Lagrange multipliers
+or with a reduction of the linear system. This brick works for both
+real or complex terms in scalar or vectorial problems. The constructor
+of this brick is:
 
 \begin{cppcode}
-  getfem::mdbrick_Dirichlet<MODEL_STATE> brick(problem, mf_data, F, bound, num_fem, with_multipliers);
+  getfem::mdbrick_Dirichlet<MODEL_STATE> brick(problem, bound, num_fem);
 \end{cppcode}
 
-where  \cpp{problem} is the problem on which the Dirichlet condition will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the data, \cpp{F} is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the data on each degree of freedom of \cpp{mf_data}, \cpp{bound} specifies on which boundary of the main mesh fem of \cpp{problem} the Dirichlet condition is applied, \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems (0 is the default) and \cpp{with_multipliers} is a boolean specifying if the Dirichlet condition is applied reducing the system (the default value of this parameter) or with Lagrange multipliers. The parameter \cpp{F} can be omitted, the default value is zero.
+where \cpp{problem} is the problem on which the Dirichlet condition
+will be added (a generic elliptic brick for instance), \cpp{bound}
+specifies on which boundary of the main mesh fem of \cpp{problem} the
+Dirichlet condition is applied, \cpp{num_fem} is an optional parameter
+allowing to choose a fem is the problem has several fems (0 is the
+default) and \cpp{with_multipliers} is a boolean specifying if the
+Dirichlet condition is applied reducing the system (the default value
+of this parameter) or with Lagrange multipliers.\\
+
+By default, the prescribed value is zero. For non-homogenous Dirichlet
+condition $u = R$, the parameter \cpp{rhs} of the brick has to be set
+by the command:
+\begin{cppcode}
+  brick.rhs().set(mf_data, R);
+\end{cppcode}
+where \cpp{mf_data} is the finite element description for the data and
+\cpp{F} is a vector of type \cpp{MODEL_STATE::vector_type} which
+contains the values of the data on each degree of freedom of
+\cpp{mf_data}.\\
+
+For vectorial elements of dimension $Q$, it is possible to describe a condition $Hu = R$ where $H$ is an $Q$x$Q$ matrix. This is done setting the optional brick parameter \cpp{H}.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_rhs(F)} & change the value of the data. \\ \hline  
+  \cpp{brick.rhs()} & gives the access to the parameter representing the value of the Dirichlet condition. \\ \hline
+
+  \cpp{brick.use_multipliers(bool v)} & set how the constraints are
+  taken into account. With \cpp{v = false} the linear system is
+  reducted on the kernel of the constraints and with \cpp{v = true}
+  some Lagrange multipliers are added to take the constraint into
+  account (see section on bricks parameters for how to change the value of the parameter). \\ \hline
+
+  \cpp{brick.H()} & give the access to the optional parameter \cpp{H}. \\ \hline
+
 \end{ctableau}
 
 \subsection{Example of a complete Poisson problem}
-If \cpp{mf_u} and \cpp{mf_data} are valid finite element description on a mesh representing the domain on which the problem is defined, the following sequence will define a Poisson (laplacian) problem with a Dirichlet condition on boundary 1 of \cpp{mf_u} and a Neumann condition on boundary 0 of \cpp{mf_u}:
+If \cpp{mf_u} and \cpp{mf_data} are valid finite element description on a mesh representing the domain on which the problem is defined, the following sequence will define a Poisson (laplacian) problem with a Dirichlet condition on boundary 5 of \cpp{mf_u} and a Neumann condition on boundary 7 of \cpp{mf_u}:
 
 \begin{cppcode}
   typedef getfem::modeling_standard_plain_vector  plain_vector;
 
   plain_vector U(mf_u.nb_dof()), F(mf_data.nb_dof());
 
-  double k = 1.0;
-  getfem::mdbrick_scalar_elliptic<> laplacian(mim, mf_u, mf_data, k);
+  getfem::mdbrick_generic_elliptic<> laplacian(mim, mf_u);
   
   plain_vector F(mf_data.nb_dof());
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
   getfem::mdbrick_source_term<> volumic_source_term(laplacian, mf_data, F);
   
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
-  getfem::mdbrick_source_term<> neumann_condition(volumic_source_term, mf_data, F, 0);
+  getfem::mdbrick_source_term<> neumann_condition(volumic_source_term, mf_data, F, 7);
   
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
-  getfem::mdbrick_Dirichlet<> final_model(neumann_condition, mf_data, F, 1);
+  getfem::mdbrick_Dirichlet<> final_model(neumann_condition, 5);
+  final_model.rhs().set(mf_data, F);
 
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residu, 1, 40000);
@@ -1333,7 +1367,9 @@ Of course, for many problems, it will be more convenient to make a specific solv
 \begin{cppcode}
   getfem::standard_solve(MS, problem, iter);
 \end{cppcode}
-where \cpp{MS} is a model state variable, \cpp{problem} is the brick  that represent your global problem and \cpp{iter} is an iteration object from Gmm++. See also the previous section for an example of use.
+where \cpp{MS} is a model state variable, \cpp{problem} is the brick  that represent your global problem and \cpp{iter} is an iteration object from Gmm++. See also the previous section for an example of use.\\
+
+Note that SuperLu is used by default on ``small'' problems. You can also link MUMPS with Getfem (see section \ref{sec:linalgproc}) and used the parallele version.
 
 
 \subsection{Isotropic linearized elasticity brick}
@@ -1345,25 +1381,19 @@ $$ \ \ \ \sigma = \lambda\mbox{tr}(\varepsilon(u))I + 2\mu\varepsilon(u); \ \ \ 
 
 $\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lamé coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
 
-There are two constructors for this brick. The first one is for constant Lamé coefficients:
+The constructors build the brick for constant Lamé coefficients:
 \begin{cppcode}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
-     brick(mim, mf_u, mf_data, lambda, mu);
+     brick(mim, mf_u, lambda, mu);
 \end{cppcode}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} is a valid fem descriptor. \cpp{mf_u} describe the finite element method used for the unknown. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.\\
 
-The second constructor is for non homogeneous Lamé coefficients:
-\begin{cppcode}
-  getfem::mdbrick_isotropic_linearized_elasticity(mim, mf_u, mf_data, lambda, mu);
-\end{cppcode}
-It has the same form but here \cpp{lambda} and \cpp{mu} are two vectors of type \cpp{MODEL_STATE::vector_type} defining the Lamé coefficients on \cpp{mf_data}.
+For non-constant Lamé coefficients, the brick parameters \cpp{lambda} and \cpp{mu} have to be set (with \cpp{brick.lambda().set(mf_data, lambda_)} and \cpp{brick.mu().set(mf_data, mu_)}, where \cpp{mf_data} is a valid fem descriptor and \cpp{lambda_} and \cpp{mu_} are two vectors of type \cpp{MODEL_STATE::vector_type}).\\
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.set_Lame_coeff(lambda, mu)} & with \cpp{lambda} and \cpp{mu} two reals, set the Lamé coefficients in the homogeneous case.  \\ \hline
-
-  \cpp{brick.set_coeff(lambda, mu)} & with \cpp{lambda} and \cpp{mu} two vectors of type
-  \cpp{MODEL_STATE::vector_type}. Set the coefficients in the non-homogeneous case.  \\ \hline
+  \cpp{brick.lambda()} & gives access to the brick parameter \cpp{lambda}.  \\ \hline
+  \cpp{brick.mu()} & gives access to the brick parameter \cpp{mu}.  \\ \hline
 
   \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
   model state variable MS and put it in the vector V.\\ \hline
@@ -1382,14 +1412,18 @@ for linearized elasticity problems. \cpp{Q} is a scalar field in the scalar case
 
 The constructor is the following :
 \begin{cppcode}
-  getfem::mdbrick_QU_term<MODEL_STATE> brick(problem, mf_data, Q, bound, numfem);
+  getfem::mdbrick_QU_term<MODEL_STATE> brick(problem, Q_diag, bound, numfem);
 \end{cppcode}
-where \cpp{problem} is the problem on which the condition will be added, \cpp{mf_data} is a valid fem descriptor for \cpp{Q}. \cpp{Q} is either a real for the homogeneous and diagonal case, or a vector of type \cpp{MODEL_STATE::vector_type} defining \cpp{Q} on \cpp{mf_data}. \cpp{bound} is the number of the boundary of \cpp{main_mesh_fem()} on which the condition will be applied. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
+where \cpp{problem} is the problem on which the condition will be
+added. \cpp{Q_diag} is a real for the homogeneous and diagonal case ($Q = Q_dia * I$).
+\cpp{bound} is the number of the boundary of \cpp{main_mesh_fem()} on
+which the condition will be applied. \cpp{num_fem} is an optional
+parameter allowing to choose a fem is the problem has several fems.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_Q(q)} & change the value of Q. \cpp{q} is either a real value or a vectors of type \cpp{MODEL_STATE::vector_type}. \\ \hline 
+  \cpp{brick.Q()} & gives access to the brick parameter \cpp{Q}. change the value of Q. \cpp{q} is either a real value or a vectors of type \cpp{MODEL_STATE::vector_type}. \\ \hline 
 \end{ctableau}
 
 \subsection{Helmholtz brick}
