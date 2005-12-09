@@ -1,3 +1,10 @@
+2005-12-09  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gmm_MUMPS_interface.h: added sequential mumps interface
+	(direct solver for sparse matrices).
+
+	* src/getfem_modeling.h: large modification of the mdbricks
+
 2005-11-22  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_mesh_fem.h (getfem): mesh_fem::linked_mesh() is now const.

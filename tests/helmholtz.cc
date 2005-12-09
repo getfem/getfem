@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
-      getfem::stored_mesh_slice sl(p.mesh, 8);
+      getfem::stored_mesh_slice sl(p.mesh, p.mesh.nb_convex() < 2000 ? 8 : 6);
       exp.exporting(sl);
       exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
       exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");

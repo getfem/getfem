@@ -64,6 +64,7 @@
 #include <gmm_precond_ilut.h>
 #include <gmm_precond_ilutp.h>
 #include <gmm_superlu_interface.h>
+#include <gmm_MUMPS_interface.h>
 #include <gmm_dense_qr.h>
 #include <gmm_matrix.h>
 #include <gmm_solver_Schwarz_additive.h>
@@ -1845,9 +1846,9 @@ namespace getfem {
     cout<<"begin Seq AS"<<endl;
 # endif
       additive_schwarz(MS.reduced_tangent_matrix(), dr,
-				  gmm::scaled(MS.reduced_residu(), value_type(-1)),
-				  0, Bib, iter_linsolv, gmm::using_superlu(),
-				  gmm::using_cg());
+		       gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		       0, Bib, iter_linsolv, gmm::using_superlu(),
+		       gmm::using_cg());
 # ifdef GMM_USES_MPI
     t_final=MPI_Wtime();
     cout<<"temps Seq AS "<< t_final-t_ref<<endl;
@@ -1856,17 +1857,32 @@ namespace getfem {
     size_type dim = problem.dim();
 
     // if (0) {
-    
-    if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
-	  || (ndof < 1000)) {
+    if (
+#ifdef GMM_USES_MUMPS
+      (ndof < 200000 && dim <= 2) || (ndof < 100000 && dim <= 3)
+	|| (ndof < 1000)
+#else  
+      (ndof < 200000 && dim <= 2) || (ndof < 13000 && dim <= 3)
+      || (ndof < 1000)
+#endif
+      ) {
 	
-	// cout << "M = " << MS.reduced_tangent_matrix() << endl;
-	// cout << "L = " << MS.reduced_residu() << endl;
+      // cout << "M = " << MS.reduced_tangent_matrix() << endl;
+      // cout << "L = " << MS.reduced_residu() << endl;
+	
+      double t = ftool::uclock_sec();
+#ifdef GMM_USES_MUMPS
+      cout << "Solving with MUMPS\n";
+	MUMPS_solve(MS.reduced_tangent_matrix(), dr,
+		      gmm::scaled(MS.reduced_residu(), value_type(-1)));
+#else
 	double rcond;
 	SuperLU_solve(MS.reduced_tangent_matrix(), dr,
 		      gmm::scaled(MS.reduced_residu(), value_type(-1)),
 		      rcond);
 	if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
+#endif
+	cout << "resolution time = " << ftool::uclock_sec() - t << endl;
     }
       else {
 	if (problem.is_coercive()) {

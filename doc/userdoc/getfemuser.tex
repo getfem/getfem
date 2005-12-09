@@ -687,8 +687,21 @@ Once an integration method is defined on a mesh, it is possible to obtain inform
 \section{Linear algebra procedures}
 The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}{GMM++ user documentation}.\\
 
-Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/), hence a direct sparse solver is available out of the box.
+Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/), hence a direct sparse solver is available out of the box.\\
 
+
+A small interface to MUMPS ( \WEB{http://graal.ens-lyon.fr/MUMPS/}{http://graal.ens-lyon.fr/MUMPS/} or \WEB{http://www.enseeiht.fr/apo/MUMPS}{http://www.enseeiht.fr/apo/MUMPS} ) is also provided. See the file \cpp{gmm\_MUMPS\_interface.h}. In order to use MUMPS, you have to indicates some options to the configure shell:
+\begin{cppcode}
+  MUMPS_CFLGAS=" -I /path/to/MUMPS/include "
+  MUMPS_LIBS=" F90 libraries and libs of MUMPS to be linked "
+\end{cppcode}
+
+For instance if you want to use the sequential version of MUMPS with double and complex double:
+\begin{cppcode}
+  MUMPS_CFLGAS=" -I /path/to/MUMPS/include "
+  MUMPS_LIBS=" ...F90libs...  -L /path/to/MUMPS/lib -ldmumps -lzmumps -lpord -L /path/to/MUMPS/libseq -lmpiseq "
+\end{cppcode}
+where \textit{...F90libs...} are the libraries of the fortran compiler used to compile MUMPS (these are highly dependant on the fortran 90 compiler used, the ./configure script should detect the options relative to the default f90 compiler on your machine and display it -- for example, with the intel \texttt{ifort} compiler, it is ``\cpp{-L/opt/icc8.0/lib -lifport -lifcoremt -limf -lm -lcxa -lunwind -lpthread}'')
 
 \section{Standard assembly procedures}
 

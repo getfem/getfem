@@ -83,8 +83,11 @@ endif
 #test_fem_SOURCES = test_fem.cc
 dynamic_friction_SOURCES = dynamic_friction.cc
 
-INCLUDES = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
+SUPLDFLAGS = @SUPLDFLAGS@
+MUMPS_LIBS = @MUMPS_LIBS@
+MUMPS_CFLAGS = @MUMPS_CFLAGS@
+INCLUDES = -I$(top_srcdir)/src -I../src $(MUMPS_CFLAGS)
+LDADD    = ../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
 
 #plasticity_LDADD = ../src/libgetfem.la -lm @SUPLDFLAGS@ $(HOME)/source++/SuperLU/superlu.a -lblas -lg2c
 #plasticity_INCLUDES = $(INCLUDES) -I$(HOME)/source++/SuperLU/
