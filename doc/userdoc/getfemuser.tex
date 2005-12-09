@@ -616,6 +616,19 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 \end{tabular} \end{center}
 
 
+\subsection{Obtaining generic mesh\_fems}
+
+It is possible to use the function
+\begin{cppcode}
+  const mesh_fem &getfem::classical_mesh_fem(const getfem_mesh &mesh, dim_type K);  
+\end{cppcode}
+to get a classical polynomial \cpp{mesh_fem} of order $K$ on the given \cpp{mesh}.
+The returned mesh_fem won't be destroyed until its linked_mesh is
+destroyed. All the \cpp{mesh_fem} built by this function are stored
+in a cache, which means that calling this function twice with
+the same arguments will return the same \cpp{mesh_fem} object. A
+consequence is that you should NEVER modify this mesh_fem!
+
 \section{Selecting integration methods}
 \index{GETFEM!getfem::mesh\_im}
 The description of an integration method on a whole mesh is done thanks to the structure \cpp{getfem::mesh\_im}, defined in the file \cpp{getfem\_mesh\_im.h}. Basically, this structure describes the integration method on each element of the mesh. One can instantiate a \cpp{getfem::mesh\_im} object as follows\\[0.5cm]
@@ -687,7 +700,7 @@ Once an integration method is defined on a mesh, it is possible to obtain inform
 \section{Linear algebra procedures}
 The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}{GMM++ user documentation}.\\
 
-Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/), hence a direct sparse solver is available out of the box.\\
+Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 ( \texttt{http://crd.lbl.gov/\verb+~+xiaoye/SuperLU/} ), hence a direct sparse solver is available out of the box.\\
 
 
 A small interface to MUMPS ( \WEB{http://graal.ens-lyon.fr/MUMPS/}{http://graal.ens-lyon.fr/MUMPS/} or \WEB{http://www.enseeiht.fr/apo/MUMPS}{http://www.enseeiht.fr/apo/MUMPS} ) is also provided. See the file \cpp{gmm\_MUMPS\_interface.h}. In order to use MUMPS, you have to indicates some options to the configure shell:
@@ -770,8 +783,7 @@ where again $R$ is the Dirichlet condition expressed on the finite element metho
 \index{GETFEM!getfem::Dirichlet\_nullspace} Then, one should
 call \\[0.5cm]\cpp{ncols = getfem::Dirichlet\_nullspace($\tildeH$, $\tildeN$,
   $\tildeR$, Ud)},\\[0.5cm] which will return a vector $U_d$ which
-satisfies the Dirichlet condition, and an orthogonal basis $\tildeN$ of the kernel of
-$\tildeH$. Hence, the discrete system that must be solved is
+satisfies the Dirichlet condition, and an orthogonal basis $\tildeN$ of the kernel of$\tildeH$. Hence, the discrete system that must be solved is
 \begin{equation*} (\tildeN'[SM]\tildeN) U_{int}=\tildeN'(B-[SM]U_d),\end{equation*}
 and the solution is $U=\tildeN U_{int}+U_d$.
 The output matrix $\tildeN$ should be a $nbdof × nbdof$ (sparse) matrix but should be resized to \cpp{ncols} columns. The output vector $U_d$ should be a $nbdof$ vector.
@@ -972,13 +984,13 @@ The file format is inspired from \cite{EncyclopCubature}.
 \section{Support for Xfem methods}
 \index{GETFEM!Xfem}
 Xfem are finite element method with a particular enrichment with non-polynomials functions (see \cite{Xfem} for instance). The file {\tt getfem_Xfem.h} gives a support for this kind of method. Any ($\tau$-equivalent) valid finite element method can be extended. If {\tt pf} is a valid descriptor of a finite element method, one can build a Xfem with the declaration
-\begin{alltt}
+\begin{cppcode}
   Xfem  xf(pf);
-\end{alltt}
+\end{cppcode}
 then one adds a global function with
-\begin{alltt}
+\begin{cppcode}
   xf.add_function(pXf, pXg, pXh, ind);
-\end{alltt}
+\end{cppcode}
 where {\tt pXf} should be a pointer on a type derived from the object {\tt virtual_Xfem_func} representing the global function, {\tt pXg} should be a pointer on a type derived from the object {\tt virtual_Xfem_grad} representing the global function gradient, {\tt pXh} is an optional parameter (only for fourth order derivative problems) which should be a pointer on a type derived from the object {\tt virtual_Xfem_hess} representing the global function Hessian and {\tt ind} is an index which should correspond to this function to identify the degrees of freedom (this should be different for each function added). It is possible to add an arbitrary number of global functions. The total number of degrees of freedom of the Xfem is the number of degrees of freedom of the initial fem times $N_f+1$ where $N_f$ is the number of global functions added.\\[0.5cm]
 
 If $\varphi_i$ for $i=1..N_d$ are the basis functions of {\tt pf} and $f_j$ for 
@@ -1065,27 +1077,47 @@ where \cpp{M} is a row matrix which will be filled with the linear map represent
 
 \section{The model bricks}
 \index{model bricks}
-Although it is possible to use assembly procedures on their own to make your finite element programs, it is now possible to use predefined bricks to build up very quickly a certain number of models. Most of the bricks are defined in \cpp{getfem_modeling.h}
+ Although it is possible to use assembly
+procedures on their own to make your finite element programs, it is
+now possible to use predefined bricks to build up very quickly a
+certain number of models. Most of the bricks are defined in
+\cpp{getfem_modeling.h}
+
+A model brick is basically an object which modifies a global tangent 
+matrix and its associated right hand side. Typical modifications are
+insertion of the stiffness matrix for the linear elasticity problem,
+handling of a set of contraints, Dirichlet condition, addition of a
+source term to the right hand side etc. The global tangent matrix and
+its right hand side are stored in a \cpp{model\_state} structure.
 
 \subsection{The model state variable}
-\index{GETFEM!getfem::model\_state}
-The model state object is an object which stores the state of the system and the tangent system with eventual constraints. There are two predefined model state type:
-\begin{alltt}
+\index{GETFEM!getfem::model\_state} The \cpp{model_state} object is an
+object which stores the state of the system and the tangent system
+with eventual constraints. There are two predefined \cpp{model_state} types:
+\begin{cppcode}
   getfem::standard_model_state
   getfem::standard_complex_model_state
-\end{alltt}
-The second one is for models with complex degrees of freedom like Helmholtz problem. These two predefined model state type are built with the following predefined sparse matrix and plain vectors:
-\begin{alltt}
+\end{cppcode}
+The second one is for models with complex degrees of freedom like
+Helmholtz problem. These two predefined \cpp{model_state} type are built
+with the following predefined sparse matrices and plain vectors:
+\begin{cppcode}
   getfem::modeling_standard_sparse_matrix (gmm::col_matrix<gmm::rsvector<double> >)
   getfem::modeling_standard_plain_vector (std::vector<double>)
   getfem::modeling_standard_complex_sparse_matrix (gmm::col_matrix<gmm::rsvector<std::complex<double> > >)
   getfem::modeling_standard_complex_plain_vector (std::vector<std::complex<double> >)
-\end{alltt}
-But you can define your own model state type with arbitrary types of sparse matrices and plain vector (see the file {\tt getfem_modeling.h})
+\end{cppcode}
+But you can define your own model state type with arbitrary types of sparse matrices and plain vectors (see the file {\tt getfem_modeling.h})
 
 \subsection{Basic properties of a brick}
-A brick represents a basic problem (elasticity, Helmholtz, Poisson problems ...) or a modifier of such problems (Addition of a Dirichlet or Neumann condition, source term, incompressibility term ...).
-Each brick will participate on the global linear system to be solved (the tangent system for non linear problem). A brick is an object which derives from \cpp{mdbrick_abstract} with the following virtual methods to be defined:\\[0.5cm]
+
+A brick represents a basic problem (elasticity, Helmholtz, Poisson
+problems ...) or a modifier of such problems (addition of a Dirichlet
+or Neumann condition, source term, incompressibility term ...).  Each
+brick will participate on the global linear system to be solved (the
+tangent system for non linear problem).
+A brick is an object which derives from \cpp{mdbrick_abstract<MODEL_STATE>} with 
+the following virtual methods to be defined:\\[0.5cm]
 
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
@@ -1110,46 +1142,127 @@ Each brick will participate on the global linear system to be solved (the tangen
 
 Of course, each specific brick may have additional methods to build
 the brick, define some parameters and extract the solution from the
-model state variable.
+model state variable. The brick may also do some extra efforts
+in order to avoid unecessary recomputations (see for example the
+\cpp{K_uptodate} flag of the \cpp{mdbrick_abstract_linear_pde} brick).
 
-\subsection{Scalar elliptic brick}
-The Scalar elliptic brick is a basic brick representing a term such as\\
-$$ -div(k\nabla u) = ... $$
+\subsection{Brick parameters}
+\index{GETFEM!getfem::mdbrick_parameter}
 
-where $u$ is a scalar field and $k$ is a positive scalar or a symmetric positive definite order two tensor field. There are two constructors for this brick. The first one is for constant scalar coefficient $k$:
-\begin{alltt}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k);
-\end{alltt}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameter $k$. As $k$ is constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a real defining a constant \cpp{k}. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+Many brick depend on one or more parameter fields. For example, the
+linear elasticity brick uses the two Lamé coefficients $\lambda$ and
+$\mu$.  These Lamé coefficients are described as a field (i.e. and
+\cpp{mesh_fem} and a vector of dof values), in a template structure
+\cpp{getfem::mdbrick_parameter<VECTOR_TYPE>}.
 
-The second constructor is for an arbitrary coefficient $k$:
-\begin{alltt}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k, laplace);
-\end{alltt}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are still two valid fem descriptor on the same mesh. Very often, \cpp{k} is still constant or piecewise constant which meand that \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} where \cpp{MODEL_STATE} is the type of model state variable used. \cpp{laplace} is a boolean, it has to be \cpp{true} if \cpp{k} is scalar and \cpp{false} if \cpp{k} is an order two tensor value. The vector \cpp{k} will be filled with either one tensorial or scalar value if the coefficient is constant or with a value on each degree of freedom of \cpp{mf_data} if not.
+Some problems require a matrix or a tensor field, instead of a scalar
+field. For example, the brick responsible for the Dirichlet condition
+is used to impose $h(x)u(x) = r(x)$ on a region of the mesh. When the
+\cpp{mesh_fem} is a vector one ($Q \ge 1$), $h(x)$ is a $Q \times Q$
+matrix field, and $r(x)$ is a vector field of dimension $Q$. That case
+is also handled by the \cpp{getfem::mdbrick_parameter} structure.
+
+Basically, this structure contains
+\begin{itemize}
+  \item a \cpp{mesh_fem} (whose Qdim is always equal to one!).
+  \item a description of the field dimensions (scalar, matrix, ..)
+  \item a vector, whose length is the field number of elements times
+    the \cpp{nb_dof()} of the mesh_fem. For a matrix field $h(x)$, the
+    order is the fortran one, with the dof number as the slowest
+    varying index:
+    $$[h_{11}^1, h_{21}^1, h_{12}^1, h_{22}^1, h_{11}^2, ..., h_{11}^n, h_{21}^n, h_{12}^n, h_{22}^n]$$
+\end{itemize}
+
+This structure provides these methods:
+\begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
+  \cpp{field.mf()} & return the \cpp{mesh_fem} on which the field is
+  defined.\\ \hline
+
+  \cpp{field.get()}    & return the current dof data of the field.\\ \hline
+  
+  \cpp{field.fsizes()} & return the field size, as a vector. For a
+  scalar field, this is an empty vector, for a $n\times p$ matrix
+  field, this is the vector $[n,p]$, etc.\\ \hline
+  
+  \cpp{field.fsize()} & return the product of the elements of the
+  vector \cpp{fsizes()}. \\ \hline
+  
+  \cpp{field.set([mf, ] V)} & change the field value. The value V can
+  be a scalar value (constant field), a vector of length \cpp{fsize()}
+  to set a constant non-scalar field, or a large vector of length
+  \cpp{fsize()*mf().nb_dof()} to set a non-constant field. The
+  \cpp{mesh_fem mf} is an optional paramater, hence it is possible to
+  change the mesh\_fem associated to the parameter (typically it is a
+  polynomial \cpp{mesh\_fem} of degree 0).\\ \hline
+
+  \cpp{set_diagonal(V)} & can be used with matrix fields, to set only the diagonal elements (V length should be \cpp{fsize()[0]} or \cpp{fsize()[0]*mf().nb_dof()}).  \\ \hline
+\end{ctableau}\\
+
+
+\subsection{generic elliptic brick}
+The generic elliptic brick is a basic brick representing a term such as\\
+$$
+-div(k\nabla u) = ... $$
+where $u$ is a scalar field and the coefficient $k$ is a
+positive scalar or a symmetric positive definite order two tensor
+field, or a symmetric positive definite order four tensor (and $u$ a vector field).
+The constructor initializes the brick for a scalar constant coefficient $k$:
+\begin{cppcode}
+  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, k = 1.0);
+\end{cppcode}
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining
+the integration method used, and \cpp{mf_u} is a \cpp{mesh_fem} on the
+same mesh.  \cpp{mf_u} describes the finite element method used for
+the unknown.
+
+A local copy of the stiffness matrix $K$ is stored in the brick, this
+obviously has a memory cost but allows not to recompute it each time
+when \cpp{compute_tangent_matrix(...)} is
+called.\\
+
+In fact this bricks cover several situations. When \cpp{k} is a scalar
+coefficient, the brick represent a laplace operator which is
+componentwise if the \cpp{mf_u} represent a vector field (\cpp{mf_u.get_qdim()>1}). When
+\cpp{k} is an order two tensor coefficient, the brick represent a
+scalar generic elliptic operator which is componentwise if 
+\cpp{mf_u} is a vector field. And finally, When \cpp{k} is
+an order four tensor coefficient, the brick represent a vectorial
+generic elliptic operator (for example linear elasticity with a generic Hooke tensor).
+
+
+A general tensor field \cpp{k} can be set thanks to the two functions:
+\cpp{brick.set_coeff_dimension(d)}  (with $d = 0, 2$ or $4$) sets the tensor dimension,
+and \cpp{brick.coeff().set(mf_data, new_k)} sets the value of the
+tensor field (\cpp{mf_data} could be ommited, it is an order 0 element
+by default).
+
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.set_coeff(k)} & with \cpp{k} a real, set the coefficient in
-  the homogeneous scalar case.  \\ \hline
-
-  \cpp{brick.set_coeff(k, laplace)} & with \cpp{k} a vector of type
-  \cpp{MODEL_STATE::vector_type} and laplace a boolean (see previous
-  explanation). Set the coefficient \cpp{k}.  \\ \hline
-
-  \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
-  model state variable MS and put it in the vector V.\\ \hline
+  \cpp{brick.coeff()} & give the access to the parameter \cpp{k} (see
+  apropriated section ...).  \\ \hline
+  
+  \cpp{brick.set_coeff_dimension(d)} & Set the tensor dimension of
+  \cpp{k}. $d=1$ for laplacian operator, $d=2$ for generic scalar
+  elliptic operator and $d=4$ for generic vectorial elliptic operator.\\ \hline
+  
+  \cpp{brick.get_solution(MS, V)} & After a solve, extract the
+  solution of the model state variable MS and put it in the vector
+  V.\\ \hline
 \end{ctableau}
 ~\\
 
-Note : if \cpp{mf_u} has a \cpp{qdim} greater than one (i.e. represent a vector field), the scalar elliptic equation is assumed to be defined componentwise. 
 
 \subsection{Source term brick}
-This brick represent either a volumic source term or a Neumann condition, i.e. a term $\int_{\Omega} f.v dx$ or $\int_{\Gamma} f.v dx$ in the weak formulation , with $\Gamma$ a part of$\partial \Omega$. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:
+This brick represent either a volumic source term or a Neumann
+condition, i.e. a term $\int_{\Omega} f.v dx$ or $\int_{\Gamma} f.v
+dx$ in the weak formulation , with $\Gamma$ a part of$\partial
+\Omega$. This brick works for both real or complex terms in scalar or
+vectorial problems. The constructor of this brick is:
 
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_source_term<MODEL_STATE> brick(problem, mf_data, F, bound, num_fem);
-\end{alltt}
+\end{cppcode}
 
 where \cpp{problem} is the problem on which the source term will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the source term $f$, F is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the source term on each degree of freedom of \cpp{mf_data}, \cpp{bound} is an optional parameter specifying on which boundary of the main mesh fem of \cpp{problem} the Neumann condition is applied. If this parameter is omitted, a volumic source term will be taken into account. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
@@ -1163,9 +1276,9 @@ The following additional methods are available on this brick:
 \subsection{Dirichlet condition brick}
 This brick allows to define a Dirichlet condition on a boundary of the domain (i.e. set the value of the unknown on this boundary $u = F$). Two means are available to take into account a Dirichlet condition : with Lagrange multipliers or with a reduction of the linear system. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:
 
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_Dirichlet<MODEL_STATE> brick(problem, mf_data, F, bound, num_fem, with_multipliers);
-\end{alltt}
+\end{cppcode}
 
 where  \cpp{problem} is the problem on which the Dirichlet condition will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the data, \cpp{F} is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the data on each degree of freedom of \cpp{mf_data}, \cpp{bound} specifies on which boundary of the main mesh fem of \cpp{problem} the Dirichlet condition is applied, \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems (0 is the default) and \cpp{with_multipliers} is a boolean specifying if the Dirichlet condition is applied reducing the system (the default value of this parameter) or with Lagrange multipliers. The parameter \cpp{F} can be omitted, the default value is zero.
 
@@ -1207,9 +1320,9 @@ Remark how the bricks are linked, each condition is applied to the brick defined
 
 \subsection{Predefined solvers}
 Of course, for many problems, it will be more convenient to make a specific solver. Even so, one generic solver is at the moment available to test your models quickly. It can also be taken as a model to build your own solvers. It is defined in \cpp{getfem_modeling.h} and the call is
-\begin{alltt}
+\begin{cppcode}
   getfem::standard_solve(MS, problem, iter);
-\end{alltt}
+\end{cppcode}
 where \cpp{MS} is a model state variable, \cpp{problem} is the brick  that represent your global problem and \cpp{iter} is an iteration object from Gmm++. See also the previous section for an example of use.
 
 
@@ -1223,16 +1336,16 @@ $$ \ \ \ \sigma = \lambda\mbox{tr}(\varepsilon(u))I + 2\mu\varepsilon(u); \ \ \ 
 $\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lamé coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
 
 There are two constructors for this brick. The first one is for constant Lamé coefficients:
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
      brick(mim, mf_u, mf_data, lambda, mu);
-\end{alltt}
+\end{cppcode}
 where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The second constructor is for non homogeneous Lamé coefficients:
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_isotropic_linearized_elasticity(mim, mf_u, mf_data, lambda, mu);
-\end{alltt}
+\end{cppcode}
 It has the same form but here \cpp{lambda} and \cpp{mu} are two vectors of type \cpp{MODEL_STATE::vector_type} defining the Lamé coefficients on \cpp{mf_data}.
 
 The following additional methods are available on this brick:
@@ -1258,9 +1371,9 @@ for linearized elasticity problems. \cpp{Q} is a scalar field in the scalar case
 
 
 The constructor is the following :
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_QU_term<MODEL_STATE> brick(problem, mf_data, Q, bound, numfem);
-\end{alltt}
+\end{cppcode}
 where \cpp{problem} is the problem on which the condition will be added, \cpp{mf_data} is a valid fem descriptor for \cpp{Q}. \cpp{Q} is either a real for the homogeneous and diagonal case, or a vector of type \cpp{MODEL_STATE::vector_type} defining \cpp{Q} on \cpp{mf_data}. \cpp{bound} is the number of the boundary of \cpp{main_mesh_fem()} on which the condition will be applied. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 The following additional methods are available on this brick:
@@ -1275,9 +1388,9 @@ $$ \Delta u + k^2 u = 0; $$
 where $k$ the wave number is a real or complex value. For a complex version, a complex model state variable has to be used (for example \cpp{getfem::standard_complex_model_state}, see \cpp{helmholtz.cc} in the tests directory)
 
 The constructor is
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mim, mf_u, mf_data, k);
-\end{alltt}
+\end{cppcode}
 where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the wave number. \cpp{k} is a real or a vector of type \cpp{MODEL_STATE::vector_type} defining the wave number. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The following additional methods are available on this brick:
@@ -1297,16 +1410,16 @@ $$ \mbox{div}(u) = 0,\ \ (or \mbox{div}(u) = \varepsilon p)$$
 For this, multipliers representing the pressure are introduced in a mixed formulation.
 
 The constructor for the incompessibility condition is:
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
-\end{alltt}
+\end{cppcode}
 
 where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 For the nearly incompressibility condition, the constructor is:
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, mf_data, epsilon, numfem);
-\end{alltt}
+\end{cppcode}
 where \cpp{mf_data} is the finite element description on which the penalization parameter is descibed and \cpp{epsilon} is either a (small) real or a vector of type \cpp{gmm::vector<scalar_type>}. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
 
 The following additional methods are available on this brick:
@@ -1381,15 +1494,15 @@ To get the constraints, you can use \cpp{brick.compute_constraints(MS);} followe
 This brick represent a large strain elasticity problem. It is defined in \cpp{getfem_nonlinear_elasticity.h}
 
 The constructor is:
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_nonlinear_elasticity<MODEL_STATE> brick(Hyperelastic_Law, mim, mf_u, mf_data, params);
-\end{alltt}
+\end{cppcode}
 where \cpp{Hyperelastic_Law} is an object representing the considered hyperelastic law. It has to be chosen between:
-\begin{alltt}
+\begin{cppcode}
   getfem::SaintVenant_Kirchhoff_hyperelastic_law Hyperelastic_Law;
   getfem::Ciarlet_Geymonat_hyperelastic_law Hyperelastic_Law;
   getfem::Mooney_Rivlin_hyperelastic_law Hyperelastic_Law;
-\end{alltt}
+\end{cppcode}
 The Saint-Venant Kirchhoff law is a linearized law defined with the two Lamé coefficients, Ciarlet Geymonat law is defined with the two Lamé coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
 
 \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameters of the selected hyperelastic law. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} defining the parameters on \cpp{mf_data}.
@@ -1403,9 +1516,9 @@ $$ \mbox{det}(I+\nabla u) = 1, $$
 For this, multipliers representing the pressure are introduced in a mixed formulation.
 
 The constructor is:
-\begin{alltt}
+\begin{cppcode}
   getfem::mdbrick_nonlinear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
-\end{alltt}
+\end{cppcode}
 
 where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
@@ -1459,7 +1572,7 @@ The program \filename{elastostatic} is built in a same way and compute the solut
 \bibitem{EncyclopCubature}
   R. {\texonly{\sc} Cools}
   {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\verb+~+ines/research/ecf/ecf.html}
-
+  
 \bibitem{Xfem}
   N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
   {\it A finite element method for crack growth without remeshing },
