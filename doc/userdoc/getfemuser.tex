@@ -1460,29 +1460,47 @@ For instance, the following program defines a Stokes problem with a source term 
 A example for a nearly incompressibility condition can be found in the program \cpp{elastostatic.cc} in tests directory.
 
 \subsection{Small displacement plasticity brick}
-This brick modelizes small-displacement quasi-static plasticity problems. It is defined in \cpp{getfem_plasticity.h}
+This brick modelizes small-displacement quasi-static plasticity
+problems. It is defined in \cpp{getfem_plasticity.h}
 
-Plasticity happens when you stress an object too much, so that even when you remove the charge, constraints remain 'trapped' into the object. When a stress is applied to an object, if the stress is small enough, the displacements stay elastic. If that stress gets greater than a constant value called stress threshold (intrinsic to the object), then the displacements become plastic.
+Plasticity happens when you stress an object too much, so that even
+when you remove the charge, constraints remain 'trapped' into the
+object. When a stress is applied to an object, if the stress is small
+enough, the displacements stay elastic. If that stress gets greater
+than a constant value called stress threshold (intrinsic to the
+object), then the displacements become plastic.
 
-Quasi-static means that we do not take inertia into account, but that the algorithm used needs some kind of a time representation. It is not possible to put the charge on the model at once, as it will render false results. Instead, we have to put the charge only a bit at a time, and calculate the deformation each time,  hence the 'quasi-static' name. For instance, if you wish to put a 100N/m charge on your object, you should put it by small steps (20,40,60,80,100 is ok). We have to use that method to keep the consistency of the problem.
+Quasi-static means that we do not take inertia into account, however
+the algorithm used needs some kind of a time representation. It is not
+possible to put the charge on the model at once, as it will render
+false results. Instead, we have to put the charge only a bit at a
+time, and calculate the deformation each time, hence the
+'quasi-static' name. For instance, if you wish to put a 100N/m charge
+on your object, you should put it by small steps (20,40,60,80,100 is
+ok). We have to use that method to keep the consistency of the
+problem.
+
+The constructor is 
+\begin{cppcode}
+  mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, value_type lambdai, value_type mui,
+                     value_type stress_threshold, const abstract_constraints_project &t_proj_);
+\end{cppcode}
+
+The \cpp{stress_threshold} is the 'elasticity limit' : if constraints
+are below that limit, the problem is an elasticity problem. Else, it
+is a plasticity one. \cpp{t_proj_} is an instance of a constraints projection objects, such as \cpp{getfem::VM_projection}.
+
+Using that constructor, you can build the problem like with any other
+bricks, adding the Volumic, Neumann and Dirichlet bricks as usual
+(look at \cpp{elastostatic.cc} and \cpp{plasticity.cc} in tests
+directory for examples), and call the solver with
+\cpp{getfem::standard_solve(MS, final_model, iter);}.
 
 
-A brick behaves like a black-box, that is defined by its constructor. A constructor is something like \cpp{getfem::mdbrick_plasticity<> brick(mim, mf_u, mf_coef, lambda, mu, stress_threshold, TOL, flag_hyp);} where :
-\begin{itemize}
-\item mf_u and mf_coef are 2 meshes that define the geometry and the finite elements method of the problem (type : \cpp{getfem::mesh_fem})
-\item lambda and mu are Lame coefficients that define the problem (type : if the problem is homogeneous, \cpp{scalar_type}. If not, \cpp{gmm::vector<scalar_type>}. Its size must be equal to the number of degree of freedom of the system.)
-\item stress_threshold is the 'elasticity limit' : if constraints are below that limit, the problem is an elasticity problem. Else, it is a plasticity one. (type : \cpp{scalar_type})
-\item TOL is a small number that defines what is zero. (type : \cpp{scalar_type})
-\item flag_hyp is zero if the problem is 3D or '2D plane'. Other cases are not implemented, yet. (type : \cpp{size_type})
-\end{itemize}
-
-
-Using that constructor, you can build the problem like with any other bricks, adding the Volumic, Neumann and Dirichlet bricks as usual (look at \cpp{elastostatic.cc} and \cpp{plasticity.cc} in tests directory for examples), and call the solver with \cpp{getfem::standard_solve(MS, final_model, iter);}.
-
-
-Once it's done, you need to know what the results are. 
-You can know the displacement using \cpp{brick.get_solution(MS, U);} where MS is defined by \cpp{getfem::standard_model_state MS(final_model);}, and U the displacement vector.
-
+Once it's done, you need to know what the results are.  You can know
+the displacement using \cpp{brick.get_solution(MS, U);} where MS is
+defined by \cpp{getfem::standard_model_state MS(final_model);}, and U
+the displacement vector.
 
 To get the constraints, you can use \cpp{brick.compute_constraints(MS);} followed by \cpp{brick.get_proj(proj);}, where proj is a \cpp{std::vector<std::vector<scalar_type> >}.
 
@@ -1491,11 +1509,11 @@ To get the constraints, you can use \cpp{brick.compute_constraints(MS);} followe
 \subsection{Linearized plate brick}
 (to be documented, see the test program \cpp{plate.cc})
 \subsection{Large strain elasticity brick}
-This brick represent a large strain elasticity problem. It is defined in \cpp{getfem_nonlinear_elasticity.h}
+This brick represents a large strain elasticity problem. It is defined in \cpp{getfem_nonlinear_elasticity.h}
 
 The constructor is:
 \begin{cppcode}
-  getfem::mdbrick_nonlinear_elasticity<MODEL_STATE> brick(Hyperelastic_Law, mim, mf_u, mf_data, params);
+  getfem::mdbrick_nonlinear_elasticity<MODEL_STATE> brick(Hyperelastic_Law, mim, mf_u, lawparams);
 \end{cppcode}
 where \cpp{Hyperelastic_Law} is an object representing the considered hyperelastic law. It has to be chosen between:
 \begin{cppcode}
@@ -1505,7 +1523,8 @@ where \cpp{Hyperelastic_Law} is an object representing the considered hyperelast
 \end{cppcode}
 The Saint-Venant Kirchhoff law is a linearized law defined with the two Lamé coefficients, Ciarlet Geymonat law is defined with the two Lamé coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
 
-\cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameters of the selected hyperelastic law. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} defining the parameters on \cpp{mf_data}.
+\cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameters of the selected hyperelastic law. The parameters of the hyperelastic law are supplied
+in the vector \cpp{lawparams} (by default they are constant over the mesh, but of you can change that later with \cpp{brick.params().set(mf, V)}).
 
 The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of use of this brick with or without an incompressibility condition.
 
