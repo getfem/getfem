@@ -3,7 +3,7 @@
 \usepackage{pifont}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{psfig}
+% \usepackage{psfig}
 \usepackage{graphicx}
 \usepackage{array}
 \usepackage{fancyheadings}
@@ -279,6 +279,24 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
 \small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \leq K_1,K_2 \leq 255$} & \small $P$, \mbox{$\ 2 \leq P \leq 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_quad8.eps} \\
+    Incomplete $Q_2$ element, 8 d.o.f., $C^0$  \\
+  \end{center}
+\end{figure}
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf Incomplete $Q_2$ Lagrange element on quadrilateral (Quad 8 serendipity element)}\\
+{\tt "FEM\_INCOMPLETE\_Q2"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+\small $3$ & 2 & 8 & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes \\ \hline
 \end{tabular}
 \end{center}
 
