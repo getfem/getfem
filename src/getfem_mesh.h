@@ -180,7 +180,10 @@ namespace getfem {
     dal::dynamic_array<mesh_region> mpi_sub_region;
     dal::bit_vector valid_sub_regions;
 
-    void touch(void) { modified = true; cuthill_mckee_uptodate = false; context_dependencies::touch(); }    
+    void touch(void) { 
+      modified = true; cuthill_mckee_uptodate = false;
+      context_dependencies::touch();
+    }    
     void compute_mpi_region(void) const ;
     void compute_mpi_sub_region(size_type) const;
 
@@ -195,7 +198,8 @@ namespace getfem {
       return mpi_sub_region[n];
     }
 #else
-    void touch(void) { cuthill_mckee_uptodate = false; context_dependencies::touch(); }
+    void touch(void)
+    { cuthill_mckee_uptodate = false; context_dependencies::touch(); }
   public :
     const mesh_region get_mpi_region(void) const 
     { return mesh_region::all_convexes(); }
