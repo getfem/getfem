@@ -475,25 +475,6 @@ namespace getfem {
       PARAMS_.set(PARAMS);
       init_();
     }
- 
-    mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
-				 mesh_im &mim_,
-				 mesh_fem &mf_u_, mesh_fem &mf_data_,
-				 value_type p1, value_type p2)
-      : AHL(AHL_), mim(mim_), mf_u(mf_u_), PARAMS_("params", mf_u.linked_mesh(), this) {
-      VECTOR PARAMS(2); PARAMS[0] = p1;  PARAMS[1] = p2; 
-      PARAMS_.set(PARAMS); init_();
-    }
-
-    mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
-				 mesh_im &mim_,
-				 mesh_fem &mf_u_, mesh_fem &mf_data_,
-				 value_type p1, value_type p2, value_type p3)
-      : AHL(AHL_), mim(mim_), mf_u(mf_u_), PARAMS_("params", mf_u.linked_mesh(), this) {
-      VECTOR PARAMS(3); PARAMS[0] = p1;  PARAMS[1] = p2; PARAMS[2] = p3;
-      PARAMS_.set(PARAMS); init_();
-    }
-
   };
 
 

@@ -38,26 +38,26 @@
 
 namespace getfem {
 
-  // Abstract projection
-  class type_proj {
+  /** Abstract projection of a stress tensor onto a set of admissible stress tensors. */
+  class abstract_constraints_projection  {
   protected : 
     size_type flag_hyp;
     
   public :
-      /* if flag_proj=0 il output proj will be Proj(tau)
-       * if flag_proj=1 il output proj will be gradProj(tau)
+      /* if flag_proj=0 the output will be Proj(tau)
+       * if flag_proj=1 the output will be gradProj(tau)
        * no others values allowed for flag_proj
        */
-      virtual void compute_type_proj(const base_matrix& tau,
+      virtual void do_projection(const base_matrix& tau,
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
 				     size_type flag_proj) const = 0;
-    type_proj(size_type flag_hyp_ = 0) : flag_hyp(flag_hyp_) {}
-    virtual ~type_proj() {}
+    abstract_constraints_projection (size_type flag_hyp_ = 0) : flag_hyp(flag_hyp_) {}
+    virtual ~abstract_constraints_projection () {}
   };
 
-  // Von Mises projection
-  class VM_projection : public type_proj  {
+  /** Von Mises projection */
+  class VM_projection : public abstract_constraints_projection   {
     /* used to compute the projection */
     template<typename MAT> void tau_m_Id(const MAT& tau, MAT &taumid) const {
       scalar_type trace = gmm::mat_trace(tau);
@@ -76,7 +76,7 @@ namespace getfem {
     public :      
 
       /* on input : tau matrix, on output : the projection of tau */
-      virtual void compute_type_proj(const base_matrix& tau,
+      virtual void do_projection(const base_matrix& tau,
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
 				     size_type flag_proj)  const {
@@ -182,7 +182,7 @@ namespace getfem {
 	  }    
 	}
       }
-    VM_projection(size_type flag_hyp_ = 0) : type_proj(flag_hyp_) {}
+    VM_projection(size_type flag_hyp_ = 0) : abstract_constraints_projection (flag_hyp_) {}
   };
   
   /** Compute the projection of D*e + sigma_bar_ on a Gauss point. */
@@ -197,7 +197,7 @@ namespace getfem {
     const std::vector<scalar_type> &stress_threshold;
     const std::vector<scalar_type> &lambda, &mu;  
     bgeot::multi_index sizes_;
-    const type_proj *t_proj; 
+    const abstract_constraints_projection  *t_proj; 
     std::vector<std::vector<scalar_type> > &sigma_bar_;
 
     // to save the projection
@@ -224,7 +224,7 @@ namespace getfem {
 			  const std::vector<scalar_type> &stress_threshold_, 
 			  const std::vector<scalar_type> &lambda_,
 			  const std::vector<scalar_type> &mu_, 
-			  const type_proj *t_proj_,
+			  const abstract_constraints_projection  *t_proj_,
 			  std::vector<std::vector<scalar_type> > &sigma_bar__, 
 			  std::vector<std::vector<scalar_type> > &saved_proj__,
 			  const size_type flag_proj_,
@@ -290,7 +290,7 @@ namespace getfem {
       }
     
       base_matrix tau_star(N,N), gradproj(N,N), proj;
-      t_proj->compute_type_proj(sigma, params[2], proj, flag_proj);
+      t_proj->do_projection(sigma, params[2], proj, flag_proj);
 
       // we fill sigma_bar only when called from compute_constraints
       // (ie, when fill_sigma_bar is set)
@@ -390,7 +390,7 @@ namespace getfem {
 # define MDBRICK_SMALL_DEF_PLASTICITY 556433
   
   /**
-     Plasticity brick (small deformations).
+     Plasticity brick (small deformations, quasi-static).
 
      @todo plane strain, plane stress  (cf flag_hyp).
      @ingroup bricks
@@ -404,7 +404,6 @@ namespace getfem {
       mesh_im &mim;
       mesh_fem &mf_u;
       mdbrick_parameter<VECTOR> lambda_, mu_;
-      bool homogeneous;
       mdbrick_parameter<VECTOR> stress_threshold_;
 
       // flag_hyp=0 : 3D case, or '2D plane'
@@ -414,20 +413,20 @@ namespace getfem {
       std::vector<std::vector<scalar_type> > sigma_bar;
       std::vector<std::vector<scalar_type> > saved_proj;
       
-      const type_proj &t_proj;
+      const abstract_constraints_projection  &t_proj;
 
       void proper_update(void) {}
 
       public:
-
+      /** accessor for the lambda lame coefficient */
       mdbrick_parameter<VECTOR> &lambda(void) { return lambda_; }
       const mdbrick_parameter<VECTOR> &lambda(void) const { return lambda_; }
+      /** accessor for the mu lame coefficient */
       mdbrick_parameter<VECTOR> &mu(void) { return mu_; }
       const mdbrick_parameter<VECTOR> &mu(void) const { return mu_; }
+      /** accessor for the stresh threshold */
       mdbrick_parameter<VECTOR> &stress_threshold(void) { return stress_threshold_; }
       const mdbrick_parameter<VECTOR> &stress_threshold(void) const { return stress_threshold_; }
-
-
       
       SUBVECTOR get_solution(MODEL_STATE &MS) {
 	gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
@@ -484,27 +483,29 @@ namespace getfem {
 	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
       }
 
-      void init_(void) {
+      /** constructor for a homogeneous material.
+	  (non homogeneous lamba, mu and stress threshold can be set afterwards).
+
+          @param lambdai 
+	  @param mu the Lame coefficients
+	  @param stress_th the stress threshold
+	  @param t_proj the projection object (projection on the admissible constraints set).
+      */
+      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_,
+			 value_type lambdai, value_type mui,
+			 value_type stress_th,
+			 const abstract_constraints_projection &t_proj_) 
+	: mim(mim_), mf_u(mf_u_), lambda_("lambda", mf_u_.linked_mesh(), this),
+	  mu_("mu", mf_u_.linked_mesh(), this),
+	  stress_threshold_("stress_threshold", mf_u_.linked_mesh(), this),
+	  t_proj(t_proj_) {
+	lambda_.set(lambdai); mu_.set(mui); stress_threshold_.set(stress_th);
 	this->add_proper_mesh_im(mim);
 	this->add_proper_mesh_fem(mf_u, MDBRICK_SMALL_DEF_PLASTICITY);
 	this->proper_is_coercive_ = this->proper_is_linear_ = false;
 	this->proper_is_symmetric_ = true;
 	N = mf_u.linked_mesh().dim();
 	this->force_update();
-      }
-
-      /** constructor for a homogeneous material (constant lambda, mu and
-	  stress_threshold */
-      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_,
-			 value_type lambdai, value_type mui,
-			 value_type stress_th,
-			 const type_proj &t_proj_) 
-	: mim(mim_), mf_u(mf_u_), lambda_("lambda", mf_u_.linked_mesh(), this),
-	  mu_("mu", mf_u_.linked_mesh(), this),
-	  stress_threshold_("stress_threshold", mf_u_.linked_mesh(), this),
-	  t_proj(t_proj_) {
-	lambda_.set(lambdai); mu_.set(mui); stress_threshold_.set(stress_th);
-	init_();
       }
 
     };

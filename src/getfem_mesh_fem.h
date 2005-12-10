@@ -393,10 +393,16 @@ namespace getfem
 
 
   /** Gives the descriptor of a classical finite element method of degree K
-   *  on mesh.  
+      on mesh.  
+      
+      The mesh_fem won't be destroyed until its linked_mesh is
+      destroyed. All the mesh_fem built by this function are stored
+      in a cache, which means that calling this function twice with
+      the same arguments will return the same mesh_fem object. A
+      consequence is that you should NEVER modify this mesh_fem!
    */
   const mesh_fem &classical_mesh_fem(const getfem_mesh &mesh,
-				      dim_type o);
+				      dim_type K);
 
 }  /* end of namespace getfem.                                             */
 

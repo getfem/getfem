@@ -454,6 +454,9 @@ namespace getfem
       tensor. This is more a demonstration of generic assembly than
       something useful !  
 
+      Note that this function could have been called 
+      "asm_stiffness_matrix_for_vector_elliptic"
+
       @ingroup asm
   */
   template<typename MAT, typename VECT> void
@@ -465,14 +468,12 @@ namespace getfem
 						   const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    /* e = strain tensor,
-       M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
+    /* 
+       M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
     */
     generic_assembly assem("a=data$1(qdim(#1),qdim(#1),qdim(#1),qdim(#1),#2);"
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
-			   "  +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
-			   "M(#1,#1)+= sym(e(:,i,j,:,k,l,p).a(i,j,k,l,p))");
+			   "M(#1,#1)+= sym(t(:,i,j,:,k,l,p).a(i,j,k,l,p))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);
