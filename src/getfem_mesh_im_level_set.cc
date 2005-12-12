@@ -86,13 +86,13 @@ namespace getfem {
     dal::bit_vector convexes_arein;
 
     //std::fstream totof("totof", std::ios::out | std::ios::app);
+    for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
+      mesherls0[i] =  mls.get_level_set(i)->mls_of_convex(cv, 0, false);
+      if (mls.get_level_set(i)->has_secondary())
+	mesherls1[i] =  mls.get_level_set(i)->mls_of_convex(cv, 1, false);
+    }
 
     if (integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
-      for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
-	mesherls0[i] =  mls.get_level_set(i)->mls_of_convex(cv, 0, false);
-	if (mls.get_level_set(i)->has_secondary())
-	  mesherls1[i] =  mls.get_level_set(i)->mls_of_convex(cv, 1, false);
-      }
       for (dal::bv_visitor scv(mesh.convex_index()); !scv.finished(); ++scv) {
 	B = dal::mean_value(mesh.points_of_convex(scv));
 	bool isin = true;
@@ -111,15 +111,52 @@ namespace getfem {
     bgeot::pgeometric_trans pgt2
       = mesh.trans_of_convex(mesh.convex_index().first_true());
     dim_type n = pgt->dim();
-    papprox_integration pai = regular_simplex_pim->approx_method();
+
+    if (base_singular_pim) {
+      if ((n == 2 && base_singular_pim->structure() != bgeot::parallelepiped_structure(2))
+	  || (n == 3 && base_singular_pim->structure() != bgeot::prism_structure(3)) || (n < 2) || (n > 3))
+	DAL_THROW(failure_error, "Base integration method for qusi polar integration not convenient");
+    }
+
+
     approx_integration *new_approx = new approx_integration(pgt->convex_ref());
     base_matrix KK(n,n), CS(n,n);
     base_matrix pc(pgt2->nb_points(), n);
+    std::vector<size_type> ptsing;
 
     for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+      papprox_integration pai = regular_simplex_pim->approx_method();
       
       if ((integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) &&
 	  !convexes_arein[i]) continue;
+      
+      if (base_singular_pim) {
+	ptsing.resize(0);
+	unsigned sing_ls = unsigned(-1);
+	
+	for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils)
+	  if (mls.get_level_set(ils)->has_secondary()) {
+	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
+	      if (gmm::abs((mesherls0[i])(mesh.points_of_convex(i)[ipt])) < 1E-10
+		  && gmm::abs((mesherls1[i])(mesh.points_of_convex(i)[ipt])) < 1E-10) {
+		if (sing_ls == unsigned(-1)) sing_ls = ils;
+		if (sing_ls != ils)
+		  DAL_THROW(failure_error, "Two singular point in one sub element. To be done");
+		ptsing.push_back(ipt);
+	      }
+	    }
+	  }
+	assert(ptsing.size() < n);
+	
+	if (ptsing.size() > 0) {
+	  std::stringstream sts;
+	  sts << "IM_QUASI_POLAR(" << name_of_int_method(base_singular_pim) << ", " << ptsing[0];
+	  if (ptsing.size() > 1) sts << ", " <<  ptsing[1];
+	  sts << ")";
+	  cout << "Singular int method : " << sts.str() << endl;
+	  pai = int_method_descriptor(sts.str())->approx_method();
+	}
+      }
 
       if (integrate_where & (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
 		

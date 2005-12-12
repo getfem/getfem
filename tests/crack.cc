@@ -345,6 +345,7 @@ void crack_problem::init(void) {
 					       "Name of integration method");
   const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
+  const char *SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
 
   add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
@@ -390,13 +391,16 @@ void crack_problem::init(void) {
     getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
-  getfem::pintegration_method sppi = 
+  getfem::pintegration_method simp_ppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
+  getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION ?
+					  getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
   if (add_crack) { mls.add_level_set(ls2); mls.add_level_set(ls3); }
-  mim.set_simplex_im(sppi);
+
+  mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
   
