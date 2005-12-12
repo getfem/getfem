@@ -39,17 +39,6 @@
 #include <getfem_modeling.h>
 #include <gmm.h>
 
-#ifdef GMM_USES_MPI
-#include <mpi.h>
-// #include <mpi++.h>
-#endif
-/* try to enable the SIGFPE if something evaluates to a Not-a-number
- * of infinity during computations
- */
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
-
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
@@ -60,7 +49,7 @@ using bgeot::base_matrix; /* small dense matrix. */
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
  */
-#ifndef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL < 2
 typedef getfem::modeling_standard_sparse_matrix Tsparse_matrix;
 typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
@@ -137,7 +126,7 @@ struct elastostatic_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_p(mesh) {}
+  elastostatic_problem(void) : mim(mesh),mf_u(mesh),mf_rhs(mesh),mf_p(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -324,20 +313,20 @@ bool elastostatic_problem::solve(plain_vector &U) {
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
   Model_State MS(final_model);
   gmm::iteration iter(residue, 1, 40000);
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     double t_init=MPI_Wtime();
 #endif
   getfem::standard_solve(MS, final_model, iter);
 
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     cout<<"temps standard solve "<< MPI_Wtime()-t_init<<endl;
 #endif
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     double t_ref=MPI_Wtime();
 #endif
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     cout<<"temps copy elas "<< MPI_Wtime()-t_ref<<endl;
 #endif
   return (iter.converged());
@@ -348,20 +337,13 @@ bool elastostatic_problem::solve(plain_vector &U) {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-#ifdef GMM_USES_MPI
-  int rank;
-  MPI_Init(&argc,&argv);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb); // to debug ...
+  GETFEM_MPI_INIT(argc, argv); // For parallelized version
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     static double t_resol = 0.0;
     double t_ref,t_final;
 #endif
@@ -371,13 +353,13 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     t_ref=MPI_Wtime();
     cout<<"begining resol"<<endl;
 #endif
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     t_final=MPI_Wtime();
     t_resol += t_final-t_ref;
     cout<<"end resol"<<endl;
@@ -398,8 +380,8 @@ int main(int argc, char *argv[]) {
     }
   }
   DAL_STANDARD_CATCH_ERROR;
-#ifdef GMM_USES_MPI
-   MPI_Finalize();
-#endif
+
+  GETFEM_MPI_FINALIZE;
+
   return 0; 
 }

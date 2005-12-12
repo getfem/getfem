@@ -984,7 +984,7 @@ namespace getfem
     size_type nb_bimg = 0;
 
     if (!(gmm::is_col_matrix(H)))
-      DAL_WARNING(2, "Dirichlet_nullspace inefficient for a row matrix H");
+      DAL_WARNING2("Dirichlet_nullspace inefficient for a row matrix H");
     // First, detection of null columns of H, and already orthogonals 
     // vectors of the image of H.
     dal::bit_vector nn;
@@ -1065,7 +1065,7 @@ namespace getfem
     // Test ...
     gmm::mult(H, U0, gmm::scaled(R, T(-1)), aux);
     if (gmm::vect_norm2(aux) > gmm::vect_norm2(U0)*tol*MAGT(10000))
-      DAL_WARNING(2, "Dirichlet condition not well inverted: residu="
+      DAL_WARNING2("Dirichlet condition not well inverted: residu="
 		  << gmm::vect_norm2(aux));
     
     return nbase;

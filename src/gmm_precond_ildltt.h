@@ -115,7 +115,7 @@ namespace gmm {
       tmp = w[i];
 
       if (gmm::abs(gmm::real(tmp)) <= max_pivot)
-	{ DAL_WARNING(2, "pivot " << i << " is too small"); tmp = T(1); }
+	{ DAL_WARNING2("pivot " << i << " is too small"); tmp = T(1); }
 
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = R(1) / gmm::real(tmp);

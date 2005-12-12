@@ -133,7 +133,7 @@ namespace gmm {
       tmp = w[i];
 
       if (gmm::abs(tmp) <= max_pivot) {
-	DAL_WARNING(2, "pivot " << i << " too small. try with ilutp ?");
+	DAL_WARNING2("pivot " << i << " too small. try with ilutp ?");
 	w[i] = tmp = T(1);
       }
 

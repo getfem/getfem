@@ -9,7 +9,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 2000-2005 Yves Renard
+// Copyright (C) 2000-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -147,13 +147,64 @@
 #ifndef GETFEM_CONFIG_H__
 #define GETFEM_CONFIG_H__
 
+// Parallelisation options
+
+// GETFEM_PARA_LEVEL is the parallelisation level of Getfem
+//    0 - Sequential
+//    1 - Only the resolution of linear systems are parallelized
+//    2 - Assembly procedures are also parallelized
+#ifndef GETFEM_PARA_LEVEL
+# define GETFEM_PARA_LEVEL 0
+#endif
+
+#define GETFEM_MPI_INIT(argc, argv) {DAL_TRACE1("Running sequential Getfem");}
+#define GETFEM_MPI_FINALIZE {}
+
+#if GETFEM_PARA_LEVEL > 0
+
+#undef DAL_TRACE_MSG_MPI
+#define DAL_TRACE_MSG_MPI					         \
+  int mip_rk__; MPI_Comm_rank(MPI_COMM_WORLD, &mip_rk__);	         \
+  if (mip_rk__ == 0) 
+
+# undef GETFEM_MPI_INIT
+# define GETFEM_MPI_INIT(argc, argv) { int mip_rk__;                     \
+  MPI_Init(&argc, &argv);                                                \
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rk__);                              \
+  DAL_TRACE1("Running parallelized Getfem level " << GETFEM_PARA_LEVEL); \
+  }
+# undef GETFEM_MPI_FINALIZE 
+# define GETFEM_MPI_FINALIZE { MPI_Finalize(); }
+
+// GETFEM_PARA_SOLVER is the parallelisation solver used
+//    MUMPS       : use direct parallel solver MUMPS
+//    SCHWARZADD  : use a Schwarz additive method
+# ifndef GETFEM_PARA_SOLVER
+#   define GETFEM_PARA_SOLVER MUMPS
+# endif
+
+# if GETFEM_PARA_SOLVER == MUMPS
+#  ifndef GMM_USES_MUMPS
+#    define GMM_USES_MUMPS
+#  endif
+# endif
+
+# include <mpi.h>
+
+# if GETFEM_PARA_LEVEL > 1
+extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *,
+				    int *, int *, int *, int *, int *);
+# endif
+
+#endif
+
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
 #include <getfem_superlu.h>
 
 /// GEneric Tool for Finite Element Methods.
-namespace getfem
-{
+namespace getfem {
+
   using bgeot::ST_NIL;
   using bgeot::size_type;
   using bgeot::dim_type;

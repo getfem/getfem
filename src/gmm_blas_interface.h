@@ -3,7 +3,7 @@
 //
 // Library : Generic Matrix Methods  (gmm)
 // File    : gmm_blas_interface.h : specialization of operations for
-//           dense matrices calling blas.
+//           dense matrices calling fortran blas.
 // Date    : October 7, 2003.
 // Authors : Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr
 //           Yves Renard <Yves.Renard@insa-toulouse.fr>
@@ -29,7 +29,7 @@
 //========================================================================
 
 /**@file gmm_blas_interface.h
-   @brief gmm interface for BLAS.
+   @brief gmm interface for fortran BLAS.
 */
 
 #if defined(GETFEM_USES_BLAS) || defined(GMM_USES_BLAS) \

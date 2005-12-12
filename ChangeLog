@@ -1,9 +1,31 @@
+2005-12-10 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+
+	* src/getfem_config.h deals now with the level of parallelization
+	of Getfem. GETFEM_PARA_LEVEL = 0 : sequential version.
+	GETFEM_PARA_LEVEL = 1 parallelization of the linear solver,
+	GETFEM_PARA_LEVEL = 2 parallelization of the assembly procedures also.
+	GETFEM_PARA_SOLVER should describe the parallel solver used.
+	A set of macro are defined to deal with mpi and metis.
+
+	* src/dal_except.h changing Warning syntax DAL_WARNING2("msg")
+	 instead of DAL_WARNING(2, "msg"). In order to be able to hide
+	some warning level at the compile time.	Adding also DAL_TRACE0("msg")
+	to DAL_TRACE4("msg") on the same format.
+	
 2005-12-09  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/gmm_MUMPS_interface.h: added sequential mumps interface
 	(direct solver for sparse matrices).
 
 	* src/getfem_modeling.h: large modification of the mdbricks
+
+2005-12-08 Julien pommier, Yves Renard
+
+	* src/getfem_modeling.h,
+	  important simplifications in the brick system. creation of brick
+	parameter, simplification of the constructors. A default mf_data
+	is assumed for constant parameters. A generic linear pde brick
+	is built to make the construction of new brick for linear pdes easy.
 
 2005-11-22  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
@@ -38,7 +60,7 @@
 
 2005-05-19 Julien pommier, Yves Renard
 
-	* getfem_modeling.h, Simplification of the model bricks system.
+	* src/getfem_modeling.h, Simplification of the model bricks system.
 
 2005-05-13  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
@@ -47,14 +69,14 @@
 
 2005-03-11 Julien pommier, Yves Renard
 
-	* getfem_fem_level_set.h,  getfem_fem_level_set.cc,
-	  getfem_mesh_fem_level_set.h and getfem_mesh_fem_level_set.cc
+	* src/getfem_fem_level_set.h, src/getfem_fem_level_set.cc,
+	getfem_mesh_fem_level_set.h, getfem_mesh_fem_level_set.cc
 	deals with the fem representation of discontinuities across some
 	level sets.
 
 2005-02-25 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
-	* dal_static_stored_object.h and dal_static_stored_object.cc
+	* src/dal_static_stored_object.h, src/dal_static_stored_object.cc
 	centralize the management of the static objects (convex structures,
 	geometric transformations, fems, precomps, mat elems ...), and store
 	the dependencies between them to be able to delete consistently a
@@ -65,12 +87,12 @@
 
 2005-02-04 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
-	* navier_stokes.cc addition of tests programs stokes and navier stokes
+	* contrib/icare/icare.cc a Navier-Stokes solver in Getfem.
 
 2005-02-01 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
-	* dal_std.h and gmm_def.h : mathematical definitions are moved from
-	dal_std.h to gmm_def.h
+	* src/dal_std.h, src/gmm_def.h : mathematical definitions are
+	moved from dal_std.h to gmm_def.h
 
 2005-01-31 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
@@ -90,8 +112,6 @@
 	mesh_fem are declared deprecated. Consequences : incompatibility
 	of the description of the set of faces : bitset in place of a 
 	dal::bit_vector, incompatibility of the mesh and mesh_fem files.
-
-2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* Changing the extension from .C to .cc for compatibility with
 	Windows.
@@ -260,7 +280,7 @@
 
 2004-03-31  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 
-	* src/getfem_fem.h and src/getfem_import.h: added a method giving
+	* src/getfem_fem.h, src/getfem_import.h: added a method giving
 	an interpolation matrix, useful for repeated interpolations of one
 	field onto another.
 

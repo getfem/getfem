@@ -1,8 +1,5 @@
 #include <bgeot_comma_init.h>
 #include <getfem_mesh_slice.h>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 using getfem::size_type;
 namespace getfem {
@@ -44,9 +41,10 @@ namespace getfem {
 
 int 
 main() {
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+
   getfem::getfem_mesh m;
   getfem::base_node A; bgeot::sc(A)=0,0;
   getfem::base_node B; bgeot::sc(B)=1,0;

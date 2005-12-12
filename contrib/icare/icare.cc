@@ -32,14 +32,6 @@
 #include <getfem_Navier_Stokes.h>
 #include "icare.h"
 
-
-/* try to enable the SIGFPE if something evaluates to a Not-a-number
- * of infinity during computations
- */
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
-
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
@@ -719,12 +711,9 @@ void navier_stokes_problem::do_export(scalar_type t) {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb); // to debug ...
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
     navier_stokes_problem p;

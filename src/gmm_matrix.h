@@ -946,10 +946,7 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-#ifdef GMM_USES_MPI
-  
-#include <mpi.h>
-// #include <mpi++.h>
+#ifdef MPI_CHAR
  
 namespace gmm { 
   
@@ -1020,7 +1017,7 @@ namespace gmm {
     static double tmult_tot2 = 0.0;
     double t_ref = MPI_Wtime();
     gmm::mult(m.M, v1, v3);
-    if (is_sparse(v2)) DAL_WARNING(2, "Using a plain temporary, here.");
+    if (is_sparse(v2)) DAL_WARNING2("Using a plain temporary, here.");
     double t_ref2 = MPI_Wtime();
     MPI_Allreduce(&(v3[0]), &(v4[0]),gmm::vect_size(v2), mpi_type(T()),
 		  MPI_SUM,MPI_COMM_WORLD);

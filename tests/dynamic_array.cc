@@ -20,14 +20,10 @@
 #include <dal_basic.h>
 #include <deque>
 #include <complex>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 int main(void) {
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   try {
 
     cout << "size of int           : " << sizeof(int)           << endl;

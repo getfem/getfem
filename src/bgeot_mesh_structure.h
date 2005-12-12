@@ -112,8 +112,7 @@ namespace bgeot
   };
   
   /// pseudo-container for a list of convexes attached to a point.
-  class mesh_convex_ind_ct
-  {
+  class mesh_convex_ind_ct {
   public :
       
     typedef size_t               value_type;
@@ -152,8 +151,8 @@ namespace bgeot
   /** Mesh structure definition. 
       At this point, the mesh is just a graph: the points have no associated coordinates
   */
-  class mesh_structure
-  {
+  class mesh_structure {
+
   protected :
     
     mesh_point_st_ct    points_tab;
@@ -297,8 +296,7 @@ namespace bgeot
   /* search functions.                                                    */
   /* ******************************************************************** */
 
-  template<class ITER> struct mesh_convex_has_points
-  {
+  template<class ITER> struct mesh_convex_has_points {
     ITER ipt;
     short_type nb;
     dim_type dim;
@@ -377,10 +375,8 @@ namespace bgeot
 
   template<class ITER>
     bool mesh_structure::is_convex_has_points(size_type ic,
-					      short_type nb, ITER pit) const
-  {
-    for (short_type i = 0; i < nb; ++i, ++pit)
-    {
+					      short_type nb, ITER pit) const {
+    for (short_type i = 0; i < nb; ++i, ++pit) {
       ref_mesh_point_ind_ct pt = ind_points_of_convex(ic);
       if (std::find(pt.begin(), pt.end(), *pit) == pt.end()) return false;
     }
@@ -389,11 +385,10 @@ namespace bgeot
   
 
   template<class ITER>
-  bool mesh_structure::is_convex_face_has_points(size_type ic, size_type face_num,
-						 short_type nb, ITER pit) const
-  {
-    for (short_type i = 0; i < nb; ++i, ++pit)
-    {
+  bool mesh_structure::is_convex_face_has_points(size_type ic, 
+						 size_type face_num,
+						 short_type nb, ITER pit) const {
+    for (short_type i = 0; i < nb; ++i, ++pit) {
       ind_ref_mesh_point_ind_ct pt = ind_points_of_face_of_convex(ic, face_num);
       if (std::find(pt.begin(), pt.end(), *pit) == pt.end()) return false;
     }
@@ -402,8 +397,7 @@ namespace bgeot
 
   template<class ITER>
     size_type mesh_structure::add_convex_noverif(pconvex_structure cs,
-						 ITER ipts, size_type is)
-  {
+						 ITER ipts, size_type is) {
     short_type nb = cs->nb_points();
     mesh_convex_structure s; s.cstruct = cs; s.pts = point_links.alloc(nb);
     if (nb > 0)
@@ -418,8 +412,7 @@ namespace bgeot
       is = convex_tab.add(s);
 
     mesh_link_ct::iterator ipl = point_links.begin(); ipl += s.pts;
-    for (short_type i = 0; i < nb; ++i, ++ipts, ++ipl)
-    {
+    for (short_type i = 0; i < nb; ++i, ++ipts, ++ipl) {
       mesh_point *os = &(points_tab[*ipts]);
       (*ipl).next = os->first; os->first = is;
       (*ipl).ind_in_next = os->ind_in_first; os->ind_in_first = i;
@@ -443,8 +436,7 @@ namespace bgeot
   }
 
   template<class ITER>
-    void mesh_structure::sup_convex_with_points(ITER ipts, short_type nb)
-  {
+    void mesh_structure::sup_convex_with_points(ITER ipts, short_type nb) {
     mesh_convex_with_points_ind_ct<ITER>
       ct = convex_with_points(*this, nb, ipts);
     typename mesh_convex_with_points_ind_ct<ITER>::iterator b = ct.begin();

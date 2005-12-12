@@ -6,9 +6,7 @@
 #endif
 #include <unistd.h>
 #include <iomanip>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
+
 
 using getfem::scalar_type;
 using getfem::size_type;
@@ -294,11 +292,11 @@ void test0() {
 }
 
 int main(int argc, char *argv[]) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb); // for debugging ...
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+
+  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
   try {
     test0();

@@ -37,6 +37,13 @@
 
 #include <dal_std.h>
 
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+# include <fenv.h>
+# define FE_ENABLE_EXCEPT { feenableexcept(FE_DIVBYZERO | FE_INVALID); }
+#else
+# define FE_ENABLE_EXCEPT {}
+#endif
+
 namespace dal {
 
 /* *********************************************************************** */
@@ -161,6 +168,11 @@ namespace dal {
     virtual ~exception_callback_debug() {}
   };
 
+#define DAL_SET_EXCEPTION_DEGUG {                         \
+    dal::exception_callback_debug cb;                     \
+    dal::exception_callback::set_exception_callback(&cb); \
+  }
+
   /** user function for changing the default exception callback */ 
   inline void set_exception_callback(exception_callback *e)
   { exception_callback::which_except(e); }
@@ -188,7 +200,11 @@ namespace dal {
 #  define DAL_INTERNAL_ERROR(thestr) DAL_THROW(dal::internal_error, "Internal error: " << thestr)
 #endif
 
+/* *********************************************************************** */
+/*	Getfem++ warnings.                         			   */
+/* *********************************************************************** */
 
+  // This allows to dynamically hide warnings
   struct warning_level {
     static int level(int l = -2)
     { static int level_ = 3; return (l != -2) ? (level_ = l) : level_; }
@@ -196,19 +212,123 @@ namespace dal {
 
   inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
 
-#define DAL_WARNING(level_, thestr) {                                 \
-    std::stringstream msg;                                            \
-    msg << "Level " << level_ << " Warning in "__FILE__ << ", line "  \
-        << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": " << thestr << ends; \
-    if ((level_) <= dal::warning_level::level())                      \
-       std::cerr << msg.str() << std::endl;                           \
-  } 
+  // This allow not too compile some Warnings
+#ifndef DAL_WARNING_LEVEL
+# define DAL_WARNING_LEVEL 4
+#endif
 
   // Warning levels : 0 always printed
   //                  1 very important : specify a possible error in the code.
   //                  2 important : specify a default of optimization for inst.
   //                  3 remark
   //                  4 ignored by default.
+
+#define DAL_WARNING_MSG(level_, thestr)  {			       \
+      std::stringstream msg;                                           \
+      msg << "Level " << level_ << " Warning in "__FILE__ << ", line " \
+          << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": " << thestr  \
+          << ends;						       \
+       std::cerr << msg.str() << std::endl;                            \
+    }
+
+#define DAL_WARNING0(thestr) DAL_WARNING_MSG(0, thestr)
+
+#if DAL_WARNING_LEVEL > 0
+# define DAL_WARNING1(thestr)                                           \
+  { if (1 <= dal::warning_level::level()) DAL_WARNING_MSG(1, thestr) }
+#else
+# define DAL_WARNING1(thestr) {}
+#endif
+
+#if DAL_WARNING_LEVEL > 1
+# define DAL_WARNING2(thestr)                                           \
+  { if (2 <= dal::warning_level::level()) DAL_WARNING_MSG(2, thestr) } 
+#else
+# define DAL_WARNING1(thestr) {}
+#endif
+
+#if DAL_WARNING_LEVEL > 2
+# define DAL_WARNING3(thestr)                                           \
+  { if (3 <= dal::warning_level::level()) DAL_WARNING_MSG(3, thestr) } 
+#else
+# define DAL_WARNING1(thestr) {}
+#endif
+
+#if DAL_WARNING_LEVEL > 3
+# define DAL_WARNING4(thestr)                                           \
+  { if (4 <= dal::warning_level::level()) DAL_WARNING_MSG(4, thestr) } 
+#else
+# define DAL_WARNING1(thestr) {}
+#endif
+
+/* *********************************************************************** */
+/*	Getfem++ traces.                         			   */
+/* *********************************************************************** */
+
+  // This allows to dynamically hide traces
+  struct traces_level {
+    static int level(int l = -2)
+    { static int level_ = 2; return (l != -2) ? (level_ = l) : level_; }
+  };
+
+  inline void set_traces_level(int l) { traces_level::level(std::max(0,l)); }
+
+  // This allow not too compile some Warnings
+#ifndef DAL_TRACES_LEVEL
+# define DAL_TRACES_LEVEL 3
+#endif
+
+  // Traces levels : 0 always printed
+  //                 1 Susceptible to occur once in a program.
+  //                 2 Susceptible to occur occasionnaly in a program (10).
+  //                 3 Susceptible to occur often (100).
+  //                 4 Susceptible to occur very often (>1000).
+
+#define DAL_TRACE_MSG_MPI     // for Parallelized version
+#define DAL_TRACE_MSG(level_, thestr)  {			       \
+   DAL_TRACE_MSG_MPI {                                                  \
+      std::stringstream msg;                                           \
+      msg << "Trace " << level_ << " in "__FILE__ << ", line "         \
+          << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": " << thestr  \
+          << ends;						       \
+       std::cout << msg.str() << std::endl;                            \
+    }                                                                  \
+  }        
+
+#define DAL_TRACE0(thestr) DAL_TRACE_MSG(0, thestr)
+
+#if DAL_TRACES_LEVEL > 0
+# define DAL_TRACE1(thestr)                                           \
+  { if (1 <= dal::traces_level::level()) DAL_TRACE_MSG(1, thestr) }
+#else
+# define DAL_TRACE1(thestr) {}
+#endif
+
+#if DAL_TRACES_LEVEL > 1
+# define DAL_TRACE2(thestr)                                           \
+  { if (2 <= dal::traces_level::level()) DAL_TRACE_MSG(2, thestr) } 
+#else
+# define DAL_TRACE2(thestr) {}
+#endif
+
+#if DAL_TRACES_LEVEL > 2
+# define DAL_TRACE3(thestr)                                           \
+  { if (3 <= dal::traces_level::level()) DAL_TRACE_MSG(3, thestr) } 
+#else
+# define DAL_TRACE3(thestr) {}
+#endif
+
+#if DAL_TRACES_LEVEL > 3
+# define DAL_TRACE4(thestr)                                           \
+  { if (4 <= dal::traces_level::level()) DAL_TRACE_MSG(4, thestr) } 
+#else
+# define DAL_TRACE4(thestr) {}
+#endif
+
+
+
+
+
   
 } /* end of namespace dal.                                                */
 

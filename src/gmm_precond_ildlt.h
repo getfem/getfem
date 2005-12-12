@@ -128,7 +128,7 @@ namespace gmm {
     
     if (A(0,0) == T(0)) {
       Tri_val[Tri_ptr[0]] = T(1);
-      DAL_WARNING(2, "pivot 0 is too small");
+      DAL_WARNING2("pivot 0 is too small");
     }
     
     for (k = 0; k < n; k++) {
@@ -136,7 +136,7 @@ namespace gmm {
       z = T(gmm::real(Tri_val[d])); Tri_val[d] = z;
       if (gmm::abs(z) <= max_pivot) {
 	Tri_val[d] = z = T(1);
-	DAL_WARNING(2, "pivot " << k << " is too small [" << gmm::abs(z) << "]");
+	DAL_WARNING2("pivot " << k << " is too small [" << gmm::abs(z) << "]");
       }
       max_pivot = std::max(max_pivot, std::min(gmm::abs(z) * prec, R(1)));
       

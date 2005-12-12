@@ -51,7 +51,7 @@ namespace gmm {
 	magnitude_type x = gmm::abs(M(i, i));
 	if (x == magnitude_type(0)) {
 	  x = magnitude_type(1);
-	  DAL_WARNING(2, "The matrix has a zero on its diagonal");
+	  DAL_WARNING2("The matrix has a zero on its diagonal");
 	}
 	diag[i] = magnitude_type(1) / x;
       }

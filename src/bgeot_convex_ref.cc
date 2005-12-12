@@ -232,7 +232,7 @@ namespace bgeot {
 
     product_ref_(pconvex_ref a, pconvex_ref b) { 
       if (a->structure()->dim() < b->structure()->dim())
-	DAL_WARNING(1, "Illegal convex : swap your operands: dim(cv1)=" << 
+	DAL_WARNING1("Illegal convex : swap your operands: dim(cv1)=" << 
 		    int(a->structure()->dim()) << " < dim(cv2)=" << 
 		    int(b->structure()->dim()));
       cvr1 = a; cvr2 = b;

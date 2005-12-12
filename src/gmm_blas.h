@@ -357,7 +357,7 @@ namespace gmm {
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,
 		   abstract_null_type) {
     typename temporary_vector<V1>::vector_type w(mat_nrows(ps));
-    DAL_WARNING(2, "Warning, a temporary is used in scalar product\n");
+    DAL_WARNING2("Warning, a temporary is used in scalar product\n");
     mult(ps, v1, w); 
     return vect_sp(w, v2);
   }
@@ -890,7 +890,7 @@ namespace gmm {
   void copy(const L1& l1, L2& l2) { 
     if ((const void *)(&l1) != (const void *)(&l2)) {
       if (same_origin(l1,l2))
-	DAL_WARNING(2, "Warning : a conflict is possible in copy\n");
+	DAL_WARNING2("Warning : a conflict is possible in copy\n");
      
       copy(l1, l2, typename linalg_traits<L1>::linalg_type(),
 	   typename linalg_traits<L2>::linalg_type());
@@ -1620,7 +1620,7 @@ namespace gmm {
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
-      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
+      DAL_WARNING2("Warning, A temporary is used for mult\n");
       typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1, l2, temp, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
@@ -1719,7 +1719,7 @@ namespace gmm {
 		    linalg_traits<L1>::sub_orientation>::potype());
     }
     else {
-      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
+      DAL_WARNING2("Warning, A temporary is used for mult\n");
       typename temporary_vector<L2>::vector_type temp(vect_size(l2));
       copy(l2, temp);
       mult_add_spec(l1,temp, l4, typename principal_orientation_type<typename
@@ -1744,7 +1744,7 @@ namespace gmm {
 		    linalg_traits<L1>::sub_orientation>::potype());
     }
     else {
-      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
+      DAL_WARNING2("Warning, A temporary is used for mult\n");
       typename temporary_vector<L3>::vector_type temp(vect_size(l2));
       copy(l2, temp);
       mult_add_spec(l1,temp, l3, typename principal_orientation_type<typename
@@ -1917,7 +1917,7 @@ namespace gmm {
       DAL_THROW(dimension_error,"dimensions mismatch");
 
     if (same_origin(l2, l3) || same_origin(l1, l3)) {
-      DAL_WARNING(2, "A temporary is used for mult");
+      DAL_WARNING2("A temporary is used for mult");
       temp_mat_type temp(mat_nrows(l3), mat_ncols(l3));
       mult_spec(l1, l2, temp, typename mult_t<
 		typename linalg_traits<L1>::sub_orientation,
@@ -1937,7 +1937,7 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, g_mult) {
     typedef typename linalg_traits<L3>::value_type T;
-    DAL_WARNING(2, "Inefficient generic matrix-matrix mult is used");
+    DAL_WARNING2("Inefficient generic matrix-matrix mult is used");
     for (size_type i = 0; i < mat_nrows(l3) ; ++i)
       for (size_type j = 0; j < mat_ncols(l3) ; ++j) {
 	T a(0);
@@ -1967,7 +1967,7 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
     if (is_sparse(l1) || is_sparse(l2)) {
-      DAL_WARNING(3, "Inefficient row matrix - col matrix mult for "
+      DAL_WARNING3("Inefficient row matrix - col matrix mult for "
 		  "sparse matrices, using temporary");
       mult_row_col_with_temp(l1, l2, l3, 
 			     typename principal_orientation_type<typename
@@ -2066,7 +2066,7 @@ namespace gmm {
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
 		 abstract_sparse, row_major) {
      typedef typename linalg_traits<L2>::value_type T;
-     DAL_WARNING(3, "Inefficient matrix-matrix mult for sparse matrices");
+     DAL_WARNING3("Inefficient matrix-matrix mult for sparse matrices");
      clear(l3);
      size_type mm = mat_nrows(l2), nn = mat_ncols(l3);
      for (size_type i = 0; i < nn; ++i)

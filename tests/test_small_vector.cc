@@ -10,9 +10,6 @@
 #include <valarray>
 #include <bgeot_small_vector.h>
 #include <unistd.h>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 bool quick = false;
 
@@ -764,9 +761,9 @@ namespace getfem {
 }
 
 int main(int argc, char **argv) {
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
   getfem::run();
 }

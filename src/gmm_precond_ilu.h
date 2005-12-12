@@ -132,7 +132,7 @@ namespace gmm {
     
     if (A(0,0) == T(0)) {
       U_val[U_ptr[0]] = T(1);
-      DAL_WARNING(2, "pivot 0 is too small");
+      DAL_WARNING2("pivot 0 is too small");
     }
 
     size_type qn, pn, rn;
@@ -141,7 +141,7 @@ namespace gmm {
       pn = U_ptr[i];
       if (gmm::abs(U_val[pn]) <= max_pivot) {
 	U_val[pn] = T(1);
-	DAL_WARNING(2, "pivot " << i << " is too small");
+	DAL_WARNING2("pivot " << i << " is too small");
       }
       max_pivot = std::max(max_pivot,
 			   std::min(gmm::abs(U_val[pn]) * prec, R(1)));

@@ -86,7 +86,7 @@ namespace gmm {
       if (rho == R(0) || xi == R(0))
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { DAL_THROW(failure_error, "QMR failed to converge"); }
-	else { DAL_WARNING(1, "QMR failed to converge"); return; }
+	else { DAL_WARNING1("QMR failed to converge"); return; }
 
       gmm::copy(gmm::scaled(v_tld, T(R(1)/rho)), v);
       gmm::scale(y, T(R(1)/rho));
@@ -98,7 +98,7 @@ namespace gmm {
       if (delta == T(0)) 
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { DAL_THROW(failure_error, "QMR failed to converge"); }
-	else { DAL_WARNING(1, "QMR failed to converge"); return; }
+	else { DAL_WARNING1("QMR failed to converge"); return; }
 
       gmm::right_mult(M1, y, y_tld);		
       gmm::transposed_left_mult(M1, z, z_tld);
@@ -117,13 +117,13 @@ namespace gmm {
       if (ep == T(0)) 
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { DAL_THROW(failure_error, "QMR failed to converge"); }
-	else { DAL_WARNING(1, "QMR failed to converge"); return; }
+	else { DAL_WARNING1("QMR failed to converge"); return; }
 
       beta = ep / delta;
       if (beta == T(0))
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { DAL_THROW(failure_error, "QMR failed to converge"); }
-	else { DAL_WARNING(1, "QMR failed to converge"); return; }
+	else { DAL_WARNING1("QMR failed to converge"); return; }
 
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
       gmm::left_mult(M1, v_tld, y);
@@ -146,7 +146,7 @@ namespace gmm {
       if (gamma == T(0)) 
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { DAL_THROW(failure_error, "QMR failed to converge"); }
-	else { DAL_WARNING(1, "QMR failed to converge"); return; }
+	else { DAL_WARNING1("QMR failed to converge"); return; }
       
       eta = -eta * T(rho_1) * gmm::sqr(gamma) / (beta * gmm::sqr(gamma_1));
 

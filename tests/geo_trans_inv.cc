@@ -25,9 +25,6 @@
 
 #include <bgeot_geotrans_inv.h>
 #include <getfem_regular_meshes.h>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 using bgeot::size_type;
 using bgeot::dim_type;
@@ -150,9 +147,8 @@ int main(int argc, char *argv[])
   ftool::md_param PARAM;
   getfem::getfem_mesh mesh;
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   try {
     test0();
     test_inversion(true);

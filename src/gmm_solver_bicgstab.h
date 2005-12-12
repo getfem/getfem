@@ -93,7 +93,7 @@ namespace gmm {
       if (rho_1 == T(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { DAL_THROW(failure_error, "Bicgstab failed to converge"); }
-	else { DAL_WARNING(1, "Bicgstab failed to converge"); return; }
+	else { DAL_WARNING1("Bicgstab failed to converge"); return; }
       }
       
       if (iter.first())
@@ -102,7 +102,7 @@ namespace gmm {
 	if (omega == T(0)) {
 	  if (iter.get_maxiter() == size_type(-1))
 	    { DAL_THROW(failure_error, "Bicgstab failed to converge"); }
-	  else { DAL_WARNING(1, "Bicgstab failed to converge"); return; }
+	  else { DAL_WARNING1("Bicgstab failed to converge"); return; }
 	}
 	
 	beta = (rho_1 / rho_2) * (alpha / omega);

@@ -34,8 +34,7 @@
 #include <dal_tree_sorted.h>
 
 
-namespace dal
-{
+namespace dal {
 
   struct fr_sp_ { size_t ind, size; };
   struct less1_fr_sp_ : public std::binary_function<fr_sp_, fr_sp_, int> {
@@ -53,7 +52,6 @@ namespace dal
   public :
     
     typedef typename dynamic_array<T, pks>::size_type size_type;
-    /* gcc needs this ... */
     
   protected :
     
@@ -92,29 +90,25 @@ namespace dal
 
   template<class T, unsigned char pks>
     typename dynamic_alloc<T,pks>::size_type
-      dynamic_alloc<T,pks>::alloc(size_type si)
-  {
+      dynamic_alloc<T,pks>::alloc(size_type si) {
     size_type res = ST_NIL;
-    if (si > 0)
-    {
+    if (si > 0) {
       fr_sp_ fsp; fsp.size = si; 
       size_type i = ind_fr_tab.search_ge(fsp);
-      if (i != ST_NIL)
-      {
+      if (i != ST_NIL) {
 	res = fr_tab[i].ind;
 	if (si > fr_tab[i].size)
 	  throw dal::internal_error
 	    ("dynamic_alloc<T,pks>::alloc : internal error (1)");
-	if (si <  fr_tab[i].size)
-	{
+	if (si <  fr_tab[i].size) {
 	  ind_fr_tab.sup(i); fr_tab[i].ind += si;
 	  fr_tab[i].size -= si; ind_fr_tab.add(i);
 	}
 	else
 	{ ind_fr_tab.sup(i); fr_tab.sup(i); }
       }
-      else
-      { throw dal::internal_error
+      else {
+	throw dal::internal_error
 	  ("dynamic_alloc<T,pks>::alloc : internal error (2)");
       }
     }
@@ -123,8 +117,7 @@ namespace dal
 
   
   template<class T, unsigned char pks>
-    void dynamic_alloc<T,pks>::free(size_type l, size_type si)
-  {
+    void dynamic_alloc<T,pks>::free(size_type l, size_type si) {
     if (si > 0 && l != ST_NIL)
     {
       fr_sp_ fsp; fsp.size = si; fsp.ind = l;
@@ -133,13 +126,11 @@ namespace dal
       fr_tab.find_sorted_iterator(i, it1);
       fsptab_t::const_sorted_iterator it2 = it1;
       size_type i1 = (++it1).index(), i2 = (--it2).index();
-      if (i1 != ST_NIL && (*it1).ind <= l + si)
-      { 
+      if (i1 != ST_NIL && (*it1).ind <= l + si) { 
 	fr_tab[i].size = (*it1).ind + (*it1).size - l;
 	ind_fr_tab.sup(i1); fr_tab.sup(i1);
       }
-      if (i2 != ST_NIL && (*it2).ind + (*it2).size >= l)
-      {
+      if (i2 != ST_NIL && (*it2).ind + (*it2).size >= l) {
 	fr_tab[i].size = l + si - (*it2).ind;
 	fr_tab[i].ind = (*it2).ind;
 	ind_fr_tab.sup(i2); fr_tab.sup(i2);

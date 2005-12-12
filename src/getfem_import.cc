@@ -68,7 +68,7 @@ namespace getfem {
 	  DAL_THROW(failure_error, "sorry pyramidal convexes not done for the moment..");
 	} break;
 	case 15: { /* POINT */
-	  DAL_WARNING(2, "ignoring point element");
+	  DAL_WARNING2("ignoring point element");
 	} break;
 	default: { /* UNKNOWN .. */
 	  /* second order elements : to be done .. */
@@ -143,7 +143,7 @@ namespace getfem {
 	  else cout << "face found!\n";
 	  }
 	if (!cvok)
-	  DAL_WARNING(2, "gmsh import ignored a convex of type "
+	  DAL_WARNING2("gmsh import ignored a convex of type "
 	  << bgeot::name_of_geometric_trans(ci.pgt));*/
       }
     }

@@ -46,7 +46,7 @@ namespace getfem {
   }
 
   getfem_mesh::getfem_mesh(dim_type NN) {
-#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+#if GETFEM_PARA_LEVEL > 1
     modified = true;
 #endif
     cuthill_mckee_uptodate = false;
@@ -55,7 +55,9 @@ namespace getfem {
                 dal::approx_less<base_node::value_type> >(eps_p);
   }
 
-#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+#if GETFEM_PARA_LEVEL > 1
+
+  // interfacage avec METIS à refaire.
 
     void getfem_mesh::compute_mpi_region(void) {
 

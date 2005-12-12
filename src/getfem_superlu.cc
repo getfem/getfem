@@ -159,7 +159,7 @@ namespace gmm {
     int m = mat_nrows(csc_A), n = mat_ncols(csc_A), nrhs = 1, info = 0;
     int nz = nnz(csc_A);
     if ((2 * nz / n) >= m)
-      DAL_WARNING(2, "CAUTION : it seems that SuperLU has a problem"
+      DAL_WARNING2("CAUTION : it seems that SuperLU has a problem"
 		  " for nearly dense sparse matrices");
 
     superlu_options_t options;

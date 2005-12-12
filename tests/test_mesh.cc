@@ -22,9 +22,6 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_poly_composite.h>
 #include <bgeot_comma_init.h>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 using getfem::size_type;
 using getfem::base_node;
@@ -247,9 +244,8 @@ void test_convex_ref() {
 
 int main(void)
 {
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   dal::set_exception_callback(new myexc);
   try {
     cout << "sizeof(size_type)=" << sizeof(size_type) << endl;

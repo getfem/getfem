@@ -156,7 +156,7 @@ namespace gmm {
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4) * det;
 	if (delta < -tol_cplx) {
-	  DAL_WARNING(1, "A complex eigenvalue has been detected : "
+	  DAL_WARNING1("A complex eigenvalue has been detected : "
 		      << std::complex<TA>(tr/TA(2), gmm::sqrt(-delta)/TA(2)));
 	  V[i] = V[i+1] = tr / TA(2);
 	}
@@ -212,7 +212,7 @@ namespace gmm {
       }
       if ((i == n-1) || gmm::abs(A(i+1,i)) < tol_i) {
 	if (gmm::abs(std::imag(A(i,i))) > tol_cplx)
-	  DAL_WARNING(1, "A complex eigenvalue has been detected : "
+	  DAL_WARNING1("A complex eigenvalue has been detected : "
 		      << T(A(i,i)) << " : "  << gmm::abs(std::imag(A(i,i)))
 		      / gmm::abs(std::real(A(i,i))) << " : " << tol_cplx);
 	V[i] = std::real(A(i,i));
@@ -224,9 +224,9 @@ namespace gmm {
 	T a1 = (tr + gmm::sqrt(delta)) / TA(2);
 	T a2 = (tr - gmm::sqrt(delta)) / TA(2);
 	if (gmm::abs(std::imag(a1)) > tol_cplx)
-	  DAL_WARNING(1, "A complex eigenvalue has been detected : " << a1);
+	  DAL_WARNING1("A complex eigenvalue has been detected : " << a1);
 	if (gmm::abs(std::imag(a2)) > tol_cplx)
-	  DAL_WARNING(1, "A complex eigenvalue has been detected : " << a2);
+	  DAL_WARNING1("A complex eigenvalue has been detected : " << a2);
 
 	V[i] = std::real(a1); V[i+1] = std::real(a2);
 	++i;

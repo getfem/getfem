@@ -86,10 +86,10 @@ namespace gmm {
       rho = vect_hp(PS, z, r);
       copy(z, p);
 
-#ifdef GMM_USES_MPI
-      double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
-      static double tmult_tot = 0.0;
-#endif
+// #ifdef MPI_CHAR
+//       double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
+//       static double tmult_tot = 0.0;
+// #endif
       while (!iter.finished_vect(r)) {
 
 	if (!iter.first()) { 
@@ -97,24 +97,24 @@ namespace gmm {
 	  rho = vect_hp(PS, z, r);
 	  add(z, scaled(p, rho / rho_1), p);
 	}
-#ifdef GMM_USES_MPI
-t_ref = MPI_Wtime();
-    cout << "mult CG " << endl;
-#endif	
+// #ifdef MPI_CHAR
+// t_ref = MPI_Wtime();
+//     cout << "mult CG " << endl;
+// #endif	
 	mult(A, p, q);
-#ifdef GMM_USES_MPI
-    tmult_tot += MPI_Wtime()-t_ref;
-    cout << "tmult_tot CG = " << tmult_tot << endl;
-#endif
+// #ifdef MPI_CHAR
+//     tmult_tot += MPI_Wtime()-t_ref;
+//     cout << "tmult_tot CG = " << tmult_tot << endl;
+// #endif
 	a = rho / vect_hp(PS, q, p);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
 	rho_1 = rho;
 
-#ifdef GMM_USES_MPI
-	t_tot = MPI_Wtime() - t_prec;
-	cout << "temps CG : " << t_tot << endl; 
-#endif
+// #ifdef MPI_CHAR
+// 	t_tot = MPI_Wtime() - t_prec;
+// 	cout << "temps CG : " << t_tot << endl; 
+// #endif
 	++iter;
       }
     }
@@ -139,34 +139,34 @@ t_ref = MPI_Wtime();
       rho = vect_hp(PS, r, r);
       copy(r, p);
 
-#ifdef GMM_USES_MPI
-      double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
-      static double tmult_tot = 0.0;
-#endif
+// #ifdef MPI_CHAR
+//       double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
+//       static double tmult_tot = 0.0;
+// #endif
       while (!iter.finished_vect(r)) {
 
 	if (!iter.first()) { 
 	  rho = vect_hp(PS, r, r);
 	  add(r, scaled(p, rho / rho_1), p);
 	}
-#ifdef GMM_USES_MPI
-t_ref = MPI_Wtime();
-    cout << "mult CG " << endl;
-#endif	
+// #ifdef MPI_CHAR
+// t_ref = MPI_Wtime();
+//     cout << "mult CG " << endl;
+// #endif	
 	mult(A, p, q);
-#ifdef GMM_USES_MPI
-    tmult_tot += MPI_Wtime()-t_ref;
-    cout << "tmult_tot CG = " << tmult_tot << endl;
-#endif
+// #ifdef MPI_CHAR
+//     tmult_tot += MPI_Wtime()-t_ref;
+//     cout << "tmult_tot CG = " << tmult_tot << endl;
+// #endif
 	a = rho / vect_hp(PS, q, p);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
 	rho_1 = rho;
 
-#ifdef GMM_USES_MPI
-	t_tot = MPI_Wtime() - t_prec;
-	cout << "temps CG : " << t_tot << endl; 
-#endif
+// #ifdef MPI_CHAR
+// 	t_tot = MPI_Wtime() - t_prec;
+// 	cout << "temps CG : " << t_tot << endl; 
+// #endif
 	++iter;
       }
     }

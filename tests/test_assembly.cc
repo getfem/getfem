@@ -7,9 +7,6 @@
 # include <sys/times.h>
 #endif
 #include <unistd.h>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 using bgeot::base_vector;
 using bgeot::base_matrix;
@@ -1526,11 +1523,10 @@ void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
 
 #endif /* ASSEMBLY_CHECK */
 
-int main(int argc, char *argv[])
-{
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+int main(int argc, char *argv[]) {
+
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   try {
 
     // getfem::pfem pf = getfem::fem_descriptor("FEM_PK_PRISM_HIERARCHICAL(3,3)");

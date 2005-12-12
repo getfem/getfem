@@ -133,7 +133,7 @@ namespace gmm {
       for (; wit != wite; ++wit)
 	if (wit->c >= i) { ip = wit->c; tmp = wit->e; break; }
       if (ip == size_type(-1) || gmm::abs(tmp) <= max_pivot)
-	{ DAL_WARNING(2, "pivot " << i << " too small"); ip=i; w[i]=tmp=T(1); }
+	{ DAL_WARNING2("pivot " << i << " too small"); ip=i; w[i]=tmp=T(1); }
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = T(1) / tmp;
       wit = w.begin();

@@ -18,13 +18,6 @@
 #include <getfem_mesh_fem_global_function.h>
 #include <getfem_mesh_fem_sum.h>
 
-/* try to enable the SIGFPE if something evaluates to a Not-a-number
- * of infinity during computations
- */
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
-
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
@@ -362,13 +355,9 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
  
  
 int main(int argc, char *argv[]) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb); // to debug ...
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {
     crackPlate_problem p;
@@ -376,7 +365,8 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh") ;
     plain_vector UT, U3, THETA;
-    if (!p.solve(UT, U3, THETA)) DAL_THROW(dal::failure_error, "Solve has failed");
+    if (!p.solve(UT, U3, THETA))
+      DAL_THROW(dal::failure_error, "Solve has failed");
     
     cout << "post-traitement pour l'affichage :\n" ;
     getfem::getfem_mesh mcut;

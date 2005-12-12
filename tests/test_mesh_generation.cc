@@ -1,18 +1,13 @@
 
 #include <getfem_mesher.h>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 using getfem::base_node;
 
 int main(int argc, char **argv) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb);
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   try {
     getfem::getfem_mesh m;
     getfem::scalar_type h = .3;

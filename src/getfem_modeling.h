@@ -34,24 +34,23 @@
    @see mdbrick_abstract
 */
 
-/***************************************************************************/
-/*                                                                         */
-/* Brick idents :                                                          */
-/* MDBRICK_GENERIC_ELLIPTIC      174397                                    */
-/* MDBRICK_LIN_ISO_ELASTICITY    852327                                    */
-/* MDBRICK_MASS_MATRIX           756543                                    */
-/* MDBRICK_HELMHOLTZ             354864                                    */
-/* MDBRICK_LINEAR_INCOMP         239898                                    */
-/* MDBRICK_NONLINEAR_ELASTICITY  821357                                    */
-/* MDBRICK_NONLINEAR_INCOMP      964552                                    */
-/* MDBRICK_SMALL_DEF_PLASTICITY  556433                                    */
-/* MDBRICK_LINEAR_PLATE          897523                                    */
-/* MDBRICK_MIXED_LINEAR_PLATE    213456                                    */
-/* MDBRICK_COULOMB_FRICTION      434245                                    */
-/* MDBRICK_NAVIER_STOKES         394329                                    */
-/*                                                                         */
-/***************************************************************************/
-
+//==============================================
+//
+// Brick idents :
+// MDBRICK_GENERIC_ELLIPTIC      174397
+// MDBRICK_LIN_ISO_ELASTICITY    852327
+// MDBRICK_MASS_MATRIX           756543
+// MDBRICK_HELMHOLTZ             354864
+// MDBRICK_LINEAR_INCOMP         239898
+// MDBRICK_NONLINEAR_ELASTICITY  821357
+// MDBRICK_NONLINEAR_INCOMP      964552
+// MDBRICK_SMALL_DEF_PLASTICITY  556433
+// MDBRICK_LINEAR_PLATE          897523
+// MDBRICK_MIXED_LINEAR_PLATE    213456
+// MDBRICK_COULOMB_FRICTION      434245
+// MDBRICK_NAVIER_STOKES         394329
+//
+//==============================================
 
 #ifndef GETFEM_MODELING_H__
 #define GETFEM_MODELING_H__
@@ -70,9 +69,6 @@
 #include <gmm_solver_Schwarz_additive.h>
 #include <set>
 #include <dal_backtrace.h>
-
-// #define LOG
-#define MD_TRACE(a) { cerr << a << endl; }
 
 namespace getfem {
 
@@ -256,7 +252,8 @@ namespace getfem {
     typedef MAT T_MATRIX;
   };
 
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
+  // encore utile ?
   template <typename MAT>
   struct T_MAT_TYPE<gmm::mpi_distributed_matrix<MAT> > {
     typedef MAT T_MATRIX;
@@ -488,7 +485,7 @@ namespace getfem {
       }
       do_compute_residu(MS, i0, j0);
       if (first) {
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
 	std::vector<value_type> resloc(gmm::vect_size(MS.residu()));
 	MPI_Allreduce(&((MS.residu())[0]), &(resloc[0]),
 		      gmm::vect_size(MS.residu()), gmm::mpi_type(value_type()),
@@ -744,7 +741,7 @@ namespace getfem {
     void proper_update_K(void) {
       if (&lambda_.mf() != &mu_.mf()) 
 	DAL_THROW(failure_error, "lambda and mu should share the same mesh_fem");
-      MD_TRACE("Assembling stiffness matrix for linear elasticity");
+      DAL_TRACE2("Assembling stiffness matrix for linear elasticity");
       asm_stiffness_matrix_for_linear_elasticity
 	(this->K, this->mim, this->mf_u, lambda_.mf(), lambda_.get(), mu_.get(),
 	 this->mf_u.linked_mesh().get_mpi_region());
@@ -797,7 +794,7 @@ namespace getfem {
     mdbrick_parameter<VECTOR> rho_;
 
     void proper_update_K(void) {
-      MD_TRACE("Assembling mass matrix for mdbrick_mass_matrix");
+      DAL_TRACE2("Assembling mass matrix for mdbrick_mass_matrix");
       asm_mass_matrix_param(this->K, this->mim, this->mf_u, rho().mf(), rho().get(), 
 			    this->mf_u.linked_mesh().get_mpi_region());
     }
@@ -986,7 +983,7 @@ namespace getfem {
     bool have_auxF;
 
     void proper_update(void) {
-      mesh_fem &mf_u = this->get_mesh_fems(num_fem);
+      mesh_fem &mf_u = this->get_mesh_fem(num_fem);
       i1 = this->mesh_fem_positions[num_fem];
       nbd = mf_u.nb_dof();
 
@@ -1009,14 +1006,9 @@ namespace getfem {
       if (!F_uptodate || this->parameters_is_any_modified()) {
 	mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	F_uptodate = true;
-	MD_TRACE("Assembling a source term");
-
-#ifdef GMM_USES_MPI 
-	asm_source_term(F_, *(this->mesh_ims[0]), mf_u, source_term().mf(), source_term().get(),
+	DAL_TRACE2("Assembling a source term");
+	asm_source_term(F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
 			mf_u.linked_mesh().get_mpi_sub_region(boundary));
-#else
-	asm_source_term(F_, *(this->mesh_ims[0]), mf_u, source_term().mf(), source_term().get(), boundary);	     
-#endif
 	this->parameters_set_uptodate();
       }
       return F_;
@@ -1093,7 +1085,7 @@ namespace getfem {
     
 
     virtual void proper_update(void) {
-      mesh_fem &mf_u = get_mesh_fems(num_fem);
+      mesh_fem &mf_u = get_mesh_fem(num_fem);
       i1 = this->mesh_fem_positions[num_fem];
       nbd = mf_u.nb_dof();
       K_uptodate = false;
@@ -1102,7 +1094,7 @@ namespace getfem {
   public :
     /** the Q parameter. */
     mdbrick_parameter<VECTOR> &Q() {       
-      size_type q = get_mesh_fems(num_fem).get_qdim();
+      size_type q = get_mesh_fem(num_fem).get_qdim();
       Q().reshape(q,q); // ensure that the shape of Q is coherent with the mesh_fem
       return Q_; 
     }
@@ -1341,7 +1333,7 @@ namespace getfem {
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
       
       if (!H_.is_initialized()) {
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
 	if (with_multipliers)
 	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), rhs().mf(),
 				    R_.get(), mf_u().linked_mesh().get_mpi_sub_region(boundary), version);   
@@ -1349,12 +1341,12 @@ namespace getfem {
 	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), rhs().mf(),
 				    R_.get(), boundary, version);
 #else
-	MD_TRACE("Assembling Dirichlet constraints with no H and version " << version);
+	DAL_TRACE2("Assembling Dirichlet constraints with no H and version " << version);
 	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), rhs().mf(),
 				  R_.get(), boundary, version);    
 #endif
       } else {
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
 	if (with_multipliers)
 	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), H().mf(), rhs().mf(),
 				    H_.get(), R_.get(), mf_u().linked_mesh().get_mpi_sub_region(boundary),
@@ -1363,7 +1355,7 @@ namespace getfem {
 	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), mf_data, H().mf(), rhs().mf(),
 				    H_.get(), R_.get(), boundary, version);
 #else
-	MD_TRACE("Assembling Dirichlet constraints with H and version " << version);
+	DAL_TRACE2("Assembling Dirichlet constraints with H and version " << version);
 	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), H().mf(), rhs().mf(),
 				  H_.get(), R_.get(), boundary, version);
 #endif
@@ -1649,7 +1641,7 @@ namespace getfem {
     }
 
     void proper_update_M(void) {
-      MD_TRACE("Assembling mass matrix for mdbrick_dynamic");
+      DAL_TRACE2("Assembling mass matrix for mdbrick_dynamic");
       asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, RHO_.mf(), RHO_.get());
 
       if (!(boundary_sup.empty())) {
@@ -1779,7 +1771,7 @@ namespace getfem {
       iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
     }
 
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     double t_init = MPI_Wtime();
 #endif
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
@@ -1790,10 +1782,10 @@ namespace getfem {
     //cout << "TM = " << MS.tangent_matrix() << endl;
 
     MS.compute_reduced_system();
-#ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     cout << "comput tangent residu reduction time = " << MPI_Wtime() - t_init << endl;
 #endif
-#ifdef GMM_USES_METIS /* use a domain partition ? */
+#if GETFEM_PARA_LEVEL > 1 /* use a domain partition ? */
     
     double t_ref = MPI_Wtime();
 
@@ -1903,15 +1895,15 @@ namespace getfem {
     R act_res = MS.reduced_residu_norm(), act_res_new(0);
 
     while (is_linear || !iter.finished(act_res)) {
-    
+      
       size_type nreddof = gmm::vect_size(MS.reduced_residu());
       gmm::iteration iter_linsolv = iter_linsolv0;
       VECTOR d(ndof), dr(nreddof);
-
+      
       if (!(iter.first())) {
 	problem.compute_tangent_matrix(MS);
 	MS.compute_reduced_system();
-#ifdef GMM_USES_METIS
+#if GETFEM_PARA_LEVEL > 1
         DAL_THROW(failure_error, "oups ...");
 #endif
       }
@@ -1940,26 +1932,23 @@ namespace getfem {
 //       cout << "emax = " << emax << endl;
 
       if (iter.get_noisy()) {
-	cout << "there are " << gmm::mat_nrows(MS.constraints_matrix()) << " constraints\n";
+	cout << "there are " << gmm::mat_nrows(MS.constraints_matrix())
+	     << " constraints\n";
 	mixvar = problem.mixed_variables();
 	cout << "there are " << mixvar.card() << " mixed variables\n";
       }
 
-#ifdef GMM_USES_METIS
-# ifdef GMM_USES_MPI
+#if GETFEM_PARA_LEVEL > 1
     double t_ref,t_final;
     t_ref=MPI_Wtime();
     cout<<"begin Seq AS"<<endl;
-# endif
       additive_schwarz(MS.reduced_tangent_matrix(), dr,
 		       gmm::scaled(MS.reduced_residu(), value_type(-1)),
 		       0, Bib, iter_linsolv, gmm::using_superlu(),
 		       gmm::using_cg());
-# ifdef GMM_USES_MPI
     t_final=MPI_Wtime();
     cout<<"temps Seq AS "<< t_final-t_ref<<endl;
-# endif
-#else // !GMM_USES_METIS
+#else
     size_type dim = problem.dim();
 
     // if (0) {
@@ -1978,91 +1967,91 @@ namespace getfem {
 	
       double t = ftool::uclock_sec();
 #ifdef GMM_USES_MUMPS
-      cout << "Solving with MUMPS\n";
-	MUMPS_solve(MS.reduced_tangent_matrix(), dr,
-		      gmm::scaled(MS.reduced_residu(), value_type(-1)));
+      DAL_TRACE2("Solving with MUMPS\n");
+      MUMPS_solve(MS.reduced_tangent_matrix(), dr,
+		  gmm::scaled(MS.reduced_residu(), value_type(-1)));
 #else
-	double rcond;
-	SuperLU_solve(MS.reduced_tangent_matrix(), dr,
-		      gmm::scaled(MS.reduced_residu(), value_type(-1)),
-		      rcond);
-	if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
+      double rcond;
+      SuperLU_solve(MS.reduced_tangent_matrix(), dr,
+		    gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		    rcond);
+      if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
 #endif
-	cout << "resolution time = " << ftool::uclock_sec() - t << endl;
+      cout << "resolution time = " << ftool::uclock_sec() - t << endl;
     }
-      else {
-	if (problem.is_coercive()) {
-	  gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-	  gmm::cg(MS.reduced_tangent_matrix(), dr, 
-		  gmm::scaled(MS.reduced_residu(), value_type(-1)),
-		  P, iter_linsolv);
-	  if (!iter_linsolv.converged()) DAL_WARNING(2,"cg did not converge!");
-	} else {
-	  if (mixvar.card() == 0) {
-	    gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-	    
-	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		       gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
-		       300, iter_linsolv);
-	  }
-	  else {
-	    gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),
-					   20, 1E-10);
-	    // gmm::identity_matrix P;
-	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		       gmm::scaled(MS.reduced_residu(),  value_type(-1)),
-		       P, 300, iter_linsolv);
-	  }
-	  if (!iter_linsolv.converged())
-	    DAL_WARNING(2,"gmres did not converge!");
-	}
-      }
-#endif // !GMM_USES_METIS
-
-     MS.unreduced_solution(dr,d);
-
-      if (is_linear) {
-	gmm::add(d, MS.state());
-	return;
-      }
-      else { // line search for the non-linear case.
-	VECTOR stateinit(ndof);
-	gmm::copy(MS.state(), stateinit);
-       
-	if ((iter.get_iteration() % 10) || (iter.get_iteration() == 0))
-	  alpha = R(1); else alpha = R(1)/R(2);
-
-	R previous_res = act_res;
-	for (size_type k = 0; alpha >= alpha_min; alpha *= alpha_mult, ++k) {
-	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-	  problem.compute_residu(MS);
-	  MS.compute_reduced_residu();
-	  // Call to Dirichlet nullspace should be avoided -> we just need Ud
-	  act_res_new = MS.reduced_residu_norm();
-	  // cout << " : " << act_res_new;
-	  if (act_res_new <= act_res / R(2)) break;
-	  if (k > 0 && act_res_new > previous_res
-	      && previous_res < alpha_max_ratio * act_res) {
-	    alpha /= alpha_mult;
-	    gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-	    act_res_new = previous_res; break;
-	  }
+    else {
+      if (problem.is_coercive()) {
+	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	gmm::cg(MS.reduced_tangent_matrix(), dr, 
+		gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		P, iter_linsolv);
+	if (!iter_linsolv.converged()) DAL_WARNING2("cg did not converge!");
+      } else {
+	if (mixvar.card() == 0) {
+	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	  
-	  previous_res = act_res_new;
+	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		     gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
+		     300, iter_linsolv);
 	}
-
-	// Something should be done to detect oscillating behaviors ...
-	// alpha_max_ratio += (R(1)-alpha_max_ratio) / R(30);
-	alpha_min *= R(1) - R(1)/R(30);
+	else {
+	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),
+					20, 1E-10);
+	  // gmm::identity_matrix P;
+	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
+		     P, 300, iter_linsolv);
+	}
+	if (!iter_linsolv.converged())
+	  DAL_WARNING2("gmres did not converge!");
       }
-      act_res = act_res_new; ++iter;
-      
-
-      if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
     }
+#endif // GETFEM_PARA_LEVEL < 2
 
+    MS.unreduced_solution(dr,d);
+    
+    if (is_linear) {
+      gmm::add(d, MS.state());
+      return;
+    }
+    else { // line search for the non-linear case.
+      VECTOR stateinit(ndof);
+      gmm::copy(MS.state(), stateinit);
+      
+      if ((iter.get_iteration() % 10) || (iter.get_iteration() == 0))
+	alpha = R(1); else alpha = R(1)/R(2);
+      
+      R previous_res = act_res;
+      for (size_type k = 0; alpha >= alpha_min; alpha *= alpha_mult, ++k) {
+	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+	problem.compute_residu(MS);
+	MS.compute_reduced_residu();
+	// Call to Dirichlet nullspace should be avoided -> we just need Ud
+	act_res_new = MS.reduced_residu_norm();
+	// cout << " : " << act_res_new;
+	if (act_res_new <= act_res / R(2)) break;
+	if (k > 0 && act_res_new > previous_res
+	    && previous_res < alpha_max_ratio * act_res) {
+	  alpha /= alpha_mult;
+	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+	  act_res_new = previous_res; break;
+	}
+	
+	previous_res = act_res_new;
+      }
+      
+      // Something should be done to detect oscillating behaviors ...
+      // alpha_max_ratio += (R(1)-alpha_max_ratio) / R(30);
+      alpha_min *= R(1) - R(1)/R(30);
+    }
+    act_res = act_res_new; ++iter;
+    
+    
+    if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
+    }
+    
   }
-
+  
 
 }  /* end of namespace getfem.                                             */
 

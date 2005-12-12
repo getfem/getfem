@@ -353,7 +353,7 @@ namespace getfem {
       size_type f = 1;
       for ( ; mit != mite; ++mit, ++f) f *= *mit;
       if (f > 1000000)
-	DAL_WARNING(2, "Warning, very large elementary computations.\n" 
+	DAL_WARNING2("Warning, very large elementary computations.\n" 
 		    << "Be sure you need to compute this elementary matrix.\n"
 		    << "(sizes = " << sizes << " )\n");
 

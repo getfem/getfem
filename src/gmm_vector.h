@@ -663,7 +663,7 @@ namespace gmm {
 	DAL_THROW(dimension_error,"dimensions mismatch");
 #       ifdef GMM_VERIFY
          if (same_origin(v1, v2))
-	  DAL_WARNING(2, "a conflict is possible in vector copy\n");
+	  DAL_WARNING2("a conflict is possible in vector copy\n");
 #       endif
 	copy_rsvector(v1, v2, typename linalg_traits<V>::storage_type());
     }

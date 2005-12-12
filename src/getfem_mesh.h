@@ -42,13 +42,6 @@
 #include <getfem_context.h>
 #include <getfem_mesh_region.h>
 
-#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
-extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *,
-				    int *, int *, int *, int *, int *);
-#include <mpi.h>
-#endif
-
-
 namespace getfem {
   /* ********************************************************************* */
   /*								   	   */
@@ -174,7 +167,7 @@ namespace getfem {
     mutable bool cuthill_mckee_uptodate;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
 
-#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+#if GETFEM_PARA_LEVEL > 1
     bool modified;
     mesh_region mpi_region;
     dal::dynamic_array<mesh_region> mpi_sub_region;

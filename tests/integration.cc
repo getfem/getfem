@@ -24,9 +24,6 @@
 #include <getfem_mat_elem.h>
 #include <iomanip>
 #include <map>
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 using getfem::size_type;
 using bgeot::base_tensor;
@@ -441,14 +438,10 @@ static void print_some_methods() {
   print_method(getfem::classical_approx_im(bgeot::product_geotrans(bgeot::product_geotrans(bgeot::simplex_geotrans(2,2), bgeot::simplex_geotrans(2,2)), bgeot::simplex_geotrans(1,1)), 3));
 }
 
-int main(int argc, char **argv)
-{
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
-  /*exception_cb cb;
-  dal::exception_callback::set_exception_callback(&cb);
-  */
+int main(/* int argc, char **argv */) {
+
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
   try {
     /*char s[600]; sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3,2),2)");
     //check_method(s, getfem::int_method_descriptor(s), 2, bgeot::parallelepiped_linear_geotrans(3));

@@ -589,7 +589,7 @@ namespace getfem
   void dx_export::write_convex_attributes(bgeot::pconvex_structure cvs) {
     const char *s_elem_type = dxname_of_convex_structure(cvs);
     if (!s_elem_type) 
-      DAL_WARNING(1, "OpenDX won't handle this kind of convexes");
+      DAL_WARNING1("OpenDX won't handle this kind of convexes");
     os << "\n  attribute \"element type\" string \"" << s_elem_type << "\"\n"
        << "  attribute \"ref\" string \"positions\"\n\n";
   }
