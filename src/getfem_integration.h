@@ -67,7 +67,7 @@
 	       close to a polar integration with respect to vertex IP1.
 	       if IM1 is an integration method on a tetrahedron, gives an
 	       integration method on a tetrahedron which is close to a
-	       cylindrical integration with respect to vertex IP1.
+	       cylindrical integration with respect to vertex IP1 (does not work very well).
 	       if IM1 is an integration method on a prism. Gives an integration
                method on a tetrahedron which is close to a
 	       cylindrical integration with respect to vertex IP1.

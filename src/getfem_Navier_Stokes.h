@@ -103,7 +103,7 @@ namespace getfem {
     value_type nu;
 
     virtual void proper_update_K(void) {
-      MD_TRACE("Assembling laplacian for mdbrick_pre_navier_stokes");
+      DAL_TRACE2("Assembling laplacian for mdbrick_pre_navier_stokes");
       asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(this->K, this->mim, this->mf_u);
       gmm::scale(this->K, nu);
     }

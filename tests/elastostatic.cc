@@ -339,7 +339,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 int main(int argc, char *argv[]) {
   GETFEM_MPI_INIT(argc, argv); // For parallelized version
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {

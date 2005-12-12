@@ -15,14 +15,14 @@ INCLINE = 0;            % Incline of the mesh.
 FT = .1;               % parameter for the exact solution.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
+MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 9;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-FEM_TYPE = 'FEM_PK(3,2)';  % PK element
+FEM_TYPE = 'FEM_PK(2,2)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
@@ -37,9 +37,9 @@ FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
 
-INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
+%INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                % to degree 6 on tetra
-%INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
+INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                % to degree 6 on triangles
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
 %INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles

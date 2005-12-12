@@ -939,7 +939,7 @@ namespace getfem {
 
     /** Switch between a scalar coefficient, a NxN matrix field (with
 	N = mf_u.linked_mesh().dim()), and a NxNxNxN tensor field. */
-    void set_coeff_dimension(unsigned d) { coeff_redim(d); }
+    void set_coeff_dimension(unsigned d) { coeff_.redim(d); }
 
     /** Constructor, the default coeff is a scalar equal to one
 	(i.e. it gives the Laplace operator).
@@ -995,7 +995,7 @@ namespace getfem {
   public :
 
     mdbrick_parameter<VECTOR> &source_term(void) {       
-      B_.reshape(mf_u.get_qdim()); // ensure that the B shape is always consistant with the mesh_fem
+      B_.reshape(this->get_mesh_fem(num_fem).get_qdim()); // ensure that the B shape is always consistant with the mesh_fem
       return B_; 
     }
     const mdbrick_parameter<VECTOR> &source_term(void) const { return B_; }
@@ -1049,9 +1049,9 @@ namespace getfem {
       if (bound != size_type(-1))
 	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
       this->force_update();
+      B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
       if (gmm::vect_size(B__)) B_.set(B__);
     }
-
   };
 
 
@@ -1085,7 +1085,7 @@ namespace getfem {
     
 
     virtual void proper_update(void) {
-      mesh_fem &mf_u = get_mesh_fem(num_fem);
+      mesh_fem &mf_u = this->get_mesh_fem(num_fem);
       i1 = this->mesh_fem_positions[num_fem];
       nbd = mf_u.nb_dof();
       K_uptodate = false;
@@ -1094,8 +1094,8 @@ namespace getfem {
   public :
     /** the Q parameter. */
     mdbrick_parameter<VECTOR> &Q() {       
-      size_type q = get_mesh_fem(num_fem).get_qdim();
-      Q().reshape(q,q); // ensure that the shape of Q is coherent with the mesh_fem
+      size_type q = this->get_mesh_fem(num_fem).get_qdim();
+      Q_.reshape(q,q); // ensure that the shape of Q is coherent with the mesh_fem
       return Q_; 
     }
     const mdbrick_parameter<VECTOR> &Q() const { return Q_; }
@@ -1381,12 +1381,6 @@ namespace getfem {
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUB_CT), CRHS);
 
-      cerr << "boundary = " << boundary << ", nb_const=" << nb_const << " V = " << gmm::vect_norm2(V) << ", M=" << gmm::mat_nrows(M) << "x" << gmm::mat_ncols(M) << ", n=" << gmm::mat_norminf(M) << ":" << gmm::mat_norm1(M) << "\n";
-
-      cerr << "R_" << gmm::vect_norm2(R_.get()) << "\n";
-      cerr << "G: " << gmm::mat_nrows(G) << "x" << gmm::mat_ncols(G) << ", n=" << gmm::mat_norminf(G) << ":" << gmm::mat_norm1(G) << "\n";
-      cerr << "CRHS: "<< gmm::vect_size(CRHS) << ", n=" << gmm::vect_norm2(CRHS) << "\n";
-
       this->parameters_set_uptodate();
     }
 
@@ -1394,8 +1388,8 @@ namespace getfem {
       if (!mfdata_set) {
 	// only done once, when proper_update is called by the constructor
 	// (cannot be done before since mf_u() cannot be used before)
-	R_.set(classical_mesh_fem(mf_u().linked_mesh(), 0), 0);
-	H_.change_mf(classical_mesh_fem(mf_u().linked_mesh(), 0));
+	rhs().set(classical_mesh_fem(mf_u().linked_mesh(), 0), 0);
+	H().change_mf(classical_mesh_fem(mf_u().linked_mesh(), 0));
 	mfdata_set = true;
       }
       /* compute_constraints has to be done here because 'nb_const' must be known.. */
@@ -1482,8 +1476,9 @@ namespace getfem {
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 		      size_type bound,
 		      size_type num_fem_=0)
-      : sub_problem(problem), R_("R", this), H_("H", this), boundary(bound),
-	num_fem(num_fem_) {
+      : sub_problem(problem), 
+	R_("R", this), H_("H", this), 
+	boundary(bound), num_fem(num_fem_) {
       this->add_sub_brick(sub_problem);
       with_multipliers = false;
       this->proper_is_coercive_ = true;

@@ -168,9 +168,8 @@ namespace dal {
     virtual ~exception_callback_debug() {}
   };
 
-#define DAL_SET_EXCEPTION_DEGUG {                         \
-    dal::exception_callback_debug cb;                     \
-    dal::exception_callback::set_exception_callback(&cb); \
+#define DAL_SET_EXCEPTION_DEBUG {                                                       \
+    dal::exception_callback::set_exception_callback(new dal::exception_callback_debug);	\
   }
 
   /** user function for changing the default exception callback */ 

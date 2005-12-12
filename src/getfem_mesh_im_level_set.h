@@ -46,7 +46,7 @@ namespace getfem {
   class mesh_im_level_set : public mesh_im {
   protected :
     pintegration_method regular_simplex_pim;
-    pintegration_method singular_simplex_pim; // en 3D ?
+    pintegration_method base_singular_pim; // en 3D ?
     mutable mesh_level_set &mls;
 
     mutable mesh_im cut_im; /* stores an im only for convexes who are crossed
@@ -59,7 +59,8 @@ namespace getfem {
     void build_method_of_convex(size_type cv) const;
 
   public :
-    enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1, INTEGRATE_BOUNDARY = 4};
+    enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,
+           INTEGRATE_BOUNDARY = 4};
     void update_from_context(void) const { is_adapted = false; }
     void adapt(void) const;
     void clear(void); // to be modified
@@ -67,7 +68,7 @@ namespace getfem {
     void set_simplex_im(pintegration_method reg,
 			pintegration_method sing = 0) {
       regular_simplex_pim = reg;
-      singular_simplex_pim = (sing == 0) ? reg : sing; is_adapted = false;
+      base_singular_pim = sing;
     }
     
     void receipt(const MESH_CLEAR &);

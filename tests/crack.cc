@@ -540,8 +540,8 @@ bool crack_problem::solve(plain_vector &U) {
 	  enriched_dofs.add(j);
       }
       if (enriched_dofs.card() < 3)
-	DAL_WARNING(0, "There is " << enriched_dofs.card() <<
-		    " enriched dofs for the crack tip");
+	DAL_WARNING0("There is " << enriched_dofs.card() <<
+		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
@@ -612,7 +612,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   //getfem::getfem_mesh_level_set_noisy();

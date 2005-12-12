@@ -468,9 +468,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
     pl->reset_unvalid_flag();
     final_model.compute_residu(MS);
     if (pl->get_unvalid_flag()) 
-      DAL_WARNING(1, "The solution is not completely valid, the determinant "
-		  "of the transformation is negative on "
-		  << pl->get_unvalid_flag() << " gauss points");
+      DAL_WARNING1("The solution is not completely valid, the determinant "
+		   "of the transformation is negative on "
+		   << pl->get_unvalid_flag() << " gauss points");
 
     gmm::copy(ELAS.get_solution(MS), U);
     //char s[100]; sprintf(s, "step%d", step+1);
@@ -494,7 +494,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    

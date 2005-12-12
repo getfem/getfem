@@ -308,7 +308,7 @@ void laplacian_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
 

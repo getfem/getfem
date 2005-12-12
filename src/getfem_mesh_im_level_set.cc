@@ -55,8 +55,7 @@ namespace getfem {
 				       pintegration_method sing) 
     : mesh_im(me.linked_mesh()), mls(me), cut_im(me.linked_mesh()),
       integrate_where(integrate_where_) {
-    regular_simplex_pim = reg;
-    singular_simplex_pim = (sing == 0) ? reg : sing;
+    set_simplex_im(reg, sing);
     this->add_dependency(mls);
     is_adapted = false;
   }

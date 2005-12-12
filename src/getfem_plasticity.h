@@ -451,7 +451,7 @@ namespace getfem {
 				       sigma_bar, saved_proj, 1, false);
 	
 	/* Calculate the actual matrix */
-	MD_TRACE("Assembling plasticity tangent matrix");
+	DAL_TRACE2("Assembling plasticity tangent matrix");
 	asm_lhs_for_plasticity(K, mim, mf_u, lambda_.mf(), lambda_.get(), mu_.get(), &gradproj);
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
@@ -465,7 +465,7 @@ namespace getfem {
 				   saved_proj, 0, false);
 	
 	/* Calculate the actual vector */
-	MD_TRACE("Assembling plasticity rhs");
+	DAL_TRACE2("Assembling plasticity rhs");
 	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
 	gmm::copy(K, gmm::sub_vector(MS.residu(), SUBI));
       }
@@ -479,7 +479,7 @@ namespace getfem {
 				   saved_proj, 0, true);
 	
 	/* Calculate the actual vector */
-	MD_TRACE("Assembling plasticity rhs");
+	DAL_TRACE2("Assembling plasticity rhs");
 	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
       }
 

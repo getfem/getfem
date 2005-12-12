@@ -239,8 +239,8 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
 	  enriched_dofs.add(j);
       }
       if (enriched_dofs.card() < 3)
-	DAL_WARNING(0, "There is " << enriched_dofs.card() <<
-		    " enriched dofs for the crack tip");
+	DAL_WARNING0("There is " << enriched_dofs.card() <<
+		     " enriched dofs for the crack tip");
       mf_ut_product.set_enrichment(enriched_dofs);
       mf_u3_product.set_enrichment(enriched_dofs);
       mf_theta_product.set_enrichment(enriched_dofs);
@@ -356,7 +356,7 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
  
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {
