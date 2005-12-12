@@ -111,6 +111,8 @@ void crack_problem::init(void) {
 					       "Name of integration method");
   const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
+  const char *SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
+
 
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
 				      "Enrichment option");
@@ -151,15 +153,17 @@ void crack_problem::init(void) {
     getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
-  getfem::pintegration_method sppi = 
+  getfem::pintegration_method simp_ppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
+  getfem::pintegration_method sing_ppi = 
+    (SINGULAR_INTEGRATION ? getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mim_crack.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
-  mim.set_simplex_im(sppi);
-  mim_crack.set_simplex_im(sppi);
+  mim.set_simplex_im(simp_ppi, sing_ppi);
+  mim_crack.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
 
@@ -288,8 +292,8 @@ bool crack_problem::solve(plain_vector &U) {
       }
 
       if (enriched_dofs.card() < 3)
-	DAL_WARNING(0, "There is " << enriched_dofs.card() <<
-		    " enriched dofs for the crack tip");
+	DAL_WARNING0("There is " << enriched_dofs.card() <<
+		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
@@ -343,7 +347,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
 

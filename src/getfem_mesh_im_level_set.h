@@ -62,7 +62,7 @@ namespace getfem {
     enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,
            INTEGRATE_BOUNDARY = 4};
     void update_from_context(void) const { is_adapted = false; }
-    void adapt(void) const;
+    void adapt(void);
     void clear(void); // to be modified
 
     void set_simplex_im(pintegration_method reg,

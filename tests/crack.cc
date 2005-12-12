@@ -393,8 +393,8 @@ void crack_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
   getfem::pintegration_method simp_ppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
-  getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION ?
-					  getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
+  getfem::pintegration_method sing_ppi = 
+    (SINGULAR_INTEGRATION ? getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);

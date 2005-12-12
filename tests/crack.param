@@ -1,3 +1,4 @@
+% -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program crack                                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -33,9 +34,12 @@ DIRICHLET_WITH_MULTIPLIERS = 0;
                                     % to degree 6 on tetra
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
-SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),1)';
+
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
-%SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+% (comment it to disable quasipolar integration). Should be a
+% method defined on a square for 2D, or defined on a prism for 3D.
+SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 13)';
 
 INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';

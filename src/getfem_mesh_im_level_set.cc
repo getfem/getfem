@@ -62,7 +62,7 @@ namespace getfem {
 
   pintegration_method 
   mesh_im_level_set::int_method_of_element(size_type cv) const {
-    if (!is_adapted) adapt();
+    if (!is_adapted) const_cast<mesh_im_level_set *>(this)->adapt();
     if (cut_im.convex_index().is_in(cv)) 
       return cut_im.int_method_of_element(cv); 
     else {
@@ -137,8 +137,8 @@ namespace getfem {
 	for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils)
 	  if (mls.get_level_set(ils)->has_secondary()) {
 	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
-	      if (gmm::abs((mesherls0[i])(mesh.points_of_convex(i)[ipt])) < 1E-10
-		  && gmm::abs((mesherls1[i])(mesh.points_of_convex(i)[ipt])) < 1E-10) {
+	      if (gmm::abs((mesherls0[ils])(mesh.points_of_convex(i)[ipt])) < 1E-10
+		  && gmm::abs((mesherls1[ils])(mesh.points_of_convex(i)[ipt])) < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
 		if (sing_ls != ils)
 		  DAL_THROW(failure_error, "Two singular point in one sub element. To be done");
@@ -220,12 +220,14 @@ namespace getfem {
 	    un /= gmm::vect_norm2(un);
 	    gmm::mult(cc.B(), un, up);
 	    nnup = gmm::vect_norm2(up);
-	    //cout << "nnup = " << nnup << endl;
+// 	    cout << "adding coeff " << pai->coeff_on_face(f, j)
+// 	      * gmm::abs(c.J()) * nup * nnup << endl;
 	  }
 	  new_approx->add_point(c.xreal(), pai->coeff_on_face(f, j)
 				* gmm::abs(c.J()) * nup * nnup, ff);
 
-	  if (integrate_where == INTEGRATE_BOUNDARY) {
+
+	  //	  if (integrate_where == INTEGRATE_BOUNDARY) {
 	    /*static double ssum = 0.0;
 	    ssum += pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup;
 	    cout << "add crack point " << c.xreal() << " : "
@@ -235,24 +237,28 @@ namespace getfem {
 	    cc.set_xref(c.xreal());
 	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\t" << cc.xreal()[2] << "\n";
 	    */
-	  }
+	  // }
 
 	} 
       }
     }
     
     new_approx->valid_method();
-    
-    pintegration_method pim = new integration_method(new_approx);
-    dal::add_stored_object(new special_imls_key(new_approx), pim,
-			   new_approx->ref_convex(),
-			   &(new_approx->integration_points()));
-    build_methods.push_back(pim);
-    cut_im.set_integration_method(cv, pim);
+
+    if (new_approx->nb_points()) {
+      pintegration_method pim = new integration_method(new_approx);
+      dal::add_stored_object(new special_imls_key(new_approx), pim,
+			     new_approx->ref_convex(),
+			     &(new_approx->integration_points()));
+      build_methods.push_back(pim);
+      cut_im.set_integration_method(cv, pim);
+    }
+    else delete new_approx;
   }
 
 
-  void mesh_im_level_set::adapt(void) const {
+  void mesh_im_level_set::adapt(void) {
+    clear_build_methods();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       if (mls.is_convex_cut(cv)) build_method_of_convex(cv);

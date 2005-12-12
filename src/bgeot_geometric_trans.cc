@@ -74,6 +74,12 @@ namespace bgeot {
 	size_type P = pgt_->structure()->dim();
 	K_.resize(N(), P);
 	if (have_pgp()) {
+
+	  if (&pgp_->grad(ii_) == 0) { cerr << "OULA!! " << ii_ << "\n"; }
+	  else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
+	  
+	  assert(ii_ < pgp_->get_point_tab().size());
+
 	  gmm::mult(G(), pgp_->grad(ii_), K_);
 	} else {
 	  base_matrix pc(pgt()->nb_points(), P); 
