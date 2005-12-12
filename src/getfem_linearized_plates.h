@@ -104,6 +104,76 @@ namespace getfem {
        gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU, rg);
   }
 
+
+
+
+  class mitc4_projection_term  : public getfem::nonlinear_elem_term {
+
+    bgeot::multi_index sizes_;
+
+  public:
+     mitc4_projection_term(void) : sizes(8,8)  { }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+     virtual void compute(getfem::fem_interpolation_context& ctx,
+			  const VECT1 &theta_,
+			  bgeot::base_tensor &t) {
+       
+       //     ctx.G()  --> coordonées des noeuds
+       //     ctx.B()  --> (grad tau) ^{-T}
+
+       for (size_type i = 0; i < 8; ++i)
+	  for (size_type j = 0; j < 8; ++j) {
+	    
+	    // .... t(i, j) = ...
+
+	    }
+      
+    }
+  };
+
+
+  /**@ingroup asm*/
+  template<class MAT, class MAT3, class VECT>
+  void asm_stiffness_matrix_for_plate_transverse_shear_mitc_new
+  (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
+   const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
+   const mesh_fem &mfdata, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    typedef typename gmm::linalg_traits<VECT>::value_type value_type;
+
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    
+    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
+      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+
+    mitc4_projection_term mitc4;
+
+    generic_assembly assem("mu=data$1(#3);"
+			   "A=NonLin();"
+			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
+			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
+			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
+			   "M$4(#2,#2)+=sym(A(k,:).t2(k,i,l,i,j).mu(j).A(l,:));"
+			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
+			   "M$2(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
+			   "M$3(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
+			   );
+
+    assem.push_mi(mim);
+    assem.push_mf(mf_u3);
+    assem.push_mf(mf_theta);
+    assem.push_mf(mfdata);
+    assem.push_data(MU);
+    assem.push_nonlinear_term(&mitc4);
+    assem.push_mat(const_cast<MAT &>(RM1));
+    assem.push_mat(const_cast<MAT &>(RM2));
+    assem.push_mat(const_cast<MAT3 &>(RM3));
+    assem.push_mat(const_cast<MAT &>(RM4));
+    assem.assembly(rg);
+    //cout << "RM3 = " << RM3 << endl; getchar();
+  }
+
   /**@ingroup asm*/
   template<class MAT, class MAT3, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear_mitc
@@ -118,6 +188,7 @@ namespace getfem {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+
     generic_assembly assem("mu=data$1(#3);"
 			   "A=data$2(8,8);"
 			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"

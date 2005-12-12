@@ -38,7 +38,9 @@
 
 namespace getfem {
 
-  /** Abstract projection of a stress tensor onto a set of admissible stress tensors. */
+  /** Abstract projection of a stress tensor onto a set of admissible
+      stress tensors.
+  */
   class abstract_constraints_projection  {
   protected : 
     size_type flag_hyp;
