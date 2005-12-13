@@ -171,6 +171,9 @@ namespace dal
    * called, a control is made on i and an allocation is made if 
    * needed. The allocation is made by blocks of n elements, where
    * @f$n = 2^{pks}@f$. @f$pks@f$ is an optional parameter assumed to be 5.
+   * The structure of this container is similar to the one of std::deque<T>
+   * but with a faster random access.
+   *
    *
    * <h3>Example of code</h3>
    *  If T is any type (with or without trivial constructor/destructor, 
@@ -179,8 +182,8 @@ namespace dal
    * @code
    *  #include<dal_basic.h>
    *  dal::dynamic_array<T> tab;
-   *  tab[50] = T(0); // to be sure to have at least 50 elements
-   *  std::fill(tab.begin(), tab.end(), T(0)); // at least 50 elements are initialized
+   *  tab[50] = T(0); // 51 elements in tab.
+   *  std::fill(tab.begin(), tab.end(), T(0)); // 51 elements initialized
    *  dal::dynamic_array<T>::iterator it = tab.begin(); 
    *  dal::dynamic_array<T>::iterator ite = it + 50; 
    *  for( ; it != ite; ++it)
@@ -378,9 +381,9 @@ namespace dal
 
 
   /** 
-      a very simple pointer collection
-      which destroys the content of its pointers 
-  */
+   *  A very simple pointer collection
+   *  which destroys the content of its pointers 
+   */
   template<class T> class ptr_collection : public std::vector<T*> {
   public:
     typedef typename std::vector<T*>::size_type size_type;
