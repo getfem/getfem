@@ -112,10 +112,9 @@ namespace getfem {
     bgeot::multi_index sizes_;
 
   public:
-     mitc4_projection_term(void) : sizes(8,8)  { }
+     mitc4_projection_term(void) : sizes_(8,8)  { }
     const bgeot::multi_index &sizes() const {  return sizes_; }
      virtual void compute(getfem::fem_interpolation_context& ctx,
-			  const VECT1 &theta_,
 			  bgeot::base_tensor &t) {
        
        //     ctx.G()  --> coordonées des noeuds
