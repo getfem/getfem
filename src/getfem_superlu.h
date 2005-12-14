@@ -40,8 +40,8 @@
 #ifndef GMM_USES_SUPERLU
 #define GMM_USES_SUPERLU
 #endif
-#include <gmm_kernel.h>
 #include <getfem_config.h>
+#include <gmm_kernel.h>
 
 namespace gmm {
 

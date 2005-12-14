@@ -46,6 +46,10 @@
   #define __USE_BSD
 #endif
 
+#if !defined(GMM_USES_MPI) && GETFEM_PARA_LEVEL > 0
+# define GMM_USES_MPI
+#endif
+
 /* ********************************************************************** */
 /*	Compilers detection.						  */
 /* ********************************************************************** */

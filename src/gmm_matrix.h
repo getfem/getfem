@@ -946,7 +946,11 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-#ifdef MPI_CHAR
+#if GETFEM_PARA_LEVEL > 0
+#include <mpi.h>
+#endif
+
+#ifdef GMM_USES_MPI
  
 namespace gmm { 
   

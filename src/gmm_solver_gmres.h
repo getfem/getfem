@@ -59,7 +59,12 @@ namespace gmm {
     std::vector<T> w(vect_size(x)), r(vect_size(x)), u(vect_size(x));
     std::vector<T> c_rot(restart+1), s_rot(restart+1), s(restart+1);
     gmm::dense_matrix<T> H(restart+1, restart);
-
+#ifdef GMM_USES_MPI
+      double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
+      static double tmult_tot = 0.0;
+t_ref = MPI_Wtime();
+    cout << "GMRES " << endl;
+#endif
     mult(M,b,r);
     outer.set_rhsnorm(gmm::vect_norm2(r));
     if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
@@ -110,6 +115,10 @@ namespace gmm {
 	if (outer.get_noisy()) cout << "Gmres is blocked, exiting\n";
 	break;
       }
+#ifdef GMM_USES_MPI
+	t_tot = MPI_Wtime() - t_ref;
+	cout << "temps GMRES : " << t_tot << endl; 
+#endif
     }
   }
 

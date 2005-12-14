@@ -484,15 +484,20 @@ namespace getfem {
 	j1 += sub_bricks[i]->nb_constraints();
       }
       do_compute_residu(MS, i0, j0);
-      if (first) {
+
+
 #if GETFEM_PARA_LEVEL > 1
+      if (first) {
 	std::vector<value_type> resloc(gmm::vect_size(MS.residu()));
+    double t_init = MPI_Wtime();
+
 	MPI_Allreduce(&((MS.residu())[0]), &(resloc[0]),
 		      gmm::vect_size(MS.residu()), gmm::mpi_type(value_type()),
 		      MPI_SUM, MPI_COMM_WORLD);
+   cout << "reduce residu  time = " << MPI_Wtime() - t_init << endl;
 	gmm::copy(resloc, MS.residu());
-#endif
       }
+#endif
     }
   };
 
@@ -1352,7 +1357,7 @@ namespace getfem {
 				    H_.get(), R_.get(), mf_u().linked_mesh().get_mpi_sub_region(boundary),
 				    version);
 	else
-	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), mf_data, H().mf(), rhs().mf(),
+	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u(), H().mf(), rhs().mf(),
 				    H_.get(), R_.get(), boundary, version);
 #else
 	DAL_TRACE2("Assembling Dirichlet constraints with H and version " << version);
@@ -1766,24 +1771,31 @@ namespace getfem {
       iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
     }
 
+
 #if GETFEM_PARA_LEVEL > 1
     double t_init = MPI_Wtime();
 #endif
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
-    problem.compute_tangent_matrix(MS);
-
-    //cout << "CM = " << MS.constraints_matrix() << endl;
-    //cout << "TM = " << MS.tangent_matrix() << endl;
-
-    MS.compute_reduced_system();
-#if GETFEM_PARA_LEVEL > 1
-    cout << "comput tangent residu reduction time = " << MPI_Wtime() - t_init << endl;
+#ifdef GETFEM_PARA_LEVEL > 1
+   cout << "comput  residu  time = " << MPI_Wtime() - t_init << endl;
+   t_init = MPI_Wtime();
 #endif
-#if GETFEM_PARA_LEVEL > 1 /* use a domain partition ? */
-    
-    double t_ref = MPI_Wtime();
+    problem.compute_tangent_matrix(MS);
+#ifdef GETFEM_PARA_LEVEL > 1
+    cout << "comput tangent time = " << MPI_Wtime() - t_init << endl;
+    // cout << "CM = " << MS.constraints_matrix() << endl;
+    // cout << "TM = " << MS.tangent_matrix() << endl;
+    t_init = MPI_Wtime();
+#endif
+    MS.compute_reduced_system();
 
+#if GETFEM_PARA_LEVEL > 1
+    cout << "comput reduced system time = " << MPI_Wtime() - t_init << endl;
+#endif
+
+#if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZ_ADD /* use a domain partition ? */
+    double t_ref = MPI_Wtime();
     std::set<const getfem_mesh *> mesh_set;
     for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
       mesh_set.insert(&(problem.get_mesh_fem(i).linked_mesh()));
@@ -1793,7 +1805,7 @@ namespace getfem {
 
     std::vector< std::vector<int> > eparts(mesh_set.size());
     size_type nset = 0;
-    int nparts = 32;//(ndof / 1000)+1; // number of sub-domains.
+    int nparts = 64;//(ndof / 1000)+1; // number of sub-domains.
 
     // Quand il y a plusieurs maillages, on découpe tous les maillages en autant de parties
     // et on regroupe les ddl de chaque partition par numéro de sous-partie.
@@ -1877,12 +1889,9 @@ namespace getfem {
 	// cout << "Bib[" << i << "] = " <<  Bib[i] << endl;
 	// cout << "Bi[" << i << "] = " <<  Bi[i] << endl;
       }
-    } else std::swap(Bi, Bib);
-
+    } else std::swap(Bi, Bib);    
     cout << "METIS time = " << MPI_Wtime() - t_ref << endl;
-
-
-#endif // GMM_USES_METIS
+#endif
 
     // cout << "RTM = " << MS.reduced_tangent_matrix() << endl;
     
@@ -1932,20 +1941,25 @@ namespace getfem {
 	mixvar = problem.mixed_variables();
 	cout << "there are " << mixvar.card() << " mixed variables\n";
       }
+      size_type dim = problem.dim();
 
-#if GETFEM_PARA_LEVEL > 1
+#if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZ_ADD
     double t_ref,t_final;
     t_ref=MPI_Wtime();
     cout<<"begin Seq AS"<<endl;
       additive_schwarz(MS.reduced_tangent_matrix(), dr,
 		       gmm::scaled(MS.reduced_residu(), value_type(-1)),
-		       0, Bib, iter_linsolv, gmm::using_superlu(),
+		       gmm::identity_matrix(), Bib, iter_linsolv, gmm::using_superlu(),
 		       gmm::using_cg());
     t_final=MPI_Wtime();
     cout<<"temps Seq AS "<< t_final-t_ref<<endl;
+#elif GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS
+     MUMPS_solve(MS.reduced_tangent_matrix(), dr,
+		 gmm::scaled(MS.reduced_residu(), value_type(-1)));
+#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS
+     MUMPS_distributed_matrix_solve(MS.reduced_tangent_matrix(), dr,
+			     gmm::scaled(MS.reduced_residu(), value_type(-1)));
 #else
-    size_type dim = problem.dim();
-
     // if (0) {
     if (
 #ifdef GMM_USES_MUMPS
@@ -2000,7 +2014,7 @@ namespace getfem {
 	if (!iter_linsolv.converged())
 	  DAL_WARNING2("gmres did not converge!");
       }
-    }
+    } 
 #endif // GETFEM_PARA_LEVEL < 2
 
     MS.unreduced_solution(dr,d);

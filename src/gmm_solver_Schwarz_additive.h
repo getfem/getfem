@@ -141,7 +141,7 @@ namespace gmm {
     itebilan = 0;
     
     if (iter.get_noisy()) cout << "Init pour sub dom ";
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,tag3=13,sizepr = 0,tab[4];
     double t_ref,t_final;
     MPI_Status status;
@@ -177,7 +177,7 @@ namespace gmm {
 	  if (iter.get_noisy()) cout << i << " " << std::flush;
 	  Matrix2 Maux(mat_ncols((*vB)[i]), mat_nrows((*vB)[i]));
 	  
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
 	  Matrix2 Maux2(mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));
 	  if (nproc == 0) {
 	    gmm::resize(vAloc[i], mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));
@@ -192,18 +192,18 @@ namespace gmm {
 	  gmm::mult(Maux, (*vB)[i], vAloc[i]);
 #endif
 
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
 	  if (nproc == size - 1 ) {
 #endif
 	    precond1[i].build_with(vAloc[i]);
 	    gmm::resize(fi[i], mat_ncols((*vB)[i]));
 	    gmm::resize(gi[i], mat_ncols((*vB)[i]));
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
 	  }
 #else
 	}
 #endif
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
      }
       if (nproc != size - 1) {
 	MPI_Sendrecv(Acsr.jc, sizeA+1, MPI_INT, next, tag2,
@@ -236,19 +236,19 @@ namespace gmm {
   void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, Vector3 &q) {
     size_type itebilan = 0;
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     static double tmult_tot = 0.0;
     double t_ref = MPI_Wtime();
 #endif
     cout << "tmult AS begin " << endl;
     mult(*(M.A), p, q);
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     tmult_tot += MPI_Wtime()-t_ref;
     cout << "tmult_tot = " << tmult_tot << endl;
 #endif
     std::vector<double> qbis(gmm::vect_size(q));
     std::vector<double> qter(gmm::vect_size(q));
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     MPI_Status status;
     MPI_Request request,request1;
     int tag=111;
@@ -271,7 +271,7 @@ namespace gmm {
     for (size_type i = 0; i < M.fi.size(); ++i)
 #endif
       {
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
       size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
 #endif
 	gmm::mult(gmm::transposed((*(M.vB))[i]), q, M.fi[i]);
@@ -281,12 +281,12 @@ namespace gmm {
        itebilan = std::max(itebilan, M.iter.get_iteration());
        }
 
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     cout << "First  AS loop time " <<  MPI_Wtime() - t_ref << endl;
 #endif
 
     gmm::clear(q);
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     t_ref = MPI_Wtime();
      for (size_type j = 0; j < size_type(nb_sub/size); ++j)
 
@@ -295,14 +295,15 @@ namespace gmm {
 #endif
 	{
 
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
       size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
-	  gmm::mult((*(M.vB))[i], M.gi[i], qbis,qbis);
+      gmm::mult((*(M.vB))[i], M.gi[i], qbis,qbis);
+
 #else
 	  gmm::mult((*(M.vB))[i], M.gi[i], q, q);
 #endif
 	}
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
      //WARNING this add only if you use the ring pattern below
 		// need to do this below if using a n explicit ring pattern communication
 
@@ -311,7 +312,7 @@ namespace gmm {
 #endif
 
 
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     int tag1=11;
     static double t_tot = 0.0;
     double t_final;
@@ -422,7 +423,7 @@ namespace gmm {
     ASM.itebilan = 0;
     std::vector<value_type> g(nb_dof);
     std::vector<value_type> gbis(nb_dof);
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     double t_init=MPI_Wtime();
     int size,tranche,borne_sup,borne_inf,rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -440,7 +441,7 @@ namespace gmm {
 #endif
     {
 
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
       size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
 #endif
       gmm::mult(gmm::transposed((*(ASM.vB))[i]), f, ASM.fi[i]);
@@ -448,7 +449,7 @@ namespace gmm {
       AS_local_solve(local_solver(), ASM.vAloc[i], ASM.gi[i], ASM.fi[i],
 		     ASM.precond1[i], ASM.iter);
       ASM.itebilan = std::max(ASM.itebilan, ASM.iter.get_iteration());
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
 
     gmm::mult((*(ASM.vB))[i], ASM.gi[i], gbis,gbis);
 
@@ -456,7 +457,7 @@ namespace gmm {
       gmm::mult((*(ASM.vB))[i], ASM.gi[i], g, g);
 #endif
     }
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     cout<<"temps boucle init "<< MPI_Wtime()-t_init<<endl;
     double t_ref,t_final;
     t_ref=MPI_Wtime();
@@ -465,12 +466,12 @@ namespace gmm {
     t_final=MPI_Wtime();
     cout<<"temps reduce init "<< t_final-t_ref<<endl;
 #endif
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     t_ref=MPI_Wtime();
     cout<<"begin global AS"<<endl;
 #endif
     AS_global_solve(global_solver(), ASM, u, g, iter);
-#ifdef MPI_CHAR
+#ifdef GMM_USES_MPI
     t_final=MPI_Wtime();
     cout<<"temps AS Global Solve "<< t_final-t_ref<<endl;
 #endif

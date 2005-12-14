@@ -32,12 +32,13 @@
    @see nonlinear_elastostatic.cc
 */
 
-#include <getfem_superlu.h>
+#include <getfem_config.h>
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <gmm.h>
+#include <getfem_superlu.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -337,6 +338,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
+
   GETFEM_MPI_INIT(argc, argv); // For parallelized version
 
   DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
@@ -362,8 +364,8 @@ int main(int argc, char *argv[]) {
 #if GETFEM_PARA_LEVEL > 1
     t_final=MPI_Wtime();
     t_resol += t_final-t_ref;
-    cout<<"end resol"<<endl;
-    cout<<"["<< rank <<"] temps Resol "<< t_final-t_ref << " t_tot = "
+    cout << "end resol"<<endl;
+    cout << "temps Resol "<< t_final-t_ref << " t_tot = "
 	<< t_resol << endl;
 #endif
     p.compute_error(U);

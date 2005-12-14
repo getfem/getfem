@@ -147,6 +147,11 @@ namespace gmm {
     const int USE_COMM_WORLD = -987654;
 
     typename mumps_interf<T>::MUMPS_STRUC_C id;
+
+#ifdef GMM_USES_MPI
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
     
     id.job = JOB_INIT;
     id.par = 1;
@@ -154,12 +159,18 @@ namespace gmm {
     id.comm_fortran = USE_COMM_WORLD;
     mumps_interf<T>::mumps_c(id);
     
-    id.n = gmm::mat_nrows(A);
-    id.nz = AA.irn.size();
-    id.irn = &(AA.irn[0]);
-    id.jcn = &(AA.jcn[0]);
-    id.a = (MUMPS_T*)(&(AA.a[0]));
-    id.rhs = (MUMPS_T*)(&(rhs[0]));
+#ifdef GMM_USES_MPI
+    if (rank == 0) {
+#endif
+      id.n = gmm::mat_nrows(A);
+      id.nz = AA.irn.size();
+      id.irn = &(AA.irn[0]);
+      id.jcn = &(AA.jcn[0]);
+      id.a = (MUMPS_T*)(&(AA.a[0]));
+      id.rhs = (MUMPS_T*)(&(rhs[0]));
+#ifdef GMM_USES_MPI
+    }
+#endif
 
 #define ICNTL(I) icntl[(I)-1]
 #define INFO(I) info[(I)-1]
@@ -168,15 +179,89 @@ namespace gmm {
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
-	case -6 :  DAL_THROW(failure_error, "Solve with MUMPS failed: matrix is singular");
+	case -6 : case -10 : DAL_THROW(failure_error, "Solve with MUMPS failed: matrix is singular");
 	case -13 : DAL_THROW(failure_error, "Solve with MUMPS failed: not enough memory");
-	default :   DAL_THROW(failure_error, "Solve with MUMPS failed with error " << id.INFO(1));
+	default :  DAL_THROW(failure_error, "Solve with MUMPS failed with error " << id.INFO(1));
       }
     }
 
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
 
+    gmm::copy(rhs, X);
+
+#undef ICNTL
+#undef INFO
+
+  }
+
+
+
+  /** MUMPS solve interface for distributed matrices 
+   *  Works only with sparse or skyline matrices
+   */
+  template <typename MAT, typename VECTX, typename VECTB>
+  void MUMPS_distributed_matrix_solve(const MAT &A, const VECTX &X_,
+				      const VECTB &B) {
+    VECTX &X = const_cast<VECTX &>(X_);
+
+    typedef typename linalg_traits<MAT>::value_type T;
+    typedef typename mumps_interf<T>::value_type MUMPS_T;
+    if (gmm::mat_nrows(A) != gmm::mat_ncols(A))
+      DAL_THROW(failure_error, "Non square matrix");
+  
+    std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
+  
+    ij_sparse_matrix<T> AA(A);
+  
+    const int JOB_INIT = -1;
+    const int JOB_END = -2;
+    const int USE_COMM_WORLD = -987654;
+
+    typename mumps_interf<T>::MUMPS_STRUC_C id;
+
+#ifdef GMM_USES_MPI
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+    
+    id.job = JOB_INIT;
+    id.par = 1;
+    id.sym = 0;
+    id.comm_fortran = USE_COMM_WORLD;
+    mumps_interf<T>::mumps_c(id);
+    
+    id.n = gmm::mat_nrows(A);
+    id.nz_loc = AA.irn.size();
+    id.irn_loc = &(AA.irn[0]);
+    id.jcn_loc = &(AA.jcn[0]);
+    id.a_loc = (MUMPS_T*)(&(AA.a[0]));
+
+#ifdef GMM_USES_MPI
+    if (rank == 0) {
+#endif
+      id.rhs = (MUMPS_T*)(&(rhs[0]));
+#ifdef GMM_USES_MPI
+    }
+#endif
+
+#define ICNTL(I) icntl[(I)-1]
+#define INFO(I) info[(I)-1]
+    id.ICNTL(1) = -1; id.ICNTL(2) = -1; id.ICNTL(3) = -1; id.ICNTL(4) = 4;
+    id.ICNTL(5)=0; id.ICNTL(18)=3;
+    id.job = 6;
+    mumps_interf<T>::mumps_c(id);
+    if (id.INFO(1) < 0) {
+      switch (id.INFO(1)) {
+	case -6 : case -10 : DAL_THROW(failure_error, "Solve with MUMPS failed: matrix is singular");
+	case -13: DAL_THROW(failure_error, "Solve with MUMPS failed: not enough memory");
+	default : DAL_THROW(failure_error, "Solve with MUMPS failed with error " << id.INFO(1));
+      }
+    }
+
+    id.job = JOB_END;
+    mumps_interf<T>::mumps_c(id);
+    MPI_Bcast(&(rhs[0]),id.n,gmm::mpi_type(T()),0,MPI_COMM_WORLD);
     gmm::copy(rhs, X);
 
 #undef ICNTL

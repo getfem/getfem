@@ -162,15 +162,16 @@
 
 #if GETFEM_PARA_LEVEL > 0
 
-#undef DAL_TRACE_MSG_MPI
-#define DAL_TRACE_MSG_MPI					         \
+# include <mpi.h>
+
+# undef DAL_TRACE_MSG_MPI
+# define DAL_TRACE_MSG_MPI					         \
   int mip_rk__; MPI_Comm_rank(MPI_COMM_WORLD, &mip_rk__);	         \
   if (mip_rk__ == 0) 
 
 # undef GETFEM_MPI_INIT
-# define GETFEM_MPI_INIT(argc, argv) { int mip_rk__;                     \
+# define GETFEM_MPI_INIT(argc, argv) {                                   \
   MPI_Init(&argc, &argv);                                                \
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rk__);                              \
   DAL_TRACE1("Running parallelized Getfem level " << GETFEM_PARA_LEVEL); \
   }
 # undef GETFEM_MPI_FINALIZE 
@@ -188,8 +189,6 @@
 #    define GMM_USES_MUMPS
 #  endif
 # endif
-
-# include <mpi.h>
 
 # if GETFEM_PARA_LEVEL > 1
 extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *,
