@@ -100,6 +100,20 @@ struct exact_solution_3D {
   }
 };
 
+base_small_vector sol_f(const base_node &x) {
+  int N = x.size();
+  base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
+  return res;
+}
+
+#else
+
+base_small_vector sol_f(const base_node &x) {
+  int N = x.size();
+  base_small_vector res(N); res[N-1] = (x[N-1] < 0 ? -0.1 : 0.1);
+  return res;
+}
+
 #endif
 
 /**************************************************************************/
@@ -110,6 +124,7 @@ struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
+  //  getfem::mesh_im basic_mim;    /* a basic non cut mim for tests.        */
   getfem::mesh_level_set mls;       /* the level set aware mesh.             */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_im_level_set mim_crack;    /* the integration on the crack.   */
@@ -142,11 +157,12 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), mim_crack(mls, getfem::mesh_im_level_set::INTEGRATE_BOUNDARY), mf_pre_u(mesh),
-			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
-			mf_partition_of_unity(mesh),
-			mf_product(mf_partition_of_unity, mf_sing_u),
-			mf_u_sum(mesh), mf_rhs(mesh),
+  crack_problem(void) :
+    /*basic_mim(mesh), */ mls(mesh),  mim(mls), 
+    mim_crack(mls, getfem::mesh_im_level_set::INTEGRATE_BOUNDARY),
+    mf_pre_u(mesh), mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
+    mf_partition_of_unity(mesh), mf_product(mf_partition_of_unity, mf_sing_u),
+    mf_u_sum(mesh), mf_rhs(mesh),
 #ifdef VALIDATE_XFEM	
 			exact_sol(mesh),
 #endif
@@ -210,7 +226,7 @@ void crack_problem::init(void) {
   getfem::pintegration_method sing_ppi = 
     (SINGULAR_INTEGRATION ? getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
-
+  // basic_mim.set_integration_method(mesh.convex_index(), ppi);
   mim.set_integration_method(mesh.convex_index(), ppi);
   mim_crack.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
@@ -307,7 +323,7 @@ bool crack_problem::solve(plain_vector &U) {
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
   for (size_type i = 0; i < 4; ++i)
-    vfunc[i] = isotropic_crack_singular_2D(i, ls, 0.0);
+    vfunc[i] = isotropic_crack_singular_2D(i, ls);
   
   mf_sing_u.set_functions(vfunc);
 
@@ -374,18 +390,23 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u(), lambda, mu);
 
   // Defining the volumic source term.
-  plain_vector F(nb_dof_rhs * N); 
+  plain_vector F(nb_dof_rhs * N);
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+    gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
-#ifdef VALIDATE_XFEM
   gmm::clear(F);
-#else
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i*N+N-1] = (mf_rhs.point_of_dof(i))[N-1];
-  gmm::scale(F, neumann_force);
-#endif
+
+// #ifdef VALIDATE_XFEM
+//   gmm::clear(F);
+// #else
+//   for (size_type i = 0; i < nb_dof_rhs; ++i)
+//     F[i*N+N-1] = (mf_rhs.point_of_dof(i))[N-1];
+//   gmm::scale(F, neumann_force);
+// #endif
 
   // Neumann condition brick.
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);

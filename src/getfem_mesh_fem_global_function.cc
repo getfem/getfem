@@ -227,16 +227,16 @@ namespace getfem {
       return v*cutoff(x,y);
     }
 
-    scalar_type cutoff(scalar_type x, scalar_type y) const {
-      if (a4>0) return exp(-a4 * gmm::sqr(x*x+y*y));
-      else return 1;
-    }
+    scalar_type cutoff(scalar_type x, scalar_type y) const
+    { return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1; }
 
     base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
       base_small_vector g(2);
-      scalar_type r2 = x*x+y*y;
-      g[0] = cutoff(x,y) * (-4*a4*r2*x);
-      g[1] = cutoff(x,y) * (-4*a4*r2*y);
+      if (a4>0) {
+	scalar_type r2 = x*x+y*y;
+	g[0] = cutoff(x,y) * (-4*a4*r2*x);
+	g[1] = cutoff(x,y) * (-4*a4*r2*y);
+      }
       return g;
     }
 
@@ -257,12 +257,18 @@ namespace getfem {
 	cerr << c.pgp()->get_point_tab() << "\n";
 	//throw int(3);
       }
-      scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
-      dfs = sing_function_grad(x, y, l);
-      dfc = cutoff_grad(x,y);
-      dfr = fs*dfc + fc*dfs;
-      dfr.resize(P);
+      if (a4 > 0) {
+	scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
+	dfs = sing_function_grad(x, y, l);
+	dfc = cutoff_grad(x,y);
+	dfr = fs*dfc + fc*dfs;
+      }
+      else {
+	dfr = sing_function_grad(x, y, l);
+	dfr[0] = 1.0;
+      }
 
+      dfr.resize(P);
       gmm::mult(c.B(), dfr, df);
       for (size_type i = 0; i < P; ++i)
 	v[i] = df[0]*dx[i] + df[1]*dy[i];

@@ -10,7 +10,7 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = .0;   	% Lamé coefficient.
 NEUMANN_FORCE = 0.03; 
 %%%%%   discretisation parameters  :                     	      %%%%%
-NL = 5;            	          % number of horizontal space steps.
+NL = 7;            	          % number of horizontal space steps.
 NH = 5;                           % number of vertical space steps.
 L = 1.0;                          % length
 H = 0.2;                          % height
@@ -27,7 +27,7 @@ FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 %SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 1)';
-SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),2)';
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),3)';
 
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
@@ -44,7 +44,7 @@ DIRICHLET_WITH_MULTIPLIERS = 0;
 ENRICHMENT_OPTION = 1;  % 0 = no enrichment
 		        % 1 = standard XFEM on a fixed zone
 
-RADIUS_ENR_AREA = 0.1; 
+RADIUS_ENR_AREA = 0.3; 
 
 RESIDUE = 1E-8;     	% residue for iterative methods if any.
 
