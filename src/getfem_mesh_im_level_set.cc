@@ -34,8 +34,10 @@
 namespace getfem {
 
   
-  void mesh_im_level_set::receipt(const MESH_CLEAR &) { clear(); is_adapted = false; }
-  void mesh_im_level_set::receipt(const MESH_DELETE &) { clear(); is_adapted = false; }
+  void mesh_im_level_set::receipt(const MESH_CLEAR &)
+  { clear(); is_adapted = false; }
+  void mesh_im_level_set::receipt(const MESH_DELETE &)
+  { clear(); is_adapted = false; }
   void mesh_im_level_set::clear_build_methods() {
     for (size_type i = 0; i < build_methods.size(); ++i)
       del_stored_object(build_methods[i]);
@@ -75,7 +77,7 @@ namespace getfem {
 
   DAL_SIMPLE_KEY(special_imls_key, papprox_integration);
 
-  void mesh_im_level_set::build_method_of_convex(size_type cv) const {
+  void mesh_im_level_set::build_method_of_convex(size_type cv) {
     const getfem_mesh &mesh(mls.mesh_of_convex(cv));
     if (mesh.convex_index().card() == 0) DAL_INTERNAL_ERROR("");
     base_matrix G;
@@ -97,11 +99,13 @@ namespace getfem {
 	B = dal::mean_value(mesh.points_of_convex(scv));
 	bool isin = true;
 	for (unsigned i = 0; isin && (i < mls.nb_level_sets()); ++i) {
-	  isin = isin && ((integrate_where & INTEGRATE_OUTSIDE) ? ((mesherls0[i])(B) > 0)
+	  isin = isin && ((integrate_where & INTEGRATE_OUTSIDE)
+			  ? ((mesherls0[i])(B) > 0)
 			  : ((mesherls0[i])(B) < 0));
 	  if (mls.get_level_set(i)->has_secondary())
-	    isin = isin && ((integrate_where & INTEGRATE_OUTSIDE) ? ((mesherls1[i])(B) > 0)
-			  : ((mesherls1[i])(B) < 0));
+	    isin = isin && ((integrate_where & INTEGRATE_OUTSIDE)
+			    ? ((mesherls1[i])(B) > 0)
+			    : ((mesherls1[i])(B) < 0));
 	}
 	convexes_arein[scv] = isin;
       }
@@ -113,9 +117,12 @@ namespace getfem {
     dim_type n = pgt->dim();
 
     if (base_singular_pim) {
-      if ((n == 2 && base_singular_pim->structure() != bgeot::parallelepiped_structure(2))
-	  || (n == 3 && base_singular_pim->structure() != bgeot::prism_structure(3)) || (n < 2) || (n > 3))
-	DAL_THROW(failure_error, "Base integration method for qusi polar integration not convenient");
+      if ((n == 2 && base_singular_pim->structure()
+	   != bgeot::parallelepiped_structure(2))
+	  || (n == 3 && base_singular_pim->structure()
+	      != bgeot::prism_structure(3)) || (n < 2) || (n > 3))
+	DAL_THROW(failure_error,
+	  "Base integration method for qusi polar integration not convenient");
     }
 
 
@@ -130,10 +137,12 @@ namespace getfem {
       if ((integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) &&
 	  !convexes_arein[i]) continue;
       
-      if (base_singular_pim) {
+      if (base_singular_pim && mls.crack_tip_convexes().is_in(cv)) {
 	ptsing.resize(0);
 	unsigned sing_ls = unsigned(-1);
 	
+	// cout << "cv no " << cv << endl;
+
 	for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils)
 	  if (mls.get_level_set(ils)->has_secondary()) {
 	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
@@ -141,7 +150,8 @@ namespace getfem {
 		  && gmm::abs((mesherls1[ils])(mesh.points_of_convex(i)[ipt])) < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
 		if (sing_ls != ils)
-		  DAL_THROW(failure_error, "Two singular point in one sub element. To be done");
+		  DAL_THROW(failure_error,
+			    "Two singular point in one sub element. To be done");
 		ptsing.push_back(ipt);
 	      }
 	    }
@@ -153,7 +163,7 @@ namespace getfem {
 	  sts << "IM_QUASI_POLAR(" << name_of_int_method(base_singular_pim) << ", " << ptsing[0];
 	  if (ptsing.size() > 1) sts << ", " <<  ptsing[1];
 	  sts << ")";
-	  cout << "Singular int method : " << sts.str() << endl;
+	  //cout << "Singular int method : " << sts.str() << endl;
 	  pai = int_method_descriptor(sts.str())->approx_method();
 	}
       }
@@ -263,9 +273,6 @@ namespace getfem {
 	 !cv.finished(); ++cv) {
       if (mls.is_convex_cut(cv)) build_method_of_convex(cv);
     }
-
-	// + éléments non coupés intérieurs.
-
     is_adapted = true; touch();
   }
 

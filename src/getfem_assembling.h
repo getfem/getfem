@@ -454,8 +454,7 @@ namespace getfem
       tensor. This is more a demonstration of generic assembly than
       something useful !  
 
-      Note that this function could have been called 
-      "asm_stiffness_matrix_for_vector_elliptic"
+      Note that this function is just an alias for asm_stiffness_matrix_for_vector_elliptic.
 
       @ingroup asm
   */
@@ -466,21 +465,9 @@ namespace getfem
 						   const mesh_fem &mf_data, 
 						   const VECT &H,
 						   const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    /* 
-       M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
-    */
-    generic_assembly assem("a=data$1(qdim(#1),qdim(#1),qdim(#1),qdim(#1),#2);"
-			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-			   "M(#1,#1)+= sym(t(:,i,j,:,k,l,p).a(i,j,k,l,p))");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_mf(mf_data);
-    assem.push_data(H);
-    assem.push_mat(RM);
-    assem.assembly(rg);
+    asm_stiffness_matrix_for_vector_elliptic(RM, mim, mf, mf_data, H, rg);
   }
+
 
   /** two-in-one assembly of stokes equation:
      linear elasticty part and p.div(v) term are assembled at the
@@ -611,7 +598,7 @@ namespace getfem
 
   /**
      assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
-     is a NxN matrix.
+     is a (symmetric positive definite) NxN matrix.
      Arguments:
      @param M a sparse matrix of dimensions mf.nb_dof() x mf.nb_dof()
 
@@ -640,8 +627,8 @@ namespace getfem
 						const VECT &A, 
 		    const mesh_region &rg = mesh_region::all_convexes())
   {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    /*if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
     asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
 				       "a=data$1(mdim(#1),mdim(#1),#2);"
 				       "M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
@@ -657,13 +644,36 @@ namespace getfem
    const mesh_fem &mf_data, const VECT &A, 
    const mesh_region &rg = mesh_region::all_convexes())
   {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    /*if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
     asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
 				       "a=data$1(mdim(#1),mdim(#1),#2);"
 				       "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
 				       "(:,l,i,:,l,j,k).a(j,i,k)");
   }
+
+  /**
+     Assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
+     is a NxNxNxN (symmetric positive definite) tensor.
+  */
+  template<typename MAT, typename VECT> void
+  asm_stiffness_matrix_for_vector_elliptic(MAT &M,
+					   const mesh_im &mim, 
+					   const mesh_fem &mf, 
+					   const mesh_fem &mf_data, 
+					   const VECT &A,
+					   const mesh_region &rg = mesh_region::all_convexes()) {
+    /*if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
+    /* 
+       M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
+    */
+    asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg, 
+				       "a=data$1(mdim(#1),mdim(#1),mdim(#1),mdim(#1),#2);"
+				       "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
+				       "M(#1,#1)+= sym(t(:,i,j,:,k,l,p).a(i,j,k,l,p))");
+  }
+
 
 
   /** 

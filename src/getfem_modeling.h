@@ -417,6 +417,9 @@ namespace getfem {
     /** return the set of mixed variables. */
     const dal::bit_vector &mixed_variables(void) const
     { context_check(); return total_mixed_variables; };
+
+    PARAM_MAP &get_parameters() { return parameters; }
+
     mdbrick_abstract_common_base(void) : proper_additional_dof(0), proper_nb_constraints(0), 
 					 MS_i0(0) { 
       proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; 
@@ -533,9 +536,10 @@ namespace getfem {
     mdbrick_abstract_parameter(const std::string &name,
 			       const mesh_fem &mf_,
 			       mdbrick_abstract_common_base *b, 
-			       size_type N=0, size_type M=0) {
+			       size_type N=0, size_type M=0, 
+			       size_type P=0, size_type Q=0) {
       brick_ = b; pmf_ = &mf_; b->add_dependency(*pmf_);
-      if (N) { sizes_.push_back(N); if (M) sizes_.push_back(M); }
+      reshape(N,M,P,Q);
       state = MODIFIED; initialized = false;
       b->parameters[name] = this;
     }
@@ -548,9 +552,15 @@ namespace getfem {
     void redim(unsigned d) {
       if (sizes_.size() != d) { sizes_.resize(d); sizes_.clear(); }
     }
-    virtual void reshape(size_type N=0, size_type M=0) {
+    virtual void reshape(size_type N=0, size_type M=0, size_type P=0, size_type Q=0) {
       sizes_.clear();
-      if (N) { sizes_.push_back(N); if (M) sizes_.push_back(M); }
+      if (N) { sizes_.push_back(N); 
+	if (M) { sizes_.push_back(M);
+	  if (P) { sizes_.push_back(P);
+	    if (Q) { sizes_.push_back(Q); }
+	  }
+	}
+      }
     }
     virtual void check() const = 0;
     virtual ~mdbrick_abstract_parameter() {}
@@ -630,9 +640,6 @@ namespace getfem {
       this->set_diagonal_(w, typename gmm::is_gmm_interfaced<W>::result());
     }
     const VEC &get() const { check(); return value_; }
-    virtual void reshape(size_type N=0, size_type M=0) {
-      mdbrick_abstract_parameter::reshape(N,M);
-    }    
     virtual void check() const {
       if (gmm::vect_size(value_) != mf().nb_dof() * fsize())
 	DAL_THROW(dal::failure_error, "invalid dimension for brick parameter");
@@ -923,9 +930,9 @@ namespace getfem {
       else if (coeff_.fdim() == 4) {
 	if (this->mf_u.get_qdim() != this->mf_u.linked_mesh().dim())
 	  DAL_THROW(failure_error, "Order 4 tensor coefficient applies only to mesh_fem whose Q dim is equal to the mesh dimension");
-	asm_stiffness_matrix_for_linear_elasticity_hooke(this->K, this->mim, this->mf_u,
-							 coeff().mf(), coeff().get(),
-							 this->mf_u.linked_mesh().get_mpi_region());
+	asm_stiffness_matrix_for_vector_elliptic(this->K, this->mim, this->mf_u,
+						 coeff().mf(), coeff().get(),
+						 this->mf_u.linked_mesh().get_mpi_region());
       }
       else DAL_THROW(failure_error, "Bad format for the coefficient of mdbrick_generic_elliptic");
     }

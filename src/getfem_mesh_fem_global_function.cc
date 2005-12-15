@@ -247,7 +247,8 @@ namespace getfem {
       base_small_vector dx(P), dy(P), dfs(2), dfc(2), dfr(2), df(P);
       scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
       if (x*x + y*y < 1e-20) {
-	cerr << "crack_singular::grad: xreal = " << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
+	cerr << "crack_singular::grad: xreal = " << c.xreal()
+	     << ", x_crack = " << x << ", y_crack=" << y << "\n";
 	cerr << "ii=" << c.ii() << "\n";
 	cerr << "G=" << c.G() << "\n";
 	cerr << "pgp=" << c.pgp() << "\n";

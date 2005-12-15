@@ -435,36 +435,27 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
-      size_type nb = AHL.nb_params();
       gmm::sub_interval SUBI(i0, mf_u.nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_nonlinear_elasticity_tangent_matrix
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mim, mf_u,
-	 gmm::sub_vector(MS.state(), SUBI), mf_data, PARAMS_.get(),  AHL);
+	 gmm::sub_vector(MS.state(), SUBI), params().mf(), params().get(),  AHL);
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, mf_u.nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
       asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
 				   mf_u, gmm::sub_vector(MS.state(), SUBI), 
-				   mf_data, PARAMS_.get(), AHL);
+				   params().mf(), params().get(), AHL);
     }
 
-    mdbrick_parameter<VECTOR> &params() { return PARAMS_; }
-    const mdbrick_parameter<VECTOR> &params() const { return PARAMS_; }
+    mdbrick_parameter<VECTOR> &params() { 
+      PARAMS_.reshape(AHL.nb_params()); return PARAMS_; 
+    }
 
     SUBVECTOR get_solution(MODEL_STATE &MS) {
       gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
-    }
-
-    void init_(void) {
-      this->add_dependency(mf_data);
-      this->add_proper_mesh_fem(mf_u, MDBRICK_NONLINEAR_ELASTICITY);
-      this->add_proper_mesh_im(mim);
-      this->proper_is_linear_ = false;
-      this->proper_is_coercive_ = this->proper_is_symmetric_ = true;
-      this->force_update();
     }
 
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
@@ -472,8 +463,12 @@ namespace getfem {
 				 mesh_fem &mf_u_,
 				 const VECTOR &PARAMS)
       : AHL(AHL_), mim(mim_), mf_u(mf_u_), PARAMS_("params", mf_u.linked_mesh(), this) {
-      PARAMS_.set(PARAMS);
-      init_();
+      params().set(PARAMS);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_NONLINEAR_ELASTICITY);
+      this->add_proper_mesh_im(mim);
+      this->proper_is_linear_ = false;
+      this->proper_is_coercive_ = this->proper_is_symmetric_ = true;
+      this->force_update();
     }
   };
 

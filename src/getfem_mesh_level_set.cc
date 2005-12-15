@@ -84,9 +84,13 @@ struct Chrono {
   }
 
 
+  const dal::bit_vector &mesh_level_set::crack_tip_convexes() const {
+    return crack_tip_convexes_;
+  }
+
 
   mesh_level_set::mesh_level_set(getfem_mesh &me) {
-    linked_mesh_ = &me; is_adapted_ = false;
+    linked_mesh_ = &me; is_adapted_ = false; 
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
 	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
@@ -745,6 +749,33 @@ struct Chrono {
 
   }
 
+  void mesh_level_set::update_crack_tip_convexes() {
+    crack_tip_convexes_.clear();
+     
+    for (std::map<size_type, convex_info>::const_iterator it = cut_cv.begin(); 
+	 it != cut_cv.end(); ++it) {
+      size_type cv = it->first;
+      getfem_mesh &mesh = *(it->second.pmesh);      
+      for (unsigned ils = 0; ils < nb_level_sets(); ++ils) {
+	if (get_level_set(ils)->has_secondary()) {
+	  mesher_level_set mesherls0 =  get_level_set(ils)->mls_of_convex(cv, 0, false);
+	  mesher_level_set mesherls1 =  get_level_set(ils)->mls_of_convex(cv, 1, false);
+	  for (dal::bv_visitor ii(mesh.convex_index()); !ii.finished(); ++ii) {
+	    for (unsigned ipt = 0; ipt < mesh.nb_points_of_convex(ii); ++ipt) {
+	      if (gmm::abs(mesherls0(mesh.points_of_convex(ii)[ipt])) < 1E-10
+		  && gmm::abs(mesherls1(mesh.points_of_convex(ii)[ipt])) < 1E-10) {
+		crack_tip_convexes_.add(cv);
+		goto next_convex;
+	      }
+	    }
+	  }
+	}
+      }
+    next_convex:
+      ;
+    }    
+  }
+
   void mesh_level_set::adapt(void) {
 
     // compute the elements touched by each level set
@@ -776,6 +807,8 @@ struct Chrono {
       exp.exporting_mesh_edges();
       exp.write_mesh();
     }
+
+    update_crack_tip_convexes();
     is_adapted_ = true;
   }
   

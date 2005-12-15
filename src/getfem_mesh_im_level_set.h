@@ -46,17 +46,18 @@ namespace getfem {
   class mesh_im_level_set : public mesh_im {
   protected :
     pintegration_method regular_simplex_pim;
-    pintegration_method base_singular_pim; // en 3D ?
-    mutable mesh_level_set &mls;
+    pintegration_method base_singular_pim;
+    mesh_level_set &mls;
 
-    mutable mesh_im cut_im; /* stores an im only for convexes who are crossed
+    mesh_im cut_im; /* stores an im only for convexes who are crossed
 		       by a levelset */
-    mutable std::vector<pintegration_method> build_methods;
+    std::vector<pintegration_method> build_methods;
+
     mutable bool is_adapted;
     int integrate_where; // INTEGRATE_INSIDE or INTEGRATE_OUTSIDE
 
     void clear_build_methods();
-    void build_method_of_convex(size_type cv) const;
+    void build_method_of_convex(size_type cv);
 
   public :
     enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,

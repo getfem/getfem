@@ -18,8 +18,57 @@
 /*                                                                         */
 /* *********************************************************************** */
 #include <dal_basic.h>
+#include <ftool.h>
 #include <deque>
 #include <complex>
+
+typedef std::deque<int>::size_type size_type;
+template<typename T> struct dyndeque : public std::deque<T> {
+  T &operator[](unsigned i) { 
+    if (i >= this->size()) 
+      this->resize(i+1); 
+    return (*this)[i]; 
+  }
+};
+
+template<typename T> struct dynarray : public dal::dynamic_array<T> {
+  void push_back(const T& t) { (*this)[this->size()] = t; }
+};
+
+template <typename DA> void bench_da(unsigned N1, unsigned N2) {
+  double t = ftool::uclock_sec();
+  DA v;
+  for (unsigned n=0; n < N1; ++n) {
+    v.clear();
+    for (unsigned i=0; i < N2; ++i) {
+      v.push_back(i);
+    }
+  }
+  cout << "  push_back: " << ftool::uclock_sec()-t << " sec\n";
+
+  t = ftool::uclock_sec();
+  v.resize(N2);
+  for (unsigned n=0; n < N1; ++n) {
+    for (unsigned i=0; i < N2; ++i) {
+      v[i] = i+n;
+    }
+  }
+  cout << "  random access fill: " << ftool::uclock_sec()-t << " sec\n";
+  
+}
+
+void bench() {
+  unsigned N1=100, N2 = 100000;
+  cout << "dynamic_array<size_type> performances: \n";
+  bench_da<dynarray<size_type> >(N1, N2);
+  cout << "std::deque<size_type> performances:\n";
+  bench_da<dyndeque<size_type> >(N1, N2);
+  cout << "dynamic_array<int> performances: \n";
+  bench_da<dynarray<int> >(N1, N2);
+  cout << "std::deque<int> performances:\n";
+  bench_da<dyndeque<int> >(N1, N2);
+}
+
 
 int main(void) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
@@ -62,6 +111,8 @@ int main(void) {
 
     // std::complex<float> x(1.0,0.0);
     // cout << "A complex : " << x << endl;
+
+    bench();
     
     size_t ee = 1, f = 2;
     ptrdiff_t g = ee - f;

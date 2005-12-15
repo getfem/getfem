@@ -53,7 +53,55 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
+#define VALIDATE_XFEM
 
+#ifdef VALIDATE_XFEM
+
+struct exact_solution_3D {
+  getfem::mesh_fem_global_function mf;
+  getfem::base_vector U;
+
+  exact_solution_3D(getfem::getfem_mesh &me) : mf(me) {}
+  
+  void init(int mode, scalar_type lambda, scalar_type mu,
+	    getfem::level_set &ls) {
+    std::vector<getfem::pglobal_function> cfun(4);
+    for (unsigned j=0; j < 4; ++j)
+      cfun[j] = getfem::isotropic_crack_singular_2D(j, ls);
+    mf.set_functions(cfun);
+    
+    mf.set_qdim(1);
+    assert(mf.linked_mesh().dim() == 3);
+    U.resize(4*mf.linked_mesh().dim()); assert(mf.nb_dof() == 4);
+    getfem::base_vector::iterator it = U.begin();
+    scalar_type coeff=0.;
+    switch(mode) {
+      case 1: {
+	scalar_type A=2+2*mu/(lambda+2*mu), B=-2*(lambda+mu)/(lambda+2*mu);
+	/* "colonne" 1: ux, colonne 2: uy */
+	*it++ = 0;       *it++=0; *it++ = A-B; /* sin(theta/2) */
+	*it++ = -(A+B);  *it++=0; *it++ = 0;   /* cos(theta/2) */
+	*it++ = B;       *it++=0; *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
+	*it++ = 0;       *it++=0; *it++ = B;   /* cos(theta/2)*cos(theta) */
+	coeff = 1/sqrt(2*M_PI);
+      } break;
+      case 2: {
+	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
+	*it++ = 1-C1-2; *it++=0; *it++ = 0;
+	*it++ = 0;      *it++=0; *it++ = -(C1-2+1);
+	*it++ = 0;      *it++=0; *it++ = 1;
+	*it++ = -1;     *it++=0; *it++ = 0;
+	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
+      } break;
+      default:
+	assert(0);
+	break;
+    }
+    U *= coeff;
+  }
+};
+
+#endif
 
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
@@ -77,7 +125,9 @@ struct crack_problem {
   
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  
+#ifdef VALIDATE_XFEM
+  exact_solution_3D exact_sol;
+#endif
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type neumann_force;
 
@@ -98,7 +148,7 @@ struct crack_problem {
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
 			mf_u_sum(mesh),
-			mf_rhs(mesh), ls(mesh, 1, true) {}
+			mf_rhs(mesh), exact_sol(mesh), ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -190,6 +240,13 @@ void crack_problem::init(void) {
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+#ifdef VALIDATE_XFEM
+    base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+    un /= gmm::vect_norm2(un);
+    if (gmm::abs(un[1]) <= 1e-7) {
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+    }
+#else
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[0] + 1.0) >= 1.0E-7) { // new Neumann face
@@ -197,8 +254,12 @@ void crack_problem::init(void) {
     } else {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     }
+#endif
   }
 
+#ifdef VALIDATE_XFEM
+  exact_sol.init(1, lambda, mu, ls);
+#endif
 }
 
 /**************************************************************************/
@@ -215,7 +276,7 @@ bool crack_problem::solve(plain_vector &U) {
     const base_node P = ls.get_mesh_fem().point_of_dof(d);
     scalar_type x = P[0], y = P[1], z = P[N-1];
     ls.values(0)[d] = z;
-    ls.values(1)[d] = -x + .2 - y; 
+    ls.values(1)[d] = -x - 0*y;    //-x + .2 - y; 
     //+ 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
   }
   ls.touch();
@@ -256,14 +317,7 @@ bool crack_problem::solve(plain_vector &U) {
       }
     }
 
-  dal::bit_vector crack_tip_convexes;
-  for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
-    if (mls.is_convex_cut(i)) {
-      // chuis pas sur sur du test..
-      if (mls.zoneset_of_convex(i).size() == 1) {
-	crack_tip_convexes.add(i); 
-      }
-    }
+  dal::bit_vector crack_tip_convexes = mls.crack_tip_convexes();
   cerr << "crack_tip_convexes = " << crack_tip_convexes << "\n";
 
   switch (enrichment_option) {
@@ -280,16 +334,25 @@ bool crack_problem::solve(plain_vector &U) {
 	if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
 	  enriched_dofs.add(j);
       }
+
+
       for (dal::bv_visitor cv(crack_tip_convexes); !cv.finished(); ++cv) {
+	cerr << "inspecting convex centered at " << dal::mean_value(mf_partition_of_unity.linked_mesh().points_of_convex(cv)) << "\n";
 	for (unsigned j=0; j < mf_partition_of_unity.nb_dof_of_element(cv); ++j) {
 	  size_type d = mf_partition_of_unity.ind_dof_of_element(cv)[j];
 	  if (!enriched_dofs.is_in(d)) {
 	    enriched_dofs.add(d);
-	    cerr << "added supplementary cracktip dof " << d << ", distance is:"
-		 << sqrt(gmm::sqr(X[d]) + gmm::sqr(Y[d])) << "\n";
+	    /*cerr << "added supplementary cracktip dof " << d << ", distance is:"
+	      << sqrt(gmm::sqr(X[d]) + gmm::sqr(Y[d])) << "\n";*/
 	  }
 	}
       }
+
+      for (dal::bv_visitor ii(enriched_dofs); !ii.finished(); ++ii) {
+	cerr << "enriched_dof " << ii << "  @ " << mf_partition_of_unity.point_of_dof(ii) << "\n";
+      }
+      cerr << "total enriched cracktip dof: " << enriched_dofs.card() << "\n\n";
+
 
       if (enriched_dofs.card() < 3)
 	DAL_WARNING0("There is " << enriched_dofs.card() <<
@@ -315,10 +378,12 @@ bool crack_problem::solve(plain_vector &U) {
 
   // Defining the Neumann condition right hand side.
   gmm::clear(F);
+#ifndef VALIDATE_XFEM
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[i*N+N-1] = (mf_rhs.point_of_dof(i))[N-1];
   gmm::scale(F, neumann_force);
- 
+#endif
+
   // Neumann condition brick.
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
@@ -326,6 +391,9 @@ bool crack_problem::solve(plain_vector &U) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN,
 					  DIRICHLET_BOUNDARY_NUM, 0);
+#ifdef VALIDATE_XFEM
+  final_model.rhs().set(exact_sol.mf, exact_sol.U);
+#endif
   final_model.use_multipliers(dir_with_mult);
   // final_model.rhs().set(mf_rhs, F);
 
@@ -362,7 +430,23 @@ int main(int argc, char *argv[]) {
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
+    
     {
+      /*assert(p.mf_u().get_qdim() == 3);
+      base_node PP; unsigned cnt=0;
+      std::fill(U.begin(), U.end(), 0);
+      for (unsigned i=0; i< p.mf_u().nb_dof(); i += 12) {
+	//base_node P = p.mf_u().point_of_dof(i);
+	//if (i && gmm::vect_dist2(P,PP) < 1e-10) {
+	//cerr << "XFem dof: " << i << " @ " << P << "\n";
+	++cnt;
+	U[i+2] = 1;
+	//}
+	//PP=P;
+      }
+      cerr << "detecte " << cnt << "xfem dof (*3)\n";
+*/
+
       cout << "Post processing...\n";
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);

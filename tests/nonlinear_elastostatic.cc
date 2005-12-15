@@ -33,7 +33,7 @@
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
-#include <getfem_nonlinear_elasticity2.h>
+#include <getfem_nonlinear_elasticity.h>
 #include <getfem_superlu.h>
 #include <gmm.h>
 
@@ -385,7 +385,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // ll.test_derivatives(3, 1E-6, test_params);
 
   p.resize(pl->nb_params());
-  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u, mf_coef, p);
+  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u, p);
 
   getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
   switch (law_num) {

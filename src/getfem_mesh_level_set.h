@@ -78,6 +78,8 @@ namespace getfem {
 
     std::map<size_type, convex_info> cut_cv;
 
+    mutable dal::bit_vector crack_tip_convexes_;
+
   public :
     /// Get number of level-sets referenced in this object.
     size_type nb_level_sets(void) const { return level_sets.size(); }
@@ -90,6 +92,8 @@ namespace getfem {
       DAL_THROW(failure_error, "This element is not cut !");
     }
     
+    const dal::bit_vector &crack_tip_convexes() const;
+
     /// Gives a reference to the linked mesh of type getfem_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
     void clear(void);
@@ -171,6 +175,8 @@ namespace getfem {
     void run_delaunay(std::vector<base_node> &fixed_points,
 		      gmm::dense_matrix<size_type> &simplexes,
 		      std::vector<dal::bit_vector> &fixed_points_constraints);
+    
+    void update_crack_tip_convexes();
   };
 
   void getfem_mesh_level_set_noisy(void);
