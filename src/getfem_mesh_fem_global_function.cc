@@ -265,7 +265,7 @@ namespace getfem {
       }
       else {
 	dfr = sing_function_grad(x, y, l);
-	dfr[0] = 1.0;
+	//	dfr[0] = 0.0;
       }
 
       dfr.resize(P);
