@@ -1782,12 +1782,12 @@ namespace getfem {
 #endif
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
-#ifdef GETFEM_PARA_LEVEL > 1
+#if GETFEM_PARA_LEVEL > 1
    cout << "comput  residu  time = " << MPI_Wtime() - t_init << endl;
    t_init = MPI_Wtime();
 #endif
     problem.compute_tangent_matrix(MS);
-#ifdef GETFEM_PARA_LEVEL > 1
+#if GETFEM_PARA_LEVEL > 1
     cout << "comput tangent time = " << MPI_Wtime() - t_init << endl;
     // cout << "CM = " << MS.constraints_matrix() << endl;
     // cout << "TM = " << MS.tangent_matrix() << endl;
