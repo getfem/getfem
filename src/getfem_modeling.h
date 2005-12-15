@@ -478,7 +478,11 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				   size_type j0) = 0;
     void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-			size_type j0 = 0, bool first = true) {
+			size_type j0 = 0, bool
+#if GETFEM_PARA_LEVEL > 1			
+			first
+#endif
+			= true) {
       this->context_check();
       size_type i1 = MS_i0 = i0, j1 = j0;
       for (size_type i = 0; i < sub_bricks.size(); ++i) {

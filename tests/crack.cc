@@ -57,6 +57,10 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /*  Exact solution.                                                       */
 /**************************************************************************/
 
+#define VALIDATE_XFEM
+
+#ifdef VALIDATE_XFEM
+
 /* returns sin(theta/2) where theta is the angle
    of 0-(x,y) with the axis Ox */
 scalar_type sint2(scalar_type x, scalar_type y) {
@@ -227,12 +231,6 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
   assert(!isnan(U[1]));
 }
 
-base_small_vector sol_f(const base_node &x) {
-  int N = x.size();
-  base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
-  return res;
-}
-
 struct exact_solution {
   getfem::mesh_fem_global_function mf;
   getfem::base_vector U;
@@ -277,6 +275,22 @@ struct exact_solution {
   }
 };
 
+base_small_vector sol_f(const base_node &x) {
+  int N = x.size();
+  base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
+  return res;
+}
+
+#else
+
+base_small_vector sol_f(const base_node &x) {
+  int N = x.size();
+  base_small_vector res(N); res[N-1] = (x[1] < 0 ? -1.0 : 1.0);
+  return res;
+}
+
+#endif
+
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
 /**************************************************************************/
@@ -302,7 +316,9 @@ struct crack_problem {
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
+#ifdef VALIDATE_XFEM
   exact_solution exact_sol;
+#endif
   
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
@@ -329,10 +345,12 @@ struct crack_problem {
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
-			mf_u_sum(mesh), mf_us(mesh),
-			mf_rhs(mesh), mf_p(mesh), 
-			exact_sol(mesh),  ls(mesh, 1, true),
-			ls2(mesh, 1, true), ls3(mesh, 1, true) {}
+			mf_u_sum(mesh), mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
+#ifdef VALIDATE_XFEM
+			exact_sol(mesh), 
+#endif
+			ls(mesh, 1, true), ls2(mesh, 1, true),
+			ls3(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -446,10 +464,22 @@ void crack_problem::init(void) {
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+#ifdef VALIDATE_XFEM
     mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+#else
+    base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+    un /= gmm::vect_norm2(un);
+    if (un[0] - 1.0 < -1.0E-7) { // new Neumann face
+      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+    } else {
+      cout << "normal = " << un << endl;
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+    }
+#endif
   }
-
+#ifdef VALIDATE_XFEM
   exact_sol.init(1, lambda, mu, ls);
+#endif
 }
 
 
@@ -595,7 +625,9 @@ bool crack_problem::solve(plain_vector &U) {
   //assert(toto.mf.nb_dof() == 1);
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM);
+#ifdef VALIDATE_XFEM
   final_model.rhs().set(exact_sol.mf, exact_sol.U);
+#endif
   final_model.use_multipliers(dir_with_mult);
 
   // Generic solve.
@@ -690,6 +722,7 @@ int main(int argc, char *argv[]) {
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
+#ifdef VALIDATE_XFEM
       p.exact_sol.mf.set_qdim(Q);
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
       plain_vector EXACT(mf_refined.nb_dof());
@@ -697,7 +730,7 @@ int main(int argc, char *argv[]) {
 			    p.exact_sol.U, EXACT);
 
       plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
-
+#endif
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
 	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
@@ -711,10 +744,12 @@ int main(int argc, char *argv[]) {
 	plain_vector D(mf_refined_vm.nb_dof() * Q), 
 	  DN(mf_refined_vm.nb_dof());
 	
+#ifdef VALIDATE_XFEM
 	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
 	for (unsigned i=0; i < DN.size(); ++i) {
 	  DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q)));
 	}
+#endif
 
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -724,15 +759,19 @@ int main(int argc, char *argv[]) {
 	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       
+#ifdef VALIDATE_XFEM
+
 	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
 
 
-	/*getfem::mesh_fem_global_function mf(mcut_refined,Q);
-	std::vector<getfem::pglobal_function> cfun(4);
-	for (unsigned j=0; j < 4; ++j)
-	  cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
-	mf.set_functions(cfun);
-	getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U, VM_EXACT);*/
+	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
+	   std::vector<getfem::pglobal_function> cfun(4);
+	   for (unsigned j=0; j < 4; ++j)
+	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
+	   mf.set_functions(cfun);
+	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
+	   VM_EXACT);
+	*/
 
 
 	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
@@ -741,23 +780,30 @@ int main(int argc, char *argv[]) {
 	exp2.write_point_data(mf_refined_vm, VM_EXACT, "exact von mises stress");
 	exp2.write_point_data(mf_refined, EXACT, "reference solution");
 	
+#endif
+
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
 
-      cout << "L2 ERROR:" << getfem::asm_L2_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U) << endl
-	   << "H1 ERROR:" << getfem::asm_H1_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
-	   << "\n";
+
+#ifdef VALIDATE_XFEM
+      cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
+						p.exact_sol.mf, p.exact_sol.U)
+	   << endl << "H1 ERROR:"
+	   << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
+				  p.exact_sol.mf, p.exact_sol.U) << "\n";
       
-      /*cout << "OLD ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
-	   << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,EXACT,mf_refined,W)
-	   << "\n";
+      /* cout << "OLD ERROR L2:" 
+	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
+	 << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,
+	 EXACT,mf_refined,W)  << "\n";
 
-      cout << "ex = " << p.exact_sol.U << "\n";
-      cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
+	 cout << "ex = " << p.exact_sol.U << "\n";
+	 cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
       */
-
+#endif
     }
 
   }

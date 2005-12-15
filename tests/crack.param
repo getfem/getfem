@@ -56,7 +56,7 @@ ENRICHMENT_OPTION = 2;  % 0 = Pas d'enrichissement
 			% 3 = spider fem alone
 		        % 4 = spider fem enrichment
 
-RADIUS_ENR_AREA = 0.1;
+RADIUS_ENR_AREA = 0.4;
 CUTOFF=0.5;
 SPIDER_RADIUS =  0.3;
 SPIDER_NR =  20;         % size of the cartesian mesh in r for spider fem

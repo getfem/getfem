@@ -20,11 +20,10 @@
 /* *********************************************************************** */
 
 /**
- * Linear Elastostatic problem with a crack.
+ * Linear Elastostatic problem with a growing delaminated crack.
  *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
-*/
+ * Research program.
+ */
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
@@ -53,7 +52,7 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
-#define VALIDATE_XFEM
+// #define VALIDATE_XFEM
 
 #ifdef VALIDATE_XFEM
 
@@ -147,8 +146,11 @@ struct crack_problem {
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
-			mf_u_sum(mesh),
-			mf_rhs(mesh), exact_sol(mesh), ls(mesh, 1, true) {}
+			mf_u_sum(mesh), mf_rhs(mesh),
+#ifdef VALIDATE_XFEM	
+			exact_sol(mesh),
+#endif
+			ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -377,8 +379,9 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
+#ifdef VALIDATE_XFEM
   gmm::clear(F);
-#ifndef VALIDATE_XFEM
+#else
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[i*N+N-1] = (mf_rhs.point_of_dof(i))[N-1];
   gmm::scale(F, neumann_force);
@@ -393,12 +396,15 @@ bool crack_problem::solve(plain_vector &U) {
 					  DIRICHLET_BOUNDARY_NUM, 0);
 #ifdef VALIDATE_XFEM
   final_model.rhs().set(exact_sol.mf, exact_sol.U);
+#else
+  final_model.rhs().set(mf_rhs, F);
 #endif
+  
   final_model.use_multipliers(dir_with_mult);
-  // final_model.rhs().set(mf_rhs, F);
 
   // Generic solve.
-  cout << "Total number of variables : " << final_model.nb_dof() << endl;
+  size_type nnb = final_model.nb_dof();
+  cout << "Total number of variables : " << nnb << endl;
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residue, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
