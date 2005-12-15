@@ -3,14 +3,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-LX = 30.0;		% size in X.
-LY = 30.0;	        % size in Y.
-LZ = 30.0;		% size in Z.
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
 %MU = 7700;	        % Lamé coefficient.
 %LAMBDA = 11500;   	% Lamé coefficient.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 3.0;    % Friction coefficient.
+FRICTION_COEF = 0.5;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
 PG=12000
@@ -21,25 +21,26 @@ RHO = 6e-6;     	% "realistic" density for steel
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % MESH_TYPE = 'GT_QK(3,1)';       % 
 % MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
-NX = 100;            	          % space step.
+NX = 20;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDUE = 1E-9;     	% residue for Newton.
 
-METHOD = 0;             % 0 = Newton.
+METHOD = 2;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
-NOISY = 1;
+			% 2 = Additive Schwarz Newton
+NOISY = 3;
 POPULATION = 100;       % Parameter for genetic algorithm
 R = 100.0;              % Augmentation parameter
 
-DIRICHLET = 2;          % 0 = no Dirichlet boundary
+DIRICHLET = 1;          % 0 = no Dirichlet boundary
 			% 1 = Dirichlet boundary on the top
 			% 2 = Dirichlet boundary on the left
-NEUMANN = 1;            % 0 = no non homogeneous Neumann Boundary
+NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
 			% 1 = Non homogeneous Neumann Boudary on the top
 NEUMANN_INTENSITY = -0.0;
 
-DIRICHLET_RATIO = 0.0;  % parametre pour la condition de Dirichlet
-CONTACT_CONDITION = 1;  % 0 = Condition almost conformal in u
+DIRICHLET_RATIO = -0.1;  % parametre pour la condition de Dirichlet
+CONTACT_CONDITION = 0;  % 0 = Condition almost conformal in u
 			% 1 = Condition almost conformal in forces on contact
 			%     boundary with FEM_TYPE_L for the multipliers
 

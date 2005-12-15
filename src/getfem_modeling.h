@@ -1432,8 +1432,6 @@ namespace getfem {
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), nb_const);
 	gmm::sub_interval SUBJ(i0+i1, nbd);
 
-	cerr << "State: " << MS.state().size() << ", residu: " << MS.residu().size() << "\n";
-
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));

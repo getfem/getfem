@@ -1,3 +1,4 @@
+// -*- c++ -*- (enables emacs c++ mode)
 /* *********************************************************************** */
 /*                                                                         */
 /* Copyright (C) 2002-2005 Yves Renard, Julien Pommier.                    */
@@ -142,7 +143,7 @@ void friction_problem::init(void) {
   population = PARAM.int_value("POPULATION", "genetic population");
   contact_condition = PARAM.int_value("CONTACT_CONDITION",
 				      "type of contact condition");
-  noisy = (PARAM.int_value("NOISY", "verbosity of iterative methods") != 0);
+  noisy = PARAM.int_value("NOISY", "verbosity of iterative methods");
   mf_u.set_qdim(N);
   mf_l.set_qdim(N);
 
@@ -423,6 +424,142 @@ void situation_of(const Vector1 &U, const Vector2 &gap,
 }
 
 
+
+/**************************************************************************/
+/*  Structure for the Newton Additive Schwarz.                            */
+/**************************************************************************/
+
+void build_vB(std::vector<sparse_matrix> &vB,
+				getfem::mesh_fem &mf_u,
+				dal::bit_vector dofgammac,
+				dal::bit_vector dofgammad) {
+  //  size_type hsize = F.size(), nb_dof = mf_u.nb_dof();
+  // size_type nbc = coulomb.nb_contact_nodes();
+  // size_type nbc_coarse = 0;
+  // if (usecoarse) nbc_coarse = coulomb_coarse.nb_contact_nodes();
+  
+  std::vector<base_node> pts;
+  size_type i;
+  for (i = 0; i < mf_u.nb_dof(); ++i)
+    pts.push_back(mf_u.point_of_dof(i));
+
+  //   std::vector<size_type> links(nbc * N);
+  //   std::vector<size_type> links_coarse(nbc_coarse * N);
+    
+  for (dal::bv_visitor j(dofgammad); !j.finished(); ++j, ++i)
+    pts.push_back(mf_u.point_of_dof(j));
+
+  for (dal::bv_visitor j(dofgammac); !j.finished(); ++j, ++i)
+    pts.push_back(mf_u.point_of_dof(j));
+
+  
+
+  //   for (size_type i = 0; i < nbc; ++i) { // Ne marche pas dans tous cas ...
+  //     size_type j 
+  //       = gmm::vect_const_begin(gmm::mat_row(coulomb.get_BN(), i)).index();
+  //     pts[nb_dof + i] = mf_u.point_of_dof(j);
+  //     //    links[i] = j;
+  //     for (size_type k = 0; k < N-1;  ++k) {
+  //       pts[nb_dof + nbc + i*(N-1) + k] = mf_u.point_of_dof(j);
+  //       // links[nbc + i*(N-1) + k] = j+k-N+1;
+  //     }
+  //   }
+  
+  //   if (usecoarse) {
+  //     for (size_type i = 0; i < nbc_coarse; ++i) {
+  //       size_type j = gmm::vect_const_begin(gmm::mat_row(coulomb_coarse.get_BN(),
+  // 						       i)).index();
+  //       links_coarse[i] = j;
+  //       for (size_type k = 0; k < N-1;  ++k)
+  // 	links_coarse[nbc_coarse + i*(N-1) + k] = j+k-N+1;
+  //     }
+  //   }
+
+  // cout << "links = " << links << endl;
+  // cout << "links_coarse = " << links_coarse << endl;
+  // cout << "nb_dof = " << nb_dof << endl;
+  // cout << "nb_dof_coarse = " << mf_coarse.nb_dof() << endl;
+  
+
+  double subdomsize = 0.2;
+  double overlap = 0.1;
+
+  gmm::rudimentary_regular_decomposition(pts, subdomsize, overlap, vB);
+  size_type nsd = vB.size();
+  
+  //   if (usecoarse) {
+  //     vB.resize(nsd+1);
+  //     cout << "interpolation coarse mesh\n";
+  //     size_type nb_dof_coarse = mf_coarse.nb_dof();
+  //     gmm::resize(vB[nsd], nb_dof, nb_dof_coarse);
+  //     getfem::interpolation(mf_coarse, mf_u, vB[nsd], true);
+  //     gmm::resize(vB[nsd], hsize, nb_dof_coarse+nbc_coarse*N);
+  
+  //     gmm::unsorted_sub_index si1(links), si2(links_coarse);
+  //     gmm::sub_interval si3(nb_dof, nbc*N), si4(nb_dof_coarse, nbc_coarse*N);
+  
+  //     sparse_matrix Maux(nbc*N, nbc_coarse*N);
+  //     gmm::copy(gmm::sub_matrix(vB[nsd], si1, si2),Maux);
+  
+  //     // cout << "Maux = " << Maux << endl;
+  //     gmm::copy(Maux, gmm::sub_matrix(vB[nsd], si3, si4));
+  
+  //     // cout << "vB[nsd] = " << vB[nsd] << endl;
+  
+  //     // gmm::copy(gmm::sub_matrix(vB[nsd], si1, si2),Maux);
+  //     // cout << "Maux = " << Maux << endl;
+  
+  //     ++nsd;
+  //   }
+  cout << "There is " << nsd << " sub-domains\n";
+}
+
+struct Coulomb_NewtonAS_struct
+  : public gmm::NewtonAS_struct<sparse_matrix, sparse_matrix> {
+  
+  std::vector<sparse_matrix> vB;
+  getfem::mdbrick_abstract<> *coulomb;
+  getfem::standard_model_state MS;
+
+  size_type size(void) { return coulomb->nb_dof(); }
+  const std::vector<sparse_matrix> &get_vB() { return vB; }
+    
+  // very inefficient, to be done again.
+
+  void compute_tangent_matrix(sparse_matrix &M, Vector &x) {
+    gmm::copy(x, MS.residu());
+    coulomb->compute_tangent_matrix(MS);
+    gmm::copy(MS.tangent_matrix(), M);
+  }
+  void compute_sub_tangent_matrix(sparse_matrix &Mloc, Vector &x,
+				  size_type i) {
+    gmm::copy(x, MS.residu());
+    coulomb->compute_tangent_matrix(MS);
+    
+    sparse_matrix aux(gmm::mat_ncols(vB[i]),
+			      gmm::mat_ncols(MS.tangent_matrix()));
+    gmm::mult(gmm::transposed(vB[i]), MS.tangent_matrix(), aux);
+    gmm::mult(aux, vB[i], Mloc);
+  }
+  void compute_sub_F(Vector &fi, Vector &x, size_type i) {
+    gmm::copy(x, MS.residu());
+    coulomb->compute_residu(MS);
+    gmm::mult(gmm::transposed(vB[i]), MS.residu(), fi);
+  }
+  void compute_F(Vector &f, Vector &x) {
+    gmm::copy(x, MS.residu());
+    coulomb->compute_residu(MS);
+    gmm::copy(MS.residu(), f);
+  }
+  Coulomb_NewtonAS_struct(getfem::mdbrick_abstract<> &C) : coulomb(&C), MS(C) {}
+  
+};
+
+
+
+
+
+
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
@@ -471,6 +608,7 @@ void friction_problem::solve(void) {
   getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F,
 					DIRICHLET_BOUNDARY);
   DIRICHLET.rhs().set(mf_rhs, F);
+  if (method == 2) DIRICHLET.use_multipliers(true);
   
   // contact condition for Lagrange elements
   dal::bit_vector cn, dn;
@@ -632,6 +770,18 @@ void friction_problem::solve(void) {
 
     }
     break;
+  case 2 : {
+      gmm::iteration iter(residue, noisy);
+      iter.set_maxiter(1000000);
+      Coulomb_NewtonAS_struct NS(FRICTION);
+      build_vB(NS.vB, mf_u, mf_u.dof_on_set(CONTACT_BOUNDARY),
+	       mf_u.dof_on_set(DIRICHLET_BOUNDARY));
+      gmm::fill_random(MS.state());
+      gmm::Newton_additive_Schwarz(NS, MS.state(), iter,
+				   gmm::identity_matrix(),
+				   gmm::using_superlu(), gmm::using_gmres());
+    }
+    break;
   }
 
   std::vector<int> situation1(nbc);
@@ -683,7 +833,10 @@ void friction_problem::solve(void) {
 
 int main(int argc, char *argv[]) {
 
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+  dal::set_warning_level(2);
 
   try {    
     friction_problem p;

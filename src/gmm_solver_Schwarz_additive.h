@@ -504,7 +504,7 @@ namespace gmm {
   /* ******************************************************************** */
   /* ref : Nonlinearly Preconditionned Inexact Newton Algorithms,         */
   /*       Xiao-Chuan Cai, David E. Keyes,                                */
-  /*       SIAM J. Sci. Comp. 24: p183-200. .                             */
+  /*       SIAM J. Sci. Comp. 24: p183-200.  l                             */
   /* ******************************************************************** */
 
   template <typename Matrixt, typename MatrixBi> 
