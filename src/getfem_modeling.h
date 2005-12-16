@@ -1975,7 +1975,7 @@ namespace getfem {
       (ndof < 200000 && dim <= 2) || (ndof < 100000 && dim <= 3)
 	|| (ndof < 1000)
 #else  
-      (ndof < 200000 && dim <= 2) || (ndof < 13000 && dim <= 3)
+      (ndof < 200000 && dim <= 2) || (ndof < 15000 && dim <= 3)
       || (ndof < 1000)
 #endif
       ) {

@@ -214,10 +214,8 @@ namespace getfem {
     mutable size_type cv;
 
     void update_mls(size_type cv_) const { 
-      if (cv_ != cv) {
-	cv = cv_; mls0 = ls.mls_of_convex(cv, 0);
-	mls1 = ls.mls_of_convex(cv, 1);
-      }
+      if (cv_ != cv) 
+	{ cv=cv_; mls0=ls.mls_of_convex(cv, 0); mls1=ls.mls_of_convex(cv, 1); }
     }
 
     virtual scalar_type val(const fem_interpolation_context& c) const {

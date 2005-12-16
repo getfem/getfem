@@ -10,8 +10,8 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = .0;   	% Lamé coefficient.
 NEUMANN_FORCE = 0.03; 
 %%%%%   discretisation parameters  :                     	      %%%%%
-NL = 11;            	          % number of horizontal space steps.
-NH = 5;                           % number of vertical space steps.
+NL = 7;            	          % number of horizontal space steps.
+NH = 3;                           % number of vertical space steps.
 L = 1.0;                          % length
 H = 0.2;                          % height
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
@@ -23,7 +23,7 @@ MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 5)';
 
 MESH_TYPE = 'GT_LINEAR_QK(3)';    % linear rectangles
-FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
+FEM_TYPE = 'FEM_QK(3,2)';  % Q1 fem for quadrangles
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 %SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 1)';
