@@ -10,7 +10,7 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = .0;   	% Lamé coefficient.
 NEUMANN_FORCE = 0.03; 
 %%%%%   discretisation parameters  :                     	      %%%%%
-NL = 7;            	          % number of horizontal space steps.
+NL = 11;            	          % number of horizontal space steps.
 NH = 5;                           % number of vertical space steps.
 L = 1.0;                          % length
 H = 0.2;                          % height

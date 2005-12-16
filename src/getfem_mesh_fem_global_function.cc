@@ -230,48 +230,72 @@ namespace getfem {
     scalar_type cutoff(scalar_type x, scalar_type y) const
     { return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1; }
 
+//     base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
+//       base_small_vector g(2);
+//       if (a4>0) {
+// 	scalar_type r2 = x*x+y*y;
+// 	g[0] = cutoff(x,y) * (-4*a4*r2*x);
+// 	g[1] = cutoff(x,y) * (-4*a4*r2*y);
+//       }
+//       return g;
+//     }
+
     base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
-      base_small_vector g(2);
-      if (a4>0) {
-	scalar_type r2 = x*x+y*y;
-	g[0] = cutoff(x,y) * (-4*a4*r2*x);
-	g[1] = cutoff(x,y) * (-4*a4*r2*y);
-      }
-      return g;
+      scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
+      return base_small_vector(ratio*x, ratio*y);
     }
+
+
+//     virtual void grad(const fem_interpolation_context& c,
+// 		      base_small_vector &v) const {
+//       update_mls(c.convex_num());
+//       size_type P = c.xref().size();
+//       base_small_vector dx(P), dy(P), dfs(2), dfc(2), dfr(2), df(P);
+//       scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
+//       if (x*x + y*y < 1e-20) {
+// 	cerr << "crack_singular::grad: xreal = " << c.xreal()
+// 	     << ", x_crack = " << x << ", y_crack=" << y << "\n";
+// 	cerr << "ii=" << c.ii() << "\n";
+// 	cerr << "G=" << c.G() << "\n";
+// 	cerr << "pgp=" << c.pgp() << "\n";
+// 	cerr << "xref=" << c.xref() << "\n";
+// 	cerr << name_of_geometric_trans(c.pgp()->get_trans()) << "\n";
+// 	cerr << c.pgp()->get_point_tab() << "\n";
+// 	//throw int(3);
+//       }
+//       if (a4 > 0) {
+// 	scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
+// 	dfs = sing_function_grad(x, y, l);
+// 	dfc = cutoff_grad(x,y);
+// 	dfr = fs*dfc + fc*dfs;
+//       }
+//       else {
+// 	dfr = sing_function_grad(x, y, l);
+// 	//	dfr[0] = 0.0;
+//       }
+
+//       dfr.resize(P);
+//       gmm::mult(c.B(), dfr, df);
+//       for (size_type i = 0; i < P; ++i)
+// 	v[i] = df[0]*dx[i] + df[1]*dy[i];
+//     }
 
     virtual void grad(const fem_interpolation_context& c,
 		      base_small_vector &v) const {
       update_mls(c.convex_num());
       size_type P = c.xref().size();
-      base_small_vector dx(P), dy(P), dfs(2), dfc(2), dfr(2), df(P);
+      base_small_vector dx(P), dy(P), dfr(2);
       scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
       if (x*x + y*y < 1e-20) {
-	cerr << "crack_singular::grad: xreal = " << c.xreal()
-	     << ", x_crack = " << x << ", y_crack=" << y << "\n";
-	cerr << "ii=" << c.ii() << "\n";
-	cerr << "G=" << c.G() << "\n";
-	cerr << "pgp=" << c.pgp() << "\n";
-	cerr << "xref=" << c.xref() << "\n";
-	cerr << name_of_geometric_trans(c.pgp()->get_trans()) << "\n";
-	cerr << c.pgp()->get_point_tab() << "\n";
-	//throw int(3);
+	cerr << "Warning, point very close to the singularity. xreal = "
+	     << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
       }
-      if (a4 > 0) {
-	scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
-	dfs = sing_function_grad(x, y, l);
-	dfc = cutoff_grad(x,y);
-	dfr = fs*dfc + fc*dfs;
-      }
-      else {
-	dfr = sing_function_grad(x, y, l);
-	//	dfr[0] = 0.0;
-      }
+      if (a4 > 0)
+	dfr = sing_function(x,y,l)*cutoff_grad(x,y)
+	  + cutoff(x,y)*sing_function_grad(x, y, l);
+      else dfr = sing_function_grad(x, y, l);
 
-      dfr.resize(P);
-      gmm::mult(c.B(), dfr, df);
-      for (size_type i = 0; i < P; ++i)
-	v[i] = df[0]*dx[i] + df[1]*dy[i];
+      gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
     }
 
     virtual void hess(const fem_interpolation_context&, base_matrix &) const
@@ -280,10 +304,8 @@ namespace getfem {
     void update_from_context(void) const { cv =  size_type(-1); }
 
     crack_singular(size_type l_, const level_set &ls_, 
-		   scalar_type cutoff_R) 
-      : l(l_), ls(ls_) {
-      if (cutoff_R) a4 = pow(2.7/cutoff_R,4);
-      else a4 = 0;
+		   scalar_type cutoff_R) : l(l_), ls(ls_) {
+      if (cutoff_R) a4 = (cutoff_R > 0.0) ? pow(2.7/cutoff_R,4) : 0.0;
       cv = size_type(-1);
       this->add_dependency(ls);
     }
