@@ -243,41 +243,6 @@ namespace getfem {
       return base_small_vector(ratio*x, ratio*y);
     }
 
-
-//     virtual void grad(const fem_interpolation_context& c,
-// 		      base_small_vector &v) const {
-//       update_mls(c.convex_num());
-//       size_type P = c.xref().size();
-//       base_small_vector dx(P), dy(P), dfs(2), dfc(2), dfr(2), df(P);
-//       scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
-//       if (x*x + y*y < 1e-20) {
-// 	cerr << "crack_singular::grad: xreal = " << c.xreal()
-// 	     << ", x_crack = " << x << ", y_crack=" << y << "\n";
-// 	cerr << "ii=" << c.ii() << "\n";
-// 	cerr << "G=" << c.G() << "\n";
-// 	cerr << "pgp=" << c.pgp() << "\n";
-// 	cerr << "xref=" << c.xref() << "\n";
-// 	cerr << name_of_geometric_trans(c.pgp()->get_trans()) << "\n";
-// 	cerr << c.pgp()->get_point_tab() << "\n";
-// 	//throw int(3);
-//       }
-//       if (a4 > 0) {
-// 	scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
-// 	dfs = sing_function_grad(x, y, l);
-// 	dfc = cutoff_grad(x,y);
-// 	dfr = fs*dfc + fc*dfs;
-//       }
-//       else {
-// 	dfr = sing_function_grad(x, y, l);
-// 	//	dfr[0] = 0.0;
-//       }
-
-//       dfr.resize(P);
-//       gmm::mult(c.B(), dfr, df);
-//       for (size_type i = 0; i < P; ++i)
-// 	v[i] = df[0]*dx[i] + df[1]*dy[i];
-//     }
-
     virtual void grad(const fem_interpolation_context& c,
 		      base_small_vector &v) const {
       update_mls(c.convex_num());

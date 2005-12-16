@@ -54,3 +54,6 @@ ajouter à la faq de gmm: "Q: est-ce que gmm et getfem resteront deux packages se
 tester les geotransinv de R^N dans R^P... 
 
 permet de choisir le chemin d'install de qhull dans le configure.in (probleme de H. Proudhon)
+
+debugger l'assemblage avec reduction dans le comp contre des donnees:
+( delaminated_crack: ../../src/bgeot_sparse_tensors.cc:699: void bgeot::tensor_reduction::pre_prepare(): Assertion `it->ridx.size() == it->tr().ndim()' failed. )

@@ -277,7 +277,7 @@ struct exact_solution {
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
-  base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
+  base_small_vector res(N);
   return res;
 }
 
@@ -285,7 +285,7 @@ base_small_vector sol_f(const base_node &x) {
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
-  base_small_vector res(N); res[N-1] = (x[1] < 0 ? -1.0 : 1.0);
+  base_small_vector res(N); res[N-1] = x[N-1];
   return res;
 }
 
@@ -683,6 +683,7 @@ int main(int argc, char *argv[]) {
       else if (NX < 30) nn = 3;
       else nn = 1;
 
+      /* choose an adequate slice refinement based on the distance to the crack tip */
       std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
       for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
 	scalar_type dmin=0, d;

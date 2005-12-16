@@ -12,7 +12,7 @@ LAMBDA = 1.0;   	% Lamé coefficient.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 20;            	          % space step.
+NX = 21;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';

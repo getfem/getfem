@@ -27,7 +27,7 @@ template<typename T> struct dyndeque : public std::deque<T> {
   T &operator[](unsigned i) { 
     if (i >= this->size()) 
       this->resize(i+1); 
-    return (*this)[i]; 
+    return std::deque<T>::operator[](i); 
   }
 };
 
@@ -44,24 +44,46 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       v.push_back(i);
     }
   }
-  cout << "  push_back: " << ftool::uclock_sec()-t << " sec\n";
+  cout << "  push_back         : " << ftool::uclock_sec()-t << " sec\n";
 
   t = ftool::uclock_sec();
+  v.clear();
   v.resize(N2);
-  for (unsigned n=0; n < N1; ++n) {
+  for (unsigned n=0; n < N1*2; ++n) {
     for (unsigned i=0; i < N2; ++i) {
       v[i] = i+n;
     }
   }
   cout << "  random access fill: " << ftool::uclock_sec()-t << " sec\n";
   
+  t = ftool::uclock_sec();
+  v.clear();
+  v.resize(N2);
+  for (unsigned n=0; n < N1*2; ++n) {
+    typename DA::iterator it = v.begin(), ite = v.end();
+    for (; it != ite; ++it) {
+      *it += n;
+    }
+  }
+  cout << "  iterator fill     : " << ftool::uclock_sec()-t << " sec\n";
+
+  DA v2; v2.resize(N2);
+  { typename DA::iterator it = v2.begin(), ite = v2.end();
+    for (; it != ite; ++it) *it = rand(); }
+
+  t = ftool::uclock_sec(); 
+  for (unsigned n=0; n < N1/10; ++n) {
+    v = v2; std::sort(v.begin(), v.end());
+  }
+  cout << "  sort              : " << ftool::uclock_sec()-t << " sec\n";
+  
 }
 
 void bench() {
-  unsigned N1=100, N2 = 100000;
-  cout << "dynamic_array<size_type> performances: \n";
+  unsigned N1=1000, N2 = 10000;
+  cout << "dynamic_array<long long> performances: \n";
   bench_da<dynarray<size_type> >(N1, N2);
-  cout << "std::deque<size_type> performances:\n";
+  cout << "std::deque<long long> performances:\n";
   bench_da<dyndeque<size_type> >(N1, N2);
   cout << "dynamic_array<int> performances: \n";
   bench_da<dynarray<int> >(N1, N2);

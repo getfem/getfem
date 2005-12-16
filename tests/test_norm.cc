@@ -21,9 +21,9 @@ void test_norm(bgeot::pgeometric_trans pgt,
 	       getfem::pintegration_method im, bool noised) {
   getfem::getfem_mesh mesh1, mesh2;
   std::vector<size_type> nsubdiv(pgt->dim());
-  std::fill(nsubdiv.begin(),nsubdiv.end(),43);
+  std::fill(nsubdiv.begin(),nsubdiv.end(),13);
   getfem::regular_unit_mesh(mesh1, nsubdiv, pgt, noised);
-  std::fill(nsubdiv.begin(),nsubdiv.end(),28);
+  std::fill(nsubdiv.begin(),nsubdiv.end(),5);
   getfem::regular_unit_mesh(mesh2, nsubdiv, pgt, noised);
   getfem::mesh_im mim1(mesh1), mim2(mesh2);
   getfem::mesh_fem mf1(mesh1), mf2(mesh2);
@@ -74,8 +74,8 @@ void test_norm(bgeot::pgeometric_trans pgt,
   d2_h1 = sqrt(gmm::sqr(d2_l2) + gmm::sqr(d2_h1));
   cout << "norm_l2 = " << d2_l2 << "(diff=" << d2_l2 - U1_l2 
        << "), norm_h1 = " << d2_h1 << " (diff=" << d2_h1 - U1_h1 << ")\n";
-  assert(gmm::abs(d2_l2 - U1_l2) < 1e-7);
-  assert(gmm::abs(d2_h1 - U1_h1) < 1e-7);
+  assert(gmm::abs(d2_l2 - U1_l2) < 1e-5);
+  assert(gmm::abs(d2_h1 - U1_h1) < 1e-5);
 }
 
 int main(int /*argc*/, char **/*argv*/) {

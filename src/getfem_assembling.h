@@ -41,6 +41,23 @@
 
 namespace getfem
 {
+  template <typename VEC>
+  scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+			     const mesh_region &rg=mesh_region::all_convexes()) {
+    generic_assembly assem;
+    if (mf.get_qdim() != 1) DAL_THROW(dal::failure_error, "expecting qdim=1");
+    assem.set("u=data(#1); t = comp(Base(#1)); V$1() += t(i); V$2() += t(i).u(i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(U);
+    std::vector<scalar_type> v(1);
+    std::vector<scalar_type> w(1);
+    assem.push_vec(v);
+    assem.push_vec(w);
+    assem.assembly(rg);
+    return w[0]/v[0];
+  }
+
   /**
      compute @f$ \|U\|_2 @f$, U might be real or complex
      @ingroup asm
@@ -66,8 +83,6 @@ namespace getfem
     assem.push_data(U);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
-    /*if (cvset+1) assem.boundary_assembly(cvset);
-      else         assem.volumic_assembly();*/
     assem.assembly(rg);
     return v[0];
   }
@@ -792,6 +807,12 @@ namespace getfem
     if (&mf_r == &mf_h) {
       for (mr_visitor v(region); !v.finished(); v.next()) {
 	size_type cv = v.cv(), f = v.f();
+
+	if (!mf_u.convex_index().is_in(cv) ||
+	    !mf_r.convex_index().is_in(cv)) 
+	  DAL_THROW(dal::failure_error, 
+		    "attempt to impose a dirichlet condition on a convex with no FEM!");
+
 	if (f >= mf_u.linked_mesh().structure_of_convex(cv)->nb_faces()) continue;
 	pf_u = mf_u.fem_of_element(cv); 
 	pf_rh = mf_r.fem_of_element(cv);

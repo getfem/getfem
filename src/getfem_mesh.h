@@ -432,7 +432,7 @@ namespace getfem {
     /** Remove the region of index b. */
     void sup_region(size_type b) {
       if (valid_cvf_sets[b])
-	{ valid_cvf_sets.sup(b); cvf_sets[b].clear(); touch(); }
+	{ cvf_sets[b].clear(); valid_cvf_sets.sup(b); touch(); }
     }
     /** Remove all references to a convex from all regions stored in the mesh.
      @param cv the convex number.*/

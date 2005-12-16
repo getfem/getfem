@@ -101,16 +101,14 @@ struct exact_solution_3D {
 };
 
 base_small_vector sol_f(const base_node &x) {
-  int N = x.size();
-  base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
-  return res;
+  return  base_small_vector(x.size());
 }
 
 #else
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
-  base_small_vector res(N); res[N-1] = (x[N-1] < 0 ? -0.1 : 0.1);
+  base_small_vector res(N); res[N-1] = x[N-1];
   return res;
 }
 
@@ -143,6 +141,7 @@ struct crack_problem {
   exact_solution_3D exact_sol;
 #endif
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
+  scalar_type Gc;
   scalar_type neumann_force;
 
   getfem::level_set ls;      /* The two level sets defining the crack.       */
@@ -155,6 +154,7 @@ struct crack_problem {
   std::string datafilename;
   ftool::md_param PARAM;
 
+  void shape_derivative(const plain_vector &U, plain_vector &SD);
   bool solve(plain_vector &U);
   void init(void);
   crack_problem(void) :
@@ -212,6 +212,7 @@ void crack_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  Gc = PARAM.real_value("GC", "Rupture energy density");
   neumann_force = PARAM.real_value("NEUMANN_FORCE", "Neumann force");
 
   mf_u().set_qdim(N);
@@ -280,6 +281,94 @@ void crack_problem::init(void) {
 #endif
 }
 
+
+
+base_small_vector ls_function(const base_node P) {
+  scalar_type x = P[0], y = P[1], z = P[2];
+  base_small_vector res(2);
+  res[0] = z;
+  res[1] = .2 - x - y; // -x - 0*y; 
+  return res;
+}
+
+/**************************************************************************/
+/*  Computation of the shape derivative.                                  */
+/**************************************************************************/
+
+void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
+  gmm::clear(SD);
+  
+  DAL_TRACE2("Computing shape derivative");
+  size_type N = mesh.dim();
+
+  getfem::mesh_fem mf(mesh, N);
+  mf.set_classical_finite_element(ls.degree());
+  gmm::resize(SD, mf.nb_dof());
+
+  // derivative of rupture energy
+  getfem::generic_assembly assem1("V(#1)+=comp(vGrad(#1))(:,i,i)");
+  assem1.push_mi(mim_crack);
+  assem1.push_mf(mf);
+  assem1.push_vec(SD);
+  assem1.assembly();
+
+  gmm::scale(SD, Gc);
+
+
+  DAL_TRACE2("Computing shape derivative, part 2");
+
+  // derivative of elastic energy
+  char s[500];
+  sprintf(s, "u=data(#1);"
+	  "t=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,:,l,:,:,:,:,:).u(k).u(l);"
+	  "w=t(:,:,:,:,:,m,m); z=t(:,:,:,l,:,l,:);"
+	  /*"w=comp(vGrad(#1)(k,:,:).vGrad(#1).vGrad(#2)(:,m,m))(k,:,:,l,:,:,:).u(k).u(l);"
+	  "z=comp(vGrad(#1)(k,:,:).vGrad(#1)(:,m,:).vGrad(#2)(:,m,:))(k,:,:,l,:,:,:).u(k).u(l);"*/
+	  "V(#2)+= %g*(w(i,j,i,j,:)+w(j,i,i,j,:)+z(j,i,i,:,j)+z(i,j,i,:,j))"
+	  "+ %g*(w(i,i,j,j,:) + z(k,k,i,:,i))",
+	  mu, lambda);
+  
+  /*
+    NE MARCHE PAS, DEBUGGER L'ASSEMBLAGE
+  sprintf(s, "u=data(mdim(#1), #1);"
+	  "t=comp(Grad(#1)(k,:).Grad(#1)(l,:).vGrad(#2).u(:,k).u(:,l)){ 6, 1, 7, 2, 3, 4, 5};"
+	  "w=t(:,:,:,:,:,m,m); z=t(:,:,:,l,:,l,:);"
+	  "V(#2)+= %g*(w(i,j,i,j,:)+w(j,i,i,j,:)+z(j,i,i,:,j)+z(i,j,i,:,j))"
+	  "+ %g*(w(i,i,j,j,:) + z(k,k,i,:,i))",
+	  mu, lambda);
+  */
+
+  //mf_u().set_qdim(1);
+  
+  getfem::generic_assembly assem2(s);
+  assem2.push_mi(mim);
+  assem2.push_mf(mf_u());
+  assem2.push_mf(mf);
+  assem2.push_data(U);
+  assem2.push_vec(SD);
+  assem2.assembly();
+
+  //mf_u().set_qdim(N);
+
+
+  // The third component is set to zero.
+  gmm::clear(gmm::sub_vector(SD, gmm::sub_slice(N-1, gmm::vect_size(SD)/N, N)));
+
+  {
+    DAL_TRACE2("Exporting shape derivative");
+    getfem::stored_mesh_slice sl; 
+    sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0), base_node(0, 0, 1), 0), 3);
+    getfem::vtk_export exp(datafilename + "_grad.vtk",
+			   PARAM.int_value("VTK_EXPORT")==1);
+    exp.exporting(sl); 
+    exp.write_point_data(mf, SD, "Shape Gradient");
+    cout << "export done, you can view the data file with (for example)\n"
+      "mayavi -d " << datafilename << "_grad.vtk -f "
+      "ExtractVectorNorm -m BandedSurfaceMap -m Outline -m Glyph\n";
+  }
+}
+
+
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
@@ -292,9 +381,8 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     const base_node P = ls.get_mesh_fem().point_of_dof(d);
-    scalar_type x = P[0], y = P[1], z = P[N-1];
-    ls.values(0)[d] = z;
-    ls.values(1)[d] = -x - 0*y;    //-x + .2 - y; 
+    ls.values(0)[d] = ls_function(P)[0];
+    ls.values(1)[d] = ls_function(P)[1];
     //+ 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
   }
   ls.touch();
@@ -304,10 +392,20 @@ bool crack_problem::solve(plain_vector &U) {
   mim_crack.adapt();
 
   cout << "testing mims..\n";
+  for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished(); ++cv) {
+    base_node G = dal::mean_value(mim.linked_mesh().points_of_convex(cv));
+    cerr << "on cv\t" << cv << " nb_integ_pts = " << mim.int_method_of_element(cv)->approx_method()->nb_points_on_convex() << "\t , at " << G << "\t";
+    scalar_type err = getfem::test_integration_error(mim.int_method_of_element(cv)->approx_method(), 2);
+    cout << " max integ error = " << err << "\n";
+    assert(err < 1e-10);
+  }
+
+
   getfem::mesh_fem mf(mim.linked_mesh()); mf.set_classical_finite_element(0);
   scalar_type vol1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0)));
   scalar_type surf1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0), NEUMANN_BOUNDARY_NUM));
   scalar_type surfcrack =  gmm::sqr(getfem::asm_L2_norm(mim_crack, mf, std::vector<double>(mf.nb_dof(), 1.0)));
+
 
   cout << "surface of the crack : " << surfcrack << endl;
   cout << "volume of mesh is " << vol1 << " surf = " << surf1 << "\n";
@@ -355,7 +453,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 
       for (dal::bv_visitor cv(crack_tip_convexes); !cv.finished(); ++cv) {
-	cerr << "inspecting convex centered at " << dal::mean_value(mf_partition_of_unity.linked_mesh().points_of_convex(cv)) << "\n";
+	//cerr << "inspecting convex centered at " << dal::mean_value(mf_partition_of_unity.linked_mesh().points_of_convex(cv)) << "\n";
 	for (unsigned j=0; j < mf_partition_of_unity.nb_dof_of_element(cv); ++j) {
 	  size_type d = mf_partition_of_unity.ind_dof_of_element(cv)[j];
 	  if (!enriched_dofs.is_in(d)) {
@@ -366,9 +464,9 @@ bool crack_problem::solve(plain_vector &U) {
 	}
       }
 
-      for (dal::bv_visitor ii(enriched_dofs); !ii.finished(); ++ii) {
+      /*for (dal::bv_visitor ii(enriched_dofs); !ii.finished(); ++ii) {
 	cerr << "enriched_dof " << ii << "  @ " << mf_partition_of_unity.point_of_dof(ii) << "\n";
-      }
+	}*/
       cerr << "total enriched cracktip dof: " << enriched_dofs.card() << "\n\n";
 
 
@@ -457,6 +555,10 @@ int main(int argc, char *argv[]) {
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
+    plain_vector SD(p.ls.get_mesh_fem().nb_dof());
+
+    p.shape_derivative(U, SD);
+
     
     {
       /*assert(p.mf_u().get_qdim() == 3);
@@ -498,14 +600,48 @@ int main(int argc, char *argv[]) {
       getfem::mesh_region border_faces;
       getfem::outer_faces_of_mesh(mcut, border_faces);
       // merge outer_faces with faces of the crack
-      for (getfem::mr_visitor i(mcut.region(0)); !i.finished(); ++i) 
+      for (getfem::mr_visitor i(mcut.region(0)); !i.finished(); ++i)
 	border_faces.add(i.cv(), i.f());
-      slicer.exec(3, border_faces);
+
 
       getfem::mesh_fem mfcut(mcut, p.mf_u().get_qdim());
       getfem::mesh_fem mfcut_vm(mcut, 1);
       mfcut.set_classical_discontinuous_finite_element(3, 0.001);
       mfcut_vm.set_classical_discontinuous_finite_element(2, 0.001);
+      
+      dal::bit_vector reflst;
+      
+      /* choose an adequate slice refinement based on the distance to the crack tip */
+      unsigned nn = 2;
+      std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
+      for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
+	scalar_type dmin=0, d;
+	base_node Pmin,P;
+	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+	  P = mcut.points_of_convex(cv)[i];
+	  d = gmm::vect_norm2(ls_function(P));
+	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+	}
+
+	if (dmin < 1e-5) {
+	  nrefine[cv] = nn*4;
+	  reflst.add(cv);
+	}
+	else if (dmin < .1) 
+	  nrefine[cv] = nn*2;
+	else nrefine[cv] = nn;
+	/*if (dmin < .01)
+	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
+      }
+      
+      mfcut.set_classical_discontinuous_finite_element(reflst, 6, 0.001);
+      mfcut_vm.set_classical_discontinuous_finite_element(reflst, 5, 0.001);
+
+
+
+      slicer.exec(nrefine, border_faces);
+
+      
       plain_vector V(mfcut.nb_dof()), VonMises(mfcut_vm.nb_dof());
       getfem::interpolation(p.mf_u(), mfcut, U, V);
       getfem::interpolation_von_mises(mfcut, mfcut_vm, V, VonMises, p.mu);

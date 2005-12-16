@@ -261,7 +261,9 @@ namespace gmm {
 
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
+#ifdef GMM_USES_MPI
     MPI_Bcast(&(rhs[0]),id.n,gmm::mpi_type(T()),0,MPI_COMM_WORLD);
+#endif
     gmm::copy(rhs, X);
 
 #undef ICNTL
