@@ -47,19 +47,12 @@ using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
-/* definition of some matrix/vector types. These ones are built
- * using the predefined types in Gmm++
+/* definition of some matrix/vector types. 
+ * default types of getfem_modeling.h
  */
-#if GETFEM_PARA_LEVEL < 2
-typedef getfem::modeling_standard_sparse_matrix Tsparse_matrix;
-typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
+typedef getfem::modeling_standard_sparse_vector sparse_vector;
+typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
-#else
-typedef gmm::mpi_distributed_matrix<getfem::modeling_standard_sparse_matrix>
-  Tsparse_matrix;
-typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
-typedef getfem::modeling_standard_plain_vector  plain_vector;
-#endif
 
 /**************************************************************************/
 /*  Exact solution.                                                       */
@@ -111,9 +104,10 @@ base_matrix sol_sigma(const base_node &x) {
 struct elastostatic_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;  /* the mesh */
   getfem::mesh_im mim;       /* the integration methods.                     */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
+  getfem::mesh_fem mf_mult;  /* mesh_fem for the Dirichlet condition.        */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
@@ -127,16 +121,17 @@ struct elastostatic_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  elastostatic_problem(void) : mim(mesh),mf_u(mesh),mf_rhs(mesh),mf_p(mesh) {}
+  elastostatic_problem(void) : mim(mesh),mf_u(mesh), mf_mult(mesh),
+			       mf_rhs(mesh),mf_p(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
 void elastostatic_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -175,6 +170,7 @@ void elastostatic_problem::init(void) {
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(N);
+  mf_mult.set_qdim(N);
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -184,19 +180,26 @@ void elastostatic_problem::init(void) {
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
-  
+
+  std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
+  if (dirichlet_fem_name.size() == 0)
+    mf_mult.set_finite_element(mesh.convex_index(), pf_u);
+  else
+    mf_mult.set_finite_element(mesh.convex_index(), 
+			       getfem::fem_descriptor(dirichlet_fem_name));
+
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
   if (mixed_pressure) {
-    const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
+    std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
     mf_p.set_finite_element(mesh.convex_index(),
 			    getfem::fem_descriptor(FEM_TYPE_P));
   }
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -245,8 +248,6 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-typedef getfem::model_state<Tsparse_matrix, Csparse_matrix, plain_vector>
-        Model_State;
 
 bool elastostatic_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -256,17 +257,17 @@ bool elastostatic_problem::solve(plain_vector &U) {
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<Model_State>
+  getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u, mixed_pressure ? 0.0 : lambda, mu);
 
-  std::auto_ptr<getfem::mdbrick_abstract<Model_State> > INCOMP;  
+  std::auto_ptr<getfem::mdbrick_abstract<> > INCOMP;  
   if (mixed_pressure) {
-    getfem::mdbrick_linear_incomp<Model_State> *incomp =
-      new getfem::mdbrick_linear_incomp<Model_State>(ELAS, mf_p);
+    getfem::mdbrick_linear_incomp<> *incomp =
+      new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
     incomp->penalization_coeff().set(1.0/lambda);
     INCOMP.reset(incomp);
   }
-  getfem::mdbrick_abstract<Model_State> *pINCOMP;
+  getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure) pINCOMP = INCOMP.get(); else pINCOMP = &ELAS;
 
   // Defining the volumic source term.
@@ -276,7 +277,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
   // Volumic source term brick.
-  getfem::mdbrick_source_term<Model_State> VOL_F(*pINCOMP, mf_rhs, F);
+  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
   base_small_vector un(N), v(N);
@@ -296,7 +297,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   }
 
   // Neumann condition brick.
-  getfem::mdbrick_source_term<Model_State>
+  getfem::mdbrick_source_term<>
     NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
@@ -305,14 +306,16 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<Model_State> final_model(NEUMANN, 
-						     DIRICHLET_BOUNDARY_NUM);
-  //  final_model.use_multipliers(true);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
+					  mf_mult);
+  // final_model.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+  // final_model.set_constraints_type(getfem::PENALIZED_CONSTRAINTS);
+  // final_model.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
   final_model.rhs().set(mf_rhs, F);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
-  Model_State MS(final_model);
+  getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residue, 1, 40000);
 #if GETFEM_PARA_LEVEL > 1
     double t_init=MPI_Wtime();

@@ -1,54 +1,67 @@
+% -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program laplacian                                        %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% pde parameters :	        				      %%%%%
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
-LZ = 1.0;		% size in Z.
-INCLINE = 0;            % Incline of the mesh.
+LX = 1.0; LY = LX; LZ = LX; % sizes of the domain.
+INCLINE = 0;                % Incline of the mesh.
+FT = 0.1;                   % parameter for the exact solution.
+N = 2;                      % domain in dimension N
+QUAD = 0;                   % use quadrilaterons or not
+NX = 20;                    % space step.
+MESH_NOISE = 0;             % Set to one if you want to "shake" the mesh
 
-FT = 0.1;               % parameter for the exact solution.
+if (N == 1)
+  FT = 2.0;
+  MESH_TYPE = 'GT_PK(1,1)';       % segments
+  FEM_TYPE = 'FEM_PK(1,1)';       % P1 for segments
+%  FEM_TYPE = 'FEM_HERMITE_SEGMENT'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
+  INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on segments
+end
 
-%%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-%MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
-%MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 50;            	          % space step.
-MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
+if (N == 2 && !QUAD)
+  FT = 1.0;
+  MESH_TYPE = 'GT_PK(2,1)';       % triangles
+  FEM_TYPE = 'FEM_PK(2,1)';       % P1 for triangles
+%  FEM_TYPE = 'FEM_HERMITE_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,4)';
+  INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
+                                  % to degree 6 on triangles
+end
 
-FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
-%FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
-%FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
-%FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
-%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
-%FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
+if (N == 2 && QUAD)
+  FT = 1.0;
+  if (MESH_NOISE)
+    MESH_TYPE = 'GT_QK(2,1)';       % quadrilaterons
+  else
+    MESH_TYPE = 'GT_LINEAR_QK(2)';  % quadrilaterons (linear transformation)
+  end
+  FEM_TYPE = 'FEM_QK(2,1)';         % Q1 for quadrilaterons
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
+end
 
-% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
-%DATA_FEM_TYPE = 'FEM_PK(2,1)';
+if (N == 3 && !QUAD)
+  MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
+  FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
+  INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
+                                     % to degree 6 on tetrahedrons
+end
 
-INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
-                               % to degree 6 on triangles
-%INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
-%INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
-%INTEGRATION = 'IM_NC_PARALLELEPIPED(2,6)'; % newton-cotes, degree 6,
-                                          % quadrangles
-%INTEGRATION = 'IM_NC_PRISM(3,12)'; % newton-cotes, degree 12, prims
-%INTEGRATION = 'IM_GAUSS1D(10)'; % Gauss-Legendre integration on the
-                               % segment of order 10
-%INTEGRATION = 'IM_GAUSSLOBATTO1D(10)'; % Gauss-Lobatto-Legendre
-                                      % integration on the segment
-                                      % of order 10
-%INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; % Product of two
-                                              % IM_GAUSS1D(10) (for
-                                              % quadrangles)
-%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(5), 3)';
-%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
+if (N == 3 && QUAD)
+  if (MESH_NOISE)
+    MESH_TYPE = 'GT_QK(3,1)';       % hexahedrons
+  else
+    MESH_TYPE = 'GT_LINEAR_QK(3)';  % hexahedrons (linear transformation)
+  end
+  FEM_TYPE = 'FEM_QK(3,1)';         % Q1 for hexahedrons
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)';
+end
 
-RESIDUE = 1E-9;     	% residue for conjugate gradient.
-GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition 
-                        % (required for non-lagrangian elts).
+if (N > 3)
+  error("Correct the parameter file for N > 3");
+end
 
-%%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'laplacian';     % Root of data files.
+RESIDUE = 1E-9;     	     % residue for conjugate gradient.
+GENERIC_DIRICHLET = 1;       % Generic Dirichlet condition or not. 
+                             % (required for non-lagrangian elts).
+ROOTFILENAME = 'laplacian'   % Root of data files.
 

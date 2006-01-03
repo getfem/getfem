@@ -9,7 +9,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard
+// Copyright (C) 1999-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -42,10 +42,12 @@ namespace getfem
   typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
 
   const base_matrix& fem_interpolation_context::M() const {
-    if (!have_pgt() || !have_G() || !have_pf())
-      DAL_THROW(dal::failure_error, "cannot compute M");
-    M_.resize(pf_->nb_base(convex_num()), pf_->nb_dof(convex_num()));
-    pf_->mat_trans(M_,G(),pgt());
+    if (gmm::mat_nrows(M_) == 0) {
+      if (!have_pgt() || !have_G() || !have_pf())
+	DAL_THROW(dal::failure_error, "cannot compute M");
+      M_.resize(pf_->nb_base(convex_num()), pf_->nb_dof(convex_num()));
+      pf_->mat_trans(M_,G(),pgt());
+    }
     return M_;
   }
   
@@ -108,15 +110,19 @@ namespace getfem
   }
 
   void fem_interpolation_context::set_pfp(pfem_precomp newpfp) {
-    pfp_ = newpfp;
-    if (pfp_) { pf_ = pfp()->get_pfem(); }
-    else pf_ = 0;
-    M_.resize(0,0);
+    if (pfp_ != newpfp) {
+      pfp_ = newpfp;
+      if (pfp_) { pf_ = pfp()->get_pfem(); }
+      else pf_ = 0;
+      M_.resize(0,0);
+    }
   }
 
   void fem_interpolation_context::set_pf(pfem newpf) {
-    set_pfp(0);
-    pf_ = newpf;
+    if (pf_ != newpf) {
+      set_pfp(0);
+      pf_ = newpf;
+    }
   }
 
   fem_interpolation_context::fem_interpolation_context() :
@@ -406,17 +412,26 @@ namespace getfem
     return true;
   }
 
-  void virtual_fem::add_node(const pdof_description &d, const base_node &pt) {
+  void virtual_fem::add_node(const pdof_description &d, const base_node &pt,
+			     const dal::bit_vector &faces) {
     short_type nb = cv_node.nb_points();
     cv_node.points().resize(nb+1);
     cv_node.points()[nb] = pt;
     dof_types_.resize(nb+1);
     dof_types_[nb] = d;
     cvs_node->add_point_adaptative(nb, short_type(-1));
-    for (short_type f = 0; f < cvs_node->nb_faces(); ++f)
-      if (d->all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
-	cvs_node->add_point_adaptative(nb, f);
+    for (dal::bv_visitor f(faces); !f.finished(); ++f)
+      cvs_node->add_point_adaptative(nb, f);
     pspt_valid = false;
+  }
+
+
+  void virtual_fem::add_node(const pdof_description &d, const base_node &pt) {
+    dal::bit_vector faces;
+     for (short_type f = 0; f < cvs_node->nb_faces(); ++f)
+      if (d->all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
+	faces.add(f);
+     add_node(d, pt, faces);
   }
 
   void virtual_fem::init_cvs_node(void) {
@@ -1040,23 +1055,37 @@ namespace getfem
   };
 
   void hermite_segment__::mat_trans(base_matrix &M,
-					    const base_matrix &G,
-					 bgeot::pgeometric_trans pgt) const { 
-    dim_type P = 1, N = G.nrows();
-    base_matrix K(N, P); // optimisable : eviter l'allocation.
-    M.fill(1.0);
-    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-    if (N != 1)
-      DAL_THROW(failure_error, "This element cannot be used for Q > 1");
-    // gradient au pt 0
+				    const base_matrix &G,
+				    bgeot::pgeometric_trans pgt) const {
+    static bgeot::pgeotrans_precomp pgp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(1, 1);
+    static base_vector r(1);
+    dim_type N = G.nrows();
+
+    if (pgt != pgt_stored) {
+      gmm::resize(r, N);
+      for (size_type i = 0; i < N; ++i) r[0] = ::exp(i);
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      gmm::resize(K, N, 1);
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+    // gradient at point 0
     gmm::mult(G, pgp->grad(0), K);
-    M(2,2) = K(0,0);
-    cout << "K(0,0) = " << K(0,0) << endl;
-    // gradient au pt 1
+    if (N == 1) M(2, 2) = K(0,0);
+    else  M(2, 2) = gmm::mat_euclidean_norm(K)
+      * gmm::sgn(gmm::vect_sp(gmm::mat_col(K, 0), r));
+    // gradient at point 1
     if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(1), K);
-    M(3,3) = K(0,0);
+    if (N == 1) M(3, 3) = K(0,0);
+    else M(3, 3) = gmm::mat_euclidean_norm(K)
+      * gmm::sgn(gmm::vect_sp(gmm::mat_row(K, 0), r));
   }
 
+  // Hermite element on the segment. when the real element lies in
+  // a 2 or 3 dimensional domain, the element should still work if
+  // the tangent coincides.
   hermite_segment__::hermite_segment__(void) { 
     base_node pt(1);
     base_poly one(1, 0), x(1, 1, 0); one.one();
@@ -1065,29 +1094,20 @@ namespace getfem
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
-    is_lag = false;
-    // is_equiv = false;
-    is_equiv = true;
+    is_lag = is_equiv = false;
     base_.resize(4);
     
     pt[0] = 0.0; add_node(lagrange_dof(1), pt);
-    base_[0] = one + x * x * (-one * 3.0  + x * 2.0);
-    // base_[0] = one - x;
-    // base_[0] = (one - x) * (one - x * 2.0);
+    base_[0] = (one - x)*(one - x)*(x*2.0 + one);
+
     pt[0] = 1.0; add_node(lagrange_dof(1), pt);
-    base_[1] = x * x * (one * 3.0 - x * 2.0);
-    // base_[1] = x * (x * 2.0 - one);
-    pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
-    // pt[0] = 0.1; add_node(lagrange_nonconforming_dof(1), pt);
-    base_[2] = x * (one + x * (-one * 2.0 + x));
-    pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
-    // pt[0] = 0.9; add_node(lagrange_nonconforming_dof(1), pt);
-    base_[3] = x * x * (-one + x);
-    
-    cout << "base(0) = " << base_[0] << endl;
-    cout << "base(1) = " << base_[1] << endl;
-    cout << "base(2) = " << base_[2] << endl;
-    cout << "base(3) = " << base_[3] << endl;
+    base_[1] = x*x*(one*3.0  - x*2.0);
+
+    pt[0] = 0.0; add_node(derivative_dof(1, 0), pt, dal::bit_vector());
+    base_[2] = x*(x - one)*(x - one);
+
+    pt[0] = 1.0; add_node(derivative_dof(1, 0), pt, dal::bit_vector());
+    base_[3] = x*x*(x - one);
   }
 
   static pfem segment_Hermite_fem(fem_param_list &params,
@@ -1095,6 +1115,108 @@ namespace getfem
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
     virtual_fem *p = new hermite_segment__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
+  /*	Hermite element on the triangle                                   */
+  /* ******************************************************************** */
+
+  struct hermite_triangle__ : public fem<base_poly> {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    hermite_triangle__(void);
+  };
+
+  void hermite_triangle__::mat_trans(base_matrix &M,
+				    const base_matrix &G,
+				    bgeot::pgeometric_trans pgt) const {
+    static bgeot::pgeotrans_precomp pgp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(2, 2);
+    dim_type N = G.nrows();
+
+    if (N != 2) DAL_THROW(failure_error, "Sorry, this version of hermite "
+			  "element works only on dimension two.")
+
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+    
+    // gradient at point (0, 0)
+    gmm::mult(G, pgp->grad(0), K);
+
+    // cout << "grad = " << K << endl;
+
+    M(4, 4) = K(0,0); M(4, 7) = K(0,1); M(7, 4) = K(1,0); M(7, 7) = K(1,1);
+    
+    // gradient at point (1, 0)
+    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(1), K);
+    M(5, 5) = K(0,0); M(5, 8) = K(0,1); M(8, 5) = K(1,0); M(8, 8) = K(1,1);
+    
+    // gradient at point (0, 1)
+    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(2), K);
+    M(6, 6) = K(0,0); M(6, 9) = K(0,1); M(9, 6) = K(1,0); M(9, 9) = K(1,1);
+
+    // cout << "M = " << M << endl;
+  }
+
+  hermite_triangle__::hermite_triangle__(void) { 
+    base_poly one(2, 0), x(2, 1, 0), y(2, 1, 1); one.one();
+    cvr = bgeot::simplex_of_reference(2);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = 3;
+    is_pol = true;
+    is_lag = false;
+    // is_equiv = false;
+    is_equiv = false; 
+    base_.resize(10);
+    
+    add_node(lagrange_dof(2), base_node(0.0, 0.0));
+    base_[0] = (one - x - y)*(one + x + y - x*x*2.0 - x*y*11.0 - y*y*2.0);
+
+    add_node(lagrange_dof(2), base_node(1.0, 0.0));
+    base_[1] = -x*x*x*2.0 + x*x*y*7.0 + x*y*y*7.0 + x*x*3.0 - x*y*7.0;
+
+    add_node(lagrange_dof(2), base_node(0.0, 1.0));
+    base_[2] = x*x*y*7.0 + x*y*y*7.0 - y*y*y*2.0 + y*y*3 - x*y*7.0;
+
+    add_node(lagrange_dof(2), base_node(1.0/3.0, 1.0/3.0));
+    base_[3] = x*y*(one - x - y)*27.0;
+
+    add_node(derivative_dof(2, 0), base_node(0.0, 0.0));
+    base_[4] = x*(one - x - y)*(one - x - y*2.0);
+
+    add_node(derivative_dof(2, 0), base_node(1.0, 0.0));
+    base_[5] = x*x*x - x*x*y*2.0 - x*y*y*2.0 - x*x + x*y*2.0;
+
+    add_node(derivative_dof(2, 0), base_node(0.0, 1.0));
+    base_[6] = x*y*(x + y*2.0 - one);
+
+    add_node(derivative_dof(2, 1), base_node(0.0, 0.0));
+    base_[7] = y*(one - x - y)*(one - x*2.0 - y);
+
+    add_node(derivative_dof(2, 1), base_node(1.0, 0.0));
+    base_[8] = x*y*(x*2.0 + y - one);
+
+    add_node(derivative_dof(2, 1), base_node(0.0, 1.0));
+    base_[9] = y*y*y - y*y*x*2.0 - y*x*x*2.0 - y*y + x*y*2.0;
+
+//     for (size_type i = 0; i < 10; ++i)
+//       cout << "Base " << i << " = " << base_[i] << endl;
+//     getchar();
+  }
+
+  static pfem triangle_Hermite_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    virtual_fem *p = new hermite_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1276,6 +1398,7 @@ namespace getfem
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
       add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
+      add_suffix("HERMITE_TRIANGLE", triangle_Hermite_fem);
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);

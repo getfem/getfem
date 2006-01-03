@@ -6,32 +6,67 @@ $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 print TMPF <<
-LX = 1.0;
-LY = 1.0;
-LZ = 1.0;
-NU = 1.0;
-MESH_TYPE = 'GT_QK(2,1)';
-NX = 6;
-DT = 0.001;
-T = 0.01;
-MESH_NOISE = 0;
-NOISY=0;
-OPTION = 3;
-FEM_TYPE = 'FEM_QK(2,2)';
-FEM_TYPE_P = 'FEM_QK(2,1)';
-DATA_FEM_TYPE = 'FEM_QK(2,1)';
-INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,4)';
-RESIDUE = 1E-9;
-SOL_REF = 2;
-ROOTFILENAME = 'navier_stokes';
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
+%MU = 7700;	        % Lam%/1€Œiso8859-15é coefficient.
+%LAMBDA = 11500;   	% Lam%/1€Œiso8859-15é coefficient.
+MU = 5;
+LAMBDA = 10;
+FRICTION_COEF = 0.5;    % Friction coefficient.
+% PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
+% PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
+PG=12000
+RHO = 6e-6;     	% "realistic" density for steel
+%%%%%   discretisation parameters  :                     	      %%%%%
+MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+% MESH_TYPE = 'GT_QK(3,1)';       % 
+% MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
+NX = 20;            	          % space step.
+MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
+RESIDUE = 1E-9;     	% residue for Newton.
+METHOD = 0;             % 0 = Newton.
+			% 1 = genetic for 2D problem only.
+			% 2 = Additive Schwarz Newton
+NOISY = 3;
+POPULATION = 100;       % Parameter for genetic algorithm
+R = 100.0;              % Augmentation parameter
+DIRICHLET = 1;          % 0 = no Dirichlet boundary
+			% 1 = Dirichlet boundary on the top
+			% 2 = Dirichlet boundary on the left
+NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
+			% 1 = Non homogeneous Neumann Boudary on the top
+NEUMANN_INTENSITY = -0.0;
+DIRICHLET_RATIO = -0.1;  % parametre pour la condition de Dirichlet
+CONTACT_CONDITION = 0;  % 0 = Condition almost conformal in u
+			% 1 = Condition almost conformal in forces on contact
+			%     boundary with FEM_TYPE_L for the multipliers
+FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
+FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM fo the multipliers
+%DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
+INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
+% INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
+MESHNAME='splx:';
+% MESHNAME='meshes/donut_regulier_8_elements_288ddl.mesh';
+% MESHNAME='donut_regulier_64_elements_1920ddl.mesh';
+% MESHNAME='donut_regulier_512_elements_13824ddl.mesh';
+% MESHNAME='donut_regulier_32_elements.mesh';
+% MESHNAME='donut_regulier_72_elements.mesh';
+% MESHNAME='donut_regulier_128_elements.mesh';
+% MESHNAME='donut_regulier_200_elements.mesh';
+% MESHNAME='donut_regulier_288_elements.mesh';
+% MESHNAME='donut_regulier_392_elements.mesh';
+% MESHNAME='donut_regulier_512_elements.mesh';
+% MESHNAME='donut_regulier_648_elements.mesh';
+% MESHNAME='donut_regulier_800_elements.mesh';
+ROOTFILENAME = 'dynamic_friction';     % Root of data files.
 DX_EXPORT = 0;
-DT_EXPORT = 0.01;
 
 ;
 close(TMPF);
 
 $er = 0;
-open F, "./navier_stokes $tmp 2>&1 |" or die;
+open F, "./static_friction $tmp 2>&1 |" or die;
 while (<F>) {
   # print $_;
   if ($_ =~ /error has been detected/)

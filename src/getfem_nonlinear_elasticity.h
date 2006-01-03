@@ -425,8 +425,8 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
 
     const abstract_hyperelastic_law &AHL;
-    mesh_im &mim;
-    mesh_fem &mf_u;
+    const mesh_im &mim;
+    const mesh_fem &mf_u;
     mdbrick_parameter<VECTOR> PARAMS_;
 
     virtual void proper_update(void) {}
@@ -459,8 +459,8 @@ namespace getfem {
     }
 
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
-				 mesh_im &mim_,
-				 mesh_fem &mf_u_,
+				 const mesh_im &mim_,
+				 const mesh_fem &mf_u_,
 				 const VECTOR &PARAMS)
       : AHL(AHL_), mim(mim_), mf_u(mf_u_), PARAMS_("params", mf_u.linked_mesh(), this) {
       params().set(PARAMS);
@@ -609,7 +609,7 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
    
     mdbrick_abstract<MODEL_STATE> &sub_problem;
-    mesh_fem &mf_p;
+    const mesh_fem &mf_p;
     size_type num_fem;
 
     virtual void proper_update(void) {
@@ -621,7 +621,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
-      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type i1 = this->mesh_fem_positions[num_fem];
       gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
       gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());           /* U */
@@ -638,7 +638,7 @@ namespace getfem {
     }
 
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
-      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type i1 = this->mesh_fem_positions[num_fem];
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());
@@ -651,7 +651,7 @@ namespace getfem {
     }
 
     mdbrick_nonlinear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
-			     mesh_fem &mf_p_, size_type num_fem_=0)
+			     const mesh_fem &mf_p_, size_type num_fem_=0)
       : sub_problem(problem), mf_p(mf_p_), num_fem(num_fem_) {
       this->add_proper_mesh_fem(mf_p, MDBRICK_NONLINEAR_INCOMP);
       this->add_sub_brick(sub_problem);

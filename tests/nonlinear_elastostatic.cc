@@ -58,7 +58,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 struct elastostatic_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im mim;       /* the integration methods */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure.                   */
@@ -219,10 +219,10 @@ struct elastostatic_problem {
    (this is boilerplate code, not very interesting)
  */
 void elastostatic_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -272,8 +272,8 @@ void elastostatic_problem::init(void) {
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM"
 		". In that case you need to set "
@@ -413,8 +413,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Dirichlet condition
   getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
   final_model.rhs().set(mf_rhs, F2);
-  final_model.use_multipliers(PARAM.int_value("USE_MULTIPLIERS"));
-
+  final_model.set_constraints_type(getfem::constraints_type
+				   (PARAM.int_value("DIRICHLET_VERSION")));
   // Generic solver.
   getfem::standard_model_state MS(final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 

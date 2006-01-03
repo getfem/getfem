@@ -57,7 +57,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 struct stokes_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
@@ -79,10 +79,10 @@ struct stokes_problem {
  * and integration methods and selects the boundaries.
  */
 void stokes_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -125,8 +125,8 @@ void stokes_problem::init(void) {
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
 		<< data_fem_name << ". In that case you need to set "

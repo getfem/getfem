@@ -92,7 +92,7 @@ namespace getfem {
     
   protected :
     
-    getfem_mesh cartesian;
+    mesh cartesian;
     mesh_fem cartesian_fem;
     pfem Qk;
     Xfem enriched_Qk;

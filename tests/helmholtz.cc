@@ -55,14 +55,14 @@ typedef getfem::modeling_standard_complex_plain_vector  plain_vector;
 struct Helmholtz_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, ROBIN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
-  getfem::mesh_im mim;     /* the integration methods */
+  getfem::mesh mesh;         /* the mesh */
+  getfem::mesh_im mim;       /* the integration methods */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   complex_type wave_number;
 
   scalar_type residu;        /* max residu for the iterative solvers         */
-  bool with_mult;
+  int with_mult;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -86,8 +86,8 @@ complex_type incoming_field(const base_node &P, scalar_type k) {
  * and integration methods and selects the boundaries.
  */
 void Helmholtz_problem::init(void) {
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -123,8 +123,8 @@ void Helmholtz_problem::init(void) {
     (PARAM.real_value("WAVENUM_R", "Real part of the wave number"),
      PARAM.real_value("WAVENUM_I", "Imaginary part of the wave number"));
 
-  with_mult = PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS",
-			      "with multipliers");
+  with_mult = PARAM.int_value("DIRICHLET_VERSION",
+			      "Dirichlet condition version");
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -137,8 +137,8 @@ void Helmholtz_problem::init(void) {
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -186,8 +186,8 @@ bool Helmholtz_problem::solve(plain_vector &U) {
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<MODELSTATE> 
-    final_model(ROBIN, DIRICHLET_BOUNDARY_NUM, 0);
-  final_model.use_multipliers(with_mult);
+    final_model(ROBIN, DIRICHLET_BOUNDARY_NUM);
+  final_model.set_constraints_type(getfem::constraints_type(with_mult));
   final_model.rhs().set(mf_rhs, F);
   
 

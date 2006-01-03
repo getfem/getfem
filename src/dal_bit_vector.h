@@ -57,8 +57,7 @@ namespace dal
 
   class bit_vector;
 
-  struct bit_reference
-  {
+  struct bit_reference {
     typedef size_t  size_type;
 
     bit_support* p;
@@ -80,8 +79,7 @@ namespace dal
     void flip(void) { if (bool(*this)) *this = false; else *this = true; }
   };
 
-  struct bit_iterator
-  {
+  struct bit_iterator {
     typedef bool             value_type;
     typedef bit_reference    reference;
     typedef bit_reference*   pointer;
@@ -124,8 +122,7 @@ namespace dal
     bool operator<(bit_iterator x) const { return ind < x.ind; }
   };
 
-  struct bit_const_iterator
-  {
+  struct bit_const_iterator {
     typedef bool             value_type;
     typedef bool             reference;
     typedef const bool*      pointer;
@@ -170,8 +167,7 @@ namespace dal
   };
 
   ///Dynamic bit container. 
-  class bit_vector : public bit_container
-  {
+  class bit_vector : public bit_container {
     public :
       
       typedef bool         value_type;
@@ -204,14 +200,12 @@ namespace dal
  
    public : 
       
-      void change_for_true(size_type i)
-      {
+      void change_for_true(size_type i) {
 	ifirst_true = std::min(ifirst_true, i);
 	ilast_true = std::max(ilast_true, i);
 	++icard;
       }
-      void change_for_false(size_type i)
-      {
+      void change_for_false(size_type i) {
 	ifirst_false = std::min(ifirst_false, i);
 	ilast_false = std::max(ilast_false, i);
 	--icard;

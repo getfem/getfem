@@ -26,8 +26,8 @@ typedef std::vector<scalar_type>                     linalg_vector;
 
 
 struct pb_data {
-  getfem::getfem_mesh mesh;
-  getfem::getfem_mesh mesh_coarse;
+  getfem::mesh mesh;
+  getfem::mesh mesh_coarse;
 
   getfem::mesh_im  mim;
   getfem::mesh_fem mef;
@@ -157,7 +157,7 @@ void pb_data::init(ftool::md_param &params) {
   for (int j = nn.take_first(); j >= 0; j << nn) {
     int k = mesh.structure_of_convex(j)->nb_faces();
     for (int i = 0; i < k; i++) {
-      if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
+      if (mesh.is_convex_having_neighbour(j, i)) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	un /= bgeot::vect_norm2(un);	
 	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.region(0).add(j, i);
@@ -280,9 +280,9 @@ int main(int argc, char *argv[]) {
     
     p.assemble();
 
-    double rutime = ftool::uclock_sec();
+    double rutime = dal::uclock_sec();
     int itebilan = p.solve();
-    std::cout << "resolution time : " << ftool::uclock_sec() - rutime << endl;
+    std::cout << "resolution time : " << dal::uclock_sec() - rutime << endl;
     cout << "itebilan = " << itebilan << endl;
 
     gmm::mult(p.RM, gmm::scaled(p.U, -1.0), p.F, p.F);

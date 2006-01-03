@@ -10,7 +10,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 1995-2005 Yves Renard
+// Copyright (C) 1995-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -35,15 +35,19 @@
 #define DAL_STD_H__
 
 #ifndef NOGETFEM_VERIFY
-#  define GETFEM_VERIFY
+# define GETFEM_VERIFY
 #endif
 
 #ifndef __USE_STD_IOSTREAM
-  #define __USE_STD_IOSTREAM
+# define __USE_STD_IOSTREAM
 #endif
 
 #ifndef __USE_BSD
-  #define __USE_BSD
+# define __USE_BSD
+#endif
+
+#ifndef __USE_ISOC99
+# define __USE_ISOC99
 #endif
 
 #if !defined(GMM_USES_MPI) && GETFEM_PARA_LEVEL > 0
@@ -83,7 +87,7 @@
 #include <cctype>
 #include <cassert>
 #include <iostream>
-//#include <ios> // essai
+//#include <ios> 
 #include <fstream>
 #include <ctime>
 #include <exception>
@@ -121,45 +125,87 @@ namespace dal {
   /* ******************************************************************** */
   /*	Fixed size integer types.                     			  */
   /* ******************************************************************** */
+  // Remark : the test program dynamic_array tests the lenght of
+  //          resulting integers
 
+  template <int s> struct fixed_size_integer_generator {
+    typedef void int_base_type;
+    typedef void uint_base_type;  
+  };
 
-typedef signed char    int8_type;
-typedef unsigned char uint8_type;
+  template <> struct fixed_size_integer_generator<sizeof(char)> {
+    typedef signed char int_base_type;
+    typedef unsigned char uint_base_type;
+  };
 
-#if INT_MAX == 32767
-  typedef signed int    int16_type;
-  typedef unsigned int uint16_type;
-#elif  SHRT_MAX == 32767
-  typedef signed short int    int16_type;
-  typedef unsigned short int uint16_type;
-#else
-# error "impossible to build a 16bits integer"
-#endif
+  template <> struct fixed_size_integer_generator<sizeof(short int)
+    - ((sizeof(short int) == sizeof(char)) ? 78 : 0)> {
+    typedef signed short int int_base_type;
+    typedef unsigned short int uint_base_type;
+  };
 
-#if INT_MAX == 2147483647
-  typedef signed int    int32_type;
-  typedef unsigned int uint32_type;
-#elif  SHRT_MAX == 2147483647
-  typedef signed short int    int32_type;
-  typedef unsigned short int uint32_type;
-#elif LONG_MAX == 2147483647
-  typedef signed long int    int32_type;
-  typedef unsigned long int uint32_type;
-#else
-# error "impossible to build a 32bits integer"
-#endif
+  template <> struct fixed_size_integer_generator<sizeof(int)
+    - ((sizeof(int) == sizeof(short int)) ? 59 : 0)> {
+    typedef signed int int_base_type;
+    typedef unsigned int uint_base_type;
+  };
+ 
+  template <> struct fixed_size_integer_generator<sizeof(long)
+    - ((sizeof(int) == sizeof(long)) ? 93 : 0)> {
+    typedef signed long int_base_type;
+    typedef unsigned long uint_base_type;
+  };
 
-#if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
-  typedef signed int    int64_type;
-  typedef unsigned int uint64_type;
-#elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
-  typedef signed long int    int64_type;
-  typedef unsigned long int uint64_type;
-  // utiliser long long dans le futur.
-  // #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
-  // typedef signed long long int int64_type;
-  // typedef unsigned long long int uint64_type;
-#endif
+  template <> struct fixed_size_integer_generator<sizeof(long long)
+    - ((sizeof(long long) == sizeof(long)) ? 99 : 0)> {
+    typedef signed long long int_base_type;
+    typedef unsigned long long uint_base_type;
+  };
+ 
+  typedef fixed_size_integer_generator<1>::int_base_type int8_type;
+  typedef fixed_size_integer_generator<1>::uint_base_type uint8_type;
+  typedef fixed_size_integer_generator<2>::int_base_type int16_type;
+  typedef fixed_size_integer_generator<2>::uint_base_type uint16_type;
+  typedef fixed_size_integer_generator<4>::int_base_type int32_type;
+  typedef fixed_size_integer_generator<4>::uint_base_type uint32_type;
+  typedef fixed_size_integer_generator<8>::int_base_type int64_type;
+  typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
+
+// #if INT_MAX == 32767
+//   typedef signed int    int16_type;
+//   typedef unsigned int uint16_type;
+// #elif  SHRT_MAX == 32767
+//   typedef signed short int    int16_type;
+//   typedef unsigned short int uint16_type;
+// #else
+// # error "impossible to build a 16 bits integer"
+// #endif
+
+// #if INT_MAX == 2147483647
+//   typedef signed int    int32_type;
+//   typedef unsigned int uint32_type;
+// #elif  SHRT_MAX == 2147483647
+//   typedef signed short int    int32_type;
+//   typedef unsigned short int uint32_type;
+// #elif LONG_MAX == 2147483647
+//   typedef signed long int    int32_type;
+//   typedef unsigned long int uint32_type;
+// #else
+// # error "impossible to build a 32 bits integer"
+// #endif
+
+// #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
+//   typedef signed int    int64_type;
+//   typedef unsigned int uint64_type;
+// #elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
+//   typedef signed long int    int64_type;
+//   typedef unsigned long int uint64_type;
+// #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
+//   typedef signed long long int int64_type;
+//   typedef unsigned long long int uint64_type;
+// #else
+// # error "impossible to build a 64 bits integer"
+// #endif
 
 #ifdef __GNUC__
 /* 

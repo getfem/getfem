@@ -50,7 +50,7 @@ namespace getfem {
   class level_set : public context_dependencies {
 
   protected :
-    getfem_mesh *pmesh;
+    mesh *pmesh;
     dim_type degree_;
     const mesh_fem *mf;
     std::vector<scalar_type> primary_, secondary_;
@@ -70,9 +70,9 @@ namespace getfem {
     bool has_secondary(void) const { return with_secondary; }
     const mesh_fem &get_mesh_fem(void) { return *mf; }
     dim_type degree() const { return degree_; }
-    level_set(getfem_mesh &mesh, dim_type deg = dim_type(1),
+    level_set(mesh &msh, dim_type deg = dim_type(1),
 	      bool with_secondary_ = false)
-      : pmesh(&mesh), degree_(deg), mf(&classical_mesh_fem(mesh, deg)),
+      : pmesh(&msh), degree_(deg), mf(&classical_mesh_fem(msh, deg)),
 	with_secondary(with_secondary_) {
       primary_.resize(mf->nb_dof());
       secondary_.resize(mf->nb_dof());

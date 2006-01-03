@@ -78,8 +78,8 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_imls_key, papprox_integration);
 
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
-    const getfem_mesh &mesh(mls.mesh_of_convex(cv));
-    if (mesh.convex_index().card() == 0) DAL_INTERNAL_ERROR("");
+    const mesh &msh(mls.mesh_of_convex(cv));
+    if (msh.convex_index().card() == 0) DAL_INTERNAL_ERROR("");
     base_matrix G;
     base_node B;
 
@@ -95,8 +95,8 @@ namespace getfem {
     }
 
     if (integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
-      for (dal::bv_visitor scv(mesh.convex_index()); !scv.finished(); ++scv) {
-	B = dal::mean_value(mesh.points_of_convex(scv));
+      for (dal::bv_visitor scv(msh.convex_index()); !scv.finished(); ++scv) {
+	B = dal::mean_value(msh.points_of_convex(scv));
 	bool isin = true;
 	for (unsigned i = 0; isin && (i < mls.nb_level_sets()); ++i) {
 	  isin = isin && ((integrate_where & INTEGRATE_OUTSIDE)
@@ -113,7 +113,7 @@ namespace getfem {
     
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     bgeot::pgeometric_trans pgt2
-      = mesh.trans_of_convex(mesh.convex_index().first_true());
+      = msh.trans_of_convex(msh.convex_index().first_true());
     dim_type n = pgt->dim();
 
     if (base_singular_pim) {
@@ -131,7 +131,7 @@ namespace getfem {
     base_matrix pc(pgt2->nb_points(), n);
     std::vector<size_type> ptsing;
 
-    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+    for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
       papprox_integration pai = regular_simplex_pim->approx_method();
       
       if ((integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) &&
@@ -146,8 +146,8 @@ namespace getfem {
 	for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils)
 	  if (mls.get_level_set(ils)->has_secondary()) {
 	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
-	      if (gmm::abs((mesherls0[ils])(mesh.points_of_convex(i)[ipt])) < 1E-10
-		  && gmm::abs((mesherls1[ils])(mesh.points_of_convex(i)[ipt])) < 1E-10) {
+	      if (gmm::abs((mesherls0[ils])(msh.points_of_convex(i)[ipt])) < 1E-10
+		  && gmm::abs((mesherls1[ils])(msh.points_of_convex(i)[ipt])) < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
 		if (sing_ls != ils)
 		  DAL_THROW(failure_error,
@@ -170,8 +170,8 @@ namespace getfem {
 
       if (integrate_where & (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
 		
-	vectors_to_base_matrix(G, mesh.points_of_convex(i));
-	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i),
+	vectors_to_base_matrix(G, msh.points_of_convex(i));
+	bgeot::geotrans_interpolation_context c(msh.trans_of_convex(i),
 						pai->point(0), G);
 	for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	  c.set_xref(pai->point(j));
@@ -187,7 +187,7 @@ namespace getfem {
       bgeot::geotrans_interpolation_context cc(linked_mesh().trans_of_convex(cv),
 					       pai->point(0), G2);
 
-      // pgt2 = mesh.trans_of_convex(i);
+      // pgt2 = msh.trans_of_convex(i);
 
       for (unsigned f = 0; f < pgt2->structure()->nb_faces(); ++f) {
 
@@ -200,24 +200,24 @@ namespace getfem {
 	    for (unsigned ipt = 0;
 		 ipt < pgt2->structure()->nb_points_of_face(f); ++ipt) {
 	      lisin = lisin && (gmm::abs((mesherls0[ils])
-		     (mesh.points_of_face_of_convex(i, f)[ipt])) < 1E-7);
+		     (msh.points_of_face_of_convex(i, f)[ipt])) < 1E-7);
 	    }
 	    if (lisin) { isin = ils; break; }
 	  }
 	  if (isin ==  unsigned(-1)) continue;
 	} else {
-	  B = dal::mean_value(mesh.points_of_face_of_convex(i, f));
+	  B = dal::mean_value(msh.points_of_face_of_convex(i, f));
 	  if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
 	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi)
 	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
 	  if (ff == short_type(-1)) DAL_INTERNAL_ERROR("");
 	}
 	  
-	vectors_to_base_matrix(G, mesh.points_of_convex(i));
-	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i),
+	vectors_to_base_matrix(G, msh.points_of_convex(i));
+	bgeot::geotrans_interpolation_context c(msh.trans_of_convex(i),
 						pai->point(0), G);
 	
-	base_small_vector un = pgt2->normals()[f], up(mesh.dim());
+	base_small_vector un = pgt2->normals()[f], up(msh.dim());
 	gmm::mult(c.B(), un, up);
 	scalar_type nup = bgeot::vect_norm2(up);
 	

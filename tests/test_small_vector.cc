@@ -584,8 +584,10 @@ namespace getfem {
     cout << " comparaison: " << c.toc().cpu() << " sec\n";
     
     //bgeot::mesh<V> m;
-    bgeot::mesh_point_ct<V> mm;
 
+    dal::dynamic_tree_sorted<V,
+      dal::lexicographical_less<V, getfem::mesh::val_comp> > mm;
+    
     cout << "mesh<base_node> : empty size = " << mm.memsize() << "\n";
     init(vv);
     c.init().tic();

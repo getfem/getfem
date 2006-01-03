@@ -785,7 +785,7 @@ namespace getfem {
 } /* namespace getfem */
 
 
-void gen_mesh(getfem::getfem_mesh& mesh) {
+void gen_mesh(getfem::mesh& mesh) {
   cout << "Mesh generation, N=" << param.NX << " Ndim=" << param.Ndim << endl;
   base_node org(param.Ndim); org.fill(0.0);
   std::vector<base_small_vector> vtab(param.Ndim);
@@ -1545,7 +1545,7 @@ int main(int argc, char *argv[]) {
 
    cerr << "\n\n-----------------------------SIMPLE MESH TESTS---------------------\n\n";
    {
-     getfem::getfem_mesh m(2);
+     getfem::mesh m(2);
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
      m.add_triangle_by_points(mknode(0.,0.),mknode(-1.2,0.),mknode(0.1,1.5));
      m.region(1).add(0, 0);
@@ -1570,7 +1570,7 @@ int main(int argc, char *argv[]) {
 
    cerr << "\n\n-----------------------------PERFORMANCE TESTS---------------------\n\n";   
    {
-     getfem::getfem_mesh m; 
+     getfem::mesh m; 
      gen_mesh(m);
      
      getfem::mesh_fem mf(m); 

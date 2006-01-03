@@ -167,7 +167,7 @@ namespace gmm {
 	       linalg_traits<DenseMatrix>::sub_orientation>::potype());
   }
 
-  /** Given an LU factored matrix, build the inverse of the matrix, and
+  /** Given a dense matrix, build the inverse of the matrix, and
       return the determinant */
   template <typename DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type

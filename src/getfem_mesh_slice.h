@@ -66,7 +66,7 @@ namespace getfem {
     mutable bool merged_nodes_available;
 
     /* keep track of the original mesh (hence it should not be destroyed before the slice) */
-    const getfem_mesh *poriginal_mesh;
+    const mesh *poriginal_mesh;
     std::vector<size_type> simplex_cnt; // count simplexes of dimension 0,1,...,dim
     size_type points_cnt;
     cvlst_ct cvlst;
@@ -77,7 +77,7 @@ namespace getfem {
   public:
     stored_mesh_slice() : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { }
     /** Shortcut constructor to simplexify a mesh with refinement. */
-    stored_mesh_slice(const getfem::getfem_mesh& m, size_type nrefine = 1) 
+    stored_mesh_slice(const getfem::mesh& m, size_type nrefine = 1) 
       : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { 
       this->build(m, slicer_none(), nrefine);
     };
@@ -93,7 +93,7 @@ namespace getfem {
     /** return the slice dimension */
     size_type dim() const { return dim_; }
     /** return a pointer to the original mesh */
-    const getfem_mesh& linked_mesh() const { return *poriginal_mesh; }
+    const mesh& linked_mesh() const { return *poriginal_mesh; }
     /** return the simplex count, in an array.
 	@param c contains the number of simplexes of dimension 0, 1, ... dim().
     */
@@ -157,15 +157,15 @@ namespace getfem {
 		    dim_type fcnt, const dal::bit_vector& splx_in);
 
     /** Build the slice, by applying a slicer_action operation. */
-    void build(const getfem::getfem_mesh& m, const slicer_action &a, 
+    void build(const getfem::mesh& m, const slicer_action &a, 
 	       size_type nrefine = 1) { build(m,&a,0,0,nrefine); }
     /** Build the slice, by applying two slicer_action operations. */
-    void build(const getfem::getfem_mesh& m, const slicer_action &a, const slicer_action &b, 
+    void build(const getfem::mesh& m, const slicer_action &a, const slicer_action &b, 
 	       size_type nrefine = 1) { build(m,&a,&b,0,nrefine); }
     /** Build the slice, by applying three slicer_action operations. */
-    void build(const getfem::getfem_mesh& m, const slicer_action &a, const slicer_action &b, const slicer_action &c, 
+    void build(const getfem::mesh& m, const slicer_action &a, const slicer_action &b, const slicer_action &c, 
 	       size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
-    void build(const getfem::getfem_mesh& m, const slicer_action *a, const slicer_action *b, const slicer_action *c, 
+    void build(const getfem::mesh& m, const slicer_action *a, const slicer_action *b, const slicer_action *c, 
 	       size_type nrefine);
       
     /** @brief Apply the listed slicer_action(s) to the slice object.
@@ -214,11 +214,11 @@ namespace getfem {
 	fem_precomp_pool fppool;
         pfem_precomp pfp = fppool(pf, store_point_tab(refpts));
         
-        ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
+        mesh_fem::ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(mf.nb_dof_of_element(cv));
           typename std::vector<T>::iterator cit = coeff[qq].begin();
-          for (ref_mesh_dof_ind_ct::iterator it=dof.begin();
+          for (mesh_fem::ref_mesh_dof_ind_ct::const_iterator it=dof.begin();
 	       it != dof.end(); ++it, ++cit)
             *cit = U[(*it)*qqdim+qq];
         }

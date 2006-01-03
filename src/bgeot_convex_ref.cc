@@ -75,8 +75,7 @@ namespace bgeot {
     : public dal::ptr_collection<mesh_structure> {};
 
   /* should be called on the basic_convex_ref */
-  const mesh_structure*
-  convex_of_reference::simplexified_convex() const {    
+  const mesh_structure* convex_of_reference::simplexified_convex() const {    
     if (psimplexified_convex == 0) {
       psimplexified_convex = new mesh_structure();
       dal::singleton<cleanup_simplexified_convexes>::instance().push_back(psimplexified_convex);

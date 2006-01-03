@@ -1,3 +1,38 @@
+2005-12-30 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_fem.cc Hermite segment is fixed !
+
+2005-12-29 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/ftool.h, src/ftool.cc modification of get_token which is now
+	more elaborated and allows to analyze a "Matlab like" langage.
+	The class md_param which reads the parameter files allows now
+	basic computations (+, -, *, /, <, >, <=, >=, &&, ||, !) and
+	an "if else" instruction. A consequence is a slight modification
+	of the format of mesh files.
+
+2005-12-27 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_modeling.h, src/getfem_assembling.h important modification
+	in the treatment of the Dirichlet condition. The penalization is
+	available as a new option in the Dirichleet condition brick. The
+	treatment of the generalized Dirichlet condition (hu = r) is separated
+	from the classical one (u=r).
+
+2005-12-20 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+
+	* src/bgeot_mesh_structure.h simplification of the structure
+	bgeot::mesh_structure. Important modification of the interface
+	of this class.
+
+	* src/bgeot_mesh.h suppression of this file and the corresponding
+	class bgeot::mesh.
+
+	* src/getfem_mesh.h the new structure getfem::mesh replace the old
+	one getfem::getfem_mesh merging bgeot::mesh and getfem::getfem_mesh.
+
+	* src/dal_alloc.h suppression of this file.
+
 2005-12-10 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/getfem_config.h deals now with the level of parallelization

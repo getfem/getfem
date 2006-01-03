@@ -55,7 +55,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 struct friction_problem {
 
   enum { DIRICHLET_BOUNDARY, CONTACT_BOUNDARY, NEUMANN_BOUNDARY };
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
   getfem::mesh_fem mf_l;     /* mesh_fem for the multipliers.                */
@@ -88,11 +88,11 @@ struct friction_problem {
  * and integration methods and selects the boundaries.
  */
 void friction_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *FEM_TYPE_L  = PARAM.string_value("FEM_TYPE_L",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string FEM_TYPE_L  = PARAM.string_value("FEM_TYPE_L",
 					       "FEM name for multipliers");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -159,8 +159,8 @@ void friction_problem::init(void) {
   mf_vm.set_classical_discontinuous_finite_element(1);
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -178,7 +178,7 @@ void friction_problem::init(void) {
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
     for (size_type f = 0; f < nf; f++) {
-      if (bgeot::neighbour_of_convex(mesh, cv, f).empty()) {
+      if (mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
@@ -248,7 +248,7 @@ namespace getfem {
     value_type r;
     size_type d, nbc;
 
-    mesh_fem *mf_u;
+    const mesh_fem *mf_u;
     gmm::sub_interval SUBU, SUBN, SUBT;
 
     void proper_update(void) {
@@ -605,11 +605,13 @@ void friction_problem::solve(void) {
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
-  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F,
-					DIRICHLET_BOUNDARY);
+  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F, DIRICHLET_BOUNDARY);
   DIRICHLET.rhs().set(mf_rhs, F);
-  if (method == 2) DIRICHLET.use_multipliers(true);
-  
+  if (method == 2)
+    DIRICHLET.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+  else
+    DIRICHLET.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
+    
   // contact condition for Lagrange elements
   dal::bit_vector cn, dn;
   size_type nbc;

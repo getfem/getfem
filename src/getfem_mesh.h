@@ -9,9 +9,9 @@
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard
+// Copyright (C) 1999-2006 Yves Renard
 //
-// This file is a part of GETFEM++
+// This file is a part of Getfem++
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,28 +36,31 @@
 
 #include <bitset>
 #include <dal_shared_ptr.h>
-#include <bgeot_mesh.h>
+#include <ftool.h>
+#include <bgeot_mesh_structure.h>
+#include <bgeot_convex.h>
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
 #include <getfem_context.h>
 #include <getfem_mesh_region.h>
 
 namespace getfem {
+
   /* ********************************************************************* */
   /*								   	   */
   /*	I. Classes of message                                		   */
   /*									   */
   /* ********************************************************************* */
 
-  class getfem_mesh;
+  class mesh;
 
   struct MESH_CLEAR { /* clear message for the structure.                  */
     enum { ID = 0 }; 
   };
   struct MESH_DELETE { /* clear message for the structure.                  */
     enum { ID = 1 }; 
-    const getfem_mesh *mesh;
-    MESH_DELETE(const getfem_mesh &m) : mesh(&m) {}
+    const mesh *msh;
+    MESH_DELETE(const mesh &m) : msh(&m) {}
   };
   struct MESH_ADD_CONVEX { 
     enum { ID = 5 }; 
@@ -80,7 +83,7 @@ namespace getfem {
 
   /** base class for objects that receive notification messages from a
       mesh. */
-  class getfem_mesh_receiver : public lmsg::virtual_linkmsg_receiver {
+  class mesh_receiver : public lmsg::virtual_linkmsg_receiver {
     public :
 
       virtual void receipt(const MESH_CLEAR           &)
@@ -94,18 +97,12 @@ namespace getfem {
       virtual void receipt(const MESH_SWAP_CONVEX     &)
       { DAL_THROW(internal_error, "internal error");}
 
-      virtual ~getfem_mesh_receiver() {}
+      virtual ~mesh_receiver() {}
   };
-
-  /* refinement methods are :                                              */
-  /* mtype = 0 : simplexification.                                         */
-  /* mtype = 1 : bank total.                                               */
-  /* mtype = 2 : bank green.                                               */
-
 
   /* ********************************************************************* */
   /*								   	   */
-  /*	III. Class getfem_mesh                                 		   */
+  /*	II. Class getfem::mesh                                 		   */
   /*									   */
   /* ********************************************************************* */
   
@@ -113,8 +110,8 @@ namespace getfem {
   /**@{*/
   
   /** Describe a mesh (collection of convexes and points).  Note that
-      getfem_mesh object have no copy constructor, use
-      getfem_mesh::copy_from instead.  This class inherits from
+      mesh object have no copy constructor, use
+      mesh::copy_from instead.  This class inherits from
       bgeot::mesh<base_node> and bgeot::mesh_structure. Compared to
       bgeot::mesh, It provides some additional methods for convenience
       (add_simplex_by_points etc...), and it is able to send
@@ -127,7 +124,7 @@ namespace getfem {
       Points and convex numbering:
 
       The numbering of points and convexes is not dynamical, which
-      means that when a point or a convex has been removed from the ,
+      means that when a point or a convex has been removed from the mesh,
       there might be holes in the numbering. To loop over the set of
       valid points in the mesh, one should use
 
@@ -145,18 +142,38 @@ namespace getfem {
       @endcode
       (same thing for the convexes, always use convex_index()).
   */
-  class getfem_mesh : virtual public dal::static_stored_object,
-		      public bgeot::mesh<base_node>,
+
+  class mesh : virtual public dal::static_stored_object,
+		      public bgeot::mesh_structure,
 		      public context_dependencies {
   public :
     
-    typedef lmsg::linkmsg_sender<getfem_mesh_receiver> msg_sender;
+    typedef lmsg::linkmsg_sender<mesh_receiver> msg_sender;
+    typedef dal::approx_less<scalar_type> val_comp;
+    typedef dal::lexicographical_less<base_node, val_comp> pt_comp;
+    typedef dal::dynamic_tree_sorted<base_node, pt_comp> PT_TAB;
+    typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
+    typedef bgeot::mesh_structure::ind_set ind_set;
+    typedef bgeot::mesh_structure::ind_pt_face_ct ind_pt_face_ct;
+    typedef bgeot::mesh_structure::point_ct point_ct;
+
+
+    typedef dal::tab_ref_index_ref
+    <PT_TAB::const_iterator, ind_cv_ct::const_iterator> ref_mesh_pt_ct;
+    typedef dal::tab_ref_index_ref
+    <PT_TAB::const_iterator, ind_pt_face_ct::const_iterator> ref_mesh_face_pt_ct;
+    typedef bgeot::convex<base_node, ref_mesh_pt_ct> ref_convex;
+    
     
   protected :
-    /* if a new field is added here, do NOT forget to add it in the
-     * copy_from method! */
+    /*
+     * When a new field is added, do NOT forget to add it in copy_from method!
+     */
     
-    double eps_p;  /* infinity distance under wich two points are equal. */
+    dim_type dimension;
+    PT_TAB pts;
+
+    scalar_type eps_p; /* infinity distance under wich two points are equal. */
     mutable msg_sender lkmsg; /* gestionnaire de msg.                    */
     dal::dynamic_array<bgeot::pgeometric_trans> gtab;
     dal::bit_vector trans_exists;
@@ -204,11 +221,34 @@ namespace getfem {
 #endif
     
     /// Constructor.
-    getfem_mesh(dim_type NN = dim_type(-1)); 
+    mesh(dim_type NN = dim_type(-1)); 
     double eps(void) const { return eps_p; }
     msg_sender &lmsg_sender(void) const { return lkmsg; }
     void update_from_context(void) const {}
+    /// Mesh dimension.
+    dim_type dim(void) const { return dimension; }
+    /// Return the array of PT.
+    const PT_TAB &points(void) const { return pts; }
+    /// Return the array of PT.
+    PT_TAB &points(void) { return pts; }
+
+    /// Return a (pseudo)container of the points of a given convex 
+    ref_mesh_pt_ct points_of_convex(size_type ic) const {
+      const ind_cv_ct &rct = ind_points_of_convex(ic);
+      return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
+    } 
     
+    /// Return a (pseudo)container of points of face of a given convex 
+    ref_mesh_face_pt_ct points_of_face_of_convex(size_type ic,
+						 size_type f) const {
+      ind_pt_face_ct rct = ind_points_of_face_of_convex(ic,f);
+      return ref_mesh_face_pt_ct(pts.begin(), rct.begin(), rct.end());
+    }
+
+    /// return a bgeot::convex object for the convex number ic. 
+    ref_convex convex(size_type ic) const
+    { return ref_convex(structure_of_convex(ic), points_of_convex(ic)); }
+
     /** Add the point pt to the mesh and return the index of the
 	point. 
 
@@ -224,9 +264,10 @@ namespace getfem {
     /// Return the points index
     const dal::bit_vector &points_index(void) const { return pts.index(); }
     /// Delete the point of index i from the mesh.
-    void sup_point(size_type i);
+    void sup_point(size_type i) { if (!is_point_valid(i)) pts.sup(i); }
     /// Swap the indexes of points of index i and j in the whole structure.
-    void swap_points(size_type i, size_type j);
+    void swap_points(size_type i, size_type j)
+    { if (i != j) { pts.swap(i,j); mesh_structure::swap_points(i,j); } }
     /** Search a point given its coordinates.
 	@param pt the point that is searched.
 	@return the point index if pt was found in (or approximatively in)
@@ -244,7 +285,8 @@ namespace getfem {
     }
     
     /** Add a convex to the mesh.
-	This methods assume that the convex nodes have already been added to the mesh.
+	This methods assume that the convex nodes have already been 
+	added to the mesh.
 	@param pgt the geometric transformation of the convex.
 	@param ipts an iterator to a set of point index.
 	@return the number of the new convex.
@@ -252,14 +294,15 @@ namespace getfem {
     template<class ITER>
     size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
       bool present;
-      size_type i = bgeot::mesh<base_node>::add_convex(pgt->structure(),
+      size_type i = bgeot::mesh_structure::add_convex(pgt->structure(),
 						       ipts, &present);
       gtab[i] = pgt; trans_exists[i] = true;
       if (!present) { lmsg_sender().send(MESH_ADD_CONVEX(i)); touch(); }
       return i;
     }
     
-    /** Add a convex to the mesh, given a geometric transformation and a list of point coordinates. 
+    /** Add a convex to the mesh, given a geometric transformation and a
+	list of point coordinates. 
 
 	As a side-effect, the points are also added to the mesh (if
 	they were not already in the mesh).
@@ -411,7 +454,7 @@ namespace getfem {
     */
     const mesh_region region(size_type id) const { 
       if (has_region(id)) return cvf_sets[id]; 
-      else return mesh_region(const_cast<getfem_mesh&>(*this),id);
+      else return mesh_region(const_cast<mesh&>(*this),id);
     }
     /* Return a reference such that operator= works as expected */
     mesh_region &region(size_type id) { 
@@ -463,9 +506,9 @@ namespace getfem {
     */
     void read_from_file(std::istream &ist);
     /** Clone a mesh */
-    void copy_from(const getfem_mesh& m); /* might be the copy constructor */
-    size_type memsize() const;
-    ~getfem_mesh() { lmsg_sender().send(MESH_DELETE(*this)); }
+    void copy_from(const mesh& m); /* might be the copy constructor */
+    size_type memsize(void) const;
+    ~mesh() { lmsg_sender().send(MESH_DELETE(*this)); }
 
     friend class mesh_region;
   private:
@@ -475,17 +518,17 @@ namespace getfem {
                        /* not handle geotrans */
   };
 
-  inline void getfem_mesh::add_face_to_set(size_type s, size_type c, short_type f) {
+  inline void mesh::add_face_to_set(size_type s, size_type c, short_type f) {
     region(s).add(c,f);
   }
 
   /**
-     build a N+1 dimensions mesh from a N-dimensions mesh by extrusion. 
-  */
-  void extrude(const getfem_mesh& in, getfem_mesh& out, unsigned nb_layers);
+   * build a N+1 dimensions mesh from a N-dimensions mesh by extrusion. 
+   */
+  void extrude(const mesh& in, mesh& out, unsigned nb_layers);
 
  template<class ITER>
-    size_type getfem_mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
+    size_type mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
 					                           ITER ipts)
   {
     short_type nb = pgt->nb_points();
@@ -495,45 +538,28 @@ namespace getfem {
   }
 
   template<class ITER>
-   size_type getfem_mesh::add_simplex_by_points(dim_type di, ITER ipts)
+   size_type mesh::add_simplex_by_points(dim_type di, ITER ipts)
   { return add_convex_by_points(bgeot::simplex_geotrans(di, 1), ipts); }
 
   template<class ITER>
-    size_type getfem_mesh::add_parallelepiped(dim_type di, const ITER &ipts)
+    size_type mesh::add_parallelepiped(dim_type di, const ITER &ipts)
   { return add_convex(bgeot::parallelepiped_geotrans(di, 1), ipts); }
 
   template<class ITER>
-    size_type getfem_mesh::add_parallelepiped_by_points
+    size_type mesh::add_parallelepiped_by_points
     (dim_type di, const ITER &ps)
   { return add_convex_by_points(bgeot::parallelepiped_geotrans(di, 1), ps); }
 
-  /*template<class ITER>
-    size_type getfem_mesh::add_parallelepiped_by_vectors
-    (dim_type di, const base_node &org, const ITER &vects) {
-    size_type nbp = (size_type(1) << size_type(di)), i, j;
-    std::vector<size_type> ipt;
-    ipt.resize(nbp);
-    base_node a; ITER b;
-
-    for (i = 0; i < nbp; ++i) {
-      for (a = org, b = vects, j = 0; j < di; ++j, ++b)
-	if (i & (1 << j)) a += *b;
-      ipt[i] = add_point(a);
-    }
-    return add_parallelepiped(di, ipt.begin());
-  }
-  */
-
   template<class ITER>
-    size_type getfem_mesh::add_prism(dim_type di, const ITER &ipts)
+    size_type mesh::add_prism(dim_type di, const ITER &ipts)
   { return add_convex(bgeot::prism_geotrans(di, 1), ipts); }
 
   template<class ITER>
-    size_type getfem_mesh::add_prism_by_points
+    size_type mesh::add_prism_by_points
     (dim_type di, const ITER &ps)
   { return add_convex_by_points(bgeot::prism_geotrans(di, 1), ps); }
 
-  typedef getfem_mesh *pgetfem_mesh;
+  typedef mesh *pmesh;
 
   /** rough estimate of the maximum value of the condition 
    * number of the jacobian of the geometric transformation */
@@ -545,9 +571,7 @@ namespace getfem {
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
 				     const base_matrix& pts);
 
-  /* 
-     stores a convex face. if f == -1, it is the whole convex
-  */
+  /* stores a convex face. if f == -1, it is the whole convex.             */
   struct convex_face  {
     size_type cv;
     size_type f;    
@@ -567,23 +591,17 @@ namespace getfem {
    * (i.e. faces which are not shared by two convexes) 
    * + convexes whose dimension is smaller that m.dim()
    */
-  void  outer_faces_of_mesh(const getfem_mesh &m, 
+  void  outer_faces_of_mesh(const mesh &m, 
 			const dal::bit_vector& cvlst, convex_face_ct& flist);
-  inline void  outer_faces_of_mesh(const getfem_mesh &m, 
-				   convex_face_ct& flist) IS_DEPRECATED;
-  void  outer_faces_of_mesh(const getfem_mesh &m, 
-				   convex_face_ct& flist) {
-    outer_faces_of_mesh(m,m.convex_index(),flist);
-  }
 
-  void  outer_faces_of_mesh(const getfem_mesh &m, 
-			    const mesh_region &cvlst,
+  inline void outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
+  { outer_faces_of_mesh(m,m.convex_index(),flist); }
+
+  void  outer_faces_of_mesh(const mesh &m, const mesh_region &cvlst,
 			    mesh_region &flist);
 
-  inline void  outer_faces_of_mesh(const getfem_mesh &m, 
-				   mesh_region &flist) {
-    outer_faces_of_mesh(m,m.convex_index(),flist);
-  }
+  inline void  outer_faces_of_mesh(const mesh &m, mesh_region &flist)
+  { outer_faces_of_mesh(m,m.convex_index(),flist); }
   ///@}
 }  /* end of namespace getfem.                                             */
 

@@ -46,7 +46,7 @@ typedef std::vector<scalar_type> linalg_vector;
 /**************************************************************************/
 
 struct lap_pb {
-  getfem::getfem_mesh mesh1, mesh2;
+  getfem::mesh mesh1, mesh2;
   getfem::mesh_im      mim1, mim2;
   getfem::mesh_fem     mef1,  mef2, mefinterpolated;
 
@@ -197,7 +197,7 @@ void lap_pb::assemble(void) {
 
 /* integration of a quarter of circle (approximated with a degree 5 segment) against a planar regular mesh */
 void test2() {
-  getfem::getfem_mesh m1, m2;
+  getfem::mesh m1, m2;
   std::vector<size_type> nsubdiv(2); nsubdiv[0] = nsubdiv[1] = 5;
 
   getfem::regular_unit_mesh

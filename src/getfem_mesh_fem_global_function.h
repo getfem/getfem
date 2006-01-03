@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-/**@file getfem_mesh_fem_global_function.h
+/**@file mesh_fem_global_function.h
    @brief Define mesh_fem whose base functions are global function given by the user.
 */
 #ifndef GETFEM_GLOBAL_FUNCTION_FEM_H__
@@ -105,7 +105,7 @@ namespace getfem {
     
     size_type memsize() const { return mesh_fem::memsize(); }
     
-    mesh_fem_global_function(getfem_mesh &me, dim_type q=1) : mesh_fem(me, q) {}
+    mesh_fem_global_function(mesh &me, dim_type q=1) : mesh_fem(me, q) {}
 
     void set_functions(pglobal_function f) 
     { fun.resize(1); fun[0]=f; adapt(); }

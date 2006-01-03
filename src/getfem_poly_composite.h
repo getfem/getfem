@@ -48,20 +48,20 @@ namespace getfem
     typedef dal::dynamic_tree_sorted<base_node,
       bgeot::imbricated_box_less> PTAB;
 
-    const getfem_mesh *mesh;
+    const mesh *msh;
     PTAB vertexes;
     std::vector<base_matrix> gtrans;
     std::vector<scalar_type> det;
     std::vector<base_node> orgs;
     mutable std::vector<bool> elt;
     
-    const getfem_mesh &linked_mesh(void) const { return *mesh; }
+    const mesh &linked_mesh(void) const { return *msh; }
     size_type nb_convex(void) const { return gtrans.size(); }
-    dim_type dim(void) const { return mesh->dim(); }
+    dim_type dim(void) const { return msh->dim(); }
     bgeot::pgeometric_trans trans_of_convex(size_type ic) const
-    { return mesh->trans_of_convex(ic); }
+    { return msh->trans_of_convex(ic); }
     
-    mesh_precomposite(const getfem_mesh &m);
+    mesh_precomposite(const mesh &m);
   };
 
   typedef const mesh_precomposite *pmesh_precomposite;
@@ -94,14 +94,14 @@ namespace getfem
   }
 
   void structured_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k,
-				  pgetfem_mesh &pm, pmesh_precomposite &pmp, bool force_simplexification=false);
+				  pmesh &pm, pmesh_precomposite &pmp, bool force_simplexification=false);
 
   /** simplexify a convex_ref.
       @param cvr the convex_ref.
       @param k the refinement level.
       @return a pointer to a statically allocated mesh. Do no free it!
   */
-  const getfem_mesh *
+  const mesh *
   refined_simplex_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k);
 
   /** simplexify the faces of a convex_ref

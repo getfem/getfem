@@ -150,7 +150,7 @@ namespace getfem {
     }
   }
 
-  void stored_mesh_slice::build(const getfem::getfem_mesh& m, 
+  void stored_mesh_slice::build(const getfem::mesh& m, 
 				const slicer_action *a, const slicer_action *b, const slicer_action *c, 
 				size_type nrefine) {
     clear();
@@ -220,7 +220,7 @@ namespace getfem {
 
   void stored_mesh_slice::merge_nodes() const {
     size_type count = 0;
-    getfem_mesh mp;
+    mesh mp;
     clear_merged_nodes();
     std::vector<size_type> iv;
     std::vector<const slice_node*> nv(nb_points());

@@ -18,7 +18,6 @@
 /*                                                                         */
 /* *********************************************************************** */
 #include <dal_basic.h>
-#include <ftool.h>
 #include <deque>
 #include <complex>
 
@@ -36,7 +35,7 @@ template<typename T> struct dynarray : public dal::dynamic_array<T> {
 };
 
 template <typename DA> void bench_da(unsigned N1, unsigned N2) {
-  double t = ftool::uclock_sec();
+  double t = dal::uclock_sec();
   DA v;
   for (unsigned n=0; n < N1; ++n) {
     v.clear();
@@ -44,9 +43,9 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       v.push_back(i);
     }
   }
-  cout << "  push_back         : " << ftool::uclock_sec()-t << " sec\n";
+  cout << "  push_back         : " << dal::uclock_sec()-t << " sec\n";
 
-  t = ftool::uclock_sec();
+  t = dal::uclock_sec();
   v.clear();
   v.resize(N2);
   for (unsigned n=0; n < N1*2; ++n) {
@@ -54,9 +53,9 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       v[i] = i+n;
     }
   }
-  cout << "  random access fill: " << ftool::uclock_sec()-t << " sec\n";
+  cout << "  random access fill: " << dal::uclock_sec()-t << " sec\n";
   
-  t = ftool::uclock_sec();
+  t = dal::uclock_sec();
   v.clear();
   v.resize(N2);
   for (unsigned n=0; n < N1*2; ++n) {
@@ -65,17 +64,17 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       *it += n;
     }
   }
-  cout << "  iterator fill     : " << ftool::uclock_sec()-t << " sec\n";
+  cout << "  iterator fill     : " << dal::uclock_sec()-t << " sec\n";
 
   DA v2; v2.resize(N2);
   { typename DA::iterator it = v2.begin(), ite = v2.end();
     for (; it != ite; ++it) *it = rand(); }
 
-  t = ftool::uclock_sec(); 
+  t = dal::uclock_sec(); 
   for (unsigned n=0; n < N1/10; ++n) {
     v = v2; std::sort(v.begin(), v.end());
   }
-  cout << "  sort              : " << ftool::uclock_sec()-t << " sec\n";
+  cout << "  sort              : " << dal::uclock_sec()-t << " sec\n";
   
 }
 
@@ -102,7 +101,7 @@ int main(void) {
     cout << "size of (int *)       : " << sizeof(int *)         << endl;
     cout << "size of short int     : " << sizeof(short int)     << endl;
     cout << "size of long int      : " << sizeof(long int)      << endl;
-    //    cout << "size of long long int : " << sizeof(long long int) << endl;
+    cout << "size of long long int : " << sizeof(long long int) << endl;
     cout << "size of char          : " << sizeof(char)          << endl;
     cout << "size of float         : " << sizeof(float)         << endl;
     cout << "size of double        : " << sizeof(double)        << endl;
@@ -113,6 +112,15 @@ int main(void) {
 	 << endl;
     cout << "size of complex<long double>: "
 	 << sizeof(std::complex<long double>) << endl;
+
+    assert(sizeof(dal::int8_type)   == 1);
+    assert(sizeof(dal::uint8_type)  == 1);
+    assert(sizeof(dal::int16_type)  == 2);
+    assert(sizeof(dal::uint16_type) == 2);
+    assert(sizeof(dal::int32_type)  == 4);
+    assert(sizeof(dal::uint32_type) == 4);
+    assert(sizeof(dal::int64_type)  == 8);
+    assert(sizeof(dal::uint64_type) == 8);
 
     // from stl_config.h
 #   ifdef __GNUC__

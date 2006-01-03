@@ -403,8 +403,8 @@ namespace getfem {
       
       TYPEDEF_MODEL_STATE_TYPES;
 
-      mesh_im &mim;
-      mesh_fem &mf_u;
+      const mesh_im &mim;
+      const mesh_fem &mf_u;
       mdbrick_parameter<VECTOR> lambda_, mu_;
       mdbrick_parameter<VECTOR> stress_threshold_;
 
@@ -493,7 +493,7 @@ namespace getfem {
 	  @param stress_th the stress threshold
 	  @param t_proj the projection object (projection on the admissible constraints set).
       */
-      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_,
+      mdbrick_plasticity(const mesh_im &mim_, const mesh_fem &mf_u_,
 			 value_type lambdai, value_type mui,
 			 value_type stress_th,
 			 const abstract_constraints_projection &t_proj_) 

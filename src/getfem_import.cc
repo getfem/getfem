@@ -81,7 +81,7 @@ namespace getfem {
     }
   };
 
-  static void import_gmsh_msh_file(std::ifstream& f, getfem_mesh& m) {
+  static void import_gmsh_msh_file(std::ifstream& f, mesh& m) {
     /* read the node list */
     ftool::read_until(f, "$NOD");
     
@@ -154,7 +154,7 @@ namespace getfem {
 
     supports linear and quadratic elements (quadrilaterals, use 9(or 27)-noded elements)
   */
-  static void import_gid_msh_file(std::ifstream& f, getfem_mesh& m) {
+  static void import_gid_msh_file(std::ifstream& f, mesh& m) {
     /* read the node list */
     size_type dim;
     enum { LIN,TRI,QUAD,TETR, PRISM, HEX,BADELTYPE } eltype=BADELTYPE;
@@ -322,7 +322,7 @@ namespace getfem {
 
     (only triangular 2D meshes)
   */
-  static void import_am_fmt_file(std::ifstream& f, getfem_mesh& m) {
+  static void import_am_fmt_file(std::ifstream& f, mesh& m) {
     /* read the node list */
     std::vector<size_type> tri;      
     size_type nbs,nbt;
@@ -346,7 +346,7 @@ namespace getfem {
 
     triangular/quadrangular 2D meshes
   */
-  static void import_emc2_mesh_file(std::ifstream& f, getfem_mesh& m) {
+  static void import_emc2_mesh_file(std::ifstream& f, mesh& m) {
     /* read the node list */
     std::vector<size_type> tri;      
     size_type nbs=0,nbt=0,nbq=0,dummy;
@@ -377,7 +377,7 @@ namespace getfem {
     }
   }
 
-  void import_mesh(const std::string& filename, const std::string& format, getfem_mesh& m) {
+  void import_mesh(const std::string& filename, const std::string& format, mesh& m) {
     m.clear();
     try {
       std::ifstream f(filename.c_str());
@@ -398,7 +398,7 @@ namespace getfem {
   }
 
   void import_mesh(std::ifstream& f, const std::string& format,
-		   getfem_mesh& m) {
+		   mesh& m) {
     if (ftool::casecmp(format,"gmsh")==0)
       import_gmsh_msh_file(f,m);
     else if (ftool::casecmp(format,"gid")==0)
@@ -411,19 +411,19 @@ namespace getfem {
 		   << format << " mesh type : unknown mesh type");
   }
 
-  void import_mesh(const std::string& filename, getfem_mesh& mesh) {
+  void import_mesh(const std::string& filename, mesh& msh) {
     if (filename.compare(0,4,"gid:")==0)
-      getfem::import_mesh(filename.substr(4), "gid", mesh);
+      getfem::import_mesh(filename.substr(4), "gid", msh);
     else if (filename.compare(0,5,"gmsh:") == 0) 
-      getfem::import_mesh(filename.substr(5), "gmsh", mesh);
+      getfem::import_mesh(filename.substr(5), "gmsh", msh);
     else if (filename.compare(0,7,"am_fmt:") == 0) 
-      getfem::import_mesh(filename.substr(7), "am_fmt", mesh);
+      getfem::import_mesh(filename.substr(7), "am_fmt", msh);
     else if (filename.compare(0,10,"emc2_mesh:") == 0)
-      getfem::import_mesh(filename.substr(10), "emc2_mesh", mesh);
-    else mesh.read_from_file(filename);
+      getfem::import_mesh(filename.substr(10), "emc2_mesh", msh);
+    else msh.read_from_file(filename);
   }
 
-  void maybe_remove_last_dimension(getfem_mesh &m) {
+  void maybe_remove_last_dimension(mesh &m) {
     bool is_flat;
     unsigned N = m.dim(); if (N < 1) return;
     for (dal::bv_visitor i(m.points().index()); !i.finished(); ++i)

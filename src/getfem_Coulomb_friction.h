@@ -28,9 +28,9 @@
 //
 //========================================================================
 
-/**@file getfem_Coulomb_friction.h
-   @brief Unilateral contact and Coulomb friction condition brick.
-*/
+/** @file getfem_Coulomb_friction.h
+ *  @brief Unilateral contact and Coulomb friction condition brick.
+ */
 #ifndef GETFEM_COULOMB_FRICTION_H__
 #define GETFEM_COULOMB_FRICTION_H__
 
@@ -42,9 +42,9 @@ namespace getfem {
 # define MDBRICK_COULOMB_FRICTION 434245
 
   /**
-     Unilateral contact and Coulomb friction condition brick.
-     (for conformal small displacement problems)
-     @ingroup bricks
+   * Unilateral contact and Coulomb friction condition brick.
+   * (for conformal small displacement problems)
+   * @ingroup bricks
    */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Coulomb_friction : public mdbrick_abstract<MODEL_STATE>  {
@@ -59,7 +59,7 @@ namespace getfem {
     value_type r, alpha, beta;
     size_type d, nbc;
 
-    mesh_fem *mf_u;
+    const mesh_fem *mf_u;
     gmm::sub_interval SUBU, SUBN, SUBT;
     
     bool Tresca_version, symmetrized, contact_only, stationary;
@@ -132,25 +132,25 @@ namespace getfem {
     }
 
   public :
-
+    
     inline size_type nb_contact_nodes(void) const
     { return gmm::mat_nrows(BN); }
-
+    
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       precomp(MS, i0);
-            
+      
       gmm::copy(gmm::scaled(BN, -alpha),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBN));
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	if (RLN[i] >= value_type(0)) {
 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-				gmm::sub_interval(SUBN.first()+i,1), SUBU));
+				     gmm::sub_interval(SUBN.first()+i,1), SUBU));
 	  MS.tangent_matrix()(SUBN.first()+i, SUBN.first()+i)=-value_type(1)/r;
 	}
       }
-    
+      
       if (!contact_only) {
 	base_matrix pg(d-1, d-1);
 	base_vector vg(d-1);
@@ -165,7 +165,7 @@ namespace getfem {
 	  if (!stationary)
 	    gmm::mult(gmm::scaled(pg, -beta), 
 		      gmm::sub_matrix(BT, SUBI,
-				   gmm::sub_interval(0, gmm::mat_ncols(BT))),
+				      gmm::sub_interval(0, gmm::mat_ncols(BT))),
 		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
 	  
 	  if (!Tresca_version) {
@@ -201,7 +201,7 @@ namespace getfem {
 						    SUBT, SUBU)), tmp);
 	  gmm::copy(tmp, gmm::sub_matrix(MS.tangent_matrix(), SUBU, SUBT));
 	}
-      } 
+      }
       else {
 	gmm::copy(gmm::scaled(gmm::transposed(BN), value_type(-1)),
 		  gmm::sub_matrix(MS.tangent_matrix(), SUBU, SUBN));
@@ -214,7 +214,7 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       precomp(MS, i0);
       value_type c1(1);
-    
+      
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	RLN[i] = std::min(value_type(0), RLN[i]);
 	if (!contact_only)
@@ -222,7 +222,7 @@ namespace getfem {
 			  Tresca_version ? threshold[i]
 			  : -friction_coef[i]*(MS.state())[SUBN.first()+i]);
       }
-
+      
       if (symmetrized) {
 	gmm::mult_add(gmm::transposed(BN), gmm::scaled(RLN, -c1),
 		      gmm::sub_vector(MS.residu(), SUBU));

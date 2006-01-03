@@ -45,7 +45,8 @@ namespace getfem {
   }
 
   void mdbrick_abstract_common_base::update_from_context(void) const {
-    // cerr << "update_from_context[" << this << " : " <<  dal::demangle(typeid(*this).name()) << "]\n";
+    // cerr << "update_from_context[" << this << " : " 
+    //      <<  dal::demangle(typeid(*this).name()) << "]\n";
     nb_total_dof = 0;
     nb_total_constraints = 0;
     total_mixed_variables.clear();

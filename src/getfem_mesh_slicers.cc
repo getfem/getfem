@@ -42,18 +42,18 @@ namespace getfem {
   }
 
   /* boundary extraction */
-  slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA, 
+  slicer_boundary::slicer_boundary(const mesh& m, slicer_action &sA, 
 				   const mesh_region& cvflst) : A(&sA) {
     build_from(m,cvflst);
   }
 
-  slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA) : A(&sA) {
+  slicer_boundary::slicer_boundary(const mesh& m, slicer_action &sA) : A(&sA) {
     mesh_region cvflist;
     outer_faces_of_mesh(m, cvflist);
     build_from(m,cvflist);
   }
 
-  void slicer_boundary::build_from(const getfem_mesh& m, const mesh_region& cvflst) {
+  void slicer_boundary::build_from(const mesh& m, const mesh_region& cvflst) {
     if (m.convex_index().card()==0) return;
     convex_faces.resize(m.convex_index().last()+1, slice_node::faces_ct(0L));
     for (mr_visitor i(cvflst); !i.finished(); ++i) 
@@ -302,7 +302,7 @@ namespace getfem {
     ms.update_nodes_index();
   }
 
-  slicer_mesh_with_mesh::slicer_mesh_with_mesh(const getfem_mesh& slm_) :  slm(slm_) { 
+  slicer_mesh_with_mesh::slicer_mesh_with_mesh(const mesh& slm_) :  slm(slm_) { 
     base_node min,max;
     for (dal::bv_visitor cv(slm.convex_index()); !cv.finished(); ++cv) {
       bgeot::bounding_box(min,max,slm.points_of_convex(cv),slm.trans_of_convex(cv));
@@ -623,7 +623,7 @@ namespace getfem {
 
   void mesh_slicer::exec_(const short_type *pnrefine, int nref_stride, const mesh_region& cvlst) {
     std::vector<base_node> cvm_pts;
-    const getfem_mesh *cvm = 0;
+    const mesh *cvm = 0;
     const bgeot::mesh_structure *cvms = 0;
     bgeot::geotrans_precomp_pool gppool;
     bgeot::pgeotrans_precomp pgp = 0;

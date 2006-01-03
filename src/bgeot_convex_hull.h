@@ -38,8 +38,7 @@
 
 /* a refaire ... */
 
-namespace bgeot
-{
+namespace bgeot {
 
   /**
     fonction qui a partir d'un liste de points donne l'env. convexe
@@ -178,8 +177,7 @@ namespace bgeot
 
   template<class PT_TAB>
     void sub_convex_hull(mesh_structure &cv, const PT_TAB &point_list,
-		  const typename PT_TAB::value_type &pt0, int N, double EPS)
-  {
+		  const typename PT_TAB::value_type &pt0, int N, double EPS) {
     typedef typename PT_TAB::value_type PT;
     dal::dynamic_array<PT> sub_point_list;
 

@@ -38,7 +38,7 @@
 #include <iostream>
 
 namespace getfem {
-  class getfem_mesh;
+  class mesh;
 
   /** imports a mesh file.
       format can be:
@@ -50,7 +50,7 @@ namespace getfem {
        boundary (2D elements) and the boundary of the boundary (line
        elements!).
        getfem makes use of the physical "region" number stored with each element in the gmsh file
-       to fill the corresponding region of the getfem_mesh object.
+       to fill the corresponding region of the mesh object.
 
        For a mesh of dimension N, getfem builds a mesh with the
        convexes listed in the gmsh file whose dimension are N, the
@@ -64,13 +64,13 @@ namespace getfem {
         [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm]
   */
   void import_mesh(const std::string& filename, const std::string& format,
-		   getfem_mesh& m);
+		   mesh& m);
   void import_mesh(std::ifstream& f, const std::string& format,
-		   getfem_mesh& m);
-  void import_mesh(const std::string& filename, getfem_mesh& m);
+		   mesh& m);
+  void import_mesh(const std::string& filename, mesh& m);
 
   /** for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
       the z-component of nodes should be removed */
-  void maybe_remove_last_dimension(getfem_mesh &mesh);
+  void maybe_remove_last_dimension(mesh &msh);
 }
 #endif /* GETFEM_IMPORT_H__  */

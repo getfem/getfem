@@ -11,7 +11,7 @@
 using getfem::scalar_type;
 using getfem::size_type;
 using getfem::dim_type;
-using getfem::getfem_mesh;
+using getfem::mesh;
 using getfem::mesh_fem;
 using getfem::pfem;
 using getfem::base_node;
@@ -78,8 +78,8 @@ base_node shake_func(const base_node& x) {
   return z;
 }
 
-void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX, size_type K, bool noised) {
-  getfem_mesh mesh;
+void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX, size_type K, bool noised) {
+  mesh msh;
   base_node org(N); org.fill(0.0);
   std::vector<base_small_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
@@ -89,14 +89,14 @@ void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type dim, size_type N, size_
   }
   switch (MESH_TYPE) {
   case 0 : getfem::parallelepiped_regular_simplex_mesh
-      (mesh, N, org, vtab.begin(), ref.begin()); break;
+      (msh, N, org, vtab.begin(), ref.begin()); break;
   case 1 : getfem::parallelepiped_regular_mesh
-      (mesh, N, org, vtab.begin(), ref.begin()); break;
+      (msh, N, org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
-      (mesh, N, org, vtab.begin(), ref.begin()); break;
+      (msh, N, org, vtab.begin(), ref.begin()); break;
   default: DAL_THROW(dal::failure_error, "invalid mesh type\n");
   }
-  mesh.optimize_structure();
+  msh.optimize_structure();
   m.clear();
   /* build a mesh with a geotrans of degree K */
   {
@@ -107,14 +107,14 @@ void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type dim, size_type N, size_
     case 2: pgt = bgeot::prism_geotrans(N,K); break;
     default: assert(0);
     }
-    for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(msh.convex_index()); !cv.finished(); ++cv) {
       if (K == 1) { 
-	m.add_convex_by_points(mesh.trans_of_convex(cv), mesh.points_of_convex(cv).begin()); 
+	m.add_convex_by_points(msh.trans_of_convex(cv), msh.points_of_convex(cv).begin()); 
       } else {
 	std::vector<base_node> pts(pgt->nb_points());
 	for (size_type i=0; i < pgt->nb_points(); ++i) {
-	  pts[i] = mesh.trans_of_convex(cv)->transform(pgt->convex_ref()->points()[i], 
-						       mesh.points_of_convex(cv));
+	  pts[i] = msh.trans_of_convex(cv)->transform(pgt->convex_ref()->points()[i], 
+						       msh.points_of_convex(cv));
 	}
 	m.add_convex_by_points(pgt, pts.begin());
       }
@@ -200,7 +200,7 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
   chrono c;
   cout << "  Same simplex mesh,  N=" << N << ", NX=" << setw(3) << NX 
        << ", P" << K << "<->P" << K+1 << ":"; cout.flush();
-  getfem_mesh m;
+  mesh m;
   build_mesh(m, 0, N, N, NX, K, false);
   mesh_fem mf1(m,Qdim1); mf1.set_finite_element(getfem::PK_fem(N,K));
   mesh_fem mf2(m,Qdim2); mf2.set_finite_element(getfem::PK_fem(N,K+1));
@@ -225,7 +225,7 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
   chrono c; c.init();
   cout << "  Different meshes, dim=" << dim << " N=" << N << ", NX=" << setw(3) << NX 
        << ", P" << K << ":"; cout.flush();
-  getfem_mesh m1, m2;
+  mesh m1, m2;
   size_type gK=1;
   build_mesh(m1, 0, dim, N, NX, gK, true);
   build_mesh(m2, 0, dim, N, NX, gK, true);
@@ -248,7 +248,7 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
 }
 
 void test0() {
-  getfem_mesh m1, m2;
+  mesh m1, m2;
   std::stringstream ss1("BEGIN POINTS LIST\n"
 		       "  POINT  0  2.5  0.6\n"
 		       "  POINT  1  5  0\n"
@@ -259,8 +259,8 @@ void test0() {
 		       "  POINT  6  2.7  2.4\n"
 		       "END POINTS LIST\n\n"
 		       "BEGIN MESH STRUCTURE DESCRIPTION\n"
-		       "CONVEX 0    GT_QK(2,1)      0  1  2  3\n"
-		       "CONVEX 1    GT_QK(2,1)      4  2  5  6\n"
+		       "CONVEX 0    \'GT_QK(2,1)\'      0  1  2  3\n"
+		       "CONVEX 1    \'GT_QK(2,1)\'      4  2  5  6\n"
 		       "END MESH STRUCTURE DESCRIPTION");
   m1.read_from_file(ss1);
   std::stringstream ss2("BEGIN POINTS LIST\n"
@@ -276,12 +276,12 @@ void test0() {
 			"  POINT  9  2.1  3\n"
 			"END POINTS LIST\n"
 			"BEGIN MESH STRUCTURE DESCRIPTION\n"
-			"CONVEX 0    GT_PK(2,1)      0  1  2\n"
-			"CONVEX 1    GT_PK(2,1)      3  0  2\n"
-			"CONVEX 2    GT_PK(2,1)      4  3  2\n"
-			"CONVEX 3    GT_PK(2,1)      5  6  7\n"
-			"CONVEX 4    GT_PK(2,1)      8  5  7\n"
-			"CONVEX 5    GT_PK(2,1)      9  8  7\n"
+			"CONVEX 0    \'GT_PK(2,1)\'      0  1  2\n"
+			"CONVEX 1    \'GT_PK(2,1)\'      3  0  2\n"
+			"CONVEX 2    \'GT_PK(2,1)\'      4  3  2\n"
+			"CONVEX 3    \'GT_PK(2,1)\'      5  6  7\n"
+			"CONVEX 4    \'GT_PK(2,1)\'      8  5  7\n"
+			"CONVEX 5    \'GT_PK(2,1)\'      9  8  7\n"
 			"END MESH STRUCTURE DESCRIPTION\n");
   m2.read_from_file(ss2);
   mesh_fem mf1(m1,1), mf2(m2,1);

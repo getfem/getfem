@@ -28,25 +28,26 @@
 //
 //========================================================================
 
-/**@file getfem_assembling.h
-   @brief Miscelleanous assembly routines for common PDEs.
-*/
+/** @file getfem_assembling.h
+ *  @brief Miscelleanous assembly routines for common PDEs.
+ */
 
-/**@defgroup asm Assembly routines*/
+/** @defgroup asm Assembly routines */
 
 #ifndef GETFEM_ASSEMBLING_H__
 #define GETFEM_ASSEMBLING_H__
 
 #include <getfem_assembling_tensors.h>
 
-namespace getfem
-{
+namespace getfem {
+
   template <typename VEC>
-  scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			     const mesh_region &rg=mesh_region::all_convexes()) {
+  scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf,
+			     const VEC &U, const mesh_region &rg
+			     = mesh_region::all_convexes()) {
     generic_assembly assem;
     if (mf.get_qdim() != 1) DAL_THROW(dal::failure_error, "expecting qdim=1");
-    assem.set("u=data(#1); t = comp(Base(#1)); V$1() += t(i); V$2() += t(i).u(i)");
+    assem.set("u=data(#1); t = comp(Base(#1)); V$1()+=t(i); V$2()+=t(i).u(i)");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
@@ -277,7 +278,8 @@ namespace getfem
 					   const mesh_fem &mf_data,
 					   const VECT &A, 
 					   const mesh_region &rg,
-					   const char *assembly_description, T) {
+					   const char *assembly_description,
+					   T) {
     generic_assembly assem(assembly_description);
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -295,10 +297,13 @@ namespace getfem
 					   const mesh_fem &mf_data,
 					   const VECT &A, 
 					   const mesh_region &rg,
-					   const char *assembly_description, std::complex<T>) {
-    asm_matrix_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,gmm::real_part(A),rg,
+					   const char *assembly_description,
+					   std::complex<T>) {
+    asm_matrix_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
+					gmm::real_part(A),rg,
 					assembly_description, T());
-    asm_matrix_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,gmm::imag_part(A),rg,
+    asm_matrix_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
+					gmm::imag_part(A),rg,
 					assembly_description, T());
   }
 
@@ -382,8 +387,8 @@ namespace getfem
   /**
      assembly of @f$\int{qu.v}@f$
 
-     (if @f$u@f$ is a vector field of size @f$N@f$, @f$q@f$ is a square matrix @f$N\times N@f$
-     used by assem_general_boundary_conditions
+     (if @f$u@f$ is a vector field of size @f$N@f$, @f$q@f$ is a square
+     matrix @f$N\times N@f$ used by assem_general_boundary_conditions
 
      convention: Q is of the form 
      Q1_11 Q2_11 ..... Qn_11
@@ -469,17 +474,15 @@ namespace getfem
       tensor. This is more a demonstration of generic assembly than
       something useful !  
 
-      Note that this function is just an alias for asm_stiffness_matrix_for_vector_elliptic.
+      Note that this function is just an alias for
+      asm_stiffness_matrix_for_vector_elliptic.
 
       @ingroup asm
   */
   template<typename MAT, typename VECT> void
-  asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
-						   const mesh_im &mim, 
-						   const mesh_fem &mf, 
-						   const mesh_fem &mf_data, 
-						   const VECT &H,
-						   const mesh_region &rg = mesh_region::all_convexes()) {
+  asm_stiffness_matrix_for_linear_elasticity_Hooke
+  (MAT &RM, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data, 
+   const VECT &H, const mesh_region &rg = mesh_region::all_convexes()) {
     asm_stiffness_matrix_for_vector_elliptic(RM, mim, mf, mf_data, H, rg);
   }
 
@@ -543,10 +546,9 @@ namespace getfem
      @ingroup asm
    */
   template<typename MAT>
-  void asm_stiffness_matrix_for_homogeneous_laplacian(const MAT &M_,
-						      const mesh_im &mim, 
-						      const mesh_fem &mf, 
-						      const mesh_region &rg = mesh_region::all_convexes()) {
+  void asm_stiffness_matrix_for_homogeneous_laplacian
+  (const MAT &M_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &M = const_cast<MAT &>(M_);
     generic_assembly 
       assem("M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i))");
@@ -575,16 +577,14 @@ namespace getfem
   }
 
   /**
-     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$ , where @f$a(x)@f$ is scalar.
+     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$ , where @f$a(x)@f$
+     is scalar.
      @ingroup asm
    */
   template<typename MAT, typename VECT>
-  void asm_stiffness_matrix_for_laplacian(MAT &M, 
-					  const mesh_im &mim,
-					  const mesh_fem &mf,
-					  const mesh_fem &mf_data,
-					  const VECT &A, 
-					  const mesh_region &rg = mesh_region::all_convexes()) {
+  void asm_stiffness_matrix_for_laplacian
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
+   const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     asm_matrix_real_or_complex_1_param(M, mim, mf, mf_data, A, rg, 
@@ -761,8 +761,252 @@ namespace getfem
 	 ASMDIR_BUILDALL = 7 };
 
   /**
-     Assembly of Dirichlet constraints h(x)u(x) = r(x), where h is a
-     QxQ matrix field (Q == mf_u.get_qdim()), outputs a
+     Assembly of Dirichlet constraints u(x) = r(x) in a weak form
+     @f[ \int_{\Gamma} u(x)v(x) = \int_{\Gamma} r(x)v(x) \forall v@f],
+     where @f$ v @f$ is in
+     the space of multipliers corresponding to mf_mult.
+
+     size(r_data) = Q   * nb_dof(mf_rh);
+
+     This function tries hard to make H diagonal or mostly diagonal:
+     this function is able to "simplify" the dirichlet constraints (see below)
+     version = |ASMDIR_BUILDH : build H
+     |ASMDIR_BUILDR : build R
+     |ASMDIR_SIMPLIFY : simplify
+     |ASMDIR_BUILDALL : do everything.
+
+     @ingroup asm
+  */
+
+  template<typename MAT, typename VECT1, typename VECT2>
+  void asm_dirichlet_constraints
+  (MAT &H, VECT1 &R, const mesh_im &mim, const mesh_fem &mf_u,
+   const mesh_fem &mf_mult, const mesh_fem &mf_r,
+   const VECT2 &r_data, const mesh_region &region,
+   int version =  ASMDIR_BUILDALL) {
+    typedef typename gmm::linalg_traits<VECT1>::value_type value_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
+
+    
+    region.from_mesh(mim.linked_mesh()).error_if_not_faces();
+    if (mf_r.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    if (version & ASMDIR_BUILDH)
+      asm_mass_matrix(H, mim, mf_mult, mf_u, region);
+    if (version & ASMDIR_BUILDR)
+      asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
+
+    gmm::clean(H, gmm::default_tol(magn_type())
+	       * gmm::mat_maxnorm(H) * magn_type(100));
+
+    // Verifications and simplifications
+
+    pfem pf_u, pf_r, pf_m;
+    bool warning_msg1 = false, warning_msg2 = false;
+    dal::bit_vector simplifiable_dofs, nonsimplifiable_dofs;
+    std::vector<size_type> simplifiable_indices(mf_mult.nb_dof());
+    std::vector<value_type> simplifiable_values(mf_mult.nb_dof());
+    std::vector<value_type> v1, v2, v3;
+
+    for (mr_visitor v(region); !v.finished(); v.next()) {
+      if (!v.is_face())
+	DAL_THROW(dal::failure_error, "attempt to impose a dirichlet "
+		  "on the interior of the domain!");
+      size_type cv = v.cv(), f = v.f();
+
+      if (!mf_u.convex_index().is_in(cv) || !mf_r.convex_index().is_in(cv) ||
+	  !mf_mult.convex_index().is_in(cv)) 
+	DAL_THROW(dal::failure_error, "attempt to impose a dirichlet "
+		  "condition on a convex with no FEM!");
+      pf_u = mf_u.fem_of_element(cv); 
+      pf_r = mf_r.fem_of_element(cv);
+      pf_m = mf_mult.fem_of_element(cv);
+
+      if (!pf_m->is_lagrange() && !warning_msg1) {
+	DAL_WARNING3("Dirichlet condition with non-lagrange multiplier fem. "
+		     "see the documentation about Dirichlet conditions.");
+	warning_msg1 = true;
+      }
+      
+      if (!(version & ASMDIR_SIMPLIFY)) continue;
+      
+      mesh_fem::ind_ref_mesh_dof_ind_ct pf_u_ct
+	= mf_u.ind_dof_of_face_of_element(cv, f);
+      mesh_fem::ind_ref_mesh_dof_ind_ct pf_r_ct
+	= mf_r.ind_dof_of_face_of_element(cv, f);
+      mesh_fem::ind_ref_mesh_dof_ind_ct pf_m_ct
+	= mf_mult.ind_dof_of_face_of_element(cv, f);
+      
+      size_type pf_u_nbdf = pf_u_ct.size();
+      size_type pf_m_nbdf = pf_m_ct.size();
+      size_type pf_u_nbdf_loc = pf_u->structure(cv)->nb_points_of_face(f);
+      size_type pf_m_nbdf_loc = pf_m->structure(cv)->nb_points_of_face(f);
+      size_type pf_r_nbdf_loc = pf_r->structure(cv)->nb_points_of_face(f);
+
+      if (pf_u_nbdf < pf_m_nbdf && !warning_msg2) {
+	DAL_WARNING2("Dirichlet condition with a to reach multiplier fem. "
+		     "see the documentation about Dirichlet conditions.");
+	warning_msg2 = true;
+      }
+      
+      if (pf_u_nbdf != pf_m_nbdf || 
+	  ((pf_u != pf_r) && (pf_u_nbdf_loc != pf_m_nbdf_loc))) { 
+	for (size_type i = 0; i < pf_m_nbdf; ++i)
+	  nonsimplifiable_dofs.add(pf_m_ct[i]);
+	continue;
+      }
+      
+      for (size_type i = 0; i < pf_m_nbdf; ++i) {
+	simplifiable_dofs.add(pf_m_ct[i]);
+	simplifiable_indices[pf_m_ct[i]] = pf_u_ct[i];
+      }
+
+      if (!(version & ASMDIR_BUILDR)) continue;
+
+      if (pf_u == pf_r) { // simplest simplification.
+	cout << "simple simplification\n";
+	size_type Qratio = mf_u.get_qdim() / mf_r.get_qdim();
+	for (size_type i = 0; i < pf_m_nbdf; ++i) {
+	  simplifiable_values[pf_m_ct[i]]
+	    = r_data[pf_r_ct[i/Qratio]*Qratio+(i%Qratio)];
+	}
+      }
+      else { // local inversion of the mass matrix.
+	cout << "local inv\n";
+	bgeot::base_tensor t1, t2;
+	pintegration_method pim = mim.int_method_of_element(cv);
+	bgeot::pgeometric_trans pgt = mf_u.linked_mesh().trans_of_convex(cv);
+	getfem::pmat_elem_type pme1 =
+	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
+				   getfem::mat_elem_base(pf_u));
+	getfem::pmat_elem_computation pmec1 = getfem::mat_elem(pme1,pim,pgt);
+	pmec1->gen_compute_on_face
+	    (t1, mf_u.linked_mesh().points_of_convex(cv), f, cv);
+	getfem::pmat_elem_type pme2 =
+	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
+				   getfem::mat_elem_base(pf_r));
+	getfem::pmat_elem_computation pmec2
+	  = getfem::mat_elem(pme2, pim, pgt);
+	pmec2->gen_compute_on_face
+	  (t2, mf_u.linked_mesh().points_of_convex(cv), f, cv);
+	  
+	
+	base_matrix m1(pf_m_nbdf_loc, pf_u_nbdf_loc);
+	base_matrix m2(pf_m_nbdf_loc, pf_r_nbdf_loc);
+	
+	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
+	  for (size_type j = 0; j < pf_u_nbdf_loc; ++j)
+	    m1(i, j) = t1(pf_m->structure(cv)->ind_points_of_face(f)[i],
+			  pf_u->structure(cv)->ind_points_of_face(f)[j]);
+	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
+	  for (size_type j = 0; j < pf_r_nbdf_loc; ++j)
+	    m2(i, j) = t2(pf_m->structure(cv)->ind_points_of_face(f)[i],
+			  pf_r->structure(cv)->ind_points_of_face(f)[j]);
+	
+	gmm::lu_inverse(m1);
+	size_type Q =  pf_u_nbdf / pf_u_nbdf_loc;
+	size_type Qu = mf_u.get_qdim();
+	
+	v1.resize(pf_r_nbdf_loc * (Qu / Q));
+	v2.resize(pf_m_nbdf_loc);
+	v3.resize(pf_u_nbdf_loc);
+
+	for (size_type k = 0; k < Q; ++k) {
+	  if (Q > 1 || (Qu == 1)) {
+	    for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
+	      v1[i] = r_data[pf_r_ct[i]*Q+k];
+	  }
+	  else {
+	    for (size_type l = 0; l < Qu; ++l)
+	      for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
+		v1[i*Qu+l] = r_data[pf_r_ct[i]*Qu+l];
+	  }
+	  gmm::mult(m2, v1, v2);
+	  gmm::mult(m1, v2, v3);
+	  
+	  for (size_type i = 0; i < pf_u_nbdf_loc; ++i)
+	    simplifiable_values[pf_m_ct[i*Q+k]] = v3[i];
+	}
+      }
+    }
+    
+    if (version & ASMDIR_SIMPLIFY) {
+      if (simplifiable_dofs.card() > 0)
+	{ DAL_TRACE3("Simplification of the Dirichlet condition"); }
+      else
+	DAL_TRACE3("Sorry, no simplification of the Dirichlet condition");
+      if (nonsimplifiable_dofs.card() > 0 && simplifiable_dofs.card() > 0)
+	DAL_WARNING3("Partial simplification of the Dirichlet condition");
+
+      for (dal::bv_visitor i(simplifiable_dofs); !i.finished(); ++i)
+	if (!(nonsimplifiable_dofs[i])) {
+	  if (version & ASMDIR_BUILDH) {  /* "erase" the row i */
+	    const mesh::ind_cv_ct &cv_ct = mf_mult.convex_to_dof(i);
+	    for (size_type j = 0; j < cv_ct.size(); ++j) {
+	      size_type cv = cv_ct[j];
+	      for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
+		H(i, mf_u.ind_dof_of_element(cv)[k]) = value_type(0);
+	    }
+	    H(i, simplifiable_indices[i]) = value_type(1);
+	  }
+	  if (version & ASMDIR_BUILDR) R[i] = simplifiable_values[i];
+	}
+    }
+  }
+
+
+
+    /**
+     Assembly of normal part Dirichlet constraints u(x)n = r(x) (where n is
+     the outward unit normal) in a weak form
+     @f[ \int_{\Gamma} (u(x)n)v(x) = \int_{\Gamma} r(x)v(x) \forall v@f],
+     where @f$ v @f$ is in
+     the space of multipliers corresponding to mf_mult.
+
+     size(r_data) = Q   * nb_dof(mf_rh);
+
+     version = |ASMDIR_BUILDH : build H
+     |ASMDIR_BUILDR : build R
+     |ASMDIR_BUILDALL : do everything.
+
+     @ingroup asm
+  */
+
+  template<typename MAT, typename VECT1, typename VECT2>
+  void asm_normal_part_dirichlet_constraints
+  (MAT &H, VECT1 &R, const mesh_im &mim, const mesh_fem &mf_u,
+   const mesh_fem &mf_mult, const mesh_fem &mf_r,
+   const VECT2 &r_data, const mesh_region &region,
+   int version =  ASMDIR_BUILDALL) {
+    typedef typename gmm::linalg_traits<VECT1>::value_type value_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
+
+    
+    region.from_mesh(mim.linked_mesh()).error_if_not_faces();
+    if (mf_r.get_qdim() != 1 || mf_mult.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid mesh fem (Qdim=1 required)");
+    if (version & ASMDIR_BUILDH) {
+      generic_assembly assem;  
+      assem.set("M(#1,#2)+=comp(vBase(#1).Normal().Base(#2))(:,i,i,:);");
+      assem.push_mi(mim);
+      assem.push_mf(mf_u);
+      assem.push_mf(mf_mult);
+      assem.push_mat(H);
+      assem.assembly(region);
+    }
+    if (version & ASMDIR_BUILDR)
+      asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
+
+    gmm::clean(H, gmm::default_tol(magn_type())
+	       * gmm::mat_maxnorm(H) * magn_type(100));
+
+  }
+
+
+
+  /**
+     Assembly of generalized Dirichlet constraints h(x)u(x) = r(x),
+     where h is a QxQ matrix field (Q == mf_u.get_qdim()), outputs a
      (under-determined) linear system MU=B.
 
      size(h_data) = Q^2 * nb_dof(mf_rh);
@@ -779,12 +1023,11 @@ namespace getfem
   */
 
   template<typename MAT, typename VECT1, typename VECT2, typename VECT3>
-  void asm_dirichlet_constraints(MAT &H, VECT1 &R, 
-				 const mesh_im &mim, const mesh_fem &mf_u,
-				 const mesh_fem &mf_h, const mesh_fem &mf_r,
-				 const VECT2 &h_data, const VECT3 &r_data,
-				 const mesh_region &region,
-				 int version =  ASMDIR_BUILDALL) {
+  void asm_generalized_dirichlet_constraints
+  (MAT &H, VECT1 &R, const mesh_im &mim, const mesh_fem &mf_u,
+   const mesh_fem &mf_h, const mesh_fem &mf_r, const VECT2 &h_data,
+   const VECT3 &r_data, const mesh_region &region,
+   int version =  ASMDIR_BUILDALL) {
     mesh_region::face_bitset nf;
     pfem pf_u, pf_rh;
 
@@ -800,7 +1043,8 @@ namespace getfem
 	if (!(bdof[i])) ind.push_back(i);
       gmm::clear(gmm::sub_matrix(H, gmm::sub_index(ind)));
     }
-    if (version & ASMDIR_BUILDR) asm_source_term(R, mim, mf_u, mf_r, r_data, region);
+    if (version & ASMDIR_BUILDR)
+      asm_source_term(R, mim, mf_u, mf_r, r_data, region);
     if (!(version & ASMDIR_SIMPLIFY)) return;
 
     /* step 2 : simplification of simple dirichlet conditions */
@@ -837,6 +1081,8 @@ namespace getfem
 	      -> the constraint is simplified:
 	      we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
 	      with             H_j*phi_i = R_j     
+	      --> Le principe peut être faux : non identique à la projection
+	      L^2 et peut entrer en conccurence avec les autres ddl -> a revoir
 	    */
 	    if (tdof_u == tdof_rh &&
 		bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
@@ -868,37 +1114,38 @@ namespace getfem
     }
   }
 
-  /**
-     simplest version of asm_dirichlet_constraints.
-     @ingroup asm
-  */
-  template<typename MAT, typename VECT>
-  void asm_dirichlet_constraints(MAT &H, VECT &R, 
-				 const mesh_im &mim, 
-				 const mesh_fem &mf_u,
-				 const mesh_fem &mf_r,
-				 const VECT &r_data, 
-				 const mesh_region &region,
-				 int version = ASMDIR_BUILDALL) {
-    if (mf_r.get_qdim() != 1) 
-      DAL_THROW(invalid_argument,"mf_r should be a scalar (qdim=1) mesh_fem");
-    mesh_fem mf_h_(mim.linked_mesh()); 
-    bool is_lagrange = true;
-    for (dal::bv_visitor cv(mf_r.convex_index()); !cv.finished(); ++cv) 
-      if (!mf_r.fem_of_element(cv)->is_lagrange()) { is_lagrange = false; break; }
+//   /**
+//      simplest version of asm_generalized_dirichlet_constraints.
+//      @ingroup asm
+//   */
+//   template<typename MAT, typename VECT>
+//   void asm_generalized_dirichlet_constraints(MAT &H, VECT &R, 
+// 				 const mesh_im &mim, 
+// 				 const mesh_fem &mf_u,
+// 				 const mesh_fem &mf_r,
+// 				 const VECT &r_data, 
+// 				 const mesh_region &region,
+// 				 int version = ASMDIR_BUILDALL) {
+//     if (mf_r.get_qdim() != 1) 
+//       DAL_THROW(invalid_argument,"mf_r should be a scalar (qdim=1) mesh_fem");
+//     mesh_fem mf_h_(mim.linked_mesh()); 
+//     bool is_lagrange = true;
+//     for (dal::bv_visitor cv(mf_r.convex_index()); !cv.finished(); ++cv) 
+//       if (!mf_r.fem_of_element(cv)->is_lagrange()) { is_lagrange = false; break; }
     
-    const mesh_fem &mf_h = (is_lagrange ? mf_r : mf_h_);
-    if (!is_lagrange) mf_h_.set_classical_finite_element(0);
+//     const mesh_fem &mf_h = (is_lagrange ? mf_r : mf_h_);
+//     if (!is_lagrange) mf_h_.set_classical_finite_element(0);
     
-    size_type N = mf_h.nb_dof(), Q=mf_u.get_qdim();
-    VECT h_data(gmm::sqr(mf_u.get_qdim())*N); gmm::clear(H);
+//     size_type N = mf_h.nb_dof(), Q=mf_u.get_qdim();
+//     VECT h_data(gmm::sqr(mf_u.get_qdim())*N);
     
-    for (size_type i=0; i < N; ++i)
-      for (size_type q=0; q < Q; ++q)  h_data[i*Q*Q+q*Q+q]=1;
+//     for (size_type i=0; i < N; ++i)
+//       for (size_type q=0; q < Q; ++q)
+// 	h_data[i*Q*Q+q*Q+q]=1;
    
-    asm_dirichlet_constraints(H, R, mim, mf_u, mf_h, mf_r, h_data, r_data,
-			      region, version);
-  }
+//     asm_generalized_dirichlet_constraints(H, R, mim, mf_u, mf_h, mf_r,
+// 					  h_data, r_data, region, version);
+//   }
 
   /**
      Faster (and simpler) assembly of simple Dirichlet conditions (
@@ -957,12 +1204,13 @@ namespace getfem
   void add_Dirichlet_dof(MATRM &RM, VECT1 &B,
 			 const mesh_fem &mf,
 			 size_type dof, 
-			 typename gmm::linalg_traits<MATRM>::value_type dof_val) {
+			 typename gmm::linalg_traits<MATRM>::value_type
+			 dof_val) {
     size_type Q=mf.get_qdim();
-    bgeot::mesh_convex_ind_ct dofcv = mf.convex_to_dof(dof);
+    const mesh::ind_cv_ct &dofcv = mf.convex_to_dof(dof);
     pfem pf1;
 
-    for (bgeot::mesh_convex_ind_ct::const_iterator it = dofcv.begin();
+    for (mesh::ind_cv_ct::const_iterator it = dofcv.begin();
 	 it != dofcv.end(); ++it) {
       pf1 = mf.fem_of_element(*it);
       if (pf1->target_dim() != 1)
@@ -992,9 +1240,9 @@ namespace getfem
 
       @ingroup asm
   */
-  template<typename MAT1, typename MAT2, typename VECT>
+  template<typename MAT1, typename MAT2, typename VECT1, typename VECT2>
   size_type Dirichlet_nullspace(const MAT1 &H, MAT2 &NS,
-				const VECT &R, VECT &U0) {
+				const VECT1 &R, VECT2 &U0) {
 
     // To be finalized.
     //  . In order to be used with any sparse matrix type

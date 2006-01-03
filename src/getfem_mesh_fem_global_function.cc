@@ -201,11 +201,6 @@ namespace getfem {
     return res;
   }
 
-
-
-
-
-
   struct crack_singular : public global_function, public context_dependencies {
     size_type l;
     const level_set &ls;

@@ -50,8 +50,8 @@
 #endif
 
 /// Basic Geometric Tools
-namespace bgeot
-{
+namespace bgeot {
+
   static const size_t ST_NIL = size_t(-1);
   /// Dimension type (<255)
   typedef dal::uint8_type dim_type;
@@ -82,7 +82,6 @@ namespace bgeot
   using dal::dimension_error;
   using dal::file_not_found_error;
   using dal::internal_error;
-  using dal::not_linear_error;
   using dal::to_be_done_error;
   using dal::failure_error;
 

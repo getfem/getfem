@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
-    getfem::getfem_mesh m;
+    getfem::mesh m;
     getfem::scalar_type h = .3;
     int K=1;
     int opt = 0;

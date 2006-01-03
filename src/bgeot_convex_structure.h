@@ -37,8 +37,6 @@
  */
 
 #include <dal_ref.h>
-#include <dal_alloc.h>
-#include <ftool.h>
 #include <bgeot_config.h>
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
@@ -55,7 +53,7 @@ namespace bgeot {
 
   /// Pointer on a convex structure description. 
   typedef boost::intrusive_ptr<const convex_structure> pconvex_structure;
-  ///
+
   typedef std::vector<const convex_structure *> convex_structure_faces_ct;
   typedef std::vector<short_type>               convex_ind_ct;
   typedef dal::tab_ref_index_ref< convex_ind_ct::const_iterator,
@@ -70,15 +68,17 @@ namespace bgeot {
    * one convex structure for the same type of convex.
    */
   class convex_structure : virtual public dal::static_stored_object {
-    protected :
-
-      dim_type Nc;
-      short_type nbpt, nbf;
-      convex_structure_faces_ct  faces_struct;
-      std::vector<convex_ind_ct> faces;
-      convex_ind_ct              dir_points_;
-      const convex_structure *basic_pcvs;
-      pconvex_structure prod_a, prod_b; /* only filled for product convex structures */
+  protected :
+    
+    dim_type Nc;
+    short_type nbpt, nbf;
+    convex_structure_faces_ct  faces_struct;
+    std::vector<convex_ind_ct> faces;
+    convex_ind_ct              dir_points_;
+    const convex_structure *basic_pcvs;
+    
+    pconvex_structure prod_a, prod_b; /* only filled for convex structures */
+				      /* product.                          */
     public :
 
       /// Number of faces.
@@ -91,54 +91,55 @@ namespace bgeot {
       pconvex_structure basic_structure(void) const 
       { return basic_pcvs; }
     /** Number of vertices of a face.
-	@param i the face number.
-    */
-      inline short_type nb_points_of_face(short_type i) const
-      { return faces[i].size(); }
-      /** Give an array of the indexes of the vertices of a face. 
-	  The indexes are "local" to the convex.
-	  @param i the face number.
-       */
-      inline const convex_ind_ct &ind_points_of_face(short_type i) const
-      { return faces[i]; }
-    /// Return "direct" points indexes. These are the subset of points than can be used to build a direct vector basis. (rarely used)
-      inline const convex_ind_ct &ind_dir_points() const
-      { return dir_points_; }
-      /** Give a pointer array on the structures of the faces.
-       *   faces_structure()[i] is a pointer on the structure of the face i.
-       */
-      inline const convex_structure_faces_ct &faces_structure(void) const
-      { return faces_struct; }
+     *	@param i the face number.
+     */
+    inline short_type nb_points_of_face(short_type i) const
+    { return faces[i].size(); }
+    /** Give an array of the indexes of the vertices of a face. 
+     *	The indexes are "local" to the convex.
+     *	@param i the face number.
+     */
+    inline const convex_ind_ct &ind_points_of_face(short_type i) const
+    { return faces[i]; }
+    /** Return "direct" points indexes. These are the subset of points than
+     *	can be used to build a direct vector basis. (rarely used)
+     */
+    inline const convex_ind_ct &ind_dir_points() const
+    { return dir_points_; }
+    /** Give a pointer array on the structures of the faces.
+     *   faces_structure()[i] is a pointer on the structure of the face i.
+     */
+    inline const convex_structure_faces_ct &faces_structure(void) const
+    { return faces_struct; }
     /** Return "direct" points indexes for a given face.
-	@param i the face number.
-    */
-      inline ref_convex_ind_ct ind_dir_points_of_face(short_type i) const
-      {
-	return ref_convex_ind_ct(faces[i].begin(),
-				 faces_struct[i]->ind_dir_points().begin(),
-				 faces_struct[i]->ind_dir_points().end());
-      }
-
-      void init_for_adaptative(pconvex_structure cvs);
-      void add_point_adaptative(short_type i, short_type f);
-    /** Return true if the convex structure is indeed a direct product of two convex structures. 
-	@param pprod1 the first sub-structure (optional)
-	@param pprod2 the second sub-structure (optional)
-    */
-      bool is_product(pconvex_structure *pprod1=0,
-		      pconvex_structure *pprod2=0) const {
-	if (pprod1) *pprod1 = prod_a;
-	if (pprod2) *pprod2 = prod_b;
-	return prod_a ? true : false;
-      }
+     *	@param i the face number.
+     */
+    inline ref_convex_ind_ct ind_dir_points_of_face(short_type i) const {
+      return ref_convex_ind_ct(faces[i].begin(),
+			       faces_struct[i]->ind_dir_points().begin(),
+			       faces_struct[i]->ind_dir_points().end());
+    }
+    
+    void init_for_adaptative(pconvex_structure cvs);
+    void add_point_adaptative(short_type i, short_type f);
+    /** Return true if the convex structure is indeed a direct product
+     *	of two convex structures. 
+     *	@param pprod1 the first sub-structure (optional)
+     *	@param pprod2 the second sub-structure (optional)
+     */
+    bool is_product(pconvex_structure *pprod1=0,
+		    pconvex_structure *pprod2=0) const {
+      if (pprod1) *pprod1 = prod_a;
+      if (pprod2) *pprod2 = prod_b;
+      return prod_a ? true : false;
+    }
   protected:
     convex_structure() { prod_a = prod_b = 0; }
     friend boost::intrusive_ptr<convex_structure> new_convex_structure();
   };
 
-  inline boost::intrusive_ptr<convex_structure> new_convex_structure() {
-    return boost::intrusive_ptr<convex_structure>(new convex_structure);
-  }
+  inline boost::intrusive_ptr<convex_structure> new_convex_structure()
+  { return boost::intrusive_ptr<convex_structure>(new convex_structure); }
 
   /** @name functions on convex structures
    */
@@ -176,7 +177,8 @@ namespace bgeot {
   pconvex_structure simplex_structure(dim_type n, short_type k);
 
   /// Generic convex with n global nodes
-  pconvex_structure generic_dummy_structure(dim_type nc, size_type n, size_type nf);
+  pconvex_structure generic_dummy_structure(dim_type nc, size_type n,
+					    size_type nf);
 
   //@}
 

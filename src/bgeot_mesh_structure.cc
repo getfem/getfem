@@ -31,20 +31,8 @@
 
 #include <bgeot_mesh_structure.h>
 
-namespace bgeot
-{
-  mc_const_iterator::mc_const_iterator(const mesh_structure &ms,
-				       size_type ip) { 
-    p = &ms; const mesh_point *q = &(p->point_structures()[ip]);
-    ind_cv = q->first; ind_in_cv = q->ind_in_first;
-    pc = &(p->convex()[ind_cv]); 
-  }
-	
-  mc_const_iterator &mc_const_iterator::operator ++() { 
-    const mesh_point_link *q = &(p->links()[pc->pts+ind_in_cv]);
-    ind_cv = q->next; ind_in_cv = q->ind_in_next;
-    pc = &(p->convex()[ind_cv]); return *this;
-  }
+namespace bgeot {
+
   
   dal::bit_vector mesh_structure::convex_index(dim_type n) const {
     dal::bit_vector res = convex_tab.index();
@@ -55,129 +43,59 @@ namespace bgeot
 
   size_type mesh_structure::local_ind_of_convex_point(size_type ic,
 						      size_type ip) const {
-    ref_mesh_point_ind_ct ct = ind_points_of_convex(ic);
-
-    /* we can't use it.index() here */
+    mesh_convex_structure::ind_pt_ct::const_iterator it;
     size_type ind = 0;
-    ref_mesh_point_ind_ct::const_iterator it = ct.begin();
-    for (; it != ct.end() && (*it) != ip; ++it) ind++;
-    if (it == ct.end())
+    for (it=convex_tab[ic].pts.begin();
+	 it != convex_tab[ic].pts.end() && (*it) != ip; ++it) ++ind;
+    if (it == convex_tab[ic].pts.end())
       DAL_THROW(internal_error, "This point does not exist on this convex.");
     return ind;
   }
-    
-
-  ind_ref_mesh_point_ind_ct
-     mesh_structure::ind_points_of_face_of_convex(size_type ic,
-					      short_type iff) const {
-    mesh_point_ind_ct::const_iterator r = point_lists.begin();
-    const mesh_convex_structure *q = &(convex_tab[ic]); r += q->pts;
-    const convex_ind_ct *p = &(q->cstruct->ind_points_of_face(iff));
-    return ind_ref_mesh_point_ind_ct(r, p->begin(), p->end());  
-  }
-
-  ref_mesh_point_ind_ct
-  mesh_structure::ind_points_of_convex(size_type ic) const {
-    const mesh_convex_structure *q = &(convex_tab[ic]);
-    mesh_point_ind_ct::const_iterator r = point_lists.begin();
-    r += q->pts;
-    return ref_mesh_point_ind_ct(r, r + q->cstruct->nb_points());
-  }
-
-  size_type mesh_structure::memsize(void) const {
-    return sizeof(mesh_structure) + points_tab.memsize()
-      + convex_tab.memsize() + point_lists.memsize()
-      + point_links.memsize();
-  }
 
   void mesh_structure::swap_points(size_type i, size_type j) {
-    if (i != j) {
-      mesh_convex_ind_ct ct = convex_to_point(i);
-      for ( ; !ct.empty(); ct.pop_front())
-	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = j;
-      ct = convex_to_point(j);
-      for ( ; !ct.empty(); ct.pop_front())
-	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = i;
-      points_tab.swap(i,j);
-    }			 
-  }
-
-  void mesh_structure::sup_convex(size_type ic) {
-    // cout << "sup convex" << ic << " !! " << endl;
-    mesh_convex_structure *p = &(convex_tab[ic]);
-    short_type nb = p->cstruct->nb_points();
-    mesh_link_ct::iterator ipl = point_links.begin(); ipl += p->pts;
-    mesh_point_ind_ct::const_iterator ipt = point_lists.begin(); ipt += p->pts;
-    for (short_type i = 0; i < nb; ++i, ++ipl, ++ipt)
-    {
-      mesh_point *os = &(points_tab[*ipt]);
-      mesh_convex_ind_ct::iterator b = convex_to_point(*ipt).begin(), c = b;
-      if (*b == ic)
-      { os->first = (*ipl).next; os->ind_in_first = (*ipl).ind_in_next; }
-      else
-      {
-	++b; while (*b != ic) { c = b; ++b; }
-	mesh_point_link *ssp = &(point_links[c.pc->pts + c.ind_in_cv]);
-	ssp->next = (*ipl).next; ssp->ind_in_next = (*ipl).ind_in_next;
+    if (i == j) return;
+    std::vector<size_type> doubles;
+    
+    for (size_type k = 0; k < points_tab[i].size(); ++k) {
+      size_type cv = points_tab[i][k];
+      for (size_type l = 0; l < convex_tab[cv].pts.size(); ++l) {
+	size_type &ind = convex_tab[cv].pts[l];
+	if (ind == i) ind = j;
+	else if (ind == j) { ind = i; doubles.push_back(cv); }
       }
     }
-    point_links.free(p->pts, nb); convex_tab.sup(ic);
-  }
-
-  mesh_point_search_ind_ct
-    mesh_structure::ind_points_to_point(size_type ip) const
-  { // pas tres efficace.
-    mesh_point_search_ind_ct r;
-    dal::bit_vector nn;
-    mesh_convex_ind_ct ct = convex_to_point(ip);
-    for ( ; !ct.empty(); ct.pop_front())
-    {
-      ref_mesh_point_ind_ct pt = ind_points_of_convex(ct.front());
-      for ( ; !pt.empty(); pt.pop_front())
-      { if (ip != pt.front()) nn.add(pt.front()); }
+    for (size_type k = 0; k < points_tab[j].size(); ++k) {
+      size_type cv = points_tab[j][k];
+      if (std::find(doubles.begin(), doubles.end(), cv) == doubles.end()) {
+	for (size_type l = 0; l < convex_tab[cv].pts.size(); ++l)
+	  if (convex_tab[cv].pts[l] == j) convex_tab[cv].pts[l] = i;
+      }
     }
-    r.clear(); r.reserve(nn.card());
-    for (dal::bv_visitor j(nn); !j.finished(); ++j) r.push_back(j);
-    return r;
-  }
+    points_tab.swap(i,j);
+  }			 
 
-  size_type mesh_structure::add_face_of_convex(size_type ic, short_type f)
-  {
-    return add_convex( (structure_of_convex(ic)->faces_structure())[f],
-		  ind_points_of_face_of_convex(ic, f).begin());
-  }
+  void mesh_structure::swap_convex(size_type i, size_type j) {
+    if (i == j) return;
+    std::vector<size_type> doubles;
 
-  void mesh_structure::add_faces_of_convex(size_type ic)
-  { // a refaire
-    // cout << "debut de add_faces(" << ic << ")" << endl;
-    // write_to_file(cout); 
-    pconvex_structure ps = structure_of_convex(ic);
-    for (short_type iff = 0; iff < ps->nb_faces(); ++iff)
-      add_convex( (ps->faces_structure())[iff],
-		  ind_points_of_face_of_convex(ic, iff).begin());
-    // cout << "fin de add_faces " << endl;
-    // write_to_file(cout); getchar();
-  }
-    
-  void mesh_structure::to_faces(dim_type n)
-  { // a refaire
-    // cout << "debut de to_faces(" << int(n) << ")" << endl;
-    mesh_convex_ct::tas_iterator b = convex_tab.tas_begin(),
-                                 e = convex_tab.tas_end();
-    for ( ; b != e; ++b)
-      if ((*b).cstruct->dim() == n)
-	{ add_faces_of_convex(b.index()); sup_convex(b.index()); }
-    // cout << "fin de to_faces " << endl;
-    // write_to_file(cout); getchar();
-  }
-
-  void mesh_structure::to_edges(void)
-  { // a refaire
-    dim_type dmax = 0;
-    mesh_convex_ct::tas_iterator b = convex_tab.tas_begin(),
-                                 e = convex_tab.tas_end();
-    for ( ; b != e; ++b) dmax = std::max(dmax, (*b).cstruct->dim());
-    for ( ; dmax > 1; --dmax) to_faces(dmax);
+    if (convex_is_valid(i)) 
+      for (size_type k = 0; k < convex_tab[i].pts.size(); ++k) {
+	size_type ip = convex_tab[i].pts[k];
+	for (size_type l = 0; l < points_tab[ip].size(); ++l) {
+	  size_type &ind = points_tab[ip][l];
+	  if (ind == i) ind = j;
+	  else if (ind == j) { ind = i; doubles.push_back(ip); }
+	}
+      }
+    if (convex_is_valid(j))
+      for (size_type k = 0; k < convex_tab[j].pts.size(); ++k) {
+	size_type ip = convex_tab[j].pts[k];
+	if (std::find(doubles.begin(), doubles.end(), ip) == doubles.end()) {
+	  for (size_type l = 0; l < points_tab[ip].size(); ++l)
+	    if (points_tab[ip][l] == j) points_tab[ip][l] = i;
+	}
+      }
+    convex_tab.swap(i,j);
   }
 
   size_type mesh_structure::add_segment(size_type a, size_type b) {
@@ -187,112 +105,133 @@ namespace bgeot
     return add_convex(cs, &t[0]);
   }
 
-  void mesh_structure::swap_convex(size_type i, size_type j)
-  {
-    size_type ip, ic, *p;
-    dal::bit_vector nn;
-
-    if (i != j) {
-      if (convex_is_valid(i)) {
-	nn.clear();
-	ref_mesh_point_ind_ct pt = ind_points_of_convex(i);
-	for( ; !pt.empty(); pt.pop_front()) {
-	  ip = pt.front(); p = &(points_tab[ip].first);
-	  if (!(nn[ip])) {
-	    nn[ip] = true;
-	    mesh_convex_ind_ct ct = convex_to_point(ip);
-	    
-	    for( ; !ct.empty(); ct.pop_front()) {
-	      ic = ct.front();
-	      if (*p == i) *p = j; else if (*p == j) *p = i;
-	      p = &(point_links[convex_tab[ic].pts+ct.begin().ind_in_cv].next);
-	    }
-	  }
-	}
-      }
-      if (convex_is_valid(j)) {
-	nn.clear();
-	ref_mesh_point_ind_ct pt = ind_points_of_convex(j);
-	for( ; !pt.empty(); pt.pop_front()) {
-	  ip = pt.front();
-	  if (!(nn[ip])) {
-	    nn[ip] = true;
-	    if (!convex_is_valid(i) || !is_convex_has_points( i, 1, &ip)) {
-	      p = &(points_tab[ip].first);
-	      mesh_convex_ind_ct ct = convex_to_point(ip);
-	      
-	      for( ; !ct.empty(); ct.pop_front()) {
-		ic = ct.front();
-		if (*p == i) *p = j; else if (*p == j) *p = i;
-		p=&(point_links[convex_tab[ic].pts+ct.begin().ind_in_cv].next);
-	      }
-	    }
-	  }
-	}
-      }
-      convex_tab.swap(i,j);
+  void mesh_structure::sup_convex(size_type ic) {
+    if (!(convex_is_valid(ic))) return;
+    for (size_type l = 0; l < convex_tab[ic].pts.size(); ++l) {
+      size_type &ind = convex_tab[ic].pts[l];
+      std::vector<size_type>::iterator it1= points_tab[ind].begin(), it2 = it1;
+      std::vector<size_type>::iterator ite= points_tab[ind].end();
+      for (; it2 != ite; ++it2) { *it1 = *it2; if (*it1 != ic) ++it1; }
+      points_tab[ind].pop_back();
     }
+    convex_tab.sup(ic);
   }
 
-  void mesh_structure::clear(void)
-  { 
-    points_tab.clear(); convex_tab.clear();
-    point_links.clear(); point_lists.clear();
+  size_type mesh_structure::add_face_of_convex(size_type ic, short_type f) {
+    return add_convex( (structure_of_convex(ic)->faces_structure())[f],
+		  ind_points_of_face_of_convex(ic, f).begin());
   }
 
-  void mesh_structure::optimize_structure()
-  {
-    size_type i, j;
-    j = nb_convex();
+  void mesh_structure::add_faces_of_convex(size_type ic) {
+    pconvex_structure ps = structure_of_convex(ic);
+    for (short_type iff = 0; iff < ps->nb_faces(); ++iff)
+      add_convex( (ps->faces_structure())[iff],
+		  ind_points_of_face_of_convex(ic, iff).begin());
+  }
+
+  void mesh_structure::to_faces(dim_type n) { // not efficient
+    dal::bit_vector nn = convex_index();
+    for (dal::bv_visitor i(nn); !i.finished(); ++i)
+      if (convex_tab[i].cstruct->dim() == n)
+	{ add_faces_of_convex(i); sup_convex(i); }
+  }
+
+  void mesh_structure::to_edges(void) { // not efficient at all !
+    dim_type dmax = 0;
+    dal::bit_vector nn = convex_index();
+    for (dal::bv_visitor i(nn); !i.finished(); ++i)
+      dmax = std::max(dmax, convex_tab[i].cstruct->dim());
+    for ( ; dmax > 1; --dmax) to_faces(dmax);
+  }
+
+  mesh_structure::ind_set
+    mesh_structure::ind_points_to_point(size_type ip) const { // not efficient
+    ind_set r;
+    for (size_type k = 0; k < points_tab[ip].size(); ++k) {
+      size_type cv = points_tab[ip][k];
+      for (size_type l = 0; l < convex_tab[cv].pts.size(); ++l)
+	if (ip != convex_tab[cv].pts[l]) r.insert(convex_tab[cv].pts[l]);
+    }
+    return r;
+  }
+
+  mesh_structure::ind_pt_face_ct
+     mesh_structure::ind_points_of_face_of_convex(size_type ic,
+						  short_type iff) const {
+    const mesh_convex_structure *q = &(convex_tab[ic]);
+    std::vector<size_type>::const_iterator r = q->pts.begin();
+    const convex_ind_ct *p = &(q->cstruct->ind_points_of_face(iff));
+    return ind_pt_face_ct(r, p->begin(), p->end());  
+  }
+
+  size_type mesh_structure::memsize(void) const {
+    size_type mems =  sizeof(mesh_structure) + points_tab.memsize()
+      + convex_tab.memsize();
+    for (size_type i = 0; i < convex_tab.size(); ++i)
+      mems += convex_tab[i].pts.size() * sizeof(size_type);
+    for (size_type i = 0; i < points_tab.size(); ++i)
+      mems += points_tab[i].size() * sizeof(size_type);
+    return mems;
+  }
+
+  void mesh_structure::optimize_structure() {
+    size_type i, j = nb_convex();
     for (i = 0; i < j; i++)
       if (!convex_tab.index_valid(i))
 	swap_convex(i, convex_tab.ind_last());
+
     if (points_tab.size())
-      for (i = 0, j = (points_tab.end()-points_tab.begin())-1; i < j; ++i, --j)
-	{
-	  while (i < j && points_tab[i].first != ST_NIL) ++i;
-	  while (i < j && points_tab[j].first == ST_NIL) --j;
-	  if (i < j) swap_points(i, j);
-	}
+      for (i=0, j = (points_tab.end()-points_tab.begin())-1; i < j; ++i, --j){
+	while (i < j && !(points_tab[i].empty())) ++i;
+	while (i < j && points_tab[j].empty()) --j;
+	if (i < j) swap_points(i, j);
+      }
   }
 
-  void mesh_structure::stat(void)
-  {
+  void mesh_structure::clear(void) { 
+    points_tab = dal::dynamic_tas<ind_cv_ct, 8>();
+    convex_tab = dal::dynamic_tas<mesh_convex_structure, 8>();
+    
+  }
+
+  void mesh_structure::stat(void) {
     cout << "mesh structure with " << nb_convex() << " valid convex, "
 	 << "for a total memory size of " << memsize() << " bytes.\n";
   }
 
-  mesh_over_convex_ind_ct over_convex(const mesh_structure &ms, size_type ic)
-  {
-    ref_mesh_point_ind_ct pt = ms.ind_points_of_convex(ic);
-    mesh_convex_ind_ct ct = ms.convex_to_point(pt[0]);
-    return mesh_over_convex_ind_ct(ct.begin(), ct.end(),
-       mesh_convex_has_points<ref_mesh_point_ind_ct::const_iterator>
-       (ms.structure_of_convex(ic)->nb_points() - 1, pt.begin() + 1,
-	ms.structure_of_convex(ic)->dim()+1));
+  mesh_structure::ind_set mesh_structure::neighbours_of_convex(size_type ic,
+					       short_type iff) const {
+    ind_set s;
+    ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
+    
+    for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
+      size_type icv = points_tab[pt[0]][i];
+      if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
+	  && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
+	s.insert(icv);
+    }
+    return s;
+  }
+  
+  size_type mesh_structure::neighbour_of_convex(size_type ic, 
+						short_type iff) const {
+    ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
+    
+    for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
+      size_type icv = points_tab[pt[0]][i];
+      if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
+	  && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
+	return icv;
+    }
+    return size_type(-1);
   }
 
-  mesh_face_convex_ind_ct face_of_convex(const mesh_structure &ms, 
-					 size_type ic, short_type iff)
-  {
-    pconvex_structure q = ms.structure_of_convex(ic);
-    short_type n = q->nb_points_of_face(iff);
-    ind_ref_mesh_point_ind_ct pt = ms.ind_points_of_face_of_convex(ic, iff);
-    mesh_convex_ind_ct ct = ms.convex_to_point(pt[0]);
-    return mesh_face_convex_ind_ct(ct.begin(), ct.end(), mesh_convex_has_points<ind_ref_mesh_point_ind_ct::const_iterator>(n-1, ++(pt.begin()), q->dim()-1, true));
+  size_type mesh_structure::ind_in_convex_of_point(size_type ic,
+						   size_type ip) const {
+    const ind_cv_ct &ct = ind_points_of_convex(ic);
+    ind_cv_ct::const_iterator it = std::find(ct.begin(), ct.end(), ip);
+    return (it != ct.end()) ? (it - ct.begin()): size_type(-1);
   }
-
-  mesh_face_convex_ind_ct neighbour_of_convex(const mesh_structure &ms, 
-					  size_type ic, short_type iff)
-  {
-    pconvex_structure q = ms.structure_of_convex(ic);
-    short_type n = q->nb_points_of_face(iff);
-    ind_ref_mesh_point_ind_ct pt = ms.ind_points_of_face_of_convex(ic, iff);
-    mesh_convex_ind_ct ct = ms.convex_to_point(pt[0]);
-    return mesh_face_convex_ind_ct(ct.begin(), ct.end(), mesh_convex_has_points<ind_ref_mesh_point_ind_ct::const_iterator>(n-1, ++(pt.begin()), q->dim(), false, ic));
-  }
-
-
 
   /* ********************************************************************* */
   /*                                                                       */
@@ -385,13 +324,14 @@ namespace bgeot
     
 
   void mesh_edge_list(const mesh_structure &m, edge_list &el, 
-		       bool merge_convex)
-  {
+		       bool merge_convex) {
     std::vector<size_type> p;
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       p.resize(m.nb_points_of_convex(cv));
-      std::copy(m.ind_points_of_convex(cv).begin(), m.ind_points_of_convex(cv).end(), p.begin());
-      mesh_edge_list_convex(m.structure_of_convex(cv), p, cv, el, merge_convex);
+      std::copy(m.ind_points_of_convex(cv).begin(),
+		m.ind_points_of_convex(cv).end(), p.begin());
+      mesh_edge_list_convex(m.structure_of_convex(cv), p, cv,
+			    el, merge_convex);
     }
   }
 
@@ -409,20 +349,22 @@ namespace bgeot
     size_type cv = cvlst.first_true();
 
     std::fill(connectivity.begin(), connectivity.end(), size_type(-1));
-    // double t = ftool::uclock_sec();
+    // double t = dal::uclock_sec();
 
     /* count neighbours for each convex */
     for (dal::bv_visitor j(cvlst); !j.finished(); ++j) {
-      ref_mesh_point_ind_ct ct = ms.ind_points_of_convex(j);
-      ref_mesh_point_ind_ct::const_iterator itp = ct.begin(), itpe = ct.end(); 
+      const mesh_structure::ind_cv_ct &ct = ms.ind_points_of_convex(j);
+      mesh_structure::ind_cv_ct::const_iterator itp = ct.begin(),
+	itpe = ct.end(); 
       size_type nei = 0;
 
       for (; itp != itpe; ++itp) {
 	size_type ip = *itp;
-	mesh_convex_ind_ct::const_iterator 
+	mesh_structure::ind_cv_ct::const_iterator 
 	  it = ms.convex_to_point(ip).begin(),
 	  ite =  ms.convex_to_point(ip).end();
-	for ( ; it != ite; ++it) if (temp[*it] != j+1) { temp[*it] = j+1; nei++; }
+	for ( ; it != ite; ++it)
+	  if (temp[*it] != j+1) { temp[*it] = j+1; nei++; }
       }
       connectivity[j] = nei-1;
       if (nei < connectivity[cv]) cv = j;
@@ -436,7 +378,7 @@ namespace bgeot
 
       for (size_type i = 0; i < nbp; i++) {
 	size_type ip = ms.ind_points_of_convex(cv)[i];
-	bgeot::mesh_convex_ind_ct::const_iterator 
+	mesh_structure::ind_cv_ct::const_iterator 
 	  it = ms.convex_to_point(ip).begin(),
 	  ite =  ms.convex_to_point(ip).end();
 	for ( ; it != ite; ++it)
@@ -450,7 +392,7 @@ namespace bgeot
       else { cv = pile.back(); pile.pop_back(); }
     }
     
-    // enumerate_dof_time += ftool::uclock_sec() - t;
+    // enumerate_dof_time += dal::uclock_sec() - t;
     // cerr << "cuthill_mckee_on_convexes: " << enumerate_dof_time << " sec\n";
   }
 

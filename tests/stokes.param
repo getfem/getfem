@@ -19,7 +19,6 @@ FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
 %FEM_TYPE = 'FEM_PK(3,3)';  % PK method
 %FEM_TYPE = 'FEM_QK(2,1)';  % QK method
 %FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
-%FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
 

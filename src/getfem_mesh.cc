@@ -9,7 +9,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard
+// Copyright (C) 1999-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -33,19 +33,19 @@
 
 namespace getfem {
 
-  void getfem_mesh::sup_convex_from_regions(size_type c) {
+  void mesh::sup_convex_from_regions(size_type c) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
       cvf_sets[i].sup(c);
     touch();
   }
 
-  void getfem_mesh::swap_convex_in_regions(size_type c1, size_type c2) {
+  void mesh::swap_convex_in_regions(size_type c1, size_type c2) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
       cvf_sets[i].swap_convex(c1, c2);
     touch();
   }
 
-  getfem_mesh::getfem_mesh(dim_type NN) {
+  mesh::mesh(dim_type NN) {
 #if GETFEM_PARA_LEVEL > 1
     modified = true;
 #endif
@@ -59,7 +59,7 @@ namespace getfem {
 
   // interfacage avec METIS à refaire.
 
-    void getfem_mesh::compute_mpi_region(void) {
+    void mesh::compute_mpi_region(void) {
 
       int ne = int(nb_convex());
       int nn = int(nb_points()), k = 0, etype = 0, numflag = 0;
@@ -100,7 +100,7 @@ namespace getfem {
       valid_sub_regions.clear();
     }
 
-  void getfem_mesh::compute_mpi_sub_region(size_type n) {
+  void mesh::compute_mpi_sub_region(size_type n) {
     if (valid_cvf_sets.is_in(n)) {
       mpi_sub_region[n] = mesh_region::intersection(cvf_sets[n], mpi_region);
     }
@@ -113,10 +113,10 @@ namespace getfem {
 #endif
 
 
-  size_type getfem_mesh::add_point(const base_node &pt, bool norepeat) {
+  size_type mesh::add_point(const base_node &pt, bool norepeat) {
     if (dimension == dim_type(-1)) dimension = pt.size();
     if (pt.size() != dimension)
-      throw dimension_error("getfem_mesh::add_point : dimensions mismatch");
+      throw dimension_error("mesh::add_point : dimensions mismatch");
     
     if (norepeat) {
       bool present;
@@ -126,28 +126,22 @@ namespace getfem {
     else return pts.add(pt);
   }
 
-  void getfem_mesh::sup_point(size_type i)
-  { if (!point_is_valid(i)) pts.sup(i); }
-
-  void getfem_mesh::swap_points(size_type i, size_type j)
-  { if (i != j) bgeot::mesh<base_node>::swap_points(i,j); }
-
-  void getfem_mesh::optimize_structure() {
+  void mesh::optimize_structure() {
     size_type i, j;
     j = nb_convex();
     for (i = 0; i < j; i++)
       if (!convex_tab.index_valid(i))
 	swap_convex(i, convex_tab.ind_last());
-    if (points().size())
-      for (i = 0, j = points().size()-1; 
+    if (pts.size())
+      for (i = 0, j = pts.size()-1; 
 	   i < j && j != ST_NIL; ++i, --j) {
-	while (i < j && j != ST_NIL && points().index()[i]) ++i;
-	while (i < j && j != ST_NIL && !(points().index()[j])) --j;
+	while (i < j && j != ST_NIL && pts.index()[i]) ++i;
+	while (i < j && j != ST_NIL && !(pts.index()[j])) --j;
 	if (i < j && j != ST_NIL ) swap_points(i, j);
       }
   }
 
-  const std::vector<size_type> &getfem_mesh::cuthill_mckee_ordering() const {
+  const std::vector<size_type> &mesh::cuthill_mckee_ordering() const {
     if (!cuthill_mckee_uptodate) {
       bgeot::cuthill_mckee_on_convexes(*this, cmk_order);
       cuthill_mckee_uptodate = true;
@@ -155,66 +149,68 @@ namespace getfem {
     return cmk_order;
   }
 
-  void getfem_mesh::translation(base_small_vector V)
+  void mesh::translation(base_small_vector V)
   {
-    for (dal::bv_visitor i(points().index()); !i.finished(); ++i)
-      points()[i] += V;
-    points().resort();
+    for (dal::bv_visitor i(pts.index()); !i.finished(); ++i)
+      pts[i] += V;
+    pts.resort();
   }
 
-  void getfem_mesh::transformation(base_matrix M)
+  void mesh::transformation(base_matrix M)
   {
     base_small_vector w(M.nrows());
     if (gmm::mat_nrows(M) == 0 || gmm::mat_ncols(M) != dim()) 
       DAL_THROW(dal::dimension_error, "invalid dimensions for the transformation matrix");
-    for (dal::bv_visitor i(points().index()); !i.finished(); ++i) {
-      w = points()[i]; gmm::resize(points()[i], gmm::mat_nrows(M)); gmm::mult(M,w,points()[i]);
+    for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
+      w = pts[i]; gmm::resize(pts[i], gmm::mat_nrows(M)); gmm::mult(M,w,pts[i]);
     }
     dimension = gmm::mat_nrows(M);
-    points().resort();
+    pts.resort();
   }
 
-  void getfem_mesh::bounding_box(base_node& Pmin, base_node& Pmax) const {
+  void mesh::bounding_box(base_node& Pmin, base_node& Pmax) const {
     bool is_first = true;
     Pmin.clear(); Pmax.clear(); 
-    for (dal::bv_visitor i(points().index()); !i.finished(); ++i) {
-      if (is_first) { Pmin = Pmax = points()[i]; is_first = false; }
+    for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
+      if (is_first) { Pmin = Pmax = pts[i]; is_first = false; }
       else for (unsigned j=0; j < dim(); ++j) {
-	Pmin[j] = std::min(Pmin[j], points()[i][j]);
-	Pmax[j] = std::max(Pmax[j], points()[i][j]);
+	Pmin[j] = std::min(Pmin[j], pts[i][j]);
+	Pmax[j] = std::max(Pmax[j], pts[i][j]);
       }
     }
   }
 
-  void getfem_mesh::clear(void) {
-    bgeot::mesh<base_node>::clear();
+  void mesh::clear(void) {
+    dimension = dim_type(-1);
+    mesh_structure::clear();
+    pts.clear();
     gtab.clear(); trans_exists.clear();
     cvf_sets.clear(); valid_cvf_sets.clear();
     lmsg_sender().send(MESH_CLEAR()); touch();
   }
 
-  size_type getfem_mesh::add_segment(size_type a, size_type b) { 
+  size_type mesh::add_segment(size_type a, size_type b) { 
     size_type ipt[2]; ipt[0] = a; ipt[1] = b;
     return add_convex(bgeot::simplex_geotrans(1, 1), &(ipt[0]));
   }
   
-  size_type getfem_mesh::add_triangle(size_type a, 
+  size_type mesh::add_triangle(size_type a, 
 				      size_type b, size_type c) {
     size_type ipt[3]; ipt[0] = a; ipt[1] = b; ipt[2] = c;
     return add_simplex(2, &(ipt[0]));
   }
   
-  size_type getfem_mesh::add_triangle_by_points
+  size_type mesh::add_triangle_by_points
     (const base_node &p1, const base_node &p2, const base_node &p3)
   { return add_triangle(add_point(p1), add_point(p2), add_point(p3)); }
   
-  size_type getfem_mesh::add_tetrahedron(size_type a, size_type b,
+  size_type mesh::add_tetrahedron(size_type a, size_type b,
 					 size_type c, size_type d) {
     size_type ipt[4]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d;
     return add_simplex(3, &(ipt[0]));
   }
 
-  size_type getfem_mesh::add_tetrahedron_by_points(const base_node &p1,
+  size_type mesh::add_tetrahedron_by_points(const base_node &p1,
 						   const base_node &p2,
 						   const base_node &p3,
 						   const base_node &p4) {
@@ -222,16 +218,16 @@ namespace getfem {
 			   add_point(p3), add_point(p4));
   }
 
-  void getfem_mesh::sup_convex(size_type ic) {
-    bgeot::mesh<base_node>::sup_convex(ic);
+  void mesh::sup_convex(size_type ic) {
+    bgeot::mesh_structure::sup_convex(ic);
     trans_exists[ic] = false;
     sup_convex_from_regions(ic);
     lmsg_sender().send(MESH_SUP_CONVEX(ic)); touch();
   }
 
-  void getfem_mesh::swap_convex(size_type i, size_type j) {
+  void mesh::swap_convex(size_type i, size_type j) {
     if (i != j) {
-      bgeot::mesh<base_node>::swap_convex(i,j);
+      bgeot::mesh_structure::swap_convex(i,j);
       trans_exists.swap(i, j);
       gtab.swap(i,j);
       swap_convex_in_regions(i, j);
@@ -239,7 +235,7 @@ namespace getfem {
     }
   }
 
-  base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
+  base_small_vector mesh::normal_of_face_of_convex(size_type ic, short_type f,
 							  const base_node &pt) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_matrix G(dim(),pgt->nb_points());
@@ -249,7 +245,7 @@ namespace getfem {
   }
 
 
-  base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
+  base_small_vector mesh::normal_of_face_of_convex(size_type ic, short_type f,
 							  size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
@@ -260,7 +256,7 @@ namespace getfem {
     return bgeot::compute_normal(c, f);
   }
 
-  base_matrix getfem_mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
+  base_matrix mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
 							 const base_node &pt) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_matrix G(dim(),pgt->nb_points());
@@ -269,7 +265,7 @@ namespace getfem {
     return bgeot::compute_local_basis(c, f);
   }
 
-  base_matrix getfem_mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
+  base_matrix mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
 							 size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes());
@@ -280,19 +276,19 @@ namespace getfem {
   }
 
 
-  scalar_type  getfem_mesh::convex_quality_estimate(size_type ic) const { 
+  scalar_type  mesh::convex_quality_estimate(size_type ic) const { 
     base_matrix G;
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     return getfem::convex_quality_estimate(trans_of_convex(ic), G);
   }
 
-  scalar_type  getfem_mesh::convex_radius_estimate(size_type ic) const { 
+  scalar_type  mesh::convex_radius_estimate(size_type ic) const { 
     base_matrix G;
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     return getfem::convex_radius_estimate(trans_of_convex(ic), G);
   }
   
-  scalar_type getfem_mesh::minimal_convex_radius_estimate() const {
+  scalar_type mesh::minimal_convex_radius_estimate() const {
     if (convex_index().empty()) return 1;
     scalar_type r = convex_radius_estimate(convex_index().first_true());
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
@@ -301,26 +297,28 @@ namespace getfem {
     return r;
   }
 
-  void getfem_mesh::copy_from(const getfem_mesh& m) {
+  void mesh::copy_from(const mesh& m) {
     clear();
-    bgeot::mesh<base_node>::operator=(m);
+    bgeot::mesh_structure::operator=(m);
     eps_p = m.eps_p;
     gtab = m.gtab;
     trans_exists = m.trans_exists; 
-    /* --- TODO --- : send an appropriate message to the mesh_fem using this mesh */
+    dimension = m.dimension;
+    pts = m.pts;
+    for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
+      lmsg_sender().send(MESH_ADD_CONVEX(i));
   }
 
-  struct mesh_convex_structure_loc
-  {
+  struct mesh_convex_structure_loc {
     bgeot::pgeometric_trans cstruct;
-    size_type pts;
+    std::vector<size_type> pts;
   };
 
-  void getfem_mesh::read_from_file(std::istream &ist) {
+  void mesh::read_from_file(std::istream &ist) {
    
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
-    char tmp[1024];
+    std::string tmp;
     bool te = false, please_get = true;
 
     ist.precision(16);
@@ -328,25 +326,23 @@ namespace getfem {
     ist.seekg(0);ist.clear();
     ftool::read_until(ist, "BEGIN POINTS LIST");
 
-    while (!te)
-    {
-      if (please_get) ftool::get_token(ist, tmp, 1023); else please_get = true;
+    while (!te) {
+      if (please_get) ftool::get_token(ist, tmp); else please_get = true;
 
-      if (!strcmp(tmp, "END"))
+      if (!ftool::casecmp(tmp, "END"))
       { te = true; }
-      else if (!strcmp(tmp, "POINT"))
-      {
-	ftool::get_token(ist, tmp, 1023);
-        size_type ip = atoi(tmp);
+      else if (!ftool::casecmp(tmp, "POINT")) {
+	ftool::get_token(ist, tmp);
+        size_type ip = atoi(tmp.c_str());
         dim_type d = 0;
 	if (npt.is_in(ip))
 	  DAL_THROW(failure_error, 
 		    "Two points with the same index. loading aborted.");
 	npt.add(ip);
-	ftool::get_token(ist, tmp, 1023);
+	ftool::get_token(ist, tmp);
 	while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
 	                       || tmp[0] == '.')
-	{ tmpv[d++] = atof(tmp); ftool::get_token(ist, tmp, 1023); }
+	  { tmpv[d++] = atof(tmp.c_str()); ftool::get_token(ist, tmp); }
 	please_get = false;
 	if (dimension == dim_type(-1)) dimension = d;
 	else if (dimension != d)
@@ -360,7 +356,7 @@ namespace getfem {
 		      "Two points [#" << ip << " and #" << ipl << "] with the same coords. loading aborted.");
 	  swap_points(ip, ipl);
 	}
-      } else if (strlen(tmp)) {
+      } else if (tmp.size()) {
 	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp
 		  << "', pos=" << std::streamoff(ist.tellg()));
       } else if (ist.eof()) {
@@ -369,7 +365,6 @@ namespace getfem {
     }
 
     bool tend = false;
-    dal::dynamic_alloc<size_type> cv_pt;
     dal::dynamic_array<mesh_convex_structure_loc> cv;
     dal::bit_vector ncv;
     
@@ -378,19 +373,19 @@ namespace getfem {
       DAL_THROW(failure_error, "This seems not to be a mesh file");
 
     while (!tend) {
-      tend = !ftool::get_token(ist, tmp, 1023);
-      if (!strcmp(tmp, "END"))
+      tend = !ftool::get_token(ist, tmp);
+      if (!ftool::casecmp(tmp, "END"))
       { tend = true; }
-      else if (!strcmp(tmp, "CONVEX"))
+      else if (!ftool::casecmp(tmp, "CONVEX"))
       {
         size_type ic;
-	ftool::get_token(ist, tmp, 1023);
-        ic = gmm::abs(atoi(tmp));
+	ftool::get_token(ist, tmp);
+        ic = gmm::abs(atoi(tmp.c_str()));
 	if (ncv.is_in(ic)) 
 	  DAL_THROW(failure_error,
 		    "Negative or repeated index, loading aborted.");
 	ncv.add(ic);
-	ftool::get_token(ist, tmp, 1023);
+	ftool::get_token(ist, tmp);
 	
 	bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
 
@@ -398,14 +393,13 @@ namespace getfem {
 	size_type nb = pgt->nb_points();
 
 	cv[ic].cstruct = pgt;
-	cv[ic].pts = cv_pt.alloc(nb);
-	for (size_type i = 0; i < nb; i++)
-	{
-	  ftool::get_token(ist, tmp, 1023);	  
-	  cv_pt[cv[ic].pts+i] = gmm::abs(atoi(tmp));
+	cv[ic].pts.resize(nb);
+	for (size_type i = 0; i < nb; i++) {
+	  ftool::get_token(ist, tmp);	  
+	  cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
 	}
       }
-      else if (strlen(tmp)) {
+      else if (tmp.size()) {
 	DAL_THROW(failure_error, "Syntax error reading a mesh file "
 		  " at pos " << std::streamoff(ist.tellg())
 		  << "(expecting 'CONVEX' or 'END', found '" << tmp << "')"); 
@@ -417,37 +411,40 @@ namespace getfem {
     ist >> ftool::skip("MESH STRUCTURE DESCRIPTION");
 
     for (dal::bv_visitor ic(ncv); !ic.finished(); ++ic) {
-      size_type i = add_convex(cv[ic].cstruct, cv_pt.begin() + cv[ic].pts);
+      size_type i = add_convex(cv[ic].cstruct, cv[ic].pts.begin());
       if (i != ic) swap_convex(i, ic);
     }
 
     tend = false;
     while (!tend) {
-      tend = !ftool::get_token(ist, tmp, 1023);
+      tend = !ftool::get_token(ist, tmp);
       // bool error = false;
-      if (strcmp(tmp, "BEGIN")==0) {
-	ftool::get_token(ist, tmp, 1023);
-	if (strcmp(tmp, "BOUNDARY")==0 ||
-	    strcmp(tmp, "REGION")==0) {
-	  ftool::get_token(ist, tmp, 1023);
-	  size_type bnum = atoi(tmp);
+      if (ftool::casecmp(tmp, "BEGIN")==0) {
+	ftool::get_token(ist, tmp);
+	if (ftool::casecmp(tmp, "BOUNDARY")==0 ||
+	    ftool::casecmp(tmp, "REGION")==0) {
+	  ftool::get_token(ist, tmp);
+	  size_type bnum = atoi(tmp.c_str());
+	  ftool::get_token(ist, tmp);
 	  while (true) {
-	    ftool::get_token(ist, tmp, 1023);
-	    if (strcmp(tmp, "END")!=0) {
-	      for (unsigned i=0; tmp[i]; ++i) 
-		if (!isdigit(tmp[i]) && tmp[i]!='/')
-		  DAL_THROW(failure_error, "Syntax error in file at token '"
-			    << tmp << "'");
-	      size_type ic = atoi(tmp);
-	      char *sf = strchr(tmp, '/');
-	      if (sf) {
-		size_type f = atoi(sf+1);
+	    if (ftool::casecmp(tmp, "END")!=0) {
+	      size_type ic = atoi(tmp.c_str());
+	      ftool::get_token(ist, tmp);
+	      if (tmp[0] == '/') {
+		ftool::get_token(ist, tmp);
+		if (!ftool::casecmp(tmp, "END")) break;
+		size_type f = atoi(tmp.c_str());
 		region(bnum).add(ic, f);
-	      } else region(bnum).add(ic);
+		ftool::get_token(ist, tmp);
+	      }
+	      else {
+		region(bnum).add(ic);
+		if (!ftool::casecmp(tmp, "END")) break;
+	      }
 	    } else break;
 	  }
-	  ftool::get_token(ist, tmp, 1023);
-	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp);
+	  ftool::get_token(ist, tmp);
 	} else tend = true; /*else DAL_THROW(failure_error, "Syntax error in file at token '"
 			 << tmp << "' [pos=" << std::streamoff(ist.tellg())
 			 << "]");*/
@@ -455,7 +452,7 @@ namespace getfem {
     }
   }
 
-  void getfem_mesh::read_from_file(const std::string &name) { 
+  void mesh::read_from_file(const std::string &name) { 
     std::ifstream o(name.c_str());
     if (!o) DAL_THROW(file_not_found_error,
 		      "Mesh file '" << name << "' does not exist");
@@ -468,14 +465,14 @@ namespace getfem {
   { for (ITER b(b_) ; b != e; ++b) ost << "  " << *b; }
 
   template<class ITER>
-    static void write_convex_to_file_(const getfem_mesh &ms,
+    static void write_convex_to_file_(const mesh &ms,
 				      std::ostream &ost,
 				      ITER b, ITER e) {
     for ( ; b != e; ++b) {
       size_type i = b.index();
-      ost << "CONVEX " << i << "    "
+      ost << "CONVEX " << i << "    \'"
 	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str()
-	  << "    ";
+	  << "\'    ";
       write_tab_to_file_(ost, ms.ind_points_of_convex(i).begin(),
 			 ms.ind_points_of_convex(i).end()  );
       ost << '\n';
@@ -486,15 +483,13 @@ namespace getfem {
 						  ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; ost << '\n'; }
 
-  void getfem_mesh::write_to_file(std::ostream &ost) const {
+  void mesh::write_to_file(std::ostream &ost) const {
     ost.precision(16);
     ost << '\n' << "BEGIN POINTS LIST" << '\n' << '\n';
-    bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
-    bgeot::mesh_point_st_ct::const_iterator e = point_structures().end();
-    for (size_type i = 0; b != e; ++b, ++i)
-      if ( (*b).is_valid() ) {
+    for (size_type i = 0; i < points_tab.size(); ++i)
+      if (is_point_valid(i) ) {
 	ost << "  POINT  " << i;
-	write_point_to_file_(ost, points()[i].begin(), points()[i].end());
+	write_point_to_file_(ost, pts[i].begin(), pts[i].end());
       }
     ost << '\n' << "END POINTS LIST" << '\n' << '\n' << '\n';
     
@@ -533,7 +528,7 @@ namespace getfem {
     }
   }
 
-  void getfem_mesh::write_to_file(const std::string &name) const {
+  void mesh::write_to_file(const std::string &name) const {
     std::ofstream o(name.c_str());
     if (!o)
       DAL_THROW(failure_error, "impossible to write to file '" << name << "'");
@@ -543,11 +538,10 @@ namespace getfem {
     o.close();
   }
 
-  size_type getfem_mesh::memsize() const {
-    return bgeot::mesh<base_node>::memsize() + 
-      (pts.index().last_true()+1)*dim()*sizeof(scalar_type)+
-      sizeof(getfem_mesh) - sizeof(bgeot::mesh<base_node>)
-      + trans_exists.memsize() + gtab.memsize()
+  size_type mesh::memsize(void) const {
+    return bgeot::mesh_structure::memsize() - sizeof(bgeot::mesh_structure)
+      + pts.memsize() + (pts.index().last_true()+1)*dim()*sizeof(scalar_type)
+      + sizeof(mesh) + trans_exists.memsize() + gtab.memsize()
       + cvf_sets.memsize() + valid_cvf_sets.memsize();
   }
 
@@ -617,11 +611,11 @@ namespace getfem {
       + convexes whose dimension is smaller that m.dim()
   */
   void
-  outer_faces_of_mesh(const getfem::getfem_mesh &m, const dal::bit_vector& cvlst, convex_face_ct& flist) {
+  outer_faces_of_mesh(const getfem::mesh &m, const dal::bit_vector& cvlst, convex_face_ct& flist) {
     for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
       if (m.structure_of_convex(ic)->dim() == m.dim()) {
 	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
-	  if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
+	  if (m.neighbour_of_convex(ic,f) == size_type(-1)) {
 	    flist.push_back(convex_face(ic,f));
 	  }
 	}
@@ -631,26 +625,24 @@ namespace getfem {
     }
   }
 
-  void  outer_faces_of_mesh(const getfem_mesh &m, 
+  void  outer_faces_of_mesh(const mesh &m, 
 			    const mesh_region &cvlst,
 			    mesh_region &flist) {
     cvlst.error_if_not_convexes();
     for (mr_visitor i(cvlst); !i.finished(); ++i) {
       if (m.structure_of_convex(i.cv())->dim() == m.dim()) {
-	for (size_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces(); f++) {
-	  if (bgeot::neighbour_of_convex(m,i.cv(),f).empty()) {
+	for (size_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
+	     f++) {
+	  if (!m.is_convex_having_neighbour(i.cv(),f)) {
 	    flist.add(i.cv(),f);
 	  }
 	}
-      } else {
-	flist.add(i.cv());
       }
+      else flist.add(i.cv());
     }
   }
 
-
-
-  void extrude(const getfem_mesh& in, getfem_mesh& out, unsigned nb_layers) {
+  void extrude(const mesh& in, mesh& out, unsigned nb_layers) {
     unsigned dim = in.dim();
     base_node pt(dim+1);
     out.clear();

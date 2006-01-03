@@ -40,7 +40,7 @@ using bgeot::dim_type;
 /**************************************************************************/
 
 struct lap_pb {
-  getfem::getfem_mesh mesh;
+  getfem::mesh mesh;
   getfem::mesh_im mim;
   getfem::mesh_fem mef;
   getfem::mesh_fem mef_data;
@@ -345,26 +345,26 @@ int main(int argc, char *argv[])
   try {
     
     lap_pb p;
-    scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
+    scalar_type exectime = dal::uclock_sec(), total_time = 0.0;
     
     // cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
     p.init();
     // cout << "Initialisation terminee\n";
     
-    total_time += ftool::uclock_sec() - exectime;
+    total_time += dal::uclock_sec() - exectime;
     
     p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
     
-    exectime = ftool::uclock_sec();
+    exectime = dal::uclock_sec();
     test1_mat_elem(p.mim, p.mef, p.mef_data);
     cout << "Mat elem computation time 1 : "
-	 << ftool::uclock_sec() - exectime << endl;
+	 << dal::uclock_sec() - exectime << endl;
  
-    exectime = ftool::uclock_sec();
+    exectime = dal::uclock_sec();
     test2_mat_elem(p.mim, p.mef, p.mef_data);
     cout << "Mat elem computation time 2 : "
-	 << ftool::uclock_sec() - exectime << endl;
+	 << dal::uclock_sec() - exectime << endl;
 
   }
   DAL_STANDARD_CATCH_ERROR;

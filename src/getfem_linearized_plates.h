@@ -238,8 +238,8 @@ namespace getfem {
 
     TYPEDEF_MODEL_STATE_TYPES;
 
-    mesh_im &mim, &mim_subint;
-    mesh_fem &mf_ut, &mf_u3, &mf_theta;
+    const mesh_im &mim, &mim_subint;
+    const mesh_fem &mf_ut, &mf_u3, &mf_theta;
     mdbrick_parameter<VECTOR> lambda_, mu_;
     value_type epsilon;
     bool homogeneous, mitc, K_uptodate;
@@ -360,7 +360,8 @@ namespace getfem {
      * @param epsilon the thickness of the plate.
      */
     mdbrick_isotropic_linearized_plate
-    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
+    (const mesh_im &mim_, const mesh_fem &mf_ut_, const mesh_fem &mf_u3_,
+     const mesh_fem &mf_theta_,
      value_type lambdai, value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
 	mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
@@ -372,8 +373,9 @@ namespace getfem {
      * @param epsilon the thickness of the plate.
      */
     mdbrick_isotropic_linearized_plate
-    (mesh_im &mim_, mesh_im &mim_subint_, mesh_fem &mf_ut_, mesh_fem &mf_u3_,
-     mesh_fem &mf_theta_, value_type lambdai, value_type mui, double epsilon_)
+    (const mesh_im &mim_, const mesh_im &mim_subint_, const mesh_fem &mf_ut_,
+     const mesh_fem &mf_u3_, const mesh_fem &mf_theta_, value_type lambdai,
+     value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
 	mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
 	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
@@ -439,8 +441,8 @@ namespace getfem {
 
     TYPEDEF_MODEL_STATE_TYPES;
 
-    mesh_im &mim;
-    mesh_fem &mf_ut, &mf_u3, &mf_theta;
+    const mesh_im &mim;
+    const mesh_fem &mf_ut, &mf_u3, &mf_theta;
     mdbrick_parameter<VECTOR> lambda_, mu_;
     value_type epsilon;
     bool homogeneous, symmetrized, K_uptodate;
@@ -594,7 +596,8 @@ namespace getfem {
 
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_mixed_isotropic_linearized_plate
-    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
+    (const mesh_im &mim_, const mesh_fem &mf_ut_, const mesh_fem &mf_u3_,
+     const mesh_fem &mf_theta_,
      value_type lambdai, value_type mui,
      double epsilon_, bool sym = false)
       : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
@@ -653,7 +656,7 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) { }
 
     mdbrick_plate_source_term(mdbrick_abstract<MODEL_STATE> &problem,
-			      mesh_fem &mf_data, const VECTOR &B__,
+			      const mesh_fem &mf_data, const VECTOR &B__,
 			      const VECTOR &M__,
 			      size_type bound = size_type(-1),
 			      size_type num_fem = 0)
@@ -729,15 +732,17 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &, size_type ,size_type) {}
 
     mdbrick_plate_simple_support(mdbrick_abstract<MODEL_STATE> &problem,
-				 size_type bound, size_type num_fem = 0,
-				 bool with_mult = false) : phi_part(0) {
-      ut_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	(problem, bound, num_fem);
-      ut_part->use_multipliers(with_mult);
+				 size_type bound,
+				 size_type num_fem = 0,
+				 constraints_type cot = AUGMENTED_CONSTRAINTS)
+      : phi_part(0) {
+      ut_part = new mdbrick_Dirichlet<MODEL_STATE>(problem, bound,
+						   dummy_mesh_fem(), num_fem);
+      ut_part->set_constraints_type(cot);
 
-      u3_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	(*ut_part, bound, num_fem+1);
-      u3_part->use_multipliers(with_mult);
+      u3_part = new mdbrick_Dirichlet<MODEL_STATE>
+	(*ut_part, bound, dummy_mesh_fem(), num_fem+1);
+      u3_part->set_constraints_type(cot);
 
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
@@ -755,8 +760,8 @@ namespace getfem {
 	DAL_THROW(failure_error, "The mesh_fem number is not correct");
 
       if (mixed) {
-	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>(*u3_part, bound, num_fem+4);
-	sub_problem->use_multipliers(with_mult);
+	sub_problem = phi_part = new mdbrick_Dirichlet<MODEL_STATE>(*u3_part, bound, dummy_mesh_fem(), num_fem+4);
+	sub_problem->set_constraints_type(cot);
       }
       else sub_problem = u3_part;
       this->add_sub_brick(*sub_problem);
@@ -795,15 +800,14 @@ namespace getfem {
 
     mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
 				  size_type bound, size_type num_fem = 0,
-				  bool with_mult = false)
-      : ut_part(problem, bound, num_fem),
-	u3_part(ut_part, bound, num_fem+1),
-	theta_part(u3_part, bound, num_fem+2),
-	phi_part(0) {
+				  constraints_type cot = AUGMENTED_CONSTRAINTS)
+      : ut_part(problem, bound, dummy_mesh_fem(), num_fem),
+	u3_part(ut_part, bound, dummy_mesh_fem(), num_fem+1),
+	theta_part(u3_part, bound, dummy_mesh_fem(), num_fem+2), phi_part(0) {
 
-      ut_part.use_multipliers(with_mult);
-      u3_part.use_multipliers(with_mult);
-      theta_part.use_multipliers(with_mult);
+      ut_part.set_constraints_type(cot);
+      u3_part.set_constraints_type(cot);
+      theta_part.set_constraints_type(cot);
 
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
@@ -822,8 +826,8 @@ namespace getfem {
 
       if (mixed) {
 	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	  (theta_part, bound, num_fem+4);
-	sub_problem->use_multipliers(with_mult);
+	  (theta_part, bound, dummy_mesh_fem(), num_fem+4);
+	sub_problem->set_constraints_type(cot);
 	this->add_sub_brick(*phi_part);
       }
       else { 
@@ -867,7 +871,7 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
     
     mdbrick_abstract<MODEL_STATE> *sub_problem;
-    mesh_fem *mf_theta;
+    const mesh_fem *mf_theta;
     gmm::row_matrix<gmm::rsvector<value_type> > CO;
     size_type num_fem;
     bool mixed, symmetrized, allclamped, with_multipliers;
@@ -879,17 +883,17 @@ namespace getfem {
       std::vector<size_type> cv_nums;
       std::vector<short_type> face_nums;
       
-      const getfem_mesh *mesh = &(mf_theta->linked_mesh());
+      const mesh *msh = &(mf_theta->linked_mesh());
     
       getfem::mesh_region border_faces;
-      getfem::outer_faces_of_mesh(*mesh, border_faces);
-      dal::bit_vector vb = mesh->regions_index();
+      getfem::outer_faces_of_mesh(*msh, border_faces);
+      dal::bit_vector vb = msh->regions_index();
       
       for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
 	bool add = true;
 	// cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
 	for (dal::bv_visitor i(vb); !i.finished(); ++i) {
-	  if (mesh->region(i).is_in(it.cv(),it.f())) {
+	  if (msh->region(i).is_in(it.cv(),it.f())) {
 	    // cout << i << endl;
 	    bound_cond_type bct = this->boundary_type(num_fem, i);
 	    if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
@@ -908,11 +912,11 @@ namespace getfem {
       cout << "allclamped = " << allclamped << endl;
 
       std::vector<size_type> comp_conns(cv_nums.size(), size_type(-1)); 
-      size_type nbmax = mesh->points().ind_last() + 1, p1, p2;
+      size_type nbmax = msh->points().ind_last() + 1, p1, p2;
       std::vector<size_type> E1(nbmax, size_type(-1)), E2(nbmax, size_type(-1));
       for (size_type j = 0; j < cv_nums.size(); ++j) {
-	p1 = mesh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
-	p2 = mesh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
+	p1 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
+	p2 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
 	if (E1[p1] == size_type(-1)) E1[p1] = j; else E2[p1] = j;
 	if (E1[p2] == size_type(-1)) E1[p2] = j; else E2[p2] = j;	
       }
@@ -922,8 +926,8 @@ namespace getfem {
 	if (comp_conns[i] == size_type(-1)) {
 	  
 	  comp_conns[i] = comp_conn;
-	  p1 = mesh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[0];
-	  p2 = mesh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[1];
+	  p1 = msh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[0];
+	  p2 = msh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[1];
 	  size_type j1 = (E1[p1] == i) ? E2[p1] :  E1[p1];
 	  size_type j2 = (E1[p2] == i) ? E2[p2] :  E1[p2];
 	  
@@ -932,8 +936,8 @@ namespace getfem {
 	    
 	    while (j != size_type(-1) && comp_conns[j] == size_type(-1)) {
 	      comp_conns[j] = comp_conn;
-	      p1 = mesh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
-	      p2 = mesh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
+	      p1 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
+	      p2 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
 	      size_type i1 = (E1[p1] == j) ? E2[p1] :  E1[p1];
 	      size_type i2 = (E1[p2] == j) ? E2[p2] :  E1[p2];
 	      if (i1 == size_type(-1) || comp_conns[i1] != size_type(-1))
@@ -1031,13 +1035,12 @@ namespace getfem {
 	size_type ncs = sub_problem->nb_constraints();
 	if (gmm::mat_nrows(CO) > 0) {
 	  gmm::sub_interval SUBI(j0+ncs,gmm::mat_nrows(CO));
-	  gmm::mult(CO, gmm::scaled(gmm::sub_vector(MS.state(), SUBJ), 
-				    value_type(-1)),
+	  gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
 		    gmm::sub_vector(MS.constraints_rhs(), SUBI));
 	}
 	if (allclamped) {
 	  (MS.constraints_rhs())[j0+ncs+gmm::mat_nrows(CO)] =
-	    -(MS.state())[i0 + this->mesh_fem_positions[num_fem+3]];
+	    (MS.state())[i0 + this->mesh_fem_positions[num_fem+3]];
 	}
       }
     }
@@ -1064,7 +1067,6 @@ namespace getfem {
       if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
 	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
 	DAL_THROW(failure_error, "The mesh_fem number is not correct");
-
 
       this->add_sub_brick(problem);
       this->force_update();

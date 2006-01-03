@@ -4,7 +4,6 @@ include_HEADERS =                          \
 	getfem_boost/noncopyable.hpp       \
 	dal_algobase.h                     \
 	dal_singleton.h		           \
-	dal_alloc.h                        \
 	dal_shared_ptr.h                   \
 	dal_basic.h                        \
 	dal_bit_vector.h                   \
@@ -22,12 +21,10 @@ include_HEADERS =                          \
 	bgeot_convex_structure.h           \
 	bgeot_convex.h                     \
 	bgeot_convex_hull.h                \
-	bgeot_convex_intersect.h           \
 	bgeot_convex_ref.h                 \
 	bgeot_geometric_trans.h            \
 	bgeot_geotrans_inv.h               \
 	bgeot_kdtree.h		           \
-	bgeot_mesh.h                       \
 	bgeot_mesh_structure.h             \
 	bgeot_poly.h                       \
 	bgeot_rtree.h		           \
@@ -81,6 +78,7 @@ include_HEADERS =                          \
 	getfem_Navier_Stokes.h             \
 	getfem_superlu.h		   \
 	getfem_plasticity.h                \
+	gmm_MUMPS_interface.h              \
 	getfem_mesher.h                    \
 	gmm.h                              \
 	gmm_matrix.h                       \

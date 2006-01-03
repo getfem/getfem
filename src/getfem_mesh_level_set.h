@@ -46,7 +46,7 @@ namespace getfem {
 
       Note that the cutting won't be conformal.
   */
-  class mesh_level_set : public getfem_mesh_receiver,
+  class mesh_level_set : public mesh_receiver,
 			 public context_dependencies {
   public:
     typedef std::string subzone;
@@ -61,19 +61,19 @@ namespace getfem {
     
 
     dal::dynamic_array<const std::string *> zones_of_convexes;
-    getfem_mesh *linked_mesh_;
+    mesh *linked_mesh_;
     mutable bool is_adapted_;
 
     typedef level_set *plevel_set;
     std::vector<plevel_set> level_sets; // set of level set
     
-    typedef boost::intrusive_ptr<getfem_mesh> pgetfem_mesh;
+    typedef boost::intrusive_ptr<mesh> pmesh;
 
     struct convex_info {
-      pgetfem_mesh pmesh;
+      pmesh pmsh;
       zoneset zones;
       mesh_region ls_border_faces;
-      convex_info() : pmesh(0) {}
+      convex_info() : pmsh(0) {}
     };
 
     std::map<size_type, convex_info> cut_cv;
@@ -87,15 +87,15 @@ namespace getfem {
     void update_from_context(void) const { is_adapted_= false; }
     bool is_convex_cut(size_type i) const
     { return (cut_cv.find(i) != cut_cv.end()); }
-    const getfem_mesh& mesh_of_convex(size_type i) const {
-      if (is_convex_cut(i)) return *((cut_cv.find(i))->second.pmesh);
+    const mesh& mesh_of_convex(size_type i) const {
+      if (is_convex_cut(i)) return *((cut_cv.find(i))->second.pmsh);
       DAL_THROW(failure_error, "This element is not cut !");
     }
     
     const dal::bit_vector &crack_tip_convexes() const;
 
-    /// Gives a reference to the linked mesh of type getfem_mesh.
-    getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
+    /// Gives a reference to the linked mesh of type mesh.
+    mesh &linked_mesh(void) const { return *linked_mesh_; }
     void clear(void);
     /* explicit calls to parent class 
        for HP aCC and mipspro CC who complain about hidden functions 
@@ -103,7 +103,7 @@ namespace getfem {
     */
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) {getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
     
@@ -113,7 +113,7 @@ namespace getfem {
       for (std::map<size_type, convex_info>::const_iterator it=cut_cv.begin();
 	   it != cut_cv.end(); ++it) {
 	res += sizeof(convex_info)
-	  + it->second.pmesh->memsize()
+	  + it->second.pmsh->memsize()
 	  + it->second.zones.size()
 	  * (level_sets.size() + sizeof(std::string *) + sizeof(std::string));
       }
@@ -138,7 +138,7 @@ namespace getfem {
     }
 
     /** fill m with the (non-conformal) "cut" mesh. */
-    void global_cut_mesh(getfem_mesh &m) const;
+    void global_cut_mesh(mesh &m) const;
     /** do all the work (cut the convexes wrt the levelsets) */
     void adapt(void);
     void merge_zoneset(zoneset &zones1, const zoneset &zones2) const;
@@ -151,7 +151,7 @@ namespace getfem {
       DAL_THROW(internal_error, "You cannot call this function for uncut convexes");
     }
     
-    mesh_level_set(getfem_mesh &me);
+    mesh_level_set(mesh &me);
     virtual ~mesh_level_set();
     
 

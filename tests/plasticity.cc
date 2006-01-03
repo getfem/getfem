@@ -58,7 +58,7 @@ template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
 struct plasticity_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -83,9 +83,9 @@ struct plasticity_problem {
  */
 void plasticity_problem::init(void)
 {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -94,19 +94,19 @@ void plasticity_problem::init(void)
   residu = PARAM.real_value("RESIDU", "residu");
 
   //  file to save the mesh
-  datafilename=std::string(PARAM.string_value("ROOTFILENAME","Filename for saving"));
+  datafilename = PARAM.string_value("ROOTFILENAME","Filename for saving");
   /* First step : build the mesh */
   size_type N;
   bgeot::pgeometric_trans pgt = 0; 
-  if (strcmp(MESH_TYPE, "load")!=0) {
-    std ::cout << "created getfem mesh"  << "\n"; 
+  if (MESH_TYPE != "load") {
+    std::cout << "created getfem mesh"  << "\n"; 
     pgt = bgeot::geometric_trans_descriptor(MESH_TYPE);
     N = pgt->dim();
     std::vector<size_type> nsubdiv(N);
     nsubdiv[0]=PARAM.int_value("NX", "Nomber of space steps in x direction ");
     nsubdiv[1]=PARAM.int_value("NY", "Nomber of space steps in y direction ");
     if(N==3)
-      nsubdiv[2]=PARAM.int_value("NZ", "Nomber of space steps in z direction ");
+      nsubdiv[2]=PARAM.int_value("NZ","Nomber of space steps in z direction ");
     getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
                               PARAM.int_value("MESH_NOISED") != 0);
     
@@ -121,7 +121,7 @@ void plasticity_problem::init(void)
     mesh.transformation(M);
   } else {
     std ::cout << "mesh from pdetool"  << "\n"; 
-    const char *MESH_FILE = PARAM.string_value("MESH_FILE","Mesh file name");
+    std::string MESH_FILE = PARAM.string_value("MESH_FILE","Mesh file name");
     mesh.read_from_file(MESH_FILE);
     
     N = mesh.dim();
@@ -143,8 +143,8 @@ void plasticity_problem::init(void)
   
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -196,7 +196,7 @@ bool plasticity_problem::solve(plain_vector &U) {
   // Neumann condition brick
   getfem::mdbrick_source_term<> NEUMANN(PLAS, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM, false);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM);
   final_model.rhs().set(mf_rhs, F);
 
   getfem::standard_model_state MS(final_model);

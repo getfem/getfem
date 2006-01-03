@@ -125,7 +125,8 @@ namespace getfem {
 			    this->mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
 
-    mdbrick_pre_navier_stokes(mesh_im &mim_, mesh_fem &mf_u_, value_type nu_)
+    mdbrick_pre_navier_stokes(const mesh_im &mim_, const mesh_fem &mf_u_,
+			      value_type nu_)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_NAVIER_STOKES),
 	nu(nu_) {
       this->proper_is_linear_ = false;
@@ -167,8 +168,8 @@ namespace getfem {
     SUBVECTOR get_pressure(MODEL_STATE &MS) 
     { return sub_problem.get_pressure(MS); }
 
-    mdbrick_navier_stokes(mesh_im &mim, mesh_fem &mf_u, mesh_fem &mf_p,
-			  value_type nu)
+    mdbrick_navier_stokes(const mesh_im &mim, const mesh_fem &mf_u,
+			  const mesh_fem &mf_p, value_type nu)
       : velocity_part(mim, mf_u, nu), sub_problem(velocity_part, mf_p) {
       this->add_sub_brick(sub_problem);
       this->force_update();

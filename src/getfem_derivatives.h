@@ -54,8 +54,7 @@ namespace getfem
   */
   template<class VECT1, class VECT2>
   void compute_gradient(const mesh_fem &mf, const mesh_fem &mf_target,
-			const VECT1 &U, VECT2 &V)
-  {
+			const VECT1 &U, VECT2 &V) {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
 
     size_type N = mf.linked_mesh().dim();

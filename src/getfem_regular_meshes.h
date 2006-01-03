@@ -50,11 +50,11 @@ namespace getfem
   /* dimension. Chaque parallelepidede est simplexifie.                   */
   /* ******************************************************************** */
 
-  void parallelepiped_regular_simplex_mesh_(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_simplex_mesh_(mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref);
 
   template<class ITER1, class ITER2>
-    void parallelepiped_regular_simplex_mesh(getfem_mesh &me,
+    void parallelepiped_regular_simplex_mesh(mesh &me,
 					     dim_type N,
 	     const base_node &org, ITER1 ivect, ITER2 iref)
   { 
@@ -66,11 +66,11 @@ namespace getfem
 					 &(ref[0]));
   } 
 
-  void parallelepiped_regular_prism_mesh_(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_prism_mesh_(mesh &me, dim_type N,
       const base_node &org, const base_small_vector *ivect, const size_type *iref);
 
   template<class ITER1, class ITER2>
-    void parallelepiped_regular_prism_mesh(getfem_mesh &me,
+    void parallelepiped_regular_prism_mesh(mesh &me,
 					     dim_type N,
 	     const base_node &org, ITER1 ivect, ITER2 iref)
   { 
@@ -82,11 +82,11 @@ namespace getfem
 					 &(ref[0]));
   } 
 
-  void parallelepiped_regular_mesh_(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_mesh_(mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt);
 
   template<class ITER1, class ITER2>
-    void parallelepiped_regular_mesh(getfem_mesh &me,
+    void parallelepiped_regular_mesh(mesh &me,
 					     dim_type N,
                                      const base_node &org, ITER1 ivect, ITER2 iref, bool linear_gt=false)
   { 
@@ -111,7 +111,7 @@ namespace getfem
 
      @param noised if set, will cause the interior nodes to be randomly "shaken".
    */
-  void regular_unit_mesh(getfem_mesh& m, std::vector<size_type> nsubdiv, 
+  void regular_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, 
 			 bgeot::pgeometric_trans pgt, bool noised = false);
 }  /* end of namespace getfem.                                             */
 

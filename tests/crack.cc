@@ -235,7 +235,7 @@ struct exact_solution {
   getfem::mesh_fem_global_function mf;
   getfem::base_vector U;
 
-  exact_solution(getfem::getfem_mesh &me) : mf(me) {}
+  exact_solution(getfem::mesh &me) : mf(me) {}
   
   void init(int mode, scalar_type lambda, scalar_type mu,
 	    getfem::level_set &ls) {
@@ -298,10 +298,11 @@ base_small_vector sol_f(const base_node &x) {
 struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
-  getfem::mesh_fem mf_pre_u; 
+  getfem::mesh_fem mf_pre_u;
+  getfem::mesh_fem mf_mult;
   getfem::mesh_fem_level_set mfls_u; 
   getfem::mesh_fem_global_function mf_sing_u;
   getfem::mesh_fem mf_partition_of_unity;
@@ -332,7 +333,8 @@ struct crack_problem {
   unsigned spider_Ntheta;
   int spider_K;
   scalar_type residue;       /* max residue for the iterative solvers        */
-  bool mixed_pressure, add_crack, dir_with_mult;
+  bool mixed_pressure, add_crack;
+  unsigned dir_with_mult;
   scalar_type cutoff_radius, enr_area_radius;
   int enrichment_option;
   
@@ -341,7 +343,7 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
+  crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh), mf_mult(mesh),
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
@@ -357,13 +359,13 @@ struct crack_problem {
  * and integration methods and selects the boundaries.
  */
 void crack_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
+  std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
-  const char *SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
+  std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
 
   add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
@@ -411,8 +413,8 @@ void crack_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
   getfem::pintegration_method simp_ppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
-  getfem::pintegration_method sing_ppi = 
-    (SINGULAR_INTEGRATION ? getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
+  getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
+		getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
@@ -420,6 +422,8 @@ void crack_problem::init(void) {
 
   mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
+  mf_mult.set_finite_element(mesh.convex_index(), pf_u);
+  mf_mult.set_qdim(N);
   mf_partition_of_unity.set_classical_finite_element(1);
   
 //   if (enrichment_option == 3 || enrichment_option == 4) {
@@ -436,17 +440,17 @@ void crack_problem::init(void) {
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
-  dir_with_mult = (PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS") != 0);
+  dir_with_mult = PARAM.int_value("DIRICHLET_VERSINO");
   if (mixed_pressure) {
-    const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
+    std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
     mf_p.set_finite_element(mesh.convex_index(),
 			    getfem::fem_descriptor(FEM_TYPE_P));
   }
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -624,11 +628,12 @@ bool crack_problem::solve(plain_vector &U) {
   //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
   //assert(toto.mf.nb_dof() == 1);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
+					  mf_mult);
 #ifdef VALIDATE_XFEM
   final_model.rhs().set(exact_sol.mf, exact_sol.U);
 #endif
-  final_model.use_multipliers(dir_with_mult);
+  final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -663,7 +668,7 @@ int main(int argc, char *argv[]) {
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
     {
-      getfem::getfem_mesh mcut;
+      getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
       getfem::mesh_fem mf(mcut, Q);
@@ -675,7 +680,7 @@ int main(int argc, char *argv[]) {
       getfem::interpolation(p.mf_u(), mf, U, V);
 
       getfem::stored_mesh_slice sl;
-      getfem::getfem_mesh mcut_refined;
+      getfem::mesh mcut_refined;
 
       unsigned NX = p.PARAM.int_value("NX"), nn;
       if (NX < 6) nn = 24;

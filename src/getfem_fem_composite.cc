@@ -96,7 +96,7 @@ namespace getfem
 	|| k > 150 || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    pgetfem_mesh pm;
+    pmesh pm;
     pmesh_precomposite pmp;
 
     structured_mesh_for_convex(pf->ref_convex(0), k, pm, pmp);

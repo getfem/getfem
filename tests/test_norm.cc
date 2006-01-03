@@ -19,7 +19,7 @@ scalar_type interp_fun(base_node x) {
 void test_norm(bgeot::pgeometric_trans pgt, 
 	       getfem::pfem pf, 
 	       getfem::pintegration_method im, bool noised) {
-  getfem::getfem_mesh mesh1, mesh2;
+  getfem::mesh mesh1, mesh2;
   std::vector<size_type> nsubdiv(pgt->dim());
   std::fill(nsubdiv.begin(),nsubdiv.end(),13);
   getfem::regular_unit_mesh(mesh1, nsubdiv, pgt, noised);

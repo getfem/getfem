@@ -92,7 +92,8 @@ namespace getfem {
        @param t     the destination tensor
        @param a     the list of vertices of the convex
        @param elt   the convex number
-       @param icb   an optional callback which will be called for each integration point
+       @param icb   an optional callback which will be called for each
+                    integration point
     */
     template <class CONT> void 
     gen_compute(base_tensor &t, const CONT &a,  size_type elt, 

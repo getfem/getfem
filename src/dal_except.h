@@ -267,7 +267,7 @@ namespace dal {
   // This allows to dynamically hide traces
   struct traces_level {
     static int level(int l = -2)
-    { static int level_ = 2; return (l != -2) ? (level_ = l) : level_; }
+    { static int level_ = 3; return (l != -2) ? (level_ = l) : level_; }
   };
 
   inline void set_traces_level(int l) { traces_level::level(std::max(0,l)); }
@@ -288,7 +288,7 @@ namespace dal {
    DAL_TRACE_MSG_MPI {                                                  \
       std::stringstream msg;                                           \
       msg << "Trace " << level_ << " in "__FILE__ << ", line "         \
-          << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": " << thestr  \
+          << __LINE__ << ": " << thestr  \
           << ends;						       \
        std::cout << msg.str() << std::endl;                            \
     }                                                                  \

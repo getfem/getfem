@@ -53,21 +53,21 @@ END POINTS LIST
 
 BEGIN MESH STRUCTURE DESCRIPTION
 
-CONVEX 0    GT_PK(2,2)      11  13  12  14  15  4
-CONVEX 1    GT_PK(2,2)      5  16  6  17  18  0
-CONVEX 2    GT_PK(2,2)      10  19  11  20  14  4
-CONVEX 3    GT_PK(2,2)      9  21  12  22  23  3
-CONVEX 4    GT_PK(2,2)      9  24  6  25  26  1
-CONVEX 5    GT_PK(2,2)      9  27  11  25  28  1
-CONVEX 6    GT_PK(2,2)      9  27  11  21  13  12
-CONVEX 7    GT_PK(2,2)      8  29  11  30  28  1
-CONVEX 8    GT_PK(2,2)      8  31  10  29  19  11
-CONVEX 9    GT_PK(2,2)      8  31  10  32  33  2
-CONVEX 10    GT_PK(2,2)      8  34  5  32  35  2
-CONVEX 11    GT_PK(2,2)      8  36  6  30  26  1
-CONVEX 12    GT_PK(2,2)      8  34  5  36  16  6
-CONVEX 13    GT_PK(2,2)      7  37  6  38  18  0
-CONVEX 14    GT_PK(2,2)      7  39  9  37  24  6
-CONVEX 15    GT_PK(2,2)      7  39  9  40  22  3
+CONVEX 0    'GT_PK(2,2)'      11  13  12  14  15  4
+CONVEX 1    'GT_PK(2,2)'      5  16  6  17  18  0
+CONVEX 2    'GT_PK(2,2)'      10  19  11  20  14  4
+CONVEX 3    'GT_PK(2,2)'      9  21  12  22  23  3
+CONVEX 4    'GT_PK(2,2)'      9  24  6  25  26  1
+CONVEX 5    'GT_PK(2,2)'      9  27  11  25  28  1
+CONVEX 6    'GT_PK(2,2)'      9  27  11  21  13  12
+CONVEX 7    'GT_PK(2,2)'      8  29  11  30  28  1
+CONVEX 8    'GT_PK(2,2)'      8  31  10  29  19  11
+CONVEX 9    'GT_PK(2,2)'      8  31  10  32  33  2
+CONVEX 10    'GT_PK(2,2)'      8  34  5  32  35  2
+CONVEX 11    'GT_PK(2,2)'      8  36  6  30  26  1
+CONVEX 12    'GT_PK(2,2)'      8  34  5  36  16  6
+CONVEX 13    'GT_PK(2,2)'      7  37  6  38  18  0
+CONVEX 14    'GT_PK(2,2)'      7  39  9  37  24  6
+CONVEX 15    'GT_PK(2,2)'      7  39  9  40  22  3
 
 END MESH STRUCTURE DESCRIPTION

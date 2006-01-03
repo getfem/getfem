@@ -148,16 +148,26 @@ namespace getfem {
        linked_mesh().points_of_convex(cv));
   }
 
-  base_node mesh_fem::point_of_dof(size_type d) const { 
+  base_node mesh_fem::point_of_dof(size_type d) const {
     if (!dof_enumeration_made) enumerate_dof();
-    return point_of_dof(first_convex_of_dof(d),
-			ind_in_first_convex_of_dof(d));
+    for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
+      size_type cv = dof_structure.first_convex_of_point(i);
+      if (cv != size_type(-1)) {
+	pfem pf = f_elems[cv];
+	return linked_mesh().trans_of_convex(cv)->transform
+	  (pf->node_of_dof(cv, dof_structure.ind_in_convex_of_point(cv, i)),
+	   linked_mesh().points_of_convex(cv));
+      }
+    }
+    DAL_THROW(failure_error, "Inexistent dof");
   }
 
   dim_type mesh_fem::dof_qdim(size_type d) const {
     if (!dof_enumeration_made) enumerate_dof();
-    size_type tdim = f_elems[first_convex_of_dof(d)]->target_dim();
-    return ind_in_first_convex_of_dof(d) % (Qdim / tdim);
+    size_type cv = first_convex_of_dof(d);
+    if (cv == size_type(-1)) DAL_THROW(failure_error, "Inexistent dof");
+    size_type tdim = f_elems[cv]->target_dim();
+    return dof_structure.ind_in_convex_of_point(cv, d) % (Qdim / tdim);
   }
 
   size_type mesh_fem::first_convex_of_dof(size_type d) const {
@@ -168,22 +178,22 @@ namespace getfem {
     return size_type(-1);
   }
 
-  size_type mesh_fem::ind_in_first_convex_of_dof(size_type d) const {
-    for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
-      size_type j = dof_structure.first_convex_of_point(i);
-      if (j != size_type(-1))
-	return (dof_structure.ind_in_first_convex_of_point(i)
-		* Qdim / f_elems[j]->target_dim());
-    }
-    return size_type(-1);
-  }
+//   size_type mesh_fem::ind_in_convex_of_dof(size_type d) const {
+//     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
+//       size_type j = dof_structure.first_convex_of_point(i);
+//       if (j != size_type(-1))
+// 	return (dof_structure.ind_in_first_convex_of_point(i)
+// 		* Qdim / f_elems[j]->target_dim());
+//     }
+//     return size_type(-1);
+//   }
 
-  bgeot::mesh_convex_ind_ct mesh_fem::convex_to_dof(size_type d) const {
+  const mesh::ind_cv_ct &mesh_fem::convex_to_dof(size_type d) const {
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return dof_structure.convex_to_point(i);
     }
-    return bgeot::mesh_convex_ind_ct();
+    DAL_THROW(failure_error, "Inexistent dof");
   }
 
   struct dof_comp_ { 
@@ -209,7 +219,7 @@ namespace getfem {
       return;
     }
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
-    // double t = ftool::uclock_sec();
+    // double t = dal::uclock_sec();
 
     dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
@@ -272,7 +282,7 @@ namespace getfem {
     dof_enumeration_made = true;
     nb_total_dof = nbdof;
     
-//    enumerate_dof_time += ftool::uclock_sec() - t;
+//    enumerate_dof_time += dal::uclock_sec() - t;
 //    cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec [nbd=" << nbdof << "]\n";
   }
 
@@ -287,7 +297,7 @@ namespace getfem {
     dof_structure.clear();
   }
 
-  mesh_fem::mesh_fem(const getfem_mesh &me, dim_type Q)
+  mesh_fem::mesh_fem(const mesh &me, dim_type Q)
     : dof_enumeration_made(false), auto_add_elt_K(size_type(-1)), Qdim(Q) {
     linked_mesh_ = &me;
     this->add_dependency(me);
@@ -302,7 +312,7 @@ namespace getfem {
   void mesh_fem::read_from_file(std::istream &ist) {
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
-    char tmp[1024];
+    std::string tmp;
     bool dof_read = false;
     ist.precision(16);
     clear();
@@ -310,37 +320,37 @@ namespace getfem {
     ftool::read_until(ist, "BEGIN MESH_FEM");
 
     while (true) {
-      ist >> std::ws; ftool::get_token(ist, tmp, 1023);
-      if (strcmp(tmp, "END")==0) {
+      ist >> std::ws; ftool::get_token(ist, tmp);
+      if (ftool::casecmp(tmp, "END")==0) {
 	break;
-      } else if (strcmp(tmp, "CONVEX")==0) {
-	ftool::get_token(ist, tmp, 1023);
-	size_type ic = atoi(tmp);
+      } else if (ftool::casecmp(tmp, "CONVEX")==0) {
+	ftool::get_token(ist, tmp);
+	size_type ic = atoi(tmp.c_str());
 	if (!linked_mesh().convex_index().is_in(ic)) {
 	  DAL_THROW(failure_error, "Convex " << ic <<
 		    " does not exist, are you sure "
 		    "that the mesh attached to this object is right one ?");
 	}
 	
-	ftool::get_token(ist, tmp, 1023);
+	ftool::get_token(ist, tmp);
 	getfem::pfem fem = getfem::fem_descriptor(tmp);
 	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" 
 			    << tmp << "'");
 	set_finite_element(ic, fem);
-      } else if (strcmp(tmp, "BEGIN")==0) {
-	ftool::get_token(ist, tmp, 1023);
-	if (!strcmp(tmp,"DOF_ENUMERATION")) {
+      } else if (ftool::casecmp(tmp, "BEGIN")==0) {
+	ftool::get_token(ist, tmp);
+	if (!ftool::casecmp(tmp, "DOF_ENUMERATION")) {
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false; touch();
 	  while (true) {
-	    ftool::get_token(ist, tmp, 1023);
-	    if (strcmp(tmp, "END")==0) { 
+	    ftool::get_token(ist, tmp);
+	    if (ftool::casecmp(tmp, "END")==0) { 
 	      break;
 	    }
-	    size_type ic = atoi(tmp);
+	    size_type ic = atoi(tmp.c_str());
 	    std::vector<size_type> tab;
-	    if (convex_index().is_in(ic) && strlen(tmp) &&
-		tmp[strlen(tmp)-1] == ':') {
+	    if (convex_index().is_in(ic) && tmp.size() &&
+		tmp[tmp.size()-1] == ':') {
 	      tab.resize(nb_dof_of_element(ic));
 	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic); i++) {
 		ist >> tab[i];
@@ -360,18 +370,18 @@ namespace getfem {
 	  touch();
 	  this->nb_total_dof = doflst.card();
 	  ist >> ftool::skip("DOF_ENUMERATION");
-	} else if (strlen(tmp))
+	} else if (tmp.size())
 	  DAL_THROW(failure_error, "Syntax error in file at token '"
 		    << tmp << "' [pos=" << std::streamoff(ist.tellg())
 							  << "]");
-      } else if (strcmp(tmp, "QDIM")==0) {
+      } else if (ftool::casecmp(tmp, "QDIM")==0) {
 	if (dof_read)
 	  DAL_THROW(failure_error, "Can't change QDIM after dof enumeration");
-	ftool::get_token(ist, tmp, 1023);
-	int q = atoi(tmp);
+	ftool::get_token(ist, tmp);
+	int q = atoi(tmp.c_str());
 	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
 	set_qdim(q);
-      } else if (strlen(tmp)) {
+      } else if (tmp.size()) {
 	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
 		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
@@ -396,8 +406,8 @@ namespace getfem {
     ost << "QDIM " << size_type(get_qdim()) << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << " CONVEX " << cv;
-      ost << " " << name_of_fem(fem_of_element(cv));
-      ost << '\n';
+      ost << " \'" << name_of_fem(fem_of_element(cv));
+      ost << "\'\n";
     }
 
     ost << " BEGIN DOF_ENUMERATION " << '\n';
@@ -430,9 +440,9 @@ namespace getfem {
   }
 
   struct mf__key_ {
-    const getfem_mesh *pmesh;
+    const mesh *pmesh;
     dim_type order;
-    mf__key_(const getfem_mesh &mesh, dim_type o) : pmesh(&mesh),order(o) {}
+    mf__key_(const mesh &msh, dim_type o) : pmesh(&msh),order(o) {}
     bool operator <(const mf__key_ &a) const {
     if (pmesh < a.pmesh) return true; else
       if (a.pmesh < pmesh) return false; else
@@ -441,7 +451,7 @@ namespace getfem {
   };
 
 
-  class classical_mesh_fem_pool : public getfem_mesh_receiver {
+  class classical_mesh_fem_pool : public mesh_receiver {
 
     typedef const mesh_fem * pmesh_fem;
     typedef std::map<mf__key_, pmesh_fem> mesh_fem_tab;
@@ -452,7 +462,7 @@ namespace getfem {
     void receipt(const MESH_DELETE &M) {
       for (mesh_fem_tab::iterator it = mfs.begin(); it != mfs.end(); ) {
 	mesh_fem_tab::iterator it2 = it; it2 ++;
-	if (it->first.pmesh == M.mesh) mfs.erase(it);
+	if (it->first.pmesh == M.msh) mfs.erase(it);
 	it = it2;
       }
     }
@@ -462,21 +472,21 @@ namespace getfem {
 
   public :
 
-    const mesh_fem &operator()(const getfem_mesh &mesh, dim_type o) {
+    const mesh_fem &operator()(const mesh &msh, dim_type o) {
 
-      mf__key_ key(mesh, o);
+      mf__key_ key(msh, o);
       mesh_fem_tab::iterator it = mfs.find(key);
       assert(it == mfs.end() || it->second->is_context_valid());
       
       if (it == mfs.end()) {
 	// the list of mesh pointers should be sorted ...
 	for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
-	  if (itt->first.pmesh == &mesh) goto nothing_to_do;
-	add_sender(mesh.lmsg_sender(), *this, lmsg::mask(MESH_DELETE::ID));
+	  if (itt->first.pmesh == &msh) goto nothing_to_do;
+	add_sender(msh.lmsg_sender(), *this, lmsg::mask(MESH_DELETE::ID));
 	
       nothing_to_do :
 	
-	mesh_fem *pmf = new mesh_fem(mesh);
+	mesh_fem *pmf = new mesh_fem(msh);
 	pmf->set_auto_add(o);
 	pmf->set_classical_finite_element(o);
 	return *(mfs[key] = pmf);
@@ -486,14 +496,16 @@ namespace getfem {
     
   };
 
-  const mesh_fem &classical_mesh_fem(const getfem_mesh &mesh,
-				     dim_type o) {
+  const mesh_fem &classical_mesh_fem(const mesh &msh,
+				     dim_type order) {
     classical_mesh_fem_pool &pool
       = dal::singleton<classical_mesh_fem_pool>::instance();
-    return pool(mesh, o);
+    return pool(msh, order);
   }
 
-
+  static mesh dummymesh;
+  static mesh_fem dummymeshfem(dummymesh);
+  const mesh_fem &dummy_mesh_fem(void) { return dummymeshfem; }
 
 
 

@@ -72,7 +72,7 @@ start_program("-d INTEGRATION=35 -d MESH_TYPE=1");
 print ".";
 start_program("-d N=3 -d INTEGRATION=1 -d MESH_TYPE=2 -d NX=3 -d FT=0.01");
 print ".";
-start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d -d NX=10 INCLINE=0.5");
+start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d NX=10 -d INCLINE=0.5");
 print ".";
 start_program("-d N=1 -d FEM_TYPE=2 -d FT=1.0");
 print ".\n";

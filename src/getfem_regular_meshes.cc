@@ -32,7 +32,7 @@
 
 namespace getfem
 {
-  void parallelepiped_regular_simplex_mesh_(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_simplex_mesh_(mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref)
   {
     bgeot::mesh_structure cvt, sl;
@@ -66,8 +66,7 @@ namespace getfem
     std::vector<size_type> tab1(N+1), tab(N), tab3(nbpt);
     size_type total = 0;
     std::fill(tab.begin(), tab.end(), 0);
-    while (tab[N-1] != iref[N-1])
-    {
+    while (tab[N-1] != iref[N-1]) {
       for (a = org, i = 0; i < N; i++) 
 	gmm::add(gmm::scaled(ivect[i],scalar_type(tab[i])),a);
         //a.addmul(scalar_type(tab[i]), ivect[i]);
@@ -75,17 +74,15 @@ namespace getfem
       for (i = 0; i < nbpt; i++)
 	tab3[i] = me.add_point(a + pararef.points()[i]);
 	
-      for (i = 0; i < nbs; i++)
-      {
-	bgeot::ref_mesh_point_ind_ct tab2 = sl.ind_points_of_convex(i);
+      for (i = 0; i < nbs; i++) {
+	const mesh::ind_cv_ct &tab2 = sl.ind_points_of_convex(i);
 	for (dim_type l = 0; l < N+1; l++)
 	  tab1[l] = tab3[(tab2[l]
 			  + (((total & 1) && N > 1) ? (nbpt/2) : 0)) % nbpt];
 	me.add_simplex(N, tab1.begin());
       }
 
-      for (dim_type l = 0; l < N; l++)
-      {
+      for (dim_type l = 0; l < N; l++) {
 	tab[l]++; total++;
 	if (l < N-1 && tab[l] >= iref[l]) { total -= tab[l]; tab[l] = 0; }
 	else break;
@@ -94,10 +91,10 @@ namespace getfem
   }
 
 
-  void parallelepiped_regular_prism_mesh_(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_prism_mesh_(mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref)
   {
-    getfem_mesh aux;
+    mesh aux;
     parallelepiped_regular_simplex_mesh_(aux, N-1, org, ivect, iref);
     std::vector<base_node> ptab(2 * N);
     
@@ -117,7 +114,7 @@ namespace getfem
 
 
 
-  void parallelepiped_regular_mesh_(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_mesh_(mesh &me, dim_type N,
                                     const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt)
   {
     bgeot::convex<base_node>
@@ -173,9 +170,9 @@ namespace getfem
     return z;
   }
 
-  void regular_unit_mesh(getfem_mesh& m, std::vector<size_type> nsubdiv, 
+  void regular_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, 
 			 bgeot::pgeometric_trans pgt, bool noised) {
-    getfem_mesh mesh;
+    mesh msh;
     size_type N = nsubdiv.size();
     base_node org(N); org.fill(0.0);
     std::vector<base_small_vector> vtab(N);
@@ -185,26 +182,26 @@ namespace getfem
     }
     if (pgt->basic_structure() == bgeot::simplex_structure(N)) {
       getfem::parallelepiped_regular_simplex_mesh
-	(mesh, N, org, vtab.begin(), nsubdiv.begin());
+	(msh, N, org, vtab.begin(), nsubdiv.begin());
     } else if (pgt->basic_structure() == bgeot::parallelepiped_structure(N)) {
       getfem::parallelepiped_regular_mesh
-	(mesh, N, org, vtab.begin(), nsubdiv.begin());
+	(msh, N, org, vtab.begin(), nsubdiv.begin());
     } else if (pgt->basic_structure() == bgeot::prism_structure(N)) {
       getfem::parallelepiped_regular_prism_mesh
-	(mesh, N, org, vtab.begin(), nsubdiv.begin());
+	(msh, N, org, vtab.begin(), nsubdiv.begin());
     } else {
       DAL_THROW(dal::failure_error, "cannot build a regular mesh for " << bgeot::name_of_geometric_trans(pgt));
     }
     m.clear();
     /* build a mesh with a geotrans of degree K */
-    for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
-      if (pgt == mesh.trans_of_convex(cv)) {
-	m.add_convex_by_points(mesh.trans_of_convex(cv), mesh.points_of_convex(cv).begin()); 
+    for (dal::bv_visitor cv(msh.convex_index()); !cv.finished(); ++cv) {
+      if (pgt == msh.trans_of_convex(cv)) {
+	m.add_convex_by_points(msh.trans_of_convex(cv), msh.points_of_convex(cv).begin()); 
       } else {
 	std::vector<base_node> pts(pgt->nb_points());
 	for (size_type i=0; i < pgt->nb_points(); ++i) {
-	  pts[i] = mesh.trans_of_convex(cv)->transform(pgt->convex_ref()->points()[i], 
-						       mesh.points_of_convex(cv));
+	  pts[i] = msh.trans_of_convex(cv)->transform(pgt->convex_ref()->points()[i], 
+						       msh.points_of_convex(cv));
 	}
 	m.add_convex_by_points(pgt, pts.begin());
       }

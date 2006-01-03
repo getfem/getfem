@@ -1,4 +1,3 @@
-% -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program crack                                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -11,8 +10,9 @@ LAMBDA = .0;   	        % Lamé coefficient.
 GC=0.01;                 % Rupture energy density
 NEUMANN_FORCE = 0.03; 
 %%%%%   discretisation parameters  :                     	      %%%%%
-NL = 5;            	          % number of horizontal space steps.
-NH = 2;                           % number of vertical space steps.
+
+NL = 10;            	          % number of horizontal space steps.
+NH = 6;                           % number of vertical space steps.
 L = 1.0;                          % length
 H = 0.2;                          % height
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
@@ -24,7 +24,7 @@ MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 5)';
 
 MESH_TYPE = 'GT_LINEAR_QK(3)';    % linear rectangles
-FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
+FEM_TYPE = 'FEM_QK(3,2)';  % Q1 fem for quadrangles
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 %SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 1)';
@@ -33,19 +33,20 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),2)';
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
+% SINGULAR_INTEGRATION = 'IM_PRODUCT(IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2), IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(6), 2))';
 SINGULAR_INTEGRATION = 'IM_PRODUCT(IM_TRIANGLE(6), IM_GAUSS1D(6))';
 
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 3)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3, 4), 1)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 4)';
 
-
 DIRICHLET_WITH_MULTIPLIERS = 0;
 
-ENRICHMENT_OPTION = 1;  % 0 = no enrichment
+ENRICHMENT_OPTION = 0;  % 0 = no enrichment
 		        % 1 = standard XFEM on a fixed zone
 
-RADIUS_ENR_AREA = 0.1; 
+
+RADIUS_ENR_AREA = 0.1;
 
 RESIDUE = 1E-8;     	% residue for iterative methods if any.
 

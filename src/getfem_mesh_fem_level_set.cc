@@ -62,15 +62,15 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_mfls_key, pfem);
 
   void mesh_fem_level_set::build_method_of_convex(size_type cv) {
-      pfem pf = new fem_level_set(index_ref_iterator
-				  (dof_enrichments.begin(),
-				   mf.ind_dof_of_element(cv).begin()) ,
-				  mf.fem_of_element(cv), mls, xfem_index);
-      dal::add_stored_object(new special_mfls_key(pf), pf,
-			     pf->ref_convex(0),
-			     pf->node_tab(0));
-      build_methods.push_back(pf);
-      set_finite_element(cv, pf);
+    pfem pf = new fem_level_set(dal::index_ref_iterator
+				(dof_enrichments.begin(),
+				 mf.ind_dof_of_element(cv).begin()) ,
+				mf.fem_of_element(cv), mls, xfem_index);
+    dal::add_stored_object(new special_mfls_key(pf), pf,
+			   pf->ref_convex(0),
+			   pf->node_tab(0));
+    build_methods.push_back(pf);
+    set_finite_element(cv, pf);
   }
   
   void mesh_fem_level_set::adapt(void) {
@@ -80,9 +80,9 @@ namespace getfem {
     dof_enrichments.resize(mf.nb_dof(), 0);
 
     for (size_type i = 0; i < mf.nb_dof(); ++i) {
-      bgeot::mesh_convex_ind_ct ct = mf.convex_to_dof(i);
+      const mesh::ind_cv_ct &ct = mf.convex_to_dof(i);
       bool touch_cut = false;
-      for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
+      for (mesh::ind_cv_ct::const_iterator it = ct.begin();
 	   it != ct.end(); ++it)
 	if (mls.is_convex_cut(*it)) { touch_cut = true; break; }
       
@@ -90,7 +90,7 @@ namespace getfem {
       if (touch_cut) {
 	mesh_level_set::zoneset zones;
 	
-	for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
+	for (mesh::ind_cv_ct::const_iterator it = ct.begin();
 	     it != ct.end(); ++it) {
 	  if (mls.is_convex_cut(*it)) {
 	    mls.merge_zoneset(zones, mls.zoneset_of_convex(*it));
@@ -106,7 +106,7 @@ namespace getfem {
 	if (zones.size() != 1) { // stockage dans un set et map
 	  dof_enrichments[i] = &(*(enrichments.insert(zones).first));
 	  enriched_dofs.add(i);
-	  for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
+	  for (mesh::ind_cv_ct::const_iterator it = ct.begin();
 	       it != ct.end(); ++it) enriched_elements.add(*it);
 	}
       }

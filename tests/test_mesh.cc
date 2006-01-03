@@ -25,11 +25,12 @@
 
 using getfem::size_type;
 using getfem::base_node;
+using getfem::base_small_vector;
 
-template<class MESH> void test_mesh(MESH &m) {
+void test_mesh(getfem::mesh &m) {
   
-  typedef typename MESH::point_type POINT;
-  typedef typename MESH::vector_type VECT;
+  typedef base_node POINT;
+  typedef base_small_vector VECT;
   
   POINT pt1, pt2, pt3;
   if (pt1.size() == 0) pt1 = POINT(3);
@@ -89,7 +90,7 @@ template<class MESH> void test_mesh(MESH &m) {
 
   getfem::parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
   m.write_to_file("test_mesh.mesh");
-  getfem::getfem_mesh m3; m3.read_from_file("test_mesh.mesh");
+  getfem::mesh m3; m3.read_from_file("test_mesh.mesh");
   m.copy_from(m3);
 
   cout << "0 before set_exists(3): " << m.has_region(3) << "\n";
@@ -112,7 +113,7 @@ template<class MESH> void test_mesh(MESH &m) {
   m.optimize_structure();
   m.write_to_file("test_mesh.mesh");
 
-  getfem::getfem_mesh m2; m2.read_from_file("test_mesh.mesh");
+  getfem::mesh m2; m2.read_from_file("test_mesh.mesh");
   assert(m.convex_index().card() == m2.convex_index().card());
   cout << "m2.regions_index=" << m2.regions_index() << "\n";
   assert(m2.regions_index().is_in(3));
@@ -129,7 +130,8 @@ template<class MESH> void test_mesh(MESH &m) {
 
 void
 print_mesh_structure(const bgeot::mesh_structure *ms) {
-  cout << "nb_pts=" <<ms->point_structures().size() << ", nb_cvs=" << ms->nb_convex() << endl;
+  cout << "nb_pts=" << ms->nb_max_points() << ", nb_cvs="
+       << ms->nb_convex() << endl;
   dal::bit_vector bv = ms->convex_index();
   size_type cv;
   for (cv << bv; cv != size_type(-1); cv << bv) {
@@ -170,18 +172,18 @@ test_convex_simplif(void) {
   print_mesh_structure(msr3);
   const bgeot::mesh_structure *psr = pr->basic_convex_ref()->simplexified_convex();
   print_mesh_structure(psr);
-  const getfem::getfem_mesh *msrr2 = getfem::refined_simplex_mesh_for_convex(sr2,2);
+  const getfem::mesh *msrr2 = getfem::refined_simplex_mesh_for_convex(sr2,2);
   msrr2->write_to_file(cout);
-  const getfem::getfem_mesh *msrr3 = getfem::refined_simplex_mesh_for_convex(sr3,3);
+  const getfem::mesh *msrr3 = getfem::refined_simplex_mesh_for_convex(sr3,3);
   msrr3->write_to_file(cout);
-  const getfem::getfem_mesh *mprr = getfem::refined_simplex_mesh_for_convex(pr,2);
+  const getfem::mesh *mprr = getfem::refined_simplex_mesh_for_convex(pr,2);
   mprr->write_to_file(cout);
 }
 
 using bgeot::sc;
 
 void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
-  getfem::getfem_mesh m;
+  getfem::mesh m;
   getfem::base_node A,B,C;
   getfem::scalar_type h = sqrt(3.0);
   sc(B)+=0,0;
@@ -242,14 +244,13 @@ void test_convex_ref() {
   }
 }
 
-int main(void)
-{
+int main(void) {
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
-
-  dal::set_exception_callback(new myexc);
+  
   try {
     cout << "sizeof(size_type)=" << sizeof(size_type) << endl;
-  getfem::getfem_mesh m1;
+  getfem::mesh m1;
   test_convex_ref();
   test_convex_simplif();
   test_mesh(m1);

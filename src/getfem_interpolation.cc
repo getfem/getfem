@@ -43,19 +43,19 @@ namespace getfem {
   void mesh_trans_inv::distribute(bool extrapolation) {
     size_type nbpts = nb_points();
     dal::bit_vector npt;
-    size_type nbcvx = mesh.convex_index().last_true() + 1;
+    size_type nbcvx = msh.convex_index().last_true() + 1;
     ref_coords.resize(nbpts); dist.resize(nbpts); cvx_pts.resize(nbpts);
     pts_cvx.clear(); pts_cvx.resize(nbcvx);
     base_node min, max, pt_ref; /* bound of the box enclosing the convex */
     bgeot::kdtree_tab_type boxpts;
 
 
-    for (dal::bv_visitor j(mesh.convex_index()); !j.finished(); ++j) {
+    for (dal::bv_visitor j(msh.convex_index()); !j.finished(); ++j) {
       //pts_cvx[j].clear();
-      bgeot::pgeometric_trans pgt = mesh.trans_of_convex(j);
-      bounding_box(min, max, mesh.points_of_convex(j), pgt);
+      bgeot::pgeometric_trans pgt = msh.trans_of_convex(j);
+      bounding_box(min, max, msh.points_of_convex(j), pgt);
       for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
-      gic.init(mesh.points_of_convex(j), pgt);
+      gic.init(msh.points_of_convex(j), pgt);
       points_in_box(boxpts, min, max);
       for (size_type l = 0; l < boxpts.size(); ++l) {
 	size_type ind = boxpts[l].i;

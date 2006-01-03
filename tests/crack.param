@@ -18,28 +18,28 @@ MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
 %FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
 FEM_TYPE = 'FEM_PK(2,2)';  % Q1 fem for quadrangles
-%FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 
 MIXED_PRESSURE=0;       % Mixed version or not.
 % FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
-DIRICHLET_WITH_MULTIPLIERS = 0;
+DIRICHLET_VERSION = 2;
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
 %DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
-%INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
+%INTEGRATION = 'IM_TETRAHEDRON(6)';  % quadrature rule for polynomials up
                                     % to degree 6 on tetra
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
-SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),1)';
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
-SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 13)';
+% SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
 INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
@@ -56,7 +56,7 @@ ENRICHMENT_OPTION = 2;  % 0 = Pas d'enrichissement
 			% 3 = spider fem alone
 		        % 4 = spider fem enrichment
 
-RADIUS_ENR_AREA = 0.4;
+RADIUS_ENR_AREA = 0.2;
 CUTOFF=0.5;
 SPIDER_RADIUS =  0.3;
 SPIDER_NR =  20;         % size of the cartesian mesh in r for spider fem

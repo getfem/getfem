@@ -58,7 +58,7 @@ struct friction_problem {
     DIRICHLET_BOUNDARY, CONTACT_BOUNDARY, PERIODIC_BOUNDARY1,
     PERIODIC_BOUNDARY2 
   };
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;  /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -91,9 +91,9 @@ struct friction_problem {
  * and integration methods and selects the boundaries.
  */
 void friction_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -173,8 +173,8 @@ void friction_problem::init(void) {
   mf_vm.set_classical_discontinuous_finite_element(1);
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -192,7 +192,7 @@ void friction_problem::init(void) {
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
     for (size_type f = 0; f < nf; f++) {
-      if (bgeot::neighbour_of_convex(mesh, cv, f).empty()) {
+      if (mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
@@ -279,7 +279,8 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
       }
   }
   gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
-  getfem::mdbrick_constraint<> PERIODIC(FRICTION, BP, F);
+  getfem::mdbrick_constraint<> PERIODIC(FRICTION);
+  PERIODIC.set_constraints(BP, F);
   getfem::standard_model_state MS(PERIODIC);
   
   FRICTION.set_r(r); 
@@ -431,7 +432,8 @@ void friction_problem::solve(void) {
       }
   }
   gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
-  getfem::mdbrick_constraint<> PERIODIC(DYNAMIC, BP, F);
+  getfem::mdbrick_constraint<> PERIODIC(DYNAMIC);
+  PERIODIC.set_constraints(BP, F);
   
   cout << "Total number of variables: " << PERIODIC.nb_dof() << endl;
   getfem::standard_model_state MS(PERIODIC);

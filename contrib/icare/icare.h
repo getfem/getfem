@@ -48,7 +48,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					size_type) {
-      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       gmm::sub_interval SUBI(i0+this->mesh_fem_positions[num_fem],
 			     mf_u.nb_dof());
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
@@ -58,7 +58,7 @@ namespace getfem {
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				size_type) {
-      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       gmm::sub_interval SUBI(i0+this->mesh_fem_positions[num_fem],
 			     mf_u.nb_dof());
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
@@ -129,7 +129,7 @@ namespace getfem {
     TYPEDEF_MODEL_STATE_TYPES;
 
     mdbrick_abstract<MODEL_STATE> &sub_problem;
-    mesh_fem &mf_lambda; /* lambda = -du/dn on the boundary */
+    const mesh_fem &mf_lambda; /* lambda = -du/dn on the boundary */
     T_MATRIX B, M;
     VECTOR Un;
     size_type num_fem, i1, nbd, boundary;
@@ -139,7 +139,7 @@ namespace getfem {
     gmm::sub_index SUBK;
 
     void proper_update(void) {
-      mesh_fem &mf_u = *(this->mesh_fems.at(num_fem));
+      const mesh_fem &mf_u = *(this->mesh_fems.at(num_fem));
       i1 = this->mesh_fem_positions.at(num_fem);
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_lambda.nb_dof();
@@ -186,7 +186,7 @@ namespace getfem {
     }
     
     void set_Un(const VECTOR &B__) {
-      mesh_fem &mf_u = *(this->mesh_fems.at(num_fem));
+      const mesh_fem &mf_u = *(this->mesh_fems.at(num_fem));
       this->context_check();
       gmm::resize(Un, gmm::vect_size(B__));
       gmm::copy(B__, Un);
@@ -210,9 +210,10 @@ namespace getfem {
     }
 
     mdbrick_NS_nonref1(mdbrick_abstract<MODEL_STATE> &problem,
-		       mesh_fem &mf_lambda_, size_type bound, value_type dt_,
-		       value_type nu_, size_type num_fem_=0)
-      : sub_problem(problem), mf_lambda(mf_lambda_), num_fem(num_fem_), boundary(bound), dt(dt_), nu(nu_)
+		       const mesh_fem &mf_lambda_, size_type bound,
+		       value_type dt_, value_type nu_, size_type num_fem_=0)
+      : sub_problem(problem), mf_lambda(mf_lambda_), num_fem(num_fem_),
+	boundary(bound), dt(dt_), nu(nu_)
     { init_(); }
 
   };

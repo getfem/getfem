@@ -89,7 +89,7 @@ struct Chrono {
   }
 
 
-  mesh_level_set::mesh_level_set(getfem_mesh &me) {
+  mesh_level_set::mesh_level_set(mesh &me) {
     linked_mesh_ = &me; is_adapted_ = false; 
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
@@ -99,7 +99,7 @@ struct Chrono {
 
   mesh_level_set::~mesh_level_set() {}
 
-  static void interpolate_face(getfem_mesh &m, dal::bit_vector& ptdone, 
+  static void interpolate_face(mesh &m, dal::bit_vector& ptdone, 
 			       const std::vector<size_type>& ipts,
 			       bgeot::pconvex_structure cvs, 
 			       size_type nb_vertices,
@@ -265,18 +265,18 @@ struct Chrono {
   }
 
 
-  static getfem_mesh global_mesh; // to visualize the result with Open dx
+  static mesh global_mesh; // to visualize the result with Open dx
 
   void mesh_level_set::run_delaunay(std::vector<base_node> &fixed_points,
 				    gmm::dense_matrix<size_type> &simplexes,
 				    std::vector<dal::bit_vector> &
 				    /* fixed_points_constraints */) {
-    double t0=ftool::uclock_sec();
+    double t0=dal::uclock_sec();
     if (noisy) cout << "running delaunay with " << fixed_points.size()
 		    << " points.." << std::flush;
     delaunay(fixed_points, simplexes);
     if (noisy) cout << " -> " << gmm::mat_ncols(simplexes)
-		    << " simplexes [" << ftool::uclock_sec()-t0 << "sec]\n";
+		    << " simplexes [" << dal::uclock_sec()-t0 << "sec]\n";
   }
 
   static bool intersects(const mesh_level_set::zone &z1, 
@@ -334,7 +334,7 @@ struct Chrono {
 					     std::string &prezone) {
     convex_info &cvi = cut_cv[cv];
     cvi.zones.clear();
-    for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i) {
+    for (dal::bv_visitor i(cvi.pmsh->convex_index()); !i.finished();++i) {
       std::string subz = prezone;
       //cout << "prezone for convex " << cv << " : " << subz << endl;
       for (size_type j = 0; j < level_sets.size(); ++j) {
@@ -355,7 +355,7 @@ struct Chrono {
 				   const dal::bit_vector &secondary) {
     
     cut_cv[cv] = convex_info();
-    cut_cv[cv].pmesh = pgetfem_mesh(new getfem_mesh);
+    cut_cv[cv].pmsh = pmesh(new mesh);
     if (noisy) cout << "cutting element " << cv << endl;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
@@ -494,36 +494,36 @@ struct Chrono {
       gmm::dense_matrix<size_type> simplexes;
       run_delaunay(fixed_points, simplexes, fixed_points_constraints);
 
-      getfem_mesh &mesh(*(cut_cv[cv].pmesh));
+      mesh &msh(*(cut_cv[cv].pmsh));
 
       mesh_region &ls_border_faces(cut_cv[cv].ls_border_faces);
 
-      mesh.clear(); 
+      msh.clear(); 
 
       for (size_type i = 0; i <  fixed_points.size(); ++i) {
-	size_type j = mesh.add_point(fixed_points[i], false);
+	size_type j = msh.add_point(fixed_points[i], false);
 	assert(j == i);
       }
 
       std::vector<base_node> cvpts;
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
-	size_type j = mesh.add_convex(bgeot::simplex_geotrans(n,1),
+	size_type j = msh.add_convex(bgeot::simplex_geotrans(n,1),
 				      gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
 	/* remove flat convexes => beware the final mesh may not be conformal ! */
- 	if (mesh.convex_quality_estimate(j) < 1E-12) mesh.sup_convex(j);
+ 	if (msh.convex_quality_estimate(j) < 1E-12) msh.sup_convex(j);
  	else {
 	  std::vector<scalar_type> signs(list_constraints.size());
 	  std::vector<size_type> prev_point(list_constraints.size());
 	  for (size_type ii = 0; ii <= n; ++ii) {
 	    for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
 	      scalar_type dd =
-		(*(list_constraints[jj]))(mesh.points_of_convex(j)[ii]);
+		(*(list_constraints[jj]))(msh.points_of_convex(j)[ii]);
 	      if (gmm::abs(dd) > 1E-7) {
 		if (dd * signs[jj] < 0.0) {
 		  if (noisy) cout << "Intersection trouvee ... \n";
 		  // calcul d'intersection
-		  base_node X = mesh.points_of_convex(j)[ii], G;
-		  base_node VV = mesh.points_of_convex(j)[prev_point[jj]] - X;
+		  base_node X = msh.points_of_convex(j)[ii], G;
+		  base_node VV = msh.points_of_convex(j)[prev_point[jj]] - X;
 		  if (dd > 0.) gmm::scale(VV, -1.);
 		  dd = (*(list_constraints[jj])).grad(X, G);
 		  size_type nbit = 0;
@@ -550,24 +550,24 @@ struct Chrono {
       }
 
       if (K>1) {
-	for (dal::bv_visitor_c j(mesh.convex_index()); !j.finished(); ++j) {
+	for (dal::bv_visitor_c j(msh.convex_index()); !j.finished(); ++j) {
 	  bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
 	  cvpts.resize(pgt2->nb_points());
 	  for (size_type k=0; k < pgt2->nb_points(); ++k) {
 	    cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
-	      (pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
+	      (pgt2->convex_ref()->points()[k], msh.points_of_convex(j));
 	  }
-	  mesh.sup_convex(j);
+	  msh.sup_convex(j);
 	  /* some new point will be added to the mesh, but the initial ones (those on the
 	     convex vertices) are kepts */
-	  size_type jj = mesh.add_convex_by_points(pgt2, cvpts.begin());
+	  size_type jj = msh.add_convex_by_points(pgt2, cvpts.begin());
 	  assert(jj == j);
 	}
       }
 
       if (noisy) {
 	getfem::stored_mesh_slice sl;
-	sl.build(mesh, getfem::slicer_none(), 1);
+	sl.build(msh, getfem::slicer_none(), 1);
 	char s[512]; sprintf(s, "totobefore%d.dx", cv);
 	getfem::dx_export exp(s);
 	exp.exporting(sl);
@@ -577,10 +577,10 @@ struct Chrono {
 
       /* detect the faces lying on level_set boundaries
 	 (not exact, some other faces maybe be found, use this only for vizualistion) */
-      for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+      for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
 	for (size_type f = 0; f <= n; ++f) {
-	  bgeot::ind_ref_mesh_point_ind_ct fpts
-	    = mesh.ind_points_of_face_of_convex(i, f);
+	  const mesh::ind_pt_face_ct &fpts
+	    = msh.ind_points_of_face_of_convex(i, f);
 	  
 	  dal::bit_vector cts; bool first = true;
 	  for (unsigned k=0; k < fpts.size(); ++k) {
@@ -602,17 +602,17 @@ struct Chrono {
       if (K > 1) { // à ne faire que sur les convexes concernés ..
 	dal::bit_vector ptdone;
 	std::vector<size_type> ipts;
-	for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
 	  for (size_type f = 0; f <= n; ++f) {
-	    bgeot::ind_ref_mesh_point_ind_ct fpts
-	      = mesh.ind_points_of_face_of_convex(i, f);
+	    const mesh::ind_pt_face_ct &fpts
+	      = msh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
 #ifdef DEBUG_LS
 	    interpolate_face_chrono.tic();
 #endif
 	    
-	    interpolate_face(mesh, ptdone, ipts,
-			     mesh.trans_of_convex(i)->structure()
+	    interpolate_face(msh, ptdone, ipts,
+			     msh.trans_of_convex(i)->structure()
 			     ->faces_structure()[f], fixed_points.size(),
 			     fixed_points_constraints, list_constraints);
 #ifdef DEBUG_LS
@@ -624,7 +624,7 @@ struct Chrono {
 
       if (noisy) {
 	getfem::stored_mesh_slice sl;
-	sl.build(mesh, getfem::slicer_none(), 12);
+	sl.build(msh, getfem::slicer_none(), 12);
 	char s[512]; sprintf(s, "toto%d.dx", cv);
 	getfem::dx_export exp(s);
 	exp.exporting(sl);
@@ -641,9 +641,9 @@ struct Chrono {
       approx_integration new_approx(pgt->convex_ref());
       base_matrix KK(n,n), CS(n,n);
       base_matrix pc(pgt2->nb_points(), n); 
-      for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	vectors_to_base_matrix(G, mesh.points_of_convex(i));
-	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i),
+      for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
+	vectors_to_base_matrix(G, msh.points_of_convex(i));
+	bgeot::geotrans_interpolation_context c(msh.trans_of_convex(i),
 						pai->point(0), G);
 	scalar_type sign = 0.0;
 	for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
@@ -654,22 +654,22 @@ struct Chrono {
 	  if (noisy && J * sign < 0)
 	    cout << "ATTENTION retrournement de situation en convexe " << i
 		 << "sign = " << sign << " J = " << J << " p1 = "
-		 << mesh.points_of_convex(i)[0] << " p2 = "
-		 << mesh.points_of_convex(i)[1] << " p3 = "
-		 << mesh.points_of_convex(i)[2] << " p4 = "
-		 << mesh.points_of_convex(i)[3] << " p5 = "
-		 << mesh.points_of_convex(i)[4] << " p6 = "
-		 << mesh.points_of_convex(i)[5] << " K = " << int(K) << endl;
+		 << msh.points_of_convex(i)[0] << " p2 = "
+		 << msh.points_of_convex(i)[1] << " p3 = "
+		 << msh.points_of_convex(i)[2] << " p4 = "
+		 << msh.points_of_convex(i)[3] << " p5 = "
+		 << msh.points_of_convex(i)[4] << " p6 = "
+		 << msh.points_of_convex(i)[5] << " K = " << int(K) << endl;
 	  if (sign == 0 && gmm::abs(J) > 1E-14) sign = J;
 	  new_approx.add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
 	}
       }
 
       getfem::mesh_region border_faces;
-      getfem::outer_faces_of_mesh(mesh, border_faces);
+      getfem::outer_faces_of_mesh(msh, border_faces);
       for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
-	vectors_to_base_matrix(G, mesh.points_of_convex(it.cv()));
-	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(it.cv()),
+	vectors_to_base_matrix(G, msh.points_of_convex(it.cv()));
+	bgeot::geotrans_interpolation_context c(msh.trans_of_convex(it.cv()),
 						pai->point(0), G);
 	for (size_type j = 0; j < pai->nb_points_on_face(it.f()); ++j) {
 	  c.set_xref(pai->point_on_face(it.f(), j));
@@ -695,14 +695,14 @@ struct Chrono {
 
       if (h0_is_ok && noisy) { // ajout dans global mesh pour visu
 	vectors_to_base_matrix(G, linked_mesh().points_of_convex(cv));
-	std::vector<size_type> pts(mesh.nb_points());
-	for (size_type i = 0; i < mesh.nb_points(); ++i)
-	  pts[i] = global_mesh.add_point(pgt->transform(mesh.points()[i], G));
+	std::vector<size_type> pts(msh.nb_points());
+	for (size_type i = 0; i < msh.nb_points(); ++i)
+	  pts[i] = global_mesh.add_point(pgt->transform(msh.points()[i], G));
 	
-	for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
-	  global_mesh.add_convex(mesh.trans_of_convex(i), 
+	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i)
+	  global_mesh.add_convex(msh.trans_of_convex(i), 
 				 dal::index_ref_iterator(pts.begin(),
-				     mesh.ind_points_of_convex(i).begin()));
+				     msh.ind_points_of_convex(i).begin()));
       }
 
     } while (!h0_is_ok);
@@ -714,26 +714,26 @@ struct Chrono {
   }
 
 
-  void mesh_level_set::global_cut_mesh(getfem_mesh &m) const {
+  void mesh_level_set::global_cut_mesh(mesh &m) const {
     m.clear();
     base_matrix G;
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       if (is_convex_cut(cv)) {
 	const convex_info &ci = (cut_cv.find(cv))->second;
-	getfem_mesh &mesh = *(ci.pmesh);
+	mesh &msh = *(ci.pmsh);
 	bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
 	vectors_to_base_matrix(G, linked_mesh().points_of_convex(cv));
-	std::vector<size_type> pts(mesh.nb_points());
-	for (size_type i = 0; i < mesh.nb_points(); ++i)
-	  pts[i] = m.add_point(pgt->transform(mesh.points()[i], G));
+	std::vector<size_type> pts(msh.nb_points());
+	for (size_type i = 0; i < msh.nb_points(); ++i)
+	  pts[i] = m.add_point(pgt->transform(msh.points()[i], G));
 	
-	std::vector<size_type> ic2(mesh.convex_index().last_true()+1);
+	std::vector<size_type> ic2(msh.convex_index().last_true()+1);
 
-	for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	  ic2[i] = m.add_convex(mesh.trans_of_convex(i), 
+	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
+	  ic2[i] = m.add_convex(msh.trans_of_convex(i), 
 				dal::index_ref_iterator(pts.begin(),
-			        mesh.ind_points_of_convex(i).begin()));
+			        msh.ind_points_of_convex(i).begin()));
 	  
 	}
 	for (mr_visitor i(ci.ls_border_faces); !i.finished(); ++i) {
@@ -755,15 +755,15 @@ struct Chrono {
     for (std::map<size_type, convex_info>::const_iterator it = cut_cv.begin(); 
 	 it != cut_cv.end(); ++it) {
       size_type cv = it->first;
-      getfem_mesh &mesh = *(it->second.pmesh);      
+      mesh &msh = *(it->second.pmsh);      
       for (unsigned ils = 0; ils < nb_level_sets(); ++ils) {
 	if (get_level_set(ils)->has_secondary()) {
 	  mesher_level_set mesherls0 =  get_level_set(ils)->mls_of_convex(cv, 0, false);
 	  mesher_level_set mesherls1 =  get_level_set(ils)->mls_of_convex(cv, 1, false);
-	  for (dal::bv_visitor ii(mesh.convex_index()); !ii.finished(); ++ii) {
-	    for (unsigned ipt = 0; ipt < mesh.nb_points_of_convex(ii); ++ipt) {
-	      if (gmm::abs(mesherls0(mesh.points_of_convex(ii)[ipt])) < 1E-10
-		  && gmm::abs(mesherls1(mesh.points_of_convex(ii)[ipt])) < 1E-10) {
+	  for (dal::bv_visitor ii(msh.convex_index()); !ii.finished(); ++ii) {
+	    for (unsigned ipt = 0; ipt < msh.nb_points_of_convex(ii); ++ipt) {
+	      if (gmm::abs(mesherls0(msh.points_of_convex(ii)[ipt])) < 1E-10
+		  && gmm::abs(mesherls1(msh.points_of_convex(ii)[ipt])) < 1E-10) {
 		crack_tip_convexes_.add(cv);
 		goto next_convex;
 	      }
@@ -818,7 +818,7 @@ struct Chrono {
     scalar_type EPS = 1e-8;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     convex_info &cvi = cut_cv[cv];
-    bgeot::pgeometric_trans pgt2 = cvi.pmesh->trans_of_convex(sub_cv);
+    bgeot::pgeometric_trans pgt2 = cvi.pmsh->trans_of_convex(sub_cv);
 
     mesher_level_set mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
@@ -826,11 +826,11 @@ struct Chrono {
     bool cutted = false;
     scalar_type d2 = 0, d1 = 1, d0 = 0, d0min = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
-      d0 = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
+      d0 = mls0(cvi.pmsh->points_of_convex(sub_cv)[i]);
       if (i == 0) d0min = gmm::abs(d0);
       else d0min = std::min(d0min, gmm::abs(d0));
       if (ls->has_secondary())
-	d1 = std::min(d1, mls1(cvi.pmesh->points_of_convex(sub_cv)[i]));
+	d1 = std::min(d1, mls1(cvi.pmsh->points_of_convex(sub_cv)[i]));
      
       int p2 = ( (d0 < -EPS) ? -1 : ((d0 > EPS) ? +1 : 0));
       if (p == 0) p = p2;
@@ -849,7 +849,7 @@ struct Chrono {
     const mesh_fem &mf = ls->get_mesh_fem();
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
 
-    ref_mesh_dof_ind_ct dofs = mf.ind_dof_of_element(cv);
+    const mesh_fem::ref_mesh_dof_ind_ct &dofs = mf.ind_dof_of_element(cv);
     pfem pf = mf.fem_of_element(cv);
     int p = -2;
     mesher_level_set mls1 = ls->mls_of_convex(cv, lsnum, false);
@@ -860,7 +860,7 @@ struct Chrono {
      - min value of the levelset greater than the radius of the convex
      => no intersection
     */ 
-    for (ref_mesh_dof_ind_ct::const_iterator it=dofs.begin();
+    for (mesh_fem::ref_mesh_dof_ind_ct::const_iterator it=dofs.begin();
 	 it != dofs.end(); ++it) {
       scalar_type v = ls->values(lsnum)[*it];
       int p2 = ( (v < -EPS) ? -1 : ((v > EPS) ? +1 : 0));

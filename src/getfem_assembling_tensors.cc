@@ -49,7 +49,7 @@ namespace getfem {
     for (const_iterator it = begin(); it != end(); ++it, ++cnt) {
       if ((*it).is_mf_ref()) {
 	r[cnt] = (*it).pmf->nb_dof_of_element(cv); 
-	ref_mesh_dof_ind_ct::const_iterator ii = (*it).pmf->ind_dof_of_element(cv).begin();
+	mesh_fem::ref_mesh_dof_ind_ct::const_iterator ii = (*it).pmf->ind_dof_of_element(cv).begin();
 	str[cnt].resize(r[cnt]);
 	for (index_type j=0; j < r[cnt]; ++j) {
 	  str[cnt][j] = (*it).pmf->ind_dof_of_element(cv)[j]*s;
@@ -1650,7 +1650,7 @@ namespace getfem {
   void generic_assembly::consistency_check() {
     //if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
     if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
-    const getfem_mesh& m = imtab[0]->linked_mesh();
+    const mesh& m = imtab[0]->linked_mesh();
     for (unsigned i=0; i < mftab.size(); ++i) {
       if (&mftab[i]->linked_mesh() != &m)
 	ASM_THROW_ERROR("the mesh_fem/mesh_im live on different meshes!");
@@ -1673,7 +1673,7 @@ namespace getfem {
       mesh_region::face_bitset nf = r[cv[i]];
       dim_type f = dim_type(-1);
       while (nf.any()) {
-	cerr << "generic_assembly::exec(" << cv[i] << ")\n";
+	// cerr << "generic_assembly::exec(" << cv[i] << ")\n";
 	if (nf[0]) exec(cv[i],f);
 	nf >>= 1; f+=1;
       }

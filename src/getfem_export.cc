@@ -136,10 +136,10 @@ namespace getfem
     if (psl->dim() > 3) DAL_THROW(dal::failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
   }
   
-  void vtk_export::exporting(const getfem_mesh& m) {
+  void vtk_export::exporting(const mesh& m) {
     dim_ = m.dim();
     if (dim_ > 3) DAL_THROW(dal::failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
-    pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
+    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf);
   }
@@ -169,7 +169,7 @@ namespace getfem
     }
     /* find out which dof will be exported to VTK */
 
-    const getfem_mesh &m = pmf->linked_mesh();
+    const mesh &m = pmf->linked_mesh();
     pmf_cell_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
     pmf_dof_used.sup(0, pmf->nb_dof());
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
@@ -327,9 +327,9 @@ namespace getfem
     state = STRUCTURE_WRITTEN;
   }
 
-  void vtk_export::write_mesh_quality(const getfem_mesh &m) {
+  void vtk_export::write_mesh_quality(const mesh &m) {
     if (psl) {
-      mesh_fem mf(const_cast<getfem_mesh&>(m),1);
+      mesh_fem mf(const_cast<mesh&>(m),1);
       mf.set_classical_finite_element(0);
       std::vector<scalar_type> q(mf.nb_dof());
       for (size_type d=0; d < mf.nb_dof(); ++d) {
@@ -436,14 +436,14 @@ namespace getfem
   void dx_export::exporting(const mesh_fem& mf, std::string name) {
     name = default_name(name, meshes.size(), "mesh");
     if (!new_mesh(name)) return;
-    const getfem_mesh &m = mf.linked_mesh();
+    const mesh &m = mf.linked_mesh();
     if (mf.linked_mesh().convex_index().card() == 0) 
       DAL_THROW(dal::failure_error, "won't export an empty mesh");
     
     dim_ = m.dim();
     if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
     if (&mf != pmf.get())
-      pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
+      pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     bgeot::pgeometric_trans pgt = m.trans_of_convex(m.convex_index().first_true());
     if (dxname_of_convex_structure(pgt->structure()->basic_structure()) == 0) 
       DAL_THROW(dal::failure_error, "DX Cannot handle " << 
@@ -469,10 +469,10 @@ namespace getfem
     connections_dim = pmf->nb_dof_of_element(m.convex_index().first_true());
   }
 
-  void dx_export::exporting(const getfem_mesh& m, std::string name) {
+  void dx_export::exporting(const mesh& m, std::string name) {
     dim_ = m.dim();
     if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
-    pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
+    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf, name);
   }

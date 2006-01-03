@@ -85,7 +85,7 @@ std::map<pgt_K_f_idx, matrix_collection> ME;
 
 static void check_method(const std::string& im_name, getfem::pintegration_method ppi, size_type k, bgeot::pgeometric_trans pgt) {
 
-  getfem::getfem_mesh m; 
+  getfem::mesh m; 
   getfem::mesh_fem mf1(m);
   getfem::mesh_fem mf2(m);
   assert(ppi!=0); assert(pgt!=0);

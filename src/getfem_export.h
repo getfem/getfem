@@ -82,7 +82,7 @@ namespace getfem {
     vtk_export(std::ostream &os_, bool ascii_ = false);
 
     /** should be called before write_*_data */
-    void exporting(const getfem_mesh& m);
+    void exporting(const mesh& m);
     void exporting(const mesh_fem& mf);
     void exporting(const stored_mesh_slice& sl);
 
@@ -116,7 +116,7 @@ namespace getfem {
         point_data (TO IMPROVE ONEDAY), if a mesh/mesh_fem is being exported,
         it is written as cell_data
     */
-    void write_mesh_quality(const getfem_mesh &m);
+    void write_mesh_quality(const mesh &m);
     void write_normals();
     const stored_mesh_slice& get_exported_slice() const;
     const mesh_fem& get_exported_mesh_fem() const;
@@ -296,7 +296,7 @@ namespace getfem {
     dx_export(const std::string& fname, bool ascii_ = false, bool append_ = false);
     dx_export(std::ostream &os_, bool ascii_ = false);
     ~dx_export(); /* the file is not complete until the destructor has been executed */
-    void exporting(const getfem_mesh& m, std::string name = std::string());
+    void exporting(const mesh& m, std::string name = std::string());
     void exporting(const mesh_fem& mf, std::string name = std::string());
     void exporting(const stored_mesh_slice& sl, bool merge_points = true, std::string name = std::string());
     /** append edges information (if you want to draw the mesh and are
@@ -332,7 +332,7 @@ namespace getfem {
     /* TOBEDONE !!!!!!!!!!!
        template<class VECT> void 
     write_cell_data(const VECT& U, std::string name = std::string()); 
-    void write_mesh_quality(const getfem_mesh &m);*/
+    void write_mesh_quality(const mesh &m);*/
     void write_normals();
     const stored_mesh_slice& get_exported_slice() const;
     const mesh_fem& get_exported_mesh_fem() const;

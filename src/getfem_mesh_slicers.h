@@ -99,7 +99,7 @@ namespace getfem {
   public:
     typedef std::vector<slice_node> cs_nodes_ct;
     typedef std::vector<slice_simplex> cs_simplexes_ct;
-    const getfem_mesh& m;
+    const mesh& m;
     size_type cv, face, cv_dim, cv_nbfaces;
     bgeot::pgeometric_trans pgt;
     /* list of nodes and simplexes for the current convex 
@@ -118,7 +118,7 @@ namespace getfem {
     /** mesh_slicer constructor. Use mesh_slicer::exec to build the slice.
 	@param m_ the mesh that is going to be sliced.
     */
-    mesh_slicer(const getfem_mesh& m_) : m(m_), pgt(0), cvr(0) {}
+    mesh_slicer(const mesh& m_) : m(m_), pgt(0), cvr(0) {}
     void push_back_action(slicer_action &a) { action.push_back(&a); }
     void push_front_action(slicer_action &a) { action.push_front(&a); }
 
@@ -177,15 +177,17 @@ namespace getfem {
      Use this structure to specify that the mesh must be deformed before the slicing operation.
      (with a mesh_fem and an associated field)
   */
-  template<typename VEC> class mesh_slice_cv_dof_data : public mesh_slice_cv_dof_data_base {
+  template<typename VEC> class mesh_slice_cv_dof_data
+    : public mesh_slice_cv_dof_data_base {
     const VEC u;
   public:
-    mesh_slice_cv_dof_data(const mesh_fem &mf_, VEC &u_) : u(u_) { pmf = &mf_; }
+    mesh_slice_cv_dof_data(const mesh_fem &mf_, VEC &u_) : u(u_) { pmf=&mf_; }
     virtual void copy(size_type cv, base_vector& coeff) const {
       coeff.resize(pmf->nb_dof_of_element(cv));
-      ref_mesh_dof_ind_ct dof = pmf->ind_dof_of_element(cv);
+      const mesh::ind_cv_ct &dof = pmf->ind_dof_of_element(cv);
       base_vector::iterator out = coeff.begin();
-      for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++out)
+      for (mesh::ind_cv_ct::iterator it=dof.begin(); it != dof.end();
+	   ++it, ++out)
         *out = u[*it];
     }
     scalar_type maxval() const { return gmm::vect_norminf(u); }
@@ -222,10 +224,10 @@ namespace getfem {
     std::vector<slice_node::faces_ct> convex_faces;
     bool test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, 
                     const mesh_slicer::cs_nodes_ct& nodes) const;
-    void build_from(const getfem_mesh& m, const mesh_region& cvflst);
+    void build_from(const mesh& m, const mesh_region& cvflst);
   public:
-    slicer_boundary(const getfem_mesh& m, slicer_action &sA, const mesh_region& fbound);
-    slicer_boundary(const getfem_mesh& m, slicer_action &sA = slicer_none::static_instance());
+    slicer_boundary(const mesh& m, slicer_action &sA, const mesh_region& fbound);
+    slicer_boundary(const mesh& m, slicer_action &sA = slicer_none::static_instance());
     void exec(mesh_slicer &ms);
   };
 
@@ -411,12 +413,12 @@ namespace getfem {
       a rough mesh with a refined mesh.
   */
   class slicer_mesh_with_mesh : public slicer_action {
-    const getfem_mesh& slm;
+    const mesh& slm;
     bgeot::rtree tree; /* tree of bounding boxes for slm */
   protected:
     virtual void intersection_callback(mesh_slicer &/*ms*/, size_type /*slmcv*/) {}
   public:
-    slicer_mesh_with_mesh(const getfem_mesh&);
+    slicer_mesh_with_mesh(const mesh&);
     void exec(mesh_slicer &ms);
   };
 
@@ -466,37 +468,37 @@ namespace getfem {
 
   /**
      Slicer whose side-effect is to build the list of edges
-     (i.e. segments) and store them in a getfem_mesh object. 
+     (i.e. segments) and store them in a mesh object. 
 
      Hence all common nodes/edges are eliminated.  (this slicer
      is not useful for anything but visualization of sliced meshes)
   */
   class slicer_build_edges_mesh : public slicer_action {
-    getfem_mesh& edges_m;
+    mesh& edges_m;
     dal::bit_vector *pslice_edges;
   public:
     /**  @param edges_m_ the mesh that will be filled with edges. */
-    slicer_build_edges_mesh(getfem_mesh& edges_m_) : edges_m(edges_m_), pslice_edges(0) {}
+    slicer_build_edges_mesh(mesh& edges_m_) : edges_m(edges_m_), pslice_edges(0) {}
     /**  @param edges_m_ the mesh that will be filled with edges.
 	 @param bv will contain on output the list of edges numbers
      (as convex numbers in edges_m_) which where not part of the
      original mesh, but became apparent when some convex faces were
      sliced. 
     */
-    slicer_build_edges_mesh(getfem_mesh& edges_m_, dal::bit_vector& bv) : edges_m(edges_m_), pslice_edges(&bv) {}
+    slicer_build_edges_mesh(mesh& edges_m_, dal::bit_vector& bv) : edges_m(edges_m_), pslice_edges(&bv) {}
     void exec(mesh_slicer &ms);
   };
 
   /**
-     Slicer whose side-effect is to build a getfem_mesh from the slice
+     Slicer whose side-effect is to build a mesh from the slice
      simplexes.  Hence using slices is a good way to simplexify a
      mesh, however keep in mind that high order geometric
      transformation will be simplexified with linear simplexes!
   */
   class slicer_build_mesh : public slicer_action {
-    getfem_mesh& m;
+    mesh& m;
   public:
-    slicer_build_mesh(getfem_mesh& m_) : m(m_) {}
+    slicer_build_mesh(mesh& m_) : m(m_) {}
     void exec(mesh_slicer &ms);
   };    
 

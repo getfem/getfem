@@ -28,7 +28,8 @@
 //========================================================================
 
 /** @file gmm_matrix.h
-    @brief Declaration of some matrix types (gmm::dense_matrix, gmm::row_matrix, gmm::col_matrix, gmm::csc_matrix, etc.)
+    @brief Declaration of some matrix types (gmm::dense_matrix,
+    gmm::row_matrix, gmm::col_matrix, gmm::csc_matrix, etc.)
 */
 
 #ifndef GMM_MATRIX_H__
@@ -976,8 +977,7 @@ namespace gmm {
   { return (sizeof(int) == sizeof(size_t)) ? MPI_INT : MPI_LONG; }
 
   
-  template <typename MAT> inline
-  MAT &eff_matrix(MAT &m) { return m; }
+  template <typename MAT> inline MAT &eff_matrix(MAT &m) { return m; }
   template <typename MAT> inline
   const MAT &eff_matrix(const MAT &m) { return m; }
   template <typename MAT> inline
@@ -987,10 +987,12 @@ namespace gmm {
   
 
   template <typename MAT1, typename MAT2>
-  inline void copy(const mpi_distributed_matrix<MAT1> &m1, mpi_distributed_matrix<MAT2> &m2)
+  inline void copy(const mpi_distributed_matrix<MAT1> &m1,
+		   mpi_distributed_matrix<MAT2> &m2)
   { copy(eff_matrix(m1), eff_matrix(m2)); }
   template <typename MAT1, typename MAT2>
-  inline void copy(const mpi_distributed_matrix<MAT1> &m1, const mpi_distributed_matrix<MAT2> &m2)
+  inline void copy(const mpi_distributed_matrix<MAT1> &m1,
+		   const mpi_distributed_matrix<MAT2> &m2)
   { copy(m1.M, m2.M); }
   
   template <typename MAT1, typename MAT2>
@@ -1003,14 +1005,13 @@ namespace gmm {
 
   template <typename MATSP, typename V1, typename V2> inline
   typename strongest_value_type3<V1,V2,MATSP>::value_type
-  vect_sp(const mpi_distributed_matrix<MATSP> &ps, const V1 &v1, const V2 &v2) {
+  vect_sp(const mpi_distributed_matrix<MATSP> &ps, const V1 &v1,
+	  const V2 &v2) {
     typedef typename strongest_value_type3<V1,V2,MATSP>::value_type T;
     T res = vect_sp(ps.M, v1, v2), rest;
     MPI_Allreduce(&res, &rest, 1, mpi_type(T()), MPI_SUM,MPI_COMM_WORLD);
     return rest;
   }
-
-  
 
   template <typename MAT, typename V1, typename V2>
   inline void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
@@ -1139,8 +1140,6 @@ namespace gmm {
   template <typename L> inline typename transposed_return<L *>::return_type
   transposed(mpi_distributed_matrix<L> &l)
   { return transposed(l.M); }
-
-
 
 
   template <typename MAT>

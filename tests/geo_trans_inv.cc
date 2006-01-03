@@ -139,13 +139,12 @@ void test_inversion(bool verbose) {
   test_inversion(bgeot::prism_linear_geotrans(3),verbose);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   dim_type N, MESH_TYPE;
   scalar_type LX, LY, LZ;
   size_type NX, NB_POINTS;
   ftool::md_param PARAM;
-  getfem::getfem_mesh mesh;
+  getfem::mesh mesh;
 
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -185,7 +184,7 @@ int main(int argc, char *argv[])
     mesh.optimize_structure();
 
 
-    scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
+    scalar_type exectime = dal::uclock_sec(), total_time = 0.0;
 
     bgeot::geotrans_inv gti;
     bgeot::base_node pt(N);
@@ -201,11 +200,11 @@ int main(int argc, char *argv[])
 
     for (size_type i=0; i < 2; ++i) {
       total_time = 0;
-      exectime = ftool::uclock_sec();
+      exectime = dal::uclock_sec();
       if (i==0) { cout << " using points_in_box..\n"; }
       else { cout << " using brute force..\n"; }
-      cout << "Time to sort points : " << ftool::uclock_sec() - exectime << endl;
-      total_time += ftool::uclock_sec() - exectime;
+      cout << "Time to sort points : " << dal::uclock_sec() - exectime << endl;
+      total_time += dal::uclock_sec() - exectime;
       
       dal::bit_vector nn = mesh.convex_index();
       size_type nbtot = 0;
@@ -218,12 +217,12 @@ int main(int argc, char *argv[])
 	nbtot += nb;
       }
       
-      cout << "Time to invert geo trans : " << ftool::uclock_sec() - exectime
+      cout << "Time to invert geo trans : " << dal::uclock_sec() - exectime
 	   << endl;
       cout << "Total number : " << nbtot << endl;
       assert(nbtot == NB_POINTS);
     }
-    total_time += ftool::uclock_sec() - exectime;
+    total_time += dal::uclock_sec() - exectime;
     
   }
   DAL_STANDARD_CATCH_ERROR;

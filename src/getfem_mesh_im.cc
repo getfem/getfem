@@ -87,7 +87,7 @@ namespace getfem {
     touch();
   }
 
-  mesh_im::mesh_im(getfem_mesh &me) {
+  mesh_im::mesh_im(mesh &me) {
     linked_mesh_ = &me; is_valid_ = true;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
@@ -101,7 +101,7 @@ namespace getfem {
   void mesh_im::read_from_file(std::istream &ist) {
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
-    char tmp[1024];
+    std::string tmp;
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
@@ -109,25 +109,25 @@ namespace getfem {
 
     while (true)
     {
-      ist >> std::ws; ftool::get_token(ist, tmp, 1023);
-      if (strcmp(tmp, "END")==0) {
+      ist >> std::ws; ftool::get_token(ist, tmp);
+      if (ftool::casecmp(tmp, "END")==0) {
 	break;
-      } else if (strcmp(tmp, "CONVEX")==0) {
-	ftool::get_token(ist, tmp, 1023);
-	size_type ic = atoi(tmp);
+      } else if (ftool::casecmp(tmp, "CONVEX")==0) {
+	ftool::get_token(ist, tmp);
+	size_type ic = atoi(tmp.c_str());
 	if (!linked_mesh().convex_index().is_in(ic)) {
 	  DAL_THROW(failure_error, "Convex " << ic <<
 		    " does not exist, are you sure "
 		    "that the mesh attached to this object is right one ?");
 	}
 	
-	ftool::get_token(ist, tmp, 1023);
+	ftool::get_token(ist, tmp);
 	getfem::pintegration_method pfi = getfem::int_method_descriptor(tmp);
 	if (!pfi) DAL_THROW(failure_error,
 	  "could not create the integration method '" << tmp << "'");
 	
 	set_integration_method(ic, pfi);
-      } else if (strlen(tmp)) {
+      } else if (tmp.size()) {
 	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
 		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
@@ -151,8 +151,8 @@ namespace getfem {
     ost << '\n' << "BEGIN MESH_IM" << '\n' << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << " CONVEX " << cv;
-      ost << " " << name_of_int_method(int_method_of_element(cv));
-      ost << '\n';
+      ost << " \'" << name_of_int_method(int_method_of_element(cv));
+      ost << "\'\n";
     }
 
     ost << "END MESH_IM" << '\n';

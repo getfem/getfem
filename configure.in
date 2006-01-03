@@ -126,6 +126,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 	AC_CHECK_CXX_FLAG([-Wredundant-decls],CXXFLAGS)
 	dnl -Wno-long-double fixes a warning on Darwin
 	AC_CHECK_CXX_FLAG([-Wno-long-double],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wno-long-long],CXXFLAGS)
 	dnl -rdynamic used for backtraces
 	AC_CHECK_CXX_FLAG([-rdynamic],SUPLDFLAGS)
 

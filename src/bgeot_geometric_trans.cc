@@ -312,7 +312,7 @@ namespace bgeot {
   struct cv_pr_tl_ : public geometric_trans {
     cv_pr_tl_(pgeometric_trans a, pgeometric_trans b) {
       if (!(a->is_linear() && b->is_linear()))
-	DAL_THROW(not_linear_error, 
+	DAL_THROW(failure_error, 
 		  "linear product of non-linear transformations");
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
       is_lin = true;

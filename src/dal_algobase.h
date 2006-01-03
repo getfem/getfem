@@ -37,16 +37,15 @@
 #include <dal_except.h>
 #include <functional>
 
-namespace dal
-{
+namespace dal {
+
   /* ********************************************************************* */
   /* Definitition de classes de comparaison.                               */
   /* retournant un int.                                                    */
   /* ********************************************************************* */
   
   template <class T>
-    struct less : public std::binary_function<T, T, int>
-  {
+    struct less : public std::binary_function<T, T, int> {
     inline int operator()(const T& x, const T& y) const
     { return (x < y) ? -1 : ((y < x) ? 1 : 0); }
   };
@@ -58,16 +57,14 @@ namespace dal
   template<> struct less<short> : public std::binary_function<short,short,int>
   { int operator()(short x, short y) const { return int(x-y); } };
   template<> struct less<unsigned char>
-     : public std::binary_function<unsigned char, unsigned char, int>
-  {
+     : public std::binary_function<unsigned char, unsigned char, int> {
     int operator()(unsigned char x, unsigned char y) const
     { return int(x)-int(y); }
   };
   
 
   template <class T>
-    struct greater : public std::binary_function<T, T, int>
-  {
+    struct greater : public std::binary_function<T, T, int> {
     inline int operator()(const T& x, const T& y) const
     { return (y < x) ? -1 : ((x < y) ? 1 : 0); }
   };
@@ -80,8 +77,7 @@ namespace dal
       : public std::binary_function<short, short, int>
   { int operator()(short x, short y) const { return int(y-x); } };
   template<> struct greater<unsigned char>
-      : public std::binary_function<unsigned char, unsigned char, int>
-  { 
+    : public std::binary_function<unsigned char, unsigned char, int> {
     int operator()(unsigned char x, unsigned char y) const
       { return int(y)-int(x); }
   };
@@ -89,8 +85,7 @@ namespace dal
   template <typename T> inline T my_abs(T a) { return (a < T(0)) ? T(-a) : a; }
   
   template <class T>
-    struct approx_less : public std::binary_function<T, T, int>
-  { 
+    struct approx_less : public std::binary_function<T, T, int> { 
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (my_abs(x - y) < eps) return 0; if (x < y) return -1; return 1; }
@@ -98,8 +93,7 @@ namespace dal
   };
 
   template <class T>
-    struct approx_greater : public std::binary_function<T, T, int>
-  { 
+    struct approx_greater : public std::binary_function<T, T, int> { 
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (my_abs(x - y) < eps) return 0; if (x > y) return -1; return 1; }
@@ -108,8 +102,7 @@ namespace dal
 
   template<class ITER1, class ITER2, class COMP>
     int lexicographical_compare(ITER1 b1, const ITER1 &e1,
-				ITER2 b2, const ITER2 &e2, const COMP &c) 
-  {
+				ITER2 b2, const ITER2 &e2, const COMP &c)  {
     int i;
     for ( ; b1 != e1 && b2 != e2; ++b1, ++b2)
       if ((i = c(*b1, *b2)) != 0) return i;
@@ -120,33 +113,32 @@ namespace dal
     struct lexicographical_less : public std::binary_function<CONT, CONT, int>
   { 
     COMP c;
-    int operator()(const CONT &x, const CONT &y) const
-    { return dal::lexicographical_compare(x.begin(), x.end(),
-				     y.begin(), y.end(), c);
+    int operator()(const CONT &x, const CONT &y) const {
+      return dal::lexicographical_compare(x.begin(), x.end(),
+					  y.begin(), y.end(), c);
     }
     lexicographical_less(const COMP &d = COMP()) { c = d; }
   };
 
   template<class CONT, class COMP = dal::less<typename CONT::value_type> >
-    struct lexicographical_greater
-                                : public std::binary_function<CONT, CONT, int>
-  { 
+  struct lexicographical_greater
+    : public std::binary_function<CONT, CONT, int> { 
     COMP c;
-    int operator()(const CONT &x, const CONT &y) const
-    { return -dal::lexicographical_compare(x.begin(), x.end(),
-				      y.begin(), y.end(), c);
+    int operator()(const CONT &x, const CONT &y) const {
+      return -dal::lexicographical_compare(x.begin(), x.end(),
+					   y.begin(), y.end(), c);
     }
     lexicographical_greater(const COMP &d = COMP()) { c = d; }
   };
-
+  
 
   /* ********************************************************************* */
   /* "Virtual" iterators on sequences.                                     */
   /* The class T represent a class of sequence.                            */
   /* ********************************************************************* */
 
-  template<class T> struct sequence_iterator
-  {
+  template<class T> struct sequence_iterator {
+    
     typedef T             value_type;
     typedef value_type*   pointer;
     typedef value_type&   reference;
@@ -174,13 +166,14 @@ namespace dal
   /* ********************************************************************* */
 
   template <class ITER1, class SIZE, class ITER2>
-    ITER2 copy_n(ITER1 first, SIZE count, ITER2 result)
-  { for ( ; count > 0; --count) { *result = *first; ++first; ++result; } return result; }
+  ITER2 copy_n(ITER1 first, SIZE count, ITER2 result) {
+    for ( ; count > 0; --count, ++first, ++result) *result = *first;
+    return result;
+  }
 
   template<class ITER>
     typename std::iterator_traits<ITER>::value_type
-      mean_value(ITER first, const ITER &last)
-  {
+      mean_value(ITER first, const ITER &last) {
     if (first == last) DAL_INTERNAL_ERROR("mean value of empty container");
     size_t n = 1;
     typename std::iterator_traits<ITER>::value_type res = *first++;
@@ -196,16 +189,14 @@ namespace dal
   template<class ITER> /* hum ... */
     void minmax_box(typename std::iterator_traits<ITER>::value_type &pmin,
 		    typename std::iterator_traits<ITER>::value_type &pmax,
-		    ITER first, const ITER &last)
-  {
+		    ITER first, const ITER &last) {
     typedef typename std::iterator_traits<ITER>::value_type PT;
     if (first != last) { pmin = pmax = *first; ++first; }
-    while (first != last)
-    {
+    while (first != last) {
       typename PT::const_iterator b = (*first).begin(), e = (*first).end();
       typename PT::iterator b1 = pmin.begin(), b2 = pmax.begin();
       while (b != e)
-      { *b1 = std::min(*b1, *b); *b2 = std::max(*b2, *b); ++b; ++b1; ++b2; }
+	{ *b1 = std::min(*b1, *b); *b2 = std::max(*b2, *b); ++b; ++b1; ++b2; }
     }
   }
 
@@ -213,9 +204,9 @@ namespace dal
     const VEC &v;
   public:
     sorted_indexes_aux(const VEC& v_) : v(v_) {}
-    template <typename IDX> bool operator()(const IDX &ia, const IDX &ib) const {
-      return v[ia] < v[ib];
-    }
+    template <typename IDX>
+    bool operator()(const IDX &ia, const IDX &ib) const
+    { return v[ia] < v[ib]; }
   };
 
   template<typename VEC, typename IVEC> 

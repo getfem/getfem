@@ -39,12 +39,12 @@
 namespace getfem {
 
   /// Describe an integration method linked to a mesh.
-  class mesh_im : public getfem_mesh_receiver, public context_dependencies {
+  class mesh_im : public mesh_receiver, public context_dependencies {
   protected :
     
     dal::dynamic_array<pintegration_method> ims;
     dal::bit_vector im_convexes;
-    getfem_mesh *linked_mesh_;
+    mesh *linked_mesh_;
     bool is_valid_;
   public :
     bool is_valid() const { return is_valid_; }
@@ -55,8 +55,8 @@ namespace getfem {
     inline const dal::bit_vector &convex_index(void) const
     { return im_convexes; }
     
-    /// Give a reference to the linked mesh of type getfem_mesh.
-    getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
+    /// Give a reference to the linked mesh of type mesh.
+    mesh &linked_mesh(void) const { return *linked_mesh_; }
     /** Set the integration method of a convex.
 
 	@param cv the convex number
@@ -96,7 +96,7 @@ namespace getfem {
     */
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) {getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX &m) {mesh_receiver::receipt(m); }
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
     
@@ -106,7 +106,7 @@ namespace getfem {
 	ims.memsize() + im_convexes.memsize();
     }
     
-    mesh_im(getfem_mesh &me);
+    mesh_im(mesh &me);
     virtual ~mesh_im();
     /** Read the mesh_im from a stream.
         @param ist the stream. */

@@ -26,17 +26,20 @@
    square, and is compared to the analytical solution.
 
    This program is used to check that getfem++ is working. This is
-   also a good example of use of Getfem++.  
+   also a good example of use of Getfem++. This program  does not use the
+   model bricks intentionally in order to serve as an exemple of solving
+   a pde directly with the assembly procedures.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and comp. of norms) */
-#include <getfem_export.h>   /* export functions (save the solution in a file) */
+#include <getfem_assembling.h> /* assembly methods (and comp. of norms) */
+#include <getfem_export.h>   /* export functions (save solutions in a file) */
 #include <getfem_regular_meshes.h>
+#include <getfem_derivatives.h>
 #include <gmm.h>
 
 /* some Getfem++ types that we will be using */
-using bgeot::base_small_vector;  /* special class for small (dim < 16) vectors */
-using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
+using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
+using bgeot::base_node; /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 
@@ -67,7 +70,7 @@ base_small_vector sol_grad(const base_node &x)
 struct laplacian_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh; /* the mesh */
+  getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods. */
   getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Laplacian solution */
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
@@ -98,11 +101,11 @@ struct laplacian_problem {
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
-void laplacian_problem::init(void)
-{
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+void laplacian_problem::init(void) {
+  
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -143,10 +146,34 @@ void laplacian_problem::init(void)
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
+//   // pour "voir" les fct de forme de l'elt d'hermite 2D ...  
+//   for (size_type ii = 0; ii < mf_u.nb_dof(); ++ii) {
+//     std::vector<scalar_type> VV(mf_u.nb_dof());
+
+//     mf_rhs.set_finite_element(mesh.convex_index(), 
+// 		    getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
+
+//     std::vector<scalar_type> WW(2*mf_rhs.nb_dof());
+  
+//     VV[ii] = 1.0;
+//     getfem::compute_gradient(mf_u, mf_rhs, VV, WW);
+ 
+//     mf_rhs.set_finite_element(mesh.convex_index(), 
+// 			      getfem::fem_descriptor("FEM_PK(2,5)"));
+
+//     std::vector<scalar_type> WWW(mf_rhs.nb_dof());
+//     getfem::interpolation(mf_u, mf_rhs, VV, WWW);
+//    cout << "ii = " << ii << " point " << mf_u.point_of_dof(ii)
+// 	 << " WW = " << WW << " WWW = " << WWW << endl;
+
+//     getchar();
+
+//   }
+
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -167,6 +194,11 @@ void laplacian_problem::init(void)
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET");
+
+  if (!pf_u->is_lagrange() && !gen_dirichlet)
+    DAL_WARNING2("With non lagrange fem prefer the generic "
+		 "Dirichlet condition option");
+
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -232,13 +264,16 @@ void laplacian_problem::assembly(void)
     
     gmm::resize(Ud, nb_dof);
     gmm::resize(NS, nb_dof, nb_dof);
-    col_sparse_matrix_type H(nb_dof, nb_dof);
-    std::vector<scalar_type> R(nb_dof), RHaux(nb_dof);
+    col_sparse_matrix_type H(nb_dof_rhs, nb_dof);
+    std::vector<scalar_type> R(nb_dof_rhs), RHaux(nb_dof);
 
     /* build H and R such that U mush satisfy H*U = R */
-    getfem::asm_dirichlet_constraints(H, R, mim, mf_u,
-				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);    
-    gmm::clean(H, 1e-15);
+    getfem::asm_dirichlet_constraints(H, R, mim, mf_u, mf_rhs,
+				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);
+    // , getfem::ASMDIR_BUILDR | getfem::ASMDIR_BUILDH);    
+    
+    gmm::clean(H, 1e-12);
+    //    cout << "H = " << H << endl;
     int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
     // cout << "Number of irreductible unknowns : " << nbcols << endl;
     gmm::resize(NS,gmm::mat_ncols(H),nbcols);
@@ -258,7 +293,7 @@ void laplacian_problem::assembly(void)
 
 bool laplacian_problem::solve(void) {
   cout << "Compute preconditionner\n";
-  double time = ftool::uclock_sec();
+  double time = dal::uclock_sec();
   gmm::iteration iter(residue, 1, 40000);
   // gmm::identity_matrix P;
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
@@ -269,7 +304,7 @@ bool laplacian_problem::solve(void) {
   // gmm::ilutp_precond<sparse_matrix_type> P(SM, 50, 1E-9);
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
   cout << "Time to compute preconditionner : "
-       << ftool::uclock_sec() - time << " seconds\n";
+       << dal::uclock_sec() - time << " seconds\n";
 
   
   //gmm::HarwellBoeing_IO::write("SM", SM);
@@ -278,7 +313,7 @@ bool laplacian_problem::solve(void) {
   // gmm::gmres(SM, U, B, P, 50, iter);
   
   cout << "Total time to solve : "
-       << ftool::uclock_sec() - time << " seconds\n";
+       << dal::uclock_sec() - time << " seconds\n";
 
   if (gen_dirichlet) {
     std::vector<scalar_type> Uaux(mf_u.nb_dof());

@@ -39,8 +39,7 @@
 #include <getfem_fem.h>
 
 
-namespace getfem
-{
+namespace getfem {
 
   template <class CONT> struct tab_scal_to_vect_iterator {
 
@@ -113,16 +112,16 @@ namespace getfem
 
 
   protected :
-    CONT c;
+    ITER it, ite;
     dim_type N;
     
   public :
 
-    bool empty(void) const { return c.empty(); }
-    size_type size(void) const { return c.size() * N; }
+    bool empty(void) const { return it == ite; }
+    size_type size(void) const { return (ite - it) * N; }
 
-    const_iterator begin(void) const { return iterator(c.begin(), N, 0); }
-    const_iterator end(void) const { return iterator(c.end(), N, 0); }
+    const_iterator begin(void) const { return iterator(it, N, 0); }
+    const_iterator end(void) const { return iterator(ite, N, 0); }
     const_reverse_iterator rbegin(void) const
       { return const_reverse_iterator(end()); }
     const_reverse_iterator rend(void) const
@@ -132,7 +131,8 @@ namespace getfem
     value_type back(void) const { return *(--(end())); }
 
     tab_scal_to_vect(void) {}
-    tab_scal_to_vect(const CONT &cc, dim_type n) : c(cc), N(n) {}
+    tab_scal_to_vect(const CONT &cc, dim_type n)
+      : it(cc.begin()), ite(cc.end()), N(n) {}
     
     value_type operator [](size_type ii) const { return *(begin() + ii);}
   };
@@ -142,22 +142,17 @@ namespace getfem
     pdof_description pnd;
   };
   
-  typedef tab_scal_to_vect<bgeot::ref_mesh_point_ind_ct> ref_mesh_dof_ind_ct;
-  typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> 
-    ind_ref_mesh_dof_ind_ct;
-  
-
   /** Describe a finite element method linked to a mesh.
    *    
-   *  @see getfem_mesh
+   *  @see mesh
    *  @see mesh_im
    */
-  class mesh_fem : public getfem_mesh_receiver, public context_dependencies {
+  class mesh_fem : public mesh_receiver, public context_dependencies {
   protected :
     
     dal::dynamic_array<pfem> f_elems;
     dal::bit_vector fe_convex;
-    const getfem_mesh *linked_mesh_;
+    const mesh *linked_mesh_;
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
@@ -168,6 +163,9 @@ namespace getfem
   public :
     
     typedef base_node point_type;
+    typedef tab_scal_to_vect<mesh::ind_cv_ct> ref_mesh_dof_ind_ct;
+    typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_ref_mesh_dof_ind_ct;
+
     void update_from_context(void) const {}
 
     /** Get the set of convexes where a finite element has been assigned.
@@ -176,7 +174,7 @@ namespace getfem
       { return fe_convex; }
     
     /// Return a reference to the underlying mesh.
-    const getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
+    const mesh &linked_mesh(void) const { return *linked_mesh_; }
 
     /** Set the degree of the fem for automatic addition
      *  of element option. K=-1 disables the automatic addition.
@@ -225,8 +223,9 @@ namespace getfem
 	center of gravity, and 1 means that all degrees of freedom
 	collapse on the center of gravity.
      */
-    void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
-						    dim_type fem_degree,scalar_type alpha=0);
+    void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs,
+						    dim_type fem_degree,
+						    scalar_type alpha=0);
     /** Shortcut for
      * set_classical_finite_element(linked_mesh().convex_index(),...)
      */
@@ -235,7 +234,8 @@ namespace getfem
      *  set_classical_discontinuous_finite_element(linked_mesh().convex_index()
      *  ,...)
      */
-    void set_classical_discontinuous_finite_element(dim_type fem_degree,scalar_type alpha=0);
+    void set_classical_discontinuous_finite_element(dim_type fem_degree,
+						    scalar_type alpha=0);
     
     /** Return the fem associated with an element (in no fem is
 	associated, the function will crash! use the convex_index() of
@@ -283,7 +283,8 @@ namespace getfem
     size_type nb_dof_of_element(size_type cv) const
     { pfem pf = f_elems[cv]; return pf->nb_dof(cv) * Qdim / pf->target_dim(); }
     
-    /* Return the geometrical location of a degree of freedom in the reference convex.
+    /* Return the geometrical location of a degree of freedom in the
+       reference convex.
 	@param cv the convex number.
 	@param i the local dof number.
     const base_node &reference_point_of_dof(size_type cv,size_type i) const {
@@ -303,18 +304,14 @@ namespace getfem
     /** Return the dof component number (0<= x <Qdim) */
     dim_type dof_qdim(size_type d) const;
     /** Shortcut for convex_to_dof(d)[0] 
-	@param d the global dof number.
+ 	@param d the global dof number.
     */
     size_type first_convex_of_dof(size_type d) const;
-    /** Return the local index of the degree of freedom in the first convex that is attached to it (i.e. first_convex_of_dof(d)).
-	@param d the global dof number.
-    */
-    size_type ind_in_first_convex_of_dof(size_type d) const;
     /** Return the list of convexes attached to the specified dof 
 	@param d the global dof number.
 	@return an array of convex numbers.
      */
-    bgeot::mesh_convex_ind_ct convex_to_dof(size_type d) const;
+    const mesh::ind_cv_ct &convex_to_dof(size_type d) const;
     /** Renumber the degrees of freedom. You should not have
      * to call this function, as it is done automagically */
     void enumerate_dof(void) const;
@@ -326,25 +323,6 @@ namespace getfem
 	@return the list in a dal::bit_vector.
     */
     dal::bit_vector dof_on_set(const mesh_region &b) const;
-    dal::bit_vector dof_on_boundary(const mesh_region &b) const IS_DEPRECATED;
-    /// Add to the boundary b the face f of the element i.
-    void add_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED;
-    /// Says whether or not element i is on the boundary b. 
-    bool is_convex_on_boundary(size_type c, size_type b) const IS_DEPRECATED;
-    bool is_face_on_boundary(size_type b, size_type c, short_type f)
-      const IS_DEPRECATED;
-    /** returns the list of convexes on the boundary b */
-    const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED;
-    mesh_region::face_bitset
-    faces_of_convex_on_boundary(size_type c, size_type b) const 
-      IS_DEPRECATED;
-    /** returns the list of boundary numbers */
-    const dal::bit_vector &get_valid_boundaries() const IS_DEPRECATED;
-    
-    void sup_boundaries_of_convex(size_type c) IS_DEPRECATED;
-    void sup_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED;
-    void sup_boundary(size_type b) IS_DEPRECATED;
-    void swap_boundaries_convex(size_type c1, size_type c2) IS_DEPRECATED;
 
     /* explicit calls to parent class 
        for HP aCC and mipspro CC who complain about hidden functions 
@@ -361,11 +339,11 @@ namespace getfem
 	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
 	f_elems.memsize() + fe_convex.memsize();
     }
-    /** Build a new mesh_fem. A getfem_mesh object must be supplied. 
+    /** Build a new mesh_fem. A mesh object must be supplied. 
 	@param me the linked mesh.
 	@param Q the Q dimension (see mesh_fem::get_qdim).
     */
-    explicit mesh_fem(const getfem_mesh &me, dim_type Q = 1);
+    explicit mesh_fem(const mesh &me, dim_type Q = 1);
     virtual ~mesh_fem();
     void clear(void);
     /** Read the mesh_fem from a stream. 
@@ -387,11 +365,6 @@ namespace getfem
     void write_to_file(const std::string &name, bool with_mesh=false) const;
   };
 
-  inline dal::bit_vector 
-  mesh_fem::dof_on_boundary(const mesh_region &b) const
-  { b.from_mesh(linked_mesh()); return dof_on_set(b); }
-
-
   /** Gives the descriptor of a classical finite element method of degree K
       on mesh.  
       
@@ -401,8 +374,11 @@ namespace getfem
       the same arguments will return the same mesh_fem object. A
       consequence is that you should NEVER modify this mesh_fem!
    */
-  const mesh_fem &classical_mesh_fem(const getfem_mesh &mesh,
-				      dim_type K);
+  const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree);
+
+  /* Dummy mehs_fem for default parameter of functions. */
+  const mesh_fem &dummy_mesh_fem(void);
+
 
 }  /* end of namespace getfem.                                             */
 

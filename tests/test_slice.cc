@@ -4,7 +4,8 @@
 using getfem::size_type;
 namespace getfem {
   std::ostream& operator<<(std::ostream& o, const bgeot::mesh_structure& m) {
-    o << "mesh_structure: nb_pts=" << m.point_structures().size() << ", nb_cvs=" << m.convex_index().card() << endl;
+    o << "mesh_structure: nb_pts=" << m.nb_max_points() << ", nb_cvs="
+      << m.convex_index().card() << endl;
     dal::bit_vector bv = m.convex_index();
     for (size_type cv = bv.take_first(); cv != size_type(-1); cv << bv) {
       o << "convex " << cv << ": "; 
@@ -44,8 +45,7 @@ main() {
 
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-
-  getfem::getfem_mesh m;
+  getfem::mesh m;
   getfem::base_node A; bgeot::sc(A)=0,0;
   getfem::base_node B; bgeot::sc(B)=1,0;
   getfem::base_node C; bgeot::sc(C)=0,2;

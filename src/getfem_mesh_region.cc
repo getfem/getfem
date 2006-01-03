@@ -10,7 +10,7 @@ namespace getfem {
     }
   }
 
-  const mesh_region& mesh_region::from_mesh(const getfem_mesh &m) const {
+  const mesh_region& mesh_region::from_mesh(const mesh &m) const {
     if (!p.get()) {
       mesh_region *r = const_cast<mesh_region*>(this);
       if (id_ == size_type(-1)) {
@@ -165,7 +165,7 @@ namespace getfem {
 		"Expecting a set of convexes or a set of faces, but not a mixed set");
   }
 
-  mesh_region::visitor::visitor(const mesh_region &s, const getfem_mesh &m) : 
+  mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 
     cv_(size_type(-1)), f_(size_type(-1)), finished_(false) {
     s.from_mesh(m);
     init(s);

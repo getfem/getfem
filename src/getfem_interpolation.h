@@ -52,7 +52,7 @@ namespace getfem {
 
   protected :
     typedef gmm::abstract_null_type void_type;
-    const getfem_mesh &mesh;
+    const mesh &msh;
     std::vector<std::map<size_type, void_type> > pts_cvx;
     typedef std::map<size_type, void_type>::const_iterator map_iterator;
     std::vector<base_node> ref_coords;
@@ -72,7 +72,7 @@ namespace getfem {
      *        into account, else test them on the frontiere convexes.
      */
     void distribute(bool extrapolation = false);
-    mesh_trans_inv(const getfem_mesh &m):bgeot::geotrans_inv(1E-12),mesh(m) {}
+    mesh_trans_inv(const mesh &m) : bgeot::geotrans_inv(1E-12), msh(m) {}
   private :
     void add_point_with_id(base_node, size_type) {}
   };
@@ -158,15 +158,17 @@ namespace getfem {
       pfem pf_t = mf_target.fem_of_element(cv);
       size_type nbd_s = pf_s->nb_dof(cv);
       size_type nbd_t = pf_t->nb_dof(cv);
-      ref_mesh_dof_ind_ct::iterator itdof;
+      mesh_fem::ref_mesh_dof_ind_ct::const_iterator itdof;
+      size_type cvnbdof = mf_source.nb_dof_of_element(cv);
 
       if (version == 0) {
         coeff.resize(qqdim);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(nbd_s*qdim);
           itdof = mf_source.ind_dof_of_element(cv).begin();
-          for (size_type k = 0; k < mf_source.nb_dof_of_element(cv);
-               ++k, ++itdof) coeff[qq][k] = U[(*itdof)*qqdim+qq];
+          for (size_type k = 0; k < cvnbdof; ++k, ++itdof) {
+	    coeff[qq][k] = U[(*itdof)*qqdim+qq];
+	  }
         }
       }
       if (pf_s->need_G()) 
@@ -179,8 +181,9 @@ namespace getfem {
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
-      dof_source.assign(mf_source.ind_dof_of_element(cv).begin(), 
-                        mf_source.ind_dof_of_element(cv).end());
+      const mesh_fem::ref_mesh_dof_ind_ct &idct
+	= mf_source.ind_dof_of_element(cv);
+      dof_source.assign(idct.begin(), idct.end());
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
 	size_type dof_t = *itdof*qmult;
         if (dof_t_done.is_in(*itdof)) continue;
@@ -226,7 +229,7 @@ namespace getfem {
 		     int version, bool extrapolation = false) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
-    const getfem_mesh &mesh(mf_source.linked_mesh());
+    const mesh &msh(mf_source.linked_mesh());
     size_type qdim_s = mf_source.get_qdim();
     size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
     
@@ -244,14 +247,14 @@ namespace getfem {
     std::vector<size_type> dof_source;
 
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt=mesh.trans_of_convex(cv);
+      bgeot::pgeometric_trans pgt=msh.trans_of_convex(cv);
       mti.points_on_convex(cv, itab);
       if (itab.size() == 0) continue;
 
       pfem pf_s = mf_source.fem_of_element(cv);
       //cerr << "pf_s = "<< pf_s << ", mf_source.cvidx = " << mf_source.convex_index().is_in(cv) << " cv=" << cv << "\n";
       if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix(G, mesh.points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
 
       fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv);
       if (version == 0) {
@@ -262,8 +265,9 @@ namespace getfem {
                     gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff[qq]);
         }
       }
-      dof_source.assign(mf_source.ind_dof_of_element(cv).begin(), 
-                        mf_source.ind_dof_of_element(cv).end());
+      const mesh_fem::ref_mesh_dof_ind_ct &idct
+	= mf_source.ind_dof_of_element(cv);
+      dof_source.assign(idct.begin(), idct.end());
       for (size_type i = 0; i < itab.size(); ++i) {
 	size_type dof_t = itab[i];
 	if (dof_done.is_in(dof_t)) {
@@ -328,8 +332,8 @@ namespace getfem {
 		       const VECTU &U, VECTV &V, MAT &M,
 		       int version, bool extrapolation = false) {
 
-    const getfem_mesh &mesh(mf_source.linked_mesh());
-    getfem::mesh_trans_inv mti(mesh);
+    const mesh &msh(mf_source.linked_mesh());
+    getfem::mesh_trans_inv mti(msh);
     size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
     if (qdim_s != qdim_t && qdim_t != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "

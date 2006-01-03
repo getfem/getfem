@@ -278,7 +278,7 @@ namespace getfem {
 	   const mesher_signed_distance& dist_, 
 	   const mesher_virtual_function& edge_len_, 
 	   scalar_type h0_,
-	   getfem_mesh &m, const std::vector<base_node> &fixed_points,
+	   mesh &m, const std::vector<base_node> &fixed_points,
 	   int noise, size_type itm, int pref,
 	   scalar_type dph, scalar_type btf)
       : dist(dist_), edge_len(edge_len_), dist_point_hull(dph),
@@ -454,19 +454,20 @@ namespace getfem {
     }
 
     void control_mesh_surface(void) {
-	getfem_mesh m;
+	mesh m;
 	adapt_mesh(m, 1);
 	dal::bit_vector ii = m.convex_index(), points_to_project;
 	size_type ic, ipt;	
 	for (ic << ii; ic != size_type(-1); ic << ii) {
 	  for (unsigned f = 0; f <= N; ++f) {
-	    if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
+	    if (m.is_convex_having_neighbour(ic,f)) {
 	      for (unsigned i = 0; i < N; ++i) {
 		ipt = m.ind_points_of_face_of_convex(ic, f)[i];
 		if (pts_attr[ipt]->constraints.card() == 0)
 		  points_to_project.add(ipt);
 		else if (dist(pts[ipt]) < -1e-2) 
-		  cout << "WARNING, point " << ipt << " incoherent !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+		  cout << "WARNING, point " << ipt 
+		       << " incoherent !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 	      }
 	    }
 	  }
@@ -484,7 +485,7 @@ namespace getfem {
     void suppress_flat_boundary_elements(void) {
       size_type nb_deleted = 0;
       do {
-	getfem_mesh m;
+	mesh m;
 	adapt_mesh(m, 1);
 	std::vector<base_small_vector> normals;
 	dal::bit_vector ii = m.convex_index();
@@ -495,7 +496,7 @@ namespace getfem {
 	  scalar_type max_flatness = -2.0;
 	  normals.resize(0);
 	  for (unsigned f = 0; f <= N; ++f) {
-	    if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
+	    if (m.is_convex_having_neighbour(ic,f)) {
 	      if (quality_of_element(ic) < 1E-8) max_flatness = 1E-8;
 	      else {
 		base_small_vector n = m.normal_of_face_of_convex(ic, f);
@@ -709,7 +710,7 @@ namespace getfem {
 				     &fixed_points) {
       size_type nbpt = 1;
       std::vector<size_type> gridnx(N);
-      getfem_mesh m;
+      mesh m;
       base_node eff_boxmin(N), eff_boxmax(N);
       bool eff_box_init = false;
 
@@ -937,7 +938,7 @@ namespace getfem {
       
     }
 
-    void adapt_mesh(getfem_mesh &m, size_type degree) {
+    void adapt_mesh(mesh &m, size_type degree) {
       std::vector<base_node> cvpts(N+1), cvpts2;
       size_type cvnum;
       m.clear();
@@ -972,7 +973,7 @@ namespace getfem {
 	getfem::outer_faces_of_mesh(m, border_faces);
 	dal::bit_vector ptdone; ptdone.sup(0,m.points_index().last_true());
 	for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
-	  bgeot::ind_ref_mesh_point_ind_ct fpts_
+	  mesh::ind_pt_face_ct fpts_
 	    = m.ind_points_of_face_of_convex(it.cv(), it.f());
 	  std::vector<size_type> fpts(fpts_.size());
 	  std::copy(fpts_.begin(), fpts_.end(), fpts.begin());
@@ -985,7 +986,7 @@ namespace getfem {
 
 
 
-    void interpolate_face(getfem_mesh &m, dal::bit_vector& ptdone, 
+    void interpolate_face(mesh &m, dal::bit_vector& ptdone, 
 			  const std::vector<size_type>& ipts,
 			  bgeot::pconvex_structure cvs) {
       if (cvs->dim() == 0) return;
@@ -1042,14 +1043,10 @@ namespace getfem {
 	bv2.setminus(pts_attr[iA]->constraints);
 	if (bv1.card() && bv2.card()) {
 	  bv1 |= bv2;
-	  bgeot::mesh_point_search_ind_ct
-	    iAneighbours = edges_mesh.ind_points_to_point(iA);
-	  bgeot::mesh_point_search_ind_ct
-	    iBneighbours = edges_mesh.ind_points_to_point(iB);
+	  mesh::ind_set iAneighbours = edges_mesh.ind_points_to_point(iA);
+	  mesh::ind_set iBneighbours = edges_mesh.ind_points_to_point(iB);
 	  std::vector<size_type>
 	    common_pts(iAneighbours.size()+iBneighbours.size());
-	  std::sort(iAneighbours.begin(),iAneighbours.end());
-	  std::sort(iBneighbours.begin(),iBneighbours.end());
 	  std::vector<size_type>::iterator ite = 
 	    std::set_intersection(iAneighbours.begin(), iAneighbours.end(),
 				  iBneighbours.begin(), iBneighbours.end(),
@@ -1162,7 +1159,7 @@ namespace getfem {
       }
     }
 
-    void do_build_mesh(getfem_mesh &m,
+    void do_build_mesh(mesh &m,
 		       const std::vector<base_node> &fixed_points) {
 
       distribute_points_regularly(fixed_points);
@@ -1368,7 +1365,7 @@ namespace getfem {
 
 
 
-  void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
+  void build_mesh(mesh &m, const mesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points,
 		  size_type K, int noise, size_type iter_max, int prefind,
 		  scalar_type dist_point_hull,

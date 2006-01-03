@@ -1,5 +1,4 @@
 #include <bgeot_kdtree.h>
-#include <ftool.h>
 #include <dal_bit_vector.h>
 using bgeot::base_node;
 using bgeot::size_type;
@@ -88,35 +87,35 @@ void speed_test(unsigned N, unsigned NPT, unsigned nrepeat) {
   bgeot::kdtree tree;
   base_node pt(N);
   cout << "speed test for the kdtree\n";
-  double t = ftool::uclock_sec();
+  double t = dal::uclock_sec();
   for (size_type i=0; i < NPT; ++i) {
     for (dim_type k = 0; k < N; ++k) 
       pt[k] = gmm::random(double())*2.;
     tree.add_point(pt);
     assert(pt.refcnt()>1);
   }
-  t = ftool::uclock_sec();
-  cout << "point list built in " << ftool::uclock_sec() - t << " seconds.\n";
+  t = dal::uclock_sec();
+  cout << "point list built in " << dal::uclock_sec() - t << " seconds.\n";
   bgeot::kdtree_tab_type ipts;
   tree.points_in_box(ipts,pt,pt);
-  cout << "tree built in " << ftool::uclock_sec() - t << " seconds.\n";
+  cout << "tree built in " << dal::uclock_sec() - t << " seconds.\n";
   bgeot::base_node bmin(0.25,0.25,0.4), bmax(0.5,0.5,3.3);
   size_type npt=0;
-  t = ftool::uclock_sec();
+  t = dal::uclock_sec();
   for (size_type c=0; c < nrepeat; ++c) {
     tree.points_in_box(ipts,bmin, bmax);
     npt = ipts.size();
   }
   cout << "BOX QUERY: nb points in " << bmin << ":" << bmax << " is : " << npt << "\n";
-  cout << "average query time is: " << (ftool::uclock_sec()-t)/nrepeat*1e6 << " microseconds\n";
+  cout << "average query time is: " << (dal::uclock_sec()-t)/nrepeat*1e6 << " microseconds\n";
 
-  t = ftool::uclock_sec();
+  t = dal::uclock_sec();
   for (size_type c=0; c < nrepeat*200; ++c) {
     tree.points_in_box(ipts,pt,pt);
     npt = ipts.size();
   }
   cout << "POINT QUERY: nb points in " << pt << ":" << pt << " is : " << npt << "\n";
-  cout << "average query time is: " << (ftool::uclock_sec()-t)/(nrepeat*200.)*1e6 << " microseconds\n";
+  cout << "average query time is: " << (dal::uclock_sec()-t)/(nrepeat*200.)*1e6 << " microseconds\n";
 }
 
 int main(int argc, char **argv) {

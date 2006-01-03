@@ -225,7 +225,6 @@ namespace getfem {
   using dal::dimension_error;
   using dal::file_not_found_error;
   using dal::internal_error;
-  using dal::not_linear_error;
   using dal::to_be_done_error;
   using dal::failure_error;
 

@@ -53,7 +53,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 struct plate_problem {
 
   enum { SIMPLY_FIXED_BOUNDARY_NUM = 0 };
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im mim, mim_subint;
   getfem::mesh_fem mf_ut;
   getfem::mesh_fem mf_u3;
@@ -91,13 +91,13 @@ struct plate_problem {
  * and integration methods and selects the boundaries.
  */
 void plate_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE_UT  = PARAM.string_value("FEM_TYPE_UT","FEM name");
-  const char *FEM_TYPE_U3  = PARAM.string_value("FEM_TYPE_U3","FEM name");
-  const char *FEM_TYPE_THETA = PARAM.string_value("FEM_TYPE_THETA","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE_UT  = PARAM.string_value("FEM_TYPE_UT","FEM name");
+  std::string FEM_TYPE_U3  = PARAM.string_value("FEM_TYPE_U3","FEM name");
+  std::string FEM_TYPE_THETA = PARAM.string_value("FEM_TYPE_THETA","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  const char *INTEGRATION_CT = PARAM.string_value("INTEGRATION_CT",
+  std::string INTEGRATION_CT = PARAM.string_value("INTEGRATION_CT",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE_UT="  << FEM_TYPE_UT << "\n";
@@ -161,8 +161,8 @@ void plate_problem::init(void) {
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_ut->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -349,9 +349,9 @@ bool plate_problem::solve(plain_vector &U) {
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_simple_support<> SIMPLE0
-    (VOL_F, SIMPLY_FIXED_BOUNDARY_NUM, 0, true);
+    (VOL_F, SIMPLY_FIXED_BOUNDARY_NUM, 0, getfem::AUGMENTED_CONSTRAINTS);
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
-    (VOL_F, SIMPLY_FIXED_BOUNDARY_NUM, 0, true);
+    (VOL_F, SIMPLY_FIXED_BOUNDARY_NUM, 0, getfem::AUGMENTED_CONSTRAINTS);
     
   if (sol_ref == 0) SIMPLE = &SIMPLE0 ;
   if (sol_ref == 1) SIMPLE = &SIMPLE1 ;

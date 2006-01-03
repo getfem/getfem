@@ -47,7 +47,8 @@ typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 enum {
-  DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1,
+  DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM,
+  NORMAL_PART_DIRICHLET_BOUNDARY_NUM,
   NONREFLECTIVE_BOUNDARY_NUM
 };
 
@@ -59,7 +60,7 @@ struct problem_definition;
  */
 struct navier_stokes_problem {
 
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   base_node BBmin, BBmax;    /* bounding box of the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
@@ -79,10 +80,11 @@ struct navier_stokes_problem {
   scalar_type t_export;
   void do_export(scalar_type t);
 
-  typedef enum { METHOD_SPLITTING_STOKES = 0,      /* cf. works of Michel Fournie */
-	 METHOD_SPLITTING = 1,             /* cf. works of Michel Fournie */
-	 METHOD_FULLY_CONSERVATIVE = 2, 
-	 METHOD_PREDICTION_CORRECTION = 3  /* cf. works of Marianna Braza */
+  typedef enum {
+    METHOD_SPLITTING_STOKES = 0,      /* cf. works of Michel Fournie. */
+    METHOD_SPLITTING = 1,             /* cf. works of Michel Fournie. */
+    METHOD_FULLY_CONSERVATIVE = 2, 
+    METHOD_PREDICTION_CORRECTION = 3  /* cf. works of Marianna Braza. */
   } option_t;
   option_t option;
 
@@ -121,11 +123,6 @@ struct problem_definition {
   virtual void dirichlet_condition(navier_stokes_problem &p,
 				   const base_node &x, scalar_type t,
 				   base_small_vector &r) = 0;
-  virtual void dirichlet_condition_h(navier_stokes_problem &p,
-				     const base_node &, scalar_type /*t*/,
-				     base_matrix &h) {
-    h.resize(p.N, p.N); gmm::copy(gmm::identity_matrix(), h);
-  }
   virtual void source_term(navier_stokes_problem &p,
 			   const base_node &x, scalar_type t,
 			   base_small_vector &F) = 0;
@@ -143,16 +140,6 @@ struct problem_definition {
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
       dirichlet_condition(p, p.mf_rhs.point_of_dof(i), t, r);
       gmm::copy(r, gmm::sub_vector(R, gmm::sub_interval(i*N, N)));
-    }
-  }
-  void dirichlet_condition_h(navier_stokes_problem &p, scalar_type t, 
-			     plain_vector &H) {
-    unsigned N = p.mesh.dim();
-    gmm::resize(H, N*N*p.mf_rhs.nb_dof());
-    base_matrix h;
-    for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
-      dirichlet_condition_h(p, p.mf_rhs.point_of_dof(i), t, h);
-      for (unsigned j=0; j < N*N; ++j) H[i*N*N+j] = h[j];
     }
   }
   void source_term(navier_stokes_problem &p, scalar_type t, plain_vector &F) {
@@ -272,16 +259,6 @@ struct problem_rotating_cylinder : public problem_definition {
     }
   }
 
-  virtual void dirichlet_condition_h(navier_stokes_problem &p,
-				     const base_node &P, scalar_type /*t*/,
-				     base_matrix &h) {
-    h.resize(p.N,p.N);
-    scalar_type y = P[1];   
-    gmm::copy(gmm::identity_matrix(), h);
-    if (gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1]) < 1e-7)
-      h(0,0) = 0;
-  }
-
    virtual void source_term(navier_stokes_problem &p,
 			    const base_node &, scalar_type /*t*/,
 			   base_small_vector &F) {
@@ -310,9 +287,9 @@ struct problem_rotating_cylinder : public problem_definition {
  * and integration methods and selects the boundaries.
  */
 void navier_stokes_problem::init(void) {
-  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -322,7 +299,7 @@ void navier_stokes_problem::init(void) {
 
   /* First step : build the mesh */
   if (meshname.compare(0,8, "regular:")==0) {
-    const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+    std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
     bgeot::pgeometric_trans pgt = 
       bgeot::geometric_trans_descriptor(MESH_TYPE);
     N = pgt->dim();
@@ -380,8 +357,8 @@ void navier_stokes_problem::init(void) {
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
 		<< data_fem_name << ". In that case you need to set "
@@ -446,8 +423,12 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
  
+  // Normal part Dirichlet condition brick.
+  getfem::mdbrick_normal_part_Dirichlet<>
+    velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+
   // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
+  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp, mf_u, 
 					     NONREFLECTIVE_BOUNDARY_NUM,
 					     dt, nu);
  
@@ -468,19 +449,19 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   sparse_matrix G(1, mf_p.nb_dof());
   G(0,0) = 1.;
   plain_vector gr(1);
-  getfem::mdbrick_constraint<> set_pressure(mixed_p, G, gr, 1);
+  getfem::mdbrick_constraint<> set_pressure(mixed_p);
+  set_pressure.set_constraints(G, gr);
+  set_pressure.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
     
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, DIRICHLET_BOUNDARY_NUM);
-  {
-    plain_vector H(mf_rhs.nb_dof()*N*N);
-    pdef->dirichlet_condition_h(*this, 0, H);
-    velocity_dir.H().set(mf_rhs, H);
-    mixed_dir.H().set(mf_rhs, H);
-  }
+  
+  // Normal part Dirichlet condition brick.
+  getfem::mdbrick_normal_part_Dirichlet<>
+    mixed_dirnp(mixed_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> mixed_dyn(mixed_dir, 1.);
+  getfem::mdbrick_dynamic<> mixed_dyn(mixed_dirnp, 1.);
   mixed_dyn.set_dynamic_coeff(0.0, 1.0);
 
   // 
@@ -535,8 +516,10 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   sparse_matrix G(1, mf_p.nb_dof());
   G(0,0) = 1.;
   plain_vector gr(1);
-  getfem::mdbrick_constraint<> velocity_ctr(velocity, G, gr, 1);
-  
+  getfem::mdbrick_constraint<> velocity_ctr(velocity);
+  velocity_ctr.set_constraints(G, gr);
+  velocity_ctr.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+
 
   // Volumic source term
   getfem::mdbrick_source_term<> velocity_f(velocity_ctr, 
@@ -546,9 +529,13 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
+  // Normal part Dirichlet condition brick.
+  getfem::mdbrick_normal_part_Dirichlet<>
+    velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+
   // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
-					     NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
+  getfem::mdbrick_NS_nonref1<>
+    nonreflective(velocity_dirnp, mf_u, NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
 
   // Dynamic brick.
   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
@@ -604,8 +591,12 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
+  // Normal part Dirichlet condition brick.
+  getfem::mdbrick_normal_part_Dirichlet<>
+    velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+  
   // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
+  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp, mf_u, 
 					      NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
 
   // Dynamic brick.
@@ -618,7 +609,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   
   getfem::mdbrick_generic_elliptic<> poisson(mim, mf_p, 1.0);
   sparse_matrix G(1, mf_p.nb_dof()); G(0,0) = 1.;  
-  getfem::mdbrick_constraint<> poisson_setonedof(poisson, G, plain_vector(1));
+  getfem::mdbrick_constraint<> poisson_setonedof(poisson);
+  poisson_setonedof.set_constraints(G, plain_vector(1));
+  poisson_setonedof.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
+
   getfem::mdbrick_source_term<> poisson_source(poisson_setonedof,
 					       mf_rhs, plain_vector(mf_rhs.nb_dof()));
 
@@ -712,7 +706,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEGUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    

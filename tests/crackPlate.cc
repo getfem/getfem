@@ -35,7 +35,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 struct crackPlate_problem{
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_pre_ut, mf_pre_u3, mf_pre_theta ; 
@@ -80,13 +80,13 @@ struct crackPlate_problem{
 
 void crackPlate_problem::init(void) {
   
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE_UT  = PARAM.string_value("FEM_TYPE_UT","FEM name");
-  const char *FEM_TYPE_U3  = PARAM.string_value("FEM_TYPE_U3","FEM name");
-  const char *FEM_TYPE_THETA = PARAM.string_value("FEM_TYPE_THETA","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE_UT  = PARAM.string_value("FEM_TYPE_UT","FEM name");
+  std::string FEM_TYPE_U3  = PARAM.string_value("FEM_TYPE_U3","FEM name");
+  std::string FEM_TYPE_THETA = PARAM.string_value("FEM_TYPE_THETA","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
+  std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
 				      "Enrichment option");
@@ -146,8 +146,8 @@ void crackPlate_problem::init(void) {
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_ut->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -276,7 +276,7 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
-    (VOL_F, DIRICHLET_BOUNDARY_NUM, 0, 1);
+    (VOL_F, DIRICHLET_BOUNDARY_NUM, 0,getfem::AUGMENTED_CONSTRAINTS);
        
   SIMPLE = &SIMPLE1 ;
   
@@ -369,11 +369,11 @@ int main(int argc, char *argv[]) {
       DAL_THROW(dal::failure_error, "Solve has failed");
     
     cout << "post-traitement pour l'affichage :\n" ;
-    getfem::getfem_mesh mcut;
+    getfem::mesh mcut;
     p.mls.global_cut_mesh(mcut);
 
     getfem::stored_mesh_slice sl;
-    getfem::getfem_mesh mcut_triangles_only;
+    getfem::mesh mcut_triangles_only;
     sl.build(mcut, 
 	     getfem::slicer_build_mesh(mcut_triangles_only), 1);
 
@@ -391,7 +391,7 @@ int main(int argc, char *argv[]) {
     getfem::interpolation(p.mf_theta(), mf, THETA, VTHETA);
     
 
-    getfem::getfem_mesh m3d; getfem::extrude(mcut_triangles_only,m3d,1);
+    getfem::mesh m3d; getfem::extrude(mcut_triangles_only,m3d,1);
     getfem::base_matrix trans(3,3); 
     trans(0,0) = trans(1,1) = 1; trans(2,2) = p.epsilon;
     m3d.transformation(trans);
@@ -426,7 +426,7 @@ int main(int argc, char *argv[]) {
 
     
 //     getfem::stored_mesh_slice sl;
-//     getfem::getfem_mesh mcut_refined;
+//     getfem::mesh mcut_refined;
 //     sl.build(mcut, 
 // 	getfem::slicer_build_mesh(mcut_refined), 4);
 //     getfem::mesh_im mim_refined(mcut_refined); 
@@ -474,7 +474,7 @@ int main(int argc, char *argv[]) {
 	
 	/* opendx ne supporte pas les prismes... */
 	getfem::stored_mesh_slice sl_tetra;
-	getfem::getfem_mesh mtetra;
+	getfem::mesh mtetra;
 	sl_tetra.build(m3d, getfem::slicer_build_mesh(mtetra), 1);
 	getfem::mesh_fem mftetra(mtetra,3); 
 	mftetra.set_classical_discontinuous_finite_element(1, 0.001);

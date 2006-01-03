@@ -46,10 +46,10 @@
 //#define MAX_FACES_PER_CV 63
 
 namespace getfem {
-  class getfem_mesh;
+  class mesh;
 
   /** structure used to hold a set of convexes and/or convex faces.
-      @see getfem_mesh::region
+      @see mesh::region
    */
   class mesh_region {
   public:
@@ -63,8 +63,8 @@ namespace getfem {
     dal::shared_ptr<impl> p;  /* the real region data */
     size_type id_;            /* used temporarily when the 
 				 mesh_region(size_type) constructor is used */
-    getfem_mesh *parent_mesh; /* used for mesh_region "extracted" from
-				 a getfem_mesh (to provide feedback) */
+    mesh *parent_mesh; /* used for mesh_region "extracted" from
+				 a mesh (to provide feedback) */
     impl &wp() { return *p.get(); }
     const impl &rp() const { return *p.get(); }
     void clean();
@@ -81,7 +81,7 @@ namespace getfem {
     */
     mesh_region(size_type boundid) : id_(boundid), parent_mesh(0) {}
     /** internal constructor. You should used m.region(id) instead. */
-    mesh_region(getfem_mesh& m, size_type id__) : 
+    mesh_region(mesh& m, size_type id__) : 
       p(new impl), id_(id__), parent_mesh(&m) {}
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv) : 
@@ -96,7 +96,7 @@ namespace getfem {
 	from_mesh(m) sets the current region to 'm.region(id)'.  
 	(works only once) 
     */
-    const mesh_region& from_mesh(const getfem_mesh &m) const;
+    const mesh_region& from_mesh(const mesh &m) const;
 
     face_bitset operator[](size_t cv) const;
     const dal::bit_vector &index() const;
@@ -133,7 +133,7 @@ namespace getfem {
       void init(const mesh_region &s);
     public: 
       visitor(const mesh_region &s);
-      visitor(const mesh_region &s, const getfem_mesh &m);
+      visitor(const mesh_region &s, const mesh &m);
       size_type cv() const { return cv_; }
       size_type is_face() const { return f_ != 0; }
       size_type f() const { return f_-1; }

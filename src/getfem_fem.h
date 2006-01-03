@@ -30,7 +30,8 @@
 /**@file getfem_fem.h 
    @brief Definition of the finite element methods.
 
-   This file defines the getfem::virtual_fem class, which is the common base class of all FEM.
+   This file defines the getfem::virtual_fem class, which is the common
+   base class of all FEM.
 
    @section fem_list List of FEM known by getfem::fem_descriptor :
    
@@ -67,7 +68,9 @@
    - "FEM_P1_BUBBLE_FACE_LAG" : P1 method on a simplex with an
    additional lagrange dof on face 0.
 
-   - "FEM_HERMITE_SEGMENT" : Hermite element on the segment \todo fix hermite segment
+   - "FEM_HERMITE_SEGMENT" : Hermite element on the segment
+
+   - "FEM_HERMITE_TRIANGLE" : Hermite element on the triangle
 
    - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis
 
@@ -373,7 +376,13 @@ namespace getfem {
     virtual size_type index_of_global_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); }
 
-    void add_node(const pdof_description &d, const base_node &pt) ;
+    /** internal function adding a node to an element for the creation
+     * of a finite element method. Important : the faces should be the faces
+     * on which the corresponding base function is non zero.
+     */
+    void add_node(const pdof_description &d, const base_node &pt,
+		  const dal::bit_vector &faces);    
+    void add_node(const pdof_description &d, const base_node &pt);
     void init_cvs_node(void);
     void unfreeze_cvs_node(void);
 

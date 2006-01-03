@@ -32,24 +32,23 @@
 #define DAL_REF_H__
 
 /** @file dal_ref.h
-    @brief Provide some simple pseudo-containers.
-    
-    WARNING : modifiying the container infirm the validity of references.
+ *  @brief Provide some simple pseudo-containers.
+ *  
+ *  WARNING : modifiying the container infirm the validity of references.
  */
 
 
 #include <iterator>
 #include <dal_basic.h>
 
-namespace dal
-{
+namespace dal {
 
   /* ********************************************************************* */
   /* Simple reference.                                                     */
   /* ********************************************************************* */
 
-  template<typename ITER> class tab_ref
-  {
+  template<typename ITER> class tab_ref {
+
     protected :
 
       ITER begin_, end_;
@@ -482,41 +481,41 @@ namespace dal
      given a container X and a predicate P, provide pseudo-container Y
      of all elements of X such that P(X[i]).
   */
-  template<typename ITER, typename COND> class tab_ref_with_selection
-  {
-    public :
-
-      typedef typename std::iterator_traits<ITER>::value_type value_type;
-      typedef typename std::iterator_traits<ITER>::pointer    pointer;
-      typedef typename std::iterator_traits<ITER>::pointer    const_pointer;
-      typedef typename std::iterator_traits<ITER>::reference  reference;
-      typedef typename std::iterator_traits<ITER>::reference  const_reference;
-      typedef size_t  size_type;
-      typedef tab_ref_with_selection_iterator_<ITER, COND> iterator;
-      typedef iterator   const_iterator;
+  template<typename ITER, typename COND> class tab_ref_with_selection {
     
-    protected :
-
-      ITER begin_, end_;
-      COND cond;
-
-    public :
-
-      iterator begin(void) const
-      { iterator it(begin_, cond); it.forward(); return it; }
-      iterator end(void) const { return iterator(end_, cond); }
-      bool empty(void) const { return begin_ == end_; }
-
-      value_type front(void) const { return *begin(); }
-      void pop_front(void) { ++begin_; begin_ = begin(); }
-
-      COND &condition(void) { return cond; }
-      const COND &condition(void) const { return cond; }
-   
-      tab_ref_with_selection(void) {}
-      tab_ref_with_selection(const ITER &b, const ITER &e, const COND &c)
-	: begin_(b), end_(e), cond(c) { begin_ = begin(); }
-
+  protected :
+    
+    ITER begin_, end_;
+    COND cond;
+    
+    
+    
+  public :
+    
+    typedef typename std::iterator_traits<ITER>::value_type value_type;
+    typedef typename std::iterator_traits<ITER>::pointer    pointer;
+    typedef typename std::iterator_traits<ITER>::pointer    const_pointer;
+    typedef typename std::iterator_traits<ITER>::reference  reference;
+    typedef typename std::iterator_traits<ITER>::reference  const_reference;
+    typedef size_t  size_type;
+    typedef tab_ref_with_selection_iterator_<ITER, COND> iterator;
+    typedef iterator   const_iterator;
+    
+    iterator begin(void) const
+    { iterator it(begin_, cond); it.forward(); return it; }
+    iterator end(void) const { return iterator(end_, cond); }
+    bool empty(void) const { return begin_ == end_; }
+    
+    value_type front(void) const { return *begin(); }
+    void pop_front(void) { ++begin_; begin_ = begin(); }
+    
+    COND &condition(void) { return cond; }
+    const COND &condition(void) const { return cond; }
+    
+    tab_ref_with_selection(void) {}
+    tab_ref_with_selection(const ITER &b, const ITER &e, const COND &c)
+      : begin_(b), end_(e), cond(c) { begin_ = begin(); }
+    
   };
 
 }

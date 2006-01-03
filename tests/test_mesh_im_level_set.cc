@@ -8,7 +8,7 @@ using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 void test_2d() {
-  getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
+  getfem::mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
   getfem::mesh_fem mf(m);
   getfem::mesh_level_set mls(m);
   getfem::mesh_im_level_set mim(mls, getfem::mesh_im_level_set::INTEGRATE_ALL,
@@ -77,7 +77,7 @@ void test_2d() {
 
 
 void test_3d() {
-  getfem::getfem_mesh m; m.read_from_file("meshes/ball_3D_P2_84_elements.mesh");
+  getfem::mesh m; m.read_from_file("meshes/ball_3D_P2_84_elements.mesh");
   getfem::mesh_fem mf(m);
   getfem::mesh_level_set mls(m);
   getfem::mesh_im_level_set mim(mls, getfem::mesh_im_level_set::INTEGRATE_ALL, 

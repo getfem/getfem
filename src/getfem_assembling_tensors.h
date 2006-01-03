@@ -38,6 +38,7 @@
 #include <getfem_mesh_im.h>
 #include <bgeot_sparse_tensors.h>
 #include <getfem_mat_elem_type.h>
+#include <getfem_mat_elem.h>
 #include <numeric>
 #include <map>
 

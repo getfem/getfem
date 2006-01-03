@@ -69,8 +69,8 @@ namespace getfem
     }
     /*virtual*/ void intersection_callback(mesh_slicer &ms, size_type slmcv) {
       if (ms.splx_in.card() == 0) return;
-      const getfem_mesh &m1 = mf1.linked_mesh();
-      const getfem_mesh &m2 = mf2.linked_mesh();
+      const mesh &m1 = mf1.linked_mesh();
+      const mesh &m2 = mf2.linked_mesh();
       bgeot::pgeometric_trans pgt1 = m1.trans_of_convex(ms.cv);
       bgeot::pgeometric_trans pgt2 = m2.trans_of_convex(slmcv);
       pfem pf1 = mf1.fem_of_element(ms.cv); 
