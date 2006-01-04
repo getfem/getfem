@@ -63,7 +63,7 @@ struct plate_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type epsilon;       /* thickness of the plate.                      */
   scalar_type pressure;
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
   bool mixed, symmetrized;
   bool mitc;
   int sol_ref;               // sol_ref = 0 : simple support on the vertical edges
@@ -117,7 +117,7 @@ void plate_problem::init(void) {
 			    PARAM.int_value("MESH_NOISED") != 0);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   mixed = (PARAM.int_value("MIXED", "Mixed version ?") != 0);
   mitc = (PARAM.int_value("MITC", "Mitc version ?") != 0);
   symmetrized = (PARAM.int_value("SYMMETRIZED",
@@ -364,7 +364,7 @@ bool plate_problem::solve(plain_vector &U) {
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residu, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
 
 

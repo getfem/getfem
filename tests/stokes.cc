@@ -64,7 +64,7 @@ struct stokes_problem {
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   scalar_type nu;            /* Lamé coefficients.                           */
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -107,7 +107,7 @@ void stokes_problem::init(void) {
   mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosité");
   mf_u.set_qdim(N);
@@ -196,7 +196,7 @@ bool stokes_problem::solve(plain_vector &U) {
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residu, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction

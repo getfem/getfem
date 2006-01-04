@@ -23,7 +23,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
 NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDU = 1E-8;     	% residu for Newton.
+RESIDUAL = 1E-8;     	% residu for Newton.
 NOISY = 0;
 
 SCHEME = 2; % 0 = theta-method, 1 = Newmark, 2 = midpoint

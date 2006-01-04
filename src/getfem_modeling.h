@@ -90,7 +90,7 @@ namespace getfem {
    *    - a constraints matrix (the Dirichlet conditions etc.), and its
    *	  right hand side.
    *	- a state (the solution of the linear system)
-   *	- a residu (residu_ = A*x - B)
+   *	- a residual (residual_ = A*x - B)
    *	- the same information, reduced (i.e. after removal of constraints).
    */
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
@@ -105,12 +105,12 @@ namespace getfem {
   protected :
     T_MATRIX tangent_matrix_;
     C_MATRIX constraints_matrix_;
-    VECTOR state_, residu_, constraints_rhs_;
+    VECTOR state_, residual_, constraints_rhs_;
     long ident_;
     
     T_MATRIX SM;
     gmm::col_matrix<gmm::rsvector<value_type> > NS; /* constraints nullspace */
-    VECTOR reduced_residu_, Ud;
+    VECTOR reduced_residual_, Ud;
 
   public :
 
@@ -127,16 +127,16 @@ namespace getfem {
     { return NS; }
     const VECTOR &state(void) const  { return state_; }
     VECTOR &state(void)  { return state_; }
-    const VECTOR &residu(void) const  { return residu_; }
-    const R reduced_residu_norm() const {
+    const VECTOR &residual(void) const  { return residual_; }
+    const R reduced_residual_norm() const {
       if (gmm::mat_nrows(constraints_matrix())) {
-	return sqrt(gmm::vect_norm2_sqr(reduced_residu_) + 
+	return sqrt(gmm::vect_norm2_sqr(reduced_residual_) + 
 		    gmm::vect_norm2_sqr(Ud));
-      } else return gmm::vect_norm2(residu_);
+      } else return gmm::vect_norm2(residual_);
     }
-    const VECTOR &reduced_residu() const { 
+    const VECTOR &reduced_residual() const { 
       return gmm::mat_nrows(constraints_matrix()) == 0 ?
-	residu_ : reduced_residu_;
+	residual_ : reduced_residual_;
     }
     const T_MATRIX &reduced_tangent_matrix() const {
       return gmm::mat_nrows(constraints_matrix()) == 0 ?
@@ -150,8 +150,8 @@ namespace getfem {
     }
     /** Apply the constraints to the linear system */
     void compute_reduced_system();
-    void compute_reduced_residu();
-    VECTOR &residu(void) { return residu_; }
+    void compute_reduced_residual();
+    VECTOR &residual(void) { return residual_; }
     long ident(void) { return ident_; }
     void touch(void) { ident_ = context_dependencies::new_ident(); }
     void adapt_sizes(mdbrick_abstract<model_state> &problem);
@@ -176,9 +176,9 @@ namespace getfem {
     gmm::resize(NS, ndof, nbcols);
     gmm::resize(SM, nbcols, nbcols);
     VECTOR RHaux(ndof);
-    gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
-    gmm::resize(reduced_residu_, nbcols);
-    gmm::mult(gmm::transposed(NS), RHaux, reduced_residu_);
+    gmm::mult(tangent_matrix(), Ud, residual(), RHaux);
+    gmm::resize(reduced_residual_, nbcols);
+    gmm::mult(gmm::transposed(NS), RHaux, reduced_residual_);
     T_MATRIX SMaux(nbcols, ndof);
     gmm::col_matrix< gmm::rsvector<value_type> >
       NST(gmm::mat_ncols(NS), gmm::mat_nrows(NS));
@@ -188,7 +188,7 @@ namespace getfem {
   }
 
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
-  void model_state<T_MATRIX, C_MATRIX, VECTOR>::compute_reduced_residu() {
+  void model_state<T_MATRIX, C_MATRIX, VECTOR>::compute_reduced_residual() {
     // The call to Dirichlet nullspace should be avoided -> we just need Ud
     if (gmm::mat_nrows(constraints_matrix()) == 0) return;
     size_type ndof = gmm::mat_ncols(tangent_matrix());
@@ -198,8 +198,8 @@ namespace getfem {
 			  gmm::scaled(constraints_rhs(), value_type(-1)), Ud);
     gmm::resize(NS, ndof, nbcols);
     VECTOR RHaux(ndof);
-    gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
-    gmm::mult(gmm::transposed(NS), RHaux, reduced_residu_);
+    gmm::mult(tangent_matrix(), Ud, residual(), RHaux);
+    gmm::mult(gmm::transposed(NS), RHaux, reduced_residual_);
   }
 
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
@@ -210,7 +210,7 @@ namespace getfem {
     if (gmm::mat_nrows(tangent_matrix_) != ndof
 	|| gmm::mat_nrows(constraints_matrix_) != nc) {
       gmm::clear(state_);
-      gmm::clear(residu_);
+      gmm::clear(residual_);
       gmm::clear(tangent_matrix_);
       gmm::clear(constraints_matrix_);
       gmm::clear(constraints_rhs_);
@@ -218,7 +218,7 @@ namespace getfem {
       gmm::resize(constraints_matrix_, nc, ndof);
       gmm::resize(constraints_rhs_, nc);
       gmm::resize(state_, ndof);
-      gmm::resize(residu_, ndof);
+      gmm::resize(residual_, ndof);
       touch();
     }
   } 
@@ -459,7 +459,7 @@ namespace getfem {
      compute its own part of the tangent and constraint matrices (@c i0 and
      @c j0 are the shifts in the matrices stored in the model_state MS)
      
-     - @c do_compute_residu(MS, i0, j0) . Same as above for the residu
+     - @c do_compute_residual(MS, i0, j0) . Same as above for the residu
      vector stored in MS.
   */
   template<typename MODEL_STATE = standard_model_state>
@@ -485,9 +485,9 @@ namespace getfem {
       }
       do_compute_tangent_matrix(MS, i0, j0);
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type j0) = 0;
-    void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+    void compute_residual(MODEL_STATE &MS, size_type i0 = 0,
 			size_type j0 = 0, bool
 #if GETFEM_PARA_LEVEL > 1			
 			first
@@ -496,23 +496,23 @@ namespace getfem {
       this->context_check();
       size_type i1 = MS_i0 = i0, j1 = j0;
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
-	((mdbrick_abstract*)sub_bricks[i])->compute_residu(MS, i1, j1, false);
+	((mdbrick_abstract*)sub_bricks[i])->compute_residual(MS, i1, j1, false);
 	i1 += sub_bricks[i]->nb_dof();
 	j1 += sub_bricks[i]->nb_constraints();
       }
-      do_compute_residu(MS, i0, j0);
+      do_compute_residual(MS, i0, j0);
 
 
 #if GETFEM_PARA_LEVEL > 1
       if (first) {
-	std::vector<value_type> resloc(gmm::vect_size(MS.residu()));
+	std::vector<value_type> resloc(gmm::vect_size(MS.residual()));
 	double t_init = MPI_Wtime();
 
-	MPI_Allreduce(&((MS.residu())[0]), &(resloc[0]),
-		      gmm::vect_size(MS.residu()), gmm::mpi_type(value_type()),
+	MPI_Allreduce(&((MS.residual())[0]), &(resloc[0]),
+		      gmm::vect_size(MS.residual()), gmm::mpi_type(value_type()),
 		      MPI_SUM, MPI_COMM_WORLD);
-	cout << "reduce residu  time = " << MPI_Wtime() - t_init << endl;
-	gmm::copy(resloc, MS.residu());
+	cout << "reduce residual  time = " << MPI_Wtime() - t_init << endl;
+	gmm::copy(resloc, MS.residual());
       }
 #endif
     }
@@ -727,10 +727,10 @@ namespace getfem {
       gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
 
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, mf_u.nb_dof());
       gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residu(), SUBI));
+		gmm::sub_vector(MS.residual(), SUBI));
     }
 
     /** provide access to the value of the solution corresponding to
@@ -1058,13 +1058,13 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					   size_type) { }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type) {
       gmm::add(gmm::scaled(get_F(), value_type(-1)),
-	       gmm::sub_vector(MS.residu(), gmm::sub_interval(i0+i1, nbd)));
+	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
       if (have_auxF)
 	gmm::add(gmm::scaled(auxF, value_type(-1)),
-		 gmm::sub_vector(MS.residu(),
+		 gmm::sub_vector(MS.residual(),
 				 gmm::sub_interval(i0+i1, nbd)));
     }
 
@@ -1155,11 +1155,11 @@ namespace getfem {
       gmm::sub_interval SUBI(i0+i1, nbd);
       gmm::add(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type /*j0*/ ) {
       gmm::sub_interval SUBI(i0+i1, nbd);
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
-	SUBV = gmm::sub_vector(MS.residu(), SUBI);
+	SUBV = gmm::sub_vector(MS.residual(), SUBI);
       gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI), SUBV, SUBV);
     }
 
@@ -1275,18 +1275,18 @@ namespace getfem {
       else
 	gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type) {
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0+i1, nbd);
       gmm::mult(get_B(), gmm::sub_vector(MS.state(), SUBJ),
-		gmm::sub_vector(MS.residu(), SUBI));
+		gmm::sub_vector(MS.residual(), SUBI));
       gmm::mult_add(gmm::transposed(get_B()),
 		    gmm::sub_vector(MS.state(), SUBI),
-		    gmm::sub_vector(MS.residu(), SUBJ));
+		    gmm::sub_vector(MS.residual(), SUBJ));
       if (penalized) 
 	gmm::mult_add(get_M(), gmm::sub_vector(MS.state(), SUBI),
-		      gmm::sub_vector(MS.residu(), SUBI));
+		      gmm::sub_vector(MS.residual(), SUBI));
     }
 
     /** extract the pressure part from the model state. */
@@ -1425,7 +1425,7 @@ namespace getfem {
       }
     }
 
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type j0) {
       const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type i1 = this->mesh_fem_positions[num_fem];
@@ -1439,11 +1439,11 @@ namespace getfem {
 	  gmm::sub_interval SUBJ(i0+i1, nbd);
 	  gmm::mult(get_B(), gmm::sub_vector(MS.state(), SUBJ),
 		    gmm::scaled(CRHS, value_type(-1)),
-		    gmm::sub_vector(MS.residu(), SUBI));
+		    gmm::sub_vector(MS.residual(), SUBI));
 	
 	  gmm::mult_add(gmm::transposed(get_B()),
 			gmm::sub_vector(MS.state(), SUBI),
-			gmm::sub_vector(MS.residu(), SUBJ));
+			gmm::sub_vector(MS.residual(), SUBJ));
 	}
 	break;
       case PENALIZED_CONSTRAINTS :
@@ -1454,7 +1454,7 @@ namespace getfem {
 		    gmm::scaled(CRHS, value_type(-1)), Raux);
 	  gmm::mult_add(gmm::transposed(get_B()),
 			gmm::scaled(Raux, value_type(1) / eps),
-			gmm::sub_vector(MS.residu(), SUBJ));
+			gmm::sub_vector(MS.residual(), SUBJ));
 	}
 	break;
       case ELIMINATED_CONSTRAINTS :
@@ -1863,7 +1863,7 @@ namespace getfem {
 	gmm::copy(G, gmm::sub_matrix(MS.constraints_matrix(), SUBI, SUBJ));
       }
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type j0) {
       compute_constraints();
       if (with_multipliers) {
@@ -1871,10 +1871,10 @@ namespace getfem {
 	gmm::sub_interval SUBJ(i0+i1, nbd);
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
-		  gmm::sub_vector(MS.residu(), SUBI));
+		  gmm::sub_vector(MS.residual(), SUBI));
 	
 	gmm::mult_add(gmm::transposed(G), gmm::sub_vector(MS.state(), SUBI),
-		      gmm::sub_vector(MS.residu(), SUBJ));
+		      gmm::sub_vector(MS.residual(), SUBJ));
       }
       else {
 	size_type ncs = sub_problem.nb_constraints();
@@ -1990,16 +1990,16 @@ namespace getfem {
       gmm::add(gmm::scaled(get_M(), Mcoef),
 	       gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type) {
       gmm::sub_interval
 	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
-      if (Kcoef != value_type(1))  gmm::scale(MS.residu(), Kcoef);
+      if (Kcoef != value_type(1))  gmm::scale(MS.residual(), Kcoef);
       gmm::add(gmm::scaled(DF, -value_type(1)),
-	       gmm::sub_vector(MS.residu(), SUBI));
+	       gmm::sub_vector(MS.residual(), SUBI));
       gmm::mult_add(get_M(),
 		    gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Mcoef),
-		    gmm::sub_vector(MS.residu(), SUBI));
+		    gmm::sub_vector(MS.residual(), SUBI));
     }
 
     void set_dynamic_coeff(value_type a, value_type b) { Mcoef=a; Kcoef=b; }
@@ -2096,9 +2096,9 @@ namespace getfem {
     double t_init = MPI_Wtime();
 #endif
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
-    problem.compute_residu(MS);
+    problem.compute_residual(MS);
 #if GETFEM_PARA_LEVEL > 1
-    cout << "comput  residu  time = " << MPI_Wtime() - t_init << endl;
+    cout << "comput  residual  time = " << MPI_Wtime() - t_init << endl;
     t_init = MPI_Wtime();
 #endif
     problem.compute_tangent_matrix(MS);
@@ -2220,11 +2220,11 @@ namespace getfem {
     // cout << "RTM = " << MS.reduced_tangent_matrix() << endl;
     
     
-    R act_res = MS.reduced_residu_norm(), act_res_new(0);
+    R act_res = MS.reduced_residual_norm(), act_res_new(0);
 
     while (is_linear || !iter.finished(act_res)) {
       
-      size_type nreddof = gmm::vect_size(MS.reduced_residu());
+      size_type nreddof = gmm::vect_size(MS.reduced_residual());
       gmm::iteration iter_linsolv = iter_linsolv0;
       VECTOR d(ndof), dr(nreddof);
       
@@ -2273,17 +2273,17 @@ namespace getfem {
       cout<<"begin Seq AS"<<endl; // à remmetre en fonction : utilisatio
       // de mpi_distributed_matrix a revoir : mettre une référence.
       additive_schwarz(gmm::mpi_distributed_matrix<..>(MS.reduced_tangent_matrix()), dr,
-		       gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		       gmm::scaled(MS.reduced_residual(), value_type(-1)),
 		       gmm::identity_matrix(), Bib, iter_linsolv, gmm::using_superlu(),
 		       gmm::using_cg());
       t_final=MPI_Wtime();
       cout<<"temps Seq AS "<< t_final-t_ref<<endl;
 #elif GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS
       MUMPS_solve(MS.reduced_tangent_matrix(), dr,
-		  gmm::scaled(MS.reduced_residu(), value_type(-1)));
+		  gmm::scaled(MS.reduced_residual(), value_type(-1)));
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS
       MUMPS_distributed_matrix_solve(MS.reduced_tangent_matrix(), dr,
-				     gmm::scaled(MS.reduced_residu(),
+				     gmm::scaled(MS.reduced_residual(),
 						 value_type(-1)));
 #else
       // if (0) {
@@ -2298,17 +2298,17 @@ namespace getfem {
 	  ) {
 	
 	// cout << "M = " << MS.reduced_tangent_matrix() << endl;
-	// cout << "L = " << MS.reduced_residu() << endl;
+	// cout << "L = " << MS.reduced_residual() << endl;
 	
 	double t = dal::uclock_sec();
 #ifdef GMM_USES_MUMPS
 	DAL_TRACE2("Solving with MUMPS\n");
 	MUMPS_solve(MS.reduced_tangent_matrix(), dr,
-		    gmm::scaled(MS.reduced_residu(), value_type(-1)));
+		    gmm::scaled(MS.reduced_residual(), value_type(-1)));
 #else
 	double rcond;
 	SuperLU_solve(MS.reduced_tangent_matrix(), dr,
-		      gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		      gmm::scaled(MS.reduced_residual(), value_type(-1)),
 		      rcond);
 	if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
 #endif
@@ -2318,7 +2318,7 @@ namespace getfem {
 	if (problem.is_coercive()) {
 	  gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	  gmm::cg(MS.reduced_tangent_matrix(), dr, 
-		  gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		  gmm::scaled(MS.reduced_residual(), value_type(-1)),
 		  P, iter_linsolv);
 	  if (!iter_linsolv.converged()) DAL_WARNING2("cg did not converge!");
 	} else {
@@ -2326,7 +2326,7 @@ namespace getfem {
 	    gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	  
 	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		       gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
+		       gmm::scaled(MS.reduced_residual(),  value_type(-1)), P,
 		       300, iter_linsolv);
 	  }
 	  else {
@@ -2334,7 +2334,7 @@ namespace getfem {
 					  20, 1E-10);
 	    // gmm::identity_matrix P;
 	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		       gmm::scaled(MS.reduced_residu(),  value_type(-1)),
+		       gmm::scaled(MS.reduced_residual(),  value_type(-1)),
 		       P, 300, iter_linsolv);
 	  }
 	  if (!iter_linsolv.converged())
@@ -2359,10 +2359,10 @@ namespace getfem {
 	R previous_res = act_res;
 	for (size_type k = 0; alpha >= alpha_min; alpha *= alpha_mult, ++k) {
 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-	  problem.compute_residu(MS);
-	  MS.compute_reduced_residu();
+	  problem.compute_residual(MS);
+	  MS.compute_reduced_residual();
 	  // Call to Dirichlet nullspace should be avoided -> we just need Ud
-	  act_res_new = MS.reduced_residu_norm();
+	  act_res_new = MS.reduced_residual_norm();
 	  // cout << " : " << act_res_new;
 	  if (act_res_new <= act_res / R(2)) break;
 	  if (k > 0 && act_res_new > previous_res

@@ -56,13 +56,13 @@ namespace getfem {
       asm_NS_uuT(K, *(this->mesh_ims[0]), mf_u, U0);
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				size_type) {
       const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       gmm::sub_interval SUBI(i0+this->mesh_fem_positions[num_fem],
 			     mf_u.nb_dof());
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
-	SUBV = gmm::sub_vector(MS.residu(), SUBI);
+	SUBV = gmm::sub_vector(MS.residual(), SUBI);
       gmm::mult_add(K, gmm::sub_vector(MS.state(), SUBI), SUBV);
     }
 
@@ -171,18 +171,18 @@ namespace getfem {
 		gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
       gmm::copy(M, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type) {
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), doflambda.card());
       gmm::sub_interval SUBJ(i0+i1, nbd);
       gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
-		gmm::sub_vector(MS.residu(), SUBI));
+		gmm::sub_vector(MS.residual(), SUBI));
       gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
-		    gmm::sub_vector(MS.residu(), SUBJ));
+		    gmm::sub_vector(MS.residual(), SUBJ));
       gmm::mult_add(M, gmm::sub_vector(MS.state(), SUBI),
-		    gmm::sub_vector(MS.residu(), SUBI));
+		    gmm::sub_vector(MS.residual(), SUBI));
       gmm::mult_add(B, gmm::scaled(Un, -value_type(1)),
-		    gmm::sub_vector(MS.residu(), SUBI));
+		    gmm::sub_vector(MS.residual(), SUBI));
     }
     
     void set_Un(const VECTOR &B__) {

@@ -35,7 +35,7 @@ struct pb_data {
   getfem::mesh_fem mef_coarse;
 
   double mu, lambda, rho, gravity;
-  double LX, LY, LZ, residu, overlap, subdomsize;
+  double LX, LY, LZ, residual, overlap, subdomsize;
   int NX, N, NXCOARSE, USECOARSE, K;
   base_vector D;
 
@@ -92,7 +92,7 @@ void pb_data::init(ftool::md_param &params) {
   NX = params.int_value("NX", "Nomber of space step ");
   NXCOARSE = params.int_value("NXCOARSE", "Nombre of space step ");
   USECOARSE = params.int_value("USECOARSE", "Coarser mesh or not");
-  residu = params.real_value("RESIDU", "residu");
+  residual = params.real_value("RESIDUAL", "residual");
   overlap = params.real_value("OVERLAP", "overlap");
   K = params.int_value("K", "Degree");
   solver = params.int_value("SOLVER", "solver");
@@ -197,7 +197,7 @@ void pb_data::assemble(void) {
 }
 
 int pb_data::solve_cg(void) {
-  gmm::iteration iter(residu, 1, 1000000);
+  gmm::iteration iter(residual, 1, 1000000);
   gmm::ildlt_precond<general_sparse_matrix> P(RM);
   gmm::cg(RM, U, F, gmm::identity_matrix(), P, iter);
   return iter.get_iteration();
@@ -210,7 +210,7 @@ int pb_data::solve_superlu(void) {
 }
 
 int pb_data::solve_cg2(void) {
-  gmm::iteration iter(residu, 1, 1000000);
+  gmm::iteration iter(residual, 1, 1000000);
   gmm::cg(RM, U, F, gmm::identity_matrix(), gmm::identity_matrix(), iter);
   return iter.get_iteration();
 }
@@ -237,7 +237,7 @@ int pb_data::solve_schwarz(int version) {
     ++nsd;
   }
   
-  gmm::iteration iter(residu, 1, 1000000);
+  gmm::iteration iter(residual, 1, 1000000);
   switch (version) {
   case 3 : gmm::additive_schwarz(RM, U, F,
 	      gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
     cout << "itebilan = " << itebilan << endl;
 
     gmm::mult(p.RM, gmm::scaled(p.U, -1.0), p.F, p.F);
-    cout << "final residu : " << gmm::vect_norm2(p.F) << endl;
+    cout << "final residual : " << gmm::vect_norm2(p.F) << endl;
   }
   DAL_STANDARD_CATCH_ERROR;
 #ifdef GMM_USES_MPI

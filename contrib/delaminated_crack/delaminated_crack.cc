@@ -147,7 +147,7 @@ struct crack_problem {
 
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
-  scalar_type residue;       /* max residue for the iterative solvers        */
+  scalar_type residual;       /* max residual for the iterative solvers        */
   unsigned dir_with_mult;
   scalar_type enr_area_radius;
   int enrichment_option;
@@ -208,7 +208,7 @@ void crack_problem::init(void) {
   mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
 
@@ -530,7 +530,7 @@ bool crack_problem::solve(plain_vector &U) {
   size_type nnb = final_model.nb_dof();
   cout << "Total number of variables : " << nnb << endl;
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residue, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction

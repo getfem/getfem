@@ -61,7 +61,7 @@ if (N > 3)
   error('Correct the parameter file for N > 3');
 end
 
-RESIDUE = 1E-9;     	     % residue for conjugate gradient.
+RESIDUAL = 1E-9;     	     % residual for conjugate gradient.
 GENERIC_DIRICHLET = 1;       % Generic Dirichlet condition or not. 
                              % (required for non-lagrangian elts).
 ROOTFILENAME = 'laplacian'   % Root of data files.

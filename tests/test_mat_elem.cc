@@ -45,7 +45,7 @@ struct lap_pb {
   getfem::mesh_fem mef;
   getfem::mesh_fem mef_data;
 
-  scalar_type LX, LY, LZ, incline, residu;
+  scalar_type LX, LY, LZ, incline, residual;
   size_type N;
   int NX, K, fem_type, KI;
  
@@ -75,7 +75,7 @@ void lap_pb::init(void)
   NX = PARAM.int_value("NX", "Nomber of sace steps ");
   integration = PARAM.int_value("INTEGRATION", "integration method");
   mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
-  residu = PARAM.real_value("RESIDU", "Residu for c.g.");
+  residual = PARAM.real_value("RESIDUAL", "Residu for c.g.");
   K = PARAM.int_value("K", "Finite element degree");
   KI = PARAM.int_value("KI", "Integration degree");
   fem_type = PARAM.int_value("FEM_TYPE", "Finite element method");

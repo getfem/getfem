@@ -126,7 +126,7 @@ namespace getfem {
       { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
     base_node oldX;
     size_type iter = 0;
-    scalar_type residu(0), alpha;
+    scalar_type residual(0), alpha;
     do {
       oldX = X;
       gmm::mult(gmm::transposed(G), G, H);
@@ -145,7 +145,7 @@ namespace getfem {
 	for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
 	alpha = 1.;
 	if (iter > 0)
-	  while (gmm::vect_norm2(d) > residu && alpha > 1E-15) {
+	  while (gmm::vect_norm2(d) > residual && alpha > 1E-15) {
 	    alpha /= 2.;
 	    gmm::add(gmm::scaled(dd, -alpha), X);
 	    for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
@@ -154,8 +154,8 @@ namespace getfem {
       }
       for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
       ++iter;
-      residu = gmm::vect_norm2(d);
-    } while (residu > 1e-14 && gmm::vect_dist2(oldX,X) > 1e-14
+      residual = gmm::vect_norm2(d);
+    } while (residual > 1e-14 && gmm::vect_dist2(oldX,X) > 1e-14
 	     && iter < 1000);
 //     cout << "nb iter de pure_multi : " << iter
 //   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;

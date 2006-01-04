@@ -65,7 +65,7 @@ struct friction_problem {
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
 
-  scalar_type residue;       /* max residue for the iterative solvers        */
+  scalar_type residual;       /* max residual for the iterative solvers        */
   
   size_type N, noisy, method, population, Dirichlet, Neumann;
   size_type contact_condition;
@@ -122,7 +122,7 @@ void friction_problem::init(void) {
   mesh.optimize_structure();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -322,35 +322,35 @@ namespace getfem {
       }
     }
     
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       precomp(MS, i0);
       value_type c1(1);
-      gmm::clear(gmm::sub_vector(MS.residu(), SUBN));
-      gmm::clear(gmm::sub_vector(MS.residu(), SUBT));
+      gmm::clear(gmm::sub_vector(MS.residual(), SUBN));
+      gmm::clear(gmm::sub_vector(MS.residual(), SUBT));
       gmm::mult(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -c1), gap,
-		gmm::sub_vector(MS.residu(), SUBN));
+		gmm::sub_vector(MS.residual(), SUBN));
       gmm::mult(BT, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -c1),
-		gmm::sub_vector(MS.residu(), SUBT));
+		gmm::sub_vector(MS.residual(), SUBT));
       gmm::mult_add(gmm::transposed(BN),
 		    gmm::scaled(gmm::sub_vector(MS.state(), SUBN),-c1),
-		    gmm::sub_vector(MS.residu(), SUBU));
+		    gmm::sub_vector(MS.residual(), SUBU));
       gmm::mult_add(gmm::transposed(BT),
 		    gmm::scaled(gmm::sub_vector(MS.state(), SUBT),-c1),
-		    gmm::sub_vector(MS.residu(), SUBU));
+		    gmm::sub_vector(MS.residual(), SUBU));
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	switch(situation[i]) {
 	case 0 :
-	  MS.residu()[SUBN.first()+i] = -(MS.state()[SUBN.first()+i])/r;
-	  MS.residu()[SUBT.first()+i] = -(MS.state()[SUBT.first()+i])/r;
+	  MS.residual()[SUBN.first()+i] = -(MS.state()[SUBN.first()+i])/r;
+	  MS.residual()[SUBT.first()+i] = -(MS.state()[SUBT.first()+i])/r;
 	  break;
 	case 1 :
 	  break;
 	case 2 :
-	  MS.residu()[SUBT.first()+i] = - (MS.state()[SUBT.first()+i])/r
+	  MS.residual()[SUBT.first()+i] = - (MS.state()[SUBT.first()+i])/r
 	    - friction_coef[i]*(MS.state()[SUBN.first()+i])/r;
 	  break;
 	case 3 :
-	  MS.residu()[SUBT.first()+i] = + (MS.state()[SUBT.first()+i])/r
+	  MS.residual()[SUBT.first()+i] = + (MS.state()[SUBT.first()+i])/r
 	    - friction_coef[i]*(MS.state()[SUBN.first()+i])/r;
 	  break;
 	default : assert(false);
@@ -527,13 +527,13 @@ struct Coulomb_NewtonAS_struct
   // very inefficient, to be done again.
 
   void compute_tangent_matrix(sparse_matrix &M, Vector &x) {
-    gmm::copy(x, MS.residu());
+    gmm::copy(x, MS.residual());
     coulomb->compute_tangent_matrix(MS);
     gmm::copy(MS.tangent_matrix(), M);
   }
   void compute_sub_tangent_matrix(sparse_matrix &Mloc, Vector &x,
 				  size_type i) {
-    gmm::copy(x, MS.residu());
+    gmm::copy(x, MS.residual());
     coulomb->compute_tangent_matrix(MS);
     
     sparse_matrix aux(gmm::mat_ncols(vB[i]),
@@ -542,14 +542,14 @@ struct Coulomb_NewtonAS_struct
     gmm::mult(aux, vB[i], Mloc);
   }
   void compute_sub_F(Vector &fi, Vector &x, size_type i) {
-    gmm::copy(x, MS.residu());
-    coulomb->compute_residu(MS);
-    gmm::mult(gmm::transposed(vB[i]), MS.residu(), fi);
+    gmm::copy(x, MS.residual());
+    coulomb->compute_residual(MS);
+    gmm::mult(gmm::transposed(vB[i]), MS.residual(), fi);
   }
   void compute_F(Vector &f, Vector &x) {
-    gmm::copy(x, MS.residu());
-    coulomb->compute_residu(MS);
-    gmm::copy(MS.residu(), f);
+    gmm::copy(x, MS.residual());
+    coulomb->compute_residual(MS);
+    gmm::copy(MS.residual(), f);
   }
   Coulomb_NewtonAS_struct(getfem::mdbrick_abstract<> &C) : coulomb(&C), MS(C) {}
   
@@ -565,7 +565,7 @@ struct Coulomb_NewtonAS_struct
 /**************************************************************************/
 
 struct fellow {
-  scalar_type residue;
+  scalar_type residual;
   std::vector<int> *situation_;
   std::vector<int> &situation(void) { return *situation_; }
   const std::vector<int> &situation(void) const { return *situation_; }
@@ -573,7 +573,7 @@ struct fellow {
 };
 
 bool  operator < (const fellow &a, const fellow &b)
-{ return (a.residue < b.residue); }
+{ return (a.residual < b.residual); }
 
 
 void friction_problem::solve(void) {
@@ -674,7 +674,7 @@ void friction_problem::solve(void) {
 
   switch (method) {
   case 0 : {
-      gmm::iteration iter(residue, noisy, 40000);
+      gmm::iteration iter(residual, noisy, 40000);
       getfem::standard_solve(MS, FRICTION, iter);
       gmm::copy(ELAS.get_solution(MS), U);
     }
@@ -704,16 +704,16 @@ void friction_problem::solve(void) {
 	  first_computed = 0;
 	}
 
-	// compute residue for the new fellows
+	// compute residual for the new fellows
 	for (size_type i = first_computed; i < population; ++i) {
 	  cout << "computing solution " << i << " on " << population << endl;
 	  FRICTION2.change_situation(people[i].situation());
-	  gmm::iteration iter(residue, noisy, 40000);
+	  gmm::iteration iter(residual, noisy, 40000);
 	  getfem::standard_solve(MS2, FRICTION2, iter);
 	  gmm::copy(MS2.state(), MS.state());
-	  FRICTION.compute_residu(MS);
+	  FRICTION.compute_residual(MS);
 	  MS.compute_reduced_system();
-	  people[i].residue = MS.reduced_residu_norm();
+	  people[i].residual = MS.reduced_residu_norm();
 	}
 	
 	// elimination of the 10% worst
@@ -722,7 +722,7 @@ void friction_problem::solve(void) {
 	for (size_type i = 0; i < population; ++i) {
 	  cout << "fellow " << i << " : ";
 	  for (size_type j = 0; j < nbc; ++j) cout << people[i].situation()[j];
-	  cout << " residue : " << people[i].residue << endl;
+	  cout << " residual : " << people[i].residual << endl;
 	}
 
 	// new generation
@@ -746,10 +746,10 @@ void friction_problem::solve(void) {
 	    cout << "Newton\n";
 	    size_type a = (rand() % first_computed);
 	    FRICTION2.change_situation(people[a].situation());
-	    gmm::iteration iter(residue, noisy, 40000);
+	    gmm::iteration iter(residual, noisy, 40000);
 	    getfem::standard_solve(MS2, FRICTION2, iter);  
 	    gmm::copy(MS2.state(), MS.state());
-	    gmm::iteration iterbis(residue, noisy, 2);
+	    gmm::iteration iterbis(residual, noisy, 2);
 	    getfem::standard_solve(MS, FRICTION, iterbis);
 	    situation_of(gmm::sub_vector(MS.state(),
 					 gmm::sub_interval(0, mf_u.nb_dof())),
@@ -773,7 +773,7 @@ void friction_problem::solve(void) {
     }
     break;
   case 2 : {
-      gmm::iteration iter(residue, noisy);
+      gmm::iteration iter(residual, noisy);
       iter.set_maxiter(1000000);
       Coulomb_NewtonAS_struct NS(FRICTION);
       build_vB(NS.vB, mf_u, mf_u.dof_on_set(CONTACT_BOUNDARY),
@@ -793,7 +793,7 @@ void friction_problem::solve(void) {
   cout << "situation of solution : ";
   for (size_type j = 0; j < nbc; ++j) cout << situation1[j];
   cout << endl;
-  cout << "Final residu : " <<  MS.reduced_residu_norm() << endl;
+  cout << "Final residual : " <<  MS.reduced_residu_norm() << endl;
   cout << "Norm of solution : " << gmm::vect_norm2(U) << endl;
 
   {

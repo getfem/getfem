@@ -1139,9 +1139,9 @@ the following virtual methods to be defined:\\[0.5cm]
   constraint matrices (i0 and j0 are optional arguments representing
   the shifts in the matrices defined in MS).\\ \hline
 
-  \cpp{brick.do_compute_residu(MS, i0, j0)} & the brick has
-  to compute its own part of the residu of the linear system and of
-  the constraint system (i0 and j0 are the shifts in the residu vectors
+  \cpp{brick.do_compute_residual(MS, i0, j0)} & the brick has
+  to compute its own part of the residual of the linear system and of
+  the constraint system (i0 and j0 are the shifts in the residual vectors
   defined in MS). \\ \hline
 
 \end{ctableau}
@@ -1374,7 +1374,7 @@ If \cpp{mf_u} and \cpp{mf_data} are valid finite element description on a mesh r
   final_model.rhs().set(mf_data, F);
 
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residu, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
 
   laplacian.get_solution(MS, U);
@@ -1514,7 +1514,7 @@ For instance, the following program defines a Stokes problem with a source term 
   final_model.rhs().set(mf_data, F);
 
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residu, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
 
   stokes.get_solution(MS, U);
@@ -1646,7 +1646,7 @@ The file \filename{laplacian.param} is the parameter file. You can edit it and t
   {\tt INCLINE} &  Incline of the mesh.\\ \hline
   {\tt FEM\_TYPE} & name of finite element method (i.e. FEM_PK(2,1))\\ \hline
   {\tt INTEGRATION} & name of integration method (i.e. IM_TRIANGLE(6))\\ \hline
-  {\tt RESIDU} & Residu for conjugate gradient. \\ \hline
+  {\tt RESIDUAL} & Residual for conjugate gradient. \\ \hline
   {\tt ROOTFILENAME} & Root name for data files. \\ \hline
 \end{tabular}
 

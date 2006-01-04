@@ -61,7 +61,7 @@ struct Helmholtz_problem {
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   complex_type wave_number;
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
   int with_mult;
 
   std::string datafilename;
@@ -117,7 +117,7 @@ void Helmholtz_problem::init(void) {
   }
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   wave_number = complex_type
     (PARAM.real_value("WAVENUM_R", "Real part of the wave number"),
@@ -195,7 +195,7 @@ bool Helmholtz_problem::solve(plain_vector &U) {
   cout << "Number of variables : " << final_model.nb_dof() << endl;
   cout << "Number of constraints : " << final_model.nb_constraints() << endl;
   MODELSTATE MS;
-  gmm::iteration iter(residu, 1, 400000);
+  gmm::iteration iter(residual, 1, 400000);
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction

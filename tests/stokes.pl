@@ -18,7 +18,7 @@ FEM_TYPE = 'FEM_QK(2,2)';
 FEM_TYPE_P = 'FEM_QK(2,1)';
 DATA_FEM_TYPE = 'FEM_QK(2,1)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,4)';
-RESIDU = 1E-9;     	% residu for conjugate gradient.
+RESIDUAL = 1E-9;     	% residu for conjugate gradient.
 ROOTFILENAME = 'stokes';     % Root of data files.
 VTK_EXPORT = 0 % export solution to a .vtk file ?
 

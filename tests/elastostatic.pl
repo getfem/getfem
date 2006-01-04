@@ -17,7 +17,7 @@ print TMPF "MESH_TYPE = 'GT_PK(2,1)';\n";
 print TMPF "MIXED_PRESSURE=0;\n";
 print TMPF "INTEGRATION = 'IM_TRIANGLE(4)';\n";
 print TMPF "NX = 5;\n";
-print TMPF "RESIDU = 1E-9;\n";
+print TMPF "RESIDUAL = 1E-9;\n";
 print TMPF "FEM_TYPE = 'FEM_PK(2,1)';\n";
 print TMPF "ROOTFILENAME = 'elasto_static';\n";
 print TMPF "\n\n";

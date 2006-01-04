@@ -67,7 +67,7 @@ struct friction_problem {
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
   
   int scheme;  /* 0 = theta method, 1 = Newmark, 2 = middle point,           */
                /* 3 = middle point with separated contact forces.            */
@@ -124,7 +124,7 @@ void friction_problem::init(void) {
   mesh.optimize_structure();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -292,7 +292,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   FRICTION.set_stationary(true);
 
   cout << "Computation of the stationary problem\n";
-  gmm::iteration iter(residu, noisy, 40000);
+  gmm::iteration iter(residual, noisy, 40000);
   getfem::standard_solve(MS, PERIODIC, iter);
 
   gmm::copy(ELAS.get_solution(MS), U0);
@@ -471,7 +471,7 @@ void friction_problem::solve(void) {
   }
  
   gmm::clear(A0);
-  gmm::iteration iter(residu, 0, 40000);
+  gmm::iteration iter(residual, 0, 40000);
   if ((scheme == 0 || scheme == 1) && !nocontact_mass && !init_stationary) {
     plain_vector FA(mf_u.nb_dof());
     gmm::mult(ELAS.get_K(), gmm::scaled(U0, -1.0),

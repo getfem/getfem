@@ -64,7 +64,7 @@ struct plasticity_problem {
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
 
   scalar_type stress_threshold;
   size_type flag_hyp;
@@ -91,7 +91,7 @@ void plasticity_problem::init(void)
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  residu = PARAM.real_value("RESIDU", "residu");
+  residual = PARAM.real_value("RESIDUAL", "residual");
 
   //  file to save the mesh
   datafilename = PARAM.string_value("ROOTFILENAME","Filename for saving");
@@ -229,7 +229,7 @@ bool plasticity_problem::solve(plain_vector &U) {
     // Generic solve.
     cout << "Number of variables : " << final_model.nb_dof() << endl;
 
-    gmm::iteration iter(residu, 2, 40000);
+    gmm::iteration iter(residual, 2, 40000);
     getfem::standard_solve(MS, final_model, iter);
 
     PLAS.compute_constraints(MS);

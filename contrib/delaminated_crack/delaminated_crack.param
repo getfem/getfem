@@ -48,7 +48,7 @@ ENRICHMENT_OPTION = 0;  % 0 = no enrichment
 
 RADIUS_ENR_AREA = 0.1;
 
-RESIDUE = 1E-8;     	% residue for iterative methods if any.
+RESIDUAL = 1E-8;     	% residual for iterative methods if any.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'crack';     % Root of data files.

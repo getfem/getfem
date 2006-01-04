@@ -117,11 +117,11 @@ namespace getfem {
       asm_navier_stokes_tgm(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
 			    this->mim, this->mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::mult(this->get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residu(), SUBI));
-      asm_navier_stokes_rhs(gmm::sub_vector(MS.residu(), SUBI), this->mim,
+		gmm::sub_vector(MS.residual(), SUBI));
+      asm_navier_stokes_rhs(gmm::sub_vector(MS.residual(), SUBI), this->mim,
 			    this->mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
 
@@ -160,7 +160,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					size_type) {}
-    virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) {}
+    virtual void do_compute_residual(MODEL_STATE &, size_type, size_type) {}
 
     SUBVECTOR get_velocity(MODEL_STATE &MS) 
     { return velocity_part.get_solution(MS); }

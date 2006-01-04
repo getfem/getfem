@@ -61,7 +61,7 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(5), 3)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
-RESIDUE = 1E-9;     	% residue for conjugate gradient.
+RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'elastostatic';     % Root of data files.

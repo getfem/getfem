@@ -458,7 +458,7 @@ namespace getfem {
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
       
-      virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+      virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
 	gmm::sub_interval SUBI(i0, mf_u.nb_dof());        
 	VECTOR K(mf_u.nb_dof());
 	plasticity_projection proj(mim, mf_u, lambda_.mf(), MS.state(),
@@ -469,7 +469,7 @@ namespace getfem {
 	/* Calculate the actual vector */
 	DAL_TRACE2("Assembling plasticity rhs");
 	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
-	gmm::copy(K, gmm::sub_vector(MS.residu(), SUBI));
+	gmm::copy(K, gmm::sub_vector(MS.residual(), SUBI));
       }
       
       void compute_constraints(MODEL_STATE &MS) {

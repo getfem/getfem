@@ -52,7 +52,7 @@ struct crackPlate_problem{
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::level_set ls;      /* The two level sets defining the crack.       */
  
-  scalar_type residu;       /* max residu for the iterative solvers        */
+  scalar_type residual;       /* max residual for the iterative solvers        */
   scalar_type cutoff_radius, enr_area_radius;
   int enrichment_option;
   std::string datafilename;
@@ -117,7 +117,7 @@ void crackPlate_problem::init(void) {
   mitc = (PARAM.int_value("MITC") != 0);
   pressure = PARAM.real_value("PRESSURE") ;
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
@@ -285,7 +285,7 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residu, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
   
   /*affichage de la solution */    

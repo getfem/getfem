@@ -28,7 +28,7 @@ ENRICHMENT_OPTION = 0	% 0 = without enrichment
 			% 1 = global functions with cutoff
 	              	% 2 = standard XFEM on a fixed zone 
 RADIUS_ENR_AREA = 0.1;
-RESIDU = 1E-9;     	% residue for conjugate gradient.
+RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters  %%%%%
 ROOTFILENAME = 'crackPlate';     % Root of data files.

@@ -112,7 +112,7 @@ struct elastostatic_problem {
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
-  scalar_type residue;       /* max residue for the iterative solvers        */
+  scalar_type residual;       /* max residual for the iterative solvers        */
   bool mixed_pressure;
 
   std::string datafilename;
@@ -160,7 +160,7 @@ void elastostatic_problem::init(void) {
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
-  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   gmm::resize(sol_K, N, N);
   for (size_type i = 0; i < N; i++)
     for (size_type j = 0; j < N; j++)
@@ -316,7 +316,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residue, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
 #if GETFEM_PARA_LEVEL > 1
     double t_init=MPI_Wtime();
 #endif

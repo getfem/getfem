@@ -332,7 +332,7 @@ struct crack_problem {
   unsigned spider_Nr;
   unsigned spider_Ntheta;
   int spider_K;
-  scalar_type residue;       /* max residue for the iterative solvers        */
+  scalar_type residual;       /* max residual for the iterative solvers        */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
   scalar_type cutoff_radius, enr_area_radius;
@@ -397,7 +397,7 @@ void crack_problem::init(void) {
   mesh.translation(tt); 
   
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
 
@@ -638,7 +638,7 @@ bool crack_problem::solve(plain_vector &U) {
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residue, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction

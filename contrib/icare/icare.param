@@ -55,7 +55,7 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; % Product of two
                                          % IM_GAUSS1D(10) (for quadrangles)
 
-RESIDUE = 1E-9;     	% residu for conjugate gradient.
+RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
 

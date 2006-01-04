@@ -66,7 +66,7 @@ struct elastostatic_problem {
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type p1, p2, p3;    /* elastic coefficients.                        */
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -107,16 +107,16 @@ struct elastostatic_problem {
 //       else */
 //     //gmm::clear(MS.state());
 //     //gmm::fill_random(MS.state()); 
-//     problem.compute_residu(MS);
+//     problem.compute_residual(MS);
 //     problem.compute_tangent_matrix(MS);
 //     MS.compute_reduced_system();
-//     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
-//     cout << "residu initial: " << gmm::vect_norm2(MS.residu()) << ", " 
-// 	 << gmm::vect_norm2(MS.reduced_residu())
+//     mtype act_res = MS.reduced_residual_norm(), act_res_new(0);
+//     cout << "residual initial: " << gmm::vect_norm2(MS.residual()) << ", " 
+// 	 << gmm::vect_norm2(MS.reduced_residual())
 // 	 << ", |U0|" << gmm::vect_norm2(MS.state()) << "\n";
 //     while (!iter.finished(act_res)) {
 //       gmm::iteration iter_linsolv = iter_linsolv0;
-//       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
+//       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residual()));
 
 //       if (!(iter.first())) {
 // 	problem.compute_tangent_matrix(MS);
@@ -135,17 +135,17 @@ struct elastostatic_problem {
 //       {
 // 	double rcond;
 //         gmm::SuperLU_solve(MS.reduced_tangent_matrix(), dr,
-//                            gmm::scaled(MS.reduced_residu(), value_type(-1)),
+//                            gmm::scaled(MS.reduced_residual(), value_type(-1)),
 //                            rcond);
 //       /*size_type srtm = gmm::mat_nrows(MS.reduced_tangent_matrix());
 // 	gmm::dense_matrix<double> MM(srtm, srtm);
 // 	gmm::copy(MS.reduced_tangent_matrix(), MM);
-// 	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residu(), value_type(-1)));*/
+// 	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residual(), value_type(-1)));*/
 //       }
 //       else {
 // 	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 // 	gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-// 		   gmm::scaled(MS.reduced_residu(), value_type(-1)),
+// 		   gmm::scaled(MS.reduced_residual(), value_type(-1)),
 // 		   P, 300, iter_linsolv);
 // 	if (!iter_linsolv.converged())
 // 	  DAL_WARNING(2,"gmres did not converge!");
@@ -156,34 +156,34 @@ struct elastostatic_problem {
 //       gmm::copy(MS.state(), stateinit);
       
 //       if (0) {
-// 	problem.compute_residu(MS);
+// 	problem.compute_residual(MS);
 // 	MS.compute_reduced_system();
-// 	scalar_type r0 = MS.reduced_residu_norm();
+// 	scalar_type r0 = MS.reduced_residual_norm();
 // 	cout << "R0 === " << r0 << "\n";
 // 	VECTOR W(gmm::vect_size(dr));
 // 	gmm::mult(MS.reduced_tangent_matrix(), dr,W);
-// 	scalar_type w = 2*gmm::vect_sp(MS.reduced_residu(), W);
+// 	scalar_type w = 2*gmm::vect_sp(MS.reduced_residual(), W);
 
 // 	for (alpha = mtype(1); alpha >= alpha_min/100; alpha *= alpha_mult) {
 // 	  gmm::add(stateinit, gmm::scaled(d, -alpha), MS.state());
-// 	  problem.compute_residu(MS);
+// 	  problem.compute_residual(MS);
 // 	  MS.compute_reduced_system(); // The whole reduced system do not
 // 	  // have to be computed, only the RHS. To be adapted.
-// 	  act_res_new = gmm::sqr(MS.reduced_residu_norm());
+// 	  act_res_new = gmm::sqr(MS.reduced_residual_norm());
 // 	  printf("%+12.5g  %+12.5g  %+12.5g\n", -alpha, act_res_new, w*(-alpha)+gmm::sqr(r0));
 // 	}
 // 	for (alpha = mtype(1); alpha >= alpha_min/100; alpha *= alpha_mult) {
 // 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-// 	  problem.compute_residu(MS);
+// 	  problem.compute_residual(MS);
 // 	  MS.compute_reduced_system(); // The whole reduced system do not
 // 	  // have to be computed, only the RHS. To be adapted.
-// 	  act_res_new = gmm::sqr(MS.reduced_residu_norm());
+// 	  act_res_new = gmm::sqr(MS.reduced_residual_norm());
 // 	  printf("%+12.5g  %+12.5g  %+12.5g\n", alpha, act_res_new, w*(alpha)+gmm::sqr(r0));
 // 	}
 // 	gmm::copy(stateinit, MS.state());
-// 	problem.compute_residu(MS);
+// 	problem.compute_residual(MS);
 // 	MS.compute_reduced_system();
-// 	r0 = MS.reduced_residu_norm();
+// 	r0 = MS.reduced_residual_norm();
 // 	cout << "R0 === " << r0 << "\n";
 //       }
 
@@ -191,17 +191,17 @@ struct elastostatic_problem {
 
 //       for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
 // 	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-// 	problem.compute_residu(MS);
+// 	problem.compute_residual(MS);
 // 	MS.compute_reduced_system(); // The whole reduced system do not
 // 	// have to be computed, only the RHS. To be adapted.
-// 	act_res_new = MS.reduced_residu_norm();
+// 	act_res_new = MS.reduced_residual_norm();
 // 	if (act_res_new <= act_res * alpha_max_ratio) break;
 
 // 	gmm::add(stateinit, gmm::scaled(d, -alpha), MS.state());
-// 	problem.compute_residu(MS);
+// 	problem.compute_residual(MS);
 // 	MS.compute_reduced_system(); // The whole reduced system do not
 // 	// have to be computed, only the RHS. To be adapted.
-// 	act_res_new = MS.reduced_residu_norm();
+// 	act_res_new = MS.reduced_residual_norm();
 // 	if (act_res_new <= act_res * alpha_max_ratio) {
 // 	  cout << "WWWWWRONG DIRECTION ALPHA < 0 is BETTER THAN ALPHA > 0 !!!!\n";
 // 	  break;
@@ -251,7 +251,7 @@ void elastostatic_problem::init(void) {
   mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   p1 = PARAM.real_value("P1", "First Elastic coefficient");
   p2 = PARAM.real_value("P2", "Second Elastic coefficient");
@@ -458,7 +458,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     final_model.rhs().set(F2);
 
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
-    iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
+    iter = gmm::iteration(residual, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
     /* let the default non-linear solve (Newton) do its job */
@@ -466,7 +466,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     // getfem::nl_solve(MS, final_model, iter);
 
     pl->reset_unvalid_flag();
-    final_model.compute_residu(MS);
+    final_model.compute_residual(MS);
     if (pl->get_unvalid_flag()) 
       DAL_WARNING1("The solution is not completely valid, the determinant "
 		   "of the transformation is negative on "

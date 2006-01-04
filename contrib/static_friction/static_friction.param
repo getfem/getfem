@@ -23,7 +23,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
 NX = 20;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDUE = 1E-9;     	% residue for Newton.
+RESIDUAL = 1E-9;     	% residual for Newton.
 
 METHOD = 2;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.

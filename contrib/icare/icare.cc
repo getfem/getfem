@@ -70,7 +70,7 @@ struct navier_stokes_problem {
   scalar_type nu;            /* 1/Re */
   scalar_type dt, T, dt_export;
   unsigned N;
-  scalar_type residue;       /* max residue for the iterative solvers        */
+  scalar_type residual;       /* max residual for the iterative solvers        */
   int noisy;
   int export_to_opendx;
 
@@ -321,7 +321,7 @@ void navier_stokes_problem::init(void) {
   mesh.bounding_box(BBmin, BBmax);
   cout << "mesh bounding box: " << BBmin << " ... " << BBmax << "\n";
   datafilename = PARAM.string_value("ROOTFILENAME","Data files base name.");
-  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosity");
   dt = PARAM.real_value("DT", "Time step");
@@ -472,7 +472,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 
   pdef->initial_condition_u(*this, Un0);
   
-  gmm::iteration iter(residue, noisy);
+  gmm::iteration iter(residual, noisy);
   getfem::standard_model_state MSL(velocity_dyn), MSM(mixed_dyn);
   
   do_export(0);
@@ -549,7 +549,7 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
 
   pdef->initial_condition_u(*this, Un0);
   
-  gmm::iteration iter(residue, noisy);
+  gmm::iteration iter(residual, noisy);
   getfem::standard_model_state MSL(velocity_dyn);
   
   do_export(0);
@@ -628,7 +628,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   pdef->initial_condition_u(*this, Un0);
   pdef->initial_condition_p(*this, Pn0);
 
-  gmm::iteration iter(residue, noisy);
+  gmm::iteration iter(residual, noisy);
   getfem::standard_model_state MSL(velocity_dyn), MSM(poisson_source);
   
   do_export(0);

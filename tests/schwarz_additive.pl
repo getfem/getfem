@@ -20,7 +20,7 @@ K = 1;         % Degree of the finite element method.
 NX = 10;       % space step.
 NXCOARSE = 4;  % space step for the coarse mesh.
 USECOARSE = 1; % use a coarse mesh or not.
-RESIDU = 1E-7;  %
+RESIDUAL = 1E-7;  %
 SOLVER = 3;     % 0 = C.G.
 		% 1 = additive Schwarz with global and local CG
 		% 2 = additive Schwarz with global et local Gmres

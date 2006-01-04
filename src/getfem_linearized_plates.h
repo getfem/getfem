@@ -302,11 +302,11 @@ namespace getfem {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residu(), SUBI));
+		gmm::sub_vector(MS.residual(), SUBI));
     }
 
     void set_elastic_coeff(value_type E, value_type nu) {
@@ -544,11 +544,11 @@ namespace getfem {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residu(), SUBI));
+		gmm::sub_vector(MS.residual(), SUBI));
     }
 
     void set_elastic_coeff(value_type E, value_type nu) {
@@ -653,7 +653,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					   size_type) { }
-    virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) { }
+    virtual void do_compute_residual(MODEL_STATE &, size_type, size_type) { }
 
     mdbrick_plate_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 			      const mesh_fem &mf_data, const VECTOR &B__,
@@ -729,7 +729,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					size_type) { }
-    virtual void do_compute_residu(MODEL_STATE &, size_type ,size_type) {}
+    virtual void do_compute_residual(MODEL_STATE &, size_type ,size_type) {}
 
     mdbrick_plate_simple_support(mdbrick_abstract<MODEL_STATE> &problem,
 				 size_type bound,
@@ -796,7 +796,7 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					   size_type) {}
-    virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) {}
+    virtual void do_compute_residual(MODEL_STATE &, size_type, size_type) {}
 
     mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
 				  size_type bound, size_type num_fem = 0,
@@ -1011,7 +1011,7 @@ namespace getfem {
 	}
       } 
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
 				   size_type j0) {
       gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem+2],
 			     mf_theta->nb_dof());
@@ -1020,15 +1020,15 @@ namespace getfem {
 	if (gmm::mat_nrows(CO) > 0) {
 	  gmm::sub_interval SUBI(i0 + nbd, gmm::mat_nrows(CO));
 	  gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
-		    gmm::sub_vector(MS.residu(), SUBI));
+		    gmm::sub_vector(MS.residual(), SUBI));
 	  gmm::mult_add(gmm::transposed(CO), gmm::sub_vector(MS.state(), SUBI),
-			gmm::sub_vector(MS.residu(), SUBJ));
+			gmm::sub_vector(MS.residual(), SUBJ));
 	}
 	if (allclamped) {
 	  size_type i = i0 + nbd + gmm::mat_nrows(CO);
 	  size_type j = i0 + this->mesh_fem_positions[num_fem+3];
-	  MS.residu()[i] = MS.state()[j];
-	  MS.residu()[j] += MS.state()[i];
+	  MS.residual()[i] = MS.state()[j];
+	  MS.residual()[j] += MS.state()[i];
 	}
       }
       else {

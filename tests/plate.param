@@ -35,7 +35,7 @@ ETA = 0.0;             % only usefull if SOL_REF = 2 :
 
 
 NX = 40;                % number of element on an edge.
-RESIDU = 1E-9;     	% residu for iterative methods.
+RESIDUAL = 1E-9;     	% residu for iterative methods.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED = 0;
 MITC = 1;

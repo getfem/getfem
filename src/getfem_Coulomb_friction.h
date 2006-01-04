@@ -211,7 +211,7 @@ namespace getfem {
       }
     }
     
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       precomp(MS, i0);
       value_type c1(1);
       
@@ -225,30 +225,30 @@ namespace getfem {
       
       if (symmetrized) {
 	gmm::mult_add(gmm::transposed(BN), gmm::scaled(RLN, -c1),
-		      gmm::sub_vector(MS.residu(), SUBU));
+		      gmm::sub_vector(MS.residual(), SUBU));
 	if (!contact_only)
 	  gmm::mult_add(gmm::transposed(BT), gmm::scaled(RLT, -c1),
-			gmm::sub_vector(MS.residu(), SUBU));
+			gmm::sub_vector(MS.residual(), SUBU));
       } else {
 	gmm::mult_add(gmm::transposed(BN),
 		      gmm::scaled(gmm::sub_vector(MS.state(), SUBN),-c1),
-		      gmm::sub_vector(MS.residu(), SUBU));
+		      gmm::sub_vector(MS.residual(), SUBU));
 	if (!contact_only)
 	  gmm::mult_add(gmm::transposed(BT),
 			gmm::scaled(gmm::sub_vector(MS.state(), SUBT),-c1),
-			gmm::sub_vector(MS.residu(), SUBU));
+			gmm::sub_vector(MS.residual(), SUBU));
       }
       
-      /* residu on LN */
+      /* residual on LN */
       gmm::add(gmm::scaled(gmm::sub_vector(MS.state(), SUBN), -c1),
-	       RLN, gmm::sub_vector(MS.residu(), SUBN));
-      gmm::scale(gmm::sub_vector(MS.residu(), SUBN), c1 / r);
+	       RLN, gmm::sub_vector(MS.residual(), SUBN));
+      gmm::scale(gmm::sub_vector(MS.residual(), SUBN), c1 / r);
 
-      /* residu on LT */
+      /* residual on LT */
       if (!contact_only) {
 	gmm::add(gmm::scaled(gmm::sub_vector(MS.state(),SUBT), -c1),
-		 RLT, gmm::sub_vector(MS.residu(), SUBT));
-	gmm::scale(gmm::sub_vector(MS.residu(), SUBT), c1 / r);
+		 RLT, gmm::sub_vector(MS.residual(), SUBT));
+	gmm::scale(gmm::sub_vector(MS.residual(), SUBT), c1 / r);
       }
     }
 

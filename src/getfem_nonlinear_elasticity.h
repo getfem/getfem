@@ -441,10 +441,10 @@ namespace getfem {
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mim, mf_u,
 	 gmm::sub_vector(MS.state(), SUBI), params().mf(), params().get(),  AHL);
     }
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, mf_u.nb_dof());
-      gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
-      asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
+      gmm::clear(gmm::sub_vector(MS.residual(), SUBI));
+      asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residual(), SUBI), mim,
 				   mf_u, gmm::sub_vector(MS.state(), SUBI), 
 				   params().mf(), params().get(), AHL);
     }
@@ -637,14 +637,14 @@ namespace getfem {
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
     }
 
-    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type i1 = this->mesh_fem_positions[num_fem];
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());
-      gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
-      asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residu(), SUBJ),
-			       gmm::sub_vector(MS.residu(), SUBI),
+      gmm::clear(gmm::sub_vector(MS.residual(), SUBI));
+      asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residual(), SUBJ),
+			       gmm::sub_vector(MS.residual(), SUBI),
 			       *(this->mesh_ims[0]), mf_u, mf_p, 
 			       gmm::sub_vector(MS.state(), SUBJ),
 			       gmm::sub_vector(MS.state(), SUBI));

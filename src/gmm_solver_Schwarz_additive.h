@@ -108,29 +108,29 @@ namespace gmm {
     const std::vector<Matrix2> *vB;
     std::vector<Matrix2> vAloc;
     mutable iteration iter;
-    double residu;
+    double residual;
     mutable size_type itebilan;
     mutable std::vector<std::vector<value_type> > gi, fi;
     std::vector<typename actual_precond<Precond, local_solver,
 					Matrix1>::APrecond> precond1;
 
     void init(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
-	      iteration iter_, const Precond &P, double residu_);
+	      iteration iter_, const Precond &P, double residual_);
 
     add_schwarz_mat(void) {}
     add_schwarz_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
-		iteration iter_, const Precond &P, double residu_)
-    { init(A_, vB_, iter_, P, residu_); }
+		iteration iter_, const Precond &P, double residual_)
+    { init(A_, vB_, iter_, P, residual_); }
   };
 
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver>
   void add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>::init(
        const Matrix1 &A_, const std::vector<Matrix2> &vB_,
-       iteration iter_, const Precond &P, double residu_) {
+       iteration iter_, const Precond &P, double residual_) {
 
     vB = &vB_; A = &A_; iter = iter_;
-    residu = residu_;
+    residual = residual_;
     
     size_type nb_sub = vB->size();
     vAloc.resize(nb_sub);
@@ -342,7 +342,7 @@ namespace gmm {
 
     if (M.iter.get_noisy() > 0) cout << "itebloc = " << itebilan << endl;
     M.itebilan += itebilan;
-    M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
+    M.iter.set_resmax((M.iter.get_resmax() + M.residual) * 0.5);
   }
 
   template <typename Matrix1, typename Matrix2, typename Precond,
@@ -541,7 +541,7 @@ namespace gmm {
     typedef typename number_traits<value_type>::magnitude_type mtype;
     typedef actual_precond<Precond, local_solver, Matrixt> chgt_precond;
     
-    double residu = iter.get_resmax();
+    double residual = iter.get_resmax();
     typename chgt_precond::APrecond PP = chgt_precond::transform(P);
     iter.set_rhsnorm(mtype(1));
     iteration iternc(iter);
@@ -602,8 +602,8 @@ namespace gmm {
 	  }
 	}
 	precond_res = gmm::vect_norm2(rhs);
-	if (SOR_step) cout << "SOR step residu = " << precond_res << endl;
-	if (precond_res < residu) break;
+	if (SOR_step) cout << "SOR step residual = " << precond_res << endl;
+	if (precond_res < residual) break;
       }
 
       iter2.init();

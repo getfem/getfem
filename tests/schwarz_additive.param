@@ -18,7 +18,7 @@ NX = 10;       % space step.
 NXCOARSE = 4;  % space step for the coarse mesh.
 USECOARSE = 0; % use a coarse mesh or not.
 
-RESIDU = 1E-7;  %
+RESIDUAL = 1E-7;  %
 SOLVER = 1;     % 0 = C.G. préconditionné ildlt
 		% 1 = C.G. non preconditionné
 	        % 2 = superlu

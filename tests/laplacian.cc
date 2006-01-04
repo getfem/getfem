@@ -76,7 +76,7 @@ struct laplacian_problem {
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
   getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients    */
 
-  scalar_type residue;      /* max residue for the iterative solvers */
+  scalar_type residual;        /* max residual for the iterative solvers */
   size_type est_degree;
   bool gen_dirichlet;
 
@@ -133,7 +133,7 @@ void laplacian_problem::init(void) {
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
-  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   sol_K.resize(N);
   for (size_type j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
@@ -293,7 +293,7 @@ void laplacian_problem::assembly(void)
 bool laplacian_problem::solve(void) {
   cout << "Compute preconditionner\n";
   double time = dal::uclock_sec();
-  gmm::iteration iter(residue, 1, 40000);
+  gmm::iteration iter(residual, 1, 40000);
   // gmm::identity_matrix P;
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
   // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);

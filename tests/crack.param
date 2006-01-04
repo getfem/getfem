@@ -64,7 +64,7 @@ SPIDER_NTHETA = 20;      % size of the cartesian mesh in theta for spider fem
 SPIDER_K=1;             % order of the  spider fem 
 
 
-RESIDUE = 1E-9;     	% residue for iterative methods if any.
+RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'crack';     % Root of data files.
