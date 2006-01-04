@@ -40,7 +40,7 @@
 namespace getfem {
 
 
-  int check_symmetry(const base_tensor &t) {
+  inline int check_symmetry(const base_tensor &t) {
     int flags = 7; size_type N = 3;
     for (size_type n = 0; n < N; ++n)
       for (size_type m = 0; m < N; ++m)

@@ -158,7 +158,7 @@ namespace getfem {
       pfem pf_t = mf_target.fem_of_element(cv);
       size_type nbd_s = pf_s->nb_dof(cv);
       size_type nbd_t = pf_t->nb_dof(cv);
-      mesh_fem::ref_mesh_dof_ind_ct::const_iterator itdof;
+      mesh_fem::ind_dof_ct::const_iterator itdof;
       size_type cvnbdof = mf_source.nb_dof_of_element(cv);
 
       if (version == 0) {
@@ -181,7 +181,7 @@ namespace getfem {
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
-      const mesh_fem::ref_mesh_dof_ind_ct &idct
+      const mesh_fem::ind_dof_ct &idct
 	= mf_source.ind_dof_of_element(cv);
       dof_source.assign(idct.begin(), idct.end());
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
@@ -265,7 +265,7 @@ namespace getfem {
                     gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff[qq]);
         }
       }
-      const mesh_fem::ref_mesh_dof_ind_ct &idct
+      const mesh_fem::ind_dof_ct &idct
 	= mf_source.ind_dof_of_element(cv);
       dof_source.assign(idct.begin(), idct.end());
       for (size_type i = 0; i < itab.size(); ++i) {

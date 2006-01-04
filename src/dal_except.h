@@ -37,12 +37,6 @@
 
 #include <dal_std.h>
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-# include <fenv.h>
-# define FE_ENABLE_EXCEPT { feenableexcept(FE_DIVBYZERO | FE_INVALID); }
-#else
-# define FE_ENABLE_EXCEPT {}
-#endif
 
 namespace dal {
 

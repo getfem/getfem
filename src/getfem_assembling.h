@@ -830,11 +830,11 @@ namespace getfem {
       
       if (!(version & ASMDIR_SIMPLIFY)) continue;
       
-      mesh_fem::ind_ref_mesh_dof_ind_ct pf_u_ct
+      mesh_fem::ind_dof_face_ct pf_u_ct
 	= mf_u.ind_dof_of_face_of_element(cv, f);
-      mesh_fem::ind_ref_mesh_dof_ind_ct pf_r_ct
+      mesh_fem::ind_dof_face_ct pf_r_ct
 	= mf_r.ind_dof_of_face_of_element(cv, f);
-      mesh_fem::ind_ref_mesh_dof_ind_ct pf_m_ct
+      mesh_fem::ind_dof_face_ct pf_m_ct
 	= mf_mult.ind_dof_of_face_of_element(cv, f);
       
       size_type pf_u_nbdf = pf_u_ct.size();
@@ -844,7 +844,7 @@ namespace getfem {
       size_type pf_r_nbdf_loc = pf_r->structure(cv)->nb_points_of_face(f);
 
       if (pf_u_nbdf < pf_m_nbdf && !warning_msg2) {
-	DAL_WARNING2("Dirichlet condition with a to reach multiplier fem. "
+	DAL_WARNING2("Dirichlet condition with a too rich multiplier fem. "
 		     "see the documentation about Dirichlet conditions.");
 	warning_msg2 = true;
       }
@@ -879,17 +879,13 @@ namespace getfem {
 	getfem::pmat_elem_type pme1 =
 	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
 				   getfem::mat_elem_base(pf_u));
-	getfem::pmat_elem_computation pmec1 = getfem::mat_elem(pme1,pim,pgt);
-	pmec1->gen_compute_on_face
-	    (t1, mf_u.linked_mesh().points_of_convex(cv), f, cv);
+	getfem::mat_elem(pme1,pim,pgt)->gen_compute_on_face
+	  (t1, mf_u.linked_mesh().points_of_convex(cv), f, cv);
 	getfem::pmat_elem_type pme2 =
 	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
 				   getfem::mat_elem_base(pf_r));
-	getfem::pmat_elem_computation pmec2
-	  = getfem::mat_elem(pme2, pim, pgt);
-	pmec2->gen_compute_on_face
+	getfem::mat_elem(pme2, pim, pgt)->gen_compute_on_face
 	  (t2, mf_u.linked_mesh().points_of_convex(cv), f, cv);
-	  
 	
 	base_matrix m1(pf_m_nbdf_loc, pf_u_nbdf_loc);
 	base_matrix m2(pf_m_nbdf_loc, pf_r_nbdf_loc);
@@ -924,7 +920,7 @@ namespace getfem {
 	  gmm::mult(m2, v1, v2);
 	  gmm::mult(m1, v2, v3);
 	  
-	  for (size_type i = 0; i < pf_u_nbdf_loc; ++i)
+	  for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
 	    simplifiable_values[pf_m_ct[i*Q+k]] = v3[i];
 	}
       }
@@ -1261,6 +1257,7 @@ namespace getfem {
     dal::dynamic_array<TEMP_VECT> base_img;
     dal::dynamic_array<TEMP_VECT> base_img_inv;
     size_type nb_bimg = 0;
+    gmm::clear(NS);
 
     if (!(gmm::is_col_matrix(H)))
       DAL_WARNING2("Dirichlet_nullspace inefficient for a row matrix H");
@@ -1272,7 +1269,7 @@ namespace getfem {
       gmm::mult(H, e, aux);
       MAGT n = gmm::vect_norm2(aux);
 
-      if (n < 1e-8) { //norminfH*tol) {
+      if (n < norminfH*tol*1000) {
 	NS(i, nbase++) = T(1); nn[i] = true;
       }
       else {
@@ -1328,12 +1325,14 @@ namespace getfem {
       gmm::add(gmm::scaled(base_img_inv[i], c), U0);
     }
     // Orthogonalisation of the basis of the kernel of H.
-    for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
+    for (size_type i = nb_triv_base; i < nbase; ++i) {
       for (size_type j = nb_triv_base; j < i; ++j) {
 	T c = gmm::vect_sp(gmm::mat_col(NS,i), gmm::mat_col(NS,j));
 	if (c != T(0))
 	  gmm::add(gmm::scaled(gmm::mat_col(NS,j), -c), gmm::mat_col(NS,i));
       }
+      gmm::scale(gmm::mat_col(NS,i),
+		 T(1) / gmm::vect_norm2(gmm::mat_col(NS,i)));
     }
     // projection of U0 on the orthogonal to the kernel.
     for (size_type j = nb_triv_base; j < nbase; ++j) {

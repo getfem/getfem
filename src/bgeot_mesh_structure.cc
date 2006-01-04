@@ -78,7 +78,7 @@ namespace bgeot {
     if (i == j) return;
     std::vector<size_type> doubles;
 
-    if (convex_is_valid(i)) 
+    if (is_convex_valid(i)) 
       for (size_type k = 0; k < convex_tab[i].pts.size(); ++k) {
 	size_type ip = convex_tab[i].pts[k];
 	for (size_type l = 0; l < points_tab[ip].size(); ++l) {
@@ -87,7 +87,7 @@ namespace bgeot {
 	  else if (ind == j) { ind = i; doubles.push_back(ip); }
 	}
       }
-    if (convex_is_valid(j))
+    if (is_convex_valid(j))
       for (size_type k = 0; k < convex_tab[j].pts.size(); ++k) {
 	size_type ip = convex_tab[j].pts[k];
 	if (std::find(doubles.begin(), doubles.end(), ip) == doubles.end()) {
@@ -106,7 +106,7 @@ namespace bgeot {
   }
 
   void mesh_structure::sup_convex(size_type ic) {
-    if (!(convex_is_valid(ic))) return;
+    if (!(is_convex_valid(ic))) return;
     for (size_type l = 0; l < convex_tab[ic].pts.size(); ++l) {
       size_type &ind = convex_tab[ic].pts[l];
       std::vector<size_type>::iterator it1= points_tab[ind].begin(), it2 = it1;

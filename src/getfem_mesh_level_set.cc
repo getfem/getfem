@@ -849,7 +849,7 @@ struct Chrono {
     const mesh_fem &mf = ls->get_mesh_fem();
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
 
-    const mesh_fem::ref_mesh_dof_ind_ct &dofs = mf.ind_dof_of_element(cv);
+    const mesh_fem::ind_dof_ct &dofs = mf.ind_dof_of_element(cv);
     pfem pf = mf.fem_of_element(cv);
     int p = -2;
     mesher_level_set mls1 = ls->mls_of_convex(cv, lsnum, false);
@@ -860,7 +860,7 @@ struct Chrono {
      - min value of the levelset greater than the radius of the convex
      => no intersection
     */ 
-    for (mesh_fem::ref_mesh_dof_ind_ct::const_iterator it=dofs.begin();
+    for (mesh_fem::ind_dof_ct::const_iterator it=dofs.begin();
 	 it != dofs.end(); ++it) {
       scalar_type v = ls->values(lsnum)[*it];
       int p2 = ( (v < -EPS) ? -1 : ((v > EPS) ? +1 : 0));

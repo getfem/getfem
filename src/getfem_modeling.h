@@ -123,6 +123,8 @@ namespace getfem {
     C_MATRIX &constraints_matrix(void) { return constraints_matrix_; }
     const VECTOR &constraints_rhs(void) const  { return constraints_rhs_; }
     VECTOR &constraints_rhs(void)  { return constraints_rhs_; }
+    gmm::col_matrix<gmm::rsvector<value_type> > &constraints_nullspace() 
+    { return NS; }
     const VECTOR &state(void) const  { return state_; }
     VECTOR &state(void)  { return state_; }
     const VECTOR &residu(void) const  { return residu_; }
@@ -140,7 +142,8 @@ namespace getfem {
       return gmm::mat_nrows(constraints_matrix()) == 0 ?
 	tangent_matrix_ : SM;
     }
-    void unreduced_solution(const VECTOR &U_reduced, VECTOR &U) {
+    template <typename VECTOR1, typename VECTOR2> 
+    void unreduced_solution(const VECTOR1 &U_reduced, VECTOR2 &U) {
       if (gmm::mat_nrows(constraints_matrix()))
 	gmm::mult(NS, U_reduced, Ud, U);
       else gmm::copy(U_reduced, U);
@@ -1541,21 +1544,22 @@ namespace getfem {
     gmm::sub_index SUB_CT;
     const mesh_fem *mf_mult;
     
-    const mesh_fem &mf_u() { return *(this->mesh_fems[num_fem]); }
+    const mesh_fem &mf_u() { return *(this->mesh_fems[this->num_fem]); }
     const mesh_im  &mim() { return *(this->mesh_ims[0]); }
 
     void compute_constraints(unsigned version) {
       size_type ndu = mf_u().nb_dof(), ndm = mf_mult->nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(ndm, ndu);
       VECTOR V(ndm);
-      if (co_how != AUGMENTED_CONSTRAINTS) version |= ASMDIR_SIMPLIFY;
+      if (this->co_how != AUGMENTED_CONSTRAINTS) version |= ASMDIR_SIMPLIFY;
       DAL_TRACE2("Assembling Dirichlet constraints, version " << version);
       asm_dirichlet_constraints
 	(M, V, mim(), mf_u(), *mf_mult, rhs().mf(), R_.get(),
 	 mf_u().linked_mesh().get_mpi_sub_region(boundary), version);    
       if (version & ASMDIR_BUILDH)
-	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), B);
-      gmm::copy(gmm::sub_vector(V, SUB_CT), CRHS);
+	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), 
+		  this->B);
+      gmm::copy(gmm::sub_vector(V, SUB_CT), this->CRHS);
     }
 
     virtual void recompute_B_sizes(void) {
@@ -1570,8 +1574,8 @@ namespace getfem {
       for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)
 	ind_ct.push_back(i);
       SUB_CT = gmm::sub_index(ind_ct);
-      gmm::resize(B, nb_const, nd);
-      gmm::resize(CRHS, nb_const);
+      gmm::resize(this->B, nb_const, nd);
+      gmm::resize(this->CRHS, nb_const);
       B_to_be_computed = true;
     }
 
@@ -1608,7 +1612,8 @@ namespace getfem {
       : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), R_("R", this),
 	boundary(bound) {
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
-      this->add_proper_boundary_info(num_fem, boundary, MDBRICK_DIRICHLET);
+      this->add_proper_boundary_info(this->num_fem, boundary, 
+				     MDBRICK_DIRICHLET);
       this->add_dependency(*mf_mult);
       mfdata_set = false; B_to_be_computed = true;
       this->force_update();
@@ -1650,22 +1655,23 @@ namespace getfem {
     gmm::sub_index SUB_CT;
     const mesh_fem &mf_mult;
     
-    const mesh_fem &mf_u() { return *(this->mesh_fems[num_fem]); }
+    const mesh_fem &mf_u() { return *(this->mesh_fems[this->num_fem]); }
     const mesh_im  &mim() { return *(this->mesh_ims[0]); }
 
     void compute_constraints(unsigned version) {
       size_type ndu = mf_u().nb_dof(), ndm = mf_mult.nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(ndm, ndu);
       VECTOR V(ndm);
-      if (co_how != AUGMENTED_CONSTRAINTS) version |= ASMDIR_SIMPLIFY;
+      if (this->co_how != AUGMENTED_CONSTRAINTS) version |= ASMDIR_SIMPLIFY;
       DAL_TRACE2("Assembling normal part Dirichlet constraints, version "
 		 << version);
       asm_normal_part_dirichlet_constraints
 	(M, V, mim(), mf_u(), mf_mult, rhs().mf(), R_.get(),
 	 mf_u().linked_mesh().get_mpi_sub_region(boundary), version);    
       if (version & ASMDIR_BUILDH)
-	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), B);
-      gmm::copy(gmm::sub_vector(V, SUB_CT), CRHS);
+	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), 
+		  this->B);
+      gmm::copy(gmm::sub_vector(V, SUB_CT), this->CRHS);
     }
 
     virtual void recompute_B_sizes(void) {
@@ -1680,8 +1686,8 @@ namespace getfem {
       for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)
 	ind_ct.push_back(i);
       SUB_CT = gmm::sub_index(ind_ct);
-      gmm::resize(B, nb_const, nd);
-      gmm::resize(CRHS, nb_const);
+      gmm::resize(this->B, nb_const, nd);
+      gmm::resize(this->CRHS, nb_const);
       B_to_be_computed = true;
     }
 
@@ -1716,7 +1722,8 @@ namespace getfem {
 				  size_type num_fem_=0)
       : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), R_("R", this),
 	boundary(bound), mf_mult(mf_mult_) {
-      this->add_proper_boundary_info(num_fem, boundary, MDBRICK_DIRICHLET);
+      this->add_proper_boundary_info(this->num_fem, boundary, 
+				     MDBRICK_DIRICHLET);
       this->add_dependency(mf_mult);
       mfdata_set = false; B_to_be_computed = true;
       this->force_update();
@@ -1784,8 +1791,8 @@ namespace getfem {
       if (!H_.is_initialized()) {
 	DAL_TRACE2("Assembling Dirichlet constraints with no H and version "
 		   << version);
-	asm_generalized_dirichlet_constraints
-	  (M, V, *(this->mesh_ims[0]), mf_u(), rhs().mf(), R_.get(),
+	asm_dirichlet_constraints
+	  (M, V, *(this->mesh_ims[0]), mf_u(), mf_u(), rhs().mf(), R_.get(),
 	   mf_u().linked_mesh().get_mpi_sub_region(boundary), version);
       } else {
 	DAL_TRACE2("Assembling Dirichlet constraints with H and version "

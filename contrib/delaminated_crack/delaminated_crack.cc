@@ -325,10 +325,10 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   // derivative of elastic energy
   char s[500];
   sprintf(s, "u=data(#1);"
-	  "t=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,:,l,:,:,:,:,:).u(k).u(l);"
-	  "w=t(:,:,:,:,:,m,m); z=t(:,:,:,l,:,l,:);"
-	  /*"w=comp(vGrad(#1)(k,:,:).vGrad(#1).vGrad(#2)(:,m,m))(k,:,:,l,:,:,:).u(k).u(l);"
-	  "z=comp(vGrad(#1)(k,:,:).vGrad(#1)(:,m,:).vGrad(#2)(:,m,:))(k,:,:,l,:,:,:).u(k).u(l);"*/
+	  /*"t=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,:,l,:,:,:,:,:).u(k).u(l);"
+	    "w=t(:,:,:,:,:,m,m); z=t(:,:,:,l,:,l,:);"*/
+	  "w=comp(vGrad(#1).vGrad(#1).vGrad(#2)(:,m,m))(k,:,:,l,:,:,:).u(k).u(l);"
+	  "z=comp(vGrad(#1).vGrad(#1)(:,m,:).vGrad(#2)(:,m,:))(k,:,:,l,:,:,:).u(k).u(l);"
 	  "V(#2)+= %g*(w(i,j,i,j,:)+w(j,i,i,j,:)+z(j,i,i,:,j)+z(i,j,i,:,j))"
 	  "+ %g*(w(i,i,j,j,:) + z(k,k,i,:,i))",
 	  mu, lambda);

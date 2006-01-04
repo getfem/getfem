@@ -92,8 +92,6 @@ void bench() {
 
 
 int main(void) {
-  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
-
   try {
 
     cout << "size of int           : " << sizeof(int)           << endl;

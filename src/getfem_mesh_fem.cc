@@ -332,7 +332,11 @@ namespace getfem {
 		    "that the mesh attached to this object is right one ?");
 	}
 	
-	ftool::get_token(ist, tmp);
+	int rgt = ftool::get_token(ist, tmp);
+	if (rgt != 3) { // for backward compatibility
+	  char c; ist.get(c);
+	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
+	}
 	getfem::pfem fem = getfem::fem_descriptor(tmp);
 	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" 
 			    << tmp << "'");
@@ -413,7 +417,7 @@ namespace getfem {
     ost << " BEGIN DOF_ENUMERATION " << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << "  " << cv << ": ";
-      ref_mesh_dof_ind_ct::const_iterator it = ind_dof_of_element(cv).begin();
+      ind_dof_ct::const_iterator it = ind_dof_of_element(cv).begin();
       while (it != ind_dof_of_element(cv).end()) {
 	ost << " " << *it;
 	// skip repeated dofs for "pseudo" vector elements

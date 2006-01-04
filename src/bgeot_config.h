@@ -34,6 +34,14 @@
 #define BGEOT_CONFIG_H__
 
 #include <getfem_arch_config.h>
+
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+# include <fenv.h>
+# define FE_ENABLE_EXCEPT { feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW); }
+#else
+# define FE_ENABLE_EXCEPT {}
+#endif
+
 #include <dal_except.h>
 #include <gmm_kernel.h>
 #include <gmm_dense_lu.h>

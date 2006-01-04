@@ -121,7 +121,11 @@ namespace getfem {
 		    "that the mesh attached to this object is right one ?");
 	}
 	
-	ftool::get_token(ist, tmp);
+	int rgt = ftool::get_token(ist, tmp);
+	if (rgt != 3) { // for backward compatibility with version 1.7
+	  char c; ist.get(c);
+	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
+	}
 	getfem::pintegration_method pfi = getfem::int_method_descriptor(tmp);
 	if (!pfi) DAL_THROW(failure_error,
 	  "could not create the integration method '" << tmp << "'");

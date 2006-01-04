@@ -119,7 +119,7 @@ namespace getfem
   }
 
   void fem_interpolation_context::set_pf(pfem newpf) {
-    if (pf_ != newpf) {
+    if (pf_ != newpf || have_pfp()) {
       set_pfp(0);
       pf_ = newpf;
     }

@@ -83,7 +83,7 @@ namespace bgeot {
     /// The total number of convexes in the mesh
     size_type nb_convex(void) const { return convex_tab.card(); }
     /// Return true if i is in convex_index()
-    bool convex_is_valid(size_type i) { return (convex_tab.index())[i]; }
+    bool is_convex_valid(size_type i) { return (convex_tab.index())[i]; }
     size_type nb_max_points(void) const { return points_tab.size(); }
     /// Return true if the point i is used by at least one convex
     bool is_point_valid(size_type i) const { return !(points_tab[i].empty()); }

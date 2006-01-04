@@ -163,8 +163,8 @@ namespace getfem {
   public :
     
     typedef base_node point_type;
-    typedef tab_scal_to_vect<mesh::ind_cv_ct> ref_mesh_dof_ind_ct;
-    typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_ref_mesh_dof_ind_ct;
+    typedef tab_scal_to_vect<mesh::ind_cv_ct> ind_dof_ct;
+    typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_dof_face_ct;
 
     void update_from_context(void) const {}
 
@@ -246,10 +246,10 @@ namespace getfem {
      *  @param cv the convex number.
      *  @return a pseudo-container of the dof number.
      */
-    ref_mesh_dof_ind_ct
+    ind_dof_ct
       ind_dof_of_element(size_type cv) const {
       if (!dof_enumeration_made) enumerate_dof();
-      return ref_mesh_dof_ind_ct(dof_structure.ind_points_of_convex(cv),
+      return ind_dof_ct(dof_structure.ind_points_of_convex(cv),
 				 Qdim /fem_of_element(cv)->target_dim());
     }
     /** Give an array of the dof numbers lying of a convex face (all
@@ -260,10 +260,10 @@ namespace getfem {
 	@return a pseudo-container of the dof number.
     */
     
-    ind_ref_mesh_dof_ind_ct
+    ind_dof_face_ct
     ind_dof_of_face_of_element(size_type cv, short_type f) const {
       if (!dof_enumeration_made) enumerate_dof();
-      return ind_ref_mesh_dof_ind_ct
+      return ind_dof_face_ct
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
 	 Qdim /fem_of_element(cv)->target_dim());
     }

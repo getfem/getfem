@@ -1,6 +1,6 @@
 $bin_dir = "$ENV{srcdir}/../bin";
-#$tmp = `$bin_dir/createmp laplacian.param`;
-$tmp=toto;
+$tmp = `$bin_dir/createmp laplacian.param`;
+#$tmp=toto;
 sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
@@ -39,7 +39,11 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
   #    print $_;
       ($a, $b) = split('=', $_);
       # print "La norme en question :", $b;
-      if ($b > 0.01) { print "\nError too large\n"; $er = 1; }
+      if ($b > 0.01) { 
+	print "\nError too large: $b\n"; 
+	print "./laplacian $tmp $def 2>&1 failed\n";
+	$er = 1; 
+      }
     }
     if ($_ =~ /error has been detected/) {
       $er = 1;
@@ -88,7 +92,7 @@ print ".";
 start_program("-d 'MESH_TYPE=\"GT_PK(1,1)\"' -d 'FEM_TYPE=\"FEM_PK_HIERARCHICAL(1,4)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(1,1)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(1)\"' -d FT=1.0");
 #start_program("-d N=1 -d FEM_TYPE=2 -d FT=1.0");
 print ".";
-start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK_HIERARCHICAL_COMPOSITE(3,1,2)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(3,1)\"' -d 'INTEGRATION=\"IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(2), 4)\"' -d NX=2 -d FT=1.0");
+start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK_HIERARCHICAL_COMPOSITE(3,1,2)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(3,2)\"' -d 'INTEGRATION=\"IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(2), 4)\"' -d NX=2 -d FT=1.0");
 #start_program("-d K=2 -d KI=2 -d N=3 -d NX=1 -d FEM_TYPE=3 -d INTEGRATION=3 -d FT=1.0");
 
 start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_PRODUCT(FEM_PK_GAUSSLOBATTO1D(3),FEM_PK_GAUSSLOBATTO1D(3))\"' -d 'INTEGRATION=\"IM_PRODUCT(IM_GAUSSLOBATTO1D(5),IM_GAUSSLOBATTO1D(5))\"' -d NX=10 -d INCLINE=0.5");

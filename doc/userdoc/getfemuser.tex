@@ -1164,7 +1164,7 @@ $\mu$.  These Lamé coefficients are described as a field (i.e. and
 Some problems require a matrix or a tensor field, instead of a scalar
 field. For example, the brick responsible for the Dirichlet condition
 is used to impose $h(x)u(x) = r(x)$ on a region of the mesh. When the
-\cpp{mesh_fem} is a vector one ($Q \ge 1$), $h(x)$ is a $Q \times Q$
+\cpp{mesh_fem} is a vector one ($Q \geq 1$), $h(x)$ is a $Q × Q$
 matrix field, and $r(x)$ is a vector field of dimension $Q$. That case
 is also handled by the \cpp{getfem::mdbrick_parameter} structure.
 
@@ -1187,7 +1187,7 @@ This structure provides these methods:
   \cpp{field.get()}    & return the current dof data of the field.\\ \hline
   
   \cpp{field.fsizes()} & return the field size, as a vector. For a
-  scalar field, this is an empty vector, for a $n\times p$ matrix
+  scalar field, this is an empty vector, for a $n× p$ matrix
   field, this is the vector $[n,p]$, etc.\\ \hline
   
   \cpp{field.fsize()} & return the product of the elements of the
@@ -1281,7 +1281,7 @@ The following additional methods are available on this brick:
 
 
 \subsection{Constraint brick}
-The constraint brick allows to add constraints on an unknown corresponding to a finite element method. This brick is a base class for the Dirichlet condition bricks for instance. It can also be used on its own to add constraints on an unknow when this unknow is not fully determinated (for instance, when only a Neumann condition is present on the boundary of the domain). This brick deals directly with the vectorial format of the unknow, i.e. with a system representing the constraints $BU=R$, where $B$ is a $n_c \times n_d$ matrix, $U$ is the vector of unkown corresponding to a finite element method \cpp{mf_u} having $n_d$ dofs and $R$ is a vector of size $n_c$ corresponding to the righ hand side of the constraints. This correspond to add $n_c$ constraints to the system. These constraints have to be independant, which means that the matrix $B$ has to be of maximal rank.
+The constraint brick allows to add constraints on an unknown corresponding to a finite element method. This brick is a base class for the Dirichlet condition bricks for instance. It can also be used on its own to add constraints on an unknow when this unknow is not fully determinated (for instance, when only a Neumann condition is present on the boundary of the domain). This brick deals directly with the vectorial format of the unknow, i.e. with a system representing the constraints $BU=R$, where $B$ is a $n_c × n_d$ matrix, $U$ is the vector of unkown corresponding to a finite element method \cpp{mf_u} having $n_d$ dofs and $R$ is a vector of size $n_c$ corresponding to the righ hand side of the constraints. This correspond to add $n_c$ constraints to the system. These constraints have to be independant, which means that the matrix $B$ has to be of maximal rank.
 
 The brick offers three different manners to take the constraints into account. This is representied by an enum in \cpp{getfem\_modeling.h}. The first method \cpp{getfem::AUGMENTED_CONSTRAINTS} consists in the addition of Lagrange multipliers (o ne multiplier for each constraint) so that the final linear system is augmented of the corresponding number of multipliers. The second method \cpp{getfem::PENALIZED_CONSTRAINTS} consists in a penalization of the constriaints adding the term $\frac{1}{\varepsilon} (B^TB U - B^TR)$ to the linear system. The penalization parameter $\varepsilon$ has a default value equal to $10^{-9}$. The third method \cpp{getfem::ELIMINATED_CONSTRAINTS} consists in collecting all the constraints on the system in a global constraint system (in the \cpp{model\_state} variable) and to ``eliminate'' the dofs concerned by the constraints before solving the linear system. This is done computing the kernel of the constraints and projecting the linear system on this kernel.
 
@@ -1326,7 +1326,7 @@ Dirichlet condition is applied, \cpp{mf_mult} is an optional parameter represent
 allowing to choose a fem is the problem has several fems (0 is the
 default).
 
-The fem \cpp{mf_mult} has to be chosen in order to satify the Babuska-Brezzi inf-sup condition (i.e. the fact that the matrix $B$, which represent here a mass matrix on the boundary $\Gamma$, is of maximal rank). It is satisfied when \cpp{mf_mult} is the same fem as the one for the unkown and generally when \cpp{mf_mult} is ``less reach'' than this fem.
+The fem \cpp{mf_mult} has to be chosen in order to satify the Babuska-Brezzi inf-sup condition (i.e. the fact that the matrix $B$, which represent here a mass matrix on the boundary $\Gamma$, is of maximal rank). It is satisfied when \cpp{mf_mult} is the same fem as the one for the unkown and generally when \cpp{mf_mult} is ``less rich'' than this fem.
 
 By default, the prescribed value is zero. For non-homogenous Dirichlet
 condition $u = r$, the parameter \cpp{rhs} of the brick has to be set

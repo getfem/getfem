@@ -74,9 +74,9 @@ struct laplacian_problem {
   getfem::mesh_im mim;      /* the integration methods. */
   getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Laplacian solution */
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
-  getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients   */
+  getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients    */
 
-  scalar_type residue;        /* max residue for the iterative solvers */
+  scalar_type residue;      /* max residue for the iterative solvers */
   size_type est_degree;
   bool gen_dirichlet;
 
@@ -273,10 +273,9 @@ void laplacian_problem::assembly(void)
     // , getfem::ASMDIR_BUILDR | getfem::ASMDIR_BUILDH);    
     
     gmm::clean(H, 1e-12);
-    //    cout << "H = " << H << endl;
     int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
     // cout << "Number of irreductible unknowns : " << nbcols << endl;
-    gmm::resize(NS,gmm::mat_ncols(H),nbcols);
+    gmm::resize(NS, gmm::mat_ncols(H),nbcols);
 
     gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
     gmm::resize(B, nbcols);
@@ -345,7 +344,6 @@ int main(int argc, char *argv[]) {
 
   DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
-
 
   try {    
     laplacian_problem p;

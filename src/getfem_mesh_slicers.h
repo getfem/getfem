@@ -184,9 +184,9 @@ namespace getfem {
     mesh_slice_cv_dof_data(const mesh_fem &mf_, VEC &u_) : u(u_) { pmf=&mf_; }
     virtual void copy(size_type cv, base_vector& coeff) const {
       coeff.resize(pmf->nb_dof_of_element(cv));
-      const mesh::ind_cv_ct &dof = pmf->ind_dof_of_element(cv);
+      const mesh_fem::ind_dof_ct &dof = pmf->ind_dof_of_element(cv);
       base_vector::iterator out = coeff.begin();
-      for (mesh::ind_cv_ct::iterator it=dof.begin(); it != dof.end();
+      for (mesh_fem::ind_dof_ct::iterator it=dof.begin(); it != dof.end();
 	   ++it, ++out)
         *out = u[*it];
     }

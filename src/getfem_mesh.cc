@@ -385,7 +385,12 @@ namespace getfem {
 	  DAL_THROW(failure_error,
 		    "Negative or repeated index, loading aborted.");
 	ncv.add(ic);
-	ftool::get_token(ist, tmp);
+
+	int rgt = ftool::get_token(ist, tmp);
+	if (rgt != 3) { // for backward compatibility with version 1.7
+	  char c; ist.get(c);
+	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
+	}
 	
 	bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
 

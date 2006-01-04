@@ -120,7 +120,7 @@ namespace ftool {
     if (c == '|') sdouble__(c, '|');
     if (c == '&') sdouble__(c, '&');
     if (c == '=') sdouble__(c, '=');
-    if (c == '!') sdouble__(c, '=');
+    if (c == '~') sdouble__(c, '=');
     if (c == '<') sdouble__(c, '=');
     if (c == '>') sdouble__(c, '=');   
 
@@ -228,7 +228,7 @@ namespace ftool {
 			 "or array values");
 	result.real() *= -1.0;
 	break;
-      case '!' : 
+      case '~' : 
 	result = read_expression(f);
 	if (result.type_of_param() != REAL_VALUE)
 	  syntax_error("Sorry, unary ! does not support string "
@@ -260,19 +260,19 @@ namespace ftool {
   static void operator_priority_(int i, char c, int &prior, int &op) {
     if (i == 5)
       switch (c) {
-      case '*' : prior = 1; op = 1; return; 
+      case '*' : prior = 1; op = 1; return;
       case '/' : prior = 1; op = 2; return;
-      case '+' : prior = 2; op = 3; return; 
-      case '-' : prior = 2; op = 4; return; 
-      case '<' : prior = 3; op = 5; return; 
-      case '>' : prior = 3; op = 6; return; 
+      case '+' : prior = 2; op = 3; return;
+      case '-' : prior = 2; op = 4; return;
+      case '<' : prior = 3; op = 5; return;
+      case '>' : prior = 3; op = 6; return;
       }
     if (i == 6)
       switch (c) {
       case '<' : prior = 3; op =  7; return; // <= 
       case '>' : prior = 3; op =  8; return; // >= 
       case '=' : prior = 3; op =  9; return; // == 
-      case '!' : prior = 3; op = 10; return; // != 
+      case '~' : prior = 3; op = 10; return; // != 
       case '&' : prior = 3; op = 11; return; // && 
       case '|' : prior = 3; op = 12; return; // ||
       }

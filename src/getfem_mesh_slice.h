@@ -214,11 +214,11 @@ namespace getfem {
 	fem_precomp_pool fppool;
         pfem_precomp pfp = fppool(pf, store_point_tab(refpts));
         
-        mesh_fem::ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
+        mesh_fem::ind_dof_ct dof = mf.ind_dof_of_element(cv);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(mf.nb_dof_of_element(cv));
           typename std::vector<T>::iterator cit = coeff[qq].begin();
-          for (mesh_fem::ref_mesh_dof_ind_ct::const_iterator it=dof.begin();
+          for (mesh_fem::ind_dof_ct::const_iterator it=dof.begin();
 	       it != dof.end(); ++it, ++cit)
             *cit = U[(*it)*qqdim+qq];
         }
