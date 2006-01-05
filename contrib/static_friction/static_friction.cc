@@ -713,7 +713,7 @@ void friction_problem::solve(void) {
 	  gmm::copy(MS2.state(), MS.state());
 	  FRICTION.compute_residual(MS);
 	  MS.compute_reduced_system();
-	  people[i].residual = MS.reduced_residu_norm();
+	  people[i].residual = MS.reduced_residual_norm();
 	}
 	
 	// elimination of the 10% worst
@@ -793,7 +793,7 @@ void friction_problem::solve(void) {
   cout << "situation of solution : ";
   for (size_type j = 0; j < nbc; ++j) cout << situation1[j];
   cout << endl;
-  cout << "Final residual : " <<  MS.reduced_residu_norm() << endl;
+  cout << "Final residual : " <<  MS.reduced_residual_norm() << endl;
   cout << "Norm of solution : " << gmm::vect_norm2(U) << endl;
 
   {
