@@ -1159,9 +1159,6 @@ namespace getfem
     
     // gradient at point (0, 0)
     gmm::mult(G, pgp->grad(0), K);
-
-    // cout << "grad = " << K << endl;
-
     M(4, 4) = K(0,0); M(4, 7) = K(0,1); M(7, 4) = K(1,0); M(7, 7) = K(1,1);
     
     // gradient at point (1, 0)
@@ -1261,34 +1258,29 @@ namespace getfem
     }
     gmm::copy(gmm::identity_matrix(), M);
 
-    if (!(pgt->is_linear())) DAL_THROW(to_be_done_error, "Non linear transformations make that "
-				       " function having a non zero gradient have a non zero hessian");
-
-
-    // gradient at point (0, 0)
-    gmm::mult(G, pgp->grad(0), K);
-    M(3, 3) = K(0,0); M(3, 6) = K(0,1); M(6, 3) = K(1,0); M(6, 6) = K(1,1);
-    
-    M(9,  9) = K(0,0)*K(0,0); M(9, 12) = K(0,0)*K(0,1);  M(9, 15) = K(0,1)*K(0,1);
-    M(12, 9) = 2.0*K(0,0)*K(1,0); M(12, 12) = K(0,1)*K(1,0) + K(0,0)*K(1,1);  M(12, 15) = 2.0*K(0,1)*K(1,1);
-    M(15, 9) = K(1,0)*K(1,0);  M(15, 12) = K(1,0)*K(1,1); M(15, 15) = K(1,1)*K(1,1); 
-    
-    // gradient at point (1, 0)
-    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(1), K);
-    M(4, 4) = K(0,0); M(4, 7) = K(0,1); M(7, 4) = K(1,0); M(7, 7) = K(1,1);
-    
-    M(10, 10) = K(0,0)*K(0,0); M(10, 13) = K(0,0)*K(0,1);  M(10, 16) = K(0,1)*K(0,1);
-    M(13, 10) = 2.0*K(0,0)*K(1,0); M(13, 13) = K(0,1)*K(1,0) + K(0,0)*K(1,1);  M(13, 16) = 2.0*K(0,1)*K(1,1);
-    M(16, 10) = K(1,0)*K(1,0);  M(16, 13) = K(1,0)*K(1,1); M(16, 16) = K(1,1)*K(1,1); 
-    
-    // gradient at point (0, 1)
-    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(2), K);
-    M(5, 5) = K(0,0); M(5, 8) = K(0,1); M(8, 5) = K(1,0); M(8, 8) = K(1,1);
-
-    M(11, 11) = K(0,0)*K(0,0); M(11, 14) = K(0,0)*K(0,1);  M(11, 17) = K(0,1)*K(0,1);
-    M(14, 11) = 2.0*K(0,0)*K(1,0); M(14, 14) = K(0,1)*K(1,0) + K(0,0)*K(1,1);  M(14, 17) = 2.0*K(0,1)*K(1,1);
-    M(17, 11) = K(1,0)*K(1,0);  M(17, 14) = K(1,0)*K(1,1); M(17, 17) = K(1,1)*K(1,1);
-
+    gmm::mult(G, pgp->grad(0), K); // gradient at point (0, 0)
+    for (unsigned k = 0; k < 3; ++k) {
+      if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(k), K);
+      M(3+k, 3+k) = K(0,0); M(3+k, 6+k) = K(0,1); M(6+k, 3+k) = K(1,0); M(6+k, 6+k) = K(1,1);
+      if (!(pgt->is_linear())) {
+	base_matrix XX[2], H(2,4), B(2,2), X(2,2); XX[0] = XX[1] = base_matrix(2,2);
+	gmm::copy(gmm::transposed(K), B); gmm::lu_inverse(B);
+	gmm::mult(G, pgp->hessian(k), H);
+	for (unsigned j = 0; j < 2; ++j) {
+	  XX[j](0,0) = B(0, j)*H(0, 0) + B(1, j)*H(1, 0);
+	  XX[j](0,1) = XX[j](1,0) = B(0, j)*H(0, 1) + B(1, j)*H(1, 1);
+	  XX[j](1,1) = B(0, j)*H(0, 3) + B(1, j)*H(1, 3);
+	}
+	for (unsigned j = 0; j < 2; ++j) {
+	  gmm::copy(gmm::scaled(XX[0], K(j,0)), X); gmm::add(gmm::scaled(XX[1], K(j,1)), X);
+	  M(3+3*j+k, 9+k) = X(0,0); M(3+3*j+k, 12+k) = X(1, 0); M(3+3*j+k, 15+k) = X(1, 1);
+	}
+      }
+      scalar_type a = K(0,0), b = K(0,1), c = K(1,0), d = K(1,1);
+      M(9+k, 9+k) = a*a;     M(9+k, 12+k) = a*b;       M(9+k,  15+k) = b*b;
+      M(12+k,9+k) = 2.0*a*c; M(12+k,12+k) = b*c + a*d; M(12+k, 15+k) = 2.0*b*d;
+      M(15+k,9+k) = c*c;     M(15+k,12+k) = c*d;       M(15+k, 15+k) = d*d; 
+    }
     
     static base_matrix W(3, 21);
     static base_small_vector norient(M_PI, M_PI * M_PI);

@@ -679,12 +679,12 @@ namespace getfem {
     
     gmm::clear(val);
     const base_matrix *M = 0;
-    if (!is_equivalent() && !is_on_real_element()) M = &(c.M());
+    if (!is_equivalent()) M = &(c.M());
     base_tensor Z; real_base_value(c,Z);
     for (size_type j = 0; j < RR; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
-	if (is_equivalent() || is_on_real_element())
+	if (is_equivalent())
 	  co = coeff[j*Qmult+q];
 	else
 	  for (size_type i = 0; i < R; ++i)
@@ -704,13 +704,13 @@ namespace getfem {
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     const base_matrix *MM = 0;
-    if (!is_equivalent() && !is_on_real_element()) MM = &(c.M());
+    if (!is_equivalent()) MM = &(c.M());
     gmm::clear(M);
     base_tensor Z; real_base_value(c,Z);
     for (size_type j = 0; j < RR; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	for (size_type r = 0; r < target_dim(); ++r)
-	  if (is_equivalent() || is_on_real_element())
+	  if (is_equivalent())
 	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
 	  else
 	    for (size_type i = 0; i < R; ++i)
@@ -733,7 +733,7 @@ namespace getfem {
     base_tensor t;
     size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
     const base_matrix *M = 0;
-    if (!is_equivalent() && !is_on_real_element()) M = &(c.M());
+    if (!is_equivalent()) M = &(c.M());
 
     gmm::clear(val);
     if (!is_on_real_element()) { // optimized case
@@ -750,7 +750,7 @@ namespace getfem {
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
 	      T co = 0.0;
-	      if (is_equivalent() || is_on_real_element())
+	      if (is_equivalent())
 		co = coeff[j*Qmult+q];
 	      else
 		for (size_type i = 0; i < R; ++i)
@@ -776,7 +776,7 @@ namespace getfem {
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
 	      T co = 0.0;
-	      if (is_equivalent() || is_on_real_element())
+	      if (is_equivalent())
 		co = coeff[j*Qmult+q];
 	      else
 		for (size_type i = 0; i < R; ++i)

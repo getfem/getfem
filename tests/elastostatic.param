@@ -15,10 +15,12 @@ INCLINE = 0;            % Incline of the mesh.
 N = 2;
 QUAD = 0;
 FT = .1;                % parameter for the exact solution.
-MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;         % Set to one if you want to "shake" the mesh
 MIXED_PRESSURE=0;       % Mixed version or not.
-NX = 15;                 % space step.
-DIRICHLET_VERSION = 2;  % 0 = multipliers, 1 = penalization, 2 = elimination
+NX = 10;                 % space step.
+DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
+
+%MESH_FILE='../../tests/meshes/disc_P2_h4.mesh'
 
 
 if (N == 1)
@@ -34,27 +36,29 @@ if (N == 1)
 end
 
 if (N == 2 && ~QUAD)
-  FT = 0.2;
+  FT = .02; 
   MESH_TYPE = 'GT_PK(2,1)';       % triangles
-  FEM_TYPE = 'FEM_PK(2,5)';       % P1 for triangles
+  FEM_TYPE = 'FEM_PK(2,2)';       % P1 for triangles
   INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature rule for polynomials up
-                                  % to degree 6 on triangles
+                                  % to degree 13 on triangles
   if (MIXED_PRESSURE)
-    FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';
+    FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,1)';
   end
+    DATA_FEM_TYPE = 'FEM_PK(2,2)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
   if 1
 %    FEM_TYPE = 'FEM_HERMITE_TRIANGLE';
     FEM_TYPE = 'FEM_ARGYRIS';
-    DATA_FEM_TYPE = 'FEM_PK(2,5)';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
-    DIRICHLET_VERSION = 2;
+    DATA_FEM_TYPE = 'FEM_PK(2,2)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+    DIRICHLET_VERSION = 0;
   end
   
 end
 
 if (N == 2 && QUAD)
   FT = 1.0;
-  if (MESH_NOISE)
+  if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(2,1)';       % quadrilaterons
   else
     MESH_TYPE = 'GT_LINEAR_QK(2)';  % quadrilaterons (linear transformation)
@@ -69,7 +73,7 @@ end
 
 if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
-  FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
+  FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                      % to degree 6 on tetrahedrons
   if (MIXED_PRESSURE)
@@ -78,7 +82,7 @@ if (N == 3 && ~QUAD)
 end
 
 if (N == 3 && QUAD)
-  if (MESH_NOISE)
+  if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(3,1)';       % hexahedrons
   else
     MESH_TYPE = 'GT_LINEAR_QK(3)';  % hexahedrons (linear transformation)

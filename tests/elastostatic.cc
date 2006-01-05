@@ -130,24 +130,36 @@ struct elastostatic_problem {
  * and integration methods and selects the boundaries.
  */
 void elastostatic_problem::init(void) {
+  std::string MESH_FILE = PARAM.string_value("MESH_FILE");
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+
+  cout << "MESH_FILE=" << MESH_FILE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
-    bgeot::geometric_trans_descriptor(MESH_TYPE);
-  size_type N = pgt->dim();
-  std::vector<size_type> nsubdiv(N);
-  std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps "));
-  getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			    PARAM.int_value("MESH_NOISED") != 0);
-  
+  size_type N;
+  if (!MESH_FILE.empty()) {
+    mesh.read_from_file(MESH_FILE);
+    MESH_TYPE = bgeot::name_of_geometric_trans(mesh.trans_of_convex(mesh.convex_index().first_true()));
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+    N = mesh.dim();
+  } else {
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+    
+    /* First step : build the mesh */
+    bgeot::pgeometric_trans pgt = 
+      bgeot::geometric_trans_descriptor(MESH_TYPE);
+    N = pgt->dim();
+    std::vector<size_type> nsubdiv(N);
+    std::fill(nsubdiv.begin(),nsubdiv.end(),
+	      PARAM.int_value("NX", "Nomber of space steps "));
+    getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
+			      PARAM.int_value("MESH_NOISED") != 0);
+  }
+
   bgeot::base_matrix M(N,N);
   for (size_type i=0; i < N; ++i) {
     static const char *t[] = {"LX","LY","LZ"};
@@ -185,9 +197,11 @@ void elastostatic_problem::init(void) {
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  else
+  else {
+    cout << "DIRICHLET_FEM_TYPE="  << dirichlet_fem_name << "\n";
     mf_mult.set_finite_element(mesh.convex_index(), 
 			       getfem::fem_descriptor(dirichlet_fem_name));
+  }
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
@@ -220,7 +234,7 @@ void elastostatic_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1] - 1.0) >= 1.0E-7) { // new Neumann face
+    if (gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
       mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
     } else {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());

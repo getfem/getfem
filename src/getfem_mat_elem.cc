@@ -129,8 +129,7 @@ namespace getfem {
 // 	  if((*it).pfi->basic_structure() != pgt->basic_structure())
 // 	    DAL_THROW(std::invalid_argument, "incorrect computation");
 	  
-	  if (!((*it).pfi->is_equivalent()) && (*it).t != GETFEM_NONLINEAR_
-	      && !computed_on_real_element) {
+	  if ((*it).t != GETFEM_NONLINEAR_ && !((*it).pfi->is_equivalent())) {
 	    // TODO : le numero d'indice à reduire peut changer ...
 	    trans_reduction.push_back(k);
 	    trans_reduction_pfi.push_back((*it).pfi);
@@ -148,7 +147,7 @@ namespace getfem {
 	  } break;
 	  case GETFEM_HESSIAN_ : {
 	    ++k; 
-	    hess_reduction.push_back(k); 
+	    if (!((*it).pfi->is_on_real_element())) hess_reduction.push_back(k); 
 	  } break;
 	  case GETFEM_NONLINEAR_ : {
 	    if ((*it).nl_part == 0) {
@@ -514,6 +513,8 @@ namespace getfem {
 	}
       }
 
+      // cout << "t= " << t << endl;
+
       /* Applying linear transformation for non tau-equivalent elements.   */
       
       if (trans_reduction.size() > 0) {
@@ -526,12 +527,12 @@ namespace getfem {
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
 	for ( ; it != ite; ++it, ++iti) { 
-	  ctx.set_pf(*iti);
+	  ctx.set_pf(*iti); // cout << "M = " << ctx.M() << endl;
 	  (flag ? t:taux).mat_transp_reduction(flag ? taux:t, ctx.M(), *it);
 	  flag = !flag;
 	}
       }
-      
+      // getchar();
       if (flag) t = taux;
     }
     

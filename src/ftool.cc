@@ -373,7 +373,7 @@ namespace ftool {
   }
 
   void md_param::read_param_file(std::istream &f) {
-    token_is_valid = false; current_line = 0;
+    token_is_valid = false; current_line = 1;
     if (read_instruction_list(f) > 1)
       syntax_error("Parameter file terminated by an else");
   }
