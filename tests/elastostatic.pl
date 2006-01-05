@@ -20,6 +20,7 @@ print TMPF "NX = 5;\n";
 print TMPF "RESIDUAL = 1E-9;\n";
 print TMPF "FEM_TYPE = 'FEM_PK(2,1)';\n";
 print TMPF "ROOTFILENAME = 'elasto_static';\n";
+print TMPF "DIRICHLET_VERSION = 0;\n";
 print TMPF "\n\n";
 close(TMPF);
 
