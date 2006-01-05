@@ -18,7 +18,7 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
+  
 /**
  * Linear Elastostatic problem with a crack.
  *
@@ -314,18 +314,19 @@ struct crack_problem {
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   // getfem::mesh_fem& mf_u() { return mf_us; }
   
-
+  scalar_type lambda, mu;    /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
 #ifdef VALIDATE_XFEM
   exact_solution exact_sol;
 #endif
   
-  scalar_type lambda, mu;    /* Lamé coefficients.                           */
-
+  
+  int bimaterial;           /* For bimaterial interface fracture */
+  double lambda_up, lambda_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::level_set ls2, ls3;  /* The two level sets defining the additional crack.       */
-  
+  //std::vector<float> bi_lambda;  
   base_small_vector translation;
   scalar_type theta0;
   scalar_type spider_radius;
@@ -347,12 +348,14 @@ struct crack_problem {
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
+
 			mf_u_sum(mesh), mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
 #ifdef VALIDATE_XFEM
 			exact_sol(mesh), 
 #endif
 			ls(mesh, 1, true), ls2(mesh, 1, true),
 			ls3(mesh, 1, true) {}
+
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -400,9 +403,24 @@ void crack_problem::init(void) {
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
+  
+  bimaterial = PARAM.int_value("BIMATERIAL", "bimaterial interface crack");
 
-  mu = PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  
+
+/**************************************   TEST  ************************************************************/
+  if (bimaterial == 1){
+    mu = PARAM.real_value("MU", "Lame coefficient mu"); 
+    lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
+    lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
+    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
+  }
+  else{
+
+    mu = PARAM.real_value("MU", "Lame coefficient mu");
+    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
+  }
+  
   cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
   mf_u().set_qdim(N);
 
@@ -468,6 +486,18 @@ void crack_problem::init(void) {
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+
+/*base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+    un /= gmm::vect_norm2(un);
+    if (un[1]  < -1.0E-7 || un[1]  > 1.0E-7 ) { // new Neumann face
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+    } else {
+    
+      cout << "normal = " << un << endl;
+      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+    
+    }*/
+
 #ifdef VALIDATE_XFEM
     mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
 #else
@@ -533,7 +563,7 @@ bool crack_problem::solve(plain_vector &U) {
       ls3.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[0];
       ls3.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[1];
     }
-    ls3.touch();
+    ls3.touch(); 
   }
 
   mls.adapt();
@@ -595,11 +625,35 @@ bool crack_problem::solve(plain_vector &U) {
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
-
+  
   // Linearized elasticity brick.
+  
+  
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u(), mixed_pressure ? 0.0 : lambda, mu);
+  
+  if(bimaterial == 1){
+    cout<<"bimaterial crack case with lambda_up = "<<lambda_up<<"and lambda_down = "<<lambda_down<<endl;
+    
+    std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
+    
+    cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
+    
+    for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
+      if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0)
+	bi_lambda[ite] = lambda_up;
+	else
+	  bi_lambda[ite] = lambda_down;
+    }
+    
+    //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
+    // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
+    
+    ELAS.lambda().set(bi_lambda);
+  }
+  
 
+   
   getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure) {
     getfem::mdbrick_linear_incomp<> *incomp

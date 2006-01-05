@@ -6,27 +6,39 @@
 %%%%% pde parameters :	        				      %%%%%
 % MU = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
+
 MU = 1.0;	        % Lamé coefficient.
-LAMBDA = 1.0;   	% Lamé coefficient.
+LAMBDA = 1.0;           % Lamé coefficient.
+
+BIMATERIAL = 0;         % 1 : To enable the bimaterial case
+LAMBDA_UP = 400.0;
+LAMBDA_DOWN = 1.O;
+
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 21;            	          % space step.
+
+
+NX = 30;            	          % space step.
+
+
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-%FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
-FEM_TYPE = 'FEM_PK(2,2)';  % Q1 fem for quadrangles
+FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
+%FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
+%FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 
 MIXED_PRESSURE=0;       % Mixed version or not.
-% FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
+ FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
 DIRICHLET_VERSION = 2;
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
-%DATA_FEM_TYPE = 'FEM_PK(2,1)';
+
+DATA_FEM_TYPE = 'FEM_PK(2,1)';
 %DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
 %INTEGRATION = 'IM_TETRAHEDRON(6)';  % quadrature rule for polynomials up
@@ -41,8 +53,9 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
-INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
+INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
+
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
 %INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
 
@@ -50,17 +63,20 @@ INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
 %INTEGRATION = 'IM_TRIANGLE(6)';
 
 ADDITIONAL_CRACK = 0;
-ENRICHMENT_OPTION = 2;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone
 			% 3 = spider fem alone
 		        % 4 = spider fem enrichment
 
+
+
 RADIUS_ENR_AREA = 0.2;
-CUTOFF=0.5;
+CUTOFF=0.2;
 SPIDER_RADIUS =  0.3;
-SPIDER_NR =  20;         % size of the cartesian mesh in r for spider fem
-SPIDER_NTHETA = 20;      % size of the cartesian mesh in theta for spider fem
+SPIDER_NR = 30;         % size of the cartesian mesh in r for spider fem
+SPIDER_NTHETA = 30;      % size of the cartesian mesh in theta for spider fem
+
 SPIDER_K=1;             % order of the  spider fem 
 
 
