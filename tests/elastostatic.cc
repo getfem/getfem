@@ -114,6 +114,7 @@ struct elastostatic_problem {
 
   scalar_type residual;       /* max residual for the iterative solvers        */
   bool mixed_pressure;
+  int dirichlet_version;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -157,7 +158,7 @@ void elastostatic_problem::init(void) {
   /* scale the unit mesh to [LX,LY,..] and incline it */
   mesh.transformation(M);
 
-
+  dirichlet_version = PARAM.int_value("DIRICHLET_VERSION","Dirichlet version");
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
@@ -308,9 +309,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
 					  mf_mult);
-  // final_model.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
-  // final_model.set_constraints_type(getfem::PENALIZED_CONSTRAINTS);
-  // final_model.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
+  final_model.set_constraints_type(getfem::constraints_type(dirichlet_version));
   final_model.rhs().set(mf_rhs, F);
 
   // Generic solve.

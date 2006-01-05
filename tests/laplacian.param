@@ -8,7 +8,7 @@ INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
 N = 2;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
-NX = 20;                    % space step.
+NX = 5;                      % space step.
 MESH_NOISE = 0;             % Set to one if you want to "shake" the mesh
 
 if (N == 1)
@@ -22,9 +22,10 @@ end
 if (N == 2 && ~QUAD)
   FT = 1.0;
   MESH_TYPE = 'GT_PK(2,1)';       % triangles
-  FEM_TYPE = 'FEM_PK(2,2)';       % P1 for triangles
-% FEM_TYPE = 'FEM_HERMITE_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,1)';
-  INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
+  %FEM_TYPE = 'FEM_PK(2,2)';       % P1 for triangles
+  %FEM_TYPE = 'FEM_HERMITE_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,2)';
+  FEM_TYPE = 'FEM_ARGYRIS'; DATA_FEM_TYPE = 'FEM_PK(2,2)';
+  INTEGRATION = 'IM_TRIANGLE(9)'; % quadrature rule for polynomials up
                                   % to degree 6 on triangles
 end
 
@@ -35,7 +36,8 @@ if (N == 2 && QUAD)
   else
     MESH_TYPE = 'GT_LINEAR_QK(2)';  % quadrilaterons (linear transformation)
   end
-  FEM_TYPE = 'FEM_QK(2,1)';         % Q1 for quadrilaterons
+  FEM_TYPE = 'FEM_QK(2,2)';         % Q1 for quadrilaterons
+%  FEM_TYPE = 'FEM_HERMITE_QUAD12()'; DATA_FEM_TYPE = 'FEM_QK(2,3)';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
 end
 

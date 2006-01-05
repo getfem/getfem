@@ -78,10 +78,10 @@ ROOTFILENAME = 'plasticity';     % Root of data files.
 STRESS_THRESHOLD =8000.;  % plasticity stress_threshold  
                           % si STRESS_THRESHOLD <VM_max on a un regime plastique;
                           % si STRESS_THRESHOLD >VM_max on a un regime elastique;
-RESIDU=1E-6;                      % RESIDUAL for iterative solvers
-OPTASCII=0;            % option for writing results : 0 for binary and other for ascii
-FLAG_HYP=0;          % option for the calculation hypothesis : 1 for stress plane
-                       %                                         other for classical 3D
-                       %                                         others to be defined, plane strain for instance 
+RESIDUAL=1E-6;            % RESIDUAL for iterative solvers
+OPTASCII=0;   % option for writing results : 0 for binary and other for ascii
+FLAG_HYP=0;   % option for the calculation hypothesis : 1 for stress plane
+              %                                other for classical 3D
+              %             others to be defined, plane strain for instance 
 
 FORCE=330;

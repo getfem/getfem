@@ -216,9 +216,12 @@ namespace bgeot
     { init(multi_index(i, j, k, l)); }
     tensor(void) {}
 
-      void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
+    /** reduction of tensor t with respect to index ni with matrix m:
+     *  t(...,j,...) <-- t(...,i,..) m(i, j)
+     */
+    void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
+    void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
 
-      void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
     size_type memsize() const { return vsvector<T>::memsize() +
 				  sizes_.memsize() + coeff.memsize(); }
   };

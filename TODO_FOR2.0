@@ -9,9 +9,7 @@ Changement à prendre en considérations pour la 2.0 :
   régler le problème serait de remplacer le calcul de la simplexification
   des éléments de référence courant par une simplexificatio connue.
 
-- Dans les briques, les numeros de bords doivent-ils passer en mesh_regions ?
-
-- Element d'hermite triangle faire marcher.
+- Element d'hermite triangle à faire marcher.
 
 - simplifier standard solve avec des options pour la résolution. raffiner
   la stratégie du newton pour qu'il marche de manière optimale dans les deux
@@ -27,10 +25,13 @@ Changement à prendre en considérations pour la 2.0 :
 - Faut-il remmettre en question la repartion dal::, bgeot:: et getfem:: ?
   bgeot:: -> getfem:: ?
 
-- Est-ce que bgeot_small_vector.h et .cc n'aurait pas leur place dans gmm ?
-
 - Ajouter le raffinement de maillage à la bank (voir fichier TOBEDONE)
 
 - Utilisation correcte de Metis.
 
 - Doc sur Xfem
+
+- Brique generalized Dirichlet : la faire deriver de la brique constraints
+
+- Reregarder la description des dof : trop complexe car on ne fait pas de
+	produit tensoriels de ddl complexes ...

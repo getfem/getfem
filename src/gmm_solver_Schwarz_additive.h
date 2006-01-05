@@ -551,10 +551,10 @@ namespace gmm {
     iteration iter4(iter3);
     iternc.set_name("Local Newton");
     iter2.set_name("Linear System for Global Newton");
-    iternc.set_resmax(residu/100.0);
-    iter3.set_resmax(residu/1000.0);
-    iter2.set_resmax(residu/100.0);
-    iter4.set_resmax(residu/1000.0);
+    iternc.set_resmax(residual/100.0);
+    iter3.set_resmax(residual/1000.0);
+    iter2.set_resmax(residual/100.0);
+    iter4.set_resmax(residual/1000.0);
     std::vector<value_type> rhs(NS.size()), x(NS.size()), d(NS.size());
     std::vector<value_type> xi, xii, fi, di;
     Matrixt Mloc, M(NS.size(), NS.size());

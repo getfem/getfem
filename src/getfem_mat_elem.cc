@@ -527,7 +527,7 @@ namespace getfem {
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
 	for ( ; it != ite; ++it, ++iti) { 
 	  ctx.set_pf(*iti);
-	  (flag ? t:taux).mat_reduction(flag ? taux:t, ctx.M(), *it);
+	  (flag ? t:taux).mat_transp_reduction(flag ? taux:t, ctx.M(), *it);
 	  flag = !flag;
 	}
       }

@@ -130,6 +130,15 @@ namespace getfem {
    *  @param r corresponds to the variable number for which the derivative is taken (0 <= r < d)
    */
   pdof_description derivative_dof(dim_type d, dim_type r);
+
+  /** Description of a unique dof of second derivative type. 
+   *  @param d the dimension of the reference element.
+   *  @param num_der1 corresponds to the variable number for which the first derivative is taken (0 <= r < d)
+   *  @param num_der2 corresponds to the variable number for which the second derivative is taken (0 <= r < d)
+   */
+  pdof_description second_derivative_dof(dim_type d, 
+					 dim_type num_der1, 
+					 dim_type num_der2);
   
   /** Description of a unique dof of normal derivative type
    *  (normal derivative at the node, regarding a face).
@@ -705,7 +714,7 @@ namespace getfem {
 	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
 	  else
 	    for (size_type i = 0; i < R; ++i)
-	      M(r+q*target_dim(), i*Qmult+q) = (*MM)(i, j) * Z[j + r*R];
+	      M(r+q*target_dim(), j*Qmult+q) += (*MM)(j, i) * Z[i + r*R];
       } 
     }
   }
@@ -771,7 +780,7 @@ namespace getfem {
 		co = coeff[j*Qmult+q];
 	      else
 		for (size_type i = 0; i < R; ++i)
-		  co += coeff[i*Qmult+q] * (*M)(i, j);	      
+		  co += coeff[i*Qmult+q] * (*M)(j, i);	      
 	      val(r + q*target_dim(), k) += co * (*it);
 	    }
       }

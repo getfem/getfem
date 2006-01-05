@@ -768,8 +768,8 @@ namespace getfem {
 
      size(r_data) = Q   * nb_dof(mf_rh);
 
-     This function tries hard to make H diagonal or mostly diagonal:
-     this function is able to "simplify" the dirichlet constraints (see below)
+     A simplification can be done when the fem for u and r are the same and
+     when the fem for the multipliers is of same dimension as the one for u.
      version = |ASMDIR_BUILDH : build H
      |ASMDIR_BUILDR : build R
      |ASMDIR_SIMPLIFY : simplify
@@ -841,7 +841,7 @@ namespace getfem {
       size_type pf_m_nbdf = pf_m_ct.size();
       size_type pf_u_nbdf_loc = pf_u->structure(cv)->nb_points_of_face(f);
       size_type pf_m_nbdf_loc = pf_m->structure(cv)->nb_points_of_face(f);
-      size_type pf_r_nbdf_loc = pf_r->structure(cv)->nb_points_of_face(f);
+      // size_type pf_r_nbdf_loc = pf_r->structure(cv)->nb_points_of_face(f);
 
       if (pf_u_nbdf < pf_m_nbdf && !warning_msg2) {
 	DAL_WARNING2("Dirichlet condition with a too rich multiplier fem. "
@@ -849,7 +849,7 @@ namespace getfem {
 	warning_msg2 = true;
       }
       
-      if (pf_u_nbdf != pf_m_nbdf || 
+      if (pf_u != pf_r || pf_u_nbdf != pf_m_nbdf || 
 	  ((pf_u != pf_r) && (pf_u_nbdf_loc != pf_m_nbdf_loc))) { 
 	for (size_type i = 0; i < pf_m_nbdf; ++i)
 	  nonsimplifiable_dofs.add(pf_m_ct[i]);
@@ -864,66 +864,65 @@ namespace getfem {
       if (!(version & ASMDIR_BUILDR)) continue;
 
       if (pf_u == pf_r) { // simplest simplification.
-	cout << "simple simplification\n";
 	size_type Qratio = mf_u.get_qdim() / mf_r.get_qdim();
 	for (size_type i = 0; i < pf_m_nbdf; ++i) {
 	  simplifiable_values[pf_m_ct[i]]
 	    = r_data[pf_r_ct[i/Qratio]*Qratio+(i%Qratio)];
 	}
       }
-      else { // local inversion of the mass matrix.
-	cout << "local inv\n";
-	bgeot::base_tensor t1, t2;
-	pintegration_method pim = mim.int_method_of_element(cv);
-	bgeot::pgeometric_trans pgt = mf_u.linked_mesh().trans_of_convex(cv);
-	getfem::pmat_elem_type pme1 =
-	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
-				   getfem::mat_elem_base(pf_u));
-	getfem::mat_elem(pme1,pim,pgt)->gen_compute_on_face
-	  (t1, mf_u.linked_mesh().points_of_convex(cv), f, cv);
-	getfem::pmat_elem_type pme2 =
-	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
-				   getfem::mat_elem_base(pf_r));
-	getfem::mat_elem(pme2, pim, pgt)->gen_compute_on_face
-	  (t2, mf_u.linked_mesh().points_of_convex(cv), f, cv);
+//       else { // local inversion of the mass matrix.
+// 	cout << "local inv\n";
+// 	bgeot::base_tensor t1, t2;
+// 	pintegration_method pim = mim.int_method_of_element(cv);
+// 	bgeot::pgeometric_trans pgt = mf_u.linked_mesh().trans_of_convex(cv);
+// 	getfem::pmat_elem_type pme1 =
+// 	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
+// 				   getfem::mat_elem_base(pf_u));
+// 	getfem::mat_elem(pme1,pim,pgt)->gen_compute_on_face
+// 	  (t1, mf_u.linked_mesh().points_of_convex(cv), f, cv);
+// 	getfem::pmat_elem_type pme2 =
+// 	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
+// 				   getfem::mat_elem_base(pf_r));
+// 	getfem::mat_elem(pme2, pim, pgt)->gen_compute_on_face
+// 	  (t2, mf_u.linked_mesh().points_of_convex(cv), f, cv);
 	
-	base_matrix m1(pf_m_nbdf_loc, pf_u_nbdf_loc);
-	base_matrix m2(pf_m_nbdf_loc, pf_r_nbdf_loc);
+// 	base_matrix m1(pf_m_nbdf_loc, pf_u_nbdf_loc);
+// 	base_matrix m2(pf_m_nbdf_loc, pf_r_nbdf_loc);
 	
-	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
-	  for (size_type j = 0; j < pf_u_nbdf_loc; ++j)
-	    m1(i, j) = t1(pf_m->structure(cv)->ind_points_of_face(f)[i],
-			  pf_u->structure(cv)->ind_points_of_face(f)[j]);
-	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
-	  for (size_type j = 0; j < pf_r_nbdf_loc; ++j)
-	    m2(i, j) = t2(pf_m->structure(cv)->ind_points_of_face(f)[i],
-			  pf_r->structure(cv)->ind_points_of_face(f)[j]);
+// 	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
+// 	  for (size_type j = 0; j < pf_u_nbdf_loc; ++j)
+// 	    m1(i, j) = t1(pf_m->structure(cv)->ind_points_of_face(f)[i],
+// 			  pf_u->structure(cv)->ind_points_of_face(f)[j]);
+// 	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
+// 	  for (size_type j = 0; j < pf_r_nbdf_loc; ++j)
+// 	    m2(i, j) = t2(pf_m->structure(cv)->ind_points_of_face(f)[i],
+// 			  pf_r->structure(cv)->ind_points_of_face(f)[j]);
 	
-	gmm::lu_inverse(m1);
-	size_type Q =  pf_u_nbdf / pf_u_nbdf_loc;
-	size_type Qu = mf_u.get_qdim();
+// 	gmm::lu_inverse(m1);
+// 	size_type Q =  pf_u_nbdf / pf_u_nbdf_loc;
+// 	size_type Qu = mf_u.get_qdim();
 	
-	v1.resize(pf_r_nbdf_loc * (Qu / Q));
-	v2.resize(pf_m_nbdf_loc);
-	v3.resize(pf_u_nbdf_loc);
+// 	v1.resize(pf_r_nbdf_loc * (Qu / Q));
+// 	v2.resize(pf_m_nbdf_loc);
+// 	v3.resize(pf_u_nbdf_loc);
 
-	for (size_type k = 0; k < Q; ++k) {
-	  if (Q > 1 || (Qu == 1)) {
-	    for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
-	      v1[i] = r_data[pf_r_ct[i]*Q+k];
-	  }
-	  else {
-	    for (size_type l = 0; l < Qu; ++l)
-	      for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
-		v1[i*Qu+l] = r_data[pf_r_ct[i]*Qu+l];
-	  }
-	  gmm::mult(m2, v1, v2);
-	  gmm::mult(m1, v2, v3);
+// 	for (size_type k = 0; k < Q; ++k) {
+// 	  if (Q > 1 || (Qu == 1)) {
+// 	    for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
+// 	      v1[i] = r_data[pf_r_ct[i]*Q+k];
+// 	  }
+// 	  else {
+// 	    for (size_type l = 0; l < Qu; ++l)
+// 	      for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
+// 		v1[i*Qu+l] = r_data[pf_r_ct[i]*Qu+l];
+// 	  }
+// 	  gmm::mult(m2, v1, v2);
+// 	  gmm::mult(m1, v2, v3);
 	  
-	  for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
-	    simplifiable_values[pf_m_ct[i*Q+k]] = v3[i];
-	}
-      }
+// 	  for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
+// 	    simplifiable_values[pf_m_ct[i*Q+k]] = v3[i];
+// 	}
+//       }
     }
     
     if (version & ASMDIR_SIMPLIFY) {

@@ -22,7 +22,7 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 ROOTFILENAME = 'plasticity';     % Root of data files.
 STRESS_THRESHOLD =8000.;  % plasticity stress_threshold
-RESIDU=1E-6;                      % RESIDUAL for iterative solvers
+RESIDUAL=1E-6;                      % RESIDUAL for iterative solvers
 FLAG_HYP=0;     % option for the calculation hypothesis : 1 for stress plane
 FORCE=330;
 

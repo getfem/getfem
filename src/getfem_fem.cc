@@ -165,7 +165,7 @@ namespace getfem
   /* ******************************************************************** */
 
   enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
-		  LAGRANGE_NONCONFORMING, GLOBAL_DOF};
+		  LAGRANGE_NONCONFORMING, GLOBAL_DOF, SECOND_DERIVATIVE};
 
   struct ddl_elem {
     ddl_type t;
@@ -303,6 +303,16 @@ namespace getfem
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
     l.ddl_desc[num_der] = ddl_elem(DERIVATIVE);
+    return &(tab[tab.add_norepeat(l)]);
+  }
+
+  pdof_description second_derivative_dof(dim_type n, dim_type num_der1, dim_type num_der2) {
+    dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
+    dof_description l;
+    l.ddl_desc.resize(n);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
+    l.ddl_desc[num_der1] = ddl_elem(SECOND_DERIVATIVE);
+    l.ddl_desc[num_der2] = ddl_elem(SECOND_DERIVATIVE);
     return &(tab[tab.add_norepeat(l)]);
   }
 
@@ -1162,7 +1172,6 @@ namespace getfem
     if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(2), K);
     M(6, 6) = K(0,0); M(6, 9) = K(0,1); M(9, 6) = K(1,0); M(9, 9) = K(1,1);
 
-    // cout << "M = " << M << endl;
   }
 
   hermite_triangle__::hermite_triangle__(void) { 
@@ -1217,6 +1226,168 @@ namespace getfem
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
     virtual_fem *p = new hermite_triangle__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+
+  /* ******************************************************************** */
+  /*    Argyris element on the triangle                                   */
+  /* ******************************************************************** */
+
+  struct argyris_triangle__ : public fem<base_poly> {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    argyris_triangle__(void);
+  };
+
+  void argyris_triangle__::mat_trans(base_matrix &M,
+				    const base_matrix &G,
+				    bgeot::pgeometric_trans pgt) const {
+    static bgeot::pgeotrans_precomp pgp;
+    static pfem_precomp pfp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(2, 2);
+    dim_type N = G.nrows();
+
+    if (N != 2) DAL_THROW(failure_error, "Sorry, this version of argyris "
+			  "element works only on dimension two.")
+
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+
+    if (!(pgt->is_linear())) DAL_THROW(to_be_done_error, "Non linear transformations make that "
+				       " function having a non zero gradient have a non zero hessian");
+
+
+    // gradient at point (0, 0)
+    gmm::mult(G, pgp->grad(0), K);
+    M(3, 3) = K(0,0); M(3, 6) = K(0,1); M(6, 3) = K(1,0); M(6, 6) = K(1,1);
+    
+    M(9,  9) = K(0,0)*K(0,0); M(9, 12) = K(0,0)*K(0,1);  M(9, 15) = K(0,1)*K(0,1);
+    M(12, 9) = 2.0*K(0,0)*K(1,0); M(12, 12) = K(0,1)*K(1,0) + K(0,0)*K(1,1);  M(12, 15) = 2.0*K(0,1)*K(1,1);
+    M(15, 9) = K(1,0)*K(1,0);  M(15, 12) = K(1,0)*K(1,1); M(15, 15) = K(1,1)*K(1,1); 
+    
+    // gradient at point (1, 0)
+    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(1), K);
+    M(4, 4) = K(0,0); M(4, 7) = K(0,1); M(7, 4) = K(1,0); M(7, 7) = K(1,1);
+    
+    M(10, 10) = K(0,0)*K(0,0); M(10, 13) = K(0,0)*K(0,1);  M(10, 16) = K(0,1)*K(0,1);
+    M(13, 10) = 2.0*K(0,0)*K(1,0); M(13, 13) = K(0,1)*K(1,0) + K(0,0)*K(1,1);  M(13, 16) = 2.0*K(0,1)*K(1,1);
+    M(16, 10) = K(1,0)*K(1,0);  M(16, 13) = K(1,0)*K(1,1); M(16, 16) = K(1,1)*K(1,1); 
+    
+    // gradient at point (0, 1)
+    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(2), K);
+    M(5, 5) = K(0,0); M(5, 8) = K(0,1); M(8, 5) = K(1,0); M(8, 8) = K(1,1);
+
+    M(11, 11) = K(0,0)*K(0,0); M(11, 14) = K(0,0)*K(0,1);  M(11, 17) = K(0,1)*K(0,1);
+    M(14, 11) = 2.0*K(0,0)*K(1,0); M(14, 14) = K(0,1)*K(1,0) + K(0,0)*K(1,1);  M(14, 17) = 2.0*K(0,1)*K(1,1);
+    M(17, 11) = K(1,0)*K(1,0);  M(17, 14) = K(1,0)*K(1,1); M(17, 17) = K(1,1)*K(1,1);
+
+    
+    static base_matrix W(3, 21);
+    static base_small_vector norient(M_PI, M_PI * M_PI);
+    if (pgt->is_linear()) gmm::lu_inverse(K); 
+    for (unsigned i = 18; i < 21; ++i) {
+      if (!(pgt->is_linear())) { gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+      bgeot::base_small_vector n(2), v(2);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i-18], n);
+      n /= gmm::vect_norm2(n);
+
+      scalar_type ps = gmm::vect_sp(n, norient);
+      if (ps < 0) n *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("Argyris : The normal orientation may not be correct");
+      gmm::mult(K, n, v);
+      const bgeot::base_tensor &t = pfp->grad(i);
+      for (unsigned j = 0; j < 21; ++j)
+	W(i-18, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+    }
+    
+    static base_matrix A(3, 3);
+    static bgeot::base_vector w(3), coeff(3);
+    static gmm::sub_interval SUBI(18, 3), SUBJ(0, 3);
+    gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
+    gmm::lu_inverse(A);
+    gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
+
+    for (unsigned j = 0; j < 18; ++j) {
+      gmm::mult(W, gmm::mat_row(M, j), w);
+      gmm::mult(A, gmm::scaled(w, -1.0), coeff);
+      gmm::copy(coeff, gmm::sub_vector(gmm::mat_row(M, j), SUBI));
+    }
+    
+  }
+
+  argyris_triangle__::argyris_triangle__(void) { 
+    base_poly one(2, 0), x(2, 1, 0), y(2, 1, 1); one.one();
+    cvr = bgeot::simplex_of_reference(2);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = 3;
+    is_pol = true;
+    is_lag = false;
+    is_equiv = false; 
+    base_.resize(21);
+
+    add_node(lagrange_dof(2), base_node(0.0, 0.0));
+    base_[0]=one - 10*x*x*x - 10*y*y*y + 15*x*x*x*x - 30*x*x*y*y
+      + 15*y*y*y*y - 6*x*x*x*x*x + 30*x*x*x*y*y + 30*x*x*y*y*y - 6*y*y*y*y*y;
+    add_node(lagrange_dof(2), base_node(1.0, 0.0));
+    base_[1]=10*x*x*x - 15*x*x*x*x + 15*x*x*y*y + 6*x*x*x*x*x - 15*x*x*x*y*y - 15*x*x*y*y*y;
+    add_node(lagrange_dof(2), base_node(0.0, 1.0));
+    base_[2]=10*y*y*y + 15*x*x*y*y - 15*y*y*y*y - 15*x*x*x*y*y - 15*x*x*y*y*y + 6*y*y*y*y*y;
+    add_node(derivative_dof(2, 0), base_node(0.0, 0.0));    
+    base_[3]=x - 6*x*x*x - 11*x*y*y + 8*x*x*x*x + 10*x*x*y*y
+      + 18*x*y*y*y - 3*x*x*x*x*x + x*x*x*y*y - 10*x*x*y*y*y - 8*x*y*y*y*y;
+    add_node(derivative_dof(2, 0), base_node(1.0, 0.0));
+    base_[4]=-4*x*x*x + 7*x*x*x*x - 3.5*x*x*y*y - 3*x*x*x*x*x + 3.5*x*x*x*y*y + 3.5*x*x*y*y*y;
+    add_node(derivative_dof(2, 0), base_node(0.0, 1.0));
+    base_[5]=-5*x*y*y + 18.5*x*x*y*y + 14*x*y*y*y - 13.5*x*x*x*y*y - 18.5*x*x*y*y*y - 8*x*y*y*y*y;
+    add_node(derivative_dof(2, 1), base_node(0.0, 0.0));
+    base_[6]=y - 11*x*x*y - 6*y*y*y + 18*x*x*x*y + 10*x*x*y*y
+      + 8*y*y*y*y - 8*x*x*x*x*y - 10*x*x*x*y*y + x*x*y*y*y - 3*y*y*y*y*y;
+    add_node(derivative_dof(2, 1), base_node(1.0, 0.0));
+    base_[7]=-5*x*x*y + 14*x*x*x*y + 18.5*x*x*y*y - 8*x*x*x*x*y - 18.5*x*x*x*y*y - 13.5*x*x*y*y*y;
+    add_node(derivative_dof(2, 1), base_node(0.0, 1.0));
+    base_[8]=-4*y*y*y - 3.5*x*x*y*y + 7*y*y*y*y + 3.5*x*x*x*y*y + 3.5*x*x*y*y*y - 3*y*y*y*y*y;
+    add_node(second_derivative_dof(2, 0, 0), base_node(0.0, 0.0));
+    base_[9]=0.5*x*x - 1.5*x*x*x + 1.5*x*x*x*x - 1.5*x*x*y*y - 0.5*x*x*x*x*x + 1.5*x*x*x*y*y + x*x*y*y*y;
+    add_node(second_derivative_dof(2, 0, 0), base_node(1.0, 0.0));
+    base_[10]=0.5*x*x*x - x*x*x*x + 0.25*x*x*y*y + 0.5*x*x*x*x*x - 0.25*x*x*x*y*y - 0.25*x*x*y*y*y;
+    add_node(second_derivative_dof(2, 0, 0), base_node(0.0, 1.0));
+    base_[11]=1.25*x*x*y*y - 1.25*x*x*x*y*y - 0.75*x*x*y*y*y;
+    add_node(second_derivative_dof(2, 1, 0), base_node(0.0, 0.0));
+    base_[12]=x*y - 4*x*x*y - 4*x*y*y + 5*x*x*x*y + 10*x*x*y*y
+      + 5*x*y*y*y - 2*x*x*x*x*y - 6*x*x*x*y*y - 6*x*x*y*y*y - 2*x*y*y*y*y;
+    add_node(second_derivative_dof(2, 1, 0), base_node(1.0, 0.0));
+    base_[13]=x*x*y - 3*x*x*x*y - 3.5*x*x*y*y + 2*x*x*x*x*y + 3.5*x*x*x*y*y + 2.5*x*x*y*y*y;
+    add_node(second_derivative_dof(2, 1, 0), base_node(0.0, 1.0));
+    base_[14]=x*y*y - 3.5*x*x*y*y - 3*x*y*y*y + 2.5*x*x*x*y*y + 3.5*x*x*y*y*y + 2*x*y*y*y*y;
+    add_node(second_derivative_dof(2, 0, 1), base_node(0.0, 0.0));
+    base_[15]=0.5*y*y - 1.5*y*y*y - 1.5*x*x*y*y + 1.5*y*y*y*y + x*x*x*y*y + 1.5*x*x*y*y*y - 0.5*y*y*y*y*y;
+    add_node(second_derivative_dof(2, 0, 1), base_node(1.0, 0.0));
+    base_[16]=1.25*x*x*y*y - 0.75*x*x*x*y*y - 1.25*x*x*y*y*y;
+    add_node(second_derivative_dof(2, 0, 1), base_node(0.0, 1.0));
+    base_[17]=0.5*y*y*y + 0.25*x*x*y*y - y*y*y*y - 0.25*x*x*x*y*y - 0.25*x*x*y*y*y + 0.5*y*y*y*y*y;
+    add_node(norm_derivative_dof(2), base_node(0.5, 0.5));
+    base_[18]=::sqrt(2) * (-8*x*x*y*y + 8*x*x*x*y*y + 8*x*x*y*y*y);
+    add_node(norm_derivative_dof(2), base_node(0.0, 0.5));
+    base_[19]=-16*x*y*y + 32*x*x*y*y + 32*x*y*y*y - 16*x*x*x*y*y - 32*x*x*y*y*y - 16*x*y*y*y*y;
+    add_node(norm_derivative_dof(2), base_node(0.5, 0.0));
+    base_[20]=-16*x*x*y + 32*x*x*x*y + 32*x*x*y*y - 16*x*x*x*x*y - 32*x*x*x*y*y - 16*x*x*y*y*y;
+  }
+
+  static pfem triangle_Argyris_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    virtual_fem *p = new argyris_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1399,6 +1570,7 @@ namespace getfem
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
       add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
       add_suffix("HERMITE_TRIANGLE", triangle_Hermite_fem);
+      add_suffix("ARGYRIS", triangle_Argyris_fem);
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);

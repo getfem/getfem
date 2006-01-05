@@ -176,12 +176,12 @@ namespace dal {
 #  define DAL_PRETTY_FUNCTION ""
 #endif
 
-#define DAL_THROW(type, thestr) {                                    \
-    std::stringstream msg;                                           \
-    msg << "Error in "__FILE__ << ", line "                          \
+#define DAL_THROW(type, thestr) {					\
+    std::stringstream msg;						\
+    msg << "Error in "__FILE__ << ", line "				\
         << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": \n" << thestr << ends; \
-    dal::exception_callback::do_exception_callback(msg.str());       \
-    throw (type)(msg.str());                                         \
+    dal::exception_callback::do_exception_callback(msg.str());		\
+    throw (type)(msg.str());						\
   }
 
 #ifdef DEBUG_MODE
@@ -219,8 +219,7 @@ namespace dal {
 #define DAL_WARNING_MSG(level_, thestr)  {			       \
       std::stringstream msg;                                           \
       msg << "Level " << level_ << " Warning in "__FILE__ << ", line " \
-          << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": " << thestr  \
-          << ends;						       \
+          << __LINE__ << ": " << thestr << ends;		       \
        std::cerr << msg.str() << std::endl;                            \
     }
 

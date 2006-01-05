@@ -634,20 +634,46 @@ $3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
   \caption{ \it Argyris element, $P_5$, 21 d.o.f., $C^1$}
   \label{fig:argyris}
 \end{figure}
-Not yet available
+
+The base functions on the reference element are:
+$$ \begin{array}{ll}
+\bar{\varphi}_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\bar{\varphi}_0(0,0) = 1), \\
+\bar{\varphi}_{1}(x,y) = 10x^3 - 15x^4 + 15x^2y^2 + 6x^5 - 15x^3y^2 - 15x^2y^3, & (\bar{\varphi}_1(1,0) = 1),\\
+\bar{\varphi}_{2}(x,y) = 10y^3 + 15x^2y^2 - 15y^4 - 15x^3y^2 - 15x^2y^3 + 6y^5, & (\bar{\varphi}_2(0,1) = 1),\\
+\bar{\varphi}_{3}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\bar{\varphi}_3(0,0) = 1),\\
+\bar{\varphi}_{4}(x,y) = -4x^3 + 7x^4 - 3.5x^2y^2 - 3x^5 + 3.5x^3y^2 + 3.5x^2y^3, & (\partial_x\bar{\varphi}_4(1,0) = 1),\\
+\bar{\varphi}_{5}(x,y) = -5xy^2 + 18.5x^2y^2 + 14xy^3 - 13.5x^3y^2 - 18.5x^2y^3 - 8xy^4, & (\partial_x\bar{\varphi}_5(0,1) = 1),\\
+\bar{\varphi}_{6}(x,y) = y - 11x^2y - 6y^3 + 18x^3y + 10x^2y^2 + 8y^4 - 8x^4y - 10x^3y^2 + x^2y^3 - 3y^5, & (\partial_y\bar{\varphi}_6(0,0) = 1),\\
+\bar{\varphi}_{7}(x,y) = -5x^2y + 14x^3y + 18.5x^2y^2 - 8x^4y - 18.5x^3y^2 - 13.5x^2y^3, & (\partial_y\bar{\varphi}_7(1,0) = 1),\\
+\bar{\varphi}_{8}(x,y) = -4y^3 - 3.5x^2y^2 + 7y^4 + 3.5x^3y^2 + 3.5x^2y^3 - 3y^5, & (\partial_y\bar{\varphi}_8(0,0) = 1),\\
+\bar{\varphi}_{9}(x,y) = 0.5x^2 - 1.5x^3 + 1.5x^4 - 1.5x^2y^2 - 0.5x^5 + 1.5x^3y^2 + x^2y^3, & (\partial^2_{xx}\bar{\varphi}_9(0,0) = 1),\\
+\bar{\varphi}_{10}(x,y) = 0.5x^3 - x^4 + 0.25x^2y^2 + 0.5x^5 - 0.25x^3y^2 - 0.25x^2y^3, & (\partial^2_{xx}\bar{\varphi}_{10}(1,0) = 1),\\
+\bar{\varphi}_{11}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\bar{\varphi}_{11}(0,1) = 1),\\
+\bar{\varphi}_{12}(x,y) = xy - 4x^2y - 4xy^2 + 5x^3y + 10x^2y^2 + 5xy^3 - 2x^4y - 6x^3y^2 - 6x^2y^3 - 2xy^4, & (\partial^2_{xy}\bar{\varphi}_{12}(0,0) = 1),\\
+\bar{\varphi}_{13}(x,y) = x^2y - 3x^3y - 3.5x^2y^2 + 2x^4y + 3.5x^3y^2 + 2.5x^2y^3, & (\partial^2_{xy}\bar{\varphi}_{13}(1,0) = 1),\\
+\bar{\varphi}_{14}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\bar{\varphi}_{14}(0,1) = 1),\\
+\bar{\varphi}_{15}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\bar{\varphi}_{15}(0,0) = 1),\\
+\bar{\varphi}_{16}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\bar{\varphi}_{16}(1,0) = 1),\\
+\bar{\varphi}_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\bar{\varphi}_{17}(0,1) = 1),\\
+\bar{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & (\partial_{x}\bar{\varphi}_0(1/2,1/2) + \partial_{y}\bar{\varphi}_{18}(1/2,1/2) = \sqrt{2),\\
+\bar{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\bar{\varphi}_{19}(0,1/2) = 1),\\
+\bar{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\bar{\varphi}_{20}(1/2,0) = 1),\\
+\end{array}
+$$
+
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\bar{\varphi}_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $\tilde{M}$ (see also the documentation on the finite element kernel \cite{BAS_COMP}) allows to define Argyris element even with nonlinear geometric transformations (for instace with curved boundaries).
+
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Argyris element on a triangle}\\
-Not yet available
+"FEM_ARGYRIS"
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
 $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
-
-This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\bar{\varphi}_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $\tilde{M}$ (see also the documentation on the finite element kernel \cite{BAS_COMP}) allows to define Argyris element even with nonlinear geometric transformations (for instace with curved boundaries).
 
 \subsection{Specific elements in dimension 3}
 \subsubsection{Elements with additional bubble functions}

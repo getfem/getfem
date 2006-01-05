@@ -146,30 +146,6 @@ void laplacian_problem::init(void) {
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
-//   // pour "voir" les fct de forme de l'elt d'hermite 2D ...  
-//   for (size_type ii = 0; ii < mf_u.nb_dof(); ++ii) {
-//     std::vector<scalar_type> VV(mf_u.nb_dof());
-
-//     mf_rhs.set_finite_element(mesh.convex_index(), 
-// 		    getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
-
-//     std::vector<scalar_type> WW(2*mf_rhs.nb_dof());
-  
-//     VV[ii] = 1.0;
-//     getfem::compute_gradient(mf_u, mf_rhs, VV, WW);
- 
-//     mf_rhs.set_finite_element(mesh.convex_index(), 
-// 			      getfem::fem_descriptor("FEM_PK(2,5)"));
-
-//     std::vector<scalar_type> WWW(mf_rhs.nb_dof());
-//     getfem::interpolation(mf_u, mf_rhs, VV, WWW);
-//    cout << "ii = " << ii << " point " << mf_u.point_of_dof(ii)
-// 	 << " WW = " << WW << " WWW = " << WWW << endl;
-
-//     getchar();
-
-//   }
-
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -273,6 +249,8 @@ void laplacian_problem::assembly(void)
     // , getfem::ASMDIR_BUILDR | getfem::ASMDIR_BUILDH);    
     
     gmm::clean(H, 1e-12);
+//     cout << "H = " << H << endl;
+//     cout << "R = " << R << endl;
     int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
     // cout << "Number of irreductible unknowns : " << nbcols << endl;
     gmm::resize(NS, gmm::mat_ncols(H),nbcols);
