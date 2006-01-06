@@ -158,7 +158,8 @@ namespace getfem {
   }
 
   template<typename VEC, typename T>
-  scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+  scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+				   const VEC &U,
 				   const mesh_region &rg, std::complex<T>) {
     return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
       asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
@@ -169,7 +170,8 @@ namespace getfem {
   scalar_type asm_H1_semi_dist(const mesh_im &mim, 
 			       const mesh_fem &mf1, const VEC1 &U1,
 			       const mesh_fem &mf2, const VEC2 &U2,
-			       const mesh_region &rg = mesh_region::all_convexes()) {    
+			       const mesh_region &rg
+			       = mesh_region::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -197,8 +199,10 @@ namespace getfem {
       @ingroup asm
   */
   template<typename VEC>
-  scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const mesh_region &rg = mesh_region::all_convexes()) {
+  scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf,
+			  const VEC &U,
+			  const mesh_region &rg
+			  = mesh_region::all_convexes()) {
     return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, rg))
 		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, rg)));
   }
@@ -211,7 +215,8 @@ namespace getfem {
   scalar_type asm_H1_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
 			  const mesh_fem &mf2, const VEC2 &U2,
-			  const mesh_region &rg = mesh_region::all_convexes()) {
+			  const mesh_region &rg
+			  = mesh_region::all_convexes()) {
     return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
 		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
   }
@@ -222,7 +227,8 @@ namespace getfem {
      @ingroup asm
    */
   template<typename MAT>
-  void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
+  void asm_mass_matrix(const MAT &M, const mesh_im &mim,
+		       const mesh_fem &mf_u1,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
     asm_mass_matrix(const_cast<MAT &>(M), mim, mf_u1, mf_u1, rg);
   }
