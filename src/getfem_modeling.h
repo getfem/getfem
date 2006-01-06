@@ -49,6 +49,7 @@
 // MDBRICK_MIXED_LINEAR_PLATE    213456
 // MDBRICK_COULOMB_FRICTION      434245
 // MDBRICK_NAVIER_STOKES         394329
+// MDBRICK_BILAPLACIAN           783465
 //
 //==============================================
 
