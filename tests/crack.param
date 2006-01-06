@@ -23,7 +23,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 30;            	          % space step.
 
 
-MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
 FEM_TYPE = 'FEM_PK(2, 1)';  % PK element

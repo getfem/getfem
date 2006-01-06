@@ -25,7 +25,7 @@ NX =40 ; %5            	          % space step.
 NY =40 ; 
 NZ =5 ;
 
-MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
 FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles

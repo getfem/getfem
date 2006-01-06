@@ -5,11 +5,11 @@
 // File    : dal_static_stored_objects.h : object which should be stored.
 //           
 // Date    : February 19, 2005
-// Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
+// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 2002-2005 Yves Renard
+// Copyright (C) 2002-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //

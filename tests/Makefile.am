@@ -37,7 +37,8 @@ check_PROGRAMS =                 \
 	schwarz_additive         \
 	$(optprogs)              \
 	plasticity               \
-	dynamic_friction
+	dynamic_friction         \
+	bilaplacian
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -82,6 +83,7 @@ crackPlate_SOURCES = crackPlate.cc
 endif
 #test_fem_SOURCES = test_fem.cc
 dynamic_friction_SOURCES = dynamic_friction.cc
+bilaplacian_SOURCES = bilaplacian.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
 MUMPS_LIBS = @MUMPS_LIBS@
@@ -121,6 +123,7 @@ TESTS = \
 	$(top_srcdir)/tests/plasticity.pl              \
 	$(top_srcdir)/tests/helmholtz.pl               \
 	$(top_srcdir)/tests/schwarz_additive.pl        \
+	$(top_srcdir)/tests/bilaplacian.pl    	       \
 	$(top_srcdir)/tests/make_gmm_test.pl     
 
 EXTRA_DIST = \
@@ -151,6 +154,8 @@ EXTRA_DIST = \
 	crack.param                       \
 	crackPlate.param                  \
 	laplacian.param                   \
+	bilaplacian.param                 \
+	bilaplacian.pl                    \
 	plate.param                       \
 	plate.pl                          \
 	schwarz_additive.pl               \

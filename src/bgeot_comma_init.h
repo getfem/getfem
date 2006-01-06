@@ -9,7 +9,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 2003-2005 Julien Pommier
+// Copyright (C) 2003-2006 Julien Pommier
 //
 // This file is a part of GETFEM++
 //

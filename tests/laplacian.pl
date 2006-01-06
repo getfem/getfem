@@ -13,7 +13,7 @@ INCLINE = 0;                      % Incline of the mesh.
 FT = 0.1;                         % parameter for the exact solution.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 50;            	          % space step.
-MESH_NOISE = 1;                   % Set to one if you want to "shake" the mesh
+MESH_NOISED = 1;                   % Set to one if you want to "shake" the mesh
 FEM_TYPE = 'FEM_PK(2,1)';         % P1 for triangles
 INTEGRATION = 'IM_TRIANGLE(6)';   % quadrature rule for polynomials up
                                   % to degree 6 on triangles

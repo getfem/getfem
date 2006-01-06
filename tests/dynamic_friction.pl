@@ -18,7 +18,7 @@ T = 0.05;
 DT = 0.001;             % Time step
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 10;            	          % space step.
-MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;         % Set to one if you want to "shake" the mesh
 RESIDUAL = 1E-9;     	% residu for Newton.
 NOISY = 0;
 SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point

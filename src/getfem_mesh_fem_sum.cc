@@ -2,7 +2,7 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_level_set.cc : definition of a finite element
+// File    : getfem_mesh_fem_sum.cc : definition of a finite element
 //           method reprensenting a direct sum of two mesh_fem.
 // Date    : March 18, 2005..
 // Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
@@ -10,7 +10,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard
+// Copyright (C) 1999-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //

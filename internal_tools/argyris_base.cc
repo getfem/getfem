@@ -113,6 +113,7 @@ int main(void) {
   gmm::clean(M, 1E-10);
   cout << "inv M = " << M << endl;
 
+  cout.precision(13);
   
   for (int i = 0; i < 21; ++i) {
     bgeot::base_poly p(2,5);

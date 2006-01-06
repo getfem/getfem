@@ -5,12 +5,12 @@
 // File    : getfem_mesh_fem_level_set.cc : definition of a finite element
 //           method reprensenting a discontinous field across some level sets.
 // Date    : March 09, 2005.
-// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
-//           Julien Pommier <Julien.Pommier@insa-toulouse.fr>           
+// Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
+//           Julien Pommier <Julien.Pommier@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 2004-2005 Yves Renard
+// Copyright (C) 2004-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //

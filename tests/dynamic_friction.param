@@ -22,7 +22,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % MESH_TYPE = 'GT_QK(3,1)';       % 
 % MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
 NX = 10;            	          % space step.
-MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;         % Set to one if you want to "shake" the mesh
 RESIDUAL = 1E-8;     	% residu for Newton.
 NOISY = 0;
 

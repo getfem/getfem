@@ -2,7 +2,7 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_level_set.cc : Dealing with level set representation.
+// File    : getfem_fem_level_set.cc : Dealing with level set representation.
 //           
 // Date    : January 31, 2005.
 // Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
@@ -10,7 +10,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard
+// Copyright (C) 1999-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //

@@ -10,7 +10,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 2000-2005 Yves Renard
+// Copyright (C) 2000-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -264,53 +264,52 @@ namespace getfem {
     (the most common here for the assembly routines below)
   */
   template <typename MAT, typename VECT>
-  void asm_matrix_real_or_complex_1_param(MAT &M, 
-					  const mesh_im &mim, 
-					  const mesh_fem &mf_u,
-					  const mesh_fem &mf_data,
-					  const VECT &A, 
-					  const mesh_region &rg,
-					  const char *assembly_description) {
-    asm_matrix_real_or_complex_1_param_(M, mim, mf_u, mf_data, A, rg, 
-					assembly_description,
-					typename gmm::linalg_traits<VECT>::value_type());
+  void asm_real_or_complex_1_param(MAT &M, 
+				   const mesh_im &mim, 
+				   const mesh_fem &mf_u,
+				   const mesh_fem &mf_data,
+				   const VECT &A, 
+				   const mesh_region &rg,
+				   const char *assembly_description) {
+    asm_real_or_complex_1_param_(M, mim, mf_u, mf_data, A, rg, 
+				 assembly_description,
+				 typename gmm::linalg_traits<VECT>::value_type());
   }
 
   /* real version */
   template<typename MAT, typename VECT, typename T>
-  void asm_matrix_real_or_complex_1_param_(const MAT &M, 
-					   const mesh_im &mim, 
-					   const mesh_fem &mf_u,
-					   const mesh_fem &mf_data,
-					   const VECT &A, 
-					   const mesh_region &rg,
-					   const char *assembly_description,
-					   T) {
+  void asm_real_or_complex_1_param_(const MAT &M, 
+				    const mesh_im &mim, 
+				    const mesh_fem &mf_u,
+				    const mesh_fem &mf_data,
+				    const VECT &A, 
+				    const mesh_region &rg,
+				    const char *assembly_description, T) {
     generic_assembly assem(assembly_description);
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_data);
     assem.push_data(A);
-    assem.push_mat(const_cast<MAT&>(M));
+    assem.push_mat_or_vec(const_cast<MAT&>(M));
     assem.assembly(rg);
   }
 
   /* complex version */
   template<typename MAT, typename VECT, typename T>
-  void asm_matrix_real_or_complex_1_param_(MAT &M, 
-					   const mesh_im &mim, 
-					   const mesh_fem &mf_u,
-					   const mesh_fem &mf_data,
-					   const VECT &A, 
-					   const mesh_region &rg,
-					   const char *assembly_description,
-					   std::complex<T>) {
-    asm_matrix_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
-					gmm::real_part(A),rg,
-					assembly_description, T());
-    asm_matrix_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
-					gmm::imag_part(A),rg,
-					assembly_description, T());
+  void asm_real_or_complex_1_param_(MAT &M, 
+				    const mesh_im &mim, 
+				    const mesh_fem &mf_u,
+				    const mesh_fem &mf_data,
+				    const VECT &A, 
+				    const mesh_region &rg,
+				    const char *assembly_description,
+				    std::complex<T>) {
+    asm_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
+				 gmm::real_part(A),rg,
+				 assembly_description, T());
+    asm_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
+				 gmm::imag_part(A),rg,
+				 assembly_description, T());
   }
 
   
@@ -329,8 +328,8 @@ namespace getfem {
     const char *s1 = "F=data(#2); M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))";
     const char *s2 = "F=data(#2); M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).F(j));";
 
-    asm_matrix_real_or_complex_1_param(M,mim,mf_u,mf_data,F,rg,
-				       (mf_u.get_qdim() == 1) ? s1 : s2);
+    asm_real_or_complex_1_param(M,mim,mf_u,mf_data,F,rg,
+				(mf_u.get_qdim() == 1) ? s1 : s2);
   }
 
 
@@ -344,39 +343,16 @@ namespace getfem {
 		       const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_source_term_(B, mim, mf, mf_data, F, rg,
-		     typename gmm::linalg_traits<VECT2>::value_type());
-  }
 
-
-  /* real version. */
-  template<typename VECT1, typename VECT2, typename T>
-  void asm_source_term_(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-			const mesh_fem &mf_data, const VECT2 &F,
-		       const mesh_region &rg, T) {
-    generic_assembly assem;
+    const char *st;
     if (mf.get_qdim() == 1)
-      assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
+      st = "F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);";
     else
-      assem.set("F=data(qdim(#1),#2);"
-		"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_mf(mf_data);
-    assem.push_data(F);
-    assem.push_vec(const_cast<VECT1&>(B));
-    assem.assembly(rg);
+      st = "F=data(qdim(#1),#2);"
+	"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);";
+    
+    asm_real_or_complex_1_param(B,mim,mf,mf_data,F,rg,st);
   }
-
-  /* complex version. */
-  template<typename VECT1, typename VECT2, typename T>
-  void asm_source_term_(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-		       const mesh_fem &mf_data, const VECT2 &F,
-		       const mesh_region &rg, std::complex<T>) {
-    asm_source_term_(gmm::real_part(B), mim, mf, mf_data, gmm::real_part(F), rg, T());
-    asm_source_term_(gmm::imag_part(B), mim, mf, mf_data, gmm::imag_part(F), rg, T());
-  }
-
 
   template <typename V> bool is_Q_symmetric(const V& Q, size_type q, size_type nbd) {
     /* detect the symmetricity of Q (in that case the symmetricity of
@@ -432,7 +408,7 @@ namespace getfem {
         asm_str = "Q=data$1(qdim(#1),qdim(#1),#2);"
 		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))"
 		  "(:,i,:,j,k).Q(i,j,k);";
-    asm_matrix_real_or_complex_1_param(M, mim, mf_u, mf_d, Q, rg, asm_str);
+    asm_real_or_complex_1_param(M, mim, mf_u, mf_d, Q, rg, asm_str);
   }
 
   /** 
@@ -547,7 +523,7 @@ namespace getfem {
   }
 
   /**
-     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$.
+     assembly of @f$\int_\Omega \nabla u.\nabla v@f$.
 
      @ingroup asm
    */
@@ -563,6 +539,7 @@ namespace getfem {
     assem.push_mat(M);
     assem.assembly(rg);
   }
+
 
   /**
      assembly of @f$\int_\Omega \nabla u.\nabla v@f$.
@@ -593,9 +570,9 @@ namespace getfem {
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_matrix_real_or_complex_1_param(M, mim, mf, mf_data, A, rg, 
-				       "a=data$1(#2); M$1(#1,#1)+="
-				       "sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
+    asm_real_or_complex_1_param(M, mim, mf, mf_data, A, rg, 
+				"a=data$1(#2); M$1(#1,#1)+="
+				"sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
   }
   
 
@@ -612,9 +589,9 @@ namespace getfem {
 		    const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_matrix_real_or_complex_1_param(M, mim, mf, mf_data, A, rg,
-				       "a=data$1(#2); M$1(#1,#1)+="
-				       "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,k,i,:,k,i,j).a(j))");
+    asm_real_or_complex_1_param(M, mim, mf, mf_data, A, rg,
+				"a=data$1(#2); M$1(#1,#1)+="
+				"sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,k,i,:,k,i,j).a(j))");
   }
 
   /**
@@ -650,10 +627,10 @@ namespace getfem {
   {
     /*if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
-    asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
-				       "a=data$1(mdim(#1),mdim(#1),#2);"
-				       "M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
-				       "(:,i,:,j,k).a(j,i,k)");
+    asm_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
+				"a=data$1(mdim(#1),mdim(#1),#2);"
+				"M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
+				"(:,i,:,j,k).a(j,i,k)");
   }
 
 
@@ -667,10 +644,10 @@ namespace getfem {
   {
     /*if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
-    asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
-				       "a=data$1(mdim(#1),mdim(#1),#2);"
-				       "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
-				       "(:,l,i,:,l,j,k).a(j,i,k)");
+    asm_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
+				"a=data$1(mdim(#1),mdim(#1),#2);"
+				"M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
+				"(:,l,i,:,l,j,k).a(j,i,k)");
   }
 
   /**
@@ -689,10 +666,10 @@ namespace getfem {
     /* 
        M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
     */
-    asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg, 
-				       "a=data$1(mdim(#1),mdim(#1),mdim(#1),mdim(#1),#2);"
-				       "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-				       "M(#1,#1)+= sym(t(:,i,j,:,k,l,p).a(i,j,k,l,p))");
+    asm_real_or_complex_1_param(M,mim,mf,mf_data,A,rg, 
+				"a=data$1(mdim(#1),mdim(#1),mdim(#1),mdim(#1),#2);"
+				"t=comp(vGrad(#1).vGrad(#1).Base(#2));"
+				"M(#1,#1)+= sym(t(:,i,j,:,k,l,p).a(i,j,k,l,p))");
   }
 
 

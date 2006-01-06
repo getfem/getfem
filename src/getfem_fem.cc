@@ -1263,7 +1263,8 @@ namespace getfem
       if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(k), K);
       M(3+k, 3+k) = K(0,0); M(3+k, 6+k) = K(0,1); M(6+k, 3+k) = K(1,0); M(6+k, 6+k) = K(1,1);
       if (!(pgt->is_linear())) {
-	base_matrix XX[2], H(2,4), B(2,2), X(2,2); XX[0] = XX[1] = base_matrix(2,2);
+	base_matrix XX[2], H(2,4), B(2,2), X(2,2);
+	XX[0] = XX[1] = base_matrix(2,2);
 	gmm::copy(gmm::transposed(K), B); gmm::lu_inverse(B);
 	gmm::mult(G, pgp->hessian(k), H);
 	for (unsigned j = 0; j < 2; ++j) {
@@ -1313,7 +1314,6 @@ namespace getfem
       gmm::mult(A, gmm::scaled(w, -1.0), coeff);
       gmm::copy(coeff, gmm::sub_vector(gmm::mat_row(M, j), SUBI));
     }
-    
   }
 
   argyris_triangle__::argyris_triangle__(void) { 
@@ -1331,48 +1331,62 @@ namespace getfem
     base_[0]=one - 10*x*x*x - 10*y*y*y + 15*x*x*x*x - 30*x*x*y*y
       + 15*y*y*y*y - 6*x*x*x*x*x + 30*x*x*x*y*y + 30*x*x*y*y*y - 6*y*y*y*y*y;
     add_node(lagrange_dof(2), base_node(1.0, 0.0));
-    base_[1]=10*x*x*x - 15*x*x*x*x + 15*x*x*y*y + 6*x*x*x*x*x - 15*x*x*x*y*y - 15*x*x*y*y*y;
+    base_[1]=10*x*x*x - 15*x*x*x*x + 15*x*x*y*y + 6*x*x*x*x*x - 15*x*x*x*y*y
+      - 15*x*x*y*y*y;
     add_node(lagrange_dof(2), base_node(0.0, 1.0));
-    base_[2]=10*y*y*y + 15*x*x*y*y - 15*y*y*y*y - 15*x*x*x*y*y - 15*x*x*y*y*y + 6*y*y*y*y*y;
+    base_[2]=10*y*y*y + 15*x*x*y*y - 15*y*y*y*y - 15*x*x*x*y*y - 15*x*x*y*y*y
+      + 6*y*y*y*y*y;
     add_node(derivative_dof(2, 0), base_node(0.0, 0.0));    
     base_[3]=x - 6*x*x*x - 11*x*y*y + 8*x*x*x*x + 10*x*x*y*y
       + 18*x*y*y*y - 3*x*x*x*x*x + x*x*x*y*y - 10*x*x*y*y*y - 8*x*y*y*y*y;
     add_node(derivative_dof(2, 0), base_node(1.0, 0.0));
-    base_[4]=-4*x*x*x + 7*x*x*x*x - 3.5*x*x*y*y - 3*x*x*x*x*x + 3.5*x*x*x*y*y + 3.5*x*x*y*y*y;
+    base_[4]=-4*x*x*x + 7*x*x*x*x - 3.5*x*x*y*y - 3*x*x*x*x*x + 3.5*x*x*x*y*y
+      + 3.5*x*x*y*y*y;
     add_node(derivative_dof(2, 0), base_node(0.0, 1.0));
-    base_[5]=-5*x*y*y + 18.5*x*x*y*y + 14*x*y*y*y - 13.5*x*x*x*y*y - 18.5*x*x*y*y*y - 8*x*y*y*y*y;
+    base_[5]=-5*x*y*y + 18.5*x*x*y*y + 14*x*y*y*y - 13.5*x*x*x*y*y
+      - 18.5*x*x*y*y*y - 8*x*y*y*y*y;
     add_node(derivative_dof(2, 1), base_node(0.0, 0.0));
     base_[6]=y - 11*x*x*y - 6*y*y*y + 18*x*x*x*y + 10*x*x*y*y
       + 8*y*y*y*y - 8*x*x*x*x*y - 10*x*x*x*y*y + x*x*y*y*y - 3*y*y*y*y*y;
     add_node(derivative_dof(2, 1), base_node(1.0, 0.0));
-    base_[7]=-5*x*x*y + 14*x*x*x*y + 18.5*x*x*y*y - 8*x*x*x*x*y - 18.5*x*x*x*y*y - 13.5*x*x*y*y*y;
+    base_[7]=-5*x*x*y + 14*x*x*x*y + 18.5*x*x*y*y - 8*x*x*x*x*y
+      - 18.5*x*x*x*y*y - 13.5*x*x*y*y*y;
     add_node(derivative_dof(2, 1), base_node(0.0, 1.0));
-    base_[8]=-4*y*y*y - 3.5*x*x*y*y + 7*y*y*y*y + 3.5*x*x*x*y*y + 3.5*x*x*y*y*y - 3*y*y*y*y*y;
+    base_[8]=-4*y*y*y - 3.5*x*x*y*y + 7*y*y*y*y + 3.5*x*x*x*y*y
+      + 3.5*x*x*y*y*y - 3*y*y*y*y*y;
     add_node(second_derivative_dof(2, 0, 0), base_node(0.0, 0.0));
-    base_[9]=0.5*x*x - 1.5*x*x*x + 1.5*x*x*x*x - 1.5*x*x*y*y - 0.5*x*x*x*x*x + 1.5*x*x*x*y*y + x*x*y*y*y;
+    base_[9]=0.5*x*x - 1.5*x*x*x + 1.5*x*x*x*x - 1.5*x*x*y*y
+      - 0.5*x*x*x*x*x + 1.5*x*x*x*y*y + x*x*y*y*y;
     add_node(second_derivative_dof(2, 0, 0), base_node(1.0, 0.0));
-    base_[10]=0.5*x*x*x - x*x*x*x + 0.25*x*x*y*y + 0.5*x*x*x*x*x - 0.25*x*x*x*y*y - 0.25*x*x*y*y*y;
+    base_[10]=0.5*x*x*x - x*x*x*x + 0.25*x*x*y*y + 0.5*x*x*x*x*x
+      - 0.25*x*x*x*y*y - 0.25*x*x*y*y*y;
     add_node(second_derivative_dof(2, 0, 0), base_node(0.0, 1.0));
     base_[11]=1.25*x*x*y*y - 1.25*x*x*x*y*y - 0.75*x*x*y*y*y;
     add_node(second_derivative_dof(2, 1, 0), base_node(0.0, 0.0));
     base_[12]=x*y - 4*x*x*y - 4*x*y*y + 5*x*x*x*y + 10*x*x*y*y
       + 5*x*y*y*y - 2*x*x*x*x*y - 6*x*x*x*y*y - 6*x*x*y*y*y - 2*x*y*y*y*y;
     add_node(second_derivative_dof(2, 1, 0), base_node(1.0, 0.0));
-    base_[13]=x*x*y - 3*x*x*x*y - 3.5*x*x*y*y + 2*x*x*x*x*y + 3.5*x*x*x*y*y + 2.5*x*x*y*y*y;
+    base_[13]=x*x*y - 3*x*x*x*y - 3.5*x*x*y*y + 2*x*x*x*x*y + 3.5*x*x*x*y*y
+      + 2.5*x*x*y*y*y;
     add_node(second_derivative_dof(2, 1, 0), base_node(0.0, 1.0));
-    base_[14]=x*y*y - 3.5*x*x*y*y - 3*x*y*y*y + 2.5*x*x*x*y*y + 3.5*x*x*y*y*y + 2*x*y*y*y*y;
-    add_node(second_derivative_dof(2, 0, 1), base_node(0.0, 0.0));
-    base_[15]=0.5*y*y - 1.5*y*y*y - 1.5*x*x*y*y + 1.5*y*y*y*y + x*x*x*y*y + 1.5*x*x*y*y*y - 0.5*y*y*y*y*y;
-    add_node(second_derivative_dof(2, 0, 1), base_node(1.0, 0.0));
+    base_[14]=x*y*y - 3.5*x*x*y*y - 3*x*y*y*y + 2.5*x*x*x*y*y + 3.5*x*x*y*y*y
+      + 2*x*y*y*y*y;
+    add_node(second_derivative_dof(2, 1, 1), base_node(0.0, 0.0));
+    base_[15]=0.5*y*y - 1.5*y*y*y - 1.5*x*x*y*y + 1.5*y*y*y*y + x*x*x*y*y
+      + 1.5*x*x*y*y*y - 0.5*y*y*y*y*y;
+    add_node(second_derivative_dof(2, 1, 1), base_node(1.0, 0.0));
     base_[16]=1.25*x*x*y*y - 0.75*x*x*x*y*y - 1.25*x*x*y*y*y;
-    add_node(second_derivative_dof(2, 0, 1), base_node(0.0, 1.0));
-    base_[17]=0.5*y*y*y + 0.25*x*x*y*y - y*y*y*y - 0.25*x*x*x*y*y - 0.25*x*x*y*y*y + 0.5*y*y*y*y*y;
+    add_node(second_derivative_dof(2, 1, 1), base_node(0.0, 1.0));
+    base_[17]=0.5*y*y*y + 0.25*x*x*y*y - y*y*y*y - 0.25*x*x*x*y*y
+      - 0.25*x*x*y*y*y + 0.5*y*y*y*y*y;
     add_node(norm_derivative_dof(2), base_node(0.5, 0.5));
     base_[18]=::sqrt(2) * (-8*x*x*y*y + 8*x*x*x*y*y + 8*x*x*y*y*y);
     add_node(norm_derivative_dof(2), base_node(0.0, 0.5));
-    base_[19]=-16*x*y*y + 32*x*x*y*y + 32*x*y*y*y - 16*x*x*x*y*y - 32*x*x*y*y*y - 16*x*y*y*y*y;
+    base_[19]=-16*x*y*y + 32*x*x*y*y + 32*x*y*y*y - 16*x*x*x*y*y
+      - 32*x*x*y*y*y - 16*x*y*y*y*y;
     add_node(norm_derivative_dof(2), base_node(0.5, 0.0));
-    base_[20]=-16*x*x*y + 32*x*x*x*y + 32*x*x*y*y - 16*x*x*x*x*y - 32*x*x*x*y*y - 16*x*x*y*y*y;
+    base_[20]=-16*x*x*y + 32*x*x*x*y + 32*x*x*y*y - 16*x*x*x*x*y
+      - 32*x*x*x*y*y - 16*x*x*y*y*y;
   }
 
   static pfem triangle_Argyris_fem(fem_param_list &params,

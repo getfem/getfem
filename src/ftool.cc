@@ -204,7 +204,10 @@ namespace ftool {
       std::string name(temp_string);
       if (parameters.find(name) != parameters.end())
 	result = parameters[name];
-      else syntax_error("Parameter not found");
+      else {
+	std::stringstream s; s << "Parameter " << name << " not found";
+	syntax_error(s.str());
+      }
     }
     else if (i == 5) { // unary operators, parentheses and arrays
       switch (temp_string[0]) {

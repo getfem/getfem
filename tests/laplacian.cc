@@ -35,6 +35,7 @@
 #include <getfem_export.h>   /* export functions (save solutions in a file) */
 #include <getfem_regular_meshes.h>
 #include <getfem_derivatives.h>
+#include <getfem_superlu.h>
 #include <gmm.h>
 
 /* some Getfem++ types that we will be using */
@@ -146,6 +147,44 @@ void laplacian_problem::init(void) {
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
+  // pour "voir" les fct de forme de l'elt d'hermite 2D ...  
+  // for (size_type ii = 0; ii < mf_u.nb_dof(); ++ii) {
+//     std::vector<scalar_type> VV(mf_u.nb_dof());
+
+//     mf_rhs.set_finite_element(mesh.convex_index(), 
+// 		    getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,4)"));
+
+//     std::vector<scalar_type> WW(2*mf_rhs.nb_dof());
+  
+//     VV[ii] = 1.0;
+//     getfem::compute_gradient(mf_u, mf_rhs, VV, WW);
+
+//     std::vector<scalar_type> G1(mf_rhs.nb_dof()), G2(mf_rhs.nb_dof());
+//     gmm::copy(gmm::sub_vector(WW, gmm::sub_slice(0, mf_rhs.nb_dof(), 2)), G1); 
+//     gmm::copy(gmm::sub_vector(WW, gmm::sub_slice(1, mf_rhs.nb_dof(), 2)), G2);
+
+//     mf_coef.set_finite_element(mesh.convex_index(), 
+// 		        getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
+    
+//     std::vector<scalar_type> WW1(2*mf_coef.nb_dof());
+//     std::vector<scalar_type> WW2(2*mf_coef.nb_dof());
+//     getfem::compute_gradient(mf_rhs, mf_coef, G1, WW1);
+//     getfem::compute_gradient(mf_rhs, mf_coef, G2, WW2);
+ 
+//     mf_rhs.set_finite_element(mesh.convex_index(), 
+// 			      getfem::fem_descriptor("FEM_PK(2,1)"));
+
+//     std::vector<scalar_type> WWW(mf_rhs.nb_dof());
+//     getfem::interpolation(mf_u, mf_rhs, VV, WWW);
+//     cout << "ii = " << ii << " point " << mf_u.point_of_dof(ii)
+// 	 << " WW = " << WW << " WW1 = " << WW1 << " WW2 = " << WW2
+// 	 << " WWW = " << WWW << endl;
+
+//     getchar();
+
+//   }
+
+
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -241,13 +280,13 @@ void laplacian_problem::assembly(void)
     gmm::resize(Ud, nb_dof);
     gmm::resize(NS, nb_dof, nb_dof);
     col_sparse_matrix_type H(nb_dof_rhs, nb_dof);
-    std::vector<scalar_type> R(nb_dof_rhs), RHaux(nb_dof);
+    std::vector<scalar_type> R(nb_dof_rhs);
+    std::vector<scalar_type> RHaux(nb_dof);
 
     /* build H and R such that U mush satisfy H*U = R */
     getfem::asm_dirichlet_constraints(H, R, mim, mf_u, mf_rhs,
-				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);
-    // , getfem::ASMDIR_BUILDR | getfem::ASMDIR_BUILDH);    
-    
+      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);
+
     gmm::clean(H, 1e-12);
 //     cout << "H = " << H << endl;
 //     cout << "R = " << R << endl;
@@ -270,24 +309,30 @@ void laplacian_problem::assembly(void)
 
 bool laplacian_problem::solve(void) {
   cout << "Compute preconditionner\n";
-  double time = dal::uclock_sec();
   gmm::iteration iter(residual, 1, 40000);
-  // gmm::identity_matrix P;
-  // gmm::diagonal_precond<sparse_matrix_type> P(SM);
-  // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
-  // gmm::ildlt_precond<sparse_matrix_type> P(SM);
-  // gmm::ildltt_precond<sparse_matrix_type> P(SM, 50, 1E-9);
-  gmm::ilut_precond<sparse_matrix_type> P(SM, 50, 1E-9);
-  // gmm::ilutp_precond<sparse_matrix_type> P(SM, 50, 1E-9);
-  // gmm::ilu_precond<sparse_matrix_type> P(SM);
-  cout << "Time to compute preconditionner : "
-       << dal::uclock_sec() - time << " seconds\n";
+  double time = dal::uclock_sec();
+  if (1) {
+    // gmm::identity_matrix P;
+    // gmm::diagonal_precond<sparse_matrix_type> P(SM);
+    // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
+    // gmm::ildlt_precond<sparse_matrix_type> P(SM);
+    // gmm::ildltt_precond<sparse_matrix_type> P(SM, 50, 1E-9);
+    gmm::ilut_precond<sparse_matrix_type> P(SM, 50, 1E-9);
+    // gmm::ilutp_precond<sparse_matrix_type> P(SM, 50, 1E-9);
+    // gmm::ilu_precond<sparse_matrix_type> P(SM);
+    cout << "Time to compute preconditionner : "
+	 << dal::uclock_sec() - time << " seconds\n";
 
   
-  //gmm::HarwellBoeing_IO::write("SM", SM);
+    //gmm::HarwellBoeing_IO::write("SM", SM);
 
-  gmm::cg(SM, U, B, P, iter);
-  // gmm::gmres(SM, U, B, P, 50, iter);
+    gmm::cg(SM, U, B, P, iter);
+    // gmm::gmres(SM, U, B, P, 50, iter);
+  } else {
+    double rcond; 
+    gmm::SuperLU_solve(SM, U, B, rcond); 
+    cout << "cond = " << 1/rcond << "\n";
+  }
   
   cout << "Total time to solve : "
        << dal::uclock_sec() - time << " seconds\n";

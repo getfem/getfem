@@ -2,14 +2,14 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_global_function_fem.cc : definition of a finite element
+// File    : getfem_mesh_fem_global_function.cc : definition of a finite element
 //           method which interpoles a fem on a different mesh.
 // Date    : October 29, 2004.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 2004-2005 Yves Renard
+// Copyright (C) 2004-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //

@@ -8,7 +8,7 @@ open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 print TMPF <<
 MU = 1.0;
 LAMBDA = 1.0;
-MESH_NOISE = 0;
+MESH_NOISED = 0;
 MESH_TYPE = 'GT_PK(2,1)';
 MIXED_PRESSURE=0;
 INTEGRATION = 'IM_TRIANGLE(6)';

@@ -2,16 +2,15 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Elements Methods (getfem)
-// File    : getfem_mesh_level_set.cc : description of a mesh cut by a 
+// File    : getfem_mesh_level_set.cc : description of a mesh cut by a
 //           number of levelsets.
-//           
 // Date    : March 04, 2005.
-// Author  : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+// Authors : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
 //           Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 2005-2005 Yves Renard
+// Copyright (C) 2005-2006 Julien Pommier
 //
 // This file is a part of GETFEM++
 //

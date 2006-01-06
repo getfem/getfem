@@ -2,7 +2,7 @@
 //========================================================================
 //
 // Library : File and string TOOL (ftool)
-// File    : ftool_naming.h : 
+// File    : dal_naming_system.h : 
 //           
 // Date    : August 17, 2002.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>

@@ -9,7 +9,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 2003-2005 Julien Pommier
+// Copyright (C) 2003-2006 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -543,6 +543,11 @@ namespace getfem {
     template< typename MAT > void push_mat(MAT& m) { 
       outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
     }
+
+    template <typename T> void push_mat_or_vec(T &v) {
+      push_mat_or_vec(v, typename gmm::linalg_traits<T>::linalg_type());
+    }
+
     /// used by the getfem_interface..
     void set_vec_factory(base_vec_factory *fact) { vec_fact = fact; }
     void set_mat_factory(base_mat_factory *fact) { mat_fact = fact; }
@@ -570,6 +575,12 @@ namespace getfem {
     void do_instr();
     void exec(size_type cv, dim_type face);
     void consistency_check();
+    template <typename T> void push_mat_or_vec(T &v, gmm::abstract_vector) {
+      push_vec(v);
+    }
+    template <typename T> void push_mat_or_vec(T &v, gmm::abstract_matrix) {
+      push_mat(v);
+    }
   public:
     /* parse the string 'str' and build the tree of vtensors */
     void parse();

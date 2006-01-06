@@ -10,7 +10,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 2002-2005 Yves Renard
+// Copyright (C) 2002-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -106,12 +106,88 @@ namespace getfem
 	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
 	  N*(qdim/target_qdim);
 	ctx.set_ii(j);
-	pf->interpolation_grad(ctx, coeff, gradt, qdim); //gmm::transposed(grad), (dim_type)qdim);
+	pf->interpolation_grad(ctx, coeff, gradt, qdim);
         gmm::copy(gmm::transposed(gradt),grad);
 	std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
       }
     }
   }
+
+  /** Compute the hessian of a field on a getfem::mesh_fem.
+      @param mf the source mesh_fem.
+      @param U the source field.
+      @param mf_target should be a lagrange discontinous element
+      does not work with vectorial elements. ... to be done ...
+      @param V contains on output the gradient of U, evaluated on mf_target.
+
+      mf_target may have the same Qdim than mf, or it may
+      be a scalar mesh_fem, in which case the derivatives are stored in
+      the order: DxxUx,DxyUx, DyxUx, DyyUx, ...
+
+      in any case, the size of V should be N*N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
+      elements (this is not checked by the function!)
+  */
+  template<class VECT1, class VECT2>
+  void compute_hessian(const mesh_fem &mf, const mesh_fem &mf_target,
+			const VECT1 &U, VECT2 &V) {
+    typedef typename gmm::linalg_traits<VECT1>::value_type T;
+
+    size_type N = mf.linked_mesh().dim();
+    size_type qdim = mf.get_qdim();
+    size_type target_qdim = mf_target.get_qdim();
+
+
+    if (&mf.linked_mesh() != &mf_target.linked_mesh())
+      DAL_THROW(std::invalid_argument, "meshes are different.");
+
+    if (target_qdim != qdim && target_qdim != 1) {
+      DAL_THROW(std::invalid_argument, "invalid Qdim for gradient mesh_fem");
+    }
+
+    base_matrix G;
+    std::vector<T> coeff;
+ 
+    bgeot::pgeotrans_precomp pgp = NULL;
+    pfem_precomp pfp = NULL;
+    pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
+    bgeot::pgeometric_trans pgt;
+
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+      pf = mf.fem_of_element(cv);
+      pf_target = mf_target.fem_of_element(cv);
+      if (pf_target->need_G() || !(pf_target->is_lagrange()))
+	DAL_THROW(std::invalid_argument, 
+		  "finite element target not convenient");
+      
+      bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
+
+      pgt = mf.linked_mesh().trans_of_convex(cv);
+      if (pf_targetold != pf_target) {
+        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab(cv));
+      }
+      pf_targetold = pf_target;
+
+      if (pf_old != pf) {
+	pfp = fem_precomp(pf, pf_target->node_tab(cv));
+      }
+      pf_old = pf;
+
+      gmm::dense_matrix<T> hess(N*N,qdim), hesst(qdim,N*N);
+      fem_interpolation_context ctx(pgp,pfp,0,G,cv);
+      gmm::resize(coeff, mf.nb_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), 
+		coeff);
+      for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
+	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
+	  N*N*(qdim/target_qdim);
+	ctx.set_ii(j);
+	pf->interpolation_hess(ctx, coeff, hesst, qdim);
+        gmm::copy(gmm::transposed(hesst), hess);
+	std::copy(hess.begin(), hess.end(), V.begin() + dof_t);
+      }
+    }
+  }
+
 
   /**Compute the Von-Mises stress of a field.
    */
