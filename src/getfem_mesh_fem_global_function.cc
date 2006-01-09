@@ -35,7 +35,7 @@ namespace getfem {
   
   void global_function_fem::init(void) {
     is_pol = is_lag = false; es_degree = 5;
-    is_equiv = false; real_element_defined = true;
+    is_equiv = real_element_defined = true;
     ntarget_dim = 1; // An extension for vectorial elements should be easy
     dim_ = cvr->structure()->dim();
     init_cvs_node();

@@ -62,6 +62,9 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 scalar_type sol_u(const base_node &x)
 { return sin(std::accumulate(x.begin(), x.end(), 0.0)); }
 
+scalar_type sol_lapl_u(const base_node &x)
+{ return -sol_u(x) * x.size(); }
+
 scalar_type sol_f(const base_node &x) { return sol_u(x)*gmm::sqr(x.size()); }
 
 base_small_vector sol_du(const base_node &x) {
@@ -74,6 +77,25 @@ base_small_vector sol_du(const base_node &x) {
 base_small_vector neumann_val(const base_node &x)
 { return -sol_du(x) * scalar_type(x.size()); }
 
+
+// scalar_type sol_u(const base_node &x)
+// { return x[0]*(1. - x[0]); }
+
+// scalar_type sol_lapl_u(const base_node &)
+// { return -2.0; }
+
+// scalar_type sol_f(const base_node &x) { return 0.0; }
+
+// base_small_vector sol_du(const base_node &x) {
+//   base_small_vector res(x.size()); res[0] = 1.0 - 2.0 * x[0];
+//   return res;
+// }
+
+// base_small_vector neumann_val(const base_node &x)
+// { return base_small_vector(x.size());  }
+
+
+
 /**************************************************************************/
 /*  Structure for the bilaplacian problem.                                */
 /**************************************************************************/
@@ -81,7 +103,7 @@ base_small_vector neumann_val(const base_node &x)
 struct bilaplacian_problem {
 
   enum { CLAMPED_BOUNDARY_NUM = 0, SIMPLE_SUPPORT_BOUNDARY_NUM = 1,
-	 NEUMANN_BOUNDARY_NUM = 2};
+	 FORCE_BOUNDARY_NUM = 2, MOMENTUM_BOUNDARY_NUM = 3};
   getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods.                     */
   getfem::mesh_fem mf_u;    /* main mesh_fem, for the bilaplacian solution  */
@@ -169,14 +191,14 @@ void bilaplacian_problem::init(void) {
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
   // assembly test
-  if (1) {
+  if (0) {
   mf_rhs.set_finite_element(mesh.convex_index(), 
 			    getfem::fem_descriptor("FEM_PK(2,4)"));
   std::vector<scalar_type> UU(mf_u.nb_dof()), VV(mf_u.nb_dof()),
     WW(mf_rhs.nb_dof());
   for (size_type k = 0; k < mf_rhs.nb_dof(); ++k) {
     base_node pt = mf_rhs.point_of_dof(k);
-    WW[k] = pt[1]*pt[1]*pt[0]*pt[0];
+    WW[k] = pt[0]*(1.0 - pt[0]);
   }
   cout << "WW = " << WW << endl;
 
@@ -184,7 +206,7 @@ void bilaplacian_problem::init(void) {
   getfem::asm_mass_matrix(MM, mim, mf_u);
   getfem::asm_source_term(VV, mim, mf_u, mf_rhs, WW);
   
-  gmm::iteration iter(1E-10, 1, 2000);
+  gmm::iteration iter(1E-13, 1, 2000);
   gmm::ilut_precond<sparse_matrix> P(MM, 90, 1E-9);
   // gmm::identity_matrix P;
   gmm::cg(MM, UU, VV, P, iter);
@@ -292,12 +314,16 @@ void bilaplacian_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (0 && gmm::abs(un[N-1] - 1.0) <= 1.0E-7)
-      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+    if (0 & gmm::abs(un[N-1] - 1.0) <= 1.0E-7) {
+      mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+      mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+    }
     else {
       mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
-      if (gmm::abs(un[N-1] + 1.0) <= 1.0E-7)
+      if (0 && gmm::abs(un[N-1] + 1.0) <= 1.0E-7)
 	mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+      else
+	mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
     }
   }
 }
@@ -336,10 +362,19 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
 
+  // Defining the prescribed momentum.
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+    F[i] = sol_lapl_u(mf_rhs.point_of_dof(i));
+  
+  // Prescribed momentum on the boundary
+  getfem::mdbrick_normal_derivative_source_term<>
+    MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+
+
   // Defining the Neumann condition right hand side.
   base_small_vector un(N);
   gmm::clear(F);
-  for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
+  for (getfem::mr_visitor i(mesh.region(FORCE_BOUNDARY_NUM));
        !i.finished(); ++i) {
     size_type cv = i.cv(), f = i.f();
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
@@ -348,13 +383,13 @@ bool bilaplacian_problem::solve(plain_vector &U) {
       un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
       un /= gmm::vect_norm2(un);
       size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = gmm::vect_sp(neumann_val(mf_rhs.point_of_dof(dof)), un);
+      F[dof] = -gmm::vect_sp(neumann_val(mf_rhs.point_of_dof(dof)), un);
     }
   }
 
   // Neumann condition brick.
   getfem::mdbrick_source_term<>
-    NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
+    NEUMANN(MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
@@ -377,7 +412,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
       un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
       un /= gmm::vect_norm2(un);
       size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un) * 0.0;
+      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un);
     }
   }
   
@@ -386,9 +421,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     final_model(DIRICHLET, CLAMPED_BOUNDARY_NUM, mf_mult);
   final_model.set_constraints_type(dirichlet_version);
   final_model.rhs().set(mf_rhs, F);
-
-   
-
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -420,8 +452,6 @@ int main(int argc, char *argv[]) {
 
     p.compute_error(U);
 
-    cout << "U = " << U << endl;
-
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -430,7 +460,7 @@ int main(int argc, char *argv[]) {
       exp.write_point_data(p.mf_u, U, "bilaplacian_displacement");
       cout << "export done, you can view the data file with (for example)\n"
 	   << "mayavi -d " << p.datafilename
-	   << ".vtk -m BandedSurfaceMap -m Outline\n";
+	   << ".vtk -m BandedSurfaceMap -m Outline -f WarpScalar\n";
     }
   }
   DAL_STANDARD_CATCH_ERROR;

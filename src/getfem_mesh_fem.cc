@@ -312,7 +312,7 @@ namespace getfem {
   void mesh_fem::read_from_file(std::istream &ist) {
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
-    std::string tmp;
+    std::string tmp, tmp2;
     bool dof_read = false;
     ist.precision(16);
     clear();
@@ -351,10 +351,12 @@ namespace getfem {
 	    if (ftool::casecmp(tmp, "END")==0) { 
 	      break;
 	    }
+	    ftool::get_token(ist, tmp2);
+
 	    size_type ic = atoi(tmp.c_str());
 	    std::vector<size_type> tab;
 	    if (convex_index().is_in(ic) && tmp.size() &&
-		tmp[tmp.size()-1] == ':') {
+		isdigit(tmp[0]) && tmp2 == ":") { // && tmp[tmp.size()-1] == ':') {
 	      tab.resize(nb_dof_of_element(ic));
 	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic); i++) {
 		ist >> tab[i];
@@ -368,6 +370,8 @@ namespace getfem {
 			     << "in dof enumeration: '" 
 			     << tmp << "' [pos="
 			     << std::streamoff(ist.tellg())<<"]");
+	    /*ftool::get_token(ist, tmp);
+	      cerr << " tok: '" << tmp << "'\n";*/
 	  } 
 	  dof_read = true;
 	  this->dof_enumeration_made = true;

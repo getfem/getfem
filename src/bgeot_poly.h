@@ -522,12 +522,14 @@ namespace bgeot
       { o << *it; first = false; ++it; ++n; ++mi; }
     for ( ; it != ite ; ++it, ++mi ) {
       if (*it != T(0)) {
+	bool first_var = true;
 	if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
 	else if (*it < T(0)) o << "-";
-	if (gmm::abs(*it)!=T(1)) o << gmm::abs(*it);
+	if (gmm::abs(*it)!=T(1)) { o << gmm::abs(*it); first_var = false; }
 	for (short_type j = 0; j < P.dim(); ++j)
 	  if (mi[j] != 0) {
-            if (P.dim() <= 3) o << "xyz"[j];
+	    if (!first_var) o << "*"; first_var = false;
+            if (P.dim() <= 7) o << "xyzwvut"[j];
             else o << "x_" << j; 
 	    if (mi[j] > 1) o << "^" << mi[j];
 	  }

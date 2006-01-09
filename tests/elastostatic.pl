@@ -13,7 +13,7 @@ LX = 1.0;
 LY = 1.0;
 LZ = 1.0;
 INCLINE = 0.0;
-MESH_NOISED = 0.0;
+MESH_NOISED = 1;
 FT = 0.1;
 MESH_TYPE = 'GT_PK(2,1)';
 MIXED_PRESSURE=0;
@@ -88,7 +88,7 @@ print ".";
 $err1 = start_program(" -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'MESH_FILE=\"$srcdir/../tests/meshes/disc_P2_h8.mesh\"'");
 $err2 = start_program(" -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'MESH_FILE=\"$srcdir/../tests/meshes/disc_P2_h4.mesh\"'");
 
-if ($err2 > $err1 / 9) {
+if ($err2 > $err1 / 4) {
   print "Convergence error: P2 isoparametric: $err1 $err2\n";
   exit(1);
 }

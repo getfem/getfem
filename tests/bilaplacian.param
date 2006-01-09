@@ -10,8 +10,8 @@ LZ = 1.0;		% size in Z.
 INCLINE = 0;            % Incline of the mesh.
 N = 2;
 QUAD = 0;
-MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 10;                 % space step.
+MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
+NX = 6;                 % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 %MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
@@ -32,10 +32,10 @@ if (N == 2 && ~QUAD)
   DATA_FEM_TYPE = 'FEM_PK(2,3)';
   if 0    % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
   else    % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   end
   % FEM_TYPE = 'FEM_PK(2,3)';
 end

@@ -134,6 +134,9 @@ namespace bgeot {
       else if (s == "y" && n > 1) result = base_poly(n, 1, 1);
       else if (s == "z" && n > 2) result = base_poly(n, 1, 2);
       else if (s == "w" && n > 3) result = base_poly(n, 1, 3);
+      else if (s == "v" && n > 4) result = base_poly(n, 1, 4);
+      else if (s == "u" && n > 5) result = base_poly(n, 1, 5);
+      else if (s == "t" && n > 6) result = base_poly(n, 1, 6);
       else if (s == "sqrt") {
 	base_poly p = read_expression(n, f);
 	if (p.degree() > 0) parse_error();

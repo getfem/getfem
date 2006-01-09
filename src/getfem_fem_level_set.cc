@@ -37,7 +37,7 @@ namespace getfem {
   void fem_level_set::init() {
     cvr = bfem->ref_convex(0);
     dim_ = cvr->structure()->dim();
-    is_equiv = false; real_element_defined = true;
+    is_equiv = true; real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = bfem->target_dim();

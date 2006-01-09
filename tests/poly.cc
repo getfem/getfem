@@ -163,6 +163,12 @@ int main(void)
       }
     }
     cout << "poly derivative : " << dal::uclock_sec() - t0 << "sec\n";
+
+    bgeot::base_poly P2;
+    std::stringstream ss; ss << P;
+    P2 = bgeot::read_base_poly(P.dim(), ss);
+    cout << "P=" << P << "\nread_base_poly=" << P2 << "\n";
+    assert(P == P2);
   }
   DAL_STANDARD_CATCH_ERROR;
 

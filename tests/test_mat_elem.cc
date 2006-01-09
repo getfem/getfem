@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
     
     total_time += dal::uclock_sec() - exectime;
     
-    p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
+    
     
     exectime = dal::uclock_sec();
     test1_mat_elem(p.mim, p.mef, p.mef_data);
@@ -366,6 +366,11 @@ int main(int argc, char *argv[])
     cout << "Mat elem computation time 2 : "
 	 << dal::uclock_sec() - exectime << endl;
 
+
+    /* check mesh/mesh_fem I/O */
+    p.mef.write_to_file(p.datafilename + ".mesh", true);
+    p.mesh.read_from_file(p.datafilename + ".mesh");
+    p.mef.read_from_file(p.datafilename + ".mesh");
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 
