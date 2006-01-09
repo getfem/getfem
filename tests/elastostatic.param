@@ -14,59 +14,54 @@ LAMBDA = 1.0;   	% Lamé coefficient.
 INCLINE = 0;            % Incline of the mesh.
 N = 2;
 QUAD = 0;
-FT = .1;                % parameter for the exact solution.
+FT = 3.0;               % parameter for the exact solution.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_PRESSURE=0;       % Mixed version or not.
-NX = 32;                % space step.
+NX = 4;                 % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 %MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
 
 
 if (N == 1)
-  FT = 5.0;
   MESH_TYPE = 'GT_PK(1,1)';       % segments
   FEM_TYPE = 'FEM_PK(1,2)';       % P1 for segments
-%  FEM_TYPE = 'FEM_HERMITE_SEGMENT'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
-  INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on
-                                  % segments
+%  FEM_TYPE = 'FEM_HERMITE(1)'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
+  INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on segments
   if (MIXED_PRESSURE)
     FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(1,0)';
   end
 end
 
 if (N == 2 && ~QUAD)
-  FT = .2; 
-  MESH_TYPE = 'GT_PK(2,1)';       % triangles
-  FEM_TYPE = 'FEM_PK(2,4)';       % P1 for triangles
+  MESH_TYPE = 'GT_PK(2,1)';        % triangles
+  FEM_TYPE = 'FEM_PK(2,3)';        % P1 for triangles
   INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature rule for polynomials up
-                                  % to degree 13 on triangles
+                                   % to degree 13 on triangles
   if (MIXED_PRESSURE)
     FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,1)';
   end
 
-  if 0
-    if 0
-      FEM_TYPE = 'FEM_HERMITE_TRIANGLE';
-      DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
+  if 0        % test with Hermite or Argyris elements
+    if 0      % test with Hermite element
+      FEM_TYPE = 'FEM_HERMITE(2)';
+      DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
     else 
       FEM_TYPE = 'FEM_ARGYRIS';
       DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
     end;
     DATA_FEM_TYPE = 'FEM_PK(2,5)';
   end
-  
 end
 
 if (N == 2 && QUAD)
-  FT = 1.0;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(2,1)';       % quadrilaterons
   else
     MESH_TYPE = 'GT_LINEAR_QK(2)';  % quadrilaterons (linear transformation)
   end
   FEM_TYPE = 'FEM_QK(2,2)';         % Q1 for quadrilaterons
-%  FEM_TYPE = 'FEM_HERMITE_QUAD12()'; DATA_FEM_TYPE = 'FEM_QK(2,3)';
+  FEM_TYPE = 'FEM_INCOMPLETE_Q2';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
   if (MIXED_PRESSURE)
     FEM_TYPE_P = 'FEM_QK_DISCONTINUOUS(2,0)';
@@ -76,6 +71,10 @@ end
 if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
   FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
+  if 1   % test with hermite element
+    FEM_TYPE = 'FEM_HERMITE(3)'; DATA_FEM_TYPE = 'FEM_PK(3,3)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(3,3)';
+  end
   INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                      % to degree 6 on tetrahedrons
   if (MIXED_PRESSURE)

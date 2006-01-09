@@ -221,11 +221,53 @@ namespace getfem {
 		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
   }
 
+  /*
+    assembly of a matrix with 1 parameter (real or complex)
+    (the most common here for the assembly routines below)
+  */
+  template <typename MAT, typename VECT>
+  void asm_real_or_complex_1_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &A, const mesh_region &rg, const char *assembly_description) {
+    asm_real_or_complex_1_param_
+      (M, mim, mf_u, mf_data, A, rg, assembly_description,
+       typename gmm::linalg_traits<VECT>::value_type());
+  }
+
+  /* real version */
+  template<typename MAT, typename VECT, typename T>
+  void asm_real_or_complex_1_param_
+  (const MAT &M, const mesh_im &mim,  const mesh_fem &mf_u,
+   const mesh_fem &mf_data, const VECT &A,  const mesh_region &rg,
+   const char *assembly_description, T) {
+    generic_assembly assem(assembly_description);
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_data);
+    assem.push_data(A);
+    assem.push_mat_or_vec(const_cast<MAT&>(M));
+    assem.assembly(rg);
+  }
+
+  /* complex version */
+  template<typename MAT, typename VECT, typename T>
+  void asm_real_or_complex_1_param_
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &A, const mesh_region &rg,const char *assembly_description,
+   std::complex<T>) {
+    asm_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
+				 gmm::real_part(A),rg,
+				 assembly_description, T());
+    asm_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
+				 gmm::imag_part(A),rg,
+				 assembly_description, T());
+  }
+
   /** 
-     generic mass matrix assembly (on the whole mesh or on the specified
-     convex set or boundary) 
-     @ingroup asm
-   */
+      generic mass matrix assembly (on the whole mesh or on the specified
+      convex set or boundary) 
+      @ingroup asm
+  */
   template<typename MAT>
   void asm_mass_matrix(const MAT &M, const mesh_im &mim,
 		       const mesh_fem &mf_u1,
@@ -259,77 +301,21 @@ namespace getfem {
     assem.assembly(rg);
   }
 
-  /*
-    assembly of a matrix with 1 parameter (real or complex)
-    (the most common here for the assembly routines below)
-  */
-  template <typename MAT, typename VECT>
-  void asm_real_or_complex_1_param(MAT &M, 
-				   const mesh_im &mim, 
-				   const mesh_fem &mf_u,
-				   const mesh_fem &mf_data,
-				   const VECT &A, 
-				   const mesh_region &rg,
-				   const char *assembly_description) {
-    asm_real_or_complex_1_param_(M, mim, mf_u, mf_data, A, rg, 
-				 assembly_description,
-				 typename gmm::linalg_traits<VECT>::value_type());
-  }
-
-  /* real version */
-  template<typename MAT, typename VECT, typename T>
-  void asm_real_or_complex_1_param_(const MAT &M, 
-				    const mesh_im &mim, 
-				    const mesh_fem &mf_u,
-				    const mesh_fem &mf_data,
-				    const VECT &A, 
-				    const mesh_region &rg,
-				    const char *assembly_description, T) {
-    generic_assembly assem(assembly_description);
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_data);
-    assem.push_data(A);
-    assem.push_mat_or_vec(const_cast<MAT&>(M));
-    assem.assembly(rg);
-  }
-
-  /* complex version */
-  template<typename MAT, typename VECT, typename T>
-  void asm_real_or_complex_1_param_(MAT &M, 
-				    const mesh_im &mim, 
-				    const mesh_fem &mf_u,
-				    const mesh_fem &mf_data,
-				    const VECT &A, 
-				    const mesh_region &rg,
-				    const char *assembly_description,
-				    std::complex<T>) {
-    asm_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
-				 gmm::real_part(A),rg,
-				 assembly_description, T());
-    asm_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
-				 gmm::imag_part(A),rg,
-				 assembly_description, T());
-  }
-
-  
-  
-
   /** 
      generic mass matrix assembly with an additional parameter
      (on the whole mesh or on the specified boundary) 
      @ingroup asm
    */
   template<typename MAT, typename VECT>
-  void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-			     const mesh_fem &mf_data,
-			     const VECT &F, 			       
-			     const mesh_region &rg = mesh_region::all_convexes()) {
-    const char *s1 = "F=data(#2); M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))";
-    const char *s2 = "F=data(#2); M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).F(j));";
-
-    asm_real_or_complex_1_param(M,mim,mf_u,mf_data,F,rg,
-				(mf_u.get_qdim() == 1) ? s1 : s2);
+  void asm_mass_matrix_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
+   const VECT &F, const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_real_or_complex_1_param
+      (M, mim, mf_u, mf_data, F, rg, (mf_u.get_qdim() == 1) ? 
+       "F=data(#2);"
+       "M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))"
+       : "F=data(#2);"
+       "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).F(j));");
   }
 
 
@@ -744,7 +730,7 @@ namespace getfem {
 	 ASMDIR_BUILDALL = 7 };
 
   /**
-     Assembly of Dirichlet constraints u(x) = r(x) in a weak form
+     Assembly of Dirichlet constraints @f$ u(x) = r(x) @f$ in a weak form
      @f[ \int_{\Gamma} u(x)v(x) = \int_{\Gamma} r(x)v(x) \forall v@f],
      where @f$ v @f$ is in
      the space of multipliers corresponding to mf_mult.
@@ -774,13 +760,13 @@ namespace getfem {
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
     if (mf_r.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    if (version & ASMDIR_BUILDH)
+    if (version & ASMDIR_BUILDH) {
       asm_mass_matrix(H, mim, mf_mult, mf_u, region);
+      gmm::clean(H, gmm::default_tol(magn_type())
+		 * gmm::mat_maxnorm(H) * magn_type(1000));
+    }
     if (version & ASMDIR_BUILDR)
       asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
-
-    gmm::clean(H, gmm::default_tol(magn_type())
-	       * gmm::mat_maxnorm(H) * magn_type(100));
 
     // Verifications and simplifications
 

@@ -35,10 +35,11 @@
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
-#include <getfem_orderfourpdes.h>
+#include <getfem_fourth_order.h>
+#include <getfem_model_solvers.h>
 #include <gmm.h>
 #include <getfem_superlu.h>
-#include <numeric>
+#include <getfem_derivatives.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -48,7 +49,7 @@ using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
- * default types of getfem_modeling.h
+ * default types of getfem_model_solvers.h
  */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
@@ -58,36 +59,37 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /*  Exact solution.                                                       */
 /**************************************************************************/
 
+scalar_type sol_u(const base_node &x)
+{ return sin(std::accumulate(x.begin(), x.end(), 0.0)); }
 
-scalar_type sol_u(const base_node &x) {
-  return sin(std::accumulate(x.begin(), x.end(), 0.0));
-}
+scalar_type sol_f(const base_node &x) { return sol_u(x)*gmm::sqr(x.size()); }
 
-scalar_type sol_f(const base_node &x) {
-  return gmm::sqr(x.size())*sin(std::accumulate(x.begin(), x.end(), 0.0));
-}
-
-base_small_vector neumann_val(const base_node &x) {
+base_small_vector sol_du(const base_node &x) {
   base_small_vector res(x.size());
   std::fill(res.begin(), res.end(),
-	    sin(std::accumulate(x.begin(), x.end(), 0.0))* x.size());
+	    cos(std::accumulate(x.begin(), x.end(), 0.0)));
   return res;
 }
 
-/*
-  structure for the bilaplacian problem
-*/
+base_small_vector neumann_val(const base_node &x)
+{ return -sol_du(x) * scalar_type(x.size()); }
+
+/**************************************************************************/
+/*  Structure for the bilaplacian problem.                                */
+/**************************************************************************/
+
 struct bilaplacian_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::mesh mesh;  /* the mesh */
+  enum { CLAMPED_BOUNDARY_NUM = 0, SIMPLE_SUPPORT_BOUNDARY_NUM = 1,
+	 NEUMANN_BOUNDARY_NUM = 2};
+  getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods.                     */
   getfem::mesh_fem mf_u;    /* main mesh_fem, for the bilaplacian solution  */
   getfem::mesh_fem mf_mult; /* mesh_fem for the Dirichlet condition.        */
   getfem::mesh_fem mf_rhs;  /* mesh_fem for the right hand side (f(x),..)   */
 
-  scalar_type residual;    /* max residual for the iterative solvers        */
-  int dirichlet_version;
+  scalar_type residual;     /* max residual for the iterative solvers       */
+  getfem::constraints_type dirichlet_version;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -98,6 +100,28 @@ struct bilaplacian_problem {
   bilaplacian_problem(void) : mim(mesh),mf_u(mesh), mf_mult(mesh),
 			      mf_rhs(mesh) {}
 };
+
+namespace getfem {
+
+  template<typename VECT> // just for a test
+  void asm_hess(VECT &V, const mesh_im &mim, const mesh_fem &mf,
+	const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem("a=data(#1); t=comp(Hess(#1));"
+			   "V$1()+=t(j,1,1).a(j); V$2()+=t(j,1,2).a(j);"
+			   "V$3()+=t(j,2,1).a(j); V$4()+=t(j,2,2).a(j)"
+			   );
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(A);
+    std::vector<scalar_type> V1(1), V2(1), V3(1), V4(1);
+    assem.push_vec(V1); assem.push_vec(V2);
+    assem.push_vec(V3); assem.push_vec(V4);
+    assem.assembly(rg);
+    V[0] = V1[0]; V[1] = V2[0]; V[2] = V3[0]; V[3] = V4[0];
+  }
+
+}
+
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
@@ -131,18 +155,110 @@ void bilaplacian_problem::init(void) {
   /* scale the unit mesh to [LX,LY,..] and incline it */
   mesh.transformation(M);
 
-  dirichlet_version=PARAM.int_value("DIRICHLET_VERSION","Dirichlet version");
+  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
+  dirichlet_version = getfem::constraints_type(dv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   /* set the finite element on the mf_u */
-  getfem::pfem pf_u = 
-    getfem::fem_descriptor(FEM_TYPE);
+  getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
+
+  // assembly test
+  if (1) {
+  mf_rhs.set_finite_element(mesh.convex_index(), 
+			    getfem::fem_descriptor("FEM_PK(2,4)"));
+  std::vector<scalar_type> UU(mf_u.nb_dof()), VV(mf_u.nb_dof()),
+    WW(mf_rhs.nb_dof());
+  for (size_type k = 0; k < mf_rhs.nb_dof(); ++k) {
+    base_node pt = mf_rhs.point_of_dof(k);
+    WW[k] = pt[1]*pt[1]*pt[0]*pt[0];
+  }
+  cout << "WW = " << WW << endl;
+
+  sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
+  getfem::asm_mass_matrix(MM, mim, mf_u);
+  getfem::asm_source_term(VV, mim, mf_u, mf_rhs, WW);
+  
+  gmm::iteration iter(1E-10, 1, 2000);
+  gmm::ilut_precond<sparse_matrix> P(MM, 90, 1E-9);
+  // gmm::identity_matrix P;
+  gmm::cg(MM, UU, VV, P, iter);
+  gmm::clean(UU, 1E-10);
+  cout << "UU = " << UU << endl;
+
+   mf_rhs.set_finite_element
+     (mesh.convex_index(), 
+      getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
+   std::vector<scalar_type> WG(2*mf_rhs.nb_dof());
+   getfem::compute_gradient(mf_u, mf_rhs, UU, WG);
+   cout << "WG = " << WG << endl;
+
+
+  getfem::vtk_export exp(datafilename + "_test.vtk",
+			 PARAM.int_value("VTK_EXPORT")==1);
+  exp.exporting(mf_u); 
+  exp.write_point_data(mf_u, UU, "bilaplacian_displacement");
+  cout << "export done, you can view the data file with (for example)\n"
+       << "mayavi -d " << datafilename
+       << "_test.vtk -m BandedSurfaceMap -m Outline\n";
+  
+
+  std::vector<scalar_type> RR(4);
+  getfem::asm_hess(RR, mim, mf_u, UU);
+  cout << "RR = " << RR << endl;
+
+  }
+     
+  // To "see" the base function of a 2D element  ... 
+  if (0) {
+    for (size_type ii = 0; ii < mf_u.nb_dof(); ++ii) {
+      std::vector<scalar_type> VV(mf_u.nb_dof());
+      
+      mf_rhs.set_finite_element
+	(mesh.convex_index(), 
+	 getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,4)"));
+      
+      std::vector<scalar_type> WW(2*mf_rhs.nb_dof());
+      
+      VV[ii] = 1.0;
+      getfem::compute_gradient(mf_u, mf_rhs, VV, WW);
+      
+      std::vector<scalar_type> G1(mf_rhs.nb_dof()), G2(mf_rhs.nb_dof());
+      gmm::copy(gmm::sub_vector(WW, gmm::sub_slice(0, mf_rhs.nb_dof(),2)), G1);
+      gmm::copy(gmm::sub_vector(WW, gmm::sub_slice(1, mf_rhs.nb_dof(),2)), G2);
+      
+      mf_mult.set_finite_element
+	(mesh.convex_index(), 
+	 getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
+      
+      std::vector<scalar_type> WW1(2*mf_mult.nb_dof());
+      std::vector<scalar_type> WW2(2*mf_mult.nb_dof());
+      getfem::compute_gradient(mf_rhs, mf_mult, G1, WW1);
+      getfem::compute_gradient(mf_rhs, mf_mult, G2, WW2);
+      
+      std::vector<scalar_type> WW3(4*mf_mult.nb_dof());
+      getfem::compute_hessian(mf_u, mf_mult, VV, WW3);
+      
+      
+      mf_rhs.set_finite_element(mesh.convex_index(), 
+				getfem::fem_descriptor("FEM_PK(2,1)"));
+      
+      std::vector<scalar_type> WWW(mf_rhs.nb_dof());
+      getfem::interpolation(mf_u, mf_rhs, VV, WWW);
+      cout << "ii = " << ii << " point " << mf_u.point_of_dof(ii)
+	   << " WW = " << WW << " WW1 = " << WW1 << " WW2 = " << WW2
+	   << " WW3 = " << WW3 << " WWW = " << WWW << endl;
+      
+      getchar();
+
+    }
+  }
+
 
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
@@ -176,10 +292,12 @@ void bilaplacian_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1] - 1.0) >= 1.0E-7) { // new Neumann face
+    if (0 && gmm::abs(un[N-1] - 1.0) <= 1.0E-7)
       mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
-    } else {
-      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+    else {
+      mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+      if (gmm::abs(un[N-1] + 1.0) <= 1.0E-7)
+	mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
     }
   }
 }
@@ -220,7 +338,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
 
   // Defining the Neumann condition right hand side.
   base_small_vector un(N);
-
+  gmm::clear(F);
   for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
        !i.finished(); ++i) {
     size_type cv = i.cv(), f = i.f();
@@ -236,17 +354,41 @@ bool bilaplacian_problem::solve(plain_vector &U) {
 
   // Neumann condition brick.
   getfem::mdbrick_source_term<>
-    NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+    NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[i] = sol_u(mf_rhs.point_of_dof(i));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
-					  mf_mult);
-  final_model.set_constraints_type(getfem::constraints_type(dirichlet_version));
+  getfem::mdbrick_Dirichlet<>
+    DIRICHLET(NEUMANN, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
+  DIRICHLET.set_constraints_type(dirichlet_version);
+  DIRICHLET.rhs().set(mf_rhs, F);
+
+  // Defining the normal derivative Dirichlet condition value.
+  gmm::clear(F);
+  for (getfem::mr_visitor i(mesh.region(CLAMPED_BOUNDARY_NUM));
+       !i.finished(); ++i) {
+    size_type cv = i.cv(), f = i.f();
+    getfem::pfem pf = mf_rhs.fem_of_element(cv);
+    for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
+      size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
+      un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
+      un /= gmm::vect_norm2(un);
+      size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
+      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un) * 0.0;
+    }
+  }
+  
+  // Normal derivative Dirichlet condition brick.
+  getfem::mdbrick_normal_derivative_Dirichlet<> 
+    final_model(DIRICHLET, CLAMPED_BOUNDARY_NUM, mf_mult);
+  final_model.set_constraints_type(dirichlet_version);
   final_model.rhs().set(mf_rhs, F);
+
+   
+
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -266,7 +408,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
 int main(int argc, char *argv[]) {
 
   GETFEM_MPI_INIT(argc, argv); // For parallelized version
-
   DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
@@ -274,11 +415,12 @@ int main(int argc, char *argv[]) {
     bilaplacian_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
 
     p.compute_error(U);
+
+    cout << "U = " << U << endl;
 
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
@@ -288,7 +430,7 @@ int main(int argc, char *argv[]) {
       exp.write_point_data(p.mf_u, U, "bilaplacian_displacement");
       cout << "export done, you can view the data file with (for example)\n"
 	   << "mayavi -d " << p.datafilename
-	   << ".vtk -f BandedSurfaceMap -m Outline\n";
+	   << ".vtk -m BandedSurfaceMap -m Outline\n";
     }
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -27,7 +27,7 @@
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_regular_meshes.h>
-#include <getfem_modeling.h>
+#include <getfem_model_solvers.h>
 #include <getfem_plasticity.h>
 
 /* some Getfem++ types that we will be using */

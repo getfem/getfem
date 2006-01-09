@@ -1,8 +1,17 @@
-2006-01-05 Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
+2006-01-07 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/bgeot_poly.h Adding a method to read a polynomial (in 
+	  dimension <= 4) on a stream or a character string.
+
+2006-01-06 Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_fem.cc Some bug fixed for non tau-equivalent elements.
-	Hermite triangle and Argyris element are working !
+	Hermite elements on triangle and tetrahedron and Argyris element
+	are working.
+
+	* src/getfem_fourth_order.h Adding tools to deal with fourth order
+	pdes like bilaplacian problem.
 
 2005-12-30 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
@@ -11,11 +20,12 @@
 2005-12-29 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/ftool.h, src/ftool.cc modification of get_token which is now
-	more elaborated and allows to analyze a "Matlab like" langage.
+	more elaborated and allows to analyze a "Matlab like" langages.
 	The class md_param which reads the parameter files allows now
-	basic computations (+, -, *, /, <, >, <=, >=, &&, ||, !) and
+	basic computations (+, -, *, /, <, >, <=, >=, &&, ||, ~, ~=) and
 	an "if else" instruction. A consequence is a slight modification
-	of the format of mesh files.
+	of the format of mesh files (the compatibility with the old version
+	is maintened).
 
 2005-12-27 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 

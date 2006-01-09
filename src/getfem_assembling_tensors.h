@@ -39,7 +39,6 @@
 #include <bgeot_sparse_tensors.h>
 #include <getfem_mat_elem_type.h>
 #include <getfem_mat_elem.h>
-#include <numeric>
 #include <map>
 
 #define ASM_THROW_PARSE_ERROR(x) DAL_THROW(std::invalid_argument, "parse error: " << x << endl << "found here:\n " << syntax_err_print());

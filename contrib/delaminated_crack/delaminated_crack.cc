@@ -29,7 +29,7 @@
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_derivatives.h>
 #include <getfem_regular_meshes.h>
-#include <getfem_modeling.h>
+#include <getfem_model_solvers.h>
 #include <getfem_mesh_im_level_set.h>
 #include <getfem_mesh_fem_level_set.h>
 #include <getfem_mesh_fem_product.h>

@@ -9,7 +9,7 @@
 #include <getfem_linearized_plates.h>
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
-#include <getfem_modeling.h>
+#include <getfem_model_solvers.h>
 #include <gmm.h>
 #include <getfem_derivatives.h>
 #include <getfem_mesh_im_level_set.h>

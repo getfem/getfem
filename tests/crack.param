@@ -28,7 +28,6 @@ MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
 FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
-%FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 
 MIXED_PRESSURE=0;       % Mixed version or not.

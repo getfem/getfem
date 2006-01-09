@@ -188,7 +188,6 @@ namespace getfem
     }
   }
 
-
   /**Compute the Von-Mises stress of a field.
    */
   template <typename VEC1, typename VEC2>

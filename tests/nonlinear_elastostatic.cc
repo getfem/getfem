@@ -32,7 +32,7 @@
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
-#include <getfem_modeling.h>
+#include <getfem_model_solvers.h>
 #include <getfem_nonlinear_elasticity.h>
 #include <getfem_superlu.h>
 #include <gmm.h>

@@ -31,17 +31,16 @@
 
 #include <bgeot_poly.h>
 #include <bgeot_vector.h>
-#include <numeric>
-namespace bgeot
-{
-    #define STORED 150
+#include <ftool.h>
+
+namespace bgeot {
+
+#define STORED 150
   static gmm::dense_matrix<size_type> alpha_M_(STORED, STORED);
   static void alpha_init_() {
     static bool init = false;
-    if (!init)
-    {
-      for (short_type i = 0; i < STORED; ++i)
-      { 
+    if (!init) {
+      for (short_type i = 0; i < STORED; ++i) {
 	alpha_M_(i, 0) = alpha_M_(0, i) = 1;
 	for (short_type j = 1; j <= i; ++j)
 	  alpha_M_(i,j) = alpha_M_(j,i) = (alpha_M_(i, j-1) * (i+j)) / j;
@@ -49,10 +48,10 @@ namespace bgeot
       init = true;
     }
   }
-  static inline size_type alpha_(short_type n, short_type d) { return alpha_M_(d,n); }
+  static inline size_type alpha_(short_type n, short_type d)
+  { return alpha_M_(d,n); }
 
-  size_type alpha(short_type n, short_type d)
-  {
+  size_type alpha(short_type n, short_type d) {
     alpha_init_();
     if (n >= STORED || d >= STORED)
       DAL_THROW(internal_error,
@@ -60,8 +59,7 @@ namespace bgeot
     return alpha_(n,d);
   }
 
-  const power_index &power_index::operator ++()
-  { 
+  const power_index &power_index::operator ++() {
     short_type n = size(), l;
     if (n > 0) {
       size_type g_idx = global_index_; short_type deg = degree_;
@@ -78,8 +76,7 @@ namespace bgeot
     return *this;
   }
   
-  const power_index &power_index::operator --()
-  {
+  const power_index &power_index::operator --() {
     short_type n = size(), l;
     if (n > 0) {
       size_type g_idx = global_index_; short_type deg = degree_;
@@ -96,15 +93,13 @@ namespace bgeot
     return *this;
   }
   
-  short_type power_index::degree() const
-  { 
+  short_type power_index::degree() const {
     if (degree_ != short_type(-1)) return degree_;
     degree_ = std::accumulate(begin(), end(), 0); 
     return degree_;
   }
 
-  size_type power_index::global_index(void) const
-  {
+  size_type power_index::global_index(void) const {
     if (global_index_ != size_type(-1)) return global_index_;
     short_type d = degree(), n = size();
     global_index_ = 0;
@@ -113,18 +108,121 @@ namespace bgeot
     { global_index_ += alpha_(n, d-1); d -= *it; --n; }
     return global_index_;
   }
-  /*
-  size_type power_index::global_index_shift(size_type idx, short_type k) {
-    degree_ = degree() + k - v[idx];
-    
-  }
-
-  size_type power_index::set(size_type idx, short_type v) {
-    short_type deg = degree(); size_type pi = power_index();
-    
-  }
-  */
+ 
   power_index::power_index(short_type nn) : v(nn), degree_(0), global_index_(0)
   { std::fill(begin(), end(), short_type(0)); alpha_init_(); }
+
+
+  // functions to read a polynomial on a stream
+
+  static void parse_error(void)
+  { DAL_THROW(failure_error, "Syntax error reading a polynomial"); }
+
+  static int get_next_token(std::string &s, std::istream &f)
+  { return ftool::get_token(f, s, true, false); }
+
+  static base_poly read_expression(short_type n, std::istream &f) {
+    base_poly result(n,0);
+    std::string s;
+    int i = get_next_token(s, f), j;
+    switch (i) {
+    case 2 : result.one();
+      result *= opt_long_scalar_type(::strtod(s.c_str(), 0));
+      break;
+    case 4 :
+      if (s == "x") result = base_poly(n, 1, 0);
+      else if (s == "y" && n > 1) result = base_poly(n, 1, 1);
+      else if (s == "z" && n > 2) result = base_poly(n, 1, 2);
+      else if (s == "w" && n > 3) result = base_poly(n, 1, 3);
+      else if (s == "sqrt") {
+	base_poly p = read_expression(n, f);
+	if (p.degree() > 0) parse_error();
+	result.one();  result *= sqrt(p[0]);
+      }
+      else parse_error();
+      break;
+    case 5 :
+      switch (s[0]) {
+      case '(' :
+	result = read_base_poly(n, f);
+	j = get_next_token(s, f);
+	if (j != 5 || s[0] != ')') parse_error();
+	break;
+      case '+' : result = read_expression(n, f); break;
+      case '-' : result = read_expression(n, f) * opt_long_scalar_type(-1);
+	break;
+      default : parse_error();
+      }
+      break;
+    default : parse_error();
+    }
+    return result;
+  }
+
+  static void operator_priority_(int i, char c, int &prior, int &op) {
+    if (i == 5)
+      switch (c) {
+      case '*' : prior = 2; op = 1; return;
+      case '/' : prior = 2; op = 2; return;
+      case '+' : prior = 3; op = 3; return;
+      case '-' : prior = 3; op = 4; return;
+      case '^' : prior = 1; op = 5; return;
+      }
+    prior = op = 0;
+  }
+
+  void do_bin_op(std::vector<base_poly> &value_list,
+		 std::vector<int> &op_list,
+		 std::vector<int> &prior_list) {
+    base_poly &p1(*(value_list.end() - 2)), &p2(*(value_list.end() - 1));
+    
+    switch (op_list.back()) {
+    case 1  : p1 *= p2; break;
+    case 2  : if (p2.degree() > 0) parse_error(); p1 /= p2[0]; break;
+    case 3  : p1 += p2; break;
+    case 4  : p1 -= p2; break;
+    case 5  : 
+      {
+	if (p2.degree() > 0) parse_error();
+	long pow = long(p2[0]);
+	if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error();
+	base_poly p = p1; p1.one();
+	for (long i = 0; i < pow; ++i) p1 *= p;
+      }
+      break;
+    }
+    value_list.pop_back(); op_list.pop_back(); prior_list.pop_back();
+  }
+
+  base_poly read_base_poly(short_type n, std::istream &f) {
+    std::vector<base_poly> value_list;
+    std::string s;
+    value_list.push_back(read_expression(n, f));
+    std::vector<int> op_list, prior_list;
+    int i = get_next_token(s, f), prior, op;
+    operator_priority_(i, s[0], prior, op);
+    while (op) {
+      while (!prior_list.empty() && prior_list.back() <= prior)
+	do_bin_op(value_list, op_list, prior_list);
+
+      value_list.push_back(read_expression(n, f));
+      op_list.push_back(op);
+      prior_list.push_back(prior);
+      
+      i = get_next_token(s, f);
+      operator_priority_(i, s[0], prior, op);
+    }
+    
+    if (i == 5 && s[0] == ')') { f.putback(')'); }
+    else if (i != 0 && (i != 5 || s[0] != ';')) parse_error();
+
+    while (!prior_list.empty()) do_bin_op(value_list, op_list, prior_list);
+
+    return value_list[0];
+  }
+
+  base_poly read_base_poly(short_type n, const std::string &s)
+  { std::stringstream f(s); return read_base_poly(n, f); }
+
 
 }  /* end of namespace bgeot.                                             */

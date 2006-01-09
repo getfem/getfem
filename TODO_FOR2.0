@@ -2,14 +2,14 @@ Changement à prendre en considérations pour la 2.0 :
 
 - Faut-il revoir la gestion des erreurs (p.ex un seul type d'erreurs) ?
 
-- orientation et numérotation dans getfemlist.tex et getfemelem.tex a revoir.
-
 - Refaire bgeot_simplexify et bgeot::convex_hull en interfaçant qhull ?
   inconvénient : lier un peu plus getfem à qhull. Une autre manière de
   régler le problème serait de remplacer le calcul de la simplexification
   des éléments de référence courant par une simplexificatio connue.
 
-- Element d'hermite triangle à faire marcher.
+- Argyris à corriger pour les transformations non linéaries. 
+
+- bilaplacian a faire marcher (y compris en transformations non linéaires)
 
 - simplifier standard solve avec des options pour la résolution. raffiner
   la stratégie du newton pour qu'il marche de manière optimale dans les deux
@@ -28,6 +28,8 @@ Changement à prendre en considérations pour la 2.0 :
 - Ajouter le raffinement de maillage à la bank (voir fichier TOBEDONE)
 
 - Utilisation correcte de Metis.
+
+- Finaliser getfemlist.tex.
 
 - Doc sur Xfem
 

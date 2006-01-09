@@ -235,7 +235,7 @@ void lap_pb::init(void)
   case 0 : break;
 
   case 1 :
-    sprintf(meth, "FEM_HERMITE_SEGMENT");
+    sprintf(meth, "FEM_HERMITE(1)");
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;

@@ -233,16 +233,14 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
   \begin{center} \begin{tabular}{m{7cm}m{7cm}}
     \includegraphics[width=5cm,angle=0]{getfemlist_cube_Q1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_cube_Q3.eps} \\
     $Q_1$ element, 8 d.o.f., $C^0$ & $Q_3$ element, 64 d.o.f., $C^0$ \\
-    \includegraphics[width=5cm,angle=0]{getfemlist_prism_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_prism_P3.eps} \\
+    \includegraphics[width=3.5cm,angle=0]{getfemlist_prism_P1.eps} & \includegraphics[width=3cm,angle=0]{getfemlist_prism_P3.eps} \\
     $P_1 \otimes P_1$ element, 6 d.o.f., $C^0$ & $P_3 \otimes P_3$ element, 40 d.o.f., $C^0$ \\
   \end{tabular} \end{center}
   \caption{ \it Examples of classical Lagrange elements in dimension 3} \label{fig:prodpktrois}
 \end{figure}
-
-
 \begin{figure}[H]
   \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_prism_P2_P1.eps}
+    \includegraphics[width=3.5cm,angle=0]{getfemlist_prism_P2_P1.eps}
   \end{center}
   \caption{ \it $P_2 \otimes P_1$ Lagrange element on a prism, 12 d.o.f., $C^0$} 
   \label{fig:prism_P2_p1}
@@ -465,7 +463,7 @@ This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 {\bf Hermite element on the segment}\\
-{\tt "FEM\_HERMITE\_SEGMENT"}
+{\tt "FEM\_HERMITE(1)"}
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
@@ -592,7 +590,7 @@ $1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \begin{center}
     \includegraphics[width=6cm,angle=0]{getfemlist_triangle_hermite.eps}
   \end{center}
-  \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$}
+  \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$ (``nearly'' $C^1$) }
   \label{fig:triangle_hermite}
 \end{figure}
 
@@ -617,7 +615,7 @@ This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equa
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Hermite element on a triangle}\\
-"FEM\_HERMITE\_TRIANGLE"
+"FEM\_HERMITE(2)"
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
@@ -655,13 +653,13 @@ $$ \begin{array}{ll}
 \bar{\varphi}_{15}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\bar{\varphi}_{15}(0,0) = 1),\\
 \bar{\varphi}_{16}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\bar{\varphi}_{16}(1,0) = 1),\\
 \bar{\varphi}_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\bar{\varphi}_{17}(0,1) = 1),\\
-\bar{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & (\partial_{x}\bar{\varphi}_0(1/2,1/2) + \partial_{y}\bar{\varphi}_{18}(1/2,1/2) = \sqrt{2}),\\
-\bar{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\bar{\varphi}_{19}(0,1/2) = 1),\\
-\bar{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\bar{\varphi}_{20}(1/2,0) = 1),\\
+\bar{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & \hspace*{-9.5em}(\sqrt{0.5}(\partial_{x}\bar{\varphi}_0(0.5,0.5) + \partial_{y}\bar{\varphi}_{18}(0.5,0.5)) = 1),\\
+\bar{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\bar{\varphi}_{19}(0,0.5) = 1),\\
+\bar{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\bar{\varphi}_{20}(0.5,0) = 1),\\
 \end{array}
 $$
 
-This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\bar{\varphi}_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $\tilde{M}$ (see also the documentation on the finite element kernel \cite{BAS_COMP}) allows to define Argyris element even with nonlinear geometric transformations (for instace with curved boundaries).
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\bar{\varphi}_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $\tilde{M}$ (see also the documentation on the finite element kernel \cite{BAS_COMP}) allows to define Argyris element even with nonlinear geometric transformations (for instance to treat curved boundaries).
 
 
 \begin{center}
@@ -722,6 +720,54 @@ $3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
+\subsubsection{Hermite element}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=6cm,angle=0]{getfemlist_tetrahedron_hermite.eps}
+  \end{center}
+  \caption{ \it Hermite element on a tetrahedron, $P_3$, 20 d.o.f., $C^0$ (``nearly'' $C^1$)}
+  \label{fig:tetrahedron_hermite}
+\end{figure}
+
+Base functions on the reference element:
+$$
+  \begin{array}{ll}
+\bar{\varphi}_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
+ ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\bar{\varphi}_0(0,0,0) = 1),\\
+\bar{\varphi}_{1}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\bar{\varphi}_0(1,0,0) = 1),\\
+\bar{\varphi}_{2}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\bar{\varphi}_0(0,1,0) = 1),\\
+\bar{\varphi}_{3}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\bar{\varphi}_0(0,0,1) = 1),\\
+\bar{\varphi}_{4}(x,y) = 27xyz, & (\bar{\varphi}_0(1/3,1/3,1/3) = 1),\\
+\bar{\varphi}_{5}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\bar{\varphi}_0(0,1/3,1/3) = 1),\\
+\bar{\varphi}_{6}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\bar{\varphi}_0(1/3,0,1/3) = 1),\\
+\bar{\varphi}_{7}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\bar{\varphi}_0(1/3,1/3,0) = 1),\\
+\bar{\varphi}_{8}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\bar{\partial_x\varphi}_0(0,0,0) = 1),\\
+\bar{\varphi}_{9}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\bar{\partial_x\varphi}_0(1,0,0) = 1),\\
+\bar{\varphi}_{10}(x,y) = -xy + x^2y + 2xy^2, & (\bar{\partial_x\varphi}_0(0,1,0) = 1),\\
+\bar{\varphi}_{11}(x,y) = -xz + x^2z + 2xz^2, & (\bar{\partial_x\varphi}_0(0,0,1) = 1),\\
+\bar{\varphi}_{12}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\bar{\partial_y\varphi}_0(0,0,0) = 1),\\
+\bar{\varphi}_{13}(x,y) = -xy + 2x^2y + xy^2, & (\bar{\partial_y\varphi}_0(1,0,0) = 1),\\
+\bar{\varphi}_{14}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\bar{\partial_y\varphi}_0(0,1,0) = 1),\\
+\bar{\varphi}_{15}(x,y) = -yz + y^2z + 2yz^2, & (\bar{\partial_y\varphi}_0(0,0,1) = 1),\\
+\bar{\varphi}_{16}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\bar{\partial_z\varphi}_0(0,0,0) = 1),\\
+\bar{\varphi}_{17}(x,y) = -xz + 2x^2z + xz^2, & (\bar{\partial_z\varphi}_0(1,0,0) = 1),\\
+\bar{\varphi}_{18}(x,y) = -yz + 2y^2z + yz^2, & (\bar{\partial_z\varphi}_0(0,1,0) = 1),\\
+\bar{\varphi}_{19}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\bar{\partial_z\varphi}_0(0,0,1) = 1),\\
+  \end{array}
+$$
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\bar{\varphi}_8$, $\bar{\varphi}_{12}$ and $\bar{\varphi}_{16}$ are used to match the gradient on the corresponding vertex. Idem on the orther vertices. 
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{ \bf Hermite element on a tetrahedron}\\
+"FEM\_HERMITE(3)"
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$3$ & $3$ & $20$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
+\end{tabular}
+\end{center}
 
 \subsection{Tensorial product of elements}
 

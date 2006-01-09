@@ -202,8 +202,7 @@ namespace bgeot
     /// Multiply P with Q. P contains the result.
     polynomial &operator *=(const polynomial &Q);
     /// Multiply P with Q. 
-    polynomial operator *(const polynomial &Q) const
-      { polynomial res = *this; res *= Q; return res; }
+    polynomial operator *(const polynomial &Q) const;
     /** Product of P and Q considering that variables of Q come after
      * variables of P. P contains the result
      */
@@ -211,8 +210,7 @@ namespace bgeot
     /// Multiply P with the scalar a. P contains the result.
     polynomial &operator *=(const T &e);
     /// Multiply P with the scalar a.
-    polynomial operator *(const T &e) const
-      { polynomial res = *this; res *= e; return res; }
+    polynomial operator *(const T &e) const;
     /// Divide P with the scalar a. P contains the result.
     polynomial &operator /=(const T &e);
     /// Divide P with the scalar a.
@@ -239,6 +237,7 @@ namespace bgeot
     polynomial(short_type dim_, short_type degree_, short_type k);
   };
 
+
   template<typename T> polynomial<T>::polynomial(short_type nn, short_type dd)
     : std::vector<T>(alpha(nn,dd))
   { n = nn; d = dd; std::fill(this->begin(), this->end(), T(0)); }
@@ -250,6 +249,14 @@ namespace bgeot
     std::fill(this->begin(), this->end(), T(0));
     (*this)[k+1] = T(1);
   }
+
+  template<typename T>
+  polynomial<T> polynomial<T>::operator *(const polynomial &Q) const
+  { polynomial res = *this; res *= Q; return res; }
+  
+  template<typename T>
+  polynomial<T> polynomial<T>::operator *(const T &e) const
+  { polynomial res = *this; res *= e; return res; }
   
   template<typename T> short_type polynomial<T>::real_degree(void) const {
     const_iterator it = this->end() - 1, ite = this->begin() - 1;
@@ -539,8 +546,11 @@ namespace bgeot
      example: poly_subs(x+y*x^2, x+1, 0) = x+1 + y*(x+1)^2
   */
   template<typename T>    
-  polynomial<T> poly_substitute_var(const polynomial<T>& P, const polynomial<T>& S, size_type subs_dim) {
-    if (S.dim()!=1 || subs_dim >= P.dim()) DAL_THROW(failure_error, "wrong arguments for polynomial substitution");
+  polynomial<T> poly_substitute_var(const polynomial<T>& P,
+				    const polynomial<T>& S,
+				    size_type subs_dim) {
+    if (S.dim()!=1 || subs_dim >= P.dim())
+      DAL_THROW(failure_error, "wrong arguments for polynomial substitution");
     polynomial<T> res(P.dim(),0);
     bgeot::power_index pi(P.dim());
     std::vector< polynomial<T> > Spow(1);
@@ -559,21 +569,25 @@ namespace bgeot
     return res;
   }
   
-  template<typename U, typename T> polynomial<T> operator *(U c, const polynomial<T> &p)
+  template<typename U, typename T>
+  polynomial<T> operator *(U c, const polynomial<T> &p)
   { polynomial<T> q = p; q *= T(c); return q; }
 
   typedef polynomial<opt_long_scalar_type> base_poly;
 
   /* usual constant polynomials  */
   
-  inline base_poly null_poly(short_type n)
-    { return base_poly(n, 0); }
+  inline base_poly null_poly(short_type n) { return base_poly(n, 0); }
   inline base_poly one_poly(short_type n)
-    { base_poly res=base_poly(n, 0); res.one(); return res;  }
+  { base_poly res=base_poly(n, 0); res.one(); return res;  }
   inline base_poly one_var_poly(short_type n, short_type k)
-    { return base_poly(n, 1, k); }
+  { return base_poly(n, 1, k); }
 
+  /** read a base_poly on the stream ist. */
+  base_poly read_base_poly(short_type n, std::istream &f);
 
+  /** read a base_poly on the string s. */
+  base_poly read_base_poly(short_type n, const std::string &s);
 
 }  /* end of namespace bgeot.                                           */
 

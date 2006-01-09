@@ -31,6 +31,7 @@
 #include <getfem_import.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_Coulomb_friction.h>
+#include <getfem_model_solvers.h>
 #include <getfem_derivatives.h>
 #include <gmm.h>
 #include <fstream>
@@ -43,7 +44,7 @@ using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
- * default types of getfem_modeling.h
+ * default types of getfem_model_solvers.h
  */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;

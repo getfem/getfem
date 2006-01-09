@@ -28,7 +28,7 @@
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_import.h>
 #include <getfem_regular_meshes.h>
-#include <getfem_modeling.h>
+#include <getfem_model_solvers.h>
 #include <getfem_Navier_Stokes.h>
 #include "icare.h"
 

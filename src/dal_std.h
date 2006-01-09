@@ -101,6 +101,8 @@
 #include <complex>
 #include <limits>
 #include <sstream>
+#include <numeric>
+
 
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
