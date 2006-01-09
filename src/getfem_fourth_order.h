@@ -351,7 +351,7 @@ namespace getfem {
     */
     mdbrick_normal_derivative_source_term
     (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
-     const VECTOR &B__ = VECTOR(), size_type bound,
+     const VECTOR &B__, size_type bound,
      size_type num_fem_=0) : B_("source_term",mf_data_, this), boundary(bound),
 	num_fem(num_fem_) {
       this->add_sub_brick(problem);
