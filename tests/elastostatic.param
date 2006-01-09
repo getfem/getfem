@@ -11,7 +11,6 @@ LZ = 1.0;		% size in Z.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-INCLINE = 0;            % Incline of the mesh.
 N = 2;
 QUAD = 0;
 FT = 3.0;               % parameter for the exact solution.

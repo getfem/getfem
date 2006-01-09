@@ -10,7 +10,6 @@ print TMPF <<
 LX = 1.0;
 LY = 1.0;
 LZ = 1.0;
-INCLINE = 0.0;
 MESH_NOISED = 0.0;
 MESH_TYPE = 'GT_PK(2,1)';
 INTEGRATION = 'IM_TRIANGLE(13)';

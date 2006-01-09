@@ -97,14 +97,16 @@ namespace getfem
 	mim[0] = tt.sizes()[0];
 	tt.adjust_sizes(mim);
 	t.mat_transp_reduction(tt, B3(), 2);
-	if (have_pfp()) {
-	  tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
-	} else {
-	  base_tensor u;
-	  pf()->grad_base_value(xref(), u);
-	  tt.mat_transp_reduction(u, B32(), 2);
+	if (!pgt()->is_linear()) {
+	  if (have_pfp()) {
+	    tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+	  } else {
+	    base_tensor u;
+	    pf()->grad_base_value(xref(), u);
+	    tt.mat_transp_reduction(u, B32(), 2);
+	  }
+	  t -= tt;
 	}
-	t -= tt;
       }
     }
   }

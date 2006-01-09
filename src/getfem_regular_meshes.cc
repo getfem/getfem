@@ -215,7 +215,9 @@ namespace getfem
 	for (size_type i=0; i < N; ++i) { if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10) is_border = true; }
 	if (!is_border) { 
 	  P = shake_func(P); 
-	  for (size_type i=0; i < N; ++i) P[i] += 0.30*(1./nsubdiv[i])*gmm::random(double());
+	  for (size_type i=0; i < N; ++i)
+	    P[i] += 0.20*(1./(nsubdiv[i]* pgt->poly_vector()[0].degree()))
+	      * gmm::random(double());
 	}
       }
     }

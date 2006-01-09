@@ -59,40 +59,43 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /*  Exact solution.                                                       */
 /**************************************************************************/
 
-scalar_type sol_u(const base_node &x)
-{ return sin(std::accumulate(x.begin(), x.end(), 0.0)); }
-
-scalar_type sol_lapl_u(const base_node &x)
-{ return -sol_u(x) * x.size(); }
-
-scalar_type sol_f(const base_node &x) { return sol_u(x)*gmm::sqr(x.size()); }
-
-base_small_vector sol_du(const base_node &x) {
-  base_small_vector res(x.size());
-  std::fill(res.begin(), res.end(),
-	    cos(std::accumulate(x.begin(), x.end(), 0.0)));
-  return res;
-}
-
-base_small_vector neumann_val(const base_node &x)
-{ return -sol_du(x) * scalar_type(x.size()); }
-
+scalar_type FT = 0.0;
 
 // scalar_type sol_u(const base_node &x)
-// { return x[0]*(1. - x[0]); }
+// { return sin(FT*std::accumulate(x.begin(), x.end(), 0.0)); }
 
-// scalar_type sol_lapl_u(const base_node &)
-// { return -2.0; }
+// scalar_type sol_lapl_u(const base_node &x)
+// { return -FT*FT*sol_u(x) * x.size(); }
 
-// scalar_type sol_f(const base_node &x) { return 0.0; }
+// scalar_type sol_f(const base_node &x)
+// { return FT*FT*FT*FT*sol_u(x)*gmm::sqr(x.size()); }
 
 // base_small_vector sol_du(const base_node &x) {
-//   base_small_vector res(x.size()); res[0] = 1.0 - 2.0 * x[0];
+//   base_small_vector res(x.size());
+//   std::fill(res.begin(), res.end(),
+// 	    FT * cos(std::accumulate(x.begin(), x.end(), 0.0)));
 //   return res;
 // }
 
 // base_small_vector neumann_val(const base_node &x)
-// { return base_small_vector(x.size());  }
+// { return -FT*FT*FT*sol_du(x) * scalar_type(x.size()); }
+
+
+scalar_type sol_u(const base_node &x)
+{ return x[0]*x[1]; }
+
+scalar_type sol_lapl_u(const base_node &)
+{ return 0.0; }
+
+scalar_type sol_f(const base_node &x) { return 0.0; }
+
+base_small_vector sol_du(const base_node &x) {
+  base_small_vector res(x.size()); res[0] = x[1]; res[1] = x[0]; 
+  return res;
+}
+
+base_small_vector neumann_val(const base_node &x)
+{ return base_small_vector(x.size());  }
 
 
 
@@ -123,32 +126,11 @@ struct bilaplacian_problem {
 			      mf_rhs(mesh) {}
 };
 
-namespace getfem {
-
-  template<typename VECT> // just for a test
-  void asm_hess(VECT &V, const mesh_im &mim, const mesh_fem &mf,
-	const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    generic_assembly assem("a=data(#1); t=comp(Hess(#1));"
-			   "V$1()+=t(j,1,1).a(j); V$2()+=t(j,1,2).a(j);"
-			   "V$3()+=t(j,2,1).a(j); V$4()+=t(j,2,2).a(j)"
-			   );
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_data(A);
-    std::vector<scalar_type> V1(1), V2(1), V3(1), V4(1);
-    assem.push_vec(V1); assem.push_vec(V2);
-    assem.push_vec(V3); assem.push_vec(V4);
-    assem.assembly(rg);
-    V[0] = V1[0]; V[1] = V2[0]; V[2] = V3[0]; V[3] = V4[0];
-  }
-
-}
-
-
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
 void bilaplacian_problem::init(void) {
+  std::string MESH_FILE = PARAM.string_value("MESH_FILE");
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
@@ -157,30 +139,40 @@ void bilaplacian_problem::init(void) {
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
-    bgeot::geometric_trans_descriptor(MESH_TYPE);
-  size_type N = pgt->dim();
-  std::vector<size_type> nsubdiv(N);
-  std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps "));
-  getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			    PARAM.int_value("MESH_NOISED") != 0);
-  
-  bgeot::base_matrix M(N,N);
-  for (size_type i=0; i < N; ++i) {
-    static const char *t[] = {"LX","LY","LZ"};
-    M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-  }
-  if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
+  size_type N;
+  if (!MESH_FILE.empty()) {
+    mesh.read_from_file(MESH_FILE);
+    MESH_TYPE = bgeot::name_of_geometric_trans(mesh.trans_of_convex(mesh.convex_index().first_true()));
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+    N = mesh.dim();
+  } else {
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+    
+    /* First step : build the mesh */
+    bgeot::pgeometric_trans pgt = 
+      bgeot::geometric_trans_descriptor(MESH_TYPE);
+    N = pgt->dim();
+    std::vector<size_type> nsubdiv(N);
+    std::fill(nsubdiv.begin(),nsubdiv.end(),
+	      PARAM.int_value("NX", "Nomber of space steps "));
+    getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
+			      PARAM.int_value("MESH_NOISED") != 0);
 
-  /* scale the unit mesh to [LX,LY,..] and incline it */
-  mesh.transformation(M);
+    bgeot::base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) {
+      static const char *t[] = {"LX","LY","LZ"};
+      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
+    }
+    /* scale the unit mesh to [LX,LY,..] and incline it */
+    mesh.transformation(M);
+  }
 
   int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
   dirichlet_version = getfem::constraints_type(dv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
+  FT = PARAM.real_value("FT"); if (FT == 0.0) FT = 1.0;
+
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -189,98 +181,6 @@ void bilaplacian_problem::init(void) {
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
-
-  // assembly test
-  if (0) {
-  mf_rhs.set_finite_element(mesh.convex_index(), 
-			    getfem::fem_descriptor("FEM_PK(2,4)"));
-  std::vector<scalar_type> UU(mf_u.nb_dof()), VV(mf_u.nb_dof()),
-    WW(mf_rhs.nb_dof());
-  for (size_type k = 0; k < mf_rhs.nb_dof(); ++k) {
-    base_node pt = mf_rhs.point_of_dof(k);
-    WW[k] = pt[0]*(1.0 - pt[0]);
-  }
-  cout << "WW = " << WW << endl;
-
-  sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
-  getfem::asm_mass_matrix(MM, mim, mf_u);
-  getfem::asm_source_term(VV, mim, mf_u, mf_rhs, WW);
-  
-  gmm::iteration iter(1E-13, 1, 2000);
-  gmm::ilut_precond<sparse_matrix> P(MM, 90, 1E-9);
-  // gmm::identity_matrix P;
-  gmm::cg(MM, UU, VV, P, iter);
-  gmm::clean(UU, 1E-10);
-  cout << "UU = " << UU << endl;
-
-   mf_rhs.set_finite_element
-     (mesh.convex_index(), 
-      getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
-   std::vector<scalar_type> WG(2*mf_rhs.nb_dof());
-   getfem::compute_gradient(mf_u, mf_rhs, UU, WG);
-   cout << "WG = " << WG << endl;
-
-
-  getfem::vtk_export exp(datafilename + "_test.vtk",
-			 PARAM.int_value("VTK_EXPORT")==1);
-  exp.exporting(mf_u); 
-  exp.write_point_data(mf_u, UU, "bilaplacian_displacement");
-  cout << "export done, you can view the data file with (for example)\n"
-       << "mayavi -d " << datafilename
-       << "_test.vtk -m BandedSurfaceMap -m Outline\n";
-  
-
-  std::vector<scalar_type> RR(4);
-  getfem::asm_hess(RR, mim, mf_u, UU);
-  cout << "RR = " << RR << endl;
-
-  }
-     
-  // To "see" the base function of a 2D element  ... 
-  if (0) {
-    for (size_type ii = 0; ii < mf_u.nb_dof(); ++ii) {
-      std::vector<scalar_type> VV(mf_u.nb_dof());
-      
-      mf_rhs.set_finite_element
-	(mesh.convex_index(), 
-	 getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,4)"));
-      
-      std::vector<scalar_type> WW(2*mf_rhs.nb_dof());
-      
-      VV[ii] = 1.0;
-      getfem::compute_gradient(mf_u, mf_rhs, VV, WW);
-      
-      std::vector<scalar_type> G1(mf_rhs.nb_dof()), G2(mf_rhs.nb_dof());
-      gmm::copy(gmm::sub_vector(WW, gmm::sub_slice(0, mf_rhs.nb_dof(),2)), G1);
-      gmm::copy(gmm::sub_vector(WW, gmm::sub_slice(1, mf_rhs.nb_dof(),2)), G2);
-      
-      mf_mult.set_finite_element
-	(mesh.convex_index(), 
-	 getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,1)"));
-      
-      std::vector<scalar_type> WW1(2*mf_mult.nb_dof());
-      std::vector<scalar_type> WW2(2*mf_mult.nb_dof());
-      getfem::compute_gradient(mf_rhs, mf_mult, G1, WW1);
-      getfem::compute_gradient(mf_rhs, mf_mult, G2, WW2);
-      
-      std::vector<scalar_type> WW3(4*mf_mult.nb_dof());
-      getfem::compute_hessian(mf_u, mf_mult, VV, WW3);
-      
-      
-      mf_rhs.set_finite_element(mesh.convex_index(), 
-				getfem::fem_descriptor("FEM_PK(2,1)"));
-      
-      std::vector<scalar_type> WWW(mf_rhs.nb_dof());
-      getfem::interpolation(mf_u, mf_rhs, VV, WWW);
-      cout << "ii = " << ii << " point " << mf_u.point_of_dof(ii)
-	   << " WW = " << WW << " WW1 = " << WW1 << " WW2 = " << WW2
-	   << " WW3 = " << WW3 << " WWW = " << WWW << endl;
-      
-      getchar();
-
-    }
-  }
-
 
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
@@ -314,13 +214,13 @@ void bilaplacian_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (0 & gmm::abs(un[N-1] - 1.0) <= 1.0E-7) {
+    if (0 & gmm::abs(un[N-1] - 1.0) <= 0.5) {
       mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
       mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
     }
     else {
       mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
-      if (0 && gmm::abs(un[N-1] + 1.0) <= 1.0E-7)
+      if (gmm::abs(un[N-1] + 1.0) <= 0.5)
 	mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
       else
 	mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
@@ -412,7 +312,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
       un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
       un /= gmm::vect_norm2(un);
       size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un);
+      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un) * 0.1;
     }
   }
   

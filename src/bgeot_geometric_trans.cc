@@ -133,7 +133,6 @@ namespace bgeot {
       B32_.resize(N_*N_, P);
       if (!pgt()->is_linear()) {
 	base_matrix B2(P*P, P), Htau(N_, P*P);
-	const base_matrix& BB3 = B3();
 	if (have_pgp()) {
 	  gmm::mult(G(), pgp_->hessian(ii_), Htau);
 	} else {
@@ -144,7 +143,7 @@ namespace bgeot {
 	    for (short_type k = 0; k < P; ++k)
 	      for (short_type l = 0; l < N_; ++l)
 		B2(i + P*j, k) += Htau(l, i + P*j) * BB(l,k);
-	gmm::mult(BB3, B2, B32_);
+	gmm::mult(B3(), B2, B32_);
       } else gmm::clear(B32_);
     }
     return B32_;
@@ -636,7 +635,7 @@ namespace bgeot {
 	  Q = P; Q.derivative(m);
 	  for (size_type j = 0; j < pspt->size(); ++j)
 	    hpc[j](i, m * N + n) = hpc[j](i, n * N + m)
-	      = P.eval((*pspt)[j].begin());
+	      = Q.eval((*pspt)[j].begin());
 	}
       }
     }

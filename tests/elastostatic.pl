@@ -12,7 +12,6 @@ LAMBDA = 1.0;
 LX = 1.0;
 LY = 1.0;
 LZ = 1.0;
-INCLINE = 0.0;
 MESH_NOISED = 1;
 FT = 0.1;
 MESH_TYPE = 'GT_PK(2,1)';

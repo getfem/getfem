@@ -7,15 +7,15 @@
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
-INCLINE = 0;            % Incline of the mesh.
 N = 2;
 QUAD = 0;
-MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
-NX = 6;                 % space step.
-DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+NX = 10;                % space step.
+DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 =
+                        % elimination
+FT = 1.0;               % parameter for the exact solution
 
-%MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
-
+% MESH_FILE='../../tests/meshes/disc_P2_h4.mesh'
 
 if (N == 1)
   MESH_TYPE = 'GT_PK(1,1)';       % segments
@@ -35,7 +35,7 @@ if (N == 2 && ~QUAD)
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
   else    % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
   end
   % FEM_TYPE = 'FEM_PK(2,3)';
 end

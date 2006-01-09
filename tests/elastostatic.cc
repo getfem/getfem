@@ -158,17 +158,14 @@ void elastostatic_problem::init(void) {
 	      PARAM.int_value("NX", "Nomber of space steps "));
     getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			      PARAM.int_value("MESH_NOISED") != 0);
+    bgeot::base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) {
+      static const char *t[] = {"LX","LY","LZ"};
+      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
+    }
+    /* scale the unit mesh to [LX,LY,..] and incline it */
+    mesh.transformation(M);
   }
-
-  bgeot::base_matrix M(N,N);
-  for (size_type i=0; i < N; ++i) {
-    static const char *t[] = {"LX","LY","LZ"};
-    M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-  }
-  if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
-
-  /* scale the unit mesh to [LX,LY,..] and incline it */
-  mesh.transformation(M);
 
   dirichlet_version = PARAM.int_value("DIRICHLET_VERSION","Dirichlet version");
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
