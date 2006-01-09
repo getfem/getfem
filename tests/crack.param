@@ -11,8 +11,10 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;           % Lamé coefficient.
 
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case
-LAMBDA_UP = 400.0;
-LAMBDA_DOWN = 1.O;
+if BIMATERIAL
+  LAMBDA_UP = 400.0;
+  LAMBDA_DOWN = 1.0;
+end
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles

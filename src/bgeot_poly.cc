@@ -184,10 +184,10 @@ namespace bgeot {
     case 5  : 
       {
 	if (p2.degree() > 0) parse_error();
-	long pow = long(p2[0]);
+	int pow = int(p2[0]);
 	if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error();
 	base_poly p = p1; p1.one();
-	for (long i = 0; i < pow; ++i) p1 *= p;
+	for (int i = 0; i < pow; ++i) p1 *= p;
       }
       break;
     }

@@ -409,14 +409,13 @@ void crack_problem::init(void) {
   
 
 /**************************************   TEST  ************************************************************/
-  if (bimaterial == 1){
+  if (bimaterial) {
     mu = PARAM.real_value("MU", "Lame coefficient mu"); 
     lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
     lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
     lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   }
-  else{
-
+  else {
     mu = PARAM.real_value("MU", "Lame coefficient mu");
     lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   }
