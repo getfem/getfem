@@ -66,12 +66,12 @@ struct friction_problem {
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
 
-  scalar_type residual;       /* max residual for the iterative solvers        */
+  scalar_type residual;      /* max residual for the iterative solvers       */
   
   size_type N, noisy, method, population, Dirichlet, Neumann;
   size_type contact_condition;
   scalar_type r;
-  scalar_type dtexport;
+  scalar_type overlap, subdomsize;
   scalar_type Dirichlet_ratio, Neumann_intensity;
   bool dxexport;
 
@@ -123,7 +123,8 @@ void friction_problem::init(void) {
   mesh.optimize_structure();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
+  residual = PARAM.real_value("RESIDUAL");
+  if (residual == 0.) residual = 1e-10;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -141,6 +142,8 @@ void friction_problem::init(void) {
 	      != 0);
   r = PARAM.real_value("R", "augmentation parameter");
   method = PARAM.int_value("METHOD", "solve method");
+  subdomsize = PARAM.real_value("SUBDOMSIZE");
+  overlap = PARAM.real_value("OVERLAP");
   population = PARAM.int_value("POPULATION", "genetic population");
   contact_condition = PARAM.int_value("CONTACT_CONDITION",
 				      "type of contact condition");
@@ -179,7 +182,7 @@ void friction_problem::init(void) {
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
     for (size_type f = 0; f < nf; f++) {
-      if (mesh.is_convex_having_neighbour(cv, f)) {
+      if (!mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
@@ -431,14 +434,15 @@ void situation_of(const Vector1 &U, const Vector2 &gap,
 /**************************************************************************/
 
 void build_vB(std::vector<sparse_matrix> &vB,
-				getfem::mesh_fem &mf_u,
-				dal::bit_vector dofgammac,
-				dal::bit_vector dofgammad) {
+	      getfem::mesh_fem &mf_u, dal::bit_vector dofgammac,
+	      dal::bit_vector dofgammad, double subdomsize, double overlap) {
   //  size_type hsize = F.size(), nb_dof = mf_u.nb_dof();
   // size_type nbc = coulomb.nb_contact_nodes();
   // size_type nbc_coarse = 0;
   // if (usecoarse) nbc_coarse = coulomb_coarse.nb_contact_nodes();
   
+  size_type N = mf_u.linked_mesh().dim();
+
   std::vector<base_node> pts;
   size_type i;
   for (i = 0; i < mf_u.nb_dof(); ++i)
@@ -450,10 +454,13 @@ void build_vB(std::vector<sparse_matrix> &vB,
   for (dal::bv_visitor j(dofgammad); !j.finished(); ++j, ++i)
     pts.push_back(mf_u.point_of_dof(j));
 
-  for (dal::bv_visitor j(dofgammac); !j.finished(); ++j, ++i)
-    pts.push_back(mf_u.point_of_dof(j));
+  for (dal::bv_visitor j(dofgammac); !j.finished(); ++j) {
+    if ((j % N) == 0) { pts.push_back(mf_u.point_of_dof(j)); ++i; }
+  }
 
-  
+  for (dal::bv_visitor j(dofgammac); !j.finished(); ++j) {
+    if ((j % N) != 0) { pts.push_back(mf_u.point_of_dof(j)); ++i; }
+  }
 
   //   for (size_type i = 0; i < nbc; ++i) { // Ne marche pas dans tous cas ...
   //     size_type j 
@@ -480,14 +487,12 @@ void build_vB(std::vector<sparse_matrix> &vB,
   // cout << "links_coarse = " << links_coarse << endl;
   // cout << "nb_dof = " << nb_dof << endl;
   // cout << "nb_dof_coarse = " << mf_coarse.nb_dof() << endl;
-  
-
-  double subdomsize = 0.2;
-  double overlap = 0.1;
-
+ 
   gmm::rudimentary_regular_decomposition(pts, subdomsize, overlap, vB);
   size_type nsd = vB.size();
-  
+
+  cout << "Number of subdomains : " << nsd << endl;
+ 
   //   if (usecoarse) {
   //     vB.resize(nsd+1);
   //     cout << "interpolation coarse mesh\n";
@@ -528,27 +533,27 @@ struct Coulomb_NewtonAS_struct
   // very inefficient, to be done again.
 
   void compute_tangent_matrix(sparse_matrix &M, Vector &x) {
-    gmm::copy(x, MS.residual());
+    gmm::copy(x, MS.state());
     coulomb->compute_tangent_matrix(MS);
     gmm::copy(MS.tangent_matrix(), M);
   }
   void compute_sub_tangent_matrix(sparse_matrix &Mloc, Vector &x,
 				  size_type i) {
-    gmm::copy(x, MS.residual());
+    gmm::copy(x, MS.state());
     coulomb->compute_tangent_matrix(MS);
     
     sparse_matrix aux(gmm::mat_ncols(vB[i]),
-			      gmm::mat_ncols(MS.tangent_matrix()));
+		      gmm::mat_ncols(MS.tangent_matrix()));
     gmm::mult(gmm::transposed(vB[i]), MS.tangent_matrix(), aux);
     gmm::mult(aux, vB[i], Mloc);
   }
   void compute_sub_F(Vector &fi, Vector &x, size_type i) {
-    gmm::copy(x, MS.residual());
+    gmm::copy(x, MS.state());
     coulomb->compute_residual(MS);
     gmm::mult(gmm::transposed(vB[i]), MS.residual(), fi);
   }
   void compute_F(Vector &f, Vector &x) {
-    gmm::copy(x, MS.residual());
+    gmm::copy(x, MS.state());
     coulomb->compute_residual(MS);
     gmm::copy(MS.residual(), f);
   }
@@ -618,7 +623,9 @@ void friction_problem::solve(void) {
   size_type nbc;
   if (contact_condition == 0) {
     cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
+    cout << "cn = " << cn << endl;
     dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
+    cout << "dn = " << dn << endl;
   }
   else {
     cn = mf_l.dof_on_set(CONTACT_BOUNDARY);
@@ -626,6 +633,8 @@ void friction_problem::solve(void) {
   }
   cn.setminus(dn); // not to be done for P0 ...
   nbc = cn.card()/N;
+
+  cout << "Nbc = " << nbc << endl;
 
   sparse_matrix BN(nbc, mf_u.nb_dof());
   sparse_matrix BT((N-1)*nbc, mf_u.nb_dof());
@@ -778,7 +787,7 @@ void friction_problem::solve(void) {
       iter.set_maxiter(1000000);
       Coulomb_NewtonAS_struct NS(FRICTION);
       build_vB(NS.vB, mf_u, mf_u.dof_on_set(CONTACT_BOUNDARY),
-	       mf_u.dof_on_set(DIRICHLET_BOUNDARY));
+	       mf_u.dof_on_set(DIRICHLET_BOUNDARY), subdomsize, overlap);
       gmm::fill_random(MS.state());
       gmm::Newton_additive_Schwarz(NS, MS.state(), iter,
 				   gmm::identity_matrix(),

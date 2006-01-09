@@ -1,3 +1,4 @@
+% -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program static Coulomb friction problem                  %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,7 +14,7 @@ LAMBDA = 10;
 FRICTION_COEF = 0.5;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
-PG=12000
+PG=12000;
 RHO = 6e-6;     	% "realistic" density for steel
 
  
@@ -21,13 +22,19 @@ RHO = 6e-6;     	% "realistic" density for steel
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % MESH_TYPE = 'GT_QK(3,1)';       % 
 % MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
-NX = 20;            	          % space step.
+NX = 3;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDUAL = 1E-9;     	% residual for Newton.
 
 METHOD = 2;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
 			% 2 = Additive Schwarz Newton
+
+if (METHOD == 2) 
+  SUBDOMSIZE = 0.6;
+  OVERLAP = 0.0;
+end
+
 NOISY = 3;
 POPULATION = 100;       % Parameter for genetic algorithm
 R = 100.0;              % Augmentation parameter

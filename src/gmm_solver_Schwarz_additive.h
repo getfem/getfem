@@ -584,6 +584,7 @@ namespace gmm {
 	    iternc.set_rhsnorm(std::max(r, mtype(1)));
 	    while(!iternc.finished(r)) {
 	      NS.compute_sub_tangent_matrix(Mloc, x, isd);
+
 	      PP.build_with(Mloc);
 	      iter3.init();
 	      AS_local_solve(local_solver(), Mloc, di, fi, PP, iter3);
