@@ -61,41 +61,36 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 scalar_type FT = 0.0;
 
-// scalar_type sol_u(const base_node &x)
-// { return sin(FT*std::accumulate(x.begin(), x.end(), 0.0)); }
+# if 1
 
-// scalar_type sol_lapl_u(const base_node &x)
-// { return -FT*FT*sol_u(x) * x.size(); }
+scalar_type sol_u(const base_node &x)
+{ return sin(FT*std::accumulate(x.begin(), x.end(), 0.0)); }
+scalar_type sol_lapl_u(const base_node &x)
+{ return -FT*FT*sol_u(x) * x.size(); }
+scalar_type sol_f(const base_node &x)
+{ return FT*FT*FT*FT*sol_u(x)*gmm::sqr(x.size()); }
+base_small_vector sol_du(const base_node &x) {
+  base_small_vector res(x.size());
+  std::fill(res.begin(), res.end(),
+	    FT * cos(std::accumulate(x.begin(), x.end(), 0.0)));
+  return res;
+}
+base_small_vector neumann_val(const base_node &x)
+{ return -FT*FT*FT*sol_du(x) * scalar_type(x.size()); }
 
-// scalar_type sol_f(const base_node &x)
-// { return FT*FT*FT*FT*sol_u(x)*gmm::sqr(x.size()); }
-
-// base_small_vector sol_du(const base_node &x) {
-//   base_small_vector res(x.size());
-//   std::fill(res.begin(), res.end(),
-// 	    FT * cos(std::accumulate(x.begin(), x.end(), 0.0)));
-//   return res;
-// }
-
-// base_small_vector neumann_val(const base_node &x)
-// { return -FT*FT*FT*sol_du(x) * scalar_type(x.size()); }
-
+#else
 
 scalar_type sol_u(const base_node &x) { return x[0]*x[1]; }
-
 scalar_type sol_lapl_u(const base_node &) { return 0.0; }
-
 scalar_type sol_f(const base_node &) { return 0.0; }
-
 base_small_vector sol_du(const base_node &x) {
   base_small_vector res(x.size()); res[0] = x[1]; res[1] = x[0]; 
   return res;
 }
-
 base_small_vector neumann_val(const base_node &x)
 { return base_small_vector(x.size());  }
 
-
+#endif
 
 /**************************************************************************/
 /*  Structure for the bilaplacian problem.                                */
@@ -140,7 +135,8 @@ void bilaplacian_problem::init(void) {
   size_type N;
   if (!MESH_FILE.empty()) {
     mesh.read_from_file(MESH_FILE);
-    MESH_TYPE = bgeot::name_of_geometric_trans(mesh.trans_of_convex(mesh.convex_index().first_true()));
+    MESH_TYPE = bgeot::name_of_geometric_trans
+      (mesh.trans_of_convex(mesh.convex_index().first_true()));
     cout << "MESH_TYPE=" << MESH_TYPE << "\n";
     N = mesh.dim();
   } else {
@@ -212,7 +208,7 @@ void bilaplacian_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (0 & gmm::abs(un[N-1] - 1.0) <= 0.5) {
+    if (0 && gmm::abs(un[N-1] - 1.0) <= 0.5) {
       mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
       mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
     }
@@ -235,6 +231,7 @@ void bilaplacian_problem::compute_error(plain_vector &U) {
   cout.precision(16);
   cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
+       << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V) << endl
        << "Linfty error = " << gmm::vect_norminf(V) << endl;
 }
 

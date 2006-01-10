@@ -10,10 +10,10 @@ LZ = 1.0;		% size in Z.
 N = 2;
 QUAD = 0;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 10;                % space step.
+NX = 20;                % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 =
                         % elimination
-FT = 1.0;               % parameter for the exact solution
+FT = 3.0;               % parameter for the exact solution
 
 % MESH_FILE='../../tests/meshes/disc_P2_h4.mesh'
 
@@ -29,7 +29,7 @@ if (N == 2 && ~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
   INTEGRATION = 'IM_TRIANGLE(10)'; % quadrature rule for polynomials up
                                    % to degree 10 on triangles
-  DATA_FEM_TYPE = 'FEM_PK(2,3)';
+  DATA_FEM_TYPE = 'FEM_PK(2, 5)';
   if 0    % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';

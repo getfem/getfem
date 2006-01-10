@@ -66,12 +66,14 @@ namespace getfem {
   template<typename VEC>
   scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
 			  const mesh_region &rg=mesh_region::all_convexes()) {
-    return sqrt(asm_L2_norm_sqr(mim, mf,U,rg,
-				typename gmm::linalg_traits<VEC>::value_type()));
+    return
+      sqrt(asm_L2_norm_sqr(mim, mf,U,rg,
+			   typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
-  scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+  scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+			      const VEC &U,
 			      const mesh_region &rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
@@ -89,7 +91,8 @@ namespace getfem {
   }
 
   template<typename VEC, typename T>
-  scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
+  scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+			      const VEC &U,
 			      const mesh_region &rg, std::complex<T>) {
     return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),rg,T()) + 
       asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),rg,T());
@@ -203,8 +206,9 @@ namespace getfem {
 			  const VEC &U,
 			  const mesh_region &rg
 			  = mesh_region::all_convexes()) {
-    return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, rg))
-		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, rg)));
+    typedef typename gmm::linalg_traits<VEC>::value_type T;
+    return sqrt(asm_L2_norm_sqr(mim, mf, U, rg, T()) +
+		asm_H1_semi_norm_sqr(mim, mf, U, rg, T()));
   }
   
   /**
@@ -221,6 +225,64 @@ namespace getfem {
 		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
   }
 
+  template<typename VEC, typename T>
+  scalar_type asm_H2_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+				   const VEC &U,
+				   const mesh_region &rg, T) {
+    generic_assembly assem;    
+    if (mf.get_qdim() == 1)
+      assem.set("u=data(#1);"
+		"V()+=u(i).u(j).comp(Hess(#1).Hess(#1))(i,d,e,j,d,e)");
+    else
+      assem.set("u=data(#1);"
+		"V()+=u(i).u(j).comp(vHess(#1).vHess(#1))(i,k,d,e,j,k,d,e)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(U);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.assembly(rg);
+    return v[0];
+  }
+
+  template<typename VEC, typename T>
+  scalar_type asm_H2_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
+				   const VEC &U,
+				   const mesh_region &rg, std::complex<T>) {
+    return asm_H2_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
+      asm_H2_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
+  }
+
+
+
+  /**
+     compute @f$\|Hess U\|_2@f$, U might be real or complex. For C^1 elements
+     @ingroup asm
+   */
+  template<typename VEC>
+  scalar_type asm_H2_semi_norm(const mesh_im &mim, const mesh_fem &mf,
+			       const VEC &U,
+			       const mesh_region &rg
+			       = mesh_region::all_convexes()) {
+    typedef typename gmm::linalg_traits<VEC>::value_type T;
+    return sqrt(asm_H2_semi_norm_sqr(mim, mf, U, rg, T()));
+  }
+
+  /** 
+      compute the H2 norm of U (for C^1 elements).
+      @ingroup asm
+  */
+  template<typename VEC>
+  scalar_type asm_H2_norm(const mesh_im &mim, const mesh_fem &mf,
+			  const VEC &U,
+			  const mesh_region &rg
+			  = mesh_region::all_convexes()) {
+    typedef typename gmm::linalg_traits<VEC>::value_type T;
+    return sqrt(asm_L2_norm_sqr(mim, mf, U, rg, T())
+		+ asm_H1_semi_norm_sqr(mim, mf, U, rg, T())
+		+ asm_H2_semi_norm_sqr(mim, mf, U, rg, T()));
+  }
+  
   /*
     assembly of a matrix with 1 parameter (real or complex)
     (the most common here for the assembly routines below)
