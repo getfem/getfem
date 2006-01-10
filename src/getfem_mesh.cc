@@ -57,46 +57,37 @@ namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
 
-  // interfacage avec METIS à refaire.
-
     void mesh::compute_mpi_region(void) {
 
-      int ne = int(nb_convex());
-      int nn = int(nb_points()), k = 0, etype = 0, numflag = 0;
-      int edgecut, size, rank;
-
+      int size, rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       MPI_Comm_size(MPI_COMM_WORLD, &size);
 
       if (size < 2) { mpi_region = mesh_region::all_convexes(); }
       else {
-      
-	bgeot::pconvex_structure cvs = structure_of_convex
-	  (convex_index().first())->basic_structure();
+
+	int ne = int(nb_convex());
+	std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
 	
-	if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
-	else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
-	else if (cvs == bgeot::parallelepiped_structure(2)) { k=4; etype = 4; }
-	else if (cvs == bgeot::parallelepiped_structure(3)) { k=8; etype = 3; }
-	else DAL_THROW(failure_error,
-		       "This kind of element is not taken into account");
-	
-	std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
-	int j = 0;
-	// Adapter la boucle aux transformations d'ordre eleve.
-	for (dal::bv_visitor i(convex_index()); !i.finished();
-	     ++i, ++j)
-	  for (int l = 0; l < k; ++l)
-	    elmnts[j*k+l] = ind_points_of_convex(i)[l];
-	
-	METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag,
-			    &size, &edgecut, &(eparts[0]), &(npart[0]));
-	
+	int j = 0, k = 0;
+	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
+	  numelt[j] = ic;
+	  xadj[j] = k;
+	  bgeot::mesh_structure::ind_set s(neighbours_of_convex(ic));
+	  for (bgeot::mesh_structure::ind_set::iterator it = s.begin();
+	       it != s.end(); ++it) { xadjncy.push_back(*it); ++k; }  
+	}
+	xadj[j] = k;
+
+	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
+
+	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
+			    &numflag, &size, options, &edgecut, &(npart[0]));
+
 	for (size_type i = 0; i < size_type(ne); ++i)
-	  if (eparts[i] == rank) mpi_region.add(i);
+	  if (nparts[i] == rank) mpi_region.add(numelt[i]);
       }
       modified = false;
-
       valid_sub_regions.clear();
     }
 

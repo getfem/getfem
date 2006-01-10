@@ -216,6 +216,11 @@ namespace bgeot
     /// Divide P with the scalar a.
     polynomial operator /(const T &e) const
       { polynomial res = *this; res /= e; return res; }   
+    /// operator ==.
+    bool operator ==(const polynomial &Q) const; 
+    /// operator !=.
+    bool operator !=(const polynomial &Q) const
+    { return !(operator ==(*this,Q)); }   
     /// Derivative of P with respect to the variable k. P contains the result.
     void derivative(short_type k);
     /// Makes P = 1.
@@ -253,6 +258,18 @@ namespace bgeot
   template<typename T>
   polynomial<T> polynomial<T>::operator *(const polynomial &Q) const
   { polynomial res = *this; res *= Q; return res; }
+
+  template<typename T>
+  bool polynomial<T>::operator ==(const polynomial &Q) const { 
+    if (dim() != Q.dim()) return false;
+    const_iterator it1 = this->begin(), ite1 = this->end();
+    const_iterator it2 = Q.begin(), ite2 = Q.end();
+    for ( ; it1 != ite1 && it2 != ite2; ++it1, ++it2)
+      if (*it1 != *it2) return false;
+    for ( ; it1 != ite1; ++it1) if (*it1 != T(0)) return false;
+    for ( ; it2 != ite2; ++it2) if (*it2 != T(0)) return false;
+    return true;
+  }
   
   template<typename T>
   polynomial<T> polynomial<T>::operator *(const T &e) const

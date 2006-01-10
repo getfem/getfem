@@ -174,12 +174,20 @@ namespace bgeot {
     void clear(void);
     void stat(void);
 
+    void neighbours_of_convex(size_type ic, short_type iff, ind_set &s) const;
+
     /** Return a list of neighbours of a given convex face.
 	@param ic the convex id.
 	@param f the face number of the convex.
-	@return a std::set<size_type> of convex IDs (ic is not in the container).
+	@return a std::set<size_type> of convex IDs (ic is not in the set).
     */
     ind_set neighbours_of_convex(size_type ic, short_type f) const;
+
+    /** Return a list of neighbours of a given convex.
+	@param ic the convex id.
+	@return a std::set<size_type> of convex IDs (ic is not in the set).
+    */
+    ind_set neighbours_of_convex(size_type ic) const;
 
     /** Return a neighbour of a given convex face.
 	@param ic the convex id.

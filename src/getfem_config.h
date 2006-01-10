@@ -191,7 +191,9 @@
 # endif
 
 # if GETFEM_PARA_LEVEL > 1
-extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *,
+extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *,
+				    int *, int *, int *);
+extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
 				    int *, int *, int *, int *, int *);
 # endif
 

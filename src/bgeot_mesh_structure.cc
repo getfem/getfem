@@ -199,9 +199,9 @@ namespace bgeot {
 	 << "for a total memory size of " << memsize() << " bytes.\n";
   }
 
-  mesh_structure::ind_set mesh_structure::neighbours_of_convex(size_type ic,
-					       short_type iff) const {
-    ind_set s;
+
+  void mesh_structure::neighbours_of_convex(size_type ic, short_type iff,
+					     ind_set &s) const {
     ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
     
     for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
@@ -210,6 +210,17 @@ namespace bgeot {
 	  && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
 	s.insert(icv);
     }
+  }
+
+  mesh_structure::ind_set
+  mesh_structure::neighbours_of_convex(size_type ic, short_type iff) const
+  { ind_set s; neighbours_of_convex(ic, iff, s); return s; }
+  
+  mesh_structure::ind_set
+  mesh_structure::neighbours_of_convex(size_type ic) const {
+    ind_set s;
+    unsigned nbf = nb_faces_of_convex(ic);
+    for (unsigned iff = 0; iff < nbf; ++iff) neighbours_of_convex(ic, iff, s);
     return s;
   }
   

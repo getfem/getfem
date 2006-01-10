@@ -62,14 +62,14 @@ int main(void)
 {
   try {
 
-    bgeot::polynomial<double> W, Z; W[0] = 1.0;
+    bgeot::base_poly W, Z; W[0] = 1.0;
     Z[0] = 2.0;
     cout << "rd = " << W.real_degree() << endl;
     cout << "W = " << W << endl;
     W.direct_product(Z);
     cout << "W = " << W << endl;
 
-    bgeot::polynomial<double> P(2,2), Q(2,2);
+    bgeot::base_poly P(2,2), Q(2,2);
     P[2] = 1.0;
     Q[3] = 2.0;
     cout << "Le nombre de monomes de P est " << P.size() << endl;
@@ -77,7 +77,7 @@ int main(void)
     cout << "Q = " << Q << endl;
     cout << "P + Q = " << P + Q << endl;
     cout << "P * 2.0 * Q = " << P * 2.0 * Q << endl;
-    bgeot::polynomial<double> R = P * Q;
+    bgeot::base_poly R = P * Q;
     cout << "Le nombre de monomes de R est " << R.size() << endl;
     cout << "Le degre de R est " << R.degree() << endl;
     P.direct_product(Q);
@@ -86,29 +86,31 @@ int main(void)
     Z.direct_product(P);
     cout << "Produit direct de P et Z : " << Z << endl;    
 
-    P = bgeot::polynomial<double>(3,1,1);
-    P *= 3.0; P *= bgeot::polynomial<double>(3,1,0);
-    P += bgeot::polynomial<double>(3,1,1);
-    P *= bgeot::polynomial<double>(3,1,2);
-    P += bgeot::polynomial<double>(3,1,0);
+    P = bgeot::base_poly(3,1,1);
+    P *= 3.0; P *= bgeot::base_poly(3,1,0);
+    P += bgeot::base_poly(3,1,1);
+    P *= bgeot::base_poly(3,1,2);
+    P += bgeot::base_poly(3,1,0);
     cout << "P = " << P << " : degree=" << P.degree() << endl;
     
     
-    double tab[3]; tab[0] = 1.0; tab[1] = 2.0; tab[2] = -1.0;
+    bgeot::opt_long_scalar_type tab[3]; tab[0] = 1.0; tab[1] = 2.0; tab[2] = -1.0;
     
     cout << "P(1.0, 2.0) = " << P.eval(&(tab[0])) << endl;
 
     for (unsigned dg=0; dg <= 6; ++dg) {
       for (unsigned dim=0; dim <= 3; ++dim) {
-	bgeot::polynomial<double> PP(dim, dg);
+	bgeot::base_poly PP(dim, dg);
 	for (unsigned i=0; i < PP.size(); ++i) 
-	  PP[i] = rand()/(double)RAND_MAX;
-	std::vector<double> X(dim); 
+	  PP[i] = bgeot::opt_long_scalar_type(rand())
+	    / bgeot::opt_long_scalar_type(RAND_MAX);
+	std::vector<bgeot::opt_long_scalar_type> X(dim); 
 	for (unsigned i=0; i < dim; ++i) X[i] = 
-	  rand()/(double)RAND_MAX;
-	double a = PP.eval(X.begin());
+	  bgeot::opt_long_scalar_type(rand())
+	  / bgeot::opt_long_scalar_type(RAND_MAX);
+	bgeot::opt_long_scalar_type a = PP.eval(X.begin());
 	bgeot::power_index mi(dim);
-	double b = PP.horner(mi,dim,0,X.begin());
+	bgeot::opt_long_scalar_type b = PP.horner(mi,dim,0,X.begin());
 
 	cout << "[d=" << dim << ", dg=" << PP.degree() 
 	  //<< ", P=" << PP << " -> " 
@@ -137,27 +139,29 @@ int main(void)
       cout << "degree=" << p.degree() << ", global_index(p)=" << p.global_index() << "\n";      
     }
 
-    bgeot::polynomial<double> S(1,2); S[0] = -2; S[1] = 3; S[2] = 1;
+    bgeot::base_poly S(1,2); S[0] = -2; S[1] = 3; S[2] = 1;
     cout << "P=" << P << ", S=" << S << " \n";
     cout << "P(S,x)=" << bgeot::poly_substitute_var(P,S,0) << "\n";
-    double t0 = dal::uclock_sec();
-    std::vector<double> v(3);
+    bgeot::opt_long_scalar_type t0 = dal::uclock_sec();
+    std::vector<bgeot::opt_long_scalar_type> v(3);
     for (unsigned i=0; i < 100000; ++i) {
-      for (unsigned k=0; k < v.size(); ++k) v[k] = rand() / double(RAND_MAX);
+      for (unsigned k=0; k < v.size(); ++k)
+	v[k] =  bgeot::opt_long_scalar_type(rand())
+	  / bgeot::opt_long_scalar_type(RAND_MAX);
       P.eval(v.begin());
     }
     cout << "poly eval : " << dal::uclock_sec() - t0 << "sec \n";
-    bgeot::polynomial<double> QQ(P); QQ.derivative(1); QQ.derivative(2); cout << "QQ=" << QQ << "\n";
+    bgeot::base_poly QQ(P); QQ.derivative(1); QQ.derivative(2); cout << "QQ=" << QQ << "\n";
     for (unsigned i=0; i < 100000; ++i) {
-      //for (unsigned k=0; k < v.size(); ++k) v[k] = rand() / double(RAND_MAX);
+      //for (unsigned k=0; k < v.size(); ++k) v[k] = rand() / bgeot::opt_long_scalar_type(RAND_MAX);
       QQ.eval(v.begin());
     }
     cout << "poly eval : " << dal::uclock_sec() - t0 << "sec \n";
 
     t0 = dal::uclock_sec();
-    double z=0;
+    bgeot::opt_long_scalar_type z=0;
     for (unsigned i=0; i < 100000; ++i) {
-      bgeot::polynomial<double> P2(P);
+      bgeot::base_poly P2(P);
       for (unsigned k=0; k < P.dim(); ++k) { 
         P2.derivative(k); z += P2[0];
       }
