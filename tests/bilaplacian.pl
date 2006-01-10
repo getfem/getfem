@@ -14,6 +14,8 @@ INTEGRATION = 'IM_TRIANGLE(13)';
 NX = 10;
 RESIDUAL = 1E-9;
 FEM_TYPE = 'FEM_ARGYRIS';
+DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+DATA_FEM_TYPE = 'FEM_PK(2, 5)';
 ROOTFILENAME = 'bilaplacian';
 DIRICHLET_VERSION = 0;
 
@@ -26,13 +28,13 @@ sub start_program {
 
  # print "def = $def\n";
 
-  my $h1err = "null";
+  my $h2err = "null";
   open F, "./bilaplacian $tmp $def 2>&1 |" or die("bilaplacian not found");
   while (<F>) {
-    if ($_ =~ /H1 error/) {
-      ($a, $h1err) = split('=', $_); 
-      $h1err =~ s/\n//;
-      #print "La norme en question :", $h1err;
+    if ($_ =~ /H2 error/) {
+      ($a, $h2err) = split('=', $_); 
+      $h2err =~ s/\n//;
+      #print "La norme en question :", $h2err;
     }
   }
   close(F);
@@ -41,12 +43,12 @@ sub start_program {
     print "./bilaplacian $tmp $def 2>&1 failed\n";
     exit(1);
   }
-  return $h1err;
+  return $h2err;
 }
 
 $err1 = start_program("");
 if ($err1 > 0.027) {
-  print "error too large\n"; exit(1);
+  print "error too large: $err1\n"; exit(1);
 }
 print ".";
 $err1 = start_program(" -d NX=4");

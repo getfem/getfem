@@ -1,21 +1,21 @@
 % -*- matlab -*- (enables emacs matlab mode)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parameters for program bilalacian                                     %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program bilalacian                       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% pde parameters :	        				      %%%%%
+%%%%% pde parameters :	                              %%%%%
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
 N = 2;
 QUAD = 0;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 20;                % space step.
+NX = 10;                % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 =
                         % elimination
-FT = 0.5;               % parameter for the exact solution
+FT = 7.0;               % parameter for the exact solution
 
-MESH_FILE='../../tests/meshes/disc_P2_h1.mesh'
+% MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
 
 if (N == 1)
   MESH_TYPE = 'GT_PK(1,1)';       % segments
@@ -27,17 +27,16 @@ end
 
 if (N == 2 && ~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
-  INTEGRATION = 'IM_TRIANGLE(10)'; % quadrature rule for polynomials up
-                                   % to degree 10 on triangles
+  INTEGRATION = 'IM_TRIANGLE(10)'; % quadrature of order 10 on triangles
+  % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
   if 0    % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
   else    % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   end
-  % FEM_TYPE = 'FEM_PK(2,3)';
 end
 
 if (N == 2 && QUAD)
@@ -62,6 +61,6 @@ end
 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
-%%%%%   saving parameters                                             %%%%%
+%%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'bilaplacian';     % Root of data files.
 VTK_EXPORT = 2; % export solution to a .vtk file ?

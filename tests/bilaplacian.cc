@@ -61,7 +61,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 scalar_type FT = 0.0;
 
-# if 1
+#if 1
 
 scalar_type sol_u(const base_node &x)
 { return sin(FT*std::accumulate(x.begin(), x.end(), 0.0)); }
@@ -264,7 +264,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   // Prescribed momentum on the boundary
   getfem::mdbrick_normal_derivative_source_term<>
     MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
-
 
   // Defining the Neumann condition right hand side.
   base_small_vector un(N);
