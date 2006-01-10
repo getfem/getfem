@@ -13,7 +13,7 @@ MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 NX = 20;                % space step.
 DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 =
                         % elimination
-FT = 7.0;               % parameter for the exact solution
+FT = 6.0;               % parameter for the exact solution
 
 % MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
 
@@ -46,9 +46,9 @@ end
 if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';        % tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(8)';
-  DATA_FEM_TYPE = 'FEM_PK(2,3)';
+  DATA_FEM_TYPE = 'FEM_PK(3,3)';
   FEM_TYPE = 'FEM_HERMITE(3)';
-  DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
+  DIRICHLET_FEM_TYPE = 'FEM_PK(3,2)';
 end
 
 if (N == 3 && QUAD)

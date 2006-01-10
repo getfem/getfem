@@ -11,7 +11,7 @@
 	are working.
 
 	* src/getfem_fourth_order.h Adding tools to deal with fourth order
-	pdes like bilaplacian problem.
+	pdes like bilaplacian problem. Adding bilaplacian test program.
 
 2005-12-30 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 

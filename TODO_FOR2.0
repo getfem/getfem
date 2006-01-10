@@ -5,11 +5,7 @@ Changement à prendre en considérations pour la 2.0 :
 - Refaire bgeot_simplexify et bgeot::convex_hull en interfaçant qhull ?
   inconvénient : lier un peu plus getfem à qhull. Une autre manière de
   régler le problème serait de remplacer le calcul de la simplexification
-  des éléments de référence courant par une simplexificatio connue.
-
-- Argyris à corriger pour les transformations non linéaries. 
-
-- bilaplacian a faire marcher (y compris en transformations non linéaires)
+  des éléments de référence courant par une simplexification connue.
 
 - simplifier standard solve avec des options pour la résolution. raffiner
   la stratégie du newton pour qu'il marche de manière optimale dans les deux
@@ -27,13 +23,11 @@ Changement à prendre en considérations pour la 2.0 :
 
 - Ajouter le raffinement de maillage à la bank (voir fichier TOBEDONE)
 
-- Utilisation correcte de Metis.
-
 - Finaliser getfemlist.tex.
 
 - Doc sur Xfem
 
-- Brique generalized Dirichlet : la faire deriver de la brique constraints
+- Brique generalized Dirichlet : la faire deriver de la brique constraints ?
 
 - Reregarder la description des dof : trop complexe car on ne fait pas de
 	produit tensoriels de ddl complexes ...
