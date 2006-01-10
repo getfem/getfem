@@ -3,7 +3,7 @@
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
 // File    : getfem_orderfourspdes.h : assembly procedures and bricks 
-//                                     for order four pdes.
+//                                     for fourth order pdes.
 // Date    : January 6, 2006.
 // Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //           Julien Pommier <Julien.Pommier@insa-toulouse.fr>
@@ -29,7 +29,7 @@
 //========================================================================
 
 /**@file getfem_orderfourpdes.h
-   @brief assembly procedures and bricks for order four pdes.
+   @brief assembly procedures and bricks for fourth order pdes.
 */
 #ifndef GETFEM_FOURTH_ORDER_H_
 #define GETFEM_FOURTH_ORDER_H__

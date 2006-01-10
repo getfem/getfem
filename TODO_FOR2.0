@@ -1,33 +1,33 @@
 Changement à prendre en considérations pour la 2.0 :
 
-- Faut-il revoir la gestion des erreurs (p.ex un seul type d'erreurs) ?
+1  - Faut-il revoir la gestion des erreurs (p.ex un seul type d'erreurs) ?
 
-- Refaire bgeot_simplexify et bgeot::convex_hull en interfaçant qhull ?
-  inconvénient : lier un peu plus getfem à qhull. Une autre manière de
-  régler le problème serait de remplacer le calcul de la simplexification
-  des éléments de référence courant par une simplexification connue.
+2  - Refaire bgeot_simplexify et bgeot::convex_hull en interfaçant qhull ?
+     inconvénient : lier un peu plus getfem à qhull. Une autre manière de
+     régler le problème serait de remplacer le calcul de la simplexification
+     des éléments de référence courant par une simplexification connue.
 
-- simplifier standard solve avec des options pour la résolution. raffiner
-  la stratégie du newton pour qu'il marche de manière optimale dans les deux
-  cas : elas nonlin et friction.
+3  - simplifier standard solve avec des options pour la résolution. raffiner
+     la stratégie du newton pour qu'il marche de manière optimale dans les deux
+     cas : elas nonlin et friction.
 
-- Ajouter une option dans le .configure pour la version parallèle ?
+4  - Ajouter une option dans le .configure pour la version parallèle ?
 
-- Finaliser la parallelisation et la doc dessus. Pour la parallelistation
-  avec MUMPS (et PARA_LEVEL >= 2) il faut voir le fonctionnement parallèle
-  de Dirichlet_null_space et prévoir qlq chose pour que l'on puisse utiliser
-  les matrices distribuées dans les programmes de tests.
+5  - Finaliser la parallelisation et la doc dessus. Pour la parallelistation
+     avec MUMPS (et PARA_LEVEL >= 2) il faut voir le fonctionnement parallèle
+     de Dirichlet_null_space et prévoir qlq chose pour que l'on puisse utiliser
+     les matrices distribuées dans les programmes de tests.
 
-- Faut-il remmettre en question la repartion dal::, bgeot:: et getfem:: ?
-  bgeot:: -> getfem:: ?
+6  - Faut-il remmettre en question la repartion dal::, bgeot:: et getfem:: ?
+     bgeot:: -> getfem:: ?
 
-- Ajouter le raffinement de maillage à la bank (voir fichier TOBEDONE)
+7  - Ajouter le raffinement de maillage à la bank (voir fichier TOBEDONE)
 
-- Finaliser getfemlist.tex.
+8  - Finaliser getfemlist.tex.
 
-- Doc sur Xfem
+9  - Doc sur Xfem
 
-- Brique generalized Dirichlet : la faire deriver de la brique constraints ?
+10 - Brique generalized Dirichlet : la faire deriver de la brique constraints ?
 
-- Reregarder la description des dof : trop complexe car on ne fait pas de
+11 - Reregarder la description des dof : trop complexe car on ne fait pas de
 	produit tensoriels de ddl complexes ...
