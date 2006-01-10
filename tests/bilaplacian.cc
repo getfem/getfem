@@ -81,8 +81,7 @@ scalar_type FT = 0.0;
 // { return -FT*FT*FT*sol_du(x) * scalar_type(x.size()); }
 
 
-scalar_type sol_u(const base_node &x)
-{ return x[0]*x[1]; }
+scalar_type sol_u(const base_node &x) { return x[0]*x[1]; }
 
 scalar_type sol_lapl_u(const base_node &) { return 0.0; }
 
@@ -311,7 +310,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
       un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
       un /= gmm::vect_norm2(un);
       size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un) * 0.1;
+      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un);
     }
   }
   

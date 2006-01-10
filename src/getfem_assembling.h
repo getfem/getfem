@@ -711,9 +711,10 @@ namespace getfem {
   }
 
   template<typename MAT, typename VECT>  
-  void asm_Helmholtz_real(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-			  const mesh_fem &mf_data, const VECT &K_squared, 
-			  const mesh_region &rg = mesh_region::all_convexes()) {
+  void asm_Helmholtz_real(const MAT &M, const mesh_im &mim,
+			  const mesh_fem &mf_u, const mesh_fem &mf_data,
+			  const VECT &K_squared, 
+			  const mesh_region &rg=mesh_region::all_convexes()) {
     generic_assembly assem("K=data$1(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).K(i) - "

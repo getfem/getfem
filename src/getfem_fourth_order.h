@@ -38,27 +38,6 @@
 #include <getfem_assembling_tensors.h>
 
 namespace getfem {
-
-  /**
-     assembly of @f$\int_\Gamma{\partial_n u f}@f$.
-     @ingroup asm
-  */
-  template<typename VECT1, typename VECT2>
-  void asm_normal_derivative_source_term
-  (VECT1 &B, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
-   const VECT2 &F, const mesh_region &rg) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-
-    const char *s;
-    if (mf.get_qdim() == 1)
-      s = "F=data(#2);"
-	"V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,i,j).F(j);";
-    else
-      s = "F=data(qdim(#1),#2);"
-	"V(#1)+=comp(vGrad(#1).Normal.Base(#2))(:,i,k,k,j).F(i,j);";
-    asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
-  }
   
   /**
      assembly of @f$\int_\Omega \Delta u \Delta v@f$.
@@ -128,6 +107,113 @@ namespace getfem {
 
 
   /* ******************************************************************** */
+  /*		Normale derivative source term brick.                     */
+  /* ******************************************************************** */
+
+  /**
+     assembly of @f$\int_\Gamma{\partial_n u f}@f$.
+     @ingroup asm
+  */
+  template<typename VECT1, typename VECT2>
+  void asm_normal_derivative_source_term
+  (VECT1 &B, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
+   const VECT2 &F, const mesh_region &rg) {
+    if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+
+    const char *s;
+    if (mf.get_qdim() == 1)
+      s = "F=data(#2);"
+	"V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,i,j).F(j);";
+    else
+      s = "F=data(qdim(#1),#2);"
+	"V(#1)+=comp(vGrad(#1).Normal.Base(#2))(:,i,k,k,j).F(i,j);";
+    asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
+  }
+
+  /**
+     Normal derivative source term brick ( @f$ F = \int b.\partial_n v @f$ ).
+     
+     Update the right hand side of the linear system.
+
+     @see asm_source_term
+     @ingroup bricks
+  */
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_normal_derivative_source_term
+    : public mdbrick_abstract<MODEL_STATE>  {
+
+    TYPEDEF_MODEL_STATE_TYPES;
+
+    mdbrick_parameter<VECTOR> B_;
+    VECTOR F_;
+    bool F_uptodate;
+    size_type boundary, num_fem, i1, nbd;
+
+    void proper_update(void) {
+      const mesh_fem &mf_u = this->get_mesh_fem(num_fem);
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u.nb_dof();
+
+      gmm::resize(F_, mf_u.nb_dof());
+      gmm::clear(F_);
+      F_uptodate = false;
+    }
+
+  public :
+
+    mdbrick_parameter<VECTOR> &source_term(void)
+    { B_.reshape(this->get_mesh_fem(num_fem).get_qdim()); return B_;  }
+
+    const mdbrick_parameter<VECTOR> &source_term(void) const { return B_; }
+
+    /// gives the right hand side of the linear system.
+    const VECTOR &get_F(void) { 
+      this->context_check();
+      if (!F_uptodate || this->parameters_is_any_modified()) {
+	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+	F_uptodate = true;
+	DAL_TRACE2("Assembling a source term");
+	asm_normal_derivative_source_term
+	  (F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
+	   mf_u.linked_mesh().get_mpi_sub_region(boundary));
+	this->parameters_set_uptodate();
+      }
+      return F_;
+    }
+
+    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
+					   size_type) { }
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
+				   size_type) {
+      gmm::add(gmm::scaled(get_F(), value_type(-1)),
+	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
+    }
+
+    /** Constructor defining the rhs
+	@param problem the sub-problem to which this brick applies.
+	@param mf_data_ the mesh_fem on which B_ is defined.
+	@param B_ the value of the source term.
+	@param bound the mesh boundary number on which the source term
+	is applied.
+	@param num_fem_ the mesh_fem number on which this brick is is applied.
+    */
+    mdbrick_normal_derivative_source_term
+    (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
+     const VECTOR &B__, size_type bound,
+     size_type num_fem_=0) : B_("source_term",mf_data_, this), boundary(bound),
+	num_fem(num_fem_) {
+      this->add_sub_brick(problem);
+      if (bound != size_type(-1))
+	this->add_proper_boundary_info(num_fem, bound,
+				       MDBRICK_NORMAL_DERIVATIVE_NEUMANN);
+      this->force_update();
+      B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
+      if (gmm::vect_size(B__)) B_.set(B__);
+    }
+  };
+
+  /* ******************************************************************** */
   /*		Normale derivative Dirichlet condition bricks.            */
   /* ******************************************************************** */
 
@@ -176,7 +262,7 @@ namespace getfem {
 		 * gmm::mat_maxnorm(H) * magn_type(1000));
     }
     if (version & ASMDIR_BUILDR)
-      asm_normal_derivative_source_term(R, mim, mf_mult, mf_r, r_data, rg);
+      asm_source_term(R, mim, mf_mult, mf_r, r_data, rg);
   }
 
   /** Normal derivative Dirichlet condition brick.
@@ -281,89 +367,6 @@ namespace getfem {
       this->force_update();
     }
   };
-
-  /**
-     Normal derivative source term brick ( @f$ F = \int b.\partial_n v @f$ ).
-     
-     Update the right hand side of the linear system.
-
-     @see asm_source_term
-     @ingroup bricks
-  */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_normal_derivative_source_term
-    : public mdbrick_abstract<MODEL_STATE>  {
-
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    mdbrick_parameter<VECTOR> B_;
-    VECTOR F_;
-    bool F_uptodate;
-    size_type boundary, num_fem, i1, nbd;
-
-    void proper_update(void) {
-      const mesh_fem &mf_u = this->get_mesh_fem(num_fem);
-      i1 = this->mesh_fem_positions[num_fem];
-      nbd = mf_u.nb_dof();
-
-      gmm::resize(F_, mf_u.nb_dof());
-      gmm::clear(F_);
-      F_uptodate = false;
-    }
-
-  public :
-
-    mdbrick_parameter<VECTOR> &source_term(void) {       
-      B_.reshape(this->get_mesh_fem(num_fem).get_qdim()); // ensure that the B shape is always consistant with the mesh_fem
-      return B_; 
-    }
-    const mdbrick_parameter<VECTOR> &source_term(void) const { return B_; }
-
-    /// gives the right hand side of the linear system.
-    const VECTOR &get_F(void) { 
-      this->context_check();
-      if (!F_uptodate || this->parameters_is_any_modified()) {
-	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
-	F_uptodate = true;
-	DAL_TRACE2("Assembling a source term");
-	asm_normal_derivative_source_term
-	  (F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
-	   mf_u.linked_mesh().get_mpi_sub_region(boundary));
-	this->parameters_set_uptodate();
-      }
-      return F_;
-    }
-
-    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					   size_type) { }
-    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				   size_type) {
-      gmm::add(gmm::scaled(get_F(), value_type(-1)),
-	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
-    }
-
-    /** Constructor defining the rhs
-	@param problem the sub-problem to which this brick applies.
-	@param mf_data_ the mesh_fem on which B_ is defined.
-	@param B_ the value of the source term.
-	@param bound the mesh boundary number on which the source term is applied.
-	@param num_fem_ the mesh_fem number on which this brick is is applied.
-    */
-    mdbrick_normal_derivative_source_term
-    (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
-     const VECTOR &B__, size_type bound,
-     size_type num_fem_=0) : B_("source_term",mf_data_, this), boundary(bound),
-	num_fem(num_fem_) {
-      this->add_sub_brick(problem);
-      if (bound != size_type(-1))
-	this->add_proper_boundary_info(num_fem, bound,
-				       MDBRICK_NORMAL_DERIVATIVE_NEUMANN);
-      this->force_update();
-      B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
-      if (gmm::vect_size(B__)) B_.set(B__);
-    }
-  };
-
 
 
 
