@@ -13,9 +13,9 @@ MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 NX = 20;                % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 =
                         % elimination
-FT = 3.0;               % parameter for the exact solution
+FT = 0.5;               % parameter for the exact solution
 
-% MESH_FILE='../../tests/meshes/disc_P2_h4.mesh'
+MESH_FILE='../../tests/meshes/disc_P2_h1.mesh'
 
 if (N == 1)
   MESH_TYPE = 'GT_PK(1,1)';       % segments

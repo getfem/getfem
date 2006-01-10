@@ -72,11 +72,11 @@ scalar_type sol_f(const base_node &x)
 base_small_vector sol_du(const base_node &x) {
   base_small_vector res(x.size());
   std::fill(res.begin(), res.end(),
-	    FT * cos(std::accumulate(x.begin(), x.end(), 0.0)));
+	    FT * cos(FT*std::accumulate(x.begin(), x.end(), 0.0)));
   return res;
 }
 base_small_vector neumann_val(const base_node &x)
-{ return -FT*FT*FT*sol_du(x) * scalar_type(x.size()); }
+{ return -FT*FT*sol_du(x) * scalar_type(x.size()); }
 
 #else
 
@@ -208,7 +208,7 @@ void bilaplacian_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (0 && gmm::abs(un[N-1] - 1.0) <= 0.5) {
+    if (gmm::abs(un[N-1] - 1.0) <= 0.5) {
       mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
       mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
     }
