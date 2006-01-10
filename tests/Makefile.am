@@ -81,7 +81,6 @@ test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc
 crack_SOURCES = crack.cc
 crackPlate_SOURCES = crackPlate.cc
 endif
-#test_fem_SOURCES = test_fem.cc
 dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
 
