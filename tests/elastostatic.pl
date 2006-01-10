@@ -77,7 +77,7 @@ print ".";
 $err1 = start_program(" -d NX=4 -d 'FEM_TYPE=\"FEM_PK(2,3)\"'");
 $err2 = start_program(" -d NX=8 -d 'FEM_TYPE=\"FEM_PK(2,3)\"'");
 
-if ($err2 > $err1 / 7.6) {
+if ($err2 > $err1 / 7.0) {
   print "Convergence error: P3: $err1 $err2\n";
   exit(1);
 }
