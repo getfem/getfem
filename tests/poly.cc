@@ -19,8 +19,8 @@
 /* *********************************************************************** */
 #include <bgeot_poly.h>
 
-std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi, bgeot::short_type k, 
-			 bgeot::short_type de) {
+std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
+			 bgeot::short_type k, bgeot::short_type de) {
   char s[1024];
   const char *xyz = "xyzabcdefghijklmnop";
   if (k == 0) {
@@ -29,10 +29,12 @@ std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi, bgeot
   } else {
     std::string str;
     //T v = (*(it+k-1)), res = T(0);
-    for (mi[k-1] = degree - de; mi[k-1] != bgeot::short_type(-1); (mi[k-1])--) {
+    for (mi[k-1] = degree-de; mi[k-1] != bgeot::short_type(-1); (mi[k-1])--) {
       //res = horner(mi, k-1, de + mi[k-1], it) + v * res;
       if (str.size())
-	sprintf(s, "%s + %c*(%s)", horner_print(degree, mi,k-1,de+mi[k-1]).c_str(), xyz[k-1], str.c_str());
+	sprintf(s, "%s + %c*(%s)",
+		horner_print(degree, mi,k-1,de+mi[k-1]).c_str(), xyz[k-1],
+		str.c_str());
       else 
 	sprintf(s, "%s", horner_print(degree, mi,k-1,de+mi[k-1]).c_str());
       str = s;
@@ -94,7 +96,8 @@ int main(void)
     cout << "P = " << P << " : degree=" << P.degree() << endl;
     
     
-    bgeot::opt_long_scalar_type tab[3]; tab[0] = 1.0; tab[1] = 2.0; tab[2] = -1.0;
+    bgeot::opt_long_scalar_type tab[3];
+    tab[0] = 1.0; tab[1] = 2.0; tab[2] = -1.0;
     
     cout << "P(1.0, 2.0) = " << P.eval(&(tab[0])) << endl;
 
@@ -136,7 +139,8 @@ int main(void)
     for (int i=0; i < 20; ++i, ++p) {
       cout << "i=" << i << ", p=";
       for (unsigned k=0; k < p.size(); ++k) cout << p[k] << " ";
-      cout << "degree=" << p.degree() << ", global_index(p)=" << p.global_index() << "\n";      
+      cout << "degree=" << p.degree() << ", global_index(p)="
+	   << p.global_index() << "\n";      
     }
 
     bgeot::base_poly S(1,2); S[0] = -2; S[1] = 3; S[2] = 1;
@@ -151,9 +155,9 @@ int main(void)
       P.eval(v.begin());
     }
     cout << "poly eval : " << dal::uclock_sec() - t0 << "sec \n";
-    bgeot::base_poly QQ(P); QQ.derivative(1); QQ.derivative(2); cout << "QQ=" << QQ << "\n";
+    bgeot::base_poly QQ(P); QQ.derivative(1); QQ.derivative(2);
+    cout << "QQ=" << QQ << "\n";
     for (unsigned i=0; i < 100000; ++i) {
-      //for (unsigned k=0; k < v.size(); ++k) v[k] = rand() / bgeot::opt_long_scalar_type(RAND_MAX);
       QQ.eval(v.begin());
     }
     cout << "poly eval : " << dal::uclock_sec() - t0 << "sec \n";

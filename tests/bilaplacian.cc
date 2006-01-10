@@ -84,10 +84,9 @@ scalar_type FT = 0.0;
 scalar_type sol_u(const base_node &x)
 { return x[0]*x[1]; }
 
-scalar_type sol_lapl_u(const base_node &)
-{ return 0.0; }
+scalar_type sol_lapl_u(const base_node &) { return 0.0; }
 
-scalar_type sol_f(const base_node &x) { return 0.0; }
+scalar_type sol_f(const base_node &) { return 0.0; }
 
 base_small_vector sol_du(const base_node &x) {
   base_small_vector res(x.size()); res[0] = x[1]; res[1] = x[0]; 
