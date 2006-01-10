@@ -7,13 +7,11 @@ $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 print TMPF <<
-LX = 1.0;
-LY = 1.0;
-LZ = 1.0;
-MESH_NOISED = 0.0;
+LX = 1.0; LY = LX; LZ = LX;
+MESH_NOISED = 0;
 MESH_TYPE = 'GT_PK(2,1)';
 INTEGRATION = 'IM_TRIANGLE(13)';
-NX = 30;
+NX = 10;
 RESIDUAL = 1E-9;
 FEM_TYPE = 'FEM_ARGYRIS';
 ROOTFILENAME = 'bilaplacian';
