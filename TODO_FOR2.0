@@ -31,3 +31,6 @@ Changement à prendre en considérations pour la 2.0 :
 
 11 - Reregarder la description des dof : trop complexe car on ne fait pas de
 	produit tensoriels de ddl complexes ...
+
+12 - Voir la logique de l'utilisation des type size_type, scalar_type,
+     opt_long_scalar_type ...

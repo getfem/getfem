@@ -112,7 +112,7 @@ struct elastostatic_problem {
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
-  scalar_type residual;       /* max residual for the iterative solvers        */
+  scalar_type residual;       /* max residual for iterative solvers          */
   bool mixed_pressure;
   int dirichlet_version;
 
@@ -170,7 +170,8 @@ void elastostatic_problem::init(void) {
   dirichlet_version = PARAM.int_value("DIRICHLET_VERSION","Dirichlet version");
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
-  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
+  residual = PARAM.real_value("RESIDUAL");
+  if (residual == 0.) residual = 1e-10;
   gmm::resize(sol_K, N, N);
   for (size_type i = 0; i < N; i++)
     for (size_type j = 0; j < N; j++)
@@ -316,7 +317,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Neumann condition brick.
   getfem::mdbrick_source_term<>
-    NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+    NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
