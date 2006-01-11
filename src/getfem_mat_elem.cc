@@ -185,11 +185,11 @@ namespace getfem {
 	
 	switch ((*it).t) {
 	  case GETFEM_BASE_    :
-	    (*it).pfi->real_base_value(ctx, elmt_stored[k]);
+	    (*it).pfi->real_base_value(ctx, elmt_stored[k], false);
 	    break;
 	  case GETFEM_GRAD_    :
 	    if (trans) {
-	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k]);
+	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k], false);
 	      *mit++ = ctx.N();
 	    }
 	    else
@@ -197,7 +197,7 @@ namespace getfem {
 	    break;
 	  case GETFEM_HESSIAN_ :
 	    if (trans) {
-	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k]);
+	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k], false);
 	      *mit++ = gmm::sqr(ctx.N());
 	    }
 	    else {
@@ -224,7 +224,7 @@ namespace getfem {
 	    if (it->t == GETFEM_GRAD_GEOTRANS_INV_) {
 	      Bt.resize(P,N); gmm::copy(gmm::transposed(ctx.B()),Bt);
 	    }
-	    const base_matrix &A = (it->t == GETFEM_GRAD_GEOTRANS_) ? ctx.K() : Bt;
+	    const base_matrix &A = (it->t==GETFEM_GRAD_GEOTRANS_) ? ctx.K():Bt;
 	    bgeot::multi_index sz(2);
 	    *(mit-1) = sz[0] = gmm::mat_nrows(A);
 	    *mit++ = sz[1] = gmm::mat_ncols(A);
@@ -232,7 +232,7 @@ namespace getfem {
 	    std::copy(A.begin(), A.end(), elmt_stored[k].begin());
 	  } break;
 	  case GETFEM_NONLINEAR_ :
-	    if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, */
+	    if ((*it).nl_part != 0) { /* for auxiliary fem of nonlinear_term,*/
 	      /* the "prepare" method is called           */
 	      (*it).nlt->prepare(ctx, (*it).nl_part);
 	      /* the dummy assistant multiplies everybody by 1
@@ -242,7 +242,8 @@ namespace getfem {
 	    } else {
 	      elmt_stored[k].adjust_sizes((*it).nlt->sizes());
 	      (*it).nlt->compute(ctx, elmt_stored[k]);
-	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
+	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii)
+		++mit;
 	    }
 	    break;
 	}
@@ -256,7 +257,8 @@ namespace getfem {
       } else {
         icb->eltm.resize(0);
 	for (unsigned k=0; k != pme->size(); ++k) {
-	  if (icb && !((*pme)[k].t == GETFEM_NONLINEAR_ && (*pme)[k].nl_part != 0))
+	  if (icb && !((*pme)[k].t == GETFEM_NONLINEAR_
+		       && (*pme)[k].nl_part != 0))
 	    icb->eltm.push_back(&elmt_stored[k]);
 	}
 	icb->exec(t, first, c);

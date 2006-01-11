@@ -81,11 +81,6 @@ namespace getfem {
     fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_,
 		  size_type xfi) : 
       bfem(pf), mls(mls_), xfem_index(xfi) {
-      if (!(bfem->is_equivalent()))
-	DAL_THROW(to_be_done_error,
-		  "Sorry, fem_level_set for non tau-equivalent "
-		  "elements to be done.");
-      
       dofzones.assign(it, it + bfem->nb_dof(0));
       init();
     }
@@ -96,11 +91,11 @@ namespace getfem {
     void hess_base_value(const base_node &x, base_tensor &t) const;
 
     void real_base_value(const fem_interpolation_context& c, 
-			 base_tensor &t) const;    
+			 base_tensor &t, bool = true) const;    
     void real_grad_base_value(const fem_interpolation_context& c, 
-			      base_tensor &t) const;
+			      base_tensor &t, bool = true) const;
     void real_hess_base_value(const fem_interpolation_context& c, 
-			      base_tensor &t) const;
+			      base_tensor &t, bool = true) const;
     
   };
 }  /* end of namespace getfem.                                            */

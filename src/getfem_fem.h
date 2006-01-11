@@ -103,9 +103,10 @@ namespace getfem {
   /** @defgroup dofdescr Dof description
    *  This set of functions gives a pointer to dof descriptions and
    *  tests the compatibility between two dof descriptions.
-   *  A dof description describes a type of dof (Lagrange type, Hermite type ...)
-   *  in order to be able to say wether two dofs are to be identified or not.
-   *  The construction of dof type with the tensorial product is taken into
+   *  A dof description describes a type of dof (Lagrange type,
+   *  Hermite type ...) in order to be able to say wether two dofs are
+   *  to be identified or not. The construction of dof type with
+   *  the tensorial product is taken into
    *  account,  making the dof_description structure a little bit complex
    *  (this structure will probably evoluate in the future).
    *  @{
@@ -365,27 +366,27 @@ namespace getfem {
 
     /** Give the value of all components of the base functions at the
 	current point of the fem_interpolation_context.  Used by
-	elementary computations.  Matrix M for non tau-equivalent
-	elements not taken into account.
+	elementary computations.  if withM is false the matrix M for
+	non tau-equivalent elements is not taken into account.
     */
     virtual void real_base_value(const fem_interpolation_context &c, 
-				 base_tensor &t) const;
+				 base_tensor &t, bool withM = true) const;
 
     /** Give the gradient of all components of the base functions at the
 	current point of the fem_interpolation_context.  Used by
-	elementary computations.  Matrix M for non tau-equivalent
-	elements not taken into account.
+	elementary computations.  if withM is false the matrix M for
+	non tau-equivalent elements is not taken into account.
     */
     virtual void real_grad_base_value(const fem_interpolation_context &c, 
-				      base_tensor &t) const;
+				      base_tensor &t, bool withM = true) const;
 
     /** Give the hessian of all components of the base functions at the
 	current point of the fem_interpolation_context.  Used by
-	elementary computations.  Matrix M for non tau-equivalent
-	elements not taken into account.
+	elementary computations. if withM is false the matrix M for
+	non tau-equivalent elements is not taken into account.
     */
     virtual void real_hess_base_value(const fem_interpolation_context &c, 
-				      base_tensor &t) const;
+				      base_tensor &t, bool withM = true) const;
     
     virtual size_type index_of_global_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); }
@@ -641,15 +642,15 @@ namespace getfem {
     /** fill the tensor with the values of the base functions (taken
 	at point @c this->xref())
     */
-    void base_value(base_tensor& t) const;
+    void base_value(base_tensor& t, bool withM = true) const;
     /** fill the tensor with the gradient of the base functions (taken
 	at point @c this->xref())
     */
-    void grad_base_value(base_tensor& t) const;
+    void grad_base_value(base_tensor& t, bool withM = true) const;
     /** fill the tensor with the hessian of the base functions (taken
 	at point @c this->xref())
     */
-    void hess_base_value(base_tensor& t) const;
+    void hess_base_value(base_tensor& t, bool withM = true) const;
     /** get the current FEM descriptor */
     const pfem pf() const { return pf_; }
     /** get the current convex number */
@@ -681,20 +682,14 @@ namespace getfem {
     size_type Qmult = size_type(Qdim) / target_dim();
     if (gmm::vect_size(val) != Qdim)
       DAL_THROW(dimension_error, "dimensions mismatch");
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
+    size_type R = nb_dof(c.convex_num());
     
     gmm::clear(val);
-    const base_matrix *M = 0;
-    if (!is_equivalent()) M = &(c.M());
-    base_tensor Z; real_base_value(c,Z);
-    for (size_type j = 0; j < RR; ++j) {
+    base_tensor Z; real_base_value(c, Z);
+    for (size_type j = 0; j < R; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
-	if (is_equivalent())
-	  co = coeff[j*Qmult+q];
-	else
-	  for (size_type i = 0; i < R; ++i)
-	    co += coeff[i*Qmult+q] * (*M)(i, j);	  
+	co = coeff[j*Qmult+q];
 	for (size_type r = 0; r < target_dim(); ++r)
 	  val[r + q*target_dim()] += co * Z[j + r*R];
       } 
@@ -705,22 +700,16 @@ namespace getfem {
   void virtual_fem::interpolation(const fem_interpolation_context& c, 
 				  MAT &M, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
+    size_type R = nb_dof(c.convex_num());
     if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
       DAL_THROW(dimension_error, "dimensions mismatch");
-    
-    const base_matrix *MM = 0;
-    if (!is_equivalent()) MM = &(c.M());
+
     gmm::clear(M);
-    base_tensor Z; real_base_value(c,Z);
-    for (size_type j = 0; j < RR; ++j) {
+    base_tensor Z; real_base_value(c, Z);
+    for (size_type j = 0; j < R; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	for (size_type r = 0; r < target_dim(); ++r)
-	  if (is_equivalent())
-	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
-	  else
-	    for (size_type i = 0; i < R; ++i)
-	      M(r+q*target_dim(), j*Qmult+q) += (*MM)(j, i) * Z[i + r*R];
+	  M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
       } 
     }
   }
@@ -737,8 +726,7 @@ namespace getfem {
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     base_tensor t;
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
-    const base_matrix *M = is_equivalent() ? 0 : &(c.M());
+    size_type R = nb_dof(c.convex_num());
 
     gmm::clear(val);
     real_grad_base_value(c, t);
@@ -746,15 +734,8 @@ namespace getfem {
       base_tensor::const_iterator it = t.begin();
       for (size_type k = 0; k < N; ++k)
 	for (size_type r = 0; r < target_dim(); ++r)
-	  for (size_type j = 0; j < RR; ++j, ++it) {
-	    T co = 0.0;
-	    if (is_equivalent())
-	      co = coeff[j*Qmult+q];
-	    else
-	      for (size_type i = 0; i < R; ++i)
-		co += coeff[i*Qmult+q] * (*M)(i, j);	      
-	    val(r + q*target_dim(), k) += co * (*it);
-	  }
+	  for (size_type j = 0; j < R; ++j, ++it)	      
+	    val(r + q*target_dim(), k) += coeff[j*Qmult+q] * (*it);
     }
   }
 
@@ -771,8 +752,7 @@ namespace getfem {
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     base_tensor t;
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
-    const base_matrix *M = is_equivalent() ? 0 : &(c.M());
+    size_type R = nb_dof(c.convex_num());
 
     gmm::clear(val);
     real_hess_base_value(c, t);
@@ -780,15 +760,8 @@ namespace getfem {
       base_tensor::const_iterator it = t.begin();
       for (size_type k = 0; k < size_type(N*N); ++k)
 	for (size_type r = 0; r < target_dim(); ++r)
-	  for (size_type j = 0; j < RR; ++j, ++it) {
-	    T co = 0.0;
-	    if (is_equivalent())
-	      co = coeff[j*Qmult+q];
-	    else
-	      for (size_type i = 0; i < R; ++i)
-		co += coeff[i*Qmult+q] * (*M)(i, j);	      
-	    val(r + q*target_dim(), k) += co * (*it);
-	  }
+	  for (size_type j = 0; j < R; ++j, ++it)
+	    val(r + q*target_dim(), k) += coeff[j*Qmult+q] * (*it);
     }
   }
 

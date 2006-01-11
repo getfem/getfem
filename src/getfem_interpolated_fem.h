@@ -138,11 +138,11 @@ namespace getfem {
     void grad_base_value(const base_node &, base_tensor &) const;
     void hess_base_value(const base_node &, base_tensor &) const;
     void real_base_value(const fem_interpolation_context& c, 
-			 base_tensor &t) const;
+			 base_tensor &t, bool = true) const;
     void real_grad_base_value(const fem_interpolation_context& c, 
-			      base_tensor &t) const;
+			      base_tensor &t, bool = true) const;
     void real_hess_base_value(const fem_interpolation_context&, 
-			      base_tensor &) const;
+			      base_tensor &, bool = true) const;
 
     /** return the list of convexes of the interpolated mesh_fem which
        contain at least one gauss point (should be all convexes)! */

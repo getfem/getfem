@@ -72,7 +72,7 @@ namespace getfem {
   { DAL_THROW(internal_error, "No base values, real only element."); }
 
   void fem_sum::real_base_value(const fem_interpolation_context &c,
-				      base_tensor &t) const {
+				      base_tensor &t, bool) const {
     bgeot::multi_index mi(2);
     mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
@@ -98,7 +98,7 @@ namespace getfem {
   }
 
   void fem_sum::real_grad_base_value(const fem_interpolation_context &c,
-					   base_tensor &t) const {
+					   base_tensor &t, bool) const {
     bgeot::multi_index mi(3);
     mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
@@ -127,7 +127,7 @@ namespace getfem {
   }
   
   void fem_sum::real_hess_base_value(const fem_interpolation_context &,
-				  base_tensor &) const {
+				  base_tensor &, bool) const {
     DAL_THROW(to_be_done_error,
 	      "Sorry order 2 derivatives for fem_sum to be done.");
   }

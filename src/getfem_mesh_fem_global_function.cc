@@ -62,7 +62,7 @@ namespace getfem {
   { DAL_THROW(internal_error, "No hess values, real only element."); }
   
   void global_function_fem::real_base_value(const fem_interpolation_context& c,
-					 base_tensor &t) const {
+					 base_tensor &t, bool) const {
     mib.resize(2); mib[0] = 1; mib[1] = functions.size();
     t.adjust_sizes(mib);
     for (size_type i=0; i < functions.size(); ++i) 
@@ -70,7 +70,7 @@ namespace getfem {
   } 
   
   void global_function_fem::real_grad_base_value
-  (const fem_interpolation_context& c, base_tensor &t) const {
+  (const fem_interpolation_context& c, base_tensor &t, bool) const {
     mig.resize(3); 
     mig[2] = dim(); mig[1] = target_dim(); mig[0] = functions.size();
     t.adjust_sizes(mig);
@@ -84,7 +84,7 @@ namespace getfem {
   }
   
   void global_function_fem::real_hess_base_value
-  (const fem_interpolation_context&, base_tensor & ) const { 
+  (const fem_interpolation_context&, base_tensor &, bool) const { 
     DAL_THROW(dal::to_be_done_error, "");
     /*
     mih.resize(4); 

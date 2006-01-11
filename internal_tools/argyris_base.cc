@@ -120,7 +120,7 @@ int main(void) {
     for (int j = 0; j < 21; ++j)
       if (gmm::abs(M(j, i)) > 1E-8) p += base[j]*M(j, i);
 
-    cout << "\\bar{\\varphi}_{" << i << "}(x,y) = " << p << ",\\\\" << endl;
+    cout << "\\hat{\\varphi}_{" << i << "}(x,y) = " << p << ",\\\\" << endl;
   }
 
   for (int i = 0; i < 21; ++i) {

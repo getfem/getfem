@@ -15,11 +15,11 @@
 
 \input{persdf}
 
-\oddsidemargin -0.4cm
-\evensidemargin -0.4cm
-\topmargin -1cm
-\textheight 22.5cm
-\textwidth 16.6cm
+\oddsidemargin -0.9cm
+\evensidemargin -0.9cm
+\topmargin -2cm
+\textheight 24.5cm
+\textwidth 17.6cm
 \headheight 1.0cm
 
 % principal notations
@@ -36,7 +36,7 @@
       \Huge \sc Description of Finite Element and Integration Methods
   \end{center}  \end{largebox}
   \\[0.5cm]
-  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
+  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@insa-toulouse.fr }, Julien Pommier\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Julien.Pommier@insa-toulouse.fr } } \\[1.0cm]
       \today \\[1.0cm]
 \end{center}
 
@@ -50,7 +50,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section*{Introduction}
-This documentation describes the different finite element methods and approximative integration methods available in {\sc Getfem++}.\\[4cm]
+This documentation describes the different finite element methods and approximative integration methods available in {\sc Getfem++}.\\[5cm]
 \input{../license.tex}
 
 \newpage
@@ -59,7 +59,7 @@ This documentation describes the different finite element methods and approximat
 
 \section{Finite element methods}
 
-all finite element methods defined in {\sc Getfem++} are interfaced in the file {\tt getfem\_fem.h}.
+All finite element methods defined in {\sc Getfem++} are interfaced in the file {\tt getfem\_fem.h}.
 A descriptor on a finite element method is available thanks to the function\\[0.5cm]
 {\tt getfem::pfem pf = getfem::fem\_descriptor("name of method");
 }\\[0.5cm]
@@ -74,24 +74,24 @@ where {\tt "name of method"} is a string to be choosen among the existing method
   \end{center}
 \end{figure}
 
-A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
-$$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q. $$
+A finite element method is defined on a reference element $\hat{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
+$$ \hat{\varphi}^i : \hat{T} \subset \Reel^P \longrightarrow \Reel^Q. $$
 Each base function corresponds to a degree of freedom (d.o.f).
 Most finite element methods are scalar, which means that $Q = 1$, but {\sc Getfem++} support also intrinsic vectorial elements. The map between the reference element and the real element is called the geometric transformation and is denoted by 
-$$ \tau :  \overline{T} \longrightarrow T, $$
-and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\overline{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
-$$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
+$$ \tau :  \hat{T} \longrightarrow T, $$
+and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\hat{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
+$$ \tilde{\varphi}^i(x) = \hat{\varphi}^i(\hat{x}) = \hat{\varphi}^i(\tau^{-1}(x)), $$
 If the element is said to be equivalent throught the geometric transformation $\tau$ (or $\tau$-equivalent) then base functions on the real element are just defined by
-$$\varphi(x) = \tilde{\varphi}^i(x).$$
-This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions is taken into account). When the element is not equivalent throught the geometric transformation then {\sc Getfem++} allows to define a matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
+$$\varphi^i(x) = \tilde{\varphi}^i(x).$$
+This is generally the case for Lagrange element, but not for Hermite elements (when some dof represent the gradient of the unkown). When the element is not equivalent throught the geometric transformation then {\sc Getfem++} allows to define a matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
 $$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} \tilde{M}_{ij} \tilde{\varphi}^j(x). $$
 Most of the time, the matrix $\tilde{M}$ is a square matrix, but for special elements a non-square matrix can be defined.
 We denote by
-$$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
+$$ [\hat{\varphi}(\hat{x})] = \vecfour{\hat{\varphi}^0(\hat{x})}{\hat{\varphi}^1(\hat{x})}{...}{\hat{\varphi}^{n_d-1}(\hat{x})}, $$
 the $n_d \times Q$ matrix, such that when a function is defined by
 $$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $$
 one has
-$$ \hspace{1em} f(\tau(\overline{x})) = \alpha^T \tilde{M} [\overline{\varphi}(\overline{x})],\hspace{1em} $$
+$$ \hspace{1em} f(\tau(\hat{x})) = \alpha^T \tilde{M} [\hat{\varphi}(\hat{x})],\hspace{1em} $$
 where $\alpha$ is the vector of components $\alpha_i$.
 
 \subsubsection{Different types of d.o.f.}
@@ -106,7 +106,7 @@ type & expression  & commentary \\ \hline
 Lagrange type & $\phi(a_i)$ & Value of $\phi$ on the node $a_i$. The most simple d.o.f. Allows the Lagrange interpolation. \\ \hline
 \end{tabular}
 \begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
-Hierarchical Lagrange type & $\phi(a_i) - ...$ & Difference between the value of $\phi$ on the node $a_i$ and the value of some other base functions. This is generally the bubble functions type of d.o.f . \\ \hline
+Hierarchical ~~~~~~~ Lagrange type & $\phi(a_i) - ...$ & Difference between the value of $\phi$ on the node $a_i$ and the value of some other base functions. This is generally the bubble functions type of d.o.f . \\ \hline
 \end{tabular}
 \begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
 mean type & $\Frac{1}{|T|}\ds \int_T \phi(x) dx$ & Value of the mean value of $\phi$ on the element. Exists also for the restriction on a face.\\ \hline
@@ -136,17 +136,13 @@ second derivative type & $\Frac{\partial^2}{\partial x_i\partial x_j}\phi(a_i)$ 
 \subsection{Classical ``$P_K$'' Lagrange elements on simplices}
 
 It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dimension and arbitrary degree. This element has only degrees of freedom which corresponds to the value of the function on a node. The grid of node is the so-called Lagrange grid. Figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk} show examples of dimension 1, 2 and 3.
-
 \begin{figure}[H] 
   \begin{center} 
     \includegraphics[width=14cm,angle=0]{getfemlist_segment_Pk.eps}
     \caption{ \it Examples of classical $P_K$ Lagrange elements on a segment.} \label{fig:segmentpk}
   \end{center}
 \end{figure}
-
-
 \begin{figure}[H]
-  
   \begin{center} \begin{tabular}{m{7cm}m{7cm}}
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P2.eps} \\
     $P_1$ element, 3 d.o.f., $C^0$ & $P_2$ element, 6 d.o.f., $C^0$ \\ \\
@@ -208,13 +204,13 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular}
 \end{center}$\ $\\[3cm]
 
-Even thought Lagrange elements are defined for arbitrary degrees, to choose a hight degree can be problematic for a large number of applications due to the ``noisy'' caracteristic of the lagrange basis. Those element are recommended for he basic interpolation but for p.d.e. applications elements with hierarchical basis are preferable (see the corresponding section).
+Even thought Lagrange elements are defined for arbitrary degrees, to choose a hight degree can be problematic for a large number of applications due to the ``noisy'' caracteristic of the lagrange basis. Those element are recommended for the basic interpolation but for p.d.e. applications elements with hierarchical basis are preferable (see the corresponding section).
 
 \subsection{Classical Lagrange elements on other geometries}
 
 Classical Lagrange elements on parallelepipeds or prisms are obtained as tensorial product of Lagrange elements on simplices. When two element are defined, one on a dimension $P_1$ and the other in dimension $P_2$, one obtains the base functions of the tensorial product (on the reference element) as
-$$ \bar{\phi}_{ij}(x,y) = \bar{\phi}^1_i(x) \bar{\phi}^2_j(y), \ \ x \in \Reel^{P_1}, y \in  \Reel^{P_2}, $$
-where $\bar{\phi}^1_i$ and $\bar{\phi}^2_i$ are respectively the base functions of the first and second element.
+$$ \hat{\phi}_{ij}(x,y) = \hat{\phi}^1_i(x) \hat{\phi}^2_j(y), \ \ x \in \Reel^{P_1}, y \in  \Reel^{P_2}, $$
+where $\hat{\phi}^1_i$ and $\hat{\phi}^2_i$ are respectively the base functions of the first and second element.
 
 
 \begin{figure}[H]
@@ -300,7 +296,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 
 \subsection{Elements with hierarchical basis}
 
-The idea behind hierarchical basis is the desciption of the solution at different level : a rought level, a more refined level ... In the same discretisation some degrees of freedom represent the rought description, some other the more rafined and so on. This correspond to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of those spaces (this is not the case in classical Lagrange elements when the mesh is refined).\\[0.5cm]
+The idea behind hierarchical basis is the desciption of the solution at different level : a rought level, a more refined level ... In the same discretisation some degrees of freedom represent the rought description, some other the more rafined and so on. This correspond to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of these spaces (this is not the case in classical Lagrange elements when the mesh is refined).\\[0.5cm]
 Among the advantages, the condition number of  rigidity matrices can be greatly improved, it allows local raffinement and a resolution with a multigrid approach.
 
 
@@ -348,10 +344,6 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular}
 \end{center}
 
-
-
-to be described ...
-
 some particular choices : $P_4$ will be build with the basis of the $P_1$, the additional basis of the $P_2$ then the additionnal basis of the $P_4$.
 
 $P_6$ will be build  with the basis of the $P_1$, the additional basis of the $P_2$ then the additionnal basis of the $P_6$ (not with the basis of the $P_1$, 
@@ -368,9 +360,6 @@ The principal interest of the composite elements is to build hierarchical elemen
   \caption{ \it composite element {\tt "FEM\_STRUCTURED\_COMPOSITE(FEM\_PK(2,1), 3)"}} 
   \label{fig:triangle_comp}
 \end{figure}
-
-
-to be described ...
 
 \begin{center}
 \begin{tabular}{|m{16.109cm}|} \hline 
@@ -417,13 +406,13 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular}
 \end{center}
 
-to be described ...
-
 Other constructions are possible thanks to {\tt "FEM\_GEN\_HIERARCHICAL(FEM1, FEM2)"} and \\ {\tt "FEM\_STRUCTURED\_COMPOSITE(FEM1, S)"}
 
 It is important to use a corresponding composite integration method.
 
 \subsection{Specific elements in dimension 1}
+
+\subsubsection{GaussLobatto element}
 
 The 1D GaussLobatto $P_K$ element is similar to the classical $P_K$ fem on the segment, but
 the nodes are given by the Gauss-Lobatto-Legendre quadrature rule of
@@ -444,6 +433,8 @@ $K$ & $1$ & $K+1$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
+\subsubsection{Hermite element}
+
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_segment_hermite.eps}
@@ -454,8 +445,8 @@ $K$ & $1$ & $K+1$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 
 Base functions on the reference element
 \begin{eqnarray*}
- \bar{\varphi}_0 = (2x+1)(x-1)^2,&&\ \ \ \bar{\varphi}_1 = x^2(3-2x), \\
- \bar{\varphi}_2 = x(x-1)^2,&& \ \ \ \bar{\varphi}_3 = x^2(x - 1). 
+ \hat{\varphi}_0 = (2x+1)(x-1)^2,&&\ \ \ \hat{\varphi}_1 = x^2(3-2x), \\
+ \hat{\varphi}_2 = x(x-1)^2,&& \ \ \ \hat{\varphi}_3 = x^2(x - 1). 
 \end{eqnarray*}
 
 This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation. The matrix $\tilde{M}$ is not equal to identity but is still diagonal.
@@ -471,6 +462,8 @@ $3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
 
+\subsubsection{Lagrange element with an additional bubble function}
+
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_segment_bubble.eps}
@@ -478,8 +471,6 @@ $3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
   \caption{ \it $P_1$ Lagrange element on a segment with additional internal bubble function, 3 d.o.f., $C^0$} 
   \label{fig:segment_bubble}
 \end{figure}
-
-to be described ...
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
@@ -506,8 +497,6 @@ $2$ & $1$ & $3$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \label{fig:triangle_p1_bubble}
 \end{figure}
 
-to be described ...
-
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ or $P_2$ element with an additional internal bubble function}\\
@@ -527,8 +516,6 @@ $3$ & $2$ & $4$ or $7$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \label{fig:triangle_p1_bubble_face}
 \end{figure}
 
-to be described ...
-
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
@@ -547,8 +534,6 @@ $2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \caption{ \it $P_1$ Lagrange element on a triangle with additional d.o.f on face 0, 4 d.o.f., $C^0$} 
   \label{fig:triangle_p1_p2_face}
 \end{figure}
-
-to be described ...
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
@@ -572,7 +557,6 @@ $2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \label{fig:triangle_non_conforming}
 \end{figure}
 
-to be described ...
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf $P_1$ non-conforming element on a triangle}\\
@@ -590,27 +574,27 @@ $1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \begin{center}
     \includegraphics[width=6cm,angle=0]{getfemlist_triangle_hermite.eps}
   \end{center}
-  \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$ (``nearly'' $C^1$) }
+  \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$ }
   \label{fig:triangle_hermite}
 \end{figure}
 
 Base functions on the reference element:
 $$
   \begin{array}{ll}
- \bar{\varphi}_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\bar{\varphi}_0(0,0) = 1), \\
- \bar{\varphi}_1 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\bar{\varphi}_1(1,0) = 1), \\
- \bar{\varphi}_2 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\bar{\varphi}_2(0,1) = 1), \\
- \bar{\varphi}_3 = 27xy(1-x-y), & (\bar{\varphi}_3(1/3,1/3) = 1), \\
- \bar{\varphi}_4 = x(1-x-y)(1-x-2y), & (\partial_x\bar{\varphi}_4(0,0) = 1), \\
- \bar{\varphi}_5 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\bar{\varphi}_5(1,0) = 1), \\
- \bar{\varphi}_6 = xy(x+2y-1), & (\partial_x\bar{\varphi}_6(0,1) = 1), \\
- \bar{\varphi}_7 = y(1-x-y)(1-2x-y), & (\partial_y\bar{\varphi}_7(0,0) = 1), \\
- \bar{\varphi}_8 = xy(y+2x-1), & (\partial_y\bar{\varphi}_8(1,0) = 1), \\
- \bar{\varphi}_9 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\bar{\varphi}_9(0,1) = 1), \\
+ \hat{\varphi}_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\hat{\varphi}_0(0,0) = 1), \\
+ \hat{\varphi}_1 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\hat{\varphi}_1(1,0) = 1), \\
+ \hat{\varphi}_2 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\hat{\varphi}_2(0,1) = 1), \\
+ \hat{\varphi}_3 = 27xy(1-x-y), & (\hat{\varphi}_3(1/3,1/3) = 1), \\
+ \hat{\varphi}_4 = x(1-x-y)(1-x-2y), & (\partial_x\hat{\varphi}_4(0,0) = 1), \\
+ \hat{\varphi}_5 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\hat{\varphi}_5(1,0) = 1), \\
+ \hat{\varphi}_6 = xy(x+2y-1), & (\partial_x\hat{\varphi}_6(0,1) = 1), \\
+ \hat{\varphi}_7 = y(1-x-y)(1-2x-y), & (\partial_y\hat{\varphi}_7(0,0) = 1), \\
+ \hat{\varphi}_8 = xy(y+2x-1), & (\partial_y\hat{\varphi}_8(1,0) = 1), \\
+ \hat{\varphi}_9 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\hat{\varphi}_9(0,1) = 1), \\
   
   \end{array}
 $$
-This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\bar{\varphi}_4$ and $\bar{\varphi}_7$ are used to match the gradient on the corresponding vertex. Idem for the two couples ($\bar{\varphi}_5$, $\bar{\varphi}_8$) and  ($\bar{\varphi}_6$, $\bar{\varphi}_9$) for the two other vertices.  
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\hat{\varphi}_4$ and $\hat{\varphi}_7$ are used to match the gradient on the corresponding vertex. Idem for the two couples ($\hat{\varphi}_5$, $\hat{\varphi}_8$) and  ($\hat{\varphi}_6$, $\hat{\varphi}_9$) for the two other vertices.  
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
@@ -635,31 +619,31 @@ $3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 
 The base functions on the reference element are:
 $$ \begin{array}{ll}
-\bar{\varphi}_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\bar{\varphi}_0(0,0) = 1), \\
-\bar{\varphi}_{1}(x,y) = 10x^3 - 15x^4 + 15x^2y^2 + 6x^5 - 15x^3y^2 - 15x^2y^3, & (\bar{\varphi}_1(1,0) = 1),\\
-\bar{\varphi}_{2}(x,y) = 10y^3 + 15x^2y^2 - 15y^4 - 15x^3y^2 - 15x^2y^3 + 6y^5, & (\bar{\varphi}_2(0,1) = 1),\\
-\bar{\varphi}_{3}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\bar{\varphi}_3(0,0) = 1),\\
-\bar{\varphi}_{4}(x,y) = -4x^3 + 7x^4 - 3.5x^2y^2 - 3x^5 + 3.5x^3y^2 + 3.5x^2y^3, & (\partial_x\bar{\varphi}_4(1,0) = 1),\\
-\bar{\varphi}_{5}(x,y) = -5xy^2 + 18.5x^2y^2 + 14xy^3 - 13.5x^3y^2 - 18.5x^2y^3 - 8xy^4, & (\partial_x\bar{\varphi}_5(0,1) = 1),\\
-\bar{\varphi}_{6}(x,y) = y - 11x^2y - 6y^3 + 18x^3y + 10x^2y^2 + 8y^4 - 8x^4y - 10x^3y^2 + x^2y^3 - 3y^5, & (\partial_y\bar{\varphi}_6(0,0) = 1),\\
-\bar{\varphi}_{7}(x,y) = -5x^2y + 14x^3y + 18.5x^2y^2 - 8x^4y - 18.5x^3y^2 - 13.5x^2y^3, & (\partial_y\bar{\varphi}_7(1,0) = 1),\\
-\bar{\varphi}_{8}(x,y) = -4y^3 - 3.5x^2y^2 + 7y^4 + 3.5x^3y^2 + 3.5x^2y^3 - 3y^5, & (\partial_y\bar{\varphi}_8(0,0) = 1),\\
-\bar{\varphi}_{9}(x,y) = 0.5x^2 - 1.5x^3 + 1.5x^4 - 1.5x^2y^2 - 0.5x^5 + 1.5x^3y^2 + x^2y^3, & (\partial^2_{xx}\bar{\varphi}_9(0,0) = 1),\\
-\bar{\varphi}_{10}(x,y) = 0.5x^3 - x^4 + 0.25x^2y^2 + 0.5x^5 - 0.25x^3y^2 - 0.25x^2y^3, & (\partial^2_{xx}\bar{\varphi}_{10}(1,0) = 1),\\
-\bar{\varphi}_{11}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\bar{\varphi}_{11}(0,1) = 1),\\
-\bar{\varphi}_{12}(x,y) = xy - 4x^2y - 4xy^2 + 5x^3y + 10x^2y^2 + 5xy^3 - 2x^4y - 6x^3y^2 - 6x^2y^3 - 2xy^4, & (\partial^2_{xy}\bar{\varphi}_{12}(0,0) = 1),\\
-\bar{\varphi}_{13}(x,y) = x^2y - 3x^3y - 3.5x^2y^2 + 2x^4y + 3.5x^3y^2 + 2.5x^2y^3, & (\partial^2_{xy}\bar{\varphi}_{13}(1,0) = 1),\\
-\bar{\varphi}_{14}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\bar{\varphi}_{14}(0,1) = 1),\\
-\bar{\varphi}_{15}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\bar{\varphi}_{15}(0,0) = 1),\\
-\bar{\varphi}_{16}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\bar{\varphi}_{16}(1,0) = 1),\\
-\bar{\varphi}_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\bar{\varphi}_{17}(0,1) = 1),\\
-\bar{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & \hspace*{-9.5em}(\sqrt{0.5}(\partial_{x}\bar{\varphi}_0(0.5,0.5) + \partial_{y}\bar{\varphi}_{18}(0.5,0.5)) = 1),\\
-\bar{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\bar{\varphi}_{19}(0,0.5) = 1),\\
-\bar{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\bar{\varphi}_{20}(0.5,0) = 1),\\
+\hat{\varphi}_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\hat{\varphi}_0(0,0) = 1), \\
+\hat{\varphi}_{1}(x,y) = 10x^3 - 15x^4 + 15x^2y^2 + 6x^5 - 15x^3y^2 - 15x^2y^3, & (\hat{\varphi}_1(1,0) = 1),\\
+\hat{\varphi}_{2}(x,y) = 10y^3 + 15x^2y^2 - 15y^4 - 15x^3y^2 - 15x^2y^3 + 6y^5, & (\hat{\varphi}_2(0,1) = 1),\\
+\hat{\varphi}_{3}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\hat{\varphi}_3(0,0) = 1),\\
+\hat{\varphi}_{4}(x,y) = -4x^3 + 7x^4 - 3.5x^2y^2 - 3x^5 + 3.5x^3y^2 + 3.5x^2y^3, & (\partial_x\hat{\varphi}_4(1,0) = 1),\\
+\hat{\varphi}_{5}(x,y) = -5xy^2 + 18.5x^2y^2 + 14xy^3 - 13.5x^3y^2 - 18.5x^2y^3 - 8xy^4, & (\partial_x\hat{\varphi}_5(0,1) = 1),\\
+\hat{\varphi}_{6}(x,y) = y - 11x^2y - 6y^3 + 18x^3y + 10x^2y^2 + 8y^4 - 8x^4y - 10x^3y^2 + x^2y^3 - 3y^5, & (\partial_y\hat{\varphi}_6(0,0) = 1),\\
+\hat{\varphi}_{7}(x,y) = -5x^2y + 14x^3y + 18.5x^2y^2 - 8x^4y - 18.5x^3y^2 - 13.5x^2y^3, & (\partial_y\hat{\varphi}_7(1,0) = 1),\\
+\hat{\varphi}_{8}(x,y) = -4y^3 - 3.5x^2y^2 + 7y^4 + 3.5x^3y^2 + 3.5x^2y^3 - 3y^5, & (\partial_y\hat{\varphi}_8(0,0) = 1),\\
+\hat{\varphi}_{9}(x,y) = 0.5x^2 - 1.5x^3 + 1.5x^4 - 1.5x^2y^2 - 0.5x^5 + 1.5x^3y^2 + x^2y^3, & (\partial^2_{xx}\hat{\varphi}_9(0,0) = 1),\\
+\hat{\varphi}_{10}(x,y) = 0.5x^3 - x^4 + 0.25x^2y^2 + 0.5x^5 - 0.25x^3y^2 - 0.25x^2y^3, & (\partial^2_{xx}\hat{\varphi}_{10}(1,0) = 1),\\
+\hat{\varphi}_{11}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\hat{\varphi}_{11}(0,1) = 1),\\
+\hat{\varphi}_{12}(x,y) = xy - 4x^2y - 4xy^2 + 5x^3y + 10x^2y^2 + 5xy^3 - 2x^4y - 6x^3y^2 - 6x^2y^3 - 2xy^4, & (\partial^2_{xy}\hat{\varphi}_{12}(0,0) = 1),\\
+\hat{\varphi}_{13}(x,y) = x^2y - 3x^3y - 3.5x^2y^2 + 2x^4y + 3.5x^3y^2 + 2.5x^2y^3, & (\partial^2_{xy}\hat{\varphi}_{13}(1,0) = 1),\\
+\hat{\varphi}_{14}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\hat{\varphi}_{14}(0,1) = 1),\\
+\hat{\varphi}_{15}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\hat{\varphi}_{15}(0,0) = 1),\\
+\hat{\varphi}_{16}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\hat{\varphi}_{16}(1,0) = 1),\\
+\hat{\varphi}_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\hat{\varphi}_{17}(0,1) = 1),\\
+\hat{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & \hspace*{-9.5em}(\sqrt{0.5}(\partial_{x}\hat{\varphi}_0(0.5,0.5) + \partial_{y}\hat{\varphi}_{18}(0.5,0.5)) = 1),\\
+\hat{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\hat{\varphi}_{19}(0,0.5) = 1),\\
+\hat{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\hat{\varphi}_{20}(0.5,0) = 1),\\
 \end{array}
 $$
 
-This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\bar{\varphi}_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $\tilde{M}$ (see also the documentation on the finite element kernel \cite{BAS_COMP}) allows to define Argyris element even with nonlinear geometric transformations (for instance to treat curved boundaries).
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\hat{\varphi}_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $\tilde{M}$ (see also the documentation on the finite element kernel \cite{BAS_COMP}) allows to define Argyris element even with nonlinear geometric transformations (for instance to treat curved boundaries).
 
 
 \begin{center}
@@ -686,8 +670,6 @@ $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
   \label{fig:tetrahedron_p1_bubble}
 \end{figure}
 
-to be described ...
-
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf $P_K$ Lagrange element with an additional internal bubble function}\\
@@ -707,8 +689,6 @@ $4$ & $3$ & $5$, $11$ or $21$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \label{fig:tetrahedron_p1_bubble_face}
 \end{figure}
 
-to be described ...
-
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
@@ -726,37 +706,37 @@ $3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
   \begin{center}
     \includegraphics[width=6cm,angle=0]{getfemlist_tetrahedron_hermite.eps}
   \end{center}
-  \caption{ \it Hermite element on a tetrahedron, $P_3$, 20 d.o.f., $C^0$ (``nearly'' $C^1$)}
+  \caption{ \it Hermite element on a tetrahedron, $P_3$, 20 d.o.f., $C^0$}
   \label{fig:tetrahedron_hermite}
 \end{figure}
 
 Base functions on the reference element:
 $$
   \begin{array}{ll}
-\bar{\varphi}_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
- ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\bar{\varphi}_0(0,0,0) = 1),\\
-\bar{\varphi}_{1}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\bar{\varphi}_0(1,0,0) = 1),\\
-\bar{\varphi}_{2}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\bar{\varphi}_0(0,1,0) = 1),\\
-\bar{\varphi}_{3}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\bar{\varphi}_0(0,0,1) = 1),\\
-\bar{\varphi}_{4}(x,y) = 27xyz, & (\bar{\varphi}_0(1/3,1/3,1/3) = 1),\\
-\bar{\varphi}_{5}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\bar{\varphi}_0(0,1/3,1/3) = 1),\\
-\bar{\varphi}_{6}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\bar{\varphi}_0(1/3,0,1/3) = 1),\\
-\bar{\varphi}_{7}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\bar{\varphi}_0(1/3,1/3,0) = 1),\\
-\bar{\varphi}_{8}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\bar{\partial_x\varphi}_0(0,0,0) = 1),\\
-\bar{\varphi}_{9}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\bar{\partial_x\varphi}_0(1,0,0) = 1),\\
-\bar{\varphi}_{10}(x,y) = -xy + x^2y + 2xy^2, & (\bar{\partial_x\varphi}_0(0,1,0) = 1),\\
-\bar{\varphi}_{11}(x,y) = -xz + x^2z + 2xz^2, & (\bar{\partial_x\varphi}_0(0,0,1) = 1),\\
-\bar{\varphi}_{12}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\bar{\partial_y\varphi}_0(0,0,0) = 1),\\
-\bar{\varphi}_{13}(x,y) = -xy + 2x^2y + xy^2, & (\bar{\partial_y\varphi}_0(1,0,0) = 1),\\
-\bar{\varphi}_{14}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\bar{\partial_y\varphi}_0(0,1,0) = 1),\\
-\bar{\varphi}_{15}(x,y) = -yz + y^2z + 2yz^2, & (\bar{\partial_y\varphi}_0(0,0,1) = 1),\\
-\bar{\varphi}_{16}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\bar{\partial_z\varphi}_0(0,0,0) = 1),\\
-\bar{\varphi}_{17}(x,y) = -xz + 2x^2z + xz^2, & (\bar{\partial_z\varphi}_0(1,0,0) = 1),\\
-\bar{\varphi}_{18}(x,y) = -yz + 2y^2z + yz^2, & (\bar{\partial_z\varphi}_0(0,1,0) = 1),\\
-\bar{\varphi}_{19}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\bar{\partial_z\varphi}_0(0,0,1) = 1),\\
+\hat{\varphi}_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
+ ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\hat{\varphi}_0(0,0,0) = 1),\\
+\hat{\varphi}_{1}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\hat{\varphi}_0(1,0,0) = 1),\\
+\hat{\varphi}_{2}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\hat{\varphi}_0(0,1,0) = 1),\\
+\hat{\varphi}_{3}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\hat{\varphi}_0(0,0,1) = 1),\\
+\hat{\varphi}_{4}(x,y) = 27xyz, & (\hat{\varphi}_0(1/3,1/3,1/3) = 1),\\
+\hat{\varphi}_{5}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\hat{\varphi}_0(0,1/3,1/3) = 1),\\
+\hat{\varphi}_{6}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\hat{\varphi}_0(1/3,0,1/3) = 1),\\
+\hat{\varphi}_{7}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\hat{\varphi}_0(1/3,1/3,0) = 1),\\
+\hat{\varphi}_{8}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\hat{\partial_x\varphi}_0(0,0,0) = 1),\\
+\hat{\varphi}_{9}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\hat{\partial_x\varphi}_0(1,0,0) = 1),\\
+\hat{\varphi}_{10}(x,y) = -xy + x^2y + 2xy^2, & (\hat{\partial_x\varphi}_0(0,1,0) = 1),\\
+\hat{\varphi}_{11}(x,y) = -xz + x^2z + 2xz^2, & (\hat{\partial_x\varphi}_0(0,0,1) = 1),\\
+\hat{\varphi}_{12}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\hat{\partial_y\varphi}_0(0,0,0) = 1),\\
+\hat{\varphi}_{13}(x,y) = -xy + 2x^2y + xy^2, & (\hat{\partial_y\varphi}_0(1,0,0) = 1),\\
+\hat{\varphi}_{14}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\hat{\partial_y\varphi}_0(0,1,0) = 1),\\
+\hat{\varphi}_{15}(x,y) = -yz + y^2z + 2yz^2, & (\hat{\partial_y\varphi}_0(0,0,1) = 1),\\
+\hat{\varphi}_{16}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\hat{\partial_z\varphi}_0(0,0,0) = 1),\\
+\hat{\varphi}_{17}(x,y) = -xz + 2x^2z + xz^2, & (\hat{\partial_z\varphi}_0(1,0,0) = 1),\\
+\hat{\varphi}_{18}(x,y) = -yz + 2y^2z + yz^2, & (\hat{\partial_z\varphi}_0(0,1,0) = 1),\\
+\hat{\varphi}_{19}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\hat{\partial_z\varphi}_0(0,0,1) = 1),\\
   \end{array}
 $$
-This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\bar{\varphi}_8$, $\bar{\varphi}_{12}$ and $\bar{\varphi}_{16}$ are used to match the gradient on the corresponding vertex. Idem on the orther vertices. 
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\hat{\varphi}_8$, $\hat{\varphi}_{12}$ and $\hat{\varphi}_{16}$ are used to match the gradient on the corresponding vertex. Idem on the orther vertices. 
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
@@ -769,10 +749,6 @@ $3$ & $3$ & $20$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
 
-\subsection{Tensorial product of elements}
-
-to be described ...
-
 \subsection{Interpolation of elements on different meshes}
 
 \begin{figure}[H]
@@ -783,25 +759,15 @@ to be described ...
   \label{fig:virtual_fem}
 \end{figure}
 
-to be described ...
-
 To increase the precision, it is not necessary to raise the order of the integration method. It is recommended to keep the normal order and use composite integration methods (see below).
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Element which interpolates an element defined on another mesh}\\
-  {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }
-  {\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, } \\ {\tt \hspace{5em} getfem::mesh\_fem mf2, \mbox{}getfem::pintegration\_method pim) }
+  {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) } \\
+  {\tt \mbox{}\hspace{5em} getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, } \\ {\tt \hspace{5em} getfem::mesh\_fem mf2, \mbox{}getfem::pintegration\_method pim) } \\  \hline 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-undefined & arbitrary & variable & variable & No & No & No\\ \hline
-\end{tabular}
 \end{center}
-
-\subsection{What really means arbitrary geometric transformation}
-
-(graphics ...)
 
 \section{Integration methods}
 
@@ -817,9 +783,6 @@ where {\tt "name of method"} is a string to be choosen among the existing method
 
 The program \texttt{integration} located in the \texttt{tests} directory lists and checks the degree of each integration method.
 
-\subsection{Dummy Integration method}
-The {\tt IM\_NONE} integration method (new in getfem++-1.7) is available. This can be useful for \texttt{mesh\_fem} objects who do not use their integration method. The {\tt IM\_NONE} method is compatible with any convex or FEM.
-
 \subsection{Exact Integration methods}
 
 The list of available Exact integration methods is the following
@@ -834,21 +797,16 @@ use {\tt "IM\_NC(N,K)"}, {\tt "IM\_NC\_PARALLELEPIPED(N,K)"}
 and {\tt "IM\_NC\_PRISM(N,K)"} to have the Newton cotes integration of order {\tt K} respectively on simplices, parallelepipeds and prisms.
 
 
-to be described ...
-
-
 \subsection{Gauss Integration methods on dimension 1}
 
 use {\tt "IM\_GAUSS1D(K)"} to have the Gauss-Legendre integration on the segment of order {\tt K} (with {\tt K}/2 + 1 points), and {\tt "IM\_GAUSSLOBATTO1D(K)"} to have the Gauss-Lobatto-Legendre integration on the segment of order {\tt K} (with {\tt K}/2 + 1 points). The latter integration method is only available for odd values of $K$. The Gauss-Lobatto integration method can be used in conjunction with {\tt "FEM\_PK\_GAUSSLOBATTO1D(K/2)"} to perform mass-lumping.
 
-to be described ...
-
 \subsection{Gauss Integration methods on dimension 2}
 
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|} \hline 
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline 
 graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tabular} & weights & function to call / order \\ \hline
 \end{tabular}
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle1.eps} & 
   { \small
@@ -860,10 +818,10 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
     \begin{tabular}{c}
       1/2
     \end{tabular}
-  & {\tt \small "IM\_TRIANGLE(1)"} \hspace{7em} 
+  & {\tt \small "IM\_TRIANGLE(1)"} \hspace{9em} 
     1 point, order 1. \\ \hline
 \end{tabular}
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle2.eps} & 
   { \small
@@ -879,9 +837,9 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/6 \\ \\
       1/6
     \end{tabular}
-  & {\tt \small "IM\_TRIANGLE(2)"} \hspace{7em} 3 points, order 2. \\ \hline
+  & {\tt \small "IM\_TRIANGLE(2)"} \hspace{9em} 3 points, order 2. \\ \hline
 \end{tabular} 
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle3.eps} & 
   { \small
@@ -899,9 +857,9 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       25/96 \\ \\ 
       25/96 
     \end{tabular} }
-  & {\tt \small "IM\_TRIANGLE(3)"} \hspace{7em} 4 points, order 3. \\ \hline
+  & {\tt \small "IM\_TRIANGLE(3)"} \hspace{9em} 4 points, order 3. \\ \hline
 \end{tabular} 
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle4.eps} & 
   { \small
@@ -925,7 +883,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
     \end{tabular} }
   & {\tt \small "IM\_TRIANGLE(4)"} \hspace{7em} \mbox{6 points, order 4,}\hspace{7em} \mbox{a = 0.445948490915965,}\hspace{5em} \mbox{b = 0.091576213509771,}\hspace{5em} \mbox{c = 0.111690794839005,}\hspace{5em} \mbox{d = 0.054975871827661.} \\ \hline
 \end{tabular} 
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle5.eps} & 
   { \small
@@ -951,7 +909,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
     \end{tabular} }
   & {\tt \small "IM\_TRIANGLE(5)"} \hspace{7em} \mbox{7 points, order 5,}\hspace{7em} \mbox{$a = \Frac{6+\sqrt{15}}{21}$,}\hspace{5em} \mbox{$b = 4/7 - a$,}\hspace{8em} \mbox{$c = \Frac{155+\sqrt{15}}{2400}$,}\hspace{5em} \mbox{$d = 31/240 - c$.} \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle6.eps} & 
   { \small
@@ -995,7 +953,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
   \mbox{$g = 0.041425537809187$.}\hspace{5em}
   \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle7.eps} & 
   { \small
@@ -1045,13 +1003,19 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
   \mbox{$k = -0.0747850222338$.}\hspace{5em}
   \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
-&&&{\tt \small "IM\_TRIANGLE(13)"}\cite{EncyclopCubature} \hspace{7em} \mbox{37 points, order 13}\hspace{7em}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_TRIANGLE(8)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{16 points, order 8}\hspace{7em} \\ \hline
 \end{tabular}
-
-Others methods are \texttt{IM\_TRIANGLE(8)} (16 points),\texttt{IM\_TRIANGLE(9)} (19 points),\texttt{IM\_TRIANGLE(10)} (25 points).
-
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_TRIANGLE(9)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{19 points, order 9}\hspace{7em} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_TRIANGLE(10)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{25 points, order 10}\hspace{7em} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_TRIANGLE(13)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{37 points, order 13}\hspace{7em} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad2.eps} & 
   { \small
@@ -1065,9 +1029,9 @@ Others methods are \texttt{IM\_TRIANGLE(8)} (16 points),\texttt{IM\_TRIANGLE(9)}
       1/3 \\ \\
       1/3
     \end{tabular}
-  & {\tt \small "IM\_QUAD(2)"} \hspace{9em} 3 points, order 2. \\ \hline
+  & {\tt \small "IM\_QUAD(2)"} \hspace{11em} 3 points, order 2. \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad3.eps} & 
   { \small
@@ -1081,9 +1045,9 @@ Others methods are \texttt{IM\_TRIANGLE(8)} (16 points),\texttt{IM\_TRIANGLE(9)}
       1/4 \\ \\
       1/4
     \end{tabular}
-  & {\tt \small "IM\_QUAD(3)"} \hspace{9em} 4 points, order 3. \\ \hline
+  & {\tt \small "IM\_QUAD(3)"} \hspace{11em} 4 points, order 3. \\ \hline
 \end{tabular} 
-\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad5.eps} & 
   { \small
@@ -1099,19 +1063,29 @@ Others methods are \texttt{IM\_TRIANGLE(8)} (16 points),\texttt{IM\_TRIANGLE(9)}
       5/63 \\ \\
       5/36
     \end{tabular}
-  & {\tt \small "IM\_QUAD(5)"} \hspace{9em} 7 points, order 5. \\ \hline
+  & {\tt \small "IM\_QUAD(5)"} \hspace{11em} 7 points, order 5. \\ \hline
 \end{tabular}  
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_QUAD(7)"} \hspace{7em} \mbox{12 points, order 7}\hspace{7em} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_QUAD(9)"} \hspace{7em} \mbox{20 points, order 7}\hspace{7em} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+&&&{\tt \small "IM\_QUAD(17)"} \hspace{7em} \mbox{70 points, order 7}\hspace{7em} \\ \hline
+\end{tabular}
+~\\[0.2cm]
 
-Others methods: \texttt{IM\_QUAD(7)} (12 points), \texttt{IM\_QUAD(9)} (20 points), \texttt{IM\_QUAD(17)} (70 points). There is also the \texttt{IM\_GAUSS\_PARALLELEPIPED(n,k)} which is a direct product of 1D gauss integrations.
+There is also the \texttt{IM\_GAUSS\_PARALLELEPIPED(n,k)} which is a direct product of 1D gauss integrations.\\
 
 \textbf{Important note:} do not forget that \texttt{IM\_QUAD(k)} is exact for polynomials up to degree $k$, and that a $Q_k$ polynomial has a degree of $2*k$. For example, \texttt{IM\_QUAD(7)} cannot integrate the product of two $Q_{2}$ polynomials. On the other hand, \texttt{IM\_GAUSS\_PARALLELEPIPED(2,4)} can integrate exactly that product\ldots
 
 \subsection{Gauss Integration methods on dimension 3}
 
-\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|} \hline 
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|} \hline 
 graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x & y & z \end{tabular} & weights & function to call / order \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron1.eps} & 
   { \small
@@ -1123,10 +1097,10 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
     { \small \begin{tabular}{c}
       1/6
     \end{tabular} }
-  & {\tt \small "IM\_TETRAHEDRON(1)"} \hspace{7em} 
+  & {\tt \small "IM\_TETRAHEDRON(1)"} \hspace{9em} 
     1 point, order 1. \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron2.eps} & 
   { \small
@@ -1150,7 +1124,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
     \mbox{$b = \Frac{5 + 3\sqrt{5}}{20}$.}\hspace{5em} \hspace{5em} \hspace{5em}
   \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron3.eps} & 
   { \small
@@ -1172,7 +1146,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
   & {\tt \small "IM\_TETRAHEDRON(3)"} \hspace{7em} 
     \mbox{5 points, order 3} \hspace{7em} \\ \hline
 \end{tabular}  
-\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron5.eps} & 
   { \small
@@ -1241,9 +1215,7 @@ Others methods are:
   \end{tabular}
 \end{center}
 \subsection{Direct product of integration methods}
-use {\tt "IM\_PRODUCT(IM1, IM2)"} ... for quadrilateral or prisms ... Consider using \texttt{IM\_GAUSS\_PARALLELEPIPED(2,k)}, which is an alias to \texttt{IM\_PRODUCT(IM\_GAUSS1D(2,k),IM\_GAUSS1D(2,k))} instead of the \texttt{IM\_QUAD} integrations.
-
-to be described ...
+use {\tt "IM\_PRODUCT(IM1, IM2)"} ... for quadrilateral or prisms ... Consider using \texttt{IM\_GAUSS\_PARALLELEPIPED(2,k)}, which is an alias for \texttt{IM\_PRODUCT(IM\_GAUSS1D(2,k),IM\_GAUSS1D(2,k))} instead of the \texttt{IM\_QUAD} integrations.
 
 \subsection{Composite integration methods}
 
@@ -1258,10 +1230,9 @@ to be described ...
 
 use {\tt "IM\_STRUCTURED\_COMPOSITE(IM1, S)"} to copy {\tt IM1} on an element with {\tt S} subdivisions. The resulting integration method has the same order but with more points. This could be more stable to use composite method rather than to improve the order of the method. Those methods have to be used also with composite elements. Most of the time for composite element, it is preferable to choose the basic method {\tt IM1} with no points on the boundary (because the gradient coulb be not defined on the boundary of sub-elements). 
 
-to be described ...
-
 \begin{thebibliography}{99}
-% \bibliographystyle{apalike}
+
+\bibliographystyle{apalike}
 % \bibliographystyle{plain}
 % \bibliography{all}
 \bibitem{dh-to1984} 

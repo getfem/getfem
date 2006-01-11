@@ -67,11 +67,11 @@ namespace getfem {
     void grad_base_value(const base_node &, base_tensor &) const;
     void hess_base_value(const base_node &, base_tensor &) const;
     void real_base_value(const fem_interpolation_context& c, 
-			 base_tensor &t) const;
+			 base_tensor &t, bool = true) const;
     void real_grad_base_value(const fem_interpolation_context& c, 
-			      base_tensor &t) const;
+			      base_tensor &t, bool = true) const;
     void real_hess_base_value(const fem_interpolation_context&, 
-			      base_tensor &) const;
+			      base_tensor &, bool = true) const;
 
     global_function_fem(bgeot::pconvex_ref cvr_, 
 			const std::vector<pglobal_function> &f)

@@ -33,8 +33,8 @@
 #include <getfem_mesh_fem.h>
 #include <dal_naming_system.h>
 
-namespace getfem
-{ 
+namespace getfem {
+ 
   typedef const fem<polynomial_composite> * ppolycompfem;
 
   static ppolycompfem composite_fe_method(const mesh_precomposite &mp, 

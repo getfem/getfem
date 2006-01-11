@@ -57,19 +57,24 @@ namespace getfem
     return convex_num_; 
   }
 
-  void fem_interpolation_context::base_value(base_tensor& t) const {
+  void fem_interpolation_context::base_value(base_tensor& t,
+					     bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_base_value(*this, t);
     else {
       if (have_pfp()) t=pfp_->val(ii());
       else pf()->base_value(xref(), t);
+      if (!(pf()->is_equivalent()) && withM)
+	{ base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
     }
   }
 
-  void fem_interpolation_context::grad_base_value(base_tensor& t) const {
+  void fem_interpolation_context::grad_base_value(base_tensor& t,
+						  bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_grad_base_value(*this, t);
     else {
+      base_tensor u;
       if (have_pfp()) {
 	t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
       } else {
@@ -78,10 +83,13 @@ namespace getfem
 	if (u.size()) /* only if the FEM can provide grad_base_value */
 	  t.mat_transp_reduction(u, B(), 2);
       }
+      if (!(pf()->is_equivalent()) && withM)
+	{ u = t; t.mat_transp_reduction(u, M(), 0); }
     }
   }
 
-  void fem_interpolation_context::hess_base_value(base_tensor& t) const {
+  void fem_interpolation_context::hess_base_value(base_tensor& t,
+						  bool withM) const {
     if (pf()->is_on_real_element())
       pf()->real_hess_base_value(*this, t);
     else {
@@ -107,6 +115,8 @@ namespace getfem
 	  }
 	  t -= tt;
 	}
+	if (!(pf()->is_equivalent()) && withM)
+	  { tt = t; t.mat_transp_reduction(tt, M(), 0); }
       }
     }
   }
@@ -149,16 +159,16 @@ namespace getfem
     pf_(pf__), pfp_(0), convex_num_(convex_num__) {}
  
   void virtual_fem::real_base_value(const fem_interpolation_context &c, 
-				    base_tensor &t) const
-  { c.base_value(t); }
+				    base_tensor &t, bool withM) const
+  { c.base_value(t, withM); }
 
   void virtual_fem::real_grad_base_value(const fem_interpolation_context &c, 
-				    base_tensor &t) const
-  { c.grad_base_value(t);}
+				    base_tensor &t, bool withM) const
+  { c.grad_base_value(t, withM);}
 
   void virtual_fem::real_hess_base_value(const fem_interpolation_context &c, 
-					 base_tensor &t) const
-  { c.hess_base_value(t); }
+					 base_tensor &t, bool withM) const
+  { c.hess_base_value(t, withM); }
 
   /* ******************************************************************** */
   /*	Class for description of an interpolation dof.                    */

@@ -184,7 +184,7 @@ namespace getfem {
   }
   
   void interpolated_fem::real_base_value(const fem_interpolation_context& c, 
-					 base_tensor &t) const {
+					 base_tensor &t, bool) const {
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type cv;
     mi2[1] = target_dim(); mi2[0] = e.nb_dof;
@@ -231,7 +231,7 @@ namespace getfem {
   }
   
   void interpolated_fem::real_grad_base_value
-  (const fem_interpolation_context& c, base_tensor &t) const {
+  (const fem_interpolation_context& c, base_tensor &t, bool) const {
 
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type nbdof = e.nb_dof, cv;
@@ -318,7 +318,7 @@ namespace getfem {
   }
   
   void interpolated_fem::real_hess_base_value
-  (const fem_interpolation_context&, base_tensor &) const
+  (const fem_interpolation_context&, base_tensor &, bool) const
   { DAL_THROW(internal_error, "Sorry, to be done."); }
   
 

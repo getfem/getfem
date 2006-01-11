@@ -32,7 +32,7 @@
   a Generic Finite Element library in C++ \\[0.5cm]
   {\LARGE Documentation, part \Huge 1} \\[0.5cm]
   \fbox{\Huge \sc Elementary Computations} \\[0.5cm]
-  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
+  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@insa-toulouse.fr } } \\[1.0cm]
       \today \\[1.0cm]
 \end{center}
 
@@ -46,7 +46,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section*{Introduction}
-The main goal of {\sc Getfem++} is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplices with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[2.4cm]
+The main goal of {\sc Getfem++} is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplices with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[1.4cm]
 \input{../license.tex}
 
 \newpage
@@ -137,24 +137,24 @@ but in the file  {\tt bgeot\_config.h} the type  {\tt bgeot::base\_poly} is defi
 \end{figure}
 
 A geometric transformation is a polynomial application
-$$ \tau : \overline{T} \subset \Reel^P \longrightarrow T \subset\Reel^N, $$
-which maps the reference element $\overline{T}$ to the real element $T$.
+$$ \tau : \hat{T} \subset \Reel^P \longrightarrow T \subset\Reel^N, $$
+which maps the reference element $\hat{T}$ to the real element $T$.
 The geometric nodes are denoted
 $$ g^i, \ \ i = 0 .. n_g - 1. $$
 The geometric transformation is described thanks to a $n_g$ components polynomial vector
-$$ {\cal N}(\overline{x}), $$
+$$ {\cal N}(\hat{x}), $$
 such that
-$$ \tau(\overline{x}) = \sum_{i = 0}^{n_g - 1} {\cal N}_i(\overline{x}) g^i.$$
+$$ \tau(\hat{x}) = \sum_{i = 0}^{n_g - 1} {\cal N}_i(\hat{x}) g^i.$$
 Denoting
 $$ G = (g^0; g^1; ...; g^{n_g - 1}), $$
 the $N \times n_g$ matrix containing of all the geometric nodes, one has
-$$ \fbox{$\hspace{1em}\tau(\overline{x}) = G {\cal N}(\overline{x}).\hspace{1em}$} $$
+$$ \fbox{$\hspace{1em}\tau(\hat{x}) = G {\cal N}(\hat{x}).\hspace{1em}$} $$
 The derivative of $\tau$ is then
-$$ \fbox{$\hspace{1em} K(\overline{x}) := \nabla \tau(\overline{x}) = G \nabla {\cal N}(\overline{x}),\hspace{1em}$} $$
-where $K(\overline{x}) = \nabla \tau(\overline{x})$ is a $N \times P$ matrix and $\nabla {\cal N}(\overline{x})$ a $n_g \times P$ matrix.
-The (transposed) pseudo-inverse of $\nabla\tau(\overline{x})$ is a $N\times P$ matrix denoted $B(\overline{x})$:
-$$ \fbox{$\hspace{1em} B(\overline{x}) := K(\overline{x})(K(\overline{x})^T K(\overline{x}))^{-1},\hspace{1em}$} $$
-Of course, when $P=N$, one has $B(\overline{x})=K(\overline{x})^{-T}$.
+$$ \fbox{$\hspace{1em} K(\hat{x}) := \nabla \tau(\hat{x}) = G \nabla {\cal N}(\hat{x}),\hspace{1em}$} $$
+where $K(\hat{x}) = \nabla \tau(\hat{x})$ is a $N \times P$ matrix and $\nabla {\cal N}(\hat{x})$ a $n_g \times P$ matrix.
+The (transposed) pseudo-inverse of $\nabla\tau(\hat{x})$ is a $N\times P$ matrix denoted $B(\hat{x})$:
+$$ \fbox{$\hspace{1em} B(\hat{x}) := K(\hat{x})(K(\hat{x})^T K(\hat{x}))^{-1},\hspace{1em}$} $$
+Of course, when $P=N$, one has $B(\hat{x})=K(\hat{x})^{-T}$.
 
 Pointer on a descriptor of a geometric transformation can be obtained by the following function defined in the file {\tt bgeot\_geometric\_trans.h}:\\[0.5cm]
 {\tt bgeot::pgeometric\_trans pgt = bgeot::geometric\_trans\_descriptor("name of trans"); }\\[0.5cm]
@@ -184,40 +184,40 @@ box of its nodes times a factor 1.2, \\
 - For each points, invert the geometric transformation (computation
 of a pseudo inverse in the linear case, and use of a Newton method in
 the non-linear case. \\ \\
-The inversion (i.e. finding $\overline{x}$ such that $\overline{x}=\tau{x}$, where $x$ is know in the real element) can be described as follows : \\ \\
+The inversion (i.e. finding $\hat{x}$ such that $\hat{x}=\tau{x}$, where $x$ is know in the real element) can be described as follows : \\ \\
 \subsubsection*{Linear case}
 If $\tau$ is linear (affin in fact), then \\
-$$x = \tau(\overline{x}) = \nabla \tau(0) \overline{x} + x_0. = K(0)\overline{x} + x_0$$ \\
+$$x = \tau(\hat{x}) = \nabla \tau(0) \hat{x} + x_0. = K(0)\hat{x} + x_0$$ \\
 Hence
-$$\fbox{$\overline{x} = B(0)^T(x - x_0)$}$$
+$$\fbox{$\hat{x} = B(0)^T(x - x_0)$}$$
 if $N > P$, the residu \\
-$$x - x_0 -  K(0) \overline{x}, $$
+$$x - x_0 -  K(0) \hat{x}, $$
 indicates wether or not the point $x$ in on the "surface" of the convex. \\ 
 \\ \subsubsection*{Non-linear case}
 A Newton method is applied., writing
-$$x = \tau(\overline{x}+\overline{h}) = \tau(\overline{x})
-+ \nabla \tau(\overline{x})\overline{h} + o(\|\overline{h}\|^2). $$
+$$x = \tau(\hat{x}+\hat{h}) = \tau(\hat{x})
++ \nabla \tau(\hat{x})\hat{h} + o(\|\hat{h}\|^2). $$
 It gives the iterative scheme
-$$\fbox{$ \overline{x}_{n+1} = \overline{x}_{n}
-+ B^T(\overline{x}_{n})(x - \tau(\overline{x}_{n})).$} $$
+$$\fbox{$ \hat{x}_{n+1} = \hat{x}_{n}
++ B^T(\hat{x}_{n})(x - \tau(\hat{x}_{n})).$} $$
 The residu is
-$$ x - \tau(\overline{x}_{n}).$$
+$$ x - \tau(\hat{x}_{n}).$$
 
 \section{Finite element methods description}
 
-A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
-$$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q, $$
+A finite element method is defined on a reference element $\hat{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
+$$ \hat{\varphi}^i : \hat{T} \subset \Reel^P \longrightarrow \Reel^Q, $$
 Denoting
-$$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
+$$ \tilde{\varphi}^i(x) = \hat{\varphi}^i(\hat{x}) = \hat{\varphi}^i(\tau^{-1}(x)), $$
 a linear transformation is allowed for the real base function
 $$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} \tilde{M}_{ij} \tilde{\varphi}^j(x), $$
 where $\tilde{M}$ is a $n_d \times n_d$ matrix possibly depending on the geometric transformation (i.e. on the real element). For basic elements as Lagrange elements this matrix is the identity matrix (it is simply ignored). In this case, we will say that the element is $\tau$-equivalent. This approach allows to define hermite elements (Argyris for instance) in a generic way, even with non linear transformations (i.e. mainly for curved boundaries).
 We denote
-$$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
+$$ [\hat{\varphi}(\hat{x})] = \vecfour{\hat{\varphi}^0(\hat{x})}{\hat{\varphi}^1(\hat{x})}{...}{\hat{\varphi}^{n_d-1}(\hat{x})}, $$
 the $n_d \times Q$ matrix, such that when a function is defined by
 $$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $$
 one has
-$$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T \tilde{M} [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
+$$ \fbox{$\hspace{1em} f(\tau(\hat{x})) = \alpha^T \tilde{M} [\hat{\varphi}(\hat{x})],\hspace{1em}$} $$
 where $\alpha$ is the vector of components $\alpha_i$.
 
 A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following (see \cite{FEM_LIST} for an exhaustive list):
@@ -248,55 +248,55 @@ One can obtain a particular descriptor thanks to the function\\[0.5cm]
 
 \subsection{Volume integral}
 One has
-$$ \int_T f(x) dx = \int_{\overline{T}} \overline{f}(\overline{x}) |vol\left(\Frac{\partial \tau(\overline{x})}{\partial \overline{x}_0} ;\Frac{\partial \tau(\overline{x})}{\partial \overline{x}_1}; ...; \Frac{\partial \tau(\overline{x})}{\partial \overline{x}_{P-1} }\right)| d\overline{x}, $$
+$$ \int_T f(x) dx = \int_{\hat{T}} \hat{f}(\hat{x}) |vol\left(\Frac{\partial \tau(\hat{x})}{\partial \hat{x}_0} ;\Frac{\partial \tau(\hat{x})}{\partial \hat{x}_1}; ...; \Frac{\partial \tau(\hat{x})}{\partial \hat{x}_{P-1} }\right)| d\hat{x}, $$
 with
-$$ \fbox{$\hspace{1em} J_{\tau}(\overline{x}) := |vol\left(\Frac{\partial \tau(\overline{x})}{\partial \overline{x}_0} ;\Frac{\partial \tau(\overline{x})}{\partial \overline{x}_1}; ...; \Frac{\partial \tau(\overline{x})}{\partial \overline{x}_{P-1} }\right)| = (\mbox{det}(K(\overline{x})^T K(\overline{x})))^{1/2},\hspace{1em}$} $$
+$$ \fbox{$\hspace{1em} J_{\tau}(\hat{x}) := |vol\left(\Frac{\partial \tau(\hat{x})}{\partial \hat{x}_0} ;\Frac{\partial \tau(\hat{x})}{\partial \hat{x}_1}; ...; \Frac{\partial \tau(\hat{x})}{\partial \hat{x}_{P-1} }\right)| = (\mbox{det}(K(\hat{x})^T K(\hat{x})))^{1/2},\hspace{1em}$} $$
 one finally has
-$$ \fbox{$\hspace{1em} \ds \int_T f(x) dx = \int_{\overline{T}} \overline{f}(\overline{x})  J_{\tau}(\overline{x})d\overline{x}.\hspace{1em}$} $$
-When $P = N$, of course $J_{\tau}(\overline{x}) = |\mbox{det}(K(\overline{x}))|$.
+$$ \fbox{$\hspace{1em} \ds \int_T f(x) dx = \int_{\hat{T}} \hat{f}(\hat{x})  J_{\tau}(\hat{x})d\hat{x}.\hspace{1em}$} $$
+When $P = N$, of course $J_{\tau}(\hat{x}) = |\mbox{det}(K(\hat{x}))|$.
 
 \subsection{Surface integral}
-With $\Gamma$ a part of the boundary of $T$ a real element and $\overline{\Gamma}$ the corresponding boundary on the reference element $\overline{T}$ and, one has
-$$ \fbox{$\hspace{1em} \ds \int_{\Gamma} f(x) d\sigma = \int_{\overline{\Gamma}} \overline{f}(\overline{x}) \|B(\overline{x})\overline{\mathbf n}\| J_{\tau}(\overline{x}) d\overline{\sigma},\hspace{1em}$} $$
-where ${\mathbf n}$ is the unit normal to $\overline{T}$ on $\overline{\Gamma}$. On a same manner
-$$ \fbox{$\hspace{1em} \ds \int_{\Gamma} F(x).{\mathbf n} d\sigma = \int_{\overline{\Gamma}} \overline{F}(\overline{x}).(B(\overline{x})\overline{\mathbf n}) J_{\tau}(\overline{x}) d\overline{\sigma}.\hspace{1em}$} $$
+With $\Gamma$ a part of the boundary of $T$ a real element and $\hat{\Gamma}$ the corresponding boundary on the reference element $\hat{T}$ and, one has
+$$ \fbox{$\hspace{1em} \ds \int_{\Gamma} f(x) d\sigma = \int_{\hat{\Gamma}} \hat{f}(\hat{x}) \|B(\hat{x})\hat{\mathbf n}\| J_{\tau}(\hat{x}) d\hat{\sigma},\hspace{1em}$} $$
+where ${\mathbf n}$ is the unit normal to $\hat{T}$ on $\hat{\Gamma}$. On a same manner
+$$ \fbox{$\hspace{1em} \ds \int_{\Gamma} F(x).{\mathbf n} d\sigma = \int_{\hat{\Gamma}} \hat{F}(\hat{x}).(B(\hat{x})\hat{\mathbf n}) J_{\tau}(\hat{x}) d\hat{\sigma}.\hspace{1em}$} $$
 
 \subsection{Derivative computation}
 One has
-$$ \nabla f(x) = B(\overline{x}) \overline{\nabla}\,\overline{f}(\overline{x}), $$
+$$ \nabla f(x) = B(\hat{x}) \hat{\nabla}\,\hat{f}(\hat{x}), $$
 \subsection{Second derivative computation}
 Denoting 
 $$ \nabla^2 f = ({\Frac{\partial^2 f}{\partial x_i \partial x_j}})_{ij}, $$
 the $N \times N$ matrix and
-$$ \overline{X}(\overline{x}) = \sum_{k = 0}^{N-1} \overline{\nabla}^2 \tau_k(\overline{x}) \Frac{\partial f}{\partial x_k}(x) = \sum_{k = 0}^{N-1} \sum_{i = 0}^{P-1} \overline{\nabla}^2 \tau_k(\overline{x}) B_{ki} \Frac{\partial \overline{f}}{\partial \overline{x}_i}(\overline{x}), $$
+$$ \hat{X}(\hat{x}) = \sum_{k = 0}^{N-1} \hat{\nabla}^2 \tau_k(\hat{x}) \Frac{\partial f}{\partial x_k}(x) = \sum_{k = 0}^{N-1} \sum_{i = 0}^{P-1} \hat{\nabla}^2 \tau_k(\hat{x}) B_{ki} \Frac{\partial \hat{f}}{\partial \hat{x}_i}(\hat{x}), $$
 the $P \times P$ matrix, then
-$$ \overline{\nabla}^2 \overline{f}(\overline{x}) = \overline{X}(\overline{x}) + K(\overline{x})^T \nabla^2 f(x) K(\overline{x}), $$
+$$ \hat{\nabla}^2 \hat{f}(\hat{x}) = \hat{X}(\hat{x}) + K(\hat{x})^T \nabla^2 f(x) K(\hat{x}), $$
 and thus
-$$ \nabla^2 f(x) = B(\overline{x}) (\overline{\nabla}^2 \overline{f}(\overline{x}) - \overline{X}(\overline{x})) B(\overline{x})^T. $$
+$$ \nabla^2 f(x) = B(\hat{x}) (\hat{\nabla}^2 \hat{f}(\hat{x}) - \hat{X}(\hat{x})) B(\hat{x})^T. $$
 
 In order to have uniform methods for the computation of elementary matrices, the Hessian is computed as a vector:
 $$  H f = \vecseven{\Frac{\partial^2 f}{\partial x^2_0}}{}{\Frac{\partial^2 f}{\partial x_1 \partial x_0}}{}{\Frac{\partial^2 f}{\partial x_2 \partial x_0}}{...}{\Frac{\partial^2 f}{\partial x^2_{N-1}}},\ \ \ \ \ 
-    \overline{H}\,\overline{f} = \vecseven{\Frac{\partial^2 \overline{f}}{\partial \overline{x}^2_0}}{}{\Frac{\partial^2 \overline{f}}{\partial \overline{x}_1 \partial \overline{x}_0}}{}{\Frac{\partial^2 \overline{f}}{\partial \overline{x}_2 \partial \overline{x}_0}}{...}{\Frac{\partial^2 \overline{f}}{\partial \overline{x}^2_{P-1}}}, $$
+    \hat{H}\,\hat{f} = \vecseven{\Frac{\partial^2 \hat{f}}{\partial \hat{x}^2_0}}{}{\Frac{\partial^2 \hat{f}}{\partial \hat{x}_1 \partial \hat{x}_0}}{}{\Frac{\partial^2 \hat{f}}{\partial \hat{x}_2 \partial \hat{x}_0}}{...}{\Frac{\partial^2 \hat{f}}{\partial \hat{x}^2_{P-1}}}, $$
 Then, with $B_2$ the $P^2 \times P$ matrix defined as
-$$ \fbox{ $(B_2(\overline{x}))_{ij} = \sum_{k = 0}^{N-1} \Frac{\partial^2 \tau_k(\overline{x})}{\partial \overline{x}_{i / P} \partial \overline{x}_{i \mbox{ mod } P} } B_{kj}(\overline{x}),$ } $$
+$$ \fbox{ $(B_2(\hat{x}))_{ij} = \sum_{k = 0}^{N-1} \Frac{\partial^2 \tau_k(\hat{x})}{\partial \hat{x}_{i / P} \partial \hat{x}_{i \mbox{ mod } P} } B_{kj}(\hat{x}),$ } $$
 and $B_3$ the $N^2 \times P^2$ matrix defined as
-$$ \fbox{ $(B_3(\overline{x}))_{ij} = B_{i / N, j / P}(\overline{x}) B_{i \mbox{ mod } N, j \mbox{ mod } P}(\overline{x}), $ } $$
+$$ \fbox{ $(B_3(\hat{x}))_{ij} = B_{i / N, j / P}(\hat{x}) B_{i \mbox{ mod } N, j \mbox{ mod } P}(\hat{x}), $ } $$
 then
-$$ \fbox{ $H f(x) = B_3(\overline{x}) \left(\overline{H}\,\overline{f}(\overline{x}) - B_2(\overline{x})\overline{\nabla}\,\overline{f}(\overline{x})\right), $ } $$
+$$ \fbox{ $H f(x) = B_3(\hat{x}) \left(\hat{H}\,\hat{f}(\hat{x}) - B_2(\hat{x})\hat{\nabla}\,\hat{f}(\hat{x})\right), $ } $$
 
 \subsection{Example of elementary matrix} \label{elmminst}
 
 Assume one needs to compute the elementary ``matrix'':
 $$ t(i_0, i_1, ..., i_7) = \int_{T} \varphi_{i_1}^{i_0}\; \partial_{i_4} \varphi_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi_{i_6}^{i_5} dx, $$ 
 The computations to be made on the reference elements are
-$$ \overline{t}_0(i_0, i_1, ..., i_7) = \int_{\overline{T}} \overline{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \overline{\varphi}_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \overline{\varphi}_{i_6}^{i_5}  J(\overline{x}) d\overline{x}, $$
+$$ \hat{t}_0(i_0, i_1, ..., i_7) = \int_{\hat{T}} \hat{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \hat{\varphi}_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \hat{\varphi}_{i_6}^{i_5}  J(\hat{x}) d\hat{x}, $$
 and
-$$ \overline{t}_1(i_0, i_1, ..., i_7) = \int_{\overline{T}} \overline{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \overline{\varphi}_{i_3}^{i_2}\; \partial_{i_7} \overline{\varphi}_{i_6}^{i_5}  J(\overline{x}) d\overline{x}, $$
-Those two tensor can be computed once on the whole reference element if the geometric transformation is linear (because $J(\overline{x})$ is constant). If the geometric transformation is non-linear, what has to be stored is the value on each integration point. To compute the integral on the real element a certain number of reductions have to be made:
+$$ \hat{t}_1(i_0, i_1, ..., i_7) = \int_{\hat{T}} \hat{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \hat{\varphi}_{i_3}^{i_2}\; \partial_{i_7} \hat{\varphi}_{i_6}^{i_5}  J(\hat{x}) d\hat{x}, $$
+Those two tensor can be computed once on the whole reference element if the geometric transformation is linear (because $J(\hat{x})$ is constant). If the geometric transformation is non-linear, what has to be stored is the value on each integration point. To compute the integral on the real element a certain number of reductions have to be made:
 \begin{itemize}
    \item Concerning the first term ($\varphi_{i_1}^{i_0}$) nothing.
    \item Concerning the second term ($\partial_{i_4} \varphi_{i_3}^{i_2}$) a reduction with respect to $i_4$ with the matrix $B$.
-   \item Concerning the third term ($\partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi_{i_6}^{i_5}$) a reduction of $\overline{t}_0$ with respect to $i_7$ with the matrix $B_3$ and a reduction of $\overline{t}_1$ with respect also to $i_7$ with the matrix $B_3B_2$
+   \item Concerning the third term ($\partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi_{i_6}^{i_5}$) a reduction of $\hat{t}_0$ with respect to $i_7$ with the matrix $B_3$ and a reduction of $\hat{t}_1$ with respect also to $i_7$ with the matrix $B_3B_2$
 \end{itemize}
 The reductions are to be made on each integration point if the geometric transformation is non-linear. Once those reductions are done, an addition of all the tensor resulting of those reductions is made (with a factor equal to the load of each integration point if the geometric transformation is non-linear).
 
