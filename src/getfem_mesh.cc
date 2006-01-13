@@ -57,7 +57,7 @@ namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
 
-    void mesh::compute_mpi_region(void) {
+    void mesh::compute_mpi_region(void) const {
 
       int size, rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -91,7 +91,7 @@ namespace getfem {
       valid_sub_regions.clear();
     }
 
-  void mesh::compute_mpi_sub_region(size_type n) {
+  void mesh::compute_mpi_sub_region(size_type n) const {
     if (valid_cvf_sets.is_in(n)) {
       mpi_sub_region[n] = mesh_region::intersection(cvf_sets[n], mpi_region);
     }

@@ -185,10 +185,10 @@ namespace getfem {
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
 
 #if GETFEM_PARA_LEVEL > 1
-    bool modified;
-    mesh_region mpi_region;
-    dal::dynamic_array<mesh_region> mpi_sub_region;
-    dal::bit_vector valid_sub_regions;
+    mutable bool modified;
+    mutable mesh_region mpi_region;
+    mutable dal::dynamic_array<mesh_region> mpi_sub_region;
+    mutable dal::bit_vector valid_sub_regions;
 
     void touch(void) { 
       modified = true; cuthill_mckee_uptodate = false;

@@ -947,11 +947,12 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-#if GETFEM_PARA_LEVEL > 0
-#include <mpi.h>
-#endif
+//#if GETFEM_PARA_LEVEL > 0
+//#include <mpi.h>
+//#endif
 
 #ifdef GMM_USES_MPI
+#include <mpi.h>
  
 namespace gmm { 
   
@@ -965,15 +966,17 @@ namespace gmm {
     MAT &local_matrix(void) { return M; }
   };
 
-  template <typename T> int mpi_type(T)
+  template <typename T> MPI_Datatype mpi_type(T)
   { DAL_THROW(failure_error, "Sorry unsupported type"); }
-  inline int mpi_type(double) { return MPI_DOUBLE; }
-  inline int mpi_type(float) { return MPI_FLOAT; }
-  inline int mpi_type(long double) { return MPI_LONG_DOUBLE; }
-  inline int mpi_type(std::complex<float>) { return MPI_COMPLEX; }
-  inline int mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
-  inline int mpi_type(int) { return MPI_INT; }
-  inline int mpi_type(size_t)
+  inline MPI_Datatype mpi_type(double) { return MPI_DOUBLE; }
+  inline MPI_Datatype mpi_type(float) { return MPI_FLOAT; }
+  inline MPI_Datatype mpi_type(long double) { return MPI_LONG_DOUBLE; }
+#ifndef LAM_MPI
+  inline MPI_Datatype mpi_type(std::complex<float>) { return MPI_COMPLEX; }
+  inline MPI_Datatype mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
+#endif
+  inline MPI_Datatype mpi_type(int) { return MPI_INT; }
+  inline MPI_Datatype mpi_type(size_t)
   { return (sizeof(int) == sizeof(size_t)) ? MPI_INT : MPI_LONG; }
 
   
@@ -1169,7 +1172,7 @@ namespace gmm {
 }
 
 
-#endif
+#endif // GMM_USES_MPI
 
 namespace std {
   template <typename V>

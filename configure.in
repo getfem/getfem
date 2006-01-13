@@ -271,8 +271,9 @@ fi
 
 # Generic BLAS library?
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas -lg2c"])
 fi
+
 
 AC_SUBST(BLAS_LIBS)
 
@@ -382,13 +383,13 @@ useQHULL="no"
 AC_ARG_ENABLE(qhull,
  [  --enable-qhull             enable the use of the qhull library (required for generation of non regular meshes)],
  [ if   test "x$enableval" = "xyes" ; then useQHULL="yes"; fi], [useQHULL="test"])
-if test "x$useQHULL" = "x$no"; then
+if test "x$useQHULL" = "xno"; then
   echo "libqhull explicitly disabled";
 else
   AC_CHECK_LIB(qhull, qh_new_qhull)
   AC_CHECK_HEADERS(qhull/qhull.h,[useQHULL="yes"],
 [
-  if test "x$useQHULL" = "$yes"; then
+  if test "x$useQHULL" = "xyes"; then
     AC_MSG_ERROR([header files qhull/qhull.h not found. Use --disable-qhull flag]);
   fi;
 ])
@@ -399,6 +400,26 @@ dnl -----------------------------END OF QHULL TEST--------------------------
 
 dnl ------------------------------LAPACK TEST--------------------------------
 dnl -----------------------------END OF LAPACK TEST--------------------------
+
+
+dnl ------------------------------MPI TEST--------------------------------
+if test "$MPI_CFLAGS" -o "$MPI_LIBS"; then
+  echo "You are using MPI! Trying to build a parallelised version of getfem (require METIS)"
+  AC_DEFINE_UNQUOTED([PARA_LEVEL], 2, [getfem parallelisation flag])
+  LIBS="$LIBS $MPI_LIBS"
+  CXXFLAGS="$CXXFLAGS $MPI_CFLAGS -DGMM_USES_MPI"
+  AC_SUBST(MPI_LIBS)
+  AC_SUBST(MPI_CLAGS)
+  AC_CHECK_LIB(metis, METIS_PartMeshNodal, [metis_ok="yes"], [metis_ok="no"])
+  if test "x$metis_ok" = "xno"; then
+    AC_MSG_ERROR([Parallel getfem requires the METIS ( http://www-users.cs.umn.edu/~karypis/metis/metis/ ) library
+ ----------> Please add the path to libmetis.a to the MPI_LIBS variable.])
+  fi
+fi
+
+
+dnl -----------------------------END OF MPI TEST--------------------------
+
 
 AC_CHECK_HEADERS(sys/times.h,[],[SUPERLU_CPPFLAGS="$SUPERLU_CPPFLAGS -DNO_TIMER"])
 AC_CHECK_HEADERS(cxxabi.h)
@@ -412,6 +433,7 @@ AC_CACHE_CHECK([for __PRETTY_FUNCTION__], ac_have_pretty_function, [
 if test "x$ac_have_pretty_function" = "xyes"; then
         AC_DEFINE_UNQUOTED(HAVE_PRETTY_FUNCTION,1,[gcc style __PRETTY_FUNCTION__ macro])
 fi;     
+
 
 dnl ---------------------------- CHECK FOR GLIBC BACKTRACE availability -----
 AC_CACHE_CHECK([for execinfo.h and backtrace], ac_have_backtrace, [
