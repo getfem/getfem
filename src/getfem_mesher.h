@@ -401,11 +401,18 @@ namespace getfem {
   };
 
 
+  // Rem : It would be better for the convergence of Newton's methods to
+  //       take somthing more smooth than min. for instance tthe square root
+  //       of positive parts or negative parts depending on the position of
+  //       point (in or out the domain).
+
   extern const mesher_half_space void_signed_distance;
 
   class mesher_union : public mesher_signed_distance {
     std::vector<const mesher_signed_distance *> dists;
     mutable std::vector<scalar_type> vd;
+    mutable bool isin;
+    bool with_min;
   public:
     mesher_union(const mesher_signed_distance &a_,
 		 const mesher_signed_distance &b_,
@@ -428,7 +435,7 @@ namespace getfem {
 		 const mesher_signed_distance &s_ = void_signed_distance,
 		 const mesher_signed_distance &t_ = void_signed_distance) {
       dists.push_back(&a_); dists.push_back(&b_);
-      size_type nb = 2;
+      size_type nb = 2; with_min = true;
       if (&c_ != &void_signed_distance) { dists.push_back(&c_); ++nb; }
       if (&d_ != &void_signed_distance) { dists.push_back(&d_); ++nb; }
       if (&e_ != &void_signed_distance) { dists.push_back(&e_); ++nb; }
@@ -465,23 +472,48 @@ namespace getfem {
       return true;
     }
     virtual scalar_type operator()(const base_node &P) const {
-      scalar_type d = (*(dists[0]))(P);
-      for (size_type k = 1; k < dists.size(); ++k)
-	d = std::min(d, (*(dists[k]))(P));
+      scalar_type d, f(0), g(1);
+      if (with_min) {
+	d = (*(dists[0]))(P);
+	for (size_type k = 1; k < dists.size(); ++k)
+	  d = std::min(d, (*(dists[k]))(P));
+      }
+      else { // essai raté ...
+	isin = false;
+	for (size_type k = 0; k < dists.size(); ++k) {
+	  vd[k] = (*(dists[k]))(P);
+	  if (vd[k] <= scalar_type(0)) isin = true;
+	  f += gmm::sqr(gmm::neg(vd[k]));
+	  g *= gmm::pos(vd[k]);
+	}
+	d = isin ? -gmm::sqrt(f) : pow(g, scalar_type(1) / dists.size());
+      }
       return d;
-
     }
     scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      scalar_type d = vd[0] = (*(dists[0]))(P);
-      bool ok = (d > -SEPS);
-      for (size_type k = 1; k < dists.size(); ++k) {
-	vd[k] = (*(dists[k]))(P); if (vd[k] <= -SEPS) ok = false;
-	d = std::min(d,vd[k]);
+      if (with_min) {
+	scalar_type d = vd[0] = (*(dists[0]))(P);
+	bool ok = (d > -SEPS);
+	for (size_type k = 1; k < dists.size(); ++k) {
+	  vd[k] = (*(dists[k]))(P); if (vd[k] <= -SEPS) ok = false;
+	  d = std::min(d,vd[k]);
+	}
+	for (size_type k = 0; ok && k < dists.size(); ++k) {
+	  if (vd[k] < SEPS) (*(dists[k]))(P, bv);
+	}
+	return d;
       }
-      for (size_type k = 0; ok && k < dists.size(); ++k) {
-	if (vd[k] < SEPS) (*(dists[k]))(P, bv);
+      else { // essai raté ...
+	vd[0] = (*(dists[0]))(P);
+	bool ok = (vd[0] > -SEPS);
+	for (size_type k = 1; k < dists.size(); ++k) {
+	  vd[k] = (*(dists[k]))(P); if (vd[k] <= -SEPS) ok = false;
+	}
+	for (size_type k = 0; ok && k < dists.size(); ++k) {
+	  if (vd[k] < SEPS) (*(dists[k]))(P, bv);
+	}
+	return operator()(P);
       }
-      return d;
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
@@ -489,22 +521,47 @@ namespace getfem {
 	dists[k]->register_constraints(list); 
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
-      scalar_type d = (*(dists[0]))(P);
-      size_type i = 0;
-      for (size_type k = 1; k < dists.size(); ++k) {
-	scalar_type d2 = (*(dists[k]))(P);
-	if (d2 < d) { d = d2; i = k; }
+      scalar_type d;
+      if (with_min || gmm::abs(d) < SEPS) {
+	d = (*(dists[0]))(P);
+	size_type i = 0;
+	for (size_type k = 1; k < dists.size(); ++k) {
+	  scalar_type d2 = (*(dists[k]))(P);
+	  if (d2 < d) { d = d2; i = k; }
+	}
+	return dists[i]->grad(P, G);
       }
-      return dists[i]->grad(P, G);
+      else { // essai raté ...
+	d = operator()(P);
+	base_small_vector Gloc;
+	for (size_type k = 0; k < dists.size(); ++k) {
+	  dists[k]->grad(P, Gloc);
+	  if (isin) 
+	    Gloc *= -gmm::neg(vd[k]);
+	  else 
+	    Gloc *= pow(d, dists.size()) / vd[k];
+	  if (!k) G = Gloc; else G += Gloc;
+	}
+	if (isin)
+	  G *= scalar_type(1) / d;
+	else
+	  G /= pow(d, dists.size() - 1) * dists.size();
+	return d;
+      }
     }
     void hess(const base_node &P, base_matrix &H) const {
       scalar_type d = (*(dists[0]))(P);
-      size_type i = 0;
-      for (size_type k = 1; k < dists.size(); ++k) {
-	scalar_type d2 = (*(dists[k]))(P);
-	if (d2 < d) { d = d2; i = k; }
+      if (with_min || gmm::abs(d) < SEPS) {
+	size_type i = 0;
+	for (size_type k = 1; k < dists.size(); ++k) {
+	  scalar_type d2 = (*(dists[k]))(P);
+	  if (d2 < d) { d = d2; i = k; }
+	}
+	dists[i]->hess(P, H);
       }
-      dists[i]->hess(P, H);
+      else {
+	DAL_THROW(to_be_done_error, "Sorry, to e done");
+      }
     }
   };
 

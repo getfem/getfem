@@ -460,7 +460,7 @@ namespace getfem {
 	size_type ic, ipt;	
 	for (ic << ii; ic != size_type(-1); ic << ii) {
 	  for (unsigned f = 0; f <= N; ++f) {
-	    if (m.is_convex_having_neighbour(ic,f)) {
+	    if (!m.is_convex_having_neighbour(ic,f)) {
 	      for (unsigned i = 0; i < N; ++i) {
 		ipt = m.ind_points_of_face_of_convex(ic, f)[i];
 		if (pts_attr[ipt]->constraints.card() == 0)
@@ -496,7 +496,7 @@ namespace getfem {
 	  scalar_type max_flatness = -2.0;
 	  normals.resize(0);
 	  for (unsigned f = 0; f <= N; ++f) {
-	    if (m.is_convex_having_neighbour(ic,f)) {
+	    if (!m.is_convex_having_neighbour(ic,f)) {
 	      if (quality_of_element(ic) < 1E-8) max_flatness = 1E-8;
 	      else {
 		base_small_vector n = m.normal_of_face_of_convex(ic, f);
@@ -558,9 +558,10 @@ namespace getfem {
       while (gmm::abs(d) > 1e-10) {
 	if (++it > 10000)
 	    DAL_THROW(failure_error,
-		      "Object empty, or bad signed distance");
-// 	cout << "iter " << it << " X = " << X << " dist = " << d << 
-// 	    " grad = " << G << endl;
+		      "Object empty, or bad signed distance X=" << X << ", G=" << G << " d = " << d);
+ 	if (it > 9980) 
+	  cout << "iter " << it << " X = " << X << " dist = " << d << 
+ 	    " grad = " << G << endl;
 	gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
 	d = dist.grad(X, G);
       }
@@ -770,7 +771,7 @@ namespace getfem {
 
 	if (dist(Q) < geps) {
 	  if (m.search_point(Q) == size_type(-1)) {
-	    cout << "adding point : " << Q << endl;
+	    //cout << "adding point : " << Q << endl;
 	    if (!eff_box_init)
 	      { eff_boxmin = eff_boxmax = Q; eff_box_init = true; }
 	    else for (size_type k = 0; k < N; ++k) {
@@ -1274,7 +1275,7 @@ namespace getfem {
 	  // ajout d'un point au barycentre des elements trop plats : 
 	  
 	  if (prefind != 3)
-	    for (unsigned cv = 0; cv < gmm::mat_ncols(t); ++cv) {
+ 	    for (unsigned cv = 0; cv < gmm::mat_ncols(t); ++cv) {
 	      
 	      if (quality_of_element(cv) < 0.05) {
 		base_node G = pts[t(0,cv)];

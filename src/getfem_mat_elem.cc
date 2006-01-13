@@ -185,11 +185,11 @@ namespace getfem {
 	
 	switch ((*it).t) {
 	  case GETFEM_BASE_    :
-	    (*it).pfi->real_base_value(ctx, elmt_stored[k], false);
+	    (*it).pfi->real_base_value(ctx, elmt_stored[k], icb != 0);
 	    break;
 	  case GETFEM_GRAD_    :
 	    if (trans) {
-	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k], false);
+	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k], icb != 0);
 	      *mit++ = ctx.N();
 	    }
 	    else
@@ -197,7 +197,7 @@ namespace getfem {
 	    break;
 	  case GETFEM_HESSIAN_ :
 	    if (trans) {
-	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k], false);
+	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k], icb != 0);
 	      *mit++ = gmm::sqr(ctx.N());
 	    }
 	    else {
@@ -519,12 +519,12 @@ namespace getfem {
 
       /* Applying linear transformation for non tau-equivalent elements.   */
       
-      if (trans_reduction.size() > 0) {
-	if (icb) // Dans ce cas, il faudrait annuler la reduction finale (si
-	  // l'indice des numerod de fonctions de base est réduit) et faire
-	  // la reduction sur chaque point de Gauss.
-	  DAL_INTERNAL_ERROR("Non tau-equivalent elements are not"
-			     "working with this kind of assembly!");
+      if (trans_reduction.size() > 0 && !icb) {
+// 	if (icb) // Dans ce cas, il faudrait annuler la reduction finale (si
+// 	  // l'indice des numerod de fonctions de base est réduit) et faire
+// 	  // la reduction sur chaque point de Gauss.
+// 	  DAL_INTERNAL_ERROR("Non tau-equivalent elements are not"
+// 			     "working with this kind of assembly!");
 	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();

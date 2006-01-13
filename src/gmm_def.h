@@ -978,7 +978,7 @@ namespace gmm {
   template<typename T> inline T default_tol(std::complex<T>)
   { return default_tol(T()); }
 
-    template<typename T> inline T default_min(T) {
+  template<typename T> inline T default_min(T) {
     using namespace std;
     static T mi(10);
     if (mi == T(10)) {
@@ -995,6 +995,24 @@ namespace gmm {
   }
   template<typename T> inline T default_min(std::complex<T>)
   { return default_min(T()); }
+
+  template<typename T> inline T default_max(T) {
+    using namespace std;
+    static T mi(10);
+    if (mi == T(10)) {
+      if (numeric_limits<T>::is_specialized)
+	mi = std::numeric_limits<T>::max();
+      else {
+	mi = T(1);
+	DAL_WARNING1("The numeric type " << typeid(T).name()
+		    << " has no numeric_limits defined !!\n"
+		    << "Taking 1 as default maximum !");
+      }
+    }
+    return mi;
+  }
+  template<typename T> inline T default_max(std::complex<T>)
+  { return default_max(T()); }
 
   
   /*

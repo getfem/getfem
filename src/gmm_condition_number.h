@@ -79,7 +79,8 @@ namespace gmm {
       emin = std::min(emin, e);
       emax = std::max(emax, e);
     }
-    if (emin == R(0)) emin = gmm::default_min(R());
+    // cout << "emin = " << emin << " emax = " << emax << endl;
+    if (emin == R(0)) return gmm::default_max(R());
     return emax / emin;
   }
 
