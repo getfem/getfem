@@ -199,12 +199,27 @@ extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
 
 #endif
 
+
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
 #include <getfem_superlu.h>
 
 /// GEneric Tool for Finite Element Methods.
 namespace getfem {
+
+#if GETFEM_PARA_LEVEL > 1
+  template <typename T> inline T MPI_SUM_SCALAR(T a)
+  { T b; MPI_Allreduce(&a,&b,1,mpi_type(a),MPI_SUM,MPI_COMM_WORLD); return b; }
+  template <typename VECT> inline void MPI_SUM_VECTOR(VECT V) {
+    typedef typename gmm::linalg_traits<VECT>::value_type T;
+    std::vector<T> W(gmm::vect_size(V)); gmm::copy(V, W);
+    MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), mpi_type(T()),
+		  MPI_SUM, MPI_COMM_WORLD); 
+  }
+#else
+  template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
+  template <typename VECT> inline void MPI_SUM_VECTOR(VECT V) {}
+#endif
 
   using bgeot::ST_NIL;
   using bgeot::size_type;

@@ -269,6 +269,7 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 
 
 bool elastostatic_problem::solve(plain_vector &U) {
+
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 

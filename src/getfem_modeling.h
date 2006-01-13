@@ -831,8 +831,9 @@ namespace getfem {
 
     void proper_update_K(void) {
       DAL_TRACE2("Assembling mass matrix for mdbrick_mass_matrix");
-      asm_mass_matrix_param(this->K, this->mim, this->mf_u, rho().mf(), rho().get(), 
-			    this->mf_u.linked_mesh().get_mpi_region());
+      asm_mass_matrix_param
+	(this->K, this->mim, this->mf_u, rho().mf(), rho().get(), 
+	 this->mf_u.linked_mesh().get_mpi_region());
     }
 
   public :
@@ -846,8 +847,10 @@ namespace getfem {
 	@param mf_u the mesh_fem for the unknown u.
 	@param rhoi default value for the density rho.
     */
-    mdbrick_mass_matrix(const mesh_im &mim_, const mesh_fem &mf_u_, value_type rhoi=1)
-      : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_MASS_MATRIX),
+    mdbrick_mass_matrix(const mesh_im &mim_, const mesh_fem &mf_u_,
+			value_type rhoi=1)
+      : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
+						 MDBRICK_MASS_MATRIX),
 	rho_("rho", mf_u_.linked_mesh(), this) {
       rho_.set(rhoi);
     }
