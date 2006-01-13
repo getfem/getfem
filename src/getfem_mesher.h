@@ -522,7 +522,7 @@ namespace getfem {
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
       scalar_type d;
-      if (with_min || gmm::abs(d) < SEPS) {
+      if (with_min /* || gmm::abs(d) < SEPS*/) {
 	d = (*(dists[0]))(P);
 	size_type i = 0;
 	for (size_type k = 1; k < dists.size(); ++k) {

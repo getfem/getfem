@@ -207,6 +207,7 @@ namespace getfem {
       if (!(valid_sub_regions.is_in(n))) compute_mpi_sub_region(n);
       return mpi_sub_region[n];
     }
+    void intersect_with_mpi_region(mesh_region &rg); 
 #else
     void touch(void)
     { cuthill_mckee_uptodate = false; context_dependencies::touch(); }
@@ -217,7 +218,7 @@ namespace getfem {
       if (n == size_type(-1)) return get_mpi_region();
       return cvf_sets[n];
     }
-
+    void intersect_with_mpi_region(mesh_region &) {}
 #endif
     
     /// Constructor.

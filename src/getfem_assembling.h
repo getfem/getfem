@@ -43,15 +43,18 @@ namespace getfem {
 
   template <typename VEC>
   scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf,
-			     const VEC &U, const mesh_region &rg
+			     const VEC &U, mesh_region rg
 			     = mesh_region::all_convexes()) {
+    // for parallelized getfem, work only on the mesh subset 
+    // assigned to the current thread
+    mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;
+    std::vector<scalar_type> v(1), w(1);
     if (mf.get_qdim() != 1) DAL_THROW(dal::failure_error, "expecting qdim=1");
     assem.set("u=data(#1); V$1()+=comp(); V$2()+=comp(Base(#1))(i).u(i);");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
-    std::vector<scalar_type> v(1), w(1);
     assem.push_vec(v);
     assem.push_vec(w);
     assem.assembly(rg);
@@ -74,8 +77,8 @@ namespace getfem {
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-			      const VEC &U,
-			      const mesh_region &rg, T) {
+			      const VEC &U, mesh_region rg, T) {
+    mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
@@ -109,7 +112,8 @@ namespace getfem {
   scalar_type asm_L2_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
 			  const mesh_fem &mf2, const VEC2 &U2, 
-			  const mesh_region &rg=mesh_region::all_convexes()) {
+			  mesh_region rg = mesh_region::all_convexes()) {
+    mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -129,7 +133,7 @@ namespace getfem {
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
     assem.assembly(rg);
-    return sqrt(v[0]);
+    return sqrt(MPI_SUM_SCALAR(v[0]));
   }
 
   
@@ -147,7 +151,8 @@ namespace getfem {
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U, const mesh_region &rg, T) {
+				   const VEC &U, mesh_region rg, T) {
+    mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
@@ -160,7 +165,7 @@ namespace getfem {
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
     assem.assembly(rg);
-    return v[0];
+    return MPI_SUM_SCALAR(v[0]);
   }
 
   template<typename VEC, typename T>
@@ -176,8 +181,8 @@ namespace getfem {
   scalar_type asm_H1_semi_dist(const mesh_im &mim, 
 			       const mesh_fem &mf1, const VEC1 &U1,
 			       const mesh_fem &mf2, const VEC2 &U2,
-			       const mesh_region &rg
-			       = mesh_region::all_convexes()) {    
+			       mesh_region rg = mesh_region::all_convexes()) {
+    mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -197,7 +202,7 @@ namespace getfem {
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
     assem.assembly(rg);
-    return sqrt(v[0]);    
+    return sqrt(MPI_SUM_SCALAR(v[0]));    
   }
 
   /** 
@@ -230,8 +235,8 @@ namespace getfem {
 
   template<typename VEC, typename T>
   scalar_type asm_H2_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U,
-				   const mesh_region &rg, T) {
+				   const VEC &U, mesh_region rg, T) {
+    mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1);"
@@ -245,7 +250,7 @@ namespace getfem {
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
     assem.assembly(rg);
-    return v[0];
+    return MPI_SUM_SCALAR(v[0]);
   }
 
   template<typename VEC, typename T>

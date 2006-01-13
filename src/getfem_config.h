@@ -214,11 +214,14 @@ namespace getfem {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V)); gmm::copy(V, W);
     MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), mpi_type(T()),
-		  MPI_SUM, MPI_COMM_WORLD); 
+		  MPI_SUM, MPI_COMM_WORLD);
   }
+  inline bool MPI_IS_MASTER(void)
+  { int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk); return !rk; }
 #else
   template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
-  template <typename VECT> inline void MPI_SUM_VECTOR(VECT V) {}
+  template <typename VECT> inline void MPI_SUM_VECTOR(VECT) {}
+  inline bool MPI_IS_MASTER(void) { return true; }
 #endif
 
   using bgeot::ST_NIL;

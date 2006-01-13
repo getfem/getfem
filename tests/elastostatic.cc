@@ -374,7 +374,7 @@ int main(int argc, char *argv[]) {
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
+    if (MPI_IS_MASTER()) p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
 #if GETFEM_PARA_LEVEL > 1
     t_ref=MPI_Wtime();
@@ -391,7 +391,7 @@ int main(int argc, char *argv[]) {
 #endif
     p.compute_error(U);
 
-    if (p.PARAM.int_value("VTK_EXPORT")) {
+    if (p.PARAM.int_value("VTK_EXPORT") && MPI_IS_MASTER()) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);

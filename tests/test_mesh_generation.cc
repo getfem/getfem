@@ -172,6 +172,19 @@ int main(int argc, char **argv) {
 	  dist = new getfem::mesher_union(*dist, *d);
 	}
       } break;
+      case 21: { /* bar with holes */
+	scalar_type H=20;
+	unsigned nb_holes = 4;
+	dist = new getfem::mesher_rectangle(base_node(-2, -1, 0), 
+					    base_node(+2, +1, H));
+	for (unsigned i=0; i < nb_holes; ++i) {
+	  scalar_type z = H/nb_holes/2 + i*(H/nb_holes);
+	  getfem::mesher_signed_distance *d = 
+	    new getfem::mesher_cylinder(base_node(0, -20, z), 
+					base_node(0, 1, 0), 40, .7);
+	  dist = new getfem::mesher_setminus(*dist, *d);
+	}
+      } break;
     }
     getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
     cerr << "You can view the result with\n mayavi -d totoq.vtk -m BandedSurfaceMap\n";

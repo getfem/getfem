@@ -100,7 +100,14 @@ namespace getfem {
     valid_sub_regions.add(n);
   }
 
-    
+  void mesh::intersect_with_mpi_region(mesh_region &rg) {
+    if (rg.id() == mesh_region::all_convexes()) { 
+      rg = get_mpi_region(); 
+    } else if (int(rg.id()) >= 0) { 
+      rg = get_mpi_sub_region(rg.id()); 
+    } else 
+      rg = mesh_region::intersection(rg, get_mpi_region());    
+  }
 #endif
 
 
