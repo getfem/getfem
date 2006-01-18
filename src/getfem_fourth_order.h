@@ -301,7 +301,6 @@ namespace getfem {
       ("MM=data$1(mdim(#1),mdim(#1),#2);"
        "divM=data$2(mdim(#1),#2);"
        "V(#1)+=comp(Base(#1).Normal().Base(#2))(:,i,j).divM(i,j);"
-       "t=comp(Grad(#1).Normal().Normal().Base(#2));"
        "V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,j,k).MM(i,j,k)*(-1);"
        "V(#1)+=comp(Grad(#1).Normal().Normal().Normal().Base(#2))(:,i,i,j,k,l).MM(j,k,l);");
     
