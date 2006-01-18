@@ -383,7 +383,7 @@ namespace getfem {
      *	@param R a vector of size @c Q*mf_data.nb_dof() .
      */
     mdbrick_parameter<VECTOR> &rhs()
-    { R_.reshape(mf_u().get_qdim()); return R_; }
+    { R_.reshape(mf_u().linked_mesh().dim()*mf_u().get_qdim()); return R_; }
 
     /** Constructor which does not define the rhs (i.e. which sets an
      *	homogeneous Dirichlet condition)

@@ -270,7 +270,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
 
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
-  cout << "Number of dof for mf_rhs: " << mf_rhs.nb_dof() << endl;
 
   // Bilaplacian brick.
   getfem::mdbrick_bilaplacian<> BIL(mim, mf_u);
@@ -294,15 +293,15 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   // Defining the Neumann condition right hand side.
   gmm::resize(F, nb_dof_rhs*N);
   getfem::interpolation_function(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
+  gmm::scale(F, -1.0);
 
   // Neumann condition brick.
   getfem::mdbrick_normal_source_term<>
     NEUMANN(MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
-  
+
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs);
-  getfem::interpolation_function(mf_rhs, F, sol_u,
-				 SIMPLE_SUPPORT_BOUNDARY_NUM);
+  getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<>
@@ -310,11 +309,9 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   DIRICHLET.set_constraints_type(dirichlet_version);
   DIRICHLET.rhs().set(mf_rhs, F);
 
-  cout << "toto\n";
-
-
   // Defining the normal derivative Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs*N);
+  gmm::clear(F);
   getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
   
   // Normal derivative Dirichlet condition brick.
@@ -322,9 +319,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     final_model(DIRICHLET, CLAMPED_BOUNDARY_NUM, mf_mult);
   final_model.set_constraints_type(dirichlet_version);
   final_model.rhs().set(mf_rhs, F);
-
-  cout << "toto\n";
-
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
