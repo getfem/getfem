@@ -135,6 +135,30 @@ namespace getfem {
 			typename gmm::linalg_traits<M>::linalg_type());
   }
 
+
+  template <typename T>
+  void take_one_op(void *a, void *b, int *len, MPI_Datatype *) {
+    return *((T*)a);
+  }
+
+  template <typename T>
+  inline MPI_op mpi_take_one_op(T) {
+    static bool isinit = false;
+    static MPI_op op;
+    if (!isinit) {
+      MPI_Op_create(take_one_op<T>, true, &op);
+    }
+    return op;
+  }
+      
+  template <typename VECT> inline void MPI_MERGE_VECTOR(VECT V) {
+    typedef typename gmm::linalg_traits<VECT>::value_type T;
+    std::vector<T> W(gmm::vect_size(V)); gmm::copy(V, W);
+    MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), mpi_type(T()),
+		  mpi_take_one_op<T>, MPI_COMM_WORLD);
+  }
+
+
   // TODO : verify that rhs is a lagrange fem
   /**
      @brief interpolation of a function f on mf_target.
@@ -154,6 +178,7 @@ namespace getfem {
     if (dofs.card() > 0)
       interpolation_rhs_(mf_target, const_cast<VECT &>(V), f, dofs,
 			 f(mf_target.point_of_dof(dofs.first())));
+    MPI_MERGE_VECTOR(V);
   }
 
   /* ********************************************************************* */
