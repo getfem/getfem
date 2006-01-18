@@ -283,6 +283,127 @@ namespace getfem {
   };
 
   /* ******************************************************************** */
+  /*   	Special boundary condition for Kirchhoff-Love model.              */
+  /* ******************************************************************** */
+
+  /*
+     assembly of the special boundary condition for Kirchhoff-Love model.
+     @ingroup asm
+  */
+  template<typename VECT1, typename VECT2>
+  void asm_neumann_KL_term
+  (VECT1 &B, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
+   const VECT2 &M, const VECT2 &divM, const mesh_region &rg) {
+    if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+
+    generic_assembly assem
+      ("MM=data$1(mdim(#1),mdim(#1),#2);"
+       "divM=data$2(mdim(#1),#2);"
+       "V(#1)+=comp(Base(#1).Normal().Base(#2))(:,i,j).divM(i,j);"
+       "t=comp(Grad(#1).Normal().Normal().Base(#2));"
+       "V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,j,k).MM(i,j,k)*(-1);"
+       "V(#1)+=comp(Grad(#1).Normal().Normal().Normal().Base(#2))(:,i,i,j,k,l).MM(j,k,l);");
+    
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mf_data);
+    assem.push_data(M);
+    assem.push_data(divM);
+    assem.push_vec(B);
+    assem.assembly(rg);
+  }
+
+  /*
+     Brick for Special boundary condition for Kirchhoff-Love model
+
+     @see asm_source_term
+     @ingroup bricks
+  */
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_neumann_KL_term : public mdbrick_abstract<MODEL_STATE>  {
+
+    TYPEDEF_MODEL_STATE_TYPES;
+
+    mdbrick_parameter<VECTOR> M_, divM_;
+    VECTOR F_;
+    bool F_uptodate;
+    size_type boundary, num_fem, i1, nbd;
+
+    const mesh_fem &mf_u(void) const { return this->get_mesh_fem(num_fem); }
+
+    void proper_update(void) {
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u().nb_dof();
+      gmm::resize(F_, nbd);
+      gmm::clear(F_);
+      F_uptodate = false;
+    }
+
+  public :
+
+    mdbrick_parameter<VECTOR> &M(void) {
+      M_.reshape(gmm::sqr(mf_u().linked_mesh().dim()));
+      return M_;
+    }
+
+    const mdbrick_parameter<VECTOR> &M(void) const { return M_; }
+
+    mdbrick_parameter<VECTOR> &divM(void) {
+      divM_.reshape(mf_u().linked_mesh().dim());
+      return divM_;
+    }
+
+    const mdbrick_parameter<VECTOR> &divM(void) const { return divM_; }
+
+    /// gives the right hand side of the linear system.
+    const VECTOR &get_F(void) { 
+      this->context_check();
+      if (!F_uptodate || this->parameters_is_any_modified()) {
+	F_uptodate = true;
+	DAL_TRACE2("Assembling a source term");
+	asm_neumann_KL_term
+	  (F_, *(this->mesh_ims[0]), mf_u(), M_.mf(), M_.get(), divM_.get(),
+	   mf_u().linked_mesh().get_mpi_sub_region(boundary));
+	this->parameters_set_uptodate();
+      }
+      return F_;
+    }
+
+    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
+					   size_type) { }
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
+				   size_type) {
+      gmm::add(gmm::scaled(get_F(), value_type(-1)),
+	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
+    }
+
+    mdbrick_neumann_KL_term
+    (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
+     const VECTOR &M__, const VECTOR &divM__, size_type bound,
+     size_type num_fem_=0)
+      : M_("source_term",mf_data_, this),
+	divM_("div source_term",mf_data_, this),
+	boundary(bound), num_fem(num_fem_) {
+      this->add_sub_brick(problem);
+      if (bound != size_type(-1))
+	this->add_proper_boundary_info(num_fem, bound,
+				       MDBRICK_NORMAL_DERIVATIVE_NEUMANN);
+      this->force_update();
+      size_type Nb = gmm::vect_size(M__);
+      if (Nb) {
+	M().set(mf_data_, M__);
+	divM().set(mf_data_, divM__);
+      }
+      else {
+	M_.reshape(gmm::sqr(mf_u().linked_mesh().dim()));
+	divM_.reshape(mf_u().linked_mesh().dim());
+      }
+    }
+  };
+
+
+  /* ******************************************************************** */
   /*		Normale derivative Dirichlet condition bricks.            */
   /* ******************************************************************** */
 

@@ -113,6 +113,9 @@ base_matrix sol_mtensor(const base_node &x) {
   return m;
 }
 
+base_small_vector sol_bf(const base_node &x)
+{ return -D * neumann_val(x); }
+
 /**************************************************************************/
 /*  Structure for the bilaplacian problem.                                */
 /**************************************************************************/
@@ -298,13 +301,25 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
 
   // Defining the Neumann condition right hand side.
+  plain_vector H(nb_dof_rhs*N*N);
   gmm::resize(F, nb_dof_rhs*N);
-  getfem::interpolation_function(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
-  gmm::scale(F, -1.0);
+  if (KL) {
+    getfem::interpolation_function(mf_rhs, F, sol_bf, FORCE_BOUNDARY_NUM);
+    getfem::interpolation_function(mf_rhs, H, sol_mtensor, FORCE_BOUNDARY_NUM);
+  }
+  else {
+    getfem::interpolation_function(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
+    gmm::scale(F, -1.0);
+  }
 
   // Neumann condition brick.
-  getfem::mdbrick_normal_source_term<>
-    NEUMANN(MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
+  getfem::mdbrick_abstract<> *NEUMANN;
+  if (KL)
+    NEUMANN = new getfem::mdbrick_neumann_KL_term<>
+      (MOMENTUM, mf_rhs, H, F, FORCE_BOUNDARY_NUM);
+  else
+    NEUMANN = new getfem::mdbrick_normal_source_term<>
+      (MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
 
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs);
@@ -312,7 +327,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<>
-    DIRICHLET(NEUMANN, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
+    DIRICHLET(*NEUMANN, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
   DIRICHLET.set_constraints_type(dirichlet_version);
   DIRICHLET.rhs().set(mf_rhs, F);
 
@@ -336,6 +351,8 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   // Solution extraction
   gmm::copy(BIL.get_solution(MS), U);
   return (iter.converged());
+
+  delete NEUMANN;
 }
   
 /**************************************************************************/
