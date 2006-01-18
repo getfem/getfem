@@ -292,9 +292,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  getfem::interpolation_rhs(mf_rhs, F, sol_f);
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
@@ -321,12 +319,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
-  getfem::interpolation_rhs(mf_rhs, F, sol_u);
-
- //  // Defining the Dirichlet condition value.
-//   for (size_type i = 0; i < nb_dof_rhs; ++i)
-//     gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
-// 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  getfem::interpolation_rhs(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
