@@ -16,7 +16,7 @@ QUAD = 0;
 FT = 3.0;               % parameter for the exact solution.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_PRESSURE=0;       % Mixed version or not.
-NX = 4;                 % space step.
+NX = 120;                 % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 %MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
@@ -70,7 +70,7 @@ end
 if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
   FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
-  if 1   % test with hermite element
+  if 0   % test with hermite element
     FEM_TYPE = 'FEM_HERMITE(3)'; DATA_FEM_TYPE = 'FEM_PK(3,3)';
     DIRICHLET_FEM_TYPE = 'FEM_PK(3,3)';
   end

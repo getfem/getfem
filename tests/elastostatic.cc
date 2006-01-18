@@ -361,7 +361,8 @@ int main(int argc, char *argv[]) {
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    if (getfem::MPI_IS_MASTER()) p.mesh.write_to_file(p.datafilename + ".mesh");
+    if (getfem::MPI_IS_MASTER())
+      p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
 #if GETFEM_PARA_LEVEL > 1
     t_ref=MPI_Wtime();

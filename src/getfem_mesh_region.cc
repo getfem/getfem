@@ -160,20 +160,27 @@ namespace getfem {
 
   mesh_region mesh_region::intersection(const mesh_region &a, 
 					const mesh_region &b) {
-    map_t::const_iterator 
-      ita = a.rp().m.begin(), enda = a.rp().m.end(),
-      itb = b.rp().m.begin(), endb = b.rp().m.end();
+    
     mesh_region r;
-    while (ita != enda && itb != endb) {
-      if (ita->first < itb->first) ++ita;
-      else if (ita->first > itb->first) ++itb;
-      else {
-	face_bitset maska = ita->second, maskb = itb->second, bs;
-	if (maska[0] && !maskb[0]) bs = maskb;
-	else if (maskb[0] && !maska[0]) bs = maska;
-	else bs = maska & maskb;
-	if (bs.any()) r.wp().m.insert(r.wp().m.end(), std::make_pair(ita->first,bs));
-	++ita; ++itb;
+    if (a.id() == all_convexes().id()) 
+      r.wp() = b.rp();
+    else if (b.id() == all_convexes().id())
+      r.wp() = a.rp();
+    else {
+      map_t::const_iterator 
+	ita = a.rp().m.begin(), enda = a.rp().m.end(),
+	itb = b.rp().m.begin(), endb = b.rp().m.end();
+      while (ita != enda && itb != endb) {
+	if (ita->first < itb->first) ++ita;
+	else if (ita->first > itb->first) ++itb;
+	else {
+	  face_bitset maska = ita->second, maskb = itb->second, bs;
+	  if (maska[0] && !maskb[0]) bs = maskb;
+	  else if (maskb[0] && !maska[0]) bs = maska;
+	  else bs = maska & maskb;
+	  if (bs.any()) r.wp().m.insert(r.wp().m.end(), std::make_pair(ita->first,bs));
+	  ++ita; ++itb;
+	}
       }
     }
     return r;
@@ -217,11 +224,14 @@ namespace getfem {
   }
 
   std::ostream & operator <<(std::ostream &os, const mesh_region &w) {
-    for (mr_visitor cv(w); !cv.finished(); cv.next()) {
-      os << cv.cv();
-      if (cv.is_face()) os << "/" << cv.f();
-      os << " ";
-    }
+    if (w.id() == mesh_region::all_convexes().id())
+      os << " ALL_CONVEXES";
+    else 
+      for (mr_visitor cv(w); !cv.finished(); cv.next()) {
+	os << cv.cv();
+	if (cv.is_face()) os << "/" << cv.f();
+	os << " ";
+      }
     return os;
   }
 }

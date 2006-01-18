@@ -405,16 +405,16 @@ dnl -----------------------------END OF LAPACK TEST--------------------------
 dnl ------------------------------MPI TEST--------------------------------
 if test "$MPI_CFLAGS" -o "$MPI_LIBS"; then
   echo "You are using MPI! Trying to build a parallelised version of getfem (require METIS)"
-  AC_DEFINE_UNQUOTED([PARA_LEVEL], 2, [getfem parallelisation flag])
-  LIBS="$LIBS $MPI_LIBS"
-  CXXFLAGS="$CXXFLAGS $MPI_CFLAGS -DGMM_USES_MPI"
-  AC_SUBST(MPI_LIBS)
-  AC_SUBST(MPI_CLAGS)
+  dnl AC_DEFINE_UNQUOTED([PARA_LEVEL], 2, [getfem parallelisation flag])
+  LIBS="$LIBS $MPI_LIBS -lmetis"
+  CXXFLAGS="$CXXFLAGS $MPI_CFLAGS -DGETFEM_PARA_LEVEL=2"
   AC_CHECK_LIB(metis, METIS_PartMeshNodal, [metis_ok="yes"], [metis_ok="no"])
   if test "x$metis_ok" = "xno"; then
     AC_MSG_ERROR([Parallel getfem requires the METIS ( http://www-users.cs.umn.edu/~karypis/metis/metis/ ) library
  ----------> Please add the path to libmetis.a to the MPI_LIBS variable.])
   fi
+  AC_SUBST(MPI_LIBS)
+  AC_SUBST(MPI_CLAGS)
 fi
 
 

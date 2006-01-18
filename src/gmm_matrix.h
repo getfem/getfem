@@ -492,7 +492,7 @@ namespace gmm
   struct csc_matrix {
     typedef unsigned int IND_TYPE;
 
-    T *pr;         // values.
+    T *pr;        // values.
     IND_TYPE *ir; // row indices.
     IND_TYPE *jc; // column repartition on pr and ir.
     size_type nc, nr;
@@ -947,25 +947,11 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-//#if GETFEM_PARA_LEVEL > 0
-//#include <mpi.h>
-//#endif
-
 #ifdef GMM_USES_MPI
 #include <mpi.h>
  
 namespace gmm { 
   
-  template <typename MAT> struct mpi_distributed_matrix {
-    MAT M;
-
-    mpi_distributed_matrix(size_type n, size_type m) : M(n, m) {}
-    mpi_distributed_matrix() {}
-
-    const MAT &local_matrix(void) const { return M; }
-    MAT &local_matrix(void) { return M; }
-  };
-
   template <typename T> MPI_Datatype mpi_type(T)
   { DAL_THROW(failure_error, "Sorry unsupported type"); }
   inline MPI_Datatype mpi_type(double) { return MPI_DOUBLE; }
@@ -979,6 +965,17 @@ namespace gmm {
   inline MPI_Datatype mpi_type(size_t)
   { return (sizeof(int) == sizeof(size_t)) ? MPI_INT : MPI_LONG; }
 
+
+
+  template <typename MAT> struct mpi_distributed_matrix {
+    MAT M;
+
+    mpi_distributed_matrix(size_type n, size_type m) : M(n, m) {}
+    mpi_distributed_matrix() {}
+
+    const MAT &local_matrix(void) const { return M; }
+    MAT &local_matrix(void) { return M; }
+  };
   
   template <typename MAT> inline MAT &eff_matrix(MAT &m) { return m; }
   template <typename MAT> inline

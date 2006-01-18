@@ -64,7 +64,6 @@
 #include <gmm_precond_ilut.h>
 #include <gmm_precond_ilutp.h>
 #include <gmm_superlu_interface.h>
-#include <gmm_MUMPS_interface.h>
 #include <gmm_dense_qr.h>
 #include <gmm_matrix.h>
 #include <gmm_solver_Schwarz_additive.h>
@@ -261,18 +260,6 @@ namespace getfem {
 			 MDBRICK_FOURIER_ROBIN,
 			 MDBRICK_NAVIERSTOKESNONREF1 };
 
-  template <typename MAT> struct T_MAT_TYPE {
-    typedef MAT T_MATRIX;
-  };
-
-#if GETFEM_PARA_LEVEL > 1
-  // encore utile ?
-  template <typename MAT>
-  struct T_MAT_TYPE<gmm::mpi_distributed_matrix<MAT> > {
-    typedef MAT T_MATRIX;
-  };
-#endif
-
   class mdbrick_abstract_parameter;
 
 #define TYPEDEF_MODEL_STATE_TYPES					\
@@ -350,7 +337,9 @@ namespace getfem {
     size_type MS_i0;
 
     /** Brick parameters */
+  public:
     typedef std::map<std::string, mdbrick_abstract_parameter *> PARAM_MAP;
+  protected:
     PARAM_MAP parameters;
     friend class mdbrick_abstract_parameter;
     

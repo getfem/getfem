@@ -567,7 +567,7 @@ struct Chrono {
       if (noisy) {
 	getfem::stored_mesh_slice sl;
 	sl.build(msh, getfem::slicer_none(), 1);
-	char s[512]; sprintf(s, "totobefore%d.dx", cv);
+	char s[512]; sprintf(s, "totobefore%ld.dx", cv);
 	getfem::dx_export exp(s);
 	exp.exporting(sl);
 	exp.exporting_mesh_edges();
@@ -624,7 +624,7 @@ struct Chrono {
       if (noisy) {
 	getfem::stored_mesh_slice sl;
 	sl.build(msh, getfem::slicer_none(), 12);
-	char s[512]; sprintf(s, "toto%d.dx", cv);
+	char s[512]; sprintf(s, "toto%ld.dx", cv);
 	getfem::dx_export exp(s);
 	exp.exporting(sl);
 	exp.exporting_mesh_edges();

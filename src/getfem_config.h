@@ -147,6 +147,8 @@
 #ifndef GETFEM_CONFIG_H__
 #define GETFEM_CONFIG_H__
 
+#include <bgeot_config.h>
+
 // Parallelisation options
 
 // GETFEM_PARA_LEVEL is the parallelisation level of Getfem
@@ -180,11 +182,14 @@
 // GETFEM_PARA_SOLVER is the parallelisation solver used
 //    MUMPS       : use direct parallel solver MUMPS
 //    SCHWARZADD  : use a Schwarz additive method
+#define MUMPS_PARA_SOLVER 1
+#define SCHWARZADD_PARA_SOLVER 2
+
 # ifndef GETFEM_PARA_SOLVER
-#   define GETFEM_PARA_SOLVER MUMPS
+#   define GETFEM_PARA_SOLVER MUMPS_PARA_SOLVER
 # endif
 
-# if GETFEM_PARA_SOLVER == MUMPS
+# if GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
 #  ifndef GMM_USES_MUMPS
 #    define GMM_USES_MUMPS
 #  endif
@@ -209,11 +214,11 @@ namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
   template <typename T> inline T MPI_SUM_SCALAR(T a)
-  { T b; MPI_Allreduce(&a,&b,1,mpi_type(a),MPI_SUM,MPI_COMM_WORLD); return b; }
+  { T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a),MPI_SUM,MPI_COMM_WORLD); return b; }
   template <typename VECT> inline void MPI_SUM_VECTOR(VECT V) {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V)); gmm::copy(V, W);
-    MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), mpi_type(T()),
+    MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), gmm::mpi_type(T()),
 		  MPI_SUM, MPI_COMM_WORLD);
   }
   inline bool MPI_IS_MASTER(void)

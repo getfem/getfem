@@ -58,7 +58,6 @@ namespace getfem {
 #if GETFEM_PARA_LEVEL > 1
 
     void mesh::compute_mpi_region(void) const {
-
       int size, rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -75,7 +74,7 @@ namespace getfem {
 	  xadj[j] = k;
 	  bgeot::mesh_structure::ind_set s(neighbours_of_convex(ic));
 	  for (bgeot::mesh_structure::ind_set::iterator it = s.begin();
-	       it != s.end(); ++it) { xadjncy.push_back(*it); ++k; }  
+	       it != s.end(); ++it) { adjncy.push_back(*it); ++k; }  
 	}
 	xadj[j] = k;
 
@@ -85,7 +84,7 @@ namespace getfem {
 			    &numflag, &size, options, &edgecut, &(npart[0]));
 
 	for (size_type i = 0; i < size_type(ne); ++i)
-	  if (nparts[i] == rank) mpi_region.add(numelt[i]);
+	  if (npart[i] == rank) mpi_region.add(numelt[i]);
       }
       modified = false;
       valid_sub_regions.clear();
@@ -101,7 +100,7 @@ namespace getfem {
   }
 
   void mesh::intersect_with_mpi_region(mesh_region &rg) const {
-    if (rg.id() == mesh_region::all_convexes()) { 
+    if (rg.id() == mesh_region::all_convexes().id()) { 
       rg = get_mpi_region(); 
     } else if (int(rg.id()) >= 0) { 
       rg = get_mpi_sub_region(rg.id()); 

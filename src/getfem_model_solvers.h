@@ -37,6 +37,7 @@
 #define GETFEM_MODEL_SOLVERS_H__
 
 #include <getfem_modeling.h>
+#include <gmm_MUMPS_interface.h>
 
 namespace getfem {
 
@@ -107,7 +108,7 @@ namespace getfem {
     cout << "comput reduced system time = " << MPI_Wtime() - t_init << endl;
 #endif
 
-#if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZ_ADD
+#if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER
     /* use a domain partition ? */
     double t_ref = MPI_Wtime();
     std::set<const mesh *> mesh_set;
@@ -260,10 +261,10 @@ namespace getfem {
       }
       size_type dim = problem.dim();
 
-#if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZ_ADD
+#if (GETFEM_PARA_LEVEL > 1) && (GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER)
       double t_ref,t_final;
       t_ref=MPI_Wtime();
-      cout<<"begin Seq AS"<<endl; // à remmetre en fonction : utilisatio
+      cout<<"begin Seq AS"<<endl; // à remmetre en fonction : utilisation
       // de mpi_distributed_matrix a revoir : mettre une référence.
       additive_schwarz(gmm::mpi_distributed_matrix<..>(MS.reduced_tangent_matrix()), dr,
 		       gmm::scaled(MS.reduced_residual(), value_type(-1)),
@@ -271,13 +272,15 @@ namespace getfem {
 		       gmm::using_cg());
       t_final=MPI_Wtime();
       cout<<"temps Seq AS "<< t_final-t_ref<<endl;
-#elif GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS
+#elif GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
       MUMPS_solve(MS.reduced_tangent_matrix(), dr,
 		  gmm::scaled(MS.reduced_residual(), value_type(-1)));
-#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS
+#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+      double tt_ref=MPI_Wtime();
       MUMPS_distributed_matrix_solve(MS.reduced_tangent_matrix(), dr,
 				     gmm::scaled(MS.reduced_residual(),
 						 value_type(-1)));
+      cout<<"temps MUMPS "<< MPI_Wtime() - tt_ref<<endl;
 #else
       // if (0) {
       if (
