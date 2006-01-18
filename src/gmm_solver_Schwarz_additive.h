@@ -240,7 +240,7 @@ namespace gmm {
     static double tmult_tot = 0.0;
     double t_ref = MPI_Wtime();
 #endif
-    cout << "tmult AS begin " << endl;
+    // cout << "tmult AS begin " << endl;
     mult(*(M.A), p, q);
 #ifdef GMM_USES_MPI
     tmult_tot += MPI_Wtime()-t_ref;
@@ -562,6 +562,7 @@ namespace gmm {
     mtype act_res=gmm::vect_norm2(rhs), act_res_new(0), precond_res = act_res;
     mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(2);
+    mtype alpha_max_ratio_glob(1.2), alpha_min_glob=mtype(1)/mtype(1024);
     
     while(!iter.finished(std::min(act_res, precond_res))) {
       for (int SOR_step = 0;  SOR_step >= 0; --SOR_step) {
@@ -590,21 +591,22 @@ namespace gmm {
 	      AS_local_solve(local_solver(), Mloc, di, fi, PP, iter3);
 	      
 	      for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
-		gmm::add(xi, gmm::scaled(di, alpha), xii);
-		gmm::mult(Bi, xii, u, x);
+		gmm::add(xi, gmm::scaled(di, -alpha), xii);
+		gmm::mult(Bi, gmm::scaled(xii, -1.0), u, x);
 		NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
 		if ((r_t = gmm::vect_norm2(fi)) <= r * alpha_max_ratio) break;
 	      }
 	      if (iternc.get_noisy()) cout << "(step=" << alpha << ")\t";
 	      ++iternc; r = r_t; gmm::copy(xii, xi); 
 	    }
-	    if (SOR_step) gmm::mult(Bi, gmm::scaled(xii, 1.7), u, u);
-	    gmm::mult(Bi, xii, rhs, rhs);
+	    if (SOR_step) gmm::mult(Bi, gmm::scaled(xii, -1.0), u, u);
+	    gmm::mult(Bi, gmm::scaled(xii, -1.0), rhs, rhs);
 	  }
 	}
 	precond_res = gmm::vect_norm2(rhs);
 	if (SOR_step) cout << "SOR step residual = " << precond_res << endl;
 	if (precond_res < residual) break;
+	cout << "Precond residual = " << precond_res << endl;
       }
 
       iter2.init();
@@ -614,11 +616,13 @@ namespace gmm {
 	ASM(M, NS.get_vB(), iter4, P, iter.get_resmax());
       AS_global_solve(global_solver(), ASM, d, rhs, iter2);
 
-      for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
+      //      gmm::add(gmm::scaled(rhs, 0.1), u); ++iter;
+
+      for (alpha = mtype(1); alpha >= alpha_min_glob; alpha *= alpha_mult) {
 	gmm::add(gmm::scaled(d, alpha), u, x);
 	NS.compute_F(rhs, x);
 	act_res_new = gmm::vect_norm2(rhs);
-	if (act_res_new <= act_res * alpha_max_ratio) break;
+	if (act_res_new <= act_res * alpha_max_ratio_glob) break;
       }
       if (iter.get_noisy() > 1) cout << endl;
       act_res = act_res_new; 

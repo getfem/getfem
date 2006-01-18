@@ -144,7 +144,8 @@ void friction_problem::init(void) {
   method = PARAM.int_value("METHOD", "solve method");
   subdomsize = PARAM.real_value("SUBDOMSIZE");
   overlap = PARAM.real_value("OVERLAP");
-  population = PARAM.int_value("POPULATION", "genetic population");
+  if (method == 1) 
+    population = PARAM.int_value("POPULATION", "genetic population");
   contact_condition = PARAM.int_value("CONTACT_CONDITION",
 				      "type of contact condition");
   noisy = PARAM.int_value("NOISY", "verbosity of iterative methods");

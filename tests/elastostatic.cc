@@ -38,7 +38,7 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_model_solvers.h>
 #include <gmm.h>
-#include <getfem_superlu.h>
+#include <getfem_interpolation.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -321,9 +321,12 @@ bool elastostatic_problem::solve(plain_vector &U) {
     NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  getfem::interpolation_rhs(mf_rhs, F, sol_u);
+
+ //  // Defining the Dirichlet condition value.
+//   for (size_type i = 0; i < nb_dof_rhs; ++i)
+//     gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
+// 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
@@ -374,7 +377,7 @@ int main(int argc, char *argv[]) {
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    if (MPI_IS_MASTER()) p.mesh.write_to_file(p.datafilename + ".mesh");
+    if (getfem::MPI_IS_MASTER()) p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
 #if GETFEM_PARA_LEVEL > 1
     t_ref=MPI_Wtime();
@@ -391,7 +394,7 @@ int main(int argc, char *argv[]) {
 #endif
     p.compute_error(U);
 
-    if (p.PARAM.int_value("VTK_EXPORT") && MPI_IS_MASTER()) {
+    if (p.PARAM.int_value("VTK_EXPORT") && getfem::MPI_IS_MASTER()) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);

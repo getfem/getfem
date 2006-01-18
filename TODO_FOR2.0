@@ -34,3 +34,9 @@ Changement à prendre en considérations pour la 2.0 :
 
 12 - Voir la logique de l'utilisation des type size_type, scalar_type,
      opt_long_scalar_type ...
+
+13 - Implémenter l'élément Hdiv ?
+
+14 - Implémenter l'élément composite C^1 ?
+
+15 - Laisser tomber les méthodes d'intégration exactes ?

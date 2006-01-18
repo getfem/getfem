@@ -78,7 +78,6 @@ namespace getfem
       if (have_pfp()) {
 	t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
       } else {
-	base_tensor u;
 	pf()->grad_base_value(xref(), u);
 	if (u.size()) /* only if the FEM can provide grad_base_value */
 	  t.mat_transp_reduction(u, B(), 2);

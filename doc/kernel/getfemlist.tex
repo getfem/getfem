@@ -50,7 +50,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section*{Introduction}
-This documentation describes the different finite element methods and approximative integration methods available in {\sc Getfem++}.\\[5cm]
+This documentation describes the different finite element methods and cubature formulas available in {\sc Getfem++}.\\[5cm]
 \input{../license.tex}
 
 \newpage
@@ -83,9 +83,8 @@ and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The 
 $$ \tilde{\varphi}^i(x) = \hat{\varphi}^i(\hat{x}) = \hat{\varphi}^i(\tau^{-1}(x)), $$
 If the element is said to be equivalent throught the geometric transformation $\tau$ (or $\tau$-equivalent) then base functions on the real element are just defined by
 $$\varphi^i(x) = \tilde{\varphi}^i(x).$$
-This is generally the case for Lagrange element, but not for Hermite elements (when some dof represent the gradient of the unkown). When the element is not equivalent throught the geometric transformation then {\sc Getfem++} allows to define a matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
+This is generally the case for Lagrange element, but not for Hermite elements (when some dof represent the gradient of the unkown). When the element is not equivalent throught the geometric transformation then {\sc Getfem++} allows to define a square matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
 $$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} \tilde{M}_{ij} \tilde{\varphi}^j(x). $$
-Most of the time, the matrix $\tilde{M}$ is a square matrix, but for special elements a non-square matrix can be defined.
 We denote by
 $$ [\hat{\varphi}(\hat{x})] = \vecfour{\hat{\varphi}^0(\hat{x})}{\hat{\varphi}^1(\hat{x})}{...}{\hat{\varphi}^{n_d-1}(\hat{x})}, $$
 the $n_d \times Q$ matrix, such that when a function is defined by
@@ -173,7 +172,7 @@ $$ 0 \leq i_0, i_1, ... i_P \leq K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.$$
 Then, the coordinate of a node can be computed as
 $$ a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0, $$
 where $S_0, S_1, ... S_N$ are the vertexes of the simplex (for $K = 0$ the particular choice $a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n$ has been chosen).
-Then each base function, corresponding of each node $a_{i_0, i_1, ... i_P}$ is defined as
+Then each base function, corresponding of each node $a_{i_0, i_1, ... i_P}$ is defined by
 $$ \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
 where $\lambda_n$ are the barycentric coordinates, i.e. the polynomials of degree 1 whose value is $1$ on the vertex $S_n$ and whose value is $0$ on other vertices. On the reference element, one has
 $$ \lambda_n = x_n, \ \ 0 \leq n < P, $$
@@ -1078,7 +1077,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
 
 There is also the \texttt{IM\_GAUSS\_PARALLELEPIPED(n,k)} which is a direct product of 1D gauss integrations.\\
 
-\textbf{Important note:} do not forget that \texttt{IM\_QUAD(k)} is exact for polynomials up to degree $k$, and that a $Q_k$ polynomial has a degree of $2*k$. For example, \texttt{IM\_QUAD(7)} cannot integrate the product of two $Q_{2}$ polynomials. On the other hand, \texttt{IM\_GAUSS\_PARALLELEPIPED(2,4)} can integrate exactly that product\ldots
+\textbf{Important note:} do not forget that \texttt{IM\_QUAD(k)} is exact for polynomials up to degree $k$, and that a $Q_k$ polynomial has a degree of $2*k$. For example, \texttt{IM\_QUAD(7)} cannot integrate exactly the product of two $Q_{2}$ polynomials. On the other hand, \texttt{IM\_GAUSS\_PARALLELEPIPED(2,4)} can integrate exactly that product\ldots
 
 \subsection{Gauss Integration methods on dimension 3}
 
@@ -1215,7 +1214,7 @@ Others methods are:
   \end{tabular}
 \end{center}
 \subsection{Direct product of integration methods}
-use {\tt "IM\_PRODUCT(IM1, IM2)"} ... for quadrilateral or prisms ... Consider using \texttt{IM\_GAUSS\_PARALLELEPIPED(2,k)}, which is an alias for \texttt{IM\_PRODUCT(IM\_GAUSS1D(2,k),IM\_GAUSS1D(2,k))} instead of the \texttt{IM\_QUAD} integrations.
+You can use {\tt "IM\_PRODUCT(IM1, IM2)"} to produce integration methods on quadrilateral or prisms. It gives the direct product of two integration mathods. For instance \texttt{IM\_GAUSS\_PARALLELEPIPED(2,k)} is an alias for \texttt{IM\_PRODUCT(IM\_GAUSS1D(2,k),IM\_GAUSS1D(2,k))} and ca be use instead of the \texttt{IM\_QUAD} integrations.
 
 \subsection{Composite integration methods}
 

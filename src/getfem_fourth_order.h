@@ -39,6 +39,10 @@
 
 namespace getfem {
   
+  /* ******************************************************************** */
+  /*		Bilaplacian brick.                                        */
+  /* ******************************************************************** */
+
   /**
      assembly of @f$\int_\Omega \Delta u \Delta v@f$.
      @ingroup asm
@@ -57,15 +61,30 @@ namespace getfem {
     assem.push_data(A);
     assem.push_mat(const_cast<MAT &>(M));
     assem.assembly(rg);
-  }  
+  }
 
-  /* ******************************************************************** */
-  /*		Bilaplacian brick.                                        */
-  /* ******************************************************************** */
+  template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_bilaplacian_KL
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mf_data, const VECT &D, const VECT &nu,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem
+      ("d=data$1(#2); n=data$2(#2);"
+       "t=comp(Hess(#1).Hess(#1).Base(#2).Base(#2));"
+       "M(#1,#1)+=sym(t(:,i,j,:,i,j,k,l).d(k)-t(:,i,j,:,i,j,k,l).d(k).n(l)"
+       "+t(:,i,i,:,j,j,k,l).d(k).n(l))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mf_data);
+    assem.push_data(D);
+    assem.push_data(nu);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
+  }
 
 # define MDBRICK_BILAPLACIAN 783465
   
-  /** Bilaplacian brick @f$ \Delta \Delta u @f$.
+  /** Bilaplacian brick @f$ D \Delta \Delta u @f$.
 
   @see asm_stiffness_matrix_for_bilaplacian
   @ingroup bricks 
@@ -76,18 +95,37 @@ namespace getfem {
     
     TYPEDEF_MODEL_STATE_TYPES;
 
-    mdbrick_parameter<VECTOR> coeff_;  /* coeff_ a scalar field */
+    bool KL;    /* Pure bilaplacian or Kirchhoff-Love plate model.        */
+    mdbrick_parameter<VECTOR> D_;  /* D_ a scalar field (flexion modulus). */
+    mdbrick_parameter<VECTOR> nu_;  /* nu_ a scalar field (Poisson ratio). */
 
     void proper_update_K(void) {
-      asm_stiffness_matrix_for_bilaplacian
-	(this->K, this->mim, this->mf_u, coeff().mf(),  coeff().get(),
-	 this->mf_u.linked_mesh().get_mpi_region());
+      if (!KL) {
+	DAL_TRACE2("Assembling bilaplacian operator");
+	asm_stiffness_matrix_for_bilaplacian
+	  (this->K, this->mim, this->mf_u, D().mf(),  D().get(),
+	   this->mf_u.linked_mesh().get_mpi_region());
+      }
+      else {
+	if (&(D().mf()) != &(nu().mf()))
+	  DAL_THROW(failure_error, "mesh fems for the two coefficients must "
+		    "be the same");
+	DAL_TRACE2("Assembling bilaplacian for a Kirchhoff-Love plate");
+	asm_stiffness_matrix_for_bilaplacian_KL
+	  (this->K, this->mim, this->mf_u, D().mf(),  D().get(), nu().get(),
+	   this->mf_u.linked_mesh().get_mpi_region());
+      }
     }
   public :
 
-    /** accessor to the coefficient k */
-    mdbrick_parameter<VECTOR> &coeff() { return coeff_; }
-    const mdbrick_parameter<VECTOR> &coeff() const { return  coeff_; }
+    /** accessor to the coefficient D */
+    mdbrick_parameter<VECTOR> &D() { return D_; }
+    const mdbrick_parameter<VECTOR> &D() const { return D_; }
+    /** accessor to the coefficient nu */
+    mdbrick_parameter<VECTOR> &nu() { return nu_; }
+    const mdbrick_parameter<VECTOR> &nu() const { return nu_; }
+
+    void set_to_KL(void) { KL = true; }
 
     /** Constructor, the default coeff is a scalar equal to one
 	(i.e. it gives the Laplace operator).
@@ -98,11 +136,11 @@ namespace getfem {
 	@param mf_u the mesh_fem for the unknown u.
 	@param k the scalar value of the coefficient.
     */
-    mdbrick_bilaplacian(const mesh_im &mim_,
-			const mesh_fem &mf_u_, value_type k = 1.)
+    mdbrick_bilaplacian(const mesh_im &mim_, const mesh_fem &mf_u_)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
 						 MDBRICK_BILAPLACIAN),
-	coeff_("coeff", mf_u_.linked_mesh(), this) { coeff_.set(k); }
+	KL(false), D_("D", mf_u_.linked_mesh(), this),
+	nu_("nu", mf_u_.linked_mesh(), this) { }
   };
 
 

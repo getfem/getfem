@@ -80,7 +80,84 @@ namespace getfem {
 
   /* ********************************************************************* */
   /*								   	   */
-  /*	II. Interpolation.                                  		   */
+  /*	II. Interpolation of functions.                     		   */
+  /*									   */
+  /* ********************************************************************* */
+
+
+  template <typename VECT, typename F, typename M>
+  inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
+				  const F &f, const dal::bit_vector &dofs,
+				  const M &, gmm::abstract_null_type) {
+    size_type Q = mf.get_qdim();
+    if (gmm::vect_size(V) != mf.nb_dof() || Q != 1)
+      DAL_THROW(failure_error, "Dof vector has not the right size");
+    for (dal::bv_visitor i(dofs); !i.finished(); ++i)
+      V[i] = f(mf.point_of_dof(i));
+  }
+
+  template <typename VECT, typename F, typename M>
+  inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
+				  F &f, const dal::bit_vector &dofs,
+				  const M &v, gmm::abstract_vector) {
+    size_type N = gmm::vect_size(v),  Q = mf.get_qdim();
+    if (gmm::vect_size(V) != mf.nb_dof()*N/Q)
+      DAL_THROW(failure_error, "Dof vector has not the right size");
+    for (dal::bv_visitor i(dofs); !i.finished(); ++i)
+      if (i % Q == 0)
+	gmm::copy(f(mf.point_of_dof(i)),
+		  gmm::sub_vector(V, gmm::sub_interval(i*N/Q, N)));
+  }
+
+  template <typename VECT, typename F, typename M>
+  inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
+				  F &f, const dal::bit_vector &dofs,
+				  const M &mm, gmm::abstract_matrix) {
+    size_type Nr = gmm::mat_nrows(mm), Nc = gmm::mat_ncols(mm), N = Nr*Nc;
+    size_type Q = mf.get_qdim();
+    base_matrix m(Nr, Nc);
+    if (gmm::vect_size(V) != mf.nb_dof()*N/Q)
+      DAL_THROW(failure_error, "Dof vector has not the right size");
+    for (dal::bv_visitor i(dofs); !i.finished(); ++i)
+      if (i % Q == 0) {
+	gmm::copy(f(mf.point_of_dof(i)), m);
+	for (size_type j = 0; j < Nc; ++j)
+	  gmm::copy(gmm::mat_col(m, j),
+		    gmm::sub_vector(V, gmm::sub_interval(i*N/Q+j*Nr, Nr)));
+      }
+  }
+
+  template <typename VECT, typename F, typename M>
+  inline void interpolation_rhs_(const mesh_fem &mf, VECT &V,
+				 F &f, const dal::bit_vector &dofs,
+				 const M &m) {
+    interpolation_rhs__(mf, V, f, dofs, m,
+			typename gmm::linalg_traits<M>::linalg_type());
+  }
+
+  // TODO : verify that rhs is a lagrange fem
+  /**
+     @brief interpolation of a function f on mf_target.
+     - mf_target must be of lagrange type.
+     - mf_target's qdim should be equal to the size of the return value of f,
+       or equal to 1
+     - V should have the right size
+     CAUTION: with the parallized version (GETFEM_PARA_LEVEL >= 2) the
+     resulting vector V is distributed.
+  */
+  template <typename VECT, typename F>
+  void interpolation_rhs(mesh_fem &mf_target, const VECT &V, F &f,
+			 mesh_region rg=mesh_region::all_convexes()) {
+    mf_target.linked_mesh().intersect_with_mpi_region(rg);
+    dal::bit_vector dofs = mf_target.dof_on_set(rg);
+    if (dofs.card() > 0)
+      interpolation_rhs_(mf_target, const_cast<VECT &>(V), f, dofs,
+			 f(mf_target.point_of_dof(dofs.first())));
+  }
+
+  /* ********************************************************************* */
+  /*								   	   */
+  /*	III. Interpolation between two meshes.                		   */
   /*									   */
   /* ********************************************************************* */
 
@@ -179,7 +256,7 @@ namespace getfem {
 	DAL_THROW(to_be_done_error,
 		  "vector FEM interpolation still to be done ... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
-      fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv);
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
       const mesh_fem::ind_dof_ct &idct
 	= mf_source.ind_dof_of_element(cv);
@@ -193,7 +270,8 @@ namespace getfem {
 	if (version == 0) {
           for (size_type qq=0; qq < qqdim; ++qq) {
             pf_s->interpolation(ctx, coeff[qq], val, qdim);
-            for (size_type k=0; k < qdim; ++k) V[(dof_t + k)*qqdim+qq] = val[k];
+            for (size_type k=0; k < qdim; ++k)
+	      V[(dof_t + k)*qqdim+qq] = val[k];
           }
 	}
 	else {
@@ -314,7 +392,7 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
 		     const VECTU &U, VECTV &V, bool extrapolation = false) {
     base_matrix M;
-    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0 || gmm::vect_size(V) == 0)
+    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0 || gmm::vect_size(V)==0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
     interpolation(mf_source, mti, U, V, M, 0, extrapolation);
   }

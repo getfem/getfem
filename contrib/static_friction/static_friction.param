@@ -3,60 +3,64 @@
 % parameters for program static Coulomb friction problem                  %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% pde parameters :	        				      %%%%%
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
-LZ = 1.0;		% size in Z.
-%MU = 7700;	        % Lamé coefficient.
-%LAMBDA = 11500;   	% Lamé coefficient.
+LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.5;    % Friction coefficient.
+FRICTION_COEF = 0.0;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
 PG=12000;
 RHO = 6e-6;     	% "realistic" density for steel
-
- 
-%%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-% MESH_TYPE = 'GT_QK(3,1)';       % 
-% MESH_TYPE = 'GT_PRISM(3,1)';    % 3D prisms
-NX = 3;            	          % space step.
+N = 2;
+NX = 20;            	% space step.
+NOISY = 1;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDUAL = 1E-9;     	% residual for Newton.
-
 METHOD = 2;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
 			% 2 = Additive Schwarz Newton
-
+if (METHOD == 1)
+  POPULATION = 100;     % Parameter for genetic algorithm
+end;
 if (METHOD == 2) 
   SUBDOMSIZE = 0.6;
-  OVERLAP = 0.0;
+  OVERLAP = 0.2;
 end
 
-NOISY = 3;
-POPULATION = 100;       % Parameter for genetic algorithm
-R = 100.0;              % Augmentation parameter
+NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
+			% 1 = Non homogeneous Neumann Boudary on the top
+NEUMANN_INTENSITY = -0;
 
 DIRICHLET = 1;          % 0 = no Dirichlet boundary
 			% 1 = Dirichlet boundary on the top
 			% 2 = Dirichlet boundary on the left
-NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
-			% 1 = Non homogeneous Neumann Boudary on the top
-NEUMANN_INTENSITY = -0.0;
 
-DIRICHLET_RATIO = -0.1;  % parametre pour la condition de Dirichlet
+DIRICHLET_RATIO = -0.1; % parametre pour la condition de Dirichlet
 CONTACT_CONDITION = 0;  % 0 = Condition almost conformal in u
 			% 1 = Condition almost conformal in forces on contact
 			%     boundary with FEM_TYPE_L for the multipliers
 
+R = 100.0;              % Augmentation parameter
+RESIDUAL = 1E-9;     	% residual for Newton.
 
-FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
-FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM fo the multipliers
-%DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
-INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
-% INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
+if (N == 2)
+  MESH_TYPE = 'GT_PK(2,1)';       % linear triangles
+  FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
+  FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM fo the multipliers
+  if 0
+    DATA_FEM_TYPE = 'FEM_PK(2,1)';% for non-Lagrangian main FEM
+  end;
+  INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
+end;
+
+if (N == 3)
+  MESH_TYPE = 'GT_PK(3,1)';       % linear triangles
+  FEM_TYPE = 'FEM_PK(3, 1)';      % Main FEM
+  FEM_TYPE_L = 'FEM_PK(3, 1)';    % FEM fo the multipliers
+  if 0
+    DATA_FEM_TYPE = 'FEM_PK(2,1)';   % for non-Lagrangian main FEM
+  end;
+  INTEGRATION = 'IM_TETRAHEDRON(6)'; % Quadrature rule
+end;
 
 MESHNAME='splx:';
 
@@ -83,9 +87,6 @@ MESHNAME='splx:';
 % MESHNAME='meshes/disc_P2_h1.mesh';
 % MESHNAME='meshes/disc_P2_h0.5.mesh';
 % MESHNAME='meshes/disc_P2_h0.3.mesh';
-
-
-
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'dynamic_friction';     % Root of data files.

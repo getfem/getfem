@@ -60,6 +60,8 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /**************************************************************************/
 
 scalar_type FT = 0.0;
+scalar_type D  = 0.0;
+scalar_type nu = 0.0;
 
 #if 1
 
@@ -78,6 +80,12 @@ base_small_vector sol_du(const base_node &x) {
 base_small_vector neumann_val(const base_node &x)
 { return -FT*FT*sol_du(x) * scalar_type(x.size()); }
 
+base_matrix sol_hessian(const base_node &x) {
+  base_matrix m(x.size(), x.size());
+  std::fill(m.begin(), m.end(), -FT*FT*sol_u(x));
+  return m;
+}
+
 #else
 
 scalar_type sol_u(const base_node &x) { return x[0]*x[1]; }
@@ -90,7 +98,20 @@ base_small_vector sol_du(const base_node &x) {
 base_small_vector neumann_val(const base_node &x)
 { return base_small_vector(x.size());  }
 
+base_matrix sol_hessian(const base_node &x)
+{ base_matrix m(x.size(), x.size()); m(1,0) = m(0,1) = 1.0; return m; }
+
 #endif
+
+base_matrix sol_mtensor(const base_node &x) { 
+  base_matrix m = sol_hessian(x), mm(x.size(), x.size());
+  scalar_type l = sol_lapl_u(x);
+  for (size_type i = 0; i < x.size(); ++i) mm(i,i) = l * nu;
+  gmm::scale(m, (1-nu));
+  gmm::add(mm, m);, 
+  gmm::scale(m, -D);
+  return m;
+}
 
 /**************************************************************************/
 /*  Structure for the bilaplacian problem.                                */
@@ -111,6 +132,8 @@ struct bilaplacian_problem {
 
   std::string datafilename;
   ftool::md_param PARAM;
+
+  bool KL;
 
   bool solve(plain_vector &U);
   void init(void);
@@ -166,7 +189,9 @@ void bilaplacian_problem::init(void) {
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   FT = PARAM.real_value("FT"); if (FT == 0.0) FT = 1.0;
-
+  KL = (PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0);
+  D = PARAM.real_value("D", "Flexion modulus");
+  if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -248,6 +273,8 @@ bool bilaplacian_problem::solve(plain_vector &U) {
 
   // Bilaplacian brick.
   getfem::mdbrick_bilaplacian<> BIL(mim, mf_u);
+  BIL.D().set(D);
+  if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs);

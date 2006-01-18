@@ -18,7 +18,8 @@ DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
 DATA_FEM_TYPE = 'FEM_PK(2, 5)';
 ROOTFILENAME = 'bilaplacian';
 DIRICHLET_VERSION = 0;
-
+D = 1.0;
+KL = 0;
 ;
 close(TMPF);
 
