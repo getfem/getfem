@@ -114,7 +114,7 @@ struct elastostatic_problem {
 
   scalar_type residual;       /* max residual for iterative solvers          */
   bool mixed_pressure;
-  int dirichlet_version;
+  getfem::constraints_type dirichlet_version;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -167,7 +167,9 @@ void elastostatic_problem::init(void) {
     mesh.transformation(M);
   }
 
-  dirichlet_version = PARAM.int_value("DIRICHLET_VERSION","Dirichlet version");
+  dirichlet_version
+    = getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION",
+					       "Dirichlet version"));
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residual = PARAM.real_value("RESIDUAL");
@@ -306,28 +308,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::mdbrick_normal_source_term<>
     NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
-
-//   // Defining the Neumann condition right hand side.
-//   base_small_vector un(N), v(N);
-
-//   for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
-//        !i.finished(); ++i) {
-//     size_type cv = i.cv(), f = i.f();
-//     getfem::pfem pf = mf_rhs.fem_of_element(cv);
-//     for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-//       size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-//       un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-//       un /= gmm::vect_norm2(un);
-//       size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-//       gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
-//       gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
-//     }
-//   }
-
-//   // Neumann condition brick.
-//   getfem::mdbrick_source_term<>
-//     NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
-  
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs * N);
   getfem::interpolation_rhs(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
@@ -335,7 +315,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
 					  mf_mult);
-  final_model.set_constraints_type(getfem::constraints_type(dirichlet_version));
+  final_model.set_constraints_type(dirichlet_version);
   final_model.rhs().set(mf_rhs, F);
 
   // Generic solve.

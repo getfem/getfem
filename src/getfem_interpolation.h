@@ -87,7 +87,7 @@ namespace getfem {
 
   template <typename VECT, typename F, typename M>
   inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
-				  const F &f, const dal::bit_vector &dofs,
+				  F &f, const dal::bit_vector &dofs,
 				  const M &, gmm::abstract_null_type) {
     size_type Q = mf.get_qdim();
     if (gmm::vect_size(V) != mf.nb_dof() || Q != 1)
@@ -148,6 +148,7 @@ namespace getfem {
   template <typename VECT, typename F>
   void interpolation_rhs(mesh_fem &mf_target, const VECT &V, F &f,
 			 mesh_region rg=mesh_region::all_convexes()) {
+    gmm::clear(const_cast<VECT &>(V));
     mf_target.linked_mesh().intersect_with_mpi_region(rg);
     dal::bit_vector dofs = mf_target.dof_on_set(rg);
     if (dofs.card() > 0)

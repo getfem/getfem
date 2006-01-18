@@ -108,7 +108,7 @@ base_matrix sol_mtensor(const base_node &x) {
   scalar_type l = sol_lapl_u(x);
   for (size_type i = 0; i < x.size(); ++i) mm(i,i) = l * nu;
   gmm::scale(m, (1-nu));
-  gmm::add(mm, m);, 
+  gmm::add(mm, m);
   gmm::scale(m, -D);
   return m;
 }
@@ -278,43 +278,29 @@ bool bilaplacian_problem::solve(plain_vector &U) {
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = sol_f(mf_rhs.point_of_dof(i));
-  
+  getfem::interpolation_rhs(mf_rhs, F, sol_f);
+
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
 
   // Defining the prescribed momentum.
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = sol_lapl_u(mf_rhs.point_of_dof(i));
+  getfem::interpolation_rhs(mf_rhs, F, sol_lapl_u, MOMENTUM_BOUNDARY_NUM);
   
   // Prescribed momentum on the boundary
   getfem::mdbrick_normal_derivative_source_term<>
     MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
 
   // Defining the Neumann condition right hand side.
-  base_small_vector un(N);
-  gmm::clear(F);
-  for (getfem::mr_visitor i(mesh.region(FORCE_BOUNDARY_NUM));
-       !i.finished(); ++i) {
-    size_type cv = i.cv(), f = i.f();
-    getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-      size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-      un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-      un /= gmm::vect_norm2(un);
-      size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = -gmm::vect_sp(neumann_val(mf_rhs.point_of_dof(dof)), un);
-    }
-  }
+  gmm::resize(F, nb_dof_rhs*N);
+  getfem::interpolation_rhs(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
 
   // Neumann condition brick.
-  getfem::mdbrick_source_term<>
+  getfem::mdbrick_normal_source_term<>
     NEUMANN(MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = sol_u(mf_rhs.point_of_dof(i));
+  gmm::resize(F, nb_dof_rhs);
+  getfem::interpolation_rhs(mf_rhs, F, sol_u,  SIMPLE_SUPPORT_BOUNDARY_NUM);
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<>
@@ -323,19 +309,8 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   DIRICHLET.rhs().set(mf_rhs, F);
 
   // Defining the normal derivative Dirichlet condition value.
-  gmm::clear(F);
-  for (getfem::mr_visitor i(mesh.region(CLAMPED_BOUNDARY_NUM));
-       !i.finished(); ++i) {
-    size_type cv = i.cv(), f = i.f();
-    getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-      size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-      un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-      un /= gmm::vect_norm2(un);
-      size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = gmm::vect_sp(sol_du(mf_rhs.point_of_dof(dof)), un);
-    }
-  }
+  gmm::resize(F, nb_dof_rhs*N);
+  getfem::interpolation_rhs(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
   
   // Normal derivative Dirichlet condition brick.
   getfem::mdbrick_normal_derivative_Dirichlet<> 

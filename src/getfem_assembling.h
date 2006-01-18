@@ -418,13 +418,18 @@ namespace getfem {
   void asm_normal_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 			      const mesh_fem &mf_data, const VECT2 &F,
 			      const mesh_region &rg) {
-    if (mf_data.get_qdim() != 1 || mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(invalid_argument, "invalid mesh_fem");
+    if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh_fem");
 
-    asm_real_or_complex_1_param
-      (B, mim, mf, mf_data, F, rg,
-       "F=data(qdim(#1),qdim(#1),#2);"
-       "V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);");
+    const char *st;
+    if (mf.get_qdim() == 1)
+      st = "F=data(qdim(#1),#2);"
+	"V(#1)+=comp(Base(#1).Base(#2).Normal())(:,j,k).F(k,j);";
+    else
+      st = "F=data(qdim(#1),qdim(#1),#2);"
+	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);";
+
+    asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
   }
 
   template <typename V> bool is_Q_symmetric(const V& Q, size_type q,
