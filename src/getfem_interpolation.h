@@ -86,9 +86,9 @@ namespace getfem {
 
 
   template <typename VECT, typename F, typename M>
-  inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
-				  F &f, const dal::bit_vector &dofs,
-				  const M &, gmm::abstract_null_type) {
+  inline void interpolation_function__(const mesh_fem &mf, VECT &V,
+				       F &f, const dal::bit_vector &dofs,
+				       const M &, gmm::abstract_null_type) {
     size_type Q = mf.get_qdim();
     if (gmm::vect_size(V) != mf.nb_dof() || Q != 1)
       DAL_THROW(failure_error, "Dof vector has not the right size");
@@ -97,9 +97,9 @@ namespace getfem {
   }
 
   template <typename VECT, typename F, typename M>
-  inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
-				  F &f, const dal::bit_vector &dofs,
-				  const M &v, gmm::abstract_vector) {
+  inline void interpolation_function__(const mesh_fem &mf, VECT &V,
+				       F &f, const dal::bit_vector &dofs,
+				       const M &v, gmm::abstract_vector) {
     size_type N = gmm::vect_size(v),  Q = mf.get_qdim();
     if (gmm::vect_size(V) != mf.nb_dof()*N/Q)
       DAL_THROW(failure_error, "Dof vector has not the right size");
@@ -110,9 +110,9 @@ namespace getfem {
   }
 
   template <typename VECT, typename F, typename M>
-  inline void interpolation_rhs__(const mesh_fem &mf, VECT &V,
-				  F &f, const dal::bit_vector &dofs,
-				  const M &mm, gmm::abstract_matrix) {
+  inline void interpolation_function__(const mesh_fem &mf, VECT &V,
+				       F &f, const dal::bit_vector &dofs,
+				       const M &mm, gmm::abstract_matrix) {
     size_type Nr = gmm::mat_nrows(mm), Nc = gmm::mat_ncols(mm), N = Nr*Nc;
     size_type Q = mf.get_qdim();
     base_matrix m(Nr, Nc);
@@ -128,14 +128,14 @@ namespace getfem {
   }
 
   template <typename VECT, typename F, typename M>
-  inline void interpolation_rhs_(const mesh_fem &mf, VECT &V,
-				 F &f, const dal::bit_vector &dofs,
-				 const M &m) {
-    interpolation_rhs__(mf, V, f, dofs, m,
-			typename gmm::linalg_traits<M>::linalg_type());
+  inline void interpolation_function_(const mesh_fem &mf, VECT &V,
+				      F &f, const dal::bit_vector &dofs,
+				      const M &m) {
+    interpolation_function__(mf, V, f, dofs, m,
+			     typename gmm::linalg_traits<M>::linalg_type());
   }
 
-
+#if(0)
   template <typename T>
   void take_one_op(void *a, void *b, int *len, MPI_Datatype *) {
     return *((T*)a);
@@ -157,7 +157,7 @@ namespace getfem {
     MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), mpi_type(T()),
 		  mpi_take_one_op<T>, MPI_COMM_WORLD);
   }
-
+#endif
 
   // TODO : verify that rhs is a lagrange fem
   /**
@@ -170,15 +170,15 @@ namespace getfem {
      resulting vector V is distributed.
   */
   template <typename VECT, typename F>
-  void interpolation_rhs(mesh_fem &mf_target, const VECT &V, F &f,
+  void interpolation_function(mesh_fem &mf_target, const VECT &V, F &f,
 			 mesh_region rg=mesh_region::all_convexes()) {
     gmm::clear(const_cast<VECT &>(V));
     mf_target.linked_mesh().intersect_with_mpi_region(rg);
     dal::bit_vector dofs = mf_target.dof_on_set(rg);
     if (dofs.card() > 0)
-      interpolation_rhs_(mf_target, const_cast<VECT &>(V), f, dofs,
-			 f(mf_target.point_of_dof(dofs.first())));
-    MPI_MERGE_VECTOR(V);
+      interpolation_function_(mf_target, const_cast<VECT &>(V), f, dofs,
+			      f(mf_target.point_of_dof(dofs.first())));
+    //   MPI_MERGE_VECTOR(V);
   }
 
   /* ********************************************************************* */

@@ -78,7 +78,7 @@ struct laplacian_problem {
   getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients    */
 
   scalar_type residual;        /* max residual for the iterative solvers */
-  size_type est_degree;
+  size_type est_degree, N;
   bool gen_dirichlet;
 
   sparse_matrix_type SM;     /* stiffness matrix.                           */
@@ -115,7 +115,7 @@ void laplacian_problem::init(void) {
   /* First step : build the mesh */
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
-  size_type N = pgt->dim();
+  N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Nomber of space steps "));
@@ -191,8 +191,7 @@ void laplacian_problem::init(void) {
   }
 }
 
-void laplacian_problem::assembly(void)
-{
+void laplacian_problem::assembly(void) {
   size_type nb_dof = mf_u.nb_dof();
   size_type nb_dof_rhs = mf_rhs.nb_dof();
 
@@ -207,37 +206,24 @@ void laplacian_problem::assembly(void)
   
   cout << "Assembling source term" << endl;
   std::vector<scalar_type> F(nb_dof_rhs);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = sol_f(mf_rhs.point_of_dof(i));
+  getfem::interpolation_function(mf_rhs, F, sol_f);
   getfem::asm_source_term(B, mim, mf_u, mf_rhs, F);
   
   cout << "Assembling Neumann condition" << endl;
-  /* Fill F with Grad(sol_u).n .. a bit complicated */
-  for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
-       !i.finished(); ++i) {
-    size_type cv = i.cv(), f = i.f();
-    getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-      size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-      base_small_vector un
-	= mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-      un /= gmm::vect_norm2(un);
-      size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      F[dof] = gmm::vect_sp(sol_grad(mf_rhs.point_of_dof(dof)), un);
-    }
-  }
-  getfem::asm_source_term(B, mim, mf_u, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
+  gmm::resize(F, nb_dof_rhs*N);
+  getfem::interpolation_function(mf_rhs, F, sol_grad);
+  getfem::asm_normal_source_term(B, mim, mf_u, mf_rhs, F,
+				 NEUMANN_BOUNDARY_NUM);
 
   cout << "take Dirichlet condition into account" << endl;  
   if (!gen_dirichlet) {    
     std::vector<scalar_type> D(nb_dof);
-    for (size_type i = 0; i < nb_dof; ++i)
-      D[i] = sol_u(mf_u.point_of_dof(i));
+    getfem::interpolation_function(mf_u, D, sol_u);
     getfem::assembling_Dirichlet_condition(SM, B, mf_u, 
 					   DIRICHLET_BOUNDARY_NUM, D);
   } else {
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      F[i] = sol_u(mf_rhs.point_of_dof(i));
+    gmm::resize(F, nb_dof_rhs);
+    getfem::interpolation_function(mf_rhs, F, sol_u);
     
     gmm::resize(Ud, nb_dof);
     gmm::resize(NS, nb_dof, nb_dof);

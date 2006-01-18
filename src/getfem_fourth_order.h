@@ -66,7 +66,7 @@ namespace getfem {
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_bilaplacian_KL
   (const MAT &M, const mesh_im &mim, const mesh_fem &mf,
-   const mesh_fem &mf_data, const VECT &D, const VECT &nu,
+   const mesh_fem &mf_data, const VECT &D_, const VECT &nu_,
    const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem
       ("d=data$1(#2); n=data$2(#2);"
@@ -76,8 +76,8 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);
-    assem.push_data(D);
-    assem.push_data(nu);
+    assem.push_data(D_);
+    assem.push_data(nu_);
     assem.push_mat(const_cast<MAT &>(M));
     assem.assembly(rg);
   }
@@ -300,7 +300,7 @@ namespace getfem {
 		 * gmm::mat_maxnorm(H) * magn_type(1000));
     }
     if (version & ASMDIR_BUILDR)
-      asm_source_term(R, mim, mf_mult, mf_r, r_data, rg);
+      asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, rg);
   }
 
   /** Normal derivative Dirichlet condition brick.

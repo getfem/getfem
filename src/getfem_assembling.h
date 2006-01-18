@@ -423,7 +423,7 @@ namespace getfem {
 
     const char *st;
     if (mf.get_qdim() == 1)
-      st = "F=data(qdim(#1),#2);"
+      st = "F=data(mdim(#1),#2);"
 	"V(#1)+=comp(Base(#1).Base(#2).Normal())(:,j,k).F(k,j);";
     else
       st = "F=data(qdim(#1),qdim(#1),#2);"

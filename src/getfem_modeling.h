@@ -399,9 +399,9 @@ namespace getfem {
 
   public :
 
-    mesh_fem_info_ &get_mesh_fem_info(size_type i)
+    mesh_fem_info_ &get_mesh_fem_info(size_type i) const
     { context_check(); return mesh_fems_info[i]; }
-    const mesh_fem &get_mesh_fem(size_type i)
+    const mesh_fem &get_mesh_fem(size_type i) const
     { context_check(); return *(mesh_fems[i]); }
     size_type get_mesh_fem_position(size_type i)
     { context_check(); return mesh_fem_positions[i]; }
@@ -1116,20 +1116,21 @@ namespace getfem {
     bool F_uptodate;
     size_type boundary, num_fem, i1, nbd;
 
+    const mesh_fem &mf_u(void) const { return this->get_mesh_fem(num_fem); }
+
     void proper_update(void) {
-      const mesh_fem &mf_u = this->get_mesh_fem(num_fem);
       i1 = this->mesh_fem_positions[num_fem];
-      nbd = mf_u.nb_dof();
-      gmm::resize(F_, mf_u.nb_dof());
-      gmm::clear(F_);
+      nbd = mf_u().nb_dof();
+      gmm::resize(F_, nbd); gmm::clear(F_);
       F_uptodate = false;
     }
+
 
   public :
 
     mdbrick_parameter<VECTOR> &normal_source_term(void) {
       // ensure that the B shape is always consistant with the mesh_fem
-      B_.reshape(gmm::sqr(this->get_mesh_fem(num_fem).get_qdim()));
+      B_.reshape(mf_u().get_qdim()*mf_u().linked_mesh().dim());
       return B_; 
     }
     const mdbrick_parameter<VECTOR> &normal_source_term(void) const
@@ -1139,12 +1140,11 @@ namespace getfem {
     const VECTOR &get_F(void) { 
       this->context_check();
       if (!F_uptodate || this->parameters_is_any_modified()) {
-	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	F_uptodate = true;
 	DAL_TRACE2("Assembling a source term");
 	asm_normal_source_term
-	  (F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
-	   mf_u.linked_mesh().get_mpi_sub_region(boundary));
+	  (F_, *(this->mesh_ims[0]), mf_u(), B_.mf(), B_.get(),
+	   mf_u().linked_mesh().get_mpi_sub_region(boundary));
 	this->parameters_set_uptodate();
       }
       return F_;
@@ -1174,7 +1174,7 @@ namespace getfem {
       if (bound != size_type(-1))
 	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
       this->force_update();
-      B_.reshape(gmm::sqr(this->get_mesh_fem(num_fem).get_qdim()));
+      B_.reshape(mf_u().get_qdim()*mf_u().linked_mesh().dim());
       if (gmm::vect_size(B__)) B_.set(B__);
     }
   };
