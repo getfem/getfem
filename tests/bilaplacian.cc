@@ -284,8 +284,15 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
 
   // Defining the prescribed momentum.
-  getfem::interpolation_function(mf_rhs, F, sol_lapl_u, MOMENTUM_BOUNDARY_NUM);
-  
+  if (KL) {
+    gmm::resize(F, nb_dof_rhs*N*N);
+    getfem::interpolation_function(mf_rhs,F,sol_mtensor,MOMENTUM_BOUNDARY_NUM);
+    gmm::scale(F, -1.0);
+  }
+  else {
+    gmm::resize(F, nb_dof_rhs);
+    getfem::interpolation_function(mf_rhs,F,sol_lapl_u,MOMENTUM_BOUNDARY_NUM);
+  }
   // Prescribed momentum on the boundary
   getfem::mdbrick_normal_derivative_source_term<>
     MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);

@@ -159,13 +159,26 @@ namespace getfem {
     if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
 
+    size_type Q = gmm::vect_size(F) / mf_data.nb_dof();
+
     const char *s;
-    if (mf.get_qdim() == 1)
+    if (mf.get_qdim() == 1 && Q == 1)
       s = "F=data(#2);"
 	"V(#1)+=comp(Grad(#1).Normal().Base(#2))(:,i,i,j).F(j);";
-    else
+    else if (mf.get_qdim() == 1 && Q == gmm::sqr(mf.linked_mesh().dim()))
+      s = "F=data(mdim(#1),mdim(#1),#2);"
+	"V(#1)+=comp(Grad(#1).Normal().Normal().Normal().Base(#2))"
+	"(:,i,i,k,l,j).F(k,l,j);";
+    else if (mf.get_qdim() > size_type(1) && Q == mf.get_qdim())
       s = "F=data(qdim(#1),#2);"
-	"V(#1)+=comp(vGrad(#1).Normal.Base(#2))(:,i,k,k,j).F(i,j);";
+	"V(#1)+=comp(vGrad(#1).Normal().Base(#2))(:,i,k,k,j).F(i,j);";
+    else if (mf.get_qdim() > size_type(1) &&
+	     Q == size_type(mf.get_qdim()*gmm::sqr(mf.linked_mesh().dim())))
+      s = "F=data(qdim(#1),mdim(#1),mdim(#1),#2);"
+	"V(#1)+=comp(vGrad(#1).Normal().Normal().Normal().Base(#2))"
+	"(:,i,k,k,l,m,j).F(i,l,m,j);";
+    else
+       DAL_THROW(invalid_argument, "invalid rhs vector");
     asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
   }
 
@@ -188,20 +201,25 @@ namespace getfem {
     bool F_uptodate;
     size_type boundary, num_fem, i1, nbd;
 
-    void proper_update(void) {
-      const mesh_fem &mf_u = this->get_mesh_fem(num_fem);
-      i1 = this->mesh_fem_positions[num_fem];
-      nbd = mf_u.nb_dof();
+    const mesh_fem &mf_u(void) const { return this->get_mesh_fem(num_fem); }
 
-      gmm::resize(F_, mf_u.nb_dof());
+    void proper_update(void) {
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u().nb_dof();
+      gmm::resize(F_, nbd);
       gmm::clear(F_);
       F_uptodate = false;
     }
 
   public :
 
-    mdbrick_parameter<VECTOR> &source_term(void)
-    { B_.reshape(this->get_mesh_fem(num_fem).get_qdim()); return B_;  }
+    mdbrick_parameter<VECTOR> &scalar_source_term(void)
+    { B_.reshape(mf_u().get_qdim()); return B_;  }
+
+    mdbrick_parameter<VECTOR> &tensorial_source_term(void) {
+      B_.reshape(mf_u().get_qdim()*gmm::sqr(mf_u().linked_mesh().dim()));
+      return B_;
+    }
 
     const mdbrick_parameter<VECTOR> &source_term(void) const { return B_; }
 
@@ -209,12 +227,11 @@ namespace getfem {
     const VECTOR &get_F(void) { 
       this->context_check();
       if (!F_uptodate || this->parameters_is_any_modified()) {
-	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	F_uptodate = true;
 	DAL_TRACE2("Assembling a source term");
 	asm_normal_derivative_source_term
-	  (F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
-	   mf_u.linked_mesh().get_mpi_sub_region(boundary));
+	  (F_, *(this->mesh_ims[0]), mf_u(), B_.mf(), B_.get(),
+	   mf_u().linked_mesh().get_mpi_sub_region(boundary));
 	this->parameters_set_uptodate();
       }
       return F_;
@@ -246,8 +263,22 @@ namespace getfem {
 	this->add_proper_boundary_info(num_fem, bound,
 				       MDBRICK_NORMAL_DERIVATIVE_NEUMANN);
       this->force_update();
-      B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
-      if (gmm::vect_size(B__)) B_.set(B__);
+      size_type Nb = gmm::vect_size(B__);
+      if (Nb) {
+	if (Nb == mf_data_.nb_dof() * mf_u().get_qdim()) {
+	   B_.reshape(mf_u().get_qdim());
+	   
+	}
+	else if (Nb == mf_data_.nb_dof() * mf_u().get_qdim()
+		 * gmm::sqr(mf_u().linked_mesh().dim())) {
+	  B_.reshape(mf_u().get_qdim()*gmm::sqr(mf_u().linked_mesh().dim()));
+	}
+	else 
+	  DAL_THROW(failure_error, "Rhs vector has a wrong size");
+	B_.set(B__);
+      }
+      else
+	B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
     }
   };
 
