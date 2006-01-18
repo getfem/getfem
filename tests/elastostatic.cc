@@ -296,29 +296,40 @@ bool elastostatic_problem::solve(plain_vector &U) {
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
+ 
 
   // Defining the Neumann condition right hand side.
-  base_small_vector un(N), v(N);
-
-  for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
-       !i.finished(); ++i) {
-    size_type cv = i.cv(), f = i.f();
-    getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-      size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-      un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-      un /= gmm::vect_norm2(un);
-      size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-      gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
-      gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
-    }
-  }
-
+  gmm::resize(F, nb_dof_rhs * N * N);
+  getfem::interpolation_rhs(mf_rhs, F, sol_sigma, NEUMANN_BOUNDARY_NUM);
+  
   // Neumann condition brick.
-  getfem::mdbrick_source_term<>
+  getfem::mdbrick_normal_source_term<>
     NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
+
+//   // Defining the Neumann condition right hand side.
+//   base_small_vector un(N), v(N);
+
+//   for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
+//        !i.finished(); ++i) {
+//     size_type cv = i.cv(), f = i.f();
+//     getfem::pfem pf = mf_rhs.fem_of_element(cv);
+//     for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
+//       size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
+//       un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
+//       un /= gmm::vect_norm2(un);
+//       size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
+//       gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
+//       gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
+//     }
+//   }
+
+//   // Neumann condition brick.
+//   getfem::mdbrick_source_term<>
+//     NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
+  
   // Defining the Dirichlet condition value.
+  gmm::resize(F, nb_dof_rhs * N);
   getfem::interpolation_rhs(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
 
   // Dirichlet condition brick.

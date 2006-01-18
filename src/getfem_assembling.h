@@ -424,7 +424,7 @@ namespace getfem {
     asm_real_or_complex_1_param
       (B, mim, mf, mf_data, F, rg,
        "F=data(qdim(#1),qdim(#1),#2);"
-       "V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,j,k);");
+       "V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);");
   }
 
   template <typename V> bool is_Q_symmetric(const V& Q, size_type q,
