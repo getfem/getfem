@@ -62,13 +62,11 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
 
 start_program("");
 print ".";
-start_program("-d 'MESH_TYPE=\"GT_PK(1,1)\"' -d 'FEM_TYPE=\"FEM_PK(1,2)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(1)\"' -d NX=10 -d FT=1.0");
-print ".";
-start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK(3,1)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(3)\"' -d NX=3 -d FT=0.01");
+start_program("-d 'MESH_TYPE=\"GT_PK(1,1)\"' -d 'FEM_TYPE=\"FEM_PK(1,2)\"' -d 'INTEGRATION=\"IM_GAUSS1D(3)\"' -d NX=10 -d FT=1.0");
 print ".";
 start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK(3,2)\"' -d 'INTEGRATION=\"IM_TETRAHEDRON(5)\"' -d NX=3 -d FT=0.01");
 print ".";
-start_program("-d 'MESH_TYPE=\"GT_PK(2,1)\"' -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(2)\"' -d NX=5 -d GENERIC_DIRICHLET=0");
+start_program("-d 'MESH_TYPE=\"GT_PK(2,1)\"' -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'INTEGRATION=\"IM_TRIANGLE(4)\"' -d NX=5 -d GENERIC_DIRICHLET=0");
 print ".";
 start_program("-d 'INTEGRATION=\"IM_TRIANGLE(2)\"'");
 print ".";
@@ -89,7 +87,7 @@ print ".";
 start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_QK(2,1)\"' -d 'INTEGRATION=\"IM_GAUSS_PARALLELEPIPED(2,2)\"' -d NX=10 -d INCLINE=0.5");
 #start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d NX=10 -d INCLINE=0.5");
 print ".";
-start_program("-d 'MESH_TYPE=\"GT_PK(1,1)\"' -d 'FEM_TYPE=\"FEM_PK_HIERARCHICAL(1,4)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(1,1)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(1)\"' -d FT=1.0 -d NX=51");
+start_program("-d 'MESH_TYPE=\"GT_PK(1,1)\"' -d 'FEM_TYPE=\"FEM_PK_HIERARCHICAL(1,4)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(1,1)\"' -d 'INTEGRATION=\"IM_GAUSS1D(10)\"' -d FT=1.0 -d NX=51");
 #start_program("-d N=1 -d FEM_TYPE=2 -d FT=1.0");
 print ".";
 start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK_HIERARCHICAL_COMPOSITE(3,1,2)\"' -d 'DATA_FEM_TYPE=\"FEM_PK(3,2)\"' -d 'INTEGRATION=\"IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(2), 4)\"' -d NX=2 -d FT=1.0");
