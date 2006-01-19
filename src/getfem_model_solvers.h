@@ -37,6 +37,7 @@
 #define GETFEM_MODEL_SOLVERS_H__
 
 #include <getfem_modeling.h>
+#include <getfem_Newton.h>
 #include <gmm_MUMPS_interface.h>
 
 namespace getfem {
@@ -73,10 +74,12 @@ namespace getfem {
     size_type ndof = problem.nb_dof();
 
     bool is_linear = problem.is_linear();
-    // R alpha, alpha_min=R(1)/R(20);
-    R alpha, alpha_min=R(1)/R(10000);
-    R alpha_mult=R(3)/R(5);
-    R alpha_max_ratio=R(2)/R(1);
+    std::auto_ptr<abstract_newton_line_search>
+      pline_search(new basic_newton_line_search2());
+
+    R alpha(0);
+    VECTOR stateinit;
+
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -346,37 +349,25 @@ namespace getfem {
 	return;
       }
       else { // line search for the non-linear case.
-	VECTOR stateinit(ndof);
+	gmm::resize(stateinit, ndof);
 	gmm::copy(MS.state(), stateinit);
       
-	if ((iter.get_iteration() % 10) || (iter.get_iteration() == 0))
-	  alpha = R(1); else alpha = R(1)/R(2);
-      
-	R previous_res = act_res;
-	for (size_type k = 0; alpha >= alpha_min; alpha *= alpha_mult, ++k) {
+	pline_search->init_search(act_res);
+	do {
+	  alpha = pline_search->next_try();
 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	  problem.compute_residual(MS);
 	  MS.compute_reduced_residual();
-	  // Call to Dirichlet nullspace should be avoided -> we just need Ud
 	  act_res_new = MS.reduced_residual_norm();
-	  // cout << " : " << act_res_new;
-	  if (act_res_new <= act_res / R(2)) break;
-	  if (k > 0 && act_res_new > previous_res
-	      && previous_res < alpha_max_ratio * act_res) {
-	    alpha /= alpha_mult;
-	    gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-	    act_res_new = previous_res; break;
-	  }
-	
-	  previous_res = act_res_new;
+	} while (!pline_search->is_converged(act_res_new));
+
+	if (alpha != pline_search->converged_value()) {
+	  alpha = pline_search->converged_value();
+	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+	  act_res_new = pline_search->converged_residual();
 	}
-      
-	// Something should be done to detect oscillating behaviors ...
-	// alpha_max_ratio += (R(1)-alpha_max_ratio) / R(30);
-	alpha_min *= R(1) - R(1)/R(30);
       }
       act_res = act_res_new; ++iter;
-    
     
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
     }
