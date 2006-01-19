@@ -9,7 +9,8 @@ Changement à prendre en considérations pour la 2.0 :
 
 3  - simplifier standard solve avec des options pour la résolution. raffiner
      la stratégie du newton pour qu'il marche de manière optimale dans les deux
-     cas : elas nonlin et friction.
+     cas : elas nonlin et friction. (en donnant le choix sur la recherche linéraire
+     et le newton)
 
 4  - Ajouter une option dans le .configure pour la version parallèle ?
 
@@ -35,8 +36,10 @@ Changement à prendre en considérations pour la 2.0 :
 12 - Voir la logique de l'utilisation des type size_type, scalar_type,
      opt_long_scalar_type ...
 
-13 - Implémenter l'élément Hdiv ?
+13 - Licence de Superlu ?
 
-14 - Implémenter l'élément composite C^1 ?
+14 - Implémenter l'élément Hdiv ?
 
-15 - Laisser tomber les méthodes d'intégration exactes ?
+15 - Implémenter l'élément composite C^1 ?
+
+16 - Laisser tomber les méthodes d'intégration exactes ?
