@@ -82,9 +82,10 @@ namespace getfem {
 
 	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
 			    &numflag, &size, options, &edgecut, &(npart[0]));
-
+	
 	for (size_type i = 0; i < size_type(ne); ++i)
 	  if (npart[i] == rank) mpi_region.add(numelt[i]);
+	
       }
       modified = false;
       valid_sub_regions.clear();

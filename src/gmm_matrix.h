@@ -952,8 +952,8 @@ namespace gmm
  
 namespace gmm { 
   
-  template <typename T> MPI_Datatype mpi_type(T)
-  { DAL_THROW(failure_error, "Sorry unsupported type"); }
+  template <typename T> inline MPI_Datatype mpi_type(T)
+  { DAL_THROW(failure_error, "Sorry unsupported type"); return MPI_FLOAT; }
   inline MPI_Datatype mpi_type(double) { return MPI_DOUBLE; }
   inline MPI_Datatype mpi_type(float) { return MPI_FLOAT; }
   inline MPI_Datatype mpi_type(long double) { return MPI_LONG_DOUBLE; }

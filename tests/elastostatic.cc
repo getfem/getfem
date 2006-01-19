@@ -253,10 +253,14 @@ void elastostatic_problem::compute_error(plain_vector &U) {
   }
   cout.precision(16);
   mf_rhs.set_qdim(N);
-  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;
+  scalar_type l2 = getfem::asm_L2_norm(mim, mf_rhs, V);
+  scalar_type h1 = getfem::asm_H1_norm(mim, mf_rhs, V);
 
+  if (getfem::MPI_IS_MASTER())
+    cout << "L2 error = " << l2 << endl
+	 << "H1 error = " << h1 << endl
+	 << "Linfty error = " << gmm::vect_norminf(V) << endl;
+  
   getfem::vtk_export exp(datafilename + "_err.vtk",
 			 PARAM.int_value("VTK_EXPORT")==1);
   exp.exporting(mf_rhs); 
@@ -360,10 +364,17 @@ int main(int argc, char *argv[]) {
 
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
+#if GETFEM_PARA_LEVEL > 1
+    t_ref=MPI_Wtime();
+#endif
     p.init();
+#if GETFEM_PARA_LEVEL > 1
+    cout << "temps init "<< MPI_Wtime()-t_ref << endl;
+#endif
     if (getfem::MPI_IS_MASTER())
       p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
+
 #if GETFEM_PARA_LEVEL > 1
     t_ref=MPI_Wtime();
     cout<<"begining resol"<<endl;
