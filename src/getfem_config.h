@@ -204,32 +204,11 @@ extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
 
 #endif
 
-
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
 #include <getfem_superlu.h>
 
-// Parallelisation options
-
-// GETFEM_PARA_LEVEL is the parallelisation level of Getfem
-//    0 - Sequential
-//    1 - Only the resolution of linear systems are parallelized
-//    2 - Assembly procedures are also parallelized
-#ifndef GETFEM_PARA_LEVEL
-# define GETFEM_PARA_LEVEL 0
-#endif
-
-#if GETFEM_PARA_LEVEL > 0
-extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *,
-				    int *, int *, int *, int *, int *);
-#include <mpi.h>
-#endif
-
 /// GEneric Tool for Finite Element Methods.
-<<<<<<< getfem_config.h
-namespace getfem {
-
-=======
 namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
@@ -249,7 +228,6 @@ namespace getfem {
   inline bool MPI_IS_MASTER(void) { return true; }
 #endif
 
->>>>>>> 1.27
   using bgeot::ST_NIL;
   using bgeot::size_type;
   using bgeot::dim_type;
