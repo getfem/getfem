@@ -832,51 +832,75 @@ the assembly of a volumic source term for a scalar FEM is done with the followin
 \index{GETFEM!getfem::generic_assembly}
 \begin{cppcode}
   getfem::generic_assembly assem;
+  assem.push_im(mim);
   assem.push_mf(mf);
   assem.push_mf(mfdata);
   assem.push_data(F);
   assem.push_vec(B);
   assem.set("Z=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).Z(j);");
-  assem.volumic_assembly();
+  assem.assembly();
 \end{cppcode}
-The first instructions declare the object, and set the data that it will use: the two \cpp{mesh\_fem} objects, the input data \cpp{F}, and the destination vector \cpp{B}.
 
-The input data is the vector $F$, defined on \cpp{mfdata}. One wants to
-evaluate $\sum_{j} f_j (\int_\Omega \phi^i \psi^j)$. The instruction must be seen as
-something that will be executed for each convex \cpp{cv} of the mesh. The terms
-\cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
-(i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
-means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z = F[mfdata.ind_dof_of_element(cv)]}. The
-part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
-accumulated into the output vector (provided with \cpp{push\_vec}). Here
-again, \cpp{\#1} means that we will write the result at indexes
-corresponding to the degrees of freedom of the current convex with respect to the first (\cpp{\#1}) \cpp{mesh_fem}. The
-left hand side \cpp{comp(Base(\#1).Base(\#2))(:,j).Z(j)} contains
+The first instructions declare the object, and set the data that it
+will use: a \cpp{mesh\_im} object which holds the integration methods,
+two \cpp{mesh\_fem} objects, the input data \cpp{F}, and the
+destination vector \cpp{B}.
+
+The input data is the vector $F$, defined on \cpp{mfdata}. One wants
+to evaluate $\sum_{j} f_j (\int_\Omega \phi^i \psi^j)$. The instruction must be seen as
+something that will be executed for each convex \cpp{cv} of the mesh.
+The terms \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and
+the second one (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction
+\cpp{Z=data(\#2);} means that for each convex, the ``tensor'' \cpp{Z}
+will receive the values of the first data argument provided with
+\cpp{push\_data}, at indexes corresponding to the degrees of freedom
+attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here,
+\cpp{Z = F[mfdata.ind_dof_of_element(cv)]}.
+
+The part \cpp{V(\#1)+=\ldots} means that the result of the next expression
+will be accumulated into the output vector (provided with
+\cpp{push\_vec}). Here again, \cpp{\#1} means that we will write the
+result at indexes corresponding to the degrees of freedom of the
+current convex with respect to the first (\cpp{\#1}) \cpp{mesh_fem}.
+
+The left hand side \cpp{comp(Base(\#1).Base(\#2))(:,j).Z(j)} contains
 two operations. The first one is a computation of a tensor on the
-convex: \cpp{comp(Base(\#1).Base(\#2))} is evaluated as a
-2-dimensions tensor, $\int\phi^i \psi^j$, for all degrees of freedom $i$ of \cpp{mf} and $j$ of \cpp{mfdata} attached to the current convex. The next
-part is a reduction operation, \cpp{C(:,j).Z(j)}: each named index
-(here $j$) is summed, i.e. the result is $\sum_j c_{i,j} z_j$.
+convex: \cpp{comp(Base(\#1).Base(\#2))} is evaluated as a 2-dimensions
+tensor, $\int\phi^i \psi^j$, for all degrees of freedom $i$ of \cpp{mf} and $j$
+of \cpp{mfdata} attached to the current convex. The next part is a
+reduction operation, \cpp{C(:,j).Z(j)}: each named index (here $j$) is
+summed, i.e. the result is $\sum_j c_{i,j} z_j$.
 
 The integration method used inside \cpp{comp(Base(\#1).Base(\#2))} is
-the one of the first \cpp{mesh\_fem} referenced (here, the
-\cpp{mesh\_fem \#1}). If you need to use integration methods from another \cpp{mesh\_fem}, you can specify it as the first argument of \cpp{comp}, for example \cpp{comp(\#3, Base(\#1).Grad(\#2))} (New in getfem++-1.7).
+taken from \cpp{mim}. If you need to use integration methods from
+another \cpp{mesh\_im} object, you can specify it as the first argument
+of \cpp{comp}, for example \cpp{comp(\%2, Base(\#1).Grad(\#2))} will use
+the second \cpp{mesh\_im} object (New in getfem++-2.0).
 
 An other example is the assembly of the stiffness matrix for a vector Laplacian:
 \begin{cppcode}
   getfem::generic_assembly assem;
+  assem.push\_im(mim);
   assem.push_mf(mf);
   assem.push_mf(mfdata);
   assem.push_data(A);
   assem.push_mat(SM);
   assem.set("a=data$1(#2);"
             "M$1(\#1,\#1)+=sym(comp(vGrad(\#1).vGrad(\#1).Base(\#2))(:,j,k,:,j,k,p).a(p))");
-  assem.volumic_assembly();
+  assem.assembly();
 \end{cppcode}
-Now the output is written in a sparse matrix, inserted with \cpp{assem.push_mat(SM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The \cpp{sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the \cpp{comp} part evaluates a 7D tensor, 
-\begin{equation*}\int\partial_k \varphi^{i}_{j} \partial_l \varphi^m_n \psi^p,\end{equation*}
-where $\varphi^i_j$ is a $jth$ component of the $ith$ base function of \cpp{mf} and $\psi^p$ is a (scalar) base function of the second \cpp{mesh_fem}. Since we want to assemble
+
+Now the output is written in a sparse matrix, inserted with
+\cpp{assem.push_mat(SM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just
+indicates that we refer to the first matrix ``pushed'' (it is
+optional, but if the assembly builds two matrices, the second one must
+be referred this way). The \cpp{sym} function ensure that the result
+is symmetric (if this is not done, some round-off errors may cancel
+the symmetricity). Next, the \cpp{comp} part evaluates a 7D tensor,
+\begin{equation*}\int\partial_k \varphi^{i}_{j} \partial_l \varphi^m_n \psi^p,\end{equation*} where
+$\varphi^i_j$ is a $jth$ component of the $ith$ base function of \cpp{mf}
+and $\psi^p$ is a (scalar) base function of the second \cpp{mesh_fem}.
+Since we want to assemble
 \begin{equation*}\int a(x).\nabla\phi^i.\nabla\phi^j,\quad\text{with}\quad a(x)=\sum_p a^p \psi^p(x),\end{equation*}
 the reduction is:
 \begin{equation*}\sum_{j,k,p}\left(\int \partial_k\varphi^{i}_{j} \partial_k\varphi^m_j \psi^p\right)a^p\end{equation*}
@@ -887,9 +911,12 @@ number, and derivative number). For a scalar Laplacian, we could have
 used \cpp{comp(Grad(\#1).Grad(\#1).Base(\#2))(:,k,:,k,p).a(p)}. But the
 vector form has the advantage to work in both vector and scalar case.
 
-The last instruction, \cpp{assem.volumic_assembly()}, does evaluate
-the expression on each convex. For an assembly over a boundary just
-call \cpp{assem.boundary_assembly(boundary_num)}.
+The last instruction, \cpp{assem.assembly()}, does evaluate the
+expression on each convex. For an assembly over a boundary just call
+\cpp{assem.assembly(rg)}, where \cpp{rg} is a
+\cpp{getfem::mesh\_region} object.  \cpp{rg} might also be a number, in that
+case the mesh region taken into account is
+\cpp{mim.linked\_mesh().region(rg)}.
 
 
 The third example shows how to compute the $L^2$ norm of a scalar or vector field on a mesh boundary:
@@ -900,13 +927,13 @@ The third example shows how to compute the $L^2$ norm of a scalar or vector fiel
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
     assem.set("u=data(#1); V()+=u(i).u(j).comp(vBase(#1).vBase(#1))(i,k,j,k)");
-    assem.boundary_assembly(boundary_number);
+    assem.assembly(boundary_number);
 \end{cppcode}
-This one is easy to read. When \cpp{boundary_assembly} returns, \cpp{v[0]} will contain 
+This one is easy to read. When \cpp{assembly} returns, \cpp{v[0]} will contain 
 \begin{equation*}\sum_{i,j,k}\left(\int_{boundary} u_i \varphi^{i}_{k} u_j \varphi^j_k \right)\end{equation*}
 
 
-The fourth and last example shows assembly of the linear elasticity problem with a complete Hooke tensor:
+The fourth and last example shows an (sub-optimal) assembly of the linear elasticity problem with a complete Hooke tensor:
 \begin{cppcode}
  assem.set("h=data\$1(qdim(\#1),qdim(\#1),qdim(\#1),qdim(\#1),\#2);"
            "t=comp(vGrad(\#1).vGrad(\#1).Base(\#2));"
@@ -929,34 +956,77 @@ expression is reduced against the hook tensor.
 {\bf availaible operations inside the \cpp{comp} command}
 
 \begin{itemize}
-  \item[\cpp{Base(\#i)}] : evaluate the value of the base functions of the \textit{ith} \cpp{mesh\_fem}
-  \item[\cpp{Grad(\#i)}] : evaluate the value of the gradient of the base functions of the \textit{ith} \cpp{mesh\_fem}
-  \item[\cpp{Hess(\#i)}] : evaluate the value of the Hessian of the base functions of the \textit{ith} \cpp{mesh\_fem}
-  \item[\cpp{Normal()}]: (New in getfem++-1.7) evaluate the unit normal (should not be used for volumic integrations !)
-    \item[\cpp{NonLinear\$x(\#mf1,\ldots\#mfn)}] : (New in getfem++-1).7evaluate the \textit{xth} non-linear term (inserted with \cpp{push\_nonlinear\_term(pnonlinear\_elem\_term)}) using the listed mesh\_fem objects.
-      \item (New in getfem++-1.7) you may reference any data object inside the \cpp{comp} command, and perform reductions inside the \cpp{comp()}. This feature is mostly interesting for speeding up assembly of nonlinear terms (see getfem\_nonlinear\_elasticy.h for an example of use).
+
+\item[\cpp{Base(\#i)}] : evaluate the value of the base functions of
+  the \textit{ith} \cpp{mesh\_fem}
+
+  \item[\cpp{Grad(\#i)}] : evaluate the value of the gradient of the
+    base functions of the \textit{ith} \cpp{mesh\_fem}
+
+  \item[\cpp{Hess(\#i)}] : evaluate the value of the Hessian of the
+    base functions of the \textit{ith} \cpp{mesh\_fem}
+
+  \item[\cpp{Normal()}]: (New in getfem++-1.7) evaluate the unit
+    normal (should not be used for volumic integrations !)
+
+  \item[\cpp{NonLinear\$x(\#mf1,\ldots\#mfn)}] : (New in getfem++-1.7)
+    evaluate the \textit{xth} non-linear term (inserted with
+    \cpp{push\_nonlinear\_term(pnonlinear\_elem\_term)}) using the listed
+    mesh\_fem objects.
+  
+  \item (New in getfem++-1.7) you may reference any data object inside
+    the \cpp{comp} command, and perform reductions inside the
+    \cpp{comp()}. This feature is mostly interesting for speeding up
+    assembly of nonlinear terms (see getfem\_nonlinear\_elasticy.h for
+    an example of use).
+
+  \item[\cpp{GradGT()}, \cpp{GradGTInv}] : evaluate the gradient (and
+    its inverse) of the geometric transformation of the current
+    convex.
+
 \end{itemize}
 
 {\bf others operations}
 
-Slices may be mixed with reduction operations \cpp{t(:,4,i,i)} takes a slice at index 4 of the second dimension, and reduces the diagonal of dimension 3 and 4. {\em Please note that index numbers for slices start at 1 and not 0 !!} 
+Slices may be mixed with reduction operations \cpp{t(:,4,i,i)} takes a
+slice at index 4 of the second dimension, and reduces the diagonal of
+dimension 3 and 4. {\em Please note that index numbers for slices
+  start at 1 and not 0 !!}
 
-\cpp{mdim(\#2)} is evaluated as the mesh dimension associated to the second \cpp{mesh_fem}, while \cpp{qdim(\#2)} is the target dimension of the \cpp{mesh_fem}.
+\cpp{mdim(\#2)} is evaluated as the mesh dimension associated to the
+second \cpp{mesh_fem}, while \cpp{qdim(\#2)} is the target dimension of
+the \cpp{mesh_fem}.
 
-The diagonal of a tensor can be obtained with \cpp{t\{:,:,3,3\}} (which is strictly equivalent to \cpp{t\{1,2,3,3\}}: the colon is just here to improve the readability). This is the same operator than for permutation operations. Note that \cpp{t\{:,:,1,1\}} or \cpp{t\{:,:,4,4\}} are not valid operations. 
+The diagonal of a tensor can be obtained with \cpp{t\{:,:,3,3\}} (which
+is strictly equivalent to \cpp{t\{1,2,3,3\}}: the colon is just here to
+improve the readability). This is the same operator than for
+permutation operations. Note that \cpp{t\{:,:,1,1\}} or \cpp{t\{:,:,4,4\}}
+are not valid operations.
 
-The \cpp{print} command can be used to see the tensor: \cpp{"print comp(Base(\#1));"} will print the integrals of the base functions for each convex.
+The \cpp{print} command can be used to see the tensor: \cpp{"print
+  comp(Base(\#1));"} will print the integrals of the base functions for
+each convex.
 
-If there is more than one data array, output array  or output sparse matrix, one can use \cpp{data\$2, data\$3, V\$2, M\$2,}\ldots
+If there is more than one data array, output array or output sparse
+matrix, one can use \cpp{data\$2, data\$3, V\$2, M\$2,}\ldots
 
 \section{Incorporate new finite element methods in \gf }
 
-Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but none vector element is implemented for now).\\[0.5cm]
-To be done ... please read \cite{BASCOMP} for more details and see the file \filename{getfem\_fem.cc} for practical implementation.
+Basically, It is sufficient to describe an element on the reference
+element, i.e. to describe each base function of each degree of
+freedom. Vectorial elements elements are partially supported \ldots
+(supported by the finite element kernel but none vector element is
+implemented for now).
+
+To be done ... please read \cite{BASCOMP} for more details and see the
+file \filename{getfem\_fem.cc} for practical implementation.
 
 \section{Incorporate new approximated integration methods in \gf }
 
-A perl script automatically incorporates new cubature methods from a description file. You can see in the directory {\tt cubature} such description files (with extension {\tt.IM}) . For instance for {\tt IM_TETRAHEDRON(5)} the following file describes the method:
+A perl script automatically incorporates new cubature methods from a
+description file. You can see in the directory {\tt cubature} such
+description files (with extension {\tt.IM}) . For instance for {\tt
+  IM_TETRAHEDRON(5)} the following file describes the method:
 
 \begin{alltt}
 NAME = IM_TETRAHEDRON(5)
@@ -974,7 +1044,16 @@ IM_TRIANGLE(5)
 IM_TRIANGLE(5)
 \end{alltt}
 
-where {\tt NAME} is the name of the method in \gf (constant integer parameter are allowed), {\tt N} is the dimension, {\tt GEOTRANS} describes a valid geometric transformation of \gf. This geometric transformation just defines the reference element on which the integration method is described. {\tt NBPT} is the number of integration node definitions. Integration node definitions include a symmetry definition such that the total number of integration nodes would be greater than {\tt NBPT}.
+
+where {\tt NAME} is the name of the method in \gf (constant integer
+parameter are allowed), {\tt N} is the dimension, {\tt GEOTRANS}
+describes a valid geometric transformation of \gf. This geometric
+transformation just defines the reference element on which the
+integration method is described. {\tt NBPT} is the number of
+integration node definitions. Integration node definitions include a
+symmetry definition such that the total number of integration nodes
+would be greater than {\tt NBPT}.
+
 
 Composition of the integration node definition :
 \begin{itemize}
@@ -985,11 +1064,16 @@ Composition of the integration node definition :
 
 {\tt NBF} is the number of faces of the reference element (should correspond to {\tt GEOTRANS}). Then follows an already existing integration method for each face (each on a line). This is necessary to make integrations on boundaries.
 
+
 The file format is inspired from \cite{EncyclopCubature}.
 
 \section{Support for Xfem methods}
-\index{GETFEM!Xfem}
-Xfem are finite element method with a particular enrichment with non-polynomials functions (see \cite{Xfem} for instance). The file {\tt getfem_Xfem.h} gives a support for this kind of method. Any ($\tau$-equivalent) valid finite element method can be extended. If {\tt pf} is a valid descriptor of a finite element method, one can build a Xfem with the declaration
+\index{GETFEM!Xfem} Xfem are finite element method with a particular
+enrichment with non-polynomials functions (see \cite{Xfem} for
+instance). The file {\tt getfem_Xfem.h} gives a support for this kind
+of method. Any ($\tau$-equivalent) valid finite element method can be
+extended. If {\tt pf} is a valid descriptor of a finite element
+method, one can build a Xfem with the declaration
 \begin{cppcode}
   Xfem  xf(pf);
 \end{cppcode}
@@ -997,24 +1081,63 @@ then one adds a global function with
 \begin{cppcode}
   xf.add_function(pXf, pXg, pXh, ind);
 \end{cppcode}
-where {\tt pXf} should be a pointer on a type derived from the object {\tt virtual_Xfem_func} representing the global function, {\tt pXg} should be a pointer on a type derived from the object {\tt virtual_Xfem_grad} representing the global function gradient, {\tt pXh} is an optional parameter (only for fourth order derivative problems) which should be a pointer on a type derived from the object {\tt virtual_Xfem_hess} representing the global function Hessian and {\tt ind} is an index which should correspond to this function to identify the degrees of freedom (this should be different for each function added). It is possible to add an arbitrary number of global functions. The total number of degrees of freedom of the Xfem is the number of degrees of freedom of the initial fem times $N_f+1$ where $N_f$ is the number of global functions added.\\[0.5cm]
+where {\tt pXf} should be a pointer on a type derived from the object
+{\tt virtual_Xfem_func} representing the global function, {\tt pXg}
+should be a pointer on a type derived from the object {\tt
+  virtual_Xfem_grad} representing the global function gradient, {\tt
+  pXh} is an optional parameter (only for fourth order derivative
+problems) which should be a pointer on a type derived from the object
+{\tt virtual_Xfem_hess} representing the global function Hessian and
+{\tt ind} is an index which should correspond to this function to
+identify the degrees of freedom (this should be different for each
+function added). It is possible to add an arbitrary number of global
+functions. The total number of degrees of freedom of the Xfem is the
+number of degrees of freedom of the initial fem times $N_f+1$ where
+$N_f$ is the number of global functions added.
 
-If $\varphi_i$ for $i=1..N_d$ are the basis functions of {\tt pf} and $f_j$ for 
-$j=1..N_f$ the additional global functions, the basis functions of the Xfem are the basis function $\varphi_i$ for $i=1..N_d$ and the basis functions $f_j\varphi_i$ for $i=1..N_d$ and $j=1..N_f$. From an element to another and for each function $f_j$, the corresponding degrees of freedom are connected in a same manner as the corresponding degrees of freedom of {\tt pf}.\\[0.5cm]
 
-Most of the time, one only needs an enrichment on a subset of node of the original element. If it is so, one should a posteriori eliminate the unwanted extra-dofs.
+If $\varphi_i$ for $i=1..N_d$ are the basis functions of {\tt pf} and $f_j$
+for $j=1..N_f$ the additional global functions, the basis functions of
+the Xfem are the basis function $\varphi_i$ for $i=1..N_d$ and the basis
+functions $f_j\varphi_i$ for $i=1..N_d$ and $j=1..N_f$. From an element to
+another and for each function $f_j$, the corresponding degrees of
+freedom are connected in a same manner as the corresponding degrees of
+freedom of {\tt pf}.
+
+
+Most of the time, one only needs an enrichment on a subset of node of
+the original element. If it is so, one should a posteriori eliminate
+the unwanted extra-dofs.
 
 \section{Interpolation of a finite element method on non-matching meshes}
 
 
-(evolution of \cpp{virtual\_link\_fem}) A special finite element method is defined in \filename{getfem\_interpolated\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
+(evolution of \cpp{virtual\_link\_fem}) A special finite element method
+is defined in \filename{getfem\_interpolated\_fem.h} which is not a real
+finite element method but allows to interpolate a finite element
+method defined on another mesh. When an assembling procedure has
+different finite element methods as arguments, the mesh on which those
+methods are defined should be the same. If you need to assemble a
+matrix with finite element methods defined on different meshes, you
+may use the finite element methods.
+
+
 \index{GETFEM!getfem::interpolated\_fem}
 \cpp{getfem::new_interpolated\_fem(getfem::mesh\_fem mf, getfem::mesh\_im mim) }\\[0.2cm]
-Because each base function of the finite element method has to be interpolated, such a computation can be a heavy procedure. By default, the interpolated fem object store the interpolation. \\[0.5cm]
+Because each base function of the finite element method has to be
+interpolated, such a computation can be a heavy procedure. By default,
+the interpolated fem object store the interpolation.
 
-The interpolation is made on each Gauss point of the integration methods of  \cpp{mim}, so that you have to use these integration methods in the assembling procedures.\\[0.5cm]
+The interpolation is made on each Gauss point of the integration
+methods of \cpp{mim}, so that you have to use these integration
+methods in the assembling procedures.
 
-For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpolate the second f.e.m. on the mesh of the first f.e.m., assuming that \cpp{mf} describes the finite element method and \cpp{mim} is the chosen integration method.\\[0.5cm]
+For instance if you need to compute the mass matrix between to
+different finite element methods defined on two different meshes, this
+is an example of code which interpolate the second f.e.m. on the mesh
+of the first f.e.m., assuming that \cpp{mf} describes the finite
+element method and \cpp{mim} is the chosen integration method.
+
 \begin{cppcode}
   getfem::mesh\_fem mf\_interpole(mf.linked\_mesh());
   pfem ifem = getfem::new_interpolated\_fem(mf, mim);
@@ -1024,7 +1147,14 @@ For instance if you need to compute the mass matrix between to different finite 
   del_interpolated_fem(ifem);
 \end{cppcode}
 
-The object pointed by \cpp{ifem} contains all the information concerning the interpolation. It could use a lot of memory. As pfem is a smart pointer (a boost instrusive pointer, see http://www.boost.org/), the interpolated fem will be automatically be destroyed when the last pointer on it will be destroyed. To obtain a better accuracy, it is better to refine the integration method (with \cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its order.
+The object pointed by \cpp{ifem} contains all the information
+concerning the interpolation. It could use a lot of memory. As pfem is
+a smart pointer (a boost instrusive pointer, see
+http://www.boost.org/), the interpolated fem will be automatically be
+destroyed when the last pointer on it will be destroyed. To obtain a
+better accuracy, it is better to refine the integration method (with
+\cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its
+order.
 
 \subsection{mixed methods with different meshes}
   to be described ...

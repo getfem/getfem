@@ -57,6 +57,7 @@
 #define GETFEM_MODELING_H__
 
 #include <getfem_assembling.h>
+#include <getfem_derivatives.h>
 #include <gmm_solver_cg.h>
 #include <gmm_solver_gmres.h>
 #include <gmm_precond_ildlt.h>
@@ -193,10 +194,12 @@ namespace getfem {
     if (gmm::mat_nrows(constraints_matrix()) == 0) return;
     size_type ndof = gmm::mat_ncols(tangent_matrix());
     gmm::resize(NS, ndof, ndof);
+    gmm::resize(Ud, ndof);
     size_type nbcols =
       Dirichlet_nullspace(constraints_matrix(), NS,
 			  gmm::scaled(constraints_rhs(), value_type(-1)), Ud);
     gmm::resize(NS, ndof, nbcols);
+    gmm::resize(reduced_residual_, nbcols);
     VECTOR RHaux(ndof);
     gmm::mult(tangent_matrix(), Ud, residual(), RHaux);
     gmm::mult(gmm::transposed(NS), RHaux, reduced_residual_);
@@ -396,11 +399,11 @@ namespace getfem {
     { context_check(); return mesh_fem_positions[i]; }
     size_type nb_mesh_fems(void) { context_check(); return mesh_fems.size(); }
 
-    dim_type dim(void)
+    dim_type dim(void) const
     { context_check(); return mesh_fems[0]->linked_mesh().dim(); }
     /** total number of variables including the variables of the
 	sub-problem(s) if any */
-    size_type nb_dof(void) { context_check(); return nb_total_dof; }
+    size_type nb_dof(void) const { context_check(); return nb_total_dof; }
 
     /** number of linear constraints on the system including the
 	constraints defined in the sub-problem(s) if any. */
@@ -795,6 +798,15 @@ namespace getfem {
 	lambda_("lambda", mf_u_.linked_mesh(), this), mu_("mu", mf_u_.linked_mesh(), this) {
       lambda_.set(lambdai);
       mu_.set(mui);
+    }
+
+    template <class VECTVM>
+    void compute_Von_Mises_or_Tresca(MODEL_STATE &MS, 
+				     const mesh_fem &mf_vm, 
+				     VECTVM &VM, bool tresca) {
+      getfem::interpolation_von_mises_or_tresca
+	(this->mf_u,mf_vm,get_solution(MS),VM,
+	 lambda().mf(),lambda().get(),mu().mf(),mu().get(),tresca);
     }
   };
 

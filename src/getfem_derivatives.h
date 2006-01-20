@@ -35,6 +35,7 @@
 #define GETFEM_DERIVATIVES_H__
 
 #include <getfem_mesh_fem.h>
+#include <gmm_dense_qr.h>
 
 namespace getfem
 {
@@ -188,8 +189,9 @@ namespace getfem
     }
   }
 
-  /**Compute the Von-Mises stress of a field.
-   */
+  /**Compute the Von-Mises stress of a field (only valid for
+     linearized elasticity in 3D)
+  */
   template <typename VEC1, typename VEC2>
   void interpolation_von_mises(const getfem::mesh_fem &mf_u, 
 			       const getfem::mesh_fem &mf_vm, 
@@ -230,7 +232,55 @@ namespace getfem
     cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max=" << 4*mu*mu*vm_max << "\n";
     gmm::scale(VM, 4*mu*mu);
   }
+  
 
+  /** Compute the Von-Mises stress of a field (only valid for
+      linearized elasticity in 3D)
+  */
+  template <typename VEC1, typename VEC2, typename VEC3>
+  void interpolation_von_mises_or_tresca(const getfem::mesh_fem &mf_u, 
+					 const getfem::mesh_fem &mf_vm, 
+					 const VEC1 &U, VEC2 &VM,
+					 const getfem::mesh_fem &mf_lambda,
+					 const VEC3 &lambda, 
+					 const getfem::mesh_fem &mf_mu,
+					 const VEC3 &mu,
+					 bool tresca) {
+    assert(mf_vm.get_qdim() == 1);
+    typedef typename gmm::linalg_traits<VEC1>::value_type T;
+    size_type N = mf_u.get_qdim();
+    std::vector<T> GRAD(mf_vm.nb_dof()*N*N), 
+      LAMBDA(mf_vm.nb_dof()), MU(mf_vm.nb_dof());
+    base_matrix sigma(N,N);
+    base_vector eig(N);
+    if (tresca)
+      interpolation(mf_lambda, mf_vm, lambda, LAMBDA);
+    interpolation(mf_mu, mf_vm, mu, MU);
+    compute_gradient(mf_u, mf_vm, U, GRAD);
+    for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
+      scalar_type trE = 0;
+      for (unsigned j = 0; j < N; ++j)
+	trE += .5 * GRAD[i*N*N + j*N + j];
+      for (unsigned j = 0; j < N; ++j) {
+	for (unsigned k = 0; k < N; ++k) {
+	  scalar_type eps = .5 * (GRAD[i*N*N + j*N + k] + 
+			     GRAD[i*N*N + k*N + j]);
+	  sigma(j,k) = 2*MU[i]*eps;
+	  if (tresca && j == k) sigma(j,k) += LAMBDA[i]*trE;
+	}
+      }
+      if (!tresca) {
+	/* von mises: 1/2 deviator(sigma):deviator(sigma) */
+	//gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma);	
+	VM[i] = gmm::mat_euclidean_norm_sqr(sigma) / 2;
+      } else {
+	/* else compute the tresca criterion */
+	gmm::symmetric_qr_algorithm(sigma, eig);
+	std::sort(eig.begin(), eig.end());
+	VM[i] = eig.back() - eig.front();
+      }
+    }
+  }
 }
 
 #endif

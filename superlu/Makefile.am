@@ -142,3 +142,5 @@ libsuperlu_la_SOURCES = $(SRC)
 libsuperlu_la_CPPFLAGS = @SUPERLU_CPPFLAGS@
 
 CLEANFILES = ii_files/* *.o.d
+
+EXTRA_DIST=License.txt

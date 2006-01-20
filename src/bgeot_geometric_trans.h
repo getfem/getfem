@@ -297,6 +297,9 @@ namespace bgeot
   };
 
 
+  pgeotrans_precomp
+  geotrans_precomp(pgeometric_trans pg, pstored_point_tab ps);
+
   template <typename CONT, typename VEC> 
   void geotrans_precomp_::transform(const CONT& G, size_type j,
 				    VEC& pt) const {

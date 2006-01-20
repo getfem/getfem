@@ -1463,13 +1463,13 @@ void test_nonlin(const getfem::mesh_im &mim, const getfem::mesh_fem &mf)
   }
 }
 
-void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, const getfem::mesh_fem &mf2) {
+void inline_red_test(const getfem::mesh_im &mim, getfem::mesh_fem &mf1, getfem::mesh_fem &mf2) {
   std::vector<scalar_type> U(mf1.nb_dof()); gmm::fill_random(U);
   std::vector<scalar_type> V(mf2.nb_dof()); gmm::fill_random(V);
   getfem::generic_assembly assem;    
   cout << "INLINE RED\n";
   assem.set("u=data(#1);v=data$2(#2);"
-            "V()+=u(i).v(j).comp(Grad(#1)(:,d).Grad(#2)(:,d))(i,j); print comp(Grad(#1)(:,d).Grad(#2)(:,d))");
+            "V()+=u(i).v(j).comp(Grad(#1)(:,d).Grad(#2)(:,d))(i,j);"); //print comp(Grad(#1)(:,d).Grad(#2)(:,d))");
   assem.push_mi(mim);
   assem.push_mf(mf1);
   assem.push_mf(mf2);
@@ -1482,7 +1482,7 @@ void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, co
   cout << "OLD SCHOOL\n";
   getfem::generic_assembly assem2;
   assem2.set("u=data(#1);v=data$2(#2);"
-            "V()+=u(i).v(j).comp(Grad(#1).Grad(#2))(i,d,j,d); print comp(Grad(#1).Grad(#2))(:,d,:,d)");
+	     "V()+=u(i).v(j).comp(Grad(#1).Grad(#2))(i,d,j,d);"); //print comp(Grad(#1).Grad(#2))(:,d,:,d)");
   assem2.push_mi(mim);
   assem2.push_mf(mf1);
   assem2.push_mf(mf2);
@@ -1492,8 +1492,34 @@ void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, co
   assem2.push_vec(v2);
   assem2.assembly();
 
+
+
   cout << "v1 = " << v1 << ", v2 = " << v2 << endl;
   assert(gmm::abs(v1[0]-v2[0]) < 1e-14);
+
+  cout << "INLINE RED2\n";
+  getfem::generic_assembly assem3;
+  mf2.set_qdim(1);
+  mf1.set_qdim(1);
+  U.resize(mf1.nb_dof());
+  V.resize(mf2.nb_dof());
+  assem3.set("u=data(#1);v=data$2(#2);"
+	     //"V()+=comp(vGrad(#1)(i,j,k).u(i));");
+	     "V()+=comp(vGrad(#1)(i,k,d).vGrad(#2)(j,k,d).v(j).u(i));");
+  assem3.push_mi(mim);
+  assem3.push_mf(mf1);
+  assem3.push_mf(mf2);
+  assem3.push_data(U);
+  assem3.push_data(V);
+  std::vector<scalar_type> v3(1);
+  assem3.push_vec(v3);
+  assem3.assembly();
+  mf1.set_qdim(1);
+  mf2.set_qdim(1);
+
+
+  cout << "v1 = " << v1 << ", v3 = " << v3 << endl;
+  assert(gmm::abs(v1[0]-v3[0]) < 1e-14);
 }
 
 void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
@@ -1513,7 +1539,7 @@ void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
   
   getfem::generic_assembly assem2;    
 
-  assem2.set("V()+=comp(GradGT().GradGTInv())(i,k,k,j); print comp(GradGT()); print comp(GradGTInv()); ");
+  assem2.set("V()+=comp(GradGT().GradGTInv())(i,k,k,j);"); // print comp(GradGT()); print comp(GradGTInv()); ");
   assem2.push_mi(mim);
   assem2.push_vec(v1);
   assem2.assembly();
@@ -1548,13 +1574,25 @@ int main(int argc, char *argv[]) {
      getfem::mesh m(2);
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
      m.add_triangle_by_points(mknode(0.,0.),mknode(-1.2,0.),mknode(0.1,1.5));
+     std::vector<base_node> pts;
+     pts.push_back(mknode(0,0));
+     pts.push_back(mknode(.65,0));
+     pts.push_back(mknode(1.2,0));
+     pts.push_back(mknode(0,-.3));
+     pts.push_back(mknode(.6,-.33));
+     pts.push_back(mknode(0.1,-.8));
+     m.add_convex_by_points(bgeot::simplex_geotrans(2,2), pts.begin());
      m.region(1).add(0, 0);
      m.region(1).add(0, 1);
-     getfem::mesh_fem mf(m);
+     getfem::mesh_fem mf(m), mfne(m);
      classical_mesh_fem(mf, 2);     
-     getfem::mesh_fem mfq(m); 
+     mfne.set_finite_element(getfem::fem_descriptor("FEM_ARGYRIS"));
+
+     getfem::mesh_fem mfq(m), mfqne(m); 
      mfq.set_qdim(m.dim());
      classical_mesh_fem(mfq, 2);
+     mfqne.set_qdim(m.dim());
+     mfqne.set_finite_element(getfem::fem_descriptor("FEM_ARGYRIS"));
      getfem::mesh_fem mfd(m); 
      mfd.set_classical_finite_element(1);
      getfem::mesh_fem mfdq(m); 
@@ -1564,8 +1602,14 @@ int main(int argc, char *argv[]) {
      getfem::mesh_im mim(m);
      init_mesh_im(mim, true);
      inline_red_test(mim,mf,mfd);
+     
+     
+     inline_red_test(mim,mfne,mfd);
+
+
      test_gradgt(mim,mf);
      run_tests(mim,mf,mfq,mfd,mfdq,do_new,do_old,tests,1,1);
+     run_tests(mim,mfne,mfqne,mfd,mfdq,do_new,do_old,tests,1,1);
    }
 
    cerr << "\n\n-----------------------------PERFORMANCE TESTS---------------------\n\n";   

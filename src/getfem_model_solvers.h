@@ -75,6 +75,7 @@ namespace getfem {
     virtual bool is_converged(scalar_type) = 0;
     virtual scalar_type converged_value(void) { return conv_alpha; };
     virtual scalar_type converged_residual(void) { return conv_r; };
+    virtual ~abstract_newton_line_search() {}
   };
 
 
@@ -156,13 +157,14 @@ namespace getfem {
   /*     Linear solvers definition                                     */
   /* ***************************************************************** */
 
-  template <class MAT, class VECT> 
+  template <typename MAT, typename VECT> 
   struct abstract_linear_solver {
     virtual void operator ()(const MAT &, VECT &, const VECT &,
 			     gmm::iteration &) const  = 0;
+    virtual ~abstract_linear_solver() {}
   };
 
-  template <class MAT, class VECT> 
+  template <typename MAT, typename VECT> 
   struct linear_solver_cg_preconditioned_ildlt
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -173,7 +175,7 @@ namespace getfem {
     }
   };
 
-  template <class MAT, class VECT> 
+  template <typename MAT, typename VECT> 
   struct linear_solver_gmres_preconditioned_ilu
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -184,7 +186,7 @@ namespace getfem {
     }
   };
 
-  template <class MAT, class VECT> 
+  template <typename MAT, typename VECT> 
   struct linear_solver_gmres_preconditioned_ilut
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -194,8 +196,8 @@ namespace getfem {
       if (!iter.converged()) DAL_WARNING2("gmres did not converge!");
     }
   };
-
-  template <class MAT, class VECT> 
+  
+  template <typename MAT, typename VECT> 
   struct linear_solver_superlu
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -208,16 +210,16 @@ namespace getfem {
 
 
 #ifdef GMM_USES_MUMPS
-  template <class MAT, class VECT> 
+  template <typename MAT, typename VECT> 
   struct linear_solver_mumps : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
 		     gmm::iteration &) const 
-    { gmm::MUMPS_solve(MS, x, b); }
+    { gmm::MUMPS_solve(M, x, b); }
   };
 #endif
 
 #if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-  template <class MAT, class VECT> 
+  template <typename MAT, typename VECT> 
   struct linear_solver_distributed_mumps
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -228,6 +230,89 @@ namespace getfem {
     }
   };
 #endif
+
+  template <typename MODEL_STATE> struct useful_types {
+    
+    TYPEDEF_MODEL_STATE_TYPES;
+    typedef abstract_linear_solver<T_MATRIX, VECTOR> lsolver_type;
+    typedef std::auto_ptr<lsolver_type> plsolver_type;
+  };
+
+
+
+  template <typename MODEL_STATE> 
+  typename useful_types<MODEL_STATE>::plsolver_type
+  default_linear_solver(const mdbrick_abstract<MODEL_STATE> &problem) {
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::vector_type VECTOR;
+
+    typename useful_types<MODEL_STATE>::plsolver_type p;
+  
+#if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+    p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
+#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+    p.reset(new linear_solver_distributed_mumps<T_MATRIX, VECTOR>);
+#else
+    size_type ndof = problem.nb_dof(), max3d = 15000, dim = problem.dim();
+# ifdef GMM_USES_MUMPS
+    max3d = 100000;
+# endif
+    if ((ndof<200000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
+# ifdef GMM_USES_MUMPS
+      p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
+# else
+      p.reset(new linear_solver_superlu<T_MATRIX, VECTOR>);
+# endif
+    }
+    else {
+      if (problem.is_coercive()) 
+	p.reset(new linear_solver_cg_preconditioned_ildlt<T_MATRIX, VECTOR>);
+      else if (problem.mixed_variables().card() != 0)
+	p.reset(new linear_solver_gmres_preconditioned_ilu<T_MATRIX, VECTOR>);
+      else 
+	p.reset(new linear_solver_gmres_preconditioned_ilut<T_MATRIX, VECTOR>);
+    }
+#endif
+    return p;
+  }
+
+
+  template <typename MODEL_STATE>
+  typename useful_types<MODEL_STATE>::plsolver_type
+  select_linear_solver(const mdbrick_abstract<MODEL_STATE> &problem,
+		       std::string &name) {
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    
+    typename useful_types<MODEL_STATE>::plsolver_type p;
+
+    if (ftool::casecmp(name, "superlu") == 0)
+      p.reset(new linear_solver_superlu<T_MATRIX, VECTOR>);
+    else if (ftool::casecmp(name, "mumps") == 0) {
+#ifdef GMM_USES_MUMPS
+# if GETFEM_PARA_LEVEL <= 1
+      p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
+# else
+      p.reset(new linear_solver_distributed_mumps<T_MATRIX, VECTOR>);
+# endif
+#else
+      DAL_THROW(failure_error, "Mumsp is not interfaced");
+#endif
+    }
+    else if (ftool::casecmp(name, "cg/ildlt") == 0)
+      p.reset(new linear_solver_cg_preconditioned_ildlt<T_MATRIX, VECTOR>);
+    else if (ftool::casecmp(name, "gmres/ilu") == 0)
+      p.reset(new linear_solver_gmres_preconditioned_ilu<T_MATRIX, VECTOR>);
+    else if (ftool::casecmp(name, "gmres/ilut") == 0)
+      p.reset(new linear_solver_gmres_preconditioned_ilut<T_MATRIX, VECTOR>);
+    else if (ftool::casecmp(name, "auto") == 0)
+      p = default_linear_solver(problem);
+    else
+      DAL_THROW(failure_error, "Unknown linear solver");
+    return p;
+  }
+
+
 
   /* ***************************************************************** */
   /*     Newton algorithm.                                             */
@@ -240,6 +325,7 @@ namespace getfem {
     // TODO : take iter into account for the Newton. compute a consistent 
     //        max residu.
     typedef typename gmm::linalg_traits<typename PB::VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.reduce_noisy();
     iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
@@ -249,14 +335,15 @@ namespace getfem {
     typename PB::VECTOR dr(gmm::vect_size(pb.residual()));
     typename PB::VECTOR b(gmm::vect_size(pb.residual()));
 
-    while (!iter.finished(gmm::vect_norm2(pb.residual()))) {
+    while (!iter.finished(pb.residual_norm())) {
       gmm::iteration iter_linsolv = iter_linsolv0;
       pb.compute_tangent_matrix();
       gmm::clear(dr);
       gmm::copy(gmm::scaled(pb.residual(), T(-1)), b);
       linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
-      pb.line_search(dr); // it is assumed that the line search execute
-      // a pb.compute_residual();
+      R alpha = pb.line_search(dr, iter); // it is assumed that the line
+      // search execute a pb.compute_residual();
+      if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
       ++iter;
     }
   }
@@ -276,23 +363,38 @@ namespace getfem {
     abstract_newton_line_search &ls;
     VECTOR stateinit, d;
 
-    void compute_tangent_matrix(void)
-    { pb.compute_tangent_matrix(MS);  MS.compute_reduced_system(); }
+    void compute_tangent_matrix(void) {
+      pb.compute_tangent_matrix(MS);
+      if (pb.nb_constraints() > 0) {
+	pb.compute_residual(MS);
+	MS.compute_reduced_system();
+      }
+    }
 
     const T_MATRIX &tangent_matrix(void)
     { return MS.reduced_tangent_matrix(); }
     
-    void compute_residual(void)
-    { pb.compute_residual(MS); MS.compute_reduced_residual(); }
+    void compute_residual(void) {
+      pb.compute_residual(MS);
+      if (pb.nb_constraints() > 0) MS.compute_reduced_residual();
+    }
 
     const VECTOR &residual(void) { return MS.reduced_residual(); }
 
-    void line_search(VECTOR &dr) {
+    R residual_norm(void) { return MS.reduced_residual_norm(); }
+
+    R line_search(VECTOR &dr, const gmm::iteration &iter) {
       gmm::resize(d, pb.nb_dof());
       gmm::resize(stateinit, pb.nb_dof());
       gmm::copy(MS.state(), stateinit);
       MS.unreduced_solution(dr, d);
-      R alpha, res;
+      R alpha(1), res;
+
+      if (iter.get_iteration() == 0) {
+	gmm::add(d, MS.state());
+	compute_residual();
+	return alpha;
+      }
       
       ls.init_search(gmm::vect_norm2(residual()));
       do {
@@ -301,13 +403,14 @@ namespace getfem {
 	compute_residual();
 	res = MS.reduced_residual_norm();
       } while (!ls.is_converged(res));
-      
+
       if (alpha != ls.converged_value()) {
 	alpha = ls.converged_value();
 	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	res = ls.converged_residual();
 	compute_residual();
       }
+      return alpha;
     }
 
     model_problem(MODEL_STATE &MS_, mdbrick_abstract<MODEL_STATE> &pb_,
@@ -319,7 +422,6 @@ namespace getfem {
   /* ***************************************************************** */
   /*     Standard solve.                                               */
   /* ***************************************************************** */
-
 
   /** A default solver for the model brick system.  
       
@@ -339,45 +441,16 @@ namespace getfem {
   @ingroup bricks
   */
   template <typename MODEL_STATE> void
-  standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
-		 gmm::iteration &iter) {
+  standard_solve
+  (MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
+   gmm::iteration &iter,
+   typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
 
     TYPEDEF_MODEL_STATE_TYPES;
     basic_newton_line_search ls;
     model_problem<MODEL_STATE> mdpb(MS, problem, ls);
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
-    
-    std::auto_ptr<abstract_linear_solver<T_MATRIX, VECTOR> > lsolver;
-
-#if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-    lsolver.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
-#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-    lsolver.reset(new linear_solver_distributed_mumps<T_MATRIX, VECTOR>);
-#else
-    size_type ndof = problem.nb_dof(), max3d = 15000, dim = problem.dim();
-# ifdef GMM_USES_MUMPS
-    max3d = 100000;
-# endif
-    if ((ndof<200000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
-# ifdef GMM_USES_MUMPS
-      lsolver.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
-# else
-      lsolver.reset(new linear_solver_superlu<T_MATRIX, VECTOR>);
-# endif
-    }
-    else {
-      if (problem.is_coercive()) 
-	lsolver.reset
-	  (new linear_solver_cg_preconditioned_ildlt<T_MATRIX, VECTOR>);
-      else if (problem.mixed_variables().card() != 0)
-	lsolver.reset
-	  (new linear_solver_gmres_preconditioned_ilu<T_MATRIX, VECTOR>);
-      else 
-	lsolver.reset
-	  (new linear_solver_gmres_preconditioned_ilut<T_MATRIX, VECTOR>);
-    }
-#endif
 
     if (problem.is_linear()) {
       mdpb.compute_tangent_matrix();
@@ -391,6 +464,12 @@ namespace getfem {
     }
     else
       classical_Newton(mdpb, iter, *lsolver);
+  }
+
+  template <typename MODEL_STATE> void
+  standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
+		 gmm::iteration &iter) {
+    standard_solve(MS, problem, iter, default_linear_solver(problem));
   }
 
 
@@ -520,7 +599,7 @@ namespace getfem {
 	if (*it == &(mf.linked_mesh())) break; 
       size_type pos = problem.get_mesh_fem_position(i);
       if (pos != apos)
-	DAL_THROW(failure_error, "Multiplicators are not taken into account");
+	DAL_THROW(failure_error, "Multipliers are not taken into account");
       size_type length = mf.nb_dof();
       apos += length;
       for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
@@ -529,7 +608,7 @@ namespace getfem {
 	  Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
       }
       if (apos != ndof)
-	DAL_THROW(failure_error, "Multiplicators are not taken into account");
+	DAL_THROW(failure_error, "Multipliers are not taken into account");
     }
 
     std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nparts);    

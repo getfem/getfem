@@ -1142,7 +1142,7 @@ namespace getfem {
     */
     if (tok_type() == IMREF) {
       if (tok_imref_num() >= imtab.size()) 
-	ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_im #" << tok_imref_num()+1);
+	ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_im %" << tok_imref_num()+1);
       what.set_im(*imtab[tok_imref_num()]); advance();
       accept(COMMA, "expecting ','");
     } else {

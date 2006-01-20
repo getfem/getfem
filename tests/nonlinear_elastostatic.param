@@ -1,3 +1,4 @@
+% -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program nonlinear elastostatic problem                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,7 +42,7 @@ FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
-DATA_FEM_TYPE = 'FEM_PK(3,1)'
+DATA_FEM_TYPE = 'FEM_PK(3,2)'
 
 
 INTEGRATION = 'IM_TETRAHEDRON(6)'
@@ -64,9 +65,9 @@ INTEGRATION = 'IM_TETRAHEDRON(6)'
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDUAL = 1E-6;     	% residu for iterative solvers.
-MAXITER = 15;
-DIRICHLET_VERSION=2
-NBSTEP = 50;
+MAXITER = 500;
+DIRICHLET_VERSION=0;
+NBSTEP = 5;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
 VTK_EXPORT = 1 % export solution to a .vtk file ?
