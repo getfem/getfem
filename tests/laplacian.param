@@ -6,7 +6,7 @@
 LX = 1.0; LY = LX; LZ = LX; % sizes of the domain.
 INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
-N = 1;                      % domain in dimension N
+N = 2;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
 NX = 10;                    % space step.
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh

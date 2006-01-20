@@ -6,7 +6,7 @@
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.5;    % Friction coefficient.
+FRICTION_COEF = 1.0;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
 PG=12000;

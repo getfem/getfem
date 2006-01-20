@@ -72,7 +72,6 @@ include_HEADERS =                          \
 	getfem_norm.h         	           \
 	getfem_regular_meshes.h            \
 	getfem_modeling.h                  \
-	getfem_Newton.h                    \
 	getfem_model_solvers.h             \
 	getfem_linearized_plates.h         \
 	getfem_Coulomb_friction.h          \
