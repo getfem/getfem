@@ -1546,6 +1546,8 @@ namespace getfem {
 	  gmm::mult(get_B(), gmm::sub_vector(MS.state(), SUBJ),
 		    gmm::scaled(CRHS, value_type(-1)),
 		    gmm::sub_vector(MS.constraints_rhs(), SUBI));
+	  gmm::copy(get_B(), gmm::sub_matrix(MS.constraints_matrix(),
+					     SUBI, SUBJ));
 	}
 	break;
       }
@@ -1963,6 +1965,7 @@ namespace getfem {
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.constraints_rhs(), SUBI));
+	gmm::copy(G, gmm::sub_matrix(MS.constraints_matrix(), SUBI, SUBJ));
       }
     }
     /** change the @f$ r(x) @f$ right hand side.

@@ -244,7 +244,6 @@ namespace getfem {
     iter_linsolv0.reduce_noisy();
     iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
 
-    pb.compute_tangent_matrix();
     pb.compute_residual();
 
     typename PB::VECTOR dr(gmm::vect_size(pb.residual()));
