@@ -163,6 +163,13 @@ namespace getfem {
     gmm::mult(G, pgp->grad(0), K);
     for (size_type i = 0; i < 3; ++i) {
       if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
+
+      const bgeot::base_tensor &t = pfp->val(i);
+       cout << "val at point " << i << " : " << t << endl;
+      const bgeot::base_tensor &tt = pfp->grad(i);
+      cout << "grad at point " << i << " : " << tt << endl;
+      
+
       M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
       M(6+i, 6+i) = K(1,0); M(6+i, 6+i) = K(1,1);
     }
@@ -291,7 +298,7 @@ namespace getfem {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
 		<< " should be 0.");
-    virtual_fem *p = new composite_C1_triangle__;
+    virtual_fem *p = new HCT_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
