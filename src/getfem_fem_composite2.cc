@@ -142,21 +142,59 @@ namespace getfem {
 					  bgeot::pgeometric_trans pgt) const {
 
     static bgeot::pgeotrans_precomp pgp;
+    static pfem_precomp pfp;
     static bgeot::pgeometric_trans pgt_stored = 0;
     static base_matrix K(2, 2);
     dim_type N = G.nrows();
     
     if (N != 2) DAL_THROW(failure_error, "Sorry, this version of hermite "
 			  "element works only on dimension two.")
-      if (pgt != pgt_stored)
-	{ pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0)); }
+      if (pgt != pgt_stored) {
+	pgt_stored = pgt;
+	pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+	pfp = fem_precomp(this, node_tab(0));
+      }
     gmm::copy(gmm::identity_matrix(), M);
     
     gmm::mult(G, pgp->grad(0), K);
-    for (size_type i = 0; i < 6; ++i) {
+    for (size_type i = 0; i < 3; ++i) {
       if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
-      M( 6+i, 6+i) = K(0,0); M( 6+i, 12+i) = K(0,1);
-      M(12+i, 6+i) = K(1,0); M(12+i, 12+i) = K(1,1);
+      M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
+      M(6+i, 6+i) = K(1,0); M(6+i, 6+i) = K(1,1);
+    }
+
+    // take the normal derivatives into account
+    static base_matrix W(3, 12);
+    static base_small_vector norient(M_PI, M_PI * M_PI);
+    if (pgt->is_linear()) gmm::lu_inverse(K); 
+    for (unsigned i = 9; i < 12; ++i) {
+      if (!(pgt->is_linear()))
+	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+      bgeot::base_small_vector n(2), v(2);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i-9], n);
+      n /= gmm::vect_norm2(n);
+
+      scalar_type ps = gmm::vect_sp(n, norient);
+      if (ps < 0) n *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("Argyris : The normal orientation may not be correct");
+      gmm::mult(K, n, v);
+      const bgeot::base_tensor &t = pfp->grad(i);
+      for (unsigned j = 0; j < 21; ++j)
+	W(i-9, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+    }
+    
+    static base_matrix A(3, 3);
+    static bgeot::base_vector w(3), coeff(3);
+    static gmm::sub_interval SUBI(9, 3), SUBJ(0, 3);
+    gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
+    gmm::lu_inverse(A);
+    gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
+
+    for (unsigned j = 0; j < 9; ++j) {
+      gmm::mult(W, gmm::mat_row(M, j), w);
+      gmm::mult(A, gmm::scaled(w, -1.0), coeff);
+      gmm::copy(coeff, gmm::sub_vector(gmm::mat_row(M, j), SUBI));
     }
   }
 
@@ -173,83 +211,55 @@ namespace getfem {
     mp = mesh_precomposite(m);
     
     std::stringstream s
-      ("1 - 3*x^2 - 6*x*y - 3*y^2 + 2*x^3 + 6*x^2*y + 6*x*y^2 + 2*y^3;"
-       "0;"
-       "0;"
-       "0;"
-       "3*x^2 + 13*x*y - 2*x^3 - 13*x^2*y - 13*x*y^2;"
-       "-7*x*y + 3*y^2 + 7*x^2*y + 7*x*y^2 - 2*y^3;"
-       "0;"
-       "1 - 3*x^2 - 6*x*y - 3*y^2 + 2*x^3 + 6*x^2*y + 6*x*y^2 + 2*y^3;"
-       "0;"
-       "0;"
-       "0;"
-       "3*x^2 - 2*x^3;"
-       "13*x*y + 3*y^2 - 13*x^2*y - 13*x*y^2 - 2*y^3;"
-       "3*x^2 - 7*x*y - 2*x^3 + 7*x^2*y + 7*x*y^2;"
-       "1 - 3*x^2 - 6*x*y - 3*y^2 + 2*x^3 + 6*x^2*y + 6*x*y^2 + 2*y^3;"
-       "0;"
-       "7*x*y - 7*x^2*y - 7*x*y^2;"
-       "1 - 3*x^2 - 13*x*y - 3*y^2 + 2*x^3 + 13*x^2*y + 13*x*y^2 + 2*y^3;"
-       "3*x^2 + 6*x*y - 2*x^3 - 6*x^2*y - 6*x*y^2;"
-       "6*x*y + 3*y^2 - 6*x^2*y - 6*x*y^2 - 2*y^3;"
-       "0;"
-       "0;"
-       "3*y^2 - 2*y^3;"
-       "0;"
-       "x - 2*x^2 - 2*x*y + x^3 + 2*x^2*y + x*y^2;"
-       "0;"
-       "0;"
-       "0;"
-       "-x^2 + 2*x*y + x^3 - 2*x^2*y - 2*x*y^2;"
-       "-2*x*y + 1*y^2 + 2*x^2*y + 2*x*y^2 - 1*y^3;"
-       "0;"
-       "1*x - 2*x^2 - 4*x*y + x^3 + 4*x^2*y + 3*x*y^2;"
-       "0;"
-       "0;"
-       "0;"
-       "-1*x^2 + 1*x^3;"
-       "-1*x*y + 1*x^2*y + 2*x*y^2;"
-       "1*x*y - 2*x^2*y - 1*x*y^2;"
-       "x - 2*x^2 + 1*x^3 - 1*x*y^2;"
-       "0;"
-       "-1*x*y + 1*x^2*y + 1*x*y^2;"
-       "-y + 3*x*y + 2*y^2 - 2*x^2*y - 3*x*y^2 - 1*y^3;"
-       "-1*x^2 + 1*x^3;"
-       "-2*x*y + 2*x^2*y + 3*x*y^2;"
-       "0;"
-       "0;"
-       "x*y^2;"
-       "0;"
-       "y - 2*x*y - 2*y^2 + x^2*y + 2*x*y^2 + y^3;"
-       "0;"
-       "0;"
-       "0;"
-       "-1*x*y + 2*x^2*y + 1*x*y^2;"
-       "1*x*y - 1*x^2*y - 2*x*y^2;"
-       "0;"
-       "y - 2*y^2 - x^2*y + 1*y^3;"
-       "0;"
-       "0;"
-       "0;"
-       "x^2*y;"
-       "2*x*y - y^2 - 2*x^2*y - 2*x*y^2 + y^3;"
-       "1*x^2 - 2*x*y - 1*x^3 + 2*x^2*y + 2*x*y^2;"
-       "1*y - 4*x*y - 2*y^2 + 3*x^2*y + 4*x*y^2 + y^3;"
-       "0;"
-       "-x*y + x^2*y + x*y^2;"
-       "-x + 2*x^2 + 3*x*y - 1*x^3 - 3*x^2*y - 2*x*y^2;"
-       "-2*x*y + 3*x^2*y + 2*x*y^2;"
-       "-y^2 + y^3;"
-       "0;"
-       "0;"
-       "-y^2 + y^3;"
-       "0;"
-       "-27*x*y + 27*x^2*y + 27*x*y^2;"
-       "27*x*y - 27*x^2*y - 27*x*y^2;"
-       "0;"
-       "0;");
-
+      ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y"
+       "  + 21*x*y^2 + 7*y^3;"
+       "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
+       "1 - 3*x^2 - 3*y^2 + 2*x^3 - 3*x*y^2 + 3*y^3;"
+       "1 - 4.5*x - 4.5*y + 9*x^2 + 15*x*y + 6*y^2 - 4.5*x^3 - 10.5*x^2*y"
+       "  - 10.5*x*y^2 - 2.5*y^3;"
+       "3*x^2 - 2.5*x^3 + 1.5*x^2*y;"
+       "3*x^2 - 2*x^3 + 1.5*x*y^2 - 0.5*y^3;"
+       "1 - 4.5*x - 4.5*y + 6*x^2 + 15*x*y + 9*y^2 - 2.5*x^3 - 10.5*x^2*y"
+       "  - 10.5*x*y^2 - 4.5*y^3;"
+       "3*y^2 - 0.5*x^3 + 1.5*x^2*y - 2*y^3;"
+       "3*y^2 + 1.5*x*y^2 - 2.5*y^3;"
+       "-(1/6) + 2.5*x - 4.5*x^2 - 4*x*y + 0.5*y^2 + (13/6)*x^3 + 4*x^2*y"
+       "  + 1.5*x*y^2 - (1/3)*y^3;"
+       "x - 0.5*x^2 - 3*x*y - (7/6)*x^3 + 2*x^2*y + 2*x*y^2;"
+       "x - 2*x^2 - 1.5*y^2 + x^3 - 0.5*x*y^2 + (7/3)*y^3;"
+       "-(1/6) + 0.75*x + 0.75*y - 2*x^2 - 2.5*x*y - 1*y^2 + (17/12)*x^3"
+       "  + 1.75*x^2*y + 1.75*x*y^2 + (5/12)*y^3;"
+       "-1*x^2 + (13/12)*x^3 - 0.25*x^2*y;"
+       "-x^2 + x^3 - 0.25*x*y^2 + (1/12)*y^3;"
+       "(2/3) - 2.75*x - 3.25*y + 3.5*x^2 + 9.5*x*y + 4.5*y^2 - (17/12)*x^3"
+       "  - 6.25*x^2*y - 5.75*x*y^2 - (13/12)*y^3;"
+       "0.5*x^2 - x*y - (13/12)*x^3 + 1.75*x^2*y + 2*x*y^2;"
+       "-0.5*y^2 + 2.25*x*y^2 + (5/12)*y^3;"
+       "-(1/6) + 2.5*y + 0.5*x^2 - 4*x*y - 4.5*y^2 - (1/3)*x^3 + 1.5*x^2*y"
+       "   + 4*x*y^2 + (13/6)*y^3;"
+       "1*y - 1.5*x^2 - 2*y^2 + (7/3)*x^3 - 0.5*x^2*y + y^3;"
+       "y - 3*x*y - 0.5*y^2 + 2*x^2*y + 2*x*y^2 - (7/6)*y^3;"
+       "(2/3) - 3.25*x - 2.75*y + 4.5*x^2 + 9.5*x*y + 3.5*y^2 - (13/12)*x^3"
+       "  - 5.75*x^2*y - 6.25*x*y^2 - (17/12)*y^3;"
+       "-0.5*x^2 + (5/12)*x^3 + 2.25*x^2*y;"
+       "-x*y + 0.5*y^2 + 2*x^2*y + 1.75*x*y^2 - (13/12)*y^3;"
+       "-(1/6) + 0.75*x + 0.75*y - 1*x^2 - 2.5*x*y - 2*y^2 + (5/12)*x^3"
+       "  + 1.75*x^2*y + 1.75*x*y^2 + (17/12)*y^3;"
+       "-1*y^2 + (1/12)*x^3 - 0.25*x^2*y + 1*y^3;"
+       "-1*y^2 - 0.25*x*y^2 + (13/12)*y^3;"
+       "-(2/3) + 3*x + 3*y - 4*x^2 - 10*x*y - 4*y^2 + (5/3)*x^3 + 7*x^2*y"
+       "  + 7*x*y^2 + (5/3)*y^3;"
+       "(1/3)*x^3 - 1*x^2*y;"
+       "-1*x*y^2 + (1/3)*y^3;"
+       "(2/3) - 2*x - 4*y + 2*x^2 + 8*x*y + 6*y^2 - (2/3)*x^3 - 4*x^2*y"
+       "  - 6*x*y^2 - (8/3)*y^3;"
+       "2*x^2 - 4*x*y - (10/3)*x^3 + 4*x^2*y + 4*x*y^2;"
+       "-2*y^2 + 2*x*y^2 + (8/3)*y^3;"
+       "(2/3) - 4*x - 2*y + 6*x^2 + 8*x*y + 2*y^2 - (8/3)*x^3 - 6*x^2*y"
+       "  - 4*x*y^2 - (2/3)*y^3;"
+       "-2*x^2 + (8/3)*x^3 + 2*x^2*y;"
+       "-4*x*y + 2*y^2 + 4*x^2*y + 4*x*y^2 - (10/3)*y^3;");
+    
     bgeot::pconvex_ref cr = bgeot::simplex_of_reference(2);
     pmesh pm;
     pmesh_precomposite pmp;
@@ -266,9 +276,9 @@ namespace getfem {
     estimated_degree() = 3;
     init_cvs_node();
 
-    base()=std::vector<polynomial_composite2>(19,polynomial_composite2(*pmp));
-    for (size_type k = 0; k < 19; ++k)
-      for (size_type ic = 0; ic < 4; ++ic) {
+    base()=std::vector<polynomial_composite2>(12,polynomial_composite2(*pmp));
+    for (size_type k = 0; k < 12; ++k)
+      for (size_type ic = 0; ic < 3; ++ic) {
 	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
 	cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
       }
@@ -277,13 +287,12 @@ namespace getfem {
       if (i == 1) pdof = derivative_dof(1, 0);
       if (i == 2) pdof = derivative_dof(1, 1);
       add_node(pdof, base_node(0.0, 0.0));
-      add_node(pdof, base_node(0.5, 0.0));
       add_node(pdof, base_node(1.0, 0.0));
-      add_node(pdof, base_node(0.0, 0.5));
-      add_node(pdof, base_node(0.5, 0.5));
       add_node(pdof, base_node(0.0, 1.0));
     }
-    add_node(lagrange_dof(2), base_node(1.0/3.0, 1.0/3.0));
+    add_node(norm_derivative_dof(2), base_node(0.5, 0.5));
+    add_node(norm_derivative_dof(2), base_node(0.0, 0.5));
+    add_node(norm_derivative_dof(2), base_node(0.5, 0.0));
   }
 
 

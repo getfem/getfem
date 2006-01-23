@@ -1648,6 +1648,8 @@ namespace getfem
 	std::vector<dal::pstatic_stored_object> &dependencies);
   pfem PK_composite_full_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies);
+  pfem composite_C1_triangle_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies);
 
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
@@ -1674,6 +1676,7 @@ namespace getfem
 		 PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
       add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
+      add_suffix("COMPOSITEC1_TRIANGLE", composite_C1_triangle_fem);
     }
   };
   

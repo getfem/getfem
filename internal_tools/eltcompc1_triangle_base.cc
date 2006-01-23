@@ -6,31 +6,57 @@
 #include <gmm.h>
 #include <getfem_config.h>
 
-/// Print P to the output stream o. for instance cout << P;
-template<typename T> void poly_cpp_display(std::ostream &o,
-					   const bgeot::polynomial<T>& P) { 
-  bool first = true; unsigned n = 0;
+using bgeot::size_type;
+
+template<typename T> void print_const(std::ostream &o, T a) {
+  if (a < 0) o << "-";
+  a = gmm::abs(a);
+  if (gmm::abs(a - 1.0/3.0) < 1E-12) { o << "(1/3)"; return; }
+  if (gmm::abs(a - 2.0/3.0) < 1E-12) { o << "(2/3)"; return; }
+  if (gmm::abs(a - 5.0/3.0) < 1E-12) { o << "(5/3)"; return; }
+  if (gmm::abs(a - 8.0/3.0) < 1E-12) { o << "(8/3)"; return; }
+  if (gmm::abs(a - 10.0/3.0) < 1E-12) { o << "(10/3)"; return; }
+  if (gmm::abs(a - 1.0/6.0) < 1E-12) { o << "(1/6)"; return; }
+  if (gmm::abs(a - 13.0/6.0) < 1E-12) { o << "(13/6)"; return; }
+  if (gmm::abs(a - 7.0/3.0) < 1E-12) { o << "(7/3)"; return; }
+  if (gmm::abs(a - 7.0/6.0) < 1E-12) { o << "(7/6)"; return; }
+  if (gmm::abs(a - 1.0/12.0) < 1E-12) { o << "(1/12)"; return; }
+  if (gmm::abs(a - 5.0/12.0) < 1E-12) { o << "(5/12)"; return; }
+  if (gmm::abs(a - 13.0/12.0) < 1E-12) { o << "(13/12)"; return; }
+  if (gmm::abs(a - 17.0/12.0) < 1E-12) { o << "(17/12)"; return; }
+  if (gmm::abs(a - 23.0/12.0) < 1E-12) { o << "(13/12)"; return; }
+  o << a;
+}
+
+template<typename T> void spec_print(std::ostream &o,
+				     const bgeot::polynomial<T>& P) { 
+  bool first = true; size_type n = 0;
   typename bgeot::polynomial<T>::const_iterator it = P.begin(), ite = P.end();
   bgeot::power_index mi(P.dim());
   if (it != ite && *it != T(0))
-    { o << *it; first = false; ++it; ++n; ++mi; }
+    {  print_const(o, *it); first = false; ++it; ++n; ++mi; }
   for ( ; it != ite ; ++it, ++mi ) {
     if (*it != T(0)) {
+      bool first_var = true;
       if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
       else if (*it < T(0)) o << "-";
-      if (gmm::abs(*it)!=T(1)) o << gmm::abs(*it);
-      for (unsigned j = 0; j < P.dim(); ++j)
+      if (gmm::abs(*it)!=T(1)) {
+	print_const(o, gmm::abs(*it));
+	first_var = false;
+      }
+      for (size_type j = 0; j < P.dim(); ++j)
 	if (mi[j] != 0) {
-	  if (j != 0 || gmm::abs(*it) != T(1)) o << "*";
-	  for (unsigned k=0; k < mi[j]; ++k) {
-	    if (k) o << "*"; o << "xyz"[j];
-	  }
+	  if (!first_var) o << "*"; first_var = false;
+	  if (P.dim() <= 7) o << "xyzwvut"[j];
+	  else o << "x_" << j; 
+	  if (mi[j] > 1) o << "^" << mi[j];
 	}
       first = false; ++n;
     }
   }
   if (n == 0) o << "0";
 }
+
 
 
 int main(void) {
@@ -193,9 +219,9 @@ int main(void) {
 	q = p; q.derivative(1); q *= u_2; q2 = p;
 	q2.derivative(0); q2 *= u_3; q += q2;
 	if (j == 2)
-	  M(28, i+10*j) =  q.eval(bgeot::base_node(u_2, u_6).begin());
+	  M(29, i+10*j) =  q.eval(bgeot::base_node(u_2, u_6).begin());
 	if (j == 0)
-	  M(28, i+10*j) = -q.eval(bgeot::base_node(u_2, u_6).begin());
+	  M(29, i+10*j) = -q.eval(bgeot::base_node(u_2, u_6).begin());
     }
     
     gmm::clean(M, 1E-10);
@@ -208,7 +234,7 @@ int main(void) {
     
     cout.precision(11);
     
-    bool latex = true;
+    bool latex = false;
     
     for (int i = 0; i < 12; ++i)
       for (int j = 0; j < 3; ++j) {
@@ -220,7 +246,7 @@ int main(void) {
 	  cout << "\\hat{\\varphi}_{" << i << "}^{" << j << "}(x,y) = ";
 	else 
 	  cout << "    \"";
-	cout << p;
+	spec_print(cout, p);
 	if (latex)
 	  cout << ",\\\\" << endl;
 	else
