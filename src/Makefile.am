@@ -159,6 +159,7 @@ SRC =                                      \
 	getfem_mesh_fem_global_function.cc \
 	getfem_Xfem.cc                     \
 	getfem_fem_composite.cc            \
+	getfem_fem_composite2.cc           \
 	getfem_mat_elem.cc                 \
 	getfem_mat_elem_type.cc            \
 	getfem_mesh.cc                     \

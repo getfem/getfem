@@ -61,6 +61,7 @@ namespace getfem {
     { return msh->trans_of_convex(ic); }
     
     mesh_precomposite(const mesh &m);
+    mesh_precomposite(void) : msh(0) {}
   };
 
   typedef const mesh_precomposite *pmesh_precomposite;
