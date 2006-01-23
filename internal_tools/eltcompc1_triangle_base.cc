@@ -51,170 +51,151 @@ int main(void) {
     base[9] = y*y*y;
     
 
-    bgeot::base_matrix M(40, 40);
+    bgeot::base_matrix M(30, 30);
     
-    for (int j = 0; j < 4; ++j)
+    for (int j = 0; j < 3; ++j)
       for (int i = 0; i < 10; ++i) {
 	bgeot::base_poly p = base[i], q, q2;
-	if (j == 0)
+	if (j == 1)
 	  M( 0, i+10*j) = p.eval(bgeot::base_node(0.0, 0.0).begin());
-	if (j == 0)
+	if (j == 2)
 	  M( 1, i+10*j) = p.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M( 2, i+10*j) = p.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 0)
-	  M( 3, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 3)
-	  M( 4, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 2)
-	  M( 5, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
+	if (j == 1)
+	  M( 2, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
 
 	q = p; q.derivative(0);
-	if (j == 0)
+	if (j == 1)
+	  M( 3, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
+	if (j == 2)
+	  M( 4, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
+	if (j == 1)
+	  M( 5, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
+
+	q = p; q.derivative(1);
+	if (j == 1)
 	  M( 6, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
-	if (j == 0)
+	if (j == 2)
 	  M( 7, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M( 8, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 0)
-	  M( 9, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 3)
-	  M(10, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 2)
-	  M(11, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
+	if (j == 1)
+	  M( 8, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
 
-	q = p; q.derivative(1);
-	if (j == 0)
-	  M(12, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
-	if (j == 0)
-	  M(13, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M(14, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 0)
-	  M(15, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 3)
-	  M(16, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 2)
-	  M(17, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-
-	double u_3 = 1.0 / 3.0;
-	if (j == 1)
-	  M(18, i+10*j) = p.eval(bgeot::base_node(u_3, u_3).begin());
-
-	// racord en (0.5, 0.0)
-	if (j == 1)
-	  M(19, i+10*j) =  p.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 0)
-	  M(19, i+10*j) = -p.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 1)
-	  M(20, i+10*j) =  p.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 3)
-	  M(20, i+10*j) = -p.eval(bgeot::base_node(0.0, 0.0).begin());
-	q = p; q.derivative(0);
-	if (j == 1) {
-	  q = p; q.derivative(1);
-	  M(21, i+10*j) =  q.eval(bgeot::base_node(0.0, 1.0).begin());
-	  M(22, i+10*j) =  q.eval(bgeot::base_node(0.0, 1.0).begin());
-	}
-	if (j == 0)
-	  M(21, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M(22, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
-	q = p; q.derivative(1);
-	if (j == 1) {
-	  q = p; q.derivative(0);
-	  M(23, i+10*j) =  q.eval(bgeot::base_node(0.0, 1.0).begin());
-	  M(24, i+10*j) =  q.eval(bgeot::base_node(0.0, 1.0).begin());
-	}
-	if (j == 0)
-	  M(23, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M(24, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
-	
-	// raccord en (0.0, 0.5)
-	if (j == 1)
-	  M(25, i+10*j) =  p.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 0)
-	  M(25, i+10*j) = -p.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 1)
-	  M(26, i+10*j) =  p.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 2)
-	  M(26, i+10*j) = -p.eval(bgeot::base_node(0.0, 0.0).begin());
-	q = p; q.derivative(0);
-	if (j == 1) {
-	  q = p; q.derivative(1);
-	  M(27, i+10*j) =  q.eval(bgeot::base_node(1.0, 0.0).begin());
-	  M(28, i+10*j) =  q.eval(bgeot::base_node(1.0, 0.0).begin());
-	}
-	if (j == 0)
-	  M(27, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 2)
-	  M(28, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
-	q = p; q.derivative(1);
-	if (j == 1) {
-	  q = p; q.derivative(0);
-	  M(29, i+10*j) =  q.eval(bgeot::base_node(1.0, 0.0).begin());
-	  M(30, i+10*j) =  q.eval(bgeot::base_node(1.0, 0.0).begin());
-	}
-	if (j == 0)
-	  M(29, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	if (j == 2)
-	  M(30, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
-
-	// raccord en (0.5, 0.5)
-	if (j == 1)
-	  M(31, i+10*j) =  p.eval(bgeot::base_node(0.0, 0.0).begin());
-	if (j == 2)
-	  M(31, i+10*j) = -p.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 1)
-	  M(32, i+10*j) =  p.eval(bgeot::base_node(0.0, 0.0).begin());
-	if (j == 3)
-	  M(32, i+10*j) = -p.eval(bgeot::base_node(0.0, 1.0).begin());
-	q = p; q.derivative(0);
-	if (j == 1) {
-	  q = p; q.derivative(1);
-	  M(33, i+10*j) =  q.eval(bgeot::base_node(0.0, 0.0).begin());
-	  M(34, i+10*j) =  q.eval(bgeot::base_node(0.0, 0.0).begin());
-	}
-	if (j == 2)
-	  M(33, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M(34, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-	q = p; q.derivative(1);
-	if (j == 1) {
-	  q = p; q.derivative(0);
-	  M(35, i+10*j) =  q.eval(bgeot::base_node(0.0, 0.0).begin());
-	  M(36, i+10*j) =  q.eval(bgeot::base_node(0.0, 0.0).begin());
-	}
-	if (j == 2)
-	  M(35, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
-	if (j == 3)
-	  M(36, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
-
-	// raccord en (0.5, 0.25)
-	q = p; q.derivative(0);
-	if (j == 1) {
-	  q = p; q.derivative(1);
-	  M(37, i+10*j) = q.eval(bgeot::base_node(0.0, 0.5).begin());
-	}
-	if (j == 3)
-	  M(37, i+10*j) = q.eval(bgeot::base_node(0.0, 0.5).begin());
-	
-	// raccord en (0.25, 0.5)
-	q = p; q.derivative(1);
-	if (j == 1) {
-	  q = p; q.derivative(0);
-	  M(38, i+10*j) = q.eval(bgeot::base_node(0.5, 0.0).begin());
-	}
-	if (j == 2)
-	  M(38, i+10*j) = q.eval(bgeot::base_node(0.5, 0.0).begin());
-	
-	// raccord en (0.25, 0.25)
 	q = p; q.derivative(1); q2 = p; q2.derivative(0); q += q2;
-	if (j == 1)
-	  M(39, i+10*j) = q.eval(bgeot::base_node(0.5, 0.5).begin());
 	if (j == 0)
-	  M(39, i+10*j) = q.eval(bgeot::base_node(0.5, 0.5).begin());
+	  M( 9, i+10*j) = q.eval(bgeot::base_node(0.5, 0.5).begin());
+	
+	q = p; q.derivative(0);
+	if (j == 1)
+	  M(10, i+10*j) = -q.eval(bgeot::base_node(0.0, 0.5).begin());
+	
+	q = p; q.derivative(1);
+	if (j == 2)
+	  M(11, i+10*j) = -q.eval(bgeot::base_node(0.5, 0.0).begin());
+	
+	//
+	// raccord internes
+	//
+
+	// raccord en (0.0, 0.0)
+	if (j == 1)
+	  M(12, i+10*j) = p.eval(bgeot::base_node(0.0, 0.0).begin());
+	if (j == 2)
+	  M(12, i+10*j) = -p.eval(bgeot::base_node(0.0, 0.0).begin());
+	q = p; q.derivative(0);
+	if (j == 1)
+	  M(13, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
+	if (j == 2)
+	  M(13, i+10*j) = -q.eval(bgeot::base_node(0.0, 0.0).begin());
+	q = p; q.derivative(1);
+	if (j == 1)
+	  M(14, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
+	if (j == 2)
+	  M(14, i+10*j) = -q.eval(bgeot::base_node(0.0, 0.0).begin());
+
+	// raccord en (1.0, 0.0)
+	if (j == 0)
+	  M(15, i+10*j) = p.eval(bgeot::base_node(1.0, 0.0).begin());
+	if (j == 2)
+	  M(15, i+10*j) = -p.eval(bgeot::base_node(1.0, 0.0).begin());
+	q = p; q.derivative(0);
+	if (j == 0)
+	  M(16, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
+	if (j == 2)
+	  M(16, i+10*j) = -q.eval(bgeot::base_node(1.0, 0.0).begin());
+	q = p; q.derivative(1);
+	if (j == 0)
+	  M(17, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
+	if (j == 2)
+	  M(17, i+10*j) = -q.eval(bgeot::base_node(1.0, 0.0).begin());
+
+	// raccord en (0.0, 1.0)
+	if (j == 0)
+	  M(18, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
+	if (j == 1)
+	  M(18, i+10*j) = -p.eval(bgeot::base_node(0.0, 1.0).begin());
+	q = p; q.derivative(0);
+	if (j == 0)
+	  M(19, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
+	if (j == 1)
+	  M(19, i+10*j) = -q.eval(bgeot::base_node(0.0, 1.0).begin());
+	q = p; q.derivative(1);
+	if (j == 0)
+	  M(20, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
+	if (j == 1)
+	  M(20, i+10*j) = -q.eval(bgeot::base_node(0.0, 1.0).begin());
+
+	// raccord en (1/3, 1/3)
+	double u_3 = 1.0 / 3.0;
+	if (j == 0)
+	  M(21, i+10*j) =  p.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 1)
+	  M(21, i+10*j) = -p.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 0)
+	  M(22, i+10*j) =  p.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 2)
+	  M(22, i+10*j) = -p.eval(bgeot::base_node(u_3, u_3).begin());
+	q = p; q.derivative(0);
+	if (j == 0)
+	  M(23, i+10*j) =  q.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 1)
+	  M(23, i+10*j) = -q.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 0)
+	  M(24, i+10*j) =  q.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 2)
+	  M(24, i+10*j) = -q.eval(bgeot::base_node(u_3, u_3).begin());
+	q = p; q.derivative(1);
+	if (j == 0)
+	  M(25, i+10*j) =  q.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 1)
+	  M(25, i+10*j) = -q.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 0)
+	  M(26, i+10*j) =  q.eval(bgeot::base_node(u_3, u_3).begin());
+	if (j == 2)
+	  M(26, i+10*j) = -q.eval(bgeot::base_node(u_3, u_3).begin());
+
+	// raccord en (1/6, 1/6)
+	double u_6 = 1.0 / 6.0;
+	q = p; q.derivative(1); q2 = p; q2.derivative(0); q -= q2;
+	if (j == 1)
+	  M(27, i+10*j) =  q.eval(bgeot::base_node(u_6, u_6).begin());
+	if (j == 2)
+	  M(27, i+10*j) = -q.eval(bgeot::base_node(u_6, u_6).begin());
+	
+	// raccord en (1/6, 2/3)
+	double u_2 = 2.0 / 3.0;
+	q = p; q.derivative(1); q *= u_3; q2 = p;
+	q2.derivative(0); q2 *= u_2; q += q2;
+	if (j == 1)
+	  M(28, i+10*j) =  q.eval(bgeot::base_node(u_6, u_2).begin());
+	if (j == 0)
+	  M(28, i+10*j) = -q.eval(bgeot::base_node(u_6, u_2).begin());
+	
+	// raccord en (2/3, 1/6)
+	q = p; q.derivative(1); q *= u_2; q2 = p;
+	q2.derivative(0); q2 *= u_3; q += q2;
+	if (j == 2)
+	  M(28, i+10*j) =  q.eval(bgeot::base_node(u_2, u_6).begin());
+	if (j == 0)
+	  M(28, i+10*j) = -q.eval(bgeot::base_node(u_2, u_6).begin());
     }
     
     gmm::clean(M, 1E-10);
@@ -227,10 +208,10 @@ int main(void) {
     
     cout.precision(11);
     
-    bool latex = false;
+    bool latex = true;
     
-    for (int i = 0; i < 19; ++i)
-      for (int j = 0; j < 4; ++j) {
+    for (int i = 0; i < 12; ++i)
+      for (int j = 0; j < 3; ++j) {
 	bgeot::base_poly p(2,3);
 	for (int k = 0; k < 10; ++k)
 	  if (gmm::abs(M(k+10*j, i)) > 1E-8) p += base[k]*M(k+10*j, i);
