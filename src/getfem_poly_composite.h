@@ -40,8 +40,7 @@
 #include <bgeot_imbricated_box.h>
 #include <getfem_mesh.h>
 
-namespace getfem
-{
+namespace getfem {
 
   struct mesh_precomposite {
 

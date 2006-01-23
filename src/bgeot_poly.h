@@ -60,7 +60,8 @@ namespace bgeot
     std::vector<short_type> v;
     mutable short_type degree_;
     mutable size_type global_index_;
-    void dirty() const { degree_ = short_type(-1); global_index_ = size_type(-1); }
+    void dirty() const
+    { degree_ = short_type(-1); global_index_ = size_type(-1); }
   public :
     typedef std::vector<short_type>::iterator iterator;
     typedef std::vector<short_type>::const_iterator const_iterator;
