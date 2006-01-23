@@ -52,7 +52,7 @@ namespace ftool {
     else { ist.putback(d); return 5; } }		   \
 
   int get_token(std::istream &ist, std::string &st,
-		bool ignore_cr, bool to_up, int *linenb) {
+		bool ignore_cr, bool to_up, bool read_un_pm, int *linenb) {
     st.resize(0);
     char c = char(-1), d, e;
    
@@ -80,11 +80,12 @@ namespace ftool {
       else break;
     }
 
-    if (c == '-' || c == '+') { // reading a number beginning with '+' or '-'
-      get_c__(2, d);
-      if (isdigit(d) || d == '.') { st.push_back(c); c = d; }
-      else ist.putback(d);
-    }
+    if (read_un_pm)
+      if (c == '-' || c == '+') { // reading a number beginning with '+' or '-'
+	get_c__(2, d);
+	if (isdigit(d) || d == '.') { st.push_back(c); c = d; }
+	else ist.putback(d);
+      }
 
     if (isdigit(c) || c == '.') { // reading a number
       while (isdigit(c) || c == '.' || c == 'e'  || c == 'E') {
@@ -164,7 +165,8 @@ namespace ftool {
   int md_param::get_next_token(std::istream &f) {
     static int token_type = 0;
     if (!token_is_valid)
-      token_type = get_token(f, temp_string, false, false, &current_line);
+      token_type = get_token(f, temp_string, false, false, false,
+			     &current_line);
     token_is_valid = false;
     return token_type;
   }

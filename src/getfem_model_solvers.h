@@ -29,7 +29,7 @@
 
 /**
    @file getfem_model_solvers.h
-   @brief Standard solver for model bricks
+   @brief Standard solvers for model bricks
    @see getfem_modeling.h
 */
 
@@ -69,8 +69,8 @@ namespace getfem {
 
   struct abstract_newton_line_search {
     scalar_type conv_alpha, conv_r;
-    size_type it, itmax;
-    virtual void init_search(scalar_type r) = 0;
+    size_type it, itmax, glob_it;
+    virtual void init_search(scalar_type r, size_type git) = 0;
     virtual scalar_type next_try(void) = 0;
     virtual bool is_converged(scalar_type) = 0;
     virtual scalar_type converged_value(void) { return conv_alpha; };
@@ -81,8 +81,10 @@ namespace getfem {
 
   struct simplest_newton_line_search : public abstract_newton_line_search {
     scalar_type alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min;
-    virtual void init_search(scalar_type r)
-    { conv_alpha = alpha = scalar_type(1); conv_r = first_res = r; it = 0; }
+    virtual void init_search(scalar_type r, size_type git) {
+      glob_it = git;
+      conv_alpha = alpha = scalar_type(1); conv_r = first_res = r; it = 0;
+    }
     virtual scalar_type next_try(void)
     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
     virtual bool is_converged(scalar_type r) {
@@ -101,25 +103,26 @@ namespace getfem {
       { itmax = imax; }
   };
 
-  struct basic_newton_line_search : public abstract_newton_line_search {
+  struct default_newton_line_search : public abstract_newton_line_search {
     scalar_type alpha, alpha_mult, first_res, alpha_max_ratio;
     scalar_type alpha_min, prev_res;
-    virtual void init_search(scalar_type r) {
+    virtual void init_search(scalar_type r, size_type git) {
+      glob_it = git;
       conv_alpha = alpha = scalar_type(1);
       prev_res = conv_r = first_res = r; it = 0;
     }
     virtual scalar_type next_try(void)
     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
     virtual bool is_converged(scalar_type r) {
-      if ((r < first_res / scalar_type(2)) || (conv_alpha <= alpha_min)
-	  || it >= itmax)
+      if (glob_it == 0 || (r < first_res / scalar_type(2))
+	  || (conv_alpha <= alpha_min) || it >= itmax)
 	{ conv_r = r; return true; }
       if (it > 1 && r > prev_res && prev_res < alpha_max_ratio * first_res)
 	return true;
       prev_res = conv_r = r;
       return false;
     }
-    basic_newton_line_search
+    default_newton_line_search
     (size_type imax = size_type(-1),
      scalar_type a_max_ratio = scalar_type(5)/scalar_type(3),
      scalar_type a_min = scalar_type(1)/scalar_type(1000),
@@ -133,7 +136,8 @@ namespace getfem {
     scalar_type alpha, alpha_mult, first_res;
     scalar_type alpha_min, prev_res;
     bool first;
-    virtual void init_search(scalar_type r) {
+    virtual void init_search(scalar_type r, size_type git) {
+      glob_it = git;
       conv_alpha = alpha = scalar_type(1);
       prev_res = conv_r = first_res = r; it = 0; first = true;
     }
@@ -389,14 +393,8 @@ namespace getfem {
       gmm::copy(MS.state(), stateinit);
       MS.unreduced_solution(dr, d);
       R alpha(1), res;
-
-      if (iter.get_iteration() == 0) {
-	gmm::add(d, MS.state());
-	compute_residual();
-	return alpha;
-      }
       
-      ls.init_search(gmm::vect_norm2(residual()));
+      ls.init_search(gmm::vect_norm2(residual()), iter.get_iteration());
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
@@ -447,7 +445,7 @@ namespace getfem {
    typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
 
     TYPEDEF_MODEL_STATE_TYPES;
-    basic_newton_line_search ls;
+    default_newton_line_search ls;
     model_problem<MODEL_STATE> mdpb(MS, problem, ls);
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
@@ -471,6 +469,14 @@ namespace getfem {
 		 gmm::iteration &iter) {
     standard_solve(MS, problem, iter, default_linear_solver(problem));
   }
+
+
+
+
+
+
+
+
 
 
 

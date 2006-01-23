@@ -115,11 +115,11 @@ namespace bgeot {
 
   // functions to read a polynomial on a stream
 
-  static void parse_error(void)
-  { DAL_THROW(failure_error, "Syntax error reading a polynomial"); }
+  static void parse_error(int i)
+  { DAL_THROW(failure_error, "Syntax error reading a polynomial " << i); }
 
   static int get_next_token(std::string &s, std::istream &f)
-  { return ftool::get_token(f, s, true, false); }
+  { return ftool::get_token(f, s, true, false, false); }
 
   static base_poly read_expression(short_type n, std::istream &f) {
     base_poly result(n,0);
@@ -139,25 +139,25 @@ namespace bgeot {
       else if (s == "t" && n > 6) result = base_poly(n, 1, 6);
       else if (s == "sqrt") {
 	base_poly p = read_expression(n, f);
-	if (p.degree() > 0) parse_error();
+	if (p.degree() > 0) parse_error(1);
 	result.one();  result *= sqrt(p[0]);
       }
-      else parse_error();
+      else parse_error(2);
       break;
     case 5 :
       switch (s[0]) {
       case '(' :
 	result = read_base_poly(n, f);
 	j = get_next_token(s, f);
-	if (j != 5 || s[0] != ')') parse_error();
+	if (j != 5 || s[0] != ')') parse_error(3);
 	break;
       case '+' : result = read_expression(n, f); break;
       case '-' : result = read_expression(n, f) * opt_long_scalar_type(-1);
 	break;
-      default : parse_error();
+      default : parse_error(4);
       }
       break;
-    default : parse_error();
+    default : parse_error(5);
     }
     return result;
   }
@@ -181,14 +181,14 @@ namespace bgeot {
     
     switch (op_list.back()) {
     case 1  : p1 *= p2; break;
-    case 2  : if (p2.degree() > 0) parse_error(); p1 /= p2[0]; break;
+    case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
     case 3  : p1 += p2; break;
     case 4  : p1 -= p2; break;
     case 5  : 
       {
-	if (p2.degree() > 0) parse_error();
+	if (p2.degree() > 0) parse_error(7);
 	int pow = int(p2[0]);
-	if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error();
+	if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
 	base_poly p = p1; p1.one();
 	for (int i = 0; i < pow; ++i) p1 *= p;
       }
@@ -217,7 +217,10 @@ namespace bgeot {
     }
     
     if (i == 5 && s[0] == ')') { f.putback(')'); }
-    else if (i != 0 && (i != 5 || s[0] != ';')) parse_error();
+    else if (i != 0 && (i != 5 || s[0] != ';')) {
+      cout << "s = " << s << endl;
+      parse_error(9);
+    }
 
     while (!prior_list.empty()) do_bin_op(value_list, op_list, prior_list);
 

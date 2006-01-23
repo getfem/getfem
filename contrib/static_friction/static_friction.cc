@@ -614,10 +614,10 @@ void friction_problem::solve(void) {
     F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
   getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F, DIRICHLET_BOUNDARY);
   DIRICHLET.rhs().set(mf_rhs, F);
-  if (method == 2)
-    DIRICHLET.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
-  else
-    DIRICHLET.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
+//   if (method == 2)
+//     DIRICHLET.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+//   else
+//     DIRICHLET.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
     
   // contact condition for Lagrange elements
   dal::bit_vector cn, dn;

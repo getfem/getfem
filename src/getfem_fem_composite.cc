@@ -162,5 +162,176 @@ namespace getfem {
     return fem_descriptor(name.str());
   }
 
+  /* ******************************************************************** */
+  /*	Composite C1 P3 element on the triangle                           */
+  /* ******************************************************************** */
+
+//   struct composite_C1_triangle__ : public fem<polynomial_composite> {
+//     virtual void mat_trans(base_matrix &M, const base_matrix &G,
+// 			   bgeot::pgeometric_trans pgt) const;
+//     composite_C1_triangle__(void);
+//   };
+
+
+//   void composite_C1_triangle__::mat_trans(base_matrix &M, const base_matrix &G,
+// 					  bgeot::pgeometric_trans pgt) const {
+
+//     static bgeot::pgeotrans_precomp pgp;
+//     static bgeot::pgeometric_trans pgt_stored = 0;
+//     static base_matrix K(2, 2);
+//     dim_type N = G.nrows();
+    
+//     if (N != 2) DAL_THROW(failure_error, "Sorry, this version of hermite "
+// 			  "element works only on dimension two.")
+//       if (pgt != pgt_stored)
+// 	{ pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0)); }
+//     gmm::copy(gmm::identity_matrix(), M);
+    
+//     gmm::mult(G, pgp->grad(0), K);
+//     for (size_type i = 0; i < 6; ++i) {
+//       if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
+//       M( 6+i, 6+i) = K(0,0); M( 6+i, 12+i) = K(0,1);
+//       M(12+i, 6+i) = K(1,0); M(12+i, 12+i) = K(1,1);
+//     }
+//   }
+
+
+
+//   composite_C1_triangle__::composite_C1_triangle__(void) {
+    
+//     std::stringstream s
+//       ("1 - 3*x^2 - 6*x*y - 3*y^2 + 2*x^3 + 6*x^2*y + 6*x*y^2 + 2*y^3;"
+//        "0;"
+//        "0;"
+//        "0;"
+//        "3*x^2 + 13*x*y - 2*x^3 - 13*x^2*y - 13*x*y^2;"
+//        "-7*x*y + 3*y^2 + 7*x^2*y + 7*x*y^2 - 2*y^3;"
+//        "0;"
+//        "1 - 3*x^2 - 6*x*y - 3*y^2 + 2*x^3 + 6*x^2*y + 6*x*y^2 + 2*y^3;"
+//        "0;"
+//        "0;"
+//        "0;"
+//        "3*x^2 - 2*x^3;"
+//        "13*x*y + 3*y^2 - 13*x^2*y - 13*x*y^2 - 2*y^3;"
+//        "3*x^2 - 7*x*y - 2*x^3 + 7*x^2*y + 7*x*y^2;"
+//        "1 - 3*x^2 - 6*x*y - 3*y^2 + 2*x^3 + 6*x^2*y + 6*x*y^2 + 2*y^3;"
+//        "0;"
+//        "7*x*y - 7*x^2*y - 7*x*y^2;"
+//        "1 - 3*x^2 - 13*x*y - 3*y^2 + 2*x^3 + 13*x^2*y + 13*x*y^2 + 2*y^3;"
+//        "3*x^2 + 6*x*y - 2*x^3 - 6*x^2*y - 6*x*y^2;"
+//        "6*x*y + 3*y^2 - 6*x^2*y - 6*x*y^2 - 2*y^3;"
+//        "0;"
+//        "0;"
+//        "3*y^2 - 2*y^3;"
+//        "0;"
+//        "x - 2*x^2 - 2*x*y + x^3 + 2*x^2*y + x*y^2;"
+//        "0;"
+//        "0;"
+//        "0;"
+//        "-x^2 + 2*x*y + x^3 - 2*x^2*y - 2*x*y^2;"
+//        "-2*x*y + 1*y^2 + 2*x^2*y + 2*x*y^2 - 1*y^3;"
+//        "0;"
+//        "1*x - 2*x^2 - 4*x*y + x^3 + 4*x^2*y + 3*x*y^2;"
+//        "0;"
+//        "0;"
+//        "0;"
+//        "-1*x^2 + 1*x^3;"
+//        "-1*x*y + 1*x^2*y + 2*x*y^2;"
+//        "1*x*y - 2*x^2*y - 1*x*y^2;"
+//        "x - 2*x^2 + 1*x^3 - 1*x*y^2;"
+//        "0;"
+//        "-1*x*y + 1*x^2*y + 1*x*y^2;"
+//        "-y + 3*x*y + 2*y^2 - 2*x^2*y - 3*x*y^2 - 1*y^3;"
+//        "-1*x^2 + 1*x^3;"
+//        "-2*x*y + 2*x^2*y + 3*x*y^2;"
+//        "0;"
+//        "0;"
+//        "x*y^2;"
+//        "0;"
+//        "y - 2*x*y - 2*y^2 + x^2*y + 2*x*y^2 + y^3;"
+//        "0;"
+//        "0;"
+//        "0;"
+//        "-1*x*y + 2*x^2*y + 1*x*y^2;"
+//        "1*x*y - 1*x^2*y - 2*x*y^2;"
+//        "0;"
+//        "y - 2*y^2 - x^2*y + 1*y^3;"
+//        "0;"
+//        "0;"
+//        "0;"
+//        "x^2*y;"
+//        "2*x*y - y^2 - 2*x^2*y - 2*x*y^2 + y^3;"
+//        "1*x^2 - 2*x*y - 1*x^3 + 2*x^2*y + 2*x*y^2;"
+//        "1*y - 4*x*y - 2*y^2 + 3*x^2*y + 4*x*y^2 + y^3;"
+//        "0;"
+//        "-x*y + x^2*y + x*y^2;"
+//        "-x + 2*x^2 + 3*x*y - 1*x^3 - 3*x^2*y - 2*x*y^2;"
+//        "-2*x*y + 3*x^2*y + 2*x*y^2;"
+//        "-y^2 + y^3;"
+//        "0;"
+//        "0;"
+//        "-y^2 + y^3;"
+//        "0;"
+//        "-27*x*y + 27*x^2*y + 27*x*y^2;"
+//        "27*x*y - 27*x^2*y - 27*x*y^2;"
+//        "0;"
+//        "0;");
+
+//     bgeot::pconvex_ref cr = bgeot::simplex_of_reference(2);
+//     pmesh pm;
+//     pmesh_precomposite pmp;
+//     structured_mesh_for_convex(cr, 2, pm, pmp);
+
+//     pm->write_to_file(cout);
+
+//     mref_convex() = cr;
+//     dim() = cr->structure()->dim();
+//     is_polynomialcomp() = true;
+//     is_equivalent() = false;
+//     is_polynomial() = false;
+//     is_lagrange() = false;
+//     estimated_degree() = 3;
+//     init_cvs_node();
+
+//     base()=std::vector<polynomial_composite>(19,polynomial_composite(*pmp));
+//     for (size_type k = 0; k < 19; ++k)
+//       for (size_type ic = 0; ic < 4; ++ic) {
+// 	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+// 	cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
+//       }
+//     pdof_description pdof = lagrange_dof(2);
+//     for (size_type i = 0; i < 3; ++i){
+//       if (i == 1) pdof = derivative_dof(1, 0);
+//       if (i == 2) pdof = derivative_dof(1, 1);
+//       add_node(pdof, base_node(0.0, 0.0));
+//       add_node(pdof, base_node(0.5, 0.0));
+//       add_node(pdof, base_node(1.0, 0.0));
+//       add_node(pdof, base_node(0.0, 0.5));
+//       add_node(pdof, base_node(0.5, 0.5));
+//       add_node(pdof, base_node(0.0, 1.0));
+//     }
+//     add_node(lagrange_dof(2), base_node(1.0/3.0, 1.0/3.0));
+//   }
+
+
+//   pfem composite_C1_triangle_fem
+//   (fem_param_list &params,
+//    std::vector<dal::pstatic_stored_object> &dependencies) {
+//     if (params.size() != 0)
+//       DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+// 		<< " should be 0.");
+//     virtual_fem *p = new composite_C1_triangle__;
+//     dependencies.push_back(p->ref_convex(0));
+//     dependencies.push_back(p->node_tab(0));
+//     return p;
+//   }
+
+
+
+
+
+
+
+
   
 }  /* end of namespace getfem.                                            */

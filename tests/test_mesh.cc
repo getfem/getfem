@@ -27,6 +27,44 @@ using getfem::size_type;
 using getfem::base_node;
 using getfem::base_small_vector;
 
+
+void test_mesh_matching(size_type dim) {
+  typedef base_node POINT;
+  typedef base_small_vector VECT;
+  
+  getfem::mesh m;
+
+  int Nsubdiv = 2;
+  std::vector<VECT> vects(dim);
+  std::vector<int> iref(dim);
+  POINT pt1(dim);
+  for (size_type i = 0; i < dim; i++)
+  { vects[i] = VECT(dim); vects[i][i] = 1.0 / Nsubdiv; iref[i] = Nsubdiv; }
+  
+
+  getfem::parallelepiped_regular_simplex_mesh(m, dim, pt1, vects.begin(),
+					      iref.begin());
+
+  getfem::mesh_region border_faces;
+  getfem::outer_faces_of_mesh(m, border_faces);
+  size_type nb_faces = 0;
+  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i, nb_faces++) {
+    for (size_type ip = 0; ip < dim; ++ip) {
+      bool onbound = false;
+      const POINT &pt = m.points_of_face_of_convex(i.cv(), i.f())[ip];
+      for (size_type nc = 0; nc < dim; ++nc)
+	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
+	  onbound = true;
+      //      if (!onbound) DAL_THROW(dal::failure_error, "Mesh is not conforming "
+      //		      << pt);
+
+      if (!onbound) { DAL_WARNING1("Mesh is not conforming " << pt); return; }
+    }
+  }
+  cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
+}
+
+
 void test_mesh(getfem::mesh &m) {
   
   typedef base_node POINT;
@@ -249,16 +287,18 @@ int main(void) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   try {
-    cout << "sizeof(size_type)=" << sizeof(size_type) << endl;
-  getfem::mesh m1;
-  test_convex_ref();
-  test_convex_simplif();
-  test_mesh(m1);
-  test_convex_simplif();
-  test_convex_quality(0.2,0);
-  test_convex_quality(-0.2,0);
-  test_convex_quality(-0.01,-0.2);
-  test_region();
+    getfem::mesh m1;
+    test_convex_ref();
+    test_convex_simplif();
+    test_mesh(m1);
+    test_convex_simplif();
+    test_convex_quality(0.2,0);
+    test_convex_quality(-0.2,0);
+    test_convex_quality(-0.01,-0.2);
+    test_region();
+
+    for (size_type d = 1; d <= 4 /* 6 */; ++d)
+      test_mesh_matching(d);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

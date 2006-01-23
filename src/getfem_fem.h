@@ -70,6 +70,8 @@
 
    - "FEM_HERMITE(N)" : Hermite element P3 on dimension N (1, 2 por 3).
 
+   - "FEM_ARGYRIS" : Argyris element on the triangle.
+
    - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis
 
    - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis

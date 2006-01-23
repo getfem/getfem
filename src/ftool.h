@@ -65,7 +65,8 @@ namespace ftool
    *  allows to consider the carriage return as a space character.
    */
   int get_token(std::istream &ist, std::string &st,
-		bool ignore_cr = true, bool to_up = true, int *linenb = 0);
+		bool ignore_cr = true, bool to_up = true, 
+		bool read_un_pm = true, int *linenb = 0);
 
   struct skip {
     const char *s;

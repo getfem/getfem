@@ -34,7 +34,6 @@
 #define GETFEM_REGULAR_MESHES_H__
 
 #include <getfem_mesh.h>
-#include <bgeot_simplexify.h>
 
 namespace getfem
 {

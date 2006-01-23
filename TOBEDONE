@@ -1,5 +1,3 @@
-A faire pour l'installation automatique :
------------------------------------------
 
 
 ============================================================================
@@ -26,34 +24,36 @@ Description : Ecrire  une  procédure  de  raffinement  de  maillage  la plus
   raffinement  à  effectuer,  les  propagations à faire ... tout en assurant
   la conformité  du maillage  et  une stratégie  pour  les méthodes éléments
   finis.
-Avancement : 
-Bilan :
 ============================================================================
 
 
 http://www.gnu.org/directory/science/visual/xd3d.html <- ajouter export
 
-external_data_fem : gerer les fonctions à valeur vectorielle
 
 methodes d'integration + FEM sur les points de Fekete (qui maximisent vandermonde, equivalents des points de gauss-lobatto sur les simplexes - refs:
 * http://citeseer.nj.nec.com/taylor98fekete.html (avec une liste de pts)
 * http://math1.unice.fr/~rpas/jcp04.pdf
 * http://epubs.siam.org/sam-bin/dbq/article/33724
 
+
 faire la doc pour les mesh_slice 
 faire la doc pour vtk_export -- permettre le 'merge' des points de slices
 
+
 getfem_mesh::clear() ne libere pas la mémoire
+
 
 mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric_trans::transform)
 
-mat_elem & reduction inline: quid des elts non equivalents
 
 ajouter à la faq de gmm: "Q: est-ce que gmm et getfem resteront deux packages separés"
 
+
 tester les geotransinv de R^N dans R^P... 
 
+
 permet de choisir le chemin d'install de qhull dans le configure.in (probleme de H. Proudhon)
+
 
 debugger l'assemblage avec reduction dans le comp contre des donnees:
 ( delaminated_crack: ../../src/bgeot_sparse_tensors.cc:699: void bgeot::tensor_reduction::pre_prepare(): Assertion `it->ridx.size() == it->tr().ndim()' failed. )

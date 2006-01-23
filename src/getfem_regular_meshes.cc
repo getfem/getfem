@@ -32,35 +32,30 @@
 
 namespace getfem
 {
-  void parallelepiped_regular_simplex_mesh_(mesh &me, dim_type N,
-    const base_node &org, const base_small_vector *ivect, const size_type *iref)
-  {
-    bgeot::mesh_structure cvt, sl;
+  void parallelepiped_regular_simplex_mesh_
+  (mesh &me, dim_type N, const base_node &org,
+   const base_small_vector *ivect, const size_type *iref) {
     bgeot::convex<base_node>
       pararef = *(bgeot::parallelepiped_of_reference(N));
+
+    if (N >= 5) DAL_WARNING1("CAUTION : Simplexification in dimension >= 5 "
+			    "has not been tested and the resulting mesh "
+			    "should be not conformal");
+    
+    const bgeot::mesh_structure &sl
+      = *(bgeot::parallelepiped_of_reference(N)->simplexified_convex());
+    
     base_node a = org;
     size_type i, nbpt = pararef.nb_points();
-
-    // cout << pararef << endl;
-
-    for (i = 0; i < nbpt; ++i)
-    {
+    
+    for (i = 0; i < nbpt; ++i) {
       a.fill(0.0);
       for (dim_type n = 0; n < N; ++n)
 	gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
-	//a.addmul(pararef.points()[i][n], ivect[n]);
       pararef.points()[i] = a;
     }
 
-    // cout << pararef << endl;
-    
-    cvt.add_convex(pararef.structure(), dal::sequence_iterator<size_type>(0));
-    cvt.to_edges();
-    // cout << "cvt " << endl;
-    // cvt.write_to_file(cout); getchar();
-    bgeot::simplexify(cvt, sl, pararef.points(), N, me.eps());
-    // cout << "sl " << endl;
-    // sl.write_to_file(cout); getchar();
+    // bgeot::simplexify(cvt, sl, pararef.points(), N, me.eps());
 
     size_type nbs = sl.nb_convex();
     std::vector<size_type> tab1(N+1), tab(N), tab3(nbpt);
@@ -76,9 +71,10 @@ namespace getfem
 	
       for (i = 0; i < nbs; i++) {
 	const mesh::ind_cv_ct &tab2 = sl.ind_points_of_convex(i);
-	for (dim_type l = 0; l < N+1; l++)
+	for (dim_type l = 0; l <= N; l++)
+	  // tab1[l] = tab3[tab2[l]];
 	  tab1[l] = tab3[(tab2[l]
-			  + (((total & 1) && N > 1) ? (nbpt/2) : 0)) % nbpt];
+			  + (((total & 1) && N > 3) ? (nbpt/2) : 0)) % nbpt];
 	me.add_simplex(N, tab1.begin());
       }
 
@@ -91,9 +87,9 @@ namespace getfem
   }
 
 
-  void parallelepiped_regular_prism_mesh_(mesh &me, dim_type N,
-    const base_node &org, const base_small_vector *ivect, const size_type *iref)
-  {
+  void parallelepiped_regular_prism_mesh_
+  (mesh &me, dim_type N, const base_node &org,
+   const base_small_vector *ivect, const size_type *iref) {
     mesh aux;
     parallelepiped_regular_simplex_mesh_(aux, N-1, org, ivect, iref);
     std::vector<base_node> ptab(2 * N);
@@ -114,40 +110,37 @@ namespace getfem
 
 
 
-  void parallelepiped_regular_mesh_(mesh &me, dim_type N,
-                                    const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt)
-  {
+  void parallelepiped_regular_mesh_
+  (mesh &me, dim_type N, const base_node &org,
+   const base_small_vector *ivect, const size_type *iref, bool linear_gt) {
     bgeot::convex<base_node>
       pararef = *(bgeot::parallelepiped_of_reference(N));
     base_node a = org;
     size_type i, nbpt = pararef.nb_points();
-
-    for (i = 0; i < nbpt; ++i)
-    {
+    
+    for (i = 0; i < nbpt; ++i) {
       a.fill(0.0);
       for (dim_type n = 0; n < N; ++n)
 	gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
-	//a.addmul(pararef.points()[i][n], ivect[n]);
+      //a.addmul(pararef.points()[i][n], ivect[n]);
       pararef.points()[i] = a;
     }
 
     std::vector<size_type> tab1(N+1), tab(N), tab3(nbpt);
     size_type total = 0;
     std::fill(tab.begin(), tab.end(), 0);
-    while (tab[N-1] != iref[N-1])
-    {
+    while (tab[N-1] != iref[N-1]) {
       for (a = org, i = 0; i < N; i++) 
 	gmm::add(gmm::scaled(ivect[i], scalar_type(tab[i])),a);
-	//a.addmul(scalar_type(tab[i]), ivect[i]);
-
+      //a.addmul(scalar_type(tab[i]), ivect[i]);
+      
       for (i = 0; i < nbpt; i++)
 	tab3[i] = me.add_point(a + pararef.points()[i]);
       me.add_convex(linear_gt ? 
                     bgeot::parallelepiped_linear_geotrans(N) : 
                     bgeot::parallelepiped_geotrans(N, 1), tab3.begin());
-     
-      for (dim_type l = 0; l < N; l++)
-      {
+      
+      for (dim_type l = 0; l < N; l++) {
 	tab[l]++; total++;
 	if (l < N-1 && tab[l] >= iref[l]) { total -= tab[l]; tab[l] = 0; }
 	else break;
@@ -190,18 +183,20 @@ namespace getfem
       getfem::parallelepiped_regular_prism_mesh
 	(msh, N, org, vtab.begin(), nsubdiv.begin());
     } else {
-      DAL_THROW(dal::failure_error, "cannot build a regular mesh for " << bgeot::name_of_geometric_trans(pgt));
+      DAL_THROW(dal::failure_error, "cannot build a regular mesh for "
+		<< bgeot::name_of_geometric_trans(pgt));
     }
     m.clear();
     /* build a mesh with a geotrans of degree K */
     for (dal::bv_visitor cv(msh.convex_index()); !cv.finished(); ++cv) {
       if (pgt == msh.trans_of_convex(cv)) {
-	m.add_convex_by_points(msh.trans_of_convex(cv), msh.points_of_convex(cv).begin()); 
+	m.add_convex_by_points(msh.trans_of_convex(cv),
+			       msh.points_of_convex(cv).begin()); 
       } else {
 	std::vector<base_node> pts(pgt->nb_points());
 	for (size_type i=0; i < pgt->nb_points(); ++i) {
-	  pts[i] = msh.trans_of_convex(cv)->transform(pgt->convex_ref()->points()[i], 
-						       msh.points_of_convex(cv));
+	  pts[i] = msh.trans_of_convex(cv)->transform
+	    (pgt->convex_ref()->points()[i], msh.points_of_convex(cv));
 	}
 	m.add_convex_by_points(pgt, pts.begin());
       }
@@ -212,7 +207,10 @@ namespace getfem
       for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
 	bool is_border = false;
 	base_node& P = m.points()[ip];
-	for (size_type i=0; i < N; ++i) { if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10) is_border = true; }
+	for (size_type i=0; i < N; ++i) {
+	  if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10)
+	    is_border = true;
+	}
 	if (!is_border) { 
 	  P = shake_func(P); 
 	  for (size_type i=0; i < N; ++i)

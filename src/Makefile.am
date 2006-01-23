@@ -20,7 +20,6 @@ include_HEADERS =                          \
 	bgeot_permutations.h               \
 	bgeot_convex_structure.h           \
 	bgeot_convex.h                     \
-	bgeot_convex_hull.h                \
 	bgeot_convex_ref.h                 \
 	bgeot_geometric_trans.h            \
 	bgeot_geotrans_inv.h               \
@@ -28,7 +27,6 @@ include_HEADERS =                          \
 	bgeot_mesh_structure.h             \
 	bgeot_poly.h                       \
 	bgeot_rtree.h		           \
-	bgeot_simplexify.h                 \
 	bgeot_small_vector.h               \
 	bgeot_sparse_tensors.h             \
 	bgeot_tensor.h                     \
@@ -137,6 +135,7 @@ SRC =                                      \
 	dal_singleton.cc		   \
 	dal_static_stored_objects.cc       \
 	bgeot_convex_structure.cc          \
+	bgeot_convex_ref_simplexified.cc   \
 	bgeot_convex_ref.cc                \
 	bgeot_geometric_trans.cc           \
 	bgeot_geotrans_inv.cc              \

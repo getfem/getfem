@@ -29,9 +29,30 @@
 
 #include <dal_singleton.h>
 #include <bgeot_convex_ref.h>
-#include <bgeot_simplexify.h>
+#include <bgeot_mesh_structure.h>
 
 namespace bgeot {
+
+  size_type simplexified_tab(pconvex_structure cvs, size_type **tab);
+
+  static void simplexify_convex(pconvex_structure cvs, mesh_structure &m) {
+    m.clear();
+    cvs = cvs->basic_structure();
+    size_type n = cvs->dim();
+    std::vector<size_type> ipts(n+1);
+    if (cvs->nb_points() == n + 1) {
+      for (size_type i = 0; i <= n; ++i) ipts[i] = i;
+      m.add_simplex(n, ipts.begin());
+    }
+    else {
+      size_type *tab;
+      size_type nb = simplexified_tab(cvs, &tab);
+      for (size_type nc = 0; nc < nb; ++nc) {
+	for (size_type i = 0; i <= n; ++i) ipts[i] = *tab++;
+	m.add_simplex(n, ipts.begin());
+      }
+    }
+  }
   
   /* ********************************************************************* */
   /*       Point tab storage.                                              */
@@ -78,19 +99,14 @@ namespace bgeot {
   const mesh_structure* convex_of_reference::simplexified_convex() const {    
     if (psimplexified_convex == 0) {
       psimplexified_convex = new mesh_structure();
-      dal::singleton<cleanup_simplexified_convexes>::instance().push_back(psimplexified_convex);
+      dal::singleton<cleanup_simplexified_convexes>::instance()
+	.push_back(psimplexified_convex);
       if (this != basic_convex_ref()) 
 	DAL_THROW(to_be_done_error, 
-                  "always use simplexified_convex on the basic_convex_ref() [this=" << 
-                  nb_points() << ", basic=" << basic_convex_ref()->nb_points());
-      mesh_structure ms;
-      std::vector<size_type> ipts(nb_points());
-      for (size_type i=0; i < ipts.size(); ++i) ipts[i] = i;
-      ms.add_convex(structure(), ipts.begin());
-      ms.to_edges();
-      bgeot::simplexify(ms,*psimplexified_convex,
-			convex<base_node>::points(), 
-			std::max(structure()->dim(),dim_type(1)), 1e-12);
+                  "always use simplexified_convex on the basic_convex_ref() "
+		  "[this=" << nb_points() << ", basic="
+		  << basic_convex_ref()->nb_points());
+      simplexify_convex(structure(), *psimplexified_convex);
     }
     return psimplexified_convex;
   }
@@ -281,6 +297,12 @@ namespace bgeot {
       ncd = nc;
     }
     return tab[nc];
+  }
+
+  pconvex_ref prism_of_reference(dim_type nc) {
+    if (nc <= 2) return parallelepiped_of_reference(nc);
+    else return convex_ref_product(simplex_of_reference(nc-1),
+				   simplex_of_reference(1));
   }
 
   /* equilateral ref convexes are used for estimation of convex quality */

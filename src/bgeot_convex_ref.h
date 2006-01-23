@@ -126,6 +126,8 @@ namespace bgeot {
   pconvex_ref simplex_of_reference(dim_type nc, short_type k = 1);
   /** parallelepiped of reference of dimension nc (and degree 1) */
   pconvex_ref parallelepiped_of_reference(dim_type nc);
+  /** prism of reference of dimension nc (and degree 1) */
+  pconvex_ref prism_of_reference(dim_type nc);
   /** tensorial product of two convex ref.
       in order to ensure unicity, it is required the a->dim() >= b->dim() */
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);

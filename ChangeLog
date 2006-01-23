@@ -1,3 +1,10 @@
+2006-01-21 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+	
+	* src/bgeot_convex_hull.h, src/bgeot_simplexify.h suppression of
+	this files (not well xritten) only used to simplexify reference
+	elements. Replaced by src/bgeot_convex_ref_simplexified.cc which
+	store the simplexifcation of standard reference elements.
+
 2006-01-07 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/bgeot_poly.h Adding a method to read a polynomial (in 
