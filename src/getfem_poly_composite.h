@@ -93,7 +93,8 @@ namespace getfem {
   }
 
   void structured_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k,
-				  pmesh &pm, pmesh_precomposite &pmp, bool force_simplexification=false);
+				  pmesh &pm, pmesh_precomposite &pmp,
+				  bool force_simplexification=false);
 
   /** simplexify a convex_ref.
       @param cvr the convex_ref.
