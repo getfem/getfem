@@ -86,8 +86,10 @@ namespace getfem {
 	    mp->elt[ii] = false;
 	    p0 = pt; p0 -= mp->orgs[ii];
 	    gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
+	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+	      // cout << "pt " << pt << " found in cv " << ii << endl;
 	      return  polytab[ii].eval(pt.begin());
+	    }
 	  }
 	}
 	++it1; i1 = it1.index();
@@ -102,8 +104,10 @@ namespace getfem {
 	    mp->elt[ii] = false;
 	    p0 = pt; p0 -= mp->orgs[ii];
 	    gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
-	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
+	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10) {
+	      // cout << "pt " << pt << " found in cv " << ii << endl;
 	      return  polytab[ii].eval(pt.begin());
+	    }
 	  }
 	}
 	--it2; i2 = it2.index();
@@ -127,20 +131,20 @@ namespace getfem {
   typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
 
   /* ******************************************************************** */
-  /*	Composite C1 P3 element on the triangle                           */
+  /*    Hsieh-Clough-Tocher C^1 element (composite P3)                    */
   /* ******************************************************************** */
 
-  struct composite_C1_triangle__ : public fem<polynomial_composite2> {
+  struct HCT_triangle__ : public fem<polynomial_composite2> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const;
+    mesh m;
     mesh_precomposite mp;
-    composite_C1_triangle__(void);
+    HCT_triangle__(void);
   };
 
-
-  void composite_C1_triangle__::mat_trans(base_matrix &M, const base_matrix &G,
-					  bgeot::pgeometric_trans pgt) const {
-
+  void HCT_triangle__::mat_trans(base_matrix &M, const base_matrix &G,
+				 bgeot::pgeometric_trans pgt) const {
+    
     static bgeot::pgeotrans_precomp pgp;
     static pfem_precomp pfp;
     static bgeot::pgeometric_trans pgt_stored = 0;
@@ -163,6 +167,8 @@ namespace getfem {
       M(6+i, 6+i) = K(1,0); M(6+i, 6+i) = K(1,1);
     }
 
+    return;
+
     // take the normal derivatives into account
     static base_matrix W(3, 12);
     static base_small_vector norient(M_PI, M_PI * M_PI);
@@ -177,10 +183,11 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	DAL_WARNING2("Argyris : The normal orientation may not be correct");
+	DAL_WARNING2("Argyris : The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
-      for (unsigned j = 0; j < 21; ++j)
+      cout << "t = " << t << endl;
+      for (unsigned j = 0; j < 12; ++j)
 	W(i-9, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
     
@@ -198,75 +205,57 @@ namespace getfem {
     }
   }
 
-  composite_C1_triangle__::composite_C1_triangle__(void) {
+  HCT_triangle__::HCT_triangle__(void) {
 
-    getfem::mesh m;
+    m.clear();
     size_type i0 = m.add_point(base_node(1.0/3.0, 1.0/3.0));
     size_type i1 = m.add_point(base_node(0.0, 0.0));
-    size_type i2 = m.add_point(base_node(0.0, 1.0));
-    size_type i3 = m.add_point(base_node(1.0, 0.0));
+    size_type i2 = m.add_point(base_node(1.0, 0.0));
+    size_type i3 = m.add_point(base_node(0.0, 1.0));
     m.add_triangle(i0, i2, i3);
     m.add_triangle(i0, i3, i1);
     m.add_triangle(i0, i1, i2);
     mp = mesh_precomposite(m);
     
     std::stringstream s
-      ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y"
-       "  + 21*x*y^2 + 7*y^3;"
-       "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
-       "1 - 3*x^2 - 3*y^2 + 2*x^3 - 3*x*y^2 + 3*y^3;"
-       "1 - 4.5*x - 4.5*y + 9*x^2 + 15*x*y + 6*y^2 - 4.5*x^3 - 10.5*x^2*y"
-       "  - 10.5*x*y^2 - 2.5*y^3;"
-       "3*x^2 - 2.5*x^3 + 1.5*x^2*y;"
-       "3*x^2 - 2*x^3 + 1.5*x*y^2 - 0.5*y^3;"
-       "1 - 4.5*x - 4.5*y + 6*x^2 + 15*x*y + 9*y^2 - 2.5*x^3 - 10.5*x^2*y"
-       "  - 10.5*x*y^2 - 4.5*y^3;"
-       "3*y^2 - 0.5*x^3 + 1.5*x^2*y - 2*y^3;"
-       "3*y^2 + 1.5*x*y^2 - 2.5*y^3;"
-       "-(1/6) + 2.5*x - 4.5*x^2 - 4*x*y + 0.5*y^2 + (13/6)*x^3 + 4*x^2*y"
-       "  + 1.5*x*y^2 - (1/3)*y^3;"
-       "x - 0.5*x^2 - 3*x*y - (7/6)*x^3 + 2*x^2*y + 2*x*y^2;"
-       "x - 2*x^2 - 1.5*y^2 + x^3 - 0.5*x*y^2 + (7/3)*y^3;"
-       "-(1/6) + 0.75*x + 0.75*y - 2*x^2 - 2.5*x*y - 1*y^2 + (17/12)*x^3"
-       "  + 1.75*x^2*y + 1.75*x*y^2 + (5/12)*y^3;"
-       "-1*x^2 + (13/12)*x^3 - 0.25*x^2*y;"
-       "-x^2 + x^3 - 0.25*x*y^2 + (1/12)*y^3;"
-       "(2/3) - 2.75*x - 3.25*y + 3.5*x^2 + 9.5*x*y + 4.5*y^2 - (17/12)*x^3"
-       "  - 6.25*x^2*y - 5.75*x*y^2 - (13/12)*y^3;"
-       "0.5*x^2 - x*y - (13/12)*x^3 + 1.75*x^2*y + 2*x*y^2;"
-       "-0.5*y^2 + 2.25*x*y^2 + (5/12)*y^3;"
-       "-(1/6) + 2.5*y + 0.5*x^2 - 4*x*y - 4.5*y^2 - (1/3)*x^3 + 1.5*x^2*y"
-       "   + 4*x*y^2 + (13/6)*y^3;"
-       "1*y - 1.5*x^2 - 2*y^2 + (7/3)*x^3 - 0.5*x^2*y + y^3;"
-       "y - 3*x*y - 0.5*y^2 + 2*x^2*y + 2*x*y^2 - (7/6)*y^3;"
-       "(2/3) - 3.25*x - 2.75*y + 4.5*x^2 + 9.5*x*y + 3.5*y^2 - (13/12)*x^3"
-       "  - 5.75*x^2*y - 6.25*x*y^2 - (17/12)*y^3;"
-       "-0.5*x^2 + (5/12)*x^3 + 2.25*x^2*y;"
-       "-x*y + 0.5*y^2 + 2*x^2*y + 1.75*x*y^2 - (13/12)*y^3;"
-       "-(1/6) + 0.75*x + 0.75*y - 1*x^2 - 2.5*x*y - 2*y^2 + (5/12)*x^3"
-       "  + 1.75*x^2*y + 1.75*x*y^2 + (17/12)*y^3;"
-       "-1*y^2 + (1/12)*x^3 - 0.25*x^2*y + 1*y^3;"
-       "-1*y^2 - 0.25*x*y^2 + (13/12)*y^3;"
-       "-(2/3) + 3*x + 3*y - 4*x^2 - 10*x*y - 4*y^2 + (5/3)*x^3 + 7*x^2*y"
-       "  + 7*x*y^2 + (5/3)*y^3;"
-       "(1/3)*x^3 - 1*x^2*y;"
-       "-1*x*y^2 + (1/3)*y^3;"
-       "(2/3) - 2*x - 4*y + 2*x^2 + 8*x*y + 6*y^2 - (2/3)*x^3 - 4*x^2*y"
-       "  - 6*x*y^2 - (8/3)*y^3;"
-       "2*x^2 - 4*x*y - (10/3)*x^3 + 4*x^2*y + 4*x*y^2;"
-       "-2*y^2 + 2*x*y^2 + (8/3)*y^3;"
-       "(2/3) - 4*x - 2*y + 6*x^2 + 8*x*y + 2*y^2 - (8/3)*x^3 - 6*x^2*y"
-       "  - 4*x*y^2 - (2/3)*y^3;"
-       "-2*x^2 + (8/3)*x^3 + 2*x^2*y;"
-       "-4*x*y + 2*y^2 + 4*x^2*y + 4*x*y^2 - (10/3)*y^3;");
+      ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y + 21*x*y^2 + 7*y^3;"
+    "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
+    "1 - 3*x^2 - 3*y^2 + 2*x^3 - 3*x*y^2 + 3*y^3;"
+    "1 - 4.5*x - 4.5*y + 9*x^2 + 15*x*y + 6*y^2 - 4.5*x^3 - 10.5*x^2*y - 10.5*x*y^2 - 2.5*y^3;"
+    "3*x^2 - 2.5*x^3 + 1.5*x^2*y;"
+    "3*x^2 - 2*x^3 + 1.5*x*y^2 - 0.5*y^3;"
+    "1 - 4.5*x - 4.5*y + 6*x^2 + 15*x*y + 9*y^2 - 2.5*x^3 - 10.5*x^2*y - 10.5*x*y^2 - 4.5*y^3;"
+    "3*y^2 - 0.5*x^3 + 1.5*x^2*y - 2*y^3;"
+    "3*y^2 + 1.5*x*y^2 - 2.5*y^3;"
+    "-(1/6) + 2.5*x - 4.5*x^2 - 4*x*y + 0.5*y^2 + (13/6)*x^3 + 4*x^2*y + 1.5*x*y^2 - (1/3)*y^3;"
+    "x - 0.5*x^2 - 3*x*y - (7/6)*x^3 + 2*x^2*y + 2*x*y^2;"
+    "x - 2*x^2 - 1.5*y^2 + x^3 - 0.5*x*y^2 + (7/3)*y^3;"
+    "-(1/6) + 0.75*x + 0.75*y - 2*x^2 - 2.5*x*y - 1*y^2 + (17/12)*x^3 + 1.75*x^2*y + 1.75*x*y^2 + (5/12)*y^3;"
+    "-1*x^2 + (13/12)*x^3 - 0.25*x^2*y;"
+    "-x^2 + x^3 - 0.25*x*y^2 + (1/12)*y^3;"
+    "(2/3) - 2.75*x - 3.25*y + 3.5*x^2 + 9.5*x*y + 4.5*y^2 - (17/12)*x^3 - 6.25*x^2*y - 5.75*x*y^2 - (23/12)*y^3;"
+    "0.5*x^2 - x*y - (13/12)*x^3 + 1.75*x^2*y + 2*x*y^2;"
+    "-0.5*y^2 + 2.25*x*y^2 + (5/12)*y^3;"
+    "-(1/6) + 2.5*y + 0.5*x^2 - 4*x*y - 4.5*y^2 - (1/3)*x^3 + 1.5*x^2*y + 4*x*y^2 + (13/6)*y^3;"
+    "1*y - 1.5*x^2 - 2*y^2 + (7/3)*x^3 - 0.5*x^2*y + y^3;"
+    "y - 3*x*y - 0.5*y^2 + 2*x^2*y + 2*x*y^2 - (7/6)*y^3;"
+    "(2/3) - 3.25*x - 2.75*y + 4.5*x^2 + 9.5*x*y + 3.5*y^2 - (23/12)*x^3 - 5.75*x^2*y - 6.25*x*y^2 - (17/12)*y^3;"
+    "-0.5*x^2 + (5/12)*x^3 + 2.25*x^2*y;"
+    "-x*y + 0.5*y^2 + 2*x^2*y + 1.75*x*y^2 - (13/12)*y^3;"
+    "-(1/6) + 0.75*x + 0.75*y - 1*x^2 - 2.5*x*y - 2*y^2 + (5/12)*x^3 + 1.75*x^2*y + 1.75*x*y^2 + (17/12)*y^3;"
+    "-1*y^2 + (1/12)*x^3 - 0.25*x^2*y + 1*y^3;"
+    "-1*y^2 - 0.25*x*y^2 + (13/12)*y^3;"
+    "-(2/3) + 3*x + 3*y - 4*x^2 - 10*x*y - 4*y^2 + (5/3)*x^3 + 7*x^2*y + 7*x*y^2 + (5/3)*y^3;"
+    "(1/3)*x^3 - 1*x^2*y;"
+    "-1*x*y^2 + (1/3)*y^3;"
+    "(2/3) - 2*x - 4*y + 2*x^2 + 8*x*y + 6*y^2 - (2/3)*x^3 - 4*x^2*y - 6*x*y^2 - (8/3)*y^3;"
+    "2*x^2 - 4*x*y - (10/3)*x^3 + 4*x^2*y + 4*x*y^2;"
+    "-2*y^2 + 2*x*y^2 + (8/3)*y^3;"
+    "(2/3) - 4*x - 2*y + 6*x^2 + 8*x*y + 2*y^2 - (8/3)*x^3 - 6*x^2*y - 4*x*y^2 - (2/3)*y^3;"
+    "-2*x^2 + (8/3)*x^3 + 2*x^2*y;"
+    "-4*x*y + 2*y^2 + 4*x^2*y + 4*x*y^2 - (10/3)*y^3;");
     
     bgeot::pconvex_ref cr = bgeot::simplex_of_reference(2);
-    pmesh pm;
-    pmesh_precomposite pmp;
-    structured_mesh_for_convex(cr, 2, pm, pmp);
-
-    pm->write_to_file(cout);
-
     mref_convex() = cr;
     dim() = cr->structure()->dim();
     is_polynomialcomp() = true;
@@ -276,11 +265,11 @@ namespace getfem {
     estimated_degree() = 3;
     init_cvs_node();
 
-    base()=std::vector<polynomial_composite2>(12,polynomial_composite2(*pmp));
+    base()=std::vector<polynomial_composite2>(12,polynomial_composite2(mp));
     for (size_type k = 0; k < 12; ++k)
       for (size_type ic = 0; ic < 3; ++ic) {
 	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
-	cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
+	// cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
       }
     pdof_description pdof = lagrange_dof(2);
     for (size_type i = 0; i < 3; ++i){
@@ -296,7 +285,7 @@ namespace getfem {
   }
 
 
-  pfem composite_C1_triangle_fem
+  pfem HCT_triangle_fem
   (fem_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 0)

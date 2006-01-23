@@ -1380,7 +1380,7 @@ namespace getfem
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	DAL_WARNING2("Argyris : The normal orientation may not be correct");
+	DAL_WARNING2("Argyris : The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
       for (unsigned j = 0; j < 21; ++j)
@@ -1648,7 +1648,7 @@ namespace getfem
 	std::vector<dal::pstatic_stored_object> &dependencies);
   pfem PK_composite_full_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies);
-  pfem composite_C1_triangle_fem(fem_param_list &params,
+  pfem HCT_triangle_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies);
 
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
@@ -1676,7 +1676,7 @@ namespace getfem
 		 PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
       add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
-      add_suffix("COMPOSITEC1_TRIANGLE", composite_C1_triangle_fem);
+      add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
     }
   };
   

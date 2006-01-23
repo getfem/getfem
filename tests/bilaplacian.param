@@ -36,9 +36,13 @@ if (N == 2 && ~QUAD)
   if 0    % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
-  else   % argyris element
-    FEM_TYPE = 'FEM_ARGYRIS';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+  else if 0  % argyris element
+      FEM_TYPE = 'FEM_ARGYRIS';
+      DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+  else
+      FEM_TYPE = 'FEM_HCT_TRIANGLE';
+      DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+      INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
   end;
 end
 

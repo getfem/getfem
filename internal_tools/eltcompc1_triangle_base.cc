@@ -24,7 +24,7 @@ template<typename T> void print_const(std::ostream &o, T a) {
   if (gmm::abs(a - 5.0/12.0) < 1E-12) { o << "(5/12)"; return; }
   if (gmm::abs(a - 13.0/12.0) < 1E-12) { o << "(13/12)"; return; }
   if (gmm::abs(a - 17.0/12.0) < 1E-12) { o << "(17/12)"; return; }
-  if (gmm::abs(a - 23.0/12.0) < 1E-12) { o << "(13/12)"; return; }
+  if (gmm::abs(a - 23.0/12.0) < 1E-12) { o << "(23/12)"; return; }
   o << a;
 }
 
