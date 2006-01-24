@@ -118,8 +118,17 @@ namespace bgeot {
   static void parse_error(int i)
   { DAL_THROW(failure_error, "Syntax error reading a polynomial " << i); }
 
-  static int get_next_token(std::string &s, std::istream &f)
-  { return ftool::get_token(f, s, true, false, false); }
+  static std::string stored_s;
+  int stored_tokent;
+
+  static void unget_token(int i, std::string s)
+  { stored_s = s; stored_tokent = i; }
+
+  static int get_next_token(std::string &s, std::istream &f) {
+    if (stored_s.size() == 0)
+      return ftool::get_token(f, s, true, false, false);
+    else { s = stored_s; stored_s.clear(); return stored_tokent; }
+  }
 
   static base_poly read_expression(short_type n, std::istream &f) {
     base_poly result(n,0);
@@ -151,10 +160,7 @@ namespace bgeot {
 	j = get_next_token(s, f);
 	if (j != 5 || s[0] != ')') parse_error(3);
 	break;
-      case '+' : result = read_expression(n, f); break;
-      case '-' : result = read_expression(n, f) * opt_long_scalar_type(-1);
-	break;
-      default : parse_error(4);
+	default : parse_error(4);
       }
       break;
     default : parse_error(5);
@@ -180,29 +186,37 @@ namespace bgeot {
     base_poly &p1(*(value_list.end() - 2)), &p2(*(value_list.end() - 1));
     
     switch (op_list.back()) {
-    case 1  : p1 *= p2; break;
-    case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
-    case 3  : p1 += p2; break;
-    case 4  : p1 -= p2; break;
-    case 5  : 
-      {
-	if (p2.degree() > 0) parse_error(7);
-	int pow = int(p2[0]);
-	if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
-	base_poly p = p1; p1.one();
-	for (int i = 0; i < pow; ++i) p1 *= p;
-      }
-      break;
+      case 1  : p1 *= p2; break;
+      case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
+      case 3  : p1 += p2; break;
+      case 4  : p1 -= p2; break;
+      case 5  : 
+	{
+	  if (p2.degree() > 0) parse_error(7);
+	  int pow = int(p2[0]);
+	  if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
+	  base_poly p = p1; p1.one();
+	  for (int i = 0; i < pow; ++i) p1 *= p;
+	}
+	break;
+      case 6 : p2 *= opt_long_scalar_type(-1); break;
     }
-    value_list.pop_back(); op_list.pop_back(); prior_list.pop_back();
+    if (op_list.back() != 6) value_list.pop_back(); op_list.pop_back(); prior_list.pop_back();
   }
 
   base_poly read_base_poly(short_type n, std::istream &f) {
     std::vector<base_poly> value_list;
     std::string s;
-    value_list.push_back(read_expression(n, f));
     std::vector<int> op_list, prior_list;
+    
     int i = get_next_token(s, f), prior, op;
+    if (i == 5 && s[0] == '-')
+      { op_list.push_back(6); prior_list.push_back(2); }
+    else if (i == 5 && s[0] == '+') ;
+    else unget_token(i, s);
+
+    value_list.push_back(read_expression(n, f));
+    i = get_next_token(s, f);
     operator_priority_(i, s[0], prior, op);
     while (op) {
       while (!prior_list.empty() && prior_list.back() <= prior)

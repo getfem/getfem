@@ -666,8 +666,7 @@ $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
   \label{fig:HCT_tr}
 \end{figure}
 
-
-This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure \ref{fig:HCT_tr} and \cite{ciarlet1978}).
+This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure \ref{fig:HCT_tr} and \cite{ciarlet1978}). It is strongly advised to use a \texttt{ IM_HCT_COMPOSITE } integration method with this finite element.
 
 
 \begin{center}
@@ -1261,6 +1260,9 @@ You can use {\tt "IM\_PRODUCT(IM1, IM2)"} to produce integration methods on quad
 
 
 use {\tt "IM\_STRUCTURED\_COMPOSITE(IM1, S)"} to copy {\tt IM1} on an element with {\tt S} subdivisions. The resulting integration method has the same order but with more points. This could be more stable to use composite method rather than to improve the order of the method. Those methods have to be used also with composite elements. Most of the time for composite element, it is preferable to choose the basic method {\tt IM1} with no points on the boundary (because the gradient coulb be not defined on the boundary of sub-elements). 
+
+
+For the HCT element, it is advised to use the \texttt{IM_HCT_COMPOSITE(im)} composite integration (which split the original triangle into 3 sub-triangles).
 
 \begin{thebibliography}{99}
 

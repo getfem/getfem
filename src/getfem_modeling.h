@@ -1162,7 +1162,7 @@ namespace getfem {
     /** Constructor defining the rhs
 	@param problem the sub-problem to which this brick applies.
 	@param mf_data_ the mesh_fem on which B_ is defined.
-	@param B_ the value of the source term.
+	@param B_ the value of the source term ( a Qdim x mesh_dim field )
 	@param bound the mesh boundary number on which the source term is applied.
 	@param num_fem_ the mesh_fem number on which this brick is is applied.
     */
@@ -1175,7 +1175,7 @@ namespace getfem {
       if (bound != size_type(-1))
 	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
       this->force_update();
-      B_.reshape(mf_u().get_qdim()*mf_u().linked_mesh().dim());
+      B_.reshape(mf_u().get_qdim(),mf_u().linked_mesh().dim());
       if (gmm::vect_size(B__)) B_.set(B__);
     }
   };

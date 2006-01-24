@@ -111,5 +111,48 @@ namespace getfem
     dependencies.push_back(&(p->approx_method()->integration_points()));
     return p;
   }
+
+  struct just_for_singleton_HCT__ { mesh m; mesh_precomposite mp; };
+  
+
+  pintegration_method HCT_composite_int_method(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+
+    
+
+    just_for_singleton_HCT__ &jfs
+      = dal::singleton<just_for_singleton_HCT__>::instance();
+
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 1)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pintegration_method pim = params[0].method();
+    if (pim->type() != IM_APPROX)
+      DAL_THROW(failure_error, "Bad parameters");
+
+    
+    jfs.m.clear();
+    size_type i0 = jfs.m.add_point(base_node(1.0/3.0, 1.0/3.0));
+    size_type i1 = jfs.m.add_point(base_node(0.0, 0.0));
+    size_type i2 = jfs.m.add_point(base_node(1.0, 0.0));
+    size_type i3 = jfs.m.add_point(base_node(0.0, 1.0));
+    jfs.m.add_triangle(i0, i2, i3);
+    jfs.m.add_triangle(i0, i3, i1);
+    jfs.m.add_triangle(i0, i1, i2);
+    jfs.mp = mesh_precomposite(jfs.m);
+
+    mesh_im mi(jfs.m);
+    mi.set_integration_method(jfs.m.convex_index(), pim);
+
+    integration_method *p
+      = new integration_method
+      (composite_approx_int_method(jfs.mp, mi,
+				   pim->approx_method()->ref_convex()));
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(&(p->approx_method()->integration_points()));
+    return p;
+  }
   
 }  /* end of namespace getfem.                                            */

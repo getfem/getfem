@@ -32,7 +32,7 @@
 #include <bgeot_convex_ref.h>
 
 
- namespace bgeot {
+namespace bgeot {
 
 
   static size_type simplexified_parallelepiped_2[6] = {
@@ -312,4 +312,4 @@
     DAL_THROW(failure_error, "No simplexification  for this element");
   }
 
-};
+}

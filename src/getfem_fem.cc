@@ -986,6 +986,68 @@ namespace getfem
     return p;
   }
 
+   /* ******************************************************************** */
+   /*	Element RT0.                                                       */
+   /* ******************************************************************** */
+
+//    struct P1_RT0_ : public PK_fem_ {
+//      P1_RT0_(dim_type nc);
+//    };
+
+//   P1_RT0_::P1_RT0_(dim_type nc) {
+//     cvr = bgeot::simplex_of_reference(nc);
+//     dim_ = cvr->structure()->dim();
+//     init_cvs_node();
+//     es_degree = 1;
+//     is_pol = true;
+//     is_lag = is_equiv = false;
+//     base_.resize(nc+1);
+
+//     base_poly p(nc, 0);
+//     for (size_type i = 0; i < nc; ++i) p += base_poly(nc, 1, i);
+      
+//     for (size_type i = 0; i <= nc; ++i) {
+//       base_[i] = p;
+//       if (i < nc) base_[i]
+//     }
+
+
+    
+//     add_node(lagrange_dof(2), base_node(0.0, 0.0));
+//     read_poly(base_[0], 2, "(1 - x - y)*(1 + x + y - 2*x*x - 11*x*y - 2*y*y)");
+
+
+
+
+
+//     is_lag = false; es_degree = 2;
+//     base_node pt(nc); pt.fill(0.5);
+//     unfreeze_cvs_node();
+//     add_node(bubble1_dof(nc), pt);
+//     base_.resize(nb_dof(0));
+//     base_[nc+1] = base_[1]; base_[nc+1] *= scalar_type(1 << nc);
+//     for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
+//     // Le raccord assure la continuite
+//     // des possibilités de raccord avec du P2 existent mais il faudrait
+//     // modifier qlq chose (transformer les fct de base P1) 
+//   }
+
+//   static pfem P1_RT0(fem_param_list &params,
+// 	std::vector<dal::pstatic_stored_object> &dependencies) {
+//     if (params.size() != 1)
+//       DAL_THROW(failure_error, 
+// 	   "Bad number of parameters : " << params.size() << " should be 2.");
+//     if (params[0].type() != 0)
+//       DAL_THROW(failure_error, "Bad type of parameters");
+//     int n = int(::floor(params[0].num() + 0.01));
+//     if (n <= 1 || n >= 100 || double(n) != params[0].num())
+//       DAL_THROW(failure_error, "Bad parameters");
+//     virtual_fem *p = new P1_RT0_(n);
+//     dependencies.push_back(p->ref_convex(0));
+//     dependencies.push_back(p->node_tab(0));
+//     return p;
+//   }
+
   /* ******************************************************************** */
   /*	P1 element with a bubble base fonction on a face : type lagrange  */
   /* ******************************************************************** */

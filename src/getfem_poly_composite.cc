@@ -60,7 +60,6 @@ namespace getfem
       pgt->gradient(x, pc);
     
       gmm::mult(gmm::transposed(pc), gmm::transposed(G), B0);
-      cout << "B0 = " << B0 << endl;
       det[cv] = gmm::lu_inverse(B0);
       gtrans[cv] = B0;
       orgs[cv] = m.points_of_convex(cv)[0];

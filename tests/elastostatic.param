@@ -17,7 +17,7 @@ FT = 3.0;               % parameter for the exact solution.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_PRESSURE=0;       % Mixed version or not.
 NX = 5;                 % space step.
-DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
+DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 %MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
 
@@ -41,19 +41,21 @@ if (N == 2 && ~QUAD)
     FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,1)';
   end
 
-  if 1        % test with Hermite or Argyris elements
-    if 0      % test with Hermite element
+  if 0        % test with Hermite or Argyris elements
+    if 1      % test with Hermite element
       FEM_TYPE = 'FEM_HERMITE(2)';
       DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
       INTEGRATION = 'IM_TRIANGLE(6)'; 
-    else if 0
+    elseif 0
       FEM_TYPE = 'FEM_ARGYRIS';
       DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
       INTEGRATION= 'IM_TRIANGLE(10)';
     else
       FEM_TYPE = 'FEM_HCT_TRIANGLE';
       DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
-      INTEGRATION= 'IM_TRIANGLE(10)';
+      % INTEGRATION= 'IM_TRIANGLE(13)';
+      % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
+      INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
     end;
     DATA_FEM_TYPE = 'FEM_PK(2,5)';
   end

@@ -8,23 +8,37 @@
 
 using bgeot::size_type;
 
+template<typename T> bool recognize_frac(T a, int &i, int &j) 
+ {
+  for (i=1; i < 100; ++i) {
+    for (j=1; j < 100; ++j) {
+      if (gmm::abs(a - double(i)/j)<1e-12) {
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
 template<typename T> void print_const(std::ostream &o, T a) {
   if (a < 0) o << "-";
   a = gmm::abs(a);
-  if (gmm::abs(a - 1.0/3.0) < 1E-12) { o << "(1/3)"; return; }
-  if (gmm::abs(a - 2.0/3.0) < 1E-12) { o << "(2/3)"; return; }
-  if (gmm::abs(a - 5.0/3.0) < 1E-12) { o << "(5/3)"; return; }
-  if (gmm::abs(a - 8.0/3.0) < 1E-12) { o << "(8/3)"; return; }
-  if (gmm::abs(a - 10.0/3.0) < 1E-12) { o << "(10/3)"; return; }
-  if (gmm::abs(a - 1.0/6.0) < 1E-12) { o << "(1/6)"; return; }
-  if (gmm::abs(a - 13.0/6.0) < 1E-12) { o << "(13/6)"; return; }
-  if (gmm::abs(a - 7.0/3.0) < 1E-12) { o << "(7/3)"; return; }
-  if (gmm::abs(a - 7.0/6.0) < 1E-12) { o << "(7/6)"; return; }
-  if (gmm::abs(a - 1.0/12.0) < 1E-12) { o << "(1/12)"; return; }
-  if (gmm::abs(a - 5.0/12.0) < 1E-12) { o << "(5/12)"; return; }
-  if (gmm::abs(a - 13.0/12.0) < 1E-12) { o << "(13/12)"; return; }
-  if (gmm::abs(a - 17.0/12.0) < 1E-12) { o << "(17/12)"; return; }
-  if (gmm::abs(a - 23.0/12.0) < 1E-12) { o << "(23/12)"; return; }
+
+  if (gmm::abs(a - int(a)) < 1e-12) { o << a; return; }
+
+  int ii, jj;
+  for (unsigned k=1; k < 100; ++k) {
+    if (recognize_frac(a/sqrt(k), ii, jj)) {
+      bool m=false;
+      if (k != 1) { 
+	o << "sqrt(" << k << ")"; 
+	if (ii != 1 || jj != 1) o << "*"; else return;
+      }
+      o << ii;
+      if (jj != 1) o << "/" << jj;
+      return;
+    }
+  }
   o << a;
 }
 
@@ -40,7 +54,7 @@ template<typename T> void spec_print(std::ostream &o,
       bool first_var = true;
       if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
       else if (*it < T(0)) o << "-";
-      if (gmm::abs(*it)!=T(1)) {
+      if (gmm::abs(gmm::abs(*it) - 1) > 1E-14) {
 	print_const(o, gmm::abs(*it));
 	first_var = false;
       }
@@ -106,6 +120,7 @@ int main(void) {
 	  M( 8, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
 
 	q = p; q.derivative(1); q2 = p; q2.derivative(0); q += q2;
+	q /= sqrt(2);
 	if (j == 0)
 	  M( 9, i+10*j) = q.eval(bgeot::base_node(0.5, 0.5).begin());
 	
@@ -200,7 +215,7 @@ int main(void) {
 
 	// raccord en (1/6, 1/6)
 	double u_6 = 1.0 / 6.0;
-	q = p; q.derivative(1); q2 = p; q2.derivative(0); q -= q2;
+	q = p; q.derivative(0); q2 = p; q2.derivative(1); q -= q2;
 	if (j == 1)
 	  M(27, i+10*j) =  q.eval(bgeot::base_node(u_6, u_6).begin());
 	if (j == 2)
@@ -208,16 +223,16 @@ int main(void) {
 	
 	// raccord en (1/6, 2/3)
 	double u_2 = 2.0 / 3.0;
-	q = p; q.derivative(1); q *= u_3; q2 = p;
-	q2.derivative(0); q2 *= u_2; q += q2;
+	q = p; q.derivative(0); q2 = p;
+	q2.derivative(1); q2 *= 2.0; q += q2;
 	if (j == 1)
 	  M(28, i+10*j) =  q.eval(bgeot::base_node(u_6, u_2).begin());
 	if (j == 0)
 	  M(28, i+10*j) = -q.eval(bgeot::base_node(u_6, u_2).begin());
 	
 	// raccord en (2/3, 1/6)
-	q = p; q.derivative(1); q *= u_2; q2 = p;
-	q2.derivative(0); q2 *= u_3; q += q2;
+	q = p; q.derivative(0); q *= 2.0; q2 = p;
+	q2.derivative(0); q += q2;
 	if (j == 2)
 	  M(29, i+10*j) =  q.eval(bgeot::base_node(u_2, u_6).begin());
 	if (j == 0)

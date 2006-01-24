@@ -426,7 +426,7 @@ namespace getfem {
       st = "F=data(mdim(#1),#2);"
 	"V(#1)+=comp(Base(#1).Base(#2).Normal())(:,j,k).F(k,j);";
     else
-      st = "F=data(qdim(#1),qdim(#1),#2);"
+      st = "F=data(qdim(#1),mdim(#1),#2);"
 	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);";
 
     asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);

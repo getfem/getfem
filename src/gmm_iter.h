@@ -80,11 +80,14 @@ namespace gmm {
     double res;        /* last computed residu.                            */
     std::string name;  /* eventually, name of the method.                  */
     bool written;
-    
+    void (*callback)(const gmm::iteration&);
   public :
 
-    void init(void) 
-    { nit = 0; res = 0.0; written = false; resminreach = 1E50; resadd = 0.0; }
+    void init(void) { 
+      nit = 0; res = 0.0; written = false; 
+      resminreach = 1E50; resadd = 0.0; 
+      callback = 0;
+    }
 
     iteration(double r = 1.0E-8, int noi = 0, size_type mit = size_type(-1))
       : rhsn(1.0), maxiter(mit), noise(noi), resmax(r) { init(); }
@@ -101,6 +104,10 @@ namespace gmm {
     double get_resmax(void) const { return resmax; }
     void set_resmax(double r) { resmax = r; }
     
+    void set_callback(void (*t)(const gmm::iteration&)) {
+      callback = t;
+    }
+
     size_type get_iteration(void) const { return nit; }
     void set_iteration(size_type i) { nit = i; }
     
@@ -119,6 +126,7 @@ namespace gmm {
     { return converged(gmm::vect_norm2(v)); }
 
     bool finished(double nr) {
+      if (callback) callback(*this);
       if (noise > 0 && !written) {
 	double a = (rhsn == 0) ? 1.0 : rhsn;
 	converged(nr);

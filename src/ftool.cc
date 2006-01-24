@@ -342,6 +342,7 @@ namespace ftool {
     if (i != 4) parse_error(temp_string);
     if (temp_string == "end") return 1;
     if (temp_string == "else") return 2;
+    if (temp_string == "elseif") return 3;
     if (temp_string == "if") {
       param_value p = read_expression_list(f);
       if (p.type_of_param() != REAL_VALUE)
@@ -353,6 +354,22 @@ namespace ftool {
 	int k = read_instruction_list(f, b || skipped);
 	if (k != 1) syntax_error("Unterminated else");
       }
+      if (j == 3) {
+	int k = 0;
+	do {
+	  if (b) skipped = true;
+	  p = read_expression_list(f);
+	  if (p.type_of_param() != REAL_VALUE)
+	    syntax_error("elseif instruction needs a condition");
+	  b = (p.real() != 0.0);
+	  k = read_instruction_list(f, !b || skipped);
+	  if (k == 2) {
+	    k = read_instruction_list(f, b || skipped);
+	    break;
+	  }
+	} while (k == 3);
+	if (k != 1) syntax_error("Unterminated elseif");
+      }     
       return 0;
     }
     if (temp_string == "error") {
