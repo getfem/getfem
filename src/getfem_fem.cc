@@ -311,7 +311,7 @@ namespace getfem
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
-    l.ddl_desc[num_der] = ddl_elem(DERIVATIVE);
+    l.ddl_desc.at(num_der) = ddl_elem(DERIVATIVE);
     return &(tab[tab.add_norepeat(l)]);
   }
 

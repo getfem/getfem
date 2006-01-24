@@ -75,17 +75,11 @@ namespace getfem {
 
     --it2; i2 = it2.index();
 
-    cout << "mesh : " << endl;
-    mp->linked_mesh().write_to_file(cout);
-
-    for (size_type i = 0; i < 4; ++i)
-      cout << "convex to point " << i << " : " << mp->linked_mesh().convex_to_point(i) << endl;
-
     while (i1 != size_type(-1) || i2 != size_type(-1)) {
       if (i1 != size_type(-1)) {
 	const bgeot::mesh_structure::ind_cv_ct &tc
 	  = mp->linked_mesh().convex_to_point(i1);
-	cout << "tc = " << tc << endl;
+	// cout << "tc = " << tc << endl;
 	itc = tc.begin(); itce = tc.end();
 	for (; itc != itce; ++itc) {
 	  size_type ii = *itc;
@@ -171,10 +165,10 @@ namespace getfem {
     for (size_type i = 0; i < 3; ++i) {
       if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
 
-      const bgeot::base_tensor &t = pfp->val(i);
-       cout << "val at point " << i << " : " << t << endl;
-      const bgeot::base_tensor &tt = pfp->grad(i);
-      cout << "grad at point " << i << " : " << tt << endl;
+//       const bgeot::base_tensor &t = pfp->val(i);
+//        cout << "val at point " << i << " : " << t << endl;
+//       const bgeot::base_tensor &tt = pfp->grad(i);
+//       cout << "grad at point " << i << " : " << tt << endl;
       
 
       M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
@@ -227,12 +221,7 @@ namespace getfem {
     m.add_triangle(i0, i2, i3);
     m.add_triangle(i0, i3, i1);
     m.add_triangle(i0, i1, i2);
-    // mp = mesh_precomposite(m);
-
-    for (size_type i = 0; i < 4; ++i)
-      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
-    getchar();
-
+    mp = mesh_precomposite(m);
 
     std::stringstream s
       ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y + 21*x*y^2 + 7*y^3;"
@@ -282,12 +271,6 @@ namespace getfem {
     estimated_degree() = 3;
     init_cvs_node();
 
-    for (size_type i = 0; i < 4; ++i)
-      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
-    getchar();
-
-    mp = mesh_precomposite(m);
-
     base()=std::vector<polynomial_composite2>(12,polynomial_composite2(mp));
     for (size_type k = 0; k < 12; ++k)
       for (size_type ic = 0; ic < 3; ++ic) {
@@ -295,32 +278,20 @@ namespace getfem {
 	// cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
       }
 
-    for (size_type i = 0; i < 4; ++i)
-      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
-    getchar();
-
     pdof_description pdof = lagrange_dof(2);
     for (size_type i = 0; i < 3; ++i){
-      if (i == 1) pdof = derivative_dof(1, 0);
-      if (i == 2) pdof = derivative_dof(1, 1);
+      
+      if (i == 1) pdof = derivative_dof(2, 0);
+      if (i == 2) pdof = derivative_dof(2, 1);
+
       add_node(pdof, base_node(0.0, 0.0));
       add_node(pdof, base_node(1.0, 0.0));
       add_node(pdof, base_node(0.0, 1.0));
     }
 
-    for (size_type i = 0; i < 4; ++i)
-      cout << "con vex to point " << i << " : " << m.convex_to_point(i) << endl;
-    getchar();
-
     add_node(norm_derivative_dof(2), base_node(0.5, 0.5));
     add_node(norm_derivative_dof(2), base_node(0.0, 0.5));
     add_node(norm_derivative_dof(2), base_node(0.5, 0.0));
-
-
-    for (size_type i = 0; i < 4; ++i)
-      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
-    getchar();
-
   }
 
 
