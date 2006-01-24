@@ -75,10 +75,17 @@ namespace getfem {
 
     --it2; i2 = it2.index();
 
+    cout << "mesh : " << endl;
+    mp->linked_mesh().write_to_file(cout);
+
+    for (size_type i = 0; i < 4; ++i)
+      cout << "convex to point " << i << " : " << mp->linked_mesh().convex_to_point(i) << endl;
+
     while (i1 != size_type(-1) || i2 != size_type(-1)) {
       if (i1 != size_type(-1)) {
 	const bgeot::mesh_structure::ind_cv_ct &tc
 	  = mp->linked_mesh().convex_to_point(i1);
+	cout << "tc = " << tc << endl;
 	itc = tc.begin(); itce = tc.end();
 	for (; itc != itce; ++itc) {
 	  size_type ii = *itc;
@@ -174,8 +181,6 @@ namespace getfem {
       M(6+i, 6+i) = K(1,0); M(6+i, 6+i) = K(1,1);
     }
 
-    return;
-
     // take the normal derivatives into account
     static base_matrix W(3, 12);
     static base_small_vector norient(M_PI, M_PI * M_PI);
@@ -190,10 +195,10 @@ namespace getfem {
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	DAL_WARNING2("Argyris : The normal orientation may be not correct");
+	DAL_WARNING2("HCT_triangle : "
+		     "The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
-      cout << "t = " << t << endl;
       for (unsigned j = 0; j < 12; ++j)
 	W(i-9, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
@@ -222,8 +227,13 @@ namespace getfem {
     m.add_triangle(i0, i2, i3);
     m.add_triangle(i0, i3, i1);
     m.add_triangle(i0, i1, i2);
-    mp = mesh_precomposite(m);
-    
+    // mp = mesh_precomposite(m);
+
+    for (size_type i = 0; i < 4; ++i)
+      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
+    getchar();
+
+
     std::stringstream s
       ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y + 21*x*y^2 + 7*y^3;"
     "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
@@ -272,12 +282,23 @@ namespace getfem {
     estimated_degree() = 3;
     init_cvs_node();
 
+    for (size_type i = 0; i < 4; ++i)
+      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
+    getchar();
+
+    mp = mesh_precomposite(m);
+
     base()=std::vector<polynomial_composite2>(12,polynomial_composite2(mp));
     for (size_type k = 0; k < 12; ++k)
       for (size_type ic = 0; ic < 3; ++ic) {
 	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
 	// cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
       }
+
+    for (size_type i = 0; i < 4; ++i)
+      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
+    getchar();
+
     pdof_description pdof = lagrange_dof(2);
     for (size_type i = 0; i < 3; ++i){
       if (i == 1) pdof = derivative_dof(1, 0);
@@ -286,9 +307,20 @@ namespace getfem {
       add_node(pdof, base_node(1.0, 0.0));
       add_node(pdof, base_node(0.0, 1.0));
     }
+
+    for (size_type i = 0; i < 4; ++i)
+      cout << "con vex to point " << i << " : " << m.convex_to_point(i) << endl;
+    getchar();
+
     add_node(norm_derivative_dof(2), base_node(0.5, 0.5));
     add_node(norm_derivative_dof(2), base_node(0.0, 0.5));
     add_node(norm_derivative_dof(2), base_node(0.5, 0.0));
+
+
+    for (size_type i = 0; i < 4; ++i)
+      cout << "convex to point " << i << " : " << m.convex_to_point(i) << endl;
+    getchar();
+
   }
 
 
