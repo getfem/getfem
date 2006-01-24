@@ -142,8 +142,10 @@ namespace ftool
       std::vector<param_value> &array(void) { return array_value; }
       const std::vector<param_value> &array(void) const { return array_value; }
       param_value(double e = 0.0) : pt(REAL_VALUE), real_value(e) {}
-      param_value(std::string s) : pt(STRING_VALUE), string_value(s) {}
-      param_value(char *s) : pt(STRING_VALUE), string_value(s) {}
+      param_value(std::string s) : pt(STRING_VALUE), real_value(0.0),
+				   string_value(s) {}
+      param_value(char *s) :  pt(STRING_VALUE), real_value(0.0),
+			      string_value(s) {}
       param_value(param_type p): pt(p), real_value(0.0) {}
     };
     
