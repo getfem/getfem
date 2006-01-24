@@ -649,12 +649,43 @@ This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equa
 \begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Argyris element on a triangle}\\
 "FEM\_ARGYRIS"
-\end{tabular} \\ \vspace{-1pt} 
+\end{tabular} \\ \vspace{-1pt}
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
 $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
+
+\subsubsection{Hsieh-Clough-Tocher element}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=6cm,angle=0]{getfemlist_HCT.eps}
+  \end{center}
+  \caption{ \it Hsieh-Clough-Tocher (HCT) element, $P_3$, 12 d.o.f., $C^1$}
+  \label{fig:HCT_tr}
+\end{figure}
+
+
+This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure \ref{fig:HCT_tr} and \cite{ciarlet1978}).
+
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{ \bf Argyris element on a triangle}\\
+"FEM\_HCT\_TRIANGLE"
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+$3$ & $2$ & $12$ & $C^1$ & No \mbox{($Q = 1$)} & No & composite\\ \hline
+\end{tabular}
+\end{center}
+
+
+
+
+
+
 
 \subsection{Specific elements in dimension 3}
 \subsubsection{Elements with additional bubble functions}

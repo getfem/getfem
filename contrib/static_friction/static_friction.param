@@ -6,7 +6,7 @@
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.5;    % Friction coefficient.
+FRICTION_COEF = 0.3;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
 PG=12000;
@@ -15,7 +15,7 @@ N = 2;
 NX = 20;            	% space step.
 NOISY = 1;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-METHOD = 0;             % 0 = Newton.
+METHOD = 2;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
 			% 2 = Additive Schwarz Newton
 if (METHOD == 1)
@@ -23,7 +23,7 @@ if (METHOD == 1)
 end;
 if (METHOD == 2) 
   SUBDOMSIZE = 0.6;
-  OVERLAP = 0.2;
+  OVERLAP = 0.4;
 end
 
 NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
@@ -34,7 +34,7 @@ DIRICHLET = 1;          % 0 = no Dirichlet boundary
 			% 1 = Dirichlet boundary on the top
 			% 2 = Dirichlet boundary on the left
 
-DIRICHLET_RATIO = -0.1; % parametre pour la condition de Dirichlet
+DIRICHLET_RATIO = 0.002; % parametre pour la condition de Dirichlet
 CONTACT_CONDITION = 0;  % 0 = Condition almost conformal in u
 			% 1 = Condition almost conformal in forces on contact
 			%     boundary with FEM_TYPE_L for the multipliers

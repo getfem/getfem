@@ -9,8 +9,8 @@ N = 2;
 QUAD = 0;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 NX = 10;                % space step.
-DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
-FT = 40.0;               % parameter for the exact solution
+DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
+FT =10.0;               % parameter for the exact solution
 D = 1.0;    % "flexion modulus"
 KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
             % plate model (N=2 only).
@@ -30,13 +30,13 @@ end
 
 if (N == 2 && ~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
-  INTEGRATION = 'IM_TRIANGLE(10)'; % quadrature of order 10 on triangles
+  INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
   if 0    % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
-  else if 0  % argyris element
+  else if 1  % argyris element
       FEM_TYPE = 'FEM_ARGYRIS';
       DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   else

@@ -39,6 +39,7 @@
 #include <gmm_solver_gmres.h>
 #include <gmm_solver_bicgstab.h>
 #include <gmm_solver_qmr.h>
+#include <gmm_solver_Newton.h>
 
 namespace gmm {
       
@@ -542,6 +543,10 @@ namespace gmm {
     typedef actual_precond<Precond, local_solver, Matrixt> chgt_precond;
     
     double residual = iter.get_resmax();
+
+    default_newton_line_search internal_ls, external_ls(size_t(-1), 5.0/3.0,
+							1.0/1000.0, 3.0/5.0);
+
     typename chgt_precond::APrecond PP = chgt_precond::transform(P);
     iter.set_rhsnorm(mtype(1));
     iteration iternc(iter);
@@ -552,17 +557,15 @@ namespace gmm {
     iternc.set_name("Local Newton");
     iter2.set_name("Linear System for Global Newton");
     iternc.set_resmax(residual/100.0);
-    iter3.set_resmax(residual/1000.0);
-    iter2.set_resmax(residual/100.0);
+    iter3.set_resmax(residual/10000.0);
+    iter2.set_resmax(residual/1000.0);
     iter4.set_resmax(residual/1000.0);
     std::vector<value_type> rhs(NS.size()), x(NS.size()), d(NS.size());
     std::vector<value_type> xi, xii, fi, di;
     Matrixt Mloc, M(NS.size(), NS.size());
     NS.compute_F(rhs, u);
     mtype act_res=gmm::vect_norm2(rhs), act_res_new(0), precond_res = act_res;
-    mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
-    mtype alpha_max_ratio(2);
-    mtype alpha_max_ratio_glob(1.2), alpha_min_glob=mtype(1)/mtype(1024);
+    mtype alpha;
     
     while(!iter.finished(std::min(act_res, precond_res))) {
       for (int SOR_step = 0;  SOR_step >= 0; --SOR_step) {
@@ -590,11 +593,21 @@ namespace gmm {
 	      iter3.init();
 	      AS_local_solve(local_solver(), Mloc, di, fi, PP, iter3);
 	      
-	      for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
+	      internal_ls.init_search(r, iternc.get_iteration());
+	      do {
+		alpha = internal_ls.next_try();
 		gmm::add(xi, gmm::scaled(di, -alpha), xii);
 		gmm::mult(Bi, gmm::scaled(xii, -1.0), u, x);
 		NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
-		if ((r_t = gmm::vect_norm2(fi)) <= r * alpha_max_ratio) break;
+		r_t = gmm::vect_norm2(fi);
+	      } while (!internal_ls.is_converged(r_t));
+	      
+	      if (alpha != internal_ls.converged_value()) {
+		alpha = internal_ls.converged_value();
+		gmm::add(xi, gmm::scaled(di, -alpha), xii);
+		gmm::mult(Bi, gmm::scaled(xii, -1.0), u, x);
+		NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
+		r_t = gmm::vect_norm2(fi);
 	      }
 	      if (iternc.get_noisy()) cout << "(step=" << alpha << ")\t";
 	      ++iternc; r = r_t; gmm::copy(xii, xi); 
@@ -617,13 +630,21 @@ namespace gmm {
       AS_global_solve(global_solver(), ASM, d, rhs, iter2);
 
       //      gmm::add(gmm::scaled(rhs, 0.1), u); ++iter;
-
-      for (alpha = mtype(1); alpha >= alpha_min_glob; alpha *= alpha_mult) {
+      external_ls.init_search(act_res, iter.get_iteration());
+      do {
+	alpha = external_ls.next_try();
 	gmm::add(gmm::scaled(d, alpha), u, x);
 	NS.compute_F(rhs, x);
 	act_res_new = gmm::vect_norm2(rhs);
-	if (act_res_new <= act_res * alpha_max_ratio_glob) break;
+      } while (!external_ls.is_converged(act_res_new));
+      
+      if (alpha != external_ls.converged_value()) {
+	alpha = external_ls.converged_value();
+	gmm::add(gmm::scaled(d, alpha), u, x);
+	NS.compute_F(rhs, x);
+	act_res_new = gmm::vect_norm2(rhs);
       }
+
       if (iter.get_noisy() > 1) cout << endl;
       act_res = act_res_new; 
       if (iter.get_noisy()) cout << "(step=" << alpha << ")\t unprecond res = " << act_res << " ";
