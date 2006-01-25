@@ -256,8 +256,11 @@ namespace gmm {
     porigin_type origin;
    
     tab_ref_with_origin(void) {}
+    template <class PT> tab_ref_with_origin(const IT &b, const IT &e, PT p)
+      : dal::tab_ref<IT>(b,e), origin(porigin_type(p)) {}
     tab_ref_with_origin(const IT &b, const IT &e, porigin_type p)
       : dal::tab_ref<IT>(b,e), origin(p) {}
+   
     tab_ref_with_origin(const V &v, const sub_interval &si)
       : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min,
 			 vect_begin(const_cast<V&>(v))+si.max),
