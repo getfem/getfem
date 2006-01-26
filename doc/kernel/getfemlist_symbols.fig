@@ -1,4 +1,4 @@
-#FIG 3.2
+#FIG 3.2  Produced by xfig version 3.2.5-alpha5
 Portrait
 Center
 Metric
@@ -74,26 +74,26 @@ Single
 2 3 0 2 0 7 49 0 20 0.000 0 0 -1 0 0 4
 	 1530 8565 1305 8475 1305 8655 1530 8565
 -6
-6 975 10437 1455 10917
-6 1155 10493 1384 10644
-5 1 0 1 0 7 50 0 -1 0.000 0 0 0 0 1222.500 10664.500 1155 10507 1290 10507 1380 10597
-5 1 0 1 0 7 50 0 -1 0.000 0 0 0 0 1245.000 10687.000 1200 10597 1290 10597 1335 10642
-5 1 0 1 0 7 50 0 -1 0.000 0 0 0 0 1235.070 10678.562 1185 10550 1290 10552 1357 10614
+6 975 11157 1455 11637
+6 1155 11213 1384 11364
+5 1 0 1 0 7 50 0 -1 0.000 0 0 0 0 1222.500 11384.500 1155 11227 1290 11227 1380 11317
+5 1 0 1 0 7 50 0 -1 0.000 0 0 0 0 1245.000 11407.000 1200 11317 1290 11317 1335 11362
+5 1 0 1 0 7 50 0 -1 0.000 0 0 0 0 1235.070 11398.562 1185 11270 1290 11272 1357 11334
 2 1 0 1 0 7 50 0 -1 0.000 0 0 -1 0 0 2
-	 1196 10595 1155 10502
+	 1196 11315 1155 11222
 2 1 0 1 0 7 50 0 -1 0.000 0 0 -1 0 0 2
-	 1327 10644 1384 10592
+	 1327 11364 1384 11312
 2 1 0 1 0 7 50 0 -1 0.000 0 0 -1 0 0 2
-	 1286 10595 1305 10509
+	 1286 11315 1305 11229
 -6
-1 3 0 2 0 7 50 0 -1 0.000 1 0.0000 1215 10677 225 225 1215 10677 1440 10677
+1 3 0 2 0 7 50 0 -1 0.000 1 0.0000 1215 11397 225 225 1215 11397 1440 11397
 -6
-6 990 11115 1260 11385
-6 990 11115 1260 11385
+6 990 11835 1260 12105
+6 990 11835 1260 12105
 2 1 0 3 0 7 50 0 -1 0.000 0 0 -1 0 0 2
-	 1035 11340 1215 11160
+	 1035 12060 1215 11880
 2 1 0 3 0 7 50 0 -1 0.000 0 0 7 0 0 2
-	 1035 11160 1215 11340
+	 1035 11880 1215 12060
 -6
 -6
 1 3 0 1 0 0 50 0 20 0.000 1 0.0000 1125 900 64 64 1125 900 1189 900
@@ -116,21 +116,25 @@ Single
 	1 0 2.00 105.00 150.00
 	 2340 2790 1863 3267
 2 1 0 3 0 7 50 0 -1 0.000 0 0 -1 0 0 3
-	 1170 9900 1170 9765 1035 9765
+	 1170 10620 1170 10485 1035 10485
+2 1 0 3 0 7 50 0 -1 0.000 0 0 -1 1 0 2
+	1 1 2.00 105.00 150.00
+	 1035 10620 1710 10620
 2 1 0 3 0 7 50 0 -1 0.000 0 0 -1 1 0 2
 	1 1 2.00 105.00 150.00
 	 1035 9900 1710 9900
-4 0 0 50 0 0 18 0.0000 4 255 6990 3375 9990 Scalar product with the normal to a face for a vectorial element\001
-4 0 0 50 0 0 18 0.0000 4 255 6450 3375 8865 Value of the whole second derivative (hessian) at the node\001
-4 0 0 50 0 0 18 0.0000 4 255 4470 3555 8010 along the third coordinate (twice) in 3D.\001
-4 0 0 50 0 0 18 0.0000 4 195 6945 3555 7785 Value of the second cross derivative in 2D or second derivative\001
-4 0 0 50 0 0 18 0.0000 4 255 7350 3600 6615 Value of the second derivative along the second coordinate (twice)\001
-4 0 0 50 0 0 18 0.0000 4 255 7050 3645 5715 Value of the second derivative along the first coordinate (twice)\001
-4 0 0 50 0 0 18 0.0000 4 195 4365 3555 4770 Value of the normal derivative to a face\001
-4 0 0 50 0 0 18 0.0000 4 255 4335 3600 3825 Value of the whole gradient at the node\001
-4 0 0 50 0 0 18 0.0000 4 255 6975 3600 2925 Value of the gradient along the third cordinate for 3D elements\001
-4 0 0 50 0 0 18 0.0000 4 255 5340 3600 1980 Value of the gradient along the second cordinate\001
-4 0 0 50 0 0 18 0.0000 4 255 5175 3645 1395 Value of the gradient along the first coordinate\001
-4 0 0 50 0 0 18 0.0000 4 195 3645 3645 945 Value of the function at the node\001
-4 0 0 50 0 0 18 0.0000 4 255 6165 3360 10695 Bubble function on an element or a face, to be specified.\001
-4 0 0 50 0 0 18 0.0000 4 255 7260 3360 11325 Lagrange hierarchical d.o.f. Value at the node in a space of details.\001
+4 0 0 50 0 0 18 0.0000 4 270 7125 3375 8865 Value of the whole second derivative (hessian) at the node\001
+4 0 0 50 0 0 18 0.0000 4 270 4920 3555 8010 along the third coordinate (twice) in 3D.\001
+4 0 0 50 0 0 18 0.0000 4 210 7725 3555 7785 Value of the second cross derivative in 2D or second derivative\001
+4 0 0 50 0 0 18 0.0000 4 270 8145 3600 6615 Value of the second derivative along the second coordinate (twice)\001
+4 0 0 50 0 0 18 0.0000 4 270 7815 3645 5715 Value of the second derivative along the first coordinate (twice)\001
+4 0 0 50 0 0 18 0.0000 4 210 4860 3555 4770 Value of the normal derivative to a face\001
+4 0 0 50 0 0 18 0.0000 4 270 4800 3600 3825 Value of the whole gradient at the node\001
+4 0 0 50 0 0 18 0.0000 4 270 7695 3600 2925 Value of the gradient along the third cordinate for 3D elements\001
+4 0 0 50 0 0 18 0.0000 4 270 5910 3600 1980 Value of the gradient along the second cordinate\001
+4 0 0 50 0 0 18 0.0000 4 270 5730 3645 1395 Value of the gradient along the first coordinate\001
+4 0 0 50 0 0 18 0.0000 4 210 4005 3645 945 Value of the function at the node\001
+4 0 0 50 0 0 18 0.0000 4 285 7740 3375 10710 Scalar product with the normal to a face for a vectorial element\001
+4 0 0 50 0 0 18 0.0000 4 285 6885 3360 11415 Bubble function on an element or a face, to be specified.\001
+4 0 0 50 0 0 18 0.0000 4 285 8145 3360 12045 Lagrange hierarchical d.o.f. Value at the node in a space of details.\001
+4 0 0 50 0 0 18 0.0000 4 285 9930 3375 10035 Scalar product with a certain vector (for instance an edge) for a vectorial element\001
