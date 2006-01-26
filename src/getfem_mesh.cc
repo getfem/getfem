@@ -68,6 +68,10 @@ namespace getfem {
 	int ne = int(nb_convex());
 	std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
 	
+#if GETFEM_PARA_LEVEL > 1
+	double t_ref = MPI_Wtime();
+#endif
+
 	int j = 0, k = 0;
 	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
 	  numelt[j] = ic;
@@ -80,11 +84,18 @@ namespace getfem {
 
 	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
 
+
+
+
 	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
 			    &numflag, &size, options, &edgecut, &(npart[0]));
 	
 	for (size_type i = 0; i < size_type(ne); ++i)
 	  if (npart[i] == rank) mpi_region.add(numelt[i]);
+
+#if GETFEM_PARA_LEVEL > 1
+    cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
+#endif
 	
       }
       modified = false;

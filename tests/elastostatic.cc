@@ -140,6 +140,10 @@ void elastostatic_problem::init(void) {
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
+#if GETFEM_PARA_LEVEL > 1
+    double t_init=MPI_Wtime();
+#endif
+
   size_type N;
   if (!MESH_FILE.empty()) {
     mesh.read_from_file(MESH_FILE);
@@ -166,6 +170,10 @@ void elastostatic_problem::init(void) {
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
   }
+
+#if GETFEM_PARA_LEVEL > 1
+    cout<<"temps creation maillage "<< MPI_Wtime()-t_init<<endl;
+#endif
 
   dirichlet_version
     = getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION",
@@ -240,6 +248,17 @@ void elastostatic_problem::init(void) {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     }
   }
+
+#if GETFEM_PARA_LEVEL > 1
+  
+  
+  t_init = MPI_Wtime();
+  
+  mf_u.nb_dof(); mf_rhs.nb_dof(); mf_mult.nb_dof();
+
+  cout<<"temps numerotation "<< MPI_Wtime()-t_init<<endl;
+#endif
+
 }
 
 /* compute the error with respect to the exact solution */
@@ -334,14 +353,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
 #if GETFEM_PARA_LEVEL > 1
     cout<<"temps standard solve "<< MPI_Wtime()-t_init<<endl;
 #endif
-#if GETFEM_PARA_LEVEL > 1
-    double t_ref=MPI_Wtime();
-#endif
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
-#if GETFEM_PARA_LEVEL > 1
-    cout<<"temps copy elas "<< MPI_Wtime()-t_ref<<endl;
-#endif
+
   return (iter.converged());
 }
   
@@ -357,15 +371,11 @@ int main(int argc, char *argv[]) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
-#if GETFEM_PARA_LEVEL > 1
-    static double t_resol = 0.0;
-    double t_ref,t_final;
-#endif
 
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
 #if GETFEM_PARA_LEVEL > 1
-    t_ref=MPI_Wtime();
+    double t_ref=MPI_Wtime();
 #endif
     p.init();
 #if GETFEM_PARA_LEVEL > 1
@@ -382,13 +392,16 @@ int main(int argc, char *argv[]) {
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
 #if GETFEM_PARA_LEVEL > 1
-    t_final=MPI_Wtime();
-    t_resol += t_final-t_ref;
-    cout << "end resol"<<endl;
-    cout << "temps Resol "<< t_final-t_ref << " t_tot = "
-	<< t_resol << endl;
+    cout << "temps Resol "<< MPI_Wtime()-t_ref << endl;
+    t_ref = MPI_Wtime();
 #endif
     p.compute_error(U);
+#if GETFEM_PARA_LEVEL > 1
+    cout << "temps error "<< MPI_Wtime()-t_ref << endl;
+    t_ref = MPI_Wtime();
+#endif
+
+    // if (getfem::MPI_IS_MASTER()) { p.mesh.write_to_file("toto.mesh"); }
 
     if (p.PARAM.int_value("VTK_EXPORT") && getfem::MPI_IS_MASTER()) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";

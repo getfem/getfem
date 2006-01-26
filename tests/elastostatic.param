@@ -19,8 +19,8 @@ MIXED_PRESSURE=0;       % Mixed version or not.
 NX = 5;                 % space step.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
-%MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
-
+%MESH_FILE='../../tests/meshes/disc_P2_h2.mesh';
+%MESH_FILE='toto.mesh';
 
 if (N == 1)
   MESH_TYPE = 'GT_PK(1,1)';       % segments
@@ -34,7 +34,7 @@ end
 
 if (N == 2 && ~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
-  FEM_TYPE = 'FEM_PK(2,1)';        % P1 for triangles
+  FEM_TYPE = 'FEM_PK(2,2)';        % P1 for triangles
   INTEGRATION = 'IM_TRIANGLE(6)';  % quadrature rule for polynomials up
                                    % to degree 13 on triangles
   if (MIXED_PRESSURE)
