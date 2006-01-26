@@ -33,10 +33,10 @@ if (N == 2 && ~QUAD)
   INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
-  if 0    % hermite element
-    FEM_TYPE = 'FEM_HERMITE(2)';
+  if 1    % hermite element
+    FEM_TYPE = 'FEM_HERMITE(2)';   % not conformal -> problem
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-  elseif 0  % argyris element
+  elseif 1  % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
   else
@@ -55,7 +55,7 @@ if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';        % tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(8)';
   DATA_FEM_TYPE = 'FEM_PK(3,3)';
-  FEM_TYPE = 'FEM_HERMITE(3)';
+  FEM_TYPE = 'FEM_HERMITE(3)';     % not conformal -> problem
   DIRICHLET_FEM_TYPE = 'FEM_PK(3,2)';
 end
 
