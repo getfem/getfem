@@ -98,7 +98,7 @@ namespace getfem {
     gmm::sub_interval I1(0, mf_u3.nb_dof());
     gmm::sub_interval I2(mf_u3.nb_dof(), mf_theta.nb_dof());
     
-    asm_stiffness_matrix_for_plate_transverse_shear_mitc
+    asm_stiffness_matrix_for_plate_transverse_shear_mitc_new
       (gmm::sub_matrix(RM, I1), gmm::sub_matrix(RM, I1, I2),
        gmm::transposed(gmm::sub_matrix(RM, I2, I1)),
        gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU, rg);
@@ -112,22 +112,82 @@ namespace getfem {
     bgeot::multi_index sizes_;
 
   public:
+
      mitc4_projection_term(void) : sizes_(8,8)  { }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
-     virtual void compute(getfem::fem_interpolation_context& ctx,
+     const bgeot::multi_index &sizes() const {  return sizes_; }
+     virtual void compute(getfem::fem_interpolation_context & ctx,
 			  bgeot::base_tensor &t) {
        
        //     ctx.G()  --> coordonées des noeuds
        //     ctx.B()  --> (grad tau) ^{-T}
 
        for (size_type i = 0; i < 8; ++i)
-	  for (size_type j = 0; j < 8; ++j) {
-	    
-	    // .... t(i, j) = ...
+	  for (size_type j = 0; j < 8; ++j) 
+	      t(i, j) = 0 ;  // Initialisation
+       
+//        // Remplissage des termes non nuls
+	// lignes 0 et 1
+	t(0,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
+	t(0,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+	t(0,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) ; 
+	t(0,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) ;
+	t(0,4) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
+	t(0,5) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+	
+	t(1,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
+	t(1,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+	t(1,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) ; 
+	t(1,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) ;
+	t(1,4) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
+	t(1,5) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+	// lignes 2 et 3
+	t(2,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) ; 
+	t(2,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) ;
+	t(2,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ;
+	t(2,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+	t(2,6) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ;
+	t(2,7) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+	
+	t(3,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) ; 
+	t(3,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) ;
+	t(3,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+	t(3,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+	t(3,6) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+	t(3,7) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+	// lignes 4 et 5
+	t(4,0) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ; 
+	t(4,1) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+	t(4,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
+	t(4,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+	t(4,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) ;
+	t(4,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) ;
+	
+	t(5,0) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ; 
+	t(5,1) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+	t(5,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
+	t(5,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+	t(5,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) ;
+	t(5,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) ;
+	// lignes 6 et 7
+	t(6,2) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ; 
+	t(6,3) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+	t(6,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) ;
+	t(6,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) ;
+	t(6,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ; 
+	t(6,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+	
+	t(7,2) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+	t(7,3) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+	t(7,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) ;
+	t(7,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) ;
+	t(7,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+	t(7,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+	
+        t *= 0.5 ;
 
 	    }
       
-    }
+    
   };
 
 
@@ -149,14 +209,11 @@ namespace getfem {
     mitc4_projection_term mitc4;
 
     generic_assembly assem("mu=data$1(#3);"
-			   "A=NonLin();"
 			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
 			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
-			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
-			   "M$4(#2,#2)+=sym(A(k,:).t2(k,i,l,i,j).mu(j).A(l,:));"
-			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
-			   "M$2(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
-			   "M$3(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
+			   "M$4(#2,#2)+=sym(comp(NonLin(#2)(k,:).vBase(#2)(k,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j));"
+			   "M$2(#1,#2)+=comp(Grad(#1)(:,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j);"   
+			   "M$3(#1,#2)+=comp(Grad(#1)(:,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j);"
 			   );
 
     assem.push_mi(mim);
