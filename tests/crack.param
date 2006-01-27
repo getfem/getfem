@@ -10,6 +10,8 @@
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;           % Lamé coefficient.
 
+QUAD = 0;
+
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case
 if BIMATERIAL
   LAMBDA_UP = 400.0;
@@ -17,33 +19,33 @@ if BIMATERIAL
 end
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-%MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
-%MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 
+if (~QUAD) 
+  MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+else
+  % MESH_TYPE = 'GT_LINEAR_QK(2)';
+  MESH_TYPE = 'GT_QK(2, 1)';
+end;
 
 NX = 30;            	          % space step.
 
-
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
-%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
-%FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
-%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
+if (~QUAD)
+  %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
+  FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
+  DATA_FEM_TYPE = 'FEM_PK(2,1)';
+  INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
+  FEM_TYPE_P = 'FEM_PK(2,1)'; 
+else
+  FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
+  DATA_FEM_TYPE = 'FEM_QK(2,1)';
+  INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
+  FEM_TYPE_P = 'FEM_QK(2,1)'; 
+end;
 
 MIXED_PRESSURE=0;       % Mixed version or not.
- FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
-FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
 DIRICHLET_VERSION = 2;
-
-% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
-
-DATA_FEM_TYPE = 'FEM_PK(2,1)';
-%DATA_FEM_TYPE = 'FEM_QK(2,1)';
-
-%INTEGRATION = 'IM_TETRAHEDRON(6)';  % quadrature rule for polynomials up
-                                    % to degree 6 on tetra
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
@@ -53,15 +55,6 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 % method defined on a square for 2D, or defined on a prism for 3D.
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
-
-INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
-%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
-
-%INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
-%INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
-
-%SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
-%INTEGRATION = 'IM_TRIANGLE(6)';
 
 ADDITIONAL_CRACK = 0;
 ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement

@@ -74,7 +74,7 @@ namespace getfem
 	for (dim_type l = 0; l <= N; l++)
 	  // tab1[l] = tab3[tab2[l]];
 	  tab1[l] = tab3[(tab2[l]
-			  + (((total & 1) && N > 3) ? (nbpt/2) : 0)) % nbpt];
+			  + (((total & 1) && N != 3) ? (nbpt/2) : 0)) % nbpt];
 	me.add_simplex(N, tab1.begin());
       }
 
