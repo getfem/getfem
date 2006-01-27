@@ -745,6 +745,325 @@ namespace gmm {
   (std::ostream &o, const csr_matrix_ref<PT1, PT2, PT3, shift>& m)
   { gmm::write(o,m); return o; }
 
+  /* ********************************************************************* */
+  /*		                                         		   */
+  /*		Simple interface for C arrays                     	   */
+  /*		                                         		   */
+  /* ********************************************************************* */
+
+  template <class PT> struct array1D_reference {
+
+    typedef typename std::iterator_traits<PT>::value_type value_type;
+
+    PT begin, end;
+    
+    const value_type &operator[](size_type i) const { return *(begin+i); }
+    value_type &operator[](size_type i) { return *(begin+i); }
+
+    array1D_reference(PT begin_, size_type s) : begin(begin_), end(begin_+s) {}
+  };
+
+  template <typename PT>
+  struct linalg_traits<array1D_reference<PT> > {
+    typedef array1D_reference<PT> this_type;
+    typedef this_type origin_type;
+    typedef typename which_reference<PT>::is_reference is_reference;
+    typedef abstract_vector linalg_type;
+    typedef typename std::iterator_traits<PT>::value_type value_type;
+    typedef typename std::iterator_traits<PT>::reference reference;
+    typedef PT iterator;
+    typedef PT const_iterator;
+    typedef abstract_dense storage_type;
+    typedef linalg_true index_sorted;
+    static size_type size(const this_type &v) { return v.end - v.begin; }
+    static iterator begin(this_type &v) { return v.begin; }
+    static const_iterator begin(const this_type &v) { return v.begin; }
+    static iterator end(this_type &v) { return v.end; }
+    static const_iterator end(const this_type &v) { return v.end; }
+    static origin_type* origin(this_type &v) { return &v; }
+    static const origin_type* origin(const this_type &v) { return &v; }
+    static void clear(origin_type*, const iterator &it, const iterator &ite)
+    { std::fill(it, ite, value_type(0)); }
+    static void do_clear(this_type &v)
+    { std::fill(v.begin, v.end, value_type(0)); }
+    static value_type access(const origin_type *, const const_iterator &it,
+			     const const_iterator &, size_type i)
+    { return it[i]; }
+    static reference access(origin_type *, const iterator &it,
+			    const iterator &, size_type i)
+    { return it[i]; }
+    static void resize(this_type &, size_type )
+    { DAL_THROW(failure_error, "Not resizable vector"); }
+  };
+
+  template<typename PT> std::ostream &operator <<
+  (std::ostream &o, const array1D_reference<PT>& v)
+  { gmm::write(o,v); return o; }
+  
+  template <class PT> struct array2D_col_reference {
+
+    typedef typename std::iterator_traits<PT>::value_type T;
+    typedef typename std::iterator_traits<PT>::reference reference;
+    typedef typename const_reference<reference>::reference const_reference;
+    typedef PT iterator;
+    typedef typename const_pointer<PT>::pointer const_iterator;
+    
+    PT begin_;
+    size_type nbl, nbc;
+
+    inline const_reference operator ()(size_type l, size_type c) const {
+#     ifdef GMM_VERIFY
+      if (l >= nbl || c >= nbc) this->out_of_range_error();
+#     endif
+      return *(begin_ + c*nbl+l);
+    }
+    inline reference operator ()(size_type l, size_type c) {
+#     ifdef GMM_VERIFY
+      if (l >= nbl || c >= nbc) this->out_of_range_error();
+#     endif
+      return *(begin_ + c*nbl+l);
+    }
+    
+    void out_of_range_error(void) const
+    { DAL_THROW(std::out_of_range, "out of range"); }
+    
+    void resize(size_type, size_type);
+    void reshape(size_type m, size_type n) {
+      if (n*m != nbl*nbc) DAL_THROW(dimension_error,"dimensions mismatch");
+      nbl = m; nbc = n;
+    }
+    
+    void fill(T a, T b = T(0)) { 
+      std::fill(begin_, end+nbc*nbl, b);
+      iterator p = begin_, e = end+nbc*nbl;
+      while (p < e) { *p = a; p += nbl+1; }
+    }
+    inline size_type nrows(void) const { return nbl; }
+    inline size_type ncols(void) const { return nbc; }
+
+    iterator begin(void) { return begin_; }
+    const_iterator begin(void) const { return begin_; }
+    iterator end(void) { return begin_+nbl*nbc; }
+    const_iterator end(void) const { return begin_+nbl*nbc; }
+
+    array2D_col_reference(PT begin__, size_type nrows_, size_type ncols_)
+      : begin_(begin__), nbl(nrows_), nbc(ncols_) {}
+  };
+
+  template <typename PT> struct linalg_traits<array2D_col_reference<PT> > {
+    typedef array2D_col_reference<PT> this_type;
+    typedef this_type origin_type;
+    typedef typename which_reference<PT>::is_reference is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename std::iterator_traits<PT>::value_type value_type;
+    typedef typename std::iterator_traits<PT>::reference reference;
+    typedef abstract_dense storage_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator,
+					   this_type> sub_row_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::const_iterator,
+					   this_type> const_sub_row_type;
+    typedef dense_compressed_iterator<typename this_type::iterator,
+				      typename this_type::iterator,
+				      this_type *> row_iterator;
+    typedef dense_compressed_iterator<typename this_type::const_iterator,
+				      typename this_type::iterator,
+				      const this_type *> const_row_iterator;
+    typedef tab_ref_with_origin<typename this_type::iterator, 
+				this_type> sub_col_type;
+    typedef tab_ref_with_origin<typename this_type::const_iterator,
+				this_type> const_sub_col_type;
+    typedef dense_compressed_iterator<typename this_type::iterator,
+				      typename this_type::iterator,
+				      this_type *> col_iterator;
+    typedef dense_compressed_iterator<typename this_type::const_iterator,
+				      typename this_type::iterator,
+				      const this_type *> const_col_iterator;
+    typedef col_and_row sub_orientation;
+    typedef linalg_true index_sorted;
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_sub_row_type row(const const_row_iterator &it) {
+      return const_sub_row_type(it.it, it.it + it.ncols * it.nrows,
+				it.nrows, it.origin); 
+    }
+    static const_sub_col_type col(const const_col_iterator &it)
+    { return const_sub_col_type(it.it, it.it + it.nrows, it.origin); }
+    static sub_row_type row(const row_iterator &it) {
+      return sub_row_type(it.it, it.it + it.ncols * it.nrows,
+			  it.nrows, it.origin);
+    }
+    static sub_col_type col(const col_iterator &it)
+    { return sub_col_type(it.it, it.it + it.nrows, it.origin); }
+    static row_iterator row_begin(this_type &m)
+    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    static row_iterator row_end(this_type &m)
+    { return row_iterator(m.begin()+m.nrows(), 1, m.nrows(), m.ncols(), &m); }
+    static const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    static const_row_iterator row_end(const this_type &m) {
+      return const_row_iterator(m.begin()+m.nrows(), 1, m.nrows(),
+				m.ncols(), &m);
+    }
+    static col_iterator col_begin(this_type &m)
+    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), &m); }
+    static col_iterator col_end(this_type &m)
+    { return col_iterator(m.end(), m.nrows(), m.nrows(), m.ncols(), &m); }
+    static const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
+    static const_col_iterator col_end(const this_type &m)
+    { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
+    static origin_type* origin(this_type &m) { return &m; }
+    static const origin_type* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.fill(value_type(0)); }
+    static value_type access(const const_col_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    static reference access(const col_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    static void resize(this_type &v, size_type m, size_type n)
+    { v.resize(m,n); }
+    static void reshape(this_type &v, size_type m, size_type n)
+    { v.reshape(m, n); }
+  };
+
+  template<typename PT> std::ostream &operator <<
+    (std::ostream &o, const array2D_col_reference<PT>& m)
+  { gmm::write(o,m); return o; }
+
+
+
+  template <class PT> struct array2D_row_reference {
+    
+    typedef typename std::iterator_traits<PT>::value_type T;
+    typedef typename std::iterator_traits<PT>::reference reference;
+    typedef typename const_reference<reference>::reference const_reference;
+    typedef PT iterator;
+    typedef typename const_pointer<PT>::pointer const_iterator;
+    
+    PT begin_;
+    size_type nbl, nbc;
+
+    inline const_reference operator ()(size_type l, size_type c) const {
+#     ifdef GMM_VERIFY
+      if (l >= nbl || c >= nbc) this->out_of_range_error();
+#     endif
+      return *(begin_ + l*nbc+c);
+    }
+    inline reference operator ()(size_type l, size_type c) {
+#     ifdef GMM_VERIFY
+      if (l >= nbl || c >= nbc) this->out_of_range_error();
+#     endif
+      return *(begin_ + l*nbc+c);
+    }
+    
+    void out_of_range_error(void) const
+    { DAL_THROW(std::out_of_range, "out of range"); }
+    
+    void resize(size_type, size_type);
+    void reshape(size_type m, size_type n) {
+      if (n*m != nbl*nbc) DAL_THROW(dimension_error,"dimensions mismatch");
+      nbl = m; nbc = n;
+    }
+    
+    void fill(T a, T b = T(0)) { 
+      std::fill(begin_, end+nbc*nbl, b);
+      iterator p = begin_, e = end+nbc*nbl;
+      while (p < e) { *p = a; p += nbc+1; }
+    }
+    inline size_type nrows(void) const { return nbl; }
+    inline size_type ncols(void) const { return nbc; }
+
+    iterator begin(void) { return begin_; }
+    const_iterator begin(void) const { return begin_; }
+    iterator end(void) { return begin_+nbl*nbc; }
+    const_iterator end(void) const { return begin_+nbl*nbc; }
+
+    array2D_row_reference(PT begin__, size_type nrows_, size_type ncols_)
+      : begin_(begin__), nbl(nrows_), nbc(ncols_) {}
+  };
+
+  template <typename PT> struct linalg_traits<array2D_row_reference<PT> > {
+    typedef array2D_row_reference<PT> this_type;
+    typedef this_type origin_type;
+    typedef typename which_reference<PT>::is_reference is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename std::iterator_traits<PT>::value_type value_type;
+    typedef typename std::iterator_traits<PT>::reference reference;
+    typedef abstract_dense storage_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator,
+					   this_type> sub_col_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::const_iterator,
+					   this_type> const_sub_col_type;
+    typedef dense_compressed_iterator<typename this_type::iterator,
+				      typename this_type::iterator,
+				      this_type *> col_iterator;
+    typedef dense_compressed_iterator<typename this_type::const_iterator,
+				      typename this_type::iterator,
+				      const this_type *> const_col_iterator;
+    typedef tab_ref_with_origin<typename this_type::iterator, 
+				this_type> sub_row_type;
+    typedef tab_ref_with_origin<typename this_type::const_iterator,
+				this_type> const_sub_row_type;
+    typedef dense_compressed_iterator<typename this_type::iterator,
+				      typename this_type::iterator,
+				      this_type *> row_iterator;
+    typedef dense_compressed_iterator<typename this_type::const_iterator,
+				      typename this_type::iterator,
+				      const this_type *> const_row_iterator;
+    typedef col_and_row sub_orientation;
+    typedef linalg_true index_sorted;
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static const_sub_col_type col(const const_col_iterator &it) {
+      return const_sub_col_type(it.it, it.it + it.nrows * it.ncols,
+				it.ncols, it.origin); 
+    }
+    static const_sub_row_type row(const const_row_iterator &it)
+    { return const_sub_row_type(it.it, it.it + it.ncols, it.origin); }
+    static sub_col_type col(const col_iterator &it) {
+      return sub_col_type(it.it, it.it + it.nrows * it.ncols,
+			  it.ncols, it.origin);
+    }
+    static sub_row_type row(const row_iterator &it)
+    { return sub_row_type(it.it, it.it + it.ncols, it.origin); }
+    static col_iterator col_begin(this_type &m)
+    { return col_iterator(m.begin(), 1, m.ncols(), m.nrows(), &m); }
+    static col_iterator col_end(this_type &m)
+    { return col_iterator(m.begin()+m.ncols(), 1, m.ncols(), m.nrows(), &m); }
+    static const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m.begin(), 1, m.ncols(), m.nrows(), &m); }
+    static const_col_iterator col_end(const this_type &m) {
+      return const_col_iterator(m.begin()+m.ncols(), 1, m.ncols(),
+				m.nrows(), &m);
+    }
+    static row_iterator row_begin(this_type &m)
+    { return row_iterator(m.begin(), m.ncols(), m.ncols(), m.nrows(), &m); }
+    static row_iterator row_end(this_type &m)
+    { return row_iterator(m.end(), m.ncols(), m.ncols(), m.nrows(), &m); }
+    static const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m.begin(),m.ncols(),m.ncols(),m.nrows(),&m); }
+    static const_row_iterator row_end(const this_type &m)
+    { return const_row_iterator(m.end(), m.ncols(),m.ncols(),m.nrows(), &m); }
+    static origin_type* origin(this_type &m) { return &m; }
+    static const origin_type* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.fill(value_type(0)); }
+    static value_type access(const const_row_iterator &itrow, size_type j)
+    { return (*itrow)[j]; }
+    static reference access(const row_iterator &itrow, size_type j)
+    { return (*itrow)[j]; }
+    static void resize(this_type &v, size_type m, size_type n)
+    { v.resize(m,n); }
+    static void reshape(this_type &v, size_type m, size_type n)
+    { v.reshape(m, n); }
+  };
+
+  template<typename PT> std::ostream &operator <<
+    (std::ostream &o, const array2D_row_reference<PT>& m)
+  { gmm::write(o,m); return o; }
+
+
+
+
+
 
 }
 

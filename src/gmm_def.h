@@ -175,6 +175,13 @@ namespace gmm {
   template <typename P> struct modifiable_pointer<const P *>
   { typedef P* pointer; };
 
+  template <typename R> struct const_reference;
+  template <typename R> struct const_reference<R &>
+  { typedef const R &reference; };
+  template <typename R> struct const_reference<const R &>
+  { typedef const R  &reference; };
+
+
   inline bool is_sparse(abstract_sparse)   { return true;  }
   inline bool is_sparse(abstract_dense)    { return false; }
   inline bool is_sparse(abstract_skyline)  { return true;  }
