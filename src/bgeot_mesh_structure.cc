@@ -144,6 +144,26 @@ namespace bgeot {
     for ( ; dmax > 1; --dmax) to_faces(dmax);
   }
 
+  size_type mesh_structure::nb_convex_with_edge(size_type i1, size_type i2) {
+    size_type nb = 0;
+    for (size_type k = 0; k < points_tab[i1].size(); ++k) {
+      size_type cv = points_tab[i1][k];
+      for (size_type l = 0; l < convex_tab[cv].pts.size(); ++l)
+	if (convex_tab[cv].pts[l] == i2) { ++nb; break; }
+    }
+    return nb;
+  }
+
+  void mesh_structure::convex_with_edge(size_type i1, size_type i2,
+					std::vector<size_type> &ipt) {
+    ipt.resize(0);
+    for (size_type k = 0; k < points_tab[i1].size(); ++k) {
+      size_type cv = points_tab[i1][k];
+      for (size_type l = 0; l < convex_tab[cv].pts.size(); ++l)
+	if (convex_tab[cv].pts[l] == i2) { ipt.push_back(cv); break; }
+    }
+  }
+
   mesh_structure::ind_set
     mesh_structure::ind_points_to_point(size_type ip) const { // not efficient
     ind_set r;

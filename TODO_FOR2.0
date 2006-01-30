@@ -7,7 +7,9 @@ Changement à prendre en considérations pour la 2.0 :
      paralleliser l'interpolation (san affecter la sauvegarde fait uniquement
      sur le processeur maitre).
 
-2  - Ajouter le raffinement de maillage à la bank (voir fichier TOBEDONE).
+2  - Finaliser le raffinement de maillage :  mise a jour des mesh_regions ;
+     dialogue_ avec mesh_im et mesh_fem ; interfacer clear, etc ... pour que
+     les green simplexes soit à jour.
 
 3  - Brique generalized Dirichlet : la faire deriver de la brique constraints.
 
@@ -16,9 +18,17 @@ Changement à prendre en considérations pour la 2.0 :
 5  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
      avantages de chacune.
 
-6  - Implémenter l'élément Hdiv ?
+6  - Interfacer le maillage régulier avec read_from_file de mesh ?
 
-7  - Implémenter l'élément composite C^1 ?
+7  - Améliorer la detection des bords pour qu'elle puisse optionellement
+     faire la différence avec les non conformité intérieure d'un maillage.
+     Pouvoir aussi détecter ces non conformité pour appliquer une condition
+     de raccord. offrir des service standard, genre detection de bords par
+     rapport à la normale au bord.
+
+8 - Dans mesh et mesh_fem, pour les recherche sur des résultats qui donnent de
+	petits ensembles d'entier, preferer le std::vector<size_type> au
+	dal::bit_vector.
 
 
 Questions en suspend :

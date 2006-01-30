@@ -22,15 +22,80 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_poly_composite.h>
 #include <bgeot_comma_init.h>
+#include <getfem_export.h>
+
 
 using getfem::size_type;
 using getfem::base_node;
 using getfem::base_small_vector;
 
 
+void export_mesh(getfem::mesh &m) {
+  getfem::mesh_fem mf(m);
+  mf.set_classical_finite_element(m.convex_index(), 0);
+  std::vector<double> U(mf.nb_dof());
+  for (size_type i = 0; i < mf.nb_dof(); ++i)
+    U[i] = double(mf.first_convex_of_dof(i));
+
+  getfem::vtk_export exp("test_mesh.vtk", false);
+  exp.exporting(mf); 
+  exp.write_point_data(mf, U, "mesh");
+  cout << "export done, you can view the data file with (for example)\n"
+    "mayavi -d test_mesh.vtk -m Outline -m BandedSurfaceMap\n";
+}
+
+typedef base_node POINT;
+typedef base_small_vector VECT;
+
+
+void test_conforming(getfem::mesh &m) {
+  size_type dim = m.dim();
+  getfem::mesh_region border_faces;
+  getfem::outer_faces_of_mesh(m, border_faces);
+  size_type nb_faces = 0;
+  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i, nb_faces++) {
+    for (size_type ip = 0; ip < dim; ++ip) {
+      bool onbound = false;
+      const POINT &pt = m.points_of_face_of_convex(i.cv(), i.f())[ip];
+      for (size_type nc = 0; nc < dim; ++nc)
+	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
+	  onbound = true;
+      if (!onbound)
+	DAL_THROW(dal::failure_error, "Mesh is not conforming " << pt);
+    }
+  }
+  cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
+
+}
+
+
+void test_refinable(size_type dim) {
+
+  int Nsubdiv = 2;
+  std::vector<VECT> vects(dim);
+  std::vector<int> iref(dim);
+  POINT pt1(dim);
+  for (size_type i = 0; i < dim; i++)
+  { vects[i] = VECT(dim); vects[i][i] = 1.0 / Nsubdiv; iref[i] = Nsubdiv; }
+
+  getfem::mesh m;
+  getfem::parallelepiped_regular_simplex_mesh(m, dim, pt1, vects.begin(),
+					      iref.begin());
+  dal::bit_vector b; b.add(0);
+  
+  cout << "\nrefine mesh" << endl;
+
+  m.Bank_refine(b); export_mesh(m);
+  m.Bank_refine(b); export_mesh(m);
+  m.Bank_refine(m.convex_index());
+  m.Bank_refine(m.convex_index());
+  m.Bank_refine(m.convex_index());
+  m.Bank_refine(m.convex_index());
+  export_mesh(m);
+  test_conforming(m);
+}
+
 void test_mesh_matching(size_type dim) {
-  typedef base_node POINT;
-  typedef base_small_vector VECT;
   
   getfem::mesh m;
 
@@ -45,31 +110,12 @@ void test_mesh_matching(size_type dim) {
   getfem::parallelepiped_regular_simplex_mesh(m, dim, pt1, vects.begin(),
 					      iref.begin());
 
-  getfem::mesh_region border_faces;
-  getfem::outer_faces_of_mesh(m, border_faces);
-  size_type nb_faces = 0;
-  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i, nb_faces++) {
-    for (size_type ip = 0; ip < dim; ++ip) {
-      bool onbound = false;
-      const POINT &pt = m.points_of_face_of_convex(i.cv(), i.f())[ip];
-      for (size_type nc = 0; nc < dim; ++nc)
-	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
-	  onbound = true;
-      //      if (!onbound) DAL_THROW(dal::failure_error, "Mesh is not conforming "
-      //		      << pt);
-
-      if (!onbound) { DAL_WARNING1("Mesh is not conforming " << pt); return; }
-    }
-  }
-  cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
+  test_conforming(m);
 }
 
 
 void test_mesh(getfem::mesh &m) {
-  
-  typedef base_node POINT;
-  typedef base_small_vector VECT;
-  
+    
   POINT pt1, pt2, pt3;
   if (pt1.size() == 0) pt1 = POINT(3);
 
@@ -299,6 +345,9 @@ int main(void) {
 
     for (size_type d = 1; d <= 4 /* 6 */; ++d)
       test_mesh_matching(d);
+
+    test_refinable(2);
+
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

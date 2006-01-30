@@ -210,7 +210,51 @@ int main(int argc, char *argv[]) {
     
     f << "  }\n\n";
 
+    // refinement of simplexes
+    
+    for (size_type n = 1; n < 7; ++n) {
+      
+      pref = bgeot::simplex_of_reference(n, 2);
+      cout << "refinement of simplex of dimension " << n << endl;
+
+      pts = pref->points();
+      
+      base_small_vector v(n); v.fill(1.0/(n+1));
+      for (size_type ip = 0; ip < pts.size(); ++ip) {
+	size_type nb1 = 0;
+	for (size_type id = 0; id < n; ++id)
+	  if (gmm::abs(pts[ip][id] - 0.5) < 1E-8) ++nb1;
+	if (nb1 >= 1) {
+	  // cout << "pts[" << ip << "] before = " << pts[ip] << ", ";
+	  pts[ip] -= v; pts[ip] *= 0.8; pts[ip] += v;
+	  // cout << "pts[" << ip << "]  after = " << pts[ip] << endl;
+	}
+      }
+
+      f << "\n  static size_type refinement_simplex_" << n;
+      nb = simplexify(pts, pref->points(), f);
+      f << "\n  static size_type refinement_simplex_" << n << "_nb = "
+	<< nb << ";\n";
+    }
+
+
+    f << "\n\n\n";
+    f << "  size_type refinement_simplexe_tab(size_type n,\n"
+      << "                                    size_type **tab) {\n"
+      << "    switch(n) {\n";
+    for (size_type d = 1; d < 7; ++d)
+      f  << "    case " << d << " : *tab = refinement_simplex_" << d << ";\n"
+	 << "             return refinement_simplex_" << d << "_nb;\n";
+    f << "    default : DAL_THROW(failure_error, \"No refinement for "
+      << " this element\");\n    }\n";
+    f << "  }\n\n";
+
+
     f << "};\n";
+
+
+
+
     f.close();
 
   }

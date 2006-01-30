@@ -645,7 +645,7 @@ namespace bgeot {
 					 const base_matrix &G) const {
     if (c.empty()) init_val();
     size_type N = G.nrows(), k = pgt->nb_points();
-    base_node P(N); P.fill(0.0);
+    base_node P(N);
     base_matrix::const_iterator git = G.begin();
     for (size_type l = 0; l < k; ++l) {
       scalar_type a = c[i][l]; 

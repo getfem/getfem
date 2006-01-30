@@ -38,7 +38,7 @@
 #include <dal_shared_ptr.h>
 #include <ftool.h>
 #include <bgeot_mesh_structure.h>
-#include <bgeot_convex.h>
+#include <bgeot_convex_ref.h>
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
 #include <getfem_context.h>
@@ -389,7 +389,7 @@ namespace getfem {
     size_type add_prism_by_points(dim_type di, const ITER &ps);
     
     /// Delete the convex of index ic from the mesh.
-    void sup_convex(size_type ic);
+    void sup_convex(size_type ic, bool sup_points = false);
     /** Swap the indexes of the convex of indexes i and j 
      *          in the whole structure.
      */
@@ -509,7 +509,10 @@ namespace getfem {
     /** Clone a mesh */
     void copy_from(const mesh& m); /* might be the copy constructor */
     size_type memsize(void) const;
-    ~mesh() { lmsg_sender().send(MESH_DELETE(*this)); }
+    ~mesh() {
+      lmsg_sender().send(MESH_DELETE(*this));
+      if (Bank_info) delete Bank_info;
+    }
 
     friend class mesh_region;
   private:
@@ -517,6 +520,50 @@ namespace getfem {
     void touch_from_region(size_type id) { valid_cvf_sets.add(id); touch(); }
     void to_edges() {} /* to be done, the to_edges of mesh_structure does   */
                        /* not handle geotrans */
+
+    //
+    // Bank refinement
+    //
+
+    // TODO : - mise a jour des mesh_regions ;
+    //        - dialogue avec mesh_im et mesh_fem
+
+    struct green_simplex {
+      bgeot::pgeometric_trans pgt;
+      std::vector<size_type> sub_simplices;
+      bgeot::convex<base_node> cv;
+    };
+    struct edge { 
+      size_type i0, i1, i2;
+      bool operator <(const edge &e) const;
+      edge(size_type a, size_type b) : i0(0), i1(a), i2(b) {}
+      edge(size_type a, size_type b, size_type c) : i0(a), i1(b), i2(c) {}
+    };
+    typedef std::set<edge> edge_set;
+
+    struct Bank_info_struct {
+      dal::bit_vector is_green_simplex; // indices of green simplices.
+      std::map<size_type, size_type> num_green_simplex;
+      dal::dynamic_tas<green_simplex> green_simplices;
+      edge_set edges;
+    };
+
+    Bank_info_struct *Bank_info;
+
+    std::vector<size_type> &Bank_loc_ind_of_pgt(bgeot::pgeometric_trans pgt);
+    void Bank_sup_convex_from_green(size_type);
+    void Bank_swap_convex(size_type, size_type);
+    void Bank_build_first_mesh(mesh &, size_type);
+    void Bank_basic_refine_convex(size_type);
+    void Bank_refine_normal_convex(size_type);
+    void Bank_test_and_refine_convex(size_type, dal::bit_vector &);
+    void Bank_build_green_simplexes(size_type, std::vector<size_type> &);
+
+  public :
+    
+    /** Use the Bank strategy to refine some convexes. */
+    void Bank_refine(dal::bit_vector);
+
   };
 
   inline void mesh::add_face_to_set(size_type s, size_type c, short_type f) {

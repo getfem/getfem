@@ -307,13 +307,8 @@ namespace bgeot
     gmm::clear(pt);
     if (c.empty()) init_val();
     for (typename CONT::const_iterator itk = G.begin(); 
-         itk != G.end(); ++itk, ++k) {
-      typename CONT::value_type::const_iterator Gk = (*itk).begin();
-      typename VEC::iterator ipt = pt.begin();
-      for (size_type i=0; i < (*itk).size(); ++i) {
-        ipt[i] += Gk[i] * c[j][k];
-      }
-    }
+         itk != G.end(); ++itk, ++k)
+      gmm::add(gmm::scaled(*itk, c[j][k]), pt);
   }
 
   template <typename CONT> 

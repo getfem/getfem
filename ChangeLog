@@ -1,7 +1,17 @@
+2006-01-26  Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
+	   Julien Pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.cc adding HCT triangle and Raviart-Thomas RT0
+	elements and Nedelec elements in dimension >=2. To build ths HCT
+	triangle a new version of composite polynomial has been added in
+	the new file getfem_fem_composite2.cc.
+
+	* src/bgeot_vector.h suppression of class vsvector.
+
 2006-01-21 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
-	
+
 	* src/bgeot_convex_hull.h, src/bgeot_simplexify.h suppression of
-	this files (not well xritten) only used to simplexify reference
+	this files (not well written) only used to simplexify reference
 	elements. Replaced by src/bgeot_convex_ref_simplexified.cc which
 	store the simplexifcation of standard reference elements.
 

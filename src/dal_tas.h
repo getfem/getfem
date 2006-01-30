@@ -84,8 +84,7 @@ namespace dal
   dnt_iterator<T, pks>::operator ++()
   { ++ib; ++id; while(id.in <= lt && !*ib) {++ib; ++id; } return *this; }
 
-  template<class T, unsigned char pks = 5> struct dnt_const_iterator
-  {
+  template<class T, unsigned char pks = 5> struct dnt_const_iterator {
     typedef T                   value_type;
     typedef const value_type*   pointer;
     typedef const value_type&   reference;
@@ -130,52 +129,49 @@ namespace dal
 
   template<class T, unsigned char pks> class dynamic_tas
     : public dynamic_array<T, pks> {
-    protected :
-      bit_vector ind;
+  protected :
+    bit_vector ind;
     
-    public :
-      typedef typename dynamic_array<T, pks>::iterator iterator;
-      typedef typename dynamic_array<T, pks>::const_iterator const_iterator;
-      typedef dnt_iterator<T, pks> tas_iterator;
-      typedef dnt_const_iterator<T, pks> const_tas_iterator;
-      typedef typename dynamic_array<T, pks>::size_type size_type;
-      
-      size_type memsize(void) const
-      {	return dynamic_array<T, pks>::memsize() + ind.memsize(); }
-      size_type size(void) const
-      { return (ind.card() == 0) ? 0 : (ind.last_true() + 1); }
-      size_type ind_first(void) const
-      { return (ind.card() == 0) ? 0 : ind.first_true(); }
-      size_type ind_last(void) const
-      { return (ind.card() == 0) ? 0 : ind.last_true(); }
-      size_type card(void) const { return ind.card(); }
-
-      tas_iterator tas_begin(void)
-      { return tas_iterator(*this, ind, ind_first()); }
-      const_tas_iterator tas_begin(void) const
-      { return const_tas_iterator(*this, ind_first()); }
-      tas_iterator tas_end(void) { return tas_iterator(*this, ind, size()); }
-      const_tas_iterator tas_end(void) const
-      { return const_tas_iterator(*this, size()); }
-
-      const bit_vector &index(void) const { return ind; }
-      bool index_valid(size_type i) const { return ind[i]; }
-      bool empty(void) const { return (ind.card() == 0); }
-     
-      void swap(size_type i, size_type j);
-      void compact(void);
-      size_type add(const T &e)
-      { size_type n=ind.first_false(); ind[n]=true; (*this)[n]=e;  return n; }
-      void add_to_index(size_type i, const T &e)
-      { ind[i] = true; (*this)[i] = e; }
-      void sup(size_type n) { ind[n] = false; }
-      void clear(void) { dynamic_array<T,pks>::clear(); ind.clear(); }
+  public :
+    typedef typename dynamic_array<T, pks>::iterator iterator;
+    typedef typename dynamic_array<T, pks>::const_iterator const_iterator;
+    typedef dnt_iterator<T, pks> tas_iterator;
+    typedef dnt_const_iterator<T, pks> const_tas_iterator;
+    typedef typename dynamic_array<T, pks>::size_type size_type;
+    
+    size_type memsize(void) const
+    {	return dynamic_array<T, pks>::memsize() + ind.memsize(); }
+    size_type size(void) const
+    { return (ind.card() == 0) ? 0 : (ind.last_true() + 1); }
+    size_type ind_first(void) const
+    { return (ind.card() == 0) ? 0 : ind.first_true(); }
+    size_type ind_last(void) const
+    { return (ind.card() == 0) ? 0 : ind.last_true(); }
+    size_type card(void) const { return ind.card(); }
+    
+    tas_iterator tas_begin(void)
+    { return tas_iterator(*this, ind, ind_first()); }
+    const_tas_iterator tas_begin(void) const
+    { return const_tas_iterator(*this, ind_first()); }
+    tas_iterator tas_end(void) { return tas_iterator(*this, ind, size()); }
+    const_tas_iterator tas_end(void) const
+    { return const_tas_iterator(*this, size()); }
+    
+    const bit_vector &index(void) const { return ind; }
+    bool index_valid(size_type i) const { return ind[i]; }
+    bool empty(void) const { return (ind.card() == 0); }
+    
+    void swap(size_type i, size_type j);
+    void compact(void);
+    size_type add(const T &e)
+    { size_type n=ind.first_false(); ind[n]=true; (*this)[n]=e;  return n; }
+    void add_to_index(size_type i, const T &e) { ind[i]=true; (*this)[i]=e; }
+    void sup(size_type n) { ind[n] = false; }
+    void clear(void) { dynamic_array<T,pks>::clear(); ind.clear(); }
   };
 
-
   template<class T, unsigned char pks>
-    void dynamic_tas<T, pks>::swap(size_type i, size_type j)
-  {
+    void dynamic_tas<T, pks>::swap(size_type i, size_type j) {
     bool ti = ind[i], tj = ind[j]; ind.swap(i,j);
     if (!ti &&  tj) (*this)[i] = (*this)[j];
     if (ti  && !tj) (*this)[j] = (*this)[i];
@@ -183,8 +179,7 @@ namespace dal
   }
 
   template<class T, unsigned char pks>
-    void dynamic_tas<T, pks>::compact(void)
-  {
+    void dynamic_tas<T, pks>::compact(void) {
     if (!empty())
       while (ind.last_true() >= ind.card())
 	swap(ind.first_false(), ind.last_true());

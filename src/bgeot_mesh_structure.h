@@ -142,6 +142,10 @@ namespace bgeot {
     /** build a new mesh, such that its convexes are the edges of the
 	convexes of the previous one */
     void to_edges(void);
+
+    size_type nb_convex_with_edge(size_type i1, size_type i2);
+    void convex_with_edge(size_type i1, size_type i2,
+			  std::vector<size_type> &ipt);
     
     /** Return a container of the convexes attached to point ip */
     const ind_cv_ct &convex_to_point(size_type ip) const
