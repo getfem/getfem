@@ -11,8 +11,8 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;           % Lamé coefficient.
 
 
-
 QUAD = 0;
+
 
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case
 
@@ -35,16 +35,12 @@ end;
 NX = 20;            	          % space step.
 
 
+
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
-%Old param
-%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-%FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
-%FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
-%FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
-%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
-%end old param
+
+
 
 if (~QUAD)
   %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
@@ -73,11 +69,14 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
 ADDITIONAL_CRACK = 0;
+
 ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
+
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone
 			% 3 = spider fem alone
 	                % 4 = spider fem enrichment
+
 
 
 
@@ -86,6 +85,7 @@ CUTOFF_FUNC = 1; % 0 for the exponential cutoff. 1 for a polynomial cutoff
 CUTOFF = 0.4;
 CUTOFF1 = 0.2;
 CUTOFF0 = 0.45;
+
 SPIDER_RADIUS =  0.3;
 SPIDER_NR = 30;         % size of the cartesian mesh in r for spider fem
 SPIDER_NTHETA = 30;      % size of the cartesian mesh in theta for spider fem

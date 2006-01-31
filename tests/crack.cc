@@ -423,9 +423,8 @@ void crack_problem::init(void) {
   }
   
 
-  
-
   cutoff_func = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
+
   cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
   cutoff_radius1 = PARAM.real_value("CUTOFF1", "Cutoff1");
   cutoff_radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
@@ -602,6 +601,7 @@ bool crack_problem::solve(plain_vector &U) {
 					   (enrichment_option == 2) ? 0.0 : cutoff_radius1,
 					   (enrichment_option == 2) ? 0.0 : cutoff_radius0,
 					   cutoff_func);
+
   
   mf_sing_u.set_functions(vfunc);
 
@@ -699,7 +699,9 @@ bool crack_problem::solve(plain_vector &U) {
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
-  getfem::interpolation_function(mf_rhs, F, sol_f);
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
@@ -877,9 +879,11 @@ int main(int argc, char *argv[]) {
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
 			       p.PARAM.int_value("VTK_EXPORT")==1);
+
 	exp.exporting(mf_refined); 
 	exp.write_point_data(mf_refined_vm, DN, "error");
 	//exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       
 #ifdef VALIDATE_XFEM
