@@ -6,16 +6,16 @@
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.3;    % Friction coefficient.
+FRICTION_COEF = 0.0;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
 PG=12000;
 RHO = 6e-6;     	% "realistic" density for steel
 N = 2;
-NX = 20;            	% space step.
-NOISY = 1;
+NX = 30;            	% space step.
+NOISY = 3;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-METHOD = 2;             % 0 = Newton.
+METHOD = 0;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
 			% 2 = Additive Schwarz Newton
 if (METHOD == 1)

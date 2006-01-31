@@ -530,6 +530,69 @@ namespace gmm {
 
     virtual ~NewtonAS_struct() {}
   };
+
+  template <typename Matrixt, typename MatrixBi> 
+  struct AS_exact_gradient {
+    const std::vector<MatrixBi> &vB;
+    std::vector<Matrixt> vM;
+    std::vector<Matrixt> vMloc;
+
+    void init(void) {
+      for (size_type i = 0; i < vB.size(); ++i) {
+	Matrixt aux(gmm::mat_ncols(vB[i]), gmm::mat_ncols(vM[i]));
+	gmm::resize(vMloc[i], gmm::mat_ncols(vB[i]), gmm::mat_ncols(vB[i]));
+	gmm::mult(gmm::transposed(vB[i]), vM[i], aux);
+	gmm::mult(aux, vB[i], vMloc[i]);
+      }
+    }
+    AS_exact_gradient(const std::vector<MatrixBi> &vB_) : vB(vB_) {
+      vM.resize(vB.size()); vMloc.resize(vB.size());
+      for (size_type i = 0; i < vB.size(); ++i) {
+	gmm::resize(vM[i], gmm::mat_nrows(vB[i]), gmm::mat_nrows(vB[i]));
+      }
+    }
+  };
+
+  template <typename Matrixt, typename MatrixBi,
+	    typename Vector2, typename Vector3>
+  void mult(const AS_exact_gradient<Matrixt, MatrixBi> &M,
+	    const Vector2 &p, Vector3 &q) {
+    gmm::clear(q);
+    typedef typename gmm::linalg_traits<Vector3>::value_type T;
+    std::vector<T> v(gmm::vect_size(p)), w, x;
+    for (size_type i = 0; i < M.vB.size(); ++i) {
+      w.resize(gmm::mat_ncols(M.vB[i]));
+      x.resize(gmm::mat_ncols(M.vB[i]));
+      gmm::mult(M.vM[i], p, v);
+      gmm::mult(gmm::transposed(M.vB[i]), v, w);
+      double rcond;
+      SuperLU_solve(M.vMloc[i], x, w, rcond);
+      // gmm::iteration iter(1E-10, 0, 100000);
+      //gmm::gmres(M.vMloc[i], x, w, gmm::identity_matrix(), 50, iter);
+      gmm::mult_add(M.vB[i], x, q);
+    }
+  }
+
+  template <typename Matrixt, typename MatrixBi,
+	    typename Vector2, typename Vector3>
+  void mult(const AS_exact_gradient<Matrixt, MatrixBi> &M,
+	    const Vector2 &p, const Vector3 &q) {
+    mult(M, p, const_cast<Vector3 &>(q));
+  }
+
+  template <typename Matrixt, typename MatrixBi,
+	    typename Vector2, typename Vector3, typename Vector4>
+  void mult(const AS_exact_gradient<Matrixt, MatrixBi> &M,
+	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
+  { mult(M, p, q); add(p2, q); }
+
+  template <typename Matrixt, typename MatrixBi,
+	    typename Vector2, typename Vector3, typename Vector4>
+  void mult(const AS_exact_gradient<Matrixt, MatrixBi> &M,
+	    const Vector2 &p, const Vector3 &p2, const Vector4 &q)
+  { mult(M, p, const_cast<Vector4 &>(q)); add(p2, q); }
+  
+
   
   template <typename Matrixt, typename MatrixBi, typename Vector,
 	    typename Precond, typename local_solver, typename global_solver>
@@ -562,6 +625,11 @@ namespace gmm {
     iter4.set_resmax(residual/1000.0);
     std::vector<value_type> rhs(NS.size()), x(NS.size()), d(NS.size());
     std::vector<value_type> xi, xii, fi, di;
+
+    std::vector< std::vector<value_type> > vx(NS.get_vB().size());
+    for (size_type i = 0; i < NS.get_vB().size(); ++i) // for exact gradient
+      vx[i].resize(NS.size()); // for exact gradient
+
     Matrixt Mloc, M(NS.size(), NS.size());
     NS.compute_F(rhs, u);
     mtype act_res=gmm::vect_norm2(rhs), act_res_new(0), precond_res = act_res;
@@ -609,6 +677,8 @@ namespace gmm {
 		NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
 		r_t = gmm::vect_norm2(fi);
 	      }
+	      gmm::copy(x, vx[isd]); // for exact gradient
+
 	      if (iternc.get_noisy()) cout << "(step=" << alpha << ")\t";
 	      ++iternc; r = r_t; gmm::copy(xii, xi); 
 	    }
@@ -624,10 +694,20 @@ namespace gmm {
 
       iter2.init();
       // solving linear system for the global Newton method
-      NS.compute_tangent_matrix(M, u);
-      add_schwarz_mat<Matrixt, MatrixBi, Precond, local_solver>
-	ASM(M, NS.get_vB(), iter4, P, iter.get_resmax());
-      AS_global_solve(global_solver(), ASM, d, rhs, iter2);
+      if (0) {
+	NS.compute_tangent_matrix(M, u);
+	add_schwarz_mat<Matrixt, MatrixBi, Precond, local_solver>
+	  ASM(M, NS.get_vB(), iter4, P, iter.get_resmax());
+	AS_global_solve(global_solver(), ASM, d, rhs, iter2);
+      }
+      else {  // for exact gradient
+	AS_exact_gradient<Matrixt, MatrixBi> eg(NS.get_vB());
+	for (size_type i = 0; i < NS.get_vB().size(); ++i) {
+	  NS.compute_tangent_matrix(eg.vM[i], vx[i]);
+	}
+	eg.init();
+	gmres(eg, d, rhs, gmm::identity_matrix(), 50, iter2);
+      }
 
       //      gmm::add(gmm::scaled(rhs, 0.1), u); ++iter;
       external_ls.init_search(act_res, iter.get_iteration());
