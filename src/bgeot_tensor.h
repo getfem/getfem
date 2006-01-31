@@ -94,17 +94,16 @@ namespace bgeot
     return o;
   }
 
-  template<class T> class tensor : public vsvector<T>
-  {
+  template<class T> class tensor : public std::vector<T> {
     protected:
 
       multi_index sizes_, coeff;
       
     public:
 
-      typedef typename vsvector<T>::size_type size_type;
-      typedef typename vsvector<T>::iterator iterator;
-      typedef typename vsvector<T>::const_iterator const_iterator;
+    typedef typename std::vector<T>::size_type size_type;
+    typedef typename std::vector<T>::iterator iterator;
+    typedef typename std::vector<T>::const_iterator const_iterator;
 
       template<class CONT> inline const T& operator ()(const CONT &c) const
       {
@@ -189,7 +188,7 @@ namespace bgeot
 	return *(this->begin() + d);
       }
 
-      inline size_type size(void) const { return vsvector<T>::size(); }
+    inline size_type size(void) const { return std::vector<T>::size(); }
       inline size_type size(int i) const { return sizes_[i]; }
       inline const multi_index &sizes(void) const { return sizes_; }
       inline size_type order(void) const { return sizes_.size(); }
@@ -222,8 +221,25 @@ namespace bgeot
     void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
     void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
 
-    size_type memsize() const { return vsvector<T>::memsize() +
-				  sizes_.memsize() + coeff.memsize(); }
+    size_type memsize() const {
+      return sizeof(T) * this->size()
+	+ sizeof(*this) + sizes_.memsize() + coeff.memsize();
+    }
+
+    std::vector<T> &as_vector(void) { return *this; }
+    const std::vector<T> &as_vector(void) const { return *this; }
+    
+
+    tensor<T>& operator +=(const tensor<T>& w)
+    { gmm::add(w.as_vector(), this->as_vector()); return *this; }
+    
+    tensor<T>& operator -=(const tensor<T>& w) {
+      gmm::add(gmm::scaled(w.as_vector(), T(-1)), this->as_vector());
+      return *this;
+    }
+    
+    tensor<T>& operator *=(const scalar_type w)
+    { gmm::scale(this->as_vector(), w); return *this; }
   };
 
   template<class T> void tensor<T>::mat_transp_reduction (const tensor &t,
@@ -320,7 +336,7 @@ namespace bgeot
 					      const tensor<T>& t)
   { // a ameliorer ...
     o << "sizes " << t.sizes() << endl;
-    o << *((const vsvector<T> *)(&t));
+    o << t.as_vector();
     return o;
   }
 

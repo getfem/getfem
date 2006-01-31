@@ -571,7 +571,6 @@ namespace getfem {
 //     for (size_type i=0; i < (vv.size()<4 ? vv.size() : 4); ++i) {
 //       printf("V[%d]@%p, V[%d][0]@%p\n", int(i), &vv[i], int(i), &vv[i][0]);
 //     }
-    typedef bgeot::PT<V> PV;
     dal::lexicographical_less<V, dal::approx_less<typename V::value_type> > comp;
     c.init().tic();
     init(vv); std::random_shuffle(vv.begin(), vv.end());
@@ -640,7 +639,7 @@ namespace getfem {
 	  typename V::value_type b = v[i][j];
 	  assert(a == b);
 	}
-	scalar_type d = bgeot::vect_dist2_sqr(v[i],v[0]);
+	scalar_type d = gmm::vect_dist2_sqr(v[i],v[0]);
 	assert(d ==0.);
       }
       for (size_type i=1; i < v.size(); ++i) v[i] = v[i-1];
@@ -649,7 +648,7 @@ namespace getfem {
       std::vector<V> w(342);
       std::vector<V> v(w);
       for (size_type i=1; i < w.size(); ++i) v[i] = w[i];
-      for (size_type i=1; i < w.size(); ++i) assert(bgeot::vect_dist2_sqr(v[i],w[i])==0.);
+      for (size_type i=1; i < w.size(); ++i) assert(gmm::vect_dist2_sqr(v[i],w[i])==0.);
       for (size_type i=1; i < w.size(); ++i) v[i] = w[0]+w[1];
       for (size_type i=1; i < w.size(); ++i) v[i] = w[0];
       for (size_type i=0; i < 8; ++i) {
@@ -713,7 +712,7 @@ namespace getfem {
     refccheck<MICRO_VEC>();
   }
 
-  void runhop() {
+  /*void runhop() {
     cout << "coucou\n";
     for (size_type i=0; i < 5; ++i) {
       hop2<bgeot::small_vector<double> >();
@@ -734,14 +733,14 @@ namespace getfem {
     }
     test::static_block_allocator::alloc.memstats();
   }
+  */
 
   void run() {
-    runhop();
+    //runhop();
     size_type N=quick ? 2311 : 20000;
-    std::vector<base_vector> bv(N);
-    std::vector<bgeot::PT<base_vector> > pbv(N);
+    //std::vector<base_vector> bv(N);
     std::vector<base_node> vv(N);
-    std::vector<micro_vec> sv(N);
+    //std::vector<micro_vec> sv(N);
     std::vector<std::valarray<double> > av(N);
     //std::vector<test::small_vector<double> > mv(N);
     std::vector<bgeot::small_vector<double> > Sv(N);
@@ -749,8 +748,7 @@ namespace getfem {
     //cerr << av[0].size() << "\n";
     //base_node n(3); cerr << n[3] << "\n";
     //rrun(bv);
-    rrun(pbv);
-    //rrun(vv);
+    rrun(vv);
     //rrun(sv);
     //rrun(mv);
     rrun(Sv);

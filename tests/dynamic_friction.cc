@@ -197,7 +197,7 @@ void friction_problem::init(void) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
-	if (un[N-1] < -0.000001 && (N != 3 || (bgeot::vect_dist2(pt, center)
+	if (un[N-1] < -0.000001 && (N != 3 || (gmm::vect_dist2(pt, center)
 			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
 	  mesh.region(CONTACT_BOUNDARY).add(cv, f); 
 	if (un[0] > 0.98) mesh.region(PERIODIC_BOUNDARY1).add(cv, f); 

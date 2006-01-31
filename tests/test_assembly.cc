@@ -664,7 +664,7 @@ namespace getfem {
 
 	for (size_type i = 0; i < nbd; i++)
 	  for (size_type j = 0; j < nbd; j++, ++p)
-	    no += bgeot::vect_sp(vval[i], vval[j]) * (*p);
+	    no += gmm::vect_sp(vval[i], vval[j]) * (*p);
       
       }
     return sqrt(no);
@@ -708,7 +708,7 @@ namespace getfem {
 	    for (size_type k = 0; k < NN; k++)
 	      for (size_type j = 0; j < nbd; j++, ++p)
 		if (k == l)
-		  no += (*p) * bgeot::vect_sp(vval[i], vval[j]);
+		  no += (*p) * gmm::vect_sp(vval[i], vval[j]);
       }
     return sqrt(no);
   }
@@ -759,7 +759,7 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
-    bgeot::vsvector<scalar_type> v(1);
+    base_vector v(1);
     assem.push_vec(v);
     assem.assembly();
     return sqrt(v[0]);
@@ -776,7 +776,7 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
-    bgeot::vsvector<scalar_type> v(1);
+    base_vector v(1);
     assem.push_vec(v);
     assem.assembly();
     return sqrt(v[0] + gmm::sqr(old2_asm_L2_norm(mim,mf,U)));
@@ -787,11 +787,11 @@ namespace getfem {
 
 void gen_mesh(getfem::mesh& mesh) {
   cout << "Mesh generation, N=" << param.NX << " Ndim=" << param.Ndim << endl;
-  base_node org(param.Ndim); org.fill(0.0);
+  base_node org(param.Ndim); gmm::clear(org);
   std::vector<base_small_vector> vtab(param.Ndim);
   std::vector<size_type> ref(param.Ndim); std::fill(ref.begin(), ref.end(), param.NX);
   for (size_type i = 0; i < param.Ndim; i++) { 
-    vtab[i] = base_small_vector(param.Ndim); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(param.Ndim); gmm::clear(vtab[i]);
     (vtab[i])[i] = 1. / scalar_type(param.NX);
   }
   switch (param.mesh_type) {

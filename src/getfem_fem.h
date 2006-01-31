@@ -147,7 +147,7 @@ namespace getfem {
    *  (normal derivative at the node, regarding a face).
    *  @param d the dimension of the reference element.
    */  
-  pdof_description norm_derivative_dof(dim_type d);
+  pdof_description normal_derivative_dof(dim_type d);
 
   /** Description of a unique dof of mean value type.
    *  @param d the dimension of the reference element.
@@ -223,7 +223,7 @@ namespace getfem {
     mutable bgeot::pstored_point_tab pspt;
     mutable bool pspt_valid;
     bgeot::pconvex_ref cvr; /// reference element.
-    mutable dim_type ntarget_dim; /// dimension of the target space
+    dim_type ntarget_dim; /// dimension of the target space
     mutable dim_type dim_; /// dimension of the reference element 
     bool is_equiv; /// true if the FEM is equivalent
     bool is_lag; /// true if the FEM is of Lagrange type

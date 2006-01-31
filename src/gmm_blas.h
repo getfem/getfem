@@ -93,6 +93,35 @@ namespace gmm {
   }
 
   ///@endcond
+
+
+  /** fill a vector or matrix with x. */
+  template <typename L> inline
+  void fill(L& l, typename gmm::linalg_traits<L>::value_type x) {
+    typedef typename gmm::linalg_traits<L>::value_type T;
+    if (x == T(0)) gmm::clear(l);
+    fill(l, x, typename linalg_traits<L>::linalg_type());
+  }
+
+  template <typename L> inline
+  void fill(const L& l, typename gmm::linalg_traits<L>::value_type x) {
+    fill(linalg_const_cast(l), x);
+  }
+
+  template <typename L> inline // to be optimized for dense vectors ...
+  void fill(L& l,  typename gmm::linalg_traits<L>::value_type x,
+		   abstract_vector) {
+    for (size_type i = 0; i < vect_size(l); ++i) l[i] = x;
+  }
+
+  template <typename L> inline // to be optimized for dense matrices ...
+  void fill(L& l, typename gmm::linalg_traits<L>::value_type x,
+		   abstract_matrix) {
+    for (size_type i = 0; i < mat_nrows(l); ++i)
+      for (size_type j = 0; j < mat_ncols(l); ++j)
+	l(i,j) = x;
+  }
+
   /** fill a vector or matrix with random value (uniform [0,1]). */
   template <typename L> inline void fill_random(L& l)
   { fill_random(l, typename linalg_traits<L>::linalg_type()); }

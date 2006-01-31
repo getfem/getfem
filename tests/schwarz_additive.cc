@@ -82,7 +82,7 @@ void pb_data::init(ftool::md_param &params) {
   gravity = params.real_value("PG", "G");
   rho = params.real_value("RHO", "RHO");
   lambda = params.real_value("LAMBDA", "lambda");
-  D.resize(N); D.fill(0.0);
+  D.resize(N); gmm::clear(D);
   D[N-1] = params.real_value("D", "Dirichlet condition");
   
   /* parametres numeriques */
@@ -111,11 +111,11 @@ void pb_data::init(ftool::md_param &params) {
     mesh.read_from_file(meshname);
   }
   else {
-    base_node org(N); org.fill(0.0);
+    base_node org(N); gmm::clear(org);
     std::vector<bgeot::base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
     for (int i = 0; i < N; i++) { 
-      vtab[i] = bgeot::base_small_vector(N); vtab[i].fill(0.0);
+      vtab[i] = bgeot::base_small_vector(N); gmm::clear(vtab[i]);
       (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
     }
     getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
@@ -123,11 +123,11 @@ void pb_data::init(ftool::md_param &params) {
   }
 
   if (USECOARSE) { // coarse mesh
-    base_node org(N); org.fill(0.0);
+    base_node org(N); gmm::clear(org);
     std::vector<bgeot::base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NXCOARSE);
     for (int i = 0; i < N; i++) { 
-      vtab[i] = bgeot::base_small_vector(N); vtab[i].fill(0.0);
+      vtab[i] = bgeot::base_small_vector(N); gmm::clear(vtab[i]);
       (vtab[i])[i] = 
 	((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NXCOARSE);
     }
@@ -159,7 +159,7 @@ void pb_data::init(ftool::md_param &params) {
     for (int i = 0; i < k; i++) {
       if (mesh.is_convex_having_neighbour(j, i)) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
-	un /= bgeot::vect_norm2(un);	
+	gmm::scale(un, 1/gmm::vect_norm2(un));
 	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.region(0).add(j, i);
       }
     }

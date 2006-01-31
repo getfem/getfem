@@ -270,9 +270,9 @@ namespace getfem
 	}
       }
       if (!tresca) {
-	/* von mises: 1/2 deviator(sigma):deviator(sigma) */
+	/* von mises: norm(deviator(sigma)) */
 	//gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma);	
-	VM[i] = gmm::mat_euclidean_norm_sqr(sigma) / 2;
+	VM[i] = gmm::mat_euclidean_norm_sqr(sigma);
       } else {
 	/* else compute the tresca criterion */
 	gmm::symmetric_qr_algorithm(sigma, eig);

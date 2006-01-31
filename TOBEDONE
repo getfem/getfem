@@ -30,3 +30,5 @@ permet de choisir le chemin d'install de qhull dans le configure.in (probleme de
 
 debugger l'assemblage avec reduction dans le comp contre des donnees:
 ( delaminated_crack: ../../src/bgeot_sparse_tensors.cc:699: void bgeot::tensor_reduction::pre_prepare(): Assertion `it->ridx.size() == it->tr().ndim()' failed. )
+
+separer interface et implementation dans gmm

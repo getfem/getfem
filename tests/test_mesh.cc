@@ -30,18 +30,18 @@ using getfem::base_node;
 using getfem::base_small_vector;
 
 
-void export_mesh(getfem::mesh &m) {
+void export_mesh(getfem::mesh &m, const std::string &name) {
   getfem::mesh_fem mf(m);
   mf.set_classical_finite_element(m.convex_index(), 0);
   std::vector<double> U(mf.nb_dof());
   for (size_type i = 0; i < mf.nb_dof(); ++i)
     U[i] = double(mf.first_convex_of_dof(i));
 
-  getfem::vtk_export exp("test_mesh.vtk", false);
+  getfem::vtk_export exp(name + ".vtk", false);
   exp.exporting(mf); 
   exp.write_point_data(mf, U, "mesh");
   cout << "export done, you can view the data file with (for example)\n"
-    "mayavi -d test_mesh.vtk -m Outline -m BandedSurfaceMap\n";
+    "mayavi -d " << name << ".vtk -m Outline -m BandedSurfaceMap\n";
 }
 
 typedef base_node POINT;
@@ -85,13 +85,27 @@ void test_refinable(size_type dim) {
   
   cout << "\nrefine mesh" << endl;
 
-  m.Bank_refine(b); export_mesh(m);
-  m.Bank_refine(b); export_mesh(m);
+  m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref0");
+  m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
   m.Bank_refine(m.convex_index());
+  /*m.Bank_refine(m.convex_index());
   m.Bank_refine(m.convex_index());
+  m.Bank_refine(m.convex_index());*/
+  if (m.dim() < 4) export_mesh(m, " test_mesh_bank_ref2");
+  test_conforming(m);
+}
+
+void test_refinable_P2() {
+  getfem::mesh m; 
+  //m.read_from_file("meshes/disc_P2_h8.mesh");
+  m.read_from_file("meshes/tripod.mesh");
+
+  cerr << "convex_index: " << m.convex_index() << "\n";
+  dal::bit_vector b; b.add(3);
+  m.Bank_refine(b);
+  m.Bank_refine(b);
   m.Bank_refine(m.convex_index());
-  m.Bank_refine(m.convex_index());
-  export_mesh(m);
+  if (m.dim() < 4) export_mesh(m, "test_mesh_bank_disc");
   test_conforming(m);
 }
 
@@ -119,7 +133,7 @@ void test_mesh(getfem::mesh &m) {
   POINT pt1, pt2, pt3;
   if (pt1.size() == 0) pt1 = POINT(3);
 
-  pt1.fill(0.0); pt2 = pt1; pt3 = pt1;
+  gmm::clear(pt1); pt2 = pt1; pt3 = pt1;
   
   pt2[0] = 1.0E-13;
   pt3[0] = 1.0;
@@ -167,9 +181,9 @@ void test_mesh(getfem::mesh &m) {
 
   std::vector<VECT> vects(dim);
   std::vector<int> iref(dim);
-  pt1.fill(0.0);
+  gmm::clear(pt1);
   for (int i = 0; i < dim; i++)
-  { vects[i] = VECT(dim); vects[i].fill(0.0); vects[i][i] = 1.0; iref[i] = 3; }
+    { vects[i] = VECT(dim); gmm::clear(vects[i]);; vects[i][i] = 1.0; iref[i] = 3; }
   
 
   getfem::parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
@@ -346,8 +360,8 @@ int main(void) {
     for (size_type d = 1; d <= 4 /* 6 */; ++d)
       test_mesh_matching(d);
 
-    test_refinable(2);
-
+    test_refinable(3);
+    //test_refinable_P2();
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

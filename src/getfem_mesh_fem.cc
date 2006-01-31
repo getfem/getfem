@@ -317,7 +317,8 @@ namespace getfem {
     add_sender(me.lmsg_sender(), *this,
 	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
 	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID) |
-	       lmsg::mask(MESH_ADD_CONVEX::ID));
+	       lmsg::mask(MESH_ADD_CONVEX::ID)|
+	       lmsg::mask(MESH_REFINE_CONVEX::ID));
   }
 
   mesh_fem::~mesh_fem() {}

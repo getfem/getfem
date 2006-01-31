@@ -77,6 +77,7 @@ namespace getfem {
     mutable std::vector<base_tensor> elmt_stored;
     short_type nbf, dim; 
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
+    std::deque<short_type> K_reduction;
     std::deque<pfem> trans_reduction_pfi;
     mutable base_small_vector un, up;
     mutable bool faces_computed;
@@ -87,6 +88,7 @@ namespace getfem {
       size_type sz = sizeof(emelem_comp_structure_) +
 	mref.capacity()*sizeof(base_tensor) +
 	grad_reduction.size()*sizeof(short_type) +
+	K_reduction.size()*sizeof(short_type) +
 	hess_reduction.size()*sizeof(short_type) +
 	trans_reduction.size()*sizeof(short_type) +
 	trans_reduction_pfi.size()*sizeof(pfem);
@@ -118,6 +120,7 @@ namespace getfem {
       nbf = pgt->structure()->nb_faces();
       dim = pgt->structure()->dim();
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
+      size_type d = pgt->dim();
       
       for (size_type k = 0; it != ite; ++it, ++k) {
 	if ((*it).pfi) {
@@ -136,17 +139,31 @@ namespace getfem {
 	  }
 	}
 	switch ((*it).t) {
-	  case GETFEM_BASE_    : break;
+	  case GETFEM_BASE_    :
+	    if ((*it).pfi->target_dim() > 1) {
+	      ++k;
+	      if ((*it).pfi->target_dim() == d) K_reduction.push_back(k);
+	    }
+	    break;
 	  case GETFEM_UNIT_NORMAL_ : 
+	    computed_on_real_element = true; break;
 	  case GETFEM_GRAD_GEOTRANS_ :
 	  case GETFEM_GRAD_GEOTRANS_INV_ :
-	    computed_on_real_element = true; break;
+	    ++k; computed_on_real_element = true; break;
 	  case GETFEM_GRAD_    : { 
 	    ++k;
+	    if ((*it).pfi->target_dim() > 1) {
+	      if ((*it).pfi->target_dim() == d) K_reduction.push_back(k);
+	      ++k;
+	    }
 	    if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
 	  } break;
 	  case GETFEM_HESSIAN_ : {
-	    ++k; 
+	    ++k;
+	    if ((*it).pfi->target_dim() > 1) {
+	      if ((*it).pfi->target_dim() == d) K_reduction.push_back(k);
+	      ++k;
+	    }
 	    if (!((*it).pfi->is_on_real_element())) hess_reduction.push_back(k); 
 	  } break;
 	  case GETFEM_NONLINEAR_ : {
@@ -474,11 +491,11 @@ namespace getfem {
 	scalar_type J=ctx.J();
 	if (ir > 0) {
 	  gmm::mult(B, un, up);
-	  scalar_type nup = bgeot::vect_norm2(up);
+	  scalar_type nup = gmm::vect_norm2(up);
 	  J *= nup; up /= nup;
 	}
      
-	t = mref[ir]; t *= J;
+	t = mref[ir]; gmm::scale(t.as_vector(), J);
 	
 	if (grad_reduction.size() > 0) {
 	  std::deque<short_type>::const_iterator it = grad_reduction.begin(),
@@ -489,6 +506,15 @@ namespace getfem {
 	  }
 	}
 	
+	if (K_reduction.size() > 0) {
+	  std::deque<short_type>::const_iterator it = K_reduction.begin(),
+	    ite = K_reduction.end();
+	  for ( ; it != ite; ++it) {
+	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, ctx.K(), *it);
+	    flag = !flag;
+	  }
+	}
+
 	if (hess_reduction.size() > 0) {
 	  std::deque<short_type>::const_iterator it = hess_reduction.begin(),
 	    ite = hess_reduction.end();
@@ -508,7 +534,7 @@ namespace getfem {
 	  scalar_type J = ctx.J();
 	  if (ir > 0) {
 	    gmm::mult(B, un, up);
-	    scalar_type nup = bgeot::vect_norm2(up);
+	    scalar_type nup = gmm::vect_norm2(up);
 	    J *= nup; up /= nup;
 	  }	  
 	  add_elem(t, ctx, J, first, true, icb, sizes);

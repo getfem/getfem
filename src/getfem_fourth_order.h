@@ -134,12 +134,13 @@ namespace getfem {
 
 	@param mim the integration method that is used. 
 	@param mf_u the mesh_fem for the unknown u.
-	@param k the scalar value of the coefficient.
+	@param KL_ true for the Kirchhoff-Love plate model.
     */
-    mdbrick_bilaplacian(const mesh_im &mim_, const mesh_fem &mf_u_)
+    mdbrick_bilaplacian(const mesh_im &mim_, const mesh_fem &mf_u_, 
+			bool KL_ = false)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
 						 MDBRICK_BILAPLACIAN),
-	KL(false), D_("D", mf_u_.linked_mesh(), this),
+	KL(KL_), D_("D", mf_u_.linked_mesh(), this),
 	nu_("nu", mf_u_.linked_mesh(), this) { }
   };
 

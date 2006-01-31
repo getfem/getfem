@@ -282,9 +282,8 @@ namespace getfem {
 	bgeot::vectors_to_base_matrix(G,
 			      mf_source.linked_mesh().points_of_convex(cv));
 
-      if (pf_s->target_dim() != 1 || pf_t->target_dim() != 1)
-	DAL_THROW(to_be_done_error,
-		  "vector FEM interpolation still to be done ... ");
+      if (pf_t->target_dim() != 1)
+	DAL_THROW(to_be_done_error, "won't interpolate on a vector FEM... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
@@ -295,7 +294,6 @@ namespace getfem {
 	size_type dof_t = *itdof*qmult;
         if (dof_t_done.is_in(*itdof)) continue;
         dof_t_done.add(*itdof);
-	/* faux dans le cas des éléments vectoriel.                        */
 	ctx.set_ii(i);
 	if (version == 0) {
           for (size_type qq=0; qq < qqdim; ++qq) {
@@ -311,12 +309,6 @@ namespace getfem {
             for (size_type j=0; j < dof_source.size(); ++j) {
               M(dof_t + k, dof_source[j]) = Mloc(k, j);
             }
-              /* does not work with col matrices..
-                 gmm::clear(gmm::mat_row(M, dof_t + k));
-                 gmm::copy(gmm::mat_row(Mloc, k),
-                 gmm::sub_vector(gmm::mat_row(M, dof_t+k),
-                 gmm::sub_index(mf_source.ind_dof_of_element(cv))));
-              */
 	  }
 	}
       }

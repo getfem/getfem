@@ -820,7 +820,7 @@ namespace getfem {
 		      const std::vector<base_node> &B) {
       scalar_type dist_max = 0;
       for (size_type i=0; i < pts.size(); ++i) 
-	dist_max = std::max(dist_max, bgeot::vect_dist2_sqr(A[i],B[i]));
+	dist_max = std::max(dist_max, gmm::vect_dist2_sqr(A[i],B[i]));
       return sqrt(dist_max);
     }
 

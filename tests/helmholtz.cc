@@ -156,7 +156,7 @@ void Helmholtz_problem::init(void) {
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     assert(i.is_face());
-    if (bgeot::vect_norm2(mesh.points_of_face_of_convex(i.cv(),
+    if (gmm::vect_norm2(mesh.points_of_face_of_convex(i.cv(),
 							i.f())[0]) > 5.) {
       mesh.region(ROBIN_BOUNDARY_NUM).add(i.cv(),i.f());
     } else mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());

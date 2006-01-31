@@ -219,7 +219,7 @@ namespace getfem {
 	
 	base_small_vector un = pgt2->normals()[f], up(msh.dim());
 	gmm::mult(c.B(), un, up);
-	scalar_type nup = bgeot::vect_norm2(up);
+	scalar_type nup = gmm::vect_norm2(up);
 	
 	for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	  c.set_xref(pai->point_on_face(f, j));

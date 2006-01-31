@@ -728,6 +728,7 @@ namespace bgeot {
 namespace getfem {
   
   bool mesh::edge::operator <(const edge &e) const {
+    if (i0 < e.i0) return true; if (i0 > e.i0) return false;    
     if (i1 < e.i1) return true; if (i1 > e.i1) return false;
     if (i2 < e.i2) return true; return false;
   }
@@ -805,9 +806,8 @@ namespace getfem {
       
       mesh2.clear();
       ipt.resize(pgt->nb_points());
-      
       for (size_type ic = 0; ic < mesh1.nb_convex(); ++ic) {
-	
+	assert(mesh1.convex_index().is_in(ic));
 	bgeot::pgeometric_trans pgt2 = mesh1.trans_of_convex(ic);
 	for (size_type ip = 0; ip < pgt->nb_points(); ++ip)
 	  ipt[ip] =
@@ -827,13 +827,12 @@ namespace getfem {
       ipt[ip] = add_point(pt);
     }
 
-    ipt2.resize(n+1); icl.resize(0);
+    ipt2.resize(pgt->nb_points()); icl.resize(0);
     for (size_type ic = 0; ic < mesh2.nb_convex(); ++ic) {
-      for (size_type j = 0; j <= n; ++j)
+      for (size_type j = 0; j < pgt->nb_points(); ++j)
 	ipt2[j] = ipt[mesh2.ind_points_of_convex(ic)[j]];
       icl.push_back(add_convex(pgt, ipt2.begin()));
     }
-
     lmsg_sender().send(MESH_REFINE_CONVEX(i, icl, true));
     sup_convex(i, true);
   }
@@ -970,9 +969,9 @@ namespace getfem {
       ipt1[ip] = add_point(pt);
     }
     
-    ipt2.resize(n+1);
+    ipt2.resize(pgt->nb_points());
     for (size_type icc = 0; icc < mesh3.nb_convex(); ++icc) {
-      for (size_type j = 0; j <= n; ++j)
+      for (size_type j = 0; j < pgt->nb_points(); ++j)
 	ipt2[j] = ipt1[mesh3.ind_points_of_convex(icc)[j]];
       size_type i = add_convex(pgt, ipt2.begin());
       gs.sub_simplices.push_back(i);
@@ -989,7 +988,10 @@ namespace getfem {
   }
 
   void mesh::Bank_refine(dal::bit_vector b) {
+    b &= convex_index();
+    if (b.card() == 0) return;
 
+  
     if (Bank_info == 0) Bank_info = new Bank_info_struct;
 
     Bank_info->edges.clear();
@@ -1002,15 +1004,16 @@ namespace getfem {
       b = convex_index();
       edge_set::const_iterator it = Bank_info->edges.begin();
       edge_set::const_iterator ite = Bank_info->edges.end(), it2=it;
+      assert(!Bank_info->edges.empty());
       ++it2;
       for (; it != ite; it = it2) {
+	if (it2 != ite) ++it2;
 	convex_with_edge(it->i1, it->i2, ipt);
 	if (ipt.size() == 0) Bank_info->edges.erase(it);
 	else {
 	  for (size_type ic = 0; ic < ipt.size(); ++ic)
 	    marked_convexes.insert(edge(ipt[ic], it->i1, it->i2));
 	}
-	if (it2 != ite) ++it2;
       }
       
       it = marked_convexes.begin(); ite = marked_convexes.end();

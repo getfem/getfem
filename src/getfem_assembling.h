@@ -1132,8 +1132,8 @@ namespace getfem {
 	      L^2 et peut entrer en conccurence avec les autres ddl -> a revoir
 	    */
 	    if (tdof_u == tdof_rh &&
-		bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
-				      (*(pf_rh->node_tab(cv)))[ind_rh])
+		gmm::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
+				    (*(pf_rh->node_tab(cv)))[ind_rh])
 		< 1.0E-14) {
 	      /* the dof might be "duplicated" */
 	      for (size_type q = 0; q < Q; ++q) {

@@ -127,7 +127,7 @@ namespace getfem {
       alldofs |= dofs;
     }
     /** setup global dofs, with dummy coordinates */
-    base_node P(dim()); P.fill(1./20);
+    base_node P(dim()); gmm::fill(P,1./20);
     node_tab_.resize(max_dof);
     std::fill(node_tab_.begin(), node_tab_.end(), P);
     pspt_valid = false;

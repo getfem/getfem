@@ -80,11 +80,11 @@ base_node shake_func(const base_node& x) {
 
 void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX, size_type K, bool noised) {
   mesh msh;
-  base_node org(N); org.fill(0.0);
+  base_node org(N); gmm::clear(org);
   std::vector<base_small_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
   for (dim_type i = 0; i < N; i++) { 
-    vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(N); gmm::clear(vtab[i]);
     (vtab[i])[i] = 1. / scalar_type(NX) * 1.;
   }
   switch (MESH_TYPE) {

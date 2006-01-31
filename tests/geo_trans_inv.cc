@@ -51,9 +51,9 @@ void check_inversion(bgeot::pgeometric_trans pgt, const std::vector<base_node>& 
   base_node Pref;
   bool is_in = gic.invert(P, Pref);
   base_node P2 = pgt->transform(Pref, cvpts.begin());
-  scalar_type err = bgeot::vect_dist2(P,P2);
+  scalar_type err = gmm::vect_dist2(P,P2);
   bool multiple_solutions = false;
-  if (err < 1e-10 && bgeot::vect_dist2(Pref,expected_Pref) > 1e-5) { multiple_solutions = true; }
+  if (err < 1e-10 && gmm::vect_dist2(Pref,expected_Pref) > 1e-5) { multiple_solutions = true; }
   if ((is_in != expected_in && !multiple_solutions) || err > 1e-10) {
     cerr << "Error with inversion of " << bgeot::name_of_geometric_trans(pgt) << " on convex: " << cvpts << "\n";
     cerr << "  inversion of point " << P << " gave point " << Pref;
@@ -162,11 +162,11 @@ int main(int argc, char *argv[]) {
  
     cout << "Mesh generation\n";
 
-    base_node org(N); org.fill(1.0);
+    base_node org(N); gmm::fill(org,1);
     std::vector<base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
     for (dim_type i = 0; i < N; i++) { 
-      vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
+      vtab[i] = base_small_vector(N); gmm::clear(vtab[i]);
       (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX) * 1.;
     }
     // if (N > 1) vtab[N-1][0] = incline * LX / scalar_type(NX);

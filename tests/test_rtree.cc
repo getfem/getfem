@@ -95,7 +95,7 @@ static void verify(const std::vector<base_node>& rmin, const std::vector<base_no
   size_type N=rmin.front().size();
   std::vector<size_type> pbset;
   //tree.dump();
-  base_node extent(rmin[0].size()); extent.fill(0.);
+  base_node extent(rmin[0].size()); 
   for (size_type i=0; i < rmin.size(); ++i)
     for (size_type k=0; k < N; ++k) { 
       assert(rmax[i][k]-rmin[i][k] >= 0.);

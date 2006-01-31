@@ -319,7 +319,7 @@ namespace getfem {
     }
   public:
     slicer_half_space(base_node x0_, base_node n_, int orient_) : 
-      slicer_volume(orient_), x0(x0_), n(n_/bgeot::vect_norm2(n_)) {
+      slicer_volume(orient_), x0(x0_), n(n_/gmm::vect_norm2(n_)) {
 	//n *= (1./bgeot::vect_norm2(n));
     }
   };
@@ -331,7 +331,7 @@ namespace getfem {
     base_node x0;
     scalar_type R;
     void test_point(const base_node& P, bool& in, bool& bound) const {
-      scalar_type R2 = bgeot::vect_dist2_sqr(P,x0);
+      scalar_type R2 = gmm::vect_dist2_sqr(P,x0);
       bound = (R2 >= (1-EPS)*R*R && R2 <= (1+EPS)*R*R);
       in = R2 <= R*R;
     }
@@ -339,9 +339,9 @@ namespace getfem {
       const base_node& A=nodes[iA].pt;
       const base_node& B=nodes[iB].pt;
       scalar_type a,b,c; // a*x^2 + b*x + c = 0
-      a = bgeot::vect_norm2_sqr(B-A); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
-      b = 2*bgeot::vect_sp(A-x0,B-A);
-      c = bgeot::vect_norm2_sqr(A-x0)-R*R;
+      a = gmm::vect_norm2_sqr(B-A); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
+      b = 2*gmm::vect_sp(A-x0,B-A);
+      c = gmm::vect_norm2_sqr(A-x0)-R*R;
       return slicer_volume::trinom(a,b,c);
     }
   public:
@@ -360,23 +360,23 @@ namespace getfem {
     scalar_type R;
     void test_point(const base_node& P, bool& in, bool& bound) const {
       base_node N = P-x0;
-      scalar_type axpos = bgeot::vect_sp(d, N);
-      scalar_type dist2 = bgeot::vect_norm2_sqr(N) - gmm::sqr(axpos);
+      scalar_type axpos = gmm::vect_sp(d, N);
+      scalar_type dist2 = gmm::vect_norm2_sqr(N) - gmm::sqr(axpos);
       bound = gmm::abs(dist2-R*R) < EPS;
       in = dist2 < R*R;
     }
     scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slicer::cs_nodes_ct& nodes) const {
-      base_node F=nodes[iA].pt-x0; scalar_type Fd = bgeot::vect_sp(F,d);
-      base_node D=nodes[iB].pt-nodes[iA].pt; scalar_type Dd = bgeot::vect_sp(D,d);
-      scalar_type a = bgeot::vect_norm2_sqr(D) - gmm::sqr(Dd); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
-      scalar_type b = 2*(bgeot::vect_sp(F,D) - Fd*Dd);
-      scalar_type c = bgeot::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
+      base_node F=nodes[iA].pt-x0; scalar_type Fd = gmm::vect_sp(F,d);
+      base_node D=nodes[iB].pt-nodes[iA].pt; scalar_type Dd = gmm::vect_sp(D,d);
+      scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
+      scalar_type b = 2*(gmm::vect_sp(F,D) - Fd*Dd);
+      scalar_type c = gmm::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
       return slicer_volume::trinom(a,b,c);
     }
   public:
     slicer_cylinder(base_node x0_, base_node x1_, scalar_type R_, int orient_) : 
       slicer_volume(orient_), x0(x0_), d(x1_-x0_), R(R_) {
-      d /= bgeot::vect_norm2(d);
+      d /= gmm::vect_norm2(d);
     }
   };
 

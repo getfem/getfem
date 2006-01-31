@@ -62,10 +62,23 @@ namespace getfem
     if (pf()->is_on_real_element())
       pf()->real_base_value(*this, t);
     else {
-      if (have_pfp()) t=pfp_->val(ii());
-      else pf()->base_value(xref(), t);
+      base_tensor u;
+      if (have_pfp()) {
+	if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim())
+	   t.mat_transp_reduction(pfp_->val(ii()), K(), 1);
+	 else
+	   t=pfp_->val(ii());
+      }
+      else {
+	if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	  pf()->base_value(xref(), u);
+	  t.mat_transp_reduction(u, K(), 1);
+	}
+	else
+	  pf()->base_value(xref(), t);
+      }
       if (!(pf()->is_equivalent()) && withM)
-	{ base_tensor u = t; t.mat_transp_reduction(u, M(), 0); }
+	{ u = t; t.mat_transp_reduction(u, M(), 0); }
     }
   }
 
@@ -77,10 +90,19 @@ namespace getfem
       base_tensor u;
       if (have_pfp()) {
 	t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	  u = t;
+	  t.mat_transp_reduction(u, K(), 1);
+	}
       } else {
 	pf()->grad_base_value(xref(), u);
-	if (u.size()) /* only if the FEM can provide grad_base_value */
+	if (u.size()) { /* only if the FEM can provide grad_base_value */
 	  t.mat_transp_reduction(u, B(), 2);
+	  if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	    u = t;
+	    t.mat_transp_reduction(u, K(), 1);
+	  }
+	}
       }
       if (!(pf()->is_equivalent()) && withM)
 	{ u = t; t.mat_transp_reduction(u, M(), 0); }
@@ -97,6 +119,10 @@ namespace getfem
 	tt = pfp()->hess(ii());
       } else {
 	pf()->hess_base_value(xref(), tt);
+      }
+      if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	base_tensor u = tt;
+	tt.mat_transp_reduction(u, K(), 1);
       }
       if (tt.size()) { /* only if the FEM can provide grad_base_value */
 	bgeot::multi_index mim(3);
@@ -173,8 +199,9 @@ namespace getfem
   /*	Class for description of an interpolation dof.                    */
   /* ******************************************************************** */
 
-  enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
-		  LAGRANGE_NONCONFORMING, GLOBAL_DOF, SECOND_DERIVATIVE};
+  enum ddl_type { LAGRANGE, NORMAL_DERIVATIVE, DERIVATIVE, MEAN_VALUE,
+		  BUBBLE1, LAGRANGE_NONCONFORMING, GLOBAL_DOF,
+		  SECOND_DERIVATIVE, NORMAL_COMPONENT, EDGE_COMPONENT};
 
   struct ddl_elem {
     ddl_type t;
@@ -325,11 +352,30 @@ namespace getfem
     return &(tab[tab.add_norepeat(l)]);
   }
 
-  pdof_description norm_derivative_dof(dim_type n) {
+  pdof_description normal_derivative_dof(dim_type n) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(NORM_DERIVATIVE));
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
+	      ddl_elem(NORMAL_DERIVATIVE));
+    return &(tab[tab.add_norepeat(l)]);
+  }
+
+  pdof_description normal_component_dof(dim_type n) {
+    dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
+    dof_description l;
+    l.ddl_desc.resize(n);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
+	      ddl_elem(NORMAL_COMPONENT));
+    return &(tab[tab.add_norepeat(l)]);
+  }
+
+  pdof_description edge_component_dof(dim_type n) {
+    dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
+    dof_description l;
+    l.ddl_desc.resize(n);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),
+	      ddl_elem(EDGE_COMPONENT));
     return &(tab[tab.add_norepeat(l)]);
   }
 
@@ -848,7 +894,8 @@ namespace getfem
     char alpha[128]; alpha[0] = 0;
     if (params.size() == 3) {
       scalar_type v = params[2].num();
-      if (v < 0 || v > 1) DAL_THROW(failure_error, "Bad value for alpha: " << v);
+      if (v < 0 || v > 1)
+	DAL_THROW(failure_error, "Bad value for alpha: " << v);
       sprintf(alpha, ",%g", v);
     }
     if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
@@ -863,9 +910,6 @@ namespace getfem
 	   << k << alpha << "))";
     return fem_descriptor(name.str());
   }
-
-  static void read_poly(bgeot::base_poly &p, int d, const std::string &s) 
-  { p = bgeot::read_base_poly(d, s); }
 
   static void read_poly(bgeot::base_poly &p, int d, const char *s) 
   { p = bgeot::read_base_poly(d, s); }
@@ -949,6 +993,7 @@ namespace getfem
     return p;
   }
 
+
    /* ******************************************************************** */
    /*	P1 element with a bubble base fonction on a face                   */
    /* ******************************************************************** */
@@ -986,67 +1031,233 @@ namespace getfem
     return p;
   }
 
-   /* ******************************************************************** */
-   /*	Element RT0.                                                       */
-   /* ******************************************************************** */
+  /* ******************************************************************** */
+  /*	Element RT0.                                                      */
+  /* ******************************************************************** */
+  
+  struct P1_RT0_ : public fem<base_poly> {
+    dim_type nc;
+    mutable base_matrix K;
+    base_small_vector norient;
+    mutable bgeot::pgeotrans_precomp pgp;
+    mutable bgeot::pgeometric_trans pgt_stored;
+    mutable pfem_precomp pfp;
 
-//    struct P1_RT0_ : public PK_fem_ {
-//      P1_RT0_(dim_type nc);
-//    };
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    P1_RT0_(dim_type nc_);
+  };
 
-//   P1_RT0_::P1_RT0_(dim_type nc) {
-//     cvr = bgeot::simplex_of_reference(nc);
-//     dim_ = cvr->structure()->dim();
-//     init_cvs_node();
-//     es_degree = 1;
-//     is_pol = true;
-//     is_lag = is_equiv = false;
-//     base_.resize(nc+1);
+  void P1_RT0_::mat_trans(base_matrix &M,
+			  const base_matrix &G,
+			  bgeot::pgeometric_trans pgt) const {
+    dim_type N = G.nrows();
+    gmm::copy(gmm::identity_matrix(), M);
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
+    if (N != nc)
+      DAL_THROW(failure_error,
+		"Sorry, this element works only in dimension " << nc);
 
-//     base_poly p(nc, 0);
-//     for (size_type i = 0; i < nc; ++i) p += base_poly(nc, 1, i);
-      
-//     for (size_type i = 0; i <= nc; ++i) {
-//       base_[i] = p;
-//       if (i < nc) base_[i]
-//     }
+    gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
+    for (unsigned i = 0; i <= nc; ++i) {
+      if (!(pgt->is_linear()))
+	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+      bgeot::base_small_vector n(nc);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
 
+      cout << "normal_norm" << gmm::vect_norm2(cvr->normals()[i]) << endl;
+      cout << "normal_norm" << gmm::vect_norm2(n) << endl;
+
+
+      M(i,i) = gmm::vect_norm2(n);
+      n /= M(i,i);
+      scalar_type ps = gmm::vect_sp(n, norient);
+      if (ps < 0) M(i, i) *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("RT0 : The normal orientation may be not correct");
+    }
+  }
+
+  P1_RT0_::P1_RT0_(dim_type nc_) {
+    nc = nc_;
+    pgt_stored = 0;
+    gmm::resize(K, nc, nc);
+    gmm::resize(norient, nc);
+    norient[0] = M_PI;
+    for (unsigned i = 1; i < nc; ++i) norient[i] = norient[i-1]*M_PI;
+
+    cvr = bgeot::simplex_of_reference(nc);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = 1;
+    is_pol = true;
+    is_lag = is_equiv = false;
+    ntarget_dim = nc;
+    base_.resize(nc*(nc+1));
 
     
-//     add_node(lagrange_dof(2), base_node(0.0, 0.0));
-//     read_poly(base_[0], 2, "(1 - x - y)*(1 + x + y - 2*x*x - 11*x*y - 2*y*y)");
+    for (size_type j = 0; j < nc; ++j)
+      for (size_type i = 0; i <= nc; ++i) {
+	base_[i+j*(nc+1)] = base_poly(nc, 1, j);
+	if (i-1 == j) base_[i+j*(nc+1)] -= bgeot::one_poly(nc);
+	if (i == 0) base_[i+j*(nc+1)] *= sqrt(opt_long_scalar_type(nc));
+      }
+
+    base_node pt(nc);
+    pt.fill(scalar_type(1)/scalar_type(nc));
+    add_node(normal_component_dof(nc), pt);
+
+    for (size_type i = 0; i < nc; ++i) {
+      pt[i] = scalar_type(0);
+      add_node(normal_component_dof(nc), pt);
+      pt[i] = scalar_type(1)/scalar_type(nc);
+    }
+  }
+
+  static pfem P1_RT0(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 2.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 1 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    virtual_fem *p = new P1_RT0_(n);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
 
 
+  /* ******************************************************************** */
+  /*	Element de Nedelec.                                               */
+  /* ******************************************************************** */
+  
+  struct P1_nedelec_ : public fem<base_poly> {
+    dim_type nc;
+    mutable base_matrix K;
+    base_small_vector norient;
+    std::vector<base_small_vector> tangents;
+    mutable bgeot::pgeotrans_precomp pgp;
+    mutable bgeot::pgeometric_trans pgt_stored;
+    mutable pfem_precomp pfp;
 
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    P1_nedelec_(dim_type nc_);
+  };
 
+  void P1_nedelec_::mat_trans(base_matrix &M,
+			  const base_matrix &G,
+			  bgeot::pgeometric_trans pgt) const {
+    dim_type N = G.nrows();
+    // gmm::copy(gmm::identity_matrix(), M);
+    
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
+    if (N != nc)
+      DAL_THROW(failure_error,
+		"Sorry, this element works only in dimension " << nc);
 
-//     is_lag = false; es_degree = 2;
-//     base_node pt(nc); pt.fill(0.5);
-//     unfreeze_cvs_node();
-//     add_node(bubble1_dof(nc), pt);
-//     base_.resize(nb_dof(0));
-//     base_[nc+1] = base_[1]; base_[nc+1] *= scalar_type(1 << nc);
-//     for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
-//     // Le raccord assure la continuite
-//     // des possibilités de raccord avec du P2 existent mais il faudrait
-//     // modifier qlq chose (transformer les fct de base P1) 
-//   }
+    gmm::mult(G, pgp->grad(0), K);
+    for (unsigned i = 0; i < nb_dof(0); ++i) {
+      if (!(pgt->is_linear()))
+	{ gmm::mult(G, pgp->grad(i), K); }
+      bgeot::base_small_vector t(nc), v(nc);
+      gmm::mult(K, tangents[i], t);
 
-//   static pfem P1_RT0(fem_param_list &params,
-// 	std::vector<dal::pstatic_stored_object> &dependencies) {
-//     if (params.size() != 1)
-//       DAL_THROW(failure_error, 
-// 	   "Bad number of parameters : " << params.size() << " should be 2.");
-//     if (params[0].type() != 0)
-//       DAL_THROW(failure_error, "Bad type of parameters");
-//     int n = int(::floor(params[0].num() + 0.01));
-//     if (n <= 1 || n >= 100 || double(n) != params[0].num())
-//       DAL_THROW(failure_error, "Bad parameters");
-//     virtual_fem *p = new P1_RT0_(n);
-//     dependencies.push_back(p->ref_convex(0));
-//     dependencies.push_back(p->node_tab(0));
-//     return p;
-//   }
+      t /= gmm::vect_norm2(t);
+
+      scalar_type ps = gmm::vect_sp(t, norient);
+      if (ps < 0) t *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("nedelec : The normal orientation may be not correct");
+
+      gmm::mult(gmm::transposed(K), t, v);
+      
+      const bgeot::base_tensor &tt = pfp->val(i);
+
+      for (size_type j = 0; j < nb_dof(0); ++j) {
+	scalar_type a = scalar_type(0);
+	for (size_type k = 0; k < nc; ++k) a += tt(j, k) * v[k];
+	M(j, i) = a;
+      }
+    }
+    gmm::lu_inverse(M);
+  }
+
+  P1_nedelec_::P1_nedelec_(dim_type nc_) {
+    nc = nc_;
+    pgt_stored = 0;
+    gmm::resize(K, nc, nc);
+    gmm::resize(norient, nc);
+    norient[0] = M_PI;
+    for (unsigned i = 1; i < nc; ++i) norient[i] = norient[i-1]*M_PI;
+
+    cvr = bgeot::simplex_of_reference(nc);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = 1;
+    is_pol = true;
+    is_lag = is_equiv = false;
+    ntarget_dim = nc;
+
+    base_.resize(nc*(nc+1)*nc/2);
+    tangents.resize(nc*(nc+1)*nc/2);
+    
+    std::vector<base_poly> lambda(nc+1);
+    std::vector<base_vector> grad_lambda(nc+1);
+    lambda[0] = bgeot::one_poly(nc);
+    gmm::resize(grad_lambda[0], nc);
+    gmm::fill(grad_lambda[0], scalar_type(-1));
+    for (size_type i = 1; i <= nc; ++i) {
+      lambda[i] = base_poly(nc, 1, i-1);
+      lambda[0] -= lambda[i];
+      gmm::resize(grad_lambda[i], nc);
+      grad_lambda[i][i-1] = 1;
+    }
+
+    size_type j = 0;
+    for (size_type k = 0; k <= nc; ++k)
+      for (size_type l = k+1; l <= nc; ++l, ++j) {
+	for (size_type i = 0; i < nc; ++i) {
+	  base_[j+i*(nc*(nc+1)/2)] = lambda[k] * grad_lambda[l][i]
+	    - lambda[l] * grad_lambda[k][i]; 
+	  cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
+	}
+	
+	base_node pt = (cvr->points()[k] + cvr->points()[l]) / scalar_type(2);
+	add_node(edge_component_dof(nc), pt);
+	tangents[j] = cvr->points()[l] - cvr->points()[k];
+	tangents[j] /= gmm::vect_norm2(tangents[j]);
+      }
+  }
+
+  static pfem P1_nedelec(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 2.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 1 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    virtual_fem *p = new P1_nedelec_(n);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
 
   /* ******************************************************************** */
   /*	P1 element with a bubble base fonction on a face : type lagrange  */
@@ -1525,7 +1736,7 @@ namespace getfem
 	case 3 : add_node(second_derivative_dof(2, 0, 0), pt); break;
 	case 4 : add_node(second_derivative_dof(2, 1, 0), pt); break;
 	case 5 : add_node(second_derivative_dof(2, 1, 1), pt); break;
-	case 6 : add_node(norm_derivative_dof(2), pt); break;
+	case 6 : add_node(normal_derivative_dof(2), pt); break;
 	}
       }
     }
@@ -1739,6 +1950,8 @@ namespace getfem
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
       add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
+      add_suffix("RT0", P1_RT0);
+      add_suffix("NEDELEC", P1_nedelec);
     }
   };
   
@@ -1800,6 +2013,7 @@ namespace getfem
     }
     return pf;
   }
+
 
   /* ********************************************************************* */
   /*       Precomputation on fem.                                          */

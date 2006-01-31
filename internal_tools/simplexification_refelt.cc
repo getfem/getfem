@@ -214,25 +214,31 @@ int main(int argc, char *argv[]) {
     
     for (size_type n = 1; n < 7; ++n) {
       
-      pref = bgeot::simplex_of_reference(n, 2);
       cout << "refinement of simplex of dimension " << n << endl;
 
-      pts = pref->points();
-      
-      base_small_vector v(n); v.fill(1.0/(n+1));
+      pref = bgeot::equilateral_simplex_of_reference(n);
+      bgeot::pconvex_ref pref2 = bgeot::simplex_of_reference(n, 2);
+      pts = pref2->points();
+      base_node barycentre = dal::mean_value(pref->points());
+
+      bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(n, 1);
+      for (size_type i = 0; i < pts.size(); ++i)
+	pts[i] = pgt->transform(pts[i], pref->points());
+
+      std::vector<base_node> pts2 = pts;
+
       for (size_type ip = 0; ip < pts.size(); ++ip) {
 	size_type nb1 = 0;
 	for (size_type id = 0; id < n; ++id)
-	  if (gmm::abs(pts[ip][id] - 0.5) < 1E-8) ++nb1;
+	  if (gmm::abs(pref2->points()[ip][id] - 0.5) < 1E-8) ++nb1;
 	if (nb1 >= 1) {
-	  // cout << "pts[" << ip << "] before = " << pts[ip] << ", ";
-	  pts[ip] -= v; pts[ip] *= 0.8; pts[ip] += v;
-	  // cout << "pts[" << ip << "]  after = " << pts[ip] << endl;
+	  pts[ip] -= barycentre; pts[ip] *= 0.7; pts[ip] += barycentre;
 	}
       }
 
       f << "\n  static size_type refinement_simplex_" << n;
-      nb = simplexify(pts, pref->points(), f);
+      // nb = simplexify(pts, pref->points(), f);
+      nb = simplexify(pts, pts2, f);
       f << "\n  static size_type refinement_simplex_" << n << "_nb = "
 	<< nb << ";\n";
     }

@@ -29,6 +29,7 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_model_solvers.h>
 #include <getfem_plasticity.h>
+#include <getfem_export.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -253,7 +254,21 @@ bool plasticity_problem::solve(plain_vector &U) {
       nb_elts = gmm::vect_size(sigma_b[cv]);
       for(size_type i=0;i<nb_elts;++i) s <<sigma_b[cv][i] <<" ";
     }      
+    
   }
+
+  getfem::mesh_fem mf_vm(mesh);
+  mf_vm.set_classical_discontinuous_finite_element(2);
+  getfem::base_vector VM(mf_vm.nb_dof());
+  PLAS.compute_Von_Mises_or_Tresca(mf_vm, VM, false);
+  getfem::vtk_export exp(datafilename + ".vtk");
+  exp.exporting(mf_vm);
+  exp.write_point_data(mf_vm,VM, "Von Mises stress");
+  exp.write_point_data(mf_u, U, "displacement");
+  cout << "export done, you can view the data file with (for example)\n"
+    "mayavi -d " << datafilename << ".vtk -f "
+	"WarpVector -m BandedSurfaceMap -m Outline\n";
+
   return true;
 }
   

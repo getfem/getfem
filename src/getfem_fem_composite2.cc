@@ -289,9 +289,9 @@ namespace getfem {
       add_node(pdof, base_node(0.0, 1.0));
     }
 
-    add_node(norm_derivative_dof(2), base_node(0.5, 0.5));
-    add_node(norm_derivative_dof(2), base_node(0.0, 0.5));
-    add_node(norm_derivative_dof(2), base_node(0.5, 0.0));
+    add_node(normal_derivative_dof(2), base_node(0.5, 0.5));
+    add_node(normal_derivative_dof(2), base_node(0.0, 0.5));
+    add_node(normal_derivative_dof(2), base_node(0.5, 0.0));
   }
 
 

@@ -271,7 +271,7 @@ struct exact_solution {
 	assert(0);
 	break;
     }
-    U *= coeff;
+    gmm::scale(U, coeff);
   }
 };
 

@@ -587,7 +587,7 @@ namespace getfem {
       if (k == 0) c.fill(1.0 / scalar_type(nc+1));
       
       gmm::dense_matrix<long_scalar_type> M(R, R);
-      bgeot::vsvector<long_scalar_type> F(R), U(R);
+      std::vector<long_scalar_type> F(R), U(R);
       std::vector<bgeot::power_index> base(R);
       std::vector<base_node> nodes(R);
       

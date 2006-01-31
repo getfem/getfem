@@ -86,14 +86,14 @@ namespace getfem {
   public:
     mesher_half_space(const base_node &x0_, const base_small_vector &n_)
       : x0(x0_), n(n_)
-    { n /= gmm::vect_norm2(n); xon = bgeot::vect_sp(x0, n); }
+    { n /= gmm::vect_norm2(n); xon = gmm::vect_sp(x0, n); }
     bool bounding_box(base_node &, base_node &) const
     { return false; }
     virtual scalar_type operator()(const base_node &P) const
-    { return xon - bgeot::vect_sp(P,n); }
+    { return xon - gmm::vect_sp(P,n); }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const {
-      scalar_type d = xon - bgeot::vect_sp(P,n);
+      scalar_type d = xon - gmm::vect_sp(P,n);
       bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
@@ -103,7 +103,7 @@ namespace getfem {
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
       G = n; G *= scalar_type(-1); 
-      return xon - bgeot::vect_sp(P,n);
+      return xon - gmm::vect_sp(P,n);
     }
     void hess(const base_node &P, base_matrix &H) const {
       gmm::resize(H, P.size(), P.size()); gmm::clear(H);
@@ -209,12 +209,12 @@ namespace getfem {
     }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const {
-      scalar_type d = bgeot::vect_dist2(P,x0)-R;
+      scalar_type d = gmm::vect_dist2(P,x0)-R;
       bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
     virtual scalar_type operator()(const base_node &P) const
-    { return bgeot::vect_dist2(P,x0)-R; }
+    { return gmm::vect_dist2(P,x0)-R; }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);

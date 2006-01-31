@@ -56,7 +56,7 @@ namespace getfem
     
       vectors_to_base_matrix(G, m.points_of_convex(cv));
       
-      base_node x(N);x.fill(0.);
+      base_node x(N); gmm::clear(x);
       pgt->gradient(x, pc);
     
       gmm::mult(gmm::transposed(pc), gmm::transposed(G), B0);
@@ -126,7 +126,7 @@ namespace getfem
     base_poly P(N, 0), Q;
     base_vector e(N), f(N);
     for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
-      e.fill(0.0); e[k] = 1.0;
+      gmm::clear(e); e[k] = 1.0;
       gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
       P.clear();
       for (dim_type n = 0; n < N; ++n)

@@ -39,7 +39,7 @@ void check_tree() {
   bgeot::kdtree tree;
   std::vector<size_type> ipts;
   std::vector<base_node> pts;
-  base_node one(2); one.fill(1.);
+  base_node one(2); gmm::fill(one, 1);
   pts.push_back(base_node(.4,.7));
   pts.push_back(base_node(1.4,.8));
   pts.push_back(base_node(2.4,.3));

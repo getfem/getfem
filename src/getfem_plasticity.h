@@ -35,6 +35,7 @@
 #define GETFEM_PLASTICITY__
 
 #include <getfem_modeling.h>
+#include <gmm_dense_qr.h>
 
 namespace getfem {
 
@@ -94,21 +95,21 @@ namespace getfem {
 		    << stress_threshold << ". You need to set "
 		    << "s as a positive number");
 	
-	size_type tausize = gmm::mat_nrows(tau);
-	size_type projsize = (flag_proj == 0) ? tausize : gmm::sqr(tausize);
+	size_type N = gmm::mat_nrows(tau);
+	size_type projsize = (flag_proj == 0) ? N : gmm::sqr(N);
 	scalar_type normtaud;
 
 	/* calculate tau_m*Id */
-	base_matrix taumId(tausize, tausize);
+	base_matrix taumId(N, N);
 	tau_m_Id(tau, taumId); 
 
 	// calcul du deviateur de tau, taud
-	base_matrix taud(tausize,tausize);
+	base_matrix taud(N,N);
 	gmm::add(gmm::scaled(taumId, scalar_type(-1)), tau, taud);
 
 	/* plane constraints */    
 	if(flag_hyp==1){  // To be done ...
-	  if(tausize/=2)
+	  if(N/=2)
 	    DAL_THROW(failure_error,
 	     "wrong value for CALCULATION HYPOTHESIS, must be /=1 SINCE n/=2");
 	  // we form the 3D tau tensor considering that tau(3,j)=tau(i,3)=0
@@ -145,16 +146,16 @@ namespace getfem {
 	    // build vector[1 0 0 1  0 0 1...] to be copied in certain
 	    // columns of Igrad(*)Igrad
 	    base_vector aux(projsize);
-	    for(size_type i=0; i < tausize; ++i)
-	      aux[i*tausize + i] = scalar_type(1);
+	    for(size_type i=0; i < N; ++i)
+	      aux[i*N + i] = scalar_type(1);
 	    
 	    // Copy in a selection of columns of Igrad(*)Igrad
-	    for(size_type i=0; i < tausize; ++i)
-	      gmm::copy(aux, gmm::mat_col(Igrad2, i*tausize + i)); 
+	    for(size_type i=0; i < N; ++i)
+	      gmm::copy(aux, gmm::mat_col(Igrad2, i*N + i)); 
 	    
 	    // Compute Id_grad
 	    base_matrix Id_grad(projsize, projsize);
-	    scalar_type rr = scalar_type(1)/scalar_type(tausize);
+	    scalar_type rr = scalar_type(1)/scalar_type(N);
 	    gmm::copy(gmm::scaled(Igrad2, -rr), Id_grad);
 	    gmm::add(Igrad, Id_grad);         
 	    
@@ -162,7 +163,7 @@ namespace getfem {
 	    // Compute ngrad(*)ngrad
 	    base_matrix ngrad2(projsize, projsize);
 	    // Compute the normal n
-	    base_matrix un(tausize, tausize);
+	    base_matrix un(N, N);
 	    gmm::copy(gmm::scaled(taud, 1./normtaud),un);  
 	    
 	    // Copy of the normal in a column vector in the Fortran order
@@ -370,10 +371,19 @@ namespace getfem {
   {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
-    generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+    /*generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 				   "t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1).Base(#2));"
 				   "e=(t{:,:,:,:,:,6,7,:,9,10,:}+t{:,:,:,:,:,7,6,:,9,10,:}+t{:,:,:,:,:,6,7,:,10,9,:}+t{:,:,:,:,:,7,6,:,10,9,:})/4;"
-				   "M(#1,#1)+= sym(2*e(i,j,k,l,:,k,l,:,i,j,m).mu(m)+e(i,j,k,k,:,l,l,:,i,j,m).lambda(m))");
+				   "M(#1,#1)+=  sym(2*e(i,j,k,l,:,k,l,:,i,j,m).mu(m)+e(i,j,k,k,:,l,l,:,i,j,m).lambda(m))");
+    */
+    generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+			   "t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1).Base(#2))(i,j,:,:,:,:,:,:,i,j,:);"
+			   //"t=comp(NonLin(#1,#2)(i,j,:,:).vGrad(#1).vGrad(#1)(:,i,j).Base(#2));"
+			   "M(#1,#1)+=  sym(t(k,l,:,l,k,:,m).mu(m)+t(k,l,:,k,l,:,m).mu(m)+t(k,k,:,l,l,:,m).lambda(m))");
+			   /*"a=comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,k,l).vGrad(#1)(:,i,j).Base(#2)(:))"
+			   " +comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,l,k).vGrad(#1)(:,i,j).Base(#2)(:));"
+			   "b=comp(NonLin(#1,#2)(i,j,k,k).vGrad(#1)(:,l,l).vGrad(#1)(:,i,j).Base(#2)(:));"
+			   "M(#1,#1)+=  sym(a(:,:,m).mu(m) + b(:,:,m).lambda(m));");*/
     // comp()  to be optimized !!
     assem.push_mi(mim);
     assem.push_mf(mf);
@@ -386,11 +396,75 @@ namespace getfem {
   }
 
 
+
+  class pseudo_fem_on_gauss_point : public virtual_fem {
+    papprox_integration pai;
+  public:
+    pseudo_fem_on_gauss_point(pintegration_method pim) {
+      pai = pim->approx_method();
+      if (!pai) 
+	DAL_THROW(dal::failure_error, "cannot use a non-approximate "
+		  "integration method in this context");
+      cvr  = pai->ref_convex();
+      dim_ = cvr->structure()->dim();
+      is_equiv = real_element_defined = true;
+      is_polycomp = is_pol = false; is_lag = true;
+      es_degree = 5; /* well .. */
+      ntarget_dim = 1;
+      init_cvs_node();
+
+      for (unsigned i=0; i < pai->nb_points_on_convex(); ++i) {
+	add_node(lagrange_dof(dim_), pai->integration_points()[i]);
+      }
+    }
+
+    virtual size_type nb_dof(size_type) const { 
+      return pai->nb_points_on_convex(); 
+    }
+
+    void base_value(const base_node &, base_tensor &) const
+    { DAL_THROW(internal_error, "base_value not allowed here.");  }
+    void grad_base_value(const base_node &, base_tensor &) const
+    { DAL_THROW(internal_error, "This FEM does not provide gradients.");  }
+    void hess_base_value(const base_node &, base_tensor &) const
+    { DAL_THROW(internal_error, "This FEM does not provide hessians.");  }
+
+    void real_base_value(const fem_interpolation_context& c, 
+			 base_tensor &t, bool = true) const {
+      bgeot::multi_index mi(2);
+      mi[1] = target_dim(); mi[0] = nb_base(0);
+      t.adjust_sizes(mi);
+      if (!c.have_pfp()) 
+	DAL_THROW(dal::failure_error, 
+		  "Cannot extrapolate the value outside of the gauss points !");
+      std::fill(t.begin(), t.end(), 0); t[c.ii()] = 1;
+    }
+    void real_grad_base_value(const fem_interpolation_context&, 
+			      base_tensor &, bool) const
+    { DAL_THROW(internal_error, "This FEM does not provide gradients.");  }
+    void real_hess_base_value(const fem_interpolation_context&, 
+			      base_tensor &, bool) const
+    { DAL_THROW(internal_error, "This FEM does not provide hessians.");  }
+  };
+
+
+  DAL_SIMPLE_KEY(special_int_gauss_pt_fem_key, pfem);
+
+  /* not good, shoud be accessible via fem_descriptor in getfem_fem */
+  inline pfem gauss_points_pseudo_fem(pintegration_method pim) {
+    pfem pf = new pseudo_fem_on_gauss_point(pim);
+    dal::add_stored_object(new special_int_gauss_pt_fem_key(pf), pf);
+    return pf;
+  }
+
   /* ******************************************************************** */
   /*		Plasticity bricks.                                        */
   /* ******************************************************************** */  
 # define MDBRICK_SMALL_DEF_PLASTICITY 556433
   
+
+
+
   /**
      Plasticity brick (small deformations, quasi-static).
 
@@ -435,11 +509,82 @@ namespace getfem {
 	return gmm::sub_vector(MS.state(), SUBU);
       }
       
+      /** get the stress on each gauss point (of each convex of the mesh) */
       void get_proj(std::vector<std::vector<scalar_type> > &p) {
 	gmm::resize(p, gmm::vect_size(saved_proj));
 	for (size_type cv=0; cv < gmm::vect_size(saved_proj); ++cv) {
 	  gmm::resize(p[cv], gmm::vect_size(saved_proj[cv]));
 	  gmm::copy(saved_proj[cv], p[cv]);
+	}
+      }
+
+      /** return the L2 projection of the Von Mises (or Tresca) stress tensor
+      */
+      template <class VECTVM>
+      void compute_Von_Mises_or_Tresca(const mesh_fem &mf_vm, 
+				       VECTVM &VM, bool tresca) {
+	pintegration_method pim = 0;
+	pfem pf_vm_old = 0;
+	bgeot::pgeometric_trans pgt_old = 0;
+	if (mf_vm.get_qdim() != 1) 
+	  DAL_THROW(dal::failure_error, "expected a scalar mesh_fem");
+	pfem pf_u = 0;
+	base_vector uvm, lvm, eig(N);
+	base_matrix M1, M2, M, sigma(N,N);
+	for (dal::bv_visitor cv(mf_vm.convex_index()); !cv.finished(); ++cv) {
+	  pfem pf_vm = mf_vm.fem_of_element(cv);
+	  bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
+	  if (mim.int_method_of_element(cv) != pim ||
+	      pf_vm != pf_vm_old || 
+	      pgt != pgt_old) {
+	    /* build the L2 projection matrix of the von mises given
+	       on gauss point onto the mf_vm mesh_fem */
+	    pim  = mim.int_method_of_element(cv);
+	    pf_u = gauss_points_pseudo_fem(pim);
+	    pmat_elem_type pme1 = 
+	      mat_elem_product(mat_elem_base(pf_vm),mat_elem_base(pf_vm));
+	    pmat_elem_type pme2 = 
+	      mat_elem_product(mat_elem_base(pf_vm),mat_elem_base(pf_u));
+	    pmat_elem_computation pmec1 = 
+	      mat_elem(pme1, mim.int_method_of_element(cv), pgt);
+	    pmat_elem_computation pmec2 = 
+	      mat_elem(pme2, mim.int_method_of_element(cv), pgt);
+	    base_tensor t;
+	    pmec1->gen_compute(t, mim.linked_mesh().points_of_convex(cv), cv);
+	    gmm::resize(M1, pf_vm->nb_dof(0), pf_vm->nb_dof(0));
+	    std::copy(t.begin(), t.end(), M1.begin());
+	    pmec2->gen_compute(t, mim.linked_mesh().points_of_convex(cv), cv);
+	    gmm::resize(M2, pf_vm->nb_dof(0), pf_u->nb_dof(0));
+
+	    std::copy(t.begin(), t.end(), M2.begin());
+	    gmm::lu_inverse(M1);
+	    gmm::resize(M, pf_vm->nb_dof(0), pf_u->nb_dof(0));
+	    gmm::mult(M1,M2,M);
+	    uvm.resize(pf_u->nb_dof(cv));
+	    lvm.resize(pf_vm->nb_dof(cv));
+	  }
+	  for (unsigned ii=0; ii < pf_u->nb_dof(cv); ++ii) {
+	    for (unsigned i=0; i < N; ++i) 
+	      for (unsigned j=0; j < N; ++j) {
+		sigma(i,j) = saved_proj.at(cv)[ii*N*N + j*N + i];
+	      }
+	    if (!tresca) {
+	      /* von mises: 1/2 deviator(sigma):deviator(sigma) */
+	      scalar_type s = gmm::mat_trace(sigma)/N;
+	      for (unsigned i=0; i < N; ++i)
+		sigma(i,i) -= s;
+	      uvm[ii] = gmm::mat_euclidean_norm(sigma);
+	    } else {
+	      /* else compute the tresca criterion */
+	      gmm::symmetric_qr_algorithm(sigma, eig);
+	      std::sort(eig.begin(), eig.end());
+	      uvm[ii] = eig.back() - eig.front();
+	    }
+	  }
+	  gmm::mult(M, uvm, lvm);
+	  for (unsigned i=0; i < mf_vm.nb_dof_of_element(cv); ++i) {
+	    VM[mf_vm.ind_dof_of_element(cv)[i]] = lvm[i];
+	  }
 	}
       }
       

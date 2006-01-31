@@ -383,7 +383,7 @@ static int inspect_results() {
     cout << "    reference" << std::setw(70) << mc.im_names[0] << " : sum= " << std::setw(6) << sumref << "\n";    
     for (size_type i = 1; i < mc.im_names.size(); ++i) {
       scalar_type sum = std::accumulate(mc.lst[i].begin(), mc.lst[i].end(),0.);
-      scalar_type dist = bgeot::vect_dist2(mc.lst[0],mc.lst[i]);
+      scalar_type dist = gmm::vect_dist2(mc.lst[0],mc.lst[i]);
       bool ok  = (gmm::abs(sum-sumref) < 1e-5 && gmm::abs(dist) < 1e-5);
       if (ok)  cout << "    [OK]     ";
       else     cout << "    [ERROR!] ";

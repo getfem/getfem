@@ -49,7 +49,7 @@ namespace getfem
     size_type i, nbpt = pararef.nb_points();
     
     for (i = 0; i < nbpt; ++i) {
-      a.fill(0.0);
+      gmm::clear(a);
       for (dim_type n = 0; n < N; ++n)
 	gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
       pararef.points()[i] = a;
@@ -119,7 +119,7 @@ namespace getfem
     size_type i, nbpt = pararef.nb_points();
     
     for (i = 0; i < nbpt; ++i) {
-      a.fill(0.0);
+      gmm::clear(a);
       for (dim_type n = 0; n < N; ++n)
 	gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
       //a.addmul(pararef.points()[i][n], ivect[n]);
@@ -167,10 +167,10 @@ namespace getfem
 			 bgeot::pgeometric_trans pgt, bool noised) {
     mesh msh;
     size_type N = nsubdiv.size();
-    base_node org(N); org.fill(0.0);
+    base_node org(N); gmm::clear(org);
     std::vector<base_small_vector> vtab(N);
     for (dim_type i = 0; i < N; i++) { 
-      vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
+      vtab[i] = base_small_vector(N); gmm::clear(vtab[i]);
       (vtab[i])[i] = 1. / scalar_type(nsubdiv[i]) * 1.;
     }
     if (pgt->basic_structure() == bgeot::simplex_structure(N)) {

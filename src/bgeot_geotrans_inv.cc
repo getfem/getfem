@@ -42,7 +42,7 @@ namespace bgeot
       else {
 	gmm::mult(K,gmm::scaled(n_ref,-1.0),y,y);
 	//        y -= K * n_ref;
-        if (vect_norm2(y) < IN_EPS) return true;
+        if (gmm::vect_norm2(y) < IN_EPS) return true;
       }
     }
     return false;
@@ -90,9 +90,9 @@ namespace bgeot
     base_node xn(P), y, z,x0;
     /* find an initial guess */
     x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
-    scalar_type d = vect_dist2_sqr(y, xreal);
+    scalar_type d = gmm::vect_dist2_sqr(y, xreal);
     for (size_type j = 1; j < pgt->nb_points(); ++j) { 
-      scalar_type d2 = vect_dist2_sqr(cvpts[j], xreal);
+      scalar_type d2 = gmm::vect_dist2_sqr(cvpts[j], xreal);
       if (d2 < d)
         { d = d2; x0 = pgt->geometric_nodes()[j]; y = cvpts[j]; }
     }
@@ -103,7 +103,7 @@ namespace bgeot
     pgt->gradient(x, pc);
     update_B();
     gmm::mult(gmm::transposed(K), rn, vres);
-    scalar_type res = vect_norm2(vres);
+    scalar_type res = gmm::vect_norm2(vres);
 
     //cerr << "DEBUT: res0=" << res << ", X=" << xreal << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n";
     unsigned cnt = 50;
@@ -128,9 +128,9 @@ namespace bgeot
 	
 	if (P != N) {
 	  gmm::mult(gmm::transposed(K), rn, vres);
-	  newres = vect_norm2(vres); 
+	  newres = gmm::vect_norm2(vres); 
 	} else {
-	  newres = vect_norm2(rn); // "better" residu
+	  newres = gmm::vect_norm2(rn); // "better" residu
 	}
 	if (newres < 1.5*res) break;
       }
@@ -148,14 +148,14 @@ namespace bgeot
       rn = pgt->transform(x,cvpts) - xreal; 
       
       if (pgt->convex_ref()->is_in(x) < IN_EPS &&
-	  N==P && vect_norm2(rn) > IN_EPS)
+	  N==P && gmm::vect_norm2(rn) > IN_EPS)
 	DAL_THROW(dal::failure_error, 
 		  "inversion of non-linear geometric transformation "
 		  "failed ! (too much iterations)");
     }
     // Test un peu sevère peut-être en ce qui concerne rn.
     if (pgt->convex_ref()->is_in(x) < IN_EPS
-        && (P == N || vect_norm2(rn) < IN_EPS)) {
+        && (P == N || gmm::vect_norm2(rn) < IN_EPS)) {
       //cout << "point " << x << "in IN (" << pgt->convex_ref()->is_in(x) << ")\n";
       return true;
     } //else cout << "point IS OUT\n";
