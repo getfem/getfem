@@ -176,6 +176,7 @@ namespace getfem {
       gmm::mult(M,w,pts[i]);
     }
     dimension = gmm::mat_nrows(M);
+    if (Bank_info) { delete Bank_info; Bank_info = 0; }
     pts.resort();
   }
 

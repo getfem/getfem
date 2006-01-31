@@ -8,8 +8,8 @@ Changement à prendre en considérations pour la 2.0 :
      sur le processeur maitre).
 
 2  - Finaliser le raffinement de maillage :  mise a jour des mesh_regions ;
-     dialogue_ avec mesh_im et mesh_fem ; interfacer clear, etc ... pour que
-     les green simplexes soit à jour.
+     dialogue avec mesh_im et mesh_fem. Documentation dessus. Estimateur a
+     posteriori basique : saut des derivées sur les arêtes ou au noeuds.
 
 3  - Brique generalized Dirichlet : la faire deriver de la brique constraints.
 
