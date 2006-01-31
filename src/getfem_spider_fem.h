@@ -44,10 +44,15 @@ namespace getfem {
   struct Xfem_sqrtr : public virtual_Xfem_func {
     virtual scalar_type val(const Xfem_func_context &c)
     { return ::sqrt(c.xreal[0]); }
+    //    { return ::sqrt(c.xreal[0])*cos(log(c.xreal[0])); }
     virtual base_small_vector grad(const Xfem_func_context &c)
-    { base_small_vector V(2); V[0] = 1. / (2.* ::sqrt(c.xreal[0])); return V; }
+    { base_small_vector V(2); 
+      V[0] = 1. / (2.* ::sqrt(c.xreal[0])); return V; }
+      // V[0] =  (1./::sqrt(c.xreal[0]))( (cos(log(::sqrt(c.xreal[0])^2)))/2. - sin(log(::sqrt(c.xreal[0])^2)) ); return V; }
     virtual base_matrix hess(const Xfem_func_context &c) {
-      base_matrix m(2,2); m(0,0) = -1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]);
+      base_matrix m(2,2); 
+      m(0,0) = 1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]);
+      //m(0,0) = ((1./::sqrt(c.xreal[0]))^(3))( (3. * cos(log(::sqrt(c.xreal[0])^2)))/4. - sin(log(::sqrt(c.xreal[0])^2)));
       return m;
     }
   };
@@ -123,7 +128,7 @@ namespace getfem {
         getfem::regular_unit_mesh(cartesian, nsubdiv, pgt, false);
 	bgeot::base_matrix M(2,2);
 	M(0,0) = R;   
-	M(1,1) = 2. * M_PI;
+	M(1,1) = 2. *  M_PI;
 	cartesian.transformation(M);
 	bgeot::base_small_vector V(2);
 	V[1] = -M_PI;

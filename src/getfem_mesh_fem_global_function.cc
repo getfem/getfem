@@ -62,13 +62,15 @@ namespace getfem {
   { DAL_THROW(internal_error, "No hess values, real only element."); }
   
   void global_function_fem::real_base_value(const fem_interpolation_context& c,
-					 base_tensor &t, bool) const {
+					    base_tensor &t, bool) const {
+
     mib.resize(2); mib[0] = 1; mib[1] = functions.size();
     t.adjust_sizes(mib);
     for (size_type i=0; i < functions.size(); ++i) 
       t[i] = (*functions[i]).val(c);
+    
   } 
-  
+   
   void global_function_fem::real_grad_base_value
   (const fem_interpolation_context& c, base_tensor &t, bool) const {
     mig.resize(3); 
@@ -198,11 +200,17 @@ namespace getfem {
     }
     return res;
   }
+  /*added lines
+declaration of cutoff_radius1 and cutoffradius0
 
+  */
   struct crack_singular : public global_function, public context_dependencies {
     size_type l;
     const level_set &ls;
     scalar_type a4;
+    scalar_type cutoff_radius1;
+    scalar_type cutoff_radius0;
+    size_type cutoff_func;
     mutable mesher_level_set mls0, mls1;
     mutable size_type cv;
 
@@ -218,9 +226,8 @@ namespace getfem {
       return v*cutoff(x,y);
     }
 
-    scalar_type cutoff(scalar_type x, scalar_type y) const
-    { return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1; }
-
+    
+ 
 //     base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
 //       base_small_vector g(2);
 //       if (a4>0) {
@@ -231,11 +238,66 @@ namespace getfem {
 //       return g;
 //     }
 
-    base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
-      scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
-      return base_small_vector(ratio*x, ratio*y);
+ 
+    
+    scalar_type cutoff(scalar_type x, scalar_type y) const {
+       
+      switch (cutoff_func){
+	
+      case 0: {
+	return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
+      } break;
+	
+      case 1: {
+	
+	if (cutoff_radius1 == 0 && cutoff_radius0 == 0) return 1;
+	
+	assert(cutoff_radius0 > cutoff_radius1);
+	scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3) + 3*cutoff_radius1*cutoff_radius0*(cutoff_radius1-cutoff_radius0));
+	scalar_type k = -(c/6.)*( -pow(cutoff_radius0,3) + 3*cutoff_radius1*pow(cutoff_radius0,2));
+	scalar_type r = sqrtf(x*x+y*y);
+	scalar_type return_value= 0.;
+	
+        if ( r <= cutoff_radius1 )
+	  return_value = 1;
+	else {
+	  if ( r <= cutoff_radius0 )
+	    
+	    return_value = (c/3.)*pow(r,3) - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2) + c*cutoff_radius0*cutoff_radius1*r + k;
+	  else
+	    return_value = 0.;
+	}
+	
+	return return_value;
+      } break;    
+      }
     }
-
+    
+    
+    base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
+      
+      switch (cutoff_func){
+	
+      case 0: {
+	scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
+	return base_small_vector(ratio*x, ratio*y);
+      }
+      case 1: {
+	
+	scalar_type r = sqrtf(x*x+y*y);
+	scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3) + 3*cutoff_radius1*cutoff_radius0*(cutoff_radius1-cutoff_radius0));
+	scalar_type ratio;
+	
+	if ( r <= cutoff_radius1 || r >= cutoff_radius0 )
+	  ratio = 0.;
+	
+      else  
+        ratio = c*(r - cutoff_radius0)*(r - cutoff_radius1);
+        
+	return base_small_vector(ratio*x/r,ratio*y/r);
+      } break;
+      }
+    }
     virtual void grad(const fem_interpolation_context& c,
 		      base_small_vector &v) const {
       update_mls(c.convex_num());
@@ -246,22 +308,39 @@ namespace getfem {
 	cerr << "Warning, point very close to the singularity. xreal = "
 	     << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
       }
-      if (a4 > 0)
-	dfr = sing_function(x,y,l)*cutoff_grad(x,y)
-	  + cutoff(x,y)*sing_function_grad(x, y, l);
-      else dfr = sing_function_grad(x, y, l);
-
-      gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
+      
+      switch (cutoff_func){
+      case 0: {
+	if (a4 > 0)
+	  dfr = sing_function(x,y,l)*cutoff_grad(x,y)
+	    + cutoff(x,y)*sing_function_grad(x, y, l);
+	else dfr = sing_function_grad(x, y, l);
+	
+	gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
+	
+      } break;
+      case 1: {
+	  if (cutoff_radius1 > 0)
+	    dfr = sing_function(x,y,l)*cutoff_grad(x,y)
+	      + cutoff(x,y)*sing_function_grad(x, y, l);
+	  else dfr = sing_function_grad(x, y, l);
+	  
+	  gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
+	} break;
+      }
     }
-
     virtual void hess(const fem_interpolation_context&, base_matrix &) const
     { DAL_THROW(dal::to_be_done_error, "hessian to be done ..."); }
-
+    
     void update_from_context(void) const { cv =  size_type(-1); }
 
     crack_singular(size_type l_, const level_set &ls_, 
-		   scalar_type cutoff_R) : l(l_), ls(ls_) {
+		   scalar_type cutoff_R, scalar_type cutoff_R1, scalar_type cutoff_R0, size_type func) : l(l_), ls(ls_) {
       if (cutoff_R) a4 = (cutoff_R > 0.0) ? pow(2.7/cutoff_R,4) : 0.0;
+      cutoff_radius1 = cutoff_R1;
+      cutoff_radius0 = cutoff_R0;
+      cutoff_func = func;
+      cerr << "cutoff radius: " << cutoff_radius0 << ", " << cutoff_radius1 << "\n";
       cv = size_type(-1);
       this->add_dependency(ls);
     }
@@ -270,9 +349,16 @@ namespace getfem {
 
   pglobal_function isotropic_crack_singular_2D(size_type i,
 					       const level_set &ls, 
-					       scalar_type cutoff_radius) {
-    return new crack_singular(i, ls, cutoff_radius);
+					       scalar_type cutoff_radius, 
+					       scalar_type cutoff_radius1, 
+					       scalar_type cutoff_radius0,
+					       size_type cutoff_func) {
+    return new crack_singular(i, ls, cutoff_radius, cutoff_radius1, cutoff_radius0, cutoff_func);
   }
 
 }  /* end of namespace getfem.                                            */
+
+
+
+
 

@@ -123,7 +123,10 @@ namespace getfem {
   class level_set;
   pglobal_function isotropic_crack_singular_2D(size_type i,
 					       const level_set &ls,
-					       scalar_type cutoff_radius = 0);
+					       scalar_type cutoff_radius = 0,
+					       scalar_type cutoff_radius1 = 0,
+					       scalar_type cutoff_radius0 = 0,
+					       size_type func = 0);
 
 
 
