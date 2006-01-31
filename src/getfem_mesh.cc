@@ -406,8 +406,7 @@ namespace getfem {
       tend = !ftool::get_token(ist, tmp);
       if (!ftool::casecmp(tmp, "END"))
       { tend = true; }
-      else if (!ftool::casecmp(tmp, "CONVEX"))
-      {
+      else if (!ftool::casecmp(tmp, "CONVEX")) {
         size_type ic;
 	ftool::get_token(ist, tmp);
         ic = gmm::abs(atoi(tmp.c_str()));
@@ -423,8 +422,6 @@ namespace getfem {
 	}
 	
 	bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
-
-       
 	size_type nb = pgt->nb_points();
 
 	cv[ic].cstruct = pgt;
@@ -799,7 +796,7 @@ namespace getfem {
     static mesh mesh2;
     static bgeot::pstored_point_tab pspt = 0;
     static bgeot::pgeotrans_precomp pgp = 0;
-    static std::vector<size_type> ipt, ipt2;
+    static std::vector<size_type> ipt, ipt2, icl;
 
     if (pgt != pgt1) {
       pgt1 = pgt;
@@ -830,13 +827,14 @@ namespace getfem {
       ipt[ip] = add_point(pt);
     }
 
-    ipt2.resize(n+1);
+    ipt2.resize(n+1); icl.resize(0);
     for (size_type ic = 0; ic < mesh2.nb_convex(); ++ic) {
       for (size_type j = 0; j <= n; ++j)
 	ipt2[j] = ipt[mesh2.ind_points_of_convex(ic)[j]];
-      add_convex(pgt, ipt2.begin());
+      icl.push_back(add_convex(pgt, ipt2.begin()));
     }
 
+    lmsg_sender().send(MESH_REFINE_CONVEX(i, icl, true));
     sup_convex(i, true);
   }
 
@@ -884,6 +882,7 @@ namespace getfem {
 	sup_convex(gs.sub_simplices[ic], true);
 	b.sup(gs.sub_simplices[ic]);
       }
+      lmsg_sender().send(MESH_REFINE_CONVEX(i, gs.sub_simplices, false));
       Bank_sup_convex_from_green(i);
       Bank_refine_normal_convex(icc);
     }
@@ -984,7 +983,8 @@ namespace getfem {
     for (size_type ip1 = 0; ip1 < ipt.size(); ++ip1)
       for (size_type ip2 = ip1+1; ip2 < ipt.size(); ++ip2)
 	Bank_info->edges.insert(edge(ipt[ip1], ipt[ip2]));
-
+    
+    lmsg_sender().send(MESH_REFINE_CONVEX(ic, gs.sub_simplices, true));
     sup_convex(ic, true);
   }
 

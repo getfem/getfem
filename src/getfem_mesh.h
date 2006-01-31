@@ -80,6 +80,15 @@ namespace getfem {
     MESH_SWAP_CONVEX(size_t i, size_t j) { icv1 = i; icv2 = j; }
     MESH_SWAP_CONVEX(void) {}
   };
+  struct MESH_REFINE_CONVEX { 
+    enum { ID = 8 }; 
+    size_t icv;
+    std::vector<size_type> &sub_cv_list;
+    bool is_refine; // true : refine, false unrefine.
+    MESH_REFINE_CONVEX(size_t i, std::vector<size_type> &s, bool r)
+      : icv(i), sub_cv_list(s), is_refine(r) { }
+    // MESH_SWAP_CONVEX(void) {}
+  };
 
   /** base class for objects that receive notification messages from a
       mesh. */
@@ -95,6 +104,8 @@ namespace getfem {
       virtual void receipt(const MESH_SUP_CONVEX      &) 
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SWAP_CONVEX     &)
+      { DAL_THROW(internal_error, "internal error");}
+      virtual void receipt(const MESH_REFINE_CONVEX   &)
       { DAL_THROW(internal_error, "internal error");}
 
       virtual ~mesh_receiver() {}

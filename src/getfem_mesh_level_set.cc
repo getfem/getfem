@@ -75,7 +75,6 @@ struct Chrono {
   void mesh_level_set::receipt(const MESH_SWAP_CONVEX &) { 
     is_adapted_ = false;
   }
-   
 
   void mesh_level_set::clear(void) {
     cut_cv.clear();

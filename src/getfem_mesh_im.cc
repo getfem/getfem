@@ -45,7 +45,20 @@ namespace getfem {
     im_convexes.swap(m.icv1, m.icv2);
     ims.swap(m.icv1, m.icv2);
   }
-   
+  void mesh_im::receipt(const MESH_REFINE_CONVEX &m) {
+    if (m.is_refine) {
+      if (ims[m.icv])
+	for (size_type i = 0; i < m.sub_cv_list.size(); ++i) {
+	  ims[m.sub_cv_list[i]] = ims[m.icv];
+	  im_convexes.add(m.sub_cv_list[i]);
+	}
+    }
+    else if (ims[m.sub_cv_list[0]]) {
+      ims[m.icv] = ims[m.sub_cv_list[0]];
+      im_convexes.add(m.icv);
+    }
+  }
+
   void mesh_im::set_integration_method(size_type cv, pintegration_method pim) {
     if (pim == NULL)
       { if (im_convexes.is_in(cv)) { im_convexes.sup(cv); touch(); } }

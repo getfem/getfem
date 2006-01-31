@@ -80,6 +80,19 @@ namespace getfem {
     fe_convex.swap(m.icv1, m.icv2);
     f_elems.swap(m.icv1, m.icv2);
   }
+  void mesh_fem::receipt(const MESH_REFINE_CONVEX &m) { 
+    if (m.is_refine) {
+      if (fe_convex[m.icv])
+	for (size_type i = 0; i < m.sub_cv_list.size(); ++i) {
+	  f_elems[m.sub_cv_list[i]] = f_elems[m.icv];
+	  fe_convex.add(m.sub_cv_list[i]);
+	}
+    }
+    else if (fe_convex[m.sub_cv_list[0]]) {
+      f_elems[m.icv] = f_elems[m.sub_cv_list[0]];
+      fe_convex.add(m.icv);
+    }
+  }
    
   void mesh_fem::set_finite_element(size_type cv, pfem pf) {
     if (pf == 0) {

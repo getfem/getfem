@@ -109,10 +109,8 @@ namespace getfem {
     return pf;
   }
 
-  void mesh_fem_global_function::receipt(const MESH_CLEAR &)
-  { clear(); }
-  void mesh_fem_global_function::receipt(const MESH_DELETE &)
-  { clear(); }
+  void mesh_fem_global_function::receipt(const MESH_CLEAR &) { clear(); }
+  void mesh_fem_global_function::receipt(const MESH_DELETE &) { clear(); }
   void mesh_fem_global_function::clear_build_methods() {
     for (std::map<bgeot::pconvex_ref,pfem>::const_iterator 
 	   it = build_methods.begin(); 

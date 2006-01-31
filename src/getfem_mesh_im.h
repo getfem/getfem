@@ -90,15 +90,12 @@ namespace getfem {
     virtual pintegration_method int_method_of_element(size_type cv) const
     { return  ims[cv]; }
     void clear(void);
-    /* explicit calls to parent class 
-       for HP aCC and mipspro CC who complain about hidden functions 
-       (they're right)
-    */
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) {mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
+    void receipt(const MESH_REFINE_CONVEX &m);
     
     size_type memsize() const {
       return 
