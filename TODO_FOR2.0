@@ -7,9 +7,9 @@ Changement à prendre en considérations pour la 2.0 :
      paralleliser l'interpolation (san affecter la sauvegarde fait uniquement
      sur le processeur maitre).
 
-2  - Finaliser le raffinement de maillage :  mise a jour des mesh_regions ;
-     dialogue avec mesh_im et mesh_fem. Documentation dessus. Estimateur a
-     posteriori basique : saut des derivées sur les arêtes ou au noeuds.
+2  - Finaliser le raffinement de maillage :
+     documentation dessus. Estimateur a  posteriori basique : saut des
+     derivées normales sur les arêtes.
 
 3  - Brique generalized Dirichlet : la faire deriver de la brique constraints.
 
