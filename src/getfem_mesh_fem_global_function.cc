@@ -242,60 +242,60 @@ declaration of cutoff_radius1 and cutoffradius0
     
     scalar_type cutoff(scalar_type x, scalar_type y) const {
        
-      switch (cutoff_func){
+      switch (cutoff_func) {
 	
-      case 0: {
+      case 0:
 	return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
-      } break;
 	
-      case 1: {
-	
-	if (cutoff_radius1 == 0 && cutoff_radius0 == 0) return 1;
-	
-	assert(cutoff_radius0 > cutoff_radius1);
-	scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3) + 3*cutoff_radius1*cutoff_radius0*(cutoff_radius1-cutoff_radius0));
-	scalar_type k = -(c/6.)*( -pow(cutoff_radius0,3) + 3*cutoff_radius1*pow(cutoff_radius0,2));
-	scalar_type r = sqrtf(x*x+y*y);
-	scalar_type return_value= 0.;
-	
-        if ( r <= cutoff_radius1 )
-	  return_value = 1;
-	else {
-	  if ( r <= cutoff_radius0 )
-	    
-	    return_value = (c/3.)*pow(r,3) - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2) + c*cutoff_radius0*cutoff_radius1*r + k;
-	  else
-	    return_value = 0.;
+      case 1:
+	{
+	  assert(cutoff_radius0 > cutoff_radius1);
+	  scalar_type r = gmm::sqrt(x*x+y*y);
+	  
+	  if (r <= cutoff_radius1)
+	    return scalar_type(1);
+	  else if (r >= cutoff_radius0)
+	    return scalar_type(0);
+	  else {
+	    scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3)
+				+ 3*cutoff_radius1*cutoff_radius0
+				* (cutoff_radius1-cutoff_radius0));
+	    scalar_type k = -(c/6.)*(- pow(cutoff_radius0,3)
+				     + 3*cutoff_radius1*pow(cutoff_radius0,2));
+
+	    return (c/3.)*pow(r,3)
+	      - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2)
+	      + c*cutoff_radius0*cutoff_radius1*r + k;
+	  }
 	}
-	
-	return return_value;
-      } break;    
+      default : return scalar_type(1);
       }
     }
     
     
     base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
       
-      switch (cutoff_func){
-	
-      case 0: {
-	scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
-	return base_small_vector(ratio*x, ratio*y);
-      }
-      case 1: {
-	
-	scalar_type r = sqrtf(x*x+y*y);
-	scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3) + 3*cutoff_radius1*cutoff_radius0*(cutoff_radius1-cutoff_radius0));
-	scalar_type ratio;
-	
-	if ( r <= cutoff_radius1 || r >= cutoff_radius0 )
-	  ratio = 0.;
-	
-      else  
-        ratio = c*(r - cutoff_radius0)*(r - cutoff_radius1);
-        
-	return base_small_vector(ratio*x/r,ratio*y/r);
-      } break;
+      switch (cutoff_func) {
+      case 0:
+	{
+	  scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
+	  return base_small_vector(ratio*x, ratio*y);
+	}
+      case 1:
+	{
+	  scalar_type r = gmm::sqrt(x*x+y*y);
+	  scalar_type ratio = scalar_type(0);
+
+	  if ( r > cutoff_radius1 && r < cutoff_radius0 ) {
+	    scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3)
+				+ 3*cutoff_radius1*cutoff_radius0
+				* (cutoff_radius1-cutoff_radius0));
+	    ratio = c*(r - cutoff_radius0)*(r - cutoff_radius1);
+	  }
+	  
+	  return base_small_vector(ratio*x/r,ratio*y/r);
+	}
+      default : return base_small_vector(2);
       }
     }
     virtual void grad(const fem_interpolation_context& c,

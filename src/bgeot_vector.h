@@ -40,29 +40,15 @@
 #include <gmm_kernel.h>
 #include <bgeot_small_vector.h>
 
-namespace bgeot
-{
+namespace bgeot {
+
   typedef std::vector<scalar_type> base_vector;
   typedef small_vector<scalar_type> base_small_vector;
-  //typedef vsvector<scalar_type> base_small_vector;
-  /// type used for points of any (reasonnably small) dimension.
   typedef base_small_vector base_node;
-
-  /*  template<class T>
-    vsvector<T> operator *(const gmm::dense_matrix<T>& m, const vsvector<T>& v)
-  { vsvector<T> res(m.nrows()); gmm::mult(m, v, res); return res; }
-
-  template<class T>
-  gmm::dense_matrix<T> operator *(const gmm::dense_matrix<T>& m,
-				  const gmm::dense_matrix<T>& n) {
-    gmm::dense_matrix<T> res(m.nrows(), n.ncols()); 
-    gmm::mult(m, n, res);
-    return res;
-  }
-  */
   typedef gmm::dense_matrix<scalar_type> base_matrix;
 
-  template <class VEC_CONT> void vectors_to_base_matrix(base_matrix &G, const VEC_CONT &a) {
+  template <class VEC_CONT>
+  void vectors_to_base_matrix(base_matrix &G, const VEC_CONT &a) {
     size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
     G.resize(P, NP);
     typename VEC_CONT::const_iterator it = a.begin(), ite = a.end();
@@ -70,6 +56,7 @@ namespace bgeot
     for (; it != ite; ++it, itm += P)
       std::copy((*it).begin(), (*it).end(), itm);
   }
+
 }  /* end of namespace bgeot.                                           */
 
 namespace std {
