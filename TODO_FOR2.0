@@ -40,7 +40,7 @@ Questions en suspend :
 3  - Reregarder la description des dof : trop complexe car on ne fait pas de
 	produit tensoriels de ddl complexes ...
 
-4  - Voir la logique de l'utilisation des type size_type, scalar_type,
+4  - Revoir la logique de l'utilisation des type size_type, scalar_type,
      opt_long_scalar_type ...
 
 5  - Laisser tomber les méthodes d'intégration exactes ?
