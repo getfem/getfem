@@ -78,6 +78,14 @@ namespace getfem {
     touch_parent_mesh();
   }
 
+  void mesh_region::sup_all(size_type cv) { 
+    map_t::iterator it = wp().m.find(cv);
+    if (it != wp().m.end()) {
+      wp().m.erase(it);
+      touch_parent_mesh();
+    }
+  }
+
   void mesh_region::sup(size_type cv, size_type f) { 
     map_t::iterator it = wp().m.find(cv);
     if (it != wp().m.end()) {

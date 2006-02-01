@@ -141,7 +141,7 @@ namespace getfem {
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
 						 MDBRICK_BILAPLACIAN),
 	KL(KL_), D_("D", mf_u_.linked_mesh(), this),
-	nu_("nu", mf_u_.linked_mesh(), this) { }
+	nu_("nu", mf_u_.linked_mesh(), this) { D().set(1.); nu().set(0.3); }
   };
 
 

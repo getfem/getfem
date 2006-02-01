@@ -191,6 +191,8 @@ namespace getfem {
     
     dal::dynamic_array<mesh_region> cvf_sets;
     dal::bit_vector valid_cvf_sets;
+    void handle_region_refinement(size_type, const std::vector<size_type> &,
+				  bool);
     
     mutable bool cuthill_mckee_uptodate;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee

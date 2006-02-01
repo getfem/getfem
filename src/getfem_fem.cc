@@ -1678,7 +1678,7 @@ namespace getfem
     cvr = bgeot::simplex_of_reference(2);
     dim_ = cvr->structure()->dim();
     init_cvs_node();
-    es_degree = 3;
+    es_degree = 5;
     is_pol = true;
     is_lag = false;
     is_equiv = false; 

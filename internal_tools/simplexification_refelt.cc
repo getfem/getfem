@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
     f << "  }\n\n";
 
 
-    f << "};\n";
+    f << "}\n";
 
 
 

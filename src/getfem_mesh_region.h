@@ -103,6 +103,7 @@ namespace getfem {
     void add(const dal::bit_vector &bv);
     void add(size_type cv, size_type f = size_type(-1));
     void sup(size_type cv, size_type f = size_type(-1));
+    void sup_all(size_type cv);
     void clear();
     void swap_convex(size_type cv1, size_type cv2);
     bool is_in(size_type cv, size_type f = size_type(-1)) const;

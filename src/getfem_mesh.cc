@@ -35,7 +35,7 @@ namespace getfem {
 
   void mesh::sup_convex_from_regions(size_type c) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
-      cvf_sets[i].sup(c);
+      cvf_sets[i].sup_all(c);
     touch();
   }
 
@@ -44,6 +44,89 @@ namespace getfem {
       cvf_sets[i].swap_convex(c1, c2);
     touch();
   }
+
+  void mesh::handle_region_refinement(size_type ic,
+				      const std::vector<size_type> &icv,
+				      bool refine) {
+    
+    bgeot::pgeometric_trans pgt = trans_of_convex(ic);
+    
+    for (dal::bv_visitor ir(valid_cvf_sets); !ir.finished(); ++ir) {
+      mesh_region &r = cvf_sets[ir];
+
+
+      if (refine && r[ic].any()) {
+	cout << "changing " << ic << " list = " << icv << endl;
+
+	if (r[ic][0])
+	  for (size_type jc = 0; jc < icv.size(); ++jc)
+	    r.add(icv[jc]);
+	
+	bgeot::geotrans_inv_convex giv;
+	for (size_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
+	  if (r[ic][f+1]) {
+
+	    for (size_type jc = 0; jc < icv.size(); ++jc) {
+	      cout << "look at sub simplex " << icv[jc] << endl;
+	      bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
+	      for (size_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
+		   ++fsub) {
+		ind_set s;
+		neighbours_of_convex(icv[jc], fsub, s);
+		ind_set::const_iterator it = s.begin(), ite = s.end();
+		bool found = false;
+		for (; it != ite; ++it)
+		  if (std::find(icv.begin(), icv.end(), *it) != icv.end())
+		    { found = true; break; }
+		if (found) continue;
+
+		base_node pt, barycentre
+		  = dal::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
+		cout << "mean = " << barycentre << endl;
+
+		pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
+		cout << "pt = " << pt << endl;
+
+		giv.init(points_of_convex(ic), pgt);
+		giv.invert(pt, barycentre);
+
+		cout << "face " << fsub << " barycentre : "
+		     << barycentre << endl;
+
+		if (pgt->convex_ref()->is_in_face(f, barycentre) < 0.1)
+		  r.add(icv[jc], fsub);
+	      }
+	    }
+	  }
+	}	
+      }
+
+      for (size_type jc = 0; jc < icv.size(); ++jc)
+	if (!refine && r[icv[jc]].any()) {
+	  if (r[icv[jc]][0])
+	    r.add(ic);
+	  cout << "dealing with unrefine " << ic << " and sub simplex "
+	       << icv[jc] << endl;
+	  bgeot::geotrans_inv_convex giv;
+	  bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
+	  for (size_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
+	       ++fsub)
+	    if (r[icv[jc]][fsub+1]) {
+	      base_node pt, barycentre
+		= dal::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
+	      pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
+	      
+	      giv.init(points_of_convex(ic), pgt);
+	      giv.invert(pt, barycentre);
+	      
+	      for (size_type f = 0; f < pgt->structure()->nb_faces(); ++f)
+		if (pgt->convex_ref()->is_in_face(f, barycentre) < 0.1)
+		  { r.add(ic, f); break; }
+	  }
+	}
+    }
+  }
+
 
   mesh::mesh(dim_type NN) {
 #if GETFEM_PARA_LEVEL > 1
@@ -834,6 +917,7 @@ namespace getfem {
       icl.push_back(add_convex(pgt, ipt2.begin()));
     }
     lmsg_sender().send(MESH_REFINE_CONVEX(i, icl, true));
+    handle_region_refinement(i, icl, true);
     sup_convex(i, true);
   }
 
@@ -877,11 +961,12 @@ namespace getfem {
       size_type igs = Bank_info->num_green_simplex[i];
       green_simplex &gs = Bank_info->green_simplices[igs];
       size_type icc = add_convex_by_points(gs.pgt, gs.cv.points().begin());
+      lmsg_sender().send(MESH_REFINE_CONVEX(icc, gs.sub_simplices, false));
+      handle_region_refinement(icc, gs.sub_simplices, false);
       for (size_type ic = 0; ic < gs.sub_simplices.size(); ++ic) {
 	sup_convex(gs.sub_simplices[ic], true);
 	b.sup(gs.sub_simplices[ic]);
       }
-      lmsg_sender().send(MESH_REFINE_CONVEX(i, gs.sub_simplices, false));
       Bank_sup_convex_from_green(i);
       Bank_refine_normal_convex(icc);
     }
@@ -984,6 +1069,7 @@ namespace getfem {
 	Bank_info->edges.insert(edge(ipt[ip1], ipt[ip2]));
     
     lmsg_sender().send(MESH_REFINE_CONVEX(ic, gs.sub_simplices, true));
+    handle_region_refinement(ic, gs.sub_simplices, true);
     sup_convex(ic, true);
   }
 

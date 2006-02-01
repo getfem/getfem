@@ -520,11 +520,13 @@ namespace getfem {
     const mesh_fem *pmf_;
     bgeot::multi_index sizes_;
     bool initialized;
+    std::string name_;
     enum { MODIFIED, UPTODATE } state;
 
     void update_notify() { initialized = true; state = MODIFIED; }
 
   public:
+    const std::string name() const { return name_; }
     const mesh_fem &mf() const { 
       if (!pmf_) DAL_THROW(dal::failure_error, "no mesh fem assigned");
       return *pmf_; 
@@ -537,20 +539,21 @@ namespace getfem {
       return sz;
     }
     size_type fdim() const { return sizes_.size(); }
-    mdbrick_abstract_parameter(const std::string &name,
+    mdbrick_abstract_parameter(const std::string &name__,
 			       mdbrick_abstract_common_base *b) {
       brick_ = b; pmf_ = 0; state = MODIFIED; initialized = false;
-      b->parameters[name] = this;
+      name_ = name__;
+      b->parameters[name()] = this;
     }
-    mdbrick_abstract_parameter(const std::string &name,
+    mdbrick_abstract_parameter(const std::string &name__,
 			       const mesh_fem &mf_,
 			       mdbrick_abstract_common_base *b, 
 			       size_type N=0, size_type M=0, 
 			       size_type P=0, size_type Q=0) {
-      brick_ = b; pmf_ = &mf_; b->add_dependency(*pmf_);
+      brick_ = b; pmf_ = &mf_; name_ = name__; b->add_dependency(*pmf_);
       reshape(N,M,P,Q);
       state = MODIFIED; initialized = false;
-      b->parameters[name] = this;
+      b->parameters[name()] = this;
     }
     void change_mf(const mesh_fem &mf_) {
       if (&mf_ != pmf_) {
@@ -619,25 +622,26 @@ namespace getfem {
       else if (gmm::vect_size(v) == n) 
 	for (unsigned i=0; i < mf().nb_dof(); ++i)
 	  gmm::copy(v, gmm::sub_vector(value_, gmm::sub_interval(i*n, n)));
-      else DAL_THROW(dal::failure_error,"inconsistent param value, expected a "
-		     << fsizes() << " x " << mf().nb_dof() 
+      else DAL_THROW(dal::failure_error,"inconsistent param value for '" 
+		     << name() << "', expected a "
+		     << fsizes() << "x" << mf().nb_dof() 
 		     << " field, got a vector with " 
 		     << gmm::vect_size(v) << " elements");
       update_notify();
     }
 
   public:
-    mdbrick_parameter(const std::string &name,
+    mdbrick_parameter(const std::string &name__,
 		      mdbrick_abstract_common_base *b) :
-      mdbrick_abstract_parameter(name, b) { }
-    mdbrick_parameter(const std::string &name, const mesh_fem &mf_,
+      mdbrick_abstract_parameter(name__, b) { }
+    mdbrick_parameter(const std::string &name__, const mesh_fem &mf_,
 		      mdbrick_abstract_common_base *b,
 		      size_type N=0, size_type M=0) :
-      mdbrick_abstract_parameter(name, mf_,b,N,M) { }
-    mdbrick_parameter(const std::string &name, const mesh &mesh,
+      mdbrick_abstract_parameter(name__, mf_,b,N,M) { }
+    mdbrick_parameter(const std::string &name__, const mesh &mesh,
 		      mdbrick_abstract_common_base *b,
 		      size_type N=0, size_type M=0) :
-      mdbrick_abstract_parameter(name, classical_mesh_fem(mesh, 0),b,N,M) { }
+      mdbrick_abstract_parameter(name__, classical_mesh_fem(mesh, 0),b,N,M) { }
     void realloc() { gmm::resize(value_, fsize()*mf().nb_dof()); }
     template <typename W> void set(const mesh_fem &mf_, const W &w) {
       this->set_(mf_, w, typename gmm::is_gmm_interfaced<W>::result());
@@ -652,13 +656,20 @@ namespace getfem {
     template <typename W> void set_diagonal(const W &w) {
       if ((fdim() != 0 && fdim() != 2)
 	  || (fdim() == 2 && (fsizes()[0] != fsizes()[1]))) 
-	DAL_THROW(dal::failure_error,"wrong field dimension for set_diagonal");
+	DAL_THROW(dal::failure_error,
+		  "wrong field dimension for set_diagonal for param '" 
+		  << name() << "'");
       this->set_diagonal_(w, typename gmm::is_gmm_interfaced<W>::result());
     }
     const VEC &get() const { check(); return value_; }
     virtual void check() const {
       if (gmm::vect_size(value_) != mf().nb_dof() * fsize())
-	DAL_THROW(dal::failure_error, "invalid dimension for brick parameter");
+	DAL_THROW(dal::failure_error, 
+		  "invalid dimension for brick parameter '" << name() << 
+		  "', expected an array of size " << 
+		  mf().nb_dof()*fsize() << "=" << fsize() << "x" << 
+		  mf().nb_dof() << ", got an array of size " << 
+		  gmm::vect_size(value_));
     }
   };
 
