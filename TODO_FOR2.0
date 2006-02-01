@@ -28,7 +28,7 @@ Changement à prendre en considérations pour la 2.0 :
 
 8 - Dans mesh et mesh_fem, pour les recherche sur des résultats qui donnent de
 	petits ensembles d'entier, preferer le std::vector<size_type> au
-	dal::bit_vector.
+	dal::bit_vector ?
 
 
 Questions en suspend :
