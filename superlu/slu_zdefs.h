@@ -23,10 +23,10 @@
 /* Define my integer type int_t */
 typedef int int_t; /* default */
 
-#include "Cnames.h"
+#include "slu_Cnames.h"
 #include "supermatrix.h"
-#include "util.h"
-#include "dcomplex.h"
+#include "slu_util.h"
+#include "slu_dcomplex.h"
 
 
 /*
@@ -138,6 +138,9 @@ zCreate_SuperNode_Matrix(SuperMatrix *, int, int, int, doublecomplex *,
 extern void
 zCopy_Dense_Matrix(int, int, doublecomplex *, int, doublecomplex *, int);
 
+extern void    countnz (const int, int *, int *, int *, GlobalLU_t *);
+extern void    fixupL (const int, const int *, GlobalLU_t *);
+
 extern void    zallocateA (int, int, doublecomplex **, int **, int **);
 extern void    zgstrf (superlu_options_t*, SuperMatrix*, double, 
                        int, int, int*, void *, int, int *, int *, 
@@ -216,11 +219,15 @@ extern void    zCompRow_to_CompCol(int, int, int, doublecomplex*, int*, int*,
 		                   doublecomplex **, int **, int **);
 extern void    zfill (doublecomplex *, int, doublecomplex);
 extern void    zinf_norm_error (int, SuperMatrix *, doublecomplex *);
+extern void    PrintPerf (SuperMatrix *, SuperMatrix *, mem_usage_t *,
+			 doublecomplex, doublecomplex, doublecomplex *, doublecomplex *, char *);
 
 /* Routines for debugging */
 extern void    zPrint_CompCol_Matrix(char *, SuperMatrix *);
 extern void    zPrint_SuperNode_Matrix(char *, SuperMatrix *);
 extern void    zPrint_Dense_Matrix(char *, SuperMatrix *);
+extern void    print_lu_col(char *, int, int, int *, GlobalLU_t *);
+extern void    check_tempv(int, doublecomplex *);
 
 #ifdef __cplusplus
   }

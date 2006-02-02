@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 3.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -20,7 +19,7 @@
   the code was modified is included with the above copyright notice.
 */
 
-#include "ssp_defs.h"
+#include "slu_sdefs.h"
 
 /* What type of supernodes we want */
 #define T2_SUPER

@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 3.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -7,7 +6,7 @@
  * October 15, 2003
  *
  */
-#include "zsp_defs.h"
+#include "slu_zdefs.h"
 
 void
 zgssv(superlu_options_t *options, SuperMatrix *A, int *perm_c, int *perm_r,

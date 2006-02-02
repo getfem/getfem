@@ -11,7 +11,7 @@
  * History:     Modified from lapack routine CGERFS
  */
 #include <math.h>
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 void
 cgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,

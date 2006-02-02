@@ -18,7 +18,7 @@
   the code was modified is included with the above copyright notice.
 */
 
-#include "dsp_defs.h"
+#include "slu_ddefs.h"
 
 void
 heap_relax_snode (

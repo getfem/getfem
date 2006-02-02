@@ -1,4 +1,4 @@
-#include "dsp_defs.h"
+#include "slu_ddefs.h"
 
 void
 sp_preorder(superlu_options_t *options,  SuperMatrix *A, int *perm_c, 

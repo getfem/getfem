@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -8,7 +7,7 @@
  *
  */
 #include <math.h>
-#include "Cnames.h"
+#include "slu_Cnames.h"
 
 int
 dlacon_(int *n, double *v, double *x, int *isgn, double *est, int *kase)

@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -8,8 +7,7 @@
  *
  */
 #include <math.h>
-#include "zsp_defs.h"
-#include "util.h"
+#include "slu_zdefs.h"
 
 double
 zPivotGrowth(int ncols, SuperMatrix *A, int *perm_c, 

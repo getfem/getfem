@@ -20,7 +20,7 @@
 */
 
 #include <math.h>
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 void
 cCreate_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz, 
@@ -240,7 +240,8 @@ cPrint_SuperNode_Matrix(char *what, SuperMatrix *A)
       for (j = c; j < c + nsup; ++j) {
 	d = Astore->nzval_colptr[j];
 	for (i = rowind_colptr[c]; i < rowind_colptr[c+1]; ++i) {
-	  printf("%d\t%d\t%e\t%e\n", rowind[i], j, dp[d++], dp[d++]);
+	  printf("%d\t%d\t%e\t%e\n", rowind[i], j, dp[d], dp[d+1]);
+          d += 2;	
 	}
       }
     }
@@ -267,16 +268,19 @@ void
 cPrint_Dense_Matrix(char *what, SuperMatrix *A)
 {
     DNformat     *Astore;
-    register int i;
+    register int i, j, lda = Astore->lda;
     float       *dp;
     
     printf("\nDense matrix %s:\n", what);
     printf("Stype %d, Dtype %d, Mtype %d\n", A->Stype,A->Dtype,A->Mtype);
     Astore = (DNformat *) A->Store;
     dp = (float *) Astore->nzval;
-    printf("nrow %d, ncol %d, lda %d\n", A->nrow,A->ncol,Astore->lda);
+    printf("nrow %d, ncol %d, lda %d\n", A->nrow,A->ncol,lda);
     printf("\nnzval: ");
-    for (i = 0; i < 2*A->nrow; ++i) printf("%f  ", dp[i]);
+    for (j = 0; j < A->ncol; ++j) {
+        for (i = 0; i < 2*A->nrow; ++i) printf("%f  ", dp[i + j*2*lda]);
+        printf("\n");
+    }
     printf("\n");
     fflush(stdout);
 }

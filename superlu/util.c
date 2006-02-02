@@ -19,8 +19,7 @@
 */
 
 #include <math.h>
-#include "dsp_defs.h"
-#include "util.h"
+#include "slu_ddefs.h"
 
 /* 
  * Global statistics variale
@@ -47,6 +46,24 @@ void set_default_options(superlu_options_t *options)
     options->PivotGrowth = NO;
     options->ConditionNumber = NO;
     options->PrintStat = YES;
+}
+
+/*
+ * Print the options setting.
+ */
+void print_options(superlu_options_t *options)
+{
+    printf(".. options:\n");
+    printf("\tFact\t %8d\n", options->Fact);
+    printf("\tEquil\t %8d\n", options->Equil);
+    printf("\tColPerm\t %8d\n", options->ColPerm);
+    printf("\tDiagPivotThresh %8.4f\n", options->DiagPivotThresh);
+    printf("\tTrans\t %8d\n", options->Trans);
+    printf("\tIterRefine\t%4d\n", options->IterRefine);
+    printf("\tSymmetricMode\t%4d\n", options->SymmetricMode);
+    printf("\tPivotGrowth\t%4d\n", options->PivotGrowth);
+    printf("\tConditionNumber\t%4d\n", options->ConditionNumber);
+    printf("..\n");
 }
 
 /* Deallocate the structure pointing to the actual storage of the matrix. */

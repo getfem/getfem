@@ -1,7 +1,7 @@
 noinst_HEADERS=\
-	Cnames.h  colamd.h  csp_defs.h  dcomplex.h \
-	dsp_defs.h  scomplex.h  ssp_defs.h  supermatrix.h \
-	util.h  zsp_defs.h
+	slu_Cnames.h  slu_dcomplex.h  slu_scomplex.h  slu_util.h  \
+	supermatrix.h colamd.h    slu_cdefs.h   slu_ddefs.h  \
+	slu_sdefs.h     slu_zdefs.h
 
 SRC = ccolumn_bmod.c \
 	ccolumn_dfs.c \
@@ -34,7 +34,6 @@ dcolumn_bmod.c \
 dcolumn_dfs.c \
 dcomplex.c \
 dcopy_to_ucol.c \
-dGetDiagU.c \
 dgscon.c \
 dgsequ.c \
 dgsrfs.c \

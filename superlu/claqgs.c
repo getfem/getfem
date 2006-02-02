@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -12,8 +11,7 @@
  * History:     Modified from LAPACK routine CLAQGE
  */
 #include <math.h>
-#include "csp_defs.h"
-#include "util.h"
+#include "slu_cdefs.h"
 
 void
 claqgs(SuperMatrix *A, float *r, float *c, 

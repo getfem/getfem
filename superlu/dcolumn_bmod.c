@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "dsp_defs.h"
+#include "slu_ddefs.h"
 
 /* 
  * Function prototypes 
@@ -212,6 +212,11 @@ dcolumn_bmod (
 		STRSV( ftcs1, ftcs2, ftcs3, &segsze, &lusup[luptr], 
 		       &nsupr, tempv, &incx );
 #else		
+		if (nsupr < segsze) {
+		  fprintf(stderr, "BAD ARGUMENT for dtrsv: N=%d LDA=%d incx=%d\n", segsze, nsupr, incx);
+		  return -10000000;
+		}
+		  
 		dtrsv_( "L", "N", "U", &segsze, &lusup[luptr], 
 		       &nsupr, tempv, &incx );
 #endif		
@@ -312,6 +317,10 @@ dcolumn_bmod (
 	STRSV( ftcs1, ftcs2, ftcs3, &nsupc, &lusup[luptr], 
 	       &nsupr, &lusup[ufirst], &incx );
 #else
+	if (nsupr < nsupc) {
+	  fprintf(stderr, "BAD ARGUMENT for dtrsv: N=%d LDA=%d incx=%d\n", nsupc, nsupr, incx);
+	  return -10000000;
+	}
 	dtrsv_( "L", "N", "U", &nsupc, &lusup[luptr], 
 	       &nsupr, &lusup[ufirst], &incx );
 #endif

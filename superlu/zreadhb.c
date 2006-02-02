@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -9,7 +8,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "zsp_defs.h"
+#include "slu_zdefs.h"
 
 
 /* Eat up the rest of the current line */

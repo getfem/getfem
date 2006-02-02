@@ -21,7 +21,7 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include "ssp_defs.h"
+#include "slu_sdefs.h"
 
 #undef DEBUG
 

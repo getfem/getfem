@@ -67,6 +67,7 @@
  *           FORTRAN CALL               C DECLARATION
  *           call dgemm(...)           void dgemm__(...)
  */
+/* BLAS */
 #define sasum_    sasum__
 #define isamax_   isamax__
 #define scopy_    scopy__
@@ -127,8 +128,26 @@
 #define zhemv_    zhemv__
 #define zher2_    zher2__
 
+/* LAPACK */
+#define dlamch_   dlamch__
+#define slamch_   slamch__
+#define xerbla_   xerbla__
+#define lsame_    lsame__
+#define dlacon_   dlacon__
+#define slacon_   slacon__
+#define icmax1_   icmax1__
+#define scsum1_   scsum1__
+#define clacon_   clacon__
+#define dzsum1_   dzsum1__
+#define izmax1_   izmax1__
+#define zlacon_   zlacon__
+
+/* Fortran interface */
 #define c_bridge_dgssv_ c_bridge_dgssv__
+#define c_fortran_sgssv_ c_fortran_sgssv__
 #define c_fortran_dgssv_ c_fortran_dgssv__
+#define c_fortran_cgssv_ c_fortran_cgssv__
+#define c_fortran_zgssv_ c_fortran_zgssv__
 #endif
 
 #if (F77_CALL_C == UPCASE)
@@ -139,6 +158,7 @@
  *           FORTRAN CALL               C DECLARATION
  *           call dgemm(...)           void DGEMM(...)
  */
+/* BLAS */
 #define sasum_    SASUM
 #define isamax_   ISAMAX
 #define scopy_    SCOPY
@@ -199,8 +219,26 @@
 #define zhemv_    CHEMV
 #define zher2_    CHER2
 
+/* LAPACK */
+#define dlamch_   DLAMCH
+#define slamch_   SLAMCH
+#define xerbla_   XERBLA
+#define lsame_    LSAME
+#define dlacon_   DLACON
+#define slacon_   SLACON
+#define icmax1_   ICMAX1
+#define scsum1_   SCSUM1
+#define clacon_   CLACON
+#define dzsum1_   DZSUM1
+#define izmax1_   IZMAX1
+#define zlacon_   ZLACON
+
+/* Fortran interface */
 #define c_bridge_dgssv_ C_BRIDGE_DGSSV
+#define c_fortran_sgssv_ C_FORTRAN_SGSSV
 #define c_fortran_dgssv_ C_FORTRAN_DGSSV
+#define c_fortran_cgssv_ C_FORTRAN_CGSSV
+#define c_fortran_zgssv_ C_FORTRAN_ZGSSV
 #endif
 
 #if (F77_CALL_C == NOCHANGE)
@@ -211,6 +249,7 @@
  *           FORTRAN CALL               C DECLARATION
  *           call dgemm(...)           void dgemm(...)
  */
+/* BLAS */
 #define sasum_    sasum
 #define isamax_   isamax
 #define scopy_    scopy
@@ -271,8 +310,26 @@
 #define zhemv_    zhemv
 #define zher2_    zher2
 
+/* LAPACK */
+#define dlamch_   dlamch
+#define slamch_   slamch
+#define xerbla_   xerbla
+#define lsame_    lsame
+#define dlacon_   dlacon
+#define slacon_   slacon
+#define icmax1_   icmax1
+#define scsum1_   scsum1
+#define clacon_   clacon
+#define dzsum1_   dzsum1
+#define izmax1_   izmax1
+#define zlacon_   zlacon
+
+/* Fortran interface */
 #define c_bridge_dgssv_ c_bridge_dgssv
+#define c_fortran_sgssv_ c_fortran_sgssv
 #define c_fortran_dgssv_ c_fortran_dgssv
+#define c_fortran_cgssv_ c_fortran_cgssv
+#define c_fortran_zgssv_ c_fortran_zgssv
 #endif
 
 #endif /* __SUPERLU_CNAMES */

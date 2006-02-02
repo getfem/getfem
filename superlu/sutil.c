@@ -20,7 +20,7 @@
 */
 
 #include <math.h>
-#include "ssp_defs.h"
+#include "slu_sdefs.h"
 
 void
 sCreate_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz, 
@@ -267,16 +267,19 @@ void
 sPrint_Dense_Matrix(char *what, SuperMatrix *A)
 {
     DNformat     *Astore;
-    register int i;
+    register int i, j, lda = Astore->lda;
     float       *dp;
     
     printf("\nDense matrix %s:\n", what);
     printf("Stype %d, Dtype %d, Mtype %d\n", A->Stype,A->Dtype,A->Mtype);
     Astore = (DNformat *) A->Store;
     dp = (float *) Astore->nzval;
-    printf("nrow %d, ncol %d, lda %d\n", A->nrow,A->ncol,Astore->lda);
+    printf("nrow %d, ncol %d, lda %d\n", A->nrow,A->ncol,lda);
     printf("\nnzval: ");
-    for (i = 0; i < A->nrow; ++i) printf("%f  ", dp[i]);
+    for (j = 0; j < A->ncol; ++j) {
+        for (i = 0; i < A->nrow; ++i) printf("%f  ", dp[i + j*lda]);
+        printf("\n");
+    }
     printf("\n");
     fflush(stdout);
 }

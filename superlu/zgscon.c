@@ -11,7 +11,7 @@
  * History:     Modified from lapack routines ZGECON.
  */
 #include <math.h>
-#include "zsp_defs.h"
+#include "slu_zdefs.h"
 
 void
 zgscon(char *norm, SuperMatrix *L, SuperMatrix *U,

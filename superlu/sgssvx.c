@@ -6,7 +6,7 @@
  * October 15, 2003
  *
  */
-#include "ssp_defs.h"
+#include "slu_sdefs.h"
 
 void
 sgssvx(superlu_options_t *options, SuperMatrix *A, int *perm_c, int *perm_r,

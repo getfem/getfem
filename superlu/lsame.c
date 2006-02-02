@@ -1,3 +1,5 @@
+#include "slu_Cnames.h"
+
 int lsame_(char *ca, char *cb)
 {
 /*  -- LAPACK auxiliary routine (version 2.0) --   

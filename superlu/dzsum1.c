@@ -1,4 +1,5 @@
-#include "dcomplex.h"
+#include "slu_Cnames.h"
+#include "slu_dcomplex.h"
 
 double dzsum1_(int *n, doublecomplex *cx, int *incx)
 {

@@ -6,7 +6,7 @@
  * October 15, 2003
  *
  */
-#include "dsp_defs.h"
+#include "slu_ddefs.h"
 
 void
 dgssvx(superlu_options_t *options, SuperMatrix *A, int *perm_c, int *perm_r,
@@ -547,7 +547,7 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
         *recip_pivot_growth = dPivotGrowth(A->ncol, AA, perm_c, L, U);
     }
 
-    if ( options->ConditionNumber ) {
+    if ( *info != -10000000 && options->ConditionNumber ) {
         /* Estimate the reciprocal of the condition number of A. */
         t0 = SuperLU_timer_();
         if ( notran ) {
@@ -560,7 +560,7 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
         utime[RCOND] = SuperLU_timer_() - t0;
     }
     
-    if ( nrhs > 0 ) {
+    if ( *info != -10000000 && nrhs > 0 ) {
         /* Compute the solution matrix X. */
         for (j = 0; j < nrhs; j++)  /* Save a copy of the right hand sides */
             for (i = 0; i < B->nrow; i++)
@@ -597,12 +597,12 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
         }
     } /* end if nrhs > 0 */
 
-    if ( options->ConditionNumber ) {
+    if ( *info == 0 && options->ConditionNumber ) {
         /* Set INFO = A->ncol+1 if the matrix is singular to working precision. */
         if ( *rcond < dlamch_("E") ) *info = A->ncol + 1;
     }
 
-    if ( nofact ) {
+    if ( *info != -10000000 && nofact ) {
         dQuerySpace(L, U, mem_usage);
         Destroy_CompCol_Permuted(&AC);
     }

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "slu_Cnames.h"
+
 #define TRUE_ (1)
 #define FALSE_ (0)
 #define abs(x) ((x) >= 0 ? (x) : -(x))
@@ -666,7 +668,7 @@ double dlamc3_(double *a, double *b)
 */
 /* >>Start of File<<   
        System generated locals */
-    volatile double ret_val;
+  volatile double ret_val; // [added volatile to avoid -O3 optimizations.. (julien pommier)]
 
     ret_val = *a + *b;
 

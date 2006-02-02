@@ -11,7 +11,7 @@
  * History:     Modified from lapack routine ZGERFS
  */
 #include <math.h>
-#include "zsp_defs.h"
+#include "slu_zdefs.h"
 
 void
 zgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,

@@ -1,4 +1,5 @@
-#include "scomplex.h"
+#include "slu_Cnames.h"
+#include "slu_scomplex.h"
 
 double scsum1_(int *n, complex *cx, int *incx)
 {

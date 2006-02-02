@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 /* 
  * Function prototypes 

@@ -5,7 +5,7 @@
  * November 15, 1997
  *
  */
-#include "dsp_defs.h"
+#include "slu_ddefs.h"
 #include "colamd.h"
 
 extern int  genmmd_(int *, int *, int *, int *, int *, int *, int *, 
@@ -22,12 +22,11 @@ get_colamd(
 	   )
 {
     int Alen, *A, i, info, *p;
-    double *knobs;
+    double knobs[COLAMD_KNOBS];
+    int stats[COLAMD_STATS];
 
     Alen = colamd_recommended(nnz, m, n);
 
-    if ( !(knobs = (double *) SUPERLU_MALLOC(COLAMD_KNOBS * sizeof(double))) )
-        ABORT("Malloc fails for knobs");
     colamd_set_defaults(knobs);
 
     if (!(A = (int *) SUPERLU_MALLOC(Alen * sizeof(int))) )
@@ -36,12 +35,11 @@ get_colamd(
         ABORT("Malloc fails for p[]");
     for (i = 0; i <= n; ++i) p[i] = colptr[i];
     for (i = 0; i < nnz; ++i) A[i] = rowind[i];
-    info = colamd(m, n, Alen, A, p, knobs);
+    info = colamd(m, n, Alen, A, p, knobs, stats);
     if ( info == FALSE ) ABORT("COLAMD failed");
 
     for (i = 0; i < n; ++i) perm_c[p[i]] = i;
 
-    SUPERLU_FREE(knobs);
     SUPERLU_FREE(A);
     SUPERLU_FREE(p);
 }
@@ -434,13 +432,12 @@ get_perm_c(int ispec, SuperMatrix *A, int *perm_c)
 	/* Transform perm_c into 0-based indexing. */
 	for (i = 0; i < n; ++i) --perm_c[i];
 
-	SUPERLU_FREE(b_colptr);
-	SUPERLU_FREE(b_rowind);
 	SUPERLU_FREE(invp);
 	SUPERLU_FREE(dhead);
 	SUPERLU_FREE(qsize);
 	SUPERLU_FREE(llist);
 	SUPERLU_FREE(marker);
+	SUPERLU_FREE(b_rowind);
 
 	t = SuperLU_timer_() - t;
 	/*  printf("call GENMMD time = %8.3f\n", t);*/
@@ -449,4 +446,5 @@ get_perm_c(int ispec, SuperMatrix *A, int *perm_c)
 	for (i = 0; i < n; ++i) perm_c[i] = i;
     }
 
+    SUPERLU_FREE(b_colptr);
 }

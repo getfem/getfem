@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -12,8 +11,7 @@
  * History:     Modified from LAPACK routine DGEEQU
  */
 #include <math.h>
-#include "dsp_defs.h"
-#include "util.h"
+#include "slu_ddefs.h"
 
 void
 dgsequ(SuperMatrix *A, double *r, double *c, double *rowcnd,

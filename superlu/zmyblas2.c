@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -14,7 +13,7 @@
  * Note:
  *     This is only used when the system lacks an efficient BLAS library.
  */
-#include "dcomplex.h"
+#include "slu_dcomplex.h"
 
 /*
  * Solves a dense UNIT lower triangular system. The unit lower 

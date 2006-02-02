@@ -11,7 +11,7 @@
  * Purpose:		Sparse BLAS 2, using some dense BLAS 2 operations.
  */
 
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 /* 
  * Function prototypes 
@@ -132,7 +132,8 @@ sp_ctrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 		luptr = L_NZ_START(fsupc);
 		nrow = nsupr - nsupc;
 
-	        solve_ops += 4 * nsupc * (nsupc - 1);
+                /* 1 c_div costs 10 flops */
+	        solve_ops += 4 * nsupc * (nsupc - 1) + 10 * nsupc;
 	        solve_ops += 8 * nrow * nsupc;
 
 		if ( nsupc == 1 ) {
@@ -185,7 +186,8 @@ sp_ctrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 	    	nsupc = L_FST_SUPC(k+1) - fsupc;
 	    	luptr = L_NZ_START(fsupc);
 		
-    	        solve_ops += 4 * nsupc * (nsupc + 1);
+                /* 1 c_div costs 10 flops */
+    	        solve_ops += 4 * nsupc * (nsupc + 1) + 10 * nsupc;
 
 		if ( nsupc == 1 ) {
 		    c_div(&x[fsupc], &x[fsupc], &Lval[luptr]);
@@ -279,7 +281,8 @@ sp_ctrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 		    }
 		}
 
-		solve_ops += 4 * nsupc * (nsupc + 1);
+                /* 1 c_div costs 10 flops */
+		solve_ops += 4 * nsupc * (nsupc + 1) + 10 * nsupc;
 
 		if ( nsupc == 1 ) {
 		    c_div(&x[fsupc], &x[fsupc], &Lval[luptr]);
@@ -358,7 +361,8 @@ sp_ctrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 		    }
 		}
 
-		solve_ops += 4 * nsupc * (nsupc + 1);
+                /* 1 c_div costs 10 flops */
+		solve_ops += 4 * nsupc * (nsupc + 1) + 10 * nsupc;
  
 		if ( nsupc == 1 ) {
                     cc_conj(&temp, &Lval[luptr]);

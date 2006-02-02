@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -12,8 +11,7 @@
  * Purpose:		Sparse BLAS3, using some dense BLAS3 operations.
  */
 
-#include "ssp_defs.h"
-#include "util.h"
+#include "slu_sdefs.h"
 
 int
 sp_sgemm(char *transa, char *transb, int m, int n, int k, 

@@ -19,10 +19,7 @@
   the code was modified is included with the above copyright notice.
 */
 
-#include "ssp_defs.h"
-
-void    countnz (const int, int *, int *, int *, GlobalLU_t *);
-void    fixupL (const int, const int *, GlobalLU_t *);
+#include "slu_sdefs.h"
 
 void
 sgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
@@ -185,8 +182,8 @@ sgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
  */
     /* Local working arrays */
     NCPformat *Astore;
-    int       *iperm_r; /* inverse of perm_r;
-			   used when options->Fact == SamePattern_SameRowPerm */
+    int       *iperm_r = NULL; /* inverse of perm_r; used when 
+                                  options->Fact == SamePattern_SameRowPerm */
     int       *iperm_c; /* inverse of perm_c */
     int       *iwork;
     float    *swork;

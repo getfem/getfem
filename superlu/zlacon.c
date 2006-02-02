@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -8,8 +7,8 @@
  *
  */
 #include <math.h>
-#include "Cnames.h"
-#include "dcomplex.h"
+#include "slu_Cnames.h"
+#include "slu_dcomplex.h"
 
 int
 zlacon_(int *n, doublecomplex *v, doublecomplex *x, double *est, int *kase)

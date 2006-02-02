@@ -93,7 +93,6 @@ typedef enum {
     RCOND,   /* estimate reciprocal condition number */
     SOLVE,   /* forward and back solves */
     REFINE,  /* perform iterative refinement */
-    FLOAT,   /* time spent in floating-point operations */
     TRSV,    /* fraction of FACT spent in xTRSV */
     GEMV,    /* fraction of FACT spent in xGEMV */
     FERR,    /* estimate error bounds after iterative refinement */
@@ -126,10 +125,9 @@ typedef unsigned char Logical;
  *             assuming that a factorization of a matrix with the same
  *             sparsity	pattern and similar numerical values was performed
  *             prior to this one. Therefore, this factorization will reuse
- *             both row and column scaling factors R and C, and the
- *             both row and column permutation vectors perm_r and perm_c,
- *             distributed data structure set up from the previous symbolic
- *             factorization.
+ *             both row and column scaling factors R and C, both row and
+ *             column permutation vectors perm_r and perm_c, and the
+ *             data structure set up from the previous symbolic factorization.
  *        = FACTORED: On entry, L, U, perm_r and perm_c contain the 
  *              factored form of A. If DiagScale is not NOEQUIL, the matrix
  *              A has been equilibrated with scaling factors R and C.

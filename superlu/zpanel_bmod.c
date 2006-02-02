@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "zsp_defs.h"
+#include "slu_zdefs.h"
 
 /* 
  * Function prototypes 

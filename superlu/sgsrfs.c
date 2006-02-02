@@ -11,7 +11,7 @@
  * History:     Modified from lapack routine SGERFS
  */
 #include <math.h>
-#include "ssp_defs.h"
+#include "slu_sdefs.h"
 
 void
 sgsrfs(trans_t trans, SuperMatrix *A, SuperMatrix *L, SuperMatrix *U,

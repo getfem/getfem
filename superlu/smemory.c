@@ -6,7 +6,7 @@
  * October 15, 2003
  *
  */
-#include "ssp_defs.h"
+#include "slu_sdefs.h"
 
 /* Constants */
 #define NO_MEMTYPE  4      /* 0: lusup;
@@ -193,9 +193,10 @@ sLUMemInit(fact_t fact, void *work, int lwork, int m, int n, int annz,
 	    sSetupSpace(work, lwork, &Glu->MemModel);
 	}
 	
-#ifdef DEBUG		   
-	printf("sLUMemInit() called: annz %d, MemModel %d\n", 
-		annz, Glu->MemModel);
+#if ( PRNTlevel >= 1 )
+	printf("sLUMemInit() called: FILL %ld, nzlmax %ld, nzumax %ld\n", 
+	       FILL, nzlmax, nzumax);
+	fflush(stdout);
 #endif	
 	
 	/* Integer pointers for L\U factors */
@@ -234,6 +235,11 @@ sLUMemInit(fact_t fact, void *work, int lwork, int m, int n, int annz,
 		printf("Not enough memory to perform factorization.\n");
 		return (smemory_usage(nzlmax, nzumax, nzlumax, n) + n);
 	    }
+#if ( PRNTlevel >= 1)
+	    printf("sLUMemInit() reduce size: nzlmax %ld, nzumax %ld\n", 
+		   nzlmax, nzumax);
+	    fflush(stdout);
+#endif
 	    lusup = (float *) sexpand( &nzlumax, LUSUP, 0, 0, Glu );
 	    ucol  = (float *) sexpand( &nzumax, UCOL, 0, 0, Glu );
 	    lsub  = (int *)    sexpand( &nzlmax, LSUB, 0, 0, Glu );
@@ -476,8 +482,7 @@ void
     else lword = sizeof(float);
 
     if ( Glu->MemModel == SYSTEM ) {
-	new_mem = (void *) SUPERLU_MALLOC(new_len * lword);
-/*	new_mem = (void *) calloc(new_len, lword); */
+	new_mem = (void *) SUPERLU_MALLOC((size_t)new_len * lword);
 	if ( no_expand != 0 ) {
 	    tries = 0;
 	    if ( keep_prev ) {
@@ -487,8 +492,7 @@ void
 		    if ( ++tries > 10 ) return (NULL);
 		    alpha = Reduce(alpha);
 		    new_len = alpha * *prev_len;
-		    new_mem = (void *) SUPERLU_MALLOC(new_len * lword); 
-/*		    new_mem = (void *) calloc(new_len, lword); */
+		    new_mem = (void *) SUPERLU_MALLOC((size_t)new_len * lword);
 		}
 	    }
 	    if ( type == LSUB || type == USUB ) {
@@ -641,7 +645,7 @@ sallocateA(int n, int nnz, float **a, int **asub, int **xa)
 float *floatMalloc(int n)
 {
     float *buf;
-    buf = (float *) SUPERLU_MALLOC(n * sizeof(float)); 
+    buf = (float *) SUPERLU_MALLOC((size_t)n * sizeof(float)); 
     if ( !buf ) {
 	ABORT("SUPERLU_MALLOC failed for buf in floatMalloc()\n");
     }
@@ -653,7 +657,7 @@ float *floatCalloc(int n)
     float *buf;
     register int i;
     float zero = 0.0;
-    buf = (float *) SUPERLU_MALLOC(n * sizeof(float));
+    buf = (float *) SUPERLU_MALLOC((size_t)n * sizeof(float));
     if ( !buf ) {
 	ABORT("SUPERLU_MALLOC failed for buf in floatCalloc()\n");
     }

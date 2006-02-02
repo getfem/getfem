@@ -10,8 +10,9 @@
  * This file defines common arithmetic operations for complex type.
  */
 #include <math.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include "dcomplex.h"
+#include "slu_dcomplex.h"
 
 
 /* Complex Division c = a/b */
@@ -26,8 +27,8 @@ void z_div(doublecomplex *c, doublecomplex *a, doublecomplex *b)
 	abi = - abi;
     if( abr <= abi ) {
 	if (abi == 0) {
-	    fprintf(stderr, "z_div.c: division by zero");
-	    exit (-1);
+	    fprintf(stderr, "z_div.c: division by zero\n");
+            exit(-1);
 	}	  
 	ratio = b->r / b->i ;
 	den = b->i * (1 + ratio*ratio);

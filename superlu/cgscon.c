@@ -11,7 +11,7 @@
  * History:     Modified from lapack routines CGECON.
  */
 #include <math.h>
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 void
 cgscon(char *norm, SuperMatrix *L, SuperMatrix *U,

@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -12,8 +11,7 @@
  * History:     Modified from lapack routine ZLANGE
  */
 #include <math.h>
-#include "zsp_defs.h"
-#include "util.h"
+#include "slu_zdefs.h"
 
 double zlangs(char *norm, SuperMatrix *A)
 {

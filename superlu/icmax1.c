@@ -1,5 +1,6 @@
 #include <math.h>
-#include "scomplex.h"
+#include "slu_scomplex.h"
+#include "slu_Cnames.h"
 
 int icmax1_(int *n, complex *cx, int *incx)
 {

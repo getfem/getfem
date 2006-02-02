@@ -6,7 +6,7 @@
  * October 15, 2003
  *
  */
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 void
 cgssvx(superlu_options_t *options, SuperMatrix *A, int *perm_c, int *perm_r,
@@ -455,7 +455,7 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
 			       Astore->nzval, Astore->colind, Astore->rowptr,
 			       SLU_NC, A->Dtype, A->Mtype);
 	if ( notran ) { /* Reverse the transpose argument. */
-            trant = CONJ;
+	    trant = TRANS;
 	    notran = 0;
 	} else {
 	    trant = NOTRANS;

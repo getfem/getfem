@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -12,7 +11,7 @@
  * History:     Modified from LAPACK routine DLAQGE
  */
 #include <math.h>
-#include "dsp_defs.h"
+#include "slu_ddefs.h"
 
 void
 dlaqgs(SuperMatrix *A, double *r, double *c, 

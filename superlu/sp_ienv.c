@@ -2,6 +2,8 @@
  * File name:		sp_ienv.c
  * History:             Modified from lapack routine ILAENV
  */
+#include "slu_Cnames.h"
+
 int
 sp_ienv(int ispec)
 {

@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -12,8 +11,7 @@
  * History:     Modified from LAPACK routine SLAQGE
  */
 #include <math.h>
-#include "ssp_defs.h"
-#include "util.h"
+#include "slu_sdefs.h"
 
 void
 slaqgs(SuperMatrix *A, float *r, float *c, 

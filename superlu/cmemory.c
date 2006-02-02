@@ -6,7 +6,7 @@
  * October 15, 2003
  *
  */
-#include "csp_defs.h"
+#include "slu_cdefs.h"
 
 /* Constants */
 #define NO_MEMTYPE  4      /* 0: lusup;
@@ -193,9 +193,10 @@ cLUMemInit(fact_t fact, void *work, int lwork, int m, int n, int annz,
 	    cSetupSpace(work, lwork, &Glu->MemModel);
 	}
 	
-#ifdef DEBUG		   
-	printf("cLUMemInit() called: annz %d, MemModel %d\n", 
-		annz, Glu->MemModel);
+#if ( PRNTlevel >= 1 )
+	printf("cLUMemInit() called: FILL %ld, nzlmax %ld, nzumax %ld\n", 
+	       FILL, nzlmax, nzumax);
+	fflush(stdout);
 #endif	
 	
 	/* Integer pointers for L\U factors */
@@ -234,6 +235,11 @@ cLUMemInit(fact_t fact, void *work, int lwork, int m, int n, int annz,
 		printf("Not enough memory to perform factorization.\n");
 		return (cmemory_usage(nzlmax, nzumax, nzlumax, n) + n);
 	    }
+#if ( PRNTlevel >= 1)
+	    printf("cLUMemInit() reduce size: nzlmax %ld, nzumax %ld\n", 
+		   nzlmax, nzumax);
+	    fflush(stdout);
+#endif
 	    lusup = (complex *) cexpand( &nzlumax, LUSUP, 0, 0, Glu );
 	    ucol  = (complex *) cexpand( &nzumax, UCOL, 0, 0, Glu );
 	    lsub  = (int *)    cexpand( &nzlmax, LSUB, 0, 0, Glu );
@@ -476,8 +482,7 @@ void
     else lword = sizeof(complex);
 
     if ( Glu->MemModel == SYSTEM ) {
-	new_mem = (void *) SUPERLU_MALLOC(new_len * lword);
-/*	new_mem = (void *) calloc(new_len, lword); */
+	new_mem = (void *) SUPERLU_MALLOC((size_t)new_len * lword);
 	if ( no_expand != 0 ) {
 	    tries = 0;
 	    if ( keep_prev ) {
@@ -487,8 +492,7 @@ void
 		    if ( ++tries > 10 ) return (NULL);
 		    alpha = Reduce(alpha);
 		    new_len = alpha * *prev_len;
-		    new_mem = (void *) SUPERLU_MALLOC(new_len * lword); 
-/*		    new_mem = (void *) calloc(new_len, lword); */
+		    new_mem = (void *) SUPERLU_MALLOC((size_t)new_len * lword);
 		}
 	    }
 	    if ( type == LSUB || type == USUB ) {
@@ -641,7 +645,7 @@ callocateA(int n, int nnz, complex **a, int **asub, int **xa)
 complex *complexMalloc(int n)
 {
     complex *buf;
-    buf = (complex *) SUPERLU_MALLOC(n * sizeof(complex)); 
+    buf = (complex *) SUPERLU_MALLOC((size_t)n * sizeof(complex)); 
     if ( !buf ) {
 	ABORT("SUPERLU_MALLOC failed for buf in complexMalloc()\n");
     }
@@ -653,7 +657,7 @@ complex *complexCalloc(int n)
     complex *buf;
     register int i;
     complex zero = {0.0, 0.0};
-    buf = (complex *) SUPERLU_MALLOC(n * sizeof(complex));
+    buf = (complex *) SUPERLU_MALLOC((size_t)n * sizeof(complex));
     if ( !buf ) {
 	ABORT("SUPERLU_MALLOC failed for buf in complexCalloc()\n");
     }

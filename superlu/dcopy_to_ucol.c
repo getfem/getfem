@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -20,8 +19,7 @@
   the code was modified is included with the above copyright notice.
 */
 
-#include "dsp_defs.h"
-#include "util.h"
+#include "slu_ddefs.h"
 
 int
 dcopy_to_ucol(

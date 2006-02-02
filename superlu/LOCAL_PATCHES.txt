@@ -1,0 +1,74 @@
+dlamch.c (dlamc3_)
+replaced   
+  double ret_val;
+with
+  volatile double ret_val; // [added volatile to avoid -O3 optimizations.. (julien pommier)]
+
+
+slamch.c 
+replaced   
+  float ret_val;
+with
+  volatile float ret_val; // [added volatile to avoid -O3 optimizations.. (julien pommier)]
+
+
+removed dGetDiagU.c
+
+
+
+
+detect situations where dtrsv while choose to stop the current process:
+
+
+--- ../../SuperLU_3.0-20060201/SRC/dcolumn_bmod.c       2005-07-17 23:50:47.000000000 +0200
++++ ./dcolumn_bmod.c    2006-02-01 13:25:50.000000000 +0100
+@@ -212,6 +212,11 @@
+                STRSV( ftcs1, ftcs2, ftcs3, &segsze, &lusup[luptr],
+                       &nsupr, tempv, &incx );
+ #else
++               if (nsupr < segsze) {
++                 fprintf(stderr, "BAD ARGUMENT for dtrsv: N=%d LDA=%d incx=%d\n", segsze, nsupr, incx);
++                 return -10000000;
++               }
++
+                dtrsv_( "L", "N", "U", &segsze, &lusup[luptr],
+                       &nsupr, tempv, &incx );
+ #endif
+
+
+Avoid crashes when the above problem is raised..
+--- ../../SuperLU_3.0-20060201/SRC/dgssvx.c     2005-07-17 23:50:47.000000000 +0200
++++ ./dgssvx.c  2006-02-01 13:33:01.000000000 +0100
+@@ -547,7 +547,7 @@
+         *recip_pivot_growth = dPivotGrowth(A->ncol, AA, perm_c, L, U);
+     }
+
+-    if ( options->ConditionNumber ) {
++    if ( *info != -10000000 && options->ConditionNumber ) {
+         /* Estimate the reciprocal of the condition number of A. */
+         t0 = SuperLU_timer_();
+         if ( notran ) {
+@@ -560,7 +560,7 @@
+         utime[RCOND] = SuperLU_timer_() - t0;
+     }
+
+-    if ( nrhs > 0 ) {
++    if ( *info != -10000000 && nrhs > 0 ) {
+         /* Compute the solution matrix X. */
+         for (j = 0; j < nrhs; j++)  /* Save a copy of the right hand sides */
+             for (i = 0; i < B->nrow; i++)
+@@ -597,12 +597,12 @@
+         }
+     } /* end if nrhs > 0 */
+
+-    if ( options->ConditionNumber ) {
++    if ( *info == 0 && options->ConditionNumber ) {
+         /* Set INFO = A->ncol+1 if the matrix is singular to working precision. */
+         if ( *rcond < dlamch_("E") ) *info = A->ncol + 1;
+     }
+
+-    if ( nofact ) {
++    if ( *info != -10000000 && nofact ) {
+         dQuerySpace(L, U, mem_usage);
+         Destroy_CompCol_Permuted(&AC);
+     }

@@ -1,5 +1,4 @@
 
-
 /*
  * -- SuperLU routine (version 2.0) --
  * Univ. of California Berkeley, Xerox Palo Alto Research Center,
@@ -8,7 +7,7 @@
  *
  */
 #include <math.h>
-#include "Cnames.h"
+#include "slu_Cnames.h"
 
 int
 slacon_(int *n, float *v, float *x, int *isgn, float *est, int *kase)
