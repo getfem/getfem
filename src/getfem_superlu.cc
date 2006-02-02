@@ -39,21 +39,21 @@ typedef int int_t;
 # undef FALSE
 #endif
 
-#include "../superlu/Cnames.h"
+#include "../superlu/slu_Cnames.h"
 #include "../superlu/supermatrix.h"
-#include "../superlu/util.h"
+#include "../superlu/slu_util.h"
 
 namespace SuperLU_S {
-#include "../superlu/ssp_defs.h"
+#include "../superlu/slu_sdefs.h"
 }
 namespace SuperLU_D {
-#include "../superlu/dsp_defs.h"
+#include "../superlu/slu_ddefs.h"
 }
 namespace SuperLU_C {
-#include "../superlu/csp_defs.h"
+#include "../superlu/slu_cdefs.h"
 }
 namespace SuperLU_Z {
-#include "../superlu/zsp_defs.h" 
+#include "../superlu/slu_zdefs.h" 
 }
 
 
@@ -158,6 +158,13 @@ namespace gmm {
 
     int m = mat_nrows(csc_A), n = mat_ncols(csc_A), nrhs = 1, info = 0;
     int nz = nnz(csc_A);
+
+    if (nz == 0) DAL_THROW(failure_error, 
+			   "Cannot factor a matrix full of zeros!");
+
+    if (n != m) DAL_THROW(failure_error, 
+			  "Cannot factor a non-square matrix");
+
     if ((2 * nz / n) >= m)
       DAL_WARNING2("CAUTION : it seems that SuperLU has a problem"
 		  " for nearly dense sparse matrices");
@@ -265,6 +272,11 @@ namespace gmm {
     rhs.resize(m); sol.resize(m);
     gmm::clear(rhs);
     int nz = nnz(A);
+
+    if (nz == 0) DAL_THROW(failure_error, 
+			   "Cannot factor a matrix full of zeros!");
+    if (n != m) DAL_THROW(failure_error, 
+			  "Cannot factor a non-square matrix");
     
     set_default_options(&options);
     options.ColPerm = NATURAL;

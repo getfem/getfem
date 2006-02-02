@@ -39,6 +39,7 @@
 #include <getfem_modeling.h>
 #include <gmm_MUMPS_interface.h>
 #include <gmm_solver_Newton.h>
+//#include <gmm_inoutput.h>
 
 namespace getfem {
 
@@ -115,6 +116,9 @@ namespace getfem {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
 		     gmm::iteration &iter)  const {
       double rcond;
+      /*gmm::HarwellBoeing_IO::write("test.hb", M);
+      std::fstream f("bbb", std::ios::out); 
+      for (unsigned i=0; i < gmm::vect_size(b); ++i) f << b[i] << "\n";*/
       SuperLU_solve(M, x, b, rcond);
       if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
     }

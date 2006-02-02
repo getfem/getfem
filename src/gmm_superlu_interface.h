@@ -47,21 +47,21 @@ typedef int int_t;
 # undef FALSE
 #endif
 
-#include "SRC/Cnames.h"
+#include "SRC/slu_Cnames.h"
 #include "SRC/supermatrix.h"
-#include "SRC/util.h"
+#include "SRC/slu_util.h"
 
 namespace SuperLU_S {
-#include "SRC/ssp_defs.h"
+#include "SRC/slu_sdefs.h"
 }
 namespace SuperLU_D {
-#include "SRC/dsp_defs.h"
+#include "SRC/slu_ddefs.h"
 }
 namespace SuperLU_C {
-#include "SRC/csp_defs.h"
+#include "SRC/slu_cdefs.h"
 }
 namespace SuperLU_Z {
-#include "SRC/zsp_defs.h" 
+#include "SRC/slu_zdefs.h" 
 }
 
 

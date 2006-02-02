@@ -39,6 +39,7 @@
 #include <getfem_model_solvers.h>
 #include <gmm.h>
 #include <getfem_interpolation.h>
+#include <getfem_error_estimate.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -60,41 +61,83 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 gmm::row_matrix<base_small_vector> sol_K;
 static scalar_type sol_lambda, sol_mu, alph = 0.3;
+bool sol_sing;
 
 base_small_vector sol_u(const base_node &x) {
   int N = x.size(); base_small_vector res(N);
-  for (int i = 0; i < N; ++i)
-    res[i] = alph * sin(gmm::vect_sp(sol_K.row(i), x));
+  if (!sol_sing) {
+    for (int i = 0; i < N; ++i)
+      res[i] = alph * sin(gmm::vect_sp(sol_K.row(i), x));
+  }
+  else {
+    base_small_vector trans(x.size());
+    gmm::fill(trans,  M_PI / 10.0);
+    base_node y = x - trans;
+    scalar_type a = gmm::sqrt(gmm::vect_norm2(y));
+    for (int i = 0; i < N; ++i) res[i] += a;
+  }
   return res;
 }
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N);
-  for (int i = 0; i < N; i++) {
-    res[i] = alph * ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
-                  * sin(gmm::vect_sp(sol_K.row(i), x));
-    for (int j = 0; j < N; j++)
-      res[i] += alph * ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
-	          * sin(gmm::vect_sp(sol_K.row(j), x));
+  if (!sol_sing) {
+    for (int i = 0; i < N; i++) {
+      res[i] = alph * ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
+	* sin(gmm::vect_sp(sol_K.row(i), x));
+      for (int j = 0; j < N; j++)
+	res[i] += alph * ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
+	  * sin(gmm::vect_sp(sol_K.row(j), x));
+    }
   }
+  else {
+    base_small_vector trans(x.size());
+    gmm::fill(trans,  M_PI / 10.0);
+    base_node y = x - trans;
+    scalar_type r = gmm::vect_norm2(y) + 1e-100;
+    scalar_type a = gmm::sqrt(1.0/r); 
+    scalar_type b = a*a*a, c = b*b*a; 
+    scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
+    for (int i = 0; i < N; ++i)
+      res[i] -= b * (sol_lambda + sol_mu * (N+1-3.0/2.0)) * 0.5
+	- c * 3.0 * (sol_lambda + sol_mu) * (y[i]*tr) / 4.0;
+  }
+
   return res;
 }
 
 base_matrix sol_sigma(const base_node &x) {
   int N = x.size();
   base_matrix res(N,N);
-  for (int i = 0; i < N; i++)
-    for (int j = 0; j <= i; j++) {
-      res(j,i) = res(i,j) = alph * sol_mu *
-	( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
-       +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
-	);
-      if (i == j)
-	for (int k = 0; k < N; k++)
-	  res(i,j) += alph * sol_lambda * sol_K(k,k)
-	                         * cos(gmm::vect_sp(sol_K.row(k), x));
+  if (!sol_sing) {
+    for (int i = 0; i < N; i++)
+      for (int j = 0; j <= i; j++) {
+	res(j,i) = res(i,j) = alph * sol_mu *
+	  ( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
+	    +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
+	    );
+	if (i == j)
+	  for (int k = 0; k < N; k++)
+	    res(i,j) += alph * sol_lambda * sol_K(k,k)
+	      * cos(gmm::vect_sp(sol_K.row(k), x));
+      }
+  }
+  else {
+    base_small_vector trans(x.size());
+    gmm::fill(trans,  M_PI / 10.0);
+    base_node y = x - trans;
+    scalar_type r = gmm::vect_norm2(y) + 1e-100;
+    scalar_type a = gmm::sqrt(1.0/r); 
+    scalar_type b = a*a*a;
+    scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
+    for (int i = 0; i < N; i++) {
+      res(i, i) += sol_lambda * tr * b * 0.5;
+      for (int j = 0; j < N; j++)
+	res(i, j) += sol_mu * b * (y[i] + y[j]) * 0.5;
     }
+  }
+
   return res;
 }
 
@@ -113,7 +156,7 @@ struct elastostatic_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
   scalar_type residual;       /* max residual for iterative solvers          */
-  bool mixed_pressure;
+  bool mixed_pressure, refine;
   getfem::constraints_type dirichlet_version;
 
   std::string datafilename;
@@ -189,6 +232,8 @@ void elastostatic_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  sol_sing = (PARAM.int_value("SOL_SING", "Optional singular solution") != 0);
+  refine = (PARAM.int_value("REFINE", "Optional refinement") != 0);
   sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(N);
   mf_mult.set_qdim(N);
@@ -242,7 +287,7 @@ void elastostatic_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
+    if (0 && gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
       mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
     } else {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
@@ -270,6 +315,9 @@ void elastostatic_problem::compute_error(plain_vector &U) {
     gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
 	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
   }
+
+  
+
   cout.precision(16);
   mf_rhs.set_qdim(N);
   scalar_type l2 = getfem::asm_L2_norm(mim, mf_rhs, V);
@@ -383,6 +431,9 @@ int main(int argc, char *argv[]) {
 #endif
     if (getfem::MPI_IS_MASTER())
       p.mesh.write_to_file(p.datafilename + ".mesh");
+
+    do {
+
     plain_vector U(p.mf_u.nb_dof());
 
 #if GETFEM_PARA_LEVEL > 1
@@ -413,6 +464,27 @@ int main(int argc, char *argv[]) {
 	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
+
+    if (p.refine) {
+      plain_vector ERR(p.mesh.convex_index().last_true()+1);
+      getfem::error_estimate(p.mim, p.mf_u, U, ERR, p.mesh.convex_index());
+      
+      
+      dal::bit_vector cvref;
+      cout << "max = " << gmm::vect_norminf(ERR) << endl;
+      // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
+      scalar_type threshold = 1e-2, min_ = 1e18;
+      for (dal::bv_visitor i(p.mesh.convex_index()); !i.finished(); ++i) {
+	if (ERR[i] > threshold) cvref.add(i);
+	min_ = std::min(min_, ERR[i]);
+      }
+      cout << "min = " << min_ << endl;
+      cout << "Nb elt to be refined : " << cvref.card() << endl;
+      getchar();
+      p.mesh.Bank_refine(cvref);
+    }
+
+    } while (p.refine);
   }
   DAL_STANDARD_CATCH_ERROR;
 

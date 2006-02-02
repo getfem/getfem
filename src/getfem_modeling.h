@@ -210,6 +210,11 @@ namespace getfem {
   adapt_sizes(mdbrick_abstract<model_state> &problem) {
     size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
 
+    cerr << "adapt_sizes: ndof = " << ndof << "\n";
+    problem.context_check();
+    ndof = problem.nb_dof(); nc = problem.nb_constraints();
+    cerr << "adapt_sizes: ndof2 = " << ndof << "\n";
+
     if (gmm::mat_nrows(tangent_matrix_) != ndof
 	|| gmm::mat_nrows(constraints_matrix_) != nc) {
       gmm::clear(state_);
@@ -730,6 +735,8 @@ namespace getfem {
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       gmm::sub_interval SUBI(i0, mf_u.nb_dof());
+      cerr << "do_compute_tangent_matrix : nbdof=" << mf_u.nb_dof() << ", K=" << gmm::mat_nrows(get_K()) << "x" << gmm::mat_ncols(get_K()) << "\n";
+      cerr << "  MS.tangent_matrix: " << gmm::mat_nrows(MS.tangent_matrix()) << "x" << gmm::mat_ncols(MS.tangent_matrix()) << "\n";
       gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
 
@@ -1720,6 +1727,11 @@ namespace getfem {
       : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), R_("R", this),
 	boundary(bound) {
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
+      if (mf_mult->get_qdim() != mf_u().get_qdim()) 
+	DAL_THROW(dal::failure_error, "The lagrange multipliers mesh fem "
+		  "for the Dirichlet brick should have the same Qdim as "
+		  "the main mesh_fem");
+
       this->add_proper_boundary_info(this->num_fem, boundary, 
 				     MDBRICK_DIRICHLET);
       this->add_dependency(*mf_mult);

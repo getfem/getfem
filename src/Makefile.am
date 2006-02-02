@@ -59,6 +59,7 @@ include_HEADERS =                          \
 	getfem_mesh_region.h               \
 	getfem_mesh_fem.h                  \
 	getfem_mesh_im.h                   \
+	getfem_error_estimate.h            \
 	getfem_level_set.h	           \
 	getfem_mesh_level_set.h            \
 	getfem_mesh_im_level_set.h         \

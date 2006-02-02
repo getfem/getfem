@@ -40,6 +40,7 @@
 #include <gmm.h>
 #include <getfem_superlu.h>
 #include <getfem_derivatives.h>
+#include <gmm_inoutput.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -321,16 +322,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     NEUMANN = new getfem::mdbrick_normal_source_term<>
       (MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
 
-  // Defining the Dirichlet condition value.
-  gmm::resize(F, nb_dof_rhs);
-  getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
-
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<>
-    DIRICHLET(*NEUMANN, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
-  DIRICHLET.set_constraints_type(dirichlet_version);
-  DIRICHLET.rhs().set(mf_rhs, F);
-
   // Defining the normal derivative Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs*N);
   gmm::clear(F);
@@ -338,9 +329,24 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   
   // Normal derivative Dirichlet condition brick.
   getfem::mdbrick_normal_derivative_Dirichlet<> 
-    final_model(DIRICHLET, CLAMPED_BOUNDARY_NUM, mf_mult);
+    NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult);
+  NDER_DIRICHLET.set_constraints_type(dirichlet_version);
+  NDER_DIRICHLET.rhs().set(mf_rhs, F);
+
+  // Defining the Dirichlet condition value.
+  gmm::resize(F, nb_dof_rhs);
+  getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
+
+  // Dirichlet condition brick.
+  getfem::mdbrick_Dirichlet<>
+    final_model(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
   final_model.set_constraints_type(dirichlet_version);
   final_model.rhs().set(mf_rhs, F);
+
+  if (0) { getfem::standard_model_state MS(final_model); 
+    final_model.compute_tangent_matrix(MS);
+    gmm::HarwellBoeing_IO::write("bilaplacian.hb", MS.tangent_matrix()); }
+
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;

@@ -1025,6 +1025,7 @@ namespace getfem {
       bgeot::kdtree tree;
       bgeot::kdtree_tab_type neighbours;
       bool tree_empty = true;
+      mesh::ind_set iAneighbours, iBneighbours, common_pts;
 	  
       attractor_points.resize(0); attracted_points.resize(0);
       
@@ -1044,19 +1045,17 @@ namespace getfem {
 	bv2.setminus(pts_attr[iA]->constraints);
 	if (bv1.card() && bv2.card()) {
 	  bv1 |= bv2;
-	  mesh::ind_set iAneighbours = edges_mesh.ind_points_to_point(iA);
-	  mesh::ind_set iBneighbours = edges_mesh.ind_points_to_point(iB);
-	  std::vector<size_type>
-	    common_pts(iAneighbours.size()+iBneighbours.size());
-	  std::vector<size_type>::iterator ite = 
-	    std::set_intersection(iAneighbours.begin(), iAneighbours.end(),
-				  iBneighbours.begin(), iBneighbours.end(),
-				  common_pts.begin());
-	  common_pts.resize(ite-common_pts.begin());
+	  edges_mesh.ind_points_to_point(iA, iAneighbours);
+	  edges_mesh.ind_points_to_point(iB, iBneighbours);
+	  common_pts.resize(0);
+	  for (size_type i = 0; i < iAneighbours.size(); ++i)
+	    if (std::find(iBneighbours.begin(), iBneighbours.end(),
+			  iAneighbours[i]) != iBneighbours.end())
+	      common_pts.push_back(iAneighbours[i]);
 	  bool do_projection = true;
 	  if (dist(.5*(pts[iA]+pts[iB])) < 0) {
-	    for (std::vector<size_type>::iterator it = common_pts.begin();
-		 it != ite; ++it) {
+	    for (mesh::ind_set::iterator it = common_pts.begin();
+		 it != common_pts.end(); ++it) {
 	      if (pts_attr[*it]->constraints.contains(bv1)) {
 		do_projection = false;
 		break;

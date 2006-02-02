@@ -278,8 +278,9 @@ namespace getfem {
 	  DAL_THROW(failure_error, "Rhs vector has a wrong size");
 	B_.set(B__);
       }
-      else
+      else {
 	B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
+      }
     }
   };
 

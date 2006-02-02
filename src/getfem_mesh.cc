@@ -50,7 +50,8 @@ namespace getfem {
 				      bool refine) {
     
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
-    
+    ind_set s;
+
     for (dal::bv_visitor ir(valid_cvf_sets); !ir.finished(); ++ir) {
       mesh_region &r = cvf_sets[ir];
 
@@ -71,7 +72,6 @@ namespace getfem {
 	      bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
 	      for (size_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
 		   ++fsub) {
-		ind_set s;
 		neighbours_of_convex(icv[jc], fsub, s);
 		ind_set::const_iterator it = s.begin(), ite = s.end();
 		bool found = false;
@@ -157,11 +157,12 @@ namespace getfem {
 #endif
 
 	int j = 0, k = 0;
+	ind_set s;
 	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
 	  numelt[j] = ic;
 	  xadj[j] = k;
-	  bgeot::mesh_structure::ind_set s(neighbours_of_convex(ic));
-	  for (bgeot::mesh_structure::ind_set::iterator it = s.begin();
+	  neighbours_of_convex(ic, s);
+	  for (ind_set::iterator it = s.begin();
 	       it != s.end(); ++it) { adjncy.push_back(*it); ++k; }  
 	}
 	xadj[j] = k;

@@ -163,6 +163,8 @@ namespace getfem
       /// Number of integration nodes on the face f of the reference element.
       size_type nb_points_on_face(short_type f) const
       { return repartition[f+1] - repartition[f]; }
+      size_type ind_first_point_on_face(short_type f) const 
+      { return repartition[f]; }
       /// Structure of the reference element.
       bgeot::pconvex_structure structure(void) const
         { return cvr->structure()->basic_structure(); }

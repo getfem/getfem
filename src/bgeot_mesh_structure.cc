@@ -164,15 +164,17 @@ namespace bgeot {
     }
   }
 
-  mesh_structure::ind_set
-    mesh_structure::ind_points_to_point(size_type ip) const { // not efficient
-    ind_set r;
+  void mesh_structure::ind_points_to_point(size_type ip, ind_set &s) const {
+    // not efficient
+    s.resize(0);
     for (size_type k = 0; k < points_tab[ip].size(); ++k) {
       size_type cv = points_tab[ip][k];
       for (size_type l = 0; l < convex_tab[cv].pts.size(); ++l)
-	if (ip != convex_tab[cv].pts[l]) r.insert(convex_tab[cv].pts[l]);
+	if (ip != convex_tab[cv].pts[l]) {
+	  size_type ind = convex_tab[cv].pts[l];
+	  if (std::find(s.begin(), s.end(), ind) != s.end()) s.push_back(ind);
+	}
     }
-    return r;
   }
 
   mesh_structure::ind_pt_face_ct
@@ -221,27 +223,27 @@ namespace bgeot {
 
 
   void mesh_structure::neighbours_of_convex(size_type ic, short_type iff,
-					     ind_set &s) const {
+					    ind_set &s) const {
+    s.resize(0);
     ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
     
     for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
       size_type icv = points_tab[pt[0]][i];
       if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
 	  && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
-	s.insert(icv);
+	s.push_back(icv);
     }
   }
-
-  mesh_structure::ind_set
-  mesh_structure::neighbours_of_convex(size_type ic, short_type iff) const
-  { ind_set s; neighbours_of_convex(ic, iff, s); return s; }
   
-  mesh_structure::ind_set
-  mesh_structure::neighbours_of_convex(size_type ic) const {
-    ind_set s;
+  void mesh_structure::neighbours_of_convex(size_type ic, ind_set &s) const {
+    s.resize(0);
+    ind_set t;
     unsigned nbf = nb_faces_of_convex(ic);
-    for (unsigned iff = 0; iff < nbf; ++iff) neighbours_of_convex(ic, iff, s);
-    return s;
+    for (unsigned iff = 0; iff < nbf; ++iff) {
+      neighbours_of_convex(ic, iff, t);
+      for (size_type i = 0; i < t.size(); ++i)
+	if (std::find(s.begin(), s.end(), t[i]) != s.end()) s.push_back(t[i]);
+    }
   }
   
   size_type mesh_structure::neighbour_of_convex(size_type ic, 

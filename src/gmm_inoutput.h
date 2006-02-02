@@ -113,6 +113,9 @@ namespace gmm {
     template <typename T, int shift> void read(csc_matrix<T, shift>& A);
     template <typename MAT> void read(MAT &M);
     template <typename T, int shift> static void write(const char *filename, const csc_matrix<T, shift>& A);
+    template <typename T, typename INDI, typename INDJ, int shift> 
+    void static write(const char *filename, const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
+
     /** static method for saving the matrix */
     template <typename MAT> static void write(const char *filename, const MAT& A);
   private:
@@ -436,6 +439,12 @@ namespace gmm {
 
   template <typename T, int shift> void
   HarwellBoeing_IO::write(const char *filename, const csc_matrix<T, shift>& A) {
+    write(filename, csc_matrix_ref<T*, unsigned*, unsigned *, shift>(A.pr, A.ir, A.jc, 
+								     A.nr, A.nc));
+  }
+
+  template <typename T, typename INDI, typename INDJ, int shift> void
+  HarwellBoeing_IO::write(const char *filename, const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A) {
     const char *t = 0;    
     if (is_complex_double__(T()))
       if (mat_nrows(A) == mat_ncols(A)) t = "CUA"; else t = "CRA";
@@ -460,6 +469,12 @@ namespace gmm {
   /** save a "double" or "std::complex<double>" matrix into a HarwellBoeing file */
   template <typename T, int shift> inline void
   Harwell_Boeing_save(const char *filename, const csc_matrix<T, shift>& A) {
+    HarwellBoeing_IO h; h.write(filename, A);
+  }
+
+  /** save a "double" or "std::complex<double>" matrix into a HarwellBoeing file */
+  template <typename T, typename INDI, typename INDJ, int shift> inline void
+  Harwell_Boeing_save(const char *filename, const csc_matrix_ref<T, INDI, INDJ, shift>& A) {
     HarwellBoeing_IO h; h.write(filename, A);
   }
 
@@ -836,6 +851,8 @@ namespace gmm {
     /* write a matrix */
     template <typename T, int shift> static void 
     write(const char *filename, const csc_matrix<T, shift>& A);  
+    template <typename T, typename INDI, typename INDJ, int shift> static void 
+    write(const char *filename, const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);  
     template <typename MAT> static void 
     write(const char *filename, const MAT& A);  
   };
@@ -851,6 +868,12 @@ namespace gmm {
   MatrixMarket_save(const char *filename, const csc_matrix<T, shift>& A) {
     MatrixMarket_IO mm; mm.write(filename, A);
   }
+
+  template <typename T, typename INDI, typename INDJ, int shift> inline void
+  MatrixMarket_save(const char *filename, const csc_matrix_ref<T, INDI, INDJ, shift>& A) {
+    MatrixMarket_IO mm; mm.write(filename, A);
+  }
+
 
   inline void MatrixMarket_IO::open(const char *filename) {
     if (f) { fclose(f); }
@@ -894,8 +917,15 @@ namespace gmm {
     for (size_type i = 0; i < size_type(nz); ++i) A(I[i]-1, J[i]-1) = PR[i];
   }
 
-  template <typename T, int shift> void
+  template <typename T, int shift> void 
   MatrixMarket_IO::write(const char *filename, const csc_matrix<T, shift>& A) {
+    write(filename, csc_matrix_ref<T*,unsigned*,unsigned*,shift>
+	  (A.pr, A.ir, A.jc, A.nr, A.nc));
+  }
+
+  template <typename T, typename INDI, typename INDJ, int shift> void 
+  MatrixMarket_IO::write(const char *filename, 
+			 const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A) {
     static MM_typecode t1 = {'M', 'C', 'R', 'G'};
     static MM_typecode t2 = {'M', 'C', 'C', 'G'};
     MM_typecode t;
@@ -913,6 +943,8 @@ namespace gmm {
     mm_write_mtx_crd(filename, mat_nrows(A), mat_ncols(A),
 		     nz, &I[0], &J[0], (double *)A.pr, t);
   }
+
+
   template <typename MAT> void
   MatrixMarket_IO::write(const char *filename, const MAT& A) {
     gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 

@@ -62,7 +62,7 @@ namespace bgeot {
   public :
     
     typedef std::vector<size_type> ind_cv_ct;
-    typedef std::set<size_type> ind_set;
+    typedef std::vector<size_type> ind_set;
     typedef dal::tab_ref_index_ref<ind_cv_ct::const_iterator,
 				   convex_ind_ct::const_iterator> ind_pt_face_ct;
     typedef dal::dynamic_array<ind_cv_ct, 8> point_ct;
@@ -151,7 +151,7 @@ namespace bgeot {
     const ind_cv_ct &convex_to_point(size_type ip) const
     { return points_tab[ip]; }
     /** Return a container of the points attached (via an edge) to point ip */
-    ind_set ind_points_to_point(size_type ip) const;
+    void ind_points_to_point(size_type, ind_set &) const;
     
     /** Return true if the convex contains the listed points.
 	@param ic the convex ID.
@@ -177,21 +177,20 @@ namespace bgeot {
     /// erase the mesh
     void clear(void);
     void stat(void);
-
+ 
+    /** Return in s a list of neighbours of a given convex face.
+	@param ic the convex id.
+	@param f the face number of the convex.
+	@param s the resulting ind_set.
+     */
     void neighbours_of_convex(size_type ic, short_type iff, ind_set &s) const;
 
     /** Return a list of neighbours of a given convex face.
 	@param ic the convex id.
 	@param f the face number of the convex.
-	@return a std::set<size_type> of convex IDs (ic is not in the set).
+	@param  s the resulting ind_set.
     */
-    ind_set neighbours_of_convex(size_type ic, short_type f) const;
-
-    /** Return a list of neighbours of a given convex.
-	@param ic the convex id.
-	@return a std::set<size_type> of convex IDs (ic is not in the set).
-    */
-    ind_set neighbours_of_convex(size_type ic) const;
+    void neighbours_of_convex(size_type ic, ind_set &s) const;
 
     /** Return a neighbour of a given convex face.
 	@param ic the convex id.
@@ -237,7 +236,7 @@ namespace bgeot {
   template<class ITER> bool
   mesh_structure::is_convex_face_having_points(size_type ic, size_type face_num,
 					    short_type nb, ITER pit) const {
-    const ind_cv_ct &pt = ind_points_of_face_of_convex(ic, face_num);
+    ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, face_num);
     for (short_type i = 0; i < nb; ++i, ++pit)
       if (std::find(pt.begin(), pt.end(), *pit) == pt.end()) return false;
     return true;
