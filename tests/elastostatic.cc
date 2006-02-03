@@ -287,7 +287,7 @@ void elastostatic_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (0 && gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
+    if (gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
       mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
     } else {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());

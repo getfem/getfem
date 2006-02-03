@@ -229,7 +229,8 @@ namespace getfem
       vm_min = (i == 0 ? VM[0] : std::min(vm_min, VM[i]));
       vm_max = (i == 0 ? VM[0] : std::max(vm_max, VM[i]));
     }
-    cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max=" << 4*mu*mu*vm_max << "\n";
+    cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max="
+	 << 4*mu*mu*vm_max << "\n";
     gmm::scale(VM, 4*mu*mu);
   }
   
