@@ -526,6 +526,27 @@ namespace getfem {
 			  ms.m.points_of_convex(ms.cv).end());    
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i)
       ms.nodes[i].pt = G + coef*(ms.nodes[i].pt - G);
+
+    for (dal::bv_visitor cnt(ms.splx_in); !cnt.finished(); ++cnt) {
+      const slice_simplex& s = ms.simplexes[cnt];
+      if (s.dim() == 3) { // keep only faces
+      	ms.sup_simplex(cnt);
+        slice_simplex s2(3);
+        for (size_type j=0; j < 4; ++j) {
+          /* usage of s forbidden in this loop since push_back happens .. */
+	  static unsigned ord[][3] = {{0,2,1},{1,2,3},{1,3,0},{0,3,2}}; /* keep orientation of faces */
+          for (size_type k=0; k < 3; ++k) { s2.inodes[k] = ms.simplexes[cnt].inodes[ord[j][k]]; } //k + (k<j ? 0 : 1)]; }
+
+	  slice_node::faces_ct f; f.set();
+	  for (size_type i=0; i < s2.dim()+1; ++i) {
+	    f &= ms.nodes[s2.inodes[i]].faces;
+	  }
+	  if (f.any()) {
+            ms.add_simplex(s2, true);
+          }
+        }
+      }
+    }
   }
 
   /* -------------------- member functions of mesh_slicer -------------- */

@@ -68,7 +68,6 @@ namespace getfem {
 	  if (r[ic][f+1]) {
 
 	    for (size_type jc = 0; jc < icv.size(); ++jc) {
-	      cout << "look at sub simplex " << icv[jc] << endl;
 	      bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
 	      for (size_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
 		   ++fsub) {
@@ -82,17 +81,12 @@ namespace getfem {
 
 		base_node pt, barycentre
 		  = dal::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
-		cout << "mean = " << barycentre << endl;
-
 		pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
-		cout << "pt = " << pt << endl;
-
+	
 		giv.init(points_of_convex(ic), pgt);
 		giv.invert(pt, barycentre);
 
-		cout << "face " << fsub << " barycentre : "
-		     << barycentre << endl;
-
+	
 		if (pgt->convex_ref()->is_in_face(f, barycentre) < 0.1)
 		  r.add(icv[jc], fsub);
 	      }
@@ -922,8 +916,8 @@ namespace getfem {
     sup_convex(i, true);
   }
 
-  std::vector<size_type> &mesh::Bank_loc_ind_of_pgt
-  (bgeot::pgeometric_trans pgt) {
+  std::vector<size_type> &mesh::Bank_loc_ind_of_pgt // à placer dans pgt 
+  (bgeot::pgeometric_trans pgt) {  // ou dans bgeot::convex_structure ?
     static std::vector<size_type> loc_ind;
     static bgeot::pgeometric_trans pgt0 = 0;
     if (pgt != pgt0) {
@@ -936,6 +930,34 @@ namespace getfem {
       }
     }
     return loc_ind;
+  }
+
+  void mesh::Bank_convex_with_edge(size_type i1, size_type i2,
+				   std::vector<size_type> &ipt) {
+    ipt.resize(0);
+    for (size_type k = 0; k < points_tab[i1].size(); ++k) {
+      size_type cv = points_tab[i1][k], found = 0;
+      std::vector<size_type> &loc_ind
+	= Bank_loc_ind_of_pgt(trans_of_convex(cv));
+      for (size_type i = 0; i < loc_ind.size(); ++i) {
+	size_type ipp = convex_tab[cv].pts[loc_ind[i]];
+	if (ipp == i1) ++found;
+	if (ipp == i2) ++found;
+      }
+      assert(found <= 2);
+      if (found == 2) ipt.push_back(cv);
+    }
+  }
+
+  bool mesh::Bank_is_convex_having_points(size_type cv,
+					  const std::vector<size_type> &ipt) {
+    size_type found = 0;
+    std::vector<size_type> &loc_ind = Bank_loc_ind_of_pgt(trans_of_convex(cv));
+    for (size_type i = 0; i < loc_ind.size(); ++i)
+      if (std::find(ipt.begin(), ipt.end(),
+		    convex_tab[cv].pts[loc_ind[i]]) != ipt.end())
+	  ++found;
+    return (found >= ipt.size());
   }
 
   void mesh::Bank_refine_normal_convex(size_type i) {
@@ -951,13 +973,14 @@ namespace getfem {
       for (size_type ip2 = ip1+1; ip2 <= n; ++ip2) {
 	size_type i1 = ind_points_of_convex(i)[loc_ind[ip1]];
 	size_type i2 = ind_points_of_convex(i)[loc_ind[ip2]];
+	assert(i1 != i2);
 	Bank_info->edges.insert(edge(i1, i2));
       }
     Bank_basic_refine_convex(i);
   }
 
-  void mesh::Bank_test_and_refine_convex(size_type i,
-					 dal::bit_vector &b) {
+  size_type mesh::Bank_test_and_refine_convex(size_type i,
+					 dal::bit_vector &b, bool ref) {
     if (Bank_info->is_green_simplex[i]) {
       size_type igs = Bank_info->num_green_simplex[i];
       green_simplex &gs = Bank_info->green_simplices[igs];
@@ -968,11 +991,18 @@ namespace getfem {
 	sup_convex(gs.sub_simplices[ic], true);
 	b.sup(gs.sub_simplices[ic]);
       }
+      if (!ref)
+	for (size_type ip = 0; ip < gs.ipt_loc.size(); ++ip)
+	  for (size_type jp = ip+1; jp < gs.ipt_loc.size(); ++jp)
+	    Bank_info->edges.insert
+	      (edge(ind_points_of_convex(icc)[gs.ipt_loc[ip]],
+		    ind_points_of_convex(icc)[gs.ipt_loc[jp]]));
       Bank_sup_convex_from_green(i);
-      Bank_refine_normal_convex(icc);
+      if (ref) { Bank_refine_normal_convex(icc); return size_type(-1); }
+      else return icc;
     }
-    else
-      Bank_refine_normal_convex(i);
+    else if (ref) Bank_refine_normal_convex(i);
+    return size_type(-1);
   }
 
   void mesh::Bank_build_green_simplexes(size_type ic,
@@ -997,19 +1027,20 @@ namespace getfem {
     std::vector<size_type> &loc_ind = Bank_loc_ind_of_pgt(pgt);
     const bgeot::mesh_structure::ind_cv_ct &ct = ind_points_of_convex(ic);
 
-    std::vector<size_type> ipt_loc(ipt.size()), ipt_other;
+    gs.ipt_loc.resize(ipt.size());
+    std::vector<size_type> ipt_other;
     for (size_type ip = 0; ip < loc_ind.size(); ++ip) {
       bool found = false;
       for (size_type i = 0; i < ipt.size(); ++i)
 	if (ct[loc_ind[ip]] == ipt[i])
-	  { ipt_loc[i] = ip; found = true; break; }
+	  { gs.ipt_loc[i] = ip; found = true; break; }
       if (!found) ipt_other.push_back(ip);
     }
     
     mesh mesh2;
     bgeot::pconvex_ref pcr = bgeot::simplex_of_reference(n);
     size_type ic0 = mesh2.add_simplex_by_points(n, pcr->points().begin());
-    size_type ic1 = mesh2.add_simplex(d, ipt_loc.begin());
+    size_type ic1 = mesh2.add_simplex(d, gs.ipt_loc.begin());
     bgeot::pgeometric_trans pgt1 = mesh2.trans_of_convex(ic1);
 
     bgeot::pstored_point_tab pspt = bgeot::store_point_tab(mesh1.points());
@@ -1078,6 +1109,7 @@ namespace getfem {
     b &= convex_index();
     if (b.card() == 0) return;
 
+    cout << "refining simplexes " << b << endl;
   
     if (Bank_info == 0) Bank_info = new Bank_info_struct;
 
@@ -1087,6 +1119,7 @@ namespace getfem {
     std::vector<size_type> ipt;
     edge_set marked_convexes;
     while (Bank_info->edges.size()) {
+      cout << "Begining iteration\n";
       marked_convexes.clear();
       b = convex_index();
       edge_set::const_iterator it = Bank_info->edges.begin();
@@ -1095,7 +1128,8 @@ namespace getfem {
       ++it2;
       for (; it != ite; it = it2) {
 	if (it2 != ite) ++it2;
-	convex_with_edge(it->i1, it->i2, ipt);
+	assert(it->i1 != it->i2);
+	Bank_convex_with_edge(it->i1, it->i2, ipt);
 	if (ipt.size() == 0) Bank_info->edges.erase(it);
 	else {
 	  for (size_type ic = 0; ic < ipt.size(); ++ic)
@@ -1109,17 +1143,27 @@ namespace getfem {
 	ipt.resize(0);
 	while (it != ite && it->i0 == ic) {
 	  bool found1 = false, found2 = false;
-	  for (size_type j = 0; j < ipt.size(); ++j)
+	  for (size_type j = 0; j < ipt.size(); ++j) {
 	    if (ipt[j] == it->i1) found1 = true;
-	    else if (ipt[j] == it->i2) found2 = true;
+	    if (ipt[j] == it->i2) found2 = true;
+	  }
 	  if (!found1) ipt.push_back(it->i1);
 	  if (!found2) ipt.push_back(it->i2);
 	  ++it;
 	}
 	if (b.is_in(ic)) {
-	  if (ipt.size() > structure_of_convex(ic)->dim()
-	      || Bank_info->is_green_simplex[ic])
+	  cout << "transmiting refinement to elt " << ic << " ipt.size() = "
+	       << ipt.size() << " dim = "
+	       << int(structure_of_convex(ic)->dim())
+	       << " green : " << Bank_info->is_green_simplex[ic] << endl
+	       << "ipt = " << ipt << endl;
+	  if (ipt.size() > structure_of_convex(ic)->dim())
 	    Bank_test_and_refine_convex(ic, b);
+	  else if (Bank_info->is_green_simplex[ic]) {
+	    size_type icc = Bank_test_and_refine_convex(ic, b, false);
+	    if (!Bank_is_convex_having_points(icc, ipt))
+	      Bank_test_and_refine_convex(icc, b);
+	  }
 	  else
 	    Bank_build_green_simplexes(ic, ipt);
 	}

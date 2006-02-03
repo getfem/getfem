@@ -545,6 +545,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt;
       std::vector<size_type> sub_simplices;
       bgeot::convex<base_node> cv;
+      std::vector<size_type> ipt_loc;
     };
     struct edge { 
       size_type i0, i1, i2;
@@ -564,12 +565,17 @@ namespace getfem {
     Bank_info_struct *Bank_info;
 
     std::vector<size_type> &Bank_loc_ind_of_pgt(bgeot::pgeometric_trans pgt);
+    void Bank_convex_with_edge(size_type, size_type,
+			       std::vector<size_type> &);
+    bool Bank_is_convex_having_points(size_type,
+				      const std::vector<size_type> &);
     void Bank_sup_convex_from_green(size_type);
     void Bank_swap_convex(size_type, size_type);
     void Bank_build_first_mesh(mesh &, size_type);
     void Bank_basic_refine_convex(size_type);
     void Bank_refine_normal_convex(size_type);
-    void Bank_test_and_refine_convex(size_type, dal::bit_vector &);
+    size_type Bank_test_and_refine_convex(size_type, dal::bit_vector &,
+					  bool = true);
     void Bank_build_green_simplexes(size_type, std::vector<size_type> &);
 
   public :

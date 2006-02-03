@@ -61,81 +61,140 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 gmm::row_matrix<base_small_vector> sol_K;
 static scalar_type sol_lambda, sol_mu, alph = 0.3;
-bool sol_sing;
+int sol_sing;
 
 base_small_vector sol_u(const base_node &x) {
   int N = x.size(); base_small_vector res(N);
-  if (!sol_sing) {
-    for (int i = 0; i < N; ++i)
-      res[i] = alph * sin(gmm::vect_sp(sol_K.row(i), x));
-  }
-  else {
-    base_small_vector trans(x.size());
-    gmm::fill(trans,  M_PI / 10.0);
-    base_node y = x - trans;
-    scalar_type a = gmm::sqrt(gmm::vect_norm2(y));
-    for (int i = 0; i < N; ++i) res[i] += a;
+  switch(sol_sing) {
+    case 0 :
+      for (int i = 0; i < N; ++i)
+	res[i] = alph * sin(gmm::vect_sp(sol_K.row(i), x));
+      break;
+    case 1 :
+      {
+	base_small_vector trans(x.size());
+	gmm::fill(trans,  M_PI / 10.0);
+	base_node y = x - trans;
+	scalar_type a = gmm::vect_norm2(y);
+	for (int i = 0; i < N; ++i) res[i] = a;
+	break;
+      }
+    case 2 :
+      {
+	base_small_vector trans(x.size());
+	gmm::fill(trans,  M_PI / 10.0);
+	base_node y = x - trans;
+	scalar_type a = gmm::sqrt(gmm::vect_norm2(y));
+	for (int i = 0; i < N; ++i) res[i] = a;
+	break;
+      }
   }
   return res;
 }
 
+// base_small_vector sol_f_2D_sing(const base_node &X) {
+//   scalar_type x=X[0], y=X[1];
+//   scalar_type lambda = sol_lambda, mu = sol_mu;
+//   base_small_vector res(2);
+
+//   res[0] = +(-3.0*mu*y*y+lambda*x*x-2.0*lambda*y*y+3.0*lambda*y*x+3.0*mu*y*x)/pow(x*x+y*y,0.175E1)/4.0;
+//   res[1] = -(3.0*mu*x*x-3.0*mu*y*x-3.0*lambda*y*x-lambda*y*y+2.0*lambda*x*x)/pow(x*x+y*y,0.175E1)/4.0;
+//   return res;
+// }
+
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N);
-  if (!sol_sing) {
-    for (int i = 0; i < N; i++) {
-      res[i] = alph * ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
-	* sin(gmm::vect_sp(sol_K.row(i), x));
-      for (int j = 0; j < N; j++)
-	res[i] += alph * ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
-	  * sin(gmm::vect_sp(sol_K.row(j), x));
-    }
-  }
-  else {
-    base_small_vector trans(x.size());
-    gmm::fill(trans,  M_PI / 10.0);
-    base_node y = x - trans;
-    scalar_type r = gmm::vect_norm2(y) + 1e-100;
-    scalar_type a = gmm::sqrt(1.0/r); 
-    scalar_type b = a*a*a, c = b*b*a; 
-    scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
-    for (int i = 0; i < N; ++i)
-      res[i] -= b * (sol_lambda + sol_mu * (N+1-3.0/2.0)) * 0.5
-	- c * 3.0 * (sol_lambda + sol_mu) * (y[i]*tr) / 4.0;
-  }
+  switch (sol_sing) {
+    case 0 :
+      for (int i = 0; i < N; i++) {
+	res[i] = alph * ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
+	  * sin(gmm::vect_sp(sol_K.row(i), x));
+	for (int j = 0; j < N; j++)
+	  res[i] += alph * ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
+	    * sin(gmm::vect_sp(sol_K.row(j), x));
+      }
+      break;
+    case 1 :
+      {
+	base_small_vector trans(x.size());
+	gmm::fill(trans,  M_PI / 10.0);
+	base_node y = x - trans;
+	scalar_type r = gmm::vect_norm2(y) + 1e-100;
+	scalar_type r2 = r*r;
+	scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
 
+	for (int i = 0; i < N; i++)
+	  res[i] = sol_lambda * (y[i]*tr / r2 - 1.0) / r
+	    + sol_mu * (y[i]*tr/r2 - N) / r;
+      }
+      break;
+    case 2 :
+      {
+	base_small_vector trans(x.size());
+	gmm::fill(trans,  M_PI / 10.0);
+	base_node y = x - trans;
+	
+	scalar_type r = gmm::vect_norm2(y) + 1e-100;
+	scalar_type a = gmm::sqrt(1.0/r); 
+	scalar_type b = a*a*a, c = b*b*a; 
+	scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
+	for (int i = 0; i < N; ++i)
+	  res[i] -= b * (sol_lambda + sol_mu * (N+1-3.0/2.0)) * 0.5
+	    - c * 3.0 * (sol_lambda + sol_mu) * (y[i]*tr) / 4.0;
+      }
+      break;
+  }
   return res;
 }
 
 base_matrix sol_sigma(const base_node &x) {
   int N = x.size();
   base_matrix res(N,N);
-  if (!sol_sing) {
-    for (int i = 0; i < N; i++)
-      for (int j = 0; j <= i; j++) {
-	res(j,i) = res(i,j) = alph * sol_mu *
-	  ( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
-	    +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
-	    );
-	if (i == j)
-	  for (int k = 0; k < N; k++)
-	    res(i,j) += alph * sol_lambda * sol_K(k,k)
-	      * cos(gmm::vect_sp(sol_K.row(k), x));
+  switch (sol_sing) {
+    case 0 :
+      for (int i = 0; i < N; i++)
+	for (int j = 0; j <= i; j++) {
+	  res(j,i) = res(i,j) = alph * sol_mu *
+	    ( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
+	      +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
+	      );
+	  if (i == j)
+	    for (int k = 0; k < N; k++)
+	      res(i,j) += alph * sol_lambda * sol_K(k,k)
+		* cos(gmm::vect_sp(sol_K.row(k), x));
+	}
+      break;
+    case 1 :
+      {
+	base_small_vector trans(x.size());
+	gmm::fill(trans,  M_PI / 10.0);
+	base_node y = x - trans;
+	scalar_type r = gmm::vect_norm2(y) + 1e-100;
+	scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
+	for (int i = 0; i < N; i++) {
+	  res(i, i) += sol_lambda * tr / r;
+	  for (int j = 0; j < N; j++)
+	    res(i, j) += sol_mu * (y[i] + y[j]) / r;
+	}
       }
-  }
-  else {
-    base_small_vector trans(x.size());
-    gmm::fill(trans,  M_PI / 10.0);
-    base_node y = x - trans;
-    scalar_type r = gmm::vect_norm2(y) + 1e-100;
-    scalar_type a = gmm::sqrt(1.0/r); 
-    scalar_type b = a*a*a;
-    scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
-    for (int i = 0; i < N; i++) {
-      res(i, i) += sol_lambda * tr * b * 0.5;
-      for (int j = 0; j < N; j++)
-	res(i, j) += sol_mu * b * (y[i] + y[j]) * 0.5;
-    }
+ 
+      break;
+    case 2 :
+      {
+	base_small_vector trans(x.size());
+	gmm::fill(trans,  M_PI / 10.0);
+	base_node y = x - trans;
+	scalar_type r = gmm::vect_norm2(y) + 1e-100;
+	scalar_type a = gmm::sqrt(1.0/r); 
+	scalar_type b = a*a*a;
+	scalar_type tr(0); tr = std::accumulate(y.begin(), y.end(), tr);
+	for (int i = 0; i < N; i++) {
+	  res(i, i) += sol_lambda * tr * b * 0.5;
+	  for (int j = 0; j < N; j++)
+	    res(i, j) += sol_mu * b * (y[i] + y[j]) * 0.5;
+	}
+      }
   }
 
   return res;
@@ -232,7 +291,7 @@ void elastostatic_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  sol_sing = (PARAM.int_value("SOL_SING", "Optional singular solution") != 0);
+  sol_sing = PARAM.int_value("SOL_SING", "Optional singular solution");
   refine = (PARAM.int_value("REFINE", "Optional refinement") != 0);
   sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(N);
@@ -420,6 +479,8 @@ int main(int argc, char *argv[]) {
 
   try {
 
+
+
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
 #if GETFEM_PARA_LEVEL > 1
@@ -431,6 +492,8 @@ int main(int argc, char *argv[]) {
 #endif
     if (getfem::MPI_IS_MASTER())
       p.mesh.write_to_file(p.datafilename + ".mesh");
+
+    dal::bit_vector cvref;
 
     do {
 
@@ -469,11 +532,10 @@ int main(int argc, char *argv[]) {
       plain_vector ERR(p.mesh.convex_index().last_true()+1);
       getfem::error_estimate(p.mim, p.mf_u, U, ERR, p.mesh.convex_index());
       
-      
-      dal::bit_vector cvref;
       cout << "max = " << gmm::vect_norminf(ERR) << endl;
       // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
-      scalar_type threshold = 1e-2, min_ = 1e18;
+      scalar_type threshold = 0.1, min_ = 1e18;
+      cvref.clear();
       for (dal::bv_visitor i(p.mesh.convex_index()); !i.finished(); ++i) {
 	if (ERR[i] > threshold) cvref.add(i);
 	min_ = std::min(min_, ERR[i]);
@@ -481,10 +543,19 @@ int main(int argc, char *argv[]) {
       cout << "min = " << min_ << endl;
       cout << "Nb elt to be refined : " << cvref.card() << endl;
       getchar();
+      cvref.clear(); cvref.add(0);
+
       p.mesh.Bank_refine(cvref);
+
+      if (getfem::MPI_IS_MASTER()) {
+	p.mesh.write_to_file(p.datafilename + ".mesh");
+	getfem::stored_mesh_slice sl;
+	sl.build(p.mesh, getfem::slicer_explode(0.8), 1);
+	getfem::vtk_export exp2("totoq.vtk");
+      }
     }
 
-    } while (p.refine);
+    } while (p.refine && cvref.card() > 0);
   }
   DAL_STANDARD_CATCH_ERROR;
 
