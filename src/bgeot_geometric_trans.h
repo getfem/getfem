@@ -102,6 +102,9 @@ namespace bgeot
     bool is_lin;
     pconvex_ref cvr;
     std::vector<base_poly> trans;
+    std::vector<size_type> vertices_;
+
+    void fill_standard_vertices(void);
   public :
     
     /// Dimension of the reference element.
@@ -119,6 +122,10 @@ namespace bgeot
     { return cvr->structure()->basic_structure(); }
     /// Gives the vector of polynomials representing the transformation.
     const std::vector<base_poly> &poly_vector(void) const { return trans; }
+    /// Gives the number of vertices.
+    size_type nb_vertices(void) const { return vertices_.size(); }
+    /// Gives the indices of vertices between the nodes.
+    const std::vector<size_type> &vertices(void) const { return vertices_; }
     /// Gives the array of geometric nodes (on reference convex)
     const stored_point_tab &geometric_nodes(void) const
     { return cvr->points(); }

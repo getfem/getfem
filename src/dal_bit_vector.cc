@@ -30,8 +30,7 @@
 
 #include <dal_bit_vector.h>
 
-namespace dal
-{
+namespace dal {
 
   bit_reference& bit_reference::operator = (bool x) {
       if (x) { if (!(*p & mask)) { *p |= mask; bv->change_for_true(ind); } } 
@@ -58,34 +57,59 @@ namespace dal
     return *this;
   }
 
+  void bit_vector::fill_false(size_type i1, size_type i2) {
+    size_type f = i1 / WD_BIT, r = i1 & (WD_BIT-1), l = i2 / WD_BIT;
+    (*((bit_container *)(this)))[l];
+    if (r != 0) f++; l++;
+    if (f < l) std::fill(dal::bit_container::begin()+f,
+			 dal::bit_container::begin()+l, 0);
+    ilast_false = i2;
+  }
+
+  void bit_vector::swap(bit_vector &da) {
+    ((bit_container *)(this))->swap(da);
+    std::swap(ifirst_true, da.ifirst_true);
+    std::swap(ifirst_false, da.ifirst_false);
+    std::swap(ilast_true, da.ilast_true);
+    std::swap(ilast_false, da.ilast_false);
+    std::swap(icard, da.icard);
+    std::swap(icard_valid, da.icard_valid);
+  }
 
   bit_vector::size_type bit_vector::card(void) const {
     if (!icard_valid) {
-      bit_container::const_iterator itb = bit_container::begin() + ifirst_true/WD_BIT, ite = bit_container::end();
-      bit_support x;
+//       bit_container::const_iterator itb = bit_container::begin()
+// 	+ ifirst_true/WD_BIT, ite = bit_container::end();
+//       bit_support x;
       icard = 0;
-      for (; itb != ite; ++itb) { 
-        if ((x = *itb)) /* fast count of the nb of bits of a integer (faster than shifts) */  
-          do icard++; while ((x &= x-1));
-      }
-      /*      const_iterator itb = begin(), ite = end();
+//       for (; itb != ite; ++itb) { 
+//         if ((x = *itb)) // fast count of the nb of bits
+// 	                // of an integer (faster than shifts)  
+//           do icard++; while ((x &= x-1));
+//       }
+//       icard_valid = true;
+
+      const_iterator itb = begin(), ite = end();
       icard = 0;
       while (itb != ite) { if (*itb) ++icard; ++itb; }
-      icard_valid = true;*/
+      icard_valid = true;
     }
     return icard;
   }
 
   bit_vector::size_type bit_vector::first_true(void) const {
+    assert(ifirst_true <= ilast_true);
     const_iterator itx = begin(), ite = end(); itx += ifirst_true;
     while (itx != ite && !*itx ) { ++itx; ++(ifirst_true); }
-    return ifirst_true;
+    if (is_in(ifirst_true)) return ifirst_true;
+    else { ifirst_true = ilast_true = 0; return size_type(-1); }
   }
   
   bit_vector::size_type bit_vector::first_false(void) const {
     const_iterator itx = begin(), ite = end(); itx += ifirst_false;
     while (itx != ite && *itx) { ++itx; ++(ifirst_false); }
-    return ifirst_false;
+    if (!is_in(ifirst_false)) return ifirst_false;
+    else { ifirst_false = ilast_false = size()-1; return size_type(-1); }
   }
 
   bit_vector::size_type bit_vector::last_true(void) const {
@@ -119,8 +143,9 @@ namespace dal
     while (it1b != it1e && it2b != it2e) { *it1b++ &= *it2b++; }
     while (it1b != it1e) { *it1b++ = 0; }
     icard_valid = false;
-    ilast_true = std::min(ilast_true, bv.ilast_true);
     ifirst_true = std::max(ifirst_true, bv.ifirst_true);
+    ilast_true = std::min(ilast_true, bv.ilast_true);
+    assert(ifirst_true <= ilast_true);
     ilast_false = std::min(size()-1, std::max(ilast_false,bv.ilast_false));
     ifirst_false = std::min(ifirst_false, bv.ifirst_false);
     return *this;
@@ -139,23 +164,18 @@ namespace dal
   }
 
   void bit_vector::add(size_type i, size_type nb) { 
-    if (nb) {
-      add(i+nb-1);
-      std::fill(this->begin()+i, this->begin()+(i+nb), true);
-    }
+    if (nb)
+      { add(i+nb-1); std::fill(this->begin()+i, this->begin()+(i+nb), true); }
   }
 
   void bit_vector::sup(size_type i, size_type nb) {
-    if (nb) {
-      sup(i+nb-1);
-      std::fill(this->begin()+i, this->begin()+(i+nb), false);
-    }
+    if (nb)
+      { sup(i+nb-1); std::fill(this->begin()+i, this->begin()+(i+nb), false); }
   }
 
   bool bit_vector::contains(const dal::bit_vector& other) const {
-    for (dal::bv_visitor i(other); !i.finished(); ++i) {
+    for (dal::bv_visitor i(other); !i.finished(); ++i)
       if (!this->is_in(i)) return false;
-    }
     return true;
   }
 
@@ -170,5 +190,21 @@ namespace dal
     o << "]";
     return o;
   }
+
+  bool bv_visitor::operator++() {
+    while (1) {
+      size_type ind_b = (ind&(~WD_MASK));
+      while (v) {
+	++ind; v >>= 1;
+	if (v&1) return true;
+      }
+      ind = ind_b + WD_BIT;
+      if (ind >= ilast) return false; 
+      v = *(++it);
+      if (v&1) return true;
+    }
+  }
+
+
 }
 

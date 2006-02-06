@@ -92,16 +92,6 @@ base_small_vector sol_u(const base_node &x) {
   return res;
 }
 
-// base_small_vector sol_f_2D_sing(const base_node &X) {
-//   scalar_type x=X[0], y=X[1];
-//   scalar_type lambda = sol_lambda, mu = sol_mu;
-//   base_small_vector res(2);
-
-//   res[0] = +(-3.0*mu*y*y+lambda*x*x-2.0*lambda*y*y+3.0*lambda*y*x+3.0*mu*y*x)/pow(x*x+y*y,0.175E1)/4.0;
-//   res[1] = -(3.0*mu*x*x-3.0*mu*y*x-3.0*lambda*y*x-lambda*y*y+2.0*lambda*x*x)/pow(x*x+y*y,0.175E1)/4.0;
-//   return res;
-// }
-
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N);
@@ -534,7 +524,7 @@ int main(int argc, char *argv[]) {
       
       cout << "max = " << gmm::vect_norminf(ERR) << endl;
       // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
-      scalar_type threshold = 0.1, min_ = 1e18;
+      scalar_type threshold = 0.01, min_ = 1e18;
       cvref.clear();
       for (dal::bv_visitor i(p.mesh.convex_index()); !i.finished(); ++i) {
 	if (ERR[i] > threshold) cvref.add(i);
@@ -542,9 +532,7 @@ int main(int argc, char *argv[]) {
       }
       cout << "min = " << min_ << endl;
       cout << "Nb elt to be refined : " << cvref.card() << endl;
-      getchar();
-      cvref.clear(); cvref.add(0);
-
+      // cvref.clear(); cvref.add(0);
       p.mesh.Bank_refine(cvref);
 
       if (getfem::MPI_IS_MASTER()) {

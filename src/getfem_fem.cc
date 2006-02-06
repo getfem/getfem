@@ -1923,6 +1923,8 @@ namespace getfem
 	std::vector<dal::pstatic_stored_object> &dependencies);
   pfem HCT_triangle_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies);
+  pfem reduced_HCT_triangle_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies);
 
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
@@ -1950,6 +1952,7 @@ namespace getfem
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
       add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
+      add_suffix("REDUCED_HCT_TRIANGLE", reduced_HCT_triangle_fem);
       add_suffix("RT0", P1_RT0);
       add_suffix("NEDELEC", P1_nedelec);
     }

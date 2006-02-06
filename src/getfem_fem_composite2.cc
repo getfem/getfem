@@ -152,25 +152,18 @@ namespace getfem {
     static base_matrix K(2, 2);
     dim_type N = G.nrows();
     
-    if (N != 2) DAL_THROW(failure_error, "Sorry, this version of hermite "
-			  "element works only on dimension two.")
-      if (pgt != pgt_stored) {
-	pgt_stored = pgt;
-	pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-	pfp = fem_precomp(this, node_tab(0));
-      }
+    if (N != 2) DAL_THROW(failure_error, "Sorry, this version of HCT "
+			  "element works only on dimension two.");
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
     gmm::copy(gmm::identity_matrix(), M);
     
     gmm::mult(G, pgp->grad(0), K);
     for (size_type i = 0; i < 3; ++i) {
-      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
-
-//       const bgeot::base_tensor &t = pfp->val(i);
-//        cout << "val at point " << i << " : " << t << endl;
-//       const bgeot::base_tensor &tt = pfp->grad(i);
-//       cout << "grad at point " << i << " : " << tt << endl;
-      
-
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);      
       M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
       M(6+i, 3+i) = K(1,0); M(6+i, 6+i) = K(1,1);
     }
@@ -302,6 +295,124 @@ namespace getfem {
       DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
 		<< " should be 0.");
     virtual_fem *p = new HCT_triangle__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+
+  /* ******************************************************************** */
+  /*    Reduced Hsieh-Clough-Tocher C^1 element (composite P3)            */
+  /* ******************************************************************** */
+
+  struct reduced_HCT_triangle__ : public fem<polynomial_composite2> {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    mesh m;
+    mesh_precomposite mp;
+    reduced_HCT_triangle__(void);
+  };
+
+  void reduced_HCT_triangle__::mat_trans(base_matrix &M, const base_matrix &G,
+				 bgeot::pgeometric_trans pgt) const {
+    
+    static bgeot::pgeotrans_precomp pgp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(2, 2);
+    dim_type N = G.nrows();
+    
+    if (N != 2) 
+      DAL_THROW(failure_error, "Sorry, this version of reduced HCT "
+		"element works only on dimension two.");
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+    
+    gmm::mult(G, pgp->grad(0), K);
+    for (size_type i = 0; i < 3; ++i) {
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
+      M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
+      M(6+i, 3+i) = K(1,0); M(6+i, 6+i) = K(1,1);
+    }
+  }
+
+  reduced_HCT_triangle__::reduced_HCT_triangle__(void) {
+
+    m.clear();
+    size_type i0 = m.add_point(base_node(1.0/3.0, 1.0/3.0));
+    size_type i1 = m.add_point(base_node(0.0, 0.0));
+    size_type i2 = m.add_point(base_node(1.0, 0.0));
+    size_type i3 = m.add_point(base_node(0.0, 1.0));
+    m.add_triangle(i0, i2, i3);
+    m.add_triangle(i0, i3, i1);
+    m.add_triangle(i0, i1, i2);
+    mp = mesh_precomposite(m);
+
+ std::stringstream s
+   ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y + 21*x*y^2 + 7*y^3;"
+    "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
+    "1 - 3*x^2 - 3*y^2 + 2*x^3 - 3*x*y^2 + 3*y^3;"
+    "1 - 9/2*x - 9/2*y + 9*x^2 + 15*x*y + 6*y^2 - 9/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 5/2*y^3;"
+    "3*x^2 - 5/2*x^3 + 3/2*x^2*y;"
+    "3*x^2 - 2*x^3 + 3/2*x*y^2 - 1/2*y^3;"
+    "1 - 9/2*x - 9/2*y + 6*x^2 + 15*x*y + 9*y^2 - 5/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 9/2*y^3;"
+    "3*y^2 - 1/2*x^3 + 3/2*x^2*y - 2*y^3;"
+    "3*y^2 + 3/2*x*y^2 - 5/2*y^3;"
+    "-1/2 + 7/2*x + 2*y - 11/2*x^2 - 8*x*y - 5/2*y^2 + 5/2*x^3 + 6*x^2*y + 9/2*x*y^2 + y^3;"
+    "x - 3/2*x^2 - x*y + 1/2*x^3;"
+    "x - 2*x^2 - 1/2*y^2 + x^3 - 3/2*x*y^2 + y^3;"
+    "-1/2 + 9/4*x + 9/4*y - 4*x^2 - 15/2*x*y - 3*y^2 + 9/4*x^3 + 21/4*x^2*y + 21/4*x*y^2 + 5/4*y^3;"
+    "-x^2 + 5/4*x^3 - 3/4*x^2*y;"
+    "-x^2 + x^3 - 3/4*x*y^2 + 1/4*y^3;"
+    "-1/4*x + 1/4*y + 1/2*x^2 + 1/2*x*y - 1/2*y^2 - 1/4*x^3 - 3/4*x^2*y + 3/4*x*y^2 + 1/4*y^3;"
+    "-1/2*x^2 + x*y + 3/4*x^3 - 3/4*x^2*y;"
+    "1/2*y^2 + 3/4*x*y^2 - 3/4*y^3;"
+    "-1/2 + 2*x + 7/2*y - 5/2*x^2 - 8*x*y - 11/2*y^2 + x^3 + 9/2*x^2*y + 6*x*y^2 + 5/2*y^3;"
+    "y - 1/2*x^2 - 2*y^2 + x^3 - 3/2*x^2*y + y^3;"
+    "y - x*y - 3/2*y^2 + 1/2*y^3;"
+    "1/4*x - 1/4*y - 1/2*x^2 + 1/2*x*y + 1/2*y^2 + 1/4*x^3 + 3/4*x^2*y - 3/4*x*y^2 - 1/4*y^3;"
+    "1/2*x^2 - 3/4*x^3 + 3/4*x^2*y;"
+    "x*y - 1/2*y^2 - 3/4*x*y^2 + 3/4*y^3;"
+    "-1/2 + 9/4*x + 9/4*y - 3*x^2 - 15/2*x*y - 4*y^2 + 5/4*x^3 + 21/4*x^2*y + 21/4*x*y^2 + 9/4*y^3;"
+    "-y^2 + 1/4*x^3 - 3/4*x^2*y + y^3;"
+    "-y^2 - 3/4*x*y^2 + 5/4*y^3;");
+
+    bgeot::pconvex_ref cr = bgeot::simplex_of_reference(2);
+    mref_convex() = cr;
+    dim() = cr->structure()->dim();
+    is_polynomialcomp() = true;
+    is_equivalent() = false;
+    is_polynomial() = false;
+    is_lagrange() = false;
+    estimated_degree() = 3;
+    init_cvs_node();
+
+    base()=std::vector<polynomial_composite2>(9,polynomial_composite2(mp));
+    for (size_type k = 0; k < 9; ++k)
+      for (size_type ic = 0; ic < 3; ++ic)
+	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+
+    pdof_description pdof = lagrange_dof(2);
+    for (size_type i = 0; i < 3; ++i) {
+      if (i == 1) pdof = derivative_dof(2, 0);
+      if (i == 2) pdof = derivative_dof(2, 1);
+
+      add_node(pdof, base_node(0.0, 0.0));
+      add_node(pdof, base_node(1.0, 0.0));
+      add_node(pdof, base_node(0.0, 1.0));
+    }
+  }
+
+
+  pfem reduced_HCT_triangle_fem
+  (fem_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 0.");
+    virtual_fem *p = new reduced_HCT_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;

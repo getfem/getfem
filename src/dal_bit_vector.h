@@ -48,8 +48,8 @@
 #include <limits.h>
 #include <bitset>
 
-namespace dal
-{
+namespace dal {
+
   typedef unsigned int bit_support;
   static const bit_support WD_BIT = bit_support(CHAR_BIT*sizeof(bit_support));
   static const bit_support WD_MASK = WD_BIT - 1;
@@ -168,171 +168,151 @@ namespace dal
 
   ///Dynamic bit container. 
   class bit_vector : public bit_container {
-    public :
-      
-      typedef bool         value_type;
-      typedef size_t       size_type;
-      typedef ptrdiff_t    difference_type;
-      typedef bool         const_reference;
-      typedef const bool*  const_pointer;
-      typedef bit_reference reference;
-      typedef bit_reference*   pointer;
-      typedef bit_iterator iterator;
-      typedef bit_const_iterator const_iterator;
-
-    protected :
-
-      mutable size_type ifirst_true, ilast_true;
-      mutable size_type ifirst_false, ilast_false;
-      mutable size_type icard;
-      mutable bool icard_valid;
-
-    void fill_false(size_type i1, size_type i2) {
-      size_type f = i1 / WD_BIT, r = i1 & (WD_BIT-1), l = i2 / WD_BIT;
-      (*((bit_container *)(this)))[l];
-      
-      if (r != 0) f++; l++;
-      if (f < l)
-	std::fill(dal::bit_container::begin()+f, dal::bit_container::begin()+l, 0);
-      
-      ilast_false = i2;
-    }
+  public :
+    
+    typedef bool         value_type;
+    typedef size_t       size_type;
+    typedef ptrdiff_t    difference_type;
+    typedef bool         const_reference;
+    typedef const bool*  const_pointer;
+    typedef bit_reference reference;
+    typedef bit_reference*   pointer;
+    typedef bit_iterator iterator;
+    typedef bit_const_iterator const_iterator;
+    
+  protected :
+    
+    mutable size_type ifirst_true, ilast_true;
+    mutable size_type ifirst_false, ilast_false;
+    mutable size_type icard;
+    mutable bool icard_valid;
+    
+    void fill_false(size_type i1, size_type i2);
  
-   public : 
-      
-      void change_for_true(size_type i) {
-	ifirst_true = std::min(ifirst_true, i);
-	ilast_true = std::max(ilast_true, i);
-	++icard;
+  public : 
+    
+    void change_for_true(size_type i) {
+      ifirst_true = std::min(ifirst_true, i);
+      ilast_true = std::max(ilast_true, i);
+      ++icard;
+    }
+    void change_for_false(size_type i) {
+      ifirst_false = std::min(ifirst_false, i);
+      ilast_false = std::max(ilast_false, i);
+      --icard;
+    }
+    
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    size_type size(void) const { return std::max(ilast_true, ilast_false)+1;}
+    
+    iterator begin(void) { return iterator(*this, 0); }
+    const_iterator begin(void) const { return const_iterator(*this, 0); }
+    iterator end(void) { return iterator(*this, size()); }
+    const_iterator end(void) const { return const_iterator(*this, size()); }
+    reverse_iterator rbegin(void) { return reverse_iterator(end()); }
+    const_reverse_iterator rbegin(void) const
+    { return const_reverse_iterator(end()); }
+    reverse_iterator rend(void) { return reverse_iterator(begin()); }
+    const_reverse_iterator rend(void) const
+    { return const_reverse_iterator(begin()); }
+    
+    size_type capacity(void) const
+    { return bit_container::capacity() * WD_BIT; }
+    size_type max_size(void) const { return (size_type(-1)); }
+    // bool empty(void) const { return card() == 0; } /* ?? */
+    reference front(void) { return *begin(); }
+    const_reference front(void) const { return *begin(); }
+    reference back(void) { return *(end() - 1); }
+    const_reference back(void) const { return *(end() - 1); }
+    
+    
+    const_reference operator [](size_type ii) const
+    { return (ii >= size()) ? false : *const_iterator(*this, ii); }
+    reference operator [](size_type ii)
+    { if (ii >= size()) fill_false(size(),ii); return *iterator(*this, ii);}
+    
+    void swap(bit_vector &da);
+    
+    void clear(void) {
+      icard = 0; icard_valid = true;
+      ifirst_false = ilast_false = ifirst_true = ilast_true = 0;
+      fill_false(0,0); 
+    }
+    void swap(size_type i1, size_type i2) {
+      if (i1 != i2) {
+	reference r1 = (*this)[i1], r2 = (*this)[i2];
+	bool tmp = r1; r1 = r2; r2 = tmp;
       }
-      void change_for_false(size_type i) {
-	ifirst_false = std::min(ifirst_false, i);
-	ilast_false = std::max(ilast_false, i);
-	--icard;
-      }
-
-      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-      typedef std::reverse_iterator<iterator> reverse_iterator;
-      size_type size(void) const 
-      { return std::max(ilast_true, ilast_false)+1;}
-      
-      iterator begin(void) { return iterator(*this, 0); }
-      const_iterator begin(void) const { return const_iterator(*this, 0); }
-      iterator end(void) { return iterator(*this, size()); }
-      const_iterator end(void) const { return const_iterator(*this, size()); }
-      reverse_iterator rbegin(void) { return reverse_iterator(end()); }
-      const_reverse_iterator rbegin(void) const
-      { return const_reverse_iterator(end()); }
-      reverse_iterator rend(void) { return reverse_iterator(begin()); }
-      const_reverse_iterator rend(void) const
-      { return const_reverse_iterator(begin()); }
-      
-      size_type capacity(void) const
-      { return bit_container::capacity() * WD_BIT; }
-      size_type max_size(void) const { return (size_type(-1)); }
-      // bool empty(void) const { return card() == 0; } /* ?? */
-      reference front(void) { return *begin(); }
-      const_reference front(void) const { return *begin(); }
-      reference back(void) { return *(end() - 1); }
-      const_reference back(void) const { return *(end() - 1); }
-      
-
-      const_reference operator [](size_type ii) const
-      { return (ii >= size()) ? false : *const_iterator(*this, ii); }
-      reference operator [](size_type ii)
-      { if (ii >= size()) fill_false(size(),ii); return *iterator(*this, ii);}
-
-      void swap(bit_vector &da) {
-	((bit_container *)(this))->swap(da);
-	std::swap(ifirst_true, da.ifirst_true);
-	std::swap(ifirst_false, da.ifirst_false);
-	std::swap(ilast_true, da.ilast_true);
-	std::swap(ilast_false, da.ilast_false);
-	std::swap(icard, da.icard);
-	std::swap(icard_valid, da.icard_valid);
-      }
-      void clear(void) {
-	icard = 0; icard_valid = true;
-	ifirst_false = ilast_false = ifirst_true = ilast_true = 0;
-	fill_false(0,0); 
-      }
-      void swap(size_type i1, size_type i2) {
-	if (i1 != i2) {
-	  reference r1 = (*this)[i1], r2 = (*this)[i2];
-	  bool tmp = r1; r1 = r2; r2 = tmp;
-	}
-      }
-      size_type memsize(void) const {
-	return bit_container::memsize() + sizeof(bit_vector) 
-	  - sizeof(bit_container);
-      }
-      size_type card(void) const;
-      /// index of first non-zero entry (size_type(-1) if the bit_vector is empty)
-      size_type first_true(void) const;
-      /// index of first zero entry (size_type(-1) if the bit_vector is empty)
-      size_type first_false(void) const;
-      /// index of last non-zero entry (size_type(-1) if the bit_vector is empty)
-      size_type last_true(void) const;
-      /// index of last zero entry (size_type(-1) if the bit_vector is empty)
-      size_type last_false(void) const;
-      /// remove all elements found in bv
-      bit_vector &setminus(const bit_vector &bv);
-      bit_vector &operator |=(const bit_vector &bv);
-      bit_vector &operator &=(const bit_vector &bv);
-
-      bit_vector operator |(const bit_vector &bv) const
-      { bit_vector r(*this); r |= bv; return r; }
-      bit_vector operator &(const bit_vector &bv) const
-      { bit_vector r(*this); r &= bv; return r; }
-      bool operator ==(const bit_vector &bv) const;
-      bool operator !=(const bit_vector &bv) const
-      { return !((*this) == bv); }
-     
-      bit_vector(void) { clear(); }
-      template <size_t N> bit_vector(const std::bitset<N> &bs) {
-	clear();
-        for (size_type i=0; i < bs.size(); ++i) { if (bs[i]) add(i); }
-      }
-
+    }
+    size_type memsize(void) const {
+      return bit_container::memsize() + sizeof(bit_vector) 
+	- sizeof(bit_container);
+    }
+    size_type card(void) const;
+    /// index of first non-zero entry (size_type(-1) for an empty bit_vector)
+    size_type first_true(void) const;
+    /// index of first zero entry (size_type(-1) for an empty bit_vector)
+    size_type first_false(void) const;
+      /// index of last non-zero entry (size_type(-1) for an empty bit_vector)
+    size_type last_true(void) const;
+    /// index of last zero entry (size_type(-1) for an empty bit_vector)
+    size_type last_false(void) const;
+    /// remove all elements found in bv
+    bit_vector &setminus(const bit_vector &bv);
+    bit_vector &operator |=(const bit_vector &bv);
+    bit_vector &operator &=(const bit_vector &bv);
+    
+    bit_vector operator |(const bit_vector &bv) const
+    { bit_vector r(*this); r |= bv; return r; }
+    bit_vector operator &(const bit_vector &bv) const
+    { bit_vector r(*this); r &= bv; return r; }
+    bool operator ==(const bit_vector &bv) const;
+    bool operator !=(const bit_vector &bv) const
+    { return !((*this) == bv); }
+    
+    bit_vector(void) { clear(); }
+    template <size_t N> bit_vector(const std::bitset<N> &bs) {
+      clear();
+      for (size_type i=0; i < bs.size(); ++i) { if (bs[i]) add(i); }
+    }
+    
     /// merges the integer values of the supplied container into the bit_vector
     template <typename ICONT> dal::bit_vector& merge_from(const ICONT& c) {
-      for (typename ICONT::const_iterator it = c.begin(); it != c.end(); ++it) add(*it);
+      for (typename ICONT::const_iterator it = c.begin(); it != c.end(); ++it)
+	add(*it);
       return *this;
     }
-    /// merges the integer values of the supplied iterator range into the bit_vector
+    /** merges the integer values of the supplied iterator range into
+     * the bit_vector */
     template <typename IT> dal::bit_vector& merge_from(IT b, IT e) {
       while (b != e) { add(*b++); }
       return *this;
     }
-    /// return true if the supplied bit_vector is a subset of the current bit_vector
+    /** return true if the supplied bit_vector is a subset of the current
+     * bit_vector */
     bool contains(const dal::bit_vector &other) const;
-   
-  /* ********************************************************************* */
-  /*									   */
-  /*	     Adaptation for old structure int_set.                         */
-  /*									   */
-  /* ********************************************************************* */
-  
-    public : 
+    
+  public : 
     /// return true if (*this)[i] == true
     bool is_in(size_type i) const { 
       if (i < ifirst_true || i > ilast_true) return false;
       else return (((*(const bit_container*)(this))[i / WD_BIT]) & 
 		   (bit_support(1) << (i & WD_MASK))) ? true : false; }
-      void add(size_type i) { (*this)[i] = true; }
+    void add(size_type i) { (*this)[i] = true; }
     /** set the interval [i...i+nb-1] to true */
-      void add(size_type i, size_type nb);
-      void sup(size_type i) { (*this)[i] = false; }
+    void add(size_type i, size_type nb);
+    void sup(size_type i) { (*this)[i] = false; }
     /** set the interval [i...i+nb-1] to true */
-      void sup(size_type i, size_type nb);
-      int first(void) const { return (card() == 0) ? -1 : int(first_true()); }
-      int last(void) const { return (card() == 0) ? -1 : int(last_true()); }
-      inline int take_first(void)
-      { int res = first(); if (res >= 0) sup(res); return res; }
-      inline int take_last(void)
-      { int res = last(); if (res >= 0) sup(res); return res; }
+    void sup(size_type i, size_type nb);
+    int first(void) const { return (card() == 0) ? -1 : int(first_true()); }
+    int last(void) const { return (card() == 0) ? -1 : int(last_true()); }
+    inline int take_first(void)
+    { int res = first(); if (res >= 0) sup(res); return res; }
+    inline int take_last(void)
+    { int res = last(); if (res >= 0) sup(res); return res; }
   };
-
+  
   /**
      if you are only interested in indexes of true values of a bit_vector
      (i.e. if you use it as an int set), use bv_visitor instead of
@@ -344,7 +324,8 @@ namespace dal
        .... (use i as an unsigned int)
      }
      @endcode
-     CAUTION: use bv_visitor_c instead of bv_visitor if the class bv_visitor need to store a copy of the bit_vector 
+     CAUTION: use bv_visitor_c instead of bv_visitor if the class bv_visitor
+     need to store a copy of the bit_vector 
      (if the original is destroyed just after the creation...)
   */
   class bv_visitor {
@@ -356,24 +337,10 @@ namespace dal
     bv_visitor(const dal::bit_vector& b) : 
       it(((const bit_container&)b).begin()+b.first()/WD_BIT),
       ilast(b.last()+1), ind(b.first()), v(0) {
-      if (ind < ilast) {
-	v = *it; v >>= (ind&WD_MASK);
-      }
+      if (ind < ilast) { v = *it; v >>= (ind&WD_MASK); }
     }
     bool finished() const { return ind >= ilast; }
-    bool operator++() {
-      while (1) {
-	size_type ind_b = (ind&(~WD_MASK));
-	while (v) {
-	  ++ind; v >>= 1;
-	  if (v&1) return true;
-	}
-	ind = ind_b + WD_BIT;
-	if (ind >= ilast) return false; 
-	v = *(++it);
-	if (v&1) return true;
-      }
-    }
+    bool operator++();
     operator size_type() const { return ind; }
   };
 
@@ -387,7 +354,8 @@ namespace dal
     bv_visitor_c(const dal::bit_vector& b) : bv(b), v(bv) {}
     bool finished() const { return v.finished(); }
     bool operator++() { return ++v; }
-    operator dal::bit_vector::size_type() const { return dal::bit_vector::size_type(v); }
+    operator dal::bit_vector::size_type() const
+    { return dal::bit_vector::size_type(v); }
   };
 
   /// extract index of first entry in the bit_vector

@@ -104,9 +104,9 @@ namespace getfem {
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
     void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
-    void receipt(const MESH_SUP_CONVEX &m);
-    void receipt(const MESH_SWAP_CONVEX &m);
-    void receipt(const MESH_REFINE_CONVEX &m) {}
+    void receipt(const MESH_SUP_CONVEX &);
+    void receipt(const MESH_SWAP_CONVEX &);
+    void receipt(const MESH_REFINE_CONVEX &) {}
     
     size_type memsize() const {
       size_type res = sizeof(mesh_level_set)

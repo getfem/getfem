@@ -114,7 +114,7 @@ namespace gmm {
     template <typename MAT> void read(MAT &M);
     template <typename T, int shift> static void write(const char *filename, const csc_matrix<T, shift>& A);
     template <typename T, typename INDI, typename INDJ, int shift> 
-    void static write(const char *filename, const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
+    static void write(const char *filename, const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
 
     /** static method for saving the matrix */
     template <typename MAT> static void write(const char *filename, const MAT& A);

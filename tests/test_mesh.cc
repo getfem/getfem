@@ -69,43 +69,25 @@ void test_conforming(getfem::mesh &m) {
 }
 
 
-void test_refinable(size_type dim) {
+void test_refinable(unsigned dim, unsigned degree) {
 
   int Nsubdiv = 2;
-  std::vector<VECT> vects(dim);
-  std::vector<int> iref(dim);
-  POINT pt1(dim);
-  for (size_type i = 0; i < dim; i++)
-  { vects[i] = VECT(dim); vects[i][i] = 1.0 / Nsubdiv; iref[i] = Nsubdiv; }
-
+  std::vector<size_type> nsubdiv(dim, Nsubdiv);
   getfem::mesh m;
-  getfem::parallelepiped_regular_simplex_mesh(m, dim, pt1, vects.begin(),
-					      iref.begin());
+  getfem::regular_unit_mesh
+    (m, nsubdiv, bgeot::simplex_geotrans(dim, degree), false);
   dal::bit_vector b; b.add(0);
   
-  cout << "\nrefine mesh" << endl;
+  cout << "\nrefine mesh in dimension " << dim << " and degree "
+       << degree << endl;
 
   m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref0");
+  m.Bank_refine(m.convex_index());
   m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
   m.Bank_refine(m.convex_index());
-  /*m.Bank_refine(m.convex_index());
-  m.Bank_refine(m.convex_index());
-  m.Bank_refine(m.convex_index());*/
+  m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
+  //  m.Bank_refine(m.convex_index());
   if (m.dim() < 4) export_mesh(m, " test_mesh_bank_ref2");
-  test_conforming(m);
-}
-
-void test_refinable_P2() {
-  getfem::mesh m; 
-  //m.read_from_file("meshes/disc_P2_h8.mesh");
-  m.read_from_file("meshes/tripod.mesh");
-
-  cerr << "convex_index: " << m.convex_index() << "\n";
-  dal::bit_vector b; b.add(3);
-  m.Bank_refine(b);
-  m.Bank_refine(b);
-  m.Bank_refine(m.convex_index());
-  if (m.dim() < 4) export_mesh(m, "test_mesh_bank_disc");
   test_conforming(m);
 }
 
@@ -360,8 +342,12 @@ int main(void) {
     for (size_type d = 1; d <= 4 /* 6 */; ++d)
       test_mesh_matching(d);
 
-    test_refinable(3);
-    //test_refinable_P2();
+    test_refinable(2, 1);
+    test_refinable(2, 2);
+    test_refinable(2, 3);
+    test_refinable(3, 1);
+    test_refinable(3, 2);
+    test_refinable(3, 3);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

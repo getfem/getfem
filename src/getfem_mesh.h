@@ -564,7 +564,6 @@ namespace getfem {
 
     Bank_info_struct *Bank_info;
 
-    std::vector<size_type> &Bank_loc_ind_of_pgt(bgeot::pgeometric_trans pgt);
     void Bank_convex_with_edge(size_type, size_type,
 			       std::vector<size_type> &);
     bool Bank_is_convex_having_points(size_type,

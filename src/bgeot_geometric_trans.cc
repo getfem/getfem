@@ -216,6 +216,19 @@ namespace bgeot {
       }
   }
 
+  void geometric_trans::fill_standard_vertices(void) {
+    vertices_.resize(0);
+    for (size_type ip = 0; ip < nb_points(); ++ip) {
+      bool vertex = true;
+      for (size_type i = 0; i < cvr->points()[ip].size(); ++i)
+	if (gmm::abs(cvr->points()[ip][i]) > 1e-10
+	    && gmm::abs(cvr->points()[ip][i]-1.0) > 1e-10)
+	  { vertex = false; break; }
+      if (vertex) vertices_.push_back(ip);
+    }
+    assert(vertices_.size() >= dim());
+  }
+
   /* ******************************************************************** */
   /* transformation on simplex.                                           */
   /* ******************************************************************** */
@@ -250,6 +263,7 @@ namespace bgeot {
       is_lin = (k == 1);
       trans.resize(R);
       for (size_type r = 0; r < R; ++r) calc_base_func(trans[r], r, k);
+      fill_standard_vertices();
     }
   };
 
@@ -286,6 +300,9 @@ namespace bgeot {
 	  trans[i1 + i2 * n1] = a->poly_vector()[i1];
 	  trans[i1 + i2 * n1].direct_product(b->poly_vector()[i2]);
 	}
+      for (size_type i2 = 0; i2 < b->nb_vertices(); ++i2)
+	for (size_type i1 = 0; i1 < a->nb_vertices(); ++i1)
+	  vertices_.push_back(a->vertices()[i1] + b->vertices()[i2] * n1);
     }
   };
 
@@ -326,6 +343,10 @@ namespace bgeot {
       for (size_type i = 0; i <= dim(); ++i)
 	trans[cvr->structure()->ind_dir_points()[i]] 
 	  = pgt->poly_vector()[i];
+      for (size_type i2 = 0; i2 < b->nb_vertices(); ++i2)
+	for (size_type i1 = 0; i1 < a->nb_vertices(); ++i1)
+	  vertices_.push_back(a->vertices()[i1]
+			      + b->vertices()[i2] * a->nb_points());
     }
   };
 
