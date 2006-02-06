@@ -77,7 +77,8 @@ namespace getfem {
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-			      const VEC &U, mesh_region rg, T) {
+			      const VEC &U, const mesh_region &rg_, T) {
+    mesh_region rg(rg_);
     mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
@@ -151,7 +152,8 @@ namespace getfem {
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U, mesh_region rg, T) {
+				   const VEC &U, const mesh_region &rg_, T) {
+    mesh_region rg(rg_);
     mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
@@ -235,7 +237,8 @@ namespace getfem {
 
   template<typename VEC, typename T>
   scalar_type asm_H2_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf,
-				   const VEC &U, mesh_region rg, T) {
+				   const VEC &U, const mesh_region &rg_, T) {
+    mesh_region rg(rg_);
     mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;    
     if (mf.get_qdim() == 1)

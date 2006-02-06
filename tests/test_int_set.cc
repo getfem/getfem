@@ -154,17 +154,21 @@ int main(int argc, char *argv[]) {
 
   cout << "cardinal : " << nn.card() << endl; assert(nn.card() == 0);
   cout << "first true : " << nn.first_true() << endl;
-  assert(nn.first_true() == 1);
+  //assert(nn.first_true() == 1);
+  assert(nn.first_true() == size_type(-1));
   cout << "last  true : " << nn.last_true()  << endl;
-  assert(nn.last_true() == 0);
+  //assert(nn.last_true() == 0);
+  assert(nn.last_true() == size_type(-1));
   cout << "first false : " << nn.first_false() << endl;
   assert(nn.first_false() == 0);
   cout << "last  false : " << nn.last_false()  << endl;
   assert(nn.last_false() == 0);
   cout << "first true : " << nn.first_true() << endl;
-  assert(nn.first_true() == 1);
+  //assert(nn.first_true() == 1);
+  assert(nn.first_true() == size_type(-1));
   cout << "last  true : " << nn.last_true()  << endl;
-  assert(nn.last_true() == 0);
+  //assert(nn.last_true() == 0);
+  assert(nn.last_true() == size_type(-1));
   cout << "first false : " << nn.first_false() << endl;
   assert(nn.first_false() == 0);
   cout << "last  false : " << nn.last_false()  << endl;

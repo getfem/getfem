@@ -115,7 +115,8 @@ namespace dal {
   bit_vector::size_type bit_vector::last_true(void) const {
     const_iterator itb = begin(), itx = itb; itx += ilast_true;
     while (itx != itb && !*itx) { --itx; --(ilast_true); }
-    return ilast_true;
+    if (is_in(ilast_true)) return ilast_true;
+    else return size_type(-1);
   }
   
   bit_vector::size_type bit_vector::last_false(void) const {
@@ -145,9 +146,11 @@ namespace dal {
     icard_valid = false;
     ifirst_true = std::max(ifirst_true, bv.ifirst_true);
     ilast_true = std::min(ilast_true, bv.ilast_true);
-    assert(ifirst_true <= ilast_true);
-    ilast_false = std::min(size()-1, std::max(ilast_false,bv.ilast_false));
-    ifirst_false = std::min(ifirst_false, bv.ifirst_false);
+    if (ifirst_true > ilast_true) clear();
+    else {
+      ilast_false = std::min(size()-1, std::max(ilast_false,bv.ilast_false));
+      ifirst_false = std::min(ifirst_false, bv.ifirst_false);
+    }
     return *this;
   }
 

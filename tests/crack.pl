@@ -15,7 +15,10 @@ INTEGRATION = 'IM_TRIANGLE(6)';
 SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
 NX = 16;
 RESIDUAL = 1E-9;
+CUTOFF_FUNC = 0;
 CUTOFF=0.3;
+CUTOFF1 = 0.2;
+CUTOFF0 = 0.45;
 ADDITIONAL_CRACK = 0;
 ENRICHMENT_OPTION = 2;
 FEM_TYPE = 'FEM_PK(2,1)';
@@ -39,7 +42,7 @@ close(TMPF);
 $er = 0;
 open F, "./crack $tmp 2>&1 |" or die;
 while (<F>) {
-  # print $_;
+  #print $_; #uncomment this line in case of problem..
   if ($_ =~ /H1 ERROR/) {
     ($a, $b) = split(':', $_);
     if ($b > 0.12) { print "\nError too large\n"; $er = 1; }

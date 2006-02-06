@@ -252,11 +252,11 @@ namespace dal {
     size_type card(void) const;
     /// index of first non-zero entry (size_type(-1) for an empty bit_vector)
     size_type first_true(void) const;
-    /// index of first zero entry (size_type(-1) for an empty bit_vector)
+    /// index of first zero entry (size_type(0) for an empty bit_vector)
     size_type first_false(void) const;
       /// index of last non-zero entry (size_type(-1) for an empty bit_vector)
     size_type last_true(void) const;
-    /// index of last zero entry (size_type(-1) for an empty bit_vector)
+    /// index of last zero entry (size_type(0) for an empty bit_vector)
     size_type last_false(void) const;
     /// remove all elements found in bv
     bit_vector &setminus(const bit_vector &bv);
