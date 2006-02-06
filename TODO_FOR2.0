@@ -1,9 +1,3 @@
-eltcompc1...cc a eliminer de internal_tool
-HCT_triangle_base.cc à ajouter
-HCT_reduced_triangle_base.cc à ajouter
-getfemlist_reduced_HCT.fig et .eps à ajouter
-
-
 Changement à prendre en considérations pour la 2.0 :
 
 1  - Finaliser la parallelisation et la doc dessus. Pour la parallelistation
