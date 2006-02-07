@@ -9,14 +9,11 @@ open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 print TMPF <<
 MU = 1.0;
 LAMBDA = 1.0;
-LX = 1.0;
-LY = 1.0;
-LZ = 1.0;
-MESH_NOISED = 1;
 FT = 0.1;
 SOL_SING = 0;
 REFINE = 0;
-MESH_TYPE = 'GT_PK(2,1)';
+N = 2;
+MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=1';
 MIXED_PRESSURE=0;
 INTEGRATION = 'IM_TRIANGLE(13)';
 NX = 30;

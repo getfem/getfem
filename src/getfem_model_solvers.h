@@ -104,7 +104,7 @@ namespace getfem {
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
 		     gmm::iteration &iter)  const {
-      gmm::ilut_precond<MAT> P(M, 20, 1E-10);
+      gmm::ilut_precond<MAT> P(M, 10, 1E-7);
       gmm::gmres(M, x, b, P, 300, iter);
       if (!iter.converged()) DAL_WARNING2("gmres did not converge!");
     }

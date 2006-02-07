@@ -101,10 +101,21 @@ namespace ftool {
       return 2;
     }
 
-    if (c == '\"' || c == '\'') { // reading a string
+    if (c == '\"') { // reading a string
       get_c__(3, c);
       while (true) {
-	if (c == '\"' || c == '\'' || c == '\n') return 3;
+	if (c == '\"' || c == '\n') return 3;
+	if (c == '\\') { st.push_back(c); get_c__(3, c); }
+	st.push_back(c);
+        get_c__(3, c);
+      }
+      return 3;
+    }
+
+    if (c == '\'') { // reading a string
+      get_c__(3, c);
+      while (true) {
+	if (c == '\'' || c == '\n') return 3;
 	if (c == '\\') { st.push_back(c); get_c__(3, c); }
 	st.push_back(c);
         get_c__(3, c);
@@ -473,6 +484,22 @@ namespace ftool {
     return p.string();
   }
   
+  const std::vector<md_param::param_value> &
+  md_param::array_value(const std::string &name, const char *comment) {
 
-
+    static std::vector<md_param::param_value> empty_array;
+    if (parameters.find(name) == parameters.end())
+      if (comment == 0) return empty_array;
+      else {
+	std::string s;
+	cout << "No parameter " << name << " found, please enter its value\n";
+	cout << comment << " : "; cin >> s;
+	parameters[name] = param_value(s);
+      }
+    param_value &p(parameters[name]);
+    if (p.type_of_param() != ARRAY_VALUE)
+      DAL_THROW(dal::failure_error, "Parameter " << name
+		<< " is not an array");
+    return p.array();
+  }
 }

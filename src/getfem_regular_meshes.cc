@@ -220,4 +220,80 @@ namespace getfem
       }
     }
   }
+  
+    
+
+  void regular_mesh(mesh& m, const std::string &st) {
+    std::stringstream s(st);
+    ftool::md_param PARAM;
+    PARAM.read_param_file(s);
+    
+    std::string GT = PARAM.string_value("GT");
+    if (GT.empty())
+      DAL_THROW(failure_error, "regular mesh : you have at least to "
+		"specify the geometric transformation");
+    bgeot::pgeometric_trans pgt = 
+      bgeot::geometric_trans_descriptor(GT);
+    
+    size_type N = pgt->dim();
+    base_small_vector org(N);
+    
+    const std::vector<ftool::md_param::param_value> &o
+      = PARAM.array_value("ORG");
+    if (o.size() > 0) {
+      if (o.size() != N)
+	DAL_THROW(failure_error,
+		  "ORG parameter should be an array of size " << N);
+      for (size_type i = 0; i < N; ++i) {
+	if (o[i].type_of_param() != ftool::md_param::REAL_VALUE)
+	  DAL_THROW(failure_error, "ORG should be a real array.");
+	org[i] = o[i].real();
+      }
+    }
+    
+    bool noised = (PARAM.int_value("NOISED") != 0);
+    
+    std::vector<size_type> nsubdiv(N);
+    gmm::fill(nsubdiv, 2);
+    const std::vector<ftool::md_param::param_value> &ns
+      = PARAM.array_value("NSUBDIV");
+    if (ns.size() > 0) {
+      if (ns.size() != N)
+	DAL_THROW(failure_error,
+		  "NSUBDIV parameter should be an array of size " << N);
+      for (size_type i = 0; i < N; ++i) {
+	if (ns[i].type_of_param() != ftool::md_param::REAL_VALUE)
+	  DAL_THROW(failure_error, "NSUBDIV should be an integer array.");
+	nsubdiv[i] = size_type(ns[i].real()+0.5);
+      }
+    }
+    
+    base_small_vector sizes(N);
+    gmm::fill(sizes, 1.0);
+    
+    const std::vector<ftool::md_param::param_value> &si
+      = PARAM.array_value("SIZES");
+    if (si.size() > 0) {
+      if (si.size() != N)
+	DAL_THROW(failure_error,
+		  "SIZES parameter should be an array of size " << N);
+      for (size_type i = 0; i < N; ++i) {
+	if (si[i].type_of_param() != ftool::md_param::REAL_VALUE)
+	  DAL_THROW(failure_error, "SIZES should be a real array.");
+	sizes[i] = si[i].real();
+      }
+    }
+    
+    regular_unit_mesh(m, nsubdiv, pgt, noised);
+        
+    base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) M(i,i) = sizes[i];
+    m.transformation(M);
+    m.translation(org);
+    
+  }
+
+
+
+
 }  /* end of namespace getfem.                                             */

@@ -40,6 +40,7 @@
 #include <gmm.h>
 #include <getfem_interpolation.h>
 #include <getfem_error_estimate.h>
+#include <getfem_import.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -222,8 +223,7 @@ struct elastostatic_problem {
  * and integration methods and selects the boundaries.
  */
 void elastostatic_problem::init(void) {
-  std::string MESH_FILE = PARAM.string_value("MESH_FILE");
-  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string MESH_FILE = PARAM.string_value("MESH_FILE", "Mesh file");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
@@ -233,38 +233,24 @@ void elastostatic_problem::init(void) {
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
 #if GETFEM_PARA_LEVEL > 1
-    double t_init=MPI_Wtime();
+  double t_init=MPI_Wtime();
 #endif
 
-  size_type N;
-  if (!MESH_FILE.empty()) {
-    mesh.read_from_file(MESH_FILE);
-    MESH_TYPE = bgeot::name_of_geometric_trans(mesh.trans_of_convex(mesh.convex_index().first_true()));
-    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
-    N = mesh.dim();
-  } else {
-    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
-    
-    /* First step : build the mesh */
-    bgeot::pgeometric_trans pgt = 
-      bgeot::geometric_trans_descriptor(MESH_TYPE);
-    N = pgt->dim();
-    std::vector<size_type> nsubdiv(N);
-    std::fill(nsubdiv.begin(),nsubdiv.end(),
-	      PARAM.int_value("NX", "Nomber of space steps "));
-    getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			      PARAM.int_value("MESH_NOISED") != 0);
-    bgeot::base_matrix M(N,N);
-    for (size_type i=0; i < N; ++i) {
-      static const char *t[] = {"LX","LY","LZ"};
-      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-    }
-    /* scale the unit mesh to [LX,LY,..] and incline it */
-    mesh.transformation(M);
+  size_type NX = PARAM.int_value("NX");
+  size_type N = PARAM.int_value("N");
+  std::stringstream filename; filename << MESH_FILE;
+  if ((MESH_FILE.compare(0,11,"structured:") == 0) && NX > 0) {
+    filename << ";NSUBDIV=[" << NX;
+    for (size_type i = 1; i < N; ++i) filename << "," << NX;
+    filename << "];";
   }
+  getfem::import_mesh(filename.str(), mesh);
+  
+  if (N != mesh.dim())
+    DAL_THROW(getfem::failure_error, "The mesh has not the right dimension");
 
 #if GETFEM_PARA_LEVEL > 1
-    cout<<"temps creation maillage "<< MPI_Wtime()-t_init<<endl;
+  cout<<"temps creation maillage "<< MPI_Wtime()-t_init<<endl;
 #endif
 
   dirichlet_version
@@ -350,9 +336,12 @@ void elastostatic_problem::init(void) {
   
   mf_u.nb_dof(); mf_rhs.nb_dof(); mf_mult.nb_dof();
 
-  cout<<"temps numerotation "<< MPI_Wtime()-t_init<<endl;
+  cout<<"enumerate dof time "<< MPI_Wtime()-t_init<<endl;
+#else
+  double t_init = dal::uclock_sec();
+  mf_u.nb_dof(); mf_rhs.nb_dof(); mf_mult.nb_dof();
+  cout << "enumerate dof time " << dal::uclock_sec() - t_init << endl;
 #endif
-
 }
 
 /* compute the error with respect to the exact solution */

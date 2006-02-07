@@ -4,31 +4,23 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
-LZ = 1.0;		% size in Z.
 % MU = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-N = 3;
+N = 2;
 QUAD = 0;
 FT = 3.0;               % parameter for the exact solution.
-SOL_SING = 1;           % 0 : Regular exact solution.
+SOL_SING = 0;           % 0 : Regular exact solution.
                         % 1 : Singular exact solution in r^{1/2}.
 			% 2 : Singular exact soluiton in r^(1/4}
-REFINE = 1;		% Mesh refinement option
-MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+REFINE = 0;		% Mesh refinement option
 MIXED_PRESSURE=0;       % Mixed version or not.
-NX = 1;                 % space step.
-DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 =
-                        % elimination
-
-%MESH_FILE='../../tests/meshes/disc_P2_h2.mesh';
-%MESH_FILE='toto.mesh';
+NX = 20;                % space step.
+DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 if (N == 1)
-  MESH_TYPE = 'GT_PK(1,1)';       % segments
+  MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0';
   FEM_TYPE = 'FEM_PK(1,2)';       % P1 for segments
 %  FEM_TYPE = 'FEM_HERMITE(1)'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
   INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on segments
@@ -38,7 +30,8 @@ if (N == 1)
 end
 
 if (N == 2 && ~QUAD)
-  MESH_TYPE = 'GT_PK(2,1)';        % triangles
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0';
+  % MESH_FILE='../../tests/meshes/disc_P2_h2.mesh';
   FEM_TYPE = 'FEM_PK(2,1)';        % P1 for triangles
   INTEGRATION = 'IM_TRIANGLE(6)';  % quadrature rule for polynomials up
                                    % to degree 13 on triangles
@@ -67,11 +60,8 @@ if (N == 2 && ~QUAD)
 end
 
 if (N == 2 && QUAD)
-  if (MESH_NOISED)
-    MESH_TYPE = 'GT_QK(2,1)';       % quadrilaterons
-  else
-    MESH_TYPE = 'GT_LINEAR_QK(2)';  % quadrilaterons (linear transformation)
-  end
+  MESH_FILE='structured:GT="GT_LINEAR_QK(2,1)";SIZES=[1,1];NOISED=0';
+  %  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1';
   FEM_TYPE = 'FEM_QK(2,2)';         % Q1 for quadrilaterons
   FEM_TYPE = 'FEM_INCOMPLETE_Q2';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
@@ -81,7 +71,7 @@ if (N == 2 && QUAD)
 end
 
 if (N == 3 && ~QUAD)
-  MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
+  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NOISED=0';
   FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
   if 0   % test with hermite element
     FEM_TYPE = 'FEM_HERMITE(3)'; DATA_FEM_TYPE = 'FEM_PK(3,3)';
@@ -95,11 +85,8 @@ if (N == 3 && ~QUAD)
 end
 
 if (N == 3 && QUAD)
-  if (MESH_NOISED)
-    MESH_TYPE = 'GT_QK(3,1)';       % hexahedrons
-  else
-    MESH_TYPE = 'GT_LINEAR_QK(3)';  % hexahedrons (linear transformation)
-  end
+  MESH_FILE='structured:GT="GT_LINEAR_QK(3,1)";SIZES=[1,1,1];NOISED=0';
+  % MESH_FILE='structured:GT="GT_QK(3,1)";SIZES=[1,1,1];NOISED=1';
   FEM_TYPE = 'FEM_QK(3,1)';         % Q1 for hexahedrons
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)';
   if (MIXED_PRESSURE)
@@ -112,7 +99,7 @@ if (N > 3)
   error('Correct the parameter file for N > 3');
 end
 
-RESIDUAL = 1E-9;     	% residual for conjugate gradient.
+RESIDUAL = 1E-18;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'elastostatic';     % Root of data files.

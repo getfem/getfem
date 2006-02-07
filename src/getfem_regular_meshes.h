@@ -112,6 +112,22 @@ namespace getfem
    */
   void regular_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, 
 			 bgeot::pgeometric_trans pgt, bool noised = false);
+
+  /**
+     Build a regular mesh parametrized by the string st.
+     The format of st is the following
+     std::string st("GT='GT_PK(2,1)'; NSUBDIV=[5,5]; ORG=[0,0]; SIZES=[1,1]; NOISED=0");
+     where GT is the geometric transformation, NSUBDIV a vector of the number
+     of subdivisions in each coordinate (default value 2), ORG is the origin
+     of the mesh (default value [0,0,...]), SIZES is a vector of the sizes
+     in each direction (default value [1, 1, ...] and if NOISED=1 the nodes
+     of the interior of the mesh are randomly "shaken"(default value NOISED=0).
+     All the parameters are optional but GT.
+
+     @param m the output mesh.    
+  */
+  void regular_mesh(mesh& m, const std::string &st);
+
 }  /* end of namespace getfem.                                             */
 
 

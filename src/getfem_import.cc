@@ -33,6 +33,7 @@
 
 #include <getfem_mesh.h>
 #include <getfem_import.h>
+#include <getfem_regular_meshes.h>
 
 namespace getfem {
 
@@ -377,9 +378,14 @@ namespace getfem {
     }
   }
 
-  void import_mesh(const std::string& filename, const std::string& format, mesh& m) {
+  void import_mesh(const std::string& filename, const std::string& format,
+		   mesh& m) {
     m.clear();
     try {
+
+      if (ftool::casecmp(format,"structured")==0)
+	{ regular_mesh(m, filename); return; }
+      
       std::ifstream f(filename.c_str());
       if (!f.good()) DAL_THROW(failure_error, "can't open file " << filename);
       /* throw exceptions when an error occurs */
@@ -393,7 +399,8 @@ namespace getfem {
     }
     catch (std::ios_base::failure& exc) {
       m.clear();
-      DAL_THROW(dal::failure_error, "error while importing " << format << " mesh file \"" << filename << "\" : " << exc.what());
+      DAL_THROW(dal::failure_error, "error while importing " << format
+		<< " mesh file \"" << filename << "\" : " << exc.what());
     }
   }
 
@@ -420,6 +427,8 @@ namespace getfem {
       getfem::import_mesh(filename.substr(7), "am_fmt", msh);
     else if (filename.compare(0,10,"emc2_mesh:") == 0)
       getfem::import_mesh(filename.substr(10), "emc2_mesh", msh);
+    else if (filename.compare(0,11,"structured:") == 0)
+      getfem::import_mesh(filename.substr(11), "structured", msh);
     else msh.read_from_file(filename);
   }
 
