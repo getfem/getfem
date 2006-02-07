@@ -16,9 +16,7 @@ Changement à prendre en considérations pour la 2.0 :
 5  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
      avantages de chacune.
 
-6  - Interfacer le maillage régulier avec read_from_file de mesh ?
-
-7  - Améliorer la detection des bords pour qu'elle puisse optionellement
+6  - Améliorer la detection des bords pour qu'elle puisse optionellement
      faire la différence avec les non conformités intérieures d'un maillage.
      Pouvoir aussi détecter ces non conformités pour appliquer une condition
      de raccord. offrir des service standard, genre detection de bords par
