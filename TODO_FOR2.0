@@ -5,7 +5,7 @@ Changement à prendre en considérations pour la 2.0 :
      de Dirichlet_null_space et prévoir qlq chose pour que l'on puisse utiliser
      les matrices distribuées dans les programmes de tests. Il faut aussi
      paralleliser l'interpolation (san affecter la sauvegarde fait uniquement
-     sur le processeur maitre).
+     sur le processeur maitre). Gestion dans le ./configure
 
 2  - Documenter le raffinement de maillage.
 
@@ -19,8 +19,8 @@ Changement à prendre en considérations pour la 2.0 :
 6  - Interfacer le maillage régulier avec read_from_file de mesh ?
 
 7  - Améliorer la detection des bords pour qu'elle puisse optionellement
-     faire la différence avec les non conformité intérieure d'un maillage.
-     Pouvoir aussi détecter ces non conformité pour appliquer une condition
+     faire la différence avec les non conformités intérieures d'un maillage.
+     Pouvoir aussi détecter ces non conformités pour appliquer une condition
      de raccord. offrir des service standard, genre detection de bords par
      rapport à la normale au bord.
 
@@ -28,13 +28,11 @@ Questions en suspend :
 
 1  - Faut-il revoir la gestion des erreurs (p.ex un seul type d'erreurs) ?
 
-2  - Ajouter une option dans le .configure pour la version parallèle ?
-
-3  - Reregarder la description des dof : trop complexe car on ne fait pas de
+2  - Reregarder la description des dof : trop complexe car on ne fait pas de
 	produit tensoriels de ddl complexes ...
 
-4  - Revoir la logique de l'utilisation des type size_type, scalar_type,
+3  - Revoir la logique de l'utilisation des type size_type, scalar_type,
      opt_long_scalar_type ...
 
-5  - Laisser tomber les méthodes d'intégration exactes ?
+4  - Laisser tomber les méthodes d'intégration exactes ?
 
