@@ -596,7 +596,7 @@ namespace getfem {
   template <typename VEC> 
   class mdbrick_parameter : public mdbrick_abstract_parameter {
     typedef typename gmm::linalg_traits<VEC>::value_type T;
-    VEC value_;
+    mutable VEC value_;
 
     template <typename W> void set_diagonal_(const W &w, gmm::linalg_false) {
       size_type n = fdim() == 2 ? fsizes()[0] : 1;
@@ -657,7 +657,7 @@ namespace getfem {
 		      mdbrick_abstract_common_base *b,
 		      size_type N=0, size_type M=0) :
       mdbrick_abstract_parameter(name__, classical_mesh_fem(mesh, 0),b,N,M) { }
-    void realloc() { gmm::resize(value_, fsize()*mf().nb_dof()); }
+    void realloc() const { gmm::resize(value_, fsize()*mf().nb_dof()); }
     template <typename W> void set(const mesh_fem &mf_, const W &w) {
       this->set_(mf_, w, typename gmm::is_gmm_interfaced<W>::result());
     }
@@ -693,9 +693,10 @@ namespace getfem {
       if (badsize) {
 	realloc();
 	size_type n = fsize();
+	std::vector<T> v(n);
+	gmm::copy(gmm::sub_vector(value_, gmm::sub_interval(0, n)), v);
 	for (size_type i=1; i < mf().nb_dof(); ++i)
-	  gmm::copy(gmm::sub_vector(value_, gmm::sub_interval(0, n)),
-		    gmm::sub_vector(value_, gmm::sub_interval(i*n, n)));
+	  gmm::copy(v, gmm::sub_vector(value_, gmm::sub_interval(i*n, n)));
       }
     }
   };

@@ -381,7 +381,6 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 
 bool elastostatic_problem::solve(plain_vector &U) {
 
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
@@ -400,10 +399,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
   }
   getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure) pINCOMP = INCOMP.get(); else pINCOMP = &ELAS;
-
-  // Defining the volumic source term.
-  plain_vector F(nb_dof_rhs * N);
-  getfem::interpolation_function(mf_rhs, F, sol_f);
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP);
@@ -411,18 +406,13 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Neumann condition brick.
   getfem::mdbrick_normal_source_term<>
     NEUMANN(VOL_F, NEUMANN_BOUNDARY_NUM);
-  
-  // Defining the Dirichlet condition value.
-  gmm::resize(F, nb_dof_rhs * N);
-  getfem::interpolation_function(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
 					  mf_mult);
   final_model.set_constraints_type(dirichlet_version);
-  final_model.rhs().set(mf_rhs, F);
+ 
 
-  // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residual, 1, 40000);
@@ -431,25 +421,29 @@ bool elastostatic_problem::solve(plain_vector &U) {
 #endif
   dal::bit_vector cvref;
 
-  do {
+  do { // solve with optional refinement
 
     // Defining the volumic source term.
+    size_type nb_dof_rhs = mf_rhs.nb_dof();
     plain_vector F(nb_dof_rhs * N);
     getfem::interpolation_function(mf_rhs, F, sol_f);
     VOL_F.source_term().set(mf_rhs, F);
 
+    // Defining the Neumann source term.
     gmm::resize(F, nb_dof_rhs * N * N);
     getfem::interpolation_function(mf_rhs, F, sol_sigma, NEUMANN_BOUNDARY_NUM);
-    NEUMANN.source_term().set(mf_rhs, F);
+    NEUMANN.normal_source_term().set(mf_rhs, F);
 
-
-
+    // Defining the Dirichlet condition value.
+    gmm::resize(F, nb_dof_rhs * N);
+    getfem::interpolation_function(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
+    final_model.rhs().set(mf_rhs, F);
 
     iter.init();
     getfem::standard_solve(MS, final_model, iter);
+    gmm::resize(U, mf_u.nb_dof());
     gmm::copy(ELAS.get_solution(MS), U);
 
-    
     if (refine) {
       plain_vector ERR(mesh.convex_index().last_true()+1);
       getfem::error_estimate(mim, mf_u, U, ERR, mesh.convex_index());
@@ -512,7 +506,7 @@ int main(int argc, char *argv[]) {
     if (getfem::MPI_IS_MASTER())
       p.mesh.write_to_file(p.datafilename + ".mesh");
 
-    plain_vector U(p.mf_u.nb_dof());
+    plain_vector U;
 
 #if GETFEM_PARA_LEVEL > 1
     t_ref=MPI_Wtime();
