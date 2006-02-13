@@ -297,27 +297,9 @@ void navier_stokes_problem::init(void) {
   std::string meshname
     (PARAM.string_value("MESHNAME", "Nom du fichier de maillage"));
 
-  /* First step : build the mesh */
-  if (meshname.compare(0,8, "regular:")==0) {
-    std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-    bgeot::pgeometric_trans pgt = 
-      bgeot::geometric_trans_descriptor(MESH_TYPE);
-    N = pgt->dim();
-    std::vector<size_type> nsubdiv(N);
-    std::fill(nsubdiv.begin(),nsubdiv.end(),
-	      PARAM.int_value("NX", "Nomber of space steps "));
-    getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			      PARAM.int_value("MESH_NOISED") != 0);
-    bgeot::base_matrix M(N,N);
-    for (size_type i=0; i < N; ++i) {
-      static const char *t[] = {"LX","LY","LZ"};
-      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-    }
-    mesh.transformation(M);
-  } else {
-    getfem::import_mesh(meshname, mesh);
-    N = mesh.dim();
-  }
+  getfem::import_mesh(meshname, mesh);
+  N = mesh.dim();
+
   mesh.bounding_box(BBmin, BBmax);
   cout << "mesh bounding box: " << BBmin << " ... " << BBmax << "\n";
   datafilename = PARAM.string_value("ROOTFILENAME","Data files base name.");

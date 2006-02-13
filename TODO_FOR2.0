@@ -9,28 +9,9 @@ Changement à prendre en considérations pour la 2.0 :
 
 2  - Documenter le raffinement de maillage.
 
-3  - Brique generalized Dirichlet : la faire deriver de la brique constraints.
+3  - Doc sur Xfem
 
-4  - Doc sur Xfem
-
-5  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
+4  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
      avantages de chacune.
 
-6  - Améliorer la detection des bords pour qu'elle puisse optionellement
-     faire la différence avec les non conformités intérieures d'un maillage.
-     Pouvoir aussi détecter ces non conformités pour appliquer une condition
-     de raccord. offrir des service standard, genre detection de bords par
-     rapport à la normale au bord.
-
-Questions en suspend :
-
-1  - Faut-il revoir la gestion des erreurs (p.ex un seul type d'erreurs) ?
-
-2  - Reregarder la description des dof : trop complexe car on ne fait pas de
-	produit tensoriels de ddl complexes ...
-
-3  - Revoir la logique de l'utilisation des type size_type, scalar_type,
-     opt_long_scalar_type ...
-
-4  - Laisser tomber les méthodes d'intégration exactes ?
-
+5  - Faire marcher tout les tests de config/

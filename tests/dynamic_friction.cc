@@ -92,36 +92,17 @@ struct friction_problem {
  * and integration methods and selects the boundaries.
  */
 void friction_problem::init(void) {
-  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   std::string meshname
     (PARAM.string_value("MESHNAME", "Nom du fichier de maillage"));
 
-  /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
-    bgeot::geometric_trans_descriptor(MESH_TYPE);
-  N = pgt->dim();
-  if (meshname.compare(0,5, "splx:")==0) {
-    std::vector<size_type> nsubdiv(N);
-    std::fill(nsubdiv.begin(),nsubdiv.end(),
-	      PARAM.int_value("NX", "Nomber of space steps "));
-    getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			      PARAM.int_value("MESH_NOISED") != 0);
-  
-    bgeot::base_matrix M(N,N);
-    for (size_type i=0; i < N; ++i) {
-      static const char *t[] = {"LX","LY","LZ"};
-      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-    }
-    mesh.transformation(M);
-  }
-  else getfem::import_mesh(meshname, mesh);
+  getfem::import_mesh(meshname, mesh);
+  N = mesh.dim();
   mesh.optimize_structure();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");

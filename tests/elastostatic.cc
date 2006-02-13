@@ -432,15 +432,47 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residual, 1, 40000);
 #if GETFEM_PARA_LEVEL > 1
-    double t_init=MPI_Wtime();
+  double t_init=MPI_Wtime();
 #endif
-  getfem::standard_solve(MS, final_model, iter);
+  dal::bit_vector cvref;
+
+  do {
+    iter.init();
+    getfem::standard_solve(MS, final_model, iter);
+    gmm::copy(ELAS.get_solution(MS), U);
+
+    
+    if (refine) {
+      plain_vector ERR(mesh.convex_index().last_true()+1);
+      getfem::error_estimate(mim, mf_u, U, ERR, mesh.convex_index());
+      
+      cout << "max = " << gmm::vect_norminf(ERR) << endl;
+      // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
+      scalar_type threshold = 0.01, min_ = 1e18;
+      cvref.clear();
+      for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+	if (ERR[i] > threshold) cvref.add(i);
+	min_ = std::min(min_, ERR[i]);
+      }
+      cout << "min = " << min_ << endl;
+      cout << "Nb elt to be refined : " << cvref.card() << endl;
+      // cvref.clear(); cvref.add(0);
+      mesh.Bank_refine(cvref);
+
+      if (getfem::MPI_IS_MASTER()) {
+	mesh.write_to_file(datafilename + ".mesh");
+	getfem::stored_mesh_slice sl;
+	sl.build(mesh, getfem::slicer_explode(0.8), 1);
+	getfem::vtk_export exp2("totoq.vtk");
+      }
+    }
+
+  } while (refine && cvref.card() > 0);
 
 #if GETFEM_PARA_LEVEL > 1
     cout<<"temps standard solve "<< MPI_Wtime()-t_init<<endl;
 #endif
-  // Solution extraction
-  gmm::copy(ELAS.get_solution(MS), U);
+ 
 
   return (iter.converged());
 }
@@ -471,10 +503,6 @@ int main(int argc, char *argv[]) {
 #endif
     if (getfem::MPI_IS_MASTER())
       p.mesh.write_to_file(p.datafilename + ".mesh");
-
-    dal::bit_vector cvref;
-
-    do {
 
     plain_vector U(p.mf_u.nb_dof());
 
@@ -507,32 +535,6 @@ int main(int argc, char *argv[]) {
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
 
-    if (p.refine) {
-      plain_vector ERR(p.mesh.convex_index().last_true()+1);
-      getfem::error_estimate(p.mim, p.mf_u, U, ERR, p.mesh.convex_index());
-      
-      cout << "max = " << gmm::vect_norminf(ERR) << endl;
-      // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
-      scalar_type threshold = 0.01, min_ = 1e18;
-      cvref.clear();
-      for (dal::bv_visitor i(p.mesh.convex_index()); !i.finished(); ++i) {
-	if (ERR[i] > threshold) cvref.add(i);
-	min_ = std::min(min_, ERR[i]);
-      }
-      cout << "min = " << min_ << endl;
-      cout << "Nb elt to be refined : " << cvref.card() << endl;
-      // cvref.clear(); cvref.add(0);
-      p.mesh.Bank_refine(cvref);
-
-      if (getfem::MPI_IS_MASTER()) {
-	p.mesh.write_to_file(p.datafilename + ".mesh");
-	getfem::stored_mesh_slice sl;
-	sl.build(p.mesh, getfem::slicer_explode(0.8), 1);
-	getfem::vtk_export exp2("totoq.vtk");
-      }
-    }
-
-    } while (p.refine && cvref.card() > 0);
   }
   DAL_STANDARD_CATCH_ERROR;
 

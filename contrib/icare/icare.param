@@ -1,35 +1,20 @@
+% -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program stokes                                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%%%%% mesh name :
-MESHNAME = 'toto.mesh'; % name of the mesh file
-%MESHNAME = 'gmsh:navier_stokes_cylindre.msh'; % name of the mesh file
-%MESHNAME = 'regular:'
-
-%%%%% pde parameters :	        				      %%%%%
-LX = 1.;		% size in X.
-LY = 1.;	        % size in Y.
-LZ = 1.0;		% size in Z.
-NU = .001;	        % Viscosity coefficient. (NU = 1 / Re)
-
-%%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(2,1)';       % linear triangles
-%MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
-%MESH_TYPE = 'GT_PRISM(3,1)';   % 3D prisms
-
-
+N = 2;
+QUAD = 0;
+NU = .001;      % Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0; 	%rate of rotation of the cylinder
 
-NX = 3;	% space step.
-DT = .25;     % Time step
+DT = .25;       % Time step
 T = 500;        % Final time
-MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
+
 NOISY = 1;
 
-OPTION = 1; % 0 = Stokes avec schéma de splitting 1
-	    % 1 = Navier Stokes avec schéma de splitting 1
+OPTION = 1; % 0 = Stokes avec sch%/1€Œiso8859-15éma de splitting 1
+	    % 1 = Navier Stokes avec sch%/1€Œiso8859-15éma de splitting 1
 	    % 2 = Navier Stokes with energy conserving midpoint scheme
 	    % 3 = Navier Stokes with prediction- correction scheme
 
@@ -37,23 +22,33 @@ PROBLEM = 3  % 1 = Reference solution for Stokes
              % 2 = Reference solution for Navier Stokes
 	     % 3 = flow around a cylinder (centered at 0)
 
-%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
-FEM_TYPE = 'FEM_PK(2,1)';  % PK method
-%FEM_TYPE = 'FEM_QK(2,2)';  % QK method
 
-FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
-%FEM_TYPE_P = 'FEM_QK(2,2)';  % Q1 for quadrangles
-% FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
+if (N == 2 && ~QUAD)
+  MESHNAME = 'toto.mesh'; % name of the mesh file
+ %MESHNAME = 'gmsh:navier_stokes_cylindre.msh'; % name of the mesh file
+ %MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
+  FEM_TYPE = 'FEM_PK(2,1)';  % PK method
+  FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
+  DATA_FEM_TYPE = 'FEM_PK(2,1)';
+  INTEGRATION = 'IM_TRIANGLE(6)'; 
+end
 
-% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
-DATA_FEM_TYPE = 'FEM_PK(2,1)';
+if (N == 2 && QUAD)
+  MESHNAME = 'structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
+  FEM_TYPE = 'FEM_QK(2,2)';  % QK method
+  FEM_TYPE_P = 'FEM_QK(2,1)';
+  DATA_FEM_TYPE = 'FEM_QK(2,1)';
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; 
+end
 
-INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
-                                  % to degree 6 on triangles
-% INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
-                               % to degree 6 on tetra
-% INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; % Product of two
-                                         % IM_GAUSS1D(10) (for quadrangles)
+if (N == 3)
+  MESHNAME = 'structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NSUBDIV=[5,5,5]';
+  FEM_TYPE = 'FEM_PK(3,2)';  % PK method
+  FEM_TYPE_P = 'FEM_PK(3,1)';
+  DATA_FEM_TYPE = 'FEM_PK(3,1)'; 
+  INTEGRATION = 'IM_TETRAHEDRON(6)'; 
+end
+
 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 

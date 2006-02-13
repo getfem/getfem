@@ -1,34 +1,45 @@
 
 
-http://www.gnu.org/directory/science/visual/xd3d.html <- ajouter export
+- http://www.gnu.org/directory/science/visual/xd3d.html <- ajouter export
 
 
-methodes d'integration + FEM sur les points de Fekete (qui maximisent vandermonde, equivalents des points de gauss-lobatto sur les simplexes - refs:
+- methodes d'integration + FEM sur les points de Fekete (qui maximisent vandermonde, equivalents des points de gauss-lobatto sur les simplexes - refs:
 * http://citeseer.nj.nec.com/taylor98fekete.html (avec une liste de pts)
 * http://math1.unice.fr/~rpas/jcp04.pdf
 * http://epubs.siam.org/sam-bin/dbq/article/33724
 
 
-faire la doc pour les mesh_slice 
+- faire la doc pour les mesh_slice 
 faire la doc pour vtk_export -- permettre le 'merge' des points de slices
 
 
-getfem_mesh::clear() ne libere pas la mémoire
+- getfem_mesh::clear() ne libere pas la mémoire
 
 
-mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric_trans::transform)
+- mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric_trans::transform)
 
 
-ajouter à la faq de gmm: "Q: est-ce que gmm et getfem resteront deux packages separés"
+- tester les geotransinv de R^N dans R^P... 
 
 
-tester les geotransinv de R^N dans R^P... 
+- permet de choisir le chemin d'install de qhull dans le configure.in (probleme de H. Proudhon)
 
 
-permet de choisir le chemin d'install de qhull dans le configure.in (probleme de H. Proudhon)
-
-
-debugger l'assemblage avec reduction dans le comp contre des donnees:
+- debugger l'assemblage avec reduction dans le comp contre des donnees:
 ( delaminated_crack: ../../src/bgeot_sparse_tensors.cc:699: void bgeot::tensor_reduction::pre_prepare(): Assertion `it->ridx.size() == it->tr().ndim()' failed. )
 
-separer interface et implementation dans gmm
+- separer interface et implementation dans gmm
+
+
+- Detection des non conformité internes d'un maillage
+
+- Dans getfem::mesh : Faire que neighbour_of_convex cherche les voisins par
+  rapports uniquement aux sommets (et non tous les points de la face de la
+  transformation géométrique).
+
+- Revoir la logique de l'utilisation des type size_type, scalar_type,
+     opt_long_scalar_type ...
+
+- Revoir la description des dofs. Cette reflexion pourrait être faite en
+  parallele avec le calcul de  produit tensoriel d'éléments non-polynomiaux
+  et non tau-équivalents.

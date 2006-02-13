@@ -607,8 +607,10 @@ namespace gmm {
     
     double residual = iter.get_resmax();
 
-    default_newton_line_search internal_ls, external_ls(size_t(-1), 5.0/3.0,
-							1.0/1000.0, 3.0/5.0);
+    default_newton_line_search internal_ls;
+    default_newton_line_search external_ls(size_t(-1), 5.0/3, 1.0/1000, 3.0/5);
+
+    // systematic_newton_line_search external_ls(size_t(-1), 1.0/10000.0, 3.0/100.0);
 
     typename chgt_precond::APrecond PP = chgt_precond::transform(P);
     iter.set_rhsnorm(mtype(1));
