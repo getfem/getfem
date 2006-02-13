@@ -383,8 +383,8 @@ namespace getfem {
     (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
      const VECTOR &M__, const VECTOR &divM__, size_type bound,
      size_type num_fem_=0)
-      : M_("source_term",mf_data_, this),
-	divM_("div source_term",mf_data_, this),
+      : M_("M",mf_data_, this),
+	divM_("divM",mf_data_, this),
 	boundary(bound), num_fem(num_fem_) {
       this->add_sub_brick(problem);
       if (bound != size_type(-1))

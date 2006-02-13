@@ -113,6 +113,7 @@ include_HEADERS =                          \
 	gmm_solver_bicgstab.h              \
 	gmm_solver_Schwarz_additive.h      \
 	gmm_solver_bfgs.h                  \
+	gmm_solver_Newton.h		   \
 	gmm_domain_decomp.h                \
 	gmm_superlu_interface.h            \
 	gmm_precond.h                      \

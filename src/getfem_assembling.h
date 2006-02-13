@@ -1006,11 +1006,12 @@ namespace getfem {
 
 
     /**
-     Assembly of normal part Dirichlet constraints u(x)n = r(x) (where n is
-     the outward unit normal) in a weak form
+     Assembly of Dirichlet constraints on the normal component of a
+     vector field: u(x)n = r(x) (where n is the outward unit normal)
+     in a weak form
      @f[ \int_{\Gamma} (u(x)n)v(x) = \int_{\Gamma} r(x)v(x) \forall v@f],
-     where @f$ v @f$ is in
-     the space of multipliers corresponding to mf_mult.
+     where @f$ v @f$ is in the space of multipliers corresponding to
+     mf_mult.
 
      size(r_data) = Q   * nb_dof(mf_rh);
 
@@ -1022,7 +1023,7 @@ namespace getfem {
   */
 
   template<typename MAT, typename VECT1, typename VECT2>
-  void asm_normal_part_dirichlet_constraints
+  void asm_normal_component_dirichlet_constraints
   (MAT &H, VECT1 &R, const mesh_im &mim, const mesh_fem &mf_u,
    const mesh_fem &mf_mult, const mesh_fem &mf_r,
    const VECT2 &r_data, const mesh_region &region,
@@ -1032,11 +1033,13 @@ namespace getfem {
 
     
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_r.get_qdim() != 1 || mf_mult.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid mesh fem (Qdim=1 required)");
+    if (mf_r.get_qdim() != 1)
+      DAL_THROW(invalid_argument, 
+		"invalid mesh fem for the normal component Dirichlet "
+		"constraint (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       generic_assembly assem;  
-      assem.set("M(#1,#2)+=comp(vBase(#1).Normal().Base(#2))(:,i,i,:);");
+      assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
       assem.push_mi(mim);
       assem.push_mf(mf_u);
       assem.push_mf(mf_mult);

@@ -15,3 +15,5 @@ Changement à prendre en considérations pour la 2.0 :
      avantages de chacune.
 
 5  - Faire marcher tout les tests de config/
+
+6  - Tester les éléments Hdiv et Hrot.

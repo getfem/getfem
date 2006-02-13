@@ -525,6 +525,7 @@ namespace getfem {
     const mesh_fem *pmf_;
     bgeot::multi_index sizes_;
     bool initialized;
+    bool isconstant;
     std::string name_;
     enum { MODIFIED, UPTODATE } state;
 
@@ -533,7 +534,7 @@ namespace getfem {
   public:
     const std::string name() const { return name_; }
     const mesh_fem &mf() const { 
-      if (!pmf_) DAL_THROW(dal::failure_error, "no mesh fem assigned");
+      if (!pmf_) DAL_THROW(dal::failure_error, "no mesh fem assigned to the parameter " << name());
       return *pmf_; 
     }
     const bgeot::multi_index& fsizes() const { return sizes_; }
@@ -557,7 +558,7 @@ namespace getfem {
 			       size_type P=0, size_type Q=0) {
       brick_ = b; pmf_ = &mf_; name_ = name__; b->add_dependency(*pmf_);
       reshape(N,M,P,Q);
-      state = MODIFIED; initialized = false;
+      state = MODIFIED; initialized = false; isconstant = false;
       b->parameters[name()] = this;
     }
     void change_mf(const mesh_fem &mf_) {
@@ -585,6 +586,10 @@ namespace getfem {
     mdbrick_abstract_common_base &brick() { return *brick_; }
     bool is_modified() const { return state != UPTODATE; }
     bool is_initialized() const { return initialized; }
+    bool is_constant() const { return isconstant; }
+    bool is_using_default_mesh_fem() const { 
+      return pmf_ == &classical_mesh_fem(pmf_->linked_mesh(),0);
+    }
     void set_uptodate(void) { state = UPTODATE; }
   };
 
@@ -614,7 +619,8 @@ namespace getfem {
       }
       update_notify();
     }
-    void set_(const mesh_fem &mf_, const T& v, gmm::linalg_false) { 
+    void set_(const mesh_fem &mf_, const T& v, gmm::linalg_false) {
+      isconstant = true;
       change_mf(mf_); realloc(); std::fill(value_.begin(), value_.end(), v);
       update_notify();
     }
@@ -622,11 +628,15 @@ namespace getfem {
     void set_(const mesh_fem &mf_, const VEC2& v, gmm::linalg_true) {
       change_mf(mf_); realloc();
       size_type n = fsize();
-      if (gmm::vect_size(v) == n*mf().nb_dof())
+      if (gmm::vect_size(v) == n*mf().nb_dof()) {
 	gmm::copy(v, value_);
-      else if (gmm::vect_size(v) == n) 
-	for (unsigned i=0; i < mf().nb_dof(); ++i)
+	isconstant = false;
+      }
+      else if (gmm::vect_size(v) == n) {
+	for (size_type i=0; i < mf().nb_dof(); ++i)
 	  gmm::copy(v, gmm::sub_vector(value_, gmm::sub_interval(i*n, n)));
+	isconstant = true;
+      }
       else DAL_THROW(dal::failure_error,"inconsistent param value for '" 
 		     << name() << "', expected a "
 		     << fsizes() << "x" << mf().nb_dof() 
@@ -668,13 +678,25 @@ namespace getfem {
     }
     const VEC &get() const { check(); return value_; }
     virtual void check() const {
-      if (gmm::vect_size(value_) != mf().nb_dof() * fsize())
+
+      bool badsize = gmm::vect_size(value_) != mf().nb_dof() * fsize();
+
+      if (!is_initialized())
+	DAL_THROW(dal::failure_error, "Parameter " << name() << " is not initialized");
+      if (badsize && (!is_constant() || gmm::vect_size(value_) == 0))
 	DAL_THROW(dal::failure_error, 
 		  "invalid dimension for brick parameter '" << name() << 
 		  "', expected an array of size " << 
 		  mf().nb_dof()*fsize() << "=" << fsize() << "x" << 
 		  mf().nb_dof() << ", got an array of size " << 
 		  gmm::vect_size(value_));
+      if (badsize) {
+	realloc();
+	size_type n = fsize();
+	for (size_type i=1; i < mf().nb_dof(); ++i)
+	  gmm::copy(gmm::sub_vector(value_, gmm::sub_interval(0, n)),
+		    gmm::sub_vector(value_, gmm::sub_interval(i*n, n)));
+      }
     }
   };
 
@@ -1014,7 +1036,7 @@ namespace getfem {
     mdbrick_generic_elliptic(const mesh_im &mim_,
 			     const mesh_fem &mf_u_, value_type k = 1.)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_GENERIC_ELLIPTIC),
-	coeff_("coeff", mf_u_.linked_mesh(), this) {
+	coeff_("A", mf_u_.linked_mesh(), this) {
       coeff_.set(k);
     }
   };
@@ -1113,6 +1135,23 @@ namespace getfem {
       B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
       if (gmm::vect_size(B__)) B_.set(B__);
     }
+
+    /** Constructor not defining the rhs
+	@param problem the sub-problem to which this brick applies.
+	@param bound the mesh boundary number on which the source term is applied 
+	(by default, it is a volumic source term as the whole mesh is taken).
+	@param num_fem_ the mesh_fem number on which this brick is is applied.
+    */
+    mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
+			size_type bound = size_type(-1), size_type num_fem_=0)
+      : B_("source_term", this), boundary(bound),
+	num_fem(num_fem_), have_auxF(false) {
+      this->add_sub_brick(problem);
+      if (bound != size_type(-1))
+	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
+      this->force_update();
+      B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
+    }
   };
 
   /* ******************************************************************** */
@@ -1197,6 +1236,22 @@ namespace getfem {
       this->force_update();
       B_.reshape(mf_u().get_qdim(),mf_u().linked_mesh().dim());
       if (gmm::vect_size(B__)) B_.set(B__);
+    }
+
+    /** Constructor not defining the rhs
+	@param problem the sub-problem to which this brick applies.
+	@param bound the mesh boundary number on which the source term is applied.
+	@param num_fem_ the mesh_fem number on which this brick is is applied.
+    */
+    mdbrick_normal_source_term(mdbrick_abstract<MODEL_STATE> &problem,
+			       size_type bound, size_type num_fem_=0)
+      : B_("normal_source_term", this), boundary(bound),
+	num_fem(num_fem_) {
+      this->add_sub_brick(problem);
+      if (bound != size_type(-1))
+	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
+      this->force_update();
+      B_.reshape(mf_u().get_qdim(),mf_u().linked_mesh().dim());
     }
   };
 
@@ -1586,8 +1641,17 @@ namespace getfem {
     }
 
     /** Set the method to take into account the constraints :
-     *	AUGMENTED_CONSTRAINTS, PENALIZED_CONSTRAINTS or ELIMINATED_CONSTRAINTS.
-     */
+     	AUGMENTED_CONSTRAINTS, PENALIZED_CONSTRAINTS or
+     	ELIMINATED_CONSTRAINTS.
+	
+       Remark: the penalization is often a quick and safe choice,
+       however you should be aware that the stop criterion of the
+       iterative solvers should be lowered accordingly (i.e. for a
+       penalization parameter of 1e9, the target residu should be
+       multiplied by 1e-9) , or the iterative method may consider it
+       has converged to the solution while it has just converged on
+       the subspace of penalized constraints!
+    */
     void set_constraints_type(constraints_type v) {
       if (co_how != v) {
 	co_how = v; 
@@ -1724,7 +1788,8 @@ namespace getfem {
 		      size_type bound,
 		      const mesh_fem &mf_mult_ = dummy_mesh_fem(), 
 		      size_type num_fem_=0)
-      : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), R_("R", this),
+      : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), 
+	R_("R", this),
 	boundary(bound) {
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
       if (mf_mult->get_qdim() != mf_u().get_qdim()) 
@@ -1742,13 +1807,13 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Normal part Dirichlet condition bricks.                   */
+  /*		normal component Dirichlet condition bricks.                   */
   /* ******************************************************************** */
 
-  /** Normal part Dirichlet condition brick.
+  /** normal component Dirichlet condition brick.
    *
    *  This brick represent a Dirichlet condition on a part of a boundary for
-   *  the normal part of a vectorial unknown.
+   *  the normal component of a vectorial unknown.
    *  The general form for this Dirichlet condition is @f[ \int (u(x).n)v(x)
    *  = \int r(x)v(x) \forall v@f] where @f$ r(x) @f$ is the scalar
    *  right hand side for the Dirichlet condition (0 for
@@ -1763,7 +1828,7 @@ namespace getfem {
    *  @ingroup bricks
    */
   template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_normal_part_Dirichlet
+  class mdbrick_normal_component_Dirichlet
     : public mdbrick_constraint<MODEL_STATE>  {
     
     TYPEDEF_MODEL_STATE_TYPES;
@@ -1783,10 +1848,10 @@ namespace getfem {
       gmm::row_matrix<gmm::rsvector<value_type> > M(ndm, ndu);
       VECTOR V(ndm);
       if (this->co_how != AUGMENTED_CONSTRAINTS) version |= ASMDIR_SIMPLIFY;
-      DAL_TRACE2("Assembling normal part Dirichlet constraints, version "
+      DAL_TRACE2("Assembling normal component Dirichlet constraints, version "
 		 << version);
-      asm_normal_part_dirichlet_constraints
-	(M, V, mim(), mf_u(), mf_mult, rhs().mf(), R_.get(),
+      asm_normal_component_dirichlet_constraints
+	(M, V, mim(), mf_u(), mf_mult, rhs().mf(), rhs().get(),
 	 mf_u().linked_mesh().get_mpi_sub_region(boundary), version);    
       if (version & ASMDIR_BUILDH)
 	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), 
@@ -1836,11 +1901,12 @@ namespace getfem {
      *  @param mf_mult_ the mesh_fem for the multipliers.
      *	@param num_fem_ the mesh_fem number on which this brick is is applied.
      */
-    mdbrick_normal_part_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
+    mdbrick_normal_component_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 				  size_type bound,
 				  const mesh_fem &mf_mult_, 
 				  size_type num_fem_=0)
-      : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), R_("R", this),
+      : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), 
+	R_("R", this),
 	boundary(bound), mf_mult(mf_mult_) {
       this->add_proper_boundary_info(this->num_fem, boundary, 
 				     MDBRICK_DIRICHLET);
