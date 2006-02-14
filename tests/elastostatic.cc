@@ -458,15 +458,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
       }
       cout << "min = " << min_ << endl;
       cout << "Nb elt to be refined : " << cvref.card() << endl;
-      // cvref.clear(); cvref.add(0);
+     
       mesh.Bank_refine(cvref);
-
-      if (getfem::MPI_IS_MASTER()) {
-	mesh.write_to_file(datafilename + ".mesh");
-	getfem::stored_mesh_slice sl;
-	sl.build(mesh, getfem::slicer_explode(0.8), 1);
-	getfem::vtk_export exp2("totoq.vtk");
-      }
     }
 
   } while (refine && cvref.card() > 0);

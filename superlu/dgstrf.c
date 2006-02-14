@@ -274,6 +274,13 @@ dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
      */
     for (jcol = 0; jcol < min_mn; ) {
 
+      if (handle_getfem_callback() != 0 || jcol == 31) {
+	fprintf(stderr, "SuperLU aborted!\n");
+	iinfo = *info = -333333333; goto HOUSTON_WE_HAVE_A_PROBLEM; 
+	break;
+      }
+
+
 	if ( relax_end[jcol] != EMPTY ) { /* start of a relaxed snode */
    	    kcol = relax_end[jcol];	  /* end of the relaxed snode */
 	    panel_histo[kcol-jcol+1]++;
@@ -350,21 +357,23 @@ dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
 
 	    	if ((*info = dcolumn_dfs(m, jj, perm_r, &nseg, &panel_lsub[k],
 					segrep, &repfnz[k], xprune, marker,
-					parent, xplore, &Glu)) != 0) return;
+					parent, xplore, &Glu)) != 0) 
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 
 	      	/* Numeric updates */
 	    	if ((*info = dcolumn_bmod(jj, (nseg - nseg1), &dense[k],
 					 tempv, &segrep[nseg1], &repfnz[k],
-					 jcol, &Glu, stat)) != 0) return;
+					 jcol, &Glu, stat)) != 0)
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 		
 	        /* Copy the U-segments to ucol[*] */
 		if ((*info = dcopy_to_ucol(jj, nseg, segrep, &repfnz[k],
 					  perm_r, &dense[k], &Glu)) != 0)
-		    return;
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 
 	    	if ( (*info = dpivotL(jj, diag_pivot_thresh, &usepr, perm_r,
 				      iperm_r, iperm_c, &pivrow, &Glu, stat)) )
-		    if ( iinfo == 0 ) iinfo = *info;
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 
 		/* Prune columns (0:jj-1) using column jj */
 	    	dpruneL(jj, perm_r, pivrow, nseg, segrep,
@@ -387,6 +396,7 @@ dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
 
     *info = iinfo;
     
+ HOUSTON_WE_HAVE_A_PROBLEM: // try to avoid ugly leaks.. 
     if ( m > n ) {
 	k = 0;
         for (i = 0; i < m; ++i) 
@@ -396,8 +406,10 @@ dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
 	    }
     }
 
-    countnz(min_mn, xprune, &nnzL, &nnzU, &Glu);
-    fixupL(min_mn, perm_r, &Glu);
+    if (*info == 0) {
+      countnz(min_mn, xprune, &nnzL, &nnzU, &Glu);
+      fixupL(min_mn, perm_r, &Glu);
+    }
 
     dLUWorkFree(iwork, dwork, &Glu); /* Free work space and compress storage */
 

@@ -188,6 +188,9 @@ namespace gmm {
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, nrhs, &sol[0], m);
 
+    memset(&SL,0,sizeof SL);
+    memset(&SU,0,sizeof SU);
+
     std::vector<int> etree(n);
     char equed[] = "B";
     std::vector<R> Rscale(m),Cscale(n); // row scale factors
@@ -210,15 +213,18 @@ namespace gmm {
 		  &ferr[0] /* estimated forward error             */,
 		  &berr[0] /* relative backward error             */,
 		  &stat, &info, T());
+    rcond_ = rcond;
+    if (SB.Store) Destroy_SuperMatrix_Store(&SB);
+    if (SX.Store) Destroy_SuperMatrix_Store(&SX);
+    if (SA.Store) Destroy_SuperMatrix_Store(&SA);
+    if (SL.Store) Destroy_SuperNode_Matrix(&SL);
+    if (SU.Store) Destroy_CompCol_Matrix(&SU);
+    StatFree(&stat);
+    if (info == -333333333) // user interruption (for matlab interface)
+      DAL_THROW(failure_error, "SuperLU was cancelled.");
     if (info != 0)
       DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
-    rcond_ = rcond;
-    Destroy_SuperMatrix_Store(&SB);
-    Destroy_SuperMatrix_Store(&SX);
-    Destroy_SuperMatrix_Store(&SA);
-    Destroy_SuperNode_Matrix(&SL);
-    Destroy_CompCol_Matrix(&SU);
-  }  
+  }
 
   template void SuperLU_solve(const gmm::csc_matrix<float> &csc_A, float *sol, float *rhs, double& rcond_, int permc_spec);
   template void SuperLU_solve(const gmm::csc_matrix<double> &csc_A, double *sol, double *rhs, double& rcond_, int permc_spec);
@@ -234,11 +240,11 @@ namespace gmm {
     mutable char equed;
     void free_supermatrix() {
       if (is_init) {
-	Destroy_SuperMatrix_Store(&SB);
-	Destroy_SuperMatrix_Store(&SX);
-	Destroy_SuperMatrix_Store(&SA);
-	Destroy_SuperNode_Matrix(&SL);
-	Destroy_CompCol_Matrix(&SU);
+	if (SB.Store) Destroy_SuperMatrix_Store(&SB);
+	if (SX.Store) Destroy_SuperMatrix_Store(&SX);
+	if (SA.Store) Destroy_SuperMatrix_Store(&SA);
+	if (SL.Store) Destroy_SuperNode_Matrix(&SL);
+	if (SU.Store) Destroy_CompCol_Matrix(&SU);
       }
     }
     SuperLU_factor_impl_common() : is_init(false) {}
@@ -293,6 +299,10 @@ namespace gmm {
                           (int *)(A.ir), (int *)(A.jc));
     Create_Dense_Matrix(&SB, m, 0, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, 0, &sol[0], m);
+    memset(&SL,0,sizeof SL);
+    memset(&SU,0,sizeof SU);
+
+
     equed = 'B';
     Rscale.resize(m); Cscale.resize(n); etree.resize(n);
     ferr.resize(1); berr.resize(1);
@@ -318,9 +328,11 @@ namespace gmm {
     Destroy_SuperMatrix_Store(&SX);
     Create_Dense_Matrix(&SB, m, 1, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
+    StatFree(&stat);
     
+    if (info == -333333333) // user interruption (for matlab interface)
+      DAL_THROW(failure_error, "SuperLU was cancelled.");
     if (info != 0) {
-      // cout << "Mat = " << A << endl;
       DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     }
     is_init = true;
@@ -354,6 +366,7 @@ namespace gmm {
                   &ferr[0] /* estimated forward error             */,
                   &berr[0] /* relative backward error             */,
                   &stat, &info, T());
+    StatFree(&stat);
     if (info != 0) {
       DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     }
@@ -424,4 +437,14 @@ template class gmm::SuperLU_factor<double>;
 template class gmm::SuperLU_factor<std::complex<float> >;
 template class gmm::SuperLU_factor<std::complex<double> >;
 
+static int (*superlu_callback)();
 
+/* this one is called from superlu (see dcolumn_bmod) */
+extern "C" int handle_getfem_callback() {
+  if (superlu_callback) return superlu_callback();
+  else return 0;
+}
+
+extern "C" void set_superlu_callback(int (*cb)()) {
+  superlu_callback = cb;
+}

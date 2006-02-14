@@ -196,6 +196,8 @@ namespace gmm {
 			  (int *)(csc_A.ir), (int *)(csc_A.jc));
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, nrhs, &sol[0], m);
+    memset(&SL,0,sizeof SL);
+    memset(&SU,0,sizeof SU);
 
     std::vector<int> etree(n);
     char equed[] = "B";
@@ -219,15 +221,16 @@ namespace gmm {
 		  &ferr[0] /* estimated forward error             */,
 		  &berr[0] /* relative backward error             */,
 		  &stat, &info, T());
-    if (info != 0)
-      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
-    gmm::copy(sol, X);
     rcond_ = rcond;
     Destroy_SuperMatrix_Store(&SB);
     Destroy_SuperMatrix_Store(&SX);
     Destroy_SuperMatrix_Store(&SA);
     Destroy_SuperNode_Matrix(&SL);
     Destroy_CompCol_Matrix(&SU);
+    StatFree(&stat);
+    if (info != 0)
+      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
+    gmm::copy(sol, X);
   }
 
   template <class T> class SuperLU_factor {
@@ -273,11 +276,11 @@ namespace gmm {
 
   template <class T> void SuperLU_factor<T>::free_supermatrix(void) {
       if (is_init) {
-	Destroy_SuperMatrix_Store(&SB);
-	Destroy_SuperMatrix_Store(&SX);
-	Destroy_SuperMatrix_Store(&SA);
-	Destroy_SuperNode_Matrix(&SL);
-	Destroy_CompCol_Matrix(&SU);
+	if (SB.Store) Destroy_SuperMatrix_Store(&SB);
+	if (SX.Store) Destroy_SuperMatrix_Store(&SX);
+	if (SA.Store) Destroy_SuperMatrix_Store(&SA);
+	if (SL.Store) Destroy_SuperNode_Matrix(&SL);
+	if (SU.Store) Destroy_CompCol_Matrix(&SU);
       }
     }
 
@@ -314,6 +317,8 @@ namespace gmm {
 			    (int *)(csc_A.ir), (int *)(csc_A.jc));
       Create_Dense_Matrix(&SB, m, 0, &rhs[0], m);
       Create_Dense_Matrix(&SX, m, 0, &sol[0], m);
+      memset(&SL,0,sizeof SL);
+      memset(&SU,0,sizeof SU);
       equed = 'B';
       Rscale.resize(m); Cscale.resize(n); etree.resize(n);
       ferr.resize(1); berr.resize(1);
@@ -339,6 +344,7 @@ namespace gmm {
       Destroy_SuperMatrix_Store(&SX);
       Create_Dense_Matrix(&SB, m, 1, &rhs[0], m);
       Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
+      StatFree(&stat);
 
       if (info != 0) {
 	// cout << "Mat = " << csc_A << endl;
@@ -377,7 +383,8 @@ namespace gmm {
 		    &ferr[0] /* estimated forward error             */,
 		    &berr[0] /* relative backward error             */,
 		    &stat, &info, T());
-      if (info != 0) {
+     StatFree(&stat);
+     if (info != 0) {
 	DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
       }
       gmm::copy(sol, X);

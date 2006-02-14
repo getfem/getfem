@@ -30,8 +30,6 @@ void dusolve(int, int, double*, double*);
 void dlsolve(int, int, double*, double*);
 void dmatvec(int, int, int, double*, double*, double*);
 
-
-
 /* Return value:   0 - successful return
  *               > 0 - number of bytes allocated when run out of space
  */
@@ -104,7 +102,7 @@ dcolumn_bmod (
     nzlumax = Glu->nzlumax;
     jcolp1 = jcol + 1;
     jsupno = supno[jcol];
-    
+
     /* 
      * For each nonz supernode segment of U[*,j] in topological order 
      */

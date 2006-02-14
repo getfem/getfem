@@ -97,13 +97,15 @@ namespace gmm {
 
     bool first(void) { return nit == 0; }
 
+    /* get/set the "noisyness" (verbosity) of the solvers */
     int get_noisy(void) const { return noise; }
     void set_noisy(int n) { noise = n; }
     void reduce_noisy(void) { if (noise > 0) noise--; }
 
     double get_resmax(void) const { return resmax; }
     void set_resmax(double r) { resmax = r; }
-    
+
+    /* change the user-definable callback, called after each iteration */
     void set_callback(void (*t)(const gmm::iteration&)) {
       callback = t;
     }

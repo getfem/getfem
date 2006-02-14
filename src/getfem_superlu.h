@@ -121,4 +121,6 @@ namespace gmm {
   }
 }
 
+extern "C" void set_superlu_callback(int (*cb)());
+
 #endif

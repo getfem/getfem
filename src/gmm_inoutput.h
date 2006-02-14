@@ -35,7 +35,7 @@
 #define GMM_INOUTPUT_H
 
 #include <stdio.h>
-
+#include <gmm_kernel.h>
 namespace gmm {
 
   /*************************************************************************/

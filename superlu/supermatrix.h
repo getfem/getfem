@@ -136,5 +136,9 @@ typedef struct {
 #define U_NZ_START(col)      ( Ustore->colptr[col] )
 #define U_SUB(ptr)           ( Ustore->rowind[ptr] )
 
+#ifdef __cplusplus
+extern "C" 
+#endif
+int handle_getfem_callback(); // this one is in ../src/getfem_superlu.cc
 
 #endif  /* __SUPERLU_SUPERMATRIX */

@@ -25,10 +25,8 @@
 // options d'optimisations avec g++ :
 //  -funroll-all-loops -ffast-math -fstrict-aliasing -fomit-frame-pointer
 
-// #define GMM_USES_LAPACK
-#include <ftool.h>
-#include <gmm.h>
-#include <gmm_superlu_interface.h>
+#include <getfem_superlu.h>
+#include <gmm_inoutput.h>
 using gmm::size_type;
 
 template <class T> void test_with(T) {
@@ -50,9 +48,15 @@ template <class T> void test_with(T) {
   A(4,1) = 0;
   double rcond;
 
-  for (size_type cnt=0; cnt < 10; ++cnt)
-    gmm::SuperLU_solve(A, x, y, rcond);
-  cout << "rcond = " << rcond << "\n";
+  for (size_type cnt=0; cnt < 5; ++cnt) {
+    try {
+      gmm::SuperLU_solve(A, x, y, rcond);
+      cout << "rcond = " << rcond << "\n";
+    }
+    catch (const dal::failure_error &e) {
+      cerr << "Solve Failed: catch " << e.what() << "\n";
+    }
+  }
 
   // gmm::lu_solve(A, z, y);
 
@@ -63,12 +67,26 @@ template <class T> void test_with(T) {
   cout << "Ax = " << y << endl;
   // gmm::mult(A, z, y);
   // cout << "Az = " << y << endl;
+
+  gmm::HarwellBoeing_IO hb("../../../getfem_matlab/tests/K.hb");
+  hb.read(A);
+  x.resize(gmm::mat_nrows(A)); gmm::fill_random(x);
+  y.resize(gmm::mat_nrows(A)); gmm::fill_random(y);
+  for (size_type cnt=0; cnt < 7; ++cnt) {
+    try {
+      gmm::SuperLU_solve(A, x, y, rcond);
+      cout << "rcond = " << rcond << "\n";
+    }
+    catch (const dal::failure_error &e) {
+      cerr << "Solve Failed: catch " << e.what() << "\n";
+    }
+  }
 }
 
 int main(void)
 {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb);
+  //dal::exception_callback_debug cb;
+  //dal::exception_callback::set_exception_callback(&cb);
 
   srand(1459);
 
