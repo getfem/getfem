@@ -38,8 +38,7 @@
 #include <bgeot_config.h>
 #include <bgeot_convex_ref.h>
 
-namespace bgeot
-{
+namespace bgeot {
   /**  Description of a geometric transformation between a
    * reference element and a real element.
    *
@@ -292,7 +291,6 @@ namespace bgeot
     void init_val() const;
     void init_grad() const;
     void init_hess() const;
-
 
     /**
      *  precomputes a geometric transformation for a fixed set of 

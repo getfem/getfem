@@ -406,7 +406,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
  
   // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_part_Dirichlet<>
+  getfem::mdbrick_normal_component_Dirichlet<>
     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
   // Non-reflective condition brick
@@ -439,7 +439,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, DIRICHLET_BOUNDARY_NUM);
   
   // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_part_Dirichlet<>
+  getfem::mdbrick_normal_component_Dirichlet<>
     mixed_dirnp(mixed_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
   // Dynamic brick.
@@ -512,7 +512,7 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
   // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_part_Dirichlet<>
+  getfem::mdbrick_normal_component_Dirichlet<>
     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
   // Non-reflective condition brick
@@ -574,7 +574,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
   // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_part_Dirichlet<>
+  getfem::mdbrick_normal_component_Dirichlet<>
     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
   
   // Non-reflective condition brick
