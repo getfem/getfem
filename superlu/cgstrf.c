@@ -274,6 +274,11 @@ cgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
      */
     for (jcol = 0; jcol < min_mn; ) {
 
+      if (handle_getfem_callback() != 0) {
+	iinfo = *info = -333333333; goto HOUSTON_WE_HAVE_A_PROBLEM; 
+	break;
+      }
+
 	if ( relax_end[jcol] != EMPTY ) { /* start of a relaxed snode */
    	    kcol = relax_end[jcol];	  /* end of the relaxed snode */
 	    panel_histo[kcol-jcol+1]++;
@@ -350,17 +355,19 @@ cgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
 
 	    	if ((*info = ccolumn_dfs(m, jj, perm_r, &nseg, &panel_lsub[k],
 					segrep, &repfnz[k], xprune, marker,
-					parent, xplore, &Glu)) != 0) return;
+					parent, xplore, &Glu)) != 0) 
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 
 	      	/* Numeric updates */
 	    	if ((*info = ccolumn_bmod(jj, (nseg - nseg1), &dense[k],
 					 tempv, &segrep[nseg1], &repfnz[k],
-					 jcol, &Glu, stat)) != 0) return;
+					 jcol, &Glu, stat)) != 0) 
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 		
 	        /* Copy the U-segments to ucol[*] */
 		if ((*info = ccopy_to_ucol(jj, nseg, segrep, &repfnz[k],
 					  perm_r, &dense[k], &Glu)) != 0)
-		    return;
+		  goto HOUSTON_WE_HAVE_A_PROBLEM;
 
 	    	if ( (*info = cpivotL(jj, diag_pivot_thresh, &usepr, perm_r,
 				      iperm_r, iperm_c, &pivrow, &Glu, stat)) )
@@ -387,6 +394,7 @@ cgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
 
     *info = iinfo;
     
+ HOUSTON_WE_HAVE_A_PROBLEM:
     if ( m > n ) {
 	k = 0;
         for (i = 0; i < m; ++i) 
@@ -396,8 +404,10 @@ cgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
 	    }
     }
 
-    countnz(min_mn, xprune, &nnzL, &nnzU, &Glu);
-    fixupL(min_mn, perm_r, &Glu);
+    if (*info == 0) {
+      countnz(min_mn, xprune, &nnzL, &nnzU, &Glu);
+      fixupL(min_mn, perm_r, &Glu);
+    }
 
     cLUWorkFree(iwork, cwork, &Glu); /* Free work space and compress storage */
 

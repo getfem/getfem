@@ -548,6 +548,7 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
     }
 
     if ( options->ConditionNumber ) {
+      if (*info == 0) {
         /* Estimate the reciprocal of the condition number of A. */
         t0 = SuperLU_timer_();
         if ( notran ) {
@@ -558,9 +559,10 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
         anorm = clangs(norm, AA);
         cgscon(norm, L, U, anorm, rcond, stat, info);
         utime[RCOND] = SuperLU_timer_() - t0;
+      } else *rcond = 0;
     }
     
-    if ( nrhs > 0 ) {
+    if ( *info == 0 && nrhs > 0 ) {
         /* Compute the solution matrix X. */
         for (j = 0; j < nrhs; j++)  /* Save a copy of the right hand sides */
             for (i = 0; i < B->nrow; i++)
@@ -597,12 +599,12 @@ printf("dgssvx: Fact=%4d, Trans=%4d, equed=%c\n",
         }
     } /* end if nrhs > 0 */
 
-    if ( options->ConditionNumber ) {
+    if ( *info == 0 && options->ConditionNumber ) {
         /* Set INFO = A->ncol+1 if the matrix is singular to working precision. */
         if ( *rcond < slamch_("E") ) *info = A->ncol + 1;
     }
 
-    if ( nofact ) {
+    if ( *info != -10000000 && nofact ) {
         cQuerySpace(L, U, mem_usage);
         Destroy_CompCol_Permuted(&AC);
     }

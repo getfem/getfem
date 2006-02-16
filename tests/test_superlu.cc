@@ -104,7 +104,7 @@ int main(void)
     // test_with(float());
     test_with(double());
     // test_with(std::complex<float>());
-    // test_with(std::complex<double>());
+    test_with(std::complex<double>());
     
   }
   DAL_STANDARD_CATCH_ERROR;

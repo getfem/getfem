@@ -274,8 +274,7 @@ dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
      */
     for (jcol = 0; jcol < min_mn; ) {
 
-      if (handle_getfem_callback() != 0 || jcol == 31) {
-	fprintf(stderr, "SuperLU aborted!\n");
+      if (handle_getfem_callback() != 0) {
 	iinfo = *info = -333333333; goto HOUSTON_WE_HAVE_A_PROBLEM; 
 	break;
       }

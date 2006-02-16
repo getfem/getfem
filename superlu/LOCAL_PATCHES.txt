@@ -1,6 +1,6 @@
 The actual patch is in LOCAL_PATCHES.patch -- below are just comments about the patch (outdated)
 patch made with:
-for i in *.c *.h; do diff -u $i ../../SuperLU_3.0-20060201/SRC/$i; done > LOCAL_PATCHES.patch
+for i in *.c *.h; do diff -u ../../SuperLU_3.0-20060201/SRC/$i $i; done > LOCAL_PATCHES.patch
 
 The patch allows interrupted of the factorisation, avoid some crashes and memory leaks.
 

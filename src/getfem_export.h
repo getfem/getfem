@@ -222,14 +222,14 @@ namespace getfem {
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     write_separ();
     if (Q == 1) {
-      cout << "Q=" << Q << ", " << "SCALARS " << remove_spaces(name) << " float 1\n";
+      //cout << "Q=" << Q << ", " << "SCALARS " << remove_spaces(name) << " float 1\n";
       os << "SCALARS " << remove_spaces(name) << " float 1\n";
       os << "LOOKUP_TABLE default\n";
       for (size_type i=0; i < nb_val; ++i) {
 	write_val(float(U[i]));
       }
     } else if (Q <= 3) {
-      cout << "Q=" << Q << ", " << "VECTORS " << remove_spaces(name) << " float\n";
+      //cout << "Q=" << Q << ", " << "VECTORS " << remove_spaces(name) << " float\n";
       os << "VECTORS " << remove_spaces(name) << " float\n";
       for (size_type i=0; i < nb_val; ++i) {
 	write_vec(U.begin() + i*Q);
@@ -238,7 +238,7 @@ namespace getfem {
       /* tensors : coef are supposed to be stored in FORTRAN order 
          in the VTK file, they are written with C (row major) order
        */
-      cout << "Q=" << Q << ", " << "TENSORS " << remove_spaces(name) << " float\n";
+      //cout << "Q=" << Q << ", " << "TENSORS " << remove_spaces(name) << " float\n";
       os << "TENSORS " << remove_spaces(name) << " float\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_3x3tensor(U.begin() + i*Q);
