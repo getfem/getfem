@@ -40,8 +40,8 @@ namespace getfem {
   static ppolycompfem composite_fe_method(const bgeot::mesh_precomposite &mp, 
 				   const mesh_fem &mf, bgeot::pconvex_ref cr) {
     
-    if (&(mf.linked_mesh()) != &(mp.linked_mesh()))
-      DAL_THROW(failure_error, "Meshes are different.");
+//     if (&(bgeot::basic_mesh(mf.linked_mesh()) != &(mp.linked_mesh()))
+//       DAL_THROW(failure_error, "Meshes are different.");
     fem<bgeot::polynomial_composite> *p = new fem<bgeot::polynomial_composite>;
 
     p->mref_convex() = cr;
