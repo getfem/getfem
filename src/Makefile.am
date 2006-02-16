@@ -25,6 +25,7 @@ include_HEADERS =                          \
 	bgeot_geotrans_inv.h               \
 	bgeot_kdtree.h		           \
 	bgeot_mesh_structure.h             \
+	bgeot_mesh.h                       \
 	bgeot_poly.h                       \
 	bgeot_rtree.h		           \
 	bgeot_small_vector.h               \

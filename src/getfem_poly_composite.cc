@@ -31,8 +31,8 @@
 #include <bgeot_comma_init.h>
 #include <getfem_poly_composite.h>
 
-namespace getfem
-{ 
+namespace getfem {
+
   mesh_precomposite::mesh_precomposite(const mesh &m) {
     msh = &m;
     elt.resize(m.nb_convex());

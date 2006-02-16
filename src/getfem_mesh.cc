@@ -118,14 +118,11 @@ namespace getfem {
   }
 
 
-  mesh::mesh(dim_type NN) {
+  mesh::mesh(dim_type NN) : bgeot::basic_mesh(NN) {
 #if GETFEM_PARA_LEVEL > 1
     modified = true;
 #endif
     cuthill_mckee_uptodate = false;
-    dimension = NN; eps_p = 1.0E-10;
-    pts.comparator() = dal::lexicographical_less<base_node,
-                dal::approx_less<base_node::value_type> >(eps_p);
     Bank_info = 0;
   }
 
@@ -396,16 +393,10 @@ namespace getfem {
 
   void mesh::copy_from(const mesh& m) {
     clear();
-    bgeot::mesh_structure::operator=(m);
-    eps_p = m.eps_p;
-    gtab = m.gtab;
-    trans_exists = m.trans_exists; 
-    dimension = m.dimension;
-    pts = m.pts;
+    bgeot::basic_mesh::operator=(m);
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
       lmsg_sender().send(MESH_ADD_CONVEX(i));
-    if (Bank_info)
-      delete Bank_info;      
+    if (Bank_info) delete Bank_info;      
     if (m.Bank_info) {
       Bank_info = new Bank_info_struct;
       *Bank_info = *(m.Bank_info);

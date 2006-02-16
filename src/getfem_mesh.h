@@ -37,7 +37,7 @@
 #include <bitset>
 #include <dal_shared_ptr.h>
 #include <ftool.h>
-#include <bgeot_mesh_structure.h>
+#include <bgeot_mesh.h>
 #include <bgeot_convex_ref.h>
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
@@ -155,24 +155,20 @@ namespace getfem {
   */
 
   class mesh : virtual public dal::static_stored_object,
-		      public bgeot::mesh_structure,
+		      public bgeot::basic_mesh,
 		      public context_dependencies {
   public :
     
     typedef lmsg::linkmsg_sender<mesh_receiver> msg_sender;
     typedef dal::approx_less<scalar_type> val_comp;
-    typedef dal::lexicographical_less<base_node, val_comp> pt_comp;
-    typedef dal::dynamic_tree_sorted<base_node, pt_comp> PT_TAB;
+    typedef bgeot::basic_mesh::pt_comp pt_comp;
+    typedef bgeot::basic_mesh::PT_TAB PT_TAB;
     typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
     typedef bgeot::mesh_structure::ind_set ind_set;
     typedef bgeot::mesh_structure::ind_pt_face_ct ind_pt_face_ct;
     typedef bgeot::mesh_structure::point_ct point_ct;
-
-
-    typedef dal::tab_ref_index_ref
-    <PT_TAB::const_iterator, ind_cv_ct::const_iterator> ref_mesh_pt_ct;
-    typedef dal::tab_ref_index_ref
-    <PT_TAB::const_iterator, ind_pt_face_ct::const_iterator> ref_mesh_face_pt_ct;
+    typedef bgeot::basic_mesh::ref_mesh_pt_ct ref_mesh_pt_ct;
+    typedef bgeot::basic_mesh::ref_mesh_face_pt_ct ref_mesh_face_pt_ct;
     typedef bgeot::convex<base_node, ref_mesh_pt_ct> ref_convex;
     
     
@@ -181,13 +177,7 @@ namespace getfem {
      * When a new field is added, do NOT forget to add it in copy_from method!
      */
     
-    dim_type dimension;
-    PT_TAB pts;
-
-    scalar_type eps_p; /* infinity distance under wich two points are equal. */
     mutable msg_sender lkmsg; /* gestionnaire de msg.                    */
-    dal::dynamic_array<bgeot::pgeometric_trans> gtab;
-    dal::bit_vector trans_exists;
     
     dal::dynamic_array<mesh_region> cvf_sets;
     dal::bit_vector valid_cvf_sets;

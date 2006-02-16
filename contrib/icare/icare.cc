@@ -595,8 +595,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   poisson_setonedof.set_constraints(G, plain_vector(1));
   poisson_setonedof.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
 
-  getfem::mdbrick_source_term<> poisson_source(poisson_setonedof,
-					       mf_rhs, plain_vector(mf_rhs.nb_dof()));
+  getfem::mdbrick_source_term<>
+    poisson_source(poisson_setonedof, mf_rhs, plain_vector(mf_rhs.nb_dof()));
 
   sparse_matrix B(mf_p.nb_dof(), mf_u.nb_dof());
   asm_stokes_B(B, mim, mf_u, mf_p);
@@ -636,7 +636,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     poisson_source.set_auxF(Pn1);
     iter.init();
     getfem::standard_solve(MSM, poisson_source, iter);
-    gmm::mult(gmm::transposed(B), gmm::scaled(poisson.get_solution(MSM), -1.), USTARbis);
+    gmm::mult(gmm::transposed(B), gmm::scaled(poisson.get_solution(MSM), -1.),
+	      USTARbis);
 
     gmm::iteration iter2 = iter; iter2.reduce_noisy(); iter2.init();
     gmm::cg(velocity_dyn.get_M(), Un1, USTARbis,
