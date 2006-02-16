@@ -186,6 +186,7 @@ namespace getfem {
     
     mutable bool cuthill_mckee_uptodate;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
+    void init(void);
 
 #if GETFEM_PARA_LEVEL > 1
     mutable bool modified;
@@ -226,6 +227,7 @@ namespace getfem {
     
     /// Constructor.
     mesh(dim_type NN = dim_type(-1)); 
+    mesh(const bgeot::basic_mesh &m);
     double eps(void) const { return eps_p; }
     msg_sender &lmsg_sender(void) const { return lkmsg; }
     void update_from_context(void) const {}

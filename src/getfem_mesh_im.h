@@ -35,6 +35,7 @@
 
 #include <getfem_integration.h>
 #include <getfem_fem.h>
+#include <getfem_mesh.h>
 
 namespace getfem {
 

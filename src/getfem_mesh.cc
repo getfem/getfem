@@ -117,14 +117,17 @@ namespace getfem {
     }
   }
 
-
-  mesh::mesh(dim_type NN) : bgeot::basic_mesh(NN) {
+  void mesh::init(void) {
 #if GETFEM_PARA_LEVEL > 1
     modified = true;
 #endif
     cuthill_mckee_uptodate = false;
     Bank_info = 0;
   }
+
+  mesh::mesh(dim_type NN) : bgeot::basic_mesh(NN) { init(); }
+
+  mesh::mesh(const bgeot::basic_mesh &m) : bgeot::basic_mesh(m) { init(); }
 
 #if GETFEM_PARA_LEVEL > 1
 
@@ -197,7 +200,7 @@ namespace getfem {
   size_type mesh::add_point(const base_node &pt, bool norepeat) {
     if (dimension == dim_type(-1)) dimension = pt.size();
     if (pt.size() != dimension)
-      throw dimension_error("mesh::add_point : dimensions mismatch");
+      DAL_THROW(dimension_error, "mesh::add_point : dimensions mismatch");
     
     if (norepeat) {
       bool present;

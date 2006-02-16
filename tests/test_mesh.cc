@@ -20,7 +20,7 @@
 #include <dal_std.h>
 #include <stdio.h>
 #include <getfem_regular_meshes.h>
-#include <getfem_poly_composite.h>
+#include <bgeot_poly_composite.h>
 #include <bgeot_comma_init.h>
 #include <getfem_export.h>
 
@@ -252,12 +252,12 @@ test_convex_simplif(void) {
   print_mesh_structure(msr3);
   const bgeot::mesh_structure *psr = pr->basic_convex_ref()->simplexified_convex();
   print_mesh_structure(psr);
-  const getfem::mesh *msrr2 = getfem::refined_simplex_mesh_for_convex(sr2,2);
-  msrr2->write_to_file(cout);
-  const getfem::mesh *msrr3 = getfem::refined_simplex_mesh_for_convex(sr3,3);
-  msrr3->write_to_file(cout);
-  const getfem::mesh *mprr = getfem::refined_simplex_mesh_for_convex(pr,2);
-  mprr->write_to_file(cout);
+  const bgeot::basic_mesh *msrr2 = bgeot::refined_simplex_mesh_for_convex(sr2,2);
+  getfem::mesh(*msrr2).write_to_file(cout);
+  const bgeot::basic_mesh *msrr3 = bgeot::refined_simplex_mesh_for_convex(sr3,3);
+  getfem::mesh(*msrr3).write_to_file(cout);
+  const bgeot::basic_mesh *mprr = bgeot::refined_simplex_mesh_for_convex(pr,2);
+  getfem::mesh(*mprr).write_to_file(cout);
 }
 
 using bgeot::sc;

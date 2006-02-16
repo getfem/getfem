@@ -684,13 +684,13 @@ namespace getfem
     }
   }
 
-  struct thierach_femi_comp : public fem<polynomial_composite>
+  struct thierach_femi_comp : public fem<bgeot::polynomial_composite>
   { 
     thierach_femi_comp(ppolycompfem fi1, ppolycompfem fi2);  
   };
 
   thierach_femi_comp::thierach_femi_comp(ppolycompfem fi1, ppolycompfem fi2)
-    : fem<polynomial_composite>(*fi1) {
+    : fem<bgeot::polynomial_composite>(*fi1) {
     if (fi2->target_dim() != fi1->target_dim())
       DAL_THROW(dimension_error, "dimensions mismatch.");
     if (fi2->basic_structure(0) != fi1->basic_structure(0))

@@ -28,15 +28,16 @@
 //========================================================================
 
 
-#include <getfem_poly_composite.h>
+#include <bgeot_poly_composite.h>
 #include <getfem_integration.h>
 #include <getfem_mesh_im.h>
 #include <dal_naming_system.h>
 
-namespace getfem
-{ 
+namespace getfem {
+ 
   papprox_integration
-  composite_approx_int_method(const mesh_precomposite &mp, const mesh_im &mi,
+  composite_approx_int_method(const bgeot::mesh_precomposite &mp,
+			      const mesh_im &mi,
 			      bgeot::pconvex_ref cr) {
     approx_integration *p = new approx_integration(cr);
     base_vector w;
@@ -96,11 +97,12 @@ namespace getfem
     if (pim->type() != IM_APPROX || k <= 0 || k > 150 || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    pmesh pm;
-    pmesh_precomposite pmp;
+    bgeot::pbasic_mesh pm;
+    bgeot::pmesh_precomposite pmp;
 
     structured_mesh_for_convex(pim->approx_method()->ref_convex(), k, pm, pmp);
-    mesh_im mi(*pm);
+    mesh m(*pm);
+    mesh_im mi(m);
     mi.set_integration_method(pm->convex_index(), pim);
 
     integration_method *p
@@ -112,7 +114,7 @@ namespace getfem
     return p;
   }
 
-  struct just_for_singleton_HCT__ { mesh m; mesh_precomposite mp; };
+  struct just_for_singleton_HCT__ { mesh m; bgeot::mesh_precomposite mp; };
   
 
   pintegration_method HCT_composite_int_method(im_param_list &params,
@@ -141,7 +143,7 @@ namespace getfem
     jfs.m.add_triangle(i0, i2, i3);
     jfs.m.add_triangle(i0, i3, i1);
     jfs.m.add_triangle(i0, i1, i2);
-    jfs.mp = mesh_precomposite(jfs.m);
+    jfs.mp = bgeot::mesh_precomposite(jfs.m);
 
     mesh_im mi(jfs.m);
     mi.set_integration_method(jfs.m.convex_index(), pim);

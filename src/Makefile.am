@@ -21,12 +21,13 @@ include_HEADERS =                          \
 	bgeot_convex_structure.h           \
 	bgeot_convex.h                     \
 	bgeot_convex_ref.h                 \
+	bgeot_poly.h                       \
 	bgeot_geometric_trans.h            \
 	bgeot_geotrans_inv.h               \
 	bgeot_kdtree.h		           \
 	bgeot_mesh_structure.h             \
 	bgeot_mesh.h                       \
-	bgeot_poly.h                       \
+	bgeot_poly_composite.h             \
 	bgeot_rtree.h		           \
 	bgeot_small_vector.h               \
 	bgeot_sparse_tensors.h             \
@@ -37,7 +38,6 @@ include_HEADERS =                          \
 	getfem_arch_config.h               \
 	getfem_integration.h               \
 	getfem_context.h                   \
-	getfem_poly_composite.h            \
 	getfem_assembling.h                \
 	getfem_assembling_tensors.h        \
 	getfem_external_data_fem.h         \
@@ -149,20 +149,19 @@ SRC =                                      \
 	bgeot_small_vector.cc              \
 	bgeot_sparse_tensors.cc            \
 	bgeot_poly.cc                      \
+	bgeot_poly_composite.cc            \
 	ftool.cc                           \
 	getfem_superlu.cc		   \
 	getfem_context.cc                  \
 	getfem_mesh_fem.cc                 \
 	getfem_mesh_im.cc                  \
 	getfem_integration.cc              \
-	getfem_poly_composite.cc           \
 	getfem_integration_composite.cc    \
 	getfem_fem.cc                      \
 	getfem_interpolated_fem.cc         \
 	getfem_mesh_fem_global_function.cc \
 	getfem_Xfem.cc                     \
 	getfem_fem_composite.cc            \
-	getfem_fem_composite2.cc           \
 	getfem_mat_elem.cc                 \
 	getfem_mat_elem_type.cc            \
 	getfem_mesh.cc                     \

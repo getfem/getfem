@@ -99,8 +99,8 @@
 
 #include <dal_static_stored_objects.h>
 #include <bgeot_geometric_trans.h>
+#include <bgeot_poly_composite.h>
 #include <getfem_integration.h>
-#include <getfem_poly_composite.h>
 #include <deque>
 
 namespace getfem {
@@ -498,7 +498,7 @@ namespace getfem {
   /** Classical polynomial FEM. */
   typedef const fem<base_poly> * ppolyfem;
   /** Polynomial composite FEM */
-  typedef const fem<polynomial_composite> * ppolycompfem;
+  typedef const fem<bgeot::polynomial_composite> * ppolycompfem;
   
   /** Give a pointer on the structures describing the classical
       polynomial fem of degree k on a given convex type.

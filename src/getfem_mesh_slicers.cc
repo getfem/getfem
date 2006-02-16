@@ -644,7 +644,7 @@ namespace getfem {
 
   void mesh_slicer::exec_(const short_type *pnrefine, int nref_stride, const mesh_region& cvlst) {
     std::vector<base_node> cvm_pts;
-    const mesh *cvm = 0;
+    const bgeot::basic_mesh *cvm = 0;
     const bgeot::mesh_structure *cvms = 0;
     bgeot::geotrans_precomp_pool gppool;
     bgeot::pgeotrans_precomp pgp = 0;
@@ -658,15 +658,15 @@ namespace getfem {
       update_cv_data(it.cv(),it.f());      
       /* update structure-dependent data */
       if (prev_cvr != cvr || nrefine != prev_nrefine) {
-	cvm = getfem::refined_simplex_mesh_for_convex(cvr, nrefine);
-	cvm_pts.resize(cvm->nb_points());
+	cvm = bgeot::refined_simplex_mesh_for_convex(cvr, nrefine);
+	cvm_pts.resize(cvm->points().card());
 	std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
 	pgp = gppool(pgt, store_point_tab(cvm_pts));
 	flag_points_on_faces(cvr, cvm_pts, points_on_faces);
 	prev_nrefine = nrefine;
       }
       if (face < dim_type(-1))
-	cvms = getfem::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
+	cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
       else
 	cvms = cvm; 
 
