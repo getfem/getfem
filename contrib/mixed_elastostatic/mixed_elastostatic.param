@@ -1,6 +1,6 @@
 % -*- matlab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parameters for program elastostatic                                     %
+% parameters for program mixed_elastostatic                               %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
@@ -10,97 +10,36 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 N = 2;
 NX = 4;                 % number of subdivisions for structured meshes.
-QUAD = 0;
+QUAD = 1;
 FT = 3.0;               % parameter for the exact solution.
-SOL_SING = 1;           % 0 : Regular exact solution.
-                        % 1 : Singular exact solution in r^{1/2}.
-			% 2 : Singular exact soluiton in r^(1/4}
-REFINE = 1;		% Mesh refinement option
-MIXED_PRESSURE=0;       % Mixed version or not.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
-
-if (N == 1)
-  MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0';
-  FEM_TYPE = 'FEM_PK(1,2)';       % P1 for segments
-%  FEM_TYPE = 'FEM_HERMITE(1)'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
-  INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on segments
-  if (MIXED_PRESSURE)
-    FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(1,0)';
-  end
-end
 
 if (N == 2 && ~QUAD)
   MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0';
   % MESH_FILE='../../tests/meshes/disc_P2_h2.mesh';
-  FEM_TYPE = 'FEM_PK(2,1)';        % P1 for triangles
-  INTEGRATION = 'IM_TRIANGLE(6)';  % quadrature rule for polynomials up
-                                   % to degree 13 on triangles
-  if (MIXED_PRESSURE)
-    FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,1)';
-  end
-
-  if 0        % test with Hermite or Argyris elements
-    if 1      % test with Hermite element
-      FEM_TYPE = 'FEM_HERMITE(2)';
-      DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-      INTEGRATION = 'IM_TRIANGLE(6)'; 
-    elseif 0
-      FEM_TYPE = 'FEM_ARGYRIS';
-      DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
-      INTEGRATION= 'IM_TRIANGLE(10)';
-    else
-      FEM_TYPE = 'FEM_HCT_TRIANGLE';
-      DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
-      % INTEGRATION= 'IM_TRIANGLE(13)';
-      % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
-      INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
-    end;
-    DATA_FEM_TYPE = 'FEM_PK(2,5)';
-  end
+  FEM_TYPE_U = 'FEM_PK(2,0)';
+  FEM_TYPE_SIGMA = 'FEM_RT0(2)'; % à modifier ...
+  FEM_TYPE_THETA = 'FEM_PK(2,0)';
+  DIRICHLET_FEM_TYPE = 'FEM_PK(2,1)';
+  INTEGRATION = 'IM_TRIANGLE(6)'; 
 end
 
 if (N == 2 && QUAD)
   MESH_FILE='structured:GT="GT_LINEAR_QK(2,1)";SIZES=[1,1];NOISED=0';
   %  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1';
-  FEM_TYPE = 'FEM_QK(2,2)';         % Q1 for quadrilaterons
-  FEM_TYPE = 'FEM_INCOMPLETE_Q2';
-  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
-  if (MIXED_PRESSURE)
-    FEM_TYPE_P = 'FEM_QK_DISCONTINUOUS(2,0)';
-  end
+  FEM_TYPE_U = 'FEM_QK(2,0)';
+  FEM_TYPE_SIGMA = 'FEM_RT0(2)'; % à modifier ...
+  FEM_TYPE_THETA = 'FEM_QK(2,0)';
+  DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,3)';
 end
 
-if (N == 3 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NOISED=0';
-  FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
-  if 0   % test with hermite element
-    FEM_TYPE = 'FEM_HERMITE(3)'; DATA_FEM_TYPE = 'FEM_PK(3,3)';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(3,3)';
-  end
-  INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
-                                     % to degree 6 on tetrahedrons
-  if (MIXED_PRESSURE)
-    FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,0)';
-  end
-end
-
-if (N == 3 && QUAD)
-  MESH_FILE='structured:GT="GT_LINEAR_QK(3,1)";SIZES=[1,1,1];NOISED=0';
-  % MESH_FILE='structured:GT="GT_QK(3,1)";SIZES=[1,1,1];NOISED=1';
-  FEM_TYPE = 'FEM_QK(3,1)';         % Q1 for hexahedrons
-  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)';
-  if (MIXED_PRESSURE)
-    FEM_TYPE_P = 'FEM_QK_DISCONTINUOUS(3,0)';
-  end
-end
-
-
-if (N > 3)
-  error('Correct the parameter file for N > 3');
+if (N ~= 2)
+  error('Adapt the parameter file for N > 2 first');
 end
 
 RESIDUAL = 1E-18;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'elastostatic';     % Root of data files.
+ROOTFILENAME = 'mixed_elastostatic';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
