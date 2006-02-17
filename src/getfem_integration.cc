@@ -929,7 +929,7 @@ namespace getfem {
 	if (what == PYRAMID) {
 	  if (nc == 1) nodes3[0] = nodes1[3];
 	  bgeot::vectors_to_base_matrix(G3, nodes3);
-	  pgt3->gradient(nodes1[0], grad);
+	  pgt3->poly_vector_grad(nodes1[0], grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G3), K3);
 	  J3 = gmm::abs(gmm::lu_inverse(K3)); /* = 1 */
 	}
@@ -965,7 +965,7 @@ namespace getfem {
 	  }
 
 	  base_node P1 = pgt1->transform(P, nodes1), P2(N);
-	  pgt1->gradient(P, grad);
+	  pgt1->poly_vector_grad(P, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G1), K);
 	  J1 = gmm::abs(gmm::lu_det(K)) * J3 * J4;
 
@@ -987,7 +987,7 @@ namespace getfem {
 	  if (pgt2->convex_ref()->is_in(P2) > 1E-8) 
 	    DAL_INTERNAL_ERROR("Point not in the convex ref : " << P2);
 	  
-	  pgt2->gradient(P2, grad);
+	  pgt2->poly_vector_grad(P2, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G2), K);
 	  J2 = gmm::abs(gmm::lu_det(K)); /* = 1 */
 	  

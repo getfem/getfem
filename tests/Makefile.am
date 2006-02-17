@@ -21,7 +21,6 @@ check_PROGRAMS =                 \
 	test_mesh                \
 	test_slice               \
 	integration              \
-	geo_trans                \
 	geo_trans_inv            \
 	test_mat_elem            \
 	test_interpolation       \
@@ -65,7 +64,6 @@ helmholtz_SOURCES = helmholtz.cc
 integration_SOURCES = integration.cc
 poly_SOURCES = poly.cc
 test_mesh_SOURCES = test_mesh.cc
-geo_trans_SOURCES = geo_trans.cc
 geo_trans_inv_SOURCES = geo_trans_inv.cc
 test_int_set_SOURCES = test_int_set.cc
 test_interpolated_fem_SOURCES = test_interpolated_fem.cc
@@ -102,7 +100,6 @@ TESTS = \
 	$(top_srcdir)/tests/test_small_vector.pl       \
 	$(top_srcdir)/tests/test_kdtree.pl             \
 	$(top_srcdir)/tests/test_rtree.pl              \
-	$(top_srcdir)/tests/geo_trans.pl               \
 	$(top_srcdir)/tests/geo_trans_inv.pl           \
 	$(top_srcdir)/tests/test_norm.pl               \
 	$(top_srcdir)/tests/test_mesh.pl               \
@@ -140,7 +137,6 @@ EXTRA_DIST = \
 	integration.pl                    \
 	poly.pl                           \
 	test_mesh.pl                      \
-	geo_trans.pl                      \
 	geo_trans_inv.pl                  \
 	test_int_set.pl                   \
 	test_interpolated_fem.pl          \

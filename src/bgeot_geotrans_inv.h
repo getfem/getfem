@@ -113,7 +113,7 @@ namespace bgeot {
     if (pgt->is_linear()) {
       if (geotrans_changed) {
 	base_node Dummy(P);
-	pgt->gradient(Dummy, pc);
+	pgt->poly_vector_grad(Dummy, pc);
       }
       // computation of the pseudo inverse
       update_B();

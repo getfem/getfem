@@ -32,6 +32,7 @@
 #include <dal_tree_sorted.h>
 #include <dal_naming_system.h>
 #include <bgeot_geometric_trans.h>
+#include <bgeot_poly_composite.h>
 
 namespace bgeot {
 
@@ -83,7 +84,7 @@ namespace bgeot {
 	  gmm::mult(G(), pgp_->grad(ii_), K_);
 	} else {
 	  base_matrix pc(pgt()->nb_points(), P); 
-	  pgt()->gradient(xref(), pc);
+	  pgt()->poly_vector_grad(xref(), pc);
 	  gmm::mult(G(),pc,K_);
 	}
       }
@@ -191,29 +192,15 @@ namespace bgeot {
   base_node geometric_trans::transform(const base_node &pt, 
 				       const base_matrix &G) const {
     size_type N = G.nrows(), k = nb_points();
-    base_node P(N); P.fill(0.0);
+    base_node P(N); base_vector val(k);
+    poly_vector_val(pt, val);
     base_matrix::const_iterator git = G.begin();
     for (size_type l = 0; l < k; ++l) {
-      scalar_type a = poly_vector()[l].eval(pt.begin());
+      scalar_type a = val[l];
       base_node::iterator pit = P.begin(), pite = P.end();
       for (; pit != pite; ++git, ++pit) *pit += a * (*git);
     }
     return P;
-  }
-
-  void geometric_trans::gradient(const base_node& x, base_matrix& pc) const {
-    base_poly PP;
-    pc.resize(nb_points(),dim());
-    for (size_type i = 0; i < nb_points(); ++i)
-      for (dim_type n = 0; n < dim(); ++n) {
-	PP = poly_vector()[i];
-	//if (!is_linear()) {
-	  PP.derivative(n);
-	  pc(i, n) = PP.eval(x.begin());
-	  /*} else {
-	  pc(i, n) = PP[n+1];
-	  }*/
-      }
   }
 
   void geometric_trans::fill_standard_vertices(void) {
@@ -230,10 +217,54 @@ namespace bgeot {
   }
 
   /* ******************************************************************** */
+  /* Instantied geometric transformations.                                */
+  /* ******************************************************************** */
+
+  template <class FUNC>
+  struct igeometric_trans : public geometric_trans {
+
+    std::vector<FUNC> trans;
+
+    virtual void poly_vector_val(const base_node &pt, base_vector &val) const {
+      val.resize(nb_points());
+      for (size_type k = 0; k < nb_points(); ++k)
+	val[k] = trans[k].eval(pt.begin());
+    }
+
+    virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
+      FUNC PP;
+      pc.resize(nb_points(),dim());
+      for (size_type i = 0; i < nb_points(); ++i)
+	for (dim_type n = 0; n < dim(); ++n) {
+	  PP = trans[i];
+	  PP.derivative(n);
+	  pc(i, n) = PP.eval(pt.begin());
+	}
+    }
+
+    virtual void poly_vector_hess(const base_node &pt, base_matrix &pc) const {
+      FUNC PP, QP;
+      pc.resize(nb_points(),dim()*dim());
+      for (size_type i = 0; i < nb_points(); ++i)
+	for (dim_type n = 0; n < dim(); ++n) {
+	  QP = trans[i]; PP.derivative(n); 
+	  for (dim_type m = 0; m <= n; ++m) {
+	    PP = QP; PP.derivative(m);
+	    pc(i, n*dim()+m) = pc(i, m*dim()+n) = PP.eval(pt.begin());
+	  }
+	}
+    }
+    
+  };
+
+  typedef igeometric_trans<base_poly> poly_geometric_trans;
+  typedef igeometric_trans<polynomial_composite> comppoly_geometric_trans;
+
+  /* ******************************************************************** */
   /* transformation on simplex.                                           */
   /* ******************************************************************** */
 
-  struct simplex_trans_ : public geometric_trans {
+  struct simplex_trans_ : public poly_geometric_trans {
     void calc_base_func(base_poly &p, size_type i, short_type K) const {
       dim_type N = dim();
       base_poly l0(N, 0), l1(N, 0);
@@ -261,6 +292,7 @@ namespace bgeot {
       cvr = simplex_of_reference(nc, k);
       size_type R = cvr->structure()->nb_points();
       is_lin = (k == 1);
+      complexity_ = k;
       trans.resize(R);
       for (size_type r = 0; r < R; ++r) calc_base_func(trans[r], r, k);
       fill_standard_vertices();
@@ -288,17 +320,18 @@ namespace bgeot {
   /* direct product transformation                                        */
   /* ******************************************************************** */
 
-  struct cv_pr_t_ : public geometric_trans {
-    cv_pr_t_(pgeometric_trans a, pgeometric_trans b) {
+  struct cv_pr_t_ : public poly_geometric_trans {
+    cv_pr_t_(const poly_geometric_trans *a, const poly_geometric_trans *b) {
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
       is_lin = false;
+      complexity_ = a->complexity() * b->complexity();
 
       size_type n1 = a->nb_points(), n2 = b->nb_points();
       trans.resize(n1 * n2);
       for (size_type i1 = 0; i1 < n1; ++i1)
 	for (size_type i2 = 0; i2 < n2; ++i2) {
-	  trans[i1 + i2 * n1] = a->poly_vector()[i1];
-	  trans[i1 + i2 * n1].direct_product(b->poly_vector()[i2]);
+	  trans[i1 + i2 * n1] = a->trans[i1];
+	  trans[i1 + i2 * n1].direct_product(b->trans[i2]);
 	}
       for (size_type i2 = 0; i2 < b->nb_vertices(); ++i2)
 	for (size_type i1 = 0; i1 < a->nb_vertices(); ++i1)
@@ -318,31 +351,38 @@ namespace bgeot {
     dependencies.push_back(a); dependencies.push_back(b);
     dependencies.push_back(convex_ref_product(a->convex_ref(),
 					      b->convex_ref()));
-    return new cv_pr_t_(a, b);
+    const poly_geometric_trans *aa
+      = dynamic_cast<const poly_geometric_trans *>(a.get());
+    const poly_geometric_trans *bb
+      = dynamic_cast<const poly_geometric_trans *>(b.get());
+    return new cv_pr_t_(aa, bb);
   }
 
   /* ******************************************************************** */
   /* linear direct product transformation.                                */
   /* ******************************************************************** */
 
-  struct cv_pr_tl_ : public geometric_trans {
-    cv_pr_tl_(pgeometric_trans a, pgeometric_trans b) {
+  struct cv_pr_tl_ : public poly_geometric_trans {
+    cv_pr_tl_(const poly_geometric_trans *a, const poly_geometric_trans *b) {
       if (!(a->is_linear() && b->is_linear()))
 	DAL_THROW(failure_error, 
 		  "linear product of non-linear transformations");
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
       is_lin = true;
+      complexity_ = std::max(a->complexity(), b->complexity());
 
       trans.resize(a->nb_points() * b->nb_points());
       std::fill(trans.begin(), trans.end(), null_poly(dim()));
 
       std::stringstream name;
       name << "GT_PK(" << int(dim()) << ",1)";
-      pgeometric_trans pgt = geometric_trans_descriptor(name.str());
+      pgeometric_trans pgt_ = geometric_trans_descriptor(name.str());
+      const poly_geometric_trans *pgt
+      = dynamic_cast<const poly_geometric_trans *>(pgt_.get());
 
       for (size_type i = 0; i <= dim(); ++i)
 	trans[cvr->structure()->ind_dir_points()[i]] 
-	  = pgt->poly_vector()[i];
+	  = pgt->trans[i];
       for (size_type i2 = 0; i2 < b->nb_vertices(); ++i2)
 	for (size_type i1 = 0; i1 < a->nb_vertices(); ++i1)
 	  vertices_.push_back(a->vertices()[i1]
@@ -362,7 +402,11 @@ namespace bgeot {
     dependencies.push_back(a); dependencies.push_back(b);
     dependencies.push_back(convex_ref_product(a->convex_ref(),
 					      b->convex_ref()));    
-    return new cv_pr_tl_(a, b);
+    const poly_geometric_trans *aa
+      = dynamic_cast<const poly_geometric_trans *>(a.get());
+    const poly_geometric_trans *bb
+      = dynamic_cast<const poly_geometric_trans *>(b.get());
+    return new cv_pr_tl_(aa, bb);
   }
 
   /* ******************************************************************** */
@@ -616,31 +660,16 @@ namespace bgeot {
   void geotrans_precomp_::init_val() const {
     c.clear();  
     c.resize(pspt->size(), base_vector(pgt->nb_points()));
-    for (size_type i = 0; i < pgt->nb_points(); ++i) {
-      for (size_type j = 0; j < pspt->size(); ++j) {
-	c[j][i] = pgt->poly_vector()[i].eval((*pspt)[j].begin());
-      }
-    }
+    for (size_type j = 0; j < pspt->size(); ++j)
+      pgt->poly_vector_val((*pspt)[j], c[j]);
   }
 
   void geotrans_precomp_::init_grad() const {
-    dim_type N = pgt->structure()->dim();
+    dim_type N = pgt->dim();
     pc.clear(); 
-    pc.resize(pspt->size(), base_matrix(pgt->nb_points() , N)); 
-    for (size_type i = 0; i < pgt->nb_points(); ++i) {
-      for (dim_type n = 0; n < N; ++n) {
-	base_poly P = pgt->poly_vector()[i];
-	P.derivative(n);
-	for (size_type j = 0; j < pspt->size(); ++j) {
-	  if ((*pspt)[j].size() != N)
-	    DAL_THROW(dimension_error, "dimensions mismatch");
-	  if(pgt->convex_ref()->is_in((*pspt)[j]) > 1.0E-7)
-	    DAL_THROW(internal_error, "point " << j
-		      << " mismatch the element");
-	  pc[j](i,n) = P.eval((*pspt)[j].begin());
-	}
-      }
-    }
+    pc.resize(pspt->size(), base_matrix(pgt->nb_points() , N));
+    for (size_type j = 0; j < pspt->size(); ++j)
+      pgt->poly_vector_grad((*pspt)[j], pc[j]);
   }
 
   void geotrans_precomp_::init_hess() const {
@@ -648,18 +677,8 @@ namespace bgeot {
     dim_type N = pgt->structure()->dim();
     hpc.clear();
     hpc.resize(pspt->size(), base_matrix(pgt->nb_points(), gmm::sqr(N)));
-    for (size_type i = 0; i < pgt->nb_points(); ++i) {
-      for (dim_type n = 0; n < N; ++n) {
-	P = pgt->poly_vector()[i];
-	P.derivative(n);
-	for (dim_type m = 0; m <= n; ++m) {
-	  Q = P; Q.derivative(m);
-	  for (size_type j = 0; j < pspt->size(); ++j)
-	    hpc[j](i, m * N + n) = hpc[j](i, n * N + m)
-	      = Q.eval((*pspt)[j].begin());
-	}
-      }
-    }
+    for (size_type j = 0; j < pspt->size(); ++j)
+      pgt->poly_vector_hess((*pspt)[j], hpc[j]);
   }
 
   base_node geotrans_precomp_::transform(size_type i,

@@ -673,7 +673,7 @@ namespace getfem {
       if (pgt->dim() == m.dim() && m.dim()>=2) { /* no orient check for convexes of lower dim */
 	base_matrix G; bgeot::vectors_to_base_matrix(G,m.points_of_convex(cv));
 	base_node g(pgt->dim()); g.fill(.5); 
-	base_matrix pc; pgt->gradient(g,pc);
+	base_matrix pc; pgt->poly_vector_grad(g,pc);
 	base_matrix K(pgt->dim(),pgt->dim());
 	gmm::mult(G,pc,K);
 	scalar_type J = gmm::lu_det(K);

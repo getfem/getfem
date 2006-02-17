@@ -214,8 +214,8 @@ namespace getfem
 	if (!is_border) { 
 	  P = shake_func(P); 
 	  for (size_type i=0; i < N; ++i)
-	    P[i] += 0.20*(1./(nsubdiv[i]* pgt->poly_vector()[0].degree()))
-	      * gmm::random(double());
+	    P[i] += 0.20*(1./(nsubdiv[i]* pgt->complexity()))
+			      * gmm::random(double());
 	}
       }
     }

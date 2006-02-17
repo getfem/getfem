@@ -62,11 +62,12 @@ namespace bgeot {
    *        \tau : \overline{T} & \longrightarrow \ T, \\
    *               \overline{x} & \longmapsto \ \ x,
    *     \end{array} @f]
-   *     which should be a diffeomorphism between @f$\overline{T}@f$ and @f$T@f$. It
-   *     is assumed that there exists a polynomial vector 
+   *     which should be a diffeomorphism between @f$\overline{T}@f$ and @f$T@f$.
+   *     It is assumed that there exists a polynomial vector 
    *     @f$ \underline{\cal N}(\overline{x})
    *        = \left({\cal N}i_(\overline{x})\right)i_, \ \ i = 0 .. n_g-1, @f$ 
-   *     defined on @f$\overline{T}@f$ of size @f$n_g@f$, such that the transformation
+   *     defined on @f$\overline{T}@f$ of size @f$n_g@f$, such that the
+   *     transformation
    *     @f$\tau@f$ can be written 
    *     @f$ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}i_(\overline{x})
    *     g^i@f$.
@@ -100,8 +101,9 @@ namespace bgeot {
     
     bool is_lin;
     pconvex_ref cvr;
-    std::vector<base_poly> trans;
     std::vector<size_type> vertices_;
+    size_type complexity_; /* either the degree or the refinement of the
+			    *  transformation */
 
     void fill_standard_vertices(void);
   public :
@@ -119,8 +121,12 @@ namespace bgeot {
     /// Basic structure of the reference element.
     pconvex_structure basic_structure(void) const
     { return cvr->structure()->basic_structure(); }
-    /// Gives the vector of polynomials representing the transformation.
-    const std::vector<base_poly> &poly_vector(void) const { return trans; }
+    /// Gives the value of the vector of functions at a certain point.
+    virtual void poly_vector_val(const base_node &pt, base_vector &val) const = 0;
+    /// Gives the gradient of the vector of functions at a certain point.
+    virtual void poly_vector_grad(const base_node &pt, base_matrix &val) const = 0;
+    /// Gives the hessian of the vector of functions at a certain point.
+    virtual void poly_vector_hess(const base_node &pt, base_matrix &val) const = 0;
     /// Gives the number of vertices.
     size_type nb_vertices(void) const { return vertices_.size(); }
     /// Gives the indices of vertices between the nodes.
@@ -138,10 +144,8 @@ namespace bgeot {
     base_node transform(const base_node &pt, const base_matrix &G) const;
     /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
 	if the transformation is linear, x is not used at all */
-    void gradient(const base_node& x, base_matrix& pc) const;
+    size_type complexity(void) const { return complexity_; }
     virtual ~geometric_trans() {}
-  protected:
-    geometric_trans() {}
   };
 
   template<class CONT>
@@ -149,10 +153,9 @@ namespace bgeot {
 					 const CONT &ptab) const {
     base_node P(ptab[0].size());
     size_type k = nb_points();
-    for (size_type l = 0; l < k; ++l)
-      gmm::add(gmm::scaled(ptab[l],
-			   scalar_type(poly_vector()[l].eval(pt.begin()))),P);
-      //P.addmul(poly_vector()[l].eval(pt.begin()),ptab[l]);
+    base_vector val(k);
+    poly_vector_val(pt, val);
+    for (size_type l = 0; l < k; ++l) gmm::add(gmm::scaled(ptab[l], val[l]),P);
     return P;
   }
 

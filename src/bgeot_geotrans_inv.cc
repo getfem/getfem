@@ -75,7 +75,7 @@ namespace bgeot
       return gmm::vect_norm2_sqr(r)/2.;
     }
     void operator()(const base_node& x, base_small_vector& gr) const {
-      gic.pgt->gradient(x, gic.pc);
+      gic.pgt->poly_vector_grad(x, gic.pc);
       gic.update_B();
       base_node r = gic.pgt->transform(x, gic.cvpts) - xreal;
       gr.resize(x.size());
@@ -100,7 +100,7 @@ namespace bgeot
     base_node vres(N);
     base_node rn(xreal); rn -= y; 
 
-    pgt->gradient(x, pc);
+    pgt->poly_vector_grad(x, pc);
     update_B();
     gmm::mult(gmm::transposed(K), rn, vres);
     scalar_type res = gmm::vect_norm2(vres);
@@ -123,7 +123,7 @@ namespace bgeot
 	
 	rn = xreal - y; 
 	
-	pgt->gradient(z, pc);
+	pgt->poly_vector_grad(z, pc);
 	update_B();
 	
 	if (P != N) {

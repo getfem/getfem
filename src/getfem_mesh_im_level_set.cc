@@ -175,7 +175,7 @@ namespace getfem {
 						pai->point(0), G);
 	for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	  c.set_xref(pai->point(j));
-	  pgt2->gradient(pai->point(j), pc);
+	  pgt2->poly_vector_grad(pai->point(j), pc);
 	  gmm::mult(G,pc,KK);
 	  scalar_type J = gmm::lu_det(KK);
 	  new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));

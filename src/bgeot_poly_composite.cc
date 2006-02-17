@@ -57,7 +57,7 @@ namespace bgeot {
       vectors_to_base_matrix(G, m.points_of_convex(cv));
       
       base_node x(N); gmm::clear(x);
-      pgt->gradient(x, pc);
+      pgt->poly_vector_grad(x, pc);
     
       gmm::mult(gmm::transposed(pc), gmm::transposed(G), B0);
       det[cv] = gmm::lu_inverse(B0);
