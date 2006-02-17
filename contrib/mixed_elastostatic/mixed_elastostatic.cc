@@ -57,6 +57,170 @@ typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 /**************************************************************************/
+/*  Brique mixed elasticity.                                              */
+/**************************************************************************/
+
+
+namespace getfem {
+
+  template<class MAT, class VECT>
+  void asm_mixed_stiffness_matrix_for_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mf_data, const VECT &LAMBDA_INV, const VECT &MU_INV,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &RM = const_cast<MAT &>(RM_);
+    if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    
+    if (mf.get_qdim() != gmm::sqr(mf.linked_mesh().dim()))
+      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+
+    generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+			   "t=comp(vBase(#1).vBase(#1).Base(#2));"
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)"
+			   "+ t(:,i,i,:,j,j,k).lambda(k))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mf_data);
+    assem.push_data(LAMBDA_INV);
+    assem.push_data(MU_INV);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+
+
+  template<class MAT, class VECT>
+  void asm_mixed_udivtau_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
+   const mesh_fem &mf_u, const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &RM = const_cast<MAT &>(RM_);
+
+    if (mf_sigma.get_qdim() != gmm::sqr(mf.linked_mesh().dim()) ||
+	mf_u.get_qdim() != mf.linked_mesh().dim())
+      DAL_THROW(std::logic_error, "wrong qdim for a mesh_fem");
+
+    generic_assembly assem("t=comp(vBase(#1).vGrad(#2));"
+                           "M(#1,#1)+= t(:,i,j,:,i,j,k).mu(k)"
+			   "+ t(:,i,i,:,j,j,k).lambda(k))";
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_sigma);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+
+
+
+
+# define MDBRICK_MIXED_ELASTICITY 43224677
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_mixed_elasticity : public mdbrick_abstract<MODEL_STATE> {
+
+    TYPEDEF_MODEL_STATE_TYPES;
+
+    const mesh_im &mim;
+    const mesh_fem &mf_sigma, &mf_u, &mf_theta;
+    mdbrick_parameter<VECTOR> lambda_inv_, mu_inv_;
+    T_MATRIX K;
+    bool K_uptodate;
+    size_type nbdof;
+
+    virtual void proper_update(void) {
+      K_uptodate = false;
+      nbdof = mf_sigma.nb_dof() + mf_u.nb_dof() + mf_theta.nb_dof();
+    }
+
+  public :
+
+    const T_MATRIX &get_K(void) {
+      this->context_check(); 
+      if (!K_uptodate || this->parameters_is_any_modified()) {
+	if (&lambda_inv_.mf() != &mu_inv_.mf()) 
+	DAL_THROW(failure_error, "lambda and mu should share the same mesh_fem");
+	gmm::resize(K, nbdof, nbdof);
+	gmm::clear(K);
+	gmm::sub_interval I1(0, mf_sigma.nb_dof());
+	gmm::sub_interval I2(mf_sigma.nb_dof(), mf_u.nb_dof());
+	gmm::sub_interval I3(mf_sigma.nb_dof()+mf_u.nb_dof(), mf_theta.nb_dof());
+	VECTOR vlambda(lambda_inv_.get()), vmu(mu_inv_.get());
+
+
+	asm_mixed_stiffness_matrix_for_linear_elasticity
+	  (gmm::sub_matrix(K, I1), mim, mf_sigma, lambda_inv_.mf(), vlambda, vmu,
+	   mf_u.linked_mesh().get_mpi_region());
+	
+
+
+
+
+
+
+
+	K_uptodate = true;
+	this->parameters_set_uptodate();
+      }
+      return K;
+    }
+
+    mdbrick_parameter<VECTOR> &lambda_inv(void) { return lambda_inv_; }
+    const mdbrick_parameter<VECTOR> &lambda_inv(void) const { return lambda_inv_; }
+    mdbrick_parameter<VECTOR> &mu_inv(void) { return mu_inv_; }
+    const mdbrick_parameter<VECTOR> &mu_inv(void) const { return mu_inv_; }
+
+
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					   size_type) {
+      gmm::sub_interval SUBI(i0, nbdof);
+      gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+    }
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
+				size_type) {
+      gmm::sub_interval SUBI(i0, nbdof);
+      gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residual(), SUBI));
+    }
+
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      gmm::sub_interval SUBU(this->first_index(), nbdof);
+      return gmm::sub_vector(MS.state(), SUBU);
+    }
+
+    void init_(void) {
+      size_type N = mf_sigma.linked_mesh().dim();
+      if (mf_sigma.get_qdim() != N*N)
+	DAL_THROW(failure_error, "Qdim of mf_sigma should be " << N*N << ".");
+      if (mf_u.get_qdim() != N)
+	DAL_THROW(failure_error, "Qdim of mf_u should be " << N << ".");
+      if (mf_theta.get_qdim() != 1)
+	DAL_THROW(failure_error, "Qdim of mf_theta should be 1.");
+      this->add_proper_mesh_im(mim);
+      this->add_proper_mesh_fem(mf_sigma, MDBRICK_MIXED_ELASTICITY);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_MIXED_ELASTICITY);
+      this->add_proper_mesh_fem(mf_theta, MDBRICK_MIXED_ELASTICITY);
+      this->force_update();
+    }
+
+    /** constructor for a homogeneous material (constant lambda and mu).
+     * @param epsilon the thickness of the plate.
+     */
+    mdbrick_mixed_elasticity
+    (const mesh_im &mim_, const mesh_fem &mf_sigma_, const mesh_fem &mf_u_,
+     const mesh_fem &mf_theta_, value_type lambdai, value_type mui)
+      : mim(mim_), mf_sigma(mf_sigma_), mf_u(mf_u_),
+	mf_theta(mf_theta_), lambda_inv_("lambda", mf_u_.linked_mesh(), this),
+	mu_inv_("mu", mf_u_.linked_mesh(), this) {
+      size_type N = mf_u_.linked_mesh().dim();
+      lambda_inv_.set(-lambdai/(2*mui*(N*lambdai+2*mui)));
+      mu_inv_.set(1. / (4. * mui));
+      init_();
+    }
+ 
+  };
+
+}
+
+/**************************************************************************/
 /*  Exact solution.                                                       */
 /**************************************************************************/
 
@@ -268,8 +432,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   cout << "Number of dof for sigma: " << mf_sigma.nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mixed_pressure ? 0.0 : lambda, mu);
+  getfem::mdbrick_mixed_elasticity<>
+    ELAS(mim, mf_sigma, mf_u, mf_theta, lambda, mu);
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(ELAS);
@@ -279,8 +443,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     NEUMANN(VOL_F, NEUMANN_BOUNDARY_NUM);
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
-					  mf_mult);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,mf_mult);
   final_model.set_constraints_type(dirichlet_version);
 
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
