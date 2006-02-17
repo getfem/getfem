@@ -496,6 +496,7 @@ AC_CONFIG_FILES(\
 	contrib/delaminated_crack/Makefile \
 	contrib/static_friction/Makefile \
 	contrib/bimaterial_crack_test/Makefile \
+	contrib/mixed_elastostatic/Makefile \
 	bin/Makefile \
 getfem-config getfem-config-notinstalled gmm-config)
 AC_OUTPUT
