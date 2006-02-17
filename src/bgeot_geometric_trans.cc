@@ -247,7 +247,7 @@ namespace bgeot {
       pc.resize(nb_points(),dim()*dim());
       for (size_type i = 0; i < nb_points(); ++i)
 	for (dim_type n = 0; n < dim(); ++n) {
-	  QP = trans[i]; PP.derivative(n); 
+	  QP = trans[i]; QP.derivative(n); 
 	  for (dim_type m = 0; m <= n; ++m) {
 	    PP = QP; PP.derivative(m);
 	    pc(i, n*dim()+m) = pc(i, m*dim()+n) = PP.eval(pt.begin());

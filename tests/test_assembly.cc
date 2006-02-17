@@ -1551,6 +1551,7 @@ void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
 
 int main(int argc, char *argv[]) {
 
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
