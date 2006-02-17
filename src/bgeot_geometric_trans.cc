@@ -355,6 +355,9 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(a.get());
     const poly_geometric_trans *bb
       = dynamic_cast<const poly_geometric_trans *>(b.get());
+    if (!aa || !bb) 
+      DAL_THROW(failure_error, "The product of geometric transformations "
+		"is only defined for polynomial ones");
     return new cv_pr_t_(aa, bb);
   }
 
@@ -406,6 +409,9 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(a.get());
     const poly_geometric_trans *bb
       = dynamic_cast<const poly_geometric_trans *>(b.get());
+    if (!aa || !bb) 
+      DAL_THROW(failure_error, "The product of geometric transformations "
+		"is only defined for polynomial ones");
     return new cv_pr_tl_(aa, bb);
   }
 

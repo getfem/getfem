@@ -79,7 +79,7 @@ $$ \hat{\varphi}^i : \hat{T} \subset \Reel^P \longrightarrow \Reel^Q. $$
 Each base function corresponds to a degree of freedom (d.o.f).
 Most finite element methods are scalar, which means that $Q = 1$, but {\sc Getfem++} support also intrinsic vectorial elements. The map between the reference element and the real element is called the geometric transformation and is denoted by 
 $$ \tau :  \hat{T} \longrightarrow T, $$
-and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\hat{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
+and is generally polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\hat{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
 $$ \tilde{\varphi}^i(x) = \hat{\varphi}^i(\hat{x}) = \hat{\varphi}^i(\tau^{-1}(x)), $$
 If the element is said to be equivalent throught the geometric transformation $\tau$ (or $\tau$-equivalent) then base functions on the real element are just defined by
 $$\varphi^i(x) = \tilde{\varphi}^i(x).$$
