@@ -556,27 +556,34 @@ namespace getfem {
       return s*r;
     }
     
-    /* append a vectorized dimension to tref */
-    stride_type add_vdim(const tensor_ranges& rng, dim_type d, stride_type s, tensor_ref &tref) {
+    /* append a vectorized dimension to tref -- works also for cases
+       where target_dim > 1
+     */
+    stride_type add_vdim(const tensor_ranges& rng, dim_type d, 
+			 index_type target_dim, stride_type s, tensor_ref &tref) {
       assert(d < rng.size()-1);
       index_type r = rng[d], q=rng[d+1];
+      index_type qmult = q/target_dim;
+      assert(r%qmult == 0); assert(q%qmult==0);
+
       tensor_strides v;
       tensor_ranges trng(2); trng[0] = q; trng[1] = r;
       index_set ti(2); ti[0] = d+1; ti[1] = d;
       tensor_mask m(trng,ti);
-      assert(r%q == 0);
-      v.resize(r);
+      v.resize(r*target_dim);
       tensor_ranges cnt(2);
       for (cnt[1]=0; cnt[1] < r; cnt[1]++) {
-	cnt[0] = cnt[1] % q;
-	m.set_mask_val(m.lpos(cnt), true);
-	v[cnt[1]] = s*(cnt[1]/q);
+	for (index_type k=0; k < target_dim; ++k) {
+	  cnt[0] = (cnt[1] % qmult)*target_dim + k;
+	  m.set_mask_val(m.lpos(cnt), true);
+	  v[cnt[1]*target_dim+k] = s*((cnt[1]/qmult)*target_dim + k);
+	}
       }
       assert(tref.masks().size() == tref.strides().size());
       tref.set_ndim_noclean(tref.ndim()+2);
       tref.push_mask(m);
       tref.strides().push_back(v);
-      return s*(r/q);
+      return s*(r/qmult)*target_dim;
     }
 
     /* called when the FEM has changed */
@@ -633,12 +640,14 @@ namespace getfem {
       } else {
         size_type target_dim = mc.pmf->fem_of_element(cv)->target_dim();
         size_type qdim = mc.pmf->get_qdim();
+	
+	//cerr << "target_dim = " << target_dim << ", qdim = " << qdim << ", vectorize=" << mc.vectorize << ", rng=" << rng << " d=" << d << ", tsz=" << tsz << "\n";
 	if (mc.vectorize) {
 	  if (target_dim == qdim) {
 	    tsz = add_dim(rng, d++, tsz, tref);
 	    tsz = add_dim(rng, d++, tsz, tref);
 	  } else {
-	    tsz = add_vdim(rng, d, tsz, tref);
+	    tsz = add_vdim(rng, d, target_dim, tsz, tref);
 	    d += 2;
 	  }
 	} else tsz = add_dim(rng, d++, tsz, tref);

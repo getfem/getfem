@@ -104,12 +104,15 @@ namespace getfem {
     }
     else {
       if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
-	  != pf->basic_structure(cv) || 
-	  (pf->target_dim() != Qdim && pf->target_dim() != 1))
-	DAL_THROW(std::logic_error,
+	  != pf->basic_structure(cv))
+	DAL_THROW(dal::failure_error,
 		  "Incompatibility between fem " << name_of_fem(pf) << 
 		  " and mesh element " <<
 		  name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
+      if ((Qdim % pf->target_dim()) != 0 && pf->target_dim() != 1)
+	DAL_THROW(dal::failure_error,
+		  "Incompatibility between Qdim=" << Qdim << " and target_dim " <<
+		  int(pf->target_dim()) << " of " << name_of_fem(pf));
       if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
 	fe_convex.add(cv);
 	f_elems[cv] = pf;
@@ -271,20 +274,20 @@ namespace getfem {
 	  size_type num = pf->index_of_global_dof(cv, i);
 	  if (!(encountered_global_dof[num])) {
 	    ind_global_dof[num] = nbdof;
-	    nbdof += (pf->target_dim() == 1 && Qdim != 1) ? Qdim : 1;
+	    nbdof += Qdim / pf->target_dim();
 	    encountered_global_dof[num] = true;
 	  }
 	  tab[i] = ind_global_dof[num];
 	} else if (!dof_linkable(fd.pnd)) {
 	  tab[i] = nbdof;
-	  nbdof += (pf->target_dim() == 1 && Qdim != 1) ? Qdim : 1;
+	  nbdof += Qdim / pf->target_dim();
 	} else {
 	  pgp->transform(linked_mesh().points_of_convex(cv), i, fd.P);
 
 	  std::pair<dof_sort_type::iterator, bool> pa = dof_sort.insert(std::make_pair(fd, nbdof));
 	  if (pa.second) {
 	    tab[i] = nbdof;
-	    nbdof += (pf->target_dim() == 1 && Qdim != 1) ? Qdim : 1;
+	    nbdof += Qdim / pf->target_dim();
 	  }
 	  else { tab[i] = pa.first->second; }
 	}

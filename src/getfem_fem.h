@@ -230,7 +230,7 @@ namespace getfem {
     bool is_pol; /// true if the FEM is polynomial
     bool is_polycomp; /// true if the FEM is polynomial composite
     bool real_element_defined;
-    short_type es_degree; /// estimated polynomial degree of the FEM
+    short_type es_degree; // estimated polynomial degree of the FEM
     short_type hier_raff; /// hierarchical refinement of the FEM
     
   public :

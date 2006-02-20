@@ -1463,6 +1463,26 @@ void test_nonlin(const getfem::mesh_im &mim, const getfem::mesh_fem &mf)
   }
 }
 
+void test_vectorfem(const getfem::mesh_im &mim) {
+  assert(mim.linked_mesh().dim() == 2);
+  getfem::mesh_fem mf(mim.linked_mesh(), 6);
+  getfem::mesh_fem mf0(mim.linked_mesh(), 2);
+  getfem::pfem pf = getfem::fem_descriptor("FEM_RT0(2)");
+  cerr << "target_dim = " << pf->target_dim() << "\n";
+  mf.set_finite_element(pf);
+  mf0.set_finite_element(pf);
+  cerr << "nb_dof = " << mf.nb_dof() << " =" << mf0.nb_dof() << "*3\n";
+  assert(mf0.nb_dof()*3 == mf.nb_dof());
+
+  {
+    getfem::generic_assembly assem("t=comp(vBase(#1)); print t;");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    //assem.assembly();
+  }
+  //exit(1);
+}
+
 void inline_red_test(const getfem::mesh_im &mim, getfem::mesh_fem &mf1, getfem::mesh_fem &mf2) {
   std::vector<scalar_type> U(mf1.nb_dof()); gmm::fill_random(U);
   std::vector<scalar_type> V(mf2.nb_dof()); gmm::fill_random(V);
@@ -1607,6 +1627,7 @@ int main(int argc, char *argv[]) {
      
      inline_red_test(mim,mfne,mfd);
 
+     test_vectorfem(mim);
 
      test_gradgt(mim,mf);
      run_tests(mim,mf,mfq,mfd,mfdq,do_new,do_old,tests,1,1);
