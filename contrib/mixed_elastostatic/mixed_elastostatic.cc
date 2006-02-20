@@ -88,13 +88,13 @@ namespace getfem {
   }
 
 
-  template<class MAT, class VECT>
+  template<class MAT>
   void asm_mixed_thetasitau_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
    const mesh_fem &mf_theta,
    const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
-    size_type N = mf.linked_mesh().dim();
+    size_type N = mf_sigma.linked_mesh().dim();
 
     if (N != 2)
       DAL_THROW(invalid_argument, "Sorry, only defined in dimension 2");
@@ -103,7 +103,7 @@ namespace getfem {
       DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
     
     generic_assembly assem("t=comp(Base(#1).vBase(#2));"
-                           "M(#1,#1)+= t(:,i,j,:,i,j,k)";
+                           "M(#1,#1)+= t(:,i,j,:,i,j,k)");
     assem.push_mi(mim);
     assem.push_mf(mf_theta);
     assem.push_mf(mf_sigma);
@@ -111,18 +111,18 @@ namespace getfem {
     assem.assembly(rg);
   }
 
-  template<class MAT, class VECT>
+  template<class MAT>
   void asm_mixed_udivtau_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
    const mesh_fem &mf_u, const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
+    size_type N = mf_sigma.linked_mesh().dim();
 
-    if (mf_sigma.get_qdim() != gmm::sqr(mf.linked_mesh().dim()) ||
-	mf_u.get_qdim() != mf.linked_mesh().dim())
+    if (mf_sigma.get_qdim() != N*N || mf_u.get_qdim() != N)
       DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
 
     generic_assembly assem("t=comp(vBase(#1).vGrad(#2));"
-                           "M(#1,#1)+= t(:,i,j,:,i,j,k)";
+                           "M(#1,#1)+= t(:,i,j,:,i,j,k)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
