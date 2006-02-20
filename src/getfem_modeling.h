@@ -1804,7 +1804,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		normal component Dirichlet condition bricks.                   */
+  /*		normal component Dirichlet condition bricks.              */
   /* ******************************************************************** */
 
   /** normal component Dirichlet condition brick.

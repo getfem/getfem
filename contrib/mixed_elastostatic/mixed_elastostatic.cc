@@ -39,7 +39,6 @@
 #include <getfem_model_solvers.h>
 #include <gmm.h>
 #include <getfem_interpolation.h>
-#include <getfem_error_estimate.h>
 #include <getfem_import.h>
 
 /* some Getfem++ types that we will be using */
@@ -73,7 +72,7 @@ namespace getfem {
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     
     if (mf.get_qdim() != gmm::sqr(mf.linked_mesh().dim()))
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+      DAL_THROW(invalid_argument, "wrong qdim for the mesh_fem");
 
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 			   "t=comp(vBase(#1).vBase(#1).Base(#2));"
@@ -90,6 +89,29 @@ namespace getfem {
 
 
   template<class MAT, class VECT>
+  void asm_mixed_thetasitau_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
+   const mesh_fem &mf_theta,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &RM = const_cast<MAT &>(RM_);
+    size_type N = mf.linked_mesh().dim();
+
+    if (N != 2)
+      DAL_THROW(invalid_argument, "Sorry, only defined in dimension 2");
+
+    if (mf_sigma.get_qdim() != N*N || mf_theta.get_qdim() != (N*(N-1)/2))
+      DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
+    
+    generic_assembly assem("t=comp(Base(#1).vBase(#2));"
+                           "M(#1,#1)+= t(:,i,j,:,i,j,k)";
+    assem.push_mi(mim);
+    assem.push_mf(mf_theta);
+    assem.push_mf(mf_sigma);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+
+  template<class MAT, class VECT>
   void asm_mixed_udivtau_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
    const mesh_fem &mf_u, const mesh_region &rg = mesh_region::all_convexes()) {
@@ -97,11 +119,10 @@ namespace getfem {
 
     if (mf_sigma.get_qdim() != gmm::sqr(mf.linked_mesh().dim()) ||
 	mf_u.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for a mesh_fem");
+      DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
 
     generic_assembly assem("t=comp(vBase(#1).vGrad(#2));"
-                           "M(#1,#1)+= t(:,i,j,:,i,j,k).mu(k)"
-			   "+ t(:,i,i,:,j,j,k).lambda(k))";
+                           "M(#1,#1)+= t(:,i,j,:,i,j,k)";
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
@@ -137,25 +158,29 @@ namespace getfem {
       this->context_check(); 
       if (!K_uptodate || this->parameters_is_any_modified()) {
 	if (&lambda_inv_.mf() != &mu_inv_.mf()) 
-	DAL_THROW(failure_error, "lambda and mu should share the same mesh_fem");
+	DAL_THROW(failure_error,
+		  "Lame coefficients should share the same mesh_fem");
 	gmm::resize(K, nbdof, nbdof);
 	gmm::clear(K);
 	gmm::sub_interval I1(0, mf_sigma.nb_dof());
 	gmm::sub_interval I2(mf_sigma.nb_dof(), mf_u.nb_dof());
-	gmm::sub_interval I3(mf_sigma.nb_dof()+mf_u.nb_dof(), mf_theta.nb_dof());
+	gmm::sub_interval I3(mf_sigma.nb_dof()+mf_u.nb_dof(),
+			     mf_theta.nb_dof());
 	VECTOR vlambda(lambda_inv_.get()), vmu(mu_inv_.get());
 
-
 	asm_mixed_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I1), mim, mf_sigma, lambda_inv_.mf(), vlambda, vmu,
-	   mf_u.linked_mesh().get_mpi_region());
+	  (gmm::sub_matrix(K, I1), mim, mf_sigma, lambda_inv_.mf(), vlambda,
+	   vmu, mf_u.linked_mesh().get_mpi_region());
 	
-
-
-
-
-
-
+	T_MATRIX B1(mf_u.nb_dof(), mf_sigma.nb_dof());
+	asm_mixed_udivtau_linear_elasticity
+	  (B1, mim, mf_sigma, mf_u, mf_u.linked_mesh().get_mpi_region());
+	gmm::copy(gmm::transposed(B1), gmm::sub_matrix(K, I1, I2));	
+	gmm::copy(B1, gmm::sub_matrix(K, I2, I1));
+	
+	T_MATRIX B2(mf_theta.nb_dof(), mf_sigma.nb_dof());
+	asm_mixed_thetasitau_linear_elasticity
+	  (B2, mim, mf_sigma, mf_theta, mf_u.linked_mesh().get_mpi_region());
 
 	K_uptodate = true;
 	this->parameters_set_uptodate();
@@ -164,7 +189,8 @@ namespace getfem {
     }
 
     mdbrick_parameter<VECTOR> &lambda_inv(void) { return lambda_inv_; }
-    const mdbrick_parameter<VECTOR> &lambda_inv(void) const { return lambda_inv_; }
+    const mdbrick_parameter<VECTOR> &lambda_inv(void) const
+    { return lambda_inv_; }
     mdbrick_parameter<VECTOR> &mu_inv(void) { return mu_inv_; }
     const mdbrick_parameter<VECTOR> &mu_inv(void) const { return mu_inv_; }
 
@@ -192,8 +218,9 @@ namespace getfem {
 	DAL_THROW(failure_error, "Qdim of mf_sigma should be " << N*N << ".");
       if (mf_u.get_qdim() != N)
 	DAL_THROW(failure_error, "Qdim of mf_u should be " << N << ".");
-      if (mf_theta.get_qdim() != 1)
-	DAL_THROW(failure_error, "Qdim of mf_theta should be 1.");
+      if (mf_theta.get_qdim() != (N*(N-1)/2))
+	DAL_THROW(failure_error,
+		  "Qdim of mf_theta should be " << (N*(N-1)/2) << ".");
       this->add_proper_mesh_im(mim);
       this->add_proper_mesh_fem(mf_sigma, MDBRICK_MIXED_ELASTICITY);
       this->add_proper_mesh_fem(mf_u, MDBRICK_MIXED_ELASTICITY);
@@ -300,8 +327,8 @@ struct elastostatic_problem {
 void elastostatic_problem::init(void) {
   std::string MESH_FILE = PARAM.string_value("MESH_FILE", "Mesh file");
   std::string FEM_TYPE_U  = PARAM.string_value("FEM_TYPE_U","FEM name");
-  std::string FEM_TYPE_SIGMA  = PARAM.string_value("FEM_TYPE_SIGMA","FEM name");
-  std::string FEM_TYPE_THETA  = PARAM.string_value("FEM_TYPE_THETA","FEM name");
+  std::string FEM_TYPE_SIGMA = PARAM.string_value("FEM_TYPE_SIGMA","FEM name");
+  std::string FEM_TYPE_THETA = PARAM.string_value("FEM_TYPE_THETA","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
 
@@ -436,37 +463,24 @@ bool elastostatic_problem::solve(plain_vector &U) {
     ELAS(mim, mf_sigma, mf_u, mf_theta, lambda, mu);
   
   // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(ELAS);
-  
-  // Neumann condition brick.
-  getfem::mdbrick_normal_source_term<>
-    NEUMANN(VOL_F, NEUMANN_BOUNDARY_NUM);
-
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,mf_mult);
-  final_model.set_constraints_type(dirichlet_version);
-
-  cout << "Total number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residual, 1, 40000);
-
-  dal::bit_vector cvref;
- 
-  // Defining the volumic source term.
+  getfem::mdbrick_source_term<> VOL_F(ELAS, size_type(-1), 1);
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs * N);
   getfem::interpolation_function(mf_rhs, F, sol_f);
   VOL_F.source_term().set(mf_rhs, F);
-  
-  // Defining the Neumann source term.
+
+
+  // Dirichlet condition brick.
+  getfem::mdbrick_normal_component_Dirichlet<>
+    final_model(VOL_F, DIRICHLET_BOUNDARY_NUM, mf_mult);
+  final_model.set_constraints_type(dirichlet_version);
   gmm::resize(F, nb_dof_rhs * N * N);
-  getfem::interpolation_function(mf_rhs, F, sol_sigma, NEUMANN_BOUNDARY_NUM);
-  NEUMANN.normal_source_term().set(mf_rhs, F);
-  
-  // Defining the Dirichlet condition value.
-  gmm::resize(F, nb_dof_rhs * N);
-  getfem::interpolation_function(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
+  getfem::interpolation_function(mf_rhs, F, sol_sigma, DIRICHLET_BOUNDARY_NUM);
   final_model.rhs().set(mf_rhs, F);
+
+  cout << "Total number of variables : " << final_model.nb_dof() << endl;
+  getfem::standard_model_state MS(final_model);
+  gmm::iteration iter(residual, 1, 40000);
   
   iter.init();
   getfem::standard_solve(MS, final_model, iter);
@@ -494,7 +508,7 @@ int main(int argc, char *argv[]) {
 
     plain_vector U;
 
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
 
     p.compute_error(U);
 
