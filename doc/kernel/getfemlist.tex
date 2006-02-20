@@ -412,13 +412,13 @@ It is important to use a corresponding composite integration method.
 
 \subsection{Classical vectorial elements}
 
-\subsubsection{Raviart-Thomas 0 element}
+\subsubsection{Raviart-Thomas 0 elements}
 
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=10cm,angle=0]{getfemlist_RT0.eps}
   \end{center}
-  \caption{ \it RT0 element in dimension two and three. (P+1 dof, H(div))} 
+  \caption{ \it some RT0 elements in dimension two and three. (P+1 dof, H(div))} 
   \label{fig:triangle_comp}
 \end{figure}
 
@@ -428,7 +428,7 @@ It is important to use a corresponding composite integration method.
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
-{\bf Raviart-Thomas 0 element}\\
+{\bf Raviart-Thomas 0 element on simplices}\\
 {\tt "FEM\_RT0(P)"}
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
@@ -436,6 +436,19 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 $1$ & $P$ & $P+1$ & $H(div)$ & Yes \mbox{($Q = P$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{\bf Raviart-Thomas 0 element on parallelepipeds (quadrilaterals, hexahedrals)}\\
+{\tt "FEM\_RT0Q(P)"}
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$1$ & $P$ & $2P$ & $H(div)$ & Yes \mbox{($Q = P$)} & No & Yes\\ \hline
+\end{tabular}
+\end{center}
+
+
 
 
 \subsubsection{Nedelec (or Whitney) edge element}

@@ -1032,7 +1032,7 @@ namespace getfem
   }
 
   /* ******************************************************************** */
-  /*	Element RT0.                                                      */
+  /*	Element RT0 on the simplexes.                                     */
   /* ******************************************************************** */
   
   struct P1_RT0_ : public fem<base_poly> {
@@ -1068,10 +1068,6 @@ namespace getfem
 	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
-
-      cout << "normal_norm" << gmm::vect_norm2(cvr->normals()[i]) << endl;
-      cout << "normal_norm" << gmm::vect_norm2(n) << endl;
-
 
       M(i,i) = gmm::vect_norm2(n);
       n /= M(i,i);
@@ -1129,6 +1125,106 @@ namespace getfem
     if (n <= 1 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
     virtual_fem *p = new P1_RT0_(n);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+
+  /* ******************************************************************** */
+  /*	Element RT0 on parallelepideds.                                   */
+  /* ******************************************************************** */
+  
+  struct P1_RT0Q_ : public fem<base_poly> {
+    dim_type nc;
+    mutable base_matrix K;
+    base_small_vector norient;
+    mutable bgeot::pgeotrans_precomp pgp;
+    mutable bgeot::pgeometric_trans pgt_stored;
+    mutable pfem_precomp pfp;
+
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    P1_RT0Q_(dim_type nc_);
+  };
+
+  void P1_RT0Q_::mat_trans(base_matrix &M,
+			  const base_matrix &G,
+			  bgeot::pgeometric_trans pgt) const {
+    dim_type N = G.nrows();
+    gmm::copy(gmm::identity_matrix(), M);
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
+    if (N != nc)
+      DAL_THROW(failure_error,
+		"Sorry, this element works only in dimension " << nc);
+
+    gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K);
+    for (unsigned i = 0; i < unsigned(2*nc); ++i) {
+      if (!(pgt->is_linear()))
+	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+      bgeot::base_small_vector n(nc);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
+
+      M(i,i) = gmm::vect_norm2(n);
+      n /= M(i,i);
+      scalar_type ps = gmm::vect_sp(n, norient);
+      if (ps < 0) M(i, i) *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("RT0Q : The normal orientation may be not correct");
+    }
+  }
+
+  P1_RT0Q_::P1_RT0Q_(dim_type nc_) {
+    nc = nc_;
+    pgt_stored = 0;
+    gmm::resize(K, nc, nc);
+    gmm::resize(norient, nc);
+    norient[0] = M_PI;
+    for (unsigned i = 1; i < nc; ++i) norient[i] = norient[i-1]*M_PI;
+
+    cvr = bgeot::parallelepiped_of_reference(nc);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = 1;
+    is_pol = true;
+    is_lag = is_equiv = false;
+    ntarget_dim = nc;
+    base_.resize(nc*2*nc);
+
+    for (size_type j = 0; j < size_type(nc*2*nc); ++j)
+      base_[j] = bgeot::null_poly(nc);
+
+    for (size_type i = 0; i < nc; ++i) { 
+      base_[2*i+i*2*nc] = base_poly(nc, 1, i);
+      base_[2*i+1+i*2*nc] = bgeot::one_poly(nc) - base_poly(nc, 1, i);
+    }
+
+    base_node pt(nc); pt.fill(0.5);
+
+    for (size_type i = 0; i < nc; ++i) {
+      pt[i] = 1.0;
+      add_node(normal_component_dof(nc), pt);
+      pt[i] = 0.0;
+      add_node(normal_component_dof(nc), pt);
+      pt[i] = 0.5;
+    }
+  }
+
+  static pfem P1_RT0Q(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 2.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 1 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    virtual_fem *p = new P1_RT0Q_(n);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
     return p;
@@ -1954,6 +2050,7 @@ namespace getfem
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
       add_suffix("REDUCED_HCT_TRIANGLE", reduced_HCT_triangle_fem);
       add_suffix("RT0", P1_RT0);
+      add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
     }
   };

@@ -70,7 +70,7 @@ struct navier_stokes_problem {
   scalar_type nu;            /* 1/Re */
   scalar_type dt, T, dt_export;
   unsigned N;
-  scalar_type residual;       /* max residual for the iterative solvers        */
+  scalar_type residual;      /* max residual for the iterative solvers       */
   int noisy;
   int export_to_opendx;
 
