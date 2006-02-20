@@ -546,7 +546,7 @@ namespace gmm {
 # define gemm_interface_nn(blas_name, base_type)                           \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
             const dense_matrix<base_type > &B,                             \
-            dense_matrix<base_type > &C, c_mult, col_major) {              \
+            dense_matrix<base_type > &C, c_mult) {                         \
     GMMLAPACK_TRACE("gemm_interface_nn");                                  \
     const char t = 'N';                                                    \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_ncols(B);     \
@@ -601,7 +601,7 @@ namespace gmm {
 # define gemm_interface_nt(blas_name, base_type, is_const)                 \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
          const transposed_col_ref<is_const dense_matrix<base_type > *> &B_,\
-         dense_matrix<base_type > &C, c_mult, row_major) {                 \
+         dense_matrix<base_type > &C, r_mult) {                            \
     GMMLAPACK_TRACE("gemm_interface_nt");                                  \
     dense_matrix<base_type > &B                                            \
         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \

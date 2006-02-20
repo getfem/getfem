@@ -1,3 +1,9 @@
+2006-02-20  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/gmm_blas_interface.h bug fixed for the interface of matrix-matrix
+	  multiplications with blas. Bug reported by william.greene@att.net on
+	  version 1.7.
+
 2006-02-01  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_mesh.h adding Bank refinement procedures for simplex
