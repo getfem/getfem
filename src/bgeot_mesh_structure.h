@@ -185,9 +185,8 @@ namespace bgeot {
      */
     void neighbours_of_convex(size_type ic, short_type iff, ind_set &s) const;
 
-    /** Return a list of neighbours of a given convex face.
+    /** Return a list of neighbours of a given convex.
 	@param ic the convex id.
-	@param f the face number of the convex.
 	@param  s the resulting ind_set.
     */
     void neighbours_of_convex(size_type ic, ind_set &s) const;

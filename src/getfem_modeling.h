@@ -509,6 +509,9 @@ namespace getfem {
 	MPI_Allreduce(&((MS.residual())[0]), &(resloc[0]),
 		      gmm::vect_size(MS.residual()), gmm::mpi_type(value_type()),
 		      MPI_SUM, MPI_COMM_WORLD);
+// 	MPI_Reduce(&((MS.residual())[0]), &(resloc[0]),
+// 		      gmm::vect_size(MS.residual()), gmm::mpi_type(value_type()),
+// 		   MPI_SUM,0, MPI_COMM_WORLD);
 	cout << "reduce of residual  time = " << MPI_Wtime() - t_init << endl;
 	gmm::copy(resloc, MS.residual());
       }

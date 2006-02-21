@@ -237,12 +237,17 @@ namespace bgeot {
   
   void mesh_structure::neighbours_of_convex(size_type ic, ind_set &s) const {
     s.resize(0);
-    ind_set t;
     unsigned nbf = nb_faces_of_convex(ic);
     for (unsigned iff = 0; iff < nbf; ++iff) {
-      neighbours_of_convex(ic, iff, t);
-      for (size_type i = 0; i < t.size(); ++i)
-	if (std::find(s.begin(), s.end(), t[i]) != s.end()) s.push_back(t[i]);
+      ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
+      
+      for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
+	size_type icv = points_tab[pt[0]][i];
+	if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
+	    && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
+	  if (std::find(s.begin(), s.end(), icv) == s.end())
+	    s.push_back(icv);
+      }
     }
   }
   
