@@ -418,7 +418,7 @@ It is important to use a corresponding composite integration method.
   \begin{center}
     \includegraphics[width=10cm,angle=0]{getfemlist_RT0.eps}
   \end{center}
-  \caption{ \it some RT0 elements in dimension two and three. (P+1 dof, H(div))} 
+  \caption{ \it RT0 elements in dimension two and three. (P+1 dof, H(div))} 
   \label{fig:triangle_comp}
 \end{figure}
 
@@ -451,7 +451,7 @@ $1$ & $P$ & $2P$ & $H(div)$ & Yes \mbox{($Q = P$)} & No & Yes\\ \hline
 
 
 
-\subsubsection{Nedelec (or Whitney) edge element}
+\subsubsection{Nedelec (or Whitney) edge elements}
 
 \begin{figure}[H]
   \begin{center}
@@ -465,7 +465,7 @@ $1$ & $P$ & $2P$ & $H(div)$ & Yes \mbox{($Q = P$)} & No & Yes\\ \hline
 \begin{tabular}{|m{16.11cm}|} \hline 
 {\bf Nedelec (or Whitney) edge element}\\
 {\tt "FEM\_NEDELEC(P)"}
-\end{tabular} \\ \vspace{-1pt} 
+\end{tabular} % \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
 $1$ & $P$ & $P(P+1)/2$ & $H(rot)$ & Yes \mbox{($Q = P$)} & No & Yes\\ \hline
