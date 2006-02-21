@@ -560,6 +560,7 @@ namespace getfem {
       t->set_name(mark_txt());
       outvars.push_back(t); return t;
     }
+    const mesh_fem& do_mf_arg_basic();
     const mesh_fem& do_mf_arg(std::vector<const mesh_fem*> *multimf = 0);
     void do_dim_spec(vdim_specif_list& lst);
     std::string do_comp_red_ops();

@@ -64,13 +64,15 @@ namespace getfem
     else {
       base_tensor u;
       if (have_pfp()) {
-	if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim())
+	if (pf()->target_dim() > 1 && 
+	    pf()->target_dim() == pf()->structure(convex_num())->dim())
 	   t.mat_transp_reduction(pfp_->val(ii()), K(), 1);
 	 else
 	   t=pfp_->val(ii());
       }
       else {
-	if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	if (pf()->target_dim() > 1 && 
+	    pf()->target_dim() == pf()->structure(convex_num())->dim()) {
 	  pf()->base_value(xref(), u);
 	  t.mat_transp_reduction(u, K(), 1);
 	}
@@ -90,7 +92,8 @@ namespace getfem
       base_tensor u;
       if (have_pfp()) {
 	t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	if (pf()->target_dim() > 1 && 
+	    pf()->target_dim() == pf()->structure(convex_num())->dim()) {
 	  u = t;
 	  t.mat_transp_reduction(u, K(), 1);
 	}
@@ -98,7 +101,8 @@ namespace getfem
 	pf()->grad_base_value(xref(), u);
 	if (u.size()) { /* only if the FEM can provide grad_base_value */
 	  t.mat_transp_reduction(u, B(), 2);
-	  if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+	  if (pf()->target_dim() > 1 && 
+	      pf()->target_dim() == pf()->structure(convex_num())->dim()) {
 	    u = t;
 	    t.mat_transp_reduction(u, K(), 1);
 	  }
@@ -120,11 +124,12 @@ namespace getfem
       } else {
 	pf()->hess_base_value(xref(), tt);
       }
-      if (pf()->target_dim() > 1 && pf()->target_dim() == pgt()->dim()) {
+      if (pf()->target_dim() > 1 && 
+	  pf()->target_dim() == pf()->structure(convex_num())->dim()) {
 	base_tensor u = tt;
 	tt.mat_transp_reduction(u, K(), 1);
       }
-      if (tt.size()) { /* only if the FEM can provide grad_base_value */
+      if (tt.size()) { /* only if the FEM can provide hess_base_value */
 	bgeot::multi_index mim(3);
 	mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
 	mim[0] = tt.sizes()[0];
@@ -1118,7 +1123,7 @@ namespace getfem
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 1)
       DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 2.");
+		<< " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));

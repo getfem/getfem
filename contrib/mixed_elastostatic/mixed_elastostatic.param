@@ -25,10 +25,10 @@ if (N == 2 && ~QUAD)
 end
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_LINEAR_QK(2,1)";SIZES=[1,1];NOISED=0';
+  MESH_FILE='structured:GT="GT_LINEAR_QK(2)";SIZES=[1,1];NOISED=0';
   %  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1';
   FEM_TYPE_U = 'FEM_QK(2,0)';
-  FEM_TYPE_SIGMA = 'FEM_RT0(2)'; % à modifier ...
+  FEM_TYPE_SIGMA = 'FEM_RT0Q(2)';
   FEM_TYPE_THETA = 'FEM_QK(2,0)';
   DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,3)';

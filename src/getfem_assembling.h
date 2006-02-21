@@ -1030,16 +1030,19 @@ namespace getfem {
    int version =  ASMDIR_BUILDALL) {
     typedef typename gmm::linalg_traits<VECT1>::value_type value_type;
     typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
-
+    size_type N = mf_u.linked_mesh().dim(), Q = mf_mult.get_qdim();
     
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_r.get_qdim() != 1)
+    if (mf_mult.get_qdim() != mf_u.get_qdim() / N)
       DAL_THROW(invalid_argument, 
 		"invalid mesh fem for the normal component Dirichlet "
-		"constraint (Qdim=1 required)");
+		"constraint (Qdim=" << mf_u.get_qdim() / N << " required)");
     if (version & ASMDIR_BUILDH) {
-      generic_assembly assem;  
-      assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+      generic_assembly assem;
+      if (Q == 1)
+	assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+      else
+	assem.set("M(#2,#1)+=comp(vBase(#2).mBase(#1).Normal())(:,j,:,i,j,i);");
       assem.push_mi(mim);
       assem.push_mf(mf_u);
       assem.push_mf(mf_mult);
@@ -1053,8 +1056,6 @@ namespace getfem {
 	       * gmm::mat_maxnorm(H) * magn_type(100));
 
   }
-
-
 
   /**
      Assembly of generalized Dirichlet constraints h(x)u(x) = r(x),

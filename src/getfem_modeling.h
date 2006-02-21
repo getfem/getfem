@@ -1913,7 +1913,7 @@ namespace getfem {
       this->add_dependency(mf_mult);
       mfdata_set = false; B_to_be_computed = true;
       this->force_update();
-      if (mf_u().get_qdim() != mf_u().linked_mesh().dim()) 
+      if ((mf_u().get_qdim() % mf_u().linked_mesh().dim()) != 0) 
 	DAL_THROW(failure_error,
 		  "This brick is only working for vectorial elements");
     }

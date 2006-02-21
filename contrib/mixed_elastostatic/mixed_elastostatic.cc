@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002-2005 Yves Renard, Julien Pommier.                    */
+/* Copyright (C) 2002-2006 Yves Renard, Julien Pommier.                    */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -20,7 +20,7 @@
 /* *********************************************************************** */
 
 /**
-   @file elastostatic.cc
+   @file mixed_elastostatic.cc
    @brief Linear Elastostatic problem. A dummy linear
    elastotatic problem is solved on a regular mesh, and is compared to
    the analytical solution.
@@ -297,7 +297,7 @@ base_matrix sol_sigma(const base_node &x) {
 struct elastostatic_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::mesh mesh;  /* the mesh */
+  getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im mim;       /* the integration methods.                     */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_sigma; /* mesh_fem for the stress tensor.              */
@@ -368,7 +368,7 @@ void elastostatic_problem::init(void) {
   sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(N);
   mf_mult.set_qdim(N);
-  mf_sigma.set_qdim(N*N);
+  mf_sigma.set_qdim_mn(N, N);
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE_U);

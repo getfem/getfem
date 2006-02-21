@@ -111,7 +111,7 @@ namespace getfem {
 		  name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
       if ((Qdim % pf->target_dim()) != 0 && pf->target_dim() != 1)
 	DAL_THROW(dal::failure_error,
-		  "Incompatibility between Qdim=" << Qdim << " and target_dim " <<
+		  "Incompatibility between Qdim=" << int(Qdim) << " and target_dim " <<
 		  int(pf->target_dim()) << " of " << name_of_fem(pf));
       if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
 	fe_convex.add(cv);

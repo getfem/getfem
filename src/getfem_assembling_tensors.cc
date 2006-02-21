@@ -366,12 +366,14 @@ namespace getfem {
     ATN_tensor *data;
     std::vector<const mesh_fem*> auxmf; /* used only by nonlinear terms */
     typedef enum { BASE=1, GRAD=2, HESS=3, NORMAL=4, GRADGT=5, GRADGTINV=6, NONLIN=7, DATA=8 } op_type;
+    typedef enum { PLAIN_SHAPE = 0, VECTORIZED_SHAPE = 1, MATRIXIZED_SHAPE = 2 } field_shape_type;
     op_type op; /* the numerical values indicates the number 
 		   of dimensions in the tensor */
-    bool vectorize; /* true if vectorization was required (adds
-		       an addiational dimension to the tensor which
-		       represents the component number
-		    */
+    field_shape_type vshape; /* VECTORIZED_SHAPE if vectorization was required (adds
+				an addiational dimension to the tensor which
+				represents the component number.
+				MATRIXIZED_SHAPE for "matricization" of the field.
+			     */
     std::string reduction;
     /*
       vectorization of non-vector FEM:
@@ -384,12 +386,13 @@ namespace getfem {
       0     0  phi2
       ...
     */
-    mf_comp(mf_comp_vect *ow, const mesh_fem* pmf_, op_type op_, bool vect) :
-      nlt(0), pmf(pmf_), owner(ow), data(0), op(op_), vectorize(vect) { }
+    mf_comp(mf_comp_vect *ow, const mesh_fem* pmf_, op_type op_, field_shape_type fst) :
+      nlt(0), pmf(pmf_), owner(ow), data(0), op(op_), vshape(fst) { }
     mf_comp(mf_comp_vect *ow, const std::vector<const mesh_fem*> vmf, pnonlinear_elem_term nlt_) : 
-      nlt(nlt_), pmf(vmf[0]), owner(ow), data(0), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
+      nlt(nlt_), pmf(vmf[0]), owner(ow), data(0), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), 
+      vshape(PLAIN_SHAPE) { }
     mf_comp(mf_comp_vect *ow, ATN_tensor *t) :
-      nlt(0), pmf(0), owner(ow), data(t), op(DATA), vectorize(0) {}
+      nlt(0), pmf(0), owner(ow), data(t), op(DATA), vshape(PLAIN_SHAPE) {}
     void push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced=false) const;
     bool reduced(unsigned i) const
     { if (i >= reduction.size()) return false; else return reduction[i] != ' '; }
@@ -442,9 +445,15 @@ namespace getfem {
 	unsigned d = 0;
 	if (!only_reduced || !reduced(d)) rng.push_back(pmf->nb_dof_of_element(cv));
 	++d; 
-	if (vectorize) {
+	if (vshape == mf_comp::VECTORIZED_SHAPE) {
 	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim());
 	  ++d;
+	}
+	if (vshape == mf_comp::MATRIXIZED_SHAPE) {
+	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim_m());
+	  ++d;
+	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim_n());
+	  ++d;	  
 	}
         
 	if (op == GRAD || op == HESS) {
@@ -586,6 +595,47 @@ namespace getfem {
       return s*(r/qmult)*target_dim;
     }
 
+    /* append a matrixized dimension to tref -- works also for cases
+       where target_dim > 1 (in that case the columns are "vectorized")
+    */
+    stride_type add_mdim(const tensor_ranges& rng, dim_type d, 
+			 index_type target_dim, stride_type s, tensor_ref &tref) {
+      assert(d < rng.size()-2);
+
+      /* r = nb_dof, q = nb_rows, p = nb_cols */
+      index_type r = rng[d], q=rng[d+1], p=rng[d+2];
+      index_type qmult = (q*p)/target_dim;
+      
+      assert(r % p == 0); 
+      assert(q % target_dim == 0);
+      assert(r % (q/target_dim) == 0);
+
+      tensor_strides v;
+      tensor_ranges trng(3); trng[0] = q; trng[1] = p; trng[2] = r;
+      index_set ti(3); ti[0] = d+1; ti[1] = d+2; ti[2] = d;
+      tensor_mask m(trng,ti);
+      v.resize(r*target_dim);
+      tensor_ranges cnt(3);
+      for (cnt[2]=0; cnt[2] < r; cnt[2]++) { // loop over virtual dof number {
+	for (index_type k=0; k < target_dim; ++k) {
+	  unsigned pos = (cnt[2]*target_dim+k) % (q*p);
+	  unsigned ii = (pos%q), jj = (pos/q);
+	  cnt[0] = ii; cnt[1] = jj;
+	  //cerr << " set_mask_val(lpos(" << cnt[0] << "," << cnt[1] << "," << cnt[2] << ") = " << m.lpos(cnt) << ")\n";
+	  m.set_mask_val(m.lpos(cnt), true);
+	  v[cnt[2]*target_dim+k] = s*((cnt[2]/qmult)*target_dim + k);
+	}
+      }
+      assert(tref.masks().size() == tref.strides().size());
+      tref.set_ndim_noclean(tref.ndim()+3);
+      tref.push_mask(m);
+      //cerr << "rng = " << rng << "\nr=" << r << ", q=" << q << ", p=" << p << ", qmult =" << qmult << ", target_dim= " << target_dim << "\n";
+      //cerr << "m = " << m << "\nv=" << v << "\n";
+      tref.strides().push_back(v);
+      return s*(r/qmult)*target_dim;
+    }
+
+
     /* called when the FEM has changed */
     void update_pmat_elem(size_type cv) {
       pme = 0;
@@ -642,13 +692,22 @@ namespace getfem {
         size_type qdim = mc.pmf->get_qdim();
 	
 	//cerr << "target_dim = " << target_dim << ", qdim = " << qdim << ", vectorize=" << mc.vectorize << ", rng=" << rng << " d=" << d << ", tsz=" << tsz << "\n";
-	if (mc.vectorize) {
+	if (mc.vshape == mf_comp::VECTORIZED_SHAPE) {
 	  if (target_dim == qdim) {
 	    tsz = add_dim(rng, d++, tsz, tref);
 	    tsz = add_dim(rng, d++, tsz, tref);
 	  } else {
 	    tsz = add_vdim(rng, d, target_dim, tsz, tref);
 	    d += 2;
+	  }
+	} else if (mc.vshape == mf_comp::MATRIXIZED_SHAPE) {
+	  if (target_dim == qdim) {
+	    tsz = add_dim(rng, d++, tsz, tref);
+	    tsz = add_dim(rng, d++, tsz, tref);
+	    tsz = add_dim(rng, d++, tsz, tref);
+	  } else {
+	    tsz = add_mdim(rng, d, target_dim, tsz, tref);	    
+	    d += 3;
 	  }
 	} else tsz = add_dim(rng, d++, tsz, tref);
 	if (mc.op == mf_comp::GRAD || mc.op == mf_comp::HESS) {
@@ -1098,13 +1157,18 @@ namespace getfem {
       cerr << "]" << endl;*/
   }
 
-  const mesh_fem& generic_assembly::do_mf_arg(std::vector<const mesh_fem*> * multimf) {
-    if (!multimf) advance(); // special hack for NonLin$i(#a,#b,..)
-    accept(OPEN_PAR,"expecting '('");
+  const mesh_fem& generic_assembly::do_mf_arg_basic() {
     if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
     if (tok_mfref_num() >= mftab.size()) 
       ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
     const mesh_fem& mf_ = *mftab[tok_mfref_num()]; advance();
+    return mf_;
+  }
+
+  const mesh_fem& generic_assembly::do_mf_arg(std::vector<const mesh_fem*> * multimf) {
+    if (!multimf) advance(); // special hack for NonLin$i(#a,#b,..)
+    accept(OPEN_PAR,"expecting '('");
+    const mesh_fem &mf_ = do_mf_arg_basic();
     if (multimf) {
       multimf->resize(1); (*multimf)[0] = &mf_;
       while (advance_if(COMMA)) {
@@ -1138,6 +1202,12 @@ namespace getfem {
     return s;
   }
 
+  static mf_comp::field_shape_type get_shape(const std::string &s) {
+    if (s[0] == 'v') return mf_comp::VECTORIZED_SHAPE;
+    else if (s[0] == 'm') return mf_comp::MATRIXIZED_SHAPE;
+    else return mf_comp::PLAIN_SHAPE;
+  }
+
   ATN_tensor* generic_assembly::do_comp() {
     accept(OPEN_PAR, "expecting '('");
     mf_comp_vect what;
@@ -1162,12 +1232,15 @@ namespace getfem {
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess, Normal, etc..");
       std::string f = tok(); 
       const mesh_fem *pmf = 0;
-      if (f.compare("Base")==0 || f.compare("vBase")==0) {
-	pmf = &do_mf_arg(); what.push_back(mf_comp(&what, pmf, mf_comp::BASE, f[0] == 'v'));
-      } else if (f.compare("Grad")==0 || f.compare("vGrad")==0) {
-	pmf = &do_mf_arg(); what.push_back(mf_comp(&what, pmf, mf_comp::GRAD, f[0] == 'v'));
-      } else if (f.compare("Hess")==0 || f.compare("vHess")==0) {
-	pmf = &do_mf_arg(); what.push_back(mf_comp(&what, pmf, mf_comp::HESS, f[0] == 'v'));
+      if (f.compare("Base")==0 || f.compare("vBase")==0 || f.compare("mBase")==0) {
+	pmf = &do_mf_arg(); 
+	what.push_back(mf_comp(&what, pmf, mf_comp::BASE, get_shape(f)));
+      } else if (f.compare("Grad")==0 || f.compare("vGrad")==0 || f.compare("mGrad")==0) {
+	pmf = &do_mf_arg(); 
+	what.push_back(mf_comp(&what, pmf, mf_comp::GRAD, get_shape(f)));
+      } else if (f.compare("Hess")==0 || f.compare("vHess")==0 || f.compare("mHess")==0) {
+	pmf = &do_mf_arg(); 
+	what.push_back(mf_comp(&what, pmf, mf_comp::HESS, get_shape(f)));
       } else if (f.compare("NonLin")==0) {	
 	size_type num = 0; /* default value */
 	advance();
@@ -1178,7 +1251,7 @@ namespace getfem {
       } else if (f.compare("Normal") == 0) {
 	advance();
 	accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
-	pmf = 0; what.push_back(mf_comp(&what, pmf, mf_comp::NORMAL, false));
+	pmf = 0; what.push_back(mf_comp(&what, pmf, mf_comp::NORMAL, mf_comp::PLAIN_SHAPE));
       } else if (f.compare("GradGT") == 0 ||
 		 f.compare("GradGTInv") == 0) {
 	advance();
@@ -1187,7 +1260,7 @@ namespace getfem {
 	what.push_back(mf_comp(&what, pmf, 
 			       f.compare("GradGT") == 0 ?
 			       mf_comp::GRADGT : 
-			       mf_comp::GRADGTINV, false));
+			       mf_comp::GRADGTINV, mf_comp::PLAIN_SHAPE));
       } else {
         if (vars.find(f) != vars.end()) {
           what.push_back(mf_comp(&what, vars[f]));
@@ -1198,7 +1271,7 @@ namespace getfem {
         }
       }
 	
-      if (!in_data && f[0] != 'v' && pmf && pmf->get_qdim() != 1 && f.compare("NonLin")) {
+      if (!in_data && f[0] != 'v' && f[0] != 'm' && pmf && pmf->get_qdim() != 1 && f.compare("NonLin")!=0) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
       }
       what.back().reduction = do_comp_red_ops();
@@ -1220,10 +1293,7 @@ namespace getfem {
 	lst.push_back(vdim_specif(tok_number_ival()+1));
 	advance();
       } else if (tok_type() == MFREF) {
-	if (tok_mfref_num() >= mftab.size()) 
-	  ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
-	lst.push_back(vdim_specif(mftab[tok_mfref_num()]));
-	advance();
+	lst.push_back(vdim_specif(&do_mf_arg_basic()));
       } else if (tok_type() != CLOSE_PAR) ASM_THROW_PARSE_ERROR("expecting mdim(#mf) or qdim(#mf) or a number or a mesh_fem #id");
       /*      if (mfcnt && !lst.back().is_mf_ref())
 	      ASM_THROW_PARSE_ERROR("#mf argument must be given after numeric dimensions");*/

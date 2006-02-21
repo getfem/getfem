@@ -202,7 +202,10 @@ namespace getfem {
 	
 	switch ((*it).t) {
 	  case GETFEM_BASE_    :
-	    (*it).pfi->real_base_value(ctx, elmt_stored[k], icb != 0);
+	    if (trans)
+	      (*it).pfi->real_base_value(ctx, elmt_stored[k], icb != 0);
+	    else
+	      elmt_stored[k] = pfp[k]->val(ctx.ii());
 	    break;
 	  case GETFEM_GRAD_    :
 	    if (trans) {
