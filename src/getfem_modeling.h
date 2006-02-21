@@ -569,7 +569,10 @@ namespace getfem {
       }
     }
     void redim(unsigned d) {
-      if (sizes_.size() != d) { sizes_.resize(d); sizes_.clear(); }
+      if (sizes_.size() != d) { 
+	sizes_.resize(d); 
+	for (unsigned i=0; i < d; ++i) sizes_[i]=0; 
+      }
     }
     virtual void reshape(size_type N=0, size_type M=0, size_type P=0,
 			 size_type Q=0) {
@@ -1010,7 +1013,8 @@ namespace getfem {
     /** ensure a consistent dimension for the coeff */
     void reshape_coeff() {
       size_type N = this->mf_u.linked_mesh().dim();
-      if (coeff_.fdim() == 2) coeff_.reshape(N,N);
+      if (coeff_.fdim() == 0)      coeff_.reshape();
+      else if (coeff_.fdim() == 2) coeff_.reshape(N,N);
       else if (coeff_.fdim() == 4) coeff_.reshape(N,N,N,N);
     }
   public :
@@ -1190,7 +1194,7 @@ namespace getfem {
 
     mdbrick_parameter<VECTOR> &normal_source_term(void) {
       // ensure that the B shape is always consistant with the mesh_fem
-      B_.reshape(mf_u().get_qdim()*mf_u().linked_mesh().dim());
+      B_.reshape(mf_u().get_qdim(), mf_u().linked_mesh().dim());
       return B_; 
     }
     const mdbrick_parameter<VECTOR> &normal_source_term(void) const
@@ -1887,12 +1891,26 @@ namespace getfem {
       }
     }
 
+   /** ensure a consistent dimension for the data */
+    void reshape_coeff() {
+      size_type N = this->mf_u().linked_mesh().dim();
+      switch (R_.fdim()) {
+	case 0 : R_.reshape(); break;
+	case 1 : R_.reshape(N); break;
+	case 2 : R_.reshape(mf_mult.get_qdim(),N); break;
+      }
+    }
+
   public :
 
     /** Change the @f$ r(x) @f$ right hand side.
      *	@param R a vector of size @c mf_data.nb_dof() .
      */
-    mdbrick_parameter<VECTOR> &rhs() { R_.reshape(1); return R_; }
+    mdbrick_parameter<VECTOR> &rhs() { reshape_coeff(); return R_; }
+
+    /** Switch between a scalar coefficient, a N vector field or a NxN
+	matrix field. */
+    void set_coeff_dimension(unsigned d) { R_.redim(d); }
 
     /** Constructor which does not define the rhs (i.e. which sets an
      *	homogeneous Dirichlet condition)

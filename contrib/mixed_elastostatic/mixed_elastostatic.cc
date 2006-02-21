@@ -75,7 +75,7 @@ namespace getfem {
       DAL_THROW(invalid_argument, "wrong qdim for the mesh_fem");
 
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
-			   "t=comp(vBase(#1).vBase(#1).Base(#2));"
+			   "t=comp(mBase(#1).mBase(#1).Base(#2));"
                            "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)"
 			   "+ t(:,i,i,:,j,j,k).lambda(k))");
     assem.push_mi(mim);
@@ -102,7 +102,7 @@ namespace getfem {
     if (mf_sigma.get_qdim() != N*N || mf_theta.get_qdim() != (N*(N-1)/2))
       DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
     
-    generic_assembly assem("t=comp(Base(#1).vBase(#2));"
+    generic_assembly assem("t=comp(Base(#1).mBase(#2));"
                            "M(#1,#1)+= t(:,i,j,:,i,j,k)");
     assem.push_mi(mim);
     assem.push_mf(mf_theta);
@@ -121,7 +121,7 @@ namespace getfem {
     if (mf_sigma.get_qdim() != N*N || mf_u.get_qdim() != N)
       DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
 
-    generic_assembly assem("t=comp(vBase(#1).vGrad(#2));"
+    generic_assembly assem("t=comp(vBase(#1).mGrad(#2));"
                            "M(#1,#1)+= t(:,i,j,:,i,j,k)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -474,6 +474,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::mdbrick_normal_component_Dirichlet<>
     final_model(VOL_F, DIRICHLET_BOUNDARY_NUM, mf_mult);
   final_model.set_constraints_type(dirichlet_version);
+  final_model.set_coeff_dimension(2);
+  cerr << "RHS ::" << final_model.rhs().fdim() << " ! " << final_model.rhs().fsizes() << "\n";
+  
   gmm::resize(F, nb_dof_rhs * N * N);
   getfem::interpolation_function(mf_rhs, F, sol_sigma, DIRICHLET_BOUNDARY_NUM);
   final_model.rhs().set(mf_rhs, F);

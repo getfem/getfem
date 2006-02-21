@@ -1013,7 +1013,10 @@ namespace getfem {
      where @f$ v @f$ is in the space of multipliers corresponding to
      mf_mult.
 
-     size(r_data) = Q   * nb_dof(mf_rh);
+     size(r_data) = Q   * nb_dof(mf_rh) or Q * N * nb_dof(mf_rh);
+
+     In the case size(r_data) = Q * N * nb_dof(mf_rh), the right hand
+     side is @f[ \int_{\Gamma} (r(x).n(x))v(x) \forall v@f]
 
      version = |ASMDIR_BUILDH : build H
      |ASMDIR_BUILDR : build R
@@ -1042,19 +1045,22 @@ namespace getfem {
       if (Q == 1)
 	assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
       else
-	assem.set("M(#2,#1)+=comp(vBase(#2).mBase(#1).Normal())(:,j,:,i,j,i);");
+	assem.set("M(#2,#1)+=comp(vBase(#2).mBase(#1).Normal())(:,i,:,i,j,j);");
       assem.push_mi(mim);
       assem.push_mf(mf_u);
       assem.push_mf(mf_mult);
       assem.push_mat(H);
       assem.assembly(region);
     }
-    if (version & ASMDIR_BUILDR)
-      asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
-
+    if (version & ASMDIR_BUILDR) {
+      if (gmm::vect_size(r_data) == mf_r.nb_dof() * Q)
+	asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
+      else if (gmm::vect_size(r_data) == mf_r.nb_dof() * Q * N)
+	asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, region);
+      else DAL_THROW(invalid_argument, "Wrong size of data vector");
+    }
     gmm::clean(H, gmm::default_tol(magn_type())
 	       * gmm::mat_maxnorm(H) * magn_type(100));
-
   }
 
   /**

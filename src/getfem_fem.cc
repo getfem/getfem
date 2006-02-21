@@ -1854,6 +1854,109 @@ namespace getfem
   }
 
   /* ******************************************************************** */
+  /*    Morley element on the triangle                                    */
+  /* ******************************************************************** */
+
+  struct morley_triangle__ : public fem<base_poly> {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    morley_triangle__(void);
+  };
+
+  void morley_triangle__::mat_trans(base_matrix &M,
+				    const base_matrix &G,
+				    bgeot::pgeometric_trans pgt) const {
+    static bgeot::pgeotrans_precomp pgp;
+    static pfem_precomp pfp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(2, 2);
+    dim_type N = G.nrows();
+
+    if (N != 2) DAL_THROW(failure_error, "Sorry, this version of morley "
+			  "element works only on dimension two.")
+
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+    
+    static base_matrix W(3, 6);
+    static base_small_vector norient(M_PI, M_PI * M_PI);
+    if (pgt->is_linear()) gmm::lu_inverse(K); 
+    for (unsigned i = 3; i < 6; ++i) {
+      if (!(pgt->is_linear()))
+	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+      bgeot::base_small_vector n(2), v(2);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i-3], n);
+      n /= gmm::vect_norm2(n);
+
+      scalar_type ps = gmm::vect_sp(n, norient);
+      if (ps < 0) n *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("Morley : The normal orientation may be not correct");
+      gmm::mult(K, n, v);
+      const bgeot::base_tensor &t = pfp->grad(i);
+      for (unsigned j = 0; j < 6; ++j)
+	W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+    }
+    
+    static base_matrix A(3, 3);
+    static bgeot::base_vector w(3), coeff(3);
+    static gmm::sub_interval SUBI(3, 3), SUBJ(0, 3);
+    gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
+    gmm::lu_inverse(A);
+    gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
+
+    for (unsigned j = 0; j < 3; ++j) {
+      gmm::mult(W, gmm::mat_row(M, j), w);
+      gmm::mult(A, gmm::scaled(w, -1.0), coeff);
+      gmm::copy(coeff, gmm::sub_vector(gmm::mat_row(M, j), SUBI));
+    }
+  }
+
+  morley_triangle__::morley_triangle__(void) { 
+    cvr = bgeot::simplex_of_reference(2);
+    dim_ = cvr->structure()->dim();
+    init_cvs_node();
+    es_degree = 2;
+    is_pol = true;
+    is_lag = false;
+    is_equiv = false; 
+    base_.resize(6);
+
+    std::stringstream s
+      ("1 - x - y + 2*x*y;"
+       "1/2*x + 1/2*y + 1/2*x^2 - x*y - 1/2*y^2;"
+       "1/2*x + 1/2*y - 1/2*x^2 - x*y + 1/2*y^2;"
+       "-sqrt(2)*1/2*x - sqrt(2)*1/2*y + sqrt(2)*1/2*x^2"
+       " + sqrt(2)*x*y + sqrt(2)*1/2*y^2;"
+       "-x + x^2;"
+       "-y + y^2;");
+    
+    for (unsigned k = 0; k < 6; ++k)
+      base_[k] = bgeot::read_base_poly(2, s);
+    
+    add_node(lagrange_dof(2), base_node(0.0, 0.0));
+    add_node(lagrange_dof(2), base_node(1.0, 0.0));
+    add_node(lagrange_dof(2), base_node(0.0, 1.0));
+    add_node(normal_derivative_dof(2), base_node(0.5, 0.5)); 
+    add_node(normal_derivative_dof(2), base_node(0.0, 0.5)); 
+    add_node(normal_derivative_dof(2), base_node(0.5, 0.0));
+  }
+
+  static pfem triangle_Morley_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    virtual_fem *p = new morley_triangle__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
   /*	DISCONTINUOUS PK                                                  */
   /* ******************************************************************** */
 
@@ -2031,6 +2134,7 @@ namespace getfem
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
       add_suffix("HERMITE", Hermite_fem);
       add_suffix("ARGYRIS", triangle_Argyris_fem);
+      add_suffix("MORLEY", triangle_Morley_fem);
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);

@@ -1488,7 +1488,7 @@ void test_matrixfem(const getfem::mesh_im &mim) {
   assert(mim.linked_mesh().dim() == 2);
 
   getfem::mesh_fem mf(mim.linked_mesh()); 
-  mf.set_qdim_mn(2, 3);
+  mf.set_qdim_mn(3, 2);
   getfem::mesh_fem mf0(mim.linked_mesh(), 1);
   getfem::pfem pf = getfem::fem_descriptor("FEM_PK(2,1)");
   cout << "target_dim = " << int(pf->target_dim()) << "\n";
@@ -1502,7 +1502,6 @@ void test_matrixfem(const getfem::mesh_im &mim) {
     assem.push_mf(mf);
     assem.assembly();
   }
-
 
   pf = getfem::fem_descriptor("FEM_RT0(2)");
   cout << "target_dim = " << int(pf->target_dim()) << "\n";

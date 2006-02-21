@@ -583,7 +583,7 @@ namespace getfem {
       tensor_ranges cnt(2);
       for (cnt[1]=0; cnt[1] < r; cnt[1]++) {
 	for (index_type k=0; k < target_dim; ++k) {
-	  cnt[0] = (cnt[1] % qmult)*target_dim + k;
+	  cnt[0] = k*qmult + (cnt[1]%qmult); //(cnt[1] % qmult)*target_dim + k;
 	  m.set_mask_val(m.lpos(cnt), true);
 	  v[cnt[1]*target_dim+k] = s*((cnt[1]/qmult)*target_dim + k);
 	}
@@ -596,7 +596,27 @@ namespace getfem {
     }
 
     /* append a matrixized dimension to tref -- works also for cases
-       where target_dim > 1 (in that case the columns are "vectorized")
+       where target_dim > 1 (in that case the rows are "vectorized")
+
+       for example, the Base(RT0) in 2D (3 dof, target_dim=2) is: 
+       [0 2 4; 
+        1 3 5]
+
+
+	if we set it in a mesh_fem of qdim = 3x2 , we produce the sparse elementary tensor
+	9x3x2 = 
+
+	x x x y y y
+	0 . . 1 . . <- phi1
+	. 0 . . 1 . <- phi2
+	. . 0 . . 1 <- phi3
+	2 . . 3 . . <- phi4
+	. 2 . . 3 . <- phi5
+	. . 2 . . 3 <- phi6
+	4 . . 5 . . <- phi7
+	. 4 . . 5 . <- phi8
+	. . 4 . . 5 <- phi9
+	
     */
     stride_type add_mdim(const tensor_ranges& rng, dim_type d, 
 			 index_type target_dim, stride_type s, tensor_ref &tref) {
@@ -606,9 +626,9 @@ namespace getfem {
       index_type r = rng[d], q=rng[d+1], p=rng[d+2];
       index_type qmult = (q*p)/target_dim;
       
-      assert(r % p == 0); 
-      assert(q % target_dim == 0);
-      assert(r % (q/target_dim) == 0);
+      assert(r % q == 0); 
+      assert(p % target_dim == 0);
+      assert(r % (p/target_dim) == 0);
 
       tensor_strides v;
       tensor_ranges trng(3); trng[0] = q; trng[1] = p; trng[2] = r;
@@ -619,7 +639,8 @@ namespace getfem {
       for (cnt[2]=0; cnt[2] < r; cnt[2]++) { // loop over virtual dof number {
 	for (index_type k=0; k < target_dim; ++k) {
 	  unsigned pos = (cnt[2]*target_dim+k) % (q*p);
-	  unsigned ii = (pos%q), jj = (pos/q);
+	  //unsigned ii = (pos%q), jj = (pos/q);
+	  unsigned ii = (pos/p), jj = (pos%p);
 	  cnt[0] = ii; cnt[1] = jj;
 	  //cerr << " set_mask_val(lpos(" << cnt[0] << "," << cnt[1] << "," << cnt[2] << ") = " << m.lpos(cnt) << ")\n";
 	  m.set_mask_val(m.lpos(cnt), true);
