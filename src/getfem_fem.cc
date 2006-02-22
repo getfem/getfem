@@ -1884,7 +1884,8 @@ namespace getfem
     
     static base_matrix W(3, 6);
     static base_small_vector norient(M_PI, M_PI * M_PI);
-    if (pgt->is_linear()) gmm::lu_inverse(K); 
+    if (pgt->is_linear())
+      { gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K); }
     for (unsigned i = 3; i < 6; ++i) {
       if (!(pgt->is_linear()))
 	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
@@ -1922,18 +1923,16 @@ namespace getfem
     init_cvs_node();
     es_degree = 2;
     is_pol = true;
-    is_lag = false;
-    is_equiv = false; 
+    is_lag = is_equiv = false; 
     base_.resize(6);
 
     std::stringstream s
       ("1 - x - y + 2*x*y;"
-       "1/2*x + 1/2*y + 1/2*x^2 - x*y - 1/2*y^2;"
-       "1/2*x + 1/2*y - 1/2*x^2 - x*y + 1/2*y^2;"
-       "-sqrt(2)*1/2*x - sqrt(2)*1/2*y + sqrt(2)*1/2*x^2"
-       " + sqrt(2)*x*y + sqrt(2)*1/2*y^2;"
-       "-x + x^2;"
-       "-y + y^2;");
+       "(x + y + x^2 - 2*x*y - y^2)/2;"
+       "(x + y - x^2 - 2*x*y + y^2)/2;"
+       "((x+y)^2 - x - y)*sqrt(2)/2;"
+       "x*(x-1);"
+       "y*(y-1);");
     
     for (unsigned k = 0; k < 6; ++k)
       base_[k] = bgeot::read_base_poly(2, s);
