@@ -671,6 +671,30 @@ $3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
 
+
+\subsubsection{Morley element}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=6cm,angle=0]{getfemlist_morley.eps}
+  \end{center}
+  \caption{ \it tiangle Morley element, $P_2$, 6 d.o.f., $C^0$ }
+  \label{fig:triangle_morley}
+\end{figure}
+
+This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). It can be used for non-conforming discretization of fourth order problems.  
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{ \bf Morley element on a triangle}\\
+"FEM\_MORLEY"
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$2$ & $2$ & $6$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
+\end{tabular}
+\end{center}
+
 \subsubsection{Argyris element}
 
 \begin{figure}[H]
