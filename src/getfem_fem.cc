@@ -1205,7 +1205,7 @@ namespace getfem
 
     for (size_type i = 0; i < nc; ++i) { 
       base_[2*i+i*2*nc] = base_poly(nc, 1, i);
-      base_[2*i+1+i*2*nc] = bgeot::one_poly(nc) - base_poly(nc, 1, i);
+      base_[2*i+1+i*2*nc] = base_poly(nc, 1, i) - bgeot::one_poly(nc);
     }
 
     base_node pt(nc); pt.fill(0.5);

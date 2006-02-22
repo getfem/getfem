@@ -9,9 +9,9 @@
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 N = 2;
-NX = 4;                 % number of subdivisions for structured meshes.
+NX = 30;                 % number of subdivisions for structured meshes.
 QUAD = 1;
-FT = 3.0;               % parameter for the exact solution.
+FT = 3.14;               % parameter for the exact solution.
 DIRICHLET_VERSION = 1;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 if (N == 2 && ~QUAD)
@@ -25,13 +25,13 @@ if (N == 2 && ~QUAD)
 end
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_LINEAR_QK(2)";SIZES=[1,1];NOISED=0';
-  %  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1';
+  % MESH_FILE='structured:GT="GT_LINEAR_QK(2)";SIZES=[1,1];NOISED=0';
+  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1';
   FEM_TYPE_U = 'FEM_QK(2,0)';
   FEM_TYPE_SIGMA = 'FEM_RT0Q(2)';
   FEM_TYPE_THETA = 'FEM_QK(2,0)';
   DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
-  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,3)';
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
 end
 
 if (N ~= 2)

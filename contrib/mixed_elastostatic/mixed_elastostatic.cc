@@ -76,7 +76,7 @@ namespace getfem {
 
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 			   "t=comp(mBase(#1).mBase(#1).Base(#2));"
-                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)"
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)*2"
 			   "+ t(:,i,i,:,j,j,k).lambda(k))");
     assem.push_mi(mim);
     assem.push_mf(mf);
@@ -89,30 +89,37 @@ namespace getfem {
 
 
   template<class MAT>
-  void asm_mixed_thetasitau_linear_elasticity
+  void asm_mixed_thetasitau
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
    const mesh_fem &mf_theta,
    const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
     size_type N = mf_sigma.linked_mesh().dim();
 
-    if (N != 2)
-      DAL_THROW(invalid_argument, "Sorry, only defined in dimension 2");
-
     if (mf_sigma.get_qdim() != N*N || mf_theta.get_qdim() != (N*(N-1)/2))
       DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
     
-    generic_assembly assem("t=comp(Base(#1).mBase(#2));"
-                           "M(#1,#1)+= t(:,i,j,:,i,j,k)");
+    base_matrix A(N*(N-1)/2, N*N);
+    size_type k = 0;
+    for (size_type i = 0; i < N; ++i)
+      for (size_type j = i + 1; j < N; ++j, ++k) {
+	A(k, i*N+j) = 1.0;
+	A(k, j*N+i) = -1.0;
+      }
+
+    generic_assembly assem("A=data(qdim(#1), qdim(#2));"
+			   "t=comp(vBase(#1).vBase(#2));"
+                           "M(#1,#2)+= t(:,i,:,j).A(i,j)");
     assem.push_mi(mim);
     assem.push_mf(mf_theta);
     assem.push_mf(mf_sigma);
     assem.push_mat(RM);
+    assem.push_data(gmm::array1D_reference<scalar_type *>(&A(0,0), A.size()));
     assem.assembly(rg);
   }
 
   template<class MAT>
-  void asm_mixed_udivtau_linear_elasticity
+  void asm_mixed_udivtau
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf_sigma,
    const mesh_fem &mf_u, const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
@@ -122,7 +129,7 @@ namespace getfem {
       DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
 
     generic_assembly assem("t=comp(vBase(#1).mGrad(#2));"
-                           "M(#1,#1)+= t(:,i,j,:,i,j,k)");
+                           "M(#1,#2)+= t(:,i,:,i,j,j)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
@@ -173,14 +180,17 @@ namespace getfem {
 	   vmu, mf_u.linked_mesh().get_mpi_region());
 	
 	T_MATRIX B1(mf_u.nb_dof(), mf_sigma.nb_dof());
-	asm_mixed_udivtau_linear_elasticity
+	asm_mixed_udivtau
 	  (B1, mim, mf_sigma, mf_u, mf_u.linked_mesh().get_mpi_region());
+
 	gmm::copy(gmm::transposed(B1), gmm::sub_matrix(K, I1, I2));	
 	gmm::copy(B1, gmm::sub_matrix(K, I2, I1));
 	
 	T_MATRIX B2(mf_theta.nb_dof(), mf_sigma.nb_dof());
-	asm_mixed_thetasitau_linear_elasticity
+	asm_mixed_thetasitau
 	  (B2, mim, mf_sigma, mf_theta, mf_u.linked_mesh().get_mpi_region());
+	gmm::copy(gmm::transposed(B2), gmm::sub_matrix(K, I1, I3));	
+	gmm::copy(B2, gmm::sub_matrix(K, I3, I1));
 
 	K_uptodate = true;
 	this->parameters_set_uptodate();
@@ -211,6 +221,10 @@ namespace getfem {
       gmm::sub_interval SUBU(this->first_index(), nbdof);
       return gmm::sub_vector(MS.state(), SUBU);
     }
+    SUBVECTOR get_U(MODEL_STATE &MS) {
+      gmm::sub_interval SUBU(this->first_index()+mf_sigma.nb_dof(), mf_u.nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
+    }
 
     void init_(void) {
       size_type N = mf_sigma.linked_mesh().dim();
@@ -228,7 +242,7 @@ namespace getfem {
       this->force_update();
     }
 
-    /** constructor for a homogeneous material (constant lambda and mu).
+    /* constructor for a homogeneous material (constant lambda and mu).
      * @param epsilon the thickness of the plate.
      */
     mdbrick_mixed_elasticity
@@ -238,12 +252,105 @@ namespace getfem {
 	mf_theta(mf_theta_), lambda_inv_("lambda", mf_u_.linked_mesh(), this),
 	mu_inv_("mu", mf_u_.linked_mesh(), this) {
       size_type N = mf_u_.linked_mesh().dim();
+      cout << "lambda_inv = " << -lambdai/(2*mui*(N*lambdai+2*mui)) << endl;
+      cout << "mu_inv = " << 1. / (4. * mui) << endl;
       lambda_inv_.set(-lambdai/(2*mui*(N*lambdai+2*mui)));
       mu_inv_.set(1. / (4. * mui));
       init_();
     }
  
   };
+
+
+   template<typename VECT1, typename VECT2>
+   void asm_source_term_normal(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+			       const mesh_fem &mf_data, const VECT2 &F,
+			       const mesh_region &rg) {
+    if (mf_data.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh_fem");
+
+    const char *st;
+    if (mf.get_qdim_n() == 1)
+      st = "F=data(#2);"
+	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,j,k,j).F(k);";
+    else
+      st = "F=data(mdim(#1),#2);" // a corriger pour les tenseurs non carres
+	"V(#1)+=comp(mBase(#1).Base(#2).Normal())(:,i,j,k,j).F(i,k);";
+
+    asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
+  }
+
+  
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_source_term_normal : public mdbrick_abstract<MODEL_STATE>  {
+
+    TYPEDEF_MODEL_STATE_TYPES;
+
+    mdbrick_parameter<VECTOR> B_;
+    VECTOR F_;
+    bool F_uptodate;
+    size_type boundary, num_fem, i1, nbd;
+
+    void proper_update(void) {
+      const mesh_fem &mf_u = this->get_mesh_fem(num_fem);
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u.nb_dof();
+
+      gmm::resize(F_, mf_u.nb_dof());
+      gmm::clear(F_);
+      F_uptodate = false;
+    }
+
+  public :
+
+    mdbrick_parameter<VECTOR> &source_term(void) {
+      const mesh_fem &mf_u = this->get_mesh_fem(num_fem);
+      B_.reshape(mf_u.get_qdim() / mf_u.linked_mesh().dim());
+      return B_;
+    }
+    const mdbrick_parameter<VECTOR> &source_term(void) const { return B_; }
+
+    // gives the right hand side of the linear system.
+    const VECTOR &get_F(void) { 
+      this->context_check();
+      if (!F_uptodate || this->parameters_is_any_modified()) {
+	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+	F_uptodate = true;
+	DAL_TRACE2("Assembling a source term");
+	asm_source_term_normal(F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
+			       mf_u.linked_mesh().get_mpi_sub_region(boundary));
+	this->parameters_set_uptodate();
+      }
+      return F_;
+    }
+
+    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
+					   size_type) { }
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
+				   size_type) {
+      gmm::add(gmm::scaled(get_F(), value_type(-1)),
+	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
+    }
+
+    /* Constructor not defining the rhs
+	@param problem the sub-problem to which this brick applies.
+	@param bound the mesh boundary number on which the source term is applied 
+	(by default, it is a volumic source term as the whole mesh is taken).
+	@param num_fem_ the mesh_fem number on which this brick is is applied.
+    */
+    mdbrick_source_term_normal(mdbrick_abstract<MODEL_STATE> &problem,
+			size_type bound = size_type(-1), size_type num_fem_=0)
+      : B_("source_term", this), boundary(bound),
+	num_fem(num_fem_) {
+      this->add_sub_brick(problem);
+      if (bound != size_type(-1))
+	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
+      this->force_update();
+      source_term();
+    }
+  };
+
+
 
 }
 
@@ -361,7 +468,7 @@ void elastostatic_problem::init(void) {
   gmm::resize(sol_K, N, N);
   for (size_type i = 0; i < N; i++)
     for (size_type j = 0; j < N; j++)
-      sol_K(i,j) = (i == j) ? FT : -FT;
+      sol_K(i,j) = (i == j) ? 0.0 : FT;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -467,15 +574,21 @@ bool elastostatic_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs * N);
   getfem::interpolation_function(mf_rhs, F, sol_f);
-  VOL_F.source_term().set(mf_rhs, F);
+  VOL_F.source_term().set(mf_rhs, gmm::scaled(F, -1.0));
+
+
+  getfem::mdbrick_source_term_normal<>
+    NEUMANN(VOL_F, NEUMANN_BOUNDARY_NUM);
+  gmm::resize(F, nb_dof_rhs * N);
+  getfem::interpolation_function(mf_rhs, F, sol_u, NEUMANN_BOUNDARY_NUM);
+  NEUMANN.source_term().set(mf_rhs, F);
 
 
   // Dirichlet condition brick.
   getfem::mdbrick_normal_component_Dirichlet<>
-    final_model(VOL_F, DIRICHLET_BOUNDARY_NUM, mf_mult);
+    final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
   final_model.set_constraints_type(dirichlet_version);
   final_model.set_coeff_dimension(2);
-  cerr << "RHS ::" << final_model.rhs().fdim() << " ! " << final_model.rhs().fsizes() << "\n";
   
   gmm::resize(F, nb_dof_rhs * N * N);
   getfem::interpolation_function(mf_rhs, F, sol_sigma, DIRICHLET_BOUNDARY_NUM);
@@ -488,7 +601,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   iter.init();
   getfem::standard_solve(MS, final_model, iter);
   gmm::resize(U, mf_u.nb_dof());
-  gmm::copy(ELAS.get_solution(MS), U);
+  gmm::copy(ELAS.get_U(MS), U);
  
   return (iter.converged());
 }

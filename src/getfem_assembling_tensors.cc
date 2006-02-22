@@ -585,7 +585,7 @@ namespace getfem {
 	for (index_type k=0; k < target_dim; ++k) {
 	  cnt[0] = k*qmult + (cnt[1]%qmult); //(cnt[1] % qmult)*target_dim + k;
 	  m.set_mask_val(m.lpos(cnt), true);
-	  v[cnt[1]*target_dim+k] = s*((cnt[1]/qmult)*target_dim + k);
+	  v[cnt[1]*target_dim+k] = s*( k * r/qmult + cnt[1]/qmult); //s*((cnt[1]/qmult)*target_dim + k);
 	}
       }
       assert(tref.masks().size() == tref.strides().size());
@@ -599,23 +599,23 @@ namespace getfem {
        where target_dim > 1 (in that case the rows are "vectorized")
 
        for example, the Base(RT0) in 2D (3 dof, target_dim=2) is: 
-       [0 2 4; 
-        1 3 5]
+       [0 1 2; 
+        3 4 5]
 
 
 	if we set it in a mesh_fem of qdim = 3x2 , we produce the sparse elementary tensor
 	9x3x2 = 
 
 	x x x y y y
-	0 . . 1 . . <- phi1
-	. 0 . . 1 . <- phi2
-	. . 0 . . 1 <- phi3
-	2 . . 3 . . <- phi4
-	. 2 . . 3 . <- phi5
-	. . 2 . . 3 <- phi6
-	4 . . 5 . . <- phi7
-	. 4 . . 5 . <- phi8
-	. . 4 . . 5 <- phi9
+	0 . . 3 . . <- phi1
+	. 0 . . 3 . <- phi2
+	. . 0 . . 3 <- phi3
+	1 . . 4 . . <- phi4
+	. 1 . . 4 . <- phi5
+	. . 1 . . 4 <- phi6
+	2 . . 5 . . <- phi7
+	. 2 . . 5 . <- phi8
+	. . 2 . . 5 <- phi9
 	
     */
     stride_type add_mdim(const tensor_ranges& rng, dim_type d, 
@@ -644,7 +644,7 @@ namespace getfem {
 	  cnt[0] = ii; cnt[1] = jj;
 	  //cerr << " set_mask_val(lpos(" << cnt[0] << "," << cnt[1] << "," << cnt[2] << ") = " << m.lpos(cnt) << ")\n";
 	  m.set_mask_val(m.lpos(cnt), true);
-	  v[cnt[2]*target_dim+k] = s*((cnt[2]/qmult)*target_dim + k);
+	  v[cnt[2]*target_dim+k] = s*(k * r/qmult + cnt[2]/qmult); //s*((cnt[2]/qmult)*target_dim + k);
 	}
       }
       assert(tref.masks().size() == tref.strides().size());

@@ -1474,13 +1474,39 @@ void test_vectorfem(const getfem::mesh_im &mim) {
   mf0.set_finite_element(pf);
   cout << "nb_dof = " << mf.nb_dof() << " =" << mf0.nb_dof() << "*3\n";
   assert(mf0.nb_dof()*3 == mf.nb_dof());
-
   {
-    getfem::generic_assembly assem("t=comp(vBase(#1)); print t;");
+    getfem::generic_assembly assem("t=comp(vBase(#1)); print t; print comp(vBase(#1).vBase(#1))(:,i,:,i)");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.assembly();
   }
+}
+
+void test_vectorfem2() {
+  cout << "\n----------------------------------------\ntest_vectorfem2\n\n";
+  getfem::mesh m; 
+  std::vector<size_type> nsubdiv(2); nsubdiv[0] = nsubdiv[1] = 2;
+  regular_unit_mesh(m, nsubdiv, 
+		    bgeot::geometric_trans_descriptor("GT_QK(2,1)"), false);
+  getfem::mesh_im mim(m);
+  mim.set_integration_method(m.convex_index(), 
+			     getfem::int_method_descriptor("IM_QUAD(9)"));
+  assert(mim.linked_mesh().dim() == 2);
+  getfem::mesh_fem mf(mim.linked_mesh(), 6);
+  getfem::mesh_fem mf0(mim.linked_mesh(), 2);
+  getfem::pfem pf = getfem::fem_descriptor("FEM_RT0Q(2)");
+  cout << "target_dim = " << int(pf->target_dim()) << "\n";
+  mf.set_finite_element(pf);
+  mf0.set_finite_element(pf);
+  cout << "nb_dof = " << mf.nb_dof() << " =" << mf0.nb_dof() << "*3\n";
+  assert(mf0.nb_dof()*3 == mf.nb_dof());
+  {
+    getfem::generic_assembly assem("t=comp(vBase(#1)); print t; print comp(vBase(#1).vBase(#1))(:,i,:,i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.assembly();
+  }
+  exit(1);
 }
 
 void test_matrixfem(const getfem::mesh_im &mim) {
@@ -1517,10 +1543,15 @@ void test_matrixfem(const getfem::mesh_im &mim) {
     assem.assembly();
   }
   {
-    getfem::generic_assembly assem("t=comp(mGrad(#1).mGrad(#1))(:,i,j,k,:,i,j,k); print t;");
+    mf.set_qdim_mn(2,2);
+    sparse_matrix_type A(mf.nb_dof(), mf.nb_dof());
+    getfem::generic_assembly assem("M(#1,#1)+=comp(mBase(#1).mBase(#1))(:,i,j,:,i,j);");
     assem.push_mi(mim);
     assem.push_mf(mf);
+    assem.push_mat(A);
     assem.assembly();
+    cout << "A = " << A << "\n";
+    exit(1);
   }
 }
 
@@ -1670,6 +1701,7 @@ int main(int argc, char *argv[]) {
      inline_red_test(mim,mfne,mfd);
 
      test_vectorfem(mim);
+     test_vectorfem2();
      test_matrixfem(mim);
 
      test_gradgt(mim,mf);
