@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002-2005 Yves Renard, Julien Pommier, Houari Khenous.    */
+/* Copyright (C) 2002-2006 Yves Renard, Julien Pommier, Houari Khenous.    */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -174,7 +174,7 @@ void friction_problem::init(void) {
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
     for (size_type f = 0; f < nf; f++) {
-      if (mesh.is_convex_having_neighbour(cv, f)) {
+      if (!mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
@@ -369,6 +369,7 @@ void friction_problem::solve(void) {
   
   // contact condition for Lagrange elements
   dal::bit_vector cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
+  cout << "cn = " << cn << endl;
   if (periodic) cn.setminus(mf_u.dof_on_set(PERIODIC_BOUNDARY1));
   sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
   sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());

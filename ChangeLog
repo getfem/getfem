@@ -452,3 +452,53 @@
 
 2004-01-23
 	* Getfem-1.6 released. The ChangeLog is started!
+	  - Some new integration methods
+	  - Performance of interpolation and geometric transformation inversion
+	    was much improved.
+	  - Support for emc2 meshes.
+
+
+2003-09-03 (from old HISTORY file)
+	* Getfem-1.5 released. News:
+	  - Possibility to use quadruple or octuple double precision for
+	    certain elementary computations.
+	  - Cubature formulas are in separated files, included with a perl
+	    script.
+	  - Hierarchical and composte methods in 3D.
+	  - First support for Xfem methods
+	  - Preconditionners in Gmm++ and separated version of Gmm++.
+	  - Support for Harwell-Boeing and Matrix-Market format in Gmm++.
+	  - New version of the Matlab interface : only one mex file.
+	  - Huge improvement of graphical possibilities with the Matlab 
+	    interface (slices, isosurfaces ... see  the  Screenshots  page
+	    of the site) and new examples.
+
+2003-03-03
+	* Getfem-1.4 released. News:
+	  - Compatibility with different C++ compilers is improved.
+	  - Improvement of elementary computations : gain in efficiency and in
+	    memory. 
+	  - Matlab interface is fully working.
+	  - A new linear algebra library is created : Gmm++.
+
+2002-09-24
+	* Getfem-1.3 released. News:
+	  - Composite and hierarchical elements and integration methods.
+	
+2002-08-21
+	* Getfem-1.2 released. News:
+	  - Hermite element on the segment (not fully working)
+	  - Support for non tau-equivalent elements.
+	  - Interpolation of finite element methods (for mortar methods for
+	    instance).
+	  - Names associated with finite element methods, integration methods
+	    and geometrical transformations.
+
+2002-07-18
+	* Getfem-1.1 released. News:
+	- Many bugs fixed. Test programs added. extension of the interpolation
+	  program.
+
+2002-06-28
+	* Getfem-1.0 released. First public release. Web site is created.
+	  The documentations are not finalized.

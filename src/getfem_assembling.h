@@ -43,8 +43,8 @@ namespace getfem {
 
   template <typename VEC>
   scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf,
-			     const VEC &U, mesh_region rg
-			     = mesh_region::all_convexes()) {
+			     const VEC &U,
+			     mesh_region rg = mesh_region::all_convexes()) {
     // for parallelized getfem, work only on the mesh subset 
     // assigned to the current thread
     mim.linked_mesh().intersect_with_mpi_region(rg);

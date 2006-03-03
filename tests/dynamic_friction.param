@@ -13,7 +13,7 @@ FRICTION_COEF = 0.0;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 0.3;
+T = 0.1;
 DT = 0.0001;            % Time step
  
 RESIDUAL = 1E-8;     	% residu for Newton.

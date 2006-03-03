@@ -166,6 +166,7 @@ SRC =                                      \
 	getfem_mat_elem_type.cc            \
 	getfem_mesh.cc                     \
 	getfem_mesh_region.cc              \
+	getfem_error_estimate.cc           \
 	getfem_level_set.cc	           \
 	getfem_mesh_level_set.cc           \
 	getfem_mesh_im_level_set.cc        \

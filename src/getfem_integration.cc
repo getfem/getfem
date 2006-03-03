@@ -342,9 +342,9 @@ namespace getfem {
     scalar_type det = 1.0;
     base_node pt(N+1);
     std::vector<base_node> pts(N);  
-      for (size_type i = 0; i < N; ++i)
-	pts[i] = (cvr->dir_points_of_face(f))[i+1]
-	  - (cvr->dir_points_of_face(f))[0];
+    for (size_type i = 0; i < N; ++i)
+      pts[i] = (cvr->dir_points_of_face(f))[i+1]
+	- (cvr->dir_points_of_face(f))[0];
     if (N) {
       base_matrix a(N+1, N), b(N, N), tmp(N, N);
       for (dim_type i = 0; i < N+1; ++i)

@@ -1,21 +1,28 @@
 Changement à prendre en considérations pour la 2.0 :
 
-1  - Finaliser la parallelisation et la doc dessus. Pour la parallelistation
-     avec MUMPS (et PARA_LEVEL >= 2) il faut voir le fonctionnement parallèle
+1  - Finaliser la parallelisation et la doc dessus (comment linker MUMPS en 
+     particulier). Pour la parallelistation avec MUMPS (et PARA_LEVEL >= 2)
+     il faut voir le fonctionnement parallèle
      de Dirichlet_null_space et prévoir qlq chose pour que l'on puisse utiliser
      les matrices distribuées dans les programmes de tests. Il faut aussi
-     paralleliser l'interpolation (san affecter la sauvegarde fait uniquement
-     sur le processeur maitre). Gestion dans le ./configure
+     paralleliser l'interpolation (sans affecter la sauvegarde faite uniquement
+     sur le processeur maitre). Gestion dans le ./configure.
+     Pour le chargement de maillage, il peut s'effectuer uniquement sur le proc
+     maitre et être distribué ensuite si cela a un interêt.
 
-2  - Documenter le raffinement de maillage.
+2  - Doc sur Xfem
 
-3  - Doc sur Xfem
-
-4  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
+3  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
      avantages de chacune.
 
-5  - Faire marcher tout les tests de config/
+4  - Faire marcher tout les tests de contrib/  (avec des tests effectifs)
 
-6  - Tester les éléments Hdiv et Hrot.
+5  - Tester les éléments Hdiv et Hrot.
 
-7  - Essayer d'optimiser un peu l'estimateur d'erreur (+ parallelisation)
+6  - commiter getfem++/doc/userdoc/getfemuserrefine.fig, .eps, .pdf et .png
+     mettre un référence pour le raffinement de Bank.
+
+7  - ajout de getfem_error_estimate.cc dans cvs
+
+
+9  - Plus de doc sur l'export des données (slices ...).

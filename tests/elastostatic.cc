@@ -446,7 +446,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
     if (refine) {
       plain_vector ERR(mesh.convex_index().last_true()+1);
-      getfem::error_estimate(mim, mf_u, U, ERR, mesh.convex_index());
+      getfem::error_estimate(mim, mf_u, U, ERR);
       
       cout << "max = " << gmm::vect_norminf(ERR) << endl;
       // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
