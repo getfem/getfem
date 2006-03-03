@@ -19,10 +19,4 @@ Changement à prendre en considérations pour la 2.0 :
 
 5  - Tester les éléments Hdiv et Hrot.
 
-6  - commiter getfem++/doc/userdoc/getfemuserrefine.fig, .eps, .pdf et .png
-     mettre un référence pour le raffinement de Bank.
-
-7  - ajout de getfem_error_estimate.cc dans cvs
-
-
-9  - Plus de doc sur l'export des données (slices ...).
+6  - Plus de doc sur l'export des données (slices ...).
