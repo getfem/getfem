@@ -829,7 +829,7 @@ where \cpp{nbound} is the index of the boundary in \cpp{mef}.
 
 \section{Mesh refinement}
 
-Mesh refinement with the Bank method (+ref) is available in dimension
+Mesh refinement with the Bank et all method (see \cite{bank1983}) is available in dimension
 1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons).
 For a given object \cpp{mymesh} of type \cpp{getfem::mesh}, the method
 \begin{cppcode}
@@ -837,7 +837,7 @@ For a given object \cpp{mymesh} of type \cpp{getfem::mesh}, the method
 \end{cppcode}
 refines the elements whose indices are stored in \cpp{bv} (a
 \cpp{dal::bit\_vector} object). The conformity of the mesh is kept
-thanks to additional refinement (the so called green triangles). Information about green triangles is stored on the mesh object to gather them for further refinements. (see Bank ...).
+thanks to additional refinement (the so called green triangles). Information about green triangles is stored on the mesh object to gather them for further refinements (see \cite{bank1983}).
 
 
 \begin{figure}[htb]
@@ -1852,6 +1852,11 @@ The program \filename{elastostatic} is built in a same way and compute the solut
 \bibitem{ciarlet1978}
   P.G.. {\texonly{\sc} Ciarlet},
   {\it The finite element method for elliptic problems}, Studies in Mathematics and its Applications vol. 4, North-Holland, 1978.
+
+\bibitem{bank1983}
+  R.E. {\texonly{\sc} Bank, A.H. Sherman, A. Weiser}
+  {\it Refinement algorithms and data structures for regular local mesh refinement},
+  in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, 1983
 
 \bibitem{EncyclopCubature}
   R. {\texonly{\sc} Cools}
