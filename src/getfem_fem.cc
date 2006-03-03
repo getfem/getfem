@@ -1902,6 +1902,7 @@ namespace getfem
       for (unsigned j = 0; j < 6; ++j)
 	W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
+    cout << "W = " << W << endl; getchar();
     
     static base_matrix A(3, 3);
     static bgeot::base_vector w(3), coeff(3);
@@ -1926,13 +1927,9 @@ namespace getfem
     is_lag = is_equiv = false; 
     base_.resize(6);
 
-    std::stringstream s
-      ("1 - x - y + 2*x*y;"
-       "(x + y + x^2 - 2*x*y - y^2)/2;"
-       "(x + y - x^2 - 2*x*y + y^2)/2;"
-       "((x+y)^2 - x - y)*sqrt(2)/2;"
-       "x*(x-1);"
-       "y*(y-1);");
+    std::stringstream s("1 - x - y + 2*x*y;  (x + y + x^2 - 2*x*y - y^2)/2;"
+			"(x + y - x^2 - 2*x*y + y^2)/2;"
+			"((x+y)^2 - x - y)*sqrt(2)/2;  x*(x-1);  y*(y-1);");
     
     for (unsigned k = 0; k < 6; ++k)
       base_[k] = bgeot::read_base_poly(2, s);

@@ -46,6 +46,7 @@ htmltar: html
 	cp $(PNGFIGS) getfemuser/
 	cp docstyle.css getfemuser/
 	cp logogetfem.png logo_getfem_small.png getfemuser/
+	cp getfemuserrefine.png getfemuser/
 	cp next.gif up.gif previous.gif getfemuser/
 	tar czvf html_getfemuser.tar.gz getfemuser
 	if [ -d ../../../getfem_html ]; then \

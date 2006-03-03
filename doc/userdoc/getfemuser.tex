@@ -10,11 +10,14 @@
 \usepackage{supertabular}
 %\usepackage{fancyheadings}
 %\usepackage{here}
-%\usepackage{pslatex}
 \usepackage{eepic,epic}
-%\usepackage{pslatex}%{ç}a serait cens{é} corriger le pb de fontes dans les pdfs mais le fichier produit est pas beau
+%\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs mais le fichier produit n'est pas beau
 \usepackage[english]{babel}
 \usepackage{alltt}
+
+
+\texonly{\newcommand{\tilda}{{$_{\em \widetilde{\ }}$}}}
+\htmlonly{\newcommand{\tilda}{\verb+~+}}
 
 \texonly{\usepackage{graphicx}
 \usepackage{makeidx}
@@ -46,7 +49,7 @@
   \htmlcss{docstyle.css}
   \newcommand{\text}[1]{\mathrm{#1}}
   \newcommand{\WEB}[2]{\xlink{#2}{#1}}
-  \newcommand{\nabla}{\htmlsym{nabla}}%renamed \xmlent by lastest version of hyperlatex
+  \newcommand{\nabla}{\htmlsym{nabla}} % renamed \xmlent by lastest version of hyperlatex
   \newcommand{\ell}{\htmlsym{tau}}
   \newcommand{\lambda}{\htmlsym{lambda}}
   \newcommand{\varepsilon}{\htmlsym{epsilon}}
@@ -712,7 +715,7 @@ Once an integration method is defined on a mesh, it is possible to obtain inform
 \section{Linear algebra procedures} \label{sec:linalgproc}
 The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}{GMM++ user documentation}.\\
 
-Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 ( \texttt{http://crd.lbl.gov/\verb+~+xiaoye/SuperLU/} ), hence a direct sparse solver is available out of the box.\\
+Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 ( \texttt{http://crd.lbl.gov/\tilda xiaoye/SuperLU/} ), hence a direct sparse solver is available out of the box.\\
 
 
 A small interface to MUMPS ( \WEB{http://graal.ens-lyon.fr/MUMPS/}{http://graal.ens-lyon.fr/MUMPS/} or \WEB{http://www.enseeiht.fr/apo/MUMPS}{http://www.enseeiht.fr/apo/MUMPS} ) is also provided. See the file \cpp{gmm\_MUMPS\_interface.h}. In order to use MUMPS, you have to indicates some options to the configure shell:
@@ -822,6 +825,48 @@ where \cpp{M} is a matrix of any type having the right dimension (i.e. here \cpp
 It is also possible to obtain  mass matrix on a boundary with the same function:
 \cpp{getfem::asm_mass\_matrix(M, mim, mef, nbound); } \\[0.5cm]
 where \cpp{nbound} is the index of the boundary in \cpp{mef}.
+
+
+\section{Mesh refinement}
+
+Mesh refinement with the Bank method (+ref) is available in dimension
+1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons).
+For a given object \cpp{mymesh} of type \cpp{getfem::mesh}, the method
+\begin{cppcode}
+  mymesh.Bank_refine(bv);
+\end{cppcode}
+refines the elements whose indices are stored in \cpp{bv} (a
+\cpp{dal::bit\_vector} object). The conformity of the mesh is kept
+thanks to additional refinement (the so called green triangles). Information about green triangles is stored on the mesh object to gather them for further refinements. (see Bank ...).
+
+
+\begin{figure}[htb]
+  \begin{center}
+    \texonly{\includegraphics[width=10cm,angle=0]{getfemuserrefine.pdf}}
+    \htmlonly{\htmlimg{getfemuserrefine.png}{Example of refinement}}
+  \end{center}
+  \caption{ \it Exemple of Bank refinement in 2D.}
+  \label{fig:refine}
+\end{figure}
+
+
+Mesh refinement is most of the time coupled with an {\it a posteriori} error estimate. A basic error estimate is available in the file \cpp{getfem\_error\_estimate.h}. 
+\begin{cppcode}
+  error_estimate(mim, mf, U, err, cvlist);
+\end{cppcode}
+where \cpp{mim} is the integration method (a \cpp{getfem::mesh\_im} object),  \cpp{mf} is the finite element method on which the unknow has been computed (a \cpp{getfem::mesh\_fem} object), \cpp{U} is the vector of degrees of freedom of the unknow, \cpp{err} is a sufficiently large vector in which the error estimate is computed for each element of the mesh, and \cpp{cvlst} if a list of indices of element on which the error estimate should be computed (a \cpp{dal::bit\_vector} object).
+
+This basic error estimate is only valid for order two problems and just compute the sum of the jump in normal derivative across the elements on each edge (for two-dimensional problems) or each face (for three-dimensional problems). This means that for each face $e$ of the mesh the following quantity is computed:
+
+\texonly{$$}
+\htmlonly{$}
+\int_e |\hspace{0.01em}[\hspace{-0.12em}[ \partial_n u ]\hspace{-0.12em}]\hspace{0.01em}|^2 d \Gamma,
+\htmlonly{$}
+\texonly{$$}
+
+where $[\hspace{-0.12em}[ \partial_n u ]\hspace{-0.12em}]$ is the jump of the normal derivative.
+Then, for each element the mean value is computed with respect to its faces and stored in the vector \cpp{err}. This basic error estimate can be taken as a model for more elaborated ones.
+
 
 
 \section{Compute arbitrary elementary matrices - generic assembly procedures}
@@ -1741,10 +1786,21 @@ The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of 
 
 Of course, each different problem should require a different parallelization adapted to its specificities. You may build your own parallelization using the mesh regions to parallelize assembly procedures.
 
-Nevertheless, the brick system offers a generic parallelization based on MPI, METIS and MUMPS. One has to compile \gf with the option "-D GETFEM_PARA_LEVEL=2" to use it. With this option, each mesh used is implicitely partitionned (using METIS) into a number of regions corresponding to the number of processors and the assembly procedures are parallelized. This means that the tangent matrix and the constraint matrix assembled in the model\_state variable is distributed. The choice made (for the moment) is not to distribute the vectors. So that the right hand side vectors in the model\_state variable are communicated to each processor (the sum of each contribution is made at the end of the assembly and each processor has the complete vector).
-note that you have to think to the fact that the matrices stored by the bricks are all distributed.
+Nevertheless, the brick system offers a generic parallelization based on MPI, METIS and MUMPS. One has to compile \gf with the option "-D GETFEM_PARA_LEVEL=2" to use it. With this option, each mesh used is implicitely partitionned (using METIS) into a number of regions corresponding to the number of processors and the assembly procedures are parallelized. This means that the tangent matrix and the constraint matrix assembled in the model\_state variable are distributed. The choice made (for the moment) is not to distribute the vectors. So that the right hand side vectors in the model\_state variable are communicated to each processor (the sum of each contribution is made at the end of the assembly and each processor has the complete vector).
+note that you have to think to the fact that the matrices stored by the bricks are all distributed.\\[0.5cm]
 
-Concerning the constraints, it is preferable for a better parallelization to avoid the \cpp{getfem::ELIMINATED_CONSTRAINTS} option (i.e. not to use the constraint matrix).
+Concerning the constraints, it is preferable for a better parallelization to avoid the \cpp{getfem::ELIMINATED_CONSTRAINTS} option (i.e. not to use the constraint matrix).\\[0.5cm]
+
+A model of parallelized program is \cpp{elastostatic.cc} in the directory \cpp{tests} of the distribution.\\[0.5cm]
+
+The following functions are also implicitely parallelized using the option "-D GETFEM_PARA_LEVEL=2":
+\begin{itemize}
+\item computation of norms (\cpp{asm\_L2\_norm}, \cpp{asm\_H1\_norm},
+  \cpp{asm\_H2\_norm} ..., in \cpp{getfem\_assembling.h}),
+\item \cpp{asm\_mean\_value} (in \cpp{getfem\_assembling.h}),
+\item \cpp{error_estimate} (in \cpp{getfem\_error_estimate.h}).
+\end{itemize}
+This means that these functions have to be called on each processor.
 
 \section{Catch errors}
 \index{errors}
@@ -1766,14 +1822,16 @@ A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{dal\
 
 The program \filename{laplacian} is provided in the directory \filename{tests} of \gf  distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of \gf . Once the program is compiled you can test it executing the command\\[0.5cm]
 {\tt laplacian laplacian.param}\\[0.5cm]
-The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
+The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The following parameters can be changed\\[0.5cm]
 
 \begin{tabular}{|m{0.2\linewidth}|l|} \hline
   {\tt LX, LY} and {\tt LZ} &  Dimensions of the domain. \\ \hline
   {\tt FT} &  parameter for the exact solution. \\ \hline
-  {\tt MESH\_TYPE} & name of the geometric transformation used for the mesh cells, for example ``GT_PK(2,1)'' for triangles\\ \hline
+  {\tt MESH\_TYPE} & name of the geometric transformation used for mesh cells, \\
+       &  for examplxe ``GT_PK(2,1)'' for triangles\\ \hline
   {\tt NX} &  Number of element in each dimension. \\ \hline
-  {\tt MESH_NOISE} &  if non-zero, a random perturbation is applied to the interior nodes of the mesh.\\ \hline
+  {\tt MESH_NOISED} &  if non-zero, a random perturbation is applied to the \\
+                    & interior nodes of the mesh.\\ \hline
   {\tt INCLINE} &  Incline of the mesh.\\ \hline
   {\tt FEM\_TYPE} & name of finite element method (i.e. FEM_PK(2,1))\\ \hline
   {\tt INTEGRATION} & name of integration method (i.e. IM_TRIANGLE(6))\\ \hline
@@ -1791,12 +1849,16 @@ The program \filename{elastostatic} is built in a same way and compute the solut
 % \bibliographystyle{plain}
 % \bibliography{all}
 
+\bibitem{ciarlet1978}
+  P.G.. {\texonly{\sc} Ciarlet},
+  {\it The finite element method for elliptic problems}, Studies in Mathematics and its Applications vol. 4, North-Holland, 1978.
+
 \bibitem{EncyclopCubature}
   R. {\texonly{\sc} Cools}
-  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\verb+~+ines/research/ecf/ecf.html}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
   
 \bibitem{Xfem}
-  N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
+  N. {\texonly{\sc} Mo\"es, J. Dolbow and T. Belytschko}
   {\it A finite element method for crack growth without remeshing },
   Int. J. Num. Meth. Engng. 46, 131-150 (1999).  
 
