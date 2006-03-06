@@ -10,7 +10,7 @@ Changement à prendre en considérations pour la 2.0 :
      Pour le chargement de maillage, il peut s'effectuer uniquement sur le proc
      maitre et être distribué ensuite si cela a un interêt.
 
-2  - Doc sur Xfem
+2  - Doc sur level-sets et Xfem.
 
 3  - Faire un récapitulatif des cond de Dirichlet: inconvénients et
      avantages de chacune.
@@ -20,3 +20,6 @@ Changement à prendre en considérations pour la 2.0 :
 5  - Tester les éléments Hdiv et Hrot.
 
 6  - Plus de doc sur l'export des données (slices ...).
+
+7  - Mettre une référence à qhull dans la doc et qlq mots sur comment le faire
+     prendre en compte par Getfem.

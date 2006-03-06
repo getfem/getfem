@@ -326,14 +326,14 @@ struct crack_problem {
   int bimaterial;           /* For bimaterial interface fracture */
   double lambda_up, lambda_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
-  getfem::level_set ls2, ls3;  /* The two level sets defining the additional crack.       */
+  getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
   base_small_vector translation;
   scalar_type theta0;
   scalar_type spider_radius;
   unsigned spider_Nr;
   unsigned spider_Ntheta;
   int spider_K;
-  scalar_type residual;       /* max residual for the iterative solvers        */
+  scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
