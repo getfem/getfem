@@ -139,6 +139,6 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" 
 #endif
-int handle_getfem_callback(); // this one is in ../src/getfem_superlu.cc
+int handle_getfem_callback(); /* this one is in ../src/getfem_superlu.cc */
 
 #endif  /* __SUPERLU_SUPERMATRIX */

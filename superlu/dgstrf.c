@@ -395,7 +395,7 @@ dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
 
     *info = iinfo;
     
- HOUSTON_WE_HAVE_A_PROBLEM: // try to avoid ugly leaks.. 
+ HOUSTON_WE_HAVE_A_PROBLEM: /* try to avoid ugly leaks.. */
     if ( m > n ) {
 	k = 0;
         for (i = 0; i < m; ++i) 

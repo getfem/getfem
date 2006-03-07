@@ -677,7 +677,7 @@ double slamc3_(float *a, float *b)
 */
 /* >>Start of File<<   
        System generated locals */
-  volatile float ret_val; // [added volatile to avoid -O3 optimizations.. (julien pommier)]
+  volatile float ret_val; /* [added volatile to avoid -O3 optimizations.. (julien pommier)] */
 
 
 
