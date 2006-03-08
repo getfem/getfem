@@ -14,9 +14,11 @@
 %\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs mais le fichier produit n'est pas beau
 \usepackage[english]{babel}
 \usepackage{alltt}
+% \usepackage{textcomp]
 
 
 \texonly{\newcommand{\tilda}{{$_{\em \widetilde{\ }}$}}}
+%\texonly{\newcommand{\tilda}{{\~{}}}}
 \htmlonly{\newcommand{\tilda}{\verb+~+}}
 
 \texonly{\usepackage{graphicx}
@@ -1390,8 +1392,8 @@ in order to avoid unecessary recomputations (see for example the
 \index{GETFEM!getfem::mdbrick_parameter}
 
 Many brick depend on one or more parameter fields. For example, the
-linear elasticity brick uses the two Lam\'e coefficients $\lambda$ and
-$\mu$.  These Lam\'e coefficients are described as a field (i.e. and
+linear elasticity brick uses the two Lamé coefficients $\lambda$ and
+$\mu$.  These Lamé coefficients are described as a field (i.e. and
 \cpp{mesh_fem} and a vector of dof values), in a template structure
 \cpp{getfem::mdbrick_parameter<VECTOR_TYPE>}.
 
@@ -1633,16 +1635,16 @@ $$ -div(\sigma) = ...; $$
 with \\
 $$ \ \ \ \sigma = \lambda\mbox{tr}(\varepsilon(u))I + 2\mu\varepsilon(u); \ \ \ \varepsilon(u) = (\nabla u + \nabla u^T)/2. $$
 
-$\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lam\'e coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
+$\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lamé coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
 
-The constructors build the brick for constant Lam\'e coefficients:
+The constructors build the brick for constant Lamé coefficients:
 \begin{cppcode}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
      brick(mim, mf_u, lambda, mu);
 \end{cppcode}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} is a valid fem descriptor. \cpp{mf_u} describe the finite element method used for the unknown. \cpp{lambda} and \cpp{mu} are two real defining the constant Lam\'e coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.\\
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} is a valid fem descriptor. \cpp{mf_u} describe the finite element method used for the unknown. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.\\
 
-For non-constant Lam\'e coefficients, the brick parameters \cpp{lambda} and \cpp{mu} have to be set (with \cpp{brick.lambda().set(mf_data, lambda_)} and \cpp{brick.mu().set(mf_data, mu_)}, where \cpp{mf_data} is a valid fem descriptor and \cpp{lambda_} and \cpp{mu_} are two vectors of type \cpp{MODEL_STATE::vector_type}).\\
+For non-constant Lamé coefficients, the brick parameters \cpp{lambda} and \cpp{mu} have to be set (with \cpp{brick.lambda().set(mf_data, lambda_)} and \cpp{brick.mu().set(mf_data, mu_)}, where \cpp{mf_data} is a valid fem descriptor and \cpp{lambda_} and \cpp{mu_} are two vectors of type \cpp{MODEL_STATE::vector_type}).\\
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1718,7 +1720,7 @@ For the nearly incompressibility condition, the constructor is:
   getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, epsilon, numfem);
 \end{cppcode}
 
-where \cpp{epsilon} is a (small) scalar penalization coefficient. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lam\'e coefficient.\\
+where \cpp{epsilon} is a (small) scalar penalization coefficient. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1818,7 +1820,7 @@ where \cpp{Hyperelastic_Law} is an object representing the considered hyperelast
   getfem::Ciarlet_Geymonat_hyperelastic_law Hyperelastic_Law;
   getfem::Mooney_Rivlin_hyperelastic_law Hyperelastic_Law;
 \end{cppcode}
-The Saint-Venant Kirchhoff law is a linearized law defined with the two Lam\'e coefficients, Ciarlet Geymonat law is defined with the two Lam\'e coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
+The Saint-Venant Kirchhoff law is a linearized law defined with the two Lamé coefficients, Ciarlet Geymonat law is defined with the two Lamé coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
 
 \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameters of the selected hyperelastic law. The parameters of the hyperelastic law are supplied
 in the vector \cpp{lawparams} (by default they are constant over the mesh, but of you can change that later with \cpp{brick.params().set(mf, V)}).
@@ -1921,7 +1923,7 @@ The program \filename{elastostatic} is built in a same way and compute the solut
   {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
   
 \bibitem{Xfem}
-  N. {\texonly{\sc} Mo\"es, J. Dolbow and T. Belytschko}
+  N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
   {\it A finite element method for crack growth without remeshing },
   Int. J. Num. Meth. Engng. 46, 131-150 (1999).  
 

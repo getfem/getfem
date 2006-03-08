@@ -163,6 +163,25 @@ namespace getfem
     return z;
   }
 
+  static void noise_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, bgeot::pgeometric_trans pgt) {
+    size_type N = nsubdiv.size();
+    for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
+      bool is_border = false;
+      base_node& P = m.points()[ip];
+      for (size_type i=0; i < N; ++i) {
+	if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10)
+	  is_border = true;
+      }
+      if (!is_border) { 
+	P = shake_func(P); 
+	for (size_type i=0; i < N; ++i)
+	  P[i] += 0.20*(1./(nsubdiv[i]* pgt->complexity()))
+	    * gmm::random(double());
+      }
+    }
+  }
+
+
   void regular_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, 
 			 bgeot::pgeometric_trans pgt, bool noised) {
     mesh msh;
@@ -186,6 +205,7 @@ namespace getfem
       DAL_THROW(dal::failure_error, "cannot build a regular mesh for "
 		<< bgeot::name_of_geometric_trans(pgt));
     }
+
     m.clear();
     /* build a mesh with a geotrans of degree K */
     for (dal::bv_visitor cv(msh.convex_index()); !cv.finished(); ++cv) {
@@ -201,24 +221,11 @@ namespace getfem
 	m.add_convex_by_points(pgt, pts.begin());
       }
     }
-    m.optimize_structure();
+
     /* apply a continuous deformation + some noise */
-    if (noised) {
-      for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
-	bool is_border = false;
-	base_node& P = m.points()[ip];
-	for (size_type i=0; i < N; ++i) {
-	  if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10)
-	    is_border = true;
-	}
-	if (!is_border) { 
-	  P = shake_func(P); 
-	  for (size_type i=0; i < N; ++i)
-	    P[i] += 0.20*(1./(nsubdiv[i]* pgt->complexity()))
-			      * gmm::random(double());
-	}
-      }
-    }
+    if (noised) noise_unit_mesh(m, nsubdiv, pgt);
+
+    m.optimize_structure();
   }
   
     

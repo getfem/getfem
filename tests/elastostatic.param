@@ -12,7 +12,7 @@ N = 2;
 NX = 30;                 % number of subdivisions for structured meshes.
 QUAD = 0;
 FT = 3.0;               % parameter for the exact solution.
-SOL_SING = 1;           % 0 : Regular exact solution.
+SOL_SING = 0;           % 0 : Regular exact solution.
                         % 1 : Singular exact solution in r^{1/2}.
 			% 2 : Singular exact soluiton in r^{1/4}
 REFINE = 0;		% Mesh refinement option

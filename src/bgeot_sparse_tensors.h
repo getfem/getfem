@@ -284,10 +284,10 @@ namespace bgeot {
   typedef std::vector<tensor_mask> tensor_mask_container;
 
   struct tensor_index_to_mask {
-    dim_type mask_num;
-    dim_type mask_dim;
-    tensor_index_to_mask() : mask_num(dim_type(-1)), mask_dim(dim_type(-1)) {}
-    bool is_valid() { return mask_num != dim_type(-1) && mask_dim != dim_type(-1); }
+    short_type mask_num;
+    short_type mask_dim;
+    tensor_index_to_mask() : mask_num(short_type(-1)), mask_dim(short_type(-1)) {}
+    bool is_valid() { return mask_num != short_type(-1) && mask_dim != short_type(-1); }
   };
 
 

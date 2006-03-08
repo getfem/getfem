@@ -1506,7 +1506,7 @@ void test_vectorfem2() {
     assem.push_mf(mf);
     assem.assembly();
   }
-  exit(1);
+  //exit(1);
 }
 
 void test_matrixfem(const getfem::mesh_im &mim) {
@@ -1551,7 +1551,7 @@ void test_matrixfem(const getfem::mesh_im &mim) {
     assem.push_mat(A);
     assem.assembly();
     cout << "A = " << A << "\n";
-    exit(1);
+    //exit(1);
   }
 }
 
