@@ -534,6 +534,7 @@ namespace getfem {
 
   public:
     const std::string name() const { return name_; }
+    void rename(const std::string &new_name) { name_ = new_name; }
     const mesh_fem &mf() const { 
       if (!pmf_) DAL_THROW(dal::failure_error, "no mesh fem assigned to the parameter " << name());
       return *pmf_; 

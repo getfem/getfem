@@ -87,6 +87,7 @@ namespace getfem {
   /** Bilaplacian brick @f$ D \Delta \Delta u @f$.
 
   @see asm_stiffness_matrix_for_bilaplacian
+  @see mdbrick_mixed_isotropic_linearized_plate
   @ingroup bricks 
   */
   template<typename MODEL_STATE = standard_model_state>

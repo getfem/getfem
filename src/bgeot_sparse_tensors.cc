@@ -540,11 +540,6 @@ namespace bgeot {
 	for (index_type i = 0; i < pri[pmi].range; ++i) {
 	  index_type pos = i * (N-pri[pmi].n) + pos0;
 	  if (i != pri[pmi].range-1) {
-	    assert(n < trtab.size());
-	    cerr << "mi = " << mi << ", trtab[n].strides()=" << trtab[n].strides().size() << "\n";
-	    assert(mi < trtab[n].strides().size());
-	    assert(i+1 < trtab[n].strides()[mi].size());
-
 	    stride_type increm = trtab[n].strides()[mi][i+1] - trtab[n].strides()[mi][i];
 	    pri[pmi].inc[pos]      = increm;
             if (pri[pmi].inc[pos] != pri[pmi].inc[pos0]) 

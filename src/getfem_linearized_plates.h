@@ -286,8 +286,12 @@ namespace getfem {
 # define MDBRICK_LINEAR_PLATE 897523
 
   /**
-     Linear plate model brick
-     @ingroup bricks
+     Linear plate model brick (for moderately thick plates, using the
+     Reissner-Mindlin model).
+
+     For very thin plates, see the
+     mdbrick_mixed_isotropic_linearized_plate or the
+     mdbrick_bilaplacian.  @ingroup bricks
   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_isotropic_linearized_plate
@@ -401,21 +405,30 @@ namespace getfem {
       if (mf_ut.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_ut should be 2.");
       if (mf_u3.get_qdim() != 1)
-	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
+	DAL_THROW(failure_error, "Qdim of mf_u3 should be 1.");
       if (mf_theta.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
       mitc = false;
       this->add_proper_mesh_im(mim);
-      this->add_proper_mesh_im(mim_subint);      
+      this->add_proper_mesh_im(mim_subint);
       this->add_proper_mesh_fem(mf_ut, MDBRICK_LINEAR_PLATE, 1);
       this->add_proper_mesh_fem(mf_u3, MDBRICK_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_LINEAR_PLATE, 0);
       this->force_update();
     }
 
-    /** constructor for a homogeneous material (constant lambda and mu).
-     * @param epsilon the thickness of the plate.
-     */
+    /** 
+	Constructor for a homogeneous material (constant lambda and
+	mu). In order to avoid locking phenomena it is preferable for
+	mf_theta to be of lower order compared to mf_u3. Another
+	possibility is to use a sub-integration of the transverse
+	shear term (with mim_subint).
+
+	@param mf_ut the finite element method for the membrane displacement
+	@param mf_u3 the finite element method for the transverse displacement.
+	@param mf_theta the finite element method for the rotation of the normal (section rotations).
+	@param epsilon the thickness of the plate.
+    */
     mdbrick_isotropic_linearized_plate
     (const mesh_im &mim_, const mesh_fem &mf_ut_, const mesh_fem &mf_u3_,
      const mesh_fem &mf_theta_,
@@ -425,9 +438,13 @@ namespace getfem {
 	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
     { lambda_.set(lambdai); mu_.set(mui); init_(); }
 
-    /** constructor for a homogeneous material (constant lambda and mu) with
-     * sub integration.
-     * @param epsilon the thickness of the plate.
+    /** Constructor for a homogeneous material (constant lambda and
+	mu) with sub integration for the transverse shear term.
+
+	@param mf_ut the finite element method for the membrane displacement
+	@param mf_u3 the finite element method for the transverse displacement.
+	@param mf_theta the finite element method for the rotation of the normal (section rotations).
+	@param epsilon the thickness of the plate.
      */
     mdbrick_isotropic_linearized_plate
     (const mesh_im &mim_, const mesh_im &mim_subint_, const mesh_fem &mf_ut_,
@@ -490,7 +507,12 @@ namespace getfem {
 # define MDBRICK_MIXED_LINEAR_PLATE 213456
 
   /** 
-      Mixed linear plate model brick.
+      Mixed linear plate model brick (for thin plates, using Kirchhoff-Love model).
+
+      Do NOT forget to use the mdbrick_plate_closing with this one !
+
+      @ingroup bricks
+      @see mdbrick_bilaplacian, mdbrick_mixed_isotropic_linearized_plate
   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_mixed_isotropic_linearized_plate
@@ -510,8 +532,6 @@ namespace getfem {
       K_uptodate = false;
       nbdof = mf_ut.nb_dof() + mf_u3.nb_dof()*3 + mf_theta.nb_dof();
     }
-
-
 
     const T_MATRIX &get_K(void) {
       this->context_check(); 
@@ -637,7 +657,7 @@ namespace getfem {
       if (mf_ut.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_ut should be 2.");
       if (mf_u3.get_qdim() != 1)
-	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
+	DAL_THROW(failure_error, "Qdim of mf_u3 should be 1.");
       if (mf_theta.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
       this->add_proper_mesh_im(mim);
@@ -651,12 +671,20 @@ namespace getfem {
       this->force_update();
     }
 
-    // constructor for a homogeneous material (constant lambda and mu)
+
+    /** constructor for a homogeneous material (constant lambda and
+	mu). An inf-sup condition between mf_u3 and mf_theta has to be
+	satisfied (mf_u3 should be of lower order than mf_theta).
+     
+	@param mf_ut the finite element method for the membrane displacement
+	@param mf_u3 the finite element method for the transverse displacement.
+	@param mf_theta the finite element method for the rotation of the normal (section rotations).
+	@param epsilon the thickness of the plate.
+    */
     mdbrick_mixed_isotropic_linearized_plate
     (const mesh_im &mim_, const mesh_fem &mf_ut_, const mesh_fem &mf_u3_,
      const mesh_fem &mf_theta_,
-     value_type lambdai, value_type mui,
-     double epsilon_, bool sym = false)
+     value_type lambdai, value_type mui, double epsilon_, bool sym = false)
       : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
 	lambda_("lambda", mf_ut_.linked_mesh(), this),
 	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_), symmetrized(sym)
@@ -665,8 +693,9 @@ namespace getfem {
   };
 
   /**
-   *  Plate source term brick.
-   */
+     Plate source term brick (apply a classical source term on the
+     @f$ut@f$, @f$u3@f$, and @f$\theta@f$ fields)
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_source_term : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -700,11 +729,14 @@ namespace getfem {
 
   public :
 
+    /** displacement (ut and u3) source term */
     mdbrick_parameter<VECTOR> &B(void) { return B_; }
     const mdbrick_parameter<VECTOR> &B(void) const { return B_; }
-    mdbrick_parameter<VECTOR> &M(void) { return ut_part->source_term(); }
+    /** moment source term (i.e. the source term on the rotation of
+	the normal). */
+    mdbrick_parameter<VECTOR> &M(void) { return theta_part->source_term(); }
     const mdbrick_parameter<VECTOR> &M(void) const
-    { return  ut_part->source_term(); }
+    { return  theta_part->source_term(); }
 
 
 
@@ -738,6 +770,9 @@ namespace getfem {
       theta_part = new mdbrick_source_term<MODEL_STATE>
 	(problem, mf_data, M__, bound, num_fem+2);
 
+      // alias the source_term param of the theta_part brick into this brick
+      this->parameters["M"] = &M();
+
       ut_part = sub_problem = new mdbrick_source_term<MODEL_STATE>
 	(*theta_part, mf_data, VECTOR(), bound, num_fem);
     
@@ -770,8 +805,11 @@ namespace getfem {
 
 
   /**
-     Simple support condition for plate model brick.
-  */
+     Simple support condition for plate model brick (Dirichlet
+     condition on @f$ut@f$ and @f$u3@f$, free rotation)
+
+     @ingroup bricks
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_simple_support : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -837,7 +875,9 @@ namespace getfem {
 
 
   /**
-   *  Clamped condition for plate model brick.
+    Clamped condition for plate model brick (Dirichlet condition on
+    the displacement and the rotation).
+    @ingroup bricks
    */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_clamped_support: public mdbrick_abstract<MODEL_STATE> {
@@ -920,7 +960,14 @@ namespace getfem {
   }
 
   /**
-   *  Free edges condition for mixed plate model brick.
+     Free edges condition for mixed plate model brick. This brick has to be added
+     for the mixed linearized plate brick after all other boundary conditions.
+
+     (the reason is that the brick has to inspect all other boundary
+     conditions to determine the number of disconnected boundary parts
+     which are free edges).
+
+     @ingroup bricks
    */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_closing: public mdbrick_abstract<MODEL_STATE> {
@@ -966,7 +1013,7 @@ namespace getfem {
 	}
 	// cout << endl;
       }
-      cout << "allclamped = " << allclamped << endl;
+      //cout << "allclamped = " << allclamped << endl;
 
       std::vector<size_type> comp_conns(cv_nums.size(), size_type(-1)); 
       size_type nbmax = msh->points().ind_last() + 1, p1, p2;
@@ -1006,7 +1053,7 @@ namespace getfem {
 	}
       }
 
-      cout << "Number of comp conn : " << comp_conn << endl;
+      //cout << "Number of comp conn : " << comp_conn << endl;
       if (comp_conn < 2) {
 	gmm::resize(CO, 0, 0);
       }
