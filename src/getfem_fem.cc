@@ -1742,7 +1742,7 @@ namespace getfem
     }
     
     static base_matrix W(3, 21);
-    static base_small_vector norient(M_PI, M_PI * M_PI);
+    base_small_vector norient(M_PI, M_PI * M_PI);
     if (pgt->is_linear()) gmm::lu_inverse(K); 
     for (unsigned i = 18; i < 21; ++i) {
       if (!(pgt->is_linear()))
@@ -1883,7 +1883,7 @@ namespace getfem
     gmm::copy(gmm::identity_matrix(), M);
     
     static base_matrix W(3, 6);
-    static base_small_vector norient(M_PI, M_PI * M_PI);
+    base_small_vector norient(M_PI, M_PI * M_PI);
     if (pgt->is_linear())
       { gmm::mult(G, pgp->grad(0), K); gmm::lu_inverse(K); }
     for (unsigned i = 3; i < 6; ++i) {

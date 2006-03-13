@@ -203,7 +203,7 @@ namespace getfem {
 
     // take the normal derivatives into account
     static base_matrix W(3, 12);
-    static base_small_vector norient(M_PI, M_PI * M_PI);
+    base_small_vector norient(M_PI, M_PI * M_PI);
     if (pgt->is_linear()) gmm::lu_inverse(K); 
     for (unsigned i = 9; i < 12; ++i) {
       if (!(pgt->is_linear()))

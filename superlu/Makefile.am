@@ -3,6 +3,14 @@ noinst_HEADERS=\
 	supermatrix.h colamd.h    slu_cdefs.h   slu_ddefs.h  \
 	slu_sdefs.h     slu_zdefs.h
 
+
+
+if USEBLASLITE
+BLASLITEFILES=BLAS.c BLAS_f2c.h f2c_lite.c
+else
+BLASLITEFILES=""
+endif
+
 SRC = ccolumn_bmod.c \
 	ccolumn_dfs.c \
 	ccopy_to_ucol.c \
@@ -126,11 +134,7 @@ zsnode_bmod.c \
 zsnode_dfs.c \
 zsp_blas2.c \
 zsp_blas3.c \
-zutil.c 
-
-if USEBLASLITE
-SRC += BLAS.c BLAS_f2c.h f2c_lite.c
-endif
+zutil.c $(BLASLITEFILES)
 
 #vire: xerbla.c 
 

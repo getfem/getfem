@@ -201,7 +201,14 @@ namespace bgeot {
     explicit small_vector(const std::vector<T>& v) : id(allocate(v.size())) { 
       std::copy(v.begin(),v.end(),begin());
     }
-    ~small_vector() { allocator().dec_ref(id); }
+    ~small_vector() { 
+      // in the wonderful world of static objects, the order of destruction 
+      // can be really important when the memory allocator is destroyed
+      // before , for ex. a global variable of type small_vector...
+      // that's why there is a check on the state of the allocator..
+      if (!allocator_destroyed()) 
+	allocator().dec_ref(id); 
+    }
 
     small_vector(T v1, T v2) : id(allocate(2)) 
     { begin()[0] = v1; begin()[1] = v2; }
@@ -254,6 +261,7 @@ namespace bgeot {
       SVEC_ASSERT(id == 0 || refcnt()); return static_cast<pointer>(allocator().obj_data(id)); 
     }
     block_allocator& allocator() const { return *palloc; }
+    bool allocator_destroyed() const { return palloc == 0; }
     node_id allocate(size_type n) {
       return (allocator().allocate(n*sizeof(value_type))); SVEC_ASSERT(refcnt() == 1);
     }

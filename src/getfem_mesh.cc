@@ -855,12 +855,16 @@ namespace getfem {
       m.add_simplex(n, tab);
   }
 
+  struct mesh_cache_for_Bank_basic_refine_convex : public mesh {};
+
   void mesh::Bank_basic_refine_convex(size_type i) {
     bgeot::pgeometric_trans pgt = trans_of_convex(i);
     size_type n = pgt->basic_structure()->dim();
 
     static bgeot::pgeometric_trans pgt1 = 0;
-    static mesh mesh2;
+    
+    mesh &mesh2 = dal::singleton<mesh_cache_for_Bank_basic_refine_convex>::instance();
+
     static bgeot::pstored_point_tab pspt = 0;
     static bgeot::pgeotrans_precomp pgp = 0;
     static std::vector<size_type> ipt, ipt2, icl;
@@ -971,6 +975,8 @@ namespace getfem {
     return size_type(-1);
   }
 
+  struct mesh_cache_for_Bank_build_green_simplexes : public mesh {};
+
   void mesh::Bank_build_green_simplexes(size_type ic,
 					std::vector<size_type> &ipt) {
     size_type igs = Bank_info->green_simplices.add(green_simplex());
@@ -985,7 +991,7 @@ namespace getfem {
     size_type d = ipt.size() - 1, n = structure_of_convex(ic)->dim();
     static size_type d0 = 0;
     static bgeot::pstored_point_tab pspt1 = 0;
-    static mesh mesh1;
+    mesh &mesh1 = dal::singleton<mesh_cache_for_Bank_build_green_simplexes>::instance();
     if (d0 != d) {
       d0 = d;
       Bank_build_first_mesh(mesh1, d);

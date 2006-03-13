@@ -263,7 +263,10 @@ struct Chrono {
   }
 
 
-  static mesh global_mesh; // to visualize the result with Open dx
+  struct global_mesh_for_mesh_level_set : public mesh {};
+  static mesh& global_mesh() {
+    return dal::singleton<global_mesh_for_mesh_level_set>::instance();
+  }
 
   void mesh_level_set::run_delaunay(std::vector<base_node> &fixed_points,
 				    gmm::dense_matrix<size_type> &simplexes,
@@ -695,10 +698,10 @@ struct Chrono {
 	vectors_to_base_matrix(G, linked_mesh().points_of_convex(cv));
 	std::vector<size_type> pts(msh.nb_points());
 	for (size_type i = 0; i < msh.nb_points(); ++i)
-	  pts[i] = global_mesh.add_point(pgt->transform(msh.points()[i], G));
+	  pts[i] = global_mesh().add_point(pgt->transform(msh.points()[i], G));
 	
 	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i)
-	  global_mesh.add_convex(msh.trans_of_convex(i), 
+	  global_mesh().add_convex(msh.trans_of_convex(i), 
 				 dal::index_ref_iterator(pts.begin(),
 				     msh.ind_points_of_convex(i).begin()));
       }
@@ -799,7 +802,7 @@ struct Chrono {
     }
     if (noisy) {
       getfem::stored_mesh_slice sl;
-      sl.build(global_mesh, getfem::slicer_none(), 6);
+      sl.build(global_mesh(), getfem::slicer_none(), 6);
       getfem::dx_export exp("totoglob.dx");
       exp.exporting(sl);
       exp.exporting_mesh_edges();

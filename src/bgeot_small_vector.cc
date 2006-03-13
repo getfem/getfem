@@ -40,6 +40,7 @@ namespace bgeot {
   block_allocator::~block_allocator() {
     for (size_type i=0; i < blocks.size(); ++i) 
       if (!blocks[i].empty()) blocks[i].clear();
+    static_block_allocator::palloc = 0;
   }
   block_allocator::node_id block_allocator::allocate(block_allocator::size_type n) {
     if (n == 0) return 0;

@@ -38,7 +38,7 @@ dnl -----------------------------------------------
 
 USER_CXXFLAGS="$CXXFLAGS"
 USER_CFLAGS="$CFLAGS"
-AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++ icpc)
+AC_PROG_CXX(g++ cxx KCC CC cc++ xlC aCC c++ icpc)
 AC_PROG_CC(gcc icc cc)
 AC_PROG_F77
 

@@ -528,9 +528,12 @@ namespace getfem {
     return pool(msh, order);
   }
 
-  static mesh dummymesh;
-  static mesh_fem dummymeshfem(dummymesh);
-  const mesh_fem &dummy_mesh_fem(void) { return dummymeshfem; }
+  struct dummy_mesh_fem_ {
+    mesh m;
+    mesh_fem mf;
+    dummy_mesh_fem_() : mf(m) {}
+  };
+  const mesh_fem &dummy_mesh_fem(void) { return dal::singleton<dummy_mesh_fem_>::instance().mf; }
 
 
 
