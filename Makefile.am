@@ -4,7 +4,6 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = m4 cubature superlu src tests contrib bin
 
 EXTRA_DIST = \
-	LICENSE \
 	BUGS \
 	MTL-ITL-LICENSE
 
