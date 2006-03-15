@@ -147,6 +147,89 @@ namespace getfem {
   };
 #endif
 
+#if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER
+  template <typename MAT, typename VECT> 
+  struct linear_solver_para_schwarzadd
+    : public abstract_linear_solver<MAT, VECT> {
+
+    const mdbrick_abstract<MODEL_STATE> &problem;
+    int nblocsubdom; // Number of sub-domains per process
+
+    void operator ()(const MAT &M, VECT &x, const VECT &b,
+		     gmm::iteration &) const { 
+      double tt_ref=MPI_Wtime();
+
+      // Meshes sub-partition.
+      std::set<const mesh *> mesh_set;
+      for (size_type i = 0; i < problem.nb_mesh_fems(); ++i)
+	mesh_set.insert(&(problem.get_mesh_fem(i).linked_mesh()));
+
+      std::vector< std::vector<int> > eparts(mesh_set.size());
+
+      int size, rank, nset = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+      for (std::set<const mesh *>::iterator it = mesh_set.begin();
+	   it != mesh_set.end(); ++it, ++nset) {
+
+	int ne = int(it->get_mpi_region().nb_convex());
+	std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
+
+	int j = 0, k = 0;
+	ind_set s;
+	for (mr_visitor ic(it->get_mpi_region()); !ic.finished();++ic,++j) {
+	  numelt[j] = ic.cv();
+	  xadj[j] = k;
+	  it->neighbours_of_convex(ic.cv(), s);
+	  for (ind_set::iterator it = s.begin();
+	       it != s.end(); ++it)
+	    if (it->get_mpi_region().is_in(*it)) 
+	      { adjncy.push_back(*it); ++k; }  
+	}
+	xadj[j] = k;
+
+	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
+
+	// The mpi region is partitionned into nblocsubdom sub-domains.
+	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
+			    &numflag, &nblocsubdom, options, &edgecut,
+			    &(npart[0]));
+
+	eparts[nset].resize(nblocsubdom);
+
+	for (size_type i = 0; i < size_type(ne); ++i)
+	  eparts[nset][npart[i]].push_back(numelt[i]);
+      }
+
+     
+
+
+
+
+
+
+      
+
+
+      // 2 - Fabrication des Bi
+      // 3 - Appel de S.A.
+
+
+
+
+
+
+
+      // MUMPS_distributed_matrix_solve(M, x, b);
+
+
+
+      cout<<"temps SCHWARZ ADD "<< MPI_Wtime() - tt_ref<<endl;
+    }
+  };
+#endif
+
   template <typename MODEL_STATE> struct useful_types {
     
     TYPEDEF_MODEL_STATE_TYPES;
@@ -168,6 +251,8 @@ namespace getfem {
     p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     p.reset(new linear_solver_distributed_mumps<T_MATRIX, VECTOR>);
+#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER
+    p.reset(new linear_solver_para_schwarzadd<T_MATRIX, VECTOR>);
 #else
     size_type ndof = problem.nb_dof(), max3d = 15000, dim = problem.dim();
 # ifdef GMM_USES_MUMPS
@@ -477,7 +562,7 @@ namespace getfem {
 
     // Quand il y a plusieurs maillages, on découpe tous les maillages en
     // autant de parties
-    // et on regroupe les ddl de chaque partition par numÃ©ro de sous-partie.
+    // et on regroupe les ddl de chaque partition par numero de sous-partie.
     for (std::set<const mesh *>::iterator it = mesh_set.begin();
 	 it != mesh_set.end(); ++it, ++nset) {
       int ne = int((*it)->nb_convex());

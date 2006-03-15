@@ -131,7 +131,7 @@ namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
 
-    void mesh::compute_mpi_region(void) const {
+  void mesh::compute_mpi_region(void) const {
       int size, rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -156,19 +156,13 @@ namespace getfem {
 
 	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
 
-
-
-	cout << "prepartition time "<< MPI_Wtime()-t_ref << endl;
-
 	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
 			    &numflag, &size, options, &edgecut, &(npart[0]));
-	
-	cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
 
 	for (size_type i = 0; i < size_type(ne); ++i)
 	  if (npart[i] == rank) mpi_region.add(numelt[i]);
 
-	cout << "postPartition time "<< MPI_Wtime()-t_ref << endl;
+	cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
       }
       modified = false;
       valid_sub_regions.clear();

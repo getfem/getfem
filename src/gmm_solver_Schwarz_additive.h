@@ -401,7 +401,7 @@ namespace gmm {
 #endif
   
   /* ******************************************************************** */
-  /*		Sequential Linear Additive Schwarz method                 */
+  /*	            Linear Additive Schwarz method                        */
   /* ******************************************************************** */
   /* ref : Domain decomposition algorithms for the p-version finite       */
   /*       element method for elliptic problems, Luca F. Pavarino,        */
