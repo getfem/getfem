@@ -247,7 +247,10 @@ namespace gmm {
 
 #define ICNTL(I) icntl[(I)-1]
 #define INFO(I) info[(I)-1]
-    id.ICNTL(1) = -1; id.ICNTL(2) = -1; id.ICNTL(3) = -1; id.ICNTL(4) = 4;
+    id.ICNTL(1) = -1; id.ICNTL(2) = 6; // id.ICNTL(2) = -1;
+    id.ICNTL(3) = 6;
+    // id.ICNTL(3) = -1; 
+    id.ICNTL(4) = 2;
     id.ICNTL(5)=0; id.ICNTL(18)=3;
     id.job = 6;
     mumps_interf<T>::mumps_c(id);

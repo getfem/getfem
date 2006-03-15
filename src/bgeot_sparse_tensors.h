@@ -286,8 +286,10 @@ namespace bgeot {
   struct tensor_index_to_mask {
     short_type mask_num;
     short_type mask_dim;
-    tensor_index_to_mask() : mask_num(short_type(-1)), mask_dim(short_type(-1)) {}
-    bool is_valid() { return mask_num != short_type(-1) && mask_dim != short_type(-1); }
+    tensor_index_to_mask() : mask_num(short_type(-1)), 
+			     mask_dim(short_type(-1)) {}
+    bool is_valid() { return mask_num != short_type(-1) && 
+	mask_dim != short_type(-1); }
   };
 
 

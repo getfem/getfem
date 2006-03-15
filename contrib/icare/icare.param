@@ -13,8 +13,8 @@ T = 500;        % Final time
 
 NOISY = 1;
 
-OPTION = 1; % 0 = Stokes avec sch%/1€Œiso8859-15éma de splitting 1
-	    % 1 = Navier Stokes avec sch%/1€Œiso8859-15éma de splitting 1
+OPTION = 1; % 0 = Stokes avec schéma de splitting 1
+	    % 1 = Navier Stokes avec schéma de splitting 1
 	    % 2 = Navier Stokes with energy conserving midpoint scheme
 	    % 3 = Navier Stokes with prediction- correction scheme
 

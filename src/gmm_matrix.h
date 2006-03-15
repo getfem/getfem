@@ -962,8 +962,12 @@ namespace gmm {
   inline MPI_Datatype mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
 #endif
   inline MPI_Datatype mpi_type(int) { return MPI_INT; }
-  inline MPI_Datatype mpi_type(size_t)
-  { return (sizeof(int) == sizeof(size_t)) ? MPI_INT : MPI_LONG; }
+  inline MPI_Datatype mpi_type(unsigned int) { return MPI_UNSIGNED; }
+  inline MPI_Datatype mpi_type(size_t) {
+    if (sizeof(int) == sizeof(size_t)) return MPI_UNSIGNED;
+    if (sizeof(long) == sizeof(size_t)) return MPI_UNSIGNED_LONG;
+    return MPI_LONG_LONG;
+  }
 
 
 
