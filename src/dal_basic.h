@@ -291,7 +291,9 @@ namespace dal
 
   template<class T, unsigned char pks>
   void dynamic_array<T,pks>::swap(dynamic_array<T,pks> &da) {
-    array.swap(da.array); std::swap(last_ind, da.last_ind);
+    array.swap(da.array); 
+    std::swap(last_ind, da.last_ind);
+    std::swap(last_accessed, da.last_accessed);
     std::swap(ppks, da.ppks); std::swap(m_ppks, da.m_ppks);
   }
   

@@ -45,8 +45,6 @@ namespace getfem {
   }
 
   void mdbrick_abstract_common_base::update_from_context(void) const {
-    // cerr << "update_from_context[" << this << " : " 
-    //      <<  dal::demangle(typeid(*this).name()) << "]\n";
     nb_total_dof = 0;
     nb_total_constraints = 0;
     total_mixed_variables.clear();
@@ -56,6 +54,7 @@ namespace getfem {
     mesh_fems.resize(0); mesh_ims.resize(0); mesh_fem_positions.resize(0);
     /* get information from parent bricks */
     for (size_type i = 0; i < sub_bricks.size(); ++i) {
+      sub_bricks[i]->context_check();
       for (size_type j = 0; j < sub_bricks[i]->mesh_fems.size(); ++j) {
 	mesh_fems.push_back(sub_bricks[i]->mesh_fems[j]);
 	mesh_fems_info.push_back(sub_bricks[i]->mesh_fems_info[j]);

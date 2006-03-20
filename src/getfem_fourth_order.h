@@ -316,7 +316,7 @@ namespace getfem {
     assem.assembly(rg);
   }
 
-  /*
+  /**
      Brick for Special boundary condition for Kirchhoff-Love model
 
      @see asm_source_term

@@ -277,6 +277,13 @@ int main(int argc, char *argv[]) {
   nn.add(2048);
   cout << nn << endl;
 
+  dal::bit_vector u, v, w, z;
+  u.add(0, 216);
+  v.add(6, 634);
+  u &= v;
+  u &= w;
+  z &= v; return 0;
+
   test_speed();
 
   }

@@ -314,7 +314,8 @@ namespace getfem {
   }
 
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
-    : dof_enumeration_made(false), auto_add_elt_K(size_type(-1)), Qdim(Q) {
+    : dof_enumeration_made(false), auto_add_elt_K(size_type(-1)), 
+      Qdim(Q), QdimM(1), QdimN(1) {
     linked_mesh_ = &me;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
