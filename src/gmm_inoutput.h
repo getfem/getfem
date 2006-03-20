@@ -452,7 +452,7 @@ namespace gmm {
       if (mat_nrows(A) == mat_ncols(A)) t = "RUA"; else t = "RRA";
     writeHB_mat_double(filename, mat_nrows(A), mat_ncols(A),
 		       A.jc[mat_ncols(A)], A.jc, A.ir,
-		       (double *)A.pr,
+		       (const double *)A.pr,
 		       0, 0, 0, 0, "GETFEM++ CSC MATRIX", "CSCMAT",
 		       t, 0, 0, 0, 0, "F", shift);
   }
@@ -783,7 +783,7 @@ namespace gmm {
   }
 
   inline int mm_write_mtx_crd(const char *fname, int M, int N, int nz, int I[],
-			      int J[], double val[], MM_typecode matcode) {
+			      int J[], const double val[], MM_typecode matcode) {
     FILE *f;
     int i;
     
@@ -941,7 +941,7 @@ namespace gmm {
       }
     }
     mm_write_mtx_crd(filename, mat_nrows(A), mat_ncols(A),
-		     nz, &I[0], &J[0], (double *)A.pr, t);
+		     nz, &I[0], &J[0], (const double *)A.pr, t);
   }
 
 

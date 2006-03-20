@@ -1827,13 +1827,18 @@ namespace getfem
     for (unsigned k = 0; k < 7; ++k) {
       for (unsigned i = 0; i < 3; ++i) {
 	base_[k*3+i] = bgeot::read_base_poly(2, s);
-	if (k == 6) { pt[0] = pt[1] = 0.5; if (i) pt[i-1] = 0.0; }
-	else { pt[0] = pt[1] = 0.0; if (k/2) pt[k/2-1] = 1.0; }
-	if (k & 1) 
-	  add_node(second_derivative_dof(2, (i) ? 1 : 0, (i == 2) ? 1 : 0), pt);
+	if (k == 6) {
+	  pt[0] = pt[1] = 0.5; if (i) pt[i-1] = 0.0;
+	  add_node(normal_derivative_dof(2), pt);
+	}
 	else {
-	  if (i) add_node(derivative_dof(2, i-1), pt);
-	  else add_node(lagrange_dof(2), pt);
+	  pt[0] = pt[1] = 0.0; if (k/2) pt[k/2-1] = 1.0;
+	  if (k & 1) 
+	    add_node(second_derivative_dof(2, (i) ? 1:0, (i == 2) ? 1:0), pt);
+	  else {
+	    if (i) add_node(derivative_dof(2, i-1), pt);
+	    else add_node(lagrange_dof(2), pt);
+	  }
 	}
       }
     }

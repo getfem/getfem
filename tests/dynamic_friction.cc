@@ -488,16 +488,10 @@ void friction_problem::solve(void) {
   }
   
   std::ofstream output1((datafilename + "_result.dat").c_str());   
-//   std::ofstream output2((datafilename + "_energy.txt").c_str());
-//   std::ofstream output3((datafilename + "_velocity.txt").c_str());
-//   std::ofstream output4((datafilename + "_normalstress.txt").c_str());
-//   std::ofstream output5((datafilename + "_displacement.txt").c_str());
-  
-  std::ofstream Houari1("iter", std::ios::out);   
-  std::ofstream Houari2("nrj", std::ios::out);
-  std::ofstream Houari3("vts", std::ios::out);
-  std::ofstream Houari4("FN0", std::ios::out);
-  std::ofstream Houari5("depl", std::ios::out);
+  std::ofstream output2((datafilename + "_energy.txt").c_str());
+  std::ofstream output3((datafilename + "_velocity.txt").c_str());
+  std::ofstream output4((datafilename + "_normalstress.txt").c_str());
+  std::ofstream output5((datafilename + "_displacement.txt").c_str());
   
   while (t <= T) {
 
@@ -739,17 +733,10 @@ void friction_problem::solve(void) {
 	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
 
 	output1 << t/dt << J1 << "\n";
-// 	output2 << J1 << "\n";
-// 	output3 << gmm::vect_norm2(VV1) << "\n";
-// 	output4 << -LLN1[ref_dof+N-1] << "\n";
-// 	output5 <<  gmm::vect_norm2(UU1) << "\n";
-
-	Houari1 << t/dt << "\n";
-	Houari2 << J1   << "\n";
-	Houari3 << VV1[N-1] << "\n";
-	Houari4 << -LLN1[ref_dof+N-1]   << "\n";
-	Houari5 << UU1[N-1] << "\n";
-      
+ 	output2 << J1 << "\n";
+ 	output3 << VV1[N-1] << "\n";
+ 	output4 << -LLN1[ref_dof+N-1] << "\n";
+ 	output5 << UU1[N-1] << "\n";
 
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");

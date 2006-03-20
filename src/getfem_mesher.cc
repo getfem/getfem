@@ -310,7 +310,6 @@ namespace getfem {
 
     template<class TAB> scalar_type simplex_quality(const TAB &ppts) {
       base_matrix G(N,N), GW(N, N);
-      base_matrix::iterator it = G.begin();
       for (size_type i=0; i < N; ++i) {
 	base_node P = ppts[i+1] - ppts[0];
 	std::copy(P.const_begin(), P.const_begin()+N, G.begin()+i*N);

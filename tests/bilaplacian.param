@@ -35,7 +35,7 @@ if (N == 2 && ~QUAD)
   if 0   % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';   % not conformal -> problem
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-  elseif 0  % argyris element
+  elseif 1  % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
   else
