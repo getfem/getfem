@@ -17,9 +17,7 @@ Changement à prendre en considérations pour la 2.0 :
 
 4  - Faire marcher tout les tests de contrib/  (avec des tests effectifs)
 
-5  - Tester les éléments Hdiv et Hrot.
+5  - Plus de doc sur l'export des données (slices ...).
 
-6  - Plus de doc sur l'export des données (slices ...).
-
-7  - Mettre une référence à qhull dans la doc et qlq mots sur comment le faire
+6  - Mettre une référence à qhull dans la doc et qlq mots sur comment le faire
      prendre en compte par Getfem.

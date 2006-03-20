@@ -1469,12 +1469,12 @@ namespace getfem
     }
     gmm::copy(gmm::identity_matrix(), M);
     // gradient at point 0
-    gmm::mult(G, pgp->grad(0), K);
-    if (N == 1) M(2, 2) = K(0,0);
-    else  M(2, 2) = gmm::mat_euclidean_norm(K)
+    gmm::mult(G, pgp->grad(1), K);
+    if (N == 1) M(1, 1) = K(0,0);
+    else  M(1, 1) = gmm::mat_euclidean_norm(K)
       * gmm::sgn(gmm::vect_sp(gmm::mat_col(K, 0), r));
     // gradient at point 1
-    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(1), K);
+    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(3), K);
     if (N == 1) M(3, 3) = K(0,0);
     else M(3, 3) = gmm::mat_euclidean_norm(K)
       * gmm::sgn(gmm::vect_sp(gmm::mat_row(K, 0), r));
@@ -1496,11 +1496,11 @@ namespace getfem
     pt[0] = 0.0; add_node(lagrange_dof(1), pt);
     read_poly(base_[0], 1, "(1 - x)^2*(2*x + 1)");
 
-    pt[0] = 1.0; add_node(lagrange_dof(1), pt);
-    read_poly(base_[1], 1, "x*x*(3  - 2*x)");
-
     pt[0] = 0.0; add_node(derivative_dof(1, 0), pt, dal::bit_vector());
-    read_poly(base_[2], 1, "x*(x - 1)*(x - 1)");
+    read_poly(base_[1], 1, "x*(x - 1)*(x - 1)");
+
+    pt[0] = 1.0; add_node(lagrange_dof(1), pt);
+    read_poly(base_[2], 1, "x*x*(3  - 2*x)");
 
     pt[0] = 1.0; add_node(derivative_dof(1, 0), pt, dal::bit_vector());
     read_poly(base_[3], 1, "x*x*(x - 1)");
@@ -1532,9 +1532,8 @@ namespace getfem
     
     gmm::mult(G, pgp->grad(0), K);
     for (size_type i = 0; i < 3; ++i) {
-      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
-      M(4+i, 4+i) = K(0,0); M(4+i, 7+i) = K(0,1);
-      M(7+i, 4+i) = K(1,0); M(7+i, 7+i) = K(1,1);
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i*3), K);
+      gmm::copy(K, gmm::sub_matrix(M, gmm::sub_interval(1+3*i, 2)));
     }
   }
 
@@ -1550,33 +1549,34 @@ namespace getfem
     add_node(lagrange_dof(2), base_node(0.0, 0.0));
     read_poly(base_[0], 2, "(1 - x - y)*(1 + x + y - 2*x*x - 11*x*y - 2*y*y)");
 
-    add_node(lagrange_dof(2), base_node(1.0, 0.0));
-    read_poly(base_[1], 2, "-2*x*x*x + 7*x*x*y + 7*x*y*y + 3*x*x - 7*x*y");
-
-    add_node(lagrange_dof(2), base_node(0.0, 1.0));
-    read_poly(base_[2], 2, "7*x*x*y + 7*x*y*y - 2*y*y*y + 3*y*y - 7*x*y");
-
-    add_node(lagrange_dof(2), base_node(1.0/3.0, 1.0/3.0));
-    read_poly(base_[3], 2, "27*x*y*(1 - x - y)");
-
     add_node(derivative_dof(2, 0), base_node(0.0, 0.0));
-    read_poly(base_[4], 2, "x*(1 - x - y)*(1 - x - 2*y)");
-
-    add_node(derivative_dof(2, 0), base_node(1.0, 0.0));
-    read_poly(base_[5], 2, "x*x*x - 2*x*x*y - 2*x*y*y - x*x + 2*x*y");
-
-    add_node(derivative_dof(2, 0), base_node(0.0, 1.0));
-    read_poly(base_[6], 2, "x*y*(x + 2*y - 1)");
+    read_poly(base_[1], 2, "x*(1 - x - y)*(1 - x - 2*y)");
 
     add_node(derivative_dof(2, 1), base_node(0.0, 0.0));
-    read_poly(base_[7], 2, "y*(1 - x - y)*(1 - 2*x - y)");
+    read_poly(base_[2], 2, "y*(1 - x - y)*(1 - 2*x - y)");
+
+    add_node(lagrange_dof(2), base_node(1.0, 0.0));
+    read_poly(base_[3], 2, "-2*x*x*x + 7*x*x*y + 7*x*y*y + 3*x*x - 7*x*y");
+
+    add_node(derivative_dof(2, 0), base_node(1.0, 0.0));
+    read_poly(base_[4], 2, "x*x*x - 2*x*x*y - 2*x*y*y - x*x + 2*x*y");
 
     add_node(derivative_dof(2, 1), base_node(1.0, 0.0));
-    read_poly(base_[8], 2, "x*y*(2*x + y - 1)");
+    read_poly(base_[5], 2, "x*y*(2*x + y - 1)");
+
+    add_node(lagrange_dof(2), base_node(0.0, 1.0));
+    read_poly(base_[6], 2, "7*x*x*y + 7*x*y*y - 2*y*y*y + 3*y*y - 7*x*y");
+ 
+    add_node(derivative_dof(2, 0), base_node(0.0, 1.0));
+    read_poly(base_[7], 2, "x*y*(x + 2*y - 1)");
 
     add_node(derivative_dof(2, 1), base_node(0.0, 1.0));
-    read_poly(base_[9], 2, "y*y*y - 2*y*y*x - 2*y*x*x - y*y + 2*x*y");
-  }
+    read_poly(base_[8], 2, "y*y*y - 2*y*y*x - 2*y*x*x - y*y + 2*x*y");
+ 
+    add_node(lagrange_dof(2), base_node(1.0/3.0, 1.0/3.0));
+    read_poly(base_[9], 2, "27*x*y*(1 - x - y)");
+
+ }
 
   /* ******************************************************************** */
   /*	Hermite element on the tetrahedron                                */
@@ -1604,10 +1604,8 @@ namespace getfem
     
     gmm::mult(G, pgp->grad(0), K);
     for (size_type k = 0; k < 4; ++k) {
-      if (k && !(pgt->is_linear())) gmm::mult(G, pgp->grad(k), K);
-      for (int i = 0; i < 3; ++i)
-	for (int j = 0; j < 3; ++j)
-	  M(8+i*4+k, 8+j*4+k) = K(i, j);
+      if (k && !(pgt->is_linear())) gmm::mult(G, pgp->grad(k*4), K);
+      gmm::copy(K, gmm::sub_matrix(M, gmm::sub_interval(1+4*k, 3)));
     }
   }
 
@@ -1623,43 +1621,44 @@ namespace getfem
       ( "1 - 3*x*x - 13*x*y - 13*x*z - 3*y*y - 13*y*z - 3*z*z + 2*x*x*x"
 	"+ 13*x*x*y + 13*x*x*z + 13*x*y*y + 33*x*y*z + 13*x*z*z + 2*y*y*y"
 	"+ 13*y*y*z + 13*y*z*z + 2*z*z*z;"
+	"x - 2*x*x - 3*x*y - 3*x*z + x*x*x + 3*x*x*y + 3*x*x*z + 2*x*y*y"
+	"+ 4*x*y*z + 2*x*z*z;"
+	"y - 3*x*y - 2*y*y - 3*y*z + 2*x*x*y + 3*x*y*y + 4*x*y*z"
+	"+ y*y*y + 3*y*y*z + 2*y*z*z;"
+	"z - 3*x*z - 3*y*z - 2*z*z + 2*x*x*z + 4*x*y*z + 3*x*z*z"
+	"+ 2*y*y*z + 3*y*z*z + z*z*z;"
 	"3*x*x - 7*x*y - 7*x*z - 2*x*x*x + 7*x*x*y + 7*x*x*z + 7*x*y*y"
 	"+ 7*x*y*z + 7*x*z*z;"
+	"-x*x + 2*x*y + 2*x*z + x*x*x - 2*x*x*y - 2*x*x*z - 2*x*y*y" 
+	"- 2*x*y*z - 2*x*z*z;"
+	"-x*y + 2*x*x*y + x*y*y;"
+	"-x*z + 2*x*x*z + x*z*z;"
 	"-7*x*y + 3*y*y - 7*y*z + 7*x*x*y + 7*x*y*y + 7*x*y*z - 2*y*y*y"
 	"+ 7*y*y*z + 7*y*z*z;"
+	"-x*y + x*x*y + 2*x*y*y;"
+	"2*x*y - y*y + 2*y*z - 2*x*x*y - 2*x*y*y - 2*x*y*z + y*y*y"
+	"- 2*y*y*z - 2*y*z*z;"
+	"-y*z + 2*y*y*z + y*z*z;"
 	"-7*x*z - 7*y*z + 3*z*z + 7*x*x*z + 7*x*y*z + 7*x*z*z + 7*y*y*z"
 	"+ 7*y*z*z - 2*z*z*z;"
+	"-x*z + x*x*z + 2*x*z*z;"
+	"-y*z + y*y*z + 2*y*z*z;"
+	"2*x*z + 2*y*z - z*z - 2*x*x*z - 2*x*y*z - 2*x*z*z - 2*y*y*z"
+	"- 2*y*z*z + z*z*z;"
 	"27*x*y*z;"
 	"27*y*z - 27*x*y*z - 27*y*y*z - 27*y*z*z;"
 	"27*x*z - 27*x*x*z - 27*x*y*z - 27*x*z*z;"
-	"27*x*y - 27*x*x*y - 27*x*y*y - 27*x*y*z;"
-	"x - 2*x*x - 3*x*y - 3*x*z + x*x*x + 3*x*x*y + 3*x*x*z + 2*x*y*y"
-	"+ 4*x*y*z + 2*x*z*z;"
-	"-x*x + 2*x*y + 2*x*z + x*x*x - 2*x*x*y - 2*x*x*z - 2*x*y*y" 
-	"- 2*x*y*z - 2*x*z*z;"
-	"-x*y + x*x*y + 2*x*y*y;"
-	"-x*z + x*x*z + 2*x*z*z;"
-	"y - 3*x*y - 2*y*y - 3*y*z + 2*x*x*y + 3*x*y*y + 4*x*y*z"
-	"+ y*y*y + 3*y*y*z + 2*y*z*z;"
-	"-x*y + 2*x*x*y + x*y*y;"
-	"2*x*y - y*y + 2*y*z - 2*x*x*y - 2*x*y*y - 2*x*y*z + y*y*y"
-	"- 2*y*y*z - 2*y*z*z;"
-	"-y*z + y*y*z + 2*y*z*z;"
-	"z - 3*x*z - 3*y*z - 2*z*z + 2*x*x*z + 4*x*y*z + 3*x*z*z"
-	"+ 2*y*y*z + 3*y*z*z + z*z*z;"
-	"-x*z + 2*x*x*z + x*z*z;"
-	"-y*z + 2*y*y*z + y*z*z;"
-	"2*x*z + 2*y*z - z*z - 2*x*x*z - 2*x*y*z - 2*x*z*z - 2*y*y*z"
-	"- 2*y*z*z + z*z*z;");
+	"27*x*y - 27*x*x*y - 27*x*y*y - 27*x*y*z;");
     
     base_node pt(3);
     for (unsigned k = 0; k < 5; ++k) {
       for (unsigned i = 0; i < 4; ++i) {
 	base_[k*4+i] = bgeot::read_base_poly(3, s);
-	pt[0] = pt[1] = pt[2] = ((k == 1) ? 1.0/3.0 : 0.0);
-	if (i) pt[i-1] = ((k == 1) ? 0.0 : 1.0);
-	if (k <= 1)  add_node(lagrange_dof(3), pt);
-	else add_node(derivative_dof(3, k-2), pt);
+	pt[0] = pt[1] = pt[2] = ((k == 4) ? 1.0/3.0 : 0.0);
+	if (k == 4 && i) pt[i-1] = 0.0;
+	if (k < 4 && k) pt[k-1] = 1.0;
+	if (k == 4 || i == 0)  add_node(lagrange_dof(3), pt);
+	else add_node(derivative_dof(3, i-1), pt);
       }
     }
   }

@@ -196,9 +196,8 @@ namespace getfem {
     
     gmm::mult(G, pgp->grad(0), K);
     for (size_type i = 0; i < 3; ++i) {
-      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);      
-      M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
-      M(6+i, 3+i) = K(1,0); M(6+i, 6+i) = K(1,1);
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(3*i), K);  
+      gmm::copy(K, gmm::sub_matrix(M, gmm::sub_interval(1+3*i, 2)));
     }
 
     // take the normal derivatives into account
@@ -254,27 +253,27 @@ namespace getfem {
    ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y + 21*x*y^2 + 7*y^3;"
     "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
     "1 - 3*x^2 - 3*y^2 + 2*x^3 - 3*x*y^2 + 3*y^3;"
-    "1 - 9/2*x - 9/2*y + 9*x^2 + 15*x*y + 6*y^2 - 9/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 5/2*y^3;"
-    "3*x^2 - 5/2*x^3 + 3/2*x^2*y;"
-    "3*x^2 - 2*x^3 + 3/2*x*y^2 - 1/2*y^3;"
-    "1 - 9/2*x - 9/2*y + 6*x^2 + 15*x*y + 9*y^2 - 5/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 9/2*y^3;"
-    "3*y^2 - 1/2*x^3 + 3/2*x^2*y - 2*y^3;"
-    "3*y^2 + 3/2*x*y^2 - 5/2*y^3;"
     "-1/6 + 5/2*x - 9/2*x^2 - 4*x*y + 1/2*y^2 + 13/6*x^3 + 4*x^2*y + 3/2*x*y^2 - 1/3*y^3;"
     "x - 1/2*x^2 - 3*x*y - 7/6*x^3 + 2*x^2*y + 2*x*y^2;"
     "x - 2*x^2 - 3/2*y^2 + x^3 - 1/2*x*y^2 + 7/3*y^3;"
-    "-1/6 + 3/4*x + 3/4*y - 2*x^2 - 5/2*x*y - y^2 + 17/12*x^3 + 7/4*x^2*y + 7/4*x*y^2 + 5/12*y^3;"
-    "-x^2 + 13/12*x^3 - 1/4*x^2*y;"
-    "-x^2 + x^3 - 1/4*x*y^2 + 1/12*y^3;"
-    "2/3 - 11/4*x - 13/4*y + 7/2*x^2 + 19/2*x*y + 9/2*y^2 - 17/12*x^3 - 25/4*x^2*y - 23/4*x*y^2 - 23/12*y^3;"
-    "1/2*x^2 - x*y - 13/12*x^3 + 7/4*x^2*y + 2*x*y^2;"
-    "-1/2*y^2 + 9/4*x*y^2 + 5/12*y^3;"
     "-1/6 + 5/2*y + 1/2*x^2 - 4*x*y - 9/2*y^2 - 1/3*x^3 + 3/2*x^2*y + 4*x*y^2 + 13/6*y^3;"
     "y - 3/2*x^2 - 2*y^2 + 7/3*x^3 - 1/2*x^2*y + y^3;"
     "y - 3*x*y - 1/2*y^2 + 2*x^2*y + 2*x*y^2 - 7/6*y^3;"
+    "1 - 9/2*x - 9/2*y + 9*x^2 + 15*x*y + 6*y^2 - 9/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 5/2*y^3;"
+    "3*x^2 - 5/2*x^3 + 3/2*x^2*y;"
+    "3*x^2 - 2*x^3 + 3/2*x*y^2 - 1/2*y^3;"
+    "-1/6 + 3/4*x + 3/4*y - 2*x^2 - 5/2*x*y - y^2 + 17/12*x^3 + 7/4*x^2*y + 7/4*x*y^2 + 5/12*y^3;"
+    "-x^2 + 13/12*x^3 - 1/4*x^2*y;"
+    "-x^2 + x^3 - 1/4*x*y^2 + 1/12*y^3;"
     "2/3 - 13/4*x - 11/4*y + 9/2*x^2 + 19/2*x*y + 7/2*y^2 - 23/12*x^3 - 23/4*x^2*y - 25/4*x*y^2 - 17/12*y^3;"
     "-1/2*x^2 + 5/12*x^3 + 9/4*x^2*y;"
     "-x*y + 1/2*y^2 + 2*x^2*y + 7/4*x*y^2 - 13/12*y^3;"
+    "1 - 9/2*x - 9/2*y + 6*x^2 + 15*x*y + 9*y^2 - 5/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 9/2*y^3;"
+    "3*y^2 - 1/2*x^3 + 3/2*x^2*y - 2*y^3;"
+    "3*y^2 + 3/2*x*y^2 - 5/2*y^3;"
+    "2/3 - 11/4*x - 13/4*y + 7/2*x^2 + 19/2*x*y + 9/2*y^2 - 17/12*x^3 - 25/4*x^2*y - 23/4*x*y^2 - 23/12*y^3;"
+    "1/2*x^2 - x*y - 13/12*x^3 + 7/4*x^2*y + 2*x*y^2;"
+    "-1/2*y^2 + 9/4*x*y^2 + 5/12*y^3;"
     "-1/6 + 3/4*x + 3/4*y - x^2 - 5/2*x*y - 2*y^2 + 5/12*x^3 + 7/4*x^2*y + 7/4*x*y^2 + 17/12*y^3;"
     "-y^2 + 1/12*x^3 - 1/4*x^2*y + y^3;"
     "-y^2 - 1/4*x*y^2 + 13/12*y^3;"
@@ -301,19 +300,15 @@ namespace getfem {
     base()=std::vector<bgeot::polynomial_composite>
       (12, bgeot::polynomial_composite(mp, false));
     for (size_type k = 0; k < 12; ++k)
-      for (size_type ic = 0; ic < 3; ++ic) {
+      for (size_type ic = 0; ic < 3; ++ic)
 	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
-	// cout << "poly read : " << base()[k].poly_of_subelt(ic) << endl;
-      }
 
-    pdof_description pdof = lagrange_dof(2);
     for (size_type i = 0; i < 3; ++i) {
-      if (i == 1) pdof = derivative_dof(2, 0);
-      if (i == 2) pdof = derivative_dof(2, 1);
-
-      add_node(pdof, base_node(0.0, 0.0));
-      add_node(pdof, base_node(1.0, 0.0));
-      add_node(pdof, base_node(0.0, 1.0));
+      base_node pt(0.0, 0.0);
+      if (i) pt[i-1] = 1.0;
+      add_node(lagrange_dof(2), pt);
+      add_node(derivative_dof(2, 0), pt);
+      add_node(derivative_dof(2, 1), pt);
     }
 
     add_node(normal_derivative_dof(2), base_node(0.5, 0.5));
@@ -366,9 +361,8 @@ namespace getfem {
     
     gmm::mult(G, pgp->grad(0), K);
     for (size_type i = 0; i < 3; ++i) {
-      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(i), K);
-      M(3+i, 3+i) = K(0,0); M(3+i, 6+i) = K(0,1);
-      M(6+i, 3+i) = K(1,0); M(6+i, 6+i) = K(1,1);
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(3*i), K);
+      gmm::copy(K, gmm::sub_matrix(M, gmm::sub_interval(1+3*i, 2)));
     }
   }
 
@@ -388,27 +382,27 @@ namespace getfem {
    ("-1 + 9*x + 9*y - 15*x^2 - 30*x*y - 15*y^2 + 7*x^3 + 21*x^2*y + 21*x*y^2 + 7*y^3;"
     "1 - 3*x^2 - 3*y^2 + 3*x^3 - 3*x^2*y + 2*y^3;"
     "1 - 3*x^2 - 3*y^2 + 2*x^3 - 3*x*y^2 + 3*y^3;"
-    "1 - 9/2*x - 9/2*y + 9*x^2 + 15*x*y + 6*y^2 - 9/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 5/2*y^3;"
-    "3*x^2 - 5/2*x^3 + 3/2*x^2*y;"
-    "3*x^2 - 2*x^3 + 3/2*x*y^2 - 1/2*y^3;"
-    "1 - 9/2*x - 9/2*y + 6*x^2 + 15*x*y + 9*y^2 - 5/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 9/2*y^3;"
-    "3*y^2 - 1/2*x^3 + 3/2*x^2*y - 2*y^3;"
-    "3*y^2 + 3/2*x*y^2 - 5/2*y^3;"
     "-1/2 + 7/2*x + 2*y - 11/2*x^2 - 8*x*y - 5/2*y^2 + 5/2*x^3 + 6*x^2*y + 9/2*x*y^2 + y^3;"
     "x - 3/2*x^2 - x*y + 1/2*x^3;"
     "x - 2*x^2 - 1/2*y^2 + x^3 - 3/2*x*y^2 + y^3;"
-    "-1/2 + 9/4*x + 9/4*y - 4*x^2 - 15/2*x*y - 3*y^2 + 9/4*x^3 + 21/4*x^2*y + 21/4*x*y^2 + 5/4*y^3;"
-    "-x^2 + 5/4*x^3 - 3/4*x^2*y;"
-    "-x^2 + x^3 - 3/4*x*y^2 + 1/4*y^3;"
-    "-1/4*x + 1/4*y + 1/2*x^2 + 1/2*x*y - 1/2*y^2 - 1/4*x^3 - 3/4*x^2*y + 3/4*x*y^2 + 1/4*y^3;"
-    "-1/2*x^2 + x*y + 3/4*x^3 - 3/4*x^2*y;"
-    "1/2*y^2 + 3/4*x*y^2 - 3/4*y^3;"
     "-1/2 + 2*x + 7/2*y - 5/2*x^2 - 8*x*y - 11/2*y^2 + x^3 + 9/2*x^2*y + 6*x*y^2 + 5/2*y^3;"
     "y - 1/2*x^2 - 2*y^2 + x^3 - 3/2*x^2*y + y^3;"
     "y - x*y - 3/2*y^2 + 1/2*y^3;"
+    "1 - 9/2*x - 9/2*y + 9*x^2 + 15*x*y + 6*y^2 - 9/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 5/2*y^3;"
+    "3*x^2 - 5/2*x^3 + 3/2*x^2*y;"
+    "3*x^2 - 2*x^3 + 3/2*x*y^2 - 1/2*y^3;"
+    "-1/2 + 9/4*x + 9/4*y - 4*x^2 - 15/2*x*y - 3*y^2 + 9/4*x^3 + 21/4*x^2*y + 21/4*x*y^2 + 5/4*y^3;"
+    "-x^2 + 5/4*x^3 - 3/4*x^2*y;"
+    "-x^2 + x^3 - 3/4*x*y^2 + 1/4*y^3;"
     "1/4*x - 1/4*y - 1/2*x^2 + 1/2*x*y + 1/2*y^2 + 1/4*x^3 + 3/4*x^2*y - 3/4*x*y^2 - 1/4*y^3;"
     "1/2*x^2 - 3/4*x^3 + 3/4*x^2*y;"
     "x*y - 1/2*y^2 - 3/4*x*y^2 + 3/4*y^3;"
+    "1 - 9/2*x - 9/2*y + 6*x^2 + 15*x*y + 9*y^2 - 5/2*x^3 - 21/2*x^2*y - 21/2*x*y^2 - 9/2*y^3;"
+    "3*y^2 - 1/2*x^3 + 3/2*x^2*y - 2*y^3;"
+    "3*y^2 + 3/2*x*y^2 - 5/2*y^3;"
+    "-1/4*x + 1/4*y + 1/2*x^2 + 1/2*x*y - 1/2*y^2 - 1/4*x^3 - 3/4*x^2*y + 3/4*x*y^2 + 1/4*y^3;"
+    "-1/2*x^2 + x*y + 3/4*x^3 - 3/4*x^2*y;"
+    "1/2*y^2 + 3/4*x*y^2 - 3/4*y^3;"
     "-1/2 + 9/4*x + 9/4*y - 3*x^2 - 15/2*x*y - 4*y^2 + 5/4*x^3 + 21/4*x^2*y + 21/4*x*y^2 + 9/4*y^3;"
     "-y^2 + 1/4*x^3 - 3/4*x^2*y + y^3;"
     "-y^2 - 3/4*x*y^2 + 5/4*y^3;");
@@ -429,14 +423,12 @@ namespace getfem {
       for (size_type ic = 0; ic < 3; ++ic)
 	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
 
-    pdof_description pdof = lagrange_dof(2);
     for (size_type i = 0; i < 3; ++i) {
-      if (i == 1) pdof = derivative_dof(2, 0);
-      if (i == 2) pdof = derivative_dof(2, 1);
-
-      add_node(pdof, base_node(0.0, 0.0));
-      add_node(pdof, base_node(1.0, 0.0));
-      add_node(pdof, base_node(0.0, 1.0));
+      base_node pt(0.0, 0.0);
+      if (i) pt[i-1] = 1.0;
+      add_node(lagrange_dof(2), pt);
+      add_node(derivative_dof(2, 0), pt);
+      add_node(derivative_dof(2, 1), pt);
     }
   }
 

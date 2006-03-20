@@ -509,8 +509,8 @@ $K$ & $1$ & $K+1$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 
 Base functions on the reference element
 \begin{eqnarray*}
- \hat{\varphi}_0 = (2x+1)(x-1)^2,&&\ \ \ \hat{\varphi}_1 = x^2(3-2x), \\
- \hat{\varphi}_2 = x(x-1)^2,&& \ \ \ \hat{\varphi}_3 = x^2(x - 1). 
+ \hat{\varphi}_0 = (2x+1)(x-1)^2,&&\ \ \ \hat{\varphi}_1 = x(x-1)^2, \\
+ \hat{\varphi}_2 = x^2(3-2x),&& \ \ \ \hat{\varphi}_3 = x^2(x - 1). 
 \end{eqnarray*}
 
 This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation. The matrix $\tilde{M}$ is not equal to identity but is still diagonal.
@@ -644,19 +644,18 @@ $1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 
 Base functions on the reference element:
 $$
-  \begin{array}{ll}
- \hat{\varphi}_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\hat{\varphi}_0(0,0) = 1), \\
- \hat{\varphi}_1 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\hat{\varphi}_1(1,0) = 1), \\
- \hat{\varphi}_2 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\hat{\varphi}_2(0,1) = 1), \\
- \hat{\varphi}_3 = 27xy(1-x-y), & (\hat{\varphi}_3(1/3,1/3) = 1), \\
- \hat{\varphi}_4 = x(1-x-y)(1-x-2y), & (\partial_x\hat{\varphi}_4(0,0) = 1), \\
- \hat{\varphi}_5 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\hat{\varphi}_5(1,0) = 1), \\
- \hat{\varphi}_6 = xy(x+2y-1), & (\partial_x\hat{\varphi}_6(0,1) = 1), \\
- \hat{\varphi}_7 = y(1-x-y)(1-2x-y), & (\partial_y\hat{\varphi}_7(0,0) = 1), \\
- \hat{\varphi}_8 = xy(y+2x-1), & (\partial_y\hat{\varphi}_8(1,0) = 1), \\
- \hat{\varphi}_9 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\hat{\varphi}_9(0,1) = 1), \\
-  
-  \end{array}
+\begin{array}{ll}
+  \hat{\varphi}_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\hat{\varphi}_0(0,0) = 1), \\
+  \hat{\varphi}_1 = x(1-x-y)(1-x-2y), & (\partial_x\hat{\varphi}_1(0,0) = 1), \\
+  \hat{\varphi}_2 = y(1-x-y)(1-2x-y), & (\partial_y\hat{\varphi}_2(0,0) = 1), \\
+  \hat{\varphi}_3 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\hat{\varphi}_3(1,0) = 1), \\
+  \hat{\varphi}_4 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\hat{\varphi}_4(1,0) = 1), \\
+  \hat{\varphi}_5 = xy(y+2x-1), & (\partial_y\hat{\varphi}_5(1,0) = 1), \\
+  \hat{\varphi}_6 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\hat{\varphi}_6(0,1) = 1), \\
+  \hat{\varphi}_7 = xy(x+2y-1), & (\partial_x\hat{\varphi}_7(0,1) = 1), \\
+  \hat{\varphi}_8 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\hat{\varphi}_8(0,1) = 1), \\
+  \hat{\varphi}_9 = 27xy(1-x-y), & (\hat{\varphi}_9(1/3,1/3) = 1), \\
+\end{array}
 $$
 This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\hat{\varphi}_4$ and $\hat{\varphi}_7$ are used to match the gradient on the corresponding vertex. Idem for the two couples ($\hat{\varphi}_5$, $\hat{\varphi}_8$) and  ($\hat{\varphi}_6$, $\hat{\varphi}_9$) for the two other vertices.  
 
@@ -856,25 +855,26 @@ $$
   \begin{array}{ll}
 \hat{\varphi}_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
  ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\hat{\varphi}_0(0,0,0) = 1),\\
-\hat{\varphi}_{1}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\hat{\varphi}_0(1,0,0) = 1),\\
-\hat{\varphi}_{2}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\hat{\varphi}_0(0,1,0) = 1),\\
-\hat{\varphi}_{3}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\hat{\varphi}_0(0,0,1) = 1),\\
-\hat{\varphi}_{4}(x,y) = 27xyz, & (\hat{\varphi}_0(1/3,1/3,1/3) = 1),\\
-\hat{\varphi}_{5}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\hat{\varphi}_0(0,1/3,1/3) = 1),\\
-\hat{\varphi}_{6}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\hat{\varphi}_0(1/3,0,1/3) = 1),\\
-\hat{\varphi}_{7}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\hat{\varphi}_0(1/3,1/3,0) = 1),\\
-\hat{\varphi}_{8}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\hat{\partial_x\varphi}_0(0,0,0) = 1),\\
-\hat{\varphi}_{9}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\hat{\partial_x\varphi}_0(1,0,0) = 1),\\
-\hat{\varphi}_{10}(x,y) = -xy + x^2y + 2xy^2, & (\hat{\partial_x\varphi}_0(0,1,0) = 1),\\
-\hat{\varphi}_{11}(x,y) = -xz + x^2z + 2xz^2, & (\hat{\partial_x\varphi}_0(0,0,1) = 1),\\
-\hat{\varphi}_{12}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\hat{\partial_y\varphi}_0(0,0,0) = 1),\\
-\hat{\varphi}_{13}(x,y) = -xy + 2x^2y + xy^2, & (\hat{\partial_y\varphi}_0(1,0,0) = 1),\\
-\hat{\varphi}_{14}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\hat{\partial_y\varphi}_0(0,1,0) = 1),\\
-\hat{\varphi}_{15}(x,y) = -yz + y^2z + 2yz^2, & (\hat{\partial_y\varphi}_0(0,0,1) = 1),\\
-\hat{\varphi}_{16}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\hat{\partial_z\varphi}_0(0,0,0) = 1),\\
-\hat{\varphi}_{17}(x,y) = -xz + 2x^2z + xz^2, & (\hat{\partial_z\varphi}_0(1,0,0) = 1),\\
-\hat{\varphi}_{18}(x,y) = -yz + 2y^2z + yz^2, & (\hat{\partial_z\varphi}_0(0,1,0) = 1),\\
-\hat{\varphi}_{19}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\hat{\partial_z\varphi}_0(0,0,1) = 1),\\
+\hat{\varphi}_{1}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\hat{\partial_x\varphi}_1(0,0,0) = 1),\\
+\hat{\varphi}_{2}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\hat{\partial_y\varphi}_2(0,0,0) = 1),\\
+\hat{\varphi}_{3}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\hat{\partial_z\varphi}_3(0,0,0) = 1),\\
+\hat{\varphi}_{4}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\hat{\varphi}_4(1,0,0) = 1),\\
+\hat{\varphi}_{5}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\hat{\partial_x\varphi}_5(1,0,0) = 1),\\
+\hat{\varphi}_{6}(x,y) = -xy + 2x^2y + xy^2, & (\hat{\partial_y\varphi}_6(1,0,0) = 1),\\
+\hat{\varphi}_{7}(x,y) = -xz + 2x^2z + xz^2, & (\hat{\partial_z\varphi}_7(1,0,0) = 1),\\
+\hat{\varphi}_{8}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\hat{\varphi}_8(0,1,0) = 1),\\
+\hat{\varphi}_{9}(x,y) = -xy + x^2y + 2xy^2, & (\hat{\partial_x\varphi}_9(0,1,0) = 1),\\
+\hat{\varphi}_{10}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\hat{\partial_y\varphi}_{10}(0,1,0) = 1),\\
+\hat{\varphi}_{11}(x,y) = -yz + 2y^2z + yz^2, & (\hat{\partial_z\varphi}_{11}(0,1,0) = 1),\\
+\hat{\varphi}_{12}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\hat{\varphi}_{12}(0,0,1) = 1),\\
+\hat{\varphi}_{13}(x,y) = -xz + x^2z + 2xz^2, & (\hat{\partial_x\varphi}_{13}(0,0,1) = 1),\\
+\hat{\varphi}_{14}(x,y) = -yz + y^2z + 2yz^2, & (\hat{\partial_y\varphi}_{14}(0,0,1) = 1),\\
+\hat{\varphi}_{15}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\hat{\partial_z\varphi}_{15}(0,0,1) = 1),\\
+\hat{\varphi}_{16}(x,y) = 27xyz, & (\hat{\varphi}_{16}(1/3,1/3,1/3) = 1),\\
+\hat{\varphi}_{17}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\hat{\varphi}_{17}(0,1/3,1/3) = 1),\\
+\hat{\varphi}_{18}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\hat{\varphi}_{18}(1/3,0,1/3) = 1),\\
+\hat{\varphi}_{19}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\hat{\varphi}_{19}(1/3,1/3,0) = 1),\\
+
   \end{array}
 $$
 This element is not \mbox{$\tau$-equivalent} (The matrix $\tilde{M}$ is not equal to identity). On the real element linear combinaisons of $\hat{\varphi}_8$, $\hat{\varphi}_{12}$ and $\hat{\varphi}_{16}$ are used to match the gradient on the corresponding vertex. Idem on the orther vertices. 

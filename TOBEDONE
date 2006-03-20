@@ -43,3 +43,5 @@ faire la doc pour vtk_export -- permettre le 'merge' des points de slices
 - Revoir la description des dofs. Cette reflexion pourrait être faite en
   parallele avec le calcul de  produit tensoriel d'éléments non-polynomiaux
   et non tau-équivalents.
+
+- Renuméroter les dof d'Argyris en les ordonant par noeuds.
