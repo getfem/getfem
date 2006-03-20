@@ -1,14 +1,14 @@
 noinst_HEADERS=\
-	slu_Cnames.h  slu_dcomplex.h  slu_scomplex.h  slu_util.h  \
-	supermatrix.h colamd.h    slu_cdefs.h   slu_ddefs.h  \
-	slu_sdefs.h     slu_zdefs.h
+	slu_Cnames.h slu_dcomplex.h slu_scomplex.h slu_util.h\
+	supermatrix.h colamd.h slu_cdefs.h slu_ddefs.h\
+	slu_sdefs.h slu_zdefs.h
 
 
 
 if USEBLASLITE
 BLASLITEFILES=BLAS.c BLAS_f2c.h f2c_lite.c
 else
-BLASLITEFILES=""
+BLASLITEFILES=
 endif
 
 SRC = ccolumn_bmod.c \

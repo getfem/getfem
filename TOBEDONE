@@ -45,3 +45,5 @@ faire la doc pour vtk_export -- permettre le 'merge' des points de slices
   et non tau-équivalents.
 
 - Renuméroter les dof d'Argyris en les ordonant par noeuds.
+
+- Interfacer http://www.computational.unibas.ch/software/spai/ ?
