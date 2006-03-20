@@ -13,8 +13,10 @@ T = 500;        % Final time
 
 NOISY = 1;
 
-OPTION = 1; % 0 = Stokes avec schéma de splitting 1
-	    % 1 = Navier Stokes avec schéma de splitting 1
+
+OPTION = 1; % 0 = Stokes avec schema de splitting 1
+	    % 1 = Navier Stokes avec schema de splitting 1
+
 	    % 2 = Navier Stokes with energy conserving midpoint scheme
 	    % 3 = Navier Stokes with prediction- correction scheme
 
@@ -24,8 +26,8 @@ PROBLEM = 3  % 1 = Reference solution for Stokes
 
 
 if (N == 2 && ~QUAD)
-  MESHNAME = 'toto.mesh'; % name of the mesh file
- %MESHNAME = 'gmsh:navier_stokes_cylindre.msh'; % name of the mesh file
+  MESHNAME = 'navier_stokes_cylindre.mesh'; % name of the mesh file
+ %MESHNAME = 'navier_stokes_cylindre.mesh'; % name of the mesh file
  %MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
   FEM_TYPE = 'FEM_PK(2,1)';  % PK method
   FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
