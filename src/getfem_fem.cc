@@ -1714,14 +1714,14 @@ namespace getfem
 
     gmm::mult(G, pgp->grad(0), K); // gradient at point (0, 0)
     for (unsigned k = 0; k < 3; ++k) {
-      if (k && !(pgt->is_linear())) gmm::mult(G, pgp->grad(k), K);
-      M(3+k, 3+k) = K(0,0); M(3+k, 6+k) = K(0,1);
-      M(6+k, 3+k) = K(1,0); M(6+k, 6+k) = K(1,1);
+      if (k && !(pgt->is_linear())) gmm::mult(G, pgp->grad(6*k), K);
+      M(1+6*k, 1+6*k) = K(0,0); M(1+6*k, 2+6*k) = K(0,1);
+      M(2+6*k, 1+6*k) = K(1,0); M(2+6*k, 2+6*k) = K(1,1);
       if (!(pgt->is_linear())) {
 	base_matrix XX[2], H(2,4), B(2,2), X(2,2);
 	XX[0] = XX[1] = base_matrix(2,2);
 	gmm::copy(gmm::transposed(K), B); gmm::lu_inverse(B);
-	gmm::mult(G, pgp->hessian(k), H);
+	gmm::mult(G, pgp->hessian(6*k), H);
 	for (unsigned j = 0; j < 2; ++j) {
 	  XX[j](0,0) = B(0, j)*H(0, 0) + B(1, j)*H(1, 0);
 	  XX[j](0,1) = XX[j](1,0) = B(0, j)*H(0, 1) + B(1, j)*H(1, 1);
@@ -1730,14 +1730,14 @@ namespace getfem
 	for (unsigned j = 0; j < 2; ++j) {
 	  gmm::copy(gmm::scaled(XX[0], K(j,0)), X);
 	  gmm::add(gmm::scaled(XX[1], K(j,1)), X);
-	  M(3+3*j+k, 9+k) = X(0,0); M(3+3*j+k, 12+k) = X(1, 0);
-	  M(3+3*j+k, 15+k) = X(1, 1);
+	  M(1+j+6*k, 3+6*k) = X(0,0); M(1+j+6*k, 4+6*k) = X(1, 0);
+	  M(1+j+6*k, 5+6*k) = X(1, 1);
 	}
       }
       scalar_type a = K(0,0), b = K(0,1), c = K(1,0), d = K(1,1);
-      M(9+k, 9+k) = a*a;     M(9+k, 12+k) = a*b;       M(9+k,  15+k) = b*b;
-      M(12+k,9+k) = 2.0*a*c; M(12+k,12+k) = b*c + a*d; M(12+k, 15+k) = 2.0*b*d;
-      M(15+k,9+k) = c*c;     M(15+k,12+k) = c*d;       M(15+k, 15+k) = d*d; 
+      M(3+6*k, 3+6*k) = a*a;     M(3+6*k, 4+6*k) = a*b;       M(3+6*k, 5+6*k) = b*b;
+      M(4+6*k, 3+6*k) = 2.0*a*c; M(4+6*k, 4+6*k) = b*c + a*d; M(4+6*k, 5+6*k) = 2.0*b*d;
+      M(5+6*k, 3+6*k) = c*c;     M(5+6*k, 4+6*k) = c*d;       M(5+6*k, 5+6*k) = d*d; 
     }
     
     static base_matrix W(3, 21);
@@ -1787,34 +1787,34 @@ namespace getfem
     std::stringstream s
       ("1 - 10*x^3 - 10*y^3 + 15*x^4 - 30*x*x*y*y"
        "+ 15*y*y*y*y - 6*x^5 + 30*x*x*x*y*y + 30*x*x*y*y*y - 6*y^5;"
-       "10*x^3 - 15*x^4 + 15*x*x*y*y + 6*x^5 - 15*x*x*x*y*y - 15*x*x*y*y*y;"
-       "10*y*y*y + 15*x*x*y*y - 15*y^4 - 15*x*x*x*y*y - 15*x*x*y*y*y + 6*y^5;"
        "x - 6*x*x*x - 11*x*y*y + 8*x*x*x*x + 10*x*x*y*y"
        "+ 18*x*y*y*y - 3*x*x*x*x*x + x*x*x*y*y - 10*x*x*y*y*y - 8*x*y*y*y*y;"
-       "-4*x*x*x + 7*x*x*x*x - 3.5*x*x*y*y - 3*x*x*x*x*x + 3.5*x*x*x*y*y"
-       "+ 3.5*x*x*y*y*y;"
-       "-5*x*y*y + 18.5*x*x*y*y + 14*x*y*y*y - 13.5*x*x*x*y*y"
-       "- 18.5*x*x*y*y*y - 8*x*y*y*y*y;"
        "y - 11*x*x*y - 6*y*y*y + 18*x*x*x*y + 10*x*x*y*y"
        "+ 8*y*y*y*y - 8*x*x*x*x*y - 10*x*x*x*y*y + x*x*y*y*y - 3*y*y*y*y*y;"
-       "-5*x*x*y + 14*x*x*x*y + 18.5*x*x*y*y - 8*x*x*x*x*y"
-       "- 18.5*x*x*x*y*y - 13.5*x*x*y*y*y;"
-       "-4*y*y*y - 3.5*x*x*y*y + 7*y*y*y*y + 3.5*x*x*x*y*y"
-       "+ 3.5*x*x*y*y*y - 3*y*y*y*y*y;"
        "0.5*x*x - 1.5*x*x*x + 1.5*x*x*x*x - 1.5*x*x*y*y"
        "- 0.5*x*x*x*x*x + 1.5*x*x*x*y*y + x*x*y*y*y;"
-       "0.5*x*x*x - x*x*x*x + 0.25*x*x*y*y + 0.5*x*x*x*x*x"
-       "- 0.25*x*x*x*y*y - 0.25*x*x*y*y*y;"
-       "1.25*x*x*y*y - 1.25*x*x*x*y*y - 0.75*x*x*y*y*y;"
        "x*y - 4*x*x*y - 4*x*y*y + 5*x*x*x*y + 10*x*x*y*y"
        "+ 5*x*y*y*y - 2*x*x*x*x*y - 6*x*x*x*y*y - 6*x*x*y*y*y - 2*x*y*y*y*y;"
-       "x*x*y - 3*x*x*x*y - 3.5*x*x*y*y + 2*x*x*x*x*y + 3.5*x*x*x*y*y"
-       "+ 2.5*x*x*y*y*y;"
-       "x*y*y - 3.5*x*x*y*y - 3*x*y*y*y + 2.5*x*x*x*y*y + 3.5*x*x*y*y*y"
-       "+ 2*x*y*y*y*y;"
        "0.5*y*y - 1.5*y*y*y - 1.5*x*x*y*y + 1.5*y*y*y*y + x*x*x*y*y"
        "+ 1.5*x*x*y*y*y - 0.5*y*y*y*y*y;"
+       "10*x^3 - 15*x^4 + 15*x*x*y*y + 6*x^5 - 15*x*x*x*y*y - 15*x*x*y*y*y;"
+       "-4*x*x*x + 7*x*x*x*x - 3.5*x*x*y*y - 3*x*x*x*x*x + 3.5*x*x*x*y*y"
+       "+ 3.5*x*x*y*y*y;"
+       "-5*x*x*y + 14*x*x*x*y + 18.5*x*x*y*y - 8*x*x*x*x*y"
+       "- 18.5*x*x*x*y*y - 13.5*x*x*y*y*y;"
+       "0.5*x*x*x - x*x*x*x + 0.25*x*x*y*y + 0.5*x*x*x*x*x"
+       "- 0.25*x*x*x*y*y - 0.25*x*x*y*y*y;"
+       "x*x*y - 3*x*x*x*y - 3.5*x*x*y*y + 2*x*x*x*x*y + 3.5*x*x*x*y*y"
+       "+ 2.5*x*x*y*y*y;"
        "1.25*x*x*y*y - 0.75*x*x*x*y*y - 1.25*x*x*y*y*y;"
+       "10*y*y*y + 15*x*x*y*y - 15*y^4 - 15*x*x*x*y*y - 15*x*x*y*y*y + 6*y^5;"
+       "-5*x*y*y + 18.5*x*x*y*y + 14*x*y*y*y - 13.5*x*x*x*y*y"
+       "- 18.5*x*x*y*y*y - 8*x*y*y*y*y;"
+       "-4*y*y*y - 3.5*x*x*y*y + 7*y*y*y*y + 3.5*x*x*x*y*y"
+       "+ 3.5*x*x*y*y*y - 3*y*y*y*y*y;"
+       "1.25*x*x*y*y - 1.25*x*x*x*y*y - 0.75*x*x*y*y*y;"
+       "x*y*y - 3.5*x*x*y*y - 3*x*y*y*y + 2.5*x*x*x*y*y + 3.5*x*x*y*y*y"
+       "+ 2*x*y*y*y*y;"
        "0.5*y*y*y + 0.25*x*x*y*y - y*y*y*y - 0.25*x*x*x*y*y"
        "- 0.25*x*x*y*y*y + 0.5*y*y*y*y*y;"
        "sqrt(2) * (-8*x*x*y*y + 8*x*x*x*y*y + 8*x*x*y*y*y);"
@@ -1827,16 +1827,13 @@ namespace getfem
     for (unsigned k = 0; k < 7; ++k) {
       for (unsigned i = 0; i < 3; ++i) {
 	base_[k*3+i] = bgeot::read_base_poly(2, s);
-	pt[0] = pt[1] = ((k == 6) ? 0.5 : 0.0);
-	if (i) pt[i-1] = ((k == 6) ? 0.0 : 1.0);
-	switch (k) {
-	case 0 : add_node(lagrange_dof(2), pt); break;
-	case 1 : add_node(derivative_dof(2, 0), pt); break;
-	case 2 : add_node(derivative_dof(2, 1), pt); break;
-	case 3 : add_node(second_derivative_dof(2, 0, 0), pt); break;
-	case 4 : add_node(second_derivative_dof(2, 1, 0), pt); break;
-	case 5 : add_node(second_derivative_dof(2, 1, 1), pt); break;
-	case 6 : add_node(normal_derivative_dof(2), pt); break;
+	if (k == 6) { pt[0] = pt[1] = 0.5; if (i) pt[i-1] = 0.0; }
+	else { pt[0] = pt[1] = 0.0; if (k/2) pt[k/2-1] = 1.0; }
+	if (k & 1) 
+	  add_node(second_derivative_dof(2, (i) ? 1 : 0, (i == 2) ? 1 : 0), pt);
+	else {
+	  if (i) add_node(derivative_dof(2, i-1), pt);
+	  else add_node(lagrange_dof(2), pt);
 	}
       }
     }
