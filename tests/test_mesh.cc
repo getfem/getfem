@@ -81,13 +81,13 @@ void test_refinable(unsigned dim, unsigned degree) {
   cout << "\nrefine mesh in dimension " << dim << " and degree "
        << degree << endl;
 
-  m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref0");
+  m.Bank_refine(b); // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref0");
   m.Bank_refine(m.convex_index());
-  m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
+  m.Bank_refine(b); // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
   m.Bank_refine(m.convex_index());
-  m.Bank_refine(b); if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
+  m.Bank_refine(b); // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
   //  m.Bank_refine(m.convex_index());
-  if (m.dim() < 4) export_mesh(m, " test_mesh_bank_ref2");
+  // if (m.dim() < 4) export_mesh(m, " test_mesh_bank_ref2");
   test_conforming(m);
 }
 

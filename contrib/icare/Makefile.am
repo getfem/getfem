@@ -17,7 +17,8 @@ TESTS = $(top_srcdir)/contrib/icare/icare.pl
 
 EXTRA_DIST = \
 	icare.pl                  \
-	icare.param
-
+	icare.param		\
+	navier_stokes_cylinder1.mesh \
+	navier_stokes_cylinder2.mesh
 
 TESTS_ENVIRONMENT = perl

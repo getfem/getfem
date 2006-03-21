@@ -1114,7 +1114,7 @@ Composition of the integration node definition :
 
 The file format is inspired from \cite{EncyclopCubature}.
 
-\section{Level-sets, Xfem, fictitious domains}
+\section{Level-sets, Xfem, fictious domains}
 
 \gf offers a certain number of functionalities concerning level-sets, support for Xfem and fictitious domain methods and discontinuous field across a level-set.\\[0.5cm]
 
@@ -1287,22 +1287,166 @@ where \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and describes the
 
 \section{Export and view a solution}
 
-If you have installed the Matlab interface, you can simply use \cpp{mesh_fem::write_to_file} and save the solution as a plain text file, and then, load them into Matlab. See the getfem-matlab interface documentation for more details.
+If you have installed the Matlab interface, you can simply use \cpp{mesh_fem::write_to_file} and save the solution as a plain text file, and then, load them into Matlab. For example, supposing you have a solution \cpp{U} on a \cpp{mesh_fem mf},
+\begin{cppcode}
+  std::fstream f("solution.U",std::ios::out);
+  for (unsigned i=0; i < gmm::vect_size(U); ++i) 
+    f << U[i] << "\verb+\+n";
 
-Two other file formats are supported for export: the \WEB{http://http://www.kitware.com/}{VTK file format} and the \WEB{http://www.opendx.org/}{OpenDX} file format.
+  // when the 2nd arg is true, the mesh is saved with the mesh_fem
+  mf.write_to_file("solution.mf", true); 
+\end{cppcode}
+and then, under matlab:
+\begin{cppcode}
+>> U=load('solution.U')';
+>> mf=gfMeshFem('load','solution.mf');
+>> gf_plot(mf,U,'mesh','on');
+\end{cppcode}
+
+See the getfem-matlab interface documentation for more details.
+
+
+
+Two other file formats are supported for export: the \WEB{http://http://www.kitware.com/}{VTK file format} and the \WEB{http://www.opendx.org/}{OpenDX} file format. Both can export either a \cpp{getfem::mesh} or \cpp{getfem::mesh_fem} , but also the more versatile \cpp{getfem::stored_mesh_slice}.
 
 Examples of use can be found in the examples of the tests directory. 
 
-\subsection{Mesh slices}
-Getfem++ provides a \cpp{getfem::mesh_slice} class,
-with support general slicing operations on a mesh (slicing with a
-plane, half-space, cylinder, sphere, isosurfaces, union or
-intersection of slices, etc..). A slice object may be considered as a
-P1 discontinuous \cpp{mesh_fem} with fast interpolation ability.  See
-\filename{getfem_mesh_slices.h} for more information, and the
-\filename{gf_slice.cc} file of the getfem-matlab interface for an
-example of use.
+\subsection{Producing mesh slices}
+Getfem++ provides ``slicers'' objects which are dedicated to
+generating post-treatment data from meshes and solutions. These
+slicers, defined in the file \filename{getfem_mesh_slicers.h} take a mesh
+(and sometimes a mesh_fem with a solution field) on input, and produce
+a set of simplexes after applying some operations such as
+``intersection with a plane'', ``extraction of the mesh boundary'',
+``refinement of each convex'', ``extraction of isosurfaces'', etc. The
+output of these slicers can be stored in a
+\cpp{getfem::stored_mesh_slice} object (see the file
+\filename{getfem_mesh_slice.h}. A \cpp{stored_mesh_slice} object may be
+considered as a P1 discontinuous FEM on a non-conformal mesh with fast
+interpolation ability.
 
+
+All slicer operation inherit from \cpp{getfem::slicer_action}, it is very easy to create a new slicer. 
+Example of slicers are (some of them use a \cpp{mesh_slice_cv_dof_data_base} which is just a reference to a \cpp{mesh\_fem mf} and a field \cpp{U} on this \cpp{mesh_fem}.
+\begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
+
+  \cpp{slicer_boundary(const mesh \&m, \ldots)} & extract the boundary of a mesh. \\
+
+  \cpp{slicer_apply_deformation(mesh_slice_cv_dof_data_base \&)} & apply a deformation to the mesh , the deformation field is defined on a mesh_fem. \\
+  
+  \cpp{slicer_half_space(base_node x0, base_node n, int orient)} & cut
+  the mesh with a half space (if \cpp{orient} = -1 or +1), or a plane
+  (if \cpp{orient} = 0), \cpp{x0} being a node of the plane, and
+  \cpp{n} being a normal of the plane.\\
+  
+  \cpp{slicer_sphere(base_node x0, scalar_type R, int orient)} &
+  cut with the interior (\cpp{orient}=-1), boundary (\cpp{orient}=0) or exterior (\cpp{orient}=+1) or a sphere of center \cpp{x0} and radius \cpp{R}.\\
+  
+  \cpp{slicer_cylinder(base_node x0, base_node x1, scalar_type R, int orient)} &
+  slice with the interior/boundary/exterior of a cylinder of axis \cpp{(x0,x1)} and radius \cpp{R}.\\
+    
+  \cpp{slicer_isovalues(const mesh_slice_cv_dof_data_base\& mfU, scalar_type val, int orient)} & cut with the isosurface defined by the scalar field \cpp{mfU} and \cpp{val}. Keep only simplexes where $u(x)$<\cpp{val} (\cpp{orient}=-1), $u(x)$=cpp{val} (\cpp{orient=0} or $u(x)$>\cpp{val}.\\
+
+  \cpp{slicer_mesh_with_mesh(const mesh\& m2)} & cut the convexes with the convexes of the mesh \cpp{m2}.\\
+
+  \cpp{slicer_union(const slicer_action \&sA, const slicer_action \&sB)} & merges the output of two slicer operations.\\
+
+  \cpp{slicer_intersect(slicer_action \&sA, slicer_action \&sB)} & intersect the output of two slicer operations.\\
+    
+  \cpp{slicer_complementary(slicer_action \&s)} & return the complementary of a slicer operation.\\
+  
+  \cpp{slicer_build_edges_mesh(mesh\& edges\_m)} & slicer whose side-effect is to build the mesh \cpp{edges_m} with the edges of the sliced mesh.\\
+
+  \cpp{slicer_build_mesh(mesh \&m)} & in some (rare) occasions , it might be useful to build a mesh from a slice. Note however that there is absolutely no guaranty that the mesh will be conformal (although it is often the case).\\
+
+  \cpp{slicer_build_stored_mesh_slice(stored_mesh_slice\& sl)} & record the output of the slicing operation into a \cpp{stored_mesh_slice} object. Note that it is often more convenient to use the \cpp{stored_mesh_slice::build(\ldots)} method to achieve the same result.\\
+
+  \cpp{slicer_explode(c)} & shrink or expand each convex with respect to its gravity center.\\
+\end{ctableau}
+
+In order to apply these slicers, a \cpp{getfem::mesh_slicer(mesh\&m)}
+object should be created, and the \cpp{slicer_action} are then stacked
+with \cpp{mesh_slicer::push_back_action(slicer_action\&)} and
+\cpp{mesh_slicer::push_front_action(slicer_action\&)}. The slicing
+operation is finally executed with \cpp{mesh_slicer::exec(int
+  nrefine)} (or \cpp{mesh_slicer::exec(int nrefine, const mesh_region
+  \&cvlst)} to apply the operation to a subset of the mesh, or its
+boundary etc.).
+
+The \cpp{nrefine} parameter is very important, as the ``precision'' of
+the final result will depend on it: if the data that is represented on
+the final slice is just P1 data on convexes with a linear geometric
+transformation, \cpp{nrefine = 1} is the right choice, but for P2, P3,
+non linear transformation etc, it is better to refine each convex of
+the original mesh during the slicing operation. This allows an
+accurate representation of any finite element field onto a very simple
+structure (linear segment/triangles/tetrahedrons with P1 discontinuous
+data on them) which is what most vizualisation programs (mayavi,
+opendx, matlab, etc.) expect.
+
+
+Example of use (cut the boundary of a mesh \cpp{m} with a half-space, and
+save the result into a \cpp{stored_mesh_slice}):
+\begin{cppcode}
+getfem::slicer_boundary a0(m);
+getfem::slicer_half_space a1(base_node(0,0), base_node(1, 0), -1);
+getfem::stored_mesh_slice sl;
+getfem::slicer_build_stored_mesh_slice a2(sl);
+getfem::mesh_slicer slicer(m);
+slicer.push_back_action(a1);
+slicer.push_back_action(a2);
+int nrefine = 3;
+slicer.exec(nrefine);
+\end{cppcode}
+
+In order to build a \cpp{stored_mesh_slice} object during the slicing operation, the \cpp{stored_mesh_slice::build()} method is often more convenient than using explicitely the \cpp{slicer_build_stored_mesh_slice} slicer:
+
+\begin{cppcode}
+getfem::stored_mesh_slice sl;
+sl.build(m, getfem::slicer_boundary(m),
+         getfem::slicer_half_space(base_node(0,0), base_node(1, 0), -1), 
+         nrefine);
+\end{cppcode}
+
+\subsection{Exporting mesh slices}
+
+The simplest way to use these slices is to export them to VTK or opendx. The file \filename{getfem_export.h} contains two classes: \cpp{vtk_export} and \cpp{dx_export}.
+
+\subsubsection{exporting to VTK data files}
+
+First, it is important to know the limitation of VTK data files: each file can contain only one mesh, with at most one scalar field and one vector field and one tensor field on this mesh (in that order).  VTK files can handle data on segment, triangles, quadrangles, tetrahedrons and hexahedrons. Although quadratic triangles, segments etc are said to be supported, it is just equivalent to using \cpp{nrefine=2} when building a slice. 
+
+
+For example, supposing that a \cpp{stored_mesh_slice sl} has already been built: 
+\begin{cppcode}
+// an optional the 2nd argument can be set to true to produce
+// a text file instead of a binary file
+vtk_export exp("output.vtk");
+exp.exporting(sl); // will save the geometrical structure of the slice
+exp.write_point_data(mfp, P, "pressure"); // write a scalar field
+exp.write_point_data(mfu, U, "displacement"); // write a vector field
+\end{cppcode}
+
+In this example, the fields \cpp{P} and \cpp{U} are interpolated on the slice nodes, and then written into the VTK field. The vector fields should always be written after the scalar fields (and the tensor fields should be written last). 
+
+
+
+
+\subsection{Exporting without slices}
+
+
+
+All these slicers operations 
+
+Examples:
+\begin{cppcode}
+  getfem::stored_mesh_slice sl;
+  sl.build(m, getfem::slicer_explode(0.8), 3);
+  getfem::vtk_export exp("meshquality.vtk");
+  exp.exporting(sl);
+  exp.write_mesh();
+  exp.write_mesh_quality(m);
+\end{cppcode}
 \section{Interpolation on different meshes}
 
 The file \filename{getfem\_export.h} defines the following function to interpolate a solution from a mesh and a finite element method  to another mesh and another Lagrange finite element method.\\[0.5cm]
@@ -1438,7 +1582,7 @@ This structure provides these methods:
   polynomial \cpp{mesh\_fem} of degree 0).\\ \hline
 
   \cpp{set_diagonal(V)} & can be used with matrix fields, to set only the diagonal elements (V length should be \cpp{fsize()[0]} or \cpp{fsize()[0]*mf().nb_dof()}).  \\ \hline
-\end{ctableau}\\
+\end{ctableau}
 
 
 \subsection{generic elliptic brick}

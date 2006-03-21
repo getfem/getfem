@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
     stokes_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
+    // p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
     if (p.PARAM.int_value("VTK_EXPORT")) {

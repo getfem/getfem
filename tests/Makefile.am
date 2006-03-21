@@ -45,8 +45,9 @@ CLEANFILES = \
 	helmholtz.vtk plate.mesh plate.vtk nonlinear_elastostatic.mesh \
 	nonlinear_elastostatic.mf nonlinear_elastostatic.mfd \
 	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk \
-	plasticity.mesh plasticity.U plasticity.sigmabar \
-	plasticity.meshfem plasticity.coef ii_files/* auto_gmm*
+	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk \
+	plasticity.meshfem plasticity.coef elasto_static_err.vtk \
+	ii_files/* auto_gmm* dyn*.txt
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 

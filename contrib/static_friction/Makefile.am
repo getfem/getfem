@@ -3,7 +3,7 @@
 check_PROGRAMS =                 \
 	static_friction
 
-CLEANFILES = 
+CLEANFILES = normal_stress tangential_stress
 
 static_friction_SOURCES = static_friction.cc
 
