@@ -73,7 +73,7 @@ FILE_VERSION_FILTER    =
 #---------------------------------------------------------------------------
 QUIET                  = NO
 WARNINGS               = YES
-WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_UNDOCUMENTED   = NO
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = NO
 WARN_FORMAT            = "$file:$line: $text"
@@ -81,7 +81,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = src tests/laplacian.cc tests/elastostatic.cc tests/helmholtz.cc tests/nonlinear_elastostatic.cc tests/stokes.cc contrib/icare/icare.cc
+INPUT                  = src tests/laplacian.cc tests/elastostatic.cc tests/helmholtz.cc tests/nonlinear_elastostatic.cc tests/stokes.cc tests/plasticity.cc tests/plate.cc
 FILE_PATTERNS          = *.c \
                          *.cc \
                          *.cxx \
@@ -243,9 +243,9 @@ PERL_PATH              = /usr/bin/perl
 #---------------------------------------------------------------------------
 CLASS_DIAGRAMS         = NO
 HIDE_UNDOC_RELATIONS   = YES
-HAVE_DOT               = YES
+HAVE_DOT               = NO
 CLASS_GRAPH            = YES
-COLLABORATION_GRAPH    = YES
+COLLABORATION_GRAPH    = NO
 GROUP_GRAPHS           = YES
 UML_LOOK               = NO
 TEMPLATE_RELATIONS     = NO

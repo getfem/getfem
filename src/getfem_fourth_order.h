@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-/**@file getfem_orderfourpdes.h
+/**@file getfem_fourth_order.h
    @brief assembly procedures and bricks for fourth order pdes.
 */
 #ifndef GETFEM_FOURTH_ORDER_H_

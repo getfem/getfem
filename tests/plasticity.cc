@@ -19,10 +19,11 @@
 /* *********************************************************************** */
 
 /**
- * Small deformation plasticity problem.
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+   @file plasticity.cc
+   @brief Small deformation plasticity problem.
+
+   This program is used to check that getfem++ is working. This is also 
+   a good example of use of Getfem++.
 */
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */

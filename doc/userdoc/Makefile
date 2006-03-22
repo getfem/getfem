@@ -12,6 +12,9 @@ PNGFIGS=$(PDFFIGS:.pdf=.png)
 .eps.pdf:
 	epstopdf $(@:.pdf=.eps) --outfile=$@
 
+filelinks.tex:: 
+	updatefilelinks.sh
+
 getfemuserelemf.png: getfemuserelemf.pdf
 	convert -resize 500x500 $(@:.png=.pdf) $@
 

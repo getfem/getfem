@@ -959,7 +959,7 @@ namespace getfem {
       
   @f$\alpha@f$ may be a scalar, a (symmetric define positive)
   @f$N\times N@f$ matrix field, or even a (symmetric definite
-  positive) @f$N\timesN\timesN\timesN@f tensor field (where N is
+  positive) @f$N\times N\times N\times N@f$ tensor field (where N is
   the dimension of the mesh).
       
   If @c mf_u is a vector mesh_fem (qdim > 1), then the assembly is

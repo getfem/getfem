@@ -39,7 +39,8 @@
 
 namespace bgeot {
 
-
+  /** @internal mesh structure + points
+   */
   class basic_mesh :  public bgeot::mesh_structure {
 
   public :
