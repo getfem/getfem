@@ -6,7 +6,7 @@ getfemlist_segment_Pk.eps : getfemlist_segment_Pk.fig
 getfemlist_extrans.eps : getfemlist_extrans.fig
 	fig2eps getfemlist_extrans.fig
 
-getfemelem.dvi : getfemelem.tex
+getfemelem.dvi : getfemelem.tex getfemelemint.tex getfemeleminta.tex getfemelemfem.tex
 	latex getfemelem.tex; latex getfemelem.tex
 
 getfemelem.ps : getfemelem.dvi

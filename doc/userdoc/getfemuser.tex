@@ -94,11 +94,15 @@
 
 \T \newcommand{\cpp}[1]{\texttt{#1}}
 \T \newcommand{\filename}[1]{\texttt{#1}}
+
+%doxfilename and doxref : used by doxygenlinks.tex
 \T \newcommand{\doxfilename}[2]{\texttt{#1}}
+\T \newcommand{\doxref}[2]{\cpp{#1}}
 
 \W \newcommand{\cpp}[1]{\xmlattributes*{tt}{class="inlinecppcode"}\texttt{#1}}
 \W \newcommand{\filename}[1]{\xmlattributes*{tt}{style="color:red"}\texttt{#1}}
-\W \newcommand{\doxfilename}[2]{\texttt{\WEB{../getfem_reference/#2.html}{#1}}}
+\W \newcommand{\doxfilename}[2]{\texttt{\WEB{../getfem_reference/#2.html}{#1}}\xspace}
+\W \newcommand{\doxref}[2]{\WEB{../getfem_reference/#2.html}{#1}\xspace}
 
 \T \newenvironment{ctableau}[2]{\begin{center}\begin{supertabular}{#1}}{\end{supertabular}\end{center}}
 \W \newenvironment{ctableau}[2]{\xmlattributes*{table}{border=1 align="center"}\begin{tabular}{#2}}{\end{tabular}}
@@ -106,9 +110,10 @@
 \newcommand{\WEBB}[1]{\WEB{#1}{#1}}
 
 
-% macros for linking to the doxygen file doc of getfem
-% (i.e. \getfemmeshh etc.)
-\input{filelinks.tex}
+% macros for linking filenames and classnames to the doxygen doc of getfem
+% (i.e. \getfemmeshh \dalbitvector etc.) 
+% edit updatedoxlinks.py to add new types/files
+\input{doxygenlinks.tex}
 
 
 
@@ -217,13 +222,14 @@ If you want to use MUMPS as the default sparse direct solver instead of SuperLU,
 
 \section{Build a mesh}
 \index{mesh}
-\gf  has it own structure to store meshes defined in the files \bgeotmeshstructureh and \getfemmeshh. The main structure is defined in \getfemmeshh by the object\\[0.5cm]
-\cpp{getfem::mesh }\\[0.5cm]
+\gf  has it own structure to store meshes defined in the files \bgeotmeshstructureh and \getfemmeshh. The main structure is defined in \getfemmeshh by the object
+\getfemmesh.\\[0.5cm]
+
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
 
 There is no meshing procedures in \gf  to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format (some procedures are in \getfemimporth to load meshes from some public domain mesh generators).\\[0.5cm]
 
-The structure \cpp{getfem::mesh} may contains also a description about a region of the mesh, such as a boundary or a set of elements. This is handled via a container of convexes and convex faces, \cpp{getfem::mesh\_region}.
+The structure \getfemmesh may contains also a description about a region of the mesh, such as a boundary or a set of elements. This is handled via a container of convexes and convex faces, \getfemmeshregion.
 
 
 \subsection{Add an element to a mesh}
@@ -240,7 +246,7 @@ where \cpp{pt} is of type \cpp{bgeot::base\_node}. The index \cpp{i} is the inde
 The most basic function to add a new element to a mesh is\\[0.5cm]
 \index{GETFEM!mymesh.add_convex(pgt, it)}
 \cpp{j = mymesh.add\_convex(pgt, it);}\\[0.5cm]
-This is a template function, with \cpp{pgt} of type \cpp{bgeot::pgeometric\_trans} and \cpp{it} is an iterator on a list of indexes of already existing points. For instance, if one needs to add a new triangle in a 3D mesh, one needs to define first an array with the indexes of the three points:\\[0.5cm]
+This is a template function, with \cpp{pgt} of type \cpp{bgeot::pgeometric\_trans} (basically a pointer to an instance of type \bgeotgeometrictrans) and \cpp{it} is an iterator on a list of indexes of already existing points. For instance, if one needs to add a new triangle in a 3D mesh, one needs to define first an array with the indexes of the three points:\\[0.5cm]
 \begin{cppcode}
   std::vector<bgeot::size\_type> ind(3);
   ind[0] = mymesh.add\_point(bgeot::base\_node(0.0, 0.0, 0.0);
@@ -346,7 +352,7 @@ For instance, to build a mesh with tetrahedrons for a unit cube with $10×10×10$ 
 Remark: \cpp{base\_node} and \cpp{base\_small\_vector} are almost identical, they are both ``small'' vector classes (they cannot store more than 16 elements), used to describe geometrical points, and geometrical vectors. Their memory footprint is lower than a \cpp{std::vector}.
 
 \subsection{Mesh regions}
-A mesh object can contain many \cpp{getfem::mesh\_region} objects (declaration in \getfemmeshregionh). These objects are containers for a set of convexes and convex faces. They are used to define boundaries, or a partition of the mesh for parallel solvers, etc.
+A mesh object can contain many \getfemmeshregion objects (declaration in \getfemmeshregionh). These objects are containers for a set of convexes and convex faces. They are used to define boundaries, or a partition of the mesh for parallel solvers, etc.
 \begin{cppcode}
   mymesh.region(30).add(3);   // add convex 3 into region 30
   mymesh.region(30).add(4,3); // add face 3 of convex 4 into region 30
@@ -374,7 +380,7 @@ The list is not exhaustive.
   
   \cpp{mymesh.structure\_of\_convex(i)} & gives the description of the
   structure of element of index \cpp{i}. The function return a
-  \cpp{bgeot::pconvex\_structure}. \\ \hline
+  \bgeotpconvexstructure. \\ \hline
   
   \cpp{mymesh.structure\_of\_convex(i)\hspace{5em}->nb_faces()} & number
   of faces of element of index \cpp{i}. \\ \hline
@@ -399,7 +405,7 @@ The list is not exhaustive.
   vertex. \\ \hline
   
   \cpp{mymesh.structure\_of\_convex(i)\hspace{5em}->face\_structure(f)}
-  & gives the structure (a \cpp{bgeot::pconvex\_structure}) of local
+  & gives the structure (a \bgeotpconvexstructure) of local
   index \cpp{f} of element of index \cpp{i}.\\ \hline
   
   \cpp{mymesh.ind\_points\_of\_convex(i)} & gives a container with the
@@ -435,7 +441,7 @@ The list is not exhaustive.
   \cpp{mymesh.optimize\_structure()} & compact the structure (renumbers points and convexes such that there is no hole in their numbering). \\ \hline
   
   \cpp{mymesh.trans\_of\_convex(i)} & return the geometric transformation of the
-  element of index \cpp{i} (in a \cpp{bgeot::pgeometric\_trans}).
+  element of index \cpp{i} (in a \bgeotpgeometrictrans).
   See \cite{BASCOMP} for more details about geometric transformations.  \\ \hline
   
   \cpp{mymesh.normal\_of\_face\_of\_convex(ic, f, pt)} & gives a
@@ -454,7 +460,7 @@ The list is not exhaustive.
   \cpp{mymesh.convex\_radius\_estimate(ic)} & gives an estimate of the
   radius of element \cpp{ic}. \\ \hline 
   
-  \cpp{mymesh.region(irg)} & return a \cpp{getfem::mesh\_region}. 
+  \cpp{mymesh.region(irg)} & return a \getfemmeshregion. 
   The region is stored in the mesh, and can contain a set of convex
   numbers and or convex faces. \\ \hline
 
@@ -469,10 +475,10 @@ The methods of the convexes/convex faces container \cpp{getfem::mesh\_region} ar
   \cpp{is\_in(ic)}, \cpp{is\_in(ic,f)} & return true if the convex (or convex face) is in the region.\\ \hline
   \cpp{is\_only\_faces()} & return true if the region does not contain any convex.\\ \hline
   \cpp{is\_only\_convexes()} & return true if the region does not contain any convex face.\\ \hline
-  \cpp{index()} & return a \cpp{dal::bit\_vector} containing the list of convexes which are stored (or whose faces are stored) in the region.\\ \hline
+  \cpp{index()} & return a \cpp{dal::bit\_vector} containing the list of convexes which are stored (or whose faces are stored) in the region.\\\hline
 \end{ctableau}
 
-Iteration over a \cpp{getfem::mesh\_region} should be done with \cpp{getfem::mr\_visitor}:
+Iteration over a \getfemmeshregion should be done with \getfemmrvisitor:
 \begin{cppcode}
   getfem::mesh\_region &rg = mymesh.region(2);
   for (getfem::mr\_visitor i(rg); !i.finished(); ++i) \{
@@ -482,7 +488,7 @@ Iteration over a \cpp{getfem::mesh\_region} should be done with \cpp{getfem::mr\
 \end{cppcode}
 
 \subsection{Using dal::bit_vector}
-The object \cpp{dal::bit_vector} (declared in \dalbitvectorh) is a structure heavily used in \gf.
+The object \dalbitvector (declared in \dalbitvectorh) is a structure heavily used in \gf.
 It is very close to \cpp{std::bitset} and \cpp{std::vector<bool>} but
 with additional functionalities to represent a set of non negative
 integers and iterate other them. 
@@ -498,7 +504,7 @@ To iterate on a
 \cpp{dal::bit\_vector}, it is possible to use iterators as usual, but,
 most of the time, as this object represents a set of integer, one just
 wants to iterate on the integers included into the set. The simplest
-way to do that is to use the pseudo-iterator \cpp{dal::bv\_visitor}.
+way to do that is to use the pseudo-iterator \dalbvvisitor.
 
 For instance, here is the code to iterate on
 the points of a mesh and print it to the standard output
@@ -520,7 +526,7 @@ The numeration of faces on usual elements is given in figure~\ref{fig:elemf}.
 
 Note that, while the convexes and the points are globaly numbered in a \cpp{getfem::mesh} object, there is no global numbering of the faces, so the only way to refer to a given face, is to give the convex number, and the local face number in the convex.
 
-\subsection{Save, load and draw meshes}
+\subsection{Save and load meshes}
 
 \subsubsection{ From getfem file format}
 
@@ -599,17 +605,21 @@ In that string, all the parameters are optional except GT.
 
 \section{Selecting finite element methods}
 \index{GETFEM!getfem::mesh\_fem}
-The description of a finite element method on a whole mesh is done thanks to the structure \cpp{getfem::mesh\_fem}, defined in the file \getfemmeshfemh. Basically, this structure describes the finite element method on each element of the mesh. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows\\[0.5cm]
-\cpp{getfem::mesh\_fem mef(mymesh); }\\[0.5cm]
+The description of a finite element method on a whole mesh is done thanks to the structure \getfemmeshfem, defined in the file \getfemmeshfemh. Basically, this structure describes the finite element method on each element of the mesh. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows
+\begin{cppcode}
+  getfem::mesh\_fem mf(mymesh);
+\end{cppcode}
 where \cpp{mymesh} is an already existing mesh. The structure will be linked to this mesh and will react when modifications will be done on it. \\[0.5cm]
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every \cpp{getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
-To select a particular finite element method on a given element, one can use \\[0.5cm]
-\index{GETFEM!mef.set\_finite\_element(i, ppf)}
-\cpp{mef.set\_finite\_element(i, ppf); }\\[0.5cm]
-where \cpp{i} is the index of the element and \cpp{ppf} is the descriptor of the finite element method. Alternative forms of this member function are:
+To select a particular finite element method on a given element, one can use
+\index{GETFEM!mf.set\_finite\_element(i, pf)}
+\begin{cppcode}
+  mf.set\_finite\_element(i, pf);
+\end{cppcode}
+where \cpp{i} is the index of the element and \cpp{pf} is the descriptor (of type \getfempfem, basically a pointer to an object which inherits from \getfemvirtualfem) of the finite element method. Alternative forms of this member function are:
 \begin{cppcode}
   void mesh\_fem::set\_finite\_element(const dal::bit\_vector &cvs, 
-    getfem::pfem ppf);
+                                    getfem::pfem pf);
   void mesh\_fem::set\_finite\_element(getfem::pfem pf);
 \end{cppcode}
 which set the finite elements for either the convexes listed in the \cpp{bit\_vector cvs}, or all the convexes of the mesh.
@@ -618,14 +628,14 @@ The list of all available descriptors of finite element methods is in the file \
 Descriptors for finite element methods and integration methods are available thanks to the following function\\[0.5cm]
 \index{GETFEM!getfem::fem\_descriptor("name")}\index{GETFEM!getfem::pfem}
 \begin{cppcode}
-  getfem::pfem ppf = getfem::fem\_descriptor("name of method");
+  getfem::pfem pf = getfem::fem\_descriptor("name of method");
 \end{cppcode}
 where \cpp{"name of method"} is to be chosen among the existing methods.
 A name of a method can be retrieved thanks to the following functions\\[0.5cm]
 \begin{cppcode}
-  std::string femname = getfem::name\_of\_fem(ppf);
+  std::string femname = getfem::name\_of\_fem(pf);
 \end{cppcode}
-A non exhautive list (see \cite{FEMLIST} for exhaustive lists) of finite element methods is given by
+A non exhautive list (see \cite{FEMLIST} or \getfemfemh for exhaustive lists) of finite element methods is given by
 \input{../kernel/getfemelemfem.tex}
 
 An alternative way to obtain a Lagrange polynomial fem suitable for a given geometric transformation is to use
@@ -638,8 +648,9 @@ An alternative way to obtain a Lagrange polynomial fem suitable for a given geom
 The \cpp{mesh\_fem} can call directly these functions via:\index{GETFEM!getfem::set_classical\_finite\_element}\index{GETFEM!getfem::set\_classical\_discontinuous\_finite\_element}
 \begin{cppcode}
   void mesh\_fem::set\_classical\_finite\_element(const dal::bit\_vector &cvs, 
-    dim\_type fem\_degree);
-  void mesh\_fem::set\_classical\_discontinuous\_finite\_element(const dal::bit\_vector &cvs, dim\_type fem\_degree);
+                                              dim\_type fem\_degree);
+  void mesh\_fem::set\_classical\_discontinuous\_finite\_element
+         (const dal::bit\_vector &cvs, dim\_type fem\_degree);
   void mesh\_fem::set\_classical\_finite\_element(dim\_type fem\_degree);
   void mesh\_fem::set\_classical\_discontinuous\_finite\_element(dim\_type fem\_degree);                           
 \end{cppcode}
@@ -647,16 +658,17 @@ The \cpp{mesh\_fem} can call directly these functions via:\index{GETFEM!getfem::
 \subsection{Examples}
 For instance if one needs to have a description of a $P_1$ finite element method on a triangle, the way to set it is
 \begin{cppcode}
- mef.set\_finite\_element(i, getfem::fem\_descriptor("FEM\_PK(2, 1)"));
+ mf.set\_finite\_element(i, getfem::fem\_descriptor("FEM\_PK(2, 1)"));
 \end{cppcode}
-where \cpp{i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, passing to \cpp{mef.set\_finite\_element} a \cpp{dal::bit\_vector} instead of a single index. For instance
+where \cpp{i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, passing to \cpp{mf.set\_finite\_element} a \cpp{dal::bit\_vector} instead of a single index. For instance
 \begin{cppcode}
- mef.set\_finite\_element(mymesh.convex\_index(), getfem::fem\_descriptor("FEM\_PK(2, 1)"));
+ mf.set\_finite\_element(mymesh.convex\_index(), 
+                         getfem::fem\_descriptor("FEM\_PK(2, 1)"));
 \end{cppcode}
 selects the method on all the elements of the mesh.\\[0.5cm]
 IMPORTANT: If the finite element represents an unknown for a vectorial
 problem (such as the displacement for linear elasticity), one should
-use \cpp{mef.set\_qdim(Q)} to set the target dimension (see
+use \cpp{mf.set\_qdim(Q)} to set the target dimension (see
 \cite{BASCOMP} for the definition of the target dimension $Q$).\\[0.5cm]
 If the target dimension $Q$ is set to a value different of $1$, the
 scalar FEMs (such as $P_k$ fems etc.) are automatically
@@ -664,10 +676,10 @@ scalar FEMs (such as $P_k$ fems etc.) are automatically
 times, from the \cpp{mesh\_fem} object point of vue. To sum it up,
 \begin{itemize}
 \item if the fem of the $ith$ element is intrinsically a vector FEM,\\
- \cpp{mef.get\_qdim() == mef.fem\_of\_element(i)->target\_dim()} 
-\\ and\\ \cpp{mef.nb\_dof\_of\_element(i) == mef.fem\_of\_element(i).nb\_dof()}.
+ \cpp{mf.get\_qdim() == mf.fem\_of\_element(i)->target\_dim()} 
+\\ and\\ \cpp{mf.nb\_dof\_of\_element(i) == mf.fem\_of\_element(i).nb\_dof()}.
 \item if the fem has a \cpp{target\_dim} equal to $1$, \\
-\cpp{mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
+\cpp{mf.nb\_dof\_of\_element(i) == mf.get\_qdim()*mf.fem\_of\_element(i).nb\_dof()}.
 \end{itemize}
 
 
@@ -677,31 +689,31 @@ times, from the \cpp{mesh\_fem} object point of vue. To sum it up,
 Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]
 \begin{center} \texonly{\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline}\htmlonly{\xmlattributes*{table}{border}\begin{tabular}{l|l}}
 
-  \cpp{mef.convex\_index()} & Set of indexes (a \cpp{dal::bit\_vector}) on which a finite element method is defined.  \\ \hline
+  \cpp{mf.convex\_index()} & Set of indexes (a \cpp{dal::bit\_vector}) on which a finite element method is defined.  \\ \hline
 
-  \cpp{mef.linked\_mesh()} & gives a reference to the linked mesh.  \\ \hline
+  \cpp{mf.linked\_mesh()} & gives a reference to the linked mesh.  \\ \hline
 
-  \cpp{mef.fem\_of\_element(i)} & gives a descriptor on the finite element method defined on element of index \cpp{i}.  \\ \hline
+  \cpp{mf.fem\_of\_element(i)} & gives a descriptor on the finite element method defined on element of index \cpp{i}.  \\ \hline
 
-  \cpp{mef.nb\_dof\_of\_element(i)} & gives the number of degrees of freedom on the element of index \cpp{i}.  \\ \hline
+  \cpp{mf.nb\_dof\_of\_element(i)} & gives the number of degrees of freedom on the element of index \cpp{i}.  \\ \hline
 
-  \cpp{mef.ind\_dof\_of\_element(i)} & gives a container (an array) with all the global indexes of the degrees of freedom of element of index \cpp{i}.  \\ \hline
+  \cpp{mf.ind\_dof\_of\_element(i)} & gives a container (an array) with all the global indexes of the degrees of freedom of element of index \cpp{i}.  \\ \hline
 
-  \cpp{mef.point\_of\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of local index \cpp{j} on element of index \cpp{i}.  \\ \hline
+  \cpp{mf.point\_of\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of local index \cpp{j} on element of index \cpp{i}.  \\ \hline
 
-  \cpp{mef.point\_of\_dof(j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of global index \cpp{j}.  \\ \hline
+  \cpp{mf.point\_of\_dof(j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of global index \cpp{j}.  \\ \hline
 
-  \cpp{mef.reference\_point\_of\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of local index \cpp{j} on element of index \cpp{i} in the coordinates of the reference element.  \\ \hline
+  \cpp{mf.reference\_point\_of\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of local index \cpp{j} on element of index \cpp{i} in the coordinates of the reference element.  \\ \hline
 
-  \cpp{mef.first\_convex\_of\_dof(j)} & gives the index of the first element on which the degree of freedom of global index \cpp{j} is defined.  \\ \hline
+  \cpp{mf.first\_convex\_of\_dof(j)} & gives the index of the first element on which the degree of freedom of global index \cpp{j} is defined.  \\ \hline
   
-  \cpp{mef.nb\_dof()} & gives the total number of different degrees of freedom.  \\ \hline
+  \cpp{mf.nb\_dof()} & gives the total number of different degrees of freedom.  \\ \hline
 
-  \cpp{mef.get_qdim()} & gives the target dimension \cpp{Q}.  \\ \hline
+  \cpp{mf.get_qdim()} & gives the target dimension \cpp{Q}.  \\ \hline
 
-  \cpp{mef.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
+  \cpp{mf.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
 
-  \cpp{mef.dof_on_set(i)} & Return a \cpp{dal::bit_vector} which represent the indices of dof which are in the set of convexes or the set of faces of index \cpp{i} (see the \cpp{getfem::mesh} object).  \\ \hline
+  \cpp{mf.dof_on_set(i)} & Return a \cpp{dal::bit_vector} which represent the indices of dof which are in the set of convexes or the set of faces of index \cpp{i} (see the \cpp{getfem::mesh} object).  \\ \hline
 
 \end{tabular} \end{center}
 
@@ -712,23 +724,43 @@ It is possible to use the function
 \begin{cppcode}
   const mesh_fem &getfem::classical_mesh_fem(const getfem::mesh &mymesh, dim_type K);  
 \end{cppcode}
-to get a classical polynomial \cpp{mesh_fem} of order $K$ on the given \cpp{mymesh}.
-The returned mesh_fem won't be destroyed until its linked_mesh is
-destroyed. All the \cpp{mesh_fem} built by this function are stored
-in a cache, which means that calling this function twice with
-the same arguments will return the same \cpp{mesh_fem} object. A
-consequence is that you should NEVER modify this mesh_fem!
+to get a classical polynomial \cpp{mesh_fem} of order $K$ on the given
+\cpp{mymesh}.  The returned mesh\_fem will be destroyed automatically
+when its linked_mesh is destroyed. All the \cpp{mesh_fem} built by
+this function are stored in a cache, which means that calling this
+function twice with the same arguments will return the same
+\cpp{mesh_fem} object. A consequence is that you should NEVER modify
+this mesh\_fem!
 
 \section{Selecting integration methods}
 \index{GETFEM!getfem::mesh\_im}
-The description of an integration method on a whole mesh is done thanks to the structure \cpp{getfem::mesh\_im}, defined in the file \getfemmeshimh. Basically, this structure describes the integration method on each element of the mesh. One can instantiate a \cpp{getfem::mesh\_im} object as follows\\[0.5cm]
-\cpp{getfem::mesh\_im mim(mymesh); }\\[0.5cm]
-where \cpp{mymesh} is an already existing mesh. The structure will be linked to this mesh and will react when modifications will be done on it. \\[0.5cm]
-It is possible to specify element by element the integration method, so that element of mixed types can be treated, even if the dimensions are different. \\[0.5cm]
-To select a particular integration method on a given element, one can use \\[0.5cm]
+
+The description of an integration method on a whole mesh is done
+thanks to the structure \cpp{getfem::mesh\_im}, defined in the file
+\getfemmeshimh. Basically, this structure describes the integration
+method on each element of the mesh. One can instantiate a
+\cpp{getfem::mesh\_im} object as follows\\[0.5cm]
+
+\begin{cppcode}
+ getfem::mesh\_im mim(mymesh);
+\end{cppcode}
+
+where \cpp{mymesh} is an already existing mesh. The structure will be
+linked to this mesh and will react when modifications will be done on
+it (for example when the mesh is refined, the integration method will
+be also refined).\\[0.5cm]
+
+It is possible to specify element by element the integration method,
+so that element of mixed types can be treated, even if the dimensions
+are different.\\[0.5cm]
+
+To select a particular integration method on a given element, one can
+use\\[0.5cm]
 \index{GETFEM!mim.set\_integration\_method(i, ppi)}
-\cpp{mef.set\_integration\_method(i, ppi); }\\[0.5cm]
-where \cpp{i} is the index of the element and \cpp{ppi} is the descriptor of the integration method. Alternative forms of this member function are:
+\cpp{mf.set\_integration\_method(i, ppi); }\\[0.5cm]
+where \cpp{i} is the index of the element and \cpp{ppi} is the
+descriptor of the integration method. Alternative forms of this member
+function are:
 \begin{cppcode}
   void mesh\_fem::set\_integration\_method(const dal::bit\_vector &cvs, 
     getfem::pintegration\_method ppi);
@@ -737,23 +769,24 @@ where \cpp{i} is the index of the element and \cpp{ppi} is the descriptor of the
 which set the integration method for either the convexes listed in the \cpp{bit\_vector} cvs, or all the convexes of the mesh.
 
 The list of all available descriptors of integration methods is in the file \getfemintegrationh. \\[0.5cm]
-Descriptors for integration methods are available thanks to the follofing function\\[0.5cm]
+Descriptors for integration methods are available thanks to the following function:
 \index{GETFEM!getfem::int\_method\_descriptor("name")}\index{GETFEM!getfem::pintegration_method}
 \begin{cppcode}
-  getfem::pintegration_method ppi = getfem::int\_method\_descriptor("name of method");
+  getfem::pintegration_method ppi = 
+            getfem::int\_method\_descriptor("name of method");
 \end{cppcode}
 where \cpp{"name of method"} is to be chosen among the existing methods.
-A name of a method can be retrieved thanks to the following function\\[0.5cm]
+A name of a method can be retrieved with
 \begin{cppcode}
   std::string im\_name = getfem::name\_of\_int\_method(ppi);
 \end{cppcode}
-A non exhautive list (see \cite{FEMLIST} for exhaustive lists) of integration methods is given by:\\
+A non exhautive list (see \cite{FEMLIST} or \getfemintegrationh for exhaustive lists) of integration methods is given below.
 
 Examples of exact integration methods:
 \input{../kernel/getfemelemint.tex}
 Examples of approximated integration methods:
 \input{../kernel/getfemeleminta.tex}
-~\\
+
 
 Remark: note that \texttt{IM\_QUAD(3)} is not able to integrate
 exactly the base functions of the \texttt{FEM_QK(2,3)} finite element!
@@ -765,10 +798,12 @@ integration points.
 
 An alternative way to obtain integration methods: \index{GETFEM!getfem::classical\_exact\_im(pgt)}\index{GETFEM!getfem::classical\_approx\_im(pgt,degree)}
 \begin{cppcode}
-  getfem::pintegration\_method getfem::classical\_exact\_im(bgeot::pgeometric\_trans pgt);
-  getfem::pintegration\_method getfem::classical\_approx\_im(bgeot::pgeometric\_trans pgt, dim\_type d);
+  getfem::pintegration\_method 
+    getfem::classical\_exact\_im(bgeot::pgeometric\_trans pgt);
+  getfem::pintegration\_method 
+    getfem::classical\_approx\_im(bgeot::pgeometric\_trans pgt, dim\_type d);
 \end{cppcode}
-These functions return an exact (i.e. analytical) integration method, or select an approximate integration method which is able to integrate exactly polynamials of degree <= \cpp{d} (at least) for convexes defined with the specified geometric transformation.
+These functions return an exact (i.e. analytical) integration method, or select an approximate integration method which is able to integrate exactly polynomials of degree <= \cpp{d} (at least) for convexes defined with the specified geometric transformation.
 
 \subsection{Methods of the \cpp{mesh\_im} object}
 
@@ -784,6 +819,47 @@ Once an integration method is defined on a mesh, it is possible to obtain inform
   \cpp{mim.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
 
 \end{tabular} \end{center}
+
+
+\section{Mesh refinement}
+
+Mesh refinement with the Bank et all method (see \cite{bank1983}) is available in dimension
+1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons).
+For a given object \cpp{mymesh} of type \getfemmesh, the method
+\begin{cppcode}
+  mymesh.Bank_refine(bv);
+\end{cppcode}
+refines the elements whose indices are stored in \cpp{bv} (a
+\dalbitvector object). The conformity of the mesh is kept
+thanks to additional refinement (the so called green triangles). Information about green triangles is stored on the mesh object to gather them for further refinements (see \cite{bank1983}).
+
+
+\begin{figure}[htb]
+  \begin{center}
+    \texonly{\includegraphics[width=10cm,angle=0]{getfemuserrefine.pdf}}
+    \htmlonly{\htmlimg{getfemuserrefine.png}{Example of refinement}}
+  \end{center}
+  \caption{ \it Exemple of Bank refinement in 2D.}
+  \label{fig:refine}
+\end{figure}
+
+
+Mesh refinement is most of the time coupled with an {\it a posteriori} error estimate. A basic error estimate is available in the file \getfemerrorestimateh. 
+\begin{cppcode}
+  error_estimate(mim, mf, U, err, cvlist);
+\end{cppcode}
+where \cpp{mim} is the integration method (a \getfemmeshim object),  \cpp{mf} is the finite element method on which the unknow has been computed (a \getfemmeshfem object), \cpp{U} is the vector of degrees of freedom of the unknow, \cpp{err} is a sufficiently large vector in which the error estimate is computed for each element of the mesh, and \cpp{cvlst} if a list of indices of element on which the error estimate should be computed (a \dalbitvector object).
+
+This basic error estimate is only valid for order two problems and just compute the sum of the jump in normal derivative across the elements on each edge (for two-dimensional problems) or each face (for three-dimensional problems). This means that for each face $e$ of the mesh the following quantity is computed:
+
+\texonly{$$}
+\htmlonly{$}
+\int_e |\hspace{0.01em}[\hspace{-0.12em}[ \partial_n u ]\hspace{-0.12em}]\hspace{0.01em}|^2 d \Gamma,
+\htmlonly{$}
+\texonly{$$}
+
+where $[\hspace{-0.12em}[ \partial_n u ]\hspace{-0.12em}]$ is the jump of the normal derivative.
+Then, for each element the mean value is computed with respect to its faces and stored in the vector \cpp{err}. This basic error estimate can be taken as a model for more elaborated ones.
 
 
 
@@ -804,11 +880,21 @@ For instance if you want to use the sequential version of MUMPS with double and 
   MUMPS_CFLAGS=" -I /path/to/MUMPS/include "
   MUMPS_LIBS=" ...F90libs...  -L /path/to/MUMPS/lib -ldmumps -lzmumps -lpord -L /path/to/MUMPS/libseq -lmpiseq "
 \end{cppcode}
-where \textit{...F90libs...} are the libraries of the fortran compiler used to compile MUMPS (these are highly dependant on the fortran 90 compiler used, the ./configure script should detect the options relative to the default f90 compiler on your machine and display it -- for example, with the intel \texttt{ifort} compiler, it is ``\cpp{-L/opt/icc8.0/lib -lifport -lifcoremt -limf -lm -lcxa -lunwind -lpthread}'')
+where \textit{...F90libs...} are the libraries of the fortran compiler
+used to compile MUMPS (these are highly dependant on the fortran 90
+compiler used, the ./configure script should detect the options
+relative to the default f90 compiler on your machine and display it --
+for example, with the intel \texttt{ifort} compiler, it is
+``\cpp{-L/opt/icc8.0/lib -lifport -lifcoremt -limf -lm -lcxa -lunwind
+  -lpthread}'')
 
 \section{Standard assembly procedures}
 
-Procedures defined in the file \getfemassemblingh allow to assemble stiffness matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library.
+Procedures defined in the file \getfemassemblingh allow the assembly
+of stiffness matrices, mass matrices and boundary conditions for a few
+amount of classical partial differential equation problems. All the
+procedures have vectors and matrices template parameters in order to
+be used with any matrix library.
 
 \subsection{Laplacian (Poisson) problem}
 \index{laplacian}
@@ -826,21 +912,78 @@ An assembling procedure is defined to solve the problem
   \end{equation*}
 }
 where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{D}$ and $\Gamma_{N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{N}$.
-The function to be called to assemble the stiffness matrix is\\[0.5cm]
+The function to be called to assemble the stiffness matrix is
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_laplacian}
-\cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mim, mef1, mef2, A);} \\[0.5cm]
-where \cpp{SM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices are the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored, hence you can use the dummy integration method \index{IM_NONE}{\tt IM\_NONE} with mef2.\\[0.5cm]
-To assemble the source term, the  function to be called is\\[0.5cm]
+\begin{cppcode}
+  getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mim, mfu, mfd, A);
+\end{cppcode}
+where
+\begin{itemize}
+\item \cpp{SM} is a matrix of any type having the right dimension
+  (i.e. \cpp{me1.nb\_dof()}), 
+\item \cpp{mim} is a variable of type
+  \getfemmeshim defining the integration method used, 
+\item \cpp{mfu}
+  is a variable of type \getfemmeshfem and should define the
+  finite element method for the solution, 
+\item \cpp{mfd} is a variable of
+  type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mfu}) describing
+  the finite element method on which the coefficient $a(x)$ is defined,
+  
+\item \cpp{A} is the (real or complex) vector of the values of this 
+  coefficient on each degree of freedom of \cpp{mfd}. 
+\end{itemize}
+Both mesh_fem should use the same mesh (i.e. \cpp{\&mfu.linked_mesh()
+  == \&mfd.linked_mesh()}). 
+
+It is important to pay attention to the fact that the integration
+methods stored in \cpp{mim}, used to compute the elementary matrices,
+have to be chosen of sufficient order. The order has to be determined
+considering the polynomial degrees of element in \cpp{mfu}, in
+\cpp{mfd} and the geometric transformations for non-linear cases.  For
+example, with linear geometric transformations, if \cpp{mfu} is a
+$P_{K}$ FEM, and \cpp{mfd} is a $P_{L}$ FEM, the integration will
+have to be chosen of order $\geq 2(K-1) + L$, since the elementary
+integals computed during the assembly of \cpp{SM} are $\int\nabla\varphi_i\nabla\varphi_j\psi_k$
+(with $\varphi_i$the basis functions for \cpp{mfu} and $\psi_i$ the basis
+functions for \cpp{mfd}).
+\\[0.5cm]
+
+To assemble the source term, the  function to be called is
 \index{GETFEM!getfem::asm\_source\_term}
-\cpp{getfem::asm\_source\_term(B, mim, mef1, mef2, V);} \\[0.5cm]
-where \cpp{B} is a vector of any type having the right dimension (still \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which $f(x)$ is defined, \cpp{V} is the vector of the values of $f(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
-For the Neumann condition on $\Gamma_{N}$, the same function\\[0.5cm]
-\cpp{getfem::asm\_source\_term(B, mim, mef1, mef2, V, nbound);} \\[0.5cm]
-is used again, but an additional argument has been added: \cpp{nbound} is the index of the boundary in \cpp{mef1} (see previous section on how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, \cpp{V} is the vector of the values of $F(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
-there is (at least) two manner to take into account the Dirichlet condition on $\Gamma_{D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
+\begin{cppcode}
+  getfem::asm\_source\_term(B, mim, mfu, mfd, V);
+\end{cppcode}
+where \cpp{B} is a vector of any type having the correct dimension
+(still \cpp{mfu.nb\_dof()}), \cpp{mim} is a variable of type
+\cpp{getfem::mesh\_im} defining the integration method used, \cpp{mfd}
+is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to
+\cpp{mfu}) describing the finite element method on which $f(x)$ is
+defined, and \cpp{V} is the vector of the values of $f(x)$ on each degree
+of freedom of \cpp{mfd}.\\[0.5cm]
+
+The function \cpp{asm_source_term} also has an optional argument, which is a
+reference to a \getfemmeshregion (or just an integer \cpp{i}, in which
+case \cpp{mim.linked_mesh().region(i)} will be considered).
+Hence for the Neumann condition on $\Gamma_{N}$, the same function
+\begin{cppcode}
+  getfem::asm\_source\_term(B, mim, mfu, mfd, V, nbound);
+\end{cppcode}
+is used again, with \cpp{nbound}
+is the index of the boundary $\Gamma_{N}$ in the linked mesh of mim,mfu and mfd.
+\\[0.5cm]
+
+There is two manner (well not really, since it is also possible to use Lagrange multipliers, or to use penalization) to take into account the Dirichlet condition on $\Gamma_{D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined 
 \index{GETFEM!getfem::assembling\_Dirichlet\_condition}
-\cpp{getfem::assembling\_Dirichlet\_condition(SM, B, mef1, nbound, V, N);} \\[0.5cm]
-where \cpp{nbound} is the index of the boundary in \cpp{mef1} where the Dirichlet condition is applied, \cpp{V} is the vector of the values of $U(x)$ on each degree of freedom of \cpp{mef1} and \cpp{N} is the dimension for vectorial problems (should be \cpp{1} for scalar problems). This operation should be the last one because it transform the stiffness matrix \cpp{SM}. It works only for Lagrange elements. At the end, one obtains the discrete system
+\begin{cppcode}
+  getfem::assembling\_Dirichlet\_condition(SM, B, mfu, nbound, R);
+\end{cppcode}
+where \cpp{nbound} is the index of the boundary $\Gamma_D$ where the
+Dirichlet condition is applied, \cpp{R} is the vector of the values of
+$R(x)$ on each degree of freedom of \cpp{mfu}. This operation should
+be the last one because it transforms the stiffness matrix \cpp{SM}.
+It works only for Lagrange elements. At the end, one obtains the
+discrete system
 \begin{equation*} [SM] U = B, \end{equation*}
 where $U$ is the discrete unknown.\\[0.5cm]
 
@@ -852,12 +995,14 @@ where $U$ is the discrete unknown.\\[0.5cm]
 \W \newcommand{\tildeN}{NN}
 
 
-For the second manner, one should use\\[0.5cm]
+For the second manner, one should use the more general
 \index{GETFEM!getfem::asm\_dirichlet\_constraints}
-\cpp{getfem::asm\_dirichlet\_constraints($\tildeH$, $\tildeR$, mim, mf\_u, mf\_mult, mf\_rh, $R$, nbound)}.\\[0.5cm]
+\begin{cppcode}
+  getfem::asm\_dirichlet\_constraints($\tildeH$, $\tildeR$, mim, mf\_u, mf\_mult, mf\_rh, $R$, nbound).
+\end{cppcode}
 See the Dirichlet condition as a general linear constraint that must
 satisfy the solution $u$. This function does the assembly of 
-Dirichlet conditions of type $\int_{\Gamma} u(x)v(x) = \int_{\Gamma}r(x)v(x)$ for all $v$ in the space of multiplier defined by \cpp{mf\_mult}. The fem \cpp{mf\_mult} could be often chosen equal to \cpp{mf\_u} except when \cpp{mf\_u} is too complex.
+Dirichlet conditions of type $\int_{\Gamma} u(x)v(x) = \int_{\Gamma}r(x)v(x)$ for all $v$ in the space of multiplier defined by \cpp{mf\_mult}. The fem \cpp{mf\_mult} could be often chosen equal to \cpp{mf\_u} except when \cpp{mf\_u} is too ``complex''.
  
 This function just assemble these
 constraints into a new linear system $\tildeH u=\tildeR$, doing some
@@ -865,82 +1010,56 @@ additional simplification in order to obtain a ``simple'' constraints
 matrix.\\[0.5cm]
 
 \index{GETFEM!getfem::Dirichlet\_nullspace} Then, one should
-call \\[0.5cm]\cpp{ncols = getfem::Dirichlet\_nullspace($\tildeH$, $\tildeN$,
-  $\tildeR$, Ud)},\\[0.5cm] which will return a vector $U_d$ which
-satisfies the Dirichlet condition, and an orthogonal basis $\tildeN$ of the kernel of$\tildeH$. Hence, the discrete system that must be solved is
+call
+\begin{cppcode}
+  ncols = getfem::Dirichlet\_nullspace($\tildeH$, $\tildeN$, $\tildeR$, Ud);
+\end{cppcode}
+which will return a vector $U_d$ which satisfies the Dirichlet
+condition, and an orthogonal basis $\tildeN$ of the kernel
+of $\tildeH$. Hence, the discrete system that must be solved is
 \begin{equation*} (\tildeN'[SM]\tildeN) U_{int}=\tildeN'(B-[SM]U_d),\end{equation*}
 and the solution is $U=\tildeN U_{int}+U_d$.
 The output matrix $\tildeN$ should be a $nbdof × nbdof$ (sparse) matrix but should be resized to \cpp{ncols} columns. The output vector $U_d$ should be a $nbdof$ vector.
 A big advantage of this approach is to be generic, and do not prescribed for the finite element method \cpp{mf\_u} to be of Lagrange type. If \cpp{mf\_u} and 
-\cpp{mf\_d} are different, there is implicitly a projection (with respect to the $L^2$ norm) of the data on the finite element \cpp{mf\_u}.
+\cpp{mf\_d} are different, there is implicitly a projection (with respect to the $L^2$ norm) of the data on the finite element \cpp{mf\_u}.\\[0.5cm]
 
 If you want to treat the more general scalar elliptic equation $\Div A(x)\nabla u$, where $A(x)$ is square matrix, you should use
-\cpp{getfem::asm_stiffness_matrix_for_scalar_elliptic(M, mf,mfdata, A)}. The matrix data \cpp{A} should be defined on \cpp{mfdata}. It is expected as a vector representing a $n× n× nbdof$ tensor (in Fortran order), where $n$ is the mesh dimension of \cpp{mf}, and $nbdof$ is the number of dof of \cpp{mfdata}.
+\begin{cppcode}
+  getfem::asm_stiffness_matrix_for_scalar_elliptic(M, mim, mfu, mfdata, A);
+\end{cppcode} The matrix data \cpp{A} should be defined on \cpp{mfdata}. It is expected as a vector representing a $n× n× nbdof$ tensor (in Fortran order), where $n$ is the mesh dimension of \cpp{mfu}, and $nbdof$ is the number of dof of \cpp{mfdata}.
 
 \subsection{Linear Elasticity problem}
 
-the following function assembles the stiffness matrix for linear elasticity\\[0.5cm]
+The following function assembles the stiffness matrix for linear elasticity
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity}
-\cpp{getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(SM, mim, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
-where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{é} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{é} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
+\begin{cppcode}
+ getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(SM, mim, mfu, mfd, LAMBDA, MU);
+\end{cppcode}
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mfu} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mfd}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mfu}) describing the finite element method on which the Lam{é} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{é} coefficients on each degree of freedom of \cpp{mfd}.\\
 
-CAUTION : Linear elasticity problem is a vectorial problem, so the target dimension of \cpp{mef1} (see \cpp{mef.set_qdim(Q)}) should be the same as the dimension of the mesh.\\[0.5cm]
+CAUTION : Linear elasticity problem is a vectorial problem, so the target dimension of \cpp{mfu} (see \cpp{mf.set_qdim(Q)}) should be the same as the dimension of the mesh.\\[0.5cm]
 
 In order to assemble source term, Neumann and Dirichlet conditions, same functions as in previous section can be used.
 
 \subsection{Stokes Problem with mixed finite element method}
 
-to be described ... (see the file \getfemassemblingh and the MATLAB interface).
+The assembly of the mixed term $B = - \int p\nabla.v$ is done with:
+\begin{cppcode}
+getfem::asm_stokes_B(MATRIX \&B, const mesh_im \&mim, 
+                    const mesh_fem \&mf_u, const mesh_fem \&mf_p);
+\end{cppcode}
  
 \subsection{Assembling a mass matrix}
 
-The following function allows to assemble a mass matrix for a finite element method\\[0.5cm]
-\cpp{getfem::asm_mass\_matrix(M, mim, mef); } \\[0.5cm]
-where \cpp{M} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method. \cpp{mef} could represent a vectorial finite element method (i.e. \cpp{mef.get_qdim } $> 1$).
+Assembly of a mass matrix between two finite elements:
+\begin{cppcode}
+ getfem::asm_mass\_matrix(M, mim, mf1, mf2);
+\end{cppcode}
 It is also possible to obtain  mass matrix on a boundary with the same function:
-\cpp{getfem::asm_mass\_matrix(M, mim, mef, nbound); } \\[0.5cm]
-where \cpp{nbound} is the index of the boundary in \cpp{mef}.
-
-
-\section{Mesh refinement}
-
-Mesh refinement with the Bank et all method (see \cite{bank1983}) is available in dimension
-1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons).
-For a given object \cpp{mymesh} of type \cpp{getfem::mesh}, the method
 \begin{cppcode}
-  mymesh.Bank_refine(bv);
+  getfem::asm_mass\_matrix(M, mim, mf1, mf2, nbound);
 \end{cppcode}
-refines the elements whose indices are stored in \cpp{bv} (a
-\cpp{dal::bit\_vector} object). The conformity of the mesh is kept
-thanks to additional refinement (the so called green triangles). Information about green triangles is stored on the mesh object to gather them for further refinements (see \cite{bank1983}).
-
-
-\begin{figure}[htb]
-  \begin{center}
-    \texonly{\includegraphics[width=10cm,angle=0]{getfemuserrefine.pdf}}
-    \htmlonly{\htmlimg{getfemuserrefine.png}{Example of refinement}}
-  \end{center}
-  \caption{ \it Exemple of Bank refinement in 2D.}
-  \label{fig:refine}
-\end{figure}
-
-
-Mesh refinement is most of the time coupled with an {\it a posteriori} error estimate. A basic error estimate is available in the file \getfemerrorestimateh. 
-\begin{cppcode}
-  error_estimate(mim, mf, U, err, cvlist);
-\end{cppcode}
-where \cpp{mim} is the integration method (a \cpp{getfem::mesh\_im} object),  \cpp{mf} is the finite element method on which the unknow has been computed (a \cpp{getfem::mesh\_fem} object), \cpp{U} is the vector of degrees of freedom of the unknow, \cpp{err} is a sufficiently large vector in which the error estimate is computed for each element of the mesh, and \cpp{cvlst} if a list of indices of element on which the error estimate should be computed (a \cpp{dal::bit\_vector} object).
-
-This basic error estimate is only valid for order two problems and just compute the sum of the jump in normal derivative across the elements on each edge (for two-dimensional problems) or each face (for three-dimensional problems). This means that for each face $e$ of the mesh the following quantity is computed:
-
-\texonly{$$}
-\htmlonly{$}
-\int_e |\hspace{0.01em}[\hspace{-0.12em}[ \partial_n u ]\hspace{-0.12em}]\hspace{0.01em}|^2 d \Gamma,
-\htmlonly{$}
-\texonly{$$}
-
-where $[\hspace{-0.12em}[ \partial_n u ]\hspace{-0.12em}]$ is the jump of the normal derivative.
-Then, for each element the mean value is computed with respect to its faces and stored in the vector \cpp{err}. This basic error estimate can be taken as a model for more elaborated ones.
+where \cpp{nbound} is the region index in \cpp{mim.linked_mesh()}, or a \cpp{mesh_region} object.
 
 
 
@@ -1016,7 +1135,8 @@ indicates that we refer to the first matrix ``pushed'' (it is
 optional, but if the assembly builds two matrices, the second one must
 be referred this way). The \cpp{sym} function ensure that the result
 is symmetric (if this is not done, some round-off errors may cancel
-the symmetricity). Next, the \cpp{comp} part evaluates a 7D tensor,
+the symmetricity, and the assembly will be a little bit slower). Next,
+the \cpp{comp} part evaluates a 7D tensor,
 \begin{equation*}\int\partial_k \varphi^{i}_{j} \partial_l \varphi^m_n \psi^p,\end{equation*} where
 $\varphi^i_j$ is a $jth$ component of the $ith$ base function of \cpp{mf}
 and $\psi^p$ is a (scalar) base function of the second \cpp{mesh_fem}.
@@ -1139,7 +1259,7 @@ freedom. Vectorial elements elements are partially supported \ldots
 implemented for now).
 
 To be done ... please read \cite{BASCOMP} for more details and see the
-file \filename{getfem\_fem.cc} for practical implementation.
+files \getfemfemh , \getfemfemcc for practical implementation.
 
 \section{Incorporate new approximated integration methods in \gf }
 
@@ -1189,9 +1309,9 @@ The file format is inspired from \cite{EncyclopCubature}.
 
 \section{Level-sets, Xfem, fictious domains}
 
-\gf offers a certain number of functionalities concerning level-sets, support for Xfem and fictitious domain methods and discontinuous field across a level-set.\\[0.5cm]
+\gf offers (since v2.0) a certain number of functionalities concerning level-sets, support for Xfem and fictitious domain methods and discontinuous field across a level-set.\\[0.5cm]
 
-Important : All the tools listed below needs the package qhull installed on your system. This package is widely available. It computes convex hull and delaunay triangulations in arbitrary dimension.\\[0.5cm]
+Important : All the tools listed below needs the package qhull installed on your system. This package is widely available. It computes convex hull and delaunay triangulations in arbitrary dimension. Everything here is still considered ``work in progress'', it is still subject to major changes if needed.\\[0.5cm]
 
 The program \cpp{crack.cc} on the \cpp{tests} directory of the distribution is a good example of use of these tools.
 
@@ -1321,7 +1441,7 @@ element method and \cpp{mim} is the chosen integration method.
   pfem ifem = getfem::new_interpolated\_fem(mf, mim);
   dal::bit\_vector nn = mf.convex\_index();
   mf\_interpole.set\_finite\_element(nn, ifem);
-  getfem::asm\_mass\_matrix(SM1, mim, mf1, mf\_interpole);
+  getfem::asm\_mass\_matrix(SM1, mim, mfu, mf\_interpole);
   del_interpolated_fem(ifem);
 \end{cppcode}
 
@@ -1343,20 +1463,20 @@ order.
 \section{Compute $L^2$ and $H^1$ norms}
 
 The file \getfemassemblingh defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
-\index{GETFEM!asm_L2\_norm(mef, U)}
-\index{GETFEM!asm_H1\_norm(mef, U)}
-\cpp{getfem::asm_L2\_norm(mef, U); } \\[0.5cm]
-\cpp{getfem::asm_H1\_semi\_norm(mef, U); } \\[0.5cm]
-\cpp{getfem::asm_H1\_norm(mef, U); } \\[0.5cm]
-where \cpp{mef} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{U} is the vector of values of the solution on each degree of freedom of \cpp{mef}. The size of  \cpp{U} should be \cpp{mef.nb\_dof()}.\\[0.5cm]
+\index{GETFEM!asm_L2\_norm(mf, U)}
+\index{GETFEM!asm_H1\_norm(mf, U)}
+\cpp{getfem::asm_L2\_norm(mf, U); } \\[0.5cm]
+\cpp{getfem::asm_H1\_semi\_norm(mf, U); } \\[0.5cm]
+\cpp{getfem::asm_H1\_norm(mf, U); } \\[0.5cm]
+where \cpp{mf} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{U} is the vector of values of the solution on each degree of freedom of \cpp{mf}. The size of  \cpp{U} should be \cpp{mf.nb\_dof()}.\\[0.5cm]
 
 \section{Compute derivatives}
 
 The file \getfemderivativesh  defines the following function to compute the gradient of a solution\\[0.5cm]
 \index{GETFEM!getfem::compute\_gradient}
-\cpp{getfem::compute\_gradient(mim, mef1, mef2, U, V); }\\[0.5cm]
-where \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mef2} describes the finite element method to compute the gradient, \cpp{U} is a vector representing the solution and should be of size \cpp{mef1.nb\_dof()}, \cpp{V} is the vector on which the gradient will be computed and should be of size
-\cpp{N * mef2.nb\_dof()} where \cpp{N} is the dimension of the domain. IMPORTANT : This function only work when \cpp{mef2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
+\cpp{getfem::compute\_gradient(mim, mf1, mf2, U, V); }\\[0.5cm]
+where \cpp{mf1} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mf2} describes the finite element method to compute the gradient, \cpp{U} is a vector representing the solution and should be of size \cpp{mf1.nb\_dof()}, \cpp{V} is the vector on which the gradient will be computed and should be of size
+\cpp{N * mf2.nb\_dof()} where \cpp{N} is the dimension of the domain. IMPORTANT : This function only work when \cpp{mf2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
 
 \section{Export and view a solution}
 

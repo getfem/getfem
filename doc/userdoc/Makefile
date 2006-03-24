@@ -12,8 +12,8 @@ PNGFIGS=$(PDFFIGS:.pdf=.png)
 .eps.pdf:
 	epstopdf $(@:.pdf=.eps) --outfile=$@
 
-filelinks.tex:: 
-	updatefilelinks.sh
+doxygenlinks.tex: updatedoxlinks.py
+	python ./updatedoxlinks.py
 
 getfemuserelemf.png: getfemuserelemf.pdf
 	convert -resize 500x500 $(@:.png=.pdf) $@
@@ -24,7 +24,7 @@ getfemuserelem.png: getfemuserelem.pdf
 TEXOPTS='-interaction=nonstopmode'
 TEXMSGFILTER=grep 'LaTeX\|[Ww]arning\|^l\.\|^\!\|^<'
 
-getfemuser.pdf: getfemuser.tex $(PDFFIGS)
+getfemuser.pdf: getfemuser.tex $(PDFFIGS) doxygenlinks.tex
 	-pdflatex $(TEXOPTS) getfemuser.tex | $(TEXMSGFILTER) && if (grep Rerun getfemuser.log || grep 'undefined references' getfemuser.log) ; then echo 'RERUN!'; pdflatex $(TEXOPTS) getfemuser.tex | $(TEXMSGFILTER); fi;
 
 #getfemuser.dvi : getfemuser.tex

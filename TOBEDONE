@@ -9,14 +9,7 @@
 * http://epubs.siam.org/sam-bin/dbq/article/33724
 
 
-- faire la doc pour les mesh_slice 
-faire la doc pour vtk_export -- permettre le 'merge' des points de slices
-
-
 - getfem_mesh::clear() ne libere pas la mémoire
-
-
-- mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric_trans::transform)
 
 
 - tester les geotransinv de R^N dans R^P... 
@@ -45,3 +38,5 @@ faire la doc pour vtk_export -- permettre le 'merge' des points de slices
   et non tau-équivalents.
 
 - Interfacer http://www.computational.unibas.ch/software/spai/ ?
+
+renommer mesh_fem::dof_on_set en mesh_fem::dof_on_region 

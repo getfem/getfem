@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/** @file getfem_fem.cc
+    @brief implementation of some finite elements.
+ */
 
 #include <dal_singleton.h>
 #include <dal_tree_sorted.h>
