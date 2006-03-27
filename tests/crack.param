@@ -32,13 +32,11 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-NX = 20;            	          % space step.
+NX = 19;            	          % space step.
 
 
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
-
-
 
 
 
@@ -70,7 +68,7 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 
 ADDITIONAL_CRACK = 0;
 
-ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone

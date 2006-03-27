@@ -167,11 +167,11 @@ The number of degree of freedom for a classical ``$P_K$'' Lagrange element of di
 
 The particular way selected in {\sc Getfem++} to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
 $$ i_0, i_1, ... i_P, $$
-be somme indexes such that
+be somme indices such that
 $$ 0 \leq i_0, i_1, ... i_P \leq K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.$$
 Then, the coordinate of a node can be computed as
 $$ a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0, $$
-where $S_0, S_1, ... S_N$ are the vertexes of the simplex (for $K = 0$ the particular choice $a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n$ has been chosen).
+where $S_0, S_1, ... S_N$ are the vertices of the simplex (for $K = 0$ the particular choice $a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n$ has been chosen).
 Then each base function, corresponding of each node $a_{i_0, i_1, ... i_P}$ is defined by
 $$ \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
 where $\lambda_n$ are the barycentric coordinates, i.e. the polynomials of degree 1 whose value is $1$ on the vertex $S_n$ and whose value is $0$ on other vertices. On the reference element, one has
