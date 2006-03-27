@@ -65,6 +65,7 @@ struct plate_problem {
   scalar_type epsilon;       /* thickness of the plate.                      */
   scalar_type pressure;
   scalar_type residual;        /* max residual for the iterative solvers         */
+  scalar_type LX , LY ;       // default : LX = LY = 1
   bool mixed, symmetrized;
   bool mitc;
   int sol_ref;               // sol_ref = 0 : simple support on the vertical edges
@@ -73,7 +74,13 @@ struct plate_problem {
                              //       edges with solution u3 = sin²(x)*sin²(y)
   scalar_type eta;           // usefull only if sol_ref == 2 :
                              // eta = 0 => Kirchoff-Love
-			     // eta = small => Mindlin  
+			     // eta = small => Mindlin 
+  size_type N_Four ;
+  base_matrix theta1_Four, theta2_Four, u3_Four ;
+  
+  int study_flag;             // if studyflag = 1, then the loadings applied are chosen
+                             // in order to have a maximal vertical displacement equal to one.
+			     // Nothing is done if study_flag has another value.   
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -127,20 +134,97 @@ void plate_problem::init(void) {
   cout << "MITC = " ;
   if (mitc) cout << "true \n" ; else cout << "false \n" ;
   sol_ref = (PARAM.int_value("SOL_REF") ) ;
+  study_flag = (PARAM.int_value("STUDY_FLAG") ) ;
   eta = (PARAM.real_value("ETA") );
+  N_Four = (PARAM.int_value("N_Four") ) ;
+  
+    
+  LX = PARAM.real_value("LX");
+  LY = PARAM.real_value("LY");
+  mu = PARAM.real_value("MU", "Lamé coefficient mu");
+  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  epsilon = PARAM.real_value("EPSILON", "thickness of the plate");
+  pressure = PARAM.real_value("PRESSURE",
+			      "pressure on the top surface of the plate.");
+			      
+			      
   cout << "SOL_REF = " ;
   if (sol_ref==0) cout << "appui simple aux 2 bords verticaux\n" ;
   if (sol_ref==1) cout << "encastrement aux 2 bords verticaux\n" ;
   if (sol_ref==2) {
-  cout << "encastrement aux 4 bords verticaux, solution en sin(x)^2*sin(y)^2\n" ;
-  cout << "eta = " << eta <<"\n";
+     cout << "encastrement aux 4 bords verticaux, solution en sin(x)^2*sin(y)^2\n" ;
+     cout << "eta = " << eta <<"\n";
   }
-  
-  mu = PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  pressure = PARAM.real_value("PRESSURE",
-			      "pressure on the top surface of the plate.");
-  epsilon = PARAM.real_value("EPSILON", "thickness of the plate");
+  if (sol_ref==4) {
+     cout << "bord en appuis simple\n" ; 
+     cout << "nombre de terme pour calcul sol exacte : " << N_Four << " \n" ;
+     // Calcul des coeeficients de Fourier de la solution exacte :
+     // Cas où le chargement est seulement vertical (pas de moment appliqué)
+     gmm::resize( theta1_Four, N_Four, N_Four) ;
+     gmm::resize( theta2_Four, N_Four, N_Four) ;
+     gmm::resize( u3_Four, N_Four, N_Four) ;
+     base_matrix Jmn(3, 3) ; 
+     base_small_vector Bmn(3), Xmn(3) ; 
+     scalar_type det_Jmn, E, nu, A, B, e2, Pmn ;
+     E = 4.*mu*(mu+lambda) / (2. * mu + lambda);
+     nu = lambda / (2. * mu + lambda);
+     e2 = epsilon * epsilon ;
+     for(size_type i = 0 ; i < N_Four ; i++) {
+        for(size_type j = 0 ; j < N_Four ; j++) {
+	   A = (j + 1) * M_PI / LX ; 
+	   B = (i + 1) * M_PI / LY ; 
+	   Jmn(0, 0) = 2. * A * A / (1. - nu) + B * B + 3. / e2   ;
+	   Jmn(0, 1) = A * B * (1. +nu) / (1. - nu) ;
+	   Jmn(0, 2) = A * 3. / e2 ;
+	   Jmn(1, 0) = A * B * (1. +nu) / (1. - nu) ;
+	   Jmn(1, 1) = 2. * B * B / (1. - nu) + A * A + 3. / e2  ;
+	   Jmn(1, 2) = B * 3. / e2 ;
+	   Jmn(2, 0) = - A ;
+	   Jmn(2, 1) = - B ;
+	   Jmn(2, 2) = A * A + B * B ;
+	   gmm::scale(Jmn,  - E*epsilon / (1. + nu) ) ;
+	   
+	   // calcul du développement de Fourrier du chargement :
+	   if ( ( (i + 1) % 2 == 1 ) && ( (j + 1) % 2 == 1) ) {
+	      Pmn =  16. * pressure / ( (i + 1) * (j + 1) * M_PI * M_PI) ; }
+	   else {
+	      Pmn = 0. ; }	      
+	   Bmn[0] = 0. ;
+	   Bmn[1] = 0. ;
+	   Bmn[2] = Pmn ;
+	   gmm::lu_solve(Jmn, Xmn, Bmn) ;
+// 	   det_Jmn = pow( E * epsilon / (nu + 1.), 3) * (
+// 	           ( A * A * 2. / (1. - nu)  + B * B + 3. / e2 ) * 
+// 		   ( B * B * 2. / (1. - nu)  + A * A + 3. / e2 ) * ( A * A + B * B) 
+// 		 + ( 6. * (1. + nu) * A * A * B * B / ( e2 * (1. - nu) ) )
+// 		 - ( A * A * 2. / (1. - nu)  + B * B + 3. / e2 ) * (3. * A * A ) / e2 
+// 		 - ( B * B * 2. / (1. - nu)  + A * A + 3. / e2 ) * (3. * B * B ) / e2  
+// 		 - A * A * B * B * ( A * A + B * B ) * (1. + nu) * (1. + nu) / ( (1. - nu) * (1. - nu) )
+// 		   )  ;
+// 	   Jmn(2, 0) =   ( E * epsilon / (nu + 1.) ) * ( E * epsilon / (nu + 1.) ) * (
+// 	                 ( 3. * (1. + nu) * A * B * B / ( e2 * (1. - nu) ) )
+// 		       - ( B * B * 2. / (1. - nu)  + A * A + 3. / e2 ) * 3. * A / e2 
+// 		         ) / det_Jmn ;
+// 	   Jmn(2, 1) = - ( E * epsilon / (nu + 1.) ) * ( E * epsilon / (nu + 1.) ) * (
+// 	                 ( A * A * 2. / (1. - nu)  + B * B + 3. / e2 ) * 3. * A / e2 
+// 		       - ( 3. * (1. + nu) * A * A * B / ( e2 * (1. - nu) ) )
+// 		         ) / det_Jmn ;
+// 	   Jmn(2, 2) =   ( E * epsilon / (nu + 1.) ) * ( E * epsilon / (nu + 1.) ) * (
+//                          ( A * A * 2. / (1. - nu)  + B * B + 3. /  e2  ) *
+// 		         ( B * B * 2. / (1. - nu)  + A * A + 3. /  e2  ) 
+// 		       - ( A * B * (1. + nu) / (1. - nu)) * ( A * B * (1. + nu) / (1. - nu) ) 
+// 		         ) / det_Jmn ;
+/*      
+	   theta1_Four(i, j) = Jmn(2, 0) * Pmn ;
+	   theta1_Four(i, j) = Jmn(2, 1) * Pmn ;
+               u3_Four(i, j) = Jmn(2, 2) * Pmn ;*/
+	   theta1_Four(i, j) = Xmn[0] ;
+	   theta1_Four(i, j) = Xmn[1] ;
+               u3_Four(i, j) = Xmn[2] ;	       
+	   }
+        }
+     }
+
   mf_ut.set_qdim(N);
   mf_theta.set_qdim(N);
 
@@ -190,12 +274,31 @@ void plate_problem::init(void) {
     assert(i.is_face());
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[1]) <= 1.0E-7) { // new Neumann face
-      mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
-    }
-    if ((sol_ref == 2)&&(gmm::abs(un[0]) <= 1.0E-7)){ 
-      mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
-    }
+    switch(sol_ref){
+       case 0 :
+            if (gmm::abs(un[1]) <= 1.0E-7)  // new Neumann face
+              mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
+            break ;
+       case 1 :
+            if (gmm::abs(un[1]) <= 1.0E-7)  // new Neumann face
+              mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
+            break ;
+       case 2 :
+            if ( (gmm::abs(un[0]) <= 1.0E-7) || (gmm::abs(un[1]) <= 1.0E-7) ) 
+              mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
+            break ;
+       case 3 :
+            if (un[0] <= (- 1. + 1.0E-7))  // new Neumann face
+              mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
+            break ;
+       case 4 :
+            if ( (gmm::abs(un[0]) <= 1.0E-7) || (gmm::abs(un[1]) <= 1.0E-7) ) 
+              mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
+            break ;
+       default :
+	    DAL_THROW(getfem::failure_error, "SOL_REF parameter is undefined");
+	    break ;
+       } 
   }
 }
 
@@ -204,29 +307,60 @@ base_small_vector plate_problem::theta_exact(base_node P) {
   if (sol_ref == 0) { // appui simple aux 2 bords
      theta[0] = (-pressure / (32. * mu * epsilon * epsilon * epsilon))
               * (4. * pow(P[0] - .5, 3) - 3 * (P[0] - .5));
-     theta[1] = 0;
+     theta[1] = 0.;
    }
-  if (sol_ref == 1) {       // encastrement aux 2 bords
+  if (sol_ref == 1) { // encastrement aux 2 bords
      theta[0] = (-pressure / (16. * mu * epsilon * epsilon * epsilon))
               * P[0] * ( 2.*P[0]*P[0] - 3.* P[0] + 1. ) ;
-     theta[1] = 0;
+     theta[1] = 0.;
      }
   if (sol_ref == 2) { // encastrement aux 4 bords et sols vraiment 2D, non polynomiale
      theta[0] = - (1. + eta) * M_PI * sin(2.*M_PI*P[0]) * sin(M_PI*P[1])* sin(M_PI*P[1]) ;
-     theta[1] = - (1. + eta) * M_PI * sin(2.*M_PI*P[1]) * sin(M_PI*P[0])* sin(M_PI*P[0]) ;}
-  
+     theta[1] = - (1. + eta) * M_PI * sin(2.*M_PI*P[1]) * sin(M_PI*P[0])* sin(M_PI*P[0]) ;
+     }
+  if (sol_ref == 3) { // plaque cantilever
+     theta[0] = (- 3. * pressure / (8. * mu * epsilon * epsilon * epsilon ))
+              * P[0] * ( 0.25 * P[0] * P[0] - P[0] + 1. ) ;
+     theta[1] = 0.;      
+     }
+  if (sol_ref == 4) { // bord entier en appui simple
+     theta[0] = 0. ;
+     theta[1] = 0. ;
+     for(size_type i = 0 ; i < N_Four ; i ++) {
+        for(size_type j = 0 ; j < N_Four ; j ++) {
+	   theta[0] += theta1_Four(i, j) * cos( (j + 1) * M_PI * P[0] / LX ) * sin( (i + 1) * M_PI * P[1] / LY ) ;
+	   theta[0] += theta2_Four(i, j) * sin( (j + 1) * M_PI * P[0] / LX ) * cos( (i + 1) * M_PI * P[1] / LY ) ;
+           }
+        }
+     }
   return theta;
 }
 
 scalar_type plate_problem::u3_exact(base_node P) {
   switch(sol_ref) {
   case 0 : return (pressure / (32. * mu * epsilon * epsilon * epsilon))
-      * P[0] * (P[0] - 1.)
-      * (gmm::sqr(P[0] - .5) -1.25-(mixed ? 0 : 8.*epsilon*epsilon));
+       * P[0] * (P[0] - 1.)
+       * (gmm::sqr(P[0] - .5) -1.25-(mixed ? 0 : 8.*epsilon*epsilon));
+       break ;
   case 1 : return (pressure /(32.* mu * epsilon * epsilon * epsilon))
-      * P[0] * (P[0] - 1.)
-      * ( P[0] * P[0] - P[0] - 8. * epsilon *epsilon) ;
+       * P[0] * (P[0] - 1.)
+       * ( P[0] * P[0] - P[0] - 8. * epsilon *epsilon) ;
+       break ;
   case 2 : return  gmm::sqr(sin(M_PI*P[0])) * gmm::sqr(sin(M_PI*P[1]));
+       break ;
+  case 3 : return (3. * pressure / (4. * mu * epsilon * epsilon * epsilon ))
+       * P[0] * ( P[0] * P[0] * P[0] / 24. - P[0] * P[0] / 6. + P[0] / 4. 
+       - epsilon * epsilon * P[0] / 3. + 2. * epsilon * epsilon / 3.) ;
+      break ;
+  case 4 : 
+       scalar_type u3_local ;
+       u3_local = 0. ;
+       for(size_type i = 0 ; i < N_Four ; i ++) {
+          for(size_type j = 0 ; j < N_Four ; j ++) 
+	     u3_local += u3_Four(i, j) * sin( (j + 1) * M_PI * P[0] / LX ) * sin( (i + 1) * M_PI * P[1] / LY ) ;
+	     }
+       return (u3_local) ;
+       break ; 
   default : DAL_THROW(dal::failure_error, 
 		 "indice de solution de référence incorrect");
   }
@@ -284,6 +418,13 @@ void plate_problem::compute_error(plain_vector &U) {
   cout << "L2 error = " << sqrt(l2) << endl
        << "H1 error = " << sqrt(h1) << endl
        << "Linfty error = " << linf << endl;
+  
+       // stockage de l'erreur H1 :
+   if (PARAM.int_value("SAUV")){
+      std::ofstream f_out("errH1.don");
+      if (!f_out) throw std :: runtime_error("Impossible to open file") ;
+      f_out << sqrt(h1) <<  "\n" ;
+   }
        
   
 }
@@ -315,6 +456,26 @@ bool plate_problem::solve(plain_vector &U) {
   if (mixed) ELAS = &ELAS2; else ELAS = &ELAS1;
 
   // Defining the surface source term.
+  if (study_flag == 1 ){
+     cout << "Attention : l'intensité de la pression verticale " ;
+     cout << "a été choisie pour que le déplacement maximal soit unitaire." ;
+     cout << "Pour annuler cette option, faire STUDY_FLAG = 0\n" ;
+     switch(sol_ref) {
+           case 0 : 
+                pressure  = 128. * mu * epsilon * epsilon * epsilon ;
+                pressure /= 1.25 + 8. * epsilon * epsilon ; 
+                break ;
+           case 1 :  
+                pressure  = 128. * mu * epsilon * epsilon * epsilon ;
+                pressure /= 0.25 + 8. * epsilon * epsilon ; 
+                break ;
+	   case 3 :
+	        pressure  = 32. * mu * epsilon * epsilon * epsilon ;
+		pressure /= 3.  + 8. * epsilon * epsilon ;
+           default : 
+	        break ;	
+	}
+  }
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
   if (sol_ref == 2) {
@@ -342,7 +503,7 @@ bool plate_problem::solve(plain_vector &U) {
 	       - 3. * eta  * sx * sx / epsilon / epsilon ) ;
      }
   }
-  else  // sol_ref = 0 or 1
+  else  // sol_ref = 0 ou 1 ou 3 ou 4: pression verticale uniforme
      for (size_type i = 0; i < nb_dof_rhs; ++i) {
        F[3*i+2] = pressure;
   }
@@ -357,6 +518,8 @@ bool plate_problem::solve(plain_vector &U) {
   if (sol_ref == 0) SIMPLE = &SIMPLE0 ;
   if (sol_ref == 1) SIMPLE = &SIMPLE1 ;
   if (sol_ref == 2) SIMPLE = &SIMPLE1 ;
+  if (sol_ref == 3) SIMPLE = &SIMPLE1 ;
+  if (sol_ref == 4) SIMPLE = &SIMPLE0 ;
   
   
   getfem::mdbrick_plate_closing<> final_model(*SIMPLE, 0, 1);
@@ -414,12 +577,13 @@ int main(int argc, char *argv[]) {
     plate_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    if ((p.sol_ref == 0) || (p.sol_ref ==1))
+    if ((p.study_flag != 1)&&((p.sol_ref == 0) || (p.sol_ref ==1)))
     p.pressure *= p.epsilon * p.epsilon * p.epsilon;
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U;
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
     p.compute_error(U);
+    
   }
   DAL_STANDARD_CATCH_ERROR;
 
