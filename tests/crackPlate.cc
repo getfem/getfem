@@ -1,5 +1,26 @@
+// -*- c++ -*- (enables emacs c++ mode)
+/* *********************************************************************** */
+/*                                                                         */
+/* Copyright (C) 2005 Yves Renard, Julien Pommier.                    */
+/*                                                                         */
+/* This program is free software; you can redistribute it and/or modify    */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
+/*                                                                         */
+/* This program is distributed in the hope that it will be useful,         */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/* GNU Lesser General Public License for more details.                     */
+/*                                                                         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
+/*                                                                         */
+/* *********************************************************************** */
+
 /**
- * Linear Elastostatic plate problem.
+ * Linear Elastostatic plate problem with a through crack.
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
@@ -58,6 +79,14 @@ struct crackPlate_problem{
   std::string datafilename;
   ftool::md_param PARAM;
   size_type mitc ;
+  size_type sol_ref ;          /* sol_ref = 0 : plate subject to vertical pressure, 
+                                                positive or negative on each side of the crack
+		                  sol_ref = 1 : same as sol_ref =1 but a side is clamped on a 
+				                side and the other is subjected to a 2 M0 
+						horizontal moment.   
+			          sol_ref = 2 : plate subject to horizontal moment M0 on the
+				                2 vertical bounds of the plate      */
+  scalar_type h_crack_length ;  // half-crack-length
 
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type epsilon, pressure ;
@@ -109,7 +138,9 @@ void crackPlate_problem::init(void) {
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
 
-  base_small_vector tt(N); tt[1] = -0.5;
+  base_small_vector tt(N); 
+  if (sol_ref > 0) tt[0] = -0.5 ;
+  tt[1] = -0.5;
   mesh.translation(tt); 
   
   // setting parameters :
@@ -123,6 +154,8 @@ void crackPlate_problem::init(void) {
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
+  h_crack_length = PARAM.real_value("HALF_CRACK_LENGTH") ;
+  sol_ref = PARAM.int_value("SOL_REF") ;
   
   mf_ut().set_qdim(N);
   mf_theta().set_qdim(N);
@@ -167,10 +200,50 @@ void crackPlate_problem::init(void) {
     assert(it.is_face());
     base_node un = mesh.normal_of_face_of_convex(it.cv(), it.f());
     un /= gmm::vect_norm2(un);
-    if ( un[0] >= 1. - 1.0E-7) { // new Dirichlet
-      mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f());
-    } else {
-      mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
+    switch (sol_ref) {
+    case 0 : {
+	if ( un[0] >= 1. - 1.0E-7) { // new Dirichlet
+	mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f());
+	} else {
+	mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
+	}
+      }
+    break ;
+    case 1 : {
+	if ( un[0] >= 1. - 1.0E-7) { // new Dirichlet
+	mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f());
+	} else {
+	mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
+	}
+      }
+    break ;
+//    case 2 : {
+// 	if ( gmm::abs(un[1]) <  1.0E-7) { // new Neumann
+// 	mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
+// 	} else {
+// 	base_small_vector index ;
+// 	index = mesh.ind_points_of_convex(it.cv()) ;
+// 	size_type i, j, found ;
+// 	i = 0 ; j = 0 ; found = 0 ;
+// 	for( i = 0 ; i < 3 ; i++ ) { 
+// 	  for( j = i + 1 ; j < 4 ; j++ ) { 
+// 	    if (  gmm::abs( mesh.points()[index[i]][1] ) >= 0.5 - 1.0E-7  && 
+// 	          gmm::abs( mesh.points()[index[j]][1] ) >= 0.5 - 1.0E-7  && 
+// 		  mesh.points()[index[i]][0] * mesh.points()[index[j]][0] <=  1.0E-7 ) {
+// 	       mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f());       
+// 	       found = 1 ;
+// 	    }
+// 	  }
+// 	}
+// 	if ( found == 0)  
+// 	mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
+// 	}
+//       }
+//    break ;
+    default : {
+        cout << "wrong parameter for sol_ref. One should set sol_ref in {0,1} \n" ;
+      }
+    break ;
     }
   }
 
@@ -184,9 +257,14 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
 
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+  if (sol_ref == 0) {
     ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
-    ls.values(1)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[0];
-  }
+    ls.values(1)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[0];}
+  if (sol_ref == 1){
+    ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[0];
+    ls.values(1)[d] = gmm::abs( (ls.get_mesh_fem().point_of_dof(d))[1] ) - h_crack_length ;}
+    }
+  
   ls.touch();
   
   mls.adapt();
@@ -195,7 +273,7 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   mfls_u3.adapt();
   mfls_theta.adapt();
   
-  cout << "setting singularties... \n" ;
+  cout << "setting singularities... \n" ;
   std::vector<getfem::pglobal_function> utfunc(4) ;
   //std::vector<getfem::pglobal_function> u3func(5) ;
   std::vector<getfem::pglobal_function> u3func(4) ;
@@ -269,9 +347,15 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
   for (size_type i = 0; i < nb_dof_rhs; ++i){
+  if (sol_ref == 0){
     if (mf_rhs.point_of_dof(i)[1] > 0 )
       F[3*i+2] = pressure;
     else F[3*i+2] = -pressure;
+    }
+  if (sol_ref == 1) {
+    if (mf_rhs.point_of_dof(i)[0] <  1E-7 - 0.5 )
+      M[2*i] =  - 2. * epsilon * epsilon  / (3. * gmm::sqrt(h_crack_length) ) ;
+  }
   }  
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
@@ -307,7 +391,7 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
  * subroutine for evaluating Von Mises
  ************************************************************/
 
- template <typename VEC1, typename VEC2>
+template <typename VEC1, typename VEC2>
 void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
 		      const getfem::mesh_fem &mf_vm, VEC2 &VM,
 		      scalar_type mu=1) {
@@ -477,7 +561,7 @@ int main(int argc, char *argv[]) {
 	getfem::mesh mtetra;
 	sl_tetra.build(m3d, getfem::slicer_build_mesh(mtetra), 1);
 	getfem::mesh_fem mftetra(mtetra,3); 
-	mftetra.set_classical_discontinuous_finite_element(1, 0.001);
+	mftetra.set_classical_discontinuous_finite_element(2, 0.001);
 	
 	plain_vector Vtetra(mftetra.nb_dof());
 	mf3d.set_qdim(3);
@@ -485,13 +569,18 @@ int main(int argc, char *argv[]) {
 	
 	/* evaluating Von Mises*/
 	getfem::mesh_fem mf_vm(mtetra,1) ; 
-	mf_vm.set_classical_discontinuous_finite_element(1, 0.001);
+	mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
 	plain_vector VM(mf_vm.nb_dof()) ;
 	calcul_von_mises(mftetra, Vtetra, mf_vm, VM, p.mu) ;
-	/* */
+
 	
 	exp.exporting(mftetra);
 	exp.write_point_data(mftetra, Vtetra, "plate_displacement");
+	size_type deb=1;
+	if(deb==1){ 
+	exp.exporting(mf_vm);
+	exp.write_point_data(mf_vm, VM, "von_mises_stress");
+	}
 	
 //     mf.set_finite_element
 
