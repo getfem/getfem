@@ -68,8 +68,8 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 
 ADDITIONAL_CRACK = 0;
 
-ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 
+ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone
 			% 3 = spider fem alone
@@ -78,11 +78,11 @@ ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 
 
 
-RADIUS_ENR_AREA = 0.4;
+RADIUS_ENR_AREA = 0.2;
 CUTOFF_FUNC = 1; % 0 for the exponential cutoff. 1 for a polynomial cutoff
 CUTOFF = 0.4;
-CUTOFF1 = 0.2;
-CUTOFF0 = 0.45;
+CUTOFF1 = 0.01;
+CUTOFF0 = 0.49;
 
 SPIDER_RADIUS =  0.3;
 SPIDER_NR = 30;         % size of the cartesian mesh in r for spider fem

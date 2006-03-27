@@ -599,7 +599,7 @@ bool crack_problem::solve(plain_vector &U) {
     vfunc[i] = isotropic_crack_singular_2D(i, ls,
 					   (enrichment_option == 2) ? 0.0 : cutoff_radius,
 					   (enrichment_option == 2) ? 0.0 : cutoff_radius1,
-					   (enrichment_option == 2) ? 0.0 : cutoff_radius0,
+					   (enrichment_option == 2) ? 0.1 : cutoff_radius0,
 					   cutoff_func);
 
   
@@ -783,10 +783,14 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
-    plain_vector U(p.mf_u().nb_dof());
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
-    {
+    plain_vector U(p.mf_u().nb_dof());
+    if (!p.solve(U)) {
+      DAL_THROW(dal::failure_error,"Solve has failed");
+    } 
+    
+    
+    { 
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
@@ -881,8 +885,8 @@ int main(int argc, char *argv[]) {
 			       p.PARAM.int_value("VTK_EXPORT")==1);
 
 	exp.exporting(mf_refined); 
-	exp.write_point_data(mf_refined_vm, DN, "error");
-	//exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+	//exp.write_point_data(mf_refined_vm, DN, "error");
+	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       
