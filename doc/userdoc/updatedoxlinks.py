@@ -36,11 +36,20 @@ getfem::mesh
 getfem::mesh_region
 getfem::mr_visitor
 bgeot::mesh_structure
+getfem::generic_assembly
 getfem::mesh_im
 getfem::mesh_fem
 getfem::stored_mesh_slice
 getfem::dx_export
 getfem::vtk_export
+getfem::level_set
+getfem::mesh_level_set
+getfem::mesh_im_level_set
+getfem::mesh_fem_level_set
+getfem::model_state
+getfem::mdbrick_abstract
+getfem::mdbrick_parameter
+getfem::mdbrick_abstract_linear_pde
 """
 
 for c in classes.split():

@@ -1,29 +1,22 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Library : Dynamic Array Library (dal)
-// File    : dal_ref.h : Structures which refere to containers.
-//           
-// Date    : August 26, 2000.
-// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
-//
-//========================================================================
-//
 // Copyright (C) 2000-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; version 2 of the License.
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software Foundation,
-// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
 //
 //========================================================================
 
@@ -32,6 +25,8 @@
 #define DAL_REF_H__
 
 /** @file dal_ref.h
+   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @date August 26, 2000.
  *  @brief Provide some simple pseudo-containers.
  *  
  *  WARNING : modifiying the container infirm the validity of references.

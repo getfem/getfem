@@ -1,33 +1,28 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_mesh_slice.h : 
-//           
-// Date    : May 2003.
-// Author  : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-//
-//========================================================================
-//
-// Copyright (C) 2003-2005 Julien Pommier
+// Copyright (C) 2003-2006 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; version 2 of the License.
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software Foundation,
-// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
 //
 //========================================================================
 
 /**@file getfem_mesh_slice.h
+   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @date May 2003.
    @brief Define the class getfem::stored_mesh_slice.
  */
 #ifndef GETFEM_MESH_SLICE_H

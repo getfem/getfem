@@ -137,7 +137,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
-STRIP_CODE_COMMENTS    = YES
+STRIP_CODE_COMMENTS    = NO
 REFERENCED_BY_RELATION = NO
 REFERENCES_RELATION    = NO
 USE_HTAGS              = NO
@@ -234,7 +234,7 @@ SKIP_FUNCTION_MACROS   = YES
 # Configuration::additions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES               = 
-GENERATE_TAGFILE       = 
+#GENERATE_TAGFILE       = ./doc/doxygen/getfem.tag
 ALLEXTERNALS           = NO
 EXTERNAL_GROUPS        = YES
 PERL_PATH              = /usr/bin/perl

@@ -1,34 +1,28 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Library : Generic Matrix Methods  (gmm)
-// File    : gmm_modified_gram_schmidt.h : from I.T.L.
-//           
-// Date    : October 13, 2002.
-// Authors : Andrew Lumsdaine <lums@osl.iu.edu>
-//           Lie-Quan Lee     <llee@osl.iu.edu>
-//
-//========================================================================
-//
-// Copyright (C) 1997-2005 Yves Renard
+// Copyright (C) 1997-2006 Yves Renard
 //
 // This file is a part of GETFEM++
 //
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; version 2 of the License.
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software Foundation,
-// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
 //
 //========================================================================
 
 /**@file gmm_modified_gram_schmidt.h
+   @author  Andrew Lumsdaine <lums@osl.iu.edu>, Lie-Quan Lee     <llee@osl.iu.edu>
+   @date October 13, 2002.
    @brief Modified Gram-Schmidt orthogonalization
 */
 

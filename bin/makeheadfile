@@ -11,6 +11,36 @@ sub clean_line {
   $_[0] =~ s/=//g;
 }
 
+sub print_license  {
+
+  my $RES   = $_[0];
+
+  print RES <<
+//========================================================================
+//
+// Copyright (C) $year1-$year2 $copyauth
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+ 
+;
+}
+
+
 $year = `date +%Y`;
 chomp $year;
 
@@ -19,9 +49,12 @@ while ($name = $ARGV[0]) {
   open(FILE, "$name");
 
 
+
 # extract information
+  $license = 0;
   $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0;
   $comment1 = ""; $comment2 = ""; $author2=""; $author3=""; $copyauth="";
+  $authors = $copyauth = "Yves Renard, Julien Pommier.";
 
   while ($li = <FILE>) {
 
@@ -49,101 +82,63 @@ while ($name = $ARGV[0]) {
       clean_line($l1);
       $date=$l1;
     }
-    if ($li =~ /Author/ && !$author1) {
-      ($li, $l1) = split(':', $li, 2);
-      clean_line($l1);
-      $author1 = $l1;
-      if ($author1 =~ /ulien/)
-	{ $author1 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
-      if ($author1 =~ /enard/)
-	{ $author1 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
-      $l1=<FILE>;
-      clean_line($l1);
-      $author2 = $l1;
-      if ($author2 =~ /ulien/)
-	{ $author2 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
-      if ($author2 =~ /enard/)
-	{ $author2 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
-      if ($author2) {
-	$l1=<FILE>;
-	clean_line($l1);
-	$author3 = $l1;
-	if ($author3 =~ /ulien/)
-	  { $author3 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
-	if ($author3 =~ /enard/)
-	  { $author3 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
-      }
-    }
     if ($li =~ /Copyright/ && !$year1) {
       ($li, $l1) = split('\)', $li, 2);
       clean_line($l1);
       $year1=int($l1);
       ($li, $l2) = split('\-', $l1, 2);
       $year2=int($l2);
-      if ($author1 =~ /ulien/) { $copyauth = "Julien Pommier"; }
-      else { $copyauth = "Yves Renard"; }
+      ($li, $copyauth) = split(' ', $l1, 2);
+      $copyauth =~ s/\*\///g;
+      clean_line($copyauth);
     }
+    if ($li =~ /MERCHANTABILITY/) { $license = 1; }
     if ($li =~ /USA./) { $li = <FILE>; $li = <FILE>; $li = <FILE>; last; }
     if ($li =~ /^#/) { last; }
   }
 
-# do the head
-
-  if (!($libname)) {
-    print "It seems that no head is present for $name ...\n";
-    exit(1);
-  }
-
-  if ($author3)
-    { $authors = "Authors : $author1\n//           $author2\n//           $author3"; }
-  elsif ($author2)
-    { $authors = "Authors : $author1\n//           $author2"; }
-  else { $authors = "Author  : $author1"; }
-
+  $year2=$year;
   $enablecpp = "// -*- c++ -*- (enables emacs c++ mode)\n";
 
-  $year2=$year;
-  $filename = $name;
-
-  open(RES, ">$name".".newhead");
-
-  print RES <<
-$enablecpp//========================================================================
-//
-// Library : $libname
-// File    : $filename : $comment1
-//           $comment2
-// Date    : $date
-// $authors
-//
-//========================================================================
-//
-// Copyright (C) $year1-$year2 $copyauth
-//
-// This file is a part of GETFEM++
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; version 2 of the License.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software Foundation,
-// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-//
-//========================================================================
-
-;
-  print RES "$li";
-  while ($li = <FILE>)
-  { 
-    $li =~ s/atofem/getfem/g;
-    $li =~ s/ATOFEM/GETFEM/g;
-    print RES "$li";
+  if (!($license)) {
+    $year1 = $year;
+    $date = $year;
+    $authors = $copyauth = "Yves Renard, Julien Pommier.";
+    seek(FILE, 0, 0);
+    # close(FILE);
+    # open(FILE, "$name");
+    open(RES, ">$name".".newhead");
+    print RES $enablecpp;
+    print_license(RES);
   }
+  else {
+
+    if ($author3)
+      { $authors = "$author1, $author2, $author3"; }
+    elsif ($author2)
+      { $authors = "$author1, $author2"; }
+    else { $authors = "$author1"; }
+
+
+    $filename = $name;
+
+    open(RES, ">$name".".newhead");
+
+    print RES $enablecpp;
+    print_license(RES);
+  }
+
+
+  do {
+    #  $li =~ s/atofem/getfem/g;
+    #  $li =~ s/ATOFEM/GETFEM/g;
+    print RES "$li";
+    # if ($li =~ /\@file/ && $libname) {
+    #  print RES "   \@author  $authors\n   \@date $date\n";
+    # }
+  } while ($li = <FILE>);
+
+
   close(RES);
   close(FILE);
 

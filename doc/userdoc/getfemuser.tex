@@ -164,7 +164,7 @@ The library also includes the usual tools for finite elements such as assembly p
 
 \gf can be used to build very general finite elements codes, where the finite elements, integration methods, dimension of the meshes, are just some parameters that can be changed very easily, thus allowing a large spectrum of experimentations. Numerous examples are available in the \filename{tests} directory of the distribution.
 
-\gf has no meshing capabilities (apart regular meshes), hence it is necessary to import meshes. Imports formats currently known by getfem are GiD , GmSH and emc2 mesh files. However, given a mesh, it is possible to refine meshes automatically.\\[0.3cm]
+\gf has no meshing capabilities (apart regular meshes), hence it is necessary to import meshes. Imports formats currently known by getfem are GiD , GmSH and emc2 mesh files. However, given a mesh, it is possible to refine it automatically.\\[0.3cm]
 \htmlonly{\\\\\\}
 \begin{quote}
 \input{../license.tex}
@@ -221,6 +221,9 @@ the distribution.
 If you want to use MUMPS as the default sparse direct solver instead of SuperLU, see the indication of section \ref{sec:linalgproc}.
 
 \section{Build a mesh}
+As a preliminary, you may want to read this short introduction to the getfem++ ``vocabulary'': \WEBB{http://www-gmm.insa-toulouse.fr/getfem/getfem_reference/main.html}.
+
+
 \index{mesh}
 \gf  has it own structure to store meshes defined in the files \bgeotmeshstructureh and \getfemmeshh. The main structure is defined in \getfemmeshh by the object
 \getfemmesh.\\[0.5cm]
@@ -1065,7 +1068,7 @@ where \cpp{nbound} is the region index in \cpp{mim.linked_mesh()}, or a \cpp{mes
 
 \section{Compute arbitrary elementary matrices - generic assembly procedures}
 As it can be seen in the file \getfemassemblingh, all the
-previous assembly procedures use a \cpp{generic_assembly} object and
+previous assembly procedures use a \getfemgenericassembly object and
 provide it an adequate description of what must be done. For example, 
 the assembly of a volumic source term for a scalar FEM is done with the following excerpt of code:
 \index{GETFEM!getfem::generic_assembly}
@@ -1311,47 +1314,89 @@ The file format is inspired from \cite{EncyclopCubature}.
 
 \gf offers (since v2.0) a certain number of functionalities concerning level-sets, support for Xfem and fictitious domain methods and discontinuous field across a level-set.\\[0.5cm]
 
-Important : All the tools listed below needs the package qhull installed on your system. This package is widely available. It computes convex hull and delaunay triangulations in arbitrary dimension. Everything here is still considered ``work in progress'', it is still subject to major changes if needed.\\[0.5cm]
+Important : All the tools listed below needs the package \WEB{http://www.qhull.org/}{qhull} installed on your system. This package is widely available. It computes convex hull and delaunay triangulations in arbitrary dimension. Everything here is considered ``work in progress'', it is still subject to major changes if needed.\\[0.5cm]
 
 The program \cpp{crack.cc} on the \cpp{tests} directory of the distribution is a good example of use of these tools.
 
 \subsection{Representation of level-sets}
-\gf deals with level-set defined by piecewise polynomial function on a mesh. It will be defined as the zero of this function. In the file \getfemlevelseth a level-set is represented by a function defined on a lagrange fem of a certain degree on a mesh. The constructor to define a new level-set is the following\index{GETFEM!getfem::level\_set}:
+\gf deals with level-set defined by piecewise polynomial function on a mesh. It will be defined as the zero of this function. In the file \getfemlevelseth a level-set is represented by a function defined on a lagrange fem of a certain degree on a mesh. The constructor to define a new \getfemlevelset is the following\index{GETFEM!getfem::level\_set}:
 
 \begin{cppcode}
-  getfem::level_set ls(mesh, degree = 1, with_secundary = false);  
+  getfem::level_set ls(mesh, degree = 1, with_secondary = false);  
 \end{cppcode}
-where \cpp{mesh} is a valid mesh of type \cpp{getfem::mesh}, \cpp{degree} is the degree of the polynomials (1 is the defaule value), and \cpp{with_secundary} is a boolean whose default value is false. The secundary level-set is used to represent fractures.\\[0.5cm]
+where \cpp{mesh} is a valid mesh of type \cpp{getfem::mesh},
+\cpp{degree} is the degree of the polynomials (1 is the defaule
+value), and \cpp{with_secondary} is a boolean whose default value is
+false. The secondary level-set is used to represent fractures (if
+$p(x)$ is the primary levelset function and $s(x)$ is the secondary
+levelset function, the crack is defined by $p(x) = 0$ and $s(x) \leq 0$ :
+the role of the secondary is to stop the crack).
 
-The object \cpp{getfem::level\_set} contains the vector of dof for the corresponding function(s). The method \cpp{ls.value(0)} returns the vector of dof for the primary level-set function, so that these values can be set. The method \cpp{ls.value(1)} returns the dof vector for the secundary level-set function if any. The method \cpp{ls.get_mesh_fem()} returns a reference on the \cpp{getfem::mesh_fem} object defining the finite element method on which the level-set function is defined.
+
+Each level-set function is defined by a mesh\_fem \cpp{mf} and the dof
+values over this mesh\_fem, in a vector. The object
+\cpp{getfem::level\_set} contains a mesh\_fem and the vectors of dof
+for the corresponding function(s). The method \cpp{ls.value(0)}
+returns the vector of dof for the primary level-set function, so that
+these values can be set. The method \cpp{ls.value(1)} returns the dof
+vector for the secondary level-set function if any. The method
+\cpp{ls.get_mesh_fem()} returns a reference on the
+\cpp{getfem::mesh_fem} object.
 
 \subsection{Mesh cut by level-sets}
 
-In order to compute adapted integration methods and finite element methods to represent a field which is discontinuous accross a level-set, a certain number of pre-computations have to be done at the mesh level. The file \getfemmeshlevelseth defines the object \cpp{getfem::mesh\_level\_set} which makes this pre-computations. The contructor of this object is the following:
+In order to compute adapted integration methods and finite element
+methods to represent a field which is discontinuous accross a
+level-set, a certain number of pre-computations have to be done at the
+mesh level. The file \getfemmeshlevelseth defines the object
+\getfemmeshlevelset which handles these pre-computations. The
+constructor of this object is the following:
+
 \begin{cppcode}
   getfem::mesh_level_set mls(mesh);
 \end{cppcode}
-where \cpp{mesh} is a valid mesh of type \cpp{getfem::mesh}. In order to indicates that the mesh is cut by a level-set, one has to call the method \cpp{mls.add\_level\_set(ls)}, where \cpp{ls} is an object of type \cpp{getfem::level_set}. An arbitrary number of level-sets can be added. To initialize the object or to actualize it when the value of the level-set function is modified, one has to call the method \cpp{mls.adapt()}.\\[0.5cm]
+where \cpp{mesh} is a valid mesh of type \cpp{getfem::mesh}. In order to indicate that the mesh is cut by a level-set, one has to call the method \cpp{mls.add\_level\_set(ls)}, where \cpp{ls} is an object of type \cpp{getfem::level_set}. An arbitrary number of level-sets can be added. To initialize the object or to actualize it when the value of the level-set function is modified, one has to call the method \cpp{mls.adapt()}.\\[0.5cm]
 
 In particular a subdivision of each element cut by the level-set is made with simplices. 
 
 \subsection{Adapted integration methods}
 
-For field which are discontinuous across a level-set, integration methods have to be adapted. The object \cpp{getfem::mesh\_im\_level\_set} defined in the file \getfemmeshimlevelseth defines a composite integration method for the elements cut by the level-set. The constructor of this object is the following:
+For fields which are discontinuous across a level-set, integration methods have to be adapted. The object \cpp{getfem::mesh\_im\_level\_set} defined in the file \getfemmeshimlevelseth defines a composite integration method for the elements cut by the level-set. The constructor of this object is the following:
 \begin{cppcode}
   getfem::mesh_im_level_set mim(mls, where, regular_im = 0, singular_im = 0);
 \end{cppcode}
-where \cpp{mls} is an object of type \cpp{getfem::mesh\_level\_set}, \cpp{where} is an enum for which possible values are \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_INSIDE, getfem::mesh\_im\_level\_set::INTEGRATE\_OUTSIDE, getfem::mesh\_im\_level\_set::INTEGRATE\_ALL, and getfem::mesh\_im\_level\_set::INTEGRATE\_BOUNDARY}. \cpp{regular\_im} should be of type \cpp{pintegration\_method} and represent the integrationon the simplex of corresponding dimension which is applied on each element of the subdivision of a convex cut by the level-set.  \cpp{singular\_im} should be also of type \cpp{pintegration\_method} and is used for crack singular functions. \\[0.5cm]
+where \cpp{mls} is an object of type \cpp{getfem::mesh\_level\_set}, \cpp{where} is an enum for which possible values are
+\begin{itemize}
+\item \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_INSIDE} (integrate over $p(x)<0$),
+\item \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_OUTSIDE} (integrate over $p(x)>0$),
+\item \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_ALL},
+\item \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_BOUNDARY} (integrate over $p(x)=0$ and $s(x)\leq 0$)
+\end{itemize}
+The argument \cpp{regular\_im} should be of type
+\cpp{pintegration\_method}, and will be the integration method applied
+on each sub-simplex of the composite integration for convexes cut by
+the levelset. The optional \cpp{singular\_im} should be also of type
+\cpp{pintegration\_method} and is used for crack singular functions: it
+is applied to sub-simplices which share a vertex with the crack tip
+(the specific integration method \cpp{IM_QUASI_POLAR(..)} is well
+suited for this purpose).
+\\[0.5cm]
 
-The object \cpp{getfem::mesh\_im\_level\_set} can be used as a classical \cpp{getfem::mesh_im} object (for instance the method \cpp{mim.set_integration_method(...)} allows to set the integration methods for the elements which are not cut by the level-set. \\[0.5cm]
+The object \getfemmeshimlevelset can be used as a classical
+\cpp{getfem::mesh_im} object (for instance the method
+\cpp{mim.set_integration_method(...)} allows to set the integration
+methods for the elements which are not cut by the level-set).
+\\[0.5cm]
 
- To initialize the object or to actualize it when the value of the level-set function is modified, one has to call the method \cpp{mim.adapt()}.\\[0.5cm]
+To initialize the object or to actualize it when the value of the
+level-set function is modified, one has to call the method
+\cpp{mim.adapt()}.
+\\[0.5cm]
 
-The different values of the parameter \cpp{where} of the constructor correspond of different uses. The value \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_INSIDE} means that only the part on which the level-set function is non-positive is taken into account, the value \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_OUTSIDE} means that only the part on which the level-set function is non-negative is taken into account, the value \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_ALL} means that both sides are taken into account and the value \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_BOUNDARY} furnishes an integration method on the level-set itself (the default value is \cpp{getfem::mesh\_im\_level\_set::INTEGRATE\_ALL}).
 
 \subsection{Discontinuous field across some level-sets}
 
-The object \cpp{getfem::mesh\_fem\_level\_set} is defined in the file
+The object \getfemmeshfemlevelset is defined in the file
 \getfemmeshfemlevelseth. It is derivated from \cpp{getfem::mesh\_fem} object and can be used in the same way. It defines a finite element method with discontinuity across the level-sets (it can deal with an arbitrary number of level-sets). The constructor is the following:
 \begin{cppcode}
   getfem::mesh\_fem\_level\_set mfls(mesh, mf);
@@ -1364,9 +1409,10 @@ To represent discontinuous fields, the finite element method is enriched with di
 
 \section{Support for Xfem methods}
 
-(outdated, to be done again ...)
+\textbf{(outdated, to be done again ...)}
 
-\index{GETFEM!Xfem} Xfem are finite element method with a particular
+\index{GETFEM!Xfem} 
+Xfem are finite element method with a particular
 enrichment with non-polynomials functions (see \cite{Xfem} for
 instance). The file \getfemXfemh gives a support for this kind
 of method. Any ($\tau$-equivalent) valid finite element method can be
@@ -1412,19 +1458,20 @@ the unwanted extra-dofs.
 
 (evolution of \cpp{virtual\_link\_fem}) A special finite element method
 is defined in \getfeminterpolatedfemh which is not a real
-finite element method but allows to interpolate a finite element
-method defined on another mesh. When an assembling procedure has
-different finite element methods as arguments, the mesh on which those
-methods are defined should be the same. If you need to assemble a
+finite element method, but a pseudo-fem which interpolates a finite element
+method defined on another mesh. If you need to assemble a
 matrix with finite element methods defined on different meshes, you
-may use the finite element methods.
+may use the ``interpolated fem'' for that purpose:
 
 
 \index{GETFEM!getfem::interpolated\_fem}
-\cpp{getfem::new_interpolated\_fem(getfem::mesh\_fem mf, getfem::mesh\_im mim) }\\[0.2cm]
+\begin{cppcode}
+  getfem::new_interpolated\_fem(getfem::mesh\_fem mf, getfem::mesh\_im mim)
+\end{cppcode}
+
 Because each base function of the finite element method has to be
 interpolated, such a computation can be a heavy procedure. By default,
-the interpolated fem object store the interpolation.
+the interpolated fem object store the interpolation data.
 
 The interpolation is made on each Gauss point of the integration
 methods of \cpp{mim}, so that you have to use these integration
@@ -1447,11 +1494,11 @@ element method and \cpp{mim} is the chosen integration method.
 
 The object pointed by \cpp{ifem} contains all the information
 concerning the interpolation. It could use a lot of memory. As pfem is
-a smart pointer (a boost instrusive pointer, see
-http://www.boost.org/), the interpolated fem will be automatically be
-destroyed when the last pointer on it will be destroyed. To obtain a
+a smart pointer (a boost 
+\WEB{http://www.boost.org/libs/smart_ptr/intrusive_ptr.html}{intrusive_ptr}), the interpolated fem will be automatically
+destroyed when the last pointer on it is destroyed. To obtain a
 better accuracy, it is better to refine the integration method (with
-\cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its
+\cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than increase its
 order.
 
 \subsection{mixed methods with different meshes}
@@ -1463,20 +1510,37 @@ order.
 \section{Compute $L^2$ and $H^1$ norms}
 
 The file \getfemassemblingh defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
-\index{GETFEM!asm_L2\_norm(mf, U)}
-\index{GETFEM!asm_H1\_norm(mf, U)}
-\cpp{getfem::asm_L2\_norm(mf, U); } \\[0.5cm]
-\cpp{getfem::asm_H1\_semi\_norm(mf, U); } \\[0.5cm]
-\cpp{getfem::asm_H1\_norm(mf, U); } \\[0.5cm]
-where \cpp{mf} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{U} is the vector of values of the solution on each degree of freedom of \cpp{mf}. The size of  \cpp{U} should be \cpp{mf.nb\_dof()}.\\[0.5cm]
+\index{GETFEM!asm_L2\_norm}
+\index{GETFEM!asm_H1\_norm}
+\begin{cppcode}
+ getfem::asm_L2\_norm(mim, mf, U);
+ getfem::asm_H1\_semi\_norm(mim, mf, U);
+ getfem::asm_H1\_norm(mim, mf, U);
+\end{cppcode}
+where \cpp{mim} is a \getfemmeshim used for the integration, \cpp{mf}
+is a \getfemmeshfem and describes the finite element method on which
+the solution is defined, \cpp{U} is the vector of values of the
+solution on each degree of freedom of \cpp{mf}. The size of \cpp{U}
+should be \cpp{mf.nb\_dof()}.
+
+In order to compare two solutions, it is often simpler and faster to use the following function than to interpolate one mesh_fem on another:
+\index{GETFEM!asm_L2_dist}
+\index{GETFEM!asm_H1_dist}
+\begin{cppcode}
+  getfem::asm_L2_dist(mim, mf1, U1, mf2, U2);
+  getfem::asm_H1_dist(mim, mf1, U1, mf2, U2);  
+\end{cppcode}
+These functions return the $L^2$ and $H^1$ norms of $u_1 - u_2$.
 
 \section{Compute derivatives}
 
-The file \getfemderivativesh  defines the following function to compute the gradient of a solution\\[0.5cm]
+The file \getfemderivativesh  defines the following function to compute the gradient of a solution
 \index{GETFEM!getfem::compute\_gradient}
-\cpp{getfem::compute\_gradient(mim, mf1, mf2, U, V); }\\[0.5cm]
-where \cpp{mf1} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mf2} describes the finite element method to compute the gradient, \cpp{U} is a vector representing the solution and should be of size \cpp{mf1.nb\_dof()}, \cpp{V} is the vector on which the gradient will be computed and should be of size
-\cpp{N * mf2.nb\_dof()} where \cpp{N} is the dimension of the domain. IMPORTANT : This function only work when \cpp{mf2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
+\begin{cppcode}
+getfem::compute\_gradient(mim, mf1, mf2, U, V);
+\end{cppcode}
+where \cpp{mf1} is a variable of type \getfemmeshfem and describes the finite element method on which the solution is defined, \cpp{mf2} describes the finite element method to compute the gradient, \cpp{U} is a vector representing the solution and should be of size \cpp{mf1.nb\_dof()}, \cpp{V} is the vector on which the gradient will be computed and should be of size
+\cpp{N * mf2.nb\_dof()} , with \cpp{N} the dimension of the domain. IMPORTANT : This function only works when \cpp{mf2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
 
 \section{Export and view a solution}
 
@@ -1717,7 +1781,7 @@ where \cpp{M} is a row matrix which will be filled with the linear map represent
 procedures on their own to make your finite element programs, it is
 now possible to use predefined bricks to build up very quickly a
 certain number of models. Most of the bricks are defined in
-\getfemmodelingh
+\getfemmodelingh .
 
 A model brick is basically an object which modifies a global tangent
 matrix and its associated right hand side. Typical modifications are
@@ -1728,7 +1792,7 @@ global tangent matrix and its right hand side are stored in a
 \cpp{model\_state} structure.
 
 \subsection{The model state variable}
-\index{GETFEM!getfem::model\_state} The \cpp{model_state} object is an
+\index{GETFEM!getfem::model\_state} The \getfemmodelstate object is an
 object which stores the state of the system and the tangent system
 with eventual constraints. There are two predefined \cpp{model_state} types:
 \begin{cppcode}
@@ -1753,7 +1817,7 @@ problems ...) or a modifier of such problems (addition of a Dirichlet
 or Neumann condition, source term, incompressibility term ...).  Each
 brick will participate on the global linear system to be solved (the
 tangent system for non linear problem).
-A brick is an object which derives from \cpp{mdbrick_abstract<MODEL_STATE>} with 
+A brick is an object which derives from \getfemmdbrickabstract\cpp{<MODEL_STATE>} with 
 the following virtual methods to be defined:\\[0.5cm]
 
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1781,7 +1845,7 @@ Of course, each specific brick may have additional methods to build
 the brick, define some parameters and extract the solution from the
 model state variable. The brick may also do some extra efforts
 in order to avoid unecessary recomputations (see for example the
-\cpp{K_uptodate} flag of the \cpp{mdbrick_abstract_linear_pde} brick).
+\cpp{K_uptodate} flag of the \getfemmdbrickabstractlinearpde brick).
 
 \subsection{Brick parameters}
 \index{GETFEM!getfem::mdbrick_parameter}
@@ -1790,7 +1854,7 @@ Many brick depend on one or more parameter fields. For example, the
 linear elasticity brick uses the two Lamé coefficients $\lambda$ and
 $\mu$.  These Lamé coefficients are described as a field (i.e. and
 \cpp{mesh_fem} and a vector of dof values), in a template structure
-\cpp{getfem::mdbrick_parameter<VECTOR_TYPE>}.
+\getfemmdbrickparameter\cpp{<VECTOR_TYPE>}.
 
 Some problems require a matrix or a tensor field, instead of a scalar
 field. For example, the brick responsible for the Dirichlet condition
