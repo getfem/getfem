@@ -23,7 +23,7 @@
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
-*/
+ */
 
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
@@ -31,15 +31,10 @@
 #include <getfem_import.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_Coulomb_friction.h>
+#include <getfem_model_solvers.h>
 #include <getfem_derivatives.h>
 #include <gmm.h>
 #include <fstream>
-/* try to enable the SIGFPE if something evaluates to a Not-a-number
- * of infinity during computations
- */
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -49,7 +44,7 @@ using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
- * default types of getfem_modeling.h
+ * default types of getfem_model_solvers.h
  */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
@@ -64,17 +59,16 @@ struct friction_problem {
     DIRICHLET_BOUNDARY, CONTACT_BOUNDARY, PERIODIC_BOUNDARY1,
     PERIODIC_BOUNDARY2 
   };
-  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh mesh;  /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */ 
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
-  scalar_type ffff, rho, PG;       /* density, and gravity                         */
+  scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers         */
   
   int scheme;  /* 0 = theta method, 1 = Newmark, 2 = middle point,           */
                /* 3 = middle point with separated contact forces.            */
@@ -91,17 +85,15 @@ struct friction_problem {
   void stationary(plain_vector &U0, plain_vector &LN, plain_vector &LT);
   void solve(void);
   void init(void);
-  friction_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_coef(mesh), mf_vm(mesh) {}
+  friction_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_vm(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
 void friction_problem::init(void) {
-
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
-
 					       "Name of integration method");
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -114,9 +106,8 @@ void friction_problem::init(void) {
   mesh.optimize_structure();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
-  ffff = PARAM.real_value("FFFF", "");
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   rho = PARAM.real_value("RHO", "Density");
@@ -164,8 +155,8 @@ void friction_problem::init(void) {
   mf_vm.set_classical_discontinuous_finite_element(1);
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
-  const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
-  if (data_fem_name == 0) {
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
@@ -177,22 +168,17 @@ void friction_problem::init(void) {
 			      getfem::fem_descriptor(data_fem_name));
   }
   
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
-
   /* set boundary conditions */
   base_node center(0.,0.,20.);
   std::cout << "Reperage des bord de contact et Dirichlet\n";  
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
     for (size_type f = 0; f < nf; f++) {
-
       if (!mesh.is_convex_having_neighbour(cv, f)) {
-
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
-	if (un[N-1] < -0.000001 && (N != 3 || (bgeot::vect_dist2(pt, center)
+	if (un[N-1] < -0.000001 && (N != 3 || (gmm::vect_dist2(pt, center)
 			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
 	  mesh.region(CONTACT_BOUNDARY).add(cv, f); 
 	if (un[0] > 0.98) mesh.region(PERIODIC_BOUNDARY1).add(cv, f); 
@@ -215,7 +201,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu);
+    ELAS(mim, mf_u, lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -230,7 +216,8 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
-  getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
+  getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, DIRICHLET_BOUNDARY);
+  DIRICHLET.rhs().set(mf_rhs, F);
 
   // contact condition for Lagrange elements
   dal::bit_vector cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
@@ -274,7 +261,8 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
       }
   }
   gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
-  getfem::mdbrick_constraint<> PERIODIC(FRICTION, BP, F);
+  getfem::mdbrick_constraint<> PERIODIC(FRICTION);
+  PERIODIC.set_constraints(BP, F);
   getfem::standard_model_state MS(PERIODIC);
   
   FRICTION.set_r(r); 
@@ -286,7 +274,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   FRICTION.set_stationary(true);
 
   cout << "Computation of the stationary problem\n";
-  gmm::iteration iter(residu, noisy, 40000);
+  gmm::iteration iter(residual, noisy, 40000);
   getfem::standard_solve(MS, PERIODIC, iter);
 
   gmm::copy(ELAS.get_solution(MS), U0);
@@ -348,7 +336,7 @@ void friction_problem::solve(void) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   N = mesh.dim();
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
- 
+
   size_type ref_dof = 0;
   for (size_type i = 1; i < mf_u.nb_dof(); ++i)
     if (mf_u.point_of_dof(i)[N-1] < mf_u.point_of_dof(ref_dof)[N-1])
@@ -356,9 +344,12 @@ void friction_problem::solve(void) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu);
+    ELAS(mim, mf_u, lambda, mu);
 
-  //f[N-1] = -rho*PG + (ffff*2*rho*init_vert_speed*init_vert_speed)/(3*init_vert_pos);
+  scalar_type h = mesh.minimal_convex_radius_estimate();
+  cout << "minimal convex radius estimate : " << h << endl;
+  cout << "CFL estimate = "
+       << h / gmm::sqrt((lambda + 2.0 * mu) / rho) << endl;
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -373,7 +364,8 @@ void friction_problem::solve(void) {
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
-  getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
+  getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, DIRICHLET_BOUNDARY);
+  DIRICHLET.rhs().set(mf_rhs, F);
   
   // contact condition for Lagrange elements
   dal::bit_vector cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
@@ -396,7 +388,7 @@ void friction_problem::solve(void) {
 	     friction_coef * ((scheme == 3) ? (1./theta) : 1.), BT);
 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> DYNAMIC(FRICTION, mf_coef, rho);
+  getfem::mdbrick_dynamic<> DYNAMIC(FRICTION, rho);
   if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
 
   // Eventual periodic condition (lagrange element only).
@@ -423,7 +415,8 @@ void friction_problem::solve(void) {
       }
   }
   gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
-  getfem::mdbrick_constraint<> PERIODIC(DYNAMIC, BP, F);
+  getfem::mdbrick_constraint<> PERIODIC(DYNAMIC);
+  PERIODIC.set_constraints(BP, F);
   
   cout << "Total number of variables: " << PERIODIC.nb_dof() << endl;
   getfem::standard_model_state MS(PERIODIC);
@@ -461,20 +454,20 @@ void friction_problem::solve(void) {
   }
  
   gmm::clear(A0);
-  gmm::iteration iter(residu, 0, 40000);
+  gmm::iteration iter(residual, 0, 40000);
   if ((scheme == 0 || scheme == 1) && !nocontact_mass && !init_stationary) {
     plain_vector FA(mf_u.nb_dof());
-    gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U0, -1.0),
- 	      VOL_F.source_term(), FA);
+    gmm::mult(ELAS.get_K(), gmm::scaled(U0, -1.0),
+ 	      VOL_F.get_F(), FA);
     gmm::mult_add(gmm::transposed(BN), LN0, FA);
     gmm::mult_add(gmm::transposed(BT), LT0, FA);
-    gmm::cg(DYNAMIC.mass_matrix(), A0, FA, gmm::identity_matrix(), iter);
+    gmm::cg(DYNAMIC.get_M(), A0, FA, gmm::identity_matrix(), iter);
   }
   iter.set_noisy(noisy);
 
-  scalar_type J0 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U0, U0)
-    + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V0, V0)
-    - gmm::vect_sp(VOL_F.source_term(), U0);
+  scalar_type J0 = 0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
+    + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V0, V0)
+    - gmm::vect_sp(VOL_F.get_F(), U0);
 
   std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
@@ -494,13 +487,17 @@ void friction_problem::solve(void) {
     exp->serie_add_object("vonmisessteps");
   }
   
-
-  std::ofstream output1((datafilename + "_result.txt").c_str());   
-  std::ofstream output2((datafilename + "_energy.txt").c_str());
-  std::ofstream output3((datafilename + "_velocity.txt").c_str());
-  std::ofstream output4((datafilename + "_normalstress.txt").c_str());
-  std::ofstream output5((datafilename + "_displacement.txt").c_str());
-
+  std::ofstream output1((datafilename + "_result.dat").c_str());   
+//   std::ofstream output2((datafilename + "_energy.txt").c_str());
+//   std::ofstream output3((datafilename + "_velocity.txt").c_str());
+//   std::ofstream output4((datafilename + "_normalstress.txt").c_str());
+//   std::ofstream output5((datafilename + "_displacement.txt").c_str());
+  
+  std::ofstream Houari1("iter", std::ios::out);   
+  std::ofstream Houari2("nrj", std::ios::out);
+  std::ofstream Houari3("vts", std::ios::out);
+  std::ofstream Houari4("FN0", std::ios::out);
+  std::ofstream Houari5("depl", std::ios::out);
   
   while (t <= T) {
 
@@ -509,16 +506,15 @@ void friction_problem::solve(void) {
       a = 1./(dt*dt*theta*theta); b = 1.; beta_ = 1./(theta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, dt*a), U1);
       gmm::add(gmm::scaled(A0, (1.-theta)/theta), U1);
-      gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
+      gmm::mult(DYNAMIC.get_M(), U1, DF);
       gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, -dt*(1.-theta)), WT);
       gmm::clear(WN);
       break;
     case 1 :
-      
       a = 2./(dt*dt*beta); b = 1.; beta_ = 2.*gamma/(beta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, a*dt), U1);
       gmm::add(gmm::scaled(A0, (1.-beta)/beta), U1);
-      gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
+      gmm::mult(DYNAMIC.get_M(), U1, DF);
       gmm::add(gmm::scaled(U0, -1.),
 	       gmm::scaled(V0, dt*(beta*0.5/gamma -1.)), WT);
       gmm::add(gmm::scaled(A0, dt*dt*0.5*(beta-gamma)/gamma), WT);
@@ -527,7 +523,7 @@ void friction_problem::solve(void) {
     case 2 : case 7 :
       a = 4./(dt*dt); b = 1.; beta_ = 2./dt; alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
-      gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
+      gmm::mult(DYNAMIC.get_M(), U1, DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
       gmm::clear(WN);
       break;
@@ -535,28 +531,26 @@ void friction_problem::solve(void) {
       // for the contact forces to define the friction threshold
       a = 2./(dt*dt); b = 1.;  beta_ = 1./dt; alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
-      gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
+      gmm::mult(DYNAMIC.get_M(), U1, DF);
       gmm::mult_add(gmm::transposed(BT), gmm::scaled(LN0, (1.-theta)), DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
       gmm::clear(WN);
       break;
     case 4 : // Paoli-Schatzman scheme DF --> F^n
-      gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U1, -1.),
-		VOL_F.source_term(), A1);
+      gmm::mult(ELAS.get_K(), gmm::scaled(U1, -1.),
+		VOL_F.get_F(), A1);
       iter.init();
-      gmm::cg(DYNAMIC.mass_matrix(), DF, A1, gmm::identity_matrix(), iter);
-      gmm::mult(BN, gmm::scaled(DF, -1.), LN1);
-      
+      gmm::cg(DYNAMIC.get_M(), DF, A1, gmm::identity_matrix(), iter);
       break;
     case 5:
       a = 4./(dt*dt); b = 1.; beta_ = 1./(2.*dt); alpha_ = 1./(1.+restit);
       if (t == 0)
 	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
       gmm::add(gmm::scaled(U1, 2.*a), gmm::scaled(U0, -a), U2);
-      gmm::mult(DYNAMIC.mass_matrix(), U2, DF);
+      gmm::mult(DYNAMIC.get_M(), U2, DF);
       gmm::add(gmm::scaled(U1, -2.), gmm::scaled(U0, -1.), U2);
-      gmm::mult_add(ELAS.stiffness_matrix(), U2, DF);
-      gmm::add(gmm::scaled(VOL_F.source_term(), 3.), DF);
+      gmm::mult_add(ELAS.get_K(), U2, DF);
+      gmm::add(gmm::scaled(VOL_F.get_F(), 3.), DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
       gmm::copy(gmm::scaled(U0, restit), WN);
       break;
@@ -565,10 +559,10 @@ void friction_problem::solve(void) {
       if (t == 0)
 	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
       gmm::add(gmm::scaled(U1, 2.*a), gmm::scaled(U0, -a), U2);
-      gmm::mult(DYNAMIC.mass_matrix(), U2, DF);
+      gmm::mult(DYNAMIC.get_M(), U2, DF);
       gmm::add(gmm::scaled(U1, -2.), gmm::scaled(U0, -1.), U2);
-      gmm::mult_add(ELAS.stiffness_matrix(), U2, DF);
-      gmm::add(gmm::scaled(VOL_F.source_term(), 3.), DF);
+      gmm::mult_add(ELAS.get_K(), U2, DF);
+      gmm::add(gmm::scaled(VOL_F.get_F(), 3.), DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
       gmm::copy(gmm::scaled(U0, -1.), WN);
       break;
@@ -624,9 +618,10 @@ void friction_problem::solve(void) {
       gmm::add(V0, V1);      
       break;
     case 2 : case 7 :
-      gmm::copy(U1, V1);
+      gmm::copy(U1, V1); gmm::copy(U1, Udemi);
       gmm::add(gmm::scaled(V1, 2.), gmm::scaled(U0, -1.), U1);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
+      gmm::copy(gmm::scaled(V1, 0.5), Vdemi);
       J_friction1 = J_friction0 + dt * 0.5 * gmm::vect_sp(BT, V1, LT1);
       gmm::add(gmm::scaled(V0, -1), V1);
 
@@ -647,7 +642,7 @@ void friction_problem::solve(void) {
       break;
     case 4 :
       if (t == 0)
-	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
+	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'ordre superieur ...
       
       gmm::add(gmm::scaled(DF, dt*dt), gmm::scaled(U0, restit-1.), U2);
       gmm::add(gmm::scaled(U1, 2.), U2);
@@ -659,17 +654,14 @@ void friction_problem::solve(void) {
       gmm::scale(U2, 1.+restit);
       gmm::add(gmm::scaled(U0, -restit), U2);
       gmm::add(gmm::scaled(U2, 1./(2.*dt)), gmm::scaled(U0, -1./(2.*dt)), V1);
-      gmm::add(gmm::scaled(U2, 1./dt), gmm::scaled(U1, -1./dt), Vdemi);
-
       
-
-      // /* calcul de la force normale */
-//       gmm::add(U0, gmm::scaled(U1, -2.), A0);
-//       gmm::add(U2, A0);
-//       gmm::scale(A0, -1./(dt*dt));
-//       gmm::add(DF, A0);
-//       gmm::mult(DYNAMIC.mass_matrix(), A0, A1);
-//       gmm::mult(BN, A1, LN1);
+      /* calcul de la force normal */
+      gmm::add(U0, gmm::scaled(U1, -2.), A0);
+      gmm::add(U2, A0);
+      gmm::scale(A0, -1./(dt*dt));
+      gmm::add(DF, A0);
+      gmm::mult(DYNAMIC.get_M(), A0, A1);
+      gmm::mult(BN, A1, LN1);
 
       break;
     case 5:
@@ -683,7 +675,6 @@ void friction_problem::solve(void) {
       gmm::scale(LT1, 1./4.);
       gmm::add(gmm::scaled(U2, 0.5), gmm::scaled(U1, 0.5), Udemi);
       gmm::add(gmm::scaled(U2, 1./dt), gmm::scaled(U1, -1./dt), Vdemi);
-
       break;
     }
     
@@ -694,26 +685,15 @@ void friction_problem::solve(void) {
 //       cout << "Contact pressure : " << LN1 << endl;
 //     }
 
-    scalar_type J1;
-    if (scheme == 5 || scheme == 6)
-      J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), Udemi, Udemi)
-      + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), Vdemi, Vdemi)
-      - gmm::vect_sp(VOL_F.source_term(), Udemi);
-    else
-      J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U1, U1)
-      + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V1, V1)
-      - gmm::vect_sp(VOL_F.source_term(), U1);
-    
-    /* rajouter la force qui joue le role du contact mais sans */
-   //  cout << "depl0=" << init_vert_pos << endl;
-//     for (size_type i=0; i < mf_u.nb_dof(); ++i)
-// 	if ((i % N) == 0) { 
-// 	  if (U0[i+N-1] = init_vert_pos/2 ){
-// 	    cout << "DF=" << DF[i+N-1] << endl;
-// 	    DF[i+N-1] += rho*PG + ffff;
-// 	    cout << "DF=" << DF[i+N-1] << endl;
-// 	  }
-// 	} 
+    scalar_type J1(0), Jdemi(0);
+    if (scheme == 5 || scheme == 6 || scheme == 2)
+      J1 = Jdemi = 0.5*gmm::vect_sp(ELAS.get_K(), Udemi, Udemi)
+      + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), Vdemi, Vdemi)
+      - gmm::vect_sp(VOL_F.get_F(), Udemi);
+    if (scheme != 5 && scheme != 6)
+      J1 = 0.5*gmm::vect_sp(ELAS.get_K(), U1, U1)
+      + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V1, V1)
+      - gmm::vect_sp(VOL_F.get_F(), U1);
 
     if (dt_adapt && gmm::abs(J0-J1) > 1E-4 && dt > 1E-5) {
       dt /= 2.;
@@ -738,8 +718,11 @@ void friction_problem::solve(void) {
 	}
       }
 
-      cout << "t = " << t << " energy : " << J1
-	   << " friction energy : " << J_friction1
+      cout << "t = " << t << " energy : ";
+      if (scheme == 5 || scheme == 6) cout << Jdemi;
+      else if (scheme == 2) cout << J1 << " energy at midpoint : " << Jdemi;
+      else cout << J1;
+      cout << " friction energy : " << J_friction1
 	   << " app. fric. coef : " << Friction_coef_ap
 	   << " (st " << nbst << ", sl " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
@@ -747,22 +730,26 @@ void friction_problem::solve(void) {
       
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
       gmm::copy(LN1, LN0); gmm::copy(LT1, LT0); J_friction0 = J_friction1;
-      if (scheme == 4 || scheme == 5 || scheme == 6) gmm::copy(U2, U1);	
-      
+      if (scheme == 4 || scheme == 5 || scheme == 6) gmm::copy(U2, U1);
       if (dxexport && t >= t_export-dt/20.0) {
 	plain_vector UU1(N), VV1(N);
 	plain_vector LLN1(gmm::vect_size(U0));
 	gmm::mult(gmm::transposed(BN), LN1, LLN1);
 	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
-
 	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
 
-	output1 << t/dt << " " << J1 << "\n";
- 	output2 << J1 << "\n";
- 	output3 << VV1[N-1] << "\n";
- 	output4 << -LLN1[ref_dof+N-1] << "\n";
- 	output5 << UU1[N-1] << "\n";
+	output1 << t/dt << J1 << "\n";
+// 	output2 << J1 << "\n";
+// 	output3 << gmm::vect_norm2(VV1) << "\n";
+// 	output4 << -LLN1[ref_dof+N-1] << "\n";
+// 	output5 <<  gmm::vect_norm2(UU1) << "\n";
 
+	Houari1 << t/dt << "\n";
+	Houari2 << J1   << "\n";
+	Houari3 << VV1[N-1] << "\n";
+	Houari4 << -LLN1[ref_dof+N-1]   << "\n";
+	Houari5 << UU1[N-1] << "\n";
+      
 
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");
@@ -774,7 +761,6 @@ void friction_problem::solve(void) {
 	t_export += dtexport;
       }
     }
-    
   }
 }
   
@@ -783,12 +769,9 @@ void friction_problem::solve(void) {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb); // in order to debug
 
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
-#endif
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
     friction_problem p;
