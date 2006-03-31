@@ -12,6 +12,9 @@ PNGFIGS=$(PDFFIGS:.pdf=.png) gmmlogo.png gmmlogo_small.png
 .eps.pdf:
 	epstopdf $(@:.pdf=.eps) --outfile=$@
 
+gmmuser.idx : gmmuser.tex
+	touch gmmuser.idx
+
 gmmuser.ilg: gmmuser.idx
 	makeindex gmmuser.idx
 
@@ -33,7 +36,7 @@ html:	gmmuser.tex gmmuser.ilg $(PNGFIGS)
 	(cd gmmuser && ../cleanup_html_doc.pl)
 
 pdf: gmmuser.pdf
-	if [ -d ../../getfem_html ]; then \
+	if [ -d ../../../getfem_html ]; then \
            cp gmmuser.pdf ../../getfem_html; \
         fi
 
@@ -42,7 +45,7 @@ htmltar: html
 	cp docstyle.css gmmuser/
 	cp next.gif up.gif previous.gif gmmuser/
 	tar czvf html_gmmuser.tar.gz gmmuser
-	if [ -d ../../getfem_html ]; then \
+	if [ -d ../../../getfem_html ]; then \
            cp html_gmmuser.tar.gz ../../getfem_html; \
         fi
 
