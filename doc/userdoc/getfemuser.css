@@ -345,6 +345,13 @@ body	{
 .inlinecppcode {
 	color:#600;
 	}
+.inlinecppcode { 
+  text-decoration: none;
+  background: transparent;
+  border-right: 1px dashed white; 
+  border-left: 1px dashed white;
+  color: #000080; 
+}
 
 .mlabcode {
 	border: solid;

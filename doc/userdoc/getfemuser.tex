@@ -101,8 +101,8 @@
 
 \W \newcommand{\cpp}[1]{\xmlattributes*{tt}{class="inlinecppcode"}\texttt{#1}}
 \W \newcommand{\filename}[1]{\xmlattributes*{tt}{style="color:red"}\texttt{#1}}
-\W \newcommand{\doxfilename}[2]{\texttt{\WEB{../getfem_reference/#2.html}{#1}}\xspace}
-\W \newcommand{\doxref}[2]{\WEB{../getfem_reference/#2.html}{#1}\xspace}
+\W \newcommand{\doxfilename}[2]{\xmlattributes*{tt}{class="inlinecppcode"}\texttt{\WEB{../getfem_reference/#2.html}{#1}}\xspace}
+\W \newcommand{\doxref}[2]{\xmlattributes*{tt}{class="inlinecppcode"}\texttt{\WEB{../getfem_reference/#2.html}{#1}}\xspace}
 
 \T \newenvironment{ctableau}[2]{\begin{center}\begin{supertabular}{#1}}{\end{supertabular}\end{center}}
 \W \newenvironment{ctableau}[2]{\xmlattributes*{table}{border=1 align="center"}\begin{tabular}{#2}}{\end{tabular}}
@@ -1583,58 +1583,58 @@ Getfem++ provides ``slicers'' objects which are dedicated to
 generating post-treatment data from meshes and solutions. These
 slicers, defined in the file \getfemmeshslicersh take a mesh
 (and sometimes a mesh_fem with a solution field) on input, and produce
-a set of simplexes after applying some operations such as
+a set of simplices after applying some operations such as
 ``intersection with a plane'', ``extraction of the mesh boundary'',
 ``refinement of each convex'', ``extraction of isosurfaces'', etc. The
 output of these slicers can be stored in a
-\cpp{getfem::stored_mesh_slice} object (see the file
+\getfemstoredmeshslice object (see the file
 \getfemmeshsliceh. A \cpp{stored_mesh_slice} object may be
 considered as a P1 discontinuous FEM on a non-conformal mesh with fast
 interpolation ability. Slices are made of segments, triangles and tetrahedrons, so the convexes of the original mesh are always simplexified.
 
 
-All slicer operation inherit from \cpp{getfem::slicer_action}, it is very easy to create a new slicer. 
-Example of slicers are (some of them use a \cpp{mesh_slice_cv_dof_data_base} which is just a reference to a \cpp{mesh\_fem mf} and a field \cpp{U} on this \cpp{mesh_fem}.
+All slicer operation inherit from \getfemsliceraction, it is very easy to create a new slicer. 
+Example of slicers are (some of them use a \getfemmeshslicecvdofdatabase which is just a reference to a \cpp{mesh\_fem mf} and a field \cpp{U} on this \cpp{mesh_fem}.
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{slicer_none()} & empty slicer.\\
+  \getfemslicernone & empty slicer.\\
 
-  \cpp{slicer_boundary(const mesh \&m, \ldots)} & extract the boundary of a mesh. \\
+  \getfemslicerboundary\cpp{(const mesh \&m, \ldots)} & extract the boundary of a mesh. \\
 
-  \cpp{slicer_apply_deformation(mesh_slice_cv_dof_data_base \&)} & apply a deformation to the mesh , the deformation field is defined on a mesh_fem. \\
+  \getfemslicerapplydeformation\cpp{(mesh_slice_cv_dof_data_base \&)} & apply a deformation to the mesh , the deformation field is defined on a mesh_fem. \\
   
-  \cpp{slicer_half_space(base_node x0, base_node n, int orient)} & cut
+  \getfemslicerhalfspace\cpp{(base_node x0, base_node n, int orient)} & cut
   the mesh with a half space (if \cpp{orient} = -1 or +1), or a plane
   (if \cpp{orient} = 0), \cpp{x0} being a node of the plane, and
   \cpp{n} being a normal of the plane.\\
   
-  \cpp{slicer_sphere(base_node x0, scalar_type R, int orient)} &
+  \getfemslicersphere\cpp{(base_node x0, scalar_type R, int orient)} &
   cut with the interior (\cpp{orient}=-1), boundary (\cpp{orient}=0) or exterior (\cpp{orient}=+1) or a sphere of center \cpp{x0} and radius \cpp{R}.\\
   
-  \cpp{slicer_cylinder(base_node x0, base_node x1, scalar_type R, int orient)} &
+  \getfemslicercylinder\cpp{(base_node x0, base_node x1, scalar_type R, int orient)} &
   slice with the interior/boundary/exterior of a cylinder of axis \cpp{(x0,x1)} and radius \cpp{R}.\\
     
-  \cpp{slicer_isovalues(const mesh_slice_cv_dof_data_base\& mfU, scalar_type val, int orient)} & cut with the isosurface defined by the scalar field \cpp{mfU} and \cpp{val}. Keep only simplexes where $u(x)$<\cpp{val} (\cpp{orient}=-1), $u(x)$=cpp{val} (\cpp{orient=0} or $u(x)$>\cpp{val}.\\
+  \getfemslicerisovalues\cpp{(const mesh_slice_cv_dof_data_base\& mfU, scalar_type val, int orient)} & cut with the isosurface defined by the scalar field \cpp{mfU} and \cpp{val}. Keep only simplices where $u(x)$<\cpp{val} (\cpp{orient}=-1), $u(x)$=cpp{val} (\cpp{orient=0} or $u(x)$>\cpp{val}.\\
 
-  \cpp{slicer_mesh_with_mesh(const mesh\& m2)} & cut the convexes with the convexes of the mesh \cpp{m2}.\\
+  \getfemslicermeshwithmesh\cpp{(const mesh\& m2)} & cut the convexes with the convexes of the mesh \cpp{m2}.\\
 
-  \cpp{slicer_union(const slicer_action \&sA, const slicer_action \&sB)} & merges the output of two slicer operations.\\
+  \getfemslicerunion\cpp{(const slicer_action \&sA, const slicer_action \&sB)} & merges the output of two slicer operations.\\
 
-  \cpp{slicer_intersect(slicer_action \&sA, slicer_action \&sB)} & intersect the output of two slicer operations.\\
+  \getfemslicerintersect\cpp{(slicer_action \&sA, slicer_action \&sB)} & intersect the output of two slicer operations.\\
     
-  \cpp{slicer_complementary(slicer_action \&s)} & return the complementary of a slicer operation.\\
+  \getfemslicercomplementary\cpp{(slicer_action \&s)} & return the complementary of a slicer operation.\\
   
-  \cpp{slicer_build_edges_mesh(mesh\& edges\_m)} & slicer whose side-effect is to build the mesh \cpp{edges_m} with the edges of the sliced mesh.\\
+  \getfemslicerbuildedgesmesh\cpp{(mesh\& edges\_m)} & slicer whose side-effect is to build the mesh \cpp{edges_m} with the edges of the sliced mesh.\\
 
-  \cpp{slicer_build_mesh(mesh \&m)} & in some (rare) occasions , it might be useful to build a mesh from a slice. Note however that there is absolutely no guaranty that the mesh will be conformal (although it is often the case).\\
+  \getfemslicerbuildmesh\cpp{(mesh \&m)} & in some (rare) occasions , it might be useful to build a mesh from a slice. Note however that there is absolutely no guaranty that the mesh will be conformal (although it is often the case).\\
 
-  \cpp{slicer_build_stored_mesh_slice(stored_mesh_slice\& sl)} & record the output of the slicing operation into a \cpp{stored_mesh_slice} object. Note that it is often more convenient to use the \cpp{stored_mesh_slice::build(\ldots)} method to achieve the same result.\\
+  \getfemslicerbuildstoredmeshslice\cpp{(stored_mesh_slice\& sl)} & record the output of the slicing operation into a \cpp{stored_mesh_slice} object. Note that it is often more convenient to use the \cpp{stored_mesh_slice::build(\ldots)} method to achieve the same result.\\
 
-  \cpp{slicer_explode(c)} & shrink or expand each convex with respect to its gravity center.\\
+  \getfemslicerexplode\cpp{(c)} & shrink or expand each convex with respect to its gravity center.\\
 \end{ctableau}
 
-In order to apply these slicers, a \cpp{getfem::mesh_slicer(mesh\&m)}
-object should be created, and the \cpp{slicer_action} are then stacked
+In order to apply these slicers, a \getfemmeshslicer\cpp{(mesh\&m)}
+object should be created, and the \getfemsliceraction are then stacked
 with \cpp{mesh_slicer::push_back_action(slicer_action\&)} and
 \cpp{mesh_slicer::push_front_action(slicer_action\&)}. The slicing
 operation is finally executed with \cpp{mesh_slicer::exec(int
@@ -1668,7 +1668,7 @@ int nrefine = 3;
 slicer.exec(nrefine);
 \end{cppcode}
 
-In order to build a \cpp{stored_mesh_slice} object during the slicing operation, the \cpp{stored_mesh_slice::build()} method is often more convenient than using explicitely the \cpp{slicer_build_stored_mesh_slice} slicer:
+In order to build a \getfemstoredmeshslice object during the slicing operation, the \cpp{stored_mesh_slice::build()} method is often more convenient than using explicitely the \cpp{slicer_build_stored_mesh_slice} slicer:
 
 \begin{cppcode}
 getfem::stored_mesh_slice sl;
@@ -1677,7 +1677,7 @@ sl.build(m, getfem::slicer_boundary(m),
          nrefine);
 \end{cppcode}
 
-The simplest way to use these slices is to export them to VTK or opendx. The file \getfemexporth contains two classes: \cpp{vtk_export} and \cpp{dx_export}.
+The simplest way to use these slices is to export them to VTK or opendx. The file \getfemexporth contains two classes: \getfemvtkexport and \getfemdxexport.
 
 \subsection{Exporting mesh, mesh_fem or slices to VTK}
 
@@ -1707,22 +1707,29 @@ exp.write_point_data(mfp, P, "pressure"); // write a scalar field
 exp.write_point_data(mfu, U, "displacement"); // write a vector field
 \end{cppcode}
 
-Note however that with this approach, the \cpp{ctk_export} will map each convex/fem of \cpp{mfu} to a VTK element type. As VTK does not handle elements of degree greater than 2, there will be a loss of precision for higher degree FEMs.
+Note however that with this approach, the \cpp{vtk_export} will map each convex/fem of \cpp{mfu} to a VTK element type. As VTK does not handle elements of degree greater than 2, there will be a loss of precision for higher degree FEMs.
 
 \subsection{Exporting mesh, mesh\_fem or slices to OpenDX}
 
 The opendx data file is more versatile than the VTK one. It is able to
-store more that one mesh, any number of fields on these meshes etc. However, it does only handle elements of degree 1 and 0 (segments, triangles, tetrahedrons, quadrangles etc.). And each mesh can only be made of one type of element, it cannot mix triangles and quadrangles in a same object. For that reason, it is generally preferable to export \cpp{getfem::stored_mesh_slice} objects (in which non simplex elements are simplexified, and which allows refinement of elements) than \cpp{getfem::mesh_fem} and \cpp{getfem::mesh} objects.
+store more that one mesh, any number of fields on these meshes etc.
+However, it does only handle elements of degree 1 and 0 (segments,
+triangles, tetrahedrons, quadrangles etc.). And each mesh can only be
+made of one type of element, it cannot mix triangles and quadrangles
+in a same object. For that reason, it is generally preferable to
+export \getfemstoredmeshslice objects (in which non simplex
+elements are simplexified, and which allows refinement of elements)
+than \getfemmeshfem and \getfemmesh objects.
 
-The basic usage is very similar to \cpp{vtk_export}:
+The basic usage is very similar to \getfemvtkexport:
 
 \begin{cppcode}
-  getfem::dx_export exp("output.dx");
+  \getfemdxexport exp("output.dx");
   exp.exporting(sl);
   exp.write_point_data(mfu, U, "displacement");
 \end{cppcode}
 
-Moreover, \cpp{dx_export} is able to reopen a '.dx' file and append
+Moreover, \getfemdxexport is able to reopen a '.dx' file and append
 new data into it.  Hence it is possible, if many time-steps are to be
 saved, to view intermediate results in OpenDX during the computations. The prototype of the constructor is:
 \begin{cppcode}
@@ -1730,7 +1737,7 @@ saved, to view intermediate results in OpenDX during the computations. The proto
   dx_export(std::ostream \&os_, bool ascii = false);
 \end{cppcode}
 
-An example of use, with multiple time steps (taken from \filename{tests/dynamic_friction.cc}:
+An example of use, with multiple time steps (taken from \filename{tests/dynamic_friction.cc}):
 \begin{cppcode}
   getfem::stored_mesh_slice sl;
   getfem::dx_export exp("output.dx", false);
@@ -1751,7 +1758,7 @@ An example of use, with multiple time steps (taken from \filename{tests/dynamic_
   \}
 \end{cppcode}
 
-In this example, an OpenDX ``time series'' is created, for each time steps, two data fields are saved: a vector field called ``deformation'', and a scalar field called ``von_mises_stress''. 
+In this example, an OpenDX ``time series'' is created, for each time step, two data fields are saved: a vector field called ``deformation'', and a scalar field called ``von_mises_stress''. 
 
 Note also that the \cpp{dx_export::exporting_mesh_edges()} function has been called. It implies that for each mesh exported, the edges of the original mesh are also exported (into another opendx mesh). In this example, you have access in OpenDX to 4 data fields: ``deformation'', ``deformation_edges'', ``von_mises_stress'' and ``von_mises_stress_edges''.
 
@@ -1760,17 +1767,22 @@ The \filename{tests/dynamic_friction.net} is an example of opendx program for th
 
 \section{Interpolation on different meshes}
 
-The file \getfeminterpolationh defines the function \cpp{getfem:ïnterpolation(\ldots)} to interpolate a solution from a given mesh/finite element method on another mesh and/or another Lagrange finite element method.\\[0.5cm]
+The file \getfeminterpolationh defines the function \cpp{getfem:ïnterpolation(\ldots)} to interpolate a solution from a given mesh/finite element method on another mesh and/or another Lagrange finite element method.
 \index{GETFEM!getfem::interpolation}
-\cpp{getfem::interpolation(mf1, mf2, U, V); }\\[0.5cm]
-where \cpp{mf1}  is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the source field \cpp{U} is defined, \cpp{mf2} is the finite element method on which \cpp{U} will be interpolated.
+
+\begin{cppcode}
+  getfem::interpolation(mf1, mf2, U, V);
+\end{cppcode}
+where \cpp{mf1}  is a variable of type \getfemmeshfem and describes the finite element method on which the source field \cpp{U} is defined, \cpp{mf2} is the finite element method on which \cpp{U} will be interpolated.
 
 The dimension of \cpp{U} should be a multiple of \cpp{mf1.nb_dof()}, and the interpolated data \cpp{V} should be correctly sized (multiple of \cpp{mf2.nb_dof()}).
 
-IMPORTANT : \cpp{mf2} should be of Lagrange type for the interpolation to makes sense but the meshes linked to \cpp{mf1} and \cpp{mf2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain (you can interpolate a 2D mesh on a line etc.).\\
+IMPORTANT : \cpp{mf2} should be of Lagrange type for the interpolation to make sense but the meshes linked to \cpp{mf1} and \cpp{mf2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain (you can interpolate a 2D mesh on a line etc.).\\
 
 If you need to perform more than one interpolation between the same finite element methods, it might be more efficient to use the function
-\cpp{getfem::interpolation(mf1, mf2, M); }\\[0.5cm]
+\begin{cppcode}
+  getfem::interpolation(mf1, mf2, M);
+\end{cppcode}
 where \cpp{M} is a row matrix which will be filled with the linear map representing the interpolation (i.e. such that \cpp{V = MU}). The matrix should have the correct dimensions (i.e. \cpp{mf2.nb\_dof()} x \cpp{mf1.nb\_dof()}). Once this matrix is built, the interpolation is done with a simple matrix multiplication: \cpp{gmm::mult(M, U, V); }
 
 
@@ -1817,27 +1829,27 @@ problems ...) or a modifier of such problems (addition of a Dirichlet
 or Neumann condition, source term, incompressibility term ...).  Each
 brick will participate on the global linear system to be solved (the
 tangent system for non linear problem).
-A brick is an object which derives from \getfemmdbrickabstract\cpp{<MODEL_STATE>} with 
+A brick is an object which derives from \getfemmdbrickabstract\cpp{<MODEL_STATE>} (which itself derive from the non-template class \getfemmdbrickabstractcommonbase) with 
 the following virtual methods to be defined:\\[0.5cm]
 
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.proper_update()} & which is called each time the brick should
-  update itself. In particular, 
-  this function is expected to assign the correct values to
-  'proper_nb_dof' (the nb of new dof introduced by this brick),
-  'proper_nb_constraints' and 'proper_mixed_variables'. It may also precompute
-  certain components (like stiffness matrices for linear problems).\\ \hline
+  \cpp{brick.proper_update()} & called each time the brick should
+  update itself. In particular, this function is expected to assign
+  the correct values to \cpp{proper_nb_dof} (the nb of new dof
+  introduced by this brick), \cpp{proper_nb_constraints} and
+  \cpp{proper_mixed_variables}. It may also precompute certain
+  components (like stiffness matrices for linear problems).\\ \hline
 
   \cpp{brick.do_compute_tangent_matrix}\cpp{(MS, i0, j0)} & the brick
-  has to compute its own part of the tangent and
-  constraint matrices (i0 and j0 are optional arguments representing
-  the shifts in the matrices defined in MS).\\ \hline
+  has to compute its own part of the tangent and constraint matrices
+  (\cpp{i0} and \cpp{j0} are optional arguments representing the
+  shifts in the matrices defined in \cpp{MS}).\\ \hline
 
-  \cpp{brick.do_compute_residual(MS, i0, j0)} & the brick has
-  to compute its own part of the residual of the linear system and of
-  the constraint system (i0 and j0 are the shifts in the residual vectors
-  defined in MS). \\ \hline
+  \cpp{brick.do_compute_residual(MS, i0, j0)} & the brick has to
+  compute its own part of the residual of the linear system and of the
+  constraint system (\cpp{i0} and \cpp{j0} are the shifts in the
+  residual vectors defined in \cpp{MS}). \\ \hline
 
 \end{ctableau}
 
@@ -1850,7 +1862,7 @@ in order to avoid unecessary recomputations (see for example the
 \subsection{Brick parameters}
 \index{GETFEM!getfem::mdbrick_parameter}
 
-Many brick depend on one or more parameter fields. For example, the
+Many bricks depend on one or more parameter fields. For example, the
 linear elasticity brick uses the two Lamé coefficients $\lambda$ and
 $\mu$.  These Lamé coefficients are described as a field (i.e. and
 \cpp{mesh_fem} and a vector of dof values), in a template structure
@@ -1861,11 +1873,11 @@ field. For example, the brick responsible for the Dirichlet condition
 is used to impose $h(x)u(x) = r(x)$ on a region of the mesh. When the
 \cpp{mesh_fem} is a vector one ($Q \geq 1$), $h(x)$ is a $Q × Q$
 matrix field, and $r(x)$ is a vector field of dimension $Q$. That case
-is also handled by the \cpp{getfem::mdbrick_parameter} structure.
+is also handled by the \getfemmdbrickparameter structure.
 
 Basically, this structure contains
 \begin{itemize}
-  \item a \cpp{mesh_fem} (whose Qdim is always equal to one!).
+  \item a \getfemmeshfem (whose Qdim is always equal to one!).
   \item a description of the field dimensions (scalar, matrix, ..)
   \item a vector, whose length is the field number of elements times
     the \cpp{nb_dof()} of the mesh_fem. For a matrix field $h(x)$, the
@@ -1909,10 +1921,10 @@ positive scalar or a symmetric positive definite order two tensor
 field, or a symmetric positive definite order four tensor (and $u$ a vector field).
 The constructor initializes the brick for a scalar constant coefficient $k$:
 \begin{cppcode}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, k = 1.0);
+  \getfemmdbrickgenericelliptic<MODEL_STATE> brick(mim, mf_u, k = 1.0);
 \end{cppcode}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining
-the integration method used, and \cpp{mf_u} is a \cpp{mesh_fem} on the
+where \cpp{mim} is a variable of type \getfemmeshim defining
+the integration method used, and \cpp{mf_u} is a \getfemmeshfem on the
 same mesh.  \cpp{mf_u} describes the finite element method used for
 the unknown.
 
@@ -1927,7 +1939,7 @@ componentwise if the \cpp{mf_u} represent a vector field (\cpp{mf_u.get_qdim()>1
 \cpp{k} is an order two tensor coefficient, the brick represent a
 scalar generic elliptic operator which is componentwise if 
 \cpp{mf_u} is a vector field. And finally, When \cpp{k} is
-an order four tensor coefficient, the brick represent a vectorial
+an order four tensor coefficient, the brick represents a vectorial
 generic elliptic operator (for example linear elasticity with a generic Hooke tensor).
 
 
@@ -1955,37 +1967,92 @@ The following additional methods are available on this brick:
 
 
 \subsection{Source term brick}
-This brick represent either a volumic source term or a Neumann
+The brick \getfemmdbricksourceterm represents either a volumic source term or a Neumann
 condition, i.e. a term $\int_{\Omega} f.v dx$ or $\int_{\Gamma} f.v
 dx$ in the weak formulation , with $\Gamma$ a part of$\partial
 \Omega$. This brick works for both real or complex terms in scalar or
 vectorial problems. The constructor of this brick is:
 
 \begin{cppcode}
-  getfem::mdbrick_source_term<MODEL_STATE> brick(problem, mf_data, F, bound, num_fem);
+  \getfemmdbricksourceterm<MODEL_STATE> brick(problem, mf_data, F, 
+                                                 bound=-1, num_fem=0);
+  \getfemmdbricksourceterm<MODEL_STATE> brick(problem, 
+                                                 bound=-1, num_fem=0);
 \end{cppcode}
 
-where \cpp{problem} is the problem on which the source term will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the source term $f$, F is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the source term on each degree of freedom of \cpp{mf_data}, \cpp{bound} is an optional parameter specifying on which boundary of the main mesh fem of \cpp{problem} the Neumann condition is applied. If this parameter is omitted, a volumic source term will be taken into account. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
+where \cpp{problem} is the problem on which the source term will be
+added (a scalar elliptic brick for instance), \cpp{mf_data} is the
+finite element description for the source term $f$, \cpp{F} is a
+vector of type \cpp{MODEL_STATE::vector_type} which contains the
+values of the source term on each degree of freedom of \cpp{mf_data},
+\cpp{bound} is an optional parameter specifying on which boundary of
+the main mesh fem of \cpp{problem} the Neumann condition is applied.
+If this parameter is omitted, a volumic source term will be taken into
+account. \cpp{num_fem} is an optional parameter allowing to choose a
+fem is the problem has several fems (for example, in a mixed problem
+the num_fem 0 may correspond to the mesh_fem used for the velocity,
+and the num_fem 1 may correspond to the mesh_fem used for the
+pressure).
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.source_term()} &  gives the access to the parameter \cpp{F} defining the source term (see section on bricks parameters for how to change the value of the parameter)  \\ \hline
+  \cpp{brick.source_term()} &  give the access to the parameter \cpp{F} defining the source term (see section on bricks parameters for how to change the value of the parameter)  \\ \hline
 \end{ctableau}
 
 
 
 \subsection{Constraint brick}
-The constraint brick allows to add constraints on an unknown corresponding to a finite element method. This brick is a base class for the Dirichlet condition bricks for instance. It can also be used on its own to add constraints on an unknow when this unknow is not fully determinated (for instance, when only a Neumann condition is present on the boundary of the domain). This brick deals directly with the vectorial format of the unknow, i.e. with a system representing the constraints $BU=R$, where $B$ is a $n_c × n_d$ matrix, $U$ is the vector of unkown corresponding to a finite element method \cpp{mf_u} having $n_d$ dofs and $R$ is a vector of size $n_c$ corresponding to the righ hand side of the constraints. This correspond to add $n_c$ constraints to the system. These constraints have to be independant, which means that the matrix $B$ has to be of maximal rank.
+The constraint brick \getfemmdbrickconstraint adds constraints on the degrees of freedom of a mesh\_fem. This brick is a base class
+for the Dirichlet condition bricks for instance. It can also be used
+on its own to add constraints on an unknow when this unknow is not
+fully determinated (for instance, when only a Neumann condition is
+present on the boundary of the domain). This brick deals directly with
+the vectorial format of the unknow, i.e. with a system representing
+the constraints $BU=R$, where $B$ is a $n_c × n_d$ matrix, $U$ is the
+vector of unkown corresponding to a finite element method \cpp{mf_u}
+having $n_d$ dofs and $R$ is a vector of size $n_c$ corresponding to
+the right hand side of the constraints. This correspond to add $n_c$
+constraints to the system. These constraints have to be independant,
+which means that the matrix $B$ has to be of maximal rank.
 
-The brick offers three different manners to take the constraints into account. This is representied by an enum in \getfemmodelingh. The first method \cpp{getfem::AUGMENTED_CONSTRAINTS} consists in the addition of Lagrange multipliers (o ne multiplier for each constraint) so that the final linear system is augmented of the corresponding number of multipliers. The second method \cpp{getfem::PENALIZED_CONSTRAINTS} consists in a penalization of the constriaints adding the term $\frac{1}{\varepsilon} (B^TB U - B^TR)$ to the linear system. The penalization parameter $\varepsilon$ has a default value equal to $10^{-9}$. The third method \cpp{getfem::ELIMINATED_CONSTRAINTS} consists in collecting all the constraints on the system in a global constraint system (in the \cpp{model\_state} variable) and to ``eliminate'' the dofs concerned by the constraints before solving the linear system. This is done computing the kernel of the constraints and projecting the linear system on this kernel.
+The brick offers three different manners to take the constraints into
+account. This is representied by an enum in \getfemmodelingh :
+\begin{itemize}
+  \item \cpp{getfem::AUGMENTED_CONSTRAINTS} consists in the
+  addition of Lagrange multipliers (one multiplier for each constraint)
+  so that the final linear system is augmented with the corresponding
+  number of multipliers.\\
+
+  The inconvenient of this approach is that the final linear system
+  looses is larger, and is not positive definite.
+
+\item \cpp{getfem::PENALIZED_CONSTRAINTS} : add a penalization
+  $\frac{1}{\varepsilon} (B^TB U - B^TR)$ to the linear system. The penalization
+  parameter $\varepsilon$ has a default value equal to $10^{-9}$.
+
+  This method is simple and robust, and does not increase the linear
+  system. However the condition number of the final system is worse.
+
+\item \cpp{getfem::ELIMINATED_CONSTRAINTS} consists in collecting all the
+  constraints on the system in a global constraint system (in the
+  \getfemmodelstate variable) and to ``eliminate'' the dofs concerned by
+  the constraints before solving the linear system. This is done
+  computing the kernel of the constraints and projecting the linear
+  system on this kernel.
+
+  This method is efficient on ``simple cases'', but it may it is not
+  very robust with respect to high degree FEMs, it is not
+  parallelisable, and the computation of the kernel takes a
+  non-negligible amount of time.
+\end{itemize}
 
 The constructor of this brick is
 
 \begin{cppcode}
-  getfem::mdbrick_constraint<MODEL_STATE> brick(problem, num_fem);
+  \getfemmdbrickconstraint<MODEL_STATE> brick(problem, num_fem);
 \end{cppcode}
-where \cpp{problem} is the problem on which the constriaints
+where \cpp{problem} is the problem on which the constraints
 will be added (a generic elliptic brick for instance) and \cpp{num_fem}
 is an optional parameter allowing to choose a fem is the problem has several fems (0 is the default).
 
@@ -2006,12 +2073,23 @@ The following additional methods are available on this brick:
 \end{ctableau}
 
 \subsection{Dirichlet condition brick}
-This brick allows to define a Dirichlet condition on a part $\Gamma$ of the
-boundary of the domain (i.e. set the value of the unknown on this part of
-the boundary $u = r$). This brick is derived from the constraint brick and automatically set the constraints system $BU=R$. As a consequence, the methods of the constraint brick are available (\cpp{brick.set\_constraints\_type(c)} and \cpp{brick.set\_penalization\_parameter(eps)}).\\ In order to be able to treat arbitraries finite element methods, the Dirichlet condition is considered in the weak form $\int_{\Gamma} u(x)v(x) d\Gamma = \int_{\Gamma} r(x)v(x) d\Gamma$ for all $v$ taken in a space of convenient multipliers. This allows to describe the data $r(x)$ on a different fem than the unknown $u(x)$ and allows also to have a more stable condition when the unknow $u(x)$ is describe on a complex fem like an Xfem using a standard lagrangian fem for the multipliers.
+The \getfemmdbrickDirichlet brick allows to define a Dirichlet
+condition on a part $\Gamma$ of the boundary of the domain (i.e. set the
+value of the unknown on this part of the boundary $u = r$). This brick
+is derived from the constraint brick and automatically set the
+constraints system $BU=R$. As a consequence, the methods of the
+constraint brick are available (\cpp{brick.set\_constraints\_type(c)}
+and \cpp{brick.set\_penalization\_parameter(eps)}).\\ In order to be
+able to treat arbitraries finite element methods, the Dirichlet
+condition is considered in the weak form $\int_{\Gamma} u(x)v(x) d\Gamma = \int_{\Gamma}
+r(x)v(x) d\Gamma$ for all $v$ taken in a space of convenient multipliers.
+This allows to describe the data $r(x)$ on a different fem than the
+unknown $u(x)$ and allows also to have a more stable condition when
+the unknow $u(x)$ is describe on a complex fem like an Xfem using a
+standard lagrangian fem for the multipliers.
 
 \begin{cppcode}
-  getfem::mdbrick_Dirichlet<MODEL_STATE> brick(problem, bound, mf_mult, num_fem);
+  \getfemmdbrickDirichlet<MODEL_STATE> brick(problem, bound, mf_mult, num_fem);
 \end{cppcode}
 
 where \cpp{problem} is the problem on which the Dirichlet condition
@@ -2055,21 +2133,22 @@ If \cpp{mf_u} and \cpp{mf_data} are valid finite element description on a mesh r
 
   plain_vector U(mf_u.nb_dof()), F(mf_data.nb_dof());
 
-  getfem::mdbrick_generic_elliptic<> laplacian(mim, mf_u);
+  \getfemmdbrickgenericelliptic<> laplacian(mim, mf_u);
   
   plain_vector F(mf_data.nb_dof());
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
-  getfem::mdbrick_source_term<> volumic_source_term(laplacian, mf_data, F);
+  \getfemmdbricksourceterm<> volumic_source_term(laplacian, mf_data, F);
   
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
-  getfem::mdbrick_source_term<> neumann_condition(volumic_source_term, mf_data, F, 7);
+  \getfemmdbricksourceterm<> neumann_condition(volumic_source_term, mf_data, F, 7);
   
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
-  getfem::mdbrick_Dirichlet<> final_model(neumann_condition, 5);
+  \getfemmdbrickDirichlet<> final_model(neumann_condition, 5);
   final_model.rhs().set(mf_data, F);
 
   getfem::standard_model_state MS(final_model);
-  gmm::iteration iter(residual, 1, 40000);
+  \gmmiteration iter(residual, 1, 40000);
+
   getfem::standard_solve(MS, final_model, iter);
 
   laplacian.get_solution(MS, U);
@@ -2078,7 +2157,7 @@ Remark how the bricks are linked, each condition is applied to the brick defined
 
 
 \subsection{Predefined solvers}
-Of course, for many problems, it will be more convenient to make a specific solver. Even so, one generic solver is at the moment available to test your models quickly. It can also be taken as a model to build your own solvers. It is defined in \getfemmodelingh and the call is
+Of course, for many problems, it will be more convenient to make a specific solver. Even so, one generic solver is at the moment available to test your models quickly. It can also be taken as a model to build your own solvers. It is defined in \getfemmodelsolversh and the call is
 \begin{cppcode}
   getfem::standard_solve(MS, problem, iter);
 \end{cppcode}
@@ -2088,7 +2167,7 @@ Note that SuperLu is used by default on ``small'' problems. You can also link MU
 
 
 \subsection{Isotropic linearized elasticity brick}
-This brick is a basic brick representing a term such as\\
+The \getfemmdbrickisotropiclinearizedelasticity is a basic brick representing a term such as\\
 $$ -div(\sigma) = ...; $$
 
 with \\
@@ -2098,25 +2177,37 @@ $\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\la
 
 The constructors build the brick for constant Lamé coefficients:
 \begin{cppcode}
-  getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
-     brick(mim, mf_u, lambda, mu);
+  \getfemmdbrickisotropiclinearizedelasticity<MODEL_STATE>
+     brick(mim, mf_u);
 \end{cppcode}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} is a valid fem descriptor. \cpp{mf_u} describe the finite element method used for the unknown. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.\\
+where \cpp{mim} is a variable of type \getfemmeshim defining the integration method used, \cpp{mf_u} is a valid fem descriptor. \cpp{mf_u} describe the finite element method used for the unknown. 
 
-For non-constant Lamé coefficients, the brick parameters \cpp{lambda} and \cpp{mu} have to be set (with \cpp{brick.lambda().set(mf_data, lambda_)} and \cpp{brick.mu().set(mf_data, mu_)}, where \cpp{mf_data} is a valid fem descriptor and \cpp{lambda_} and \cpp{mu_} are two vectors of type \cpp{MODEL_STATE::vector_type}).\\
+The brick has two parameters, \cpp{lambda()} and \cpp{mu()} for the usual Lamé coefficients. As they are \getfemmdbrickparameter , it is possible to use either a constant value (with for example \cpp{brick.lambda().set(100.)}, or a non constant value (for example \cpp{brick.lambda().set(mf_lambda, lambdav)} with \cpp{lambdav} of type \cpp{MODEL_STATE::vector_type}).
+
+The stiffness matrix is ``cached'' in the brick (and available with \cpp{brick.get_K()}), it has a memory cost but avoids unnecessary recomputations each time \cpp{compute_tangent_matrix(...)} is called.\\
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.lambda()} & gives access to the brick parameter \cpp{lambda}.  \\ \hline
-  \cpp{brick.mu()} & gives access to the brick parameter \cpp{mu}.  \\ \hline
+  \cpp{brick.lambda()} & gives access to the brick parameter
+  \cpp{lambda}.  \\ \hline
 
-  \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
-  model state variable MS and put it in the vector V.\\ \hline
+  \cpp{brick.mu()} & gives access to the brick parameter \cpp{mu}.  \\
+  \hline
+
+  \cpp{brick.get_solution(MS, V)} & After a solve, extract the
+  solution of the model state variable MS and put it in the vector
+  V.\\ \hline
+
+  \cpp{brick.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, tresca_flag)} &
+    Compute the Von Mises criterion (or Tresca is \cpp{tresca_flag} is
+    set to true) on the displacement field stored in \cpp{MS}. The
+    stress is evaluated on the mesh_fem \cpp{mf_vm} and stored in the
+    vector \cpp{VM}.\\ \hline
 \end{ctableau}
 The program \cpp{elastostatic.cc} in the tests directory of Getfem++ distribution can be taken as a model of use of this brick.
 
 \subsection{Qu term brick}
-This brick allows to add boundary conditions of Fourier-Robin type like\\
+The \getfemmdbrickQUterm brick can be used to add boundary conditions of Fourier-Robin type like\\
 $$ \frac{\partial u}{\partial n} = Qu $$
 
 for scalar problems, or\\
@@ -2127,7 +2218,7 @@ for linearized elasticity problems. \cpp{Q} is a scalar field in the scalar case
 
 The constructor is the following :
 \begin{cppcode}
-  getfem::mdbrick_QU_term<MODEL_STATE> brick(problem, Q_diag, bound, numfem);
+  \getfemmdbrickQUterm<MODEL_STATE> brick(problem, Q_diag=0.0, bound=-1, numfem=0);
 \end{cppcode}
 where \cpp{problem} is the problem on which the condition will be
 added. \cpp{Q_diag} is a real for the homogeneous and diagonal case ($Q = Q_dia * I$).
@@ -2162,30 +2253,21 @@ The following additional methods are available on this brick:
 \end{ctableau}
 
 \subsection{linear incompressibility (or nearly incompressibility) brick}
-This brick adds a linear incompressibility condition (or a nearly incompressible condition) in a problem of type\\
+The \getfemmdbricklinearincomp brick adds a linear incompressibility condition (or a nearly incompressible condition) in a problem of type\\
 $$ \mbox{div}(u) = 0,\ \ (or \mbox{div}(u) = \varepsilon p)$$
 
 This constraint is enforced with Lagrange multipliers representing the pressure, introduced in a mixed formulation.
 
 The constructor for the incompressibility condition is:
 \begin{cppcode}
-  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
+  \getfemmdbricklinearincomp<MODEL_STATE> brick(problem, mf_p, numfem);
 \end{cppcode}
 
 where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
-For the nearly incompressibility condition, the constructor is:
-\begin{cppcode}
-  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, epsilon, numfem);
-\end{cppcode}
+The nearly incompressibility condition is used when it is switched on with \cpp{brick.set_penalized(true)}. The penalization parameter $\varepsilon$ is accessed with \cpp{brick.penalization_coeff()}.\\
 
-where \cpp{epsilon} is a (small) scalar penalization coefficient. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
-
-The following additional methods are available on this brick:
-\begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.epsilon()} & gives access to the penalization coefficient \cpp{epsilon} of the nearly incompressible case.\\ \hline
-\end{ctableau}
-~\\
+In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
 
 For instance, the following program defines a Stokes problem with a source term and an homogeneous Dirichlet condition on boundary 0. \cpp{mf_u}, \cpp{mf_data} and \cpp{mf_p} have to be valid finite element description on the same mesh.
 
@@ -2215,18 +2297,18 @@ For instance, the following program defines a Stokes problem with a source term 
   stokes.get_solution(MS, U);
 \end{cppcode}
 
-A example for a nearly incompressibility condition can be found in the program \cpp{elastostatic.cc} in tests directory.
+A example for a nearly incompressibility condition can be found in the program \cpp{tests/elastostatic.cc}.
 
 \subsection{Small displacement plasticity brick}
-This brick modelizes small-displacement quasi-static plasticity
-problems. It is defined in \getfemplasticityh
+The \getfemmdbrickplasticity brick modelizes small-displacement
+quasi-static plasticity problems. It is defined in \getfemplasticityh
 
 Plasticity happens when you stress an object too much, so that even
 when you remove the charge, constraints remain 'trapped' into the
 object. When a stress is applied to an object, if the stress is small
-enough, the displacements stay elastic. If that stress gets greater
+enough, the displacements stays elastic. If that stress gets greater
 than a constant value called stress threshold (intrinsic to the
-object), then the displacements become plastic.
+object), then the displacements becomes plastic.
 
 Quasi-static means that we do not take inertia into account, however
 the algorithm used needs some kind of a time representation. It is not
@@ -2240,8 +2322,10 @@ problem.
 
 The constructor is 
 \begin{cppcode}
-  mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, value_type lambdai, value_type mui,
-                     value_type stress_threshold, const abstract_constraints_project &t_proj_);
+  \getfemmdbrickplasticity(mesh_im &mim_, mesh_fem &mf_u_, 
+                              value_type lambdai, value_type mui,
+                              value_type stress_threshold, 
+                              const abstract_constraints_project &t_proj_);
 \end{cppcode}
 
 The \cpp{stress_threshold} is the 'elasticity limit' : if constraints
@@ -2260,24 +2344,58 @@ the displacement using \cpp{brick.get_solution(MS, U);} where MS is
 defined by \cpp{getfem::standard_model_state MS(final_model);}, and U
 the displacement vector.
 
-To get the constraints, you can use \cpp{brick.compute_constraints(MS);} followed by \cpp{brick.get_proj(proj);}, where proj is a \cpp{std::vector<std::vector<scalar_type> >}.
+The Von Mises constraints can be obtained with 
+\cpp{brick.compute_Von_Mises_or_Tresca(mf_vm,VM,tresca_flag)} (see the description in the linearized isotropic elasticity brick).
 
 \subsection{Contact and friction conditions brick}
-(to be documented, see the test program \cpp{dynamic_friction.cc})
+(to be documented, see the test program \cpp{tests/dynamic_friction.cc}, and the source file \getfemCoulombfrictionh)
 \subsection{Linearized plate brick}
-(to be documented, see the test program \cpp{plate.cc})
+(to be documented, see the test program \cpp{tests/plate.cc})
+
+\begin{itemize}
+\item $u_t$ is the membrane displacement.
+\item $u_3$ is the transverse displacement.
+\item $\theta$ is the rotation of the normal (section rotation).
+\end{itemize}
+
+Many specialized bricks are defined in \getfemlinearizedplatesh:
+\begin{itemize}
+
+\item \getfemmdbrickisotropiclinearizedplate : linear plate model
+  brick (for moderately thick plates, using the Reissner-Mindlin
+  model).
+
+\item \getfemmdbrickmixedisotropiclinearizedplate : mixed linear plate model brick (for thin plates, using Kirchhoff-Love model). The \getfemmdbrickplateclosing has to be used in conjonction with this one.
+
+\item \getfemmdbrickplatesourceterm : apply a classical source term on
+  the $u_t$, $u_3$, and $\theta$ fields.
+
+\item \getfemmdbrickplatesimplesupport : Dirichlet condition on $u_t$ and
+  $u_3$, free rotation.
+
+\item \getfemmdbrickplateclampedsupport : Dirichlet condition on
+  the displacement and the rotation.
+
+\item \getfemmdbrickplateclosing : free edges condition for mixed
+  plate model brick. This brick has to be added for the mixed
+  linearized plate brick after all other boundary conditions.
+
+\end{itemize}
+
+
 \subsection{Large strain elasticity brick}
-This brick represents a large strain elasticity problem. It is defined in \getfemnonlinearelasticityh
+The \getfemmdbricknonlinearelasticity brick represents a large strain elasticity problem. It is defined in \getfemnonlinearelasticityh
 
 The constructor is:
 \begin{cppcode}
-  getfem::mdbrick_nonlinear_elasticity<MODEL_STATE> brick(Hyperelastic_Law, mim, mf_u, lawparams);
+  \getfemmdbricknonlinearelasticity<MODEL_STATE> brick
+       (Hyperelastic_Law, mim, mf_u, lawparams);
 \end{cppcode}
-where \cpp{Hyperelastic_Law} is an object representing the considered hyperelastic law. It has to be chosen between:
+where \cpp{Hyperelastic_Law} is an object of type \getfemabstracthyperelasticlaw representing the considered hyperelastic law. It has to be chosen between:
 \begin{cppcode}
-  getfem::SaintVenant_Kirchhoff_hyperelastic_law Hyperelastic_Law;
-  getfem::Ciarlet_Geymonat_hyperelastic_law Hyperelastic_Law;
-  getfem::Mooney_Rivlin_hyperelastic_law Hyperelastic_Law;
+  \getfemSaintVenantKirchhoffhyperelasticlaw Hyperelastic_Law;
+  \getfemCiarletGeymonathyperelasticlaw Hyperelastic_Law;
+  \getfemMooneyRivlinhyperelasticlaw Hyperelastic_Law;
 \end{cppcode}
 The Saint-Venant Kirchhoff law is a linearized law defined with the two Lamé coefficients, Ciarlet Geymonat law is defined with the two Lamé coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
 
@@ -2287,14 +2405,14 @@ in the vector \cpp{lawparams} (by default they are constant over the mesh, but o
 The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of use of this brick with or without an incompressibility condition.
 
 \subsection{Large strain incompressibility brick}
-This brick allows to add an incompressibility condition in a large strain problem of type\\
+The \getfemmdbricknonlinearincomp brick adds an incompressibility condition in a large strain problem of type\\
 $$ \mbox{det}(I+\nabla u) = 1, $$
 
 For this, Lagrange multipliers representing the pressure are introduced in a mixed formulation.
 
 The constructor is:
 \begin{cppcode}
-  getfem::mdbrick_nonlinear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
+  \getfemmdbricknonlinearincomp<MODEL_STATE> brick(problem, mf_p, numfem);
 \end{cppcode}
 
 where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB (Ladyzhenskaja-Babuska-Brezzi) inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
@@ -2305,8 +2423,23 @@ The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of 
 
 Of course, each different problem should require a different parallelization adapted to its specificities. You may build your own parallelization using the mesh regions to parallelize assembly procedures.
 
-Nevertheless, the brick system offers a generic parallelization based on MPI, METIS and MUMPS. One has to compile \gf with the option "-D GETFEM_PARA_LEVEL=2" to use it. With this option, each mesh used is implicitely partitionned (using METIS) into a number of regions corresponding to the number of processors and the assembly procedures are parallelized. This means that the tangent matrix and the constraint matrix assembled in the model\_state variable are distributed. The choice made (for the moment) is not to distribute the vectors. So that the right hand side vectors in the model\_state variable are communicated to each processor (the sum of each contribution is made at the end of the assembly and each processor has the complete vector).
-note that you have to think to the fact that the matrices stored by the bricks are all distributed.\\[0.5cm]
+Nevertheless, the brick system offers a generic parallelization based
+on MPI (communication between processes),
+\WEB{http://glaros.dtc.umn.edu/gkhome/metis/metis/overview}{METIS}
+(partition of the mesh) and \WEB{http://graal.ens-lyon.fr/MUMPS/}{MUMPS} (parallel sparse direct
+solver). One has to compile \gf with the option "-D
+GETFEM_PARA_LEVEL=2" to use it. With this option, each mesh used is
+implicitely partitionned (using METIS) into a number of regions
+corresponding to the number of processors and the assembly procedures
+are parallelized. This means that the tangent matrix and the
+constraint matrix assembled in the model\_state variable are
+distributed. The choice made (for the moment) is not to distribute the
+vectors. So that the right hand side vectors in the model\_state
+variable are communicated to each processor (the sum of each
+contribution is made at the end of the assembly and each processor has
+the complete vector).  note that you have to think to the fact that
+the matrices stored by the bricks are all distributed.
+\\[0.5cm]
 
 Concerning the constraints, it is preferable for a better parallelization to avoid the \cpp{getfem::ELIMINATED_CONSTRAINTS} option (i.e. not to use the constraint matrix).\\[0.5cm]
 
@@ -2320,6 +2453,9 @@ The following functions are also implicitely parallelized using the option "-D G
 \item \cpp{error_estimate} (in \getfemerrorestimateh).
 \end{itemize}
 This means that these functions have to be called on each processor.
+
+
+Parallelization of getfem is still considered a ``work in progress''..
 
 \section{Catch errors}
 \index{errors}
@@ -2339,29 +2475,19 @@ A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \dalexcep
 \index{laplacian}
 \index{Poisson problem}
 
-The program \filename{laplacian} is provided in the directory \filename{tests} of \gf  distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of \gf . Once the program is compiled you can test it executing the command\\[0.5cm]
-{\tt laplacian laplacian.param}\\[0.5cm]
-The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The following parameters can be changed\\[0.5cm]
+The program \filename{laplacian} is provided in the directory
+\filename{tests} of \gf distribution. This program compute the
+solution of the Poisson problem in a parellepiped domain in any
+dimension with various finite element methods and elements. This
+program can be used as a model to build application programs. It is
+built when a {\tt gmake check} is done on the root directory of \gf (or just \texttt{ cd tests; make laplacian }).
 
-\begin{tabular}{|m{0.2\linewidth}|l|} \hline
-  {\tt LX, LY} and {\tt LZ} &  Dimensions of the domain. \\ \hline
-  {\tt FT} &  parameter for the exact solution. \\ \hline
-  {\tt MESH\_TYPE} & name of the geometric transformation used for mesh cells, \\
-       &  for examplxe ``GT_PK(2,1)'' for triangles\\ \hline
-  {\tt NX} &  Number of element in each dimension. \\ \hline
-  {\tt MESH_NOISED} &  if non-zero, a random perturbation is applied to the \\
-                    & interior nodes of the mesh.\\ \hline
-  {\tt INCLINE} &  Incline of the mesh.\\ \hline
-  {\tt FEM\_TYPE} & name of finite element method (i.e. FEM_PK(2,1))\\ \hline
-  {\tt INTEGRATION} & name of integration method (i.e. IM_TRIANGLE(6))\\ \hline
-  {\tt RESIDUAL} & Residual for conjugate gradient. \\ \hline
-  {\tt ROOTFILENAME} & Root name for data files. \\ \hline
-\end{tabular}
-
-
-The mesh is exported as \filename{laplacian.mesh}. The program print the $L^2$ and $H^1$ error from an exact solution.\\[0.5cm]
+Once the program is compiled you can test it executing the command
+\\[0.5cm]
+{\tt cd tests; ./laplacian laplacian.param}\\[0.5cm]
+The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The program print the $L^2$ and $H^1$ error from an exact solution.\\[0.5cm]
 \index{elastostatic}
-The program \filename{elastostatic} is built in a same way and compute the solution of linear elasticity problem.
+The program \filename{elastostatic} is built in a same way and compute the solution of linear elasticity problem. Many more examples can be found in the tests directory.
 
 \begin{thebibliography}{99}
 % \bibliographystyle{apalike}

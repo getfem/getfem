@@ -20,7 +20,19 @@ a:visited, #textbar a:visited {color: #909;}
 
 .inlinecppcode {
 	color:#600;
-	}
+}
+
+.inlinecppcode a {
+  color:#A00;
+  text-decoration: none; 
+  /*border-bottom: 1px dashed #800;*/
+}
+
+.inlinecppcode a:hover {
+  color:#F00;
+  text-decoration: underline; 
+  /*border-bottom: 1px dashed #800;*/
+}
 
 .mlabcode {
   border-style: dotted;
