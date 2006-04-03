@@ -1,3 +1,0 @@
-#!/bin/csh
-$1 -v |& grep version
-  

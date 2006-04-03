@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cvs status 2>&1| grep "Needs\|Locally"
-
