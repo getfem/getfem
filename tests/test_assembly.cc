@@ -1556,7 +1556,16 @@ void test_matrixfem(const getfem::mesh_im &mim) {
 }
 
 
-void inline_red_test(const getfem::mesh_im &mim, getfem::mesh_fem &mf1, getfem::mesh_fem &mf2) {
+
+
+
+void inline_red_test(const getfem::mesh_im &mim, getfem::mesh_fem &mf1_, getfem::mesh_fem &mf2) {
+  std::stringstream ss; mf1_.write_to_file(ss);
+  getfem::mesh_fem mf1(mf1_.linked_mesh()); mf1.read_from_file(ss);
+
+  if (mf1_.convex_index().is_in(2))
+    mf1.set_finite_element(2, getfem::fem_descriptor("FEM_PK(2,1)"));
+
   std::vector<scalar_type> U(mf1.nb_dof()); gmm::fill_random(U);
   std::vector<scalar_type> V(mf2.nb_dof()); gmm::fill_random(V);
   getfem::generic_assembly assem;    
@@ -1572,47 +1581,143 @@ void inline_red_test(const getfem::mesh_im &mim, getfem::mesh_fem &mf1, getfem::
   assem.push_vec(v1);
   assem.assembly();
   
-  cout << "OLD SCHOOL\n";
-  getfem::generic_assembly assem2;
-  assem2.set("u=data(#1);v=data$2(#2);"
-	     "V()+=u(i).v(j).comp(Grad(#1).Grad(#2))(i,d,j,d);"); //print comp(Grad(#1).Grad(#2))(:,d,:,d)");
+  {
+    cout << "OLD SCHOOL\n";
+    getfem::generic_assembly assem2;
+    assem2.set("u=data(#1);v=data$2(#2);"
+	       "V()+=u(i).v(j).comp(Grad(#1).Grad(#2))(i,d,j,d);"); //print comp(Grad(#1).Grad(#2))(:,d,:,d)");
+    assem2.push_mi(mim);
+    assem2.push_mf(mf1);
+    assem2.push_mf(mf2);
+    assem2.push_data(U);
+    assem2.push_data(V);
+    std::vector<scalar_type> v2(1);
+    assem2.push_vec(v2);
+    assem2.assembly();
+
+
+
+    cout << "v1 = " << v1 << ", v2 = " << v2 << endl;
+    assert(gmm::abs(v1[0]-v2[0]) < 1e-14);
+  }
+  {
+    cout << "INLINE RED2\n";
+    getfem::generic_assembly assem3;
+    mf2.set_qdim(1);
+    mf1.set_qdim(1);
+    U.resize(mf1.nb_dof());
+    V.resize(mf2.nb_dof());
+    assem3.set("u=data(#1);v=data$2(#2);"
+	       //"V()+=comp(vGrad(#1)(i,j,k).u(i));");
+	       "V()+=comp(vGrad(#1)(i,k,:).vGrad(#2)(j,k,:).v(j).u(i))(d,d);");
+    /*
+      assem3.set("u=data(#1);"
+      "t=comp(vGrad(#1)(k,:,:).vGrad(#1)(l,:,:).vGrad(#2).u(k).u(l));"
+      "V()+=t(i,j,k,l,m,n,o);");
+    */
+    assem3.push_mi(mim);
+    assem3.push_mf(mf1);
+    assem3.push_mf(mf2);
+    assem3.push_data(U);
+    assem3.push_data(V);
+    std::vector<scalar_type> v3(1);
+    assem3.push_vec(v3);
+    assem3.assembly();
+    mf1.set_qdim(1);
+    mf2.set_qdim(1);
+    
+    
+    cout << "v1 = " << v1 << ", v3 = " << v3 << endl;
+
+    mf1.write_to_file(std::cerr);
+    
+    assert(gmm::abs(v1[0]-v3[0]) < 1e-14);
+  }
+}
+
+template<typename VECT1> class shape_der_nonlinear_term 
+  : public getfem::nonlinear_elem_term {
+  
+  const getfem::mesh_fem &mf;
+  const VECT1 &U;
+  size_type N;
+  base_vector coeff;
+  base_matrix gradU, E, Sigma;
+  bgeot::multi_index sizes_;
+  scalar_type lambda, mu;
+  
+public:
+  shape_der_nonlinear_term(const getfem::mesh_fem &mf_, const VECT1 &U_,
+			  scalar_type lambda_, scalar_type mu_) 
+    : mf(mf_), U(U_),
+      N(mf_.get_qdim()),
+      gradU(N, N), E(N, N), Sigma(N,N), sizes_(N,N),
+      lambda(lambda_), mu(mu_) { }
+  
+  const bgeot::multi_index &sizes() const { return sizes_; }
+  
+  virtual void compute(getfem::fem_interpolation_context& ctx,
+		       bgeot::base_tensor &t) {
+    assert(t.size() == N*N);
+    /*size_type cv = ctx.convex_num();
+    coeff.resize(mf.nb_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+	      coeff);
+    ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
+    gmm::copy(gradU, E); gmm::add(gmm::transposed(gradU), E);
+    gmm::scale(E, 0.5);
+    gmm::copy(gmm::identity_matrix(), Sigma);
+    gmm::scale(Sigma, lambda * gmm::mat_trace(E));
+    gmm::add(gmm::scaled(E, 2.*mu), Sigma);
+    
+    for (size_type i = 0; i < N; ++i) 
+      for (size_type j = 0; j < N; ++j) {
+	t(i,j) = 0.0;
+	for (size_type k = 0; k < N; ++k)
+	  t(i,j) += Sigma(i,k) * gradU(k,j); 
+      }
+    */
+    for (size_type i = 0; i < N; ++i) 
+      for (size_type j = 0; j < N; ++j)
+	t(i,j) = 0.0;
+    
+  }
+};
+
+void testbug() {
+  std::vector<size_type> nsubdiv(3); nsubdiv[0] = nsubdiv[1] = nsubdiv[2] = 3;
+  getfem::mesh m; 
+  getfem::regular_unit_mesh(m, nsubdiv, bgeot::simplex_geotrans(3,1));
+  getfem::mesh_fem mf1(m,3), mf2(m,3);
+  mf1.set_classical_finite_element(m.convex_index(), 1);
+  mf2.set_classical_finite_element(m.convex_index(), 1);
+  /*mf1.set_finite_element(12, getfem::fem_descriptor("FEM_PK(3,2)"));
+    mf2.set_finite_element(15, getfem::fem_descriptor("FEM_PK(3,2)"));*/
+  getfem::mesh_im mim(m); mim.set_integration_method(m.convex_index(), 5);
+  std::vector<scalar_type> U(mf1.nb_dof()), SD(mf2.nb_dof());
+  gmm::fill_random(U);
+
+  shape_der_nonlinear_term<std::vector<scalar_type> > nl(mf1, U, 0, 1);
+  
+  // trigers a real bug: printing an empty (because of the "vectorization" of vBase)
+  // subtensor will crash
+  getfem::generic_assembly assem2
+    ("t=comp(vBase(#1).vBase(#2));"
+     "print(t(:,:,2,3)); ");
+
+  
+
+  //"V(#2) += t(:,:,2,3)"); //0.5*t(i,i,:,j,j) - t(i,j,:,j,i);");
   assem2.push_mi(mim);
   assem2.push_mf(mf1);
+  assem2.push_nonlinear_term(&nl);
   assem2.push_mf(mf2);
-  assem2.push_data(U);
-  assem2.push_data(V);
-  std::vector<scalar_type> v2(1);
-  assem2.push_vec(v2);
+  assem2.push_vec(SD);
+  
+  double t0 = dal::uclock_sec();
   assem2.assembly();
-
-
-
-  cout << "v1 = " << v1 << ", v2 = " << v2 << endl;
-  assert(gmm::abs(v1[0]-v2[0]) < 1e-14);
-
-  cout << "INLINE RED2\n";
-  getfem::generic_assembly assem3;
-  mf2.set_qdim(1);
-  mf1.set_qdim(1);
-  U.resize(mf1.nb_dof());
-  V.resize(mf2.nb_dof());
-  assem3.set("u=data(#1);v=data$2(#2);"
-	     //"V()+=comp(vGrad(#1)(i,j,k).u(i));");
-	     "V()+=comp(vGrad(#1)(i,k,d).vGrad(#2)(j,k,d).v(j).u(i));");
-  assem3.push_mi(mim);
-  assem3.push_mf(mf1);
-  assem3.push_mf(mf2);
-  assem3.push_data(U);
-  assem3.push_data(V);
-  std::vector<scalar_type> v3(1);
-  assem3.push_vec(v3);
-  assem3.assembly();
-  mf1.set_qdim(1);
-  mf2.set_qdim(1);
-
-
-  cout << "v1 = " << v1 << ", v3 = " << v3 << endl;
-  assert(gmm::abs(v1[0]-v3[0]) < 1e-14);
+  cerr << " done : " << dal::uclock_sec() - t0 << "\n"; exit(1);
+  exit(1);
 }
 
 void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
@@ -1652,6 +1757,7 @@ int main(int argc, char *argv[]) {
     // getfem::pfem pf = getfem::fem_descriptor("FEM_PK_PRISM_HIERARCHICAL(3,3)");
     
 
+    //testbug();
     do_general_check();
 
 #ifdef ASSEMBLY_CHECK
@@ -1662,6 +1768,7 @@ int main(int argc, char *argv[]) {
       std::fill(tests.begin(),tests.end(),false);
       tests[param.do_what]=true;
     }
+
 
    cerr << "\n\n-----------------------------SIMPLE MESH TESTS---------------------\n\n";
    {

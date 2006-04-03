@@ -600,7 +600,8 @@ namespace bgeot {
       if (vectorized_pr_dim == pri.size()-1) {
         if (pp->have_regular_strides.count() == N) vectorized_size_ = pp->range;
         for (dim_type n=pp->n; n < N; ++n) {
-          vectorized_strides_[n] = pp->inc[n];
+	  if (n >= pp->inc.size()) DAL_INTERNAL_ERROR(""); // expected failure here with "empty" tensors, see tests/test_assembly.cc, testbug() function.
+          vectorized_strides_[n] = pp->inc[n]; 
         }
       } else {
         if (pp->have_regular_strides.count() != N) break;
