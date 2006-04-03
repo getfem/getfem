@@ -1,0 +1,17 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program laplacian                                        %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% mesh parameters :	        				      %%%%%
+N = 3;                  % dimension of the domain.
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
+
+%%%%%   discretisation parameters  :                     	      %%%%%
+MESH_TYPE = 0;          % 0 = simplexes
+			% 1 = parallelepipeds
+			% 2 = prisms
+NX = 24;          	% space step.
+NB_POINTS = 50;         % Number of points
+

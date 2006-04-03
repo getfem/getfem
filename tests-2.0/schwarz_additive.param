@@ -1,0 +1,33 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters of test program schwarz additive             	          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+N = 2;                  % dimension.
+PG = 9.81;		% gravity constant.
+RHO = 0.1;     	        % mass density
+MU = 1.0;	        % shear elastic stiffness.
+LAMBDA = 1.0;   	% elastic stiffness.
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
+D = 0.00;		% Dirichlet condition.
+
+%%%%%   discretisation parameters :        			      %%%%%
+K = 1;         % Degree of the finite element method.
+NX = 10;       % space step.
+NXCOARSE = 4;  % space step for the coarse mesh.
+USECOARSE = 0; % use a coarse mesh or not.
+
+RESIDUAL = 1E-7;  %
+SOLVER = 1;     % 0 = C.G. préconditionné ildlt
+		% 1 = C.G. non preconditionné
+	        % 2 = superlu
+		% 3 = additive Schwarz with global and local CG
+		% 4 = additive Schwarz with global and local Gmres
+		% 5 = additive Schwarz with global cg and local Superlu
+
+SUBDOMSIZE = 0.2; % Size of sub-domains.
+OVERLAP = 0.1;    % ratio of overlap between sub-domains
+
+MESHNAME = '';
+

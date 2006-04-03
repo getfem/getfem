@@ -491,6 +491,7 @@ AC_CONFIG_FILES(\
 	src/Makefile \
 	tests/Makefile \
 	tests/meshes/Makefile \
+	tests-2.0/Makefile \
 	contrib/Makefile \
 	contrib/icare/Makefile \
 	contrib/delaminated_crack/Makefile \
