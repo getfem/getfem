@@ -737,6 +737,7 @@ namespace getfem {
     void update_shape_with_inline_reduction(size_type cv) {
       fallback_red_uptodate = false;
       icb.tensor_bases.resize(mfcomp.size()); /* todo : resize(nb_mfcomp_not_data) */
+      icb.red.clear();
       for (size_type i=0; i < mfcomp.size(); ++i) {
 	tensor_ref tref;
 	tensor_ranges rng;
@@ -1766,7 +1767,7 @@ namespace getfem {
       mesh_region::face_bitset nf = r[cv[i]];
       dim_type f = dim_type(-1);
       while (nf.any()) {
-	// cerr << "generic_assembly::exec(" << cv[i] << ")\n";
+	//cerr << "generic_assembly::exec(" << cv[i] << ")\n";
 	if (nf[0]) exec(cv[i],f);
 	nf >>= 1; f+=1;
       }
