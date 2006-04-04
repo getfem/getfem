@@ -84,9 +84,8 @@ namespace getfem {
     if (!touched) {
       touched = true;
       iterator_list it = dependent.begin(), ite = dependent.end();
-      for (; it != ite; ++it) {
+      for (; it != ite; ++it)
 	(*it)->change_context();
-      }
     }
   }
  

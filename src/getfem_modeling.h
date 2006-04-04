@@ -682,7 +682,8 @@ namespace getfem {
       bool badsize = gmm::vect_size(value_) != mf().nb_dof() * fsize();
 
       if (!is_initialized())
-	DAL_THROW(dal::failure_error, "Parameter " << name() << " is not initialized");
+	DAL_THROW(dal::failure_error, "Parameter " << name()
+		  << " is not initialized");
       if (badsize && (!is_constant() || gmm::vect_size(value_) == 0))
 	DAL_THROW(dal::failure_error, 
 		  "invalid dimension for brick parameter '" << name() << 
@@ -733,7 +734,9 @@ namespace getfem {
 	each time, hence a flag is just set in proper_update, and
 	the matrix K is computed only when it is needed.
     */
-    virtual void proper_update(void) { K_uptodate = false; }
+    virtual void proper_update(void) {
+      K_uptodate = false;
+    }
 
     /** Virtual method whose purpose is to update the content of the
 	stiffness matrix K
@@ -811,9 +814,24 @@ namespace getfem {
       if (&lambda_.mf() != &mu_.mf()) 
 	DAL_THROW(failure_error, "lambda and mu should share the same mesh_fem");
       DAL_TRACE2("Assembling stiffness matrix for linear elasticity");
+      this->context_check();
+
+      // mesh_fem mff(this->mf_u.linked_mesh());
+      // mff.set_classical_finite_element(0);
+      // mff.set_qdim(3);
+      // gmm::resize(this->K, mff.nb_dof(), mff.nb_dof());
+
       asm_stiffness_matrix_for_linear_elasticity
 	(this->K, this->mim, this->mf_u, lambda_.mf(), lambda_.get(), mu_.get(),
+	 //      asm_stiffness_matrix_for_linear_elasticity
+	 // (this->K, this->mim, this->mf_u, lambda_.mf(), lambda_.get(), mu_.get(),
 	 this->mf_u.linked_mesh().get_mpi_region());
+      
+      cout << "Check context ..." << endl;
+      this->context_check();
+      cout << "context is checked..." << endl;
+      
+
     }
 
   public :

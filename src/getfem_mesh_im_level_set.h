@@ -35,7 +35,7 @@
 
 namespace getfem {
 
-  /** Describe an adaptable integration method linked to a mesh cutted by
+  /** Describe an adaptable integration method linked to a mesh cut by
    * a level set.
    */
   class mesh_im_level_set : public mesh_im {
@@ -57,7 +57,7 @@ namespace getfem {
   public :
     enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,
            INTEGRATE_BOUNDARY = 4};
-    void update_from_context(void) const { is_adapted = false; }
+    void update_from_context(void) const;
     void adapt(void);
     void clear(void); // to be modified
 

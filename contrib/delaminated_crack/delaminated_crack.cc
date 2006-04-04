@@ -40,6 +40,7 @@
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
+using bgeot::base_vector;
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
@@ -122,8 +123,8 @@ struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::mesh mesh;  /* the mesh */
-  //  getfem::mesh_im basic_mim;    /* a basic non cut mim for tests.        */
   getfem::mesh_level_set mls;       /* the level set aware mesh.             */
+  getfem::mesh_im standard_mim; 
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_im_level_set mim_crack;    /* the integration on the crack.   */
   getfem::mesh_fem mf_pre_u;
@@ -161,7 +162,7 @@ struct crack_problem {
   bool solve(plain_vector &U);
   void init(void);
   crack_problem(void)
-    : /*basic_mim(mesh), */ mls(mesh),  mim(mls), 
+    : mls(mesh), standard_mim(mesh), mim(mls), 
       mim_crack(mls, getfem::mesh_im_level_set::INTEGRATE_BOUNDARY),
       mf_pre_u(mesh), mf_mult(mesh), mfls_u(mls, mf_pre_u),
       mf_sing_u(mesh), mf_partition_of_unity(mesh),
@@ -232,7 +233,7 @@ void crack_problem::init(void) {
     (SINGULAR_INTEGRATION.size() ? 
      getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
-  // basic_mim.set_integration_method(mesh.convex_index(), ppi);
+  standard_mim.set_integration_method(mesh.convex_index(), ppi);
   mim.set_integration_method(mesh.convex_index(), ppi);
   mim_crack.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
@@ -296,7 +297,7 @@ base_small_vector ls_function(const base_node P) {
   scalar_type x = P[0], y = P[1], z = P[2];
   base_small_vector res(2);
   res[0] = z;
-  res[1] = .2 - x - y; // -x - 0*y; 
+  res[1] = (.2 - x - y)/sqrt(2); // -x - 0*y; 
   return res;
 }
 
@@ -304,10 +305,56 @@ base_small_vector ls_function(const base_node P) {
 /*  Computation of the shape derivative.                                  */
 /**************************************************************************/
 
+template<typename VECT1> class shape_der_nonlinear_term 
+  : public getfem::nonlinear_elem_term {
+  
+  const getfem::mesh_fem &mf;
+  const VECT1 &U;
+  size_type N;
+  base_vector coeff;
+  base_matrix gradU, E, Sigma;
+  bgeot::multi_index sizes_;
+  scalar_type lambda, mu;
+  
+public:
+  shape_der_nonlinear_term(const getfem::mesh_fem &mf_, const VECT1 &U_,
+			  scalar_type lambda_, scalar_type mu_) 
+    : mf(mf_), U(U_),
+      N(mf_.get_qdim()),
+      gradU(N, N), E(N, N), Sigma(N,N), sizes_(N,N),
+      lambda(lambda_), mu(mu_) { assert(N == mf_.linked_mesh().dim()); }
+  
+  const bgeot::multi_index &sizes() const { return sizes_; }
+  
+  virtual void compute(getfem::fem_interpolation_context& ctx,
+		       bgeot::base_tensor &t) {
+    size_type cv = ctx.convex_num();
+    coeff.resize(mf.nb_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+	      coeff);
+    ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
+    gmm::copy(gradU, E); gmm::add(gmm::transposed(gradU), E);
+    gmm::scale(E, 0.5);
+    gmm::copy(gmm::identity_matrix(), Sigma);
+    gmm::scale(Sigma, lambda * gmm::mat_trace(E));
+    gmm::add(gmm::scaled(E, 2.*mu), Sigma);
+    
+    for (size_type i = 0; i < N; ++i) 
+      for (size_type j = 0; j < N; ++j) {
+	t(i,j) = 0.0;
+	for (size_type k = 0; k < N; ++k)
+	  t(i,j) += Sigma(i,k) * gradU(k,j); 
+      }
+  }
+};
+
+
 void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   gmm::clear(SD);
   
   DAL_TRACE2("Computing shape derivative");
+
+  shape_der_nonlinear_term<plain_vector> nl(mf_u(), U, lambda, mu);
 
   // derivative of rupture energy
   getfem::generic_assembly assem1("V(#1)+=comp(vGrad(#1))(:,i,i)");
@@ -320,28 +367,36 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
 
 
   DAL_TRACE2("Computing shape derivative, part 2");
+#if 1
+  // derivative of elastic energy
+  getfem::generic_assembly assem2
+    ("t=comp(NonLin(#1).vGrad(#2));"
+     //"t2=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,:,l,:,:,:,:,:).u(k).u(l);"
+     //"print u; print(t(:,:,1,1,1)); print(t2(l,l,:,:,1,1,1));"
+     "V(#2) += 0.5*t(i,i,:,j,j) - t(i,j,:,j,i);");
+  assem2.push_mi(mim);
+  assem2.push_mf(mf_u());
+  assem2.push_nonlinear_term(&nl);
+  assem2.push_mf(mf_SD);
+  assem2.push_data(U);
+  assem2.push_vec(SD);
+
+  double t0 = dal::uclock_sec();
+  assem2.assembly();
+  cerr << " done : " << dal::uclock_sec() - t0 << "\n";
+
+#else 
 
   // derivative of elastic energy
   char s[500];
   sprintf(s, "u=data(#1);"
-	  "t=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,:,l,:,:,:,:,:).u(k).u(l);"
-	  "w=t(:,:,:,:,:,m,m); z=t(:,:,:,l,:,l,:);"
-	  
-	  // "w=comp(vGrad(#1).vGrad(#1).vGrad(#2)(:,m,m))(k,:,:,l,:,:,:).u(k).u(l);"
-	  // "z=comp(vGrad(#1).vGrad(#1)(:,m,:).vGrad(#2)(:,m,:))(k,:,:,l,:,:,:).u(k).u(l);"
-	  "V(#2)+= %g*(w(i,j,i,j,:)*0.5+w(j,i,i,j,:)*0.5-z(j,i,i,:,j)-z(i,j,i,:,j))"
-	  "+ %g*(w(i,i,j,j,:)*0.5 - z(k,k,i,:,i))",
+	  // "t=comp(vGrad(#1).vGrad(#1).vGrad(#2))(k,:,: ,l,:,:,:,:,:)
+	  // ".u(k).u(l);"
+	  "t=comp(vGrad(#1)(k,:,:).vGrad(#1)(l,:,:).vGrad(#2).u(k).u(l));"
+	  "w=t(:,:,:,:,:,m,m)*0.5; z=t(:,:,:,l,:,l,:);"
+	  "V(#2)+= %g*(w(i,j,i,j,:)+w(j,i,i,j,:)-z(j,i,i,:,j)"
+	  "           -z(i,j,i,:,j)) + %g*(w(i,i,j,j,:) - z(k,k,i,:,i))",
 	  mu, lambda);
-  
-  /*
-    NE MARCHE PAS, DEBUGGER L'ASSEMBLAGE
-  sprintf(s, "u=data(mdim(#1), #1);"
-	  "t=comp(Grad(#1)(k,:).Grad(#1)(l,:).vGrad(#2).u(:,k).u(:,l)){ 6, 1, 7, 2, 3, 4, 5};"
-	  "w=t(:,:,:,:,:,m,m); z=t(:,:,:,l,:,l,:);"
-	  "V(#2)+= %g*(w(i,j,i,j,:)+w(j,i,i,j,:)+z(j,i,i,:,j)+z(i,j,i,:,j))"
-	  "+ %g*(w(i,i,j,j,:) + z(k,k,i,:,i))",
-	  mu, lambda);
-  */
   
   getfem::generic_assembly assem2(s);
   assem2.push_mi(mim);
@@ -349,7 +404,13 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   assem2.push_mf(mf_SD);
   assem2.push_data(U);
   assem2.push_vec(SD);
+
+  double t0 = dal::uclock_sec();
   assem2.assembly();
+  cerr << " done : " << dal::uclock_sec() - t0 << "\n";
+
+#endif
+
 
   size_type N = mesh.dim();
   // The third component is set to zero.
@@ -410,7 +471,6 @@ namespace getfem {
     }
 
   public :
-    /* accessor to the Lame coef lamda */
     mdbrick_parameter<VECTOR> &theta(void) { return theta_; }
     const mdbrick_parameter<VECTOR> &theta(void) const { return theta_; }
 
@@ -421,97 +481,114 @@ namespace getfem {
   };
 
 
-template<typename VECT1> class transportdc_nonlinear_term 
+  template<typename VECT1> class transportdc_nonlinear_term 
     : public getfem::nonlinear_elem_term {
-
+    
     const mesh_fem &mf;
-    const VECT1 &U;
+    const VECT1 &phi0, &phin;
     size_type N;
-    base_vector coeff;
-    base_matrix gradPhi;
+    base_vector coeff, Phi0;
+    base_matrix gradPhin;
     bgeot::multi_index sizes_;
     int version; 
-
+    
   public:
-    transportdc_nonlinear_term(const mesh_fem &mf_, const VECT1 &U_,
-			       int version_) 
-      : mf(mf_), U(U_),
-	N(mf_.get_qdim()),
-	gradPhi(N, N), sizes_(N),
-	version(version_)
-   { if (version == 1) { sizes_.resize(1); sizes_[0] = 1; } }
+    transportdc_nonlinear_term(const mesh_fem &mf_, const VECT1 &phi0_,
+			       const VECT1 &phin_, int version_) 
+      : mf(mf_), phi0(phi0_), phin(phin_),
+	N(mf_.linked_mesh().dim()), Phi0(1), gradPhin(1,N),
+	sizes_(1), version(version_)
+    { sizes_[0] = (version == 1) ? 1 : N; }
+    
     const bgeot::multi_index &sizes() const { return sizes_; }
+    
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
       coeff.resize(mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
-		coeff);
-      ctx.pf()->interpolation_grad(ctx, coeff, gradPhi, mf.get_qdim());
-      gmm::add(gmm::identity_matrix(), gradPhi);
-      scalar_type det = gmm::lu_inverse(gradPhi);
-
-      if (version != 1) {
-	if (version == 2) det = sqrt(gmm::abs(det));
+      gmm::copy(gmm::sub_vector(phi0,
+		gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation(ctx, coeff, Phi0, 1);
+      
+      scalar_type no = gmm::sgn(Phi0[0]);
+      if (version == 1)
+	t[0] = no;
+      else {
+	gmm::copy(gmm::sub_vector(phin,
+		  gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation_grad(ctx, coeff, gradPhin, 1);
+	no /= std::max(1e-6, gmm::mat_euclidean_norm(gradPhin));
 	for (size_type i = 0; i < N; ++i) 
-	  for (size_type j = 0; j < N; ++j) {
-	    t(i,j) = - det * gradPhi(j,i);
-	  }
+	  t[i] = no * gradPhin(0, i);
       }
-      else t[0] = scalar_type(1) - det;
-     
     }
   };
-
 
   template<typename MAT, typename VECT>
   void asm_transport_dc2
   (const MAT &M, const mesh_im &mim, const mesh_fem &mf,
-   const mesh_fem &mf_data,
-   const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
+   const VECT &phi0, const VECT &phin,
+   const mesh_region &rg = mesh_region::all_convexes()) {
 
-    transportdc_nonlinear_term<VECT> nterm(mf, A1, A2, 0); 
-
+    transportdc_nonlinear_term<VECT> nterm(mf, phi0, phin, 0); 
 
     generic_assembly 
-      assem("a=data$1(#1); M$1(#1,#1)+="
-	    "comp(Nonlinear(#1).Grad(#1).Base(#1))(i,j,:,j,:).a(i)");
+      assem("M$1(#1,#1)+="
+	    "comp(NonLin(#1).Grad(#1).Base(#1))(i,:,i,:)");
     assem.push_mi(mim);
     assem.push_mf(mf);
-    assem.push_mf(mf_data);
-    assem.push_data(A);
+    assem.push_nonlinear_term(&nterm);
     assem.push_mat(const_cast<MAT&>(M));
+    assem.assembly(rg);
+  }
+
+  template<typename VECT1, typename VECT>
+  void asm_transport_dc2_st
+  (const VECT1 &V, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &phi0, const VECT &phin,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+
+    transportdc_nonlinear_term<VECT> nterm(mf, phi0, phin, 1); 
+
+    generic_assembly 
+      assem("V$1(#1)+="
+	    "comp(NonLin(#1).Base(#1))(1,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(const_cast<VECT1&>(V));
     assem.assembly(rg);
   }
 
 
 # define MDBRICK_TRANSPORT_DC2 3423456
 
-
-  /* "Transport" brick ( @f$ K = \int \theta.\nabla u v @f$ ). */
+  /* "Level-set regularization" brick. */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_transport_dc2
     : public mdbrick_abstract_linear_pde<MODEL_STATE> {
     
     TYPEDEF_MODEL_STATE_TYPES;
-    
-    mdbrick_parameter<VECTOR> theta_; /* vector field parameter */
+
+    mdbrick_parameter<VECTOR> phi0_, phin_; /* vector field parameter */
 
     void proper_update_K(void) {
       asm_transport_dc2
-	(this->K, this->mim, this->mf_u, theta_.mf(), theta_.get(),
+	(this->K, this->mim, this->mf_u, phi0_.get(), phin_.get(),
 	 this->mf_u.linked_mesh().get_mpi_region());
     }
 
   public :
-    /* accessor to the Lame coef lamda */
-    mdbrick_parameter<VECTOR> &theta(void) { return theta_; }
-    const mdbrick_parameter<VECTOR> &theta(void) const { return theta_; }
+    mdbrick_parameter<VECTOR> &phi0(void) { return phi0_; }
+    const mdbrick_parameter<VECTOR> &phi0(void) const { return phi0_; }
+    mdbrick_parameter<VECTOR> &phin(void) { return phin_; }
+    const mdbrick_parameter<VECTOR> &phin(void) const { return phin_; }
 
     mdbrick_transport_dc2(const mesh_im &mim_, const mesh_fem &mf_u_)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
 						 MDBRICK_TRANSPORT_DC2),
-	theta_("theta", mf_u_.linked_mesh(), this) { }
+        phi0_("phi0", mf_u_.linked_mesh(), this),
+	phin_("phin", mf_u_.linked_mesh(), this)  { }
   };
 
 }
@@ -525,7 +602,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
 
   plain_vector phi0 = ls.values(1), DF(gmm::vect_size(phi0));
 
-  getfem::mdbrick_transport_dc1<> transport(mim, ls.get_mesh_fem());
+  getfem::mdbrick_transport_dc1<> transport(standard_mim, ls.get_mesh_fem());
   transport.theta().set(mf_SD, gmm::scaled(SD, -1.0));
 
   getfem::mdbrick_dynamic<> dynamic(transport, 1.0);
@@ -544,27 +621,31 @@ void crack_problem::update_level_set(const plain_vector &SD) {
   // Level-set regularization
 
   
-//   dt = 0.8 * h;
+  dt = 0.02 * h;
 
-//   for (size_type nt = 0; nt < 3; ++nt) {
-//     gmm::copy(ls.values(1), phi0);
+  gmm::copy(ls.values(1), phi0);
+  plain_vector phin = phi0;
+  for (size_type nt = 0; nt < 50; ++nt) {
+    getfem::mdbrick_transport_dc2<> transport(standard_mim, ls.get_mesh_fem());
+    transport.phi0().set(ls.get_mesh_fem(), phi0);
+    transport.phin().set(ls.get_mesh_fem(), phin);
     
-//     getfem::mdbrick_transport_dc2 transport(mim, ls.get_mesh_fem());
-//     transport.theta().set(ls.get_mesh_fem(), gmm::scaled(SD, -1.0)) ...;
+    getfem::mdbrick_dynamic<> dynamic(transport, 1.0);
+    dynamic.set_dynamic_coeff(1.0/dt, 1.0);
     
-//     getfem::mdbrick_dynamic dynamic(transport, 1.0);
-//     dynamic.set_dynamic_coeff(1.0/dt, 1.0);
+    gmm::mult(dynamic.get_M(), gmm::scaled(phin, 1.0/dt), DF);
+//     asm_transport_dc2_st
+//       (DF, standard_mim, ls.get_mesh_fem(), phi0, phin,
+//        ls.get_mesh_fem().linked_mesh().get_mpi_region());
+    dynamic.set_DF(DF);
     
-//     gmm::mult(dynamic.get_mass_matrix(), gmm::scaled(phi0, 1.0/dt), DF);
-//     dynamic.set_DF(DF);
+    getfem::standard_model_state MS(dynamic);
+    gmm::iteration iter(residual, 1, 40000);
+    getfem::standard_solve(MS, dynamic, iter);
     
-//     getfem::standard_model_state MS(dynamic);
-//     gmm::iteration iter(residual, 1, 40000);
-//     getfem::standard_solve(MS, dynamic, iter);
-    
-//     gmm::copy(MS.state(), ls.values(1));
-//   }
-
+    gmm::copy(MS.state(), phin);
+  }
+  gmm::copy(phin, ls.values(1));
 
 
 
@@ -577,7 +658,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
     exp.exporting(sl); 
     exp.write_point_data(ls.get_mesh_fem(), ls.values(1), "Level_set");
     cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d " << datafilename << "_ls.vtk -f "
+      "mayavi -d " << datafilename << "_ls.vtk "
       "-m BandedSurfaceMap -m Outline\n";
   }
 
@@ -597,33 +678,32 @@ bool crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
-  cout << "testing mims..\n";
-  for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished(); ++cv) {
-    base_node G = dal::mean_value(mim.linked_mesh().points_of_convex(cv));
-    cerr << "on cv\t" << cv << " nb_integ_pts = " << mim.int_method_of_element(cv)->approx_method()->nb_points_on_convex() << "\t , at " << G << "\t";
-    scalar_type err = getfem::test_integration_error(mim.int_method_of_element(cv)->approx_method(), 2);
-    cout << " max integ error = " << err << "\n";
-    assert(err < 1e-10);
-  }
+//   cout << "testing mims..\n";
+//   for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished(); ++cv) {
+//     base_node G = dal::mean_value(mim.linked_mesh().points_of_convex(cv));
+//     cerr << "on cv\t" << cv << " nb_integ_pts = " << mim.int_method_of_element(cv)->approx_method()->nb_points_on_convex() << "\t , at " << G << "\t";
+//     scalar_type err = getfem::test_integration_error(mim.int_method_of_element(cv)->approx_method(), 2);
+//     cout << " max integ error = " << err << "\n";
+//     assert(err < 1e-10);
+//   }
 
 
-  getfem::mesh_fem mf(mim.linked_mesh()); mf.set_classical_finite_element(0);
-  scalar_type vol1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0)));
-  scalar_type surf1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0), NEUMANN_BOUNDARY_NUM));
-  scalar_type surfcrack =  gmm::sqr(getfem::asm_L2_norm(mim_crack, mf, std::vector<double>(mf.nb_dof(), 1.0)));
+//   getfem::mesh_fem mf(mim.linked_mesh()); mf.set_classical_finite_element(0);
+//   scalar_type vol1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0)));
+//   scalar_type surf1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0), NEUMANN_BOUNDARY_NUM));
+//   scalar_type surfcrack =  gmm::sqr(getfem::asm_L2_norm(mim_crack, mf, std::vector<double>(mf.nb_dof(), 1.0)));
 
 
-  cout << "surface of the crack : " << surfcrack << endl;
-  cout << "volume of mesh is " << vol1 << " surf = " << surf1 << "\n";
-  getfem::mesh_im mim2(mim.linked_mesh()); mim2.set_integration_method(mim.linked_mesh().convex_index(), 6);
-  scalar_type vol2 = gmm::sqr(getfem::asm_L2_norm(mim2, mf, std::vector<double>(mf.nb_dof(), 1.0)));
-  scalar_type surf2 = gmm::sqr(getfem::asm_L2_norm(mim2, mf, std::vector<double>(mf.nb_dof(), 1.0), NEUMANN_BOUNDARY_NUM));
-  cout << "volume of mesh is " << vol2 << " surf = " << surf2 << "\n";
-  assert(gmm::abs(vol1-vol2) < 1e-5);
-  assert(gmm::abs(surf1-surf2) < 1e-5);
+//   cout << "surface of the crack : " << surfcrack << endl;
+//   cout << "volume of mesh is " << vol1 << " surf = " << surf1 << "\n";
+//   getfem::mesh_im mim2(mim.linked_mesh()); mim2.set_integration_method(mim.linked_mesh().convex_index(), 6);
+//   scalar_type vol2 = gmm::sqr(getfem::asm_L2_norm(mim2, mf, std::vector<double>(mf.nb_dof(), 1.0)));
+//   scalar_type surf2 = gmm::sqr(getfem::asm_L2_norm(mim2, mf, std::vector<double>(mf.nb_dof(), 1.0), NEUMANN_BOUNDARY_NUM));
+//   cout << "volume of mesh is " << vol2 << " surf = " << surf2 << "\n";
+//   assert(gmm::abs(vol1-vol2) < 1e-5);
+//   assert(gmm::abs(surf1-surf2) < 1e-5);
 
   
-  cerr << "CV INDEX: " << mim_crack.convex_index() << "\n";
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
   for (size_type i = 0; i < 4; ++i)
@@ -632,13 +712,13 @@ bool crack_problem::solve(plain_vector &U) {
   mf_sing_u.set_functions(vfunc);
 
 
-  for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
-    if (mls.is_convex_cut(i)) {
-      cerr << i << " primary zone: " << mls.primary_zone_of_convex(i) << " sz.size=" << mls.zoneset_of_convex(i).size() << " " << dal::mean_value(mls.linked_mesh().points_of_convex(i)) << "\n";
-      if (mls.zoneset_of_convex(i).size() == 1) {
-      }
-    }
-
+//   for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
+//     if (mls.is_convex_cut(i)) {
+//       cerr << i << " primary zone: " << mls.primary_zone_of_convex(i) << " sz.size=" << mls.zoneset_of_convex(i).size() << " " << dal::mean_value(mls.linked_mesh().points_of_convex(i)) << "\n";
+//       if (mls.zoneset_of_convex(i).size() == 1) {
+//       }
+//     }
+  
   dal::bit_vector crack_tip_convexes = mls.crack_tip_convexes();
   cerr << "crack_tip_convexes = " << crack_tip_convexes << "\n";
 
@@ -691,7 +771,8 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u(), lambda, mu);
+  getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u(),
+							 lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -704,14 +785,6 @@ bool crack_problem::solve(plain_vector &U) {
   // Defining the Neumann condition right hand side.
   gmm::clear(F);
 
-// #ifdef VALIDATE_XFEM
-//   gmm::clear(F);
-// #else
-//   for (size_type i = 0; i < nb_dof_rhs; ++i)
-//     F[i*N+N-1] = (mf_rhs.point_of_dof(i))[N-1];
-//   gmm::scale(F, neumann_force);
-// #endif
-
   // Neumann condition brick.
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
@@ -719,16 +792,13 @@ bool crack_problem::solve(plain_vector &U) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN,
 					  DIRICHLET_BOUNDARY_NUM, mf_mult);
-#ifdef VALIDATE_XFEM
-  final_model.rhs().set(exact_sol.mf, exact_sol.U);
-#else
-  final_model.rhs().set(mf_rhs, F);
-#endif
-  
+  final_model.rhs().set(mf_rhs, F);  
   final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
   // Generic solve.
   size_type nnb = final_model.nb_dof();
+  cout << "Total number of variables : " << nnb << endl;
+  nnb = final_model.nb_dof();
   cout << "Total number of variables : " << nnb << endl;
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residual, 1, 40000);

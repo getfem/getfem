@@ -227,6 +227,7 @@ namespace getfem {
     bool real_element_defined;
     short_type es_degree; // estimated polynomial degree of the FEM
     short_type hier_raff; /// hierarchical refinement of the FEM
+    std::string debug_name_;
     
   public :
     /** Number of degrees of freedom. 
@@ -267,6 +268,8 @@ namespace getfem {
     /// Gives the convex structure of the reference element nodes.
     bgeot::pconvex_structure structure(size_type cv) const
     { return node_convex(cv).structure(); }
+    const std::string &debug_name(void) const { return debug_name_; }
+    std::string &debug_name(void) { return debug_name_; }
     virtual bgeot::pstored_point_tab node_tab(size_type) const { 
       if (!pspt_valid) {
 	pspt = bgeot::store_point_tab(cv_node.points());
@@ -434,6 +437,7 @@ namespace getfem {
       real_element_defined = f.real_element_defined;
       es_degree = f.es_degree;
       hier_raff = f.hier_raff;
+      debug_name_ = f.debug_name_;
     }
   };
 

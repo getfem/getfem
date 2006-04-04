@@ -44,7 +44,7 @@ if (N == 2 && ~QUAD)
 %  DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
 %  DATA_FEM_TYPE = 'FEM_PK(2,2)';
   
-  if 1        % test with Hermite or Argyris elements
+  if 0        % test with Hermite or Argyris elements
     if 0      % test with Hermite element
       FEM_TYPE = 'FEM_HERMITE(2)';
       DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';

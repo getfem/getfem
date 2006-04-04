@@ -38,6 +38,10 @@ namespace getfem {
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = 1;
+    std::stringstream nm;
+    nm << "FEM_PRODUCT(" << pfems[0]->debug_name() << ","
+       << pfems[1]->debug_name() << "," << cv << ")";
+    debug_name_ = nm.str();
     
     init_cvs_node();
     for (dal::bv_visitor i(enriched_dof1); !i.finished(); ++i) {
@@ -137,6 +141,7 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_mflproduct_key, pfem);
   
   void mesh_fem_product::adapt(void) {
+    context_check();
     clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished();
 	 ++cv) {

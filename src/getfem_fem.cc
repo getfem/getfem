@@ -2162,17 +2162,16 @@ namespace getfem
   // get a fem descriptor from a string name of a fem.
   pfem fem_descriptor(std::string name) {
     size_type i = 0;
-    return dal::singleton<fem_naming_system>::instance().method(name, i);
+    pfem  pf = dal::singleton<fem_naming_system>::instance().method(name, i);
+    const_cast<virtual_fem &>(*pf).debug_name()
+      = dal::singleton<fem_naming_system>::instance().shorter_name_of_method(pf);
+    return pf;
   }
 
   // get the string name of a fem descriptor.
   std::string name_of_fem(pfem p) {
-    try {
-      return dal::singleton<fem_naming_system>::instance().shorter_name_of_method(p);
-    } 
-    catch (dal::failure_error&) {
-      return std::string("FEM_UNKNOWN()");
-    }
+    return dal::singleton<fem_naming_system>::instance().
+      shorter_name_of_method(p);
   }
 
   /* ******************************************************************** */

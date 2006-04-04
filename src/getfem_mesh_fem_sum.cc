@@ -32,6 +32,13 @@ namespace getfem {
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = 1;
+
+    std::stringstream nm;
+    nm << "FEM_SUM(" << pfems[0]->debug_name() << ",";
+    for (size_type i = 1; i < pfems.size(); ++i)
+      nm << pfems[1]->debug_name() << ",";
+    nm << cv << ")";
+    debug_name_ = nm.str();
     
     init_cvs_node();
     for (size_type i = 0; i < pfems.size(); ++i) {
@@ -144,6 +151,7 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_mflsum_key, pfem);
   
   void mesh_fem_sum::adapt(void) {
+    context_check();
     clear();
     for (dal::bv_visitor i(linked_mesh().convex_index()); !i.finished(); ++i) {
       std::vector<pfem> pfems;

@@ -33,6 +33,10 @@ namespace getfem {
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = bfem->target_dim();
+
+    std::stringstream nm;
+    nm << "FEM_LEVEL_SET(" << bfem->debug_name() << ")";
+    debug_name_ = nm.str();
  
     ls_index.sup(0, mls.nb_level_sets());
 

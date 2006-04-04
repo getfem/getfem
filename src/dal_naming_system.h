@@ -118,16 +118,20 @@ namespace dal {
   std::string naming_system<METHOD>::normative_name_of_method(typename 
 			         naming_system<METHOD>::pmethod pm)  const {
     pstatic_stored_object_key k = key_of_stored_object(pm);
-    if (!k) DAL_THROW(failure_error, "Unknown method");
-    return (dynamic_cast<const method_key *>(k))->name;
+    const method_key *p;
+    if (!k || !(p = dynamic_cast<const method_key *>(k)))
+      return prefix + "_UNKNOWN";
+    return p->name;
   }
   
   template <class METHOD> std::string
   naming_system<METHOD>::shorter_name_of_method(typename
 			        naming_system<METHOD>::pmethod pm)  const { 
     pstatic_stored_object_key k = key_of_stored_object(pm);
-    if (!k)  return "UNKNOWN";
-    const std::string &name((dynamic_cast<const method_key *>(k))->name);
+    const method_key *p;
+    if (!k || !(p = dynamic_cast<const method_key *>(k)))
+      return prefix + "_UNKNOWN";
+    const std::string &name(p->name);
     std::map<std::string, std::string>::const_iterator
       it = shorter_names.find(name);
     if (it != shorter_names.end()) return it->second;
