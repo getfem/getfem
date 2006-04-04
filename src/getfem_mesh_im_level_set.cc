@@ -26,11 +26,18 @@
 
 namespace getfem {
 
-  
+  void mesh_im_level_set::update_from_context(void) const { 
+    is_adapted = false; 
+  }
+
   void mesh_im_level_set::receipt(const MESH_CLEAR &)
-  { clear(); is_adapted = false; }
+  { clear(); is_adapted = false; 
+  }
+
   void mesh_im_level_set::receipt(const MESH_DELETE &)
-  { clear(); is_adapted = false; }
+  { clear(); is_adapted = false; 
+
+  }
   void mesh_im_level_set::clear_build_methods() {
     for (size_type i = 0; i < build_methods.size(); ++i)
       del_stored_object(build_methods[i]);
@@ -261,6 +268,7 @@ namespace getfem {
 
 
   void mesh_im_level_set::adapt(void) {
+    context_check();
     clear_build_methods();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {

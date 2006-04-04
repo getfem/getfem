@@ -66,6 +66,7 @@ namespace getfem {
   }
   
   void mesh_fem_level_set::adapt(void) {
+    context_check();
     clear();
     enriched_dofs.clear(); enriched_elements.clear();
     dof_enrichments.resize(0);
