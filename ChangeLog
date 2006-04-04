@@ -1,3 +1,14 @@
+2006-04-04 Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+
+	* src/getfem_mat_elem_type.cc bug fixed for nonlinear terms.
+
+2006-04-04  Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
+	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+
+	* tests-2.0/ A copy of test programs corresponding to version 2.0
+	is made in this directory in order to test the compatibility of
+	future changes with 2.0 version of Getfem.
+
 2006-02-20  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/gmm_blas_interface.h bug fixed for the interface of matrix-matrix
