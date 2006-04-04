@@ -289,14 +289,16 @@ namespace getfem {
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_nonlinear_elasticity_tangent_matrix
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mim, mf_u,
-	 gmm::sub_vector(MS.state(), SUBI), params().mf(), params().get(),  AHL);
+	 gmm::sub_vector(MS.state(), SUBI), params().mf(), params().get(),
+	 AHL, this->mf_u.linked_mesh().get_mpi_region());
     }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, mf_u.nb_dof());
       gmm::clear(gmm::sub_vector(MS.residual(), SUBI));
       asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residual(), SUBI), mim,
 				   mf_u, gmm::sub_vector(MS.state(), SUBI), 
-				   params().mf(), params().get(), AHL);
+				   params().mf(), params().get(), AHL,
+				   this->mf_u.linked_mesh().get_mpi_region());
     }
 
     mdbrick_parameter<VECTOR> &params() { 
@@ -522,7 +524,8 @@ namespace getfem {
 							  SUBJ, SUBJ), B,
 					  *(this->mesh_ims[0]), mf_u, mf_p, 
 					  gmm::sub_vector(MS.state(), SUBJ), 
-					  gmm::sub_vector(MS.state(), SUBI));
+					  gmm::sub_vector(MS.state(), SUBI),
+					  mf_u.linked_mesh().get_mpi_region());
       gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
       gmm::copy(gmm::transposed(B),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
@@ -539,7 +542,8 @@ namespace getfem {
 			       gmm::sub_vector(MS.residual(), SUBI),
 			       *(this->mesh_ims[0]), mf_u, mf_p, 
 			       gmm::sub_vector(MS.state(), SUBJ),
-			       gmm::sub_vector(MS.state(), SUBI));
+			       gmm::sub_vector(MS.state(), SUBI),
+			       mf_u.linked_mesh().get_mpi_region());
     }
 
     mdbrick_nonlinear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
