@@ -1,24 +1,24 @@
 // -*- c++ -*- (enables emacs c++ mode)
-//========================================================================
-//
-// Copyright (C) 2002-2006 Michel Fournié, Julien Pommier, Yves Renard.
-//
-// This file is a part of GETFEM++
-//
-// Getfem++ is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; version 2.1 of the License.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-// You should have received a copy of the GNU Lesser General Public
-// License along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
-// USA.
-//
-//========================================================================
+/* *********************************************************************** */
+/*                                                                         */
+/* Copyright (C) 2002-2005 Michel Fournié, Julien Pommier,                 */
+/*                         Yves Renard, Nicolas Roux.                      */
+/*                                                                         */
+/* This program is free software; you can redistribute it and/or modify    */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
+/*                                                                         */
+/* This program is distributed in the hope that it will be useful,         */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/* GNU Lesser General Public License for more details.                     */
+/*                                                                         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
+/*                                                                         */
+/* *********************************************************************** */
 
 /**@file icare.cc
    @brief Fluid flow (Navier-Stokes) around an obstacle.
@@ -234,9 +234,9 @@ struct problem_rotating_cylinder : public problem_definition {
     getfem::outer_faces_of_mesh(p.mesh, r);
     for (getfem::mr_visitor i(r); !i.finished(); ++i) {
       base_node G = dal::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
-      if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
-	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
-      else 
+      //if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+      //p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+      //else 
 	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
     }
   }
@@ -410,9 +410,8 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
   // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp, mf_u, 
-					     NONREFLECTIVE_BOUNDARY_NUM,
-					     dt, nu);
+  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp,
+					     NONREFLECTIVE_BOUNDARY_NUM, dt);
  
   // Dynamic brick.
   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
@@ -431,7 +430,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   sparse_matrix G(1, mf_p.nb_dof());
   G(0,0) = 1.;
   plain_vector gr(1);
-  getfem::mdbrick_constraint<> set_pressure(mixed_p);
+  getfem::mdbrick_constraint<> set_pressure(mixed_p, 1);
   set_pressure.set_constraints(G, gr);
   set_pressure.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
     
@@ -517,7 +516,7 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
 
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<>
-    nonreflective(velocity_dirnp, mf_u, NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
+    nonreflective(velocity_dirnp, NONREFLECTIVE_BOUNDARY_NUM, dt);
 
   // Dynamic brick.
   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
@@ -559,7 +558,7 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   }
 }
 
-
+/************************************************************/
 void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   // Velocity brick.  
   getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
@@ -578,8 +577,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
   
   // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp, mf_u, 
-					      NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
+  getfem::mdbrick_NS_nonref1<> nonreflective( velocity_dirnp, 
+					      NONREFLECTIVE_BOUNDARY_NUM, dt);
+  
 
   // Dynamic brick.
     getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
@@ -616,7 +616,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   do_export(0);
   for (scalar_type t = dt; t <= T; t += dt) {
 
-
+    nonreflective.set_Un(Un0);
     velocity_nonlin.set_U0(Un0);
     nonreflective.set_Un(Un0);
     pdef->source_term(*this, t, F);
@@ -650,7 +650,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     
     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
     do_export(t);
-  }
+
+ }
 }
 
 
