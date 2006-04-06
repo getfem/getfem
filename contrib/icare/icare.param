@@ -9,13 +9,13 @@ NU = .001;      % Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0; 	%rate of rotation of the cylinder
 
 DT =.25;       % Time step
-T = 50;        % Final time
+T = 10;        % Final time
 
 NOISY = 1;
 
 
 OPTION =3; % 0 = Stokes avec schema de splitting 1
-	    % 1 = Navier Stokes avec schema de splitting 1
+           % 1 = Navier Stokes avec schema de splitting 1
 
 	    % 2 = Navier Stokes with energy conserving midpoint scheme
 	    % 3 = Navier Stokes with prediction- correction scheme

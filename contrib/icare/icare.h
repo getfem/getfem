@@ -54,7 +54,7 @@ namespace getfem {
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
       gmm::clear(K);
       asm_NS_uuT(K, *(this->mesh_ims[0]), mf_u, U0, 
-		 mf_u.linked_mesh().get_mpi_sub_region(boundary));
+		 mf_u.linked_mesh().get_mpi_region());
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
@@ -105,7 +105,7 @@ namespace getfem {
 # define MDBRICK_NS_NONREF1 3212435
 
 
-  template<typename MAT, typename VECTOR, typename VECT>
+  template<typename VECTOR, typename VECT>
   void asm_nonref_right_hand_side(VECTOR &R,
 				  const mesh_im &mim,
 				  const mesh_fem &mf_u,
@@ -157,7 +157,7 @@ namespace getfem {
       DAL_TRACE2("Assembling Dirichlet constraints, version " << version);
       if ((version | ASMDIR_BUILDH)) {
 	asm_mass_matrix(M, mim(), mf_u(), *mf_mult,
-			mf_u().linked_mesh().get_mpi_sub_region(boundary));
+			mf_u().linked_mesh().get_mpi_region());
       }
       if ((version | ASMDIR_BUILDR)) {
 	asm_nonref_right_hand_side(V, mim(), mf_u(), *mf_mult, Un, dt,
