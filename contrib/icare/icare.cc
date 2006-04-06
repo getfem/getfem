@@ -234,9 +234,9 @@ struct problem_rotating_cylinder : public problem_definition {
     getfem::outer_faces_of_mesh(p.mesh, r);
     for (getfem::mr_visitor i(r); !i.finished(); ++i) {
       base_node G = dal::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
-      //if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
-      //p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
-      //else 
+      if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+      else 
 	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
     }
   }
@@ -616,7 +616,6 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   do_export(0);
   for (scalar_type t = dt; t <= T; t += dt) {
 
-    nonreflective.set_Un(Un0);
     velocity_nonlin.set_U0(Un0);
     nonreflective.set_Un(Un0);
     pdef->source_term(*this, t, F);
@@ -633,6 +632,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     gmm::copy(velocity.get_solution(MSL), USTAR);
     gmm::mult(B, USTAR, Pn1);
  
+    cout << "PN1 : " << gmm::vect_norm2(Pn1) << endl;
+    cout << "U1 - USTAR = " << gmm::vect_dist2(Un0, USTAR);
+
     poisson_source.set_auxF(Pn1);
     iter.init();
     getfem::standard_solve(MSM, poisson_source, iter);
@@ -647,6 +649,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     gmm::add(gmm::scaled(poisson.get_solution(MSM), 1./dt), Pn0, Pn1);
     
     pdef->validate_solution(*this, t);
+    cout << "U1 - Un1 = " << gmm::vect_dist2(Un1, Un0);
     
     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
     do_export(t);
@@ -669,19 +672,32 @@ void navier_stokes_problem::do_export(scalar_type t) {
     exp->exporting_mesh_edges();
     t_export = 0;
     first_export = false;
-  } else if (t >= t_export-dt/20.0) {
-    t_export += dt_export;
   }
-  
-  static int cnt = 0;
-  char s[128]; sprintf(s, "icare.U%d", cnt++);
-  gmm::vecsave(s, Un0);
+  if (t >= t_export-dt/20.0) {
+    t_export += dt_export;
+    
+    static int cnt = 0;
+    char s[128]; sprintf(s, "icare.U%d", cnt++);
+    gmm::vecsave(s, Un0);
+    
+    exp->write_point_data(mf_u, Un0);
+    exp->serie_add_object("velocity");
+    cout << "Saving Pressure, |p| = " << gmm::vect_norm2(Pn1) << "\n";
+    exp->write_point_data(mf_p, Pn1);
+    exp->serie_add_object("pressure");
 
-  exp->write_point_data(mf_u, Un0);
-  exp->serie_add_object("velocity");
-  cout << "Saving Pressure, |p| = " << gmm::vect_norm2(Pn1) << "\n";
-  exp->write_point_data(mf_p, Pn1);
-  exp->serie_add_object("pressure");
+    if (N == 2) {
+      plain_vector DU(mf_rhs.nb_dof() * N * N);
+      plain_vector Rot(mf_rhs.nb_dof());
+      compute_gradient(mf_u, mf_rhs, Un0, DU);
+      for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
+	Rot[i] = DU[i*N + 3] - DU[i*N + 2];
+      }
+      cout << "Saving Rot, |rot| = " << gmm::vect_norm2(Rot) << "\n";
+      exp->write_point_data(mf_rhs, Rot);
+      exp->serie_add_object("rot");
+    }
+  }
 }
 
 /**************************************************************************/
