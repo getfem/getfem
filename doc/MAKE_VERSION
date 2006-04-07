@@ -1,4 +1,4 @@
-(à revoir) Liste des items a passer en revue pour fabriquer une nouvelle version
+Liste des items a passer en revue pour fabriquer une nouvelle version
 
 - Mettre à jour les version de libtool, automake, autoconf
 
@@ -26,26 +26,12 @@
    http://gersoo.free.fr/calsci/calsci.html
    http://www.oonumerics.org/oon/
    http://www.6dof.com
+   http://freshmeat.net/
 
 - Faire passer le numero de version au suivant dans la distribution,
   mettre à jour la page WEB, remettre la date dans les numéros de version.
 
-  Eventuellement faire une revision tag par
-
-  cvs rtag STABLE-1_2 getfem++
-  cvs rtag -b -r STABLE-1_2 STABLE-1_2-BRANCH getfem++
-
-  qui a pour effet de fabriquer une branche que l'on peut modifier
-  La commande 
- 
-  cvs checkout -r STABLE-1_2-BRANCH
-
-  charge la branche en question
-
-  Si on fait une correction dans la branche en question il est possible
-  de la merger dans la branche principale par un
-
-  cvs update -j STABLE-1_2-BRANCH toto.C
+  Eventuellement faire une branche pour la version
 
 - Pour un changement de version d'autoconf et libtool :
   libtool :
