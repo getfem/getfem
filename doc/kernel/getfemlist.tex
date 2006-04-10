@@ -24,7 +24,9 @@
 
 % principal notations
 
-
+\newcommand{\tilda}{{$_{\widetilde{\ }}$}}
+%\texonly{\newcommand{\tilda}{{$_{\em \widetilde{\ }}$}}}
+%\htmlonly{\newcommand{\tilda}{\verb+~+}}
 
 \begin{document}
 
@@ -317,7 +319,7 @@ Among the advantages, the condition number of  rigidity matrices can be greatly 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$} & \small $P$, \mbox{$\ 1 \leq P \leq 255$} & \mbox{$\Frac{(K_1+P)!}{K_1! P!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$} & \small $P$, \mbox{$\ 1 \leq P \leq 255$} & \mbox{$\Frac{(K+P)!}{K! P!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -724,7 +726,7 @@ $$ \begin{array}{ll}
 \hat{\varphi}_{15}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\hat{\varphi}_{15}(0,1) = 1),\\
 \hat{\varphi}_{16}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\hat{\varphi}_{16}(0,1) = 1),\\
 \hat{\varphi}_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\hat{\varphi}_{17}(0,1) = 1),\\
-\hat{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & \hspace*{-9.5em}(\sqrt{0.5}(\partial_{x}\hat{\varphi}_0(0.5,0.5) + \partial_{y}\hat{\varphi}_{18}(0.5,0.5)) = 1),\\
+\hat{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & \hspace*{-9.5em}(\sqrt{0.5}(\partial_{x}\hat{\varphi}_{18}(0.5,0.5) + \partial_{y}\hat{\varphi}_{18}(0.5,0.5)) = 1),\\
 \hat{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\hat{\varphi}_{19}(0,0.5) = 1),\\
 \hat{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\hat{\varphi}_{20}(0.5,0) = 1),\\
 \end{array}
@@ -1404,7 +1406,7 @@ For the HCT element, it is advised to use the \texttt{IM\_HCT\_COMPOSITE(im)} co
 
 \bibitem{EncyclopCubature}
   R. {\sc Cools}
-  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/{\~n}ines/research/ecf/ecf.html}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
 
 \bibitem{so-se-do2004}
   P. {\sc Solin, K. Segeth, I. Dolezel},
