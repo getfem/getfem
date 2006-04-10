@@ -302,7 +302,7 @@ namespace getfem {
   static double round_to_nth_significant_number(double x, int ndec) {
     double p = 1.;
     double s = (x < 0 ? -1 : 1);
-    double pdec = pow(10.,ndec);
+    double pdec = pow(10.,double(ndec));
     if (x == 0) return 0.;
     x = gmm::abs(x);
     while (x > 1) { x /= 10.0; p*=10; }

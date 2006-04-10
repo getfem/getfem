@@ -60,7 +60,7 @@ namespace getfem {
     build_rtree();
     
 
-    cerr << "interpolated_fem::update from context : convex_index = " << mim.convex_index() << "\n";
+    //cerr << "interpolated_fem::update from context : convex_index = " << mim.convex_index() << "\n";
     std::vector<elt_interpolation_data> vv(mim.convex_index().last_true() + 1);
     elements.swap(vv);
     base_node gpt;

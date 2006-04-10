@@ -127,7 +127,8 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
       opt_long_scalar_type sum = 0, realsum = 1.;
       for (size_type i=0; i < ppi->approx_method()->nb_points_on_convex(); ++i) {
 	opt_long_scalar_type prod = ppi->approx_method()->coeff(i);
-	for (size_type d=0; d < dim; ++d) prod *= pow(ppi->approx_method()->point(i)[d], idx[d]);
+	for (size_type d=0; d < dim; ++d) 
+	  prod *= pow(opt_long_scalar_type(ppi->approx_method()->point(i)[d]), idx[d]);
 	sum += prod;
       }
       if (ppi->structure()->basic_structure() == bgeot::simplex_structure(dim)) {        

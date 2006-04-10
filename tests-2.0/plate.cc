@@ -307,7 +307,7 @@ base_small_vector plate_problem::theta_exact(base_node P) {
   base_small_vector theta(2);
   if (sol_ref == 0) { // appui simple aux 2 bords
      theta[0] = (-pressure / (32. * mu * epsilon * epsilon * epsilon))
-              * (4. * pow(P[0] - .5, 3) - 3 * (P[0] - .5));
+              * (4. * pow(P[0] - .5, 3.) - 3 * (P[0] - .5));
      theta[1] = 0.;
    }
   if (sol_ref == 1) { // encastrement aux 2 bords

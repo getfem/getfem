@@ -250,14 +250,15 @@ declaration of cutoff_radius1 and cutoffradius0
 	  else if (r >= cutoff_radius0)
 	    return scalar_type(0);
 	  else {
-	    scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3)
+	    scalar_type c = 6./(pow(cutoff_radius0,3.) - 
+				pow(cutoff_radius1,3.)
 				+ 3*cutoff_radius1*cutoff_radius0
 				* (cutoff_radius1-cutoff_radius0));
-	    scalar_type k = -(c/6.)*(- pow(cutoff_radius0,3)
-				     + 3*cutoff_radius1*pow(cutoff_radius0,2));
+	    scalar_type k = -(c/6.)*(- pow(cutoff_radius0,3.)
+				     + 3*cutoff_radius1*pow(cutoff_radius0,2.));
 
-	    return (c/3.)*pow(r,3)
-	      - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2)
+	    return (c/3.)*pow(r,3.)
+	      - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2.)
 	      + c*cutoff_radius0*cutoff_radius1*r + k;
 	  }
 	}
@@ -280,7 +281,7 @@ declaration of cutoff_radius1 and cutoffradius0
 	  scalar_type ratio = scalar_type(0);
 
 	  if ( r > cutoff_radius1 && r < cutoff_radius0 ) {
-	    scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3)
+	    scalar_type c = 6./(pow(cutoff_radius0,3.) - pow(cutoff_radius1,3.)
 				+ 3*cutoff_radius1*cutoff_radius0
 				* (cutoff_radius1-cutoff_radius0));
 	    ratio = c*(r - cutoff_radius0)*(r - cutoff_radius1);
@@ -329,7 +330,7 @@ declaration of cutoff_radius1 and cutoffradius0
 
     crack_singular(size_type l_, const level_set &ls_, 
 		   scalar_type cutoff_R, scalar_type cutoff_R1, scalar_type cutoff_R0, size_type func) : l(l_), ls(ls_) {
-      if (cutoff_R) a4 = (cutoff_R > 0.0) ? pow(2.7/cutoff_R,4) : 0.0;
+      if (cutoff_R) a4 = (cutoff_R > 0.0) ? pow(2.7/cutoff_R,4.) : 0.0;
       cutoff_radius1 = cutoff_R1;
       cutoff_radius0 = cutoff_R0;
       cutoff_func = func;

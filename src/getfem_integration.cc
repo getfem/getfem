@@ -1238,7 +1238,8 @@ namespace getfem {
       opt_long_scalar_type sum(0), realsum;
       for (size_type i=0; i < pim->nb_points_on_convex(); ++i) {
 	opt_long_scalar_type prod = pim->coeff(i);
-	for (size_type d=0; d < dim; ++d) prod *= pow(pim->point(i)[d], idx[d]);
+	for (size_type d=0; d < dim; ++d) 
+	  prod *= pow(opt_long_scalar_type(pim->point(i)[d]), idx[d]);
 	sum += prod;
       }
       realsum = exact->exact_method()->int_monomial(idx);
