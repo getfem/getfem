@@ -481,6 +481,10 @@ namespace getfem {
   };
 
 
+  /* compute 
+      - sgn(phi0) if version == 1
+      - sgn(phi0) / grad(Phi)/norm(grad(Phi)) if version != 1
+  */
   template<typename VECT1> class transportdc_nonlinear_term 
     : public getfem::nonlinear_elem_term {
     
@@ -618,8 +622,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
   for (size_type i = 0; i < ls.get_mesh_fem().nb_dof(); ++i)
     ls.values(1)[i] = std::min(ls.values(1)[i], MS.state()[i]);
 
-  // Level-set regularization
-
+  // Level-set reinitialization -> get back a signed distance
   
   dt = 0.02 * h;
 
@@ -659,7 +662,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
     exp.write_point_data(ls.get_mesh_fem(), ls.values(1), "Level_set");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d " << datafilename << "_ls.vtk "
-      "-m BandedSurfaceMap -m Outline\n";
+      "-m BandedSurfaceMap -m Outline -f WarpVector\n";
   }
 
 
