@@ -83,7 +83,7 @@ namespace getfem {
       return mesh_fem::memsize(); // + ... ;
     }
     
-    mesh_fem_sum(mesh &me) : mesh_fem(me) { is_adapted = false; }
+    mesh_fem_sum(const mesh &me) : mesh_fem(me) { is_adapted = false; }
     void set_mesh_fems(const std::vector<const mesh_fem *> &mefs)
     { mfs = mefs; adapt(); }
     void set_mesh_fems(const mesh_fem &mf1)
