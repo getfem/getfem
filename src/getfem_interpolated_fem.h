@@ -145,6 +145,7 @@ namespace getfem {
     
     /** return the min/max/mean number of gauss points in the convexes of the interpolated mesh_fem */
     void gauss_pts_stats(unsigned &ming, unsigned &maxg, scalar_type &meang) const; 
+    size_type memsize() const;
   private:
     interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
 		     pinterpolated_func pif_ = 0,

@@ -26,6 +26,28 @@
 #include <gmm_solver_bfgs.h>
 namespace bgeot
 { 
+  bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
+				   scalar_type IN_EPS) {
+    n_ref.resize(pgt->structure()->dim());
+    bool converged = true;
+    if (pgt->is_linear()) {
+      return invert_lin(n, n_ref,IN_EPS);
+    } else {
+      return invert_nonlin(n, n_ref,IN_EPS,converged,true);
+    }
+  }
+
+  bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref, 
+				   bool &converged, 
+				   scalar_type IN_EPS) {
+    n_ref.resize(pgt->structure()->dim());
+    converged = true;
+    if (pgt->is_linear()) {
+      return invert_lin(n, n_ref,IN_EPS);
+    } else return invert_nonlin(n, n_ref,IN_EPS,converged, false);
+  }
+
+
   /* inversion for linear geometric transformations */
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS) {
     base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
@@ -79,7 +101,7 @@ namespace bgeot
   /* inversion for non-linear geometric transformations 
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
-  bool geotrans_inv_convex::invert_nonlin(const base_node& xreal, base_node& x, scalar_type IN_EPS) {
+  bool geotrans_inv_convex::invert_nonlin(const base_node& xreal, base_node& x, scalar_type IN_EPS, bool &converged, bool throw_except) {
     base_node xn(P), y, z,x0;
     /* find an initial guess */
     x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
@@ -128,9 +150,9 @@ namespace bgeot
 	if (newres < 1.5*res) break;
       }
       x = z; res = newres;
-      //cout << "cnt=" << cnt << ", x=" << x << ", res=" << res << "\n";
+      //cerr << "cnt=" << cnt << ", x=" << x << ", res=" << res << "\n";
     }
-    //cout << " invert_nonlin done\n";
+    //cerr << " invert_nonlin done\n";
     //cerr << "cnt=" << cnt << ", P=" << P << ", N=" << N << ", G=" << G << "\nX=" << xreal << " Xref=" << x << "\nresidu=" << res << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n-------------------^^^^^^^^\n";
     if (cnt == 0) {
       //cout << "BFGS in geotrans_inv_convex!\n";
@@ -141,10 +163,19 @@ namespace bgeot
       rn = pgt->transform(x,cvpts) - xreal; 
       
       if (pgt->convex_ref()->is_in(x) < IN_EPS &&
-	  N==P && gmm::vect_norm2(rn) > IN_EPS)
-	DAL_THROW(dal::failure_error, 
-		  "inversion of non-linear geometric transformation "
-		  "failed ! (too much iterations)");
+	  N==P && gmm::vect_norm2(rn) > IN_EPS) {
+	if (throw_except) {
+	  DAL_THROW(failure_error,
+		    "inversion of non-linear geometric transformation "
+		    "failed ! (too much iterations -- xreal=" << xreal
+		    << ", rn=" << rn 
+		    << ", xref=" << x 
+		    << ", is_in(x)=" << pgt->convex_ref()->is_in(x) 
+		    << ", eps=" << IN_EPS << ")");
+	}
+	converged = false;
+	return false;
+      }
     }
     // Test un peu sevère peut-être en ce qui concerne rn.
     if (pgt->convex_ref()->is_in(x) < IN_EPS

@@ -38,9 +38,10 @@ namespace getfem {
   
   bool interpolated_fem::find_a_point(base_node pt, base_node &ptr,
 				      size_type &cv) const {
+    bool gt_invertible;
     if (pif) { base_node ptreal = pt; pif->val(ptreal, pt); }
-    if (cv_stored != size_type(-1) && gic.invert(pt, ptr))
-      { cv = cv_stored; return true; }
+    if (cv_stored != size_type(-1) && gic.invert(pt, ptr, gt_invertible))
+      { cv = cv_stored; if (gt_invertible) return true; }
     boxtree.find_boxes_at_point(pt, boxlst);
     bgeot::rtree::pbox_set::const_iterator it = boxlst.begin(),
       ite = boxlst.end();
@@ -49,7 +50,9 @@ namespace getfem {
 	(mf.linked_mesh().convex((*it)->id),
 	 mf.linked_mesh().trans_of_convex((*it)->id));
       cv_stored = (*it)->id;
-      if (gic.invert(pt, ptr)) { cv = (*it)->id; return true; }
+      if (gic.invert(pt, ptr, gt_invertible)) { 
+	cv = (*it)->id; return true; 
+      }
     }
     return false;
   }
@@ -135,7 +138,11 @@ namespace getfem {
   }
 
   size_type interpolated_fem::nb_dof(size_type cv) const
-  { context_check(); return elements[cv].nb_dof; }
+  { context_check(); 
+    if (mim.linked_mesh().convex_index().is_in(cv))
+      return elements[cv].nb_dof; 
+    else DAL_THROW(dal::failure_error, "Wrong convex number: " << cv);
+  }
   
   size_type interpolated_fem::index_of_global_dof
   (size_type cv, size_type i) const
@@ -146,7 +153,11 @@ namespace getfem {
   
   const bgeot::convex<base_node> &interpolated_fem::node_convex
   (size_type cv) const
-  { return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mim.linked_mesh().structure_of_convex(cv)->nb_faces())); }
+  { 
+    if (mim.linked_mesh().convex_index().is_in(cv))
+      return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
+    else DAL_THROW(dal::failure_error, "Wrong convex number: " << cv);
+  }
 
   bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
     const { 
@@ -343,6 +354,21 @@ namespace getfem {
     meang /= mf.linked_mesh().convex_index().card();
   }
 
+  size_type interpolated_fem::memsize() const {
+    size_type sz = 0;
+    sz += blocked_dof.memsize();
+    sz += sizeof(*this);
+    sz += elements.capacity() * sizeof(elt_interpolation_data);
+    for (unsigned i=0; i < elements.size(); ++i) {
+      sz += elements[i].gausspt.capacity() * sizeof(gausspt_interpolation_data);
+      sz += elements[i].inddof.capacity() * sizeof(size_type);
+      for (unsigned j=0; j < elements[i].gausspt.size(); ++j) {
+	sz += elements[i].gausspt[j].local_dof.capacity() * sizeof(size_type);
+      }
+    }
+    return sz;
+  }
+
   interpolated_fem::interpolated_fem(const mesh_fem &mef,
 				     const mesh_im &meim, 
 				     pinterpolated_func pif_,
@@ -373,6 +399,7 @@ namespace getfem {
     dal::add_stored_object(new special_intfem_key(pf), pf);
     return pf;
   }
+
 
 }  /* end of namespace getfem.                                            */
 

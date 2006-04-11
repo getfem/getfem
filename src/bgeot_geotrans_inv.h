@@ -70,24 +70,47 @@ namespace bgeot {
     template<class TAB> void init(const TAB &nodes, pgeometric_trans pgt_);
     
     /**
-       given the node on the real element, returns the node
-       on the reference element (even if it is outside of the ref. convex)
+       given the node on the real element, returns the node on the
+       reference element (even if it is outside of the ref. convex).
+       
+       If the geometric transformation is not invertible at point n,
+       an exception is thrown.
+
        @return true if the n is inside the convex
+
        @param n node on the real element 
+
        @param n_ref computed node on the reference convex
+
        @param IN_EPS a threshold.
     */
     bool invert(const base_node& n, base_node& n_ref,
-		scalar_type IN_EPS=1e-12) {
-      n_ref.resize(pgt->structure()->dim());
-      if (pgt->is_linear()) {
-        return invert_lin(n, n_ref,IN_EPS);
-      } else return invert_nonlin(n, n_ref,IN_EPS);
-    }
+		scalar_type IN_EPS=1e-12);
+
+    /**
+       given the node on the real element, returne the node
+       on the reference element (even if it is outside of the ref. convex).
+       
+       This version will not throw an exception if the geometric
+       transformation is not invertible at point n. 
+       
+       @return true if the n is inside the convex
+
+       @param n node on the real element 
+
+       @param n_ref computed node on the reference convex
+
+       @param converged on output, will be set to true if the
+       geometric transformation could be inverted.
+
+       @param IN_EPS a threshold.
+    */
+    bool invert(const base_node& n, base_node& n_ref, bool &converged, 
+		scalar_type IN_EPS=1e-12);
   private:
     bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
     bool invert_nonlin(const base_node& n, base_node& n_ref,
-		       scalar_type IN_EPS);
+		       scalar_type IN_EPS, bool &converged, bool throw_except);
     void update_B();
     friend class geotrans_inv_convex_bfgs;
   };
