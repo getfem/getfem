@@ -52,7 +52,7 @@ namespace getfem {
 
   public :
 
-    void update_from_context(void) const { }    
+    void update_from_context(void) const { }
     void reinit(void);
     std::vector<scalar_type> &values(unsigned i = 0)
     { return (i == 0) ? primary_ : secondary_; }
@@ -72,7 +72,7 @@ namespace getfem {
       secondary_.resize(mf->nb_dof());
       this->add_dependency(*mf);
     }
-
+    size_type memsize() const;
   };
  
 

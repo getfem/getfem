@@ -43,6 +43,10 @@ namespace getfem {
     return mesher_level_set(mf->fem_of_element(cv), coeff);
   }
  
-
+  size_type level_set::memsize() const {
+    return sizeof(*this) + 
+      primary_.capacity() * sizeof(scalar_type) + 
+      secondary_.capacity() * sizeof(scalar_type);
+  }
 }  /* end of namespace getfem.                                             */
 
