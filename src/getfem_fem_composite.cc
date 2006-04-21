@@ -287,7 +287,7 @@ namespace getfem {
     is_equivalent() = false;
     is_polynomial() = false;
     is_lagrange() = false;
-    estimated_degree() = 3;
+    estimated_degree() = 5;
     init_cvs_node();
 
     base()=std::vector<bgeot::polynomial_composite>
@@ -407,7 +407,7 @@ namespace getfem {
     is_equivalent() = false;
     is_polynomial() = false;
     is_lagrange() = false;
-    estimated_degree() = 3;
+    estimated_degree() = 5;
     init_cvs_node();
 
     base()=std::vector<bgeot::polynomial_composite>
@@ -437,5 +437,349 @@ namespace getfem {
     dependencies.push_back(p->node_tab(0));
     return p;
   }
+
+
+
+
+  /* ******************************************************************** */
+  /*    C1 composite element on quadrilateral (piecewise P3).     */
+  /* ******************************************************************** */
+
+  struct quadc1p3__ : public fem<bgeot::polynomial_composite> {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    mesh m;
+    bgeot::mesh_precomposite mp;
+    quadc1p3__(void);
+  };
+
+  void quadc1p3__::mat_trans(base_matrix &M, const base_matrix &G,
+				 bgeot::pgeometric_trans pgt) const {
+    
+    static bgeot::pgeotrans_precomp pgp;
+    static pfem_precomp pfp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(2, 2);
+    dim_type N = G.nrows();
+    
+    if (N != 2) 
+      DAL_THROW(failure_error, "Sorry, this version of reduced HCT "
+		"element works only on dimension two.");
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pfp = fem_precomp(this, node_tab(0));
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+    
+    gmm::mult(G, pgp->grad(0), K);
+    for (size_type i = 0; i < 4; ++i) {
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(3*i), K);
+      gmm::copy(K, gmm::sub_matrix(M, gmm::sub_interval(1+3*i, 2)));
+    }
+
+    // take the normal derivatives into account
+    static base_matrix W(4, 16);
+    base_small_vector norient(M_PI, M_PI * M_PI);
+    if (pgt->is_linear()) gmm::lu_inverse(K); 
+    for (unsigned i = 12; i < 16; ++i) {
+      if (!(pgt->is_linear()))
+	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
+      bgeot::base_small_vector n(2), v(2);
+      gmm::mult(gmm::transposed(K), cvr->normals()[i-12], n);
+      n /= gmm::vect_norm2(n);
+
+      scalar_type ps = gmm::vect_sp(n, norient);
+      if (ps < 0) n *= scalar_type(-1);
+      if (gmm::abs(ps) < 1E-8)
+	DAL_WARNING2("FVS_quadrilateral : "
+		     "The normal orientation may be not correct");
+      gmm::mult(K, n, v);
+      const bgeot::base_tensor &t = pfp->grad(i);
+      for (unsigned j = 0; j < 16; ++j)
+	W(i-12, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
+    }
+    
+    static base_matrix A(4, 4);
+    static bgeot::base_vector w(4), coeff(4);
+    static gmm::sub_interval SUBI(12, 4), SUBJ(0, 4);
+    gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
+    gmm::lu_inverse(A);
+    gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));
+
+    for (unsigned j = 0; j < 12; ++j) {
+      gmm::mult(W, gmm::mat_row(M, j), w);
+      gmm::mult(A, gmm::scaled(w, -1.0), coeff);
+      gmm::copy(coeff, gmm::sub_vector(gmm::mat_row(M, j), SUBI));
+    }
+  }
+
+  quadc1p3__::quadc1p3__(void) {
+
+    m.clear();
+    size_type i0 = m.add_point(base_node(0.0, 0.0));
+    size_type i1 = m.add_point(base_node(1.0, 0.0));
+    size_type i2 = m.add_point(base_node(0.0, 1.0));
+    size_type i3 = m.add_point(base_node(1.0, 1.0));
+    size_type i4 = m.add_point(base_node(0.5, 0.5));
+    m.add_triangle(i1, i3, i4);
+    m.add_triangle(i2, i0, i4);
+    m.add_triangle(i3, i2, i4);
+    m.add_triangle(i0, i1, i4);
+    mp = bgeot::mesh_precomposite(m);
+
+ std::stringstream s
+   ("2 - 3*x - 3*y + 6*x*y + x^3 - 3*x^2*y;"
+    "1 - 3*x^2 - 3*y^2 + x^3 + 3*x^2*y + 2*y^3;"
+    "2 - 3*x - 3*y + 6*x*y - 3*x*y^2 + y^3;"
+    "1 - 3*x^2 - 3*y^2 + 2*x^3 + 3*x*y^2 + y^3;"
+    "1/6 + 1/2*x - y - 3/2*x^2 + 2*x*y + 5/6*x^3 - x^2*y;"
+    "x - 1/2*x^2 - 3*x*y + 1/6*x^3 + x^2*y + 2*x*y^2;"
+    "1/6 + 1/2*x - y - x*y + 3/2*y^2 + 1/2*x*y^2 - 2/3*y^3;"
+    "x - 2*x^2 - 3/2*y^2 + x^3 + 3/2*x*y^2 + 2/3*y^3;"
+    "1/6 - x + 1/2*y + 3/2*x^2 - x*y - 2/3*x^3 + 1/2*x^2*y;"
+    "y - 3/2*x^2 - 2*y^2 + 2/3*x^3 + 3/2*x^2*y + y^3;"
+    "1/6 - x + 1/2*y + 2*x*y - 3/2*y^2 - x*y^2 + 5/6*y^3;"
+    "y - 3*x*y - 1/2*y^2 + 2*x^2*y + x*y^2 + 1/6*y^3;"
+    "-1 + 3*x + 3*y - 6*x*y - 3*y^2 - x^3 + 3*x^2*y + 2*y^3;"
+    "3*x^2 - x^3 - 3*x^2*y;"
+    "-1 + 3*x + 3*y - 6*x*y - 3*y^2 + 3*x*y^2 + y^3;"
+    "3*x^2 - 2*x^3 - 3*x*y^2 + y^3;"
+    "-2/3 + 1/2*x + 2*y - x*y - 2*y^2 + 1/6*x^3 - x^2*y + 2*x*y^2;"
+    "-x^2 + 5/6*x^3 + x^2*y;"
+    "-2/3 + 1/2*x + 2*y - x*y - 2*y^2 + 1/2*x*y^2 + 2/3*y^3;"
+    "-x^2 + x^3 + 3/2*x*y^2 - 2/3*y^3;"
+    "-5/6 + x + 5/2*y + 1/2*x^2 - 3*x*y - 2*y^2 - 2/3*x^3 + 3/2*x^2*y + y^3;"
+    "-1/2*x^2 + 2/3*x^3 + 1/2*x^2*y;"
+    "-5/6 + x + 5/2*y - 2*x*y - 5/2*y^2 + x*y^2 + 5/6*y^3;"
+    "-x*y + 1/2*y^2 + 2*x^2*y - x*y^2 + 1/6*y^3;"
+    "-1 + 3*x + 3*y - 3*x^2 - 6*x*y + x^3 + 3*x^2*y;"
+    "3*y^2 + x^3 - 3*x^2*y - 2*y^3;"
+    "-1 + 3*x + 3*y - 3*x^2 - 6*x*y + 2*x^3 + 3*x*y^2 - y^3;"
+    "3*y^2 - 3*x*y^2 - y^3;"
+    "-5/6 + 5/2*x + y - 5/2*x^2 - 2*x*y + 5/6*x^3 + x^2*y;"
+    "1/2*x^2 - x*y + 1/6*x^3 - x^2*y + 2*x*y^2;"
+    "-5/6 + 5/2*x + y - 2*x^2 - 3*x*y + 1/2*y^2 + x^3 + 3/2*x*y^2 - 2/3*y^3;"
+    "-1/2*y^2 + 1/2*x*y^2 + 2/3*y^3;"
+    "-2/3 + 2*x + 1/2*y - 2*x^2 - x*y + 2/3*x^3 + 1/2*x^2*y;"
+    "-y^2 - 2/3*x^3 + 3/2*x^2*y + y^3;"
+    "-2/3 + 2*x + 1/2*y - 2*x^2 - x*y + 2*x^2*y - x*y^2 + 1/6*y^3;"
+    "-y^2 + x*y^2 + 5/6*y^3;"
+    "1 - 3*x - 3*y + 3*x^2 + 6*x*y + 3*y^2 - x^3 - 3*x^2*y - 2*y^3;"
+    "-x^3 + 3*x^2*y;"
+    "1 - 3*x - 3*y + 3*x^2 + 6*x*y + 3*y^2 - 2*x^3 - 3*x*y^2 - y^3;"
+    "3*x*y^2 - y^3;"
+    "-2/3 + 3/2*x + 2*y - x^2 - 3*x*y - 2*y^2 + 1/6*x^3 + x^2*y + 2*x*y^2;"
+    "5/6*x^3 - x^2*y;"
+    "-2/3 + 3/2*x + 2*y - x^2 - 3*x*y - 2*y^2 + x^3 + 3/2*x*y^2 + 2/3*y^3;"
+    "1/2*x*y^2 - 2/3*y^3;"
+    "-2/3 + 2*x + 3/2*y - 2*x^2 - 3*x*y - y^2 + 2/3*x^3 + 3/2*x^2*y + y^3;"
+    "-2/3*x^3 + 1/2*x^2*y;"
+    "-2/3 + 2*x + 3/2*y - 2*x^2 - 3*x*y - y^2 + 2*x^2*y + x*y^2 + 1/6*y^3;"
+    "-x*y^2 + 5/6*y^3;"
+    "4/3 - 2*x - 4*y + 4*x*y + 4*y^2 + 2/3*x^3 - 4*x*y^2;"
+    "-2/3*x^3;"
+    "4/3 - 2*x - 4*y + 4*x*y + 4*y^2 - 2*x*y^2 - 4/3*y^3;"
+    "-2*x*y^2 + 4/3*y^3;"
+    "-2/3 + 2*x - 2*x^2 + 2/3*x^3;"
+    "2*x^2 - 4*x*y - 2/3*x^3 + 4*x*y^2;"
+    "-2/3 + 2*x - 4*x*y + 2*y^2 + 2*x*y^2 - 4/3*y^3;"
+    "-2*y^2 + 2*x*y^2 + 4/3*y^3;"
+    "4/3 - 4*x - 2*y + 4*x^2 + 4*x*y - 4/3*x^3 - 2*x^2*y;"
+    "4/3*x^3 - 2*x^2*y;"
+    "4/3 - 4*x - 2*y + 4*x^2 + 4*x*y - 4*x^2*y + 2/3*y^3;"
+    "-2/3*y^3;"
+    "-2/3 + 2*y + 2*x^2 - 4*x*y - 4/3*x^3 + 2*x^2*y;"
+    "-2*x^2 + 4/3*x^3 + 2*x^2*y;"
+    "-2/3 + 2*y - 2*y^2 + 2/3*y^3;"
+    "-4*x*y + 2*y^2 + 4*x^2*y - 2/3*y^3;");
+
+    bgeot::pconvex_ref cr = bgeot::parallelepiped_of_reference(2);
+    mref_convex() = cr;
+    dim() = cr->structure()->dim();
+    is_polynomialcomp() = true;
+    is_equivalent() = false;
+    is_polynomial() = false;
+    is_lagrange() = false;
+    estimated_degree() = 5;
+    init_cvs_node();
+
+    base()=std::vector<bgeot::polynomial_composite>
+      (16, bgeot::polynomial_composite(mp, false));
+    for (size_type k = 0; k < 16; ++k)
+      for (size_type ic = 0; ic < 4; ++ic)
+	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+
+    for (size_type i = 0; i < 4; ++i) {
+      base_node pt(0.0, 0.0);
+      if (i & 1) pt[0] = 1.0;
+      if (i & 2) pt[1] = 1.0;
+      add_node(lagrange_dof(2), pt);
+      add_node(derivative_dof(2, 0), pt);
+      add_node(derivative_dof(2, 1), pt);
+    }
+
+    add_node(normal_derivative_dof(2), base_node(1.0, 0.5));
+    add_node(normal_derivative_dof(2), base_node(0.0, 0.5));
+    add_node(normal_derivative_dof(2), base_node(0.5, 1.0));
+    add_node(normal_derivative_dof(2), base_node(0.5, 0.0));
+  }
+
+
+  pfem quadc1p3_fem
+  (fem_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 0.");
+    virtual_fem *p = new quadc1p3__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
+  /*    Reduced C1 composite element on quadrilateral (piecewise P3).     */
+  /* ******************************************************************** */
+
+  struct reduced_quadc1p3__ : public fem<bgeot::polynomial_composite> {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const;
+    mesh m;
+    bgeot::mesh_precomposite mp;
+    reduced_quadc1p3__(void);
+  };
+
+  void reduced_quadc1p3__::mat_trans(base_matrix &M, const base_matrix &G,
+				 bgeot::pgeometric_trans pgt) const {
+    
+    static bgeot::pgeotrans_precomp pgp;
+    static bgeot::pgeometric_trans pgt_stored = 0;
+    static base_matrix K(2, 2);
+    dim_type N = G.nrows();
+    
+    if (N != 2) 
+      DAL_THROW(failure_error, "Sorry, this version of reduced HCT "
+		"element works only on dimension two.");
+    if (pgt != pgt_stored) {
+      pgt_stored = pgt;
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+    }
+    gmm::copy(gmm::identity_matrix(), M);
+    
+    gmm::mult(G, pgp->grad(0), K);
+    for (size_type i = 0; i < 4; ++i) {
+      if (i && !(pgt->is_linear())) gmm::mult(G, pgp->grad(3*i), K);
+      gmm::copy(K, gmm::sub_matrix(M, gmm::sub_interval(1+3*i, 2)));
+    }
+  }
+
+  reduced_quadc1p3__::reduced_quadc1p3__(void) {
+
+    m.clear();
+    size_type i0 = m.add_point(base_node(0.0, 0.0));
+    size_type i1 = m.add_point(base_node(1.0, 0.0));
+    size_type i2 = m.add_point(base_node(0.0, 1.0));
+    size_type i3 = m.add_point(base_node(1.0, 1.0));
+    size_type i4 = m.add_point(base_node(0.5, 0.5));
+    m.add_triangle(i1, i3, i4);
+    m.add_triangle(i2, i0, i4);
+    m.add_triangle(i3, i2, i4);
+    m.add_triangle(i0, i1, i4);
+    mp = bgeot::mesh_precomposite(m);
+
+ std::stringstream s
+   ("2 - 3*x - 3*y + 6*x*y + x^3 - 3*x^2*y;"
+    "1 - 3*x^2 - 3*y^2 + x^3 + 3*x^2*y + 2*y^3;"
+    "2 - 3*x - 3*y + 6*x*y - 3*x*y^2 + y^3;"
+    "1 - 3*x^2 - 3*y^2 + 2*x^3 + 3*x*y^2 + y^3;"
+    "1/2 - 1/2*x - y - 1/2*x^2 + 2*x*y + 1/2*x^3 - x^2*y;"
+    "x - 3/2*x^2 - x*y + 1/2*x^3 + x^2*y;"
+    "1/2 - 1/2*x - y + x*y + 1/2*y^2 - 1/2*x*y^2;"
+    "x - 2*x^2 - 1/2*y^2 + x^3 + 1/2*x*y^2;"
+    "1/2 - x - 1/2*y + 1/2*x^2 + x*y - 1/2*x^2*y;"
+    "y - 1/2*x^2 - 2*y^2 + 1/2*x^2*y + y^3;"
+    "1/2 - x - 1/2*y + 2*x*y - 1/2*y^2 - x*y^2 + 1/2*y^3;"
+    "y - x*y - 3/2*y^2 + x*y^2 + 1/2*y^3;"
+    "-1 + 3*x + 3*y - 6*x*y - 3*y^2 - x^3 + 3*x^2*y + 2*y^3;"
+    "3*x^2 - x^3 - 3*x^2*y;"
+    "-1 + 3*x + 3*y - 6*x*y - 3*y^2 + 3*x*y^2 + y^3;"
+    "3*x^2 - 2*x^3 - 3*x*y^2 + y^3;"
+    "-1/2*x + x*y + 1/2*x^3 - x^2*y;"
+    "-x^2 + 1/2*x^3 + x^2*y;"
+    "-1/2*x + x*y - 1/2*x*y^2;"
+    "-x^2 + x^3 + 1/2*x*y^2;"
+    "-1/2 + x + 3/2*y - 1/2*x^2 - x*y - 2*y^2 + 1/2*x^2*y + y^3;"
+    "1/2*x^2 - 1/2*x^2*y;"
+    "-1/2 + x + 3/2*y - 2*x*y - 3/2*y^2 + x*y^2 + 1/2*y^3;"
+    "x*y - 1/2*y^2 - x*y^2 + 1/2*y^3;"
+    "-1 + 3*x + 3*y - 3*x^2 - 6*x*y + x^3 + 3*x^2*y;"
+    "3*y^2 + x^3 - 3*x^2*y - 2*y^3;"
+    "-1 + 3*x + 3*y - 3*x^2 - 6*x*y + 2*x^3 + 3*x*y^2 - y^3;"
+    "3*y^2 - 3*x*y^2 - y^3;"
+    "-1/2 + 3/2*x + y - 3/2*x^2 - 2*x*y + 1/2*x^3 + x^2*y;"
+    "-1/2*x^2 + x*y + 1/2*x^3 - x^2*y;"
+    "-1/2 + 3/2*x + y - 2*x^2 - x*y - 1/2*y^2 + x^3 + 1/2*x*y^2;"
+    "1/2*y^2 - 1/2*x*y^2;"
+    "-1/2*y + x*y - 1/2*x^2*y;"
+    "-y^2 + 1/2*x^2*y + y^3;"
+    "-1/2*y + x*y - x*y^2 + 1/2*y^3;"
+    "-y^2 + x*y^2 + 1/2*y^3;"
+    "1 - 3*x - 3*y + 3*x^2 + 6*x*y + 3*y^2 - x^3 - 3*x^2*y - 2*y^3;"
+    "-x^3 + 3*x^2*y;"
+    "1 - 3*x - 3*y + 3*x^2 + 6*x*y + 3*y^2 - 2*x^3 - 3*x*y^2 - y^3;"
+    "3*x*y^2 - y^3;"
+    "1/2*x - x^2 - x*y + 1/2*x^3 + x^2*y;"
+    "1/2*x^3 - x^2*y;"
+    "1/2*x - x^2 - x*y + x^3 + 1/2*x*y^2;"
+    "-1/2*x*y^2;"
+    "1/2*y - x*y - y^2 + 1/2*x^2*y + y^3;"
+    "-1/2*x^2*y;"
+    "1/2*y - x*y - y^2 + x*y^2 + 1/2*y^3;"
+    "-x*y^2 + 1/2*y^3;");
+
+    bgeot::pconvex_ref cr = bgeot::parallelepiped_of_reference(2);
+    mref_convex() = cr;
+    dim() = cr->structure()->dim();
+    is_polynomialcomp() = true;
+    is_equivalent() = false;
+    is_polynomial() = false;
+    is_lagrange() = false;
+    estimated_degree() = 5;
+    init_cvs_node();
+
+    base()=std::vector<bgeot::polynomial_composite>
+      (12, bgeot::polynomial_composite(mp, false));
+    for (size_type k = 0; k < 12; ++k)
+      for (size_type ic = 0; ic < 4; ++ic)
+	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+
+    for (size_type i = 0; i < 4; ++i) {
+      base_node pt(0.0, 0.0);
+      if (i & 1) pt[0] = 1.0;
+      if (i & 2) pt[1] = 1.0;
+      add_node(lagrange_dof(2), pt);
+      add_node(derivative_dof(2, 0), pt);
+      add_node(derivative_dof(2, 1), pt);
+    }
+  }
+
+
+  pfem reduced_quadc1p3_fem
+  (fem_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 0.");
+    virtual_fem *p = new reduced_quadc1p3__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+
+
+
+
 
 }  /* end of namespace getfem.                                            */

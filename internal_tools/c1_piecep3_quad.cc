@@ -6,7 +6,7 @@
 #include <gmm.h>
 #include <getfem_config.h>
 
-#define REDUCED 1
+#define REDUCED 0
 
 using bgeot::size_type;
 
@@ -23,10 +23,10 @@ template<typename T> bool recognize_frac(T a, int &i, int &j)
 }
 
 template<typename T> void print_const(std::ostream &o, T a) {
-  if (a < 0) o << "-";
+  if (a < T(0)) o << "-";
   a = gmm::abs(a);
 
-  if (gmm::abs(a - int(a)) < 1e-12) { o << a; return; }
+  if (gmm::abs(a - T(int(a))) < T(1e-12)) { o << int(a+T(0.25)); return; }
 
   int ii, jj;
   for (unsigned k=1; k < 100; ++k) {
@@ -56,7 +56,7 @@ template<typename T> void spec_print(std::ostream &o,
       bool first_var = true;
       if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
       else if (*it < T(0)) o << "-";
-      if (gmm::abs(gmm::abs(*it) - 1) > 1E-14) {
+      if (gmm::abs(gmm::abs(*it) - T(1)) > T(1E-14)) {
 	print_const(o, gmm::abs(*it));
 	first_var = false;
       }
