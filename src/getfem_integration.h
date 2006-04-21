@@ -57,8 +57,10 @@
                                          (K=5,9).
    - "IM_STRUCTURED_COMPOSITE(IM1, K)" : Composite method on a grid with
                                          K divisions
-   - "IM_HCT_COMPOSITE(IM1)"           : Composite integration suited to the HCT
-                                         composite finite element.
+   - "IM_HCT_COMPOSITE(IM1)"           : Composite integration suited to the
+                                         HCT composite finite element.
+   - "IM_QUAQC1_COMPOSITE(IM1)"        : Composite integration suited to the
+                                         QUADC1 composite finite element.
 
    - "IM_QUASI_POLAR(IM1, IP1)"        : if IM1 is an integration method on a
                square, gives an integration method on a triangle which is

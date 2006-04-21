@@ -1,3 +1,7 @@
+2006-04-21 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_fem_composite.cc Adding a C1 composite finite element on quadrilaterals.
+
 2006-04-04 Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* src/getfem_mat_elem_type.cc bug fixed for nonlinear terms.

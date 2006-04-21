@@ -68,7 +68,16 @@
    - "FEM_ARGYRIS" : Argyris element on the triangle.
 
    - "FEM_HCT_TRIANGLE" : Hsieh-Clough-Tocher element on the triangle
-       (composite P3 element which is C^1).
+       (composite P3 element which is C^1, 12 dof).
+
+   - "FEM_REDUCED_HCT_TRIANGLE" : Hsieh-Clough-Tocher element on the triangle
+       (composite P3 element which is C^1, 9 dof).
+
+   - "FEM_QUADC1_COMPOSITE" : quadrilateral element, composite P3 element
+      and C^1 (16 dof).
+
+   - "FEM_REDUCED_QUADC1_COMPOSITE" : quadrilateral element, composite
+      P3 element and C^1 (12 dof).
 
    - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis
 

@@ -756,7 +756,7 @@ $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
   \label{fig:HCT_tr}
 \end{figure}
 
-This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure \ref{fig:HCT_tr} and \cite{ciarlet1978}). It is strongly advised to use a \texttt{ IM\_HCT\_COMPOSITE } integration method with this finite element. The numeration of the dof is the following : 0, 1 and 2 for the lagrange dof on the first second and third vertex respectively; 3, 4, 5 for the derivative with respects to the first variable; 6, 7, 8 for the derivative with respects to the second variable and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.\\
+This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure \ref{fig:HCT_tr} and \cite{ciarlet1978}). It is strongly advised to use a \texttt{ IM\_HCT\_COMPOSITE } integration method with this finite element. The numeration of the dof is the following : 0, 3 and 6 for the lagrange dof on the first second and third vertex respectively; 1, 4, 7 for the derivative with respects to the first variable; 2, 5, 8 for the derivative with respects to the second variable and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.\\
 
 \begin{center}
 \begin{tabular}{|m{16.11cm}|} \hline 
@@ -793,7 +793,51 @@ $3$ & $2$ & $9$ & $C^1$ & No \mbox{($Q = 1$)} & No & composite\\ \hline
 \end{tabular}
 \end{center}
 
+\subsubsection{A composite $C^1$ element on quadrilaterals}
 
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=6cm,angle=0]{getfemlist_quadc1_composite.eps}
+  \end{center}
+  \caption{ \it Composite element on quadrilaterals, piecewise $P_3$, 16 d.o.f., $C^1$}
+  \label{fig:QC1_tr}
+\end{figure}
+
+This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the four sub-triangles (see figure \ref{fig:QC1_tr}). At least on the reference element it correponds to the Fraeijs de Veubeke-Sander element (see \cite{ciarlet1978}). It is strongly advised to use a \texttt{ IM\_QUADC1\_COMPOSITE } integration method with this finite element. \\
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{ \bf HCT element on a triangle}\\
+"FEM\_QUADC1\_COMPOSITE"
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+$3$ & $2$ & $16$ & $C^1$ & No \mbox{($Q = 1$)} & No & composite\\ \hline
+\end{tabular}
+\end{center}
+
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5.5cm,angle=0]{getfemlist_reduced_quadc1_composite.eps}
+  \end{center}
+  \caption{ \it Reduced composite element on quadrilaterals, piecewise $P_3$, 12 d.o.f., $C^1$}
+  \label{fig:reduced_QC1_tr}
+\end{figure}
+
+This element exists also in its reduced form, where the normal derivatives is assumed to be polynomial of degree one on each edge (see figure \ref{fig:reduced_QC1_tr})
+
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{ \bf Reduced HCT element on a triangle}\\
+"FEM\_REDUCED\_QUADC1\_COMPOSITE"
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+$3$ & $2$ & $12$ & $C^1$ & No \mbox{($Q = 1$)} & No & composite\\ \hline
+\end{tabular}
+\end{center}
 
 
 

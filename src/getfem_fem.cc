@@ -2158,8 +2158,8 @@ namespace getfem
       add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
       add_suffix("REDUCED_HCT_TRIANGLE", reduced_HCT_triangle_fem);
-      add_suffix("QUADC1P3", quadc1p3_fem);
-      add_suffix("REDUCED_QUADC1P3", reduced_quadc1p3_fem);
+      add_suffix("QUADC1_COMPOSITE", quadc1p3_fem);
+      add_suffix("REDUCED_QUADC1_COMPOSITE", reduced_quadc1p3_fem);
       add_suffix("RT0", P1_RT0);
       add_suffix("RT0Q", P1_RT0Q);
       add_suffix("NEDELEC", P1_nedelec);
