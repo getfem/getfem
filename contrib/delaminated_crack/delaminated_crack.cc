@@ -43,6 +43,7 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_vector;
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
+using bgeot::short_type;  /* = short */
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
@@ -157,6 +158,7 @@ struct crack_problem {
   std::string datafilename;
   ftool::md_param PARAM;
 
+  scalar_type rupture_energy(void);
   void shape_derivative(const plain_vector &U, plain_vector &SD);
   void update_level_set(const plain_vector &SD);
   bool solve(plain_vector &U);
@@ -297,7 +299,7 @@ base_small_vector ls_function(const base_node P) {
   scalar_type x = P[0], y = P[1], z = P[2];
   base_small_vector res(2);
   res[0] = z;
-  res[1] = (.2 - x - y)/sqrt(2); // -x - 0*y; 
+  res[1] = (.177 - x - y) / sqrt(2); // -x - 0*y; 
   return res;
 }
 
@@ -349,10 +351,19 @@ public:
 };
 
 
+scalar_type crack_problem::rupture_energy(void) {
+  plain_vector V(1);
+  getfem::generic_assembly assem1("V()+=comp()");
+  assem1.push_mi(mim_crack);
+  assem1.push_vec(V);
+  assem1.assembly();
+  return V[0]*Gc;
+}
+
 void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   gmm::clear(SD);
   
-  DAL_TRACE2("Computing shape derivative");
+  DAL_TRACE2("Computing shape derivative, part 1");
 
   shape_der_nonlinear_term<plain_vector> nl(mf_u(), U, lambda, mu);
 
@@ -444,7 +455,7 @@ namespace getfem {
 
     generic_assembly 
       assem("a=data$1(#2); M$1(#1,#1)+="
-	    "comp(vBase(#2).Grad(#1).Base(#1))(i,j,:,j,:).a(i)");
+	    "comp(Base(#1).vBase(#2).Grad(#1))(:,i,j,:,j).a(i)");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);
@@ -482,8 +493,10 @@ namespace getfem {
 
 
   /* compute 
-      - sgn(phi0) if version == 1
-      - sgn(phi0) / grad(Phi)/norm(grad(Phi)) if version != 1
+      version == 0 : tanh(phi0) * grad(phin)/norm(grad(phin))
+      version == 1 : tanh(phi0)
+      version == 2 : (3tanh(phi0) - tanh(phin))/2
+      version == 3 : abs(tanh(phi0))
   */
   template<typename VECT1> class transportdc_nonlinear_term 
     : public getfem::nonlinear_elem_term {
@@ -491,7 +504,7 @@ namespace getfem {
     const mesh_fem &mf;
     const VECT1 &phi0, &phin;
     size_type N;
-    base_vector coeff, Phi0;
+    base_vector coeff, Phi;
     base_matrix gradPhin;
     bgeot::multi_index sizes_;
     int version; 
@@ -499,9 +512,8 @@ namespace getfem {
   public:
     transportdc_nonlinear_term(const mesh_fem &mf_, const VECT1 &phi0_,
 			       const VECT1 &phin_, int version_) 
-      : mf(mf_), phi0(phi0_), phin(phin_),
-	N(mf_.linked_mesh().dim()), Phi0(1), gradPhin(1,N),
-	sizes_(1), version(version_)
+      : mf(mf_), phi0(phi0_), phin(phin_), N(mf_.linked_mesh().dim()), Phi(1),
+	gradPhin(1,N), sizes_(1), version(version_)
     { sizes_[0] = (version == 1) ? 1 : N; }
     
     const bgeot::multi_index &sizes() const { return sizes_; }
@@ -511,19 +523,29 @@ namespace getfem {
       size_type cv = ctx.convex_num();
       coeff.resize(mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(phi0,
-		gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
-      ctx.pf()->interpolation(ctx, coeff, Phi0, 1);
+				gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation(ctx, coeff, Phi, 1);
+      gmm::copy(gmm::sub_vector(phin,
+				gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
       
-      scalar_type no = gmm::sgn(Phi0[0]);
-      if (version == 1)
-	t[0] = no;
-      else {
-	gmm::copy(gmm::sub_vector(phin,
-		  gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+      scalar_type sgnphi = gmm::sgn(Phi[0]);
+      scalar_type no = ::tanh(Phi[0]);
+     
+      switch (version) {
+      case 0 :
 	ctx.pf()->interpolation_grad(ctx, coeff, gradPhin, 1);
+	// gradPhin(0,0) = -0.7; gradPhin(0,1) = -0.7;  gradPhin(0,2) = 0.0; // for test to be suppressed
 	no /= std::max(1e-6, gmm::mat_euclidean_norm(gradPhin));
 	for (size_type i = 0; i < N; ++i) 
 	  t[i] = no * gradPhin(0, i);
+	break;
+      case 1 : t[0] = no; break;
+      case 2 :
+	ctx.pf()->interpolation(ctx, coeff, Phi, 1);
+	t[0] = no + gmm::abs(no)*0.5*(sgnphi - gmm::sgn(Phi[0]));
+	break;
+      case 3 : t[0] = gmm::abs(no); break;
+      default : DAL_THROW(dal::internal_error, "Oups...");
       }
     }
   };
@@ -534,14 +556,13 @@ namespace getfem {
    const VECT &phi0, const VECT &phin,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
-    transportdc_nonlinear_term<VECT> nterm(mf, phi0, phin, 0); 
+    transportdc_nonlinear_term<VECT> nterm1(mf, phi0, phin, 0); 
 
     generic_assembly 
-      assem("M$1(#1,#1)+="
-	    "comp(NonLin(#1).Grad(#1).Base(#1))(i,:,i,:)");
+      assem("M$1(#1,#1)+=comp(Base(#1).NonLin$1(#1).Grad(#1))(:,i,:,i)");
     assem.push_mi(mim);
     assem.push_mf(mf);
-    assem.push_nonlinear_term(&nterm);
+    assem.push_nonlinear_term(&nterm1);
     assem.push_mat(const_cast<MAT&>(M));
     assem.assembly(rg);
   }
@@ -552,11 +573,10 @@ namespace getfem {
    const VECT &phi0, const VECT &phin,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
-    transportdc_nonlinear_term<VECT> nterm(mf, phi0, phin, 1); 
+    transportdc_nonlinear_term<VECT> nterm(mf, phi0, phin, 2); 
 
     generic_assembly 
-      assem("V$1(#1)+="
-	    "comp(NonLin(#1).Base(#1))(1,:)");
+      assem("V$1(#1)+=comp(Base(#1).NonLin(#1))(:,1)");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_nonlinear_term(&nterm);
@@ -576,7 +596,23 @@ namespace getfem {
 
     mdbrick_parameter<VECTOR> phi0_, phin_; /* vector field parameter */
 
+    T_MATRIX K0;
+    bool K0init;
+    scalar_type h;
+
     void proper_update_K(void) {
+      if (!K0init) { // viscous term for regularization
+	gmm::resize(K0, mf_u.nb_dof(), mf_u.nb_dof());
+	gmm::clear(K0);
+	generic_assembly 
+	  assem("M$1(#1,#1)+=comp(Grad(#1).Grad(#1))(:,i,:,i)"); 
+	assem.push_mi(this->mim);
+	assem.push_mf(this->mf_u);
+	assem.push_mat(K0);
+	assem.assembly(this->mf_u.linked_mesh().get_mpi_region());
+	gmm::scale(K0, 0.01 * h);
+      }
+      gmm::copy(K0, this->K);
       asm_transport_dc2
 	(this->K, this->mim, this->mf_u, phi0_.get(), phin_.get(),
 	 this->mf_u.linked_mesh().get_mpi_region());
@@ -588,11 +624,13 @@ namespace getfem {
     mdbrick_parameter<VECTOR> &phin(void) { return phin_; }
     const mdbrick_parameter<VECTOR> &phin(void) const { return phin_; }
 
-    mdbrick_transport_dc2(const mesh_im &mim_, const mesh_fem &mf_u_)
+    mdbrick_transport_dc2(const mesh_im &mim_, const mesh_fem &mf_u_,
+			  scalar_type h_)
       : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
 						 MDBRICK_TRANSPORT_DC2),
         phi0_("phi0", mf_u_.linked_mesh(), this),
-	phin_("phin", mf_u_.linked_mesh(), this)  { }
+	phin_("phin", mf_u_.linked_mesh(), this), 
+	K0init(false), h(h_) { }
   };
 
 }
@@ -605,6 +643,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
   scalar_type dt = 0.8 * h / gmm::vect_norminf(SD);
 
   plain_vector phi0 = ls.values(1), DF(gmm::vect_size(phi0));
+  plain_vector DF0(gmm::vect_size(phi0));
 
   getfem::mdbrick_transport_dc1<> transport(standard_mim, ls.get_mesh_fem());
   transport.theta().set(mf_SD, gmm::scaled(SD, -1.0));
@@ -624,47 +663,75 @@ void crack_problem::update_level_set(const plain_vector &SD) {
 
   // Level-set reinitialization -> get back a signed distance
   
-  dt = 0.02 * h;
+  dt = 0.8 * h;
 
   gmm::copy(ls.values(1), phi0);
   plain_vector phin = phi0;
-  for (size_type nt = 0; nt < 50; ++nt) {
-    getfem::mdbrick_transport_dc2<> transport(standard_mim, ls.get_mesh_fem());
-    transport.phi0().set(ls.get_mesh_fem(), phi0);
-    transport.phin().set(ls.get_mesh_fem(), phin);
-    
-    getfem::mdbrick_dynamic<> dynamic(transport, 1.0);
-    dynamic.set_dynamic_coeff(1.0/dt, 1.0);
-    
-    gmm::mult(dynamic.get_M(), gmm::scaled(phin, 1.0/dt), DF);
-//     asm_transport_dc2_st
-//       (DF, standard_mim, ls.get_mesh_fem(), phi0, phin,
-//        ls.get_mesh_fem().linked_mesh().get_mpi_region());
-    dynamic.set_DF(DF);
-    
-    getfem::standard_model_state MS(dynamic);
-    gmm::iteration iter(residual, 1, 40000);
-    getfem::standard_solve(MS, dynamic, iter);
-    
-    gmm::copy(MS.state(), phin);
+  
+  getfem::mdbrick_transport_dc2<> transport2(standard_mim, ls.get_mesh_fem(),h);
+  getfem::mdbrick_dynamic<> dynamic2(transport2, 1.0);
+  transport2.phi0().set(ls.get_mesh_fem(), phi0);
+
+  for (size_type nt = 0; nt*dt < 1.0; ++nt) {
+    cout << "t = " << nt * dt << endl;
+
+//     if ((nt % 1) == 0) {
+//       {
+// 	DAL_TRACE2("Exporting level set");
+// 	getfem::stored_mesh_slice sl; 
+// 	sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0),
+// 						 base_node(0, 0, 1), 0), 3);
+// 	getfem::vtk_export exp(datafilename + "_ls.vtk",
+// 			       PARAM.int_value("VTK_EXPORT")==1);
+// 	exp.exporting(sl); 
+// 	exp.write_point_data(ls.get_mesh_fem(), phin, "Level_set");
+// 	cout << "export done, you can view the data file with (for example)\n"
+// 	  "mayavi -d " << datafilename << "_ls.vtk "
+// 	  "-m BandedSurfaceMap -m Outline -f WarpScalar -m IsoSurface\n";
+//       }
+//     }
+
+    gmm::clear(DF0);
+    asm_transport_dc2_st
+      (DF0, standard_mim, ls.get_mesh_fem(), phi0, phin,
+       ls.get_mesh_fem().linked_mesh().get_mpi_region());
+    transport2.phin().set(ls.get_mesh_fem(), phin);
+    dynamic2.set_dynamic_coeff(1.0/dt, 1.0);
+    gmm::mult(dynamic2.get_M(), gmm::scaled(phin, 1.0/dt), DF0, DF);
+    dynamic2.set_DF(DF);
+
+    if (0) {
+      // explicit scheme
+      gmm::iteration iter2(residual, 0, 40000);
+      plain_vector DF1(gmm::vect_size(phi0));
+      gmm::mult(transport2.get_K(), gmm::scaled(phin, -1.0), DF1);
+      gmm::add(DF1, DF);
+      gmm::cg(dynamic2.get_M(), phin, gmm::scaled(DF, dt),
+	      gmm::identity_matrix(), iter2);
+    }
+    else {
+      // implicit scheme
+      gmm::iteration iter2(residual, 1, 40000);
+      getfem::standard_model_state MS2(dynamic2);
+      getfem::standard_solve(MS2, dynamic2, iter2);
+      gmm::copy(MS2.state(), phin);
+    } 
   }
   gmm::copy(phin, ls.values(1));
-
-
 
   {
     DAL_TRACE2("Exporting level set");
     getfem::stored_mesh_slice sl; 
-    sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0), base_node(0, 0, 1), 0), 3);
+    sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0),
+					     base_node(0, 0, 1), 0), 3);
     getfem::vtk_export exp(datafilename + "_ls.vtk",
 			   PARAM.int_value("VTK_EXPORT")==1);
     exp.exporting(sl); 
-    exp.write_point_data(ls.get_mesh_fem(), ls.values(1), "Level_set");
+    exp.write_point_data(ls.get_mesh_fem(), phin, "Level_set");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d " << datafilename << "_ls.vtk "
-      "-m BandedSurfaceMap -m Outline -f WarpVector\n";
+      "-m BandedSurfaceMap -m Outline -f WarpScalar -m IsoSurface\n";
   }
-
 
   ls.touch();
   mls.adapt();
@@ -810,6 +877,11 @@ bool crack_problem::solve(plain_vector &U) {
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
 
+  // Energy computation
+  cout << "Energy = " <<
+    gmm::vect_sp(ELAS.get_K(), U, U) * 0.5 - gmm::vect_sp(VOL_F.get_F(), U)
+    - gmm::vect_sp(NEUMANN.get_F(), U) + rupture_energy() << endl;
+
   return (iter.converged());
 }
   
@@ -822,9 +894,7 @@ int main(int argc, char *argv[]) {
   DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-
   //getfem::getfem_mesh_level_set_noisy();
-
 
   try {
     crack_problem p;
@@ -846,140 +916,128 @@ int main(int argc, char *argv[]) {
     p.mim.adapt();
     p.mim_crack.adapt();
 
+    p.solve(U);
 
-    for (size_type it = 0; it < 1; ++it) {
-
-      if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    for (size_type it = 0; it < 100; ++it) {
       
       plain_vector SD(p.mf_SD.nb_dof());
-      
       p.shape_derivative(U, SD);
-
-      
       p.update_level_set(SD);
-
-    }
+      p.solve(U);
 
     
-    {
-      /*assert(p.mf_u().get_qdim() == 3);
-      base_node PP; unsigned cnt=0;
-      std::fill(U.begin(), U.end(), 0);
-      for (unsigned i=0; i< p.mf_u().nb_dof(); i += 12) {
-	//base_node P = p.mf_u().point_of_dof(i);
-	//if (i && gmm::vect_dist2(P,PP) < 1e-10) {
-	//cerr << "XFem dof: " << i << " @ " << P << "\n";
-	++cnt;
-	U[i+2] = 1;
-	//}
-	//PP=P;
-      }
-      cerr << "detecte " << cnt << "xfem dof (*3)\n";
-*/
-
-      cout << "Post processing...\n";
-      getfem::mesh mcut;
-      p.mls.global_cut_mesh(mcut);
+      {
+	/*assert(p.mf_u().get_qdim() == 3);
+	  base_node PP; unsigned cnt=0;
+	  std::fill(U.begin(), U.end(), 0);
+	  for (unsigned i=0; i< p.mf_u().nb_dof(); i += 12) {
+	  //base_node P = p.mf_u().point_of_dof(i);
+	  //if (i && gmm::vect_dist2(P,PP) < 1e-10) {
+	  //cerr << "XFem dof: " << i << " @ " << P << "\n";
+	  ++cnt;
+	  U[i+2] = 1;
+	  //}
+	  //PP=P;
+	  }
+	  cerr << "detecte " << cnt << "xfem dof (*3)\n";
+	*/
+	
+	cout << "Post processing...\n";
+	getfem::mesh mcut;
+	p.mls.global_cut_mesh(mcut);
 //       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
 //       mf.set_classical_discontinuous_finite_element(2, 0.001);
 
 //       plain_vector V(mf.nb_dof());
 //       getfem::interpolation(p.mf_u(), mf, U, V);
 
-      getfem::stored_mesh_slice sl;
-      getfem::mesh mcut_refined;
+	getfem::stored_mesh_slice sl;
+	getfem::mesh mcut_refined;
       //sl.build(mcut, /*getfem::slicer_boundary(mcut), */getfem::slicer_build_mesh(mcut_refined), 2);
 
 
-      getfem::mesh_slicer slicer(mcut);
-      getfem::slicer_build_stored_mesh_slice sbuild(sl);
-      //getfem::slicer_build_mesh sbmesh(mcut_refined);
-      slicer.push_back_action(sbuild);
-      //slicer.push_back_action(sbmesh);
-      cout << "mcut.region(0) = " << mcut.region(0) << "\n";
+	getfem::mesh_slicer slicer(mcut);
+	getfem::slicer_build_stored_mesh_slice sbuild(sl);
+	//getfem::slicer_build_mesh sbmesh(mcut_refined);
+	slicer.push_back_action(sbuild);
+	//slicer.push_back_action(sbmesh);
+	cout << "mcut.region(0) = " << mcut.region(0) << "\n";
 
-      getfem::mesh_region border_faces;
-      getfem::outer_faces_of_mesh(mcut, border_faces);
-      // merge outer_faces with faces of the crack
-      for (getfem::mr_visitor i(mcut.region(0)); !i.finished(); ++i)
-	border_faces.add(i.cv(), i.f());
+	getfem::mesh_region border_faces;
+	getfem::outer_faces_of_mesh(mcut, border_faces);
+	// merge outer_faces with faces of the crack
+	for (getfem::mr_visitor i(mcut.region(0)); !i.finished(); ++i)
+	  border_faces.add(i.cv(), i.f());
 
 
-      getfem::mesh_fem mfcut(mcut, p.mf_u().get_qdim());
-      getfem::mesh_fem mfcut_vm(mcut, 1);
-      mfcut.set_classical_discontinuous_finite_element(3, 0.001);
-      mfcut_vm.set_classical_discontinuous_finite_element(2, 0.001);
-      
-      dal::bit_vector reflst;
-      
-      /* choose an adequate slice refinement based on the distance to the crack tip */
-      unsigned nn = 2;
-      std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
-      for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
-	scalar_type dmin=0, d;
-	base_node Pmin,P;
-	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
-	  P = mcut.points_of_convex(cv)[i];
-	  d = gmm::vect_norm2(ls_function(P));
-	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+	getfem::mesh_fem mfcut(mcut, p.mf_u().get_qdim());
+	getfem::mesh_fem mfcut_vm(mcut, 1);
+	mfcut.set_classical_discontinuous_finite_element(3, 0.001);
+	mfcut_vm.set_classical_discontinuous_finite_element(2, 0.001);
+	
+	dal::bit_vector reflst;
+	
+	/* choose an adequate slice refinement based on the distance to the
+	   crack tip */
+	unsigned nn = 1;
+	std::vector<short_type> nrefine(mcut.convex_index().last_true()+1);
+	for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
+	  scalar_type dmin=0, d;
+	  base_node Pmin,P;
+	  for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+	    P = mcut.points_of_convex(cv)[i];
+	    d = gmm::vect_norm2(ls_function(P));
+	    if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+	  }
+	  
+	  if (dmin < 1e-5) { nrefine[cv] = nn*4; reflst.add(cv); }
+	  else if (dmin < .1) nrefine[cv] = nn*2;
+	  else nrefine[cv] = nn;
 	}
+	
+	mfcut.set_classical_discontinuous_finite_element(reflst, 6, 0.001);
+	mfcut_vm.set_classical_discontinuous_finite_element(reflst, 5, 0.001);
+	
+	slicer.exec(nrefine, border_faces);
 
-	if (dmin < 1e-5) {
-	  nrefine[cv] = nn*4;
-	  reflst.add(cv);
+	plain_vector V(mfcut.nb_dof()), VonMises(mfcut_vm.nb_dof());
+	getfem::interpolation(p.mf_u(), mfcut, U, V);
+	getfem::interpolation_von_mises(mfcut, mfcut_vm, V, VonMises, p.mu);
+
+	//getfem::interpolation(mfcut, sl, U, W);
+
+	if (p.PARAM.int_value("VTK_EXPORT")) {
+	  cout << "export to " << p.datafilename + ".vtk" << "..\n";
+	  getfem::vtk_export exp(p.datafilename + ".vtk",
+			       p.PARAM.int_value("VTK_EXPORT")==1);
+	  exp.exporting(sl); 
+	  exp.write_point_data(mfcut_vm, VonMises, "Von Mises Stress");
+	  exp.write_point_data(mfcut, V, "elastostatic_displacement");
+	  cout << "export done, you can view the data file with (for example)\n"
+	    "mayavi -d " << p.datafilename << ".vtk -f "
+	    "WarpVector -m BandedSurfaceMap -m Outline\n";
 	}
-	else if (dmin < .1) 
-	  nrefine[cv] = nn*2;
-	else nrefine[cv] = nn;
-	/*if (dmin < .01)
-	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
-      }
-      
-      mfcut.set_classical_discontinuous_finite_element(reflst, 6, 0.001);
-      mfcut_vm.set_classical_discontinuous_finite_element(reflst, 5, 0.001);
-
-
-
-      slicer.exec(nrefine, border_faces);
-
-      
-      plain_vector V(mfcut.nb_dof()), VonMises(mfcut_vm.nb_dof());
-      getfem::interpolation(p.mf_u(), mfcut, U, V);
-      getfem::interpolation_von_mises(mfcut, mfcut_vm, V, VonMises, p.mu);
-
-      //getfem::interpolation(mfcut, sl, U, W);
-
-      if (p.PARAM.int_value("VTK_EXPORT")) {
-	cout << "export to " << p.datafilename + ".vtk" << "..\n";
-	getfem::vtk_export exp(p.datafilename + ".vtk",
-			       p.PARAM.int_value("VTK_EXPORT")==1);
-	exp.exporting(sl); 
-	exp.write_point_data(mfcut_vm, VonMises, "Von Mises Stress");
-	exp.write_point_data(mfcut, V, "elastostatic_displacement");
-	cout << "export done, you can view the data file with (for example)\n"
-	  "mayavi -d " << p.datafilename << ".vtk -f "
-	  "WarpVector -m BandedSurfaceMap -m Outline\n";
-      }
-
-      /*getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
-      mf_refined.set_classical_discontinuous_finite_element(1, 0.001);
-      plain_vector W(mf_refined.nb_dof());
-      getfem::interpolation(p.mf_u(), mf_refined, U, W);
-
-      if (p.PARAM.int_value("VTK_EXPORT")) {
-	cout << "export to " << p.datafilename + ".vtk" << "..\n";
-	getfem::vtk_export exp(p.datafilename + ".vtk",
-			       p.PARAM.int_value("VTK_EXPORT")==1);
-	exp.exporting(mf_refined); 
-	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-	cout << "export done, you can view the data file with (for example)\n"
+	
+	/*getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
+	  mf_refined.set_classical_discontinuous_finite_element(1, 0.001);
+	  plain_vector W(mf_refined.nb_dof());
+	  getfem::interpolation(p.mf_u(), mf_refined, U, W);
+	  
+	  if (p.PARAM.int_value("VTK_EXPORT")) {
+	  cout << "export to " << p.datafilename + ".vtk" << "..\n";
+	  getfem::vtk_export exp(p.datafilename + ".vtk",
+	  p.PARAM.int_value("VTK_EXPORT")==1);
+	  exp.exporting(mf_refined); 
+	  exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+	  cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
+	  }
+	*/
+	
       }
-      */
-
+      getchar();
     }
-
   }
   DAL_STANDARD_CATCH_ERROR;
 

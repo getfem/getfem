@@ -8,12 +8,12 @@
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = .0;   	        % Lamé coefficient.
-GC=0.0;                 % Rupture energy density
-NEUMANN_FORCE = 0.03; 
+GC = 0.0001;             % Rupture energy density
+NEUMANN_FORCE = 0.0; 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NL = 10;            	          % number of horizontal space steps.
-NH = 2;                           % number of vertical space steps.
+NL = 4;            	          % number of horizontal space steps.
+NH = 1;                           % number of vertical space steps.
 L = 1.0;                          % length
 H = 0.2;                          % height
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
@@ -22,12 +22,14 @@ QUAD = 1;
 if (QUAD)
   MESH_TYPE = 'GT_LINEAR_QK(3)';    % linear rectangles
   FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
-  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 4)';
-  % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3, 4), 1)';
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 6)';
+  % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 10)';
+  % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3, 4), 4)';
 else
   MESH_TYPE = 'GT_PK(3,1)';    % linear tetrahedrons
-  FEM_TYPE = 'FEM_PK(3,1)';  % P1 fem for tetrahedrons
-  INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 3)';
+  FEM_TYPE = 'FEM_PK(3,2)';  % P1 fem for tetrahedrons
+  INTEGRATION = 'IM_TETRAHEDRON(6)';
+  % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 3)';
 end
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
