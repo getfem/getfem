@@ -25,7 +25,7 @@
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
-*/
+ */
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
@@ -401,7 +401,8 @@ void crack_problem::init(void) {
   mesh.translation(tt); 
   
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
+  residual = PARAM.real_value("RESIDUAL");
+  if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
   
