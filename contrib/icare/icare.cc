@@ -66,6 +66,7 @@ struct navier_stokes_problem {
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
+  getfem::mesh_fem mf_mult;  /* mesh_fem for Dirichlet condition.            */
   scalar_type Re;            /* Reynolds number */
   scalar_type nu;            /* 1/Re */
   scalar_type dt, T, dt_export;
@@ -102,9 +103,10 @@ struct navier_stokes_problem {
   void solve_METHOD_SPLITTING(bool);
   void solve_FULLY_CONSERVATIVE();
   void solve_PREDICTION_CORRECTION();
+  void solve_PREDICTION_CORRECTION2();
   void init(void);
   navier_stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
-				mf_rhs(mesh) {}
+				mf_rhs(mesh), mf_mult(mesh) {}
 };
 
 struct problem_definition {
@@ -343,13 +345,26 @@ void navier_stokes_problem::init(void) {
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
       DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
-		<< data_fem_name << ". In that case you need to set "
+		<< FEM_TYPE << ". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
+  }
+
+  std::string mult_fem_name = PARAM.string_value("MULTIPLIER_FEM_TYPE");
+  if (mult_fem_name.size() == 0) {
+    if (!pf_u->is_lagrange()) {
+      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+		<< FEM_TYPE << ". In that case you need to set "
+		<< "MULTIPLIER_FEM_TYPE in the .param file");
+    }
+    mf_mult.set_finite_element(mesh.convex_index(), pf_u);
+  } else {
+    mf_mult.set_finite_element(mesh.convex_index(), 
+			      getfem::fem_descriptor(mult_fem_name));
   }
 
   /* set boundary conditions */
@@ -656,6 +671,142 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
 
  }
 }
+
+
+/************************************************************/
+void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
+
+  size_type nbdof_u = mf_u.nb_dof(), nbdof_p = mf_p.nb_dof();
+  size_type nbdof_rhs = mf_rhs.nb_dof();
+
+  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
+  size_type nbdof_mult = dofon_Dirichlet.card();
+  std::vector<size_type> ind_ct;
+  for (dal::bv_visitor i(dofon_Dirichlet); !i.finished(); ++i)
+    ind_ct.push_back(i);
+  gmm::sub_index SUB_CT(ind_ct);
+  
+  gmm::sub_interval I1(0, nbdof_u), I2(nbdof_u, nbdof_mult);
+  getfem::mesh_region mpirg = mf_u.linked_mesh().get_mpi_region();
+  getfem::mesh_region mpidirrg
+    = mf_u.linked_mesh().get_mpi_sub_region(DIRICHLET_BOUNDARY_NUM);
+
+  // Discretization of laplace operator for u
+  sparse_matrix K1(nbdof_u, nbdof_u);
+  asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
+    (K1, mim, mf_u, mpirg);
+  gmm::scale(K1, nu);
+  
+  // Mass Matrix
+  sparse_matrix M(nbdof_u, nbdof_u);
+  asm_mass_matrix(M, mim, mf_u, mpirg);
+
+  // Matrix p div u
+  sparse_matrix B(nbdof_p, nbdof_u);
+  asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
+
+  // Dirichlet condition
+  sparse_matrix H(nbdof_mult, nbdof_u);
+  {
+    sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+    getfem::generic_assembly assem;
+    assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+    assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
+    assem.push_mat(A); assem.assembly(mpidirrg);
+    gmm::copy(gmm::sub_matrix(A, SUB_CT, I1), H);
+  }
+
+  // Discretization of laplace operator for p
+  sparse_matrix K2(nbdof_p+1, nbdof_p+1);
+  gmm::sub_interval I3(0, nbdof_p);
+  asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K2, I3),
+						 mim, mf_p, mpirg);
+  K2(nbdof_p, 0) = K2(0, nbdof_p) = 1.0; // set the first pressure dof to 0
+  
+
+  // 
+  // dynamic problem
+  //
+  plain_vector DF(nbdof_u), F(nbdof_rhs), USTAR(nbdof_u), USTARbis(nbdof_u);
+  plain_vector Phi(nbdof_p);
+
+  pdef->initial_condition_u(*this, Un0);
+  pdef->initial_condition_p(*this, Pn0);
+  
+  do_export(0);
+  for (scalar_type t = dt; t <= T; t += dt) {
+
+    //
+    // Assembly of the first linear system
+    //
+    sparse_matrix A1(nbdof_u+nbdof_mult, nbdof_u+nbdof_mult);
+    plain_vector Y(nbdof_u+nbdof_mult);
+    // laplace operator
+    gmm::copy(K1, gmm::sub_matrix(A1, I1));
+    // Normal dirichlet condition
+    gmm::copy(H, gmm::sub_matrix(A1, I2, I1));
+    gmm::copy(gmm::transposed(H), gmm::sub_matrix(A1, I1, I2));
+    // Nonlinear part
+    getfem::asm_NS_uuT(gmm::sub_matrix(A1, I1), mim, mf_u, Un0, mpirg);
+    // Dynamic part
+    gmm::add(gmm::scaled(M, 1./dt), gmm::sub_matrix(A1, I1));
+    gmm::mult(M, gmm::scaled(Un0, 1./dt), gmm::sub_vector(Y, I1));
+
+    // Volumic source term
+    pdef->source_term(*this, t, F);
+    getfem::asm_source_term(gmm::sub_vector(Y, I1), mim, mf_u, mf_rhs, F, mpirg);
+    // Dirichlet rhs
+    pdef->dirichlet_condition(*this, t, F);
+    {
+      plain_vector VV(mf_mult.nb_dof());
+      getfem::asm_normal_source_term(VV, mim, mf_mult, mf_rhs, F, mpidirrg);
+      gmm::copy(gmm::sub_vector(VV, SUB_CT), gmm::sub_vector(Y, I2));
+    }
+
+    // manque cond non reflective
+    
+    //
+    // Solving the first linear system
+    //
+    {
+      double rcond;
+      plain_vector X(nbdof_u+nbdof_mult);
+      SuperLU_solve(A1, X, Y, rcond);
+      if (noisy) cout << "condition number: " << 1.0/rcond << endl;
+      gmm::copy(gmm::sub_vector(X, I1), USTAR);
+    }
+    
+    //
+    // Solving the second linear system
+    //
+    {
+      double rcond;
+      plain_vector X(nbdof_p+1), Z(nbdof_p+1);
+      gmm::mult(B, USTAR, gmm::sub_vector(Z, I3));
+      SuperLU_solve(K2, X, Z, rcond);
+      if (noisy) cout << "condition number: " << 1.0/rcond << endl;
+      gmm::copy(gmm::sub_vector(X, I3), Phi);
+    }
+
+    gmm::mult(gmm::transposed(B), gmm::scaled(Phi, -1.), USTARbis);
+
+    gmm::iteration iter2(residual, noisy); iter2.reduce_noisy();
+    gmm::cg(M, Un1, USTARbis, gmm::identity_matrix(), iter2);
+
+    gmm::add(USTAR, Un1);
+    gmm::add(gmm::scaled(Phi, 1./dt), Pn0, Pn1);
+    
+    pdef->validate_solution(*this, t);
+    cout << "U1 - Un1 = " << gmm::vect_dist2(Un1, Un0);
+    
+    gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+    do_export(t);
+  }
+}
+
+
+
+
 
 
 void navier_stokes_problem::do_export(scalar_type t) {
