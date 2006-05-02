@@ -12,8 +12,8 @@ GC = 0.0001;             % Rupture energy density
 NEUMANN_FORCE = 0.0; 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NL = 4;            	          % number of horizontal space steps.
-NH = 1;                           % number of vertical space steps.
+NL = 15;            	          % number of horizontal space steps.
+NH = 3;                           % number of vertical space steps.
 L = 1.0;                          % length
 H = 0.2;                          % height
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
