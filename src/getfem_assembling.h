@@ -391,7 +391,7 @@ namespace getfem {
       @ingroup asm
    */
   template<typename VECT1, typename VECT2>
-  void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+  void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mf_data, const VECT2 &F,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_data.get_qdim() != 1)
@@ -404,7 +404,7 @@ namespace getfem {
       st = "F=data(qdim(#1),#2);"
 	"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);";
     
-    asm_real_or_complex_1_param(B,mim,mf,mf_data,F,rg,st);
+    asm_real_or_complex_1_param(const_cast<VECT1 &>(B),mim,mf,mf_data,F,rg,st);
   }
 
   /** 

@@ -58,7 +58,7 @@ namespace bgeot {
    *               \overline{x} & \longmapsto \ \ x,
    *     \end{array} @f]
    *     which should be a diffeomorphism between @f$\overline{T}@f$ and @f$T@f$.
-   *     It is assumed that there exists a polynomial vector 
+   *     It is assumed that there exists a (generally polynomial) vector 
    *     @f$ \underline{\cal N}(\overline{x})
    *        = \left({\cal N}i_(\overline{x})\right)i_, \ \ i = 0 .. n_g-1, @f$ 
    *     defined on @f$\overline{T}@f$ of size @f$n_g@f$, such that the
