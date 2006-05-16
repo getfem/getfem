@@ -6,32 +6,36 @@
 N = 2;
 QUAD = 0;
 NU = .001;      % Viscosity coefficient. (NU = 1 / Re)
-ALPHA = 0.0; 	%rate of rotation of the cylinder
+ALPHA = 0.0; 	% rate of rotation of the cylinder
 
-DT =.25;       % Time step
-T = 10;        % Final time
+DT =.25;        % Time step
+T = 2;         % Final time
 
 NOISY = 1;
 
+OPTION = 4;  % 0 = Stokes avec schema de splitting 1
+             % 1 = Navier Stokes avec schema de splitting 1
+	     % 2 = Navier Stokes with energy conserving midpoint scheme
+	     % 3 = Navier Stokes with prediction-correction scheme
+             % 4 = Navier Stokes with prediction-correction without bricks
 
-OPTION =3; % 0 = Stokes avec schema de splitting 1
-           % 1 = Navier Stokes avec schema de splitting 1
-
-	    % 2 = Navier Stokes with energy conserving midpoint scheme
-	    % 3 = Navier Stokes with prediction- correction scheme
-
-PROBLEM = 3  % 1 = Reference solution for Stokes
+PROBLEM = 2  % 1 = Reference solution for Stokes
              % 2 = Reference solution for Navier Stokes
 	     % 3 = flow around a cylinder (centered at 0)
 
 
 if (N == 2 && ~QUAD)
-  MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
  %MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
- %MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
-  FEM_TYPE = 'FEM_PK(2,1)';  % PK method
-  FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
-  DATA_FEM_TYPE = 'FEM_PK(2,1)';
+ %MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
+  MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
+  if (OPTION >= 3)
+    FEM_TYPE = 'FEM_PK(2,1)';  % PK method
+    FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
+  else % take care to the inf-sup condition !
+    FEM_TYPE = 'FEM_PK(2,2)';  % PK method
+    FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
+  end    
+  % DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_TRIANGLE(6)'; 
 end
 
@@ -39,7 +43,7 @@ if (N == 2 && QUAD)
   MESHNAME = 'structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
   FEM_TYPE = 'FEM_QK(2,2)';  % QK method
   FEM_TYPE_P = 'FEM_QK(2,1)';
-  DATA_FEM_TYPE = 'FEM_QK(2,1)';
+  % DATA_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; 
 end
 
@@ -47,7 +51,7 @@ if (N == 3)
   MESHNAME = 'structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NSUBDIV=[5,5,5]';
   FEM_TYPE = 'FEM_PK(3,2)';  % PK method
   FEM_TYPE_P = 'FEM_PK(3,1)';
-  DATA_FEM_TYPE = 'FEM_PK(3,1)'; 
+  % DATA_FEM_TYPE = 'FEM_PK(3,1)'; 
   INTEGRATION = 'IM_TETRAHEDRON(6)'; 
 end
 
