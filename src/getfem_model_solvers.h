@@ -448,6 +448,7 @@ namespace getfem {
       VECTOR dr(gmm::vect_size(mdpb.residual())), d(problem.nb_dof());
       VECTOR b(gmm::vect_size(dr));
       gmm::copy(gmm::scaled(mdpb.residual(), value_type(-1)), b);
+      // print_eigval(mdpb.tangent_matrix());
       (*lsolver)(mdpb.tangent_matrix(), dr, b, iter);
       MS.unreduced_solution(dr, d);
       gmm::add(d, MS.state());
