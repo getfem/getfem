@@ -5,11 +5,11 @@
 
 N = 2;
 QUAD = 0;
-NU = .001;      % Viscosity coefficient. (NU = 1 / Re)
+NU = .01;       % Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0; 	% rate of rotation of the cylinder
 
-DT =.25;        % Time step
-T = 2;         % Final time
+DT = 0.01;        % Time step
+T = 0.5;         % Final time
 
 NOISY = 1;
 
@@ -19,15 +19,15 @@ OPTION = 4;  % 0 = Stokes avec schema de splitting 1
 	     % 3 = Navier Stokes with prediction-correction scheme
              % 4 = Navier Stokes with prediction-correction without bricks
 
-PROBLEM = 2  % 1 = Reference solution for Stokes
+PROBLEM = 3; % 1 = Reference solution for Stokes
              % 2 = Reference solution for Navier Stokes
 	     % 3 = flow around a cylinder (centered at 0)
 
 
 if (N == 2 && ~QUAD)
- %MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
- %MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
-  MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
+  MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
+ %MESHNAME = 'navier_stokes_cylinder2.mesh'; % name of the mesh file
+ %MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[30,30]';
   if (OPTION >= 3)
     FEM_TYPE = 'FEM_PK(2,1)';  % PK method
     FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
@@ -62,4 +62,4 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 ROOTFILENAME = 'icare';     % Root of data files.
 DX_EXPORT = 1 % export solution to a .dx file ?
-DT_EXPORT = 5;
+DT_EXPORT = DT;

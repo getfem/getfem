@@ -120,9 +120,11 @@ namespace getfem {
 
     std::stringstream ss;
     ss << "u=data$1(#1); "
-      "V(#1)+=" << -dt << "*"
-      " comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))(l,i,i,m,j,k,j,:,k).u(l).u(m)"
-      "+comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
+      "V(#1)+="
+      // << -dt << "*"
+      //" comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))"
+      //"(l,i,i,m,j,k,j,:,k).u(l).u(m)+"
+      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
     assem.set(ss.str());
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -130,8 +132,6 @@ namespace getfem {
     assem.push_data(Un);
     assem.push_vec(R);
     assem.assembly(rg);
-
-    gmm::scale(R, dt);
   }
 
 

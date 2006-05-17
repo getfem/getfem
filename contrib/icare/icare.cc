@@ -232,6 +232,9 @@ struct problem_rotating_cylinder : public problem_definition {
       base_node G = dal::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
       if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
 	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+//       else if (gmm::abs(G[1] - p.BBmax[1]) < 1e-7
+// 	       || gmm::abs(G[1] - p.BBmin[1]) < 1e-7)
+// 	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
       else 
 	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
     }
@@ -299,7 +302,8 @@ void navier_stokes_problem::init(void) {
   mesh.bounding_box(BBmin, BBmax);
   cout << "mesh bounding box: " << BBmin << " ... " << BBmax << "\n";
   datafilename = PARAM.string_value("ROOTFILENAME","Data files base name.");
-  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
+  residual = PARAM.real_value("RESIDUAL"); 
+  if (residual == 0.) residual = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosity");
   dt = PARAM.real_value("DT", "Time step");
@@ -690,11 +694,21 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   // Matrix p div u
   sparse_matrix B(nbdof_p, nbdof_u);
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
-
-  // Normal part Dirichlet condition
+  
   mf_mult.set_qdim(1);
   dal::bit_vector dofon_NDirichlet
     = mf_mult.dof_on_set(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
+  mf_mult.set_qdim(N);
+  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
+  dofon_NDirichlet.setminus(dofon_Dirichlet);
+  // dofon_Dirichlet.setminus(dofon_NDirichlet);
+  dal::bit_vector dofon_nonref =mf_mult.dof_on_set(NONREFLECTIVE_BOUNDARY_NUM);
+  cout << "Nb of Dirichlet constraints : " << dofon_Dirichlet.card()  << endl;
+  
+  dofon_Dirichlet.setminus(dofon_nonref);
+
+  // Normal part Dirichlet condition
+  mf_mult.set_qdim(1);
   size_type nbdof_NDir = dofon_NDirichlet.card();
   std::vector<size_type> ind_ct_ndir;
   for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) 
@@ -717,7 +731,6 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
   // Dirichlet condition
   mf_mult.set_qdim(N);
-  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
   size_type nbdof_Dir = dofon_Dirichlet.card();
   std::vector<size_type> ind_ct_dir;
   for (dal::bv_visitor i(dofon_Dirichlet); !i.finished(); ++i) 
@@ -738,10 +751,33 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   }
   cout << "Nb of Dirichlet constraints : " << nbdof_Dir << endl;
 
+
+  // Non reflective condition
+  size_type nbdof_nonref = dofon_nonref.card();
+  std::vector<size_type> ind_ct_nonref;
+  for (dal::bv_visitor i(dofon_nonref); !i.finished(); ++i) 
+    ind_ct_nonref.push_back(i);
+  gmm::sub_index SUB_CT_NONREF(ind_ct_nonref);
+  gmm::sub_interval I4(nbdof_u+nbdof_NDir+nbdof_Dir, nbdof_nonref);
+  getfem::mesh_region mpinonrefrg
+    = mf_u.linked_mesh().get_mpi_sub_region(NONREFLECTIVE_BOUNDARY_NUM);
+
+  sparse_matrix HNR(nbdof_nonref, nbdof_u);
+  {
+    sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+    getfem::generic_assembly assem;
+    assem.set("M(#2,#1)+=comp(vBase(#2).vBase(#1))(:,i,:,i);");
+    assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
+    assem.push_mat(A); assem.assembly(mpinonrefrg);
+    gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
+  }
+  cout << "Nb on Non reflective condition: " << nbdof_nonref << endl;
+
+
   // Discretization of laplace operator for p
   sparse_matrix K2(nbdof_p+1, nbdof_p+1);
-  gmm::sub_interval I4(0, nbdof_p);
-  asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K2, I4),
+  gmm::sub_interval IP(0, nbdof_p);
+  asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K2, IP),
 						 mim, mf_p, mpirg);
   K2(nbdof_p, 0) = K2(0, nbdof_p) = 1.0; // set the first pressure dof to 0
   
@@ -761,7 +797,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     //
     // Assembly of the first linear system
     //
-    size_type sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir;
+    size_type sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir + nbdof_nonref;
     sparse_matrix A1(sizelsystem, sizelsystem);
     plain_vector Y(sizelsystem), YY(nbdof_u);
     // laplace operator
@@ -791,19 +827,30 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpidirrg);
       gmm::copy(gmm::sub_vector(VV, SUB_CT_DIR), gmm::sub_vector(Y, I3));
     }
+    // Non reflective condition
+    gmm::copy(HNR, gmm::sub_matrix(A1, I4, I1));
+    gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A1, I1, I4));
+    {
+      plain_vector VV(mf_mult.nb_dof());
+      if (t < 0.2)
+	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg);
+      else {
+	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
+	// asm_nonref_right_hand_side(VV, mim, mf_u, mf_mult, Un0, dt,mpinonrefrg);
+      }
+      gmm::copy(gmm::sub_vector(VV, SUB_CT_NONREF), gmm::sub_vector(Y, I4));
+    }
 
     // pressure part
     gmm::mult(gmm::transposed(B), gmm::scaled(Pn0, -1.0), YY);
     gmm::add(YY, gmm::sub_vector(Y, I1));
-
-    // TODO : non reflective to be added
     
     //
     // Solving the first linear system
     //
     {
       double rcond;
-      plain_vector X(nbdof_u+nbdof_Dir);
+      plain_vector X(sizelsystem);
       SuperLU_solve(A1, X, Y, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
       gmm::copy(gmm::sub_vector(X, I1), USTAR);
@@ -817,10 +864,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     {
       double rcond;
       plain_vector X(nbdof_p+1), Z(nbdof_p+1);
-      gmm::mult(B, USTAR, gmm::sub_vector(Z, I4));
+      gmm::mult(B, USTAR, gmm::sub_vector(Z, IP));
       SuperLU_solve(K2, X, Z, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
-      gmm::copy(gmm::sub_vector(X, I4), Phi);
+      gmm::copy(gmm::sub_vector(X, IP), Phi);
     }
 
     gmm::mult(gmm::transposed(B), gmm::scaled(Phi, -1.), USTARbis);
@@ -874,7 +921,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
       plain_vector Rot(mf_rhs.nb_dof());
       compute_gradient(mf_u, mf_rhs, Un0, DU);
       for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
-	Rot[i] = DU[i*N + 3] - DU[i*N + 2];
+	Rot[i] = DU[i*N*N + 3] - DU[i*N*N + 2];
       }
       cout << "Saving Rot, |rot| = " << gmm::vect_norm2(Rot) << "\n";
       exp->write_point_data(mf_rhs, Rot);
