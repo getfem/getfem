@@ -232,9 +232,9 @@ struct problem_rotating_cylinder : public problem_definition {
       base_node G = dal::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
       if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
 	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
-//       else if (gmm::abs(G[1] - p.BBmax[1]) < 1e-7
-// 	       || gmm::abs(G[1] - p.BBmin[1]) < 1e-7)
-// 	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+      else if (gmm::abs(G[1] - p.BBmax[1]) < 1e-7
+	       || gmm::abs(G[1] - p.BBmin[1]) < 1e-7)
+	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
       else 
 	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
     }
@@ -695,24 +695,23 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   sparse_matrix B(nbdof_p, nbdof_u);
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
   
-  mf_mult.set_qdim(1);
-  dal::bit_vector dofon_NDirichlet
-    = mf_mult.dof_on_set(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   mf_mult.set_qdim(N);
   dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
-  dofon_NDirichlet.setminus(dofon_Dirichlet);
-  // dofon_Dirichlet.setminus(dofon_NDirichlet);
   dal::bit_vector dofon_nonref =mf_mult.dof_on_set(NONREFLECTIVE_BOUNDARY_NUM);
-  cout << "Nb of Dirichlet constraints : " << dofon_Dirichlet.card()  << endl;
-  
   dofon_Dirichlet.setminus(dofon_nonref);
 
   // Normal part Dirichlet condition
   mf_mult.set_qdim(1);
-  size_type nbdof_NDir = dofon_NDirichlet.card();
+  dal::bit_vector dofon_NDirichlet
+    = mf_mult.dof_on_set(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   std::vector<size_type> ind_ct_ndir;
-  for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) 
-    ind_ct_ndir.push_back(i);
+  for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) {
+    if (dofon_Dirichlet.is_in(i*N) || dofon_nonref.is_in(i*N)) 
+      dofon_NDirichlet.sup(i);  // Suppress i because it is on the
+    else                        // Dirichlet or non reflective boundary.
+      ind_ct_ndir.push_back(i);
+  }
+  size_type nbdof_NDir = dofon_NDirichlet.card();
   gmm::sub_index SUB_CT_NDIR(ind_ct_ndir);
   gmm::sub_interval I2(nbdof_u, nbdof_NDir);
   getfem::mesh_region mpindirrg
