@@ -78,7 +78,6 @@ if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
 crack_SOURCES = crack.cc
-crackPlate_SOURCES = crackPlate.cc
 endif
 dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
@@ -148,7 +147,6 @@ EXTRA_DIST = \
 	test_mat_elem.pl                  \
 	crack.pl                          \
 	crack.param                       \
-	crackPlate.param                  \
 	laplacian.param                   \
 	bilaplacian.param                 \
 	bilaplacian.pl                    \
