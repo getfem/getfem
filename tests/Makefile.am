@@ -1,7 +1,7 @@
 SUBDIRS = meshes
 
 if QHULL
-optprogs = test_mesh_generation test_mesh_im_level_set crack crackPlate
+optprogs = test_mesh_generation test_mesh_im_level_set crack
 optpl = $(top_srcdir)/tests/test_mesh_im_level_set.pl \
         $(top_srcdir)/tests/crack.pl
 else

@@ -345,7 +345,8 @@ namespace getfem
     return &(tab[tab.add_norepeat(l)]);
   }
 
-  pdof_description second_derivative_dof(dim_type n, dim_type num_der1, dim_type num_der2) {
+  pdof_description second_derivative_dof(dim_type n, dim_type num_der1,
+					 dim_type num_der2) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l;
     l.ddl_desc.resize(n);
