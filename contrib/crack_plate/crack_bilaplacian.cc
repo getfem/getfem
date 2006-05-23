@@ -39,9 +39,10 @@
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
+using bgeot::base_vector; /* dense vector. */
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
-using bgeot::base_matrix; /* small dense matrix. */
+using bgeot::base_matrix; /* dense matrix. */
 
 /* definition of some matrix/vector types. 
  * default types of getfem_model_solvers.h
@@ -54,34 +55,41 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /******** Exact Solution *******************************/
 
 scalar_type D  = 1.  ;
-scalar_type nu = 0.3 ;
-scalar_type A1 = 1., A2 = 1. ;
-scalar_type b1 = 3. + (A2 / A1) * (24. * nu) / (3. * nu * nu - 6. * nu + 5. ) ;
-scalar_type b2 = (3. * nu * nu - 6. * nu - 3. ) / (3. * nu * nu - 6. * nu + 5. ) ;
+scalar_type nu = 0. ;
+scalar_type AA = (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
+scalar_type BB = 0 ;
+scalar_type CC = (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
+ 
 
 scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
- scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
- assert(gmm::abs(( x[0] + r )) > 1e-10);
- return pow(r, 1.5) * ( A1 * ( sin( 1.5 * theta ) - b1 * sin(0.5 * theta) )  
-                      + A2 * ( cos( 1.5 * theta ) - b2 * cos(0.5 * theta) ); }
+ //scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
+ scalar_type theta = atan2(x[1], x[0]);
+ return sqrt(r*r*r) * (sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
+ }
  
 scalar_type sol_lapl_u(const base_node &x) {
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
- assert(gmm::abs(( x[0] + r )) > 1e-10);
- scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ; 
-return - 2. * ( A1 * b1 * sin( 0.5 * theta ) + A2 * b2 * cos(0.5 * theta) ) / sqrt(r) ; }
+ scalar_type theta = atan2(x[1], x[0]);
+ return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-AA*sin(theta/
+2.0)/4.0-9.0/4.0*BB*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); }
 
-scalar_type sol_f(const base_node &x)
+scalar_type sol_f(const base_node &)
 { return 0. ; }
 
 base_small_vector sol_du(const base_node &x) {
  base_small_vector res(x.size());
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
- assert(gmm::abs(( x[0] + r )) > 1e-10);
- scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ; 
- res[0] = sqrt(r) * (1.5 * ( A1 * ( sin( 1.5 * theta ) - 3. * sin( 0.5 * theta) ) + A2 * ( cos(1.5 * theta) - cos(0.5 * theta) )) * cos(theta) - ( A1 * ( 1.5 * cos( 1.5 * theta) - 1.5 * cos( 0.5 * theta))+ A2 * ( - 1.5 * sin( 1.5 * theta) + 0.5 * sin( 0.5 * theta) ) ) * sin ( theta ) ) ;
- res[1] = sqrt(r) * (1.5 * ( A1 * ( sin( 1.5 * theta ) - 3. * sin( 0.5 * theta) ) + A2 * ( cos( 1.5 * theta) - cos( 0.5 * theta) ) ) * sin(theta) + ( A1 * ( 1.5 * cos( 1.5 * theta) - 1.5 * cos( 0.5 * theta) ) + A2 * ( - 1.5 * sin( 1.5 * theta ) + 0.5 * sin( 0.5 * theta ) ) ) * cos( theta ) ) ;
+ scalar_type theta = atan2(x[1], x[0]);
+
+res[0] =  3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+AA*
+cos(theta/2.0)/2.0-3.0/2.0*BB*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*sin(
+theta);
+ 
+res[1] = 3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+AA*
+cos(theta/2.0)/2.0-3.0/2.0*BB*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*cos(
+theta);
+
   return res;
 }
 
@@ -117,81 +125,33 @@ return res ; }
 
 
 
-/******** Struct for the Bilaplacian problem *******************************/
 
 
 
 
-
-
-
-struct bilaplacian_crack_problem {
-
-  enum { CLAMPED_BOUNDARY_NUM = 0, SIMPLE_SUPPORT_BOUNDARY_NUM = 1,
-	 FORCE_BOUNDARY_NUM = 2, MOMENTUM_BOUNDARY_NUM = 3};
-  
-  getfem::mesh mesh;        /* the mesh */
-  getfem::level_set ls;      /* The two level sets defining the crack.       */
-  getfem::mesh_level_set mls;       
-  getfem::mesh_im_level_set mim;    /* the integration methods.              */
-  getfem::mesh_fem mf_pre_u ; 
-  getfem::mesh_fem_level_set mfls_u ; 
-  getfem::mesh_fem_global_function mf_sing_u ;
-  getfem::mesh_fem mf_partition_of_unity;
-  getfem::mesh_fem_product mf_u_product ;
-  getfem::mesh_fem_sum mf_u_sum ;
-  getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  
-  getfem::mesh_fem mf_mult; /* mesh_fem for the Dirichlet condition.        */
-  getfem::mesh_fem mf_rhs;  /* mesh_fem for the right hand side (f(x),..)   */
-  
-  scalar_type residual;     /* max residual for the iterative solvers       */
-  getfem::constraints_type dirichlet_version;
-  
-  scalar_type cutoff_radius, enr_area_radius;
-  int enrichment_option;
-  
-  std::string datafilename;
-  ftool::md_param PARAM;
-
-  bool KL = 1 ;
-  
-  scalar_type epsilon ;      /* half-plate thickness */
-    
-  bool solve(plain_vector &U);
-  void init(void);
-  void compute_error(plain_vector &U);
-
-  bilaplacian_crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh), 
-			mfls_u(mls, mf_pre_ut), mf_sing_u(mesh)
-			mf_partition_of_unity(mesh),
-			mf_u_product(mf_partition_of_unity, mf_sing_u),
-			mf_u_sum(mesh), mf_rhs(mesh), mf_mult(mesh),
-			ls(mesh, 1, true) {} 
-};
-
-
-
-
-struct bilaplacian_singular_functions : public global_function, public context_dependencies {
+struct bilaplacian_singular_functions : public getfem::global_function, public getfem::context_dependencies {
   size_type l;             // singular function number
-  const level_set &ls;
-  mutable mesher_level_set mls0, mls1;
+  const getfem::level_set &ls;
+  mutable getfem::mesher_level_set mls0, mls1;
   mutable size_type cv;
   
   void update_mls(size_type cv_) const { 
-    if (cv_ != cv) 
-      { cv=cv_; mls0=ls.mls_of_convex(cv, 0); mls1=ls.mls_of_convex(cv, 1); }
+    if (cv_ != cv) { 
+      cv=cv_; 
+      mls0=ls.mls_of_convex(cv, 0); 
+      mls1=ls.mls_of_convex(cv, 1); 
+    }
   }
 
 
-  scalar_type sing_function(scalar_type x, scalar_type y) {
+  scalar_type sing_function(scalar_type x, scalar_type y) const {
     scalar_type r = sqrt(x*x + y*y);
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
      * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
      */
-    scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
+    /*scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
+    */
 
     scalar_type theta = atan2(y,x); 
  
@@ -199,20 +159,29 @@ struct bilaplacian_singular_functions : public global_function, public context_d
     case 0: {
       return r*sqrt(r)*sin(theta/2);
     } break;
+    case 1: {
+      return r*sqrt(r)*sin(3.0 * theta/2);
+    } break;
+    case 2: {
+      return r*sqrt(r)*cos(3.0 * theta/2);
+    } break;
+    case 3: {
+      return r*sqrt(r)*cos(theta/2);
+    } break;
     default: assert(0); 
     }
   }
 
   /* derivative in the levelset coordinates */
-  void sing_function_grad(scalar_type x, scalar_type y, base_small_vector &g) {
+  void sing_function_grad(scalar_type x, scalar_type y, base_small_vector &g) const {
     g.resize(2);
     scalar_type r = sqrt(x*x + y*y);
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
      * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
      */
-    scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
+    /*scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
-
+    */
     scalar_type theta = atan2(y,x);
 
     switch (l) {
@@ -220,19 +189,31 @@ struct bilaplacian_singular_functions : public global_function, public context_d
       g[0] = 3.0/2.0*sqrt(r)*sin(theta/2.0)*cos(theta)-sqrt(r)*cos(theta/2.0)*sin(theta)/2.0;
       g[1] = 3.0/2.0*sqrt(r)*sin(theta/2.0)*sin(theta)+sqrt(r)*cos(theta/2.0)*cos(theta)/2.0;
     } break;
+    case 1: {
+      g[0] = 3.0/2.0*sqrt(r)* ( sin(3.0/2.0*theta)*cos(theta)-cos(3.0/2.0*theta)*sin(theta) );
+      g[1] = 3.0/2.0*sqrt(r)* ( sin(3.0/2.0*theta)*sin(theta)+cos(3.0/2.0*theta)*cos(theta) );
+    } break;
+    case 2: {
+      g[0] = 3.0/2.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/2.0*sqrt(r)*cos(3.0/2.0*theta)*cos(theta);
+      g[1] = 3.0/2.0*sqrt(r)*cos(3.0/2.0*theta)*sin(theta)-3.0/2.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta);
+    } break;
+    case 3: {
+      g[0] = 3.0/2.0*sqrt(r)*cos(theta/2.0)*cos(theta)+sqrt(r)*sin(theta/2.0)*sin(theta)/2.0;
+      g[1] = 3.0/2.0*sqrt(r)*cos(theta/2.0)*sin(theta)-sqrt(r)*sin(theta/2.0)*cos(theta)/2.0;
+    } break;
     default: assert(0); 
     }
   }
    
-  void sing_function_hess(scalar_type x, scalar_type y, base_matrix &he) {
+  void sing_function_hess(scalar_type x, scalar_type y, base_matrix &he) const {
     he.resize(2,2);
     scalar_type r = sqrt(x*x + y*y);
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
      * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
      */
-    scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
+    /*scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
-    
+    */
     scalar_type theta = atan2(y,x);
 
     switch (l) {
@@ -248,19 +229,57 @@ struct bilaplacian_singular_functions : public global_function, public context_d
 		 cos(theta)/4.0)*sin(theta)+(sqrt(r)*cos(theta/2.0)*sin(theta)/4.0+5.0/4.0*
 					     sqrt(r)*sin(theta/2.0)*cos(theta))*cos(theta)/r;
     } break;
+    case 1: {
+      he(0,0) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)
+                 *cos(3.0/2.0*theta)*sin(theta))*cos(theta)-(3.0/4.0*sqrt(r)*
+                  cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*sin(theta)/r;
+      he(1,1) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)*
+                cos(3.0/2.0*theta)*sin(theta))*sin(theta)+(3.0/4.0*sqrt(r)*
+                cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*cos(theta)/r;
+      he(1,0) = (3.0/4.0/sqrt(r)*sin(theta/2.0)*sin(theta)+1/sqrt(r)*cos(theta/2.0)*
+		 cos(theta)/4.0)*sin(theta)+(sqrt(r)*cos(theta/2.0)*sin(theta)/4.0+5.0/4.0*
+					     sqrt(r)*sin(theta/2.0)*cos(theta))*cos(theta)/r;
+      he(0,1) = he(1,0) ;
+    } break;
+    case 2: {
+      he(0,0) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
+	        cos(3.0/2.0*theta)*cos(theta))*cos(theta)-(3.0/4.0*sqrt(r)*
+		cos(3.0/2.0*theta)*sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*sin(theta)/r;
+      he(1,1) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
+		cos(3.0/2.0*theta)*cos(theta))*sin(theta)+(3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)
+	       *sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*cos(theta)/r;
+      he(1,0) = (3.0/4.0/sqrt(r)*cos(3.0/2.0*theta)*sin(theta)-3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)
+		 *cos(theta))*sin(theta)+(-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta)
+                  -3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)*cos(theta))*cos(theta)/r;
+      he(0,1) = he(1,0) ;
+    } break;
+    case 3: {
+      he(0,0) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
+		 sin(theta)/4.0)*cos(theta)-(-sqrt(r)*sin(theta/2.0)*cos(theta)/4.0-5.0/4.0
+					     *sqrt(r)*cos(theta/2.0)*sin(theta))*sin(theta)/r;
+      he(1,1) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
+		 sin(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*cos(theta)/4.0-5.0/4.0
+					     *sqrt(r)*cos(theta/2.0)*sin(theta))*cos(theta)/r;
+      he(1,0) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*sin(theta)-1/sqrt(r)*sin(theta/2.0)*
+		 cos(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*sin(theta)/4.0+5.0/4.0
+					     *sqrt(r)*cos(theta/2.0)*cos(theta))*cos(theta)/r;
+      he(0,1) = he(1,0) ;
+    } break;
     default: assert(0); 
     }
   }
    
   
-  virtual scalar_type val(const fem_interpolation_context& c) const {
+  virtual scalar_type val(const getfem::fem_interpolation_context& c) const {
+
+    assert(ls.get_mesh_fem().convex_index().is_in(c.convex_num()));
     update_mls(c.convex_num());
     scalar_type x = mls1(c.xref()), y = mls0(c.xref());
     scalar_type v = sing_function(x, y);
     return v;
   }
 
-  virtual void grad(const fem_interpolation_context& c,
+  virtual void grad(const getfem::fem_interpolation_context& c,
 		    base_small_vector &v) const {
     update_mls(c.convex_num());
     size_type P = c.xref().size();
@@ -276,9 +295,9 @@ struct bilaplacian_singular_functions : public global_function, public context_d
     gmm::mult(c.B(), dref, v); // gradient in the coords of the real element.
   }
   
-  virtual void hess(const fem_interpolation_context& c, base_matrix &he) const {
+  virtual void hess(const getfem::fem_interpolation_context& c, base_matrix &he) const {
     update_mls(c.convex_num());
-    size_type P = c.xref().size();
+    size_type P = c.xref().size(); assert(P == 2);
     base_small_vector dx(P), dy(P), dfr(2);  
     scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
     base_matrix d2x(P,P), d2y(P,P), hefr(P, P) ;
@@ -305,21 +324,108 @@ struct bilaplacian_singular_functions : public global_function, public context_d
 
     base_vector &vhe = he;
     // back in the real element basis
-    gmm::mult_add(c.B2(), gmm::scaled(dref,-1), hh);
-    gmm::mult_add(c.B3(), hh, vhe);
+    gmm::mult(c.B3(), hh, vhe);
+    gmm::mult_add(c.B32(), gmm::scaled(dref,-1), vhe);
   }
     
   void update_from_context(void) const { cv =  size_type(-1); }
 
-  bilaplacian_singular_functions(size_type l_, const level_set &ls_) : l(l_), ls(ls_) {
+  bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_) : l(l_), ls(ls_) {
     cv = size_type(-1);
     this->add_dependency(ls);
   }
 
 };
 
+getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls){ 
+  return new bilaplacian_singular_functions(i, ls);
+}
 
+struct exact_solution {
+  getfem::mesh_fem_global_function mf;
+  getfem::base_vector U;
+
+  exact_solution(getfem::mesh &me) : mf(me) {}
+  
+  void init(getfem::level_set &ls) {
+    std::vector<getfem::pglobal_function> cfun(4) ;
+    for (unsigned j=0; j < 4; ++j)
+      cfun[j] = bilaplacian_crack_singular(j, ls) ;
+    mf.set_functions(cfun);
+    U.resize(4); assert(mf.nb_dof() == 4);
+   // scalar_type A1 = 1., nu = 0.3 ;
+   // scalar_type b1_ = 3. + (A2 / A1) * (24. * nu) / (3. * nu * nu - 6. * nu + 5. ) ; 
+    U[0] = AA ;
+    U[1] = 1  ;
+    U[2] = BB ;
+    U[3] = CC ;
+  }
+};
+
+
+/******** Struct for the Bilaplacian problem *******************************/
+
+
+
+
+
+
+
+struct bilaplacian_crack_problem {
+
+  enum { CLAMPED_BOUNDARY_NUM = 0, SIMPLE_SUPPORT_BOUNDARY_NUM = 1,
+	 FORCE_BOUNDARY_NUM = 2, MOMENTUM_BOUNDARY_NUM = 3};
+  
+  getfem::mesh mesh;        /* the mesh */
+  getfem::level_set ls;      /* The two level sets defining the crack.       */
+  getfem::mesh_level_set mls;       
+  getfem::mesh_im_level_set mim;    /* the integration methods.              */
+  getfem::mesh_fem mf_pre_u ; 
+  getfem::mesh_fem_level_set mfls_u ; 
+  getfem::mesh_fem_global_function mf_sing_u ;
+  getfem::mesh_fem mf_partition_of_unity;
+  getfem::mesh_fem_product mf_u_product ;
+  getfem::mesh_fem_sum mf_u_sum ;
+  getfem::mesh_fem& mf_u() { return mf_u_sum; }
+  
+  getfem::mesh_fem mf_rhs;  /* mesh_fem for the right hand side (f(x),..)   */
+  getfem::mesh_fem mf_mult; /* mesh_fem for the Dirichlet condition.        */
+  
+  scalar_type residual;     /* max residual for the iterative solvers       */
+  getfem::constraints_type dirichlet_version;
+  
+  scalar_type cutoff_radius, enr_area_radius;
+  int enrichment_option;
+  
+  std::string datafilename;
+  ftool::md_param PARAM;
+
+  bool KL;
+  
+  scalar_type epsilon ;      /* half-plate thickness */
+  
+  exact_solution exact_sol;
+    
+  bool solve(plain_vector &U);
+  void init(void);
+  void compute_error(plain_vector &U);
+
+  bilaplacian_crack_problem(void) : ls(mesh, 1, true), 
+				    mls(mesh), mim(mls), mf_pre_u(mesh), 
+				    mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
+				    mf_partition_of_unity(mesh),
+				    mf_u_product(mf_partition_of_unity, mf_sing_u),
+				    mf_u_sum(mesh), mf_rhs(mesh), mf_mult(mesh), exact_sol(mesh)
+				    { KL = true; } 
+};
+
+
+/*                                                          */
 /******************* Methods ********************************/
+/*                                                          */
+
+
+
 
 
 
@@ -341,9 +447,11 @@ void bilaplacian_crack_problem::init(void) {
     
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
+  std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
 				      "Enrichment option");
-    
+    enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
+				     "radius of the enrichment area");
     
     /* First step : build the mesh */
     
@@ -371,13 +479,13 @@ void bilaplacian_crack_problem::init(void) {
     mesh.translation(tt); 
   
     
+    
    /* read the parameters   */
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
   int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
   dirichlet_version = getfem::constraints_type(dv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
-  FT = PARAM.real_value("FT"); if (FT == 0.0) FT = 1.0;
   KL = (PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0);
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
@@ -388,15 +496,17 @@ void bilaplacian_crack_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
   getfem::pintegration_method sppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
+  getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
+		getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
     
   mim.set_integration_method(mesh.convex_index(), ppi);
-  mf_u.set_finite_element(mesh.convex_index(), pf_u);
+  //mf_u.set_finite_element(mesh.convex_index(), pf_u);
   mls.add_level_set(ls);
-  mim.set_simplex_im(sppi);
+  mim.set_simplex_im(sppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
+  mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
 
-  
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
@@ -406,6 +516,7 @@ void bilaplacian_crack_problem::init(void) {
 			       getfem::fem_descriptor(dirichlet_fem_name));
   }
 
+  
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -428,22 +539,24 @@ void bilaplacian_crack_problem::init(void) {
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
-    mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
-    
+    mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
   }
+  
+  exact_sol.init(ls);
 }
 
+
 /* compute the error with respect to the exact solution */
-void bilaplacian_problem::compute_error(plain_vector &U) {
-  std::vector<scalar_type> V(mf_rhs.nb_dof());
-  getfem::interpolation(mf_u, mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_dof(i));
-  cout.precision(16);
-  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;
+void bilaplacian_crack_problem::compute_error(plain_vector &U) {
+  cout << "L2 ERROR:"
+       << getfem::asm_L2_dist(mim, mf_u(), U,
+			      exact_sol.mf, exact_sol.U) << "\n";
+  cout << "H1 ERROR:"
+       << getfem::asm_H1_dist(mim, mf_u(), U,
+			      exact_sol.mf, exact_sol.U) << "\n";
+  /*cout << "H2 ERROR:"
+       << getfem::asm_H2_dist(mim, mf_u(), U,
+       exact_sol.mf, exact_sol.U) << "\n";*/
 }
 
 /**************************************************************************/
@@ -453,50 +566,65 @@ void bilaplacian_problem::compute_error(plain_vector &U) {
 bool bilaplacian_crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
-
-  cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
   
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    ls.values(0)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[1];
-    ls.values(1)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[0];}
+    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    ls.values(0)[d] = y;
+    ls.values(1)[d] = x;
+  }
   ls.touch();
   
   mls.adapt();
   mim.adapt();
-  mfls_ut.adapt();
-  mfls_u3.adapt();
-  mfls_theta.adapt();
+  mfls_u.adapt();
+  
+  cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
   
   // setting singularities 
-  std::vector<getfem::pglobal_function> utfunc(1) ;                  
-  for (size_type i = 0 ; i < 1 ; ++i) {                              
-    utfunc[i] = new bilaplacian_singular_functions(i, ls);
+  cout << "setting singularities \n" ;
+  std::vector<getfem::pglobal_function> ufunc(1);
+  for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
+    ufunc[i] = bilaplacian_crack_singular(i, ls);
   }
+
+
+
+
+
   
   mf_sing_u.set_functions(ufunc);
   
- 
-  dal::bit_vector enriched_dofs;
-  plain_vector X(mf_partition_of_unity.nb_dof());
-  plain_vector Y(mf_partition_of_unity.nb_dof());
-  getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			ls.values(1), X);
-  getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			ls.values(0), Y);
-  for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
-    if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
-      enriched_dofs.add(j);
+  if (enrichment_option) {
+    dal::bit_vector enriched_dofs;
+    plain_vector X(mf_partition_of_unity.nb_dof());
+    plain_vector Y(mf_partition_of_unity.nb_dof());
+    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			  ls.values(1), X);
+    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			  ls.values(0), Y);
+    for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
+      if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
+	enriched_dofs.add(j);
+    }
+    
+    cout << "enriched_dofs: " << enriched_dofs << "\n";
+    
+    if (enriched_dofs.card() < 3)
+      DAL_WARNING0("There is " << enriched_dofs.card() <<
+		   " enriched dofs for the crack tip");
+    mf_u_product.set_enrichment(enriched_dofs);
+    mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
+    cout << "Enrichissement effectué \n" ;
+  } else {
+    mf_u_sum.set_mesh_fems(mfls_u);
   }
-  if (enriched_dofs.card() < 3)
-    DAL_WARNING0("There is " << enriched_dofs.card() <<
-		 " enriched dofs for the crack tip");
-  mf_u_product.set_enrichment(enriched_dofs);
-  mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
   
-  
+  cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
+
   // Bilaplacian brick.
-  getfem::mdbrick_bilaplacian<> BIL(mim, mf_u);
+  getfem::mdbrick_bilaplacian<> BIL(mim, mf_u());
   BIL.D().set(D);
   if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
   
@@ -521,8 +649,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<>
     final_model(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
-  final_model.set_constraints_type(dirichlet_version);
-  final_model.rhs().set(mf_rhs, F);
+  final_model.rhs().set(exact_sol.mf,exact_sol.U);
+  final_model.set_constraints_type(getfem::constraints_type(dirichlet_version));  
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -531,22 +659,154 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction
+  gmm::resize(U, mf_u().nb_dof());
   gmm::copy(BIL.get_solution(MS), U);
   return (iter.converged());
-
 }
 
 int main(int argc, char *argv[]) {
 
-try {
-    bilaplacian_problem p;
+  try {
+    bilaplacian_crack_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    plain_vector U(p.mf_u.nb_dof());
+    plain_vector U;
     if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
 
     p.compute_error(U);
+
+    // visualisation, export au format .vtk
+      getfem::mesh mcut;
+      p.mls.global_cut_mesh(mcut);
+      unsigned Q = p.mf_u().get_qdim();
+      assert( Q == 1 ) ;
+      getfem::mesh_fem mf(mcut, Q);
+      mf.set_classical_discontinuous_finite_element(2, 0.001);
+      // mf.set_finite_element
+      //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
+      plain_vector V(mf.nb_dof());
+
+      getfem::interpolation(p.mf_u(), mf, U, V);
+
+      getfem::stored_mesh_slice sl;
+      getfem::mesh mcut_refined;
+
+      unsigned NX = p.PARAM.int_value("NX"), nn;
+      if (NX < 6) nn = 24;
+      else if (NX < 12) nn = 8;
+      else if (NX < 30) nn = 3;
+      else nn = 1;
+
+      /* choose an adequate slice refinement based on the distance to the crack tip */
+      std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
+      for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
+	scalar_type dmin=0, d;
+	base_node Pmin,P;
+	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+	  P = mcut.points_of_convex(cv)[i];
+	  //d = gmm::vect_norm2(ls_function(P));
+	  d = gmm::vect_norm2(P) ; 
+	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+	}
+
+	if (dmin < 1e-5)
+	  nrefine[cv] = nn*8;
+	else if (dmin < .1) 
+	  nrefine[cv] = nn*2;
+	else nrefine[cv] = nn;
+	/*if (dmin < .01)
+	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
+      }
+
+
+	getfem::mesh_slicer slicer(mcut); 
+	getfem::slicer_build_mesh bmesh(mcut_refined);
+	slicer.push_back_action(bmesh);
+	slicer.exec(nrefine, getfem::mesh_region::all_convexes());
+     
+      /*
+      sl.build(mcut, 
+      getfem::slicer_build_mesh(mcut_refined), nrefine);*/
+
+      getfem::mesh_im mim_refined(mcut_refined); 
+      mim_refined.set_integration_method(getfem::int_method_descriptor
+					 ("IM_TRIANGLE(6)"));
+
+      getfem::mesh_fem mf_refined(mcut_refined, Q);
+      mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
+      plain_vector W(mf_refined.nb_dof());
+
+      getfem::interpolation(p.mf_u(), mf_refined, U, W);
+
+      p.exact_sol.mf.set_qdim(Q);
+      assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());   // ??
+      plain_vector EXACT(mf_refined.nb_dof());
+      getfem::interpolation(p.exact_sol.mf, mf_refined, 
+			    p.exact_sol.U, EXACT);
+
+      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
+
+      /*
+      if (p.PARAM.int_value("VTK_EXPORT")) {
+	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
+	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.0001);
+	cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
+		plain_vector VM(mf_refined_vm.nb_dof());
+
+		cout << "computing von mises\n";
+	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
+
+	plain_vector D(mf_refined_vm.nb_dof() * Q), 
+	  DN(mf_refined_vm.nb_dof());
+	
+	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
+	for (unsigned i=0; i < DN.size(); ++i) {
+	DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q))); 
+	} */
+
+
+	cout << "export to " << p.datafilename + ".vtk" << "..\n";
+	getfem::vtk_export exp(p.datafilename + ".vtk",
+			       p.PARAM.int_value("VTK_EXPORT")==1);
+
+	exp.exporting(mf_refined); 
+	//exp.write_point_data(mf_refined_vm, DN, "error");
+	//	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+
+	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+      
+
+
+	//	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
+
+
+	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
+	   std::vector<getfem::pglobal_function> cfun(4);
+	   for (unsigned j=0; j < 4; ++j)
+	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
+	   mf.set_functions(cfun);
+	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
+	   VM_EXACT);
+	*/
+
+
+	//	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
+	if (1) {
+	  getfem::vtk_export exp2("crack_exact.vtk");
+	  exp2.exporting(mf_refined);
+	  exp2.write_point_data(mf_refined, EXACT, "reference solution");
+	}
+
+	getfem::vtk_export exp2("crack_diff.vtk");
+	exp2.exporting(mf_refined);
+	exp2.write_point_data(mf_refined, DIFF, "difference solution");
+
+	cout << "export done, you can view the data file with (for example)\n"
+	  "mayavi -d " << p.datafilename << ".vtk -f "
+	  "WarpScalar -m BandedSurfaceMap -m Outline\n";
   
+  }
+  DAL_STANDARD_CATCH_ERROR;
   return 0; 
 }
 
