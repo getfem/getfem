@@ -3,72 +3,67 @@
 % parameters for program bilaplacian                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% pde parameters :	                              %%%%%
+%%%%% domain parameters                   %%%%%
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
-QUAD = 1;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 10;                 % space step.
+NX = 41;                 % space step.
+
 DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
 FT = 5.0;              % parameter for the exact solution
 D = 1.0;    % "flexion modulus"
 KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
             % plate model (N=2 only).
 if (KL)     % For Kirchhoff-Love plate model only
-  NU = 0.3; % Poisson ratio (0 <= NU <= 1)
+  NU = 0; % Poisson ratio (0 <= NU <= 1)
 end;
 
  % MESH_FILE='/home-local/jlasry/source++/getfem++/tests/meshes/disc_P2_h2.mesh'
 
-if (N == 1)
-  MESH_TYPE = 'GT_PK(1,1)';       % segments
-  FEM_TYPE = 'FEM_HERMITE(1)';
-  DATA_FEM_TYPE = 'FEM_PK(1,3)';
-  INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on segments
-end
-
-if (N == 2 && ~QUAD)
+QUAD = 1;
+ 
+if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
   INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
-  % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
+% INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
   if 0   % hermite element
-    FEM_TYPE = 'FEM_HERMITE(2)';   % not conformal -> problem
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+     FEM_TYPE = 'FEM_HERMITE(2)';   % not conformal -> problem
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   elseif 0  % argyris element
-    FEM_TYPE = 'FEM_ARGYRIS';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
+     FEM_TYPE = 'FEM_ARGYRIS';
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
   else
 %    FEM_TYPE = 'FEM_HCT_TRIANGLE';
-    FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-    % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
-    INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
+     FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
+     INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   end;
 end
 
-if (N == 2 && QUAD)
+if (QUAD)
   MESH_TYPE = 'GT_QK(2,1)';
-  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';  DATA_FEM_TYPE = 'FEM_QK(2,2)';
-  % FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  DATA_FEM_TYPE = 'FEM_QK(2,2)';
+  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE'; 
+% FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
+  DATA_FEM_TYPE = 'FEM_QK(2,3)';
   INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(6))';
 end
 
-if (N == 3 && ~QUAD)
-  MESH_TYPE = 'GT_PK(3,1)';        % tetrahedrons
-  INTEGRATION = 'IM_TETRAHEDRON(8)';
-  DATA_FEM_TYPE = 'FEM_PK(3,3)';
-  FEM_TYPE = 'FEM_HERMITE(3)';     % not conformal -> problem
-  DIRICHLET_FEM_TYPE = 'FEM_PK(3,2)';
-end
+% integration meth. for sub-simplexe of elements crossed by the level-set
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 
-if (N == 3 && QUAD)
-  error('Sorry, no hermite elements on hexahedrons for the moment');
-end
+% integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
+% (comment it to disable quasipolar integration). Should be a
+% method defined on a square for 2D, or defined on a prism for 3D.
+% SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
-if (N > 3)
-  error('Correct the parameter file for N > 3');
-end
+ENRICHMENT_OPTION = 2;  % 0 = Pas d'enrichissement
+	                % 2 = standard XFEM on a fixed zone
+			
+RADIUS_ENR_AREA = 0.2;
+EPSILON=0.1 % thickness
 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
