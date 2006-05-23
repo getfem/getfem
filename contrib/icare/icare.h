@@ -111,7 +111,6 @@ namespace getfem {
 				  const mesh_fem &mf_u,
 				  const mesh_fem &mf_mult,
 				  const VECT &Un,
-				  scalar_type dt,
 				  const mesh_region &rg) {
     generic_assembly assem;
     // construction du terme de droite dans [M]*Unp1=F
@@ -160,8 +159,7 @@ namespace getfem {
 			mf_u().linked_mesh().get_mpi_region());
       }
       if ((version | ASMDIR_BUILDR)) {
-	asm_nonref_right_hand_side(V, mim(), mf_u(), *mf_mult, Un, dt,
-			   mf_u().linked_mesh().get_mpi_sub_region(boundary));
+	asm_nonref_right_hand_side(V, mim(), mf_u(), *mf_mult, Un, mf_u().linked_mesh().get_mpi_sub_region(boundary));
       }
       if (version & ASMDIR_BUILDH)
 	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), 
