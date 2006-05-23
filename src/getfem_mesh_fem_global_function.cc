@@ -57,7 +57,8 @@ namespace getfem {
   void global_function_fem::real_base_value(const fem_interpolation_context& c,
 					    base_tensor &t, bool) const {
 
-    mib.resize(2); mib[0] = 1; mib[1] = functions.size();
+    mib.resize(2); mib[0] = target_dim(); mib[1] = functions.size();
+    assert(target_dim() == 1);
     t.adjust_sizes(mib);
     for (size_type i=0; i < functions.size(); ++i) 
       t[i] = (*functions[i]).val(c);
@@ -68,31 +69,29 @@ namespace getfem {
   (const fem_interpolation_context& c, base_tensor &t, bool) const {
     mig.resize(3); 
     mig[2] = dim(); mig[1] = target_dim(); mig[0] = functions.size();
+    assert(target_dim() == 1);
     t.adjust_sizes(mig);
     base_small_vector G(dim());
     for (size_type i=0; i < functions.size(); ++i) {
       (*functions[i]).grad(c,G);
       for (unsigned j=0; j < dim(); ++j)
 	t[j*functions.size() + i] = G[j];
-      //std::copy(G.const_begin(), G.const_end(), t.begin() + i*dim());
     }
   }
   
   void global_function_fem::real_hess_base_value
-  (const fem_interpolation_context&, base_tensor &, bool) const { 
-    DAL_THROW(dal::to_be_done_error, "");
-    /*
+  (const fem_interpolation_context &c, base_tensor &t, bool) const { 
     mih.resize(4); 
     mih[3] = mih[2] = dim(); mih[1] = target_dim(); mih[0] = functions.size();
+    assert(target_dim() == 1);
     t.adjust_sizes(mih);
     base_matrix H(dim(),dim());
     for (size_type i=0; i < functions.size(); ++i) {
       (*functions[i]).hess(c,H);
-      
-      NO !! NOT THE RIGHT ORDER!
-      std::copy(H.begin(), H.end(), t.begin() + i*H.size());
+      for (unsigned k=0; k < dim(); ++k)
+	for (unsigned j=0; j < dim(); ++j)
+	  t.at((k*dim() + j)*functions.size() + i) = H.at((k*dim() + j));
     }
-    */
   }
   
   DAL_SIMPLE_KEY(special_int_globf_fem_key, pfem);

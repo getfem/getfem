@@ -62,16 +62,12 @@ namespace getfem {
     mesher_level_set mls_of_convex(size_type cv, unsigned lsnum = 0,
 				   bool inverted = false) const;
     bool has_secondary(void) const { return with_secondary; }
-    const mesh_fem &get_mesh_fem(void) { return *mf; }
+    const mesh_fem &get_mesh_fem(void) const { return *mf; }
+    const mesh &linked_mesh() const { return mf->linked_mesh(); }
     dim_type degree() const { return degree_; }
     level_set(mesh &msh, dim_type deg = dim_type(1),
-	      bool with_secondary_ = false)
-      : pmesh(&msh), degree_(deg), mf(&classical_mesh_fem(msh, deg)),
-	with_secondary(with_secondary_) {
-      primary_.resize(mf->nb_dof());
-      secondary_.resize(mf->nb_dof());
-      this->add_dependency(*mf);
-    }
+	      bool with_secondary_ = false);
+    ~level_set();
     size_type memsize() const;
   };
  

@@ -170,10 +170,37 @@ namespace getfem {
     assert(it == t.end());
   }
   
-  void fem_level_set::real_hess_base_value(const fem_interpolation_context &,
-				  base_tensor &, bool) const {
-    DAL_THROW(to_be_done_error,
-	      "Sorry order 2 derivatives for fem_level_set to be done.");
+  void fem_level_set::real_hess_base_value(const fem_interpolation_context &c,
+				  base_tensor &t, bool) const {
+    bgeot::multi_index mi(4);
+    mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    t.adjust_sizes(mi);
+    fem_interpolation_context c0 = c;
+    if (c0.have_pfp())
+      c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab()));
+    else  c0.set_pf(bfem); 
+    base_tensor tt; c0.hess_base_value(tt);
+
+    base_tensor::iterator it = t.begin();
+    base_tensor::const_iterator itf = tt.begin();
+
+    std::vector<unsigned> zid;
+    find_zone_id(c, zid);
+
+    for (dim_type i = 0; i < c.N() ; ++i) {
+      for (dim_type j = 0; j < c.N() ; ++j) {
+	for (dim_type q = 0; q < target_dim(); ++q) {
+	  for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
+	    if (dofzones[d]) { /* enriched dof ? */
+	      for (size_type k = 0; k < dofzones[d]->size(); ++k) {
+		*it++ = (k == zid[d]) ? *itf : 0;
+	      }
+	    } else *it++ = *itf;
+	  }
+	}
+      }
+    }
+    assert(it == t.end());
   }
 
 

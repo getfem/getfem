@@ -25,6 +25,18 @@
 
 namespace getfem {
 
+  level_set::level_set(mesh &msh, dim_type deg,
+		       bool with_secondary_)
+    : pmesh(&msh), degree_(deg), mf(&classical_mesh_fem(msh, deg)),
+      with_secondary(with_secondary_) {
+    primary_.resize(mf->nb_dof());
+    secondary_.resize(mf->nb_dof());
+    this->add_dependency(*mf);
+  }
+
+  level_set::~level_set() {
+  }
+
   void level_set::reinit(void) {
     primary_.resize(mf->nb_dof());
     if (has_secondary()) secondary_.resize(mf->nb_dof());
@@ -32,6 +44,7 @@ namespace getfem {
 
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
 					    bool inverted) const {
+    assert(mf);
     if (!mf->linked_mesh().convex_index().is_in(cv)) 
       DAL_THROW(dal::failure_error, "convex " << cv << " is not in the level set mesh!");
     if (!mf->fem_of_element(cv)) DAL_INTERNAL_ERROR("");

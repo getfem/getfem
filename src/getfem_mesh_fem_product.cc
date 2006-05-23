@@ -117,10 +117,44 @@ namespace getfem {
     assert(it == t.end());
   }
   
-  void fem_product::real_hess_base_value(const fem_interpolation_context &,
-				  base_tensor &, bool) const {
-    DAL_THROW(to_be_done_error,
-	      "Sorry order 2 derivatives for fem_product to be done.");
+  void fem_product::real_hess_base_value(const fem_interpolation_context &c,
+				  base_tensor &t, bool) const {
+    bgeot::multi_index mi(4);
+    mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    t.adjust_sizes(mi);
+    base_tensor::iterator it = t.begin();
+    
+    fem_interpolation_context c0 = c;
+    std::vector<base_tensor> hess_e(2), grad_e(2), val_e(2);
+    for (size_type k = 0; k < 2; ++k) {
+      if (c0.have_pfp()) {
+	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab()));
+      } else { c0.set_pf(pfems[k]); }
+      c0.hess_base_value(hess_e[k]);
+      c0.grad_base_value(grad_e[k]);
+      c0.base_value(val_e[k]);
+    }
+
+    assert(target_dim() == 1);
+    for (dim_type k0 = 0; k0 < c.N(); ++k0) {
+      for (dim_type k1 = 0; k1 < c.N() ; ++k1) {
+	for (dal::bv_visitor i(enriched_dof1); !i.finished(); ++i) {
+	  size_type posh0 = (k0*c.N()+k1) * pfems[0]->nb_base(cv);
+	  size_type posh1 = (k0*c.N()+k1) * pfems[1]->nb_base(cv);
+	  size_type posg00 = k0 * pfems[0]->nb_base(cv);
+	  size_type posg01 = k1 * pfems[0]->nb_base(cv);
+	  size_type posg10 = k0 * pfems[1]->nb_base(cv);
+	  size_type posg11 = k1 * pfems[1]->nb_base(cv);
+	  for (size_type j = 0; j < pfems[1]->nb_base(cv); ++j) {
+	    *it++ =  hess_e[0][i + posh0] * val_e[1][j] + 
+	      hess_e[1][j + posh1] * val_e[0][i] + 
+	      grad_e[0][i + posg00] * grad_e[1][j + posg11] +
+	      grad_e[0][i + posg01] * grad_e[1][j + posg10];
+	  }
+	}
+      }
+    }
+    assert(it == t.end());
   }
 
   void mesh_fem_product::receipt(const MESH_CLEAR &)
