@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file getfem_interpolation.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard    <Yves.Renard@insa-toulouse.fr>
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date October 15, 2001.
    @brief Interpolation of fields from a mesh_fem onto another.
 */
@@ -32,7 +33,6 @@
 #include <getfem_mesh_fem.h>
 #include <bgeot_geotrans_inv.h>
 #include <dal_tree_sorted.h>
-#include <getfem_mesh_slice.h>
 
 namespace getfem {
 

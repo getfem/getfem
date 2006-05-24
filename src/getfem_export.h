@@ -29,6 +29,7 @@
 #define GETFEM_EXPORT_H__
 
 #include <getfem_interpolation.h>
+#include <getfem_mesh_slice.h>
 
 namespace getfem {
 
