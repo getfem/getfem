@@ -2185,19 +2185,235 @@ namespace getfem {
       if (!(boundary_sup.empty())) {
 	gmm::unsorted_sub_index SUBS;
 	std::vector<size_type> ind;
-	std::set<size_type> ind_set;
+	dal::bit_vector ind_set;
+	
 	for (std::set<size_type>::const_iterator it = boundary_sup.begin();
 	     it != boundary_sup.end(); ++it) {
-	  dal::bit_vector bv = mf_u->dof_on_set(*it);
-	  for (dal::bv_visitor i(bv); !i.finished(); ++i) ind_set.insert(i);
+	  ind_set = ind_set | mf_u->dof_on_set(*it);
 	}
-	ind.assign(ind_set.begin(), ind_set.end());
+
+	VECTOR V(mf_u->nb_dof()), MV(mf_u->nb_dof()); 
+	for (size_type i=0; i < V.size(); i += mf_u->get_qdim()) V[i] = 1;
+	gmm::mult(M_, V, MV);
+	cerr << " VMV = " << gmm::vect_sp(V, MV) << "\n";
+
+
+	redistribute_mass(ind_set);
+
+	gmm::mult(M_, V, MV);
+	cerr << " VMV2 = " << gmm::vect_sp(V, MV) << "\n";
+
+
+	ind.reserve(ind_set.card());
+	for (dal::bv_visitor ii(ind_set); !ii.finished(); ++ii)
+	  ind.push_back(ii);
 	SUBS = gmm::unsorted_sub_index(ind);
+	
 	gmm::sub_interval SUBI(0, mf_u->nb_dof());
+
+	/*cerr << "gmm::sub_matrix(M_, SUBS, SUBI)) = " << 
+	  gmm::sub_matrix(M_, SUBS, SUBI) << "\n";
+	  assert(gmm::nnz(gmm::sub_matrix(M_, SUBI, SUBS)) == 0);*/
+
 	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
 	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));
+
+	gmm::mult(M_, V, MV);
+	cerr << " VMV3 = " << gmm::vect_sp(V, MV) << "\n";
+
       }
     }
+
+    /* valid only for lagrange FEMs */
+    void redistribute_mass(const dal::bit_vector &redistributed_dof) {
+      size_type N = mf_u->linked_mesh().dim();
+      size_type Qdim = mf_u->get_qdim();
+      size_type nn = mf_u->nb_dof() / Qdim;
+
+      /* extract the "scalar" mass matrix */
+      gmm::csc_matrix<value_type> M0;
+      gmm::sub_slice IND0(0, nn, Qdim);
+      M0.init_with(gmm::sub_matrix(M_, IND0, IND0));
+
+      /* get the non-zero coef as a vector */
+      size_type nz = gmm::nnz(M0);
+      gmm::array1D_reference<value_type*> vM0(M0.pr, nz);
+
+      //dal::bit_vector removed; removed.sup(0, nz);
+      size_type nbmult = 1+N+N*(N+1)/2;
+
+      std::vector<value_type> F(nz); gmm::copy(vM0, F);
+      gmm::dense_matrix<value_type> C(nbmult, nz);
+      std::vector<value_type> d(nbmult);
+
+      for (size_type j=0, ii=0; j < gmm::mat_ncols(M0); ++j) {
+	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
+	  size_type i=M0.ir[ii];
+	  const base_node Pi = mf_u->point_of_dof(i * Qdim);
+	  const base_node Pj = mf_u->point_of_dof(j * Qdim);
+	  C(0, ii) = 1; // X'MX 
+	  d[0] += vM0[ii];
+	
+	  for (unsigned k=0; k < N; ++k) {
+	    C(1+k, ii) = Pi[k]; // X'MYk = 0
+	    d[1+k] += vM0[ii]*Pi[k];
+	  }
+	  
+	  for (unsigned k=0,cnt=0; k < N; ++k) {
+	    for (unsigned l=k; l < N; ++l, ++cnt) {
+	      C(1+N+cnt, ii) = Pi[k] * Pj[l];
+	      d[1+N+cnt] += vM0[ii] * Pi[k] * Pj[l];
+	    }
+	  }
+
+	  if (redistributed_dof.is_in(i*Qdim) ||
+	      redistributed_dof.is_in(j*Qdim)) {
+	    for (unsigned k=0; k < gmm::mat_nrows(C); ++k) {
+	      C(k,ii) = 0; 
+	    }
+	    F[ii] = 0;
+	  }
+	}
+      }
+
+      /* solve [ I C'][X]   [F]
+               [ C 0 ][L] = [d] 
+      */
+      gmm::dense_matrix<value_type> CCt(nbmult, nbmult);
+      std::vector<value_type> L(nbmult), CF(nbmult);
+      gmm::mult(C, gmm::transposed(C), CCt);
+      gmm::mult(C, F, CF);
+      gmm::add(gmm::scaled(d, -1), CF);
+      gmm::lu_solve(CCt, L, CF);
+      gmm::mult(gmm::transposed(C), gmm::scaled(L, -1), vM0); gmm::add(F, vM0);
+
+
+      /* force the symmetricity */
+      gmm::copy(vM0, F);
+      for (size_type j=0, ii=0; j < gmm::mat_ncols(M0); ++j) {
+	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
+	  size_type i=M0.ir[ii];
+	  F[ii] = (M0(i,j) + M0(j,i))/2;
+	}
+      }
+      gmm::copy(F, vM0);
+
+      
+      //gmm::HarwellBoeing_IO::write("redist_mass.hb", M0);
+
+
+      /* write back the mass matrix */
+
+      for (unsigned k=0; k < Qdim; ++k) {
+	gmm::sub_slice IND(k, nn, Qdim);
+	gmm::copy(M0, gmm::sub_matrix(M_, IND, IND));
+      }
+
+      /* some sanity checks */
+      for (unsigned i=0; i < gmm::mat_nrows(M0); ++i) {
+	if (M0(i,i) < 0) {
+	  DAL_WARNING1("negative diagonal terms found in the mass matrix!");
+	  break;
+	}
+      }
+      std::vector<value_type> e(nbmult);
+      for (size_type j=0, ii=0; j < gmm::mat_ncols(M0); ++j) {
+	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
+	  size_type i=M0.ir[ii];
+	  if (i > j) continue; // deal with upper triangle only
+	  const base_node Pi = mf_u->point_of_dof(i * Qdim);
+	  const base_node Pj = mf_u->point_of_dof(j * Qdim);
+	  e[0] += vM0[ii];
+	
+	  for (unsigned k=0; k < N; ++k) {
+	    e[1+k] += vM0[ii]*Pi[k];
+	  }
+	  
+	  for (unsigned k=0,cnt=0; k < N; ++k) {
+	    for (unsigned l=k; l < N; ++l, ++cnt) {
+	      e[1+N+cnt] += vM0[ii] * Pi[k] * Pj[l];
+	    }
+	  }
+	}
+      }
+
+      cerr << "d = " << d << "\ne = " << e << "\n";
+
+
+//       VECTOR G(mf_u->get_qdim());
+      
+//       gmm::fill(X, 1.0 / sqrt(N));
+      
+//       for (size_type d=0; d < mf_u->get_qdim(); ++d) {
+// 	gmm::clear(Y); 
+// 	for (size_type i=0; i < mf_u->nb_dof(); i += N) 
+// 	  Y[i] = mf_u->point_of_dof(i)[d];
+	
+// 	gmm::mult(M_, Y, MY);
+// 	G[d] = gmm::vect_sp(X,MY);
+//       }
+
+//       cerr << "The gravity center is: G=" << G << "\n";
+    }
+
+
+
+
+
+
+
+/*
+la matrice de masse redistribue
+for (;i < n;){
+for (;j < n;){
+if (M0(i,j) = 0)
+then M(i,j) = M0(i,j);
+}
+}
+while ||lam - lam1 || > eps {
+lam[0] = lam[1] = lam[2] = 0.001;
+M(i,j) - M0(i,j) + lam1*X^T (In(i,j) - M0(i,j)) X 
+                 + lam2*X^T (In(i,j) - M0(i,j)) Yk 
+                 + lam3*Yk^T (In(i,j) - M0(i,j)) Yl = 0;
+lam[0] = max{lam[0] + r* X^T (M - M0) X, 0};  
+lam[1] = max{lam[1] + r* X^T (M - M0) Yk, 0};  
+lam[2] = max{lam[2] + r* Yk^T (M - M0) Yl, 0};  
+lam1 = lam;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
+
+
+
+
+    /* pour matrice de masse diagonale ou de l'unite */
+   //  virtual void proper_update(void) {
+//       mf_u = this->mesh_fems[num_fem];
+//       gmm::clear(M_); gmm::resize(M_, mf_u->nb_dof(), mf_u->nb_dof());
+//       mesh_im im(mf_u->linked_mesh());
+//       im.set_integration_method(int_method_descriptor("IM_NC(2,1)"));
+//       //      asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, mf_data, RHO_);
+//       asm_mass_matrix_param(M_, im, *mf_u, mf_data, RHO_);
+//       cout << "mass matrix " << M_ << endl;
+//       if (have_subs) {
+// 	gmm::sub_interval SUBI(0, mf_u->nb_dof());
+// 	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
+// 	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));	
+//       }
+//     }
+
 
   public :
 
@@ -2248,6 +2464,13 @@ namespace getfem {
 	boundary_sup.insert(b);
 	this->force_update();
       }
+//    dal::bit_vector dof_mass;
+//       for (mr_visitor ii(mf_u->linked_mesh().region(b)); !ii.finished(); ++ii) {
+// 	size_type cv = ii.cv();
+// 	for (size_type i=0; i < mf_u->nb_dof_of_element(cv); ++i) {
+// 	  if (!mf_u->is_dof_on_region(b, i)) dof_mass.add(i);
+// 	}
+//       }
     }
 
     /**

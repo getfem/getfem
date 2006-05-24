@@ -426,8 +426,10 @@ void friction_problem::solve(void) {
   plain_vector WT(mf_u.nb_dof()), WN(mf_u.nb_dof());
   plain_vector DF(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
   plain_vector U2(mf_u.nb_dof());
-  plain_vector U0(mf_u.nb_dof()), V0(mf_u.nb_dof()), A0(mf_u.nb_dof());
-  plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), A1(mf_u.nb_dof());
+  plain_vector U0(mf_u.nb_dof()), V0(mf_u.nb_dof()), MA0(mf_u.nb_dof());
+  plain_vector A0(mf_u.nb_dof());
+  plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), MA1(mf_u.nb_dof());
+  plain_vector A1(mf_u.nb_dof());
   plain_vector Udemi(mf_u.nb_dof()), Vdemi(mf_u.nb_dof());
   plain_vector LT0(gmm::mat_nrows(BT)), LN0(gmm::mat_nrows(BN)), UN(gmm::mat_nrows(BN));
   plain_vector LT1(gmm::mat_nrows(BT)), LN1(gmm::mat_nrows(BN));
@@ -455,15 +457,17 @@ void friction_problem::solve(void) {
     gmm::fill_random(V0); gmm::scale(V0, pert_stationary);
   }
  
-  gmm::clear(A0);
+  gmm::clear(MA0);
   gmm::iteration iter(residual, 0, 40000);
-  if ((scheme == 0 || scheme == 1) && !nocontact_mass && !init_stationary) {
+  if ((scheme == 0 || scheme == 1) &&  !init_stationary) {
     plain_vector FA(mf_u.nb_dof());
     gmm::mult(ELAS.get_K(), gmm::scaled(U0, -1.0),
  	      VOL_F.get_F(), FA);
     gmm::mult_add(gmm::transposed(BN), LN0, FA);
     gmm::mult_add(gmm::transposed(BT), LT0, FA);
-    gmm::cg(DYNAMIC.get_M(), A0, FA, gmm::identity_matrix(), iter);
+    gmm::copy(FA, MA0);
+    if (!nocontact_mass)
+      gmm::cg(DYNAMIC.get_M(), A0, FA, gmm::identity_matrix(), iter);
   }
   iter.set_noisy(noisy);
 
@@ -500,6 +504,11 @@ void friction_problem::solve(void) {
   std::ofstream Houari3("vts", std::ios::out);
   std::ofstream Houari4("FN0", std::ios::out);
   std::ofstream Houari5("depl", std::ios::out);
+
+  scalar_type Einit = (0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
+		    + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V0, V0)
+		    - gmm::vect_sp(VOL_F.get_F(), U0));
+  cout << "T=0, initial energy: " << Einit << endl;
   
   while (t <= T) {
 
@@ -507,16 +516,16 @@ void friction_problem::solve(void) {
     case 0 :
       a = 1./(dt*dt*theta*theta); b = 1.; beta_ = 1./(theta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, dt*a), U1);
-      gmm::add(gmm::scaled(A0, (1.-theta)/theta), U1);
       gmm::mult(DYNAMIC.get_M(), U1, DF);
+      gmm::add(gmm::scaled(MA0, (1.-theta)/theta), DF);
       gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, -dt*(1.-theta)), WT);
       gmm::clear(WN);
       break;
     case 1 :
       a = 2./(dt*dt*beta); b = 1.; beta_ = 2.*gamma/(beta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, a*dt), U1);
-      gmm::add(gmm::scaled(A0, (1.-beta)/beta), U1);
       gmm::mult(DYNAMIC.get_M(), U1, DF);
+      gmm::add(gmm::scaled(MA0, (1.-beta)/beta), DF);
       gmm::add(gmm::scaled(U0, -1.),
 	       gmm::scaled(V0, dt*(beta*0.5/gamma -1.)), WT);
       gmm::add(gmm::scaled(A0, dt*dt*0.5*(beta-gamma)/gamma), WT);
@@ -606,8 +615,11 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(V0, -(1.-theta)), V1);
       gmm::scale(V1, 1./theta);
       gmm::add(gmm::scaled(V1, 1./dt), gmm::scaled(V0, -1./dt), A1);
+      gmm::mult(DYNAMIC.get_M(), A1, MA1);
       gmm::add(gmm::scaled(A0, -(1.-theta)), A1);
       gmm::scale(A1, 1./theta);
+      gmm::add(gmm::scaled(MA0, -(1.-theta)), MA1);
+      gmm::scale(MA1, 1./theta);
       break;
     case 1 :
       gmm::add(gmm::scaled(U1, 1.), gmm::scaled(U0, -1.), A1);
@@ -618,6 +630,7 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(A0, -(1. - beta)/beta), A1);
       gmm::add(gmm::scaled(A0, (1.-gamma)*dt), gmm::scaled(A1, gamma*dt), V1);
       gmm::add(V0, V1);      
+      gmm::mult(DYNAMIC.get_M(), A1, MA1);
       break;
     case 2 : case 7 :
       gmm::copy(U1, V1); gmm::copy(U1, Udemi);
@@ -730,7 +743,8 @@ void friction_problem::solve(void) {
       dt = std::min(2.*dt, dt0);
       // cout << "LN1 = " << LN1 << endl;
       
-      gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
+      gmm::copy(U1, U0); gmm::copy(V1, V0);
+      gmm::copy(A1, A0); gmm::copy(MA1, MA0); J0 = J1;
       gmm::copy(LN1, LN0); gmm::copy(LT1, LT0); J_friction0 = J_friction1;
       if (scheme == 4 || scheme == 5 || scheme == 6) gmm::copy(U2, U1);
       if (dxexport && t >= t_export-dt/20.0) {
