@@ -24,6 +24,28 @@
 
 
 namespace getfem {
+
+  std::ostream &operator<<(std::ostream &os, const mesh_level_set::zone &z) {
+    os << "zone[";
+    for (mesh_level_set::zone::const_iterator it = z.begin();
+	 it != z.end(); ++it) {
+      if (it != z.begin()) os << ", ";
+      os << **it; 
+    }
+    os << "]";
+    return os;
+  }
+
+  std::ostream &operator<<(std::ostream &os, const mesh_level_set::zoneset &zs) {
+    os << "zoneset[";
+    for (mesh_level_set::zoneset::const_iterator it = zs.begin(); 
+	 it != zs.end(); ++it) {
+      if (it != zs.begin()) os << "; ";
+      os << **it;
+    }
+    os << "]";
+    return os;
+  }
   
 
 #ifdef DEBUG_LS
@@ -816,7 +838,7 @@ struct Chrono {
     mesher_level_set mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
     int p = 0;
-    bool cutted = false;
+    bool is_cut = false;
     scalar_type d2 = 0, d1 = 1, d0 = 0, d0min = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
       d0 = mls0(cvi.pmsh->points_of_convex(sub_cv)[i]);
@@ -828,11 +850,13 @@ struct Chrono {
       int p2 = ( (d0 < -EPS) ? -1 : ((d0 > EPS) ? +1 : 0));
       if (p == 0) p = p2;
       if (gmm::abs(d0) > gmm::abs(d2)) d2 = d0;
-      if (!p2 || p*p2 < 0) cutted = true;
+      if (!p2 || p*p2 < 0) is_cut = true;
     }
-    if (cutted && d1 > +EPS)
-      { cout << "ooops, je retourne 0: d1 = " << d1 << endl; return 0; }
-    if (d0min < EPS &&  d1 > -EPS) return 0;
+    if (is_cut && (ls->has_secondary() && d1 > +EPS)) { 
+      //cout << "ooops, je retourne 0: d1 = " << d1 << endl; 
+      return 0; 
+    }
+    if (d0min < EPS && ls->has_secondary() && d1 > -EPS) return 0;
     return (d2 < 0.) ? -1 : 1;
   }
 
