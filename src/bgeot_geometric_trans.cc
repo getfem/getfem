@@ -130,7 +130,10 @@ namespace bgeot {
 	if (have_pgp()) {
 	  gmm::mult(G(), pgp_->hessian(ii_), Htau);
 	} else {
-	  DAL_THROW(dal::to_be_done_error,"to be done..");
+	  /* very inefficient of course... */
+	  base_matrix pc(pgt()->nb_points(), P*P); 
+	  pgt()->poly_vector_hess(xref(), pc);
+	  gmm::mult(G(), pc, Htau);
 	}
 	for (short_type i = 0; i < P; ++i)
 	  for (short_type j = 0; j < P; ++j)
