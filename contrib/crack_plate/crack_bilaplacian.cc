@@ -121,6 +121,129 @@ return res ; }
 
 
 
+scalar_type eval_fem_gradient_with_finite_differences(getfem::pfem pf, 
+					       const base_vector &coeff,
+					       size_type cv,
+					       bgeot::pgeometric_trans pgt, 
+					       bgeot::geotrans_inv_convex &gic,
+					       const base_matrix &G, 
+					       base_node X0, 
+					       scalar_type h, unsigned dg) {
+  X0[dg] -= h/2;
+  base_node X0ref; gic.invert(X0, X0ref);
+  getfem::fem_interpolation_context c(pgt, pf, X0ref, G, cv);
+
+  base_vector val0(1);
+  pf->interpolation(c, coeff, val0, 1);
+
+  base_node X1(X0), X1ref; X1[dg] += h;
+  gic.invert(X1, X1ref);
+  c.set_xref(X1ref);
+
+  base_vector val1(1);
+  pf->interpolation(c, coeff, val1, 1);
+
+  return (val1[0] - val0[0])/h;
+}
+
+scalar_type eval_fem_hessian_with_finite_differences(getfem::pfem pf, 
+					      const base_vector &coeff,
+					      size_type cv, 
+					      bgeot::pgeometric_trans pgt, 
+					      bgeot::geotrans_inv_convex &gic,
+					      const base_matrix &G, 
+					      base_node X0, 
+					      scalar_type h, 
+					      unsigned dg, unsigned dh) {
+  X0[dh] -= h/2;
+  scalar_type Gr0 = 
+    eval_fem_gradient_with_finite_differences(pf, coeff, cv, pgt, gic, G, X0, h, dg);
+  base_node X1(X0);
+  X1[dh] += h;
+  scalar_type Gr1 = 
+    eval_fem_gradient_with_finite_differences(pf, coeff, cv, pgt, gic, G, X1, h, dg);
+  return (Gr1 - Gr0)/h;
+}
+
+void validate_fem_derivatives(getfem::pfem pf, unsigned cv, 
+			      bgeot::pgeometric_trans pgt, const base_matrix &G) {
+  unsigned N = gmm::mat_nrows(G);
+  scalar_type h = 1e-5;
+
+  std::vector<base_node> pts(gmm::mat_ncols(G));
+  for (unsigned j=0; j < pts.size(); ++j) {
+    pts[j].resize(N); gmm::copy(gmm::mat_col(G, j), pts[j]);
+  }
+  cout << "validate_fem_derivatives: pf = " << &(*pf) << ", nbdof = "<< pf->nb_dof(cv) << ", cv = " << cv << " (~ at " << dal::mean_value(pts) << ")\n";
+  bgeot::geotrans_inv_convex gic(pts, pgt);
+
+  //cout << "pts = " << pts << "\n";
+  
+  for (unsigned idof = 0; idof < pf->nb_dof(cv); ++idof) {    
+    /* choose a random point in the convex */
+    base_node X0(N), X0ref;
+    base_node w(pgt->nb_points());
+    do {
+      for (unsigned i=0; i < w.size(); ++i) w[i] = 0.1 + 0.8*gmm::random(); 
+      gmm::scale(w, 1/gmm::vect_norm1(w));
+      gmm::mult(G, w, X0);
+
+      //cout << "w = " << w << "\n";
+      
+      gic.invert(X0, X0ref);
+      
+      // avoid discontinuity lines in the HCT composite element..
+      if (gmm::abs(X0ref[0] + X0ref[1] - 1) > 1e-2 &&
+	  gmm::abs(X0ref[0] - X0ref[1]) > 1e-2 && 
+	  gmm::abs(X0[0]) > 1e-3 && gmm::abs(X0[1])> 1e-3) break;
+    } while (1);
+    //cout << "testing X0 = " << X0 << " (X0ref=" << X0ref << ")\n";
+
+
+    base_vector coeff(pf->nb_dof(cv)); coeff[idof] = 1;
+    base_matrix grad(1,N), grad_fd(1,N);
+    base_matrix hess(1,N*N), hess_fd(1,N*N);
+
+    getfem::fem_interpolation_context c(pgt, pf, X0ref, G, cv);
+    pf->interpolation_grad(c, coeff, grad, 1);
+    pf->interpolation_hess(c, coeff, hess, 1);
+
+    for (unsigned dg = 0; dg < N; ++dg) {
+      grad_fd[dg] = 
+	eval_fem_gradient_with_finite_differences(pf, coeff, cv, pgt, gic, G, X0, h, dg);
+      for (unsigned dh = 0; dh < N; ++dh) {
+	hess_fd(0,dg*N+dh) = 
+	  eval_fem_hessian_with_finite_differences(pf, coeff, cv, pgt, gic, G, X0, h, dg, dh);
+      }
+    }
+    
+    scalar_type err_grad = 
+      gmm::vect_dist2((base_vector&)grad, (base_vector&)grad_fd);
+    scalar_type err_hess = 
+      gmm::vect_dist2((base_vector&)hess, (base_vector&)hess_fd);
+    
+    if (err_grad > 1e-4 ||
+	err_hess > 1e-4) {
+      cout << "validate_fem_derivatives dof=" << idof << "/" << pf->nb_dof(cv) << " -- X0ref = " << X0ref << "\n";
+
+      if (gmm::vect_dist2((base_vector&)grad, (base_vector&)grad_fd) > 1e-4)
+	cout << "grad = " << (base_vector&)grad << "\ngrad_fd = " << (base_vector&)grad_fd << "\n";
+      cout << "hess = " << (base_vector&)hess << "\nhess_fd = " << (base_vector&)hess_fd << "\n";
+      if (err_grad + err_hess > 1.0) { cout << "---------> COMPLETEMENT FAUX!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"; abort(); }
+    }
+  }
+}
+
+
+void validate_fem_derivatives(const getfem::mesh_fem &mf) {
+  bgeot::base_matrix G;
+  for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+    //if (mf.nb_dof_of_element(cv) > 12) {
+      vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
+      validate_fem_derivatives(mf.fem_of_element(cv), cv, mf.linked_mesh().trans_of_convex(cv), G);
+      //}
+  }
+}
 
 
 
@@ -170,6 +293,7 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
     } break;
     default: assert(0); 
     }
+    return 0;
   }
 
   /* derivative in the levelset coordinates */
@@ -233,22 +357,22 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
       he(0,0) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)
                  *cos(3.0/2.0*theta)*sin(theta))*cos(theta)-(3.0/4.0*sqrt(r)*
                   cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*sin(theta)/r;
-      he(1,1) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)*
-                cos(3.0/2.0*theta)*sin(theta))*sin(theta)+(3.0/4.0*sqrt(r)*
-                cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*cos(theta)/r;
-      he(1,0) = (3.0/4.0/sqrt(r)*sin(theta/2.0)*sin(theta)+1/sqrt(r)*cos(theta/2.0)*
-		 cos(theta)/4.0)*sin(theta)+(sqrt(r)*cos(theta/2.0)*sin(theta)/4.0+5.0/4.0*
-					     sqrt(r)*sin(theta/2.0)*cos(theta))*cos(theta)/r;
+      he(1,0) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)
+		 *cos(3.0/2.0*theta)*sin(theta))*sin(theta)+(3.0/4.0*sqrt(r)*
+		 cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*cos(theta)/r;
+      he(1,1) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)
+		 *cos(3.0/2.0*theta)*cos(theta))*sin(theta)+(3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)
+		 *sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*cos(theta)/r;
       he(0,1) = he(1,0) ;
     } break;
     case 2: {
       he(0,0) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
 	        cos(3.0/2.0*theta)*cos(theta))*cos(theta)-(3.0/4.0*sqrt(r)*
 		cos(3.0/2.0*theta)*sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*sin(theta)/r;
-      he(1,1) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
+      he(1,0) = (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
 		cos(3.0/2.0*theta)*cos(theta))*sin(theta)+(3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)
 	       *sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*cos(theta)/r;
-      he(1,0) = (3.0/4.0/sqrt(r)*cos(3.0/2.0*theta)*sin(theta)-3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)
+      he(1,1) = (3.0/4.0/sqrt(r)*cos(3.0/2.0*theta)*sin(theta)-3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)
 		 *cos(theta))*sin(theta)+(-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta)
                   -3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)*cos(theta))*cos(theta)/r;
       he(0,1) = he(1,0) ;
@@ -257,10 +381,10 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
       he(0,0) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
 		 sin(theta)/4.0)*cos(theta)-(-sqrt(r)*sin(theta/2.0)*cos(theta)/4.0-5.0/4.0
 					     *sqrt(r)*cos(theta/2.0)*sin(theta))*sin(theta)/r;
-      he(1,1) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
+      he(1,0) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
 		 sin(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*cos(theta)/4.0-5.0/4.0
 					     *sqrt(r)*cos(theta/2.0)*sin(theta))*cos(theta)/r;
-      he(1,0) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*sin(theta)-1/sqrt(r)*sin(theta/2.0)*
+      he(1,1) = (3.0/4.0/sqrt(r)*cos(theta/2.0)*sin(theta)-1/sqrt(r)*sin(theta/2.0)*
 		 cos(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*sin(theta)/4.0+5.0/4.0
 					     *sqrt(r)*cos(theta/2.0)*cos(theta))*cos(theta)/r;
       he(0,1) = he(1,0) ;
@@ -314,14 +438,18 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
     base_small_vector dref = dfr[0]*dx + dfr[1]*dy; // gradient in the coordinate the ref convex.
 
     base_vector hh(4);
+    assert(d2x(0,1) == d2x(1,0));
+    assert(d2y(0,1) == d2y(1,0));
     // expression of the derivatives in the element reference basis
-    hh[0] = hefr(0,0) * gmm::sqr(dx[0]) + hefr(0,1) * (2. * dy[0] * dx[0] )
-      + hefr(1,1) * gmm::sqr(dy[0]) + dfr[0] * d2x(0,0) + dfr[1] * d2y(0,0) ;
-    hh[3] = hefr(0,0) * gmm::sqr(dx[1]) + hefr(0,1) * (2. * dy[1] * dx[1] )
-      + hefr(1,1) * gmm::sqr(dy[1]) + dfr[0] * d2x(1,1) + dfr[1] * d2y(1,1) ;  
-    hh[1] = hh[2] = hefr(0, 0) * dx[1] * dx[0] + hefr(0, 1) * ( dy[1] * dx[0] + dx[1] * dy[0])
-      + hefr(1, 1) * dy[0] * dy[1] + dfr[0] * d2x(0,1) + dfr[1] * d2y(0, 1) ;
-
+    for (unsigned i=0; i < 2; ++i) {
+      for (unsigned j=0; j < 2; ++j) {
+	hh[i*2+j] = (hefr(0, 0) * (dx[i]*dx[j]) + 
+		     hefr(0, 1) * (dx[i]*dy[j]) +
+		     hefr(1, 0) * (dx[j]*dy[i]) +
+		     hefr(1, 1) * (dy[i]*dy[j]) + 
+		     dfr[0]*d2x(i,j) + dfr[1]*d2y(i,j));
+      }
+    }
     base_vector &vhe = he;
     // back in the real element basis
     gmm::mult(c.B3(), hh, vhe);
@@ -581,10 +709,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   mfls_u.adapt();
   
   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
+
   
   // setting singularities 
   cout << "setting singularities \n" ;
-  std::vector<getfem::pglobal_function> ufunc(1);
+  std::vector<getfem::pglobal_function> ufunc(4);
   for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
     ufunc[i] = bilaplacian_crack_singular(i, ls);
   }
@@ -595,6 +724,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   
   mf_sing_u.set_functions(ufunc);
+  
   
   if (enrichment_option) {
     dal::bit_vector enriched_dofs;
@@ -620,6 +750,10 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   } else {
     mf_u_sum.set_mesh_fems(mfls_u);
   }
+
+  //cout << "validate mf_sing_u():\n"; validate_fem_derivatives(mf_sing_u);
+
+  //cout << "validate mf_u():\n"; validate_fem_derivatives(mf_u());
   
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
