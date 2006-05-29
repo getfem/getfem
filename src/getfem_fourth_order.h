@@ -400,7 +400,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Normale derivative Dirichlet condition bricks.            */
+  /*		Normal derivative Dirichlet condition bricks.            */
   /* ******************************************************************** */
 
   /**
@@ -423,8 +423,8 @@ namespace getfem {
   void asm_normal_derivative_dirichlet_constraints
   (MAT &H, VECT1 &R, const mesh_im &mim, const mesh_fem &mf_u,
    const mesh_fem &mf_mult, const mesh_fem &mf_r,
-   const VECT2 &r_data, const mesh_region &rg,
-   int version =  ASMDIR_BUILDALL) {
+   const VECT2 &r_data, const mesh_region &rg, bool R_must_be_derivated, 
+   int version) {
     typedef typename gmm::linalg_traits<VECT1>::value_type value_type;
     typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
     
@@ -447,8 +447,15 @@ namespace getfem {
       gmm::clean(H, gmm::default_tol(magn_type())
 		 * gmm::mat_maxnorm(H) * magn_type(1000));
     }
-    if (version & ASMDIR_BUILDR)
-      asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, rg);
+    if (version & ASMDIR_BUILDR) {
+      if (!R_must_be_derivated) {
+	asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, rg);
+      } else {
+	asm_real_or_complex_1_param
+	  (R, mim, mf_mult, mf_r, r_data, rg,
+	   "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
+      }
+    }
   }
 
   /** Normal derivative Dirichlet condition brick.
@@ -476,6 +483,8 @@ namespace getfem {
     
     size_type boundary;
     bool mfdata_set, B_to_be_computed;
+    bool R_must_be_derivated_; /* if true, then R(x) is a scalar field, and we will impose 
+				 grad(u).n = grad(R).n on the boundary */
     gmm::sub_index SUB_CT;
     const mesh_fem *mf_mult;
     
@@ -490,7 +499,8 @@ namespace getfem {
 		 << version);
       asm_normal_derivative_dirichlet_constraints
 	(M, V, mim(), mf_u(), *mf_mult, rhs().mf(), R_.get(),
-	 mf_u().linked_mesh().get_mpi_sub_region(boundary), version);    
+	 mf_u().linked_mesh().get_mpi_sub_region(boundary), 
+	 R_must_be_derivated_, version);
       if (version & ASMDIR_BUILDH)
 	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), 
 		  this->B);
@@ -530,9 +540,16 @@ namespace getfem {
     /** Change the @f$ r(x) @f$ right hand side.
      *	@param R a vector of size @c Q*mf_data.nb_dof() .
      */
-    mdbrick_parameter<VECTOR> &rhs()
-    { R_.reshape(mf_u().linked_mesh().dim()*mf_u().get_qdim()); return R_; }
+    mdbrick_parameter<VECTOR> &rhs() { 
+      unsigned n = (R_must_be_derivated_ == false ? mf_u().linked_mesh().dim() : 1);
+      R_.reshape(n*mf_u().get_qdim());
+      return R_; 
+    }
 
+    void R_must_be_derivated() {
+      R_must_be_derivated_ = true;
+    }
+    
     /** Constructor which does not define the rhs (i.e. which sets an
      *	homogeneous Dirichlet condition)
      *	@param problem the sub problem to which this brick is applied.
@@ -550,6 +567,7 @@ namespace getfem {
 				     MDBRICK_NORMAL_DERIVATIVE_DIRICHLET);
       this->add_dependency(*mf_mult);
       mfdata_set = false; B_to_be_computed = true;
+      R_must_be_derivated_ = false;
       this->force_update();
     }
   };

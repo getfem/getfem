@@ -548,6 +548,8 @@ struct bilaplacian_crack_problem {
 };
 
 
+
+
 /*                                                          */
 /******************* Methods ********************************/
 /*                                                          */
@@ -687,6 +689,7 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
        exact_sol.mf, exact_sol.U) << "\n";*/
 }
 
+
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
@@ -717,9 +720,6 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
     ufunc[i] = bilaplacian_crack_singular(i, ls);
   }
-
-
-
 
 
   
@@ -763,18 +763,29 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
   
   // Defining the normal derivative Dirichlet condition value.
-  plain_vector F(nb_dof_rhs*N);
-  getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
-  
+  plain_vector F;
+
+
+  /* WRONG !! 
+
+    F.resize(nb_dof_rhs*N);
+  getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);  
    
-  // Normal derivative Dirichlet condition brick.
-  
- 
+  // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
     NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult);       
  
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.rhs().set(mf_rhs, F);
+  */
+
+  // Normal derivative Dirichlet condition brick. 
+  getfem::mdbrick_normal_derivative_Dirichlet<>                   
+    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult);    
+  NDER_DIRICHLET.set_constraints_type(dirichlet_version);
+  NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
+  NDER_DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
+
 
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs);
@@ -798,6 +809,13 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   return (iter.converged());
 }
 
+
+//function to save a vector for matlab
+template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
+  std::ofstream f(fname.c_str()); f.precision(16);
+  for (size_type i=0; i < V.size(); ++i) f << V[i] << "\n"; 
+}
+
 int main(int argc, char *argv[]) {
 
   try {
@@ -810,135 +828,121 @@ int main(int argc, char *argv[]) {
     p.compute_error(U);
 
     // visualisation, export au format .vtk
-      getfem::mesh mcut;
-      p.mls.global_cut_mesh(mcut);
-      unsigned Q = p.mf_u().get_qdim();
-      assert( Q == 1 ) ;
-      getfem::mesh_fem mf(mcut, Q);
-      mf.set_classical_discontinuous_finite_element(2, 0.001);
-      // mf.set_finite_element
-      //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
-      plain_vector V(mf.nb_dof());
+    getfem::mesh mcut;
+    p.mls.global_cut_mesh(mcut);
+    unsigned Q = p.mf_u().get_qdim();
+    assert( Q == 1 ) ;
+    getfem::mesh_fem mf(mcut, Q);
+    mf.set_classical_discontinuous_finite_element(2, 0.001);
+    // mf.set_finite_element
+    //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
+    plain_vector V(mf.nb_dof());
 
-      getfem::interpolation(p.mf_u(), mf, U, V);
+    getfem::interpolation(p.mf_u(), mf, U, V);
 
-      getfem::stored_mesh_slice sl;
-      getfem::mesh mcut_refined;
+    getfem::stored_mesh_slice sl;
+    getfem::mesh mcut_refined;
 
-      unsigned NX = p.PARAM.int_value("NX"), nn;
-      if (NX < 6) nn = 24;
-      else if (NX < 12) nn = 8;
-      else if (NX < 30) nn = 3;
-      else nn = 1;
+    unsigned NX = p.PARAM.int_value("NX"), nn;
+    if (NX < 6) nn = 24;
+    else if (NX < 12) nn = 8;
+    else if (NX < 30) nn = 3;
+    else nn = 1;
 
-      /* choose an adequate slice refinement based on the distance to the crack tip */
-      std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
-      for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
-	scalar_type dmin=0, d;
-	base_node Pmin,P;
-	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
-	  P = mcut.points_of_convex(cv)[i];
-	  //d = gmm::vect_norm2(ls_function(P));
-	  d = gmm::vect_norm2(P) ; 
-	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
-	}
-
-	if (dmin < 1e-5)
-	  nrefine[cv] = nn*8;
-	else if (dmin < .1) 
-	  nrefine[cv] = nn*2;
-	else nrefine[cv] = nn;
-	/*if (dmin < .01)
-	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
+    /* choose an adequate slice refinement based on the distance to the crack tip */
+    std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
+    for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
+      scalar_type dmin=0, d;
+      base_node Pmin,P;
+      for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+	P = mcut.points_of_convex(cv)[i];
+	//d = gmm::vect_norm2(ls_function(P));
+	d = gmm::vect_norm2(P) ; 
+	if (d < dmin || i == 0) { dmin = d; Pmin = P; }
       }
 
+      if (dmin < 1e-5)
+	nrefine[cv] = nn*8;
+      else if (dmin < .1) 
+	nrefine[cv] = nn*2;
+      else nrefine[cv] = nn;
+      /*if (dmin < .01)
+	cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
+    }
 
-	getfem::mesh_slicer slicer(mcut); 
-	getfem::slicer_build_mesh bmesh(mcut_refined);
-	slicer.push_back_action(bmesh);
-	slicer.exec(nrefine, getfem::mesh_region::all_convexes());
+
+    getfem::mesh_slicer slicer(mcut); 
+    getfem::slicer_build_mesh bmesh(mcut_refined);
+    slicer.push_back_action(bmesh);
+    slicer.exec(nrefine, getfem::mesh_region::all_convexes());
      
-      /*
+    /*
       sl.build(mcut, 
       getfem::slicer_build_mesh(mcut_refined), nrefine);*/
 
-      getfem::mesh_im mim_refined(mcut_refined); 
-      mim_refined.set_integration_method(getfem::int_method_descriptor
-					 ("IM_TRIANGLE(6)"));
+    getfem::mesh_im mim_refined(mcut_refined); 
+    mim_refined.set_integration_method(getfem::int_method_descriptor
+				       ("IM_TRIANGLE(6)"));
 
-      getfem::mesh_fem mf_refined(mcut_refined, Q);
-      mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
-      plain_vector W(mf_refined.nb_dof());
+    getfem::mesh_fem mf_refined(mcut_refined, Q);
+    mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
+    plain_vector W(mf_refined.nb_dof());
 
-      getfem::interpolation(p.mf_u(), mf_refined, U, W);
+    getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
+
+    int VTK_EXPORT = p.PARAM.int_value("VTK_EXPORT");
+    if ((VTK_EXPORT & 1)) {
+      cout << "exporting solution to " << p.datafilename + ".vtk" << "..\n";
+      getfem::vtk_export exp(p.datafilename + ".vtk", false);
+      exp.exporting(mf_refined); 
+      exp.write_point_data(mf_refined, W, "vertical_displacement");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d " << p.datafilename << ".vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+    }
+    if ((VTK_EXPORT & (2|4))) {
       p.exact_sol.mf.set_qdim(Q);
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());   // ??
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
 			    p.exact_sol.U, EXACT);
-
-      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
-
-      /*
-      if (p.PARAM.int_value("VTK_EXPORT")) {
-	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
-	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.0001);
-	cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
-		plain_vector VM(mf_refined_vm.nb_dof());
-
-		cout << "computing von mises\n";
-	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
-
-	plain_vector D(mf_refined_vm.nb_dof() * Q), 
-	  DN(mf_refined_vm.nb_dof());
 	
-	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
-	for (unsigned i=0; i < DN.size(); ++i) {
-	DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q))); 
-	} */
-
-
-	cout << "export to " << p.datafilename + ".vtk" << "..\n";
-	getfem::vtk_export exp(p.datafilename + ".vtk",
-			       p.PARAM.int_value("VTK_EXPORT")==1);
-
-	exp.exporting(mf_refined); 
-	//exp.write_point_data(mf_refined_vm, DN, "error");
-	//	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
-
-	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-      
-
-
-	//	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
-
-
-	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
-	   std::vector<getfem::pglobal_function> cfun(4);
-	   for (unsigned j=0; j < 4; ++j)
-	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
-	   mf.set_functions(cfun);
-	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
-	   VM_EXACT);
-	*/
-
-
-	//	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
-	if (1) {
-	  getfem::vtk_export exp2("crack_exact.vtk");
-	  exp2.exporting(mf_refined);
-	  exp2.write_point_data(mf_refined, EXACT, "reference solution");
-	}
-
-	getfem::vtk_export exp2("crack_diff.vtk");
+      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
+      if ((VTK_EXPORT & 2)) {
+	cout << "exporting exact solution to VTK\n";
+	getfem::vtk_export exp2(p.datafilename + "_exact.vtk");
+	exp2.exporting(mf_refined);
+	exp2.write_point_data(mf_refined, EXACT, "reference solution");
+      }
+      if ((VTK_EXPORT & 4)) {
+	cout << "exporting difference with exact solution to VTK\n";
+	getfem::vtk_export exp2(p.datafilename + "_diff.vtk");
 	exp2.exporting(mf_refined);
 	exp2.write_point_data(mf_refined, DIFF, "difference solution");
+      }
+    }
 
-	cout << "export done, you can view the data file with (for example)\n"
-	  "mayavi -d " << p.datafilename << ".vtk -f "
-	  "WarpScalar -m BandedSurfaceMap -m Outline\n";
-  
+    int MATLAB_EXPORT = p.PARAM.int_value("MATLAB_EXPORT");
+    if (MATLAB_EXPORT) {
+      cout << "exporting solution to " << p.datafilename + ".mf" << " and " << p.datafilename << ".U\n";
+      mf_refined.write_to_file(p.datafilename + ".mf", true);
+      vecsave(p.datafilename + ".U", W);
+      p.exact_sol.mf.set_qdim(Q);
+      assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());   // ??
+      plain_vector EXACT(mf_refined.nb_dof());
+      getfem::interpolation(p.exact_sol.mf, mf_refined, 
+			    p.exact_sol.U, EXACT);
+      vecsave(p.datafilename + ".EXACT", EXACT);
+
+      cout << "exporting original mesh to " << p.datafilename + "_base.mesh\n";
+      p.mesh.write_to_file(p.datafilename + "_base.mesh");
+
+      cout << "matlab export done, you can view the results with\n";
+      cout << "mf=gfMeshFem('load', 'bilaplacian.mf'); U=load('bilaplacian.U')'; "
+	"EXACT=load('bilaplacian.EXACT')'; m0=gfMesh('load','bilaplacian_base.mesh');\n";
+      cout << "gf_plot(mf, U-EXACT, 'refine',1); hold on; gf_plot_mesh(m0); hold off; colorbar;\n";
+    }
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 
