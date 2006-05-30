@@ -635,7 +635,8 @@ void bilaplacian_crack_problem::init(void) {
   mim.set_simplex_im(sppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  mf_partition_of_unity.set_classical_finite_element(1);
+  //mf_partition_of_unity.set_classical_finite_element(1);
+  mf_partition_of_unity.set_finite_element(mesh.convex_index(), pf_u);
 
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
