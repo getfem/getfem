@@ -9,7 +9,7 @@ NU = .01;       % Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0; 	% rate of rotation of the cylinder
 
 DT = 0.01;        % Time step
-T = 0.5;         % Final time
+T =0.3;         % Final time
 
 NOISY = 1;
 

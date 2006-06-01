@@ -104,8 +104,7 @@ namespace getfem {
 
 # define MDBRICK_NS_NONREF1 3212435
 
-
-  template<typename VECTOR, typename VECT>
+ template<typename VECTOR, typename VECT>
   void asm_nonref_right_hand_side(VECTOR &R,
 				  const mesh_im &mim,
 				  const mesh_fem &mf_u,
@@ -119,11 +118,9 @@ namespace getfem {
 
     std::stringstream ss;
     ss << "u=data$1(#1); "
-      "V(#1)+="
-      // << -dt << "*"
-      //" comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))"
-      //"(l,i,i,m,j,k,j,:,k).u(l).u(m)+"
-      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
+    "sel=data$1(#2);"
+     "V(#1)+=comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
+ 
     assem.set(ss.str());
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -132,6 +129,82 @@ namespace getfem {
     assem.push_vec(R);
     assem.assembly(rg);
   }
+
+  template<typename VECTOR, typename VECT>
+  void asm_nonref_right_hand_side2(VECTOR &R,
+				  const mesh_im &mim,
+				  const mesh_fem &mf_u,
+				  const mesh_fem &mf_mult,
+				  const VECT &Un,
+				  const VECT &selectV,
+				  scalar_type dt,
+				  const mesh_region &rg) {
+    generic_assembly assem;
+    std::stringstream ss;
+    ss << "u=data$1(#1); "
+    "sel=data$1(#2);"
+     "V(#1)+=comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)"
+     << - dt << "*"
+    " comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))"
+    "(l,i,i,m,j,k,j,n,k).u(l).u(m).sel(n)";
+ 
+    assem.set(ss.str());
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_mult);
+    assem.push_data(Un);
+    assem.push_data(selectV);
+    assem.push_vec(R);
+    assem.assembly(rg);
+  }
+  /*
+   template<typename VECTOR, typename VECT>
+  void asm_1stcomp_for_normal_part(VECTOR &R,
+				  const mesh_im &mim,
+				  const mesh_fem &mf_u,
+				  const VECT &Un,
+				  const mesh_region &rg) {
+    generic_assembly assem;
+    std::stringstream ss;
+    ss << "u=data$1(#1); "
+      "V(#1)+=u(l)";
+    assem.set(ss.str());
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_data(Un);
+    assem.push_vec(R);
+    assem.assembly(rg);
+    
+    // R n'est égal à Un que sur les points de la paroi de sortie
+  }
+  
+*/
+     
+template<typename MAT, typename VECT>
+  void asm_nonref_mat(MAT &MHNR,
+				  const mesh_im &mim,
+				  const mesh_fem &mf_u,
+				  const mesh_fem &mf_mult,
+				  const VECT &Un,
+				  const VECT &selectU,
+				  scalar_type dt,
+				  const mesh_region &rg) {
+getfem::generic_assembly assem;
+
+    std::stringstream ss;
+    ss << "u=data$1(#1); "
+    "sel=data$1(#2);"
+     << dt << "*"
+    "M(#2,#1)+=comp(vBase(#2).vBase(#1))(:,i,:,i)"
+    "+comp(vGrad(#1).Normal().vBase(#2))(m,j,k,j,n,k).u(m).sel(n))";
+    assem.push_mi(mim); 
+    assem.push_mf(mf_u); 
+    assem.push_mf(mf_mult);
+    assem.push_data(Un);
+    assem.push_data(selectU);
+    assem.push_mat(MHNR); 
+    assem.assembly(rg);  
+    }
 
 
   template<typename MODEL_STATE = standard_model_state>
