@@ -79,7 +79,7 @@ struct plate_problem {
   size_type N_Four ;
   base_matrix theta1_Four, theta2_Four, u3_Four ;
   
-  int study_flag;             // if studyflag = 1, then the loadings applied are chosen
+  int study_flag;            // if studyflag = 1, then the loadings applied are chosen
                              // in order to have a maximal vertical displacement equal to one.
 			     // Nothing is done if study_flag has another value.   
 
