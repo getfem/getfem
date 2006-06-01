@@ -8,8 +8,8 @@ QUAD = 0;
 NU = .01;       % Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0; 	% rate of rotation of the cylinder
 
-DT = 0.01;        % Time step
-T =0.3;         % Final time
+DT = 0.04;        % Time step
+T = 30.0;         % Final time
 
 NOISY = 1;
 
@@ -62,4 +62,4 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 ROOTFILENAME = 'icare';     % Root of data files.
 DX_EXPORT = 1 % export solution to a .dx file ?
-DT_EXPORT = DT;
+DT_EXPORT = 4*DT;

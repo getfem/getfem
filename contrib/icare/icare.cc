@@ -763,8 +763,18 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
   sparse_matrix HNR(nbdof_nonref, nbdof_u);
   {
-     plain_vector U_scal_N(nbdof_u);
-    /*construction du vecteur pour U.N*/
+    sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+    getfem::generic_assembly assem;
+    assem.set("M(#2,#1)+=comp(vBase(#2).vBase(#1))(:,i,:,i);");
+    assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
+    assem.push_mat(A); assem.assembly(mpinonrefrg);
+    gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
+
+
+    // plain_vector U_scal_N(nbdof_u);
+   
+
+     /*construction du vecteur pour U.N*/
   /*  asm_1stcomp_for_normal_part(U_scal_N, mim, mf_u, Un0, mpinonrefrg);
     for(getfem::mr_visitor i(mpinonrefrg); !i.finished(); ++i){
        unsigned int I_m1=2*i;
@@ -773,8 +783,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
        
 
     
-    sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
-    plain_vector selectU(nbdof_u);
+    // sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+    // plain_vector selectU(nbdof_u);
     /*   for(getfem::mr_visitor i(mpinonrefrg); !i.finished(); ++i){
 
 	 unsigned int I=2*i-1;
@@ -783,9 +793,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
          selectU[Im1]=0; //                                 [0] 
          }*/
     
-     asm_nonref_mat(A, mim, mf_u, mf_mult, Un0, selectU, dt, mpinonrefrg);
+    // asm_nonref_mat(A, mim, mf_u, mf_mult, Un0, selectU, dt, mpinonrefrg);
 
-    gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
+    // gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
   
   
   
@@ -831,13 +841,13 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::add(gmm::scaled(M, 1./dt), gmm::sub_matrix(A1, I1));
     gmm::mult(M, gmm::scaled(Un0, 1./dt), gmm::sub_vector(Y, I1));
 
-    plain_vector subY1(nbdof_u);
-    gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
+    //    plain_vector subY1(nbdof_u);
+    // gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
 
     
     // Volumic source term
     pdef->source_term(*this, t, F);
-    getfem::asm_source_term(subY1, mim, mf_u, mf_rhs, F,
+    getfem::asm_source_term(gmm::sub_vector(Y, I1), mim, mf_u, mf_rhs, F,
 			    mpirg);
 
     // Normal Dirichlet condition
@@ -861,9 +871,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       if (t < 0.2)
 	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg);
       else {
-	//getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
-	 
-	 plain_vector selectV(nbdof_u);
+	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
+	
+	// plain_vector selectV(nbdof_u);
  /*     for(getfem::mr_visitor i(mpinonrefrg); !i.finished(); ++i){
 
 	 unsigned int I=2*i-1;
@@ -873,7 +883,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
          }*/
 	 
 	 
-      asm_nonref_right_hand_side2(VV, mim, mf_u, mf_mult, Un0, selectV, dt, mpinonrefrg);
+	 // asm_nonref_right_hand_side2(VV, mim, mf_u, mf_mult, Un0, selectV, dt, mpinonrefrg);
       }
       gmm::copy(gmm::sub_vector(VV, SUB_CT_NONREF), gmm::sub_vector(Y, I4));
     }
@@ -907,12 +917,21 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       gmm::copy(gmm::sub_vector(X, IP), Phi);
     }
 
-    gmm::mult(gmm::transposed(B), gmm::scaled(Phi, -1.), USTARbis);
+    gmm::mult(M, USTAR, USTARbis);
+    gmm::mult(gmm::transposed(B), gmm::scaled(Phi, -1.), USTARbis, USTARbis);
+    gmm::copy(USTARbis, gmm::sub_vector(Y, I1));
+    gmm::copy(M, gmm::sub_matrix(A1, I1));
+    
+    {
+      double rcond;
+      plain_vector X(sizelsystem);
+      SuperLU_solve(A1, X, Y, rcond);
+      gmm::copy(gmm::sub_vector(X, I1), Un1);
 
-    gmm::iteration iter2(residual, noisy); iter2.reduce_noisy();
-    gmm::cg(M, Un1, USTARbis, gmm::identity_matrix(), iter2);
+    }
+   
 
-    gmm::add(USTAR, Un1);
+    // gmm::add(USTAR, Un1);
     gmm::add(gmm::scaled(Phi, 1./dt), Pn0, Pn1);
     
     pdef->validate_solution(*this, t);
