@@ -710,15 +710,15 @@ namespace getfem {
       gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(1, n, 3)),
 		gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
      
-      ut_part->source_term().set(Bt);
+      ut_part->source_term().set(B_.mf(), Bt);
       
       VECTOR Bn(n);
       gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(2, n, 3)), Bn);
       if (!mixed || symmetrized)
-	u3_part->source_term().set(Bn);
+	u3_part->source_term().set(B_.mf(), Bn);
       
       if (mixed && !symmetrized)
-	phi_part->source_term().set(Bn);
+	phi_part->source_term().set(B_.mf(), Bn);
     }
 
   public :

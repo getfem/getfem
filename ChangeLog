@@ -1,3 +1,12 @@
+2006-06-01  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_linearized_plates.h: fixed a minor bug in
+	mdbrick_plate_source_term for non-homogeneous rhs.
+
+	* src/getfem_mesh_level_set.cc: fixed a bug which broke levelsets
+	without 'secondary' part (i.e. non-crack levelsets).
+	
+
 2006-04-21 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem_composite.cc Adding a C1 composite finite element on quadrilaterals.
