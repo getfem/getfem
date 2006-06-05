@@ -57,13 +57,13 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 double Radius;
 
 double u_exact(const base_node &p) {
-  double sum(0); std::accumulate(p.begin(), p.end(), sum);
+  double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
   return sin(sum) * (norm_sqr - Radius*Radius);
 }
 
 double rhs(const base_node &p) {
-  double sum(0); std::accumulate(p.begin(), p.end(), sum);
+  double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
   double N = double(gmm::vect_size(p));
   return N * sin(sum) * (norm_sqr - Radius*Radius-2.0) - 4.0 * sum * cos(sum);
@@ -74,8 +74,7 @@ double rhs(const base_node &p) {
  */
 
 void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs) {
-
-  // const getfem::mesh &mesh = mim.linked_mesh();
+  unsigned N =  mim.linked_mesh().dim();
   size_type nbdof = mf_rhs.nb_dof();
   plain_vector V(nbdof), W(1);
   std::fill(V.begin(), V.end(), 1.0);
@@ -84,13 +83,38 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs) {
   assem.push_mi(mim); assem.push_mf(mf_rhs); assem.push_data(V);
   assem.push_vec(W);
   assem.assembly(getfem::mesh_region::all_convexes());
-  double exact = Radius*Radius*M_PI;
-  cout << "Result = " << W[0] << " compared to " << exact << endl;
+  double exact(0);
+  switch (N) {
+    case 1: exact = 2*Radius; break;
+    case 2: exact = Radius*Radius*M_PI; break;
+    case 3: exact = 4.0*M_PI*Radius*Radius*Radius/3.0; break;
+    default: assert(N <= 3);
+  }
+  cout << "Area: " << W[0] << " should be " << exact << endl;
+
+
+//   base_matrix G;
+//   for (dal::bv_visitor i(mim.linked_mesh().convex_index());
+//        !i.finished(); ++i) {
+//     double area = 0;
+//     getfem::papprox_integration pai
+//       = mim.int_method_of_element(i)->approx_method();
+//     if (!pai) continue;
+//     bgeot::vectors_to_base_matrix(G, mim.linked_mesh().points_of_convex(i));
+//     bgeot::geotrans_interpolation_context 
+//       c(mim.linked_mesh().trans_of_convex(i), pai->point(0), G);
+//     for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
+//       c.set_xref(pai->point(j));
+//       area += pai->coeff(j) * c.J(); 
+//     }
+//     cout << "area of elt " << i << ": " << area << endl;
+//   }
+
+
 }
 
 void test_mimbound(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs) {
-
-  // const getfem::mesh &mesh = mim.linked_mesh();
+  unsigned N =  mim.linked_mesh().dim();
   size_type nbdof = mf_rhs.nb_dof();
   plain_vector V(nbdof), W(1);
   std::fill(V.begin(), V.end(), 1.0);
@@ -99,8 +123,14 @@ void test_mimbound(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs) {
   assem.push_mi(mim); assem.push_mf(mf_rhs); assem.push_data(V);
   assem.push_vec(W);
   assem.assembly(getfem::mesh_region::all_convexes());
-  double exact = 2*M_PI*Radius;
-  cout << "Result = " << W[0] << " compared to " << exact << endl;
+  double exact(0);
+  switch (N) {
+    case 1: exact = 2.0; break;
+    case 2: exact = 2.0*Radius*M_PI; break;
+    case 3: exact = 4.0*M_PI*Radius*Radius; break;
+    default: assert(N <= 3);
+  }
+  cout << "Boundary length: " << W[0] << " should be " << exact << endl;
   assert(gmm::abs(exact-W[0])/exact < 0.1); 
 }
 
@@ -148,6 +178,11 @@ int main(int argc, char *argv[]) {
     mls.add_level_set(ls);
     mls.adapt();
     
+    getfem::mesh mcut;
+    mls.global_cut_mesh(mcut);
+    mcut.write_to_file("cut.mesh");
+
+
     // Integration method on the domain
     std::string IM = PARAM.string_value("IM", "Mesh file");
     std::string IMS = PARAM.string_value("IM_SIMPLEX", "Mesh file");

@@ -5,8 +5,8 @@
 
 QUAD = 0;
 N = 2;
-RADIUS = 0.4;               % radius of the real circular domain.
-LEVEL_SET_DEGREE = 1;       % Degree of the piecewise polynomial
+RADIUS = 0.34;               % radius of the real circular domain.
+LEVEL_SET_DEGREE = 2;       % Degree of the piecewise polynomial
                             % defining the level set.
 
 if (N == 1) 
@@ -29,16 +29,25 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
-  IM = 'IM_TRIANGLE(6)';    % Integration method.
-  IM_SIMPLEX = IM;          % Integration method on sub-triangles.
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[4,4]';
+  IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';    % Integration method.
+  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';          % Integration method on sub-triangles.
   FEM = 'FEM_PK(2,1)';      % Finite element method for the unknown.
   FEM_RHS = FEM;            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
 end;
 
-if (N > 2)
-  error ('Adapt the paramer file first');
+if (N == 3 && ~QUAD)
+  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NOISED=0;NSUBDIV=[3,3,3]';
+  IM = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)';    % Integration method.
+  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)';          % Integration method on sub-triangles.
+  FEM = 'FEM_PK(3,1)';      % Finite element method for the unknown.
+  FEM_RHS = FEM;            % Finite element method for the rhs
+  FEM_MULT = 'FEM_PK(3,1)'; % Finite element method for multipliers
+end;
+
+if (N > 3)
+  error ('Adapt the parameter file first');
 end;
 
 
