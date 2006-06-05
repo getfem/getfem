@@ -1073,9 +1073,11 @@ namespace getfem {
     }
   };
 
-  pintegration_method int_method_descriptor(std::string name) {
+  pintegration_method int_method_descriptor(std::string name,
+					    bool throw_if_not_found) {
     size_type i = 0;
-    return dal::singleton<im_naming_system>::instance().method(name, i);
+    return dal::singleton<im_naming_system>::instance().method
+      (name, i, throw_if_not_found);
   }
 
   std::string name_of_int_method(pintegration_method p) {
@@ -1195,12 +1197,7 @@ namespace getfem {
       for (size_type k = degree; k < size_type(degree+10); ++k) {
 	pintegration_method im = 0;
 	std::stringstream name2; name2 << name.str() << "(" << k << ")";
-        /* TODO: remove the catch .. */
-	try {
-	  //cerr << "testing " << name2.str() << "\n";
-	  im = int_method_descriptor(name2.str());
-	}
-	catch (dal::failure_error) { im = 0; }
+	im = int_method_descriptor(name2.str(), false);
 	if (im) return im;
       }
       DAL_THROW(dal::failure_error,

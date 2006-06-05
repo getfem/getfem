@@ -97,7 +97,7 @@ namespace dal {
     void add_generic_function(pgenfunction pf);
     std::string normative_name_of_method(pmethod pm) const;
     std::string shorter_name_of_method(pmethod pm) const;
-    pmethod method(std::string name, size_type &i);
+    pmethod method(std::string name, size_type &i, bool throw_if_not_found);
     naming_system(std::string pr) : prefix(pr) { nb_genfunctions = 0; }
     
   };
@@ -173,7 +173,8 @@ namespace dal {
   
   template <class METHOD>
   typename naming_system<METHOD>::pmethod
-  naming_system<METHOD>::method(std::string name, size_type &i) {
+  naming_system<METHOD>::method(std::string name, size_type &i,
+				bool throw_if_not_found = true) {
     int state = 0;
     bool error = false;
     bool isend = false;
@@ -206,7 +207,8 @@ namespace dal {
 	switch (lex) {
 	case 1  : i += l; break;
 	case 2  : 
-	  pm = method(name, i);
+	  pm = method(name, i, throw_if_not_found);
+	  if (!pm) return pm;
 	  params.push_back(parameter(pm));
 	  state = 3; break;
 	case 3  :
@@ -256,8 +258,11 @@ namespace dal {
 	  pm = (*(genfunctions[k]))(nname.name, dependencies);
 	}
 	if (!pm) {
-	  if (ind_suff == size_type(-1))
-	    DAL_THROW(failure_error, "Unknown method : " << nname.name);
+	  if (ind_suff == size_type(-1)) {
+	    if (throw_if_not_found) {
+	      DAL_THROW(failure_error, "Unknown method : " << nname.name);
+	    } else return 0;
+	  }
 	  pm = (*(functions[ind_suff]))(params, dependencies);
 	}
 	

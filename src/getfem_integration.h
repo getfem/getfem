@@ -272,10 +272,15 @@ namespace getfem
   };
 
 
-  /** Get an integration method from its name 
+  /** Get an integration method from its name .
       @see @ref im_list 
+      @param name the integration method name, for example "IM_TRIANGLE(6)"
+      @param throw_if_not_found choose if an exception must be thrown
+      when the integration method does not exist (if no exception, a
+      null pointer is returned).
   */
-  pintegration_method int_method_descriptor(std::string name);
+  pintegration_method int_method_descriptor(std::string name,
+					    bool throw_if_not_found = true);
 
   /** Get the string name of an integration method .
    */
