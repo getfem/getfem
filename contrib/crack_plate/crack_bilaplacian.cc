@@ -55,24 +55,28 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /******** Exact Solution *******************************/
 
 scalar_type D  = 1.  ;
-scalar_type nu = 0. ;
-scalar_type AA = (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type BB = 0 ;
-scalar_type CC = (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
+scalar_type nu = 0.3 ;
+scalar_type BB = 0. ;
+scalar_type AA = BB * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
+scalar_type DD = 1. ;
+scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
  
 
 scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  //scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
  scalar_type theta = atan2(x[1], x[0]);
- return sqrt(r*r*r) * (sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
- }
+ //return sqrt(r*r*r) * (sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
+ return sqrt(r*r*r)*(AA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0));
+ 
+}
  
 scalar_type sol_lapl_u(const base_node &x) {
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  scalar_type theta = atan2(x[1], x[0]);
- return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-AA*sin(theta/
-2.0)/4.0-9.0/4.0*BB*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); }
+ return 2.0*(BB*sin(theta/2.0)+DD*cos(theta/2.0))/sqrt(r);
+ /* return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-AA*sin(theta/
+    2.0)/4.0-9.0/4.0*BB*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); */ }
 
 scalar_type sol_f(const base_node &)
 { return 0. ; }
@@ -81,7 +85,15 @@ base_small_vector sol_du(const base_node &x) {
  base_small_vector res(x.size());
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  scalar_type theta = atan2(x[1], x[0]);
+res[0] = 3.0/2.0*sqrt(r)*(AA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
++DD*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*AA*cos(3.0/2.0*theta)+
+BB*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*sin(theta );
 
+res[1] = 3.0/2.0*sqrt(r)*(AA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
++DD*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*AA*cos(3.0/2.0*theta)+
+BB*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*cos(theta);
+
+/*
 res[0] =  3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+AA*
 cos(theta/2.0)/2.0-3.0/2.0*BB*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*sin(
 theta);
@@ -89,7 +101,7 @@ theta);
 res[1] = 3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+AA*
 cos(theta/2.0)/2.0-3.0/2.0*BB*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*cos(
 theta);
-
+*/
   return res;
 }
 
@@ -483,10 +495,10 @@ struct exact_solution {
     U.resize(4); assert(mf.nb_dof() == 4);
    // scalar_type A1 = 1., nu = 0.3 ;
    // scalar_type b1_ = 3. + (A2 / A1) * (24. * nu) / (3. * nu * nu - 6. * nu + 5. ) ; 
-    U[0] = AA ;
-    U[1] = 1  ;
-    U[2] = BB ;
-    U[3] = CC ;
+    U[0] = BB ;
+    U[1] = AA ;
+    U[2] = CC ;
+    U[3] = DD ;
   }
 };
 
