@@ -403,6 +403,8 @@ struct Chrono {
 	mesher_level_set &mls(mesher_level_sets.back());
 	list_constraints.push_back(&mesher_level_sets.back());
 	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
+	if (gmm::abs(r0) < 1e-13) 
+	  DAL_THROW(failure_error, "Something wrong in your level set ...\n");
 	if (secondary[ll]) {
 	  mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 1));
 	  mesher_level_set &mls2(mesher_level_sets.back());

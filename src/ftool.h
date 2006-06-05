@@ -154,8 +154,8 @@ namespace ftool
     int get_next_token(std::istream &f);
     void valid_token(void);
     std::string temp_string;
-    param_value read_expression_list(std::istream &f);
-    param_value read_expression(std::istream &f);
+    param_value read_expression_list(std::istream &f, bool skipped);
+    param_value read_expression(std::istream &f, bool skipped);
     int read_instruction_list(std::istream &f, bool sk = false);
     int read_instruction(std::istream &f, bool sk = false);
     void parse_error(const std::string &t);

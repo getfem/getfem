@@ -122,7 +122,7 @@ namespace getfem {
 	  || (n == 3 && base_singular_pim->structure()
 	      != bgeot::prism_structure(3)) || (n < 2) || (n > 3))
 	DAL_THROW(failure_error,
-	  "Base integration method for qusi polar integration not convenient");
+	 "Base integration method for quasi polar integration not convenient");
     }
 
 
@@ -273,6 +273,7 @@ namespace getfem {
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       if (mls.is_convex_cut(cv)) build_method_of_convex(cv);
+      
     }
     is_adapted = true; touch();
   }

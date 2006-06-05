@@ -191,7 +191,8 @@ namespace ftool {
     return o;
   }
 
-  md_param::param_value md_param::read_expression(std::istream &f) {
+  md_param::param_value md_param::read_expression(std::istream &f,
+						  bool skipped) {
     param_value result;
     int i = get_next_token(f);
     if (i == 2) { // a number
@@ -210,7 +211,7 @@ namespace ftool {
       std::string name(temp_string);
       if (parameters.find(name) != parameters.end())
 	result = parameters[name];
-      else {
+      else if (!skipped) {
 	std::stringstream s; s << "Parameter " << name << " not found";
 	syntax_error(s.str());
       }
@@ -219,26 +220,26 @@ namespace ftool {
       switch (temp_string[0]) {
       case '(' :
 	{
-	  result = read_expression_list(f);
+	  result = read_expression_list(f, skipped);
 	  int j = get_next_token(f);
 	  if (j != 5 || temp_string[0] != ')') parse_error(temp_string);
 	}
 	break;
       case '+' :
-	result = read_expression(f);
+	result = read_expression(f, skipped);
 	if (result.type_of_param() != REAL_VALUE)
 	  syntax_error("Sorry, unary + does not support string "
 		       "or array values");
 	break;
       case '-' :
-	result = read_expression(f);
+	result = read_expression(f, skipped);
 	if (result.type_of_param() != REAL_VALUE)
 	  syntax_error("Sorry, unary - does not support string "
 			 "or array values");
 	result.real() *= -1.0;
 	break;
       case '~' : 
-	result = read_expression(f);
+	result = read_expression(f, skipped);
 	if (result.type_of_param() != REAL_VALUE)
 	  syntax_error("Sorry, unary ! does not support string "
 			 "or array values");
@@ -253,7 +254,7 @@ namespace ftool {
 	    if (j == 5 && temp_string[0] == ']') break;
 	    if (!first && temp_string[0] != ',') parse_error(temp_string);
 	    if (first) valid_token();
-	    result.array().push_back(read_expression_list(f));
+	    result.array().push_back(read_expression_list(f, skipped));
 	    first = false;
 	  }
 	}
@@ -315,9 +316,10 @@ namespace ftool {
   }
 
 
-  md_param::param_value md_param::read_expression_list(std::istream &f) {
+  md_param::param_value md_param::read_expression_list(std::istream &f,
+						       bool skipped) {
     std::vector<param_value> value_list;
-    value_list.push_back(read_expression(f));
+    value_list.push_back(read_expression(f, skipped));
     std::vector<int> op_list, prior_list;
     int i = get_next_token(f), prior, op;
     operator_priority_(i, temp_string[0], prior, op);
@@ -325,7 +327,7 @@ namespace ftool {
       while (!prior_list.empty() && prior_list.back() <= prior)
 	do_bin_op(value_list, op_list, prior_list);
 
-      value_list.push_back(read_expression(f));
+      value_list.push_back(read_expression(f, skipped));
       op_list.push_back(op);
       prior_list.push_back(prior);
 
@@ -348,7 +350,7 @@ namespace ftool {
     if (temp_string == "else") return 2;
     if (temp_string == "elseif") return 3;
     if (temp_string == "if") {
-      param_value p = read_expression_list(f);
+      param_value p = read_expression_list(f, skipped);
       if (p.type_of_param() != REAL_VALUE)
 	syntax_error("if instruction needs a condition");
       bool b = (p.real() != 0.0);
@@ -362,7 +364,7 @@ namespace ftool {
 	int k = 0;
 	do {
 	  if (b) skipped = true;
-	  p = read_expression_list(f);
+	  p = read_expression_list(f, skipped);
 	  if (p.type_of_param() != REAL_VALUE)
 	    syntax_error("elseif instruction needs a condition");
 	  b = (p.real() != 0.0);
@@ -377,7 +379,7 @@ namespace ftool {
       return 0;
     }
     if (temp_string == "error") {
-      param_value p = read_expression_list(f);
+      param_value p = read_expression_list(f, skipped);
       if (!skipped)
 	DAL_THROW(dal::failure_error, "Error in parameter file: " << p);
       return 0;
@@ -385,7 +387,7 @@ namespace ftool {
     std::string name(temp_string);
     i = get_next_token(f);
     if (i != 5 || temp_string[0] != '=') parse_error(temp_string);
-    param_value result = read_expression_list(f);
+    param_value result = read_expression_list(f, skipped);
     i = get_next_token(f);
     if (i != 0 && i != 1 && (i != 5 || temp_string[0] != ';'))
       parse_error(temp_string);
