@@ -397,14 +397,14 @@ struct Chrono {
     mesher_level_sets.reserve(nbtotls);
     for (size_type ll = 0; ll < level_sets.size(); ++ll) {
       if (primary[ll]) {
-	base_node X(n);
+	base_node X(n); gmm::fill_random(X);
 	K = std::max(K, (level_sets[ll])->degree());
 	mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 0));
 	mesher_level_set &mls(mesher_level_sets.back());
 	list_constraints.push_back(&mesher_level_sets.back());
 	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
 	if (gmm::abs(r0) < 1e-13) 
-	  DAL_THROW(failure_error, "Something wrong in your level set ...\n");
+	  DAL_THROW(failure_error, "Something wrong in your level set ... curvature radius = " << r0);
 	if (secondary[ll]) {
 	  mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 1));
 	  mesher_level_set &mls2(mesher_level_sets.back());
