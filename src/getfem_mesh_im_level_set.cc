@@ -307,7 +307,8 @@ namespace getfem {
 	}
       }
     }
-    cerr << "mesh_im_level_set: integrate = " << integrate_where << ", ignored = " << ignored_im << "\n";
+    // cerr << "mesh_im_level_set: integrate = " << integrate_where
+    //      << ", ignored = " << ignored_im << "\n";
     is_adapted = true; touch();
   }
 
