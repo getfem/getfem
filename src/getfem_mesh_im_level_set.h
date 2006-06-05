@@ -35,9 +35,14 @@
 
 namespace getfem {
 
-  /** Describe an adaptable integration method linked to a mesh cut by
-   * a level set.
-   */
+  /** 
+     Describe an adaptable integration method linked to a mesh cut by
+     a level set.  It is possible to choose to integrate over the
+     whole mesh, or to select integration on the "inside" (the
+     intersection of the negative parts of the levelsets), the
+     "outside" or just the levelset boundary.
+  */
+
   class mesh_im_level_set : public mesh_im {
   protected :
     pintegration_method regular_simplex_pim;
@@ -46,6 +51,10 @@ namespace getfem {
 
     mesh_im cut_im; /* stores an im only for convexes who are crossed
 		       by a levelset */
+
+    dal::bit_vector ignored_im; /* convex list whose integration method is ignored
+				   (for ex. because INTEGRATE_INSIDE and the convex
+				   is outside etc.) */
     std::vector<pintegration_method> build_methods;
 
     mutable bool is_adapted;
@@ -53,6 +62,9 @@ namespace getfem {
 
     void clear_build_methods();
     void build_method_of_convex(size_type cv);
+    bool is_point_in_selected_area
+    (const std::vector<mesher_level_set> &mesherls0,
+     const std::vector<mesher_level_set> &mesherls1, const base_node& P);
 
   public :
     enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,

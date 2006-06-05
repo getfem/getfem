@@ -68,7 +68,7 @@ namespace getfem {
     if (cut_im.convex_index().is_in(cv)) 
       return cut_im.int_method_of_element(cv); 
     else {
-      if (integrate_where == INTEGRATE_BOUNDARY)
+      if (ignored_im.is_in(cv)) //integrate_where == INTEGRATE_BOUNDARY)
 	return getfem::im_none();
 
       return mesh_im::int_method_of_element(cv);
@@ -76,6 +76,20 @@ namespace getfem {
   }
 
   DAL_SIMPLE_KEY(special_imls_key, papprox_integration);
+
+  /* only for INTEGRATE_INSIDE or INTEGRATE_OUTSIDE */
+  bool mesh_im_level_set::is_point_in_selected_area
+  (const std::vector<mesher_level_set> &mesherls0,
+   const std::vector<mesher_level_set> &mesherls1,
+				  const base_node& P) {
+    bool isin = true;
+    for (unsigned i = 0; isin && (i < mls.nb_level_sets()); ++i) {
+      isin = isin && ((mesherls0[i])(P) < 0);
+      if (mls.get_level_set(i)->has_secondary())
+	isin = isin && ((mesherls1[i])(P) < 0);
+    }
+    return ((integrate_where & INTEGRATE_INSIDE)) ? isin : !isin;
+  }
 
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
     const mesh &msh(mls.mesh_of_convex(cv));
@@ -97,17 +111,7 @@ namespace getfem {
     if (integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
       for (dal::bv_visitor scv(msh.convex_index()); !scv.finished(); ++scv) {
 	B = dal::mean_value(msh.points_of_convex(scv));
-	bool isin = true;
-	for (unsigned i = 0; isin && (i < mls.nb_level_sets()); ++i) {
-	  isin = isin && ((integrate_where & INTEGRATE_OUTSIDE)
-			  ? ((mesherls0[i])(B) > 0)
-			  : ((mesherls0[i])(B) < 0));
-	  if (mls.get_level_set(i)->has_secondary())
-	    isin = isin && ((integrate_where & INTEGRATE_OUTSIDE)
-			    ? ((mesherls1[i])(B) > 0)
-			    : ((mesherls1[i])(B) < 0));
-	}
-	convexes_arein[scv] = isin;
+	convexes_arein[scv] = is_point_in_selected_area(mesherls0, mesherls1, B);
       }
     }
     
@@ -168,24 +172,34 @@ namespace getfem {
 	}
       }
 
+      base_matrix G2;
+      vectors_to_base_matrix(G2, linked_mesh().points_of_convex(cv));
+      bgeot::geotrans_interpolation_context cc(linked_mesh().trans_of_convex(cv),
+					       pai->point(0), G2);
+
       if (integrate_where & (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
 		
 	vectors_to_base_matrix(G, msh.points_of_convex(i));
 	bgeot::geotrans_interpolation_context c(msh.trans_of_convex(i),
 						pai->point(0), G);
+
 	for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	  c.set_xref(pai->point(j));
 	  pgt2->poly_vector_grad(pai->point(j), pc);
 	  gmm::mult(G,pc,KK);
 	  scalar_type J = gmm::lu_det(KK);
 	  new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
+
+	  /*if (integrate_where == INTEGRATE_INSIDE) {
+	    cc.set_xref(c.xreal());
+	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\n";
+	  }
+	  */
 	}
       }
 
-      base_matrix G2;
-      vectors_to_base_matrix(G2, linked_mesh().points_of_convex(cv));
-      bgeot::geotrans_interpolation_context cc(linked_mesh().trans_of_convex(cv),
-					       pai->point(0), G2);
+
+
 
       // pgt2 = msh.trans_of_convex(i);
 
@@ -217,12 +231,13 @@ namespace getfem {
 	bgeot::geotrans_interpolation_context c(msh.trans_of_convex(i),
 						pai->point(0), G);
 	
-	base_small_vector un = pgt2->normals()[f], up(msh.dim());
-	gmm::mult(c.B(), un, up);
-	scalar_type nup = gmm::vect_norm2(up);
 	
 	for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	  c.set_xref(pai->point_on_face(f, j));
+	  base_small_vector un = pgt2->normals()[f], up(msh.dim());
+	  gmm::mult(c.B(), un, up);
+	  scalar_type nup = gmm::vect_norm2(up);
+
 	  scalar_type nnup(1);
 	  if (integrate_where == INTEGRATE_BOUNDARY) {
 	    cc.set_xref(c.xreal());
@@ -237,18 +252,17 @@ namespace getfem {
 				* gmm::abs(c.J()) * nup * nnup, ff);
 
 
-	  //	  if (integrate_where == INTEGRATE_BOUNDARY) {
-	    /*static double ssum = 0.0;
+	  /*if (integrate_where == INTEGRATE_BOUNDARY) {
+	    static double ssum = 0.0;
 	    ssum += pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup;
 	    cout << "add crack point " << c.xreal() << " : "
 		 << pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup << " sum = " << ssum << endl;
-	    */
-	    /*
+	  }*/
+	  /*if (integrate_where == INTEGRATE_BOUNDARY) {
 	    cc.set_xref(c.xreal());
-	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\t" << cc.xreal()[2] << "\n";
-	    */
-	  // }
-
+	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\n"; // << cc.xreal()[2] << "\n";
+	  }
+	  */
 	} 
       }
     }
@@ -270,11 +284,30 @@ namespace getfem {
   void mesh_im_level_set::adapt(void) {
     context_check();
     clear_build_methods();
+    ignored_im.clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       if (mls.is_convex_cut(cv)) build_method_of_convex(cv);
-      
+      else {
+	if (integrate_where == INTEGRATE_BOUNDARY) {
+	  ignored_im.add(cv);
+	} else if (integrate_where != (INTEGRATE_OUTSIDE|INTEGRATE_INSIDE)) {
+	  /* remove convexes that are not in the integration area */
+	  std::vector<mesher_level_set> mesherls0(mls.nb_level_sets());
+	  std::vector<mesher_level_set> mesherls1(mls.nb_level_sets());
+	  for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
+	    mesherls0[i] = mls.get_level_set(i)->mls_of_convex(cv, 0, false);
+	    if (mls.get_level_set(i)->has_secondary())
+	      mesherls1[i] = mls.get_level_set(i)->mls_of_convex(cv, 1, false);
+	  }
+
+	  base_node B(dal::mean_value(linked_mesh().trans_of_convex(cv)->convex_ref()->points()));
+	  if (!is_point_in_selected_area(mesherls0, mesherls1, B))
+	    ignored_im.add(cv);
+	}
+      }
     }
+    cerr << "mesh_im_level_set: integrate = " << integrate_where << ", ignored = " << ignored_im << "\n";
     is_adapted = true; touch();
   }
 
