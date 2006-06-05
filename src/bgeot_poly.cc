@@ -62,7 +62,7 @@ namespace bgeot {
       short_type a = (*this)[n-1]; (*this)[n-1] = 0;
       (*this)[short_type(l+1)] = a + 1;
       if (l != short_type(-1)) ((*this)[l])--;
-      else if (deg+1) degree_ = deg+1;
+      else if (short_type(deg+1)) degree_ = deg+1;
       if (g_idx+1) global_index_ = g_idx+1;
       //degree_ = short_type(-1);
     }
@@ -79,7 +79,7 @@ namespace bgeot {
       if (l != short_type(-1)) {
 	short_type a = (*this)[l]; (*this)[l] = 0; (*this)[n-1] = a - 1;
 	if (l > 0) ((*this)[l-1])++; 
-        else if (deg+1) degree_ = deg-1;
+        else if (short_type(deg+1)) degree_ = deg-1;
       }
       if (g_idx+1) global_index_ = g_idx-1;
     }
