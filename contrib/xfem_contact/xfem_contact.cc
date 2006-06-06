@@ -283,12 +283,24 @@ int main(int argc, char *argv[]) {
     plain_vector U(nb_dof);
     gmm::copy(gmm::sub_vector(XX, II), gmm::sub_vector(U, I));
 
+
+    // interpolation of the solution on mf_rhs
+    plain_vector Uint(nb_dof_rhs);
+    getfem::interpolation(mf, mf_rhs, U, Uint);
+    plain_vector Vint(nb_dof_rhs);
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      Vint[i] = u_exact(mf_rhs.point_of_dof(i));
+
     // computation of max error.
     double errmax = 0.0;
-    for (size_type i = 0; i < nb_dof; ++i)
-      if (gmm::vect_norm2(mf.point_of_dof(i)) < Radius)
-	errmax = std::max(errmax, gmm::abs(U[i]-u_exact(mf.point_of_dof(i))));
-    cout << "Linfty error : " << errmax << endl;
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
+	errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
+    cout << "Linfty error: " << errmax << endl;
+    cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
+	 << endl;
+    cout << "H1 error: " << getfem::asm_H1_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
+	 << endl;
       
     // export de la solution au format vtk.
     getfem::vtk_export exp("xfem_contact.vtk", (2==1));
