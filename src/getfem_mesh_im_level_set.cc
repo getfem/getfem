@@ -189,12 +189,12 @@ namespace getfem {
 	  gmm::mult(G,pc,KK);
 	  scalar_type J = gmm::lu_det(KK);
 	  new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
+	  tot += pai->coeff(j) * gmm::abs(J);
 
 	  /*if (integrate_where == INTEGRATE_INSIDE) {
 	    cc.set_xref(c.xreal());
-	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\n";
-	  }
-	  */
+	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\t" << pai->coeff(j) * gmm::abs(J) << "\n";
+	    }*/
 	}
       }
 
@@ -266,7 +266,7 @@ namespace getfem {
 	} 
       }
     }
-    
+
     new_approx->valid_method();
 
     if (new_approx->nb_points()) {
@@ -277,7 +277,9 @@ namespace getfem {
       build_methods.push_back(pim);
       cut_im.set_integration_method(cv, pim);
     }
-    else delete new_approx;
+    else {
+      delete new_approx;
+    }
   }
 
 
@@ -287,8 +289,14 @@ namespace getfem {
     ignored_im.clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
-      if (mls.is_convex_cut(cv)) build_method_of_convex(cv);
-      else {
+      if (mls.is_convex_cut(cv)) {
+	build_method_of_convex(cv);
+      }
+
+      if (!cut_im.convex_index().is_in(cv)) {
+	/* not exclusive with mls.is_convex_cut ... sometimes, cut cv
+	   contains no integration points.. */
+
 	if (integrate_where == INTEGRATE_BOUNDARY) {
 	  ignored_im.add(cv);
 	} else if (integrate_where != (INTEGRATE_OUTSIDE|INTEGRATE_INSIDE)) {
