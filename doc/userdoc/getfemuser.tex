@@ -1310,7 +1310,7 @@ Composition of the integration node definition :
 
 The file format is inspired from \cite{EncyclopCubature}.
 
-\section{Level-sets, Xfem, fictious domains}
+\section{Level-sets, Xfem, fictitious domains}
 
 \gf offers (since v2.0) a certain number of functionalities concerning level-sets, support for Xfem and fictitious domain methods and discontinuous field across a level-set.\\[0.5cm]
 
@@ -1406,6 +1406,10 @@ where \cpp{mesh} is a valid mesh of type \cpp{getfem::mesh} and \cpp{mf} is the 
 To initialize the object or to actualize it when the value of the level-set function is modified, one has to call the method \cpp{mfls.adapt()}.\\[0.5cm]
 
 To represent discontinuous fields, the finite element method is enriched with discontinuous functions which are the product of a Heaviside function by the base functions of the finite element method represented by \cpp{mf} (see \cite{Xfem} for more details).
+
+\subsection{Fictitious domain approach with Xfem}
+
+An example of a Poisson problem with a Dirichlet condition posed on a boundary independant of the mesh is present on the \cpp{tests} directory of the distribution. See \cpp{xfem_dirichlet.cc} file.
 
 \section{Support for Xfem methods}
 
