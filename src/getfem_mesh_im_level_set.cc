@@ -189,7 +189,6 @@ namespace getfem {
 	  gmm::mult(G,pc,KK);
 	  scalar_type J = gmm::lu_det(KK);
 	  new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
-	  tot += pai->coeff(j) * gmm::abs(J);
 
 	  /*if (integrate_where == INTEGRATE_INSIDE) {
 	    cc.set_xref(c.xreal());
