@@ -80,7 +80,7 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
   plain_vector V(nbdof), W(1);
   std::fill(V.begin(), V.end(), 1.0);
 
-  getfem::generic_assembly assem("u = data(#1); V()+=comp(Base(#1))(i).u(i)");
+  getfem::generic_assembly assem("u = data(#1); V()+=comp(Base(#1))(i).u(i);");
   assem.push_mi(mim); assem.push_mf(mf_rhs); assem.push_data(V);
   assem.push_vec(W);
   assem.assembly(getfem::mesh_region::all_convexes());
@@ -174,6 +174,9 @@ int main(int argc, char *argv[]) {
     std::string IM = PARAM.string_value("IM", "Mesh file");
     std::string IMS = PARAM.string_value("IM_SIMPLEX", "Mesh file");
     int intins = getfem::mesh_im_level_set::INTEGRATE_INSIDE;
+    getfem::mesh_im uncutmim(mesh);
+    uncutmim.set_integration_method(mesh.convex_index(),
+				    getfem::int_method_descriptor(IM));
     getfem::mesh_im_level_set mim(mls, intins,
 				  getfem::int_method_descriptor(IMS));
     mim.set_integration_method(mesh.convex_index(),
@@ -234,28 +237,50 @@ int main(int argc, char *argv[]) {
     test_mim(mimbound, mf_rhs, true);
 
     // Dof selection for the solution and the multipliers
+    bool mass_elimination = PARAM.int_value("MASS_ELIMINATION",
+					    "Mass elimination on/off") != 0;
+    double elim_threshold = PARAM.real_value("ELIMINATION_THRESHOLD",
+					     "Elimination threshold");
+    sparse_matrix M1(nb_dof, nb_dof), M1bis(nb_dof, nb_dof);
+    sparse_matrix M2(nb_dof_mult, nb_dof_mult), M2bis(nb_dof_mult,nb_dof_mult);
+    if (mass_elimination) {
+      getfem::asm_mass_matrix(M1, mim, mf, mf);
+      getfem::asm_mass_matrix(M1bis, uncutmim, mf, mf);
+      getfem::asm_mass_matrix(M2, mimbound, mf_mult, mf_mult);
+      getfem::asm_mass_matrix(M2bis, uncutmim, mf_mult, mf_mult);
+    }
+
     dal::bit_vector dof_u, dof_mult;
     for (dal::bv_visitor i(mesh.convex_index());  !i.finished(); ++i) {
-      if (mim.int_method_of_element(i)->approx_method() != 0) {
-	for (unsigned j = 0; j < mf.nb_dof_of_element(i); ++j)
-	  dof_u.add(mf.ind_dof_of_element(i)[j]);
-      }
-      if (mls.is_convex_cut(i)) {
-	for (unsigned j = 0; j < mf_mult.nb_dof_of_element(i); ++j)
-	  dof_mult.add(mf_mult.ind_dof_of_element(i)[j]);
+      if (mim.int_method_of_element(i) != getfem::im_none()) {
+	for (unsigned j = 0; j < mf.nb_dof_of_element(i); ++j) {
+	  size_type ii = mf.ind_dof_of_element(i)[j];
+	  if (!mass_elimination || M1(ii,ii) > elim_threshold * M1bis(ii,ii))
+	    dof_u.add(ii);
+	}
+      
+	if (mls.is_convex_cut(i)) {
+	  for (unsigned j = 0; j < mf_mult.nb_dof_of_element(i); ++j) {
+	    size_type ii = mf_mult.ind_dof_of_element(i)[j];
+	    if (!mass_elimination ||
+		M2(ii,ii) > pow(elim_threshold * M2bis(ii,ii), double(N-1)/N))
+	      dof_mult.add(ii);
+	  }
+	}
       }
     }
-    // cout << "dof_u = " << dof_u << endl;
-    // cout << "dof_mult = " << dof_mult << endl;
+    
     std::vector<size_type> ind_u;
     for (dal::bv_visitor i(dof_u); !i.finished(); ++i) ind_u.push_back(i);
     gmm::sub_index I(ind_u);
     size_type nb_real_dof = ind_u.size();
+    cout << "nb_real_dof = " << nb_real_dof << endl;
     std::vector<size_type> ind_mult;
     for (dal::bv_visitor i(dof_mult); !i.finished(); ++i)
       ind_mult.push_back(i);
     gmm::sub_index J(ind_mult);
     size_type nb_real_dof_mult = ind_mult.size();
+    cout << "nb_real_dof_mult = " << nb_real_dof_mult << endl;
 
     // reduced matrices and rhs
     sparse_matrix K2(nb_real_dof, nb_real_dof);
