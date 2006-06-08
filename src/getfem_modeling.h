@@ -2293,7 +2293,7 @@ namespace getfem {
       for (size_type j=0, ii=0; j < gmm::mat_ncols(M0); ++j) {
 	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
 	  size_type i=M0.ir[ii];
-	  F[ii] = (M0(i,j) + M0(j,i))/2;
+	  F[ii] = (M0(i,j) + M0(j,i))/value_type(2);
 	}
       }
       gmm::copy(F, vM0);
@@ -2311,7 +2311,7 @@ namespace getfem {
 
       /* some sanity checks */
       for (unsigned i=0; i < gmm::mat_nrows(M0); ++i) {
-	if (M0(i,i) < 0) {
+	if (gmm::real(M0(i,i)) < 0) {
 	  DAL_WARNING1("negative diagonal terms found in the mass matrix!");
 	  break;
 	}
