@@ -60,14 +60,15 @@ double Radius;
 double u_exact(const base_node &p) {
   double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
-  return sin(sum) * (norm_sqr - Radius*Radius);
+  return 5.0 * sin(sum) * (norm_sqr - Radius*Radius);
 }
 
 double rhs(const base_node &p) {
   double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
   double N = double(gmm::vect_size(p));
-  return N * sin(sum) * (norm_sqr - Radius*Radius-2.0) - 4.0 * sum * cos(sum);
+  return 5.0 * (N * sin(sum) * (norm_sqr - Radius*Radius-2.0)
+		- 4.0 * sum * cos(sum));
 }
 
 /*
@@ -94,7 +95,7 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
   }
   if (bound) cout << "Boundary length: "; else cout << "Area: ";
   cout << W[0] << " should be " << exact << endl;
-  assert(gmm::abs(exact-W[0])/exact < 0.1); 
+  assert(gmm::abs(exact-W[0])/exact < 0.01); 
 }
 
 /* 
@@ -165,9 +166,13 @@ int main(int argc, char *argv[]) {
     
 
     // Finite element method for the unknown
-    getfem::mesh_fem mf(mesh);
+    getfem::mesh_fem pre_mf(mesh);
     std::string FEM = PARAM.string_value("FEM", "finite element method");
-    mf.set_finite_element(mesh.convex_index(), getfem::fem_descriptor(FEM));
+    pre_mf.set_finite_element(mesh.convex_index(),
+			      getfem::fem_descriptor(FEM));
+    getfem::partial_mesh_fem mf(pre_mf);
+    dal::bit_vector kept_dof = select_dofs_from_im(pre_mf, mim);
+    mf.adapt(kept_dof);
     size_type nb_dof = mf.nb_dof();
     
     // Finite element method for the rhs
@@ -179,41 +184,32 @@ int main(int argc, char *argv[]) {
     cout << "nb_dof_rhs = " << nb_dof_rhs << endl;
     
     // Finite element method for the multipliers
-    getfem::mesh_fem mf_mult(mesh);
+    getfem::mesh_fem pre_mf_mult(mesh);
     std::string FEMM = PARAM.string_value("FEM_MULT", "fem for multipliers");
-    mf_mult.set_finite_element(mesh.convex_index(),
-			       getfem::fem_descriptor(FEMM));
+    pre_mf_mult.set_finite_element(mesh.convex_index(),
+				   getfem::fem_descriptor(FEMM));
+    getfem::partial_mesh_fem mf_mult(pre_mf_mult);
+    dal::bit_vector kept_dof_mult
+      = select_dofs_from_im(pre_mf_mult, mimbound,N-1);
+    mf_mult.adapt(kept_dof_mult);
     size_type nb_dof_mult = mf_mult.nb_dof();
     cout << "nb_dof_mult = " << nb_dof_mult << endl;
-    
-
-    // Partial Finite element methods
-    getfem::partial_mesh_fem mf2(mf);
-    dal::bit_vector kept_dof = select_dofs_from_im(mf, mim);
-    mf2.adapt(kept_dof);
-    nb_dof = mf2.nb_dof();
-
-    getfem::partial_mesh_fem mf_mult2(mf_mult);
-    dal::bit_vector kept_dof_mult = select_dofs_from_im(mf_mult, mimbound,N-1);
-    mf_mult2.adapt(kept_dof_mult);
-    nb_dof_mult = mf_mult2.nb_dof();
-
 
     // Stiffness matrix for the Poisson problem
     sparse_matrix K(nb_dof, nb_dof);
-    getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim, mf2);
+    getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim, mf);
 
     
 
     // Mass matrix on the boundary
     sparse_matrix B(nb_dof_mult, nb_dof);
-    getfem::asm_mass_matrix(B, mimbound, mf_mult2, mf2);
+    getfem::asm_mass_matrix(B, mimbound, mf_mult, mf);
 
     // rhs
     plain_vector F(nb_dof), FD(nb_dof_rhs);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       FD[i] = rhs(mf_rhs.point_of_dof(i));
-    getfem::asm_source_term(F, mim, mf2, mf_rhs, FD);
+    getfem::asm_source_term(F, mim, mf, mf_rhs, FD);
 
     // Tests
     test_mim(mim, mf_rhs, false);
@@ -240,7 +236,7 @@ int main(int argc, char *argv[]) {
 
     // interpolation of the solution on mf_rhs
     plain_vector Uint(nb_dof_rhs);
-    getfem::interpolation(mf2, mf_rhs, U, Uint);
+    getfem::interpolation(mf, mf_rhs, U, Uint);
     plain_vector Vint(nb_dof_rhs);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       Vint[i] = u_exact(mf_rhs.point_of_dof(i));
@@ -258,26 +254,12 @@ int main(int argc, char *argv[]) {
       
     // export de la solution au format vtk.
     getfem::vtk_export exp("xfem_contact.vtk", (2==1));
-    exp.exporting(mf2); 
-    exp.write_point_data(mf2, U, "solution");
+    exp.exporting(mf); 
+    exp.write_point_data(mf, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d xfem_contact.vtk  -f WarpScalar -m BandedSurfaceMap -m Outline\n";
     
     
-    
-    
-
-//     // rhs for the problem on multipliers
-//     plain_vector X(nb_real_dof), FF(nb_dof_mult);
-//     SuperLU_solve(K2, X, F2, rcond);
-//     gmm::mult(B2, X, FF);
-
-//     // cg on the problem on multipliers
-//     gmm::SMatrix SK(K2, B2);
-//     plain_vector L(nb_dof_mult);
-//     gmm::iteration iter(1e-10);
-//     gmm::cg(SK, L, FF, gmm::identity_matrix(), iter);
-   
   }
   DAL_STANDARD_CATCH_ERROR;
 
