@@ -1,4 +1,10 @@
 2006-06-08  julien pommier  <pommier@gmm.insa-tlse.fr>
+	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_partial_mesh_fem.h: a new mesh fem allowing to
+	  select dofs.
+
+2006-06-08  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_mesh_slice.cc (include): initial support for levelset
 	in slices. added write_to_file and read_from_file.
