@@ -81,7 +81,7 @@ namespace getfem {
 
   class slicer_action;
   class stored_mesh_slice;
- 
+  class mesh_level_set;
 
   /** @brief Apply a serie a slicing operations to a mesh.
       
@@ -95,6 +95,7 @@ namespace getfem {
     typedef std::vector<slice_node> cs_nodes_ct;
     typedef std::vector<slice_simplex> cs_simplexes_ct;
     const mesh& m;
+    const mesh_level_set *mls; // optional
     size_type cv, face, cv_dim, cv_nbfaces;
     bgeot::pgeometric_trans pgt;
     /* list of nodes and simplexes for the current convex 
@@ -107,13 +108,19 @@ namespace getfem {
     dal::bit_vector simplex_index, nodes_index, splx_in;
     size_type fcnt;
     bgeot::pconvex_ref cvr, prev_cvr;
+    bool discont; // true when mls->is_convex_cut(cv) == true
+
+    mesh tmp_mesh; // used only when mls != 0
+    bgeot::mesh_structure tmp_mesh_struct; // used only when mls != 0 for faces structure.
 
     void pack(); /* not used, indeed */
     void update_nodes_index();
     /** mesh_slicer constructor. Use mesh_slicer::exec to build the slice.
 	@param m_ the mesh that is going to be sliced.
     */
-    mesh_slicer(const mesh& m_) : m(m_), pgt(0), cvr(0) {}
+    mesh_slicer(const mesh& m_);
+    mesh_slicer(const mesh_level_set &mls_);
+    void using_mesh_level_set(const mesh_level_set &mls_);
     void push_back_action(slicer_action &a) { action.push_back(&a); }
     void push_front_action(slicer_action &a) { action.push_front(&a); }
 
@@ -149,8 +156,12 @@ namespace getfem {
      */
      void exec(const std::vector<base_node>& pts);
   private:
-    void exec_(const short_type *pnrefine, int nref_stride, 
+    void exec_(const short_type *pnrefine, 
+	       int nref_stride, 
 	       const mesh_region& cvlst);
+    const mesh& refined_simplex_mesh_for_convex_cut_by_level_set(const mesh &cvm, unsigned nrefine);
+    const bgeot::mesh_structure &refined_simplex_mesh_for_convex_faces_cut_by_level_set(size_type f);
+ 
     void update_cv_data(size_type cv_, size_type f_ = size_type(-1));
     void init_indexes();
     void apply_slicers();

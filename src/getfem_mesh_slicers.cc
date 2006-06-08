@@ -24,6 +24,7 @@
 #include <getfem_mesh_slicers.h>
 #include <getfem_mesh_slice.h>
 #include <bgeot_geotrans_inv.h>
+#include <getfem_mesh_level_set.h>
 
 namespace getfem {
   const float slicer_action::EPS = 1e-13;
@@ -544,6 +545,17 @@ namespace getfem {
 
   /* -------------------- member functions of mesh_slicer -------------- */
 
+  mesh_slicer::mesh_slicer(const mesh_level_set &mls_) :
+    m(mls_.linked_mesh()), mls(&mls_), pgt(0), cvr(0) {}
+  mesh_slicer::mesh_slicer(const mesh& m_) : 
+    m(m_), mls(0), pgt(0), cvr(0) {}
+
+  void mesh_slicer::using_mesh_level_set(const mesh_level_set &mls_) { 
+    mls = &mls_;
+    if (&m != &mls->linked_mesh()) 
+      DAL_THROW(dal::failure_error, "different meshes");
+  }
+
   void mesh_slicer::pack() {
     std::vector<size_type> new_id(nodes.size());
     size_type ncnt = 0;
@@ -597,6 +609,7 @@ namespace getfem {
     cv_dim = cvr->structure()->dim();
     cv_nbfaces = cvr->structure()->nb_faces();
     fcnt = cvr->structure()->nb_faces();
+    discont = (mls && mls->is_convex_cut(cv));
   }
 
   void mesh_slicer::apply_slicers() {
@@ -635,6 +648,24 @@ namespace getfem {
     exec_(&nrefine[0], 1, cvlst);
   }
 
+  static bool check_orient(size_type cv, bgeot::pgeometric_trans pgt, const mesh& m) {
+    if (pgt->dim() == m.dim() && m.dim()>=2) { /* no orient check for 
+						  convexes of lower dim */
+      base_matrix G; bgeot::vectors_to_base_matrix(G,m.points_of_convex(cv));
+      base_node g(pgt->dim()); g.fill(.5); 
+      base_matrix pc; pgt->poly_vector_grad(g,pc);
+      base_matrix K(pgt->dim(),pgt->dim());
+      gmm::mult(G,pc,K);
+      scalar_type J = gmm::lu_det(K);
+      // bgeot::geotrans_interpolation_context ctx(pgp,0,G);
+      // scalar_type J = gmm::lu_det(ctx.B()); // pb car inverse K même
+      if (J < 0) return true;
+      //cout << "cv = " << cv << ", J = " << J << "\n";
+    }
+    return false;
+  }
+
+#if OLD_MESH_SLICER
   void mesh_slicer::exec_(const short_type *pnrefine, int nref_stride, const mesh_region& cvlst) {
     std::vector<base_node> cvm_pts;
     const bgeot::basic_mesh *cvm = 0;
@@ -646,9 +677,10 @@ namespace getfem {
     cvlst.from_mesh(m);
     size_type prev_nrefine = 0;
     for (mr_visitor it(cvlst); !it.finished(); ++it) {
-      bool revert_orientation = false;
       size_type nrefine = pnrefine[it.cv()*nref_stride];
       update_cv_data(it.cv(),it.f());      
+      bool revert_orientation = check_orient(cv, pgt,m);
+
       /* update structure-dependent data */
       if (prev_cvr != cvr || nrefine != prev_nrefine) {
 	cvm = bgeot::refined_simplex_mesh_for_convex(cvr, nrefine);
@@ -663,25 +695,12 @@ namespace getfem {
       else
 	cvms = cvm; 
 
-      if (pgt->dim() == m.dim() && m.dim()>=2) { /* no orient check for convexes of lower dim */
-	base_matrix G; bgeot::vectors_to_base_matrix(G,m.points_of_convex(cv));
-	base_node g(pgt->dim()); g.fill(.5); 
-	base_matrix pc; pgt->poly_vector_grad(g,pc);
-	base_matrix K(pgt->dim(),pgt->dim());
-	gmm::mult(G,pc,K);
-	scalar_type J = gmm::lu_det(K);
-	// bgeot::geotrans_interpolation_context ctx(pgp,0,G);
-	// scalar_type J = gmm::lu_det(ctx.B()); // pb car inverse K même
-	if (J < 0) revert_orientation = true;
-	//cout << "cv = " << cv << ", J = " << J << "\n";
-      }
-
-
       /* apply the initial geometric transformation */
       std::vector<size_type> ptsid(cvm_pts.size()); std::fill(ptsid.begin(), ptsid.end(), size_type(-1));
       simplexes.resize(cvms->nb_convex());
       nodes.resize(0);
-      for (size_type snum = 0; snum < cvms->nb_convex(); ++snum) { /* cvms should not contain holes in its convex index.. */
+      for (size_type snum = 0; snum < cvms->nb_convex(); ++snum) { 
+	/* cvms should not contain holes in its convex index.. */
 	simplexes[snum].inodes.resize(cvms->nb_points_of_convex(snum));
 	std::copy(cvms->ind_points_of_convex(snum).begin(),
 		  cvms->ind_points_of_convex(snum).end(), simplexes[snum].inodes.begin());
@@ -710,6 +729,183 @@ namespace getfem {
       apply_slicers();
     }
   }
+#endif // OLD_MESH_SLICER
+
+  template <typename CONT> 
+  static void add_degree1_convex(bgeot::pgeometric_trans pgt, const CONT &pts, 
+				 mesh &m) {
+    unsigned N = pgt->dim();
+    std::vector<base_node> v; v.reserve(N+1);
+    for (unsigned i=0; i < pgt->nb_points(); ++i) {
+      const base_node P = pgt->convex_ref()->points()[i];
+      scalar_type s = 0; 
+      for (unsigned j=0; j < N; ++j) { 
+	s += P[j]; if (P[j] == 1) { v.push_back(pts[i]); break; }
+      }
+      if (s == 0) v.push_back(pts[i]);
+    }
+    assert(v.size() == N+1);
+    base_node G=dal::mean_value(v);
+    /*for (unsigned i=0; i < v.size();++i) 
+      v[i] = v[i] + 0.1 * (G - v[i]);*/
+    m.add_convex_by_points(bgeot::simplex_geotrans(N,1), v.begin());
+  }
+
+  const mesh& mesh_slicer::refined_simplex_mesh_for_convex_cut_by_level_set
+  (const mesh &cvm, unsigned nrefine) {
+    mesh mm; mm.copy_from(cvm);
+    while (nrefine > 1) { 
+      mm.Bank_refine(mm.convex_index());
+      nrefine /= 2;
+    }
+
+    std::vector<size_type> idx;
+    tmp_mesh.clear();
+    //cerr << "nb cv = " << tmp_mesh.convex_index().card() << "\n";
+    for (dal::bv_visitor_c ic(mm.convex_index()); !ic.finished(); ++ic) {
+      /*if (mm.structure_of_convex(ic)->basic_structure()->nb_points() 
+	  != mm.structure_of_convex(ic)->dim() + 1)
+	  DAL_INTERNAL_ERROR("");*/
+      add_degree1_convex(mm.trans_of_convex(ic), mm.points_of_convex(ic), tmp_mesh);
+    }
+    /*tmp_mesh.write_to_file(std::cerr);
+      cerr << "\n";*/
+    return tmp_mesh;
+  }
+  
+  const bgeot::mesh_structure &
+  mesh_slicer::refined_simplex_mesh_for_convex_faces_cut_by_level_set
+  (size_type f) {
+    mesh &cvm = tmp_mesh;
+    tmp_mesh_struct.clear();
+    unsigned N = cvm.dim();
+    
+    dal::bit_vector pt_in_face; pt_in_face.sup(0, cvm.points().index().last_true()+1);
+    for (dal::bv_visitor ip(cvm.points().index()); !ip.finished(); ++ip)
+      if (cvr->is_in_face(f, cvm.points()[ip])) pt_in_face.add(ip);
+
+    for (dal::bv_visitor_c ic(cvm.convex_index()); !ic.finished(); ++ic) {
+      for (unsigned ff=0; ff < cvm.nb_faces_of_convex(ic); ++ff) {
+	bool face_ok = true;
+	for (unsigned i=0; i < N; ++i) {
+	  if (!pt_in_face.is_in(cvm.ind_points_of_face_of_convex(ic,ff)[i])) {
+	    face_ok = false; break;
+	  }
+	}
+	if (face_ok) {
+	  tmp_mesh_struct.add_convex(bgeot::simplex_structure(N-1), 
+				     cvm.ind_points_of_face_of_convex(ic, ff).begin());
+	}
+      }
+    }
+    return tmp_mesh_struct;
+  }
+
+  void mesh_slicer::exec_(const short_type *pnrefine, 
+			  int nref_stride, 
+			  const mesh_region& cvlst) {
+    std::vector<base_node> cvm_pts;
+    const bgeot::basic_mesh *cvm = 0;
+    const bgeot::mesh_structure *cvms = 0;
+    bgeot::geotrans_precomp_pool gppool;
+    bgeot::pgeotrans_precomp pgp = 0;
+    std::vector<slice_node::faces_ct> points_on_faces;
+    bool prev_discont = true;
+
+    cvlst.from_mesh(m);
+    size_type prev_nrefine = 0;
+    size_type prev_cv = size_type(-1);
+    for (mr_visitor it(cvlst); !it.finished(); ++it) {
+      size_type nrefine = pnrefine[it.cv()*nref_stride];
+      update_cv_data(it.cv(),it.f());
+      bool revert_orientation = check_orient(cv, pgt,m);
+
+      /* update structure-dependent data */
+      
+      /* TODO : fix levelset handling when slicing faces .. */
+      if (prev_cvr != cvr || nrefine != prev_nrefine || discont || prev_discont) {
+	if (discont) {
+	  //if (prev_cv != it.cv())
+	  cerr << "refined_simplex_mesh_for_convex_cut_by_level_set(" << it.cv() << "):\n";
+	  cvm = &refined_simplex_mesh_for_convex_cut_by_level_set(mls->mesh_of_convex(cv), 
+								  nrefine);
+	} else {
+	  cvm = bgeot::refined_simplex_mesh_for_convex(cvr, nrefine);
+	}
+	cvm_pts.resize(cvm->points().card());
+	std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
+	pgp = gppool(pgt, store_point_tab(cvm_pts));
+	flag_points_on_faces(cvr, cvm_pts, points_on_faces);
+	prev_nrefine = nrefine;
+      }
+      if (face < dim_type(-1)) {
+	if (!discont) {
+	  cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
+	} else {
+	  cvms = &refined_simplex_mesh_for_convex_faces_cut_by_level_set(face);
+	}
+      } else {
+	cvms = cvm; 
+      }
+
+
+
+      /* apply the initial geometric transformation */
+      std::vector<size_type> ptsid(cvm_pts.size()); std::fill(ptsid.begin(), ptsid.end(), size_type(-1));
+      simplexes.resize(cvms->nb_convex());
+      nodes.resize(0);
+
+      base_node G;
+      for (size_type snum = 0; snum < cvms->nb_convex(); ++snum) { 
+	/* cvms should not contain holes in its convex index.. */
+	simplexes[snum].inodes.resize(cvms->nb_points_of_convex(snum));
+	std::copy(cvms->ind_points_of_convex(snum).begin(),
+		  cvms->ind_points_of_convex(snum).end(), simplexes[snum].inodes.begin());
+	if (revert_orientation) std::swap(simplexes[snum].inodes[0],simplexes[snum].inodes[1]);
+	/* store indices of points which are really used , and renumbers them */
+	if (discont) {
+	  G.resize(m.dim()); G.fill(0.);
+	  for (std::vector<size_type>::iterator itp = 
+		 simplexes[snum].inodes.begin();
+	       itp != simplexes[snum].inodes.end(); ++itp) {
+	    G += cvm_pts[*itp];
+	  }
+	  G /= simplexes[snum].inodes.size();
+	}
+	  
+
+	for (std::vector<size_type>::iterator itp = 
+	       simplexes[snum].inodes.begin();
+	     itp != simplexes[snum].inodes.end(); ++itp) {
+	  if (discont || ptsid[*itp] == size_type(-1)) {
+	    ptsid[*itp] = nodes.size();
+	    nodes.push_back(slice_node());
+	    if (!discont) {
+	      nodes.back().pt_ref = cvm_pts[*itp];
+	    } else {
+	      /* displace the ref point such that one will not interpolate
+		 on the discontinuity (yes this is quite ugly and not 
+		 robust) 
+	      */
+	      nodes.back().pt_ref = cvm_pts[*itp] + 0.05*(G - cvm_pts[*itp]);
+	    }
+	    nodes.back().faces = points_on_faces[*itp];
+	    nodes.back().pt.resize(m.dim()); nodes.back().pt.fill(0.);
+	    pgp->transform(m.points_of_convex(cv), *itp, nodes.back().pt);
+	    //nodes.back().pt = pgt->transform(G, m.points_of_convex(cv));
+	    //cerr << "G = " << G << " -> pt = " << nodes.back().pt << "\n";
+	  }
+	  *itp = ptsid[*itp];
+	}
+      }
+      //cerr << "cv = " << cv << ", cvm.nb_points_ = "<< cvm->points().size() << ", nbnodes = " << nodes.size() << ", nb_simpl=" << simplexes.size() << "\n";
+
+      apply_slicers();
+      prev_cv = it.cv();
+      prev_discont = discont;
+    }
+  }
+
 
   void mesh_slicer::exec(size_type nrefine) {
     exec(nrefine,mesh_region(m.convex_index()));

@@ -44,18 +44,142 @@ namespace getfem {
     return o;
   }
 
+  void stored_mesh_slice::write_to_file(const std::string &name, 
+			       bool with_mesh) const {
+    std::ofstream o(name.c_str());
+    if (!o)
+      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+    o << "% GETFEM SLICE FILE " << '\n';
+    o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
+    if (with_mesh) linked_mesh().write_to_file(o);
+    write_to_file(o);
+  }
+
+
+  void stored_mesh_slice::write_to_file(std::ostream &os) const {
+    os << "\nBEGIN MESH_SLICE\n";
+    os << " DIM " << int(dim()) << "\n"; 
+    for (unsigned i=0; i < cvlst.size(); ++i) {
+      const convex_slice &cs = cvlst[i];
+      os << " CONVEX " << cs.cv_num 
+	 << " " << int(cs.fcnt)
+	 << " " << int(cs.discont) << "\n"
+	 << " " << cs.nodes.size() << " " << cs.simplexes.size() << "\n";
+      for (unsigned j=0; j < cs.nodes.size(); ++j) {
+	os << "\t";
+	for (unsigned k=0; k < cs.nodes[j].pt.size(); ++k) {
+	  if (k) os << " ";
+	  os << cs.nodes[j].pt[k];
+	}
+	os << ";";
+	for (unsigned k=0; k < cs.nodes[j].pt_ref.size(); ++k)
+	  os << " " << cs.nodes[j].pt_ref[k];
+	os << "; "; os << cs.nodes[j].faces.to_ulong();;
+	os << "\n";
+      }
+      for (unsigned j=0; j < cs.simplexes.size(); ++j) {
+	os << "\t" << cs.simplexes[j].inodes.size() << ":";
+	for (unsigned k=0; k < cs.simplexes[j].inodes.size(); ++k) {
+	  os << " " << cs.simplexes[j].inodes[k];
+	}
+	os << "\n";
+      }
+    }
+    os << "END MESH_SLICE\n";
+  }
+
+  void stored_mesh_slice::read_from_file(const std::string &name, const getfem::mesh &m) {
+    std::ifstream o(name.c_str());
+    if (!o) DAL_THROW(file_not_found_error,
+		      "slice file '" << name << "' does not exist");
+    read_from_file(o,m);
+  }
+
+  void stored_mesh_slice::read_from_file(std::istream &ist, const getfem::mesh &m) {
+    if (!poriginal_mesh) {
+      poriginal_mesh = &m; 
+    } else if (poriginal_mesh != &m) 
+      DAL_THROW(dal::failure_error, "wrong mesh..");
+
+    dim_ = m.dim();
+    cv2pos.clear(); 
+    cv2pos.resize(m.convex_index().last_true() + 1, 
+		  size_type(-1));
+
+    std::string tmp;
+    ist.precision(16);
+    ist.seekg(0);ist.clear();
+    ftool::read_until(ist, "BEGIN MESH_SLICE");
+
+    mesh_slicer::cs_nodes_ct nodes;
+    mesh_slicer::cs_simplexes_ct simplexes;
+    
+
+    while (true) {
+      ist >> std::ws; ftool::get_token(ist, tmp);
+      if (ftool::casecmp(tmp, "END")==0) {
+	break;
+      } else if (ftool::casecmp(tmp, "DIM")==0) {
+	int d; ist >> d;
+	dim_ = d;
+      } else if (ftool::casecmp(tmp, "CONVEX")==0) {
+	ftool::get_token(ist,tmp);
+	size_type ic = atoi(tmp.c_str());
+	if (!m.convex_index().is_in(ic)) {
+	  DAL_THROW(failure_error, "Convex " << ic <<
+		    " does not exist, are you sure "
+		    "that the mesh attached to this object is right one ?");
+	}
+	bgeot::pconvex_ref cvr = m.trans_of_convex(ic)->convex_ref();
+	unsigned fcnt, discont, nbn, nbs;
+	ist >> fcnt >> discont >> nbn >> nbs;
+	nodes.resize(nbn); 
+	simplexes.resize(nbs);
+	for (unsigned i=0; i < nbn; ++i) {
+	  nodes[i].pt.resize(dim()); 
+	  nodes[i].pt_ref.resize(cvr->structure()->dim());
+	  for (unsigned j=0; j < dim(); ++j) 
+	    ist >> nodes[i].pt[j];
+	  ist >> ftool::skip(";");
+	  for (unsigned j=0; j < cvr->structure()->dim(); ++j) 
+	    ist >> nodes[i].pt_ref[j];
+	  ist >> ftool::skip(";");
+	  unsigned long ul; ist >> ul;
+	  nodes[i].faces = slice_node::faces_ct(ul);
+	}
+	for (unsigned i=0; i < nbs; ++i) {
+	  unsigned np(0);
+	  ist >> np >> ftool::skip(":");
+	  if (np > dim()+1) 
+	    DAL_THROW(dal::failure_error, "invalid simplex..");
+	  simplexes[i].inodes.resize(np);
+	  for (unsigned j=0; j < np; ++j) 
+	    ist >> simplexes[i].inodes[j];
+	}
+	dal::bit_vector bv; bv.add(0, nbs);
+	set_convex(ic, cvr, nodes, simplexes, dim_type(fcnt), bv, discont);
+      } else if (tmp.size()) {
+	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
+		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
+      } else if (ist.eof()) {
+	DAL_THROW(failure_error, "Unexpected end of stream "
+		  << "(missing BEGIN MESH_SLICE/END MESH_SLICE ?)");	
+      }
+    }
+  }
+
   void slicer_build_stored_mesh_slice::exec(mesh_slicer &ms) {
     if (!sl.poriginal_mesh) {
       sl.poriginal_mesh = &ms.m; sl.dim_ = sl.linked_mesh().dim();
       sl.cv2pos.clear(); sl.cv2pos.resize(sl.linked_mesh().convex_index().last_true() + 1, size_type(-1));
     } else if (sl.poriginal_mesh != &ms.m) DAL_THROW(dal::failure_error, "wrong mesh..");
-    sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, ms.fcnt, ms.splx_in);
+    sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, ms.fcnt, ms.splx_in, ms.discont);
   }
 
   void stored_mesh_slice::set_convex(size_type cv, bgeot::pconvex_ref cvr, 
 				     mesh_slicer::cs_nodes_ct cv_nodes, 
 				     mesh_slicer::cs_simplexes_ct cv_simplexes, 
-				     dim_type fcnt, const dal::bit_vector& splx_in) {
+				     dim_type fcnt, const dal::bit_vector& splx_in, bool discont) {
     /* push the used nodes and simplexes in the final list */
     if (splx_in.card() == 0) return;
     merged_nodes_available = false;
@@ -71,6 +195,7 @@ namespace getfem {
       sc->cv_nbfaces = cvr->structure()->nb_faces();
       sc->fcnt = fcnt;
       sc->global_points_count = points_cnt;
+      sc->discont = discont;
     } else {
       sc = &cvlst[cv2pos[cv]];
       assert(sc->cv_num == cv);

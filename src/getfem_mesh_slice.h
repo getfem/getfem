@@ -42,6 +42,7 @@ namespace getfem {
       size_type cv_num; 
       dim_type cv_dim;
       dim_type fcnt, cv_nbfaces; // number of faces of the convex (fcnt also counts the faces created by the slicing of the convex)
+      bool discont; // when true, it is assumed that the interpolated data inside the convex may be discontinuous (for ex. levelset discont function)
       mesh_slicer::cs_nodes_ct nodes;
       mesh_slicer::cs_simplexes_ct simplexes;
       size_type global_points_count;
@@ -147,9 +148,10 @@ namespace getfem {
 		   bool from_merged_nodes) const;
 
     void set_convex(size_type cv, bgeot::pconvex_ref cvr, 
-	       mesh_slicer::cs_nodes_ct cv_nodes, 
-	       mesh_slicer::cs_simplexes_ct cv_simplexes, 
-		    dim_type fcnt, const dal::bit_vector& splx_in);
+		    mesh_slicer::cs_nodes_ct cv_nodes, 
+		    mesh_slicer::cs_simplexes_ct cv_simplexes, 
+		    dim_type fcnt, const dal::bit_vector& splx_in,
+		    bool discont);
 
     /** Build the slice, by applying a slicer_action operation. */
     void build(const getfem::mesh& m, const slicer_action &a, 
@@ -172,6 +174,16 @@ namespace getfem {
     void replay(slicer_action &a, slicer_action &b) const { replay(&a, &b, 0); }
     void replay(slicer_action &a, slicer_action &b, slicer_action &c) const { replay(&a, &b, &c); }
     void replay(slicer_action *a, slicer_action *b, slicer_action *c) const;
+
+    /** @brief Save a slice content to a text file.
+     */
+    void write_to_file(std::ostream &os) const;
+    void write_to_file(const std::string &fname, bool with_mesh=false) const;
+    /** @brief Read a slice from a file.
+     */
+    void read_from_file(std::istream &ist, const getfem::mesh &m);
+    void read_from_file(const std::string &fname, const getfem::mesh &m);
+
 
     /** @brief Interpolation of a mesh_fem on a slice.
 
