@@ -8,10 +8,6 @@ N = 2;
 RADIUS = .167;              % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;       % Degree of the piecewise polynomial
                             % defining the level set.
-
-MASS_ELIMINATION = 1;      % remove dof and multipliers which may
-                           % degrade too much the condition number.			    
-ELIMINATION_THRESHOLD = 1e-8
 			   
 OK = 0;
 

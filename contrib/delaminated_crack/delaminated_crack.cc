@@ -602,7 +602,7 @@ namespace getfem {
 
     void proper_update_K(void) {
       if (!K0init) { // viscous term for regularization
-	gmm::resize(K0, mf_u.nb_dof(), mf_u.nb_dof());
+	gmm::resize(K0, this->mf_u.nb_dof(), this->mf_u.nb_dof());
 	gmm::clear(K0);
 	generic_assembly 
 	  assem("M$1(#1,#1)+=comp(Grad(#1).Grad(#1))(:,i,:,i)"); 
@@ -961,7 +961,6 @@ int main(int argc, char *argv[]) {
 	//getfem::slicer_build_mesh sbmesh(mcut_refined);
 	slicer.push_back_action(sbuild);
 	//slicer.push_back_action(sbmesh);
-	cout << "mcut.region(0) = " << mcut.region(0) << "\n";
 
 	getfem::mesh_region border_faces;
 	getfem::outer_faces_of_mesh(mcut, border_faces);

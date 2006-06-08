@@ -106,6 +106,8 @@ namespace getfem {
       virtual ~mesh_receiver() {}
   };
 
+  class approx_integration;
+
   /* ********************************************************************* */
   /*								   	   */
   /*	II. Class getfem::mesh                                 		   */
@@ -435,8 +437,14 @@ namespace getfem {
     */ 
     base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
 					      size_type n) const;
-    /** Return an estimate of the convex quality. */
+    /** Return an estimate of the convex quality (0 <= Q <= 1). */
     scalar_type convex_quality_estimate(size_type ic) const;
+    /** Return an estimate of the convex area. 
+	@param ic the convex number
+	@param degree the degree of the approximation integration
+	method used to compute the area.
+    */
+    scalar_type convex_area_estimate(size_type ic, size_type degree=2) const;
     /** Return an estimate of the convex largest dimension. @see getfem::convex_quality_estimate */
     scalar_type convex_radius_estimate(size_type ic) const;
     /** Return an estimate of the convex smallest dimension. @see getfem::convex_radius_estimate */
@@ -613,6 +621,16 @@ namespace getfem {
   { return add_convex_by_points(bgeot::prism_geotrans(di, 1), ps); }
 
   typedef mesh *pmesh;
+
+  /** rough estimate of the convex area.
+      @param pgt the geometric transformation.
+      @param pts the convex nodes.
+      @param pai the approximate integration used for the computation
+      of the convex area.
+   */
+  scalar_type convex_area_estimate(bgeot::pgeometric_trans pgt,
+				   const base_matrix& pts, 
+				   const approx_integration* pai);
 
   /** rough estimate of the maximum value of the condition 
    * number of the jacobian of the geometric transformation */

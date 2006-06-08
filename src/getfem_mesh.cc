@@ -23,6 +23,7 @@
 #include <dal_singleton.h>
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
+#include <getfem_integration.h>
 
 namespace getfem {
 
@@ -357,6 +358,14 @@ namespace getfem {
     return bgeot::compute_local_basis(c, f);
   }
 
+  scalar_type  mesh::convex_area_estimate(size_type ic, size_type deg) const { 
+    base_matrix G;
+    bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
+    papprox_integration pai = 
+      classical_approx_im(trans_of_convex(ic), deg)->approx_method();
+    return getfem::convex_area_estimate(trans_of_convex(ic), G, pai);
+  }
+
   scalar_type  mesh::convex_quality_estimate(size_type ic) const { 
     base_matrix G;
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
@@ -442,7 +451,7 @@ namespace getfem {
 	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp
 		  << "', pos=" << std::streamoff(ist.tellg()));
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream");	
+	DAL_THROW(failure_error, "Unexpected end of stream while reading mesh");	
       }
     }
 
@@ -649,6 +658,28 @@ namespace getfem {
     return pbm[N-1];
   }
     
+  
+  scalar_type convex_area_estimate(bgeot::pgeometric_trans pgt,
+				   const base_matrix& G, 
+				   const approx_integration *pai) {
+    double area(0);
+    static bgeot::pgeometric_trans pgt_old = 0;
+    static papprox_integration pai_old = 0;
+    static bgeot::pgeotrans_precomp pgp = 0;
+    static pintegration_method pim = 0;
+    if (pgt_old != pgt || pai_old != pai) {
+      pgt_old = pgt;
+      pgp = bgeot::geotrans_precomp
+	(pgt,&pai->integration_points());
+    }
+    bgeot::geotrans_interpolation_context gic(pgp, 0, G);
+    for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
+      gic.set_ii(i);
+      area += pai->coeff(i) * gic.J();
+    }
+    return area;
+  }
+
   /* TODO : use the geotrans from an "equilateral" reference element to
      the real element 
      check if the sign of the determinants does change

@@ -5,7 +5,7 @@
 
 QUAD = 0;
 N = 2;
-RADIUS = .167;              % radius of the real circular domain.
+RADIUS = .467;              % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;       % Degree of the piecewise polynomial
                             % defining the level set.
 
@@ -37,7 +37,7 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[60,60]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[12,12]';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';          % Integration method on sub-triangles.
   FEM = 'FEM_PK(2,2)';      % Finite element method for the unknown.

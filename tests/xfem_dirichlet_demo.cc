@@ -97,35 +97,6 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
 }
 
 /* 
- * Matrix definition for the CG
- */
-
-namespace gmm {
-
-  struct SMatrix {
-    const sparse_matrix &K, &B;
-    SMatrix(const sparse_matrix &KK, const sparse_matrix &BB) : K(KK), B(BB) {}
-  };
-  
-  template <class vecU, class vecV>
-  void mult(const SMatrix &K, const vecU &U, vecV &V) {
-    plain_vector W(gmm::mat_ncols(K.B));
-    gmm::mult(gmm::transposed(K.B), U, W);
-    double rcond;
-    plain_vector X(gmm::mat_ncols(K.B));
-    // A LU decomposition should be done only once !!
-    SuperLU_solve(K.K, X, W, rcond);
-    gmm::mult(K.B, X, V);
-  }
-  
-  
-  template <class vecU, class vecV, class vecW>
-  void mult(const SMatrix &K, const vecU &U, const vecV &V, vecW &W)
-  { mult(K, U, W); gmm::add(V, W); }
-
-}
-
-/* 
  * Main program 
  */
 
@@ -328,26 +299,30 @@ int main(int argc, char *argv[]) {
 	 << endl;
       
     // export de la solution au format vtk.
-    getfem::vtk_export exp("xfem_contact.vtk", (2==1));
+    getfem::vtk_export exp("xfem_dirichlet_demo.vtk", (2==1));
     exp.exporting(mf); 
     exp.write_point_data(mf, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d xfem_contact.vtk  -f WarpScalar -m BandedSurfaceMap -m Outline\n";
     
-    
-    
-    
-
-//     // rhs for the problem on multipliers
-//     plain_vector X(nb_real_dof), FF(nb_dof_mult);
-//     SuperLU_solve(K2, X, F2, rcond);
-//     gmm::mult(B2, X, FF);
-
-//     // cg on the problem on multipliers
-//     gmm::SMatrix SK(K2, B2);
-//     plain_vector L(nb_dof_mult);
-//     gmm::iteration iter(1e-10);
-//     gmm::cg(SK, L, FF, gmm::identity_matrix(), iter);
+    { 
+      getfem::stored_mesh_slice sl;
+      getfem::slicer_build_stored_mesh_slice slbuild(sl);
+      getfem::mesh_slicer slicer(mls.linked_mesh());
+      slicer.push_back_action(slbuild);
+      slicer.exec(8);
+      sl.write_to_file("xfem_dirichlet_demo.sl", true);
+      plain_vector slU(sl.nb_points()*mf.get_qdim());
+      sl.interpolate(mf,U,slU);
+      gmm::vecsave("xfem_dirichlet_demo.U", slU);
+    }
+    {
+      getfem::stored_mesh_slice sl0;
+      getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf,U);
+      getfem::slicer_isovalues iso(mfU,0,0);
+      sl0.build(mls.linked_mesh(), iso);
+      sl0.write_to_file("xfem_dirichlet_demo_0.sl", true);      
+    }
    
   }
   DAL_STANDARD_CATCH_ERROR;

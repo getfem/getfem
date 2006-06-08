@@ -45,13 +45,11 @@ namespace getfem {
     typedef std::string subzone;
     typedef std::set<const subzone *> zone;
     typedef std::set<const zone*> zoneset;
+
   protected :
 
     mutable std::set<subzone> allsubzones;
-
     mutable std::set<zone> allzones;
-
-    
 
     dal::dynamic_array<const std::string *> zones_of_convexes;
     mesh *linked_mesh_;
@@ -174,6 +172,9 @@ namespace getfem {
   };
 
   void getfem_mesh_level_set_noisy(void);
+
+  std::ostream &operator<<(std::ostream &os, const mesh_level_set::zone &z);
+  std::ostream &operator<<(std::ostream &os, const mesh_level_set::zoneset &zs);
 
 }  /* end of namespace getfem.                                             */
 

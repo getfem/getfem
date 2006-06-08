@@ -350,15 +350,18 @@ struct Chrono {
     convex_info &cvi = cut_cv[cv];
     cvi.zones.clear();
     for (dal::bv_visitor i(cvi.pmsh->convex_index()); !i.finished();++i) {
-      std::string subz = prezone;
-      //cout << "prezone for convex " << cv << " : " << subz << endl;
-      for (size_type j = 0; j < level_sets.size(); ++j) {
-	if (subz[j] == '*' || subz[j] == '0') {
-	  int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i);
-	  subz[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
+      // If the sub element is too small, the zone is not taken into account
+      if (cvi.pmsh->convex_area_estimate(i) > 1e-8) {
+	std::string subz = prezone;
+	//cout << "prezone for convex " << cv << " : " << subz << endl;
+	for (size_type j = 0; j < level_sets.size(); ++j) {
+	  if (subz[j] == '*' || subz[j] == '0') {
+	    int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i);
+	    subz[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
+	  }
 	}
+	merge_zoneset(cvi.zones, subz);
       }
-      merge_zoneset(cvi.zones, subz);
     }
     if (noisy) cout << "Number of zones for convex " << cv << " : "
 		    << cvi.zones.size() << endl;

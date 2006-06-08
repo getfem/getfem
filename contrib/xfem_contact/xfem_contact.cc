@@ -31,6 +31,7 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_model_solvers.h>
 #include <getfem_mesh_im_level_set.h>
+#include <getfem_partial_mesh_fem.h>
 #include <getfem_import.h>
 #include <gmm.h>
 
@@ -97,35 +98,6 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
 }
 
 /* 
- * Matrix definition for the CG
- */
-
-namespace gmm {
-
-  struct SMatrix {
-    const sparse_matrix &K, &B;
-    SMatrix(const sparse_matrix &KK, const sparse_matrix &BB) : K(KK), B(BB) {}
-  };
-  
-  template <class vecU, class vecV>
-  void mult(const SMatrix &K, const vecU &U, vecV &V) {
-    plain_vector W(gmm::mat_ncols(K.B));
-    gmm::mult(gmm::transposed(K.B), U, W);
-    double rcond;
-    plain_vector X(gmm::mat_ncols(K.B));
-    // A LU decomposition should be done only once !!
-    SuperLU_solve(K.K, X, W, rcond);
-    gmm::mult(K.B, X, V);
-  }
-  
-  
-  template <class vecU, class vecV, class vecW>
-  void mult(const SMatrix &K, const vecU &U, const vecV &V, vecW &W)
-  { mult(K, U, W); gmm::add(V, W); }
-
-}
-
-/* 
  * Main program 
  */
 
@@ -168,7 +140,6 @@ int main(int argc, char *argv[]) {
     getfem::mesh mcut;
     mls.global_cut_mesh(mcut);
     mcut.write_to_file("cut.mesh");
-
 
     // Integration method on the domain
     std::string IM = PARAM.string_value("IM", "Mesh file");
@@ -216,102 +187,60 @@ int main(int argc, char *argv[]) {
     cout << "nb_dof_mult = " << nb_dof_mult << endl;
     
 
+    // Partial Finite element methods
+    getfem::partial_mesh_fem mf2(mf);
+    dal::bit_vector kept_dof = select_dofs_from_im(mf, mim);
+    mf2.adapt(kept_dof);
+    nb_dof = mf2.nb_dof();
+
+    getfem::partial_mesh_fem mf_mult2(mf_mult);
+    dal::bit_vector kept_dof_mult = select_dofs_from_im(mf_mult, mimbound,N-1);
+    mf_mult2.adapt(kept_dof_mult);
+    nb_dof_mult = mf_mult2.nb_dof();
+
+
     // Stiffness matrix for the Poisson problem
     sparse_matrix K(nb_dof, nb_dof);
-    getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim, mf);
+    getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim, mf2);
 
+    
 
     // Mass matrix on the boundary
     sparse_matrix B(nb_dof_mult, nb_dof);
-    getfem::asm_mass_matrix(B, mimbound, mf_mult, mf);
+    getfem::asm_mass_matrix(B, mimbound, mf_mult2, mf2);
 
     // rhs
     plain_vector F(nb_dof), FD(nb_dof_rhs);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       FD[i] = rhs(mf_rhs.point_of_dof(i));
-    getfem::asm_source_term(F, mim, mf, mf_rhs, FD);
-
+    getfem::asm_source_term(F, mim, mf2, mf_rhs, FD);
 
     // Tests
     test_mim(mim, mf_rhs, false);
     test_mim(mimbound, mf_rhs, true);
 
-    // Dof selection for the solution and the multipliers
-    bool mass_elimination = PARAM.int_value("MASS_ELIMINATION",
-					    "Mass elimination on/off") != 0;
-    double elim_threshold = PARAM.real_value("ELIMINATION_THRESHOLD",
-					     "Elimination threshold");
-    sparse_matrix M1(nb_dof, nb_dof), M1bis(nb_dof, nb_dof);
-    sparse_matrix M2(nb_dof_mult, nb_dof_mult), M2bis(nb_dof_mult,nb_dof_mult);
-    if (mass_elimination) {
-      getfem::asm_mass_matrix(M1, mim, mf, mf);
-      getfem::asm_mass_matrix(M1bis, uncutmim, mf, mf);
-      getfem::asm_mass_matrix(M2, mimbound, mf_mult, mf_mult);
-      getfem::asm_mass_matrix(M2bis, uncutmim, mf_mult, mf_mult);
-    }
-
-    dal::bit_vector dof_u, dof_mult;
-    for (dal::bv_visitor i(mesh.convex_index());  !i.finished(); ++i) {
-      if (mim.int_method_of_element(i) != getfem::im_none()) {
-	for (unsigned j = 0; j < mf.nb_dof_of_element(i); ++j) {
-	  size_type ii = mf.ind_dof_of_element(i)[j];
-	  if (!mass_elimination || M1(ii,ii) > elim_threshold * M1bis(ii,ii))
-	    dof_u.add(ii);
-	}
-      
-	if (mls.is_convex_cut(i)) {
-	  for (unsigned j = 0; j < mf_mult.nb_dof_of_element(i); ++j) {
-	    size_type ii = mf_mult.ind_dof_of_element(i)[j];
-	    if (!mass_elimination ||
-		M2(ii,ii) > pow(elim_threshold * M2bis(ii,ii), double(N-1)/N))
-	      dof_mult.add(ii);
-	  }
-	}
-      }
-    }
-    
-    std::vector<size_type> ind_u;
-    for (dal::bv_visitor i(dof_u); !i.finished(); ++i) ind_u.push_back(i);
-    gmm::sub_index I(ind_u);
-    size_type nb_real_dof = ind_u.size();
-    cout << "nb_real_dof = " << nb_real_dof << endl;
-    std::vector<size_type> ind_mult;
-    for (dal::bv_visitor i(dof_mult); !i.finished(); ++i)
-      ind_mult.push_back(i);
-    gmm::sub_index J(ind_mult);
-    size_type nb_real_dof_mult = ind_mult.size();
-    cout << "nb_real_dof_mult = " << nb_real_dof_mult << endl;
-
-    // reduced matrices and rhs
-    sparse_matrix K2(nb_real_dof, nb_real_dof);
-    gmm::copy(gmm::sub_matrix(K, I), K2);
-    sparse_matrix B2(nb_real_dof_mult, nb_real_dof);
-    gmm::copy(gmm::sub_matrix(B, J, I), B2);
-    plain_vector F2(nb_real_dof);
-    gmm::copy(gmm::sub_vector(F, I), F2);
-    
     // global system
-    sparse_matrix A(nb_real_dof+nb_real_dof_mult,
-		    nb_real_dof+nb_real_dof_mult);
-    gmm::sub_interval II(0, nb_real_dof), JJ(nb_real_dof, nb_real_dof_mult);
-    gmm::copy(K2, gmm::sub_matrix(A, II));
-    gmm::copy(gmm::transposed(B2), gmm::sub_matrix(A, II, JJ));
-    gmm::copy(B2, gmm::sub_matrix(A, JJ, II));
-    plain_vector gF(nb_real_dof+nb_real_dof_mult);
-    gmm::copy(F2, gmm::sub_vector(gF, II));
+    sparse_matrix A(nb_dof + nb_dof_mult,
+		    nb_dof + nb_dof_mult);
+    gmm::sub_interval II(0, nb_dof), JJ(nb_dof, nb_dof_mult);
+    gmm::copy(K, gmm::sub_matrix(A, II));
+    gmm::copy(gmm::transposed(B), gmm::sub_matrix(A, II, JJ));
+    gmm::copy(B, gmm::sub_matrix(A, JJ, II));
+    plain_vector gF(nb_dof + nb_dof_mult);
+    gmm::copy(F, gmm::sub_vector(gF, II));
 
     double rcond; 
-    plain_vector XX(nb_real_dof+nb_real_dof_mult);
+    plain_vector XX(nb_dof + nb_dof_mult);
     SuperLU_solve(A, XX, gF, rcond);
     cout << "condition number : " << 1.0 / rcond << endl;
 
     plain_vector U(nb_dof);
-    gmm::copy(gmm::sub_vector(XX, II), gmm::sub_vector(U, I));
+    gmm::copy(gmm::sub_vector(XX, II), U);
 
 
     // interpolation of the solution on mf_rhs
     plain_vector Uint(nb_dof_rhs);
-    getfem::interpolation(mf, mf_rhs, U, Uint);
+    getfem::interpolation(mf2, mf_rhs, U, Uint);
     plain_vector Vint(nb_dof_rhs);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       Vint[i] = u_exact(mf_rhs.point_of_dof(i));
@@ -329,8 +258,8 @@ int main(int argc, char *argv[]) {
       
     // export de la solution au format vtk.
     getfem::vtk_export exp("xfem_contact.vtk", (2==1));
-    exp.exporting(mf); 
-    exp.write_point_data(mf, U, "solution");
+    exp.exporting(mf2); 
+    exp.write_point_data(mf2, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d xfem_contact.vtk  -f WarpScalar -m BandedSurfaceMap -m Outline\n";
     

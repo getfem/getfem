@@ -66,7 +66,19 @@ main() {
   cout << sl << endl;
   cout << "memory 0: " << sl.memsize() << " bytes\n";
 
+  {
+    sl.write_to_file("test_slice.sl", true);
+  }
   sl.clear();
+  {std::fstream f("test_slice.sl", std::ios::in);
+    sl.read_from_file(f, m);
+  }
+  {std::fstream f("test_slice2.sl", std::ios::out);
+   sl.write_to_file(f);
+  }
+  sl.clear();
+
+
   getfem::slicer_half_space slh1(x1,n1,false);
   getfem::mesh_slicer ms1(m); 
   ms1.push_back_action(slh1); 

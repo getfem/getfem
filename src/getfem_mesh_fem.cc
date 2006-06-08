@@ -416,7 +416,6 @@ namespace getfem {
     if (!o) DAL_THROW(file_not_found_error,
 		      "Mesh_fem file '" << name << "' does not exist");
     read_from_file(o);
-    o.close();
   }
 
   void mesh_fem::write_to_file(std::ostream &ost) const
@@ -455,7 +454,6 @@ namespace getfem {
     o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     if (with_mesh) linked_mesh().write_to_file(o);
     write_to_file(o);
-    o.close();
   }
 
   struct mf__key_ {

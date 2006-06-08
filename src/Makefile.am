@@ -62,6 +62,8 @@ nobase_include_HEADERS =                          \
 	getfem_mesh_im.h                   \
 	getfem_error_estimate.h            \
 	getfem_level_set.h	           \
+	getfem_partial_fem.h		   \
+	getfem_partial_mesh_fem.h	   \
 	getfem_mesh_level_set.h            \
 	getfem_mesh_im_level_set.h         \
 	getfem_mesh_fem_level_set.h	   \
@@ -174,6 +176,8 @@ SRC =                                      \
 	getfem_mesh_fem_product.cc         \
 	getfem_mesh_fem_sum.cc             \
 	getfem_fem_level_set.cc            \
+	getfem_partial_fem.cc		   \
+	getfem_partial_mesh_fem.cc         \
 	getfem_mesh_slicers.cc	           \
 	getfem_mesh_slice.cc	           \
 	getfem_regular_meshes.cc           \
