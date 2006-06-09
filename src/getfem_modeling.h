@@ -279,7 +279,7 @@ namespace getfem {
 
      @see getfem::mdbrick_abstract
   */
-  class mdbrick_abstract_common_base : public context_dependencies {
+  class mdbrick_abstract_common_base : public context_dependencies, public boost::noncopyable {
   public :
     struct mesh_fem_info_ {
       size_type brick_ident; // basic model brick using the mesh_fem
@@ -507,7 +507,6 @@ namespace getfem {
 // 	MPI_Reduce(&((MS.residual())[0]), &(resloc[0]),
 // 		      gmm::vect_size(MS.residual()), gmm::mpi_type(value_type()),
 // 		   MPI_SUM,0, MPI_COMM_WORLD);
-	cout << "reduce of residual  time = " << MPI_Wtime() - t_init << endl;
 	gmm::copy(resloc, MS.residual());
       }
 #endif
@@ -827,11 +826,7 @@ namespace getfem {
 	 // (this->K, this->mim, this->mf_u, lambda_.mf(), lambda_.get(), mu_.get(),
 	 this->mf_u.linked_mesh().get_mpi_region());
       
-      cout << "Check context ..." << endl;
       this->context_check();
-      cout << "context is checked..." << endl;
-      
-
     }
 
   public :
@@ -1701,8 +1696,14 @@ namespace getfem {
     mdbrick_constraint(mdbrick_abstract<MODEL_STATE> &problem,		       
 		       size_type num_fem_=0)
       : sub_problem(problem), eps(1e-9), num_fem(num_fem_),
-	co_how(AUGMENTED_CONSTRAINTS) { init_(); }
-    
+	co_how(AUGMENTED_CONSTRAINTS) { 
+      init_(); 
+    }
+
+    mdbrick_constraint(mdbrick_constraint<MODEL_STATE>& problem) : 
+      sub_problem(problem), eps(1e-9), num_fem(0),
+      co_how(AUGMENTED_CONSTRAINTS) { init_(true); }
+
   };
 
 
@@ -1807,19 +1808,17 @@ namespace getfem {
 		      const mesh_fem &mf_mult_ = dummy_mesh_fem(), 
 		      size_type num_fem_=0)
       : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), 
-	R_("R", this),
-	boundary(bound) {
+	R_("R", this), boundary(bound) {
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
-      if (mf_mult->get_qdim() != mf_u().get_qdim()) 
-	DAL_THROW(dal::failure_error, "The lagrange multipliers mesh fem "
-		  "for the Dirichlet brick should have the same Qdim as "
-		  "the main mesh_fem");
-
       this->add_proper_boundary_info(this->num_fem, boundary, 
 				     MDBRICK_DIRICHLET);
       this->add_dependency(*mf_mult);
       mfdata_set = false; B_to_be_computed = true;
       this->force_update();
+      if (mf_mult->get_qdim() != mf_u().get_qdim()) 
+	DAL_THROW(dal::failure_error, "The lagrange multipliers mesh fem "
+		  "for the Dirichlet brick should have the same Qdim as "
+		  "the main mesh_fem");
     }
   };
 
