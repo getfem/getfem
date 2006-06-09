@@ -32,6 +32,7 @@
 #include <getfem_model_solvers.h>
 #include <getfem_mesh_im_level_set.h>
 #include <getfem_partial_mesh_fem.h>
+#include <getfem_Coulomb_friction.h>
 #include <getfem_import.h>
 #include <gmm.h>
 
@@ -50,7 +51,6 @@ using bgeot::base_matrix; /* small dense matrix. */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
-
 
 /* 
  * Exact solution 
@@ -88,9 +88,9 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
   assem.assembly(getfem::mesh_region::all_convexes());
   double exact(0), R2 = Radius*Radius, R3 = R2*Radius;
   switch (N) {
-  case 1: exact = bound ? 2.0 : 2*Radius; break;
-  case 2: exact = bound ? 2.0*Radius*M_PI : R2*M_PI; break;
-  case 3: exact = bound ? 4.0*M_PI*R2 : 4.0*M_PI*R3/3.0; break;
+  case 1: exact = bound ? 1.0 : Radius; break;
+  case 2: exact = bound ? Radius*M_PI : R2*M_PI/2.0; break;
+  case 3: exact = bound ? 2.0*M_PI*R2 : 2.0*M_PI*R3/3.0; break;
   default: assert(N <= 3);
   }
   if (bound) cout << "Boundary length: "; else cout << "Area: ";
@@ -107,13 +107,12 @@ int main(int argc, char *argv[]) {
   DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  // getfem::getfem_mesh_level_set_noisy();
-
   try {
     
     // Read parameters.
     ftool::md_param PARAM;
     PARAM.read_command_line(argc, argv);
+    bool signorini = (PARAM.int_value("SIGNORINI", "Is signorini ?") != 0);
 
     // Load the mesh
     getfem::mesh mesh;
@@ -125,6 +124,7 @@ int main(int argc, char *argv[]) {
     base_node Pmin(N), Pmax(N);
     mesh.bounding_box(Pmin, Pmax);
     Pmin += Pmax; Pmin /= -2.0;
+    Pmin[N-1] = -Pmax[N-1];
     mesh.translation(Pmin);
 
     // Level set definition
@@ -195,71 +195,84 @@ int main(int argc, char *argv[]) {
     size_type nb_dof_mult = mf_mult.nb_dof();
     cout << "nb_dof_mult = " << nb_dof_mult << endl;
 
-    // Stiffness matrix for the Poisson problem
-    sparse_matrix K(nb_dof, nb_dof);
-    getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim, mf);
-
-    
-
-    // Mass matrix on the boundary
-    sparse_matrix B(nb_dof_mult, nb_dof);
-    getfem::asm_mass_matrix(B, mimbound, mf_mult, mf);
-
-    // rhs
-    plain_vector F(nb_dof), FD(nb_dof_rhs);
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      FD[i] = rhs(mf_rhs.point_of_dof(i));
-    getfem::asm_source_term(F, mim, mf, mf_rhs, FD);
-
     // Tests
     test_mim(mim, mf_rhs, false);
     test_mim(mimbound, mf_rhs, true);
 
-    // global system
-    sparse_matrix A(nb_dof + nb_dof_mult,
-		    nb_dof + nb_dof_mult);
-    gmm::sub_interval II(0, nb_dof), JJ(nb_dof, nb_dof_mult);
-    gmm::copy(K, gmm::sub_matrix(A, II));
-    gmm::copy(gmm::transposed(B), gmm::sub_matrix(A, II, JJ));
-    gmm::copy(B, gmm::sub_matrix(A, JJ, II));
-    plain_vector gF(nb_dof + nb_dof_mult);
-    gmm::copy(F, gmm::sub_vector(gF, II));
+    // Selecting Dirichlet boundary
+    unsigned dirichlet_boundary = 1;
+    getfem::mesh_region border_faces;
+    getfem::outer_faces_of_mesh(mesh, border_faces);
+    for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+      base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+      un /= gmm::vect_norm2(un);
+      if (gmm::abs(un[N-1] - 1.0) < 0.01)
+	mesh.region(dirichlet_boundary).add(i.cv(), i.f());
+    }
 
-    double rcond; 
-    plain_vector XX(nb_dof + nb_dof_mult);
-    SuperLU_solve(A, XX, gF, rcond);
-    cout << "condition number : " << 1.0 / rcond << endl;
+ 
+    // Mass matrix on the boundary
+    sparse_matrix B(nb_dof_mult, nb_dof);
+    getfem::asm_mass_matrix(B, mimbound, mf_mult, mf);
 
+    // Brick system
+    getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
+
+    getfem::mdbrick_Dirichlet<>
+      brick_dirichlet(brick_laplacian, dirichlet_boundary, pre_mf_mult);
+    plain_vector F(nb_dof_rhs);
+    getfem::interpolation_function(mf_rhs, F, u_exact, dirichlet_boundary);
+    brick_dirichlet.rhs().set(mf_rhs, F);
+    brick_dirichlet.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+    
+    getfem::mdbrick_source_term<> brick_volumic_rhs(brick_dirichlet);
+    getfem::interpolation_function(mf_rhs, F, rhs);
+    brick_volumic_rhs.source_term().set(mf_rhs, F);
+
+    getfem::mdbrick_constraint<> brick_constraint(brick_volumic_rhs);
+    brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
+    brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+
+    getfem::mdbrick_Coulomb_friction<>
+      brick_signorini(brick_volumic_rhs, B, plain_vector(nb_dof_mult));
+    
+    getfem::mdbrick_abstract<> *final_brick = &brick_constraint;
+    if (signorini) final_brick = &brick_signorini;
+    
+    // Solving the problem
+    cout << "Total number of unknown: " << final_brick->nb_dof() << endl;
+    getfem::standard_model_state MS(*final_brick);
+    gmm::iteration iter(1e-9, 1, 40000);
+    getfem::standard_solve(MS, *final_brick, iter);
     plain_vector U(nb_dof);
-    gmm::copy(gmm::sub_vector(XX, II), U);
-
+    gmm::copy(brick_laplacian.get_solution(MS), U);
 
     // interpolation of the solution on mf_rhs
-    plain_vector Uint(nb_dof_rhs);
+    plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs);
     getfem::interpolation(mf, mf_rhs, U, Uint);
-    plain_vector Vint(nb_dof_rhs);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       Vint[i] = u_exact(mf_rhs.point_of_dof(i));
 
     // computation of max error.
-    double errmax = 0.0;
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
-	errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
-    cout << "Linfty error: " << errmax << endl;
-    cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
-	 << endl;
-    cout << "H1 error: " << getfem::asm_H1_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
-	 << endl;
+    if (!signorini) {
+      double errmax = 0.0;
+      for (size_type i = 0; i < nb_dof_rhs; ++i)
+	if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
+	  errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
+      cout << "Linfty error: " << errmax << endl;
+      cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
+	   << endl;
+      cout << "H1 error: " << getfem::asm_H1_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
+	   << endl;
+    }
       
     // export de la solution au format vtk.
     getfem::vtk_export exp("xfem_contact.vtk", (2==1));
     exp.exporting(mf); 
     exp.write_point_data(mf, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d xfem_contact.vtk  -f WarpScalar -m BandedSurfaceMap -m Outline\n";
-    
-    
+      "mayavi -d xfem_contact.vtk -f WarpScalar -m BandedSurfaceMap "
+      "-m Outline\n";
   }
   DAL_STANDARD_CATCH_ERROR;
 

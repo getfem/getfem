@@ -61,6 +61,5 @@ if ($err2 > $err1 / 3.4) {
   print "Convergence error: P1: $err1 $err2\n";
   exit(1);
 }
-print ".";
 
 
