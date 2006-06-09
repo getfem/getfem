@@ -119,15 +119,13 @@ namespace getfem {
       
     for (dal::bv_visitor cv(linked_mesh().convex_index());
 	 !cv.finished(); ++cv) {
-      bool whole = true;
       dal::bit_vector selected_dofs;
       for (size_type i = 0; i < mf.nb_dof_of_element(cv); ++i)
 	if (kept_dofs.is_in(mf.ind_dof_of_element(cv)[i])) 
 	  selected_dofs.add(i);
-	else
-	  whole = false;
-      if (whole) set_finite_element(cv, mf.fem_of_element(cv));
-      else {
+      if (selected_dofs.card() == mf.nb_dof_of_element(cv))
+	set_finite_element(cv, mf.fem_of_element(cv));
+      else if (selected_dofs.card()) {
 	pfem pf = new partial_fem(mf.fem_of_element(cv), selected_dofs, cv);
 	dal::add_stored_object(new special_partialmf_key(pf), pf,
 			       pf->ref_convex(0),
