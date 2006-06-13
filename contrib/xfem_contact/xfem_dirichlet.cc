@@ -63,6 +63,14 @@ double u_exact(const base_node &p) {
   return 5.0 * sin(sum) * (norm_sqr - Radius*Radius);
 }
 
+double g_exact(const base_node &p) {
+  double sum = std::accumulate(p.begin(), p.end(), double(0));
+  double norm_sqr = gmm::vect_norm2_sqr(p);
+  if (norm_sqr < 1e-10) norm_sqr = 1e-10;
+  return 5.0 * (sum * cos(sum) * (norm_sqr - Radius*Radius)
+		+ 2.0 * norm_sqr * sin(sum)) / sqrt(norm_sqr);
+}
+
 double rhs(const base_node &p) {
   double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
@@ -146,9 +154,9 @@ int main(int argc, char *argv[]) {
     mlsdown.add_level_set(lsdown);
     mlsdown.adapt();
     
-//     getfem::mesh mcut;
-//     mls.global_cut_mesh(mcut);
-//     mcut.write_to_file("cut.mesh");
+    getfem::mesh mcut;
+    mlsdown.global_cut_mesh(mcut);
+    mcut.write_to_file("cut.mesh");
 
     // Integration method on the domain
     std::string IM = PARAM.string_value("IM", "Mesh file");
@@ -166,17 +174,17 @@ int main(int argc, char *argv[]) {
 
     // Integration methods on the boudary
     int intbound = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
+    getfem::mesh_im_level_set mimbounddown(mlsdown, intbound,
+					   getfem::int_method_descriptor(IMS));
+    mimbounddown.set_integration_method(mesh.convex_index(),
+					getfem::int_method_descriptor(IM));
+    mimbounddown.adapt();
     getfem::mesh_im_level_set mimboundup(mlsup, intbound,
 					 getfem::int_method_descriptor(IMS));
     mimboundup.set_integration_method(mesh.convex_index(),
 				      getfem::int_method_descriptor(IM));
     mimboundup.adapt();
-    getfem::mesh_im_level_set mimbounddown(mlsdown, intbound,
-					   getfem::int_method_descriptor(IMS));
-    mimbounddown.set_integration_method(mesh.convex_index(),
-				      getfem::int_method_descriptor(IM));
-    mimbounddown.adapt();
-
+    
     // Finite element method for the unknown
     getfem::mesh_fem pre_mf(mesh);
     std::string FEM = PARAM.string_value("FEM", "finite element method");
@@ -211,13 +219,20 @@ int main(int argc, char *argv[]) {
     size_type nb_dof_mult = mf_mult.nb_dof();
     cout << "nb_dof_mult = " << nb_dof_mult << endl;
 
+ 
+    // Mass matrix on the boundary
+    sparse_matrix B2(mf_rhs.nb_dof(), nb_dof);
+    getfem::asm_mass_matrix(B2, mimboundup, mf_rhs, mf);
+
+    cerr << "attention\n";
+    sparse_matrix B(nb_dof_mult, nb_dof);
+    getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
+    cerr << "je suis mort\n";
+
+
     // Tests
     test_mim(mim, mf_rhs, false);
     test_mim(mimbounddown, mf_rhs, true);
- 
-    // Mass matrix on the boundary
-    sparse_matrix B(nb_dof_mult, nb_dof);
-    getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
 
     // Brick system
     getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
@@ -227,6 +242,13 @@ int main(int argc, char *argv[]) {
     getfem::interpolation_function(mf_rhs, F, rhs);
     brick_volumic_rhs.source_term().set(mf_rhs, F);
 
+    // Neumann condition
+    getfem::interpolation_function(mf_rhs, F, g_exact);
+    plain_vector R(nb_dof);
+    gmm::mult(gmm::transposed(B2), F, R);
+    brick_volumic_rhs.set_auxF(R);
+
+    // Dirichlet condition
     getfem::mdbrick_constraint<> brick_constraint(brick_volumic_rhs);
     brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
     brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
