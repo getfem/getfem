@@ -1690,17 +1690,16 @@ namespace getfem {
   }
 
   struct cv_fem_compare {
-    const std::deque<const mesh_fem *>& mf;
+    const std::deque<const mesh_fem *> &mf;
     cv_fem_compare(const std::deque<const mesh_fem *>& mf_) : mf(mf_) {}
     bool operator()(size_type a, size_type b) {
       for (size_type i=0; i < mf.size(); ++i) {
-	/*
-	  if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b))
-	  return true;
-	if (mf[i]->fem_of_element(a) == mf[i]->fem_of_element(b) &&
-	    mf[i]->nb_dof_of_element(a) < mf[i]->nb_dof_of_element(b))
-	  return true;
-	*/
+	assert(mf[i]->convex_index().is_in(a));
+	assert(mf[i]->convex_index().is_in(b));
+	if (mf[i]->fem_of_element(a) == 0) 
+	  DAL_INTERNAL_ERROR("no fem on " << i << "th mesh_fem, at cv " << a);
+	if (mf[i]->fem_of_element(b) == 0) 
+	  DAL_INTERNAL_ERROR("no fem on " << i << "th mesh_fem, at cv " << b);
 
 	/* sort by nb_dof and then by fem */
 	if (mf[i]->nb_dof_of_element(a) < mf[i]->nb_dof_of_element(b)) {
@@ -1726,19 +1725,26 @@ namespace getfem {
     for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
       if (cvlst.is_in(cv) && imtab[0]->int_method_of_element(cv) != im_none()) {
 	bool ok = true;
-        for (size_type i=0; i < mftab.size(); ++i)
+        for (size_type i=0; i < mftab.size(); ++i) {
           if (!mftab[i]->convex_index().is_in(cv)) {
 	    ok = false;
             //ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
 	  }
-        if (ok) cvorder.push_back(cv);
+	}
+        if (ok) {
+	  cvorder.push_back(cv);
+	}
       } else if (!imtab[0]->linked_mesh().convex_index().is_in(cv)) {
         ASM_THROW_ERROR("the convex " << cv << " is not part of the mesh");
       } else {
 	/* skip convexes without integration method */
       }
     }
-    std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
+
+    cerr << "cvorder = " << cvorder << "\n";
+
+    cv_fem_compare cmp(mftab); 
+    std::stable_sort(cvorder.begin(), cvorder.end(), cmp);
   }
   
   void generic_assembly::consistency_check() {

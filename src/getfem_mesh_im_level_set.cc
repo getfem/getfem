@@ -88,7 +88,7 @@ namespace getfem {
       if (mls.get_level_set(i)->has_secondary())
 	isin = isin && ((mesherls1[i])(P) < 0);
     }
-    return ((integrate_where & INTEGRATE_INSIDE)) ? isin : !isin;
+    return ((integrate_where & INTEGRATE_OUTSIDE)) ? !isin : isin;
   }
 
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
@@ -108,7 +108,7 @@ namespace getfem {
 	mesherls1[i] =  mls.get_level_set(i)->mls_of_convex(cv, 1, false);
     }
 
-    if (integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
+    if (integrate_where != (INTEGRATE_ALL)) {
       for (dal::bv_visitor scv(msh.convex_index()); !scv.finished(); ++scv) {
 	B = dal::mean_value(msh.points_of_convex(scv));
 	convexes_arein[scv] = is_point_in_selected_area(mesherls0, mesherls1, B);

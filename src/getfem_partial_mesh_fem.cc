@@ -128,6 +128,7 @@ namespace getfem {
 	if (selected_dofs.card() == mf.nb_dof_of_element(cv))
 	  set_finite_element(cv, mf.fem_of_element(cv));
 	else if (selected_dofs.card()) {
+	  assert(mf.fem_of_element(cv) != 0);
 	  pfem pf = new partial_fem(mf.fem_of_element(cv), selected_dofs, cv);
 	  dal::add_stored_object(new special_partialmf_key(pf), pf,
 				 pf->ref_convex(0),
