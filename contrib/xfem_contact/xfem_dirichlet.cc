@@ -20,7 +20,7 @@
 /* *********************************************************************** */
 
 /**
- * Goal : scalar Signorini problem with Xfem.
+ * Goal : scalar Dirichlet problem with Xfem.
  *
  * Research program.
  */
@@ -88,9 +88,9 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
   assem.assembly(getfem::mesh_region::all_convexes());
   double exact(0), R2 = Radius*Radius, R3 = R2*Radius;
   switch (N) {
-  case 1: exact = bound ? 1.0 : Radius; break;
-  case 2: exact = bound ? Radius*M_PI : R2*M_PI/2.0; break;
-  case 3: exact = bound ? 2.0*M_PI*R2 : 2.0*M_PI*R3/3.0; break;
+  case 1: exact = bound ? 1.0 : 2.0*Radius; break;
+  case 2: exact = bound ? Radius*M_PI : R2*M_PI; break;
+  case 3: exact = bound ? 2.0*M_PI*R2 : 4.0*M_PI*R3/3.0; break;
   default: assert(N <= 3);
   }
   if (bound) cout << "Boundary length: "; else cout << "Area: ";
@@ -112,7 +112,6 @@ int main(int argc, char *argv[]) {
     // Read parameters.
     ftool::md_param PARAM;
     PARAM.read_command_line(argc, argv);
-    bool signorini = (PARAM.int_value("SIGNORINI", "Is signorini ?") != 0);
 
     // Load the mesh
     getfem::mesh mesh;
@@ -124,23 +123,32 @@ int main(int argc, char *argv[]) {
     base_node Pmin(N), Pmax(N);
     mesh.bounding_box(Pmin, Pmax);
     Pmin += Pmax; Pmin /= -2.0;
-    Pmin[N-1] = -Pmax[N-1];
+    // Pmin[N-1] = -Pmax[N-1];
     mesh.translation(Pmin);
 
     // Level set definition
     unsigned lsdeg = PARAM.int_value("LEVEL_SET_DEGREE", "level set degree");
     Radius = PARAM.real_value("RADIUS", "Domain radius");
     getfem::level_set ls(mesh, lsdeg);
+    getfem::level_set lsup(mesh, lsdeg, true), lsdown(mesh, lsdeg, true);
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
-    for (unsigned i = 0; i < lsmf.nb_dof(); ++i)
-      ls.values()[i] = gmm::vect_norm2_sqr(lsmf.point_of_dof(i))-Radius*Radius;
-    getfem::mesh_level_set mls(mesh);
+    for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
+      lsup.values()[i] = lsdown.values()[i] = ls.values()[i]
+	= gmm::vect_norm2_sqr(lsmf.point_of_dof(i))-Radius*Radius;
+      lsdown.values(1)[i] = lsmf.point_of_dof(i)[1];
+      lsup.values(1)[i] = -lsmf.point_of_dof(i)[1];
+    }
+    getfem::mesh_level_set mls(mesh), mlsup(mesh), mlsdown(mesh);
     mls.add_level_set(ls);
     mls.adapt();
+    mlsup.add_level_set(lsup);
+    mlsup.adapt();
+    mlsdown.add_level_set(lsdown);
+    mlsdown.adapt();
     
-    getfem::mesh mcut;
-    mls.global_cut_mesh(mcut);
-    mcut.write_to_file("cut.mesh");
+//     getfem::mesh mcut;
+//     mls.global_cut_mesh(mcut);
+//     mcut.write_to_file("cut.mesh");
 
     // Integration method on the domain
     std::string IM = PARAM.string_value("IM", "Mesh file");
@@ -156,14 +164,18 @@ int main(int argc, char *argv[]) {
     mim.adapt();
 
 
-    // Integration method on the boudary
+    // Integration methods on the boudary
     int intbound = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
-    getfem::mesh_im_level_set mimbound(mls, intbound,
-				       getfem::int_method_descriptor(IMS));
-    mimbound.set_integration_method(mesh.convex_index(),
-				    getfem::int_method_descriptor(IM));
-    mimbound.adapt();
-    
+    getfem::mesh_im_level_set mimboundup(mlsup, intbound,
+					 getfem::int_method_descriptor(IMS));
+    mimboundup.set_integration_method(mesh.convex_index(),
+				      getfem::int_method_descriptor(IM));
+    mimboundup.adapt();
+    getfem::mesh_im_level_set mimbounddown(mlsdown, intbound,
+					   getfem::int_method_descriptor(IMS));
+    mimbounddown.set_integration_method(mesh.convex_index(),
+				      getfem::int_method_descriptor(IM));
+    mimbounddown.adapt();
 
     // Finite element method for the unknown
     getfem::mesh_fem pre_mf(mesh);
@@ -194,42 +206,24 @@ int main(int argc, char *argv[]) {
 				   getfem::fem_descriptor(FEMM));
     getfem::partial_mesh_fem mf_mult(pre_mf_mult);
     dal::bit_vector kept_dof_mult
-      = select_dofs_from_im(pre_mf_mult, mimbound,N-1);
+      = select_dofs_from_im(pre_mf_mult, mimbounddown, N-1);
     mf_mult.adapt(kept_dof_mult, rejected_elt);
     size_type nb_dof_mult = mf_mult.nb_dof();
     cout << "nb_dof_mult = " << nb_dof_mult << endl;
 
     // Tests
     test_mim(mim, mf_rhs, false);
-    test_mim(mimbound, mf_rhs, true);
-
-    // Selecting Dirichlet boundary
-    unsigned dirichlet_boundary = 1;
-    getfem::mesh_region border_faces;
-    getfem::outer_faces_of_mesh(mesh, border_faces);
-    for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-      base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
-      un /= gmm::vect_norm2(un);
-      if (gmm::abs(un[N-1] - 1.0) < 0.01)
-	mesh.region(dirichlet_boundary).add(i.cv(), i.f());
-    }
-
+    test_mim(mimbounddown, mf_rhs, true);
  
     // Mass matrix on the boundary
     sparse_matrix B(nb_dof_mult, nb_dof);
-    getfem::asm_mass_matrix(B, mimbound, mf_mult, mf);
+    getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
 
     // Brick system
     getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
-
-    getfem::mdbrick_Dirichlet<>
-      brick_dirichlet(brick_laplacian, dirichlet_boundary, pre_mf_mult);
-    plain_vector F(nb_dof_rhs);
-    getfem::interpolation_function(mf_rhs, F, u_exact, dirichlet_boundary);
-    brick_dirichlet.rhs().set(mf_rhs, F);
-    brick_dirichlet.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
     
-    getfem::mdbrick_source_term<> brick_volumic_rhs(brick_dirichlet);
+    getfem::mdbrick_source_term<> brick_volumic_rhs(brick_laplacian);
+    plain_vector F(nb_dof_rhs);
     getfem::interpolation_function(mf_rhs, F, rhs);
     brick_volumic_rhs.source_term().set(mf_rhs, F);
 
@@ -237,11 +231,7 @@ int main(int argc, char *argv[]) {
     brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
     brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
 
-    getfem::mdbrick_Coulomb_friction<>
-      brick_signorini(brick_volumic_rhs, B, plain_vector(nb_dof_mult));
-    
     getfem::mdbrick_abstract<> *final_brick = &brick_constraint;
-    if (signorini) final_brick = &brick_signorini;
     
     // Solving the problem
     cout << "Total number of unknown: " << final_brick->nb_dof() << endl;
@@ -258,24 +248,22 @@ int main(int argc, char *argv[]) {
       Vint[i] = u_exact(mf_rhs.point_of_dof(i));
 
     // computation of max error.
-    if (!signorini) {
-      double errmax = 0.0;
-      for (size_type i = 0; i < nb_dof_rhs; ++i)
-	if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
-	  errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
-      cout << "Linfty error: " << errmax << endl;
-      cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
-	   << endl;
-      cout << "H1 error: " << getfem::asm_H1_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
-	   << endl;
-    }
-      
+    double errmax = 0.0;
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
+	errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
+    cout << "Linfty error: " << errmax << endl;
+    cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
+	 << endl;
+    cout << "H1 error: " << getfem::asm_H1_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
+	 << endl;
+    
     // export de la solution au format vtk.
-    getfem::vtk_export exp("xfem_contact.vtk", (2==1));
+    getfem::vtk_export exp("xfem_dirichlet.vtk", (2==1));
     exp.exporting(mf); 
     exp.write_point_data(mf, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d xfem_contact.vtk -f WarpScalar -m BandedSurfaceMap "
+      "mayavi -d xfem_dirichlet.vtk -f WarpScalar -m BandedSurfaceMap "
       "-m Outline\n";
   }
   DAL_STANDARD_CATCH_ERROR;
