@@ -5,7 +5,7 @@
 
 QUAD = 0;
 N = 2;
-RADIUS = 0.5;             % radius of the real circular domain.
+RADIUS = 0.5;              % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
                            % defining the level set.
 SIGNORINI = 0;             % 1 = Signorini, 0 = Dirichlet.
@@ -37,11 +37,11 @@ if (N == 2 && ~QUAD)
   MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[21,21]';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';
-  FEM = 'FEM_PK(2,3)';      % Finite element method for the unknown.
+  FEM = 'FEM_PK(2,2)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,2)';
   FEM_RHS = 'FEM_PK(2,2)';  % Finite element method for the rhs
-%  FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
-  FEM_MULT = 'FEM_PK_DISCONTINUOUS(2,1)';
+  FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
+%  FEM_MULT = 'FEM_PK_DISCONTINUOUS(2,1)';
   OK = 1;
 end;
 

@@ -51,7 +51,8 @@ namespace getfem {
 
     /** build the mesh_fem keeping only the dof of the original
 	mesh_fem which are listed in kept_dof. */
-    void adapt(const dal::bit_vector &kept_dof);
+    void adapt(const dal::bit_vector &kept_dof,
+	       const dal::bit_vector &rejected_elt = dal::bit_vector());
     void clear(void);
 
     void receipt(const MESH_CLEAR &);

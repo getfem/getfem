@@ -172,7 +172,12 @@ int main(int argc, char *argv[]) {
 			      getfem::fem_descriptor(FEM));
     getfem::partial_mesh_fem mf(pre_mf);
     dal::bit_vector kept_dof = select_dofs_from_im(pre_mf, mim);
-    mf.adapt(kept_dof);
+    dal::bit_vector rejected_elt;
+    for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv)
+      if (mim.int_method_of_element(cv) == getfem::im_none())
+	rejected_elt.add(cv);
+    cout << "rejected_elt " << rejected_elt << endl;
+    mf.adapt(kept_dof, rejected_elt);
     size_type nb_dof = mf.nb_dof();
     
     // Finite element method for the rhs
@@ -191,7 +196,7 @@ int main(int argc, char *argv[]) {
     getfem::partial_mesh_fem mf_mult(pre_mf_mult);
     dal::bit_vector kept_dof_mult
       = select_dofs_from_im(pre_mf_mult, mimbound,N-1);
-    mf_mult.adapt(kept_dof_mult);
+    mf_mult.adapt(kept_dof_mult, rejected_elt);
     size_type nb_dof_mult = mf_mult.nb_dof();
     cout << "nb_dof_mult = " << nb_dof_mult << endl;
 

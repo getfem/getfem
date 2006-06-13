@@ -111,29 +111,31 @@ namespace getfem {
   }
 
   DAL_SIMPLE_KEY(special_partialmf_key, pfem);
-  void partial_mesh_fem::adapt(const dal::bit_vector &kept_dofs) {
+  void partial_mesh_fem::adapt(const dal::bit_vector &kept_dofs,
+			       const dal::bit_vector &rejected_elt) {
     context_check();
     clear();
     
     dal::bit_vector kept_dof;
       
     for (dal::bv_visitor cv(linked_mesh().convex_index());
-	 !cv.finished(); ++cv) {
-      dal::bit_vector selected_dofs;
-      for (size_type i = 0; i < mf.nb_dof_of_element(cv); ++i)
-	if (kept_dofs.is_in(mf.ind_dof_of_element(cv)[i])) 
-	  selected_dofs.add(i);
-      if (selected_dofs.card() == mf.nb_dof_of_element(cv))
-	set_finite_element(cv, mf.fem_of_element(cv));
-      else if (selected_dofs.card()) {
-	pfem pf = new partial_fem(mf.fem_of_element(cv), selected_dofs, cv);
-	dal::add_stored_object(new special_partialmf_key(pf), pf,
-			       pf->ref_convex(0),
-			       pf->node_tab(0));
-	build_methods.push_back(pf);
-	set_finite_element(cv, pf);
+	 !cv.finished(); ++cv)
+      if (!rejected_elt.is_in(cv)) {
+	dal::bit_vector selected_dofs;
+	for (size_type i = 0; i < mf.nb_dof_of_element(cv); ++i)
+	  if (kept_dofs.is_in(mf.ind_dof_of_element(cv)[i])) 
+	    selected_dofs.add(i);
+	if (selected_dofs.card() == mf.nb_dof_of_element(cv))
+	  set_finite_element(cv, mf.fem_of_element(cv));
+	else if (selected_dofs.card()) {
+	  pfem pf = new partial_fem(mf.fem_of_element(cv), selected_dofs, cv);
+	  dal::add_stored_object(new special_partialmf_key(pf), pf,
+				 pf->ref_convex(0),
+				 pf->node_tab(0));
+	  build_methods.push_back(pf);
+	  set_finite_element(cv, pf);
+	}
       }
-    }
     is_adapted = true; touch();
   }
 
