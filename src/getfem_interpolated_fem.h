@@ -152,19 +152,25 @@ namespace getfem {
 		     dal::bit_vector blocked_dof = dal::bit_vector(),
 		     bool store_val = true);
     
-    /** create a new interpolated FEM. 
-	@param mef the mesh_fem that will be interpolated.
-	@param mim the integration method on the final mesh (not the mesh of mef!).
-	@param pif an optional geometric transformation applied to mef.linked_mesh() (used for getfem::spider_fem)
-	@param blocked_dof list of dof of mef which won't be interpolated.
-	@param store_val if true, the values/gradients of interpolated base function are cached at each gauss point (eats much memory).
-    */
     friend pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
-				     pinterpolated_func pif = 0,
-				     dal::bit_vector blocked_dof = dal::bit_vector(),
-				     bool store_val = true);
+				     pinterpolated_func pif,
+				     dal::bit_vector blocked_dof,
+				     bool store_val);
   };
   
+
+  /** create a new interpolated FEM. 
+      @param mef the mesh_fem that will be interpolated.
+      @param mim the integration method on the final mesh (not the mesh of mef!).
+      @param pif an optional geometric transformation applied to mef.linked_mesh() (used for getfem::spider_fem)
+      @param blocked_dof list of dof of mef which won't be interpolated.
+      @param store_val if true, the values/gradients of interpolated base function are cached at each gauss point (eats much memory).
+  */
+  pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
+			    pinterpolated_func pif = 0,
+			    dal::bit_vector blocked_dof = dal::bit_vector(),
+			    bool store_val = true);
+
   /** release an interpolated fem */
   inline void del_interpolated_fem(pfem pf) { dal::del_stored_object(pf); }
 

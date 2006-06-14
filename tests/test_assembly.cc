@@ -1656,7 +1656,7 @@ public:
   
   const bgeot::multi_index &sizes() const { return sizes_; }
   
-  virtual void compute(getfem::fem_interpolation_context& ctx,
+  virtual void compute(getfem::fem_interpolation_context& ,
 		       bgeot::base_tensor &t) {
     assert(t.size() == N*N);
     /*size_type cv = ctx.convex_num();

@@ -166,7 +166,7 @@ void plate_problem::init(void) {
      gmm::resize( u3_Four, N_Four, N_Four) ;
      base_matrix Jmn(3, 3) ; 
      base_small_vector Bmn(3), Xmn(3) ; 
-     scalar_type det_Jmn, E, nu, A, B, e2, Pmn ;
+     scalar_type /*det_Jmn, */E, nu, A, B, e2, Pmn ;
      E = 4.*mu*(mu+lambda) / (2. * mu + lambda);
      nu = lambda / (2. * mu + lambda);
      e2 = epsilon * epsilon ;
