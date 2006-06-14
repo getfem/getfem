@@ -1692,27 +1692,23 @@ namespace getfem {
   struct cv_fem_compare {
     const std::deque<const mesh_fem *> &mf;
     cv_fem_compare(const std::deque<const mesh_fem *>& mf_) : mf(mf_) {}
-    bool operator()(size_type a, size_type b) {
+    bool operator()(size_type a, size_type b) const {
       for (size_type i=0; i < mf.size(); ++i) {
-	assert(mf[i]->convex_index().is_in(a));
-	assert(mf[i]->convex_index().is_in(b));
-	if (mf[i]->fem_of_element(a) == 0) 
-	  DAL_INTERNAL_ERROR("no fem on " << i << "th mesh_fem, at cv " << a);
-	if (mf[i]->fem_of_element(b) == 0) 
-	  DAL_INTERNAL_ERROR("no fem on " << i << "th mesh_fem, at cv " << b);
-
 	/* sort by nb_dof and then by fem */
-	if (mf[i]->nb_dof_of_element(a) < mf[i]->nb_dof_of_element(b)) {
+	unsigned nba = mf[i]->nb_dof_of_element(a);
+	unsigned nbb = mf[i]->nb_dof_of_element(b);
+	if (nba < nbb) {
 	  return true;
-	}
-	if (mf[i]->nb_dof_of_element(a) == mf[i]->nb_dof_of_element(b) && 
-	    mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b)) {
+	} else if (nba > nbb) {
+	  return false;
+	} else if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b)) {
 	  return true;
 	}
       }
       return false;
     }
   };
+
   /* reorder the convexes in order to minimize the number of
      shape modifications during the assembly (since this can be
      very expensive) */
@@ -1722,6 +1718,7 @@ namespace getfem {
 			       const dal::bit_vector& candidates, 
 			       std::vector<size_type>& cvorder) {
     cvorder.reserve(candidates.card()); cvorder.resize(0);
+    
     for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
       if (cvlst.is_in(cv) && imtab[0]->int_method_of_element(cv) != im_none()) {
 	bool ok = true;
@@ -1740,11 +1737,7 @@ namespace getfem {
 	/* skip convexes without integration method */
       }
     }
-
-    cerr << "cvorder = " << cvorder << "\n";
-
-    cv_fem_compare cmp(mftab); 
-    std::stable_sort(cvorder.begin(), cvorder.end(), cmp);
+    std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
   }
   
   void generic_assembly::consistency_check() {
