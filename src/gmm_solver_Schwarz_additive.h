@@ -139,7 +139,8 @@ namespace gmm {
     
     if (iter.get_noisy()) cout << "Init pour sub dom ";
 #ifdef GMM_USES_MPI
-    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,tag3=13,sizepr = 0,tab[4];
+    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,tag3=13,sizepr = 0;
+    //    int tab[4];
     double t_ref,t_final;
     MPI_Status status;
     t_ref=MPI_Wtime();
@@ -148,8 +149,7 @@ namespace gmm {
     tranche=nb_sub/size;
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
-    if (rank==size-1) borne_sup=nb_sub;
-
+    // if (rank==size-1) borne_sup = nb_sub;
 
     cout << "Nombre de sous domaines " << borne_sup - borne_inf << endl;
 
@@ -162,9 +162,10 @@ namespace gmm {
     //Each process receive  Nproc-1 contributions 
 
     for (int nproc = 0; nproc < size; ++nproc) {
-      //      for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
-     for (size_type j = 0; j < size_type(nb_sub/size); ++j) {
-      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
+       for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
+// 	for (size_type i = 0; i < nb_sub/size; ++i) {
+// 	for (size_type i = 0; i < nb_sub; ++i) {
+	// size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
 
 	cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
 #else
@@ -246,30 +247,29 @@ namespace gmm {
     std::vector<double> qbis(gmm::vect_size(q));
     std::vector<double> qter(gmm::vect_size(q));
 #ifdef GMM_USES_MPI
-    MPI_Status status;
-    MPI_Request request,request1;
-    int tag=111;
-    int size,tranche,borne_sup,borne_inf,rank,nb_sub;
-    nb_sub=M.fi.size();
+    //    MPI_Status status;
+    //    MPI_Request request,request1;
+    //    int tag=111;
+    int size,tranche,borne_sup,borne_inf,rank;
+    size_type nb_sub=M.fi.size();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    nb_sub=M.fi.size();
     tranche=nb_sub/size;
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
-    if (rank==size-1) borne_sup=nb_sub;
-    int next = (rank + 1) % size;
-    int previous = (rank + size - 1) % size;
+    // if (rank==size-1) borne_sup=nb_sub;
+    //    int next = (rank + 1) % size;
+    //    int previous = (rank + size - 1) % size;
     t_ref = MPI_Wtime();
-//     for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
-     for (size_type j = 0; j < size_type(nb_sub/size); ++j)
+     for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+//        for (size_type i = 0; i < nb_sub/size; ++i)
+      // for (size_type j = 0; j < nb_sub; ++j)
 #else
-
     for (size_type i = 0; i < M.fi.size(); ++i)
 #endif
       {
 #ifdef GMM_USES_MPI
-      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
+	// size_type i=j; // (rank+size*(j-1)+nb_sub)%nb_sub;
 #endif
 	gmm::mult(gmm::transposed((*(M.vB))[i]), q, M.fi[i]);
        M.iter.init();
@@ -285,7 +285,8 @@ namespace gmm {
     gmm::clear(q);
 #ifdef GMM_USES_MPI
     t_ref = MPI_Wtime();
-     for (size_type j = 0; j < size_type(nb_sub/size); ++j)
+    // for (size_type j = 0; j < nb_sub; ++j)
+    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
 
 #else
       for (size_type i = 0; i < M.gi.size(); ++i)
@@ -293,16 +294,17 @@ namespace gmm {
 	{
 
 #ifdef GMM_USES_MPI
-      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
-      gmm::mult((*(M.vB))[i], M.gi[i], qbis,qbis);
-
+	  // size_type i=j; // (rank+size*(j-1)+nb_sub)%nb_sub;
+// 	  gmm::mult((*(M.vB))[i], M.gi[i], qbis,qbis);
+	  gmm::mult((*(M.vB))[i], M.gi[i], qter);
+	  add(qter,qbis,qbis);
 #else
 	  gmm::mult((*(M.vB))[i], M.gi[i], q, q);
 #endif
 	}
 #ifdef GMM_USES_MPI
      //WARNING this add only if you use the ring pattern below
-		// need to do this below if using a n explicit ring pattern communication
+  // need to do this below if using a n explicit ring pattern communication
 
 //      add(qbis,q,q);
     cout << "Second AS loop time " <<  MPI_Wtime() - t_ref << endl;
@@ -310,7 +312,7 @@ namespace gmm {
 
 
 #ifdef GMM_USES_MPI
-    int tag1=11;
+    //    int tag1=11;
     static double t_tot = 0.0;
     double t_final;
     t_ref=MPI_Wtime();
@@ -428,18 +430,18 @@ namespace gmm {
     tranche=nb_sub/size;
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
-    if (rank==size-1) borne_sup=nb_sub;
-//     for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
-     for (size_type j = 0; j < size_type(nb_sub/size); ++j)
-
-    //    for (size_type i = rank; i < nb_sub; i+=size)
+    // if (rank==size-1) borne_sup=nb_sub*size;
+    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+//     for (size_type i = 0; i < nb_sub/size; ++i)
+      // for (size_type j = 0; j < nb_sub; ++j)
+      // for (size_type i = rank; i < nb_sub; i+=size)
 #else
     for (size_type i = 0; i < nb_sub; ++i)
 #endif
     {
 
 #ifdef GMM_USES_MPI
-      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
+      // size_type i=j; // (rank+size*(j-1)+nb_sub)%nb_sub;
 #endif
       gmm::mult(gmm::transposed((*(ASM.vB))[i]), f, ASM.fi[i]);
       ASM.iter.init();
@@ -447,11 +449,9 @@ namespace gmm {
 		     ASM.precond1[i], ASM.iter);
       ASM.itebilan = std::max(ASM.itebilan, ASM.iter.get_iteration());
 #ifdef GMM_USES_MPI
-
     gmm::mult((*(ASM.vB))[i], ASM.gi[i], gbis,gbis);
-
 #else   
-      gmm::mult((*(ASM.vB))[i], ASM.gi[i], g, g);
+    gmm::mult((*(ASM.vB))[i], ASM.gi[i], g, g);
 #endif
     }
 #ifdef GMM_USES_MPI

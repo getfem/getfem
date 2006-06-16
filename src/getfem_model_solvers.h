@@ -143,15 +143,21 @@ namespace getfem {
 #endif
 
 #if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER
-  template <typename MAT, typename VECT> 
+  template <typename MODEL_STATE, typename MAT, typename VECT> 
   struct linear_solver_para_schwarzadd
     : public abstract_linear_solver<MAT, VECT> {
+
+    typedef typename MODEL_STATE::value_type value_type;
 
     const mdbrick_abstract<MODEL_STATE> &problem;
     int nblocsubdom; // Number of sub-domains per process
 
+    linear_solver_para_schwarzadd(const mdbrick_abstract<MODEL_STATE> &problem_, 
+				  int nblocsubdom_)
+      : problem(problem_), nblocsubdom(nblocsubdom_) {}
+
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &) const { 
+		     gmm::iteration &iter) const { 
       double tt_ref=MPI_Wtime();
 
       // Meshes sub-partition.
@@ -162,63 +168,98 @@ namespace getfem {
       std::vector< std::vector<int> > eparts(mesh_set.size());
 
       int size, rank, nset = 0;
+      size_type ndof = problem.nb_dof();
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       MPI_Comm_size(MPI_COMM_WORLD, &size);
 
       for (std::set<const mesh *>::iterator it = mesh_set.begin();
 	   it != mesh_set.end(); ++it, ++nset) {
 
-	int ne = int(it->get_mpi_region().nb_convex());
-	std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
+	int ne = int((*it)->get_mpi_region().nb_convex());
+	std::vector<int> xadj(ne+1), adjncy, numelt((*it)->convex_index().last_true()+1), numeltinv(ne), npart(ne);
 
 	int j = 0, k = 0;
-	ind_set s;
-	for (mr_visitor ic(it->get_mpi_region()); !ic.finished();++ic,++j) {
-	  numelt[j] = ic.cv();
+	bgeot::mesh_structure::ind_set s;
+	for (mr_visitor ic((*it)->get_mpi_region()); !ic.finished();++ic,++j) 
+	  { numelt[ic.cv()] = j; numeltinv[j] = ic.cv(); }
+
+	j = 0;
+	for (mr_visitor ic((*it)->get_mpi_region()); !ic.finished();++ic,++j) {
 	  xadj[j] = k;
-	  it->neighbours_of_convex(ic.cv(), s);
-	  for (ind_set::iterator it = s.begin();
-	       it != s.end(); ++it)
-	    if (it->get_mpi_region().is_in(*it)) 
-	      { adjncy.push_back(*it); ++k; }  
+	  (*it)->neighbours_of_convex(ic.cv(), s);
+	  for (bgeot::mesh_structure::ind_set::iterator iti = s.begin();
+	       iti != s.end(); ++iti)
+	    if ((*it)->get_mpi_region().is_in(*iti)) 
+	      { adjncy.push_back(numelt[*iti]); ++k; }  
 	}
 	xadj[j] = k;
 
 	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
+	int nbbl = nblocsubdom/size;
 
 	// The mpi region is partitionned into nblocsubdom sub-domains.
 	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
-			    &numflag, &nblocsubdom, options, &edgecut,
+			    &numflag, &nbbl, options, &edgecut,
 			    &(npart[0]));
 
-	eparts[nset].resize(nblocsubdom);
-
+	eparts[nset].resize(0);
+	eparts[nset].resize((*it)->convex_index().last()+1, size_type(-1));
+	
 	for (size_type i = 0; i < size_type(ne); ++i)
-	  eparts[nset][npart[i]].push_back(numelt[i]);
+	  eparts[nset][numeltinv[i]] = npart[i];
+      }
+      
+      // To be completeted for non-finite element dofs
+      // nblocsubdom is number of sub dom per proc  
+//       std::vector<dal::bit_vector> Bidof(nblocsubdom);
+      // nblocsubdom is the global number of  sub dom        
+      std::vector<dal::bit_vector> Bidof(nblocsubdom/size);
+      size_type apos = 0;
+      for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
+	const mesh_fem &mf = problem.get_mesh_fem(i);
+	nset = 0;
+	for (std::set<const mesh *>::iterator it = mesh_set.begin();
+	     it != mesh_set.end(); ++it, ++nset)
+	  if (*it == &(mf.linked_mesh())) break; 
+	size_type pos = problem.get_mesh_fem_position(i);
+	if (pos != apos)
+	  DAL_THROW(failure_error, "Multipliers are not taken into account");
+	size_type length = mf.nb_dof();
+	apos += length;
+	for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
+	  size_type k = eparts[nset][j];
+	  if (k != size_type(-1))
+	    for (size_type l = 0; l < mf.nb_dof_of_element(j); ++l)
+	      Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
+	}
+	if (apos != ndof)
+	  DAL_THROW(failure_error, "Multipliers are not taken into account");
+      }
+      // nblocsubdom is number of sub dom per proc        
+//       std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom*size);   
+      // nblocsubdom is the global number of  sub dom             
+      std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom);     
+      // nblocsubdom is number of sub dom per proc        
+//       for (size_type i = 0; i < size_type(nblocsubdom); ++i) {
+      // nblocsubdom is the global number of  sub dom        
+      for (size_type i = 0; i < size_type(nblocsubdom/size); ++i) {
+     // nblocsubdom is number of sub dom per proc        
+// 	gmm::resize(Bi[size*rank + i], ndof, Bidof[i].card());
+     // nblocsubdom is the global number of  sub dom     
+	gmm::resize(Bi[(nblocsubdom/size)*rank + i], ndof, Bidof[i].card());
+	size_type k = 0;
+	for (dal::bv_visitor j(Bidof[i]); !j.finished(); ++j, ++k)
+    // nblocsubdom is number of sub dom per proc      
+// 	  Bi[size*rank + i](j, k) = value_type(1);
+     // nblocsubdom is the global number of  sub dom    
+	  Bi[(nblocsubdom/size)*rank + i](j, k) = value_type(1);
       }
 
-     
-
-
-
-
-
-
+      gmm::mpi_distributed_matrix<MAT> mpiM(ndof, ndof);
+      gmm::copy(M, mpiM.local_matrix());
       
-
-
-      // 2 - Fabrication des Bi
-      // 3 - Appel de S.A.
-
-
-
-
-
-
-
-      // MUMPS_distributed_matrix_solve(M, x, b);
-
-
+      additive_schwarz(mpiM, x, b, gmm::identity_matrix(), Bi, iter,
+		       gmm::using_superlu(), gmm::using_cg());
 
       cout<<"temps SCHWARZ ADD "<< MPI_Wtime() - tt_ref<<endl;
     }
@@ -231,7 +272,6 @@ namespace getfem {
     typedef abstract_linear_solver<T_MATRIX, VECTOR> lsolver_type;
     typedef std::auto_ptr<lsolver_type> plsolver_type;
   };
-
 
 
   template <typename MODEL_STATE> 
@@ -247,7 +287,10 @@ namespace getfem {
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     p.reset(new linear_solver_distributed_mumps<T_MATRIX, VECTOR>);
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER
-    p.reset(new linear_solver_para_schwarzadd<T_MATRIX, VECTOR>);
+    int size;
+//     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    size=32;//global number of sub_dom
+    p.reset(new linear_solver_para_schwarzadd<MODEL_STATE, T_MATRIX, VECTOR>(problem, size));
 #else
     size_type ndof = problem.nb_dof(), max3d = 15000, dim = problem.dim();
 # ifdef GMM_USES_MUMPS

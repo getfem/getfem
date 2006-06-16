@@ -393,9 +393,9 @@ namespace getfem {
     { context_check(); return mesh_fems_info[i]; }
     const mesh_fem &get_mesh_fem(size_type i) const
     { context_check(); return *(mesh_fems[i]); }
-    size_type get_mesh_fem_position(size_type i)
+    size_type get_mesh_fem_position(size_type i) const
     { context_check(); return mesh_fem_positions[i]; }
-    size_type nb_mesh_fems(void) { context_check(); return mesh_fems.size(); }
+    size_type nb_mesh_fems(void) const { context_check(); return mesh_fems.size(); }
 
     dim_type dim(void) const
     { context_check(); return mesh_fems[0]->linked_mesh().dim(); }
