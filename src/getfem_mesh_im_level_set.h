@@ -70,9 +70,13 @@ namespace getfem {
     enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,
            INTEGRATE_BOUNDARY = 4};
     void update_from_context(void) const;
+    
+    /** Apply the adequate integration methods. */
     void adapt(void);
     void clear(void); // to be modified
 
+    /** Set the specific integration methods. see the constructor
+	documentation for more details. */
     void set_simplex_im(pintegration_method reg,
 			pintegration_method sing = 0) {
       regular_simplex_pim = reg;
@@ -88,7 +92,21 @@ namespace getfem {
     size_type memsize() const {
       return mesh_im::memsize(); // + ... ;
     }
-    
+
+    /** 
+	@param me the level-set.
+	
+	@param integrate_where : choose between INTEGRATE_ALL,
+	INTEGRATE_BOUNDARY, INTEGRATE_INSIDE and INTEGRATE_OUTSIDE.
+
+	@param reg the integration method (for simplices) that will be
+	used on the sub-simplices of convexes crossed by the levelset.
+
+	@param sing the (optional) integration method to use on the crack tips
+	(i.e. when the levelset has a secondary level set), this is
+	generally an IM_QUASI_POLAR method as it provides a good
+	integration of singular XFEM functions.
+    */
     mesh_im_level_set(mesh_level_set &me, 
 		      int integrate_where_ = INTEGRATE_ALL,
 		      pintegration_method reg = 0,

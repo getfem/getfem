@@ -207,13 +207,18 @@ namespace getfem {
       size_type qqdim = gmm::vect_size(U)/mf.nb_dof();
       size_type pos = 0;
       coeff.resize(qqdim);
+
+      gmm::clear(V);
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
-	if (!mf.convex_index().is_in(cv)) 
-	  DAL_THROW(dal::failure_error, "convex " << cv << " has no fem");
         refpts.resize(nodes(i).size());
         for (size_type j=0; j < refpts.size(); ++j)
 	  refpts[j] = nodes(i)[j].pt_ref;
+	if (!mf.convex_index().is_in(cv)) {
+	  pos += refpts.size() * qdim * qqdim;
+	  continue;
+	}
+	//DAL_THROW(dal::failure_error, "convex " << cv << " has no fem");
         pfem pf = mf.fem_of_element(cv);
 	if (pf->need_G()) 
 	  bgeot::vectors_to_base_matrix(G,

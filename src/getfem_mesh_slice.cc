@@ -111,8 +111,8 @@ namespace getfem {
     ist.seekg(0);ist.clear();
     ftool::read_until(ist, "BEGIN MESH_SLICE");
 
-    mesh_slicer::cs_nodes_ct nodes;
-    mesh_slicer::cs_simplexes_ct simplexes;
+    mesh_slicer::cs_nodes_ct nod;
+    mesh_slicer::cs_simplexes_ct sim;
     
 
     while (true) {
@@ -133,31 +133,31 @@ namespace getfem {
 	bgeot::pconvex_ref cvr = m.trans_of_convex(ic)->convex_ref();
 	unsigned fcnt, discont, nbn, nbs;
 	ist >> fcnt >> discont >> nbn >> nbs;
-	nodes.resize(nbn); 
-	simplexes.resize(nbs);
+	nod.resize(nbn); 
+	sim.resize(nbs);
 	for (unsigned i=0; i < nbn; ++i) {
-	  nodes[i].pt.resize(dim()); 
-	  nodes[i].pt_ref.resize(cvr->structure()->dim());
+	  nod[i].pt.resize(dim()); 
+	  nod[i].pt_ref.resize(cvr->structure()->dim());
 	  for (unsigned j=0; j < dim(); ++j) 
-	    ist >> nodes[i].pt[j];
+	    ist >> nod[i].pt[j];
 	  ist >> ftool::skip(";");
 	  for (unsigned j=0; j < cvr->structure()->dim(); ++j) 
-	    ist >> nodes[i].pt_ref[j];
+	    ist >> nod[i].pt_ref[j];
 	  ist >> ftool::skip(";");
 	  unsigned long ul; ist >> ul;
-	  nodes[i].faces = slice_node::faces_ct(ul);
+	  nod[i].faces = slice_node::faces_ct(ul);
 	}
 	for (unsigned i=0; i < nbs; ++i) {
 	  unsigned np(0);
 	  ist >> np >> ftool::skip(":");
 	  if (np > dim()+1) 
 	    DAL_THROW(dal::failure_error, "invalid simplex..");
-	  simplexes[i].inodes.resize(np);
+	  sim[i].inodes.resize(np);
 	  for (unsigned j=0; j < np; ++j) 
-	    ist >> simplexes[i].inodes[j];
+	    ist >> sim[i].inodes[j];
 	}
 	dal::bit_vector bv; bv.add(0, nbs);
-	set_convex(ic, cvr, nodes, simplexes, dim_type(fcnt), bv, discont);
+	set_convex(ic, cvr, nod, sim, dim_type(fcnt), bv, discont);
       } else if (tmp.size()) {
 	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
 		  "' [pos=" << std::streamoff(ist.tellg()) << "]");

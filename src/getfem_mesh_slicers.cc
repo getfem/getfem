@@ -826,7 +826,6 @@ namespace getfem {
       if (prev_cvr != cvr || nrefine != prev_nrefine || discont || prev_discont) {
 	if (discont) {
 	  //if (prev_cv != it.cv())
-	  cerr << "refined_simplex_mesh_for_convex_cut_by_level_set(" << it.cv() << "):\n";
 	  cvm = &refined_simplex_mesh_for_convex_cut_by_level_set(mls->mesh_of_convex(cv), 
 								  nrefine);
 	} else {
@@ -887,7 +886,7 @@ namespace getfem {
 		 on the discontinuity (yes this is quite ugly and not 
 		 robust) 
 	      */
-	      nodes.back().pt_ref = cvm_pts[*itp] + 0.05*(G - cvm_pts[*itp]);
+	      nodes.back().pt_ref = cvm_pts[*itp] + 0.01*(G - cvm_pts[*itp]);
 	    }
 	    nodes.back().faces = points_on_faces[*itp];
 	    nodes.back().pt.resize(m.dim()); nodes.back().pt.fill(0.);

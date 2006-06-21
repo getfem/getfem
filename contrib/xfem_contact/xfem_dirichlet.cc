@@ -56,27 +56,87 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
  * Exact solution 
  */
 double Radius;
-
+int u_version;
+double u_alpha = 1.5;
+double u_B = 20;
+double u_n = 7.0;
+double dtheta = M_PI/36;
 double u_exact(const base_node &p) {
-  double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
-  return 5.0 * sin(sum) * (norm_sqr - Radius*Radius);
+  switch (u_version) {
+    case 0: {
+      double sum = std::accumulate(p.begin(), p.end(), double(0));
+      
+      return 5.0 * sin(sum) * (norm_sqr - Radius*Radius);
+    }
+    case 1: {
+      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+      return Radius*Radius - r*r *(1+A*(1.0 + sin(n*T)));
+    }
+    case 2: {
+      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
+      return (Radius*Radius - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
+    }
+  }
+  DAL_THROW(dal::failure_error, "Invalid exact solution");
 }
 
 double g_exact(const base_node &p) {
-  double sum = std::accumulate(p.begin(), p.end(), double(0));
   double norm_sqr = gmm::vect_norm2_sqr(p);
-  if (norm_sqr < 1e-10) norm_sqr = 1e-10;
-  return 5.0 * (sum * cos(sum) * (norm_sqr - Radius*Radius)
-		+ 2.0 * norm_sqr * sin(sum)) / sqrt(norm_sqr);
+  switch (u_version) {
+    case 0: {
+      double sum = std::accumulate(p.begin(), p.end(), double(0));
+      if (norm_sqr < 1e-10) norm_sqr = 1e-10;
+      return 5.0 * (sum * cos(sum) * (norm_sqr - Radius*Radius)
+		    + 2.0 * norm_sqr * sin(sum)) / sqrt(norm_sqr);
+    }
+    case 1: {
+      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+      return - sqrt(r*r*pow(2.0*sin(T)+2.0*sin(T)*A+2.0*sin(T)*A*sin(n*T)+cos(T)*A*cos(n*T)*n,2.0)+r*r*pow(-2.0*cos(T)-2.0*cos(T)*A-2.0*cos(T)*A*sin(n*T)+sin(T)*A*cos(n*T)*n,2.0));
+    } 
+    case 2: {
+      double R=Radius, r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
+      if (gmm::abs(r) < 1e-10) r = 1e-10;
+      return -(4.0*r*cos(B*r)+8.0*r*cos(B*r)*A+8.0*r*cos(B*r)*A*A+2.0*sin(B*r)*B*R*R-2.0*sin(B*r)*B*r*r+r*A*A*pow(cos(n*T),2.0)*n*n*cos(B*r)+8.0*r*cos(B*r)*A*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*sin(n*T)+2.0*sin(B*r)*B*r*r*A*A*pow(cos(n*T),2.0)-4.0*r*cos(B*r)*A*A*pow(cos(n*T),2.0)+8.0*r*cos(B*r)*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*A-4.0*sin(B*r)*B*r*r*A+2.0*sin(B*r)*B*R*R*A+2.0*sin(B*r)*B*R*R*A*sin(n*T))/sqrt(A*A*pow(cos(n*T),2.0)*n*n+4.0+8.0*A+8.0*A*sin(n*T)+8.0*A*A+8.0*A*A*sin(n*T)-4.0*A*A*pow(cos(n*T),2.0));
+    }
+  }
+  return 0;
 }
 
 double rhs(const base_node &p) {
-  double sum = std::accumulate(p.begin(), p.end(), double(0));
-  double norm_sqr = gmm::vect_norm2_sqr(p);
-  double N = double(gmm::vect_size(p));
-  return 5.0 * (N * sin(sum) * (norm_sqr - Radius*Radius-2.0)
-		- 4.0 * sum * cos(sum));
+  switch (u_version) {
+    case 0: {
+      double sum = std::accumulate(p.begin(), p.end(), double(0));
+      double norm_sqr = gmm::vect_norm2_sqr(p);
+      double N = double(gmm::vect_size(p));
+      return 5.0 * (N * sin(sum) * (norm_sqr - Radius*Radius-2.0)
+		    - 4.0 * sum * cos(sum));
+    }
+    case 1: {
+      double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+      return -(-4.0-4.0*A-4.0*A*sin(n*T)+A*sin(n*T)*n*n);
+    }
+    case 2: {
+      double R=Radius, r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
+      if (gmm::abs(r) < 1e-10) r = 1e-10;
+      return (4.0*r*cos(B*r)*A*sin(n*T)-5.0*sin(B*r)*B*r*r*A+4.0*r*cos(B*r)+4.0*
+r*cos(B*r)*A+sin(B*r)*B*R*R-5.0*sin(B*r)*B*r*r-5.0*sin(B*r)*B*r*r*A*sin(n*T)-r*
+r*r*cos(B*r)*B*B-r*A*sin(n*T)*n*n*cos(B*r)+r*cos(B*r)*B*B*R*R-r*r*r*cos(B*r)*B*
+	      B*A-r*r*r*cos(B*r)*B*B*A*sin(n*T))/r;
+    }
+  }
+  return 0;
+}
+
+double ls_value(const base_node &p) {
+  switch (u_version) {
+    case 0: return gmm::vect_norm2_sqr(p)-Radius*Radius;
+    case 1: case 2: {
+      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+      return r*r*(1+A*(1.0 + sin(n*T))) - Radius*Radius;
+    }
+  }
+  return 0;
 }
 
 /*
@@ -85,25 +145,27 @@ double rhs(const base_node &p) {
 
 void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
 	      bool bound) {
-  unsigned N =  mim.linked_mesh().dim();
-  size_type nbdof = mf_rhs.nb_dof();
-  plain_vector V(nbdof), W(1);
-  std::fill(V.begin(), V.end(), 1.0);
-
-  getfem::generic_assembly assem("u = data(#1); V()+=comp(Base(#1))(i).u(i);");
-  assem.push_mi(mim); assem.push_mf(mf_rhs); assem.push_data(V);
-  assem.push_vec(W);
-  assem.assembly(getfem::mesh_region::all_convexes());
-  double exact(0), R2 = Radius*Radius, R3 = R2*Radius;
-  switch (N) {
-  case 1: exact = bound ? 1.0 : 2.0*Radius; break;
-  case 2: exact = bound ? Radius*M_PI : R2*M_PI; break;
-  case 3: exact = bound ? 2.0*M_PI*R2 : 4.0*M_PI*R3/3.0; break;
-  default: assert(N <= 3);
+  if (!u_version) {
+    unsigned N =  mim.linked_mesh().dim();
+    size_type nbdof = mf_rhs.nb_dof();
+    plain_vector V(nbdof), W(1);
+    std::fill(V.begin(), V.end(), 1.0);
+    
+    getfem::generic_assembly assem("u=data(#1); V()+=comp(Base(#1))(i).u(i);");
+    assem.push_mi(mim); assem.push_mf(mf_rhs); assem.push_data(V);
+    assem.push_vec(W);
+    assem.assembly(getfem::mesh_region::all_convexes());
+    double exact(0), R2 = Radius*Radius, R3 = R2*Radius;
+    switch (N) {
+      case 1: exact = bound ? 1.0 : 2.0*Radius; break;
+      case 2: exact = bound ? Radius*M_PI : R2*M_PI; break;
+      case 3: exact = bound ? 2.0*M_PI*R2 : 4.0*M_PI*R3/3.0; break;
+      default: assert(N <= 3);
+    }
+    if (bound) cout << "Boundary length: "; else cout << "Area: ";
+    cout << W[0] << " should be " << exact << endl;
+    assert(gmm::abs(exact-W[0])/exact < 0.01); 
   }
-  if (bound) cout << "Boundary length: "; else cout << "Area: ";
-  cout << W[0] << " should be " << exact << endl;
-  assert(gmm::abs(exact-W[0])/exact < 0.01); 
 }
 
 /* 
@@ -120,7 +182,8 @@ int main(int argc, char *argv[]) {
     // Read parameters.
     ftool::md_param PARAM;
     PARAM.read_command_line(argc, argv);
-
+    u_version = PARAM.int_value("EXACT_SOL", "Which exact solution");
+    
     // Load the mesh
     getfem::mesh mesh;
     std::string MESH_FILE = PARAM.string_value("MESH_FILE", "Mesh file");
@@ -142,7 +205,7 @@ int main(int argc, char *argv[]) {
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
     for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
       lsup.values()[i] = lsdown.values()[i] = ls.values()[i]
-	= gmm::vect_norm2_sqr(lsmf.point_of_dof(i))-Radius*Radius;
+	= ls_value(lsmf.point_of_dof(i));
       lsdown.values(1)[i] = lsmf.point_of_dof(i)[1];
       lsup.values(1)[i] = -lsmf.point_of_dof(i)[1];
     }
@@ -155,7 +218,7 @@ int main(int argc, char *argv[]) {
     mlsdown.adapt();
     
     getfem::mesh mcut;
-    mlsdown.global_cut_mesh(mcut);
+    mls.global_cut_mesh(mcut);
     mcut.write_to_file("cut.mesh");
 
     // Integration method on the domain
@@ -224,11 +287,8 @@ int main(int argc, char *argv[]) {
     sparse_matrix B2(mf_rhs.nb_dof(), nb_dof);
     getfem::asm_mass_matrix(B2, mimboundup, mf_rhs, mf);
 
-    cerr << "attention\n";
     sparse_matrix B(nb_dof_mult, nb_dof);
     getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
-    cerr << "je suis mort\n";
-
 
     // Tests
     test_mim(mim, mf_rhs, false);
@@ -272,7 +332,7 @@ int main(int argc, char *argv[]) {
     // computation of max error.
     double errmax = 0.0;
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
+      if (ls_value(mf_rhs.point_of_dof(i)) < 0.0)
 	errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
     cout << "Linfty error: " << errmax << endl;
     cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
@@ -287,6 +347,23 @@ int main(int argc, char *argv[]) {
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d xfem_dirichlet.vtk -f WarpScalar -m BandedSurfaceMap "
       "-m Outline\n";
+
+    lsmf.write_to_file("xfem_dirichlet_ls.mf", true);
+    gmm::vecsave("xfem_dirichlet_ls.U", ls.values());
+
+    
+    getfem::stored_mesh_slice sl;
+    unsigned nrefine = mf.linked_mesh().convex_index().card() < 200 ? 32 : 4;
+    
+    getfem::mesh_slicer slicer(mf.linked_mesh());
+    getfem::slicer_build_stored_mesh_slice sbuild(sl);
+    slicer.push_back_action(sbuild);
+    slicer.exec(nrefine, mf.convex_index());
+
+    sl.write_to_file("xfem_dirichlet.sl", true);
+    plain_vector UU(sl.nb_points()); 
+    sl.interpolate(mf, U, UU);
+    gmm::vecsave("xfem_dirichlet.slU", UU);
   }
   DAL_STANDARD_CATCH_ERROR;
 
