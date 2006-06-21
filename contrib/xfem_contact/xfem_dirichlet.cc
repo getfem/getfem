@@ -351,19 +351,30 @@ int main(int argc, char *argv[]) {
     lsmf.write_to_file("xfem_dirichlet_ls.mf", true);
     gmm::vecsave("xfem_dirichlet_ls.U", ls.values());
 
-    
-    getfem::stored_mesh_slice sl;
     unsigned nrefine = mf.linked_mesh().convex_index().card() < 200 ? 32 : 4;
+    {
+      cout << "saving the slice solution for matlab\n";
+      getfem::stored_mesh_slice sl, sl0;
     
-    getfem::mesh_slicer slicer(mf.linked_mesh());
-    getfem::slicer_build_stored_mesh_slice sbuild(sl);
-    slicer.push_back_action(sbuild);
-    slicer.exec(nrefine, mf.convex_index());
+      getfem::mesh_slicer slicer(mf.linked_mesh());
+      getfem::slicer_build_stored_mesh_slice sbuild(sl);
+      getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf,U);
+      getfem::slicer_isovalues iso(mfU, 0.0, 0);
+      getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
 
-    sl.write_to_file("xfem_dirichlet.sl", true);
-    plain_vector UU(sl.nb_points()); 
-    sl.interpolate(mf, U, UU);
-    gmm::vecsave("xfem_dirichlet.slU", UU);
+      slicer.push_back_action(sbuild);  // full slice in sl
+      slicer.push_back_action(iso);     // extract isosurface 0
+      slicer.push_back_action(sbuild0); // store it into sl0
+
+      slicer.exec(nrefine, mf.convex_index());
+
+      sl.write_to_file("xfem_dirichlet.sl", true);
+      sl0.write_to_file("xfem_dirichlet.sl0", true);
+      plain_vector UU(sl.nb_points()); 
+      sl.interpolate(mf, U, UU);
+      gmm::vecsave("xfem_dirichlet.slU", UU);
+    }
+    
   }
   DAL_STANDARD_CATCH_ERROR;
 
