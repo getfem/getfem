@@ -770,37 +770,6 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     assem.push_mat(A); assem.assembly(mpinonrefrg);
     gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
 
-
-    // plain_vector U_scal_N(nbdof_u);
-   
-
-     /*construction du vecteur pour U.N*/
-  /*  asm_1stcomp_for_normal_part(U_scal_N, mim, mf_u, Un0, mpinonrefrg);
-    for(getfem::mr_visitor i(mpinonrefrg); !i.finished(); ++i){
-       unsigned int I_m1=2*i;
-       U_scal_N[I_m1]=0; // 0 pour la 2ieme composante en chq pt de la paroi de sortie
-       }*/
-       
-
-    
-    // sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
-    // plain_vector selectU(nbdof_u);
-    /*   for(getfem::mr_visitor i(mpinonrefrg); !i.finished(); ++i){
-
-	 unsigned int I=2*i-1;
-         unsigned int I_m1=2*i;
-         selectU[I]=1;  //  selectionne la 1ere composante  [1]
-         selectU[Im1]=0; //                                 [0] 
-         }*/
-    
-    // asm_nonref_mat(A, mim, mf_u, mf_mult, Un0, selectU, dt, mpinonrefrg);
-
-    // gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
-  
-  
-  
-  
-  
   
   }
   cout << "Nb on Non reflective condition: " << nbdof_nonref << endl;
@@ -844,10 +813,12 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     //    plain_vector subY1(nbdof_u);
     // gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
 
-    
+    plain_vector subY1(nbdof_u);
+    gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
+
     // Volumic source term
     pdef->source_term(*this, t, F);
-    getfem::asm_source_term(gmm::sub_vector(Y, I1), mim, mf_u, mf_rhs, F,
+    getfem::asm_source_term(subY1, mim, mf_u, mf_rhs, F,
 			    mpirg);
 
     // Normal Dirichlet condition
@@ -868,23 +839,12 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A1, I1, I4));
     {
       plain_vector VV(mf_mult.nb_dof());
-      if (t < 0.2)
+    /*  if (t < 0.2)
 	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg);
       else {
-	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
+	*/getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
 	
-	// plain_vector selectV(nbdof_u);
- /*     for(getfem::mr_visitor i(mpinonrefrg); !i.finished(); ++i){
-
-	 unsigned int I=2*i-1;
-         unsigned int I_m1=2*i;
-         selectV[I]=0;  //  selectionne la 2ieme composante    [0]
-         selectV[Im1]=1;  //                                   [1]
-         }*/
-	 
-	 
-	 // asm_nonref_right_hand_side2(VV, mim, mf_u, mf_mult, Un0, selectV, dt, mpinonrefrg);
-      }
+      //}
       gmm::copy(gmm::sub_vector(VV, SUB_CT_NONREF), gmm::sub_vector(Y, I4));
     }
 
@@ -978,6 +938,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
       compute_gradient(mf_u, mf_rhs, Un0, DU);
       for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
 	Rot[i] = DU[i*N*N + 3] - DU[i*N*N + 2];
+	if ((Rot[i]*Rot[i])<=1.5){Rot[i]=0;}
       }
       cout << "Saving Rot, |rot| = " << gmm::vect_norm2(Rot) << "\n";
       exp->write_point_data(mf_rhs, Rot);
