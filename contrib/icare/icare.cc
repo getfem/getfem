@@ -690,6 +690,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   // Mass Matrix
   sparse_matrix M(nbdof_u, nbdof_u);
   asm_mass_matrix(M, mim, mf_u, mpirg);
+  
+
 
   // Matrix p div u
   sparse_matrix B(nbdof_p, nbdof_u);
@@ -800,6 +802,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     //
     size_type sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir + nbdof_nonref;
     sparse_matrix A1(sizelsystem, sizelsystem);
+   
+    sparse_matrix A2(sizelsystem, sizelsystem);  // sera utilisée pour reappliquer la CNR
+    
     plain_vector Y(sizelsystem), YY(nbdof_u);
     // laplace operator
     gmm::copy(K1, gmm::sub_matrix(A1, I1));
@@ -808,6 +813,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     getfem::asm_NS_uuT(gmm::sub_matrix(A1, I1), mim, mf_u, Un0, mpirg);
     // Dynamic part
     gmm::add(gmm::scaled(M, 1./dt), gmm::sub_matrix(A1, I1));
+        
+     gmm::add(M, gmm::sub_matrix(A2, I1));
+
+    
     gmm::mult(M, gmm::scaled(Un0, 1./dt), gmm::sub_vector(Y, I1));
 
     //    plain_vector subY1(nbdof_u);
@@ -824,9 +833,17 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     // Normal Dirichlet condition
     gmm::copy(HND, gmm::sub_matrix(A1, I2, I1));
     gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A1, I1, I2));
+    
+    gmm::copy(HND, gmm::sub_matrix(A2, I2, I1));
+    gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A2, I1, I2));
+    
     // Dirichlet condition
     gmm::copy(HD, gmm::sub_matrix(A1, I3, I1));
     gmm::copy(gmm::transposed(HD), gmm::sub_matrix(A1, I1, I3));
+    
+    gmm::copy(HD, gmm::sub_matrix(A2, I3, I1));
+    gmm::copy(gmm::transposed(HD), gmm::sub_matrix(A2, I1, I3));
+    
     gmm::resize(F, N * nbdof_rhs);
     pdef->dirichlet_condition(*this, t, F);
     {
@@ -837,14 +854,38 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     // Non reflective condition
     gmm::copy(HNR, gmm::sub_matrix(A1, I4, I1));
     gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A1, I1, I4));
+    
+    gmm::copy(HNR, gmm::sub_matrix(A2, I4, I1));
+    gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A2, I1, I4));
     {
       plain_vector VV(mf_mult.nb_dof());
     /*  if (t < 0.2)
 	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg);
       else {
-	*/getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
+	*/
+	//getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
 	
       //}
+	getfem::generic_assembly assem;
+    // construction du terme de droite dans [M]*Unp1=F
+    
+    // mise en place de Un + Un.N*(dUn/dn).N
+
+    std::stringstream ss;
+    ss << "u=data$1(#1); "
+      "V(#1)+="
+       << -dt << "*"
+      " comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))"
+      "(l,i,i,m,j,k,j,:,k).u(l).u(m)+"
+      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
+ 
+    assem.set(ss.str());
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_mult);  
+    assem.push_data(Un0);
+    assem.push_vec(VV);
+    assem.assembly(mpinonrefrg);
       gmm::copy(gmm::sub_vector(VV, SUB_CT_NONREF), gmm::sub_vector(Y, I4));
     }
 
@@ -880,12 +921,12 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::mult(M, USTAR, USTARbis);
     gmm::mult(gmm::transposed(B), gmm::scaled(Phi, -1.), USTARbis, USTARbis);
     gmm::copy(USTARbis, gmm::sub_vector(Y, I1));
-    gmm::copy(M, gmm::sub_matrix(A1, I1));
+    //gmm::copy(M, gmm::sub_matrix(A1, I1));
     
     {
       double rcond;
       plain_vector X(sizelsystem);
-      SuperLU_solve(A1, X, Y, rcond);
+      SuperLU_solve(A2, X, Y, rcond);     // A2 contient la matrice de masse et les blocs des CL
       gmm::copy(gmm::sub_vector(X, I1), Un1);
 
     }
@@ -932,6 +973,11 @@ void navier_stokes_problem::do_export(scalar_type t) {
     exp->write_point_data(mf_p, Pn1);
     exp->serie_add_object("pressure");
 
+        
+    static int cntp=0;
+    char sp[128]; sprintf(sp, "icare.P%d", cntp++);
+    gmm::vecsave(sp, Pn0);
+    
     if (N == 2) {
       plain_vector DU(mf_rhs.nb_dof() * N * N);
       plain_vector Rot(mf_rhs.nb_dof());
