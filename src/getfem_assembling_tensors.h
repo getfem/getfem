@@ -226,6 +226,10 @@ namespace getfem {
     void exec_(size_type cv, dim_type) {
       size_type nb_r = mf_r.nb_dof_of_element(cv);
       size_type nb_c = mf_c.nb_dof_of_element(cv);
+      if (child(0).tensor().ndim() != 2)
+	ASM_THROW_TENSOR_ERROR("cannot write a " << 
+			       int(child(0).tensor().ndim()) << 
+			       "D-tensor into a matrix!");
       if (child(0).tensor().dim(0) != nb_r ||
 	  child(0).tensor().dim(1) != nb_c) {
 	ASM_THROW_TENSOR_ERROR("size mismatch for sparse matrix output:"
