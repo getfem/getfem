@@ -52,6 +52,7 @@ namespace getfem {
 
   public :
 
+    void simplify(void);
     void update_from_context(void) const { }
     void reinit(void);
     std::vector<scalar_type> &values(unsigned i = 0)

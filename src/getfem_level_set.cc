@@ -44,11 +44,15 @@ namespace getfem {
 
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
 					    bool inverted) const {
-    assert(mf);
+    assert(this); assert(mf); 
     if (!mf->linked_mesh().convex_index().is_in(cv)) 
       DAL_THROW(dal::failure_error, "convex " << cv << " is not in the level set mesh!");
     if (!mf->fem_of_element(cv)) DAL_INTERNAL_ERROR("");
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
+    if (values(lsnum).size() != mf->nb_dof())
+      DAL_INTERNAL_ERROR("Inconsistent state in the levelset: nb_dof=" << 
+			 mf->nb_dof() << ", values(" << lsnum << ").size=" << 
+			 values(lsnum).size());
     for (size_type i = 0; i < coeff.size(); ++i)
       coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 
 	values(lsnum)[mf->ind_dof_of_element(cv)[i]];
@@ -61,5 +65,25 @@ namespace getfem {
       primary_.capacity() * sizeof(scalar_type) + 
       secondary_.capacity() * sizeof(scalar_type);
   }
+
+  void level_set::simplify() {
+    for (dal::bv_visitor cv(mf->linked_mesh().convex_index());
+	 !cv.finished(); ++cv) {
+      scalar_type h = mf->linked_mesh().convex_radius_estimate(cv);
+      for (size_type i = 0; i < mf->nb_dof_of_element(cv); ++i) {
+	size_type dof = mf->ind_dof_of_element(cv)[i];
+	if (gmm::abs(primary_[dof]) < h/100) {
+	  primary_[dof] = scalar_type(0);
+	  // cout << "Simplify dof " << dof << " : " << mf->point_of_dof(dof) << endl;
+	}
+	if (has_secondary() && gmm::abs(secondary_[dof]) < h/100)
+	    secondary_[dof] = scalar_type(0);
+      }
+
+    }
+  }
+
+  
+
 }  /* end of namespace getfem.                                             */
 

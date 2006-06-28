@@ -209,6 +209,7 @@ int main(int argc, char *argv[]) {
       lsdown.values(1)[i] = lsmf.point_of_dof(i)[1];
       lsup.values(1)[i] = -lsmf.point_of_dof(i)[1];
     }
+    ls.simplify(); lsup.simplify(); lsdown.simplify(); 
     getfem::mesh_level_set mls(mesh), mlsup(mesh), mlsdown(mesh);
     mls.add_level_set(ls);
     mls.adapt();

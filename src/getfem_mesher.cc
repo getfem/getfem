@@ -75,7 +75,7 @@ namespace getfem {
     if (on_surface || d > 0.0)
       while (gmm::abs(d) > 1e-15) {
 	if (++iter > 1000) {
-	  cout << "\n\nTry projection failed, 1000 iterations\n\n"; exit(1);
+	  DAL_WARNING4("Try projection failed, 1000 iterations\n\n");
 	  return (gmm::abs(d) < 1E-10); // is there a possibility to detect
 	} 	// the impossibility without making 1000 iterations ?
 	gmm::scale(G, -d / std::max(1E-8, gmm::vect_norm2_sqr(G)));
@@ -152,7 +152,7 @@ namespace getfem {
 //     cout << "nb iter de pure_multi : " << iter
 //   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;
     for (i = 0; i < nbco; ++i) if (gmm::abs(d[i]) > SEPS) {
-      cout << "PURE MULTI HAS FAILED for " << cts << " nb iter = " << iter << endl;
+      //cout << "PURE MULTI HAS FAILED for " << cts << " nb iter = " << iter << endl;
       return false;
     }
     return true;

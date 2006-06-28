@@ -144,7 +144,8 @@ struct Chrono {
 	  base_node &P = m.points()[ipts[i]];
 	  // if (cts.card() > 1)
 	  //   cout << "WARNING, projection sur " << cts << endl;
-	  pure_multi_constraint_projection(list_constraints, P, cts);
+	  if (!pure_multi_constraint_projection(list_constraints, P, cts))
+	    DAL_WARNING1("Pure multi has failed in interpolate_face !!");
 	  // dist(P, new_cts);
 	}
       }
@@ -547,15 +548,28 @@ struct Chrono {
 		  if (dd > 0.) gmm::scale(VV, -1.);
 		  dd = (*(list_constraints[jj])).grad(X, G);
 		  size_type nbit = 0;
-		  while (gmm::abs(dd) > 1e-15) {
-		    if (++nbit > 1000) {
-		      if (noisy) cout << "Intersection not found";
-		      assert(false);
-		    }
-		    scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
+		  while (gmm::abs(dd) > 1e-15 && (++nbit < 20)) { // Newton
+		    scalar_type nG = gmm::vect_sp(G, VV);
+		    if (gmm::abs(nG) < 1E-8) nG = 1E-8;
+		    if (nG < 0) nG = 1.0;
 		    gmm::add(gmm::scaled(VV, -dd / nG), X);
 		    dd = (*(list_constraints[jj])).grad(X, G);
 		  }
+		  if (gmm::abs(dd) > 1e-15) { // brute force dychotomie
+		    base_node X1 = msh.points_of_convex(j)[ii];
+		    base_node X2 = msh.points_of_convex(j)[prev_point[jj]], X3;
+		    scalar_type dd1 = (*(list_constraints[jj]))(X1);
+		    scalar_type dd2 = (*(list_constraints[jj]))(X2);
+		    if (dd1 > dd2) { std::swap(dd1, dd2); std::swap(X1, X2); }
+		    while (gmm::abs(dd1) > 1e-15) {
+		      X3 = (X1 + X2) / 2.0;
+		      scalar_type dd3 = (*(list_constraints[jj]))(X3);
+		      if (dd3 > 0) { dd2 = dd3; X2 = X3; }
+		      else { dd1 = dd3; X1 = X3; }
+		    }
+		    X = X1;
+		  }
+		  
 		  size_type kk = mesh_points.add(X);
 		  if (!(retained_points[kk])) {
 		    retained_points.add(kk);
