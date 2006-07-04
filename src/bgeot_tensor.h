@@ -188,8 +188,7 @@ namespace bgeot
       inline const multi_index &sizes(void) const { return sizes_; }
       inline size_type order(void) const { return sizes_.size(); }
 
-      void init(const multi_index &c)
-      {
+      void init(const multi_index &c) {
 	multi_index::const_iterator it = c.begin();
 	size_type d = 1;
 	sizes_ = c; coeff.resize(c.size());
@@ -198,9 +197,8 @@ namespace bgeot
 	resize(d);
       }
 
-      void adjust_sizes(const multi_index &mi)
-      {
-	if ((mi.size() != sizes().size())
+      void adjust_sizes(const multi_index &mi) {
+	if (!mi.size() || (mi.size() != sizes().size())
 	    || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
 	  init(mi);
       }
