@@ -290,7 +290,7 @@ void crack_problem::init(void) {
 
 
 base_small_vector ls_function(const base_node P) {
-  scalar_type x = P[0], /*y = P[1], */ z = P[2];
+  scalar_type x = P[0], y = P[1], z = P[2];
   base_small_vector res(2);
   res[0] = z;
   res[1] = Pmax[0]*0.5 - x;
@@ -850,7 +850,7 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::clear(F);
 
   // Neumann condition brick.
-  base_small_vector f(N); f[N-1] = 0.005;
+  base_small_vector f(N); f[N-1] = neumann_force;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);

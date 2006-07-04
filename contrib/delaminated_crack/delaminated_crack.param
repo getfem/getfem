@@ -9,7 +9,7 @@
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;           % Lamé coefficient.
 GC = 0.0001;            % Rupture energy density
-NEUMANN_FORCE = 0.0; 
+NEUMANN_FORCE = 0.005; 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
 QUAD = 1;
