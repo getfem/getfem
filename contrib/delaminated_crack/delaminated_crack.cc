@@ -151,7 +151,7 @@ struct crack_problem {
   
   scalar_type residual;       /* max residual for the iterative solvers      */
   unsigned dir_with_mult;
-  scalar_type enr_area_radius;
+  scalar_type enr_area_radius, min_h;
   int enrichment_option;
   
   std::string datafilename;
@@ -183,7 +183,6 @@ struct crack_problem {
 static base_node Pmin, Pmax;
 
 void crack_problem::init(void) {
-  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
@@ -194,7 +193,6 @@ void crack_problem::init(void) {
 
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
 				      "Enrichment option");
-  cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
   
@@ -207,6 +205,7 @@ void crack_problem::init(void) {
   mesh.bounding_box(Pmin, Pmax);
   Ptrans[N-1] = -(Pmin[N-1] + Pmax[N-1])/2.0;
   mesh.translation(Ptrans);
+  min_h = mesh.minimal_convex_radius_estimate();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
@@ -294,7 +293,7 @@ base_small_vector ls_function(const base_node P) {
   scalar_type x = P[0], /*y = P[1], */ z = P[2];
   base_small_vector res(2);
   res[0] = z;
-  res[1] = Pmax[0]*0.85 - x;
+  res[1] = Pmax[0]*0.5 - x;
   return res;
 }
 
@@ -351,7 +350,7 @@ scalar_type crack_problem::rupture_energy(void) {
   getfem::generic_assembly assem1("V()+=comp()");
   assem1.push_mi(mim_crack);
   assem1.push_vec(V);
-  // assem1.assembly();
+  assem1.assembly();
   return V[0]*Gc;
 }
 
@@ -634,7 +633,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
 
   // Level-set advance
 
-  scalar_type h = 1.0 / PARAM.int_value("NL");
+  scalar_type h = 1.0 / min_h;
   scalar_type dt = 0.8 * h / gmm::vect_norminf(SD);
 
   plain_vector phi0 = ls.values(1), DF(gmm::vect_size(phi0));
@@ -851,7 +850,7 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::clear(F);
 
   // Neumann condition brick.
-  base_small_vector f(N); f[N-1] = 1.0;
+  base_small_vector f(N); f[N-1] = 0.005;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);

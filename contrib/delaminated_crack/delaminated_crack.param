@@ -15,14 +15,14 @@ NEUMANN_FORCE = 0.0;
 QUAD = 1;
 
 if (QUAD)
-  MESH_FILE='structured:GT="GT_QK(3,1)";SIZES=[1,0.3,0.2];NOISED=0;NSUBDIV=[10,3,2]';
+  MESH_FILE='structured:GT="GT_QK(3,1)";SIZES=[1,0.5,0.2];NOISED=0;NSUBDIV=[10,5,3]';
   MESH_TYPE = 'GT_LINEAR_QK(3)';    % linear rectangles
   FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 6)';
   % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 10)';
   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3, 4), 4)';
 else
-  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,0.3,0.2];NOISED=0;NSUBDIV=[10,3,2]';
+  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,0.5,0.2];NOISED=0;NSUBDIV=[10,5,2]';
   MESH_TYPE = 'GT_PK(3,1)';    % linear tetrahedrons
   FEM_TYPE = 'FEM_PK(3,2)';  % P1 fem for tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(6)';
