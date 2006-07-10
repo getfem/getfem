@@ -56,9 +56,9 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type BB = 0. ;
+scalar_type BB = 0.1 ;
 scalar_type AA = BB * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type DD = 1. ;
+scalar_type DD = 0.0 ;
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
  
 
@@ -68,7 +68,6 @@ scalar_type sol_u(const base_node &x){
  scalar_type theta = atan2(x[1], x[0]);
  //return sqrt(r*r*r) * (sin(3.0/2.0*theta)+AA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
  return sqrt(r*r*r)*(AA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0));
- 
 }
  
 scalar_type sol_lapl_u(const base_node &x) {
@@ -500,15 +499,14 @@ struct exact_solution {
     U[2] = CC ;
     U[3] = DD ;
   }
+  
+
+
 };
 
 
+
 /******** Struct for the Bilaplacian problem *******************************/
-
-
-
-
-
 
 
 struct bilaplacian_crack_problem {
@@ -523,10 +521,14 @@ struct bilaplacian_crack_problem {
   getfem::mesh_fem mf_pre_u ; 
   getfem::mesh_fem_level_set mfls_u ; 
   getfem::mesh_fem_global_function mf_sing_u ;
-  getfem::mesh_fem mf_partition_of_unity;
+  getfem::mesh_fem mf_partition_of_unity ;
   getfem::mesh_fem_product mf_u_product ;
   getfem::mesh_fem_sum mf_u_sum ;
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
+  getfem::mesh_fem mf_pre_u_ext ;                // 3 mesh_fems defined outside the enrichment zone
+  getfem::mesh_fem_level_set mfls_u_ext ;        //
+  //getfem::mesh_fem_sum mf_u_sum_ext ;            //
+  //getfem::mesh_fem& mf_u_ext() { return mf_u_sum_ext ; }  //
   
   getfem::mesh_fem mf_rhs;  /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_mult; /* mesh_fem for the Dirichlet condition.        */
@@ -554,20 +556,16 @@ struct bilaplacian_crack_problem {
 				    mls(mesh), mim(mls), mf_pre_u(mesh), 
 				    mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 				    mf_partition_of_unity(mesh),
-				    mf_u_product(mf_partition_of_unity, mf_sing_u),
-				    mf_u_sum(mesh), mf_rhs(mesh), mf_mult(mesh), exact_sol(mesh)
+				    mf_u_product(mf_partition_of_unity, mf_sing_u), mf_u_sum(mesh),
+				    mf_pre_u_ext(mesh), mfls_u_ext(mls, mf_pre_u_ext), //mf_u_sum_ext(mesh),  // 
+				    mf_rhs(mesh), mf_mult(mesh), exact_sol(mesh)   
 				    { KL = true; } 
 };
 
 
-
-
 /*                                                          */
-/******************* Methods ********************************/
+/*****  Methods for class bilaplacian_crack_problem  ********/
 /*                                                          */
-
-
-
 
 
 
@@ -632,7 +630,8 @@ void bilaplacian_crack_problem::init(void) {
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
 
-  /* set the finite element on the mf_u */
+ // Setting the integration methods
+  
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
@@ -645,11 +644,66 @@ void bilaplacian_crack_problem::init(void) {
   //mf_u.set_finite_element(mesh.convex_index(), pf_u);
   mls.add_level_set(ls);
   mim.set_simplex_im(sppi, sing_ppi);
-  mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult.set_finite_element(mesh.convex_index(), pf_u);
+  
+  // modified since here --------------------------------------------------------------
+  
+  // Setting the level-sets
+  ls.reinit();  
+  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    ls.values(0)[d] = y;
+    ls.values(1)[d] = x;
+  }
+  ls.touch();
+  mls.adapt();
+  mim.adapt();
+  
+  /**************************************/
+  /* set the finite element on the mf_u */
+  /**************************************/
+  
+  if (enrichment_option == 1 ) {
+     dal::bit_vector enriched_convexes ;
+     
+     // Selecting the element in the enriched domain
+     
+     for ( dal::bv_visitor i( mesh.convex_index() ) ; !i.finished() ; ++i ){
+        enriched_convexes.add(i) ;
+	/* For each element, we test all of its nodes. If all the nodes are inside the enrichment area,
+	then the element is completly inside the area too */ 
+	for (unsigned j=0; (j < mesh.structure_of_convex(i)->nb_points() )&& (enriched_convexes[i]); ++j) {
+	   if ( gmm::sqr(mesh.points_of_convex(i)[j][0]) + gmm::sqr(mesh.points_of_convex(i)[j][1]) > gmm::sqr(enr_area_radius) ) 
+	     enriched_convexes.sup(i) ;
+	}
+     }
+     
+     // set the finite element on the mf_u, mf_u_ext
+     
+     for ( dal::bv_visitor i( mesh.convex_index() ) ; !i.finished() ; ++i ){
+        if (enriched_convexes[i]) 
+	    mf_pre_u.set_finite_element(i, pf_u);  
+        else mf_pre_u_ext.set_finite_element(i, pf_u) ;   
+     }
+  }
+  
+  
+  if ( (enrichment_option == 0) || (enrichment_option == 2) ) {
+     mf_pre_u.set_finite_element(mesh.convex_index(), pf_u); 
+  }                 
+  
+  mf_mult.set_finite_element(mesh.convex_index(), pf_u);                   
   //mf_partition_of_unity.set_classical_finite_element(1);
-  mf_partition_of_unity.set_finite_element(mesh.convex_index(), pf_u);
+  mf_partition_of_unity.set_finite_element(mesh.convex_index(), pf_u);     // idem
 
+  
+  // Set the mesh_fem_level_set
+  mfls_u.adapt();
+  mfls_u_ext.adapt();
+  
+  
+  // unchanged after this line --------------------------------------------------------------------
+    
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
@@ -709,22 +763,23 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
 
 bool bilaplacian_crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
-  size_type N = mesh.dim();
+  //size_type N = mesh.dim();
   
-  ls.reinit();  
-  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
-    ls.values(0)[d] = y;
-    ls.values(1)[d] = x;
-  }
-  ls.touch();
-  
-  mls.adapt();
-  mim.adapt();
-  mfls_u.adapt();
-  
-  cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
+
+//   ls.reinit();  
+//   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+//     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
+//     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+//     ls.values(0)[d] = y;
+//     ls.values(1)[d] = x;
+//   }
+//   ls.touch();
+//   
+//   mls.adapt();
+//   mim.adapt();
+//   mfls_u.adapt();
+//   
+//   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
 
   
   // setting singularities 
@@ -739,30 +794,52 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   mf_sing_u.set_functions(ufunc);
   
   
-  if (enrichment_option) {
-    dal::bit_vector enriched_dofs;
-    plain_vector X(mf_partition_of_unity.nb_dof());
-    plain_vector Y(mf_partition_of_unity.nb_dof());
-    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			  ls.values(1), X);
-    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			  ls.values(0), Y);
-    for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
-      if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
-	enriched_dofs.add(j);
-    }
-    
-    cout << "enriched_dofs: " << enriched_dofs << "\n";
-    
-    if (enriched_dofs.card() < 3)
-      DAL_WARNING0("There is " << enriched_dofs.card() <<
-		   " enriched dofs for the crack tip");
-    mf_u_product.set_enrichment(enriched_dofs);
-    mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
-    cout << "Enrichissement effectué \n" ;
-  } else {
+  switch(enrichment_option) {
+  case 0 :  // No enrichment
     mf_u_sum.set_mesh_fems(mfls_u);
-  }
+    break ;
+  case 1 : // pointwise matching
+    {
+      cout << "\npointwise matching, after that errors are foreseen\n" ;
+      
+      for (dal::bv_visitor cv(mf_pre_u_ext.convex_index()); !cv.finished(); ++cv) {
+	mf_sing_u.set_finite_element(cv, 0);
+	assert(!mfls_u.convex_index().is_in(cv));
+	assert(!mf_sing_u.convex_index().is_in(cv));
+      }
+
+      mf_u_sum.set_mesh_fems(mfls_u_ext, mf_pre_u); //_ext, mf_sing_u);
+
+      cout << "mf_u_sum.nb_dof = " << mf_u_sum.nb_dof() << "\n";
+      cout << "mfls_u.convex_index = " << mfls_u.convex_index() << ", mf_sing_u: " << mf_sing_u.convex_index() << "\n";
+    } break ;
+  case 2 :  // standard XFEM on a fixed zone
+    {
+      dal::bit_vector enriched_dofs;
+      plain_vector X(mf_partition_of_unity.nb_dof());
+      plain_vector Y(mf_partition_of_unity.nb_dof());
+      getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			    ls.values(1), X);    
+          getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			  ls.values(0), Y);    
+          for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
+               if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
+	           enriched_dofs.add(j);
+          }
+          cout << "enriched_dofs: " << enriched_dofs << "\n";
+          if (enriched_dofs.card() < 3)
+             DAL_WARNING0("There is " << enriched_dofs.card() <<
+		   " enriched dofs for the crack tip");
+          mf_u_product.set_enrichment(enriched_dofs);
+          mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
+          cout << "Enrichissement effectué \n" ;}
+	  break ;
+	default : 
+	  DAL_THROW(getfem::failure_error, "Enrichment_option parameter is undefined");
+	  break ;  
+	}
+
+
 
   //cout << "validate mf_sing_u():\n"; validate_fem_derivatives(mf_sing_u);
 
@@ -791,6 +868,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.rhs().set(mf_rhs, F);
   */
+
 
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
