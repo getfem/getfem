@@ -115,6 +115,13 @@ base_small_vector sol_f(const base_node &x) {
 
 #endif
 
+scalar_type cutoff_C2(scalar_type r, scalar_type r1, scalar_type r2) {
+  if (r < r1) return 1.0;
+  if (r < r2) return pow(r2 - r, 3) *
+    (r2*r2 - 5*r1*r2 + 3*r*r2 + 10*r1*r1 + 6*r*r - 15*r*r1) / pow(r2 - r1, 5);
+  return 0.0;
+}
+
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
 /**************************************************************************/
@@ -146,6 +153,8 @@ struct crack_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type Gc;
   scalar_type neumann_force;
+  bool is_prescribed_disp;
+  scalar_type prescribed_disp;
 
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
@@ -157,7 +166,7 @@ struct crack_problem {
   std::string datafilename;
   ftool::md_param PARAM;
 
-  scalar_type rupture_energy(void);
+  scalar_type fracture_energy(void);
   void shape_derivative(const plain_vector &U, plain_vector &SD);
   void update_level_set(const plain_vector &SD);
   bool solve(plain_vector &U);
@@ -193,6 +202,10 @@ void crack_problem::init(void) {
 
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
 				      "Enrichment option");
+  prescribed_disp = PARAM.real_value("PRESCRIBED_DISPLACEMENT",
+				     "prescribed displacement");
+  is_prescribed_disp = (PARAM.int_value("IS_PRESCRIBED_DISPLACEMENT",
+					"prescribed displacement") != 0);
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
   
@@ -214,7 +227,7 @@ void crack_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  Gc = PARAM.real_value("GC", "Rupture energy density");
+  Gc = PARAM.real_value("GC", "Fracture energy density");
   neumann_force = PARAM.real_value("NEUMANN_FORCE", "Neumann force");
 
   mf_u().set_qdim(N);
@@ -243,7 +256,7 @@ void crack_problem::init(void) {
   mf_SD.set_qdim(N);
   mf_SD.set_classical_finite_element(ls.degree());
 
-  dir_with_mult = PARAM.int_value("DIRICHLET_VERSION");
+  dir_with_mult = PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS", "Well");
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -275,8 +288,16 @@ void crack_problem::init(void) {
 #else
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
+    base_node barycenter
+      = dal::mean_value(mesh.points_of_face_of_convex (i.cv(), i.f()).begin(),
+			mesh.points_of_face_of_convex(i.cv(), i.f()).end());
     if (gmm::abs(un[2] - 1.0) <= 1.0E-7) // new Neumann face
-      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+      if (is_prescribed_disp && barycenter[0] > Pmax[0]*0.9)
+	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+      else
+	mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+    else if (is_prescribed_disp && gmm::abs(un[2] + 1.0) <= 1.0E-7 && barycenter[0] > Pmax[0]*0.9)
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     else if (gmm::abs(un[0] + 1.0) <= 1.0E-7) // new Dirichlet face
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
 #endif
@@ -290,10 +311,10 @@ void crack_problem::init(void) {
 
 
 base_small_vector ls_function(const base_node P) {
-  scalar_type x = P[0], y = P[1], z = P[2];
+  scalar_type x = P[0] /*, y = P[1]*/, z = P[2];
   base_small_vector res(2);
   res[0] = z;
-  res[1] = Pmax[0]*0.5 - x;
+  res[1] = Pmax[0]*0.6 - x;
   return res;
 }
 
@@ -345,7 +366,7 @@ public:
 };
 
 
-scalar_type crack_problem::rupture_energy(void) {
+scalar_type crack_problem::fracture_energy(void) {
   plain_vector V(1);
   getfem::generic_assembly assem1("V()+=comp()");
   assem1.push_mi(mim_crack);
@@ -361,7 +382,7 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
 
   shape_der_nonlinear_term<plain_vector> nl(mf_u(), U, lambda, mu);
 
-  // derivative of rupture energy
+  // derivative of fracture energy
   getfem::generic_assembly assem1("V(#1)+=comp(vGrad(#1))(:,i,i)");
   assem1.push_mi(mim_crack);
   assem1.push_mf(mf_SD);
@@ -420,6 +441,9 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   size_type N = mesh.dim();
   // The third component is set to zero.
   gmm::clear(gmm::sub_vector(SD, gmm::sub_slice(N-1,gmm::vect_size(SD)/N, N)));
+
+  for (size_type i = 0; i < mf_SD.nb_dof(); ++i)
+    SD[i] *= cutoff_C2(gmm::abs(ls.values(1)[i/N]), 0.1, 0.2);
 
   {
     DAL_TRACE2("Exporting shape derivative");
@@ -604,7 +628,7 @@ namespace getfem {
 	assem.push_mf(this->mf_u);
 	assem.push_mat(K0);
 	assem.assembly(this->mf_u.linked_mesh().get_mpi_region());
-	gmm::scale(K0, 0.01 * h);
+	gmm::scale(K0, h*0.1);
       }
       gmm::copy(K0, this->K);
       asm_transport_dc2
@@ -631,87 +655,80 @@ namespace getfem {
 
 void crack_problem::update_level_set(const plain_vector &SD) {
 
-  // Level-set advance
 
-  scalar_type h = 1.0 / min_h;
-  scalar_type dt = 0.8 * h / gmm::vect_norminf(SD);
-
-  plain_vector phi0 = ls.values(1), DF(gmm::vect_size(phi0));
-  plain_vector DF0(gmm::vect_size(phi0));
-
-  getfem::mdbrick_transport_dc1<> transport(standard_mim, ls.get_mesh_fem());
-  transport.theta().set(mf_SD, gmm::scaled(SD, -1.0));
-
-  getfem::mdbrick_dynamic<> dynamic(transport, 1.0);
-  dynamic.set_dynamic_coeff(1.0/dt, 1.0);
-
-  gmm::mult(dynamic.get_M(), gmm::scaled(phi0, 1.0/dt), DF);
-  dynamic.set_DF(DF);
-  
-  getfem::standard_model_state MS(dynamic);
-  gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(MS, dynamic, iter);
-
-  for (size_type i = 0; i < ls.get_mesh_fem().nb_dof(); ++i)
-    ls.values(1)[i] = std::min(ls.values(1)[i], MS.state()[i]);
-
-  // Level-set reinitialization -> get back a signed distance
-  
-  dt = 0.8 * h;
-
-  gmm::copy(ls.values(1), phi0);
-  plain_vector phin = phi0;
-  
-  getfem::mdbrick_transport_dc2<> transport2(standard_mim, ls.get_mesh_fem(),h);
-  getfem::mdbrick_dynamic<> dynamic2(transport2, 1.0);
-  transport2.phi0().set(ls.get_mesh_fem(), phi0);
-
-  for (size_type nt = 0; nt*dt < 1.0; ++nt) {
-    cout << "t = " << nt * dt << endl;
-
-//     if ((nt % 1) == 0) {
-//       {
-// 	DAL_TRACE2("Exporting level set");
-// 	getfem::stored_mesh_slice sl; 
-// 	sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0),
-// 						 base_node(0, 0, 1), 0), 3);
-// 	getfem::vtk_export exp(datafilename + "_ls.vtk",
-// 			       PARAM.int_value("VTK_EXPORT")==1);
-// 	exp.exporting(sl); 
-// 	exp.write_point_data(ls.get_mesh_fem(), phin, "Level_set");
-// 	cout << "export done, you can view the data file with (for example)\n"
-// 	  "mayavi -d " << datafilename << "_ls.vtk "
-// 	  "-m BandedSurfaceMap -m Outline -f WarpScalar -m IsoSurface\n";
-//       }
-//     }
-
-    gmm::clear(DF0);
-    asm_transport_dc2_st
-      (DF0, standard_mim, ls.get_mesh_fem(), phi0, phin,
-       ls.get_mesh_fem().linked_mesh().get_mpi_region());
-    transport2.phin().set(ls.get_mesh_fem(), phin);
-    dynamic2.set_dynamic_coeff(1.0/dt, 1.0);
-    gmm::mult(dynamic2.get_M(), gmm::scaled(phin, 1.0/dt), DF0, DF);
-    dynamic2.set_DF(DF);
-
-    if (0) {
-      // explicit scheme
-      gmm::iteration iter2(residual, 0, 40000);
-      plain_vector DF1(gmm::vect_size(phi0));
-      gmm::mult(transport2.get_K(), gmm::scaled(phin, -1.0), DF1);
-      gmm::add(DF1, DF);
-      gmm::cg(dynamic2.get_M(), phin, gmm::scaled(DF, dt),
-	      gmm::identity_matrix(), iter2);
+  for (size_type ntt = 0; ntt < 3; ++ntt) {
+    
+    // Level-set advance
+    
+    scalar_type h = min_h;
+    cout << "min_h = " << h << endl;
+    cout << "Norminf(SD) = " << gmm::vect_norminf(SD) << endl;
+    scalar_type dt = 0.8 * h / gmm::vect_norminf(SD);
+    
+    plain_vector phi0 = ls.values(1), DF(gmm::vect_size(phi0));
+    plain_vector DF0(gmm::vect_size(phi0));
+    
+    gmm::copy(ls.values(1), phi0);
+    
+    getfem::mdbrick_transport_dc1<> transport(standard_mim, ls.get_mesh_fem());
+    transport.theta().set(mf_SD, gmm::scaled(SD, -1.0));
+    
+    getfem::mdbrick_dynamic<> dynamic(transport, 1.0);
+    dynamic.set_dynamic_coeff(1.0/dt, 1.0);
+    
+    gmm::mult(dynamic.get_M(), gmm::scaled(phi0, 1.0/dt), DF);
+    dynamic.set_DF(DF);
+    
+    getfem::standard_model_state MS(dynamic);
+    gmm::iteration iter(residual, 1, 40000);
+    getfem::standard_solve(MS, dynamic, iter);
+    
+    for (size_type i = 0; i < ls.get_mesh_fem().nb_dof(); ++i)
+      ls.values(1)[i] = std::min(ls.values(1)[i], MS.state()[i]);
+    
+    // Level-set reinitialization -> get back a signed distance
+    
+    dt = 0.8 * h;
+    
+    gmm::copy(ls.values(1), phi0);
+    plain_vector phin = phi0;
+    
+    getfem::mdbrick_transport_dc2<> transport2(standard_mim, ls.get_mesh_fem(),h);
+    getfem::mdbrick_dynamic<> dynamic2(transport2, 1.0);
+    transport2.phi0().set(ls.get_mesh_fem(), phi0);
+    
+    for (size_type nt = 0; nt < 20; ++nt) {
+      
+      gmm::clear(DF0);
+      asm_transport_dc2_st
+	(DF0, standard_mim, ls.get_mesh_fem(), phi0, phin,
+	 ls.get_mesh_fem().linked_mesh().get_mpi_region());
+      transport2.phin().set(ls.get_mesh_fem(), phin);
+      dynamic2.set_dynamic_coeff(1.0/dt, 1.0);
+      gmm::mult(dynamic2.get_M(), gmm::scaled(phin, 1.0/dt), DF0, DF);
+      dynamic2.set_DF(DF);
+      
+      if (0) {
+	// explicit scheme
+	gmm::iteration iter2(residual, 0, 40000);
+	plain_vector DF1(gmm::vect_size(phi0));
+	gmm::mult(transport2.get_K(), gmm::scaled(phin, -1.0), DF1);
+	gmm::add(DF1, DF);
+	gmm::cg(dynamic2.get_M(), phin, gmm::scaled(DF, dt),
+		gmm::identity_matrix(), iter2);
+      }
+      else {
+	// implicit scheme
+	gmm::iteration iter2(residual, 1, 40000);
+	getfem::standard_model_state MS2(dynamic2);
+	getfem::standard_solve(MS2, dynamic2, iter2);
+	gmm::copy(MS2.state(), phin);
+      }
     }
-    else {
-      // implicit scheme
-      gmm::iteration iter2(residual, 1, 40000);
-      getfem::standard_model_state MS2(dynamic2);
-      getfem::standard_solve(MS2, dynamic2, iter2);
-      gmm::copy(MS2.state(), phin);
-    } 
+    gmm::copy(phin, ls.values(1));
+  
   }
-  gmm::copy(phin, ls.values(1));
+
 
   {
     DAL_TRACE2("Exporting level set");
@@ -721,7 +738,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
     getfem::vtk_export exp(datafilename + "_ls.vtk",
 			   PARAM.int_value("VTK_EXPORT")==1);
     exp.exporting(sl); 
-    exp.write_point_data(ls.get_mesh_fem(), phin, "Level_set");
+    exp.write_point_data(ls.get_mesh_fem(), ls.values(1), "Level_set");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d " << datafilename << "_ls.vtk "
       "-m BandedSurfaceMap -m Outline -f WarpScalar -m IsoSurface\n";
@@ -850,12 +867,21 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::clear(F);
 
   // Neumann condition brick.
-  base_small_vector f(N); f[N-1] = neumann_force;
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  if (!is_prescribed_disp) {
+    base_small_vector f(N); f[N-1] = neumann_force;
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      if (mf_rhs.point_of_dof(i)[0] > 0.8 * Pmax[0])
+	gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  }
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
   
   gmm::clear(F);
+  if (is_prescribed_disp) {
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      if (mf_rhs.point_of_dof(i)[0] > 0.4 * Pmax[0])
+	if (mf_rhs.point_of_dof(i)[2] >= Pmax[2]/2.0)
+	  F[i*N+2] = prescribed_disp;
+  }
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN,
 					  DIRICHLET_BOUNDARY_NUM, mf_mult);
@@ -865,8 +891,6 @@ bool crack_problem::solve(plain_vector &U) {
   // Generic solve.
   size_type nnb = final_model.nb_dof();
   cout << "Total number of variables : " << nnb << endl;
-  nnb = final_model.nb_dof();
-  cout << "Total number of variables : " << nnb << endl;
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
@@ -875,12 +899,12 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::copy(ELAS.get_solution(MS), U);
 
   // Energy computation
-  double rupt_e = rupture_energy();
+  double rupt_e = fracture_energy();
   double elas_e = gmm::vect_sp(ELAS.get_K(), U, U) * 0.5;
   double rhs_e = - gmm::vect_sp(VOL_F.get_F(), U)
     - gmm::vect_sp(NEUMANN.get_F(), U);
   cout << "Potential energy = " <<  elas_e + rhs_e
-       << " Rupture energy = " << rupt_e
+       << " Fracture energy = " << rupt_e
        << " Total energy = " << elas_e + rhs_e + rupt_e << endl;
 
   return (iter.converged());
@@ -1028,8 +1052,7 @@ int main(int argc, char *argv[]) {
       p.update_level_set(SD);
       p.solve(U);
       p.save_U(U);
-    
-      
+
       getchar();
     }
   }

@@ -8,29 +8,27 @@
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;           % Lamé coefficient.
-GC = 0.0001;            % Rupture energy density
-NEUMANN_FORCE = 0.005; 
+GC = 0.00000002;            % Fracture energy density
+NEUMANN_FORCE = 0.0003; 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
 QUAD = 1;
 
 if (QUAD)
-  MESH_FILE='structured:GT="GT_QK(3,1)";SIZES=[1,0.5,0.2];NOISED=0;NSUBDIV=[10,5,3]';
-  MESH_TYPE = 'GT_LINEAR_QK(3)';    % linear rectangles
+  MESH_FILE='structured:GT="GT_QK(3,1)";SIZES=[1,0.2,0.05];NOISED=0;NSUBDIV=[40,10,3]';
   FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
-  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 6)';
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 4)';
   % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3, 10)';
   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3, 4), 4)';
 else
-  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,0.5,0.2];NOISED=0;NSUBDIV=[10,5,2]';
-  MESH_TYPE = 'GT_PK(3,1)';    % linear tetrahedrons
+  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,0.5,0.2];NOISED=0;NSUBDIV=[10,5,3]';
   FEM_TYPE = 'FEM_PK(3,2)';  % P1 fem for tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(6)';
   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 3)';
 end
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
-SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),2)';
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(3),2)';
 
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
@@ -38,7 +36,11 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),2)';
 % SINGULAR_INTEGRATION = 'IM_PRODUCT(IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2), IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(6), 2))';
 SINGULAR_INTEGRATION = 'IM_PRODUCT(IM_TRIANGLE(6), IM_GAUSS1D(6))';
 
-DIRICHLET_WITH_MULTIPLIERS = 0;
+DIRICHLET_WITH_MULTIPLIERS = 2; % 0 = multipliers, 1 = penalized,
+                                % 2 = eliminated.
+
+IS_PRESCRIBED_DISPLACEMENT = 1;
+PRESCRIBED_DISPLACEMENT = 0.1;
 
 ENRICHMENT_OPTION = 1;  % 0 = no enrichment
 		        % 1 = standard XFEM on a fixed zone
