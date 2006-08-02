@@ -2028,7 +2028,7 @@ namespace getfem
     base_[j] = base_poly(nc, 0);
     base_[j].one();
     for (size_type i = 0; i < P1.nb_dof(0); i++) base_[j] *= P1.base()[i];
-    // cout << "buble = " << base_[j] << endl;
+    // cout << "bubble = " << base_[j] << endl;
   }
 
   static pfem PK_with_cubic_bubble(fem_param_list &params,
@@ -2129,7 +2129,8 @@ namespace getfem
 	std::vector<dal::pstatic_stored_object> &dependencies);
   pfem quadc1p3_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies);
-
+  pfem P1bubbletriangle_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies);
 
   struct fem_naming_system : public dal::naming_system<virtual_fem> {
     fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
@@ -2147,6 +2148,7 @@ namespace getfem
       add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
       add_suffix("P1_BUBBLE_FACE", P1_with_bubble_on_a_face);
       add_suffix("P1_BUBBLE_FACE_LAG", P1_with_bubble_on_a_face_lagrange);
+      add_suffix("P1_PIECEWISE_LINEAR_BUBBLE", P1bubbletriangle_fem);
       add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
       add_suffix("PK_HIERARCHICAL", PK_hierarch_fem);
       add_suffix("QK_HIERARCHICAL", QK_hierarch_fem);

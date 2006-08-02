@@ -158,6 +158,8 @@ namespace getfem {
    */
   pdof_description mean_value_dof(dim_type d);
   
+  pdof_description bubble1_dof(dim_type ct);
+
   /** Description of a global dof, i.e. a numbered dof having a global scope.
    *  @param d the dimension of the reference element.
    */

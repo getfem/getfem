@@ -52,11 +52,11 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
     }
  # print $_;
   }
-  close(F); 
-  if ($?) { 
-    #`rm -f $tmp`; 
+  close(F);
+  if ($?) {
+    #`rm -f $tmp`;
     print "./laplacian $tmp $def 2>&1 failed\n";
-    exit(1); 
+    exit(1);
   }
 }
 

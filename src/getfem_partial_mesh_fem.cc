@@ -101,7 +101,7 @@ namespace getfem {
 
     for (size_type i = 0; i < mf.nb_dof(); ++i) {
       //cout << "area " << i << " : " << area_supports[i] << " : " << areas[i];
-      if (area_supports[i] > pow(2e-8 * areas[i], scalar_type(P) / N))
+      if (area_supports[i] > pow(1e-14 * areas[i], scalar_type(P) / N))
 	kept_dofs.add(i);
       // else cout << " eliminated"; cout << endl;
     }

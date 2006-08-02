@@ -133,7 +133,7 @@ double ls_value(const base_node &p) {
     case 0: return gmm::vect_norm2_sqr(p)-Radius*Radius;
     case 1: case 2: {
       double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
-      return r*r*(1+A*(1.0 + sin(n*T))) - Radius*Radius;
+      return (r*r*(1+A*(1.0 + sin(n*T))) - Radius*Radius) / 15.0;
     }
   }
   return 0;
@@ -196,6 +196,8 @@ int main(int argc, char *argv[]) {
     Pmin += Pmax; Pmin /= -2.0;
     // Pmin[N-1] = -Pmax[N-1];
     mesh.translation(Pmin);
+    scalar_type h = mesh.minimal_convex_radius_estimate();
+    cout << "h = " << h << endl;
 
     // Level set definition
     unsigned lsdeg = PARAM.int_value("LEVEL_SET_DEGREE", "level set degree");
@@ -209,7 +211,11 @@ int main(int argc, char *argv[]) {
       lsdown.values(1)[i] = lsmf.point_of_dof(i)[1];
       lsup.values(1)[i] = -lsmf.point_of_dof(i)[1];
     }
-    ls.simplify(); lsup.simplify(); lsdown.simplify(); 
+
+    scalar_type simplify_rate = std::min(0.03, 0.05 * sqrt(h));
+    cout << "simplify rate = " << simplify_rate << endl;
+    
+    ls.simplify(simplify_rate); lsup.simplify(simplify_rate); lsdown.simplify(simplify_rate); 
     getfem::mesh_level_set mls(mesh), mlsup(mesh), mlsdown(mesh);
     mls.add_level_set(ls);
     mls.adapt();
@@ -325,34 +331,48 @@ int main(int argc, char *argv[]) {
     gmm::copy(brick_laplacian.get_solution(MS), U);
 
     // interpolation of the solution on mf_rhs
-    plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs);
+    plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs);
     getfem::interpolation(mf, mf_rhs, U, Uint);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      Vint[i] = u_exact(mf_rhs.point_of_dof(i));
+      { Vint[i] = u_exact(mf_rhs.point_of_dof(i)); Eint[i] = gmm::abs(Uint[i] - Vint[i]); }
+    
 
     // computation of max error.
     double errmax = 0.0;
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      if (ls_value(mf_rhs.point_of_dof(i)) < 0.0)
-	errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
+      if (ls_value(mf_rhs.point_of_dof(i)) <= 0.0) 
+	errmax = std::max(errmax, Eint[i]);
+      else Eint[i] = 0.0;
     cout << "Linfty error: " << errmax << endl;
     cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
 	 << endl;
     cout << "H1 error: " << getfem::asm_H1_dist(mim,mf_rhs,Uint,mf_rhs,Vint)
 	 << endl;
     
-    // export de la solution au format vtk.
-    getfem::vtk_export exp("xfem_dirichlet.vtk", (2==1));
-    exp.exporting(mf); 
-    exp.write_point_data(mf, U, "solution");
-    cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d xfem_dirichlet.vtk -f WarpScalar -m BandedSurfaceMap "
-      "-m Outline\n";
+    // exporting solution in vtk format.
+    {
+      getfem::vtk_export exp("xfem_dirichlet.vtk", (2==1));
+      exp.exporting(mf); 
+      exp.write_point_data(mf, U, "solution");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d xfem_dirichlet.vtk -f WarpScalar -m BandedSurfaceMap "
+	"-m Outline\n";
+    }
+    // exporting error in vtk format.
+    {
+      getfem::vtk_export exp("xfem_dirichlet_error.vtk", (2==1));
+      exp.exporting(mf_rhs); 
+      exp.write_point_data(mf_rhs, Eint, "error");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d xfem_dirichlet_error.vtk -f WarpScalar -m BandedSurfaceMap "
+	"-m Outline\n";
+    }
 
     lsmf.write_to_file("xfem_dirichlet_ls.mf", true);
     gmm::vecsave("xfem_dirichlet_ls.U", ls.values());
 
     unsigned nrefine = mf.linked_mesh().convex_index().card() < 200 ? 32 : 4;
+    if (0)
     {
       cout << "saving the slice solution for matlab\n";
       getfem::stored_mesh_slice sl, sl0;

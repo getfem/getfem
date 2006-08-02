@@ -158,6 +158,68 @@ namespace getfem {
   
 
   /* ******************************************************************** */
+  /*    P1 with piecewise linear bubble function on a triangle.           */
+  /* ******************************************************************** */
+
+  struct P1bubbletriangle__ : public fem<bgeot::polynomial_composite> {
+    mesh m;
+    bgeot::mesh_precomposite mp;
+    P1bubbletriangle__(void);
+  };
+
+  P1bubbletriangle__::P1bubbletriangle__(void) {
+
+    m.clear();
+    size_type i0 = m.add_point(base_node(1.0/3.0, 1.0/3.0));
+    size_type i1 = m.add_point(base_node(0.0, 0.0));
+    size_type i2 = m.add_point(base_node(1.0, 0.0));
+    size_type i3 = m.add_point(base_node(0.0, 1.0));
+    m.add_triangle(i0, i2, i3);
+    m.add_triangle(i0, i3, i1);
+    m.add_triangle(i0, i1, i2);
+    mp = bgeot::mesh_precomposite(m);
+
+    std::stringstream s("1-x-y;1-x-y;1-x-y;x;x;x;y;y;y;3-3*x-3*y;3*x;3*y;");
+
+    bgeot::pconvex_ref cr = bgeot::simplex_of_reference(2);
+    mref_convex() = cr;
+    dim() = cr->structure()->dim();
+    is_polynomialcomp() = true;
+    is_equivalent() = true;
+    is_polynomial() = false;
+    is_lagrange() = false;
+    estimated_degree() = 3;
+    init_cvs_node();
+
+    base()=std::vector<bgeot::polynomial_composite>
+      (4, bgeot::polynomial_composite(mp, false));
+    for (size_type k = 0; k < 4; ++k)
+      for (size_type ic = 0; ic < 3; ++ic)
+	base()[k].poly_of_subelt(ic) = bgeot::read_base_poly(2, s);
+
+    for (size_type i = 0; i < 3; ++i) {
+      base_node pt(0.0, 0.0);
+      if (i) pt[i-1] = 1.0;
+      add_node(lagrange_dof(2), pt);
+    }
+
+    add_node(bubble1_dof(2), base_node(1.0/3.0, 1.0/3.0));
+  }
+
+
+  pfem P1bubbletriangle_fem
+  (fem_param_list &params,
+   std::vector<dal::pstatic_stored_object> &dependencies) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 0.");
+    virtual_fem *p = new P1bubbletriangle__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_tab(0));
+    return p;
+  }
+
+  /* ******************************************************************** */
   /*    Hsieh-Clough-Tocher C^1 element (composite P3)                    */
   /* ******************************************************************** */
 

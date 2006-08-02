@@ -66,17 +66,17 @@ namespace getfem {
       secondary_.capacity() * sizeof(scalar_type);
   }
 
-  void level_set::simplify() {
+  void level_set::simplify(scalar_type eps) {
     for (dal::bv_visitor cv(mf->linked_mesh().convex_index());
 	 !cv.finished(); ++cv) {
       scalar_type h = mf->linked_mesh().convex_radius_estimate(cv);
       for (size_type i = 0; i < mf->nb_dof_of_element(cv); ++i) {
 	size_type dof = mf->ind_dof_of_element(cv)[i];
-	if (gmm::abs(primary_[dof]) < h/100) {
+	if (gmm::abs(primary_[dof]) < h*eps) {
 	  primary_[dof] = scalar_type(0);
 	  // cout << "Simplify dof " << dof << " : " << mf->point_of_dof(dof) << endl;
 	}
-	if (has_secondary() && gmm::abs(secondary_[dof]) < h/100)
+	if (has_secondary() && gmm::abs(secondary_[dof]) < h*eps)
 	    secondary_[dof] = scalar_type(0);
       }
 
