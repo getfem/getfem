@@ -274,7 +274,8 @@ struct exact_solution {
 	break;
     }
     gmm::scale(U, coeff);
-  }
+  }  
+
 };
 
 base_small_vector sol_f(const base_node &x) {
@@ -325,7 +326,7 @@ struct crack_problem {
   
   
   int bimaterial;           /* For bimaterial interface fracture */
-  double lambda_up, lambda_down;  /*Lame coeff for bimaterial case*/
+  double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
   base_small_vector translation;
@@ -341,6 +342,9 @@ struct crack_problem {
   int enrichment_option;
   size_type cutoff_func;
   std::string datafilename;
+  
+  std::string GLOBAL_FUNCTION_MF, GLOBAL_FUNCTION_U;
+
   ftool::md_param PARAM;
 
   bool solve(plain_vector &U);
@@ -408,12 +412,16 @@ void crack_problem::init(void) {
   
   bimaterial = PARAM.int_value("BIMATERIAL", "bimaterial interface crack");
 
+  GLOBAL_FUNCTION_MF = PARAM.string_value("GLOBAL_FUNCTION_MF");
+  GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
 
   
 
 
   if (bimaterial == 1){
     mu = PARAM.real_value("MU", "Lame coefficient mu"); 
+    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
+    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
     lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
     lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
     lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
@@ -596,14 +604,42 @@ bool crack_problem::solve(plain_vector &U) {
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
-  std::vector<getfem::pglobal_function> vfunc(4);
-  for (size_type i = 0; i < 4; ++i)
-    vfunc[i] = isotropic_crack_singular_2D(i, ls,
-					   (enrichment_option == 2) ? 0.0 : cutoff_radius,
-					   (enrichment_option == 2) ? 0.0 : cutoff_radius1,
-					   (enrichment_option == 2) ? 0.1 : cutoff_radius0,
-					   cutoff_func);
+  
+  bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
 
+  std::vector<getfem::pglobal_function> vfunc(4);
+  if (!load_global_fun) {
+    cout << "Using default singular functions\n";
+    for (size_type i = 0; i < 4; ++i)
+      vfunc[i] = isotropic_crack_singular_2D(i, ls,
+					     (enrichment_option == 2) ? 0.0 : cutoff_radius,
+					     (enrichment_option == 2) ? 0.0 : cutoff_radius1,
+					     (enrichment_option == 2) ? 0.1 : cutoff_radius0,
+					     cutoff_func);
+  } else {
+    cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U << "\n";
+    getfem::mesh *m = new getfem::mesh(); 
+    m->read_from_file(GLOBAL_FUNCTION_MF);
+    getfem::mesh_fem *mf_c = new getfem::mesh_fem(*m); 
+    mf_c->read_from_file(GLOBAL_FUNCTION_MF);
+    std::fstream f(GLOBAL_FUNCTION_U.c_str(), std::ios::in);
+    plain_vector W(mf_c->nb_dof());
+    for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
+      f >> W[i]; if (!f.good()) DAL_THROW(dal::failure_error, "problem while reading " << GLOBAL_FUNCTION_U);
+    }
+    unsigned nb_func = mf_c->get_qdim();
+    cout << "read " << nb_func << " global functions OK.\n";
+    vfunc.resize(nb_func);
+    getfem::interpolator_on_mesh_fem *global_interp = 
+      new getfem::interpolator_on_mesh_fem(*mf_c, W);
+    for (size_type i=0; i < nb_func; ++i) {
+      vfunc[i] = bimaterial_reduced_basis(global_interp, i, ls,
+					  (enrichment_option == 2) ? 0.0 : cutoff_radius,
+					  (enrichment_option == 2) ? 0.0 : cutoff_radius1,
+					  (enrichment_option == 2) ? 0.1 : cutoff_radius0,
+					  cutoff_func);
+    }
+  }
   
   mf_sing_u.set_functions(vfunc);
 
@@ -627,7 +663,8 @@ bool crack_problem::solve(plain_vector &U) {
       cout<<"Using exponential Cutoff..."<<endl;
     else
    cout<<"Using Polynomial Cutoff..."<<endl;
-    mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u); break;
+     mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u); break;
+ 
   }
   case 2 :
     {
@@ -649,11 +686,13 @@ bool crack_problem::solve(plain_vector &U) {
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
     break;
-    case 3 : mf_u_sum.set_mesh_fems(mf_us); break;
+  case 3 : mf_u_sum.set_mesh_fems(mf_us); break;
+  
   case 4 : 
     mf_u_sum.set_mesh_fems(mf_us, mfls_u); 
     break;
-  default : mf_u_sum.set_mesh_fems(mfls_u); break;
+    default : mf_u_sum.set_mesh_fems(mfls_u); break;
+  
   }
   
 
@@ -674,20 +713,26 @@ bool crack_problem::solve(plain_vector &U) {
     cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
     cout<<"______________________________________________________________________________"<<endl;
     std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
-    
+    std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
+
     cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
     
     for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-      if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0)
+      if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
 	bi_lambda[ite] = lambda_up;
-	else
+	bi_mu[ite] = mu_up;
+      }
+	else{
 	  bi_lambda[ite] = lambda_down;
+	  bi_mu[ite] = mu_down;
+	}
     }
     
     //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
     // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
     
     ELAS.lambda().set(bi_lambda);
+    ELAS.mu().set(bi_mu);
   }
   
 
@@ -718,7 +763,7 @@ bool crack_problem::solve(plain_vector &U) {
 
   if(bimaterial ==  1){
   for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i]=-0.2;
+    F[i]=-0.1;
   }
   
   getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);   
@@ -729,7 +774,7 @@ bool crack_problem::solve(plain_vector &U) {
   
   gmm::clear(F);
   for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i]=0.2;
+    F[i]=0.1;
  
   getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
   
@@ -801,6 +846,11 @@ int main(int argc, char *argv[]) {
       // mf.set_finite_element
       //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
       plain_vector V(mf.nb_dof());
+
+      for (unsigned i=0; i < p.mf_u().nb_dof(); ++i) {
+	cout << "dof " << i << ": " << p.mf_u().point_of_dof(i);
+      }
+      gmm::fill_random(U);
 
       getfem::interpolation(p.mf_u(), mf, U, V);
 
@@ -887,8 +937,8 @@ int main(int argc, char *argv[]) {
 			       p.PARAM.int_value("VTK_EXPORT")==1);
 
 	exp.exporting(mf_refined); 
-	//exp.write_point_data(mf_refined_vm, DN, "error");
-	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+	exp.write_point_data(mf_refined_vm, DN, "error");
+	//exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       

@@ -100,6 +100,8 @@ namespace gmm {
     double get_resmax(void) const { return resmax; }
     void set_resmax(double r) { resmax = r; }
 
+    double get_res() const { return res; }
+
     /* change the user-definable callback, called after each iteration */
     void set_callback(void (*t)(const gmm::iteration&)) {
       callback = t;

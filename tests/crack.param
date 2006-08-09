@@ -14,11 +14,13 @@ LAMBDA = 1.0;           % Lamé coefficient.
 QUAD = 0;
 
 
-BIMATERIAL = 0;         % 1 : To enable the bimaterial case
+BIMATERIAL = 1;         % 1 : To enable the bimaterial case
 
 if BIMATERIAL
   LAMBDA_UP = 999.0;
   LAMBDA_DOWN = 1.0;
+  MU_UP = 3.0;	
+  MU_DOWN = 1.0;
 end
 
 
@@ -32,7 +34,7 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-NX = 19;            	          % space step.
+NX = 27;            	          % space step.
 
 
 
@@ -68,8 +70,11 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 
 ADDITIONAL_CRACK = 0;
 
+%Enable the following two lines to use the precalculated solution as enrichement 
+GLOBAL_FUNCTION_MF = "crack.meshfem"
+GLOBAL_FUNCTION_U  = "crack.U"
 
-ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone
 			% 3 = spider fem alone

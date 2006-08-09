@@ -30,6 +30,7 @@
 
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
+#include <bgeot_rtree.h>
 
 namespace getfem {
   /// inherit from this class to define new global functions.
@@ -123,6 +124,37 @@ namespace getfem {
 					       size_type func = 0);
 
 
+
+
+
+  struct interpolator_on_mesh_fem {
+    const mesh_fem &mf;
+    const std::vector<scalar_type> U;
+
+    mutable bgeot::rtree boxtree;
+    mutable size_type cv_stored;
+    mutable bgeot::rtree::pbox_set boxlst;
+    mutable bgeot::geotrans_inv_convex gic;
+    
+    
+    interpolator_on_mesh_fem(const mesh_fem &mf_, 
+			     const std::vector<scalar_type> &U_) :
+      mf(mf_), U(U_) { init(); }
+
+    void init();
+    bool find_a_point(base_node pt, base_node &ptr,
+		      size_type &cv) const;
+    bool eval(const base_node pt, base_vector &val, base_matrix &grad) const;
+  };
+
+
+  pglobal_function bimaterial_reduced_basis(interpolator_on_mesh_fem *interp,
+					    size_type component,
+					    const level_set &ls,
+					    scalar_type cutoff_radius = 0,
+					    scalar_type cutoff_radius1 = 0,
+					    scalar_type cutoff_radius0 = 0,
+					    size_type func = 0);
 
 }  /* end of namespace getfem.                                            */
 

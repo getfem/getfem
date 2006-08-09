@@ -4,16 +4,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-% MU = 77.0;	        % Lamé coefficient.
-% LAMBDA = 107.0;   	% Lamé coefficient.
+% MU = 77.0;	        % Lamï¿½coefficient.
+% LAMBDA = 107.0;   	% Lamï¿½coefficient.
 
-MU = 1.0;	        % Lamé coefficient.
-LAMBDA = 1.0;           % Lamé coefficient.
+MU = 1.0;	        % Lamï¿½coefficient.
+LAMBDA = 1.0;           % Lamï¿½coefficient.
 
-BIMATERIAL = 0;         % 1 : To enable the bimaterial case.
+BIMATERIAL = 1;         % 1 : To enable the bimaterial case.
 LAMBDA_UP = 100.0;
 LAMBDA_DOWN=1.0;
-
+MU_UP = 3.0;
+MU_DOWN = 1.0;
 
 
 
@@ -24,16 +25,16 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 
 
 
-LX = 0.2;			  % mesh size x'ox
-LY = 0.2;	                  % mesh size y'oy
-NX = 30;            	          % space step.
+LX = 1;			  % mesh size x'ox
+LY = 1;	                  % mesh size y'oy
+NX = 100;            	          % space step.
 
 
-                                               %             F1
-F11 =   0.;  F12 = 0.   ;                      %        -----------|D 
-F21 =  0.4;  F22 = 0.   ;                      %     F2 |          |I
-F31 = -0.4;  F32 = 0.   ;                      %        -----      |R
-F41 =   0.;  F42 = -0.  ;                      %     F3 |          |C
+                                               %             F1                    
+F11 =   0.;  F12 = 0.2  ;                      %        -----------|D 
+F21 =   0.;  F22 = 0.   ;                      %     F2 |          |I
+F31 =   0.;  F32 = 0.   ;                      %        -----      |R
+F41 =   0.;  F42 = -0.2 ;                      %     F3 |          |C
                                                %        -----------|H
                                                %             F4
  
@@ -46,6 +47,7 @@ FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
+FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,1)';  % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=0;       % Mixed version or not.
  FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
