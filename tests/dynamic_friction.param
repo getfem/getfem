@@ -36,6 +36,7 @@ SCHEME =1 ; % 0 = theta-method, 1 = Newmark, 2 = midpoint
 	    % 5 = modified (implicit) Paoli-Schatzman scheme
 	    % 6 = KLR conservative scheme
 	    % 7 = midpoint + velocity modification
+            % 8 = Laursen Chawla ? (to be verified).
 	    
 THETA = 1.0;
 BETA = 1.0;
