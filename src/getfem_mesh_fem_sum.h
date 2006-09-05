@@ -37,12 +37,13 @@ namespace getfem {
   /** @internal FEM used in mesh_fem_sum objects. */
   class fem_sum : public virtual_fem {
     std::vector<pfem> pfems; /* the fems to be summed */
+    bool smart_global_dof_linking_;
     size_type cv;
     
   public:
 
     size_type index_of_global_dof(size_type cv_, size_type j) const;
-    fem_sum(const std::vector<pfem> &pfs, size_type i) : pfems(pfs), cv(i) { init(); }
+    fem_sum(const std::vector<pfem> &pfs, size_type i, bool smart_global_dof_linking) : pfems(pfs), smart_global_dof_linking_(smart_global_dof_linking), cv(i) { init(); }
     void init();
     void valid();
     void base_value(const base_node &x, base_tensor &t) const;
@@ -55,6 +56,8 @@ namespace getfem {
 			      base_tensor &t, bool = true) const;
     void real_hess_base_value(const fem_interpolation_context& c, 
 			      base_tensor &t, bool = true) const;
+    void mat_trans(base_matrix &M, const base_matrix &G,
+		   bgeot::pgeometric_trans pgt) const;
   };
 
 
@@ -66,6 +69,7 @@ namespace getfem {
     mutable std::map< std::vector<pfem>, pfem> situations;
     mutable std::vector<pfem> build_methods;
     mutable bool is_adapted;
+    bool smart_global_dof_linking_;
     void clear_build_methods();
 
   public :
@@ -83,9 +87,12 @@ namespace getfem {
       return mesh_fem::memsize(); // + ... ;
     }
     
-    mesh_fem_sum(const mesh &me) : mesh_fem(me) { is_adapted = false; }
+    mesh_fem_sum(const mesh &me, bool smart_global_dof_linking = false)
+      : mesh_fem(me), smart_global_dof_linking_(smart_global_dof_linking) { is_adapted = false; }
     void set_mesh_fems(const std::vector<const mesh_fem *> &mefs)
     { mfs = mefs; adapt(); }
+    void set_smart_global_dof_linking(bool b)
+    { smart_global_dof_linking_ = b; }
     void set_mesh_fems(const mesh_fem &mf1)
     { mfs.clear(); mfs.push_back(&mf1); adapt(); }
     void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2)

@@ -435,11 +435,9 @@ namespace getfem
   // ATTENTION : en cas de modif, changer aussi
   //             dof_description_comp__::operator,
   //             product_dof, et dof_hierarchical_compatibility.
-  int dof_description_compare(pdof_description a, pdof_description b) {
+  //             et dof_description_compare
+  int dof_weak_compatibility(pdof_description a, pdof_description b) {
     int nn;
-    if ((nn = int(a->coord_index) - int(b->coord_index)) != 0) return nn;
-    if ((nn = int(a->linkable) - int(b->linkable)) != 0) return nn;
-    if ((nn = int(a->xfem_index) - int(b->xfem_index)) != 0) return nn;
     std::vector<ddl_elem>::const_iterator
       ita = a->ddl_desc.begin(), itae = a->ddl_desc.end(),
       itb = b->ddl_desc.begin(), itbe = b->ddl_desc.end();
@@ -452,6 +450,18 @@ namespace getfem
     for (; ita != itae; ++ita) if (ita->t != LAGRANGE) return 1;
     for (; itb != itbe; ++itb) if (itb->t != LAGRANGE) return -1;
     return 0;
+  }
+
+
+  // ATTENTION : en cas de modif, changer aussi
+  //             dof_description_comp__::operator,
+  //             product_dof, et dof_hierarchical_compatibility.
+  int dof_description_compare(pdof_description a, pdof_description b) {
+    int nn;
+    if ((nn = int(a->coord_index) - int(b->coord_index)) != 0) return nn;
+    if ((nn = int(a->linkable) - int(b->linkable)) != 0) return nn;
+    if ((nn = int(a->xfem_index) - int(b->xfem_index)) != 0) return nn;
+    return dof_weak_compatibility(a,b);
   }
 
   bool dof_linkable(pdof_description a)

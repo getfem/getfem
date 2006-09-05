@@ -28,7 +28,8 @@ namespace getfem {
   void fem_sum::init() {
     cvr = pfems[0]->ref_convex(cv);
     dim_ = cvr->structure()->dim();
-    is_equiv = real_element_defined = true;
+    is_equiv = !smart_global_dof_linking_;
+    real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = 1;
@@ -49,6 +50,62 @@ namespace getfem {
 	add_node(pfems[i]->dof_types()[k], pfems[i]->node_of_dof(cv,k));
       }
     }
+  }
+
+  /* used only when smart_global_dof_linking_ is on */
+  void fem_sum::mat_trans(base_matrix &M,
+			  const base_matrix &G,
+			  bgeot::pgeometric_trans pgt) const {
+    pdof_description andof = 0, lagdof = lagrange_dof(dim());
+    std::vector<pdof_description> hermdof(dim());
+    for (size_type id = 0; id < dim(); ++id)
+      hermdof[id] = derivative_dof(dim(), id);
+    if (pfems.size()) andof = global_dof(dim());
+    gmm::copy(gmm::identity_matrix(), M);
+    base_vector val(1);
+    base_matrix grad(1, dim());
+    
+
+    // very inefficient, to be optimized ...
+    for (size_type ifem1 = 0, i=0; ifem1 < pfems.size(); ++ifem1) {
+      pfem pf1 = pfems[ifem1];
+      for (size_type idof1 = 0; idof1 < pf1->nb_dof(cv); ++idof1, ++i) {
+	if (pf1->dof_types()[idof1] == andof) {
+	  base_vector coeff(pfems[ifem1]->nb_dof(cv));
+	  coeff[idof1] = 1.0;
+	  fem_interpolation_context fic(pgt, pf1, base_node(dim()), G, cv);
+	  for (size_type ifem2 = 0, j=0; ifem2 < pfems.size(); ++ifem2) {
+	    pfem pf2 = pfems[ifem2];
+	    for (size_type idof2 = 0; idof2 < pf2->nb_dof(cv); ++idof2, ++j) {
+	      pdof_description pdd = pf2->dof_types()[idof2];
+	      bool found = false;
+	      if (pdd != andof) {
+		fic.set_xref(pf2->node_of_dof(cv, idof2));
+		if (dof_weak_compatibility(pdd, lagdof) == 0) {
+		  pfems[ifem1]->interpolation(fic, coeff, val, 1);
+		  M(i, j) = 0; //-val[0];
+		  cout << "dof " << idof2 << "compatible with lagrange\n";
+		  found = true;
+		}
+		else for (size_type id = 0; id < dim(); ++id) {
+		  if (dof_weak_compatibility(pdd, hermdof[id]) == 0) {
+		    pfems[ifem1]->interpolation_grad(fic, coeff, grad, 1);
+		    M(i, j) = -grad(0, id);
+		    cout << "dof " << idof2 << "compatible with hermite " << id << "\n";
+		    found = true;
+		  }
+		}
+		if (!found)
+		  DAL_THROW(failure_error,
+			    "Sorry, smart_global_dof_linking not "
+			    "compatible with this kind of dof");
+	      }
+	    }
+	  }
+	}
+      }
+    }
+    //cout << "fem = " << debug_name_ << ", M = " << M << "\n";
   }
 
   size_type fem_sum::index_of_global_dof(size_type , size_type j) const {
@@ -195,7 +252,7 @@ namespace getfem {
       }
       else if (pfems.size() > 0) {
 	if (situations.find(pfems) == situations.end() || is_cv_dep) {
-	  pfem pf = new fem_sum(pfems, i);
+	  pfem pf = new fem_sum(pfems, i, smart_global_dof_linking_);
 	  dal::add_stored_object(new special_mflsum_key(pf), pf,
 				 pf->ref_convex(0),
 				 pf->node_tab(0));

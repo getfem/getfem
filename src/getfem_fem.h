@@ -179,6 +179,8 @@ namespace getfem {
   size_type reserve_xfem_index(void);
   dim_type coord_index_of_dof(pdof_description a);
 
+  int dof_weak_compatibility(pdof_description a, pdof_description b);
+
   /** Gives a total order on the dof description compatible with the
    *   identification.
    */
