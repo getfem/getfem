@@ -91,6 +91,8 @@ namespace getfem {
       : mesh_fem(me), smart_global_dof_linking_(smart_global_dof_linking) { is_adapted = false; }
     void set_mesh_fems(const std::vector<const mesh_fem *> &mefs)
     { mfs = mefs; adapt(); }
+    /** enabled "smart" dof linking between the mesh_fems. It is used for 
+	example in the point-wise matching part of tests/crack.cc */
     void set_smart_global_dof_linking(bool b)
     { smart_global_dof_linking_ = b; }
     void set_mesh_fems(const mesh_fem &mf1)

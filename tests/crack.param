@@ -34,7 +34,7 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-NX = 27;            	          % space step.
+NX = 17;            	          % space step.
 
 
 
@@ -75,15 +75,16 @@ GLOBAL_FUNCTION_MF = "crack.meshfem"
 GLOBAL_FUNCTION_U  = "crack.U"
 
 ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
-		        % 1 = global functions with cutoff
-	                % 2 = standard XFEM on a fixed zone
-			% 3 = spider fem alone
-	                % 4 = spider fem enrichment
+	                % 1 = standard XFEM on a fixed zone
+			% 2 = global functions with pointwise matching
+		        % 3 = global functions with cutoff
+			% 4 = spider fem alone
+	                % 5 = spider fem enrichment
 
 
 
 
-RADIUS_ENR_AREA = 0.2;
+RADIUS_ENR_AREA = 0.3;
 CUTOFF_FUNC = 1; % 0 for the exponential cutoff. 1 for a polynomial cutoff
 CUTOFF = 0.4;
 CUTOFF1 = 0.01;

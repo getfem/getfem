@@ -241,12 +241,15 @@ struct exact_solution {
   void init(int mode, scalar_type lambda, scalar_type mu,
 	    getfem::level_set &ls) {
     std::vector<getfem::pglobal_function> cfun(4);
-    for (unsigned j=0; j < 4; ++j)
-      cfun[j] = getfem::isotropic_crack_singular_2D(j, ls);
+    for (unsigned j=0; j < 4; ++j) {
+      getfem::crack_singular_xy_function *s = 
+	new getfem::crack_singular_xy_function(j);
+      cfun[j] = getfem::global_function_on_level_set(ls, *s);
+    }
+
     mf.set_functions(cfun);
     
     mf.set_qdim(1);
-   
     
     U.resize(8); assert(mf.nb_dof() == 4);
     getfem::base_vector::iterator it = U.begin();
@@ -274,8 +277,7 @@ struct exact_solution {
 	break;
     }
     gmm::scale(U, coeff);
-  }  
-
+  }
 };
 
 base_small_vector sol_f(const base_node &x) {
@@ -300,7 +302,7 @@ base_small_vector sol_f(const base_node &x) {
 
 struct crack_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, NEUMANN_BOUNDARY_NUM1=2, NEUMANN_HOMOGENE_BOUNDARY_NUM=3};
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1 };
   getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
@@ -311,7 +313,6 @@ struct crack_problem {
   getfem::mesh_fem mf_partition_of_unity;
   getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
-  getfem::spider_fem *spider;
   getfem::mesh_fem mf_us;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
@@ -324,23 +325,43 @@ struct crack_problem {
   exact_solution exact_sol;
 #endif
   
-  
-  int bimaterial;           /* For bimaterial interface fracture */
-  double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
+
+  dal::bit_vector pm_convexes; /* convexes inside the enrichment 
+				  area when point-wise matching is used.*/
+
   base_small_vector translation;
-  scalar_type theta0;
-  scalar_type spider_radius;
-  unsigned spider_Nr;
-  unsigned spider_Ntheta;
-  int spider_K;
+
+  struct spider_param {
+    getfem::spider_fem *fem;
+    scalar_type theta0;
+    scalar_type radius;
+    unsigned Nr;
+    unsigned Ntheta;
+    int K;
+  };
+  spider_param spider;
+
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
-  scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
-  int enrichment_option;
-  size_type cutoff_func;
+  
+  scalar_type enr_area_radius;
+  struct cutoff_param {
+    scalar_type radius, radius1, radius0;
+    size_type fun_num;
+  };
+  cutoff_param cutoff;
+
+  typedef enum { NO_ENRICHMENT=0, 
+		 FIXED_ZONE=1, 
+		 GLOBAL_WITH_POINTWISE_MATCHING=2,
+		 GLOBAL_WITH_CUTOFF=3,
+		 SPIDER_FEM_ALONE=4,
+		 SPIDER_FEM_ENRICHMENT=5 } enrichment_option_enum;
+  enrichment_option_enum enrichment_option;
+
   std::string datafilename;
   
   std::string GLOBAL_FUNCTION_MF, GLOBAL_FUNCTION_U;
@@ -376,21 +397,22 @@ void crack_problem::init(void) {
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
 
   add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
-  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
-				      "Enrichment option");
+  enrichment_option = 
+    enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
+					   "Enrichment option"));
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  spider_radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
-  spider_Nr = PARAM.int_value("SPIDER_NR","Spider_Nr ");
-  spider_Ntheta = PARAM.int_value("SPIDER_NTHETA","Ntheta ");
-  spider_K = PARAM.int_value("SPIDER_K","K ");
+  spider.radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
+  spider.Nr = PARAM.int_value("SPIDER_NR","Spider_Nr ");
+  spider.Ntheta = PARAM.int_value("SPIDER_NTHETA","Ntheta ");
+  spider.K = PARAM.int_value("SPIDER_K","K ");
+  spider.theta0 =0;
 
   translation.resize(2); 
   translation[0] =0.5;
   translation[1] =0.;
-  theta0 =0;
   
   /* First step : build the mesh */
   bgeot::pgeometric_trans pgt = 
@@ -410,34 +432,14 @@ void crack_problem::init(void) {
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
   
-  bimaterial = PARAM.int_value("BIMATERIAL", "bimaterial interface crack");
+  mu = PARAM.real_value("MU", "Lame coefficient mu");
+  lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
 
-  GLOBAL_FUNCTION_MF = PARAM.string_value("GLOBAL_FUNCTION_MF");
-  GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
+  cutoff.fun_num = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
 
-  
-
-
-  if (bimaterial == 1){
-    mu = PARAM.real_value("MU", "Lame coefficient mu"); 
-    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
-    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
-    lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
-    lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
-    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-  }
-  else{
-
-    mu = PARAM.real_value("MU", "Lame coefficient mu");
-    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-  }
-  
-
-  cutoff_func = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
-
-  cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
-  cutoff_radius1 = PARAM.real_value("CUTOFF1", "Cutoff1");
-  cutoff_radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
+  cutoff.radius = PARAM.real_value("CUTOFF", "Cutoff");
+  cutoff.radius1 = PARAM.real_value("CUTOFF1", "Cutoff1");
+  cutoff.radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
   mf_u().set_qdim(N);
 
   /* set the finite element on the mf_u */
@@ -460,18 +462,6 @@ void crack_problem::init(void) {
   mf_mult.set_qdim(N);
   mf_partition_of_unity.set_classical_finite_element(1);
   
-//   if (enrichment_option == 3 || enrichment_option == 4) {
-//     spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-// 				    spider_Ntheta, spider_K, translation,
-// 				    theta0);
-//     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
-//     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
-//       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
-// 	mf_us.set_finite_element(i,0);
-//       }
-//     }
-//   }
-
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
   dir_with_mult = PARAM.int_value("DIRICHLET_VERSINO");
@@ -505,34 +495,9 @@ void crack_problem::init(void) {
     
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if(bimaterial == 1) {
-      
-      if (un[0]  > 1.0E-7 ) { // new Neumann face
-	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
-      } else {
-	if (un[1]  > 1.0E-7 ) {
-	  cout << "normal = " << un << endl;
-	  mesh.region(NEUMANN_BOUNDARY_NUM1).add(i.cv(), i.f());
-	}
-	else {
-	  if (un[1]  < -1.0E-7 ) {
-	    cout << "normal = " << un << endl;
-	    mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
-	  }
-	  else {
-	    if (un[0]  < -1.0E-7 ) {
-	      cout << "normal = " << un << endl;
-	      mesh.region(NEUMANN_HOMOGENE_BOUNDARY_NUM).add(i.cv(), i.f());
-	    }
-	  }
-	}
-      }
-    }
-    else {
-      
 #ifdef VALIDATE_XFEM
-      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
-      #else
+    mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+#else
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     if (un[0] - 1.0 < -1.0E-7) { // new Neumann face
@@ -540,9 +505,8 @@ void crack_problem::init(void) {
     } else {
       cout << "normal = " << un << endl;
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
-      }
-#endif
     }
+#endif
   }
   
   
@@ -605,69 +569,48 @@ bool crack_problem::solve(plain_vector &U) {
   mim.adapt();
   mfls_u.adapt();
   
-  bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
 
+
+  cout << "Setting up the singular functions for the enrichment\n";
   std::vector<getfem::pglobal_function> vfunc(4);
-  if (!load_global_fun) {
-    cout << "Using default singular functions\n";
-    for (size_type i = 0; i < 4; ++i)
-      vfunc[i] = isotropic_crack_singular_2D(i, ls,
-					     (enrichment_option == 2) ? 0.0 : cutoff_radius,
-					     (enrichment_option == 2) ? 0.0 : cutoff_radius1,
-					     (enrichment_option == 2) ? 0.1 : cutoff_radius0,
-					     cutoff_func);
-  } else {
-    cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U << "\n";
-    getfem::mesh *m = new getfem::mesh(); 
-    m->read_from_file(GLOBAL_FUNCTION_MF);
-    getfem::mesh_fem *mf_c = new getfem::mesh_fem(*m); 
-    mf_c->read_from_file(GLOBAL_FUNCTION_MF);
-    std::fstream f(GLOBAL_FUNCTION_U.c_str(), std::ios::in);
-    plain_vector W(mf_c->nb_dof());
-    for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
-      f >> W[i]; if (!f.good()) DAL_THROW(dal::failure_error, "problem while reading " << GLOBAL_FUNCTION_U);
+  for (size_type i = 0; i < 4; ++i) {
+    /* use the singularity */
+    getfem::abstract_xy_function *s = 
+      new getfem::crack_singular_xy_function(i);
+    if (enrichment_option != FIXED_ZONE && 
+	enrichment_option != GLOBAL_WITH_POINTWISE_MATCHING) {
+      /* use the product of the singularity function
+	 with a cutoff */
+      getfem::abstract_xy_function *c = 
+	new getfem::cutoff_xy_function(cutoff.fun_num,
+				       cutoff.radius, 
+				       cutoff.radius1,cutoff.radius0);
+      s = new getfem::product_of_xy_functions(*s, *c);
     }
-    unsigned nb_func = mf_c->get_qdim();
-    cout << "read " << nb_func << " global functions OK.\n";
-    vfunc.resize(nb_func);
-    getfem::interpolator_on_mesh_fem *global_interp = 
-      new getfem::interpolator_on_mesh_fem(*mf_c, W);
-    for (size_type i=0; i < nb_func; ++i) {
-      vfunc[i] = bimaterial_reduced_basis(global_interp, i, ls,
-					  (enrichment_option == 2) ? 0.0 : cutoff_radius,
-					  (enrichment_option == 2) ? 0.0 : cutoff_radius1,
-					  (enrichment_option == 2) ? 0.1 : cutoff_radius0,
-					  cutoff_func);
-    }
+    vfunc[i] = getfem::global_function_on_level_set(ls, *s);
   }
   
   mf_sing_u.set_functions(vfunc);
 
 
-  if (enrichment_option == 3 || enrichment_option == 4) {
-    spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-				    spider_Ntheta, spider_K, translation,
-				    theta0);
-    mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
+  if (enrichment_option == SPIDER_FEM_ALONE || 
+      enrichment_option == SPIDER_FEM_ENRICHMENT) {
+    spider.fem = new getfem::spider_fem(spider.radius, mim, spider.Nr,
+					spider.Ntheta, spider.K, translation,
+					spider.theta0);
+    mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
 	mf_us.set_finite_element(i,0);
       }
     }
-    spider->check();
+    spider.fem->check();
   }
 
   switch (enrichment_option) {
-  case 1 :{
-    if(cutoff_func == 0)
-      cout<<"Using exponential Cutoff..."<<endl;
-    else
-   cout<<"Using Polynomial Cutoff..."<<endl;
-     mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u); break;
- 
-  }
-  case 2 :
-    {
+
+
+    case FIXED_ZONE: {
       dal::bit_vector enriched_dofs;
       plain_vector X(mf_partition_of_unity.nb_dof());
       plain_vector Y(mf_partition_of_unity.nb_dof());
@@ -684,14 +627,59 @@ bool crack_problem::solve(plain_vector &U) {
 		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
-    }
-    break;
-  case 3 : mf_u_sum.set_mesh_fems(mf_us); break;
+    } break;
+
+    case GLOBAL_WITH_POINTWISE_MATCHING: {
+      // Selecting the element in the enriched domain
+
+      for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
+	bool in_area = true;
+	/* For each element, we test all of its nodes. 
+	   If all the nodes are inside the enrichment area,
+	   then the element is completly inside the area too */ 
+	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
+	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] - translation[0]) + 
+	      gmm::sqr(mesh.points_of_convex(cv)[j][1] - translation[1]) > 
+	      gmm::sqr(enr_area_radius)) {
+	    in_area = false; break;
+	  }
+	}
+
+	/* "remove" the global function on convexes outside the enrichment
+	   area */
+	if (!in_area) {
+	  mf_sing_u.set_finite_element(cv, 0);
+	}
+      }
+      /* 
+	 enable smart dof linking: this will join the inside and the
+	 outside of the enrichment area by ensuring that the value at
+	 the dof node is the same inside the enrichment area and
+	 outside the enrichment area.
+      */
+      //mf_u_sum.set_smart_global_dof_linking(true);
+      mf_u_sum.set_mesh_fems(mfls_u); // , mf_sing_u);
+    } break;
+
+    case GLOBAL_WITH_CUTOFF :{
+      if(cutoff.fun_num == getfem::cutoff_xy_function::EXPONENTIAL_CUTOFF)
+	cout<<"Using exponential Cutoff..."<<endl;
+      else
+	cout<<"Using Polynomial Cutoff..."<<endl;
+      mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
+    } break;
+
+    case SPIDER_FEM_ALONE: {
+      mf_u_sum.set_mesh_fems(mf_us); 
+    } break;
   
-  case 4 : 
-    mf_u_sum.set_mesh_fems(mf_us, mfls_u); 
-    break;
-    default : mf_u_sum.set_mesh_fems(mfls_u); break;
+    case SPIDER_FEM_ENRICHMENT: {
+      mf_u_sum.set_mesh_fems(mf_us, mfls_u); 
+    } break;
+
+    case NO_ENRICHMENT: {
+      mf_u_sum.set_mesh_fems(mfls_u); 
+    } break;
   
   }
   
@@ -706,37 +694,9 @@ bool crack_problem::solve(plain_vector &U) {
   
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u(), mixed_pressure ? 0.0 : lambda, mu);
-
-  
-  if(bimaterial == 1){
-    cout<<"______________________________________________________________________________"<<endl;
-    cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
-    cout<<"______________________________________________________________________________"<<endl;
-    std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
-    std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
-
-    cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
-    for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-      if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
-	bi_lambda[ite] = lambda_up;
-	bi_mu[ite] = mu_up;
-      }
-	else{
-	  bi_lambda[ite] = lambda_down;
-	  bi_mu[ite] = mu_down;
-	}
-    }
-    
-    //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
-    // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
-    ELAS.lambda().set(bi_lambda);
-    ELAS.mu().set(bi_mu);
-  }
   
 
-    getfem::mdbrick_abstract<> *pINCOMP;
+  getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure) {
     getfem::mdbrick_linear_incomp<> *incomp
       = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
@@ -757,60 +717,30 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::clear(F);
   
   // Neumann condition brick.
-  
-  getfem::mdbrick_abstract<> *pNEUMANN;
-    
-
-  if(bimaterial ==  1){
-  for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i]=-0.1;
-  }
-  
-  getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);   
-  
-   gmm::clear(F);
-   getfem::mdbrick_source_term<> NEUMANN_HOM(NEUMANN, mf_rhs, F,NEUMANN_HOMOGENE_BOUNDARY_NUM);
-  
-  
-  gmm::clear(F);
-  for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i]=0.1;
- 
-  getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
-  
-  if (bimaterial ==1)
-    pNEUMANN = & NEUMANN1;
-  else
-    pNEUMANN = & NEUMANN;
-   
-    
+        
+  getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);        
    
  //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
  //assert(toto.mf.nb_dof() == 1);
    
  // Dirichlet condition brick.
-   getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
-   
-   if (bimaterial == 1)
-     final_model.rhs().set(exact_sol.mf,0);
-   else {
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
+  
 #ifdef VALIDATE_XFEM
-     final_model.rhs().set(exact_sol.mf,exact_sol.U);
-#endif
-   }
+  final_model.rhs().set(exact_sol.mf,exact_sol.U);
+#endif   
+  final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
    
-   final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
-   
-   // Generic solve.
- cout << "Total number of variables : " << final_model.nb_dof() << endl;
- getfem::standard_model_state MS(final_model);
- gmm::iteration iter(residual, 1, 40000);
- getfem::standard_solve(MS, final_model, iter);
- 
- // Solution extraction
- gmm::copy(ELAS.get_solution(MS), U);
- 
- return (iter.converged());
+  // Generic solve.
+  cout << "Total number of variables : " << final_model.nb_dof() << endl;
+  getfem::standard_model_state MS(final_model);
+  gmm::iteration iter(residual, 1, 40000);
+  getfem::standard_solve(MS, final_model, iter);
+  
+  // Solution extraction
+  gmm::copy(ELAS.get_solution(MS), U);
+  
+  return (iter.converged());
 }
 
 /**************************************************************************/
@@ -847,10 +777,10 @@ int main(int argc, char *argv[]) {
       //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
       plain_vector V(mf.nb_dof());
 
-      for (unsigned i=0; i < p.mf_u().nb_dof(); ++i) {
+      /*for (unsigned i=0; i < p.mf_u().nb_dof(); ++i) {
 	cout << "dof " << i << ": " << p.mf_u().point_of_dof(i);
       }
-      gmm::fill_random(U);
+      gmm::fill_random(U);*/
 
       getfem::interpolation(p.mf_u(), mf, U, V);
 

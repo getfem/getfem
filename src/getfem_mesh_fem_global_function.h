@@ -112,21 +112,10 @@ namespace getfem {
   };
 
 
-  /*
-   * some usefull global functions
-   */
-  class level_set;
-  pglobal_function isotropic_crack_singular_2D(size_type i,
-					       const level_set &ls,
-					       scalar_type cutoff_radius = 0,
-					       scalar_type cutoff_radius1 = 0,
-					       scalar_type cutoff_radius0 = 0,
-					       size_type func = 0);
-
-
-
-
-
+  /** a general structure for interpolation of a function defined 
+      by a mesh_fem and a vector U at any point 
+      (interpolation of value and radient).
+  */
   struct interpolator_on_mesh_fem {
     const mesh_fem &mf;
     const std::vector<scalar_type> U;
@@ -148,14 +137,77 @@ namespace getfem {
   };
 
 
-  pglobal_function bimaterial_reduced_basis(interpolator_on_mesh_fem *interp,
-					    size_type component,
-					    const level_set &ls,
-					    scalar_type cutoff_radius = 0,
-					    scalar_type cutoff_radius1 = 0,
-					    scalar_type cutoff_radius0 = 0,
-					    size_type func = 0);
+  /* below a list of simple function of (x,y)
+     used for building the crack singular functions 
+  */
+  struct abstract_xy_function {
+    virtual scalar_type val(scalar_type x, scalar_type y) const = 0;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const = 0;
+    virtual ~abstract_xy_function() {}
+  };
 
+  
+  struct crack_singular_xy_function : public abstract_xy_function {
+    unsigned l; /* 0 <= l <= 3 */
+    virtual scalar_type val(scalar_type x, scalar_type y) const;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    crack_singular_xy_function(unsigned l_) : l(l_) {}
+  };
+
+  struct cutoff_xy_function : public abstract_xy_function {
+    enum { NOCUTOFF = -1, 
+	   EXPONENTIAL_CUTOFF = 0, POLYNOMIAL_CUTOFF = 1, 
+	   POLYNOMIAL2_CUTOFF=2 };
+    int fun;
+    scalar_type a4, r1, r0;
+    virtual scalar_type val(scalar_type x, scalar_type y) const;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    cutoff_xy_function(int fun_num, scalar_type r, 
+		       scalar_type r1, scalar_type r0);
+  };
+
+  struct interpolated_xy_function : public abstract_xy_function {
+    interpolator_on_mesh_fem &itp;
+    virtual scalar_type val(scalar_type x, scalar_type y) const {
+      base_vector v; base_matrix g;
+      itp.eval(base_node(x,y), v, g);
+      return v[0];
+    }
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const {
+      base_vector v; base_matrix g;
+      itp.eval(base_node(x,y), v, g);
+      return base_small_vector(g[0], g[1]);      
+    }
+    interpolated_xy_function(interpolator_on_mesh_fem &itp_) :
+      itp(itp_) {}
+  };
+
+  struct product_of_xy_functions : 
+    public abstract_xy_function {
+    abstract_xy_function &fn1, &fn2;
+    scalar_type val(scalar_type x, scalar_type y) const {
+      return fn1.val(x,y) * fn2.val(x,y);
+    }
+    base_small_vector grad(scalar_type x, scalar_type y) const {
+      return fn1.grad(x,y)*fn2.val(x,y) + fn1.val(x,y)*fn2.grad(x,y);
+    }
+    product_of_xy_functions(abstract_xy_function &fn1_,
+			    abstract_xy_function &fn2_) 
+      : fn1(fn1_), fn2(fn2_) {}
+  };
+
+
+
+  /*
+   * some usefull global functions
+   */
+  class level_set;
+
+  pglobal_function 
+  global_function_on_level_set(const level_set &ls,
+			       const abstract_xy_function &fn);
+
+  
 }  /* end of namespace getfem.                                            */
 
 #endif

@@ -374,6 +374,7 @@ namespace getfem {
     base_vector coeff;
     base_matrix G;
     pfem pf = mfU->pmf->fem_of_element(cv);
+    if (pf == 0) return;
     fem_precomp_pool fprecomp;
     if (pf->need_G()) 
       bgeot::vectors_to_base_matrix(G, mfU->pmf->linked_mesh().points_of_convex(cv));

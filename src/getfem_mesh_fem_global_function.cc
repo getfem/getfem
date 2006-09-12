@@ -134,8 +134,9 @@ namespace getfem {
   }
 
 
-  static scalar_type sing_function(scalar_type x, scalar_type y, size_type l) {
-
+  /* the basic 4 singular functions for 2D cracks */
+  scalar_type 
+  crack_singular_xy_function::val(scalar_type x, scalar_type y) const {
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
@@ -143,26 +144,27 @@ namespace getfem {
      */
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
+
     switch(l){
-      case 0 :
-	return sqrt(r)*sin2;
-      case 1 :
-	return sqrt(r)*cos2;
-      case 2 :
-	return sin2*y/sqrt(r);
-      case 3 :
-	return cos2*y/sqrt(r);
+      case 0 : return sqrt(r)*sin2;
+      case 1 : return sqrt(r)*cos2; 
+      case 2 : return sin2*y/sqrt(r); 
+      case 3 : return cos2*y/sqrt(r); 
       default:
 	DAL_INTERNAL_ERROR("arg");
     }
   }
 
-
-  static base_small_vector sing_function_grad(scalar_type x, scalar_type y,
-					      size_type l) {
+  base_small_vector 
+  crack_singular_xy_function::grad(scalar_type x, scalar_type y) const {
     base_small_vector res(2);
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
+
+    if (r < 1e-10) {
+      DAL_WARNING0("Warning, point very close to the singularity.\n");
+    }
+
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
      * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
      */
@@ -193,212 +195,143 @@ namespace getfem {
   }
 
 
+  scalar_type 
+  cutoff_xy_function::val(scalar_type x, scalar_type y) const { 
+    switch (fun) {
+      case EXPONENTIAL_CUTOFF:
+	return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
+      case POLYNOMIAL_CUTOFF: {
+	assert(r0 > r1);
+	scalar_type r = gmm::sqrt(x*x+y*y);
+	
+	if (r <= r1) return 1;
+	else if (r >= r0) return 0;
+	else {
+	  scalar_type c = 6./(pow(r0,3.) - pow(r1,3.) + 3*r1*r0*(r1-r0));
+	  scalar_type k = -(c/6.)*(-pow(r0,3.) + 3*r1*pow(r0,2.));
+	  return (c/3.)*pow(r,3.) - (c*(r0 + r1)/2.)*pow(r,2.)
+	    + c*r0*r1*r + k;
+	}
+      }
+      case POLYNOMIAL2_CUTOFF: {
+	assert(r0 > r1);
+	scalar_type r = gmm::sqrt(x*x+y*y);
+	if (r <= r1) return scalar_type(1);
+	else if (r >= r0) return scalar_type(0);
+	else {
+	  scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5)) 
+			      + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4)) 
+			      - (1./3.)*(pow(r1,3)*pow(r0,2) - 
+					 pow(r1,2)*pow(r0,3)));
+	  scalar_type k = 1. - c*((-1./30.)*pow(r1,5) + 
+				  (1./6.)*pow(r1,4)*r0 - 
+				  (1./3.)*pow(r1,3)*pow(r0,2));
+	  return c*( (-1./5.)*pow(r,5) + (1./2.)* (r1+r0)*pow(r,4) - 
+		     (1./3.)*(pow(r1,2)+pow(r0,2) + 4.*r0*r1)*pow(r,3) + 
+		     r0*r1*(r0+r1)*pow(r,2) - pow(r0,2)*pow(r1,2)*r) + k;
+	}
+      }
+      default : return scalar_type(1);
+    }
+  }
+    
+  base_small_vector 
+  cutoff_xy_function::grad(scalar_type x, scalar_type y) const {
+    switch (fun) {
+      case EXPONENTIAL_CUTOFF: {
+	scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
+	return base_small_vector(ratio*x, ratio*y);
+      } break;
+      case POLYNOMIAL_CUTOFF: {
+	scalar_type r = gmm::sqrt(x*x+y*y);
+	scalar_type ratio = 0;
+	
+	if ( r > r1 && r < r0 ) {
+	  scalar_type c = 6./(pow(r0,3.) - pow(r1,3.) + 3*r1*r0*(r1-r0));
+	  ratio = c*(r - r0)*(r - r1);
+	}
+	return base_small_vector(ratio*x/r,ratio*y/r);
+      } break;
+      case POLYNOMIAL2_CUTOFF: {
+	scalar_type r = gmm::sqrt(x*x+y*y);
+	scalar_type ratio = 0;
+	if (r > r1 && r < r0) {
+	  scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5)) 
+			      + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4)) 
+			      - (1./3.)*(pow(r1,3)*pow(r0,2) - 
+					 pow(r1,2)*pow(r0,3)));
+	  ratio = - c*gmm::sqr(r-r0)*gmm::sqr(r-r1);
+	}
+	return base_small_vector(ratio*x/r,ratio*y/r);
+      } break;
+      default : return base_small_vector(2);
+    }
+  }
+
+  cutoff_xy_function::cutoff_xy_function(int fun_num, scalar_type r, 
+					 scalar_type r1_, scalar_type r0_) 
+  {
+    fun = fun_num;
+    r1 = r1_; r0 = r0_;
+    a4 = 0;
+    if (r > 0) a4 = pow(2.7/r,4.);
+  }
 
 
-
-
-  /*added lines
-declaration of cutoff_radius1 and cutoffradius0
-
-  */
-  struct crack_singular : public global_function, public context_dependencies {
-    size_type l;
+  struct global_function_on_levelset_ : 
+    public global_function, public context_dependencies {
     const level_set &ls;
-    scalar_type a4;
-    scalar_type cutoff_radius1; //radius of the area where the cutoff is equal 1
-    scalar_type cutoff_radius0; //radius of the support of the cutoff. outside this area the cutoff is null
-    size_type cutoff_func;
-    mutable mesher_level_set mls0, mls1;
+    mutable mesher_level_set mls_x, mls_y;
     mutable size_type cv;
 
+    const abstract_xy_function &fn;
+
     void update_mls(size_type cv_) const { 
-      if (cv_ != cv) 
-	{ cv=cv_; mls0=ls.mls_of_convex(cv, 0); mls1=ls.mls_of_convex(cv, 1); }
+      if (cv_ != cv) { 
+	cv=cv_; 
+	mls_x=ls.mls_of_convex(cv, 1);
+	mls_y=ls.mls_of_convex(cv, 0);
+      }
     }
 
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num());
-      scalar_type x = mls1(c.xref()), y = mls0(c.xref());
-      scalar_type v=sing_function(x, y, l);
-      return v*cutoff(x,y);
-    }
-
-    
- 
-//     base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
-//       base_small_vector g(2);
-//       if (a4>0) {
-// 	scalar_type r2 = x*x+y*y;
-// 	g[0] = cutoff(x,y) * (-4*a4*r2*x);
-// 	g[1] = cutoff(x,y) * (-4*a4*r2*y);
-//       }
-//       return g;
-//     }
-
- 
-    
-    scalar_type cutoff(scalar_type x, scalar_type y) const {
-       
-      switch (cutoff_func) {
-
-	
-      case 0:
-	return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
-	  
-      case 1:
-	{
-	  assert(cutoff_radius0 > cutoff_radius1);
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  
-	  if (r <= cutoff_radius1)
-	    return scalar_type(1);
-	  else if (r >= cutoff_radius0)
-	    return scalar_type(0);
-	  else {
-	    scalar_type c = 6./(pow(cutoff_radius0,3.) - 
-				pow(cutoff_radius1,3.)
-				+ 3*cutoff_radius1*cutoff_radius0
-				* (cutoff_radius1-cutoff_radius0));
-	    scalar_type k = -(c/6.)*(- pow(cutoff_radius0,3.)
-				     + 3*cutoff_radius1*pow(cutoff_radius0,2.));
-	    
-	    return (c/3.)*pow(r,3.)
-	      - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2.)
-	      + c*cutoff_radius0*cutoff_radius1*r + k;
-	  }
-	}
-      case 2:
-	{
-	  assert(cutoff_radius0 > cutoff_radius1);
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  
-	  if (r <= cutoff_radius1)
-	    return scalar_type(1);
-	  else if (r >= cutoff_radius0)
-	    return scalar_type(0);
-	  else {
-	    scalar_type c = 1. / (  (-1./30.) * (pow(cutoff_radius1,5) - pow(cutoff_radius0,5)) + (1./6.)*(pow(cutoff_radius1,4)*cutoff_radius0 - cutoff_radius1*pow(cutoff_radius0,4)) - (1./3.)*(pow(cutoff_radius1,3)*pow(cutoff_radius0,2) - pow(cutoff_radius1,2)*pow(cutoff_radius0,3))  );
-	    
-	    scalar_type k = 1. - c*((-1./30.)*pow(cutoff_radius1,5) + (1./6.)*pow(cutoff_radius1,4)*cutoff_radius0 - (1./3.)*pow(cutoff_radius1,3)*pow(cutoff_radius0,2));
-	    
-	    return c*( (-1./5.)*pow(r,5) + (1./2.)* (cutoff_radius1+cutoff_radius0)*pow(r,4) - (1./3.)*(pow(cutoff_radius1,2)+pow(cutoff_radius0,2) + 4.*cutoff_radius0*cutoff_radius1)*pow(r,3) + cutoff_radius0*cutoff_radius1*(cutoff_radius0+cutoff_radius1)*pow(r,2) - pow(cutoff_radius0,2)*pow(cutoff_radius1,2)*r) + k;
-	  }
-	}
-      default : return scalar_type(1);
-      }
-    }
-    
-    
-    base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
-      
-      switch (cutoff_func) {
-      case 0:
-	{
-	  scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
-	  return base_small_vector(ratio*x, ratio*y);
-	}
-      case 1:
-	{
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  scalar_type ratio = scalar_type(0);
-
-	  if ( r > cutoff_radius1 && r < cutoff_radius0 ) {
-	    scalar_type c = 6./(pow(cutoff_radius0,3.) - pow(cutoff_radius1,3.)
-				+ 3*cutoff_radius1*cutoff_radius0
-				* (cutoff_radius1-cutoff_radius0));
-	    ratio = c*(r - cutoff_radius0)*(r - cutoff_radius1);
-	  }
-	  
-	  return base_small_vector(ratio*x/r,ratio*y/r);
-	}
-      case 2:
-	{
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  scalar_type ratio = scalar_type(0);
-
-	  if ( r > cutoff_radius1 && r < cutoff_radius0 ) {
-	    scalar_type c = 1. / (  (-1./30.) * (pow(cutoff_radius1,5) - pow(cutoff_radius0,5)) + (1./6.)*(pow(cutoff_radius1,4)*cutoff_radius0 - cutoff_radius1*pow(cutoff_radius0,4)) - (1./3.)*(pow(cutoff_radius1,3)*pow(cutoff_radius0,2) - pow(cutoff_radius1,2)*pow(cutoff_radius0,3))  );
-	    
-	    ratio = - c*pow((r - cutoff_radius0),2)*pow((r - cutoff_radius1),2);
-	  }
-	  
-	  return base_small_vector(ratio*x/r,ratio*y/r);
-	}
-      default : return base_small_vector(2);
-      }
+      scalar_type x = mls_x(c.xref()), y = mls_y(c.xref());
+      return fn.val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
-		      base_small_vector &v) const {
+		      base_small_vector &g) const {
       update_mls(c.convex_num());
       size_type P = c.xref().size();
       base_small_vector dx(P), dy(P), dfr(2);
-      scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
-      if (x*x + y*y < 1e-20) {
-	cerr << "Warning, point very close to the singularity. xreal = "
-	     << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
-      }
-      
-      switch (cutoff_func){
-      case 0: 
-	{
-	if (a4 > 0)
-	  dfr = sing_function(x,y,l)*cutoff_grad(x,y)
-	    + cutoff(x,y)*sing_function_grad(x, y, l);
-	else dfr = sing_function_grad(x, y, l);
-	
-	gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
-	
-      } break;
-      case 1: {
-	  if (cutoff_radius1 > 0)
-	    dfr = sing_function(x,y,l)*cutoff_grad(x,y)
-	      + cutoff(x,y)*sing_function_grad(x, y, l);
-	  else dfr = sing_function_grad(x, y, l);
-	  
-	  gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
-	} break;
-      
-    case 2: {
-	  if (cutoff_radius1 > 0)
-	    dfr = sing_function(x,y,l)*cutoff_grad(x,y) + cutoff(x,y)*sing_function_grad(x, y, l);
-	  else dfr = sing_function_grad(x, y, l);
-	  
-	  gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, v);
-	} break;
-      }
+      scalar_type x = mls_x.grad(c.xref(), dx);
+      scalar_type y = mls_y.grad(c.xref(), dy);
+
+      base_small_vector gfn = fn.grad(x,y);
+      gmm::mult(c.B(), gfn[0]*dx + gfn[1]*dy, g);
     }
-    virtual void hess(const fem_interpolation_context&, base_matrix &) const
+    virtual void hess(const fem_interpolation_context&, 
+		      base_matrix &) const
     { DAL_THROW(dal::to_be_done_error, "hessian to be done ..."); }
     
     void update_from_context(void) const { cv =  size_type(-1); }
 
-    crack_singular(size_type l_, const level_set &ls_, 
-		   scalar_type cutoff_R, scalar_type cutoff_R1, scalar_type cutoff_R0, size_type func) : l(l_), ls(ls_) {
-      if (cutoff_R) a4 = (cutoff_R > 0.0) ? pow(2.7/cutoff_R,4.) : 0.0;
-      cutoff_radius1 = cutoff_R1;
-      cutoff_radius0 = cutoff_R0;
-      cutoff_func = func;
-      cerr << "cutoff radius: " << cutoff_radius0 << ", " << cutoff_radius1 << "\n";
+    global_function_on_levelset_(const level_set &ls_, 
+				 const abstract_xy_function &fn_)
+      : ls(ls_), fn(fn_) {
       cv = size_type(-1);
       this->add_dependency(ls);
     }
 
   };
+  
 
-  pglobal_function isotropic_crack_singular_2D(size_type i,
-					       const level_set &ls, 
-					       scalar_type cutoff_radius, 
-					       scalar_type cutoff_radius1, 
-					       scalar_type cutoff_radius0,
-					       size_type cutoff_func) {
-    return new crack_singular(i, ls, cutoff_radius, cutoff_radius1, cutoff_radius0, cutoff_func);
+  pglobal_function 
+  global_function_on_level_set(const level_set &ls, 
+			      const abstract_xy_function &fn) {
+    return new global_function_on_levelset_(ls, fn);
   }
 
-
-
-
-  /* ** Begining of UNDER CONSTRUCTION
-/---------------------------------------------------------------------*/
 
   void interpolator_on_mesh_fem::init() {
     base_node min, max;
@@ -455,206 +388,7 @@ declaration of cutoff_radius1 and cutoffradius0
       return true;
     } else return false;
   }
-
-  struct reduced_basis : public global_function, public context_dependencies {
-    const interpolator_on_mesh_fem *interp;
-    size_type l;
-    const level_set &ls;
-    scalar_type a4;
-    scalar_type cutoff_radius1; //radius of the area where the cutoff is equal 1
-    scalar_type cutoff_radius0; //radius of the support of the cutoff. outside this area the cutoff is null
-    size_type cutoff_func;
-    mutable mesher_level_set mls0, mls1;
-    mutable size_type cv;
-
-
-    void update_mls(size_type cv_) const { 
-      if (cv_ != cv) 
-	{ cv=cv_; mls0=ls.mls_of_convex(cv, 0); mls1=ls.mls_of_convex(cv, 1); }
-    }
-    
-    //use this part for vector valued enrichment (To be adapted later)
-    //************************************************************
-    
-      /*
-	virtual void val(const fem_interpolation_context& c, base_small_vector &v) const {
-	update_mls(c.convex_num());
-	
-	base_node pt;
-	pt[0] = mls1(c.xref()); 
-	pt[1] = mls0(c.xref()); 
-	v.resize(2);
-	v[0] = evaluate_pt(pt,mef)(0,1)*cutoff(pt[0],pt[1]);
-	v[1] = evaluate_pt(pt,mef)(1,1)*cutoff(pt[0],pt[1]);
-      */
-    
-    
-    //Or use this part for scalar valued enrichment 
-    //************************************************************
-    
-
-    scalar_type cutoff(scalar_type x, scalar_type y) const {
-       
-      switch (cutoff_func) {
-	
-      case 0:
-	return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
-	
-      case 1:
-	{
-	  assert(cutoff_radius0 > cutoff_radius1);
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  
-	  if (r <= cutoff_radius1)
-	    return scalar_type(1);
-	  else if (r >= cutoff_radius0)
-	    return scalar_type(0);
-	  else {
-	    scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3)
-				+ 3*cutoff_radius1*cutoff_radius0
-				* (cutoff_radius1-cutoff_radius0));
-	    scalar_type k = -(c/6.)*(- pow(cutoff_radius0,3)
-				     + 3*cutoff_radius1*pow(cutoff_radius0,2));
-
-	    return (c/3.)*pow(r,3)
-	      - (c*(cutoff_radius0 + cutoff_radius1)/2.)*pow(r,2)
-	      + c*cutoff_radius0*cutoff_radius1*r + k;
-	  }
-	}
-      case 2:
-	{
-	  assert(cutoff_radius0 > cutoff_radius1);
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  
-	  if (r <= cutoff_radius1)
-	    return scalar_type(1);
-	  else if (r >= cutoff_radius0)
-	    return scalar_type(0);
-	  else {
-	    scalar_type c = 1. / (  (-1./30.) * (pow(cutoff_radius1,5) - pow(cutoff_radius0,5)) + (1./6.)*(pow(cutoff_radius1,4)*cutoff_radius0 - cutoff_radius1*pow(cutoff_radius0,4)) - (1./3.)*(pow(cutoff_radius1,3)*pow(cutoff_radius0,2) - pow(cutoff_radius1,2)*pow(cutoff_radius0,3))  );
-	    
-	    scalar_type k = 1. - c*((-1./30.)*pow(cutoff_radius1,5) + (1./6.)*pow(cutoff_radius1,4)*cutoff_radius0 - (1./3.)*pow(cutoff_radius1,3)*pow(cutoff_radius0,2));
-	    
-	    return c*( (-1./5.)*pow(r,5) + (1./2.)* (cutoff_radius1+cutoff_radius0)*pow(r,4) - (1./3.)*(pow(cutoff_radius1,2)+pow(cutoff_radius0,2) + 4.*cutoff_radius0*cutoff_radius1)*pow(r,3) + cutoff_radius0*cutoff_radius1*(cutoff_radius0+cutoff_radius1)*pow(r,2) - pow(cutoff_radius0,2)*pow(cutoff_radius1,2)*r) + k;
-	  }
-	}
-      default : return scalar_type(1);
-      }
-    }
-    
-    
-    base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
-      
-      switch (cutoff_func) {
-      case 0:
-	{
-	  scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
-	  return base_small_vector(ratio*x, ratio*y);
-	}
-      case 1:
-	{
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  scalar_type ratio = scalar_type(0);
-
-	  if ( r > cutoff_radius1 && r < cutoff_radius0 ) {
-	    scalar_type c = 6./(pow(cutoff_radius0,3) - pow(cutoff_radius1,3)
-				+ 3*cutoff_radius1*cutoff_radius0
-				* (cutoff_radius1-cutoff_radius0));
-	    ratio = c*(r - cutoff_radius0)*(r - cutoff_radius1);
-	  }
-	  
-	  return base_small_vector(ratio*x/r,ratio*y/r);
-	}
-	      case 2:
-	{
-	  scalar_type r = gmm::sqrt(x*x+y*y);
-	  scalar_type ratio = scalar_type(0);
-
-	  if ( r > cutoff_radius1 && r < cutoff_radius0 ) {
-	    scalar_type c = 1. / (  (-1./30.) * (pow(cutoff_radius1,5) - pow(cutoff_radius0,5)) + (1./6.)*(pow(cutoff_radius1,4)*cutoff_radius0 - cutoff_radius1*pow(cutoff_radius0,4)) - (1./3.)*(pow(cutoff_radius1,3)*pow(cutoff_radius0,2) - pow(cutoff_radius1,2)*pow(cutoff_radius0,3))  );
-	    
-	    ratio = - c*pow((r - cutoff_radius0),2)*pow((r - cutoff_radius1),2);
-	  }
-	  
-	  return base_small_vector(ratio*x/r,ratio*y/r);
-	}
-      default : return base_small_vector(2);
-      }
-    }
-
-    virtual scalar_type val(const fem_interpolation_context& c) const {
-      update_mls(c.convex_num());
-      base_node pt(2);	
-      pt[0] = mls1(c.xref()); 
-      pt[1] = mls0(c.xref()); 
-      base_vector v; base_matrix g;
-      if (interp->eval(pt, v, g))
-	return  v[l]*cutoff(pt[0],pt[1]);
-      else return 0;
-    }
-
-    virtual void grad(const fem_interpolation_context& c,
-		      base_small_vector &df) const {
-      update_mls(c.convex_num());
-      base_node pt(2);	
-      pt[0] = mls1(c.xref()); 
-      pt[1] = mls0(c.xref()); 
-      
-      size_type P = c.xref().size();
-      base_small_vector dx(P), dy(P), dfr(2);
-      scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
-      if (x*x + y*y < 1e-20) {
-	cerr << "Warning, point very close to the singularity. xreal = "
-	     << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
-      }
-      base_vector v; base_matrix g;
-
-      base_small_vector cg = cutoff_grad(x,y);
-      dfr.resize(cg.size()); df.resize(cg.size()); 
-      if (interp->eval(pt, v, g)) {
-	for (unsigned i=0; i < cg.size(); ++i) {
-	  dfr[i] = v[l]*cg[i] + cutoff(x,y)*g(l,i);
-	  gmm::mult(c.B(), dfr[0]*dx + dfr[1]*dy, df);
-	}
-      } else gmm::clear(df);
-    }
-
-    virtual void hess(const fem_interpolation_context&, base_matrix &) const
-    { DAL_THROW(dal::to_be_done_error, "hessian to be done ..."); }
-    
-    void update_from_context(void) const { cv =  size_type(-1); }
-
-    reduced_basis(const interpolator_on_mesh_fem *interp_,
-		  size_type l_, const level_set &ls_, 
-		  scalar_type cutoff_R, scalar_type cutoff_R1, 
-		  scalar_type cutoff_R0, size_type func)
-      : interp(interp_), l(l_), ls(ls_) {
-      if (cutoff_R) a4 = (cutoff_R > 0.0) ? pow(2.7/cutoff_R,4) : 0.0;
-      cutoff_radius1 = cutoff_R1;
-      cutoff_radius0 = cutoff_R0;
-      cutoff_func = func;
-      cerr << "cutoff radius: " << cutoff_radius0 << ", " << cutoff_radius1 << "\n";
-      cv = size_type(-1);
-      this->add_dependency(ls);
-    }
-
-  };
-
-  pglobal_function bimaterial_reduced_basis(interpolator_on_mesh_fem *interp,
-					    size_type component,
-					    const level_set &ls,
-					    scalar_type cutoff_radius, 
-					    scalar_type cutoff_radius1, 
-					    scalar_type cutoff_radius0,
-					    size_type cutoff_func) {
-    return new reduced_basis(interp, component, ls, cutoff_radius, cutoff_radius1, cutoff_radius0, cutoff_func);
-  }
-
-  /* ** END OF UNDER CONSTARUCTION
-**********************************************
-**********************************************----------------*/
-
-}  
+}
 
 /* end of namespace getfem  */
 

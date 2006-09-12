@@ -56,6 +56,8 @@ namespace getfem {
   void fem_sum::mat_trans(base_matrix &M,
 			  const base_matrix &G,
 			  bgeot::pgeometric_trans pgt) const {
+
+    cerr << "fem_sum::mat_trans / smart_global_dof_linking_ = " << smart_global_dof_linking_<< "\n";
     pdof_description andof = 0, lagdof = lagrange_dof(dim());
     std::vector<pdof_description> hermdof(dim());
     for (size_type id = 0; id < dim(); ++id)
@@ -84,7 +86,7 @@ namespace getfem {
 		if (dof_weak_compatibility(pdd, lagdof) == 0) {
 		  pfems[ifem1]->interpolation(fic, coeff, val, 1);
 		  M(i, j) = 0; //-val[0];
-		  cout << "dof " << idof2 << "compatible with lagrange\n";
+		  //cout << "dof " << idof2 << "compatible with lagrange\n";
 		  found = true;
 		}
 		else for (size_type id = 0; id < dim(); ++id) {
