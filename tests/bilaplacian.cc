@@ -139,7 +139,20 @@ struct bilaplacian_problem {
   ftool::md_param PARAM;
 
   bool KL;
-
+  size_type boundary_ref ;        /* boundary_ref = 0 corresponds to clamped edge on the 4 edges   
+                                     boundary_ref = 1 corresponds to :    
+                                    
+                                               free edge
+                                              __________
+                                             |          |
+                                   simple    |          |   simple
+                                   support   |          |   support
+                                             |          |
+                                             |__________|
+                                    
+                                               clamped
+                                               edge          */
+                                 
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
@@ -197,7 +210,8 @@ void bilaplacian_problem::init(void) {
   KL = (PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0);
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
-
+  boundary_ref = PARAM.int_value("BOUNDARY_REF");
+  
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
@@ -235,34 +249,45 @@ void bilaplacian_problem::init(void) {
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-    base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
-    un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1] - 1.0) <= 0.5) {
-      mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
-      mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
-    }
-    else {
-      mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
-      if (gmm::abs(un[N-1] + 1.0) <= 0.5)
-	mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
-      else
-	mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
-    }
+  
+  if (boundary_ref == 0) { // clamped plate
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+        mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+	mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+     }
   }
+  
+  if (boundary_ref == 1) { // mixed boundary conditions
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+       base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+       un /= gmm::vect_norm2(un);
+       if (gmm::abs(un[N-1] - 1.0) <= 0.5) {
+         mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+         mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+       }
+       else {
+         mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+         if (gmm::abs(un[N-1] + 1.0) <= 0.5)
+   	    mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+         else
+   	    mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+       }
+     }
+   }
+   
 }
 
-/* compute the error with respect to the exact solution */
+/* compute the relative error with respect to the exact solution */
 void bilaplacian_problem::compute_error(plain_vector &U) {
   std::vector<scalar_type> V(mf_rhs.nb_dof());
   getfem::interpolation(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= sol_u(mf_rhs.point_of_dof(i));
   cout.precision(16);
-  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;
+  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) / getfem::asm_L2_norm(mim, mf_u, U) << endl
+       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) / getfem::asm_H1_norm(mim, mf_u, U) << endl
+       << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V) / getfem::asm_H2_norm(mim, mf_u, U) << endl
+       << "Linfty error = " << gmm::vect_norminf(V) / gmm::vect_norminf(U) << endl;
 }
 
 /**************************************************************************/
@@ -288,6 +313,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
 
+
   // Defining the prescribed momentum.
   if (KL) {
     gmm::resize(F, nb_dof_rhs*N*N);
@@ -300,37 +326,39 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   }
   // Prescribed momentum on the boundary
   getfem::mdbrick_normal_derivative_source_term<>
-    MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+  MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
 
   // Defining the Neumann condition right hand side.
   plain_vector H(nb_dof_rhs*N*N);
   gmm::resize(F, nb_dof_rhs*N);
   if (KL) {
-    getfem::interpolation_function(mf_rhs, F, sol_bf, FORCE_BOUNDARY_NUM);
-    getfem::interpolation_function(mf_rhs, H, sol_mtensor, FORCE_BOUNDARY_NUM);
+     getfem::interpolation_function(mf_rhs, F, sol_bf, FORCE_BOUNDARY_NUM);
+     getfem::interpolation_function(mf_rhs, H, sol_mtensor, FORCE_BOUNDARY_NUM);
   }
   else {
-    getfem::interpolation_function(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
-    gmm::scale(F, -1.0);
+     getfem::interpolation_function(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
+     gmm::scale(F, -1.0);
   }
 
   // Neumann condition brick.
   getfem::mdbrick_abstract<> *NEUMANN;
   if (KL)
-    NEUMANN = new getfem::mdbrick_neumann_KL_term<>
-      (MOMENTUM, mf_rhs, H, F, FORCE_BOUNDARY_NUM);
+     NEUMANN = new getfem::mdbrick_neumann_KL_term<>
+       (MOMENTUM, mf_rhs, H, F, FORCE_BOUNDARY_NUM);
   else
-    NEUMANN = new getfem::mdbrick_normal_source_term<>
-      (MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
+     NEUMANN = new getfem::mdbrick_normal_source_term<>
+       (MOMENTUM, mf_rhs, F, FORCE_BOUNDARY_NUM);
 
   // Defining the normal derivative Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs*N);
   gmm::clear(F);
   getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
-  
-  // Normal derivative Dirichlet condition brick.
+
+  // Normal derivative Dirichlet condition brick
   getfem::mdbrick_normal_derivative_Dirichlet<> 
-    NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult);
+	NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult);
+
+    
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.rhs().set(mf_rhs, F);
 
