@@ -6,9 +6,9 @@
 %%%%% pde parameters :	                              %%%%%
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
-QUAD = 1;
+QUAD = 0;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 10;                 % space step.
+NX = 39;                 % space step.
 DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
 FT = 10.0;              % parameter for the exact solution
 D = 1.0;    % "flexion modulus"
@@ -17,6 +17,9 @@ KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
 if (KL)     % For Kirchhoff-Love plate model only
   NU = 0.3; % Poisson ratio (0 <= NU <= 1)
 end;
+
+BOUNDARY_REF = 0 ;      % 0 :  non-homogeneous Dirichlet 
+                        % 1 :  mixed boundary conditions 
 
 % MESH_FILE='../../tests/meshes/disc_P2_h2.mesh'
 
@@ -29,17 +32,17 @@ end
 
 if (N == 2 && ~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
-  INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
-  % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
+  % INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
+    INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
   if 0   % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';   % not conformal -> problem
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-  elseif 1  % argyris element
+  elseif 0  % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
   else
-%    FEM_TYPE = 'FEM_HCT_TRIANGLE';
+%     FEM_TYPE = 'FEM_HCT_TRIANGLE';
     FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
     % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
@@ -49,8 +52,8 @@ end
 
 if (N == 2 && QUAD)
   MESH_TYPE = 'GT_QK(2,1)';
-  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';  DATA_FEM_TYPE = 'FEM_QK(2,2)';
-  % FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  DATA_FEM_TYPE = 'FEM_QK(2,2)';
+  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';   DATA_FEM_TYPE = 'FEM_QK(2,2)';  
+  %FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  DATA_FEM_TYPE = 'FEM_QK(2,2)';
   INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(6))';
 end
 
@@ -74,4 +77,4 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'bilaplacian';     % Root of data files.
-VTK_EXPORT = 2; % export solution to a .vtk file ?
+VTK_EXPORT = 1; % export solution to a .vtk file ?
