@@ -85,7 +85,7 @@ namespace getfem {
 		fic.set_xref(pf2->node_of_dof(cv, idof2));
 		if (dof_weak_compatibility(pdd, lagdof) == 0) {
 		  pfems[ifem1]->interpolation(fic, coeff, val, 1);
-		  M(i, j) = 0; //-val[0];
+		  M(i, j) = -val[0];
 		  //cout << "dof " << idof2 << "compatible with lagrange\n";
 		  found = true;
 		}
@@ -107,7 +107,7 @@ namespace getfem {
 	}
       }
     }
-    //cout << "fem = " << debug_name_ << ", M = " << M << "\n";
+    //static int cnt=0; if(++cnt < 10) cout << "fem = " << debug_name_ << ", M = " << M << "\n";
   }
 
   size_type fem_sum::index_of_global_dof(size_type , size_type j) const {
@@ -130,7 +130,8 @@ namespace getfem {
   { DAL_THROW(internal_error, "No base values, real only element."); }
 
   void fem_sum::real_base_value(const fem_interpolation_context &c,
-				      base_tensor &t, bool) const {
+				base_tensor &t, 
+				bool withM) const {
     bgeot::multi_index mi(2);
     mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
@@ -153,10 +154,15 @@ namespace getfem {
       }
     }
     assert(it == t.end());
+    if (!is_equivalent() && withM) { 
+      base_tensor tt(t); 
+      t.mat_transp_reduction(tt, c.M(), 0); 
+    }
+    //cerr << "fem_sum::real_base_value(" << c.xreal() << ")\n";
   }
 
   void fem_sum::real_grad_base_value(const fem_interpolation_context &c,
-					   base_tensor &t, bool) const {
+				     base_tensor &t, bool withM) const {
     bgeot::multi_index mi(3);
     mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
@@ -182,10 +188,14 @@ namespace getfem {
       }
     }
     assert(it == t.end());
+    if (!is_equivalent() && withM) { 
+      base_tensor tt(t); 
+      t.mat_transp_reduction(tt, c.M(), 0); 
+    }
   }
   
   void fem_sum::real_hess_base_value(const fem_interpolation_context &c,
-				  base_tensor &t, bool) const {
+				     base_tensor &t, bool withM) const {
     bgeot::multi_index mi(4);
     mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
@@ -213,6 +223,10 @@ namespace getfem {
       }
     }
     assert(it == t.end());
+    if (!is_equivalent() && withM) { 
+      base_tensor tt(t); 
+      t.mat_transp_reduction(tt, c.M(), 0); 
+    }
   }
 
 
