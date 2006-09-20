@@ -35,6 +35,9 @@ namespace getfem {
     for (size_type i = 0; i < functions.size(); ++i) {
       add_node(global_dof(dim()), P);
     }
+    std::stringstream nm;
+    nm << "GLOBAL_FEM(" << (void*)this << ")";
+    debug_name_ = nm.str();
   }
 
   size_type global_function_fem::nb_dof(size_type) const
@@ -50,7 +53,7 @@ namespace getfem {
 					 base_tensor &) const
   { DAL_THROW(internal_error, "No grad values, real only element."); }
   void global_function_fem::hess_base_value(const base_node &,
-					 base_tensor &) const
+					    base_tensor &) const
   { DAL_THROW(internal_error, "No hess values, real only element."); }
   
   void global_function_fem::real_base_value(const fem_interpolation_context& c,
@@ -59,8 +62,12 @@ namespace getfem {
     mib.resize(2); mib[0] = target_dim(); mib[1] = functions.size();
     assert(target_dim() == 1);
     t.adjust_sizes(mib);
-    for (size_type i=0; i < functions.size(); ++i) 
+    for (size_type i=0; i < functions.size(); ++i) {
+      /*cerr << "global_function_fem: real_base_value(" << c.xreal() << ")\n";
+      if (c.have_G()) cerr << "G = " << c.G() << "\n"; 
+      else cerr << "no G\n";*/
       t[i] = (*functions[i]).val(c);
+    }
     
   } 
    
@@ -139,6 +146,11 @@ namespace getfem {
   crack_singular_xy_function::val(scalar_type x, scalar_type y) const {
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
+
+    if (r < 1e-10) {
+      return 0;
+    }
+
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
      * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
      */
@@ -162,7 +174,7 @@ namespace getfem {
     scalar_type r = sqrt(x*x + y*y);
 
     if (r < 1e-10) {
-      DAL_WARNING0("Warning, point very close to the singularity.\n");
+      DAL_WARNING0("Warning, point close to the singularity (r=" << r << ")");
     }
 
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
@@ -336,6 +348,7 @@ namespace getfem {
   void interpolator_on_mesh_fem::init() {
     base_node min, max;
     scalar_type EPS=1E-13;
+    cv_stored = size_type(-1);
     boxtree.clear();
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bounding_box(min, max, mf.linked_mesh().points_of_convex(cv),

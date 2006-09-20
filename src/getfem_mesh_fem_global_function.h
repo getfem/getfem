@@ -177,7 +177,7 @@ namespace getfem {
     virtual base_small_vector grad(scalar_type x, scalar_type y) const {
       base_vector v; base_matrix g;
       itp.eval(base_node(x,y), v, g);
-      return base_small_vector(g(0,component), g(1,component));      
+      return base_small_vector(g(component,0), g(component,1));
     }
     interpolated_xy_function(interpolator_on_mesh_fem &itp_, size_type c) :
       itp(itp_), component(c) {}
