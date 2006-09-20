@@ -867,8 +867,8 @@ int main(int argc, char *argv[]) {
 			       p.PARAM.int_value("VTK_EXPORT")==1);
 
 	exp.exporting(mf_refined); 
-	exp.write_point_data(mf_refined_vm, DN, "error");
-	//exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+	//exp.write_point_data(mf_refined_vm, DN, "error");
+	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       

@@ -168,18 +168,19 @@ namespace getfem {
 
   struct interpolated_xy_function : public abstract_xy_function {
     interpolator_on_mesh_fem &itp;
+    size_type component;
     virtual scalar_type val(scalar_type x, scalar_type y) const {
       base_vector v; base_matrix g;
       itp.eval(base_node(x,y), v, g);
-      return v[0];
+      return v[component];
     }
     virtual base_small_vector grad(scalar_type x, scalar_type y) const {
       base_vector v; base_matrix g;
       itp.eval(base_node(x,y), v, g);
-      return base_small_vector(g[0], g[1]);      
+      return base_small_vector(g(0,component), g(1,component));      
     }
-    interpolated_xy_function(interpolator_on_mesh_fem &itp_) :
-      itp(itp_) {}
+    interpolated_xy_function(interpolator_on_mesh_fem &itp_, size_type c) :
+      itp(itp_), component(c) {}
   };
 
   struct product_of_xy_functions : 

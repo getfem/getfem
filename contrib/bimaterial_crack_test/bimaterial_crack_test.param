@@ -10,7 +10,7 @@
 MU = 1.0;	        % Lam�coefficient.
 LAMBDA = 1.0;           % Lam�coefficient.
 
-BIMATERIAL = 1;         % 1 : To enable the bimaterial case.
+BIMATERIAL = 0;         % 1 : To enable the bimaterial case.
 LAMBDA_UP = 100.0;
 LAMBDA_DOWN=1.0;
 MU_UP = 3.0;
@@ -27,7 +27,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 
 LX = 1;			  % mesh size x'ox
 LY = 1;	                  % mesh size y'oy
-NX = 100;            	          % space step.
+NX = 10;            	          % space step.
 
 
                                                %             F1                    
@@ -38,7 +38,7 @@ F41 =   0.;  F42 = -0.2 ;                      %     F3 |          |C
                                                %        -----------|H
                                                %             F4
  
-all_dirichlet = 0;     % Choose 1 To impose a dirichlet displacement all over the borders
+all_dirichlet = 1;     % Choose 1 To impose a dirichlet displacement all over the borders
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
@@ -47,7 +47,7 @@ FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
-FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,1)';  % Discontinuous P1 for triangles
+FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,1,0.001)';  % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=0;       % Mixed version or not.
  FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
@@ -85,5 +85,5 @@ INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'crack';     % Root of data files.
+ROOTFILENAME = 'bimaterial_crack';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
