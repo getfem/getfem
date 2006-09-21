@@ -329,6 +329,8 @@ int main(int argc, char *argv[]) {
     getfem::standard_solve(MS, *final_brick, iter);
     plain_vector U(nb_dof);
     gmm::copy(brick_laplacian.get_solution(MS), U);
+    plain_vector LAMBDA(nb_dof_mult);
+    gmm::copy(brick_constraint.get_mult(MS), LAMBDA);
 
     // interpolation of the solution on mf_rhs
     plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs);
@@ -365,6 +367,15 @@ int main(int argc, char *argv[]) {
       exp.write_point_data(mf_rhs, Eint, "error");
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d xfem_dirichlet_error.vtk -f WarpScalar -m BandedSurfaceMap "
+	"-m Outline\n";
+    }
+    // exporting multipliers in vtk format.
+    {
+      getfem::vtk_export exp("xfem_dirichlet_mult.vtk", (2==1));
+      exp.exporting(mf_mult); 
+      exp.write_point_data(mf_mult, LAMBDA, "multipliers");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d xfem_dirichlet_mult.vtk -f WarpScalar -m BandedSurfaceMap "
 	"-m Outline\n";
     }
 

@@ -26,7 +26,7 @@ if (N == 2 && QUAD)
   MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[40,40]';
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
-  FEM = 'FEM_QK(2,1)';      % Finite element method for the unknown.
+  FEM = 'FEM_QK(2,2)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
   FEM_RHS = 'FEM_QK(2,2)';     % Finite element method for the rhs
   FEM_MULT = 'FEM_QK(2,0)'; % Finite element method for multipliers
@@ -34,7 +34,7 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[64,64]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[66,66]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
@@ -60,7 +60,6 @@ end;
 if (~OK)
   error ('Adapt the parameter file first');
 end;
-
 
 
 %%%%%   saving parameters                                             %%%%%
