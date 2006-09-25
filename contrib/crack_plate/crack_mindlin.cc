@@ -55,7 +55,198 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector; 
 
-struct crackPlate_problem{
+
+// Parameters for the exact solution  ---------------------------
+
+
+scalar_type nu = 0.3 ;
+
+scalar_type A0 = 1. ;
+
+scalar_type A1 = 0.1 ;
+scalar_type B1 = 0.0 ;
+scalar_type C1 = 3.* A1 ;   
+scalar_type D1 = 0.0 ;  
+
+scalar_type A2 = 0.1 ;
+scalar_type B2 = 0.0 ;
+scalar_type C2 = 3.* A2 + nu * (D1 - B1) ; 
+scalar_type D2 = B2 ;  
+ 
+
+// Singular functions for Mindlin ------------------------------
+
+struct mindlin_singular_functions : public getfem::global_function, public getfem::context_dependencies {
+  size_type l;             // singular function number
+  const getfem::level_set &ls;
+  mutable getfem::mesher_level_set mls0, mls1;
+  mutable size_type cv;
+  
+  void update_mls(size_type cv_) const { 
+    if (cv_ != cv) { 
+      cv=cv_; 
+      mls0=ls.mls_of_convex(cv, 0); 
+      mls1=ls.mls_of_convex(cv, 1); 
+    }
+  }
+
+
+  scalar_type sing_function(scalar_type x, scalar_type y) const {
+    scalar_type r = sqrt(x*x + y*y);
+    scalar_type theta = atan2(y,x); 
+ 
+    switch (l) {
+    case 0: {
+      return sqrt(r)*cos(3.0 * theta/2);
+    } break;
+    case 1: {
+      return sqrt(r)*sin(3.0 * theta/2);
+    } break;
+    case 2: {
+      return sqrt(r)*cos(theta/2);
+    } break;
+    case 3: {
+      return sqrt(r)*sin(theta/2);
+    } break;
+    case 4: {   // usefull for isotropic_linear_elasticity_2D
+      return sqrt(r)*sin(theta/2)*cos(theta);
+    } break;
+    case 5: {   // usefull for isotropic_linear_elasticity_2D
+      return sqrt(r)*cos(theta/2)*cos(theta);
+    } break;
+    default: assert(0); 
+    }
+    return 0;
+  }
+
+  /* derivative in the levelset coordinates */
+  void sing_function_grad(scalar_type x, scalar_type y, base_small_vector &g) const {
+    g.resize(2);
+    scalar_type r = sqrt(x*x + y*y);
+    scalar_type theta = atan2(y,x);
+
+    switch (l) {
+    case 0: {
+      g[0] = (   cos(theta/2.0) - cos(5.0/2.0*theta) / 2.0) / sqrt(r) ; 
+      g[1] = ( - sin(theta/2.0) - sin(5.0/2.0*theta) / 2.0) / sqrt(r) ; 
+    } break;
+    case 1: {
+      g[0] = (   sin(theta/2.0) - sin(5.0/2.0*theta) / 2.0) / sqrt(r) ; 
+      g[1] = (   cos(theta/2.0) + cos(5.0/2.0*theta) / 2.0) / sqrt(r) ;
+    } break;
+    case 2: {
+      g[0] =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
+      g[1] =   sin(theta/2.0)  / 2.0   / sqrt(r) ; 
+    } break;
+    case 3: {
+      g[0] = - sin(theta/2.0)  / 2.0   / sqrt(r) ; 
+      g[1] =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
+    } break;
+    case 4: {  // usefull for isotropic_linear_elasticity_2D   -> expression to check with maple !
+      g[0] =   (   sin(theta/2.0) - sin(5.0/2.0*theta) )  / 4.0   / sqrt(r) ; 
+      g[1] =   (   cos(theta/2.0) + cos(5.0/2.0*theta) )  / 4.0   / sqrt(r) ; 
+    } break;
+    case 5: {  // usefull for isotropic_linear_elasticity_2D   -> expression to check with maple !
+      g[0] = (  3./2.* cos(theta/2.0) - cos(5.0/2.0*theta) / 2.0)   / 2.0   / sqrt(r) ; 
+      g[1] = (       - sin(theta/2.0) - sin(5.0/2.0*theta)      )   / 4.0   / sqrt(r) ; 
+    } break;
+    default: assert(0); 
+    }
+  }
+   
+ 
+   
+  
+  virtual scalar_type val(const getfem::fem_interpolation_context& c) const {
+
+    assert(ls.get_mesh_fem().convex_index().is_in(c.convex_num()));
+    update_mls(c.convex_num());
+    scalar_type x = mls1(c.xref()), y = mls0(c.xref());
+    scalar_type v = sing_function(x, y);
+    return v;
+  }
+
+  virtual void grad(const getfem::fem_interpolation_context& c,
+		    base_small_vector &v) const {
+    update_mls(c.convex_num());
+    size_type P = c.xref().size();
+    base_small_vector dx(P), dy(P), dfr(2);
+    scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
+    if (x*x + y*y < 1e-20) {
+      cerr << "Warning, point very close to the singularity. xreal = "
+	   << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
+    } 
+    sing_function_grad(x, y, dfr); // gradient in the coord of the levelset
+
+    base_small_vector dref = dfr[0]*dx + dfr[1]*dy; // gradient in the coordinate the ref convex.
+    gmm::mult(c.B(), dref, v); // gradient in the coords of the real element.
+  }
+  
+
+    
+  void update_from_context(void) const { cv =  size_type(-1); }
+
+  mindlin_singular_functions(size_type l_, const getfem::level_set &ls_) : l(l_), ls(ls_) {
+    cv = size_type(-1);
+    this->add_dependency(ls);
+  }
+
+};
+
+getfem::pglobal_function mindlin_crack_singular(size_type i, const getfem::level_set &ls){ 
+  return new mindlin_singular_functions(i, ls);
+}
+
+
+struct exact_solution {
+  getfem::mesh_fem_global_function mf_ut, mf_u3, mf_theta;
+  getfem::base_vector UT ;
+  getfem::base_vector U3 ; 
+  getfem::base_vector THETA;
+  
+  exact_solution(getfem::mesh &me) : mf_ut(me), mf_u3(me), mf_theta(me) {}
+  
+  void init(getfem::level_set &ls) {
+    std::vector<getfem::pglobal_function> cfun_ut(4), cfun_u3(1), cfun_theta(4) ;
+    for (unsigned j=0; j < 4; ++j) {
+      cfun_ut[j] = mindlin_crack_singular(j+2, ls) ;
+      cfun_theta[j] = mindlin_crack_singular(j, ls) ;
+    }
+    cfun_u3[0] = mindlin_crack_singular(3,ls) ;
+    
+    // Initialising  ut
+    mf_ut.set_qdim(2) ;
+    mf_ut.set_functions(cfun_ut);   
+    UT.resize(8); assert(mf_ut.nb_dof() == 8);
+    for( unsigned i = 0; i< 8 ; ++i)
+        UT[i] = 0. ;
+      
+    // Initialising  theta
+    mf_theta.set_qdim(2) ;
+    mf_theta.set_functions(cfun_theta);   
+    THETA.resize(8); assert(mf_theta.nb_dof() == 8);
+    THETA[0] = A1 ;
+    THETA[1] = A2 ;
+    THETA[2] = B1 ;
+    THETA[3] = B2 ;
+    THETA[4] = C1 ;
+    THETA[5] = C2 ;
+    THETA[6] = D1 ;
+    THETA[7] = D2 ;
+    
+    // Initialising u3
+    mf_u3.set_functions(cfun_u3) ;
+    U3.resize(1) ;
+    U3[0] = A0 ;  
+  }
+  
+};
+
+/*                                                                            */
+/*   -------------  Struct for the (cracked) plate problem ---------------    */ 
+/*                                                                            */
+
+struct crack_mindlin_problem{
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::mesh mesh;  /* the mesh */
@@ -73,6 +264,8 @@ struct crackPlate_problem{
   getfem::mesh_fem& mf_theta() { return mf_theta_sum; }
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
+  getfem::mesh_fem mf_mult_ut, mf_mult_u3, mf_mult_theta ;  /* mesh_fem for the md_brick_dirichlet */ 
+  getfem::constraints_type dirichlet_version;
   getfem::level_set ls;      /* The two level sets defining the crack.       */
  
   scalar_type residual;       /* max residual for the iterative solvers        */
@@ -82,20 +275,29 @@ struct crackPlate_problem{
   ftool::md_param PARAM;
   size_type mitc ;
   size_type sol_ref ;          /* sol_ref = 0 : plate subject to vertical pressure, 
-                                                positive or negative on each side of the crack
-		                  sol_ref = 1 : same as sol_ref =1 but a side is clamped on a 
+                                                positive or negative on each side of the crack.
+		                  sol_ref = 1 : same as sol_ref = 2 but a side is clamped on a 
 				                side and the other is subjected to a 2 M0 
 						horizontal moment.   
 			          sol_ref = 2 : plate subject to horizontal moment M0 on the
-				                2 vertical bounds of the plate      */
+				                2 vertical bounds of the plate      
+				  sol_ref = 3 : non-homogeneous Dirichlet conditions on the
+				                4 boundaries of the plate. The exact solution
+						is equal to the singularities.   */
+
   scalar_type h_crack_length ;  // half-crack-length
 
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type epsilon, pressure ;
+  
+  exact_solution exact_sol;
+  
   // methods
+  
   bool solve(plain_vector &UT, plain_vector &U3, plain_vector &THETA);
   void init(void);
-  crackPlate_problem(void) : mls(mesh), mim(mls),
+  void compute_error(plain_vector &UT, plain_vector &U3, plain_vector &THETA);
+  crack_mindlin_problem(void) : mls(mesh), mim(mls),
   			mf_pre_ut(mesh), mf_pre_u3(mesh), mf_pre_theta(mesh), 
 			mfls_ut(mls, mf_pre_ut), mfls_u3(mls, mf_pre_u3), mfls_theta(mls, mf_pre_theta),
 			mf_sing_ut(mesh),mf_sing_u3(mesh),mf_sing_theta(mesh),
@@ -104,12 +306,12 @@ struct crackPlate_problem{
 			mf_u3_product(mf_partition_of_unity, mf_sing_u3),
 			mf_theta_product(mf_partition_of_unity, mf_sing_theta),
 			mf_ut_sum(mesh), mf_u3_sum(mesh), mf_theta_sum(mesh),
-			mf_rhs(mesh),
-			ls(mesh, 1, true) {} 
+			mf_rhs(mesh), mf_mult_ut(mesh), mf_mult_u3(mesh), mf_mult_theta(mesh), 
+			ls(mesh, 1, true), exact_sol(mesh) {} 
 
 };
 
-void crackPlate_problem::init(void) {
+void crack_mindlin_problem::init(void) {
   
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE_UT  = PARAM.string_value("FEM_TYPE_UT","FEM name");
@@ -149,6 +351,8 @@ void crackPlate_problem::init(void) {
   epsilon = PARAM.real_value("EPSILON", "thickness") ; 
   mitc = (PARAM.int_value("MITC") != 0);
   pressure = PARAM.real_value("PRESSURE") ;
+  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
+  dirichlet_version = getfem::constraints_type(dv);
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
@@ -179,6 +383,21 @@ void crackPlate_problem::init(void) {
   mf_pre_theta.set_finite_element(mesh.convex_index(), pf_theta);
   mf_partition_of_unity.set_classical_finite_element(1);
 
+  std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
+  mf_mult_ut.set_qdim(2) ;
+  mf_mult_theta.set_qdim(2) ;
+  if (dirichlet_fem_name.size() == 0) {
+    mf_mult_u3.set_finite_element(mesh.convex_index(), pf_u3) ;
+    mf_mult_theta.set_finite_element(mesh.convex_index(), pf_theta) ; }
+  else {
+    cout << "DIRICHLET_FEM_TYPE="  << dirichlet_fem_name << "\n";
+    mf_mult_ut.set_finite_element(mesh.convex_index(), 
+			       getfem::fem_descriptor(dirichlet_fem_name));
+    mf_mult_u3.set_finite_element(mesh.convex_index(), 
+			       getfem::fem_descriptor(dirichlet_fem_name));
+    mf_mult_theta.set_finite_element(mesh.convex_index(), 
+			       getfem::fem_descriptor(dirichlet_fem_name));
+  }
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -242,26 +461,33 @@ void crackPlate_problem::init(void) {
 // 	}
 //       }
 //    break ;
+    case 3 : // Dirichlet on the hole boundary of the domain
+        mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f()); 
+      break ;
     default : {
-        cout << "wrong parameter for sol_ref. One should set sol_ref in {0,1} \n" ;
+        cout << "wrong parameter for sol_ref. One should set sol_ref to 0, 1 or 3 \n" ;
       }
     break ;
     }
   }
-
+  
+  exact_sol.init(ls);
+  
 }
 
-bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector &THETA) {
+bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector &THETA) {
 
-  cout << "solving\n" ;
+
+  // Setting the enrichment --------------
+
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   //size_type N = mesh.dim();
 
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-  if (sol_ref == 0) {
+  if (sol_ref == 0 || sol_ref == 3) {
     ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
-    ls.values(1)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[0];}
+    ls.values(1)[d] =  (ls.get_mesh_fem().point_of_dof(d))[0];}
   if (sol_ref == 1){
     ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[0];
     ls.values(1)[d] = gmm::abs( (ls.get_mesh_fem().point_of_dof(d))[1] ) - h_crack_length ;}
@@ -277,21 +503,15 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   
   cout << "setting singularities... \n" ;
   std::vector<getfem::pglobal_function> utfunc(4) ;
-  //std::vector<getfem::pglobal_function> u3func(5) ;
-  std::vector<getfem::pglobal_function> u3func(4) ;
+  std::vector<getfem::pglobal_function> u3func(1) ;
   std::vector<getfem::pglobal_function> theta_func(4) ;
   
-  // A mettre a jour !!!
-  /////////////////////////////////////////////////////////////////////
+
   for (size_type i = 0 ; i < 4 ; ++i){
-        utfunc[i] = isotropic_crack_singular_2D(i, ls,
-			 (enrichment_option == 2) ? 0.0 : cutoff_radius);
-	u3func[i] = isotropic_crack_singular_2D(i, ls,
-			 (enrichment_option == 2) ? 0.0 : cutoff_radius);
-	theta_func[i] = isotropic_crack_singular_2D(i, ls,
-			 (enrichment_option == 2) ? 0.0 : cutoff_radius);
-  }
-  /////////////////////////////////////////////////////////////////////:
+        utfunc[i] = mindlin_crack_singular(i+2, ls); 
+	theta_func[i] = mindlin_crack_singular(i, ls);
+  }  
+  u3func[0] = mindlin_crack_singular(3, ls) ;
   
   mf_sing_ut.set_functions(utfunc);
   mf_sing_u3.set_functions(u3func);
@@ -336,18 +556,25 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
    break;
   }
 
-  getfem::mdbrick_abstract<> *ELAS, *SIMPLE;
+  
+  cout << " Solving ---------------------- \n" ;
+  
+  
+  getfem::mdbrick_abstract<> *ELAS, *SIMPLE, *LAST(0);
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
     ELAS1(mim, mim, mf_ut(), mf_u3(), mf_theta(), lambda,
 	  mu, epsilon);
   if (mitc) ELAS1.set_mitc();  
+  
   ELAS = &ELAS1;
 
   // Defining the surface source term.
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
+  scalar_type r, theta, E, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
+  E = - 4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
   for (size_type i = 0; i < nb_dof_rhs; ++i){
   if (sol_ref == 0){
     if (mf_rhs.point_of_dof(i)[1] > 0 )
@@ -357,16 +584,88 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
   if (sol_ref == 1) {
     if (mf_rhs.point_of_dof(i)[0] <  1E-7 - 0.5 )
       M[2*i] =  - 2. * epsilon * epsilon  / (3. * gmm::sqrt(h_crack_length) ) ;
-  }
-  }  
+    }
+  
+  if (sol_ref == 3) {
+     r = sqrt ( mf_rhs.point_of_dof(i)[0] * mf_rhs.point_of_dof(i)[0] + mf_rhs.point_of_dof(i)[1] * mf_rhs.point_of_dof(i)[1] ) ;
+     theta = atan2( mf_rhs.point_of_dof(i)[1], mf_rhs.point_of_dof(i)[0] ) ;
+     F[3*i+2] = - epsilon * E / (1.+nu) / sqrt(r) * ( 
+                   (A1 + C1/2. + B2 + D2/2.) * cos(theta/2.)
+                 + (B1 - D1/2. - A2 + C2/2.) * sin(theta/2.)
+                 + (- A1/2. + B2/2. ) * cos(5. * theta/2.) 
+                 + (- B1/2. - A2/2. ) * sin(5. * theta/2.)     ) ;  
+      
+      MapleGenVar1 = E ;
+      MapleGenVar3 = epsilon*epsilon*epsilon;
+      MapleGenVar5 = 1/(3.0+3.0*nu);
+      MapleGenVar7 = 2.0/(1.0-nu)*(-((A1+C1/2.0)*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/
+2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A1+
+C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0
+/4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta))+(1.0+nu)/(1.0-nu)*(-((A2+C2/2.0)*
+cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0)-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/
+sqrt(r*r*r)*sin(theta)/2.0+(-(A2+C2/2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+
+5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
+      MapleGenVar6 = MapleGenVar7-((B1+D1/2.0)*cos(theta/2.0)+(-A1+C1/2.0)*sin(theta/
+2.0)+B1*cos(5.0/2.0*theta)/2.0-A1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B1+
+D1/2.0)*sin(theta/2.0)/2.0+(-A1+C1/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B1*sin(5.0/2.0*theta)
+-5.0/4.0*A1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*cos(theta)
+/2.0-A0/sqrt(r)*cos(theta/2.0)*sin(theta)/2.0+sqrt(r)*(A1*cos(3.0/2.0*theta)+B1*sin(3.0/2.0*
+theta)+C1*cos(theta/2.0)+D1*sin(theta/2.0)))*epsilon*epsilon;
+      MapleGenVar4 = MapleGenVar5*MapleGenVar6;
+      MapleGenVar2 = MapleGenVar3*MapleGenVar4;
+      M[2*i] = MapleGenVar1*MapleGenVar2;
+      MapleGenVar1 = -4.*mu*(mu+lambda) / (2. * mu + lambda);
+      MapleGenVar3 = epsilon*epsilon*epsilon;
+      MapleGenVar5 = 1/(3.0+3.0*nu);
+      MapleGenVar7 = 2.0/(1.0-nu)*(-((B2+D2/2.0)*cos(theta/2.0)+(-A2+C2/2.0)*sin(theta/
+2.0)+B2*cos(5.0/2.0*theta)/2.0-A2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B2+
+D2/2.0)*sin(theta/2.0)/2.0+(-A2+C2/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B2*sin(5.0/2.0*theta)
+-5.0/4.0*A2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta))+(1.0+nu)/(1.0-nu)*(-((A1+C1/2.0
+)*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0
+)/sqrt(r*r*r)*sin(theta)/2.0+(-(A1+C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/
+2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0/4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
+      MapleGenVar6 = MapleGenVar7-((A2+C2/2.0)*cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0
+)-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A2+C2/
+2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/
+4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*sin(theta)/2.0+
+A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3.0/2.0*theta)+C2
+*cos(theta/2.0)+D2*sin(theta/2.0)))*epsilon*epsilon;
+      MapleGenVar4 = MapleGenVar5*MapleGenVar6;
+      MapleGenVar2 = MapleGenVar3*MapleGenVar4;
+      M[2*i+1 ] = MapleGenVar1*MapleGenVar2;
+  } 
+  } 
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
     (VOL_F, DIRICHLET_BOUNDARY_NUM, 0,getfem::AUGMENTED_CONSTRAINTS);
        
   SIMPLE = &SIMPLE1 ;
+
   
-  getfem::mdbrick_plate_closing<> final_model(*SIMPLE, 0, 1);
+
+  cout << "Setting the Dirichlet condition brick : \n " ;
+  
+  getfem::mdbrick_Dirichlet<> DIRICHLET_U3(*SIMPLE, DIRICHLET_BOUNDARY_NUM, mf_mult_u3, 1);
+  DIRICHLET_U3.rhs().set(exact_sol.mf_u3, exact_sol.U3);
+  DIRICHLET_U3.set_constraints_type(getfem::constraints_type(dirichlet_version)); 
+  cout << " md_brick DIRICHLET_U3 done     \n" ;
+  
+  getfem::mdbrick_Dirichlet<> DIRICHLET_THETA(DIRICHLET_U3, DIRICHLET_BOUNDARY_NUM, mf_mult_theta, 2);
+  DIRICHLET_THETA.rhs().set(exact_sol.mf_theta, exact_sol.THETA);
+  DIRICHLET_THETA.set_constraints_type(getfem::constraints_type(dirichlet_version));  
+  cout << " md_brick DIRICHLET_THETA done     \n" ;
+  
+  getfem::mdbrick_Dirichlet<> DIRICHLET_UT(DIRICHLET_THETA, DIRICHLET_BOUNDARY_NUM, mf_mult_ut, 0);
+  DIRICHLET_UT.rhs().set(exact_sol.mf_ut, exact_sol.UT);
+  DIRICHLET_UT.set_constraints_type(getfem::constraints_type(dirichlet_version)); 
+  cout << " md_brick DIRICHLET_UT done     \n" ;
+  
+  if (sol_ref == 0 || sol_ref == 1) LAST = &SIMPLE1 ;
+  if (sol_ref == 3 )                LAST = &DIRICHLET_UT ;
+  
+  getfem::mdbrick_plate_closing<> final_model(*LAST, 0, 1);
+  
   
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -388,6 +687,25 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
 //   gmm::copy(ELAS1.get_solution(MS), U);
   return (iter.converged());
 }
+
+/* compute the error with respect to the exact solution */
+void crack_mindlin_problem::compute_error(plain_vector &, plain_vector &U3, plain_vector &THETA ) {
+  cout << "Relative error on the vertical displacement u3 :\n" ;
+  cout << "L2 ERROR:"
+       << getfem::asm_L2_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) 
+        / getfem::asm_L2_norm(mim, exact_sol.mf_u3, exact_sol.U3)<< "\n";
+  cout << "H1 ERROR:"
+       << getfem::asm_H1_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3)
+        / getfem::asm_H1_norm(mim, exact_sol.mf_u3, exact_sol.U3) << "\n";
+  cout << "Relative error on the section rotations theta = (theta_1, theta_2 ) :\n" ;
+  cout << "L2 ERROR:"
+       << getfem::asm_L2_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA)
+        / getfem::asm_L2_norm(mim, exact_sol.mf_theta, exact_sol.THETA) << "\n";
+  cout << "H1 ERROR:"
+       << getfem::asm_H1_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA)
+        / getfem::asm_H1_norm(mim, exact_sol.mf_theta, exact_sol.THETA) << "\n";
+}
+
 
 /************************************************************
  * subroutine for evaluating Von Mises
@@ -446,14 +764,15 @@ int main(int argc, char *argv[]) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {
-    crackPlate_problem p;
+    crack_mindlin_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh") ;
     plain_vector UT, U3, THETA;
     if (!p.solve(UT, U3, THETA))
       DAL_THROW(dal::failure_error, "Solve has failed");
-    
+    if (p.sol_ref == 3) p.compute_error(UT, U3, THETA) ;
+          
     cout << "post-traitement pour l'affichage :\n" ;
     getfem::mesh mcut;
     p.mls.global_cut_mesh(mcut);
@@ -563,7 +882,7 @@ int main(int argc, char *argv[]) {
 	getfem::mesh mtetra;
 	sl_tetra.build(m3d, getfem::slicer_build_mesh(mtetra), 1);
 	getfem::mesh_fem mftetra(mtetra,3); 
-	mftetra.set_classical_discontinuous_finite_element(2, 0.001);
+	mftetra.set_classical_discontinuous_finite_element(3, 0.001);
 	
 	plain_vector Vtetra(mftetra.nb_dof());
 	mf3d.set_qdim(3);
@@ -571,7 +890,7 @@ int main(int argc, char *argv[]) {
 	
 	/* evaluating Von Mises*/
 	getfem::mesh_fem mf_vm(mtetra,1) ; 
-	mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
+	mf_vm.set_classical_discontinuous_finite_element(3, 0.001);
 	plain_vector VM(mf_vm.nb_dof()) ;
 	calcul_von_mises(mftetra, Vtetra, mf_vm, VM, p.mu) ;
 
