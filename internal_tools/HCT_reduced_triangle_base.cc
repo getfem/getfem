@@ -99,23 +99,23 @@ int main(void) {
 	if (j == 1)
 	  M( 0, i+10*j) = p.eval(bgeot::base_node(0.0, 0.0).begin());
 	if (j == 2)
-	  M( 1, i+10*j) = p.eval(bgeot::base_node(1.0, 0.0).begin());
+	  M( 3, i+10*j) = p.eval(bgeot::base_node(1.0, 0.0).begin());
 	if (j == 1)
-	  M( 2, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
+	  M( 6, i+10*j) = p.eval(bgeot::base_node(0.0, 1.0).begin());
 
 	q = p; q.derivative(0);
 	if (j == 1)
-	  M( 3, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
+	  M( 1, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
 	if (j == 2)
 	  M( 4, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
 	if (j == 1)
-	  M( 5, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
+	  M( 7, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
 
 	q = p; q.derivative(1);
 	if (j == 1)
-	  M( 6, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
+	  M( 2, i+10*j) = q.eval(bgeot::base_node(0.0, 0.0).begin());
 	if (j == 2)
-	  M( 7, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
+	  M( 5, i+10*j) = q.eval(bgeot::base_node(1.0, 0.0).begin());
 	if (j == 1)
 	  M( 8, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
 
