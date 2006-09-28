@@ -134,6 +134,7 @@ namespace getfem {
   struct fem_dof {
     base_node P;
     pdof_description pnd;
+    size_type part;
   };
   
   /** Describe a finite element method linked to a mesh.
@@ -155,9 +156,9 @@ namespace getfem {
     dim_type Qdim; /* this is the "global" target_dim */
     dim_type QdimM, QdimN; /* for matrix field with QdimM lines and QdimN */
                            /* columnsQdimM * QdimN = Qdim.                */
+    std::vector<size_type> dof_partition;
     
   public :
-    
     typedef base_node point_type;
     typedef tab_scal_to_vect<mesh::ind_cv_ct> ind_dof_ct;
     typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_dof_face_ct;
@@ -337,7 +338,22 @@ namespace getfem {
 	@param b the mesh_region.
 	@return the list in a dal::bit_vector.
     */
-    dal::bit_vector dof_on_set(const mesh_region &b) const;
+    dal::bit_vector dof_on_region(const mesh_region &b) const;
+    dal::bit_vector dof_on_set(const mesh_region &b) const 
+    { return dof_on_region(b); }
+
+    void set_dof_partition(size_type cv, unsigned partition_num) {
+      if (dof_partition.size() < linked_mesh().convex_index().last_true()+1) 
+	dof_partition.resize(linked_mesh().convex_index().last_true()+1);
+      if (dof_partition.at(cv) != partition_num) {
+	dof_partition[cv] = partition_num;
+	dof_enumeration_made = false;
+      }
+    }
+    unsigned get_dof_partition(size_type cv) const {
+      return (cv < dof_partition.size() ? dof_partition[cv] : 0); 
+    }
+    void clear_dof_partition() { dof_partition.clear(); }
 
     /* explicit calls to parent class 
        for HP aCC and mipspro CC who complain about hidden functions 

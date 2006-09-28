@@ -27,7 +27,7 @@
 
 namespace getfem {
   
-  dal::bit_vector mesh_fem::dof_on_set(const mesh_region &b) const {
+  dal::bit_vector mesh_fem::dof_on_region(const mesh_region &b) const {
     if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
     for (getfem::mr_visitor v(b,linked_mesh()); !v.finished(); ++v) {
@@ -211,7 +211,10 @@ namespace getfem {
       int d = dal::lexicographical_compare(m.P.begin(), m.P.end(),
 					   n.P.begin(), n.P.end(), comp);
       if (d != 0) return (d < 0);
-      return dof_description_compare(m.pnd, n.pnd) < 0;
+      if (m.part == n.part)
+	return dof_description_compare(m.pnd, n.pnd) < 0;
+      else if (m.part < n.part) return true;
+      else if (m.part > n.part) return false;
     }
     dof_comp_(double e = 1.0E-10) : comp(e) { }
   };
@@ -229,6 +232,8 @@ namespace getfem {
     }
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
     // double t = dal::uclock_sec();
+
+    cout << "enumerate_dof\n";
 
     dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
@@ -262,7 +267,7 @@ namespace getfem {
       for (size_type i = 0; i < nbd; i++) {
 	fd.P.resize(linked_mesh().dim()); 
 	fd.pnd = pf->dof_types()[i];
- 
+	fd.part = get_dof_partition(cv);
 	if (fd.pnd == andof) {
 	  size_type num = pf->index_of_global_dof(cv, i);
 	  if (!(encountered_global_dof[num])) {

@@ -39,6 +39,7 @@
 #include <getfem_spider_fem.h>
 #include <getfem_mesh_fem_sum.h>
 #include <gmm.h>
+#include <gmm_inoutput.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -302,7 +303,7 @@ base_small_vector sol_f(const base_node &x) {
 
 struct crack_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1 };
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43 };
   getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
@@ -356,7 +357,7 @@ struct crack_problem {
 
   typedef enum { NO_ENRICHMENT=0, 
 		 FIXED_ZONE=1, 
-		 GLOBAL_WITH_POINTWISE_MATCHING=2,
+		 GLOBAL_WITH_MORTAR=2,
 		 GLOBAL_WITH_CUTOFF=3,
 		 SPIDER_FEM_ALONE=4,
 		 SPIDER_FEM_ENRICHMENT=5 } enrichment_option_enum;
@@ -383,6 +384,44 @@ struct crack_problem {
 			ls3(mesh, 1, true) {}
 
 };
+
+
+std::string name_of_dof(getfem::pdof_description dof) {
+  char s[200];
+  sprintf(s, "UnknownDof[%p]", (void*)dof);
+  for (unsigned d = 0; d < 4; ++d) {
+    if (dof == getfem::lagrange_dof(d)) {
+      sprintf(s, "Lagrange[%d]", d); goto found;
+    }
+    if (dof == getfem::normal_derivative_dof(d)) {
+      sprintf(s, "D_n[%d]", d); goto found;
+    }
+    if (dof == getfem::global_dof(d)) {
+      sprintf(s, "GlobalDof[%d]", d);
+    }
+    if (dof == getfem::mean_value_dof(d)) {
+      sprintf(s, "MeanValue[%d]", d);
+    }
+    if (getfem::dof_xfem_index(dof) != 0) {
+      sprintf(s, "Xfem[idx:%d]", int(dof_xfem_index(dof)));
+    }
+    
+    for (unsigned r = 0; r < d; ++r) {
+      if (dof == getfem::derivative_dof(d, r)) {
+	sprintf(s, "D_%c[%d]", "xyzuvw"[r], d); goto found;
+      }
+      for (unsigned t = 0; t < d; ++t) {
+	if (dof == getfem::second_derivative_dof(d, r, t)) {
+	  sprintf(s, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d); 
+	  goto found;
+	}
+      }
+    }
+  }
+ found:
+  return s;
+}
+
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
@@ -573,12 +612,12 @@ bool crack_problem::solve(plain_vector &U) {
 
   cout << "Setting up the singular functions for the enrichment\n";
   std::vector<getfem::pglobal_function> vfunc(4);
-  for (size_type i = 0; i < 4; ++i) {
+  for (size_type i = 0; i < vfunc.size(); ++i) {
     /* use the singularity */
     getfem::abstract_xy_function *s = 
       new getfem::crack_singular_xy_function(i);
     if (enrichment_option != FIXED_ZONE && 
-	enrichment_option != GLOBAL_WITH_POINTWISE_MATCHING) {
+	enrichment_option != GLOBAL_WITH_MORTAR) {
       /* use the product of the singularity function
 	 with a cutoff */
       getfem::abstract_xy_function *c = 
@@ -607,6 +646,7 @@ bool crack_problem::solve(plain_vector &U) {
     spider.fem->check();
   }
 
+
   switch (enrichment_option) {
 
 
@@ -629,10 +669,13 @@ bool crack_problem::solve(plain_vector &U) {
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     } break;
 
-    case GLOBAL_WITH_POINTWISE_MATCHING: {
+    case GLOBAL_WITH_MORTAR: {
       // Selecting the element in the enriched domain
 
-      for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
+      dal::bit_vector cvlist_in_area;
+      dal::bit_vector cvlist_out_area;
+      for (dal::bv_visitor cv(mesh.convex_index()); 
+	   !cv.finished(); ++cv) {
 	bool in_area = true;
 	/* For each element, we test all of its nodes. 
 	   If all the nodes are inside the enrichment area,
@@ -648,17 +691,26 @@ bool crack_problem::solve(plain_vector &U) {
 	/* "remove" the global function on convexes outside the enrichment
 	   area */
 	if (!in_area) {
+	  cvlist_out_area.add(cv);
 	  mf_sing_u.set_finite_element(cv, 0);
-	}
+	  mf_u().set_dof_partition(cv, 1);
+	} else cvlist_in_area.add(cv);
       }
-      /* 
-	 enable smart dof linking: this will join the inside and the
-	 outside of the enrichment area by ensuring that the value at
-	 the dof node is the same inside the enrichment area and
-	 outside the enrichment area.
-      */
-      //mf_u_sum.set_smart_global_dof_linking(true);
-      mf_u_sum.set_mesh_fems(mfls_u); // , mf_sing_u);
+
+      /* extract the boundary of the enrichment area, from the
+	 "inside" point-of-view, and from the "outside"
+	 point-of-view */
+      getfem::mesh_region r_border, r_enr_out;
+      getfem::outer_faces_of_mesh(mesh, r_border);
+
+      getfem::outer_faces_of_mesh(mesh, cvlist_in_area, 
+				  mesh.region(MORTAR_BOUNDARY_IN));
+      getfem::outer_faces_of_mesh(mesh, cvlist_out_area, 
+				  mesh.region(MORTAR_BOUNDARY_OUT));
+      for (getfem::mr_visitor v(r_border); !v.finished(); ++v) {
+	mesh.region(MORTAR_BOUNDARY_OUT).sup(v.cv(), v.f());
+      }
+      mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
     } break;
 
     case GLOBAL_WITH_CUTOFF :{
@@ -688,6 +740,32 @@ bool crack_problem::solve(plain_vector &U) {
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
+
+  unsigned Q = mf_u().get_qdim();
+  for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
+    printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
+	   mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
+
+    const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
+    for (unsigned i=0; i < cvs.size(); ++i) {
+      unsigned cv = cvs[i];
+      //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
+
+      getfem::pfem pf = mf_u().fem_of_element(cv);
+      unsigned ld = unsigned(-1);
+      for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
+	if (mf_u().ind_dof_of_element(cv)[dd] == d) {
+	  ld = dd/Q; break;
+	}
+      }
+      if (ld == unsigned(-1)) {
+	cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
+      } else {
+	printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
+      }
+    }
+    printf("\n");
+  }
   
   // Linearized elasticity brick.
   
@@ -695,6 +773,7 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u(), mixed_pressure ? 0.0 : lambda, mu);
   
+  //gmm::HarwellBoeing_IO::write("K.hb", ELAS.get_K());
 
   getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure) {
@@ -724,18 +803,66 @@ bool crack_problem::solve(plain_vector &U) {
  //assert(toto.mf.nb_dof() == 1);
    
  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
+  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
   
 #ifdef VALIDATE_XFEM
-  final_model.rhs().set(exact_sol.mf,exact_sol.U);
+  DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
 #endif   
-  final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
+  DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
+
+  getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
+
+  if (enrichment_option == GLOBAL_WITH_MORTAR) {
+    /* add a constraint brick for the mortar junction between
+       the enriched area and the rest of the mesh */
+    /* we use mfls_u as the space of lagrange multipliers */
+    getfem::mesh_fem &mf_mortar = mfls_u; 
+    /* adjust its qdim.. this is just evil and dangerous
+       since mf_u() is built upon mfls_u.. it would be better
+       to use a copy. */
+    mf_mortar.set_qdim(2); // EVIL 
+    getfem::mdbrick_constraint<> &mortar = 
+      *(new getfem::mdbrick_constraint<>(DIRICHLET));
+    /* build the list of dof for the mortar condition */
+    dal::bit_vector bv_mortar = 
+      mf_mortar.dof_on_region(MORTAR_BOUNDARY_OUT);
+    std::vector<size_type> ind_mortar;
+    for (dal::bv_visitor d(bv_mortar); !d.finished(); ++d) 
+      ind_mortar.push_back(d);
+    cout << "Handling mortar junction (" << ind_mortar.size() << 
+      " dof for the lagrange multiplier\n";
+
+    sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()), 
+      H(ind_mortar.size(), mf_u().nb_dof());
+
+
+    gmm::sub_index sub_i(ind_mortar);
+    gmm::sub_interval sub_j(0, mf_u().nb_dof());
+    
+    /* build the mortar constraint matrix -- note that the integration
+       method is conformal to the crack
+     */
+    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
+			    MORTAR_BOUNDARY_OUT);
+    gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), H);
+
+    gmm::clear(H0);
+    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
+			    MORTAR_BOUNDARY_IN);
+    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), H);
+    
+    getfem::base_vector R(ind_mortar.size());
+    mortar.set_constraints(H,R);
+
+    final_model = &mortar;
+  }
+
    
   // Generic solve.
-  cout << "Total number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS(final_model);
+  cout << "Total number of variables : " << final_model->nb_dof() << endl;
+  getfem::standard_model_state MS(*final_model);
   gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(MS, final_model, iter);
+  getfem::standard_solve(MS, *final_model, iter);
   
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
@@ -788,7 +915,7 @@ int main(int argc, char *argv[]) {
       getfem::mesh mcut_refined;
 
       unsigned NX = p.PARAM.int_value("NX"), nn;
-      if (NX < 6) nn = 24;
+      if (NX < 6) nn = 8;
       else if (NX < 12) nn = 8;
       else if (NX < 30) nn = 3;
       else nn = 1;
@@ -805,7 +932,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (dmin < 1e-5)
-	  nrefine[cv] = nn*8;
+	  nrefine[cv] = nn*4;
 	else if (dmin < .1) 
 	  nrefine[cv] = nn*2;
 	else nrefine[cv] = nn;

@@ -757,7 +757,8 @@ namespace getfem {
       if (m.structure_of_convex(i.cv())->dim() == m.dim()) {
 	for (size_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
 	     f++) {
-	  if (!m.is_convex_having_neighbour(i.cv(),f)) {
+	  size_type cv2 = m.neighbour_of_convex(i.cv(), f);
+	  if (cv2 == size_type(-1) || !cvlst.is_in(cv2)) {
 	    flist.add(i.cv(),f);
 	  }
 	}
