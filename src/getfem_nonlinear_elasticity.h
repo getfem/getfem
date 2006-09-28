@@ -215,7 +215,7 @@ namespace getfem {
       /*assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1)); "
 	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
       */
-  assem("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
+      assem("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);

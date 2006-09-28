@@ -1565,6 +1565,18 @@ namespace getfem {
 
   public :
 
+    /* provide access to the value of the multipliers only for multiplier
+     * option (could be extended ?).
+     */
+    SUBVECTOR get_mult(MODEL_STATE &MS) {
+      if (co_how != AUGMENTED_CONSTRAINTS)
+	DAL_THROW(failure_error, "Only for Augmented constraint option");
+      gmm::sub_interval SUBM
+	= gmm::sub_interval(this->first_index()+sub_problem.nb_dof(),
+			    gmm::mat_nrows(B));
+      return gmm::sub_vector(MS.state(), SUBM);
+    }
+
     const local_C_MATRIX &get_B() { recompute_B(); return B; }
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
