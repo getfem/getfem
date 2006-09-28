@@ -1702,7 +1702,7 @@ namespace getfem {
 
     mdbrick_constraint(mdbrick_constraint<MODEL_STATE>& problem) : 
       sub_problem(problem), eps(1e-9), num_fem(0),
-      co_how(AUGMENTED_CONSTRAINTS) { init_(true); }
+      co_how(AUGMENTED_CONSTRAINTS) { init_(); }
 
   };
 

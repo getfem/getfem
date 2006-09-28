@@ -28,6 +28,7 @@ namespace bgeot
 { 
   bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,
 				   scalar_type IN_EPS) {
+    assert(pgt);
     n_ref.resize(pgt->structure()->dim());
     bool converged = true;
     if (pgt->is_linear()) {
@@ -40,6 +41,7 @@ namespace bgeot
   bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref, 
 				   bool &converged, 
 				   scalar_type IN_EPS) {
+    assert(pgt);
     n_ref.resize(pgt->structure()->dim());
     converged = true;
     if (pgt->is_linear()) {
