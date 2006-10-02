@@ -1,3 +1,14 @@
+2006-09-28  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_mesh_fem.h: added an optional partition of convexes
+	in the mesh_fem which allows to partition the dof in disconnected
+	area (used for the mortar joint in the tests/crack.cc program)
+
+	* src/getfem_mesh.cc: modified outer_faces_of_mesh when a list of
+	convex is supplied to it: now it returns the border of this set of
+	convexes, not the intersection of the mesh border with this set of
+	convexes.
+
 2006-07-28  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem_composite.h: adding P1 fem on triangle with an 
