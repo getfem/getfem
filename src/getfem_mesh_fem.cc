@@ -233,7 +233,7 @@ namespace getfem {
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
     // double t = dal::uclock_sec();
 
-    cout << "enumerate_dof\n";
+    //cout << "enumerate_dof\n";
 
     dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
