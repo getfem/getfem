@@ -3,10 +3,10 @@
 % parameters for program xfem_dirichlet                                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-QUAD = 0;
+QUAD = 1;
 N = 2;
 RADIUS = 0.47;             % radius of the real circular domain.
-LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
+LEVEL_SET_DEGREE = 3;      % Degree of the piecewise polynomial
                            % defining the level set.
 EXACT_SOL = 1;             % Which exact solution.
 			   
@@ -23,27 +23,26 @@ if (N == 1)
 end;
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[40,40]';
+  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[20,20]';
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
   FEM = 'FEM_QK(2,2)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
   FEM_RHS = 'FEM_QK(2,2)';     % Finite element method for the rhs
-  FEM_MULT = 'FEM_QK(2,0)'; % Finite element method for multipliers
+  FEM_MULT = 'FEM_QK(2,1)'; % Finite element method for multipliers
   OK = 1;
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[66,66]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[16,16]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
-  IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';    % Integration method.
-  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
+  IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
+  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
   FEM = 'FEM_PK(2,2)';      % Finite element method for the unknown.
-%  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+%  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,2)';
 %  FEM = 'FEM_P1_PIECEWISE_LINEAR_BUBBLE';
   FEM_RHS = 'FEM_PK(2,2)';  % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
-%  FEM_MULT = 'FEM_PK_DISCONTINUOUS(2,1)';
   OK = 1;
 end;
 
