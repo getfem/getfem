@@ -258,6 +258,33 @@ namespace getfem {
       asm_H2_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
   }
 
+  template<typename VEC1, typename VEC2>
+  scalar_type asm_H2_semi_dist(const mesh_im &mim, 
+			       const mesh_fem &mf1, const VEC1 &U1,
+			       const mesh_fem &mf2, const VEC2 &U2,
+			       mesh_region rg = mesh_region::all_convexes()) {
+    mim.linked_mesh().intersect_with_mpi_region(rg);
+    generic_assembly assem;    
+    if (mf1.get_qdim() == 1)
+      assem.set("u1=data$1(#1); u2=data$2(#2); "
+		"V()+=u1(i).u1(j).comp(Hess(#1).Hess(#1))(i,d,e,j,d,e)"
+		"+ u2(i).u2(j).comp(Hess(#2).Hess(#2))(i,d,e,j,d,e)"
+		"- 2*u1(i).u2(j).comp(Hess(#1).Hess(#2))(i,d,e,j,d,e)");
+    else 
+      assem.set("u1=data$1(#1); u2=data$2(#2); "
+		"V()+=u1(i).u1(j).comp(vHess(#1).vHess(#1))(i,k,d,e,j,k,d,e)"
+		"+ u2(i).u2(j).comp(vHess(#2).vHess(#2))(i,k,d,e,j,k,d,e)"
+		"- 2*u1(i).u2(j).comp(vHess(#1).vHess(#2))(i,k,d,e,j,k,d,e)");
+    assem.push_mi(mim);
+    assem.push_mf(mf1);
+    assem.push_mf(mf2);
+    assem.push_data(U1);
+    assem.push_data(U2);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.assembly(rg);
+    return sqrt(MPI_SUM_SCALAR(v[0]));    
+  }
 
 
   /**
@@ -288,6 +315,22 @@ namespace getfem {
 		+ asm_H2_semi_norm_sqr(mim, mf, U, rg, T()));
   }
   
+  /**
+     Compute the H2 distance between U1 and U2
+     @ingroup asm
+   */
+  template<typename VEC1, typename VEC2>
+  scalar_type asm_H2_dist(const mesh_im &mim, 
+			  const mesh_fem &mf1, const VEC1 &U1,
+			  const mesh_fem &mf2, const VEC2 &U2,
+			  const mesh_region &rg
+			  = mesh_region::all_convexes()) {
+    return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
+		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)) +
+		gmm::sqr(asm_H2_semi_dist(mim,mf1,U1,mf2,U2,rg)));
+  }
+
+
   /*
     assembly of a matrix with 1 parameter (real or complex)
     (the most common here for the assembly routines below)
