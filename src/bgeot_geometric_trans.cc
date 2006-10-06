@@ -53,7 +53,8 @@ namespace bgeot {
       base_matrix CS(P,P);
       if (P != N()) {
 	gmm::mult(gmm::transposed(K()), K(), CS);/*O*/
-	J_ = ::sqrt(gmm::lu_det(CS));
+	// gmm::abs below because on flat convexes, the determinant is sometimes -1e-27 ..
+	J_ = ::sqrt(gmm::abs(gmm::lu_det(CS)));
       } else {
 	J_ = gmm::abs(gmm::lu_det(K()));
       }
@@ -95,7 +96,8 @@ namespace bgeot {
 	if (P != N()) {
 	  base_matrix CS(P,P);
 	  gmm::mult(gmm::transposed(K()), K(), CS);
-	  J_ = ::sqrt(gmm::lu_inverse(CS));
+	  // gmm::abs below because on flat convexes, the determinant is sometimes -1e-27 ..
+	  J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));
 	  gmm::mult(K(), CS, B_);
 	} else {
 	  gmm::copy(gmm::transposed(K()), B_);
