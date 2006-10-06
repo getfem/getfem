@@ -14,8 +14,8 @@ MUMPS_CFLAGS = @MUMPS_CFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../../src $(MUMPS_CFLAGS)
 LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
 
-TESTS = $(top_srcdir)/contrib/bimaterial_crack_test/bimaterial_crack_test.pl
-TESTS = $(top_srcdir)/contrib/bimaterial_crack_test/crack.pl
+TESTS = $(top_srcdir)/contrib/bimaterial_crack_test/bimaterial_crack_test.pl \
+        $(top_srcdir)/contrib/bimaterial_crack_test/crack.pl
 EXTRA_DIST = \
 	bimaterial_crack_test.pl                  \
 	bimaterial_crack_test.param          \
