@@ -207,7 +207,7 @@ namespace gmm {
 #ifdef GMM_VERIFY
       if (c >= nbl) out_of_range_error();
 #endif
-      const_iterator it = lower_bound(c);
+      const_iterator it = this->lower_bound(c);
       if (it != this->end() && c == it->first) return it->second;
       else return T(0);
     }

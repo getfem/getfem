@@ -197,9 +197,6 @@ namespace getfem {
 	}
       }
 
-
-
-
       // pgt2 = msh.trans_of_convex(i);
 
       for (unsigned f = 0; f < pgt2->structure()->nb_faces(); ++f) {
@@ -221,8 +218,11 @@ namespace getfem {
 	} else {
 	  B = dal::mean_value(msh.points_of_face_of_convex(i, f));
 	  if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
-	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi)
+	  // cout << "pgt->convex_ref()->is_in(B = " << pgt->convex_ref()->is_in(B) << endl;
+	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi) {
+	    // cout << "gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) = " << gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) << endl;
 	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
+	  }
 	  if (ff == short_type(-1)) DAL_INTERNAL_ERROR("");
 	}
 	  
