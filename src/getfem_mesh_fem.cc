@@ -73,6 +73,8 @@ namespace getfem {
     fe_convex.swap(m.icv1, m.icv2);
     f_elems.swap(m.icv1, m.icv2);
   }
+
+  /* keep the FEM and dof_partition when the mesh is refined */
   void mesh_fem::receipt(const MESH_REFINE_CONVEX &m) { 
     if (m.is_refine) {
       if (fe_convex[m.icv])
@@ -80,10 +82,14 @@ namespace getfem {
 	  f_elems[m.sub_cv_list[i]] = f_elems[m.icv];
 	  fe_convex.add(m.sub_cv_list[i]);
 	}
+      for (size_type i = 0; i < m.sub_cv_list.size(); ++i) {
+	set_dof_partition(m.sub_cv_list[i], get_dof_partition(m.icv));
+      }
     }
     else if (fe_convex[m.sub_cv_list[0]]) {
       f_elems[m.icv] = f_elems[m.sub_cv_list[0]];
       fe_convex.add(m.icv);
+      set_dof_partition(m.icv, get_dof_partition(m.sub_cv_list[0]));
     }
   }
    
@@ -359,7 +365,12 @@ namespace getfem {
 	set_finite_element(ic, fem);
       } else if (ftool::casecmp(tmp, "BEGIN")==0) {
 	ftool::get_token(ist, tmp);
-	if (!ftool::casecmp(tmp, "DOF_ENUMERATION")) {
+	if (ftool::casecmp(tmp, "DOF_PARTITION") == 0) {
+	  for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
+	    size_type d; ist >> d; set_dof_partition(cv,d);
+	  }
+	  ist >> ftool::skip("END DOF_PARTITION");
+	} else if (ftool::casecmp(tmp, "DOF_ENUMERATION") == 0) {
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false; touch();
 	  while (true) {
@@ -431,6 +442,15 @@ namespace getfem {
       ost << " CONVEX " << cv;
       ost << " \'" << name_of_fem(fem_of_element(cv));
       ost << "\'\n";
+    }
+    if (!dof_partition.empty()) {
+      ost << " BEGIN DOF_PARTITION\n";
+      unsigned i;
+      for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
+	ost << " " << get_dof_partition(cv); if ((++i % 20) == 0) ost << "\n";
+      }
+      ost << "\n";
+      ost << " END DOF_PARTITION\n";
     }
 
     ost << " BEGIN DOF_ENUMERATION " << '\n';
