@@ -905,7 +905,7 @@ namespace getfem {
 	  other_nodes.pop_back();
 	}
 
-      cout << "nodes2 = " << nodes2 << endl;
+      //cout << "nodes2 = " << nodes2 << endl;
 
       base_matrix G1, G2, G3; 
       base_matrix K(N, N), grad(N, N), K3(N, N), K4(N, N);

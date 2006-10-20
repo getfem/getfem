@@ -307,9 +307,9 @@ struct crack_problem {
   getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
-  getfem::mesh_fem mf_pre_u;
+  getfem::mesh_fem mf_pre_u, mf_pre_mortar;
   getfem::mesh_fem mf_mult;
-  getfem::mesh_fem_level_set mfls_u; 
+  getfem::mesh_fem_level_set mfls_u, mfls_mortar; 
   getfem::mesh_fem_global_function mf_sing_u;
   getfem::mesh_fem mf_partition_of_unity;
   getfem::mesh_fem_product mf_product;
@@ -317,7 +317,6 @@ struct crack_problem {
   getfem::mesh_fem mf_us;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  // getfem::mesh_fem& mf_u() { return mf_us; }
   
   scalar_type lambda, mu;    /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -371,8 +370,10 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh), mf_mult(mesh),
-			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
+  crack_problem(void) : mls(mesh), mim(mls), 
+			mf_pre_u(mesh), mf_pre_mortar(mesh), mf_mult(mesh),
+			mfls_u(mls, mf_pre_u), mfls_mortar(mls, mf_pre_mortar),
+			mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
 
@@ -497,6 +498,8 @@ void crack_problem::init(void) {
 
   mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
+  mf_pre_mortar.set_finite_element(mesh.convex_index(), 
+				   getfem::fem_descriptor(PARAM.string_value("MORTAR_FEM_TYPE")));
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_qdim(N);
   mf_partition_of_unity.set_classical_finite_element(1);
@@ -607,6 +610,7 @@ bool crack_problem::solve(plain_vector &U) {
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
+  mfls_mortar.adapt(); mfls_mortar.set_qdim(2);
   
 
 
@@ -742,29 +746,31 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   unsigned Q = mf_u().get_qdim();
-  for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
-    printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
-	   mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
+  if (0) {
+    for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
+      printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
+	     mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
 
-    const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
-    for (unsigned i=0; i < cvs.size(); ++i) {
-      unsigned cv = cvs[i];
-      //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
+      const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
+      for (unsigned i=0; i < cvs.size(); ++i) {
+	unsigned cv = cvs[i];
+	//if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
 
-      getfem::pfem pf = mf_u().fem_of_element(cv);
-      unsigned ld = unsigned(-1);
-      for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
-	if (mf_u().ind_dof_of_element(cv)[dd] == d) {
-	  ld = dd/Q; break;
+	getfem::pfem pf = mf_u().fem_of_element(cv);
+	unsigned ld = unsigned(-1);
+	for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
+	  if (mf_u().ind_dof_of_element(cv)[dd] == d) {
+	    ld = dd/Q; break;
+	  }
+	}
+	if (ld == unsigned(-1)) {
+	  cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
+	} else {
+	  printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
 	}
       }
-      if (ld == unsigned(-1)) {
-	cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
-      } else {
-	printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
-      }
+      printf("\n");
     }
-    printf("\n");
   }
   
   // Linearized elasticity brick.
@@ -816,21 +822,29 @@ bool crack_problem::solve(plain_vector &U) {
     /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
     /* we use mfls_u as the space of lagrange multipliers */
-    getfem::mesh_fem &mf_mortar = mfls_u; 
+    getfem::mesh_fem &mf_mortar = mfls_mortar; 
     /* adjust its qdim.. this is just evil and dangerous
        since mf_u() is built upon mfls_u.. it would be better
        to use a copy. */
     mf_mortar.set_qdim(2); // EVIL 
     getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET));
-    /* build the list of dof for the mortar condition */
-    dal::bit_vector bv_mortar = 
-      mf_mortar.dof_on_region(MORTAR_BOUNDARY_OUT);
+      *(new getfem::mdbrick_constraint<>(DIRICHLET,0));
+
+    cout << "Handling mortar junction\n";
+
+    /* list of dof of mf_mortar for the mortar condition */
     std::vector<size_type> ind_mortar;
-    for (dal::bv_visitor d(bv_mortar); !d.finished(); ++d) 
-      ind_mortar.push_back(d);
-    cout << "Handling mortar junction (" << ind_mortar.size() << 
-      " dof for the lagrange multiplier\n";
+    /* unfortunately , dof_on_region sometimes returns too much dof
+       when mf_mortar is an enriched one so we have to filter them */
+    sparse_matrix M(mf_mortar.nb_dof(), mf_mortar.nb_dof());
+    getfem::asm_mass_matrix(M, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
+    for (dal::bv_visitor_c d(mf_mortar.dof_on_region(MORTAR_BOUNDARY_OUT)); 
+	 !d.finished(); ++d) {
+      if (M(d,d) > 1e-8) ind_mortar.push_back(d);
+      else cout << "  removing non mortar dof" << d << "\n";
+    }
+
+    cout << ind_mortar.size() << " dof for the lagrange multiplier)\n";
 
     sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()), 
       H(ind_mortar.size(), mf_u().nb_dof());
@@ -850,8 +864,29 @@ bool crack_problem::solve(plain_vector &U) {
     getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
 			    MORTAR_BOUNDARY_IN);
     gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), H);
+
+
+    /* because of the discontinuous partition of mf_u(), some levelset
+       enriched functions do not contribute any more to the
+       mass-matrix (the ones which are null on one side of the
+       levelset, when split in two by the mortar partition, may create
+       a "null" dof whose base function is all zero..
+    */
+    sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
+    getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
+
+    for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
+      if (M2(d,d) < 1e-10) {
+	cout << "  removing null mf_u() dof " << d << "\n";
+	unsigned n = gmm::mat_nrows(H);
+	gmm::resize(H, n+1, gmm::mat_ncols(H));
+	H(n, d) = 1;
+      }
+    }
     
-    getfem::base_vector R(ind_mortar.size());
+    
+    
+    getfem::base_vector R(gmm::mat_nrows(H));
     mortar.set_constraints(H,R);
 
     final_model = &mortar;
