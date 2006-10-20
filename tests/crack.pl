@@ -1,19 +1,25 @@
 $bin_dir = "$ENV{srcdir}/../bin";
 $tmp = `$bin_dir/createmp elas.param`;
 
-sub catch { `rm -f $tmp`; exit(1); }
+sub catch { `rm -f $tmp`; print "error caught..\n"; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
+
 print TMPF <<
 MU = 1.0;
 LAMBDA = 1.0;
 MESH_NOISED = 0;
 MESH_TYPE = 'GT_PK(2,1)';
+NX = 16;
 MIXED_PRESSURE=0;
 INTEGRATION = 'IM_TRIANGLE(6)';
 SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
-NX = 16;
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
+FEM_TYPE = 'FEM_PK(2, 1)';
+MORTAR_FEM_TYPE = FEM_TYPE;
+DATA_FEM_TYPE = 'FEM_PK(2,1)';
+INTEGRATION = 'IM_TRIANGLE(6)';
 RESIDUAL = 1E-9;
 CUTOFF_FUNC = 0;
 CUTOFF=0.3;
@@ -32,24 +38,21 @@ SPIDER_K=1;
 ROOTFILENAME = 'crack';
 DIRICHLET_VERSION = 2;
 VTK_EXPORT = 0;
-BIMATERIAL = 0;
 
 ;
 close(TMPF);
 
-
-
 $er = 0;
-open F, "./crack $tmp 2>&1 |" or die;
+open F, "./crack $tmp 2>&1 |" or die "could not open $tmp\n";
 while (<F>) {
   #print $_; #uncomment this line in case of problem..
   if ($_ =~ /H1 ERROR/) {
     ($a, $b) = split(':', $_);
-    if ($b > 0.12) { print "\nError too large\n"; $er = 1; }
+    if ($b > 0.08) { print "\nError too large\n"; $er = 1; }
   }
   if ($_ =~ /L2 ERROR/) {
     ($a, $b) = split(':', $_);
-    if ($b > 0.0025) { print "\nError too large\n"; $er = 1; }
+    if ($b > 0.0015) { print "\nError too large\n"; $er = 1; }
   }
   if ($_ =~ /error has been detected/)
   {
