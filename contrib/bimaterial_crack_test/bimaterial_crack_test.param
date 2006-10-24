@@ -16,7 +16,12 @@ LAMBDA_DOWN=1.0;
 MU_UP = 3.0;
 MU_DOWN = 1.0;
 
+REFINEMENT_RADIUS = 0.1;   % 0 for no refinement
+REFINEMENT_PROCESS = 15;
 
+ADAPTED_REFINE = 0;      % 0 to disable adapted refinement 
+                         % 1 to enable it
+CONV_MAX = 60000;        % maximal number of convexes
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -27,7 +32,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 
 LX = 1;			  % mesh size x'ox
 LY = 1;	                  % mesh size y'oy
-NX = 10;            	          % space step.
+NX = 30;            	          % space step.
 
 
                                                %             F1                    

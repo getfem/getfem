@@ -642,7 +642,7 @@ bool crack_problem::solve(plain_vector &U) {
   
     for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
       f >> W[i]; if (!f.good()) DAL_THROW(dal::failure_error, "problem while reading " << GLOBAL_FUNCTION_U);
-      cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
+      //cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
       /*scalar_type x = pow(mf_c->point_of_dof(i)[0],2); scalar_type y = pow(mf_c->point_of_dof(i)[1],2);
 	scalar_type r = std::sqrt(pow(x,2) + pow(y,2));
 	scalar_type sgny = (y < 0 ? -1.0 : 1.0);
@@ -867,9 +867,9 @@ int main(int argc, char *argv[]) {
     if (!p.solve(U)) {
       DAL_THROW(dal::failure_error,"Solve has failed");
     } 
-    for (size_type i = 4; i < U.size(); ++i)
-      U[i] = 0;
-    cout << "The solution" << U ;
+    //        for (size_type i = 4; i < U.size(); ++i)
+    //U[i] = 0;
+    //cout << "The solution" << U ;
     
     { 
       getfem::mesh mcut;
