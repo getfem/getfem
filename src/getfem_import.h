@@ -50,10 +50,9 @@ namespace getfem {
        For a mesh of dimension N, getfem builds a mesh with the
        convexes listed in the gmsh file whose dimension are N, the
        convexes of dim N-1 are used to tag "region" of faces,
-       according to their gmsh "physical region number", and the
-       convexes of lower dimension are ignored.
-
-       Note that the mesh nodes are always 3D.
+       according to their gmsh "physical region number" (physical
+       region number 'n' is mapped to the getfem region '1000+n'), and
+       the convexes of lower dimension are ignored.
 
       - "am_fmt" for 2D meshes from emc2
         [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm]

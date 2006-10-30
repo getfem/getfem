@@ -118,27 +118,28 @@ namespace getfem {
       for (size_type cv=0; cv < nb_cv; ++cv) {
 	bool cvok = false;
 	gmsh_cv_info &ci = cvlst[cv];
-	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << "\n";
+	cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << " region: " << ci.region << "\n";
 	if (ci.pgt->dim() == N) {
-	  /*size_type ic = */m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
-	  //m.region(ci.region).add(ic);
-	}/* else if (ci.pgt->dim() == N-1) {
-	  bgeot::mesh_convex_ind_ct ct = m.convex_to_point(ci.nodes[0]);
-	  for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
-	       it != ct.end(); ++it) {
+	  size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
+	  m.region(ci.region).add(ic);
+	} else if (ci.pgt->dim() == N-1) {
+	  bgeot::mesh_structure::ind_cv_ct ct = 
+	    m.convex_to_point(ci.nodes[0]);
+	  for (bgeot::mesh_structure::ind_cv_ct::const_iterator 
+		 it = ct.begin(); it != ct.end(); ++it) {
 	    for (unsigned face=0; face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-	      if (m.is_convex_face_has_points(*it,face,ci.nodes.size(),ci.nodes.begin())) {
-		m.region(ci.region).add(*it,face);
+	      if (m.is_convex_face_having_points(*it,face,ci.nodes.size(),ci.nodes.begin())) {
+		m.region(ci.region+1000).add(*it,face);
 		cvok = true;
 	      }
 	    }
 	  }
 	  if (!cvok) cout << "face not found ... \n";
 	  else cout << "face found!\n";
-	  }
+	}
 	if (!cvok)
 	  DAL_WARNING2("gmsh import ignored a convex of type "
-	  << bgeot::name_of_geometric_trans(ci.pgt));*/
+		       << bgeot::name_of_geometric_trans(ci.pgt));
       }
     }
     maybe_remove_last_dimension(m);
