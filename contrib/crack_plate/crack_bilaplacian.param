@@ -7,46 +7,56 @@
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 5;                 % space step.
+
+
+NX = 49;                 % space step.
+
+
+
 
 DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
 FT = 5.0;              % parameter for the exact solution
-D = 1.0;    % "flexion modulus"
+D = 10.0;    % "flexion modulus"
 KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
             % plate model (N=2 only).
 if (KL)     % For Kirchhoff-Love plate model only
-  NU = 0.3; % Poisson ratio (0 <= NU <= 1)
+  NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
+
 end;
 
  % MESH_FILE='/home-local/jlasry/source++/getfem++/tests/meshes/disc_P2_h2.mesh'
 
-QUAD = 1;
+QUAD = 0;
  
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
   INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
 % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
-  if 1   % hermite element
+  if 0   % hermite element
      FEM_TYPE = 'FEM_PK(2,1)'; %HERMITE(2)';   % not conformal -> problem
      DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   elseif 0  % argyris element
      FEM_TYPE = 'FEM_ARGYRIS';
      DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
   else
-%    FEM_TYPE = 'FEM_HCT_TRIANGLE';
-     FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+    FEM_TYPE = 'FEM_HCT_TRIANGLE';
+%     FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
      DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
    % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
      INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
+     MORTAR_FEM_TYPE = 'FEM_PK(2,2)';
   end;
 end
 
 if (QUAD)
   MESH_TYPE = 'GT_QK(2,1)';
-  FEM_TYPE = 'FEM_QK(2,1)'; %'FEM_REDUCED_QUADC1_COMPOSITE'; 
+%  FEM_TYPE = 'FEM_QK(2,1)'; 
+  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE'; 
 % FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
-  DATA_FEM_TYPE = 'FEM_QK(2,2)';
+  DATA_FEM_TYPE = 'FEM_QK(2,5)';
+  DIRICHLET_FEM_TYPE = 'FEM_QK(2,5)';
+  MORTAR_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(6))';
 end
 
@@ -59,10 +69,14 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
-ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
-	                % 2 = standard XFEM on a fixed zone
+
+ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
+                        % 1 = Pointwise matching
+                        % 2 = standard XFEM on a fixed zone
+			% 3 = Integral matching (mortar)
+	                
 			
-RADIUS_ENR_AREA = 0.4;
+RADIUS_ENR_AREA = 0.1;
 EPSILON=0.1 % thickness
 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
@@ -70,4 +84,4 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'bilaplacian';     % Root of data files.
 VTK_EXPORT = 1; % export solution to a .vtk file ?
-MATLAB_EXPORT = 1;
+MATLAB_EXPORT = 0;
