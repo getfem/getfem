@@ -170,11 +170,19 @@ namespace gmm {
 #define INFO(I) info[(I)-1]
     id.ICNTL(1) = -1; id.ICNTL(2) = -1; id.ICNTL(3) = -1; id.ICNTL(4) = 0;
     id.job = 6;
+    
+    id.ICNTL(14) += 40; /* small boost to the workspace size as we have encountered some problem
+			   who did not fit in the default settings of mumps.. 
+			   by default, ICNTL(14) = 15 or 20
+		       */
+    //cout << "ICNTL(14): " << id.ICNTL(14) << "\n";
+
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
 	case -6 : case -10 : DAL_THROW(failure_error, "Solve with MUMPS failed: matrix is singular");
 	case -13 : DAL_THROW(failure_error, "Solve with MUMPS failed: not enough memory");
+        case -9: DAL_THROW(failure_error, "Solve with MUMPS failed: error " << id.INFO(1) << ", increase ICNTL(14)");
 	default :  DAL_THROW(failure_error, "Solve with MUMPS failed with error " << id.INFO(1));
       }
     }
