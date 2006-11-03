@@ -887,12 +887,14 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	break ;  
 	}
   mesh.write_to_file("toto.mesh");
-
- unsigned Q = mf_u().get_qdim();
+  
+  /*
+  unsigned Q = mf_u().get_qdim();
   for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
     printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
-	   mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
-
+    mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
+    
+    
     const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
     for (unsigned i=0; i < cvs.size(); ++i) {
       unsigned cv = cvs[i];
@@ -913,6 +915,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     }
     printf("\n");
   }
+  */
 
   //cout << "validate mf_sing_u():\n"; validate_fem_derivatives(mf_sing_u);
 
@@ -978,7 +981,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     std::vector<size_type> ind_mortar;
     getfem::asm_mass_matrix(MM, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
     for (size_type i=0; i < mf_mortar.nb_dof(); ++i) {
-      if (MM(i,i) > 1e-9) bv_mortar.add(i);
+      if (MM(i,i) > 1e-15) bv_mortar.add(i);
     }
     for (dal::bv_visitor d(bv_mortar); !d.finished(); ++d) 
       ind_mortar.push_back(d);
@@ -1020,18 +1023,20 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
        a "null" dof whose base function is all zero.. */
     sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
     getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
+    //gmm::HarwellBoeing_IO::write("M2.hb", M2);
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
-        if (M2(d,d) < 1e-10) {
-           cout << "  removing null mf_u() dof " << d << "\n";
-           unsigned n = gmm::mat_nrows(H);
-           gmm::resize(H, n+1, gmm::mat_ncols(H));
-           H(n, d) = 1;
-        }
-     }
+      if (M2(d,d) < 1e-15) {
+	cout << "  removing null mf_u() dof " << d << " @ " << 
+	  mf_u().point_of_dof(d) << "\n";	
+	unsigned n = gmm::mat_nrows(H);
+	gmm::resize(H, n+1, gmm::mat_ncols(H));
+	H(n, d) = 1;
+      }
+    }
     getfem::base_vector R(gmm::mat_nrows(H));    
     mortar.set_constraints(H,R);
     
-    gmm::HarwellBoeing_IO::write("H.hb", H);
+    //gmm::HarwellBoeing_IO::write("H.hb", H);
        
     cout << "matching of nodal values done.\n" ;
     final_model = &mortar;
@@ -1052,7 +1057,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 			mf_mortar, mf_pre_u, R, MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
     gmm::add(gmm::sub_matrix(H0, sub_i, sub_j), H) ;
     
-    cout << "matrice de contraintes : \n" << H << "\n" ;
+    //cout << "matrice de contraintes : \n" << H << "\n" ;
     cout << "matching of derivative values done.\n" ;  
     gmm::resize(R, ind_mortar.size());
     mortar_derivative.set_constraints(H,R);
