@@ -68,8 +68,11 @@ struct exact_solution_3D {
   void init(int mode, scalar_type lambda, scalar_type mu,
 	    getfem::level_set &ls) {
     std::vector<getfem::pglobal_function> cfun(4);
-    for (unsigned j=0; j < 4; ++j)
-      cfun[j] = getfem::isotropic_crack_singular_2D(j, ls);
+    for (unsigned j=0; j < 4; ++j) {
+      getfem::crack_singular_xy_function *s = 
+	new getfem::crack_singular_xy_function(j);
+      cfun[j] = getfem::global_function_on_level_set(ls, *s);
+    }
     mf.set_functions(cfun);
     
     mf.set_qdim(1);
@@ -787,8 +790,11 @@ bool crack_problem::solve(plain_vector &U) {
   
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
-  for (size_type i = 0; i < 4; ++i)
-    vfunc[i] = isotropic_crack_singular_2D(i, ls);
+  for (unsigned j=0; j < 4; ++j) {
+    getfem::crack_singular_xy_function *s = 
+      new getfem::crack_singular_xy_function(j);
+    vfunc[j] = getfem::global_function_on_level_set(ls, *s);
+  }
   
   mf_sing_u.set_functions(vfunc);
 

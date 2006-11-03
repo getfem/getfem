@@ -63,7 +63,7 @@ elseif nn==4,
   P0=gf_slice_get(sll, 'pts');
   [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color',[.3 .3 .3]);
   hold on;
-  gf_slice_set(sll,'pts',[P0 ; slL*0.05]);
+  gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*0.05]);
   [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5);
   sl=gfSlice('load','xfem_dirichlet.sl');
   gf_plot_slice(sl,'mesh','on');
@@ -83,6 +83,7 @@ elseif nn==4,
   axis off;
   view(3);
   camzoom(1.7);
+  axis([-0.5000    0.5000   -0.5000    0.5000 -.2 .2]);
   print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
 end;
 
