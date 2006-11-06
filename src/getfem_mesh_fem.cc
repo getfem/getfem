@@ -220,7 +220,7 @@ namespace getfem {
       if (m.part == n.part)
 	return dof_description_compare(m.pnd, n.pnd) < 0;
       else if (m.part < n.part) return true;
-      else if (m.part > n.part) return false;
+      else /*if (m.part > n.part)*/ return false;
     }
     dof_comp_(double e = 1.0E-10) : comp(e) { }
   };
