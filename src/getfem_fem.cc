@@ -43,7 +43,7 @@ namespace getfem
     if (gmm::mat_nrows(M_) == 0) {
       if (!have_pgt() || !have_G() || !have_pf())
 	DAL_THROW(dal::failure_error, "cannot compute M");
-      M_.resize(pf_->nb_base(convex_num()), pf_->nb_dof(convex_num()));
+      M_.resize(pf_->nb_dof(convex_num()), pf_->nb_base(convex_num()));
       pf_->mat_trans(M_,G(),pgt());
     }
     return M_;
