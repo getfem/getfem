@@ -118,7 +118,7 @@ namespace getfem {
       for (size_type cv=0; cv < nb_cv; ++cv) {
 	bool cvok = false;
 	gmsh_cv_info &ci = cvlst[cv];
-	cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << " region: " << ci.region << "\n";
+	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << " region: " << ci.region << "\n";
 	if (ci.pgt->dim() == N) {
 	  size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
 	  m.region(ci.region).add(ic);
@@ -135,7 +135,7 @@ namespace getfem {
 	    }
 	  }
 	  if (!cvok) cout << "face not found ... \n";
-	  else cout << "face found!\n";
+	  //else cout << "face found!\n";
 	}
 	if (!cvok)
 	  DAL_WARNING2("gmsh import ignored a convex of type "
@@ -427,13 +427,15 @@ namespace getfem {
   }
 
   void maybe_remove_last_dimension(mesh &m) {
-    bool is_flat;
+    bool is_flat = true;
     unsigned N = m.dim(); if (N < 1) return;
     for (dal::bv_visitor i(m.points().index()); !i.finished(); ++i)
       if (m.points()[i][N-1] != 0) is_flat = 0;
-    base_matrix M(N-1,N); 
-    for (unsigned i=0; i < N-1; ++i) M(i,i) = 1;
-    m.transformation(M);
+    if (is_flat) {
+      base_matrix M(N-1,N); 
+      for (unsigned i=0; i < N-1; ++i) M(i,i) = 1;
+      m.transformation(M);
+    }
   }
 
 }
