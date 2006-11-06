@@ -1,3 +1,9 @@
+2006-11-06  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_fem_composite.cc: fixed a bug in reduced HCT and for
+	finite element having nonsquared M matrix (see kernel documentation).
+
 2006-10-05  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_assembling.h: added asm_H2_dist
