@@ -256,12 +256,14 @@ namespace gmm {
     SuperLU_factor(void) { is_init = false; }
     SuperLU_factor(const SuperLU_factor& other) {
       if (other.is_init) 
-	DAL_THROW(dal::failure_error, "copy of initialized SuperLU_factor is forbidden");
+	DAL_THROW(dal::failure_error,
+		  "copy of initialized SuperLU_factor is forbidden");
       is_init = false;
     }
     SuperLU_factor& operator=(const SuperLU_factor& other) {
       if (other.is_init || is_init) 
-	DAL_THROW(dal::failure_error, "assignment of initialized SuperLU_factor is forbidden");
+	DAL_THROW(dal::failure_error,
+		  "assignment of initialized SuperLU_factor is forbidden");
       return *this;
     }
     ~SuperLU_factor() { free_supermatrix(); }
@@ -349,7 +351,8 @@ namespace gmm {
     }
     
     template <class T> template <typename VECTX, typename VECTB> 
-    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B, int transp) const {
+    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B,
+				  int transp) const {
       VECTX &X = const_cast<VECTX &>(X_);
       gmm::copy(B, rhs);
       options.Fact = FACTORED;
@@ -358,7 +361,8 @@ namespace gmm {
       case LU_NOTRANSP: options.Trans = NOTRANS; break;
       case LU_TRANSP: options.Trans = TRANS; break;
       case LU_CONJUGATED: options.Trans = CONJ; break;
-      default: DAL_THROW(dal::failure_error, "invalid value for transposition option");
+      default: DAL_THROW(dal::failure_error,
+			 "invalid value for transposition option");
       }
       StatInit(&stat);
       int info = 0;
