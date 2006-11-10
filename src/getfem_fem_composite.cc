@@ -397,7 +397,7 @@ namespace getfem {
     const HCT_triangle__ *HCT;
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const;
-    virtual size_type nb_base(size_type cv) const { return 12; }
+    virtual size_type nb_base(size_type) const { return 12; }
     mutable base_matrix P, Mhct;
     reduced_HCT_triangle__(void);
   };
@@ -666,7 +666,7 @@ namespace getfem {
     const quadc1p3__ *HCT;
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const;
-    virtual size_type nb_base(size_type cv) const { return 16; }
+    virtual size_type nb_base(size_type) const { return 16; }
     mutable base_matrix P, Mhct;
     reduced_quadc1p3__(void);
   };

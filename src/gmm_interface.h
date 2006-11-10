@@ -313,18 +313,16 @@ namespace gmm {
     porigin_type origin;
     
     tab_ref_reg_spaced_with_origin(void) {}
-    tab_ref_reg_spaced_with_origin(const IT &b, const IT &e, size_type n,
-				   const porigin_type p) 
-      : dal::tab_ref_reg_spaced<IT>(b,e,n), origin(p) {}
+    tab_ref_reg_spaced_with_origin(const IT &b, size_type n, size_type s,
+				   const porigin_type p)
+      : dal::tab_ref_reg_spaced<IT>(b,n,s), origin(p) {}
     tab_ref_reg_spaced_with_origin(const V &v, const sub_slice &si)
-      : dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min,
-				    vect_begin(const_cast<V&>(v)) + si.max, 
-				    si.N),
+      : dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min, 
+				    si.N, (si.max - si.min)/si.N),
       origin(linalg_origin(const_cast<V&>(v))) {}
     tab_ref_reg_spaced_with_origin(V &v, const sub_slice &si)
       : dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min,
-				    vect_begin(const_cast<V&>(v)) + si.max,
-				    si.N),
+				    si.N, (si.max - si.min)/si.N),
 	origin(linalg_origin(const_cast<V&>(v))) {}
   };
 
@@ -442,35 +440,38 @@ namespace gmm {
     typedef typename std::iterator_traits<PT>::value_type *MPT;
 
     ITER it;
-    size_type N, nrows, ncols;
+    size_type N, nrows, ncols, i;
     PT origin;
     
-    iterator operator ++(int) { iterator tmp = *this; it += N; return tmp; }
-    iterator operator --(int) { iterator tmp = *this; it -= N; return tmp; }
-    iterator &operator ++()   { it += N; return *this; }
-    iterator &operator --()   { it -= N; return *this; }
-    iterator &operator +=(difference_type i) { it += i * N; return *this; }
-    iterator &operator -=(difference_type i) { it -= i * N; return *this; }
-    iterator operator +(difference_type i) const 
-    { iterator itt = *this; return (itt += i); }
-    iterator operator -(difference_type i) const
-    { iterator itt = *this; return (itt -= i); }
-    difference_type operator -(const iterator &i) const
-    { return (it - i.it) / N; }
+    iterator operator ++(int) { iterator tmp = *this; i++; return tmp; }
+    iterator operator --(int) { iterator tmp = *this; i--; return tmp; }
+    iterator &operator ++()   { ++i; return *this; }
+    iterator &operator --()   { --i; return *this; }
+    iterator &operator +=(difference_type ii) { i += ii; return *this; }
+    iterator &operator -=(difference_type ii) { i -= ii; return *this; }
+    iterator operator +(difference_type ii) const 
+    { iterator itt = *this; return (itt += ii); }
+    iterator operator -(difference_type ii) const
+    { iterator itt = *this; return (itt -= ii); }
+    difference_type operator -(const iterator &ii) const
+    { return (it - ii.it) / N + i - ii.i; }
 
-    ITER operator *() const { return it; }
-    ITER operator [](int ii) const { return it + ii * N; }
+    ITER operator *() const { return it+i*N; }
+    ITER operator [](int ii) const { return it + (i+ii) * N; }
 
-    bool operator ==(const iterator &i) const { return (it == i.it); }
-    bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (it < i.it); }
+    bool operator ==(const iterator &ii) const
+    { return (*this - ii) == difference_type(0); }
+    bool operator !=(const iterator &ii) const { return !(ii == *this); }
+    bool operator < (const iterator &ii) const
+    { return (*this - ii) < difference_type(0); }
 
     dense_compressed_iterator(void) {}
     dense_compressed_iterator(const dense_compressed_iterator<MIT,MIT,MPT> &ii)
-      : it(ii.it), N(ii.N),nrows(ii.nrows),ncols(ii.ncols),origin(ii.origin) {}
+      : it(ii.it), N(ii.N), nrows(ii.nrows), ncols(ii.ncols), i(ii.i),
+	origin(ii.origin)  {}
     dense_compressed_iterator(const ITER &iter, size_type n, size_type r,
-			      size_type c, PT o)
-      : it(iter), N(n), nrows(r), ncols(c), origin(o) { }
+			      size_type c, size_type ii, PT o)
+      : it(iter), N(n != 0 ? n : 1), nrows(r), ncols(c), i(ii), origin(o) { }
     
   };
 
@@ -877,36 +878,38 @@ namespace gmm {
     typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
-    static const_sub_row_type row(const const_row_iterator &it) {
-      return const_sub_row_type(it.it, it.it + it.ncols * it.nrows,
-				it.nrows, it.origin); 
-    }
+    static const_sub_row_type row(const const_row_iterator &it)
+    { return const_sub_row_type(*it, it.nrows, it.ncols, it.origin); }
     static const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(it.it, it.it + it.nrows, it.origin); }
-    static sub_row_type row(const row_iterator &it) {
-      return sub_row_type(it.it, it.it + it.ncols * it.nrows,
-			  it.nrows, it.origin);
-    }
+    { return const_sub_col_type(*it, *it + it.nrows, it.origin); }
+    static sub_row_type row(const row_iterator &it)
+    { return sub_row_type(*it, it.nrows, it.ncols, it.origin); }
     static sub_col_type col(const col_iterator &it)
-    { return sub_col_type(it.it, it.it + it.nrows, it.origin); }
+    { return sub_col_type(*it, *it + it.nrows, it.origin); }
     static row_iterator row_begin(this_type &m)
-    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), 0, &m); }
     static row_iterator row_end(this_type &m)
-    { return row_iterator(m.begin()+m.nrows(), 1, m.nrows(), m.ncols(), &m); }
+    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), m.nrows(), &m); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), 0, &m); }
     static const_row_iterator row_end(const this_type &m) {
-      return const_row_iterator(m.begin()+m.nrows(), 1, m.nrows(),
-				m.ncols(), &m);
+      return const_row_iterator(m.begin(), 1, m.nrows(),
+				m.ncols(), m.nrows(), &m);
     }
     static col_iterator col_begin(this_type &m)
-    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), &m); }
-    static col_iterator col_end(this_type &m)
-    { return col_iterator(m.end(), m.nrows(), m.nrows(), m.ncols(), &m); }
-    static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
-    static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
+    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), 0, &m); }
+    static col_iterator col_end(this_type &m) {
+      return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(),
+			  m.ncols(), &m);
+    }
+    static const_col_iterator col_begin(const this_type &m) {
+      return const_col_iterator(m.begin(), m.nrows(), m.nrows(),
+				m.ncols(), 0, &m);
+    }
+    static const_col_iterator col_end(const this_type &m) {
+      return const_col_iterator(m.begin(), m.nrows(),m.nrows(),m.ncols(),
+				m.ncols(), &m);
+    }
     static origin_type* origin(this_type &m) { return &m; }
     static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.fill(value_type(0)); }
@@ -1008,36 +1011,38 @@ namespace gmm {
     typedef linalg_true index_sorted;
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static size_type nrows(const this_type &m) { return m.nrows(); }
-    static const_sub_col_type col(const const_col_iterator &it) {
-      return const_sub_col_type(it.it, it.it + it.nrows * it.ncols,
-				it.ncols, it.origin); 
-    }
+    static const_sub_col_type col(const const_col_iterator &it)
+    { return const_sub_col_type(*it, it.ncols, it.nrows, it.origin); }
     static const_sub_row_type row(const const_row_iterator &it)
-    { return const_sub_row_type(it.it, it.it + it.ncols, it.origin); }
-    static sub_col_type col(const col_iterator &it) {
-      return sub_col_type(it.it, it.it + it.nrows * it.ncols,
-			  it.ncols, it.origin);
-    }
+    { return const_sub_row_type(*it, *it + it.ncols, it.origin); }
+    static sub_col_type col(const col_iterator &it)
+    { return sub_col_type(*it, *it, it.ncols, it.nrows, it.origin); }
     static sub_row_type row(const row_iterator &it)
-    { return sub_row_type(it.it, it.it + it.ncols, it.origin); }
+    { return sub_row_type(*it, *it + it.ncols, it.origin); }
     static col_iterator col_begin(this_type &m)
-    { return col_iterator(m.begin(), 1, m.ncols(), m.nrows(), &m); }
+    { return col_iterator(m.begin(), 1, m.ncols(), m.nrows(), 0, &m); }
     static col_iterator col_end(this_type &m)
-    { return col_iterator(m.begin()+m.ncols(), 1, m.ncols(), m.nrows(), &m); }
+    { return col_iterator(m.begin(), 1, m.ncols(), m.nrows(), m.ncols(), &m); }
     static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin(), 1, m.ncols(), m.nrows(), &m); }
+    { return const_col_iterator(m.begin(), 1, m.ncols(), m.nrows(), 0, &m); }
     static const_col_iterator col_end(const this_type &m) {
-      return const_col_iterator(m.begin()+m.ncols(), 1, m.ncols(),
-				m.nrows(), &m);
+      return const_col_iterator(m.begin(), 1, m.ncols(),
+				m.nrows(), m.ncols(), &m);
     }
     static row_iterator row_begin(this_type &m)
-    { return row_iterator(m.begin(), m.ncols(), m.ncols(), m.nrows(), &m); }
-    static row_iterator row_end(this_type &m)
-    { return row_iterator(m.end(), m.ncols(), m.ncols(), m.nrows(), &m); }
-    static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin(),m.ncols(),m.ncols(),m.nrows(),&m); }
-    static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.end(), m.ncols(),m.ncols(),m.nrows(), &m); }
+    { return row_iterator(m.begin(), m.ncols(), m.ncols(), m.nrows(), 0, &m); }
+    static row_iterator row_end(this_type &m) {
+      return row_iterator(m.begin(), m.ncols(), m.ncols(), m.nrows(),
+			  m.nrows(), &m);
+    }
+    static const_row_iterator row_begin(const this_type &m) {
+      return const_row_iterator(m.begin(), m.ncols(), m.ncols(), m.nrows(),
+				0, &m);
+    }
+    static const_row_iterator row_end(const this_type &m) {
+      return const_row_iterator(m.begin(), m.ncols(), m.ncols(), m.nrows(),
+				m.nrows(), &m);
+    }
     static origin_type* origin(this_type &m) { return &m; }
     static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.fill(value_type(0)); }

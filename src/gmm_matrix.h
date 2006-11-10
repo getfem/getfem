@@ -431,36 +431,30 @@ namespace gmm
     typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
-    static const_sub_row_type row(const const_row_iterator &it) {
-      return const_sub_row_type(it.it, it.it + it.ncols * it.nrows,
-				it.nrows, it.origin); 
-    }
+    static const_sub_row_type row(const const_row_iterator &it)
+    { return const_sub_row_type(*it, it.nrows, it.ncols, it.origin); }
     static const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(it.it, it.it + it.nrows, it.origin); }
-    static sub_row_type row(const row_iterator &it) {
-      return sub_row_type(it.it, it.it + it.ncols * it.nrows,
-			  it.nrows, it.origin);
-    }
+    { return const_sub_col_type(*it, *it + it.nrows, it.origin); }
+    static sub_row_type row(const row_iterator &it)
+    { return sub_row_type(*it, it.nrows, it.ncols, it.origin); }
     static sub_col_type col(const col_iterator &it)
-    { return sub_col_type(it.it, it.it + it.nrows, it.origin); }
+    { return sub_col_type(*it, *it + it.nrows, it.origin); }
     static row_iterator row_begin(this_type &m)
-    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), 0, &m); }
     static row_iterator row_end(this_type &m)
-    { return row_iterator(m.begin()+m.nrows(), 1, m.nrows(), m.ncols(), &m); }
+    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), m.nrows(), &m); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
-    static const_row_iterator row_end(const this_type &m) {
-      return const_row_iterator(m.begin()+m.nrows(), 1, m.nrows(),
-				m.ncols(), &m);
-    }
+    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), 0, &m); }
+    static const_row_iterator row_end(const this_type &m)
+    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), m.nrows(), &m); }
     static col_iterator col_begin(this_type &m)
-    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), &m); }
+    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), 0, &m); }
     static col_iterator col_end(this_type &m)
-    { return col_iterator(m.end(), m.nrows(), m.nrows(), m.ncols(), &m); }
+    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), m.ncols(), &m); }
     static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
+    { return const_col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), 0, &m); }
     static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
+    { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),m.ncols(), &m); }
     static origin_type* origin(this_type &m) { return &m; }
     static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.fill(value_type(0)); }

@@ -352,31 +352,34 @@ namespace dal {
     typedef tab_ref_reg_spaced_iterator_<ITER> iterator;
     
     ITER it;
-    size_type N;
+    size_type N, i;
     
-    iterator operator ++(int) { iterator tmp = *this; it += N; return tmp; }
-    iterator operator --(int) { iterator tmp = *this; it -= N; return tmp; }
-    iterator &operator ++()   { it += N; return *this; }
-    iterator &operator --()   { it -= N; return *this; }
-    iterator &operator +=(difference_type i) { it += i * N; return *this; }
-    iterator &operator -=(difference_type i) { it -= i * N; return *this; }
-    iterator operator +(difference_type i) const 
-    { iterator itt = *this; return (itt += i); }
-    iterator operator -(difference_type i) const
-    { iterator itt = *this; return (itt -= i); }
-    difference_type operator -(const iterator &i) const
-    { return (it - i.it) / N; }
+    iterator operator ++(int) { iterator tmp = *this; i++; return tmp; }
+    iterator operator --(int) { iterator tmp = *this; i--; return tmp; }
+    iterator &operator ++()   { i++; return *this; }
+    iterator &operator --()   { i--; return *this; }
+    iterator &operator +=(difference_type ii) { i+=ii; return *this; }
+    iterator &operator -=(difference_type ii) { i-=ii; return *this; }
+    iterator operator +(difference_type ii) const 
+    { iterator itt = *this; return (itt += ii); }
+    iterator operator -(difference_type ii) const
+    { iterator itt = *this; return (itt -= ii); }
+    difference_type operator -(const iterator &ii) const
+    { return (it - ii.it) / N + i - ii.i; }
 
-    reference operator *() const { return *it; }
-    reference operator [](int ii) const { return *(it + ii * N); }
+    reference operator *() const { return *(it + i*N); }
+    reference operator [](int ii) const { return *(it + (i+ii)*N); }
 
-    bool operator ==(const iterator &i) const { return (it == i.it); }
-    bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (it < i.it); }
+    bool operator ==(const iterator &ii) const
+    { return (*this - ii) == difference_type(0); }
+    bool operator !=(const iterator &ii) const
+    { return  (*this - ii) != difference_type(0); }
+    bool operator < (const iterator &ii) const
+    { return (*this - ii) < difference_type(0); }
 
     tab_ref_reg_spaced_iterator_(void) {}
-    tab_ref_reg_spaced_iterator_(const ITER &iter, size_type n)
-      : it(iter), N(n) { }
+    tab_ref_reg_spaced_iterator_(const ITER &iter, size_type n, size_type ii)
+      : it(iter), N(n), i(ii) { }
     
   };
 
@@ -392,65 +395,63 @@ namespace dal {
   /**
      provide a "strided" view a of container
   */
-  template<typename ITER> class tab_ref_reg_spaced
-  {
-    public :
+  template<typename ITER> class tab_ref_reg_spaced {
+  public :
 
-      typedef typename std::iterator_traits<ITER>::value_type value_type;
-      typedef typename std::iterator_traits<ITER>::pointer    pointer;
-      typedef typename std::iterator_traits<ITER>::pointer    const_pointer;
-      typedef typename std::iterator_traits<ITER>::reference  reference;
-      typedef typename std::iterator_traits<ITER>::reference  const_reference;
-      typedef typename std::iterator_traits<ITER>::difference_type
-	                                                       difference_type;
-      typedef size_t size_type;
-      typedef tab_ref_reg_spaced_iterator_<ITER> iterator;
-      typedef iterator                          const_iterator;
-      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-      typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef typename std::iterator_traits<ITER>::value_type value_type;
+    typedef typename std::iterator_traits<ITER>::pointer    pointer;
+    typedef typename std::iterator_traits<ITER>::pointer    const_pointer;
+    typedef typename std::iterator_traits<ITER>::reference  reference;
+    typedef typename std::iterator_traits<ITER>::reference  const_reference;
+    typedef typename std::iterator_traits<ITER>::difference_type
+            difference_type;
+    typedef size_t size_type;
+    typedef tab_ref_reg_spaced_iterator_<ITER> iterator;
+    typedef iterator                          const_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
     
-    protected :
+  protected :
 
-      ITER begin_, end_;
-      size_type N;
-
-    public :
-
-      bool empty(void) const { return begin_ == end_; }
-      size_type size(void) const { return (end_ - begin_) / N; }
-
-      iterator begin(void) { return iterator(begin_, N); }
-      const_iterator begin(void) const { return iterator(begin_, N); }
-      iterator end(void) { return iterator(end_, N); }
-      const_iterator end(void) const { return iterator(end_, N); }
-      reverse_iterator rbegin(void) { return reverse_iterator(end()); }
-      const_reverse_iterator rbegin(void) const
-      { return const_reverse_iterator(end()); }
-      reverse_iterator rend(void) { return reverse_iterator(begin()); }
-      const_reverse_iterator rend(void) const
-      { return const_reverse_iterator(begin()); }
-
-      reference front(void) { return *begin_; }
-      const_reference front(void) const { return *begin_; }
-      reference back(void) { return *(--(end())); }
-      const_reference back(void) const { return *(--(end())); }
-      void pop_front(void) { begin_ += N; }
-
-      tab_ref_reg_spaced(void) {}
-      tab_ref_reg_spaced(const ITER &b, const ITER &e, size_type n)
-	: begin_(b), end_(e), N(n) {}
-
-
-      const_reference operator [](size_type ii) const
-      { return *(begin_ + ii * N);}
-      reference operator [](size_type ii) { return *(begin_ + ii * N); }
-
+    ITER begin_;
+    size_type N, size_;
+    
+  public :
+    
+    bool empty(void) const { return size_ == 0; }
+    size_type size(void) const { return size_; }
+    
+    iterator begin(void) { return iterator(begin_, N, 0); }
+    const_iterator begin(void) const { return iterator(begin_, N, 0); }
+    iterator end(void) { return iterator(begin_, N, size_); }
+    const_iterator end(void) const { return iterator(begin_, N, size_); }
+    reverse_iterator rbegin(void) { return reverse_iterator(end()); }
+    const_reverse_iterator rbegin(void) const
+    { return const_reverse_iterator(end()); }
+    reverse_iterator rend(void) { return reverse_iterator(begin()); }
+    const_reverse_iterator rend(void) const
+    { return const_reverse_iterator(begin()); }
+    
+    reference front(void) { return *begin_; }
+    const_reference front(void) const { return *begin_; }
+    reference back(void) { return *(begin_ + N * (size_-1)); }
+    const_reference back(void) const { *(begin_ + N * (size_-1)); }
+    void pop_front(void) { begin_ += N; }
+    
+    tab_ref_reg_spaced(void) {}
+    tab_ref_reg_spaced(const ITER &b, size_type n, size_type s)
+      : begin_(b), N(n != 0 ? n : 1), size_(s) {}
+    
+    
+    const_reference operator [](size_type ii) const
+    { return *(begin_ + ii * N);}
+    reference operator [](size_type ii) { return *(begin_ + ii * N); }
+    
   };
 
   /// iterator over a tab_ref_with_selection
   template<typename ITER, typename COND> 
-    struct tab_ref_with_selection_iterator_ : public ITER
-  {
+  struct tab_ref_with_selection_iterator_ : public ITER {
     typedef typename std::iterator_traits<ITER>::value_type value_type;
     typedef typename std::iterator_traits<ITER>::pointer    pointer;
     typedef typename std::iterator_traits<ITER>::reference  reference;
@@ -482,8 +483,6 @@ namespace dal {
     
     ITER begin_, end_;
     COND cond;
-    
-    
     
   public :
     
