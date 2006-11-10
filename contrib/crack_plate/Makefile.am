@@ -21,7 +21,7 @@ INCLUDES = -I$(top_srcdir)/src -I../../src $(MUMPS_CFLAGS)
 LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
 
 if QHULL
-TESTS = $(top_srcdir)/contrib/crack_mindlin/crack_mindlin.pl
+TESTS = $(top_srcdir)/contrib/crack_plate/crack_mindlin.pl
 else
 TESTS =
 endif
