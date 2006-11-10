@@ -1,3 +1,8 @@
+2006-07-28  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/dal_ref.h: modification of tab_ref_reg_spaced iterators to fix a bug
+	with VC++ on Gmm++.
+
 2006-11-06  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
