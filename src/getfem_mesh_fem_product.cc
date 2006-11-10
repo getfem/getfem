@@ -64,7 +64,7 @@ namespace getfem {
   void fem_product::real_base_value(const fem_interpolation_context &c,
 				      base_tensor &t, bool) const {
     bgeot::multi_index mi(2);
-    mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[1] = target_dim(); mi[0] = nb_dof(0);
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
 
@@ -90,7 +90,7 @@ namespace getfem {
   void fem_product::real_grad_base_value(const fem_interpolation_context &c,
 					 base_tensor &t, bool) const {
     bgeot::multi_index mi(3);
-    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_dof(0);
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin();
     
@@ -107,9 +107,9 @@ namespace getfem {
     assert(target_dim() == 1);
     for (dim_type k = 0; k < c.N() ; ++k) {
       for (dal::bv_visitor i(enriched_dof1); !i.finished(); ++i) {
-	size_type posg0 = k * pfems[0]->nb_base(cv);
-	size_type posg1 = k * pfems[1]->nb_base(cv);
-	for (size_type j = 0; j < pfems[1]->nb_base(cv); ++j)
+	size_type posg0 = k * pfems[0]->nb_dof(cv);
+	size_type posg1 = k * pfems[1]->nb_dof(cv);
+	for (size_type j = 0; j < pfems[1]->nb_dof(cv); ++j)
 	  *it++ = grad_e[0][i + posg0] * val_e[1][j]
 	    + grad_e[1][j + posg1] * val_e[0][i];
       }
@@ -120,7 +120,7 @@ namespace getfem {
   void fem_product::real_hess_base_value(const fem_interpolation_context &c,
 				  base_tensor &t, bool) const {
     bgeot::multi_index mi(4);
-    mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_dof(0);
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin();
     
@@ -139,13 +139,13 @@ namespace getfem {
     for (dim_type k0 = 0; k0 < c.N(); ++k0) {
       for (dim_type k1 = 0; k1 < c.N() ; ++k1) {
 	for (dal::bv_visitor i(enriched_dof1); !i.finished(); ++i) {
-	  size_type posh0 = (k0*c.N()+k1) * pfems[0]->nb_base(cv);
-	  size_type posh1 = (k0*c.N()+k1) * pfems[1]->nb_base(cv);
-	  size_type posg00 = k0 * pfems[0]->nb_base(cv);
-	  size_type posg01 = k1 * pfems[0]->nb_base(cv);
-	  size_type posg10 = k0 * pfems[1]->nb_base(cv);
-	  size_type posg11 = k1 * pfems[1]->nb_base(cv);
-	  for (size_type j = 0; j < pfems[1]->nb_base(cv); ++j) {
+	  size_type posh0 = (k0*c.N()+k1) * pfems[0]->nb_dof(cv);
+	  size_type posh1 = (k0*c.N()+k1) * pfems[1]->nb_dof(cv);
+	  size_type posg00 = k0 * pfems[0]->nb_dof(cv);
+	  size_type posg01 = k1 * pfems[0]->nb_dof(cv);
+	  size_type posg10 = k0 * pfems[1]->nb_dof(cv);
+	  size_type posg11 = k1 * pfems[1]->nb_dof(cv);
+	  for (size_type j = 0; j < pfems[1]->nb_dof(cv); ++j) {
 	    *it++ =  hess_e[0][i + posh0] * val_e[1][j] + 
 	      hess_e[1][j + posh1] * val_e[0][i] + 
 	      grad_e[0][i + posg00] * grad_e[1][j + posg11] +

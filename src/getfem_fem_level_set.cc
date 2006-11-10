@@ -128,7 +128,7 @@ namespace getfem {
     std::vector<unsigned> zid;
     find_zone_id(c, zid);
     for (dim_type q = 0; q < target_dim(); ++q) {
-      for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
+      for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
 	if (dofzones[d]) { /* enriched dof ? */
 	  for (size_type k = 0; k < dofzones[d]->size(); ++k) {
 	    *it++ = (k == zid[d]) ? *itf : 0;
@@ -158,7 +158,7 @@ namespace getfem {
 
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type q = 0; q < target_dim(); ++q) {
-	for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
+	for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
 	  if (dofzones[d]) { /* enriched dof ? */
 	    for (size_type k = 0; k < dofzones[d]->size(); ++k) {
 	      *it++ = (k == zid[d]) ? *itf : 0;
@@ -190,7 +190,7 @@ namespace getfem {
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type j = 0; j < c.N() ; ++j) {
 	for (dim_type q = 0; q < target_dim(); ++q) {
-	  for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
+	  for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
 	    if (dofzones[d]) { /* enriched dof ? */
 	      for (size_type k = 0; k < dofzones[d]->size(); ++k) {
 		*it++ = (k == zid[d]) ? *itf : 0;
