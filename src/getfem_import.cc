@@ -95,23 +95,32 @@ namespace getfem {
     ftool::read_until(f, "$ELM");
     size_type nb_cv;
     f >> nb_cv;
-    std::vector<gmsh_cv_info> cvlst(nb_cv);
+    std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     for (size_type cv=0; cv < nb_cv; ++cv) {
-      gmsh_cv_info &ci = cvlst[cv];
+      unsigned id, type, region;
       unsigned dummy, cv_nb_nodes;
-      f >> ci.id >> ci.type >> ci.region >> dummy >> cv_nb_nodes;
-      ci.id--; /* numbering starts at 1 */
-      ci.nodes.resize(cv_nb_nodes);
-      for (size_type i=0; i < cv_nb_nodes; ++i) {
-	size_type j;
-	f >> j;
-	ci.nodes[i] = msh_node_2_getfem_node.search(j);
-	if (ci.nodes[i] == size_type(-1)) 
-	  DAL_THROW(failure_error, "Invalid node ID " << j 
-		    << " in gmsh convex " << ci.id);
+      f >> id >> type >> region >> dummy >> cv_nb_nodes;
+      id--; /* numbering starts at 1 */
+      if (type == 15) { // just a node
+        // get rid of the rest of the line
+        f >> dummy;
+      } else {
+        cvlst.push_back(gmsh_cv_info());
+        gmsh_cv_info &ci = cvlst.back();
+        ci.id = id; ci.type = type; ci.region = region;
+        ci.nodes.resize(cv_nb_nodes);
+        for (size_type i=0; i < cv_nb_nodes; ++i) {
+          size_type j;
+          f >> j;
+          ci.nodes[i] = msh_node_2_getfem_node.search(j);
+          if (ci.nodes[i] == size_type(-1)) 
+            DAL_THROW(failure_error, "Invalid node ID " << j 
+                      << " in gmsh convex " << ci.id);
+        }
+        ci.set_pgt();
       }
-      ci.set_pgt();
     }
+    nb_cv = cvlst.size();
     if (cvlst.size()) {
       std::sort(cvlst.begin(), cvlst.end());
       unsigned N = cvlst.front().pgt->dim();
