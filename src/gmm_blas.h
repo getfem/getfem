@@ -2024,8 +2024,9 @@ namespace gmm {
     clear(l3);
     size_type nn = mat_nrows(l3), mm = mat_nrows(l2);
     for (size_type i = 0; i < nn; ++i) {
-      for (size_type j = 0; j < mm; ++j)
-      add(scaled(mat_const_row(l2, j), l1(i, j)), mat_row(l3, i));
+      for (size_type j = 0; j < mm; ++j) {
+	add(scaled(mat_const_row(l2, j), l1(i, j)), mat_row(l3, i));
+      }
     }
   }
 

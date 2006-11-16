@@ -454,7 +454,7 @@ namespace gmm {
     iterator operator -(difference_type ii) const
     { iterator itt = *this; return (itt -= ii); }
     difference_type operator -(const iterator &ii) const
-    { return (it - ii.it) / N + i - ii.i; }
+    { return (N ? (it - ii.it) / N : 0) + i - ii.i; }
 
     ITER operator *() const { return it+i*N; }
     ITER operator [](int ii) const { return it + (i+ii) * N; }
@@ -471,7 +471,7 @@ namespace gmm {
 	origin(ii.origin)  {}
     dense_compressed_iterator(const ITER &iter, size_type n, size_type r,
 			      size_type c, size_type ii, PT o)
-      : it(iter), N(n != 0 ? n : 1), nrows(r), ncols(c), i(ii), origin(o) { }
+      : it(iter), N(n), nrows(r), ncols(c), i(ii), origin(o) { }
     
   };
 

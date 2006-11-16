@@ -59,17 +59,16 @@ namespace gmm {
   // software for any purpose. This software is provided "as is" without 
   // expressed or implied warranty.
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
 
-  inline void IOHBTerminate(const char *a) { DAL_THROW(dal::failure_error, a); }
+  inline void IOHBTerminate(const char *a) { DAL_THROW(dal::failure_error, a);}
 
   inline bool is_complex_double__(std::complex<double>) { return true; }
   inline bool is_complex_double__(double) { return false; }
 
   inline int ParseIfmt(const char *fmt, int* perline, int* width) {
-    if (sscanf(fmt, " (%dI%d)", perline, width) != 2) {
+    if (SECURE_NONCHAR_SSCANF(fmt, " (%dI%d)", perline, width) != 2) {
       *perline = 1;
-      if (sscanf(fmt, " (I%d)", width) != 1) 
+      if (SECURE_NONCHAR_SSCANF(fmt, " (I%d)", width) != 1) 
 	DAL_THROW(dal::failure_error, "invalid HB I-format : " << fmt);
     }
     return *width;
@@ -79,11 +78,21 @@ namespace gmm {
 		       int* prec, int* flag) {
     char p;
     *perline = *width = *flag = *prec = 0;
-    if (sscanf(fmt, " (%d%c%d.%d)", perline, &p, width, prec) < 3 || 
-	!strchr("PEDF", p)) {
+#ifdef GMM_SECURE_CRT
+    if (sscanf_s(fmt, " (%d%c%d.%d)", perline, &p, sizeof(char), width, prec)
+	< 3 || !strchr("PEDF", p))
+#else
+    if (sscanf(fmt, " (%d%c%d.%d)", perline, &p, width, prec) < 3
+	|| !strchr("PEDF", p))
+#endif
+	{
       *perline = 1;
-      if (sscanf(fmt, " (%c%d.%d)", &p, width, prec) < 2 || 
-	  !strchr("PEDF", p))
+#ifdef GMM_SECURE_CRT
+      if (sscanf_s(fmt, " (%c%d.%d)", &p, sizeof(char), width, prec) < 2
+	  || !strchr("PEDF", p))
+#else
+      if (sscanf(fmt, " (%c%d.%d)", &p, width, prec) < 2 || !strchr("PEDF", p))
+#endif
 	DAL_THROW(dal::failure_error, "invalid HB REAL format : " << fmt);
     }
     *flag = p;
@@ -106,12 +115,15 @@ namespace gmm {
     /** read the opened file */
     template <typename T, int shift> void read(csc_matrix<T, shift>& A);
     template <typename MAT> void read(MAT &M);
-    template <typename T, int shift> static void write(const char *filename, const csc_matrix<T, shift>& A);
+    template <typename T, int shift>
+    static void write(const char *filename, const csc_matrix<T, shift>& A);
     template <typename T, typename INDI, typename INDJ, int shift> 
-    static void write(const char *filename, const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
+    static void write(const char *filename,
+		      const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
 
     /** static method for saving the matrix */
-    template <typename MAT> static void write(const char *filename, const MAT& A);
+    template <typename MAT> static void write(const char *filename,
+					      const MAT& A);
   private:
     FILE *f;
     char Title[73], Key[9], Rhstype[4], Type[4];
@@ -130,18 +142,18 @@ namespace gmm {
     }
     char *getline(char *buf) { 
       fgets(buf, BUFSIZ, f); ++lcount;
-      if (sscanf(buf,"%*s") < 0) 
+      if (SECURE_NONCHAR_SSCANF(buf,"%*s") < 0) 
 	DAL_THROW(dal::failure_error, "blank line in HB file at line " << lcount);
       return buf;
     }
 
     int substrtoi(const char *p, size_type len) {
       char s[100]; len = std::min(len, sizeof s - 1);
-      strncpy(s,p,len); s[len] = 0; return atoi(s);
+      SECURE_STRNCPY(s, 100, p, len); s[len] = 0; return atoi(s);
     }
     double substrtod(const char *p, size_type len, int Valflag) {
       char s[100]; len = std::min(len, sizeof s - 1);
-      strncpy(s,p,len); s[len] = 0;
+      SECURE_STRNCPY(s, 100, p, len); s[len] = 0;
       if ( Valflag != 'F' && !strchr(s,'E')) {
 	/* insert a char prefix for exp */
 	int last = strlen(s);
@@ -239,30 +251,46 @@ namespace gmm {
     int Totcrd,Neltvl,Nrhsix;
     char line[BUFSIZ];
     close();
-    f = fopen(filename, "r");
+    SECURE_FOPEN(&f, filename, "r");
     if (!f) { DAL_THROW(dal::failure_error, "could not open " << filename); }
     /* First line: */
+#ifdef GMM_SECURE_CRT
+    sscanf_s(getline(line), "%c%s", Title, 72, Key, 8);
+#else
     sscanf(getline(line), "%72c%8s", Title, Key);
+#endif
     Key[8] = Title[72] = 0;
     /* Second line: */
     Totcrd = Ptrcrd = Indcrd = Valcrd = Rhscrd = 0;
-    sscanf(getline(line), "%d%d%d%d%d", &Totcrd, &Ptrcrd, &Indcrd, &Valcrd, &Rhscrd);
+    SECURE_NONCHAR_SSCANF(getline(line), "%d%d%d%d%d", &Totcrd, &Ptrcrd, &Indcrd, &Valcrd, &Rhscrd);
     
     /* Third line: */
     Nrow = Ncol = Nnzero = Neltvl = 0;
+#ifdef GMM_SECURE_CRT
+    if (sscanf_s(getline(line), "%c%d%d%d%d", Type, 3, &Nrow, &Ncol, &Nnzero, &Neltvl) < 1)
+#else
     if (sscanf(getline(line), "%3c%d%d%d%d", Type, &Nrow, &Ncol, &Nnzero, &Neltvl) < 1)
+#endif
       IOHBTerminate("Invalid Type info, line 3 of Harwell-Boeing file.\n");
     std::for_each(Type, Type+3, toupper);
     
       /*  Fourth line:  */
+#ifdef GMM_SECURE_CRT
+    if ( sscanf_s(getline(line), "%c%c%c%c",Ptrfmt, 16,Indfmt, 16,Valfmt, 20,Rhsfmt, 20) < 3)
+#else
     if ( sscanf(getline(line), "%16c%16c%20c%20c",Ptrfmt,Indfmt,Valfmt,Rhsfmt) < 3)
+#endif
       IOHBTerminate("Invalid format info, line 4 of Harwell-Boeing file.\n"); 
     Ptrfmt[16] = Indfmt[16] = Valfmt[20] = Rhsfmt[20] = 0;
     
     /*  (Optional) Fifth line: */
     if (Rhscrd != 0 ) { 
       Nrhs = Nrhsix = 0;
-      if ( sscanf(getline(line), "%3c%d%d", Rhstype, &Nrhs, &Nrhsix) != 1) 
+#ifdef GMM_SECURE_CRT
+      if ( sscanf_s(getline(line), "%c%d%d", Rhstype, 3, &Nrhs, &Nrhsix) != 1)
+#else
+      if ( sscanf(getline(line), "%3c%d%d", Rhstype, &Nrhs, &Nrhsix) != 1)
+#endif
 	IOHBTerminate("Invalid RHS type information, line 5 of"
 		      " Harwell-Boeing file.\n");
     }
@@ -336,19 +364,20 @@ namespace gmm {
 	{ nvalentries = nz; nrhsentries = M; }
     
       if ( filename != NULL ) {
-	if ( (out_file = fopen( filename, "w")) == NULL )
+	SECURE_FOPEN(&out_file, filename, "w");
+	if ( out_file == NULL )
 	  DAL_THROW(gmm::failure_error,"Error: Cannot open file: " << filename);
       } else out_file = stdout;
     
       if ( Ptrfmt == NULL ) Ptrfmt = "(8I10)";
       ParseIfmt(Ptrfmt, &Ptrperline, &Ptrwidth);
-      sprintf(pformat,"%%%dd",Ptrwidth);
+      SECURE_SPRINTF1(pformat,sizeof(pformat),"%%%dd",Ptrwidth);
       ptrcrd = (N+1)/Ptrperline;
       if ( (N+1)%Ptrperline != 0) ptrcrd++;
     
       if ( Indfmt == NULL ) Indfmt =  Ptrfmt;
       ParseIfmt(Indfmt, &Indperline, &Indwidth);
-      sprintf(iformat,"%%%dd",Indwidth);
+      SECURE_SPRINTF1(iformat,sizeof(iformat), "%%%dd",Indwidth);
       indcrd = nz/Indperline;
       if ( nz%Indperline != 0) indcrd++;
     
@@ -357,9 +386,9 @@ namespace gmm {
 	ParseRfmt(Valfmt, &Valperline, &Valwidth, &Valprec, &Valflag);
 	if (Valflag == 'D') *strchr(Valfmt,'D') = 'E';
 	if (Valflag == 'F')
-	  sprintf(vformat, "%% %d.%df", Valwidth, Valprec);
+	  SECURE_SPRINTF2(vformat, sizeof(vformat), "%% %d.%df", Valwidth, Valprec);
 	else
-	  sprintf(vformat, "%% %d.%dE", Valwidth, Valprec);
+	  SECURE_SPRINTF2(vformat, sizeof(vformat), "%% %d.%dE", Valwidth, Valprec);
 	valcrd = nvalentries/Valperline;
 	if ( nvalentries%Valperline != 0) valcrd++;
       } else valcrd = 0;
@@ -368,9 +397,9 @@ namespace gmm {
 	if ( Rhsfmt == NULL ) Rhsfmt = Valfmt;
 	ParseRfmt(Rhsfmt,&Rhsperline,&Rhswidth,&Rhsprec, &Rhsflag);
 	if (Rhsflag == 'F')
-	  sprintf(rformat,"%% %d.%df",Rhswidth,Rhsprec);
+	  SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%df",Rhswidth,Rhsprec);
 	else
-	  sprintf(rformat,"%% %d.%dE",Rhswidth,Rhsprec);
+	  SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%dE",Rhswidth,Rhsprec);
 	if (Rhsflag == 'D') *strchr(Rhsfmt,'D') = 'E';
 	rhscrd = nrhsentries/Rhsperline; 
 	if ( nrhsentries%Rhsperline != 0) rhscrd++;
@@ -636,8 +665,9 @@ namespace gmm {
     else
       return NULL;
     
-    sprintf(buffer,"%s %s %s %s", types[0], types[1], types[2], types[3]);
-    return strdup(buffer);
+    SECURE_SPRINTF4(buffer, sizeof(buffer), "%s %s %s %s", types[0], types[1],
+		    types[2], types[3]);
+    return SECURE_STRDUP(buffer);
     
   }
   
@@ -656,8 +686,12 @@ namespace gmm {
     if (fgets(line, MM_MAX_LINE_LENGTH, f) == NULL) 
       return MM_PREMATURE_EOF;
 
-    if (sscanf(line, "%s %s %s %s %s", banner, mtx, crd, data_type, 
-	       storage_scheme) != 5)
+#ifdef GMM_SECURE_CRT
+    if (sscanf_s(line, "%s %s %s %s %s", banner, sizeof(banner), mtx, sizeof(mtx), crd,
+		sizeof(crd), data_type, sizeof(data_type), storage_scheme, sizeof(storage_scheme)) != 5)
+#else
+	if (sscanf(line, "%s %s %s %s %s", banner, mtx, crd, data_type, storage_scheme) != 5)
+#endif
       return MM_PREMATURE_EOF;
 
     for (p=mtx; *p!='\0'; *p=tolower(*p),p++);  /* convert to lower case */
@@ -739,10 +773,10 @@ namespace gmm {
     } while (line[0] == '%');
     
     /* line[] is either blank or has M,N, nz */
-    if (sscanf(line, "%d %d %d", M, N, nz) == 3) return 0;
+    if (SECURE_NONCHAR_SSCANF(line, "%d %d %d", M, N, nz) == 3) return 0;
     else
       do { 
-	num_items_read = fscanf(f, "%d %d %d", M, N, nz); 
+	num_items_read = SECURE_NONCHAR_FSCANF(f, "%d %d %d", M, N, nz); 
 	if (num_items_read == EOF) return MM_PREMATURE_EOF;
       }
       while (num_items_read != 3);
@@ -756,19 +790,19 @@ namespace gmm {
     int i;
     if (mm_is_complex(matcode)) {
       for (i=0; i<nz; i++)
-	if (fscanf(f, "%d %d %lg %lg", &I[i], &J[i], &val[2*i], &val[2*i+1])
+	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg %lg", &I[i], &J[i], &val[2*i], &val[2*i+1])
 	    != 4) return MM_PREMATURE_EOF;
     }
     else if (mm_is_real(matcode)) {
       for (i=0; i<nz; i++) {
-	if (fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i])
+	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg\n", &I[i], &J[i], &val[i])
 	    != 3) return MM_PREMATURE_EOF;
 	
       }
     }
     else if (mm_is_pattern(matcode)) {
       for (i=0; i<nz; i++)
-	if (fscanf(f, "%d %d", &I[i], &J[i])
+	if (SECURE_NONCHAR_FSCANF(f, "%d %d", &I[i], &J[i])
 	    != 2) return MM_PREMATURE_EOF;
     }
     else return MM_UNSUPPORTED_TYPE;
@@ -783,9 +817,11 @@ namespace gmm {
     
     if (strcmp(fname, "stdout") == 0) 
       f = stdout;
-    else
-      if ((f = fopen(fname, "w")) == NULL)
+    else {
+      SECURE_FOPEN(&f, fname, "w");
+      if (f == NULL)
         return MM_COULD_NOT_WRITE_FILE;
+    }
     
     /* print banner followed by typecode */
     fprintf(f, "%s ", MatrixMarketBanner);
@@ -871,7 +907,8 @@ namespace gmm {
 
   inline void MatrixMarket_IO::open(const char *filename) {
     if (f) { fclose(f); }
-    f = fopen(filename, "r"); if (!f) DAL_THROW(failure_error, "Sorry, we can not open " << filename);
+    SECURE_FOPEN(&f, filename, "r");
+    if (!f) DAL_THROW(failure_error, "Sorry, we can not open " << filename);
     if (mm_read_banner(f, &matcode) != 0) {
       DAL_THROW(failure_error,
 		"Sorry, we cannnot find the matrix market banner in " << filename);

@@ -88,7 +88,7 @@ namespace gmm {
   void ilutp_precond<Matrix>::do_ilutp(const M& A, row_major) {
     typedef value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-    
+
     size_type n = mat_nrows(A);
     CLU_Matrix CU(n,n);
     if (n == 0) return;
@@ -137,6 +137,7 @@ namespace gmm {
 	if (wit->c < i) { if (nnl < nL+K) { L(i, wit->c) = wit->e; ++nnl; } }
 	else if (nnu < nU+K) { CU(i, wit->c) = U(i, wit->c) = wit->e; ++nnu; }
       }
+
       if (ip != i) {
 	typename svector::const_iterator iti = CU.col(i).begin();
 	typename svector::const_iterator itie = CU.col(i).end();
@@ -148,8 +149,12 @@ namespace gmm {
 	  else if (iti->c > itp->c) { U.row(itp->c).swap_indices(i,ip);++itp; }
 	  else { U.row(iti->c).swap_indices(i, ip); ++iti; ++itp; }
 	}
+	
 	for( ; iti != itie; ++iti) U.row(iti->c).swap_indices(i, ip);
-	for( ; itp != itpe; ++itp) U.row(itp->c).swap_indices(i, ip);
+	
+	for( ; itp != itpe; ++itp) {
+	  U.row(itp->c).swap_indices(i, ip);
+	}
 
 	CU.swap_col(i, ip);
 	

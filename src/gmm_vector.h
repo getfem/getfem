@@ -453,6 +453,7 @@ namespace gmm {
 
   template <typename T>
   void rsvector<T>::swap_indices(size_type i, size_type j) {
+    cout << "coucou i = " << i << " j = " << j << " \n";
     if (i > j) std::swap(i, j);
     if (i != j) {
       int situation = 0;
@@ -463,19 +464,26 @@ namespace gmm {
       itj = std::lower_bound(this->begin(), this->end(), ej);
       if (itj != this->end() && itj->c == j) situation += 2;
 
+      cout << "situation = " << situation << endl;
+
       switch (situation) {
       case 1 : a = *iti; a.c = j; it = iti; ++it; ite = this->end();
 	       for (; it != ite && it->c <= j; ++it, ++iti) *iti = *it;
 	       *iti = a;
 	       break;
-      case 2 : a = *itj; a.c = i; it = itj; --it; ite = this->begin();
-	       for (; it >= ite && it->c >= i; --it, --itj) *itj = *it;
-	       *itj = a;
-	       break;
+      case 2 : a = *itj; a.c = i; it = itj; ite = this->begin();
+	if (it != ite) {
+	  --it;
+	  while (it->c >= i)
+	    { *itj = *it; if (it == ite) break; --it, --itj; }
+	}
+	*itj = a;
+	break;
       case 3 : std::swap(iti->e, itj->e);
 	       break;
       }
     }
+    cout << "c pas la\n";
   }
 
   template <typename T> void rsvector<T>::sup(size_type j) {

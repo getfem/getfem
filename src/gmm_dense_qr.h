@@ -43,7 +43,7 @@ namespace gmm {
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
-    
+
     std::vector<value_type> W(m), V(m);
 
     for (size_type j = 0; j < n; ++j) {

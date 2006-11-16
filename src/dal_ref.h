@@ -365,7 +365,7 @@ namespace dal {
     iterator operator -(difference_type ii) const
     { iterator itt = *this; return (itt -= ii); }
     difference_type operator -(const iterator &ii) const
-    { return (it - ii.it) / N + i - ii.i; }
+    { return (N ? (it - ii.it) / N : 0) + i - ii.i; }
 
     reference operator *() const { return *(it + i*N); }
     reference operator [](int ii) const { return *(it + (i+ii)*N); }
@@ -440,7 +440,7 @@ namespace dal {
     
     tab_ref_reg_spaced(void) {}
     tab_ref_reg_spaced(const ITER &b, size_type n, size_type s)
-      : begin_(b), N(n != 0 ? n : 1), size_(s) {}
+      : begin_(b), N(n), size_(s) {}
     
     
     const_reference operator [](size_type ii) const

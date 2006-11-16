@@ -95,7 +95,8 @@ namespace gmm
   void transposed_right_mult(const identity_matrix&,const V1 &v1,const V2 &v2) 
   { copy(v1, v2); }
   template <typename M> void copy_ident(const identity_matrix&, M &m) {
-    size_type i = 0, n = std::min(mat_nrows(m), mat_ncols(m)); clear(m);
+    size_type i = 0, n = std::min(mat_nrows(m), mat_ncols(m));
+    clear(m);
     for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);
   }
   template <typename M> inline void copy(const identity_matrix&, M &m)
@@ -390,10 +391,10 @@ namespace gmm
     nbl = m; nbc = n;
   }
   
-  template<typename T> void dense_matrix<T>::fill(T a, T b) { 
+  template<typename T> void dense_matrix<T>::fill(T a, T b) {
     std::fill(this->begin(), this->end(), b);
-    iterator p = this->begin(), e = this->end();
-    while (p < e) { *p = a; p += nbl+1; }
+    size_type n = std::min(nbl, nbc);
+    if (a != b) for (size_type i = 0; i < n; ++i) (*this)(i,i) = a; 
   }
 
   template<typename T>  void dense_matrix<T>::out_of_range_error(void) const
@@ -440,13 +441,13 @@ namespace gmm
     static sub_col_type col(const col_iterator &it)
     { return sub_col_type(*it, *it + it.nrows, it.origin); }
     static row_iterator row_begin(this_type &m)
-    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), 0, &m); }
+    { return row_iterator(m.begin(), m.size() ? 1 : 0, m.nrows(), m.ncols(), 0, &m); }
     static row_iterator row_end(this_type &m)
-    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), m.nrows(), &m); }
+    { return row_iterator(m.begin(), m.size() ? 1 : 0, m.nrows(), m.ncols(), m.nrows(), &m); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), 0, &m); }
+    { return const_row_iterator(m.begin(), m.size() ? 1 : 0, m.nrows(), m.ncols(), 0, &m); }
     static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), m.nrows(), &m); }
+    { return const_row_iterator(m.begin(),  m.size() ? 1 : 0, m.nrows(), m.ncols(), m.nrows(), &m); }
     static col_iterator col_begin(this_type &m)
     { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), 0, &m); }
     static col_iterator col_end(this_type &m)
