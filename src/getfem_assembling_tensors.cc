@@ -906,6 +906,8 @@ namespace getfem {
     const base_asm_data *basm; //scalar_type* global_array;
     vdim_specif_list vdim;
     multi_tensor_iterator mti;
+    tensor_ranges e_r;
+    std::vector< tensor_strides > e_str;
   public:
     ATN_tensor_from_dofs_data(const base_asm_data *basm_, 
 			      const vdim_specif_list& d) :
@@ -934,12 +936,10 @@ namespace getfem {
 
   private:
     void exec_(size_type cv, dim_type ) {
-      tensor_ranges r;
-      std::vector< tensor_strides > str;
-      vdim.build_strides_for_cv(cv, r, str);
-      assert(r == ranges());
+      vdim.build_strides_for_cv(cv, e_r, e_str);
+      assert(e_r == ranges());
       mti.rewind();
-      basm->copy_with_mti(str, mti);
+      basm->copy_with_mti(e_str, mti);
     }
   };
   
@@ -1690,18 +1690,20 @@ namespace getfem {
   }
 
   struct cv_fem_compare {
-    const std::deque<const mesh_fem *> &mf;
-    cv_fem_compare(const std::deque<const mesh_fem *>& mf_) : mf(mf_) {}
+    const std::vector<const mesh_fem *> &mf;
+    cv_fem_compare(const std::vector<const mesh_fem *>& mf_) : mf(mf_) {}
     bool operator()(size_type a, size_type b) const {
       for (size_type i=0; i < mf.size(); ++i) {
+	pfem pfa(mf[i]->fem_of_element(a));
+	pfem pfb(mf[i]->fem_of_element(b));
 	/* sort by nb_dof and then by fem */
-	unsigned nba = mf[i]->nb_dof_of_element(a);
-	unsigned nbb = mf[i]->nb_dof_of_element(b);
+	unsigned nba = pfa->nb_dof(a);
+	unsigned nbb = pfb->nb_dof(b);
 	if (nba < nbb) {
 	  return true;
 	} else if (nba > nbb) {
 	  return false;
-	} else if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b)) {
+	} else if (pfa < pfb) {
 	  return true;
 	}
       }
@@ -1713,8 +1715,8 @@ namespace getfem {
      shape modifications during the assembly (since this can be
      very expensive) */
   static void get_convex_order(const dal::bit_vector& cvlst,
-			       const std::deque<const mesh_im *>& imtab, 
-			       const std::deque<const mesh_fem *>& mftab, 
+			       const std::vector<const mesh_im *>& imtab, 
+			       const std::vector<const mesh_fem *>& mftab, 
 			       const dal::bit_vector& candidates, 
 			       std::vector<size_type>& cvorder) {
     cvorder.reserve(candidates.card()); cvorder.resize(0);
@@ -1737,7 +1739,7 @@ namespace getfem {
 	/* skip convexes without integration method */
       }
     }
-    std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
+    //std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
   }
   
   void generic_assembly::consistency_check() {

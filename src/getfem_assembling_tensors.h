@@ -161,8 +161,9 @@ namespace getfem {
     vdim_specif(size_type i) { dim = i; pmf = 0; }
     vdim_specif(const mesh_fem *pmf_) { dim = pmf_->nb_dof(); pmf = pmf_; }
   };
-  class vdim_specif_list : public std::deque< vdim_specif > {
+  class vdim_specif_list : public std::vector< vdim_specif > {
   public:
+    vdim_specif_list() { reserve(8); }
     size_type nb_mf() const;
     size_type nbelt() const;
     void build_strides_for_cv(size_type cv, tensor_ranges& r, 
@@ -213,15 +214,22 @@ namespace getfem {
     const mesh_fem &mf_r, &mf_c;
     MAT& m;
     multi_tensor_iterator mti;
+    struct ijv { // just a fast cache for the mti output (yes it makes a small difference)
+      scalar_type *p;
+      unsigned i,j;
+    };
+    std::vector<ijv> it;
   public:
     ATN_smatrix_output(ATN_tensor& a, const mesh_fem& mf_r_, 
 		       const mesh_fem& mf_c_, MAT& m_) 
       : mf_r(mf_r_), mf_c(mf_c_), m(m_) { 
       add_child(a); 
+      it.reserve(100);
     }
   private:
     void reinit() {
       mti = multi_tensor_iterator(child(0).tensor(),true);
+      it.resize(0);
     }
     void exec_(size_type cv, dim_type) {
       size_type nb_r = mf_r.nb_dof_of_element(cv);
@@ -239,11 +247,9 @@ namespace getfem {
 			       << cv << " should have " << nb_r << "x"
 			       << nb_c << " elements");
       }
-      std::vector<size_type> cvdof_r(nb_r);
-      std::vector<size_type> cvdof_c(nb_c);
-      std::copy(mf_r.ind_dof_of_element(cv).begin(), mf_r.ind_dof_of_element(cv).end(), cvdof_r.begin());
-      std::copy(mf_c.ind_dof_of_element(cv).begin(), mf_c.ind_dof_of_element(cv).end(), cvdof_c.begin());
-      mti.rewind();
+      std::vector<size_type> cvdof_r(mf_r.ind_dof_of_element(cv).begin(), mf_r.ind_dof_of_element(cv).end());
+      std::vector<size_type> cvdof_c(mf_c.ind_dof_of_element(cv).begin(), mf_c.ind_dof_of_element(cv).end());
+      /*mti.rewind();
       do {
 	if (mti.p(0)) {
 	  size_type dof_i = cvdof_r[mti.index(0)];
@@ -251,6 +257,20 @@ namespace getfem {
 	  m(dof_i, dof_j) += mti.p(0);
 	}
       } while (mti.qnext1());
+      */
+      if (it.size() == 0) {
+	mti.rewind();
+	do {
+	  ijv v;
+	  v.p = &mti.p(0);
+	  v.i = mti.index(0);
+	  v.j = mti.index(1);
+	  it.push_back(v);
+	} while (mti.qnext1());
+      }
+      for (unsigned i=0; i < it.size(); ++i)
+	if (*it[i].p) 
+	  m(cvdof_r[it[i].i], cvdof_c[it[i].j]) += *it[i].p;
     }
   };
 
@@ -276,11 +296,11 @@ namespace getfem {
     }
     /* used to transfert the data for the current convex to the mti of ATN_tensor_from_dofs_data */
     void copy_with_mti(const std::vector<tensor_strides> &str, multi_tensor_iterator &mti) const {
-      typename gmm::linalg_traits<VEC>::const_iterator it;
+      size_type ppos;
       do {
-        it = gmm::vect_const_begin(v);
-	for (dim_type i = 0; i < mti.ndim(); ++i) it+=str[i][mti.index(i)];
-	mti.p(0) = *it;
+	ppos = 0;
+	for (unsigned i = 0; i < mti.ndim(); ++i) ppos+=str[i][mti.index(i)];
+	mti.p(0) = v[ppos];
       } while (mti.qnext1());
     }
   };
@@ -457,12 +477,12 @@ namespace getfem {
       Many examples of use available @link asm here@endlink.
    */
   class generic_assembly : public asm_tokenizer {
-    std::deque<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
-    std::deque<const mesh_im *> imtab;/* list of the mesh_im used in the computation */
-    std::deque<pnonlinear_elem_term> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
-    std::deque<base_asm_data*> indata;              /* data sources */
-    std::deque<base_asm_vec*> outvec;               /* vectors in which is done the assembly */
-    std::deque<base_asm_mat*> outmat;               /* matrices in which is done the assembly */
+    std::vector<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
+    std::vector<const mesh_im *> imtab;/* list of the mesh_im used in the computation */
+    std::vector<pnonlinear_elem_term> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
+    std::vector<base_asm_data*> indata;              /* data sources */
+    std::vector<base_asm_vec*> outvec;               /* vectors in which is done the assembly */
+    std::vector<base_asm_mat*> outmat;               /* matrices in which is done the assembly */
 
     base_vec_factory *vec_fact; /* if non null, used to fill the outvec list with a given vector class */
     base_mat_factory *mat_fact; /* if non null, used to fill the outmat list with a given matrix class */
@@ -485,11 +505,11 @@ namespace getfem {
       vec_fact(0), mat_fact(0), parse_done(false)
     { set_str(s_); }
     generic_assembly(const std::string& s_,
-	       std::deque<const mesh_fem*>& mftab_, 
-	       std::deque<const mesh_im*>& imtab_, 
-	       std::deque<base_asm_data*> indata_,
-	       std::deque<base_asm_mat*> outmat_,
-	       std::deque<base_asm_vec*> outvec_) : 
+	       std::vector<const mesh_fem*>& mftab_, 
+	       std::vector<const mesh_im*>& imtab_, 
+	       std::vector<base_asm_data*> indata_,
+	       std::vector<base_asm_mat*> outmat_,
+	       std::vector<base_asm_vec*> outvec_) : 
       mftab(mftab_), imtab(imtab_),
       indata(indata_), outvec(outvec_), outmat(outmat_),
       vec_fact(0), mat_fact(0), parse_done(false)
@@ -505,12 +525,12 @@ namespace getfem {
     }
 
     void set(const std::string& s_) { set_str(s_); }
-    const std::deque<const mesh_fem*>& mf() const { return mftab; }
-    const std::deque<const mesh_im*>& im() const { return imtab; }
-    const std::deque<pnonlinear_elem_term> nonlin() const { return innonlin; }
-    const std::deque<base_asm_data*>& data() const { return indata; }
-    const std::deque<base_asm_vec*>& vec() const { return outvec; }
-    const std::deque<base_asm_mat*>& mat() const { return outmat; }
+    const std::vector<const mesh_fem*>& mf() const { return mftab; }
+    const std::vector<const mesh_im*>& im() const { return imtab; }
+    const std::vector<pnonlinear_elem_term> nonlin() const { return innonlin; }
+    const std::vector<base_asm_data*>& data() const { return indata; }
+    const std::vector<base_asm_vec*>& vec() const { return outvec; }
+    const std::vector<base_asm_mat*>& mat() const { return outmat; }
     /// Add a new mesh_fem
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
     /// Add a new mesh_im
