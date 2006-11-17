@@ -125,8 +125,9 @@ namespace gmm {
     typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
     typename linalg_traits<TriMatrix>::value_type t;
     typename linalg_traits<TriMatrix>::const_row_iterator
-      itr = mat_row_const_end(T) - 1;
-    for (int i = int(k) - 1; i >= 0; --i, --itr) {
+      itr = mat_row_const_end(T);
+    for (int i = int(k) - 1; i >= 0; --i) {
+      --itr;
       ROW c = linalg_traits<TriMatrix>::row(itr);
       typename linalg_traits<ROW>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);

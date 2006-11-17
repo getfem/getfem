@@ -471,8 +471,7 @@ namespace gmm {
       case 2 : a = *itj; a.c = i; it = itj; ite = this->begin();
 	if (it != ite) {
 	  --it;
-	  while (it->c >= i)
-	    { *itj = *it; if (it == ite) break; --it, --itj; }
+	  while (it->c >= i) { *itj = *it;  --itj; if (it==ite) break; --it; }
 	}
 	*itj = a;
 	break;

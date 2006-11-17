@@ -106,7 +106,7 @@ namespace gmm {
     R max_pivot = gmm::abs(A(0,0)) * prec;
 
     for (size_type i = 0; i < n; ++i) {
-      
+
       copy(sub_vector(mat_const_row(A, i), indperm), w);
       double norm_row = gmm::vect_norm2(mat_const_row(A, i)); 
 
@@ -121,10 +121,12 @@ namespace gmm {
 	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
+
       gmm::clean(w, eps * norm_row);
       std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       size_type ip = size_type(-1);
+
       for (; wit != wite; ++wit)
 	if (wit->c >= i) { ip = wit->c; tmp = wit->e; break; }
       if (ip == size_type(-1) || gmm::abs(tmp) <= max_pivot)
@@ -132,6 +134,7 @@ namespace gmm {
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = T(1) / tmp;
       wit = w.begin();
+
       size_type nnl = 0, nnu = 0;
       for (; wit != wite; ++wit) {
 	if (wit->c < i) { if (nnl < nL+K) { L(i, wit->c) = wit->e; ++nnl; } }
