@@ -3,6 +3,7 @@
 // VECTOR_PARAM;
 // ENDPARAM;
 
+using namespace std; // in order to test a using namespace std;
 #include <gmm.h>
 
 using gmm::size_type;

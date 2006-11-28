@@ -272,7 +272,7 @@ namespace gmm {
     if (sscanf(getline(line), "%3c%d%d%d%d", Type, &Nrow, &Ncol, &Nnzero, &Neltvl) < 1)
 #endif
       IOHBTerminate("Invalid Type info, line 3 of Harwell-Boeing file.\n");
-    std::for_each(Type, Type+3, toupper);
+    std::for_each(Type, Type+3, ::toupper);
     
       /*  Fourth line:  */
 #ifdef GMM_SECURE_CRT
