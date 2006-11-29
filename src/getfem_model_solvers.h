@@ -320,7 +320,9 @@ namespace getfem {
       else if (problem.mixed_variables().card() == 0)
 	p.reset(new linear_solver_gmres_preconditioned_ilu<T_MATRIX, VECTOR>);
       else 
-	p.reset(new linear_solver_gmres_preconditioned_ilutp<T_MATRIX,VECTOR>);
+	// p.reset(new linear_solver_gmres_preconditioned_ilut<T_MATRIX,VECTOR>);
+	// p.reset(new linear_solver_gmres_preconditioned_ilutp<T_MATRIX,VECTOR>);
+	p.reset(new linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
     }
 #endif
     return p;
@@ -355,6 +357,8 @@ namespace getfem {
       p.reset(new linear_solver_gmres_preconditioned_ilu<T_MATRIX, VECTOR>);
     else if (ftool::casecmp(name, "gmres/ilut") == 0)
       p.reset(new linear_solver_gmres_preconditioned_ilut<T_MATRIX, VECTOR>);
+    else if (ftool::casecmp(name, "gmres/ilutp") == 0)
+      p.reset(new linear_solver_gmres_preconditioned_ilutp<T_MATRIX, VECTOR>);
     else if (ftool::casecmp(name, "auto") == 0)
       p = default_linear_solver(problem);
     else
