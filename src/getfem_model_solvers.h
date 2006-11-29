@@ -106,6 +106,17 @@ namespace getfem {
   };
   
   template <typename MAT, typename VECT> 
+  struct linear_solver_gmres_preconditioned_ilutp
+    : public abstract_linear_solver<MAT, VECT> {
+    void operator ()(const MAT &M, VECT &x, const VECT &b,
+		     gmm::iteration &iter)  const {
+      gmm::ilutp_precond<MAT> P(M, 10, 1E-7);
+      gmm::gmres(M, x, b, P, 50, iter);
+      if (!iter.converged()) DAL_WARNING2("gmres did not converge!");
+    }
+  };
+  
+  template <typename MAT, typename VECT> 
   struct linear_solver_superlu
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
@@ -306,10 +317,10 @@ namespace getfem {
     else {
       if (problem.is_coercive()) 
 	p.reset(new linear_solver_cg_preconditioned_ildlt<T_MATRIX, VECTOR>);
-      else if (problem.mixed_variables().card() != 0)
+      else if (problem.mixed_variables().card() == 0)
 	p.reset(new linear_solver_gmres_preconditioned_ilu<T_MATRIX, VECTOR>);
       else 
-	p.reset(new linear_solver_gmres_preconditioned_ilut<T_MATRIX, VECTOR>);
+	p.reset(new linear_solver_gmres_preconditioned_ilutp<T_MATRIX,VECTOR>);
     }
 #endif
     return p;
