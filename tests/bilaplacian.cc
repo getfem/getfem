@@ -62,8 +62,9 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /**************************************************************************/
 
 scalar_type FT = 0.0;
-scalar_type D  = 0.0;
+scalar_type D  = 1.0;
 scalar_type nu = 0.0;
+scalar_type pressure  = 1.0 ;
 
 #if 1
 
@@ -90,18 +91,41 @@ base_matrix sol_hessian(const base_node &x) {
 
 #else
 
-scalar_type sol_u(const base_node &x) { return x[0]*x[1]; }
-scalar_type sol_lapl_u(const base_node &) { return 0.0; }
-scalar_type sol_f(const base_node &) { return 0.0; }
+scalar_type sol_u(const base_node &x) {
+ return pressure/(2. * D) * x[0] * x[0] * ( x[0] * x[0] / 12. - x[0] / 3. + 1./2. ); }
+ 
+scalar_type sol_lapl_u(const base_node &) { 
+return pressure/(2. * D) * ( x[0] * x[0] - 2. * x[0] + 1. ); }
+
+scalar_type sol_f(const base_node &) { return pressure ; }
 base_small_vector sol_du(const base_node &x) {
-  base_small_vector res(x.size()); res[0] = x[1]; res[1] = x[0]; 
+  base_small_vector res(x.size()); 
+  res[0] = pressure/(2. * D) * x[0] * ( x[0] * x[0] / 3. - x[0] + 1. ); 
+  res[1] = 0.; 
   return res;
 }
 base_small_vector neumann_val(const base_node &x)
-{ return base_small_vector(x.size());  }
+{ cout << "erreur : KL = 1 doit etre selectionne \n";
+  return 0 ; /*base_small_vector(x.size()); */ }
 
 base_matrix sol_hessian(const base_node &x)
-{ base_matrix m(x.size(), x.size()); m(1,0) = m(0,1) = 1.0; return m; }
+{ base_matrix m(x.size(), x.size()); 
+  m(0,0) = sol_lapl_u(x);
+  return m; }
+
+
+// scalar_type sol_u(const base_node &x) { return x[0]*x[1]; }
+// scalar_type sol_lapl_u(const base_node &) { return 0.0; }
+// scalar_type sol_f(const base_node &) { return 0.0; }
+// base_small_vector sol_du(const base_node &x) {
+//   base_small_vector res(x.size()); res[0] = x[1]; res[1] = x[0]; 
+//   return res;
+// }
+// base_small_vector neumann_val(const base_node &x)
+// { return base_small_vector(x.size());  }
+// 
+// base_matrix sol_hessian(const base_node &x)
+// { base_matrix m(x.size(), x.size()); m(1,0) = m(0,1) = 1.0; return m; }
 
 #endif
 
@@ -126,6 +150,12 @@ struct bilaplacian_problem {
 
   enum { CLAMPED_BOUNDARY_NUM = 0, SIMPLE_SUPPORT_BOUNDARY_NUM = 1,
 	 FORCE_BOUNDARY_NUM = 2, MOMENTUM_BOUNDARY_NUM = 3};
+  /* Boundary conditions :
+    CLAMPED_BOUNDARY_NUM        --> normal derivative of the solution
+    SIMPLE_SUPPORT_BOUNDARY_NUM --> value of the solution
+    FORCE_BOUNDARY_NUM          --> the "big" condition
+    MOMENTUM_BOUNDARY_NUM       --> flexure moment condition  */
+
   getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods.                     */
   getfem::mesh_fem mf_u;    /* main mesh_fem, for the bilaplacian solution  */
@@ -139,6 +169,7 @@ struct bilaplacian_problem {
   ftool::md_param PARAM;
 
   bool KL;
+  size_type NX ;
   size_type boundary_ref ;        /* boundary_ref = 0 corresponds to clamped edge on the 4 edges   
                                      boundary_ref = 1 corresponds to :    
                                     
@@ -188,8 +219,8 @@ void bilaplacian_problem::init(void) {
       bgeot::geometric_trans_descriptor(MESH_TYPE);
     N = pgt->dim();
     std::vector<size_type> nsubdiv(N);
-    std::fill(nsubdiv.begin(),nsubdiv.end(),
-	      PARAM.int_value("NX", "Nomber of space steps "));
+    NX = PARAM.int_value("NX", "Nomber of space steps ") ;
+    std::fill(nsubdiv.begin(),nsubdiv.end(), NX );
     getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			      PARAM.int_value("MESH_NOISED") != 0);
 
@@ -207,6 +238,7 @@ void bilaplacian_problem::init(void) {
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   FT = PARAM.real_value("FT"); if (FT == 0.0) FT = 1.0;
+  pressure = PARAM.real_value("pressure") ; 
   KL = (PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0);
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
@@ -275,6 +307,18 @@ void bilaplacian_problem::init(void) {
      }
    }
    
+   if (boundary_ref == 2) { // clamped plate on the left edge, free boundary elsewhere
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+        base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+        un /= gmm::vect_norm2(un);
+	if (un[0] < - 0.5 ) { 
+           mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+ 	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f()); }
+	else
+	   mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+           mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+     }
+  }
 }
 
 /* compute the relative error with respect to the exact solution */
@@ -284,11 +328,16 @@ void bilaplacian_problem::compute_error(plain_vector &U) {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= sol_u(mf_rhs.point_of_dof(i));
   cout.precision(16);
-  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) / getfem::asm_L2_norm(mim, mf_u, U) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) / getfem::asm_H1_norm(mim, mf_u, U) << endl
-       << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V) / getfem::asm_H2_norm(mim, mf_u, U) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) / gmm::vect_norminf(U) << endl;
+  cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
+        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
+        << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V)  << endl
+        /*<< "Linfty error = " << gmm::vect_norminf(V)  << endl*/; 
+  cout  << "semi-norme H1 = " << getfem::asm_H1_semi_norm(mim, mf_rhs, V)  << endl 
+        << "semi-norme H2 = " << getfem::asm_H2_semi_norm(mim, mf_rhs, V)  << endl ;
+       
 }
+
+
 
 /**************************************************************************/
 /*  Model.                                                                */
@@ -370,6 +419,8 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   getfem::mdbrick_Dirichlet<>
     final_model(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
   final_model.set_constraints_type(dirichlet_version);
+  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
+    final_model.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
   final_model.rhs().set(mf_rhs, F);
 
   if (0) { getfem::standard_model_state MS(final_model); 
@@ -404,12 +455,14 @@ int main(int argc, char *argv[]) {
     bilaplacian_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    plain_vector U(p.mf_u.nb_dof());
+    plain_vector U(p.mf_u.nb_dof()), V(p.mf_u.nb_dof()) ;
     if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
 
     p.compute_error(U);
 
-    if (p.PARAM.int_value("VTK_EXPORT")) {
+    
+
+    if (p.PARAM.int_value("VTK_EXPORT") ) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
@@ -419,6 +472,10 @@ int main(int argc, char *argv[]) {
 	   << "mayavi -d " << p.datafilename
 	   << ".vtk -m BandedSurfaceMap -m Outline -f WarpScalar\n";
     }
+    
+    
+    
+
   }
   DAL_STANDARD_CATCH_ERROR;
 
