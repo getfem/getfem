@@ -54,250 +54,12 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
-/**************************************************************************/
-/*  Exact solution.                                                       */
-/**************************************************************************/
-
-#define VALIDATE_XFEM
-
-#ifdef VALIDATE_XFEM
-
-/* returns sin(theta/2) where theta is the angle
-   of 0-(x,y) with the axis Ox */
-scalar_type sint2(scalar_type x, scalar_type y) {
-  scalar_type r = sqrt(x*x+y*y);
-  if (r == 0) return 0;
-  else return (y<0 ? -1:1) * sqrt(gmm::abs(r-x)/(2*r));
-  // sometimes (gcc3.3.2 -O3), r-x < 0 ....
-}
-scalar_type cost2(scalar_type x, scalar_type y) {
-  scalar_type r = sqrt(x*x+y*y);
-  if (r == 0) return 0;
-  else return sqrt(gmm::abs(r+x)/(2*r));
-}
-/* analytical solution for a semi-infinite crack [-inf,a] in an
-   infinite plane submitted to +sigma above the crack
-   and -sigma under the crack. (The crack is directed along the x axis).
-   
-   nu and E are the poisson ratio and young modulus
-   
-   solution taken from "an extended finite elt method with high order
-   elts for curved cracks", Stazi, Budyn,Chessa, Belytschko
-*/
-
-void elasticite2lame(const scalar_type young_modulus,
-		     const scalar_type poisson_ratio, 
-		     scalar_type& lambda, scalar_type& mu) {
-  mu = young_modulus/(2*(1+poisson_ratio));
-  lambda = 2*mu*poisson_ratio/(1-poisson_ratio);
-}
-
-void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
-			    scalar_type a, scalar_type xx, scalar_type y,
-			    base_small_vector& U, int mode,
-			    base_matrix *pgrad) {
-  scalar_type x  = xx-a; /* the eq are given relatively to the crack tip */
-  //scalar_type KI = sigma*sqrt(M_PI*a);
-  scalar_type r = std::max(sqrt(x*x+y*y),1e-16);
-  scalar_type sqrtr = sqrt(r), sqrtr3 = sqrtr*sqrtr*sqrtr;
-  scalar_type cost = x/r, sint = y/r;
-  scalar_type theta = atan2(y,x);
-  scalar_type s2 = sin(theta/2); //sint2(x,y);
-  scalar_type c2 = cos(theta/2); //cost2(x,y);
-  // scalar_type c3 = cos(3*theta/2); //4*c2*c2*c2-3*c2; /* cos(3*theta/2) */
-  // scalar_type s3 = sin(3*theta/2); //4*s2*c2*c2-s2;  /* sin(3*theta/2) */
-
-  scalar_type lambda, mu;
-  elasticite2lame(E,nu,lambda,mu);
-
-  U.resize(2);
-  if (pgrad) (*pgrad).resize(2,2);
-  scalar_type C= 1./E * (mode == 1 ? 1. : (1+nu));
-  if (mode == 1) {
-    scalar_type A=2+2*mu/(lambda+2*mu);
-    scalar_type B=-2*(lambda+mu)/(lambda+2*mu);
-    U[0] = sqrtr/sqrt(2*M_PI) * C * c2 * (A + B*cost);
-    U[1] = sqrtr/sqrt(2*M_PI) * C * s2 * (A + B*cost);
-    if (pgrad) {
-      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*c2*A-cost*cost*c2*B+sint*s2*A+sint*s2*B*cost+2*c2*B);
-      (*pgrad)(1,0) = -C/(2*sqrt(2*M_PI)*sqrtr)
-	* (-sint*c2*A+sint*c2*B*cost+cost*s2*A+cost*cost*s2*B);
-      (*pgrad)(0,1) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*s2*A-cost*cost*s2*B-sint*c2*A-sint*c2*B*cost+2*s2*B);
-      (*pgrad)(1,1) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (sint*s2*A-sint*s2*B*cost+cost*c2*A+cost*cost*c2*B);
-    }
-  } else if (mode == 2) {
-    scalar_type C1 = (lambda+3*mu)/(lambda+mu);
-    U[0] = sqrtr/sqrt(2*M_PI) * C * s2 * (C1 + 2 + cost);
-    U[1] = sqrtr/sqrt(2*M_PI) * C * c2 * (C1 - 2 + cost) * (-1.);
-    if (pgrad) {
-      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*s2*C1+2*cost*s2-cost*cost*s2-sint*c2*C1
-	   -2*sint*c2-sint*cost*c2+2*s2);
-      (*pgrad)(1,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (sint*s2*C1+2*sint*s2-sint*s2*cost+cost*c2*C1
-	   +2*cost*c2+cost*cost*c2);
-      (*pgrad)(0,1) = -C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*c2*C1-2*cost*c2-cost*cost*c2+sint*s2*C1
-	   -2*sint*s2+sint*s2*cost+2*c2);
-      (*pgrad)(1,1) =  C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (-sint*c2*C1+2*sint*c2+sint*cost*c2+cost*s2*C1
-	   -2*cost*s2+cost*cost*s2);
-    }
-  } else if (mode == 100) {
-    U[0] = - sqrtr3 * (c2 + 4./3 *(7*mu+3*lambda)/(lambda+mu)*c2*s2*s2
-		       -1./3*(7*mu+3*lambda)/(lambda+mu)*c2);
-    U[1] = - sqrtr3 * (s2+4./3*(lambda+5*mu)/(lambda+mu)*s2*s2*s2
-		       -(lambda+5*mu)/(lambda+mu)*s2);
-    if (pgrad) {
-      (*pgrad)(0,0) = 2*sqrtr*(-6*cost*c2*mu+7*cost*c2*c2*c2*mu
-			       -3*cost*c2*lambda+3*cost*c2*c2*c2*lambda
-			       -2*sint*s2*mu
-			       +7*sint*s2*c2*c2*mu-sint*s2*lambda
-			       +3*sint*s2*c2*c2*lambda)/(lambda+mu);
-      (*pgrad)(1,0) = -2*sqrtr*(6*sint*c2*mu-7*sint*c2*c2*c2*mu
-				+3*sint*c2*lambda-3*sint*c2*c2*c2*lambda
-				-2*cost*s2*mu
-				+7*cost*s2*c2*c2*mu-cost*s2*lambda
-				+3*cost*s2*c2*c2*lambda)/(lambda+mu);
-      (*pgrad)(0,1) = 2*sqrtr*(-2*cost*s2*mu-cost*s2*lambda
-			       +cost*s2*c2*c2*lambda+5*cost*s2*c2*c2*mu
-			       +4*sint*c2*mu
-			       +sint*c2*lambda-sint*c2*c2*c2*lambda
-			       -5*sint*c2*c2*c2*mu)/(lambda+mu);
-      (*pgrad)(1,1) = 2*sqrtr*(-2*sint*s2*mu-sint*s2*lambda
-			       +sint*s2*c2*c2*lambda+5*sint*s2*c2*c2*mu
-			       -4*cost*c2*mu
-			       -cost*c2*lambda+cost*c2*c2*c2*lambda
-			       +5*cost*c2*c2*c2*mu)/(lambda+mu);
-    }
-  } else if (mode == 101) {
-    U[0] = -4*sqrtr3*s2*(-lambda-2*mu+7*lambda*c2*c2
-			 +11*mu*c2*c2)/(3*lambda-mu);
-    U[1] = -4*sqrtr3*c2*(-3*lambda+3*lambda*c2*c2-mu*c2*c2)/(3*lambda-mu);
-    if (pgrad) {
-      (*pgrad)(0,0) = -6*sqrtr*(-cost*s2*lambda-2*cost*s2*mu
-				+7*cost*s2*lambda*c2*c2
-				+11*cost*s2*mu*c2*c2+5*sint*c2*lambda
-				+8*sint*c2*mu-7*sint*c2*c2*c2*lambda
-				-11*sint*c2*c2*c2*mu)/(3*lambda-mu);
-      (*pgrad)(1,0) = -6*sqrtr*(-sint*s2*lambda-2*sint*s2*mu
-				+7*sint*s2*lambda*c2*c2
-				+11*sint*s2*mu*c2*c2-5*cost*c2*lambda
-				-8*cost*c2*mu+7*cost*c2*c2*c2*lambda
-				+11*cost*c2*c2*c2*mu)/(3*lambda-mu);
-      (*pgrad)(0,1) = -6*sqrtr*(-3*cost*c2*lambda+3*cost*c2*c2*c2*lambda
-				-cost*c2*c2*c2*mu-sint*s2*lambda
-				+3*sint*s2*lambda*c2*c2
-				-sint*s2*mu*c2*c2)/(3*lambda-mu);
-      (*pgrad)(1,1) = 6*sqrtr*(3*sint*c2*lambda
-			       -3*sint*c2*c2*c2*lambda+sint*c2*c2*c2*mu
-			       -cost*s2*lambda+3*cost*s2*lambda*c2*c2
-			       -cost*s2*mu*c2*c2)/(3*lambda-mu);
-    }
-
-  } else if (mode == 10166666) {
-
-    U[0] = 4*sqrtr3*s2*(-lambda+lambda*c2*c2-3*mu*c2*c2)/(lambda-3*mu);
-    U[1] = 4*sqrtr3*c2*(-3*lambda-6*mu+5*lambda*c2*c2+9*mu*c2*c2)/(lambda-3*mu);
-    if (pgrad) {
-      (*pgrad)(0,0) = 6*sqrtr*(-cost*s2*lambda+cost*s2*lambda*c2*c2-
-			       3*cost*s2*mu*c2*c2-2*sint*c2*mu+sint*c2*lambda-
-			       sint*c2*c2*c2*lambda
-			       +3*sint*c2*c2*c2*mu)/(lambda-3*mu);
-      (*pgrad)(1,0) = 6*sqrtr*(-sint*s2*lambda+sint*s2*lambda*c2*c2-
-			       3*sint*s2*mu*c2*c2+2*cost*c2*mu-cost*c2*lambda+
-			       cost*c2*c2*c2*lambda
-			       -3*cost*c2*c2*c2*mu)/(lambda-3*mu);
-      (*pgrad)(0,1) = 6*sqrtr*(-3*cost*c2*lambda-6*cost*c2*mu
-			       +5*cost*c2*c2*c2*lambda+
-			       9*cost*c2*c2*c2*mu-sint*s2*lambda-2*sint*s2*mu+
-			       5*sint*s2*lambda*c2*c2
-			       +9*sint*s2*mu*c2*c2)/(lambda-3*mu);
-      (*pgrad)(1,1) = -6*sqrtr*(3*sint*c2*lambda+6*sint*c2*mu
-				-5*sint*c2*c2*c2*lambda-
-				9*sint*c2*c2*c2*mu-cost*s2*lambda-2*cost*s2*mu+
-				5*cost*s2*lambda*c2*c2
-				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
-    }
-  } else assert(0);
-  if (isnan(U[0]))
-    cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig="
-	 << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r="
-	 << r << ", sqrtr=" << sqrtr << ", cost=" << cost << ", U=" << U[0]
-	 << "," << U[1] << endl;
-  assert(!isnan(U[0]));
-  assert(!isnan(U[1]));
-}
-
-struct exact_solution {
-  getfem::mesh_fem_global_function mf;
-  getfem::base_vector U;
-
-  exact_solution(getfem::mesh &me) : mf(me) {}
-  
-  void init(int mode, scalar_type lambda, scalar_type mu,
-	    getfem::level_set &ls) {
-    std::vector<getfem::pglobal_function> cfun(4);
-    for (size_type i = 0; i < 4; ++i) {
-      /* use the singularity */
-      getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i);
-      cfun[i] = getfem::global_function_on_level_set(ls, *s);
-    }
-    
-    mf.set_functions(cfun);
-    
-    mf.set_qdim(1);
-    
-    
-    U.resize(8); assert(mf.nb_dof() == 4);
-    getfem::base_vector::iterator it = U.begin();
-    scalar_type coeff=0.;
-    switch(mode) {
-      case 1: {
-	scalar_type A=2+2*mu/(lambda+2*mu), B=-2*(lambda+mu)/(lambda+2*mu);
-	/* "colonne" 1: ux, colonne 2: uy */
-	*it++ = 0;       *it++ = A-B; /* sin(theta/2) */
-	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
-	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
-	*it++ = 0;       *it++ = B;   /* cos(theta/2)*cos(theta) */
-	coeff = 1/sqrt(2*M_PI);
-      } break;
-      case 2: {
-	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
-	*it++ = C1+2-1;   *it++ = 0;
-	*it++ = 0;      *it++ = -(C1-2+1);
-	*it++ = 0;      *it++ = 1;
-	*it++ = 1;      *it++ = 0;
-	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
-      } break;
-      default:
-	assert(0);
-	break;
-    }
-    gmm::scale(U, coeff);
-  }  
-
-};
-
-base_small_vector sol_f(const base_node &x) {
-  int N = x.size();
-  base_small_vector res(N);
-  return res;
-}
-
-#else
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N); res[N-1] = x[N-1];
   return res;
 }
-
-#endif
 
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
@@ -347,8 +109,6 @@ struct crack_problem {
   int enrichment_option;
   size_type cutoff_func;
   std::string datafilename;
-  
-  std::string GLOBAL_FUNCTION_MF, GLOBAL_FUNCTION_U;
 
   ftool::md_param PARAM;
 
@@ -416,12 +176,6 @@ void crack_problem::init(void) {
 				     "radius of the enrichment area");
   
   bimaterial = PARAM.int_value("BIMATERIAL", "bimaterial interface crack");
-
-  GLOBAL_FUNCTION_MF = PARAM.string_value("GLOBAL_FUNCTION_MF");
-  GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
-
-  
-
 
   if (bimaterial == 1){
     mu = PARAM.real_value("MU", "Lame coefficient mu"); 
@@ -610,68 +364,22 @@ bool crack_problem::solve(plain_vector &U) {
   mim.adapt();
   mfls_u.adapt();
   
-  bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
-
   std::vector<getfem::pglobal_function> vfunc(4);
-  if (!load_global_fun) {
-    cout << "Using default singular functions\n";
-    for (size_type i = 0; i < 4; ++i){
- /* use the singularity */
+  cout << "Using default singular functions\n";
+  for (size_type i = 0; i < 4; ++i){
+    /* use the singularity */
     getfem::abstract_xy_function *s = 
       new getfem::crack_singular_xy_function(i);
-  /* use the product of the singularity function
-	 with a cutoff */
-      getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(cutoff_func,
-				       cutoff_radius, 
-				       cutoff_radius1,cutoff_radius0);
-      s = new getfem::product_of_xy_functions(*s, *c);
-      
-      vfunc[i] = getfem::global_function_on_level_set(ls, *s);
-    }
-  } else {
-    cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U << "\n";
-    getfem::mesh *m = new getfem::mesh(); 
-    m->read_from_file(GLOBAL_FUNCTION_MF);
-    getfem::mesh_fem *mf_c = new getfem::mesh_fem(*m); 
-    mf_c->read_from_file(GLOBAL_FUNCTION_MF);
-    std::fstream f(GLOBAL_FUNCTION_U.c_str(), std::ios::in);
-    plain_vector W(mf_c->nb_dof());
-
-
-  
-    for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
-      f >> W[i]; if (!f.good()) DAL_THROW(dal::failure_error, "problem while reading " << GLOBAL_FUNCTION_U);
-      //cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
-      /*scalar_type x = pow(mf_c->point_of_dof(i)[0],2); scalar_type y = pow(mf_c->point_of_dof(i)[1],2);
-	scalar_type r = std::sqrt(pow(x,2) + pow(y,2));
-	scalar_type sgny = (y < 0 ? -1.0 : 1.0);
-	scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
-	scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
-	W[i] = std::sqrt(r) * sin2;
-      */
-    }
-    unsigned nb_func = mf_c->get_qdim();
-    cout << "read " << nb_func << " global functions OK.\n";
-    vfunc.resize(nb_func);
-    getfem::interpolator_on_mesh_fem *global_interp = 
-      new getfem::interpolator_on_mesh_fem(*mf_c, W);
-    for (size_type i=0; i < nb_func; ++i) {
-      /* use the precalculated function for the enrichment*/
-      //getfem::abstract_xy_function *s = new getfem::crack_singular_xy_function(i);
-      getfem::abstract_xy_function *s = new getfem::interpolated_xy_function(*global_interp,i);
-      /* use the product of the enrichment function
-	 with a cutoff */
-      getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(cutoff_func,
-				       cutoff_radius, 
-				       cutoff_radius1,cutoff_radius0);
-      s = new getfem::product_of_xy_functions(*s, *c);
-      
-      vfunc[i] = getfem::global_function_on_level_set(ls, *s);
-    }    
+    /* use the product of the singularity function
+       with a cutoff */
+    getfem::abstract_xy_function *c = 
+      new getfem::cutoff_xy_function(cutoff_func,
+				     cutoff_radius, 
+				     cutoff_radius1,cutoff_radius0);
+    s = new getfem::product_of_xy_functions(*s, *c);
+    
+    vfunc[i] = getfem::global_function_on_level_set(ls, *s);
   }
-  
 
   mf_sing_u.set_functions(vfunc);
 

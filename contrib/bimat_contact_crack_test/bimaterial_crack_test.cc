@@ -59,251 +59,12 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
-/**************************************************************************/
-/*  Exact solution.                                                       */
-/**************************************************************************/
-
-#define VALIDATE_XFEM
-
-#ifdef VALIDATE_XFEM
-
-/* returns sin(theta/2) where theta is the angle
-   of 0-(x,y) with the axis Ox */
-scalar_type sint2(scalar_type x, scalar_type y) {
-  scalar_type r = sqrt(x*x+y*y);
-  if (r == 0) return 0;
-  else return (y<0 ? -1:1) * sqrt(gmm::abs(r-x)/(2*r));
-  // sometimes (gcc3.3.2 -O3), r-x < 0 ....
-}
-scalar_type cost2(scalar_type x, scalar_type y) {
-  scalar_type r = sqrt(x*x+y*y);
-  if (r == 0) return 0;
-  else return sqrt(gmm::abs(r+x)/(2*r));
-}
-/* analytical solution for a semi-infinite crack [-inf,a] in an
-   infinite plane submitted to +sigma above the crack
-   and -sigma under the crack. (The crack is directed along the x axis).
-   
-   nu and E are the poisson ratio and young modulus
-   
-   solution taken from "an extended finite elt method with high order
-   elts for curved cracks", Stazi, Budyn,Chessa, Belytschko
-*/
-
-void elasticite2lame(const scalar_type young_modulus,
-		     const scalar_type poisson_ratio, 
-		     scalar_type& lambda, scalar_type& mu) {
-  mu = young_modulus/(2*(1+poisson_ratio));
-  lambda = 2*mu*poisson_ratio/(1-poisson_ratio);
-}
-
-void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
-			    scalar_type a, scalar_type xx, scalar_type y,
-			    base_small_vector& U, int mode,
-			    base_matrix *pgrad) {
-  scalar_type x  = xx-a; /* the eq are given relatively to the crack tip */
-  //scalar_type KI = sigma*sqrt(M_PI*a);
-  scalar_type r = std::max(sqrt(x*x+y*y),1e-16);
-  scalar_type sqrtr = sqrt(r), sqrtr3 = sqrtr*sqrtr*sqrtr;
-  scalar_type cost = x/r, sint = y/r;
-  scalar_type theta = atan2(y,x);
-  scalar_type s2 = sin(theta/2); //sint2(x,y);
-  scalar_type c2 = cos(theta/2); //cost2(x,y);
-  // scalar_type c3 = cos(3*theta/2); //4*c2*c2*c2-3*c2; /* cos(3*theta/2) */
-  // scalar_type s3 = sin(3*theta/2); //4*s2*c2*c2-s2;  /* sin(3*theta/2) */
-
-  scalar_type lambda, mu;
-  elasticite2lame(E,nu,lambda,mu);
-
-  U.resize(2);
-  if (pgrad) (*pgrad).resize(2,2);
-  scalar_type C= 1./E * (mode == 1 ? 1. : (1+nu));
-  if (mode == 1) {
-    scalar_type A=2+2*mu/(lambda+2*mu);
-    scalar_type B=-2*(lambda+mu)/(lambda+2*mu);
-    U[0] = sqrtr/sqrt(2*M_PI) * C * c2 * (A + B*cost);
-    U[1] = sqrtr/sqrt(2*M_PI) * C * s2 * (A + B*cost);
-    if (pgrad) {
-      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*c2*A-cost*cost*c2*B+sint*s2*A+sint*s2*B*cost+2*c2*B);
-      (*pgrad)(1,0) = -C/(2*sqrt(2*M_PI)*sqrtr)
-	* (-sint*c2*A+sint*c2*B*cost+cost*s2*A+cost*cost*s2*B);
-      (*pgrad)(0,1) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*s2*A-cost*cost*s2*B-sint*c2*A-sint*c2*B*cost+2*s2*B);
-      (*pgrad)(1,1) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (sint*s2*A-sint*s2*B*cost+cost*c2*A+cost*cost*c2*B);
-    }
-  } else if (mode == 2) {
-    scalar_type C1 = (lambda+3*mu)/(lambda+mu);
-    U[0] = sqrtr/sqrt(2*M_PI) * C * s2 * (C1 + 2 + cost);
-    U[1] = sqrtr/sqrt(2*M_PI) * C * c2 * (C1 - 2 + cost) * (-1.);
-    if (pgrad) {
-      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*s2*C1+2*cost*s2-cost*cost*s2-sint*c2*C1
-	   -2*sint*c2-sint*cost*c2+2*s2);
-      (*pgrad)(1,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (sint*s2*C1+2*sint*s2-sint*s2*cost+cost*c2*C1
-	   +2*cost*c2+cost*cost*c2);
-      (*pgrad)(0,1) = -C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (cost*c2*C1-2*cost*c2-cost*cost*c2+sint*s2*C1
-	   -2*sint*s2+sint*s2*cost+2*c2);
-      (*pgrad)(1,1) =  C/(2.*sqrt(2*M_PI)*sqrtr)
-	* (-sint*c2*C1+2*sint*c2+sint*cost*c2+cost*s2*C1
-	   -2*cost*s2+cost*cost*s2);
-    }
-  } else if (mode == 100) {
-    U[0] = - sqrtr3 * (c2 + 4./3 *(7*mu+3*lambda)/(lambda+mu)*c2*s2*s2
-		       -1./3*(7*mu+3*lambda)/(lambda+mu)*c2);
-    U[1] = - sqrtr3 * (s2+4./3*(lambda+5*mu)/(lambda+mu)*s2*s2*s2
-		       -(lambda+5*mu)/(lambda+mu)*s2);
-    if (pgrad) {
-      (*pgrad)(0,0) = 2*sqrtr*(-6*cost*c2*mu+7*cost*c2*c2*c2*mu
-			       -3*cost*c2*lambda+3*cost*c2*c2*c2*lambda
-			       -2*sint*s2*mu
-			       +7*sint*s2*c2*c2*mu-sint*s2*lambda
-			       +3*sint*s2*c2*c2*lambda)/(lambda+mu);
-      (*pgrad)(1,0) = -2*sqrtr*(6*sint*c2*mu-7*sint*c2*c2*c2*mu
-				+3*sint*c2*lambda-3*sint*c2*c2*c2*lambda
-				-2*cost*s2*mu
-				+7*cost*s2*c2*c2*mu-cost*s2*lambda
-				+3*cost*s2*c2*c2*lambda)/(lambda+mu);
-      (*pgrad)(0,1) = 2*sqrtr*(-2*cost*s2*mu-cost*s2*lambda
-			       +cost*s2*c2*c2*lambda+5*cost*s2*c2*c2*mu
-			       +4*sint*c2*mu
-			       +sint*c2*lambda-sint*c2*c2*c2*lambda
-			       -5*sint*c2*c2*c2*mu)/(lambda+mu);
-      (*pgrad)(1,1) = 2*sqrtr*(-2*sint*s2*mu-sint*s2*lambda
-			       +sint*s2*c2*c2*lambda+5*sint*s2*c2*c2*mu
-			       -4*cost*c2*mu
-			       -cost*c2*lambda+cost*c2*c2*c2*lambda
-			       +5*cost*c2*c2*c2*mu)/(lambda+mu);
-    }
-  } else if (mode == 101) {
-    U[0] = -4*sqrtr3*s2*(-lambda-2*mu+7*lambda*c2*c2
-			 +11*mu*c2*c2)/(3*lambda-mu);
-    U[1] = -4*sqrtr3*c2*(-3*lambda+3*lambda*c2*c2-mu*c2*c2)/(3*lambda-mu);
-    if (pgrad) {
-      (*pgrad)(0,0) = -6*sqrtr*(-cost*s2*lambda-2*cost*s2*mu
-				+7*cost*s2*lambda*c2*c2
-				+11*cost*s2*mu*c2*c2+5*sint*c2*lambda
-				+8*sint*c2*mu-7*sint*c2*c2*c2*lambda
-				-11*sint*c2*c2*c2*mu)/(3*lambda-mu);
-      (*pgrad)(1,0) = -6*sqrtr*(-sint*s2*lambda-2*sint*s2*mu
-				+7*sint*s2*lambda*c2*c2
-				+11*sint*s2*mu*c2*c2-5*cost*c2*lambda
-				-8*cost*c2*mu+7*cost*c2*c2*c2*lambda
-				+11*cost*c2*c2*c2*mu)/(3*lambda-mu);
-      (*pgrad)(0,1) = -6*sqrtr*(-3*cost*c2*lambda+3*cost*c2*c2*c2*lambda
-				-cost*c2*c2*c2*mu-sint*s2*lambda
-				+3*sint*s2*lambda*c2*c2
-				-sint*s2*mu*c2*c2)/(3*lambda-mu);
-      (*pgrad)(1,1) = 6*sqrtr*(3*sint*c2*lambda
-			       -3*sint*c2*c2*c2*lambda+sint*c2*c2*c2*mu
-			       -cost*s2*lambda+3*cost*s2*lambda*c2*c2
-			       -cost*s2*mu*c2*c2)/(3*lambda-mu);
-    }
-
-  } else if (mode == 10166666) {
-
-    U[0] = 4*sqrtr3*s2*(-lambda+lambda*c2*c2-3*mu*c2*c2)/(lambda-3*mu);
-    U[1] = 4*sqrtr3*c2*(-3*lambda-6*mu+5*lambda*c2*c2+9*mu*c2*c2)/(lambda-3*mu);
-    if (pgrad) {
-      (*pgrad)(0,0) = 6*sqrtr*(-cost*s2*lambda+cost*s2*lambda*c2*c2-
-			       3*cost*s2*mu*c2*c2-2*sint*c2*mu+sint*c2*lambda-
-			       sint*c2*c2*c2*lambda
-			       +3*sint*c2*c2*c2*mu)/(lambda-3*mu);
-      (*pgrad)(1,0) = 6*sqrtr*(-sint*s2*lambda+sint*s2*lambda*c2*c2-
-			       3*sint*s2*mu*c2*c2+2*cost*c2*mu-cost*c2*lambda+
-			       cost*c2*c2*c2*lambda
-			       -3*cost*c2*c2*c2*mu)/(lambda-3*mu);
-      (*pgrad)(0,1) = 6*sqrtr*(-3*cost*c2*lambda-6*cost*c2*mu
-			       +5*cost*c2*c2*c2*lambda+
-			       9*cost*c2*c2*c2*mu-sint*s2*lambda-2*sint*s2*mu+
-			       5*sint*s2*lambda*c2*c2
-			       +9*sint*s2*mu*c2*c2)/(lambda-3*mu);
-      (*pgrad)(1,1) = -6*sqrtr*(3*sint*c2*lambda+6*sint*c2*mu
-				-5*sint*c2*c2*c2*lambda-
-				9*sint*c2*c2*c2*mu-cost*s2*lambda-2*cost*s2*mu+
-				5*cost*s2*lambda*c2*c2
-				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
-    }
-  } else assert(0);
-  if (isnan(U[0]))
-    cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig="
-	 << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r="
-	 << r << ", sqrtr=" << sqrtr << ", cost=" << cost << ", U=" << U[0]
-	 << "," << U[1] << endl;
-  assert(!isnan(U[0]));
-  assert(!isnan(U[1]));
-}
-
-struct exact_solution {
-  getfem::mesh_fem_global_function mf;
-  getfem::base_vector U;
-
-  exact_solution(getfem::mesh &me) : mf(me) {}
-  
-  void init(int mode, scalar_type lambda, scalar_type mu,
-	    getfem::level_set &ls) {
-    std::vector<getfem::pglobal_function> cfunc(4);
-   
- for (size_type i = 0; i < 4; ++i) {
-    /* use the singularity */
-    getfem::abstract_xy_function *s = 
-      new getfem::crack_singular_xy_function(i);
-    cfunc[i] = getfem::global_function_on_level_set(ls, *s);
- }
-
-    mf.set_functions(cfunc);
-    
-    mf.set_qdim(1);
-   
-    
-    U.resize(8); assert(mf.nb_dof() == 4);
-    getfem::base_vector::iterator it = U.begin();
-    scalar_type coeff=0.;
-    switch(mode) {
-      case 1: {
-	scalar_type A=2+2*mu/(lambda+2*mu), B=-2*(lambda+mu)/(lambda+2*mu);
-	/* "colonne" 1: ux, colonne 2: uy */
-	*it++ = 0;       *it++ = A-B; /* sin(theta/2) */
-	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
-	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
-	*it++ = 0;       *it++ = B;   /* cos(theta/2)*cos(theta) */
-	coeff = 1/sqrt(2*M_PI);
-      } break;
-      case 2: {
-	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
-	*it++ = C1+2-1;   *it++ = 0;
-	*it++ = 0;      *it++ = -(C1-2+1);
-	*it++ = 0;      *it++ = 1;
-	*it++ = 1;      *it++ = 0;
-	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
-      } break;
-      default:
-	assert(0);
-	break;
-    }
-    gmm::scale(U, coeff);
-  }
-};
-
-base_small_vector sol_f(const base_node &x) {
-  int N = x.size();
-  base_small_vector res(N);
-  return res;
-}
-
-#else
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N); res[N-1] = x[N-1];
   return res;
 }
-
-#endif
-
 
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
@@ -324,10 +85,6 @@ struct crack_problem {
   
   scalar_type lambda, mu;    /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  
-#ifdef VALIDATE_XFEM
-  exact_solution exact_sol;
-#endif
   
   
   double lx,ly;             /* size of the mesh */
@@ -353,9 +110,7 @@ struct crack_problem {
 			mfls_u(mls, mf_pre_u),
 			
 			mf_u_sum(mesh), mf_rhs(mesh), 
-#ifdef VALIDATE_XFEM
-			exact_sol(mesh), 
-#endif
+
 			ls(mesh, 1, true) {}
 
 };
@@ -541,9 +296,7 @@ void crack_problem::init(void) {
       }
     }
   }
-#ifdef VALIDATE_XFEM
-  exact_sol.init(1, lambda, mu, ls);
-#endif
+
 }
 
 
@@ -679,13 +432,9 @@ bool crack_problem::solve(plain_vector &U) {
     getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
 					    mf_mult);
     if(all_dirichlet){
-#ifdef VALIDATE_XFEM
-      final_model.rhs().set(exact_sol.mf,exact_sol.U);
-#endif
+
     } else {
-#ifdef VALIDATE_XFEM
-      final_model.rhs().set(exact_sol.mf,0);
-#endif
+
     }
     final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
   
@@ -819,15 +568,7 @@ int main(int argc, char *argv[]) {
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
-#ifdef VALIDATE_XFEM
-      p.exact_sol.mf.set_qdim(Q);
-      assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
-      plain_vector EXACT(mf_refined.nb_dof());
-      getfem::interpolation(p.exact_sol.mf, mf_refined, 
-			    p.exact_sol.U, EXACT);
 
-      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
-#endif
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
 	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
@@ -841,12 +582,6 @@ int main(int argc, char *argv[]) {
 	plain_vector D(mf_refined_vm.nb_dof() * Q), 
 	  DN(mf_refined_vm.nb_dof());
 	
-#ifdef VALIDATE_XFEM
-	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
-	for (unsigned i=0; i < DN.size(); ++i) {
-	  DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q)));
-	}
-#endif
 
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -856,51 +591,12 @@ int main(int argc, char *argv[]) {
 	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       
-#ifdef VALIDATE_XFEM
 
-	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
-
-
-	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
-	   std::vector<getfem::pglobal_function> cfun(4);
-	   for (unsigned j=0; j < 4; ++j)
-	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
-	   mf.set_functions(cfun);
-	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
-	   VM_EXACT);
-	*/
-
-
-	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
-	getfem::vtk_export exp2("bimaterial_crack_exact.vtk");
-	exp2.exporting(mf_refined);
-	exp2.write_point_data(mf_refined_vm, VM_EXACT, "exact von mises stress");
-	exp2.write_point_data(mf_refined, EXACT, "reference solution");
-	
-#endif
 
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
-
-
-#ifdef VALIDATE_XFEM
-      cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
-						p.exact_sol.mf, p.exact_sol.U)
-	   << endl << "H1 ERROR:"
-	   << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
-				  p.exact_sol.mf, p.exact_sol.U) << "\n";
-      
-      /* cout << "OLD ERROR L2:" 
-	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
-	 << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,
-	 EXACT,mf_refined,W)  << "\n";
-
-	 cout << "ex = " << p.exact_sol.U << "\n";
-	 cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
-      */
-#endif
     }
 
   }

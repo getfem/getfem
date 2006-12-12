@@ -497,6 +497,7 @@ AC_CONFIG_FILES(\
 	contrib/delaminated_crack/Makefile \
 	contrib/static_friction/Makefile \
 	contrib/bimaterial_crack_test/Makefile \
+	contrib/bimat_contact_crack_test/Makefile \
 	contrib/mixed_elastostatic/Makefile \
 	contrib/xfem_contact/Makefile \
 	contrib/crack_plate/Makefile \

@@ -4,11 +4,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-% MU = 77.0;	        % Lam�coefficient.
-% LAMBDA = 107.0;   	% Lam�coefficient.
+% MU = 77.0;	        % Lame coefficient.
+% LAMBDA = 107.0;   	% Lame coefficient.
 
-MU = 1.0;	        % Lam�coefficient.
-LAMBDA = 1.0;           % Lam�coefficient.
+MU = 1.0;	        % Lame coefficient.
+LAMBDA = 1.0;           % Lame coefficient.
 
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case.
 LAMBDA_UP = 100.0;
