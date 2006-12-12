@@ -1,13 +1,11 @@
 # SUBDIRS = 
 
 check_PROGRAMS =                 \
-	bimaterial_crack_test		\
-	crack
+	bimaterial_crack_test
 
 CLEANFILES = 
 
 bimaterial_crack_test_SOURCES = bimaterial_crack_test.cc
-crack_SOURCES = crack.cc
 SUPLDFLAGS = @SUPLDFLAGS@
 MUMPS_LIBS = @MUMPS_LIBS@
 MUMPS_CFLAGS = @MUMPS_CFLAGS@
@@ -18,9 +16,7 @@ TESTS = $(top_srcdir)/contrib/bimaterial_crack_test/bimaterial_crack_test.pl \
         $(top_srcdir)/contrib/bimaterial_crack_test/crack.pl
 EXTRA_DIST = \
 	bimaterial_crack_test.pl                  \
-	bimaterial_crack_test.param          \
-	crack.pl                  \
-	crack.param 
+	bimaterial_crack_test.param
 
 
 TESTS_ENVIRONMENT = perl
