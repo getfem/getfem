@@ -522,7 +522,7 @@ struct Chrono {
       msh.clear(); 
 
       for (size_type i = 0; i <  fixed_points.size(); ++i) {
-	size_type j = msh.add_point(fixed_points[i], false);
+	size_type j = msh.add_point(fixed_points[i]); // remettre le add_norepeat ?
 	assert(j == i);
       }
 

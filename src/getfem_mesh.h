@@ -183,6 +183,7 @@ namespace getfem {
     
     mutable bool cuthill_mckee_uptodate;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
+    scalar_type max_radius, characteristic_size;
     void init(void);
 
 #if GETFEM_PARA_LEVEL > 1
@@ -225,7 +226,6 @@ namespace getfem {
     /// Constructor.
     mesh(dim_type NN = dim_type(-1)); 
     mesh(const bgeot::basic_mesh &m);
-    double eps(void) const { return eps_p; }
     msg_sender &lmsg_sender(void) const { return lkmsg; }
     void update_from_context(void) const {}
     /// Mesh dimension.
@@ -259,9 +259,10 @@ namespace getfem {
 	function does not create a new point, and returns the index of the
 	already existing point.
 	@param pt the point coordinates.
-	@param norepeat should not be used.
     */
-    size_type add_point(const base_node &pt, bool norepeat = true);
+    size_type add_point(const base_node &pt);
+    //			scalar_type characteristic_size = scalar_type(1));
+    
     /// Give the number of geometrical nodes in the mesh.
     size_type nb_points(void) const { return pts.card(); }
     /// Return the points index

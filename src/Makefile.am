@@ -1,4 +1,4 @@
-nobase_include_HEADERS =                          \
+nobase_include_HEADERS =                   \
 	getfem_boost/workaround.hpp        \
 	getfem_boost/intrusive_ptr.hpp     \
 	getfem_boost/noncopyable.hpp       \

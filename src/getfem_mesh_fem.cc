@@ -445,7 +445,7 @@ namespace getfem {
     }
     if (!dof_partition.empty()) {
       ost << " BEGIN DOF_PARTITION\n";
-      unsigned i;
+      unsigned i = 0;
       for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
 	ost << " " << get_dof_partition(cv); if ((++i % 20) == 0) ost << "\n";
       }

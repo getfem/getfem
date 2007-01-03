@@ -383,7 +383,7 @@ namespace getfem {
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.reduce_noisy();
     iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
-    iter_linsolv0.set_maxiter(100000); // arbitrary
+    iter_linsolv0.set_maxiter(10000); // arbitrary
 
     pb.compute_residual();
 

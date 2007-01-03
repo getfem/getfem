@@ -1,3 +1,8 @@
+2006-01-03  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/bgeot_mesh.h: modification of the test which decides when
+	two points are coinciding. Making it more context dependent.
+
 2006-11-10  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/dal_ref.h: modification of tab_ref_reg_spaced iterators to fix a bug

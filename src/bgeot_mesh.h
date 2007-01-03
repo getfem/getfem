@@ -34,14 +34,28 @@
 
 namespace bgeot {
 
+  struct basic_mesh_point_comparator
+    : public std::binary_function<base_node, base_node, int> {
+    dal::approx_less<scalar_type> c; 
+    double eps;
+    
+    int operator()(const base_node &x, const base_node &y) const {
+      return dal::lexicographical_compare(x.begin(), x.end(),
+					  y.begin(), y.end(), c);
+    }
+
+    basic_mesh_point_comparator(double e = scalar_type(10000)
+				*gmm::default_tol(scalar_type()))
+      : c(0), eps(e) {}
+  };
+
   /** @internal mesh structure + points
    */
   class basic_mesh :  public bgeot::mesh_structure {
 
   public :
     
-    typedef dal::approx_less<scalar_type> val_comp;
-    typedef dal::lexicographical_less<base_node, val_comp> pt_comp;
+    typedef basic_mesh_point_comparator pt_comp;
     typedef dal::dynamic_tree_sorted<base_node, pt_comp> PT_TAB;
     typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
     typedef bgeot::mesh_structure::ind_set ind_set;
@@ -59,7 +73,6 @@ namespace bgeot {
     dim_type dimension;
     PT_TAB pts;
 
-    scalar_type eps_p; /* infinity distance under wich two points are equal. */
     dal::dynamic_array<bgeot::pgeometric_trans> gtab;
     dal::bit_vector trans_exists;
  
@@ -84,7 +97,7 @@ namespace bgeot {
       if (dimension == dim_type(-1)) dimension = pt.size();
       if (pt.size() != dimension)
 	DAL_THROW(dimension_error, "mesh::add_point : dimensions mismatch");
-      return pts.add(pt);
+      return pts.add_norepeat(pt); //add_norepeat ?
     }
 
     template<class ITER>
@@ -111,11 +124,7 @@ namespace bgeot {
       return add_convex(simplex_geotrans(3, 1), &(ipt[0]));
     }
 
-    basic_mesh(dim_type NN = dim_type(-1)) {
-      dimension = NN; eps_p = 1.0E-10;
-      pts.comparator() = dal::lexicographical_less<base_node,
-	dal::approx_less<base_node::value_type> >(eps_p);
-    }
+    basic_mesh(dim_type NN = dim_type(-1)) { dimension = NN; }
   };
 
   typedef basic_mesh *pbasic_mesh;

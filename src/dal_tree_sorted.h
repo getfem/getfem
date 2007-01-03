@@ -421,7 +421,7 @@ namespace dal
       { sorted_iterator it(*this); it.last(); return it; }
       const_sorted_iterator sorted_last(void) const
       { const_sorted_iterator it(*this); it.last(); return it; }
-      sorted_iterator sorted_ge(const T &elt);
+//       sorted_iterator sorted_ge(const T &elt);
       const_sorted_iterator sorted_ge(const T &elt) const;
   }; 
 
@@ -575,15 +575,15 @@ namespace dal
     return it.index();
   }
 
-  template<typename T, typename COMP, int pks>
-    typename dynamic_tree_sorted<T, COMP, pks>::sorted_iterator
-      dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt)
-  {
-    sorted_iterator it(*this); insert_path(elt, it);
-    short_type dir = it.direction();
-    it.up(); if (it.index() != ST_NIL && dir == +1) ++it;
-    return it;
-  } 
+//   template<typename T, typename COMP, int pks>
+//     typename dynamic_tree_sorted<T, COMP, pks>::sorted_iterator
+//       dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt)
+//   {
+//     sorted_iterator it(*this); insert_path(elt, it);
+//     short_type dir = it.direction();
+//     it.up(); if (it.index() != ST_NIL && dir == +1) ++it;
+//     return it;
+//   } 
 
   template<typename T, typename COMP, int pks>
     typename dynamic_tree_sorted<T, COMP, pks>::const_sorted_iterator

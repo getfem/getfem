@@ -83,11 +83,19 @@ void test_refinable(unsigned dim, unsigned degree) {
   cout << "\nrefine mesh in dimension " << dim << " and degree "
        << degree << endl;
 
-  m.Bank_refine(b); // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref0");
+  // m.write_to_file(cout); getchar();
+
+  // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref0");
+  m.Bank_refine(b);
+  // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
   m.Bank_refine(m.convex_index());
-  m.Bank_refine(b); // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
+  // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref2");
+  m.Bank_refine(b);
+  // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref3");
   m.Bank_refine(m.convex_index());
-  m.Bank_refine(b); // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref1");
+  // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref4");
+  m.Bank_refine(b);
+  // if (m.dim() < 4) export_mesh(m, "test_mesh_bank_ref5");
   //  m.Bank_refine(m.convex_index());
   // if (m.dim() < 4) export_mesh(m, " test_mesh_bank_ref2");
   test_conforming(m);
@@ -119,11 +127,11 @@ void test_mesh(getfem::mesh &m) {
 
   gmm::clear(pt1); pt2 = pt1; pt3 = pt1;
   
-  pt2[0] = 1.0E-13;
+  pt2[0] = 1E-13;
   pt3[0] = 1.0;
   size_t i1 = m.add_point(pt1);
-  size_t i2 = m.add_point(pt2);
   size_t i3 = m.add_point(pt3);
+  size_t i2 = m.add_point(pt2);
   
   int dim = m.dim();
 

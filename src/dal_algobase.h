@@ -83,7 +83,7 @@ namespace dal {
     struct approx_less : public std::binary_function<T, T, int> { 
     double eps;
     inline int operator()(const T &x, const T &y) const
-    { if (my_abs(x - y) < eps) return 0; if (x < y) return -1; return 1; }
+    { if (my_abs(x - y) <= eps) return 0; if (x < y) return -1; return 1; }
     approx_less(double e = 1E-13) { eps = e; }
   };
 
@@ -91,7 +91,7 @@ namespace dal {
     struct approx_greater : public std::binary_function<T, T, int> { 
     double eps;
     inline int operator()(const T &x, const T &y) const
-    { if (my_abs(x - y) < eps) return 0; if (x > y) return -1; return 1; }
+    { if (my_abs(x - y) <= eps) return 0; if (x > y) return -1; return 1; }
     approx_greater(double e = 1E-13) { eps = e; }
   };
 
