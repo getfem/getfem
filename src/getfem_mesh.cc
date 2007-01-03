@@ -181,20 +181,6 @@ namespace getfem {
   }
 #endif
 
-
-//   size_type mesh::add_point(const base_node &pt, bool norepeat) {
-//     if (dimension == dim_type(-1)) dimension = pt.size();
-//     if (pt.size() != dimension)
-//       DAL_THROW(dimension_error, "mesh::add_point : dimensions mismatch");
-    
-//     if (norepeat) {
-//       bool present;
-//       size_type i = pts.add_norepeat(pt, false, &present);
-//       return i;
-//     }
-//     else return pts.add(pt);
-//   }
-
   size_type mesh::add_point(const base_node &pt) {
     static scalar_type prec_factor = gmm::default_tol(scalar_type())
       * scalar_type(10000);
@@ -213,21 +199,14 @@ namespace getfem {
       if (max_radius > scalar_type(10)*characteristic_size) {
 	characteristic_size = max_radius;
 	pts.comparator().c.eps = characteristic_size * prec_factor;
-	// cout << "eps = " << pts.comparator().c.eps << endl; getchar();
 	pts.resort();
       }
       
-      bgeot::basic_mesh::PT_TAB::const_sorted_iterator it = pts.sorted_ge(pt);
-      
-      // cout << "index ge for " << pt << " = " << it.index() << endl;
-      
-      while (it.index() != ST_NIL && pts.comparator()(pt, *it) == 0)
+      bgeot::basic_mesh::PT_TAB::const_sorted_iterator it = pts.sorted_ge(pt); 
+      if (it.index() != ST_NIL && pts.comparator()(pt, *it) == 0)
 	{ return it.index(); }
       
       size_type i = pts.add(pt);
-
-      // cout << "adding point " << i << " : " << pt << " max_radius = " << max_radius << endl; 
-      
       return i;
     }
   }

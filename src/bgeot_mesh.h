@@ -97,7 +97,7 @@ namespace bgeot {
       if (dimension == dim_type(-1)) dimension = pt.size();
       if (pt.size() != dimension)
 	DAL_THROW(dimension_error, "mesh::add_point : dimensions mismatch");
-      return pts.add_norepeat(pt); //add_norepeat ?
+      return pts.add_norepeat(pt); // add_norepeat valable ?
     }
 
     template<class ITER>
