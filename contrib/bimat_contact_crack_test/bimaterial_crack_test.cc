@@ -96,7 +96,7 @@ struct crack_problem {
   
   base_small_vector translation;
 
-  scalar_type residual;       /* max residual for the iterative solvers        */
+  scalar_type residual;      /* max residual for the iterative solvers       */
   scalar_type conv_max;
   unsigned dir_with_mult;
   
@@ -177,7 +177,7 @@ void crack_problem::init(void) {
       }
       mesh.Bank_refine(conv_to_refine);
       ref = ref + 1;
-      refinement_radius = refinement_radius/2.;
+      refinement_radius = refinement_radius/4.;
       if(refinement_radius > 1e-16)
 	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
     }
@@ -590,9 +590,6 @@ int main(int argc, char *argv[]) {
 	//exp.write_point_data(mf_refined_vm, DN, "error");
 	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-      
-
-
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";

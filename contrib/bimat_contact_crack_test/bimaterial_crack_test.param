@@ -10,14 +10,14 @@
 MU = 1.0;	        % Lame coefficient.
 LAMBDA = 1.0;           % Lame coefficient.
 
-BIMATERIAL = 0;         % 1 : To enable the bimaterial case.
-LAMBDA_UP = 100.0;
-LAMBDA_DOWN=1.0;
-MU_UP = 3.0;
-MU_DOWN = 1.0;
+BIMATERIAL = 1;         % 1 : To enable the bimaterial case.
+LAMBDA_UP = 10000.0;
+LAMBDA_DOWN=1000.0;
+MU_UP = 3000.0;
+MU_DOWN = 10.0;
 
 REFINEMENT_RADIUS = 0.1;   % 0 for no refinement
-REFINEMENT_PROCESS = 15;
+REFINEMENT_PROCESS = 23;
 
 ADAPTED_REFINE = 0;      % 0 to disable adapted refinement 
                          % 1 to enable it
@@ -43,7 +43,7 @@ F41 =   0.;  F42 = -0.2 ;                      %     F3 |          |C
                                                %        -----------|H
                                                %             F4
  
-all_dirichlet = 1;     % Choose 1 To impose a dirichlet displacement all over the borders
+all_dirichlet = 0;     % Choose 1 To impose a dirichlet displacement all over the borders
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
