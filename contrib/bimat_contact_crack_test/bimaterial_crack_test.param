@@ -17,7 +17,7 @@ MU_UP = 3000.0;
 MU_DOWN = 10.0;
 
 REFINEMENT_RADIUS = 0.1;   % 0 for no refinement
-REFINEMENT_PROCESS = 26;
+REFINEMENT_PROCESS = 28;
 
 ADAPTED_REFINE = 0;      % 0 to disable adapted refinement 
                          % 1 to enable it
