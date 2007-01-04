@@ -237,10 +237,7 @@ namespace getfem {
       return;
     }
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
-    // double t = dal::uclock_sec();
-
-    //cout << "enumerate_dof\n";
-
+    
     dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
     dal::dynamic_array<size_type> ind_global_dof;
@@ -288,7 +285,8 @@ namespace getfem {
 	} else {
 	  pgp->transform(linked_mesh().points_of_convex(cv), i, fd.P);
 
-	  std::pair<dof_sort_type::iterator, bool> pa = dof_sort.insert(std::make_pair(fd, nbdof));
+	  std::pair<dof_sort_type::iterator, bool>
+	    pa = dof_sort.insert(std::make_pair(fd, nbdof));
 	  if (pa.second) {
 	    tab[i] = nbdof;
 	    nbdof += Qdim / pf->target_dim();

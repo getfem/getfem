@@ -106,8 +106,8 @@ namespace getfem {
       }
     }
 
-    cout << "Enriched convexes : " << enriched_elements << endl;
-    cout << "Enriched dofs : " << enriched_dofs << endl;
+    // cout << "Enriched convexes : " << enriched_elements << endl;
+    // cout << "Enriched dofs : " << enriched_dofs << endl;
 
     for (dal::bv_visitor i(mf.convex_index()); !i.finished(); ++i) {
       if (enriched_elements[i]) build_method_of_convex(i); else

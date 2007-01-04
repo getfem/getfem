@@ -88,10 +88,7 @@ namespace getfem {
     /// Gives a reference to the linked mesh of type mesh.
     mesh &linked_mesh(void) const { return *linked_mesh_; }
     void clear(void);
-    /* explicit calls to parent class 
-       for HP aCC and mipspro CC who complain about hidden functions 
-       (they're right)
-    */
+  
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
     void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
@@ -140,7 +137,8 @@ namespace getfem {
     const zoneset &zoneset_of_convex(size_type cv) const {
       std::map<size_type, convex_info>::const_iterator it = cut_cv.find(cv);
       if (it != cut_cv.end()) return (*it).second.zones;
-      DAL_THROW(internal_error, "You cannot call this function for uncut convexes");
+      DAL_THROW(internal_error,
+		"You cannot call this function for uncut convexes");
     }
     
     mesh_level_set(mesh &me);

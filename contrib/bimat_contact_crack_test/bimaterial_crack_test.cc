@@ -38,6 +38,7 @@
 #include <getfem_mesh_fem_global_function.h>
 #include <getfem_spider_fem.h>
 #include <getfem_mesh_fem_sum.h>
+#include <getfem_Coulomb_friction.h>
 #include <gmm.h>
 #include <getfem_error_estimate.h>
 
@@ -76,6 +77,7 @@ struct crack_problem {
   getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
+  getfem::mesh_im_level_set mimbound;  /* integration methods on the crack.  */
   getfem::mesh_fem mf_pre_u;
   getfem::mesh_fem mf_mult;
   getfem::mesh_fem_level_set mfls_u; 
@@ -98,7 +100,7 @@ struct crack_problem {
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   scalar_type conv_max;
-  unsigned dir_with_mult;
+  unsigned dir_with_mult, with_contact;
   
   std::string datafilename;
   ftool::md_param PARAM;
@@ -106,12 +108,11 @@ struct crack_problem {
   bool adapted_refine, solve(plain_vector &U);
   
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh), mf_mult(mesh),
-			mfls_u(mls, mf_pre_u),
-			
-			mf_u_sum(mesh), mf_rhs(mesh), 
-
-			ls(mesh, 1, true) {}
+  crack_problem(void) : mls(mesh), mim(mls),
+		     mimbound(mls, getfem::mesh_im_level_set::INTEGRATE_BOUNDARY),
+		     mf_pre_u(mesh), mf_mult(mesh),
+		     mfls_u(mls, mf_pre_u),
+		     mf_u_sum(mesh), mf_rhs(mesh), ls(mesh, 1, true) {}
 
 };
 
@@ -230,16 +231,18 @@ void crack_problem::init(void) {
   getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ? getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
   
   mim.set_integration_method(mesh.convex_index(), ppi);
+  mimbound.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
 
-
   mim.set_simplex_im(simp_ppi, sing_ppi);
+  mimbound.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_qdim(N);
 
 
-  dir_with_mult = PARAM.int_value("DIRICHLET_VERSINO");
+  dir_with_mult = PARAM.int_value("DIRICHLET_VERSION");
+  with_contact = PARAM.int_value("WITH_CONTACT");
  
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -324,10 +327,8 @@ base_small_vector ls_function(const base_node P, int num = 0) {
 }
 
 bool crack_problem::solve(plain_vector &U) {
+  
   size_type N = mesh.dim();
-  
-  
-  // Linearized elasticity brick.
   dal::bit_vector conv_to_refine;
   bool iteration;
   
@@ -344,9 +345,34 @@ bool crack_problem::solve(plain_vector &U) {
     mls.adapt();
     mim.adapt();
     mfls_u.adapt();
+    mimbound.adapt();
  
     mf_u_sum.set_mesh_fems(mfls_u);
-  
+
+    // Constraint matrix for unilateral contact condition
+    sparse_matrix BN(mf_u().nb_dof(), mf_u().nb_dof());
+    dal::bit_vector nn;
+    size_type xfem_index = mfls_u.get_xfem_index(), k = 0;
+    for (dal::bv_visitor icv(mesh.convex_index()); !icv.finished(); ++icv) {
+      getfem::pfem pf = mf_u().fem_of_element(icv);
+      for (size_type j = 0; j < pf->nb_dof(icv); ++j) {
+	if (getfem::dof_xfem_index(pf->dof_types()[j]) == xfem_index) {
+	  size_type ndof = mf_u().ind_dof_of_element(icv)[2*j+1];
+	  cout << "ndof = " << ndof << endl;
+	  if (!nn[ndof]) {
+	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+1]) = -1.0;
+	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+3]) = 1.0;
+	    ++k; nn.add(ndof);
+	  }
+	  cout << "dof " << j << " of cv " << icv << " ; " << getfem::dof_xfem_index(pf->dof_types()[j])-mfls_u.get_xfem_index() << " : " << " : " << mf_u().ind_dof_of_element(icv)[2*j+1] << " : " << mf_u().ind_dof_of_element(icv)[2*j+3] << endl;
+	}
+      }
+    }
+    gmm::resize(BN, k, mf_u().nb_dof());
+    plain_vector gap(k);
+   
+    cout << "mf_u().nb_dof() = " << mf_u().nb_dof() << endl;
+
     U.resize(mf_u().nb_dof());
 
     conv_to_refine.clear();
@@ -424,28 +450,29 @@ bool crack_problem::solve(plain_vector &U) {
     if (all_dirichlet)
       pNEUMANN = & VOL_F; 
     else 
-      pNEUMANN = & NEUMANN_up; 
-    
-    //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
-    //assert(toto.mf.nb_dof() == 1);
+      pNEUMANN = & NEUMANN_up;
   
     // Dirichlet condition brick.
-    getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
-					    mf_mult);
-    if(all_dirichlet){
-
-    } else {
-
-    }
-    final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
+    getfem::mdbrick_Dirichlet<> DIRICHLET(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
+					  mf_mult);
+    DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
   
+    getfem::mdbrick_Coulomb_friction<> CONTACT(DIRICHLET, BN, gap);
+
+
+    getfem::mdbrick_abstract<> *final_model;
+    if (with_contact) final_model = &CONTACT; else final_model = &DIRICHLET;
+
+
     // Generic solve.
-    cout << "Total number of variables : " << final_model.nb_dof() << endl;
-    getfem::standard_model_state MS(final_model);
+    cout << "Total number of variables : " << final_model->nb_dof() << endl;
+    getfem::standard_model_state MS(*final_model);
     gmm::iteration iter(residual, 1, 40000);
   
-    getfem::standard_solve(MS, final_model, iter);
+    getfem::standard_solve(MS, *final_model, iter);
   
+    cout << "Contact forces: " << CONTACT.get_LN(MS) << endl; 
+
     // Solution extraction
     gmm::copy(ELAS.get_solution(MS), U);
     iteration = iter.converged();  
@@ -470,6 +497,7 @@ bool crack_problem::solve(plain_vector &U) {
       else
 	break;
     }
+
   } while(adapted_refine && conv_to_refine.size() > 0);
   mesh.write_to_file(datafilename + ".meshh");
   cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
@@ -529,7 +557,8 @@ int main(int argc, char *argv[]) {
       else if (NX < 30) nn = 3;
       else nn = 1;
 
-      /* choose an adequate slice refinement based on the distance to the crack tip */
+      // choose an adequate slice refinement based on the distance to
+      // the crack tip
       std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
       for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
 	scalar_type dmin=0, d;
@@ -545,8 +574,9 @@ int main(int argc, char *argv[]) {
 	else if (dmin < .1) 
 	  nrefine[cv] = nn*2;
 	else nrefine[cv] = nn;
-	if (dmin < .01)
-	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
+	// if (dmin < .01)
+	//  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin 
+	//       << " " << nrefine[cv] << "\n";
       }
 
       {
@@ -555,10 +585,10 @@ int main(int argc, char *argv[]) {
 	slicer.push_back_action(bmesh);
 	slicer.exec(nrefine, getfem::mesh_region::all_convexes());
       }
-      /*
-      sl.build(mcut, 
-      getfem::slicer_build_mesh(mcut_refined), nrefine);*/
 
+      // sl.build(mcut, 
+      // getfem::slicer_build_mesh(mcut_refined), nrefine);
+      
       getfem::mesh_im mim_refined(mcut_refined); 
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 ("IM_TRIANGLE(6)"));
@@ -568,8 +598,6 @@ int main(int argc, char *argv[]) {
       plain_vector W(mf_refined.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
-
-
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
 	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);

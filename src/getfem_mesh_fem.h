@@ -329,7 +329,7 @@ namespace getfem {
      */
     const mesh::ind_cv_ct &convex_to_dof(size_type d) const;
     /** Renumber the degrees of freedom. You should not have
-     * to call this function, as it is done automagically */
+     * to call this function, as it is done automatically */
     void enumerate_dof(void) const;
     /// Return the total number of degrees of freedom.
     size_type nb_dof(void) const

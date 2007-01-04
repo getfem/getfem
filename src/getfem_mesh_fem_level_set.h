@@ -52,6 +52,7 @@ namespace getfem {
     void update_from_context(void) const { is_adapted = false; }
     void adapt(void);
     void clear(void); // to be modified
+    size_type get_xfem_index(void) const { return xfem_index; }
 
     const mesh_level_set &linked_mesh_level_set() const { return mls; }
     
