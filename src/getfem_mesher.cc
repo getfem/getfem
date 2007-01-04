@@ -69,14 +69,16 @@ namespace getfem {
 
   bool try_projection(const mesher_signed_distance& dist, base_node &X,
 		      bool on_surface) {
-    base_small_vector G;
+    base_small_vector G; base_node Y = X;
     scalar_type d = dist.grad(X, G), dmin = gmm::abs(d);
     size_type iter(0), count_falt(0);
     if (on_surface || d > 0.0)
-      while (gmm::abs(d) > 1e-15) {
+      while (iter == 0 || dmin > 1e-15 || gmm::vect_dist2(X, Y) > 1e-15 ) {
+	gmm::copy(X, Y);
 	if (++iter > 1000) {
 	  DAL_WARNING4("Try projection failed, 1000 iterations\n\n");
-	  return (gmm::abs(d) < 1E-10); // is there a possibility to detect
+	  return false;
+	  // return (gmm::abs(d) < 1E-10); // is there a possibility to detect
 	} 	// the impossibility without making 1000 iterations ?
 	gmm::scale(G, -d / std::max(1E-8, gmm::vect_norm2_sqr(G)));
 	gmm::add(G, X);
@@ -90,12 +92,9 @@ namespace getfem {
 //	if (gmm::abs(alpha) < 1E-15) return (gmm::abs(d) < 1E-10);
 	d = dist.grad(X, G);
 	if (gmm::abs(d) >= dmin*0.95) ++count_falt;
-	else { count_falt=0; dmin = gmm::abs(d); }
-	if (count_falt > 20) return (gmm::abs(d) < 1E-10);
-//	cout.precision(16);
-//    	cout << "iter " << iter << " X = " << X << " dist = " << d << 
-//    	  " grad = " << G  << endl;
-
+	else { count_falt = 0; dmin = gmm::abs(d); }
+	// if (count_falt > 20) return (gmm::abs(d) < 1E-10);
+	if (count_falt > 20) return false;
       }
     return true;
   }
@@ -147,7 +146,7 @@ namespace getfem {
       for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
       ++iter;
       residual = gmm::vect_norm2(d);
-    } while (residual > 1e-14 && gmm::vect_dist2(oldX,X) > 1e-14
+    } while ((residual > 1e-14 || gmm::vect_dist2(oldX,X) > 1e-14)
 	     && iter < 1000);
 //     cout << "nb iter de pure_multi : " << iter
 //   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;

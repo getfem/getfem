@@ -1,3 +1,8 @@
+2006-01-04  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/bgeot_mesh_level_set.cc: making tests depending on the convex
+	radius for fine refinements. 
+
 2006-01-03  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/bgeot_mesh.h: modification of the test which decides when

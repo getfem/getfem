@@ -161,7 +161,8 @@ struct Chrono {
     std::vector<dal::bit_vector> constraints_;
     std::vector<scalar_type> radius_;
     const std::vector<const mesher_signed_distance*> &list_constraints;
-    
+    scalar_type radius_cv;
+
     void clear(void) { points.clear(); constraints_.clear();radius_.clear(); }
     scalar_type radius(size_type i) const { return radius_[i]; }
     const dal::bit_vector &constraints(size_type i) const
@@ -184,7 +185,8 @@ struct Chrono {
       if (j == size_type(-1)) {
 	dal::bit_vector bv;
 	for (size_type i = 0; i < list_constraints.size(); ++i)
-	  if (gmm::abs((*(list_constraints[i]))(pt)) < 1E-8) bv.add(i);
+	  if (gmm::abs((*(list_constraints[i]))(pt)) < 1E-8*radius_cv)
+	    bv.add(i);
 	j = points.add(pt);
 	constraints_.push_back(bv);
 	radius_.push_back(r);
@@ -196,7 +198,8 @@ struct Chrono {
       if (j == size_type(-1)) {
 	dal::bit_vector bv;
 	for (size_type i = 0; i < list_constraints.size(); ++i)
-	  if (gmm::abs((*(list_constraints[i]))(pt)) < 1E-8) bv.add(i);
+	  if (gmm::abs((*(list_constraints[i]))(pt)) < 1E-8*radius_cv)
+	    bv.add(i);
 	j = points.add(pt);
 	constraints_.push_back(bv);
 	scalar_type r = min_curvature_radius_estimate(list_constraints,pt,bv);
@@ -246,9 +249,11 @@ struct Chrono {
       return retained_points;
     }
 
-    point_stock(const std::vector<const mesher_signed_distance*> &ls)
+    point_stock(const std::vector<const mesher_signed_distance*> &ls,
+		scalar_type rcv)
       : points(dal::lexicographical_less<base_node,
-	       dal::approx_less<scalar_type> >(1E-7)), list_constraints(ls) {}
+	       dal::approx_less<scalar_type> >(1E-7)), list_constraints(ls),
+	radius_cv(rcv) {}
   };
 
 
@@ -347,7 +352,8 @@ struct Chrono {
      This information is now refined for each sub-convex.
   */
   void mesh_level_set::find_zones_of_element(size_type cv,
-					     std::string &prezone) {
+					     std::string &prezone,
+					     scalar_type radius) {
     convex_info &cvi = cut_cv[cv];
     cvi.zones.clear();
     for (dal::bv_visitor i(cvi.pmsh->convex_index()); !i.finished();++i) {
@@ -357,7 +363,7 @@ struct Chrono {
 	//cout << "prezone for convex " << cv << " : " << subz << endl;
 	for (size_type j = 0; j < level_sets.size(); ++j) {
 	  if (subz[j] == '*' || subz[j] == '0') {
-	    int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i);
+	    int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i,radius);
 	    subz[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
 	  }
 	}
@@ -371,7 +377,8 @@ struct Chrono {
 
   void mesh_level_set::cut_element(size_type cv,
 				   const dal::bit_vector &primary,
-				   const dal::bit_vector &secondary) {
+				   const dal::bit_vector &secondary,
+				   scalar_type radius_cv) {
     
     cut_cv[cv] = convex_info();
     cut_cv[cv].pmsh = pmesh(new mesh);
@@ -394,7 +401,7 @@ struct Chrono {
     dim_type K = 0; // Max. degree of the level sets.
     scalar_type r0 = 1E+10; // min curvature radius
     std::vector<const mesher_signed_distance*> list_constraints;
-    point_stock mesh_points(list_constraints);
+    point_stock mesh_points(list_constraints, radius_cv);
 
     ref_element->register_constraints(list_constraints);
     size_type nbeltconstraints = list_constraints.size();
@@ -539,7 +546,7 @@ struct Chrono {
 	    for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
 	      scalar_type dd =
 		(*(list_constraints[jj]))(msh.points_of_convex(j)[ii]);
-	      if (gmm::abs(dd) > 1E-7) {
+	      if (gmm::abs(dd) > radius_cv * 1E-7) {
 		if (dd * signs[jj] < 0.0) {
 		  if (noisy) cout << "Intersection trouvee ... \n";
 		  // calcul d'intersection
@@ -548,20 +555,20 @@ struct Chrono {
 		  if (dd > 0.) gmm::scale(VV, -1.);
 		  dd = (*(list_constraints[jj])).grad(X, G);
 		  size_type nbit = 0;
-		  while (gmm::abs(dd) > 1e-15 && (++nbit < 20)) { // Newton
+		  while (gmm::abs(dd) > 1e-15*radius_cv && (++nbit < 20)) { // Newton
 		    scalar_type nG = gmm::vect_sp(G, VV);
 		    if (gmm::abs(nG) < 1E-8) nG = 1E-8;
 		    if (nG < 0) nG = 1.0;
 		    gmm::add(gmm::scaled(VV, -dd / nG), X);
 		    dd = (*(list_constraints[jj])).grad(X, G);
 		  }
-		  if (gmm::abs(dd) > 1e-15) { // brute force dychotomie
+		  if (gmm::abs(dd) > 1e-15*radius_cv) { // brute force dychotomie
 		    base_node X1 = msh.points_of_convex(j)[ii];
 		    base_node X2 = msh.points_of_convex(j)[prev_point[jj]], X3;
 		    scalar_type dd1 = (*(list_constraints[jj]))(X1);
 		    scalar_type dd2 = (*(list_constraints[jj]))(X2);
 		    if (dd1 > dd2) { std::swap(dd1, dd2); std::swap(X1, X2); }
-		    while (gmm::abs(dd1) > 1e-15) {
+		    while (gmm::abs(dd1) > 1e-15*radius_cv) {
 		      X3 = (X1 + X2) / 2.0;
 		      scalar_type dd3 = (*(list_constraints[jj]))(X3);
 		      if (dd3 > 0) { dd2 = dd3; X2 = X3; }
@@ -823,14 +830,15 @@ struct Chrono {
     std::string z;
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
+      scalar_type radius = linked_mesh().convex_radius_estimate(cv);
       dal::bit_vector prim, sec;
-      find_crossing_level_set(cv, prim, sec, z);
+      find_crossing_level_set(cv, prim, sec, z, radius);
       zones_of_convexes[cv] = &(*(allsubzones.insert(z).first));
       if (noisy) cout << "element " << cv << " cut level sets : "
 		      << prim << " zone : " << z << endl;
       if (prim.card()) {
-	cut_element(cv, prim, sec);
-	find_zones_of_element(cv, z);
+	cut_element(cv, prim, sec, radius);
+	find_zones_of_element(cv, z, radius);
       }
     }
     if (noisy) {
@@ -848,8 +856,9 @@ struct Chrono {
   
   int mesh_level_set::sub_simplex_is_not_crossed_by(size_type cv,
 						    plevel_set ls,
-						    size_type sub_cv) {
-    scalar_type EPS = 1e-8;
+						    size_type sub_cv,
+						    scalar_type radius) {
+    scalar_type EPS = 1e-8 * radius;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     convex_info &cvi = cut_cv[cv];
     bgeot::pgeometric_trans pgt2 = cvi.pmsh->trans_of_convex(sub_cv);
@@ -879,17 +888,13 @@ struct Chrono {
     return (d2 < 0.) ? -1 : 1;
   }
 
-
   int mesh_level_set::is_not_crossed_by(size_type cv, plevel_set ls,
-					unsigned lsnum) {
+					unsigned lsnum, scalar_type radius) {
     const mesh_fem &mf = ls->get_mesh_fem();
-    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-
     const mesh_fem::ind_dof_ct &dofs = mf.ind_dof_of_element(cv);
     pfem pf = mf.fem_of_element(cv);
     int p = -2;
-    mesher_level_set mls1 = ls->mls_of_convex(cv, lsnum, false);
-    scalar_type EPS = 1e-8;
+    scalar_type EPS = 1e-8 * radius;
 
     /* easy cases: 
      - different sign on the dof nodes => intersection for sure
@@ -904,11 +909,13 @@ struct Chrono {
       if (!p2 || p*p2 < 0) return 0;
     }
 
+    mesher_level_set mls1 = ls->mls_of_convex(cv, lsnum, false);
     base_node X(pf->dim()), G(pf->dim());
     gmm::fill_random(X); X *= 1E-2;
     scalar_type d = mls1.grad(X, G);
-    if (gmm::vect_norm2(G)*2. < gmm::abs(d)) return p;
+    if (gmm::vect_norm2(G)*2.5 < gmm::abs(d)) return p;
 
+    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
     
     gmm::fill_random(X); X *= 1E-2;
@@ -928,18 +935,20 @@ struct Chrono {
   void mesh_level_set::find_crossing_level_set(size_type cv,
 					       dal::bit_vector &prim,
 					       dal::bit_vector &sec,
-					       std::string &z) {
+					       std::string &z,
+					       scalar_type radius) {
     prim.clear(); sec.clear();
     z = std::string(level_sets.size(), '*');
     unsigned lsnum = 0;
     for (size_type k = 0; k < level_sets.size(); ++k, ++lsnum) {
       if (noisy) cout << "testing cv " << cv << " with level set "
 		      << k << endl;
-      int s = is_not_crossed_by(cv, level_sets[k], 0);
+      int s = is_not_crossed_by(cv, level_sets[k], 0, radius);
       if (!s) {
 	if (noisy) cout << "is cut \n";
+       	// cout << linked_mesh().convex(cv) << endl;
 	if (level_sets[k]->has_secondary()) {
-	  s = is_not_crossed_by(cv, level_sets[k], 1);
+	  s = is_not_crossed_by(cv, level_sets[k], 1, radius);
 	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
 	  else if (s < 0) prim.add(lsnum); else z[k] = '0';
 	}

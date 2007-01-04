@@ -181,7 +181,8 @@ void crack_problem::init(void) {
       if(refinement_radius > 1e-16)
 	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
     }
-  cout<<"refining process complete." << endl ;
+    cout << "refining process completed." << endl;
+    mesh.write_to_file("toto.mesh");
   }
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL");

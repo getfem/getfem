@@ -151,19 +151,21 @@ namespace getfem {
     mesh_level_set(const mesh_level_set &);
     mesh_level_set & operator=(const mesh_level_set &);
     void cut_element(size_type cv, const dal::bit_vector &primary,
-		     const dal::bit_vector &secondary);     
-    int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
+		     const dal::bit_vector &secondary, scalar_type radius);
+    int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum,
+			 scalar_type radius);
     int sub_simplex_is_not_crossed_by(size_type cv, plevel_set ls,
-				      size_type sub_cv);
-    void find_zones_of_element(size_type cv, std::string &prezone);
+				      size_type sub_cv, scalar_type radius);
+    void find_zones_of_element(size_type cv, std::string &prezone,
+			       scalar_type radius);
 
     /** For each levelset, if the convex cv is crossed, add the levelset number
 	into 'prim' (and 'sec' is the levelset has a secondary part).
 	zone is also filled with '0', '+', and '-'.
     */
-    void find_crossing_level_set(size_type cv, 
-				 dal::bit_vector &prim, 
-				 dal::bit_vector &sec, std::string &zone);
+    void find_crossing_level_set(size_type cv, dal::bit_vector &prim, 
+				 dal::bit_vector &sec, std::string &zone,
+				 scalar_type radius);
     void run_delaunay(std::vector<base_node> &fixed_points,
 		      gmm::dense_matrix<size_type> &simplexes,
 		      std::vector<dal::bit_vector> &fixed_points_constraints);

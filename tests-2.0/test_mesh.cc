@@ -122,8 +122,8 @@ void test_mesh(getfem::mesh &m) {
   pt2[0] = 1.0E-13;
   pt3[0] = 1.0;
   size_t i1 = m.add_point(pt1);
-  size_t i2 = m.add_point(pt2);
   size_t i3 = m.add_point(pt3);
+  size_t i2 = m.add_point(pt2);
   
   int dim = m.dim();
 
