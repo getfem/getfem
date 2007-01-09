@@ -725,6 +725,18 @@ void bilaplacian_crack_problem::init(void) {
 
 /* compute the error with respect to the exact solution */
 void bilaplacian_crack_problem::compute_error(plain_vector &U) {
+// plain_vector V(gmm::vect_size(U)) ;
+// gmm::clear(V) ;
+//   cout << "L2 ERROR : "
+//        << getfem::asm_L2_dist(mim, mf_u(), V,
+// 			      exact_sol.mf, exact_sol.U) << "\n";
+//   cout << "H1 ERROR : "
+//        << getfem::asm_H1_dist(mim, mf_u(), V,
+// 			      exact_sol.mf, exact_sol.U) << "\n";
+//   cout << "H2 ERROR : "
+//        << getfem::asm_H2_dist(mim, mf_u(), V, 
+//                               exact_sol.mf, exact_sol.U) << "\n"; 
+
   cout << "L2 ERROR : "
        << getfem::asm_L2_dist(mim, mf_u(), U,
 			      exact_sol.mf, exact_sol.U) << "\n";
@@ -965,7 +977,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     DIRICHLET(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
   DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
   DIRICHLET.set_constraints_type(getfem::constraints_type(dirichlet_version));  
-  
+  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
+    DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
   getfem::mdbrick_abstract<> *final_model = &DIRICHLET ;
   
   if (enrichment_option == 3) {
@@ -1091,7 +1104,7 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     plain_vector U;
-
+    p.mesh.write_to_file("mesh.m") ;
     if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
 
     p.compute_error(U);
