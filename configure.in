@@ -192,14 +192,19 @@ acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
 echo "BLAS_LIBS=$BLAS_LIBS"
 # First, check BLAS_LIBS environment variable
+if test "x$BLAS_LIBS" = xbuiltin; then
+  echo "Using builtin blas lib";
+  BLAS_LIBS=""
+else
+
 if test $acx_blas_ok = no; then
-if test "x$BLAS_LIBS" != x; then
+  if test "x$BLAS_LIBS" != x; then
         save_LIBS="$LIBS"; LIBS="$BLAS_LIBS $LIBS"
         AC_MSG_CHECKING([for $sgemm in $BLAS_LIBS])
         AC_TRY_LINK_FUNC($sgemm, [acx_blas_ok=yes], [BLAS_LIBS=""])
         AC_MSG_RESULT($acx_blas_ok)
         LIBS="$save_LIBS"
-fi
+  fi
 fi
 
 # BLAS linked to by default?  (happens on some supercomputers)
@@ -274,6 +279,7 @@ if test $acx_blas_ok = no; then
         AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas -lg2c"])
 fi
 
+fi # if BLAS_LIBS=builtin
 
 AC_SUBST(BLAS_LIBS)
 
