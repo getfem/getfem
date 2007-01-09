@@ -241,7 +241,7 @@ typedef const static_stored_object_key *pstatic_stored_object_key;
   }
 
   /** Delete an object and the object which depend on it. */
-  void del_stored_object(pstatic_stored_object o);
+  void del_stored_object(pstatic_stored_object o, bool ignore_unstored=false);
   
   /** Delete all the object whose permanence is greater or equal to perm. */
   void del_stored_objects(int perm);

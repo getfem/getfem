@@ -2274,7 +2274,9 @@ namespace getfem
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(pre_fem_key_(pf, pspt));
-    if (o) return dal::stored_cast<fem_precomp_>(o);
+    if (o) {
+      return dal::stored_cast<fem_precomp_>(o);
+    }
     pfem_precomp p = new fem_precomp_(pf, pspt);
     dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pspt,
 			   dal::AUTODELETE_STATIC_OBJECT);
@@ -2282,5 +2284,14 @@ namespace getfem
     return p;
     
   }
+
+  void fem_precomp_pool::clear(void) {
+    for (std::set<pfem_precomp>::iterator it = precomps.begin();
+	 it != precomps.end(); ++it) {
+      del_stored_object(*it, true);
+    }
+    precomps.clear();
+  }
+
 
 }  /* end of namespace getfem.                                            */

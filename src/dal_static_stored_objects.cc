@@ -189,15 +189,24 @@ namespace dal {
   }
   
   // Delete a list of objects and their dependencies
-  void del_stored_objects(std::list<pstatic_stored_object> &to_delete) {
+  void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
+			  bool ignore_unstored) {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
-    std::list<pstatic_stored_object>::iterator it;
-    for (it = to_delete.begin(); it != to_delete.end(); ++it) {
+    std::list<pstatic_stored_object>::iterator it, itnext;
+    for (it = to_delete.begin(); it != to_delete.end(); it = itnext) {
+      itnext = it; itnext++;
       stored_object_tab::iterator ito = iterator_of_object(*it);
-      if (ito == stored_objects.end())
-	DAL_THROW(failure_error, "This object is not stored : " << it->get());
-      iterator_of_object(*it)->second.valid = false;
+      if (ito == stored_objects.end()) {
+	if (ignore_unstored)
+	  to_delete.erase(it);
+	else
+	  DAL_THROW(failure_error, "This object is not stored : " << it->get()
+		    << " typename: " << typeid(*it->get()).name()
+		    );
+      }
+      else
+	iterator_of_object(*it)->second.valid = false;
     }
     std::set<pstatic_stored_object>::iterator itd;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
@@ -235,10 +244,10 @@ namespace dal {
   }
 
   // Delete an object and its dependencies
-  void del_stored_object(pstatic_stored_object o) {
+  void del_stored_object(pstatic_stored_object o, bool ignore_unstored) {
     std::list<pstatic_stored_object> to_delete;
     to_delete.push_back(o);
-    del_stored_objects(to_delete);
+    del_stored_objects(to_delete, ignore_unstored);
   }
   
   // Delete all the object whose perm is greater or equal to perm
@@ -251,7 +260,7 @@ namespace dal {
     for (it = stored_objects.begin(); it != stored_objects.end(); ++it)
       if (it->second.perm >= perm)
 	to_delete.push_back(it->second.p);
-    del_stored_objects(to_delete);
+    del_stored_objects(to_delete, false);
   }
 
 

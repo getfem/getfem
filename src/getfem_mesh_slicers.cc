@@ -118,7 +118,8 @@ namespace getfem {
     bool ref_pts_changed = false;
     if (ms.cvr != ms.prev_cvr || defdata->pmf->fem_of_element(ms.cv) != pf) {
       pf = defdata->pmf->fem_of_element(ms.cv);
-      if (pf->need_G()) bgeot::vectors_to_base_matrix(G, defdata->pmf->linked_mesh().points_of_convex(ms.cv));
+      if (pf->need_G()) 
+	bgeot::vectors_to_base_matrix(G, defdata->pmf->linked_mesh().points_of_convex(ms.cv));
     }
     /* check that the points are still the same -- or recompute the fem_precomp */
     std::vector<base_node> ref_pts2; ref_pts2.reserve(ms.nodes_index.card());
@@ -132,8 +133,8 @@ namespace getfem {
       ref_pts.swap(ref_pts2);
       fprecomp.clear();
     }
-    pfem_precomp pfp = fprecomp(pf, store_point_tab(ref_pts));
-    
+    bgeot::pstored_point_tab pspt = store_point_tab(ref_pts);
+    pfem_precomp pfp = fprecomp(pf, pspt);
     defdata->copy(ms.cv, coeff);
     
     base_vector val(ms.m.dim());

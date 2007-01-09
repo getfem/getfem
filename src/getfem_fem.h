@@ -629,14 +629,10 @@ namespace getfem {
       precomps.insert(p);
       return p;
     }
-    void clear(void) {
-      for (std::set<pfem_precomp>::iterator it = precomps.begin();
-	   it != precomps.end(); ++it)
-	delete_fem_precomp(*it);
-    }
+    void clear(void);
     ~fem_precomp_pool() { clear(); }
   };
-  
+ 
     
   /** structure passed as the argument of fem interpolation
       functions. This structure can be partially filled (for example

@@ -73,7 +73,7 @@ namespace getfem {
   public:
     stored_mesh_slice() : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { }
     /** Shortcut constructor to simplexify a mesh with refinement. */
-    stored_mesh_slice(const getfem::mesh& m, size_type nrefine = 1) 
+    explicit stored_mesh_slice(const getfem::mesh& m, size_type nrefine = 1) 
       : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { 
       this->build(m, slicer_none(), nrefine);
     };
