@@ -421,7 +421,11 @@ namespace getfem {
   };
 
   void mesh::read_from_file(std::istream &ist) {
-   
+    /* if the application does a setlocale, then we have a problem..*/
+    if (atof("1.5") != 1.5f) { 
+      DAL_THROW(dal::internal_error, "Go fix your locales! The numerical separator MUST be the dot");
+    }
+
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
     std::string tmp;
@@ -460,7 +464,7 @@ namespace getfem {
 	  if (npt.is_in(ipl))
 	    DAL_THROW(failure_error, 
 		      "Two points [#" << ip << " and #" << ipl
-		      << "] with the same coords. loading aborted.");
+		      << "] with the same coords " << v << ". loading aborted.");
 	  swap_points(ip, ipl);
 	}
       } else if (tmp.size()) {
