@@ -470,7 +470,7 @@ namespace getfem {
 		 size_type elt, mat_elem_integration_callback *icb = 0) const {
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
-      fem_interpolation_context ctx(pgp,0,0,G,elt);
+      fem_interpolation_context ctx(pgp,0,0,G,elt, ir-1);
       bgeot::multi_index sizes = pme->sizes(elt);
 
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");

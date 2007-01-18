@@ -74,8 +74,10 @@ namespace getfem
 
       vectors_to_base_matrix(G1,m1.points_of_convex(ms.cv));
       vectors_to_base_matrix(G2,m2.points_of_convex(slmcv));
-      fem_interpolation_context ctx1(pgt1,pf1,base_node(),G1,ms.cv);
-      fem_interpolation_context ctx2(pgt2,pf2,base_node(),G2,slmcv);
+      fem_interpolation_context ctx1(pgt1,pf1,base_node(),G1,ms.cv,
+				     size_type(-1));
+      fem_interpolation_context ctx2(pgt2,pf2,base_node(),G2,slmcv,
+				     size_type(-1));
 
       /* coordinates on the ref convex of each mesh */
       std::vector<base_node> nodes1(im->nb_points_on_convex()), 

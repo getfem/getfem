@@ -75,10 +75,12 @@ namespace getfem {
 	if (pf1->dof_types()[idof1] == gdof) {
 	  base_vector coeff(pfems[ifem1]->nb_dof(cv));
 	  coeff[idof1] = 1.0;
-	  fem_interpolation_context fic(pgt, pf1, base_node(dim()), G, cv);
+	  fem_interpolation_context fic(pgt, pf1, base_node(dim()), G, cv,
+					size_type(-1));
 	  for (size_type ifem2 = 0, j=0; ifem2 < pfems.size(); ++ifem2) {
 	    pfem pf2 = pfems[ifem2];
-	    fem_interpolation_context fic2(pgt, pf2, base_node(dim()), G, cv);
+	    fem_interpolation_context fic2(pgt, pf2, base_node(dim()), G, cv,
+					   size_type(-1));
 	    for (size_type idof2 = 0; idof2 < pf2->nb_dof(cv); ++idof2, ++j) {
 	      pdof_description pdd = pf2->dof_types()[idof2];
 	      bool found = false;

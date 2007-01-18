@@ -100,7 +100,7 @@ struct crack_problem {
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   scalar_type conv_max;
-  unsigned dir_with_mult, with_contact;
+  unsigned dir_with_mult, with_contact, invert_contact;
   
   std::string datafilename;
   ftool::md_param PARAM;
@@ -177,8 +177,8 @@ void crack_problem::init(void) {
 	}
       }
       mesh.Bank_refine(conv_to_refine);
-      ref = ref + 1;
-      refinement_radius = refinement_radius/4.;
+      ref++;
+      refinement_radius = refinement_radius/2.;
       if(refinement_radius > 1e-16)
 	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
     }
@@ -243,7 +243,9 @@ void crack_problem::init(void) {
 
   dir_with_mult = PARAM.int_value("DIRICHLET_VERSION");
   with_contact = PARAM.int_value("WITH_CONTACT");
- 
+  invert_contact = PARAM.int_value("INVERT_CONTACT");
+  
+
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -358,13 +360,15 @@ bool crack_problem::solve(plain_vector &U) {
       for (size_type j = 0; j < pf->nb_dof(icv); ++j) {
 	if (getfem::dof_xfem_index(pf->dof_types()[j]) == xfem_index) {
 	  size_type ndof = mf_u().ind_dof_of_element(icv)[2*j+1];
-	  cout << "ndof = " << ndof << endl;
+	  // cout << "ndof = " << ndof << endl;
 	  if (!nn[ndof]) {
-	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+1]) = -1.0;
-	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+3]) = 1.0;
+	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+1])
+	      = invert_contact ? 1.0 : -1.0;
+	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+3])
+	      = invert_contact ? -1.0 : 1.0;
 	    ++k; nn.add(ndof);
 	  }
-	  cout << "dof " << j << " of cv " << icv << " ; " << getfem::dof_xfem_index(pf->dof_types()[j])-mfls_u.get_xfem_index() << " : " << " : " << mf_u().ind_dof_of_element(icv)[2*j+1] << " : " << mf_u().ind_dof_of_element(icv)[2*j+3] << endl;
+	  // cout << "dof " << j << " of cv " << icv << " ; " << getfem::dof_xfem_index(pf->dof_types()[j])-mfls_u.get_xfem_index() << " : " << " : " << mf_u().ind_dof_of_element(icv)[2*j+1] << " : " << mf_u().ind_dof_of_element(icv)[2*j+3] << endl;
 	}
       }
     }
@@ -381,9 +385,10 @@ bool crack_problem::solve(plain_vector &U) {
      
      
     if(bimaterial == 1){
-      cout<<"______________________________________________________________________________"<<endl;
-      cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
-      cout<<"______________________________________________________________________________"<<endl;
+      cout<<"_________________________________________________________"<<endl;
+      cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up
+	  <<" and lambda_down = "<<lambda_down<<endl;
+      cout<<"_________________________________________________________"<<endl;
       std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
       std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
     
@@ -471,7 +476,7 @@ bool crack_problem::solve(plain_vector &U) {
   
     getfem::standard_solve(MS, *final_model, iter);
   
-    cout << "Contact forces: " << CONTACT.get_LN(MS) << endl; 
+    if (with_contact) cout << "Contact forces: "<< CONTACT.get_LN(MS) << endl; 
 
     // Solution extraction
     gmm::copy(ELAS.get_solution(MS), U);
@@ -503,14 +508,21 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
   
   dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
-  getfem::mesh_fem mf_printed(mesh, N);
+  getfem::mesh_fem mf_printed(mesh, N), mf_printed_vm(mesh);
   std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
   mf_printed.set_finite_element(mesh.convex_index(),
 				getfem::fem_descriptor(FEM_DISC));
+  mf_printed_vm.set_finite_element(mesh.convex_index(),
+				   getfem::fem_descriptor(FEM_DISC));
   plain_vector W(mf_printed.nb_dof());
   getfem::interpolation(mf_u(), mf_printed, U, W);
   mf_printed.write_to_file(datafilename + ".meshfem", true);
+  mf_printed_vm.write_to_file(datafilename + ".meshfem_vm", true);
   gmm::vecsave(datafilename + ".U", W);
+
+  plain_vector VM(mf_printed_vm.nb_dof());
+  getfem::interpolation_von_mises(mf_printed, mf_printed_vm, W, VM);
+  gmm::vecsave(datafilename + ".VM", VM);
 
   return (iteration);
 }

@@ -139,7 +139,7 @@ namespace getfem {
     
     base_vector val(ms.m.dim());
     size_type cnt = 0;
-    fem_interpolation_context ctx(ms.pgt, pfp, 0, G, ms.cv);
+    fem_interpolation_context ctx(ms.pgt, pfp, 0, G, ms.cv, size_type(-1));
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i, ++cnt) {
       ms.nodes[i].pt.resize(defdata->pmf->get_qdim());
       ctx.set_ii(cnt);
@@ -367,7 +367,8 @@ namespace getfem {
   }
 
   /* isosurface computations */
-  void slicer_isovalues::prepare(size_type cv, const mesh_slicer::cs_nodes_ct& nodes, 
+  void slicer_isovalues::prepare(size_type cv,
+				 const mesh_slicer::cs_nodes_ct& nodes, 
 				 const dal::bit_vector& nodes_index) {
     pt_in.clear(); pt_bin.clear();
     std::vector<base_node> refpts(nodes.size());
@@ -385,7 +386,7 @@ namespace getfem {
     //cerr << "cv=" << cv << ", val=" << val << ", coeff=" << coeff << endl;
     base_vector v(1); 
     fem_interpolation_context ctx(mfU->pmf->linked_mesh().trans_of_convex(cv),
-				  pfp, 0, G, cv);
+				  pfp, 0, G, cv, size_type(-1));
     for (dal::bv_visitor i(nodes_index); !i.finished(); ++i) {
       v[0] = 0;
       ctx.set_ii(i);

@@ -50,9 +50,13 @@ namespace getfem
   }
   
   size_type fem_interpolation_context::convex_num() const { 
-    if (convex_num_ == size_type(-1)) 
-      DAL_INTERNAL_ERROR(""); 
+    if (convex_num_ == size_type(-1)) DAL_INTERNAL_ERROR(""); 
     return convex_num_; 
+  }
+
+  size_type fem_interpolation_context::face_num() const { 
+    if (face_num_ == size_type(-1)) DAL_INTERNAL_ERROR(""); 
+    return face_num_; 
   }
 
   void fem_interpolation_context::base_value(base_tensor& t,
@@ -167,24 +171,25 @@ namespace getfem
 
   fem_interpolation_context::fem_interpolation_context() :
     bgeot::geotrans_interpolation_context(), pf_(0), pfp_(0), 
-    convex_num_(size_type(-1)) {}
+    convex_num_(size_type(-1)), face_num_(size_type(-1)) {}
   fem_interpolation_context::fem_interpolation_context
   (bgeot::pgeotrans_precomp pgp__, pfem_precomp pfp__, size_type ii__, 
-   const base_matrix& G__, size_type convex_num__) : 
+   const base_matrix& G__, size_type convex_num__, size_type face_num__) : 
     bgeot::geotrans_interpolation_context(pgp__,ii__,G__), 
-    convex_num_(convex_num__) { set_pfp(pfp__); }
+    convex_num_(convex_num__), face_num_(face_num__) { set_pfp(pfp__); }
   fem_interpolation_context::fem_interpolation_context
   (bgeot::pgeometric_trans pgt__, pfem_precomp pfp__, size_type ii__, 
-   const base_matrix& G__, size_type convex_num__) :
+   const base_matrix& G__, size_type convex_num__, size_type face_num__) :
     bgeot::geotrans_interpolation_context(pgt__,&pfp__->get_point_tab(),
 					  ii__, G__),
-    convex_num_(convex_num__)
+    convex_num_(convex_num__), face_num_(face_num__)
   { set_pfp(pfp__); }
   fem_interpolation_context::fem_interpolation_context(
    bgeot::pgeometric_trans pgt__, pfem pf__,
-   const base_node& xref__,const base_matrix& G__, size_type convex_num__) :
+   const base_node& xref__,const base_matrix& G__, size_type convex_num__,
+   size_type face_num__) :
     bgeot::geotrans_interpolation_context(pgt__,xref__,G__),
-    pf_(pf__), pfp_(0), convex_num_(convex_num__) {}
+    pf_(pf__), pfp_(0), convex_num_(convex_num__), face_num_(face_num__) {}
  
   void virtual_fem::real_base_value(const fem_interpolation_context &c, 
 				    base_tensor &t, bool withM) const

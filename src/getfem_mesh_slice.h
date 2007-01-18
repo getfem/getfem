@@ -235,7 +235,7 @@ namespace getfem {
             *cit = U[(*it)*qqdim+qq];
         }
 	fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),
-				      pfp,0,G,cv);
+				      pfp,0,G,cv, size_type(-1));
         for (size_type j=0; j < refpts.size(); ++j) {
 	  ctx.set_ii(j);
           for (size_type qq = 0; qq < qqdim; ++qq) {

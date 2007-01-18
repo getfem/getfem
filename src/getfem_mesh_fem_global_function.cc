@@ -380,7 +380,8 @@ namespace getfem {
     return false;
   }
 
-  bool interpolator_on_mesh_fem::eval(const base_node pt, base_vector &val, base_matrix &grad) const {
+  bool interpolator_on_mesh_fem::eval(const base_node pt, base_vector &val,
+				      base_matrix &grad) const {
     base_node ptref;
     size_type cv;
     base_vector coeff;
@@ -391,9 +392,11 @@ namespace getfem {
 	mf.linked_mesh().trans_of_convex(cv);
       base_matrix G; 
       vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
-      fem_interpolation_context fic(pgt, mf.fem_of_element(cv), ptref, G, cv);
+      fem_interpolation_context fic(pgt, mf.fem_of_element(cv), ptref, G, cv,
+				    size_type(-1));
       coeff.resize(mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+		coeff);
       val.resize(q);
       mf.fem_of_element(cv)->interpolation(fic, coeff, val, q);
       grad.resize(q, N);

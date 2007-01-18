@@ -645,6 +645,7 @@ namespace getfem {
     pfem pf_;               /// current fem 
     pfem_precomp pfp_;      /// optional fem_precomp_ (speed up the computations)
     size_type convex_num_;  /// the convex number (info needed by some specific FEMs)
+    size_type face_num_;    /// Face number for boundary integration
   public:
     /// true if a fem_precomp_ has been supplied.
     bool have_pfp() const { return pfp_ != 0; }
@@ -668,6 +669,8 @@ namespace getfem {
     const pfem pf() const { return pf_; }
     /** get the current convex number */
     size_type convex_num() const;
+    /** get the current face number */
+    size_type face_num() const;
     /** get the current fem_precomp_ */
     pfem_precomp pfp() const { return pfp_; }
     void set_pfp(pfem_precomp newpfp);
@@ -676,16 +679,19 @@ namespace getfem {
     fem_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
 			      pfem_precomp pfp__, size_type ii__, 
 			      const base_matrix& G__, 
-			      size_type convex_num__);
+			      size_type convex_num__,
+			      size_type face_num__ = size_type(-1));
     fem_interpolation_context(bgeot::pgeometric_trans pgt__, 
 			      pfem_precomp pfp__, size_type ii__, 
 			      const base_matrix& G__, 
-			      size_type convex_num__);
+			      size_type convex_num__,
+			      size_type face_num__ = size_type(-1));
     fem_interpolation_context(bgeot::pgeometric_trans pgt__,
 			      pfem pf__,
 			      const base_node& xref__,
 			      const base_matrix& G__,
-			      size_type convex_num__);
+			      size_type convex_num__,
+			      size_type face_num__ = size_type(-1));
   };
 
   template <typename CVEC, typename VVEC>

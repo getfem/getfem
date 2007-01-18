@@ -181,7 +181,8 @@ namespace getfem {
       bgeot::vectors_to_base_matrix
 	(G, mf.linked_mesh().points_of_convex(cv));
       fictx = fem_interpolation_context
-	(mf.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv);
+	(mf.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv,
+	 size_type(-1));
       fictx_cv = cv;
     }
     fictx.set_xref(ptr);

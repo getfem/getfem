@@ -279,7 +279,8 @@ namespace getfem {
       if (pf_t->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "won't interpolate on a vector FEM... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
-      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+				    size_type(-1));
       itdof = mf_target.ind_dof_of_element(cv).begin();
       const mesh_fem::ind_dof_ct &idct
 	= mf_source.ind_dof_of_element(cv);
@@ -350,7 +351,8 @@ namespace getfem {
       if (pf_s->need_G()) 
 	bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
 
-      fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv);
+      fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv,
+				    size_type(-1));
       if (version == 0) {
         coeff.resize(qqdim);
         for (size_type qq=0; qq < qqdim; ++qq) {

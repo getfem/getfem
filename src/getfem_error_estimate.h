@@ -115,7 +115,8 @@ namespace getfem {
 
       bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv1.cv()));
       
-      fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1.cv());
+      fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1.cv(),
+				     size_type(-1));
 
       coeff1.resize(mf.nb_dof_of_element(cv1.cv()));
       gmm::copy(gmm::sub_vector(U,
@@ -162,9 +163,11 @@ namespace getfem {
 	  bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
 
 	  gic.init(m.points_of_convex(cv2), pgt2);
-	  fem_interpolation_context ctx2(pgt2, pfp2, 0, G2, cv2);
+	  fem_interpolation_context ctx2(pgt2, pfp2, 0, G2, cv2,
+					 size_type(-1));
  	  fem_interpolation_context ctx3(pgt2, pf2,
- 					 base_node(pgt2->dim()), G2, cv2);
+ 					 base_node(pgt2->dim()), G2, cv2,
+					 size_type(-1));
 
 	  for (unsigned ii=0; ii < pai1->nb_points_on_face(f1); ++ii) {
 	    ctx1.set_ii(pai1->ind_first_point_on_face(f1) + ii);
