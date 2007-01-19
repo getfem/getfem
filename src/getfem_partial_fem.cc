@@ -65,7 +65,7 @@ namespace getfem {
   { DAL_THROW(internal_error, "No base values, real only element."); }
 
   void partial_fem::real_base_value(const fem_interpolation_context &c,
-				      base_tensor &t, bool) const {
+				    base_tensor &t, bool) const {
     bgeot::multi_index mi(2);
     mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);

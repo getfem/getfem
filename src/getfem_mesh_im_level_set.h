@@ -52,8 +52,9 @@ namespace getfem {
     mesh_im cut_im; /* stores an im only for convexes who are crossed
 		       by a levelset */
 
-    dal::bit_vector ignored_im; /* convex list whose integration method is ignored
-				   (for ex. because INTEGRATE_INSIDE and the convex
+    dal::bit_vector ignored_im; /* convex list whose integration method is
+				   ignored (for instance because
+				   INTEGRATE_INSIDE and the convex
 				   is outside etc.) */
     std::vector<pintegration_method> build_methods;
 

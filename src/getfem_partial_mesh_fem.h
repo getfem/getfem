@@ -23,9 +23,11 @@
 /**@file getfem_partial_mesh_fem.h
    @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 08, 2006.
-   @brief a subclass of getfem::mesh_fem which allows to eliminate a number of dof of the original mesh_fem.
+   @brief a subclass of getfem::mesh_fem which allows to eliminate a number
+          of dof of the original mesh_fem.
 
-   This elimination is done via the pseudo-fem getfem::partial_fem , hence it is not very efficient.
+   This elimination is done via the pseudo-fem getfem::partial_fem,
+   hence it is not very efficient.
 */
 
 #ifndef GETFEM_PARTIAL_MESH_FEM_H__
@@ -68,9 +70,11 @@ namespace getfem {
   };
 
   /**
-     @brief Return a selection of dof who contribute significantly to the mass-matrix that would be computed with mf and the integration method mim.
+     @brief Return a selection of dof who contribute significantly to the
+     mass-matrix that would be computed with mf and the integration method mim.
 
-     P represents the dimension on what the integration method operates (default mf.linked_mesh().dim()).
+     P represents the dimension on what the integration method operates
+     (default mf.linked_mesh().dim()).
 
      An example of use can be found in the contrib/xfem_contact/ directory.
    */

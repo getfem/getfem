@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2006-2006 Yves Renard
+// Copyright (C) 2007-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -19,31 +19,35 @@
 // USA.
 //
 //========================================================================
-/**@file getfem_partial_fem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-   @date June 7, 2006.
-   @brief Implement a special fem which disables some dof of another fem.
+
+/**@file getfem_trace_mesh_fem_level_set.h
+   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>,
+   @date January 19, 2007.
+   @brief a subclass of getfem::mesh_fem which allows to represent a subspace
+   of a fem on a level-set. Different strategies should be provided.
 */
 
+#ifndef GETFEM_TRACE_MESH_FEM_LEVEL_SET_H__
+#define GETFEM_TRACE_MESH_FEM_LEVEL_SET_H__
 
-#ifndef GETFEM_PARTIAL_FEM_H__
-#define GETFEM_PARTIAL_FEM_H__
-
-#include <getfem_fem.h>
+#include <getfem_mesh_fem.h>
+#include <getfem_mesh_im.h>
+#include <getfem_mesh_level_set.h>
 
 namespace getfem {
-  
-  /** @internal FEM used in parital_mesh_fem objects. */
-  class partial_fem : public virtual_fem {
+
+  /** @internal FEM used in  objects. */
+  class sub_space_fem : public virtual_fem {
     pfem org_fem;
-    dal::bit_vector selected_dofs;
-    std::vector<unsigned> ind;
     size_type cv;
+    std::vector<unsigned> ind;
+    base_matrix B;
     
   public:
 
-    partial_fem(pfem pf,const dal::bit_vector &s, size_type cv_ = 0)
-      : org_fem(pf), selected_dofs(s), cv(cv_) { init(); }
+    sub_space_fem(pfem pf, const std::vector<unsigned> &indg,
+		  const base_matrix &B_, size_type cv_)
+      : org_fem(pf), cv(cv_), ind(indg), B(B_) { init(); }
     size_type index_of_global_dof(size_type, size_type j) const;
     void init();
     void valid();
@@ -60,7 +64,38 @@ namespace getfem {
   };
 
 
+  /**
+     a subclass of mesh_fem which allows to represent a subspace of a trace
+     of a fem on a level-set.
+  */
+  class trace_mesh_fem_level_set : public mesh_fem, public boost::noncopyable {
+  protected :
+    const mesh_level_set &mls;
+    const mesh_fem &mf;
+    mutable std::vector<pfem> build_methods;
+    mutable bool is_adapted;
+    void clear_build_methods();
 
+  public :
+    void update_from_context(void) const { is_adapted = false; }
+
+    /** build the mesh_fem keeping only the dof of the original
+	mesh_fem which are listed in kept_dof. */
+    void adapt(void);
+    void clear(void);
+
+    void receipt(const MESH_CLEAR &);
+    void receipt(const MESH_DELETE &);
+    
+    size_type memsize() const {
+      return mesh_fem::memsize(); // + ... ;
+    }
+    
+    trace_mesh_fem_level_set(const mesh_level_set &me, const mesh_fem &mef);
+
+    ~trace_mesh_fem_level_set() { clear_build_methods(); }
+  };
+  
 }  /* end of namespace getfem.                                            */
 
 #endif
