@@ -3,7 +3,7 @@
 % parameters for program xfem_dirichlet                                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-QUAD = 1;
+QUAD = 0;
 N = 2;
 RADIUS = 0.47;             % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
@@ -19,6 +19,7 @@ if (N == 1)
   FEM = 'FEM_PK(1,1)';      % Finite element method for the unknown.
   FEM_RHS = FEM;            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(1,1)'; % Finite element method for multipliers
+  FEM_MULT_DEGREE = 1; % Degree for multipliers definition
   OK = 1;
 end;
 
@@ -30,11 +31,12 @@ if (N == 2 && QUAD)
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
   FEM_RHS = 'FEM_QK(2,2)';     % Finite element method for the rhs
   FEM_MULT = 'FEM_QK(2,1)'; % Finite element method for multipliers
+  FEM_MULT_DEGREE = 1; % Degree for multipliers definition
   OK = 1;
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[16,16]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
@@ -43,6 +45,7 @@ if (N == 2 && ~QUAD)
 %  FEM = 'FEM_P1_PIECEWISE_LINEAR_BUBBLE';
   FEM_RHS = 'FEM_PK(2,2)';  % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
+  FEM_MULT_DEGREE = 1; % Degree for multipliers definition
   OK = 1;
 end;
 
@@ -53,6 +56,7 @@ if (N == 3 && ~QUAD)
   FEM = 'FEM_PK(3,2)';      % Finite element method for the unknown.
   FEM_RHS = FEM;            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(3,1)'; % Finite element method for multipliers
+  FEM_MULT_DEGREE = 1; % Degree for multipliers definition
    OK = 1;
 end;
 

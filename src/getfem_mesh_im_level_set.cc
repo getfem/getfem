@@ -26,30 +26,27 @@
 
 namespace getfem {
 
-  void mesh_im_level_set::update_from_context(void) const { 
-    is_adapted = false; 
-  }
+  void mesh_im_level_set::update_from_context(void) const
+  { is_adapted = false; }
 
   void mesh_im_level_set::receipt(const MESH_CLEAR &)
-  { clear(); is_adapted = false; 
-  }
+  { clear(); is_adapted = false; }
 
   void mesh_im_level_set::receipt(const MESH_DELETE &)
-  { clear(); is_adapted = false; 
+  { clear(); is_adapted = false; }
 
-  }
   void mesh_im_level_set::clear_build_methods() {
     for (size_type i = 0; i < build_methods.size(); ++i)
       del_stored_object(build_methods[i]);
     build_methods.clear();
     cut_im.clear();
   }
+
   void mesh_im_level_set::clear(void) {
     mesh_im::clear();
     clear_build_methods();
     is_adapted = false;
-  }
-  
+  }  
 
   mesh_im_level_set::mesh_im_level_set(mesh_level_set &me,
 				       int integrate_where_, 
@@ -111,7 +108,8 @@ namespace getfem {
     if (integrate_where != (INTEGRATE_ALL)) {
       for (dal::bv_visitor scv(msh.convex_index()); !scv.finished(); ++scv) {
 	B = dal::mean_value(msh.points_of_convex(scv));
-	convexes_arein[scv] = is_point_in_selected_area(mesherls0, mesherls1, B);
+	convexes_arein[scv]
+	  = is_point_in_selected_area(mesherls0, mesherls1, B);
       }
     }
     
@@ -144,18 +142,19 @@ namespace getfem {
       if (base_singular_pim && mls.crack_tip_convexes().is_in(cv)) {
 	ptsing.resize(0);
 	unsigned sing_ls = unsigned(-1);
-	
-	// cout << "cv no " << cv << endl;
 
 	for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils)
 	  if (mls.get_level_set(ils)->has_secondary()) {
 	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
-	      if (gmm::abs((mesherls0[ils])(msh.points_of_convex(i)[ipt])) < 1E-10
-		  && gmm::abs((mesherls1[ils])(msh.points_of_convex(i)[ipt])) < 1E-10) {
+	      if (gmm::abs((mesherls0[ils])(msh.points_of_convex(i)[ipt]))
+		  < 1E-10
+		  && gmm::abs((mesherls1[ils])(msh.points_of_convex(i)[ipt]))
+		  < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
 		if (sing_ls != ils)
 		  DAL_THROW(failure_error,
-			    "Two singular point in one sub element. To be done");
+			    "Two singular point in one sub element. "
+			    "To be done.");
 		ptsing.push_back(ipt);
 	      }
 	    }
@@ -164,7 +163,8 @@ namespace getfem {
 	
 	if (ptsing.size() > 0) {
 	  std::stringstream sts;
-	  sts << "IM_QUASI_POLAR(" << name_of_int_method(base_singular_pim) << ", " << ptsing[0];
+	  sts << "IM_QUASI_POLAR(" << name_of_int_method(base_singular_pim)
+	      << ", " << ptsing[0];
 	  if (ptsing.size() > 1) sts << ", " <<  ptsing[1];
 	  sts << ")";
 	  //cout << "Singular int method : " << sts.str() << endl;
@@ -174,8 +174,8 @@ namespace getfem {
 
       base_matrix G2;
       vectors_to_base_matrix(G2, linked_mesh().points_of_convex(cv));
-      bgeot::geotrans_interpolation_context cc(linked_mesh().trans_of_convex(cv),
-					       pai->point(0), G2);
+      bgeot::geotrans_interpolation_context
+	cc(linked_mesh().trans_of_convex(cv), pai->point(0), G2);
 
       if (integrate_where & (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) {
 		
@@ -192,7 +192,8 @@ namespace getfem {
 
 	  /*if (integrate_where == INTEGRATE_INSIDE) {
 	    cc.set_xref(c.xreal());
-	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\t" << pai->coeff(j) * gmm::abs(J) << "\n";
+	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\t"
+	    << pai->coeff(j) * gmm::abs(J) << "\n";
 	    }*/
 	}
       }
@@ -218,9 +219,7 @@ namespace getfem {
 	} else {
 	  B = dal::mean_value(msh.points_of_face_of_convex(i, f));
 	  if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
-	  // cout << "pgt->convex_ref()->is_in(B = " << pgt->convex_ref()->is_in(B) << endl;
 	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi) {
-	    // cout << "gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) = " << gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) << endl;
 	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
 	  }
 	  if (ff == short_type(-1)) DAL_INTERNAL_ERROR("");
@@ -244,22 +243,20 @@ namespace getfem {
 	    un /= gmm::vect_norm2(un);
 	    gmm::mult(cc.B(), un, up);
 	    nnup = gmm::vect_norm2(up);
-// 	    cout << "adding coeff " << pai->coeff_on_face(f, j)
-// 	      * gmm::abs(c.J()) * nup * nnup << endl;
 	  }
 	  new_approx->add_point(c.xreal(), pai->coeff_on_face(f, j)
 				* gmm::abs(c.J()) * nup * nnup, ff);
-
 
 	  /*if (integrate_where == INTEGRATE_BOUNDARY) {
 	    static double ssum = 0.0;
 	    ssum += pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup;
 	    cout << "add crack point " << c.xreal() << " : "
-		 << pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup << " sum = " << ssum << endl;
+		 << pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup
+		 << " sum = " << ssum << endl;
 	  }*/
 	  /*if (integrate_where == INTEGRATE_BOUNDARY) {
 	    cc.set_xref(c.xreal());
-	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\n"; // << cc.xreal()[2] << "\n";
+	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\n";
 	  }
 	  */
 	} 
@@ -280,7 +277,6 @@ namespace getfem {
       delete new_approx;
     }
   }
-
 
   void mesh_im_level_set::adapt(void) {
     context_check();
@@ -308,7 +304,8 @@ namespace getfem {
 	      mesherls1[i] = mls.get_level_set(i)->mls_of_convex(cv, 1, false);
 	  }
 
-	  base_node B(dal::mean_value(linked_mesh().trans_of_convex(cv)->convex_ref()->points()));
+	  base_node B(dal::mean_value(linked_mesh().trans_of_convex(cv)
+				      ->convex_ref()->points()));
 	  if (!is_point_in_selected_area(mesherls0, mesherls1, B))
 	    ignored_im.add(cv);
 	}
