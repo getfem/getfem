@@ -126,7 +126,7 @@ namespace getfem {
     gmm::linalg_traits<gmm::rsvector<bool> >::const_iterator
       it = gmm::vect_const_begin(pairs[i]),
       ite = gmm::vect_const_end(pairs[i]);
-    for (; it != ite; ++it) if (it.index() != i) pairs[i].sup(it.index());
+    for (; it != ite; ++it) if (it.index() != i) pairs[it.index()].sup(i);
     gmm::clear(pairs[i]);
   }
   
@@ -156,11 +156,13 @@ namespace getfem {
 	 !cv.finished(); ++cv) {
       
       if (mls.is_convex_cut(cv)) {
-      pts.resize(0);
-	
+	pts.resize(0);
+	cout << "scanning cv " << cv << endl;
 	// Building a set of points of the intersection of the element with
 	// the level-set.
 	const mesh &msh(mls.mesh_of_convex(cv));
+	cout << "nbsubcv : " << msh.convex_index().card() << endl;
+
 	bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
 	bgeot::pgeometric_trans pgt2
 	  = msh.trans_of_convex(msh.convex_index().first_true());
@@ -206,6 +208,9 @@ namespace getfem {
 	    }
 	  }
 	}
+	
+	if (pts.size() == 0) continue;
+	
 	// Selecting the right number of points
 	std::vector<size_type> selection;
 	cout << "begining selection\n";
@@ -245,19 +250,23 @@ namespace getfem {
 	for (size_type i = 0; i < selection.size(); ++i) { 
 	  c.set_xref(pts[selection[i]]);
 	  c.base_value(t);
+	  cout << "t.size() = " << t.size() << endl;
+	  cout << "t = " << t << endl;
 	  
 	  size_type n1 = size_type(-1), n2(0);
 	  scalar_type y1(0), y2(0);
 	  
 	  for (size_type j = 0; j < pfcv->nb_dof(cv); ++j) {
-	    if (t[j] > y1) { n1 = j; y1 = t[j]; }
+	    if (t[j] > y1) { n2 = n1; y2 = y1; n1 = j; y1 = t[j]; }
 	    else if (t[j] > y2) { n2 = j; y2 = t[j]; }
 	  }
 	  if (n1 == size_type(-1)) DAL_INTERNAL_ERROR("");
 	  size_type nd1 = mf.ind_dof_of_element(cv)[n1];
 	  size_type nd2 = mf.ind_dof_of_element(cv)[n2];
 	  
-	  if (n2 < scalar_type(1e-4)) pairs(nd1, nd1) = true;
+	  cout << "n1 = " << n1 << "nd1 = " << nd1 << " y1 = " << y1 << endl;
+	  cout << "n2 = " << n2 << "nd2 = " << nd2 << " y2 = " << y2 << endl;
+	  if (y2 < scalar_type(1e-4)) pairs(nd1, nd1) = true;
 	  else pairs(nd1, nd2) = pairs(nd2, nd1) = true;
 	}
 	
@@ -281,30 +290,43 @@ namespace getfem {
 
     bool ttouched;
     size_type nbdof(0);
+
+
+    for (size_type i = 0; i < mf.nb_dof(); ++i)
+      if (pairs(i,i) == true) {
+	cout << "adding singleton " << i << " : " << nbdof << endl;
+	indpairing[i] = nbdof++;
+	clear_pairs(pairs, i);
+      }
+
     do {
       int nb_nnz(0), lasti(0), lastj(0);
       ttouched = false;
+
       for (size_type i = 0; i < mf.nb_dof(); ++i) { // to be optimized ... 
 	if (gmm::nnz(pairs[i]) > 0) {
 	  lasti = i;
 	  lastj = gmm::vect_const_begin(pairs[i]).index();
 	  ++nb_nnz;
 	  if (pairs(i,i) == true) {
-	    indpairing[i] = nbdof++;
-	    ttouched = true;
-	    clear_pairs(pairs, i);
+	    DAL_INTERNAL_ERROR("");
 	  }
 	  else {
 	    if (gmm::nnz(pairs[i]) == 1) {
+	      cout << "adding pair (" << i << ", " << lastj << ") : "
+		   << nbdof << endl;
 	      indpairing[lasti] = indpairing[lastj] = nbdof++;
 	      clear_pairs(pairs, lasti); clear_pairs(pairs, lastj);
 	      ttouched = true;
 	    }
+	    else { cout << "pairs["<<i<<"] = " << pairs[i] << endl; }
 	  }
 	  
 	}
       }
       if (nb_nnz > 0 && !ttouched) {
+	cout << "addingg pair (" << lasti << ", " << lastj << ") : "
+	     << nbdof << endl;
 	indpairing[lasti] = indpairing[lastj] = nbdof++;
 	clear_pairs(pairs, lasti); clear_pairs(pairs, lastj);
 	ttouched = true;
@@ -334,16 +356,25 @@ namespace getfem {
 	      indlist2[it - glob_dof.begin()] = i;
 	  }
 	}
-
-	base_matrix B(glob_dof.size(), mf.nb_dof_of_element(cv));
-	for (size_type i = 0; i < glob_dof.size(); ++i) {
-	  B(i, indlist1[i]) = scalar_type(1);
-	  B(i, indlist2[i]) = scalar_type(1);
-	}
 	
-	pfem pfnew = new sub_space_fem(mf.fem_of_element(cv), glob_dof, B, cv);
-	build_methods.push_back(pfnew);
-	set_finite_element(cv, pfnew);
+	if (glob_dof.size()) {
+	  base_matrix B(glob_dof.size(), mf.nb_dof_of_element(cv));
+	  for (size_type i = 0; i < glob_dof.size(); ++i) {
+	    B(i, indlist1[i]) = scalar_type(1);
+	    B(i, indlist2[i]) = scalar_type(1);
+	  }
+	  
+	  cout << "glob = " << glob_dof << endl;
+	  cout << "B = " << B << endl;
+	  
+	  pfem pfnew = new sub_space_fem(mf.fem_of_element(cv), glob_dof,
+					 B, cv);
+	  dal::add_stored_object(new special_tracemf_key(pfnew), pfnew,
+				 pfnew->ref_convex(0),
+				 pfnew->node_tab(0));
+	  build_methods.push_back(pfnew);
+	  set_finite_element(cv, pfnew);
+	}
       }
     }
     is_adapted = true; touch();

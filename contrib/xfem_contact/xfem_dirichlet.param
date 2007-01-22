@@ -36,7 +36,7 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[5,5]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
