@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
 
     
     getfem::trace_mesh_fem_level_set
-      mf_mult(mls, pre_mf_mult,
+      mf_mult(mlsdown, pre_mf_mult,
 	      PARAM.int_value("FEM_MULT_DEGREE",
 			      "Degree for multipliers definition"));
     mf_mult.adapt();
@@ -340,6 +340,7 @@ int main(int argc, char *argv[]) {
     gmm::copy(brick_laplacian.get_solution(MS), U);
     plain_vector LAMBDA(nb_dof_mult);
     gmm::copy(brick_constraint.get_mult(MS), LAMBDA);
+    // cout << "multipliers : " << LAMBDA << endl;
 
     // interpolation of the solution on mf_rhs
     plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs);

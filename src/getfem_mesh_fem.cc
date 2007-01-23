@@ -275,6 +275,7 @@ namespace getfem {
 	  size_type num = pf->index_of_global_dof(cv, i);
 	  if (!(encountered_global_dof[num])) {
 	    ind_global_dof[num] = nbdof;
+	    // cout << "Global dof " << num << " is numbered " << nbdof <<endl;
 	    nbdof += Qdim / pf->target_dim();
 	    encountered_global_dof[num] = true;
 	  }

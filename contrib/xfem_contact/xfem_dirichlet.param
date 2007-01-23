@@ -24,7 +24,7 @@ if (N == 1)
 end;
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[201,201]';
+  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[21,21]';
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
   FEM = 'FEM_QK(2,2)';      % Finite element method for the unknown.
@@ -36,14 +36,14 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[5,5]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[200,200]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
-  FEM = 'FEM_PK(2,2)';      % Finite element method for the unknown.
+  FEM = 'FEM_PK(2,1)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,2)';
 %  FEM = 'FEM_P1_PIECEWISE_LINEAR_BUBBLE';
-  FEM_RHS = 'FEM_PK(2,2)';  % Finite element method for the rhs
+  FEM_RHS = 'FEM_PK(2,1)';  % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
   FEM_MULT_DEGREE = 1; % Degree for multipliers definition
   OK = 1;

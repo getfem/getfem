@@ -73,6 +73,7 @@ namespace getfem {
     c0.base_value(val_e);
     
     t.mat_transp_reduction(val_e, B, 0);
+    // cout << "elt " << c.convex_num() << " t = " << t << endl;
   }
 
   void sub_space_fem::real_grad_base_value(const fem_interpolation_context &c,
@@ -157,12 +158,11 @@ namespace getfem {
       
       if (mls.is_convex_cut(cv)) {
 	pts.resize(0);
-	cout << "scanning cv " << cv << endl;
+	
 	// Building a set of points of the intersection of the element with
 	// the level-set.
 	const mesh &msh(mls.mesh_of_convex(cv));
-	cout << "nbsubcv : " << msh.convex_index().card() << endl;
-
+	
 	bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
 	bgeot::pgeometric_trans pgt2
 	  = msh.trans_of_convex(msh.convex_index().first_true());
@@ -188,7 +188,7 @@ namespace getfem {
 		lisin = lisin && (gmm::abs((mesherls0[ils])
 			(msh.points_of_face_of_convex(i, f)[ipt])) < 1E-7);
 		if (mls.get_level_set(ils)->has_secondary())
-		  lisin = lisin && ((mesherls1[i])
+		  lisin = lisin && ((mesherls1[ils])
 			(msh.points_of_face_of_convex(i, f)[ipt]) < -1E-7);
 	      }
 	      if (lisin) break;
@@ -203,7 +203,6 @@ namespace getfem {
 	    
 	    for (size_type j=0; j<pf->structure(0)->nb_points_of_face(f);++j) {
 	      c.set_xref(pf->node_convex(0).points_of_face(f)[j]);
-	      cout << "Adding to point stock " << c.xreal() << endl;
 	      pts.push_back(c.xreal());
 	    }
 	  }
@@ -213,7 +212,6 @@ namespace getfem {
 	
 	// Selecting the right number of points
 	std::vector<size_type> selection;
-	cout << "begining selection\n";
 	for (size_type k = 0; k < pf->structure(0)->nb_points_of_face(0);++k) {
 	  size_type ipt = size_type(-1);
 	  scalar_type maxdmin = scalar_type(0);
@@ -231,8 +229,7 @@ namespace getfem {
 	  
 	  if (ipt ==  size_type(-1))
 	    DAL_THROW(failure_error, "Trace fem: not enought points");
-	  cout << "adding " << pts[ipt] << endl;
-	  selection.push_back(ipt);
+      	  selection.push_back(ipt);
 	}
 	
 
@@ -250,9 +247,7 @@ namespace getfem {
 	for (size_type i = 0; i < selection.size(); ++i) { 
 	  c.set_xref(pts[selection[i]]);
 	  c.base_value(t);
-	  cout << "t.size() = " << t.size() << endl;
-	  cout << "t = " << t << endl;
-	  
+	  	  
 	  size_type n1 = size_type(-1), n2(0);
 	  scalar_type y1(0), y2(0);
 	  
@@ -264,9 +259,7 @@ namespace getfem {
 	  size_type nd1 = mf.ind_dof_of_element(cv)[n1];
 	  size_type nd2 = mf.ind_dof_of_element(cv)[n2];
 	  
-	  cout << "n1 = " << n1 << "nd1 = " << nd1 << " y1 = " << y1 << endl;
-	  cout << "n2 = " << n2 << "nd2 = " << nd2 << " y2 = " << y2 << endl;
-	  if (y2 < scalar_type(1e-4)) pairs(nd1, nd1) = true;
+       	  if (y2 < scalar_type(1e-4)) pairs(nd1, nd1) = true;
 	  else pairs(nd1, nd2) = pairs(nd2, nd1) = true;
 	}
 	
@@ -294,7 +287,7 @@ namespace getfem {
 
     for (size_type i = 0; i < mf.nb_dof(); ++i)
       if (pairs(i,i) == true) {
-	cout << "adding singleton " << i << " : " << nbdof << endl;
+	// cout << "adding singleton " << i << " : " << nbdof << endl;
 	indpairing[i] = nbdof++;
 	clear_pairs(pairs, i);
       }
@@ -313,20 +306,20 @@ namespace getfem {
 	  }
 	  else {
 	    if (gmm::nnz(pairs[i]) == 1) {
-	      cout << "adding pair (" << i << ", " << lastj << ") : "
-		   << nbdof << endl;
+	      // cout << "adding pair (" << i << ", " << lastj << ") : "
+	      //      << nbdof << endl;
 	      indpairing[lasti] = indpairing[lastj] = nbdof++;
 	      clear_pairs(pairs, lasti); clear_pairs(pairs, lastj);
 	      ttouched = true;
 	    }
-	    else { cout << "pairs["<<i<<"] = " << pairs[i] << endl; }
+	    // else { cout << "pairs["<<i<<"] = " << pairs[i] << endl; }
 	  }
 	  
 	}
       }
       if (nb_nnz > 0 && !ttouched) {
-	cout << "addingg pair (" << lasti << ", " << lastj << ") : "
-	     << nbdof << endl;
+	// cout << "addingg pair (" << lasti << ", " << lastj << ") : "
+	//      << nbdof << endl;
 	indpairing[lasti] = indpairing[lastj] = nbdof++;
 	clear_pairs(pairs, lasti); clear_pairs(pairs, lastj);
 	ttouched = true;
@@ -364,10 +357,7 @@ namespace getfem {
 	    B(i, indlist2[i]) = scalar_type(1);
 	  }
 	  
-	  cout << "glob = " << glob_dof << endl;
-	  cout << "B = " << B << endl;
-	  
-	  pfem pfnew = new sub_space_fem(mf.fem_of_element(cv), glob_dof,
+      	  pfem pfnew = new sub_space_fem(mf.fem_of_element(cv), glob_dof,
 					 B, cv);
 	  dal::add_stored_object(new special_tracemf_key(pfnew), pfnew,
 				 pfnew->ref_convex(0),
