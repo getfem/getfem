@@ -132,6 +132,7 @@ nobase_include_HEADERS =                   \
 	gmm_blas_interface.h               \
 	gmm_lapack_interface.h             \
 	gmm_condition_number.h             \
+	gmm_least_squares_cg.h             \
 	gmm_opt.h                          \
 	linkmsg.h
 
