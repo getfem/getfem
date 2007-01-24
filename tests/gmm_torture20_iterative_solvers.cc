@@ -46,6 +46,13 @@ void print_stat(const PS &ps, const char *name) {
   cout << endl;
 }
 
+struct LEAST_SQUARE_CG {
+  template <typename MAT, typename VECT1, typename VECT2, typename PRECOND>
+  void operator()(const MAT &m, VECT1 &v1, const VECT2 &v2, const PRECOND &,
+		  gmm::iteration &iter) const
+  { gmm::least_squares_cg(m, v1, v2, iter); }
+};
+
 struct BICGSTAB {
   template <typename MAT, typename VECT1, typename VECT2, typename PRECOND>
   void operator()(const MAT &m, VECT1 &v1, const VECT2 &v2, const PRECOND &P,
@@ -158,6 +165,9 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
 
   if (sizeof(R) > 4 || m < 15) {
     
+    if (print_debug) cout << "\nLeast square CG with no preconditionner\n";
+    do_test(LEAST_SQUARE_CG(), m1, v1, v2, P1, cond);
+
     if (print_debug) cout << "\nBicgstab with no preconditionner\n";
     do_test(BICGSTAB(), m1, v1, v2, P1, cond);
     
@@ -248,6 +258,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     cout << ", size = " << m << " base type : " << typeid(T).name() << endl;
 
     cout.precision(3);
+    print_stat(LEAST_SQUARE_CG(), "solver least square cg");
     print_stat(BICGSTAB(), "solver bicgstab");
     print_stat(GMRES(), "solver gmres");
     print_stat(QMR(), "solver qmr");

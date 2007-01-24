@@ -1,0 +1,279 @@
+
+# -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
+$getfem_root = ".";
+$MAJOR_VERSION = "2";
+$MINOR_VERSION = "02";
+# $DATE_VERSION = -`date +%Y%m%d`;
+$DATE_VERSION = "";
+
+
+$gmm_files = "dal_std.h dal_except.h dal_basic.h dal_algobase.h dal_ref.h";
+$gmm_files_bis = "\\\n          dal_std.h\\\n          dal_basic.h\\\n          dal_except.h\\\n          dal_algobase.h\\\n          dal_ref.h";
+open F, "(cd $getfem_root/src && ls gmm*.h) |", or die;
+while (<F>) { chomp $_; $gmm_files = "$gmm_files $_"; $gmm_files_bis = "$gmm_files_bis\\\n          $_"; }
+$test_files = "make_gmm_test.pl";
+$test_files_bis = "\\\n          make_gmm_test.pl";
+open F, "(cd $getfem_root/tests && ls gmm_torture*.cc) |", or die;
+while (<F>) { chomp $_; $test_files = "$test_files $_"; $test_files_bis = "$test_files_bis\\\n          $_"; }
+
+print "gmm_files = $gmm_files\n";
+print "test_files = $test_files\n";
+
+$root = `pwd`; chomp $root; $root = "$root/gmm++_standalone";
+`/bin/rm -fr $root`;
+`mkdir $root`;
+`mkdir $root/tests`;
+`mkdir $root/include`;
+print `(cd $getfem_root/src && cp $gmm_files $root/include)`;
+print `(cd $getfem_root/tests && cp $test_files $root/tests)`;
+print `cp $getfem_root/gmm-config.in $root`;
+print `cp $getfem_root/MTL-ITL-LICENSE $root`;
+print `cp $getfem_root/COPYING $root`;
+print `cp $getfem_root/config.sub $root`;
+print `cp $getfem_root/config.guess $root`;
+print `cp $getfem_root/ltmain.sh $root`;
+print `touch $root/ChangeLog`;
+print `touch $root/NEWS`;
+print `cp $getfem_root/README $root`;
+print `cp $getfem_root/aclocal.m4 $root`;
+print `cp $getfem_root/install-sh $root`;
+print `cp -r $getfem_root/m4 $root`;
+
+open(F, ">$root/AUTHORS") or die "Open file impossible : $!\n";
+print F <<
+Authors of GETFEM++\n
+Yves RENARD. Initial project. All the project.\n
+Julien POMMIER. All the project.\n
+
+;
+close(F);
+
+open(F, ">$root/autogen.sh") or die "Open file impossible : $!\n";
+print F <<
+#!/bin/sh
+aclocal -I m4
+autoheader
+autoconf
+automake --gnu -a `find . -name Makefile.am | sed -e 's@\\./\\(.*\\)\\.am@\\1\@g'`
+
+;
+close(F);
+
+open(F, ">$root/tests/dummy.cc") or die "Open file impossible : $!\n";
+print F <<
+#include <iostream>\n
+int main(void) { return 0; }
+
+;
+close(F);
+
+open(F, ">$root/include/Makefile.am") or die "Open file impossible : $!\n";
+print F <<
+includedir=\${prefix}/include\n
+EXTRA_HEADERS=$gmm_files_bis
+\n\nEXTRA_DIST=\$(EXTRA_HEADERS)\n\n
+install-data-hook:
+	\@\$(NORMAL_INSTALL)
+	\$(mkinstalldirs) \$(DESTDIR)\$(includedir)
+	\@list='\$(EXTRA_HEADERS)'; for p in \$\$list; do \\
+	  if test -f \"\$\$p\"; then d=; else d=\"\$(srcdir)/\"; fi; \\
+	  f=\"`echo \$\$p | sed -e 's|^.*/||'`\"; \\
+	  echo \" \$(INSTALL_DATA) \$\$d\$\$p \$(DESTDIR)\$(includedir)/\$\$f\"; \\
+	  \$(INSTALL_DATA) \$\$d\$\$p \$(DESTDIR)\$(includedir)/\$\$f; \\
+	done\n
+uninstall-hook:
+	\@\$(NORMAL_UNINSTALL)
+	\@list='\$(EXTRA_HEADERS)'; for p in \$\$list; do \\
+	  f=\"`echo \$\$p | sed -e 's|^.*/||'`\"; \\
+	  echo \" rm -f \$(DESTDIR)\$(includedir)/\$\$f\"; \\
+	  rm -f \$(DESTDIR)\$(includedir)/\$\$f; \\
+	done\n
+
+;
+close(F);
+
+open(F, ">$root/tests/Makefile.am") or die "Open file impossible : $!\n";
+print F <<
+\ncheck_PROGRAMS = dummy \n
+dummy_SOURCES = dummy.cc \n
+INCLUDES = -I\$(top_srcdir)/include -I../include\n
+LDADD    = -lm \@SUPLDFLAGS\@\n
+TESTS = \$(top_srcdir)/tests/make_gmm_test.pl\n
+EXTRA_DIST=$test_files_bis
+\n\nCLEANFILES = toto.mat ii_files/* auto_gmm* \n
+TESTS_ENVIRONMENT = perl\n
+
+;
+close(F);
+
+open(F, ">$root/Makefile.am") or die "Open file impossible : $!\n";
+print F <<
+\nACLOCAL_AMFLAGS = -I m4\n
+SUBDIRS = include tests\n
+EXTRA_DIST = \\
+        MTL-ITL-LICENSE \\
+        m4/ax_check_cxx_flag.m4  m4/ax_prefix_config_h.m4\n
+CLEANFILES = so_locations\n
+
+;
+close(F);
+
+open(F, ">$root/configure.in") or die "Open file impossible : $!\n";
+print F <<
+dnl Process this file with autoconf to produce a configure script.
+dnl ------------------------------------------------------------------------
+dnl initialisation
+dnl ------------------------------------------------------------------------\n
+dnl ./configure: sh internal 2K buffer overflow on HP-UX 9.xx
+dnl thus, updating cache ./config.cache avoided.
+define([AC_CACHE_LOAD], )dnl
+define([AC_CACHE_SAVE], )dnl\n
+AC_INIT
+AC_CONFIG_HEADERS(config.h)
+AC_PREREQ(2.56)
+AC_ARG_PROGRAM\n
+PACKAGE="gmm"
+MAJOR_VERSION="$MAJOR_VERSION"
+MINOR_VERSION="$MINOR_VERSION"
+VERSION=\$MAJOR_VERSION.\$MINOR_VERSION$DATE_VERSION
+dnl VERSION=\$MAJOR_VERSION.\$MINOR_VERSION
+echo "configuring \$PACKAGE \$VERSION..."\n
+dnl ------------------------------------------------------------------------
+dnl   init automake
+dnl ------------------------------------------------------------------------\n
+AM_INIT_AUTOMAKE(\$PACKAGE,\$VERSION)\n
+dnl -----------------------------------------------
+dnl test du c++
+dnl -----------------------------------------------\n
+USER_CXXFLAGS="\$CXXFLAGS"
+AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++ icc)
+AC_PROG_CXXCPP
+CXXFLAGS="\${USER_CXXFLAGS}"
+SUPLDFLAGS=""\n
+AC_LANG_CPLUSPLUS\n
+if test "x\$prefix" = "xNONE"; then
+  GFPREFIX=/usr/local;
+else
+  GFPREFIX="\$prefix";
+fi;\n
+dnl AC_CXX_FULL_SPECIALIZATION_SYNTAX (c)Luc Maisonobe v 1.1.1.1 (2001/07/26)
+dnl with some modification to test partial specialization
+AC_CACHE_CHECK(whether the compiler recognizes the partial specialization syntax,
+ac_cv_cxx_partial_specialization_syntax,
+[AC_LANG_SAVE
+ AC_LANG_CPLUSPLUS
+ AC_TRY_COMPILE([
+template<class T> class A        { public : int f () const { return 1; } };
+template<class T> class A<T*>    { public:  int f () const { return 0; } };],[
+A<float*> a; return a.f();],
+ ac_cv_cxx_partial_specialization_syntax=yes, ac_cv_cxx_partial_specialization_s
+yntax=no)
+ AC_LANG_RESTORE
+])
+if test "\$ac_cv_cxx_partial_specialization_syntax" != yes; then
+  echo "Your compiler (\$CXX) does not support partial template specialization, trash it"
+  exit 1;
+fi\n
+AC_CANONICAL_HOST\n
+echo "you are compiling gmm on a \$host"\n
+case \$CXX in
+ cxx)
+        echo "Using Compaq cxx compiler"
+        echo "WARNING : Control that you have at least Compaq C++ V6.3"
+        here=`pwd`
+        cd \$srcdir
+dnl     il faut utiliser -tweak au lieu des repositories ...
+        CXXFLAGS="\$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
+dnl     CXXFLAGS="\$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
+        cd \$here
+        ;;
+ CC)
+        case \$host in
+        *irix*)
+                echo "Using MIPSPRO CC on IRIX  (LD is set to CC)"
+                LD=CC
+dnl             CXXFLAGS="\$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
+                CXXFLAGS="\$CXXFLAGS -LANG:std  -O3 "
+dnl             CXXFLAGS="\$CXXFLAGS -LANG:std  -O3 -ansiW "
+                SUPLDFLAGS="-lCio"
+                ;;
+        *sun*)
+                echo "Using SUN C++ WorkShop Compiler"
+                CXXFLAGS="\$CXXFLAGS +w2 -O3"
+                ;;
+        esac
+        ;;
+ aCC)
+        echo "Using HP ANSI C++ Compiler aCC"
+        CXXFLAGS="\$CXXFLAGS -AA -fast"
+        ;;
+ g++* | c++)
+        GCCVER=`\$CXX --version | head -1 | cut -d ' ' -f3`
+        echo "Using the GNU g++ compiler \$GCCVER"
+        case \$GCCVER in
+          2.95*)
+                WSHADOW=""
+                ;;
+          *)
+                WSHADOW="-Wshadow"
+                ;;
+        esac
+        CXXFLAGS="\$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W \$WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls -Wno-long-long"
+        ;;
+ icc | icpc)
+        echo "Using INTEL icc"
+dnl -tpp6 is for pentiumII and more
+dnl -Xc is for ansi conformance
+        CXXFLAGS="\$CXXFLAGS -O3 -tpp6"
+        ;;
+ *)
+        echo "Using a unknown compiler"
+        CXXFLAGS="\$CXXFLAGS -O3"
+        ;;
+esac\n
+AC_SUBST(SUPLDFLAGS)\n
+dnl ------------------------------------------------------------------------
+dnl   init libtools for shared libraries
+dnl ------------------------------------------------------------------------\n
+dnl AC_DISABLE_FAST_INSTALL\n
+AM_ENABLE_STATIC\n
+dnl AM_PROG_LIBTOOL
+AM_PROG_LIBTOOL
+AC_SUBST([LIBTOOL_DEPS])\n
+AC_CHECK_HEADERS(sys/times.h)\n
+BUILDER=`whoami`
+AC_SUBST(BUILDER)
+BUILDDATE=`date +%D,%H:%M:%S`
+AC_SUBST(BUILDDATE)
+CONFIGURE_ARGS=\$ac_configure_args
+AC_SUBST(CONFIGURE_ARGS)
+LIBTOOL_VERSION_INFO="-version-info \${MAJOR_VERSION}:\${MINOR_VERSION}:0"
+AC_SUBST(LIBTOOL_VERSION_INFO)\n
+dnl AC_CHECK_PROGS(RANLIB, ranlib)\n
+dnl -----------------------------------------------
+dnl sorties
+dnl -----------------------------------------------
+AC_CONFIG_FILES(\\
+        Makefile \\
+        tests/Makefile \\
+        include/Makefile gmm-config)
+AC_OUTPUT
+chmod a+x gmm-config
+chmod a+x gmm-config
+
+;
+close(F);
+
+
+
+
+print `(cd $root && chmod a+x autogen.sh && ./autogen.sh)`;
+print `(cd $root && ./configure)`;
+print `(cd $root && make dist)`;
+print `(mv -f $root/gmm-*.tar.gz $getfem_root)`;
+`/bin/rm -fr $root`;
+
+
