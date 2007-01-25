@@ -369,8 +369,8 @@ namespace gmm {
 
   #define tol_type_for_qr typename number_traits<typename \
                           linalg_traits<MAT1>::value_type>::magnitude_type
-  #define default_tol_for_qr gmm::default_tol(typename \
-                             linalg_traits<MAT1>::value_type())
+  #define default_tol_for_qr \
+    (gmm::default_tol(tol_type_for_qr()) *  tol_type_for_qr(3))
 
   // QR method for real or complex square matrices based on QR factorisation.
   // eigval has to be a complex vector if A has complex eigeinvalues.
@@ -563,7 +563,7 @@ namespace gmm {
 				     tol, (its == 10 || its == 20), compvect);
 
       q_old = q;
-      qr_stop_criterion(H, p, q, tol);
+      qr_stop_criterion(H, p, q, tol*2);
       if (q != q_old) its = 0;
       ++its;
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed");

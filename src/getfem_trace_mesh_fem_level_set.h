@@ -40,12 +40,12 @@ namespace getfem {
   class sub_space_fem : public virtual_fem {
     pfem org_fem;
     size_type cv;
-    std::vector<unsigned> ind;
+    std::vector<size_type> ind;
     base_matrix B;
     
   public:
 
-    sub_space_fem(pfem pf, const std::vector<unsigned> &indg,
+    sub_space_fem(pfem pf, const std::vector<size_type> &indg,
 		  const base_matrix &B_, size_type cv_)
       : org_fem(pf), cv(cv_), ind(indg), B(B_) { init(); }
     size_type index_of_global_dof(size_type, size_type j) const;

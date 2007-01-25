@@ -37,7 +37,7 @@ html:	gmmuser.tex gmmuser.ilg $(PNGFIGS)
 
 pdf: gmmuser.pdf
 	if [ -d ../../../getfem_html ]; then \
-           cp gmmuser.pdf ../../getfem_html; \
+           cp gmmuser.pdf ../../../getfem_html; \
         fi
 
 htmltar: html
@@ -46,7 +46,7 @@ htmltar: html
 	cp next.gif up.gif previous.gif gmmuser/
 	tar czvf html_gmmuser.tar.gz gmmuser
 	if [ -d ../../../getfem_html ]; then \
-           cp html_gmmuser.tar.gz ../../getfem_html; \
+           cp html_gmmuser.tar.gz ../../../getfem_html; \
         fi
 
 all: htmltar pdf
