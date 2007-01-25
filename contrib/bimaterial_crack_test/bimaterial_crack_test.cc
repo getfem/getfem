@@ -40,7 +40,7 @@
 #include <getfem_mesh_fem_sum.h>
 #include <gmm.h>
 #include <getfem_error_estimate.h>
-
+#include <sstream>
 #include <getfem_interpolated_fem.h>
 
 
@@ -334,6 +334,8 @@ struct crack_problem {
   int bimaterial;           /* For bimaterial interface fracture */
   bool all_dirichlet;
   double F11,F12,F21,F22,F31,F32,F41,F42;       /* NEUMANN forces */
+  double neumann_value;   /* NEUMANN force value */
+  int mode;
   double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
@@ -409,7 +411,7 @@ void crack_problem::init(void) {
   size_type refinement_process;
   refinement_process = PARAM.int_value("REFINEMENT_PROCESS","Refinement process");
   dal::bit_vector conv_to_refine;
-  size_type ref = 0;  
+  size_type ref = 1;  
   if (refinement_radius > 0){
     while(ref <= refinement_process){
       conv_to_refine.clear();
@@ -421,10 +423,12 @@ void crack_problem::init(void) {
 	}
       }
       mesh.Bank_refine(conv_to_refine);
-      ref = ref + 1;
+      
+      ref = ref + 1; 
       refinement_radius = refinement_radius/2.;
-      if(refinement_radius > 1e-16)
+      if(refinement_radius > 1e-16 )
 	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
+      
     }
   cout<<"refining process complete." << endl ;
   }
@@ -434,15 +438,19 @@ void crack_problem::init(void) {
   
   bimaterial = PARAM.int_value("BIMATERIAL", "Bimaterial interface crack");
   all_dirichlet = PARAM.int_value("all_dirichlet", "Dirichlet condition");
-  F11 = PARAM.real_value("F11","F11");
-  F12 = PARAM.real_value("F12","F12");
-  F21 = PARAM.real_value("F21","F21");
-  F22 = PARAM.real_value("F22","F22");
-  F31 = PARAM.real_value("F31","F31");
-  F32 = PARAM.real_value("F32","F32");
-  F41 = PARAM.real_value("F41","F41");
-  F42 = PARAM.real_value("F42","F42");
+  mode = PARAM.int_value("mode","mode");
+
+  //F11 = PARAM.real_value("F11","F11");
+  //F12 = PARAM.real_value("F12","F12");
+  //F21 = PARAM.real_value("F21","F21");
+  //F22 = PARAM.real_value("F22","F22");
+  //F31 = PARAM.real_value("F31","F31");
+  //F32 = PARAM.real_value("F32","F32");
+  //F41 = PARAM.real_value("F41","F41");
+  //F42 = PARAM.real_value("F42","F42");
  
+  neumann_value = PARAM.real_value("NEUMANN_VALUE","neumann_value");
+
   if (bimaterial == 1){
     mu = PARAM.real_value("MU", "Lame coefficient mu"); 
     lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
@@ -577,167 +585,409 @@ bool crack_problem::solve(plain_vector &U) {
   dal::bit_vector conv_to_refine;
   bool iteration;
   
-  do {
-    cout << "Number of convexes : "<<  mesh.convex_index().size() <<endl;
-    size_type nb_dof_rhs = mf_rhs.nb_dof();
-    ls.reinit();  
-    cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
-    for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-      ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
-      ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
-    }
-    ls.touch();
-    mls.adapt();
-    mim.adapt();
-    mfls_u.adapt();
- 
-    mf_u_sum.set_mesh_fems(mfls_u);
-  
-    U.resize(mf_u().nb_dof());
-
-    conv_to_refine.clear();
-    getfem::mdbrick_isotropic_linearized_elasticity<>
-      ELAS(mim, mf_u(), lambda, mu);
-     
-     
-    if(bimaterial == 1){
-      cout<<"______________________________________________________________________________"<<endl;
-      cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
-      cout<<"______________________________________________________________________________"<<endl;
-      std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
-      std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
-    
-      cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
-      for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-	if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
-	  bi_lambda[ite] = lambda_up;
-	  bi_mu[ite] = mu_up;
-	}
-	else{
-	  bi_lambda[ite] = lambda_down;
-	  bi_mu[ite] = mu_down;
-	}
-      } 
-      //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
-      // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
-      ELAS.lambda().set(bi_lambda);
-      ELAS.mu().set(bi_mu);
-    }
-  
- 
-    // Defining the volumic source term.
-    plain_vector F(nb_dof_rhs * N);
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  
-    // Volumic source term brick.
-    getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
-
-    // Defining the Neumann condition right hand side.
-    
-    // Neumann condition brick.
-  
-    getfem::mdbrick_abstract<> *pNEUMANN;
-
-    gmm::clear(F);
-    for(size_type i = 0; i<F.size(); i=i+2) 
-      {F[i] = F41; F[i+1] = F42;}
-  
-    getfem::mdbrick_source_term<> NEUMANN_down(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM_down);
-  
-    gmm::clear(F);
-    for(size_type i = 0; i<F.size(); i=i+2) 
-      {F[i] = F21; F[i+1] = F22;}
-  
-    getfem::mdbrick_source_term<> NEUMANN_right_up(NEUMANN_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right);
-  
-  
-    gmm::clear(F);
-    for(size_type i = 0; i<F.size(); i=i+2) 
-      {F[i] = F31; F[i+1] = F32;}
-  
-    getfem::mdbrick_source_term<> NEUMANN_right_down(NEUMANN_right_up, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right+1);
-  
-    gmm::clear(F);
-    for(size_type i = 0; i<F.size(); i=i+2) 
-      {F[i] = F11; F[i+1] = F12;}
-  
-    getfem::mdbrick_source_term<> NEUMANN_up(NEUMANN_right_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_up);
-  
-    if (all_dirichlet)
-      pNEUMANN = & VOL_F; 
-    else 
-      pNEUMANN = & NEUMANN_up; 
-    
-    //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
-    //assert(toto.mf.nb_dof() == 1);
-  
-    // Dirichlet condition brick.
-    getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
-					    mf_mult);
-    if(all_dirichlet){
-#ifdef VALIDATE_XFEM
-      final_model.rhs().set(exact_sol.mf,exact_sol.U);
-#endif
-    } else {
-#ifdef VALIDATE_XFEM
-      final_model.rhs().set(exact_sol.mf,0);
-#endif
-    }
-    final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
-  
-    // Generic solve.
-    cout << "Total number of variables : " << final_model.nb_dof() << endl;
-    getfem::standard_model_state MS(final_model);
-    gmm::iteration iter(residual, 1, 40000);
-  
-    getfem::standard_solve(MS, final_model, iter);
-  
-    // Solution extraction
-    gmm::copy(ELAS.get_solution(MS), U);
-    iteration = iter.converged();  
-
-    // Adapted Refinement (suivant une erreur a posteriori)
-    if (adapted_refine) {
-      if (mesh.convex_index().size() < conv_max){
-      plain_vector ERR(mesh.convex_index().last_true()+1);
-      getfem::error_estimate(mim, mf_u(), U, ERR);
-    
-      cout << "max = " << gmm::vect_norminf(ERR) << endl;
-      scalar_type threshold = 0.01, min_ = 1e18;
-      conv_to_refine.clear();
-      for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	if (ERR[i] > threshold) conv_to_refine.add(i);
-	min_ = std::min(min_, ERR[i]);
+  switch (mode) {
+  case 1:
+  case 2:{
+    if (mode == 1){
+      F11 = 0; F12 = neumann_value; F21 = 0; F22 = 0; F31 = 0; F32 = 0; F41 = 0; F42 = -neumann_value;
+    } else 
+      if(mode == 2){
+	F11 = 0; F12 = 0; F21 = neumann_value; F22 = 0; F31 = -neumann_value; F32 = 0; F41 = 0; F42 = 0;
       }
-      cout << "min = " << min_ << endl;
+    
+    do {
+      cout << "Number of convexes : "<<  mesh.convex_index().size() <<endl;
+      size_type nb_dof_rhs = mf_rhs.nb_dof();
+      ls.reinit();  
+      cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
+      for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+	ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
+	ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
+      }
+      ls.touch();
+      mls.adapt();
+      mim.adapt();
+      mfls_u.adapt();
+      
+      mf_u_sum.set_mesh_fems(mfls_u);
+      
+      U.resize(mf_u().nb_dof());
+      
+      conv_to_refine.clear();
+      getfem::mdbrick_isotropic_linearized_elasticity<>
+	ELAS(mim, mf_u(), lambda, mu);
+      
+      
+      if(bimaterial == 1){
+	cout<<"______________________________________________________________________________"<<endl;
+	cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
+	cout<<"______________________________________________________________________________"<<endl;
+	std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
+	std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
+	
+	cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
+	
+	for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
+	  if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
+	    bi_lambda[ite] = lambda_up;
+	    bi_mu[ite] = mu_up;
+	  }
+	  else{
+	    bi_lambda[ite] = lambda_down;
+	    bi_mu[ite] = mu_down;
+	  }
+	} 
+	//cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
+	// cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
+	
+	ELAS.lambda().set(bi_lambda);
+	ELAS.mu().set(bi_mu);
+      }
+      
+      
+      // Defining the volumic source term.
+      
+      
+      plain_vector F(nb_dof_rhs * N);
+      for (size_type i = 0; i < nb_dof_rhs; ++i)
+	gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+		  gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+      
+      // Volumic source term brick.
+      getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+      
+      // Defining the Neumann condition right hand side.
+      
+      // Neumann condition brick.
+      
+      getfem::mdbrick_abstract<> *pNEUMANN;
+      
+      gmm::clear(F);
+      for(size_type i = 0; i<F.size(); i=i+2) 
+	{F[i] = F41; F[i+1] = F42;}
+      
+      getfem::mdbrick_source_term<> NEUMANN_down(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM_down);
+      
+      gmm::clear(F);
+      for(size_type i = 0; i<F.size(); i=i+2) 
+	{F[i] = F21; F[i+1] = F22;}
+      
+      getfem::mdbrick_source_term<> NEUMANN_right_up(NEUMANN_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right);
+      
+      
+      gmm::clear(F);
+      for(size_type i = 0; i<F.size(); i=i+2) 
+	{F[i] = F31; F[i+1] = F32;}
+      
+      getfem::mdbrick_source_term<> NEUMANN_right_down(NEUMANN_right_up, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right+1);
+      
+      gmm::clear(F);
+      for(size_type i = 0; i<F.size(); i=i+2) 
+	{F[i] = F11; F[i+1] = F12;}
+      
+      getfem::mdbrick_source_term<> NEUMANN_up(NEUMANN_right_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_up);
+      
+      if (all_dirichlet)
+	pNEUMANN = & VOL_F; 
+      else 
+	pNEUMANN = & NEUMANN_up; 
+      
+      //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
+      //assert(toto.mf.nb_dof() == 1);
+      
+      // Dirichlet condition brick.
+      getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
+					      mf_mult);
+      if(all_dirichlet){
+#ifdef VALIDATE_XFEM
+	final_model.rhs().set(exact_sol.mf,exact_sol.U);
+#endif
+      } else {
+#ifdef VALIDATE_XFEM
+	final_model.rhs().set(exact_sol.mf,0);
+#endif
+      }
+      final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
+      
+      // Generic solve.
+      cout << "Total number of variables : " << final_model.nb_dof() << endl;
+      getfem::standard_model_state MS(final_model);
+      gmm::iteration iter(residual, 1, 40000);
+      
+      getfem::standard_solve(MS, final_model, iter);
+      
+      // Solution extraction
+      gmm::copy(ELAS.get_solution(MS), U);
+      iteration = iter.converged();  
+      
+      // Adapted Refinement (suivant une erreur a posteriori)
+      if (adapted_refine) {
+	if (mesh.convex_index().size() < conv_max){
+	  plain_vector ERR(mesh.convex_index().last_true()+1);
+	  getfem::error_estimate(mim, mf_u(), U, ERR);
+	  
+	  cout << "max = " << gmm::vect_norminf(ERR) << endl;
+	  scalar_type threshold = 0.01, min_ = 1e18;
+	  conv_to_refine.clear();
+	  for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+	    if (ERR[i] > threshold) conv_to_refine.add(i);
+	    min_ = std::min(min_, ERR[i]);
+	  }
+	  cout << "min = " << min_ << endl;
       cout << "Refining " <<  conv_to_refine.card() << " convexes..."<< endl;  
       mesh.Bank_refine(conv_to_refine);
-    }    
-      else
-	break;
-    }
-  } while(adapted_refine && conv_to_refine.size() > 0);
-  mesh.write_to_file(datafilename + ".meshh");
-  cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
-  
-  dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
-  getfem::mesh_fem mf_printed(mesh, N);
-  std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
-  mf_printed.set_finite_element(mesh.convex_index(),
-				getfem::fem_descriptor(FEM_DISC));
-  plain_vector W(mf_printed.nb_dof());
-  getfem::interpolation(mf_u(), mf_printed, U, W);
-  mf_printed.write_to_file(datafilename + ".meshfem", true);
-  gmm::vecsave(datafilename + ".U", W);
+	}    
+	else
+	  break;
+      }
+    } while(adapted_refine && conv_to_refine.size() > 0);
+    mesh.write_to_file(datafilename + ".meshh");
+    cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
+    
+    dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
+    getfem::mesh_fem mf_printed(mesh, N);
+    std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
+    mf_printed.set_finite_element(mesh.convex_index(),
+				  getfem::fem_descriptor(FEM_DISC));
+    
+    plain_vector W(mf_printed.nb_dof());
+    getfem::interpolation(mf_u(), mf_printed, U, W);
 
+    std::ostringstream oss;
+    oss << mode;
+    std::string mode_string = oss.str();
+
+    mf_printed.write_to_file(datafilename + "_mode"  + mode_string +  " .meshfem", true);
+    gmm::vecsave(datafilename + "_mode" + mode_string + ".U", W);
+
+  }break;
+    
+  case 12:{
+    int mode_counter = 1;
+    plain_vector W12;
+    W12.clear();
+    getfem::mesh_fem mf_printed(mesh, N);
+    dal::bit_vector blocked_dof;
+    
+    std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
+
+    do{
+      cout << "Computing mode " << mode_counter << " solution..." <<endl;
+      
+      if (mode_counter == 1){
+	F11 = 0; F12 = neumann_value; F21 = 0; F22 = 0; F31 = 0; F32 = 0; F41 = 0; F42 = -neumann_value;
+	//F11 = 0; F12 = 0; F21 = neumann_value; F22 = 0; F31 = -neumann_value; F32 = 0; F41 = 0; F42 = 0;
+      } else 
+	
+	if(mode_counter == 2){
+	  F11 = 0; F12 = 0; F21 = neumann_value; F22 = 0; F31 = -neumann_value; F32 = 0; F41 = 0; F42 = 0;
+	  //F11 = 0; F12 = neumann_value; F21 = 0; F22 = 0; F31 = 0; F32 = 0; F41 = 0; F42 = -neumann_value;
+	}
+
+      do {
+	cout << "Number of convexes : "<<  mesh.convex_index().size() <<endl;
+	size_type nb_dof_rhs = mf_rhs.nb_dof();
+
+	if (mode_counter == 1) {
+	  ls.reinit();  
+	  cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
+	  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+	    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
+	    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
+	  }
+	  ls.touch();
+	  mls.adapt();
+	  mim.adapt();
+	  mfls_u.adapt();	  
+	  mf_u_sum.set_mesh_fems(mfls_u);
+	  U.resize(mf_u().nb_dof());
+	}
+
+	conv_to_refine.clear();
+	getfem::mdbrick_isotropic_linearized_elasticity<>
+	  ELAS(mim, mf_u(), lambda, mu);
+	
+	
+	if(bimaterial == 1){
+	  cout<<"______________________________________________________________________________"<<endl;
+	  cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
+	  cout<<"______________________________________________________________________________"<<endl;
+	  std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
+	  std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
+	  
+	  cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
+	  
+	  for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
+	    if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
+	      bi_lambda[ite] = lambda_up;
+	      bi_mu[ite] = mu_up;
+	    }
+	    else{
+	      bi_lambda[ite] = lambda_down;
+	      bi_mu[ite] = mu_down;
+	    }
+	  } 
+	  //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
+	  // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
+	  
+	  ELAS.lambda().set(bi_lambda);
+	  ELAS.mu().set(bi_mu);
+	}
+	
+	
+	// Defining the volumic source term.
+	
+	
+	plain_vector F(nb_dof_rhs * N);
+	for (size_type i = 0; i < nb_dof_rhs; ++i)
+	  gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+		    gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+	
+	// Volumic source term brick.
+	getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+	
+	// Defining the Neumann condition right hand side.
+	
+	// Neumann condition brick.
+	
+	getfem::mdbrick_abstract<> *pNEUMANN;
+	
+	gmm::clear(F);
+	for(size_type i = 0; i<F.size(); i=i+2) 
+	  {F[i] = F41; F[i+1] = F42;}
+	
+	getfem::mdbrick_source_term<> NEUMANN_down(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM_down);
+	
+	gmm::clear(F);
+	for(size_type i = 0; i<F.size(); i=i+2) 
+	  {F[i] = F21; F[i+1] = F22;}
+	
+	getfem::mdbrick_source_term<> NEUMANN_right_up(NEUMANN_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right);
+	
+	
+	gmm::clear(F);
+	for(size_type i = 0; i<F.size(); i=i+2) 
+	  {F[i] = F31; F[i+1] = F32;}
+	
+	getfem::mdbrick_source_term<> NEUMANN_right_down(NEUMANN_right_up, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right+1);
+	
+	gmm::clear(F);
+	for(size_type i = 0; i<F.size(); i=i+2) 
+	  {F[i] = F11; F[i+1] = F12;}
+	
+	getfem::mdbrick_source_term<> NEUMANN_up(NEUMANN_right_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_up);
+	
+	if (all_dirichlet)
+	  pNEUMANN = & VOL_F; 
+	else 
+	  pNEUMANN = & NEUMANN_up; 
+	
+	//toto_solution toto(mf_rhs.linked_mesh()); toto.init();
+	//assert(toto.mf.nb_dof() == 1);
+	
+	// Dirichlet condition brick.
+	getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
+						mf_mult);
+	if(all_dirichlet){
+#ifdef VALIDATE_XFEM
+	  final_model.rhs().set(exact_sol.mf,exact_sol.U);
+#endif
+	} else {
+#ifdef VALIDATE_XFEM
+	  final_model.rhs().set(exact_sol.mf,0);
+#endif
+	}
+	final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
+	
+	// Generic solve.
+	cout << "Total number of variables : " << final_model.nb_dof() << endl;
+	getfem::standard_model_state MS(final_model);
+	gmm::iteration iter(residual, 1, 40000);
+	
+	getfem::standard_solve(MS, final_model, iter);
+	
+	// Solution extraction
+	gmm::copy(ELAS.get_solution(MS), U);
+	iteration = iter.converged();  
+	
+	// Adapted Refinement (suivant une erreur a posteriori)
+	if (adapted_refine && mode_counter == 1) {
+	  if (mesh.convex_index().size() < conv_max){
+	    plain_vector ERR(mesh.convex_index().last_true()+1);
+	    getfem::error_estimate(mim, mf_u(), U, ERR);
+	    
+	    cout << "max = " << gmm::vect_norminf(ERR) << endl;
+	    scalar_type threshold = 0.01, min_ = 1e18;
+	    conv_to_refine.clear();
+	    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+	      if (ERR[i] > threshold) conv_to_refine.add(i);
+	      min_ = std::min(min_, ERR[i]);
+	    }
+	    cout << "min = " << min_ << endl;
+	    cout << "Refining " <<  conv_to_refine.card() << " convexes..."<< endl;  
+	    mesh.Bank_refine(conv_to_refine);
+
+	  }   
+	  else
+	    break;
+	  
+	}
+	if (mode_counter == 1) {
+	  mesh.write_to_file(datafilename + ".meshh");
+	  cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
+	  
+	  blocked_dof = mf_u().dof_on_set(5);
+	  mf_printed.set_finite_element(mesh.convex_index(),
+					getfem::fem_descriptor(FEM_DISC));
+	} else break;
+      } while (adapted_refine && conv_to_refine.size() > 0 );
+      
+      
+      plain_vector W1(mf_printed.nb_dof());
+      plain_vector W2(mf_printed.nb_dof());
+      cout << "nb of dof of printed_dof = " << mf_printed.nb_dof() << "." << endl;
+      cout << "Assembling final solution using the mode " << mode_counter << " solution..." << endl;
+      cout << "size of W1 and W2 = " << W1.size() << "." << endl;
+
+      switch (mode_counter){
+      
+      case 1:{
+	W12.resize(mf_printed.nb_dof()*2);
+	getfem::interpolation(mf_u(), mf_printed, U, W1);
+	size_type j = 0;
+	for(size_type i=0; i < W1.size(); i++){
+	  W12[j] = W1[i];
+	  j=j+2;  
+	}
+      } break;
+	
+      case 2:{
+	size_type j = 0;
+	getfem::interpolation(mf_u(), mf_printed, U, W2);
+	for(size_type i=0; i < W2.size(); i++){
+	  W12[j+1] = W2[i];
+	  j = j+2;
+	}
+      } break;
+      }
+      
+
+      mode_counter++;
+    } while(mode_counter < 3);
+    
+    mf_printed.write_to_file(datafilename + "12.meshfem", true);
+    gmm::vecsave(datafilename + "12.U", W12);
+
+    cout << "size of W12 = " << W12.size() << "." << endl;
+
+  } break; 
+    
+  }
   return (iteration);
+
 }
 
-  
+
 /**************************************************************************/
 /*  main program.                                                         */
 /**************************************************************************/

@@ -34,7 +34,7 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-NX = 30;            	          % space step.
+NX =10;            	          % space step.
 
 
 
@@ -48,11 +48,13 @@ if (~QUAD)
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   FEM_TYPE_P = 'FEM_PK(2,1)'; 
+  MORTAR_FEM_TYPE = FEM_TYPE;
 else
   FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
   DATA_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
   FEM_TYPE_P = 'FEM_QK(2,1)'; 
+  MORTAR_FEM_TYPE = FEM_TYPE;
 end;
 
 
@@ -74,13 +76,13 @@ ADDITIONAL_CRACK = 0;
 GLOBAL_FUNCTION_MF = "bimaterial_crack.meshfem"
 GLOBAL_FUNCTION_U  = "bimaterial_crack.U"
 
-ENRICHMENT_OPTION = 2;  % 0 = Pas d'enrichissement
-		        % 1 = global functions with cutoff
-	                % 2 = standard XFEM on a fixed zone
-			% 3 = spider fem alone
-	                % 4 = spider fem enrichment
 
-
+ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
+	                % 1 = standard XFEM on a fixed zone
+			% 2 = global functions with mortar junction
+		        % 3 = global functions with cutoff
+			% 4 = spider fem alone
+	                % 5 = spider fem enrichment
 
 
 RADIUS_ENR_AREA = 0.2;

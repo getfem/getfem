@@ -16,12 +16,12 @@ LAMBDA_DOWN=1.0;
 MU_UP = 3.0;
 MU_DOWN = 1.0;
 
-REFINEMENT_RADIUS = 0.1;   % 0 for no refinement
-REFINEMENT_PROCESS = 15;
+REFINEMENT_RADIUS = 0.4;   % 0 for no refinement
+REFINEMENT_PROCESS = 10;
 
 ADAPTED_REFINE = 0;      % 0 to disable adapted refinement 
                          % 1 to enable it
-CONV_MAX = 60000;        % maximal number of convexes
+CONV_MAX = 30000;        % maximal number of convexes
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -32,18 +32,24 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 
 LX = 1;			  % mesh size x'ox
 LY = 1;	                  % mesh size y'oy
-NX = 30;            	          % space step.
+NX = 20;            	          % space step.
 
 
-                                               %             F1                    
-F11 =   0.;  F12 = 0.2  ;                      %        -----------|D 
-F21 =   0.;  F22 = 0.   ;                      %     F2 |          |I
-F31 =   0.;  F32 = 0.   ;                      %        -----      |R
-F41 =   0.;  F42 = -0.2 ;                      %     F3 |          |C
-                                               %        -----------|H
-                                               %             F4
+mode = 12;   % 1 for the opening mode 1
+             % 2 for the mode 2
+             % 12 for a combination of mode 1 and mode 2
+
+NEUMANN_VALUE = 0.2; % Neumann Force Value
+
+                                              %             F1                    
+%F11 =   0.;  F12 = 0.2  ;                    %        -----------|D 
+%F21 =   0.;  F22 = 0.   ;                    %     F2 |          |I
+%F31 =   0.;  F32 = 0.   ;                    %        -----      |R
+%F41 =   0.;  F42 = -0.2 ;                    %     F3 |          |C
+                                              %        -----------|H
+                                              %             F4
  
-all_dirichlet = 1;     % Choose 1 To impose a dirichlet displacement all over the borders
+all_dirichlet = 0;     % Choose 1 To impose a dirichlet displacement all over the borders
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
@@ -52,10 +58,10 @@ FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
-FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,1,0.001)';  % Discontinuous P1 for triangles
+FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,1,0.0001)';  % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=0;       % Mixed version or not.
- FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
+FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
 DIRICHLET_VERSION = 2;
 
