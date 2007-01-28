@@ -288,7 +288,9 @@ int main(int argc, char *argv[]) {
     getfem::trace_mesh_fem_level_set
       mf_mult(mlsdown, pre_mf_mult,
 	      PARAM.int_value("FEM_MULT_DEGREE",
-			      "Degree for multipliers definition"));
+			      "Degree for multipliers definition"),
+	      PARAM.int_value("FEM_MULT_STRATEGY",
+			      "Strategy for multipliers definition"));
     mf_mult.adapt();
 
     // getfem::partial_mesh_fem mf_mult(pre_mf_mult);

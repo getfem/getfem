@@ -72,7 +72,7 @@ namespace getfem {
   protected :
     const mesh_level_set &mls;
     const mesh_fem &mf;
-    unsigned degree;
+    unsigned degree, strategy;
     mutable std::vector<pfem> build_methods;
     mutable bool is_adapted;
     void clear_build_methods();
@@ -93,7 +93,7 @@ namespace getfem {
     }
     
     trace_mesh_fem_level_set(const mesh_level_set &me, const mesh_fem &mef,
-			     unsigned degree_);
+			     unsigned degree_, unsigned strategy_ = 1);
 
     ~trace_mesh_fem_level_set() { clear_build_methods(); }
   };
