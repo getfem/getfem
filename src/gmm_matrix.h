@@ -750,7 +750,7 @@ namespace gmm
     static const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m.pr, m.ir, m.jc, m.nc, m.pr); }
     static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.pr, m.ir, m.jc + m.nc, m.nc, m.pr); }
+    { return const_row_iterator(m.pr, m.ir, m.jc + m.nr, m.nc, m.pr); }
     static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.pr + *(it.jc) - shift,
 				it.ir + *(it.jc) - shift,
