@@ -36,7 +36,7 @@ sub print_license  {
 // USA.
 //
 //========================================================================
- 
+
 ;
 }
 
@@ -130,12 +130,17 @@ while ($name = $ARGV[0]) {
 
 
   do {
-    #  $li =~ s/atofem/getfem/g;
-    #  $li =~ s/ATOFEM/GETFEM/g;
+    $li =~ s/\#include\ \<getfem(.*)\.h\>/\#include \"getfem$1\.h\"/g;
+    $li =~ s/\#include\ \<gmm(.*)\.h\>/\#include \"gmm$1\.h\"/g;
+    $li =~ s/\#include\ \<dal(.*)\.h\>/\#include \"dal$1\.h\"/g;
+    $li =~ s/\#include\ \<bgeot(.*)\.h\>/\#include \"bgeot$1\.h\"/g;
+
+    #$li =~ s/\#include\ \"gmm(.*)\.h\"/\#include \"gmm\/gmm$1\.h\"/g;
+    #$li =~ s/\#include\ \"getfem(.*)\.h\"/\#include \"getfem\/getfem$1\.h\"/g;
+    #$li =~ s/\#include\ \"bgeot(.*)\.h\"/\#include \"getfem\/bgeot$1\.h\"/g;
+    #$li =~ s/\#include\ \"dal(.*)\.h\"/\#include \"getfem\/dal$1\.h\"/g;
+
     print RES "$li";
-    # if ($li =~ /\@file/ && $libname) {
-    #  print RES "   \@author  $authors\n   \@date $date\n";
-    # }
   } while ($li = <FILE>);
 
 

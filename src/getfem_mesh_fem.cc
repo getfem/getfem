@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -22,8 +22,8 @@
 
 
 #include <queue>
-#include <dal_singleton.h>
-#include <getfem_mesh_fem.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/getfem_mesh_fem.h"
 
 namespace getfem {
   
@@ -104,12 +104,12 @@ namespace getfem {
     else {
       if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
 	  != pf->basic_structure(cv))
-	DAL_THROW(dal::failure_error,
+	DAL_THROW(failure_error,
 		  "Incompatibility between fem " << name_of_fem(pf) << 
 		  " and mesh element " <<
 		  name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
       if ((Qdim % pf->target_dim()) != 0 && pf->target_dim() != 1)
-	DAL_THROW(dal::failure_error,
+	DAL_THROW(failure_error,
 		  "Incompatibility between Qdim=" << int(Qdim) << " and target_dim " <<
 		  int(pf->target_dim()) << " of " << name_of_fem(pf));
       if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
@@ -212,9 +212,9 @@ namespace getfem {
   }
 
   struct dof_comp_ { 
-    dal::approx_less<scalar_type> comp;
+    gmm::approx_less<scalar_type> comp;
     int operator()(const fem_dof& m, const fem_dof& n) const { 
-      int d = dal::lexicographical_compare(m.P.begin(), m.P.end(),
+      int d = gmm::lexicographical_compare(m.P.begin(), m.P.end(),
 					   n.P.begin(), n.P.end(), comp);
       if (d != 0) return (d < 0);
       if (m.part == n.part)
@@ -300,9 +300,6 @@ namespace getfem {
     
     dof_enumeration_made = true;
     nb_total_dof = nbdof;
-    
-//    enumerate_dof_time += dal::uclock_sec() - t;
-//    cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec [nbd=" << nbdof << "]\n";
   }
 
 
@@ -322,10 +319,10 @@ namespace getfem {
     linked_mesh_ = &me;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
-	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
-	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID) |
-	       lmsg::mask(MESH_ADD_CONVEX::ID)|
-	       lmsg::mask(MESH_REFINE_CONVEX::ID));
+	       mask(MESH_CLEAR::ID)   | mask(MESH_SUP_CONVEX::ID) |
+	       mask(MESH_SWAP_CONVEX::ID) | mask(MESH_DELETE::ID) |
+	       mask(MESH_ADD_CONVEX::ID)|
+	       mask(MESH_REFINE_CONVEX::ID));
   }
 
   mesh_fem::~mesh_fem() {}
@@ -338,14 +335,14 @@ namespace getfem {
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
-    ftool::read_until(ist, "BEGIN MESH_FEM");
+    bgeot::read_until(ist, "BEGIN MESH_FEM");
 
     while (true) {
-      ist >> std::ws; ftool::get_token(ist, tmp);
-      if (ftool::casecmp(tmp, "END")==0) {
+      ist >> std::ws; bgeot::get_token(ist, tmp);
+      if (bgeot::casecmp(tmp, "END")==0) {
 	break;
-      } else if (ftool::casecmp(tmp, "CONVEX")==0) {
-	ftool::get_token(ist, tmp);
+      } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
+	bgeot::get_token(ist, tmp);
 	size_type ic = atoi(tmp.c_str());
 	if (!linked_mesh().convex_index().is_in(ic)) {
 	  DAL_THROW(failure_error, "Convex " << ic <<
@@ -353,7 +350,7 @@ namespace getfem {
 		    "that the mesh attached to this object is right one ?");
 	}
 	
-	int rgt = ftool::get_token(ist, tmp);
+	int rgt = bgeot::get_token(ist, tmp);
 	if (rgt != 3) { // for backward compatibility
 	  char c; ist.get(c);
 	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
@@ -362,22 +359,22 @@ namespace getfem {
 	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" 
 			    << tmp << "'");
 	set_finite_element(ic, fem);
-      } else if (ftool::casecmp(tmp, "BEGIN")==0) {
-	ftool::get_token(ist, tmp);
-	if (ftool::casecmp(tmp, "DOF_PARTITION") == 0) {
+      } else if (bgeot::casecmp(tmp, "BEGIN")==0) {
+	bgeot::get_token(ist, tmp);
+	if (bgeot::casecmp(tmp, "DOF_PARTITION") == 0) {
 	  for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
 	    size_type d; ist >> d; set_dof_partition(cv,d);
 	  }
-	  ist >> ftool::skip("END DOF_PARTITION");
-	} else if (ftool::casecmp(tmp, "DOF_ENUMERATION") == 0) {
+	  ist >> bgeot::skip("END DOF_PARTITION");
+	} else if (bgeot::casecmp(tmp, "DOF_ENUMERATION") == 0) {
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false; touch();
 	  while (true) {
-	    ftool::get_token(ist, tmp);
-	    if (ftool::casecmp(tmp, "END")==0) { 
+	    bgeot::get_token(ist, tmp);
+	    if (bgeot::casecmp(tmp, "END")==0) { 
 	      break;
 	    }
-	    ftool::get_token(ist, tmp2);
+	    bgeot::get_token(ist, tmp2);
 
 	    size_type ic = atoi(tmp.c_str());
 	    std::vector<size_type> tab;
@@ -396,22 +393,22 @@ namespace getfem {
 			     << "in dof enumeration: '" 
 			     << tmp << "' [pos="
 			     << std::streamoff(ist.tellg())<<"]");
-	    /*ftool::get_token(ist, tmp);
+	    /*bgeot::get_token(ist, tmp);
 	      cerr << " tok: '" << tmp << "'\n";*/
 	  } 
 	  dof_read = true;
 	  this->dof_enumeration_made = true;
 	  touch();
 	  this->nb_total_dof = doflst.card();
-	  ist >> ftool::skip("DOF_ENUMERATION");
+	  ist >> bgeot::skip("DOF_ENUMERATION");
 	} else if (tmp.size())
 	  DAL_THROW(failure_error, "Syntax error in file at token '"
 		    << tmp << "' [pos=" << std::streamoff(ist.tellg())
 							  << "]");
-      } else if (ftool::casecmp(tmp, "QDIM")==0) {
+      } else if (bgeot::casecmp(tmp, "QDIM")==0) {
 	if (dof_read)
 	  DAL_THROW(failure_error, "Can't change QDIM after dof enumeration");
-	ftool::get_token(ist, tmp);
+	bgeot::get_token(ist, tmp);
 	int q = atoi(tmp.c_str());
 	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
 	set_qdim(q);
@@ -523,7 +520,7 @@ namespace getfem {
 	// the list of mesh pointers should be sorted ...
 	for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
 	  if (itt->first.pmesh == &msh) goto nothing_to_do;
-	add_sender(msh.lmsg_sender(), *this, lmsg::mask(MESH_DELETE::ID));
+	add_sender(msh.lmsg_sender(), *this, mask(MESH_DELETE::ID));
 	
       nothing_to_do :
 	

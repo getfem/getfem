@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2006-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -20,21 +20,21 @@
 //
 //========================================================================
 
-#include <getfem_config.h>
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_regular_meshes.h>
-#include <getfem_fourth_order.h>
-#include <getfem_model_solvers.h>
-#include <gmm.h>
-#include <getfem_superlu.h>
-#include <getfem_derivatives.h>
-#include <gmm_inoutput.h>
-#include <getfem_mesh_im_level_set.h>
-#include <getfem_mesh_fem_level_set.h>
-#include <getfem_mesh_fem_product.h>
-#include <getfem_mesh_fem_global_function.h>
-#include <getfem_mesh_fem_sum.h>
+#include "getfem/getfem_config.h"
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_fourth_order.h"
+#include "getfem/getfem_model_solvers.h"
+#include "gmm/gmm.h"
+#include "getfem/getfem_superlu.h"
+#include "getfem/getfem_derivatives.h"
+#include "gmm/gmm_inoutput.h"
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_mesh_fem_level_set.h"
+#include "getfem/getfem_mesh_fem_product.h"
+#include "getfem/getfem_mesh_fem_global_function.h"
+#include "getfem/getfem_mesh_fem_sum.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -185,7 +185,7 @@ void validate_fem_derivatives(getfem::pfem pf, unsigned cv,
   for (unsigned j=0; j < pts.size(); ++j) {
     pts[j].resize(N); gmm::copy(gmm::mat_col(G, j), pts[j]);
   }
-  cout << "validate_fem_derivatives: pf = " << &(*pf) << ", nbdof = "<< pf->nb_dof(cv) << ", cv = " << cv << " (~ at " << dal::mean_value(pts) << ")\n";
+  cout << "validate_fem_derivatives: pf = " << &(*pf) << ", nbdof = "<< pf->nb_dof(cv) << ", cv = " << cv << " (~ at " << gmm::mean_value(pts) << ")\n";
   bgeot::geotrans_inv_convex gic(pts, pgt);
 
   //cout << "pts = " << pts << "\n";
@@ -542,7 +542,7 @@ std::string name_of_dof(getfem::pdof_description dof) {
 namespace getfem {
 // function for assembling the constraints of the integral matching 
   template<typename MAT, typename VECT1, typename VECT2>
-  void getfem::asm_normal_derivative_dirichlet_constraints_bis 
+  void asm_normal_derivative_dirichlet_constraints_bis 
  (MAT &H, VECT1 &R, const mesh_im &mim, const mesh_fem &mf_u,
    const mesh_fem &mf_mult, const mesh_fem &mf_r,
    const VECT2 &r_data, const mesh_region &rg, bool R_must_be_derivated, 
@@ -613,7 +613,7 @@ struct bilaplacian_crack_problem {
   size_type NX;
   
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   bool KL;
 
@@ -744,7 +744,7 @@ void bilaplacian_crack_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -1231,7 +1231,7 @@ int main(int argc, char *argv[]) {
     p.init();
     plain_vector U;
     p.mesh.write_to_file("mesh.m") ;
-    if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
+    if (!p.solve(U)) DAL_THROW(gmm::failure_error, "Solve has failed");
 
     p.compute_error(U);
 
@@ -1363,7 +1363,7 @@ int main(int argc, char *argv[]) {
     //getchar(); 
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }
 

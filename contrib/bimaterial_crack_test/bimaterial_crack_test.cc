@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -27,21 +27,21 @@
  * a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_derivatives.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <getfem_mesh_im_level_set.h>
-#include <getfem_mesh_fem_level_set.h>
-#include <getfem_mesh_fem_product.h>
-#include <getfem_mesh_fem_global_function.h>
-#include <getfem_spider_fem.h>
-#include <getfem_mesh_fem_sum.h>
-#include <gmm.h>
-#include <getfem_error_estimate.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_mesh_fem_level_set.h"
+#include "getfem/getfem_mesh_fem_product.h"
+#include "getfem/getfem_mesh_fem_global_function.h"
+#include "getfem/getfem_spider_fem.h"
+#include "getfem/getfem_mesh_fem_sum.h"
+#include "gmm/gmm.h"
+#include "getfem/getfem_error_estimate.h"
 #include <sstream>
-#include <getfem_interpolated_fem.h>
+#include "getfem/getfem_interpolated_fem.h"
 
 
 /* some Getfem++ types that we will be using */
@@ -346,7 +346,7 @@ struct crack_problem {
   unsigned dir_with_mult;
   
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
   
   bool adapted_refine, solve(plain_vector &U);
   
@@ -498,7 +498,7 @@ void crack_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -994,7 +994,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   //getfem::getfem_mesh_level_set_noisy();
@@ -1006,7 +1006,7 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u().nb_dof());
-     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+     if (!p.solve(U)) DAL_THROW(gmm::failure_error,"Solve has failed");
    
     {
       getfem::mesh mcut;
@@ -1154,7 +1154,7 @@ int main(int argc, char *argv[]) {
     }
 
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

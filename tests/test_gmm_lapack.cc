@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -42,8 +42,8 @@
 #include <x86.h>
 
 // #define GMM_USES_LAPACK
-#include <gmm.h>
-#include <gmm_inoutput.h>
+#include "gmm/gmm.h"
+#include "gmm/gmm_inoutput.h"
 
 
 using gmm::size_type;

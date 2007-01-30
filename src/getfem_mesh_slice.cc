@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2003-2006 Julien Pommier
+// Copyright (C) 2003-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,9 +20,9 @@
 //
 //========================================================================
 
-#include <getfem_mesh_fem.h>
-#include <getfem_mesh_slice.h>
-#include <bgeot_geotrans_inv.h>
+#include "getfem/getfem_mesh_fem.h"
+#include "getfem/getfem_mesh_slice.h"
+#include "getfem/bgeot_geotrans_inv.h"
 
 namespace getfem {
 
@@ -99,7 +99,7 @@ namespace getfem {
     if (!poriginal_mesh) {
       poriginal_mesh = &m; 
     } else if (poriginal_mesh != &m) 
-      DAL_THROW(dal::failure_error, "wrong mesh..");
+      DAL_THROW(failure_error, "wrong mesh..");
 
     dim_ = m.dim();
     cv2pos.clear(); 
@@ -109,21 +109,21 @@ namespace getfem {
     std::string tmp;
     ist.precision(16);
     ist.seekg(0);ist.clear();
-    ftool::read_until(ist, "BEGIN MESH_SLICE");
+    bgeot::read_until(ist, "BEGIN MESH_SLICE");
 
     mesh_slicer::cs_nodes_ct nod;
     mesh_slicer::cs_simplexes_ct sim;
     
 
     while (true) {
-      ist >> std::ws; ftool::get_token(ist, tmp);
-      if (ftool::casecmp(tmp, "END")==0) {
+      ist >> std::ws; bgeot::get_token(ist, tmp);
+      if (bgeot::casecmp(tmp, "END")==0) {
 	break;
-      } else if (ftool::casecmp(tmp, "DIM")==0) {
+      } else if (bgeot::casecmp(tmp, "DIM")==0) {
 	int d; ist >> d;
 	dim_ = d;
-      } else if (ftool::casecmp(tmp, "CONVEX")==0) {
-	ftool::get_token(ist,tmp);
+      } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
+	bgeot::get_token(ist,tmp);
 	size_type ic = atoi(tmp.c_str());
 	if (!m.convex_index().is_in(ic)) {
 	  DAL_THROW(failure_error, "Convex " << ic <<
@@ -140,18 +140,18 @@ namespace getfem {
 	  nod[i].pt_ref.resize(cvr->structure()->dim());
 	  for (unsigned j=0; j < dim(); ++j) 
 	    ist >> nod[i].pt[j];
-	  ist >> ftool::skip(";");
+	  ist >> bgeot::skip(";");
 	  for (unsigned j=0; j < cvr->structure()->dim(); ++j) 
 	    ist >> nod[i].pt_ref[j];
-	  ist >> ftool::skip(";");
+	  ist >> bgeot::skip(";");
 	  unsigned long ul; ist >> ul;
 	  nod[i].faces = slice_node::faces_ct(ul);
 	}
 	for (unsigned i=0; i < nbs; ++i) {
 	  unsigned np(0);
-	  ist >> np >> ftool::skip(":");
+	  ist >> np >> bgeot::skip(":");
 	  if (np > dim()+1) 
-	    DAL_THROW(dal::failure_error, "invalid simplex..");
+	    DAL_THROW(failure_error, "invalid simplex..");
 	  sim[i].inodes.resize(np);
 	  for (unsigned j=0; j < np; ++j) 
 	    ist >> sim[i].inodes[j];
@@ -172,7 +172,7 @@ namespace getfem {
     if (!sl.poriginal_mesh) {
       sl.poriginal_mesh = &ms.m; sl.dim_ = sl.linked_mesh().dim();
       sl.cv2pos.clear(); sl.cv2pos.resize(sl.linked_mesh().convex_index().last_true() + 1, size_type(-1));
-    } else if (sl.poriginal_mesh != &ms.m) DAL_THROW(dal::failure_error, "wrong mesh..");
+    } else if (sl.poriginal_mesh != &ms.m) DAL_THROW(failure_error, "wrong mesh..");
     sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, ms.fcnt, ms.splx_in, ms.discont);
   }
 
@@ -185,7 +185,7 @@ namespace getfem {
     merged_nodes_available = false;
     std::vector<size_type> nused(cv_nodes.size(), size_type(-1));
     convex_slice *sc = 0;
-    if (cv >= cv2pos.size()) DAL_THROW(dal::internal_error, "");
+    if (cv >= cv2pos.size()) DAL_THROW(internal_error, "");
     if (cv2pos[cv] == size_type(-1)) {
       cv2pos[cv] = cvlst.size();
       cvlst.push_back(convex_slice());
@@ -299,13 +299,13 @@ namespace getfem {
   }
 
   void stored_mesh_slice::merge(const stored_mesh_slice& sl) {
-    if (dim() != sl.dim()) DAL_THROW(dal::dimension_error, "inconsistent dimensions for slice merging");
+    if (dim() != sl.dim()) DAL_THROW(dimension_error, "inconsistent dimensions for slice merging");
     clear_merged_nodes();
     cv2pos.resize(std::max(cv2pos.size(), sl.cv2pos.size()), size_type(-1));
     for (size_type i=0; i < sl.nb_convex(); ++i) 
       if (cv2pos[sl.convex_num(i)] != size_type(-1) &&
 	  cvlst[cv2pos[sl.convex_num(i)]].cv_dim != sl.cvlst[i].cv_num)
-	DAL_THROW(dal::dimension_error, "inconsistent dimensions for convex " << sl.cvlst[i].cv_num << " on the slices");
+	DAL_THROW(dimension_error, "inconsistent dimensions for convex " << sl.cvlst[i].cv_num << " on the slices");
 
     for (size_type i=0; i < sl.nb_convex(); ++i) {
       size_type cv = sl.convex_num(i);
@@ -350,7 +350,7 @@ namespace getfem {
 	//cout << "orig[" << count-1 << "] = " << nv[count-1]->pt << ", idx=" << to_merged_index[count-1] << "\n";
       }
     }
-    dal::sorted_indexes(to_merged_index,iv);
+    gmm::sorted_indexes(to_merged_index,iv);
     //cout << "to_merged_index = " << iv << "\n";
     merged_nodes.resize(nb_points());
     merged_nodes_idx.reserve(nb_points()/8);

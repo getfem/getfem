@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2005-2006 Yves Renard
+// Copyright (C) 2005-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <getfem_mesh_im.h>
+#include "getfem/getfem_mesh_im.h"
 
 
 namespace getfem {
@@ -80,7 +80,7 @@ namespace getfem {
   
   void mesh_im::set_integration_method(const dal::bit_vector &cvs, 
 				       dim_type im_degree) {
-    if (im_degree == dim_type(-1)) DAL_THROW(dal::failure_error, "im_degree==-1");
+    if (im_degree == dim_type(-1)) DAL_THROW(failure_error, "im_degree==-1");
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
       pintegration_method pim = 
 	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv), im_degree);
@@ -97,9 +97,9 @@ namespace getfem {
     linked_mesh_ = &me; is_valid_ = true;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
-	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
-	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID) |
-	       lmsg::mask(MESH_REFINE_CONVEX::ID));
+	       mask(MESH_CLEAR::ID) | mask(MESH_SUP_CONVEX::ID) |
+	       mask(MESH_SWAP_CONVEX::ID) | mask(MESH_DELETE::ID) |
+	       mask(MESH_REFINE_CONVEX::ID));
   }
 
   mesh_im::~mesh_im() {}
@@ -112,15 +112,15 @@ namespace getfem {
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
-    ftool::read_until(ist, "BEGIN MESH_IM");
+    bgeot::read_until(ist, "BEGIN MESH_IM");
 
     while (true)
     {
-      ist >> std::ws; ftool::get_token(ist, tmp);
-      if (ftool::casecmp(tmp, "END")==0) {
+      ist >> std::ws; bgeot::get_token(ist, tmp);
+      if (bgeot::casecmp(tmp, "END")==0) {
 	break;
-      } else if (ftool::casecmp(tmp, "CONVEX")==0) {
-	ftool::get_token(ist, tmp);
+      } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
+	bgeot::get_token(ist, tmp);
 	size_type ic = atoi(tmp.c_str());
 	if (!linked_mesh().convex_index().is_in(ic)) {
 	  DAL_THROW(failure_error, "Convex " << ic <<
@@ -128,7 +128,7 @@ namespace getfem {
 		    "that the mesh attached to this object is right one ?");
 	}
 	
-	int rgt = ftool::get_token(ist, tmp);
+	int rgt = bgeot::get_token(ist, tmp);
 	if (rgt != 3) { // for backward compatibility with version 1.7
 	  char c; ist.get(c);
 	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }

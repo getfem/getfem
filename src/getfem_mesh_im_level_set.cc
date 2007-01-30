@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2005-2006 Yves Renard
+// Copyright (C) 2005-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,9 +20,9 @@
 //
 //========================================================================
 
-#include <getfem_mesh_im_level_set.h>
-#include <getfem_mesher.h>
-#include <bgeot_kdtree.h>
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_mesher.h"
+#include "getfem/bgeot_kdtree.h"
 
 namespace getfem {
 
@@ -107,7 +107,7 @@ namespace getfem {
 
     if (integrate_where != (INTEGRATE_ALL)) {
       for (dal::bv_visitor scv(msh.convex_index()); !scv.finished(); ++scv) {
-	B = dal::mean_value(msh.points_of_convex(scv));
+	B = gmm::mean_value(msh.points_of_convex(scv));
 	convexes_arein[scv]
 	  = is_point_in_selected_area(mesherls0, mesherls1, B);
       }
@@ -217,7 +217,7 @@ namespace getfem {
 	  }
 	  if (isin ==  unsigned(-1)) continue;
 	} else {
-	  B = dal::mean_value(msh.points_of_face_of_convex(i, f));
+	  B = gmm::mean_value(msh.points_of_face_of_convex(i, f));
 	  if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
 	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi) {
 	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
@@ -304,7 +304,7 @@ namespace getfem {
 	      mesherls1[i] = mls.get_level_set(i)->mls_of_convex(cv, 1, false);
 	  }
 
-	  base_node B(dal::mean_value(linked_mesh().trans_of_convex(cv)
+	  base_node B(gmm::mean_value(linked_mesh().trans_of_convex(cv)
 				      ->convex_ref()->points()));
 	  if (!is_point_in_selected_area(mesherls0, mesherls1, B))
 	    ignored_im.add(cv);

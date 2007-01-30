@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Yves Renard
+// Copyright (C) 2000-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,18 +21,18 @@
 //========================================================================
 
 
-#include <dal_singleton.h>
-#include <dal_tree_sorted.h>
-#include <dal_naming_system.h>
-#include <bgeot_geometric_trans.h>
-#include <bgeot_poly_composite.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/dal_tree_sorted.h"
+#include "getfem/dal_naming_system.h"
+#include "getfem/bgeot_geometric_trans.h"
+#include "getfem/bgeot_poly_composite.h"
 
 namespace bgeot {
 
   const base_node& geotrans_interpolation_context::xref() const { 
     if (!have_xref()) 
       if (pspt_) xref_ = (*pspt_)[ii_];
-      else DAL_THROW(dal::failure_error, "missing xref");
+      else DAL_THROW(failure_error, "missing xref");
     return xref_; 
   }
 
@@ -47,7 +47,7 @@ namespace bgeot {
 
   void geotrans_interpolation_context::compute_J(void) const {
     if (!have_G() || !have_pgt()) {
-      DAL_THROW(dal::failure_error, "unable to compute B\n");
+      DAL_THROW(failure_error, "unable to compute B\n");
     } else {
       size_type P = pgt_->structure()->dim();
       base_matrix CS(P,P);
@@ -64,7 +64,7 @@ namespace bgeot {
   const base_matrix& geotrans_interpolation_context::K() const {
     if (!have_K()) {
       if (!have_G() || !have_pgt()) {
-	DAL_THROW(dal::failure_error, "unable to compute K\n");
+	DAL_THROW(failure_error, "unable to compute K\n");
       } else {
 	size_type P = pgt_->structure()->dim();
 	K_.resize(N(), P);
@@ -89,7 +89,7 @@ namespace bgeot {
   const base_matrix& geotrans_interpolation_context::B() const {
     if (!have_B()) {
       if (!have_G() || !have_pgt()) {
-	DAL_THROW(dal::failure_error, "unable to compute B\n");
+	DAL_THROW(failure_error, "unable to compute B\n");
       } else {
 	size_type P = pgt_->structure()->dim();
 	B_.resize(N(), P);

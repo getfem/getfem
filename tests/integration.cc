@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -20,10 +20,10 @@
 //
 //========================================================================
 #include <numeric>
-#include <getfem_integration.h>
-#include <bgeot_comma_init.h>
-#include <getfem_mesh_fem.h>
-#include <getfem_mat_elem.h>
+#include "getfem/getfem_integration.h"
+#include "getfem/bgeot_comma_init.h"
+#include "getfem/getfem_mesh_fem.h"
+#include "getfem/getfem_mat_elem.h"
 #include <iomanip>
 #include <map>
 
@@ -50,7 +50,7 @@ void print_method(getfem::pintegration_method ppi) {
   cout << endl << endl;
 }
 
-class exception_cb : public dal::exception_callback  {
+class exception_cb : public gmm::exception_callback  {
   public:
   virtual void callback(const std::string& msg)
   { cerr << msg << endl; *(int *)(0) = 0; }
@@ -457,10 +457,10 @@ int main(/* int argc, char **argv */) {
     getfem::pintegration_method im_none = getfem::int_method_descriptor("IM_NONE()");
     try {
       cout << "nbpts=" << im_none->structure()->nb_points() << "\n";
-    } catch (dal::failure_error e) {
+    } catch (gmm::failure_error e) {
       ok = 1;
     }
-    if (!ok) throw(dal::failure_error("IM_NONE failed..\n"));
+    if (!ok) throw(gmm::failure_error("IM_NONE failed..\n"));
     print_some_methods();
     check_methods();
     int failcnt = inspect_results();

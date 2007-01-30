@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,7 +21,7 @@
 //========================================================================
 
 
-#include <getfem_level_set.h>
+#include "getfem/getfem_level_set.h"
 
 namespace getfem {
 
@@ -46,7 +46,8 @@ namespace getfem {
 					    bool inverted) const {
     assert(this); assert(mf); 
     if (!mf->linked_mesh().convex_index().is_in(cv)) 
-      DAL_THROW(dal::failure_error, "convex " << cv << " is not in the level set mesh!");
+      DAL_THROW(failure_error, "convex " << cv
+		<< " is not in the level set mesh!");
     if (!mf->fem_of_element(cv)) DAL_INTERNAL_ERROR("");
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
     if (values(lsnum).size() != mf->nb_dof())

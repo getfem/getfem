@@ -746,14 +746,14 @@ A (too) simple program in \cpp{gmm_domain_decomp.h} allows to build a regular do
 \section{Catch errors}
 \index{errors}
 
-Errors used in \gmm are defined in the file \filename{dal\_except.h}. In order to make easier  the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
-A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{dal\_except.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
+Errors used in \gmm are defined in the file \filename{gmm\_except.h}. In order to make easier  the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
+A standard procedure, \cpp{GMM\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{gmm\_except.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
 \begin{cppcode}
   int main(void) \{ 
     try \{ 
       ... main program ... 
         \} 
-     DAL\_STANDARD\_CATCH\_ERROR;
+     GMM\_STANDARD\_CATCH\_ERROR;
   \}
 \end{cppcode}
 

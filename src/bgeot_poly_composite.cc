@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard
+// Copyright (C) 2002-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,9 +20,9 @@
 //
 //========================================================================
 
-#include <dal_singleton.h>
-#include <bgeot_comma_init.h>
-#include <bgeot_poly_composite.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/bgeot_comma_init.h"
+#include "getfem/bgeot_poly_composite.h"
 
 namespace bgeot {
 
@@ -470,7 +470,7 @@ namespace bgeot {
       pstr_mesh_cv__ psmc = dal::stored_cast<str_mesh_cv__>(o);
       return psmc->pfacem;
     } 
-    else DAL_THROW(dal::internal_error,
+    else DAL_THROW(internal_error,
 		   "call refined_simplex_mesh_for_convex first (or fix me)");
   }
 

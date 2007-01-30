@@ -1,5 +1,27 @@
-#include <bgeot_kdtree.h>
-#include <dal_bit_vector.h>
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+#include "getfem/bgeot_kdtree.h"
+#include "getfem/bgeot_kdtree.h"
+#include "getfem/dal_bit_vector.h"
 using bgeot::base_node;
 using bgeot::size_type;
 using bgeot::dim_type;
@@ -87,35 +109,35 @@ void speed_test(unsigned N, unsigned NPT, unsigned nrepeat) {
   bgeot::kdtree tree;
   base_node pt(N);
   cout << "speed test for the kdtree\n";
-  double t = dal::uclock_sec();
+  double t = gmm::uclock_sec();
   for (size_type i=0; i < NPT; ++i) {
     for (dim_type k = 0; k < N; ++k) 
       pt[k] = gmm::random(double())*2.;
     tree.add_point(pt);
     assert(pt.refcnt()>1);
   }
-  t = dal::uclock_sec();
-  cout << "point list built in " << dal::uclock_sec() - t << " seconds.\n";
+  t = gmm::uclock_sec();
+  cout << "point list built in " << gmm::uclock_sec() - t << " seconds.\n";
   bgeot::kdtree_tab_type ipts;
   tree.points_in_box(ipts,pt,pt);
-  cout << "tree built in " << dal::uclock_sec() - t << " seconds.\n";
+  cout << "tree built in " << gmm::uclock_sec() - t << " seconds.\n";
   bgeot::base_node bmin(0.25,0.25,0.4), bmax(0.5,0.5,3.3);
   size_type npt=0;
-  t = dal::uclock_sec();
+  t = gmm::uclock_sec();
   for (size_type c=0; c < nrepeat; ++c) {
     tree.points_in_box(ipts,bmin, bmax);
     npt = ipts.size();
   }
   cout << "BOX QUERY: nb points in " << bmin << ":" << bmax << " is : " << npt << "\n";
-  cout << "average query time is: " << (dal::uclock_sec()-t)/nrepeat*1e6 << " microseconds\n";
+  cout << "average query time is: " << (gmm::uclock_sec()-t)/nrepeat*1e6 << " microseconds\n";
 
-  t = dal::uclock_sec();
+  t = gmm::uclock_sec();
   for (size_type c=0; c < nrepeat*200; ++c) {
     tree.points_in_box(ipts,pt,pt);
     npt = ipts.size();
   }
   cout << "POINT QUERY: nb points in " << pt << ":" << pt << " is : " << npt << "\n";
-  cout << "average query time is: " << (dal::uclock_sec()-t)/(nrepeat*200.)*1e6 << " microseconds\n";
+  cout << "average query time is: " << (gmm::uclock_sec()-t)/(nrepeat*200.)*1e6 << " microseconds\n";
 }
 
 int main(int argc, char **argv) {

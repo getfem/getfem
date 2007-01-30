@@ -25,10 +25,10 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#include <getfem_assembling.h>
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_mat_elem.h>
+#include <getfem/getfem_assembling.h>
+#include <getfem/getfem_export.h>
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_mat_elem.h>
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;
@@ -333,16 +333,9 @@ void test2_mat_elem(const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
 /*  main program.                                                         */
 /**************************************************************************/
 
-class exception_cb : public dal::exception_callback  {
-  public:
-  virtual void callback(const std::string& msg)
-  { cerr << msg << endl; *(int *)(0) = 0; }
-};
-
 int main(int argc, char *argv[])
 {
-  exception_cb cb;
-  dal::exception_callback::set_exception_callback(&cb);
+  DAL_SET_EXCEPTION_DEBUG;
 
   try {
     

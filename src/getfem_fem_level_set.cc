@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -22,7 +22,7 @@
 /**\file getfem_fem_level_set.cc
    \brief a FEM which should be used with getfem::mesh_fem_level_set.
 */
-#include <getfem_fem_level_set.h>
+#include "getfem/getfem_fem_level_set.h"
 
 namespace getfem {
     

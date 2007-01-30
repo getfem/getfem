@@ -28,11 +28,11 @@
    a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <getfem_plasticity.h>
-#include <getfem_export.h>
+#include <getfem/getfem_assembling.h> /* import assembly methods (and norms comp.) */
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_model_solvers.h>
+#include <getfem/getfem_plasticity.h>
+#include <getfem/getfem_export.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */

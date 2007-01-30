@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier, Houari Khenous.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier, Houari Khenous.
 //
 // This file is a part of GETFEM++
 //
@@ -28,14 +28,14 @@
  */
 
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_import.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_Coulomb_friction.h>
-#include <getfem_model_solvers.h>
-#include <getfem_derivatives.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_import.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_Coulomb_friction.h"
+#include "getfem/getfem_model_solvers.h"
+#include "getfem/getfem_derivatives.h"
+#include "gmm/gmm.h"
 #include <fstream>
 
 /* some Getfem++ types that we will be using */
@@ -81,7 +81,7 @@ struct friction_problem {
   bool dt_adapt, periodic, dxexport, Dirichlet, init_stationary;
 
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   void stationary(plain_vector &U0, plain_vector &LN, plain_vector &LT);
   void solve(void);
@@ -160,7 +160,7 @@ void friction_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -814,7 +814,7 @@ void friction_problem::solve(void) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -823,7 +823,7 @@ int main(int argc, char *argv[]) {
     p.init();
     p.solve();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   cout << "To see the simulation, you have to set DX_EXPORT to 1 in "
     "dynamic_friction.param and DT_EXPORT to a suitable value (for "

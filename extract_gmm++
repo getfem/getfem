@@ -10,8 +10,8 @@ $MINOR_VERSION = "02";
 $DATE_VERSION = "";
 
 
-$gmm_files = "dal_std.h dal_except.h dal_basic.h dal_algobase.h dal_ref.h";
-$gmm_files_bis = "\\\n          dal_std.h\\\n          dal_basic.h\\\n          dal_except.h\\\n          dal_algobase.h\\\n          dal_ref.h";
+$gmm_files = "dal_std.h dal_except.h dal_algobase.h dal_ref.h";
+$gmm_files_bis = "\\\n          dal_std.h\\\n          dal_except.h\\\n          dal_algobase.h\\\n          dal_ref.h";
 open F, "(cd $getfem_root/src && ls gmm*.h) |", or die;
 while (<F>) { chomp $_; $gmm_files = "$gmm_files $_"; $gmm_files_bis = "$gmm_files_bis\\\n          $_"; }
 $test_files = "make_gmm_test.pl";

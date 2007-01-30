@@ -1,6 +1,5 @@
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <ftool.h>
+#include <getfem/getfem_export.h>
+#include <getfem/getfem_regular_meshes.h>
 #ifdef GETFEM_HAVE_SYS_TIMES
 #  include <sys/times.h>
 #endif

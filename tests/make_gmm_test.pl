@@ -136,6 +136,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       elsif ($li=~/VECTOR_PARAM/) { $param[$nb_param++] = 2; }
       elsif ($li=~/RECTANGULAR_MATRIX_PARAM/) { $param[$nb_param++] = 3; }
       elsif ($li=~/SQUARED_MATRIX_PARAM/) { $param[$nb_param++] = 4; }
+      elsif ($li=~/\/\//) { }
       else { die "Error in parameter list"; }
     }
 
@@ -191,9 +192,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       print TMPF "  fpu_fix_start(0);\n\n";
     }
     print TMPF "  srand($theseed);\n\n";
-    print TMPF "  dal::exception_callback_debug cb;\n";
-    print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n";
-    print TMPF "  dal::set_warning_level(1);\n\n";
+    print TMPF "  gmm::exception_callback_debug cb;\n";
+    print TMPF "  gmm::exception_callback::set_exception_callback(&cb);\n";
+    print TMPF "  gmm::set_warning_level(1);\n\n";
     print TMPF "  for (int iter = 0; iter < 100000; ++iter) {\n\n";
     print TMPF "    try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
@@ -326,7 +327,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF ");\n";
     print TMPF "      if (ret) return 0;\n\n";
     print TMPF "    }\n";
-    print TMPF "    DAL_STANDARD_CATCH_ERROR;\n";
+    print TMPF "    GMM_STANDARD_CATCH_ERROR;\n";
     print TMPF "  }\n";
     print TMPF "  return 0;\n";
     print TMPF "}\n";

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -25,8 +25,8 @@
   (used by many other modules, such as interpolation from one mesh onto another, etc)
  */
 
-#include <bgeot_geotrans_inv.h>
-#include <getfem_regular_meshes.h>
+#include "getfem/bgeot_geotrans_inv.h"
+#include "getfem/getfem_regular_meshes.h"
 
 using bgeot::size_type;
 using bgeot::dim_type;
@@ -66,7 +66,7 @@ void check_inversion(bgeot::pgeometric_trans pgt, const std::vector<base_node>& 
     cerr << "  distance(transform(Pref)-P) = " << err;
     if (err >= 1e-10) cerr << ": TOO LARGE (>1e-10). Inversion failed miserabily.";
     cerr << "\n\n";
-    DAL_THROW(dal::failure_error, "geotrans_inv_convex failed\n");
+    DAL_THROW(gmm::failure_error, "geotrans_inv_convex failed\n");
   }
   if (verbose) { 
     cout << "SUCCESS: ";
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
   dim_type N, MESH_TYPE;
   scalar_type LX, LY, LZ;
   size_type NX, NB_POINTS;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
   getfem::mesh mesh;
 
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
@@ -180,13 +180,13 @@ int main(int argc, char *argv[]) {
 		     (mesh, N, org, vtab.begin(), ref.begin()); break;
     case 2 : getfem::parallelepiped_regular_prism_mesh
 		     (mesh, N, org, vtab.begin(), ref.begin()); break;
-    default : DAL_THROW(dal::internal_error, "Unknown type of mesh");
+    default : DAL_THROW(gmm::internal_error, "Unknown type of mesh");
     }
     
     mesh.optimize_structure();
 
 
-    scalar_type exectime = dal::uclock_sec(), total_time = 0.0;
+    scalar_type exectime = gmm::uclock_sec(), total_time = 0.0;
 
     bgeot::geotrans_inv gti;
     bgeot::base_node pt(N);
@@ -202,11 +202,11 @@ int main(int argc, char *argv[]) {
 
     for (size_type i=0; i < 2; ++i) {
       total_time = 0;
-      exectime = dal::uclock_sec();
+      exectime = gmm::uclock_sec();
       if (i==0) { cout << " using points_in_box..\n"; }
       else { cout << " using brute force..\n"; }
-      cout << "Time to sort points : " << dal::uclock_sec() - exectime << endl;
-      total_time += dal::uclock_sec() - exectime;
+      cout << "Time to sort points : " << gmm::uclock_sec() - exectime << endl;
+      total_time += gmm::uclock_sec() - exectime;
       
       dal::bit_vector nn = mesh.convex_index();
       size_type nbtot = 0;
@@ -219,12 +219,12 @@ int main(int argc, char *argv[]) {
 	nbtot += nb;
       }
       
-      cout << "Time to invert geo trans : " << dal::uclock_sec() - exectime
+      cout << "Time to invert geo trans : " << gmm::uclock_sec() - exectime
 	   << endl;
       cout << "Total number : " << nbtot << endl;
       assert(nbtot == NB_POINTS);
     }
-    total_time += dal::uclock_sec() - exectime;
+    total_time += gmm::uclock_sec() - exectime;
     
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -37,7 +37,7 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[100,100]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[200,200]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
@@ -47,7 +47,7 @@ if (N == 2 && ~QUAD)
   FEM_RHS = 'FEM_PK(2,1)';  % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
   FEM_MULT_DEGREE = 1; % Degree for multipliers definition
-  FEM_MULT_STRATEGY = 1;
+  FEM_MULT_STRATEGY = 4;
   OK = 1;
 end;
 
@@ -58,7 +58,7 @@ if (N == 3 && ~QUAD)
   FEM = 'FEM_PK(3,2)';      % Finite element method for the unknown.
   FEM_RHS = FEM;            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(3,1)'; % Finite element method for multipliers
-  FEM_MULT_DEGREE = 1; % Degree for multipliers definition
+  FEM_MULT_DEGREE = 1;      % Degree for multipliers definition
    OK = 1;
 end;
 

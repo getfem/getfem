@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <dal_basic.h>
+#include <getfem/dal_basic.h>
 #include <deque>
 #include <complex>
 

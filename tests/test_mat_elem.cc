@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -25,10 +25,10 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#include <getfem_assembling.h>
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_mat_elem.h>
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_mat_elem.h"
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;
@@ -54,7 +54,7 @@ struct lap_pb {
   int integration, mesh_type;
 
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   
   void init(void);
@@ -107,7 +107,7 @@ void lap_pb::init(void)
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
-  default : DAL_THROW(dal::internal_error, "Unknown type of mesh");
+  default : DAL_THROW(gmm::internal_error, "Unknown type of mesh");
   }
 
   mesh.optimize_structure();
@@ -120,21 +120,21 @@ void lap_pb::init(void)
   case 0 : break;
   case 1 :
     if (N != 1 || mesh_type != 0)
-      DAL_THROW(dal::internal_error,
+      DAL_THROW(gmm::internal_error,
 		"This element is only defined on segments");
      K = 3;
     break;
   case 2 : 
     if (mesh_type != 0)
-      DAL_THROW(dal::internal_error,
+      DAL_THROW(gmm::internal_error,
 		"This element is only defined on simplexes");
     break;
   case 3 : 
     if (mesh_type != 0)
-      DAL_THROW(dal::internal_error,
+      DAL_THROW(gmm::internal_error,
 		"This element is only defined on simplexes");
     break;
-  default : DAL_THROW(dal::internal_error, "Unknown finite element method");
+  default : DAL_THROW(gmm::internal_error, "Unknown finite element method");
   }
 
   getfem::pintegration_method ppi;
@@ -145,7 +145,7 @@ void lap_pb::init(void)
     switch (mesh_type) { 
     case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
     case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%d)", int(N)); break;
-    default : DAL_THROW(dal::internal_error, 
+    default : DAL_THROW(gmm::internal_error, 
     "Exact integration not allowed in this context");
     }
     break;
@@ -166,7 +166,7 @@ void lap_pb::init(void)
     if (mesh_type == 1)
       sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", int(N), int(KI));
     else
-      DAL_THROW(dal::internal_error,
+      DAL_THROW(gmm::internal_error,
 		"Product of 1D Gauss only for parallelepipeds");
     break;
   case 3 :
@@ -181,7 +181,7 @@ void lap_pb::init(void)
 		int(N), int(2*K), int(KI));
     }
     else
-      DAL_THROW(dal::internal_error,
+      DAL_THROW(gmm::internal_error,
 		"Composite integration only for simplexes");
     break;
   case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
@@ -333,7 +333,7 @@ void test2_mat_elem(const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
 /*  main program.                                                         */
 /**************************************************************************/
 
-class exception_cb : public dal::exception_callback  {
+class exception_cb : public gmm::exception_callback  {
   public:
   virtual void callback(const std::string& msg)
   { cerr << msg << endl; *(int *)(0) = 0; }
@@ -342,31 +342,31 @@ class exception_cb : public dal::exception_callback  {
 int main(int argc, char *argv[])
 {
   exception_cb cb;
-  dal::exception_callback::set_exception_callback(&cb);
+  gmm::exception_callback::set_exception_callback(&cb);
 
   try {
     
     lap_pb p;
-    scalar_type exectime = dal::uclock_sec(), total_time = 0.0;
+    scalar_type exectime = gmm::uclock_sec(), total_time = 0.0;
     
     // cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
     p.init();
     // cout << "Initialisation terminee\n";
     
-    total_time += dal::uclock_sec() - exectime;
+    total_time += gmm::uclock_sec() - exectime;
     
     
     
-    exectime = dal::uclock_sec();
+    exectime = gmm::uclock_sec();
     test1_mat_elem(p.mim, p.mef, p.mef_data);
     cout << "Mat elem computation time 1 : "
-	 << dal::uclock_sec() - exectime << endl;
+	 << gmm::uclock_sec() - exectime << endl;
  
-    exectime = dal::uclock_sec();
+    exectime = gmm::uclock_sec();
     test2_mat_elem(p.mim, p.mef, p.mef_data);
     cout << "Mat elem computation time 2 : "
-	 << dal::uclock_sec() - exectime << endl;
+	 << gmm::uclock_sec() - exectime << endl;
 
 
     /* check mesh/mesh_fem I/O */

@@ -1,5 +1,5 @@
-#include <bgeot_kdtree.h>
-#include <dal_bit_vector.h>
+#include <getfem/bgeot_kdtree.h>
+#include <getfem/dal_bit_vector.h>
 using bgeot::base_node;
 using bgeot::size_type;
 using bgeot::dim_type;

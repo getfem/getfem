@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2001-2006 Yves Renard
+// Copyright (C) 2001-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,7 +21,7 @@
 //========================================================================
 
 
-#include <getfem_interpolation.h>
+#include "getfem/getfem_interpolation.h"
 
 namespace getfem {
 

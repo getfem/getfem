@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Yves Renard
+// Copyright (C) 2004-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <getfem_modeling.h>
+#include "getfem/getfem_modeling.h"
 
 namespace getfem {
 

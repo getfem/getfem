@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -25,12 +25,12 @@
 /*                                                                         */
 /***************************************************************************/
 
-#include <getfem_assembling.h>
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <gmm.h>
-#include <getfem_interpolated_fem.h>
-#include <getfem_mesh_fem_sum.h>
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "gmm/gmm.h"
+#include "getfem/getfem_interpolated_fem.h"
+#include "getfem/getfem_mesh_fem_sum.h"
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;
@@ -55,7 +55,7 @@ struct lap_pb {
   scalar_type LX, LY, LZ;
   int NX1, NX2, N, K, KI, integration;
 
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   void assemble(void);
   void init(void);
@@ -259,8 +259,8 @@ void test2() {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb);
+  gmm::exception_callback_debug cb;
+  gmm::exception_callback::set_exception_callback(&cb);
   
   try {
     test2();
@@ -274,6 +274,6 @@ int main(int argc, char *argv[]) {
     p.assemble();
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -28,11 +28,11 @@
    a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <getfem_plasticity.h>
-#include <getfem_export.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "getfem/getfem_plasticity.h"
+#include "getfem/getfem_export.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -75,7 +75,7 @@ struct plasticity_problem {
   std::vector<std::vector<scalar_type> > sigma_b;
 
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   bool solve(plain_vector &U);
   void init(void);
@@ -150,7 +150,7 @@ void plasticity_problem::init(void)
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -280,7 +280,7 @@ bool plasticity_problem::solve(plain_vector &U) {
 /**************************************************************************/
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -289,14 +289,14 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) DAL_THROW(gmm::failure_error,"Solve has failed");
 
     cout << "Resultats dans fichier : "<<p.datafilename<<".* \n";
     p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
     scalar_type t[2]={p.mu,p.lambda};
     vecsave(p.datafilename+".coef", std::vector<scalar_type>(t, t+2));    
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   
   return 0; 
 }

@@ -1,6 +1,6 @@
-#include <getfem_assembling.h> /* import assembly methods (and comp. of norms) */
-#include <getfem_regular_meshes.h>
-#include <getfem_norm.h>
+#include <getfem/getfem_assembling.h> /* import assembly methods (and comp. of norms) */
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_norm.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small(dim < 16) vectors */

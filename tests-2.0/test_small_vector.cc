@@ -3,12 +3,12 @@
 # define DEBUG_SMALL_VECTOR
 #endif
 */
-#include <getfem_mesh.h>
+#include <getfem/getfem_mesh.h>
 #ifdef GETFEM_HAVE_SYS_TIMES
 #  include <sys/times.h>
 #endif
 #include <valarray>
-#include <bgeot_small_vector.h>
+#include <getfem/bgeot_small_vector.h>
 #include <unistd.h>
 
 bool quick = false;

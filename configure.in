@@ -10,7 +10,7 @@ define([AC_CACHE_SAVE], )dnl
 
 AC_INIT(install-sh)
 AM_CONFIG_HEADER(config.h)
-AX_PREFIX_CONFIG_H(src/getfem_arch_config.h,GETFEM) 
+AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM) 
 AC_PREREQ(2.56)
 AC_ARG_PROGRAM
 

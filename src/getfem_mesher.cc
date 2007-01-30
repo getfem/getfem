@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Julien Pommier
+// Copyright (C) 2004-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <getfem_mesher.h>
+#include "getfem/getfem_mesher.h"
 
 namespace getfem {
 
@@ -388,7 +388,7 @@ namespace getfem {
       if (noisy > 0) cout << "Quality post-optimization\n";
       base_vector X(pts.size() * N);
       for (unsigned i=0; i < pts.size(); ++i)
-	dal::copy_n(pts[i].const_begin(), N, X.begin() + i*N);
+	gmm::copy_n(pts[i].const_begin(), N, X.begin() + i*N);
 
       base_matrix S(N,N), SW(N,N);
       for (unsigned i=0; i < nbt; ++i) {
@@ -427,7 +427,7 @@ namespace getfem {
 			  << " worst element: " << sqrt(worst_element) << endl;
 
       for (unsigned i=0; i < pts.size(); ++i)
-	dal::copy_n(X.begin() + i*N, N, pts[i].begin());      
+	gmm::copy_n(X.begin() + i*N, N, pts[i].begin());      
     }
 
     void delete_element(size_type ic) {
@@ -439,7 +439,7 @@ namespace getfem {
     }
 
     scalar_type quality_of_element(size_type i) {
-      return simplex_quality(dal::index_ref_iterator
+      return simplex_quality(gmm::index_ref_iterator
 			     (pts.begin(), gmm::mat_col(t,i).begin()));
     }
 
@@ -1187,7 +1187,7 @@ namespace getfem {
 
 	// computation of L and L0.
 	size_type nbcv = edges_mesh.convex_index().card();
-	if (nbcv == 0) DAL_THROW(dal::failure_error, "no more edges!");
+	if (nbcv == 0) DAL_THROW(failure_error, "no more edges!");
 	L.resize(nbcv); L0.resize(nbcv);
 	scalar_type sL = 0, sL0 = 0;
 	for (dal::bv_visitor ie(edges_mesh.convex_index());

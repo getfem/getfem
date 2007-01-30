@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -32,12 +32,12 @@
    a pde directly with the assembly procedures.
 */
 
-#include <getfem_assembling.h> /* assembly methods (and comp. of norms) */
-#include <getfem_export.h>   /* export functions (save solutions in a file) */
-#include <getfem_regular_meshes.h>
-#include <getfem_derivatives.h>
-#include <getfem_superlu.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h" /* assembly methods (and comp. of norms) */
+#include "getfem/getfem_export.h"   /* export functions (save solutions in a file) */
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_superlu.h"
+#include "gmm/gmm.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -90,7 +90,7 @@ struct laplacian_problem {
 			      * (used if gen_dirichlet is true)
 			      */
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   void assembly(void);
   bool solve(void);
@@ -153,7 +153,7 @@ void laplacian_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -259,7 +259,7 @@ void laplacian_problem::assembly(void) {
 bool laplacian_problem::solve(void) {
   cout << "Compute preconditionner\n";
   gmm::iteration iter(residual, 1, 40000);
-  double time = dal::uclock_sec();
+  double time = gmm::uclock_sec();
   if (1) {
     gmm::identity_matrix P;
     // gmm::diagonal_precond<sparse_matrix_type> P(SM);
@@ -270,7 +270,7 @@ bool laplacian_problem::solve(void) {
     // gmm::ilutp_precond<sparse_matrix_type> P(SM, 50, 1E-9);
     // gmm::ilu_precond<sparse_matrix_type> P(SM);
     cout << "Time to compute preconditionner : "
-	 << dal::uclock_sec() - time << " seconds\n";
+	 << gmm::uclock_sec() - time << " seconds\n";
 
   
     //gmm::HarwellBoeing_IO::write("SM", SM);
@@ -284,7 +284,7 @@ bool laplacian_problem::solve(void) {
   }
   
   cout << "Total time to solve : "
-       << dal::uclock_sec() - time << " seconds\n";
+       << gmm::uclock_sec() - time << " seconds\n";
 
   if (gen_dirichlet) {
     std::vector<scalar_type> Uaux(mf_u.nb_dof());
@@ -314,7 +314,7 @@ void laplacian_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -323,11 +323,11 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.assembly();
-    if (!p.solve()) DAL_THROW(dal::failure_error,
+    if (!p.solve()) DAL_THROW(gmm::failure_error,
 			      "Solve procedure has failed");
     p.compute_error();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

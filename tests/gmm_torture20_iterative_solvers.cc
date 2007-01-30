@@ -1,10 +1,31 @@
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
 // SQUARED_MATRIX_PARAM;
 // DENSE_VECTOR_PARAM;
 // VECTOR_PARAM;
 // ENDPARAM;
 
 using namespace std; // in order to test a using namespace std;
-#include <gmm.h>
+#include "gmm/gmm.h"
 
 using gmm::size_type;
 
@@ -131,7 +152,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   if (m == 0) return true;
   static int nexpe = 0, effexpe = 0;
   ++nexpe;
-  dal::set_warning_level(0);
+  gmm::set_warning_level(0);
 
   gmm::clean(v1, 0.01);
   for (size_type i = 0; i < gmm::vect_size(v1); ++i)
@@ -140,7 +161,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
 
   if (print_debug) {
     cout << "Begin experiment " << nexpe << "\n\nwith " << m1 << "\n\n"; 
-    dal::set_warning_level(3);
+    gmm::set_warning_level(3);
   }
   
   R det = gmm::abs(gmm::lu_det(m1)), cond = gmm::condest(m1);

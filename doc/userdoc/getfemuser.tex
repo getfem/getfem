@@ -26,7 +26,7 @@
 \usepackage[pdftex,pageanchor=true,hyperindex=true,pagebackref=true,pdfhighlight=/O,pdfauthor={Yves Renard}]{hyperref}%pour le pdf
 \usepackage{xspace} % insere un espace si necessaire 
 \usepackage{underscore}
- %\input{persdf}
+
 \newcommand{\ds}{\displaystyle}
 \newcommand{\Frac}[2]{{\ds \frac{\ds #1}{\ds #2}}}
 \oddsidemargin -0.9cm
@@ -578,7 +578,7 @@ The following is an example of how to load a mesh and extract information on it.
         \}
      \}
      
-   \} DAL\_STANDARD\_CATCH\_ERROR; // catches standard errors
+   \} GMM\_STANDARD\_CATCH\_ERROR; // catches standard errors
  \}
 \end{cppcode}
 
@@ -2467,14 +2467,14 @@ Parallelization of getfem is still considered a ``work in progress''..
 \section{Catch errors}
 \index{errors}
 
-Errors used in \gf are defined in the file \dalexcepth. In order to make easier the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
-A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \dalexcepth. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
+Errors used in \gf are defined in the file \gmmexcepth. In order to make easier the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
+A standard procedure, \cpp{GMM\_STANDARD\_CATCH\_ERROR}, is defined in \gmmexcepth. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
 \begin{cppcode}
   int main(void) \{ 
     try \{ 
       ... main program ... 
         \} 
-     DAL\_STANDARD\_CATCH\_ERROR;
+     GMM\_STANDARD\_CATCH\_ERROR;
   \}
 \end{cppcode}
 

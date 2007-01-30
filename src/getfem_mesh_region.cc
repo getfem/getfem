@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2005-2006 Yves Renard
+// Copyright (C) 2005-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,8 +20,8 @@
 //
 //========================================================================
 
-#include <getfem_mesh_region.h>
-#include <getfem_mesh.h>
+#include "getfem/getfem_mesh_region.h"
+#include "getfem/getfem_mesh.h"
 
 namespace getfem {
   typedef mesh_region::face_bitset face_bitset;
@@ -188,18 +188,16 @@ namespace getfem {
 
   void mesh_region::error_if_not_faces() const {
     if (!is_only_faces()) 
-      DAL_THROW(dal::failure_error, 
-		"Expecting a set of faces, not convexes");
+      DAL_THROW(failure_error, "Expecting a set of faces, not convexes");
   }
   void mesh_region::error_if_not_convexes() const {
     if (!is_only_convexes()) 
-      DAL_THROW(dal::failure_error, 
-		"Expecting a set of convexes, not faces");
+      DAL_THROW(failure_error, "Expecting a set of convexes, not faces");
   }
   void mesh_region::error_if_not_homogeneous() const {
     if (!is_only_faces() && !is_only_convexes()) 
-      DAL_THROW(dal::failure_error, 
-		"Expecting a set of convexes or a set of faces, but not a mixed set");
+      DAL_THROW(failure_error, 
+	"Expecting a set of convexes or a set of faces, but not a mixed set");
   }
 
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 
@@ -216,7 +214,7 @@ namespace getfem {
 
   void mesh_region::visitor::init(const mesh_region &s) {
     if (&s == 0) 
-      DAL_THROW(dal::failure_error, 
+      DAL_THROW(failure_error, 
 		"Attemps to use an invalid mesh_region "
 		"(need to call 'from_mesh')");
     it = s.rp().m.begin(); ite = s.rp().m.end(); 

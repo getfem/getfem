@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <dal_bit_vector.h>
+#include "getfem/dal_bit_vector.h"
 #include <deque>
 typedef size_t size_type;
 
@@ -27,60 +27,60 @@ bool quick = false;
 
 void test_speed_part(dal::bit_vector& bv, std::vector<bool>& vb, std::deque<bool>& db) {
   double t0;
-  t0=dal::uclock_sec();
+  t0=gmm::uclock_sec();
   size_type cnt=0, oldcnt;
   for (size_type i=0; i < vb.size(); ++i) {
     cnt += bv[i] ? 1 : 0;
   }
-  cerr << "bit_vector   [random_access ]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec();
+  cerr << "bit_vector   [random_access ]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec();
 
   oldcnt=cnt; cnt = 0;
   for (size_type i=0; i < vb.size(); ++i) {
     cnt += bv.is_in(i) ? 1 : 0;
   }
-  cerr << "bit_vector   [is_in         ]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "bit_vector   [is_in         ]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (size_type i=0; i < vb.size(); ++i) {
     cnt += vb[i] ? 1 : 0;
   }
-  cerr << "vector<bool> [random_access ]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "vector<bool> [random_access ]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (size_type i=0; i < db.size(); ++i) {
     cnt += db[i] ? 1 : 0;
   }
-  cerr << "deque <bool> [random_access ]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "deque <bool> [random_access ]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (dal::bit_vector::const_iterator it = bv.begin(); it != bv.end(); ++it) {
     cnt += (*it) ? 1 : 0;
   }
-  cerr << "bit_vector   [const_iterator]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "bit_vector   [const_iterator]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (dal::bv_visitor i(bv); !i.finished(); ++i) {
     cnt ++; 
   }
-  cerr << "bit_vector   [bv_visitor    ]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec();  assert(oldcnt == cnt);
+  cerr << "bit_vector   [bv_visitor    ]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec();  assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (size_type i = bv.take_first(); i != size_type(-1); i << bv) {
     cnt ++; 
   }
-  cerr << "bit_vector   [operator <<   ]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "bit_vector   [operator <<   ]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (std::vector<bool>::const_iterator it = vb.begin(); it != vb.end(); ++it) {
     cnt += (*it) ? 1 : 0;
   }
-  cerr << "vector<bool> [const_iterator]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "vector<bool> [const_iterator]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (std::deque<bool>::const_iterator it = db.begin(); it != db.end(); ++it) {
     cnt += (*it) ? 1 : 0;
   }
-  cerr << "deque <bool> [const_iterator]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "deque <bool> [const_iterator]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec(); assert(oldcnt == cnt);
 }
 
 void test_speed() {
@@ -92,13 +92,13 @@ void test_speed() {
   dal::bit_vector   bv2;
   std::vector<bool> vb2;
   std::deque<bool> db2;
-  double t0 = dal::uclock_sec();
+  double t0 = gmm::uclock_sec();
   for (size_type i=0; i < N; ++i) bv2[i] = 1;
-  cerr << "bit_vector   [push_back]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec();
+  cerr << "bit_vector   [push_back]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec();
   for (size_type i=0; i < N; ++i) vb2.push_back(true);
-  cerr << "vector<bool> [push_back]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec();
+  cerr << "vector<bool> [push_back]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec();
   for (size_type i=0; i < N; ++i) db2.push_back(true);
-  cerr << "deque<bool>  [push_back]: " << dal::uclock_sec()-t0 << endl; t0 = dal::uclock_sec();
+  cerr << "deque<bool>  [push_back]: " << gmm::uclock_sec()-t0 << endl; t0 = gmm::uclock_sec();
 
 
   cerr << "---- full vector ----" << endl;

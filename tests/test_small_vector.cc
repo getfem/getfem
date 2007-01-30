@@ -1,15 +1,37 @@
-/*
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+
+
 #ifndef DEBUG_SMALL_VECTOR
 # define DEBUG_SMALL_VECTOR
 #endif
-*/
-#include <getfem_mesh.h>
+
 #ifdef GETFEM_HAVE_SYS_TIMES
 #  include <sys/times.h>
 #endif
 #include <valarray>
-#include <bgeot_small_vector.h>
 #include <unistd.h>
+#include "getfem/bgeot_small_vector.h"
+#include "getfem/getfem_mesh.h"
 
 bool quick = false;
 
@@ -59,25 +81,25 @@ namespace test {
 
   class block_allocator {
   public:
-    typedef dal::uint16_type uint16_type;
+    typedef gmm::uint16_type uint16_type;
     /* number of objects stored in a same block, power of 2 */
     enum { p2_BLOCKSZ = 8, BLOCKSZ = 1<<p2_BLOCKSZ }; 
     struct node_id {
-      dal::uint32_type p;
+      gmm::uint32_type p;
       bool aliased() const { return (p != (p*2)/2); }// & 0x80000000; }
       void set_aliased() { p += 0x80000000; }
       void unset_aliased() { p = (p*2)/2; }//&= ~0x80000000; }
-      dal::uint32_type id() const { return (p*2)/2; } // & 0x7fffffff; }
-      dal::uint32_type bid() const { return id()/BLOCKSZ; }
-      dal::uint32_type chunkid() const { return id()%BLOCKSZ; }
-      explicit node_id(dal::uint32_type p_) : p(p_) {}
-      node_id(dal::uint32_type b, dal::uint32_type cid, bool al_) : p((b*BLOCKSZ+cid)+(al_?0x80000000:0)) {}
+      gmm::uint32_type id() const { return (p*2)/2; } // & 0x7fffffff; }
+      gmm::uint32_type bid() const { return id()/BLOCKSZ; }
+      gmm::uint32_type chunkid() const { return id()%BLOCKSZ; }
+      explicit node_id(gmm::uint32_type p_) : p(p_) {}
+      node_id(gmm::uint32_type b, gmm::uint32_type cid, bool al_) : p((b*BLOCKSZ+cid)+(al_?0x80000000:0)) {}
       bool null() const { return p == 0; }
       void nullify() { p = 0; }
     };
 
 
-    typedef dal::uint32_type size_type;
+    typedef gmm::uint32_type size_type;
     enum { OBJ_SIZE_LIMIT = 129 }; /* object size limit */
     enum { MAXREF = 256 }; /* reference count limit before copying is used */
   protected:
@@ -325,7 +347,7 @@ namespace test {
   block_allocator::node_id block_allocator::allocate(block_allocator::size_type n) {
     if (n == 0) return node_id(0);
     if (n >= OBJ_SIZE_LIMIT) 
-      DAL_THROW(dal::failure_error, 
+      DAL_THROW(gmm::failure_error, 
 		"attempt to allocate a supposedly \"small\" object of " 
 		<< n << " bytes\n");
     //cout << "dim = " << n << " ";
@@ -333,7 +355,7 @@ namespace test {
       blocks.push_back(block(n)); blocks.back().init();
       insert_block_into_unfilled(blocks.size()-1);
       if (first_unfilled[n] >= (1<<(31-p2_BLOCKSZ))) {//(node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ))) {
-	DAL_THROW(dal::failure_error, "allocation slots exhausted for objects of size " << 
+	DAL_THROW(gmm::failure_error, "allocation slots exhausted for objects of size " << 
 		  n << " (" << first_unfilled[n] << " allocated!),\n" << 
 		  "either increase the limit, or check for a leak in your code.");
 	//cout << "created new block " << first_unfilled[n] << "\n";
@@ -509,7 +531,7 @@ namespace getfem {
   template <class V> void rrun(std::vector<V>& vv) {
     chrono c;
     c.init().tic();
-    cout << DAL_PRETTY_FUNCTION << "\n";
+    cout << GMM_PRETTY_FUNCTION << "\n";
     size_type N = quick ? 10 : 25;
     for (size_type k=0; k < N; ++k) {
       init(vv);
@@ -571,7 +593,7 @@ namespace getfem {
 //     for (size_type i=0; i < (vv.size()<4 ? vv.size() : 4); ++i) {
 //       printf("V[%d]@%p, V[%d][0]@%p\n", int(i), &vv[i], int(i), &vv[i][0]);
 //     }
-    dal::lexicographical_less<V, dal::approx_less<typename V::value_type> > comp;
+    gmm::lexicographical_less<V, gmm::approx_less<typename V::value_type> > comp;
     c.init().tic();
     init(vv); std::random_shuffle(vv.begin(), vv.end());
     for (size_type i=0; i < N*4; ++i) {
@@ -585,7 +607,7 @@ namespace getfem {
     //bgeot::mesh<V> m;
 
     dal::dynamic_tree_sorted<V,
-      dal::lexicographical_less<V, getfem::mesh::val_comp> > mm;
+      gmm::lexicographical_less<V, getfem::mesh::val_comp> > mm;
     
     cout << "mesh<base_node> : empty size = " << mm.memsize() << "\n";
     init(vv);

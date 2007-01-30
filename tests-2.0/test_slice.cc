@@ -1,5 +1,5 @@
-#include <bgeot_comma_init.h>
-#include <getfem_mesh_slice.h>
+#include <getfem/bgeot_comma_init.h>
+#include <getfem/getfem_mesh_slice.h>
 
 using getfem::size_type;
 namespace getfem {

@@ -25,8 +25,8 @@
   (used by many other modules, such as interpolation from one mesh onto another, etc)
  */
 
-#include <bgeot_geotrans_inv.h>
-#include <getfem_regular_meshes.h>
+#include <getfem/bgeot_geotrans_inv.h>
+#include <getfem/getfem_regular_meshes.h>
 
 using bgeot::size_type;
 using bgeot::dim_type;

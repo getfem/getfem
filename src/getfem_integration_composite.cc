@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard
+// Copyright (C) 2002-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,10 +21,10 @@
 //========================================================================
 
 
-#include <bgeot_poly_composite.h>
-#include <getfem_integration.h>
-#include <getfem_mesh_im.h>
-#include <dal_naming_system.h>
+#include "getfem/bgeot_poly_composite.h"
+#include "getfem/getfem_integration.h"
+#include "getfem/getfem_mesh_im.h"
+#include "getfem/dal_naming_system.h"
 
 namespace getfem {
  
@@ -51,7 +51,7 @@ namespace getfem {
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
-	base_node barycentre = dal::mean_value(mi.linked_mesh().points_of_face_of_convex(cv, f).begin(),
+	base_node barycentre = gmm::mean_value(mi.linked_mesh().points_of_face_of_convex(cv, f).begin(),
                                                mi.linked_mesh().points_of_face_of_convex(cv, f).end());
 	short_type f2 = short_type(-1);
 	for (short_type f3 = 0; f3 < cr->structure()->nb_faces(); ++f3) {

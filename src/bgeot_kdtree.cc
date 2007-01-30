@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Julien Pommier
+// Copyright (C) 2004-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -21,7 +21,7 @@
 //========================================================================
 
 
-#include <bgeot_kdtree.h>
+#include "getfem/bgeot_kdtree.h"
 
 namespace bgeot {
   /* generic node for the kdtree */

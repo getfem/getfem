@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Yves Renard
+// Copyright (C) 2000-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -22,8 +22,8 @@
 
 
 
-#include <bgeot_geotrans_inv.h>
-#include <gmm_solver_bfgs.h>
+#include "getfem/bgeot_geotrans_inv.h"
+#include "gmm/gmm_solver_bfgs.h"
 namespace bgeot
 { 
   bool geotrans_inv_convex::invert(const base_node& n, base_node& n_ref,

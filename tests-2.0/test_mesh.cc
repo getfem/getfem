@@ -19,12 +19,10 @@
 // USA.
 //
 //========================================================================
-#include <dal_std.h>
-#include <stdio.h>
-#include <getfem_regular_meshes.h>
-#include <bgeot_poly_composite.h>
-#include <bgeot_comma_init.h>
-#include <getfem_export.h>
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/bgeot_poly_composite.h>
+#include <getfem/bgeot_comma_init.h>
+#include <getfem/getfem_export.h>
 
 
 using getfem::size_type;
@@ -298,11 +296,6 @@ void test_region() {
   r = getfem::mesh_region::intersection(a,b);
   cout << "a=" << a << "\nb=" << b << "a inter b=" << r << "\n";
 }
-
-class myexc : public dal::exception_callback {
-  void callback(const std::string& s)
-  { cerr << "exception launched: " << s << std::endl; }
-};
 
 void test_convex_ref() {
   for (unsigned k=1; k <= 2; ++k) {

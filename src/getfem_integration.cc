@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Yves Renard
+// Copyright (C) 2000-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,13 +21,13 @@
 //========================================================================
 
 
-#include <dal_singleton.h>
-#include <getfem_integration.h>
-#include <dal_naming_system.h>
-#include <gmm_dense_lu.h>
-#include <bgeot_permutations.h>
-#include <bgeot_geotrans_inv.h>
-#include <getfem_im_list.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/getfem_integration.h"
+#include "getfem/dal_naming_system.h"
+#include "gmm/gmm_dense_lu.h"
+#include "getfem/bgeot_permutations.h"
+#include "getfem/bgeot_geotrans_inv.h"
+#include "getfem/getfem_im_list.h"
 
 namespace getfem {
 
@@ -39,8 +39,7 @@ namespace getfem {
   static pintegration_method im_none(im_param_list &params,
 			       std::vector<dal::pstatic_stored_object> &) {
     if (params.size())
-      DAL_THROW(dal::failure_error,
-		"IM_NONE does not accept any parameter");
+      DAL_THROW(failure_error, "IM_NONE does not accept any parameter");
     return new integration_method();
   }
 
@@ -1191,7 +1190,7 @@ namespace getfem {
       case 2: name << "IM_TRIANGLE"; break;
       case 3: name << "IM_TETRAHEDRON"; break;
       case 4: name << "IM_SIMPLEX4D"; break;
-      default: DAL_THROW(dal::failure_error,
+      default: DAL_THROW(failure_error,
 	"no approximate integration method for simplexes of dimension " << n);
       }
       for (size_type k = degree; k < size_type(degree+10); ++k) {
@@ -1200,13 +1199,13 @@ namespace getfem {
 	im = int_method_descriptor(name2.str(), false);
 	if (im) return im;
       }
-      DAL_THROW(dal::failure_error,
+      DAL_THROW(failure_error,
        "could not find an " << name.str() << " of degree >= " << int(degree));
     } else if (cvs->is_product(&a,&b)) {
       name << "IM_PRODUCT(" 
 	   << name_of_int_method(classical_approx_im_(a,degree)) << ","
 	   << name_of_int_method(classical_approx_im_(b,degree)) << ")";
-    } else DAL_THROW(dal::failure_error, "unknown convex structure!");
+    } else DAL_THROW(failure_error, "unknown convex structure!");
     return int_method_descriptor(name.str());
   }
 

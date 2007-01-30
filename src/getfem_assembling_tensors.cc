@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2003-2006 Julien Pommier
+// Copyright (C) 2003-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,8 +20,8 @@
 //
 //========================================================================
 
-#include <getfem_assembling_tensors.h>
-#include <getfem_mat_elem.h>
+#include "getfem/getfem_assembling_tensors.h"
+#include "getfem/getfem_mat_elem.h"
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
 

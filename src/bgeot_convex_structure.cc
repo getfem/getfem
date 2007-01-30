@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,9 +21,9 @@
 //========================================================================
 
 
-#include <dal_singleton.h>
-#include <dal_static_stored_objects.h>
-#include <bgeot_convex_structure.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/dal_static_stored_objects.h"
+#include "getfem/bgeot_convex_structure.h"
 
 
 namespace bgeot {
@@ -35,7 +35,7 @@ namespace bgeot {
   /* ******************************************************************** */
 
   void convex_structure::add_point_adaptative(short_type i, short_type f) {
-    if (nbpt < i) throw dal::internal_error(
+    if (nbpt < i) throw gmm::internal_error(
 		   "convex_structure::add_point_adaptative : internal error");
     if (i == nbpt) nbpt++;
     if (f != short_type(-1)) {

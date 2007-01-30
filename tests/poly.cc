@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <bgeot_poly.h>
+#include "getfem/bgeot_poly.h"
 
 std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
 			 bgeot::short_type k, bgeot::short_type de) {
@@ -148,7 +148,7 @@ int main(void)
     bgeot::base_poly S(1,2); S[0] = -2; S[1] = 3; S[2] = 1;
     cout << "P=" << P << ", S=" << S << " \n";
     cout << "P(S,x)=" << bgeot::poly_substitute_var(P,S,0) << "\n";
-    bgeot::opt_long_scalar_type t0 = dal::uclock_sec();
+    bgeot::opt_long_scalar_type t0 = gmm::uclock_sec();
     std::vector<bgeot::opt_long_scalar_type> v(3);
     for (unsigned i=0; i < 100000; ++i) {
       for (unsigned k=0; k < v.size(); ++k)
@@ -156,15 +156,15 @@ int main(void)
 	  / bgeot::opt_long_scalar_type(RAND_MAX);
       P.eval(v.begin());
     }
-    cout << "poly eval : " << dal::uclock_sec() - t0 << "sec \n";
+    cout << "poly eval : " << gmm::uclock_sec() - t0 << "sec \n";
     bgeot::base_poly QQ(P); QQ.derivative(1); QQ.derivative(2);
     cout << "QQ=" << QQ << "\n";
     for (unsigned i=0; i < 100000; ++i) {
       QQ.eval(v.begin());
     }
-    cout << "poly eval : " << dal::uclock_sec() - t0 << "sec \n";
+    cout << "poly eval : " << gmm::uclock_sec() - t0 << "sec \n";
 
-    t0 = dal::uclock_sec();
+    t0 = gmm::uclock_sec();
     bgeot::opt_long_scalar_type z=0;
     for (unsigned i=0; i < 100000; ++i) {
       bgeot::base_poly P2(P);
@@ -172,7 +172,7 @@ int main(void)
         P2.derivative(k); z += P2[0];
       }
     }
-    cout << "poly derivative : " << dal::uclock_sec() - t0 << "sec\n";
+    cout << "poly derivative : " << gmm::uclock_sec() - t0 << "sec\n";
 
     bgeot::base_poly P2;
     std::stringstream ss; ss << P;

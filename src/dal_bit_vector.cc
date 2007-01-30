@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1995-2006 Yves Renard
+// Copyright (C) 1995-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,7 +21,7 @@
 //========================================================================
 
 
-#include <dal_bit_vector.h>
+#include "getfem/dal_bit_vector.h"
 
 namespace dal {
 

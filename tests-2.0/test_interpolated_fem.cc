@@ -25,12 +25,12 @@
 /*                                                                         */
 /***************************************************************************/
 
-#include <getfem_assembling.h>
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <gmm.h>
-#include <getfem_interpolated_fem.h>
-#include <getfem_mesh_fem_sum.h>
+#include <getfem/getfem_assembling.h>
+#include <getfem/getfem_export.h>
+#include <getfem/getfem_regular_meshes.h>
+#include <gmm/gmm.h>
+#include <getfem/getfem_interpolated_fem.h>
+#include <getfem/getfem_mesh_fem_sum.h>
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;
@@ -259,8 +259,6 @@ void test2() {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb);
   
   try {
     test2();

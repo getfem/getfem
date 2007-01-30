@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1995-2006 Yves Renard
+// Copyright (C) 1995-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include "dal_backtrace.h"
+#include "getfem/dal_backtrace.h"
 #ifdef GETFEM_HAVE_BACKTRACE
 # include <execinfo.h>
 #endif

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Yves Renard
+// Copyright (C) 2004-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <getfem_mesh_fem_level_set.h>
+#include "getfem/getfem_mesh_fem_level_set.h"
 
 namespace getfem {
   
@@ -54,7 +54,7 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_mfls_key, pfem);
 
   void mesh_fem_level_set::build_method_of_convex(size_type cv) {
-    pfem pf = new fem_level_set(dal::index_ref_iterator
+    pfem pf = new fem_level_set(gmm::index_ref_iterator
 				(dof_enrichments.begin(),
 				 mf.ind_dof_of_element(cv).begin()) ,
 				mf.fem_of_element(cv), mls, xfem_index);

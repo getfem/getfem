@@ -32,12 +32,12 @@
    a pde directly with the assembly procedures.
 */
 
-#include <getfem_assembling.h> /* assembly methods (and comp. of norms) */
-#include <getfem_export.h>   /* export functions (save solutions in a file) */
-#include <getfem_regular_meshes.h>
-#include <getfem_derivatives.h>
-#include <getfem_superlu.h>
-#include <gmm.h>
+#include <getfem/getfem_assembling.h> /* assembly methods (and comp. of norms) */
+#include <getfem/getfem_export.h>   /* export functions (save solutions in a file) */
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_derivatives.h>
+#include <getfem/getfem_superlu.h>
+#include <gmm/gmm.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */

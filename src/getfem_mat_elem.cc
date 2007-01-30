@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Yves Renard
+// Copyright (C) 2000-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -22,9 +22,9 @@
 
 
 #include <deque>
-#include <dal_singleton.h>
-#include <getfem_fem.h>
-#include <getfem_mat_elem.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/getfem_fem.h"
+#include "getfem/getfem_mat_elem.h"
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
 		       const int *incx, double *y, const int *incy);
@@ -103,7 +103,7 @@ namespace getfem {
       case IM_APPROX: 
 	ppi = 0; pai = pi->approx_method(); is_ppi = false; break;
       case IM_NONE: 
-	DAL_THROW(dal::failure_error, 
+	DAL_THROW(failure_error, 
 		  "Attempt to use IM_NONE integration method in assembly!\n");
       }
 

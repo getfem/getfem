@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Julien Pommier
+// Copyright (C) 2004-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <dal_singleton.h>
+#include "getfem/dal_singleton.h"
 #include <algorithm>
 namespace dal {
   std::auto_ptr<singletons_manager> singletons_manager::m;

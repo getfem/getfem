@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Julien Pommier
+// Copyright (C) 2004-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <bgeot_small_vector.h>
+#include "getfem/bgeot_small_vector.h"
 namespace bgeot {
   block_allocator *static_block_allocator::palloc = 0;
 
@@ -38,7 +38,7 @@ namespace bgeot {
   block_allocator::node_id block_allocator::allocate(block_allocator::size_type n) {
     if (n == 0) return 0;
     if (n >= OBJ_SIZE_LIMIT) 
-      DAL_THROW(dal::failure_error, 
+      DAL_THROW(failure_error, 
 		"attempt to allocate a supposedly \"small\" object of " 
 		<< n << " bytes\n");
     //cout << "dim = " << n << " ";
@@ -46,7 +46,7 @@ namespace bgeot {
       blocks.push_back(block(n)); blocks.back().init();
       insert_block_into_unfilled(blocks.size()-1);
       if (first_unfilled[n] >= (node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ))) {
-	DAL_THROW(dal::failure_error, "allocation slots exhausted for objects of size " << 
+	DAL_THROW(failure_error, "allocation slots exhausted for objects of size " << 
 		  n << " (" << first_unfilled[n] << " allocated!),\n" << 
 		  "either increase the limit, or check for a leak in your code.");
 	//cout << "created new block " << first_unfilled[n] << "\n";

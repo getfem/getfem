@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <dal_basic.h>
+#include "getfem/dal_basic.h"
 #include <deque>
 #include <complex>
 
@@ -37,7 +37,7 @@ template<typename T> struct dynarray : public dal::dynamic_array<T> {
 };
 
 template <typename DA> void bench_da(unsigned N1, unsigned N2) {
-  double t = dal::uclock_sec();
+  double t = gmm::uclock_sec();
   DA v;
   for (unsigned n=0; n < N1; ++n) {
     v.clear();
@@ -45,9 +45,9 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       v.push_back(i);
     }
   }
-  cout << "  push_back         : " << dal::uclock_sec()-t << " sec\n";
+  cout << "  push_back         : " << gmm::uclock_sec()-t << " sec\n";
 
-  t = dal::uclock_sec();
+  t = gmm::uclock_sec();
   v.clear();
   v.resize(N2);
   for (unsigned n=0; n < N1*2; ++n) {
@@ -55,9 +55,9 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       v[i] = i+n;
     }
   }
-  cout << "  random access fill: " << dal::uclock_sec()-t << " sec\n";
+  cout << "  random access fill: " << gmm::uclock_sec()-t << " sec\n";
   
-  t = dal::uclock_sec();
+  t = gmm::uclock_sec();
   v.clear();
   v.resize(N2);
   for (unsigned n=0; n < N1*2; ++n) {
@@ -66,17 +66,17 @@ template <typename DA> void bench_da(unsigned N1, unsigned N2) {
       *it += n;
     }
   }
-  cout << "  iterator fill     : " << dal::uclock_sec()-t << " sec\n";
+  cout << "  iterator fill     : " << gmm::uclock_sec()-t << " sec\n";
 
   DA v2; v2.resize(N2);
   { typename DA::iterator it = v2.begin(), ite = v2.end();
     for (; it != ite; ++it) *it = rand(); }
 
-  t = dal::uclock_sec(); 
+  t = gmm::uclock_sec(); 
   for (unsigned n=0; n < N1/10; ++n) {
     v = v2; std::sort(v.begin(), v.end());
   }
-  cout << "  sort              : " << dal::uclock_sec()-t << " sec\n";
+  cout << "  sort              : " << gmm::uclock_sec()-t << " sec\n";
   
 }
 
@@ -113,14 +113,14 @@ int main(void) {
     cout << "size of complex<long double>: "
 	 << sizeof(std::complex<long double>) << endl;
 
-    assert(sizeof(dal::int8_type)   == 1);
-    assert(sizeof(dal::uint8_type)  == 1);
-    assert(sizeof(dal::int16_type)  == 2);
-    assert(sizeof(dal::uint16_type) == 2);
-    assert(sizeof(dal::int32_type)  == 4);
-    assert(sizeof(dal::uint32_type) == 4);
-    assert(sizeof(dal::int64_type)  == 8);
-    assert(sizeof(dal::uint64_type) == 8);
+    assert(sizeof(gmm::int8_type)   == 1);
+    assert(sizeof(gmm::uint8_type)  == 1);
+    assert(sizeof(gmm::int16_type)  == 2);
+    assert(sizeof(gmm::uint16_type) == 2);
+    assert(sizeof(gmm::int32_type)  == 4);
+    assert(sizeof(gmm::uint32_type) == 4);
+    assert(sizeof(gmm::int64_type)  == 8);
+    assert(sizeof(gmm::uint64_type) == 8);
 
     // from stl_config.h
 #   ifdef __GNUC__
@@ -147,13 +147,13 @@ int main(void) {
     size_t ee = 1, f = 2;
     ptrdiff_t g = ee - f;
     cout << "1 - 2 = " << g << endl;
-    if (g != -1) DAL_THROW(dal::internal_error, "Basic operation error");
+    if (g != -1) DAL_THROW(gmm::internal_error, "Basic operation error");
 
     dal::dynamic_array<int, 4> t;
 
     try {
       t[(unsigned)(-5)] = 8;
-      DAL_THROW(dal::internal_error,
+      DAL_THROW(gmm::internal_error,
 		"negative index does not produce an error");
     }
     catch(std::out_of_range e) {
@@ -163,7 +163,7 @@ int main(void) {
     t[64] = 13;
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
     if (t.capacity() != 80)
-      DAL_THROW(dal::internal_error, " bad capacity");
+      DAL_THROW(gmm::internal_error, " bad capacity");
     
     dal::dynamic_array<int, 4>::iterator itb = t.begin(), ite = t.end();
     dal::dynamic_array<int, 4>::iterator ita;
@@ -177,19 +177,19 @@ int main(void) {
     
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
     if (t.capacity() != 80)
-      DAL_THROW(dal::internal_error, " bad capacity");
+      DAL_THROW(gmm::internal_error, " bad capacity");
     // cout << "t[64] = (should be 3) " << t[64] << endl;
-    if (t[64] != 3) DAL_THROW(dal::internal_error, "iterators don't work");
+    if (t[64] != 3) DAL_THROW(gmm::internal_error, "iterators don't work");
     
     t.clear();
     // cout << "capacity : (should be 0) " << t.capacity() << endl;
     if (t.capacity() != 0) 
-      DAL_THROW(dal::internal_error, " clear does not work");
+      DAL_THROW(gmm::internal_error, " clear does not work");
    
     std::fill(t.begin(), t.end(), int(3));
     // cout << "capacity : (should be 0) " << t.capacity() << endl;
     if (t.capacity() != 0)   
-      DAL_THROW(dal::internal_error, " clear does not work");
+      DAL_THROW(gmm::internal_error, " clear does not work");
     t[64] = 6;
     
     dal::dynamic_array<int, 4> t2, t3;
@@ -199,7 +199,7 @@ int main(void) {
     
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
     if (t.capacity() != 80)
-      DAL_THROW(dal::internal_error, " bad capacity");
+      DAL_THROW(gmm::internal_error, " bad capacity");
 
     {
       dal::dynamic_array<int, 4>::const_iterator
@@ -219,7 +219,7 @@ int main(void) {
 	  ( (&(*it1)) == (&(*it2)) ) ||
 	  ( (&(*it2)) == (&(*it3)) ) ||
 	  ( (&(*it1)) == (&(*it3)) ) )
-	  DAL_THROW(dal::internal_error, " copy does not work");
+	  DAL_THROW(gmm::internal_error, " copy does not work");
       }
     }
     
@@ -242,7 +242,7 @@ int main(void) {
 	    ( (&(*it1)) == (&(*it2)) ) ||
 	    ( (&(*it2)) == (&(*it3)) ) ||
 	    ( (&(*it1)) == (&(*it3)) ) )
-	    DAL_THROW(dal::internal_error, " copy does not work");
+	    DAL_THROW(gmm::internal_error, " copy does not work");
 	}
     }
     
@@ -251,10 +251,10 @@ int main(void) {
     
     // cout << "t2[64] = (should be 6 6) " << t2[64] << " " << t3[64]<< endl;
     if (t2[64] != 6)
-       DAL_THROW(dal::internal_error, " copy does not work");
+       DAL_THROW(gmm::internal_error, " copy does not work");
     // cout << "capacity : (should be 80) " << t3.capacity() << endl;
     if (t.capacity() != 80)
-      DAL_THROW(dal::internal_error, " bad capacity");
+      DAL_THROW(gmm::internal_error, " bad capacity");
 
   }
   DAL_STANDARD_CATCH_ERROR;

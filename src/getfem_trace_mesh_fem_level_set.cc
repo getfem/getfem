@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <getfem_trace_mesh_fem_level_set.h>
+#include "getfem/getfem_trace_mesh_fem_level_set.h"
 
 namespace getfem {
 
@@ -158,6 +158,9 @@ namespace getfem {
     gmm::row_matrix<gmm::rsvector<bool> > pairs(mfndof, mfndof);
     std::vector<std::vector<size_type> > selected_comb(mfndof);
     size_type nbdof(0);
+    dal::bit_vector cut_convexes;
+    size_type nb_max_cv = linked_mesh().convex_index().last_true()+1;
+    std::vector<scalar_type> lengthes(nb_max_cv);
     for (dal::bv_visitor cv(linked_mesh().convex_index());
 	 !cv.finished(); ++cv) {
       
@@ -213,7 +216,10 @@ namespace getfem {
 	      c(msh.trans_of_convex(i),
 		pf->node_convex(0).points_of_face(f)[0], G);
 	    gmm::mult(c.B(), msh.trans_of_convex(i)->normals()[f], up);
-	    lenght_estimate += c.J() * gmm::vect_norm2(up);
+	    scalar_type loc_lenght = c.J() * gmm::vect_norm2(up);
+	    if (msh.is_convex_having_neighbour(i, f))
+	      loc_lenght /= scalar_type(2);
+	    lenght_estimate += loc_lenght;
 	    for (size_type j=0; j<pf->structure(0)->nb_points_of_face(f);
 		 ++j) {
 	      c.set_xref(pf->node_convex(0).points_of_face(f)[j]);
@@ -223,15 +229,8 @@ namespace getfem {
 	}
 	
 	if (pts.size() == 0) continue;
-	
-	if (strategy == 3) {
-	  cout << "cv " << cv << " l = " << lenght_estimate << endl;
-	  if (lenght_estimate > 0.3) {
-	    ++nbdof;
-	    for (size_type j = 0; j < mf.nb_dof_of_element(cv); ++j)
-	      selected_comb[mf.ind_dof_of_element(cv)[j]].push_back(nbdof);
-	  }
-	}	
+	cut_convexes.add(cv);
+	lengthes[cv] = lenght_estimate;		
 
 	if (strategy == 1 || strategy == 2) {
 	
@@ -407,15 +406,140 @@ namespace getfem {
 
     case 3:
       // Strategy 3:
-      //  Only adapted to P1. One new base function per element, which is
+      //  Only adapted to P0 or P1. One new base function per element, which is
       //  the sum of the base function on the element.
-      //  nothing to do here.
+      for (dal::bv_visitor cv(cut_convexes); !cv.finished(); ++cv) {
+	cout << "cv " << cv << " l = " << lengthes[cv] << endl;
+	if (lengthes[cv] > 0.499) {
+	  ++nbdof;
+	  for (size_type j = 0; j < mf.nb_dof_of_element(cv); ++j)
+	    selected_comb[mf.ind_dof_of_element(cv)[j]].push_back(nbdof);
+	}
+      }
+      break;
 
+    case 4:
+      { // Strategy 4:
+        //  Idem strategy 3, but gather together small intersection in order
+        //  to have a certain uniformity
+	//  rmk : the threshold should depend on the mesh dimension.
+	//  Could be greatly optimized.
+
+	scalar_type threshold = 0.85;
+	std::vector< std::vector<size_type> > zones;
+	std::vector<scalar_type> zone_lengthes;
+	std::vector<size_type> zone_of_cv(nb_max_cv, size_type(-1)); 
+	dal::bit_vector rcut_convexes = cut_convexes;
+
+	for (dal::bv_visitor cv(rcut_convexes); !cv.finished(); ++cv) {
+	  cout << "cv " << cv << " l = " << lengthes[cv] << endl;
+	  if (lengthes[cv] > threshold) {
+	    cout << "adding basic zone with cv " << cv << endl;
+	    zone_of_cv[cv] = zones.size();
+	    zones.push_back(std::vector<size_type>());
+	    zone_lengthes.push_back(lengthes[cv]);
+	    zones[zone_of_cv[cv]].push_back(cv);
+	    rcut_convexes.sup(cv);
+	  }
+	}
+
+	std::vector<size_type> indset;
+	do {
+	  ttouched = false;
+	  for (dal::bv_visitor cv(rcut_convexes); !cv.finished(); ++cv) {
+	    mf.linked_mesh().neighbours_of_convex(cv, indset);
+	    size_type nb = 0, ind;
+	    for (size_type i = 0; i < indset.size(); ++i)
+	      if (rcut_convexes[indset[i]]) { ind = indset[i]; ++nb; }
+	    if (nb == 1 && lengthes[cv] + lengthes[ind] > threshold) {
+	      cout << "adding coupling zone with cv " << cv << " and " << ind << endl;
+	      zone_of_cv[cv] = zones.size();
+	      zone_of_cv[ind] = zones.size();
+	      zones.push_back(std::vector<size_type>());
+	      zone_lengthes.push_back(lengthes[cv] + lengthes[ind]);
+	      zones[zone_of_cv[cv]].push_back(cv);
+	      zones[zone_of_cv[cv]].push_back(ind);
+	      rcut_convexes.sup(cv);
+	      rcut_convexes.sup(ind);
+	      ttouched = true;
+	    }
+	  }
+	} while(ttouched);
+
+	std::vector<size_type> retained;
+	for (dal::bv_visitor cv(rcut_convexes); !cv.finished(); ++cv) {
+	  retained.resize(1); retained[0] = cv;
+	  size_type cvn = 0;
+	  scalar_type l(0);
+
+	  while (cvn < std::min(retained.size(), size_type(5))) {
+	    mf.linked_mesh().neighbours_of_convex(retained[cvn], indset);   
+	    for (size_type i = 0; i < indset.size(); ++i) {
+	      size_type ind = indset[i];
+	      if (rcut_convexes[ind] &&
+		  std::find(retained.begin(), retained.end(), ind)
+		  == retained.end())
+		{ l += lengthes[ind]; retained.push_back(ind); }
+	      if (l > threshold) break;
+	    }
+	    if (l > threshold) break;
+	    cvn++;
+	  }
+
+	  if (l > threshold) {
+	    cout << "adding neighbour zone around cv " << cv << endl;
+	    zone_of_cv[cv] = zones.size();
+	    zones.push_back(std::vector<size_type>());
+	    zone_lengthes.push_back(l);
+	    for (size_type i = 0; i < retained.size(); ++i) {
+	      zone_of_cv[retained[i]] = zone_of_cv[cv];
+	      zones[zone_of_cv[cv]].push_back(retained[i]);
+	      rcut_convexes.sup(retained[i]);
+	    }
+	  }
+	}
+
+	do {
+	  ttouched = false;
+	  for (dal::bv_visitor cv(rcut_convexes); !cv.finished(); ++cv) {
+	    mf.linked_mesh().neighbours_of_convex(cv, indset);
+	    size_type ind = size_type(-1);
+	    scalar_type l(100);
+	    for (size_type i = 0; i < indset.size(); ++i)
+	      if (zone_of_cv[indset[i]] != size_type(-1) &&
+		  zone_lengthes[zone_of_cv[indset[i]]] < l)
+		{ ind = zone_of_cv[indset[i]]; l = zone_lengthes[ind]; }
+	    if (ind != size_type(-1)) {
+	      cout << "sticking cv " << cv << endl;
+	      zone_of_cv[cv] = ind;
+	      zones[ind].push_back(cv);
+	      zone_lengthes[ind] += lengthes[cv];
+	      rcut_convexes.sup(cv);
+	      ttouched = true;
+	    }
+	  }
+	} while(ttouched);
+
+	if (rcut_convexes.card() > 0) {
+	  cout << "alone convexes : " << rcut_convexes << endl;
+	  DAL_THROW(failure_error, "This is not normal ...");
+	}
+
+	for (size_type i = 0; i < zones.size(); ++i) {
+	  cout << "zone " << i << " lenght = " << zone_lengthes[i] << endl;
+	  ++nbdof;
+	  for (size_type j = 0; j < zones[i].size(); ++j) {
+	    size_type cv = zones[i][j];
+	    for (size_type k = 0; k < mf.nb_dof_of_element(cv); ++k)
+	      selected_comb[mf.ind_dof_of_element(cv)[k]].push_back(nbdof);
+	  }
+	}
+      }
       break;
 
     }
     // Step 5 - Now that the convenient pairs of dofs are selected, the
-    // special fem are built.
+    // special fems are built.
 
     std::vector<size_type> glob_dof;
     for (dal::bv_visitor cv(linked_mesh().convex_index());
@@ -448,8 +572,8 @@ namespace getfem {
 	}
 	
 	if (glob_dof.size()) {
-	  cout << "elt " << cv << "glob_dof = " << glob_dof 
-	       << " B = " << B << endl;
+	  // cout << "elt " << cv << "glob_dof = " << glob_dof 
+	  //     << " B = " << B << endl;
 	  
       	  pfem pfnew = new sub_space_fem(mf.fem_of_element(cv), glob_dof,
 					 B, cv);

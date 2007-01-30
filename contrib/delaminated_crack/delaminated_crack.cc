@@ -1,23 +1,24 @@
 // -*- c++ -*- (enables emacs c++ mode)
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 2002-2005 Yves Renard, Julien Pommier.                    */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+//========================================================================
+//
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
 
 /**
  * Linear Elastostatic problem with a growing delaminated crack.
@@ -25,19 +26,19 @@
  * Research program.
  */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_derivatives.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <getfem_mesh_im_level_set.h>
-#include <getfem_mesh_fem_level_set.h>
-#include <getfem_mesh_fem_product.h>
-#include <getfem_mesh_fem_global_function.h>
-#include <getfem_spider_fem.h>
-#include <getfem_mesh_fem_sum.h>
-#include <getfem_import.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_mesh_fem_level_set.h"
+#include "getfem/getfem_mesh_fem_product.h"
+#include "getfem/getfem_mesh_fem_global_function.h"
+#include "getfem/getfem_spider_fem.h"
+#include "getfem/getfem_mesh_fem_sum.h"
+#include "getfem/getfem_import.h"
+#include "gmm/gmm.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -167,7 +168,7 @@ struct crack_problem {
   int enrichment_option;
   
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   scalar_type fracture_energy(void);
   void shape_derivative(const plain_vector &U, plain_vector &SD);
@@ -266,7 +267,7 @@ void crack_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -292,7 +293,7 @@ void crack_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     base_node barycenter
-      = dal::mean_value(mesh.points_of_face_of_convex (i.cv(), i.f()).begin(),
+      = gmm::mean_value(mesh.points_of_face_of_convex (i.cv(), i.f()).begin(),
 			mesh.points_of_face_of_convex(i.cv(), i.f()).end());
     if (gmm::abs(un[2] - 1.0) <= 1.0E-7) // new Neumann face
       if (is_prescribed_disp && barycenter[0] > Pmax[0]*0.9)
@@ -381,7 +382,7 @@ scalar_type crack_problem::fracture_energy(void) {
 void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   gmm::clear(SD);
   
-  DAL_TRACE2("Computing shape derivative, part 1");
+  GMM_TRACE2("Computing shape derivative, part 1");
 
   shape_der_nonlinear_term<plain_vector> nl(mf_u(), U, lambda, mu);
 
@@ -395,7 +396,7 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   gmm::scale(SD, Gc);
 
 
-  DAL_TRACE2("Computing shape derivative, part 2");
+  GMM_TRACE2("Computing shape derivative, part 2");
 #if 1
   // derivative of elastic energy
   getfem::generic_assembly assem2
@@ -410,9 +411,9 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   assem2.push_data(U);
   assem2.push_vec(SD);
 
-  double t0 = dal::uclock_sec();
+  double t0 = gmm::uclock_sec();
   assem2.assembly();
-  cerr << " done : " << dal::uclock_sec() - t0 << "\n";
+  cerr << " done : " << gmm::uclock_sec() - t0 << "\n";
 
 #else 
 
@@ -434,9 +435,9 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
   assem2.push_data(U);
   assem2.push_vec(SD);
 
-  double t0 = dal::uclock_sec();
+  double t0 = gmm::uclock_sec();
   assem2.assembly();
-  cerr << " done : " << dal::uclock_sec() - t0 << "\n";
+  cerr << " done : " << gmm::uclock_sec() - t0 << "\n";
 
 #endif
 
@@ -449,7 +450,7 @@ void crack_problem::shape_derivative(const plain_vector &U, plain_vector &SD) {
     SD[i] *= cutoff_C2(gmm::abs(ls.values(1)[i/N]), 0.1, 0.2);
 
   {
-    DAL_TRACE2("Exporting shape derivative");
+    GMM_TRACE2("Exporting shape derivative");
     getfem::stored_mesh_slice sl; 
     sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0), base_node(0, 0, 1), 0), 3);
     getfem::vtk_export exp(datafilename + "_grad.vtk",
@@ -566,7 +567,7 @@ namespace getfem {
 	t[0] = no + gmm::abs(no)*0.5*(sgnphi - gmm::sgn(Phi[0]));
 	break;
       case 3 : t[0] = gmm::abs(no); break;
-      default : DAL_THROW(dal::internal_error, "Oups...");
+      default : DAL_THROW(gmm::internal_error, "Oups...");
       }
     }
   };
@@ -734,7 +735,7 @@ void crack_problem::update_level_set(const plain_vector &SD) {
 
 
   {
-    DAL_TRACE2("Exporting level set");
+    GMM_TRACE2("Exporting level set");
     getfem::stored_mesh_slice sl; 
     sl.build(mesh, getfem::slicer_half_space(base_node(0, 0, 0),
 					     base_node(0, 0, 1), 0), 3);
@@ -764,7 +765,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 //   cout << "testing mims..\n";
 //   for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished(); ++cv) {
-//     base_node G = dal::mean_value(mim.linked_mesh().points_of_convex(cv));
+//     base_node G = gmm::mean_value(mim.linked_mesh().points_of_convex(cv));
 //     cerr << "on cv\t" << cv << " nb_integ_pts = " << mim.int_method_of_element(cv)->approx_method()->nb_points_on_convex() << "\t , at " << G << "\t";
 //     scalar_type err = getfem::test_integration_error(mim.int_method_of_element(cv)->approx_method(), 2);
 //     cout << " max integ error = " << err << "\n";
@@ -801,7 +802,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 //   for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
 //     if (mls.is_convex_cut(i)) {
-//       cerr << i << " primary zone: " << mls.primary_zone_of_convex(i) << " sz.size=" << mls.zoneset_of_convex(i).size() << " " << dal::mean_value(mls.linked_mesh().points_of_convex(i)) << "\n";
+//       cerr << i << " primary zone: " << mls.primary_zone_of_convex(i) << " sz.size=" << mls.zoneset_of_convex(i).size() << " " << gmm::mean_value(mls.linked_mesh().points_of_convex(i)) << "\n";
 //       if (mls.zoneset_of_convex(i).size() == 1) {
 //       }
 //     }
@@ -826,7 +827,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 
       for (dal::bv_visitor cv(crack_tip_convexes); !cv.finished(); ++cv) {
-	//cerr << "inspecting convex centered at " << dal::mean_value(mf_partition_of_unity.linked_mesh().points_of_convex(cv)) << "\n";
+	//cerr << "inspecting convex centered at " << gmm::mean_value(mf_partition_of_unity.linked_mesh().points_of_convex(cv)) << "\n";
 	for (unsigned j=0; j < mf_partition_of_unity.nb_dof_of_element(cv); ++j) {
 	  size_type d = mf_partition_of_unity.ind_dof_of_element(cv)[j];
 	  if (!enriched_dofs.is_in(d)) {
@@ -1022,7 +1023,7 @@ void crack_problem::save_U(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   //getfem::getfem_mesh_level_set_noisy();
@@ -1062,7 +1063,7 @@ int main(int argc, char *argv[]) {
       getchar();
     }
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

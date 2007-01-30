@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -28,18 +28,18 @@
  * a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_linearized_plates.h>
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <gmm.h>
-#include <getfem_derivatives.h>
-#include <getfem_mesh_im_level_set.h>
-#include <getfem_mesh_fem_level_set.h>
-#include <getfem_mesh_fem_product.h>
-#include <getfem_mesh_fem_global_function.h>
-#include <getfem_mesh_fem_sum.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_linearized_plates.h"
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "gmm/gmm.h"
+#include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_mesh_fem_level_set.h"
+#include "getfem/getfem_mesh_fem_product.h"
+#include "getfem/getfem_mesh_fem_global_function.h"
+#include "getfem/getfem_mesh_fem_sum.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -272,7 +272,7 @@ struct crack_mindlin_problem{
   scalar_type cutoff_radius, enr_area_radius;
   int enrichment_option;
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
   size_type mitc ;
   size_type sol_ref ;          /* sol_ref = 0 : plate subject to vertical pressure, 
                                                 positive or negative on each side of the crack.
@@ -403,7 +403,7 @@ void crack_mindlin_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_ut->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -760,7 +760,7 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
  
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {
@@ -770,7 +770,7 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh") ;
     plain_vector UT, U3, THETA;
     if (!p.solve(UT, U3, THETA))
-      DAL_THROW(dal::failure_error, "Solve has failed");
+      DAL_THROW(gmm::failure_error, "Solve has failed");
     if (p.sol_ref == 3) p.compute_error(UT, U3, THETA) ;
           
     cout << "post-traitement pour l'affichage :\n" ;
@@ -927,7 +927,7 @@ int main(int argc, char *argv[]) {
     cout << "fin du programme atteinte \n" ;
   }
   
-    DAL_STANDARD_CATCH_ERROR;
+    GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

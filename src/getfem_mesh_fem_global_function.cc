@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Yves Renard
+// Copyright (C) 2004-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,8 +20,8 @@
 //
 //========================================================================
 
-#include <getfem_mesh_fem_global_function.h>
-#include <getfem_level_set.h>
+#include "getfem/getfem_mesh_fem_global_function.h"
+#include "getfem/getfem_level_set.h"
 
 namespace getfem {
   
@@ -324,7 +324,7 @@ namespace getfem {
     }
     virtual void hess(const fem_interpolation_context&, 
 		      base_matrix &) const
-    { DAL_THROW(dal::to_be_done_error, "hessian to be done ..."); }
+    { DAL_THROW(to_be_done_error, "hessian to be done ..."); }
     
     void update_from_context(void) const { cv =  size_type(-1); }
 

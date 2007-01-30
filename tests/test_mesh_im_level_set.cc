@@ -1,4 +1,26 @@
-#include <getfem_mesh_im_level_set.h>
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_mesh_im_level_set.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -72,7 +94,7 @@ void test_2d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << M_PI*R1*R1 << endl;
   if (gmm::abs(area - M_PI*R1*R1) > 1E-3)
-    DAL_THROW(dal::failure_error, "Cutting integration method has failed");
+    DAL_THROW(gmm::failure_error, "Cutting integration method has failed");
 }
 
 
@@ -142,18 +164,18 @@ void test_3d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << 4/3.*M_PI*R1*R1*R1 << endl;
   if (gmm::abs(area - 4/3.*M_PI*R1*R1*R1) > 1E-3)
-    DAL_THROW(dal::failure_error, "Cutting integration method has failed");
+    DAL_THROW(gmm::failure_error, "Cutting integration method has failed");
 }
 
 int main(/* int argc, char **argv */) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {
     // getfem::getfem_mesh_level_set_noisy();
     test_2d();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0;
 }

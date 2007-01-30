@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -20,12 +20,12 @@
 //
 //========================================================================
 
-#include <dal_std.h>
+#include "gmm/gmm_std.h"
 #ifndef GETFEM_VERIFY__
   #define GETFEM_VERIFY__
 #endif
 
-#include <dal_tree_sorted.h>
+#include "getfem/dal_tree_sorted.h"
 
 
 int main(void)

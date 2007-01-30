@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Yves Renard
+// Copyright (C) 2000-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,10 +20,10 @@
 //
 //========================================================================
 
-#include <dal_singleton.h>
-#include <getfem_mat_elem_type.h>
-#include <dal_tree_sorted.h>
-#include <getfem_mat_elem.h> /* for mat_elem_forget_mat_elem_type */
+#include "getfem/dal_singleton.h"
+#include "getfem/getfem_mat_elem_type.h"
+#include "getfem/dal_tree_sorted.h"
+#include "getfem/getfem_mat_elem.h" /* for mat_elem_forget_mat_elem_type */
 namespace getfem {
 
   bool operator < (const constituant &m, const constituant &n) {
@@ -42,7 +42,7 @@ namespace getfem {
     virtual bool compare(const static_stored_object_key &oo) const {
       const mat_elem_type_key &o
 	= dynamic_cast<const mat_elem_type_key &>(oo);
-      if (dal::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)) < 0)
+      if (gmm::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)) < 0)
 	return true;
       return false;
     }
@@ -145,7 +145,7 @@ namespace getfem {
   pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term nlt,
 				    std::vector<pfem> pfi) {
     if (pfi.size() == 0)
-      DAL_THROW(dal::dimension_error, "mat_elem_nonlinear with no pfem!");
+      DAL_THROW(dimension_error, "mat_elem_nonlinear with no pfem!");
     pmat_elem_type me = mat_elem_nonlinear_(nlt, pfi[0], 0);
     for (size_type i=1; i < pfi.size(); ++i)
       me = mat_elem_product(mat_elem_nonlinear_(nlt, pfi[i], i),me);

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard
+// Copyright (C) 2002-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,10 +21,10 @@
 //========================================================================
 
 
-#include <bgeot_poly_composite.h>
-#include <getfem_integration.h>
-#include <getfem_mesh_fem.h>
-#include <dal_naming_system.h>
+#include "getfem/bgeot_poly_composite.h"
+#include "getfem/getfem_integration.h"
+#include "getfem/getfem_mesh_fem.h"
+#include "getfem/dal_naming_system.h"
 
 namespace getfem {
  

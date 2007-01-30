@@ -1,35 +1,35 @@
 // -*- c++ -*- (enables emacs c++ mode)
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 2002-2005 Michel Fournié, Julien Pommier,                 */
-/*                         Yves Renard, Nicolas Roux.                      */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+//========================================================================
+//
+// Copyright (C) 2002-2007 Michel Fournié, Julien Pommier,
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
 
 /**@file icare.cc
    @brief Fluid flow (Navier-Stokes) around an obstacle.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_import.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <getfem_Navier_Stokes.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_import.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "getfem/getfem_Navier_Stokes.h"
 #include "icare.h"
 
 /* some Getfem++ types that we will be using */
@@ -86,7 +86,7 @@ struct navier_stokes_problem {
   std::auto_ptr<problem_definition> pdef;
 
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   plain_vector Un1, Un0, Pn1, Pn0; /* U_{n+1}, U_{n}, P_{n+1} and P_{n} */
 
@@ -229,7 +229,7 @@ struct problem_rotating_cylinder : public problem_definition {
     getfem::mesh_region r; 
     getfem::outer_faces_of_mesh(p.mesh, r);
     for (getfem::mr_visitor i(r); !i.finished(); ++i) {
-      base_node G = dal::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
+      base_node G = gmm::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
       if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
 	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
       else if (gmm::abs(G[1] - p.BBmax[1]) < 1e-7
@@ -317,7 +317,7 @@ void navier_stokes_problem::init(void) {
     case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
     case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
     case 3: pdef.reset(new problem_rotating_cylinder(PARAM.real_value("CYL_ROT_SPEED"))); break;
-    default: DAL_THROW(dal::failure_error, "wrong PROBLEM value");
+    default: DAL_THROW(gmm::failure_error, "wrong PROBLEM value");
   }
 
   export_to_opendx = PARAM.int_value("DX_EXPORT", "");
@@ -341,7 +341,7 @@ void navier_stokes_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -354,7 +354,7 @@ void navier_stokes_problem::init(void) {
   std::string mult_fem_name = PARAM.string_value("MULTIPLIER_FEM_TYPE");
   if (mult_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "MULTIPLIER_FEM_TYPE in the .param file");
     }
@@ -383,7 +383,7 @@ void navier_stokes_problem::solve() {
   case 2 : solve_FULLY_CONSERVATIVE(); break;
   case 3 : solve_PREDICTION_CORRECTION(); break;
   case 4 : solve_PREDICTION_CORRECTION2(); break;
-  default: DAL_THROW(dal::failure_error, "unknown method");
+  default: DAL_THROW(gmm::failure_error, "unknown method");
   }
 }
 
@@ -999,7 +999,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -1009,7 +1009,7 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.solve();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

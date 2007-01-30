@@ -20,10 +20,10 @@
 //
 //========================================================================
 #include <numeric>
-#include <getfem_integration.h>
-#include <bgeot_comma_init.h>
-#include <getfem_mesh_fem.h>
-#include <getfem_mat_elem.h>
+#include <getfem/getfem_integration.h>
+#include <getfem/bgeot_comma_init.h>
+#include <getfem/getfem_mesh_fem.h>
+#include <getfem/getfem_mat_elem.h>
 #include <iomanip>
 #include <map>
 
@@ -49,12 +49,6 @@ void print_method(getfem::pintegration_method ppi) {
   }
   cout << endl << endl;
 }
-
-class exception_cb : public dal::exception_callback  {
-  public:
-  virtual void callback(const std::string& msg)
-  { cerr << msg << endl; *(int *)(0) = 0; }
-};
 
 class matrix_collection {
 public:

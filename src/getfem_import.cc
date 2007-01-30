@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Julien Pommier
+// Copyright (C) 2000-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -24,9 +24,9 @@
 #include <iomanip>
 #include <fstream>
 
-#include <getfem_mesh.h>
-#include <getfem_import.h>
-#include <getfem_regular_meshes.h>
+#include "getfem/getfem_mesh.h"
+#include "getfem/getfem_import.h"
+#include "getfem/getfem_regular_meshes.h"
 
 namespace getfem {
 
@@ -77,7 +77,7 @@ namespace getfem {
 
   static void import_gmsh_msh_file(std::ifstream& f, mesh& m) {
     /* read the node list */
-    ftool::read_until(f, "$NOD");
+    bgeot::read_until(f, "$NOD");
     
     size_type nb_node; 
     f >> nb_node;
@@ -89,10 +89,10 @@ namespace getfem {
       f >> node_id >> n[0] >> n[1] >> n[2];
       msh_node_2_getfem_node.add_to_index(m.add_point(n), node_id);
     }
-    ftool::read_until(f, "$ENDNOD");
+    bgeot::read_until(f, "$ENDNOD");
     
     /* read the convexes */
-    ftool::read_until(f, "$ELM");
+    bgeot::read_until(f, "$ELM");
     size_type nb_cv;
     f >> nb_cv;
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
@@ -168,21 +168,21 @@ namespace getfem {
     bool nodes_done = false;
     do {
       if (!f.eof()) f >> std::ws;
-      if (f.eof() || !ftool::read_until(f, "MESH")) break;
+      if (f.eof() || !bgeot::read_until(f, "MESH")) break;
       std::string selemtype;
-      f >> ftool::skip("DIMENSION") >> dim 
-	>> ftool::skip("ELEMTYPE") >> std::ws 
+      f >> bgeot::skip("DIMENSION") >> dim 
+	>> bgeot::skip("ELEMTYPE") >> std::ws 
 	>> selemtype 
-	>> ftool::skip("NNODE") >> nnode;
-      if (ftool::casecmp(selemtype, "linear")==0) { eltype = LIN;  }
-      else if (ftool::casecmp(selemtype, "triangle")==0) { eltype = TRI; }
-      else if (ftool::casecmp(selemtype, "quadrilateral")==0) { eltype = QUAD; }
-      else if (ftool::casecmp(selemtype, "tetrahedra")==0) { eltype = TETR; }
-      else if (ftool::casecmp(selemtype, "prisma")==0) { eltype = PRISM; }
-      else if (ftool::casecmp(selemtype, "hexahedra")==0) { eltype = HEX; }
-      else DAL_THROW(dal::failure_error, "unknown element type '"<< selemtype << "'");
+	>> bgeot::skip("NNODE") >> nnode;
+      if (bgeot::casecmp(selemtype, "linear")==0) { eltype = LIN;  }
+      else if (bgeot::casecmp(selemtype, "triangle")==0) { eltype = TRI; }
+      else if (bgeot::casecmp(selemtype, "quadrilateral")==0) { eltype = QUAD; }
+      else if (bgeot::casecmp(selemtype, "tetrahedra")==0) { eltype = TETR; }
+      else if (bgeot::casecmp(selemtype, "prisma")==0) { eltype = PRISM; }
+      else if (bgeot::casecmp(selemtype, "hexahedra")==0) { eltype = HEX; }
+      else DAL_THROW(failure_error, "unknown element type '"<< selemtype << "'");
       assert(!f.eof());
-      f >> ftool::skip("COORDINATES");
+      f >> bgeot::skip("COORDINATES");
       if (!nodes_done) {
 	dal::dynamic_array<base_node> gid_nodes;
 	dal::bit_vector gid_nodes_used;
@@ -191,7 +191,7 @@ namespace getfem {
 	  std::string ls;
 	  f >> std::ws;
 	  std::getline(f,ls);
-	  if (ftool::casecmp(ls, "END COORDINATES", 15)==0) break;
+	  if (bgeot::casecmp(ls, "END COORDINATES", 15)==0) break;
 	  std::stringstream s; s << ls; 
 	  size_type id;
 	  s >> id;
@@ -202,7 +202,7 @@ namespace getfem {
 	} while (true);
 	
 	if (gid_nodes_used.card() == 0) {
-	  DAL_THROW(dal::failure_error,"no nodes in the mesh!");
+	  DAL_THROW(failure_error,"no nodes in the mesh!");
 	}
 	
 	/* suppression of unused dimensions */
@@ -223,7 +223,7 @@ namespace getfem {
         }
       }
       
-      ftool::read_until(f, "ELEMENTS");
+      bgeot::read_until(f, "ELEMENTS");
       bgeot::pgeometric_trans pgt = NULL;
       std::vector<size_type> order(nnode); // ordre de GiD cf http://gid.cimne.upc.es/support/gid_11.subst#SEC160
       for (size_type i=0; i < nnode; ++i) order[i]=i;
@@ -277,13 +277,13 @@ namespace getfem {
 	DAL_INTERNAL_ERROR("");
       } break;
       }
-      if (pgt == NULL) DAL_THROW(dal::failure_error, "unknown element type " << selemtype 
+      if (pgt == NULL) DAL_THROW(failure_error, "unknown element type " << selemtype 
 				 << " with " << nnode << "nodes");
       do {
 	std::string ls;
 	f >> std::ws;
 	std::getline(f,ls);
-	if (ftool::casecmp(ls, "END ELEMENTS", 12)==0) break;
+	if (bgeot::casecmp(ls, "END ELEMENTS", 12)==0) break;
 	std::stringstream s; s << ls; 
 	size_type cv_id;
 	s >> cv_id;
@@ -332,7 +332,7 @@ namespace getfem {
     size_type nbs,nbt;
     base_node P(2);
     
-    f >> nbs >> nbt; ftool::read_until(f,"\n");
+    f >> nbs >> nbt; bgeot::read_until(f,"\n");
     tri.resize(nbt*3);
     for (size_type i=0; i < nbt*3; ++i) f >> tri[i];
     for (size_type j=0; j < nbs; ++j) {
@@ -355,7 +355,7 @@ namespace getfem {
     std::vector<size_type> tri;      
     size_type nbs=0,nbt=0,nbq=0,dummy;
     base_node P(2);
-    ftool::read_until(f,"Vertices");
+    bgeot::read_until(f,"Vertices");
     f >> nbs;
     for (size_type j=0; j < nbs; ++j) {
       f >> P[0] >> P[1] >> dummy; 
@@ -386,7 +386,7 @@ namespace getfem {
     m.clear();
     try {
 
-      if (ftool::casecmp(format,"structured")==0)
+      if (bgeot::casecmp(format,"structured")==0)
 	{ regular_mesh(m, filename); return; }
       
       std::ifstream f(filename.c_str());
@@ -396,28 +396,28 @@ namespace getfem {
       import_mesh(f,format,m);
       f.close();
     }
-    catch (dal::failure_error& exc) {
+    catch (failure_error& exc) {
       m.clear();
       throw exc;
     }
     catch (std::ios_base::failure& exc) {
       m.clear();
-      DAL_THROW(dal::failure_error, "error while importing " << format
+      DAL_THROW(failure_error, "error while importing " << format
 		<< " mesh file \"" << filename << "\" : " << exc.what());
     }
   }
 
   void import_mesh(std::ifstream& f, const std::string& format,
 		   mesh& m) {
-    if (ftool::casecmp(format,"gmsh")==0)
+    if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_msh_file(f,m);
-    else if (ftool::casecmp(format,"gid")==0)
+    else if (bgeot::casecmp(format,"gid")==0)
       import_gid_msh_file(f,m);
-    else if (ftool::casecmp(format,"am_fmt")==0)
+    else if (bgeot::casecmp(format,"am_fmt")==0)
       import_am_fmt_file(f,m);
-    else if (ftool::casecmp(format,"emc2_mesh")==0)
+    else if (bgeot::casecmp(format,"emc2_mesh")==0)
       import_emc2_mesh_file(f,m);
-    else DAL_THROW(dal::failure_error, "cannot import "
+    else DAL_THROW(failure_error, "cannot import "
 		   << format << " mesh type : unknown mesh type");
   }
 

@@ -1,8 +1,8 @@
-#include <getfem_assembling.h>
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_mat_elem.h>
-#include <gmm.h>
+#include <getfem/getfem_assembling.h>
+#include <getfem/getfem_export.h>
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_mat_elem.h>
+#include <gmm/gmm.h>
 #ifdef GETFEM_HAVE_SYS_TIMES
 # include <sys/times.h>
 #endif
@@ -1656,7 +1656,7 @@ public:
   
   const bgeot::multi_index &sizes() const { return sizes_; }
   
-  virtual void compute(getfem::fem_interpolation_context& ctx,
+  virtual void compute(getfem::fem_interpolation_context& ,
 		       bgeot::base_tensor &t) {
     assert(t.size() == N*N);
     /*size_type cv = ctx.convex_num();

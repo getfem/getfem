@@ -1,8 +1,30 @@
-#include <getfem_assembling.h>
-#include <getfem_export.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_mat_elem.h>
-#include <gmm.h>
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_mat_elem.h"
+#include "gmm/gmm.h"
 #ifdef GETFEM_HAVE_SYS_TIMES
 # include <sys/times.h>
 #endif
@@ -93,7 +115,7 @@ std::ostream& operator<<(std::ostream& o, const chrono& c) {
 }
 
 struct g_params {
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   size_type NX,Ndim;
   int mesh_type;
@@ -171,7 +193,7 @@ namespace getfem {
 		  }
 		}
 	    }
-	  if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	  if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
 	}
       }
     }
@@ -216,7 +238,7 @@ namespace getfem {
 		for (size_type k = 0; k < N; k++) B[dof1*N + k] += F[dof2*N+k]*(*p);
 	      }
 	  }
-	if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
       }
   }
 
@@ -270,7 +292,7 @@ namespace getfem {
 		  M(dof1*N + k, dof2*N + k) += (*p);
 	      }
 	    }
-	    if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	    if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
 	  }
 	}
       }
@@ -321,7 +343,7 @@ namespace getfem {
 		  M(dof1*N + k, dof2*N + k) += (*p);
 	      }
 	  }
-	if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
       }
   }
 
@@ -409,7 +431,7 @@ namespace getfem {
 		    }
 		  }
 		}
-		if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+		if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
 	      }
 	  }
       }
@@ -491,7 +513,7 @@ namespace getfem {
 		      }
 		}
 	  }
-	if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
       }
   }
 
@@ -569,7 +591,7 @@ namespace getfem {
 	  } 
 	}
       }
-      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+      if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
     }
   }
 
@@ -622,7 +644,7 @@ namespace getfem {
 	    }
 	  }
 	}
-	if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
       }
   }
 
@@ -807,7 +829,7 @@ void gen_mesh(getfem::mesh& mesh) {
 		     (mesh, param.Ndim, org, vtab.begin(), ref.begin()); 
     cerr << mesh.convex_index().card() << " " << param.Ndim << "D prisms generated\n";
     break;
-  default : DAL_THROW(dal::internal_error, "Unknown type of mesh");
+  default : DAL_THROW(gmm::internal_error, "Unknown type of mesh");
   }
 
   assert(param.NX>2);
@@ -1714,9 +1736,9 @@ void testbug() {
   assem2.push_mf(mf2);
   assem2.push_vec(SD);
   
-  double t0 = dal::uclock_sec();
+  double t0 = gmm::uclock_sec();
   assem2.assembly();
-  cerr << " done : " << dal::uclock_sec() - t0 << "\n"; exit(1);
+  cerr << " done : " << gmm::uclock_sec() - t0 << "\n"; exit(1);
   exit(1);
 }
 
@@ -1749,7 +1771,7 @@ void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
@@ -1850,7 +1872,7 @@ int main(int argc, char *argv[]) {
    }
 #endif /* ASSEMBLY_CHECK */
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   cout << "failures: " << fail_cnt << endl;
   return fail_cnt; 
 }

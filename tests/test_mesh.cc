@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -19,12 +19,10 @@
 // USA.
 //
 //========================================================================
-#include <dal_std.h>
-#include <stdio.h>
-#include <getfem_regular_meshes.h>
-#include <bgeot_poly_composite.h>
-#include <bgeot_comma_init.h>
-#include <getfem_export.h>
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/bgeot_poly_composite.h"
+#include "getfem/bgeot_comma_init.h"
+#include "getfem/getfem_export.h"
 
 
 using getfem::size_type;
@@ -63,7 +61,7 @@ void test_conforming(getfem::mesh &m) {
 	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
 	  onbound = true;
       if (!onbound)
-	DAL_THROW(dal::failure_error, "Mesh is not conforming " << pt);
+	DAL_THROW(gmm::failure_error, "Mesh is not conforming " << pt);
     }
   }
   cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
@@ -307,7 +305,7 @@ void test_region() {
   cout << "a=" << a << "\nb=" << b << "a inter b=" << r << "\n";
 }
 
-class myexc : public dal::exception_callback {
+class myexc : public gmm::exception_callback {
   void callback(const std::string& s)
   { cerr << "exception launched: " << s << std::endl; }
 };
@@ -335,7 +333,7 @@ void test_convex_ref() {
 }
 
 int main(void) {
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   try {

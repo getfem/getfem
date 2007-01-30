@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,10 +20,10 @@
 //
 //========================================================================
 
-#include <dal_singleton.h>
-#include <gmm_condition_number.h>
-#include <getfem_mesh.h>
-#include <getfem_integration.h>
+#include "getfem/dal_singleton.h"
+#include "gmm/gmm_condition_number.h"
+#include "getfem/getfem_mesh.h"
+#include "getfem/getfem_integration.h"
 
 namespace getfem {
 
@@ -72,7 +72,7 @@ namespace getfem {
 		if (found) continue;
 
 		base_node pt, barycentre
-		  =dal::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
+		  =gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
 		pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
 	
 		giv.init(points_of_convex(ic), pgt);
@@ -97,7 +97,7 @@ namespace getfem {
 	       ++fsub)
 	    if (r[icv[jc]][fsub+1]) {
 	      base_node pt, barycentre
-		= dal::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
+		= gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
 	      pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
 	      
 	      giv.init(points_of_convex(ic), pgt);
@@ -243,7 +243,7 @@ namespace getfem {
   void mesh::transformation(base_matrix M) {
     base_small_vector w(M.nrows());
     if (gmm::mat_nrows(M) == 0 || gmm::mat_ncols(M) != dim()) 
-      DAL_THROW(dal::dimension_error,
+      DAL_THROW(dimension_error,
 		"invalid dimensions for the transformation matrix");
     for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
       w = pts[i];
@@ -423,7 +423,8 @@ namespace getfem {
   void mesh::read_from_file(std::istream &ist) {
     /* if the application does a setlocale, then we have a problem..*/
     if (atof("1.5") != 1.5f) { 
-      DAL_THROW(dal::internal_error, "Go fix your locales! The numerical separator MUST be the dot");
+      DAL_THROW(internal_error,
+	       "Go fix your locales! The numerical separator MUST be the dot");
     }
 
     dal::bit_vector npt;
@@ -434,25 +435,25 @@ namespace getfem {
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
-    ftool::read_until(ist, "BEGIN POINTS LIST");
+    bgeot::read_until(ist, "BEGIN POINTS LIST");
 
     while (!te) {
-      if (please_get) ftool::get_token(ist, tmp); else please_get = true;
+      if (please_get) bgeot::get_token(ist, tmp); else please_get = true;
 
-      if (!ftool::casecmp(tmp, "END"))
+      if (!bgeot::casecmp(tmp, "END"))
       { te = true; }
-      else if (!ftool::casecmp(tmp, "POINT")) {
-	ftool::get_token(ist, tmp);
+      else if (!bgeot::casecmp(tmp, "POINT")) {
+	bgeot::get_token(ist, tmp);
         size_type ip = atoi(tmp.c_str());
         dim_type d = 0;
 	if (npt.is_in(ip))
 	  DAL_THROW(failure_error, 
 		    "Two points with the same index. loading aborted.");
 	npt.add(ip);
-	ftool::get_token(ist, tmp);
+	bgeot::get_token(ist, tmp);
 	while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
 	                       || tmp[0] == '.')
-	  { tmpv[d++] = atof(tmp.c_str()); ftool::get_token(ist, tmp); }
+	  { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
 	please_get = false;
 	if (dimension == dim_type(-1)) dimension = d;
 	else if (dimension != d)
@@ -480,23 +481,23 @@ namespace getfem {
     dal::bit_vector ncv;
     
     ist.seekg(0);
-    if (!ftool::read_until(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
+    if (!bgeot::read_until(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
       DAL_THROW(failure_error, "This seems not to be a mesh file");
 
     while (!tend) {
-      tend = !ftool::get_token(ist, tmp);
-      if (!ftool::casecmp(tmp, "END"))
+      tend = !bgeot::get_token(ist, tmp);
+      if (!bgeot::casecmp(tmp, "END"))
       { tend = true; }
-      else if (!ftool::casecmp(tmp, "CONVEX")) {
+      else if (!bgeot::casecmp(tmp, "CONVEX")) {
         size_type ic;
-	ftool::get_token(ist, tmp);
+	bgeot::get_token(ist, tmp);
         ic = gmm::abs(atoi(tmp.c_str()));
 	if (ncv.is_in(ic)) 
 	  DAL_THROW(failure_error,
 		    "Negative or repeated index, loading aborted.");
 	ncv.add(ic);
 
-	int rgt = ftool::get_token(ist, tmp);
+	int rgt = bgeot::get_token(ist, tmp);
 	if (rgt != 3) { // for backward compatibility with version 1.7
 	  char c; ist.get(c);
 	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
@@ -508,7 +509,7 @@ namespace getfem {
 	cv[ic].cstruct = pgt;
 	cv[ic].pts.resize(nb);
 	for (size_type i = 0; i < nb; i++) {
-	  ftool::get_token(ist, tmp);	  
+	  bgeot::get_token(ist, tmp);	  
 	  cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
 	}
       }
@@ -521,7 +522,7 @@ namespace getfem {
 		  << "(missing BEGIN MESH/END MESH ?)");
       }
     }
-    ist >> ftool::skip("MESH STRUCTURE DESCRIPTION");
+    ist >> bgeot::skip("MESH STRUCTURE DESCRIPTION");
 
     for (dal::bv_visitor ic(ncv); !ic.finished(); ++ic) {
       size_type i = add_convex(cv[ic].cstruct, cv[ic].pts.begin());
@@ -530,34 +531,34 @@ namespace getfem {
 
     tend = false;
     while (!tend) {
-      tend = !ftool::get_token(ist, tmp);
+      tend = !bgeot::get_token(ist, tmp);
       // bool error = false;
-      if (ftool::casecmp(tmp, "BEGIN")==0) {
-	ftool::get_token(ist, tmp);
-	if (ftool::casecmp(tmp, "BOUNDARY")==0 ||
-	    ftool::casecmp(tmp, "REGION")==0) {
-	  ftool::get_token(ist, tmp);
+      if (bgeot::casecmp(tmp, "BEGIN")==0) {
+	bgeot::get_token(ist, tmp);
+	if (bgeot::casecmp(tmp, "BOUNDARY")==0 ||
+	    bgeot::casecmp(tmp, "REGION")==0) {
+	  bgeot::get_token(ist, tmp);
 	  size_type bnum = atoi(tmp.c_str());
-	  ftool::get_token(ist, tmp);
+	  bgeot::get_token(ist, tmp);
 	  while (true) {
-	    if (ftool::casecmp(tmp, "END")!=0) {
+	    if (bgeot::casecmp(tmp, "END")!=0) {
 	      size_type ic = atoi(tmp.c_str());
-	      ftool::get_token(ist, tmp);
+	      bgeot::get_token(ist, tmp);
 	      if (tmp[0] == '/') {
-		ftool::get_token(ist, tmp);
-		if (!ftool::casecmp(tmp, "END")) break;
+		bgeot::get_token(ist, tmp);
+		if (!bgeot::casecmp(tmp, "END")) break;
 		size_type f = atoi(tmp.c_str());
 		region(bnum).add(ic, f);
-		ftool::get_token(ist, tmp);
+		bgeot::get_token(ist, tmp);
 	      }
 	      else {
 		region(bnum).add(ic);
-		if (!ftool::casecmp(tmp, "END")) break;
+		if (!bgeot::casecmp(tmp, "END")) break;
 	      }
 	    } else break;
 	  }
-	  ftool::get_token(ist, tmp);
-	  ftool::get_token(ist, tmp);
+	  bgeot::get_token(ist, tmp);
+	  bgeot::get_token(ist, tmp);
 	} else tend = true;
 	/*else DAL_THROW(failure_error, "Syntax error in file at token '"
 	  << tmp << "' [pos=" << std::streamoff(ist.tellg())
@@ -793,7 +794,7 @@ namespace getfem {
     out.clear();
     size_type nbpt = in.points().index().last()+1;
     if (nbpt != in.points().index().card()) 
-      DAL_THROW(dal::failure_error, "please optimize the mesh before using "
+      DAL_THROW(failure_error, "please optimize the mesh before using "
 		"it as a base for prismatic mesh");
     for (size_type i = 0; i < nbpt; ++i) {
       std::copy(in.points()[i].begin(), in.points()[i].end(),pt.begin());

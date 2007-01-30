@@ -1,4 +1,4 @@
-#include <getfem_mesh_im_level_set.h>
+#include <getfem/getfem_mesh_im_level_set.h>
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */

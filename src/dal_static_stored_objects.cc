@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard
+// Copyright (C) 2002-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,8 +21,8 @@
 //========================================================================
 
 
-#include <dal_static_stored_objects.h>
-#include <dal_singleton.h>
+#include "getfem/dal_static_stored_objects.h"
+#include "getfem/dal_singleton.h"
 #include <map>
 #include <list>
 #include <set>
@@ -98,7 +98,7 @@ namespace dal {
       stored_object_tab::iterator it
 	= stored_objects.find(enr_static_stored_object_key(k));
       if (it == stored_objects.end())
-	DAL_THROW(internal_error, "Object has key but cannot be found");
+	DAL_THROW(gmm::internal_error, "Object has key but cannot be found");
       return it;
     }
     return stored_objects.end();
@@ -115,7 +115,7 @@ namespace dal {
     for (stored_object_tab::iterator it = stored_objects.begin();
 	 it != stored_objects.end(); ++it)
       if (iterator_of_object(it->second.p) == stored_objects.end())
-	DAL_THROW(internal_error, "Object has key but cannot be found");
+	DAL_THROW(gmm::internal_error, "Object has key but cannot be found");
   }
 
   // Add a dependency, object o1 will depend on object o2
@@ -135,7 +135,7 @@ namespace dal {
       if (it1 == stored_objects.end()) cerr << "First object does non exist.";
       if (it2 == stored_objects.end()) cerr << "Second object does non exist.";
       cerr << endl;
-      DAL_THROW(failure_error, "Add_dependency : Inexistent object");
+      DAL_THROW(gmm::failure_error, "Add_dependency : Inexistent object");
     }
   }
 
@@ -160,7 +160,7 @@ namespace dal {
       = dal::singleton<stored_object_tab>::instance();
     stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     if (stored_keys.find(o) != stored_keys.end())
-      DAL_THROW(failure_error, "This object has already been stored, "
+      DAL_THROW(gmm::failure_error, "This object has already been stored, "
 		"possibly with another key");
     stored_keys[o] = k;
     stored_objects[enr_static_stored_object_key(k)]
@@ -201,7 +201,7 @@ namespace dal {
 	if (ignore_unstored)
 	  to_delete.erase(it);
 	else
-	  DAL_THROW(failure_error, "This object is not stored : " << it->get()
+	  DAL_THROW(gmm::failure_error, "This object is not stored : " << it->get()
 		    << " typename: " << typeid(*it->get()).name()
 		    );
       }
@@ -213,7 +213,7 @@ namespace dal {
       if (*it) {
 	stored_object_tab::iterator ito = iterator_of_object(*it);
 	if (ito == stored_objects.end())
-	  DAL_THROW(internal_error, "An object disapeared !");
+	  DAL_THROW(gmm::internal_error, "An object disapeared !");
 	ito->second.valid = false;
 	std::set<pstatic_stored_object> dep = ito->second.dependencies;
 	for (itd = dep.begin(); itd != dep.end(); ++itd) {
@@ -231,7 +231,7 @@ namespace dal {
 	  stored_object_tab::iterator itod=iterator_of_object(*itd);
 	  if (itod != stored_objects.end()) {
 	    if (itod->second.perm == PERMANENT_STATIC_OBJECT)
-	      DAL_THROW(failure_error,"Trying to delete a permanent object");
+	      DAL_THROW(gmm::failure_error,"Trying to delete a permanent object");
 	    if (itod->second.valid) {
 	      itod->second.valid = false;
 	      to_delete.push_back(itod->second.p);

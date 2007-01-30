@@ -1,11 +1,32 @@
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
 // RECTANGULAR_MATRIX_PARAM
 // SQUARED_MATRIX_PARAM
 // ENDPARAM;
 
-#include <gmm_kernel.h>
-#include <gmm_dense_lu.h>
-#include <gmm_dense_qr.h>
-#include <gmm_condition_number.h>
+#include "gmm/gmm_kernel.h"
+#include "gmm/gmm_dense_lu.h"
+#include "gmm/gmm_dense_qr.h"
+#include "gmm/gmm_condition_number.h"
 
 
 using gmm::size_type;
@@ -82,7 +103,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   if (print_debug) {
     static int nexpe = 0;
     cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n"; 
-    dal::set_warning_level(3);
+    gmm::set_warning_level(3);
   }
     
   gmm::dense_matrix<T> dm1(m, n);

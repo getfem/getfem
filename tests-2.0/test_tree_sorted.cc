@@ -20,12 +20,11 @@
 //
 //========================================================================
 
-#include <dal_std.h>
 #ifndef GETFEM_VERIFY__
   #define GETFEM_VERIFY__
 #endif
 
-#include <dal_tree_sorted.h>
+#include <getfem/dal_tree_sorted.h>
 
 
 int main(void)

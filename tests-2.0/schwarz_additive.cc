@@ -7,11 +7,11 @@
 
 #define GMM_USES_SUPERLU
 
-#include <getfem_assembling.h>
-#include <getfem_norm.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_export.h>
-#include <gmm.h>
+#include <getfem/getfem_assembling.h>
+#include <getfem/getfem_norm.h>
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_export.h>
+#include <gmm/gmm.h>
 #ifdef GMM_USES_MPI
 #include <mpi++.h>
 #endif
@@ -256,19 +256,11 @@ int pb_data::solve_schwarz(int version) {
 }
 
   
-struct exception_cb : public dal::exception_callback  {
-   virtual void callback(const std::string& msg)
-   { cerr << msg << endl; *(int *)(0) = 0; } 
-};
-
 int main(int argc, char *argv[]) {
 #ifdef GMM_USES_MPI
     MPI_Init(&argc,&argv);
 #endif
  
-  exception_cb cb;
-   dal::exception_callback::set_exception_callback(&cb);
-
   try {
     ftool::md_param params;
     pb_data p;

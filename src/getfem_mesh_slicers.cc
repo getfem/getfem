@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Julien Pommier
+// Copyright (C) 2004-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,11 +20,11 @@
 //
 //========================================================================
 
-#include <dal_singleton.h>
-#include <getfem_mesh_slicers.h>
-#include <getfem_mesh_slice.h>
-#include <bgeot_geotrans_inv.h>
-#include <getfem_mesh_level_set.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/getfem_mesh_slicers.h"
+#include "getfem/getfem_mesh_slice.h"
+#include "getfem/bgeot_geotrans_inv.h"
+#include "getfem/getfem_mesh_level_set.h"
 
 namespace getfem {
   const float slicer_action::EPS = 1e-13;
@@ -286,9 +286,10 @@ namespace getfem {
 
     /* signalement des points qui se trouvent pile-poil sur la bordure */
     if (pt_bin.card()) {
-      if (ms.fcnt == dim_type(-1)) DAL_THROW(dal::internal_error, 
-					  "too much {faces}/{slices faces} in the convex " << ms.cv 
-					  << " (nbfaces=" << ms.fcnt << ")");
+      if (ms.fcnt == dim_type(-1))
+	DAL_THROW(internal_error, 
+		  "too much {faces}/{slices faces} in the convex " << ms.cv 
+		  << " (nbfaces=" << ms.fcnt << ")");
       for (dal::bv_visitor cnt(pt_bin); !cnt.finished(); ++cnt) {
 	ms.nodes[cnt].faces.set(ms.fcnt);
       }
@@ -336,7 +337,7 @@ namespace getfem {
 	  x0 = slm.points_of_face_of_convex(slmcv,f)[0];
 	  base_node A = slm.points_of_face_of_convex(slmcv,f)[1] - x0;
 	  base_node B = slm.points_of_face_of_convex(slmcv,f)[2] - x0;
-	  base_node G = dal::mean_value(slm.points_of_convex(slmcv).begin(),slm.points_of_convex(slmcv).end());
+	  base_node G = gmm::mean_value(slm.points_of_convex(slmcv).begin(),slm.points_of_convex(slmcv).end());
 	  n.resize(3);
 	  n[0] = A[1]*B[2] - A[2]*B[1];
 	  n[1] = A[2]*B[0] - A[0]*B[2];
@@ -506,7 +507,7 @@ namespace getfem {
 	assert(m.points_index().is_in(pid.at(ms.simplexes.at(i).inodes[j])));
       }
       m.add_convex(bgeot::simplex_geotrans(ms.simplexes[i].dim(),1),
-		   dal::index_ref_iterator(pid.begin(),
+		   gmm::index_ref_iterator(pid.begin(),
 					   ms.simplexes[i].inodes.begin()));
     }
   }
@@ -516,10 +517,10 @@ namespace getfem {
 
     base_node G;
     if (ms.face < dim_type(-1))
-      G = dal::mean_value(ms.m.points_of_face_of_convex(ms.cv, ms.face).begin(), 
+      G = gmm::mean_value(ms.m.points_of_face_of_convex(ms.cv, ms.face).begin(), 
 			  ms.m.points_of_face_of_convex(ms.cv, ms.face).end());
     else
-      G = dal::mean_value(ms.m.points_of_convex(ms.cv).begin(), 
+      G = gmm::mean_value(ms.m.points_of_convex(ms.cv).begin(), 
 			  ms.m.points_of_convex(ms.cv).end());    
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i)
       ms.nodes[i].pt = G + coef*(ms.nodes[i].pt - G);
@@ -556,7 +557,7 @@ namespace getfem {
   void mesh_slicer::using_mesh_level_set(const mesh_level_set &mls_) { 
     mls = &mls_;
     if (&m != &mls->linked_mesh()) 
-      DAL_THROW(dal::failure_error, "different meshes");
+      DAL_THROW(failure_error, "different meshes");
   }
 
   void mesh_slicer::pack() {
@@ -632,7 +633,7 @@ namespace getfem {
       base_matrix M(N,N);
       for (size_type i=1; i < N+1; ++i) {
 	base_small_vector d = nodes[s.inodes[i]].pt - nodes[s.inodes[0]].pt;
-	dal::copy_n(d.const_begin(), N, M.begin() + (i-1)*N);
+	gmm::copy_n(d.const_begin(), N, M.begin() + (i-1)*N);
       }
       scalar_type J = lu_det(M);
       //cout << " lu_det = " << J << "\n";	
@@ -748,7 +749,7 @@ namespace getfem {
       if (s == 0) v.push_back(pts[i]);
     }
     assert(v.size() == N+1);
-    base_node G=dal::mean_value(v);
+    base_node G = gmm::mean_value(v);
     /*for (unsigned i=0; i < v.size();++i) 
       v[i] = v[i] + 0.1 * (G - v[i]);*/
     m.add_convex_by_points(bgeot::simplex_geotrans(N,1), v.begin());
@@ -915,7 +916,7 @@ namespace getfem {
   
   /* apply slice ops to an already stored slice object */
   void mesh_slicer::exec(const stored_mesh_slice& sl) {
-    if (&sl.linked_mesh() != &m) DAL_THROW(dal::failure_error, "wrong mesh");
+    if (&sl.linked_mesh() != &m) DAL_THROW(failure_error, "wrong mesh");
     for (stored_mesh_slice::cvlst_ct::const_iterator it = sl.cvlst.begin(); it != sl.cvlst.end(); ++it) {
       update_cv_data((*it).cv_num);
       nodes = (*it).nodes;

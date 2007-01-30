@@ -28,14 +28,14 @@
  */
 
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_import.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_Coulomb_friction.h>
-#include <getfem_model_solvers.h>
-#include <getfem_derivatives.h>
-#include <gmm.h>
+#include <getfem/getfem_assembling.h> /* import assembly methods (and norms comp.) */
+#include <getfem/getfem_export.h>   /* export functions (save solution in a file)  */
+#include <getfem/getfem_import.h>
+#include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_Coulomb_friction.h>
+#include <getfem/getfem_model_solvers.h>
+#include <getfem/getfem_derivatives.h>
+#include <gmm/gmm.h>
 #include <fstream>
 
 /* some Getfem++ types that we will be using */

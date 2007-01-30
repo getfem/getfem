@@ -1,3 +1,25 @@
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
+#define GMM_USES_SUPERLU
 /**************************************************************************/
 /*                                                                        */
 /*  Schwarz additive test program on an elastostatic problem with         */
@@ -7,11 +29,11 @@
 
 #define GMM_USES_SUPERLU
 
-#include <getfem_assembling.h>
-#include <getfem_norm.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_export.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_norm.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_export.h"
+#include "gmm/gmm.h"
 #ifdef GMM_USES_MPI
 #include <mpi++.h>
 #endif
@@ -44,7 +66,7 @@ struct pb_data {
   int solver;
 
   void assemble(void);
-  void init(ftool::md_param &params);
+  void init(bgeot::md_param &params);
 
   int solve_cg(void);
   int solve_cg2(void);
@@ -68,9 +90,9 @@ struct pb_data {
   pb_data(void) : mim(mesh), mef(mesh), mef_data(mesh), mef_coarse(mesh_coarse)  {}
 };
 
-ftool::md_param PBSTFR_PARAM;
+bgeot::md_param PBSTFR_PARAM;
 
-void pb_data::init(ftool::md_param &params) {
+void pb_data::init(bgeot::md_param &params) {
 
   /***********************************************************************/
   /*  READING PARAMETER FILE.                                            */
@@ -256,7 +278,7 @@ int pb_data::solve_schwarz(int version) {
 }
 
   
-struct exception_cb : public dal::exception_callback  {
+struct exception_cb : public gmm::exception_callback  {
    virtual void callback(const std::string& msg)
    { cerr << msg << endl; *(int *)(0) = 0; } 
 };
@@ -267,10 +289,10 @@ int main(int argc, char *argv[]) {
 #endif
  
   exception_cb cb;
-   dal::exception_callback::set_exception_callback(&cb);
+   gmm::exception_callback::set_exception_callback(&cb);
 
   try {
-    ftool::md_param params;
+    bgeot::md_param params;
     pb_data p;
     
     std::cout << "initialization ...\n";
@@ -280,15 +302,15 @@ int main(int argc, char *argv[]) {
     
     p.assemble();
 
-    double rutime = dal::uclock_sec();
+    double rutime = gmm::uclock_sec();
     int itebilan = p.solve();
-    std::cout << "resolution time : " << dal::uclock_sec() - rutime << endl;
+    std::cout << "resolution time : " << gmm::uclock_sec() - rutime << endl;
     cout << "itebilan = " << itebilan << endl;
 
     gmm::mult(p.RM, gmm::scaled(p.U, -1.0), p.F, p.F);
     cout << "final residual : " << gmm::vect_norm2(p.F) << endl;
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 #ifdef GMM_USES_MPI
    MPI_Finalize();
 #endif

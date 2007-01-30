@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Yves Renard
+// Copyright (C) 2000-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -22,9 +22,9 @@
 
 
 
-#include <bgeot_poly.h>
-#include <bgeot_vector.h>
-#include <ftool.h>
+#include "getfem/bgeot_poly.h"
+#include "getfem/bgeot_vector.h"
+#include "getfem/bgeot_ftool.h"
 
 namespace bgeot {
 
@@ -119,7 +119,7 @@ namespace bgeot {
 
   static int get_next_token(std::string &s, std::istream &f) {
     if (stored_s.size() == 0)
-      return ftool::get_token(f, s, true, false, false);
+      return get_token(f, s, true, false, false);
     else { s = stored_s; stored_s.clear(); return stored_tokent; }
   }
 

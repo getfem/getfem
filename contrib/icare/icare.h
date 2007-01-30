@@ -1,12 +1,32 @@
 // -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Copyright (C) 2007-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
 #ifndef NAVIER_STOKES_H_
 #define NAVIER_STOKES_H_
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_regular_meshes.h>
-#include <getfem_modeling.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_modeling.h"
+#include "gmm/gmm.h"
 
 namespace getfem {
 
@@ -151,7 +171,7 @@ namespace getfem {
       size_type ndu = mf_u().nb_dof(), ndm = mf_mult->nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(ndm, ndu);
       VECTOR V(ndm);
-      DAL_TRACE2("Assembling Dirichlet constraints, version " << version);
+      GMM_TRACE2("Assembling Dirichlet constraints, version " << version);
       if ((version | ASMDIR_BUILDH)) {
 	asm_mass_matrix(M, mim(), mf_u(), *mf_mult,
 			mf_u().linked_mesh().get_mpi_region());
@@ -205,7 +225,7 @@ namespace getfem {
       dt = dt_;
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
       if (mf_mult->get_qdim() != mf_u().get_qdim()) 
-	DAL_THROW(dal::failure_error, "The lagrange multipliers mesh fem "
+	DAL_THROW(failure_error, "The lagrange multipliers mesh fem "
 		  "for the mdbrick_NS_nonref1 brick should have the same Qdim as "
 		  "the main mesh_fem");
 

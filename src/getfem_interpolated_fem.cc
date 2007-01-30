@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2004-2006 Yves Renard
+// Copyright (C) 2004-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <getfem_interpolated_fem.h>
+#include "getfem/getfem_interpolated_fem.h"
 
 namespace getfem {
 
@@ -76,11 +76,11 @@ namespace getfem {
 	dim_ = mim.linked_mesh().structure_of_convex(cv)->dim();
       
       if (dim_ != mim.linked_mesh().structure_of_convex(cv)->dim())
-	DAL_THROW(dal::failure_error, "Convexes of different dimension"
+	DAL_THROW(failure_error, "Convexes of different dimension"
 		  ": to be done");
       pintegration_method pim = mim.int_method_of_element(cv);
       if (pim->type() != IM_APPROX) 
-	DAL_THROW(dal::failure_error, "You have to use approximated "
+	DAL_THROW(failure_error, "You have to use approximated "
 		  "integration to interpolate an fem");
       papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
@@ -141,7 +141,7 @@ namespace getfem {
   { context_check(); 
     if (mim.linked_mesh().convex_index().is_in(cv))
       return elements[cv].nb_dof; 
-    else DAL_THROW(dal::failure_error, "Wrong convex number: " << cv);
+    else DAL_THROW(failure_error, "Wrong convex number: " << cv);
   }
   
   size_type interpolated_fem::index_of_global_dof
@@ -156,7 +156,7 @@ namespace getfem {
   { 
     if (mim.linked_mesh().convex_index().is_in(cv))
       return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
-    else DAL_THROW(dal::failure_error, "Wrong convex number: " << cv);
+    else DAL_THROW(failure_error, "Wrong convex number: " << cv);
   }
 
   bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
@@ -378,7 +378,7 @@ namespace getfem {
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
     if (mef.get_qdim() != 1) 
-      DAL_THROW(dal::to_be_done_error,
+      DAL_THROW(to_be_done_error,
 		"interpolated_fem do not handle qdim != 1");
     this->add_dependency(mf);
     this->add_dependency(mim);

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2005-2006 Yves Renard
+// Copyright (C) 2005-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <bgeot_imbricated_box.h>
+#include "getfem/bgeot_imbricated_box.h"
 
 namespace bgeot {
 #if 0

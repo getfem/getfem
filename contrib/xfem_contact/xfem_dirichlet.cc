@@ -1,23 +1,24 @@
 // -*- c++ -*- (enables emacs c++ mode)
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 2002-2005 Yves Renard, Julien Pommier.                    */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+//========================================================================
+//
+// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
+//
+// This file is a part of GETFEM++
+//
+// Getfem++ is free software; you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation; version 2.1 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+// USA.
+//
+//========================================================================
 
 /**
  * Goal : scalar Dirichlet problem with Xfem.
@@ -25,16 +26,16 @@
  * Research program.
  */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_derivatives.h>
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <getfem_mesh_im_level_set.h>
-#include <getfem_partial_mesh_fem.h>
-#include <getfem_Coulomb_friction.h>
-#include <getfem_import.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "getfem/getfem_mesh_im_level_set.h"
+#include "getfem/getfem_partial_mesh_fem.h"
+#include "getfem/getfem_Coulomb_friction.h"
+#include "getfem/getfem_import.h"
+#include "gmm/gmm.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -78,7 +79,7 @@ double u_exact(const base_node &p) {
       return (Radius*Radius - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
     }
   }
-  DAL_THROW(dal::failure_error, "Invalid exact solution");
+  DAL_THROW(gmm::failure_error, "Invalid exact solution");
 }
 
 double g_exact(const base_node &p) {
@@ -174,13 +175,13 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
     
     // Read parameters.
-    ftool::md_param PARAM;
+    bgeot::md_param PARAM;
     PARAM.read_command_line(argc, argv);
     u_version = PARAM.int_value("EXACT_SOL", "Which exact solution");
     
@@ -421,7 +422,7 @@ int main(int argc, char *argv[]) {
     }
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

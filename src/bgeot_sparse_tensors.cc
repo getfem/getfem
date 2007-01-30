@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2006 Julien Pommier
+// Copyright (C) 2000-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -21,8 +21,8 @@
 //========================================================================
 
 #include <bitset>
-#include "gmm_blas_interface.h"
-#include "bgeot_sparse_tensors.h"
+#include "gmm/gmm_blas_interface.h"
+#include "getfem/bgeot_sparse_tensors.h"
 
 
 namespace bgeot {

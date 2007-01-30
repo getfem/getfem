@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -21,7 +21,7 @@
 //========================================================================
 
 
-#include <getfem_regular_meshes.h>
+#include "getfem/getfem_regular_meshes.h"
 
 namespace getfem
 {
@@ -195,7 +195,7 @@ namespace getfem
       getfem::parallelepiped_regular_prism_mesh
 	(msh, N, org, vtab.begin(), nsubdiv.begin());
     } else {
-      DAL_THROW(dal::failure_error, "cannot build a regular mesh for "
+      DAL_THROW(failure_error, "cannot build a regular mesh for "
 		<< bgeot::name_of_geometric_trans(pgt));
     }
 
@@ -225,7 +225,7 @@ namespace getfem
 
   void regular_mesh(mesh& m, const std::string &st) {
     std::stringstream s(st);
-    ftool::md_param PARAM;
+    bgeot::md_param PARAM;
     PARAM.read_param_file(s);
     
     std::string GT = PARAM.string_value("GT");
@@ -238,14 +238,14 @@ namespace getfem
     size_type N = pgt->dim();
     base_small_vector org(N);
     
-    const std::vector<ftool::md_param::param_value> &o
+    const std::vector<bgeot::md_param::param_value> &o
       = PARAM.array_value("ORG");
     if (o.size() > 0) {
       if (o.size() != N)
 	DAL_THROW(failure_error,
 		  "ORG parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
-	if (o[i].type_of_param() != ftool::md_param::REAL_VALUE)
+	if (o[i].type_of_param() != bgeot::md_param::REAL_VALUE)
 	  DAL_THROW(failure_error, "ORG should be a real array.");
 	org[i] = o[i].real();
       }
@@ -255,14 +255,14 @@ namespace getfem
     
     std::vector<size_type> nsubdiv(N);
     gmm::fill(nsubdiv, 2);
-    const std::vector<ftool::md_param::param_value> &ns
+    const std::vector<bgeot::md_param::param_value> &ns
       = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
       if (ns.size() != N)
 	DAL_THROW(failure_error,
 		  "NSUBDIV parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
-	if (ns[i].type_of_param() != ftool::md_param::REAL_VALUE)
+	if (ns[i].type_of_param() != bgeot::md_param::REAL_VALUE)
 	  DAL_THROW(failure_error, "NSUBDIV should be an integer array.");
 	nsubdiv[i] = size_type(ns[i].real()+0.5);
       }
@@ -271,14 +271,14 @@ namespace getfem
     base_small_vector sizes(N);
     gmm::fill(sizes, 1.0);
     
-    const std::vector<ftool::md_param::param_value> &si
+    const std::vector<bgeot::md_param::param_value> &si
       = PARAM.array_value("SIZES");
     if (si.size() > 0) {
       if (si.size() != N)
 	DAL_THROW(failure_error,
 		  "SIZES parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
-	if (si[i].type_of_param() != ftool::md_param::REAL_VALUE)
+	if (si[i].type_of_param() != bgeot::md_param::REAL_VALUE)
 	  DAL_THROW(failure_error, "SIZES should be a real array.");
 	sizes[i] = si[i].real();
       }

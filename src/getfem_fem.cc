@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 1999-2006 Yves Renard
+// Copyright (C) 1999-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -26,15 +26,15 @@
     @brief implementation of some finite elements.
  */
 
-#include <dal_singleton.h>
-#include <dal_tree_sorted.h>
-#include <dal_algobase.h>
-#include <dal_naming_system.h>
-#include <getfem_fem.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/dal_tree_sorted.h"
+#include "gmm/gmm_algobase.h"
+#include "getfem/dal_naming_system.h"
+#include "getfem/getfem_fem.h"
 
 /* do not read this file ! */
-#include <getfem_gauss_lobatto_fem_coef.h>
-#include <getfem_integration.h> /* for gauss-lobatto points */
+#include "getfem/getfem_gauss_lobatto_fem_coef.h"
+#include "getfem/getfem_integration.h" /* for gauss-lobatto points */
 namespace getfem
 {
   typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
@@ -42,7 +42,7 @@ namespace getfem
   const base_matrix& fem_interpolation_context::M() const {
     if (gmm::mat_nrows(M_) == 0) {
       if (!have_pgt() || !have_G() || !have_pf())
-	DAL_THROW(dal::failure_error, "cannot compute M");
+	DAL_THROW(failure_error, "cannot compute M");
       M_.resize(pf_->nb_dof(convex_num()), pf_->nb_base(convex_num()));
       pf_->mat_trans(M_,G(),pgt());
     }
@@ -213,7 +213,7 @@ namespace getfem
 
   struct ddl_elem {
     ddl_type t;
-    dal::int16_type hier_degree;
+    gmm::int16_type hier_degree;
     short_type hier_raff;
     bool operator < (const ddl_elem &l) const {
       if (t < l.t) return true; if (t > l.t) return false; 
@@ -221,7 +221,7 @@ namespace getfem
       if (hier_degree > l.hier_degree) return false;
       if (hier_raff < l.hier_raff) return true; return false;
     }
-    ddl_elem(ddl_type s = LAGRANGE, dal::int16_type k = -1, short_type l = 0)
+    ddl_elem(ddl_type s = LAGRANGE, gmm::int16_type k = -1, short_type l = 0)
       : t(s), hier_degree(k), hier_raff(l) {}
   };
 
@@ -244,7 +244,7 @@ namespace getfem
   //             product_dof, et dof_hierarchical_compatibility.
   int dof_description_comp__::operator()(const dof_description &m,
 					 const dof_description &n) const { 
-    int nn = dal::lexicographical_less<std::vector<ddl_elem> >()
+    int nn = gmm::lexicographical_less<std::vector<ddl_elem> >()
       (m.ddl_desc, n.ddl_desc);
     if (nn < 0) return -1; if (nn > 0) return 1;
     nn = int(m.linkable) - int(n.linkable);
@@ -421,7 +421,7 @@ namespace getfem
     std::copy(b->ddl_desc.begin(), b->ddl_desc.end(), l.ddl_desc.begin()+nb1);
     
     {
-      dal::int16_type deg = -1;
+      gmm::int16_type deg = -1;
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
 	deg = std::max(deg, l.ddl_desc[i].hier_degree);
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
@@ -686,8 +686,8 @@ namespace getfem
     for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
-	if ( dal::lexicographical_less<base_node,
-	     dal::approx_less<scalar_type> >()
+	if ( gmm::lexicographical_less<base_node,
+	     gmm::approx_less<scalar_type> >()
 	     (fi2->node_of_dof(0,i), fi1->node_of_dof(0,j)) == 0
 	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
 					       fi1->dof_types()[j]))
@@ -725,8 +725,8 @@ namespace getfem
     for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
-	if ( dal::lexicographical_less<base_node,
-	     dal::approx_less<scalar_type> >()
+	if ( gmm::lexicographical_less<base_node,
+	     gmm::approx_less<scalar_type> >()
 	     (fi2->node_of_dof(0,i), fi1->node_of_dof(0,j)) == 0
 	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
 					       fi1->dof_types()[j]))
@@ -1423,7 +1423,7 @@ namespace getfem
     es_degree = k;
     
     if (k >= fem_coeff_gausslob_max_k || !fem_coeff_gausslob[k]) 
-      DAL_THROW(dal::failure_error, "try another degree");
+      DAL_THROW(failure_error, "try another degree");
     
     init_cvs_node();
     std::stringstream sstr; sstr << "IM_GAUSSLOBATTO1D(" << k*2-1 << ")";
@@ -1981,7 +1981,7 @@ namespace getfem
 
       if (alpha != 0.) {
 	base_node G = 
-	  dal::mean_value(cv_node.points().begin(), cv_node.points().end());
+	  gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
       for (size_type i=0; i < cv_node.nb_points(); ++i) 
 	cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
 	for (size_type d = 0; d < nc; ++d) {

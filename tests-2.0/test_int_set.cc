@@ -19,8 +19,9 @@
 // USA.
 //
 //========================================================================
-#include <dal_bit_vector.h>
+#include <getfem/dal_bit_vector.h>
 #include <deque>
+
 typedef size_t size_type;
 
 bool quick = false;

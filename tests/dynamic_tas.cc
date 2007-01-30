@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <dal_tas.h>
+#include "getfem/dal_tas.h"
 
 using namespace std;
 
@@ -31,7 +31,7 @@ int main(void)
     // cout << "index = " << t.index() << endl;
     // cout << "first free place : " << t.index().first_false() << endl;
     if (t.index().first_false() != 1)
-      throw dal::internal_error("dynamic_tas.C : structure error 1");
+      throw gmm::internal_error("dynamic_tas.C : structure error 1");
     
     t.add(4);
     t.add(2);
@@ -42,7 +42,7 @@ int main(void)
     // cout << "index = " << t.index() << endl;
     // cout << "first free place : " << t.index().first_false() << endl;
     if (t.index().first_false() != 1)
-      throw dal::internal_error("dynamic_tas.C : structure error 2");
+      throw gmm::internal_error("dynamic_tas.C : structure error 2");
     
     t.add(3);
     

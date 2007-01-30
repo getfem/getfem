@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2005-2006 Julien Pommier
+// Copyright (C) 2005-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -20,7 +20,7 @@
 //
 //========================================================================
 
-#include <getfem_mesh_level_set.h>
+#include "getfem/getfem_mesh_level_set.h"
 
 
 namespace getfem {
@@ -105,8 +105,8 @@ struct Chrono {
     linked_mesh_ = &me; is_adapted_ = false; 
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
-	       lmsg::mask(MESH_CLEAR::ID) | lmsg::mask(MESH_SUP_CONVEX::ID) |
-	       lmsg::mask(MESH_SWAP_CONVEX::ID) | lmsg::mask(MESH_DELETE::ID));
+	       mask(MESH_CLEAR::ID) | mask(MESH_SUP_CONVEX::ID) |
+	       mask(MESH_SWAP_CONVEX::ID) | mask(MESH_DELETE::ID));
   }
 
   mesh_level_set::~mesh_level_set() {}
@@ -156,8 +156,8 @@ struct Chrono {
   struct point_stock {
     
     dal::dynamic_tree_sorted
-    <base_node, dal::lexicographical_less<base_node,
-		dal::approx_less<scalar_type> > > points;
+    <base_node, gmm::lexicographical_less<base_node,
+		gmm::approx_less<scalar_type> > > points;
     std::vector<dal::bit_vector> constraints_;
     std::vector<scalar_type> radius_;
     const std::vector<const mesher_signed_distance*> &list_constraints;
@@ -251,8 +251,8 @@ struct Chrono {
 
     point_stock(const std::vector<const mesher_signed_distance*> &ls,
 		scalar_type rcv)
-      : points(dal::lexicographical_less<base_node,
-	       dal::approx_less<scalar_type> >(1E-7)), list_constraints(ls),
+      : points(gmm::lexicographical_less<base_node,
+	       gmm::approx_less<scalar_type> >(1E-7)), list_constraints(ls),
 	radius_cv(rcv) {}
   };
 
@@ -292,12 +292,12 @@ struct Chrono {
 				    gmm::dense_matrix<size_type> &simplexes,
 				    std::vector<dal::bit_vector> &
 				    /* fixed_points_constraints */) {
-    double t0=dal::uclock_sec();
+    double t0=gmm::uclock_sec();
     if (noisy) cout << "running delaunay with " << fixed_points.size()
 		    << " points.." << std::flush;
     delaunay(fixed_points, simplexes);
     if (noisy) cout << " -> " << gmm::mat_ncols(simplexes)
-		    << " simplexes [" << dal::uclock_sec()-t0 << "sec]\n";
+		    << " simplexes [" << gmm::uclock_sec()-t0 << "sec]\n";
   }
 
   static bool intersects(const mesh_level_set::zone &z1, 
@@ -742,8 +742,8 @@ struct Chrono {
 	
 	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i)
 	  global_mesh().add_convex(msh.trans_of_convex(i), 
-				 dal::index_ref_iterator(pts.begin(),
-				     msh.ind_points_of_convex(i).begin()));
+				   gmm::index_ref_iterator(pts.begin(),
+				   msh.ind_points_of_convex(i).begin()));
       }
 
     } while (!h0_is_ok);
@@ -773,7 +773,7 @@ struct Chrono {
 
 	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
 	  ic2[i] = m.add_convex(msh.trans_of_convex(i), 
-				dal::index_ref_iterator(pts.begin(),
+				gmm::index_ref_iterator(pts.begin(),
 			        msh.ind_points_of_convex(i).begin()));
 	  
 	}

@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <bgeot_poly.h>
+#include <getfem/bgeot_poly.h>
 
 std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
 			 bgeot::short_type k, bgeot::short_type de) {

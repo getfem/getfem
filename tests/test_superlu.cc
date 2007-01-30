@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard.
+// Copyright (C) 2002-2007 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -27,8 +27,8 @@
 // options d'optimisations avec g++ :
 //  -funroll-all-loops -ffast-math -fstrict-aliasing -fomit-frame-pointer
 
-#include <getfem_superlu.h>
-#include <gmm_inoutput.h>
+#include "getfem/getfem_superlu.h"
+#include "gmm/gmm_inoutput.h"
 using gmm::size_type;
 
 template <class T> void test_with(T) {

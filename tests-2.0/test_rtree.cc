@@ -1,6 +1,5 @@
-#include <bgeot_rtree.h>
-#include <ftool.h>
-#include <dal_bit_vector.h>
+#include <getfem/bgeot_rtree.h>
+#include <getfem/dal_bit_vector.h>
 using bgeot::base_node;
 using bgeot::size_type;
 using bgeot::dim_type;

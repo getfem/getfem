@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2001-2006 Yves Renard
+// Copyright (C) 2001-2007 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -20,9 +20,9 @@
 //
 //========================================================================
 
-#include <dal_singleton.h>
-#include <bgeot_convex_ref.h>
-#include <bgeot_mesh_structure.h>
+#include "getfem/dal_singleton.h"
+#include "getfem/bgeot_convex_ref.h"
+#include "getfem/bgeot_mesh_structure.h"
 
 namespace bgeot {
 

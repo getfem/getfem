@@ -84,6 +84,6 @@ elseif nn==4,
   view(3);
   camzoom(1.7);
   axis([-0.5000    0.5000   -0.5000    0.5000 -.2 .2]);
-  print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
+  % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
 end;
 

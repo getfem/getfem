@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2006 Yves Renard, Michel Salaün.
+// Copyright (C) 2002-2007 Yves Renard, Michel Salaün.
 //
 // This file is a part of GETFEM++
 //
@@ -28,12 +28,12 @@
    also a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_linearized_plates.h>
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
-#include <getfem_regular_meshes.h>
-#include <getfem_model_solvers.h>
-#include <gmm.h>
+#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_linearized_plates.h"
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_model_solvers.h"
+#include "gmm/gmm.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -84,7 +84,7 @@ struct plate_problem {
 			     // Nothing is done if study_flag has another value.   
 
   std::string datafilename;
-  ftool::md_param PARAM;
+  bgeot::md_param PARAM;
 
   base_small_vector theta_exact(base_node P);
   scalar_type u3_exact(base_node P);
@@ -250,7 +250,7 @@ void plate_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_ut->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -362,7 +362,7 @@ scalar_type plate_problem::u3_exact(base_node P) {
 	     }
        return (u3_local) ;
        break ; 
-  default : DAL_THROW(dal::failure_error, 
+  default : DAL_THROW(gmm::failure_error, 
 		 "indice de solution de référence incorrect");
   }
 }
@@ -571,7 +571,7 @@ bool plate_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {    
@@ -582,11 +582,11 @@ int main(int argc, char *argv[]) {
     p.pressure *= p.epsilon * p.epsilon * p.epsilon;
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U;
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) DAL_THROW(gmm::failure_error,"Solve has failed");
     p.compute_error(U);
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

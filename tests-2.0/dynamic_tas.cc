@@ -19,7 +19,7 @@
 // USA.
 //
 //========================================================================
-#include <dal_tas.h>
+#include <getfem/dal_tas.h>
 
 using namespace std;
 
