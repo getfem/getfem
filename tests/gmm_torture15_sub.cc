@@ -57,7 +57,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_interval(0,n)), T(-1)),
 	     gmm::sub_vector(v2, gmm::sub_interval(0,n)), v3);
     if (!((error = gmm::vect_norm2(v3)) <= prec * R(20000) * cond))
-      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 
   det = gmm::abs(gmm::lu_det(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1))));
@@ -70,7 +70,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_slice(0,n,1)), T(-1)),
 	     gmm::sub_vector(v2, gmm::sub_slice(0,n,1)), v3);
     if (!((error = gmm::vect_norm2(v3)) <= prec * R(20000) * cond))
-      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
   }
   
   gmm::copy(gmm::identity_matrix(), gmm::sub_matrix(gmm::transposed(m1),
@@ -87,7 +87,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
 	    gmm::sub_vector(v2, gmm::sub_interval(0,n)),
 	    gmm::scaled(v2, T(-1)), v1);
   if (!((error = gmm::vect_norm2(v1)) <= prec * R(2000)))
-    DAL_THROW(gmm::failure_error, "Error too large: " << error);
+    GMM_THROW(gmm::failure_error, "Error too large: " << error);
   
   if (nb_iter == 100) return true;
   return false;

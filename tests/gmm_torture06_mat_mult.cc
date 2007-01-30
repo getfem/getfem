@@ -50,15 +50,15 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_, const MAT3 &m3_) {
   R error = mat_euclidean_norm(m4)
     - mat_euclidean_norm(m1) * mat_euclidean_norm(m2);
   if (error > prec * R(100))
-    DAL_THROW(gmm::failure_error, "Inconsistence of fröbenius norm" << error);
+    GMM_THROW(gmm::failure_error, "Inconsistence of fröbenius norm" << error);
 
   error = mat_norm1(m4) - mat_norm1(m1) * mat_norm1(m2);
   if (error > prec * R(100))
-    DAL_THROW(gmm::failure_error, "Inconsistence of norm1 for matrices"
+    GMM_THROW(gmm::failure_error, "Inconsistence of norm1 for matrices"
 	      << error);
   error = mat_norminf(m4) - mat_norminf(m1) * mat_norminf(m2);
   if (error > prec * R(100))
-    DAL_THROW(gmm::failure_error, "Inconsistence of norminf for matrices"
+    GMM_THROW(gmm::failure_error, "Inconsistence of norminf for matrices"
 	      << error);
 
   size_type mm = std::min(m, k);
@@ -84,7 +84,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_, const MAT3 &m3_) {
 					   gmm::sub_interval(0,nn)));
 
   if (!(error <= prec * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error too large: " << error);
+    GMM_THROW(gmm::failure_error, "Error too large: " << error);
 
   if (nn <= gmm::mat_nrows(m3) && mm <= gmm::mat_ncols(m3)) {
     
@@ -103,7 +103,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_, const MAT3 &m3_) {
 					   gmm::sub_interval(0,mm)));
     
     if (!(error <= prec * R(10000)))
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
   }
   if (nb_iter == 100) return true;
   return false;

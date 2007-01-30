@@ -124,7 +124,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
     if (!(error <= prec * R(10000))) 
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
     gmm::apply_house_right(m1, q);
@@ -136,7 +136,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     gmm::add(gmm::scaled(b, T(-1)), a);
     error = gmm::mat_euclidean_norm(a);
     if (!(error <= prec * R(10000)))
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
       
     gmm::copy(gmm::conjugated(qaux), q2);
     gmm::apply_house_left(m1, q2);
@@ -144,7 +144,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
     if (!(error <= prec * R(10000)))
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
   else {
@@ -163,7 +163,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
     if (!(error <= prec * R(10000))) 
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
     gmm::apply_house_right(gmm::transposed(m1), q);
@@ -175,7 +175,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     gmm::add(gmm::scaled(b, T(-1)), a);
     error = gmm::mat_euclidean_norm(a);
     if (!(error <= prec * R(10000)))
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
       
     gmm::copy(gmm::conjugated(qaux), q2);
     gmm::apply_house_left(gmm::transposed(m1), q2);
@@ -183,7 +183,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_euclidean_norm(dm1aux);
     if (!(error <= prec * R(10000))) 
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
   
@@ -204,7 +204,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   implicit_qr_algorithm(ca, eigc, cq);
   for (size_type i = 0; i < m; ++i) det2 *= eigc[i];
   if (gmm::abs(det1 - det2) > (gmm::abs(det1)+gmm::abs(det2))/R(100))
-    DAL_THROW(gmm::failure_error, "Error in QR or det. det lu: " << det1
+    GMM_THROW(gmm::failure_error, "Error in QR or det. det lu: " << det1
 	      << " det qr: " << det2);
   if (print_debug)
     cout << "det lu = " << det1 << "  det qr = " << det2 << endl;
@@ -247,7 +247,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   sort_eval(eigc);
   error = gmm::vect_dist2(cvc, eigc);
   if (!(error <= sqrt(prec) * gmm::vect_norm2(cv) * R(10)))
-    DAL_THROW(gmm::failure_error, "Error in QR algorithm, error = " << error);
+    GMM_THROW(gmm::failure_error, "Error in QR algorithm, error = " << error);
 
   gmm::dense_matrix<T> aa(m, m), bb(m, m);
   gmm::mult(gmm::conjugated(cq), ca, aa);
@@ -257,7 +257,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
       bb(i, j) = T(0);
   error = gmm::mat_maxnorm(bb);
   if (!(error <= sqrt(prec) * gmm::vect_norm2(cv) * R(10)))
-    DAL_THROW(gmm::failure_error, "Error in Schur vectors, error = "<< error); 
+    GMM_THROW(gmm::failure_error, "Error in Schur vectors, error = "<< error); 
 
   //
   // Test for symmetric_qr_algorithm
@@ -305,7 +305,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
 	       gmm::scaled(gmm::mat_col(cq, l), -eigcr[l]), vy);
      error = gmm::vect_norm2(vy);
      if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr) * R(10))) 
-       DAL_THROW(gmm::failure_error, "Error too large: " << error);
+       GMM_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
 
@@ -313,7 +313,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   sort_eval(eigcr);
   error = gmm::vect_dist2(cvr, eigcr);
   if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr) * R(10)))
-    DAL_THROW(gmm::failure_error, "Error in QR algorithm.");
+    GMM_THROW(gmm::failure_error, "Error in QR algorithm.");
 
   if (nb_iter == 100) return true;
   return false;
