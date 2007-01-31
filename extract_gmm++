@@ -10,10 +10,10 @@ $MINOR_VERSION = "02";
 $DATE_VERSION = "";
 
 
-$gmm_files = "dal_std.h dal_except.h dal_algobase.h dal_ref.h";
-$gmm_files_bis = "\\\n          dal_std.h\\\n          dal_except.h\\\n          dal_algobase.h\\\n          dal_ref.h";
-open F, "(cd $getfem_root/src && ls gmm*.h) |", or die;
-while (<F>) { chomp $_; $gmm_files = "$gmm_files $_"; $gmm_files_bis = "$gmm_files_bis\\\n          $_"; }
+$gmm_files = "";
+$gmm_files_bis = "";
+open F, "(cd $getfem_root/src/gmm && ls gmm*.h) |", or die;
+while (<F>) { chomp $_; $gmm_files = "$gmm_files gmm/$_"; $gmm_files_bis = "$gmm_files_bis\\\n          gmm/$_"; }
 $test_files = "make_gmm_test.pl";
 $test_files_bis = "\\\n          make_gmm_test.pl";
 open F, "(cd $getfem_root/tests && ls gmm_torture*.cc) |", or die;
@@ -27,7 +27,8 @@ $root = `pwd`; chomp $root; $root = "$root/gmm++_standalone";
 `mkdir $root`;
 `mkdir $root/tests`;
 `mkdir $root/include`;
-print `(cd $getfem_root/src && cp $gmm_files $root/include)`;
+`mkdir $root/include/gmm`;
+print `(cd $getfem_root/src && cp $gmm_files $root/include/gmm)`;
 print `(cd $getfem_root/tests && cp $test_files $root/tests)`;
 print `cp $getfem_root/gmm-config.in $root`;
 print `cp $getfem_root/MTL-ITL-LICENSE $root`;
@@ -72,25 +73,7 @@ close(F);
 
 open(F, ">$root/include/Makefile.am") or die "Open file impossible : $!\n";
 print F <<
-includedir=\${prefix}/include\n
-EXTRA_HEADERS=$gmm_files_bis
-\n\nEXTRA_DIST=\$(EXTRA_HEADERS)\n\n
-install-data-hook:
-	\@\$(NORMAL_INSTALL)
-	\$(mkinstalldirs) \$(DESTDIR)\$(includedir)
-	\@list='\$(EXTRA_HEADERS)'; for p in \$\$list; do \\
-	  if test -f \"\$\$p\"; then d=; else d=\"\$(srcdir)/\"; fi; \\
-	  f=\"`echo \$\$p | sed -e 's|^.*/||'`\"; \\
-	  echo \" \$(INSTALL_DATA) \$\$d\$\$p \$(DESTDIR)\$(includedir)/\$\$f\"; \\
-	  \$(INSTALL_DATA) \$\$d\$\$p \$(DESTDIR)\$(includedir)/\$\$f; \\
-	done\n
-uninstall-hook:
-	\@\$(NORMAL_UNINSTALL)
-	\@list='\$(EXTRA_HEADERS)'; for p in \$\$list; do \\
-	  f=\"`echo \$\$p | sed -e 's|^.*/||'`\"; \\
-	  echo \" rm -f \$(DESTDIR)\$(includedir)/\$\$f\"; \\
-	  rm -f \$(DESTDIR)\$(includedir)/\$\$f; \\
-	done\n
+nobase_include_HEADERS=$gmm_files_bis
 
 ;
 close(F);

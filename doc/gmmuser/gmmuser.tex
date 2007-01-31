@@ -165,7 +165,7 @@ name on the command line:
 More specific instructions can be found in the \texttt{README*} files of
 the distribution.\\[0.2cm]
 
-Now, to use \gmm in you programs, the simpler manner is to include the file \filename{gmm.h} which includes all the template library. If the compilation time is too important, the minimum to be included is contained is the file \filename{gmm\_kernel.h} (vectors and matrix types, blas, sub vector and sub matrices).\\[0.2cm]
+Now, to use \gmm in you programs, the simpler manner is to include the file \filename{gmm/gmm.h} which includes all the template library. If the compilation time is too important, the minimum to be included is contained is the file \filename{gmm/gmm\_kernel.h} (vectors and matrix types, blas, sub vector and sub matrices).\\[0.2cm]
 
 DO NOT FORGET to catch errors messages. See the corresponding section.
 
@@ -213,7 +213,7 @@ In the following, the template parameter \cpp{T} will represent a scalar type li
 \subsection{dense vectors}
 \index{std::vector$<$T$>$}
 \gmm interfaces \cpp{std::vector<T>} so you can use it as your basic dense vector type.
-If you need to interface another type of dense vector you can see in \cpp{gmm_interface.h}
+If you need to interface another type of dense vector you can see in \cpp{gmm/gmm_interface.h}
 some examples.
 \subsection{sparse vectors}
 \index{gmm::wsvector$<$T$>$}
@@ -273,7 +273,7 @@ The ``1'' means that a shift will be done on all the indices.
 \section{Input and output with Harwell-Boeing and Matrix Market formats}
 \index{Harwell-Boeing format}
 \index{Matrix Market format}
-Including the file \cpp{gmm_inoutput.h} you will be able to load and save matrices with Harwell-Boeing and Matrix Market formats. Concerning the Harwell-Boeing format, only the type \cpp{gmm::csc_matrix<double>} and \cpp{gmm::csc_matrix<std::complex<double> >} has been interfaced, so you can execute
+Including the file \cpp{gmm/gmm_inoutput.h} you will be able to load and save matrices with Harwell-Boeing and Matrix Market formats. Concerning the Harwell-Boeing format, only the type \cpp{gmm::csc_matrix<double>} and \cpp{gmm::csc_matrix<std::complex<double> >} has been interfaced, so you can execute
 \begin{cppcode}
 Harwell_Boeing_save("filename", A) // save the csc_matrix A .
 Harwell_Boeing_load("filename", A) // load the csc_matrix A.
@@ -559,7 +559,7 @@ components which are lower the diagonal are ignored by \cpp{gmm::upper_tri_solve
 
 \section{Dense LU decomposition}
 
-The following procedures are available in the file \filename{gmm\_dense\_lu.h} for dense real and complex matrices (\cpp{gmm::dense_matrix<T>}, \cpp{gmm::row_matrix< std::vector<T> >} and \cpp{gmm::col_matrix< std::vector<T> >})
+The following procedures are available in the file \filename{gmm/gmm\_dense\_lu.h} for dense real and complex matrices (\cpp{gmm::dense_matrix<T>}, \cpp{gmm::row_matrix< std::vector<T> >} and \cpp{gmm::col_matrix< std::vector<T> >})
 
 \begin{cppcode}
 gmm::lu_factor(M, ipvt) : compute the LU factorization of M in M. ipvt should be
@@ -590,7 +590,7 @@ gmm::lu_det(A) : compute the determinant of A calling the LU factorization
 \end{cppcode}
 
 \section{Dense QR factorisation, eigenvalues and eigenvectors}
-The following procedures are available in the file \filename{gmm\_dense\_qr.h} for dense real and complex matrices.
+The following procedures are available in the file \filename{gmm/gmm\_dense\_qr.h} for dense real and complex matrices.
 \index{gmm::qr_factor(M, Q, R)}
 \index{gmm::implicit_qr_algorithm(M, eigval, tol)}
 \index{gmm::symmetric_qr_algorithm(M, eigval, tol)}
@@ -616,18 +616,18 @@ The following procedures are available in the file \filename{gmm\_dense\_qr.h} f
 
 \end{cppcode}
 
-Remark : The computation of eigenvectors for non hermitian matrices is not yet implemented. You can use for the moment the functions \cpp{geev_interface_left} and \cpp{geev_interface_right} from the LAPACK interface (see \cpp{gmm_lapack_interface.h}. These LAPACK functions compute right and left eigen vectors. 
+Remark : The computation of eigenvectors for non hermitian matrices is not yet implemented. You can use for the moment the functions \cpp{geev_interface_left} and \cpp{geev_interface_right} from the LAPACK interface (see \cpp{gmm/gmm_lapack_interface.h}. These LAPACK functions compute right and left eigen vectors. 
                    
 \section{Condition number estimation}
 \index{gmm::condest}
-The following function defined in the file \filename{gmm\_condition\_number.h}
+The following function defined in the file \filename{gmm/gmm\_condition\_number.h}
 \begin{cppcode}
    condition_number(M)
 \end{cppcode}
 compute the condition number of a matrix \cpp{M}. For the moment, this function uses a dense QR algorithm and thus is only usable for dense matrices.
 
 \section{Iterative solvers}
-Most of the solvers provided in \gmm come form ITL with slight modifications (gmres has been optimized and adapted for complex matrices). Include the file \filename{gmm_iter_solvers.h} to use them.
+Most of the solvers provided in \gmm come form ITL with slight modifications (gmres has been optimized and adapted for complex matrices). Include the file \filename{gmm/gmm_iter_solvers.h} to use them.
 
 \subsection{iterations}
 \index{gmm::iteration}
@@ -741,13 +741,13 @@ The test program \cpp{schwarz_additive.C} is the directory \cpp{tests} of Getfem
 
 In the case of multiple solves with the same linear system, it is possible to store the preconditioners or the LU factorisations to save computation time.\\
 
-A (too) simple program in \cpp{gmm_domain_decomp.h} allows to build a regular domain decomposition with a certain ratio of overlap. It directly produces the vector of matrices \cpp{vB} for the additive Schwarz method.
+A (too) simple program in \cpp{gmm/gmm_domain_decomp.h} allows to build a regular domain decomposition with a certain ratio of overlap. It directly produces the vector of matrices \cpp{vB} for the additive Schwarz method.
 
 \section{Catch errors}
 \index{errors}
 
-Errors used in \gmm are defined in the file \filename{gmm\_except.h}. In order to make easier  the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
-A standard procedure, \cpp{GMM\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{gmm\_except.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
+Errors used in \gmm are defined in the file \filename{gmm/gmm\_except.h}. In order to make easier  the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
+A standard procedure, \cpp{GMM\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{gmm/gmm\_except.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
 \begin{cppcode}
   int main(void) \{ 
     try \{ 
@@ -768,7 +768,7 @@ to use this interface you have first to define \cpp{GMM_USES_LAPACK} before incl
 
 \begin{cppcode}
   \#define GMM_USES_LAPACK
-  \#include <gmm.h>
+  \#include <gmm/gmm.h>
 
   ... your code
 \end{cppcode}
@@ -883,7 +883,7 @@ Of course, it is not difficult to interface another operation if needed.
 
 \section{Interface with SuperLU}
 
-It is possible to call SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/) from \gmm. The following function defined in the file \filename{gmm_superlu_interface.h} is available
+It is possible to call SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/) from \gmm. The following function defined in the file \filename{gmm/gmm_superlu_interface.h} is available
 
 \begin{cppcode}
   SuperLU_solve(A, X, B, condest, permc_spec = 1)
@@ -1030,7 +1030,7 @@ The major principle of \gmm is that each vector and matrix type has a correspond
   typename gmm::linalg_traits<V>::linalg_type ...  // should be abstract_vector
   typename gmm::linalg_traits<M>::linalg_type ...  // should be abstract_matrix
 \end{cppcode}
-The types \cpp{abstract_vector} and \cpp{abstract_matrix} are defined in \cpp{gmm_def.h}. They are void type allowing to specialize generic algorithms.\\
+The types \cpp{abstract_vector} and \cpp{abstract_matrix} are defined in \cpp{gmm/gmm_def.h}. They are void type allowing to specialize generic algorithms.\\
 
 For a vector type, the following informations are available
 \begin{cppcode}
@@ -1123,7 +1123,7 @@ and for a matrix type
   gmm::linalg_traits<M>::do_clear(m)  --> make a clear on the matrix
 \end{cppcode}
 
-This is this structure you have to fill in to interface a new vector or matrix type. You can see some examples in \cpp{gmm_interface.h} . Most of the generic algorithms are in \cpp{gmm_blas.h} .
+This is this structure you have to fill in to interface a new vector or matrix type. You can see some examples in \cpp{gmm/gmm_interface.h} . Most of the generic algorithms are in \cpp{gmm/gmm_blas.h} .
 
 
 \subsection{How to iterate on the components of a vector}

@@ -1,3 +1,23 @@
+2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/*.h: moving header files of Gmm and Getfem into sub-directories
+	src/gmm and src/getfem respectively. dal_std.h, dal_ref.h,
+	dal_algobase.h and dal_except.h are integrated to gmm and renamed
+	gmm_std.h, gmm_ref.h, gmm_algobase.h and gmm_except.h. This means
+	in particular that errors, warning and traces are now defined into
+	the namespace gmm.
+	
+
+2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/linkmsg.h: moved to src/getfem_linkmsg.h. Integrated to
+	  namespace getfem.
+	
+2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/ftool.h, src/ftool.cc: moved to src/bgeot_ftool.h and
+	  src/bgeot_ftool.cc. Integrated to namespace bgeot.
+	
 2006-01-04  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
 	* src/bgeot_mesh_level_set.cc: making tests depending on the convex
@@ -10,8 +30,8 @@
 
 2006-11-10  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
-	* src/dal_ref.h: modification of tab_ref_reg_spaced iterators to fix a bug
-	with VC++ on Gmm++.
+	* src/dal_ref.h: modification of tab_ref_reg_spaced iterators to fix
+	a bug with VC++ on Gmm++.
 
 2006-11-06  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
