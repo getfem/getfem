@@ -21,8 +21,8 @@
 //========================================================================
 
 /** @file bgeot_geometric_trans.h 
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
-   @date December 20, 2000.
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+    @date December 20, 2000.
     @brief Geometric transformations on convexes.
 */ 
 

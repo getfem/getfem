@@ -43,7 +43,7 @@
 //=======================================================================
 
 /**@file gmm_solver_cg.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
    @brief Conjugate gradient iterative solver. 
 */

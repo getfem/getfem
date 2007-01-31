@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_kernel.h 
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 15, 2003.
    @brief Include the base gmm files.
  */

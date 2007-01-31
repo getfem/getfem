@@ -20,7 +20,7 @@
 //
 //========================================================================
 /**@file getfem_interpolated_fem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 29, 2004.
    @brief FEM which interpolates a mesh_fem on a different mesh.
 

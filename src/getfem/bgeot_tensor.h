@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file bgeot_tensor.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 09, 2000.
    @brief tensor class, used in mat_elem computations.
 */

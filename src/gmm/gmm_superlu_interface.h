@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_superlu_interface.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 17, 2003.
    @brief Interface with SuperLU (LU direct solver for sparse matrices).
 */

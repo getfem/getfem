@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_spider_fem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 29, 2004.
    @brief work in progress...
 */

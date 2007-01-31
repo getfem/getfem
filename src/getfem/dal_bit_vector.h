@@ -26,7 +26,7 @@
 
 
 /** @file dal_bit_vector.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 01, 1995.
     @brief Provide a dynamic bit container.
     

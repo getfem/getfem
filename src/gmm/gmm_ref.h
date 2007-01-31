@@ -25,7 +25,7 @@
 #define GMM_REF_H__
 
 /** @file gmm_ref.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date August 26, 2000.
  *  @brief Provide some simple pseudo-containers.
  *  

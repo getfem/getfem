@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_conjugated.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date September 18, 2003.
    @brief handle conjugation of complex matrices/vectors.
 */

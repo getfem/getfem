@@ -25,7 +25,7 @@
 #include "gmm_kernel.h"
 
 /** @file gmm_precond.h
-    @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
     @date March 29, 2004.
     @brief gmm preconditioners.
  */

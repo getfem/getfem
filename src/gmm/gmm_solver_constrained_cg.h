@@ -45,7 +45,7 @@
 //=======================================================================
 
 /**@file gmm_solver_constrained_cg.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
    @brief Constrained conjugate gradient. */
 //  preconditionning does not work

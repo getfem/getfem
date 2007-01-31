@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_blas_interface.h
-   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 7, 2003.
    @brief gmm interface for fortran BLAS.
 */

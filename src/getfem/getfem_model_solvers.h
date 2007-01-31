@@ -22,7 +22,7 @@
 
 /**
    @file getfem_model_solvers.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 15, 2004.
    @brief Standard solvers for model bricks
    @see getfem_modeling.h

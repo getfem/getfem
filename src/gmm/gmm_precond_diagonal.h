@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_precond_diagonal.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 5, 2003.
    @brief Diagonal matrix preconditoner.
 */

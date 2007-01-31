@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_lapack_interface.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 7, 2003.
    @brief gmm interface for LAPACK
 */

@@ -44,7 +44,7 @@
 //===========================================================================
 
 /**@file gmm_tri_solve.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
    @brief Solve triangular linear system for dense matrices.
 */

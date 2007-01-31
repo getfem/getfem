@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file getfem_Coulomb_friction.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date July 6, 2004.
  *  @brief Unilateral contact and Coulomb friction condition brick.
  */

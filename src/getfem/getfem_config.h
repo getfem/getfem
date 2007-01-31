@@ -133,7 +133,7 @@
 */
 
 /**@file getfem_config.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 19, 2000.
    @brief defines and typedefs for namespace getfem
 */

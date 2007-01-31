@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_dense_qr.h
-   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-lyon.fr>
    @date September 12, 2003.
    @brief Dense QR factorization.
 */

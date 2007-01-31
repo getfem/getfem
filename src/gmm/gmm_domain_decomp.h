@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file gmm_domain_decomp.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date May 21, 2004.
     @brief Domain decomposition.
 */

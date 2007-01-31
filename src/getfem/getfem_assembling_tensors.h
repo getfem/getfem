@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_assembling_tensors.h
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date January 2003.
    @brief Generic assembly implementation.
 */

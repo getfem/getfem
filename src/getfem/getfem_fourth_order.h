@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_fourth_order.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date January 6, 2006.
    @brief assembly procedures and bricks for fourth order pdes.
 */

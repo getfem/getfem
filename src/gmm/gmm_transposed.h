@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_transposed.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 10, 2002.
    @brief Generic transposed matrices
 */

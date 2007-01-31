@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_context.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 17, 2004.
    @brief Deal with interdependencies of objects (getfem::context_dependencies).
 */

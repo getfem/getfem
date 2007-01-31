@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file bgeot_geotrans_inv.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 20, 2000.
    @brief Inversion of geometric transformations.
 

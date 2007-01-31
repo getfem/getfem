@@ -25,8 +25,8 @@
 #define BGEOT_POLY_H__
 
 /** @file bgeot_poly.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
-   @date December 01, 2000.
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+    @date December 01, 2000.
     @brief Multivariate polynomials.
 */
 

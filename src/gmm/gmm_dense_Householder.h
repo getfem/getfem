@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_dense_Householder.h
-   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 5, 2003.
    @brief Householder for dense matrices.
 */

@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file bgeot_convex.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 20, 1999.
    @brief Convex objects (structure + vertices)
 */

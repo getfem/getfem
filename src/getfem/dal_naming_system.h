@@ -31,7 +31,7 @@
 namespace dal {
 
   /** @file dal_naming_system.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date August 17, 2002.
       @brief Naming system.
   */

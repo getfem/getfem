@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_export.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date October 15, 2001.
    @brief Export solutions to various formats.
 */

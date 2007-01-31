@@ -22,7 +22,7 @@
 
 /**
    @file getfem_modeling.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 15, 2004.
    @brief Model Bricks
    @see model_state

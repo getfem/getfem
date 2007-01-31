@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file bgeot_imbricated_box.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date January 26, 1999.
    @brief A comparison function for bgeot::base_node
 */

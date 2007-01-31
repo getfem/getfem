@@ -22,7 +22,7 @@
 
 
 /**@file gmm_interface.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
    @brief gmm interface for STL vectors.
 */

@@ -22,7 +22,7 @@
 
 
 /**@file bgeot_convex_ref.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date Septembre 28, 2001.
    @brief Reference convexes
 */

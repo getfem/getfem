@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file dal_static_stored_objects.h 
-    @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
     @date February 19, 2005
     @brief Stores interdependent getfem objects.
 

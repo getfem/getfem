@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_opt.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date July 9, 2003.
    @brief Optimization for some small cases (inversion of 2x2 matrices etc.)
 */

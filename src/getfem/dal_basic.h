@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file dal_basic.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 01, 1995.
    @brief Dynamic array class.
 */

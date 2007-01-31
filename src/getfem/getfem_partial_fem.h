@@ -20,7 +20,7 @@
 //
 //========================================================================
 /**@file getfem_partial_fem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 7, 2006.
    @brief Implement a special fem which disables some dof of another fem.
 */

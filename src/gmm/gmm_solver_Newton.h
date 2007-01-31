@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_solver_Newton.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Michel Fournie, fournie@mip.ups-tlse.fr
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Michel Fournie, fournie@mip.ups-tlse.fr
    @date January 24, 2006.
 */
 #ifndef GMM_SOLVERS_NEWTON_H__

@@ -23,7 +23,7 @@
 
 /**
    @file getfem_error_estimate.h 
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date February 10, 2006.
    @brief Definition of a posteriori error estimates.
 */

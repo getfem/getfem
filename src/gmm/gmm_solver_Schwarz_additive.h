@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_solver_Schwarz_additive.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @author  Michel Fournie <fournie@mip.ups-tlse.fr>
    @date October 13, 2002.
 */

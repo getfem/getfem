@@ -21,10 +21,11 @@
 //========================================================================
 
 /**@file bgeot_ftool.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date March 09, 2000.
    @brief "File Tools"
 */
+
 #ifndef BGEOT_FTOOL_H
 #define BGEOT_FTOOL_H
 

@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mesh_im.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date January 26, 2005.
    @brief Define the getfem::mesh_im class (integration of getfem::mesh_fem).
 */

@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_vector_to_matrix.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 6, 2003.
    @brief View vectors as row or column matrices. */
 #ifndef GMM_VECTOR_TO_MATRIX_H__

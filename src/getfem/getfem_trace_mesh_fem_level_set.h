@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_trace_mesh_fem_level_set.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>,
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>,
    @date January 19, 2007.
    @brief a subclass of getfem::mesh_fem which allows to represent a subspace
    of a fem on a level-set. Different strategies should be provided.

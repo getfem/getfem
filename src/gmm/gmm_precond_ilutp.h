@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_precond_ilutp.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 14, 2004.
    @brief ILUTP: Incomplete LU with threshold and K fill-in Preconditioner and
    column pivoting.

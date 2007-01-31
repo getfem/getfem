@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mesh.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 05, 1999.
    @brief Define a getfem::getfem_mesh object.
 */

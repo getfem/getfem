@@ -20,7 +20,7 @@
 //
 //========================================================================
 /**@file getfem_mat_elem_type.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 21, 2000.
    @brief Build elementary tensors descriptors, used by generic assembly.
 */

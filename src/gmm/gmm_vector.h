@@ -20,7 +20,7 @@
 //
 //========================================================================
 /**@file gmm_vector.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
    @brief Declaration of the vector types (gmm::rsvector , gmm::wsvector , gmm::slvector ,..)
 */

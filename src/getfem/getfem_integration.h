@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_integration.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 17, 2000.
    @brief Integration methods (exact and approximated) on convexes
 

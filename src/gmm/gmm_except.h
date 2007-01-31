@@ -21,7 +21,8 @@
 //========================================================================
 
 /** @file gmm_except.h 
-    @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+    @author Yves Renard <Yves.Renard@insa-lyon.fr>
+    @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
     @date September 01, 2002.
     @brief Definition of basic exceptions.
 */

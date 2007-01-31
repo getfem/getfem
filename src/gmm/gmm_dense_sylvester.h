@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file gmm_dense_sylvester.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 5, 2003.
     @brief Sylvester equation solver.
 */

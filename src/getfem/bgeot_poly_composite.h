@@ -21,8 +21,8 @@
 //========================================================================
 
 /**@file bgeot_poly_composite.h
-  @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
-  @date August 26, 2002.
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+   @date August 26, 2002.
    @brief Handle composite polynomials.
 
    Composite polynomials are used in hierarchical FEM, composite geometric

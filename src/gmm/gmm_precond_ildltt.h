@@ -20,7 +20,7 @@
 //
 //========================================================================
 /**@file gmm_precond_ildltt.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 30, 2003.
    @brief incomplete LDL^t (cholesky) preconditioner with fill-in and threshold.
 */

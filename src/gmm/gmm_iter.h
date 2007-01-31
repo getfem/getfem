@@ -45,7 +45,7 @@
 //=======================================================================
 
 /**@file gmm_iter.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date February 10, 2003.
    @brief Iteration object.
 */

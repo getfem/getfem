@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file bgeot_mesh.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date February 15, 2006.
    @brief Basic mesh definition
 */

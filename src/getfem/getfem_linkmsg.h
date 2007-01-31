@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file linkmsg.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date March 21, 1999.
    @brief structure for managing Messages between objects.
 */

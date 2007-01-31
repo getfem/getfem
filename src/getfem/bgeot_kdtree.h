@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2000-2007 Julien Pommier
+// Copyright (C) 2004-2007 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -24,8 +24,8 @@
 #define BGEOT_KDTREE_H
 
 /** @file bgeot_kdtree.h
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-   @date January 2004.
+    @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+    @date January 2004.
     @brief Simple implementation of a KD-tree.
 
     Basically, a KD-tree is a balanced N-dimensional tree.

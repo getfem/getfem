@@ -130,10 +130,10 @@ while ($name = $ARGV[0]) {
 
 
   do {
-    $li =~ s/\#include\ \<getfem(.*)\.h\>/\#include \"getfem$1\.h\"/g;
-    $li =~ s/\#include\ \<gmm(.*)\.h\>/\#include \"gmm$1\.h\"/g;
-    $li =~ s/\#include\ \<dal(.*)\.h\>/\#include \"dal$1\.h\"/g;
-    $li =~ s/\#include\ \<bgeot(.*)\.h\>/\#include \"bgeot$1\.h\"/g;
+    # $li =~ s/\#include\ \<getfem(.*)\.h\>/\#include \"getfem$1\.h\"/g;
+    # $li =~ s/\#include\ \<gmm(.*)\.h\>/\#include \"gmm$1\.h\"/g;
+    # $li =~ s/\#include\ \<dal(.*)\.h\>/\#include \"dal$1\.h\"/g;
+    # $li =~ s/\#include\ \<bgeot(.*)\.h\>/\#include \"bgeot$1\.h\"/g;
 
     #$li =~ s/\#include\ \"gmm(.*)\.h\"/\#include \"gmm\/gmm$1\.h\"/g;
     #$li =~ s/\#include\ \"getfem(.*)\.h\"/\#include \"getfem\/getfem$1\.h\"/g;

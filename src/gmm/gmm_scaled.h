@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_scaled.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 10, 2002.
    @brief get a scaled view of a vector/matrix.
 */

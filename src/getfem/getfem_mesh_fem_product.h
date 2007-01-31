@@ -23,7 +23,7 @@
 //                   depend on the mesh fem arguments.
 
 /**@file getfem_mesh_fem_product.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date April 8, 2005.
    @brief NEED A DESCRIPTION!
 */

@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file dal_backtrace.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 01, 2003.
    @brief Get debug information.
 */

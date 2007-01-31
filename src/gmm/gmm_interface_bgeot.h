@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_interface_bgeot.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
    @brief interface for bgeot::small_vector
 */

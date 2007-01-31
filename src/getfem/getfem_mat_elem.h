@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mat_elem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 21, 2000.
    @brief elementary computations (used by the generic assembly).
 

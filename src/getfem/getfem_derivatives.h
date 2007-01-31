@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_derivatives.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 17, 2002.
    @brief Compute the gradient of a field on a getfem::mesh_fem.
 */

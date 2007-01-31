@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_condition_number.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date August 27, 2003.
    @brief computation of the condition number of dense matrices.
 */

@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_partial_mesh_fem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 08, 2006.
    @brief a subclass of getfem::mesh_fem which allows to eliminate a number
           of dof of the original mesh_fem.

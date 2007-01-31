@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file mesh_fem_global_function.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, J. Pommier
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, J. Pommier
    @date March, 2005.
    @brief Define mesh_fem whose base functions are global function given by the user.
 */

@@ -24,7 +24,7 @@
 #define BGEOT_CONVEX_STRUCTURE_H__
 
 /** @file bgeot_convex_structure.h
-    @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
     @date December 20, 1999.
     @brief Definition of convex structures
  */

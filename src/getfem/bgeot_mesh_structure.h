@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file bgeot_mesh_structure.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 5, 1999.
    @brief Mesh structure definition
 */

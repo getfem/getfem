@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_Xfem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date April 8, 2003.
    @brief eXtended Finite Element Method.
 

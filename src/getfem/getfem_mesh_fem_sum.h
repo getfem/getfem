@@ -20,7 +20,7 @@
 //
 //========================================================================
 /**@file getfem_mesh_fem_sum.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date March 18, 2005.
    @brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.
 */

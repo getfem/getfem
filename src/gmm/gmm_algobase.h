@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file gmm_algobase.h 
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date September 28, 2000.
     @brief Miscelleanous algorithms on containers.
 */

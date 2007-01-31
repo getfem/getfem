@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_solver_bfgs.h 
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 14 2004.
    @brief Implements BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm.
  */

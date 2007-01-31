@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mesher.h
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>, Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>, Yves Renard <Yves.Renard@insa-lyon.fr>
    @date May 1, 2004.
    @brief a broken mesher.
 */

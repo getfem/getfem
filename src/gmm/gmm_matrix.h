@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file gmm_matrix.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
     @brief Declaration of some matrix types (gmm::dense_matrix,
     gmm::row_matrix, gmm::col_matrix, gmm::csc_matrix, etc.)

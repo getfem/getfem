@@ -21,7 +21,7 @@
 //========================================================================
 
 /** @file getfem_fem.cc
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date December 21, 1999.
     @brief implementation of some finite elements.
  */

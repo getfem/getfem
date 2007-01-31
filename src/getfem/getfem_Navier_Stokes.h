@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_Navier_Stokes.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date April 15, 2005.
    @brief Navier-Stokes dynamic brick.
 */

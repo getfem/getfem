@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_external_data_fem.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 28, 2003.
    @brief A pseudo FEM allowing to define any function on a getfem::mesh_fem. 
 */

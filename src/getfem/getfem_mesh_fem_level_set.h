@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mesh_fem_level_set.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date March 09, 2005.
    @brief a subclass of mesh_fem which is conformal to a number of level sets.
 */

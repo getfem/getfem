@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mesh_level_set.h
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>, Yves Renard <Yves.Renard@insa-toulouse.fr>
+   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>, Yves Renard <Yves.Renard@insa-lyon.fr>
    @date March 04, 2005.
    @brief Keep informations about a mesh crossed by level-sets. 
 */

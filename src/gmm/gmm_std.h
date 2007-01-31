@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file gmm_std.h
-   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 01, 1995.
    @brief basic setup for gmm (includes, typedefs etc.)
 */
