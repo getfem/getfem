@@ -93,10 +93,6 @@ namespace getfem {
 	  }
 	}
 	
-	/*cout << "number of zones for dof " << i << "  "
-	     << mf.point_of_dof(i) << " : " << zones.size() << endl;
-	*/
-
 	if (zones.size() != 1) { // stockage dans un set et map
 	  dof_enrichments[i] = &(*(enrichments.insert(zones).first));
 	  enriched_dofs.add(i);

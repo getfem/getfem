@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_mesh_im_level_set.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author  Yves Renard <Yves.Renard@insa-toulouse.fr>
    @date February 02, 2005.
    @brief a subclass of mesh_im which is conformal to a number of level sets.
 */
@@ -39,8 +39,9 @@ namespace getfem {
      Describe an adaptable integration method linked to a mesh cut by
      a level set.  It is possible to choose to integrate over the
      whole mesh, or to select integration on the "inside" (the
-     intersection of the negative parts of the levelsets), the
-     "outside" or just the levelset boundary.
+     intersection of the negative parts of the levelsets, or any other
+     union, intersection etc of the levelset negative parts), the
+     "outside", or just the levelset boundary.
   */
 
   class mesh_im_level_set : public mesh_im {
@@ -63,7 +64,25 @@ namespace getfem {
 
     void clear_build_methods();
     void build_method_of_convex(size_type cv);
-    bool is_point_in_selected_area
+
+    /* CSG (constructive solid geometry) description for the
+       definition of the domain with respect to one or more levelsets.
+    */
+    std::string ls_csg_description;
+  public:
+    struct bool2 {
+      bool in;      // true when the point in inside the levelsets 
+      unsigned bin; /* 0 when the point is not on the boundary, and
+		       (lsindex+1) when it is on the boundary of the
+		       lsindex-th levelset */
+    };
+  protected:
+    /* return true when the point is inside the levelsets CSG
+       description */
+    bool2 is_point_in_selected_area
+    (const std::vector<mesher_level_set> &mesherls0,
+     const std::vector<mesher_level_set> &mesherls1, const base_node& P);
+    bool2 is_point_in_selected_area2
     (const std::vector<mesher_level_set> &mesherls0,
      const std::vector<mesher_level_set> &mesherls1, const base_node& P);
 
@@ -116,6 +135,31 @@ namespace getfem {
     virtual pintegration_method int_method_of_element(size_type cv) 
       const;
     ~mesh_im_level_set() { clear_build_methods(); }
+
+    /**
+       Set the boolean operation which define the integration domain
+       when there is more than one levelset.
+
+       the syntax is very simple, for example if there are 3 different
+       levelset,
+       
+       "a*b*c" is the intersection of the domains defined by each
+       levelset (this is the default behaviour if this function is not
+       called).
+
+       "a+b+c" is the union of their domains.
+
+       "c-(a+b)" is the domain of the third levelset minus the union of the domains of the two others.
+       
+       "!a" is the complementary of the domain of a (i.e. it is the
+       domain where a(x)>0)
+
+       The first levelset is always referred to with "a", the second
+       with "b", and so on..
+    */
+    void set_level_set_boolean_operations(const std::string description) {
+      ls_csg_description = description;
+    }
   private:
     mesh_im_level_set(const mesh_im_level_set &);
     mesh_im_level_set & operator=(const mesh_im_level_set &);

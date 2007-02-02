@@ -74,20 +74,143 @@ namespace getfem {
 
   DAL_SIMPLE_KEY(special_imls_key, papprox_integration);
 
-  /* only for INTEGRATE_INSIDE or INTEGRATE_OUTSIDE */
-  bool mesh_im_level_set::is_point_in_selected_area
+    /* only for INTEGRATE_INSIDE or INTEGRATE_OUTSIDE */
+  mesh_im_level_set::bool2 mesh_im_level_set::is_point_in_selected_area2
   (const std::vector<mesher_level_set> &mesherls0,
    const std::vector<mesher_level_set> &mesherls1,
 				  const base_node& P) {
     bool isin = true;
-    for (unsigned i = 0; isin && (i < mls.nb_level_sets()); ++i) {
+    int isbin = 0;
+    for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
       isin = isin && ((mesherls0[i])(P) < 0);
+      if (gmm::abs((mesherls0[i])(P)) < 1e-7)
+	isbin = i+1;
       if (mls.get_level_set(i)->has_secondary())
 	isin = isin && ((mesherls1[i])(P) < 0);
     }
-    return ((integrate_where & INTEGRATE_OUTSIDE)) ? !isin : isin;
+    bool2 b; 
+    b.in = ((integrate_where & INTEGRATE_OUTSIDE)) ? !isin : isin;
+    b.bin = isbin;
+    return b;
   }
+  
 
+  /* very rustic set operations evaluator */
+  struct is_in_eval {
+    dal::bit_vector in;  // levelsets for which the point is "inside"
+    dal::bit_vector bin; // levelsets for which the point is on the boundary
+    typedef mesh_im_level_set::bool2 bool2;
+    bool2 do_expr(const char *&s) {
+      bool2 r;
+      if (*s == '(') {
+	r = do_expr(++s);
+	if (*s++ != ')') 
+	  DAL_THROW(failure_error, 
+		    "expecting ')' in csg expression at '" << s-1 << "'");
+      } else if (*s == '!') { // complementary
+	r = do_expr(++s); r.in = !r.in;
+      } else if (*s >= 'a' && *s <= 'z') {
+	unsigned idx = (*s) - 'a';
+	r.in  = in.is_in(idx);
+	r.bin = bin.is_in(idx) ? idx+1 : 0; 
+	++s;
+      } else 
+	DAL_THROW(failure_error, 
+		  "parse error in csg expression at '" << s << "'");
+      if (*s == '+') { // Union
+	//cerr << "s = " << s << ", r = " << r << "\n";
+	bool2 a = r, b = do_expr(++s);
+	//cerr << "->b = " << b << "\n";
+	r.in = b.in || a.in;
+	if      (b.bin && !a.in) r.bin = b.bin;
+	else if (a.bin && !b.in) r.bin = a.bin;
+	else r.bin = 0;
+      } else if (*s == '-') { // Set difference
+	bool2 a = r, b = do_expr(++s);
+	r.in  = a.in && !b.in;
+	if      (a.bin && !b.in) r.bin = a.bin;
+	else if (a.in  && b.bin) r.bin = b.bin;
+	else r.bin = 0;
+      } else if (*s == '*') { // Intersection
+	bool2 a = r, b = do_expr(++s);
+	r.in  = a.in && b.in;
+	if      (a.bin && b.in)  r.bin = a.bin;
+	else if (a.in  && b.bin) r.bin = b.bin;
+	else r.bin = 0;
+      }
+      return r;
+    }
+    bool2 is_in(const char*s) { 
+      bool2 b = do_expr(s); 
+      if (*s) 
+	DAL_THROW(failure_error, "parse error in CSG expression at " << s);
+      return b;
+    }
+    void check() {
+      const char *s[] = { "a*b*c*d",
+			  "a+b+c+d",
+			  "(a+b+c+d)",
+			  "d*(a+b+c)",
+			  "(a+b)-(c+d)",
+			  "((a+b)-(c+d))",
+			  "!a",
+			  0 };
+      for (const char **p = s; *p; ++p) 
+	cerr << *p << "\n";
+      for (unsigned c=0; c < 16; ++c) {
+	in[0] = (c&1); bin[0] = 1;
+	in[1] = (c&2); bin[1] = 1;
+	in[2] = (c&4); bin[2] = 1;
+	in[3] = (c&8); bin[3] = 1;
+	cerr << in[0] << in[1] << in[2] << in[3] << ": ";
+	for (const char **p = s; *p; ++p) {
+	  bool2 b = is_in(*p);
+	  cerr << b.in << "/" << b.bin << " ";
+	}
+	cerr << "\n";
+      }
+    }
+  };
+  
+  mesh_im_level_set::bool2 
+  mesh_im_level_set::is_point_in_selected_area
+           (const std::vector<mesher_level_set> &mesherls0,
+	    const std::vector<mesher_level_set> &mesherls1,
+	    const base_node& P) {
+    is_in_eval ev;
+    for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
+      bool sec = mls.get_level_set(i)->has_secondary();
+      scalar_type d1 = (mesherls0[i])(P);
+      scalar_type d2 = (sec ? (mesherls1[i])(P) : -1);
+      if (d1 < 0 && d2 < 0) ev.in.add(i);
+      if ((integrate_where & INTEGRATE_OUTSIDE) /*&& !sec*/)
+	ev.in[i].flip();
+
+      if (gmm::abs(d1) < 1e-7 && d2 < 1e-7) 
+	ev.bin.add(i);
+      /*if (integrate_where == INTEGRATE_BOUNDARY)
+	cerr << "is_point_in_selected_area: i=" << i << ", in = " << ev.in.is_in(i) << ", bin=" << ev.bin.is_in(i) << " d1 = " << d1 << ", d2=" << d2 << " where=" << integrate_where << " csg=" << ls_csg_description << " ls=" << (void*)mls.get_level_set(i) << ", sec=" << sec << "\n";*/
+    }
+    
+
+    bool2 r;
+    if (ls_csg_description.size()) 
+      r = ev.is_in(ls_csg_description.c_str());
+    else {
+      r.in  = (ev.in.card() == mls.nb_level_sets());
+      r.bin = (ev.bin.card() >= 1 && ev.in.card() >= mls.nb_level_sets()-1);
+    }
+    /*bool2 r2 = is_point_in_selected_area2(mesherls0,mesherls1,P);
+    if (r2.in != r.in || r2.bin != r.bin) {
+      cerr << "ev.in = " << ev.in << ", bin=" << ev.bin<<"\n";
+      cerr << "is_point_in_selected_area2("<<P <<"): r="<<r.in<<"/"<<r.bin
+	   << ", r2=" << r2.in<<"/"<<r2.bin <<"\n";
+      assert(0);
+      }*/
+
+    return r;
+  }
+  
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
     const mesh &msh(mls.mesh_of_convex(cv));
     if (msh.convex_index().card() == 0) DAL_INTERNAL_ERROR("");
@@ -108,8 +231,8 @@ namespace getfem {
     if (integrate_where != (INTEGRATE_ALL)) {
       for (dal::bv_visitor scv(msh.convex_index()); !scv.finished(); ++scv) {
 	B = gmm::mean_value(msh.points_of_convex(scv));
-	convexes_arein[scv]
-	  = is_point_in_selected_area(mesherls0, mesherls1, B);
+	convexes_arein[scv] = 
+	  is_point_in_selected_area(mesherls0, mesherls1, B).in;
       }
     }
     
@@ -133,10 +256,12 @@ namespace getfem {
     base_matrix pc(pgt2->nb_points(), n);
     std::vector<size_type> ptsing;
 
+    //cerr << "testing convex " << cv << ", " << msh.convex_index().card() << " subconvexes\n";
+
     for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
       papprox_integration pai = regular_simplex_pim->approx_method();
       
-      if ((integrate_where != (INTEGRATE_INSIDE | INTEGRATE_OUTSIDE)) &&
+      if ((integrate_where != INTEGRATE_ALL) &&
 	  !convexes_arein[i]) continue;
       
       if (base_singular_pim && mls.crack_tip_convexes().is_in(cv)) {
@@ -160,7 +285,7 @@ namespace getfem {
 	    }
 	  }
 	assert(ptsing.size() < n);
-	
+
 	if (ptsing.size() > 0) {
 	  std::stringstream sts;
 	  sts << "IM_QUASI_POLAR(" << name_of_int_method(base_singular_pim)
@@ -201,21 +326,22 @@ namespace getfem {
       // pgt2 = msh.trans_of_convex(i);
 
       for (unsigned f = 0; f < pgt2->structure()->nb_faces(); ++f) {
-
 	short_type ff = short_type(-1);
 	unsigned isin = unsigned(-1);
 
 	if (integrate_where == INTEGRATE_BOUNDARY) {
-	  for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils) {
-	    bool lisin = true;
-	    for (unsigned ipt = 0;
-		 ipt < pgt2->structure()->nb_points_of_face(f); ++ipt) {
-	      lisin = lisin && (gmm::abs((mesherls0[ils])
-		     (msh.points_of_face_of_convex(i, f)[ipt])) < 1E-7);
-	    }
-	    if (lisin) { isin = ils; break; }
+	  bool lisin = true;
+	  for (unsigned ipt = 0; ipt < 
+		 pgt2->structure()->nb_points_of_face(f); ++ipt) {
+	    const base_node P = msh.points_of_face_of_convex(i, f)[ipt];
+	    isin = is_point_in_selected_area(mesherls0, mesherls1, P).bin;
+	    //cerr << P << ":" << isin << " ";
+	    if (!isin) { lisin = false; break; }
 	  }
-	  if (isin ==  unsigned(-1)) continue;
+	  /*cerr << "testing face " << f << " sub " << i << " of cv " << cv << " "
+	    << " -> lisin=" << lisin << "\n";*/
+	  if (!lisin) continue;
+	  else isin--;
 	} else {
 	  B = gmm::mean_value(msh.points_of_face_of_convex(i, f));
 	  if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
@@ -306,7 +432,7 @@ namespace getfem {
 
 	  base_node B(gmm::mean_value(linked_mesh().trans_of_convex(cv)
 				      ->convex_ref()->points()));
-	  if (!is_point_in_selected_area(mesherls0, mesherls1, B))
+	  if (!is_point_in_selected_area(mesherls0, mesherls1, B).in)
 	    ignored_im.add(cv);
 	}
       }
