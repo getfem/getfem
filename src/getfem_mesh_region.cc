@@ -162,25 +162,64 @@ namespace getfem {
 					const mesh_region &b) {
     
     mesh_region r;
-    if (a.id() == all_convexes().id()) 
-      r.wp() = b.rp();
-    else if (b.id() == all_convexes().id())
-      r.wp() = a.rp();
-    else {
-      map_t::const_iterator 
-	ita = a.rp().m.begin(), enda = a.rp().m.end(),
-	itb = b.rp().m.begin(), endb = b.rp().m.end();
-      while (ita != enda && itb != endb) {
-	if (ita->first < itb->first) ++ita;
-	else if (ita->first > itb->first) ++itb;
-	else {
-	  face_bitset maska = ita->second, maskb = itb->second, bs;
-	  if (maska[0] && !maskb[0]) bs = maskb;
-	  else if (maskb[0] && !maska[0]) bs = maska;
-	  else bs = maska & maskb;
-	  if (bs.any()) r.wp().m.insert(r.wp().m.end(), std::make_pair(ita->first,bs));
-	  ++ita; ++itb;
-	}
+    /* we do not allow the "all_convexes" kind of regions
+       for these operations as there are not intended to be manipulated
+       (they only exist to provide a default argument to the mesh_region
+       parameters of assembly procedures etc. */
+    if (a.id() == all_convexes().id() || 
+        b.id() == all_convexes().id()) {
+      DAL_THROW(failure_error, 
+                "the 'all_convexes' regions are not supported for set operations");
+    }
+    map_t::const_iterator 
+      ita = a.rp().m.begin(), enda = a.rp().m.end(),
+      itb = b.rp().m.begin(), endb = b.rp().m.end();
+    while (ita != enda && itb != endb) {
+      if (ita->first < itb->first) ++ita;
+      else if (ita->first > itb->first) ++itb;
+      else {
+        face_bitset maska = ita->second, maskb = itb->second, bs;
+        if (maska[0] && !maskb[0]) bs = maskb;
+        else if (maskb[0] && !maska[0]) bs = maska;
+        else bs = maska & maskb;
+        if (bs.any()) r.wp().m.insert(r.wp().m.end(), std::make_pair(ita->first,bs));
+        ++ita; ++itb;
+      }
+    }
+    return r;
+  }
+
+  mesh_region mesh_region::merge(const mesh_region &a, 
+				 const mesh_region &b) {
+    mesh_region r;
+    if (a.id() == all_convexes().id() || 
+        b.id() == all_convexes().id()) {
+      DAL_THROW(failure_error, 
+                "the 'all_convexes' regions are not supported for set operations");
+    }
+    r.wp() = a.rp();
+    for (map_t::const_iterator it = b.rp().m.begin(); 
+         it != b.rp().m.end(); ++it) {
+      r.wp().m[it->first] |= it->second;
+    }
+    return r;
+  }
+
+  mesh_region mesh_region::substract(const mesh_region &a,
+                                     const mesh_region &b) {
+    mesh_region r;
+    if (a.id() == all_convexes().id() || 
+        b.id() == all_convexes().id()) {
+      DAL_THROW(failure_error, 
+                "the 'all_convexes' regions are not supported for set operations");
+    }
+    r.wp() = a.rp();
+    for (map_t::const_iterator itb = b.rp().m.begin(); 
+         itb != b.rp().m.end(); ++itb) {
+      size_type cv = itb->first;
+      map_t::iterator it = r.wp().m.find(cv);
+      if (it != r.wp().m.end()) {
+        it->second &= ~(itb->second);
       }
     }
     return r;
@@ -197,7 +236,7 @@ namespace getfem {
   void mesh_region::error_if_not_homogeneous() const {
     if (!is_only_faces() && !is_only_convexes()) 
       DAL_THROW(failure_error, 
-	"Expecting a set of convexes or a set of faces, but not a mixed set");
+                "Expecting a set of convexes or a set of faces, but not a mixed set");
   }
 
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 

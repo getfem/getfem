@@ -80,10 +80,20 @@ namespace getfem {
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv) : 
       p(new impl), id_(size_type(-3)), parent_mesh(0) { add(bv); }
+    /** provide a default value for the mesh_region paramters of assembly
+        procedures etc. */
     static mesh_region all_convexes() {
       return mesh_region(size_type(-1)); 
     }
-    static mesh_region intersection(const mesh_region& a, const mesh_region& b);
+    /** return the intersection of two mesh regions */
+    static mesh_region intersection(const mesh_region& a, 
+                                    const mesh_region& b); 
+    /** return the union of two mesh_regions */
+    static mesh_region merge(const mesh_region &a, 
+                             const mesh_region &b);
+    /** remove the second region from the first one */
+    static mesh_region substract(const mesh_region &a, 
+                                 const mesh_region &b);
     size_type id() const { return id_; }
 
     /** for regions which have been built with just a number 'id',
