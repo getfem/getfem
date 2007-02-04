@@ -22,7 +22,8 @@
 /**@file gmm_vector.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
-   @brief Declaration of the vector types (gmm::rsvector , gmm::wsvector , gmm::slvector ,..)
+   @brief Declaration of the vector types (gmm::rsvector, gmm::wsvector,
+     gmm::slvector ,..)
 */
 #ifndef GMM_VECTOR_H__
 #define GMM_VECTOR_H__
@@ -174,7 +175,8 @@ namespace gmm {
 
 
   /**
-     sparse vector built upon std::map. Read and write access are quite fast (log n)
+     sparse vector built upon std::map.
+     Read and write access are quite fast (log n)
   */
   template<typename T> class wsvector : public std::map<size_type, T> {
   public:
@@ -188,7 +190,6 @@ namespace gmm {
     size_type nbl;
     
   public:
-    void out_of_range_error(void) const;
     void clean(double eps);
     void resize(size_type);
     
@@ -196,17 +197,13 @@ namespace gmm {
     { return ref_elt_vector<T, wsvector<T> >(this, c); }
 
     inline void w(size_type c, const T &e) {
-#   ifdef GMM_VERIFY
-      if (c >= nbl) out_of_range_error();
-#   endif
+      GMM_ASSERT2(c < nbl, "out of range");
       if (e == T(0)) { base_type::erase(c); }
       else base_type::operator [](c) = e;
     }
 
     inline T r(size_type c) const {
-#ifdef GMM_VERIFY
-      if (c >= nbl) out_of_range_error();
-#endif
+      GMM_ASSERT2(c < nbl, "out of range");
       const_iterator it = this->lower_bound(c);
       if (it != this->end() && c == it->first) return it->second;
       else return T(0);
@@ -241,9 +238,6 @@ namespace gmm {
     }
     nbl = n;
   }
-
-  template<typename T>  void wsvector<T>::out_of_range_error(void) const
-  { GMM_THROW(std::out_of_range, "out of range"); }
 
   template <typename T> struct linalg_traits<wsvector<T> > {
     typedef wsvector<T> this_type;
@@ -292,8 +286,7 @@ namespace gmm {
       *svr = const_cast<simple_vector_ref<wsvector<T> *> *>(&v2);
     wsvector<T>
       *pv = const_cast<wsvector<T> *>(v2.origin);
-    if (vect_size(v1) != vect_size(v2))
-	GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
     *pv = v1; svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
   template <typename T> inline
@@ -410,7 +403,8 @@ namespace gmm {
   };
 
   /**
-     sparse vector built upon std::vector. Read access is fast, but insertion is O(n) 
+     sparse vector built upon std::vector. Read access is fast,
+     but insertion is O(n) 
   */
   template<typename T> class rsvector : public std::vector<elt_rsvector_<T> > {
   public:
@@ -427,7 +421,6 @@ namespace gmm {
   public:
 
     void sup(size_type j);
-    void out_of_range_error(void) const;
     void base_resize(size_type n) { base_type_::resize(n); }
     void resize(size_type);
     
@@ -501,9 +494,7 @@ namespace gmm {
   }
 
   template <typename T> void rsvector<T>::w(size_type c, const T &e) {
-#   ifdef GMM_VERIFY
-    if (c >= nbl) out_of_range_error();
-#   endif
+    GMM_ASSERT2(c < nbl, "out of range");
     if (e == T(0)) sup(c);
     else {
       elt_rsvector_<T> ev(c, e);
@@ -528,9 +519,7 @@ namespace gmm {
   }
   
   template <typename T> T rsvector<T>::r(size_type c) const {
-#   ifdef GMM_VERIFY
-    if (c >= nbl) out_of_range_error();
-#   endif
+    GMM_ASSERT2(c < nbl, "out of range");
     if (nb_stored() != 0) {
       elt_rsvector_<T> ev(c);
       const_iterator it = std::lower_bound(this->begin(), this->end(), ev);
@@ -538,9 +527,6 @@ namespace gmm {
     }
     return T(0);
   }
-
-  template<typename T>  void rsvector<T>::out_of_range_error(void) const
-  { GMM_THROW(std::out_of_range, "out of range"); }
 
   template <typename T> struct linalg_traits<rsvector<T> > {
     typedef rsvector<T> this_type;
@@ -581,8 +567,7 @@ namespace gmm {
 
   template <typename T> inline void copy(const rsvector<T> &v1,
  					 rsvector<T> &v2) {
-    if (vect_size(v1) != vect_size(v2))
-      GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
     v2 = v1;
   }
   template <typename T> inline
@@ -591,8 +576,7 @@ namespace gmm {
       *svr = const_cast<simple_vector_ref<rsvector<T> *> *>(&v2);
     rsvector<T>
       *pv = const_cast<rsvector<T> *>((v2.origin));
-    if (vect_size(v1) != vect_size(v2))
-	GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
     *pv = v1; svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
   template <typename T> inline
@@ -606,8 +590,7 @@ namespace gmm {
   template <typename V, typename T> inline void add(const V &v1,
 						    rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
-      if (vect_size(v1) != vect_size(v2))
-	GMM_THROW(dimension_error,"dimensions mismatch");
+      GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
 	add_rsvector(v1, v2, typename linalg_traits<V>::storage_type());
     }
   }
@@ -657,13 +640,12 @@ namespace gmm {
 
   template <typename V, typename T> void copy(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
-      if (vect_size(v1) != vect_size(v2))
-	GMM_THROW(dimension_error,"dimensions mismatch");
 #       ifdef GMM_VERIFY
-         if (same_origin(v1, v2))
-	  GMM_WARNING2("a conflict is possible in vector copy\n");
+      GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
+      if (same_origin(v1, v2))
+	GMM_WARNING2("a conflict is possible in vector copy\n");
 #       endif
-	copy_rsvector(v1, v2, typename linalg_traits<V>::storage_type());
+      copy_rsvector(v1, v2, typename linalg_traits<V>::storage_type());
     }
   }
 
@@ -739,8 +721,7 @@ namespace gmm {
   /*                                                                       */
   /*************************************************************************/
 
-  template<typename T> struct slvector_iterator
-  {
+  template<typename T> struct slvector_iterator {
     typedef T value_type;
     typedef T *pointer;
     typedef T &reference;
@@ -791,8 +772,7 @@ namespace gmm {
       : it(iter), shift(s) {}
   };
 
-  template<typename T> struct slvector_const_iterator
-  {
+  template<typename T> struct slvector_const_iterator {
     typedef T value_type;
     typedef const T *pointer;
     typedef value_type reference;
@@ -864,7 +844,6 @@ namespace gmm {
 
   public :
 
-    void out_of_range_error(void) const;
     size_type size(void) const { return size_; }
     size_type first(void) const { return shift; }
     size_type last(void) const { return shift + data.size(); }
@@ -880,9 +859,7 @@ namespace gmm {
 
     void w(size_type c, const T &e);
     T r(size_type c) const {
-#   ifdef GMM_VERIFY
-      if (c >= size_) out_of_range_error();
-#   endif
+      GMM_ASSERT2(c < size_, "out of range");
       if (c < shift || c >= shift + data.size()) return T(0);
       return data[c - shift];
     }
@@ -912,29 +889,24 @@ namespace gmm {
   }
 
   template<typename T>  void slvector<T>::w(size_type c, const T &e) {
-#   ifdef GMM_VERIFY
-      if (c >= size_) out_of_range_error();
-#   endif
-      size_type s = data.size();
-      if (!s) { data.resize(1); shift = c; }
-      else if (c < shift) {
-	data.resize(s + shift - c); 
-	typename std::vector<T>::iterator it = data.begin(),it2=data.end()-1;
-	typename std::vector<T>::iterator it3 = it2 - shift + c;
-	for (; it3 >= it; --it3, --it2) *it2 = *it3;
-	std::fill(it, it + shift - c, T(0));
-	shift = c;
-      }
-      else if (c >= shift + s) {
-	data.resize(c - shift + 1);
-	std::fill(data.begin() + s, data.end(), T(0));
-      }
-      data[c - shift] = e;
+    GMM_ASSERT2(c < size_, "out of range");
+    size_type s = data.size();
+    if (!s) { data.resize(1); shift = c; }
+    else if (c < shift) {
+      data.resize(s + shift - c); 
+      typename std::vector<T>::iterator it = data.begin(),it2=data.end()-1;
+      typename std::vector<T>::iterator it3 = it2 - shift + c;
+      for (; it3 >= it; --it3, --it2) *it2 = *it3;
+      std::fill(it, it + shift - c, T(0));
+      shift = c;
     }
-
-  template<typename T>  void slvector<T>::out_of_range_error(void) const
-  { GMM_THROW(std::out_of_range, "out of range"); }
-
+    else if (c >= shift + s) {
+      data.resize(c - shift + 1);
+      std::fill(data.begin() + s, data.end(), T(0));
+    }
+    data[c - shift] = e;
+  }
+  
   template <typename T> struct linalg_traits<slvector<T> > {
     typedef slvector<T> this_type;
     typedef this_type origin_type;
@@ -975,22 +947,6 @@ namespace gmm {
   template <typename T>
   inline size_type nnz(const slvector<T>& l) { return l.last() - l.first(); }
 
-//   template <typename T, typename V> inline
-//   T sqr(const gmm::ref_elt_vector<T, V> &a)
-//   { return T(a) * T(a); }
-
-//   template <typename T, typename V> inline
-//   typename gmm::number_traits<T>::magnitude_type
-//   abs(const gmm::ref_elt_vector<T, V> &a)
-//   { return gmm::abs(T(a)); }
-
-//   template <typename T, typename V> inline
-//   typename gmm::number_traits<T>::magnitude_type
-//   abs_sqr(const gmm::ref_elt_vector<T, V> &a)
-//   { return gmm::abs_sqr(T(a)); }
-//   template <typename T, typename V> inline
-//   T conj(const gmm::ref_elt_vector<T, V> &a)
-//   { return gmm::conj(T(a)); }
 }
 
 namespace std {

@@ -169,7 +169,7 @@ namespace gmm {
   template<class ITER>
     typename std::iterator_traits<ITER>::value_type
       mean_value(ITER first, const ITER &last) {
-    if (first == last) GMM_INTERNAL_ERROR("mean value of empty container");
+    GMM_ASSERT2(first != last, "mean value of empty container");
     size_t n = 1;
     typename std::iterator_traits<ITER>::value_type res = *first++;
     while (first != last) { res += *first; ++first; ++n; }

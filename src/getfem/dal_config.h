@@ -54,8 +54,13 @@ namespace dal {
   using gmm::approx_less;
   using gmm::uclock_sec;
 
+  
+  // inline void DAL_THROW() IS_DEPRECATED;
+  inline void DAL_THROW() {}
+
+
 #define DAL_STANDARD_CATCH_ERROR GMM_STANDARD_CATCH_ERROR
-#define DAL_THROW GMM_THROW
+#define DAL_THROW(a, b) { GMM_THROW(a, b); dal::DAL_THROW(); }
 #define DAL_INTERNAL_ERROR GMM_INTERNAL_ERROR
 #define DAL_WARNING0 GMM_WARNING0
 #define DAL_WARNING1 GMM_WARNING1

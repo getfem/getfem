@@ -29,11 +29,6 @@
 #define GMM_DEF_H__
 
 #include "gmm_ref.h"
-
-#if !defined(NOGMM_VERIFY) && defined(GETFEM_VERIFY)
-#   define GMM_VERIFY
-#endif
-
 #include <complex>
 
 #ifndef M_PI

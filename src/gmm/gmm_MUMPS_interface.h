@@ -129,8 +129,7 @@ namespace gmm {
 
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename mumps_interf<T>::value_type MUMPS_T;
-    if (gmm::mat_nrows(A) != gmm::mat_ncols(A))
-      GMM_THROW(failure_error, "Non square matrix");
+    GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non square matrix");
   
     std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
   
@@ -180,10 +179,16 @@ namespace gmm {
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
-	case -6 : case -10 : GMM_THROW(failure_error, "Solve with MUMPS failed: matrix is singular");
-	case -13 : GMM_THROW(failure_error, "Solve with MUMPS failed: not enough memory");
-        case -9: GMM_THROW(failure_error, "Solve with MUMPS failed: error " << id.INFO(1) << ", increase ICNTL(14)");
-	default :  GMM_THROW(failure_error, "Solve with MUMPS failed with error " << id.INFO(1));
+	case -6 : case -10 :
+	  GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
+	case -13 :
+	  GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+        case -9:
+	  GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
+		      << ", increase ICNTL(14)");
+	default :
+	  GMM_ASSERT1(false, "Solve with MUMPS failed with error "
+		      << id.INFO(1));
       }
     }
 
@@ -209,8 +214,7 @@ namespace gmm {
 
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename mumps_interf<T>::value_type MUMPS_T;
-    if (gmm::mat_nrows(A) != gmm::mat_ncols(A))
-      GMM_THROW(failure_error, "Non square matrix");
+    GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
   
     std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
   
@@ -258,9 +262,15 @@ namespace gmm {
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
-	case -6 : case -10 : GMM_THROW(failure_error, "Solve with MUMPS failed: matrix is singular");
-	case -13: GMM_THROW(failure_error, "Solve with MUMPS failed: not enough memory");
-	default : GMM_THROW(failure_error, "Solve with MUMPS failed with error " << id.INFO(1));
+      case -6 : case -10 :
+	GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
+      case -13:
+	GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+      case -9:
+	GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
+		    << ", increase ICNTL(14)");
+      default :
+	GMM_ASSERT1(false, "Solve with MUMPS failed with error " <<id.INFO(1));
       }
     }
 

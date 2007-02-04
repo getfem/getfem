@@ -157,8 +157,9 @@ namespace gmm {
     virtual ~exception_callback_debug() {}
   };
 
-#define GMM_SET_EXCEPTION_DEBUG {                                                       \
-    gmm::exception_callback::set_exception_callback(new gmm::exception_callback_debug);	\
+#define GMM_SET_EXCEPTION_DEBUG {					\
+    gmm::exception_callback::set_exception_callback			\
+      (new gmm::exception_callback_debug);				\
   }
 
   /** user function for changing the default exception callback */ 
@@ -171,21 +172,88 @@ namespace gmm {
 #  define GMM_PRETTY_FUNCTION ""
 #endif
 
-#define GMM_THROW(type, thestr) {					\
+  // Errors : GMM_THROW should not be used on its own.
+  //          GMM_ASSERT1 : Non-maskable errors. Typically for in/ouput and
+  //               when the test do not significantly reduces the performance.
+  //          GMM_ASSERT2 : All tests which are potentially performance
+  //               consuming. Not didden by default. Hidden when NDEBUG is
+  //               defined.
+  //          GMM_ASSERT3 : For internal checks. Hidden by default. Active
+  //               only when DEBUG_MODE is defined.
+
+#ifdef __EXCEPTIONS
+  inline void short_error_throw(const char *file, int line, const char *func,
+				const char *errormsg) {
+    std::stringstream msg;
+    msg << "Error in " << file << ", line "
+	<< line << " " << func << ": \n"
+	<< errormsg << ends;
+    gmm::exception_callback::do_exception_callback(msg.str());
+    throw gmm::failure_error(msg.str());	
+  }
+# define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg;						\
     msg << "Error in "__FILE__ << ", line "				\
-        << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n" << thestr << ends; \
+	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
+	<< errormsg << ends;						\
     gmm::exception_callback::do_exception_callback(msg.str());		\
     throw (type)(msg.str());						\
   }
-
-#ifdef DEBUG_MODE
-#  define GMM_INTERNAL_ERROR(thestr) { \
-  cerr << "Internal error: " << GMM_PRETTY_FUNCTION << " " << thestr << endl; \
-   ::abort(); \
-   }
 #else
-#  define GMM_INTERNAL_ERROR(thestr) GMM_THROW(gmm::internal_error, "Internal error: " << thestr)
+  inline void short_error_throw(const char *file, int line, const char *func,
+				const char *errormsg) {
+    std::stringstream msg;
+    msg << "Error in " << file << ", line "
+	<< line << " " << func << ": \n"
+	<< errormsg << ends;
+    gmm::exception_callback::do_exception_callback(msg.str());
+    ::abort();	
+  }
+# define GMM_THROW_(type, errormsg) {					\
+    std::stringstream msg;						\
+    msg << "Error in "__FILE__ << ", line "				\
+	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
+	<< errormsg   << ends;						\
+    gmm::exception_callback::do_exception_callback(msg.str());		\
+    ::abort();								\
+  }
+#endif
+  
+# define GMM_ASSERT1(test, errormsg)		        		\
+    { if (!(test)) GMM_THROW(gmm::failure_error, errormsg); }
+
+  // inline void GMM_INTERNAL_ERROR() IS_DEPRECATED;
+  inline void GMM_INTERNAL_ERROR() {}
+  // inline void GMM_THROW() IS_DEPRECATED;
+  inline void GMM_THROW() {}
+#define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
+
+#if defined(NDEBUG)
+# define GMM_ASSERT2(test, errormsg)
+# define GMM_ASSERT3(test, errormsg)
+# define GMM_INTERNAL_ERROR(thestr)  	gmm::GMM_INTERNAL_ERROR();	\
+    GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)
+#elif defined(DEBUG_MODE)
+# define GMM_ASSERT2(test, errormsg)				        \
+  { if (!(test)) short_error_throw(__FILE__, __LINE__,			\
+				   GMM_PRETTY_FUNCTION, errormsg); }
+# define GMM_ASSERT3(test, errormsg)				        \
+  { if (!(test)) short_error_throw(__FILE__, __LINE__,			\
+				   GMM_PRETTY_FUNCTION, errormsg); }  
+#  define GMM_INTERNAL_ERROR(thestr) {					\
+    cerr << "Internal error: " << GMM_PRETTY_FUNCTION << " " << thestr	\
+	 << endl;							\
+    ::abort(); 	GMM_INTERNAL_ERROR();					\
+  }
+#else
+# define GMM_ASSERT2(test, errormsg)          				\
+  { if (!(test)) short_error_throw(__FILE__, __LINE__,			\
+				   GMM_PRETTY_FUNCTION, errormsg); }
+# define GMM_ASSERT3(test, errormsg)
+#  define GMM_INTERNAL_ERROR(thestr)	{				\
+    gmm::GMM_INTERNAL_ERROR();						\
+    GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)	\
+      }
 #endif
 
 /* *********************************************************************** */

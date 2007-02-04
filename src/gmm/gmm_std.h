@@ -21,15 +21,19 @@
 //========================================================================
 
 /**@file gmm_std.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 01, 1995.
    @brief basic setup for gmm (includes, typedefs etc.)
 */
 #ifndef GMM_STD_H__
 #define GMM_STD_H__
 
-#ifndef NOGETFEM_VERIFY
+#if !defined(NOGETFEM_VERIFY) && !defined(NDEBUG)
 # define GETFEM_VERIFY
+# if !defined(NOGMM_VERIFY)
+#   define GMM_VERIFY
+# endif
 #endif
 
 #ifndef __USE_STD_IOSTREAM
