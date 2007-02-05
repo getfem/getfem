@@ -21,8 +21,8 @@
 //========================================================================
 
 /** @file getfem_fem.cc
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
-   @date December 21, 1999.
+    @author Yves Renard <Yves.Renard@insa-lyon.fr>
+    @date December 21, 1999.
     @brief implementation of some finite elements.
  */
 
@@ -31,18 +31,16 @@
 #include "gmm/gmm_algobase.h"
 #include "getfem/dal_naming_system.h"
 #include "getfem/getfem_fem.h"
-
-/* do not read this file ! */
 #include "getfem/getfem_gauss_lobatto_fem_coef.h"
 #include "getfem/getfem_integration.h" /* for gauss-lobatto points */
-namespace getfem
-{
+
+namespace getfem {
+
   typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
 
   const base_matrix& fem_interpolation_context::M() const {
     if (gmm::mat_nrows(M_) == 0) {
-      if (!have_pgt() || !have_G() || !have_pf())
-	DAL_THROW(failure_error, "cannot compute M");
+      GMM_ASSERT2(have_pgt() && have_G() && have_pf(), "cannot compute M");
       M_.resize(pf_->nb_dof(convex_num()), pf_->nb_base(convex_num()));
       pf_->mat_trans(M_,G(),pgt());
     }
@@ -414,8 +412,7 @@ namespace getfem
     l.coord_index = std::max(a->coord_index, b->coord_index); // logique ?
     l.xfem_index = a->xfem_index;
     l.all_faces = a->all_faces || b->all_faces;
-    if (a->xfem_index != b->xfem_index)
-      DAL_THROW(failure_error, "Invalid product of dof");
+    GMM_ASSERT2(a->xfem_index == b->xfem_index, "Invalid product of dof");
     l.ddl_desc.resize(nb1+nb2);
     std::copy(a->ddl_desc.begin(), a->ddl_desc.end(), l.ddl_desc.begin());
     std::copy(b->ddl_desc.begin(), b->ddl_desc.end(), l.ddl_desc.begin()+nb1);
@@ -585,16 +582,15 @@ namespace getfem
 
   static pfem PK_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     virtual_fem *p = new PK_fem_(n, k);
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -612,13 +608,11 @@ namespace getfem
 
   tproduct_femi::tproduct_femi(ppolyfem fi1, ppolyfem fi2) {
     if (fi2->target_dim() != 1) std::swap(fi1, fi2);
-    if (fi2->target_dim() != 1) 
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(fi2->target_dim() == 1, "dimensions mismatch");
     
     is_pol = true;
     is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
-    if (!is_equiv) 
-      DAL_THROW(to_be_done_error, 
+    GMM_ASSERT1(is_equiv,
 		"Product of non equivalent elements not available, sorry.");
     is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
     es_degree = fi1->estimated_degree() + fi2->estimated_degree();
@@ -646,11 +640,10 @@ namespace getfem
 
   static pfem product_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
+		"Bad type of parameters");
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     if (!(pf1->is_polynomial() && pf2->is_polynomial()))
@@ -743,9 +736,8 @@ namespace getfem
 
   static pfem gen_hierarchical_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 1 || params[1].type() != 1)
       DAL_THROW(failure_error, "Bad type of parameters");
     pfem pf1 = params[0].method();
@@ -768,9 +760,8 @@ namespace getfem
 
   static pfem PK_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -791,9 +782,8 @@ namespace getfem
 
   static pfem QK_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -812,9 +802,8 @@ namespace getfem
 
   static pfem PK_prism_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -839,9 +828,9 @@ namespace getfem
   static pfem QK_fem_(fem_param_list &params, bool discontinuous) {
     const char *fempk = discontinuous ? "FEM_PK_DISCONTINUOUS" : "FEM_PK";
     const char *femqk = discontinuous ? "FEM_QK_DISCONTINUOUS" : "FEM_QK";
-    if (!(params.size() == 2 || (discontinuous && params.size() == 3)))
-      DAL_THROW(failure_error, 
-		"Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2 || (discontinuous && params.size() == 3),
+		"Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if ((params[0].type() != 0 || params[1].type() != 0) ||
 	params.size() == 3 && params[2].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
@@ -881,9 +870,8 @@ namespace getfem
 
   static pfem PK_prism_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -902,9 +890,9 @@ namespace getfem
 
   static pfem PK_prism_discontinuous_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2 && params.size() != 3)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2 || params.size() == 3,
+		"Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0 ||
 	(params.size() == 3 && params[2].type() != 0))
       DAL_THROW(failure_error, "Bad type of parameters");
@@ -939,8 +927,7 @@ namespace getfem
 
    static pfem P1_nonconforming_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters ");
     fem<base_poly> *p = new fem<base_poly>;
     p->mref_convex() = bgeot::simplex_of_reference(2);
     p->dim() = 2;
@@ -975,8 +962,7 @@ namespace getfem
 
    static pfem incomplete_Q2_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     fem<base_poly> *p = new fem<base_poly>;
     p->mref_convex() = bgeot::parallelepiped_of_reference(2);
     p->dim() = 2;
@@ -1036,9 +1022,8 @@ namespace getfem
 
   static pfem P1_with_bubble_on_a_face(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -1135,9 +1120,8 @@ namespace getfem
 
   static pfem P1_RT0(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 1.");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -1235,9 +1219,8 @@ namespace getfem
 
   static pfem P1_RT0Q(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 2.");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -1359,9 +1342,8 @@ namespace getfem
 
   static pfem P1_nedelec(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 2.");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -1398,8 +1380,7 @@ namespace getfem
   
   static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     virtual_fem *p = new P1_wabbfoafla_;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1443,9 +1424,8 @@ namespace getfem
 
   static pfem PK_GL_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
@@ -1679,8 +1659,8 @@ namespace getfem
 
   static pfem Hermite_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, "Bad number of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int d = int(::floor(params[0].num() + 0.01));
@@ -1860,8 +1840,7 @@ namespace getfem
 
   static pfem triangle_Argyris_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     virtual_fem *p = new argyris_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1911,7 +1890,7 @@ namespace getfem
       scalar_type ps = gmm::vect_sp(n, norient);
       if (ps < 0) n *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	DAL_WARNING2("Morley : The normal orientation may be not correct");
+	GMM_WARNING2("Morley : The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
       for (unsigned j = 0; j < 6; ++j)
@@ -1959,8 +1938,7 @@ namespace getfem
 
   static pfem triangle_Morley_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     virtual_fem *p = new morley_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -1998,9 +1976,9 @@ namespace getfem
   
   static pfem PK_discontinuous_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2 && params.size() != 3)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 2 or 3.");
+    GMM_ASSERT1(params.size() == 2 || params.size() == 3,
+		"Bad number of parameters : "
+		<< params.size() << " should be 2 or 3.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -2048,9 +2026,8 @@ namespace getfem
 
   static pfem PK_with_cubic_bubble(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));

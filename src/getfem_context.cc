@@ -76,7 +76,7 @@ namespace getfem {
       return true;
     }
     else if (state == CONTEXT_INVALID)
-      DAL_THROW(failure_error, "Invalid context");
+      GMM_ASSERT1(false, "Invalid context");
     return false;
   }
   

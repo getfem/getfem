@@ -139,7 +139,8 @@ namespace gmm {
   /* ********************************************************************* */
 
   template<typename T>
-  void SuperLU_solve(const gmm::csc_matrix<T> &csc_A, T *sol, T *rhs, double& rcond_, int permc_spec) {
+  void SuperLU_solve(const gmm::csc_matrix<T> &csc_A, T *sol, T *rhs,
+		     double& rcond_, int permc_spec) {
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
      *   permc_spec = 0: use the natural ordering 
@@ -152,14 +153,11 @@ namespace gmm {
     int m = mat_nrows(csc_A), n = mat_ncols(csc_A), nrhs = 1, info = 0;
     int nz = nnz(csc_A);
 
-    if (nz == 0) DAL_THROW(failure_error, 
-			   "Cannot factor a matrix full of zeros!");
-
-    if (n != m) DAL_THROW(failure_error, 
-			  "Cannot factor a non-square matrix");
+    GMM_ASSERT1(nz != 0, "Cannot factor a matrix full of zeros!");
+    GMM_ASSERT1(n == m, "Cannot factor a non-square matrix");
 
     if ((2 * nz / n) >= m)
-      DAL_WARNING2("CAUTION : it seems that SuperLU has a problem"
+      GMM_WARNING2("CAUTION : it seems that SuperLU has a problem"
 		  " for nearly dense sparse matrices");
 
     superlu_options_t options;
@@ -213,10 +211,8 @@ namespace gmm {
     if (SL.Store) Destroy_SuperNode_Matrix(&SL);
     if (SU.Store) Destroy_CompCol_Matrix(&SU);
     StatFree(&stat);
-    if (info == -333333333) // user interruption (for matlab interface)
-      DAL_THROW(failure_error, "SuperLU was cancelled.");
-    if (info != 0)
-      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
+    GMM_ASSERT1(info != -333333333, "SuperLU was cancelled."); // user interruption (for matlab interface)
+    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
   }
 
   template void SuperLU_solve(const gmm::csc_matrix<float> &csc_A, float *sol, float *rhs, double& rcond_, int permc_spec);
@@ -272,10 +268,8 @@ namespace gmm {
     gmm::clear(rhs);
     int nz = nnz(A);
 
-    if (nz == 0) DAL_THROW(failure_error, 
-			   "Cannot factor a matrix full of zeros!");
-    if (n != m) DAL_THROW(failure_error, 
-			  "Cannot factor a non-square matrix");
+    GMM_ASSERT1(nz != 0, "Cannot factor a matrix full of zeros!");
+    GMM_ASSERT1(n == m, "Cannot factor a non-square matrix");
     
     set_default_options(&options);
     options.ColPerm = NATURAL;
@@ -323,11 +317,8 @@ namespace gmm {
     Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
     StatFree(&stat);
     
-    if (info == -333333333) // user interruption (for matlab interface)
-      DAL_THROW(failure_error, "SuperLU was cancelled.");
-    if (info != 0) {
-      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
-    }
+    GMM_ASSERT1(info != -333333333, "SuperLU was cancelled.");
+    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
     is_init = true;
   }
 
@@ -339,7 +330,7 @@ namespace gmm {
       case SuperLU_factor<T>::LU_NOTRANSP: options.Trans = NOTRANS; break;
       case SuperLU_factor<T>::LU_TRANSP: options.Trans = TRANS; break;
       case SuperLU_factor<T>::LU_CONJUGATED: options.Trans = CONJ; break;
-      default: DAL_THROW(failure_error, "invalid value for transposition option");
+      default: GMM_ASSERT1(false, "invalid value for transposition option");
     }
     StatInit(&stat);
     int info = 0;
@@ -360,9 +351,7 @@ namespace gmm {
                   &berr[0] /* relative backward error             */,
                   &stat, &info, T());
     StatFree(&stat);
-    if (info != 0) {
-      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
-    }
+    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
   }
    
   template<typename T> void 
@@ -398,15 +387,15 @@ namespace gmm {
   template<typename T> 
   SuperLU_factor<T>::SuperLU_factor(const SuperLU_factor& other) {
     impl = new SuperLU_factor_impl<T>();
-    if (other.impl->is_init) 
-      DAL_THROW(failure_error, "copy of initialized SuperLU_factor is forbidden");
+    GMM_ASSERT1(!(other.impl->is_init),
+		"copy of initialized SuperLU_factor is forbidden");
     other.impl->is_init = false;
   }
 
   template<typename T> SuperLU_factor<T>&  
   SuperLU_factor<T>::operator=(const SuperLU_factor& other) {
-    if (other.impl->is_init || impl->is_init) 
-      DAL_THROW(failure_error, "assignment of initialized SuperLU_factor is forbidden");
+    GMM_ASSERT1(!(other.impl->is_init) && !(impl->is_init),
+		"assignment of initialized SuperLU_factor is forbidden");
     return *this;
   }
 

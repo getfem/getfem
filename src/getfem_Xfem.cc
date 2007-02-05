@@ -42,8 +42,7 @@ namespace getfem
   }
   
   size_type Xfem::nb_dof(size_type) const {
-    if (!is_valid)
-      DAL_THROW(failure_error, "Valid the Xfem element before using it");
+    GMM_ASSERT1(is_valid, "Valid the Xfem element before using it");
     return dof_types_.size();
   }
 
@@ -55,7 +54,7 @@ namespace getfem
     func_indices.resize(nb_func);
     funcs[nb_func-1] = pXf;
     if (cvr != pf->ref_convex(0) || (pfb && pfb->target_dim() != pf->target_dim()))
-      DAL_THROW(failure_error, "Incompatible Xfem fems");
+      GMM_ASSERT1(false, "Incompatible Xfem fems");
 
     /* insert the new fem in the list */
     std::vector<pfem>::const_iterator it;
@@ -83,11 +82,11 @@ namespace getfem
   }
   
   void Xfem::base_value(const base_node &, base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element.");  }
+  { GMM_ASSERT1(false, "No base values, real only element.");  }
   void Xfem::grad_base_value(const base_node &, base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element.");  }
+  { GMM_ASSERT1(false, "No base values, real only element.");  }
   void Xfem::hess_base_value(const base_node &, base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element.");  }
+  { GMM_ASSERT1(false, "No base values, real only element.");  }
 
   void Xfem::real_base_value(const fem_interpolation_context &c,
 			     base_tensor &t, bool) const {
@@ -177,10 +176,8 @@ namespace getfem
   }
   
   void Xfem::real_hess_base_value(const fem_interpolation_context &,
-				  base_tensor &, bool) const {
-    DAL_THROW(to_be_done_error,
-	      "Sorry order 2 derivatives for Xfem to be done.");
-  }
+				  base_tensor &, bool) const
+  { GMM_ASSERT1(false, "Sorry order 2 derivatives for Xfem to be done."); }
 
   void Xfem::init(pfem pf) {
     cvr = pf->ref_convex(0);

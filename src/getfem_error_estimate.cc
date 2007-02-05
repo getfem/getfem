@@ -28,8 +28,7 @@
 namespace getfem {
 
   papprox_integration get_approx_im_or_fail(pintegration_method pim) {
-    if (pim->type() != IM_APPROX) 
-      DAL_THROW(failure_error, "error estimate work only with "
+    GMM_ASSERT1(pim->type() == IM_APPROX,  "error estimate work only with "
 		"approximate integration methods");
     return pim->approx_method();
   }
@@ -38,8 +37,8 @@ namespace getfem {
     (pintegration_method pa1, pintegration_method pa2)
     : pai1(get_approx_im_or_fail(pa1)), pai2(get_approx_im_or_fail(pa2)),
       warn_msg(false) {
-    if (pai1->structure()->dim() !=  pai2->structure()->dim())
-      DAL_THROW(failure_error, "dimensions mismatch");
+      GMM_ASSERT1(pai1->structure()->dim() ==  pai2->structure()->dim(),
+		  "dimensions mismatch");
     indices.resize(pai1->structure()->nb_faces()
 		   * pai2->structure()->nb_faces());
   }
@@ -48,9 +47,8 @@ namespace getfem {
   std::vector<size_type> &
     interelt_boundary_integration_::face_indices(size_type f1,
 						 size_type f2) const {
-    if (f1 > pai1->structure()->nb_faces()
-	|| f2 > pai2->structure()->nb_faces())
-      DAL_THROW(invalid_argument, "face number invalid");
+    GMM_ASSERT1(f1 <= pai1->structure()->nb_faces()
+		&& f2 <= pai2->structure()->nb_faces(), "face number invalid");
     std::vector<size_type> &ind=indices[f1*pai2->structure()->nb_faces()+f2];
     
     if (ind.size() == 0) {
@@ -83,7 +81,7 @@ namespace getfem {
 	    { ind[i] = j; break; }
 	if (ind[i] == size_type(-1)) {
 	  if (!warn_msg)
-	    DAL_WARNING2("Integration on a face between two elements with "
+	    GMM_WARNING2("Integration on a face between two elements with "
 			 "non-conforming integration methods");
 	  warn_msg = true;
 	  ind[i] = add_points.size() + pai2->nb_points_on_face(f2);
