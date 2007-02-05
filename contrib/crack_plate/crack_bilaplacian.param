@@ -9,7 +9,7 @@ N = 2;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
-NX = 17;                 % space step
+NX = 200;                 % space step
 
 
 
@@ -26,16 +26,17 @@ end;
 
  % MESH_FILE='/home-local/jlasry/source++/getfem++/tests/meshes/disc_P2_h2.mesh'
 
-QUAD = 0;
+QUAD = 1;
  
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
   INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
 % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
   DATA_FEM_TYPE = 'FEM_PK(2, 5)';
- MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';    
-%  MORTAR_FEM_TYPE ='FEM_PK(2,1)';
+%  MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';    
+  MORTAR_FEM_TYPE ='FEM_PK(2,2)';
   MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
+% MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
   PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
   if 0   % hermite element
      FEM_TYPE = 'FEM_PK(2,1)'; %HERMITE(2)';   % not conformal -> problem
@@ -54,13 +55,15 @@ end
 
 if (QUAD)
   MESH_TYPE = 'GT_QK(2,1)';
-%  FEM_TYPE = 'FEM_QK(2,1)'; 
+  %FEM_TYPE = 'FEM_QK(2,1)'; 
   FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE'; 
-% FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
+  %FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
   DATA_FEM_TYPE = 'FEM_QK(2,3)';
   DIRICHLET_FEM_TYPE = 'FEM_QK(2,2)';
   MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
-  MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  %MORTAR_FEM_TYPE = 'FEM_QK(2,1)' ;
+  %MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  MORTAR_DERIV_FEM_TYPE = 'FEM_QK(2,1)';
   PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
   INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(6))';
 end
@@ -81,7 +84,7 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
 			% 3 = Integral matching (mortar)
 	                
 			
-RADIUS_ENR_AREA = 0.21;
+RADIUS_ENR_AREA = 0.15;
 EPSILON=0.1 % thickness
 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.

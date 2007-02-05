@@ -76,7 +76,7 @@ namespace dal {
   class static_stored_object_key {
   protected :
     virtual bool compare(const static_stored_object_key &) const {
-      DAL_THROW(gmm::failure_error, "This method should not be called");
+      GMM_ASSERT1(false, "This method should not be called");
     }
 
   public :

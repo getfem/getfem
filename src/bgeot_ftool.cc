@@ -139,9 +139,8 @@ namespace bgeot {
     while (!is.get(c).eof() && isspace(c)) /*continue*/;    
     for (i=0; t.s[i]; ++i) {
       if (i) is.get(c);
-      //cerr << "skip " << t.s[i] << endl;
-      if (toupper(c) != toupper(t.s[i]) || is.eof())
-	DAL_THROW(failure_error, "expected token '"<<t.s<<"' not found");
+      GMM_ASSERT1(toupper(c) == toupper(t.s[i]) && !is.eof(),
+		  "expected token '"<<t.s<<"' not found");
     }
     return is;
   }
@@ -158,13 +157,13 @@ namespace bgeot {
   }
   
   void md_param::parse_error(const std::string &t) {
-    DAL_THROW(failure_error, "Parse error reading "
-	      << current_file << " line " << current_line << " near " << t);
+    GMM_ASSERT1(false, "Parse error reading "
+		<< current_file << " line " << current_line << " near " << t);
   }
 
   void md_param::syntax_error(const std::string &t) {
-    DAL_THROW(failure_error, "Error reading "
-	      << current_file << " line " << current_line << " : " << t);
+    GMM_ASSERT1(false, "Error reading "
+		<< current_file << " line " << current_line << " : " << t);
   }
 
   int md_param::get_next_token(std::istream &f) {
@@ -381,8 +380,7 @@ namespace bgeot {
     }
     if (temp_string == "error") {
       param_value p = read_expression_list(f, skipped);
-      if (!skipped)
-	DAL_THROW(failure_error, "Error in parameter file: " << p);
+      GMM_ASSERT1(skipped, "Error in parameter file: " << p);
       return 0;
     }
     std::string name(temp_string);
@@ -418,8 +416,7 @@ namespace bgeot {
 	  current_file += ".param";
 	  std::ifstream f2(current_file.c_str());
 	  if (f2) { read_param_file(f2); f2.close(); }
-	  else DAL_THROW(failure_error, "Parameter file " 
-			 << r << "not found");
+	  else GMM_ASSERT1(false,  "Parameter file " << r << "not found");
 	}
       }
       else if (argv[aa][1] == 'd') {
@@ -442,8 +439,8 @@ namespace bgeot {
 	parameters[name] = param_value(f);
       }
     param_value &p(parameters[name]);
-    if (p.type_of_param() != REAL_VALUE)
-      DAL_THROW(failure_error, "Parameter " << name << " is not real");
+    GMM_ASSERT1(p.type_of_param() == REAL_VALUE,
+		"Parameter " << name << " is not real");
     return p.real();
   }
   
@@ -457,8 +454,8 @@ namespace bgeot {
 	parameters[name] = param_value(double(f));
       }
     param_value &p(parameters[name]);
-    if (p.type_of_param() != REAL_VALUE)
-      DAL_THROW(failure_error, "Parameter " << name << " is not real");
+    GMM_ASSERT1(p.type_of_param() == REAL_VALUE,
+		"Parameter " << name << " is not real");
     return long(p.real());
   }
   
@@ -474,8 +471,7 @@ namespace bgeot {
 	parameters[name] = param_value(s);
       }
     param_value &p(parameters[name]);
-    if (p.type_of_param() != STRING_VALUE)
-      DAL_THROW(failure_error, "Parameter " << name
+    GMM_ASSERT1(p.type_of_param() == STRING_VALUE, "Parameter " << name
 		<< " is not a character string");
     return p.string();
   }
@@ -493,8 +489,7 @@ namespace bgeot {
 	parameters[name] = param_value(s);
       }
     param_value &p(parameters[name]);
-    if (p.type_of_param() != ARRAY_VALUE)
-      DAL_THROW(failure_error, "Parameter " << name
+    GMM_ASSERT1(p.type_of_param() == ARRAY_VALUE, "Parameter " << name
 		<< " is not an array");
     return p.array();
   }

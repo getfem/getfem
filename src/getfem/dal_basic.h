@@ -329,9 +329,7 @@ namespace dal
   template<class T, unsigned char pks> typename dynamic_array<T,pks>::reference
     dynamic_array<T,pks>::operator [](size_type ii) {
     if (ii >= last_accessed) {
-      if (ii >= INT_MAX) {
-	DAL_THROW(std::out_of_range, "index" << long(ii) << " out of range.");
-      }
+      GMM_ASSERT2(ii < INT_MAX, "out of range");
       
       last_accessed = ii + 1;
       if (ii >= last_ind) {

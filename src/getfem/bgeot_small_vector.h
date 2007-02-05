@@ -162,9 +162,10 @@ namespace bgeot {
     typedef T *iterator;
     typedef const T * const_iterator;
 
-    void out_of_range_error(void) const { DAL_THROW(std::out_of_range, "out of range"); }
-    reference operator[](size_type l) { if (l >= size()) out_of_range_error(); return base()[l]; }
-    value_type operator[](size_type l) const { if (l >= size()) out_of_range_error(); return const_base()[l]; }
+    reference operator[](size_type l)
+    { GMM_ASSERT2(l < size(), "out of range"); return base()[l]; }
+    value_type operator[](size_type l) const
+    { GMM_ASSERT2(l < size(), "out of range"); return const_base()[l]; }
     value_type at(size_type l) const { return const_base()[l]; }
     iterator begin() { return base(); }
     const_iterator begin() const { return const_base(); }

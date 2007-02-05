@@ -156,7 +156,7 @@ int main(void) {
       DAL_THROW(dal::internal_error,
 		"negative index does not produce an error");
     }
-    catch(std::out_of_range e) {
+    catch(std::logic_error e) {
       cout << "Out of range error successfully catched, ok\n";
     }
 

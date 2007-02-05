@@ -323,9 +323,7 @@ namespace dal {
 
     public :
 
-#ifndef NDEBUG
-
-      int verify_balance(size_type i = size_type(-2)) const {
+      int verify_balance(size_type i = size_type(-2)) const { // for debugging
 	if (i == size_type(-2)) i = first_node;
 	if (i == ST_NIL) return 0;
 	int l = verify_balance(nodes[i].l);
@@ -334,8 +332,6 @@ namespace dal {
 		    (nodes[i].eq <= 1 && nodes[i].eq>=-1), "internal error");
 	return std::max(l,r) + 1;
       }
-      
-#endif
       
       void insert_path(const T &elt, const_sorted_iterator &it) const;
       void search_sorted_iterator(const T &elt, 

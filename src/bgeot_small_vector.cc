@@ -37,20 +37,17 @@ namespace bgeot {
   }
   block_allocator::node_id block_allocator::allocate(block_allocator::size_type n) {
     if (n == 0) return 0;
-    if (n >= OBJ_SIZE_LIMIT) 
-      DAL_THROW(failure_error, 
+    GMM_ASSERT1(n < OBJ_SIZE_LIMIT,
 		"attempt to allocate a supposedly \"small\" object of " 
 		<< n << " bytes\n");
-    //cout << "dim = " << n << " ";
     if (first_unfilled[n] == size_type(-1)) {
       blocks.push_back(block(n)); blocks.back().init();
       insert_block_into_unfilled(blocks.size()-1);
-      if (first_unfilled[n] >= (node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ))) {
-	DAL_THROW(failure_error, "allocation slots exhausted for objects of size " << 
-		  n << " (" << first_unfilled[n] << " allocated!),\n" << 
-		  "either increase the limit, or check for a leak in your code.");
-	//cout << "created new block " << first_unfilled[n] << "\n";
-      }
+      GMM_ASSERT1(first_unfilled[n] <
+		  (node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ)),
+		  "allocation slots exhausted for objects of size " << n
+		  << " (" << first_unfilled[n] << " allocated!),\n" << "either"
+		  " increase the limit or check for a leak in your code.");
     }
     block &b = blocks[first_unfilled[n]]; SVEC_ASSERT(b.objsz == n);
     if (b.empty()) b.init(); /* realloc memory if needed */

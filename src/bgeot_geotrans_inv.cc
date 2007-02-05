@@ -103,7 +103,9 @@ namespace bgeot
   /* inversion for non-linear geometric transformations 
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
-  bool geotrans_inv_convex::invert_nonlin(const base_node& xreal, base_node& x, scalar_type IN_EPS, bool &converged, bool throw_except) {
+  bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
+					  base_node& x, scalar_type IN_EPS,
+					  bool &converged, bool throw_except) {
     base_node xn(P), y, z,x0;
     /* find an initial guess */
     x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
@@ -130,13 +132,6 @@ namespace bgeot
       for (unsigned i=1; i<=256; i*=2) {
 	z = x + xn / scalar_type(i);
 	y = pgt->transform(z, cvpts);
-	/*y.fill(0.0);
-	for (size_type k = 0; k < pgt->nb_points(); ++k) {
-	  gmm::add(gmm::scaled(cvpts[k],
-			       scalar_type(pgt->poly_vector()[k].eval(z.begin()))),y);
-	}
-	*/
-	// cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();
 	
 	rn = xreal - y; 
 	
@@ -166,15 +161,13 @@ namespace bgeot
       
       if (pgt->convex_ref()->is_in(x) < IN_EPS &&
 	  N==P && gmm::vect_norm2(rn) > IN_EPS) {
-	if (throw_except) {
-	  DAL_THROW(failure_error,
+	GMM_ASSERT1(!throw_except,
 		    "inversion of non-linear geometric transformation "
 		    "failed ! (too much iterations -- xreal=" << xreal
 		    << ", rn=" << rn 
 		    << ", xref=" << x 
 		    << ", is_in(x)=" << pgt->convex_ref()->is_in(x) 
 		    << ", eps=" << IN_EPS << ")");
-	}
 	converged = false;
 	return false;
       }

@@ -289,15 +289,14 @@ namespace bgeot
   template<typename T>
   void polynomial<T>::add_monomial(const T &coeff, const power_index &power) {
     size_type i = power.global_index();
-    if (n != power.size()) DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(n == power.size(), "dimensions mismatch");
     if (i >= this->size()) { change_degree(power.degree()); }
     ((*this)[i]) += coeff;
   }
   
   template<typename T> 
   polynomial<T> &polynomial<T>::operator +=(const polynomial &Q) {
-    if (Q.dim() != dim())
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(Q.dim() == dim(), "dimensions mismatch");
     
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = this->begin();
@@ -308,8 +307,7 @@ namespace bgeot
   
   template<typename T> 
   polynomial<T> &polynomial<T>::operator -=(const polynomial &Q) {
-    if (Q.dim() != dim() || dim() == 0)
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(Q.dim() == dim() && dim() != 0, "dimensions mismatch");
     
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = this->begin();
@@ -328,8 +326,7 @@ namespace bgeot
   
   template<typename T>
   polynomial<T> &polynomial<T>::operator *=(const polynomial &Q) {
-    if (Q.dim() != dim())
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(Q.dim() == dim(), "dimensions mismatch");
     
     polynomial aux = *this;
     change_degree(0); (*this)[0] = T(0);
@@ -399,8 +396,7 @@ namespace bgeot
 
   template<typename T>
   inline void polynomial<T>::derivative(short_type k) {
-    if (k >= n)
-      DAL_THROW(std::out_of_range, "index out of range");
+    GMM_ASSERT2(k < n, "index out of range");
     
      iterator it = this->begin(), ite = this->end();
      power_index mi(dim()); 
@@ -564,8 +560,8 @@ namespace bgeot
   polynomial<T> poly_substitute_var(const polynomial<T>& P,
 				    const polynomial<T>& S,
 				    size_type subs_dim) {
-    if (S.dim()!=1 || subs_dim >= P.dim())
-      DAL_THROW(failure_error, "wrong arguments for polynomial substitution");
+    GMM_ASSERT2(S.dim() == 1 && subs_dim < P.dim(),
+		"wrong arguments for polynomial substitution");
     polynomial<T> res(P.dim(),0);
     bgeot::power_index pi(P.dim());
     std::vector< polynomial<T> > Spow(1);

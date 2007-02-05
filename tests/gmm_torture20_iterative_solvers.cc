@@ -125,7 +125,7 @@ void do_test(const SOLVER &solver, const MAT &m1, VECT1 &v1,
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3) / gmm::vect_norm2(v1);
     // if (error * R(0) != R(0))
-    //   GMM_THROW(gmm::failure_error, "Inconsistent error: " << error);
+    //   GMM_ASSERT1(false, "Inconsistent error: " << error);
     if (error <= prec * cond * R(20000)) {
       ps_stat(solver, iter.get_iteration(), false);
       ps_stat(P, iter.get_iteration(), false);
@@ -136,7 +136,7 @@ void do_test(const SOLVER &solver, const MAT &m1, VECT1 &v1,
   ps_stat(P, iter.get_iteration(), true);
   ++nb_fault;
   if (nb_fault > nb_fault_allowed)
-      GMM_THROW(gmm::failure_error, "Error too large: " << error);
+      GMM_ASSERT1(false, "Error too large: " << error);
 
 }
 
@@ -157,7 +157,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   gmm::clean(v1, 0.01);
   for (size_type i = 0; i < gmm::vect_size(v1); ++i)
     if (v1[i] != T(0) && gmm::abs(v1[i]) < R(1) / R(101))
-      GMM_THROW(gmm::failure_error, "Error in clean");
+      GMM_ASSERT1(false, "Error in clean");
 
   if (print_debug) {
     cout << "Begin experiment " << nexpe << "\n\nwith " << m1 << "\n\n"; 
@@ -169,7 +169,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   if (print_debug)
     cout << "condition number = " << cond << " det = " << det << endl;
   if (det == R(0) && cond < R(1) / prec && cond != R(0))
-    GMM_THROW(gmm::failure_error, "Inconsistent condition number: " << cond);
+    GMM_ASSERT1(false, "Inconsistent condition number: " << cond);
 
   if (sqrt(prec) * cond >= R(1)/R(100) || det < sqrt(prec)*R(10)) return false;
     
@@ -257,7 +257,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   gmm::choleskyt_precond<MAT1> P7(m1, 10, prec);
   
   if (!is_hermitian(m1, prec*R(100)))
-    GMM_THROW(gmm::failure_error, "The matrix is not hermitian");
+    GMM_ASSERT1(false, "The matrix is not hermitian");
   
   if (print_debug) cout << "\nCG with no preconditionner\n";
   do_test(CG(), m1, v1, v2, P1, cond*cond);
@@ -292,7 +292,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     print_stat(P5b, "ilutp precond");
     print_stat(P6, "ildlt precond");
     print_stat(P7, "ildltt precond");
-    if (ratio_max > 0.2) GMM_THROW(gmm::failure_error, "something wrong ..");
+    if (ratio_max > 0.2) GMM_ASSERT1(false, "something wrong ..");
     return true;
   }
  

@@ -32,7 +32,7 @@ namespace bgeot {
   const base_node& geotrans_interpolation_context::xref() const { 
     if (!have_xref()) 
       if (pspt_) xref_ = (*pspt_)[ii_];
-      else DAL_THROW(failure_error, "missing xref");
+      else GMM_ASSERT1(false, "missing xref");
     return xref_; 
   }
 
@@ -46,41 +46,35 @@ namespace bgeot {
   }
 
   void geotrans_interpolation_context::compute_J(void) const {
-    if (!have_G() || !have_pgt()) {
-      DAL_THROW(failure_error, "unable to compute B\n");
-    } else {
-      size_type P = pgt_->structure()->dim();
-      base_matrix CS(P,P);
-      if (P != N()) {
-	gmm::mult(gmm::transposed(K()), K(), CS);/*O*/
-	// gmm::abs below because on flat convexes, the determinant is sometimes -1e-27 ..
-	J_ = ::sqrt(gmm::abs(gmm::lu_det(CS)));
-      } else {
-	J_ = gmm::abs(gmm::lu_det(K()));
-      }
+    GMM_ASSERT1(have_G() && have_pgt(), "unable to compute B\n");
+    size_type P = pgt_->structure()->dim();
+    base_matrix CS(P,P);
+    if (P != N()) {
+      gmm::mult(gmm::transposed(K()), K(), CS);
+      // gmm::abs below because on flat convexes determinant could be -1e-27.
+      J_ = ::sqrt(gmm::abs(gmm::lu_det(CS)));
     }
+    else
+      J_ = gmm::abs(gmm::lu_det(K()));
   }
 
   const base_matrix& geotrans_interpolation_context::K() const {
     if (!have_K()) {
-      if (!have_G() || !have_pgt()) {
-	DAL_THROW(failure_error, "unable to compute K\n");
+      GMM_ASSERT1(have_G() && have_pgt(), "unable to compute K\n");
+      size_type P = pgt_->structure()->dim();
+      K_.resize(N(), P);
+      if (have_pgp()) {
+	
+	if (&pgp_->grad(ii_) == 0) { cerr << "OULA!! " << ii_ << "\n"; }
+	else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
+	
+	assert(ii_ < pgp_->get_point_tab().size());
+	
+	gmm::mult(G(), pgp_->grad(ii_), K_);
       } else {
-	size_type P = pgt_->structure()->dim();
-	K_.resize(N(), P);
-	if (have_pgp()) {
-
-	  if (&pgp_->grad(ii_) == 0) { cerr << "OULA!! " << ii_ << "\n"; }
-	  else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
-	  
-	  assert(ii_ < pgp_->get_point_tab().size());
-
-	  gmm::mult(G(), pgp_->grad(ii_), K_);
-	} else {
-	  base_matrix pc(pgt()->nb_points(), P); 
-	  pgt()->poly_vector_grad(xref(), pc);
-	  gmm::mult(G(),pc,K_);
-	}
+	base_matrix pc(pgt()->nb_points(), P); 
+	pgt()->poly_vector_grad(xref(), pc);
+	gmm::mult(G(),pc,K_);
       }
     }
     return K_;
@@ -88,21 +82,18 @@ namespace bgeot {
 
   const base_matrix& geotrans_interpolation_context::B() const {
     if (!have_B()) {
-      if (!have_G() || !have_pgt()) {
-	DAL_THROW(failure_error, "unable to compute B\n");
+      GMM_ASSERT1(have_G() && have_pgt(), "unable to compute K\n");
+      size_type P = pgt_->structure()->dim();
+      B_.resize(N(), P);
+      if (P != N()) {
+	base_matrix CS(P,P);
+	gmm::mult(gmm::transposed(K()), K(), CS);
+	// gmm::abs below because on flat convexes determinant could be -1e-27.
+	J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));
+	gmm::mult(K(), CS, B_);
       } else {
-	size_type P = pgt_->structure()->dim();
-	B_.resize(N(), P);
-	if (P != N()) {
-	  base_matrix CS(P,P);
-	  gmm::mult(gmm::transposed(K()), K(), CS);
-	  // gmm::abs below because on flat convexes, the determinant is sometimes -1e-27 ..
-	  J_ = ::sqrt(gmm::abs(gmm::lu_inverse(CS)));
-	  gmm::mult(K(), CS, B_);
-	} else {
-	  gmm::copy(gmm::transposed(K()), B_);
-	  J_ = gmm::abs(gmm::lu_inverse(B_)); 
-	}
+	gmm::copy(gmm::transposed(K()), B_);
+	J_ = gmm::abs(gmm::lu_inverse(B_)); 
       }
     }
     return B_;
@@ -300,16 +291,15 @@ namespace bgeot {
   static pgeometric_trans
   PK_gt(gt_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n < 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n >= 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     dependencies.push_back(simplex_of_reference(n, k));
     return new simplex_trans_(n, k);
   }
@@ -339,11 +329,10 @@ namespace bgeot {
 
   static pgeometric_trans product_gt(gt_param_list &params,
 		  std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
+		"Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
     dependencies.push_back(a); dependencies.push_back(b);
@@ -353,8 +342,7 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(a.get());
     const poly_geometric_trans *bb
       = dynamic_cast<const poly_geometric_trans *>(b.get());
-    if (!aa || !bb) 
-      DAL_THROW(failure_error, "The product of geometric transformations "
+    GMM_ASSERT1(aa && bb, "The product of geometric transformations "
 		"is only defined for polynomial ones");
     return new cv_pr_t_(aa, bb);
   }
@@ -365,8 +353,7 @@ namespace bgeot {
 
   struct cv_pr_tl_ : public poly_geometric_trans {
     cv_pr_tl_(const poly_geometric_trans *a, const poly_geometric_trans *b) {
-      if (!(a->is_linear() && b->is_linear()))
-	DAL_THROW(failure_error, 
+      GMM_ASSERT1(a->is_linear() && b->is_linear(),
 		  "linear product of non-linear transformations");
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
       is_lin = true;
@@ -393,11 +380,10 @@ namespace bgeot {
 
   static pgeometric_trans linear_product_gt(gt_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
+		"Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
     dependencies.push_back(a); dependencies.push_back(b);
@@ -407,8 +393,7 @@ namespace bgeot {
       = dynamic_cast<const poly_geometric_trans *>(a.get());
     const poly_geometric_trans *bb
       = dynamic_cast<const poly_geometric_trans *>(b.get());
-    if (!aa || !bb) 
-      DAL_THROW(failure_error, "The product of geometric transformations "
+    GMM_ASSERT1(aa && bb, "The product of geometric transformations "
 		"is only defined for polynomial ones");
     return new cv_pr_tl_(aa, bb);
   }
@@ -419,17 +404,15 @@ namespace bgeot {
 
   static pgeometric_trans QK_gt(gt_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
-
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     std::stringstream name;
     if (n == 1)
       name << "GT_PK(1," << k << ")";
@@ -441,17 +424,15 @@ namespace bgeot {
 
   static pgeometric_trans prism_gt(gt_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
-
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     std::stringstream name;
     name << "GT_PRODUCT(GT_PK(" << n-1 << "," << k << "),GT_PK(1,"
 	 << k << "))";
@@ -460,11 +441,9 @@ namespace bgeot {
 
   static pgeometric_trans linear_qk(gt_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     return parallelepiped_linear_geotrans(n);
   }
@@ -477,8 +456,7 @@ namespace bgeot {
   */
   base_small_vector compute_normal(const geotrans_interpolation_context& c,
 				   size_type face) {
-    if (c.G().ncols() != c.pgt()->nb_points())
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(c.G().ncols() == c.pgt()->nb_points(), "dimensions mismatch");
     base_small_vector un(c.N());
     gmm::mult(c.B(), c.pgt()->normals()[face], un);
     return un;
@@ -491,8 +469,7 @@ namespace bgeot {
   base_matrix 
   compute_local_basis(const geotrans_interpolation_context& c,
 		      size_type face) {
-    if (c.G().ncols() != c.pgt()->nb_points())
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(c.G().ncols() == c.pgt()->nb_points(), "dimensions mismatch");
     base_small_vector up = c.pgt()->normals()[face];
     base_small_vector un(c.N());
     size_type P = c.pgt()->structure()->dim();

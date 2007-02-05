@@ -61,31 +61,31 @@ void test_procedure2(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
     gmm::mult(m1, v6, v1);
     gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
     if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
     
     gmm::lu_solve(gmm::transposed(m1), v6, v2);
     gmm::mult(gmm::transposed(m1), v6, v1);
     gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
     if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
     
     gmm::lu_solve(gmm::conjugated(m1), v6, v2);
     gmm::mult(gmm::conjugated(m1), v6, v1);
     gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
     if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
     
     gmm::lu_solve(gmm::transposed(gmm::conjugated(m1)), v6, v2);
     gmm::mult(gmm::transposed(gmm::conjugated(m1)), v6, v1);
     gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
     if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
     
     gmm::lu_solve(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v2);
     gmm::mult(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v1);
     gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
     if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
 
   }
 
@@ -97,7 +97,7 @@ void test_procedure2(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
     gmm::mult(r, v3, v4);
     gmm::mult(q, v4, gmm::scaled(v2, T(-1)), v5);
     if (!((error = gmm::vect_norm2(v5)) <= prec * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
 
   }
   else {
@@ -107,7 +107,7 @@ void test_procedure2(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
     gmm::mult(r, v2, v1);
     gmm::mult(q, v1, gmm::scaled(v3, T(-1)), v5);
     if (!((error = gmm::vect_norm2(v5)) <= prec * R(10000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+      GMM_ASSERT1(false, "Error too large: "<< error);
 
   }
   
@@ -125,7 +125,7 @@ template<typename MAT> void test_mat_swap(MAT &M, gmm::linalg_false) {
   std::swap(M, M2);
   gmm::add(gmm::scaled(M2, T(-1)), M3);
   if (gmm::mat_euclidean_norm(M3) > R(0) || gmm::mat_euclidean_norm(M) > R(0))
-    GMM_THROW(gmm::failure_error, "Error in swap");
+    GMM_ASSERT1(false, "Error in swap");
 }
 
 template<typename VECT> void test_vect_swap(VECT &, gmm::linalg_modifiable) {}
@@ -140,7 +140,7 @@ template<typename VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
   std::swap(V, V2);
   gmm::add(gmm::scaled(V2, T(-1)), V3);
   if (gmm::vect_norm2(V3) > R(0) || gmm::vect_norm2(V) > R(0))
-    GMM_THROW(gmm::failure_error, "Error in swap");
+    GMM_ASSERT1(false, "Error in swap");
 }
 
 
@@ -183,7 +183,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
   
   R error = gmm::mat_euclidean_norm(m1) + gmm::mat_euclidean_norm(m2);
   if (!(error <= prec * R(10000)))
-    GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+    GMM_ASSERT1(false, "Error too large: "<< error);
 
   // test for row_vector and col_vector
   std::vector<T> v5(gmm::vect_size(v2));
@@ -193,13 +193,13 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
   gmm::add(gmm::scaled(v5, T(-1)), v2);
   error = gmm::vect_norm2(v2);
   if (!(error <= prec))
-    GMM_THROW(gmm::failure_error, "Error too large: " << error);
+    GMM_ASSERT1(false, "Error too large: " << error);
   gmm::mult(gmm::row_vector(gmm::conjugated(v3)), gmm::conjugated(m2),
 	    gmm::row_vector(v2));
   gmm::add(gmm::conjugated(gmm::scaled(v5, T(-1))), v2);
   error = gmm::vect_norm2(v2);
   if (!(error <= prec))
-    GMM_THROW(gmm::failure_error, "Error too large: " << error);
+    GMM_ASSERT1(false, "Error too large: " << error);
 
   if (gmm::is_original_linalg(m1)) {
     size_type a = gmm::mat_nrows(m1), b = gmm::mat_ncols(m1);
@@ -212,17 +212,17 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
       for (size_type j = 0; j < b+b2; ++j) {
 	if (i < a && j < b) {
 	  if (m3(i, j) != m1(i, j))
-	    GMM_THROW(gmm::failure_error, "Error in resize");
+	    GMM_ASSERT1(false, "Error in resize");
 	}
 	else
 	  if (m1(i, j) != T(0))
-	    GMM_THROW(gmm::failure_error, "Error in resize");
+	    GMM_ASSERT1(false, "Error in resize");
       }
     gmm::resize(m1, a2, b2);
     for (size_type i = 0; i < a2; ++i)
       for (size_type j = 0; j < b2; ++j)
 	if (m3(i, j) != m1(i, j))
-	    GMM_THROW(gmm::failure_error, "Error in resize");
+	    GMM_ASSERT1(false, "Error in resize");
   }
 
   if (gmm::is_original_linalg(v1)) {
@@ -234,16 +234,16 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
     for (size_type i = 0; i < a+a2; ++i) {
       if (i < a) {
 	if (v1[i] != v6[i])
-	    GMM_THROW(gmm::failure_error, "Error in resize");
+	    GMM_ASSERT1(false, "Error in resize");
 	}
 	else
 	  if (v1[i] != T(0))
-	    GMM_THROW(gmm::failure_error, "Error in resize");
+	    GMM_ASSERT1(false, "Error in resize");
     }
     gmm::resize(v1, a2);
     for (size_type i = 0; i < a2; ++i)
       if (v1[i] != v6[i])
-	GMM_THROW(gmm::failure_error, "Error in resize");
+	GMM_ASSERT1(false, "Error in resize");
   }
 
   test_mat_swap(m1, typename gmm::linalg_traits<MAT1>::is_reference());

@@ -51,15 +51,12 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_) {
     x -= y;
     x *= v1[i];
     x /= v1[i];
-    if (y != v1[i])
-      GMM_THROW(gmm::failure_error, "Error in basic operations");
-    if (!(y == v1[i]))
-      GMM_THROW(gmm::failure_error, "Error in basic operations");
+    GMM_ASSERT1(y == v1[i], "Error in basic operations");
     normtest += gmm::abs_sqr(x);
   }
   
-  if (gmm::abs(norm - normtest) > prec * R(100))
-    GMM_THROW(gmm::failure_error, "Error in basic operations");
+  GMM_ASSERT1(gmm::abs(norm - normtest) <= prec * R(100),
+	      "Error in basic operations");
   
   return true;
 }

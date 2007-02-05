@@ -46,8 +46,7 @@ namespace bgeot {
 
   size_type alpha(short_type n, short_type d) {
     alpha_init_();
-    if (n >= STORED || d >= STORED)
-      DAL_THROW(internal_error,
+    GMM_ASSERT1(n < STORED && d < STORED,
 		"alpha called with n = " << n << " and d = " << d);
     return alpha_(n,d);
   }
@@ -109,7 +108,7 @@ namespace bgeot {
   // functions to read a polynomial on a stream
 
   static void parse_error(int i)
-  { DAL_THROW(failure_error, "Syntax error reading a polynomial " << i); }
+  { GMM_ASSERT1(false, "Syntax error reading a polynomial " << i); }
 
   static std::string stored_s;
   int stored_tokent;

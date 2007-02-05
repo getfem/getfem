@@ -94,9 +94,8 @@ namespace bgeot {
       psimplexified_convex = new mesh_structure();
       dal::singleton<cleanup_simplexified_convexes>::instance()
 	.push_back(psimplexified_convex);
-      if (this != basic_convex_ref()) 
-	DAL_THROW(to_be_done_error, 
-                  "always use simplexified_convex on the basic_convex_ref() "
+      GMM_ASSERT1(this == basic_convex_ref(),
+		  "always use simplexified_convex on the basic_convex_ref() "
 		  "[this=" << nb_points() << ", basic="
 		  << basic_convex_ref()->nb_points());
       simplexify_convex(structure(), *psimplexified_convex);
@@ -230,8 +229,7 @@ namespace bgeot {
       // supposé appartenir au convexe est dans une face donnée
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
       base_node pt1(n1), pt2(n2);
-      if (pt.size() != cvs->dim())
-	DAL_THROW(dimension_error, "Dimensions mismatch");
+      GMM_ASSERT1(pt.size() == cvs->dim(), "Dimensions mismatch");
       std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
       std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
       if (f < cvr1->structure()->nb_faces()) return cvr1->is_in_face(f, pt1);
@@ -240,7 +238,7 @@ namespace bgeot {
 
     product_ref_(pconvex_ref a, pconvex_ref b) { 
       if (a->structure()->dim() < b->structure()->dim())
-	DAL_WARNING1("Illegal convex : swap your operands: dim(cv1)=" << 
+	GMM_WARNING1("Illegal convex : swap your operands: dim(cv1)=" << 
 		    int(a->structure()->dim()) << " < dim(cv2)=" << 
 		    int(b->structure()->dim()));
       cvr1 = a; cvr2 = b;
@@ -364,9 +362,9 @@ namespace bgeot {
   class generic_dummy_ : public convex_of_reference {
   public:
     scalar_type is_in(const base_node &) const
-    { DAL_THROW(failure_error, "Information not available here"); }
+    { GMM_ASSERT1(false, "Information not available here"); }
     scalar_type is_in_face(short_type, const base_node &) const 
-    { DAL_THROW(failure_error, "Information not available here"); }
+    { GMM_ASSERT1(false, "Information not available here"); }
   
     generic_dummy_(dim_type d, size_type n, size_type nf) {
       cvs = generic_dummy_structure(d, n, nf);

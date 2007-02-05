@@ -40,8 +40,8 @@ namespace bgeot {
     size_type ind = 0;
     for (it=convex_tab[ic].pts.begin();
 	 it != convex_tab[ic].pts.end() && (*it) != ip; ++it) ++ind;
-    if (it == convex_tab[ic].pts.end())
-      DAL_THROW(internal_error, "This point does not exist on this convex.");
+    GMM_ASSERT1(it != convex_tab[ic].pts.end(),
+		"This point does not exist on this convex.");
     return ind;
   }
 

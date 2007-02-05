@@ -164,8 +164,8 @@ namespace dal {
     if (c == '(') return 4;
     if (c == ')') return 5;
     if (c == ',') return 6;
-    DAL_THROW(gmm::failure_error, "Invalid character on position " << i
-	      << " of the string : " << s);
+    GMM_ASSERT1(false, "Invalid character on position " << i
+		<< " of the string : " << s);
   }
   
   
@@ -227,9 +227,8 @@ namespace dal {
 	}
 	break;
       }
-      if (error) 
-	DAL_THROW(gmm::failure_error,
-	     "Syntax error on position " << i << " of the string : " << name);
+      GMM_ASSERT1(!error, "Syntax error on position " << i
+		  << " of the string : " << name);
       if (isend) {
 	std::stringstream norm_name;
 	norm_name << suff;
@@ -257,9 +256,8 @@ namespace dal {
 	}
 	if (!pm) {
 	  if (ind_suff == size_type(-1)) {
-	    if (throw_if_not_found) {
-	      DAL_THROW(gmm::failure_error, "Unknown method : " << nname.name);
-	    } else return 0;
+	    GMM_ASSERT1(!throw_if_not_found, "Unknown method: " << nname.name);
+	    return 0;
 	  }
 	  pm = (*(functions[ind_suff]))(params, dependencies);
 	}

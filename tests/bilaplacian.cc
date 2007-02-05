@@ -266,9 +266,9 @@ void bilaplacian_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
-		<< "In that case you need to set "
-		<< "DATA_FEM_TYPE in the .param file");
+      GMM_ASSERT1(false, "You are using a non-lagrange FEM. "
+		  << "In that case you need to set "
+		  << "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
@@ -456,11 +456,9 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     plain_vector U(p.mf_u.nb_dof()), V(p.mf_u.nb_dof()) ;
-    if (!p.solve(U)) DAL_THROW(gmm::failure_error, "Solve has failed");
+    if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
 
     p.compute_error(U);
-
-    
 
     if (p.PARAM.int_value("VTK_EXPORT") ) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
@@ -472,10 +470,6 @@ int main(int argc, char *argv[]) {
 	   << "mayavi -d " << p.datafilename
 	   << ".vtk -m BandedSurfaceMap -m Outline -f WarpScalar\n";
     }
-    
-    
-    
-
   }
   GMM_STANDARD_CATCH_ERROR;
 

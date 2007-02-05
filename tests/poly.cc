@@ -180,7 +180,7 @@ int main(void)
     cout << "P=" << P << "\nread_base_poly=" << P2 << "\n";
     assert(P == P2);
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 }

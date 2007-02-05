@@ -65,7 +65,8 @@ namespace bgeot {
     typedef gmm::tab_ref_index_ref
     <PT_TAB::const_iterator, ind_cv_ct::const_iterator> ref_mesh_pt_ct;
     typedef gmm::tab_ref_index_ref
-    <PT_TAB::const_iterator, ind_pt_face_ct::const_iterator> ref_mesh_face_pt_ct;
+    <PT_TAB::const_iterator, ind_pt_face_ct::const_iterator>
+    ref_mesh_face_pt_ct;
     
     
   protected :
@@ -80,9 +81,8 @@ namespace bgeot {
 
     dim_type dim(void) const { return dimension; }
 
-    bgeot::pgeometric_trans trans_of_convex(size_type ic) const { 
-      if (!(trans_exists[ic]))
-	DAL_THROW(internal_error, "internal error");
+    bgeot::pgeometric_trans trans_of_convex(size_type ic) const {
+      GMM_ASSERT2(trans_exists[ic], "internal error");
       return gtab[ic]; 
     }
 
@@ -95,15 +95,15 @@ namespace bgeot {
 
     size_type add_point(const base_node &pt) {
       if (dimension == dim_type(-1)) dimension = pt.size();
-      if (pt.size() != dimension)
-	DAL_THROW(dimension_error, "mesh::add_point : dimensions mismatch");
+       GMM_ASSERT2(pt.size() == dimension, "dimensions mismatch");
       return pts.add_norepeat(pt); // add_norepeat valable ?
     }
 
     template<class ITER>
     size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
       bool present;
-      size_type i = mesh_structure::add_convex(pgt->structure(), ipts, &present);
+      size_type i = mesh_structure::add_convex(pgt->structure(), ipts,
+					       &present);
       gtab[i] = pgt; trans_exists[i] = true;
       return i;
     }

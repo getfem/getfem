@@ -147,23 +147,21 @@ int main(void) {
     size_t ee = 1, f = 2;
     ptrdiff_t g = ee - f;
     cout << "1 - 2 = " << g << endl;
-    if (g != -1) DAL_THROW(gmm::internal_error, "Basic operation error");
+    GMM_ASSERT1(g == -1, "Basic operation error");
 
     dal::dynamic_array<int, 4> t;
 
     try {
       t[(unsigned)(-5)] = 8;
-      DAL_THROW(gmm::internal_error,
-		"negative index does not produce an error");
+      GMM_ASSERT1(false, "negative index does not produce an error");
     }
-    catch(std::out_of_range e) {
+    catch(std::logic_error e) {
       cout << "Out of range error successfully catched, ok\n";
     }
 
     t[64] = 13;
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
-    if (t.capacity() != 80)
-      DAL_THROW(gmm::internal_error, " bad capacity");
+    GMM_ASSERT1(t.capacity() == 80, " bad capacity");
     
     dal::dynamic_array<int, 4>::iterator itb = t.begin(), ite = t.end();
     dal::dynamic_array<int, 4>::iterator ita;
@@ -176,20 +174,17 @@ int main(void) {
     // std::fill(t.begin(), t.end(), int(3));
     
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
-    if (t.capacity() != 80)
-      DAL_THROW(gmm::internal_error, " bad capacity");
+    GMM_ASSERT1(t.capacity() == 80, "bad capacity");
     // cout << "t[64] = (should be 3) " << t[64] << endl;
-    if (t[64] != 3) DAL_THROW(gmm::internal_error, "iterators don't work");
+    GMM_ASSERT1(t[64] == 3, "iterators don't work");
     
     t.clear();
     // cout << "capacity : (should be 0) " << t.capacity() << endl;
-    if (t.capacity() != 0) 
-      DAL_THROW(gmm::internal_error, " clear does not work");
+    GMM_ASSERT1(t.capacity() == 0, "clear does not work");
    
     std::fill(t.begin(), t.end(), int(3));
     // cout << "capacity : (should be 0) " << t.capacity() << endl;
-    if (t.capacity() != 0)   
-      DAL_THROW(gmm::internal_error, " clear does not work");
+    GMM_ASSERT1(t.capacity() == 0, "clear does not work");
     t[64] = 6;
     
     dal::dynamic_array<int, 4> t2, t3;
@@ -198,8 +193,7 @@ int main(void) {
     t3 = t2 = t;
     
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
-    if (t.capacity() != 80)
-      DAL_THROW(gmm::internal_error, " bad capacity");
+    GMM_ASSERT1(t.capacity() == 80, " bad capacity");
 
     {
       dal::dynamic_array<int, 4>::const_iterator
@@ -219,7 +213,7 @@ int main(void) {
 	  ( (&(*it1)) == (&(*it2)) ) ||
 	  ( (&(*it2)) == (&(*it3)) ) ||
 	  ( (&(*it1)) == (&(*it3)) ) )
-	  DAL_THROW(gmm::internal_error, " copy does not work");
+	  GMM_ASSERT1(false, " copy does not work");
       }
     }
     
@@ -242,7 +236,7 @@ int main(void) {
 	    ( (&(*it1)) == (&(*it2)) ) ||
 	    ( (&(*it2)) == (&(*it3)) ) ||
 	    ( (&(*it1)) == (&(*it3)) ) )
-	    DAL_THROW(gmm::internal_error, " copy does not work");
+	    GMM_ASSERT1(false, " copy does not work");
 	}
     }
     
@@ -250,14 +244,12 @@ int main(void) {
     t[64] = 11;
     
     // cout << "t2[64] = (should be 6 6) " << t2[64] << " " << t3[64]<< endl;
-    if (t2[64] != 6)
-       DAL_THROW(gmm::internal_error, " copy does not work");
+    GMM_ASSERT1(t2[64] == 6, " copy does not work");
     // cout << "capacity : (should be 80) " << t3.capacity() << endl;
-    if (t.capacity() != 80)
-      DAL_THROW(gmm::internal_error, " bad capacity");
+    GMM_ASSERT1(t.capacity() == 80, "bad capacity");
 
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 }

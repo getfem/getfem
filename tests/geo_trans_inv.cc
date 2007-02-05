@@ -66,7 +66,7 @@ void check_inversion(bgeot::pgeometric_trans pgt, const std::vector<base_node>& 
     cerr << "  distance(transform(Pref)-P) = " << err;
     if (err >= 1e-10) cerr << ": TOO LARGE (>1e-10). Inversion failed miserabily.";
     cerr << "\n\n";
-    DAL_THROW(gmm::failure_error, "geotrans_inv_convex failed\n");
+    GMM_ASSERT1(false, "geotrans_inv_convex failed\n");
   }
   if (verbose) { 
     cout << "SUCCESS: ";
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
 		     (mesh, N, org, vtab.begin(), ref.begin()); break;
     case 2 : getfem::parallelepiped_regular_prism_mesh
 		     (mesh, N, org, vtab.begin(), ref.begin()); break;
-    default : DAL_THROW(gmm::internal_error, "Unknown type of mesh");
+    default : GMM_ASSERT1(false, "Unknown type of mesh");
     }
     
     mesh.optimize_structure();
@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
     total_time += gmm::uclock_sec() - exectime;
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 }

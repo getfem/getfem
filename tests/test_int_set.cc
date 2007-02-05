@@ -289,6 +289,6 @@ int main(int argc, char *argv[]) {
   test_speed();
 
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0;
 }

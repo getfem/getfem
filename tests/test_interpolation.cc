@@ -115,7 +115,7 @@ void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX
       (msh, N, org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
       (msh, N, org, vtab.begin(), ref.begin()); break;
-  default: DAL_THROW(gmm::failure_error, "invalid mesh type\n");
+  default: GMM_ASSERT1(false, "invalid mesh type\n");
   }
   msh.optimize_structure();
   m.clear();

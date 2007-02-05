@@ -61,7 +61,7 @@ void test_conforming(getfem::mesh &m) {
 	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
 	  onbound = true;
       if (!onbound)
-	DAL_THROW(gmm::failure_error, "Mesh is not conforming " << pt);
+	GMM_ASSERT1(false, "Mesh is not conforming " << pt);
     }
   }
   cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
@@ -352,7 +352,7 @@ int main(void) {
     test_refinable(3, 2);
     test_refinable(3, 3);
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0;
 }
 

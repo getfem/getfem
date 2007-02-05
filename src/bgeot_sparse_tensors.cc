@@ -860,9 +860,8 @@ namespace bgeot {
             global_range.push_back(it->tr().dim(i));
             it->gdim[i] = global_range.size() - 1;
           } else {
-            if (it->tr().dim(i) != global_range[p]) 
-              DAL_THROW(std::invalid_argument, 
-                        "inconsistent dimensions for reduction index " 
+	    GMM_ASSERT1(it->tr().dim(i) == global_range[p],
+			"inconsistent dimensions for reduction index " 
                         << it->ridx[i] << "(" << int(it->tr().dim(i)) 
                         << " != " << int(global_range[p]) << ")");
             it->gdim[i] = p;
@@ -1035,7 +1034,7 @@ namespace bgeot {
 	mti.p(0) += s1;
       } while (mti.bnext(0));	
     } else {
-      DAL_THROW(std::invalid_argument, "unhandled reduction case ! (N=" << int(N) << ")");
+      GMM_ASSERT1(false, "unhandled reduction case ! (N=" << int(N) << ")");
     }
   }
 

@@ -101,7 +101,7 @@ namespace gmm {
 #if defined(NDEBUG)
 # define GMM_ASSERT2(test, errormsg)
 # define GMM_ASSERT3(test, errormsg)
-# define GMM_INTERNAL_ERROR(thestr)  	gmm::GMM_INTERNAL_ERROR();	\
+# define GMM_INTERNAL_ERROR(thestr)					\
     GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)
 #elif defined(GMM_DEBUG_MODE)
 # define GMM_ASSERT2(test, errormsg)				        \

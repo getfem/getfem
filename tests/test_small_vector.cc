@@ -227,7 +227,7 @@ namespace test {
     typedef T *iterator;
     typedef const T * const_iterator;
 
-    void out_of_range_error(void) const { DAL_THROW(std::out_of_range, "out of range"); }
+    void out_of_range_error(void) const { GMM_ASSERT1(false, "out of range"); }
     reference operator[](size_type l) { if (l >= size()) out_of_range_error(); return base()[l]; }
     value_type operator[](size_type l) const { if (l >= size()) out_of_range_error(); return const_base()[l]; }
     value_type at(size_type l) const { return const_base()[l]; }
@@ -347,17 +347,18 @@ namespace test {
   block_allocator::node_id block_allocator::allocate(block_allocator::size_type n) {
     if (n == 0) return node_id(0);
     if (n >= OBJ_SIZE_LIMIT) 
-      DAL_THROW(gmm::failure_error, 
-		"attempt to allocate a supposedly \"small\" object of " 
-		<< n << " bytes\n");
+      GMM_ASSERT1(false, 
+		  "attempt to allocate a supposedly \"small\" object of " 
+		  << n << " bytes\n");
     //cout << "dim = " << n << " ";
     if (first_unfilled[n] == size_type(-1)) {
       blocks.push_back(block(n)); blocks.back().init();
       insert_block_into_unfilled(blocks.size()-1);
       if (first_unfilled[n] >= (1<<(31-p2_BLOCKSZ))) {//(node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ))) {
-	DAL_THROW(gmm::failure_error, "allocation slots exhausted for objects of size " << 
-		  n << " (" << first_unfilled[n] << " allocated!),\n" << 
-		  "either increase the limit, or check for a leak in your code.");
+	GMM_ASSERT1(false,
+		    "allocation slots exhausted for objects of size " << 
+		    n << " (" << first_unfilled[n] << " allocated!),\n" << 
+		    "either increase the limit, or check for a leak in your code.");
 	//cout << "created new block " << first_unfilled[n] << "\n";
       }
     }

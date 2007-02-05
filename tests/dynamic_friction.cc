@@ -160,9 +160,9 @@ void friction_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
-		<< "In that case you need to set "
-		<< "DATA_FEM_TYPE in the .param file");
+      GMM_ASSERT1(false, "You are using a non-lagrange FEM. "
+		  << "In that case you need to set "
+		  << "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {

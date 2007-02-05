@@ -152,9 +152,10 @@ void g_params::init(int argc, char *argv[]) {
 
 namespace getfem {
   template<class VECT1, class VECT2>
-  void old_asm_Neumann_condition(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-				 size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
-  {
+  void old_asm_Neumann_condition(VECT1 &B, const mesh_im &mim,
+				 const mesh_fem &mf,
+				 size_type boundary, const mesh_fem &mfdata,
+				 const VECT2 &F, dim_type N) {
     size_type cv, nbd1, nbd2, f;
     dal::bit_vector nn = mf.convex_index(), nf;
     base_tensor t;
@@ -164,8 +165,8 @@ namespace getfem {
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn) {
       nf = dal::bit_vector(mf.linked_mesh().region(boundary).faces_of_convex(cv));
@@ -193,7 +194,7 @@ namespace getfem {
 		  }
 		}
 	    }
-	  if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+	  if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
 	}
       }
     }
@@ -212,8 +213,8 @@ namespace getfem {
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
@@ -238,7 +239,7 @@ namespace getfem {
 		for (size_type k = 0; k < N; k++) B[dof1*N + k] += F[dof2*N+k]*(*p);
 	      }
 	  }
-	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+	if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
       }
   }
 
@@ -257,8 +258,8 @@ namespace getfem {
     // M(0,0) = 1.0;  ??
 
     if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
@@ -292,7 +293,7 @@ namespace getfem {
 		  M(dof1*N + k, dof2*N + k) += (*p);
 	      }
 	    }
-	    if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+	    if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
 	  }
 	}
       }
@@ -311,8 +312,8 @@ namespace getfem {
     // M(0,0) = 1.0;  ??
 
     if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
@@ -343,7 +344,7 @@ namespace getfem {
 		  M(dof1*N + k, dof2*N + k) += (*p);
 	      }
 	  }
-	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+	if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
       }
   }
 
@@ -362,8 +363,8 @@ namespace getfem {
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf_u.linked_mesh()) != &(mf_d.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
@@ -431,7 +432,7 @@ namespace getfem {
 		    }
 		  }
 		}
-		if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+		if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
 	      }
 	  }
       }
@@ -454,8 +455,8 @@ namespace getfem {
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
@@ -513,7 +514,7 @@ namespace getfem {
 		      }
 		}
 	  }
-	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+	if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
       }
   }
 
@@ -540,9 +541,9 @@ namespace getfem {
 
     if (&(mf_u.linked_mesh()) != &(mf_p.linked_mesh())
 	|| &(mf_u.linked_mesh()) != &(mf_d.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
-
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
+    
     /* loop over all convexes */
     for (cv << nn; cv != ST_NIL; cv << nn) {
 
@@ -591,7 +592,7 @@ namespace getfem {
 	  } 
 	}
       }
-      if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+      if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
     }
   }
 
@@ -608,8 +609,8 @@ namespace getfem {
     pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
+      GMM_ASSERT1(false,
+		  "This assembling procedure only works on a single mesh");
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
@@ -644,7 +645,7 @@ namespace getfem {
 	    }
 	  }
 	}
-	if (p != t.end()) DAL_THROW(gmm::internal_error, "internal error"); 
+	if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
       }
   }
 
@@ -753,10 +754,10 @@ namespace getfem {
                                                          const VECT &LAMBDA,const VECT &MU) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      GMM_ASSERT1(false, "invalid data mesh fem (Qdim=1 required)");
     
     if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+      GMM_ASSERT1(false, "wrong qdim for the mesh_fem");
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 			   "M(#1,#1)+= sym(comp(vGrad(#1)(:,i,j).vGrad(#1)(:,i,j).Base(#2)(k).mu(k)) +"
 			   "               comp(vGrad(#1)(:,j,i).vGrad(#1)(:,i,j).Base(#2)(k).mu(k)) +"
@@ -829,7 +830,7 @@ void gen_mesh(getfem::mesh& mesh) {
 		     (mesh, param.Ndim, org, vtab.begin(), ref.begin()); 
     cerr << mesh.convex_index().card() << " " << param.Ndim << "D prisms generated\n";
     break;
-  default : DAL_THROW(gmm::internal_error, "Unknown type of mesh");
+  default : GMM_ASSERT1(false, "Unknown type of mesh");
   }
 
   assert(param.NX>2);

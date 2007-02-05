@@ -100,7 +100,7 @@ namespace bgeot {
     void add_point_with_id(const base_node& n, size_type i) {
       if (pts.size() == 0) N = n.size(); 
       else if (N != n.size()) 
-	DAL_THROW(failure_error, "invalid dimension");
+	GMM_ASSERT2(false, "invalid dimension");
       if (tree) clear_tree();
       pts.push_back(index_node_pair(i, n));
     }

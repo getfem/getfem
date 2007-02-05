@@ -75,7 +75,7 @@ namespace bgeot {
   {
     size_type s = x.size(); 
     scalar_type c1 = c_max, c2 = c_max * scalar_type(base);
-    if (y.size() != s) DAL_THROW(dimension_error, "dimension error");
+    GMM_ASSERT2(y.size() == s, "dimension error");
     
     base_node::const_iterator itx=x.begin(), itex=x.end(), ity=y.begin();
     int ret = 0;

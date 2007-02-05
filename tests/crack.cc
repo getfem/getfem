@@ -518,9 +518,9 @@ void crack_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
-		<< "In that case you need to set "
-		<< "DATA_FEM_TYPE in the .param file");
+      GMM_ASSERT1(false, "You are using a non-lagrange FEM. "
+		  << "In that case you need to set "
+		  << "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
@@ -667,7 +667,7 @@ bool crack_problem::solve(plain_vector &U) {
 	  enriched_dofs.add(j);
       }
       if (enriched_dofs.card() < 3)
-	DAL_WARNING0("There is " << enriched_dofs.card() <<
+	GMM_WARNING0("There is " << enriched_dofs.card() <<
 		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
@@ -924,10 +924,7 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
 
     plain_vector U(p.mf_u().nb_dof());
-    if (!p.solve(U)) {
-      DAL_THROW(gmm::failure_error,"Solve has failed");
-    } 
-    
+    if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
     
     { 
       getfem::mesh mcut;

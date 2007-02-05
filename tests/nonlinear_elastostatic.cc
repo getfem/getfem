@@ -149,7 +149,7 @@ struct elastostatic_problem {
 // 		   gmm::scaled(MS.reduced_residual(), value_type(-1)),
 // 		   P, 300, iter_linsolv);
 // 	if (!iter_linsolv.converged())
-// 	  DAL_WARNING(2,"gmres did not converge!");
+// 	  GMM_WARNING(2,"gmres did not converge!");
 //       }
 //       MS.unreduced_solution(dr,d);
 //       cout << "..done (" << ftool::uclock_sec() - t0 << ")\n";
@@ -275,11 +275,9 @@ void elastostatic_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM"
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM"
 		". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -340,7 +338,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
     case 2: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
     case 3: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
-    default: DAL_THROW(gmm::failure_error, "no such law");
+    default: GMM_ASSERT1(false, "no such law");
   }
 
   pl->test_derivatives(3, .0001, p);
@@ -469,7 +467,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     pl->reset_unvalid_flag();
     final_model.compute_residual(MS);
     if (pl->get_unvalid_flag()) 
-      DAL_WARNING1("The solution is not completely valid, the determinant "
+      GMM_WARNING1("The solution is not completely valid, the determinant "
 		   "of the transformation is negative on "
 		   << pl->get_unvalid_flag() << " gauss points");
 
@@ -507,9 +505,7 @@ int main(int argc, char *argv[]) {
     p.mf_rhs.write_to_file(p.datafilename + ".mfd", true);
     plain_vector U(p.mf_u.nb_dof());
     if (p.PARAM.int_value("VTK_EXPORT")) {
-      if (!p.solve(U)) 
-	//DAL_THROW(gmm::failure_error,"Solve has failed");
-	cerr << "Solve has failed\n";
+      if (!p.solve(U)) cerr << "Solve has failed\n";
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);

@@ -259,6 +259,7 @@ namespace getfem
       case IM_NONE: DAL_THROW(failure_error, "IM_NONE has no structure");
       default: GMM_ASSERT3(false, "");
       }
+      return 0;
     }
 
     integration_method(ppoly_integration p)

@@ -238,6 +238,6 @@ int main(int argc, char **argv) {
     /*if (!quick)
       speed_test(3,300000,20000);
       else speed_test(2,10000,100);*/
-  } DAL_STANDARD_CATCH_ERROR;
+  } GMM_STANDARD_CATCH_ERROR;
   return 0;  
 }

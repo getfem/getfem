@@ -107,7 +107,7 @@ void lap_pb::init(void)
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
-  default : DAL_THROW(gmm::internal_error, "Unknown type of mesh");
+  default : GMM_ASSERT1(false, "Unknown type of mesh");
   }
 
   mesh.optimize_structure();
@@ -120,21 +120,18 @@ void lap_pb::init(void)
   case 0 : break;
   case 1 :
     if (N != 1 || mesh_type != 0)
-      DAL_THROW(gmm::internal_error,
-		"This element is only defined on segments");
+      GMM_ASSERT1(false, "This element is only defined on segments");
      K = 3;
     break;
   case 2 : 
     if (mesh_type != 0)
-      DAL_THROW(gmm::internal_error,
-		"This element is only defined on simplexes");
+      GMM_ASSERT1(false, "This element is only defined on simplexes");
     break;
   case 3 : 
     if (mesh_type != 0)
-      DAL_THROW(gmm::internal_error,
-		"This element is only defined on simplexes");
+      GMM_ASSERT1(false, "This element is only defined on simplexes");
     break;
-  default : DAL_THROW(gmm::internal_error, "Unknown finite element method");
+  default : GMM_ASSERT1(false, "Unknown finite element method");
   }
 
   getfem::pintegration_method ppi;
@@ -145,8 +142,8 @@ void lap_pb::init(void)
     switch (mesh_type) { 
     case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
     case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%d)", int(N)); break;
-    default : DAL_THROW(gmm::internal_error, 
-    "Exact integration not allowed in this context");
+    default : GMM_ASSERT1(false,
+			  "Exact integration not allowed in this context");
     }
     break;
   case 1 :
@@ -166,8 +163,7 @@ void lap_pb::init(void)
     if (mesh_type == 1)
       sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", int(N), int(KI));
     else
-      DAL_THROW(gmm::internal_error,
-		"Product of 1D Gauss only for parallelepipeds");
+      GMM_ASSERT1(false, "Product of 1D Gauss only for parallelepipeds");
     break;
   case 3 :
     if (mesh_type == 0) {
@@ -181,8 +177,7 @@ void lap_pb::init(void)
 		int(N), int(2*K), int(KI));
     }
     else
-      DAL_THROW(gmm::internal_error,
-		"Composite integration only for simplexes");
+      GMM_ASSERT1(false, "Composite integration only for simplexes");
     break;
   case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
   case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
@@ -198,7 +193,7 @@ void lap_pb::init(void)
   case 32 : sprintf(meth, "IM_QUAD(2)"); break;
   case 33 : sprintf(meth, "IM_QUAD(3)"); break;
   case 35 : sprintf(meth, "IM_QUAD(5)"); break;
-  default : DAL_THROW(std::logic_error, "Undefined integration method");
+  default : GMM_ASSERT1(false, "Undefined integration method");
   }
   ppi = getfem::int_method_descriptor(meth);
   getfem::pfem pfprinc = 0;
@@ -275,8 +270,7 @@ void test1_mat_elem(const getfem::mesh_im &mim,
   getfem::pmat_elem_computation pmec = 0;
   
   if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-    DAL_THROW(std::invalid_argument,
-	      "This assembling procedure only works on a single mesh");
+    GMM_ASSERT1(false,"This assembling procedure only works on a single mesh");
   
   for (cv << nn; cv != size_type(-1); cv << nn) {
     pf1 =     mf.fem_of_element(cv);
@@ -309,8 +303,7 @@ void test2_mat_elem(const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
   getfem::pmat_elem_computation pmec = 0;
   
   if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-    DAL_THROW(std::invalid_argument,
-	      "This assembling procedure only works on a single mesh");
+    GMM_ASSERT1(false,"This assembling procedure only works on a single mesh");
   
   for (cv << nn; cv != size_type(-1); cv << nn) {
     pf1 =     mf.fem_of_element(cv);
@@ -365,6 +358,6 @@ int main(int argc, char *argv[]) {
     p.mesh.read_from_file(p.datafilename + ".mesh");
     p.mef.read_from_file(p.datafilename + ".mesh");
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }

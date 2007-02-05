@@ -40,8 +40,7 @@ namespace bgeot {
       pgeometric_trans pgt = m.trans_of_convex(cv);
       size_type N = pgt->structure()->dim();
       size_type P = m.dim();
-      if (!(pgt->is_linear()) || N != P) 
-	DAL_THROW(internal_error, "Bad geometric transformation");
+      GMM_ASSERT1(pgt->is_linear() && N == P, "Bad geometric transformation");
     
       base_matrix G(P, pgt->nb_points());
       base_matrix pc(pgt->nb_points() , N);
@@ -107,8 +106,7 @@ namespace bgeot {
 	--it2; i2 = it2.index();
       }
     }
-    DAL_THROW(internal_error,
-	      "Element not found in composite polynomial: " << pt);
+    GMM_ASSERT1(false, "Element not found in composite polynomial: " << pt);
   }
 
 
@@ -256,9 +254,8 @@ namespace bgeot {
       }
       break;
     default : 
-      //delete pm; pm = NULL;
-      DAL_THROW(to_be_done_error, "Sorry, not implemented for simplices of "
-		"dimension " << int(cvs->dim()));
+      GMM_ASSERT1(false, "Sorry, not implemented for simplices of "
+		  "dimension " << int(cvs->dim()));
     }
   }
 
@@ -324,11 +321,9 @@ namespace bgeot {
       structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
     } else if (nbp == 2 * n && 
 	       cvs->basic_structure() == prism_structure(n)) {
-      DAL_THROW(to_be_done_error,
-		"Sorry, structured_mesh not implemented for prisms.");
+      GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
     } else {
-      DAL_THROW(to_be_done_error,
-		"This element is not taken into account. Contact us");
+      GMM_ASSERT1(false, "This element is not taken into account. Contact us");
     }
   }
 
@@ -470,8 +465,8 @@ namespace bgeot {
       pstr_mesh_cv__ psmc = dal::stored_cast<str_mesh_cv__>(o);
       return psmc->pfacem;
     } 
-    else DAL_THROW(internal_error,
-		   "call refined_simplex_mesh_for_convex first (or fix me)");
+    else GMM_ASSERT1(false,
+		     "call refined_simplex_mesh_for_convex first (or fix me)");
   }
 
 }  /* end of namespace getfem.                                            */

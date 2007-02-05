@@ -94,7 +94,7 @@ void test_2d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << M_PI*R1*R1 << endl;
   if (gmm::abs(area - M_PI*R1*R1) > 1E-3)
-    DAL_THROW(gmm::failure_error, "Cutting integration method has failed");
+    GMM_ASSERT1(false, "Cutting integration method has failed");
 }
 
 
@@ -164,7 +164,7 @@ void test_3d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << 4/3.*M_PI*R1*R1*R1 << endl;
   if (gmm::abs(area - 4/3.*M_PI*R1*R1*R1) > 1E-3)
-    DAL_THROW(gmm::failure_error, "Cutting integration method has failed");
+    GMM_ASSERT1(false, "Cutting integration method has failed");
 }
 
 int main(/* int argc, char **argv */) {

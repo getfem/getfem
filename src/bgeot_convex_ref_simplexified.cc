@@ -301,7 +301,7 @@
       return simplexified_prism_6_nb;
     }
 
-    DAL_THROW(failure_error, "No simplexification  for this element");
+    GMM_ASSERT1(false, "No simplexification  for this element");
   }
 
 
@@ -397,7 +397,7 @@
              return refinement_simplex_5_nb;
     case 6 : *tab = refinement_simplex_6;
              return refinement_simplex_6_nb;
-    default : DAL_THROW(failure_error, "No refinement for  this element");
+    default : GMM_ASSERT1(false, "No refinement for  this element");
     }
   }
 

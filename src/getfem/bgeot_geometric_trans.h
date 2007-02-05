@@ -395,7 +395,7 @@ namespace bgeot {
     scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
     size_type N() const { if (have_G()) return G().nrows(); 
       else if (have_xreal()) return xreal_.size(); 
-      else DAL_THROW(gmm::failure_error, "cannot get N"); }
+      else GMM_ASSERT2(false, "cannot get N"); return 0; }
     size_type ii() const { return ii_; }
     bgeot::pgeotrans_precomp pgp() const { return pgp_; }
     /** change the current point (assuming a geotrans_precomp_ is used) */

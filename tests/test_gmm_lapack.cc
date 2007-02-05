@@ -122,7 +122,7 @@ int main(void)
     x86_fix_end(&old_cw);
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 }

@@ -96,7 +96,6 @@ int main(void)
 	  tsa.sup(k);
 	  //    cout << tsa << endl;
 	  tsa.verify_balance();
-	  
 	}
     }
     
@@ -121,7 +120,7 @@ int main(void)
       }
     }
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 

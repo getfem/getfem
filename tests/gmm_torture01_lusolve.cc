@@ -48,8 +48,8 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   R cond = gmm::condition_number(m1);
 
   if (print_debug) cout << "cond = " << cond << " det = " << det << endl;
-  if (det == R(0) && cond < R(0.01) / prec && cond != R(0))
-    GMM_THROW(gmm::failure_error, "Inconsistent condition number: " << cond);
+  GMM_ASSERT1(det != R(0) || cond >= R(0.01) / prec || cond == R(0),
+	      "Inconsistent condition number: " << cond);
 
   if (prec * cond < R(1)/R(10000) && det != R(0)) {
     ++nb_iter;
@@ -58,8 +58,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
 
     error = gmm::vect_norm2(v3);
-    if (!(error <= prec * cond * R(20000)))
-      GMM_THROW(gmm::failure_error, "Error too large: " << error);
+    GMM_ASSERT1(error <= prec * cond * R(20000), "Error too large: " << error);
 
     gmm::lu_inverse(m1);
     gmm::mult(m1, v2, v1);
@@ -67,8 +66,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     
     error = gmm::vect_norm2(v3);
-    if (!(error <= prec * cond * R(20000)))
-      GMM_THROW(gmm::failure_error, "Error too large: "<< error);
+    GMM_ASSERT1(error <= prec * cond * R(20000), "Error too large: " << error);
 
     if (nb_iter == 100) return true;
   }
