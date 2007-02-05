@@ -113,7 +113,7 @@ namespace gmm {
 #  define GMM_INTERNAL_ERROR(thestr) {					\
     cerr << "Internal error: " << GMM_PRETTY_FUNCTION << " " << thestr	\
 	 << endl;							\
-    ::abort(); 	GMM_INTERNAL_ERROR();					\
+    ::abort();								\
   }
 #else
 # define GMM_ASSERT2(test, errormsg)          				\
@@ -121,7 +121,6 @@ namespace gmm {
 				   GMM_PRETTY_FUNCTION, errormsg); }
 # define GMM_ASSERT3(test, errormsg)
 #  define GMM_INTERNAL_ERROR(thestr)	{				\
-    gmm::GMM_INTERNAL_ERROR();						\
     GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)	\
       }
 #endif
