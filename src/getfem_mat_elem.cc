@@ -537,16 +537,9 @@ namespace getfem {
 	}
       }
 
-      // cout << "t= " << t << endl;
-
       /* Applying linear transformation for non tau-equivalent elements.   */
       
       if (trans_reduction.size() > 0 && !icb) {
-// 	if (icb) // Dans ce cas, il faudrait annuler la reduction finale (si
-// 	  // l'indice des numerod de fonctions de base est réduit) et faire
-// 	  // la reduction sur chaque point de Gauss.
-// 	  DAL_INTERNAL_ERROR("Non tau-equivalent elements are not"
-// 			     "working with this kind of assembly!");
 	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
@@ -556,7 +549,6 @@ namespace getfem {
 	  flag = !flag;
 	}
       }
-      // getchar();
       if (flag) t = taux;
     }
     

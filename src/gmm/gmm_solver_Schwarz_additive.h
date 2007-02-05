@@ -393,8 +393,8 @@ namespace gmm {
   template <typename ASM_type, typename Vect>
   void AS_global_solve(using_superlu, const ASM_type &, Vect &,
 		       const Vect &, iteration &) {
-    GMM_THROW(failure_error,
-     "You cannot use SuperLU as global solver in additive Schwarz meethod");
+    GMM_ASSERT1(false, "You cannot use SuperLU as "
+		"global solver in additive Schwarz meethod");
   }
 #endif
   

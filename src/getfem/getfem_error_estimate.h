@@ -79,10 +79,9 @@ namespace getfem {
     mim.linked_mesh().intersect_with_mpi_region(sub_rg);
 
     const mesh &m = mim.linked_mesh();
-    if (&m != &mf.linked_mesh() || 
-	gmm::vect_size(U) < mf.nb_dof() ||
-	gmm::vect_size(err) < m.convex_index().last_true()+1)
-      DAL_INTERNAL_ERROR("");
+    GMM_ASSERT3(&m == &mf.linked_mesh() && 
+		gmm::vect_size(U) >= mf.nb_dof() &&
+		gmm::vect_size(err) >= m.convex_index().last_true()+1, "");
     gmm::clear(err);
     std::vector<unsigned> nb_cedges(m.convex_index().last_true()+1);
     pfem pf1_old = 0, pf2_old = 0;
@@ -98,9 +97,8 @@ namespace getfem {
     bgeot::geotrans_inv_convex gic;
 
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1) {
-      if (!mf.convex_index().is_in(cv1.cv()) ||
-	  !mim.convex_index().is_in(cv1.cv()))
-	DAL_INTERNAL_ERROR("");
+      GMM_ASSERT3(mf.convex_index().is_in(cv1.cv()) &&
+		  mim.convex_index().is_in(cv1.cv()), "");
       bgeot::mesh_structure::ind_set neighbours;
 
       bgeot::pgeometric_trans pgt1 = m.trans_of_convex(cv1.cv());

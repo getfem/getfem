@@ -151,20 +151,20 @@ namespace gmm {
   /* QR factorization.                                                     */
   /* ********************************************************************* */
 
-# define geqrf_interface(lapack_name1, base_type) inline                   \
-  void qr_factor(dense_matrix<base_type > &A){                             \
-    GMMLAPACK_TRACE("geqrf_interface");                                    \
+# define geqrf_interface(lapack_name1, base_type) inline		   \
+  void qr_factor(dense_matrix<base_type > &A){			           \
+    GMMLAPACK_TRACE("geqrf_interface");				           \
     int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
-    if (m && n) {                                                          \
-      std::vector<base_type > tau(n);                                      \
+    if (m && n) {							   \
+      std::vector<base_type > tau(n);					   \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info); \
-      lwork = int(gmm::real(work1));                                       \
-      std::vector<base_type > work(lwork);                                 \
+      lwork = int(gmm::real(work1));					   \
+      std::vector<base_type > work(lwork);				   \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info); \
-      if (info) GMM_THROW(failure_error, "QR factorization failed");       \
-    }                                                                      \
+      GMM_ASSERT1(!info, "QR factorization failed");			   \
+    }									   \
   }
-
+    
   geqrf_interface(sgeqrf_, BLAS_S)
   geqrf_interface(dgeqrf_, BLAS_D)
     // For complex values, housholder vectors are not the same as in
@@ -184,7 +184,7 @@ namespace gmm {
       lwork = int(gmm::real(work1));                                       \
       std::vector<base_type > work(lwork);                                 \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work[0], &lwork, &info); \
-      if (info) GMM_THROW(failure_error, "QR factorization failed");       \
+      GMM_ASSERT1(!info, "QR factorization failed");                       \
       base_type *p = &R(0,0), *q = &Q(0,0);                                \
       for (int j = 0; j < n; ++j, q += m-n)                                \
         for (int i = 0; i < n; ++i, ++p, ++q)                              \
@@ -221,7 +221,7 @@ namespace gmm {
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
 		&eigv2[0], &Q(0,0), &n, &work[0], &lwork, &rwork[0],&info);\
-    if (info) GMM_THROW(failure_error, "QR algorithm failed");             \
+    GMM_ASSERT1(!info, "QR algorithm failed");                             \
     extract_eig(H, const_cast<VECT &>(eigval_), tol);                      \
   }
 
@@ -243,7 +243,7 @@ namespace gmm {
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
                 &Q(0,0), &n, &work[0], &lwork, &rwork[0], &rwork[0],&info);\
-    if (info) GMM_THROW(failure_error, "QR algorithm failed");             \
+    GMM_ASSERT1(!info, "QR algorithm failed");                             \
     extract_eig(H, const_cast<VECT &>(eigval_), tol);                      \
   }
 
@@ -268,7 +268,7 @@ namespace gmm {
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
 		&Q(0,0), &n, &Q(0,0), &n, &work[0], &lwork, &info);    	   \
-    if (info) GMM_THROW(failure_error, "QR algorithm failed");             \
+    GMM_ASSERT1(!info, "QR algorithm failed");                             \
     gmm::copy(eigvr, gmm::real_part(const_cast<VECT &>(eigval_)));	   \
     gmm::copy(eigvi, gmm::imag_part(const_cast<VECT &>(eigval_)));	   \
   }
@@ -290,7 +290,7 @@ namespace gmm {
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
 		&Q(0,0), &n, &work[0], &lwork,  &rwork[0],  &info);	   \
-    if (info) GMM_THROW(failure_error, "QR algorithm failed");             \
+    GMM_ASSERT1(!info, "QR algorithm failed");                             \
     gmm::copy(eigv, const_cast<VECT &>(eigval_));			   \
   }
 
@@ -315,7 +315,7 @@ namespace gmm {
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
 		&Q(0,0), &n, &Q(0,0), &n, &work[0], &lwork, &info);    	   \
-    if (info) GMM_THROW(failure_error, "QR algorithm failed");             \
+    GMM_ASSERT1(!info, "QR algorithm failed");                             \
     gmm::copy(eigvr, gmm::real_part(const_cast<VECT &>(eigval_)));	   \
     gmm::copy(eigvi, gmm::imag_part(const_cast<VECT &>(eigval_)));	   \
   }
@@ -337,7 +337,7 @@ namespace gmm {
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
 		&Q(0,0), &n, &work[0], &lwork,  &rwork[0],  &info);	   \
-    if (info) GMM_THROW(failure_error, "QR algorithm failed");             \
+    GMM_ASSERT1(!info, "QR algorithm failed");                             \
     gmm::copy(eigv, const_cast<VECT &>(eigval_));			   \
   }
 

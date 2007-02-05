@@ -333,17 +333,8 @@ void test2_mat_elem(const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
 /*  main program.                                                         */
 /**************************************************************************/
 
-class exception_cb : public gmm::exception_callback  {
-  public:
-  virtual void callback(const std::string& msg)
-  { cerr << msg << endl; *(int *)(0) = 0; }
-};
-
-int main(int argc, char *argv[])
-{
-  exception_cb cb;
-  gmm::exception_callback::set_exception_callback(&cb);
-
+int main(int argc, char *argv[]) {
+  
   try {
     
     lap_pb p;

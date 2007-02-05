@@ -63,7 +63,7 @@ namespace gmm {
   // expressed or implied warranty.
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  inline void IOHBTerminate(const char *a) { GMM_THROW(failure_error, a);}
+  inline void IOHBTerminate(const char *a) { GMM_ASSERT1(false, a);}
 
   inline bool is_complex_double__(std::complex<double>) { return true; }
   inline bool is_complex_double__(double) { return false; }
@@ -71,8 +71,8 @@ namespace gmm {
   inline int ParseIfmt(const char *fmt, int* perline, int* width) {
     if (SECURE_NONCHAR_SSCANF(fmt, " (%dI%d)", perline, width) != 2) {
       *perline = 1;
-      if (SECURE_NONCHAR_SSCANF(fmt, " (I%d)", width) != 1) 
-	GMM_THROW(failure_error, "invalid HB I-format : " << fmt);
+      int s = SECURE_NONCHAR_SSCANF(fmt, " (I%d)", width);
+      GMM_ASSERT1(s == 1, "invalid HB I-format: " << fmt);
     }
     return *width;
   }
@@ -91,12 +91,11 @@ namespace gmm {
 	{
       *perline = 1;
 #ifdef GMM_SECURE_CRT
-      if (sscanf_s(fmt, " (%c%d.%d)", &p, sizeof(char), width, prec) < 2
-	  || !strchr("PEDF", p))
+      int s = sscanf_s(fmt, " (%c%d.%d)", &p, sizeof(char), width, prec);
 #else
-      if (sscanf(fmt, " (%c%d.%d)", &p, width, prec) < 2 || !strchr("PEDF", p))
+      int s = sscanf(fmt, " (%c%d.%d)", &p, width, prec);
 #endif
-	GMM_THROW(failure_error, "invalid HB REAL format : " << fmt);
+      GMM_ASSERT1(s>=2 && strchr("PEDF",p), "invalid HB REAL format: " << fmt);
     }
     *flag = p;
     return *width;
@@ -145,8 +144,8 @@ namespace gmm {
     }
     char *getline(char *buf) { 
       fgets(buf, BUFSIZ, f); ++lcount;
-      if (SECURE_NONCHAR_SSCANF(buf,"%*s") < 0) 
-	GMM_THROW(failure_error, "blank line in HB file at line " << lcount);
+      int s = SECURE_NONCHAR_SSCANF(buf,"%*s");
+      GMM_ASSERT1(s >= 0, "blank line in HB file at line " << lcount);
       return buf;
     }
 
@@ -256,7 +255,7 @@ namespace gmm {
     char line[BUFSIZ];
     close();
     SECURE_FOPEN(&f, filename, "r");
-    if (!f) { GMM_THROW(failure_error, "could not open " << filename); }
+    GMM_ASSERT1(f, "could not open " << filename);
     /* First line: */
 #ifdef GMM_SECURE_CRT
     sscanf_s(getline(line), "%c%s", Title, 72, Key, 8);
@@ -311,15 +310,12 @@ namespace gmm {
 
     typedef typename csc_matrix<T, shift>::IND_TYPE IND_TYPE;
 
-    if (!f) GMM_THROW(failure_error, "no file opened!");    
-    if (Type[0] == 'P')
-      GMM_THROW(failure_error,
+    GMM_ASSERT1(f, "no file opened!");
+    GMM_ASSERT1(Type[0] != 'P',
 		"Bad HB matrix format (pattern matrices not supported)");
-    if (is_complex_double__(T()) && Type[0] == 'R') 
-      GMM_THROW(failure_error,
+    GMM_ASSERT1(!is_complex_double__(T()) || Type[0] != 'R',
 		"Bad HB matrix format (file contains a REAL matrix)");
-    if (!is_complex_double__(T()) && Type[0] == 'C') 
-      GMM_THROW(failure_error,
+    GMM_ASSERT1(is_complex_double__(T()) || Type[0] != 'C',
 		"Bad HB matrix format (file contains a COMPLEX matrix)");
     if (A.pr) { delete[] A.pr; delete[] A.ir; delete[] A.jc; }
     A.nc = ncols(); A.nr = nrows();
@@ -378,8 +374,7 @@ namespace gmm {
     
     if ( filename != NULL ) {
       SECURE_FOPEN(&out_file, filename, "w");
-      if ( out_file == NULL )
-	GMM_THROW(gmm::failure_error,"Error: Cannot open file: " << filename);
+      GMM_ASSERT1(out_file != NULL, "Error: Cannot open file: " << filename);
     } else out_file = stdout;
     
     if ( Ptrfmt == NULL ) Ptrfmt = "(8I10)";
@@ -469,10 +464,9 @@ namespace gmm {
       }
       if ( nvalentries % Valperline != 0 ) fprintf(out_file,"\n");
     }
-    
-    if ( fclose(out_file) != 0) {
-      GMM_THROW(failure_error, "Error closing file in writeHB_mat_double().");
-    } else return 1;
+    int s = fclose(out_file);
+    GMM_ASSERT1(s == 0, "Error closing file in writeHB_mat_double().");
+    return 1;
   }
   
   template <typename T, int shift> void
@@ -939,23 +933,18 @@ namespace gmm {
   inline void MatrixMarket_IO::open(const char *filename) {
     if (f) { fclose(f); }
     SECURE_FOPEN(&f, filename, "r");
-    if (!f) GMM_THROW(failure_error, "Sorry, we can not open " << filename);
-    if (mm_read_banner(f, &matcode) != 0) {
-      GMM_THROW(failure_error,
-		"Sorry, we cannnot find the matrix market banner in "
+    GMM_ASSERT1(f, "Sorry, cannot open file " << filename);
+    int s1 = mm_read_banner(f, &matcode);
+    GMM_ASSERT1(s1 == 0, "Sorry, cannnot find the matrix market banner in "
 		<< filename);
-    }
-    if (mm_is_coordinate(matcode) == 0 || mm_is_matrix(matcode) == 0) {
-      GMM_THROW(failure_error,
+    int s2 = mm_is_coordinate(matcode), s3 = mm_is_matrix(matcode);
+    GMM_ASSERT1(s2 > 0 && s3 > 0,
 		"file is not coordinate storage or is not a matrix");
-    }
-    if (mm_is_pattern(matcode)) {
-      GMM_THROW(failure_error, 
-		"the file does only contain the pattern of a sparse matrix");
-    }
-    if (mm_is_skew(matcode)) {
-      GMM_THROW(failure_error, "not currently supporting skew symmetric");
-    }
+    int s4 = mm_is_pattern(matcode);
+    GMM_ASSERT1(s4 == 0,
+	       "the file does only contain the pattern of a sparse matrix");
+    int s5 = mm_is_skew(matcode);
+    GMM_ASSERT1(s5 == 0, "not currently supporting skew symmetric");
     isSymmetric = mm_is_symmetric(matcode) || mm_is_hermitian(matcode); 
     isHermitian = mm_is_hermitian(matcode); 
     isComplex =   mm_is_complex(matcode);
@@ -963,16 +952,12 @@ namespace gmm {
   }
 
   template <typename Matrix> void MatrixMarket_IO::read(Matrix &A) {
-    if (!f) GMM_THROW(failure_error, "no file opened!");
     typedef typename linalg_traits<Matrix>::value_type T;
-    
-    if (is_complex_double__(T()) && !isComplex)
-      GMM_THROW(failure_error,
+    GMM_ASSERT1(f, "no file opened!");
+    GMM_ASSERT1(!is_complex_double__(T()) || isComplex,
 		"Bad MM matrix format (complex matrix expected)");
-    if (!is_complex_double__(T()) && isComplex)
-      GMM_THROW(failure_error,
+    GMM_ASSERT1(is_complex_double__(T()) || !isComplex,
 		"Bad MM matrix format (real matrix expected)");
-    
     A = Matrix(row, col);
     gmm::clear(A);
     

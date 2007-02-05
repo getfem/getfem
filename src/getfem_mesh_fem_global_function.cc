@@ -162,8 +162,7 @@ namespace getfem {
       case 1 : return sqrt(r)*cos2; 
       case 2 : return sin2*y/sqrt(r); 
       case 3 : return cos2*y/sqrt(r); 
-      default:
-	DAL_INTERNAL_ERROR("arg");
+    default: GMM_ASSERT2(false, "arg");
     }
   }
 
@@ -200,8 +199,7 @@ namespace getfem {
       res[0] = -cos2*cos2*sin2*(4*cos2*cos2 - 3)/sqrt(r);
       res[1] = cos2*(4*cos2*cos2*cos2*cos2 + 2 - 5*cos2*cos2)/sqrt(r);
       break;
-    default: 
-      DAL_INTERNAL_ERROR("oups");
+    default: GMM_ASSERT2(false, "oups");
     }
     return res;
   }

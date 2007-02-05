@@ -276,8 +276,7 @@ namespace gmm {
 
   template <typename T> inline void copy(const wsvector<T> &v1,
 					 wsvector<T> &v2) {
-    if (vect_size(v1) != vect_size(v2))
-      GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
     v2 = v1;
   }
   template <typename T> inline
@@ -640,11 +639,9 @@ namespace gmm {
 
   template <typename V, typename T> void copy(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
-#       ifdef GMM_VERIFY
       GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
       if (same_origin(v1, v2))
 	GMM_WARNING2("a conflict is possible in vector copy\n");
-#       endif
       copy_rsvector(v1, v2, typename linalg_traits<V>::storage_type());
     }
   }

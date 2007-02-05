@@ -67,13 +67,13 @@ namespace gmm {
       if (N <= 3) {
 	switch (N) {
 	  case 1 : {
-	    det = *p; 
-	    if (det==T(0)) GMM_THROW(failure_error, "non invertible matrix"); 
+	    det = *p;
+	    GMM_ASSERT1(det!=T(0), "non invertible matrix");
 	    *p = T(1) / det; 
 	  } break;
 	  case 2 : {
 	    det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
-	    if (det==T(0)) GMM_THROW(failure_error, "non invertible matrix");
+	    GMM_ASSERT1(det!=T(0), "non invertible matrix");
 	    std::swap(*p, *(p+3));
 	    *p++ /= det; *p++ /= -det; *p++ /= -det; *p++ /= det; 
 	  } break;
@@ -89,7 +89,7 @@ namespace gmm {
 	    h = - (*(p+0)) * (*(p+7)) + (*(p+1)) * (*(p+6));
 	    i =   (*(p+0)) * (*(p+4)) - (*(p+1)) * (*(p+3));
 	    det = (*p) * a + (*(p+1)) * d + (*(p+2)) * g;
-	    if (det==T(0)) GMM_THROW(failure_error, "non invertible matrix");
+	    GMM_ASSERT1(det!=T(0), "non invertible matrix");
 	    *p++ = a / det; *p++ = b / det; *p++ = c / det; 
 	    *p++ = d / det; *p++ = e / det; *p++ = f / det; 
 	    *p++ = g / det; *p++ = h / det; *p++ = i / det; 
@@ -100,8 +100,8 @@ namespace gmm {
 	dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
 	std::vector<int> ipvt(mat_nrows(A));
 	gmm::copy(A, B);
-	if (lu_factor(B, ipvt))
-	  GMM_THROW(failure_error,"Non invertible matrix");
+	size_type info = lu_factor(B, ipvt);
+	GMM_ASSERT1(!info, "non invertible matrix");
 	lu_inverse(B, ipvt, A);
 	return lu_det(B, ipvt);
       }

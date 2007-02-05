@@ -21,8 +21,8 @@
 //========================================================================
 
 /** @file gmm_dense_sylvester.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
-   @date June 5, 2003.
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+    @date June 5, 2003.
     @brief Sylvester equation solver.
 */
 #ifndef GMM_DENSE_SYLVESTER_H
@@ -31,8 +31,6 @@
 #include "gmm_kernel.h"
 
 namespace gmm {
-
-
 
   /* ********************************************************************* */
   /*   Kronecker system matrix.                                            */
@@ -44,8 +42,8 @@ namespace gmm {
     size_type m = mat_nrows(m1), n = mat_ncols(m1);
     size_type l = mat_nrows(m2), k = mat_ncols(m2);
 
-    if (mat_nrows(m3) != m*l || mat_ncols(m3) != n*k)
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(mat_nrows(m3) == m*l && mat_ncols(m3) == n*k,
+		"dimensions mismatch");
 
     for (size_type i = 0; i < m; ++i)
       for (size_type j = 0; j < m; ++j)
@@ -67,7 +65,7 @@ namespace gmm {
   template <typename MAT, typename VECT>
   colmatrix_to_vector(const MAT &A, VECT &v, col_major) {
     size_type m = mat_nrows(A), n = mat_ncols(A);
-    if (m*n != vect_size(v)) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m*n == vect_size(v), "dimensions mismatch");
     for (size_type i = 0; i < n; ++i)
       gmm::copy(mat_col(A, i), sub_vector(v, sub_interval(i*m, m)));
   }
@@ -83,7 +81,7 @@ namespace gmm {
   template <typename MAT, typename VECT>
   colmatrix_to_vector(const MAT &A, VECT &v, row_major) {
     size_type m = mat_nrows(mat), n = mat_ncols(A);
-    if (m*n != vect_size(v)) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m*n == vect_size(v), "dimensions mismatch");
     for (size_type i = 0; i < m; ++i)
       gmm::copy(mat_row(A, i), sub_vector(v, sub_slice(i, n, m)));
   }
@@ -102,7 +100,7 @@ namespace gmm {
   template <typename MAT, typename VECT>
   vector_to_colmatrix(const VECT &v, MAT &A, col_major) {
     size_type m = mat_nrows(A), n = mat_ncols(A);
-    if (m*n != vect_size(v)) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m*n == vect_size(v), "dimensions mismatch");
     for (size_type i = 0; i < n; ++i)
       gmm::copy(sub_vector(v, sub_interval(i*m, m)), mat_col(A, i));
   }
@@ -118,7 +116,7 @@ namespace gmm {
   template <typename MAT, typename VECT>
   vector_to_colmatrix(const VECT &v, MAT &A, row_major) {
     size_type m = mat_nrows(mat), n = mat_ncols(A);
-    if (m*n != vect_size(v)) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m*n == vect_size(v), "dimensions mismatch");
     for (size_type i = 0; i < m; ++i)
       gmm::copy(sub_vector(v, sub_slice(i, n, m)), mat_row(A, i));
   }
@@ -143,9 +141,9 @@ namespace gmm {
     size_type m = mat_nrows(m1), n = mat_ncols(m1);
     size_type l = mat_nrows(m2), k = mat_ncols(m2);
     
-    if (m != n || l != k || m != mat_nrows(m3)
-	|| l != mat_ncols(m3) || m != mat_nrows(m4) || l != mat_ncols(m4))
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m == n && l == k && m == mat_nrows(m3) &&
+		l == mat_ncols(m3) && m == mat_nrows(m4) && l == mat_ncols(m4),
+		"dimensions mismatch");
 
     gmm::dense_matrix<T> akronb(m*l, m*l);
     gmm::dense_matrix<T> idm(m, m), idl(l,l);

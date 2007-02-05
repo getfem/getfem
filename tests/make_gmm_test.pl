@@ -192,8 +192,6 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       print TMPF "  fpu_fix_start(0);\n\n";
     }
     print TMPF "  srand($theseed);\n\n";
-    print TMPF "  gmm::exception_callback_debug cb;\n";
-    print TMPF "  gmm::exception_callback::set_exception_callback(&cb);\n";
     print TMPF "  gmm::set_warning_level(1);\n\n";
     print TMPF "  for (int iter = 0; iter < 100000; ++iter) {\n\n";
     print TMPF "    try {\n\n";

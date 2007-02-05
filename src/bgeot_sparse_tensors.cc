@@ -309,12 +309,12 @@ namespace bgeot {
   }
 
   void tensor_mask::check_assertions() const {
-    if (r.size() != idxs.size()) DAL_INTERNAL_ERROR("");
-    if (s.size() != idxs.size()+1) DAL_INTERNAL_ERROR("");
-    if (m.size() != size()) DAL_INTERNAL_ERROR("");
+    GMM_ASSERT3(r.size() == idxs.size(), "");
+    GMM_ASSERT3(s.size() == idxs.size()+1, "");
+    GMM_ASSERT3(m.size() == size(), "");
     dal::bit_vector bv;
     for (dim_type i=0; i < idxs.size(); ++i) {
-      if (bv.is_in(i)) DAL_INTERNAL_ERROR(""); 
+      GMM_ASSERT3(!bv.is_in(i), "");
       bv.add(i);
     }
   }
@@ -600,7 +600,7 @@ namespace bgeot {
       if (vectorized_pr_dim == pri.size()-1) {
         if (pp->have_regular_strides.count() == N) vectorized_size_ = pp->range;
         for (dim_type n=pp->n; n < N; ++n) {
-	  if (n >= pp->inc.size()) DAL_INTERNAL_ERROR(""); // expected failure here with "empty" tensors, see tests/test_assembly.cc, testbug() function.
+	  GMM_ASSERT3(n < pp->inc.size(), ""); // expected failure here with "empty" tensors, see tests/test_assembly.cc, testbug() function.
           vectorized_strides_[n] = pp->inc[n]; 
         }
       } else {
@@ -712,8 +712,8 @@ namespace bgeot {
     update_reduction_chars();
 
     //cout << "find_best_reduction: reduction_chars='" << reduction_chars << "'\n";
-    if (trtab.size() > 32) 
-      DAL_INTERNAL_ERROR("wow it was assumed that nobody would ever need a reduction on more than 32 tensors..");
+    GMM_ASSERT2(trtab.size() <= 32, "wow it was assumed that nobody would "
+		"ever need a reduction on more than 32 tensors..");
 
     std::vector<std::bitset<32> > idx_occurences(reduction_chars.size());
 
@@ -831,10 +831,9 @@ namespace bgeot {
       pout_data = &out_data[0];
       trres.set_base(pout_data);
     } else {
-      if (tr_out->ndim() != reduced_range.size()) 
-	DAL_INTERNAL_ERROR("");
-      for (dim_type i=0; i < tr_out->ndim(); ++i) if (tr_out->dim(i) != reduced_range[i]) 
-	DAL_INTERNAL_ERROR("");
+      GMM_ASSERT3(tr_out->ndim() == reduced_range.size(), "");
+      for (dim_type i=0; i < tr_out->ndim(); ++i)
+	GMM_ASSERT3(tr_out->dim(i) == reduced_range[i], "");
       trres = *tr_out;
     }
 

@@ -279,7 +279,7 @@ namespace getfem {
 	      if (t[j] > y1) { n2 = n1; y2 = y1; n1 = j; y1 = t[j]; }
 	      else if (t[j] > y2) { n2 = j; y2 = t[j]; }
 	    }
-	    if (n1 == size_type(-1)) DAL_INTERNAL_ERROR("");
+	    GMM_ASSERT3(n1 != size_type(-1), "");
 	    size_type nd1 = mf.ind_dof_of_element(cv)[n1];
 	    size_type nd2 = mf.ind_dof_of_element(cv)[n2];
 	    

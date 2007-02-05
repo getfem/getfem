@@ -213,7 +213,7 @@ namespace getfem {
   
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
     const mesh &msh(mls.mesh_of_convex(cv));
-    if (msh.convex_index().card() == 0) DAL_INTERNAL_ERROR("");
+    GMM_ASSERT3(msh.convex_index().card() != 0, "");
     base_matrix G;
     base_node B;
 
@@ -348,7 +348,7 @@ namespace getfem {
 	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi) {
 	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
 	  }
-	  if (ff == short_type(-1)) DAL_INTERNAL_ERROR("");
+	  GMM_ASSERT3(ff != short_type(-1), "");
 	}
 	  
 	vectors_to_base_matrix(G, msh.points_of_convex(i));

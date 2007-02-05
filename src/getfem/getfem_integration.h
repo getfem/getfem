@@ -257,7 +257,7 @@ namespace getfem
       case IM_EXACT: return method.ppi->structure();
       case IM_APPROX: return method.pai->structure();
       case IM_NONE: DAL_THROW(failure_error, "IM_NONE has no structure");
-	default: DAL_INTERNAL_ERROR("");
+      default: GMM_ASSERT3(false, "");
       }
     }
 

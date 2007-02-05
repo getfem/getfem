@@ -82,6 +82,9 @@ namespace bgeot {
 #  endif
 #  define LONG_SCAL(xx) long_scalar_type(#xx) /* string assignment to preserve the precision */
 #endif
+
+  // For compatibility with Getfem 2.0
+
   using gmm::dimension_error;
   using gmm::file_not_found_error;
   using gmm::internal_error;

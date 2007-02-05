@@ -52,7 +52,7 @@ namespace gmm {
     size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
     
-    if (ipvt.size()+1 < NN) GMM_THROW(failure_error, "IPVT too small");
+    GMM_ASSERT2(ipvt.size()+1 >= NN, "IPVT too small");
     for (i = 0; i+1 < NN; ++i) ipvt[i] = i;
       
     if (M || N) {
@@ -99,7 +99,7 @@ namespace gmm {
     std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
-    if (info) GMM_THROW(failure_error, "Singular system, pivot = " << info);
+    GMM_ASSERT1(!info, "Singular system, pivot = " << info);
     lu_solve(B, ipvt, x, b);
   }
   
@@ -173,8 +173,7 @@ namespace gmm {
     std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
-    if (info) 
-      GMM_THROW(failure_error, "Non invertible matrix, pivot = " << info);
+    GMM_ASSERT1(!info, "Non invertible matrix, pivot = " << info);
     lu_inverse(B, ipvt, A);
     return lu_det(B, ipvt);
   }

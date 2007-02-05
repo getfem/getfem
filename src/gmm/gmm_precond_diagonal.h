@@ -74,8 +74,7 @@ namespace gmm {
 
   template <typename Matrix, typename V1, typename V2> inline
   void mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    if (P.diag.size() != vect_size(v2))
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(P.diag.size() == vect_size(v2),"dimensions mismatch");
     copy(v1, v2);
     mult_diag_p(P, v2, typename linalg_traits<V2>::storage_type());
   }
@@ -89,8 +88,7 @@ namespace gmm {
   
   template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    if (P.diag.size() != vect_size(v2))
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(P.diag.size() == vect_size(v2), "dimensions mismatch");
     copy(v1, v2);
 #   ifdef DIAG_LEFT_MULT_SQRT
     for (size_type i= 0; i < P.diag.size(); ++i) v2[i] *= gmm::sqrt(P.diag[i]);
@@ -107,9 +105,7 @@ namespace gmm {
   template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     typedef typename linalg_traits<Matrix>::value_type T;
-
-    if (P.diag.size() != vect_size(v2))
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(P.diag.size() == vect_size(v2), "dimensions mismatch");
     copy(v1, v2);
 #   ifdef DIAG_LEFT_MULT_SQRT    
     for (size_type i= 0; i < P.diag.size(); ++i) v2[i] *= gmm::sqrt(P.diag[i]);

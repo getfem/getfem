@@ -118,7 +118,7 @@ namespace bgeot {
   template<class TAB>
   void geotrans_inv_convex::init(const TAB &nodes,  pgeometric_trans pgt_) {
     bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
-    if (nodes.empty()) DAL_INTERNAL_ERROR("empty points!");
+    GMM_ASSERT3(!nodes.empty(), "empty points!");
     if (N != nodes[0].size())
       { N = nodes[0].size(); geotrans_changed = true; }
     if (geotrans_changed) {

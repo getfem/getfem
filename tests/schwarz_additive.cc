@@ -277,20 +277,12 @@ int pb_data::solve_schwarz(int version) {
   return 0;
 }
 
-  
-struct exception_cb : public gmm::exception_callback  {
-   virtual void callback(const std::string& msg)
-   { cerr << msg << endl; *(int *)(0) = 0; } 
-};
 
 int main(int argc, char *argv[]) {
 #ifdef GMM_USES_MPI
     MPI_Init(&argc,&argv);
 #endif
  
-  exception_cb cb;
-   gmm::exception_callback::set_exception_callback(&cb);
-
   try {
     bgeot::md_param params;
     pb_data p;

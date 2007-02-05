@@ -525,10 +525,7 @@ namespace gmm {
     typename sub_vector_type<const V *, SUBI>::vector_type,
     typename sub_vector_type<V *, SUBI>::vector_type, const V *>::return_type
   sub_vector(const V &v, const SUBI &si) {
-#   ifdef GMM_VERIFY
-    if (si.last() > vect_size(v))
-      GMM_THROW(dimension_error, "sub vector too large");
-#   endif
+    GMM_ASSERT2(si.last() <= vect_size(v), "sub vector too large");
     return typename select_return<
       typename sub_vector_type<const V *, SUBI>::vector_type,
       typename sub_vector_type<V *, SUBI>::vector_type, const V *>::return_type
@@ -540,10 +537,7 @@ namespace gmm {
     typename sub_vector_type<const V *, SUBI>::vector_type,
     typename sub_vector_type<V *, SUBI>::vector_type, V *>::return_type
   sub_vector(V &v, const SUBI &si) {
-#   ifdef GMM_VERIFY
-    if (si.last() > vect_size(v))
-      GMM_THROW(dimension_error, "sub vector too large");
-#   endif
+    GMM_ASSERT2(si.last() <= vect_size(v), "sub vector too large");
     return  typename select_return<
       typename sub_vector_type<const V *, SUBI>::vector_type,
       typename sub_vector_type<V *, SUBI>::vector_type, V *>::return_type

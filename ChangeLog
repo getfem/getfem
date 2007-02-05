@@ -1,5 +1,16 @@
 2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
 
+	* src/gmm/gmm_except.h: changing error managing. Errors are now handle
+	thanks to three macros: GMM_ASSERT1(test, msg), GMM_ASSERT2(test, msg),
+	and GMM_ASSERT3(test, msg). GMM_ASSERT1 for non-maskable tests and
+	errors. GMM_ASSERT2 for maskable tests (especially for
+	performance consuming tests, maskable with NDEBUG). GMM_ASSERT3 for
+	maskable by default internal tests (activated by DEBUG_MODE). Be aware
+	that the test could not be executed. For instance
+	GMM_ASSERT2(++iteration < 1000, "not converged") is not safe.
+
+2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
 	* src/*.h: moving header files of Gmm and Getfem into sub-directories
 	src/gmm and src/getfem respectively. dal_std.h, dal_ref.h,
 	dal_algobase.h and dal_except.h are integrated to gmm and renamed

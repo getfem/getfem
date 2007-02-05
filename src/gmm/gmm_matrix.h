@@ -212,7 +212,7 @@ namespace gmm
     static void resize(this_type &v, size_type m, size_type n)
     { v.resize(m, n); }
     static void reshape(this_type &, size_type, size_type)
-    { GMM_THROW(failure_error, "Sorry, to be done"); }
+    { GMM_ASSERT1(false, "Sorry, to be done"); }
   };
 
   template<typename V> std::ostream &operator <<
@@ -314,7 +314,7 @@ namespace gmm
     static void resize(this_type &v, size_type m, size_type n)
     { v.resize(m,n); }
     static void reshape(this_type &, size_type, size_type)
-    { GMM_THROW(failure_error, "Sorry, to be done"); }
+    { GMM_ASSERT1(false, "Sorry, to be done"); }
   };
 
   template<typename V> std::ostream &operator <<
@@ -338,20 +338,14 @@ namespace gmm
   public:
     
     inline const T& operator ()(size_type l, size_type c) const {
-#     ifdef GMM_VERIFY
-      if (l >= nbl || c >= nbc) this->out_of_range_error();
-#     endif
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(this->begin() + c*nbl+l);
     }
     inline T& operator ()(size_type l, size_type c) {
-#     ifdef GMM_VERIFY
-      if (l >= nbl || c >= nbc) this->out_of_range_error();
-#     endif
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(this->begin() + c*nbl+l);
     }
 
-    void out_of_range_error(void) const;
-    
     void resize(size_type, size_type);
     void reshape(size_type, size_type);
     
@@ -367,7 +361,7 @@ namespace gmm
   };
 
   template<typename T> void dense_matrix<T>::reshape(size_type m,size_type n) {
-    if (n*m != nbl*nbc) GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
     nbl = m; nbc = n;
   }
 
@@ -396,9 +390,6 @@ namespace gmm
     size_type n = std::min(nbl, nbc);
     if (a != b) for (size_type i = 0; i < n; ++i) (*this)(i,i) = a; 
   }
-
-  template<typename T>  void dense_matrix<T>::out_of_range_error(void) const
-  { GMM_THROW(std::out_of_range, "out of range"); }
 
   template <typename T> struct linalg_traits<dense_matrix<T> > {
     typedef dense_matrix<T> this_type;
@@ -853,9 +844,9 @@ namespace gmm
     static void do_clear(this_type &m) { m.do_clear(); }
     // access to be done ...    
     static void resize(this_type &, size_type , size_type)
-    { GMM_THROW(failure_error, "Sorry, to be done"); }
+    { GMM_ASSERT1(false, "Sorry, to be done"); }
     static void reshape(this_type &, size_type , size_type)
-    { GMM_THROW(failure_error, "Sorry, to be done"); }
+    { GMM_ASSERT1(false, "Sorry, to be done"); }
   };
 
   template <typename MAT> void block_matrix<MAT>::do_clear(void) { 
@@ -943,7 +934,7 @@ namespace gmm
 namespace gmm { 
   
   template <typename T> inline MPI_Datatype mpi_type(T)
-  { GMM_THROW(failure_error, "Sorry unsupported type"); return MPI_FLOAT; }
+  { GMM_ASSERT1(false, "Sorry unsupported type"); return MPI_FLOAT; }
   inline MPI_Datatype mpi_type(double) { return MPI_DOUBLE; }
   inline MPI_Datatype mpi_type(float) { return MPI_FLOAT; }
   inline MPI_Datatype mpi_type(long double) { return MPI_LONG_DOUBLE; }

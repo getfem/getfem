@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file gmm_dense_Householder.h
-   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Caroline Lecalvez <Caroline.Lecalvez@gmm.insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 5, 2003.
    @brief Householder for dense matrices.
 */
@@ -43,8 +44,8 @@ namespace gmm {
 			      const VecY& y, row_major) {
     typedef typename linalg_traits<Matrix>::value_type T;
     size_type N = mat_nrows(A);
-    if (N > vect_size(x) || mat_ncols(A) > vect_size(y))
-      GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(N <= vect_size(x) && mat_ncols(A) <= vect_size(y),
+	       "dimensions mismatch");
     typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
     for (size_type i = 0; i < N; ++i, ++itx) {
       typedef typename linalg_traits<Matrix>::sub_row_type row_type;
@@ -62,8 +63,8 @@ namespace gmm {
 			      const VecY& y, col_major) {
     typedef typename linalg_traits<Matrix>::value_type T;
     size_type M = mat_ncols(A);
-    if (mat_nrows(A) > vect_size(x) || M > vect_size(y))
-      GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(mat_nrows(A) <= vect_size(x) && M <= vect_size(y),
+		"dimensions mismatch");
     typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
     for (size_type i = 0; i < M; ++i, ++ity) {
       typedef typename linalg_traits<Matrix>::sub_col_type col_type;
@@ -95,8 +96,8 @@ namespace gmm {
 			      const VecY& y, row_major) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     size_type N = mat_nrows(A);
-    if (N > vect_size(x) || mat_ncols(A) > vect_size(y))
-      GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(N <= vect_size(x) && mat_ncols(A) <= vect_size(y),
+		"dimensions mismatch");
     typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
     typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);
     for (size_type i = 0; i < N; ++i, ++itx1, ++ity2) {
@@ -117,8 +118,8 @@ namespace gmm {
 			      const VecY& y, col_major) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     size_type M = mat_ncols(A);
-    if (mat_nrows(A) > vect_size(x) || M > vect_size(y))
-      GMM_THROW(dimension_error,"dimensions mismatch");
+    GMM_ASSERT2(mat_nrows(A) <= vect_size(x) && M <= vect_size(y),
+		"dimensions mismatch");
     typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
     typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
     for (size_type i = 0; i < M; ++i, ++ity1, ++itx2) {

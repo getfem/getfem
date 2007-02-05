@@ -305,11 +305,6 @@ void test_region() {
   cout << "a=" << a << "\nb=" << b << "a inter b=" << r << "\n";
 }
 
-class myexc : public gmm::exception_callback {
-  void callback(const std::string& s)
-  { cerr << "exception launched: " << s << std::endl; }
-};
-
 void test_convex_ref() {
   for (unsigned k=1; k <= 2; ++k) {
     bgeot::pconvex_ref cvr  = bgeot::simplex_of_reference(1,k);

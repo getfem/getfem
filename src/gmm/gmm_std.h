@@ -29,13 +29,6 @@
 #ifndef GMM_STD_H__
 #define GMM_STD_H__
 
-#if !defined(NOGETFEM_VERIFY) && !defined(NDEBUG)
-# define GETFEM_VERIFY
-# if !defined(NOGMM_VERIFY)
-#   define GMM_VERIFY
-# endif
-#endif
-
 #ifndef __USE_STD_IOSTREAM
 # define __USE_STD_IOSTREAM
 #endif

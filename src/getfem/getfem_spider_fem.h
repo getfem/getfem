@@ -21,7 +21,7 @@
 //========================================================================
 
 /**@file getfem_spider_fem.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 29, 2004.
    @brief work in progress...
 */
@@ -162,7 +162,7 @@ namespace getfem {
 	cerr << cartesian.convex_index().card() - bv.card() << 
 	  "convexes missed by interpolated_fem, increase the "
 	  "number of integration points";
-	DAL_INTERNAL_ERROR("");
+	GMM_ASSERT3(false, "");
       }
     }
   };

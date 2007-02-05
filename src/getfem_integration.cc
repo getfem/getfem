@@ -415,7 +415,7 @@ namespace getfem {
 	    pai->add_point(pt, atof(im_desc_real[fr+j*(N+1)+N]));
 	    // pai->add_point(pt,LONG_SCALAR_ATOF(im_desc_real[fr+j*(N+1)+N]));
 	  } break;
-	  default: DAL_INTERNAL_ERROR("");
+	  default: GMM_ASSERT1(false, "");
 	  }
 	}
 
@@ -899,7 +899,7 @@ namespace getfem {
 
       for (size_type i = 0; i <= N; ++i)
 	if (i != ip1 && i != ip2) {
-	  if (other_nodes.empty()) DAL_INTERNAL_ERROR("");
+	  GMM_ASSERT3(!other_nodes.empty(), "");
 	  nodes2[i] = nodes1[other_nodes.back()];
 	  other_nodes.pop_back();
 	}
@@ -976,8 +976,8 @@ namespace getfem {
 	  }
 	  
 	  gic.invert(P1, P2);
-	  if (pgt2->convex_ref()->is_in(P2) > 1E-8) 
-	    DAL_INTERNAL_ERROR("Point not in the convex ref : " << P2);
+	  GMM_ASSERT1(pgt2->convex_ref()->is_in(P2) < 1E-8,
+		      "Point not in the convex ref : " << P2);
 	  
 	  pgt2->poly_vector_grad(P2, grad);
 	  gmm::mult(gmm::transposed(grad), gmm::transposed(G2), K);

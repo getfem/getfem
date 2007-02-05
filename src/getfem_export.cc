@@ -190,7 +190,8 @@ namespace getfem
       pmf_cell_type[cv] = t;
       const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(t);
       //cout << "nbd = " << nbd << ", t = " << t << ", dmap = " << dmap << "\n";
-      if (dmap.size() > pmf->nb_dof_of_element(cv)) DAL_INTERNAL_ERROR("inconsistency in vtk_dof_mapping");
+      GMM_ASSERT1(dmap.size() <= pmf->nb_dof_of_element(cv),
+		  "inconsistency in vtk_dof_mapping");
       for (unsigned i=0; i < dmap.size(); ++i)
         pmf_dof_used.add(pmf->ind_dof_of_element(cv)[dmap[i]]);
     }

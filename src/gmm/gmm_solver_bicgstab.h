@@ -43,7 +43,8 @@
 //=======================================================================
 
 /**@file gmm_solver_bicgstab.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Andrew Lumsdaine <lums@osl.iu.edu>
+   @author Lie-Quan Lee <llee@osl.iu.edu>
    @date October 13, 2002.
    @brief BiCGStab iterative solver.
 */
@@ -87,7 +88,7 @@ namespace gmm {
       rho_1 = gmm::vect_sp(rtilde, r);
       if (rho_1 == T(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
-	  { GMM_THROW(failure_error, "Bicgstab failed to converge"); }
+	  { GMM_ASSERT1(false, "Bicgstab failed to converge"); }
 	else { GMM_WARNING1("Bicgstab failed to converge"); return; }
       }
       
@@ -96,7 +97,7 @@ namespace gmm {
       else {
 	if (omega == T(0)) {
 	  if (iter.get_maxiter() == size_type(-1))
-	    { GMM_THROW(failure_error, "Bicgstab failed to converge"); }
+	    { GMM_ASSERT1(false, "Bicgstab failed to converge"); }
 	  else { GMM_WARNING1("Bicgstab failed to converge"); return; }
 	}
 	

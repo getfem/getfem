@@ -30,8 +30,7 @@
 
 #include "bgeot_vector.h"
 
-namespace bgeot
-{
+namespace bgeot {
 
   /* ********************************************************************* */
   /*		Class tensor<T>.     		                           */
@@ -43,8 +42,7 @@ namespace bgeot
   class multi_index : public std::vector<short_type> {
   public :
     
-    void incrementation(const multi_index &m)
-    { /* a compiler ... */
+    void incrementation(const multi_index &m) { /* a compiler ... */
       iterator it = begin(), ite = end();
       const_iterator itm = m.begin();
       
@@ -78,8 +76,7 @@ namespace bgeot
   };
 
   inline std::ostream &operator <<(std::ostream &o,
-					 const multi_index& mi)
-  {  /* a compiler ... */
+				   const multi_index& mi) { /* a compiler ...*/
     multi_index::const_iterator it = mi.begin(), ite = mi.end();
     bool f = true;
     o << "(";
@@ -104,74 +101,61 @@ namespace bgeot
       {
 	typename CONT::const_iterator it = c.begin();
 	multi_index::const_iterator q = coeff.begin(), e = coeff.end();
-	#ifdef GETFEM_VERIFY
-	  multi_index::const_iterator qv = sizes_.begin();
-	#endif
+#ifndef NDEBUG
+	multi_index::const_iterator qv = sizes_.begin();
+#endif
 	size_type d = 0;
-	for ( ; q != e; ++q, ++it)
-	{ 
+	for ( ; q != e; ++q, ++it) { 
 	  d += (*q) * (*it);
-	  #ifdef GETFEM_VERIFY
-	    if (*it >= *qv) DAL_THROW(std::out_of_range, "index out of range");
-	    ++qv;
-          #endif
+	  GMM_ASSERT2(*it < *qv++, "index out of range");
 	}
 	return *(this->begin() + d);
       }
 
       inline T& operator ()(size_type i, size_type j, size_type k,
 			    size_type l) {
-	if (order() != 4)
-	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	GMM_ASSERT2(order() == 4, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
     
       inline T& operator ()(size_type i, size_type j, size_type k) {
-	if (order() != 3)
-	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	GMM_ASSERT2(order() == 3, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
     
       inline T& operator ()(size_type i, size_type j) {
-	if (order() != 2)
-	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	GMM_ASSERT2(order() == 2, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j;
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
 
       inline const T& operator ()(size_type i, size_type j, size_type k,
 			    size_type l) const {
-	if (order() != 4)
-	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	GMM_ASSERT2(order() == 4, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
     
       inline const T& operator ()(size_type i, size_type j,
 				  size_type k) const {
-	if (order() != 3)
-	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	GMM_ASSERT2(order() == 3, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
     
       inline const T& operator ()(size_type i, size_type j) const {
-	if (order() != 2)
-	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	GMM_ASSERT2(order() == 2, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j;
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
-
-
-    
 
       template<class CONT> inline T& operator ()(const CONT &c) {
 	typename CONT::const_iterator it = c.begin();
@@ -179,7 +163,7 @@ namespace bgeot
 	size_type d = 0;
 	for ( ; q != e; ++q, ++it) d += (*q) * (*it);
 	
-	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	GMM_ASSERT2(d < size(), "index out of range");
 	return *(this->begin() + d);
       }
 
@@ -212,7 +196,8 @@ namespace bgeot
      *  t(...,j,...) <-- t(...,i,..) m(i, j)
      */
     void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
-    void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
+    void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m,
+			      int ni);
 
     size_type memsize() const {
       return sizeof(T) * this->size()
@@ -235,8 +220,8 @@ namespace bgeot
     { gmm::scale(this->as_vector(), w); return *this; }
   };
 
-  template<class T> void tensor<T>::mat_transp_reduction (const tensor &t,
-					      const gmm::dense_matrix<T> &m, int ni) { 
+  template<class T> void tensor<T>::mat_transp_reduction
+  (const tensor &t, const gmm::dense_matrix<T> &m, int ni) { 
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
     
@@ -250,10 +235,8 @@ namespace bgeot
     *mi = t.sizes();
     size_type dimt = (*mi)[ni], dim = m.nrows();
     
-    if (dimt != m.ncols()) DAL_THROW(dimension_error, "dimensions mismatch");
-    if (&t == this)
-      DAL_THROW(std::invalid_argument,
-		"does not work when t and *this are the same");
+    GMM_ASSERT2(dimt == m.ncols(), "dimensions mismatch");
+    GMM_ASSERT2(&t != this, "does not work when t and *this are the same");
 
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
@@ -281,8 +264,8 @@ namespace bgeot
       }
   }
   
-  template<class T> void tensor<T>::mat_reduction(const tensor &t,
-					 const gmm::dense_matrix<T> &m, int ni) {
+  template<class T> void tensor<T>::mat_reduction
+  (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
     static std::vector<T> *tmp;
     static multi_index *mi;
@@ -292,11 +275,8 @@ namespace bgeot
     }
     *mi = t.sizes();
     size_type dimt = (*mi)[ni], dim = m.ncols();
-    if (dimt != m.nrows())
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    if (&t == this)
-      DAL_THROW(std::invalid_argument,
-		"does not work when t and *this are the same");
+    GMM_ASSERT2(dimt == m.nrows(), "dimensions mismatch");
+    GMM_ASSERT2(&t != this, "does not work when t and *this are the same");
     
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
@@ -325,9 +305,8 @@ namespace bgeot
   }
   
 
-  template<class T> std::ostream &operator <<(std::ostream &o,
-					      const tensor<T>& t)
-  { // a ameliorer ...
+  template<class T> std::ostream &operator <<
+    (std::ostream &o, const tensor<T>& t) { // a ameliorer ...
     o << "sizes " << t.sizes() << endl;
     o << t.as_vector();
     return o;

@@ -767,9 +767,6 @@ namespace getfem {
     tmp_mesh.clear();
     //cerr << "nb cv = " << tmp_mesh.convex_index().card() << "\n";
     for (dal::bv_visitor_c ic(mm.convex_index()); !ic.finished(); ++ic) {
-      /*if (mm.structure_of_convex(ic)->basic_structure()->nb_points() 
-	  != mm.structure_of_convex(ic)->dim() + 1)
-	  DAL_INTERNAL_ERROR("");*/
       add_degree1_convex(mm.trans_of_convex(ic), mm.points_of_convex(ic), tmp_mesh);
     }
     /*tmp_mesh.write_to_file(std::cerr);

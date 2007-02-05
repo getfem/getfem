@@ -233,7 +233,7 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
     c.init().tic();
     double err2 = interpolate_check(mf1, mf2, i, mat_version); 
     if (i==0 || (mat_version > 0 && i == 1)) err = err2;
-    else if (err != err2) DAL_INTERNAL_ERROR("");
+    else GMM_ASSERT1(err == err2, "");
     printf(" %5.1f ", c.toc().cpu()*1000.); //cout << " " << setw(4) << c.toc().cpu(); 
     cout.flush();
   }
@@ -260,7 +260,7 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
     c.init().tic();
     double err2 = interpolate_check(mf1, mf2, i, mat_version); 
     if (i==0 || (mat_version > 0 && i == 1)) err = err2;
-    else if (err != err2) DAL_INTERNAL_ERROR("");
+    else GMM_ASSERT1(err == err2, "");
     printf(" %5.1f ", c.toc().cpu()*1000.); //cout << " " << setw(4) << c.toc().cpu(); 
     cout.flush();
   }

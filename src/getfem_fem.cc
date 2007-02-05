@@ -49,13 +49,13 @@ namespace getfem
     return M_;
   }
   
-  size_type fem_interpolation_context::convex_num() const { 
-    if (convex_num_ == size_type(-1)) DAL_INTERNAL_ERROR(""); 
+  size_type fem_interpolation_context::convex_num() const {
+    GMM_ASSERT3(convex_num_ != size_type(-1), "");
     return convex_num_; 
   }
 
-  size_type fem_interpolation_context::face_num() const { 
-    if (face_num_ == size_type(-1)) DAL_INTERNAL_ERROR(""); 
+  size_type fem_interpolation_context::face_num() const {
+    GMM_ASSERT3(face_num_ != size_type(-1), "");
     return face_num_; 
   }
 

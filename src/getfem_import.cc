@@ -273,9 +273,7 @@ namespace getfem {
 	  std::copy(lorder,lorder+nnode,order.begin());
 	}
       } break;
-      default: {
-	DAL_INTERNAL_ERROR("");
-      } break;
+      default: GMM_ASSERT3(false, ""); break;
       }
       if (pgt == NULL) DAL_THROW(failure_error, "unknown element type " << selemtype 
 				 << " with " << nnode << "nodes");
@@ -340,7 +338,8 @@ namespace getfem {
       cerr.precision(16);
       P[0]=round_to_nth_significant_number(P[0],6); // force 9.999999E-1 to be converted to 1.0
       P[1]=round_to_nth_significant_number(P[1],6);
-      if (m.add_point(P) != j) DAL_INTERNAL_ERROR("ouch");
+      size_type jj = m.add_point(P);
+      GMM_ASSERT1(jj == j, "ouch");
     }
     for (size_type i=0; i < nbt*3; i+=3)
       m.add_triangle(tri[i]-1,tri[i+1]-1,tri[i+2]-1);
@@ -359,7 +358,8 @@ namespace getfem {
     f >> nbs;
     for (size_type j=0; j < nbs; ++j) {
       f >> P[0] >> P[1] >> dummy; 
-      if (m.add_point(P) != j) DAL_INTERNAL_ERROR("ouch");
+      size_type jj = m.add_point(P);
+      GMM_ASSERT1(jj == j, "ouch");
     }
     while (!f.eof()) {
       size_type ip[4];

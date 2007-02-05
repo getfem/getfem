@@ -48,12 +48,12 @@ namespace getfem {
     if (!mf->linked_mesh().convex_index().is_in(cv)) 
       DAL_THROW(failure_error, "convex " << cv
 		<< " is not in the level set mesh!");
-    if (!mf->fem_of_element(cv)) DAL_INTERNAL_ERROR("");
+    GMM_ASSERT3(mf->fem_of_element(cv), "");
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
-    if (values(lsnum).size() != mf->nb_dof())
-      DAL_INTERNAL_ERROR("Inconsistent state in the levelset: nb_dof=" << 
-			 mf->nb_dof() << ", values(" << lsnum << ").size=" << 
-			 values(lsnum).size());
+    GMM_ASSERT1(values(lsnum).size() == mf->nb_dof(),
+		"Inconsistent state in the levelset: nb_dof=" << 
+		mf->nb_dof() << ", values(" << lsnum << ").size=" << 
+		values(lsnum).size());
     for (size_type i = 0; i < coeff.size(); ++i)
       coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 
 	values(lsnum)[mf->ind_dof_of_element(cv)[i]];

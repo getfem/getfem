@@ -143,8 +143,7 @@ namespace gmm {
     unsorted_sub_index &operator =(const unsorted_sub_index &si)
     { sub_index::operator =(si); return *this; }
     void swap(size_type i, size_type j) {
-      if (ind->nb_ref > 1)
-	GMM_THROW(failure_error, "Operation not allowed on this index");
+      GMM_ASSERT2(ind->nb_ref <= 1, "Operation not allowed on this index");
       if (rind) rind->swap((*ind)[i], (*ind)[j]);
       ind->swap(i, j);
     }

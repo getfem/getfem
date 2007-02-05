@@ -231,7 +231,7 @@ namespace gmm {
 				    sub_interval(j, 2))); 
 	      ++j;
 	    }
-	    else GMM_THROW(internal_error, "internal error");
+	    else GMM_ASSERT3(false, "internal error");
 	  }
 	  
 	  if (!st.ok) {
@@ -282,7 +282,7 @@ namespace gmm {
 				      sub_interval(j, 2))); 
 		++j;
 	      }
-	      else GMM_THROW(internal_error, "internal error");
+	      else GMM_ASSERT3(false, "internal error");
 	    }
 
 	    gmm::dense_matrix<T> z(st.nb_un, st.fin - st.nb_un);
@@ -328,9 +328,8 @@ namespace gmm {
     sub_interval SUBR(0, nrows), SUBC(0, ncols);
     T alpha(1);
 
-    if ( ((end-begin) != ncols) || (m != mat_nrows(H)) 
-	|| (m+1 != mat_ncols(H)) )
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(((end-begin) == ncols) && (m == mat_nrows(H)) 
+		&& (m+1 == mat_ncols(H)), "dimensions mismatch");
     
     // DEFLATION using the QR Factorization of YB
 	  

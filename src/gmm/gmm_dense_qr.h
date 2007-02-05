@@ -42,7 +42,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
-    if (m < n) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m >= n, "dimensions mismatch");
 
     std::vector<value_type> W(m), V(m);
 
@@ -67,7 +67,7 @@ namespace gmm {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
-    if (m != mat_ncols(A)) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m == mat_ncols(A), "dimensions mismatch");
     if (m == 0) return;
     std::vector<T> V(m), W(mat_nrows(A));
     V[0] = T(1);
@@ -87,7 +87,7 @@ namespace gmm {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
-    if (m != mat_nrows(A)) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m == mat_nrows(A), "dimensions mismatch");
     if (m == 0) return;
     std::vector<T> V(m), W(mat_ncols(A));
     V[0] = T(1);
@@ -106,7 +106,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
-    if (m < n) GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(m >= n, "dimensions mismatch");
     gmm::copy(A, Q);
     
     std::vector<value_type> W(m);
@@ -398,7 +398,8 @@ namespace gmm {
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
       
       qr_stop_criterion(A1, p, q, tol);
-      if (++ite > n*1000) GMM_THROW(failure_error, "QR algorithm failed");
+      ++ite;
+      GMM_ASSERT1(ite < n*1000, "QR algorithm failed");
     }
     if (compvect) block2x2_reduction(A1, Q, tol);
     extract_eig(A1, eigval, tol); 
@@ -565,8 +566,8 @@ namespace gmm {
       q_old = q;
       qr_stop_criterion(H, p, q, tol*2);
       if (q != q_old) its = 0;
-      ++its;
-      if (++ite > n*100) GMM_THROW(failure_error, "QR algorithm failed");
+      ++its; ++ite;
+      GMM_ASSERT1(ite < n*100, "QR algorithm failed");
     }
     if (compvect) block2x2_reduction(H, Q, tol);
     extract_eig(H, eigval, tol);
@@ -715,8 +716,8 @@ namespace gmm {
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
       
       symmetric_qr_stop_criterion(Tri, p, q, tol*R(2));
-      if (++ite > n*100)
-	GMM_THROW(failure_error, "QR algorithm failed. Probably, your matrix"
+      ++ite;
+      GMM_ASSERT1(ite < n*100, "QR algorithm failed. Probably, your matrix"
 		  " is not real symmetric or complex hermitian");
     }
     
@@ -758,7 +759,8 @@ namespace gmm {
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
 
       symmetric_qr_stop_criterion(diag, sdiag, p, q, tol*R(2));
-      if (++ite > n*100) GMM_THROW(failure_error, "QR algorithm failed.");
+      ++ite;
+      GMM_ASSERT1(ite < n*100, "QR algorithm failed.");
     }
     
     gmm::copy(diag, eigval);

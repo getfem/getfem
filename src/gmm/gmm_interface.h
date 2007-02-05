@@ -789,7 +789,7 @@ namespace gmm {
 			    const iterator &, size_type i)
     { return it[i]; }
     static void resize(this_type &, size_type )
-    { GMM_THROW(failure_error, "Not resizable vector"); }
+    { GMM_ASSERT1(false, "Not resizable vector"); }
   };
 
   template<typename PT> std::ostream &operator <<
@@ -808,24 +808,17 @@ namespace gmm {
     size_type nbl, nbc;
 
     inline const_reference operator ()(size_type l, size_type c) const {
-#     ifdef GMM_VERIFY
-      if (l >= nbl || c >= nbc) this->out_of_range_error();
-#     endif
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(begin_ + c*nbl+l);
     }
     inline reference operator ()(size_type l, size_type c) {
-#     ifdef GMM_VERIFY
-      if (l >= nbl || c >= nbc) this->out_of_range_error();
-#     endif
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(begin_ + c*nbl+l);
     }
     
-    void out_of_range_error(void) const
-    { GMM_THROW(std::out_of_range, "out of range"); }
-    
     void resize(size_type, size_type);
     void reshape(size_type m, size_type n) {
-      if (n*m != nbl*nbc) GMM_THROW(dimension_error,"dimensions mismatch");
+      GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
       nbl = m; nbc = n;
     }
     
@@ -941,24 +934,17 @@ namespace gmm {
     size_type nbl, nbc;
 
     inline const_reference operator ()(size_type l, size_type c) const {
-#     ifdef GMM_VERIFY
-      if (l >= nbl || c >= nbc) this->out_of_range_error();
-#     endif
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(begin_ + l*nbc+c);
     }
     inline reference operator ()(size_type l, size_type c) {
-#     ifdef GMM_VERIFY
-      if (l >= nbl || c >= nbc) this->out_of_range_error();
-#     endif
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(begin_ + l*nbc+c);
     }
     
-    void out_of_range_error(void) const
-    { GMM_THROW(std::out_of_range, "out of range"); }
-    
     void resize(size_type, size_type);
     void reshape(size_type m, size_type n) {
-      if (n*m != nbl*nbc) GMM_THROW(dimension_error,"dimensions mismatch");
+      GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
       nbl = m; nbc = n;
     }
     

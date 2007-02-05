@@ -50,12 +50,6 @@ void print_method(getfem::pintegration_method ppi) {
   cout << endl << endl;
 }
 
-class exception_cb : public gmm::exception_callback  {
-  public:
-  virtual void callback(const std::string& msg)
-  { cerr << msg << endl; *(int *)(0) = 0; }
-};
-
 class matrix_collection {
 public:
   std::vector<base_vector> lst;

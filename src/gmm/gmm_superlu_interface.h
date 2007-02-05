@@ -223,8 +223,7 @@ namespace gmm {
     Destroy_SuperNode_Matrix(&SL);
     Destroy_CompCol_Matrix(&SU);
     StatFree(&stat);
-    if (info != 0)
-      GMM_THROW(failure_error, "SuperLU solve failed: info=" << info);
+    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
     gmm::copy(sol, X);
   }
 
@@ -255,14 +254,12 @@ namespace gmm {
     void solve(const VECTX &X_, const VECTB &B, int transp=LU_NOTRANSP) const;
     SuperLU_factor(void) { is_init = false; }
     SuperLU_factor(const SuperLU_factor& other) {
-      if (other.is_init) 
-	GMM_THROW(gmm::failure_error,
-		  "copy of initialized SuperLU_factor is forbidden");
+      GMM_ASSERT2(!(other.is_init),
+		 "copy of initialized SuperLU_factor is forbidden");
       is_init = false;
     }
     SuperLU_factor& operator=(const SuperLU_factor& other) {
-      if (other.is_init || is_init) 
-	GMM_THROW(gmm::failure_error,
+      GMM_ASSERT2(!(other.is_init) && !is_init,
 		  "assignment of initialized SuperLU_factor is forbidden");
       return *this;
     }
@@ -343,10 +340,7 @@ namespace gmm {
       Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
       StatFree(&stat);
 
-      if (info != 0) {
-	// cout << "Mat = " << csc_A << endl;
-	GMM_THROW(failure_error, "SuperLU solve failed: info=" << info);
-      }
+      GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
       is_init = true;
     }
     
@@ -361,8 +355,7 @@ namespace gmm {
       case LU_NOTRANSP: options.Trans = NOTRANS; break;
       case LU_TRANSP: options.Trans = TRANS; break;
       case LU_CONJUGATED: options.Trans = CONJ; break;
-      default: GMM_THROW(gmm::failure_error,
-			 "invalid value for transposition option");
+      default: GMM_ASSERT1(false, "invalid value for transposition option");
       }
       StatInit(&stat);
       int info = 0;
@@ -383,10 +376,8 @@ namespace gmm {
 		    &berr[0] /* relative backward error             */,
 		    &stat, &info, T());
      StatFree(&stat);
-     if (info != 0) {
-	GMM_THROW(failure_error, "SuperLU solve failed: info=" << info);
-      }
-      gmm::copy(sol, X);
+     GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
+     gmm::copy(sol, X);
     }
 
   template <typename T, typename V1, typename V2> inline

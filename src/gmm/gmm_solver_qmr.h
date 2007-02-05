@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file gmm_solver_qmr.h
-   @author  Andrew Lumsdaine <lums@osl.iu.edu>, Lie-Quan Lee     <llee@osl.iu.edu>
+   @author Andrew Lumsdaine <lums@osl.iu.edu>
+   @author Lie-Quan Lee     <llee@osl.iu.edu>
    @date October 13, 2002.
    @brief Quasi-Minimal Residual iterative solver.
 */
@@ -79,7 +80,7 @@ namespace gmm {
     
       if (rho == R(0) || xi == R(0))
 	if (iter.get_maxiter() == size_type(-1)) 
-	  { GMM_THROW(failure_error, "QMR failed to converge"); }
+	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
 
       gmm::copy(gmm::scaled(v_tld, T(R(1)/rho)), v);
@@ -91,7 +92,7 @@ namespace gmm {
       delta = gmm::vect_sp(z, y);
       if (delta == T(0)) 
 	if (iter.get_maxiter() == size_type(-1)) 
-	  { GMM_THROW(failure_error, "QMR failed to converge"); }
+	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
 
       gmm::right_mult(M1, y, y_tld);		
@@ -110,13 +111,13 @@ namespace gmm {
       ep = gmm::vect_sp(q, p_tld);
       if (ep == T(0)) 
 	if (iter.get_maxiter() == size_type(-1)) 
-	  { GMM_THROW(failure_error, "QMR failed to converge"); }
+	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
 
       beta = ep / delta;
       if (beta == T(0))
 	if (iter.get_maxiter() == size_type(-1)) 
-	  { GMM_THROW(failure_error, "QMR failed to converge"); }
+	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
 
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
@@ -139,7 +140,7 @@ namespace gmm {
 
       if (gamma == T(0)) 
 	if (iter.get_maxiter() == size_type(-1)) 
-	  { GMM_THROW(failure_error, "QMR failed to converge"); }
+	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
       
       eta = -eta * T(rho_1) * gmm::sqr(gamma) / (beta * gmm::sqr(gamma_1));

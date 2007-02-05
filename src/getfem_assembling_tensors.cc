@@ -896,7 +896,7 @@ namespace getfem {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
-      if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR(t.size() << " != " << tsize);
+      GMM_ASSERT3(t.size() == size_type(tsize), "");
     }
   };
 
@@ -1611,7 +1611,7 @@ namespace getfem {
     case wALIAS: {
       vars[ident] = t.tensor(); t.tensor()->freeze();
     } break;
-    default: DAL_INTERNAL_ERROR(""); break;
+    default: GMM_ASSERT3(false, ""); break;
     }
     pop_mark();
   }

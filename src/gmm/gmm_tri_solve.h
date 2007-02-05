@@ -44,7 +44,7 @@
 //===========================================================================
 
 /**@file gmm_tri_solve.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Andrew Lumsdaine, Jeremy G. Siek, Lie-Quan Lee, Yves Renard
    @date October 13, 2002.
    @brief Solve triangular linear system for dense matrices.
 */
@@ -203,9 +203,8 @@ namespace gmm {
   void upper_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
 		       bool is_unit) {
     VecX& x = const_cast<VecX&>(x_);
-    if ((mat_nrows(T) < k) || (vect_size(x) < k)
-	|| (mat_ncols(T) < k) || is_sparse(x_))
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(mat_nrows(T) >= k && vect_size(x) >= k
+		&& mat_ncols(T) >= k && !is_sparse(x_), "dimensions mismatch");
     upper_tri_solve__(T, x, k, 
 		      typename principal_orientation_type<typename
 		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
@@ -217,9 +216,8 @@ namespace gmm {
   void lower_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
 		       bool is_unit) {
     VecX& x = const_cast<VecX&>(x_);
-    if ((mat_nrows(T) < k) || (vect_size(x) < k)
-	|| (mat_ncols(T) < k) || is_sparse(x_))
-      GMM_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT2(mat_nrows(T) >= k && vect_size(x) >= k
+		&& mat_ncols(T) >= k && !is_sparse(x_), "dimensions mismatch");
     lower_tri_solve__(T, x, k, 
 		      typename principal_orientation_type<typename
 		      linalg_traits<TriMatrix>::sub_orientation>::potype(),

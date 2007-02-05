@@ -259,8 +259,6 @@ void test2() {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  gmm::exception_callback_debug cb;
-  gmm::exception_callback::set_exception_callback(&cb);
   
   try {
     test2();

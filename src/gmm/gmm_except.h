@@ -39,132 +39,10 @@ namespace gmm {
 /*	Getfem++ generic errors.                     			   */
 /* *********************************************************************** */
 
-  /* errors definitions  */
-
-  using std::invalid_argument;
-
-  class dimension_error : public std::logic_error {
+  class gmm_error: public std::logic_error {
   public:
-    dimension_error(const std::string& what_arg): std::logic_error (what_arg)
-      { }
+    gmm_error(const std::string& what_arg): std::logic_error (what_arg) {}
   };
-
-  class file_not_found_error : public std::logic_error {
-  public:
-    file_not_found_error(const std::string& what_arg)
-      : std::logic_error (what_arg) { }
-  };
-
-  class internal_error : public std::logic_error {
-  public:
-    internal_error(const std::string& what_arg): std::logic_error (what_arg)
-      { }
-  };
-
-  class failure_error : public std::logic_error {
-  public:
-    failure_error(const std::string& what_arg): std::logic_error (what_arg)
-      { }
-  };
-
-  class not_linear_error : public std::logic_error {
-  public:
-    not_linear_error(const std::string& what_arg): std::logic_error (what_arg)
-      { }
-  };
-
-  class to_be_done_error : public std::logic_error {
-  public:
-    to_be_done_error(const std::string& what_arg): std::logic_error (what_arg)
-      { }
-  };
-
-  #define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e) \
-  { \
-    cerr << "============================================\n";\
-    cerr << "|      An error has been detected !!!      |\n";\
-    cerr << "============================================\n";\
-    cerr << e.what() << endl << endl;\
-    exit(1);\
-  }\
-  catch(std::runtime_error e)\
-  {\
-    cerr << "============================================\n";\
-    cerr << "|      An error has been detected !!!      |\n";\
-    cerr << "============================================\n";\
-    cerr << e.what() << endl << endl;\
-    exit(1);\
-  }\
-  catch(std::bad_alloc) {\
-    cerr << "============================================\n";\
-    cerr << "|  A bad allocation has been detected !!!  |\n";\
-    cerr << "============================================\n";\
-    exit(1);\
-  }\
-  catch(std::bad_typeid) { \
-    cerr << "============================================\n";\
-    cerr << "|  A bad typeid     has been detected !!!  |\n";\
-    cerr << "============================================\n";\
-    exit(1);\
-  } \
-  catch(std::bad_exception) { \
-    cerr << "============================================\n";\
-    cerr << "|  A bad exception  has been detected !!!  |\n";\
-    cerr << "============================================\n";\
-    exit(1);\
-  } \
-  catch(std::bad_cast) { \
-    cerr << "============================================\n";\
-    cerr << "|    A bad cast  has been detected !!!     |\n";\
-    cerr << "============================================\n";\
-    exit(1);\
-  } \
-  catch(...) {\
-    cerr << "============================================\n";\
-    cerr << "|  An unknown error has been detected !!!  |\n";\
-    cerr << "============================================\n";\
-    exit(1);\
-  }
-//   catch(ios_base::failure) { 
-//     cerr << "============================================\n";
-//     cerr << "| A ios_base::failure has been detected !!!|\n";
-//     cerr << "============================================\n";
-//     exit(1);
-//   } 
-
-  /* callback handler for gmm/getfem exceptions */
-  struct exception_callback {
-    virtual void callback(const std::string&) = 0; //{};
-
-    static exception_callback *which_except(exception_callback *p = 0) {
-      static exception_callback *exc_cback = 0;
-      if (p != 0) exc_cback = p;
-      return exc_cback;
-    }
-
-    static void do_exception_callback(const std::string &msg)
-      { if (which_except()) which_except()->callback(msg); }
-  
-    static void set_exception_callback(exception_callback *e)
-      { which_except(e); }
-    virtual ~exception_callback() {}
-  };
-
-  /* crashing callback for debug mode */
-  struct exception_callback_debug : public gmm::exception_callback  {
-    virtual void callback(const std::string& msg)
-    { cerr << msg << endl; *(int *)(0) = 0; }
-    virtual ~exception_callback_debug() {}
-  };
-
-#define GMM_SET_EXCEPTION_DEBUG {					\
-    gmm::exception_callback::set_exception_callback			\
-      (new gmm::exception_callback_debug);				\
-  }
-
-  /** user function for changing the default exception callback */ 
-  inline void set_exception_callback(exception_callback *e)
-  { exception_callback::which_except(e); }
 
 #ifdef GETFEM_HAVE_PRETTY_FUNCTION
 #  define GMM_PRETTY_FUNCTION __PRETTY_FUNCTION__
@@ -176,7 +54,7 @@ namespace gmm {
   //          GMM_ASSERT1 : Non-maskable errors. Typically for in/ouput and
   //               when the test do not significantly reduces the performance.
   //          GMM_ASSERT2 : All tests which are potentially performance
-  //               consuming. Not didden by default. Hidden when NDEBUG is
+  //               consuming. Not hidden by default. Hidden when NDEBUG is
   //               defined.
   //          GMM_ASSERT3 : For internal checks. Hidden by default. Active
   //               only when DEBUG_MODE is defined.
@@ -185,28 +63,23 @@ namespace gmm {
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
     std::stringstream msg;
-    msg << "Error in " << file << ", line "
-	<< line << " " << func << ": \n"
-	<< errormsg << ends;
-    gmm::exception_callback::do_exception_callback(msg.str());
-    throw gmm::failure_error(msg.str());	
+    msg << "Error in " << file << ", line " << line << " " << func
+	<< ": \n" << errormsg << ends;
+    throw gmm::gmm_error(msg.str());	
   }
 # define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg;						\
     msg << "Error in "__FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
 	<< errormsg << ends;						\
-    gmm::exception_callback::do_exception_callback(msg.str());		\
     throw (type)(msg.str());						\
   }
 #else
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
     std::stringstream msg;
-    msg << "Error in " << file << ", line "
-	<< line << " " << func << ": \n"
-	<< errormsg << ends;
-    gmm::exception_callback::do_exception_callback(msg.str());
+    msg << "Error in " << file << ", line " << line << " " << func
+	<< ": \n" << errormsg << ends;
     ::abort();	
   }
 # define GMM_THROW_(type, errormsg) {					\
@@ -214,16 +87,13 @@ namespace gmm {
     msg << "Error in "__FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
 	<< errormsg   << ends;						\
-    gmm::exception_callback::do_exception_callback(msg.str());		\
     ::abort();								\
   }
 #endif
   
 # define GMM_ASSERT1(test, errormsg)		        		\
-    { if (!(test)) GMM_THROW(gmm::failure_error, errormsg); }
+  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 
-  // inline void GMM_INTERNAL_ERROR() IS_DEPRECATED;
-  inline void GMM_INTERNAL_ERROR() {}
   // inline void GMM_THROW() IS_DEPRECATED;
   inline void GMM_THROW() {}
 #define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
@@ -233,12 +103,12 @@ namespace gmm {
 # define GMM_ASSERT3(test, errormsg)
 # define GMM_INTERNAL_ERROR(thestr)  	gmm::GMM_INTERNAL_ERROR();	\
     GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)
-#elif defined(DEBUG_MODE)
+#elif defined(GMM_DEBUG_MODE)
 # define GMM_ASSERT2(test, errormsg)				        \
-  { if (!(test)) short_error_throw(__FILE__, __LINE__,			\
+  { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
 				   GMM_PRETTY_FUNCTION, errormsg); }
 # define GMM_ASSERT3(test, errormsg)				        \
-  { if (!(test)) short_error_throw(__FILE__, __LINE__,			\
+  { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
 				   GMM_PRETTY_FUNCTION, errormsg); }  
 #  define GMM_INTERNAL_ERROR(thestr) {					\
     cerr << "Internal error: " << GMM_PRETTY_FUNCTION << " " << thestr	\
@@ -247,7 +117,7 @@ namespace gmm {
   }
 #else
 # define GMM_ASSERT2(test, errormsg)          				\
-  { if (!(test)) short_error_throw(__FILE__, __LINE__,			\
+  { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
 				   GMM_PRETTY_FUNCTION, errormsg); }
 # define GMM_ASSERT3(test, errormsg)
 #  define GMM_INTERNAL_ERROR(thestr)	{				\
@@ -341,7 +211,7 @@ namespace gmm {
 
 #define GMM_TRACE_MSG_MPI     // for Parallelized version
 #define GMM_TRACE_MSG(level_, thestr)  {			       \
-   GMM_TRACE_MSG_MPI {                                                  \
+   GMM_TRACE_MSG_MPI {                                                 \
       std::stringstream msg;                                           \
       msg << "Trace " << level_ << " in "__FILE__ << ", line "         \
           << __LINE__ << ": " << thestr  \
@@ -380,7 +250,82 @@ namespace gmm {
 # define GMM_TRACE4(thestr) {}
 #endif
 
- 
+  
+  /* ********************************************************************* */
+  /*    Definitions for compatibility with old versions.        	   */
+  /* ********************************************************************* */ 
+  
+  using std::invalid_argument;
+  
+  struct dimension_error : public std::logic_error
+  { dimension_error(const std::string& w): std::logic_error(w) {} };
+  struct file_not_found_error : public std::logic_error
+  { file_not_found_error(const std::string& w): std::logic_error (w) {} };
+  struct internal_error : public std::logic_error
+  { internal_error(const std::string& w): std::logic_error(w) {} };
+  struct failure_error : public std::logic_error
+  { failure_error(const std::string& w): std::logic_error (w) {} };
+  struct not_linear_error : public std::logic_error
+  { not_linear_error(const std::string& w): std::logic_error (w) {} };
+  struct to_be_done_error : public std::logic_error
+  { to_be_done_error(const std::string& w): std::logic_error (w) {} };
+
+#define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)	\
+    {								\
+      cerr << "============================================\n";	\
+      cerr << "|      An error has been detected !!!      |\n";	\
+      cerr << "============================================\n";	\
+      cerr << e.what() << endl << endl;				\
+      exit(1);							\
+    }								\
+  catch(std::runtime_error e)					\
+    {								\
+      cerr << "============================================\n";	\
+      cerr << "|      An error has been detected !!!      |\n";	\
+      cerr << "============================================\n";	\
+      cerr << e.what() << endl << endl;				\
+      exit(1);							\
+    }								\
+  catch(std::bad_alloc) {					\
+    cerr << "============================================\n";	\
+    cerr << "|  A bad allocation has been detected !!!  |\n";	\
+    cerr << "============================================\n";	\
+    exit(1);							\
+  }								\
+  catch(std::bad_typeid) {					\
+    cerr << "============================================\n";	\
+    cerr << "|  A bad typeid     has been detected !!!  |\n";	\
+    cerr << "============================================\n";	\
+    exit(1);							\
+  }								\
+  catch(std::bad_exception) {					\
+    cerr << "============================================\n";	\
+    cerr << "|  A bad exception  has been detected !!!  |\n";	\
+    cerr << "============================================\n";	\
+    exit(1);							\
+  }								\
+  catch(std::bad_cast) {					\
+    cerr << "============================================\n";	\
+    cerr << "|    A bad cast  has been detected !!!     |\n";	\
+    cerr << "============================================\n";	\
+    exit(1);							\
+  }								\
+  catch(...) {							\
+    cerr << "============================================\n";	\
+    cerr << "|  An unknown error has been detected !!!  |\n";	\
+    cerr << "============================================\n";	\
+    exit(1);							\
+  }
+  //   catch(ios_base::failure) { 
+  //     cerr << "============================================\n";
+  //     cerr << "| A ios_base::failure has been detected !!!|\n";
+  //     cerr << "============================================\n";
+  //     exit(1);
+  //   } 
+  
+#define GMM_SET_EXCEPTION_DEBUG
+
+
 }
 
 

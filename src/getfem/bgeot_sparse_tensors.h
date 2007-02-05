@@ -385,7 +385,7 @@ namespace bgeot {
       for (dim_type i=0; i < masks_.size(); ++i) {
 	for (dim_type j=0; j < masks_[i].indexes().size(); ++j) {
 	  dim_type k = masks_[i].indexes()[j];
-	  if (k >= idx2mask.size() || idx2mask[k].is_valid()) DAL_INTERNAL_ERROR("");
+	  GMM_ASSERT3(k < idx2mask.size() && !idx2mask[k].is_valid(), "");
 	  idx2mask[k].mask_num = i; idx2mask[k].mask_dim = j;
 	}
       }
@@ -429,11 +429,11 @@ namespace bgeot {
     /* fusion d'une autre forme */
     void merge(const tensor_shape &ts2, bool and_op = true) {
       /* quelques verifs de base */
-      if (ts2.ndim() != ndim()) DAL_INTERNAL_ERROR("");
+      GMM_ASSERT3(ts2.ndim() == ndim(), "");
       if (ts2.ndim()==0) return; /* c'est un scalaire */
       for (index_type i = 0; i < ndim(); ++i) 
-	if (index_is_valid(i) && ts2.index_is_valid(i)) 
-	  if (ts2.dim(i) != dim(i)) DAL_INTERNAL_ERROR("");
+	if (index_is_valid(i) && ts2.index_is_valid(i))
+	  GMM_ASSERT3(ts2.dim(i) == dim(i), "");
 
       tensor_mask_container new_mask;
       dal::bit_vector mask_treated1; mask_treated1.sup(0,masks().size());
@@ -450,7 +450,7 @@ namespace bgeot {
 	  find_linked_masks(i2, ts2, *this, mask_treated2, mask_treated1,
 			    lstB, lstA);
 	else continue;
-	if (!(lstA.size() || lstB.size())) DAL_INTERNAL_ERROR("");
+	GMM_ASSERT3(lstA.size() || lstB.size(), "");
 	new_mask.push_back(tensor_mask(lstA,lstB,and_op));
       }
       masks_ = new_mask;
