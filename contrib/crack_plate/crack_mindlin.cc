@@ -334,8 +334,7 @@ void crack_mindlin_problem::init(void) {
   bgeot::pgeometric_trans pgt = 
   bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
-  if (N != 2)
-    DAL_THROW(getfem::failure_error, "For a plate problem, N should be 2");
+  GMM_ASSERT1(N == 2, "For a plate problem, N should be 2");
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Number of space steps "));
@@ -402,11 +401,9 @@ void crack_mindlin_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_ut->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
+    GMM_ASSERT1(pf_ut->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_ut);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -539,7 +536,7 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
 	  enriched_dofs.add(j);
       }
       if (enriched_dofs.card() < 3)
-	DAL_WARNING0("There is " << enriched_dofs.card() <<
+	GMM_WARNING0("There is " << enriched_dofs.card() <<
 		     " enriched dofs for the crack tip");
       mf_ut_product.set_enrichment(enriched_dofs);
       mf_u3_product.set_enrichment(enriched_dofs);
@@ -770,7 +767,7 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh") ;
     plain_vector UT, U3, THETA;
     if (!p.solve(UT, U3, THETA))
-      DAL_THROW(gmm::failure_error, "Solve has failed");
+      GMM_ASSERT1(false, "Solve has failed");
     if (p.sol_ref == 3) p.compute_error(UT, U3, THETA) ;
           
     cout << "post-traitement pour l'affichage :\n" ;

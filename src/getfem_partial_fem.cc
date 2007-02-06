@@ -39,8 +39,7 @@ namespace getfem {
     debug_name_ = nm.str();
     
     init_cvs_node();
-    if (org_fem->target_dim() != 1)
-      DAL_THROW(to_be_done_error, "Vectorial fems not supported");
+    GMM_ASSERT1(org_fem->target_dim() == 1, "Vectorial fems not supported");
 
     for (size_type k = 0; k < org_fem->nb_dof(cv); ++k) {
       if (selected_dofs.is_in(k)) {
@@ -56,13 +55,13 @@ namespace getfem {
 
   void partial_fem::base_value(const base_node &, 
 				 base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void partial_fem::grad_base_value(const base_node &, 
 				      base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void partial_fem::hess_base_value(const base_node &, 
 			     base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
 
   void partial_fem::real_base_value(const fem_interpolation_context &c,
 				    base_tensor &t, bool) const {

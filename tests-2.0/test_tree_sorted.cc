@@ -120,7 +120,7 @@ int main(void)
       }
     }
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 

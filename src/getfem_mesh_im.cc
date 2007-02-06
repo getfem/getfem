@@ -56,12 +56,13 @@ namespace getfem {
     if (pim == NULL)
       { if (im_convexes.is_in(cv)) { im_convexes.sup(cv); touch(); } }
     else if (!im_convexes.is_in(cv) || ims[cv] != pim) {
-      if (pim->type() != IM_NONE && 
-	  linked_mesh_->structure_of_convex(cv)->basic_structure() 
-	  != pim->structure())
-	DAL_THROW(std::logic_error,
-		  "Incompatibility between integration method " << getfem::name_of_int_method(pim) << 
-		  " and mesh element " << bgeot::name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
+      GMM_ASSERT1
+	(pim->type() == IM_NONE || 
+	 linked_mesh_->structure_of_convex(cv)->basic_structure()
+	 == pim->structure(),
+	 "Incompatibility between integration method "
+	 << getfem::name_of_int_method(pim) << " and mesh element " <<
+	 bgeot::name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
       im_convexes.add(cv);
       ims[cv] = pim;
       touch();
@@ -80,7 +81,7 @@ namespace getfem {
   
   void mesh_im::set_integration_method(const dal::bit_vector &cvs, 
 				       dim_type im_degree) {
-    if (im_degree == dim_type(-1)) DAL_THROW(failure_error, "im_degree==-1");
+    GMM_ASSERT1(im_degree != dim_type(-1), "im_degree==-1");
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
       pintegration_method pim = 
 	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv), im_degree);
@@ -122,11 +123,9 @@ namespace getfem {
       } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
 	bgeot::get_token(ist, tmp);
 	size_type ic = atoi(tmp.c_str());
-	if (!linked_mesh().convex_index().is_in(ic)) {
-	  DAL_THROW(failure_error, "Convex " << ic <<
+	GMM_ASSERT1(linked_mesh().convex_index().is_in(ic), "Convex " << ic <<
 		    " does not exist, are you sure "
 		    "that the mesh attached to this object is right one ?");
-	}
 	
 	int rgt = bgeot::get_token(ist, tmp);
 	if (rgt != 3) { // for backward compatibility with version 1.7
@@ -134,16 +133,16 @@ namespace getfem {
 	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
 	}
 	getfem::pintegration_method pfi = getfem::int_method_descriptor(tmp);
-	if (!pfi) DAL_THROW(failure_error,
-	  "could not create the integration method '" << tmp << "'");
+	GMM_ASSERT1(pfi, "could not create the integration method '"
+		    << tmp << "'");
 	
 	set_integration_method(ic, pfi);
       } else if (tmp.size()) {
-	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
+	GMM_ASSERT1(false, "Unexpected token '" << tmp <<
 		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream "
-		  << "(missing BEGIN MESH_IM/END MESH_IM ?)");	
+	GMM_ASSERT1(false, "Unexpected end of stream "
+		    << "(missing BEGIN MESH_IM/END MESH_IM ?)");	
       }
     }
   }
@@ -151,8 +150,7 @@ namespace getfem {
   void mesh_im::read_from_file(const std::string &name)
   { 
     std::ifstream o(name.c_str());
-    if (!o) DAL_THROW(file_not_found_error,
-		      "mesh_im file '" << name << "' does not exist");
+    GMM_ASSERT1(o, "mesh_im file '" << name << "' does not exist");
     read_from_file(o);
     o.close();
   }
@@ -172,8 +170,7 @@ namespace getfem {
   void mesh_im::write_to_file(const std::string &name, bool with_mesh) const
   {
     std::ofstream o(name.c_str());
-    if (!o)
-      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+    GMM_ASSERT1(o, "impossible to open file '" << name << "'");
     o << "% GETFEM MESH_IM FILE " << '\n';
     o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     if (with_mesh) linked_mesh().write_to_file(o);

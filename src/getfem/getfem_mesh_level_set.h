@@ -80,7 +80,7 @@ namespace getfem {
     { return (cut_cv.find(i) != cut_cv.end()); }
     const mesh& mesh_of_convex(size_type i) const {
       if (is_convex_cut(i)) return *((cut_cv.find(i))->second.pmsh);
-      DAL_THROW(failure_error, "This element is not cut !");
+      GMM_ASSERT1(false, "This element is not cut !");
     }
     
     const dal::bit_vector &crack_tip_convexes() const;
@@ -137,8 +137,7 @@ namespace getfem {
     const zoneset &zoneset_of_convex(size_type cv) const {
       std::map<size_type, convex_info>::const_iterator it = cut_cv.find(cv);
       if (it != cut_cv.end()) return (*it).second.zones;
-      DAL_THROW(internal_error,
-		"You cannot call this function for uncut convexes");
+      GMM_ASSERT1(false, "You cannot call this function for uncut convexes");
     }
     
     mesh_level_set(mesh &me);

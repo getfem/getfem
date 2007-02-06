@@ -31,9 +31,9 @@ namespace getfem
     bgeot::convex<base_node>
       pararef = *(bgeot::parallelepiped_of_reference(N));
 
-    if (N >= 5) DAL_WARNING1("CAUTION : Simplexification in dimension >= 5 "
-			    "has not been tested and the resulting mesh "
-			    "should be not conformal");
+    if (N >= 5) GMM_WARNING1("CAUTION : Simplexification in dimension >= 5 "
+			     "has not been tested and the resulting mesh "
+			     "should be not conformal");
     
     const bgeot::mesh_structure &sl
       = *(bgeot::parallelepiped_of_reference(N)->simplexified_convex());
@@ -195,8 +195,8 @@ namespace getfem
       getfem::parallelepiped_regular_prism_mesh
 	(msh, N, org, vtab.begin(), nsubdiv.begin());
     } else {
-      DAL_THROW(failure_error, "cannot build a regular mesh for "
-		<< bgeot::name_of_geometric_trans(pgt));
+      GMM_ASSERT1(false, "cannot build a regular mesh for "
+		  << bgeot::name_of_geometric_trans(pgt));
     }
 
     m.clear();
@@ -229,8 +229,7 @@ namespace getfem
     PARAM.read_param_file(s);
     
     std::string GT = PARAM.string_value("GT");
-    if (GT.empty())
-      DAL_THROW(failure_error, "regular mesh : you have at least to "
+    GMM_ASSERT1(!GT.empty(), "regular mesh : you have at least to "
 		"specify the geometric transformation");
     bgeot::pgeometric_trans pgt = 
       bgeot::geometric_trans_descriptor(GT);
@@ -241,12 +240,11 @@ namespace getfem
     const std::vector<bgeot::md_param::param_value> &o
       = PARAM.array_value("ORG");
     if (o.size() > 0) {
-      if (o.size() != N)
-	DAL_THROW(failure_error,
-		  "ORG parameter should be an array of size " << N);
+      GMM_ASSERT1(o.size() == N, "ORG parameter should be an array of size "
+		  << N);
       for (size_type i = 0; i < N; ++i) {
-	if (o[i].type_of_param() != bgeot::md_param::REAL_VALUE)
-	  DAL_THROW(failure_error, "ORG should be a real array.");
+	GMM_ASSERT1(o[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+		    "ORG should be a real array.");
 	org[i] = o[i].real();
       }
     }
@@ -258,12 +256,11 @@ namespace getfem
     const std::vector<bgeot::md_param::param_value> &ns
       = PARAM.array_value("NSUBDIV");
     if (ns.size() > 0) {
-      if (ns.size() != N)
-	DAL_THROW(failure_error,
+      GMM_ASSERT1(ns.size() == N,
 		  "NSUBDIV parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
-	if (ns[i].type_of_param() != bgeot::md_param::REAL_VALUE)
-	  DAL_THROW(failure_error, "NSUBDIV should be an integer array.");
+	GMM_ASSERT1(ns[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+		    "NSUBDIV should be an integer array.");
 	nsubdiv[i] = size_type(ns[i].real()+0.5);
       }
     }
@@ -274,12 +271,11 @@ namespace getfem
     const std::vector<bgeot::md_param::param_value> &si
       = PARAM.array_value("SIZES");
     if (si.size() > 0) {
-      if (si.size() != N)
-	DAL_THROW(failure_error,
+      GMM_ASSERT1(si.size() == N,
 		  "SIZES parameter should be an array of size " << N);
       for (size_type i = 0; i < N; ++i) {
-	if (si[i].type_of_param() != bgeot::md_param::REAL_VALUE)
-	  DAL_THROW(failure_error, "SIZES should be a real array.");
+	GMM_ASSERT1(si[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+		    "SIZES should be a real array.");
 	sizes[i] = si[i].real();
       }
     }

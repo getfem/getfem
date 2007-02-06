@@ -81,7 +81,7 @@ namespace getfem {
       m(1,0) = -w[1] / gmm::sqr(r); m(1,1) = w[0] / gmm::sqr(r);
     }
     virtual void hess(const base_node &, base_matrix &) const
-    { DAL_THROW(failure_error,"this interpolated_func has no hessian"); }
+    { GMM_ASSERT1(false, "this interpolated_func has no hessian"); }
     
     
     virtual ~interpolated_transformation() {}

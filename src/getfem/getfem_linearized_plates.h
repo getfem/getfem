@@ -58,11 +58,11 @@ namespace getfem {
    const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
    const mesh_fem &mfdata, const VECT &MU,
    const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mfdata.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mfdata.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     
-    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
+		"wrong qdim for the mesh_fem");
     generic_assembly assem("mu=data$1(#3);"
 			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
 			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
@@ -194,11 +194,11 @@ namespace getfem {
    const mesh_region &rg = mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
-    if (mfdata.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mfdata.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     
-    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
+		"wrong qdim for the mesh_fem");
 
     mitc4_projection_term mitc4;
 
@@ -233,11 +233,11 @@ namespace getfem {
    const mesh_region &rg = mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
-    if (mfdata.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mfdata.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     
-    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
+		"wrong qdim for the mesh_fem");
 
     generic_assembly assem("mu=data$1(#3);"
 			   "A=data$2(8,8);"
@@ -311,9 +311,8 @@ namespace getfem {
     const T_MATRIX &get_K(void) {
       this->context_check(); 
       if (!K_uptodate || this->parameters_is_any_modified()) {
-	if (&lambda_.mf() != &mu_.mf()) 
-	DAL_THROW(failure_error,
-		  "lambda and mu should share the same mesh_fem");
+	GMM_ASSERT1(&lambda_.mf() == &mu_.mf(),
+		    "lambda and mu should share the same mesh_fem");
 	gmm::resize(K, nbdof, nbdof);
 	gmm::clear(K);
 	gmm::sub_interval I1(0, mf_ut.nb_dof());
@@ -396,12 +395,9 @@ namespace getfem {
     }
 
     void init_(void) {
-      if (mf_ut.get_qdim() != 2)
-	DAL_THROW(failure_error, "Qdim of mf_ut should be 2.");
-      if (mf_u3.get_qdim() != 1)
-	DAL_THROW(failure_error, "Qdim of mf_u3 should be 1.");
-      if (mf_theta.get_qdim() != 2)
-	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
+      GMM_ASSERT1(mf_ut.get_qdim() == 2, "Qdim of mf_ut should be 2.");
+      GMM_ASSERT1(mf_u3.get_qdim() == 1, "Qdim of mf_u3 should be 1.");
+      GMM_ASSERT1(mf_theta.get_qdim() == 2, "Qdim of mf_theta should be 2.");
       mitc = false;
       this->add_proper_mesh_im(mim);
       this->add_proper_mesh_im(mim_subint);
@@ -464,8 +460,8 @@ namespace getfem {
 			    const mesh_region &rg
 			    = mesh_region::all_convexes()) {
     
-    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
+		"wrong qdim for the mesh_fem");
     generic_assembly assem("t1=comp(Grad(#1).vBase(#2));"
 			   "M$1(#1,#2)+=t1(:,i,:,i);");
     assem.push_mi(mim);
@@ -483,8 +479,8 @@ namespace getfem {
 			     const mesh_region &rg
 			     = mesh_region::all_convexes()) {
     
-    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
+		"wrong qdim for the mesh_fem");
     generic_assembly assem("t1=comp(Base(#1).vGrad(#2));"
 			   "M$1(#1,#2)+=t1(:,:,2,1)-t1(:,:,1,2);");
     assem.push_mi(mim);
@@ -648,12 +644,9 @@ namespace getfem {
 
     void init_(void) {
       size_type info = 1 + (symmetrized ? 2 : 0);
-      if (mf_ut.get_qdim() != 2)
-	DAL_THROW(failure_error, "Qdim of mf_ut should be 2.");
-      if (mf_u3.get_qdim() != 1)
-	DAL_THROW(failure_error, "Qdim of mf_u3 should be 1.");
-      if (mf_theta.get_qdim() != 2)
-	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
+      GMM_ASSERT1(mf_ut.get_qdim() == 2, "Qdim of mf_ut should be 2.");
+      GMM_ASSERT1(mf_u3.get_qdim() == 1, "Qdim of mf_u3 should be 1.");
+      GMM_ASSERT1(mf_theta.get_qdim() == 2, "Qdim of mf_theta should be 2.");
       this->add_proper_mesh_im(mim);
       this->add_proper_mesh_fem(mf_ut, MDBRICK_MIXED_LINEAR_PLATE, info );
       this->add_proper_mesh_fem(mf_u3, MDBRICK_MIXED_LINEAR_PLATE, 0);
@@ -755,11 +748,11 @@ namespace getfem {
 	mixed=true;
 	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
-      else DAL_THROW(failure_error,
-		     "This brick should only be applied to a plate problem");
-      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
-	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
-	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+      else GMM_ASSERT1(false, "This brick should only be applied to a "
+		       "plate problem");
+      GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
+		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+		  "The mesh_fem number is not correct");
 
       theta_part = new mdbrick_source_term<MODEL_STATE>
 	(problem, mf_data, M__, bound, num_fem+2);
@@ -842,11 +835,11 @@ namespace getfem {
 	mixed=true;
 	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
-      else DAL_THROW(failure_error,
-		     "This brick should only be applied to a plate problem");
-      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
-	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
-	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+      else GMM_ASSERT1(false, "This brick should only be applied to "
+		       "a plate problem");
+      GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
+		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+		  "The mesh_fem number is not correct");
 
       if (mixed) {
 	sub_problem = phi_part = new mdbrick_Dirichlet<MODEL_STATE>(*u3_part, bound, dummy_mesh_fem(), num_fem+4);
@@ -909,11 +902,11 @@ namespace getfem {
 	mixed=true;
 	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
-      else DAL_THROW(failure_error,
-		     "This brick should only be applied to a plate problem");
-      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
-	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
-	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+      else GMM_ASSERT1(false, "This brick should only be applied to "
+		       "a plate problem");
+      GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
+		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+		  "The mesh_fem number is not correct");
 
       if (mixed) {
 	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
@@ -1160,11 +1153,11 @@ namespace getfem {
 	mixed=true;
 	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
-      else DAL_THROW(failure_error,
-		     "This brick should only be applied to a plate problem");
-      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
-	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
-	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+      else GMM_ASSERT1(false, "This brick should only be applied to "
+		       "a plate problem");
+      GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
+		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+		  "The mesh_fem number is not correct");
 
       this->add_sub_brick(problem);
       this->force_update();

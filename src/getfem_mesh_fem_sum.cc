@@ -43,8 +43,7 @@ namespace getfem {
     
     init_cvs_node();
     for (size_type i = 0; i < pfems.size(); ++i) {
-      if (pfems[i]->target_dim() != 1)
-	DAL_THROW(to_be_done_error, "Vectorial fems not supported");
+      GMM_ASSERT1(pfems[i]->target_dim() == 1, "Vectorial fems not supported");
 
       for (size_type k = 0; k < pfems[i]->nb_dof(cv); ++k) {
 	add_node(pfems[i]->dof_types()[k], pfems[i]->node_of_dof(cv,k));
@@ -112,8 +111,7 @@ namespace getfem {
 		    found = true;
 		  }
 		}
-		if (!found)
-		  DAL_THROW(failure_error,
+		GMM_ASSERT1(found,
 			    "Sorry, smart_global_dof_linking not "
 			    "compatible with this kind of dof");
 	      }
@@ -133,18 +131,18 @@ namespace getfem {
       if (j >= nb) j -= pfems[i]->nb_dof(cv);
       else return pfems[i]->index_of_global_dof(cv, j);
     }
-    DAL_THROW(failure_error, "incoherent global dof.");
+    GMM_ASSERT1(false, "incoherent global dof.");
   }
 
   void fem_sum::base_value(const base_node &, 
 				 base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_sum::grad_base_value(const base_node &, 
 				      base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_sum::hess_base_value(const base_node &, 
 			     base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
 
   void fem_sum::real_base_value(const fem_interpolation_context &c,
 				base_tensor &t, 

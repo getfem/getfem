@@ -128,7 +128,7 @@ void lap_pb::init(void) {
   case 22 : sprintf(meth, "IM_TETRAHEDRON(2)"); break;
   case 23 : sprintf(meth, "IM_TETRAHEDRON(3)"); break;
   case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
-  default : DAL_THROW(std::logic_error, "Undefined integration method");
+  default : GMM_THROW(std::logic_error, "Undefined integration method");
   }
   ppi = getfem::int_method_descriptor(meth);
   
@@ -272,6 +272,6 @@ int main(int argc, char *argv[]) {
     p.assemble();
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }

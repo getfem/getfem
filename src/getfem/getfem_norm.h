@@ -88,7 +88,7 @@ namespace getfem
 	const slice_simplex &s = ms.simplexes[is];
 	if (gp == 0 || s.dim() != im->dim()) 
 	  gp = bgeot::geotrans_precomp(bgeot::simplex_geotrans(s.dim(),1), &im->integration_points());
-	//DAL_THROW(dal::dimension_error, "incompatible dimension of the slice");
+	//GMM_ASSERT1(false, "incompatible dimension of the slice");
 	base_matrix M(s.dim(),s.dim());
 
 	for (size_type i=0; i < s.dim(); ++i) 

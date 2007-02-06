@@ -286,8 +286,7 @@ namespace getfem {
 
     /* signalement des points qui se trouvent pile-poil sur la bordure */
     if (pt_bin.card()) {
-      if (ms.fcnt == dim_type(-1))
-	DAL_THROW(internal_error, 
+      GMM_ASSERT1(ms.fcnt != dim_type(-1), 
 		  "too much {faces}/{slices faces} in the convex " << ms.cv 
 		  << " (nbfaces=" << ms.fcnt << ")");
       for (dal::bv_visitor cnt(pt_bin); !cnt.finished(); ++cnt) {
@@ -556,8 +555,7 @@ namespace getfem {
 
   void mesh_slicer::using_mesh_level_set(const mesh_level_set &mls_) { 
     mls = &mls_;
-    if (&m != &mls->linked_mesh()) 
-      DAL_THROW(failure_error, "different meshes");
+    GMM_ASSERT1(&m == &mls->linked_mesh(), "different meshes");
   }
 
   void mesh_slicer::pack() {
@@ -596,7 +594,9 @@ namespace getfem {
   static void flag_points_on_faces(const bgeot::pconvex_ref& cvr, 
                                    const std::vector<base_node>& pts, 
                                    std::vector<slice_node::faces_ct>& faces) {
-    if (cvr->structure()->nb_faces() > 32) DAL_THROW(std::out_of_range, "won't work for convexes with more than 32 faces (hardcoded limit)");
+    GMM_ASSERT1(cvr->structure()->nb_faces() <= 32,
+		"won't work for convexes with more than 32 faces "
+		"(hardcoded limit)");
     faces.resize(pts.size());
     for (size_type i=0; i < pts.size(); ++i) {
       faces[i].reset();      
@@ -913,7 +913,7 @@ namespace getfem {
   
   /* apply slice ops to an already stored slice object */
   void mesh_slicer::exec(const stored_mesh_slice& sl) {
-    if (&sl.linked_mesh() != &m) DAL_THROW(failure_error, "wrong mesh");
+    GMM_ASSERT1(&sl.linked_mesh() == &m, "wrong mesh");
     for (stored_mesh_slice::cvlst_ct::const_iterator it = sl.cvlst.begin(); it != sl.cvlst.end(); ++it) {
       update_cv_data((*it).cv_num);
       nodes = (*it).nodes;

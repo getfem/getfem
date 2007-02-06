@@ -103,8 +103,8 @@ namespace getfem {
       case IM_APPROX: 
 	ppi = 0; pai = pi->approx_method(); is_ppi = false; break;
       case IM_NONE: 
-	DAL_THROW(failure_error, 
-		  "Attempt to use IM_NONE integration method in assembly!\n");
+	GMM_ASSERT1(false, "Attempt to use IM_NONE integration method "
+		    "in assembly!\n");
       }
 
       faces_computed = volume_computed = false;
@@ -118,12 +118,9 @@ namespace getfem {
       for (size_type k = 0; it != ite; ++it, ++k) {
 	if ((*it).pfi) {
 	  if ((*it).pfi->is_on_real_element()) computed_on_real_element = true;
-	  if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear 
-			 || computed_on_real_element))
-	    DAL_THROW(std::invalid_argument, 
+	  GMM_ASSERT1(!is_ppi || (((*it).pfi->is_polynomial()) && is_linear 
+				  && !computed_on_real_element),
 		      "Exact integration not allowed in this context");
-// 	  if((*it).pfi->basic_structure() != pgt->basic_structure())
-// 	    DAL_THROW(std::invalid_argument, "incorrect computation");
 	  
 	  if ((*it).t != GETFEM_NONLINEAR_ && !((*it).pfi->is_equivalent())) {
 	    // TODO : le numero d'indice à reduire peut changer ...
@@ -162,8 +159,8 @@ namespace getfem {
 	  case GETFEM_NONLINEAR_ : {
 	    if ((*it).nl_part == 0) {
 	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
-	      if (is_ppi) DAL_THROW(failure_error, "For nonlinear terms you have "
-				    "to use approximated integration");
+	      GMM_ASSERT1(!is_ppi, "For nonlinear terms you have "
+			  "to use approximated integration");
 	      computed_on_real_element = true;
 	    }
 	  } break;
@@ -308,7 +305,7 @@ namespace getfem {
         for (k=k0+1; k != pme->size() && ++pts[k] == elmt_stored[k].end(); ++k)
           pts[k] = elmt_stored[k].begin();
       } while (k != pme->size());
-      if (pt != t.end()) DAL_THROW(internal_error, "Internal error");
+      GMM_ASSERT1(pt == t.end(), "Internal error");
     }
 
     /* do the tensorial product using the blas function daxpy (much more
@@ -352,7 +349,7 @@ namespace getfem {
           for (k=1; k != nm && ++pts[k] == es_end[k]; ++k)
             pts[k] = es_beg[k];
         } while (k != nm);
-        if (pt != t.end()) DAL_THROW(internal_error, "Internal error");
+        GMM_ASSERT1(pt == t.end(), "Internal error");
       }
     }
 
@@ -367,7 +364,7 @@ namespace getfem {
       size_type f = 1;
       for ( ; mit != mite; ++mit, ++f) f *= *mit;
       if (f > 1000000)
-	DAL_WARNING2("Warning, very large elementary computations.\n" 
+	GMM_WARNING2("Warning, very large elementary computations.\n" 
 		    << "Be sure you need to compute this elementary matrix.\n"
 		    << "(sizes = " << sizes << " )\n");
 
@@ -410,10 +407,10 @@ namespace getfem {
 	    case GETFEM_GRAD_GEOTRANS_INV_:
 	    case GETFEM_UNIT_NORMAL_ :
 	    case GETFEM_NONLINEAR_ :
-	      DAL_THROW(failure_error, 
-			"Normals, gradients of geotrans and non linear terms "
-			"are not compatible with exact integration, "
-			"use an approximate method instead");
+	      GMM_ASSERT1(false, 
+			  "Normals, gradients of geotrans and non linear "
+			  "terms are not compatible with exact integration, "
+			  "use an approximate method instead");
 	  }
 	  ++it;
 
@@ -437,7 +434,7 @@ namespace getfem {
 	      case GETFEM_GRAD_GEOTRANS_:
 	      case GETFEM_GRAD_GEOTRANS_INV_ :
 	      case GETFEM_NONLINEAR_ :
-		DAL_THROW(failure_error, "No nonlinear term allowed here");
+		GMM_ASSERT1(false, "No nonlinear term allowed here");
 	      }
 	      P *= R;   
 	    }
@@ -473,7 +470,7 @@ namespace getfem {
       fem_interpolation_context ctx(pgp,0,0,G,elt, ir-1);
       bgeot::multi_index sizes = pme->sizes(elt);
 
-      if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
+      GMM_ASSERT1(G.ncols() == NP, "dimensions mismatch");
       if (ir > 0) {
 	up.resize(N); un.resize(P);
 	un = pgt->normals()[ir-1];

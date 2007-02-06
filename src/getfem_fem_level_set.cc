@@ -79,13 +79,13 @@ namespace getfem {
 
   void fem_level_set::base_value(const base_node &, 
 				 base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_level_set::grad_base_value(const base_node &, 
 				      base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_level_set::hess_base_value(const base_node &, 
 			     base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element.");  }
+  { GMM_ASSERT1(false, "No base values, real only element.");  }
 
   void fem_level_set::find_zone_id(const fem_interpolation_context &c, 
 				   std::vector<unsigned> &ids) const {

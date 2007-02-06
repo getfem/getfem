@@ -212,8 +212,8 @@ namespace getfem {
       nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
     }
     size_type Q = gmm::vect_size(U) / nb_val;
-    if (gmm::vect_size(U) != nb_val*Q) 
-      DAL_THROW(failure_error, "inconsistency in the size of the dataset: " 
+    GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
+		"inconsistency in the size of the dataset: " 
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     write_separ();
     if (Q == 1) {
@@ -238,8 +238,7 @@ namespace getfem {
       for (size_type i=0; i < nb_val; ++i) {
         write_3x3tensor(U.begin() + i*Q);
       }
-    } else DAL_THROW(dimension_error,
-		     "vtk does not accept vectors of dimension > 3");
+    } else GMM_ASSERT1(false, "vtk does not accept vectors of dimension > 3");
     write_separ();
   }
 
@@ -363,11 +362,11 @@ namespace getfem {
 					     bool raise_error = true);
     dxMesh &current_mesh() { 
       if (meshes.size()) return meshes.back(); 
-      else DAL_THROW(failure_error, "no mesh!"); 
+      else GMM_ASSERT1(false, "no mesh!"); 
     }
     dxObject &current_data() {
       if (objects.size()) return objects.back(); 
-      else DAL_THROW(failure_error, "no data!"); 
+      else GMM_ASSERT1(false, "no data!"); 
     }
 
     std::string name_of_pts_array(const std::string &meshname) 
@@ -452,10 +451,10 @@ namespace getfem {
       nb_val = psl ? (psl_use_merged ? psl->nb_merged_nodes() : psl->nb_points()) : pmf_dof_used.card();
     }
     size_type Q = gmm::vect_size(U) / nb_val;
-    if (gmm::vect_size(U) != nb_val*Q) 
-      DAL_THROW(failure_error, "inconsistency in the size of the dataset: " 
+    GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
+		"inconsistency in the size of the dataset: " 
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
-
+    
     os << "\nobject \"" << name << "_data\" class array type float rank ";
     if (Q == 1) { os << "0"; } /* scalar data */
     else if (Q == 4) { os << "2 shape 2 2"; } /* or 2x2 tensor data */

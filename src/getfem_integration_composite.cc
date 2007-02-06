@@ -39,8 +39,8 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = mi.linked_mesh().trans_of_convex(cv);
       if (pim->type() != IM_APPROX || !(pgt->is_linear())) {
 	delete p;
-	DAL_THROW(failure_error,
-		  "Approx integration and linear transformation are required.");
+	GMM_ASSERT1(false, "Approx integration and linear transformation "
+		    "are required.");
       }
       papprox_integration pai = pim->approx_method();
       
@@ -80,15 +80,14 @@ namespace getfem {
 
   pintegration_method structured_composite_int_method(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 0,
+		"Bad type of parameters");
     pintegration_method pim = params[0].method();
     int k = int(::floor(params[1].num() + 0.01));
-    if (pim->type() != IM_APPROX || k <= 0 || k > 150 || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(pim->type() == IM_APPROX && k > 0 && k <= 150 &&
+		double(k) == params[1].num(), "Bad parameters");
 
     bgeot::pbasic_mesh pm;
     bgeot::pmesh_precomposite pmp;
@@ -117,14 +116,11 @@ namespace getfem {
     just_for_singleton_HCT__ &jfs
       = dal::singleton<just_for_singleton_HCT__>::instance();
 
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 1, "Bad type of parameters");
     pintegration_method pim = params[0].method();
-    if (pim->type() != IM_APPROX)
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(pim->type() == IM_APPROX, "Bad parameters");
 
     
     jfs.m.clear();
@@ -158,15 +154,11 @@ namespace getfem {
     just_for_singleton_QUADC1__ &jfs
       = dal::singleton<just_for_singleton_QUADC1__>::instance();
 
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 1, "Bad type of parameters");
     pintegration_method pim = params[0].method();
-    if (pim->type() != IM_APPROX)
-      DAL_THROW(failure_error, "Bad parameters");
-
+    GMM_ASSERT1(pim->type() == IM_APPROX, "Bad parameters");
     
     jfs.m.clear();
     size_type i0 = jfs.m.add_point(base_node(0.0, 0.0));

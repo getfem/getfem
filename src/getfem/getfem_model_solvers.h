@@ -79,7 +79,7 @@ namespace getfem {
 		     gmm::iteration &iter)  const {
       gmm::ildlt_precond<MAT> P(M);
       gmm::cg(M, x, b, P, iter);
-      if (!iter.converged()) DAL_WARNING2("cg did not converge!");
+      if (!iter.converged()) GMM_WARNING2("cg did not converge!");
     }
   };
 
@@ -90,7 +90,7 @@ namespace getfem {
 		     gmm::iteration &iter)  const {
       gmm::ilu_precond<MAT> P(M);
       gmm::gmres(M, x, b, P, 50, iter);
-      if (!iter.converged()) DAL_WARNING2("gmres did not converge!");
+      if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
 
@@ -101,7 +101,7 @@ namespace getfem {
 		     gmm::iteration &iter)  const {
       gmm::ilut_precond<MAT> P(M, 10, 1E-7);
       gmm::gmres(M, x, b, P, 50, iter);
-      if (!iter.converged()) DAL_WARNING2("gmres did not converge!");
+      if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
   
@@ -112,7 +112,7 @@ namespace getfem {
 		     gmm::iteration &iter)  const {
       gmm::ilutp_precond<MAT> P(M, 10, 1E-7);
       gmm::gmres(M, x, b, P, 50, iter);
-      if (!iter.converged()) DAL_WARNING2("gmres did not converge!");
+      if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
   
@@ -233,8 +233,7 @@ namespace getfem {
 	     it != mesh_set.end(); ++it, ++nset)
 	  if (*it == &(mf.linked_mesh())) break; 
 	size_type pos = problem.get_mesh_fem_position(i);
-	if (pos != apos)
-	  DAL_THROW(failure_error, "Multipliers are not taken into account");
+	GMM_ASSERT1(pos == apos, "Multipliers are not taken into account");
 	size_type length = mf.nb_dof();
 	apos += length;
 	for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
@@ -243,8 +242,7 @@ namespace getfem {
 	    for (size_type l = 0; l < mf.nb_dof_of_element(j); ++l)
 	      Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
 	}
-	if (apos != ndof)
-	  DAL_THROW(failure_error, "Multipliers are not taken into account");
+	GMM_ASSERT1(apos == ndof, "Multipliers are not taken into account");
       }
       // nblocsubdom is number of sub dom per proc        
 //       std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom*size);   
@@ -348,7 +346,7 @@ namespace getfem {
       p.reset(new linear_solver_distributed_mumps<T_MATRIX, VECTOR>);
 # endif
 #else
-      DAL_THROW(failure_error, "Mumps is not interfaced");
+      GMM_ASSERT1(false, "Mumps is not interfaced");
 #endif
     }
     else if (bgeot::casecmp(name, "cg/ildlt") == 0)
@@ -362,7 +360,7 @@ namespace getfem {
     else if (bgeot::casecmp(name, "auto") == 0)
       p = default_linear_solver(problem);
     else
-      DAL_THROW(failure_error, "Unknown linear solver");
+      GMM_ASSERT1(false, "Unknown linear solver");
     return p;
   }
 
@@ -632,8 +630,7 @@ namespace getfem {
       else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
       else if (cvs == bgeot::parallelepiped_structure(2)) { k = 4; etype = 4; }
       else if (cvs == bgeot::parallelepiped_structure(3)) { k = 8; etype = 3; }
-      else DAL_THROW(failure_error,
-		     "This kind of element is not taken into account");
+      else GMM_ASSERT1(false,"This kind of element is not taken into account");
 
       
       std::vector<int> elmnts(ne*k), npart(nn);
@@ -657,8 +654,7 @@ namespace getfem {
 	   it != mesh_set.end(); ++it, ++nset)
 	if (*it == &(mf.linked_mesh())) break; 
       size_type pos = problem.get_mesh_fem_position(i);
-      if (pos != apos)
-	DAL_THROW(failure_error, "Multipliers are not taken into account");
+      GMM_ASSERT1(pos == apos, "Multipliers are not taken into account");
       size_type length = mf.nb_dof();
       apos += length;
       for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
@@ -666,8 +662,7 @@ namespace getfem {
 	for (size_type l = 0; l < mf.nb_dof_of_element(i); ++l)
 	  Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
       }
-      if (apos != ndof)
-	DAL_THROW(failure_error, "Multipliers are not taken into account");
+      GMM_ASSERT1(apos == ndof, "Multipliers are not taken into account");
     }
 
     std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nparts);    
@@ -720,7 +715,7 @@ namespace getfem {
 	problem.compute_tangent_matrix(MS);
 	MS.compute_reduced_system();
 #if GETFEM_PARA_LEVEL > 1
-        DAL_THROW(failure_error, "oups ...");
+        GMM_ASSERT1(false, "oups ...");
 #endif
       }
       
@@ -792,7 +787,7 @@ namespace getfem {
 	
 	double t = dal::uclock_sec();
 #ifdef GMM_USES_MUMPS
-	DAL_TRACE2("Solving with MUMPS\n");
+	GMM_TRACE2("Solving with MUMPS\n");
 	MUMPS_solve(MS.reduced_tangent_matrix(), dr,
 		    gmm::scaled(MS.reduced_residual(), value_type(-1)));
 #else
@@ -810,7 +805,7 @@ namespace getfem {
 	  gmm::cg(MS.reduced_tangent_matrix(), dr, 
 		  gmm::scaled(MS.reduced_residual(), value_type(-1)),
 		  P, iter_linsolv);
-	  if (!iter_linsolv.converged()) DAL_WARNING2("cg did not converge!");
+	  if (!iter_linsolv.converged()) GMM_WARNING2("cg did not converge!");
 	} else {
 	  if (mixvar.card() == 0) {
 	    gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
@@ -828,7 +823,7 @@ namespace getfem {
 		       P, 300, iter_linsolv);
 	  }
 	  if (!iter_linsolv.converged())
-	    DAL_WARNING2("gmres did not converge!");
+	    GMM_WARNING2("gmres did not converge!");
 	}
       } 
 #endif // GETFEM_PARA_LEVEL < 2

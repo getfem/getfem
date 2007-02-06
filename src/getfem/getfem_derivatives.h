@@ -57,13 +57,11 @@ namespace getfem
     size_type target_qdim = mf_target.get_qdim();
 
 
-    if (&mf.linked_mesh() != &mf_target.linked_mesh())
-      DAL_THROW(std::invalid_argument, "meshes are different.");
-
-    if (target_qdim != qdim && target_qdim != 1) {
-      DAL_THROW(std::invalid_argument, "invalid Qdim for gradient mesh_fem");
-    }
-
+    GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
+		"meshes are different.");
+    GMM_ASSERT1(target_qdim == qdim || target_qdim == 1,
+		"invalid Qdim for gradient mesh_fem");
+    
     base_matrix G;
     std::vector<T> coeff;
  
@@ -75,8 +73,7 @@ namespace getfem
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
-      if (pf_target->need_G() || !(pf_target->is_lagrange()))
-	DAL_THROW(std::invalid_argument, 
+      GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
 		  "finite element target not convenient");
       
       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
@@ -131,14 +128,10 @@ namespace getfem
     size_type qdim = mf.get_qdim();
     size_type target_qdim = mf_target.get_qdim();
 
-
-    if (&mf.linked_mesh() != &mf_target.linked_mesh())
-      DAL_THROW(std::invalid_argument, "meshes are different.");
-
-    if (target_qdim != qdim && target_qdim != 1) {
-      DAL_THROW(std::invalid_argument, "invalid Qdim for gradient mesh_fem");
-    }
-
+    GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
+		"meshes are different.");
+    GMM_ASSERT1(target_qdim == qdim || target_qdim == 1,
+		"invalid Qdim for gradient mesh_fem");
     base_matrix G;
     std::vector<T> coeff;
  
@@ -150,8 +143,7 @@ namespace getfem
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
-      if (pf_target->need_G() || !(pf_target->is_lagrange()))
-	DAL_THROW(std::invalid_argument, 
+      GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
 		  "finite element target not convenient");
       
       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));

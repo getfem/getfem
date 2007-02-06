@@ -36,9 +36,9 @@
 #include "getfem_mat_elem.h"
 #include <map>
 
-#define ASM_THROW_PARSE_ERROR(x) DAL_THROW(std::invalid_argument, "parse error: " << x << endl << "found here:\n " << syntax_err_print());
-#define ASM_THROW_TENSOR_ERROR(x) DAL_THROW(std::invalid_argument, "tensor error: " << x);
-#define ASM_THROW_ERROR(x) DAL_THROW(std::invalid_argument, "error: " << x);
+#define ASM_THROW_PARSE_ERROR(x) GMM_ASSERT1(false, "parse error: " << x << endl << "found here:\n " << syntax_err_print());
+#define ASM_THROW_TENSOR_ERROR(x) GMM_ASSERT1(false, "tensor error: " << x);
+#define ASM_THROW_ERROR(x) GMM_ASSERT1(false, "error: " << x);
 
 namespace getfem {
   using bgeot::stride_type;

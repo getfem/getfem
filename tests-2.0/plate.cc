@@ -118,7 +118,7 @@ void plate_problem::init(void) {
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   if (N != 2)
-    DAL_THROW(getfem::failure_error, "For a plate problem, N should be 2");
+    GMM_THROW(getfem::failure_error, "For a plate problem, N should be 2");
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Number of space steps "));
@@ -250,7 +250,7 @@ void plate_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_ut->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      GMM_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -297,7 +297,7 @@ void plate_problem::init(void) {
               mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
             break ;
        default :
-	    DAL_THROW(getfem::failure_error, "SOL_REF parameter is undefined");
+	    GMM_THROW(getfem::failure_error, "SOL_REF parameter is undefined");
 	    break ;
        } 
   }
@@ -362,7 +362,7 @@ scalar_type plate_problem::u3_exact(base_node P) {
 	     }
        return (u3_local) ;
        break ; 
-  default : DAL_THROW(dal::failure_error, 
+  default : GMM_THROW(dal::failure_error, 
 		 "indice de solution de référence incorrect");
   }
 }
@@ -571,7 +571,7 @@ bool plate_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {    
@@ -582,11 +582,11 @@ int main(int argc, char *argv[]) {
     p.pressure *= p.epsilon * p.epsilon * p.epsilon;
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U;
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) GMM_THROW(dal::failure_error,"Solve has failed");
     p.compute_error(U);
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

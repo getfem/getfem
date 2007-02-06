@@ -34,7 +34,7 @@ namespace getfem {
 				   const mesh_fem &mf, bgeot::pconvex_ref cr) {
     
 //     if (&(bgeot::basic_mesh(mf.linked_mesh()) != &(mp.linked_mesh()))
-//       DAL_THROW(failure_error, "Meshes are different.");
+//       GMM_ASSERT1(false, "Meshes are different.");
     fem<bgeot::polynomial_composite> *p = new fem<bgeot::polynomial_composite>;
 
     p->mref_convex() = cr;
@@ -54,7 +54,7 @@ namespace getfem {
       if (!pf1->is_lagrange()) p->is_lagrange() = false;
       if (!(pf1->is_equivalent() && pf1->is_polynomial())) {
 	delete p;
-	DAL_THROW(failure_error, "Only for polynomial and equivalent fem.");
+	GMM_ASSERT1(false, "Only for polynomial and equivalent fem.");
       }
       ppolyfem pf = ppolyfem(pf1.get());
       p->estimated_degree() = std::max(p->estimated_degree(),
@@ -78,17 +78,14 @@ namespace getfem {
 
   pfem structured_composite_fem_method(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 0,
+		"Bad type of parameters");
     pfem pf = params[0].method();
     int k = int(::floor(params[1].num() + 0.01));
-    if (!(pf->is_polynomial()) || !(pf->is_equivalent()) || k <= 0
-	|| k > 150 || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
-
+    GMM_ASSERT1((pf->is_polynomial()) || !(pf->is_equivalent()) && k > 0
+		&& k <= 150 && double(k) == params[1].num(), "Bad parameters");
     bgeot::pbasic_mesh pm;
     bgeot::pmesh_precomposite pmp;
 
@@ -105,18 +102,17 @@ namespace getfem {
 
   pfem PK_composite_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 3)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0 || params[2].type()!= 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 3, "Bad number of parameters : "
+		<< params.size() << " should be 3.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0 &&
+		params[2].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     int s = int(::floor(params[2].num() + 0.01)), t;
-    if (n <= 0 || n >= 100 || k <= 0 || k > 150 || s <= 0 || s > 150 ||
-	((s & 1) && (s != 1)) || double(s) != params[2].num() ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && k > 0 && k <= 150 && s > 0 && s <= 150 &&
+	(!(s & 1) || (s == 1)) && double(s) == params[2].num() &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     std::stringstream name;
     if (s == 1) 
       name << "FEM_STRUCTURED_COMPOSITE(FEM_PK(" << n << "," << k << "),1)";
@@ -131,21 +127,21 @@ namespace getfem {
 
     pfem PK_composite_full_hierarch_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 3)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0 || params[2].type()!= 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 3, "Bad number of parameters : "
+		<< params.size() << " should be 3.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0 &&
+		params[2].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
     int s = int(::floor(params[2].num() + 0.01)), t;
-    if (n <= 0 || n >= 100 || k <= 0 || k > 150 || s <= 0 || s > 150 ||
-	((s & 1) && (s != 1)) || double(s) != params[2].num() ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && k > 0 && k <= 150 && s > 0 && s <= 150 &&
+	(!(s & 1) || (s == 1)) && double(s) == params[2].num() &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     std::stringstream name;
     if (s == 1) 
-      name << "FEM_STRUCTURED_COMPOSITE(FEM_PK_HIERARCHICAL(" << n << "," << k << "),1)";
+      name << "FEM_STRUCTURED_COMPOSITE(FEM_PK_HIERARCHICAL(" << n << ","
+	   << k << "),1)";
     else {
       for (t = 2; t <= s; ++t) if ((s % t) == 0) break;
       name << "FEM_GEN_HIERARCHICAL(FEM_PK_FULL_HIERARCHICAL_COMPOSITE(" << n
@@ -210,9 +206,8 @@ namespace getfem {
   pfem P1bubbletriangle_fem
   (fem_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 0.");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+		<< params.size() << " should be 0.");
     virtual_fem *p = new P1bubbletriangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -242,8 +237,8 @@ namespace getfem {
     
     dim_type N = G.nrows();
     
-    if (N != 2) DAL_THROW(failure_error, "Sorry, this version of HCT "
-			  "element works only on dimension two.");
+    GMM_ASSERT1(N == 2, "Sorry, this version of HCT "
+		"element works only on dimension two.");
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
@@ -273,7 +268,7 @@ namespace getfem {
       true_normals[i-9] = n;
 
       if (gmm::abs(ps) < 1E-8)
-	DAL_WARNING2("HCT_triangle : "
+	GMM_WARNING2("HCT_triangle : "
 		     "The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
@@ -379,9 +374,8 @@ namespace getfem {
   pfem HCT_triangle_fem
   (fem_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 0.");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+		<< params.size() << " should be 0.");
     virtual_fem *p = new HCT_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -449,9 +443,8 @@ namespace getfem {
   pfem reduced_HCT_triangle_fem
   (fem_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 0.");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+		<< params.size() << " should be 0.");
     virtual_fem *p = new reduced_HCT_triangle__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -481,8 +474,7 @@ namespace getfem {
     
     dim_type N = G.nrows();
     
-    if (N != 2) 
-      DAL_THROW(failure_error, "Sorry, this version of reduced HCT "
+    GMM_ASSERT1(N == 2, "Sorry, this version of reduced HCT "
 		"element works only on dimension two.");
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
@@ -512,7 +504,7 @@ namespace getfem {
       if (ps < 0) n *= scalar_type(-1);
       true_normals[i-12] = n;
       if (gmm::abs(ps) < 1E-8)
-	DAL_WARNING2("FVS_quadrilateral : "
+	GMM_WARNING2("FVS_quadrilateral : "
 		     "The normal orientation may be not correct");
       gmm::mult(K, n, v);
       const bgeot::base_tensor &t = pfp->grad(i);
@@ -649,9 +641,8 @@ namespace getfem {
   pfem quadc1p3_fem
   (fem_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 0.");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+		<< params.size() << " should be 0.");
     virtual_fem *p = new quadc1p3__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));
@@ -722,9 +713,8 @@ namespace getfem {
   pfem reduced_quadc1p3_fem
   (fem_param_list &params,
    std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 0)
-      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
-		<< " should be 0.");
+    GMM_ASSERT1(params.size() == 0, "Bad number of parameters : "
+		<< params.size() << " should be 0.");
     virtual_fem *p = new reduced_quadc1p3__;
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));

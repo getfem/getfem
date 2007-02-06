@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
     gmm::mult(p.RM, gmm::scaled(p.U, -1.0), p.F, p.F);
     cout << "final residual : " << gmm::vect_norm2(p.F) << endl;
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 #ifdef GMM_USES_MPI
    MPI_Finalize();
 #endif

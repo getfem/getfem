@@ -102,9 +102,8 @@ namespace getfem {
 	   this->mf_u.linked_mesh().get_mpi_region());
       }
       else {
-	if (&(D().mf()) != &(nu().mf()))
-	  DAL_THROW(failure_error, "mesh fems for the two coefficients must "
-		    "be the same");
+	GMM_ASSERT1(&(D().mf()) == &(nu().mf()), "mesh fems for the two "
+		    "coefficients must be the same");
 	GMM_TRACE2("Assembling bilaplacian for a Kirchhoff-Love plate");
 	asm_stiffness_matrix_for_bilaplacian_KL
 	  (this->K, this->mim, this->mf_u, D().mf(),  D().get(), nu().get(),
@@ -152,8 +151,8 @@ namespace getfem {
   void asm_normal_derivative_source_term
   (VECT1 &B, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
    const VECT2 &F, const mesh_region &rg) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
 
     size_type Q = gmm::vect_size(F) / mf_data.nb_dof();
 
@@ -174,7 +173,7 @@ namespace getfem {
 	"V(#1)+=comp(vGrad(#1).Normal().Normal().Normal().Base(#2))"
 	"(:,i,k,k,l,m,j).F(i,l,m,j);";
     else
-       DAL_THROW(invalid_argument, "invalid rhs vector");
+       GMM_ASSERT1(false, "invalid rhs vector");
     asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
   }
 
@@ -270,7 +269,7 @@ namespace getfem {
 	  B_.reshape(mf_u().get_qdim()*gmm::sqr(mf_u().linked_mesh().dim()));
 	}
 	else 
-	  DAL_THROW(failure_error, "Rhs vector has a wrong size");
+	  GMM_ASSERT1(false, "Rhs vector has a wrong size");
 	B_.set(B__);
       }
       else {
@@ -291,8 +290,8 @@ namespace getfem {
   void asm_neumann_KL_term
   (VECT1 &B, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
    const VECT2 &M, const VECT2 &divM, const mesh_region &rg) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
 
     generic_assembly assem
       ("MM=data$1(mdim(#1),mdim(#1),#2);"
@@ -429,8 +428,8 @@ namespace getfem {
     typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
     
     rg.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_r.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_r.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       const char *s;
       if (mf_u.get_qdim() == 1 && mf_mult.get_qdim() == 1)

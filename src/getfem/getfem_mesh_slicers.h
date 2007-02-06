@@ -133,7 +133,7 @@ namespace getfem {
     }
     size_type dim() { 
       if (nodes.size()) return nodes[0].pt.size(); 
-      else DAL_THROW(internal_error,"");
+      else GMM_ASSERT1(false, "internal_error");
     }
     void simplex_orientation(slice_simplex& s);
     /**@brief build a new mesh_slice.
@@ -246,11 +246,11 @@ namespace getfem {
  public:
     slicer_apply_deformation(mesh_slice_cv_dof_data_base &defdata_) 
       : defdata(&defdata_), pf(0) {
-	if (defdata && defdata->pmf->get_qdim() != defdata->pmf->linked_mesh().dim()) 
-	  DAL_THROW(dimension_error, "wrong Q(=" << int(defdata->pmf->get_qdim()) 
+      if (defdata && defdata->pmf->get_qdim() != defdata->pmf->linked_mesh().dim()) 
+	GMM_ASSERT1(false, "wrong Q(=" << int(defdata->pmf->get_qdim()) 
 		    << ") dimension for slice deformation: should be equal to "
 		    "the mesh dimension which is " << int(defdata->pmf->linked_mesh().dim()));
-      }    
+    }
     void exec(mesh_slicer &ms);
   };
 
@@ -407,7 +407,7 @@ namespace getfem {
     /* orient = -1: u(x) <= val, 0: u(x) == val, +1: u(x) >= val */
     slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU_, scalar_type val_, int orient_) : 
       slicer_volume(orient_), mfU(mfU_.clone()), val(val_) {
-	if (mfU->pmf->get_qdim() != 1) DAL_THROW(failure_error, "can't compute isovalues of a vector field !");
+      GMM_ASSERT1(mfU->pmf->get_qdim() == 1, "can't compute isovalues of a vector field !");
 	val_scaling = mfU->maxval();
       }
   };

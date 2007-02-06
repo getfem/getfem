@@ -41,8 +41,8 @@ namespace getfem {
     debug_name_ = nm.str();
     
     init_cvs_node();
-    if (org_fem->target_dim() != 1)
-      DAL_THROW(to_be_done_error, "Vectorial fems not (yet) supported");
+    GMM_ASSERT1(org_fem->target_dim() == 1,
+		"Vectorial fems not (yet) supported");
 
     base_node P(dim()); gmm::fill(P, 1./4.);
     for (size_type k = 0; k < ind.size(); ++k)
@@ -54,13 +54,13 @@ namespace getfem {
 
   void sub_space_fem::base_value(const base_node &, 
 				 base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void sub_space_fem::grad_base_value(const base_node &, 
 				      base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void sub_space_fem::hess_base_value(const base_node &, 
 			     base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
 
   void sub_space_fem::real_base_value(const fem_interpolation_context &c,
 				    base_tensor &t, bool) const {
@@ -137,8 +137,7 @@ namespace getfem {
 						     unsigned strategy_)
     : mesh_fem(mef.linked_mesh()), mls(me), mf(mef), degree(degree_),
       strategy(strategy_) {
-    if (mf.get_qdim() != 1)
-      DAL_THROW(to_be_done_error, "base mesh_fem for mesh_fem_level_set has "
+    GMM_ASSERT1(mf.get_qdim() == 1, "base mesh_fem for mesh_fem_level_set has "
 		"to be of qdim one for the moment ...");
     this->add_dependency(mls);
     is_adapted = false;
@@ -251,8 +250,7 @@ namespace getfem {
 	      if (dmin > maxdmin) { maxdmin = dmin; ipt = i; }
 	    }
 	    
-	    if (ipt ==  size_type(-1))
-	      DAL_THROW(failure_error, "Trace fem: not enought points");
+	    GMM_ASSERT1(ipt != size_type(-1), "Trace fem: not enought points");
 	    selection.push_back(ipt);
 	  }
 	  
@@ -522,7 +520,7 @@ namespace getfem {
 
 	if (rcut_convexes.card() > 0) {
 	  cout << "alone convexes : " << rcut_convexes << endl;
-	  DAL_THROW(failure_error, "This is not normal ...");
+	  GMM_ASSERT1(false, "This is not normal ...");
 	}
 
 	for (size_type i = 0; i < zones.size(); ++i) {

@@ -61,7 +61,7 @@ void test_conforming(getfem::mesh &m) {
 	if (gmm::abs(pt[nc]) < 1E-10 || gmm::abs(pt[nc] - 1.0) < 1E-10)
 	  onbound = true;
       if (!onbound)
-	DAL_THROW(dal::failure_error, "Mesh is not conforming " << pt);
+	GMM_THROW(dal::failure_error, "Mesh is not conforming " << pt);
     }
   }
   cout << "nb faces of mesh of dim " << dim << " : " << nb_faces << endl;
@@ -320,7 +320,7 @@ void test_convex_ref() {
 }
 
 int main(void) {
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   try {
@@ -344,7 +344,7 @@ int main(void) {
     test_refinable(3, 2);
     test_refinable(3, 3);
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0;
 }
 

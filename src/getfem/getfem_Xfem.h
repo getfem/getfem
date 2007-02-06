@@ -63,9 +63,12 @@ namespace getfem
   struct virtual_Xfem_func {
     /*
     */
-    virtual scalar_type val(const Xfem_func_context&) { DAL_THROW(failure_error,"this Xfem_func has no value"); }
-    virtual base_small_vector grad(const Xfem_func_context&) { DAL_THROW(failure_error,"this Xfem_func has no gradient"); }  
-    virtual base_matrix hess(const Xfem_func_context&) { DAL_THROW(failure_error,"this Xfem_func has no hessian"); }
+    virtual scalar_type val(const Xfem_func_context&)
+    { GMM_ASSERT1(false, "this Xfem_func has no value"); }
+    virtual base_small_vector grad(const Xfem_func_context&)
+    { GMM_ASSERT1(false, "this Xfem_func has no gradient"); }  
+    virtual base_matrix hess(const Xfem_func_context&)
+    { GMM_ASSERT1(false, "this Xfem_func has no hessian"); }
     virtual ~virtual_Xfem_func() {}
   };
   typedef virtual_Xfem_func *pXfem_func;

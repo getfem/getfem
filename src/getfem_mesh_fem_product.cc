@@ -27,10 +27,9 @@ namespace getfem {
     
   void fem_product::init() {
     
-    if (pfems[0]->target_dim() > 1) 
-      DAL_THROW(to_be_done_error, "To be done");
-    if (pfems[1]->target_dim() > 1) 
-      DAL_THROW(failure_error, "The second finite element should be scalar");
+    GMM_ASSERT1(pfems[0]->target_dim() == 1, "To be done");
+    GMM_ASSERT1(pfems[1]->target_dim() == 1,
+		"The second finite element should be scalar");
 
     cvr = pfems[0]->ref_convex(cv);
     dim_ = cvr->structure()->dim();
@@ -53,13 +52,13 @@ namespace getfem {
 
   void fem_product::base_value(const base_node &, 
 				 base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_product::grad_base_value(const base_node &, 
 				      base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_product::hess_base_value(const base_node &, 
 			     base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
 
   void fem_product::real_base_value(const fem_interpolation_context &c,
 				      base_tensor &t, bool) const {

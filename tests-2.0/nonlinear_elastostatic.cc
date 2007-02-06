@@ -149,7 +149,7 @@ struct elastostatic_problem {
 // 		   gmm::scaled(MS.reduced_residual(), value_type(-1)),
 // 		   P, 300, iter_linsolv);
 // 	if (!iter_linsolv.converged())
-// 	  DAL_WARNING(2,"gmres did not converge!");
+// 	  GMM_WARNING(2,"gmres did not converge!");
 //       }
 //       MS.unreduced_solution(dr,d);
 //       cout << "..done (" << ftool::uclock_sec() - t0 << ")\n";
@@ -276,7 +276,7 @@ void elastostatic_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM"
+      GMM_THROW(dal::failure_error, "You are using a non-lagrange FEM"
 		". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -340,7 +340,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
     case 2: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
     case 3: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
-    default: DAL_THROW(dal::failure_error, "no such law");
+    default: GMM_THROW(dal::failure_error, "no such law");
   }
 
   pl->test_derivatives(3, .0001, p);
@@ -495,7 +495,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -508,7 +508,7 @@ int main(int argc, char *argv[]) {
     plain_vector U(p.mf_u.nb_dof());
     if (p.PARAM.int_value("VTK_EXPORT")) {
       if (!p.solve(U)) 
-	//DAL_THROW(dal::failure_error,"Solve has failed");
+	//GMM_THROW(dal::failure_error,"Solve has failed");
 	cerr << "Solve has failed\n";
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -520,7 +520,7 @@ int main(int argc, char *argv[]) {
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

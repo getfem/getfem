@@ -530,7 +530,7 @@ namespace getfem {
     const std::string name() const { return name_; }
     void rename(const std::string &new_name) { name_ = new_name; }
     const mesh_fem &mf() const { 
-      if (!pmf_) DAL_THROW(gmm::failure_error, "no mesh fem assigned to the parameter " << name());
+      GMM_ASSERT1(pmf_, "no mesh fem assigned to the parameter " << name());
       return *pmf_; 
     }
     const bgeot::multi_index& fsizes() const { return sizes_; }
@@ -607,9 +607,8 @@ namespace getfem {
       size_type n = fdim() == 2 ? fsizes()[0] : 1;
       int flag = 1;
       if (gmm::vect_size(w) == n) flag = 0;
-      else if (gmm::vect_size(w) != mf().nb_dof()*n) 
-	DAL_THROW(gmm::failure_error,
-		  "inconsistent vector dimension for set_diagonal");
+      else GMM_ASSERT1(gmm::vect_size(w) == mf().nb_dof()*n,
+		       "inconsistent vector dimension for set_diagonal");
       realloc();
       for (unsigned i=0; i < mf().nb_dof(); ++i) {
 	for (unsigned j=0; j < n; ++j) {
@@ -636,11 +635,11 @@ namespace getfem {
 	  gmm::copy(v, gmm::sub_vector(value_, gmm::sub_interval(i*n, n)));
 	isconstant = true;
       }
-      else DAL_THROW(gmm::failure_error,"inconsistent param value for '" 
-		     << name() << "', expected a "
-		     << fsizes() << "x" << mf().nb_dof() 
-		     << " field, got a vector with " 
-		     << gmm::vect_size(v) << " elements");
+      else GMM_ASSERT1(false, "inconsistent param value for '" 
+		       << name() << "', expected a "
+		       << fsizes() << "x" << mf().nb_dof() 
+		       << " field, got a vector with " 
+		       << gmm::vect_size(v) << " elements");
       update_notify();
     }
 
@@ -668,9 +667,8 @@ namespace getfem {
       this->set_(mf(), w, typename gmm::is_gmm_interfaced<W>::result());
     }
     template <typename W> void set_diagonal(const W &w) {
-      if ((fdim() != 0 && fdim() != 2)
-	  || (fdim() == 2 && (fsizes()[0] != fsizes()[1]))) 
-	DAL_THROW(gmm::failure_error,
+      GMM_ASSERT1((fdim() == 0 || fdim() == 2)
+		  && (fdim() != 2 || (fsizes()[0] == fsizes()[1])),
 		  "wrong field dimension for set_diagonal for param '" 
 		  << name() << "'");
       this->set_diagonal_(w, typename gmm::is_gmm_interfaced<W>::result());
@@ -680,11 +678,9 @@ namespace getfem {
 
       bool badsize = gmm::vect_size(value_) != mf().nb_dof() * fsize();
 
-      if (!is_initialized())
-	DAL_THROW(gmm::failure_error, "Parameter " << name()
+      GMM_ASSERT1(is_initialized(), "Parameter " << name()
 		  << " is not initialized");
-      if (badsize && (!is_constant() || gmm::vect_size(value_) == 0))
-	DAL_THROW(gmm::failure_error, 
+      GMM_ASSERT1(!badsize || (is_constant() && gmm::vect_size(value_) != 0),
 		  "invalid dimension for brick parameter '" << name() << 
 		  "', expected an array of size " << 
 		  mf().nb_dof()*fsize() << "=" << fsize() << "x" << 
@@ -810,8 +806,8 @@ namespace getfem {
     mdbrick_parameter<VECTOR> lambda_, mu_; /** the Lame coefficients */
 
     void proper_update_K(void) {
-      if (&lambda_.mf() != &mu_.mf()) 
-	DAL_THROW(failure_error, "lambda and mu should share the same mesh_fem");
+      GMM_ASSERT1(&lambda_.mf() == &mu_.mf(),
+		  "lambda and mu should share the same mesh_fem");
       GMM_TRACE2("Assembling stiffness matrix for linear elasticity");
       this->context_check();
 
@@ -1010,13 +1006,14 @@ namespace getfem {
 						   this->mf_u.linked_mesh().get_mpi_region());
       }
       else if (coeff_.fdim() == 4) {
-	if (this->mf_u.get_qdim() != this->mf_u.linked_mesh().dim())
-	  DAL_THROW(failure_error, "Order 4 tensor coefficient applies only to mesh_fem whose Q dim is equal to the mesh dimension");
+	GMM_ASSERT1(this->mf_u.get_qdim() == this->mf_u.linked_mesh().dim(),
+		    "Order 4 tensor coefficient applies only to mesh_fem "
+		    "whose Q dim is equal to the mesh dimension");
 	asm_stiffness_matrix_for_vector_elliptic(this->K, this->mim, this->mf_u,
 						 coeff().mf(), coeff().get(),
 						 this->mf_u.linked_mesh().get_mpi_region());
       }
-      else DAL_THROW(failure_error, "Bad format for the coefficient of mdbrick_generic_elliptic");
+      else GMM_ASSERT1(false, "Bad format for the coefficient of mdbrick_generic_elliptic");
     }
 
     /** ensure a consistent dimension for the coeff */
@@ -1569,8 +1566,8 @@ namespace getfem {
      * option (could be extended ?).
      */
     SUBVECTOR get_mult(MODEL_STATE &MS) {
-      if (co_how != AUGMENTED_CONSTRAINTS)
-	DAL_THROW(failure_error, "Only for Augmented constraint option");
+      GMM_ASSERT1(co_how == AUGMENTED_CONSTRAINTS,
+		  "Only for Augmented constraint option");
       gmm::sub_interval SUBM
 	= gmm::sub_interval(this->first_index()+sub_problem.nb_dof(),
 			    gmm::mat_nrows(B));
@@ -1827,8 +1824,8 @@ namespace getfem {
       this->add_dependency(*mf_mult);
       mfdata_set = false; B_to_be_computed = true;
       this->force_update();
-      if (mf_mult->get_qdim() != mf_u().get_qdim()) 
-	DAL_THROW(gmm::failure_error, "The lagrange multipliers mesh fem "
+      GMM_ASSERT1(mf_mult->get_qdim() == mf_u().get_qdim(),
+		  "The lagrange multipliers mesh fem "
 		  "for the Dirichlet brick should have the same Qdim as "
 		  "the main mesh_fem");
     }
@@ -1956,8 +1953,7 @@ namespace getfem {
       this->add_dependency(mf_mult);
       mfdata_set = false; B_to_be_computed = true;
       this->force_update();
-      if ((mf_u().get_qdim() % mf_u().linked_mesh().dim()) != 0) 
-	DAL_THROW(failure_error,
+      GMM_ASSERT1((mf_u().get_qdim() % mf_u().linked_mesh().dim()) == 0,
 		  "This brick is only working for vectorial elements");
     }
   };
@@ -2323,7 +2319,7 @@ namespace getfem {
       /* some sanity checks */
       for (unsigned i=0; i < gmm::mat_nrows(M0); ++i) {
 	if (gmm::real(M0(i,i)) < 0) {
-	  DAL_WARNING1("negative diagonal terms found in the mass matrix!");
+	  GMM_WARNING1("negative diagonal terms found in the mass matrix!");
 	  break;
 	}
       }

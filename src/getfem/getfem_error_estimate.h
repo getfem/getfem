@@ -71,8 +71,7 @@ namespace getfem {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
     rg.from_mesh(mim.linked_mesh());
-    if (!rg.is_only_convexes())
-      DAL_THROW(invalid_argument, "Invalid mesh region");
+    GMM_ASSERT1(rg.is_only_convexes(), "Invalid mesh region");
     // for parallelized getfem, works only on the mesh subset 
     // assigned to the current thread
     mesh_region sub_rg = rg;

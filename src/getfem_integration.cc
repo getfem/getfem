@@ -38,8 +38,7 @@ namespace getfem {
    */
   static pintegration_method im_none(im_param_list &params,
 			       std::vector<dal::pstatic_stored_object> &) {
-    if (params.size())
-      DAL_THROW(failure_error, "IM_NONE does not accept any parameter");
+    GMM_ASSERT1(params.size() == 0, "IM_NONE does not accept any parameter");
     return new integration_method();
   }
 
@@ -129,14 +128,12 @@ namespace getfem {
 
   static pintegration_method exact_simplex(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
-    if (n <= 0 || n >= 100 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && double(n) == params[0].num(),
+		"Bad parameters");
     dependencies.push_back(bgeot::simplex_structure(n));
     return new integration_method
           (new simplex_poly_integration_(bgeot::simplex_structure(n)));
@@ -187,15 +184,14 @@ namespace getfem {
 
   static pintegration_method product_exact(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1, 
+		"Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
-    if (!(a->type() == IM_EXACT && b->type() == IM_EXACT))
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(a->type() == IM_EXACT && b->type() == IM_EXACT,
+		"Bad parameters");
     dependencies.push_back(a); dependencies.push_back(b);
     dependencies.push_back(bgeot::convex_product_structure(a->structure(),
 							   b->structure()));
@@ -209,14 +205,12 @@ namespace getfem {
 
   static pintegration_method exact_parallelepiped(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
-    if (n <= 0 || n >= 100 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && double(n) == params[0].num(),
+		"Bad parameters");
 
     std::stringstream name;
     if (n == 1)
@@ -229,14 +223,12 @@ namespace getfem {
 
   static pintegration_method exact_prism(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
-    if (n <= 1 || n >= 100 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 1 && n < 100 && double(n) == params[0].num(),
+		"Bad parameters");
 
     std::stringstream name;
     name << "IM_PRODUCT(IM_EXACT_SIMPLEX(" << n-1
@@ -250,12 +242,10 @@ namespace getfem {
 
   void approx_integration::add_point(const base_node &pt,
 				     scalar_type w,short_type f) {
-    if (valid) DAL_THROW(internal_error, 
-			 "Impossible to modify a valid integration method.");
+    GMM_ASSERT1(!valid, "Impossible to modify a valid integration method.");
     if (gmm::abs(w) > 1.0E-15) {
       ++f;
-      if (f > cvr->structure()->nb_faces())
-	DAL_THROW(internal_error, "Wrong argument.");
+      GMM_ASSERT1(f <= cvr->structure()->nb_faces(), "Wrong argument.");
       size_type i = pt_to_store[f].search(pt);
       if (i == size_type(-1)) {
 	i = pt_to_store[f].add(pt);
@@ -315,21 +305,18 @@ namespace getfem {
       }
     }
     else
-      DAL_THROW(failure_error, "Fully symmetric option is only valid for"
-		"simplices and parallelepipedic elements");
-
+      GMM_ASSERT1(false, "Fully symmetric option is only valid for"
+		  "simplices and parallelepipedic elements");
   }
 
   void approx_integration::add_method_on_face(pintegration_method ppi,
 					      short_type f) {
     papprox_integration pai = ppi->approx_method();
-    if (valid) DAL_THROW(internal_error, 
-			 "Impossible to modify a valid integration method.");
-    if (pai->structure() != structure()->faces_structure()[f])
-      DAL_THROW(internal_error, "structures missmatch");
-    if (ppi->type() != IM_APPROX)
-      DAL_THROW(internal_error, "Impossible with an exact method.");
-    
+    GMM_ASSERT1(!valid, "Impossible to modify a valid integration method.");
+    GMM_ASSERT1(pai->structure() == structure()->faces_structure()[f],
+		"structures missmatch");
+    GMM_ASSERT1(ppi->type() == IM_APPROX, "Impossible with an exact method.");
+
     dim_type N = pai->structure()->dim();
     scalar_type det = 1.0;
     base_node pt(N+1);
@@ -366,7 +353,7 @@ namespace getfem {
 	ptab[i++] = *it;
       }
     }
-    if (i != int_coeffs.size()) DAL_THROW(internal_error, "internal error.");
+    GMM_ASSERT1(i == int_coeffs.size(), "internal error.");
     pint_points = bgeot::store_point_tab(ptab);
     pt_to_store = std::vector<PT_TAB>();
     pt_to_store.clear();
@@ -493,7 +480,7 @@ namespace getfem {
   };
 
   gauss_approx_integration_::gauss_approx_integration_(short_type nbpt) {
-    if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
+    GMM_ASSERT1(nbpt <= 32000, "too much points");
     
     cvr = bgeot::simplex_of_reference(1);
     std::vector<base_node> int_points(nbpt+2);
@@ -527,14 +514,12 @@ namespace getfem {
 
   static pintegration_method gauss1d(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : "
+		<< params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
-    if (n < 0 || n >= 32000 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n >= 0 && n < 32000 && double(n) == params[0].num(),
+		"Bad parameters");
     if (n & 1) {
       std::stringstream name;
       name << "IM_GAUSS1D(" << n-1 << ")";
@@ -643,16 +628,15 @@ namespace getfem {
 
   static pintegration_method Newton_Cotes(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-          "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n < 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n >= 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
     integration_method *p
       = new integration_method(new Newton_Cotes_approx_integration_(n, k));
     dependencies.push_back(p->approx_method()->ref_convex());
@@ -734,15 +718,14 @@ namespace getfem {
 
   static pintegration_method product_approx(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-       "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
+		"Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
-    if (a->type() != IM_APPROX || b->type() != IM_APPROX)
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(a->type() == IM_APPROX && b->type() == IM_APPROX,
+		"Bad parameters");
     integration_method *p
       = new integration_method(new a_int_pro_integration(a->approx_method(),
 							 b->approx_method()));
@@ -753,11 +736,10 @@ namespace getfem {
 
   static pintegration_method product_which(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 1 || params[1].type() != 1)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 1,
+		"Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
     if (a->type() == IM_EXACT || b->type() == IM_EXACT)
@@ -772,16 +754,15 @@ namespace getfem {
 
   static pintegration_method Newton_Cotes_para(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-          "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
 
     std::stringstream name;
     if (n == 1)
@@ -794,16 +775,15 @@ namespace getfem {
 
   static pintegration_method Newton_Cotes_prism(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-          "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 1 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
 
     std::stringstream name;
     name << "IM_PRODUCT(IM_NC(" << n-1 << "," << k << "),IM_NC(1,"
@@ -817,16 +797,15 @@ namespace getfem {
 
   static pintegration_method Gauss_paramul(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    if (params.size() != 2)
-      DAL_THROW(failure_error, 
-          "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params.size() == 2, "Bad number of parameters : "
+		<< params.size() << " should be 2.");
+    GMM_ASSERT1(params[0].type() == 0 && params[1].type() == 0,
+		"Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(n > 0 && n < 100 && k >= 0 && k <= 150 &&
+		double(n) == params[0].num() && double(k) == params[1].num(),
+		"Bad parameters");
 
     std::stringstream name;
     if (n == 1)
@@ -853,7 +832,7 @@ namespace getfem {
 	what = (ip2 == size_type(-1) || ip1 == ip2) ? PRISM2 : PRISM;
       else if (base_im->structure() == bgeot::simplex_structure(3))
 	what = PYRAMID;
-      else DAL_THROW(failure_error, "Incoherent integration method");
+      else GMM_ASSERT1(false, "Incoherent integration method");
 
       // The first geometric transformation collapse a face of
       // a parallelepiped.
@@ -989,18 +968,15 @@ namespace getfem {
 	    size_type f = size_type(-1);
 	    for (size_type ff = 0; ff <= N; ++ff)
 	      if (gmm::abs(pgt2->convex_ref()->is_in_face(ff, P2)) < 1E-8) {
-		if (f != size_type(-1))
-		  DAL_THROW(failure_error,
+		GMM_ASSERT1(f == size_type(-1),
 			    "An integration point is common to two faces");
 		f = ff;
 	      }
 	    if (f != size_type(-1)) {
 	      gmm::mult(K, normal2, normal1);
-	      add_point(P2, base_im->coeff(i)*J1*gmm::vect_norm2(normal1)/J2,f);
+	      add_point(P2,base_im->coeff(i)*J1*gmm::vect_norm2(normal1)/J2,f);
 	    }
-	    else {
-	      cout << "Point " << P2 << " eliminated" << endl;
-	    }
+	    // else { cout << "Point " << P2 << " eliminated" << endl; }
 	  }  
 	}
 	if (what != PYRAMID) break;
@@ -1012,22 +988,19 @@ namespace getfem {
 
   static pintegration_method quasi_polar(im_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
-    if (params.size() < 2 || params.size() > 3)
-      DAL_THROW(failure_error, 
-		"Bad number of parameters : " << params.size() 
+    GMM_ASSERT1(params.size() == 2 || params.size() == 3,
+		"Bad number of parameters : " << params.size()
 		<< " should be 2 or 3.");
-    if (params[0].type() != 1 || params[1].type() != 0
-	|| params.back().type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
+    GMM_ASSERT1(params[0].type() == 1 && params[1].type() == 0
+		&& params.back().type() == 0, "Bad type of parameters");
     pintegration_method a = params[0].method();
-    if (a->type() != IM_APPROX) 
-      DAL_THROW(failure_error, "need an approximate integration method");
+    GMM_ASSERT1(a->type()==IM_APPROX,"need an approximate integration method");
 
     int ip1 = int(::floor(params[1].num() + 0.01));
     int ip2 = int(::floor(params.back().num() + 0.01));
     int N = a->approx_method()->dim();
-    if (N < 2 || N > 3 || ip1 < 0 || ip2 < 0 || ip1 > N || ip2 > N )
-      DAL_THROW(failure_error, "Bad parameters");
+    GMM_ASSERT1(N >= 2 && N <= 3 && ip1 >= 0 && ip2 >= 0 && ip1 <= N
+		&& ip2 <= N, "Bad parameters");
     integration_method *p
       = new integration_method(new quasi_polar_integration(a->approx_method(),
 							   ip1, ip2));
@@ -1166,8 +1139,7 @@ namespace getfem {
       return im_last;
     }
  
-    DAL_THROW(to_be_done_error,
-	      "This element is not taken into account. Contact us");
+    GMM_ASSERT1(false, "This element is not taken into account. Contact us");
   }
 
 
@@ -1190,8 +1162,8 @@ namespace getfem {
       case 2: name << "IM_TRIANGLE"; break;
       case 3: name << "IM_TETRAHEDRON"; break;
       case 4: name << "IM_SIMPLEX4D"; break;
-      default: DAL_THROW(failure_error,
-	"no approximate integration method for simplexes of dimension " << n);
+      default: GMM_ASSERT1(false, "no approximate integration method "
+			   "for simplexes of dimension " << n);
       }
       for (size_type k = degree; k < size_type(degree+10); ++k) {
 	pintegration_method im = 0;
@@ -1199,13 +1171,13 @@ namespace getfem {
 	im = int_method_descriptor(name2.str(), false);
 	if (im) return im;
       }
-      DAL_THROW(failure_error,
-       "could not find an " << name.str() << " of degree >= " << int(degree));
+      GMM_ASSERT1(false, "could not find an " << name.str()
+		  << " of degree >= " << int(degree));
     } else if (cvs->is_product(&a,&b)) {
       name << "IM_PRODUCT(" 
 	   << name_of_int_method(classical_approx_im_(a,degree)) << ","
 	   << name_of_int_method(classical_approx_im_(b,degree)) << ")";
-    } else DAL_THROW(failure_error, "unknown convex structure!");
+    } else GMM_ASSERT1(false, "unknown convex structure!");
     return int_method_descriptor(name.str());
   }
 

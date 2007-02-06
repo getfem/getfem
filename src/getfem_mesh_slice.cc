@@ -47,14 +47,12 @@ namespace getfem {
   void stored_mesh_slice::write_to_file(const std::string &name, 
 			       bool with_mesh) const {
     std::ofstream o(name.c_str());
-    if (!o)
-      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+    GMM_ASSERT1(o, "impossible to open file '" << name << "'");
     o << "% GETFEM SLICE FILE " << '\n';
     o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     if (with_mesh) linked_mesh().write_to_file(o);
     write_to_file(o);
   }
-
 
   void stored_mesh_slice::write_to_file(std::ostream &os) const {
     os << "\nBEGIN MESH_SLICE\n";
@@ -90,16 +88,14 @@ namespace getfem {
 
   void stored_mesh_slice::read_from_file(const std::string &name, const getfem::mesh &m) {
     std::ifstream o(name.c_str());
-    if (!o) DAL_THROW(file_not_found_error,
-		      "slice file '" << name << "' does not exist");
+    GMM_ASSERT1(o, "slice file '" << name << "' does not exist");
     read_from_file(o,m);
   }
 
   void stored_mesh_slice::read_from_file(std::istream &ist, const getfem::mesh &m) {
     if (!poriginal_mesh) {
       poriginal_mesh = &m; 
-    } else if (poriginal_mesh != &m) 
-      DAL_THROW(failure_error, "wrong mesh..");
+    } else GMM_ASSERT1(poriginal_mesh == &m, "wrong mesh..");
 
     dim_ = m.dim();
     cv2pos.clear(); 
@@ -125,11 +121,9 @@ namespace getfem {
       } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
 	bgeot::get_token(ist,tmp);
 	size_type ic = atoi(tmp.c_str());
-	if (!m.convex_index().is_in(ic)) {
-	  DAL_THROW(failure_error, "Convex " << ic <<
+	GMM_ASSERT1(m.convex_index().is_in(ic), "Convex " << ic <<
 		    " does not exist, are you sure "
 		    "that the mesh attached to this object is right one ?");
-	}
 	bgeot::pconvex_ref cvr = m.trans_of_convex(ic)->convex_ref();
 	unsigned fcnt, discont, nbn, nbs;
 	ist >> fcnt >> discont >> nbn >> nbs;
@@ -150,8 +144,7 @@ namespace getfem {
 	for (unsigned i=0; i < nbs; ++i) {
 	  unsigned np(0);
 	  ist >> np >> bgeot::skip(":");
-	  if (np > dim()+1) 
-	    DAL_THROW(failure_error, "invalid simplex..");
+	  GMM_ASSERT1(np <= dim()+1, "invalid simplex..");
 	  sim[i].inodes.resize(np);
 	  for (unsigned j=0; j < np; ++j) 
 	    ist >> sim[i].inodes[j];
@@ -159,11 +152,11 @@ namespace getfem {
 	dal::bit_vector bv; bv.add(0, nbs);
 	set_convex(ic, cvr, nod, sim, dim_type(fcnt), bv, discont);
       } else if (tmp.size()) {
-	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
-		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
+	GMM_ASSERT1(false, "Unexpected token '" << tmp <<
+		    "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream "
-		  << "(missing BEGIN MESH_SLICE/END MESH_SLICE ?)");	
+	GMM_ASSERT1(false, "Unexpected end of stream "
+		    << "(missing BEGIN MESH_SLICE/END MESH_SLICE ?)");	
       }
     }
   }
@@ -172,7 +165,7 @@ namespace getfem {
     if (!sl.poriginal_mesh) {
       sl.poriginal_mesh = &ms.m; sl.dim_ = sl.linked_mesh().dim();
       sl.cv2pos.clear(); sl.cv2pos.resize(sl.linked_mesh().convex_index().last_true() + 1, size_type(-1));
-    } else if (sl.poriginal_mesh != &ms.m) DAL_THROW(failure_error, "wrong mesh..");
+    } else if (sl.poriginal_mesh != &ms.m) GMM_ASSERT1(false, "wrong mesh..");
     sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, ms.fcnt, ms.splx_in, ms.discont);
   }
 
@@ -185,7 +178,7 @@ namespace getfem {
     merged_nodes_available = false;
     std::vector<size_type> nused(cv_nodes.size(), size_type(-1));
     convex_slice *sc = 0;
-    if (cv >= cv2pos.size()) DAL_THROW(internal_error, "");
+    GMM_ASSERT1(cv < cv2pos.size(), "internal error");
     if (cv2pos[cv] == size_type(-1)) {
       cv2pos[cv] = cvlst.size();
       cvlst.push_back(convex_slice());
@@ -299,14 +292,14 @@ namespace getfem {
   }
 
   void stored_mesh_slice::merge(const stored_mesh_slice& sl) {
-    if (dim() != sl.dim()) DAL_THROW(dimension_error, "inconsistent dimensions for slice merging");
+    GMM_ASSERT1(dim()==sl.dim(), "inconsistent dimensions for slice merging");
     clear_merged_nodes();
     cv2pos.resize(std::max(cv2pos.size(), sl.cv2pos.size()), size_type(-1));
     for (size_type i=0; i < sl.nb_convex(); ++i) 
-      if (cv2pos[sl.convex_num(i)] != size_type(-1) &&
-	  cvlst[cv2pos[sl.convex_num(i)]].cv_dim != sl.cvlst[i].cv_num)
-	DAL_THROW(dimension_error, "inconsistent dimensions for convex " << sl.cvlst[i].cv_num << " on the slices");
-
+      GMM_ASSERT1(cv2pos[sl.convex_num(i)] == size_type(-1) ||
+		  cvlst[cv2pos[sl.convex_num(i)]].cv_dim == sl.cvlst[i].cv_num,
+		  "inconsistent dimensions for convex " << sl.cvlst[i].cv_num
+		  << " on the slices");
     for (size_type i=0; i < sl.nb_convex(); ++i) {
       size_type cv = sl.convex_num(i);
       if (cv2pos[cv] == size_type(-1)) {

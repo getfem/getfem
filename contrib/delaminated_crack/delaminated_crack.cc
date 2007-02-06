@@ -266,11 +266,9 @@ void crack_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -567,7 +565,7 @@ namespace getfem {
 	t[0] = no + gmm::abs(no)*0.5*(sgnphi - gmm::sgn(Phi[0]));
 	break;
       case 3 : t[0] = gmm::abs(no); break;
-      default : DAL_THROW(gmm::internal_error, "Oups...");
+      default : GMM_ASSERT1(false, "Oups...");
       }
     }
   };
@@ -845,7 +843,7 @@ bool crack_problem::solve(plain_vector &U) {
 
 
       if (enriched_dofs.card() < 3)
-	DAL_WARNING0("There is " << enriched_dofs.card() <<
+	GMM_WARNING0("There is " << enriched_dofs.card() <<
 		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);

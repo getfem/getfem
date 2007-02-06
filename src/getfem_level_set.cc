@@ -45,10 +45,9 @@ namespace getfem {
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
 					    bool inverted) const {
     assert(this); assert(mf); 
-    if (!mf->linked_mesh().convex_index().is_in(cv)) 
-      DAL_THROW(failure_error, "convex " << cv
+    GMM_ASSERT1(mf->linked_mesh().convex_index().is_in(cv), "convex " << cv
 		<< " is not in the level set mesh!");
-    GMM_ASSERT3(mf->fem_of_element(cv), "");
+    GMM_ASSERT1(mf->fem_of_element(cv), "");
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
     GMM_ASSERT1(values(lsnum).size() == mf->nb_dof(),
 		"Inconsistent state in the levelset: nb_dof=" << 

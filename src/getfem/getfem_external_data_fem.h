@@ -42,23 +42,23 @@ namespace getfem
     
   public :    
     void base_value(const base_node &, base_tensor &) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
+    { GMM_ASSERT1(false, "Uninstantied function"); }
     void grad_base_value(const base_node &, base_tensor &) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
+    { GMM_ASSERT1(false, "Uninstantied function"); }
     void hess_base_value(const base_node &, base_tensor &) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
+    { GMM_ASSERT1(false, "Uninstantied function"); }
 
     void real_base_value(const fem_interpolation_context &, 
 			 base_tensor &, bool = true) const
-    { DAL_THROW(failure_error, "Uninstantied function"); } 
+    { GMM_ASSERT1(false, "Uninstantied function"); } 
     
     void real_grad_base_value(const fem_interpolation_context &, 
 			      base_tensor &, bool = true) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
+    { GMM_ASSERT1(false, "Uninstantied function"); }
     
     void real_hess_base_value(const fem_interpolation_context &, 
 			      base_tensor &, bool = true) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
+    { GMM_ASSERT1(false, "Uninstantied function"); }
 
     external_data_fem(const bgeot::pconvex_ref cvr_, size_type dim = 1) {
       cvr = cvr_;

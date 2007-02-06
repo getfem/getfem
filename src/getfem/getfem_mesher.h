@@ -137,12 +137,10 @@ namespace getfem {
   template <typename VECT> 
   void mesher_level_set::init_base(pfem pf_, const VECT &coeff_) {
     std::vector<scalar_type> coeff(coeff_.begin(), coeff_.end());
-    if (gmm::vect_norm2(coeff) == 0)
-      DAL_THROW(failure_error, "level is zero!");
+    GMM_ASSERT1(gmm::vect_norm2(coeff) != 0, "level is zero!");
     pf = dynamic_cast<const fem<base_poly>* > (pf_.get());
-    if (!pf) DAL_THROW(failure_error,
-		       "PK fem are required for level set (got "
-		       << typeid(pf_).name() << ")");
+    GMM_ASSERT1(pf, "PK fem are required for level set (got "
+		<< typeid(pf_).name() << ")");
     base = base_poly(pf->base()[0].dim(), pf->base()[0].degree());
     for (unsigned i=0; i < pf->nb_base(0); ++i) {
       base += pf->base()[i] * coeff[i];
@@ -187,7 +185,7 @@ namespace getfem {
       return d;
     }
     void hess(const base_node &, base_matrix &) const {
-      DAL_THROW(to_be_done_error, "Sorry, to be done");
+      GMM_ASSERT1(false, "Sorry, to be done");
     }
   };
 
@@ -222,7 +220,7 @@ namespace getfem {
       return d;
     }
     void hess(const base_node &, base_matrix &) const {
-      DAL_THROW(to_be_done_error, "Sorry, to be done");
+      GMM_ASSERT1(false, "Sorry, to be done");
     }
   };
 
@@ -554,7 +552,7 @@ namespace getfem {
 	dists[i]->hess(P, H);
       }
       else {
-	DAL_THROW(to_be_done_error, "Sorry, to e done");
+	GMM_ASSERT1(false, "Sorry, to e done");
       }
     }
   };
@@ -733,7 +731,7 @@ namespace getfem {
     scalar_type grad(const base_node &P, base_small_vector &G) const
       { return i2.grad(P, G); }
     void hess(const base_node &, base_matrix &) const {
-      DAL_THROW(to_be_done_error, "Sorry, to be done");
+      GMM_ASSERT1(false, "Sorry, to be done");
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
@@ -783,7 +781,7 @@ namespace getfem {
     scalar_type grad(const base_node &, base_small_vector &) const
     { assert(0); }
     void hess(const base_node &, base_matrix &) const {
-      DAL_THROW(to_be_done_error, "Sorry, to be done");
+      GMM_ASSERT1(false, "Sorry, to be done");
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
@@ -832,7 +830,7 @@ namespace getfem {
       return d;
     }
     void hess(const base_node &, base_matrix &) const {
-      DAL_THROW(to_be_done_error, "Sorry, to be done");
+      GMM_ASSERT1(false, "Sorry, to be done");
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>&list) const

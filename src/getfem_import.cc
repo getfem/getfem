@@ -59,14 +59,14 @@ namespace getfem {
 	  pgt = bgeot::prism_geotrans(3,1);
 	} break;
 	case 7: { /* PYRAMID */
-	  DAL_THROW(failure_error, "sorry pyramidal convexes not done for the moment..");
+	  GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
 	} break;
 	case 15: { /* POINT */
-	  DAL_WARNING2("ignoring point element");
+	  GMM_WARNING2("ignoring point element");
 	} break;
 	default: { /* UNKNOWN .. */
 	  /* second order elements : to be done .. */
-	  DAL_THROW(failure_error, "the gmsh element type " << type << "is unknown..");
+	  GMM_ASSERT1(false, "the gmsh element type "<< type <<"is unknown..");
 	} break;
       }
     }
@@ -113,8 +113,7 @@ namespace getfem {
           size_type j;
           f >> j;
           ci.nodes[i] = msh_node_2_getfem_node.search(j);
-          if (ci.nodes[i] == size_type(-1)) 
-            DAL_THROW(failure_error, "Invalid node ID " << j 
+          GMM_ASSERT1(ci.nodes[i] != size_type(-1), "Invalid node ID " << j 
                       << " in gmsh convex " << ci.id);
         }
         ci.set_pgt();
@@ -147,7 +146,7 @@ namespace getfem {
 	  //else cout << "face found!\n";
 	}
 	if (!cvok)
-	  DAL_WARNING2("gmsh import ignored a convex of type "
+	  GMM_WARNING2("gmsh import ignored a convex of type "
 		       << bgeot::name_of_geometric_trans(ci.pgt));
       }
     }
@@ -180,7 +179,7 @@ namespace getfem {
       else if (bgeot::casecmp(selemtype, "tetrahedra")==0) { eltype = TETR; }
       else if (bgeot::casecmp(selemtype, "prisma")==0) { eltype = PRISM; }
       else if (bgeot::casecmp(selemtype, "hexahedra")==0) { eltype = HEX; }
-      else DAL_THROW(failure_error, "unknown element type '"<< selemtype << "'");
+      else GMM_ASSERT1(false, "unknown element type '"<< selemtype << "'");
       assert(!f.eof());
       f >> bgeot::skip("COORDINATES");
       if (!nodes_done) {
@@ -201,9 +200,7 @@ namespace getfem {
 	  //cerr << "ppoint " << id << ", " << n << endl;
 	} while (true);
 	
-	if (gid_nodes_used.card() == 0) {
-	  DAL_THROW(failure_error,"no nodes in the mesh!");
-	}
+	GMM_ASSERT1(gid_nodes_used.card() != 0, "no nodes in the mesh!");
 	
 	/* suppression of unused dimensions */
 	std::vector<bool> direction_useless(3,true);
@@ -273,10 +270,10 @@ namespace getfem {
 	  std::copy(lorder,lorder+nnode,order.begin());
 	}
       } break;
-      default: GMM_ASSERT3(false, ""); break;
+      default: GMM_ASSERT1(false, ""); break;
       }
-      if (pgt == NULL) DAL_THROW(failure_error, "unknown element type " << selemtype 
-				 << " with " << nnode << "nodes");
+      GMM_ASSERT1(pgt != NULL, "unknown element type " << selemtype 
+		  << " with " << nnode << "nodes");
       do {
 	std::string ls;
 	f >> std::ws;
@@ -290,8 +287,7 @@ namespace getfem {
 	  size_type j;
 	  s >> j;
 	  cv_nodes[i] = msh_node_2_getfem_node.search(j);
-	  if (cv_nodes[i] == size_type(-1)) 
-	    DAL_THROW(failure_error, "Invalid node ID " << j 
+	  GMM_ASSERT1(cv_nodes[i] != size_type(-1), "Invalid node ID " << j 
 		      << " in GiD mesh convex num " << cv_id);
 	}
 	getfem_cv_nodes.resize(nnode);
@@ -390,7 +386,7 @@ namespace getfem {
 	{ regular_mesh(m, filename); return; }
       
       std::ifstream f(filename.c_str());
-      if (!f.good()) DAL_THROW(failure_error, "can't open file " << filename);
+      GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
       import_mesh(f,format,m);
@@ -402,8 +398,8 @@ namespace getfem {
     }
     catch (std::ios_base::failure& exc) {
       m.clear();
-      DAL_THROW(failure_error, "error while importing " << format
-		<< " mesh file \"" << filename << "\" : " << exc.what());
+      GMM_ASSERT1(false, "error while importing " << format
+		  << " mesh file \"" << filename << "\" : " << exc.what());
     }
   }
 
@@ -417,10 +413,10 @@ namespace getfem {
       import_am_fmt_file(f,m);
     else if (bgeot::casecmp(format,"emc2_mesh")==0)
       import_emc2_mesh_file(f,m);
-    else DAL_THROW(failure_error, "cannot import "
-		   << format << " mesh type : unknown mesh type");
+    else GMM_ASSERT1(false, "cannot import "
+		     << format << " mesh type : unknown mesh type");
   }
-
+  
   void import_mesh(const std::string& filename, mesh& msh) {
     if (filename.compare(0,4,"gid:")==0)
       getfem::import_mesh(filename.substr(4), "gid", msh);

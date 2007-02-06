@@ -248,7 +248,7 @@ void elastostatic_problem::init(void) {
   getfem::import_mesh(filename.str(), mesh);
   
   if (N != mesh.dim())
-    DAL_THROW(getfem::failure_error, "The mesh has not the right dimension");
+    GMM_THROW(getfem::failure_error, "The mesh has not the right dimension");
 
 #if GETFEM_PARA_LEVEL > 1
   cout<<"temps creation maillage "<< MPI_Wtime()-t_init<<endl;
@@ -305,7 +305,7 @@ void elastostatic_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      GMM_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -481,7 +481,7 @@ int main(int argc, char *argv[]) {
 
   GETFEM_MPI_INIT(argc, argv); // For parallelized version
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {
@@ -506,7 +506,7 @@ int main(int argc, char *argv[]) {
     t_ref=MPI_Wtime();
     cout<<"begining resol"<<endl;
 #endif
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) GMM_THROW(dal::failure_error,"Solve has failed");
 
 #if GETFEM_PARA_LEVEL > 1
     cout << "temps Resol "<< MPI_Wtime()-t_ref << endl;
@@ -532,7 +532,7 @@ int main(int argc, char *argv[]) {
     }
 
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   GETFEM_MPI_FINALIZE;
 

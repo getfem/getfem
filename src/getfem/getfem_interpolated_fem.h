@@ -44,11 +44,11 @@ namespace getfem {
 
   struct virtual_interpolated_func {
     virtual void val(const base_node&, base_node &) const
-    { DAL_THROW(failure_error,"this interpolated_func has no value"); }
+    { GMM_ASSERT1(false, "this interpolated_func has no value"); }
     virtual void grad(const base_node&, base_matrix &) const
-    { DAL_THROW(failure_error,"this interpolated_func has no gradient"); }
+    { GMM_ASSERT1(false, "this interpolated_func has no gradient"); }
     virtual void hess(const base_node&, base_matrix &) const
-    { DAL_THROW(failure_error,"this interpolated_func has no hessian"); }
+    { GMM_ASSERT1(false, "this interpolated_func has no hessian"); }
     virtual ~virtual_interpolated_func() {}
   };
 

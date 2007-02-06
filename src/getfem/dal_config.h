@@ -55,7 +55,7 @@ namespace dal {
   using gmm::uclock_sec;
 
   
-  // inline void DAL_THROW() IS_DEPRECATED;
+  inline void DAL_THROW() IS_DEPRECATED;
   inline void DAL_THROW() {}
   inline void DAL_INTERNAL_ERROR() IS_DEPRECATED;
   inline void DAL_INTERNAL_ERROR() {}

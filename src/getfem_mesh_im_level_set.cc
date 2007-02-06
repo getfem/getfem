@@ -104,8 +104,7 @@ namespace getfem {
       bool2 r;
       if (*s == '(') {
 	r = do_expr(++s);
-	if (*s++ != ')') 
-	  DAL_THROW(failure_error, 
+	GMM_ASSERT1(*s++ == ')', 
 		    "expecting ')' in csg expression at '" << s-1 << "'");
       } else if (*s == '!') { // complementary
 	r = do_expr(++s); r.in = !r.in;
@@ -115,8 +114,7 @@ namespace getfem {
 	r.bin = bin.is_in(idx) ? idx+1 : 0; 
 	++s;
       } else 
-	DAL_THROW(failure_error, 
-		  "parse error in csg expression at '" << s << "'");
+	GMM_ASSERT1(false, "parse error in csg expression at '" << s << "'");
       if (*s == '+') { // Union
 	//cerr << "s = " << s << ", r = " << r << "\n";
 	bool2 a = r, b = do_expr(++s);
@@ -142,8 +140,7 @@ namespace getfem {
     }
     bool2 is_in(const char*s) { 
       bool2 b = do_expr(s); 
-      if (*s) 
-	DAL_THROW(failure_error, "parse error in CSG expression at " << s);
+      GMM_ASSERT1(!(*s), "parse error in CSG expression at " << s);
       return b;
     }
     void check() {
@@ -241,15 +238,13 @@ namespace getfem {
       = msh.trans_of_convex(msh.convex_index().first_true());
     dim_type n = pgt->dim();
 
-    if (base_singular_pim) {
-      if ((n == 2 && base_singular_pim->structure()
-	   != bgeot::parallelepiped_structure(2))
-	  || (n == 3 && base_singular_pim->structure()
-	      != bgeot::prism_structure(3)) || (n < 2) || (n > 3))
-	DAL_THROW(failure_error,
-	 "Base integration method for quasi polar integration not convenient");
-    }
-
+    if (base_singular_pim) GMM_ASSERT1
+      ((n != 2 ||
+	base_singular_pim->structure()== bgeot::parallelepiped_structure(2))
+       && (n != 3
+	   || base_singular_pim->structure() == bgeot::prism_structure(3))
+       && (n >= 2) && (n <= 3),
+       "Base integration method for quasi polar integration not convenient");
 
     approx_integration *new_approx = new approx_integration(pgt->convex_ref());
     base_matrix KK(n,n), CS(n,n);
@@ -276,10 +271,8 @@ namespace getfem {
 		  && gmm::abs((mesherls1[ils])(msh.points_of_convex(i)[ipt]))
 		  < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
-		if (sing_ls != ils)
-		  DAL_THROW(failure_error,
-			    "Two singular point in one sub element. "
-			    "To be done.");
+		GMM_ASSERT1(sing_ls == ils, "Two singular point in one "
+			    "sub element. To be done.");
 		ptsing.push_back(ipt);
 	      }
 	    }

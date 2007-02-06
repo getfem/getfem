@@ -43,8 +43,7 @@ namespace getfem {
 					 const mesh_fem &mef)
     : mesh_fem(mef.linked_mesh()), mls(me), mf(mef) {
     xfem_index = reserve_xfem_index();
-    if (mf.get_qdim() != 1)
-      DAL_THROW(to_be_done_error, "base mesh_fem for mesh_fem_level_set has "
+    GMM_ASSERT1(mf.get_qdim() == 1, "base mesh_fem for mesh_fem_level_set has "
 		"to be of qdim one for the moment ...");
     this->add_dependency(mls);
     is_adapted = false;

@@ -43,8 +43,8 @@ namespace getfem {
 			     const mesh_fem &mf,
 			     const VECT &U,
 			     const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
 
     getfem::generic_assembly assem;
     assem.set("u=data(#1);"
@@ -70,8 +70,8 @@ namespace getfem {
 			     const mesh_fem &mf,
 			     const VECT2 &U,
 			     const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
 
     getfem::generic_assembly assem;
     assem.set("u=data(#1);"

@@ -166,11 +166,9 @@ namespace getfem {
        for these operations as there are not intended to be manipulated
        (they only exist to provide a default argument to the mesh_region
        parameters of assembly procedures etc. */
-    if (a.id() == all_convexes().id() || 
-        b.id() == all_convexes().id()) {
-      DAL_THROW(failure_error, 
-                "the 'all_convexes' regions are not supported for set operations");
-    }
+    GMM_ASSERT1(a.id() != all_convexes().id() &&
+		b.id() != all_convexes().id(), "the 'all_convexes' regions "
+		"are not supported for set operations");
     map_t::const_iterator 
       ita = a.rp().m.begin(), enda = a.rp().m.end(),
       itb = b.rp().m.begin(), endb = b.rp().m.end();
@@ -192,11 +190,9 @@ namespace getfem {
   mesh_region mesh_region::merge(const mesh_region &a, 
 				 const mesh_region &b) {
     mesh_region r;
-    if (a.id() == all_convexes().id() || 
-        b.id() == all_convexes().id()) {
-      DAL_THROW(failure_error, 
-                "the 'all_convexes' regions are not supported for set operations");
-    }
+    GMM_ASSERT1(a.id() != all_convexes().id() &&
+		b.id() != all_convexes().id(), "the 'all_convexes' regions "
+		"are not supported for set operations");
     r.wp() = a.rp();
     for (map_t::const_iterator it = b.rp().m.begin(); 
          it != b.rp().m.end(); ++it) {
@@ -208,11 +204,9 @@ namespace getfem {
   mesh_region mesh_region::substract(const mesh_region &a,
                                      const mesh_region &b) {
     mesh_region r;
-    if (a.id() == all_convexes().id() || 
-        b.id() == all_convexes().id()) {
-      DAL_THROW(failure_error, 
-                "the 'all_convexes' regions are not supported for set operations");
-    }
+    GMM_ASSERT1(a.id() != all_convexes().id() &&
+		b.id() != all_convexes().id(), "the 'all_convexes' regions "
+		"are not supported for set operations");
     r.wp() = a.rp();
     for (map_t::const_iterator itb = b.rp().m.begin(); 
          itb != b.rp().m.end(); ++itb) {
@@ -226,17 +220,14 @@ namespace getfem {
   }
 
   void mesh_region::error_if_not_faces() const {
-    if (!is_only_faces()) 
-      DAL_THROW(failure_error, "Expecting a set of faces, not convexes");
+    GMM_ASSERT1(is_only_faces(), "Expecting a set of faces, not convexes");
   }
   void mesh_region::error_if_not_convexes() const {
-    if (!is_only_convexes()) 
-      DAL_THROW(failure_error, "Expecting a set of convexes, not faces");
+    GMM_ASSERT1(is_only_convexes(), "Expecting a set of convexes, not faces");
   }
   void mesh_region::error_if_not_homogeneous() const {
-    if (!is_only_faces() && !is_only_convexes()) 
-      DAL_THROW(failure_error, 
-                "Expecting a set of convexes or a set of faces, but not a mixed set");
+    GMM_ASSERT1(is_only_faces() || is_only_convexes(), "Expecting a set "
+		"of convexes or a set of faces, but not a mixed set");
   }
 
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 
@@ -252,9 +243,7 @@ namespace getfem {
   }
 
   void mesh_region::visitor::init(const mesh_region &s) {
-    if (&s == 0) 
-      DAL_THROW(failure_error, 
-		"Attemps to use an invalid mesh_region "
+    GMM_ASSERT1(&s != 0, "Attemps to use an invalid mesh_region "
 		"(need to call 'from_mesh')");
     it = s.rp().m.begin(); ite = s.rp().m.end(); 
     next();

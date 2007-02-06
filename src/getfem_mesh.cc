@@ -192,8 +192,8 @@ namespace getfem {
       return pts.add(pt);
     }
     else {
-      if (pt.size() != dimension)
-	DAL_THROW(dimension_error, "mesh::add_point : dimensions mismatch");
+      GMM_ASSERT1(pt.size() == dimension,
+		  "mesh::add_point : dimensions mismatch");
       max_radius = std::max(max_radius, npt);
 
       if (max_radius > scalar_type(10)*characteristic_size) {
@@ -242,8 +242,7 @@ namespace getfem {
 
   void mesh::transformation(base_matrix M) {
     base_small_vector w(M.nrows());
-    if (gmm::mat_nrows(M) == 0 || gmm::mat_ncols(M) != dim()) 
-      DAL_THROW(dimension_error,
+    GMM_ASSERT1(gmm::mat_nrows(M) != 0 && gmm::mat_ncols(M) == dim(),
 		"invalid dimensions for the transformation matrix");
     for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
       w = pts[i];
@@ -422,10 +421,8 @@ namespace getfem {
 
   void mesh::read_from_file(std::istream &ist) {
     /* if the application does a setlocale, then we have a problem..*/
-    if (atof("1.5") != 1.5f) { 
-      DAL_THROW(internal_error,
+    GMM_ASSERT1(atof("1.5") == 1.5f,
 	       "Go fix your locales! The numerical separator MUST be the dot");
-    }
 
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
@@ -446,8 +443,7 @@ namespace getfem {
 	bgeot::get_token(ist, tmp);
         size_type ip = atoi(tmp.c_str());
         dim_type d = 0;
-	if (npt.is_in(ip))
-	  DAL_THROW(failure_error, 
+	GMM_ASSERT1(!npt.is_in(ip), 
 		    "Two points with the same index. loading aborted.");
 	npt.add(ip);
 	bgeot::get_token(ist, tmp);
@@ -456,23 +452,20 @@ namespace getfem {
 	  { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
 	please_get = false;
 	if (dimension == dim_type(-1)) dimension = d;
-	else if (dimension != d)
-	  DAL_THROW(failure_error, "Points of different dimensions.");
+	else GMM_ASSERT1(dimension == d, "Points of different dimensions.");
 	base_node v(d);
 	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
 	size_type ipl = add_point(v);
 	if (ip != ipl) {
-	  if (npt.is_in(ipl))
-	    DAL_THROW(failure_error, 
-		      "Two points [#" << ip << " and #" << ipl
-		      << "] with the same coords " << v << ". loading aborted.");
+	  GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #" << ipl
+		      << "] with the same coords "<< v <<". loading aborted.");
 	  swap_points(ip, ipl);
 	}
       } else if (tmp.size()) {
-	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp
-		  << "', pos=" << std::streamoff(ist.tellg()));
+	GMM_ASSERT1(false, "Syntax error in file, at token '" << tmp
+		    << "', pos=" << std::streamoff(ist.tellg()));
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream while reading mesh");	
+	GMM_ASSERT1(false, "Unexpected end of stream while reading mesh");
       }
     }
 
@@ -482,7 +475,7 @@ namespace getfem {
     
     ist.seekg(0);
     if (!bgeot::read_until(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
-      DAL_THROW(failure_error, "This seems not to be a mesh file");
+      GMM_ASSERT1(false, "This seems not to be a mesh file");
 
     while (!tend) {
       tend = !bgeot::get_token(ist, tmp);
@@ -492,8 +485,7 @@ namespace getfem {
         size_type ic;
 	bgeot::get_token(ist, tmp);
         ic = gmm::abs(atoi(tmp.c_str()));
-	if (ncv.is_in(ic)) 
-	  DAL_THROW(failure_error,
+	GMM_ASSERT1(!ncv.is_in(ic),
 		    "Negative or repeated index, loading aborted.");
 	ncv.add(ic);
 
@@ -514,12 +506,12 @@ namespace getfem {
 	}
       }
       else if (tmp.size()) {
-	DAL_THROW(failure_error, "Syntax error reading a mesh file "
-		  " at pos " << std::streamoff(ist.tellg())
-		  << "(expecting 'CONVEX' or 'END', found '" << tmp << "')"); 
+	GMM_ASSERT1(false, "Syntax error reading a mesh file "
+		    " at pos " << std::streamoff(ist.tellg())
+		    << "(expecting 'CONVEX' or 'END', found '"<< tmp << "')"); 
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream "
-		  << "(missing BEGIN MESH/END MESH ?)");
+	GMM_ASSERT1(false, "Unexpected end of stream "
+		    << "(missing BEGIN MESH/END MESH ?)");
       }
     }
     ist >> bgeot::skip("MESH STRUCTURE DESCRIPTION");
@@ -560,7 +552,7 @@ namespace getfem {
 	  bgeot::get_token(ist, tmp);
 	  bgeot::get_token(ist, tmp);
 	} else tend = true;
-	/*else DAL_THROW(failure_error, "Syntax error in file at token '"
+	/*else GMM_ASSERT1(false, "Syntax error in file at token '"
 	  << tmp << "' [pos=" << std::streamoff(ist.tellg())
 	  << "]");*/
       } else tend=true;
@@ -569,8 +561,7 @@ namespace getfem {
 
   void mesh::read_from_file(const std::string &name) { 
     std::ifstream o(name.c_str());
-    if (!o) DAL_THROW(file_not_found_error,
-		      "Mesh file '" << name << "' does not exist");
+    GMM_ASSERT1(o, "Mesh file '" << name << "' does not exist");
     read_from_file(o); 
     o.close();
   }
@@ -645,8 +636,7 @@ namespace getfem {
 
   void mesh::write_to_file(const std::string &name) const {
     std::ofstream o(name.c_str());
-    if (!o)
-      DAL_THROW(failure_error, "impossible to write to file '" << name << "'");
+    GMM_ASSERT1(o, "impossible to write to file '" << name << "'");
     o << "% GETFEM MESH FILE " << '\n';
     o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     write_to_file(o);
@@ -793,8 +783,8 @@ namespace getfem {
     base_node pt(dim+1);
     out.clear();
     size_type nbpt = in.points().index().last()+1;
-    if (nbpt != in.points().index().card()) 
-      DAL_THROW(failure_error, "please optimize the mesh before using "
+    GMM_ASSERT1(nbpt == in.points().index().card(),
+		"please optimize the mesh before using "
 		"it as a base for prismatic mesh");
     for (size_type i = 0; i < nbpt; ++i) {
       std::copy(in.points()[i].begin(), in.points()[i].end(),pt.begin());
@@ -976,9 +966,8 @@ namespace getfem {
 
   void mesh::Bank_refine_normal_convex(size_type i) {
     bgeot::pgeometric_trans pgt = trans_of_convex(i);
-    if (pgt->basic_structure() != bgeot::simplex_structure(pgt->dim()))
-      DAL_THROW(failure_error, "Sorry, refinement is only working "
-		"with simplices.");
+    GMM_ASSERT1(pgt->basic_structure() == bgeot::simplex_structure(pgt->dim()),
+		"Sorry, refinement is only working with simplices.");
     
     const std::vector<size_type> &loc_ind = pgt->vertices();
     for (size_type ip1 = 0; ip1 < loc_ind.size(); ++ip1)

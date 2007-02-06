@@ -151,6 +151,7 @@ int main(void) {
 
     dal::dynamic_array<int, 4> t;
 
+#ifndef NDEBUG
     try {
       t[(unsigned)(-5)] = 8;
       GMM_ASSERT1(false, "negative index does not produce an error");
@@ -158,6 +159,7 @@ int main(void) {
     catch(std::logic_error e) {
       cout << "Out of range error successfully catched, ok\n";
     }
+#endif
 
     t[64] = 13;
     // cout << "capacity : (should be 80) " << t.capacity() << endl;

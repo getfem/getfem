@@ -129,7 +129,7 @@ void stokes_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+      GMM_THROW(dal::failure_error, "You are using a non-lagrange FEM "
 		<< data_fem_name << ". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -212,7 +212,7 @@ bool stokes_problem::solve(plain_vector &U) {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
     p.init();
     // p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    if (!p.solve(U)) GMM_THROW(dal::failure_error,"Solve has failed");
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

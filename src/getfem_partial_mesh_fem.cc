@@ -42,8 +42,7 @@ namespace getfem {
   
   partial_mesh_fem::partial_mesh_fem(const mesh_fem &mef)
     : mesh_fem(mef.linked_mesh()), mf(mef) {
-    if (mf.get_qdim() != 1)
-      DAL_THROW(to_be_done_error, "base mesh_fem for partial_mesh_fem has "
+    GMM_ASSERT1(mf.get_qdim() == 1, "base mesh_fem for partial_mesh_fem has "
 		"to be of qdim one for the moment ...");
     is_adapted = false;
   }
@@ -69,8 +68,8 @@ namespace getfem {
       pintegration_method pim = mim.int_method_of_element(cv);
       if (pim == im_none()) continue;
       getfem::pfem pf = mf.fem_of_element(cv);
-      if (pim->type() != IM_APPROX)
-	DAL_THROW(failure_error, "Works only with approximate integration");
+      GMM_ASSERT1(pim->type() == IM_APPROX,
+		  "Works only with approximate integration");
       papprox_integration pai2= pim->approx_method();
       static papprox_integration pai2_old = 0;
       if (pgt_old != pgt || pai2 != pai2_old) {

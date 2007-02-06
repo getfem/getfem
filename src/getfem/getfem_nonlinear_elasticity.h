@@ -205,8 +205,8 @@ namespace getfem {
 					       const abstract_hyperelastic_law &AHL,
 					       const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &K = const_cast<MAT &>(K_);
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT1, VECT2>
       nterm(mf, U, mf_data, PARAMS, AHL, 0);
@@ -238,8 +238,8 @@ namespace getfem {
 				    const abstract_hyperelastic_law &AHL,
 				    const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R = const_cast<VECT1 &>(R_);
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT2, VECT3>
       nterm(mf, U, mf_data, PARAMS, AHL, 1);
@@ -317,8 +317,8 @@ namespace getfem {
       
       interpolation(PARAMS_.mf(), mf_vm, PARAMS_.get(), PARAMS);
       compute_gradient(mf_u, mf_vm, get_solution(MS), GRAD);
-      if (gmm::vect_size(VM) != mf_vm.nb_dof())
-	DAL_THROW(dimension_error, "The vector has not the good size");
+      GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
+		  "The vector has not the good size");
       base_matrix E(N, N), gradphi(N,N), Id(N, N), sigmahathat(N,N),
 	aux(N,N), sigma(N,N);
       base_vector p(NP);
@@ -425,8 +425,8 @@ namespace getfem {
 					   const mesh_region &rg = mesh_region::all_convexes()) {
     MAT1 &K = const_cast<MAT1 &>(K_);
     MAT2 &B = const_cast<MAT2 &>(B_);
-    if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
 
     incomp_nonlinear_term<VECT1> ntermk(mf_u, U, 0);
     incomp_nonlinear_term<VECT1> ntermb(mf_u, U, 2);
@@ -470,8 +470,8 @@ namespace getfem {
 				const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R_U = const_cast<VECT1 &>(R_U_);
     VECT1 &R_P = const_cast<VECT1 &>(R_P_);
-    if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
 
     incomp_nonlinear_term<VECT2> nterm_tg(mf_u, U, 0);
     incomp_nonlinear_term<VECT2> nterm(mf_u, U, 1);

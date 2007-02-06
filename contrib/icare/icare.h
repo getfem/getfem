@@ -224,10 +224,10 @@ namespace getfem {
 	boundary(bound) {
       dt = dt_;
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
-      if (mf_mult->get_qdim() != mf_u().get_qdim()) 
-	DAL_THROW(failure_error, "The lagrange multipliers mesh fem "
-		  "for the mdbrick_NS_nonref1 brick should have the same Qdim as "
-		  "the main mesh_fem");
+      GMM_ASSERT1(mf_mult->get_qdim() == mf_u().get_qdim(),
+		  "The lagrange multipliers mesh fem "
+		  "for the mdbrick_NS_nonref1 brick should have the same "
+		  "Qdim as the main mesh_fem");
 
       this->add_proper_boundary_info(this->num_fem, boundary, 
 				     MDBRICK_DIRICHLET);

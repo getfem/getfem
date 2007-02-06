@@ -75,12 +75,10 @@ namespace getfem {
       if (dim_ == dim_type(-1))
 	dim_ = mim.linked_mesh().structure_of_convex(cv)->dim();
       
-      if (dim_ != mim.linked_mesh().structure_of_convex(cv)->dim())
-	DAL_THROW(failure_error, "Convexes of different dimension"
-		  ": to be done");
+      GMM_ASSERT1(dim_ == mim.linked_mesh().structure_of_convex(cv)->dim(),
+		  "Convexes of different dimension: to be done");
       pintegration_method pim = mim.int_method_of_element(cv);
-      if (pim->type() != IM_APPROX) 
-	DAL_THROW(failure_error, "You have to use approximated "
+      GMM_ASSERT1(pim->type() == IM_APPROX, "You have to use approximated "
 		  "integration to interpolate an fem");
       papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
@@ -141,7 +139,7 @@ namespace getfem {
   { context_check(); 
     if (mim.linked_mesh().convex_index().is_in(cv))
       return elements[cv].nb_dof; 
-    else DAL_THROW(failure_error, "Wrong convex number: " << cv);
+    else GMM_ASSERT1(false, "Wrong convex number: " << cv);
   }
   
   size_type interpolated_fem::index_of_global_dof
@@ -156,7 +154,7 @@ namespace getfem {
   { 
     if (mim.linked_mesh().convex_index().is_in(cv))
       return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
-    else DAL_THROW(failure_error, "Wrong convex number: " << cv);
+    else GMM_ASSERT1(false, "Wrong convex number: " << cv);
   }
 
   bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
@@ -167,13 +165,13 @@ namespace getfem {
   }
   
   void interpolated_fem::base_value(const base_node &, base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void interpolated_fem::grad_base_value(const base_node &,
 					 base_tensor &) const
-  { DAL_THROW(internal_error, "No grad values, real only element."); }
+  { GMM_ASSERT1(false, "No grad values, real only element."); }
   void interpolated_fem::hess_base_value(const base_node &,
 					 base_tensor &) const
-  { DAL_THROW(internal_error, "No hess values, real only element."); }
+  { GMM_ASSERT1(false, "No hess values, real only element."); }
   
   inline void interpolated_fem::actualize_fictx(pfem pf, size_type cv,
 						const base_node &ptr) const {
@@ -324,7 +322,7 @@ namespace getfem {
   
   void interpolated_fem::real_hess_base_value
   (const fem_interpolation_context&, base_tensor &, bool) const
-  { DAL_THROW(internal_error, "Sorry, to be done."); }
+  { GMM_ASSERT1(false, "Sorry, to be done."); }
   
 
   dal::bit_vector interpolated_fem::interpolated_convexes() const {
@@ -377,8 +375,7 @@ namespace getfem {
 				     bool store_val)
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
-    if (mef.get_qdim() != 1) 
-      DAL_THROW(to_be_done_error,
+    GMM_ASSERT1(mef.get_qdim() == 1,
 		"interpolated_fem do not handle qdim != 1");
     this->add_dependency(mf);
     this->add_dependency(mim);

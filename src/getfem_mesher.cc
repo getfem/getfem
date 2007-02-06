@@ -76,7 +76,7 @@ namespace getfem {
       while (iter == 0 || dmin > 1e-15 || gmm::vect_dist2(X, Y) > 1e-15 ) {
 	gmm::copy(X, Y);
 	if (++iter > 1000) {
-	  DAL_WARNING4("Try projection failed, 1000 iterations\n\n");
+	  GMM_WARNING4("Try projection failed, 1000 iterations\n\n");
 	  return false;
 	  // return (gmm::abs(d) < 1E-10); // is there a possibility to detect
 	} 	// the impossibility without making 1000 iterations ?
@@ -164,7 +164,7 @@ namespace getfem {
   // symmetric base_matrix
   static scalar_type max_vp(const base_matrix& M) {
     size_type m = mat_nrows(M);
-    if (!is_hermitian(M)) DAL_THROW(failure_error, "Matrix is not symmetric");
+    GMM_ASSERT1(is_hermitian(M), "Matrix is not symmetric");
     std::vector<scalar_type> eig(m);
     gmm::symmetric_qr_algorithm(M, eig);
     scalar_type emax(0);
@@ -532,8 +532,8 @@ namespace getfem {
       size_type it(0);
       if (d > 0.0)
 	while (gmm::abs(d) > 1e-10) {
-	  if (++it > 10000)
-	    DAL_THROW(failure_error, "Object empty, or bad signed distance");
+	  ++it;
+	  GMM_ASSERT1(it <= 10000, "Object empty, or bad signed distance");
 // 	  cout << "iter " << it << " X = " << X << " dist = " << d << 
 // 	    " grad = " << G << endl;
 	  gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
@@ -546,12 +546,12 @@ namespace getfem {
       scalar_type d = dist.grad(X, G);
       size_type it(0);
       while (gmm::abs(d) > 1e-10) {
-	if (++it > 10000)
-	    DAL_THROW(failure_error,
-		      "Object empty, or bad signed distance X=" << X << ", G=" << G << " d = " << d);
- 	if (it > 9980) 
-	  cout << "iter " << it << " X = " << X << " dist = " << d << 
- 	    " grad = " << G << endl;
+	++it;
+	GMM_ASSERT1(it <= 10000, "Object empty, or bad signed distance X="
+		    << X << ", G=" << G << " d = " << d);
+//  	if (it > 9980) 
+// 	  cout << "iter " << it << " X = " << X << " dist = " << d << 
+//  	    " grad = " << G << endl;
 	gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
 	d = dist.grad(X, G);
       }
@@ -707,8 +707,7 @@ namespace getfem {
 
       for (size_type i=0; i < N; ++i) 
 	h0 = std::min(h0, bounding_box_max[i] - bounding_box_min[i]);
-      if (h0 < 1E-10)
-	DAL_THROW(failure_error, "h0 = " << h0 << " too small, aborting.");
+      GMM_ASSERT1(h0 >= 1E-10, "h0 = " << h0 << " too small, aborting.");
 
       for (size_type i=0; i < N; ++i) {
 	scalar_type h = h0;
@@ -1187,7 +1186,7 @@ namespace getfem {
 
 	// computation of L and L0.
 	size_type nbcv = edges_mesh.convex_index().card();
-	if (nbcv == 0) DAL_THROW(failure_error, "no more edges!");
+	GMM_ASSERT1(nbcv != 0, "no more edges!");
 	L.resize(nbcv); L0.resize(nbcv);
 	scalar_type sL = 0, sL0 = 0;
 	for (dal::bv_visitor ie(edges_mesh.convex_index());
@@ -1372,8 +1371,8 @@ namespace getfem {
 # ifndef GETFEM_HAVE_QHULL_QHULL_H
   void delaunay(const std::vector<base_node> &,
 		gmm::dense_matrix<size_type>&) {
-    DAL_THROW(failure_error, "Qhull header files not installed. "
-	      "Install qhull library and reinstall Getfem++ library.");
+    GMM_ASSERT1(false, "Qhull header files not installed. "
+		"Install qhull library and reinstall Getfem++ library.");
   }
 # else
 

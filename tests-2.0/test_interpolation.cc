@@ -93,7 +93,7 @@ void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX
       (msh, N, org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
       (msh, N, org, vtab.begin(), ref.begin()); break;
-  default: DAL_THROW(dal::failure_error, "invalid mesh type\n");
+  default: GMM_THROW(dal::failure_error, "invalid mesh type\n");
   }
   msh.optimize_structure();
   m.clear();
@@ -211,7 +211,7 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
     c.init().tic();
     double err2 = interpolate_check(mf1, mf2, i, mat_version); 
     if (i==0 || (mat_version > 0 && i == 1)) err = err2;
-    else if (err != err2) DAL_INTERNAL_ERROR("");
+    else if (err != err2) GMM_INTERNAL_ERROR("");
     printf(" %5.1f ", c.toc().cpu()*1000.); //cout << " " << setw(4) << c.toc().cpu(); 
     cout.flush();
   }
@@ -238,7 +238,7 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
     c.init().tic();
     double err2 = interpolate_check(mf1, mf2, i, mat_version); 
     if (i==0 || (mat_version > 0 && i == 1)) err = err2;
-    else if (err != err2) DAL_INTERNAL_ERROR("");
+    else if (err != err2) GMM_INTERNAL_ERROR("");
     printf(" %5.1f ", c.toc().cpu()*1000.); //cout << " " << setw(4) << c.toc().cpu(); 
     cout.flush();
   }
@@ -292,7 +292,7 @@ void test0() {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
 
@@ -318,5 +318,5 @@ int main(int argc, char *argv[]) {
       }
     }
   }  
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 }

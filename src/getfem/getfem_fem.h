@@ -316,7 +316,7 @@ namespace getfem {
     
     virtual void mat_trans(base_matrix &, const base_matrix &,
 			   bgeot::pgeometric_trans) const
-      { DAL_THROW(internal_error, "This function should not be called."); }
+    { GMM_ASSERT1(false, "This function should not be called."); }
     /** Interpolate at an arbitrary point x given on the reference
 	element.
 	
@@ -405,7 +405,7 @@ namespace getfem {
 				      base_tensor &t, bool withM = true) const;
     
     virtual size_type index_of_global_dof(size_type, size_type) const
-      { DAL_THROW(internal_error, "internal error."); }
+      { GMM_ASSERT1(false, "internal error."); }
 
     /** internal function adding a node to an element for the creation
      * of a finite element method. Important : the faces should be the faces
@@ -699,8 +699,7 @@ namespace getfem {
 				  const CVEC& coeff, VVEC &val,
 				  dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    if (gmm::vect_size(val) != Qdim)
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(gmm::vect_size(val) == Qdim, "dimensions mismatch");
     size_type R = nb_dof(c.convex_num());
     
     gmm::clear(val);
@@ -720,8 +719,8 @@ namespace getfem {
 				  MAT &M, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
     size_type R = nb_dof(c.convex_num());
-    if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(gmm::mat_nrows(M) == Qdim && gmm::mat_ncols(M) == R*Qmult,
+		"dimensions mismatch");
 
     gmm::clear(M);
     base_tensor Z; real_base_value(c, Z);
@@ -741,8 +740,8 @@ namespace getfem {
     typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
     dim_type N = c.N();
-    if (gmm::mat_ncols(val) != N || gmm::mat_nrows(val) != Qdim)
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(gmm::mat_ncols(val) == N && gmm::mat_nrows(val) == Qdim,
+		"dimensions mismatch");
     
     base_tensor t;
     size_type R = nb_dof(c.convex_num());
@@ -766,9 +765,8 @@ namespace getfem {
     typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
     dim_type N = c.N();
-    if (gmm::mat_ncols(val) != gmm::size_type(N*N)
-	|| gmm::mat_nrows(val) != Qdim)
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    GMM_ASSERT1(gmm::mat_ncols(val) == gmm::size_type(N*N)
+		&& gmm::mat_nrows(val) == Qdim, "dimensions mismatch");
     
     base_tensor t;
     size_type R = nb_dof(c.convex_num());

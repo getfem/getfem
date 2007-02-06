@@ -317,7 +317,7 @@ void navier_stokes_problem::init(void) {
     case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
     case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
     case 3: pdef.reset(new problem_rotating_cylinder(PARAM.real_value("CYL_ROT_SPEED"))); break;
-    default: DAL_THROW(gmm::failure_error, "wrong PROBLEM value");
+    default: GMM_ASSERT1(false, "wrong PROBLEM value");
   }
 
   export_to_opendx = PARAM.int_value("DX_EXPORT", "");
@@ -340,11 +340,9 @@ void navier_stokes_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -353,11 +351,9 @@ void navier_stokes_problem::init(void) {
 
   std::string mult_fem_name = PARAM.string_value("MULTIPLIER_FEM_TYPE");
   if (mult_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "MULTIPLIER_FEM_TYPE in the .param file");
-    }
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_mult.set_finite_element(mesh.convex_index(), 
@@ -383,7 +379,7 @@ void navier_stokes_problem::solve() {
   case 2 : solve_FULLY_CONSERVATIVE(); break;
   case 3 : solve_PREDICTION_CORRECTION(); break;
   case 4 : solve_PREDICTION_CORRECTION2(); break;
-  default: DAL_THROW(gmm::failure_error, "unknown method");
+  default: GMM_ASSERT1(false, "unknown method");
   }
 }
 

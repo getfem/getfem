@@ -551,8 +551,8 @@ namespace getfem {
     typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
     
     rg.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_r.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_r.get_qdim() == 1, 
+		"invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       const char *s;
       if (mf_u.get_qdim() == 1 && mf_mult.get_qdim() == 1)
@@ -674,8 +674,7 @@ void bilaplacian_crack_problem::init(void) {
     bgeot::pgeometric_trans pgt = 
       bgeot::geometric_trans_descriptor(MESH_TYPE);
     N = pgt->dim();
-    if (N != 2)
-     DAL_THROW(getfem::failure_error, "For a plate problem, N should be 2");
+    GMM_ASSERT1(N == 2, "For a plate problem, N should be 2");
     std::vector<size_type> nsubdiv(N);
     NX = PARAM.int_value("NX", "Number of space steps ") ;
     std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
@@ -743,11 +742,9 @@ void bilaplacian_crack_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -882,7 +879,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
           }
           cout << "enriched_dofs: " << enriched_dofs << "\n";
           if (enriched_dofs.card() < 3)
-             DAL_WARNING0("There is " << enriched_dofs.card() <<
+             GMM_WARNING0("There is " << enriched_dofs.card() <<
 		   " enriched dofs for the crack tip");
           mf_u_product.set_enrichment(enriched_dofs);
           mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
@@ -941,7 +938,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     }
     break ;
   default : 
-	DAL_THROW(getfem::failure_error, "Enrichment_option parameter is undefined");
+	GMM_ASSERT1(false, "Enrichment_option parameter is undefined");
 	break ;  
 	}
   mesh.write_to_file("toto.mesh");
@@ -1292,7 +1289,7 @@ int main(int argc, char *argv[]) {
     p.init();
     plain_vector U;
     p.mesh.write_to_file("mesh.m") ;
-    if (!p.solve(U)) DAL_THROW(gmm::failure_error, "Solve has failed");
+    if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
 
     p.compute_error(U);
 

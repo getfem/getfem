@@ -451,7 +451,7 @@ int main(/* int argc, char **argv */) {
     getfem::pintegration_method im_none = getfem::int_method_descriptor("IM_NONE()");
     try {
       cout << "nbpts=" << im_none->structure()->nb_points() << "\n";
-    } catch (gmm::failure_error e) {
+    } catch (gmm::gmm_error e) {
       ok = 1;
     }
     if (!ok) throw(gmm::failure_error("IM_NONE failed..\n"));

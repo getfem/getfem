@@ -250,11 +250,9 @@ void crack_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -546,7 +544,7 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u().nb_dof());
-     if (!p.solve(U)) DAL_THROW(gmm::failure_error,"Solve has failed");
+     if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
    
     {
       getfem::mesh mcut;

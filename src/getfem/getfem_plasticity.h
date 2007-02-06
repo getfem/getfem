@@ -80,13 +80,11 @@ namespace getfem {
 				     size_type flag_proj)  const {
 	
 	/* be sure that flag_proj has a correct value */
-	if(flag_proj!=0 && flag_proj!=1)
-	  DAL_THROW(failure_error,
+	GMM_ASSERT1(flag_proj == 0 || flag_proj ==1,
 		    "wrong value for the projection flag, must be 0 or 1 ");
       
 	/* be sure that stress_threshold has a correct value */
-	if(!(stress_threshold>=0.))
-	  DAL_THROW(failure_error, "s is not a positive number "
+	GMM_ASSERT1(stress_threshold>=0., "s is not a positive number "
 		    << stress_threshold << ". You need to set "
 		    << "s as a positive number");
 	
@@ -104,9 +102,9 @@ namespace getfem {
 
 	/* plane constraints */    
 	if(flag_hyp==1){  // To be done ...
-	  if(N/=2)
-	    DAL_THROW(failure_error,
-	     "wrong value for CALCULATION HYPOTHESIS, must be /=1 SINCE n/=2");
+	  N /= 2;
+	  GMM_ASSERT1(!N, "wrong value for CALCULATION HYPOTHESIS, "
+		      "must be /=1 SINCE n/=2");
 	  // we form the 3D tau tensor considering that tau(3,j)=tau(i,3)=0
 	  base_matrix tau_aux(3,3); gmm::clear(tau_aux);
 	  gmm::copy(tau,gmm::sub_matrix(tau_aux,gmm::sub_interval(0,2)));
@@ -237,8 +235,7 @@ namespace getfem {
       fill_sigma_bar = fill_sigma;   /* always false during resolution, */
       /*                      true when called from compute_constraints */
 
-      if (mf.get_qdim() != N)
-	DAL_THROW(failure_error, "wrong qdim for the mesh_fem");      
+      GMM_ASSERT1(mf.get_qdim() == N, "wrong qdim for the mesh_fem");      
       if (flag_proj==0) sizes_.resize(2);
     
       sigma_bar_.resize(mf.linked_mesh().convex_index().last_true()+1);    
@@ -331,18 +328,15 @@ namespace getfem {
       @ingroup asm
   */
   template<typename VECT> 
-  void asm_rhs_for_plasticity(VECT &V, 
-			      const mesh_im &mim, 
-			      const mesh_fem &mf,
-			      const mesh_fem &mfdata,
-			      nonlinear_elem_term *plast,
-			      const mesh_region &rg = mesh_region::all_convexes())
-  {
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+  void asm_rhs_for_plasticity
+  (VECT &V, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mfdata,
+   nonlinear_elem_term *plast,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
     generic_assembly assem("t=comp(NonLin(#1,#2).vGrad(#1));"
-				   "e=(t{:,:,:,4,5}+t{:,:,:,5,4})/2;"
-				   "V(#1) += e(i,j,:,i,j)");
+			   "e=(t{:,:,:,4,5}+t{:,:,:,5,4})/2;"
+			   "V(#1) += e(i,j,:,i,j)");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -350,22 +344,18 @@ namespace getfem {
     assem.push_vec(V);
     assem.assembly(rg);
   }
-
+  
   /** 
       Left hand side matrix for plasticity
       @ingroup asm
   */
   template<typename MAT,typename VECT> 
-  void asm_lhs_for_plasticity(MAT &H, 
-			      const mesh_im &mim, 
-			      const mesh_fem &mf,
-			      const mesh_fem &mfdata,
-			      const VECT &LAMBDA, const VECT &MU,
-			      nonlinear_elem_term *gradplast,
-			      const mesh_region &rg = mesh_region::all_convexes())
-  {
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+  void asm_lhs_for_plasticity
+  (MAT &H, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mfdata,
+   const VECT &LAMBDA, const VECT &MU, nonlinear_elem_term *gradplast,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
     /*generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 				   "t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1).Base(#2));"
 				   "e=(t{:,:,:,:,:,6,7,:,9,10,:}+t{:,:,:,:,:,7,6,:,9,10,:}+t{:,:,:,:,:,6,7,:,10,9,:}+t{:,:,:,:,:,7,6,:,10,9,:})/4;"
@@ -397,8 +387,7 @@ namespace getfem {
   public:
     pseudo_fem_on_gauss_point(pintegration_method pim) {
       pai = pim->approx_method();
-      if (!pai) 
-	DAL_THROW(gmm::failure_error, "cannot use a non-approximate "
+      GMM_ASSERT1(pai, "cannot use a non-approximate "
 		  "integration method in this context");
       cvr  = pai->ref_convex();
       dim_ = cvr->structure()->dim();
@@ -418,28 +407,27 @@ namespace getfem {
     }
 
     void base_value(const base_node &, base_tensor &) const
-    { DAL_THROW(internal_error, "base_value not allowed here.");  }
+    { GMM_ASSERT1(false, "base_value not allowed here.");  }
     void grad_base_value(const base_node &, base_tensor &) const
-    { DAL_THROW(internal_error, "This FEM does not provide gradients.");  }
+    { GMM_ASSERT1(false, "This FEM does not provide gradients.");  }
     void hess_base_value(const base_node &, base_tensor &) const
-    { DAL_THROW(internal_error, "This FEM does not provide hessians.");  }
+    { GMM_ASSERT1(false, "This FEM does not provide hessians.");  }
 
     void real_base_value(const fem_interpolation_context& c, 
 			 base_tensor &t, bool = true) const {
       bgeot::multi_index mi(2);
       mi[1] = target_dim(); mi[0] = nb_base(0);
       t.adjust_sizes(mi);
-      if (!c.have_pfp()) 
-	DAL_THROW(gmm::failure_error, 
-		  "Cannot extrapolate the value outside of the gauss points !");
+      GMM_ASSERT1(c.have_pfp(), "Cannot extrapolate the value outside "
+		  "of the gauss points !");
       std::fill(t.begin(), t.end(), 0); t[c.ii()] = 1;
     }
     void real_grad_base_value(const fem_interpolation_context&, 
 			      base_tensor &, bool) const
-    { DAL_THROW(internal_error, "This FEM does not provide gradients.");  }
+    { GMM_ASSERT1(false, "This FEM does not provide gradients.");  }
     void real_hess_base_value(const fem_interpolation_context&, 
 			      base_tensor &, bool) const
-    { DAL_THROW(internal_error, "This FEM does not provide hessians.");  }
+    { GMM_ASSERT1(false, "This FEM does not provide hessians.");  }
   };
 
 
@@ -521,8 +509,7 @@ namespace getfem {
 	pintegration_method pim = 0;
 	pfem pf_vm_old = 0;
 	bgeot::pgeometric_trans pgt_old = 0;
-	if (mf_vm.get_qdim() != 1) 
-	  DAL_THROW(gmm::failure_error, "expected a scalar mesh_fem");
+	GMM_ASSERT1(mf_vm.get_qdim() == 1, "expected a scalar mesh_fem");
 	pfem pf_u = 0;
 	base_vector uvm, lvm, eig(N);
 	base_matrix M1, M2, M, sigma(N,N);

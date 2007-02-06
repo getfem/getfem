@@ -539,11 +539,9 @@ void crack_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -695,7 +693,7 @@ bool crack_problem::solve(plain_vector &U) {
 
   
     for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
-      f >> W[i]; if (!f.good()) DAL_THROW(gmm::failure_error, "problem while reading " << GLOBAL_FUNCTION_U);
+      f >> W[i]; GMM_ASSERT1(f.good(), "problem while reading " << GLOBAL_FUNCTION_U);
       //cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
       /*scalar_type x = pow(mf_c->point_of_dof(i)[0],2); scalar_type y = pow(mf_c->point_of_dof(i)[1],2);
 	scalar_type r = std::sqrt(pow(x,2) + pow(y,2));
@@ -763,7 +761,7 @@ bool crack_problem::solve(plain_vector &U) {
 	  enriched_dofs.add(j);
       }
       if (enriched_dofs.card() < 3)
-	DAL_WARNING0("There is " << enriched_dofs.card() <<
+	GMM_WARNING0("There is " << enriched_dofs.card() <<
 		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
@@ -1078,9 +1076,8 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
 
     plain_vector U(p.mf_u().nb_dof());
-    if (!p.solve(U)) {
-      DAL_THROW(gmm::failure_error,"Solve has failed");
-    } 
+    if (!p.solve(U)) GMM_ASSERT1(false,"Solve has failed");
+ 
     //        for (size_type i = 4; i < U.size(); ++i)
     //U[i] = 0;
     //cout << "The solution" << U ;

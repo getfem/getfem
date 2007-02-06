@@ -79,7 +79,7 @@ double u_exact(const base_node &p) {
       return (Radius*Radius - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
     }
   }
-  DAL_THROW(gmm::failure_error, "Invalid exact solution");
+  GMM_ASSERT1(false, "Invalid exact solution");
 }
 
 double g_exact(const base_node &p) {

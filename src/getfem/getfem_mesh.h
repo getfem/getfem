@@ -91,17 +91,17 @@ namespace getfem {
     public :
 
       virtual void receipt(const MESH_CLEAR           &)
-      { DAL_THROW(internal_error, "internal error");}
+      { GMM_ASSERT1(false, "internal error"); }
       virtual void receipt(const MESH_DELETE          &)
-      { DAL_THROW(internal_error, "internal error");}
+      { GMM_ASSERT1(false, "internal error"); }
       virtual void receipt(const MESH_ADD_CONVEX      &) 
-      { DAL_THROW(internal_error, "internal error");}
+      { GMM_ASSERT1(false, "internal error"); }
       virtual void receipt(const MESH_SUP_CONVEX      &) 
-      { DAL_THROW(internal_error, "internal error");}
+      { GMM_ASSERT1(false, "internal error"); }
       virtual void receipt(const MESH_SWAP_CONVEX     &)
-      { DAL_THROW(internal_error, "internal error");}
+      { GMM_ASSERT1(false, "internal error"); }
       virtual void receipt(const MESH_REFINE_CONVEX   &)
-      { DAL_THROW(internal_error, "internal error");}
+      { GMM_ASSERT1(false, "internal error"); }
 
       virtual ~mesh_receiver() {}
   };
@@ -283,8 +283,7 @@ namespace getfem {
 	@param ic the convex number.
     */
     bgeot::pgeometric_trans trans_of_convex(size_type ic) const { 
-      if (!(trans_exists[ic]))
-	DAL_THROW(internal_error, "internal error");
+      GMM_ASSERT1(trans_exists[ic], "internal error");
       return gtab[ic]; 
     }
     

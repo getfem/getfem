@@ -36,11 +36,11 @@ namespace getfem {
   /// inherit from this class to define new global functions.
   struct global_function : virtual public dal::static_stored_object {
     virtual scalar_type val(const fem_interpolation_context&) const
-    { DAL_THROW(failure_error, "this global_function has no value"); }
+    { GMM_ASSERT1(false, "this global_function has no value"); }
     virtual void grad(const fem_interpolation_context&, base_small_vector &) const
-    { DAL_THROW(failure_error, "this global_function has no gradient"); }
+    { GMM_ASSERT1(false, "this global_function has no gradient"); }
     virtual void hess(const fem_interpolation_context&, base_matrix &) const
-    { DAL_THROW(failure_error, "this global_function has no hessian"); }
+    { GMM_ASSERT1(false, "this global_function has no hessian"); }
     virtual ~global_function() {}
   };
   

@@ -69,11 +69,11 @@ namespace getfem {
    const mesh_fem &mf_data, const VECT &LAMBDA_INV, const VECT &MU_INV,
    const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     
-    if (mf.get_qdim() != gmm::sqr(mf.linked_mesh().dim()))
-      DAL_THROW(invalid_argument, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf.get_qdim() == gmm::sqr(mf.linked_mesh().dim()),
+		"wrong qdim for the mesh_fem");
 
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 			   "t=comp(mBase(#1).mBase(#1).Base(#2));"
@@ -97,8 +97,9 @@ namespace getfem {
     MAT &RM = const_cast<MAT &>(RM_);
     size_type N = mf_sigma.linked_mesh().dim();
 
-    if (mf_sigma.get_qdim() != N*N || mf_theta.get_qdim() != (N*(N-1)/2))
-      DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
+    GMM_ASSERT1(mf_sigma.get_qdim() == N*N &&
+		mf_theta.get_qdim() == (N*(N-1)/2),
+		"wrong qdim for a mesh_fem");
     
     base_matrix A(N*(N-1)/2, N*N);
     size_type k = 0;
@@ -126,8 +127,8 @@ namespace getfem {
     MAT &RM = const_cast<MAT &>(RM_);
     size_type N = mf_sigma.linked_mesh().dim();
 
-    if (mf_sigma.get_qdim() != N*N || mf_u.get_qdim() != N)
-      DAL_THROW(invalid_argument, "wrong qdim for a mesh_fem");
+    GMM_ASSERT1(mf_sigma.get_qdim() == N*N && mf_u.get_qdim() == N,
+		"wrong qdim for a mesh_fem");
 
     generic_assembly assem("t=comp(vBase(#1).mGrad(#2));"
                            "M(#1,#2)+= t(:,i,:,i,j,j)");
@@ -165,9 +166,8 @@ namespace getfem {
     const T_MATRIX &get_K(void) {
       this->context_check(); 
       if (!K_uptodate || this->parameters_is_any_modified()) {
-	if (&lambda_inv_.mf() != &mu_inv_.mf()) 
-	DAL_THROW(failure_error,
-		  "Lame coefficients should share the same mesh_fem");
+	GMM_ASSERT1(&lambda_inv_.mf() == &mu_inv_.mf(), 
+		    "Lame coefficients should share the same mesh_fem");
 	gmm::resize(K, nbdof, nbdof);
 	gmm::clear(K);
 	gmm::sub_interval I1(0, mf_sigma.nb_dof());
@@ -229,12 +229,11 @@ namespace getfem {
 
     void init_(void) {
       size_type N = mf_sigma.linked_mesh().dim();
-      if (mf_sigma.get_qdim() != N*N)
-	DAL_THROW(failure_error, "Qdim of mf_sigma should be " << N*N << ".");
-      if (mf_u.get_qdim() != N)
-	DAL_THROW(failure_error, "Qdim of mf_u should be " << N << ".");
-      if (mf_theta.get_qdim() != (N*(N-1)/2))
-	DAL_THROW(failure_error,
+      GMM_ASSERT1(mf_sigma.get_qdim() == N*N,
+		  "Qdim of mf_sigma should be " << N*N << ".");
+      GMM_ASSERT1(mf_u.get_qdim() == N,
+		  "Qdim of mf_u should be " << N << ".");
+      GMM_ASSERT1(mf_theta.get_qdim() == (N*(N-1)/2),
 		  "Qdim of mf_theta should be " << (N*(N-1)/2) << ".");
       this->add_proper_mesh_im(mim);
       this->add_proper_mesh_fem(mf_sigma, MDBRICK_MIXED_ELASTICITY);
@@ -267,8 +266,7 @@ namespace getfem {
    void asm_source_term_normal(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 			       const mesh_fem &mf_data, const VECT2 &F,
 			       const mesh_region &rg) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh_fem");
+     GMM_ASSERT1(mf_data.get_qdim() == 1, "invalid data mesh_fem");
 
     const char *st;
     if (mf.get_qdim_n() == 1)
@@ -456,8 +454,7 @@ void elastostatic_problem::init(void) {
   }
   getfem::import_mesh(filename.str(), mesh);
   
-  if (N != mesh.dim())
-    DAL_THROW(getfem::failure_error, "The mesh has not the right dimension");
+  GMM_ASSERT1(N == mesh.dim(), "The mesh has not the right dimension");
 
   dirichlet_version
     = getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION",
@@ -500,11 +497,9 @@ void elastostatic_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(gmm::failure_error, "You are using a non-lagrange FEM. "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -625,7 +620,7 @@ int main(int argc, char *argv[]) {
 
     plain_vector U;
 
-    if (!p.solve(U)) DAL_THROW(gmm::failure_error, "Solve has failed");
+    if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
 
     p.compute_error(U);
 

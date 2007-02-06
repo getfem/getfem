@@ -93,7 +93,7 @@ namespace getfem {
     linkmsg_sender(void) {};
     virtual ~linkmsg_sender();
     const linkmsg_sender& operator =(const linkmsg_sender &) {
-      DAL_THROW(internal_error, "The copy of this object doesn't work");
+      GMM_ASSERT1(false, "The copy of this object doesn't work");
       return *this;
     }
     linkmsg_sender(const linkmsg_sender &v) { *this = v; }
@@ -163,7 +163,7 @@ namespace getfem {
       { sup_sender_(NULL, senders.tas_begin(), senders.tas_end()); }
     const virtual_linkmsg_receiver& operator =(const
 					       virtual_linkmsg_receiver &) {
-      DAL_THROW(internal_error, "The copy of this object doesn't work");
+      GMM_ASSERT1(false, "The copy of this object doesn't work");
       return *this;
     }
     virtual_linkmsg_receiver(const virtual_linkmsg_receiver &v) { *this = v; }

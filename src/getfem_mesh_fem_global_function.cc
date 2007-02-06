@@ -48,13 +48,13 @@ namespace getfem {
   { return i; }
    
   void global_function_fem::base_value(const base_node &, base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
+  { GMM_ASSERT1(false, "No base values, real only element."); }
   void global_function_fem::grad_base_value(const base_node &,
 					 base_tensor &) const
-  { DAL_THROW(internal_error, "No grad values, real only element."); }
+  { GMM_ASSERT1(false, "No grad values, real only element."); }
   void global_function_fem::hess_base_value(const base_node &,
 					    base_tensor &) const
-  { DAL_THROW(internal_error, "No hess values, real only element."); }
+  { GMM_ASSERT1(false, "No hess values, real only element."); }
   
   void global_function_fem::real_base_value(const fem_interpolation_context& c,
 					    base_tensor &t, bool) const {
@@ -173,7 +173,7 @@ namespace getfem {
     scalar_type r = sqrt(x*x + y*y);
 
     if (r < 1e-10) {
-      DAL_WARNING0("Warning, point close to the singularity (r=" << r << ")");
+      GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
     }
 
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
@@ -322,7 +322,7 @@ namespace getfem {
     }
     virtual void hess(const fem_interpolation_context&, 
 		      base_matrix &) const
-    { DAL_THROW(to_be_done_error, "hessian to be done ..."); }
+    { GMM_ASSERT1(false, "hessian to be done ..."); }
     
     void update_from_context(void) const { cv =  size_type(-1); }
 

@@ -102,16 +102,15 @@ namespace getfem {
       }
     }
     else {
-      if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
-	  != pf->basic_structure(cv))
-	DAL_THROW(failure_error,
+      GMM_ASSERT1(linked_mesh_->structure_of_convex(cv)->basic_structure() 
+		  == pf->basic_structure(cv),
 		  "Incompatibility between fem " << name_of_fem(pf) << 
 		  " and mesh element " <<
 		  name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
-      if ((Qdim % pf->target_dim()) != 0 && pf->target_dim() != 1)
-	DAL_THROW(failure_error,
-		  "Incompatibility between Qdim=" << int(Qdim) << " and target_dim " <<
-		  int(pf->target_dim()) << " of " << name_of_fem(pf));
+      GMM_ASSERT1((Qdim % pf->target_dim()) == 0 || pf->target_dim() == 1,
+		  "Incompatibility between Qdim=" << int(Qdim) <<
+		  " and target_dim " << int(pf->target_dim()) << " of " <<
+		  name_of_fem(pf));
       if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
 	fe_convex.add(cv);
 	f_elems[cv] = pf;
@@ -174,13 +173,13 @@ namespace getfem {
 	   linked_mesh().points_of_convex(cv));
       }
     }
-    DAL_THROW(failure_error, "Inexistent dof");
+    GMM_ASSERT1(false, "Inexistent dof");
   }
 
   dim_type mesh_fem::dof_qdim(size_type d) const {
     if (!dof_enumeration_made) enumerate_dof();
     size_type cv = first_convex_of_dof(d);
-    if (cv == size_type(-1)) DAL_THROW(failure_error, "Inexistent dof");
+    GMM_ASSERT1(cv != size_type(-1), "Inexistent dof");
     size_type tdim = f_elems[cv]->target_dim();
     return dof_structure.ind_in_convex_of_point(cv, d) % (Qdim / tdim);
   }
@@ -208,7 +207,7 @@ namespace getfem {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return dof_structure.convex_to_point(i);
     }
-    DAL_THROW(failure_error, "Inexistent dof");
+    GMM_ASSERT1(false, "Inexistent dof");
   }
 
   struct dof_comp_ { 
@@ -302,10 +301,6 @@ namespace getfem {
     nb_total_dof = nbdof;
   }
 
-
-
-
-
   void mesh_fem::clear(void) {
     fe_convex.clear();
     dof_enumeration_made = false;
@@ -344,11 +339,9 @@ namespace getfem {
       } else if (bgeot::casecmp(tmp, "CONVEX")==0) {
 	bgeot::get_token(ist, tmp);
 	size_type ic = atoi(tmp.c_str());
-	if (!linked_mesh().convex_index().is_in(ic)) {
-	  DAL_THROW(failure_error, "Convex " << ic <<
+	GMM_ASSERT1(linked_mesh().convex_index().is_in(ic), "Convex " << ic <<
 		    " does not exist, are you sure "
 		    "that the mesh attached to this object is right one ?");
-	}
 	
 	int rgt = bgeot::get_token(ist, tmp);
 	if (rgt != 3) { // for backward compatibility
@@ -356,8 +349,7 @@ namespace getfem {
 	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
 	}
 	getfem::pfem fem = getfem::fem_descriptor(tmp);
-	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" 
-			    << tmp << "'");
+	GMM_ASSERT1(fem, "could not create the FEM '" << tmp << "'");
 	set_finite_element(ic, fem);
       } else if (bgeot::casecmp(tmp, "BEGIN")==0) {
 	bgeot::get_token(ist, tmp);
@@ -389,10 +381,10 @@ namespace getfem {
 	      }
 	      dof_structure.add_convex_noverif
 		(fem_of_element(ic)->structure(ic), tab.begin(), ic);
-	    } else DAL_THROW(failure_error, "Missing convex or wrong number "
-			     << "in dof enumeration: '" 
-			     << tmp << "' [pos="
-			     << std::streamoff(ist.tellg())<<"]");
+	    } else GMM_ASSERT1(false, "Missing convex or wrong number "
+			       << "in dof enumeration: '" 
+			       << tmp << "' [pos="
+			       << std::streamoff(ist.tellg())<<"]");
 	    /*bgeot::get_token(ist, tmp);
 	      cerr << " tok: '" << tmp << "'\n";*/
 	  } 
@@ -402,36 +394,32 @@ namespace getfem {
 	  this->nb_total_dof = doflst.card();
 	  ist >> bgeot::skip("DOF_ENUMERATION");
 	} else if (tmp.size())
-	  DAL_THROW(failure_error, "Syntax error in file at token '"
-		    << tmp << "' [pos=" << std::streamoff(ist.tellg())
-							  << "]");
+	  GMM_ASSERT1(false, "Syntax error in file at token '"
+		      << tmp << "' [pos=" << std::streamoff(ist.tellg())
+		      << "]");
       } else if (bgeot::casecmp(tmp, "QDIM")==0) {
-	if (dof_read)
-	  DAL_THROW(failure_error, "Can't change QDIM after dof enumeration");
+	GMM_ASSERT1(!dof_read, "Can't change QDIM after dof enumeration");
 	bgeot::get_token(ist, tmp);
 	int q = atoi(tmp.c_str());
-	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
+	GMM_ASSERT1(q > 0 && q <= 250, "invalid qdim: " << q);
 	set_qdim(q);
       } else if (tmp.size()) {
-	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
-		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
+	GMM_ASSERT1(false, "Unexpected token '" << tmp <<
+		    "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream "
-		  << "(missing BEGIN MESH_FEM/END MESH_FEM ?)");	
+	GMM_ASSERT1(false, "Unexpected end of stream "
+		    << "(missing BEGIN MESH_FEM/END MESH_FEM ?)");	
       }
     }
   }
 
-  void mesh_fem::read_from_file(const std::string &name)
-  { 
+  void mesh_fem::read_from_file(const std::string &name) { 
     std::ifstream o(name.c_str());
-    if (!o) DAL_THROW(file_not_found_error,
-		      "Mesh_fem file '" << name << "' does not exist");
+    GMM_ASSERT1(o, "Mesh_fem file '" << name << "' does not exist");
     read_from_file(o);
   }
 
-  void mesh_fem::write_to_file(std::ostream &ost) const
-  {
+  void mesh_fem::write_to_file(std::ostream &ost) const {
     ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
     ost << "QDIM " << size_type(get_qdim()) << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
@@ -466,11 +454,9 @@ namespace getfem {
     ost << "END MESH_FEM" << '\n';
   }
 
-  void mesh_fem::write_to_file(const std::string &name, bool with_mesh) const
-  {
+  void mesh_fem::write_to_file(const std::string &name, bool with_mesh) const {
     std::ofstream o(name.c_str());
-    if (!o)
-      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+    GMM_ASSERT1(o, "impossible to open file '" << name << "'");
     o << "% GETFEM MESH_FEM FILE " << '\n';
     o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     if (with_mesh) linked_mesh().write_to_file(o);

@@ -84,8 +84,8 @@ namespace getfem {
 				       F &f, const dal::bit_vector &dofs,
 				       const M &, gmm::abstract_null_type) {
     size_type Q = mf.get_qdim();
-    if (gmm::vect_size(V) != mf.nb_dof() || Q != 1)
-      DAL_THROW(failure_error, "Dof vector has not the right size");
+    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof() && Q == 1,
+		"Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       V[i] = f(mf.point_of_dof(i));
   }
@@ -95,8 +95,8 @@ namespace getfem {
 				       F &f, const dal::bit_vector &dofs,
 				       const M &v, gmm::abstract_vector) {
     size_type N = gmm::vect_size(v),  Q = mf.get_qdim();
-    if (gmm::vect_size(V) != mf.nb_dof()*N/Q)
-      DAL_THROW(failure_error, "Dof vector has not the right size");
+    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof()*N/Q,
+		"Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       if (i % Q == 0)
 	gmm::copy(f(mf.point_of_dof(i)),
@@ -110,8 +110,8 @@ namespace getfem {
     size_type Nr = gmm::mat_nrows(mm), Nc = gmm::mat_ncols(mm), N = Nr*Nc;
     size_type Q = mf.get_qdim();
     base_matrix m(Nr, Nc);
-    if (gmm::vect_size(V) != mf.nb_dof()*N/Q)
-      DAL_THROW(failure_error, "Dof vector has not the right size");
+    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof()*N/Q,
+		"Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       if (i % Q == 0) {
 	gmm::copy(f(mf.point_of_dof(i)), m);
@@ -239,8 +239,8 @@ namespace getfem {
     std::vector<T> val(qdim);
     std::vector<std::vector<T> > coeff;
     std::vector<size_type> dof_source;
-    if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
-      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
+    GMM_ASSERT1(qdim == mf_target.get_qdim() || mf_target.get_qdim() == 1,
+		"Attempt to interpolate a field of dimension "
 		<< qdim << " on a mesh_fem whose Qdim is " << 
 		int(mf_target.get_qdim()));
     size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
@@ -276,8 +276,8 @@ namespace getfem {
 	bgeot::vectors_to_base_matrix(G,
 			      mf_source.linked_mesh().points_of_convex(cv));
 
-      if (pf_t->target_dim() != 1)
-	DAL_THROW(to_be_done_error, "won't interpolate on a vector FEM... ");
+      GMM_ASSERT1(pf_t->target_dim() == 1,
+		  "won't interpolate on a vector FEM... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
 				    size_type(-1));
@@ -410,8 +410,8 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
 		     const VECTU &U, VECTV &V, bool extrapolation = false) {
     base_matrix M;
-    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0 || gmm::vect_size(V)==0)
-      DAL_THROW(dimension_error, "Dimensions mismatch");
+    GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0 &&
+		gmm::vect_size(V)!=0, "Dimensions mismatch");
     interpolation(mf_source, mti, U, V, M, 0, extrapolation);
   }
 
@@ -431,15 +431,15 @@ namespace getfem {
     const mesh &msh(mf_source.linked_mesh());
     getfem::mesh_trans_inv mti(msh);
     size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
-    if (qdim_s != qdim_t && qdim_t != 1)
-      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
+    GMM_ASSERT1(qdim_s == qdim_t || qdim_t == 1,
+		"Attempt to interpolate a field of dimension "
 		<< qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
-
+    
     /* test if the target mesh_fem is really of Lagrange type.         */
     for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
       pfem pf_t = mf_target.fem_of_element(cv);
-      if (pf_t->target_dim() != 1 || !(pf_t->is_lagrange()))
-	DAL_THROW(failure_error,"Target fem not convenient for interpolation");
+      GMM_ASSERT1(pf_t->target_dim() == 1 && pf_t->is_lagrange(),
+		  "Target fem not convenient for interpolation");
     }
     /* initialisation of the mesh_trans_inv */
     size_type nbpts = mf_target.nb_dof() / qdim_t;
@@ -452,10 +452,9 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		     const VECTU &U, VECTV &V, bool extrapolation) {
     base_matrix M;
-    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0
-	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
-	|| gmm::vect_size(V) == 0)
-      DAL_THROW(dimension_error, "Dimensions mismatch");
+    GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
+		&& (gmm::vect_size(V) % mf_target.nb_dof()) == 0
+		&& gmm::vect_size(V) != 0, "Dimensions mismatch");
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     }
@@ -466,10 +465,9 @@ namespace getfem {
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		     MAT &M, bool extrapolation) {
-    if (mf_source.nb_dof() != gmm::mat_ncols(M)
-	|| (gmm::mat_nrows(M) % mf_target.nb_dof()) != 0
-	|| gmm::mat_nrows(M) == 0)
-      DAL_THROW(dimension_error, "Dimensions mismatch");
+    GMM_ASSERT1(mf_source.nb_dof() == gmm::mat_ncols(M)
+		&& (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
+		&& gmm::mat_nrows(M) != 0, "Dimensions mismatch");
     std::vector<scalar_type> U, V;
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);
@@ -492,10 +490,9 @@ namespace getfem {
 			      const VECTU &U, VECTV &V,
 			      bool extrapolation) {
     base_matrix M;
-    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0
-	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
-	|| gmm::vect_size(V) == 0)
-      DAL_THROW(dimension_error, "Dimensions mismatch");
+    GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
+		&& (gmm::vect_size(V) % mf_target.nb_dof()) == 0
+		&& gmm::vect_size(V) != 0, "Dimensions mismatch");
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     }

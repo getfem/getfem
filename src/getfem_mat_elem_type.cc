@@ -144,8 +144,7 @@ namespace getfem {
 
   pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term nlt,
 				    std::vector<pfem> pfi) {
-    if (pfi.size() == 0)
-      DAL_THROW(dimension_error, "mat_elem_nonlinear with no pfem!");
+    GMM_ASSERT1(pfi.size() != 0, "mat_elem_nonlinear with no pfem!");
     pmat_elem_type me = mat_elem_nonlinear_(nlt, pfi[0], 0);
     for (size_type i=1; i < pfi.size(); ++i)
       me = mat_elem_product(mat_elem_nonlinear_(nlt, pfi[i], i),me);

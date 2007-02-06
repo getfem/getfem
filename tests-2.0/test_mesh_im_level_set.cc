@@ -72,7 +72,7 @@ void test_2d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << M_PI*R1*R1 << endl;
   if (gmm::abs(area - M_PI*R1*R1) > 1E-3)
-    DAL_THROW(dal::failure_error, "Cutting integration method has failed");
+    GMM_THROW(dal::failure_error, "Cutting integration method has failed");
 }
 
 
@@ -142,18 +142,18 @@ void test_3d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << 4/3.*M_PI*R1*R1*R1 << endl;
   if (gmm::abs(area - 4/3.*M_PI*R1*R1*R1) > 1E-3)
-    DAL_THROW(dal::failure_error, "Cutting integration method has failed");
+    GMM_THROW(dal::failure_error, "Cutting integration method has failed");
 }
 
 int main(/* int argc, char **argv */) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.  
 
   try {
     // getfem::getfem_mesh_level_set_noisy();
     test_2d();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
   return 0;
 }

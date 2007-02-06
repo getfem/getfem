@@ -80,7 +80,7 @@ void test_norm(bgeot::pgeometric_trans pgt,
 
 int main(int /*argc*/, char **/*argv*/) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -91,7 +91,7 @@ int main(int /*argc*/, char **/*argv*/) {
 	      getfem::fem_descriptor("FEM_PK(3,1)"),
 	      getfem::int_method_descriptor("IM_TETRAHEDRON(1)"),false);*/
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

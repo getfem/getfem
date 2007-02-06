@@ -145,7 +145,7 @@ struct Chrono {
 	  // if (cts.card() > 1)
 	  //   cout << "WARNING, projection sur " << cts << endl;
 	  if (!pure_multi_constraint_projection(list_constraints, P, cts))
-	    DAL_WARNING1("Pure multi has failed in interpolate_face !!");
+	    GMM_WARNING1("Pure multi has failed in interpolate_face !!");
 	  // dist(P, new_cts);
 	}
       }
@@ -278,8 +278,7 @@ struct Chrono {
       return new mesher_prism_ref(n);
     }
     
-    DAL_THROW(to_be_done_error,
-	      "This element is not taken into account. Contact us");
+    GMM_ASSERT1(false, "This element is not taken into account. Contact us");
   }
 
 
@@ -390,8 +389,7 @@ struct Chrono {
     size_type n = pgt->structure()->dim();
     size_type nbtotls = primary.card() + secondary.card();
     pintegration_method exactint = classical_exact_im(pgt);
-    if (nbtotls > 16)
-      DAL_THROW(failure_error,
+    GMM_ASSERT1(nbtotls <= 16,
 		"An element is cut by more than 16 level_set, aborting");
 
 		/* 
@@ -414,8 +412,8 @@ struct Chrono {
 	mesher_level_set &mls(mesher_level_sets.back());
 	list_constraints.push_back(&mesher_level_sets.back());
 	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
-	if (gmm::abs(r0) < 1e-13) 
-	  DAL_THROW(failure_error, "Something wrong in your level set ... curvature radius = " << r0);
+	GMM_ASSERT1(gmm::abs(r0) >= 1e-13, "Something wrong in your level "
+		    "set ... curvature radius = " << r0);
 	if (secondary[ll]) {
 	  mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 1));
 	  mesher_level_set &mls2(mesher_level_sets.back());

@@ -160,7 +160,7 @@ void friction_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      GMM_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -781,7 +781,7 @@ int main(int argc, char *argv[]) {
     p.init();
     p.solve();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   cout << "To see the simulation, you have to set DX_EXPORT to 1 in "
     "dynamic_friction.param and DT_EXPORT to a suitable value (for "

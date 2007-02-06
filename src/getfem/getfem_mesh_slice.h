@@ -218,7 +218,7 @@ namespace getfem {
 	  pos += refpts.size() * qdim * qqdim;
 	  continue;
 	}
-	//DAL_THROW(failure_error, "convex " << cv << " has no fem");
+	
         pfem pf = mf.fem_of_element(cv);
 	if (pf->need_G()) 
 	  bgeot::vectors_to_base_matrix(G,
@@ -247,7 +247,7 @@ namespace getfem {
           }
         }
       }
-      if (pos != V.size()) DAL_THROW(failure_error, "bad dimensions");
+      GMM_ASSERT1(pos == V.size(), "bad dimensions");
     }
   };
 
@@ -258,8 +258,8 @@ namespace getfem {
     stored_mesh_slice &sl;
   public:
     slicer_build_stored_mesh_slice(stored_mesh_slice& sl_) : sl(sl_) {
-      if (sl.cvlst.size()) 
-	DAL_THROW(failure_error, "the stored_mesh_slice already contains data");
+      GMM_ASSERT1(sl.cvlst.size() == 0, 
+		  "the stored_mesh_slice already contains data");
     }
     void exec(mesh_slicer& ms);
   };

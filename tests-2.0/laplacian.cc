@@ -153,7 +153,7 @@ void laplacian_problem::init(void) {
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+      GMM_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
@@ -174,7 +174,7 @@ void laplacian_problem::init(void) {
   gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET");
 
   if (!pf_u->is_lagrange() && !gen_dirichlet)
-    DAL_WARNING2("With non lagrange fem prefer the generic "
+    GMM_WARNING2("With non lagrange fem prefer the generic "
 		 "Dirichlet condition option");
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -314,7 +314,7 @@ void laplacian_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -323,11 +323,11 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.assembly();
-    if (!p.solve()) DAL_THROW(dal::failure_error,
+    if (!p.solve()) GMM_THROW(dal::failure_error,
 			      "Solve procedure has failed");
     p.compute_error();
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }

@@ -210,45 +210,45 @@ namespace gmm {
 
 #define GMM_TRACE_MSG_MPI     // for Parallelized version
 #define GMM_TRACE_MSG(level_, thestr)  {			       \
-   GMM_TRACE_MSG_MPI {                                                 \
+    GMM_TRACE_MSG_MPI {						       \
       std::stringstream msg;                                           \
       msg << "Trace " << level_ << " in "__FILE__ << ", line "         \
-          << __LINE__ << ": " << thestr  \
+          << __LINE__ << ": " << thestr				       \
           << ends;						       \
-       std::cout << msg.str() << std::endl;                            \
+      std::cout << msg.str() << std::endl;			       \
     }                                                                  \
   }        
 
 #define GMM_TRACE0(thestr) GMM_TRACE_MSG(0, thestr)
 
 #if GMM_TRACES_LEVEL > 0
-# define GMM_TRACE1(thestr)                                           \
+# define GMM_TRACE1(thestr)						\
   { if (1 <= gmm::traces_level::level()) GMM_TRACE_MSG(1, thestr) }
 #else
 # define GMM_TRACE1(thestr) {}
 #endif
-
+  
 #if GMM_TRACES_LEVEL > 1
-# define GMM_TRACE2(thestr)                                           \
+# define GMM_TRACE2(thestr)						\
   { if (2 <= gmm::traces_level::level()) GMM_TRACE_MSG(2, thestr) } 
 #else
 # define GMM_TRACE2(thestr) {}
 #endif
-
+  
 #if GMM_TRACES_LEVEL > 2
-# define GMM_TRACE3(thestr)                                           \
+# define GMM_TRACE3(thestr)						\
   { if (3 <= gmm::traces_level::level()) GMM_TRACE_MSG(3, thestr) } 
 #else
 # define GMM_TRACE3(thestr) {}
 #endif
-
+  
 #if GMM_TRACES_LEVEL > 3
-# define GMM_TRACE4(thestr)                                           \
+# define GMM_TRACE4(thestr)						\
   { if (4 <= gmm::traces_level::level()) GMM_TRACE_MSG(4, thestr) } 
 #else
 # define GMM_TRACE4(thestr) {}
 #endif
-
+  
   
   /* ********************************************************************* */
   /*    Definitions for compatibility with old versions.        	   */
@@ -321,9 +321,13 @@ namespace gmm {
   //     cerr << "============================================\n";
   //     exit(1);
   //   } 
-  
-#define GMM_SET_EXCEPTION_DEBUG
 
+#if defined(__GNUC__) && (__GNUC__ > 3)
+# define GMM_SET_EXCEPTION_DEBUG				\
+  std::set_terminate(__gnu_cxx::__verbose_terminate_handler);
+#else
+# define GMM_SET_EXCEPTION_DEBUG
+#endif
 
 }
 

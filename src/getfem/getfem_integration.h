@@ -249,14 +249,14 @@ namespace getfem
       }
       else if (type() == IM_APPROX)
 	return method.pai->integration_points();
-      else DAL_THROW(failure_error, "IM_NONE has no points");
+      else GMM_ASSERT1(false, "IM_NONE has no points");
     }
 
     bgeot::pconvex_structure structure(void) const { 
       switch (type()) {
       case IM_EXACT: return method.ppi->structure();
       case IM_APPROX: return method.pai->structure();
-      case IM_NONE: DAL_THROW(failure_error, "IM_NONE has no structure");
+      case IM_NONE: GMM_ASSERT1(false, "IM_NONE has no structure");
       default: GMM_ASSERT3(false, "");
       }
       return 0;

@@ -61,8 +61,7 @@ namespace getfem
   
   vtk_export::vtk_export(const std::string& fname, bool ascii_)
     : os(real_os), ascii(ascii_), real_os(fname.c_str()) {
-    if (!real_os) DAL_THROW(failure_error, "impossible to write to vtk file '"
-			    << fname << "'");
+    GMM_ASSERT1(real_os, "impossible to write to vtk file '" << fname << "'");
     init();
   }
 
@@ -125,12 +124,14 @@ namespace getfem
 
   void vtk_export::exporting(const stored_mesh_slice& sl) {
     psl = &sl; dim_ = sl.dim();
-    if (psl->dim() > 3) DAL_THROW(failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
+    GMM_ASSERT1(psl->dim() <= 3, "attempt to export a " << int(dim_)
+		<< "D slice (not supported)");
   }
   
   void vtk_export::exporting(const mesh& m) {
     dim_ = m.dim();
-    if (dim_ > 3) DAL_THROW(failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
+    GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
+		<< "D slice (not supported)");
     pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf);
@@ -138,7 +139,8 @@ namespace getfem
 
   void vtk_export::exporting(const mesh_fem& mf) {
     dim_ = mf.linked_mesh().dim();
-    if (dim_ > 3) DAL_THROW(failure_error, "attempt to export a " << int(dim_) << "D slice (not supported)");
+    GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
+		<< "D slice (not supported)");
     if (&mf != pmf.get())
       pmf.reset(new mesh_fem(mf.linked_mesh(),1));
     /* initialize pmf with finite elements suitable for VTK (which only knows
@@ -184,9 +186,9 @@ namespace getfem
           else if (nbd == 27) t = VTK_QUADRATIC_HEXAHEDRON;
           else if (nbd == 6) t = VTK_WEDGE; break;        
       }
-      if (t == -1)
-        DAL_THROW(failure_error, "semi internal error.. could not map " << 
-                  name_of_fem(pmf->fem_of_element(cv)) << " to a VTK cell type");
+      GMM_ASSERT1(t != -1, "semi internal error.. could not map " << 
+                  name_of_fem(pmf->fem_of_element(cv))
+		  << " to a VTK cell type");
       pmf_cell_type[cv] = t;
       const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(t);
       //cout << "nbd = " << nbd << ", t = " << t << ", dmap = " << dmap << "\n";
@@ -200,13 +202,13 @@ namespace getfem
 
 
   const stored_mesh_slice& vtk_export::get_exported_slice() const { 
-    if (!psl) DAL_THROW(failure_error,"no slice!")
-    else return *psl; 
+    GMM_ASSERT1(psl, "no slice!");
+    return *psl; 
   }
 
   const mesh_fem& vtk_export::get_exported_mesh_fem() const { 
-    if (!pmf.get()) DAL_THROW(failure_error,"no mesh_fem!")
-    else return *pmf; 
+    GMM_ASSERT1(pmf.get(), "no mesh_fem!");
+    return *pmf; 
   }
 
   void vtk_export::set_header(const std::string& s)
@@ -351,8 +353,8 @@ namespace getfem
     real_os.open(fname.c_str(), 
                  std::ios_base::openmode(std::ios_base::in | std::ios_base::out | 
                                          (append_ ? std::ios_base::ate : std::ios_base::trunc)));
-    if (!real_os.good()) DAL_THROW(failure_error, "impossible to write to dx file '"
-			    << fname << "'");
+    GMM_ASSERT1(real_os.good(), "impossible to write to dx file '"
+		<< fname << "'");
     init();
     if (append_) { reread_metadata(); header_written = true; }
   }
@@ -380,10 +382,8 @@ namespace getfem
 	 it != c.end(); ++it) {
       if (it->name == name) return it;
     }
-    if (raise_error) {
-      DAL_THROW(failure_error, 
-		"object not found in dx file: " << name);
-    } else return c.end();
+    GMM_ASSERT1(!raise_error, "object not found in dx file: " << name);
+    return c.end();
   }
 
   std::list<dx_export::dxMesh>::iterator
@@ -409,20 +409,21 @@ namespace getfem
     }
   }
 
-  void dx_export::exporting(const stored_mesh_slice& sl, bool merge_points, std::string name) {
+  void dx_export::exporting(const stored_mesh_slice& sl, bool merge_points,
+			    std::string name) {
     if (!new_mesh(name)) return;
     psl_use_merged = merge_points;
     if (merge_points) sl.merge_nodes();
     psl = &sl; dim_ = sl.dim();
-    if (psl->dim() > 3) DAL_THROW(failure_error, "4D slices and more are not supported");
+    GMM_ASSERT1(psl->dim() <= 3, "4D slices and more are not supported");
     for (dim_type d = 0; d <= psl->dim(); ++d) {
       if (psl->nb_simplexes(d)) {
         if (connections_dim == dim_type(-1)) connections_dim = d;
-        else DAL_THROW(failure_error, "Cannot export a slice containing simplexes of different dimensions");
+        else GMM_ASSERT1(false, "Cannot export a slice containing "
+			 "simplexes of different dimensions");
       }
     }
-    if (connections_dim == dim_type(-1)) 
-      DAL_THROW(failure_error, "empty slice!");
+    GMM_ASSERT1(connections_dim != dim_type(-1), "empty slice!");
   }
 
  
@@ -430,25 +431,25 @@ namespace getfem
     name = default_name(name, meshes.size(), "mesh");
     if (!new_mesh(name)) return;
     const mesh &m = mf.linked_mesh();
-    if (mf.linked_mesh().convex_index().card() == 0) 
-      DAL_THROW(failure_error, "won't export an empty mesh");
+    GMM_ASSERT1(mf.linked_mesh().convex_index().card() != 0,
+		"won't export an empty mesh");
     
     dim_ = m.dim();
-    if (dim_ > 3) DAL_THROW(failure_error, "4D meshes and more are not supported");
+    GMM_ASSERT1(dim_ <= 3, "4D meshes and more are not supported");
     if (&mf != pmf.get())
       pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     bgeot::pgeometric_trans pgt = m.trans_of_convex(m.convex_index().first_true());
-    if (dxname_of_convex_structure(pgt->structure()->basic_structure()) == 0) 
-      DAL_THROW(failure_error, "DX Cannot handle " << 
+    GMM_ASSERT1(dxname_of_convex_structure
+		(pgt->structure()->basic_structure()) != 0,
+		"DX Cannot handle " << 
 		bgeot::name_of_geometric_trans(pgt) << ", use slices");
     /* initialize pmf with finite elements suitable for OpenDX */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt2 = mf.linked_mesh().trans_of_convex(cv);
-      if (pgt->structure()->basic_structure() != pgt2->structure()->basic_structure()) {
-	DAL_THROW(failure_error, 
+      GMM_ASSERT1(pgt->structure()->basic_structure() ==
+		  pgt2->structure()->basic_structure(), 
 		  "Cannot export this mesh to opendx, it contains "
 		  "different convex types. Slice it first.");
-      }
       pfem pf = mf.fem_of_element(cv);      
       bool discontinuous = false;
       for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
@@ -464,7 +465,7 @@ namespace getfem
 
   void dx_export::exporting(const mesh& m, std::string name) {
     dim_ = m.dim();
-    if (dim_ > 3) DAL_THROW(failure_error, "4D meshes and more are not supported");
+    GMM_ASSERT1(dim_ <= 3, "4D meshes and more are not supported");
     pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf, name);
@@ -553,15 +554,15 @@ namespace getfem
     } while (++count < 512 && c != '#');
     real_os.getline(line, sizeof line);
     if (sscanf(line, "#E \"THE_END\" %lu %lu", &lu_series, &lu_end) != 2)
-      DAL_THROW(failure_error, "this file was not generated by getfem, "
-                "cannot append data to it!\n");
+      GMM_ASSERT1(false, "this file was not generated by getfem, "
+		  "cannot append data to it!\n");
     real_os.seekg(lu_end, std::ios::beg);
     do {
       char name[512]; unsigned n;
       int pos;
       real_os.getline(line, sizeof line);
       if (sscanf(line, "#%c \"%512[^\"]\"%n", &c, name, &pos) < 1) 
-        DAL_THROW(failure_error, "corrupted file! your .dx file is broken\n");
+        GMM_ASSERT1(false, "corrupted file! your .dx file is broken\n");
       if (c == 'S') {
         series.push_back(dxSeries()); series.back().name = name;
       } else if (c == '+') {
@@ -574,7 +575,7 @@ namespace getfem
         sscanf(line+pos, "%u", &n); meshes.back().flags = n;
       } else if (c == 'E') {
         break;
-      } else DAL_THROW(failure_error, "corrupted file! your .dx file is broken\n");
+      } else GMM_ASSERT1(false, "corrupted file! your .dx file is broken\n");
     } while (1);
     real_os.seekp(lu_series, std::ios::beg);
   }
@@ -582,7 +583,7 @@ namespace getfem
   void dx_export::write_convex_attributes(bgeot::pconvex_structure cvs) {
     const char *s_elem_type = dxname_of_convex_structure(cvs);
     if (!s_elem_type) 
-      DAL_WARNING1("OpenDX won't handle this kind of convexes");
+      GMM_WARNING1("OpenDX won't handle this kind of convexes");
     os << "\n  attribute \"element type\" string \"" << s_elem_type << "\"\n"
        << "  attribute \"ref\" string \"positions\"\n\n";
   }

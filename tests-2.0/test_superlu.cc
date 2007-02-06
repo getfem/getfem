@@ -109,7 +109,7 @@ int main(void)
     test_with(std::complex<double>());
     
   }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
 }

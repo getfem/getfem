@@ -44,7 +44,7 @@ namespace getfem {
     mim.linked_mesh().intersect_with_mpi_region(rg);
     generic_assembly assem;
     std::vector<scalar_type> v(1), w(1);
-    if (mf.get_qdim() != 1) DAL_THROW(failure_error, "expecting qdim=1");
+    GMM_ASSERT1(mf.get_qdim() == 1, "expecting qdim=1");
     assem.set("u=data(#1); V$1()+=comp(); V$2()+=comp(Base(#1))(i).u(i);");
     assem.push_mi(mim);
     assem.push_mf(mf);
@@ -437,8 +437,8 @@ namespace getfem {
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mf_data, const VECT2 &F,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
 
     const char *st;
     if (mf.get_qdim() == 1)
@@ -458,8 +458,7 @@ namespace getfem {
   void asm_normal_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 			      const mesh_fem &mf_data, const VECT2 &F,
 			      const mesh_region &rg) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh_fem");
+    GMM_ASSERT1(mf_data.get_qdim() == 1, "invalid data mesh_fem");
 
     const char *st;
     if (mf.get_qdim() == 1)
@@ -509,8 +508,8 @@ namespace getfem {
 		   const mesh_fem &mf_d, const VECT &Q, 
 		   const mesh_region &rg) {
     generic_assembly assem;
-    if (mf_d.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_d.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
     assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
     const char *asm_str = "";
@@ -539,11 +538,11 @@ namespace getfem {
    const mesh_fem &mf_data, const VECT &LAMBDA, const VECT &MU,
    const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     
-    if (mf.get_qdim() != mf.linked_mesh().dim())
-      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
     /* e = strain tensor,
        M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
     */
@@ -596,8 +595,8 @@ namespace getfem {
 		  const mesh_fem &mf_u, const mesh_fem &mf_p,
 		  const mesh_fem &mf_d, const VECT &viscos,
 		  const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf_d.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_d.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("visc=data$1(#3); "
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
 			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
@@ -626,8 +625,8 @@ namespace getfem {
   void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
 		    const mesh_fem &mf_p, 
 		    const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf_p.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_p.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     //generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
     generic_assembly assem("M$1(#1,#2)+=-comp(Base(#1).vGrad(#2))(:,:,i,i);");
     assem.push_mi(mim);
@@ -683,8 +682,8 @@ namespace getfem {
   void asm_stiffness_matrix_for_laplacian
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1, 
+		"invalid data mesh fem (Qdim=1 required)");
     asm_real_or_complex_1_param
       (M, mim, mf, mf_data, A, rg, "a=data$1(#2); M$1(#1,#1)+="
        "sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
@@ -699,8 +698,8 @@ namespace getfem {
   void asm_stiffness_matrix_for_laplacian_componentwise
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     asm_real_or_complex_1_param
       (M, mim, mf, mf_data, A, rg, "a=data$1(#2); M$1(#1,#1)+="
        "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,k,i,:,k,i,j).a(j))");
@@ -733,8 +732,8 @@ namespace getfem {
   void asm_stiffness_matrix_for_scalar_elliptic
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data,
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    /*if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
+    /*GMM_ASSERT1(mf_data.get_qdim() == 1,
+      "invalid data mesh fem (Qdim=1 required)");*/
     asm_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
 				"a=data$1(mdim(#1),mdim(#1),#2);"
 				"M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
@@ -748,8 +747,8 @@ namespace getfem {
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mf_data, const VECT &A, 
    const mesh_region &rg = mesh_region::all_convexes()) {
-    /*if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
+    /* GMM_ASSERT1(mf_data.get_qdim() == 1,
+       "invalid data mesh fem (Qdim=1 required)");*/
     asm_real_or_complex_1_param
       (M,mim,mf,mf_data,A,rg, "a=data$1(mdim(#1),mdim(#1),#2);"
        "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
@@ -764,8 +763,8 @@ namespace getfem {
   asm_stiffness_matrix_for_vector_elliptic
   (MAT &M, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_data, 
    const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
-    /*if (mf_data.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");*/
+    /* GMM_ASSERT1(mf_data.get_qdim() == 1,
+       "invalid data mesh fem (Qdim=1 required)");*/
     /* 
        M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
     */
@@ -880,8 +879,8 @@ namespace getfem {
 
     
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_r.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_r.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       asm_mass_matrix(H, mim, mf_mult, mf_u, region);
       gmm::clean(H, gmm::default_tol(magn_type())
@@ -900,21 +899,21 @@ namespace getfem {
     std::vector<value_type> v1, v2, v3;
 
     for (mr_visitor v(region); !v.finished(); v.next()) {
-      if (!v.is_face())
-	DAL_THROW(failure_error, "attempt to impose a dirichlet "
+      GMM_ASSERT1(v.is_face(), "attempt to impose a dirichlet "
 		  "on the interior of the domain!");
       size_type cv = v.cv(), f = v.f();
 
-      if (!mf_u.convex_index().is_in(cv) || !mf_r.convex_index().is_in(cv) ||
-	  !mf_mult.convex_index().is_in(cv)) 
-	DAL_THROW(failure_error, "attempt to impose a dirichlet "
+      GMM_ASSERT1(mf_u.convex_index().is_in(cv) &&
+		  mf_r.convex_index().is_in(cv) &&
+		  mf_mult.convex_index().is_in(cv), 
+		  "attempt to impose a dirichlet "
 		  "condition on a convex with no FEM!");
       pf_u = mf_u.fem_of_element(cv); 
       pf_r = mf_r.fem_of_element(cv);
       pf_m = mf_mult.fem_of_element(cv);
 
       if (!pf_m->is_lagrange() && !warning_msg1) {
-	DAL_WARNING3("Dirichlet condition with non-lagrange multiplier fem. "
+	GMM_WARNING3("Dirichlet condition with non-lagrange multiplier fem. "
 		     "see the documentation about Dirichlet conditions.");
 	warning_msg1 = true;
       }
@@ -935,7 +934,7 @@ namespace getfem {
       // size_type pf_r_nbdf_loc = pf_r->structure(cv)->nb_points_of_face(f);
 
       if (pf_u_nbdf < pf_m_nbdf && !warning_msg2) {
-	DAL_WARNING2("Dirichlet condition with a too rich multiplier fem. "
+	GMM_WARNING2("Dirichlet condition with a too rich multiplier fem. "
 		     "see the documentation about Dirichlet conditions.");
 	warning_msg2 = true;
       }
@@ -1022,7 +1021,7 @@ namespace getfem {
       else
 	GMM_TRACE3("Sorry, no simplification of the Dirichlet condition");
       if (nonsimplifiable_dofs.card() > 0 && simplifiable_dofs.card() > 0)
-	DAL_WARNING3("Partial simplification of the Dirichlet condition");
+	GMM_WARNING3("Partial simplification of the Dirichlet condition");
 
       for (dal::bv_visitor i(simplifiable_dofs); !i.finished(); ++i)
 	if (!(nonsimplifiable_dofs[i])) {
@@ -1073,8 +1072,7 @@ namespace getfem {
     size_type N = mf_u.linked_mesh().dim(), Q = mf_mult.get_qdim();
     
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_mult.get_qdim() != mf_u.get_qdim() / N)
-      DAL_THROW(invalid_argument, 
+    GMM_ASSERT1(mf_mult.get_qdim() == mf_u.get_qdim() / N,
 		"invalid mesh fem for the normal component Dirichlet "
 		"constraint (Qdim=" << mf_u.get_qdim() / N << " required)");
     if (version & ASMDIR_BUILDH) {
@@ -1094,7 +1092,7 @@ namespace getfem {
 	asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
       else if (gmm::vect_size(r_data) == mf_r.nb_dof() * Q * N)
 	asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, region);
-      else DAL_THROW(invalid_argument, "Wrong size of data vector");
+      else GMM_ASSERT1(false, "Wrong size of data vector");
     }
     gmm::clean(H, gmm::default_tol(magn_type())
 	       * gmm::mat_maxnorm(H) * magn_type(100));
@@ -1128,8 +1126,8 @@ namespace getfem {
     pfem pf_u, pf_rh;
 
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    if (mf_h.get_qdim() != 1 || mf_r.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_h.get_qdim() == 1 && mf_r.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       asm_qu_term(H, mim, mf_u, mf_h, h_data, region);
       std::vector<size_type> ind(0);
@@ -1148,9 +1146,9 @@ namespace getfem {
       for (mr_visitor v(region); !v.finished(); v.next()) {
 	size_type cv = v.cv(), f = v.f();
 
-	if (!mf_u.convex_index().is_in(cv) ||
-	    !mf_r.convex_index().is_in(cv)) 
-	  DAL_THROW(failure_error, "attempt to impose a dirichlet "
+	GMM_ASSERT1(mf_u.convex_index().is_in(cv) &&
+		    mf_r.convex_index().is_in(cv), 
+		    "attempt to impose a dirichlet "
 		    "condition on a convex with no FEM!");
 
 	if (f >= mf_u.linked_mesh().structure_of_convex(cv)->nb_faces())
@@ -1276,8 +1274,7 @@ namespace getfem {
     for (mesh::ind_cv_ct::const_iterator it = dofcv.begin();
 	 it != dofcv.end(); ++it) {
       pf1 = mf.fem_of_element(*it);
-      if (pf1->target_dim() != 1)
-	DAL_THROW(to_be_done_error, "sorry, to be done ... ");
+      GMM_ASSERT1(pf1->target_dim() == 1, "sorry, to be done ... ");
       size_type nbd = pf1->nb_dof(*it);
       for (size_type i = 0; i < nbd * Q; i++) {
 	size_type dof1 = mf.ind_dof_of_element(*it)[i];
@@ -1327,7 +1324,7 @@ namespace getfem {
     gmm::clear(NS);
 
     if (!(gmm::is_col_matrix(H)))
-      DAL_WARNING2("Dirichlet_nullspace inefficient for a row matrix H");
+      GMM_WARNING2("Dirichlet_nullspace inefficient for a row matrix H");
     // First, detection of null columns of H, and already orthogonals 
     // vectors of the image of H.
     dal::bit_vector nn;
@@ -1410,7 +1407,7 @@ namespace getfem {
     // Test ...
     gmm::mult(H, U0, gmm::scaled(R, T(-1)), aux);
     if (gmm::vect_norm2(aux) > gmm::vect_norm2(U0)*tol*MAGT(10000))
-      DAL_WARNING2("Dirichlet condition not well inverted: residu="
+      GMM_WARNING2("Dirichlet condition not well inverted: residu="
 		  << gmm::vect_norm2(aux));
     
     return nbase;
