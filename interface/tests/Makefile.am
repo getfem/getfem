@@ -1,0 +1,2 @@
+SUBDIRS = meshes python matlab
+

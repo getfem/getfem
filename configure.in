@@ -486,6 +486,188 @@ else
 fi;
 AC_SUBST(DISTCLEANMESH)
 
+
+
+dnl -----------------------------------------------
+dnl MATLAB Interface
+dnl -----------------------------------------------
+
+
+AC_ARG_ENABLE(matlab,
+[  --enable-matlab    Turn on/off matlab support],
+[case "${enableval}" in
+  yes) usematlab=YES ;;
+  no)  usematlab=NO ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-matlab]) ;;
+esac],[usematlab=NO])
+
+AC_ARG_WITH(toolbox-dir, [  --with-matlab-toolbox-dir : directory in which the matlab interface will be installed],
+            TOOLBOXDIR="$withval",TOOLBOXDIR="$prefix/getfem_toolbox")
+AC_SUBST(TOOLBOXDIR)
+
+AC_ARG_ENABLE(python,
+[  --enable-python    Turn on/off python support],
+[case "${enableval}" in
+  yes) usepython=YES ;;
+  no)  usepython=NO ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
+esac],[usepython=NO])
+
+if test "$usematlab" != NO; then
+  AC_CHECK_PROGS(MEX, mex)
+  if test x"$MEX" = x""; then
+    AC_CHECK_PROGS(MEX, mex.bat)
+    if test x"$MEX" = x""; then
+      if test x$usematlab = xYES; then
+        AC_MSG_ERROR([Impossible to build the matlab interface without mex -- specify its full path with the MEX=/path/to/mex option, or use --enable-matlab-interface=no])
+        exit 1
+      fi
+    else
+      MEX=gnumex;
+      MATLAB_COM_EXT=".dll";
+      echo "You are using Matlab on a windows platform (assuming MingW compiler)";
+      if test -f gnumex.opts; then
+         echo "sourcing gnumex.opts.."
+         source gnumex.opts;         
+         echo "MATLAB_ROOT=$MATLAB_ROOT"
+         echo "Matlab release is : R$MATLAB_RELEASE"
+      elif test x$usematlab = xYES; then
+        echo "You need to fill the gnumex.opts file, for example (use MSys-style paths, not DOS-style paths)"
+        echo '#!/bin/sh'
+        echo 'MATLAB_ROOT="c:\\MATLAB6p5"'
+        echo 'MATLAB_RELEASE=13'
+        echo 'MATLAB_INC_DIR="$MATLAB_ROOT\\extern\\include"'
+        echo 'MEXOPTS=c:\\gnumex\\mexopts.bat'
+        echo "when this is done, check that the gnumex script works correctly"
+        echo " (i.e. gnumex gnumex.opts -v prints the rights options to use the MinGW gcc)"
+        exit 1
+      fi
+    fi
+  else
+     dnl thanks to paolo for pointing the 'twin mex' problem
+     if $(echo "" | $MEX 2>&1 | grep 'This is .*TeX'); then
+	  AC_MSG_ERROR([the mex binary which is in the PATH appears to be part of LaTeX, not matlab !! run ./configure MEX=/path/to/matlab/mex]);
+     fi;
+     MATLAB_ROOT=`$MEX -v 2>&1 | grep "MATLAB " | awk '{print $4}'|sed -e '2,$d'`
+     MATLAB_INC_DIR=$MATLAB_ROOT/extern/include
+     echo "checking for matlab path... " $MATLAB_ROOT
+     MATLAB_COM_EXT=`$MEX -v 2>&1 | grep "LDEXTENSION " | awk '{print $3}'`
+     echo "checking for mex extension... " $MATLAB_COM_EXT
+     MATLAB_RELEASE=`grep "MATLAB R" $MATLAB_ROOT/extern/src/mexversion.c | awk '{print $4}' | sed -e 's/R//'`
+     echo "Matlab release is : R$MATLAB_RELEASE"
+  fi
+fi
+AM_CONDITIONAL(BUILDMEX, test x$usematlab = xYES)
+
+
+
+AC_SUBST(MATLAB_ROOT)
+AC_SUBST(MATLAB_INC_DIR)
+AC_SUBST(MATLAB_RELEASE)
+AC_SUBST(MATLAB_COM_EXT)
+AC_SUBST(MEX)
+
+AM_CONDITIONAL(USE_MINGW_MEX, test x"$MATLAB_COM_EXT" = x".dll")
+
+
+
+dnl ----------------------------
+dnl RPCs -- matlab interface communication with a separated getfem process
+dnl useful for debugging..
+GETFEM_SERVER="";
+use_rpc="no";
+AC_ARG_ENABLE(matlab-rpc,
+ [  --enable-matlab-rpc        enable use of RPCs for matlab interface],
+ [ matlab_rpc="yes"; use_rpc="yes";
+   echo "Matlab mex-file will use sun RPCs in order to communicate with the getfem server"],
+ [matlab_rpc="no"])
+
+if test x$use_rpc = xyes; then
+  GETFEM_SERVER="getfem_server";
+  AC_ARG_WITH(rpc-include, [  --with-rpc-include : directory in which the rpc/rpc.h header can be found],
+              RPC_INC_DIR="-I$withval",RPC_INC_DIR="")
+  case $host in
+        *alpha*)
+                RPC_LIB="-lrpc";
+                ;;
+	*darwin*)
+	        RPC_LIB="";
+		;;
+        *)
+                RPC_LIB="-lnsl";
+                ;;
+  esac
+  AC_ARG_WITH(rpc-lib, [  --with-rpc-lib : linker flags for the RPC library],
+              RPC_LIB="$withval")
+  AC_SUBST(RPC_INC_DIR)
+  AC_SUBST(RPC_LIB)
+  AC_DEFINE_UNQUOTED(USE_RPC, 1, [Use rpc for getfem communication with matlab])
+fi;
+AC_SUBST(GETFEM_SERVER)
+AM_CONDITIONAL(BUILDMEXRPC, test x$matlab_rpc = xyes)
+
+
+dnl the pb is that we cannot link the libstdc++.so in the mex-file without horrible problems
+dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared since matlab-7). 
+dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
+STDCPP_STATICLIBS=""
+
+if $usematlab = xYES; then
+  dnl ------------------------------------
+  dnl COMPILER SETTINGS
+  compiler_type=dontcare
+  case $CXX in
+   *g++* | c++)
+	case $host in
+	x86_64-*)
+	       echo "Compiling on an x86_64 architecture..."
+	       ;;
+        *-darwin*)
+               echo "Compiling on Darwin (MacOS)"
+		;;
+	*)
+		STDCPP_STATICLIBS=$($CXX -print-file-name=libstdc++.a)
+		echo "The MEX file will be linked against the static c++ library '$STDCPP_STATICLIBS'"
+		;;
+	esac
+	;;
+   *icc | *icpc)
+	dnl a small remark: with icpc 8.0, the getfem_server will crash 
+	dnl at the first exception throwed (except with -g)
+	dnl the fix is to pass the -static flag at the linker
+	dnl unfortunately, the lovely libtool assumes that icpc won't
+	dnl understand it, and removes it. I hate libtool.
+	dnl so I added the -Wl,-static -- it works for now.
+	GFSERVERFLAGS="-Wl,-static -static"
+	;;
+   *)
+	;;
+  esac
+fi
+AC_SUBST(GFSERVERFLAGS)
+AC_SUBST(STDCPP_STATICLIBS)
+
+
+
+dnl ----------------------------------------------
+dnl python 
+dnl ----------------------------------------------
+
+if test x$usepython = xYES; then
+  AM_PATH_PYTHON(2.2, usepython=YES, usepython=NO)
+fi
+
+AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
+
+if test x$usepython = xYES; then
+  echo "Building with python support (use --enable-python=no to disable it)"
+  echo "You will need the python-numarray package."
+dnl  AM_PATH_PYTHON(2.2)
+  AC_PYTHON_DEVEL
+fi
+
+
+
 dnl -----------------------------------------------
 dnl sorties
 dnl -----------------------------------------------
@@ -508,6 +690,32 @@ AC_CONFIG_FILES(\
 	contrib/xfem_contact/Makefile \
 	contrib/crack_plate/Makefile \
 	bin/Makefile \
+        interface/Makefile \
+	interface/src/Makefile \
+	interface/src/matlab/Makefile \
+	interface/src/matlab/@gfCvStruct/Makefile \
+	interface/src/matlab/@gfEltm/Makefile \
+	interface/src/matlab/@gfFem/Makefile \
+	interface/src/matlab/@gfGeoTrans/Makefile \
+	interface/src/matlab/@gfInteg/Makefile \
+	interface/src/matlab/@gfMesh/Makefile \
+	interface/src/matlab/@gfMeshFem/Makefile \
+	interface/src/matlab/@gfSlice/Makefile \
+	interface/src/matlab/@gfMeshIm/Makefile \
+	interface/src/matlab/@gfSpmat/Makefile \
+	interface/src/matlab/@gfPrecond/Makefile \
+	interface/src/matlab/@gfMdBrick/Makefile \
+	interface/src/matlab/@gfMdState/Makefile \
+	interface/src/matlab/@gfLevelSet/Makefile \
+	interface/src/matlab/@gfMeshLevelSet/Makefile \
+	interface/src/matlab/private/Makefile \
+	interface/src/python/Makefile \
+	interface/src/python/setup.py \
+	interface/tests/Makefile \
+        interface/tests/meshes/Makefile \
+	interface/tests/matlab/Makefile \
+        interface/tests/matlab/private/Makefile \
+        interface/tests/python/Makefile \
 getfem-config getfem-config-notinstalled gmm-config)
 AC_OUTPUT
 chmod a+x getfem-config-notinstalled
@@ -552,3 +760,10 @@ for i in `ls $srcdir/tests/meshes/*.mesh`; do
 		ln -s $addpathm$i $j
 	fi
 done
+
+echo "---------------------------------------"
+echo "Ready to build getfem++"
+echo "  building MATLAB interface: $usematlab"
+echo "  building PYTHON interface: $usepython"
+echo "---------------------------------------"
+

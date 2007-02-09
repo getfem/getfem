@@ -1,0 +1,20 @@
+#!/bin/sh
+CF=$1
+MF=`basename $CF .cc`.m
+src_dir=`dirname $CF`
+funname=`echo $MF | sed -e 's/\.m$//'`
+shortfunname=`echo $funname | sed -e 's/^gf_//'`
+
+echo "Extracting doc from $CF to $MF"
+#cat $CF | sed -n -e '/\*MLABCOM/,/MLABCOM\*/s/^/%/p' | sed -e '/MLABCOM/d' > $MF
+
+$src_dir/../bin/extract_pydoc $MF $src_dir | sed -e 's/^/% /' > $MF 
+echo "function [varargout]=${funname}(varargin)" >> $MF
+cat $CF | sed -n -e '/\*MLABEXT/,/MLABEXT\*/p' | sed -e '/MLABEXT/d' >> $MF
+
+echo "  if (nargout)," >> $MF
+echo "    [varargout{1:nargout}]=gf_matlab('${shortfunname}',varargin{:});" >> $MF
+echo "  else" >> $MF
+echo "    gf_matlab('${shortfunname}',varargin{:});" >> $MF
+echo "    if (exist('ans','var') == 1), varargout{1}=ans; end;" >> $MF
+echo "  end;" >> $MF
