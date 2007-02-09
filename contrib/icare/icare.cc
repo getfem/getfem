@@ -230,12 +230,12 @@ struct problem_rotating_cylinder : public problem_definition {
     getfem::outer_faces_of_mesh(p.mesh, r);
     for (getfem::mr_visitor i(r); !i.finished(); ++i) {
       base_node G = gmm::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
-      if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+      /*if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
 	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
       else if (gmm::abs(G[1] - p.BBmax[1]) < 1e-7
 	       || gmm::abs(G[1] - p.BBmin[1]) < 1e-7)
 	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
-      else 
+	else */
 	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
     }
   }
@@ -250,8 +250,8 @@ struct problem_rotating_cylinder : public problem_definition {
     if (gmm::abs(x-p.BBmax[0]) < 1e-7) on_cylinder = false;
     if (gmm::abs(y-p.BBmax[1]) < 1e-7) on_cylinder = false;
     if (!on_cylinder) {
-      if (!(gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1])< 1e-7))
-	r[0] = 1;
+      //if (!(gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1])< 1e-7))
+      r[0] = 1;
     } else {
       r[0] = -2.*alpha*y; /* HYPOTHESIS: cylinder centered at (0,0) */
       r[1] = 2.*alpha*x;
@@ -694,14 +694,14 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
   
   mf_mult.set_qdim(N);
-  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
-  dal::bit_vector dofon_nonref =mf_mult.dof_on_set(NONREFLECTIVE_BOUNDARY_NUM);
+  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_region(DIRICHLET_BOUNDARY_NUM);
+  dal::bit_vector dofon_nonref =mf_mult.dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
   dofon_Dirichlet.setminus(dofon_nonref);
 
   // Normal part Dirichlet condition
   mf_mult.set_qdim(1);
   dal::bit_vector dofon_NDirichlet
-    = mf_mult.dof_on_set(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
+    = mf_mult.dof_on_region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   std::vector<size_type> ind_ct_ndir;
   for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) {
     if (dofon_Dirichlet.is_in(i*N) || dofon_nonref.is_in(i*N)) 
@@ -789,6 +789,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
   pdef->initial_condition_u(*this, Un0);
   pdef->initial_condition_p(*this, Pn0);
+
+  //gmm::clear(Un0); gmm::clear(Pn0);
+  gmm::vecsave("Un0", Un0);
+  gmm::vecsave("Pn0", Pn0);
   
   do_export(0);
   for (scalar_type t = dt; t <= T; t += dt) {
@@ -817,7 +821,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
     //    plain_vector subY1(nbdof_u);
     // gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
-
+    /*
     plain_vector subY1(nbdof_u);
     gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
 
@@ -825,7 +829,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     pdef->source_term(*this, t, F);
     getfem::asm_source_term(subY1, mim, mf_u, mf_rhs, F,
 			    mpirg);
-
+    */
     // Normal Dirichlet condition
     gmm::copy(HND, gmm::sub_matrix(A1, I2, I1));
     gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A1, I1, I2));
@@ -898,6 +902,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       SuperLU_solve(A1, X, Y, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
       gmm::copy(gmm::sub_vector(X, I1), USTAR);
+      
+      gmm::HarwellBoeing_IO::write("A1.hb", A1);
+      gmm::vecsave("Y", Y);
+      gmm::vecsave("USTAR", USTAR); exit(1);
     }
 
     cout << "U* - Un0 = " << gmm::vect_dist2(USTAR, Un0) << endl;
@@ -932,7 +940,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::add(gmm::scaled(Phi, 1./dt), Pn0, Pn1);
     
     pdef->validate_solution(*this, t);
-    cout << "Un1 - Un0 = " << gmm::vect_dist2(Un1, Un0) << endl;
+    cout << "Un1 - Un0 = " << gmm::vect_dist2(Un1, Un0) << ", t=" << t << ", T=" << T << endl;
     
     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
     do_export(t);
@@ -945,6 +953,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
   if (!export_to_opendx) return;
   if (first_export) {
     mf_u.write_to_file("icare.mf_u", true);
+    mf_p.write_to_file("icare.mf_p", true);
 
     exp.reset(new getfem::dx_export(datafilename + ".dx", false));
     if (N <= 2)

@@ -35,7 +35,7 @@ namespace getfemint
   void workspace_stack::set_dependance(getfem_object *user, getfem_object *used)
   {
     if (!used->is_static()) {
-      std::vector<size_type> &u = used->used_by;
+      std::vector<id_type> &u = used->used_by;
       if (std::find(u.begin(), u.end(), user->get_id()) == u.end())
 	u.push_back(user->get_id());
     }
@@ -45,7 +45,7 @@ namespace getfemint
   void workspace_stack::sup_dependance(getfem_object *user, getfem_object *used)
   {
     if (!used->is_static()) {
-      std::vector<size_type> &u = used->used_by;
+      std::vector<id_type> &u = used->used_by;
       unsigned i = 0, j = 0;
       for ( ; i < u.size(); ++i) {
 	u[j] = u[i];
