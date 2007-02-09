@@ -612,7 +612,7 @@ dnl with dynamic_casts (with matlab 6.5 -- the pb seems to have disappeared sinc
 dnl Hence the gf_matlab.mexglx should be linked against the libstdc++.a ..
 STDCPP_STATICLIBS=""
 
-if $usematlab = xYES; then
+if test $usematlab = xYES; then
   dnl ------------------------------------
   dnl COMPILER SETTINGS
   compiler_type=dontcare
