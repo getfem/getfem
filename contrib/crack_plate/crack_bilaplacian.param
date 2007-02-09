@@ -9,7 +9,7 @@ N = 2;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
-NX = 200;                 % space step
+NX = 40;                 % space step
 
 
 
@@ -26,7 +26,7 @@ end;
 
  % MESH_FILE='/home-local/jlasry/source++/getfem++/tests/meshes/disc_P2_h2.mesh'
 
-QUAD = 1;
+QUAD = 0;
  
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
@@ -84,7 +84,7 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
 			% 3 = Integral matching (mortar)
 	                
 			
-RADIUS_ENR_AREA = 0.15;
+RADIUS_ENR_AREA = 0.25;
 EPSILON=0.1 % thickness
 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.

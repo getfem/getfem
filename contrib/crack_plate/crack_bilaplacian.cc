@@ -1139,23 +1139,20 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
    /* build the list of dof for the "(u-v) lambda" condition  */  
     dal::bit_vector bv_mortar;
     dal::bit_vector bv_deriv;
-    sparse_matrix MM(mf_mortar.nb_dof(), mf_mortar.nb_dof());
-    sparse_matrix MD(mf_mortar_deriv.nb_dof(), mf_mortar_deriv.nb_dof());
+    sparse_matrix MM(mf_pre_mortar.nb_dof(), mf_pre_mortar.nb_dof());
+    sparse_matrix MD(mf_pre_mortar_deriv.nb_dof(), mf_pre_mortar_deriv.nb_dof());
     std::vector<size_type> ind_mortar;
     std::vector<size_type> ind_deriv;
-    getfem::asm_mass_matrix(MM, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
-    getfem::asm_mass_matrix(MD, mim, mf_mortar_deriv, MORTAR_BOUNDARY_OUT);
-    //  getfem::base_vector R( mf_mortar_deriv.nb_dof() );
-    //  getfem::asm_normal_derivative_dirichlet_constraints_bis(MD, R, mim, mf_mortar_deriv,
-    // 	  		mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
-    for (size_type i=0; i < mf_mortar.nb_dof(); ++i) {
-      if ( MM(i,i) > 1e-15 )  
-	bv_mortar.add(i);
-    }
-    for (size_type i=0; i < mf_mortar_deriv.nb_dof(); ++i) {
-      if ( MD(i,i) > 1e-15 )  
-	bv_deriv.add(i);
-    }
+    getfem::asm_mass_matrix(MM, mim, mf_pre_mortar, MORTAR_BOUNDARY_OUT);
+    getfem::asm_mass_matrix(MD, mim, mf_pre_mortar_deriv, MORTAR_BOUNDARY_OUT);
+    //  getfem::base_vector R( mf_pre_mortar_deriv.nb_dof() );
+    //  getfem::asm_normal_derivative_dirichlet_constraints_bis(MD, R, mim, mf_pre_mortar_deriv,
+    // 	  		mf_pre_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
+    for (size_type i=0; i < mf_pre_mortar.nb_dof(); ++i)
+      if (MM(i,i) > 1e-15) bv_mortar.add(i);
+    for (size_type i=0; i < mf_pre_mortar_deriv.nb_dof(); ++i)
+      if (MD(i,i) > 1e-15) bv_deriv.add(i);
+    
     for (dal::bv_visitor d(bv_mortar); !d.finished(); ++d)
       ind_mortar.push_back(d);
     for (dal::bv_visitor d(bv_deriv); !d.finished(); ++d)
@@ -1167,7 +1164,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       " dof for the lagrange multiplier of the displacement, " <<
       ind_deriv.size() << " dof for the lagrange multiplier of the derivative)\n";
       
-    sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()),
+    sparse_matrix H0(mf_pre_mortar.nb_dof(), mf_u().nb_dof()),
       H(ind_mortar.size() + ind_deriv.size(), mf_u().nb_dof()) ; 
 
     // Defining sub_indexes of the matrices calculated with the 
@@ -1176,44 +1173,40 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     gmm::sub_index sub_i1(ind_deriv);
     gmm::sub_interval sub_j(0, mf_u().nb_dof());
 
-    // building sub_indices of dofs which are either value or derivatives in the matrix of constraints H
-    std::vector<size_type> ind_val_H, ind_deriv_H ;
-    for (unsigned i=0; i< ind_mortar.size(); ++i) {
-       ind_val_H.push_back(i) ;
-    }  
-    for (unsigned i=ind_mortar.size()  ; i < ind_mortar.size() + ind_deriv.size() ; ++i){
-      ind_deriv_H.push_back(i) ;
-    }
-    gmm::sub_index sub_val_H(ind_val_H) ;
-    gmm::sub_index sub_deriv_H(ind_deriv_H) ;
+    gmm::sub_interval sub_val_H(0, ind_mortar.size()) ;
+    gmm::sub_interval sub_deriv_H(ind_mortar.size(), ind_deriv.size()) ;
 
     cout << "sub_indexes built\n" ;
     /* build the mortar constraint matrix -- note that the integration
        method is conformal to the crack
      */
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_OUT);
+    getfem::asm_mass_matrix(H0, mim, mf_pre_mortar, mf_u(), MORTAR_BOUNDARY_OUT);
     gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), gmm::sub_matrix(H, sub_val_H, sub_j) );
 
     gmm::clear(H0);
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_IN);
+    getfem::asm_mass_matrix(H0, mim, mf_pre_mortar, mf_u(), MORTAR_BOUNDARY_IN);
     gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), gmm::sub_matrix(H, sub_val_H, sub_j) );
 
+
     cout << "first contraint asm\n" ;
-    gmm::clear(H0) ;
-    gmm::resize(H0, mf_mortar_deriv.nb_dof(), mf_u().nb_dof() ) ;
-    getfem::base_vector R( mf_mortar_deriv.nb_dof() );
-    getfem::asm_normal_derivative_dirichlet_constraints(H0, R, mim, mf_u(),
-	     		mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
-    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), 1. ), gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
+    base_vector R;
+    gmm::clear(H0);
+    gmm::resize(H0, mf_pre_mortar_deriv.nb_dof(), mf_u().nb_dof() ) ;
+    getfem::asm_normal_derivative_dirichlet_constraints
+      (H0, R, mim, mf_u(), mf_pre_mortar_deriv, mf_pre_u, base_vector(),
+       MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
+    gmm::add(gmm::sub_matrix(H0, sub_i1, sub_j),
+             gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
    
     cout << "first step \n" ;
-    gmm::clear(H0) ;
-    getfem::asm_normal_derivative_dirichlet_constraints(H0, R, mim, mf_u(),
-			mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
-    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), -1.), gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
-  
-    gmm::resize(R, ind_mortar.size() + ind_deriv.size() ) ;
-
+    gmm::clear(H0);
+    getfem::asm_normal_derivative_dirichlet_constraints
+      (H0, R, mim, mf_u(), mf_pre_mortar_deriv, mf_pre_u, R,
+       MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
+    gmm::add(gmm::sub_matrix(H0, sub_i1, sub_j),
+             gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
+    
+    
     // ------------------------------------------ end of new version
 
     /* because of the discontinuous partition of mf_u(), some levelset 
@@ -1236,7 +1229,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     gmm::resize(R, gmm::mat_nrows(H)); 
     mortar.set_constraints(H,R);
     final_model = &mortar;
-        
+    gmm::HarwellBoeing_IO::write("H.hb", H);        
     //------------------------------------------------------------------
     // Matching of the normal derivative
 //     getfem::mdbrick_constraint<> &mortar_derivative = 
