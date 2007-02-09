@@ -1116,7 +1116,7 @@ void tensor_ref_check3(unsigned n1, unsigned n2, unsigned n3, unsigned n4, unsig
     for (unsigned i=0; i < n1; ++i) {
       if (gmm::abs(trABCD.base()[i+j*n1] - ABCD(i,j)) > 1e-10) {
 	cerr << "FAILED : " << i << ", " << j << ", " << trABCD.base()[i+j*n1] << "!=" << ABCD(i,j) << "\n";
-	GMM_INTERNAL_ERROR("");
+	GMM_ASSERT1(false, "");
       }
     }
 }

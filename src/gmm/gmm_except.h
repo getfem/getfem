@@ -32,7 +32,6 @@
 
 #include "gmm_std.h"
 
-
 namespace gmm {
 
 /* *********************************************************************** */
@@ -101,28 +100,18 @@ namespace gmm {
 #if defined(NDEBUG)
 # define GMM_ASSERT2(test, errormsg)
 # define GMM_ASSERT3(test, errormsg)
-# define GMM_INTERNAL_ERROR(thestr)					\
-    GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)
-#elif defined(GMM_DEBUG_MODE)
+#elif !defined(GMM_FULL_NDEBUG)
 # define GMM_ASSERT2(test, errormsg)				        \
   { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
 				   GMM_PRETTY_FUNCTION, errormsg); }
 # define GMM_ASSERT3(test, errormsg)				        \
   { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
-				   GMM_PRETTY_FUNCTION, errormsg); }  
-#  define GMM_INTERNAL_ERROR(thestr) {					\
-    cerr << "Internal error: " << GMM_PRETTY_FUNCTION << " " << thestr	\
-	 << endl;							\
-    ::abort();								\
-  }
+				   GMM_PRETTY_FUNCTION, errormsg); }
 #else
 # define GMM_ASSERT2(test, errormsg)          				\
   { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
 				   GMM_PRETTY_FUNCTION, errormsg); }
 # define GMM_ASSERT3(test, errormsg)
-#  define GMM_INTERNAL_ERROR(thestr)	{				\
-    GMM_THROW_(gmm::internal_error, "Internal error: " << thestr)	\
-      }
 #endif
 
 /* *********************************************************************** */

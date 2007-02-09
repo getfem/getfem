@@ -57,14 +57,9 @@ namespace dal {
   
   inline void DAL_THROW() IS_DEPRECATED;
   inline void DAL_THROW() {}
-  inline void DAL_INTERNAL_ERROR() IS_DEPRECATED;
-  inline void DAL_INTERNAL_ERROR() {}
-
 
 #define DAL_STANDARD_CATCH_ERROR GMM_STANDARD_CATCH_ERROR
 #define DAL_THROW(a, b) { GMM_THROW(a, b); dal::DAL_THROW(); }
-#define DAL_INTERNAL_ERROR(a)				\
-  { GMM_INTERNAL_ERROR(a); dal::DAL_INTERNAL_ERROR(); }
 #define DAL_WARNING0 GMM_WARNING0
 #define DAL_WARNING1 GMM_WARNING1
 #define DAL_WARNING2 GMM_WARNING2
