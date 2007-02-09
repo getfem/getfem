@@ -28,7 +28,7 @@
 #ifndef BGEOT_CONFIG_H__
 #define BGEOT_CONFIG_H__
 
-#include "getfem_arch_config.h"
+#include "getfem/getfem_arch_config.h"
 
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
 # include <fenv.h>

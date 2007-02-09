@@ -28,7 +28,7 @@
 #ifndef DAL_BACKTRACE
 #define DAL_BACKTRACE
 
-#include "getfem_arch_config.h"
+#include "getfem/getfem_arch_config.h"
 #include <stdio.h>
 #include <string>
 
