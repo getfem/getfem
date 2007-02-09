@@ -1,0 +1,66 @@
+A faire pour l'installation automatique :
+-----------------------------------------
+
+gf_mesh_fem_get('dofs from cvs'): ---> traiter le cas ou CVLIST = [cvs; faces]
+(genre pour chopper les ddl qui sont une boundary donnée)
+
+
+documenter l'export POVray
+
+[ok.. a retester qd meme] gerer la suppression des objets a moities crees quand on lance une exception.. ça c'est un joli memory leak 
+
+memsize pour les gf_spmat
+
+complex sparse : faire le load dans gf_util
+
+gf_fem_get('base_value') ne marche pas pour les matrices de points
+
+interpolation sur les points, recuperation de la matrice [ok, voir gf_asm]
+
+remettre le threshold sur le from_sparse (surtout pour dirichlet nullspace qui filtrait à 10-8). [update] avec les modifs d'yves sur dof_on_boundary ça n'est plus necessaire ?
+
+interface ARPACK (comme matlab) pour eigs et svd ça serait moumoute
+
+[OK] gerer correctement le to_iarray(-2,-1) etc (python/matlab)
+
+type de retour des matrices creuses
+
+ajouter spmat & precond dans getfemmatlab.tex
+
+classe GetfemError pour l'interface python, a la place de RuntimeError
+
+gf_slice_get('edges') devrait etre modifiee pour utiliser stored_mesh_slice.get_edges et reutiliser le tableau de points de la slice.
+
+asm_dirichlet & co : pouvoir utiliser 'identity(3)' a la place de 'transpose(repeat([[1,0,0,0,1,0,0,0,1]], mfd.nbdof()))',
+ 
+dans la doc: expliquer les champs non scalaires pour l'interpolation, l'export etc.
+
+gf_fem_get('nbdof') devrait attendre un numero de convexe.., pareil pour 'pts'
+
+pour stokes: le terme de pression c'est -P.div U et pas +P.div U . Sans doute à changer dans les tests/demo_stokes et la doc
+
+envisager de deplacer compute('l2 norm') vers asm('l2 norm') ?
+
+DOCUMENTER: export to dx etc (avec des exemples..)
+
+DOCUMENTER : Faire une intro pour getfem-python (gestion memoire etc)
+DOCUMENTER les changements de la v2.0 (cf changelog)
+CORRIGER le bug qui fait que les <br> sont manquants dans la doc html (sans doute un changement de hyperlatex..)
+
+
+briques: 
+	- rendre un peu plus coherent la generation de maillages reguliers (noised, pas noised etc)
+
+	- reecrire gf_plot_mesh pour ne plus utiliser les fonctions obsoletes
+
+	- interfacer les level sets..
+
+mettre a jour le src/matlab/Contents.m
+
+rendre interruptible: l'assemblage, la construction de slices enormes (callback).
+
+interface les mesh_fem_sum, etc.
+
+
+make DOC for 
+ - 'interpolated_fem' 

@@ -1,0 +1,21 @@
+#!/bin/sh
+set -x
+function abort() { 
+ echo "gnumex error: $1";
+ exit 1; 
+}
+
+source $1 || abort "cannot source gnumex.opts !?";
+echo "int main(int argc,char **argv) { printf(\"%s\n\",argv[1]); return 0; }" > u2d.c  
+gcc u2d.c -o u2d || abort "cannot source gnumex.opts !?";
+mexbat=$(u2d $MATLAB_ROOT/bin/win32/mex.bat) && echo "MEXBAT=$mexbat";
+mexopt=$(u2d $MEXOPTS) && echo "MEXOPTS=$mexopt";
+arg="$mexbat -v -f $mexopt";
+shift;
+for i in $*; do
+  v=$(u2d $i);
+  arg="$arg $v";
+done;
+rm u2d.c && rm u2d.exe
+echo "Executing: cmd /c \"$arg\""
+exec cmd /c "$arg"
