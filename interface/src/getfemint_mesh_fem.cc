@@ -37,7 +37,7 @@ namespace getfemint {
 
   getfemint_mesh_fem *
   getfemint_mesh_fem::new_from(getfemint_mesh *m, 
-			       unsigned q_dim) { 
+			       size_type q_dim) { 
     //assert(::workspace == 0);
     getfem::mesh_fem *mf = new getfem::mesh_fem(m->mesh());
     mf->set_qdim(q_dim);
