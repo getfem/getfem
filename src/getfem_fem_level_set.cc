@@ -19,8 +19,8 @@
 // USA.
 //
 //========================================================================
-/**\file getfem_fem_level_set.cc
-   \brief a FEM which should be used with getfem::mesh_fem_level_set.
+/** \file getfem_fem_level_set.cc
+    \brief a FEM which should be used with getfem::mesh_fem_level_set.
 */
 #include "getfem/getfem_fem_level_set.h"
 
@@ -77,38 +77,46 @@ namespace getfem {
     }
   }
 
-  void fem_level_set::base_value(const base_node &, 
-				 base_tensor &) const
+  void fem_level_set::base_value(const base_node &, base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_level_set::grad_base_value(const base_node &, 
 				      base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_level_set::hess_base_value(const base_node &, 
-			     base_tensor &) const
+				      base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element.");  }
 
+  static bool are_zones_compatible_(const std::string a, const std::string b) {
+    if (a.size() != b.size()) return false;
+    for (size_type i = 0; i < a.size(); ++i)
+      if (a[i] != '0' && a[i] != b[i]) return false;
+    return true;
+  }
+
   void fem_level_set::find_zone_id(const fem_interpolation_context &c, 
-				   std::vector<unsigned> &ids) const {
+				   std::vector<bool> &ids) const {
+    size_type s = 0;
+    for (size_type i = 0; i < dofzones.size(); ++i)
+      if (dofzones[i]) s += dofzones[i]->size();
     ids.resize(dofzones.size());
     std::string z(common_ls_zones);
     for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
       mesher_level_set eval = mls.get_level_set(i)->
 	mls_of_convex(c.convex_num());
       scalar_type v = eval(c.xref());
-      z[i] = (v > 0) ? '+' : '-';
+      z[i] = (v > 1e-8) ? '+' : ((v < -1e-8) ? '-' : '0');
     }
-    for (unsigned d=0; d < ids.size(); ++d) {
-      ids[d] = unsigned(-1);
+    unsigned cnt = 0;
+    for (unsigned d = 0; d < dofzones.size(); ++d) {
       if (!dofzones[d]) continue;
-      unsigned cnt = 0;
       for (mesh_level_set::zoneset::const_iterator it = dofzones[d]->begin();
-	   it != dofzones[d]->end() && ids[d] == unsigned(-1); ++it, ++cnt) {
+	   it != dofzones[d]->end(); ++it, ++cnt) {
+	ids[cnt] = false;
 	for (mesh_level_set::zone::const_iterator it2 = (*it)->begin();
 	     it2 != (*it)->end(); ++it2) {
-	  if (z == *(*it2)) { ids[d] = cnt; break; }
+	  if (are_zones_compatible_(z,*(*it2))) { ids[cnt] = true; break; }
 	}
       }
-      assert(ids[d] != unsigned(-1)); 
     }
   }
 
@@ -125,14 +133,14 @@ namespace getfem {
     base_tensor tt; c0.base_value(tt);
     base_tensor::const_iterator itf = tt.begin();
 
-    std::vector<unsigned> zid;
+    std::vector<bool> zid;
     find_zone_id(c, zid);
     for (dim_type q = 0; q < target_dim(); ++q) {
+      unsigned cnt = 0;
       for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
 	if (dofzones[d]) { /* enriched dof ? */
-	  for (size_type k = 0; k < dofzones[d]->size(); ++k) {
-	    *it++ = (k == zid[d]) ? *itf : 0;
-	  }
+	  for (size_type k = 0; k < dofzones[d]->size(); ++k, ++cnt)
+	    *it++ = zid[cnt] ? *itf : 0;
 	} else *it++ = *itf;
       }
     }
@@ -153,16 +161,16 @@ namespace getfem {
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itf = tt.begin();
 
-    std::vector<unsigned> zid;
+    std::vector<bool> zid;
     find_zone_id(c, zid);
 
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type q = 0; q < target_dim(); ++q) {
+	unsigned cnt = 0;
 	for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
 	  if (dofzones[d]) { /* enriched dof ? */
-	    for (size_type k = 0; k < dofzones[d]->size(); ++k) {
-	      *it++ = (k == zid[d]) ? *itf : 0;
-	    }
+	    for (size_type k = 0; k < dofzones[d]->size(); ++k, ++cnt)
+	      *it++ = zid[cnt] ? *itf : 0;
 	  } else *it++ = *itf;
 	}
       }
@@ -184,17 +192,17 @@ namespace getfem {
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itf = tt.begin();
 
-    std::vector<unsigned> zid;
+    std::vector<bool> zid;
     find_zone_id(c, zid);
 
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type j = 0; j < c.N() ; ++j) {
 	for (dim_type q = 0; q < target_dim(); ++q) {
+	  unsigned cnt = 0;
 	  for (size_type d = 0; d < bfem->nb_dof(0); ++d, ++itf) {
 	    if (dofzones[d]) { /* enriched dof ? */
-	      for (size_type k = 0; k < dofzones[d]->size(); ++k) {
-		*it++ = (k == zid[d]) ? *itf : 0;
-	      }
+	      for (size_type k = 0; k < dofzones[d]->size(); ++k, ++cnt)
+		*it++ = zid[cnt] ? *itf : 0;
 	    } else *it++ = *itf;
 	  }
 	}

@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file getfem_fem_level_set.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date March 09, 2005.
    @brief FEM associated with getfem::mesh_fem_level_set objects.
 
@@ -69,7 +70,7 @@ namespace getfem {
     dal::bit_vector ls_index; /* lists only the significant level sets */
     std::string common_ls_zones;
     void find_zone_id(const fem_interpolation_context &c, 
-		      std::vector<unsigned> &ids) const;
+		      std::vector<bool> &ids) const;
   public:
     template <typename IT_LS_ENRICH>
     fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_,
