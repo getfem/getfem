@@ -1,6 +1,11 @@
 SUBDIRS = private
 
+if BUILDMEX
 TESTS = $(srcdir)/check_all.sh
+else
+TESTS = 
+endif
+
 
 EXTRA_DIST= \
 	check_all.sh \

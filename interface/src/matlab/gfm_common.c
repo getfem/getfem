@@ -44,7 +44,9 @@ mxClassID2string(mxClassID id) {
     case mxINT64_CLASS:   return "INT64";
     case mxUINT64_CLASS:  return "UINT64";
     case mxSPARSE_CLASS:  return "SPARSE";
+#ifdef LOGICAL_IS_A_TYPE
     case mxLOGICAL_CLASS: return "LOGICAL";
+#endif
     case mxOPAQUE_CLASS: return "OPAQUE_CLASS";
     default:
 #if MATLAB_RELEASE >= 14
@@ -85,6 +87,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       t->storage.gfi_storage_u.data_int32.data_int32_len = n;
       t->storage.gfi_storage_u.data_int32.data_int32_val = mxGetData(mx);
     } break;
+#ifdef LOGICAL_IS_A_TYPE
     case mxLOGICAL_CLASS: {
       int i;
       mxLogical *p = (mxLogical*)mxGetData(mx);
@@ -94,6 +97,7 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       for (i = 0; i < n; ++i)
 	t->storage.gfi_storage_u.data_int32.data_int32_val[i] = (p[i] ? 1 : 0);
     } break;
+#endif
     case mxUINT32_CLASS: {
       t->storage.type = GFI_UINT32;
       t->storage.gfi_storage_u.data_uint32.data_uint32_len = n;

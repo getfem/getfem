@@ -1,3 +1,10 @@
+2006-02-12  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem/getfem_fem_level_set.cc: the base functions are now
+	non-zero on gauss points sufficiently near the level-sets in order
+	to allow some computations (for instance mass matrices on the
+	level-sets). 
+
 2006-02-09 Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* interface/*: integrating Matlab and Python interfaces into Getfem
