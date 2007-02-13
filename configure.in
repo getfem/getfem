@@ -155,13 +155,18 @@ dnl   init libtools for shared libraries
 dnl ------------------------------------------------------------------------
 
 dnl AC_DISABLE_FAST_INSTALL
-
 AM_DISABLE_SHARED
 AM_ENABLE_STATIC
 
-dnl AM_PROG_LIBTOOL
+dnl always build with -fPIC so that the matlab and python interface
+dnl can be run on x86_64 platforms
+dnl unfortunately , it does not work... I HATE LIBTOOL
+dnl AC_LIBTOOL_PICMODE(['yes'])
+
 AM_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
+
+
 
 dnl -------------------------------BLAS----------------------------------
 
@@ -767,3 +772,15 @@ echo "  building MATLAB interface: $usematlab"
 echo "  building PYTHON interface: $usepython"
 echo "---------------------------------------"
 
+case $host in
+  x86_64-*)
+	if test $usematlab = "YES" -o $usepython = "YES"; then
+          if test $pic_mode != "yes"; then
+            echo "!!!!!"
+            echo "!!!!! Your build will fail because you did not use the --with-pic option"
+            echo "!!!!! This is required for the getfem interfaces on x86_64"
+            echo ""
+          fi
+        fi      
+  ;;
+esac

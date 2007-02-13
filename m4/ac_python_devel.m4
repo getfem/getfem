@@ -52,8 +52,8 @@ AC_DEFUN([AC_PYTHON_DEVEL],[
 	AC_MSG_CHECKING([for a version of Python >= '2.1.0'])
 	ac_supports_python_ver=`$PYTHON -c "import sys, string; \
 		ver = string.split(sys.version)[[0]]; \
-		print ver >= '2.1.0'"`
-	if test "$ac_supports_python_ver" != "True"; then
+		print int(ver >= '2.1.0')"`
+	if test "$ac_supports_python_ver" != "1"; then
 		if test -z "$PYTHON_NOVERSIONCHECK"; then
 			AC_MSG_RESULT([no])
 			AC_MSG_FAILURE([
