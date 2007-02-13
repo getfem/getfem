@@ -515,16 +515,16 @@ void friction_problem::solve(void) {
     case 0 :
       a = 1./(dt*dt*theta*theta); b = 1.; beta_ = 1./(theta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, dt*a), U1);
-      gmm::add(gmm::scaled(MA0, (1.-theta)/theta), DF);
       gmm::mult(DYNAMIC.get_M(), U1, DF);
+      gmm::add(gmm::scaled(MA0, (1.-theta)/theta), DF);
       gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, -dt*(1.-theta)), WT);
       gmm::clear(WN);
       break;
     case 1 :
       a = 2./(dt*dt*beta); b = 1.; beta_ = 2.*gamma/(beta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, a*dt), U1);
-      gmm::add(gmm::scaled(MA0, (1.-beta)/beta), DF);
       gmm::mult(DYNAMIC.get_M(), U1, DF);
+      gmm::add(gmm::scaled(MA0, (1.-beta)/beta), DF);
       gmm::add(gmm::scaled(U0, -1.),
 	       gmm::scaled(V0, dt*(beta*0.5/gamma -1.)), WT);
       gmm::add(gmm::scaled(A0, dt*dt*0.5*(beta-gamma)/gamma), WT);
