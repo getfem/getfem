@@ -694,6 +694,7 @@ AC_CONFIG_FILES(\
 	contrib/mixed_elastostatic/Makefile \
 	contrib/xfem_contact/Makefile \
 	contrib/crack_plate/Makefile \
+	contrib/aposteriori/Makefile \
 	bin/Makefile \
         interface/Makefile \
 	interface/src/Makefile \
