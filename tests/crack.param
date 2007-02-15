@@ -23,13 +23,7 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-<<<<<<< .mine
 NX = 28;            	          % space step.
-=======
-NX = 10;            	          % space step.
->>>>>>> .r2525
-
-
 
 MESH_NOISED = 1; % Set to one if you want to "shake" the mesh
 

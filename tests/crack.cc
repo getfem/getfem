@@ -476,7 +476,6 @@ void crack_problem::init(void) {
   lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
 
   cutoff.fun_num = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
-
   cutoff.radius = PARAM.real_value("CUTOFF", "Cutoff");
   cutoff.radius1 = PARAM.real_value("CUTOFF1", "Cutoff1");
   cutoff.radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
@@ -611,8 +610,6 @@ bool crack_problem::solve(plain_vector &U) {
   mim.adapt();
   mfls_u.adapt();
   mfls_mortar.adapt(); mfls_mortar.set_qdim(2);
-  
-
 
   cout << "Setting up the singular functions for the enrichment\n";
   std::vector<getfem::pglobal_function> vfunc(4);
