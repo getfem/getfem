@@ -265,22 +265,140 @@ base_small_vector ls_function(const base_node P, int num = 0) {
 void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
 
 
+  size_type N = mesh.dim();
+  size_type qdim = mf_u().get_qdim();
   gmm::clear(ERR);
-
+  std::vector<scalar_type> coeff1, coeff2;
+  base_matrix grad1(qdim, N), grad2(qdim, N), E(N, N), S1(N, N), S2(N, N);
+  base_matrix hess1(qdim, N*N);
+  base_matrix G1, G2;
+  bgeot::geotrans_inv_convex gic;
+  base_node xref2(N);
+  base_small_vector up(N), jump(N);
 
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
 
+    bgeot::pgeometric_trans pgt1 = mesh.trans_of_convex(cv);
+    getfem::papprox_integration pai1 = 
+      get_approx_im_or_fail(mim.int_method_of_element(cv));
+    getfem::pfem pf1 = mf_u().fem_of_element(cv);
+    scalar_type radius = mesh.convex_radius_estimate(cv);
+
+    bgeot::vectors_to_base_matrix(G1, mesh.points_of_convex(cv));
+
+    coeff1.resize(mf_u().nb_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u().ind_dof_of_element(cv))), coeff1);
+
+    getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, cv);
+     
+    // Residual on the element
+
+    for (unsigned ii=0; ii < pai1->nb_points_on_convex(); ++ii) {
+      
+      base_small_vector res = sol_f(pai1->point(ii));
+      ctx1.set_xref(pai1->point(ii));
+      pf1->interpolation_hess(ctx1, coeff1, hess1, qdim);
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j)
+	  res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j);
+      
+      ERR[cv] += radius * radius * ctx1.J() * pai1->coeff(ii) * gmm::vect_norm2(res);
+    }
+
+    // Stress on the level set.
+    getfem::papprox_integration pai_crack = 
+      get_approx_im_or_fail(mimbound.int_method_of_element(cv));
+    
+    getfem::mesher_level_set mmls = ls.mls_of_convex(cv, 0);
+    base_small_vector gradls;
+    for (unsigned ii=0; ii < pai_crack->nb_points(); ++ii) {
+      
+      ctx1.set_xref(pai_crack->point(ii));
+      mmls.grad(pai_crack->point(ii), gradls);
+      gmm::mult(ctx1.B(), gradls, up);
+      scalar_type norm = gmm::vect_norm2(up), normls = gmm::vect_norm2(gradls);
+      up /= norm;
+      scalar_type coefficient = pai_crack->coeff(ii) * ctx1.J() * norm / normls; 
+
+      for (scalar_type e = -1.0; e < 2.0; e += 2.0) {
+	
+	base_node ptref = pai_crack->point(ii) + e * 1.0e-7 * gradls;
+	ctx1.set_xref(ptref);
+	pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
+	gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
+	gmm::scale(E, 0.5);
+	scalar_type trace = gmm::mat_trace(E);
+	gmm::copy(gmm::identity_matrix(), S1);
+	gmm::scale(S1, lambda * trace);
+	gmm::add(gmm::scaled(E, 2*mu), S1);
+	gmm::mult(S1, up, jump);
+	
+	ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
+
+      }
+    }
+ 
+    // jump of the stress between the element ant its neighbours.
     for (unsigned f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
-      size_type cvn = mesh.neighbour_of_convex(cv1.cv(), f1);
+      
+      
+      size_type cvn = mesh.neighbour_of_convex(cv, f1);
 
+      bgeot::pgeometric_trans pgt2 = mesh.trans_of_convex(cvn);
+      getfem::pfem pf2 = mf_u().fem_of_element(cvn);
+      bgeot::vectors_to_base_matrix(G2, mesh.points_of_convex(cvn));
+      coeff2.resize(mf_u().nb_dof_of_element(cvn));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u().ind_dof_of_element(cvn))), coeff2);
+      getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(N), G2, cvn);
+      gic.init(mesh.points_of_convex(cvn), pgt2);
+
+      for (unsigned ii=0; ii < pai1->nb_points_on_face(f1); ++ii) {
+
+	ctx1.set_xref(pai1->point_on_face(f1, ii));
+	gmm::mult(ctx1.B(), pgt1->normals()[f1], up);
+	scalar_type norm = gmm::vect_norm2(up);
+	up /= norm;
+	scalar_type coefficient = pai1->coeff_on_face(f1, ii) * ctx1.J() * norm; 
+	
+	pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
+	gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
+	gmm::scale(E, 0.5);
+	scalar_type trace = gmm::mat_trace(E);
+	gmm::copy(gmm::identity_matrix(), S1);
+	gmm::scale(S1, lambda * trace);
+	gmm::add(gmm::scaled(E, 2*mu), S1);
+
+	bool converged;
+	gic.invert(ctx1.xreal(), xref2, converged);
+	GMM_ASSERT1(converged, "geometric transformation not well inverted ... !");
+	
+	ctx2.set_xref(xref2);
+	pf2->interpolation_grad(ctx2, coeff2, grad2, qdim);
+	gmm::copy(grad2, E); gmm::add(gmm::transposed(grad2), E);
+	gmm::scale(E, 0.5);
+	trace = gmm::mat_trace(E);
+	gmm::copy(gmm::identity_matrix(), S2);
+	gmm::scale(S2, lambda * trace);
+	gmm::add(gmm::scaled(E, 2*mu), S2);
+	
+	gmm::mult(S1, up, jump);
+	gmm::mult_add(S2, gmm::scaled(up, -1.0), jump);
+
+	ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
+
+      }
+      
+    }
       
 
 
-    }
+    
 
+    
+    
   }
-
+  
 }
 
 

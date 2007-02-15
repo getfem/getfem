@@ -147,9 +147,7 @@ namespace getfem {
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
 
-    if (r < 1e-10) {
-      return 0;
-    }
+    if (r < 1e-10)  return 0;
 
     /* ci-dessous: la valeur absolue est malheureusement necessaire,
      * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
@@ -164,6 +162,7 @@ namespace getfem {
       case 3 : return cos2*y/sqrt(r); 
     default: GMM_ASSERT2(false, "arg");
     }
+    return 0;
   }
 
   base_small_vector 
@@ -204,6 +203,54 @@ namespace getfem {
     return res;
   }
 
+  base_matrix crack_singular_xy_function::hess(scalar_type x, scalar_type y) const {
+    base_matrix res(2,2);
+    scalar_type sgny = (y < 0 ? -1.0 : 1.0);
+    scalar_type r = sqrt(x*x + y*y);
+
+    if (r < 1e-10) {
+      GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
+    }
+
+    /* ci-dessous: la valeur absolue est malheureusement necessaire,
+     * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
+     */
+    scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
+    scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
+
+    switch(l){
+    case 0 :
+      res(0,0) = (-sin2*x*x + 2.0*cos2*x*y + sin2*y*y) / (4*pow(r, 3.5));
+      res(0,1) = (-cos2*x*x - 2.0*sin2*x*y + cos2*y*y) / (4*pow(r, 3.5));
+      res(1,0) = res(0, 1);
+      res(1,1) = (sin2*x*x - 2.0*cos2*x*y - sin2*y*y) / (4*pow(r, 3.5));
+      break;
+    case 1 :
+      res(0,0) = (-cos2*x*x - 2.0*sin2*x*y + cos2*y*y) / (4*pow(r, 3.5));
+      res(0,1) = (sin2*x*x - 2.0*cos2*x*y - sin2*y*y) / (4*pow(r, 3.5));
+      res(1,0) = res(0, 1);
+      res(1,1) = (cos2*x*x + 2.0*sin2*x*y - cos2*y*y) / (4*pow(r, 3.5));
+      break;
+    case 2 :
+      res(0,0) = 3.0*y*(sin2*x*x + 2.0*cos2*x*y - sin2*y*y) / (4*pow(r, 4.5));
+      res(0,1) = (-2.0*sin2*x*x*x - 5.0*cos2*y*x*x + 4.0*sin2*y*y*x + cos2*y*y*y)
+	/ (4*pow(r, 4.5));
+      res(1,0) = res(0, 1);
+      res(1,1) = (4.0*cos2*x*x*x - 7.0*sin2*y*x*x - 2.0*cos2*y*y*x - sin2*y*y*y)
+	/ (4*pow(r, 4.5));
+      break;
+    case 3 :
+      res(0,0) = 3.0*y*(cos2*x*x - 2.0*sin2*x*y - cos2*y*y) / (4*pow(r, 4.5));
+      res(0,1) = (-2.0*cos2*x*x*x + 5.0*sin2*y*x*x + 4.0*cos2*y*y*x - sin2*y*y*y)
+	/ (4*pow(r, 4.5));
+      res(1,0) = res(0, 1);
+      res(1,1) = (-4.0*sin2*x*x*x - 7.0*cos2*y*x*x + 2.0*sin2*y*y*x - cos2*y*y*y)
+	/ (4*pow(r, 4.5));
+      break;
+    default: GMM_ASSERT2(false, "oups");
+    }
+    return res;
+  }
 
   scalar_type 
   cutoff_xy_function::val(scalar_type x, scalar_type y) const { 
@@ -320,9 +367,42 @@ namespace getfem {
       base_small_vector gfn = fn.grad(x,y);
       gmm::mult(c.B(), gfn[0]*dx + gfn[1]*dy, g);
     }
-    virtual void hess(const fem_interpolation_context&, 
-		      base_matrix &) const
-    { GMM_ASSERT1(false, "hessian to be done ..."); }
+    virtual void hess(const fem_interpolation_context&c, 
+		      base_matrix &h) const {
+      update_mls(c.convex_num());
+      size_type P = c.xref().size(), N = c.N();
+      
+      base_small_vector dx(P), dy(P), dfr(2),  dx_real(N), dy_real(N);
+      scalar_type x = mls_x.grad(c.xref(), dx);
+      scalar_type y = mls_y.grad(c.xref(), dy);
+
+      base_small_vector gfn = fn.grad(x,y);
+      base_matrix hfn = fn.hess(x, y);
+
+      base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
+      mls_x.hess(c.xref(), hx);
+      mls_x.hess(c.xref(), hy);
+      gmm::reshape(hx, P*P, 1);
+      gmm::reshape(hy, P*P, 1);
+      
+      gmm::mult(c.B3(), hx, hx_real);
+      gmm::mult(c.B32(), gmm::scaled(dx, -1.0), gmm::mat_col(hx_real, 0));
+      gmm::mult(c.B3(), hy, hy_real);
+      gmm::mult(c.B32(), gmm::scaled(dy, -1.0), gmm::mat_col(hy_real, 0));
+      gmm::mult(c.B(), dx, dx_real);
+      gmm::mult(c.B(), dy, dy_real);
+
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j) {
+	  h(i, j) = hfn(0,0) * dx_real[i] * dx_real[j]
+	    + hfn(0,1) * dx_real[i] * dy_real[j]
+	    + hfn(1,0) * dy_real[i] * dx_real[j]
+	    +  hfn(1,1) * dy_real[i] * dy_real[j]
+	    + gfn[0] * hx_real(i,j) + gfn[1] * hy_real(i,j);
+	}
+    }
+
+    //    { GMM_ASSERT1(false, "hessian to be done ..."); }
     
     void update_from_context(void) const { cv =  size_type(-1); }
 

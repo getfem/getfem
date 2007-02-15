@@ -140,6 +140,7 @@ namespace getfem {
   struct abstract_xy_function {
     virtual scalar_type val(scalar_type x, scalar_type y) const = 0;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const = 0;
+    virtual base_matrix hess(scalar_type x, scalar_type y) const = 0;
     virtual ~abstract_xy_function() {}
   };
 
@@ -148,6 +149,7 @@ namespace getfem {
     unsigned l; /* 0 <= l <= 3 */
     virtual scalar_type val(scalar_type x, scalar_type y) const;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    virtual base_matrix hess(scalar_type, scalar_type) const;
     crack_singular_xy_function(unsigned l_) : l(l_) {}
   };
 
@@ -159,6 +161,8 @@ namespace getfem {
     scalar_type a4, r1, r0;
     virtual scalar_type val(scalar_type x, scalar_type y) const;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    virtual base_matrix hess(scalar_type, scalar_type) const
+    { GMM_ASSERT1(false, "Sorry, to be done ..."); }
     cutoff_xy_function(int fun_num, scalar_type r, 
 		       scalar_type r1, scalar_type r0);
   };
@@ -176,6 +180,8 @@ namespace getfem {
       itp.eval(base_node(x,y), v, g);
       return base_small_vector(g(component,0), g(component,1));
     }
+    virtual base_matrix hess(scalar_type, scalar_type) const
+    { GMM_ASSERT1(false, "Sorry, to be done ..."); }
     interpolated_xy_function(interpolator_on_mesh_fem &itp_, size_type c) :
       itp(itp_), component(c) {}
   };
@@ -188,6 +194,12 @@ namespace getfem {
     }
     base_small_vector grad(scalar_type x, scalar_type y) const {
       return fn1.grad(x,y)*fn2.val(x,y) + fn1.val(x,y)*fn2.grad(x,y);
+    }
+    virtual base_matrix hess(scalar_type x, scalar_type y) const {      
+      base_matrix h = fn1.hess(x, y); gmm::scale(h, fn2.val(x,y));
+      gmm::add(gmm::scaled(fn2.hess(x,y), fn1.val(x,y)), h);
+      gmm::rank_two_update(h, fn1.grad(x,y), fn2.grad(x,y));
+      return h;
     }
     product_of_xy_functions(abstract_xy_function &fn1_,
 			    abstract_xy_function &fn2_) 
