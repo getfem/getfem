@@ -23,7 +23,8 @@
 
 /**
    @file getfem_error_estimate.h 
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date February 10, 2006.
    @brief Definition of a posteriori error estimates.
 */
@@ -96,7 +97,7 @@ namespace getfem {
     bgeot::geotrans_inv_convex gic;
 
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1) {
-      GMM_ASSERT3(mf.convex_index().is_in(cv1.cv()) &&
+      GMM_ASSERT1(mf.convex_index().is_in(cv1.cv()) &&
 		  mim.convex_index().is_in(cv1.cv()), "");
       bgeot::mesh_structure::ind_set neighbours;
 

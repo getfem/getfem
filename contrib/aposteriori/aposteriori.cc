@@ -118,6 +118,8 @@ struct crack_problem {
   bool adapted_refine;
 
   bool solve(plain_vector &U);
+
+  void error_estimate(const plain_vector &U, plain_vector ERR);
   
   void init(void);
   crack_problem(void) : mls(mesh), mim(mls),
@@ -259,6 +261,31 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   return res;
 }
 
+
+void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
+
+
+  gmm::clear(ERR);
+
+
+  for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
+
+    for (unsigned f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
+
+      size_type cvn = mesh.neighbour_of_convex(cv1.cv(), f1);
+
+      
+
+
+    }
+
+  }
+
+}
+
+
+
+
 bool crack_problem::solve(plain_vector &U) {
   
   size_type N = mesh.dim();
@@ -331,7 +358,7 @@ bool crack_problem::solve(plain_vector &U) {
     // Adapted Refinement (suivant une erreur a posteriori)
     if (adapted_refine && mesh.convex_index().card() < conv_max) {
       plain_vector ERR(mesh.convex_index().last_true()+1);
-      getfem::error_estimate(mim, mf_u(), U, ERR);
+      error_estimate(U, ERR);
 
       // cout << "ERR = " << ERR << endl; 
     
