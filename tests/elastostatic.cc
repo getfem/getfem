@@ -448,7 +448,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
       
       cout << "max = " << gmm::vect_norminf(ERR) << endl;
       // scalar_type threshold = gmm::vect_norminf(ERR) * 0.7;
-      scalar_type threshold = 0.01, min_ = 1e18;
+      scalar_type threshold = 0.0001, min_ = 1e18;
       cvref.clear();
       for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
 	if (ERR[i] > threshold) cvref.add(i);

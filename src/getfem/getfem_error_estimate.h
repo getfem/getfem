@@ -83,7 +83,6 @@ namespace getfem {
 		gmm::vect_size(U) >= mf.nb_dof() &&
 		gmm::vect_size(err) >= m.convex_index().last_true()+1, "");
     gmm::clear(err);
-    std::vector<unsigned> nb_cedges(m.convex_index().last_true()+1);
     pfem pf1_old = 0, pf2_old = 0;
     papprox_integration pai_old = 0, pai1_old = 0, pai2_old = 0;
     pfem_precomp pfp1 = 0, pfp2 = 0;
@@ -97,6 +96,9 @@ namespace getfem {
     bgeot::geotrans_inv_convex gic;
 
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1) {
+      
+      scalar_type radius = m.convex_radius_estimate(cv1.cv());
+      
       GMM_ASSERT1(mf.convex_index().is_in(cv1.cv()) &&
 		  mim.convex_index().is_in(cv1.cv()), "");
       bgeot::mesh_structure::ind_set neighbours;
@@ -182,23 +184,20 @@ namespace getfem {
 	    }
 
 	    const base_matrix& B = ctx1.B();
-	    scalar_type J=ctx1.J();
 	    gmm::mult(B, pgt1->normals()[f1], up);
-	    J /= gmm::vect_norm2(up);
+	    scalar_type norm = gmm::vect_norm2(up);
+	    scalar_type J = ctx1.J() * norm;
+	    gmm::scale(up, R(1) / norm);
 	    gmm::mult(grad1, up, gradn);
 	    gmm::mult_add(grad2, gmm::scaled(up, R(-1)), gradn);
-	    R a = gmm::vect_norm2_sqr(gradn)
-	      * pai1->integration_coefficients()[ctx1.ii()] * J;
-	    err[cv1.cv()] += gmm::sqrt(a); err[cv2] += gmm::sqrt(a);
-	    nb_cedges[cv1.cv()]++; nb_cedges[cv2]++; 
+	    R a = gmm::vect_norm2_sqr(gradn) * radius *
+	      pai1->integration_coefficients()[ctx1.ii()] * J;
+	    err[cv1.cv()] += a; err[cv2] += a;
 	  }
 	}
       }
     }
     MPI_SUM_VECTOR(err);
-    MPI_SUM_VECTOR(nb_cedges);
-    for (mr_visitor cv1(rg); !cv1.finished(); ++cv1)
-      if (nb_cedges[cv1.cv()]) err[cv1.cv()] /= R(nb_cedges[cv1.cv()]);
   }
 }
 
