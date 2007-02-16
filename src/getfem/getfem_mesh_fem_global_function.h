@@ -161,8 +161,7 @@ namespace getfem {
     scalar_type a4, r1, r0;
     virtual scalar_type val(scalar_type x, scalar_type y) const;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
-    virtual base_matrix hess(scalar_type, scalar_type) const
-    { GMM_ASSERT1(false, "Sorry, to be done ..."); }
+    virtual base_matrix hess(scalar_type, scalar_type) const;
     cutoff_xy_function(int fun_num, scalar_type r, 
 		       scalar_type r1, scalar_type r0);
   };

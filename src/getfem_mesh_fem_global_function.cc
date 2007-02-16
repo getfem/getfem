@@ -264,10 +264,12 @@ namespace getfem {
 	if (r <= r1) return 1;
 	else if (r >= r0) return 0;
 	else {
-	  scalar_type c = 6./(pow(r0,3.) - pow(r1,3.) + 3*r1*r0*(r1-r0));
-	  scalar_type k = -(c/6.)*(-pow(r0,3.) + 3*r1*pow(r0,2.));
-	  return (c/3.)*pow(r,3.) - (c*(r0 + r1)/2.)*pow(r,2.)
-	    + c*r0*r1*r + k;
+	  // scalar_type c = 6./(r0*r0*r0 - r1*r1*r1 + 3*r1*r0*(r1-r0));
+	  // scalar_type k = -(c/6.)*(-pow(r0,3.) + 3*r1*pow(r0,2.));
+	  // return (c/3.)*pow(r,3.) - (c*(r0 + r1)/2.)*pow(r,2.) +
+	  //        c*r0*r1*r + k;
+	  scalar_type c = 1./pow(r0-r1,3.0);
+	  return c*(r*(r*(2.0*r-3.0*(r0+r1))+6.0*r1*r0) + r0*r0*(r0-3.0*r1));
 	}
       }
       case POLYNOMIAL2_CUTOFF: {
@@ -276,16 +278,20 @@ namespace getfem {
 	if (r <= r1) return scalar_type(1);
 	else if (r >= r0) return scalar_type(0);
 	else {
-	  scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5)) 
-			      + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4)) 
-			      - (1./3.)*(pow(r1,3)*pow(r0,2) - 
-					 pow(r1,2)*pow(r0,3)));
-	  scalar_type k = 1. - c*((-1./30.)*pow(r1,5) + 
-				  (1./6.)*pow(r1,4)*r0 - 
-				  (1./3.)*pow(r1,3)*pow(r0,2));
-	  return c*( (-1./5.)*pow(r,5) + (1./2.)* (r1+r0)*pow(r,4) - 
-		     (1./3.)*(pow(r1,2)+pow(r0,2) + 4.*r0*r1)*pow(r,3) + 
-		     r0*r1*(r0+r1)*pow(r,2) - pow(r0,2)*pow(r1,2)*r) + k;
+// 	  scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5)) 
+// 			      + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4)) 
+// 			      - (1./3.)*(pow(r1,3)*pow(r0,2) - 
+// 					 pow(r1,2)*pow(r0,3)));
+// 	  scalar_type k = 1. - c*((-1./30.)*pow(r1,5) + 
+// 				  (1./6.)*pow(r1,4)*r0 - 
+// 				  (1./3.)*pow(r1,3)*pow(r0,2));
+// 	  return c*( (-1./5.)*pow(r,5) + (1./2.)* (r1+r0)*pow(r,4) - 
+// 		     (1./3.)*(pow(r1,2)+pow(r0,2) + 4.*r0*r1)*pow(r,3) + 
+// 		     r0*r1*(r0+r1)*pow(r,2) - pow(r0,2)*pow(r1,2)*r) + k;
+	  return (r*(r*(r*(r*(-6.0*r + 15.0*(r0+r1))
+			   - 10.0*(r0*r0 + 4.0*r1*r0 + r1*r1))
+			+ 30.0 * r0*r1*(r0+r1)) - 30.0*r1*r1*r0*r0)
+		  + r0*r0*r0*(r0*r0-5.0*r1*r0+10*r1*r1)) / pow(r0-r1, 5.0);
 	}
       }
       default : return scalar_type(1);
@@ -295,36 +301,74 @@ namespace getfem {
   base_small_vector 
   cutoff_xy_function::grad(scalar_type x, scalar_type y) const {
     switch (fun) {
-      case EXPONENTIAL_CUTOFF: {
-	scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
-	return base_small_vector(ratio*x, ratio*y);
-      } break;
-      case POLYNOMIAL_CUTOFF: {
-	scalar_type r = gmm::sqrt(x*x+y*y);
-	scalar_type ratio = 0;
-	
-	if ( r > r1 && r < r0 ) {
-	  scalar_type c = 6./(pow(r0,3.) - pow(r1,3.) + 3*r1*r0*(r1-r0));
-	  ratio = c*(r - r0)*(r - r1);
-	}
-	return base_small_vector(ratio*x/r,ratio*y/r);
-      } break;
-      case POLYNOMIAL2_CUTOFF: {
-	scalar_type r = gmm::sqrt(x*x+y*y);
-	scalar_type ratio = 0;
-	if (r > r1 && r < r0) {
-	  scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5)) 
-			      + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4)) 
-			      - (1./3.)*(pow(r1,3)*pow(r0,2) - 
-					 pow(r1,2)*pow(r0,3)));
-	  ratio = - c*gmm::sqr(r-r0)*gmm::sqr(r-r1);
-	}
-	return base_small_vector(ratio*x/r,ratio*y/r);
-      } break;
-      default : return base_small_vector(2);
+    case EXPONENTIAL_CUTOFF: {
+      scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
+      return base_small_vector(ratio*x, ratio*y);
+    } break;
+    case POLYNOMIAL_CUTOFF: {
+      scalar_type r = gmm::sqrt(x*x+y*y);
+      scalar_type ratio = 0;
+      
+      if ( r > r1 && r < r0 ) {
+	// scalar_type c = 6./(pow(r0,3.) - pow(r1,3.) + 3*r1*r0*(r1-r0));
+	// ratio = c*(r - r0)*(r - r1);
+	ratio = 6.*(r - r0)*(r - r1)/pow(r0-r1, 3.);
+      }
+      return base_small_vector(ratio*x/r,ratio*y/r);
+    } break;
+    case POLYNOMIAL2_CUTOFF: {
+      scalar_type r = gmm::sqrt(x*x+y*y);
+      scalar_type ratio = 0;
+      if (r > r1 && r < r0) {
+// 	scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5)) 
+// 			    + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4)) 
+// 			    - (1./3.)*(pow(r1,3)*pow(r0,2) - 
+// 				       pow(r1,2)*pow(r0,3)));
+// 	ratio = - c*gmm::sqr(r-r0)*gmm::sqr(r-r1);
+	ratio = -30.0*gmm::sqr(r-r0)*gmm::sqr(r-r1) / pow(r0-r1, 5.0);
+      }
+      return base_small_vector(ratio*x/r,ratio*y/r);
+    } break;
+    default : return base_small_vector(2);
     }
   }
-
+  
+  base_matrix
+  cutoff_xy_function::hess(scalar_type x, scalar_type y) const {
+    base_matrix res;
+    switch (fun) {
+    case EXPONENTIAL_CUTOFF: {
+      scalar_type r2 = x*x+y*y, r4 = r2*r2;
+      res(0,0) = 4.0*a4*(-3.0*x*x - y*y + 4.0*a4*x*x*r4)*exp(-a4*r4);
+      res(1,0) = 8.0*a4*x*y*(-1.0 + 2.0*a4*r4)*exp(-a4*r4);
+      res(0,1) = res(1,0);
+      res(1,1) = 4.0*a4*(-3.0*y*y - x*x + 4.0*a4*y*y*r4)*exp(-a4*r4);
+    } break;
+    case POLYNOMIAL_CUTOFF: {
+      scalar_type r2 = x*x+y*y, r = gmm::sqrt(r2), c=6./(pow(r0-r1,3.)*r*r2);
+      if ( r > r1 && r < r0 ) {
+	res(0,0) = c*(x*x*r2 + r1*r0*y*y - r*r2*(r0+r1) + r2*r2);
+	res(1,0) = c*x*y*(r2 - r1*r0);
+	res(0,1) = res(1,0);
+	res(1,1) = c*(y*y*r2 + r1*r0*x*x - r*r2*(r0+r1) + r2*r2);
+      }
+    } break;
+    case POLYNOMIAL2_CUTOFF: {
+      scalar_type r2 = x*x+y*y, r = gmm::sqrt(r2), r3 = r*r2;
+      if (r > r1 && r < r0) {
+	scalar_type dp = -30.0*(r1-r)*(r1-r)*(r0-r)*(r0-r) / pow(r0-r1, 5.0);
+	scalar_type ddp = 60.0*(r1-r)*(r0-r)*(r0+r1-2.0*r) / pow(r0-r1, 5.0);
+	scalar_type rx= x/r, ry= y/r, rxx= y*y/r3, rxy= -x*y/r3, ryy= x*x/r3;
+	res(0,0) = ddp*rx*rx + dp*rxx;
+	res(1,0) = ddp*rx*ry + dp*rxy;
+	res(0,1) = res(1,0);
+	res(1,1) = ddp*ry*ry + dp*ryy;
+      }
+    } break;
+    }
+    return res;
+  }
+  
   cutoff_xy_function::cutoff_xy_function(int fun_num, scalar_type r, 
 					 scalar_type r1_, scalar_type r0_) 
   {
@@ -401,8 +445,6 @@ namespace getfem {
 	    + gfn[0] * hx_real(i,j) + gfn[1] * hy_real(i,j);
 	}
     }
-
-    //    { GMM_ASSERT1(false, "hessian to be done ..."); }
     
     void update_from_context(void) const { cv =  size_type(-1); }
 

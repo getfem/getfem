@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
-// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2007 Vanessa Lleras, Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -390,13 +390,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
       }
       
     }
-      
 
-
-    
-
-    
-    
   }
   
 }
