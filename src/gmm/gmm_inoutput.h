@@ -425,7 +425,7 @@ namespace gmm {
     
     fprintf(out_file,"%-72s%-8s\n%14d%14d%14d%14d%14d\n",Title, Key, totcrd,
 	    ptrcrd, indcrd, valcrd, rhscrd);
-    fprintf(out_file,"%3s%11s%14d%14d%14d\n",Type,"          ", M, N, nz);
+    fprintf(out_file,"%3s%11s%14d%14d%14d%14d\n",Type,"          ", M, N, nz, 0);
     fprintf(out_file,"%-16s%-16s%-20s", Ptrfmt, Indfmt, Valfmt);
     //     if ( Nrhs != 0 ) {
     //       /* Print Rhsfmt on fourth line and                              */
