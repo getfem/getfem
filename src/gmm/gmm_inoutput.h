@@ -116,16 +116,23 @@ namespace gmm {
     void open(const char *filename);
     /** read the opened file */
     template <typename T, int shift> void read(csc_matrix<T, shift>& A);
-    template <typename MAT> void read(MAT &M);
+    template <typename MAT> void read(MAT &M) IS_DEPRECATED;
     template <typename T, int shift>
     static void write(const char *filename, const csc_matrix<T, shift>& A);
+    template <typename T, int shift>
+    static void write(const char *filename, const csc_matrix<T, shift>& A,
+		      const std::vector<T> &rhs);
     template <typename T, typename INDI, typename INDJ, int shift> 
     static void write(const char *filename,
 		      const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
+    template <typename T, typename INDI, typename INDJ, int shift> 
+    static void write(const char *filename,
+		      const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A,
+		      const std::vector<T> &rhs);
 
     /** static method for saving the matrix */
     template <typename MAT> static void write(const char *filename,
-					      const MAT& A);
+					      const MAT& A) IS_DEPRECATED;
   private:
     FILE *f;
     char Title[73], Key[9], Rhstype[4], Type[4];
@@ -341,9 +348,8 @@ namespace gmm {
 				const IND_TYPE colptr[],
 				const IND_TYPE rowind[], 
 				const double val[], int Nrhs,
-				const double /*rhs*/[],
-				const double /*guess*/[],
-				const double /*exact*/[], const char* Title,
+				const double rhs[], const double guess[],
+				const double exact[], const char* Title,
 				const char* Key, const char* Type, 
 				const char* Ptrfmt, const char* Indfmt,
 				const char* Valfmt, const char* Rhsfmt,
@@ -358,7 +364,7 @@ namespace gmm {
     /*                                                                      */
     /************************************************************************/
     FILE *out_file;
-    int i,entry,offset/* , j, acount, linemod */;
+    int i, entry, offset, j, acount, linemod;
     int totcrd, ptrcrd, indcrd, valcrd, rhscrd;
     int nvalentries, nrhsentries;
     int Ptrperline, Ptrwidth, Indperline, Indwidth;
@@ -406,6 +412,7 @@ namespace gmm {
     if ( Nrhs > 0 ) {
       if ( Rhsfmt == NULL ) Rhsfmt = Valfmt;
       ParseRfmt(Rhsfmt,&Rhsperline,&Rhswidth,&Rhsprec, &Rhsflag);
+      cout << "rhswidth = " << Rhswidth << endl;
       if (Rhsflag == 'F')
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%df",Rhswidth,Rhsprec);
       else
@@ -427,12 +434,13 @@ namespace gmm {
 	    ptrcrd, indcrd, valcrd, rhscrd);
     fprintf(out_file,"%3s%11s%14d%14d%14d%14d\n",Type,"          ", M, N, nz, 0);
     fprintf(out_file,"%-16s%-16s%-20s", Ptrfmt, Indfmt, Valfmt);
-    //     if ( Nrhs != 0 ) {
-    //       /* Print Rhsfmt on fourth line and                              */
-    //       /*  optional fifth header line for auxillary vector information:*/
-    //       fprintf(out_file,"%-20s\n%-14s%d\n",Rhsfmt,Rhstype,Nrhs);
-    //     } else
-    fprintf(out_file,"\n");
+    if ( Nrhs != 0 ) {
+      /* Print Rhsfmt on fourth line and                              */
+      /*  optional fifth header line for auxillary vector information:*/
+      fprintf(out_file,"%-20s\n%-14s%d\n",Rhsfmt,Rhstype,Nrhs);
+    }
+    else
+      fprintf(out_file,"\n");
     
     offset = 1 - shift;  /* if base 0 storage is declared (via macro def), */
     /* then storage entries are offset by 1           */
@@ -462,7 +470,44 @@ namespace gmm {
 	fprintf(out_file,vformat,val[i]);
 	if ( (i+1)%Valperline == 0 ) fprintf(out_file,"\n");
       }
+      
       if ( nvalentries % Valperline != 0 ) fprintf(out_file,"\n");
+      
+      /*  Print right hand sides:  */
+      acount = 1;
+      linemod=0;
+      if ( Nrhs > 0 ) {
+	for (j=0;j<Nrhs;j++) {
+	  for (i=0;i<nrhsentries;i++) {
+	    fprintf(out_file,rformat,rhs[i] /* *Rhswidth */);
+	    if ( acount++%Rhsperline == linemod ) fprintf(out_file,"\n");
+	  }
+	  if ( acount%Rhsperline != linemod ) {
+	    fprintf(out_file,"\n");
+	    linemod = (acount-1)%Rhsperline;
+	  }
+	  if ( Rhstype[1] == 'G' ) {
+	    for (i=0;i<nrhsentries;i++) {
+	      fprintf(out_file,rformat,guess[i] /* *Rhswidth */);
+	      if ( acount++%Rhsperline == linemod ) fprintf(out_file,"\n");
+	    }
+	    if ( acount%Rhsperline != linemod ) {
+	      fprintf(out_file,"\n");
+	      linemod = (acount-1)%Rhsperline;
+	    }
+	  }
+	  if ( Rhstype[2] == 'X' ) {
+	    for (i=0;i<nrhsentries;i++) {
+	      fprintf(out_file,rformat,exact[i] /* *Rhswidth */);
+	      if ( acount++%Rhsperline == linemod ) fprintf(out_file,"\n");
+	    }
+	    if ( acount%Rhsperline != linemod ) {
+	      fprintf(out_file,"\n");
+	      linemod = (acount-1)%Rhsperline;
+	    }
+	  }
+	}
+      }
     }
     int s = fclose(out_file);
     GMM_ASSERT1(s == 0, "Error closing file in writeHB_mat_double().");
@@ -474,6 +519,14 @@ namespace gmm {
 			  const csc_matrix<T, shift>& A) {
     write(filename, csc_matrix_ref<T*, unsigned*, unsigned *, shift>
 	  (A.pr, A.ir, A.jc, A.nr, A.nc));
+  }
+
+  template <typename T, int shift> void
+  HarwellBoeing_IO::write(const char *filename,
+			  const csc_matrix<T, shift>& A,
+			  const std::vector<T> &rhs) {
+    write(filename, csc_matrix_ref<T*, unsigned*, unsigned *, shift>
+	  (A.pr, A.ir, A.jc, A.nr, A.nc), rhs);
   }
 
   template <typename T, typename INDI, typename INDJ, int shift> void
@@ -490,6 +543,26 @@ namespace gmm {
 		       0, 0, 0, 0, "GETFEM++ CSC MATRIX", "CSCMAT",
 		       t, 0, 0, 0, 0, "F", shift);
   }
+
+  template <typename T, typename INDI, typename INDJ, int shift> void
+  HarwellBoeing_IO::write(const char *filename,
+			  const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A,
+			  const std::vector<T> &rhs) {
+    const char *t = 0;
+    if (is_complex_double__(T()))
+      if (mat_nrows(A) == mat_ncols(A)) t = "CUA"; else t = "CRA";
+    else
+      if (mat_nrows(A) == mat_ncols(A)) t = "RUA"; else t = "RRA";
+    int Nrhs = gmm::vect_size(rhs) / mat_nrows(A);
+    cout << "rhs = " << rhs << endl;
+    writeHB_mat_double(filename, mat_nrows(A), mat_ncols(A),
+		       A.jc[mat_ncols(A)], A.jc, A.ir,
+		       (const double *)A.pr,
+		       Nrhs, (const double *)(&rhs[0]), 0, 0,
+		       "GETFEM++ CSC MATRIX", "CSCMAT",
+		       t, 0, 0, 0, 0, "F  ", shift);
+  }
+
   
   template <typename MAT> void
   HarwellBoeing_IO::write(const char *filename, const MAT& A) {
@@ -498,26 +571,47 @@ namespace gmm {
     gmm::copy(A,tmp); 
     HarwellBoeing_IO::write(filename, tmp);
   }
-  
 
-  /** save a "double" or "std::complex<double>" matrix into a
+  /** save a "double" or "std::complex<double>" csc matrix into a
       HarwellBoeing file
   */
   template <typename T, int shift> inline void
   Harwell_Boeing_save(const char *filename, const csc_matrix<T, shift>& A) {
-    HarwellBoeing_IO h; h.write(filename, A);
+    HarwellBoeing_IO::write(filename, A);
   }
 
-  /** save a "double" or "std::complex<double>" matrix into a
-      HarwellBoeing file
+  /** save a reference on "double" or "std::complex<double>" csc matrix
+      into a HarwellBoeing file
   */
   template <typename T, typename INDI, typename INDJ, int shift> inline void
   Harwell_Boeing_save(const char *filename,
 		      const csc_matrix_ref<T, INDI, INDJ, shift>& A) {
-    HarwellBoeing_IO h; h.write(filename, A);
+    HarwellBoeing_IO::write(filename, A);
   }
 
-  /** load a "double" or "std::complex<double>" matrix from a
+  /** save a "double" or "std::complex<double>" generic matrix
+      into a HarwellBoeing file making a copy in a csc matrix
+  */
+  template <typename MAT> inline void
+  Harwell_Boeing_save(const char *filename, const MAT& A) {
+    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
+      tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
+    gmm::copy(A, tmp); 
+    HarwellBoeing_IO::write(filename, tmp);
+  }
+
+  template <typename MAT, typename VECT> inline void
+  Harwell_Boeing_save(const char *filename, const MAT& A, const VECT &RHS) {
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    gmm::csc_matrix<T> tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
+    gmm::copy(A, tmp);
+    std::vector<T> tmprhs(gmm::vect_size(RHS));
+    gmm::copy(RHS, tmprhs);
+    HarwellBoeing_IO::write(filename, tmp, tmprhs);
+  }
+
+
+  /** load a "double" or "std::complex<double>" csc matrix from a
       HarwellBoeing file
   */
   template <typename T, int shift> void
@@ -525,6 +619,16 @@ namespace gmm {
     HarwellBoeing_IO h(filename); h.read(A);
   }
 
+  /** load a "double" or "std::complex<double>" generic matrix from a
+      HarwellBoeing file
+  */
+  template <typename MAT> void
+  Harwell_Boeing_load(const char *filename, MAT& A) {
+    csc_matrix<typename gmm::linalg_traits<MAT>::value_type> csc;
+    Harwell_Boeing_load(filename, csc);
+    resize(A, mat_nrows(csc), mat_ncols(csc));
+    copy(csc, A);
+  }
 
   /*************************************************************************/
   /*                                                                       */

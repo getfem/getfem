@@ -275,10 +275,10 @@ The ``1'' means that a shift will be done on all the indices.
 \index{Matrix Market format}
 Including the file \cpp{gmm/gmm_inoutput.h} you will be able to load and save matrices with Harwell-Boeing and Matrix Market formats. Concerning the Harwell-Boeing format, only the type \cpp{gmm::csc_matrix<double>} and \cpp{gmm::csc_matrix<std::complex<double> >} has been interfaced, so you can execute
 \begin{cppcode}
-Harwell_Boeing_save("filename", A) // save the csc_matrix A .
-Harwell_Boeing_load("filename", A) // load the csc_matrix A.
+Harwell_Boeing_save("filename", A) // save the matrix A .
+Harwell_Boeing_load("filename", A) // load the matrix A.
 \end{cppcode}
-Of course if you need to save another kind of matrix, you can do first a copy in a \cpp{gmm::csc_matrix}.
+If \cpp{A} is not a  \cpp{gmm::csc_matrix<double>} or a \cpp{gmm::csc_matrix<std::complex<double> >} a copy is made.\\
 
 Concerning the Matrix Market format, it is possible to save a \cpp{gmm::csc_matrix<double>} or a  \cpp{gmm::csc_matrix<std::complex<double> >} and to load a \cpp{gmm::row_matrix<VECT>} or a \cpp{gmm::col_matrix<VECT>}.
 \begin{cppcode}
