@@ -412,7 +412,6 @@ namespace gmm {
     if ( Nrhs > 0 ) {
       if ( Rhsfmt == NULL ) Rhsfmt = Valfmt;
       ParseRfmt(Rhsfmt,&Rhsperline,&Rhswidth,&Rhsprec, &Rhsflag);
-      cout << "rhswidth = " << Rhswidth << endl;
       if (Rhsflag == 'F')
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%df",Rhswidth,Rhsprec);
       else
@@ -554,7 +553,6 @@ namespace gmm {
     else
       if (mat_nrows(A) == mat_ncols(A)) t = "RUA"; else t = "RRA";
     int Nrhs = gmm::vect_size(rhs) / mat_nrows(A);
-    cout << "rhs = " << rhs << endl;
     writeHB_mat_double(filename, mat_nrows(A), mat_ncols(A),
 		       A.jc[mat_ncols(A)], A.jc, A.ir,
 		       (const double *)A.pr,
