@@ -285,7 +285,7 @@ namespace gmm {
 	       &Neltvl) < 1)
 #endif
       IOHBTerminate("Invalid Type info, line 3 of Harwell-Boeing file.\n");
-    std::for_each(Type, Type+3, ::toupper);
+    for (size_type i = 0; i < 3; ++i) Type[i] = toupper(Type[i]);
     
       /*  Fourth line:  */
 #ifdef GMM_SECURE_CRT
