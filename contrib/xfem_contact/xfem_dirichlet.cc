@@ -169,6 +169,88 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
   }
 }
 
+/*
+ * Assembly of augmentation terms
+ */
+
+
+  template<typename VECT1> class level_set_unit_normal 
+    : public getfem::nonlinear_elem_term {
+    const getfem::mesh_fem &mf;
+    const VECT1 &U;
+    size_type N;
+    base_matrix gradU;
+    bgeot::base_tensor tt;
+    bgeot::base_vector coeff;
+    bgeot::multi_index sizes_;
+  public:
+    level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
+      : mf(mf_), U(U_), N(mf_.linked_mesh().dim()), gradU(1, N)
+    { sizes_.resize(1); sizes_[0] = N; tt.adjust_sizes(sizes_); }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf.nb_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+		coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, 1);
+      scalar_type norm = gmm::vect_norm2(gmm::mat_row(gradU, 0));
+      for (size_type i = 0; i < N; ++i) t[i] = gradU(0, i) / norm;
+      // cout << "point " << ctx.xreal() << " norm = " << t << endl;
+    }
+  };
+
+
+template<class MAT>
+void asm_augmentation_mixed_term
+(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf, 
+ const getfem::mesh_fem &mf_mult, getfem::level_set &ls,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  MAT &RM = const_cast<MAT &>(RM_);
+
+  level_set_unit_normal<std::vector<scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+
+  getfem::generic_assembly assem("t=comp(Base(#2).Grad(#1).NonLin(#3));"
+				 "M(#2, #1)+= t(:,:,i,i)");
+  assem.push_mi(mim);
+  assem.push_mf(mf);
+  assem.push_mf(mf_mult);
+  assem.push_mf(ls.get_mesh_fem());
+  assem.push_mat(RM);
+  assem.push_nonlinear_term(&nterm);
+  assem.assembly(rg);
+}
+
+
+template<class MAT>
+void asm_augmentation_symm_term
+(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf, 
+ getfem::level_set &ls,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  MAT &RM = const_cast<MAT &>(RM_);
+
+  level_set_unit_normal<std::vector<scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+
+  getfem::generic_assembly
+    assem("t=comp(Grad(#1).NonLin(#2).Grad(#1).NonLin(#2));"
+	  "M(#1, #1)+= sym(t(:,i,i,:,j,j))");
+  assem.push_mi(mim);
+  assem.push_mf(mf);
+  assem.push_mf(ls.get_mesh_fem());
+  assem.push_mat(RM);
+  assem.push_nonlinear_term(&nterm);
+  assem.assembly(rg);
+}
+
+
+
+
+
+
+
 /* 
  * Main program 
  */
@@ -298,6 +380,25 @@ int main(int argc, char *argv[]) {
     sparse_matrix B(nb_dof_mult, nb_dof);
     getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
 
+    bool augmented_dirichlet = PARAM.int_value("AUGMENTED_DIRICHLET",
+					       "Augmented version of "
+					       "Dirichlet condition or not");
+    scalar_type dir_augm_parameter(0);
+    sparse_matrix MA(nb_dof_mult, nb_dof_mult), KA(nb_dof, nb_dof);
+    sparse_matrix BA(nb_dof_mult, nb_dof);
+    if (augmented_dirichlet) {
+      dir_augm_parameter = PARAM.real_value("DIRICHLET_AUGMENTATION_PARAMETER",
+					    "Augmentation parameter for "
+					    "Dirichlet condition");
+      getfem::asm_mass_matrix(MA, mimbounddown, mf_mult);
+      asm_augmentation_mixed_term(BA, mimbounddown, mf, mf_mult, lsdown);
+      asm_augmentation_symm_term(KA, mimbounddown, mf, lsdown);
+      gmm::scale(MA, -1.0/dir_augm_parameter);
+      gmm::scale(BA, -1.0/dir_augm_parameter);
+      gmm::scale(KA, -1.0/dir_augm_parameter);
+      gmm::add(BA, B);
+    }
+
     // Tests
     test_mim(mim, mf_rhs, false);
     test_mim(mimbounddown, mf_rhs, true);
@@ -320,6 +421,7 @@ int main(int argc, char *argv[]) {
     getfem::mdbrick_constraint<> brick_constraint(brick_volumic_rhs);
     brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
     brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+    if (augmented_dirichlet) brick_constraint.set_optional_matrices(KA, MA);
 
     getfem::mdbrick_abstract<> *final_brick = &brick_constraint;
     
