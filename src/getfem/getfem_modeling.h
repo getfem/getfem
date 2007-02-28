@@ -1521,6 +1521,8 @@ namespace getfem {
 
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     local_C_MATRIX  B; // Constraint matrix. Supposed to be of maximal rank.
+    T_MATRIX optK, optM; // Optional additional matrices (penalisation or
+                         // aumentation terms
     VECTOR CRHS;     // right hand side of the constraints (BU = CRHS)
     R eps;           // Parameter for the PENALIZED_CONSTRAINTS option
     size_type num_fem;
@@ -1574,6 +1576,13 @@ namespace getfem {
       return gmm::sub_vector(MS.state(), SUBM);
     }
 
+    template <class MAT1, class MAT2>
+    void set_optional_matrices(const MAT1 &K_, const MAT2 &M_) {
+      gmm::resize(optK, gmm::mat_nrows(K_), gmm::mat_ncols(K_));
+      gmm::resize(optM, gmm::mat_nrows(M_), gmm::mat_ncols(M_));
+      gmm::copy(K_, optK); gmm::copy(M_, optM);
+    }
+
     const local_C_MATRIX &get_B() { recompute_B(); return B; }
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
@@ -1591,7 +1600,12 @@ namespace getfem {
 	  gmm::copy(get_B(), gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(get_B()),
 		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+	  if (gmm::mat_nrows(optK) != 0)
+	    gmm::add(optK, gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBJ));
+	  if (gmm::mat_nrows(optM) != 0)
+	    gmm::copy(optM, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+	  else
+	    gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));     
 	}
 	break;
       case PENALIZED_CONSTRAINTS :
@@ -1630,10 +1644,16 @@ namespace getfem {
 	  gmm::mult(get_B(), gmm::sub_vector(MS.state(), SUBJ),
 		    gmm::scaled(CRHS, value_type(-1)),
 		    gmm::sub_vector(MS.residual(), SUBI));
+	  if (gmm::mat_nrows(optM) != 0)
+	    gmm::mult_add(optM, gmm::sub_vector(MS.state(), SUBI),
+			  gmm::sub_vector(MS.residual(), SUBI));
 	
 	  gmm::mult_add(gmm::transposed(get_B()),
 			gmm::sub_vector(MS.state(), SUBI),
 			gmm::sub_vector(MS.residual(), SUBJ));
+	  if (gmm::mat_nrows(optK) != 0)
+	    gmm::mult_add(optK, gmm::sub_vector(MS.state(), SUBJ),
+			  gmm::sub_vector(MS.residual(), SUBJ));
 	}
 	break;
       case PENALIZED_CONSTRAINTS :
