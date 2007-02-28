@@ -54,7 +54,7 @@ mxClassID2string(mxClassID id) {
 	return "OBJECT";
       else 
 #endif
-	return "unknown class...";
+	return "unknown class...did you use the correct mex version ?";
   }
 }
 
