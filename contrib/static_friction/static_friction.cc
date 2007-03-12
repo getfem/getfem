@@ -562,8 +562,126 @@ struct Coulomb_NewtonAS_struct
 };
 
 
+/**************************************************************************/
+/*  Stiffness matrix for Hansbo augmentation and linear elasticity.       */
+/**************************************************************************/
+/* attention, il manque le \gamma pour le moment.                         */
 
+namespace getfem {
 
+  template<class MAT, class VECT>
+  void asm_stiffness_matrix_for_hansbo_augmentation_on_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mf_data, const VECT &LAMBDA, const VECT &MU,
+   const mesh_region &rg) { // à simplifier, faire des réductions par termes
+    // "non linéaires".
+    MAT &RM = const_cast<MAT &>(RM_);
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
+    
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+    
+    generic_assembly
+      assem("lambda=data$1(#2); mu=data$2(#2);"
+	    "t=comp(Normal().vGrad(#1).Normal().Normal().vGrad(#1).Normal().Base(#2).Base(#2));"
+	    "M(#1,#1)+= sym(t(i,:,i,j,j,k,:,k,l,l,p,q).mu(p).mu(q)*4"
+	    "+ t(i,:,i,j,j,k,:,l,l,k,p,q).mu(p).lambda(q)*2"
+	    "+ t(i,:,j,j,i,k,:,k,l,l,p,q).lambda(p).mu(q)*2"
+	    "+ t(i,:,j,j,i,k,:,l,l,k,p,q).lambda(p).lambda(q))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mf_data);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+  
+  template<class MAT, class VECT>
+  void asm_mixed_matrix_for_hansbo_augmentation_on_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mf_mult, const mesh_fem &mf_data,
+   const VECT &LAMBDA, const VECT &MU,
+   const mesh_region &rg) {
+    MAT &RM = const_cast<MAT &>(RM_);
+    GMM_ASSERT1(mf_data.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
+    
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+    
+    generic_assembly
+      assem("lambda=data$1(#3); mu=data$2(#3);"
+	    "t=comp(Base(#2).Normal().vGrad(#1).Normal().Base(#3));"
+	    "M(#1,#1)+= t(:,i,:,i,j,j,p).mu(p)*2 + t(:,i,:,j,j,i,p).lambda(p)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mf_mult);
+    assem.push_mf(mf_data);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+  
+  // A mettre dans getfem_modeling.h (et à changer en additional matrices).
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_additional_matrix : public mdbrick_abstract<MODEL_STATE>  {
+  public :
+    
+    TYPEDEF_MODEL_STATE_TYPES;
+    
+  protected :
+    
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    T_MATRIX M;
+    size_type num_fem1, num_fem2;
+    
+    virtual void proper_update(void) { }
+    
+  public :
+    
+    template <typename MAT> void set_matrix(const MAT &MM)
+    { gmm::resize(M, gmm::mat_nrows(MM), gmm::mat_ncols(MM)); gmm::copy(MM, M); }
+    
+    const T_MATRIX &get_matrix() { return M; }
+    
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					   size_type) {
+      if (gmm::mat_nrows(M) > 0) {
+	const mesh_fem &mf_u1 = *(this->mesh_fems[num_fem1]);
+	size_type i1 = this->mesh_fem_positions[num_fem1], nbd1 = mf_u1.nb_dof();
+	const mesh_fem &mf_u2 = *(this->mesh_fems[num_fem2]);
+	size_type i2 = this->mesh_fem_positions[num_fem2], nbd2 = mf_u2.nb_dof();
+	gmm::sub_interval SUBI(i0+i1, nbd1);
+	gmm::sub_interval SUBJ(i0+i2, nbd2);
+	gmm::add(M, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+      }
+    }
+    
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
+				     size_type) {
+      if (gmm::mat_nrows(M) > 0) {
+	const mesh_fem &mf_u1 = *(this->mesh_fems[num_fem1]);
+	size_type i1 = this->mesh_fem_positions[num_fem1], nbd1 = mf_u1.nb_dof();
+	const mesh_fem &mf_u2 = *(this->mesh_fems[num_fem2]);
+	size_type i2 = this->mesh_fem_positions[num_fem2], nbd2 = mf_u2.nb_dof();
+	gmm::sub_interval SUBI(i0+i1, nbd1);
+	gmm::sub_interval SUBJ(i0+i2, nbd2);
+	gmm::mult(M, gmm::sub_vector(MS.state(), SUBJ),
+		  gmm::sub_vector(MS.residual(), SUBI));
+      }
+    }
+    
+    mdbrick_additional_matrix(mdbrick_abstract<MODEL_STATE> &problem,
+			      size_type numfem1 = 0, size_type numfem2 = 0)
+      : sub_problem(problem), num_fem1(numfem1), num_fem2(numfem2) { }
+    
+  };
+  
+}
 
 
 /**************************************************************************/
@@ -591,13 +709,16 @@ void friction_problem::solve(void) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u, lambda, mu);
 
+  getfem::mdbrick_additional_matrix<>
+    AUGMENTATION(ELAS);
+
   // Defining the volumic source term brick.
   plain_vector F(nb_dof_rhs * N);
   plain_vector f(N);
   if (Dirichlet == 2) f[0] = -rho*PG; else f[N-1] = -rho*PG;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(f,gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+  getfem::mdbrick_source_term<> VOL_F(AUGMENTATION, mf_rhs, F);
   
   // Defining the applied force source term brick
   gmm::clear(f);
@@ -639,42 +760,67 @@ void friction_problem::solve(void) {
   sparse_matrix BN(nbc, mf_u.nb_dof());
   sparse_matrix BT((N-1)*nbc, mf_u.nb_dof());
   plain_vector gap(nbc);
+  sparse_matrix AUG_M;
 
-  if (contact_condition == 0) {
-    size_type jj = 0;
-    for (dal::bv_visitor i(cn); !i.finished(); ++i)
-      if (i % N == 0) {
-	BN(jj, i+N-1) = -1.;
-	gap[jj] = mf_u.point_of_dof(i)[N-1];
-	if (noisy)
-	  cout << "mf_u.point_of_dof(i) = " << mf_u.point_of_dof(i) << endl;
-	for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
-	++jj;
+  switch (contact_condition) {
+  case 0:
+    {
+      size_type jj = 0;
+      for (dal::bv_visitor i(cn); !i.finished(); ++i)
+	if (i % N == 0) {
+	  BN(jj, i+N-1) = -1.;
+	  gap[jj] = mf_u.point_of_dof(i)[N-1];
+	  if (noisy)
+	    cout << "mf_u.point_of_dof(i) = " << mf_u.point_of_dof(i) << endl;
+	  for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
+	  ++jj;
+	}
+    }
+    break;
+  case 1: case 2:
+    {
+      sparse_matrix BB(mf_l.nb_dof(), mf_u.nb_dof());
+      std::vector<size_type> ind(nbc);
+      size_type jj = 0;
+      for (dal::bv_visitor i(cn); !i.finished(); ++i) 
+	if (i % N == 0) ind[jj++] = i;
+      gmm::sub_index SUBI(ind);
+      gmm::sub_interval SUBJ(0, mf_u.nb_dof());
+      getfem::asm_mass_matrix(BB, mim, mf_u, mf_l, CONTACT_BOUNDARY);
+      gmm::copy(gmm::sub_matrix(BB, SUBI, SUBJ), BN);
+      gmm::copy(gmm::sub_matrix(BB, SUBI, SUBJ),
+		gmm::sub_matrix(BT, gmm::sub_slice(0, nbc, N-1), SUBJ));
+      if (N > 2)
+	gmm::copy(gmm::sub_matrix(BB, SUBI, SUBJ),
+		  gmm::sub_matrix(BT, gmm::sub_slice(1, nbc, N-1), SUBJ));
+      if (contact_condition == 2) {
+	sparse_matrix AUG_MM(mf_l.nb_dof(), mf_l.nb_dof());
+	getfem::asm_mass_matrix(AUG_MM, mim, mf_l, mf_l, CONTACT_BOUNDARY);
+	gmm::resize(AUG_M, nbc, nbc);
+	gmm::copy(gmm::sub_matrix(AUG_MM, SUBI, SUBI), AUG_M);
+
+	sparse_matrix AUG_C(mf_u.nb_dof(), mf_u.nb_dof());
+	plain_vector LAMBDA(nb_dof_rhs, lambda), MU(nb_dof_rhs, mu);
+	getfem::asm_stiffness_matrix_for_hansbo_augmentation_on_linear_elasticity
+	  (AUG_C, mim, mf_u, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
+	AUGMENTATION.set_matrix(gmm::scaled(AUG_C, -1.0));
+	
+	sparse_matrix AUG_D(mf_l.nb_dof(), mf_u.nb_dof());
+	getfem::asm_mixed_matrix_for_hansbo_augmentation_on_linear_elasticity
+	  (AUG_D, mim, mf_u, mf_l, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
+	gmm::add(gmm::scaled(gmm::sub_matrix(AUG_D, SUBI, SUBJ), -1.0), BN);
+	
       }
-  } else {
-    sparse_matrix MM(mf_l.nb_dof(), mf_u.nb_dof());
-    std::vector<size_type> ind(nbc);
-    size_type jj = 0;
-    for (dal::bv_visitor i(cn); !i.finished(); ++i) 
-      if (i % N == 0) ind[jj++] = i;
-    cout << "ind = " << ind << endl;
-    cout << "nbdof = " << mf_l.nb_dof() << " : " << mf_u.nb_dof() << endl;
-    gmm::sub_index SUBI(ind);
-    gmm::sub_interval SUBJ(0, mf_u.nb_dof());
-    getfem::asm_mass_matrix(MM, mim, mf_u, mf_l, CONTACT_BOUNDARY);
-    gmm::copy(gmm::sub_matrix(MM, SUBI, SUBJ), BN);
-    gmm::copy(gmm::sub_matrix(MM, SUBI, SUBJ),
-	      gmm::sub_matrix(BT, gmm::sub_slice(0, nbc, N-1), SUBJ));
-    if (N > 2)
-      gmm::copy(gmm::sub_matrix(MM, SUBI, SUBJ),
-		gmm::sub_matrix(BT, gmm::sub_slice(1, nbc, N-1), SUBJ));
+    }
+    break;
+  default: GMM_ASSERT1(false, "Unknown contact condition option");
   }
-
 
 
   getfem::mdbrick_Coulomb_friction<>
     FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
   FRICTION.set_r(r);
+  if (contact_condition == 2) FRICTION.set_augmented_matrix(AUG_M);
   
   cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
   getfem::standard_model_state MS(FRICTION);

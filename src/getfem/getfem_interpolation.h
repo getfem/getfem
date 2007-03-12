@@ -195,8 +195,8 @@ namespace getfem {
      - V.size() >= (mf_target.nb_dof() / mf_target.get_qdim())
                    * mf_source.get_qdim()
 
-     If both mesh_fem shared the same mesh object, a fast interpolation will be
-     used.
+     If both mesh_fem shared the same mesh object, a fast interpolation
+     will be used.
   */
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
@@ -212,8 +212,6 @@ namespace getfem {
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		     MAT &M, bool extrapolation = false);
-
-
 
 
   /* --------------------------- Implementation ---------------------------*/
@@ -282,9 +280,10 @@ namespace getfem {
       fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
 				    size_type(-1));
       itdof = mf_target.ind_dof_of_element(cv).begin();
-      const mesh_fem::ind_dof_ct &idct
-	= mf_source.ind_dof_of_element(cv);
-      dof_source.assign(idct.begin(), idct.end());
+      if (version != 0) {
+	const mesh_fem::ind_dof_ct &idct = mf_source.ind_dof_of_element(cv);
+	dof_source.assign(idct.begin(), idct.end());
+      }
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
 	size_type dof_t = *itdof*qmult;
         if (dof_t_done.is_in(*itdof)) continue;
@@ -315,7 +314,6 @@ namespace getfem {
      interpolation of a solution on another mesh.
      - mti contains the points where to interpole.
      - the solution should be continuous.
-     - M should be a row major matrix.
    */
   template<typename VECTU, typename VECTV, typename MAT>
   void interpolation(const mesh_fem &mf_source,
@@ -327,7 +325,7 @@ namespace getfem {
     const mesh &msh(mf_source.linked_mesh());
     size_type qdim_s = mf_source.get_qdim();
     size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
-    
+
     mti.distribute(extrapolation);
     std::vector<size_type> itab;    
     base_matrix G;
@@ -347,7 +345,6 @@ namespace getfem {
       if (itab.size() == 0) continue;
 
       pfem pf_s = mf_source.fem_of_element(cv);
-      //cerr << "pf_s = "<< pf_s << ", mf_source.cvidx = " << mf_source.convex_index().is_in(cv) << " cv=" << cv << "\n";
       if (pf_s->need_G()) 
 	bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
 
@@ -357,13 +354,14 @@ namespace getfem {
         coeff.resize(qqdim);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(mf_source.nb_dof_of_element(cv));
-          gmm::copy(gmm::sub_vector(U,
-                    gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff[qq]);
+	  gmm::sub_index SUBI(mf_source.ind_dof_of_element(cv));
+          gmm::copy(gmm::sub_vector(U, SUBI), coeff[qq]);
         }
       }
-      const mesh_fem::ind_dof_ct &idct
-	= mf_source.ind_dof_of_element(cv);
-      dof_source.assign(idct.begin(), idct.end());
+      if (version != 0) {
+	const mesh_fem::ind_dof_ct &idct = mf_source.ind_dof_of_element(cv);
+	dof_source.assign(idct.begin(), idct.end());
+      }
       for (size_type i = 0; i < itab.size(); ++i) {
 	size_type dof_t = itab[i];
 	if (dof_done.is_in(dof_t)) {
@@ -373,13 +371,14 @@ namespace getfem {
 	  if (version == 0) {
             for (size_type qq=0; qq < qqdim; ++qq) {           
               pf_s->interpolation(ctx, coeff[qq], val, qdim_s);
-              for (size_type k=0; k < qdim_s; ++k) V[(pos + k)*qqdim+qq] = val[k];
+              for (size_type k=0; k < qdim_s; ++k)
+		V[(pos + k)*qqdim+qq] = val[k];
             }
 	    // Partie à arranger si on veut en option pouvoir interpoler
 	    // le gradient.
 	    //	  if (PVGRAD) {
 	    // base_matrix grad(mdim, qdim);
-	    // pf_s->interpolation_grad(ctx, coeff, gmm::transposed(grad), qdim);
+	    // pf_s->interpolation_grad(ctx,coeff,gmm::transposed(grad), qdim);
 	    // std::copy(grad.begin(), grad.end(), V.begin()+dof_t*qdim*mdim);
 	    // }
 	  }
@@ -390,20 +389,19 @@ namespace getfem {
               for (size_type j=0; j < gmm::mat_ncols(Mloc); ++j)
                 M(pos+k, dof_source[j]) = Mloc(k,j);
                 /* does not work with col matrices
-	      gmm::clear(gmm::mat_row(M, pos+k));
-	      gmm::copy(gmm::mat_row(Mloc, k),
-			gmm::sub_vector(gmm::mat_row(M, pos+k), isrc));
+		   gmm::clear(gmm::mat_row(M, pos+k));
+		   gmm::copy(gmm::mat_row(Mloc, k),
+		   gmm::sub_vector(gmm::mat_row(M, pos+k), isrc));
                 */
 	    }
 	  }
 	}
       }
     }
-    if (dof_done.card() != 0) {
-      cerr << "WARNING : in interpolation (different meshes),"
-	   << dof_done.card() << " dof of target mesh_fem have been missed\n";
-      cerr << "missing dofs : " << dof_done << endl;
-    }
+    if (dof_done.card() != 0)
+      GMM_WARNING2("WARNING : in interpolation (different meshes),"
+		   << dof_done.card() << " dof of target mesh_fem have "
+		   << " been missed\nmissing dofs : " << dof_done);
   }
 
   template<typename VECTU, typename VECTV>
@@ -421,7 +419,6 @@ namespace getfem {
      interpolation of a solution on another mesh.
      - mf_target must be of lagrange type.
      - the solution should be continuous..
-     - M should be a row major matrix.
    */
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
@@ -476,7 +473,9 @@ namespace getfem {
       interpolation(mf_source, mf_target, U, V, M, 1, extrapolation);
   }
 
+  //
   // Deprecated functions (for version 1.6 -> 1.7)
+  //
 
   template<typename VECTU, typename VECTV>
   void interpolation_solution(const mesh_fem &mf_source,
@@ -508,10 +507,8 @@ namespace getfem {
   template<class VECT>
   void interpolation_solution(const mesh_fem &mf_source,
 			      mesh_trans_inv &mti,
-			      const VECT &U, VECT &V) {
-    base_matrix M;
-    interpolation_solution(mf_source, mti, U, V, M, 0, false);
-  }
+			      const VECT &U, VECT &V)
+  { base_matrix M; interpolation_solution(mf_source, mti, U, V, M, 0, false); }
 
   template<typename VECTU, typename VECTV, typename MAT>
   void interpolation_solution_same_mesh(const mesh_fem &mf_source,
@@ -523,9 +520,8 @@ namespace getfem {
   void interpolation_solution_same_mesh(const mesh_fem &mf_source,
 					const mesh_fem &mf_target,
 					const VECTU &U, VECTV &V,
-					MAT &M, int version) {
-    interpolation_same_mesh(mf_source, mf_target, U, V, M, version);
-  }
+					MAT &M, int version)
+  { interpolation_same_mesh(mf_source, mf_target, U, V, M, version); }
 
 }  /* end of namespace getfem.                                             */
 

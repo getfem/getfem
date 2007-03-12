@@ -7,15 +7,13 @@ LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5;
 LAMBDA = 10;
 FRICTION_COEF = 0.4;    % Friction coefficient.
-% PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
-% PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
-PG=12000;
+PG=9810;                % gravitation constante (on earth) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
 N = 3;
 NX = 10;            	% space step.
 NOISY = 3;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-METHOD = 2;             % 0 = Newton.
+METHOD = 0;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
 			% 2 = Additive Schwarz Newton
 if (METHOD == 1)
@@ -38,6 +36,8 @@ DIRICHLET_RATIO = 0.002; % parametre pour la condition de Dirichlet
 CONTACT_CONDITION = 0;  % 0 = Condition almost conformal in u
 			% 1 = Condition almost conformal in forces on contact
 			%     boundary with FEM_TYPE_L for the multipliers
+			% 2 = option 1 with additional Hansbo augmentation
+			%     (only for the contact condition for the moment)
 
 R = 100.0;              % Augmentation parameter
 RESIDUAL = 1E-9;     	% residual for Newton.

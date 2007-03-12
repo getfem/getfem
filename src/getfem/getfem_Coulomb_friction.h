@@ -21,9 +21,10 @@
 //========================================================================
 
 /** @file getfem_Coulomb_friction.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-   @date July 6, 2004.
- *  @brief Unilateral contact and Coulomb friction condition brick.
+    @author Yves Renard <Yves.Renard@insa-lyon.fr>
+    @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+    @date July 6, 2004.
+    @brief Unilateral contact and Coulomb friction condition brick.
  */
 #ifndef GETFEM_COULOMB_FRICTION_H__
 #define GETFEM_COULOMB_FRICTION_H__
@@ -49,6 +50,8 @@ namespace getfem {
     size_type num_fem;
 
     T_MATRIX BN, BT;
+    typedef gmm::row_matrix<gmm::rsvector<value_type> > RT_MATRIX;
+    RT_MATRIX AUG_M; // For Hansbo augmentation.
     VECTOR gap, threshold, WT, WN, friction_coef, RLN, RLT;
     value_type r, alpha, beta;
     size_type d, nbc;
@@ -99,8 +102,11 @@ namespace getfem {
       gmm::add(gmm::sub_vector(MS.state(), SUBN), gmm::scaled(gap, r), RLN);
       gmm::mult_add(BN, gmm::scaled(WN, -r*alpha), RLN);
       gmm::mult_add(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU),
-				    -r*alpha),
-		    RLN);
+				    -r*alpha), RLN);
+      if (gmm::mat_nrows(AUG_M) > 0) {
+	gmm::mult_add(AUG_M, gmm::scaled(gmm::sub_vector(MS.state(), SUBN), r),
+		      RLN);
+      }
       if (!contact_only) {
 	gmm::mult(BT, gmm::scaled(WT, -r*beta),
 		    gmm::sub_vector(MS.state(), SUBT), RLT);
@@ -140,8 +146,15 @@ namespace getfem {
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	if (RLN[i] >= value_type(0)) {
 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-				     gmm::sub_interval(SUBN.first()+i,1), SUBU));
+				     gmm::sub_interval(SUBN.first()+i,1),
+				     SUBU));
 	  MS.tangent_matrix()(SUBN.first()+i, SUBN.first()+i)=-value_type(1)/r;
+	  if (gmm::mat_nrows(AUG_M) > 0) {
+	    gmm::add(gmm::sub_matrix(AUG_M, gmm::sub_interval(i,1),
+				     gmm::sub_interval(0,nb_contact_nodes())),
+		     gmm::sub_matrix(MS.tangent_matrix(),
+				   gmm::sub_interval(SUBN.first()+i,1), SUBN));
+	  }
 	}
       }
       
@@ -159,7 +172,7 @@ namespace getfem {
 	  if (!stationary)
 	    gmm::mult(gmm::scaled(pg, -beta), 
 		      gmm::sub_matrix(BT, SUBI,
-				      gmm::sub_interval(0, gmm::mat_ncols(BT))),
+				      gmm::sub_interval(0,gmm::mat_ncols(BT))),
 		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
 	  
 	  if (!Tresca_version) {
@@ -205,7 +218,7 @@ namespace getfem {
       }
     }
     
-    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,size_type) {
       precomp(MS, i0);
       value_type c1(1);
       
@@ -234,15 +247,15 @@ namespace getfem {
       }
       
       /* residual on LN */
-      gmm::add(gmm::scaled(gmm::sub_vector(MS.state(), SUBN), -c1),
-	       RLN, gmm::sub_vector(MS.residual(), SUBN));
-      gmm::scale(gmm::sub_vector(MS.residual(), SUBN), c1 / r);
+      gmm::add(gmm::scaled(gmm::sub_vector(MS.state(), SUBN), -c1/r),
+	       gmm::scaled(RLN, c1/r), gmm::sub_vector(MS.residual(), SUBN));
+      // gmm::scale(gmm::sub_vector(MS.residual(), SUBN), c1 / r);
 
       /* residual on LT */
       if (!contact_only) {
-	gmm::add(gmm::scaled(gmm::sub_vector(MS.state(),SUBT), -c1),
-		 RLT, gmm::sub_vector(MS.residual(), SUBT));
-	gmm::scale(gmm::sub_vector(MS.residual(), SUBT), c1 / r);
+	gmm::add(gmm::scaled(gmm::sub_vector(MS.state(),SUBT), -c1/r),
+		 gmm::scaled(RLT, c1/r), gmm::sub_vector(MS.residual(), SUBT));
+	// gmm::scale(gmm::sub_vector(MS.residual(), SUBT), c1 / r);
       }
     }
 
@@ -259,6 +272,10 @@ namespace getfem {
     void set_stationary(bool b) { stationary = b; }
     void set_beta(value_type a) { beta = a; }
     void set_alpha(value_type a) { alpha = a; }
+    template<typename MAT> void set_augmented_matrix(const MAT &M) {
+      gmm::resize(AUG_M, gmm::mat_nrows(M), gmm::mat_ncols(M));
+      gmm::copy(M, AUG_M);
+    }
 
     void set_r(value_type r_) { r = r_; }
     value_type get_r(void) const { return r; }
