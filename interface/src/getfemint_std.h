@@ -26,10 +26,6 @@
 #include <getfem/bgeot_config.h>
 #include <getfem/dal_backtrace.h>
 #include <gfi_array.h>
-#if ((!defined(GETFEM_MAJOR_VERSION) || !defined(GETFEM_MINOR_VERSION)) || \
-     GETFEM_MAJOR_VERSION != 2 || GETFEM_MINOR_VERSION != 0)
-#error "you are not using the right version of getfem++ !"
-#endif
 
 namespace getfemint
 {  
