@@ -59,7 +59,7 @@ namespace getfem {
     const mesh_fem *mf_u;
     gmm::sub_interval SUBU, SUBN, SUBT;
     
-    bool Tresca_version, symmetrized, contact_only, stationary;
+    bool Tresca_version, symmetrized, contact_only, really_stationary;
 
     template<typename VEC> static void ball_projection(const VEC &x,
 						       value_type radius) {
@@ -100,17 +100,18 @@ namespace getfem {
       SUBT = gmm::sub_interval(i0 + sub_problem.nb_dof() + gmm::mat_nrows(BN),
 			       gmm::mat_nrows(BT));
       gmm::add(gmm::sub_vector(MS.state(), SUBN), gmm::scaled(gap, r), RLN);
-      gmm::mult_add(BN, gmm::scaled(WN, -r*alpha), RLN);
+      if (gmm::vect_size(WN) > 0)
+	gmm::mult_add(BN, gmm::scaled(WN, -r*alpha), RLN);
       gmm::mult_add(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU),
 				    -r*alpha), RLN);
-      if (gmm::mat_nrows(AUG_M) > 0) {
-	gmm::mult_add(AUG_M, gmm::scaled(gmm::sub_vector(MS.state(), SUBN), r),
+      if (gmm::mat_nrows(AUG_M) > 0)
+	gmm::mult_add(AUG_M, gmm::scaled(gmm::sub_vector(MS.state(),SUBN),-r),
 		      RLN);
-      }
       if (!contact_only) {
-	gmm::mult(BT, gmm::scaled(WT, -r*beta),
-		    gmm::sub_vector(MS.state(), SUBT), RLT);
-	if (!stationary)
+	gmm::copy(gmm::sub_vector(MS.state(), SUBT), RLT);
+	if (gmm::vect_size(WT) > 0)
+	  gmm::mult_add(BT, gmm::scaled(WT, -r*beta), RLT);
+	if (!really_stationary)
 	  gmm::mult_add(BT, gmm::scaled(gmm::sub_vector(MS.state(), SUBU),
 					-r*beta), RLT);
       }
@@ -122,8 +123,8 @@ namespace getfem {
       gmm::resize(BN, nbc, mf_u->nb_dof());
       gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
       gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
-      gmm::resize(threshold, nbc); gmm::resize(WT, mf_u->nb_dof());
-      gmm::resize(WN, mf_u->nb_dof());
+      gmm::resize(threshold, nbc);
+      // gmm::resize(WT, mf_u->nb_dof()); gmm::resize(WN, mf_u->nb_dof());
       this->proper_additional_dof = gmm::mat_nrows(BN)
 	+ (contact_only ? 0 : gmm::mat_nrows(BT));
       this->proper_mixed_variables.clear();
@@ -143,18 +144,18 @@ namespace getfem {
       gmm::copy(gmm::scaled(BN, -alpha),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBN));
+      if (gmm::mat_nrows(AUG_M) > 0)
+	gmm::copy(gmm::scaled(AUG_M, -value_type(1)),
+		  gmm::sub_matrix(MS.tangent_matrix(), SUBN));
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	if (RLN[i] >= value_type(0)) {
 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
 				     gmm::sub_interval(SUBN.first()+i,1),
 				     SUBU));
+	  if (gmm::mat_nrows(AUG_M) > 0)
+	    gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
+				  gmm::sub_interval(SUBN.first()+i,1), SUBN));
 	  MS.tangent_matrix()(SUBN.first()+i, SUBN.first()+i)=-value_type(1)/r;
-	  if (gmm::mat_nrows(AUG_M) > 0) {
-	    gmm::add(gmm::sub_matrix(AUG_M, gmm::sub_interval(i,1),
-				     gmm::sub_interval(0,nb_contact_nodes())),
-		     gmm::sub_matrix(MS.tangent_matrix(),
-				   gmm::sub_interval(SUBN.first()+i,1), SUBN));
-	  }
 	}
       }
       
@@ -169,7 +170,7 @@ namespace getfem {
 	    : - (MS.state())[SUBN.first()+i] * friction_coef[i];
 	  
 	  ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
-	  if (!stationary)
+	  if (!really_stationary)
 	    gmm::mult(gmm::scaled(pg, -beta), 
 		      gmm::sub_matrix(BT, SUBI,
 				      gmm::sub_interval(0,gmm::mat_ncols(BT))),
@@ -269,7 +270,7 @@ namespace getfem {
       this->force_update();
     }
 
-    void set_stationary(bool b) { stationary = b; }
+    void set_stationary(bool b) { really_stationary = b; }
     void set_beta(value_type a) { beta = a; }
     void set_alpha(value_type a) { alpha = a; }
     template<typename MAT> void set_augmented_matrix(const MAT &M) {
@@ -279,8 +280,10 @@ namespace getfem {
 
     void set_r(value_type r_) { r = r_; }
     value_type get_r(void) const { return r; }
-    template <class VEC> void set_WT(const VEC &WT_) { gmm::copy(WT_, WT); }
-    template <class VEC> void set_WN(const VEC &WN_) { gmm::copy(WN_, WN); }
+    template <class VEC> void set_WT(const VEC &WT_)
+    { gmm::resize(WT, gmm::vect_size(WT_)); gmm::copy(WT_, WT); }
+    template <class VEC> void set_WN(const VEC &WN_)
+    { gmm::resize(WN, gmm::vect_size(WN_)); gmm::copy(WN_, WN); }
 
     VECTOR &get_gap(void) { return gap; }
     const VECTOR &get_gap(void) const { return gap; }
@@ -302,7 +305,7 @@ namespace getfem {
     (mdbrick_abstract<MODEL_STATE> &problem, const MAT &BN_, const VEC &gap_,
      scalar_type FC_, const MAT &BT_, size_type num_fem_=0)
       : sub_problem(problem), num_fem(num_fem_) {
-      contact_only = false; Tresca_version = symmetrized = stationary = false;
+      contact_only = Tresca_version = symmetrized = really_stationary = false;
       nbc = gmm::mat_nrows(BN_);
       init();
       gmm::copy(BN_, BN); gmm::copy(BT_, BT); gmm::copy(gap_, gap);
@@ -313,7 +316,8 @@ namespace getfem {
     template <class MAT, class VEC> mdbrick_Coulomb_friction
     (mdbrick_abstract<MODEL_STATE> &problem, const MAT &BN_, const VEC &gap_,
      size_type num_fem_=0) : sub_problem(problem), num_fem(num_fem_) {
-      contact_only = true; Tresca_version = symmetrized = stationary = false;
+      contact_only = true;
+      Tresca_version = symmetrized = really_stationary = false;
       nbc = gmm::mat_nrows(BN_);
       init();
       gmm::copy(BN_, BN); gmm::copy(gap_, gap);

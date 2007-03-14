@@ -512,7 +512,6 @@ int main(int argc, char *argv[]) {
       slicer2.push_back_action(sbuildl); // store it into sl0
       slicer2.exec(nrefine, mf.convex_index());
       
-      
       sl.write_to_file("xfem_dirichlet.sl", true);
       sl0.write_to_file("xfem_dirichlet.sl0", true);
       sll.write_to_file("xfem_dirichlet.sll", true);

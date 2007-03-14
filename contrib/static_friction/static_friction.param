@@ -6,46 +6,46 @@
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.4;    % Friction coefficient.
-PG=9810;                % gravitation constante (on earth) (mm/s^2).
+FRICTION_COEF = 0.0;    % Friction coefficient.
+% PG=9810;                % gravitation constante (on earth) (mm/s^2).
+PG = 100;
 RHO = 6e-6;     	% "realistic" density for steel
-N = 3;
-NX = 10;            	% space step.
+N = 2;
+NX = 40;            	% space step.
 NOISY = 3;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 METHOD = 0;             % 0 = Newton.
-			% 1 = genetic for 2D problem only.
-			% 2 = Additive Schwarz Newton
+			% 1 = Additive Schwarz Newton
 if (METHOD == 1)
-  POPULATION = 100;     % Parameter for genetic algorithm
-end;
-if (METHOD == 2) 
   SUBDOMSIZE = 0.6;
   OVERLAP = 0.4;
 end
 
 NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
 			% 1 = Non homogeneous Neumann Boudary on the top
-NEUMANN_INTENSITY = -0;
+NEUMANN_INTENSITY = 0;
 
 DIRICHLET = 1;          % 0 = no Dirichlet boundary
 			% 1 = Dirichlet boundary on the top
 			% 2 = Dirichlet boundary on the left
 
-DIRICHLET_RATIO = 0.002; % parametre pour la condition de Dirichlet
-CONTACT_CONDITION = 0;  % 0 = Condition almost conformal in u
+DIRICHLET_RATIO = -.1; % parametre pour la condition de Dirichlet
+CONTACT_CONDITION = 2;  % 0 = Condition almost conformal in u
 			% 1 = Condition almost conformal in forces on contact
 			%     boundary with FEM_TYPE_L for the multipliers
 			% 2 = option 1 with additional Hansbo augmentation
 			%     (only for the contact condition for the moment)
+if (CONTACT_CONDITION == 2)
+  GAMMA = 0.001;        % Augmentation parameter for Hansbo method.
+end
 
 R = 100.0;              % Augmentation parameter
-RESIDUAL = 1E-9;     	% residual for Newton.
+RESIDUAL = 3E-8;     	% residual for Newton.
 
 if (N == 2)
-  MESH_TYPE = 'GT_PK(2,1)';       % linear triangles
-  FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
-  FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM fo the multipliers
+  MESH_TYPE = 'GT_PK(2, 1)';      % linear triangles
+  FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
+  FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM for the multipliers
   if 0
     DATA_FEM_TYPE = 'FEM_PK(2,1)';% for non-Lagrangian main FEM
   end;
@@ -62,7 +62,7 @@ if (N == 3)
   INTEGRATION = 'IM_TETRAHEDRON(6)'; % Quadrature rule
 end;
 
-MESHNAME='splx:';
+% MESHNAME='splx:';
 
 % MESHNAME='meshes/donut_regulier_8_elements_288ddl.mesh';
 % MESHNAME='donut_regulier_64_elements_1920ddl.mesh';
@@ -79,15 +79,16 @@ MESHNAME='splx:';
 % MESHNAME='donut_regulier_800_elements.mesh';
 
 %%%%% disque en P2 %%%%%
-% MESHNAME='meshes/disc_P2_h11.mesh';
-% MESHNAME='meshes/disc_P2_h8.mesh';
-% MESHNAME='meshes/disc_P2_h6.mesh';
-% MESHNAME='meshes/disc_P2_h4.mesh';
-% MESHNAME='meshes/disc_P2_h2.mesh';
-% MESHNAME='meshes/disc_P2_h1.mesh';
-% MESHNAME='meshes/disc_P2_h0.5.mesh';
-% MESHNAME='meshes/disc_P2_h0.3.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h11.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h8.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h6.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h4.mesh';
+MESHNAME='../../../tests/meshes/disc_P2_h2.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h1.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h0.5.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h0.3.mesh';
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'static_friction';     % Root of data files.
+ML_EXPORT = 1; % export solution for Matlab
 DX_EXPORT = 0; % export solution to an OpenDX file ?

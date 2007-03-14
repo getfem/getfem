@@ -27,8 +27,8 @@
  */
 
 
-#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
-#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_model_solvers.h"
@@ -66,6 +66,7 @@ struct friction_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
+  scalar_type gamma;         /* augmentation parameter fof Hansbo method.    */
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   
@@ -74,7 +75,7 @@ struct friction_problem {
   scalar_type r;
   scalar_type overlap, subdomsize;
   scalar_type Dirichlet_ratio, Neumann_intensity;
-  bool dxexport;
+  bool dxexport, mlexport;
 
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -132,15 +133,16 @@ void friction_problem::init(void) {
   rho = PARAM.real_value("RHO", "Density");
   PG = PARAM.real_value("PG", "Gravity constant");
   friction_coef = PARAM.real_value("FRICTION_COEF", "Friction coefficient");
-
   Dirichlet = PARAM.int_value("DIRICHLET","Dirichlet condition or not");
   Dirichlet_ratio = PARAM.real_value("DIRICHLET_RATIO",
 				     "parameter for Dirichlet condition");
+  cout << "Dirichlet_ratio = " << Dirichlet_ratio << endl;
   Neumann = PARAM.int_value("NEUMANN","Neumann condition or not");
   Neumann_intensity = PARAM.real_value("NEUMANN_INTENSITY",
 				       "Intensity of the applied force");
-  dxexport = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format")
-	      != 0);
+  dxexport = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format") != 0);
+  mlexport = (PARAM.int_value("ML_EXPORT", "Exporting on Matlab format") != 0);
+
   r = PARAM.real_value("R", "augmentation parameter");
   method = PARAM.int_value("METHOD", "solve method");
   subdomsize = PARAM.real_value("SUBDOMSIZE");
@@ -149,6 +151,8 @@ void friction_problem::init(void) {
     population = PARAM.int_value("POPULATION", "genetic population");
   contact_condition = PARAM.int_value("CONTACT_CONDITION",
 				      "type of contact condition");
+  if (contact_condition == 2)
+    gamma = PARAM.real_value("GAMMA", "Hansbo augmentation parameter");
   noisy = PARAM.int_value("NOISY", "verbosity of iterative methods");
   mf_u.set_qdim(N);
   mf_l.set_qdim(N);
@@ -232,182 +236,6 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
 }
 
 /**************************************************************************/
-/*  Friction model brick for genetic algorithm (2D only).                 */
-/**************************************************************************/
-
-namespace getfem {
-
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_genetic_Coulomb_friction
-    : public mdbrick_abstract<MODEL_STATE>  {
-    
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    mdbrick_abstract<MODEL_STATE> &sub_problem;
-    size_type num_fem;
-
-    T_MATRIX BN, BT;
-    VECTOR gap, friction_coef;
-    std::vector<int> situation;
-    value_type r;
-    size_type d, nbc;
-
-    const mesh_fem *mf_u;
-    gmm::sub_interval SUBU, SUBN, SUBT;
-
-    void proper_update(void) {
-      mf_u = this->mesh_fems[num_fem];
-      d = mf_u->linked_mesh().dim();
-      gmm::resize(BN, nbc, mf_u->nb_dof());
-      gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
-      gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
-      this->proper_additional_dof = gmm::mat_nrows(BN) + gmm::mat_nrows(BT);
-      this->proper_mixed_variables.clear();
-      this->proper_mixed_variables.add(sub_problem.nb_dof(),
-				       this->proper_additional_dof);
-    }
-
-    void precomp(MODEL_STATE &, size_type i0) {
-      size_type i1 = this->mesh_fem_positions[num_fem];
-      SUBU = gmm::sub_interval(i0 + i1, mf_u->nb_dof());
-      SUBN = gmm::sub_interval(i0 + sub_problem.nb_dof(), gmm::mat_nrows(BN));
-      SUBT = gmm::sub_interval(i0 + sub_problem.nb_dof() + gmm::mat_nrows(BN),
-			       gmm::mat_nrows(BT));
-    }
-
-  public :
-
-    inline size_type nb_contact_nodes(void) const
-    { return gmm::mat_nrows(BN); }
-
-    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					   size_type) {
-      precomp(MS, i0);
-      gmm::copy(gmm::scaled(gmm::transposed(BN), value_type(-1)),
-		gmm::sub_matrix(MS.tangent_matrix(), SUBU, SUBN));
-      gmm::copy(gmm::scaled(gmm::transposed(BT), value_type(-1)), 
-		gmm::sub_matrix(MS.tangent_matrix(), SUBU, SUBT));
-      gmm::copy(gmm::scaled(BN, value_type(-1)),
-		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
-      gmm::copy(gmm::scaled(BT, value_type(-1)), 
-		gmm::sub_matrix(MS.tangent_matrix(), SUBT, SUBU));
-      gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-				 gmm::sub_interval(SUBN.first(),
-				 gmm::mat_nrows(BN) + gmm::mat_nrows(BT))));
-      for (size_type i=0; i < nb_contact_nodes(); ++i) {
-	switch (situation[i]) {
-	case 0 : // no contact
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-		     gmm::sub_interval(SUBN.first()+i,1), SUBU));
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-		     gmm::sub_interval(SUBT.first()+i,1), SUBU));
-	  MS.tangent_matrix()(SUBN.first()+i, SUBN.first()+i)=-value_type(1)/r;
-	  MS.tangent_matrix()(SUBT.first()+i, SUBT.first()+i)=-value_type(1)/r;
-	  break;
-	case 1 : // stick
-	  break;
-	case 2 : // slip direction 1
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-		     gmm::sub_interval(SUBT.first()+i,1), SUBU));
-	  MS.tangent_matrix()(SUBT.first()+i, SUBN.first()+i)
-	    = -friction_coef[i]/r;
-	  MS.tangent_matrix()(SUBT.first()+i, SUBT.first()+i)
-	    = -value_type(1)/r;
-	  break;
-	case 3 : // slip direction 2
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-		     gmm::sub_interval(SUBT.first()+i,1), SUBU));
-	  MS.tangent_matrix()(SUBT.first()+i, SUBN.first()+i)
-	    = -friction_coef[i]/r;
-	  MS.tangent_matrix()(SUBT.first()+i, SUBT.first()+i)
-	    = value_type(1)/r;
-	  break;
-	}
-      }
-    }
-    
-    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
-      precomp(MS, i0);
-      value_type c1(1);
-      gmm::clear(gmm::sub_vector(MS.residual(), SUBN));
-      gmm::clear(gmm::sub_vector(MS.residual(), SUBT));
-      gmm::mult(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -c1), gap,
-		gmm::sub_vector(MS.residual(), SUBN));
-      gmm::mult(BT, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -c1),
-		gmm::sub_vector(MS.residual(), SUBT));
-      gmm::mult_add(gmm::transposed(BN),
-		    gmm::scaled(gmm::sub_vector(MS.state(), SUBN),-c1),
-		    gmm::sub_vector(MS.residual(), SUBU));
-      gmm::mult_add(gmm::transposed(BT),
-		    gmm::scaled(gmm::sub_vector(MS.state(), SUBT),-c1),
-		    gmm::sub_vector(MS.residual(), SUBU));
-      for (size_type i=0; i < nb_contact_nodes(); ++i) {
-	switch(situation[i]) {
-	case 0 :
-	  MS.residual()[SUBN.first()+i] = -(MS.state()[SUBN.first()+i])/r;
-	  MS.residual()[SUBT.first()+i] = -(MS.state()[SUBT.first()+i])/r;
-	  break;
-	case 1 :
-	  break;
-	case 2 :
-	  MS.residual()[SUBT.first()+i] = - (MS.state()[SUBT.first()+i])/r
-	    - friction_coef[i]*(MS.state()[SUBN.first()+i])/r;
-	  break;
-	case 3 :
-	  MS.residual()[SUBT.first()+i] = + (MS.state()[SUBT.first()+i])/r
-	    - friction_coef[i]*(MS.state()[SUBN.first()+i])/r;
-	  break;
-	default : assert(false);
-	}
-      }
-    }
-
-    void init(void) {
-      this->add_sub_brick(sub_problem);
-      this->proper_is_linear_ = true; 
-      this->proper_is_coercive_ = false;
-      this->proper_is_symmetric_ =  false;
-      r = value_type(1);
-      this->update_from_context();
-    }
-
-    void change_situation(std::vector<int> &sit) 
-    { gmm::copy(sit, situation); }
-    void set_r(value_type r_) { r = r_; }
-    value_type get_r(void) const { return r; }
-
-    VECTOR &get_gap(void) { return gap; }
-    const VECTOR &get_gap(void) const { return gap; }
-
-    SUBVECTOR get_LN(MODEL_STATE &MS) {
-      SUBN = gmm::sub_interval(this->first_index() + sub_problem.nb_dof(),
-			       gmm::mat_nrows(BN));
-      return gmm::sub_vector(MS.state(), SUBN);
-    }
-
-    SUBVECTOR get_LT(MODEL_STATE &MS) {
-      SUBT = gmm::sub_interval(this->first_index() + sub_problem.nb_dof()
-			       + gmm::mat_nrows(BN),  gmm::mat_nrows(BT));
-      return gmm::sub_vector(MS.state(), SUBT);
-    }
-
-    template <class MAT, class VEC> mdbrick_genetic_Coulomb_friction
-    (mdbrick_abstract<MODEL_STATE> &problem, const MAT &BN_, const VEC &gap_,
-     scalar_type FC_, const MAT &BT_, size_type num_fem_=0)
-      : sub_problem(problem), num_fem(num_fem_) {
-      nbc = gmm::mat_nrows(BN_);
-      situation.resize(nbc);
-      init();
-      gmm::copy(BN_, BN); gmm::copy(BT_, BT); gmm::copy(gap_, gap);
-      std::fill(friction_coef.begin(), friction_coef.end(), FC_);
-    }
-
-  };
-}
-
-
-
-/**************************************************************************/
 /*  Function determining the situation of a solution.                     */
 /**************************************************************************/
 
@@ -415,19 +243,21 @@ template <class Matrix, class Vector1, class Vector2>
 void situation_of(const Vector1 &U, const Vector2 &gap,
 		  const Matrix &BN, const Matrix &BT,
 		  std::vector<int> &situation) {
-  size_type nbc = gmm::mat_nrows(BN);
-  plain_vector RLN(nbc), RLT(nbc);
+  size_type nbc = gmm::mat_nrows(BN), N1 = gmm::mat_nrows(BT) / nbc;
+  plain_vector RLN(nbc), RLT(nbc*N1);
   gmm::mult(BN, U, gmm::scaled(gap, -1.0), RLN);
+  
   gmm::mult(BT, U, RLT);
+  cout << "RLT = " << RLT << endl;
   for (size_type j = 0; j < nbc; ++j) {
     if (RLN[j] < -1E-10) situation[j] = 0;
-    else if (gmm::abs(RLT[j]) < 1E-10) situation[j] = 1;
-    else if (RLT[j] < 0) situation[j] = 2;
+    else if (gmm::vect_norm2
+	     (gmm::sub_vector(RLT, gmm::sub_interval(j*N1, N1))) < 1E-10)
+      situation[j] = 1;
+    else if (N1 > 1 || RLT[j] < 0) situation[j] = 2;
     else situation[j] = 3;
   }
 }
-
-
 
 /**************************************************************************/
 /*  Structure for the Newton Additive Schwarz.                            */
@@ -475,8 +305,8 @@ void build_vB(std::vector<sparse_matrix> &vB,
   
   //   if (usecoarse) {
   //     for (size_type i = 0; i < nbc_coarse; ++i) {
-  //       size_type j = gmm::vect_const_begin(gmm::mat_row(coulomb_coarse.get_BN(),
-  // 						       i)).index();
+  //       size_type j=gmm::vect_const_begin
+  //                  (gmm::mat_row(coulomb_coarse.get_BN(),i)).index();
   //       links_coarse[i] = j;
   //       for (size_type k = 0; k < N-1;  ++k)
   // 	links_coarse[nbc_coarse + i*(N-1) + k] = j+k-N+1;
@@ -502,7 +332,7 @@ void build_vB(std::vector<sparse_matrix> &vB,
   //     gmm::resize(vB[nsd], hsize, nb_dof_coarse+nbc_coarse*N);
   
   //     gmm::unsorted_sub_index si1(links), si2(links_coarse);
-  //     gmm::sub_interval si3(nb_dof, nbc*N), si4(nb_dof_coarse, nbc_coarse*N);
+  //     gmm::sub_interval si3(nb_dof, nbc*N), si4(nb_dof_coarse,nbc_coarse*N);
   
   //     sparse_matrix Maux(nbc*N, nbc_coarse*N);
   //     gmm::copy(gmm::sub_matrix(vB[nsd], si1, si2),Maux);
@@ -557,7 +387,7 @@ struct Coulomb_NewtonAS_struct
     coulomb->compute_residual(MS);
     gmm::copy(MS.residual(), f);
   }
-  Coulomb_NewtonAS_struct(getfem::mdbrick_abstract<> &C) : coulomb(&C), MS(C) {}
+  Coulomb_NewtonAS_struct(getfem::mdbrick_abstract<> &C) : coulomb(&C),MS(C) {}
   
 };
 
@@ -570,7 +400,7 @@ struct Coulomb_NewtonAS_struct
 namespace getfem {
 
   template<class MAT, class VECT>
-  void asm_stiffness_matrix_for_hansbo_augmentation_on_linear_elasticity
+  void asm_stiffmatrix_for_hansbo_augmentation_on_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mf_data, const VECT &LAMBDA, const VECT &MU,
    const mesh_region &rg) { // à simplifier, faire des réductions par termes
@@ -584,7 +414,8 @@ namespace getfem {
     
     generic_assembly
       assem("lambda=data$1(#2); mu=data$2(#2);"
-	    "t=comp(Normal().vGrad(#1).Normal().Normal().vGrad(#1).Normal().Base(#2).Base(#2));"
+	    "t=comp(Normal().vGrad(#1).Normal().Normal().vGrad(#1)"
+	    ".Normal().Base(#2).Base(#2));"
 	    "M(#1,#1)+= sym(t(i,:,i,j,j,k,:,k,l,l,p,q).mu(p).mu(q)*4"
 	    "+ t(i,:,i,j,j,k,:,l,l,k,p,q).mu(p).lambda(q)*2"
 	    "+ t(i,:,j,j,i,k,:,k,l,l,p,q).lambda(p).mu(q)*2"
@@ -601,23 +432,23 @@ namespace getfem {
   template<class MAT, class VECT>
   void asm_mixed_matrix_for_hansbo_augmentation_on_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
-   const mesh_fem &mf_mult, const mesh_fem &mf_data,
-   const VECT &LAMBDA, const VECT &MU,
-   const mesh_region &rg) {
+   const mesh_fem &mf_l, const mesh_fem &mf_data, const VECT &LAMBDA,
+   const VECT &MU, const mesh_region &rg) {
     MAT &RM = const_cast<MAT &>(RM_);
+
     GMM_ASSERT1(mf_data.get_qdim() == 1,
 		"invalid data mesh fem (Qdim=1 required)");
-    
     GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
     
     generic_assembly
       assem("lambda=data$1(#3); mu=data$2(#3);"
-	    "t=comp(Base(#2).Normal().vGrad(#1).Normal().Base(#3));"
-	    "M(#1,#1)+= t(:,i,:,i,j,j,p).mu(p)*2 + t(:,i,:,j,j,i,p).lambda(p)");
+	    "t=comp(vBase(#2).Normal().Normal().vGrad(#1).Normal().Base(#3));"
+	    "M(#2,#1)+= t(:,k,k,i,:,i,j,j,p).mu(p)*2"
+	    "+ t(:,k,k,i,:,j,j,i,p).lambda(p)");
     assem.push_mi(mim);
     assem.push_mf(mf);
-    assem.push_mf(mf_mult);
+    assem.push_mf(mf_l);
     assem.push_mf(mf_data);
     assem.push_data(LAMBDA);
     assem.push_data(MU);
@@ -644,7 +475,7 @@ namespace getfem {
   public :
     
     template <typename MAT> void set_matrix(const MAT &MM)
-    { gmm::resize(M, gmm::mat_nrows(MM), gmm::mat_ncols(MM)); gmm::copy(MM, M); }
+    { gmm::resize(M, gmm::mat_nrows(MM),gmm::mat_ncols(MM)); gmm::copy(MM,M); }
     
     const T_MATRIX &get_matrix() { return M; }
     
@@ -652,9 +483,9 @@ namespace getfem {
 					   size_type) {
       if (gmm::mat_nrows(M) > 0) {
 	const mesh_fem &mf_u1 = *(this->mesh_fems[num_fem1]);
-	size_type i1 = this->mesh_fem_positions[num_fem1], nbd1 = mf_u1.nb_dof();
+	size_type i1 = this->mesh_fem_positions[num_fem1], nbd1=mf_u1.nb_dof();
 	const mesh_fem &mf_u2 = *(this->mesh_fems[num_fem2]);
-	size_type i2 = this->mesh_fem_positions[num_fem2], nbd2 = mf_u2.nb_dof();
+	size_type i2 = this->mesh_fem_positions[num_fem2], nbd2=mf_u2.nb_dof();
 	gmm::sub_interval SUBI(i0+i1, nbd1);
 	gmm::sub_interval SUBJ(i0+i2, nbd2);
 	gmm::add(M, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
@@ -665,19 +496,22 @@ namespace getfem {
 				     size_type) {
       if (gmm::mat_nrows(M) > 0) {
 	const mesh_fem &mf_u1 = *(this->mesh_fems[num_fem1]);
-	size_type i1 = this->mesh_fem_positions[num_fem1], nbd1 = mf_u1.nb_dof();
+	size_type i1 = this->mesh_fem_positions[num_fem1], nbd1=mf_u1.nb_dof();
 	const mesh_fem &mf_u2 = *(this->mesh_fems[num_fem2]);
-	size_type i2 = this->mesh_fem_positions[num_fem2], nbd2 = mf_u2.nb_dof();
+	size_type i2 = this->mesh_fem_positions[num_fem2], nbd2=mf_u2.nb_dof();
 	gmm::sub_interval SUBI(i0+i1, nbd1);
 	gmm::sub_interval SUBJ(i0+i2, nbd2);
-	gmm::mult(M, gmm::sub_vector(MS.state(), SUBJ),
-		  gmm::sub_vector(MS.residual(), SUBI));
+	gmm::mult_add(M, gmm::sub_vector(MS.state(), SUBJ),
+		      gmm::sub_vector(MS.residual(), SUBI));
       }
     }
     
     mdbrick_additional_matrix(mdbrick_abstract<MODEL_STATE> &problem,
 			      size_type numfem1 = 0, size_type numfem2 = 0)
-      : sub_problem(problem), num_fem1(numfem1), num_fem2(numfem2) { }
+      : sub_problem(problem), num_fem1(numfem1), num_fem2(numfem2) {
+      this->add_sub_brick(sub_problem);
+      this->force_update();
+    }
     
   };
   
@@ -688,29 +522,15 @@ namespace getfem {
 /*  Model.                                                                */
 /**************************************************************************/
 
-struct fellow {
-  scalar_type residual;
-  std::vector<int> *situation_;
-  std::vector<int> &situation(void) { return *situation_; }
-  const std::vector<int> &situation(void) const { return *situation_; }
-  fellow(void) : situation_(0) {}
-};
-
-bool  operator < (const fellow &a, const fellow &b)
-{ return (a.residual < b.residual); }
-
-
 void friction_problem::solve(void) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   N = mesh.dim();
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, lambda, mu);
+  getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u, lambda,mu);
 
-  getfem::mdbrick_additional_matrix<>
-    AUGMENTATION(ELAS);
+  getfem::mdbrick_additional_matrix<> AUGMENTATION(ELAS);
 
   // Defining the volumic source term brick.
   plain_vector F(nb_dof_rhs * N);
@@ -731,7 +551,8 @@ void friction_problem::solve(void) {
   // Dirichlet condition brick.
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
+    F[i*N+N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
+  cout << "F = " << F << endl;
   getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F, DIRICHLET_BOUNDARY);
   DIRICHLET.rhs().set(mf_rhs, F);
 //   if (method == 2)
@@ -770,8 +591,6 @@ void friction_problem::solve(void) {
 	if (i % N == 0) {
 	  BN(jj, i+N-1) = -1.;
 	  gap[jj] = mf_u.point_of_dof(i)[N-1];
-	  if (noisy)
-	    cout << "mf_u.point_of_dof(i) = " << mf_u.point_of_dof(i) << endl;
 	  for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
 	  ++jj;
 	}
@@ -780,42 +599,55 @@ void friction_problem::solve(void) {
   case 1: case 2:
     {
       sparse_matrix BB(mf_l.nb_dof(), mf_u.nb_dof());
-      std::vector<size_type> ind(nbc);
-      size_type jj = 0;
+      std::vector<std::vector<size_type> > ind(N);
       for (dal::bv_visitor i(cn); !i.finished(); ++i) 
-	if (i % N == 0) ind[jj++] = i;
-      gmm::sub_index SUBI(ind);
+	ind[i%N].push_back(i);
+      GMM_ASSERT1(ind[0].size() == nbc, "Internal error");
+      gmm::sub_index SUBI(ind[N-1]);
       gmm::sub_interval SUBJ(0, mf_u.nb_dof());
-      getfem::asm_mass_matrix(BB, mim, mf_u, mf_l, CONTACT_BOUNDARY);
-      gmm::copy(gmm::sub_matrix(BB, SUBI, SUBJ), BN);
-      gmm::copy(gmm::sub_matrix(BB, SUBI, SUBJ),
-		gmm::sub_matrix(BT, gmm::sub_slice(0, nbc, N-1), SUBJ));
-      if (N > 2)
-	gmm::copy(gmm::sub_matrix(BB, SUBI, SUBJ),
-		  gmm::sub_matrix(BT, gmm::sub_slice(1, nbc, N-1), SUBJ));
+      getfem::asm_mass_matrix(BB, mim, mf_l, mf_u, CONTACT_BOUNDARY);
+      gmm::copy(gmm::scaled(gmm::sub_matrix(BB, SUBI, SUBJ), -1.0), BN);
+      
+      for (size_type k = 0; k < N-1; ++k) {
+	gmm::sub_index SUBIk(ind[k]);
+	gmm::copy(gmm::sub_matrix(BB, SUBIk, SUBJ),
+		  gmm::sub_matrix(BT, gmm::sub_slice(k, nbc, N-1), SUBJ));
+      }
+
+      plain_vector pregap(mf_u.nb_dof());
+      for (size_type i=0; i < mf_u.nb_dof(); ++i)
+        if (i % N == N-1) pregap[i] = -mf_u.point_of_dof(i)[N-1];
+      gmm::mult(BN, pregap, gap);
+      // gmm::clear(gap);
+
       if (contact_condition == 2) {
 	sparse_matrix AUG_MM(mf_l.nb_dof(), mf_l.nb_dof());
 	getfem::asm_mass_matrix(AUG_MM, mim, mf_l, mf_l, CONTACT_BOUNDARY);
+	gmm::scale(AUG_MM, gamma);
 	gmm::resize(AUG_M, nbc, nbc);
 	gmm::copy(gmm::sub_matrix(AUG_MM, SUBI, SUBI), AUG_M);
 
 	sparse_matrix AUG_C(mf_u.nb_dof(), mf_u.nb_dof());
 	plain_vector LAMBDA(nb_dof_rhs, lambda), MU(nb_dof_rhs, mu);
-	getfem::asm_stiffness_matrix_for_hansbo_augmentation_on_linear_elasticity
+	getfem::asm_stiffmatrix_for_hansbo_augmentation_on_linear_elasticity
 	  (AUG_C, mim, mf_u, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
+	gmm::scale(AUG_C, gamma);
 	AUGMENTATION.set_matrix(gmm::scaled(AUG_C, -1.0));
 	
 	sparse_matrix AUG_D(mf_l.nb_dof(), mf_u.nb_dof());
 	getfem::asm_mixed_matrix_for_hansbo_augmentation_on_linear_elasticity
 	  (AUG_D, mim, mf_u, mf_l, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
-	gmm::add(gmm::scaled(gmm::sub_matrix(AUG_D, SUBI, SUBJ), -1.0), BN);
-	
+	gmm::scale(AUG_D, gamma);
+	gmm::add(gmm::scaled(gmm::sub_matrix(AUG_D, SUBI, SUBJ), 1.0), BN);
+	/* 1.0 ou -1.0 ? */
       }
+
     }
     break;
   default: GMM_ASSERT1(false, "Unknown contact condition option");
   }
 
+  cout << "gap = " << gap << endl;
 
   getfem::mdbrick_Coulomb_friction<>
     FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
@@ -825,110 +657,21 @@ void friction_problem::solve(void) {
   cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
   getfem::standard_model_state MS(FRICTION);
  
-
-  std::vector<scalar_type> U(mf_u.nb_dof());
-
   switch (method) {
-  case 0 : {
+  case 0 :
+    {
+      MS.adapt_sizes(FRICTION);
       gmm::iteration iter(residual, noisy, 40000);
-      getfem::standard_solve(MS, FRICTION, iter);
-      gmm::copy(ELAS.get_solution(MS), U);
-    }
-    break;
-  case 1 : {
-      assert(N==2);
-      std::vector<fellow> people(population);
       
-      // Specific brick for the linear system
-      getfem::mdbrick_genetic_Coulomb_friction<>
-	FRICTION2(DIRICHLET, BN, gap, friction_coef, BT);
-      FRICTION2.set_r(r);
-      getfem::standard_model_state MS2(FRICTION2);
-      FRICTION.compute_tangent_matrix(MS);
-      size_type first_computed = 0, nbiter = 0;
-
-      for (;;) {
-
-	if (nbiter == 0) {
-	  // initial random population
-	  for (size_type i = 0; i < population; ++i) {
-	    people[i].situation_ = new std::vector<int>(nbc);
-	    for (size_type j = 0; j < nbc; ++j)
-	      people[i].situation()[j] = (rand() & 3);
-	    // cout << "fellow " << i <<" : " << people[i].situation() << endl;
-	  }
-	  first_computed = 0;
-	}
-
-	// compute residual for the new fellows
-	for (size_type i = first_computed; i < population; ++i) {
-	  cout << "computing solution " << i << " on " << population << endl;
-	  FRICTION2.change_situation(people[i].situation());
-	  gmm::iteration iter(residual, noisy, 40000);
-	  getfem::standard_solve(MS2, FRICTION2, iter);
-	  gmm::copy(MS2.state(), MS.state());
-	  FRICTION.compute_residual(MS);
-	  MS.compute_reduced_system();
-	  people[i].residual = MS.reduced_residual_norm();
-	}
-	
-	// elimination of the 10% worst
-	first_computed = (population * 90) / 100;
-	std::sort(people.begin(), people.end());
-	for (size_type i = 0; i < population; ++i) {
-	  cout << "fellow " << i << " : ";
-	  for (size_type j = 0; j < nbc; ++j) cout << people[i].situation()[j];
-	  cout << " residual : " << people[i].residual << endl;
-	}
-
-	// new generation
-	for (size_type i = first_computed; i < population; ++i) {
-	  int n = (rand() & 255);
-	  if (n < 230) { // Evolution by mixing
-	    size_type a = (rand() % first_computed);
-	    size_type b = (rand() % first_computed);
-	    while (a == b) b = (rand() % first_computed);
-	    // cout << "Mixte between " << a << " and " << b << endl;
-	    for (size_type j = 0; j < nbc; ++j)
-	      people[i].situation()[j] = (rand() & 1) ?
-		people[a].situation()[j] :
-		people[b].situation()[j];
- 	    if (n < 80) // Mutations
- 	      for (size_type j = 0; j < nbc; ++j) {
-		// cout << "mutation" << endl;
-		if ((rand() & 15) == 0) people[i].situation()[j] = (rand()&3);
-	      }
-	  } else { // Evolution by Newton iterations
-	    cout << "Newton\n";
-	    size_type a = (rand() % first_computed);
-	    FRICTION2.change_situation(people[a].situation());
-	    gmm::iteration iter(residual, noisy, 40000);
-	    getfem::standard_solve(MS2, FRICTION2, iter);  
-	    gmm::copy(MS2.state(), MS.state());
-	    gmm::iteration iterbis(residual, noisy, 2);
-	    getfem::standard_solve(MS, FRICTION, iterbis);
-	    situation_of(gmm::sub_vector(MS.state(),
-					 gmm::sub_interval(0, mf_u.nb_dof())),
-			 gap, BN, BT, people[i].situation());
-	  }
-	  
-	}
-	
-	++nbiter;
-	// if (nbiter == 200) nbiter = 0;
-	cout << "iter = " << nbiter << endl;
-	// getchar();
-	
-	
-      }
-
-      // free memory
-      for (size_type i = 0; i < population; ++i)
-	delete people[i].situation_;
-
+      gmm::default_newton_line_search
+	ls(size_type(-1), 5.0/3.0, 1.0/1000.0, 3.0/5.0);
+      getfem::model_problem<getfem::standard_model_state> mdpb(MS,FRICTION,ls);
+      getfem::classical_Newton(mdpb, iter,
+			       *getfem::default_linear_solver(FRICTION));
     }
     break;
-  case 2 : {
+  case 1 :
+    {
       gmm::iteration iter(residual, noisy);
       iter.set_maxiter(1000000);
       Coulomb_NewtonAS_struct NS(FRICTION);
@@ -942,6 +685,9 @@ void friction_problem::solve(void) {
     break;
   }
 
+  std::vector<scalar_type> U(mf_u.nb_dof());
+  gmm::copy(ELAS.get_solution(MS), U);
+  
   std::vector<int> situation1(nbc);
   situation_of(gmm::sub_vector(MS.state(),
 			       gmm::sub_interval(0, mf_u.nb_dof())),
@@ -964,7 +710,33 @@ void friction_problem::solve(void) {
       file2 << LT1[i*(N-1)] << endl;
     }
     file1.close(); file2.close();
-  } 
+  }
+
+  if (mlexport) {
+    getfem::mesh_fem mf_printed_vm(mesh);
+    mf_printed_vm.set_finite_element(mesh.convex_index(),
+				     getfem::classical_discontinuous_fem
+				     (mesh.trans_of_convex(0), 3));
+    mf_u.write_to_file(datafilename + ".meshfem", true);
+    mf_printed_vm.write_to_file(datafilename + ".meshfem_vm", true);
+    gmm::vecsave(datafilename + ".U", U);
+    
+    plain_vector VM(mf_printed_vm.nb_dof());
+    getfem::interpolation_von_mises(mf_u, mf_printed_vm, U, VM);
+    gmm::vecsave(datafilename + ".VM", VM);
+
+    
+    getfem::slicer_boundary a0(mf_l.linked_mesh(), CONTACT_BOUNDARY);
+    getfem::stored_mesh_slice sl;
+    getfem::slicer_build_stored_mesh_slice a1(sl);
+    getfem::mesh_slicer slicer(mf_l.linked_mesh());
+    slicer.push_back_action(a0);
+    slicer.push_back_action(a1);
+    sl.write_to_file(datafilename + ".sl", true);
+    plain_vector LLN(sl.nb_points())
+      sl.interpolate(mf_l, LN1, LLN); // pb il faut remmetre LN dans un grand vecteur ...
+    gmm::vecsave(datafilename + ".LN", LLN);
+  }
   
   if (dxexport) {
     getfem::dx_export exp(datafilename + ".dx", false);
@@ -994,15 +766,12 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  gmm::set_warning_level(2);
+  // gmm::set_warning_level(2);
 
-  try {    
-    friction_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    p.solve();
-  }
-  GMM_STANDARD_CATCH_ERROR;
-
+  friction_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  p.solve();
+  
   return 0; 
 }
