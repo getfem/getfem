@@ -180,13 +180,12 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
     const VECT1 &U;
     size_type N;
     base_matrix gradU;
-    bgeot::base_tensor tt;
     bgeot::base_vector coeff;
     bgeot::multi_index sizes_;
   public:
     level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
       : mf(mf_), U(U_), N(mf_.linked_mesh().dim()), gradU(1, N)
-    { sizes_.resize(1); sizes_[0] = N; tt.adjust_sizes(sizes_); }
+    { sizes_.resize(1); sizes_[0] = N; }
     const bgeot::multi_index &sizes() const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {

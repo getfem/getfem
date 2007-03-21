@@ -305,7 +305,7 @@ namespace getfem {
 # ifdef GMM_USES_MUMPS
     max3d = 100000;
 # endif
-    if ((ndof<200000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
+    if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
 # ifdef GMM_USES_MUMPS
       p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
 # else
@@ -390,9 +390,13 @@ namespace getfem {
 
     while (!iter.finished(pb.residual_norm())) {
       gmm::iteration iter_linsolv = iter_linsolv0;
+      if (iter.get_noisy() > 1)
+	cout << "starting computing tangent matrix" << endl;
       pb.compute_tangent_matrix();
       gmm::clear(dr);
       gmm::copy(gmm::scaled(pb.residual(), T(-1)), b);
+      if (iter.get_noisy() > 1)
+	cout << "starting solving linear system" << endl;
       linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
       R alpha = pb.line_search(dr, iter); // it is assumed that the line
       // search execute a pb.compute_residual();

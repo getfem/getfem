@@ -47,9 +47,12 @@ using bgeot::base_matrix; /* small dense matrix. */
 /* definition of some matrix/vector types. 
  * default types of getfem_model_solvers.h
  */
-typedef getfem::modeling_standard_sparse_vector sparse_vector;
-typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
+typedef gmm::wsvector<scalar_type> sparse_vector;
+typedef gmm::row_matrix<sparse_vector> sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
+
+typedef getfem::model_state<sparse_matrix, sparse_matrix,
+			    plain_vector> MODEL_STATE;
 
 /*
  * structure for the friction problem
@@ -63,6 +66,11 @@ struct friction_problem {
   getfem::mesh_fem mf_l;     /* mesh_fem for the multipliers.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */
+
+  getfem::mesh mesh_refu;    /* mesh used for a reference solution.          */
+  getfem::mesh_im  mim_refu; /* integration method for error computation.    */
+  getfem::mesh_fem mf_refu;  /* mesh_fem used for a reference solution.      */
+
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
@@ -72,20 +80,95 @@ struct friction_problem {
   
   size_type N, noisy, method, population, Dirichlet, Neumann;
   size_type contact_condition;
+  std::vector<size_type> blocked_dofs;
+  sparse_matrix Brigid;
+
   scalar_type r;
   scalar_type overlap, subdomsize;
   scalar_type Dirichlet_ratio, Neumann_intensity;
-  bool dxexport, mlexport;
+  bool dxexport, mlexport, compare_with_ref;
 
-  std::string datafilename;
+  plain_vector UREF;
+
+  std::string datafilename, reffilename;
   bgeot::md_param PARAM;
 
   void solve(void);
   void init(void);
   friction_problem(void)
     : mim(mesh), mf_u(mesh), mf_l(mesh), mf_rhs(mesh),
-      mf_vm(mesh) {}
+      mf_vm(mesh), mim_refu(mesh_refu), mf_refu(mesh_refu) {}
 };
+
+
+namespace getfem {
+
+  class position_vector : public getfem::nonlinear_elem_term {
+    unsigned N;
+    bgeot::base_vector coeff;
+    bgeot::multi_index sizes_;
+  public:
+    position_vector(unsigned NN) : N(NN) { sizes_.resize(1); sizes_[0] = N; }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t)
+    { for (size_type i = 0; i < N; ++i) t[i] = ctx.xreal()[i]; }
+  };
+  
+  // Compute the matrix for the momentums
+  template<class MAT>
+  void asm_momentum_matrix
+  (const MAT &B_, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    // "non linéaires".
+    MAT &B = const_cast<MAT &>(B_);
+
+    position_vector nterm(mf.linked_mesh().dim());
+    unsigned line = 0;
+
+    std::vector<scalar_type> V(mf.nb_dof());
+
+    for (unsigned k = 1; k <= mf.get_qdim(); ++k) {
+      std::stringstream msg;
+      msg << "V(#1)+=comp(vBase(#1))(:," << k << ");";
+      generic_assembly assem(msg.str());
+      assem.push_mi(mim);
+      assem.push_mf(mf);
+      assem.push_vec(V);
+      assem.assembly(rg);
+      gmm::copy(gmm::row_vector(V),
+		gmm::sub_matrix(B, gmm::sub_interval(line++, 1),
+				gmm::sub_interval(0, gmm::mat_ncols(B))));
+    }
+    
+    for (unsigned k1 = mf.get_qdim(); k1 >= 1; --k1)
+      for (unsigned k2 = mf.get_qdim(); k2 >= k1+1; --k2) {
+	std::stringstream msg;
+	msg << "t=comp(vBase(#1).NonLin(#1));"
+	    << "V(#1) += t(:," << k1 << "," << k2 << ")"
+	    << "- t(:," << k2 << "," << k1 << ");";
+	generic_assembly assem(msg.str());
+	assem.push_mi(mim);
+	assem.push_mf(mf);
+	assem.push_vec(V);
+	assem.push_nonlinear_term(&nterm);
+	assem.assembly(rg);
+	gmm::copy(gmm::row_vector(V),
+		  gmm::sub_matrix(B, gmm::sub_interval(line++, 1),
+				  gmm::sub_interval(0, gmm::mat_ncols(B))));
+      } 
+    
+  }
+
+
+
+
+
+
+
+
+}
+
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
@@ -147,8 +230,6 @@ void friction_problem::init(void) {
   method = PARAM.int_value("METHOD", "solve method");
   subdomsize = PARAM.real_value("SUBDOMSIZE");
   overlap = PARAM.real_value("OVERLAP");
-  if (method == 1) 
-    population = PARAM.int_value("POPULATION", "genetic population");
   contact_condition = PARAM.int_value("CONTACT_CONDITION",
 				      "type of contact condition");
   if (contact_condition == 2)
@@ -175,13 +256,15 @@ void friction_problem::init(void) {
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
-  } else {
+  }
+  else
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
-  }
 
   /* set boundary conditions */
-  base_node center(0.,0.,20.);
+  base_node Pmin(N), Pmax(N);
+  mesh.bounding_box(Pmin, Pmax);
+  base_node center = (Pmin + Pmax )/2.0;
   std::cout << "Reperage des bord de contact et Dirichlet\n";  
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
@@ -200,6 +283,67 @@ void friction_problem::init(void) {
 	  mesh.region(NEUMANN_BOUNDARY).add(cv, f);
       }
     }
+  }
+  if (Dirichlet == 3) { // kill rigid motions.
+    
+    if (N == 3) {
+      
+      gmm::row_matrix<gmm::wsvector<scalar_type> >
+	BBR(N+(N*(N-1))/2, mf_u.nb_dof()), BR(N-1+(N*(N-1))/2, mf_u.nb_dof());
+      getfem::asm_momentum_matrix(BBR, mim, mf_u);
+      gmm::sub_interval SUBN(0, N-1), SUBU(0, mf_u.nb_dof());
+      gmm::copy(gmm::sub_matrix(BBR, SUBN, SUBU),
+		gmm::sub_matrix(BR, SUBN, SUBU));
+      gmm::copy(gmm::sub_matrix(BBR, gmm::sub_interval(N, (N*(N-1))/2), SUBU),
+		gmm::sub_matrix(BR, gmm::sub_interval(N-1, (N*(N-1))/2), SUBU));
+      gmm::resize(Brigid, N-1+(N*(N-1))/2, mf_u.nb_dof());
+      gmm::copy(BR, Brigid);
+    }
+    else {
+      
+      base_node top = center; top[N-1] = Pmax[N-1];
+      
+      for (size_type k = 0; k < N-1; ++k) {
+	scalar_type dist_to_center = gmm::vect_dist2(Pmin, center);
+	scalar_type dist_to_top = gmm::vect_dist2(Pmin, top);
+	size_type indmid = size_type(-1), indtop = size_type(-1);
+	for (size_type i = 0; i < mf_u.nb_dof(); i+=N) {
+	  
+	  if (gmm::abs(mf_u.point_of_dof(i)[k]) < 1e-7) {
+	    if (gmm::vect_dist2(mf_u.point_of_dof(i), center)<dist_to_center) {
+	      indmid = i;
+	      dist_to_center = gmm::vect_dist2(mf_u.point_of_dof(i), center); 
+	    }
+	    if (gmm::vect_dist2(mf_u.point_of_dof(i), top) < dist_to_top) {
+	      indtop = i;
+	      dist_to_top = gmm::vect_dist2(mf_u.point_of_dof(i), top); 
+	    }
+	  }
+	}
+	GMM_ASSERT1(indmid != size_type(-1) && indtop != size_type(-1),
+		    "No dof found to kill rigid motions : " << indmid
+		    << " : " << indtop);
+	cout << "Blocking dof " << indmid+k << " : "
+	     << mf_u.point_of_dof(indmid+k) << endl;
+	cout << "Blocking dof " << indtop+k << " : "
+	     << mf_u.point_of_dof(indtop+k) << endl;
+	blocked_dofs.push_back(indmid+k); 
+	blocked_dofs.push_back(indtop+k);
+      }
+    }
+  }
+
+  // loading an eventual reference solution
+
+  reffilename = PARAM.string_value("REFSOLFILENAME");
+  compare_with_ref = (reffilename.size() > 0);
+  if (compare_with_ref) {
+    cout << "name = " << reffilename << endl;
+    mesh_refu.read_from_file(reffilename + ".meshfem");
+    mf_refu.read_from_file(reffilename + ".meshfem");
+    mim_refu.set_integration_method(mesh_refu.convex_index(), ppi);
+    gmm::resize(UREF, mf_refu.nb_dof());
+    gmm::vecload(reffilename + ".U", UREF);
   }
 }
 
@@ -248,7 +392,6 @@ void situation_of(const Vector1 &U, const Vector2 &gap,
   gmm::mult(BN, U, gmm::scaled(gap, -1.0), RLN);
   
   gmm::mult(BT, U, RLT);
-  cout << "RLT = " << RLT << endl;
   for (size_type j = 0; j < nbc; ++j) {
     if (RLN[j] < -1E-10) situation[j] = 0;
     else if (gmm::vect_norm2
@@ -354,8 +497,8 @@ struct Coulomb_NewtonAS_struct
   : public gmm::NewtonAS_struct<sparse_matrix, sparse_matrix> {
   
   std::vector<sparse_matrix> vB;
-  getfem::mdbrick_abstract<> *coulomb;
-  getfem::standard_model_state MS;
+  getfem::mdbrick_abstract<MODEL_STATE> *coulomb;
+  MODEL_STATE MS;
 
   size_type size(void) { return coulomb->nb_dof(); }
   const std::vector<sparse_matrix> &get_vB() { return vB; }
@@ -387,7 +530,7 @@ struct Coulomb_NewtonAS_struct
     coulomb->compute_residual(MS);
     gmm::copy(MS.residual(), f);
   }
-  Coulomb_NewtonAS_struct(getfem::mdbrick_abstract<> &C) : coulomb(&C),MS(C) {}
+  Coulomb_NewtonAS_struct(getfem::mdbrick_abstract<MODEL_STATE> &C) : coulomb(&C),MS(C) {}
   
 };
 
@@ -528,9 +671,9 @@ void friction_problem::solve(void) {
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u, lambda,mu);
+  getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE> ELAS(mim, mf_u, lambda,mu);
 
-  getfem::mdbrick_additional_matrix<> AUGMENTATION(ELAS);
+  getfem::mdbrick_additional_matrix<MODEL_STATE> AUGMENTATION(ELAS);
 
   // Defining the volumic source term brick.
   plain_vector F(nb_dof_rhs * N);
@@ -538,36 +681,48 @@ void friction_problem::solve(void) {
   if (Dirichlet == 2) f[0] = -rho*PG; else f[N-1] = -rho*PG;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(f,gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_source_term<> VOL_F(AUGMENTATION, mf_rhs, F);
+  getfem::mdbrick_source_term<MODEL_STATE> VOL_F(AUGMENTATION, mf_rhs, F);
   
   // Defining the applied force source term brick
   gmm::clear(f);
   if (Neumann == 1) f[N-1] = Neumann_intensity;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(f,gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_source_term<> NEUMANN_F(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY);
+  getfem::mdbrick_source_term<MODEL_STATE> NEUMANN_F(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY);
  
 
   // Dirichlet condition brick.
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[i*N+N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
-  cout << "F = " << F << endl;
-  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN_F, DIRICHLET_BOUNDARY);
+
+  getfem::mdbrick_constraint<MODEL_STATE> RIGID_MOTIONS(NEUMANN_F);
+  if (Dirichlet == 3) {
+    if (blocked_dofs.size() > 0) {
+      sparse_matrix CB(blocked_dofs.size(), mf_u.nb_dof());
+      for (size_type i = 0; i < blocked_dofs.size(); ++i)
+	CB(i, blocked_dofs[i]) = scalar_type(1);
+      RIGID_MOTIONS.set_constraints(CB, plain_vector(blocked_dofs.size()));
+    }
+    else if (gmm::mat_nrows(Brigid) > 0)
+      RIGID_MOTIONS.set_constraints(Brigid,
+				    plain_vector(gmm::mat_nrows(Brigid)));
+  }
+
+  getfem::mdbrick_Dirichlet<MODEL_STATE> DIRICHLET(RIGID_MOTIONS, DIRICHLET_BOUNDARY);
   DIRICHLET.rhs().set(mf_rhs, F);
 //   if (method == 2)
 //     DIRICHLET.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
 //   else
 //     DIRICHLET.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
+
     
   // contact condition for Lagrange elements
   dal::bit_vector cn, dn;
   size_type nbc;
   if (contact_condition == 0) {
-    cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
-    cout << "cn = " << cn << endl;
-    dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
-    cout << "dn = " << dn << endl;
+    cn = mf_u.dof_on_set(CONTACT_BOUNDARY); // cout << "cn = " << cn << endl;
+    dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY); // cout << "dn = " << dn << endl;
   }
   else {
     cn = mf_l.dof_on_set(CONTACT_BOUNDARY);
@@ -639,7 +794,6 @@ void friction_problem::solve(void) {
 	  (AUG_D, mim, mf_u, mf_l, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
 	gmm::scale(AUG_D, gamma);
 	gmm::add(gmm::scaled(gmm::sub_matrix(AUG_D, SUBI, SUBJ), 1.0), BN);
-	/* 1.0 ou -1.0 ? */
       }
 
     }
@@ -647,25 +801,24 @@ void friction_problem::solve(void) {
   default: GMM_ASSERT1(false, "Unknown contact condition option");
   }
 
-  cout << "gap = " << gap << endl;
-
-  getfem::mdbrick_Coulomb_friction<>
+  getfem::mdbrick_Coulomb_friction<MODEL_STATE>
     FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
   FRICTION.set_r(r);
   if (contact_condition == 2) FRICTION.set_augmented_matrix(AUG_M);
   
   cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
-  getfem::standard_model_state MS(FRICTION);
+  MODEL_STATE MS(FRICTION);
  
   switch (method) {
   case 0 :
     {
       MS.adapt_sizes(FRICTION);
+      if (Dirichlet == 3) gmm::fill(MS.state(), scalar_type(-1));
       gmm::iteration iter(residual, noisy, 40000);
       
       gmm::default_newton_line_search
 	ls(size_type(-1), 5.0/3.0, 1.0/1000.0, 3.0/5.0);
-      getfem::model_problem<getfem::standard_model_state> mdpb(MS,FRICTION,ls);
+      getfem::model_problem<MODEL_STATE> mdpb(MS,FRICTION,ls);
       getfem::classical_Newton(mdpb, iter,
 			       *getfem::default_linear_solver(FRICTION));
     }
@@ -698,19 +851,34 @@ void friction_problem::solve(void) {
   cout << "Final residual : " <<  MS.reduced_residual_norm() << endl;
   cout << "Norm of solution : " << gmm::vect_norm2(U) << endl;
 
-  {
-    plain_vector LN1(nbc), LT1(nbc*(N-1));
-    gmm::copy(FRICTION.get_LN(MS), LN1);
-    cout << "contact stress : " << LN1 << endl;
-    gmm::copy(FRICTION.get_LT(MS), LT1);
-    cout << "friction stress : " << LT1 << endl;
-    std::ofstream file1("normal_stress"), file2("tangential_stress");
-    for (size_type i = 0; i < nbc; ++i) {
-      file1 << LN1[i] << endl;
-      file2 << LT1[i*(N-1)] << endl;
-    }
-    file1.close(); file2.close();
+  
+  plain_vector LN1(nbc), LT1(nbc*(N-1));
+  gmm::copy(FRICTION.get_LN(MS), LN1);
+  cout << "contact stress : " << LN1 << endl;
+  gmm::copy(FRICTION.get_LT(MS), LT1);
+  cout << "friction stress : " << LT1 << endl;
+  std::ofstream file1("normal_stress"), file2("tangential_stress");
+  for (size_type i = 0; i < nbc; ++i) {
+    file1 << LN1[i] << endl;
+    file2 << LT1[i*(N-1)] << endl;
   }
+  file1.close(); file2.close();
+
+  if (compare_with_ref) { // error with reference solution
+    plain_vector UR(mf_refu.nb_dof());
+    getfem::interpolation(mf_u, mf_refu, U, UR, true);
+    gmm::add(gmm::scaled(UREF, -1.0), UR);
+
+    scalar_type l2 = getfem::asm_L2_norm(mim_refu, mf_refu, UR);
+    scalar_type h1 = getfem::asm_H1_norm(mim_refu, mf_refu, UR);
+    
+    cout << "L2 error = " << l2 << endl
+	 << "H1 error = " << h1 << endl
+	 << "Linfty error = " << gmm::vect_norminf(UR) << endl;
+
+    gmm::vecsave(reffilename + "_error.U", UR);
+  }
+
 
   if (mlexport) {
     getfem::mesh_fem mf_printed_vm(mesh);
@@ -725,16 +893,23 @@ void friction_problem::solve(void) {
     getfem::interpolation_von_mises(mf_u, mf_printed_vm, U, VM);
     gmm::vecsave(datafilename + ".VM", VM);
 
-    
-    getfem::slicer_boundary a0(mf_l.linked_mesh(), CONTACT_BOUNDARY);
+    getfem::slicer_boundary a0(mf_l.linked_mesh()); //,
+    //			       getfem::slicer_none::static_instance(),
+    //		       CONTACT_BOUNDARY);
     getfem::stored_mesh_slice sl;
     getfem::slicer_build_stored_mesh_slice a1(sl);
     getfem::mesh_slicer slicer(mf_l.linked_mesh());
     slicer.push_back_action(a0);
     slicer.push_back_action(a1);
+    unsigned nrefine = 4;
+    slicer.exec(nrefine, mf_l.convex_index());
     sl.write_to_file(datafilename + ".sl", true);
-    plain_vector LLN(sl.nb_points())
-      sl.interpolate(mf_l, LN1, LLN); // pb il faut remmetre LN dans un grand vecteur ...
+    plain_vector BIGLN(mf_l.nb_dof());
+    size_type j = 0;
+    for (dal::bv_visitor i(cn); !i.finished(); ++i)
+      if (i % N == N-1) BIGLN[i] = LN1[j++];
+    plain_vector LLN(sl.nb_points()*N);
+    sl.interpolate(mf_l, BIGLN, LLN);
     gmm::vecsave(datafilename + ".LN", LLN);
   }
   

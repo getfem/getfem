@@ -1109,7 +1109,14 @@ namespace gmm {
 
   template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
     std::ofstream f(fname.c_str()); f.precision(16);
-    for (size_type i=0; i < V.size(); ++i) f << V[i] << "\n"; 
+    for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n"; 
+  } 
+
+  template<typename VEC> static void vecload(std::string fname,
+					     const VEC& V_) {
+    VEC &V(const_cast<VEC&>(V_));
+    std::ifstream f(fname.c_str());
+    for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i]; 
   }
 }
 

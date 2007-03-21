@@ -141,31 +141,50 @@ namespace getfem {
 					   size_type) {
       precomp(MS, i0);
       
-      gmm::copy(gmm::scaled(BN, -alpha),
-		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
-      gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBN));
+      RT_MATRIX BBN(gmm::mat_nrows(BN), gmm::mat_ncols(BN));
+      RT_MATRIX MM(nb_contact_nodes(), nb_contact_nodes());
+      gmm::copy(gmm::scaled(BN, -alpha), BBN);
       if (gmm::mat_nrows(AUG_M) > 0)
-	gmm::copy(gmm::scaled(AUG_M, -value_type(1)),
-		  gmm::sub_matrix(MS.tangent_matrix(), SUBN));
+	gmm::copy(gmm::scaled(AUG_M, -value_type(1)), MM);
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	if (RLN[i] >= value_type(0)) {
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-				     gmm::sub_interval(SUBN.first()+i,1),
-				     SUBU));
-	  if (gmm::mat_nrows(AUG_M) > 0)
-	    gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
-				  gmm::sub_interval(SUBN.first()+i,1), SUBN));
-	  MS.tangent_matrix()(SUBN.first()+i, SUBN.first()+i)=-value_type(1)/r;
+	  gmm::clear(BBN[i]);
+	  if (gmm::mat_nrows(AUG_M) > 0) gmm::clear(MM[i]);
+	  MM(i, i) = -value_type(1)/r;
 	}
       }
+      gmm::copy(BBN, gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
+      gmm::copy(MM, gmm::sub_matrix(MS.tangent_matrix(), SUBN));
+
+//       gmm::copy(gmm::scaled(BN, -alpha),
+// 		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
+//       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBN));
+//       if (gmm::mat_nrows(AUG_M) > 0)
+// 	gmm::copy(gmm::scaled(AUG_M, -value_type(1)),
+// 		  gmm::sub_matrix(MS.tangent_matrix(), SUBN));
+//       for (size_type i=0; i < nb_contact_nodes(); ++i) {
+// 	if (RLN[i] >= value_type(0)) {
+// 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
+// 				     gmm::sub_interval(SUBN.first()+i,1),
+// 				     SUBU));
+// 	  if (gmm::mat_nrows(AUG_M) > 0)
+// 	    gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
+// 				  gmm::sub_interval(SUBN.first()+i,1), SUBN));
+// 	  MS.tangent_matrix()(SUBN.first()+i, SUBN.first()+i)=-value_type(1)/r;
+// 	}
+//       }
       
       if (!contact_only) {
 	base_matrix pg(d-1, d-1);
 	base_vector vg(d-1);
+
+	RT_MATRIX BBT(gmm::mat_nrows(BT), gmm::mat_ncols(BT));
+	gmm::dense_matrix<value_type> BTi(d-1,  gmm::mat_ncols(BT));
 	
 	for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	  gmm::sub_interval SUBI(i*(d-1), d-1);
 	  gmm::sub_interval SUBJ(SUBT.first()+i*(d-1),(d-1));
+	  gmm::sub_interval SUBJJ(i*(d-1),(d-1));
 	  value_type th = Tresca_version ? threshold[i]
 	    : - (MS.state())[SUBN.first()+i] * friction_coef[i];
 	  
@@ -174,8 +193,9 @@ namespace getfem {
 	    gmm::mult(gmm::scaled(pg, -beta), 
 		      gmm::sub_matrix(BT, SUBI,
 				      gmm::sub_interval(0,gmm::mat_ncols(BT))),
-		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
-	  
+		      BTi);
+	  gmm::copy(BTi, gmm::sub_matrix(BBT, SUBJJ, SUBU));
+
 	  if (!Tresca_version) {
 	    ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
 	    for (size_type k = 0; k < d-1; ++k)
@@ -186,7 +206,40 @@ namespace getfem {
 	  gmm::copy(gmm::scaled(pg,value_type(1)/r), 
 		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ));
 	}
+	T_MATRIX BBBT(gmm::mat_nrows(BT), gmm::mat_ncols(BT));
+	gmm::copy(BBT, BBBT);
+	gmm::copy(BBBT, gmm::sub_matrix(MS.tangent_matrix(), SUBT, SUBU));
       }
+
+//       if (!contact_only) {
+// 	base_matrix pg(d-1, d-1);
+// 	base_vector vg(d-1);
+	
+// 	for (size_type i=0; i < nb_contact_nodes(); ++i) {
+// 	  gmm::sub_interval SUBI(i*(d-1), d-1);
+// 	  gmm::sub_interval SUBJ(SUBT.first()+i*(d-1),(d-1));
+// 	  value_type th = Tresca_version ? threshold[i]
+// 	    : - (MS.state())[SUBN.first()+i] * friction_coef[i];
+	  
+// 	  ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
+// 	  if (!really_stationary)
+// 	    gmm::mult(gmm::scaled(pg, -beta), 
+// 		      gmm::sub_matrix(BT, SUBI,
+// 				      gmm::sub_interval(0,gmm::mat_ncols(BT))),
+// 		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
+	  
+// 	  if (!Tresca_version) {
+// 	    ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
+// 	    for (size_type k = 0; k < d-1; ++k)
+// 	      MS.tangent_matrix()(SUBT.first()+i*(d-1)+k, SUBN.first()+i)
+// 		= - friction_coef[i] * vg[k] / r;
+// 	  }
+// 	  for (size_type j = 0; j < d-1; ++j) pg(j,j) -= value_type(1);
+// 	  gmm::copy(gmm::scaled(pg,value_type(1)/r), 
+// 		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ));
+// 	}
+//       }
+
       
       if (symmetrized) {
 	T_MATRIX tmp(mf_u->nb_dof(), mf_u->nb_dof());
