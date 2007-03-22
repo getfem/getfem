@@ -142,6 +142,7 @@ int main(int argc, char **argv) {
     getfem::mesher_setminus M1(U2, C10);
     getfem::mesher_setminus D19(M1, P4);
 
+    getfem::mesher_ball D22(base_node(0.,0.,20.),20.);
 
 
 
@@ -207,6 +208,7 @@ int main(int argc, char **argv) {
 	  dist = new getfem::mesher_setminus(*dist, *d);
 	}
       } break;
+    case 22: dist = &D22; break; /* ball for test of radius 20. */
     }
     getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
     cerr << "You can view the result with\n mayavi -d totoq.vtk -m BandedSurfaceMap\n";

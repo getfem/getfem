@@ -207,6 +207,16 @@ void friction_problem::init(void) {
   else getfem::import_mesh(meshname, mesh);
   mesh.optimize_structure();
 
+  double h = 0;
+  for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
+    h += mesh.convex_radius_estimate(i);
+  h /= mesh.convex_index().card();
+  cout << "mean h = " << h << endl;
+  
+//   for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
+//     cout << "quality of " << i << " : " << mesh.convex_quality_estimate(i)
+// 	 << endl;
+
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL");
   if (residual == 0.) residual = 1e-10;
@@ -819,8 +829,17 @@ void friction_problem::solve(void) {
       gmm::default_newton_line_search
 	ls(size_type(-1), 5.0/3.0, 1.0/1000.0, 3.0/5.0);
       getfem::model_problem<MODEL_STATE> mdpb(MS,FRICTION,ls);
-      getfem::classical_Newton(mdpb, iter,
-			       *getfem::default_linear_solver(FRICTION));
+      
+      int l = gmm::get_warning_level();
+      gmm::set_warning_level(1);
+      getfem::useful_types<MODEL_STATE>::plsolver_type plinsolv
+	= getfem::default_linear_solver(FRICTION);
+      if (N == 3)
+	plinsolv.reset
+	  (new getfem::linear_solver_gmres_preconditioned_ilu<sparse_matrix,
+	   plain_vector>());
+      getfem::classical_Newton(mdpb, iter, *plinsolv);
+      gmm::set_warning_level(l);
     }
     break;
   case 1 :
@@ -941,7 +960,7 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  // gmm::set_warning_level(2);
+  // gmm::set_warning_level(1);
 
   friction_problem p;
   p.PARAM.read_command_line(argc, argv);

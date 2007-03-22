@@ -89,7 +89,7 @@ namespace getfem {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
 		     gmm::iteration &iter)  const {
       gmm::ilu_precond<MAT> P(M);
-      gmm::gmres(M, x, b, P, 50, iter);
+      gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
@@ -100,7 +100,7 @@ namespace getfem {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
 		     gmm::iteration &iter)  const {
       gmm::ilut_precond<MAT> P(M, 10, 1E-7);
-      gmm::gmres(M, x, b, P, 50, iter);
+      gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
@@ -111,7 +111,7 @@ namespace getfem {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
 		     gmm::iteration &iter)  const {
       gmm::ilutp_precond<MAT> P(M, 10, 1E-7);
-      gmm::gmres(M, x, b, P, 50, iter);
+      gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };

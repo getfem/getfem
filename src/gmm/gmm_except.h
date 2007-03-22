@@ -125,6 +125,7 @@ namespace gmm {
   };
 
   inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
+  inline int  get_warning_level(void)  { return warning_level::level(-2); }
 
   // This allow not too compile some Warnings
 #ifndef GMM_WARNING_LEVEL
