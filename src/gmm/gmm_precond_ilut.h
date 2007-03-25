@@ -60,8 +60,9 @@ namespace gmm {
   class ilut_precond  {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
-    typedef rsvector<value_type> svector;
-    typedef row_matrix<svector> LU_Matrix;
+    typedef wsvector<value_type> _wsvector;
+    typedef rsvector<value_type> _rsvector;
+    typedef row_matrix<_rsvector> LU_Matrix;
 
     bool invert;
     LU_Matrix L, U;
@@ -99,7 +100,8 @@ namespace gmm {
     size_type n = mat_nrows(A);
     if (n == 0) return;
     std::vector<T> indiag(n);
-    svector w(mat_ncols(A)), wL(mat_ncols(A)), wU(mat_ncols(A));
+    _wsvector w(mat_ncols(A));
+    _rsvector ww(mat_ncols(A)), wL(mat_ncols(A)), wU(mat_ncols(A));
     T tmp;
     gmm::clear(U); gmm::clear(L);
     R prec = default_tol(R()); 
@@ -111,18 +113,19 @@ namespace gmm {
 
       size_type nL = 0, nU = 1;
       if (is_sparse(A)) {
-	typename linalg_traits<svector>::iterator it = vect_begin(w),
+	typename linalg_traits<_wsvector>::iterator it = vect_begin(w),
 	  ite = vect_end(w);
 	for (; it != ite; ++it) if (i > it.index()) nL++;
 	nU = w.nb_stored() - nL;
+	nL = std::min(size_type(1000), nL); // to avoid problems with eventual plain lines
+	nU = std::min(size_type(1000), nU);
       }
 
-      for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
-	typename svector::iterator wk = w.begin() + krow;
-	if ((k = wk->c) >= i) break;
-	tmp = (wk->e) * indiag[k];
-	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
+      for (typename _wsvector::iterator wk = w.begin(); wk != w.end() && wk->first < i; ) {
+	size_type k = wk->first;
+	tmp = (wk->second) * indiag[k];
+	if (gmm::abs(tmp) < eps * norm_row) { ++wk; w.erase(k); } 
+	else { wk->second += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); ++wk; }
       }
       tmp = w[i];
 
@@ -134,12 +137,13 @@ namespace gmm {
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = T(1) / tmp;
       gmm::clean(w, eps * norm_row);
-      std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
-      typename svector::const_iterator wit = w.begin(), wite = w.end();
+      gmm::copy(w, ww);
+      std::sort(ww.begin(), ww.end(), elt_rsvector_value_less_<T>());
+      typename _rsvector::const_iterator wit = ww.begin(), wite = ww.end();
       size_type nnl = 0, nnu = 0;
       
       wL.base_resize(nL+K); wU.base_resize(nU+K+1);
-      typename svector::iterator witL = wL.begin(), witU = wU.begin();
+      typename _rsvector::iterator witL = wL.begin(), witU = wU.begin();
       for (; wit != wite; ++wit) 
 	if (wit->c < i) { if (nnl < nL+K) { *witL++ = *wit; ++nnl; } }
 	else { if (nnu < nU+K  || wit->c == i) { *witU++ = *wit; ++nnu; } }
@@ -148,11 +152,6 @@ namespace gmm {
       std::sort(wU.begin(), wU.end());
       gmm::copy(wL, L.row(i));
       gmm::copy(wU, U.row(i));
-      
-//       wit = w.begin(); nnl = 0; nnu = 0;
-//       for (; wit != wite; ++wit) // copy to be optimized ...
-//   	if (wit->c < i) { if (nnl < nL+K) { L(i, wit->c) = wit->e; ++nnl;} }
-//   	else if (nnu < nU+K || wit->c == i) { U(i, wit->c) = wit->e; ++nnu; }
     }
 
   }
