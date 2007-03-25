@@ -12,7 +12,7 @@ RHO = 6e-6;     	% "realistic" density for steel
                         % (in kg/mm^3, i.e. 6000kg/m^3)
 N = 2;
 NX = 40;            	% space step.
-NOISY = 2;
+NOISY = 3;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 METHOD = 0;             % 0 = Newton.
 			% 1 = Additive Schwarz Newton
@@ -46,8 +46,8 @@ RESIDUAL = 1E-9;     	% residual for Newton.
 
 if (N == 2)
   MESH_TYPE = 'GT_PK(2, 1)';      % linear triangles
-  FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
-  FEM_TYPE_L = 'FEM_PK(2, 2)';    % FEM for the multipliers
+  FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
+  FEM_TYPE_L = 'FEM_PK(2, 0)';    % FEM for the multipliers
   if 0
     DATA_FEM_TYPE = 'FEM_PK(2,1)';% for non-Lagrangian main FEM
   end;
@@ -81,14 +81,15 @@ end;
 % MESHNAME='../../../tests/meshes/donut_regulier_800_elements.mesh';
 
 %%%%% disque en P2 %%%%%
-% MESHNAME='../../../tests/meshes/disc_P2_h11.mesh';
-% MESHNAME='../../../tests/meshes/disc_P2_h8.mesh';
-% MESHNAME='../../../tests/meshes/disc_P2_h6.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h5.5.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h4.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h3.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h2.mesh';
-MESHNAME='../../../tests/meshes/disc_P2_h1.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h1.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h0.5.mesh';
-% MESHNAME='../../../tests/meshes/disc_P2_h0.3.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h0.25.mesh';
+MESHNAME='../../../tests/meshes/disc_P2_h0.15.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h0.075.mesh';
 
 %%%%%   saving parameters                                             %%%%%
 REFSOLFILENAME = 'reference_sol2d';

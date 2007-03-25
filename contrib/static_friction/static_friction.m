@@ -111,47 +111,47 @@ elseif (option == 3)
   % axis([-0.5000    0.5000   -0.5000    0.5000 -.5 .5]);
   % % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
 else
-  H    = [0.3    0.5    1      2      4      6      8     11];
+  H    = [0.075  0.15    0.25   0.5    1      2      3      4     5.5];
   % P1/P1 Non Augmenté
-  L2_1 = [0.02   0.04   0.089  0.30   1.68   3.75   9.09];
-  H1_1 = [0.087  0.12   0.27   0.63   2.04   4.19   9.49];
+  L2_1 = [0.0020 0.0082  0.039  0.086  0.30   1.68   3.75   9.09];
+  H1_1 = [0.042  0.072   0.136  0.284  0.64   2.04   4.20   9.50];
   % P1/P1 augmenté
-  L2_2 = [0.013  0.034  0.089  0.30   1.68   3.75   9.11];
-  H1_2 = [0.086  0.12   0.27   0.63   2.04   4.20   9.51];
+  L2_2 = [0.0021 0.0079  0.039  0.087  0.31   1.68   3.75   9.09];
+  H1_2 = [0.042  0.072   0.136  0.285  0.64   2.04   4.20   9.50];
   % P1/P0 augmenté
-  L2_3 = [0.011  0.020  0.095  0.45   2.54   7.28];
-  H1_3 = [0.086  0.11   0.27   0.71   2.79   7.55];
+  L2_3 = [0.0027 0.010   0.021  0.092  0.45   2.54   7.28];
+  H1_3 = [0.0418 0.072   0.132  0.29   0.71   2.79   7.55];
   % P1/P2 augmenté
-  L2_4 = [0.0077 0.021  0.085  0.45   1.40   3.75   8.30   36.8];
-  H1_4 = [0.085  0.11   0.27   0.71   1.78   4.15   8.73   36.9];
+  L2_4 = [0.003  0.0090  0.022  0.087  0.45   1.40   3.75   8.30   36.8];
+  H1_4 = [0.0419 0.072   0.13   0.28   0.72   1.78   4.15   8.73   36.9];
   % P2/P1 augmenté
-  L2_5 = [0.0018 0.0047 0.072  0.12   0.88   2.04   11.9];
-  H1_5 = [0.0058 0.012  0.087  0.15   0.92   2.11   12.03];
+  L2_5 = [100    0.0045  0.0082 0.050  0.12   0.88   2.04   11.9];
+  H1_5 = [100    0.0074  0.014  0.092  0.15   0.92   2.11   12.03];
   % P2/P0 augmenté
-  L2_6 = [0.0007 0.019  0.053  0.18   0.59   1.74   6.92];
-  H1_6 = [0.0076 0.024  0.064  0.22   0.71   1.91   7.01];
+  L2_6 = [100    0.0039  0.013  0.048  0.18   0.59   1.74   6.92];
+  H1_6 = [100    0.0097  0.021  0.059  0.22   0.71   1.91   7.01];
   % P2/P2 augmenté
-  L2_7 = [0.0043 0.0079 0.040  0.053  0.13   0.58   4.06   4.89];
-  H1_7 = [0.0048 0.013  0.050  0.10   0.30   0.79   4.13   5.15];
+  L2_7 = [100    0.00042 0.0022 0.010  0.048  0.13   0.58   4.06   4.89];
+  H1_7 = [100    0.0052  0.010  0.047  0.10   0.30   0.79   4.13   5.15];
 
-  loglog(H(2:6), L2_1(2:6), 'o-k');
+  loglog(H(1:7), L2_1(1:7), 'o-k');
   hold on;
-  loglog(H(2:6), L2_2(2:6), 'x:k');
-  loglog(H(2:6), L2_3(2:6), '+-.k');
-  loglog(H(2:6), L2_4(2:6), '*--k');
-  loglog(H(2:6), L2_5(2:6), 's-k');
-  loglog(H(2:6), L2_6(2:6), 'd:k');
-  loglog(H(2:6), L2_7(2:6), '<-.k');
+  loglog(H(1:7), L2_2(1:7), 'x:k');
+  loglog(H(1:7), L2_3(1:7), '+-.k');
+  loglog(H(1:7), L2_4(1:7), '*--k');
+  loglog(H(2:7), L2_5(2:7), 's-k');
+  loglog(H(2:7), L2_6(2:7), 'd:k');
+  loglog(H(2:7), L2_7(2:7), '<-.k');
   hold off;
   xlabel('h');
   ylabel('L^2(\Omega) error');
-  P1 = polyfit(log(H(2:6)), log(L2_1(2:6)), 1);
-  P2 = polyfit(log(H(2:6)), log(L2_2(2:6)), 1);
-  P3 = polyfit(log(H(2:6)), log(L2_3(2:6)), 1);
-  P4 = polyfit(log(H(2:6)), log(L2_4(2:6)), 1);
-  P5 = polyfit(log(H(2:6)), log(L2_5(2:6)), 1);
-  P6 = polyfit(log(H(2:6)), log(L2_6(2:6)), 1);
-  P7 = polyfit(log(H(2:6)), log(L2_7(2:6)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2_4(1:5)), 1);
+  P5 = polyfit(log(H(2:5)), log(L2_5(2:5)), 1);
+  P6 = polyfit(log(H(2:5)), log(L2_6(2:5)), 1);
+  P7 = polyfit(log(H(2:5)), log(L2_7(2:5)), 1);
   legend(strcat('P1/P1 org (slope=',num2str(P1(1)), ')'), ...
          strcat('P1/P1     (slope=',num2str(P2(1)), ')'), ...
          strcat('P1/P0     (slope=',num2str(P3(1)), ')'), ...
@@ -161,25 +161,26 @@ else
          strcat('P2/P2     (slope=',num2str(P7(1)), ')'), ...
          'Location', 'NorthWest');
   grid on;
+  axis([0.05 7 1e-4 10]);
   pause;
-  loglog(H(2:6), H1_1(2:6), 'o-k');
+  loglog(H(1:7), H1_1(1:7), 'o-k');
   hold on;
-  loglog(H(2:6), H1_2(2:6), 'x:k');
-  loglog(H(2:6), H1_3(2:6), '+-.k');
-  loglog(H(2:6), H1_4(2:6), '*--k');
-  loglog(H(2:6), H1_5(2:6), 's-k');
-  loglog(H(2:6), H1_6(2:6), 'd:k');
-  loglog(H(2:6), H1_7(2:6), '<-.k');
+  loglog(H(1:7), H1_2(1:7), 'x:k');
+  loglog(H(1:7), H1_3(1:7), '+-.k');
+  loglog(H(1:7), H1_4(1:7), '*--k');
+  loglog(H(2:7), H1_5(2:7), 's-k');
+  loglog(H(2:7), H1_6(2:7), 'd:k');
+  loglog(H(2:7), H1_7(2:7), '<-.k');
   hold off;
   xlabel('h');
   ylabel('H^1(\Omega) error');
-  P1 = polyfit(log(H(2:6)), log(H1_1(2:6)), 1);
-  P2 = polyfit(log(H(2:6)), log(H1_2(2:6)), 1);
-  P3 = polyfit(log(H(2:6)), log(H1_3(2:6)), 1);
-  P4 = polyfit(log(H(2:6)), log(H1_4(2:6)), 1);
-  P5 = polyfit(log(H(2:6)), log(H1_5(2:6)), 1);
-  P6 = polyfit(log(H(2:6)), log(H1_6(2:6)), 1);
-  P7 = polyfit(log(H(2:6)), log(H1_7(2:6)), 1);
+  P1 = polyfit(log(H(1:5)), log(H1_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(H1_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(H1_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(H1_4(1:5)), 1);
+  P5 = polyfit(log(H(2:5)), log(H1_5(2:5)), 1);
+  P6 = polyfit(log(H(2:5)), log(H1_6(2:5)), 1);
+  P7 = polyfit(log(H(2:5)), log(H1_7(2:5)), 1);
   legend(strcat('P1/P1 org (slope=',num2str(P1(1)), ')'), ...
          strcat('P1/P1     (slope=',num2str(P2(1)), ')'), ...
          strcat('P1/P0     (slope=',num2str(P3(1)), ')'), ...
@@ -189,6 +190,7 @@ else
          strcat('P2/P2     (slope=',num2str(P7(1)), ')'), ...
          'Location', 'NorthWest');
   grid on;
+  axis([0.05 7 1e-3 10]);
   pause;
   GAMMA=[1    0.1  0.01   1e-3   1e-4   1e-5   1e-6   1e-7   1e-8   1e-9   1e-10  1e-11   1e-12   1e-13 ];
   H1_G =[7.5  1.45 0.2736 0.2717 0.2723 0.2724 0.2724 0.2724 0.2724 0.2724 0.2724 0.2724  0.2724  0.2724];
@@ -206,22 +208,35 @@ else
   ylabel('Condition number');
   grid on;
   pause;
-  H_3D= [ 1    2   3   5  11  ];
-  L2_3D=[ 3.49 12  26  75 124 ];
-  H1_3D=[ 5.58 14  28  60 126 ];
-  loglog(H_3D(1:5), L2_3D(1:5), 'o-k');
+  H_3D  = [ 1    2    3   5   11  ];
+  L2_3D_0=[ 3.53 12.8 35  167 1461 ];
+  H1_3D_0=[ 5.60 14.8 37  168 1462 ];
+  L2_3D_1=[ 4.33 13   40  173 1022 ];
+  H1_3D_1=[ 6.20 15   42  174 1023 ];
+  
+  loglog(H_3D(1:4), L2_3D_0(1:4), 'o-k');
+  hold on;
+  loglog(H_3D(1:4), L2_3D_1(1:4), 'x:k');
+  hold off;
   xlabel('h');
   ylabel('L^2(\Omega) error');
-  P1 = polyfit(log(H_3D(1:5)), log(L2_3D(1:5)), 1);
-  legend(strcat('P1/P1 (slope=',num2str(P1(1)), ')'));
+  P1 = polyfit(log(H_3D(1:4)), log(L2_3D_0(1:4)), 1);
+  P2 = polyfit(log(H_3D(1:4)), log(L2_3D_1(1:4)), 1);
+  legend(strcat('P1/P0 (slope=',num2str(P1(1)), ')'), ...
+	 strcat('P1/P1 (slope=',num2str(P2(1)), ')'));
   axis([0.5 20 1 300]);
   grid on;
   pause;
-  loglog(H_3D(1:5), H1_3D(1:5), 'o-k');
+  loglog(H_3D(1:4), H1_3D_0(1:4), 'o-k');
+  hold on;
+  loglog(H_3D(1:4), H1_3D_1(1:4), 'x:k');
+  hold off;
   xlabel('h');
   ylabel('H^1(\Omega) error');
-  P1 = polyfit(log(H_3D(1:5)), log(H1_3D(1:5)), 1);
-  legend(strcat('P1/P1 (slope=',num2str(P1(1)), ')'));
+  P1 = polyfit(log(H_3D(1:3)), log(H1_3D_0(1:3)), 1);
+  P2 = polyfit(log(H_3D(1:3)), log(H1_3D_1(1:3)), 1);
+  legend(strcat('P1/P0 (slope=',num2str(P1(1)), ')'), ...
+	 strcat('P1/P1 (slope=',num2str(P2(1)), ')'));
   axis([0.5 20 1 300]);
   grid on;
 end;

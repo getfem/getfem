@@ -182,6 +182,7 @@ void friction_problem::init(void) {
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
+  cout << "FEM_TYPE_L="  << FEM_TYPE_L << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   std::string meshname
@@ -213,9 +214,10 @@ void friction_problem::init(void) {
   h /= mesh.convex_index().card();
   cout << "mean h = " << h << endl;
   
-//   for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
-//     cout << "quality of " << i << " : " << mesh.convex_quality_estimate(i)
-// 	 << endl;
+  for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
+    if (mesh.convex_quality_estimate(i) < 0.1)
+      GMM_WARNING1("Bad quality of convex " << i << " : "
+		   << mesh.convex_quality_estimate(i));
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL");
