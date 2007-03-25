@@ -105,7 +105,9 @@ namespace gmm {
 	if (count) { U_val[U_loc] = T(0); U_ind[U_loc] = i; }
 	++U_loc; // diagonal element
 	
-	for (k = 0; it != ite; ++it, ++k) {
+	for (k = 0; it != ite && k < 1000; ++it, ++k) {
+	  // if a plain row is present, retains only the 1000 firsts
+	  // nonzero elements. ---> a sort should be done.
 	  j = index_of_it(it, k, store_type());
 	  if (j < i) {
 	    if (count) { L_val[L_loc] = *it; L_ind[L_loc] = j; }
