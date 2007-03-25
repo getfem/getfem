@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # http://sources.redhat.com/automake/automake.html#Local-Macros
 function die {
       echo "ERROR: $1";
