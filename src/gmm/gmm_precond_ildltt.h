@@ -49,7 +49,7 @@ namespace gmm {
     std::vector<magnitude_type> indiag;
 
   protected:
-    int K;
+    size_type K;
     double eps;    
 
     template<typename M> void do_ildltt(const M&, row_major);
@@ -65,7 +65,7 @@ namespace gmm {
     ildltt_precond(const Matrix& A, int k_, double eps_) 
       : U(mat_nrows(A),mat_ncols(A)), K(k_), eps(eps_) { build_with(A); }
     ildltt_precond(void) { K=10; eps = 1E-7; }
-    ildltt_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
+    ildltt_precond(size_type k_, double eps_) :  K(k_), eps(eps_) {}
     size_type memsize() const { 
       return sizeof(*this) + nnz(U)*sizeof(value_type) + indiag.size() * sizeof(magnitude_type);
     }    
@@ -86,13 +86,6 @@ namespace gmm {
     for (size_type i = 0; i < n; ++i) {
       gmm::copy(mat_const_row(A, i), w);
       double norm_row = gmm::vect_norm2(w);
-
-      size_type nU = 0;
-      if (is_sparse(A)) {
-	typename linalg_traits<svector>::iterator it = vect_begin(w),
-	  ite = vect_end(w);
-	for (; it != ite; ++it) if (i < it.index()) nU++;
-      }
 
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
@@ -119,7 +112,7 @@ namespace gmm {
       std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       for (size_type nnu = 0; wit != wite; ++wit)  // copy to be optimized ...
-	if (wit->c > i) { if (nnu < nU+K) { U(i, wit->c) = wit->e; ++nnu; } }
+	if (wit->c > i) { if (nnu < K) { U(i, wit->c) = wit->e; ++nnu; } }
     }
   }
 

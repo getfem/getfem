@@ -48,18 +48,19 @@ namespace gmm {
   class ilutp_precond  {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
-    typedef rsvector<value_type> svector;
-    typedef row_matrix<svector> LU_Matrix;
-    typedef col_matrix<svector> CLU_Matrix;
+    typedef wsvector<value_type> _wsvector;
+    typedef rsvector<value_type> _rsvector;
+    typedef row_matrix<_rsvector> LU_Matrix;
+    typedef col_matrix<_wsvector> CLU_Matrix;
 
     bool invert;
     LU_Matrix L, U;
     gmm::unsorted_sub_index indperm;
-    gmm::unsorted_sub_index indperminv;    
+    gmm::unsorted_sub_index indperminv;
     mutable std::vector<value_type> temporary;
 
   protected:
-    int K;
+    size_type K;
     double eps;
 
     template<typename M> void do_ilutp(const M&, row_major);
@@ -73,7 +74,7 @@ namespace gmm {
       do_ilutp(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
-    ilutp_precond(const Matrix& A, int k_, double eps_) 
+    ilutp_precond(const Matrix& A, size_type k_, double eps_) 
       : L(mat_nrows(A), mat_ncols(A)), U(mat_nrows(A), mat_ncols(A)),
 	K(k_), eps(eps_) { build_with(A); }
     ilutp_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
@@ -98,7 +99,8 @@ namespace gmm {
     for (size_type i = 0; i < n; ++i) ipvt[i] = ipvtinv[i] = i;
     indperm = unsorted_sub_index(ipvt);
     indperminv = unsorted_sub_index(ipvtinv);
-    svector w(mat_ncols(A));
+    _wsvector w(mat_ncols(A));
+    _rsvector ww(mat_ncols(A));
     
     T tmp = T(0);
     gmm::clear(L); gmm::clear(U);
@@ -110,54 +112,61 @@ namespace gmm {
       copy(sub_vector(mat_const_row(A, i), indperm), w);
       double norm_row = gmm::vect_norm2(mat_const_row(A, i)); 
 
-      size_type nL = 0, nU = 1;
-      if (is_sparse(A))
-	{ nL = nnz(mat_const_row(A, i)) / 2; nU = nL + 1; }
-
-      for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
-	typename svector::iterator wk = w.begin() + krow;
-	if ((k = wk->c) >= i) break;
-	tmp = (wk->e) * indiag[k];
-	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
+      for (typename _wsvector::iterator wk = w.begin();
+	   wk != w.end() && wk->first < i; )  {
+	size_type k = wk->first;
+	tmp = (wk->second) * indiag[k];
+	if (gmm::abs(tmp) < eps * norm_row) { ++wk; w.erase(k);  } 
+	else {
+	  wk->second += tmp;
+	  gmm::add(scaled(mat_row(U, k), -tmp), w);
+	  ++wk;
+	}
       }
 
       gmm::clean(w, eps * norm_row);
-      std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
-      typename svector::const_iterator wit = w.begin(), wite = w.end();
+      gmm::copy(w, ww);
+
+      std::sort(ww.begin(), ww.end(), elt_rsvector_value_less_<T>());
+      typename _rsvector::const_iterator wit = ww.begin(), wite = ww.end();
       size_type ip = size_type(-1);
 
       for (; wit != wite; ++wit)
 	if (wit->c >= i) { ip = wit->c; tmp = wit->e; break; }
       if (ip == size_type(-1) || gmm::abs(tmp) <= max_pivot)
-	{ GMM_WARNING2("pivot " << i << " too small"); ip=i; w[i]=tmp=T(1); }
+	{ GMM_WARNING2("pivot " << i << " too small"); ip=i; ww[i]=tmp=T(1); }
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = T(1) / tmp;
-      wit = w.begin();
+      wit = ww.begin();
 
       size_type nnl = 0, nnu = 0;
+      L[i].base_resize(K); U[i].base_resize(K+1);
+      typename _rsvector::iterator witL = L[i].begin(), witU = U[i].begin();
       for (; wit != wite; ++wit) {
-	if (wit->c < i) { if (nnl < nL+K) { L(i, wit->c) = wit->e; ++nnl; } }
-	else if (nnu < nU+K) { CU(i, wit->c) = U(i, wit->c) = wit->e; ++nnu; }
+	if (wit->c < i) { if (nnl < K) { *witL++ = *wit; ++nnl; } }
+	else if (nnu < K+1) { CU(i, wit->c) = wit->e; *witU++ = *wit; ++nnu; }
       }
+      L[i].base_resize(nnl); U[i].base_resize(nnu);
+      std::sort(L[i].begin(), L[i].end());
+      std::sort(U[i].begin(), U[i].end());
 
       if (ip != i) {
-	typename svector::const_iterator iti = CU.col(i).begin();
-	typename svector::const_iterator itie = CU.col(i).end();
-	typename svector::const_iterator itp = CU.col(ip).begin();
-	typename svector::const_iterator itpe = CU.col(ip).end();
+	typename _wsvector::const_iterator iti = CU.col(i).begin();
+	typename _wsvector::const_iterator itie = CU.col(i).end();
+	typename _wsvector::const_iterator itp = CU.col(ip).begin();
+	typename _wsvector::const_iterator itpe = CU.col(ip).end();
 	
 	while (iti != itie && itp != itpe) {
-	  if (iti->c < itp->c) { U.row(iti->c).swap_indices(i, ip); ++iti; }
-	  else if (iti->c > itp->c) { U.row(itp->c).swap_indices(i,ip);++itp; }
-	  else { U.row(iti->c).swap_indices(i, ip); ++iti; ++itp; }
+	  if (iti->first < itp->first)
+	    { U.row(iti->first).swap_indices(i, ip); ++iti; }
+	  else if (iti->first > itp->first)
+	    { U.row(itp->first).swap_indices(i,ip);++itp; }
+	  else
+	    { U.row(iti->first).swap_indices(i, ip); ++iti; ++itp; }
 	}
 	
-	for( ; iti != itie; ++iti) U.row(iti->c).swap_indices(i, ip);
-	
-	for( ; itp != itpe; ++itp) {
-	  U.row(itp->c).swap_indices(i, ip);
-	}
+	for( ; iti != itie; ++iti) U.row(iti->first).swap_indices(i, ip);
+	for( ; itp != itpe; ++itp) U.row(itp->first).swap_indices(i, ip);
 
 	CU.swap_col(i, ip);
 	

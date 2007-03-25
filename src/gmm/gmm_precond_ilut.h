@@ -23,7 +23,7 @@
 #define GMM_PRECOND_ILUT_H
 
 /**@file gmm_precond_ilut.h
-   @author  Andrew Lumsdaine <lums@osl.iu.edu>, Lie-Quan Lee     <llee@osl.iu.edu>
+   @author  Andrew Lumsdaine <lums@osl.iu.edu>, Lie-Quan Lee <llee@osl.iu.edu>
    @date June 5, 2003.
    @brief ILUT:  Incomplete LU with threshold and K fill-in Preconditioner.
 */
@@ -68,7 +68,7 @@ namespace gmm {
     LU_Matrix L, U;
 
   protected:
-    int K;
+    size_type K;
     double eps;    
 
     template<typename M> void do_ilut(const M&, row_major);
@@ -85,7 +85,7 @@ namespace gmm {
     ilut_precond(const Matrix& A, int k_, double eps_) 
       : L(mat_nrows(A), mat_ncols(A)), U(mat_nrows(A), mat_ncols(A)),
 	K(k_), eps(eps_) { build_with(A); }
-    ilut_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
+    ilut_precond(size_type k_, double eps_) :  K(k_), eps(eps_) {}
     ilut_precond(void) { K = 10; eps = 1E-7; }
     size_type memsize() const { 
       return sizeof(*this) + (nnz(U)+nnz(L))*sizeof(value_type);
@@ -111,21 +111,16 @@ namespace gmm {
       gmm::copy(mat_const_row(A, i), w);
       double norm_row = gmm::vect_norm2(w);
 
-      size_type nL = 0, nU = 1;
-      if (is_sparse(A)) {
-	typename linalg_traits<_wsvector>::iterator it = vect_begin(w),
-	  ite = vect_end(w);
-	for (; it != ite; ++it) if (i > it.index()) nL++;
-	nU = w.nb_stored() - nL;
-	nL = std::min(size_type(1000), nL); // to avoid problems with eventual plain lines
-	nU = std::min(size_type(1000), nU);
-      }
-
-      for (typename _wsvector::iterator wk = w.begin(); wk != w.end() && wk->first < i; ) {
+      for (typename _wsvector::iterator wk = w.begin();
+	   wk != w.end() && wk->first < i; ) {
 	size_type k = wk->first;
 	tmp = (wk->second) * indiag[k];
 	if (gmm::abs(tmp) < eps * norm_row) { ++wk; w.erase(k); } 
-	else { wk->second += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); ++wk; }
+	else {
+	  wk->second += tmp;
+	  gmm::add(scaled(mat_row(U, k), -tmp), w);
+	  ++wk;
+	}
       }
       tmp = w[i];
 
@@ -142,11 +137,11 @@ namespace gmm {
       typename _rsvector::const_iterator wit = ww.begin(), wite = ww.end();
       size_type nnl = 0, nnu = 0;
       
-      wL.base_resize(nL+K); wU.base_resize(nU+K+1);
+      wL.base_resize(K); wU.base_resize(K+1);
       typename _rsvector::iterator witL = wL.begin(), witU = wU.begin();
       for (; wit != wite; ++wit) 
-	if (wit->c < i) { if (nnl < nL+K) { *witL++ = *wit; ++nnl; } }
-	else { if (nnu < nU+K  || wit->c == i) { *witU++ = *wit; ++nnu; } }
+	if (wit->c < i) { if (nnl < K) { *witL++ = *wit; ++nnl; } }
+	else { if (nnu < K+1  || wit->c == i) { *witU++ = *wit; ++nnu; } }
       wL.base_resize(nnl); wU.base_resize(nnu);
       std::sort(wL.begin(), wL.end());
       std::sort(wU.begin(), wU.end());
