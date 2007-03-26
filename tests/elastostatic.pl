@@ -83,8 +83,8 @@ if ($err2 > $err1 / 6.7) {
 
 print ".";
 
-$err1 = start_program(" -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'MESH_FILE=\"$srcdir/../tests/meshes/disc_P2_h8.mesh\"'");
-$err2 = start_program(" -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'MESH_FILE=\"$srcdir/../tests/meshes/disc_P2_h4.mesh\"'");
+$err1 = start_program(" -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'MESH_FILE=\"$srcdir/../tests/meshes/disc_P2_h4.mesh\"'");
+$err2 = start_program(" -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'MESH_FILE=\"$srcdir/../tests/meshes/disc_P2_h2.mesh\"'");
 
 if ($err2 > $err1 / 4) {
   print "Convergence error: P2 isoparametric: $err1 $err2\n";
