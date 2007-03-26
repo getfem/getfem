@@ -102,6 +102,7 @@
 #include <cstring>
 #include <cctype>
 #include <cassert>
+#include <climits>
 #include <iostream>
 //#include <ios> 
 #include <fstream>
