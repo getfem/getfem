@@ -179,8 +179,8 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   gmm::diagonal_precond<MAT1> P2(m1);
   gmm::mr_approx_inverse_precond<MAT1> P3(m1, 10, prec);
   gmm::ilu_precond<MAT1> P4(m1);
-  gmm::ilut_precond<MAT1> P5(m1, 15, prec);
-  gmm::ilutp_precond<MAT1> P5b(m1, 15, prec);
+  gmm::ilut_precond<MAT1> P5(m1, 20, prec);
+  gmm::ilutp_precond<MAT1> P5b(m1, 20, prec);
   
   R detmr = gmm::abs(gmm::lu_det(P3.approx_inverse()));
 

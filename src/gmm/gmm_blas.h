@@ -813,18 +813,11 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Clean                                    		  */
   /* ******************************************************************** */
-  /** Clean a vector or matrix (replace near-zero entries with zeroes). */
-  template <typename L> inline void clean(L &l, double threshold)
-  { clean(l, threshold, typename linalg_traits<L>::linalg_type()); }
+  /** Clean a vector or matrix (replace near-zero entries with zeroes).   */
+  
+  template <typename L> inline void clean(L &l, double threshold);
+
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
-
-  template <typename L> inline void clean(const L &l, double threshold)
-  { clean(linalg_const_cast(l), threshold); }
-
-  template <typename L> inline void clean(L &l, double threshold,abstract_vector) {
-    clean(l, threshold, typename linalg_traits<L>::storage_type(),
-	  typename linalg_traits<L>::value_type());
-  }
 
   template <typename L, typename T>
   void clean(L &l, double threshold, abstract_dense, T) {
@@ -836,19 +829,18 @@ namespace gmm {
 
   template <typename L, typename T>
   void clean(L &l, double threshold, abstract_skyline, T)
-  { clean(l, threshold, abstract_dense(), T()); }
+  { gmm::clean(l, threshold, abstract_dense(), T()); }
 
   template <typename L, typename T>
   void clean(L &l, double threshold, abstract_sparse, T) {
     typedef typename number_traits<T>::magnitude_type R;
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
-    for (; it != ite; ++it) // to be optimized ...
-      if (gmm::abs(*it) < R(threshold)) {
-	l[it.index()] = T(0);
-	it = vect_begin(l); ite = vect_end(l);
-      }
+    std::vector<size_type> ind;
+    for (; it != ite; ++it)
+      if (gmm::abs(*it) < R(threshold)) ind.push_back(it.index());
+    for (size_type i = 0; i < ind.size(); ++i) l[ind[i]] = T(0);
   }
-
+  
   template <typename L, typename T>
   void clean(L &l, double threshold, abstract_dense, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
@@ -862,33 +854,53 @@ namespace gmm {
 
   template <typename L, typename T>
   void clean(L &l, double threshold, abstract_skyline, std::complex<T>)
-  { clean(l, threshold, abstract_dense(), std::complex<T>()); }
+  { gmm::clean(l, threshold, abstract_dense(), std::complex<T>()); }
 
   template <typename L, typename T>
   void clean(L &l, double threshold, abstract_sparse, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
-    for (; it != ite; ++it) { // to be optimized ...
-      if (gmm::abs((*it).real()) < T(threshold)) {
-	l[it.index()] = std::complex<T>(T(0), (*it).imag());
-	it = vect_begin(l); ite = vect_end(l); continue;
-      }
-      if (gmm::abs((*it).imag()) < T(threshold)) {
-	l[it.index()] = std::complex<T>((*it).real(), T(0));
-	it = vect_begin(l); ite = vect_end(l); continue;
-      }
+    std::vector<size_type> ind;
+    for (; it != ite; ++it) {
+      bool r = (gmm::abs((*it).real()) < T(threshold));
+      bool i = (gmm::abs((*it).imag()) < T(threshold));
+      if (r && i) ind.push_back(it.index());
+      else if (r) (*it).real() = T(0);
+      else if (i) (*it).imag() = T(0);
     }
+    for (size_type i = 0; i < ind.size(); ++i)
+      l[ind[i]] = std::complex<T>(T(0),T(0));
   }
 
-  template <typename L> inline void clean(L &l, double threshold,abstract_matrix) {
-    clean(l, threshold, typename principal_orientation_type<typename
-	  linalg_traits<L>::sub_orientation>::potype());
+  template <typename L> inline void clean(L &l, double threshold,
+					  abstract_vector) {
+    gmm::clean(l, threshold, typename linalg_traits<L>::storage_type(),
+	       typename linalg_traits<L>::value_type());
   }
-  
-  template <typename L> void clean(L &l, double threshold, row_major)
-  { for (size_type i = 0; i < mat_nrows(l); ++i) clean(mat_row(l, i), threshold); }
 
-  template <typename L> void clean(L &l, double threshold, col_major)
-  { for (size_type i = 0; i < mat_ncols(l); ++i) clean(mat_col(l, i), threshold); }
+  template <typename L> inline void clean(const L &l, double threshold);
+
+  template <typename L> void clean(L &l, double threshold, row_major) {
+    for (size_type i = 0; i < mat_nrows(l); ++i)
+      gmm::clean(mat_row(l, i), threshold);
+  }
+
+  template <typename L> void clean(L &l, double threshold, col_major) {
+    for (size_type i = 0; i < mat_ncols(l); ++i)
+      gmm::clean(mat_col(l, i), threshold);
+  }
+
+  template <typename L> inline void clean(L &l, double threshold,
+					  abstract_matrix) {
+    gmm::clean(l, threshold,
+	       typename principal_orientation_type<typename
+	       linalg_traits<L>::sub_orientation>::potype());
+  }
+
+  template <typename L> inline void clean(L &l, double threshold)
+  { clean(l, threshold, typename linalg_traits<L>::linalg_type()); }
+ 
+  template <typename L> inline void clean(const L &l, double threshold)
+  { gmm::clean(linalg_const_cast(l), threshold); }
 
   /* ******************************************************************** */
   /*		Copy                                    		  */

@@ -347,7 +347,7 @@ namespace gmm {
       if (gmm::abs(H(i+1,i)) > tol_i) { // 2x2 block detected
 	T tr = (H(i+1, i+1) - H(i,i)) / T(2);
 	T delta = tr*tr + H(i,i+1)*H(i+1, i);
-
+	
 	if (is_complex(T()) || gmm::real(delta) >= R(0)) {
 	  sub_interval SUBI(i, 2);
 	  T theta = (tr - gmm::sqrt(delta)) / H(i+1,i);
@@ -562,7 +562,6 @@ namespace gmm {
       Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI), 
 				     sub_matrix(Q, SUBJ, SUBK),
 				     tol, (its == 10 || its == 20), compvect);
-
       q_old = q;
       qr_stop_criterion(H, p, q, tol*2);
       if (q != q_old) its = 0;

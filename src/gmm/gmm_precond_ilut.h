@@ -135,13 +135,13 @@ namespace gmm {
       gmm::copy(w, ww);
       std::sort(ww.begin(), ww.end(), elt_rsvector_value_less_<T>());
       typename _rsvector::const_iterator wit = ww.begin(), wite = ww.end();
-      size_type nnl = 0, nnu = 0;
-      
+
+      size_type nnl = 0, nnu = 0;    
       wL.base_resize(K); wU.base_resize(K+1);
       typename _rsvector::iterator witL = wL.begin(), witU = wU.begin();
       for (; wit != wite; ++wit) 
 	if (wit->c < i) { if (nnl < K) { *witL++ = *wit; ++nnl; } }
-	else { if (nnu < K+1  || wit->c == i) { *witU++ = *wit; ++nnu; } }
+	else { if (nnu < K  || wit->c == i) { *witU++ = *wit; ++nnu; } }
       wL.base_resize(nnl); wU.base_resize(nnu);
       std::sort(wL.begin(), wL.end());
       std::sort(wU.begin(), wU.end());

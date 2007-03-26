@@ -343,7 +343,8 @@ namespace gmm {
 
   template <typename T> inline T sqr(T a) { return a * a; }
   template <typename T> inline T abs(T a) { return (a < T(0)) ? T(-a) : a; }
-  template <typename T> inline T abs(std::complex<T> a) { return std::abs(a); }
+  template <typename T> inline T abs(std::complex<T> a)
+  { T x = a.real(), y = a.imag(); return ::sqrt(x*x+y*y); }
   template <typename T> inline T abs_sqr(T a) { return a*a; }
   template <typename T> inline T abs_sqr(std::complex<T> a)
   { return gmm::sqr(a.real()) + gmm::sqr(a.imag()); }

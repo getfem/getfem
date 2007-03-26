@@ -144,7 +144,8 @@ namespace gmm {
       typename _rsvector::iterator witL = L[i].begin(), witU = U[i].begin();
       for (; wit != wite; ++wit) {
 	if (wit->c < i) { if (nnl < K) { *witL++ = *wit; ++nnl; } }
-	else if (nnu < K+1) { CU(i, wit->c) = wit->e; *witU++ = *wit; ++nnu; }
+	else if (nnu < K || wit->c == i)
+	  { CU(i, wit->c) = wit->e; *witU++ = *wit; ++nnu; }
       }
       L[i].base_resize(nnl); U[i].base_resize(nnu);
       std::sort(L[i].begin(), L[i].end());
