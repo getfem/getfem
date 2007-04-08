@@ -7,7 +7,7 @@ LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5; LAMBDA = 10;    % Lamé coefficients (in N/mm^2, i.e. 5 and 10Mpa).
 FRICTION_COEF = 0.0;    % Friction coefficient.
 PG=9810;                % gravitation constante (on earth)
-			% (in mm/s^2, i.e. 9.81m/s).
+			% (in mm/s^2, i.e. 9.81m/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
                         % (in kg/mm^3, i.e. 6000kg/m^3)
 N = 2;
@@ -47,7 +47,7 @@ RESIDUAL = 1E-9;     	% residual for Newton.
 if (N == 2)
   MESH_TYPE = 'GT_PK(2, 1)';      % linear triangles
   FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
-  FEM_TYPE_L = 'FEM_PK(2, 0)';    % FEM for the multipliers
+  FEM_TYPE_L = 'FEM_PK(2, 2)';    % FEM for the multipliers
   if 0
     DATA_FEM_TYPE = 'FEM_PK(2,1)';% for non-Lagrangian main FEM
   end;
@@ -81,7 +81,7 @@ end;
 % MESHNAME='../../../tests/meshes/donut_regulier_800_elements.mesh';
 
 %%%%% disque en P2 %%%%%
-% MESHNAME='../../../tests/meshes/disc_P2_h5.5.mesh';
+MESHNAME='../../../tests/meshes/disc_P2_h5.5.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h4.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h3.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h2.mesh';

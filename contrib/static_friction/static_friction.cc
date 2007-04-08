@@ -212,7 +212,7 @@ void friction_problem::init(void) {
   for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
     h += mesh.convex_radius_estimate(i);
   h /= mesh.convex_index().card();
-  cout << "mean h = " << h << endl;
+  cout << "mean h = " << 2*h << endl;
   
   for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
     if (mesh.convex_quality_estimate(i) < 0.1)
@@ -350,7 +350,7 @@ void friction_problem::init(void) {
   reffilename = PARAM.string_value("REFSOLFILENAME");
   compare_with_ref = (reffilename.size() > 0);
   if (compare_with_ref) {
-    cout << "name = " << reffilename << endl;
+    cout << "Comparison with " << reffilename << endl;
     mesh_refu.read_from_file(reffilename + ".meshfem");
     mf_refu.read_from_file(reffilename + ".meshfem");
     mim_refu.set_integration_method(mesh_refu.convex_index(), ppi);
@@ -746,6 +746,7 @@ void friction_problem::solve(void) {
   cout << "Nbc = " << nbc << endl;
 
   sparse_matrix BN(nbc, mf_u.nb_dof());
+  sparse_matrix MMB(nbc, nbc);
   sparse_matrix BT((N-1)*nbc, mf_u.nb_dof());
   plain_vector gap(nbc);
   sparse_matrix AUG_M;
@@ -761,6 +762,13 @@ void friction_problem::solve(void) {
 	  for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
 	  ++jj;
 	}
+      sparse_matrix BB(mf_u.nb_dof(), mf_u.nb_dof());
+      getfem::asm_mass_matrix(BB, mim, mf_u, mf_u, CONTACT_BOUNDARY);
+      std::vector<size_type> ind;
+      for (dal::bv_visitor i(cn); !i.finished(); ++i) 
+	if ((i%N) == N-1) ind.push_back(i);
+      gmm::sub_index SUBI(ind);
+      gmm::copy(gmm::sub_matrix(BB, SUBI, SUBI), MMB);
     }
     break;
   case 1: case 2:
@@ -875,31 +883,22 @@ void friction_problem::solve(void) {
   
   plain_vector LN1(nbc), LT1(nbc*(N-1));
   gmm::copy(FRICTION.get_LN(MS), LN1);
-  cout << "contact stress : " << LN1 << endl;
   gmm::copy(FRICTION.get_LT(MS), LT1);
+
+  if (contact_condition == 0) { // to be done also for the friction ...
+    gmm::iteration itercg(1e-12, 1);
+    plain_vector LL(nbc);
+    gmm::cg(MMB, LL, LN1, gmm::identity_matrix(), itercg);
+    gmm::copy(LL, LN1);
+  }
+
+  plain_vector BIGLN(mf_l.nb_dof());
+  size_type j = 0;
+  for (dal::bv_visitor i(cn); !i.finished(); ++i)
+    if (i % N == N-1) BIGLN[i] = LN1[j++];
+
+  cout << "contact stress : " << LN1 << endl;
   cout << "friction stress : " << LT1 << endl;
-  std::ofstream file1("normal_stress"), file2("tangential_stress");
-  for (size_type i = 0; i < nbc; ++i) {
-    file1 << LN1[i] << endl;
-    file2 << LT1[i*(N-1)] << endl;
-  }
-  file1.close(); file2.close();
-
-  if (compare_with_ref) { // error with reference solution
-    plain_vector UR(mf_refu.nb_dof());
-    getfem::interpolation(mf_u, mf_refu, U, UR, true);
-    gmm::add(gmm::scaled(UREF, -1.0), UR);
-
-    scalar_type l2 = getfem::asm_L2_norm(mim_refu, mf_refu, UR);
-    scalar_type h1 = getfem::asm_H1_norm(mim_refu, mf_refu, UR);
-    
-    cout << "L2 error = " << l2 << endl
-	 << "H1 error = " << h1 << endl
-	 << "Linfty error = " << gmm::vect_norminf(UR) << endl;
-
-    gmm::vecsave(reffilename + "_error.U", UR);
-  }
-
 
   if (mlexport) {
     getfem::mesh_fem mf_printed_vm(mesh);
@@ -907,6 +906,7 @@ void friction_problem::solve(void) {
 				     getfem::classical_discontinuous_fem
 				     (mesh.trans_of_convex(0), 3));
     mf_u.write_to_file(datafilename + ".meshfem", true);
+    mf_l.write_to_file(datafilename + ".meshfem_l", true);
     mf_printed_vm.write_to_file(datafilename + ".meshfem_vm", true);
     gmm::vecsave(datafilename + ".U", U);
     
@@ -925,15 +925,46 @@ void friction_problem::solve(void) {
     unsigned nrefine = 4;
     slicer.exec(nrefine, mf_l.convex_index());
     sl.write_to_file(datafilename + ".sl", true);
-    plain_vector BIGLN(mf_l.nb_dof());
-    size_type j = 0;
-    for (dal::bv_visitor i(cn); !i.finished(); ++i)
-      if (i % N == N-1) BIGLN[i] = LN1[j++];
+    
+    gmm::vecsave(datafilename + ".BIGLN", BIGLN);
     plain_vector LLN(sl.nb_points()*N);
     sl.interpolate(mf_l, BIGLN, LLN);
     gmm::vecsave(datafilename + ".LN", LLN);
   }
-  
+
+  if (compare_with_ref) { // error with reference solution
+    plain_vector UR(mf_refu.nb_dof());
+    getfem::interpolation(mf_u, mf_refu, U, UR, true);
+    gmm::add(gmm::scaled(UREF, -1.0), UR);
+
+    getfem::mesh_fem mf_refl(mesh_refu);
+    mf_refl.read_from_file(reffilename + ".meshfem_l");
+    plain_vector BIGRLN(mf_refl.nb_dof()), BIGREFLN(mf_refl.nb_dof());
+    gmm::vecload(reffilename + ".BIGLN", BIGREFLN);
+    getfem::interpolation(mf_l, mf_refl, BIGLN, BIGRLN, true);
+    gmm::add(gmm::scaled(BIGREFLN, -1.0), BIGRLN);
+
+    scalar_type l2gc = getfem::asm_L2_norm(mim_refu, mf_refl, BIGRLN,
+					   CONTACT_BOUNDARY);
+    cout << "L2 error on contact pressure = " << l2gc << endl;
+    scalar_type l2 = getfem::asm_L2_norm(mim_refu, mf_refu, UR);
+    scalar_type h1 = getfem::asm_H1_norm(mim_refu, mf_refu, UR);
+    cout << "L2 error = " << l2 << endl
+	 << "H1 error = " << h1 << endl
+	 << "Linfty error = " << gmm::vect_norminf(UR) << endl;
+
+    l2gc = getfem::asm_L2_norm(mim_refu, mf_refl, BIGREFLN,
+			       CONTACT_BOUNDARY);
+    l2 = getfem::asm_L2_norm(mim_refu, mf_refu, UREF);
+    h1 = getfem::asm_H1_norm(mim_refu, mf_refu, UREF);
+    cout << "L2 contact pressure ref = " << l2gc << endl
+	 << "L2 ref = " << l2 << endl
+	 << "H1 ref = " << h1 << endl
+	 << "Linfty ref = " << gmm::vect_norminf(UREF) << endl;
+
+    gmm::vecsave(reffilename + "_error.U", UR);
+  }
+
   if (dxexport) {
     getfem::dx_export exp(datafilename + ".dx", false);
     getfem::stored_mesh_slice sl;
