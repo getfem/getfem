@@ -574,54 +574,53 @@ namespace gmm {
       HarwellBoeing file
   */
   template <typename T, int shift> inline void
-  Harwell_Boeing_save(const char *filename, const csc_matrix<T, shift>& A) {
-    HarwellBoeing_IO::write(filename, A);
-  }
+  Harwell_Boeing_save(const std::string &filename,
+		      const csc_matrix<T, shift>& A)
+  { HarwellBoeing_IO::write(filename.c_str(), A); }
 
   /** save a reference on "double" or "std::complex<double>" csc matrix
       into a HarwellBoeing file
   */
   template <typename T, typename INDI, typename INDJ, int shift> inline void
-  Harwell_Boeing_save(const char *filename,
-		      const csc_matrix_ref<T, INDI, INDJ, shift>& A) {
-    HarwellBoeing_IO::write(filename, A);
-  }
+  Harwell_Boeing_save(const std::string &filename,
+		      const csc_matrix_ref<T, INDI, INDJ, shift>& A)
+  { HarwellBoeing_IO::write(filename.c_str(), A); }
 
   /** save a "double" or "std::complex<double>" generic matrix
       into a HarwellBoeing file making a copy in a csc matrix
   */
   template <typename MAT> inline void
-  Harwell_Boeing_save(const char *filename, const MAT& A) {
+  Harwell_Boeing_save(const std::string &filename, const MAT& A) {
     gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
       tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
     gmm::copy(A, tmp); 
-    HarwellBoeing_IO::write(filename, tmp);
+    HarwellBoeing_IO::write(filename.c_str(), tmp);
   }
 
   template <typename MAT, typename VECT> inline void
-  Harwell_Boeing_save(const char *filename, const MAT& A, const VECT &RHS) {
+  Harwell_Boeing_save(const std::string &filename, const MAT& A,
+		      const VECT &RHS) {
     typedef typename gmm::linalg_traits<MAT>::value_type T;
     gmm::csc_matrix<T> tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
     gmm::copy(A, tmp);
     std::vector<T> tmprhs(gmm::vect_size(RHS));
     gmm::copy(RHS, tmprhs);
-    HarwellBoeing_IO::write(filename, tmp, tmprhs);
+    HarwellBoeing_IO::write(filename.c_str(), tmp, tmprhs);
   }
-
 
   /** load a "double" or "std::complex<double>" csc matrix from a
       HarwellBoeing file
   */
   template <typename T, int shift> void
-  Harwell_Boeing_load(const char *filename, csc_matrix<T, shift>& A) {
-    HarwellBoeing_IO h(filename); h.read(A);
+  Harwell_Boeing_load(const std::string &filename, csc_matrix<T, shift>& A) {
+    HarwellBoeing_IO h(filename.c_str()); h.read(A);
   }
 
   /** load a "double" or "std::complex<double>" generic matrix from a
       HarwellBoeing file
   */
   template <typename MAT> void
-  Harwell_Boeing_load(const char *filename, MAT& A) {
+  Harwell_Boeing_load(const std::string &filename, MAT& A) {
     csc_matrix<typename gmm::linalg_traits<MAT>::value_type> csc;
     Harwell_Boeing_load(filename, csc);
     resize(A, mat_nrows(csc), mat_ncols(csc));
