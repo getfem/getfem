@@ -7,6 +7,7 @@ from distutils.core import setup, Extension
 import os
 
 cclibopts = "../../../src/.libs/libgetfem.a".split()
+cclibopts += '@LIBS@'.split()
 
 libnames = [l[2:] for l in cclibopts if l.startswith("-l")]
 libdirs  = [l[2:] for l in cclibopts if l.startswith("-L")]
