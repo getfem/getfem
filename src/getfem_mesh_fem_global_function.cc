@@ -207,7 +207,7 @@ namespace getfem {
     base_matrix res(2,2);
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
-
+    
     if (r < 1e-10) {
       GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
     }
@@ -335,7 +335,7 @@ namespace getfem {
   
   base_matrix
   cutoff_xy_function::hess(scalar_type x, scalar_type y) const {
-    base_matrix res;
+    base_matrix res(2,2);
     switch (fun) {
     case EXPONENTIAL_CUTOFF: {
       scalar_type r2 = x*x+y*y, r4 = r2*r2;
@@ -441,8 +441,8 @@ namespace getfem {
 	  h(i, j) = hfn(0,0) * dx_real[i] * dx_real[j]
 	    + hfn(0,1) * dx_real[i] * dy_real[j]
 	    + hfn(1,0) * dy_real[i] * dx_real[j]
-	    +  hfn(1,1) * dy_real[i] * dy_real[j]
-	    + gfn[0] * hx_real(i,j) + gfn[1] * hy_real(i,j);
+	    + hfn(1,1) * dy_real[i] * dy_real[j]
+	    + gfn[0] * hx_real(i * N + j, 0) + gfn[1] * hy_real(i*N+j,0);
 	}
     }
     

@@ -104,7 +104,8 @@ namespace getfem {
       mesher_level_set eval = mls.get_level_set(i)->
 	mls_of_convex(c.convex_num());
       scalar_type v = eval(c.xref());
-      z[i] = (v > 1e-9) ? '+' : ((v < -1e-9) ? '-' : '0');
+      // z[i] = (v > 1e-9) ? '+' : ((v < -1e-9) ? '-' : '0');
+      z[i] = (v > 0.) ? '+' : '-';
     }
     unsigned cnt = 0;
     for (unsigned d = 0; d < dofzones.size(); ++d) {

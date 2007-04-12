@@ -194,8 +194,9 @@ namespace getfem {
     base_small_vector grad(scalar_type x, scalar_type y) const {
       return fn1.grad(x,y)*fn2.val(x,y) + fn1.val(x,y)*fn2.grad(x,y);
     }
-    virtual base_matrix hess(scalar_type x, scalar_type y) const {      
-      base_matrix h = fn1.hess(x, y); gmm::scale(h, fn2.val(x,y));
+    virtual base_matrix hess(scalar_type x, scalar_type y) const {
+      base_matrix h = fn1.hess(x, y);
+      gmm::scale(h, fn2.val(x,y));
       gmm::add(gmm::scaled(fn2.hess(x,y), fn1.val(x,y)), h);
       gmm::rank_two_update(h, fn1.grad(x,y), fn2.grad(x,y));
       return h;

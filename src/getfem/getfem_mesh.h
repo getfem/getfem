@@ -283,7 +283,8 @@ namespace getfem {
 	@param ic the convex number.
     */
     bgeot::pgeometric_trans trans_of_convex(size_type ic) const { 
-      GMM_ASSERT1(trans_exists[ic], "internal error");
+      GMM_ASSERT1(trans_exists[ic],
+		  "No geometric transformation or nonexisting element");
       return gtab[ic]; 
     }
     

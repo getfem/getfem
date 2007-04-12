@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file getfem_mesh_level_set.h
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>, Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-toulouse.fr>
    @date March 04, 2005.
    @brief Keep informations about a mesh crossed by level-sets. 
 */
@@ -88,7 +89,6 @@ namespace getfem {
     /// Gives a reference to the linked mesh of type mesh.
     mesh &linked_mesh(void) const { return *linked_mesh_; }
     void clear(void);
-  
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
     void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
@@ -150,7 +150,7 @@ namespace getfem {
     void cut_element(size_type cv, const dal::bit_vector &primary,
 		     const dal::bit_vector &secondary, scalar_type radius);
     int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum,
-			 scalar_type radius);
+			  scalar_type radius);
     int sub_simplex_is_not_crossed_by(size_type cv, plevel_set ls,
 				      size_type sub_cv, scalar_type radius);
     void find_zones_of_element(size_type cv, std::string &prezone,
@@ -160,7 +160,8 @@ namespace getfem {
 	into 'prim' (and 'sec' is the levelset has a secondary part).
 	zone is also filled with '0', '+', and '-'.
     */
-    void find_crossing_level_set(size_type cv, dal::bit_vector &prim, 
+    void find_crossing_level_set(size_type cv, 
+				 dal::bit_vector &prim, 
 				 dal::bit_vector &sec, std::string &zone,
 				 scalar_type radius);
     void run_delaunay(std::vector<base_node> &fixed_points,

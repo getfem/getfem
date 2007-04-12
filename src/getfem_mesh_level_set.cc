@@ -363,6 +363,7 @@ struct Chrono {
 	for (size_type j = 0; j < level_sets.size(); ++j) {
 	  if (subz[j] == '*' || subz[j] == '0') {
 	    int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i,radius);
+	    // cout << "sub_simplex_is_not_crossed_by = " << s << endl;
 	    subz[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
 	  }
 	}
@@ -852,14 +853,20 @@ struct Chrono {
     is_adapted_ = true;
   }
   
+  // return +1 if the sub-element is on the one side of the level-set
+  //        -1 if the sub-element is on the other side of the level-set
+  //         0 if the sub-element is one the positive part of the secundary
+  //           level-set if any.
   int mesh_level_set::sub_simplex_is_not_crossed_by(size_type cv,
 						    plevel_set ls,
 						    size_type sub_cv,
 						    scalar_type radius) {
-    scalar_type EPS = 1e-8 * radius;
+    scalar_type EPS = 1e-7 * radius;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     convex_info &cvi = cut_cv[cv];
     bgeot::pgeometric_trans pgt2 = cvi.pmsh->trans_of_convex(sub_cv);
+
+    // cout << "cv " << cv << " radius = " << radius << endl;
 
     mesher_level_set mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
@@ -878,11 +885,10 @@ struct Chrono {
       if (gmm::abs(d0) > gmm::abs(d2)) d2 = d0;
       if (!p2 || p*p2 < 0) is_cut = true;
     }
-    if (is_cut && (ls->has_secondary() && d1 > +EPS)) { 
-      //cout << "ooops, je retourne 0: d1 = " << d1 << endl; 
-      return 0; 
-    }
-    if (d0min < EPS && ls->has_secondary() && d1 > -EPS) return 0;
+    // cout << "d0min = " << d0min << " d1 = " << d1 << " iscut = "
+    //      << is_cut << endl;
+    if (is_cut && ls->has_secondary() && d1 >= -radius*0.0001) return 0;
+    // if (d0min < EPS && ls->has_secondary() && d1 >= -EPS) return 0;
     return (d2 < 0.) ? -1 : 1;
   }
 
@@ -944,7 +950,6 @@ struct Chrono {
       int s = is_not_crossed_by(cv, level_sets[k], 0, radius);
       if (!s) {
 	if (noisy) cout << "is cut \n";
-       	// cout << linked_mesh().convex(cv) << endl;
 	if (level_sets[k]->has_secondary()) {
 	  s = is_not_crossed_by(cv, level_sets[k], 1, radius);
 	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
