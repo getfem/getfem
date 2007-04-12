@@ -72,6 +72,53 @@ base_small_vector sol_F(const base_node &x) {
   return res;
 }
 
+struct exact_solution {
+  getfem::mesh_fem_global_function mf;
+  getfem::base_vector U;
+
+  exact_solution(getfem::mesh &me) : mf(me) {}
+  
+  void init(int mode, scalar_type lambda, scalar_type mu,
+	    getfem::level_set &ls) {
+    std::vector<getfem::pglobal_function> cfun(4);
+    for (unsigned j=0; j < 4; ++j) {
+      getfem::crack_singular_xy_function *s = 
+	new getfem::crack_singular_xy_function(j);
+      cfun[j] = getfem::global_function_on_level_set(ls, *s);
+    }
+
+    mf.set_functions(cfun);
+    
+    mf.set_qdim(1);
+    
+    U.resize(8); assert(mf.nb_dof() == 4);
+    getfem::base_vector::iterator it = U.begin();
+    scalar_type coeff=0.;
+    switch(mode) {
+      case 1: {
+	scalar_type A=2+2*mu/(lambda+2*mu), B=-2*(lambda+mu)/(lambda+2*mu);
+	/* "colonne" 1: ux, colonne 2: uy */
+	*it++ = 0;       *it++ = A-B; /* sin(theta/2) */
+	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
+	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
+	*it++ = 0;       *it++ = B;   /* cos(theta/2)*cos(theta) */
+	coeff = 1/sqrt(2*M_PI);
+      } break;
+      case 2: {
+	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
+	*it++ = C1+2-1;   *it++ = 0;
+	*it++ = 0;      *it++ = -(C1-2+1);
+	*it++ = 0;      *it++ = 1;
+	*it++ = 1;      *it++ = 0;
+	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
+      } break;
+      default:
+	assert(0);
+	break;
+    }
+    gmm::scale(U, coeff);
+  }
+};
 
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
@@ -90,6 +137,7 @@ struct crack_problem {
   getfem::mesh_fem_global_function mf_sing_u;
   getfem::mesh_fem_level_set mfls_u; 
   getfem::mesh_fem_sum mf_u_sum;
+  exact_solution exact_sol;
   
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   
@@ -104,7 +152,7 @@ struct crack_problem {
   
   scalar_type residual;      /* max residual for the iterative solvers       */
   scalar_type conv_max;
-  unsigned dir_with_mult;
+  unsigned dir_with_mult, option;
   
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -119,14 +167,15 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
 
-  void error_estimate(const plain_vector &U, plain_vector ERR);
+  void error_estimate(const plain_vector &U, plain_vector &ERR);
   
   void init(void);
   crack_problem(void) : mls(mesh), mim(mls),
 			mimbound(mls, getfem::mesh_im_level_set::INTEGRATE_BOUNDARY),
 			mf_pre_u(mesh), mf_mult(mesh), mf_sing_u(mesh),
 			mfls_u(mls, mf_pre_u),
-			mf_u_sum(mesh), mf_rhs(mesh), ls(mesh, 1, true) {}
+			mf_u_sum(mesh), exact_sol(mesh),
+			mf_rhs(mesh), ls(mesh, 1, true) {}
 
 };
 
@@ -142,6 +191,7 @@ void crack_problem::init(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
+  option = PARAM.int_value("OPTION", "option");
 
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -153,20 +203,22 @@ void crack_problem::init(void) {
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
-  std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps ") * 2);
+  size_type NX = PARAM.int_value("NX", "Nomber of space steps ");
+  if (option == 1) NX *= 2;
+  std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
-  for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-    base_node pt = gmm::mean_value(mesh.points_of_convex(i)) ;
-    bool kill = true;
-    for (size_type j = 0; j < N; ++j)
-      if (pt[j] < 0.5) kill = false;
-    if (kill) mesh.sup_convex(i, true);
-  }
+  if (option == 1)
+    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
+      base_node pt = gmm::mean_value(mesh.points_of_convex(i)) ;
+      bool kill = true;
+      for (size_type j = 0; j < N; ++j)
+	if (pt[j] < 0.5) kill = false;
+      if (kill) mesh.sup_convex(i, true);
+    }
   
-  lx = PARAM.real_value("LX","length x'ox");
-  ly = PARAM.real_value("LY","length y'oy");
+  lx = PARAM.real_value("LX", "length x'ox");
+  ly = PARAM.real_value("LY", "length y'oy");
   
   bgeot::base_matrix M(2,2);
   M(0,0) = lx;   
@@ -177,7 +229,7 @@ void crack_problem::init(void) {
   // mesh.translation(tt); 
 
   conv_max = PARAM.int_value("CONV_MAX","Maximal number of convexes in the mesh");
-  adapted_refine = PARAM.int_value("ADAPTED_REFINE","Adapted Refinement");
+  adapted_refine = PARAM.int_value("ADAPTED_REFINE", "Adapted Refinement");
   
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL");
@@ -236,33 +288,45 @@ void crack_problem::init(void) {
     
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1]-1.0) < 1.0E-7) {
-      base_node pt = gmm::mean_value(mesh.points_of_face_of_convex(i.cv(), i.f()));
-      if (pt[N-1] > 0.9) mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+    switch (option) {
+    case 0 :
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+      break;
+    case 1 :
+      if (gmm::abs(un[N-1]-1.0) < 1.0E-7) {
+	base_node pt = gmm::mean_value(mesh.points_of_face_of_convex(i.cv(), i.f()));
+	if (pt[N-1] > 0.9) mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+      }
+      else if (gmm::abs(un[N-1]+1.0) < 1.0E-7)
+	mesh.region(NEUMANN_BOUNDARY_NUM1).add(i.cv(), i.f());
+      else
+	mesh.region(NEUMANN_BOUNDARY_NUM2).add(i.cv(), i.f());
+      break;
     }
-    else if (gmm::abs(un[N-1]+1.0) < 1.0E-7)
-      mesh.region(NEUMANN_BOUNDARY_NUM1).add(i.cv(), i.f());
-    else
-      mesh.region(NEUMANN_BOUNDARY_NUM2).add(i.cv(), i.f());
   }
 }
 
 
-base_small_vector ls_function(const base_node P, int num = 0) {
+base_small_vector ls_function(const base_node P, int option) {
   scalar_type x = P[0], y = P[1];
   base_small_vector res(2);
-  switch (num) {
-    case 0: {
-      res[0] =  2* x - y - 0.5;
-      res[1] =  7.0/8.0 - (x + 2*y);
-    } break;
-    default: assert(0);
+  switch (option) {
+  case 0:
+    res[0] =  y-0.5;
+    res[1] =  x-0.5;
+    break;
+  case 1:
+    //       res[0] =  2.2* x - y - 0.6;
+    //       res[1] =  1.0 - (x + 2.2*y);
+    res[0] =  2.* x - y - 0.5; // crack tip on (0.375, 0.25).
+    res[1] =  7./8. - 0.001 - (x + 2.*y);
+    break;
+  default: assert(0);
   }
   return res;
 }
 
-
-void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
+void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 
 
   size_type N = mesh.dim();
@@ -275,9 +339,11 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
   bgeot::geotrans_inv_convex gic;
   base_node xref2(N);
   base_small_vector up(N), jump(N);
+  
 
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
-
+    
+    getfem::mesher_level_set mmls = ls.mls_of_convex(cv, 0);
     bgeot::pgeometric_trans pgt1 = mesh.trans_of_convex(cv);
     getfem::papprox_integration pai1 = 
       get_approx_im_or_fail(mim.int_method_of_element(cv));
@@ -302,49 +368,78 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
 	for (size_type j = 0; j < N; ++j)
 	  res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j);
       
-      ERR[cv] += radius * radius * ctx1.J() * pai1->coeff(ii) * gmm::vect_norm2(res);
+      // cout << "adding " << radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res) << endl;
+      ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res);
     }
+
+    scalar_type ee = ERR[cv];
+    if (ERR[cv] > 100)
+      cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;
 
     // Stress on the level set.
-    getfem::papprox_integration pai_crack = 
-      get_approx_im_or_fail(mimbound.int_method_of_element(cv));
-    
-    getfem::mesher_level_set mmls = ls.mls_of_convex(cv, 0);
-    base_small_vector gradls;
-    for (unsigned ii=0; ii < pai_crack->nb_points(); ++ii) {
+   
+    getfem::pintegration_method pim = mimbound.int_method_of_element(cv);
+
+    if (pim->type() == getfem::IM_APPROX) {
+      getfem::papprox_integration pai_crack = pim->approx_method();
       
-      ctx1.set_xref(pai_crack->point(ii));
-      mmls.grad(pai_crack->point(ii), gradls);
-      gmm::mult(ctx1.B(), gradls, up);
-      scalar_type norm = gmm::vect_norm2(up), normls = gmm::vect_norm2(gradls);
-      up /= norm;
-      scalar_type coefficient = pai_crack->coeff(ii) * ctx1.J() * norm / normls; 
-
-      for (scalar_type e = -1.0; e < 2.0; e += 2.0) {
+      base_small_vector gradls;
+      for (unsigned ii=0; ii < pai_crack->nb_points(); ++ii) {
 	
-	base_node ptref = pai_crack->point(ii) + e * 1.0e-7 * gradls;
-	ctx1.set_xref(ptref);
-	pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
-	gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
-	gmm::scale(E, 0.5);
-	scalar_type trace = gmm::mat_trace(E);
-	gmm::copy(gmm::identity_matrix(), S1);
-	gmm::scale(S1, lambda * trace);
-	gmm::add(gmm::scaled(E, 2*mu), S1);
-	gmm::mult(S1, up, jump);
+	ctx1.set_xref(pai_crack->point(ii));
+	mmls.grad(pai_crack->point(ii), gradls);
+	gradls /= gmm::vect_norm2(gradls);
+	gmm::mult(ctx1.B(), gradls, up);
+	scalar_type norm = gmm::vect_norm2(up);
+	up /= norm;
+	scalar_type coefficient = pai_crack->coeff(ii)*ctx1.J()*norm; 
 	
-	ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
+	for (scalar_type e = -1.0; e < 2.0; e += 2.0) {
+	  
+	  base_node ptref = pai_crack->point(ii) + e * 1.0E-7 * gradls;
+	  if (pgt1->convex_ref()->is_in(ptref) > 0.) continue;
+	  ctx1.set_xref(ptref);
+	  pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
+	  // cout << "coeff1 = " << coeff1 << endl;
+	  // cout << "grad1 = " << grad1 << endl;
+	  gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
+	  gmm::scale(E, 0.5);
+	  // cout << "E = " << grad1 << endl;
+	  scalar_type trace = gmm::mat_trace(E);
+	  gmm::copy(gmm::identity_matrix(), S1);
+	  gmm::scale(S1, lambda * trace);
+	  gmm::add(gmm::scaled(E, 2*mu), S1);
+	  // cout << "S1 = " << S1 << endl;
+	  // cout << "up = " << up << endl;
+	  gmm::mult(S1, up, jump);
+	  // cout << "jump = " << jump << endl;
+	
+	  ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
 
+	  if (gmm::vect_norm2_sqr(jump) > 100000) {
+	    // cout.precision(14);
+	    // cout << "gmm::vect_norm2_sqr(jump) = " << gmm::vect_norm2_sqr(jump) << " on cv " << cv << " pt " << ctx1.xreal() << endl; getchar();
+// 	    cout << "S1 = " << S1 << endl;
+// 	    cout << "up = " << up << endl;
+// 	    cout << "jump = " << jump << endl;
+// 	    cout << "point = " << ctx1.xreal() << endl;
+	  }
+	}
       }
     }
+
+    if (ERR[cv]-ee > 100)
+      cout << "Erreur en contrainte sur la level set sur element " << cv << " : " << ERR[cv]-ee << "  radius = " << radius << endl;
+    ee = ERR[cv];
  
     // jump of the stress between the element ant its neighbours.
     for (unsigned f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
-      
-      
-      size_type cvn = mesh.neighbour_of_convex(cv, f1);
+      if (gmm::abs(mmls(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
+      size_type cvn = mesh.neighbour_of_convex(cv, f1);
+      if (cvn == size_type(-1)) continue;
+	
       bgeot::pgeometric_trans pgt2 = mesh.trans_of_convex(cvn);
       getfem::pfem pf2 = mf_u().fem_of_element(cvn);
       bgeot::vectors_to_base_matrix(G2, mesh.points_of_convex(cvn));
@@ -391,6 +486,10 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector ERR) {
       
     }
 
+    if (ERR[cv]-ee > 100)
+      cout << "Erreur en contrainte inter element sur element " << cv << " : " << ERR[cv]-ee << endl;
+    ee = ERR[cv];
+
   }
   
 }
@@ -409,7 +508,8 @@ bool crack_problem::solve(plain_vector &U) {
     size_type nb_dof_rhs = mf_rhs.nb_dof();
     ls.reinit();
     for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-      base_small_vector v =  ls_function(ls.get_mesh_fem().point_of_dof(d), 0);
+      base_small_vector v =  ls_function(ls.get_mesh_fem().point_of_dof(d),
+					 option);
       ls.values(0)[d] = v[0];
       ls.values(1)[d] = v[1];
     }
@@ -418,6 +518,7 @@ bool crack_problem::solve(plain_vector &U) {
     mim.adapt();
     mfls_u.adapt();
     mimbound.adapt();
+    exact_sol.init(1, lambda, mu, ls);
  
     cout << "Setting up the singular functions for the enrichment\n";
     std::vector<getfem::pglobal_function> vfunc(4);
@@ -434,7 +535,13 @@ bool crack_problem::solve(plain_vector &U) {
     }
     mf_sing_u.set_functions(vfunc);
 
-    mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
+
+    if (PARAM.int_value("ENRICHED", "Enrichment with singular functions")) {
+      cout << "enriched version\n";
+      mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
+    }
+    else
+      mf_u_sum.set_mesh_fems(mfls_u);
 
     getfem::mdbrick_isotropic_linearized_elasticity<>
       ELAS(mim, mf_u(), lambda, mu);
@@ -451,6 +558,9 @@ bool crack_problem::solve(plain_vector &U) {
     // Dirichlet condition brick.
     getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
     DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
+
+    if (option == 0)
+      DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
   
     getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
 
@@ -471,16 +581,25 @@ bool crack_problem::solve(plain_vector &U) {
     if (adapted_refine && mesh.convex_index().card() < conv_max) {
       plain_vector ERR(mesh.convex_index().last_true()+1);
       error_estimate(U, ERR);
+      // getfem::error_estimate(mim, mf_u(), U, ERR);
 
       // cout << "ERR = " << ERR << endl; 
     
       cout << "max = " << gmm::vect_norminf(ERR) << endl;
       scalar_type threshold = PARAM.real_value("REFINE_THRESHOLD",
 					       "threshold for the refinement");
+      scalar_type min_radius_elt = PARAM.real_value("MIN_RADIUS_ELT",
+						  "Min radius for an element");
       scalar_type min_ = 1e18;
       conv_to_refine.clear();
       for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	if (ERR[i] > threshold) conv_to_refine.add(i);
+	if (ERR[i] > threshold) {
+	  if (mesh.convex_radius_estimate(i) > min_radius_elt)
+	    conv_to_refine.add(i);
+	  else cout << "Tried to refine elt " << i
+		    << " which is too small, radius "
+		    << mesh.convex_radius_estimate(i) << endl;
+	}
 	min_ = std::min(min_, ERR[i]);
       }
       cout << "min = " << min_ << endl;
@@ -563,7 +682,7 @@ int main(int argc, char *argv[]) {
       base_node Pmin,P;
       for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
 	P = mcut.points_of_convex(cv)[i];
-	d = gmm::vect_norm2(ls_function(P));
+	d = gmm::vect_norm2(ls_function(P, p.option));
 	if (d < dmin || i == 0) { dmin = d; Pmin = P; }
       }
       
@@ -572,7 +691,7 @@ int main(int argc, char *argv[]) {
       else if (dmin < .1) 
 	nrefine[cv] = nn*2;
       else nrefine[cv] = nn;
-      nrefine[cv] = 1;
+      // nrefine[cv] = 1;
       // if (dmin < .01)
       //  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin 
       //       << " " << nrefine[cv] << "\n";
@@ -609,6 +728,13 @@ int main(int argc, char *argv[]) {
       
       plain_vector D(mf_refined_vm.nb_dof() * Q), 
 	DN(mf_refined_vm.nb_dof());
+
+
+      mf_refined.write_to_file(p.datafilename + ".meshfem2", true);
+      mf_refined_vm.write_to_file(p.datafilename + ".meshfem_vm2", false);
+      gmm::vecsave(p.datafilename + ".U2", W);
+      gmm::vecsave(p.datafilename + ".VM2", VM);
+      
       
       
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
