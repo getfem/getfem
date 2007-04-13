@@ -319,7 +319,7 @@ base_small_vector ls_function(const base_node P, int option) {
     //       res[0] =  2.2* x - y - 0.6;
     //       res[1] =  1.0 - (x + 2.2*y);
     res[0] =  2.* x - y - 0.5; // crack tip on (0.375, 0.25).
-    res[1] =  7./8. - 0.001 - (x + 2.*y);
+    res[1] =  7./8. - (x + 2.*y);
     break;
   default: assert(0);
   }
@@ -392,7 +392,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	gmm::mult(ctx1.B(), gradls, up);
 	scalar_type norm = gmm::vect_norm2(up);
 	up /= norm;
-	scalar_type coefficient = pai_crack->coeff(ii)*ctx1.J()*norm; 
+	scalar_type coefficient = pai_crack->coeff(ii)*ctx1.J(); 
 	
 	for (scalar_type e = -1.0; e < 2.0; e += 2.0) {
 	  
@@ -416,20 +416,24 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	
 	  ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
 
-	  if (gmm::vect_norm2_sqr(jump) > 100000) {
-	    // cout.precision(14);
-	    // cout << "gmm::vect_norm2_sqr(jump) = " << gmm::vect_norm2_sqr(jump) << " on cv " << cv << " pt " << ctx1.xreal() << endl; getchar();
-// 	    cout << "S1 = " << S1 << endl;
-// 	    cout << "up = " << up << endl;
-// 	    cout << "jump = " << jump << endl;
-// 	    cout << "point = " << ctx1.xreal() << endl;
-	  }
+// 	  if (gmm::vect_norm2_sqr(jump) > 100) {
+// 	    cout.precision(14);
+// 	    cout << "\ngmm::vect_norm2_sqr(jump) = "
+// 		 << gmm::vect_norm2_sqr(jump) << " on cv " << cv
+// 		 << " pt " << ctx1.xreal() << endl;
+//  	    cout << "S1 = " << S1 << "up = " << up << endl;
+//  	    cout << "jump = " << jump << " coefficient = "
+// 		 << coefficient << endl;
+// 	  }
 	}
       }
     }
 
-    if (ERR[cv]-ee > 100)
-      cout << "Erreur en contrainte sur la level set sur element " << cv << " : " << ERR[cv]-ee << "  radius = " << radius << endl;
+    if (ERR[cv]-ee > 100) {
+      cout << "Erreur en contrainte sur la level set sur element " << cv
+	   << " : " << ERR[cv]-ee << "  radius = " << radius << endl;
+      // getchar();
+    }
     ee = ERR[cv];
  
     // jump of the stress between the element ant its neighbours.
@@ -540,8 +544,10 @@ bool crack_problem::solve(plain_vector &U) {
       cout << "enriched version\n";
       mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
     }
-    else
+    else {
+      cout << "nonenriched version\n";
       mf_u_sum.set_mesh_fems(mfls_u);
+    }
 
     getfem::mdbrick_isotropic_linearized_elasticity<>
       ELAS(mim, mf_u(), lambda, mu);
