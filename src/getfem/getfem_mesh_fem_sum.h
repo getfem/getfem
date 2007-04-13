@@ -20,11 +20,12 @@
 //
 //========================================================================
 /**@file getfem_mesh_fem_sum.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date March 18, 2005.
-   @brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.
+   @brief Implement a special mesh_fem with merges the FEMs of two
+    (or more) mesh_fems.
 */
-
 
 #ifndef GETFEM_MESH_SUM_H__
 #define GETFEM_MESH_SUM_H__
@@ -43,7 +44,10 @@ namespace getfem {
   public:
 
     size_type index_of_global_dof(size_type cv_, size_type j) const;
-    fem_sum(const std::vector<pfem> &pfs, size_type i, bool smart_global_dof_linking) : pfems(pfs), smart_global_dof_linking_(smart_global_dof_linking), cv(i) { init(); }
+    fem_sum(const std::vector<pfem> &pfs, size_type i,
+	    bool smart_global_dof_linking)
+      : pfems(pfs), smart_global_dof_linking_(smart_global_dof_linking),
+	cv(i) { init(); }
     void init();
     void valid();
     void base_value(const base_node &x, base_tensor &t) const;
@@ -61,7 +65,9 @@ namespace getfem {
   };
 
 
-  /** @brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.*/
+  /** @brief Implement a special mesh_fem with merges the FEMs of
+      two (or more) mesh_fems.
+  */
   class mesh_fem_sum : public mesh_fem {
   protected :
     std::vector<const mesh_fem *> mfs;
@@ -88,7 +94,8 @@ namespace getfem {
     }
     
     mesh_fem_sum(const mesh &me, bool smart_global_dof_linking = false)
-      : mesh_fem(me), smart_global_dof_linking_(smart_global_dof_linking) { is_adapted = false; }
+      : mesh_fem(me), smart_global_dof_linking_(smart_global_dof_linking)
+    { is_adapted = false; }
     void set_mesh_fems(const std::vector<const mesh_fem *> &mefs)
     { mfs = mefs; adapt(); }
     /** enabled "smart" dof linking between the mesh_fems. 
@@ -102,9 +109,12 @@ namespace getfem {
     { mfs.clear(); mfs.push_back(&mf1); adapt(); }
     void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2)
     { mfs.clear(); mfs.push_back(&mf1); mfs.push_back(&mf2);  adapt(); }
-    void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2, const mesh_fem &mf3)
-    { mfs.clear(); mfs.push_back(&mf1); mfs.push_back(&mf2); mfs.push_back(&mf3);  adapt(); }
-
+    void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2,
+		       const mesh_fem &mf3) {
+      mfs.clear();
+      mfs.push_back(&mf1); mfs.push_back(&mf2); mfs.push_back(&mf3);
+      adapt();
+    }
 
     ~mesh_fem_sum() { clear_build_methods(); }
   };
