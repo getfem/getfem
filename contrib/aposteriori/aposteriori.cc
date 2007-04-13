@@ -318,8 +318,8 @@ base_small_vector ls_function(const base_node P, int option) {
   case 1:
     //       res[0] =  2.2* x - y - 0.6;
     //       res[1] =  1.0 - (x + 2.2*y);
-    res[0] =  2.* x - y - 0.5; // crack tip on (0.375, 0.25).
-    res[1] =  7./8. - (x + 2.*y);
+    res[0] =  (2.* x - y - 0.5) / sqrt(5); // crack tip on (0.375, 0.25).
+    res[1] =  (7./8. - (x + 2.*y)) / sqrt(5);
     break;
   default: assert(0);
   }

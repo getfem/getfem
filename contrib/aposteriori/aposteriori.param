@@ -9,7 +9,7 @@ LAMBDA = 200.0;   	% Lame coefficient.
 
 ADAPTED_REFINE = 1;      % 0 to disable adapted refinement 
                          % 1 to enable it
-REFINE_THRESHOLD = 1;
+REFINE_THRESHOLD = 0.001;
 % REFINE_THRESHOLD = 1E-8;
 
 MIN_RADIUS_ELT = 1E-7;  % Min radius for an element in the refinement process.
@@ -25,7 +25,7 @@ CUTOFF0 = 0.3;
 
 ENRICHED = 1;    % Enrichment or not with singular functions
 
-OPTION = 0; % 0 = opening mode
+OPTION = 1; % 0 = opening mode
             % 1 = L shaped domain.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
@@ -35,7 +35,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 
 LX = 1;			  % mesh size x'ox
 LY = 1;	                  % mesh size y'oy
-NX = 4;            	  % space step.
+NX = 8;            	  % space step.
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
@@ -53,15 +53,15 @@ DIRICHLET_VERSION = 0;
 % DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
-SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),10)';
 
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 3)';
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 10)';
 
-INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 3)';
+INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
 
 %INTEGRATION = 'IM_TRIANGLE(6)';
