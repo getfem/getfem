@@ -62,7 +62,7 @@ void print_stat(const PS &ps, const char *name) {
     double ratio = double(s.nb_fault) / double(s.nb_expe);
     ratio_max = std::max(ratio, ratio_max);
     cout << ", ratio = " << ratio;
-    cout << ", iter mean = " << double(s.nb_iter) / double(s.nb_expe);
+    cout << ", average nb iter = " << double(s.nb_iter) / double(s.nb_expe);
   } 
   cout << endl;
 }
