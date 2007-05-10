@@ -3,6 +3,17 @@ from numarray import *
 
 print 'This is the "modern" tripod demo, which uses the getfem model bricks'
 print 'importing the mesh..',
+
+with_graphics=True
+try:
+    import getfem_tvtk
+except:
+    print "\n** Could NOT import getfem_tvtk -- graphical output disabled **\n"
+    import time
+    time.sleep(2)
+    with_graphics=False
+
+
 m=Mesh('import','gid','../meshes/tripod.GiD.msh')
 print 'done!'
 mfu=MeshFem(m,3) # displacement
@@ -96,3 +107,10 @@ U.tofile('tripod.U')
 mfe.save('tripod.mfe')
 VM.tofile('tripod.VM')
 #memstats()
+
+if with_graphics:
+  fig = getfem_tvtk.Figure()
+  fig.show(mfu, deformation=U, data=(mfe,VM))
+  print "Press Q to continue.."
+  fig.set_colormap('tripod')
+  fig.loop()

@@ -398,7 +398,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       @*/
     assemble_source(size_type(-1), in, out);
   } else if (check_cmd(cmd, "boundary source", in, out, 5, 5, 0, 1)) {
-    /*@FUNC ::ASM('boundary source', @tmim mim, boundary_num, @tmf mf_u, @tmf mf_d, @dvec G)
+    /*@FUNC ::ASM('boundary source', boundary_num, @tmim mim, @tmf mf_u, @tmf mf_d, @dvec G)
       Assembly of a boundary source term.
       
       G should be a [QDIM x N] matrix, where N is the number of degree of freedom
