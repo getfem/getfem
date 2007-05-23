@@ -209,6 +209,8 @@ namespace gmm {
       if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
 	ParseRfmt(Valfmt,&Valperline,&Valwidth,&Valprec,&Valflag);
       }
+
+      cout << "Valwidth = " << Valwidth << endl; getchar();
     
       /*  Read column pointer array:   */
       offset = 0;         /* if base 0 storage is declared (via macro def),  */
@@ -396,7 +398,7 @@ namespace gmm {
     if ( nz%Indperline != 0) indcrd++;
     
     if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
-      if ( Valfmt == NULL ) Valfmt = "(4E20.13)";
+      if ( Valfmt == NULL ) Valfmt = "(4E21.13)";
       ParseRfmt(Valfmt, &Valperline, &Valwidth, &Valprec, &Valflag);
       if (Valflag == 'D') *strchr(Valfmt,'D') = 'E';
       if (Valflag == 'F')
