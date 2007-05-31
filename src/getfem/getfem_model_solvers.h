@@ -351,7 +351,7 @@ namespace getfem {
   template <typename MODEL_STATE>
   typename useful_types<MODEL_STATE>::plsolver_type
   select_linear_solver(const mdbrick_abstract<MODEL_STATE> &problem,
-		       std::string &name) {
+		       const std::string &name) {
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::vector_type VECTOR;
     

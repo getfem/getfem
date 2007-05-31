@@ -1064,6 +1064,11 @@ int main(int argc, char *argv[]) {
 	   << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
 				  p.exact_sol.mf, p.exact_sol.U) << "\n";
       
+       
+      cout << "L2 norm of the solution:"  << getfem::asm_L2_norm(p.mim,p.mf_u(),U)<<endl;
+      cout << "H1 norm of the solution:"  << getfem::asm_H1_norm(p.mim,p.mf_u(),U)<<endl;
+
+
       /* cout << "OLD ERROR L2:" 
 	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
 	 << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,

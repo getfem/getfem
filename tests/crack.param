@@ -23,7 +23,8 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-NX = 28;            	          % space step.
+
+NX = 20;            	          % space step.
 
 MESH_NOISED = 1; % Set to one if you want to "shake" the mesh
 
@@ -69,8 +70,6 @@ ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
 		        % 3 = global functions with cutoff
 			% 4 = spider fem alone
 	                % 5 = spider fem enrichment
-
-
 
 
 RADIUS_ENR_AREA = 0.2;

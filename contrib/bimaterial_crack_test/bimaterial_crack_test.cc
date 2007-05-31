@@ -587,9 +587,11 @@ bool crack_problem::solve(plain_vector &U) {
   case 1:
   case 2:{
     if (mode == 1){
+      cout << "Mode I problem..." << endl;
       F11 = 0; F12 = neumann_value; F21 = 0; F22 = 0; F31 = 0; F32 = 0; F41 = 0; F42 = -neumann_value;
     } else 
       if(mode == 2){
+	cout << "Mode II problem..." << endl;
 	F11 = 0; F12 = 0; F21 = neumann_value; F22 = 0; F31 = -neumann_value; F32 = 0; F41 = 0; F42 = 0;
       }
     
@@ -685,8 +687,10 @@ bool crack_problem::solve(plain_vector &U) {
       
       getfem::mdbrick_source_term<> NEUMANN_up(NEUMANN_right_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_up);
       
-      if (all_dirichlet)
-	pNEUMANN = & VOL_F; 
+      if (all_dirichlet){
+	cout << "Exact -DIRICHLET- Mode I problem..." << endl;
+	pNEUMANN = & VOL_F;
+      }
       else 
 	pNEUMANN = & NEUMANN_up; 
       
@@ -712,7 +716,8 @@ bool crack_problem::solve(plain_vector &U) {
       getfem::standard_model_state MS(final_model);
       gmm::iteration iter(residual, 1, 40000);
       
-      getfem::standard_solve(MS, final_model, iter);
+      //getfem::standard_solve(MS, final_model, iter);
+      getfem::standard_solve(MS, final_model, iter, getfem::select_linear_solver(final_model, "superlu"));
       
       // Solution extraction
       gmm::copy(ELAS.get_solution(MS), U);
@@ -728,7 +733,8 @@ bool crack_problem::solve(plain_vector &U) {
 	  scalar_type threshold = 0.01, min_ = 1e18;
 	  conv_to_refine.clear();
 	  for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	    if (ERR[i] > threshold) conv_to_refine.add(i);
+	    if (ERR[i] > threshold && mesh.points()[mesh.ind_points_of_convex(i)[0]][0] >= -0.1) 
+	      conv_to_refine.add(i);
 	    min_ = std::min(min_, ERR[i]);
 	  }
 	  cout << "min = " << min_ << endl;
@@ -755,8 +761,8 @@ bool crack_problem::solve(plain_vector &U) {
     oss << mode;
     std::string mode_string = oss.str();
 
-    mf_printed.write_to_file(datafilename + "_mode"  + mode_string +  " .meshfem", true);
-    gmm::vecsave(datafilename + "_mode" + mode_string + ".U", W);
+    mf_printed.write_to_file(datafilename + mode_string +  ".meshfem", true);
+    gmm::vecsave(datafilename + mode_string + ".U", W);
 
   }break;
     
@@ -902,8 +908,9 @@ bool crack_problem::solve(plain_vector &U) {
 	getfem::standard_model_state MS(final_model);
 	gmm::iteration iter(residual, 1, 40000);
 	
-	getfem::standard_solve(MS, final_model, iter);
-	
+	// getfem::standard_solve(MS, final_model, iter);
+	getfem::standard_solve(MS, final_model, iter, getfem::select_linear_solver(final_model, "superlu"));
+
 	// Solution extraction
 	gmm::copy(ELAS.get_solution(MS), U);
 	iteration = iter.converged();  
@@ -918,7 +925,8 @@ bool crack_problem::solve(plain_vector &U) {
 	    scalar_type threshold = 0.01, min_ = 1e18;
 	    conv_to_refine.clear();
 	    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	      if (ERR[i] > threshold) conv_to_refine.add(i);
+	      if (ERR[i] > threshold && mesh.points()[mesh.ind_points_of_convex(i)[0]][0] >= -0.1) 
+		conv_to_refine.add(i);
 	      min_ = std::min(min_, ERR[i]);
 	    }
 	    cout << "min = " << min_ << endl;
@@ -957,6 +965,8 @@ bool crack_problem::solve(plain_vector &U) {
 	  W12[j] = W1[i];
 	  j=j+2;  
 	}
+	cout << "W1[0]= " << W1[0] << "W1[1]= " << W1[1] << "W1[2]= " << W1[2] << "W1[3]= " << W1[3] << endl; 
+	cout << "W12[0]= " << W12[0] << " W12[1]= " << W12[1] << " W12[2]= " << W12[2] << " W12[3]= " << W12[3] << " W12[4]= " << W12[4] <<  " W12[5]= " << W12[5] <<  " W12[6]= " << W12[6]  << endl; 
       } break;
 	
       case 2:{
@@ -972,7 +982,8 @@ bool crack_problem::solve(plain_vector &U) {
 
       mode_counter++;
     } while(mode_counter < 3);
-    
+    mf_printed.write_to_file(datafilename + "12.meshfem_", true);
+    mf_printed.set_qdim(4);  
     mf_printed.write_to_file(datafilename + "12.meshfem", true);
     gmm::vecsave(datafilename + "12.U", W12);
 

@@ -63,6 +63,8 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 #ifdef VALIDATE_XFEM
 
+
+
 /* returns sin(theta/2) where theta is the angle
    of 0-(x,y) with the axis Ox */
 scalar_type sint2(scalar_type x, scalar_type y) {
@@ -298,6 +300,10 @@ base_small_vector sol_f(const base_node &x) {
 
 #endif
 
+
+
+
+
 /**************************************************************************/
 /*  Structure for the crack problem.                                      */
 /**************************************************************************/
@@ -356,6 +362,7 @@ struct crack_problem {
 
   std::string datafilename;
   
+  int reference_test;
   std::string GLOBAL_FUNCTION_MF, GLOBAL_FUNCTION_U;
 
   bgeot::md_param PARAM;
@@ -467,6 +474,7 @@ void crack_problem::init(void) {
   GLOBAL_FUNCTION_MF = PARAM.string_value("GLOBAL_FUNCTION_MF");
   GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
 
+  reference_test = PARAM.int_value("REFERENCE_TEST", "Reference test"); 
   
 
 
@@ -694,6 +702,7 @@ bool crack_problem::solve(plain_vector &U) {
   
     for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
       f >> W[i]; GMM_ASSERT1(f.good(), "problem while reading " << GLOBAL_FUNCTION_U);
+      
       //cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
       /*scalar_type x = pow(mf_c->point_of_dof(i)[0],2); scalar_type y = pow(mf_c->point_of_dof(i)[1],2);
 	scalar_type r = std::sqrt(pow(x,2) + pow(y,2));
@@ -931,20 +940,28 @@ bool crack_problem::solve(plain_vector &U) {
   
   
   if(bimaterial ==  1){
+    //down side
     for(size_type i = 1; i<F.size(); i=i+2) 
-      F[i]=-0.2;
+      F[i] = -0.2;
+    for(size_type i = 0; i<F.size(); i=i+2) 
+      F[i] = -0;
   }
   
   getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);   
-  
-  gmm::clear(F);
-  getfem::mdbrick_source_term<> NEUMANN_HOM(NEUMANN, mf_rhs, F,NEUMANN_HOMOGENE_BOUNDARY_NUM);
-   
-  
+  //left side (crack opening side)
   gmm::clear(F);
   for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i]=0.2;
-  
+    F[i] = 0.;
+  for(size_type i = 0; i<F.size(); i=i+2) 
+    F[i] = -0.1;
+  getfem::mdbrick_source_term<> NEUMANN_HOM(NEUMANN, mf_rhs, F,NEUMANN_HOMOGENE_BOUNDARY_NUM);
+   
+    //upper side
+  gmm::clear(F);
+  for(size_type i = 1; i<F.size(); i=i+2) 
+    F[i] = 0.2;
+  for(size_type i = 0; i<F.size(); i=i+2) 
+    F[i] = -0.2;
   getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
   
   if (bimaterial ==1)
@@ -1036,7 +1053,7 @@ bool crack_problem::solve(plain_vector &U) {
 	H(n, d) = 1;
       }
     }
-    
+
     
     
     getfem::base_vector R(gmm::mat_nrows(H));
@@ -1053,6 +1070,25 @@ bool crack_problem::solve(plain_vector &U) {
   
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
+  
+  if(reference_test)
+    {
+      cout << "Reference solution export...";
+      dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
+      getfem::mesh_fem mf_refined(mesh, N);
+      std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
+      mf_refined.set_finite_element(mesh.convex_index(),
+				    getfem::fem_descriptor(FEM_DISC));
+      
+      plain_vector W(mf_refined.nb_dof());
+      getfem::interpolation(mf_u(), mf_refined, U, W);
+      
+      
+      mf_refined.write_to_file(datafilename + "_refined_test.meshfem", true);
+      gmm::vecsave(datafilename + "_refined_test.U", W);
+      cout << "done" << endl;
+    }
+  
   
   return (iter.converged());
 }
@@ -1081,7 +1117,8 @@ int main(int argc, char *argv[]) {
     //        for (size_type i = 4; i < U.size(); ++i)
     //U[i] = 0;
     //cout << "The solution" << U ;
-    
+     gmm::vecsave("crack.U", U);
+     cout << "vecsave done"<<endl;
     { 
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
@@ -1145,6 +1182,7 @@ int main(int argc, char *argv[]) {
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
+
 #ifdef VALIDATE_XFEM
       p.exact_sol.mf.set_qdim(Q);
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
@@ -1206,25 +1244,69 @@ int main(int argc, char *argv[]) {
 	exp2.write_point_data(mf_refined, EXACT, "reference solution");
 	
 #endif
-
+	
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f  "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
 
+      //bool error_to_ref_sol = 0;
+      
+      if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
+	cout << "Coputing error with respect to a reference solution..." << endl;
+	std::string REFERENCE_MF = "crack_refined_test.meshfem";
+	std::string REFERENCE_U = "crack_refined_test.U";
+	
+	cout << "Load reference meshfem and solution from " << REFERENCE_MF << " and " << REFERENCE_U << "\n";
+	getfem::mesh ref_m; 
+	ref_m.read_from_file(REFERENCE_MF);
+	getfem::mesh_fem ref_mf(ref_m); 
+	ref_mf.read_from_file(REFERENCE_MF);
+	std::fstream f(REFERENCE_U.c_str(), std::ios::in);
+	plain_vector ref_U(ref_mf.nb_dof());
+      
+	for (unsigned i=0; i < ref_mf.nb_dof(); ++i) {
+	  f >> ref_U[i]; if (!f.good()) DAL_THROW(gmm::failure_error, "problem while reading " << REFERENCE_U);
+	}
+	
+	getfem::mesh_im ref_mim(ref_m);
+	getfem::pintegration_method ppi = 
+	  getfem::int_method_descriptor("IM_TRIANGLE(6)");
+	ref_mim.set_integration_method(ref_m.convex_index(), ppi);
+	plain_vector interp_U(ref_mf.nb_dof());
+	getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);
+	
+	//gmm::add(gmm::scaled(interp_U, -1), ref_U);
+	  
 
+	cout << "TO ref L2 ERROR:"<< getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
+						  ref_mf, ref_U)
+	     << endl << "To ref H1 ERROR:"
+	     << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
+				    ref_mf, ref_U) << "\n";
+	
+	//cout << "L2 ERROR:"<< getfem::asm_L2_norm(ref_mim, ref_mf, ref_U)
+	//     << endl << "H1 ERROR:"
+	//     << getfem::asm_H1_norm(ref_mim, ref_mf, ref_U) << "\n";
+	
+      }
+      
+      
 #ifdef VALIDATE_XFEM
       cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
 						p.exact_sol.mf, p.exact_sol.U)
 	   << endl << "H1 ERROR:"
 	   << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
-				  p.exact_sol.mf, p.exact_sol.U) << "\n";
+	   			  p.exact_sol.mf, p.exact_sol.U) << "\n";
+
+      // cout << "Relative L2 Error"  << getfem::asm_L2_norm(p.mim,p.mf_u(),U)<<endl;
+      //cout << "Relative L2 Error"  << getfem::asm_H1_norm(p.mim,p.mf_u(),U)<<endl;
       
       /* cout << "OLD ERROR L2:" 
 	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
 	 << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,
 	 EXACT,mf_refined,W)  << "\n";
-
+	 
 	 cout << "ex = " << p.exact_sol.U << "\n";
 	 cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
       */
