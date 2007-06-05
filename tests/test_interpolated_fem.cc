@@ -252,6 +252,9 @@ void test2() {
   sparse_matrix_type MM2 = sparse_matrix_type(mf2.nb_dof(), mf2.nb_dof());
   getfem::asm_mass_matrix(MM2, mim, mf2, mf2);
   cout << "MM2=" << MM2 << "\n";
+  sparse_matrix_type MM3 = sparse_matrix_type(mflnk.nb_dof(), mflnk.nb_dof());
+
+  asm_stiffness_matrix_for_homogeneous_laplacian(MM3, mim, mflnk);
 }
 
 /**************************************************************************/

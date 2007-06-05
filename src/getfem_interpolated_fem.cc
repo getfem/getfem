@@ -190,6 +190,7 @@ namespace getfem {
 					 base_tensor &t, bool) const {
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type cv;
+
     mi2[1] = target_dim(); mi2[0] = e.nb_dof;
     t.adjust_sizes(mi2);
     std::fill(t.begin(), t.end(), scalar_type(0));
@@ -235,10 +236,11 @@ namespace getfem {
   
   void interpolated_fem::real_grad_base_value
   (const fem_interpolation_context& c, base_tensor &t, bool) const {
-
+    size_type N0 = mf.linked_mesh().dim();
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type nbdof = e.nb_dof, cv;
-    mi3[2] = dim(); mi3[1] = target_dim(); mi3[0] = nbdof;
+
+    mi3[2] = N0; mi3[1] = target_dim(); mi3[0] = nbdof;
     t.adjust_sizes(mi3);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (nbdof == 0) return;
@@ -268,9 +270,9 @@ namespace getfem {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    if (gpid.local_dof[i] != size_type(-1))
 	      for (size_type j = 0; j < target_dim(); ++j)
-		for (size_type k = 0; k < dim(); ++k) {
+		for (size_type k = 0; k < N0; ++k) {
 		  scalar_type ee(0);
-		  for (size_type l = 0; l < dim(); ++l)
+		  for (size_type l = 0; l < N0; ++l)
 		    ee += trans(l, k) * taux(i, j, l);
 		  t(gpid.local_dof[i], j, k) = ee;
 		}
@@ -279,7 +281,7 @@ namespace getfem {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    if (gpid.local_dof[i] != size_type(-1))
 	      for (size_type j = 0; j < target_dim(); ++j)
-		for (size_type k = 0; k < dim(); ++k)
+		for (size_type k = 0; k < N0; ++k)
 		  t(gpid.local_dof[i], j, k) = taux(i, j, k);
 	  if (store_values) { gpid.grad_val = t; gpid.iflags |= 4; }
 	}
@@ -299,10 +301,10 @@ namespace getfem {
 	  pif->grad(c.xreal(), trans);
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
-	      for (size_type k = 0; k < dim(); ++k)
+	      for (size_type k = 0; k < N0; ++k)
 		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1)) {
 		  scalar_type ee(0);
-		  for (size_type l = 0; l < dim(); ++l)
+		  for (size_type l = 0; l < N0; ++l)
 		    ee += trans(l, k) * taux(i, j, l);
 		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = ee;
 		}
@@ -310,7 +312,7 @@ namespace getfem {
 	else {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
-	      for (size_type k = 0; k < dim(); ++k)
+	      for (size_type k = 0; k < N0; ++k)
 		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
 		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
 	}
