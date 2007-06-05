@@ -38,6 +38,9 @@
 
 namespace getfem {
 
+
+  // To be done again using getfem_inter_element.h
+
   template <typename VECT1, typename VECT2>
     void error_estimate(const mesh_im &mim, const mesh_fem &mf,
 			const VECT1 &U, VECT2 &err,
