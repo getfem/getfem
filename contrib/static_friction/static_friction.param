@@ -35,10 +35,11 @@ DIRICHLET_RATIO = -.1; % parametre pour la condition de Dirichlet
 CONTACT_CONDITION = 2;  % 0 = Condition almost conformal in u
 			% 1 = Condition almost conformal in forces on contact
 			%     boundary with FEM_TYPE_L for the multipliers
-			% 2 = option 1 with additional Hansbo augmentation
+			% 2 = option 1 with additional Barbosa-Hughes
+                        %     stabilization
 			%     (only for the contact condition for the moment)
 if (CONTACT_CONDITION == 2)
-  GAMMA = 0.0001;       % Augmentation parameter for Hansbo method.
+  GAMMA = 0.0001;       % Stabilization parameter.
 end
 
 R = 100.0;              % Augmentation parameter
@@ -46,8 +47,8 @@ RESIDUAL = 1E-9;     	% residual for Newton.
 
 if (N == 2)
   MESH_TYPE = 'GT_PK(2, 1)';      % linear triangles
-  FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
-  FEM_TYPE_L = 'FEM_PK(2, 2)';    % FEM for the multipliers
+  FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
+  FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM for the multipliers
   if 0
     DATA_FEM_TYPE = 'FEM_PK(2,1)';% for non-Lagrangian main FEM
   end;
@@ -81,14 +82,14 @@ end;
 % MESHNAME='../../../tests/meshes/donut_regulier_800_elements.mesh';
 
 %%%%% disque en P2 %%%%%
-MESHNAME='../../../tests/meshes/disc_P2_h5.5.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h5.5.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h4.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h3.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h2.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h1.mesh';
-% MESHNAME='../../../tests/meshes/disc_P2_h0.5.mesh';
+MESHNAME='../../../tests/meshes/disc_P2_h0.5.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h0.25.mesh';
-MESHNAME='../../../tests/meshes/disc_P2_h0.15.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h0.15.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h0.075.mesh';
 
 %%%%%   saving parameters                                             %%%%%

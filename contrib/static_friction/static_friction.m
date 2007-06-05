@@ -3,7 +3,7 @@
 
 gf_workspace('clear all');
 
-option = 4; % 0 : reference solution
+option = 3; % 0 : reference solution
             % 1 : error
             % 2 : solution
             % 3 : contact stress
@@ -18,13 +18,14 @@ if (option == 1)
   gf_plot(mf, UERR, 'norm', 'on', 'refine', 1, 'deformation', U, 'deformation_mf', mf, 'deformed_mesh','off', 'deformation_scale', 1.0);
   colorbar;
   gf_colormap('chouette');
+  A = colormap; colormap(A(7:size(A,1),:));
 elseif (option == 2 || option == 0)
   if (option == 0)
-    mesh = gf_mesh('load', 'reference_sol3d.meshfem');
-    mf = gf_mesh_fem('load', 'reference_sol3d.meshfem', mesh);
-    mf_vm = gf_mesh_fem('load', 'reference_sol3d.meshfem_vm', mesh);
-    U = load('reference_sol3d.U')';
-    VM = load('reference_sol3d.VM')';
+    mesh = gf_mesh('load', 'reference_sol2d.meshfem');
+    mf = gf_mesh_fem('load', 'reference_sol2d.meshfem', mesh);
+    mf_vm = gf_mesh_fem('load', 'reference_sol2d.meshfem_vm', mesh);
+    U = load('reference_sol2d.U')';
+    VM = load('reference_sol2d.VM')';
   else 
     mesh = gf_mesh('load', 'static_friction.meshfem');
     mf = gf_mesh_fem('load', 'static_friction.meshfem', mesh);
@@ -37,6 +38,7 @@ elseif (option == 2 || option == 0)
     gf_plot(mf_vm, VM, 'norm', 'on', 'refine', 1, 'deformation', U, ...
       'deformation_mf', mf, 'deformed_mesh','off', 'deformation_scale', 1.0);
     gf_colormap('chouette');
+    A = colormap; colormap(A(7:size(A,1),:));
     xlabel('x'); ylabel('y');
     colorbar;
   else
@@ -76,12 +78,12 @@ elseif (option == 2 || option == 0)
     xlabel('x'); ylabel('y'); zlabel('z');
   end;
 elseif (option == 3)
-  % mesh = gf_mesh('load', 'reference_sol2d.meshfem');
-  % sll=gfSlice('load','reference_sol2d.sl');
-  % LN=load('reference_sol2d.LN')';
-  mesh = gf_mesh('load', 'static_friction.meshfem');
-  sll=gfSlice('load','static_friction.sl');
-  LN=load('static_friction.LN')';
+  mesh = gf_mesh('load', 'reference_sol2d.meshfem');
+  sll=gfSlice('load','reference_sol2d.sl');
+  LN=load('reference_sol2d.LN')';
+  % mesh = gf_mesh('load', 'static_friction.meshfem');
+  % sll=gfSlice('load','static_friction.sl');
+  % LN=load('static_friction.LN')';
   N = gf_mesh_get(mesh, 'dim');
   P0=gf_slice_get(sll, 'pts');
   % [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off', ...
@@ -301,10 +303,14 @@ end;
 axesobj = findobj('type', 'axes');
 set(axesobj, 'fontname', 'times');
 set(axesobj, 'fontunits', 'points');
-set(axesobj, 'fontsize', 32);
+set(axesobj, 'fontsize', 15);
 set(axesobj, 'fontweight', 'bold');
 
 
 % Pour certains graphiques, il vaut mieux renommer les "ticks" par
 %  set(gca,'XTickLabel',{'0.1';'1';'10';'...'})
 %  set(gca,'YTickLabel',{'0.0001%';'0.001%';'0.01%';'0.1%';'1%';'10%'})     
+
+
+% Pour sortir le graphique en png, faire par exemple :
+% print(gcf,'-dpng','-r450', 'toto.png');

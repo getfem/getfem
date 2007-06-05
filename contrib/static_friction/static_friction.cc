@@ -74,7 +74,7 @@ struct friction_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
-  scalar_type gamma;         /* augmentation parameter fof Hansbo method.    */
+  scalar_type gamma;       /* Stabilization parameter Barbosa-Hughes method. */
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   
@@ -245,7 +245,7 @@ void friction_problem::init(void) {
   contact_condition = PARAM.int_value("CONTACT_CONDITION",
 				      "type of contact condition");
   if (contact_condition == 2)
-    gamma = PARAM.real_value("GAMMA", "Hansbo augmentation parameter");
+    gamma = PARAM.real_value("GAMMA", "Stabilization parameter");
   noisy = PARAM.int_value("NOISY", "verbosity of iterative methods");
   mf_u.set_qdim(N);
   mf_l.set_qdim(N);
@@ -548,14 +548,14 @@ struct Coulomb_NewtonAS_struct
 
 
 /**************************************************************************/
-/*  Stiffness matrix for Hansbo augmentation and linear elasticity.       */
+/*  Stiffness matrix for Barbosa-Hughes method and linear elasticity.     */
 /**************************************************************************/
 /* attention, il manque le \gamma pour le moment.                         */
 
 namespace getfem {
 
   template<class MAT, class VECT>
-  void asm_stiffmatrix_for_hansbo_augmentation_on_linear_elasticity
+  void asm_stiffmatrix_for_stabilization_on_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mf_data, const VECT &LAMBDA, const VECT &MU,
    const mesh_region &rg) { // à simplifier, faire des réductions par termes
@@ -585,7 +585,7 @@ namespace getfem {
   }
   
   template<class MAT, class VECT>
-  void asm_mixed_matrix_for_hansbo_augmentation_on_linear_elasticity
+  void asm_mixed_matrix_for_stabilization_on_linear_elasticity
   (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mf_l, const mesh_fem &mf_data, const VECT &LAMBDA,
    const VECT &MU, const mesh_region &rg) {
@@ -804,13 +804,13 @@ void friction_problem::solve(void) {
 
 	sparse_matrix AUG_C(mf_u.nb_dof(), mf_u.nb_dof());
 	plain_vector LAMBDA(nb_dof_rhs, lambda), MU(nb_dof_rhs, mu);
-	getfem::asm_stiffmatrix_for_hansbo_augmentation_on_linear_elasticity
+	getfem::asm_stiffmatrix_for_stabilization_on_linear_elasticity
 	  (AUG_C, mim, mf_u, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
 	gmm::scale(AUG_C, gamma);
 	AUGMENTATION.set_matrix(gmm::scaled(AUG_C, -1.0));
 	
 	sparse_matrix AUG_D(mf_l.nb_dof(), mf_u.nb_dof());
-	getfem::asm_mixed_matrix_for_hansbo_augmentation_on_linear_elasticity
+	getfem::asm_mixed_matrix_for_stabilization_on_linear_elasticity
 	  (AUG_D, mim, mf_u, mf_l, mf_rhs, LAMBDA, MU, CONTACT_BOUNDARY);
 	gmm::scale(AUG_D, gamma);
 	gmm::add(gmm::scaled(gmm::sub_matrix(AUG_D, SUBI, SUBJ), 1.0), BN);
