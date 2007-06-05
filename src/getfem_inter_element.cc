@@ -21,7 +21,7 @@
 //========================================================================
 
 
-#include "getfem/getfem_error_estimate.h"
+#include "getfem/getfem_inter_element.h"
 
 
 

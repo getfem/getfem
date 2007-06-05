@@ -34,36 +34,9 @@
 
 #include "getfem_mesh_im.h"
 #include "getfem_mesh_fem.h"
+#include "getfem_inter_element.h"
 
 namespace getfem {
-
-  papprox_integration get_approx_im_or_fail(pintegration_method pim);
-
-  class interelt_boundary_integration_
-    : virtual public dal::static_stored_object {
-    
-    papprox_integration pai1, pai2;
-    mutable std::vector<base_node> add_points;
-    mutable std::vector< std::vector<size_type> > indices;
-    mutable bool warn_msg;
-
-  public :
-    
-    interelt_boundary_integration_(pintegration_method pa1,
-				   pintegration_method pa2);
-    
-    std::vector<size_type> &face_indices(size_type f1, size_type f2) const;
-    const base_node &additional_point(size_type i) const
-    { return add_points[i]; }
-
-  };
-
-  typedef boost::intrusive_ptr<const getfem::interelt_boundary_integration_>
-    pinterelt_boundary_integration;
-
-  pinterelt_boundary_integration interelt_boundary_integration
-    (pintegration_method pa1, pintegration_method pa2);
-
 
   template <typename VECT1, typename VECT2>
     void error_estimate(const mesh_im &mim, const mesh_fem &mf,
@@ -162,7 +135,7 @@ namespace getfem {
 
 	  bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
 
-	  gic.init(m.points_of_convex(cv2), pgt2);
+	  // gic.init(m.points_of_convex(cv2), pgt2);
 	  fem_interpolation_context ctx2(pgt2, pfp2, 0, G2, cv2,
 					 size_type(-1));
  	  fem_interpolation_context ctx3(pgt2, pf2,
