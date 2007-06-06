@@ -109,15 +109,16 @@ namespace getfem {
   }
   
 
-  void compute_on_inter_element::compute_on_face(size_type cv, size_type f1) {
+  void compute_on_inter_element::compute_on_face(size_type cv, size_type ff1) {
     
+    f1 = ff1;
     const getfem::mesh &m(mf.linked_mesh());
     
     GMM_ASSERT1(mf.convex_index().is_in(cv) &&
 		mim.convex_index().is_in(cv), "");
     bgeot::mesh_structure::ind_set neighbours;
     
-    bgeot::pgeometric_trans pgt1 = m.trans_of_convex(cv);
+    pgt1 = m.trans_of_convex(cv);
     papprox_integration pai1 =
       get_approx_im_or_fail(mim.int_method_of_element(cv));
     pfem pf1 = mf.fem_of_element(cv);
@@ -149,8 +150,8 @@ namespace getfem {
       }
       
       /* look for the face number of the second convex */
-      bgeot::pgeometric_trans pgt2 = m.trans_of_convex(cv2);
-      size_type f2 = 0;
+      pgt2 = m.trans_of_convex(cv2);
+      f2 = 0;
       for (; f2 < pgt2->structure()->nb_faces(); ++f2) {
 	if (m.is_convex_face_having_points
 	    (cv2, f2, pgt1->structure()->nb_points_of_face(f1),

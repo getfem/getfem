@@ -84,6 +84,8 @@ namespace getfem {
     pfem_precomp pfp1, pfp2;
     pinterelt_boundary_integration pibi;
     base_matrix G1, G2;
+    bgeot::pgeometric_trans pgt1, pgt2;
+    size_type f1, f2;
 
 
     virtual void compute_on_gauss_point
@@ -97,7 +99,7 @@ namespace getfem {
       : mim(mmim), mf(mmf), pf1_old(0), pf2_old(0), pai_old(0),
 	pai1_old(0), pai2_old(0), pfp1(0), pfp2(0), pibi(0) {}
     
-    void compute_on_face(size_type cv, size_type f1);
+    void compute_on_face(size_type cv, size_type f);
     
     virtual ~compute_on_inter_element() {}
     

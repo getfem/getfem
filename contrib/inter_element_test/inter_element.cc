@@ -57,8 +57,8 @@ class mass_matrix_jump : public getfem::compute_on_inter_element {
 
  public :
   
-  mass_matrix_jump(sparse_matrix &MM, getfem::mesh_im &mmim,
-		   getfem::mesh_fem &mmf)
+  mass_matrix_jump(sparse_matrix &MM, const getfem::mesh_im &mmim,
+		   const getfem::mesh_fem &mmf)
     : compute_on_inter_element(mmim, mmf), M(MM) {
     GMM_ASSERT1(mf.get_qdim() > 1,
 	       "Vectorial elements not taken into account ... to be done");
