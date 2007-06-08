@@ -121,6 +121,7 @@ namespace getfem {
   */
   static void import_gmsh_msh_file(std::ifstream& f, mesh& m, int version = 1)
   {
+
     /* read the node list */
     if (version == 2)
       bgeot::read_until(f, "$Nodes"); /* Format version 2 */

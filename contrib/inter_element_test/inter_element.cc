@@ -142,7 +142,7 @@ public:
 int main(void) {
 
   getfem::mesh m;
-  // Import mesh from gmsh (version 2).
+  // Import mesh from gmsh.
   getfem::import_mesh("gmshv2:square.msh", m);
   // 2d problem.
   getfem::maybe_remove_last_dimension(m);
@@ -222,10 +222,11 @@ int main(void) {
 
   // Post-processing of the solution.
   post_proc sortie(mf);
-  // Indeed the emf is computed between the points x1 and x2.
+  // The emf is computed between the points x1 and x2.
   getfem::base_node x1(0., -0.0001), x2(0., .0001);
   scalar_type ddp;
   sortie.emf(X, x1, x2, ddp);
-  cout << "V" << x2 << " - " << "V" << x1
-       << " = " << ddp << endl;
+  std::cout << "Jump of the potential V on the interface :" << std::endl;
+  std::cout << "V" << x2 << " - " << "V" << x1
+       << " = " << ddp << std::endl;
 }
