@@ -30,9 +30,7 @@
 
 namespace getfem {
 
-  /* mesh file from gmsh [http://www.geuz.org/gmsh/] 
-     structure: $NOD list_of_nodes $ENDNOD $ELT list_of_elt $ENDELT
-  */
+  /* mesh file from gmsh [http://www.geuz.org/gmsh/]*/
 
   struct gmsh_cv_info {
     unsigned id, type, region;
@@ -40,44 +38,94 @@ namespace getfem {
     std::vector<size_type> nodes;
     void set_pgt() {
       switch (type) {
-	case 1: { /* LINE */
-	  pgt = bgeot::simplex_geotrans(1,1);
-	} break;
-	case 2: { /* TRIANGLE */
-	  pgt = bgeot::simplex_geotrans(2,1);
-	} break;
-	case 3: { /* QUADRANGLE */
-	  pgt = bgeot::parallelepiped_geotrans(2,1);
-	} break;
-	case 4: { /* TETRAHEDRON */
-	  pgt = bgeot::simplex_geotrans(3,1);
-	} break;
-	case 5: { /* HEXAHEDRON */
-	  pgt = bgeot::parallelepiped_geotrans(3,1);
-	} break;
-	case 6: { /* PRISM */
-	  pgt = bgeot::prism_geotrans(3,1);
-	} break;
-	case 7: { /* PYRAMID */
-	  GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
-	} break;
-	case 15: { /* POINT */
-	  GMM_WARNING2("ignoring point element");
-	} break;
-	default: { /* UNKNOWN .. */
-	  /* second order elements : to be done .. */
-	  GMM_ASSERT1(false, "the gmsh element type "<< type <<"is unknown..");
-	} break;
+      case 1: { /* LINE */
+	pgt = bgeot::simplex_geotrans(1,1);
+      } break;
+      case 2: { /* TRIANGLE */
+	pgt = bgeot::simplex_geotrans(2,1);
+      } break;
+      case 3: { /* QUADRANGLE */
+	pgt = bgeot::parallelepiped_geotrans(2,1);
+      } break;
+      case 4: { /* TETRAHEDRON */
+	pgt = bgeot::simplex_geotrans(3,1);
+      } break;
+      case 5: { /* HEXAHEDRON */
+	pgt = bgeot::parallelepiped_geotrans(3,1);
+      } break;
+      case 6: { /* PRISM */
+	pgt = bgeot::prism_geotrans(3,1);
+      } break;
+      case 7: { /* PYRAMID */
+	GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
+      } break;
+      case 15: { /* POINT */
+	GMM_WARNING2("ignoring point element");
+      } break;
+      default: { /* UNKNOWN .. */
+	/* higher order elements : to be done .. */
+	GMM_ASSERT1(false, "the gmsh element type "<< type <<"is unknown..");
+      } break;
       }
     }
+    
+    void set_nb_nodes() {
+      /* Especially for the gmsh file format version 2.*/
+      switch (type) {
+      case 1: { /* LINE */
+	nodes.resize(2);
+      } break;
+      case 2: { /* TRIANGLE */
+	nodes.resize(3);
+      } break;
+      case 3: { /* QUADRANGLE */
+	nodes.resize(4);
+      } break;
+      case 4: { /* TETRAHEDRON */
+	nodes.resize(4);
+      } break;
+      case 5: { /* HEXAHEDRON */
+	nodes.resize(8);
+      } break;
+      case 6: { /* PRISM */
+	nodes.resize(6);
+      } break;
+      case 7: { /* PYRAMID */
+	GMM_ASSERT1(false,
+		    "sorry pyramidal convexes not done for the moment..");
+      } break;
+      case 15: { /* POINT */
+	GMM_WARNING2("ignoring point element");
+      } break;
+      default: { /* UNKNOWN .. */
+	/* second order elements : to be done .. */
+	GMM_ASSERT1(false, "the gmsh element type " << type << "is unknown..");
+      } break;
+      }
+    }
+
     bool operator<(const gmsh_cv_info& other) const {
       return pgt->dim() > other.pgt->dim();
     }
   };
 
-  static void import_gmsh_msh_file(std::ifstream& f, mesh& m) {
+  /* 
+     Format version 1 [for gmsh version < 2.0].
+     structure: $NOD list_of_nodes $ENDNOD $ELT list_of_elt $ENDELT
+
+     Format version 2 [for gmsh version >= 2.0]. Modification of some keywords
+     and more than one tag is authorized for a specific region.
+
+     structure: $Nodes list_of_nodes $EndNodes $Elements list_of_elt
+     $EndElements
+  */
+  static void import_gmsh_msh_file(std::ifstream& f, mesh& m, int version = 1)
+  {
     /* read the node list */
-    bgeot::read_until(f, "$NOD");
+    if (version == 2)
+      bgeot::read_until(f, "$Nodes"); /* Format version 2 */
+    else
+      bgeot::read_until(f, "$NOD");
     
     size_type nb_node; 
     f >> nb_node;
@@ -89,17 +137,36 @@ namespace getfem {
       f >> node_id >> n[0] >> n[1] >> n[2];
       msh_node_2_getfem_node.add_to_index(m.add_point(n), node_id);
     }
-    bgeot::read_until(f, "$ENDNOD");
+
+    if (version == 2)
+      bgeot::read_until(f, "$Endnodes"); /* Format version 2 */
+    else
+      bgeot::read_until(f, "$ENDNOD");
     
     /* read the convexes */
-    bgeot::read_until(f, "$ELM");
+    if (version == 2)
+      bgeot::read_until(f, "$Elements"); /* Format version 2 */	
+    else
+      bgeot::read_until(f, "$ELM");
+
     size_type nb_cv;
     f >> nb_cv;
     std::vector<gmsh_cv_info> cvlst; cvlst.reserve(nb_cv);
     for (size_type cv=0; cv < nb_cv; ++cv) {
       unsigned id, type, region;
       unsigned dummy, cv_nb_nodes;
-      f >> id >> type >> region >> dummy >> cv_nb_nodes;
+
+      if (version == 2) { /* Format version 2 */	
+	unsigned nbtags, mesh_part;
+	f >> id >> type >> nbtags;
+	if (nbtags != 3) 
+	  GMM_ASSERT1(false, "Number of tags" << nbtags 
+		      << " is not managed.");      
+	f >> region >> dummy >> mesh_part;
+      }
+      else
+	f >> id >> type >> region >> dummy >> cv_nb_nodes;
+
       id--; /* numbering starts at 1 */
       if (type == 15) { // just a node
         // get rid of the rest of the line
@@ -108,7 +175,14 @@ namespace getfem {
         cvlst.push_back(gmsh_cv_info());
         gmsh_cv_info &ci = cvlst.back();
         ci.id = id; ci.type = type; ci.region = region;
-        ci.nodes.resize(cv_nb_nodes);
+
+	if (version == 2) { /* For version 2 */
+	  ci.set_nb_nodes();
+	  cv_nb_nodes = ci.nodes.size();
+	}
+	else
+	  ci.nodes.resize(cv_nb_nodes);
+
         for (size_type i=0; i < cv_nb_nodes; ++i) {
           size_type j;
           f >> j;
@@ -126,7 +200,8 @@ namespace getfem {
       for (size_type cv=0; cv < nb_cv; ++cv) {
 	bool cvok = false;
 	gmsh_cv_info &ci = cvlst[cv];
-	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << " region: " << ci.region << "\n";
+	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << "
+	//region: " << ci.region << "\n";
 	if (ci.pgt->dim() == N) {
 	  size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
 	  m.region(ci.region).add(ic);
@@ -135,8 +210,10 @@ namespace getfem {
 	    m.convex_to_point(ci.nodes[0]);
 	  for (bgeot::mesh_structure::ind_cv_ct::const_iterator 
 		 it = ct.begin(); it != ct.end(); ++it) {
-	    for (unsigned face=0; face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-	      if (m.is_convex_face_having_points(*it,face,ci.nodes.size(),ci.nodes.begin())) {
+	    for (unsigned face=0;
+		 face < m.structure_of_convex(*it)->nb_faces(); ++face) {
+	      if (m.is_convex_face_having_points(*it,face,ci.nodes.size(),
+						 ci.nodes.begin())) {
 		m.region(ci.region+1000).add(*it,face);
 		cvok = true;
 	      }
@@ -155,7 +232,7 @@ namespace getfem {
 
   /* mesh file from GiD [http://gid.cimne.upc.es/]
 
-    supports linear and quadratic elements (quadrilaterals, use 9(or 27)-noded elements)
+  supports linear and quadratic elements (quadrilaterals, use 9(or 27)-noded elements)
   */
   static void import_gid_msh_file(std::ifstream& f, mesh& m) {
     /* read the node list */
@@ -318,7 +395,7 @@ namespace getfem {
 
   /* mesh file from emc2 [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm], am_fmt format
 
-    (only triangular 2D meshes)
+  (only triangular 2D meshes)
   */
   static void import_am_fmt_file(std::ifstream& f, mesh& m) {
     /* read the node list */
@@ -343,7 +420,7 @@ namespace getfem {
 
   /* mesh file from emc2 [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm], am_fmt format
 
-    triangular/quadrangular 2D meshes
+  triangular/quadrangular 2D meshes
   */
   static void import_emc2_mesh_file(std::ifstream& f, mesh& m) {
     /* read the node list */
@@ -407,6 +484,8 @@ namespace getfem {
 		   mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_msh_file(f,m);
+    else if (bgeot::casecmp(format,"gmshv2")==0)
+      import_gmsh_msh_file(f,m,2);
     else if (bgeot::casecmp(format,"gid")==0)
       import_gid_msh_file(f,m);
     else if (bgeot::casecmp(format,"am_fmt")==0)
@@ -422,6 +501,8 @@ namespace getfem {
       getfem::import_mesh(filename.substr(4), "gid", msh);
     else if (filename.compare(0,5,"gmsh:") == 0) 
       getfem::import_mesh(filename.substr(5), "gmsh", msh);
+    else if (filename.compare(0,7,"gmshv2:") == 0) 
+      getfem::import_mesh(filename.substr(7), "gmshv2", msh);
     else if (filename.compare(0,7,"am_fmt:") == 0) 
       getfem::import_mesh(filename.substr(7), "am_fmt", msh);
     else if (filename.compare(0,10,"emc2_mesh:") == 0)
