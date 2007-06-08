@@ -59,6 +59,12 @@ namespace getfem {
       case 7: { /* PYRAMID */
 	GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
       } break;
+      case 8: { /* 2ND ORDER LINE */
+	pgt = bgeot::simplex_geotrans(1,2);
+      } break;
+      case 9: { /* 2ND ORDER TRIANGLE */
+	pgt = bgeot::simplex_geotrans(2,2);
+      } break;
       case 15: { /* POINT */
 	GMM_WARNING2("ignoring point element");
       } break;
@@ -94,11 +100,17 @@ namespace getfem {
 	GMM_ASSERT1(false,
 		    "sorry pyramidal convexes not done for the moment..");
       } break;
+      case 8: { /* 2ND ORDER LINE */
+	nodes.resize(3);
+      } break;
+      case 9: { /* 2ND ORDER TRIANGLE */
+	nodes.resize(6);
+      } break;
       case 15: { /* POINT */
 	GMM_WARNING2("ignoring point element");
       } break;
       default: { /* UNKNOWN .. */
-	/* second order elements : to be done .. */
+	/* higher order elements : to be done .. */
 	GMM_ASSERT1(false, "the gmsh element type " << type << "is unknown..");
       } break;
       }
@@ -192,6 +204,28 @@ namespace getfem {
                       << " in gmsh convex " << ci.id);
         }
         ci.set_pgt();
+	if (ci.type == 8) { /* Second order line */
+	  std::vector<size_type> tmp_nodes(3);
+	  tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[2],
+	    tmp_nodes[2] = ci.nodes[1];
+	  
+	  ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+	    ci.nodes[2] = tmp_nodes[2];
+	}
+	else if (ci.type == 9)  { /* Second order triangle */
+	  std::vector<size_type> tmp_nodes(6);
+	  tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
+	    tmp_nodes[2] = ci.nodes[1];
+	  tmp_nodes[3] = ci.nodes[5], tmp_nodes[4] = ci.nodes[4],
+	    tmp_nodes[5] = ci.nodes[2];
+
+	  ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+	    ci.nodes[2] = tmp_nodes[2];
+	  ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+	    ci.nodes[5] = tmp_nodes[5];
+	}
+	else 
+	  continue;
       }
     }
     nb_cv = cvlst.size();

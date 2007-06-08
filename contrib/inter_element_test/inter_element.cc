@@ -150,7 +150,7 @@ int main(void) {
   // Mesh fem variables for the solution and the data.
   getfem::mesh_fem mf(m), mfd(m);
   mf.set_finite_element(m.convex_index(),
-			getfem::fem_descriptor("FEM_PK(2,1)"));
+			getfem::fem_descriptor("FEM_PK(2,2)"));
   mfd.set_finite_element(m.convex_index(),
 			 getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2,0)"));
 
@@ -181,7 +181,7 @@ int main(void) {
   // Selection of the integration method.
   getfem::mesh_im mim(m);
   mim.set_integration_method(m.convex_index(), 
-			     getfem::int_method_descriptor("IM_TRIANGLE(3)"));
+			     getfem::int_method_descriptor("IM_TRIANGLE(5)"));
 
   // Creation of the matrix for the problem assembly.
   sparse_matrix M(mf.nb_dof(), mf.nb_dof());
