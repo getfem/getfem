@@ -1849,10 +1849,10 @@ namespace gmm {
   
 
   struct g_mult {};  // generic mult, less optimized
-  struct c_mult {};  // col x col mult
-  struct r_mult {};  // row x row mult
-  struct rcmult {};  // row x col mult
-  struct crmult {};  // col x row mult
+  struct c_mult {};  // col x col -> col mult
+  struct r_mult {};  // row x row -> row mult
+  struct rcmult {};  // row x col -> col mult
+  struct crmult {};  // col x row -> row mult
 
 
   template<typename SO1, typename SO2, typename SO3> struct mult_t;
