@@ -698,6 +698,7 @@ AC_CONFIG_FILES(\
 	contrib/aposteriori/Makefile \
 	bin/Makefile \
         interface/Makefile \
+        interface/bin/Makefile \
 	interface/src/Makefile \
 	interface/src/matlab/Makefile \
 	interface/src/matlab/@gfCvStruct/Makefile \
@@ -771,7 +772,7 @@ done
 echo "---------------------------------------"
 echo "Ready to build getfem++"
 echo "  building MATLAB interface: $usematlab"
-echo "  building PYTHON interface: $usepython"
+echo "  building PYTHON interface: $usepython (requires numarray)"
 echo "---------------------------------------"
 
 case $host in

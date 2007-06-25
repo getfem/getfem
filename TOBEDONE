@@ -1,9 +1,6 @@
 
-A faire si possible avant version 3.0 :
 
 - Mettre dans getfem_modeling.h la brique qui ajoute directement des sous matrices à la matrice tangente en fonction des fems (+ interface Matlab). Gestion d'un second membre additionel aussi.
-
-
 
 
 - http://www.gnu.org/directory/science/visual/xd3d.html <- ajouter export
@@ -14,9 +11,7 @@ A faire si possible avant version 3.0 :
 * http://math1.unice.fr/~rpas/jcp04.pdf
 * http://epubs.siam.org/sam-bin/dbq/article/33724
 
-
 - getfem_mesh::clear() ne libere pas la mémoire
-
 
 - permet de choisir le chemin d'install de qhull dans le configure.in (probleme de H. Proudhon)
 
@@ -41,8 +36,6 @@ A faire si possible avant version 3.0 :
   et non tau-équivalents.
 
 - Interfacer http://www.computational.unibas.ch/software/spai/ ?
-
-- renommer mesh_fem::dof_on_set en mesh_fem::dof_on_region 
 
 - Finaliser la parallelisation et la doc dessus (comment linker MUMPS en 
      particulier). Pour la parallelistation avec MUMPS (et PARA_LEVEL >= 2)

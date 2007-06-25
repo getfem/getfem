@@ -1123,7 +1123,6 @@ namespace getfem {
    const mesh_fem &mf_h, const mesh_fem &mf_r, const VECT2 &h_data,
    const VECT3 &r_data, const mesh_region &region,
    int version =  ASMDIR_BUILDALL) {
-    mesh_region::face_bitset nf;
     pfem pf_u, pf_rh;
 
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();

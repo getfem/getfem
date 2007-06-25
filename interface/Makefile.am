@@ -1,7 +1,7 @@
 #http://sources.redhat.com/automake/automake.html#Local-Macros
 #ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src tests 
+SUBDIRS = src tests bin
 
 install-toolbox: all
 	cd src && $(MAKE) install-toolbox 

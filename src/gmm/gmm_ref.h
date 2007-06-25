@@ -435,7 +435,7 @@ namespace gmm {
     reference front(void) { return *begin_; }
     const_reference front(void) const { return *begin_; }
     reference back(void) { return *(begin_ + N * (size_-1)); }
-    const_reference back(void) const { *(begin_ + N * (size_-1)); }
+    const_reference back(void) const { return *(begin_ + N * (size_-1)); }
     void pop_front(void) { begin_ += N; }
     
     tab_ref_reg_spaced(void) {}
