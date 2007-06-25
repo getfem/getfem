@@ -61,6 +61,7 @@ MESHNAME='splx:';
 % MESHNAME='donut_regulier_800_elements.mesh';
 ROOTFILENAME = 'dynamic_friction';     % Root of data files.
 DX_EXPORT = 0;
+ML_EXPORT = 0;
 
 ;
 close(TMPF);
@@ -68,7 +69,7 @@ close(TMPF);
 $er = 0;
 open F, "./static_friction $tmp 2>&1 |" or die;
 while (<F>) {
-  # print $_;
+  #print $_;
   if ($_ =~ /error has been detected/)
   {
     $er = 1;
