@@ -7,8 +7,8 @@
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
 
-MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
-NX = 29;                 % space step
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+NX = 9;                 % space step
 
 
 FT = 5.0;              % parameter for the exact solution
@@ -21,7 +21,7 @@ end;
 
  % MESH_FILE='/home-local/jlasry/source++/getfem++/tests/meshes/disc_P2_h2.mesh'
 
-QUAD = 0;
+QUAD = 1;
  
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
@@ -77,7 +77,7 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
 
 
-ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)
@@ -100,7 +100,7 @@ EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
                                % integral matching with penalization 
 ASM_H1_AND_H2_DIST = 1 ;	       
 
-SEUIL = 1e-30 ;    % threshold for elimination of dofs at the end of the integral matching
+SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integral matching
 
 RADIUS_SPLIT_DOMAIN = 0.10
 PENALI = 1.0 ;

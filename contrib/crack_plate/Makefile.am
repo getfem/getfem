@@ -11,7 +11,7 @@ CLEANFILES =
 
 if QHULL
 crack_mindlin_SOURCES = crack_mindlin.cc
-crack_bilaplacian_SOURCES = crack_bilaplacian.cc
+crack_bilaplacian_SOURCES = crack_bilaplacian.cc crack_bilaplacian_singularities.cc crack_bilaplacian_problem.cc crack_bilaplacian.h
 endif
 
 SUPLDFLAGS = @SUPLDFLAGS@

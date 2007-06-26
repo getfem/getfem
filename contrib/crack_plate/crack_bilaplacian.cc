@@ -21,6 +21,8 @@
 //========================================================================
 
 #include "crack_bilaplacian.h"
+#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_derivatives.h"
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -158,13 +160,13 @@ int main(int argc, char *argv[]) {
     if (MATLAB_EXPORT) {
       cout << "exporting solution to " << p.datafilename + ".mf" << " and " << p.datafilename << ".U\n";
       mf_refined.write_to_file(p.datafilename + ".mf", true);
-      vecsave(p.datafilename + ".U", W);
+      gmm::vecsave(p.datafilename + ".U", W);
       p.exact_sol.mf.set_qdim(Q);
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());   // ??
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
 			    p.exact_sol.U, EXACT);
-      vecsave(p.datafilename + ".EXACT", EXACT);
+      gmm::vecsave(p.datafilename + ".EXACT", EXACT);
 
       cout << "exporting original mesh to " << p.datafilename + "_base.mesh\n";
       p.mesh.write_to_file(p.datafilename + "_base.mesh");
