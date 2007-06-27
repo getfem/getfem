@@ -1,0 +1,1961 @@
+
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module getfem</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem</strong></big></big> (version 2534)</font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/pommier/getfem/getfem++/gcc-4.0/interface/src/python/getfem.py">/home/pommier/getfem/getfem++/gcc-4.0/interface/src/python/getfem.py</a></font></td></tr></table>
+    <p><tt>Getfem-interface&nbsp;classes.<br>
+&nbsp;<br>
+Provides&nbsp;access&nbsp;to&nbsp;the&nbsp;pseudo-objects&nbsp;exported&nbsp;by&nbsp;the&nbsp;getfem-python&nbsp;interface.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numarray.html">numarray</a><br>
+</td><td width="25%" valign=top><a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="getfem.html#CvStruct">CvStruct</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Eltm">Eltm</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Fem">Fem</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#GeoTrans">GeoTrans</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Integ">Integ</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#LevelSet">LevelSet</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#MdBrick">MdBrick</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#MdState">MdState</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Mesh">Mesh</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#MeshFem">MeshFem</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#MeshIm">MeshIm</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Poly">Poly</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Precond">Precond</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Slice">Slice</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem.html#Spmat">Spmat</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="CvStruct">class <strong>CvStruct</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Descriptor&nbsp;for&nbsp;a&nbsp;convex&nbsp;structure.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="CvStruct-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CvStruct-__init__"><strong>__init__</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="CvStruct-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CvStruct-basic_structure"><strong>basic_structure</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;simplest&nbsp;structure.<br>
+&nbsp;<br>
+Synopsis:&nbsp;&nbsp;cs=<a href="#CvStruct">CvStruct</a>.<a href="#CvStruct-basic_structure">basic_structure</a>()<br>
+For&nbsp;example,&nbsp;the&nbsp;'basic&nbsp;structure'&nbsp;of&nbsp;the&nbsp;6-node&nbsp;triangle,&nbsp;is&nbsp;the&nbsp;canonical<br>
+3-noded&nbsp;triangle.</tt></dd></dl>
+
+<dl><dt><a name="CvStruct-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;convex&nbsp;structure.</tt></dd></dl>
+
+<dl><dt><a name="CvStruct-face"><strong>face</strong></a>(self, F)</dt><dd><tt>Return&nbsp;the&nbsp;structure&nbsp;of&nbsp;the&nbsp;face&nbsp;F.</tt></dd></dl>
+
+<dl><dt><a name="CvStruct-facepts"><strong>facepts</strong></a>(self, F)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;point&nbsp;indices&nbsp;for&nbsp;the&nbsp;face&nbsp;F.</tt></dd></dl>
+
+<dl><dt><a name="CvStruct-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="CvStruct-nbpts"><strong>nbpts</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;number&nbsp;of&nbsp;points&nbsp;of&nbsp;the&nbsp;convex&nbsp;structure.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Eltm">class <strong>Eltm</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Descriptor&nbsp;for&nbsp;an&nbsp;elementary&nbsp;matrix&nbsp;type.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Eltm-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Eltm-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>Generates&nbsp;a&nbsp;descriptor&nbsp;for&nbsp;an&nbsp;elementary&nbsp;matrix&nbsp;type.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Eltm">Eltm</a>('base',&nbsp;@tfem&nbsp;FEM)<br>
+&nbsp;Integration&nbsp;of&nbsp;shape&nbsp;functions&nbsp;on&nbsp;elements,&nbsp;using&nbsp;the&nbsp;fem&nbsp;FEM.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Eltm">Eltm</a>('grad',&nbsp;@tfem&nbsp;FEM)<br>
+&nbsp;Integration&nbsp;of&nbsp;gradient&nbsp;of&nbsp;shape&nbsp;functions&nbsp;on&nbsp;elements,&nbsp;using&nbsp;the&nbsp;fem&nbsp;FEM.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Eltm">Eltm</a>('hessian',&nbsp;@tfem&nbsp;FEM)<br>
+&nbsp;Integration&nbsp;of&nbsp;hessian&nbsp;of&nbsp;shape&nbsp;functions&nbsp;on&nbsp;elements,&nbsp;using&nbsp;the&nbsp;fem&nbsp;FEM.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Eltm">Eltm</a>('normal')<br>
+&nbsp;The&nbsp;unit&nbsp;normal&nbsp;to&nbsp;the&nbsp;current&nbsp;convex&nbsp;face<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Eltm">Eltm</a>('grad_geotrans')<br>
+&nbsp;The&nbsp;gradient&nbsp;of&nbsp;the&nbsp;geometric&nbsp;transformation.&nbsp;&nbsp;*&nbsp;<a href="#Eltm">Eltm</a>('grad_geotrans_inv')<br>
+&nbsp;The&nbsp;inverse&nbsp;of&nbsp;the&nbsp;gradient&nbsp;of&nbsp;the&nbsp;geometric&nbsp;transformation.&nbsp;&nbsp;*<br>
+<a href="#Eltm">Eltm</a>('product',&nbsp;@eltm&nbsp;A,&nbsp;@eltm&nbsp;B)<br>
+&nbsp;Integration&nbsp;of&nbsp;the&nbsp;tensorial&nbsp;product&nbsp;of&nbsp;elementary&nbsp;matrices&nbsp;A&nbsp;and&nbsp;B.<br>
+&nbsp;<br>
+&nbsp;&nbsp;In&nbsp;order&nbsp;to&nbsp;obtain&nbsp;a&nbsp;numerical&nbsp;value&nbsp;of&nbsp;theses&nbsp;matrices,&nbsp;see&nbsp;<a href="#MeshIm">MeshIm</a>.eltm().</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Fem">class <strong>Fem</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>FEM&nbsp;(Finite&nbsp;Element&nbsp;Method)&nbsp;objects.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Fem-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Fem-__init__"><strong>__init__</strong></a>(self, fem_name)</dt><dd><tt>Build&nbsp;a&nbsp;FEM&nbsp;object&nbsp;from&nbsp;a&nbsp;string&nbsp;description.<br>
+&nbsp;<br>
+*&nbsp;FEM_PK(N,K)<br>
+&nbsp;&nbsp;&nbsp;classical&nbsp;Lagrange&nbsp;element&nbsp;PK&nbsp;on&nbsp;a&nbsp;simplex&nbsp;of&nbsp;dimension&nbsp;N<br>
+&nbsp;*&nbsp;FEM_PK_DISCONTINUOUS(N,K[,alpha])}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;discontinuous&nbsp;Lagrange&nbsp;element&nbsp;PK&nbsp;on&nbsp;a&nbsp;simplex&nbsp;of&nbsp;dim&nbsp;N<br>
+&nbsp;*&nbsp;FEM_QK(N,K)}<br>
+&nbsp;&nbsp;&nbsp;classical&nbsp;Lagrange&nbsp;element&nbsp;QK&nbsp;on&nbsp;quadrangles,&nbsp;hexahedrons&nbsp;etc<br>
+&nbsp;*&nbsp;FEM_QK_DISCONTINUOUS(N,K[,alpha])}<br>
+&nbsp;&nbsp;&nbsp;discontinuous&nbsp;Lagrange&nbsp;element&nbsp;QK&nbsp;on&nbsp;quadrangles,&nbsp;hexahedrons&nbsp;etc<br>
+&nbsp;*&nbsp;FEM_Q2_INCOMPLETE<br>
+&nbsp;&nbsp;&nbsp;incomplete&nbsp;2D&nbsp;Q2&nbsp;element&nbsp;with&nbsp;8&nbsp;dof&nbsp;(serendipity&nbsp;Quad&nbsp;8&nbsp;element)&nbsp;&nbsp;*<br>
+FEM_PK_PRISM(N,K)<br>
+&nbsp;&nbsp;&nbsp;classical&nbsp;Lagrange&nbsp;element&nbsp;PK&nbsp;on&nbsp;a&nbsp;prism<br>
+&nbsp;*&nbsp;FEM_PK_PRISM_DISCONTINUOUS(N,K[,alpha])<br>
+&nbsp;&nbsp;&nbsp;classical&nbsp;discontinuous&nbsp;Lagrange&nbsp;element&nbsp;PK&nbsp;on&nbsp;a&nbsp;prism.<br>
+&nbsp;&nbsp;*&nbsp;FEM_PK_WITH_CUBIC_BUBBLE(N,K)<br>
+&nbsp;&nbsp;&nbsp;classical&nbsp;Lagrange&nbsp;element&nbsp;PK&nbsp;on&nbsp;a&nbsp;simplex&nbsp;with&nbsp;an&nbsp;additional&nbsp;volumic<br>
+bubble&nbsp;function.<br>
+&nbsp;*&nbsp;FEM_P1_NONCONFORMING<br>
+&nbsp;&nbsp;&nbsp;non-conforming&nbsp;P1&nbsp;method&nbsp;on&nbsp;a&nbsp;triangle.<br>
+&nbsp;*&nbsp;FEM_P1_BUBBLE_FACE(N)<br>
+&nbsp;&nbsp;&nbsp;P1&nbsp;method&nbsp;on&nbsp;a&nbsp;simplex&nbsp;with&nbsp;an&nbsp;additional&nbsp;bubble&nbsp;function&nbsp;on&nbsp;face&nbsp;0.<br>
+&nbsp;*&nbsp;FEM_P1_BUBBLE_FACE_LAG<br>
+&nbsp;&nbsp;&nbsp;P1&nbsp;method&nbsp;on&nbsp;a&nbsp;simplex&nbsp;with&nbsp;an&nbsp;additional&nbsp;lagrange&nbsp;dof&nbsp;on&nbsp;face&nbsp;0.<br>
+&nbsp;&nbsp;*&nbsp;FEM_PK_HIERARCHICAL(N,K)<br>
+&nbsp;&nbsp;&nbsp;PK&nbsp;element&nbsp;with&nbsp;a&nbsp;hierarchical&nbsp;basis<br>
+&nbsp;*&nbsp;FEM_QK_HIERARCHICAL(N,K)<br>
+&nbsp;&nbsp;&nbsp;QK&nbsp;element&nbsp;with&nbsp;a&nbsp;hierarchical&nbsp;basis<br>
+&nbsp;*&nbsp;FEM_PK_PRISM_HIERARCHICAL(N,K)<br>
+&nbsp;&nbsp;&nbsp;PK&nbsp;element&nbsp;on&nbsp;a&nbsp;prism&nbsp;with&nbsp;a&nbsp;hierarchical&nbsp;basis<br>
+&nbsp;*&nbsp;FEM_STRUCTURED_COMPOSITE(FEM,&nbsp;K)<br>
+&nbsp;&nbsp;&nbsp;Composite&nbsp;fem&nbsp;on&nbsp;a&nbsp;grid&nbsp;with&nbsp;K&nbsp;divisions<br>
+&nbsp;*&nbsp;FEM_PK_HIERARCHICAL_COMPOSITE(N,K,S)<br>
+&nbsp;&nbsp;&nbsp;PK&nbsp;composite&nbsp;element&nbsp;on&nbsp;a&nbsp;grid&nbsp;with&nbsp;S&nbsp;subdivisions&nbsp;and&nbsp;with&nbsp;a&nbsp;hierarchical<br>
+basis<br>
+&nbsp;*&nbsp;FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)<br>
+&nbsp;&nbsp;&nbsp;PK&nbsp;composite&nbsp;element&nbsp;with&nbsp;S&nbsp;subdivisions&nbsp;and&nbsp;a&nbsp;hierarchical&nbsp;basis&nbsp;on&nbsp;both<br>
+degree&nbsp;and&nbsp;subdivision<br>
+&nbsp;*&nbsp;FEM_PRODUCT(FEM1,FEM2)<br>
+&nbsp;&nbsp;&nbsp;tensorial&nbsp;product&nbsp;of&nbsp;two&nbsp;polynomial&nbsp;elements<br>
+&nbsp;*&nbsp;FEM_HERMITE(N)<br>
+&nbsp;&nbsp;&nbsp;Hermite&nbsp;element&nbsp;P3&nbsp;on&nbsp;a&nbsp;simplex&nbsp;of&nbsp;dimension&nbsp;N=1,2,3<br>
+&nbsp;*&nbsp;FEM_ARGYRIS<br>
+&nbsp;&nbsp;&nbsp;Argyris&nbsp;element&nbsp;P5&nbsp;on&nbsp;the&nbsp;triangle.<br>
+&nbsp;*&nbsp;FEM_HCT_TRIANGLE<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Hsieh-Clough-Tocher&nbsp;element&nbsp;on&nbsp;the&nbsp;triangle&nbsp;(composite&nbsp;P3&nbsp;&nbsp;&nbsp;element&nbsp;which<br>
+is&nbsp;C^1),&nbsp;should&nbsp;be&nbsp;used&nbsp;with&nbsp;IM_HCT_COMPOSITE()&nbsp;&nbsp;&nbsp;integration&nbsp;method.<br>
+&nbsp;*&nbsp;FEM_QUADC1_COMPOSITE<br>
+&nbsp;&nbsp;&nbsp;Quadrilateral&nbsp;element,&nbsp;composite&nbsp;P3&nbsp;element&nbsp;and&nbsp;C^1&nbsp;(16&nbsp;dof).<br>
+&nbsp;*&nbsp;FEM_REDUCED_QUADC1_COMPOSITE<br>
+&nbsp;&nbsp;&nbsp;Quadrilateral&nbsp;element,&nbsp;composite&nbsp;P3&nbsp;element&nbsp;and&nbsp;C^1&nbsp;(12&nbsp;dof).<br>
+&nbsp;*&nbsp;FEM(:_(BRT0(N)<br>
+&nbsp;&nbsp;&nbsp;Raviart-Thomas&nbsp;element&nbsp;of&nbsp;order&nbsp;0&nbsp;on&nbsp;a&nbsp;simplex&nbsp;of&nbsp;dimension&nbsp;N.<br>
+&nbsp;*&nbsp;FEM(:_(BNEDELEC(N)<br>
+&nbsp;&nbsp;&nbsp;Nedelec&nbsp;edge&nbsp;element&nbsp;of&nbsp;order&nbsp;0&nbsp;on&nbsp;a&nbsp;simplex&nbsp;of&nbsp;dimension&nbsp;N.<br>
+&nbsp;<br>
+&nbsp;*&nbsp;f=<a href="#Fem">Fem</a>('interpolated_fem',&nbsp;@mf&nbsp;MF1,&nbsp;@mim&nbsp;MIM2,&nbsp;[ivec&nbsp;blocked_dof])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;special&nbsp;fem&nbsp;which&nbsp;is&nbsp;interpolated&nbsp;from&nbsp;another&nbsp;mesh_fem.&nbsp;&nbsp;Using&nbsp;this<br>
+special&nbsp;finite&nbsp;element,&nbsp;it&nbsp;is&nbsp;possible&nbsp;to&nbsp;interpolate&nbsp;a&nbsp;given&nbsp;mesh_fem&nbsp;MF1&nbsp;on<br>
+another&nbsp;mesh,&nbsp;given&nbsp;the&nbsp;integration&nbsp;method&nbsp;that&nbsp;will&nbsp;be&nbsp;used&nbsp;on&nbsp;this&nbsp;mesh.<br>
+Note&nbsp;that&nbsp;this&nbsp;finite&nbsp;element&nbsp;may&nbsp;be&nbsp;quite&nbsp;slow,&nbsp;and&nbsp;eats&nbsp;much&nbsp;memory.</tt></dd></dl>
+
+<dl><dt><a name="Fem-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Fem-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Fem-base_value"><strong>base_value</strong></a>(self, X)</dt><dd><tt>Evaluate&nbsp;all&nbsp;base&nbsp;functions&nbsp;at&nbsp;the&nbsp;given&nbsp;point.</tt></dd></dl>
+
+<dl><dt><a name="Fem-char"><strong>char</strong></a>(self)</dt><dd><tt>Ouput&nbsp;a&nbsp;(unique)&nbsp;string&nbsp;representation&nbsp;of&nbsp;the&nbsp;FEM.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Fem">Fem</a>.<a href="#Fem-char">char</a>()<br>
+This&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;perform&nbsp;comparisons&nbsp;between&nbsp;two&nbsp;different&nbsp;FEM&nbsp;objects.</tt></dd></dl>
+
+<dl><dt><a name="Fem-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;dimension&nbsp;(dimension&nbsp;of&nbsp;the&nbsp;reference&nbsp;convex)&nbsp;of&nbsp;the&nbsp;FEM.</tt></dd></dl>
+
+<dl><dt><a name="Fem-estimated_degree"><strong>estimated_degree</strong></a>(self)</dt><dd><tt>Return&nbsp;an&nbsp;estimation&nbsp;of&nbsp;the&nbsp;polynomial&nbsp;degree&nbsp;of&nbsp;the&nbsp;FEM.</tt></dd></dl>
+
+<dl><dt><a name="Fem-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Fem-grad_base_value"><strong>grad_base_value</strong></a>(self, X)</dt><dd><tt>Evaluate&nbsp;the&nbsp;gradient&nbsp;of&nbsp;all&nbsp;base&nbsp;functions&nbsp;at&nbsp;the&nbsp;given&nbsp;point.</tt></dd></dl>
+
+<dl><dt><a name="Fem-hess_base_value"><strong>hess_base_value</strong></a>(self, X)</dt><dd><tt>Evaluate&nbsp;the&nbsp;Hessian&nbsp;of&nbsp;all&nbsp;base&nbsp;functions&nbsp;at&nbsp;the&nbsp;given&nbsp;point.</tt></dd></dl>
+
+<dl><dt><a name="Fem-is_equivalent"><strong>is_equivalent</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;if&nbsp;the&nbsp;FEM&nbsp;is&nbsp;not&nbsp;equivalent.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Fem">Fem</a>.<a href="#Fem-is_equivalent">is_equivalent</a>()<br>
+Equivalent&nbsp;FEM&nbsp;are&nbsp;evaluated&nbsp;on&nbsp;the&nbsp;reference&nbsp;convex.&nbsp;This&nbsp;is&nbsp;the&nbsp;case&nbsp;of&nbsp;most<br>
+classical&nbsp;FEMs.</tt></dd></dl>
+
+<dl><dt><a name="Fem-is_lagrange"><strong>is_lagrange</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;if&nbsp;the&nbsp;FEM&nbsp;is&nbsp;not&nbsp;of&nbsp;Lagrange&nbsp;type.</tt></dd></dl>
+
+<dl><dt><a name="Fem-is_polynomial"><strong>is_polynomial</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;if&nbsp;the&nbsp;basis&nbsp;functions&nbsp;are&nbsp;not&nbsp;polynomials.</tt></dd></dl>
+
+<dl><dt><a name="Fem-nbdof"><strong>nbdof</strong></a>(self, CV<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;number&nbsp;of&nbsp;DOF&nbsp;for&nbsp;the&nbsp;FEM.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Fem">Fem</a>.<a href="#Fem-nbdof">nbdof</a>([,&nbsp;int&nbsp;CV])<br>
+Some&nbsp;specific&nbsp;FEM&nbsp;(for&nbsp;example&nbsp;'interpolated_fem')&nbsp;may&nbsp;require&nbsp;a&nbsp;convex&nbsp;number<br>
+CV&nbsp;to&nbsp;give&nbsp;their&nbsp;result&nbsp;(interpolated&nbsp;fems&nbsp;for&nbsp;example).&nbsp;In&nbsp;most&nbsp;of&nbsp;the&nbsp;case,<br>
+you&nbsp;can&nbsp;omit&nbsp;this&nbsp;convex&nbsp;number.</tt></dd></dl>
+
+<dl><dt><a name="Fem-poly_str"><strong>poly_str</strong></a>(self)</dt><dd><tt>Return&nbsp;(if&nbsp;possible)&nbsp;the&nbsp;polynomial&nbsp;expressions&nbsp;of&nbsp;the&nbsp;base&nbsp;functions&nbsp;in&nbsp;the<br>
+reference&nbsp;element.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Fem">Fem</a>.<a href="#Fem-poly_str">poly_str</a>()<br>
+This&nbsp;function&nbsp;will&nbsp;of&nbsp;course&nbsp;fail&nbsp;for&nbsp;non-polynomial&nbsp;FEMs.</tt></dd></dl>
+
+<dl><dt><a name="Fem-pts"><strong>pts</strong></a>(self, CV<font color="#909090">=None</font>)</dt><dd><tt>Get&nbsp;the&nbsp;location&nbsp;of&nbsp;the&nbsp;degrees&nbsp;of&nbsp;freedom&nbsp;on&nbsp;the&nbsp;reference&nbsp;element.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Fem">Fem</a>.<a href="#Fem-pts">pts</a>([,&nbsp;int&nbsp;CV])<br>
+Some&nbsp;specific&nbsp;FEM&nbsp;may&nbsp;require&nbsp;a&nbsp;convex&nbsp;number&nbsp;CV&nbsp;to&nbsp;give&nbsp;their&nbsp;result<br>
+(interpolated&nbsp;fems&nbsp;for&nbsp;example).&nbsp;In&nbsp;most&nbsp;of&nbsp;the&nbsp;case,&nbsp;you&nbsp;can&nbsp;omit&nbsp;this&nbsp;convex<br>
+number.</tt></dd></dl>
+
+<dl><dt><a name="Fem-target_dim"><strong>target_dim</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;target&nbsp;space.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Fem">Fem</a>.<a href="#Fem-target_dim">target_dim</a>()<br>
+The&nbsp;target&nbsp;space&nbsp;dimension&nbsp;is&nbsp;usually&nbsp;1,&nbsp;except&nbsp;for&nbsp;vector&nbsp;FEMs&nbsp;(none&nbsp;of&nbsp;them<br>
+has&nbsp;been&nbsp;implemented&nbsp;in&nbsp;getfem++&nbsp;for&nbsp;now)</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="GeoTrans">class <strong>GeoTrans</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="GeoTrans-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="GeoTrans-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;function&nbsp;for&nbsp;building&nbsp;descriptors&nbsp;to&nbsp;geometric&nbsp;transformations.&nbsp;&nbsp;Name<br>
+can&nbsp;be:&nbsp;&nbsp;*&nbsp;'GT_PK(N,K)'&nbsp;&nbsp;&nbsp;:&nbsp;Transformation&nbsp;on&nbsp;simplexes,&nbsp;dim&nbsp;N,&nbsp;degree&nbsp;K&nbsp;*<br>
+'GT_QK(N,K)'&nbsp;&nbsp;&nbsp;:&nbsp;Transformation&nbsp;on&nbsp;parallelepipeds,&nbsp;dim&nbsp;N,&nbsp;degree&nbsp;K&nbsp;*<br>
+'GT_PRISM(N,K)'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Transformation&nbsp;on&nbsp;prisms,&nbsp;dim&nbsp;N,&nbsp;degree&nbsp;K&nbsp;*<br>
+'GT_PRODUCT(a,b)'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;tensorial&nbsp;product&nbsp;of&nbsp;two&nbsp;transformations&nbsp;*<br>
+'GT_LINEAR_PRODUCT(a,b)'&nbsp;:&nbsp;Linear&nbsp;tensorial&nbsp;product&nbsp;of&nbsp;two&nbsp;transformations</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="GeoTrans-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="GeoTrans-char"><strong>char</strong></a>(self)</dt><dd><tt>Output&nbsp;a&nbsp;(unique)&nbsp;string&nbsp;representation&nbsp;of&nbsp;the&nbsp;@tgeotrans.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#CvStruct">CvStruct</a>.<a href="#GeoTrans-char">char</a>()<br>
+This&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;perform&nbsp;comparisons&nbsp;between&nbsp;two&nbsp;different&nbsp;@tgeotrans<br>
+objects.</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;geometric&nbsp;transformation.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#CvStruct">CvStruct</a>.<a href="#GeoTrans-dim">dim</a>()<br>
+This&nbsp;is&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;source&nbsp;space,&nbsp;i.e.&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;reference<br>
+convex.</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="GeoTrans-is_linear"><strong>is_linear</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;if&nbsp;the&nbsp;geometric&nbsp;transformation&nbsp;is&nbsp;not&nbsp;linear.</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-nbpts"><strong>nbpts</strong></a>(self)</dt><dd><tt>return&nbsp;the&nbsp;number&nbsp;of&nbsp;points&nbsp;of&nbsp;the&nbsp;geometric&nbsp;transformation.</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-normals"><strong>normals</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;normals&nbsp;for&nbsp;each&nbsp;face&nbsp;of&nbsp;the&nbsp;reference&nbsp;convex</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-pts"><strong>pts</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;reference&nbsp;convex&nbsp;points.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#CvStruct">CvStruct</a>.<a href="#GeoTrans-pts">pts</a>()<br>
+The&nbsp;points&nbsp;are&nbsp;stored&nbsp;in&nbsp;the&nbsp;columns&nbsp;of&nbsp;the&nbsp;output&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="GeoTrans-transform"><strong>transform</strong></a>(self, G, pts)</dt><dd><tt>Apply&nbsp;the&nbsp;geometric&nbsp;transformation&nbsp;to&nbsp;a&nbsp;set&nbsp;of&nbsp;points.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#CvStruct">CvStruct</a>.<a href="#GeoTrans-transform">transform</a>(G,pts)<br>
+G&nbsp;is&nbsp;the&nbsp;set&nbsp;of&nbsp;vertices&nbsp;of&nbsp;the&nbsp;real&nbsp;convex,&nbsp;pts&nbsp;is&nbsp;the&nbsp;set&nbsp;of&nbsp;points&nbsp;(in&nbsp;the<br>
+reference&nbsp;convex)&nbsp;that&nbsp;are&nbsp;to&nbsp;be&nbsp;transformed.&nbsp;The&nbsp;corresponding&nbsp;set&nbsp;of&nbsp;points<br>
+in&nbsp;the&nbsp;real&nbsp;convex&nbsp;is&nbsp;returned.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Integ">class <strong>Integ</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Integration&nbsp;Method&nbsp;Objects.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Integ-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Integ-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt><a href="#Integ">Integ</a>(stringing&nbsp;method)&nbsp;Return&nbsp;a&nbsp;FEM&nbsp;Integration&nbsp;Method&nbsp;from&nbsp;a&nbsp;string<br>
+description.<br>
+&nbsp;<br>
+&nbsp;&nbsp;Possible&nbsp;descriptions&nbsp;are&nbsp;(non&nbsp;exhaustive&nbsp;list):<br>
+&nbsp;*&nbsp;IM_EXACT_SIMPLEX(n)<br>
+&nbsp;&nbsp;&nbsp;Exact&nbsp;integration&nbsp;on&nbsp;simplices&nbsp;(works&nbsp;only&nbsp;with&nbsp;linear&nbsp;geometric<br>
+transformations&nbsp;and&nbsp;PK&nbsp;FEMs).&nbsp;Note&nbsp;that&nbsp;'exact&nbsp;integration'&nbsp;&nbsp;&nbsp;should&nbsp;be<br>
+avoided&nbsp;in&nbsp;general,&nbsp;since&nbsp;they&nbsp;only&nbsp;apply&nbsp;to&nbsp;linear&nbsp;&nbsp;&nbsp;geometric<br>
+transformations,&nbsp;are&nbsp;quite&nbsp;slow,&nbsp;and&nbsp;subject&nbsp;to&nbsp;&nbsp;&nbsp;numerical&nbsp;stability&nbsp;problems<br>
+for&nbsp;high&nbsp;degree&nbsp;FEMs.<br>
+&nbsp;*&nbsp;IM_PRODUCT(a,&nbsp;b)&nbsp;&nbsp;&nbsp;Product&nbsp;of&nbsp;two&nbsp;integration&nbsp;methods.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_EXACT_PARALLELEPIPED(n)<br>
+&nbsp;&nbsp;&nbsp;Exact&nbsp;integration&nbsp;on&nbsp;parallelepipeds.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_EXACT_PRISM(n)<br>
+&nbsp;&nbsp;&nbsp;Exact&nbsp;integration&nbsp;on&nbsp;prisms.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_GAUSS1D(K)<br>
+&nbsp;&nbsp;&nbsp;Gauss&nbsp;method&nbsp;on&nbsp;the&nbsp;segment,&nbsp;order&nbsp;K&nbsp;(K=1,3,...99).<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_NC(N,K)<br>
+&nbsp;&nbsp;&nbsp;Newton-Cotes&nbsp;approximative&nbsp;integration&nbsp;on&nbsp;simplexes,&nbsp;order&nbsp;K.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_NC_PARALLELEPIPED(N,K)<br>
+&nbsp;&nbsp;&nbsp;Product&nbsp;of&nbsp;Newton-Cotes&nbsp;integration&nbsp;on&nbsp;parallelepipeds.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_NC_PRISM(N,K)<br>
+&nbsp;&nbsp;&nbsp;Product&nbsp;of&nbsp;Newton-Cotes&nbsp;integration&nbsp;on&nbsp;prisms.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_GAUSS_PARALLELEPIPED(N,K)<br>
+&nbsp;&nbsp;&nbsp;Product&nbsp;of&nbsp;Gauss1D&nbsp;integration&nbsp;on&nbsp;parallelepipeds.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_TRIANGLE(K)<br>
+&nbsp;&nbsp;&nbsp;Gauss&nbsp;methods&nbsp;on&nbsp;triangles&nbsp;(K=1,3,5,6,7,8,9,10,13,17,19).<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_QUAD(K)<br>
+&nbsp;&nbsp;&nbsp;Gauss&nbsp;methods&nbsp;on&nbsp;quadrilaterons&nbsp;(K=2,&nbsp;3,&nbsp;5,&nbsp;..&nbsp;17).&nbsp;Note&nbsp;that<br>
+IM_GAUSS_PARALLELEPIPED&nbsp;should&nbsp;be&nbsp;prefered&nbsp;for&nbsp;QK&nbsp;FEMs.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_TETRAHEDRON(K)<br>
+&nbsp;&nbsp;&nbsp;Gauss&nbsp;methods&nbsp;on&nbsp;tetrahedrons&nbsp;(K=1,&nbsp;2,&nbsp;3,&nbsp;5,&nbsp;6&nbsp;or&nbsp;8).<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_SIMPLEX4D(3)<br>
+&nbsp;&nbsp;&nbsp;Gauss&nbsp;method&nbsp;on&nbsp;a&nbsp;4-dimensional&nbsp;simplex.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_STRUCTURED_COMPOSITE(IM1,&nbsp;K)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Composite&nbsp;method&nbsp;on&nbsp;a&nbsp;grid&nbsp;with&nbsp;K&nbsp;divisions.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;IM_HCT_COMPOSITE(IM1)<br>
+&nbsp;&nbsp;&nbsp;Composite&nbsp;integration&nbsp;suited&nbsp;to&nbsp;the&nbsp;HCT&nbsp;composite&nbsp;finite&nbsp;element.<br>
+&nbsp;<br>
+&nbsp;&nbsp;example:<br>
+&nbsp;&nbsp;&nbsp;<a href="#Integ">Integ</a>('IM_PRODUCT(IM_GAUSS1D(5),IM_GAUSS1D(5))')<br>
+&nbsp;&nbsp;&nbsp;is&nbsp;the&nbsp;same&nbsp;as:<br>
+&nbsp;&nbsp;&nbsp;<a href="#Integ">Integ</a>('IM_GAUSS_PARALLELEPIPED(2,5)')</tt></dd></dl>
+
+<dl><dt><a name="Integ-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Integ-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Integ-char"><strong>char</strong></a>(self)</dt><dd><tt>Ouput&nbsp;a&nbsp;(unique)&nbsp;string&nbsp;representation&nbsp;of&nbsp;the&nbsp;integration&nbsp;method.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Integ">Integ</a>.<a href="#Integ-char">char</a>()<br>
+This&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;&nbsp;comparisons&nbsp;between&nbsp;two&nbsp;different&nbsp;@tinteg&nbsp;objects.</tt></dd></dl>
+
+<dl><dt><a name="Integ-coeffs"><strong>coeffs</strong></a>(self)</dt><dd><tt>Returns&nbsp;the&nbsp;coefficients&nbsp;associated&nbsp;to&nbsp;each&nbsp;integration&nbsp;point.</tt></dd></dl>
+
+<dl><dt><a name="Integ-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;ref.&nbsp;convex&nbsp;of&nbsp;the&nbsp;method.</tt></dd></dl>
+
+<dl><dt><a name="Integ-face_coeffs"><strong>face_coeffs</strong></a>(self, F)</dt><dd><tt>Returns&nbsp;the&nbsp;coefficients&nbsp;associated&nbsp;to&nbsp;each&nbsp;integration&nbsp;of&nbsp;a&nbsp;face.</tt></dd></dl>
+
+<dl><dt><a name="Integ-face_pts"><strong>face_pts</strong></a>(self, F)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;integration&nbsp;points&nbsp;for&nbsp;a&nbsp;face.</tt></dd></dl>
+
+<dl><dt><a name="Integ-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Integ-is_exact"><strong>is_exact</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;if&nbsp;the&nbsp;integration&nbsp;is&nbsp;an&nbsp;approximate&nbsp;one.</tt></dd></dl>
+
+<dl><dt><a name="Integ-nbpts"><strong>nbpts</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;total&nbsp;number&nbsp;of&nbsp;integration&nbsp;points.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Integ">Integ</a>.<a href="#Integ-nbpts">nbpts</a>()<br>
+Count&nbsp;the&nbsp;points&nbsp;for&nbsp;the&nbsp;volume&nbsp;integration,&nbsp;and&nbsp;points&nbsp;for&nbsp;surface<br>
+integration&nbsp;on&nbsp;each&nbsp;face&nbsp;of&nbsp;the&nbsp;reference&nbsp;convex.&nbsp;Raises&nbsp;an&nbsp;error&nbsp;for&nbsp;exact<br>
+integration&nbsp;methods.</tt></dd></dl>
+
+<dl><dt><a name="Integ-pts"><strong>pts</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;integration&nbsp;points&nbsp;(only&nbsp;for&nbsp;approximate&nbsp;methods).</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LevelSet">class <strong>LevelSet</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Getfem&nbsp;Level-set.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LevelSet-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LevelSet-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#LevelSet">LevelSet</a>&nbsp;objects.</tt></dd></dl>
+
+<dl><dt><a name="LevelSet-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="LevelSet-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MdBrick">class <strong>MdBrick</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MdBrick-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MdBrick-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#MdBrick">MdBrick</a>&nbsp;objects.<br>
+&nbsp;<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('constraint',&nbsp;mdbrick&nbsp;parent,&nbsp;string&nbsp;CTYPE&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;generic&nbsp;constraint&nbsp;brick.&nbsp;&nbsp;&nbsp;It&nbsp;may&nbsp;be&nbsp;useful&nbsp;in&nbsp;some&nbsp;situations,<br>
+such&nbsp;as&nbsp;the&nbsp;Stokes&nbsp;problem&nbsp;where&nbsp;the&nbsp;pressure&nbsp;in&nbsp;defined&nbsp;modulo&nbsp;a&nbsp;constant.&nbsp;In<br>
+such&nbsp;a&nbsp;situation,&nbsp;this&nbsp;brick&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;add&nbsp;an&nbsp;additional&nbsp;constraint&nbsp;on<br>
+the&nbsp;pressure&nbsp;value.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CTYPE&nbsp;has&nbsp;to&nbsp;be&nbsp;chosen&nbsp;among&nbsp;'augmented',<br>
+'penalized',&nbsp;and&nbsp;'eliminated'.&nbsp;&nbsp;The&nbsp;constraint&nbsp;can&nbsp;be&nbsp;specified&nbsp;with<br>
+<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_constraints">set_constraints</a>().&nbsp;Note&nbsp;that&nbsp;Dirichlet&nbsp;bricks&nbsp;(except&nbsp;the&nbsp;'generalized<br>
+Dirichlet'&nbsp;one)&nbsp;are&nbsp;also&nbsp;specializations&nbsp;of&nbsp;the&nbsp;'constraint'&nbsp;brick.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('dirichlet',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM,&nbsp;meshfem&nbsp;MFMULT,&nbsp;string<br>
+CTYPE&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;brick&nbsp;which&nbsp;impose&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;field&nbsp;along&nbsp;a<br>
+mesh&nbsp;boundary.&nbsp;&nbsp;The&nbsp;BNUM&nbsp;parameter&nbsp;selects&nbsp;on&nbsp;which&nbsp;mesh&nbsp;region&nbsp;the&nbsp;Dirichlet<br>
+condition&nbsp;is&nbsp;imposed.&nbsp;CTYPE&nbsp;has&nbsp;to&nbsp;be&nbsp;chosen&nbsp;among&nbsp;'augmented',&nbsp;'penalized',<br>
+and&nbsp;'eliminated'.&nbsp;The&nbsp;MFMULT&nbsp;may&nbsp;generally&nbsp;be&nbsp;taken&nbsp;as&nbsp;the&nbsp;meshfem&nbsp;of&nbsp;the<br>
+unknown,&nbsp;but&nbsp;for&nbsp;'augmented'&nbsp;Dirichlet&nbsp;conditions,&nbsp;you&nbsp;may&nbsp;have&nbsp;to&nbsp;respect&nbsp;the<br>
+Inf-Sup&nbsp;condition&nbsp;and&nbsp;choose&nbsp;an&nbsp;adequate&nbsp;meshfem.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('dirichlet_on_normal_component',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM,<br>
+meshfem&nbsp;MFMULT,&nbsp;string&nbsp;CTYPE&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;brick&nbsp;which&nbsp;imposes&nbsp;the&nbsp;value&nbsp;of&nbsp;the&nbsp;normal<br>
+component&nbsp;of&nbsp;a&nbsp;vector&nbsp;field.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('dirichlet_on_normal_derivative',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM,<br>
+meshfem&nbsp;MFMULT,&nbsp;string&nbsp;CTYPE&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;brick&nbsp;which&nbsp;imposes&nbsp;the&nbsp;value&nbsp;of&nbsp;the&nbsp;normal<br>
+derivative&nbsp;of&nbsp;the&nbsp;unknown.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('generalized_dirichlet',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;This&nbsp;is&nbsp;the&nbsp;"old"&nbsp;Dirichlet&nbsp;brick&nbsp;of&nbsp;getfem.&nbsp;&nbsp;This&nbsp;brick&nbsp;can&nbsp;be&nbsp;used&nbsp;to<br>
+impose&nbsp;general&nbsp;Dirichlet&nbsp;conditions&nbsp;'h(x)u(x)&nbsp;=&nbsp;r(x)'&nbsp;,&nbsp;however&nbsp;it&nbsp;may&nbsp;have<br>
+some&nbsp;issues&nbsp;with&nbsp;elaborated&nbsp;FEM&nbsp;(such&nbsp;as&nbsp;Argyris,&nbsp;etc).&nbsp;It&nbsp;should&nbsp;be&nbsp;avoided<br>
+when&nbsp;possible.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('source_term',&nbsp;mdbrick&nbsp;parent,&nbsp;[,&nbsp;int&nbsp;BNUM=-1[,&nbsp;int&nbsp;numfem]])<br>
+&nbsp;&nbsp;Add&nbsp;a&nbsp;boundary&nbsp;or&nbsp;volumic&nbsp;source&nbsp;term&nbsp;(&nbsp;\int&nbsp;B.v&nbsp;).&nbsp;&nbsp;If&nbsp;BNUM&nbsp;is&nbsp;omitted&nbsp;(or<br>
+set&nbsp;to&nbsp;-1)&nbsp;,&nbsp;the&nbsp;brick&nbsp;adds&nbsp;a&nbsp;volumic&nbsp;source&nbsp;term&nbsp;on&nbsp;the&nbsp;whole&nbsp;mesh.&nbsp;For&nbsp;BNUM<br>
+&gt;=&nbsp;0,&nbsp;the&nbsp;source&nbsp;term&nbsp;is&nbsp;imposed&nbsp;on&nbsp;the&nbsp;mesh&nbsp;region&nbsp;BNUM.&nbsp;Use<br>
+<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_param">set_param</a>('source&nbsp;term',mf,B)&nbsp;to&nbsp;set&nbsp;the&nbsp;source&nbsp;term&nbsp;field.&nbsp;The&nbsp;source<br>
+term&nbsp;is&nbsp;expected&nbsp;as&nbsp;a&nbsp;vector&nbsp;field&nbsp;of&nbsp;size&nbsp;Q&nbsp;(with&nbsp;Q&nbsp;=&nbsp;qdim).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('normal_source_term',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Add&nbsp;a&nbsp;boundary&nbsp;source&nbsp;term&nbsp;(&nbsp;\int&nbsp;(Bn).v&nbsp;).&nbsp;&nbsp;The&nbsp;source&nbsp;term&nbsp;is&nbsp;imposed&nbsp;on<br>
+the&nbsp;mesh&nbsp;region&nbsp;BNUM&nbsp;(which&nbsp;of&nbsp;course&nbsp;is&nbsp;not&nbsp;allowed&nbsp;to&nbsp;be&nbsp;a&nbsp;volumic&nbsp;region,<br>
+only&nbsp;boundary&nbsp;regions&nbsp;are&nbsp;allowed).&nbsp;Use&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_param">set_param</a>('source&nbsp;term',mf,B)<br>
+to&nbsp;set&nbsp;the&nbsp;source&nbsp;term&nbsp;field.&nbsp;The&nbsp;source&nbsp;term&nbsp;B&nbsp;is&nbsp;expected&nbsp;as&nbsp;tensor&nbsp;field&nbsp;of<br>
+size&nbsp;QxN&nbsp;(with&nbsp;Q&nbsp;=&nbsp;qdim,&nbsp;N&nbsp;=&nbsp;mesh&nbsp;dim).&nbsp;For&nbsp;example,&nbsp;if&nbsp;you&nbsp;consider&nbsp;an<br>
+elasticity&nbsp;problem,&nbsp;this&nbsp;brick&nbsp;may&nbsp;be&nbsp;used&nbsp;to&nbsp;impose&nbsp;a&nbsp;force&nbsp;on&nbsp;the&nbsp;boundary<br>
+with&nbsp;B&nbsp;as&nbsp;the&nbsp;stress&nbsp;tensor.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('normal_derivative_source_term',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM&nbsp;[,&nbsp;int<br>
+numfem])<br>
+&nbsp;&nbsp;Add&nbsp;a&nbsp;boundary&nbsp;source&nbsp;term&nbsp;(&nbsp;\int&nbsp;(\partial_n&nbsp;B).v&nbsp;).&nbsp;&nbsp;The&nbsp;source&nbsp;term&nbsp;is<br>
+imposed&nbsp;on&nbsp;the&nbsp;mesh&nbsp;region&nbsp;BNUM.&nbsp;Use&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_param">set_param</a>('source&nbsp;term',mf,B)&nbsp;to<br>
+set&nbsp;the&nbsp;source&nbsp;term&nbsp;field,&nbsp;which&nbsp;is&nbsp;expected&nbsp;as&nbsp;a&nbsp;vector&nbsp;field&nbsp;&nbsp;of&nbsp;size&nbsp;Q<br>
+(with&nbsp;Q&nbsp;=&nbsp;qdim).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('neumann&nbsp;KirchhoffLove&nbsp;source&nbsp;term',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM&nbsp;[,<br>
+int&nbsp;numfem])<br>
+&nbsp;&nbsp;&nbsp;Add&nbsp;a&nbsp;boundary&nbsp;source&nbsp;term&nbsp;for&nbsp;neumann&nbsp;Kirchhoff-Love&nbsp;plate&nbsp;problems<br>
+(should&nbsp;be&nbsp;used&nbsp;with&nbsp;the&nbsp;Kirchhoff-Love&nbsp;flavour&nbsp;of&nbsp;the&nbsp;bilaplacian&nbsp;brick).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('qu_term',&nbsp;mdbrick&nbsp;parent,&nbsp;[,&nbsp;int&nbsp;BNUM&nbsp;[,&nbsp;int&nbsp;numfem]])<br>
+&nbsp;&nbsp;Update&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;with&nbsp;a&nbsp;\int&nbsp;(Qu).v&nbsp;term.&nbsp;&nbsp;The&nbsp;Q(x)&nbsp;parameter&nbsp;is&nbsp;a<br>
+matrix&nbsp;field&nbsp;of&nbsp;size&nbsp;qdim&nbsp;x&nbsp;qdim.&nbsp;An&nbsp;example&nbsp;of&nbsp;use&nbsp;is&nbsp;for&nbsp;the&nbsp;"iku"&nbsp;part&nbsp;of<br>
+Robin&nbsp;boundary&nbsp;conditions&nbsp;\partial_n&nbsp;u&nbsp;+&nbsp;iku&nbsp;=&nbsp;...<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('mass_matrix',&nbsp;meshim&nbsp;mim,&nbsp;meshfem&nbsp;mf_u&nbsp;[,'real'|'complex'])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;mass-matrix&nbsp;brick.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('generic_elliptic',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu<br>
+[,'scalar'|'matrix'|'tensor'][,'real'|'complex'])<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;generic&nbsp;elliptic&nbsp;problem&nbsp;(&nbsp;(A*grad(U)).grad(V)&nbsp;).&nbsp;&nbsp;The&nbsp;brick<br>
+parameter&nbsp;'A'&nbsp;may&nbsp;be&nbsp;a&nbsp;scalar&nbsp;field,&nbsp;a&nbsp;matrix&nbsp;field,&nbsp;or&nbsp;a&nbsp;tensor&nbsp;field<br>
+(default&nbsp;is&nbsp;scalar).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('helmholtz',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu&nbsp;[,'real'|'complex'])<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;Helmholtz&nbsp;problem.&nbsp;&nbsp;The&nbsp;brick&nbsp;has&nbsp;one&nbsp;parameter,&nbsp;'wave_number'.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('isotropic_linearized_elasticity',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu)<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;linear&nbsp;elasticity&nbsp;problem.&nbsp;&nbsp;The&nbsp;brick&nbsp;has&nbsp;two&nbsp;scalar&nbsp;parameter,<br>
+'lambda'&nbsp;and&nbsp;'mu'&nbsp;(the&nbsp;Lame&nbsp;coefficients).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('linear_incompressibility_term',&nbsp;mdbrick&nbsp;parent,&nbsp;meshfem&nbsp;mf_p&nbsp;[,<br>
+int&nbsp;numfem])<br>
+&nbsp;&nbsp;Add&nbsp;an&nbsp;incompressibily&nbsp;constraint&nbsp;(div&nbsp;u&nbsp;=&nbsp;0).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('nonlinear_elasticity',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu,&nbsp;string&nbsp;lawname)<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;nonlinear&nbsp;elasticity&nbsp;(large&nbsp;deformations)&nbsp;problem.&nbsp;&nbsp;The&nbsp;material&nbsp;law<br>
+can&nbsp;be&nbsp;chosen&nbsp;among&nbsp;-&nbsp;'SaintVenant&nbsp;Kirchhoff'&nbsp;(linearized&nbsp;material&nbsp;law)&nbsp;-<br>
+'Mooney&nbsp;Rivlin'&nbsp;(to&nbsp;be&nbsp;used&nbsp;with&nbsp;the&nbsp;nonlinear&nbsp;incompressibily&nbsp;term)&nbsp;-<br>
+'Ciarlet&nbsp;Geymonat'<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('nonlinear_elasticity_incompressibility_term',&nbsp;mdbrick&nbsp;parent,<br>
+meshfem&nbsp;mf_p&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Add&nbsp;an&nbsp;incompressibily&nbsp;constraint&nbsp;to&nbsp;a&nbsp;large&nbsp;strain&nbsp;elasticity&nbsp;problem.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('small_deformations_plasticity',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu,&nbsp;scalar<br>
+THRESHOLD)<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;plasticity&nbsp;problem&nbsp;(with&nbsp;small&nbsp;deformations).&nbsp;&nbsp;The&nbsp;THRESHOLD<br>
+parameter&nbsp;is&nbsp;the&nbsp;maximum&nbsp;value&nbsp;of&nbsp;the&nbsp;Von&nbsp;Mises&nbsp;stress&nbsp;before&nbsp;'plastification'<br>
+of&nbsp;the&nbsp;material.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('dynamic',&nbsp;mdbrick&nbsp;parent,&nbsp;scalar&nbsp;rho&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;Dynamic&nbsp;brick.&nbsp;This&nbsp;brick&nbsp;is&nbsp;not&nbsp;ready.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('navier_stokes',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu,&nbsp;meshfem&nbsp;mfp)<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;Navier-Stokes&nbsp;problem&nbsp;(this&nbsp;brick&nbsp;is&nbsp;not&nbsp;ready,&nbsp;do&nbsp;not&nbsp;use&nbsp;it).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('bilaplacian',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;mfu,&nbsp;['Kirchhoff-Love'])<br>
+&nbsp;&nbsp;Setup&nbsp;a&nbsp;bilaplacian&nbsp;problem.&nbsp;&nbsp;If&nbsp;the&nbsp;Kirchhoff-Love&nbsp;option&nbsp;is&nbsp;specified,&nbsp;the<br>
+Kirchhoff-Love&nbsp;plate&nbsp;model&nbsp;is&nbsp;used.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('isotropic_linearized_plate',&nbsp;meshim&nbsp;MIM,&nbsp;meshim&nbsp;MIMSUB,&nbsp;meshfem<br>
+MF_UT,&nbsp;meshfem&nbsp;MF_U3,&nbsp;meshfem&nbsp;MF_THETA,&nbsp;scalar&nbsp;EPSILON)<br>
+&nbsp;&nbsp;&nbsp;Setup&nbsp;a&nbsp;linear&nbsp;plate&nbsp;model&nbsp;brick&nbsp;(for&nbsp;moderately&nbsp;thick&nbsp;plates,&nbsp;using&nbsp;the<br>
+Reissner-Mindlin&nbsp;model).&nbsp;EPSILON&nbsp;is&nbsp;the&nbsp;plate&nbsp;thinkness,&nbsp;the&nbsp;@mf&nbsp;MF_UT&nbsp;and<br>
+MF_U3&nbsp;are&nbsp;used&nbsp;respectively&nbsp;for&nbsp;the&nbsp;membrane&nbsp;displacement&nbsp;and&nbsp;the&nbsp;transverse<br>
+displacement&nbsp;of&nbsp;the&nbsp;plate.&nbsp;The&nbsp;@mf&nbsp;MF_THETA&nbsp;is&nbsp;the&nbsp;rotation&nbsp;of&nbsp;the&nbsp;normal<br>
+("section&nbsp;rotations").&nbsp;&nbsp;The&nbsp;second&nbsp;integration&nbsp;method&nbsp;MIMSUB&nbsp;can&nbsp;be&nbsp;chosen<br>
+equal&nbsp;to&nbsp;MIM,&nbsp;or&nbsp;different&nbsp;if&nbsp;you&nbsp;want&nbsp;to&nbsp;perform&nbsp;sub-integration&nbsp;on&nbsp;the<br>
+transverse&nbsp;shear&nbsp;term&nbsp;(mitc4&nbsp;projection).&nbsp;&nbsp;This&nbsp;brick&nbsp;has&nbsp;two&nbsp;parameters<br>
+"lambda"&nbsp;and&nbsp;"mu"&nbsp;(the&nbsp;Lamé&nbsp;coefficients)<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('mixed_isotropic_linearized_plate',&nbsp;meshim&nbsp;MIM,&nbsp;meshfem&nbsp;MF_UT,<br>
+meshfem&nbsp;MF_U3,&nbsp;meshfem&nbsp;MF_THETA,&nbsp;scalar&nbsp;EPSILON)<br>
+&nbsp;&nbsp;&nbsp;Setup&nbsp;a&nbsp;mixed&nbsp;linear&nbsp;plate&nbsp;model&nbsp;brick&nbsp;(for&nbsp;thin&nbsp;plates,&nbsp;using&nbsp;Kirchhoff-<br>
+Love&nbsp;model).&nbsp;&nbsp;For&nbsp;a&nbsp;non-mixed&nbsp;version,&nbsp;use&nbsp;the&nbsp;bilaplacian&nbsp;brick.<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('plate_source_term',&nbsp;mdbrick&nbsp;parent,&nbsp;[,&nbsp;int&nbsp;BNUM=-1[,&nbsp;int<br>
+numfem]])<br>
+&nbsp;&nbsp;&nbsp;Add&nbsp;a&nbsp;boundary&nbsp;or&nbsp;a&nbsp;volumic&nbsp;source&nbsp;term&nbsp;to&nbsp;a&nbsp;plate&nbsp;problem.&nbsp;This&nbsp;brick&nbsp;has<br>
+two&nbsp;parameters:&nbsp;"B"&nbsp;is&nbsp;the&nbsp;displacement&nbsp;(ut&nbsp;and&nbsp;u3)&nbsp;source&nbsp;term,&nbsp;"M"&nbsp;is&nbsp;the<br>
+moment&nbsp;source&nbsp;term&nbsp;(i.e.&nbsp;the&nbsp;source&nbsp;term&nbsp;on&nbsp;the&nbsp;rotation&nbsp;of&nbsp;the&nbsp;normal).<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('plate_simple_support',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM,&nbsp;string&nbsp;CTYPE&nbsp;[,<br>
+int&nbsp;numfem])<br>
+&nbsp;&nbsp;&nbsp;Add&nbsp;a&nbsp;"simple&nbsp;support"&nbsp;boundary&nbsp;condition&nbsp;to&nbsp;a&nbsp;plate&nbsp;problem&nbsp;(homogeneous<br>
+Dirichlet&nbsp;condition&nbsp;on&nbsp;the&nbsp;displacement,&nbsp;free&nbsp;rotation).&nbsp;CTYPE&nbsp;specifies&nbsp;how<br>
+the&nbsp;constraint&nbsp;is&nbsp;enforced&nbsp;('penalized',&nbsp;'augmented'&nbsp;or&nbsp;'eliminated').<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('plate_clamped_support',&nbsp;mdbrick&nbsp;parent,&nbsp;int&nbsp;BNUM,&nbsp;string&nbsp;CTYPE<br>
+[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;&nbsp;Add&nbsp;a&nbsp;"clamped&nbsp;support"&nbsp;boundary&nbsp;condition&nbsp;to&nbsp;a&nbsp;plate&nbsp;problem&nbsp;(homogeneous<br>
+Dirichlet&nbsp;condition&nbsp;on&nbsp;the&nbsp;displacement&nbsp;and&nbsp;on&nbsp;the&nbsp;rotation).&nbsp;CTYPE&nbsp;specifies<br>
+how&nbsp;the&nbsp;constraint&nbsp;is&nbsp;enforced&nbsp;('penalized',&nbsp;'augmented'&nbsp;or&nbsp;'eliminated').<br>
+&nbsp;*&nbsp;B=<a href="#MdBrick">MdBrick</a>('plate_closing',&nbsp;mdbrick&nbsp;parent&nbsp;[,&nbsp;int&nbsp;numfem])<br>
+&nbsp;&nbsp;&nbsp;Add&nbsp;a&nbsp;free&nbsp;edges&nbsp;condition&nbsp;for&nbsp;the&nbsp;mixed&nbsp;plate&nbsp;model&nbsp;brick.&nbsp;&nbsp;This&nbsp;brick&nbsp;is<br>
+required&nbsp;when&nbsp;the&nbsp;mixed&nbsp;linearized&nbsp;plate&nbsp;brick&nbsp;is&nbsp;used.&nbsp;It&nbsp;must&nbsp;be&nbsp;inserted<br>
+after&nbsp;all&nbsp;other&nbsp;boundary&nbsp;conditions&nbsp;(the&nbsp;reason&nbsp;is&nbsp;that&nbsp;the&nbsp;brick&nbsp;has&nbsp;to<br>
+inspect&nbsp;all&nbsp;other&nbsp;boundary&nbsp;conditions&nbsp;to&nbsp;determine&nbsp;the&nbsp;number&nbsp;of&nbsp;disconnected<br>
+boundary&nbsp;parts&nbsp;which&nbsp;are&nbsp;free&nbsp;edges).</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MdBrick-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MdBrick-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;main&nbsp;mesh&nbsp;(2&nbsp;for&nbsp;a&nbsp;2D&nbsp;mesh,&nbsp;etc).</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MdBrick-is_coercive"><strong>is_coercive</strong></a>(self)</dt><dd><tt>Return&nbsp;true&nbsp;if&nbsp;the&nbsp;problem&nbsp;is&nbsp;coercive.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-is_complex"><strong>is_complex</strong></a>(self)</dt><dd><tt>Return&nbsp;true&nbsp;if&nbsp;the&nbsp;problem&nbsp;uses&nbsp;complex&nbsp;numbers.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-is_linear"><strong>is_linear</strong></a>(self)</dt><dd><tt>Return&nbsp;true&nbsp;if&nbsp;the&nbsp;problem&nbsp;is&nbsp;linear.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-is_symmetric"><strong>is_symmetric</strong></a>(self)</dt><dd><tt>Return&nbsp;true&nbsp;if&nbsp;the&nbsp;problem&nbsp;is&nbsp;symmetric.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the&nbsp;model&nbsp;brick.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-mixed_variables"><strong>mixed_variables</strong></a>(self)</dt><dd><tt>Identify&nbsp;the&nbsp;indices&nbsp;of&nbsp;mixed&nbsp;variables&nbsp;(typically&nbsp;the&nbsp;pressure,&nbsp;etc.)&nbsp;in&nbsp;the<br>
+tangent&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-nbdof"><strong>nbdof</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;total&nbsp;number&nbsp;of&nbsp;dof&nbsp;of&nbsp;the&nbsp;current&nbsp;problem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-nbdof">nbdof</a>()<br>
+This&nbsp;is&nbsp;the&nbsp;sum&nbsp;of&nbsp;the&nbsp;brick&nbsp;specific&nbsp;dof&nbsp;plus&nbsp;the&nbsp;dof&nbsp;of&nbsp;the&nbsp;parent&nbsp;bricks.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-param"><strong>param</strong></a>(self, parameter_name)</dt><dd><tt>Get&nbsp;the&nbsp;parameter&nbsp;value.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-param">param</a>(&nbsp;string&nbsp;parameter_name)<br>
+When&nbsp;the&nbsp;parameter&nbsp;has&nbsp;been&nbsp;assigned&nbsp;a&nbsp;specific&nbsp;mesh_fem,&nbsp;it&nbsp;is&nbsp;returned&nbsp;&nbsp;as&nbsp;a<br>
+large&nbsp;array&nbsp;(the&nbsp;last&nbsp;dimension&nbsp;being&nbsp;the&nbsp;mesh_fem&nbsp;dof).&nbsp;When&nbsp;no&nbsp;mesh_fem&nbsp;has<br>
+been&nbsp;assigned,&nbsp;the&nbsp;parameter&nbsp;is&nbsp;considered&nbsp;to&nbsp;be&nbsp;constant&nbsp;over&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-param_list"><strong>param_list</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;list&nbsp;of&nbsp;parameters&nbsp;names.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-param_list">param_list</a>()<br>
+Each&nbsp;brick&nbsp;embeds&nbsp;a&nbsp;number&nbsp;of&nbsp;parameters&nbsp;(the&nbsp;Lamé&nbsp;coefficients&nbsp;for&nbsp;the<br>
+linearized&nbsp;elasticity&nbsp;brick,&nbsp;the&nbsp;wave&nbsp;number&nbsp;for&nbsp;the&nbsp;Helmholtz&nbsp;brick,...),<br>
+described&nbsp;as&nbsp;a&nbsp;(scalar,&nbsp;or&nbsp;vector,&nbsp;tensor&nbsp;etc)&nbsp;field&nbsp;on&nbsp;a&nbsp;mesh_fem.&nbsp;You&nbsp;can<br>
+read/change&nbsp;the&nbsp;parameter&nbsp;values&nbsp;with&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-param">param</a>()&nbsp;and&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_param">set_param</a>().</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-penalization_epsilon"><strong>penalization_epsilon</strong></a>(self, eps)</dt><dd><tt>Change&nbsp;the&nbsp;penalization&nbsp;coefficient&nbsp;of&nbsp;a&nbsp;constraint&nbsp;brick.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-penalization_epsilon">penalization_epsilon</a>(&nbsp;eps)<br>
+This&nbsp;is&nbsp;only&nbsp;applicable&nbsp;to&nbsp;the&nbsp;bricks&nbsp;which&nbsp;inherit&nbsp;from&nbsp;the&nbsp;constraint&nbsp;brick,<br>
+such&nbsp;as&nbsp;the&nbsp;Dirichlet&nbsp;ones.&nbsp;And&nbsp;of&nbsp;course&nbsp;it&nbsp;is&nbsp;not&nbsp;effective&nbsp;when&nbsp;the<br>
+constraint&nbsp;is&nbsp;enforced&nbsp;via&nbsp;direct&nbsp;elimination&nbsp;or&nbsp;via&nbsp;Lagrange&nbsp;multipliers.&nbsp;The<br>
+default&nbsp;value&nbsp;of&nbsp;eps&nbsp;is&nbsp;1e-9.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MdBrick-set_constraints"><strong>set_constraints</strong></a>(self, H, R)</dt><dd><tt>Set&nbsp;the&nbsp;constraints&nbsp;imposed&nbsp;by&nbsp;a&nbsp;constraint&nbsp;brick.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_constraints">set_constraints</a>(&nbsp;mat&nbsp;H,&nbsp;vec&nbsp;R)<br>
+This&nbsp;is&nbsp;only&nbsp;applicable&nbsp;to&nbsp;the&nbsp;bricks&nbsp;which&nbsp;inherit&nbsp;from&nbsp;the&nbsp;constraint&nbsp;brick,<br>
+such&nbsp;as&nbsp;the&nbsp;Dirichlet&nbsp;ones.&nbsp;Imposes&nbsp;HU=R.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-set_constraints_rhs"><strong>set_constraints_rhs</strong></a>(self, H, R)</dt><dd><tt>Set&nbsp;the&nbsp;right&nbsp;hand&nbsp;side&nbsp;of&nbsp;the&nbsp;constraints&nbsp;imposed&nbsp;by&nbsp;a&nbsp;constraint&nbsp;brick.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_constraints_rhs">set_constraints_rhs</a>(&nbsp;mat&nbsp;H,&nbsp;vec&nbsp;R)<br>
+This&nbsp;is&nbsp;only&nbsp;applicable&nbsp;to&nbsp;the&nbsp;bricks&nbsp;which&nbsp;inherit&nbsp;from&nbsp;the&nbsp;constraint&nbsp;brick,<br>
+such&nbsp;as&nbsp;the&nbsp;Dirichlet&nbsp;ones.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-set_param"><strong>set_param</strong></a>(self, name, *args)</dt><dd><tt>Change&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;brick&nbsp;parameter.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-set_param">set_param</a>(&nbsp;string&nbsp;name,&nbsp;{meshfem&nbsp;MF,V&nbsp;|&nbsp;V})<br>
+V&nbsp;should&nbsp;contain&nbsp;the&nbsp;new&nbsp;parameter&nbsp;value.&nbsp;If&nbsp;a&nbsp;meshfem&nbsp;is&nbsp;given&nbsp;,&nbsp;V&nbsp;should<br>
+hold&nbsp;the&nbsp;field&nbsp;values&nbsp;over&nbsp;that&nbsp;meshfem&nbsp;(i.e.&nbsp;its&nbsp;last&nbsp;dimension&nbsp;should&nbsp;be<br>
+<a href="#MeshFem">MeshFem</a>.<a href="#MdBrick-nbdof">nbdof</a>()).</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-solve"><strong>solve</strong></a>(self, mds, *args)</dt><dd><tt>Run&nbsp;the&nbsp;standard&nbsp;getfem&nbsp;solver.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-solve">solve</a>(&nbsp;@mdstate&nbsp;mds&nbsp;[,...])<br>
+Note&nbsp;that&nbsp;you&nbsp;should&nbsp;be&nbsp;able&nbsp;to&nbsp;use&nbsp;your&nbsp;own&nbsp;solver&nbsp;if&nbsp;you&nbsp;want&nbsp;(it&nbsp;is<br>
+possible&nbsp;to&nbsp;obtain&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;and&nbsp;its&nbsp;right&nbsp;hand&nbsp;side&nbsp;with&nbsp;the<br>
+<a href="#MdState">MdState</a>.tangent_matrix()&nbsp;etc.).&nbsp;&nbsp;&nbsp;Various&nbsp;options&nbsp;can&nbsp;be&nbsp;specified:<br>
+&nbsp;<br>
+&nbsp;&nbsp;-&nbsp;'noisy'&nbsp;or&nbsp;'very&nbsp;noisy'&nbsp;:&nbsp;the&nbsp;solver&nbsp;will&nbsp;display&nbsp;some<br>
+&nbsp;information&nbsp;showing&nbsp;the&nbsp;progress&nbsp;(residual&nbsp;values&nbsp;etc.).<br>
+&nbsp;-&nbsp;'max_iter',&nbsp;NIT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;set&nbsp;the&nbsp;maximum&nbsp;iterations&nbsp;numbers.<br>
+&nbsp;-&nbsp;'max_res',&nbsp;RES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;set&nbsp;the&nbsp;target&nbsp;residual&nbsp;value.<br>
+&nbsp;-&nbsp;'lsolver',&nbsp;SOLVERNAME&nbsp;&nbsp;&nbsp;:&nbsp;select&nbsp;explicitely&nbsp;the&nbsp;solver&nbsp;used&nbsp;for&lt;&nbsp;the<br>
+linear&nbsp;systems&nbsp;(the&nbsp;default&nbsp;value&nbsp;is&nbsp;'auto',&nbsp;which&nbsp;lets&nbsp;getfem&nbsp;choose&nbsp;itself).<br>
+Possible&nbsp;values&nbsp;are&nbsp;'superlu',&nbsp;'mumps'&nbsp;(if&nbsp;supported),&nbsp;'cg/ildlt',&nbsp;'gmres/ilu'<br>
+and&nbsp;'gmres/ilut'.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-subclass"><strong>subclass</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;typename&nbsp;of&nbsp;the&nbsp;brick.</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-tresca"><strong>tresca</strong></a>(self, mds, MFVM)</dt><dd><tt>Compute&nbsp;the&nbsp;Tresca&nbsp;stress&nbsp;criterion&nbsp;on&nbsp;the&nbsp;mesh_fem&nbsp;MFVM.<br>
+&nbsp;<br>
+Synopsis:&nbsp;VM=<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-tresca">tresca</a>(&nbsp;@mdstate&nbsp;mds,&nbsp;meshfem&nbsp;MFVM)<br>
+Only&nbsp;available&nbsp;on&nbsp;bricks&nbsp;where&nbsp;it&nbsp;has&nbsp;a&nbsp;meaning:&nbsp;linearized&nbsp;elasticity,<br>
+plasticity,&nbsp;nonlinear&nbsp;elasticity..</tt></dd></dl>
+
+<dl><dt><a name="MdBrick-von_mises"><strong>von_mises</strong></a>(self, mds, MFVM)</dt><dd><tt>Compute&nbsp;the&nbsp;Von&nbsp;Mises&nbsp;stress&nbsp;on&nbsp;the&nbsp;mesh_fem&nbsp;MFVM.<br>
+&nbsp;<br>
+Synopsis:&nbsp;VM=<a href="#MdBrick">MdBrick</a>.<a href="#MdBrick-von_mises">von_mises</a>(&nbsp;@mdstate&nbsp;mds,&nbsp;meshfem&nbsp;MFVM)<br>
+Only&nbsp;available&nbsp;on&nbsp;bricks&nbsp;where&nbsp;it&nbsp;has&nbsp;a&nbsp;meaning:&nbsp;linearized&nbsp;elasticity,<br>
+plasticity,&nbsp;nonlinear&nbsp;elasticity..&nbsp;Note&nbsp;that&nbsp;in&nbsp;2D&nbsp;it&nbsp;is&nbsp;not&nbsp;the&nbsp;"real"&nbsp;Von<br>
+Mises&nbsp;(which&nbsp;should&nbsp;take&nbsp;into&nbsp;account&nbsp;the&nbsp;'plane&nbsp;stress'&nbsp;or&nbsp;'plane&nbsp;strain'<br>
+aspect),&nbsp;but&nbsp;a&nbsp;pure&nbsp;2D&nbsp;Von&nbsp;Mises.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MdState">class <strong>MdState</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MdState-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MdState-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#MdState">MdState</a>&nbsp;objects.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These&nbsp;objects&nbsp;hold&nbsp;the&nbsp;global&nbsp;model&nbsp;data&nbsp;of&nbsp;a&nbsp;chain&nbsp;of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MdBricks,&nbsp;such&nbsp;as&nbsp;the&nbsp;right&nbsp;hand&nbsp;side,&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;and<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;constraints.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;MDS=<a href="#MdState">MdState</a>(mdbrick&nbsp;B)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Build&nbsp;a&nbsp;modelstate&nbsp;for&nbsp;the&nbsp;brick&nbsp;B&nbsp;(selects&nbsp;the&nbsp;real&nbsp;or<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complex&nbsp;state&nbsp;from&nbsp;the&nbsp;complexity&nbsp;of&nbsp;B).<br>
+&nbsp;<br>
+*&nbsp;MDS=<a href="#MdState">MdState</a>('real')<br>
+&nbsp;Build&nbsp;a&nbsp;model&nbsp;state&nbsp;for&nbsp;real&nbsp;unknowns.<br>
+&nbsp;<br>
+*&nbsp;MDS=<a href="#MdState">MdState</a>('complex')<br>
+&nbsp;Build&nbsp;a&nbsp;model&nbsp;state&nbsp;for&nbsp;complex&nbsp;unknowns.</tt></dd></dl>
+
+<dl><dt><a name="MdState-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MdState-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MdState-clear"><strong>clear</strong></a>(self)</dt><dd><tt>Clear&nbsp;the&nbsp;model&nbsp;state.</tt></dd></dl>
+
+<dl><dt><a name="MdState-compute_reduced_residual"><strong>compute_reduced_residual</strong></a>(self)</dt><dd><tt>Compute&nbsp;the&nbsp;reduced&nbsp;residual&nbsp;from&nbsp;the&nbsp;residual&nbsp;and&nbsp;constraints.</tt></dd></dl>
+
+<dl><dt><a name="MdState-compute_reduced_system"><strong>compute_reduced_system</strong></a>(self)</dt><dd><tt>Compute&nbsp;the&nbsp;reduced&nbsp;system&nbsp;from&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;and&nbsp;constraints.</tt></dd></dl>
+
+<dl><dt><a name="MdState-compute_residual"><strong>compute_residual</strong></a>(self, B)</dt><dd><tt>Compute&nbsp;the&nbsp;residual&nbsp;for&nbsp;the&nbsp;brick&nbsp;B.</tt></dd></dl>
+
+<dl><dt><a name="MdState-compute_tangent_matrix"><strong>compute_tangent_matrix</strong></a>(self, B)</dt><dd><tt>Update&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;from&nbsp;the&nbsp;brick&nbsp;B.</tt></dd></dl>
+
+<dl><dt><a name="MdState-constraints_matrix"><strong>constraints_matrix</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;constraints&nbsp;matrix&nbsp;stored&nbsp;in&nbsp;the&nbsp;model&nbsp;state.</tt></dd></dl>
+
+<dl><dt><a name="MdState-constraints_nullspace"><strong>constraints_nullspace</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;nullspace&nbsp;of&nbsp;the&nbsp;constraints&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="MdState-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MdState-is_complex"><strong>is_complex</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;is&nbsp;the&nbsp;model&nbsp;state&nbsp;is&nbsp;real,&nbsp;1&nbsp;if&nbsp;it&nbsp;is&nbsp;complex.</tt></dd></dl>
+
+<dl><dt><a name="MdState-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the&nbsp;model&nbsp;state.</tt></dd></dl>
+
+<dl><dt><a name="MdState-reduced_residual"><strong>reduced_residual</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;residual&nbsp;on&nbsp;the&nbsp;reduced&nbsp;system.</tt></dd></dl>
+
+<dl><dt><a name="MdState-reduced_tangent_matrix"><strong>reduced_tangent_matrix</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;reduced&nbsp;tangent&nbsp;matrix&nbsp;(i.e.&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;after&nbsp;elimination<br>
+of&nbsp;the&nbsp;constraints).</tt></dd></dl>
+
+<dl><dt><a name="MdState-residual"><strong>residual</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;residual.</tt></dd></dl>
+
+<dl><dt><a name="MdState-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MdState-state"><strong>state</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;vector&nbsp;of&nbsp;unknowns,&nbsp;which&nbsp;contains&nbsp;the&nbsp;solution&nbsp;after<br>
+<a href="#MdBrick">MdBrick</a>.solve().</tt></dd></dl>
+
+<dl><dt><a name="MdState-tangent_matrix"><strong>tangent_matrix</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;stored&nbsp;in&nbsp;the&nbsp;model&nbsp;state.</tt></dd></dl>
+
+<dl><dt><a name="MdState-unreduce"><strong>unreduce</strong></a>(self, U)</dt><dd><tt>Reinsert&nbsp;the&nbsp;constraint&nbsp;eliminated&nbsp;from&nbsp;the&nbsp;system.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Mesh">class <strong>Mesh</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;for&nbsp;getfem&nbsp;mesh&nbsp;objects.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Mesh-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Mesh-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#Mesh">Mesh</a>&nbsp;objects.<br>
+&nbsp;<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('empty',&nbsp;int&nbsp;dim)<br>
+&nbsp;&nbsp;Create&nbsp;a&nbsp;new&nbsp;empty&nbsp;mesh.<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('cartesian',&nbsp;vec&nbsp;X[,&nbsp;vec&nbsp;Y[,&nbsp;vec&nbsp;Z,..]])<br>
+&nbsp;&nbsp;Build&nbsp;quickly&nbsp;a&nbsp;regular&nbsp;mesh&nbsp;of&nbsp;quadrangles,&nbsp;cubes,&nbsp;etc.<br>
+&nbsp;*&nbsp;M=<a href="#Mesh">Mesh</a>('regular_simplices',&nbsp;vec&nbsp;X[,&nbsp;vec&nbsp;Y[,&nbsp;vec&nbsp;Z,..,&nbsp;]]['degree',&nbsp;int<br>
+K]['noised'])<br>
+&nbsp;&nbsp;<a href="#Mesh">Mesh</a>&nbsp;a&nbsp;n-dimensionnal&nbsp;parallelepipeded&nbsp;with&nbsp;simplices&nbsp;(triangles,<br>
+tetrahedrons&nbsp;etc)&nbsp;.&nbsp;&nbsp;The&nbsp;optional&nbsp;degree&nbsp;may&nbsp;be&nbsp;used&nbsp;to&nbsp;build&nbsp;meshes&nbsp;with&nbsp;non<br>
+linear&nbsp;geometric&nbsp;transformations.<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('triangles_grid',&nbsp;vec&nbsp;X,&nbsp;vec&nbsp;Y)<br>
+&nbsp;&nbsp;Build&nbsp;quickly&nbsp;a&nbsp;regular&nbsp;mesh&nbsp;of&nbsp;triangles.&nbsp;&nbsp;&nbsp;This&nbsp;is&nbsp;a&nbsp;very&nbsp;limited&nbsp;and<br>
+somehow&nbsp;deprecated&nbsp;function&nbsp;(See&nbsp;also&nbsp;<a href="#Mesh">Mesh</a>('ptND'),&nbsp;<a href="#Mesh">Mesh</a>('regular_simplices')<br>
+and&nbsp;<a href="#Mesh">Mesh</a>('cartesian')).<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('curved',&nbsp;M0,&nbsp;vec&nbsp;F)<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;curved&nbsp;(n+1)-dimensions&nbsp;mesh&nbsp;from&nbsp;a&nbsp;n-dimensions&nbsp;mesh&nbsp;M0.&nbsp;&nbsp;&nbsp;The<br>
+points&nbsp;of&nbsp;the&nbsp;new&nbsp;mesh&nbsp;have&nbsp;one&nbsp;additional&nbsp;coordinate,&nbsp;given&nbsp;by&nbsp;the&nbsp;vector&nbsp;F.<br>
+This&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;obtain&nbsp;meshes&nbsp;for&nbsp;shells.&nbsp;M0&nbsp;may&nbsp;be&nbsp;a&nbsp;meshfem&nbsp;object,&nbsp;in<br>
+that&nbsp;case&nbsp;its&nbsp;linked&nbsp;mesh&nbsp;will&nbsp;be&nbsp;used.<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('prismatic',&nbsp;M0,&nbsp;int&nbsp;NLAY)<br>
+&nbsp;&nbsp;Extrude&nbsp;a&nbsp;prismatic&nbsp;mesh&nbsp;M&nbsp;from&nbsp;a&nbsp;mesh&nbsp;M0.&nbsp;&nbsp;&nbsp;In&nbsp;the&nbsp;additional&nbsp;dimension<br>
+there&nbsp;are&nbsp;NLAY&nbsp;layers&nbsp;of&nbsp;elements&nbsp;built&nbsp;from&nbsp;0&nbsp;to&nbsp;1.<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('pt2D',&nbsp;mat&nbsp;P,&nbsp;ivec&nbsp;T[,&nbsp;int&nbsp;N])<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;mesh&nbsp;from&nbsp;a&nbsp;2D&nbsp;triangulation.&nbsp;&nbsp;Each&nbsp;column&nbsp;of&nbsp;P&nbsp;contains&nbsp;a&nbsp;point<br>
+coordinate,&nbsp;and&nbsp;each&nbsp;column&nbsp;of&nbsp;T&nbsp;contains&nbsp;the&nbsp;point&nbsp;indices&nbsp;of&nbsp;a&nbsp;triangle.&nbsp;N<br>
+is&nbsp;optional&nbsp;and&nbsp;is&nbsp;a&nbsp;zone&nbsp;number.&nbsp;If&nbsp;N&nbsp;is&nbsp;specified&nbsp;then&nbsp;only&nbsp;the&nbsp;zone&nbsp;number<br>
+'N'&nbsp;is&nbsp;converted&nbsp;(in&nbsp;that&nbsp;case,&nbsp;T&nbsp;is&nbsp;expected&nbsp;to&nbsp;have&nbsp;4&nbsp;rows,&nbsp;the&nbsp;fourth<br>
+containing&nbsp;these&nbsp;zone&nbsp;numbers).<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('ptND',&nbsp;mat&nbsp;P,&nbsp;imat&nbsp;T)<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;mesh&nbsp;from&nbsp;a&nbsp;N-dimensional&nbsp;"triangulation".&nbsp;&nbsp;Similar&nbsp;function&nbsp;to<br>
+'pt2D',&nbsp;for&nbsp;building&nbsp;simplexes&nbsp;meshes&nbsp;from&nbsp;a&nbsp;triangulation&nbsp;given&nbsp;in&nbsp;T,&nbsp;and&nbsp;a<br>
+list&nbsp;of&nbsp;points&nbsp;given&nbsp;in&nbsp;P.&nbsp;The&nbsp;dimension&nbsp;of&nbsp;the&nbsp;mesh&nbsp;will&nbsp;be&nbsp;the&nbsp;number&nbsp;of<br>
+rows&nbsp;of&nbsp;P,&nbsp;and&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;simplexes&nbsp;will&nbsp;be&nbsp;the&nbsp;number&nbsp;of&nbsp;rows&nbsp;of&nbsp;T.<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('load',&nbsp;string&nbsp;FILENAME)<br>
+&nbsp;&nbsp;Load&nbsp;a&nbsp;mesh&nbsp;from&nbsp;a&nbsp;GETFEM++&nbsp;ascii&nbsp;mesh&nbsp;file.&nbsp;See&nbsp;also&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-save">save</a>(FILENAME).<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('from_string',&nbsp;string&nbsp;S)<br>
+&nbsp;&nbsp;Load&nbsp;a&nbsp;mesh&nbsp;from&nbsp;a&nbsp;string&nbsp;description.&nbsp;For&nbsp;example,&nbsp;a&nbsp;string&nbsp;returned&nbsp;by<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-char">char</a>().<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('import',&nbsp;string&nbsp;FORMAT,&nbsp;string&nbsp;FILENAME)<br>
+&nbsp;&nbsp;Import&nbsp;a&nbsp;mesh,&nbsp;FORMAT&nbsp;may&nbsp;be:<br>
+&nbsp;<br>
+&nbsp;-&nbsp;'gmsh'&nbsp;&nbsp;&nbsp;for&nbsp;a&nbsp;mesh&nbsp;created&nbsp;with&nbsp;gmsh&nbsp;(&nbsp;<a href="http://www.geuz.org/gmsh">http://www.geuz.org/gmsh</a>&nbsp;)<br>
+&nbsp;-&nbsp;'gid'&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;a&nbsp;mesh&nbsp;created&nbsp;with&nbsp;GiD&nbsp;&nbsp;(&nbsp;<a href="http://gid.cimne.upc.es">http://gid.cimne.upc.es</a>&nbsp;)<br>
+&nbsp;-&nbsp;'am_fmt'&nbsp;for&nbsp;a&nbsp;mesh&nbsp;created&nbsp;with&nbsp;emc2&nbsp;(<br>
+<a href="http://pauillac.inria.fr/cdrom/www/emc2/fra.htm">http://pauillac.inria.fr/cdrom/www/emc2/fra.htm</a>&nbsp;)<br>
+&nbsp;*&nbsp;&nbsp;M=<a href="#Mesh">Mesh</a>('clone',&nbsp;mesh&nbsp;M2)<br>
+&nbsp;&nbsp;Create&nbsp;a&nbsp;copy&nbsp;of&nbsp;a&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Mesh-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Mesh-add_convex"><strong>add_convex</strong></a>(self, CVTR, CVPTS)</dt><dd><tt>Add&nbsp;a&nbsp;new&nbsp;convex&nbsp;into&nbsp;the&nbsp;mesh.<br>
+&nbsp;<br>
+Synopsis:&nbsp;IDX&nbsp;=&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-add_convex">add_convex</a>(&nbsp;@geotrans&nbsp;CVTR,&nbsp;mat&nbsp;CVPTS)<br>
+The&nbsp;convex&nbsp;structure&nbsp;(triangle,&nbsp;prism,...)&nbsp;is&nbsp;given&nbsp;by&nbsp;CVTR&nbsp;(obtained&nbsp;with<br>
+<a href="#GeoTrans">GeoTrans</a>('...')),&nbsp;and&nbsp;its&nbsp;points&nbsp;are&nbsp;given&nbsp;by&nbsp;the&nbsp;columns&nbsp;of&nbsp;CVPTS.&nbsp;On&nbsp;return,<br>
+IDX&nbsp;contains&nbsp;the&nbsp;convex&nbsp;number.&nbsp;CVPTS&nbsp;might&nbsp;be&nbsp;a&nbsp;3-dimensional&nbsp;array&nbsp;in&nbsp;order<br>
+to&nbsp;insert&nbsp;more&nbsp;than&nbsp;one&nbsp;convex&nbsp;(or&nbsp;a&nbsp;two&nbsp;dimensional&nbsp;array&nbsp;correctly&nbsp;shaped<br>
+according&nbsp;to&nbsp;Fortran&nbsp;ordering).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-add_point"><strong>add_point</strong></a>(self, PT)</dt><dd><tt>Insert&nbsp;new&nbsp;points&nbsp;in&nbsp;the&nbsp;mesh&nbsp;and&nbsp;return&nbsp;their&nbsp;#id.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[IDX]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-add_point">add_point</a>(&nbsp;mat&nbsp;PT)<br>
+PT&nbsp;should&nbsp;be&nbsp;an&nbsp;[n&nbsp;x&nbsp;m]&nbsp;matrix&nbsp;,&nbsp;where&nbsp;n&nbsp;is&nbsp;the&nbsp;mesh&nbsp;dimension,&nbsp;and&nbsp;m&nbsp;is&nbsp;the<br>
+number&nbsp;of&nbsp;points&nbsp;that&nbsp;will&nbsp;be&nbsp;added&nbsp;to&nbsp;the&nbsp;mesh.&nbsp;On&nbsp;output,&nbsp;IDX&nbsp;contains&nbsp;the<br>
+indices&nbsp;of&nbsp;these&nbsp;new&nbsp;points.<br>
+&nbsp;<br>
+&nbsp;Remark:&nbsp;if&nbsp;some&nbsp;points&nbsp;are&nbsp;already&nbsp;part&nbsp;of&nbsp;the&nbsp;mesh&nbsp;(with&nbsp;a&nbsp;small&nbsp;tolerance<br>
+of&nbsp;approximately&nbsp;1e-8),&nbsp;they&nbsp;won't&nbsp;be&nbsp;inserted&nbsp;again,&nbsp;and&nbsp;IDX&nbsp;will&nbsp;contain&nbsp;the<br>
+previously&nbsp;assigned&nbsp;indices&nbsp;of&nbsp;the&nbsp;points.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-char"><strong>char</strong></a>(self)</dt><dd><tt>Output&nbsp;a&nbsp;string&nbsp;description&nbsp;of&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-curved_edges"><strong>curved_edges</strong></a>(self, N, CVLST<font color="#909090">=None</font>)</dt><dd><tt>[OBSOLETE&nbsp;FUNCTION!&nbsp;will&nbsp;be&nbsp;removed&nbsp;in&nbsp;a&nbsp;future&nbsp;release]\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[E,C]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-curved_edges">curved_edges</a>(&nbsp;int&nbsp;N&nbsp;[,&nbsp;CVLST])<br>
+More&nbsp;sophisticated&nbsp;version&nbsp;of&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-edges">edges</a>()&nbsp;designed&nbsp;for&nbsp;curved&nbsp;elements.&nbsp;This<br>
+one&nbsp;will&nbsp;return&nbsp;N&nbsp;(N&gt;=2)&nbsp;points&nbsp;of&nbsp;the&nbsp;(curved)&nbsp;edges.&nbsp;With&nbsp;N==2,&nbsp;this&nbsp;is<br>
+equivalent&nbsp;to&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-edges">edges</a>().&nbsp;Since&nbsp;the&nbsp;points&nbsp;are&nbsp;no&nbsp;more&nbsp;always&nbsp;part&nbsp;of&nbsp;the<br>
+mesh,&nbsp;their&nbsp;coordinates&nbsp;are&nbsp;returned&nbsp;instead&nbsp;of&nbsp;points&nbsp;number,&nbsp;in&nbsp;the&nbsp;array&nbsp;E<br>
+which&nbsp;is&nbsp;a&nbsp;[&nbsp;mesh_dim&nbsp;x&nbsp;2&nbsp;x&nbsp;nb_edges&nbsp;]&nbsp;array.&nbsp;&nbsp;If&nbsp;the&nbsp;optional&nbsp;output&nbsp;argument<br>
+C&nbsp;is&nbsp;specified,&nbsp;it&nbsp;will&nbsp;contain&nbsp;the&nbsp;convex&nbsp;number&nbsp;associated&nbsp;with&nbsp;each&nbsp;edge.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-cvid"><strong>cvid</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;all&nbsp;convex&nbsp;#id.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[CVID]&nbsp;=&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-cvid">cvid</a>()<br>
+Note&nbsp;that&nbsp;their&nbsp;numbering&nbsp;is&nbsp;not&nbsp;supposed&nbsp;to&nbsp;be&nbsp;contiguous&nbsp;from&nbsp;0&nbsp;to<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-nbcvs">nbcvs</a>()-1,&nbsp;&nbsp;especially&nbsp;if&nbsp;some&nbsp;points&nbsp;have&nbsp;been&nbsp;removed&nbsp;from&nbsp;the&nbsp;mesh.<br>
+You&nbsp;can&nbsp;use&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-optimize_structure">optimize_structure</a>()&nbsp;to&nbsp;enforce&nbsp;a&nbsp;contiguous&nbsp;numbering.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-cvid_from_pid"><strong>cvid_from_pid</strong></a>(self, PIDLST)</dt><dd><tt>Returns&nbsp;the&nbsp;convex&nbsp;#ids&nbsp;that&nbsp;share&nbsp;the&nbsp;point&nbsp;#ids&nbsp;given&nbsp;in&nbsp;PIDLST.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-cvstruct"><strong>cvstruct</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;an&nbsp;array&nbsp;of&nbsp;the&nbsp;convex&nbsp;structures.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[CVS,&nbsp;ivec&nbsp;CV2STRUC]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-cvstruct">cvstruct</a>([ivec&nbsp;CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;not&nbsp;given,&nbsp;all&nbsp;convexes&nbsp;are&nbsp;considered.&nbsp;Each&nbsp;convex&nbsp;structure&nbsp;is<br>
+listed&nbsp;once&nbsp;in&nbsp;CVS,&nbsp;and&nbsp;CV2STRUC&nbsp;maps&nbsp;the&nbsp;convexes&nbsp;indice&nbsp;in&nbsp;CVLST&nbsp;to&nbsp;the<br>
+indice&nbsp;of&nbsp;its&nbsp;structure&nbsp;in&nbsp;CVS.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-del_convex"><strong>del_convex</strong></a>(self, IDX)</dt><dd><tt>Remove&nbsp;one&nbsp;or&nbsp;more&nbsp;convexes&nbsp;from&nbsp;the&nbsp;mesh.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-del_convex">del_convex</a>(&nbsp;IDX)<br>
+IDX&nbsp;should&nbsp;contain&nbsp;the&nbsp;convexes&nbsp;#ids,&nbsp;such&nbsp;as&nbsp;the&nbsp;ones&nbsp;returned&nbsp;bu<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-add_convex">add_convex</a>().</tt></dd></dl>
+
+<dl><dt><a name="Mesh-del_convex_of_dim"><strong>del_convex_of_dim</strong></a>(self, DIM)</dt><dd><tt>Remove&nbsp;all&nbsp;convexes&nbsp;of&nbsp;dimension&nbsp;listed&nbsp;in&nbsp;DIM.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-del_convex_of_dim">del_convex_of_dim</a>(&nbsp;ivec&nbsp;DIM)<br>
+For&nbsp;example&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-del_convex_of_dim">del_convex_of_dim</a>(&nbsp;[1,2])&nbsp;remove&nbsp;all&nbsp;line&nbsp;segments,&nbsp;triangles<br>
+and&nbsp;quadrangles.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-del_point"><strong>del_point</strong></a>(self, PIDLST)</dt><dd><tt>Removes&nbsp;one&nbsp;or&nbsp;more&nbsp;points&nbsp;from&nbsp;the&nbsp;mesh.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-del_point">del_point</a>(&nbsp;ivec&nbsp;PIDLST)<br>
+PIDLST&nbsp;should&nbsp;contain&nbsp;the&nbsp;&nbsp;point&nbsp;#id,&nbsp;such&nbsp;as&nbsp;the&nbsp;one&nbsp;returned&nbsp;by&nbsp;the&nbsp;'add<br>
+point'&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-delete_region"><strong>delete_region</strong></a>(self, RLST)</dt><dd><tt>Remove&nbsp;the&nbsp;regions&nbsp;whose&nbsp;#ids&nbsp;are&nbsp;listed&nbsp;in&nbsp;RLST</tt></dd></dl>
+
+<dl><dt><a name="Mesh-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;mesh&nbsp;(2&nbsp;for&nbsp;a&nbsp;2D&nbsp;mesh,&nbsp;etc).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-edges"><strong>edges</strong></a>(self, *args)</dt><dd><tt>[OBSOLETE&nbsp;FUNCTION!&nbsp;will&nbsp;be&nbsp;removed&nbsp;in&nbsp;a&nbsp;future&nbsp;release]\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[E,C]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-edges">edges</a>([,&nbsp;CVLST][,'merge'])<br>
+Return&nbsp;the&nbsp;list&nbsp;of&nbsp;edges&nbsp;of&nbsp;mesh&nbsp;M&nbsp;for&nbsp;the&nbsp;convexes&nbsp;listed&nbsp;in&nbsp;the&nbsp;row&nbsp;vector<br>
+CVLST.&nbsp;E&nbsp;is&nbsp;a&nbsp;2&nbsp;x&nbsp;nb_edges&nbsp;matrix&nbsp;containing&nbsp;point&nbsp;indices.&nbsp;If&nbsp;CVLST&nbsp;is<br>
+omitted,&nbsp;then&nbsp;the&nbsp;edges&nbsp;of&nbsp;all&nbsp;convexes&nbsp;are&nbsp;returned.&nbsp;If&nbsp;CVLST&nbsp;has&nbsp;two&nbsp;rows<br>
+then&nbsp;the&nbsp;first&nbsp;row&nbsp;is&nbsp;supposed&nbsp;to&nbsp;contain&nbsp;convex&nbsp;numbers,&nbsp;and&nbsp;the&nbsp;second&nbsp;face<br>
+numbers,&nbsp;of&nbsp;which&nbsp;the&nbsp;edges&nbsp;will&nbsp;be&nbsp;returned.&nbsp;&nbsp;If&nbsp;'merge'&nbsp;is&nbsp;indicated,&nbsp;all<br>
+common&nbsp;edges&nbsp;of&nbsp;convexes&nbsp;are&nbsp;merged&nbsp;in&nbsp;a&nbsp;single&nbsp;edge.&nbsp;&nbsp;If&nbsp;the&nbsp;optional&nbsp;output<br>
+argument&nbsp;C&nbsp;is&nbsp;specified,&nbsp;it&nbsp;will&nbsp;contain&nbsp;the&nbsp;convex&nbsp;number&nbsp;associated&nbsp;with<br>
+each&nbsp;edge.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-export_to_dx"><strong>export_to_dx</strong></a>(self, filename, *args)</dt><dd><tt>Exports&nbsp;a&nbsp;mesh&nbsp;to&nbsp;an&nbsp;OpenDX&nbsp;file.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-export_to_dx">export_to_dx</a>(&nbsp;string&nbsp;filename,&nbsp;...<br>
+[,'ascii'][,'append'][,'as',string&nbsp;name,[,'serie',string<br>
+serie_name]][,'edges'])<br>
+See&nbsp;also&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#Mesh-export_to_dx">export_to_dx</a>()&nbsp;,&nbsp;<a href="#Slice">Slice</a>.<a href="#Mesh-export_to_dx">export_to_dx</a>().</tt></dd></dl>
+
+<dl><dt><a name="Mesh-export_to_vtk"><strong>export_to_vtk</strong></a>(self, filename, *args)</dt><dd><tt>Exports&nbsp;a&nbsp;mesh&nbsp;to&nbsp;a&nbsp;VTK&nbsp;file&nbsp;.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-export_to_vtk">export_to_vtk</a>(&nbsp;string&nbsp;filename,&nbsp;...&nbsp;[,'ascii'][,'quality'])<br>
+If&nbsp;'quality'&nbsp;is&nbsp;specified,&nbsp;an&nbsp;estimation&nbsp;of&nbsp;the&nbsp;quality&nbsp;of&nbsp;each&nbsp;convex&nbsp;will&nbsp;be<br>
+written&nbsp;to&nbsp;the&nbsp;file.&nbsp;&nbsp;See&nbsp;also&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#Mesh-export_to_vtk">export_to_vtk</a>()&nbsp;,<br>
+<a href="#Slice">Slice</a>.<a href="#Mesh-export_to_vtk">export_to_vtk</a>().</tt></dd></dl>
+
+<dl><dt><a name="Mesh-faces_from_cvid"><strong>faces_from_cvid</strong></a>(self, CVLST)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;convexes&nbsp;faces&nbsp;from&nbsp;a&nbsp;list&nbsp;of&nbsp;convex&nbsp;#id.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[imat&nbsp;CVFLST]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-faces_from_cvid">faces_from_cvid</a>(&nbsp;ivec&nbsp;CVLST,[&nbsp;'merge'])<br>
+CVFLST&nbsp;is&nbsp;a&nbsp;two-rows&nbsp;matrix,&nbsp;the&nbsp;first&nbsp;row&nbsp;lists&nbsp;convex&nbsp;#ids,&nbsp;and&nbsp;the&nbsp;second<br>
+lists&nbsp;face&nbsp;numbers.&nbsp;The&nbsp;optional&nbsp;argument&nbsp;'merge'&nbsp;merges&nbsp;faces&nbsp;shared&nbsp;by&nbsp;two<br>
+convexes&nbsp;of&nbsp;CVLST.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-faces_from_pid"><strong>faces_from_pid</strong></a>(self, PIDLST)</dt><dd><tt>Return&nbsp;the&nbsp;convex&nbsp;faces&nbsp;whose&nbsp;vertex&nbsp;#ids&nbsp;are&nbsp;in&nbsp;PIDLST.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[imat&nbsp;CVFLST]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-faces_from_pid">faces_from_pid</a>(&nbsp;ivec&nbsp;PIDLST)<br>
+For&nbsp;a&nbsp;convex&nbsp;face&nbsp;to&nbsp;be&nbsp;returned,&nbsp;EACH&nbsp;of&nbsp;its&nbsp;points&nbsp;have&nbsp;to&nbsp;be&nbsp;listed&nbsp;in<br>
+PIDLST.&nbsp;On&nbsp;output,&nbsp;the&nbsp;first&nbsp;row&nbsp;of&nbsp;CVFLST&nbsp;contains&nbsp;the&nbsp;convex&nbsp;number,&nbsp;and&nbsp;the<br>
+second&nbsp;row&nbsp;contains&nbsp;the&nbsp;face&nbsp;number&nbsp;(local&nbsp;number&nbsp;in&nbsp;the&nbsp;convex).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-geotrans"><strong>geotrans</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Returns&nbsp;an&nbsp;array&nbsp;of&nbsp;the&nbsp;geometric&nbsp;transformations.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[GT,GT2STRUCT]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-geotrans">geotrans</a>([CVLST])<br>
+See&nbsp;also&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-cvstruct">cvstruct</a>().</tt></dd></dl>
+
+<dl><dt><a name="Mesh-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Mesh-max_cvid"><strong>max_cvid</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;maximum&nbsp;#id&nbsp;of&nbsp;all&nbsp;convexes&nbsp;in&nbsp;the&nbsp;mesh&nbsp;(see&nbsp;'max&nbsp;pid').</tt></dd></dl>
+
+<dl><dt><a name="Mesh-max_pid"><strong>max_pid</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;maximum&nbsp;#id&nbsp;of&nbsp;all&nbsp;points&nbsp;in&nbsp;the&nbsp;mesh&nbsp;(see&nbsp;'max&nbsp;cvid').</tt></dd></dl>
+
+<dl><dt><a name="Mesh-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-merge"><strong>merge</strong></a>(self, M2)</dt><dd><tt>Merge&nbsp;with&nbsp;the&nbsp;mesh&nbsp;M2.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-merge">merge</a>(&nbsp;@mesh&nbsp;M2)<br>
+Overlapping&nbsp;points&nbsp;won't&nbsp;be&nbsp;duplicated.&nbsp;If&nbsp;M2&nbsp;is&nbsp;a&nbsp;mesh_fem&nbsp;object,&nbsp;its&nbsp;linked<br>
+mesh&nbsp;will&nbsp;be&nbsp;used.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-nbcvs"><strong>nbcvs</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;number&nbsp;of&nbsp;convexes&nbsp;of&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-nbpts"><strong>nbpts</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;number&nbsp;of&nbsp;points&nbsp;of&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-normal_of_face"><strong>normal_of_face</strong></a>(self, CV, F, FPTNUM<font color="#909090">=None</font>)</dt><dd><tt>Evaluates&nbsp;the&nbsp;normal&nbsp;of&nbsp;convex&nbsp;CV,&nbsp;face&nbsp;F&nbsp;at&nbsp;the&nbsp;FPTNUMth&nbsp;point&nbsp;of&nbsp;the&nbsp;face.<br>
+If&nbsp;FPTNUM&nbsp;is&nbsp;not&nbsp;specified,&nbsp;then&nbsp;the&nbsp;normal&nbsp;is&nbsp;evaluated&nbsp;at&nbsp;each&nbsp;geometrical<br>
+node&nbsp;of&nbsp;the&nbsp;face.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-normal_of_faces"><strong>normal_of_faces</strong></a>(self, CVFLST)</dt><dd><tt>Evaluates&nbsp;(at&nbsp;face&nbsp;centers)&nbsp;the&nbsp;normals&nbsp;of&nbsp;convexes.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[mat&nbsp;N]&nbsp;=&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-normal_of_faces">normal_of_faces</a>(&nbsp;imat&nbsp;CVFLST)<br>
+CVFLST&nbsp;is&nbsp;supposed&nbsp;to&nbsp;contain&nbsp;convex&nbsp;numbers&nbsp;in&nbsp;its&nbsp;first&nbsp;row&nbsp;and&nbsp;convex&nbsp;face<br>
+number&nbsp;in&nbsp;its&nbsp;second&nbsp;row.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-optimize_structure"><strong>optimize_structure</strong></a>(self)</dt><dd><tt>Reset&nbsp;point&nbsp;and&nbsp;convex&nbsp;numbering.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-optimize_structure">optimize_structure</a>()<br>
+After&nbsp;optimisation,&nbsp;the&nbsp;points&nbsp;(resp.&nbsp;convexes)&nbsp;will&nbsp;be&nbsp;consecutively&nbsp;numbered<br>
+from&nbsp;0&nbsp;to&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-max_pid">max_pid</a>()-1&nbsp;(resp.&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-max_cvid">max_cvid</a>()-1).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-outer_faces"><strong>outer_faces</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;faces&nbsp;which&nbsp;are&nbsp;not&nbsp;shared&nbsp;by&nbsp;two&nbsp;convexes.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[CVFLST]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-outer_faces">outer_faces</a>([,&nbsp;CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;not&nbsp;given,&nbsp;it&nbsp;basically&nbsp;returns&nbsp;the&nbsp;mesh&nbsp;boundary.&nbsp;If&nbsp;CVLST&nbsp;is<br>
+given,&nbsp;it&nbsp;returns&nbsp;the&nbsp;boundary&nbsp;of&nbsp;the&nbsp;convex&nbsp;set&nbsp;whose&nbsp;#ids&nbsp;are&nbsp;listed&nbsp;in<br>
+CVLST.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-pid"><strong>pid</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;points&nbsp;#id&nbsp;of&nbsp;the&nbsp;mesh.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[ivec&nbsp;PID]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-pid">pid</a>()<br>
+Note&nbsp;that&nbsp;their&nbsp;numbering&nbsp;is&nbsp;not&nbsp;supposed&nbsp;to&nbsp;be&nbsp;contiguous&nbsp;from&nbsp;0&nbsp;to<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-nbpts">nbpts</a>()-1,&nbsp;&nbsp;especially&nbsp;if&nbsp;you&nbsp;destroyed&nbsp;some&nbsp;convexes.&nbsp;You&nbsp;can&nbsp;use<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-optimize_structure">optimize_structure</a>()&nbsp;to&nbsp;enforce&nbsp;a&nbsp;contiguous&nbsp;numbering.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-pid_from_coords"><strong>pid_from_coords</strong></a>(self, PT)</dt><dd><tt>Search&nbsp;point&nbsp;#id&nbsp;whose&nbsp;coordinates&nbsp;are&nbsp;listed&nbsp;in&nbsp;PT.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[ivec&nbsp;PIDLST]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-pid_from_coords">pid_from_coords</a>(&nbsp;mat&nbsp;PT)<br>
+PT&nbsp;is&nbsp;an&nbsp;array&nbsp;containing&nbsp;a&nbsp;list&nbsp;of&nbsp;point&nbsp;coordinates.&nbsp;On&nbsp;return,&nbsp;PIDLST&nbsp;is&nbsp;a<br>
+vector&nbsp;containing&nbsp;points&nbsp;#id&nbsp;for&nbsp;each&nbsp;point&nbsp;found,&nbsp;and&nbsp;-1&nbsp;&nbsp;-1&nbsp;for&nbsp;those&nbsp;which<br>
+where&nbsp;not&nbsp;found&nbsp;in&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-pid_from_cvid"><strong>pid_from_cvid</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;points&nbsp;attached&nbsp;to&nbsp;each&nbsp;convex&nbsp;of&nbsp;the&nbsp;mesh.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;&nbsp;[PID,IDX]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-pid_from_cvid">pid_from_cvid</a>([,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;omitted,&nbsp;all&nbsp;the&nbsp;convexes&nbsp;will&nbsp;be&nbsp;considered&nbsp;(equivalent&nbsp;to&nbsp;CVLST<br>
+=&nbsp;@<a href="#Mesh">Mesh</a>.<a href="#Mesh-max_cvid">max_cvid</a>()).&nbsp;IDX&nbsp;is&nbsp;a&nbsp;vector,&nbsp;length(IDX)&nbsp;=&nbsp;length(CVLIST)+1.&nbsp;PID&nbsp;is&nbsp;a<br>
+vector&nbsp;containing&nbsp;the&nbsp;concatenated&nbsp;list&nbsp;of&nbsp;points&nbsp;of&nbsp;each&nbsp;convex&nbsp;in&nbsp;cvlst.<br>
+Each&nbsp;entry&nbsp;of&nbsp;IDX&nbsp;is&nbsp;the&nbsp;position&nbsp;of&nbsp;the&nbsp;corresponding&nbsp;convex&nbsp;point&nbsp;list&nbsp;in<br>
+PID.&nbsp;Hence,&nbsp;for&nbsp;example,&nbsp;the&nbsp;list&nbsp;of&nbsp;points&nbsp;of&nbsp;the&nbsp;second&nbsp;convex&nbsp;is<br>
+PID[IDX(2):IDX(3)].\&nbsp;&nbsp;If&nbsp;CVLST&nbsp;contains&nbsp;convex&nbsp;#id&nbsp;which&nbsp;do&nbsp;not&nbsp;exist&nbsp;in&nbsp;the<br>
+mesh,&nbsp;their&nbsp;point&nbsp;list&nbsp;will&nbsp;be&nbsp;empty.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-pts"><strong>pts</strong></a>(self, PIDLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;point&nbsp;coordinates&nbsp;of&nbsp;the&nbsp;mesh.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;[mat&nbsp;PT]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-pts">pts</a>([,&nbsp;ivec&nbsp;PIDLST])<br>
+Each&nbsp;column&nbsp;of&nbsp;the&nbsp;returned&nbsp;matrix&nbsp;contains&nbsp;the&nbsp;coordinates&nbsp;of&nbsp;one&nbsp;point.&nbsp;&nbsp;If<br>
+the&nbsp;optional&nbsp;argument&nbsp;PIDLST&nbsp;was&nbsp;given,&nbsp;only&nbsp;the&nbsp;points&nbsp;whose&nbsp;#id&nbsp;is&nbsp;listed&nbsp;in<br>
+this&nbsp;vector&nbsp;are&nbsp;returned.&nbsp;Otherwise,&nbsp;the&nbsp;returned&nbsp;matrix&nbsp;will&nbsp;have<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-max_pid">max_pid</a>()&nbsp;columns,&nbsp;which&nbsp;might&nbsp;be&nbsp;greater&nbsp;than&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-nbpts">nbpts</a>()&nbsp;(if&nbsp;some<br>
+points&nbsp;of&nbsp;the&nbsp;mesh&nbsp;have&nbsp;been&nbsp;destroyed&nbsp;and&nbsp;no&nbsp;call&nbsp;to<br>
+<a href="#Mesh">Mesh</a>.<a href="#Mesh-optimize_structure">optimize_structure</a>()&nbsp;have&nbsp;been&nbsp;issued).&nbsp;&nbsp;The&nbsp;columns&nbsp;corresponding&nbsp;to<br>
+deleted&nbsp;points&nbsp;will&nbsp;be&nbsp;filled&nbsp;with&nbsp;NaN.&nbsp;You&nbsp;can&nbsp;use&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-pid">pid</a>()&nbsp;to&nbsp;filter&nbsp;such<br>
+invalid&nbsp;points.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-quality"><strong>quality</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;an&nbsp;estimation&nbsp;of&nbsp;the&nbsp;quality&nbsp;of&nbsp;each&nbsp;convex&nbsp;(0&nbsp;&lt;=&nbsp;Q&nbsp;&lt;=&nbsp;1).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-refine"><strong>refine</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Use&nbsp;a&nbsp;Bank&nbsp;strategy&nbsp;for&nbsp;mesh&nbsp;refinement.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-refine">refine</a>([,&nbsp;ivec&nbsp;CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;not&nbsp;given,&nbsp;the&nbsp;whole&nbsp;mesh&nbsp;is&nbsp;refined.&nbsp;Note&nbsp;that&nbsp;the&nbsp;regions,&nbsp;and<br>
+the&nbsp;finite&nbsp;element&nbsp;methods&nbsp;and&nbsp;integration&nbsp;methods&nbsp;of&nbsp;the&nbsp;mesh_fem&nbsp;and&nbsp;mesh_im<br>
+objects&nbsp;linked&nbsp;to&nbsp;this&nbsp;mesh&nbsp;will&nbsp;be&nbsp;automagically&nbsp;refined.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-region"><strong>region</strong></a>(self, rnum)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;convexes/faces&nbsp;on&nbsp;the&nbsp;region&nbsp;'rnum'.<br>
+&nbsp;<br>
+Synopsis:&nbsp;CVFLST&nbsp;=&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-region">region</a>(&nbsp;int&nbsp;rnum)<br>
+On&nbsp;output,&nbsp;the&nbsp;first&nbsp;row&nbsp;of&nbsp;I&nbsp;contains&nbsp;the&nbsp;convex&nbsp;numbers,&nbsp;and&nbsp;the&nbsp;second&nbsp;row<br>
+contains&nbsp;the&nbsp;face&nbsp;numbers&nbsp;(and&nbsp;-1&nbsp;when&nbsp;the&nbsp;whole&nbsp;convex&nbsp;is&nbsp;in&nbsp;the&nbsp;region).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-region_intersect"><strong>region_intersect</strong></a>(self, R1, R2)</dt><dd><tt>Replace&nbsp;the&nbsp;region&nbsp;number&nbsp;R1&nbsp;with&nbsp;its&nbsp;intersection&nbsp;with&nbsp;region&nbsp;number&nbsp;R2.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-region_merge"><strong>region_merge</strong></a>(self, R1, R2)</dt><dd><tt>Merge&nbsp;region&nbsp;number&nbsp;R2&nbsp;into&nbsp;region&nbsp;number&nbsp;R1.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-region_substract"><strong>region_substract</strong></a>(self, R1, R2)</dt><dd><tt>Replace&nbsp;the&nbsp;region&nbsp;number&nbsp;R1&nbsp;with&nbsp;its&nbsp;difference&nbsp;with&nbsp;region&nbsp;number&nbsp;R2.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-regions"><strong>regions</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;valid&nbsp;regions&nbsp;stored&nbsp;in&nbsp;the&nbsp;mesh.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-save"><strong>save</strong></a>(self, FILENAME)</dt><dd><tt>Save&nbsp;the&nbsp;mesh&nbsp;object&nbsp;to&nbsp;an&nbsp;ascii&nbsp;file.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-save">save</a>(&nbsp;stringing&nbsp;FILENAME)<br>
+This&nbsp;mesh&nbsp;can&nbsp;be&nbsp;restored&nbsp;with&nbsp;<a href="#Mesh">Mesh</a>('load',&nbsp;FILENAME).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Mesh-set_pts"><strong>set_pts</strong></a>(self, P)</dt><dd><tt>Replace&nbsp;the&nbsp;coordinates&nbsp;of&nbsp;the&nbsp;mesh&nbsp;points&nbsp;with&nbsp;those&nbsp;given&nbsp;in&nbsp;P.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-set_region"><strong>set_region</strong></a>(self, rnum, CVFLST)</dt><dd><tt>Assigns&nbsp;the&nbsp;region&nbsp;number&nbsp;rnum&nbsp;to&nbsp;the&nbsp;convex&nbsp;faces&nbsp;stored&nbsp;in&nbsp;each&nbsp;column&nbsp;of<br>
+the&nbsp;matrix&nbsp;CVFLST.&nbsp;&nbsp;&nbsp;The&nbsp;first&nbsp;row&nbsp;of&nbsp;CVFLST&nbsp;contains&nbsp;a&nbsp;convex&nbsp;number,&nbsp;and&nbsp;the<br>
+second&nbsp;row&nbsp;contains&nbsp;a&nbsp;face&nbsp;number&nbsp;in&nbsp;the&nbsp;convex&nbsp;(or&nbsp;-1&nbsp;for&nbsp;the&nbsp;whole&nbsp;convex&nbsp;--<br>
+regions&nbsp;are&nbsp;usually&nbsp;used&nbsp;to&nbsp;store&nbsp;a&nbsp;list&nbsp;of&nbsp;convex&nbsp;faces,&nbsp;but&nbsp;you&nbsp;may&nbsp;also&nbsp;use<br>
+them&nbsp;to&nbsp;store&nbsp;a&nbsp;list&nbsp;of&nbsp;convexes).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-transform"><strong>transform</strong></a>(self, T)</dt><dd><tt>Applies&nbsp;the&nbsp;matrix&nbsp;T&nbsp;to&nbsp;each&nbsp;point&nbsp;of&nbsp;the&nbsp;mesh.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-transform">transform</a>(&nbsp;mat&nbsp;T)<br>
+Note&nbsp;that&nbsp;T&nbsp;is&nbsp;not&nbsp;required&nbsp;to&nbsp;be&nbsp;a&nbsp;NxN&nbsp;matrix&nbsp;(with&nbsp;N=<a href="#Mesh">Mesh</a>.<a href="#Mesh-dim">dim</a>()).&nbsp;Hence&nbsp;it<br>
+is&nbsp;possible&nbsp;to&nbsp;transform&nbsp;a&nbsp;2D&nbsp;mesh&nbsp;into&nbsp;a&nbsp;3D&nbsp;one&nbsp;(and&nbsp;reciprocally).</tt></dd></dl>
+
+<dl><dt><a name="Mesh-translate"><strong>translate</strong></a>(self, V)</dt><dd><tt>Translates&nbsp;each&nbsp;point&nbsp;of&nbsp;the&nbsp;mesh&nbsp;from&nbsp;V.</tt></dd></dl>
+
+<dl><dt><a name="Mesh-triangulated_surface"><strong>triangulated_surface</strong></a>(self, Nrefine, CVLIST<font color="#909090">=None</font>)</dt><dd><tt>[OBSOLETE&nbsp;FUNCTION!&nbsp;will&nbsp;be&nbsp;removed&nbsp;in&nbsp;a&nbsp;future&nbsp;release]<br>
+&nbsp;<br>
+Synopsis:&nbsp;[mat&nbsp;T]=<a href="#Mesh">Mesh</a>.<a href="#Mesh-triangulated_surface">triangulated_surface</a>(&nbsp;int&nbsp;Nrefine&nbsp;[,CVLIST])<br>
+Similar&nbsp;function&nbsp;to&nbsp;<a href="#Mesh">Mesh</a>.<a href="#Mesh-curved_edges">curved_edges</a>()&nbsp;:&nbsp;split&nbsp;(if&nbsp;necessary,&nbsp;i.e.&nbsp;if&nbsp;the<br>
+geometric&nbsp;transformation&nbsp;if&nbsp;non-linear)&nbsp;each&nbsp;face&nbsp;into&nbsp;sub-triangles&nbsp;and<br>
+return&nbsp;their&nbsp;coordinates&nbsp;in&nbsp;T&nbsp;(see&nbsp;also&nbsp;compute_eval&nbsp;on&nbsp;P1&nbsp;tri&nbsp;mesh(mf,&nbsp;U,&nbsp;))</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MeshFem">class <strong>MeshFem</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MeshFem-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MeshFem-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#MeshFem">MeshFem</a>&nbsp;objects.<br>
+&nbsp;<br>
+*&nbsp;<a href="#MeshFem">MeshFem</a>(mesh&nbsp;M&nbsp;[,&nbsp;int&nbsp;Qdim=1])<br>
+Build&nbsp;a&nbsp;new&nbsp;<a href="#MeshFem">MeshFem</a>&nbsp;object.&nbsp;The&nbsp;Qdim&nbsp;parameter&nbsp;is&nbsp;optional.<br>
+&nbsp;*&nbsp;<a href="#MeshFem">MeshFem</a>('load',&nbsp;fname[,&nbsp;mesh&nbsp;M])<br>
+&nbsp;&nbsp;Load&nbsp;a&nbsp;meshfem&nbsp;from&nbsp;a&nbsp;file.&nbsp;&nbsp;&nbsp;If&nbsp;the&nbsp;mesh&nbsp;M&nbsp;is&nbsp;not&nbsp;supplied&nbsp;(this&nbsp;kind&nbsp;of<br>
+file&nbsp;does&nbsp;not&nbsp;store&nbsp;the&nbsp;mesh),&nbsp;then&nbsp;it&nbsp;is&nbsp;read&nbsp;from&nbsp;the&nbsp;file&nbsp;and&nbsp;its<br>
+descriptor&nbsp;is&nbsp;returned&nbsp;as&nbsp;the&nbsp;second&nbsp;output&nbsp;argument.<br>
+&nbsp;*&nbsp;<a href="#MeshFem">MeshFem</a>('from_string',&nbsp;str[,&nbsp;mesh&nbsp;M])<br>
+&nbsp;&nbsp;Create&nbsp;a&nbsp;mesh_fem&nbsp;object&nbsp;from&nbsp;its&nbsp;string&nbsp;description.&nbsp;&nbsp;See&nbsp;also<br>
+<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-char">char</a>()<br>
+&nbsp;*&nbsp;<a href="#MeshFem">MeshFem</a>('clone',&nbsp;meshfem&nbsp;MF2)<br>
+&nbsp;&nbsp;Create&nbsp;a&nbsp;copy&nbsp;of&nbsp;a&nbsp;mesh_fem.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MeshFem-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MeshFem-char"><strong>char</strong></a>(self, opt<font color="#909090">=None</font>)</dt><dd><tt>Output&nbsp;a&nbsp;string&nbsp;description&nbsp;of&nbsp;the&nbsp;mesh_fem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-char">char</a>([,&nbsp;opt])<br>
+By&nbsp;default,&nbsp;it&nbsp;does&nbsp;not&nbsp;include&nbsp;the&nbsp;description&nbsp;of&nbsp;the&nbsp;linked&nbsp;mesh&nbsp;object,<br>
+except&nbsp;if&nbsp;opt&nbsp;is&nbsp;'with_mesh'</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-dof_from_cv"><strong>dof_from_cv</strong></a>(self, CVLST)</dt><dd><tt>Return&nbsp;the&nbsp;DoF&nbsp;of&nbsp;the&nbsp;convexes&nbsp;listed&nbsp;in&nbsp;CVLST.<br>
+&nbsp;<br>
+Synopsis:&nbsp;I&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-dof_from_cv">dof_from_cv</a>(&nbsp;CVLST)<br>
+WARNING:&nbsp;the&nbsp;Degree&nbsp;of&nbsp;Freedom&nbsp;might&nbsp;be&nbsp;returned&nbsp;in&nbsp;ANY&nbsp;order,&nbsp;do&nbsp;not&nbsp;use&nbsp;this<br>
+function&nbsp;in&nbsp;your&nbsp;assembly&nbsp;routines.&nbsp;Use&nbsp;'dof&nbsp;from&nbsp;cvid'&nbsp;instead,&nbsp;if&nbsp;you&nbsp;want<br>
+to&nbsp;be&nbsp;able&nbsp;to&nbsp;map&nbsp;a&nbsp;convex&nbsp;number&nbsp;with&nbsp;its&nbsp;associated&nbsp;degrees&nbsp;of&nbsp;freedom.&nbsp;&nbsp;One<br>
+can&nbsp;also&nbsp;get&nbsp;the&nbsp;list&nbsp;of&nbsp;dof&nbsp;on&nbsp;a&nbsp;set&nbsp;on&nbsp;convex&nbsp;faces,&nbsp;by&nbsp;indicating&nbsp;on&nbsp;the<br>
+second&nbsp;row&nbsp;of&nbsp;CVLST&nbsp;the&nbsp;faces&nbsp;numbers&nbsp;(with&nbsp;respect&nbsp;to&nbsp;the&nbsp;convex&nbsp;number&nbsp;on<br>
+the&nbsp;first&nbsp;row).</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-dof_from_cvid"><strong>dof_from_cvid</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;degrees&nbsp;of&nbsp;freedom&nbsp;attached&nbsp;to&nbsp;each&nbsp;convex&nbsp;of&nbsp;the&nbsp;mesh.\\<br>
+&nbsp;<br>
+Synopsis:&nbsp;&nbsp;[DOFS,IDX]=<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-dof_from_cvid">dof_from_cvid</a>([,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;omitted,&nbsp;all&nbsp;the&nbsp;convexes&nbsp;will&nbsp;be&nbsp;considered&nbsp;(equivalent&nbsp;to&nbsp;CVLST<br>
+=&nbsp;1&nbsp;...&nbsp;@<a href="#Mesh">Mesh</a>.max_cvid()).&nbsp;&nbsp;IDX&nbsp;is&nbsp;a&nbsp;vector,&nbsp;length(IDX)&nbsp;=&nbsp;length(CVLIST)+1.<br>
+DOFS&nbsp;is&nbsp;a&nbsp;vector&nbsp;containing&nbsp;the&nbsp;concatenated&nbsp;list&nbsp;of&nbsp;dof&nbsp;of&nbsp;each&nbsp;convex&nbsp;in<br>
+CVLST.&nbsp;Each&nbsp;entry&nbsp;of&nbsp;IDX&nbsp;is&nbsp;the&nbsp;position&nbsp;of&nbsp;the&nbsp;corresponding&nbsp;convex&nbsp;point<br>
+list&nbsp;in&nbsp;DOFS.&nbsp;Hence,&nbsp;for&nbsp;example,&nbsp;the&nbsp;list&nbsp;of&nbsp;points&nbsp;of&nbsp;the&nbsp;second&nbsp;convex&nbsp;is<br>
+DOFS[IDX(2):IDX(3)].\&nbsp;&nbsp;If&nbsp;CVLST&nbsp;contains&nbsp;convex&nbsp;#id&nbsp;which&nbsp;do&nbsp;not&nbsp;exist&nbsp;in&nbsp;the<br>
+mesh,&nbsp;their&nbsp;point&nbsp;list&nbsp;will&nbsp;be&nbsp;empty.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-dof_nodes"><strong>dof_nodes</strong></a>(self, DOFLST<font color="#909090">=None</font>)</dt><dd><tt>Get&nbsp;location&nbsp;of&nbsp;Degrees&nbsp;of&nbsp;Freedom.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[DOF_XY]&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-dof_nodes">dof_nodes</a>([,&nbsp;DOFLST])<br>
+Return&nbsp;the&nbsp;list&nbsp;of&nbsp;interpolation&nbsp;points&nbsp;for&nbsp;the&nbsp;specified&nbsp;dof&nbsp;#IDs&nbsp;in&nbsp;DOFLST<br>
+(if&nbsp;DOFLST&nbsp;is&nbsp;omitted,&nbsp;all&nbsp;DoF&nbsp;are&nbsp;considered).</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-dof_on_region"><strong>dof_on_region</strong></a>(self, RLIST)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;dof&nbsp;lying&nbsp;on&nbsp;one&nbsp;of&nbsp;the&nbsp;mesh&nbsp;regions&nbsp;listed&nbsp;in&nbsp;RLIST.<br>
+&nbsp;<br>
+Synopsis:&nbsp;DOFLST&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-dof_on_region">dof_on_region</a>(&nbsp;RLIST)<br>
+More&nbsp;precisely,&nbsp;this&nbsp;function&nbsp;returns&nbsp;the&nbsp;DoF&nbsp;whose&nbsp;support&nbsp;is&nbsp;non-null&nbsp;on&nbsp;one<br>
+of&nbsp;regions&nbsp;whose&nbsp;#ids&nbsp;are&nbsp;listed&nbsp;in&nbsp;RLIST&nbsp;(note&nbsp;that&nbsp;for&nbsp;boundary&nbsp;regions,<br>
+some&nbsp;dof&nbsp;nodes&nbsp;may&nbsp;not&nbsp;lie&nbsp;exactly&nbsp;on&nbsp;the&nbsp;boundary,&nbsp;for&nbsp;example&nbsp;the&nbsp;dof&nbsp;of<br>
+PK(n,0)&nbsp;lies&nbsp;on&nbsp;the&nbsp;center&nbsp;of&nbsp;the&nbsp;convex,&nbsp;but&nbsp;the&nbsp;base&nbsp;function&nbsp;in&nbsp;not&nbsp;null&nbsp;on<br>
+the&nbsp;convex&nbsp;border).</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-dof_partition"><strong>dof_partition</strong></a>(self, DOFP)</dt><dd><tt>Change&nbsp;the&nbsp;dof_partition&nbsp;array.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-dof_partition">dof_partition</a>(&nbsp;ivec&nbsp;DOFP)<br>
+DOFP&nbsp;is&nbsp;a&nbsp;vector&nbsp;holding&nbsp;a&nbsp;integer&nbsp;value&nbsp;for&nbsp;each&nbsp;convex&nbsp;of&nbsp;the&nbsp;mesh_fem.&nbsp;See<br>
+<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-dof_partition">dof_partition</a>()&nbsp;for&nbsp;a&nbsp;description&nbsp;of&nbsp;"dof&nbsp;partition".</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-eval"><strong>eval</strong></a>(self, expression)</dt><dd><tt>interpolate&nbsp;an&nbsp;expression&nbsp;on&nbsp;the&nbsp;(lagrangian)&nbsp;<a href="#MeshFem">MeshFem</a>.<br>
+&nbsp;<br>
+Examples:<br>
+&nbsp;&nbsp;mf.<a href="#MeshFem-eval">eval</a>('x[0]*x[1]')&nbsp;interpolates&nbsp;the&nbsp;function&nbsp;'x*y'<br>
+&nbsp;&nbsp;mf.<a href="#MeshFem-eval">eval</a>('[x[0],x[1]]')&nbsp;interpolates&nbsp;the&nbsp;vector&nbsp;field&nbsp;'[x,y]'</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-export_to_dx"><strong>export_to_dx</strong></a>(self, FILENAME, *args)</dt><dd><tt>Export&nbsp;a&nbsp;mesh_fem&nbsp;and&nbsp;some&nbsp;fields&nbsp;to&nbsp;an&nbsp;OpenDX&nbsp;file.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-export_to_dx">export_to_dx</a>(&nbsp;string&nbsp;FILENAME,&nbsp;...&nbsp;['as',&nbsp;string<br>
+mesh_name][,'edges']['serie',string&nbsp;serie_name][,'ascii'][,'append'],&nbsp;U,<br>
+'name'...)<br>
+This&nbsp;function&nbsp;will&nbsp;fail&nbsp;if&nbsp;the&nbsp;mesh_fem&nbsp;mixes&nbsp;different&nbsp;convex&nbsp;types&nbsp;(i.e.<br>
+quads&nbsp;and&nbsp;triangles),&nbsp;or&nbsp;if&nbsp;OpenDX&nbsp;does&nbsp;not&nbsp;handle&nbsp;a&nbsp;specific&nbsp;element&nbsp;type<br>
+(i.e.&nbsp;prism&nbsp;connections&nbsp;are&nbsp;not&nbsp;known&nbsp;by&nbsp;OpenDX).&nbsp;&nbsp;The&nbsp;FEM&nbsp;will&nbsp;be&nbsp;mapped&nbsp;to<br>
+order&nbsp;1&nbsp;PK&nbsp;(or&nbsp;QK)&nbsp;FEMs.&nbsp;If&nbsp;you&nbsp;need&nbsp;to&nbsp;represent&nbsp;high-order&nbsp;FEMs&nbsp;or&nbsp;high-<br>
+order&nbsp;geometric&nbsp;transformations,&nbsp;you&nbsp;should&nbsp;consider&nbsp;@<a href="#Slice">Slice</a>.<a href="#MeshFem-export_to_dx">export_to_dx</a>().</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-export_to_vtk"><strong>export_to_vtk</strong></a>(self, FILENAME, *args)</dt><dd><tt>Export&nbsp;a&nbsp;mesh_fem&nbsp;and&nbsp;some&nbsp;fields&nbsp;to&nbsp;a&nbsp;vtk&nbsp;file.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-export_to_vtk">export_to_vtk</a>(&nbsp;string&nbsp;FILENAME,&nbsp;...&nbsp;['ascii'],&nbsp;U,&nbsp;'name'...)<br>
+The&nbsp;FEM&nbsp;and&nbsp;geometric&nbsp;transformations&nbsp;will&nbsp;be&nbsp;mapped&nbsp;to&nbsp;order&nbsp;1&nbsp;or&nbsp;2<br>
+isoparametric&nbsp;PK&nbsp;(or&nbsp;QK)&nbsp;FEMs&nbsp;(as&nbsp;VTK&nbsp;does&nbsp;not&nbsp;handle&nbsp;higher&nbsp;order&nbsp;elements).<br>
+If&nbsp;you&nbsp;need&nbsp;to&nbsp;represent&nbsp;high-order&nbsp;FEMs&nbsp;or&nbsp;high-order&nbsp;geometric<br>
+transformations,&nbsp;you&nbsp;should&nbsp;consider&nbsp;@<a href="#Slice">Slice</a>.<a href="#MeshFem-export_to_vtk">export_to_vtk</a>().</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-fem"><strong>fem</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;FEM&nbsp;used&nbsp;by&nbsp;the&nbsp;meshfem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[FEMLST,&nbsp;CV2F]&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-fem">fem</a>([,&nbsp;CVLST])<br>
+FEMLST&nbsp;is&nbsp;an&nbsp;array&nbsp;of&nbsp;all&nbsp;@tfem&nbsp;objects&nbsp;found&nbsp;in&nbsp;the&nbsp;convexes&nbsp;given&nbsp;in&nbsp;CVLST.<br>
+If&nbsp;CV2F&nbsp;was&nbsp;supplied&nbsp;as&nbsp;an&nbsp;output&nbsp;argument,&nbsp;it&nbsp;contains,&nbsp;for&nbsp;each&nbsp;convex<br>
+listed&nbsp;in&nbsp;CVLST,&nbsp;the&nbsp;index&nbsp;of&nbsp;its&nbsp;correspounding&nbsp;FEM&nbsp;in&nbsp;FEMLST.&nbsp;&nbsp;&nbsp;Convexes<br>
+which&nbsp;are&nbsp;not&nbsp;part&nbsp;of&nbsp;the&nbsp;mesh,&nbsp;or&nbsp;convexes&nbsp;which&nbsp;do&nbsp;not&nbsp;have&nbsp;any&nbsp;FEM&nbsp;have<br>
+their&nbsp;correspounding&nbsp;entry&nbsp;in&nbsp;CV2F&nbsp;set&nbsp;to&nbsp;-1.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MeshFem-interpolate_convex_data"><strong>interpolate_convex_data</strong></a>(self, Ucv)</dt><dd><tt>Interpolate&nbsp;data&nbsp;given&nbsp;on&nbsp;each&nbsp;convex&nbsp;of&nbsp;the&nbsp;mesh&nbsp;to&nbsp;the&nbsp;meshfem&nbsp;dof.&nbsp;&nbsp;The<br>
+meshfem&nbsp;has&nbsp;to&nbsp;be&nbsp;lagrangian,&nbsp;and&nbsp;should&nbsp;be&nbsp;discontinuous&nbsp;(typically&nbsp;a<br>
+FEM_PK(N,0)&nbsp;or&nbsp;FEM_QK(N,0)&nbsp;should&nbsp;be&nbsp;used).&nbsp;&nbsp;The&nbsp;last&nbsp;dimension&nbsp;of&nbsp;the&nbsp;input<br>
+vector&nbsp;Ucv&nbsp;should&nbsp;have&nbsp;<a href="#Mesh">Mesh</a>.max_cvid()&nbsp;elements.&nbsp;&nbsp;Example&nbsp;of&nbsp;use:<br>
+<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-interpolate_convex_data">interpolate_convex_data</a>(&nbsp;<a href="#Mesh">Mesh</a>.quality())</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-is_equivalent"><strong>is_equivalent</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Test&nbsp;if&nbsp;the&nbsp;meshfem&nbsp;is&nbsp;equivalent.<br>
+&nbsp;<br>
+Synopsis:&nbsp;I&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-is_equivalent">is_equivalent</a>([,CVLST])<br>
+See&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-is_lagrangian">is_lagrangian</a>()</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-is_lagrangian"><strong>is_lagrangian</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Test&nbsp;if&nbsp;the&nbsp;meshfem&nbsp;is&nbsp;Lagrangian.<br>
+&nbsp;<br>
+Synopsis:&nbsp;I&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-is_lagrangian">is_lagrangian</a>([,CVLST])<br>
+Lagrangian&nbsp;means&nbsp;that&nbsp;each&nbsp;base&nbsp;function&nbsp;Phi[i]&nbsp;is&nbsp;such&nbsp;that<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Phi[i](P[j])&nbsp;=&nbsp;delta(i,j),<br>
+&nbsp;where&nbsp;P[j]&nbsp;is&nbsp;the&nbsp;DoF&nbsp;location&nbsp;of&nbsp;the&nbsp;jth&nbsp;base&nbsp;function,&nbsp;and&nbsp;delta(i,j)&nbsp;=&nbsp;1<br>
+if&nbsp;i==j,&nbsp;else&nbsp;0.<br>
+&nbsp;&nbsp;If&nbsp;CVLST&nbsp;is&nbsp;omitted,&nbsp;it&nbsp;returns&nbsp;1&nbsp;if&nbsp;all&nbsp;convexes&nbsp;in&nbsp;the&nbsp;mesh&nbsp;are<br>
+Lagrangian.&nbsp;If&nbsp;CVLST&nbsp;is&nbsp;used,&nbsp;it&nbsp;returns&nbsp;the&nbsp;convex&nbsp;indices&nbsp;(with&nbsp;respect&nbsp;to<br>
+CVLST)&nbsp;which&nbsp;are&nbsp;Lagrangian.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-is_polynomial"><strong>is_polynomial</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Test&nbsp;if&nbsp;all&nbsp;base&nbsp;functions&nbsp;are&nbsp;polynomials.<br>
+&nbsp;<br>
+Synopsis:&nbsp;I&nbsp;=&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-is_polynomial">is_polynomial</a>([,CVLST])<br>
+See&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-is_lagrangian">is_lagrangian</a>()</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-linked_mesh"><strong>linked_mesh</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;reference&nbsp;to&nbsp;the&nbsp;mesh&nbsp;object&nbsp;linked&nbsp;to&nbsp;MF.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the&nbsp;mesh_fem&nbsp;object.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-memsize">memsize</a>()<br>
+The&nbsp;result&nbsp;does&nbsp;not&nbsp;take&nbsp;into&nbsp;account&nbsp;the&nbsp;linked&nbsp;mesh&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-nbdof"><strong>nbdof</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;number&nbsp;of&nbsp;Degrees&nbsp;of&nbsp;Freedom&nbsp;(DoF)&nbsp;of&nbsp;the&nbsp;meshfem&nbsp;MF.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-non_conformal_dof"><strong>non_conformal_dof</strong></a>(self, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;partially&nbsp;linked&nbsp;degrees&nbsp;of&nbsp;freedom.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-non_conformal_dof">non_conformal_dof</a>([,CVLST])<br>
+Return&nbsp;the&nbsp;dof&nbsp;located&nbsp;on&nbsp;the&nbsp;border&nbsp;of&nbsp;a&nbsp;convex&nbsp;and&nbsp;which&nbsp;belong&nbsp;to&nbsp;only&nbsp;one<br>
+convex,&nbsp;except&nbsp;the&nbsp;ones&nbsp;which&nbsp;are&nbsp;located&nbsp;on&nbsp;the&nbsp;border&nbsp;of&nbsp;the&nbsp;mesh.&nbsp;&nbsp;For<br>
+example,&nbsp;if&nbsp;the&nbsp;convex&nbsp;'a'&nbsp;and&nbsp;'b'&nbsp;share&nbsp;a&nbsp;common&nbsp;face,&nbsp;'a'&nbsp;has&nbsp;a&nbsp;P1&nbsp;FEM,&nbsp;and<br>
+'b'&nbsp;has&nbsp;a&nbsp;P2&nbsp;FEM,&nbsp;then&nbsp;the&nbsp;dof&nbsp;on&nbsp;the&nbsp;middle&nbsp;of&nbsp;the&nbsp;face&nbsp;will&nbsp;be&nbsp;returned&nbsp;by<br>
+this&nbsp;function&nbsp;(this&nbsp;can&nbsp;be&nbsp;useful&nbsp;when&nbsp;searching&nbsp;the&nbsp;interfaces&nbsp;between<br>
+classical&nbsp;FEM&nbsp;and&nbsp;hierarchical&nbsp;FEM).</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-qdim"><strong>qdim</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;dimension&nbsp;Q&nbsp;of&nbsp;the&nbsp;field&nbsp;interpolated&nbsp;by&nbsp;the&nbsp;mesh_fem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-qdim">qdim</a>()<br>
+By&nbsp;default,&nbsp;Q=1&nbsp;(scalar&nbsp;field).&nbsp;This&nbsp;has&nbsp;an&nbsp;impact&nbsp;on&nbsp;the&nbsp;DOF&nbsp;numbering.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-save"><strong>save</strong></a>(self, filename, opt<font color="#909090">=None</font>)</dt><dd><tt>Save&nbsp;a&nbsp;meshfem&nbsp;in&nbsp;a&nbsp;text&nbsp;file&nbsp;(and&nbsp;optionaly&nbsp;its&nbsp;linked&nbsp;mesh&nbsp;object&nbsp;if&nbsp;opt&nbsp;is<br>
+the&nbsp;string&nbsp;'with_mesh').</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MeshFem-set_classical_discontinuous_fem"><strong>set_classical_discontinuous_fem</strong></a>(self, *args)</dt><dd><tt>Assigns&nbsp;a&nbsp;classical&nbsp;(Lagrange&nbsp;polynomial)&nbsp;discontinuous&nbsp;fem&nbsp;or&nbsp;order&nbsp;K.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-set_classical_discontinuous_fem">set_classical_discontinuous_fem</a>(&nbsp;int&nbsp;K,&nbsp;[int&nbsp;IM_DEGREE<br>
+[,ivec&nbsp;CVIDX]])<br>
+Similar&nbsp;to&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-set_classical_fem">set_classical_fem</a>()&nbsp;except&nbsp;that&nbsp;FEM_PK_DISCONTINUOUS&nbsp;is<br>
+used.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-set_classical_fem"><strong>set_classical_fem</strong></a>(self, K, CVIDX<font color="#909090">=None</font>)</dt><dd><tt>Assign&nbsp;a&nbsp;classical&nbsp;(Lagrange&nbsp;polynomial)&nbsp;fem&nbsp;of&nbsp;order&nbsp;K&nbsp;to&nbsp;the&nbsp;meshfem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-set_classical_fem">set_classical_fem</a>(&nbsp;int&nbsp;K,&nbsp;[,ivec&nbsp;CVIDX])<br>
+Uses&nbsp;FEM_PK&nbsp;for&nbsp;simplexes,&nbsp;FEM_QK&nbsp;for&nbsp;parallelepipeds&nbsp;etc.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-set_fem"><strong>set_fem</strong></a>(self, FEM, CVIDX<font color="#909090">=None</font>)</dt><dd><tt>Set&nbsp;the&nbsp;Finite&nbsp;Element&nbsp;Method.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-set_fem">set_fem</a>(&nbsp;@tfem&nbsp;FEM&nbsp;[,&nbsp;ivec&nbsp;CVIDX])<br>
+Assign&nbsp;a&nbsp;FEM&nbsp;to&nbsp;all&nbsp;convexes&nbsp;whose&nbsp;#ids&nbsp;are&nbsp;listed&nbsp;in&nbsp;CVIDX.&nbsp;If&nbsp;CVIDX&nbsp;is&nbsp;not<br>
+given,&nbsp;the&nbsp;integration&nbsp;is&nbsp;assigned&nbsp;to&nbsp;all&nbsp;convexes.&nbsp;&nbsp;See&nbsp;the&nbsp;help&nbsp;of&nbsp;<a href="#Fem">Fem</a>&nbsp;to<br>
+obtain&nbsp;a&nbsp;list&nbsp;of&nbsp;available&nbsp;FEM&nbsp;methods.</tt></dd></dl>
+
+<dl><dt><a name="MeshFem-set_qdim"><strong>set_qdim</strong></a>(self, Q)</dt><dd><tt>Change&nbsp;the&nbsp;Q&nbsp;dimension&nbsp;of&nbsp;the&nbsp;field&nbsp;that&nbsp;is&nbsp;interpolated&nbsp;by&nbsp;the&nbsp;meshfem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-set_qdim">set_qdim</a>(&nbsp;int&nbsp;Q)<br>
+Q=1&nbsp;means&nbsp;that&nbsp;the&nbsp;meshfem&nbsp;describes&nbsp;a&nbsp;scalar&nbsp;field,&nbsp;Q=N&nbsp;means&nbsp;that&nbsp;the<br>
+meshfem&nbsp;describes&nbsp;a&nbsp;vector&nbsp;field&nbsp;of&nbsp;dimension&nbsp;N.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MeshIm">class <strong>MeshIm</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MeshIm-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MeshIm-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#MeshIm">MeshIm</a>&nbsp;objects.<br>
+&nbsp;<br>
+*&nbsp;<a href="#MeshIm">MeshIm</a>(mesh&nbsp;M,&nbsp;[{<a href="#Integ">Integ</a>&nbsp;Im|int&nbsp;IM_DEGREE}])<br>
+Build&nbsp;a&nbsp;new&nbsp;<a href="#MeshIm">MeshIm</a>&nbsp;object.&nbsp;For&nbsp;convenience,&nbsp;optional&nbsp;arguments&nbsp;(IM&nbsp;or&nbsp;IM_DEGREE)&nbsp;can&nbsp;be&nbsp;provided,&nbsp;in&nbsp;that&nbsp;case&nbsp;a&nbsp;call&nbsp;to&nbsp;MESHIM:SET('integ')&nbsp;is&nbsp;issued&nbsp;with&nbsp;these&nbsp;arguments.<br>
+&nbsp;<br>
+&nbsp;*&nbsp;<a href="#MeshIm">MeshIm</a>('load',&nbsp;fname[,&nbsp;mesh&nbsp;M])<br>
+&nbsp;&nbsp;Load&nbsp;a&nbsp;meshim&nbsp;from&nbsp;a&nbsp;file.&nbsp;&nbsp;&nbsp;If&nbsp;the&nbsp;mesh&nbsp;M&nbsp;is&nbsp;not&nbsp;supplied&nbsp;(this&nbsp;kind&nbsp;of<br>
+file&nbsp;does&nbsp;not&nbsp;store&nbsp;the&nbsp;mesh),&nbsp;then&nbsp;it&nbsp;is&nbsp;read&nbsp;from&nbsp;the&nbsp;file&nbsp;and&nbsp;its<br>
+descriptor&nbsp;is&nbsp;returned&nbsp;as&nbsp;the&nbsp;second&nbsp;output&nbsp;argument.<br>
+&nbsp;*&nbsp;<a href="#MeshIm">MeshIm</a>('from_string',&nbsp;str[,&nbsp;mesh&nbsp;M])<br>
+&nbsp;&nbsp;Create&nbsp;a&nbsp;meshim&nbsp;object&nbsp;from&nbsp;its&nbsp;string&nbsp;description.&nbsp;&nbsp;See&nbsp;also&nbsp;<a href="#MeshIm">MeshIm</a>.<a href="#MeshIm-char">char</a>()<br>
+&nbsp;*&nbsp;<a href="#MeshIm">MeshIm</a>('clone',&nbsp;meshim&nbsp;MIM2)<br>
+&nbsp;&nbsp;Create&nbsp;a&nbsp;copy&nbsp;of&nbsp;a&nbsp;meshim.</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MeshIm-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="MeshIm-char"><strong>char</strong></a>(self)</dt><dd><tt>Output&nbsp;a&nbsp;string&nbsp;description&nbsp;of&nbsp;the&nbsp;mesh_im.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshIm">MeshIm</a>.<a href="#MeshIm-char">char</a>([,'with&nbsp;mesh'])<br>
+By&nbsp;default,&nbsp;it&nbsp;does&nbsp;not&nbsp;include&nbsp;the&nbsp;description&nbsp;of&nbsp;the&nbsp;linked&nbsp;mesh&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-eltm"><strong>eltm</strong></a>(self, MET, CV, F<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;elementary&nbsp;matrix&nbsp;(or&nbsp;tensor)&nbsp;integrated&nbsp;on&nbsp;the&nbsp;convex&nbsp;CV.<br>
+&nbsp;<br>
+Synopsis:&nbsp;M&nbsp;=&nbsp;<a href="#MeshIm">MeshIm</a>.<a href="#MeshIm-eltm">eltm</a>(&nbsp;@eltm&nbsp;MET,&nbsp;int&nbsp;CV&nbsp;[int&nbsp;F])<br>
+!!WARNING!!&nbsp;Be&nbsp;sure&nbsp;that&nbsp;the&nbsp;fem&nbsp;used&nbsp;for&nbsp;the&nbsp;construction&nbsp;of&nbsp;MET&nbsp;is<br>
+compatible&nbsp;with&nbsp;the&nbsp;fem&nbsp;assigned&nbsp;to&nbsp;element&nbsp;CV&nbsp;!&nbsp;This&nbsp;is&nbsp;not&nbsp;checked&nbsp;by&nbsp;the<br>
+function&nbsp;!&nbsp;If&nbsp;the&nbsp;argument&nbsp;F&nbsp;is&nbsp;given,&nbsp;then&nbsp;the&nbsp;elementary&nbsp;tensor&nbsp;is<br>
+integrated&nbsp;on&nbsp;the&nbsp;face&nbsp;F&nbsp;of&nbsp;CV&nbsp;instead&nbsp;of&nbsp;the&nbsp;whole&nbsp;convex.</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MeshIm-integ"><strong>integ</strong></a>(self, CVLIST<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;a&nbsp;list&nbsp;of&nbsp;integration&nbsp;methods&nbsp;used&nbsp;by&nbsp;the&nbsp;meshim.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[INTEG,&nbsp;CV2I]&nbsp;=&nbsp;<a href="#MeshIm">MeshIm</a>.<a href="#MeshIm-integ">integ</a>([,&nbsp;CVLIST])<br>
+INTEG&nbsp;is&nbsp;an&nbsp;array&nbsp;of&nbsp;all&nbsp;@tinteg&nbsp;objects&nbsp;found&nbsp;in&nbsp;the&nbsp;convexes&nbsp;given&nbsp;in&nbsp;CVLST.<br>
+If&nbsp;CV2F&nbsp;was&nbsp;supplied&nbsp;as&nbsp;an&nbsp;output&nbsp;argument,&nbsp;it&nbsp;contains,&nbsp;for&nbsp;each&nbsp;convex<br>
+listed&nbsp;in&nbsp;CVLST,&nbsp;the&nbsp;index&nbsp;of&nbsp;its&nbsp;correspounding&nbsp;integration&nbsp;method&nbsp;in&nbsp;INTEG.<br>
+Convexes&nbsp;which&nbsp;are&nbsp;not&nbsp;part&nbsp;of&nbsp;the&nbsp;mesh,&nbsp;or&nbsp;convexes&nbsp;which&nbsp;do&nbsp;not&nbsp;have&nbsp;any<br>
+integration&nbsp;method&nbsp;have&nbsp;their&nbsp;correspounding&nbsp;entry&nbsp;in&nbsp;CV2I&nbsp;set&nbsp;to&nbsp;-1.</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-linked_mesh"><strong>linked_mesh</strong></a>(self)</dt><dd><tt>Returns&nbsp;a&nbsp;reference&nbsp;to&nbsp;the&nbsp;mesh&nbsp;object&nbsp;linked&nbsp;to&nbsp;MIM.</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the&nbsp;mesh_im&nbsp;object.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshIm">MeshIm</a>.<a href="#MeshIm-memsize">memsize</a>()<br>
+The&nbsp;result&nbsp;does&nbsp;not&nbsp;take&nbsp;into&nbsp;account&nbsp;the&nbsp;linked&nbsp;mesh&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-save"><strong>save</strong></a>(self, filename)</dt><dd><tt>Saves&nbsp;a&nbsp;meshim&nbsp;in&nbsp;a&nbsp;text&nbsp;file&nbsp;(and&nbsp;optionaly&nbsp;its&nbsp;linked&nbsp;mesh&nbsp;object).</tt></dd></dl>
+
+<dl><dt><a name="MeshIm-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="MeshIm-set_integ"><strong>set_integ</strong></a>(self, *args)</dt><dd><tt>Set&nbsp;the&nbsp;integration&nbsp;method.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#MeshIm">MeshIm</a>.<a href="#MeshIm-set_integ">set_integ</a>(&nbsp;{integ&nbsp;IM|int&nbsp;IM_DEGREE}&nbsp;[,&nbsp;ivec&nbsp;CVIDX])<br>
+Assign&nbsp;an&nbsp;integration&nbsp;method&nbsp;to&nbsp;all&nbsp;convexes&nbsp;whose&nbsp;#ids&nbsp;are&nbsp;listed&nbsp;in&nbsp;CVIDX.<br>
+If&nbsp;CVIDX&nbsp;is&nbsp;not&nbsp;given,&nbsp;the&nbsp;integration&nbsp;is&nbsp;assigned&nbsp;to&nbsp;all&nbsp;convexes.&nbsp;It&nbsp;is<br>
+possible&nbsp;to&nbsp;assign&nbsp;a&nbsp;specific&nbsp;integration&nbsp;method&nbsp;with&nbsp;an&nbsp;integration&nbsp;method<br>
+handle&nbsp;IM&nbsp;obtained&nbsp;via&nbsp;<a href="#Integ">Integ</a>('IM_SOMETHING'),&nbsp;or&nbsp;to&nbsp;let&nbsp;getfem&nbsp;choose&nbsp;a<br>
+suitable&nbsp;integration&nbsp;method&nbsp;with&nbsp;IM_DEGREE&nbsp;(choosen&nbsp;such&nbsp;that&nbsp;polynomials&nbsp;of<br>
+degree&nbsp;&lt;=&nbsp;IM_DEGREE&nbsp;are&nbsp;exactly&nbsp;integrated.&nbsp;If&nbsp;IM_DEGREE=-1,&nbsp;then&nbsp;the&nbsp;dummy<br>
+integration&nbsp;method&nbsp;IM_NONE&nbsp;will&nbsp;be&nbsp;used.)</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Poly">class <strong>Poly</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"></td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Precond">class <strong>Precond</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Getfem&nbsp;preconditioner.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Precond-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Precond-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;getfem&nbsp;preconditioners.<br>
+&nbsp;<br>
+&nbsp;&nbsp;The&nbsp;preconditioners&nbsp;may&nbsp;store&nbsp;REAL&nbsp;or&nbsp;COMPLEX&nbsp;values.&nbsp;They&nbsp;accept&nbsp;getfem<br>
+sparse&nbsp;matrices&nbsp;and&nbsp;Matlab&nbsp;sparse&nbsp;matrices.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('identity')<br>
+&nbsp;Create&nbsp;a&nbsp;REAL&nbsp;identity&nbsp;precondioner.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('cidentity')<br>
+&nbsp;Create&nbsp;a&nbsp;COMPLEX&nbsp;identity&nbsp;precondioner.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('diagonal',&nbsp;@dcvec&nbsp;D)<br>
+&nbsp;Create&nbsp;a&nbsp;diagonal&nbsp;precondioner.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('ildlt',&nbsp;@spmat&nbsp;M)<br>
+&nbsp;Create&nbsp;an&nbsp;ILDLT&nbsp;(Cholesky)&nbsp;preconditioner&nbsp;for&nbsp;the&nbsp;(symmetric)&nbsp;sparse&nbsp;matrix<br>
+M.<br>
+&nbsp;This&nbsp;preconditioner&nbsp;has&nbsp;the&nbsp;same&nbsp;sparsity&nbsp;pattern&nbsp;than&nbsp;M&nbsp;(no&nbsp;fill-in).<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('ilu',&nbsp;@spmat&nbsp;M)<br>
+&nbsp;Create&nbsp;an&nbsp;ILU&nbsp;(Incomplete&nbsp;LU)&nbsp;preconditioner&nbsp;for&nbsp;the&nbsp;sparse&nbsp;matrix&nbsp;M.<br>
+&nbsp;This&nbsp;preconditioner&nbsp;has&nbsp;the&nbsp;same&nbsp;sparsity&nbsp;pattern&nbsp;than&nbsp;M&nbsp;(no&nbsp;fill-in).<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('ildltt',&nbsp;@spmat&nbsp;M&nbsp;[,&nbsp;int&nbsp;fillin&nbsp;[,&nbsp;scalar&nbsp;threshold]])<br>
+&nbsp;Create&nbsp;an&nbsp;ILDLT&nbsp;(Cholesky&nbsp;with&nbsp;filling)&nbsp;preconditioner&nbsp;for&nbsp;the&nbsp;(symmetric)<br>
+sparse&nbsp;matrix&nbsp;M.<br>
+&nbsp;&nbsp;The&nbsp;preconditioner&nbsp;may&nbsp;add&nbsp;at&nbsp;most&nbsp;'fillin'&nbsp;additional&nbsp;non-zero&nbsp;entries&nbsp;on<br>
+each&nbsp;line.&nbsp;The&nbsp;default&nbsp;value&nbsp;for&nbsp;'fillin'&nbsp;is&nbsp;10,&nbsp;and&nbsp;the&nbsp;default&nbsp;threshold&nbsp;is<br>
+1e-7.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('ilut',&nbsp;@spmat&nbsp;M&nbsp;[,&nbsp;int&nbsp;fillin&nbsp;[,&nbsp;scalar&nbsp;threshold]])<br>
+&nbsp;Create&nbsp;an&nbsp;ILUT&nbsp;(Incomplete&nbsp;LU&nbsp;with&nbsp;filling)&nbsp;preconditioner&nbsp;for&nbsp;the&nbsp;sparse<br>
+matrix&nbsp;M.<br>
+&nbsp;&nbsp;The&nbsp;preconditioner&nbsp;may&nbsp;add&nbsp;at&nbsp;most&nbsp;'fillin'&nbsp;additional&nbsp;non-zero&nbsp;entries&nbsp;on<br>
+each&nbsp;line.&nbsp;The&nbsp;default&nbsp;value&nbsp;for&nbsp;'fillin'&nbsp;is&nbsp;10,&nbsp;and&nbsp;the&nbsp;default&nbsp;threshold&nbsp;is<br>
+1e-7.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Precond">Precond</a>('superlu',&nbsp;@spmat&nbsp;M)<br>
+&nbsp;Uses&nbsp;SuperLU&nbsp;to&nbsp;build&nbsp;an&nbsp;exact&nbsp;factorization&nbsp;of&nbsp;the&nbsp;sparse&nbsp;matrix&nbsp;M.&nbsp;&nbsp;This<br>
+preconditioner&nbsp;is&nbsp;only&nbsp;available&nbsp;if&nbsp;the&nbsp;getfem-interface&nbsp;was&nbsp;built&nbsp;with<br>
+SuperLU&nbsp;support.&nbsp;Note&nbsp;that&nbsp;LU&nbsp;factorization&nbsp;is&nbsp;likely&nbsp;to&nbsp;eat&nbsp;all&nbsp;your&nbsp;memory<br>
+for&nbsp;3D&nbsp;problems.</tt></dd></dl>
+
+<dl><dt><a name="Precond-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Precond-info"><strong>info</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;short&nbsp;informative&nbsp;string&nbsp;about&nbsp;the&nbsp;preconditioner.</tt></dd></dl>
+
+<dl><dt><a name="Precond-is_complex"><strong>is_complex</strong></a>(self)</dt><dd><tt>Return&nbsp;1&nbsp;if&nbsp;the&nbsp;preconditioner&nbsp;stores&nbsp;complex&nbsp;values.</tt></dd></dl>
+
+<dl><dt><a name="Precond-mult"><strong>mult</strong></a>(self, V)</dt><dd><tt>Apply&nbsp;the&nbsp;preconditioner&nbsp;to&nbsp;the&nbsp;supplied&nbsp;vector.</tt></dd></dl>
+
+<dl><dt><a name="Precond-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Precond-size"><strong>size</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;dimensions&nbsp;of&nbsp;the&nbsp;preconditioner.</tt></dd></dl>
+
+<dl><dt><a name="Precond-tmult"><strong>tmult</strong></a>(self, V)</dt><dd><tt>Apply&nbsp;the&nbsp;transposed&nbsp;preconditioner&nbsp;to&nbsp;the&nbsp;supplied&nbsp;vector.</tt></dd></dl>
+
+<dl><dt><a name="Precond-type"><strong>type</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;string&nbsp;describing&nbsp;the&nbsp;type&nbsp;of&nbsp;the&nbsp;preconditioner&nbsp;('ilu',&nbsp;'ildlt',..).</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Slice">class <strong>Slice</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#Mesh">Mesh</a>&nbsp;slices.<br>
+&nbsp;<br>
+The&nbsp;slices&nbsp;may&nbsp;be&nbsp;considered&nbsp;as&nbsp;a&nbsp;(non-conformal)&nbsp;mesh&nbsp;of<br>
+simplexes&nbsp;which&nbsp;provides&nbsp;fast&nbsp;interpolation&nbsp;on&nbsp;a&nbsp;P1-discontinuous<br>
+<a href="#MeshFem">MeshFem</a>.<br>
+&nbsp;<br>
+It&nbsp;is&nbsp;used&nbsp;mainly&nbsp;for&nbsp;post-processing&nbsp;purposes.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Slice-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Slice-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#Slice">Slice</a>&nbsp;objects.<br>
+&nbsp;<br>
+sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>(sliceop,&nbsp;mesh&nbsp;M,&nbsp;int&nbsp;REFINE&nbsp;[,&nbsp;CVFLST])<br>
+&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>(sliceop,&nbsp;mesh_fem&nbsp;MF,&nbsp;vec&nbsp;U,&nbsp;int&nbsp;REFINE&nbsp;[,&nbsp;CVFLST])<br>
+&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>(sliceop,&nbsp;slice&nbsp;SL)<br>
+&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>('streamlines',&nbsp;mesh_fem&nbsp;MF,&nbsp;vec&nbsp;U,&nbsp;mat&nbsp;SEEDS)<br>
+&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>('points',&nbsp;mesh&nbsp;M,&nbsp;mat&nbsp;PTS)<br>
+&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>('load',&nbsp;mesh&nbsp;M)<br>
+&nbsp;<br>
+&nbsp;&nbsp;Creation&nbsp;of&nbsp;a&nbsp;mesh&nbsp;slice.&nbsp;<a href="#Mesh">Mesh</a>&nbsp;slices&nbsp;are&nbsp;very&nbsp;similar&nbsp;to&nbsp;a&nbsp;P1-discontinuous<br>
+mesh_fem&nbsp;on&nbsp;which&nbsp;interpolation&nbsp;is&nbsp;very&nbsp;fast.&nbsp;The&nbsp;slice&nbsp;is&nbsp;built&nbsp;from&nbsp;a&nbsp;mesh<br>
+object,&nbsp;and&nbsp;a&nbsp;description&nbsp;of&nbsp;the&nbsp;slicing&nbsp;operation,&nbsp;for&nbsp;example,<br>
+&nbsp;<br>
+&nbsp;&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>(('planar',+1,[0;0],[1;0]),&nbsp;m,&nbsp;5);<br>
+&nbsp;<br>
+&nbsp;&nbsp;cuts&nbsp;the&nbsp;original&nbsp;mesh&nbsp;with&nbsp;the&nbsp;half&nbsp;space&nbsp;{y&gt;0}.&nbsp;Each&nbsp;convex&nbsp;of&nbsp;the<br>
+original&nbsp;mesh&nbsp;m&nbsp;is&nbsp;simplexified&nbsp;(for&nbsp;example&nbsp;a&nbsp;quadrangle&nbsp;is&nbsp;splitted&nbsp;into&nbsp;2<br>
+triangles),&nbsp;and&nbsp;each&nbsp;simplex&nbsp;is&nbsp;refined&nbsp;5&nbsp;times.<br>
+&nbsp;<br>
+&nbsp;&nbsp;Slicing&nbsp;operations&nbsp;can&nbsp;be:<br>
+&nbsp;&nbsp;-&nbsp;cutting&nbsp;with&nbsp;a&nbsp;plane,&nbsp;a&nbsp;sphere&nbsp;or&nbsp;a&nbsp;cylinder<br>
+&nbsp;&nbsp;-&nbsp;intersection&nbsp;or&nbsp;union&nbsp;of&nbsp;slices<br>
+&nbsp;&nbsp;-&nbsp;isovalues&nbsp;surfaces/volumes<br>
+&nbsp;&nbsp;-&nbsp;"points",&nbsp;"streamlines"&nbsp;(see&nbsp;below)<br>
+&nbsp;<br>
+&nbsp;&nbsp;If&nbsp;the&nbsp;first&nbsp;argument&nbsp;is&nbsp;a&nbsp;mesh_fem&nbsp;mf&nbsp;instead&nbsp;of&nbsp;a&nbsp;mesh,&nbsp;and&nbsp;if&nbsp;it&nbsp;is<br>
+followed&nbsp;by&nbsp;a&nbsp;field&nbsp;U&nbsp;,&nbsp;then&nbsp;the&nbsp;deformation&nbsp;U&nbsp;will&nbsp;be&nbsp;applied&nbsp;to&nbsp;the&nbsp;mesh<br>
+before&nbsp;the&nbsp;slicing&nbsp;operation.<br>
+&nbsp;<br>
+&nbsp;&nbsp;The&nbsp;first&nbsp;argument&nbsp;can&nbsp;also&nbsp;be&nbsp;a&nbsp;slice.<br>
+&nbsp;<br>
+&nbsp;&nbsp;Slicing&nbsp;operations:<br>
+===============<br>
+&nbsp;They&nbsp;are&nbsp;specified&nbsp;with&nbsp;TUPLES,&nbsp;do&nbsp;not&nbsp;forget&nbsp;the&nbsp;extra&nbsp;parentheses!.&nbsp;The<br>
+first&nbsp;element&nbsp;is&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;operation,&nbsp;followed&nbsp;the&nbsp;slicing&nbsp;options.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;*&nbsp;('none')<br>
+&nbsp;&nbsp;Does&nbsp;not&nbsp;cut&nbsp;the&nbsp;mesh.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('planar',&nbsp;orient,&nbsp;p,&nbsp;n)<br>
+&nbsp;&nbsp;&nbsp;Planar&nbsp;cut.&nbsp;p&nbsp;and&nbsp;n&nbsp;define&nbsp;a&nbsp;half-space,&nbsp;p&nbsp;being&nbsp;a&nbsp;point&nbsp;belong&nbsp;to&nbsp;the<br>
+boundary&nbsp;of&nbsp;the&nbsp;half-space,&nbsp;and&nbsp;n&nbsp;being&nbsp;its&nbsp;normal.&nbsp;If&nbsp;orient&nbsp;is&nbsp;equal&nbsp;to&nbsp;-1<br>
+(resp.&nbsp;0,&nbsp;+1),&nbsp;then&nbsp;the&nbsp;slicing&nbsp;operation&nbsp;will&nbsp;cut&nbsp;the&nbsp;mesh&nbsp;with&nbsp;the<br>
+"interior"&nbsp;(resp.&nbsp;"boundary",&nbsp;"exterior")&nbsp;of&nbsp;the&nbsp;half-space.&nbsp;Orient&nbsp;may&nbsp;also<br>
+be&nbsp;set&nbsp;to&nbsp;+2&nbsp;which&nbsp;means&nbsp;that&nbsp;the&nbsp;mesh&nbsp;will&nbsp;be&nbsp;sliced,&nbsp;but&nbsp;both&nbsp;the&nbsp;outer&nbsp;and<br>
+inner&nbsp;parts&nbsp;will&nbsp;be&nbsp;kept.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('ball',&nbsp;orient,&nbsp;c,&nbsp;r)<br>
+&nbsp;&nbsp;Cut&nbsp;with&nbsp;a&nbsp;ball&nbsp;of&nbsp;center&nbsp;c&nbsp;and&nbsp;radius&nbsp;r.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('cylinder',&nbsp;orient,&nbsp;p1,&nbsp;p2,&nbsp;r)<br>
+&nbsp;&nbsp;Cut&nbsp;with&nbsp;a&nbsp;cylinder&nbsp;whose&nbsp;axis&nbsp;is&nbsp;the&nbsp;line&nbsp;(p1,p2)&nbsp;and&nbsp;whose&nbsp;radius&nbsp;is&nbsp;r.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('isovalues',orient,&nbsp;mesh_fem&nbsp;MF,&nbsp;vec&nbsp;U,&nbsp;scalar&nbsp;V)<br>
+&nbsp;&nbsp;Cut&nbsp;using&nbsp;the&nbsp;isosurface&nbsp;of&nbsp;the&nbsp;field&nbsp;U&nbsp;(defined&nbsp;on&nbsp;the&nbsp;mesh_fem&nbsp;MF).&nbsp;The<br>
+result&nbsp;is&nbsp;the&nbsp;set&nbsp;{x&nbsp;such&nbsp;that&nbsp;U(x)&nbsp;&lt;=&nbsp;V}&nbsp;or&nbsp;{x&nbsp;such&nbsp;that&nbsp;U(x)&nbsp;==&nbsp;V}&nbsp;or&nbsp;{x<br>
+such&nbsp;that&nbsp;U(x)&nbsp;&lt;=&nbsp;V}&nbsp;depending&nbsp;on&nbsp;the&nbsp;value&nbsp;of&nbsp;ORIENT.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('boundary'[,&nbsp;SLICEOP])<br>
+&nbsp;&nbsp;Return&nbsp;the&nbsp;boundary&nbsp;of&nbsp;the&nbsp;result&nbsp;of&nbsp;SLICEOP,&nbsp;where&nbsp;SLICEOP&nbsp;is&nbsp;any&nbsp;slicing<br>
+operation.&nbsp;If&nbsp;SLICEOP&nbsp;is&nbsp;not&nbsp;specified,&nbsp;then&nbsp;the&nbsp;whole&nbsp;mesh&nbsp;is&nbsp;considered<br>
+(i.e.&nbsp;it&nbsp;is&nbsp;equivalent&nbsp;to&nbsp;('boundary',{'none'})).<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('explode',&nbsp;coef)<br>
+&nbsp;&nbsp;Build&nbsp;an&nbsp;'exploded'&nbsp;view&nbsp;of&nbsp;the&nbsp;mesh:&nbsp;each&nbsp;convex&nbsp;is&nbsp;shrinked&nbsp;(0&nbsp;&lt;&nbsp;coef&nbsp;&lt;=<br>
+1).&nbsp;In&nbsp;the&nbsp;case&nbsp;of&nbsp;3D&nbsp;convexes,&nbsp;only&nbsp;their&nbsp;faces&nbsp;are&nbsp;kept.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('union',&nbsp;SLICEOP1,&nbsp;SLICEOP2)<br>
+&nbsp;*&nbsp;('intersection',&nbsp;SLICEOP1,&nbsp;SLICEOP2)<br>
+&nbsp;*&nbsp;('comp',&nbsp;SLICEOP)<br>
+&nbsp;*&nbsp;('diff',&nbsp;SLICEOP1,&nbsp;SLICEOP2)<br>
+&nbsp;&nbsp;Boolean&nbsp;operations:&nbsp;returns&nbsp;the&nbsp;union,intersection,complementary&nbsp;or<br>
+difference&nbsp;of&nbsp;slicing&nbsp;operations.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;('mesh',&nbsp;MESH)<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;slice&nbsp;which&nbsp;is&nbsp;the&nbsp;intersection&nbsp;of&nbsp;the&nbsp;sliced&nbsp;mesh&nbsp;with&nbsp;another<br>
+mesh.&nbsp;The&nbsp;slice&nbsp;is&nbsp;such&nbsp;that&nbsp;all&nbsp;of&nbsp;its&nbsp;simplexes&nbsp;are&nbsp;stricly&nbsp;contained&nbsp;into&nbsp;a<br>
+convex&nbsp;of&nbsp;each&nbsp;mesh.<br>
+&nbsp;<br>
+&nbsp;&nbsp;EXAMPLE:<br>
+&nbsp;&nbsp;sl&nbsp;=&nbsp;<a href="#Slice">Slice</a>((intersection',('planar',+1,[0;0;0],[0;0;1]),...<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;('isovalues',-1,mf2,U2,0)),mf,U,5);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;SPECIAL&nbsp;SLICES:<br>
+&nbsp;<br>
+&nbsp;&nbsp;There&nbsp;are&nbsp;also&nbsp;some&nbsp;special&nbsp;calls&nbsp;to&nbsp;<a href="#Slice">Slice</a>(...)<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Slice">Slice</a>('streamlines',mf,&nbsp;U,&nbsp;mat&nbsp;SEEDS)<br>
+&nbsp;<br>
+&nbsp;&nbsp;compute&nbsp;streamlines&nbsp;of&nbsp;the&nbsp;(vector)&nbsp;field&nbsp;U,&nbsp;with&nbsp;seed&nbsp;points&nbsp;given&nbsp;by&nbsp;the<br>
+columns&nbsp;of&nbsp;SEEDS.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Slice">Slice</a>('points',&nbsp;m,&nbsp;mat&nbsp;PTS)<br>
+&nbsp;<br>
+&nbsp;&nbsp;return&nbsp;the&nbsp;"slice"&nbsp;composed&nbsp;of&nbsp;points&nbsp;given&nbsp;by&nbsp;the&nbsp;columns&nbsp;of&nbsp;PTS&nbsp;(useful<br>
+for&nbsp;interpolation&nbsp;on&nbsp;a&nbsp;given&nbsp;set&nbsp;of&nbsp;sparse&nbsp;points,&nbsp;see<br>
+<a href="#-compute_interpolate_on">compute_interpolate_on</a>(mf,&nbsp;U,&nbsp;sl).&nbsp;&nbsp;*&nbsp;<a href="#Slice">Slice</a>('load',&nbsp;filename&nbsp;[,&nbsp;m])<br>
+&nbsp;<br>
+&nbsp;&nbsp;load&nbsp;the&nbsp;slice&nbsp;(and&nbsp;its&nbsp;linked_mesh&nbsp;if&nbsp;it&nbsp;is&nbsp;not&nbsp;given&nbsp;as&nbsp;an&nbsp;argument)&nbsp;from<br>
+a&nbsp;text&nbsp;file.</tt></dd></dl>
+
+<dl><dt><a name="Slice-area"><strong>area</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;area&nbsp;of&nbsp;the&nbsp;slice.</tt></dd></dl>
+
+<dl><dt><a name="Slice-cvs"><strong>cvs</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;convexes&nbsp;of&nbsp;the&nbsp;original&nbsp;mesh&nbsp;contained&nbsp;in&nbsp;the&nbsp;slice.</tt></dd></dl>
+
+<dl><dt><a name="Slice-dim"><strong>dim</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;slice&nbsp;(2&nbsp;for&nbsp;a&nbsp;2D&nbsp;mesh,&nbsp;etc..).</tt></dd></dl>
+
+<dl><dt><a name="Slice-edges"><strong>edges</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;edges&nbsp;of&nbsp;the&nbsp;linked&nbsp;mesh&nbsp;contained&nbsp;in&nbsp;the&nbsp;slice.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[mat&nbsp;P,&nbsp;ivec&nbsp;E1,&nbsp;ivec&nbsp;E2]=<a href="#Slice">Slice</a>.<a href="#Slice-edges">edges</a>()<br>
+P&nbsp;contains&nbsp;the&nbsp;list&nbsp;of&nbsp;all&nbsp;edge&nbsp;vertices,&nbsp;E1&nbsp;contains&nbsp;the&nbsp;indices&nbsp;of&nbsp;each&nbsp;mesh<br>
+edge&nbsp;in&nbsp;P,&nbsp;and&nbsp;E2&nbsp;contains&nbsp;the&nbsp;indices&nbsp;of&nbsp;each&nbsp;"edges"&nbsp;which&nbsp;is&nbsp;on&nbsp;the&nbsp;border<br>
+of&nbsp;the&nbsp;slice.&nbsp;This&nbsp;function&nbsp;is&nbsp;useless&nbsp;except&nbsp;for&nbsp;post-processing&nbsp;purposes.</tt></dd></dl>
+
+<dl><dt><a name="Slice-export_to_dx"><strong>export_to_dx</strong></a>(self, FILENAME, *args)</dt><dd><tt>Export&nbsp;a&nbsp;slice&nbsp;to&nbsp;OpenDX.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Slice">Slice</a>.<a href="#Slice-export_to_dx">export_to_dx</a>(&nbsp;string&nbsp;FILENAME,&nbsp;...)<br>
+Following&nbsp;the&nbsp;file&nbsp;name,&nbsp;you&nbsp;may&nbsp;use&nbsp;any&nbsp;of&nbsp;the&nbsp;following&nbsp;options:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;if&nbsp;'ascii'&nbsp;is&nbsp;not&nbsp;used,&nbsp;the&nbsp;file&nbsp;will&nbsp;contain&nbsp;binary&nbsp;data&nbsp;&nbsp;&nbsp;(non<br>
+portable,&nbsp;but&nbsp;fast).&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;if&nbsp;'edges'&nbsp;is&nbsp;used,&nbsp;the&nbsp;edges&nbsp;of&nbsp;the&nbsp;original&nbsp;mesh<br>
+will&nbsp;be&nbsp;&nbsp;&nbsp;written&nbsp;instead&nbsp;of&nbsp;the&nbsp;slice&nbsp;content.&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;if&nbsp;'append'&nbsp;is&nbsp;used,&nbsp;the<br>
+opendx&nbsp;file&nbsp;will&nbsp;not&nbsp;be&nbsp;&nbsp;&nbsp;overwritten,&nbsp;and&nbsp;the&nbsp;new&nbsp;data&nbsp;will&nbsp;be&nbsp;added&nbsp;at&nbsp;the<br>
+end&nbsp;of&nbsp;the&nbsp;&nbsp;&nbsp;file.&nbsp;&nbsp;More&nbsp;than&nbsp;one&nbsp;dataset&nbsp;may&nbsp;be&nbsp;written,&nbsp;just&nbsp;list&nbsp;them.&nbsp;Each<br>
+dataset&nbsp;consists&nbsp;of&nbsp;either:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;a&nbsp;field&nbsp;interpolated&nbsp;on&nbsp;the&nbsp;slice&nbsp;(scalar,&nbsp;vector&nbsp;or&nbsp;&nbsp;&nbsp;tensor),&nbsp;followed<br>
+by&nbsp;an&nbsp;optional&nbsp;name.&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;a&nbsp;mesh_fem&nbsp;and&nbsp;a&nbsp;field,&nbsp;followed&nbsp;by&nbsp;an&nbsp;optional<br>
+name.</tt></dd></dl>
+
+<dl><dt><a name="Slice-export_to_pov"><strong>export_to_pov</strong></a>(self, FILENAME, *args)</dt><dd><tt>Export&nbsp;a&nbsp;the&nbsp;triangles&nbsp;of&nbsp;the&nbsp;slice&nbsp;to&nbsp;POV-RAY.</tt></dd></dl>
+
+<dl><dt><a name="Slice-export_to_vtk"><strong>export_to_vtk</strong></a>(self, FILENAME, *args)</dt><dd><tt>Export&nbsp;a&nbsp;slice&nbsp;to&nbsp;VTK.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Slice">Slice</a>.<a href="#Slice-export_to_vtk">export_to_vtk</a>(&nbsp;string&nbsp;FILENAME&nbsp;...&nbsp;[,&nbsp;'ascii'][,&nbsp;'edges']&nbsp;...)<br>
+Following&nbsp;the&nbsp;file&nbsp;name,&nbsp;you&nbsp;may&nbsp;use&nbsp;any&nbsp;of&nbsp;the&nbsp;following&nbsp;options:&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;if<br>
+'ascii'&nbsp;is&nbsp;not&nbsp;used,&nbsp;the&nbsp;file&nbsp;will&nbsp;contain&nbsp;binary&nbsp;data&nbsp;(non&nbsp;portable,&nbsp;but<br>
+fast).&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;if&nbsp;'edges'&nbsp;is&nbsp;used,&nbsp;the&nbsp;edges&nbsp;of&nbsp;the&nbsp;original&nbsp;mesh&nbsp;will&nbsp;be&nbsp;written<br>
+instead&nbsp;of&nbsp;the&nbsp;slice&nbsp;content.&nbsp;&nbsp;More&nbsp;than&nbsp;one&nbsp;dataset&nbsp;may&nbsp;be&nbsp;written,&nbsp;just&nbsp;list<br>
+them.&nbsp;Each&nbsp;dataset&nbsp;consists&nbsp;of&nbsp;either:&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;a&nbsp;field&nbsp;interpolated&nbsp;on&nbsp;the&nbsp;slice,<br>
+followed&nbsp;by&nbsp;an&nbsp;optional&nbsp;name.&nbsp;&nbsp;&nbsp;*&nbsp;a&nbsp;mesh_fem&nbsp;and&nbsp;a&nbsp;field,&nbsp;followed&nbsp;by&nbsp;an<br>
+optional&nbsp;name.&nbsp;&nbsp;The&nbsp;field&nbsp;might&nbsp;be&nbsp;a&nbsp;scalar&nbsp;field,&nbsp;a&nbsp;vector&nbsp;field&nbsp;or&nbsp;a&nbsp;tensor<br>
+field.&nbsp;&nbsp;examples:&nbsp;@<a href="#Slice">Slice</a>.<a href="#Slice-export_to_vtk">export_to_vtk</a>(&nbsp;'test.vtk',&nbsp;Uslice,&nbsp;'first_dataset',<br>
+mf,&nbsp;U2,&nbsp;'second_dataset')&nbsp;@<a href="#Slice">Slice</a>.<a href="#Slice-export_to_vtk">export_to_vtk</a>(&nbsp;'test.vtk',&nbsp;'ascii',&nbsp;mf,&nbsp;U2)<br>
+@<a href="#Slice">Slice</a>.<a href="#Slice-export_to_vtk">export_to_vtk</a>(&nbsp;'test.vtk',&nbsp;'edges',&nbsp;'ascii',&nbsp;Uslice)</tt></dd></dl>
+
+<dl><dt><a name="Slice-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Slice-interpolate_convex_data"><strong>interpolate_convex_data</strong></a>(self, Ucv)</dt><dd><tt>Interpolate&nbsp;data&nbsp;given&nbsp;on&nbsp;each&nbsp;convex&nbsp;of&nbsp;the&nbsp;mesh&nbsp;to&nbsp;the&nbsp;slice&nbsp;nodes.&nbsp;&nbsp;The<br>
+input&nbsp;array&nbsp;Ucv&nbsp;may&nbsp;have&nbsp;any&nbsp;number&nbsp;of&nbsp;dimensions,&nbsp;but&nbsp;its&nbsp;last&nbsp;dimension<br>
+should&nbsp;be&nbsp;equal&nbsp;to&nbsp;<a href="#Mesh">Mesh</a>.max_cvid().&nbsp;&nbsp;Example&nbsp;of&nbsp;use:<br>
+<a href="#Slice">Slice</a>.<a href="#Slice-interpolate_convex_data">interpolate_convex_data</a>(&nbsp;<a href="#Mesh">Mesh</a>.quality())</tt></dd></dl>
+
+<dl><dt><a name="Slice-linked_mesh"><strong>linked_mesh</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;mesh&nbsp;on&nbsp;which&nbsp;the&nbsp;slice&nbsp;was&nbsp;taken.</tt></dd></dl>
+
+<dl><dt><a name="Slice-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the&nbsp;slice&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="Slice-mesh"><strong>mesh</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Slice-nbpts"><strong>nbpts</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;number&nbsp;of&nbsp;points&nbsp;in&nbsp;the&nbsp;slice.</tt></dd></dl>
+
+<dl><dt><a name="Slice-nbsplxs"><strong>nbsplxs</strong></a>(self, DIM<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;number&nbsp;of&nbsp;simplexes&nbsp;in&nbsp;the&nbsp;slice.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Slice">Slice</a>.<a href="#Slice-nbsplxs">nbsplxs</a>([,int&nbsp;DIM])<br>
+Since&nbsp;the&nbsp;slice&nbsp;may&nbsp;contain&nbsp;points&nbsp;(simplexes&nbsp;of&nbsp;dim&nbsp;0),&nbsp;segments&nbsp;(simplexes<br>
+of&nbsp;dimension&nbsp;1),&nbsp;triangles&nbsp;etc.,&nbsp;the&nbsp;result&nbsp;is&nbsp;a&nbsp;vector&nbsp;of&nbsp;size&nbsp;<a href="#Slice">Slice</a>.<a href="#Slice-dim">dim</a>()+1<br>
+,&nbsp;except&nbsp;if&nbsp;the&nbsp;optional&nbsp;argument&nbsp;DIM&nbsp;is&nbsp;used.</tt></dd></dl>
+
+<dl><dt><a name="Slice-pts"><strong>pts</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;point&nbsp;coordinates.</tt></dd></dl>
+
+<dl><dt><a name="Slice-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Slice-set_pts"><strong>set_pts</strong></a>(self, P)</dt><dd><tt>Replace&nbsp;the&nbsp;points&nbsp;of&nbsp;the&nbsp;slice.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Slice">Slice</a>.<a href="#Slice-set_pts">set_pts</a>(&nbsp;mat&nbsp;P)<br>
+The&nbsp;new&nbsp;points&nbsp;P&nbsp;are&nbsp;stored&nbsp;in&nbsp;the&nbsp;columns&nbsp;the&nbsp;matrix.&nbsp;Note&nbsp;that&nbsp;you&nbsp;can&nbsp;use<br>
+the&nbsp;function&nbsp;to&nbsp;apply&nbsp;a&nbsp;deformation&nbsp;to&nbsp;a&nbsp;slice,&nbsp;or&nbsp;to&nbsp;change&nbsp;the&nbsp;dimension&nbsp;of<br>
+the&nbsp;slice&nbsp;(the&nbsp;number&nbsp;of&nbsp;rows&nbsp;of&nbsp;P&nbsp;is&nbsp;not&nbsp;required&nbsp;to&nbsp;be&nbsp;equal&nbsp;to<br>
+<a href="#Slice">Slice</a>.<a href="#Slice-dim">dim</a>()).</tt></dd></dl>
+
+<dl><dt><a name="Slice-splxs"><strong>splxs</strong></a>(self, DIM)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;simplexes&nbsp;of&nbsp;dimension&nbsp;DIM.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[S,CV2SPLX]=<a href="#Slice">Slice</a>.<a href="#Slice-splxs">splxs</a>(&nbsp;int&nbsp;DIM)<br>
+On&nbsp;output,&nbsp;S&nbsp;has&nbsp;DIM+1&nbsp;rows,&nbsp;each&nbsp;column&nbsp;contains&nbsp;the&nbsp;point&nbsp;numbers&nbsp;of&nbsp;a<br>
+simplex.&nbsp;&nbsp;The&nbsp;vector&nbsp;CV2SPLX&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;find&nbsp;the&nbsp;list&nbsp;of&nbsp;simplexes&nbsp;for&nbsp;any<br>
+convex&nbsp;stored&nbsp;in&nbsp;the&nbsp;slice.&nbsp;For&nbsp;example&nbsp;S[:,CV2SPLX[4]:CV2SPLX[5]]&nbsp;gives&nbsp;the<br>
+list&nbsp;of&nbsp;simplexes&nbsp;for&nbsp;the&nbsp;fourth&nbsp;convex.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Spmat">class <strong>Spmat</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Getfem&nbsp;sparse&nbsp;matrix.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Spmat-__add__"><strong>__add__</strong></a>(self, other)</dt></dl>
+
+<dl><dt><a name="Spmat-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Spmat-__getitem__"><strong>__getitem__</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="Spmat-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;getfem&nbsp;sparse&nbsp;matrices&nbsp;.<br>
+&nbsp;<br>
+&nbsp;&nbsp;These&nbsp;sparse&nbsp;matrix&nbsp;can&nbsp;be&nbsp;stored&nbsp;as&nbsp;CSC&nbsp;(compressed&nbsp;column&nbsp;sparse),&nbsp;which<br>
+is&nbsp;the&nbsp;format&nbsp;used&nbsp;by&nbsp;Matlab,&nbsp;or&nbsp;they&nbsp;can&nbsp;be&nbsp;stored&nbsp;as&nbsp;WSC&nbsp;(internal&nbsp;format&nbsp;to<br>
+getfem).&nbsp;The&nbsp;CSC&nbsp;matrices&nbsp;are&nbsp;not&nbsp;writable&nbsp;(it&nbsp;would&nbsp;be&nbsp;very&nbsp;inefficient),&nbsp;but<br>
+they&nbsp;are&nbsp;optimized&nbsp;for&nbsp;multiplication&nbsp;with&nbsp;vectors,&nbsp;and&nbsp;memory&nbsp;usage.&nbsp;The&nbsp;WSC<br>
+are&nbsp;writable,&nbsp;they&nbsp;are&nbsp;very&nbsp;fast&nbsp;with&nbsp;respect&nbsp;to&nbsp;random&nbsp;read/write&nbsp;operation.<br>
+However&nbsp;their&nbsp;memory&nbsp;overhead&nbsp;is&nbsp;higher&nbsp;than&nbsp;CSC&nbsp;matrices,&nbsp;and&nbsp;they&nbsp;are&nbsp;a<br>
+little&nbsp;bit&nbsp;slower&nbsp;for&nbsp;matrix-vector&nbsp;multiplications.<br>
+&nbsp;<br>
+&nbsp;&nbsp;By&nbsp;default,&nbsp;all&nbsp;newly&nbsp;created&nbsp;matrices&nbsp;are&nbsp;build&nbsp;as&nbsp;WSC&nbsp;matrices.&nbsp;This&nbsp;can<br>
+be&nbsp;changed&nbsp;later&nbsp;with&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-to_csc">to_csc</a>(),&nbsp;or&nbsp;may&nbsp;be&nbsp;changed&nbsp;automatically&nbsp;by<br>
+getfem&nbsp;(for&nbsp;example&nbsp;linsolve_()&nbsp;converts&nbsp;the&nbsp;matrices&nbsp;to&nbsp;CSC).<br>
+&nbsp;<br>
+&nbsp;&nbsp;The&nbsp;matrices&nbsp;may&nbsp;store&nbsp;REAL&nbsp;or&nbsp;COMPLEX&nbsp;values.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('empty',&nbsp;@tint&nbsp;m&nbsp;[,&nbsp;@tint&nbsp;n])<br>
+&nbsp;Create&nbsp;a&nbsp;new&nbsp;empty&nbsp;(i.e.&nbsp;full&nbsp;of&nbsp;zeros)&nbsp;sparse&nbsp;matrix,&nbsp;of&nbsp;dimensions&nbsp;m&nbsp;x&nbsp;n.<br>
+If&nbsp;n&nbsp;is&nbsp;omitted,&nbsp;the&nbsp;matrix&nbsp;dimension&nbsp;is&nbsp;m&nbsp;x&nbsp;m.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('identity',&nbsp;@tint&nbsp;n)<br>
+&nbsp;Create&nbsp;a&nbsp;n&nbsp;x&nbsp;n&nbsp;identity&nbsp;matrix.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-diag">diag</a>(&nbsp;mat&nbsp;D&nbsp;[,&nbsp;ivec&nbsp;E&nbsp;[,&nbsp;int&nbsp;n&nbsp;[,int&nbsp;m]]])&nbsp;Create&nbsp;a&nbsp;diagonal&nbsp;matrix.<br>
+If&nbsp;E&nbsp;is&nbsp;given,&nbsp;D&nbsp;might&nbsp;be&nbsp;a&nbsp;matrix&nbsp;and&nbsp;each&nbsp;column&nbsp;of&nbsp;E&nbsp;will&nbsp;contain&nbsp;the&nbsp;sub-<br>
+diagonal&nbsp;number&nbsp;that&nbsp;will&nbsp;be&nbsp;filled&nbsp;with&nbsp;the&nbsp;corresponding&nbsp;column&nbsp;of&nbsp;D.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('copy',&nbsp;@spmat&nbsp;K&nbsp;[,I&nbsp;[,J]])<br>
+&nbsp;&nbsp;Duplicate&nbsp;a&nbsp;matrix&nbsp;K&nbsp;(which&nbsp;might&nbsp;be&nbsp;a&nbsp;gfSpmat&nbsp;).&nbsp;If&nbsp;I&nbsp;and/or&nbsp;J&nbsp;are&nbsp;given,<br>
+the&nbsp;matrix&nbsp;M&nbsp;will&nbsp;be&nbsp;a&nbsp;submatrix&nbsp;of&nbsp;K.&nbsp;For&nbsp;example<br>
+&nbsp;&nbsp;M&nbsp;=&nbsp;gf_spmat('copy',&nbsp;sprand(50,50,.1),&nbsp;1:40,&nbsp;[6&nbsp;7&nbsp;8&nbsp;3&nbsp;10])<br>
+&nbsp;will&nbsp;return&nbsp;a&nbsp;40x5&nbsp;matrix.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('mult',&nbsp;@spmat&nbsp;A,&nbsp;@spmat&nbsp;B)<br>
+&nbsp;Create&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;as&nbsp;the&nbsp;product&nbsp;of&nbsp;the&nbsp;sparse&nbsp;matrices&nbsp;A&nbsp;and&nbsp;B.&nbsp;&nbsp;It<br>
+requires&nbsp;that&nbsp;A&nbsp;and&nbsp;B&nbsp;be&nbsp;both&nbsp;real&nbsp;or&nbsp;both&nbsp;complex,&nbsp;you&nbsp;may&nbsp;have&nbsp;to&nbsp;use<br>
+<a href="#Spmat">Spmat</a>.<a href="#Spmat-to_complex">to_complex</a>()<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('add',&nbsp;@spmat&nbsp;A,&nbsp;@spmat&nbsp;B)<br>
+&nbsp;Create&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;as&nbsp;the&nbsp;sum&nbsp;of&nbsp;the&nbsp;sparse&nbsp;matrices&nbsp;A&nbsp;and&nbsp;B.&nbsp;Adding&nbsp;a<br>
+real&nbsp;matrix&nbsp;with&nbsp;a&nbsp;complex&nbsp;matrix&nbsp;is&nbsp;possible.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('load','hb'|'harwell-boeing',&nbsp;filename)<br>
+&nbsp;Read&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;from&nbsp;an&nbsp;Harwell-Boeing&nbsp;file.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('mm',&nbsp;filename)<br>
+&nbsp;*&nbsp;<a href="#Spmat">Spmat</a>('matrix-market',&nbsp;filename)<br>
+&nbsp;Read&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;from&nbsp;a&nbsp;Matrix-Market&nbsp;file.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-__mul__"><strong>__mul__</strong></a>(self, other)</dt><dd><tt>Multiplication&nbsp;of&nbsp;a&nbsp;<a href="#Spmat">Spmat</a>&nbsp;with&nbsp;another&nbsp;<a href="#Spmat">Spmat</a>&nbsp;or&nbsp;a&nbsp;vector&nbsp;or&nbsp;a&nbsp;scalar.<br>
+&nbsp;<br>
+The&nbsp;result&nbsp;is&nbsp;another&nbsp;<a href="#Spmat">Spmat</a>&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-__neg__"><strong>__neg__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Spmat-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Spmat-__rmul__"><strong>__rmul__</strong></a>(self, other)</dt></dl>
+
+<dl><dt><a name="Spmat-__setitem__"><strong>__setitem__</strong></a>(self, key, keyval)</dt></dl>
+
+<dl><dt><a name="Spmat-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Spmat-__sub__"><strong>__sub__</strong></a>(self, other)</dt></dl>
+
+<dl><dt><a name="Spmat-add"><strong>add</strong></a>(self, I, J, V)</dt><dd><tt>Add&nbsp;V&nbsp;to&nbsp;the&nbsp;sub-matrix&nbsp;M(I,J).<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-add">add</a>(&nbsp;I,&nbsp;J,&nbsp;V)<br>
+V&nbsp;might&nbsp;be&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;or&nbsp;a&nbsp;full&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-assign"><strong>assign</strong></a>(self, I, J, V)</dt><dd><tt>Copy&nbsp;V&nbsp;into&nbsp;the&nbsp;sub-matrix&nbsp;M(I,J).<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-assign">assign</a>(&nbsp;ivec&nbsp;I,&nbsp;ivec&nbsp;J,&nbsp;V)<br>
+V&nbsp;might&nbsp;be&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;or&nbsp;a&nbsp;full&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-clear"><strong>clear</strong></a>(self, *args)</dt><dd><tt>Erase&nbsp;the&nbsp;non-zero&nbsp;entries&nbsp;of&nbsp;the&nbsp;matrix.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-clear">clear</a>([,&nbsp;I[,&nbsp;J]])<br>
+The&nbsp;optional&nbsp;arguments&nbsp;I&nbsp;and&nbsp;J&nbsp;may&nbsp;be&nbsp;specified&nbsp;to&nbsp;clear&nbsp;a&nbsp;sub-matrix&nbsp;instead<br>
+of&nbsp;the&nbsp;entire&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-conjugate"><strong>conjugate</strong></a>(self)</dt><dd><tt>Conjugate&nbsp;each&nbsp;element&nbsp;of&nbsp;the&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-csc_ind"><strong>csc_ind</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;two&nbsp;usual&nbsp;index&nbsp;arrays&nbsp;of&nbsp;CSC&nbsp;storage.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[JC,IR]=<a href="#Spmat">Spmat</a>.<a href="#Spmat-csc_ind">csc_ind</a>()<br>
+If&nbsp;M&nbsp;is&nbsp;not&nbsp;stored&nbsp;as&nbsp;a&nbsp;CSC&nbsp;matrix,&nbsp;it&nbsp;is&nbsp;converted&nbsp;into&nbsp;CSC.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-csc_val"><strong>csc_val</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;array&nbsp;of&nbsp;values&nbsp;of&nbsp;all&nbsp;non-zero&nbsp;entries&nbsp;of&nbsp;M.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[V]=<a href="#Spmat">Spmat</a>.<a href="#Spmat-csc_val">csc_val</a>()<br>
+If&nbsp;M&nbsp;is&nbsp;not&nbsp;stored&nbsp;as&nbsp;a&nbsp;CSC&nbsp;matrix,&nbsp;it&nbsp;is&nbsp;converted&nbsp;into&nbsp;CSC.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-diag"><strong>diag</strong></a>(self, D, E<font color="#909090">=None</font>)</dt><dd><tt>Change&nbsp;the&nbsp;diagonal&nbsp;(or&nbsp;sub-diagonals)&nbsp;of&nbsp;the&nbsp;matrix.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-diag">diag</a>(&nbsp;mat&nbsp;D&nbsp;[,&nbsp;ivec&nbsp;E])<br>
+If&nbsp;E&nbsp;is&nbsp;given,&nbsp;D&nbsp;might&nbsp;be&nbsp;a&nbsp;matrix&nbsp;and&nbsp;each&nbsp;column&nbsp;of&nbsp;E&nbsp;will&nbsp;contain&nbsp;the&nbsp;sub-<br>
+diagonal&nbsp;number&nbsp;that&nbsp;will&nbsp;be&nbsp;filled&nbsp;with&nbsp;the&nbsp;corresponding&nbsp;column&nbsp;of&nbsp;D.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-dirichlet_nullspace"><strong>dirichlet_nullspace</strong></a>(self, R)</dt><dd><tt>Solve&nbsp;the&nbsp;dirichlet&nbsp;conditions&nbsp;MU=R.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[N,U0]=<a href="#Spmat">Spmat</a>.<a href="#Spmat-dirichlet_nullspace">dirichlet_nullspace</a>(&nbsp;vec&nbsp;R)<br>
+A&nbsp;solution&nbsp;U0&nbsp;which&nbsp;has&nbsp;a&nbsp;minimum&nbsp;L2-norm&nbsp;is&nbsp;returned,&nbsp;with&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;N<br>
+containing&nbsp;an&nbsp;orthogonal&nbsp;basis&nbsp;of&nbsp;the&nbsp;kernel&nbsp;of&nbsp;the&nbsp;(assembled)&nbsp;constraints<br>
+matrix&nbsp;M&nbsp;(hence,&nbsp;the&nbsp;PDE&nbsp;linear&nbsp;system&nbsp;should&nbsp;be&nbsp;solved&nbsp;on&nbsp;this&nbsp;subspace):&nbsp;the<br>
+initial&nbsp;problem<br>
+&nbsp;<br>
+&nbsp;&nbsp;KU&nbsp;=&nbsp;B&nbsp;with&nbsp;constraints&nbsp;MU=R<br>
+&nbsp;<br>
+&nbsp;&nbsp;is&nbsp;replaced&nbsp;by<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(N'*K*N)*UU&nbsp;=&nbsp;N'*B<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;U&nbsp;=&nbsp;N*UU&nbsp;+&nbsp;U0</tt></dd></dl>
+
+<dl><dt><a name="Spmat-full"><strong>full</strong></a>(self, *args)</dt><dd><tt>Return&nbsp;a&nbsp;full&nbsp;(sub-)matrix&nbsp;of&nbsp;M.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-full">full</a>([,I&nbsp;[,J]])<br>
+The&nbsp;optional&nbsp;arguments&nbsp;I,&nbsp;are&nbsp;the&nbsp;sub-intervals&nbsp;for&nbsp;the&nbsp;rows&nbsp;and&nbsp;columns&nbsp;that<br>
+are&nbsp;to&nbsp;be&nbsp;extracted.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Spmat-info"><strong>info</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;string&nbsp;contains&nbsp;a&nbsp;short&nbsp;summary&nbsp;on&nbsp;the&nbsp;sparse&nbsp;matrix&nbsp;(dimensions,<br>
+filling,&nbsp;..).</tt></dd></dl>
+
+<dl><dt><a name="Spmat-is_complex"><strong>is_complex</strong></a>(self)</dt><dd><tt>Return&nbsp;1&nbsp;if&nbsp;the&nbsp;matrix&nbsp;contains&nbsp;complex&nbsp;values.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-mult"><strong>mult</strong></a>(self, V)</dt><dd><tt>Product&nbsp;of&nbsp;the&nbsp;sparse&nbsp;matrix&nbsp;M&nbsp;with&nbsp;a&nbsp;vector&nbsp;V.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-mult">mult</a>(&nbsp;V)<br>
+For&nbsp;matrix-matrix&nbsp;multiplications,&nbsp;see&nbsp;<a href="#Spmat">Spmat</a>('mult')</tt></dd></dl>
+
+<dl><dt><a name="Spmat-nnz"><strong>nnz</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;number&nbsp;of&nbsp;non-null&nbsp;values&nbsp;stored&nbsp;in&nbsp;the&nbsp;sparse&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-save"><strong>save</strong></a>(self, format, filename)</dt><dd><tt>Export&nbsp;the&nbsp;sparse&nbsp;matrix.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-save">save</a>(&nbsp;string&nbsp;format,&nbsp;string&nbsp;filename)<br>
+the&nbsp;format&nbsp;of&nbsp;the&nbsp;file&nbsp;may&nbsp;be&nbsp;'hb'&nbsp;for&nbsp;Harwell-Boeing,&nbsp;or&nbsp;'mm'&nbsp;for&nbsp;Matrix-<br>
+Market.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-scale"><strong>scale</strong></a>(self, V)</dt><dd><tt>Multiplies&nbsp;the&nbsp;matrix&nbsp;by&nbsp;a&nbsp;scalar&nbsp;value&nbsp;V.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Spmat-size"><strong>size</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;vector&nbsp;[ni,&nbsp;nj]&nbsp;where&nbsp;ni&nbsp;and&nbsp;nj&nbsp;are&nbsp;the&nbsp;dimensions&nbsp;of&nbsp;the&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-storage"><strong>storage</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;storage&nbsp;type&nbsp;currently&nbsp;used&nbsp;for&nbsp;the&nbsp;matrix.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-storage">storage</a>()<br>
+The&nbsp;storage&nbsp;is&nbsp;returned&nbsp;as&nbsp;a&nbsp;string,&nbsp;either&nbsp;'CSC'&nbsp;or&nbsp;'WSC'.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-tmult"><strong>tmult</strong></a>(self, V)</dt><dd><tt>Product&nbsp;of&nbsp;M&nbsp;transposed&nbsp;(conjugated&nbsp;if&nbsp;M&nbsp;is&nbsp;complex)&nbsp;with&nbsp;the&nbsp;vector&nbsp;V.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-to_complex"><strong>to_complex</strong></a>(self)</dt><dd><tt>Store&nbsp;complex&nbsp;numbers.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-to_csc"><strong>to_csc</strong></a>(self)</dt><dd><tt>Convert&nbsp;the&nbsp;matrix&nbsp;to&nbsp;CSC&nbsp;storage.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-to_csc">to_csc</a>()<br>
+CSC&nbsp;storage&nbsp;is&nbsp;recommended&nbsp;for&nbsp;matrix-vector&nbsp;multiplications.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-to_wsc"><strong>to_wsc</strong></a>(self)</dt><dd><tt>Convert&nbsp;the&nbsp;matrix&nbsp;to&nbsp;WSC&nbsp;storage.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#Spmat">Spmat</a>.<a href="#Spmat-to_wsc">to_wsc</a>()<br>
+Read&nbsp;and&nbsp;write&nbsp;operation&nbsp;are&nbsp;quite&nbsp;fast&nbsp;with&nbsp;WSC&nbsp;storage.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-transconj"><strong>transconj</strong></a>(self)</dt><dd><tt>Transpose&nbsp;and&nbsp;conjugate&nbsp;the&nbsp;matrix.</tt></dd></dl>
+
+<dl><dt><a name="Spmat-transpose"><strong>transpose</strong></a>(self)</dt><dd><tt>Transpose&nbsp;the&nbsp;matrix.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-asm"><strong>asm</strong></a>(what, *args)</dt></dl>
+ <dl><dt><a name="-asm_bilaplacian"><strong>asm_bilaplacian</strong></a>(mim, mf_u, mf_data, a)</dt><dd><tt>Assembly&nbsp;of&nbsp;the&nbsp;matrix&nbsp;for&nbsp;the&nbsp;Bilaplacian&nbsp;problem&nbsp;{<br>
+Laplacian(a(x)*Laplacian(u))&nbsp;}</tt></dd></dl>
+ <dl><dt><a name="-asm_boundary"><strong>asm_boundary</strong></a>(*args)</dt><dd><tt>Generic&nbsp;boundary&nbsp;assembly.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[...]=<a href="#-asm_boundary">asm_boundary</a>(&nbsp;@tint&nbsp;bnum,&nbsp;string&nbsp;expr&nbsp;[[,&nbsp;mesh_ims,&nbsp;mesh_fems,<br>
+data...]])<br>
+See&nbsp;the&nbsp;help&nbsp;for&nbsp;<a href="#-asm_volumic">asm_volumic</a>().</tt></dd></dl>
+ <dl><dt><a name="-asm_boundary_qu_term"><strong>asm_boundary_qu_term</strong></a>(boundary_num, mim, mf_u, mf_d, q)</dt><dd><tt>Q&nbsp;should&nbsp;be&nbsp;be&nbsp;a&nbsp;[Qdim&nbsp;x&nbsp;Qdim&nbsp;x&nbsp;N]&nbsp;array,&nbsp;where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;of&nbsp;degree&nbsp;of<br>
+freedom&nbsp;of&nbsp;mf_d,&nbsp;and&nbsp;QDIM&nbsp;is&nbsp;dimension&nbsp;of&nbsp;the&nbsp;unkown&nbsp;u&nbsp;(that&nbsp;is&nbsp;set&nbsp;when<br>
+creating&nbsp;the&nbsp;mesh_fem).</tt></dd></dl>
+ <dl><dt><a name="-asm_boundary_source"><strong>asm_boundary_source</strong></a>(boundary_num, mim, mf_u, mf_d, G)</dt><dd><tt>Assembly&nbsp;of&nbsp;a&nbsp;boundary&nbsp;source&nbsp;term.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#-asm_boundary_source">asm_boundary_source</a>(&nbsp;boundary_num,&nbsp;meshim&nbsp;mim,&nbsp;meshfem&nbsp;mf_u,&nbsp;meshfem<br>
+mf_d,&nbsp;vec&nbsp;G)<br>
+G&nbsp;should&nbsp;be&nbsp;a&nbsp;[QDIM&nbsp;x&nbsp;N]&nbsp;matrix,&nbsp;where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;of&nbsp;degree&nbsp;of&nbsp;freedom&nbsp;of<br>
+mf_d,&nbsp;and&nbsp;QDIM=MESHFEM::GET{mf_u}('qdim').</tt></dd></dl>
+ <dl><dt><a name="-asm_dirichlet"><strong>asm_dirichlet</strong></a>(boundary_num, mim, mf_u, mf_d, H, R, threshold<font color="#909090">=None</font>)</dt><dd><tt>Assembly&nbsp;of&nbsp;Dirichlet&nbsp;conditions&nbsp;of&nbsp;type&nbsp;'h.u&nbsp;=&nbsp;r'.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[HH,RR]=<a href="#-asm_dirichlet">asm_dirichlet</a>(&nbsp;int&nbsp;boundary_num,&nbsp;meshim&nbsp;mim,&nbsp;meshfem&nbsp;mf_u,<br>
+meshfem&nbsp;mf_d,&nbsp;mat&nbsp;H,&nbsp;vec&nbsp;R&nbsp;[,&nbsp;threshold])<br>
+Handle&nbsp;'h.u&nbsp;=&nbsp;r'&nbsp;where&nbsp;h&nbsp;is&nbsp;a&nbsp;square&nbsp;matrix&nbsp;(of&nbsp;any&nbsp;rank)&nbsp;whose&nbsp;size&nbsp;is&nbsp;equal<br>
+to&nbsp;MESHFEM:GET{mf_u}('qdim').&nbsp;This&nbsp;matrix&nbsp;is&nbsp;stored&nbsp;in&nbsp;'H',&nbsp;one&nbsp;column&nbsp;per&nbsp;dof<br>
+in&nbsp;'mf_d',&nbsp;each&nbsp;column&nbsp;containing&nbsp;the&nbsp;values&nbsp;of&nbsp;the&nbsp;matrix&nbsp;'h'&nbsp;stored&nbsp;in<br>
+fortran&nbsp;order:&nbsp;H(:,j)&nbsp;=&nbsp;[h11(x_j)&nbsp;h21(x_j)&nbsp;h12(x_j)&nbsp;h22(x_j)]&nbsp;if&nbsp;u&nbsp;is&nbsp;a&nbsp;2D<br>
+vector&nbsp;field.<br>
+&nbsp;<br>
+&nbsp;&nbsp;Of&nbsp;course,&nbsp;if&nbsp;the&nbsp;unknown&nbsp;is&nbsp;a&nbsp;scalar&nbsp;field,&nbsp;you&nbsp;just&nbsp;have&nbsp;to&nbsp;set&nbsp;H&nbsp;=<br>
+ones(1,&nbsp;MESFEM:GET{mf_d}('nbdof')).<br>
+&nbsp;<br>
+&nbsp;&nbsp;This&nbsp;is&nbsp;basically&nbsp;the&nbsp;same&nbsp;than&nbsp;calling&nbsp;<a href="#-asm_boundary_qu_term">asm_boundary_qu_term</a>()&nbsp;for&nbsp;H&nbsp;and<br>
+calling&nbsp;asm_neumann()&nbsp;for&nbsp;R,&nbsp;except&nbsp;that&nbsp;this&nbsp;function&nbsp;tries&nbsp;to&nbsp;produce&nbsp;a<br>
+'better'&nbsp;(more&nbsp;diagonal)&nbsp;constraints&nbsp;matrix&nbsp;(when&nbsp;possible).&nbsp;&nbsp;see&nbsp;also<br>
+<a href="#Spmat">Spmat</a>.Dirichlet_nullspace().</tt></dd></dl>
+ <dl><dt><a name="-asm_extrapolation_matrix"><strong>asm_extrapolation_matrix</strong></a>(MF1, MF2)</dt><dd><tt>Build&nbsp;the&nbsp;extrapolation&nbsp;matrix&nbsp;from&nbsp;a&nbsp;meshfem&nbsp;onto&nbsp;another&nbsp;meshfem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;M=<a href="#-asm_extrapolation_matrix">asm_extrapolation_matrix</a>(&nbsp;MF1,&nbsp;MF2)<br>
+Return&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;M,&nbsp;such&nbsp;that&nbsp;V=M*U&nbsp;is&nbsp;equal&nbsp;to<br>
+::COMPUTE{MF1,U}('extrapolate_on',MF2).&nbsp;Useful&nbsp;for&nbsp;repeated&nbsp;extrapolations.</tt></dd></dl>
+ <dl><dt><a name="-asm_helmholtz"><strong>asm_helmholtz</strong></a>(mim, mf_u, mf_data, k2)</dt><dd><tt>Assembly&nbsp;of&nbsp;the&nbsp;matrix&nbsp;for&nbsp;the&nbsp;Helmholtz&nbsp;problem&nbsp;{&nbsp;Laplacian(u)&nbsp;+&nbsp;k^2u&nbsp;=&nbsp;0&nbsp;}</tt></dd></dl>
+ <dl><dt><a name="-asm_interpolation_matrix"><strong>asm_interpolation_matrix</strong></a>(MF1, MF2)</dt><dd><tt>Build&nbsp;the&nbsp;interpolation&nbsp;matrix&nbsp;from&nbsp;a&nbsp;meshfem&nbsp;onto&nbsp;another&nbsp;meshfem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;M=<a href="#-asm_interpolation_matrix">asm_interpolation_matrix</a>(&nbsp;MF1,&nbsp;MF2)<br>
+Return&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;M,&nbsp;such&nbsp;that&nbsp;V=M*U&nbsp;is&nbsp;equal&nbsp;to<br>
+::COMPUTE{MF1,U}('interpolate_on',MF2).&nbsp;Useful&nbsp;for&nbsp;repeated&nbsp;interpolations.<br>
+Note&nbsp;that&nbsp;this&nbsp;is&nbsp;just&nbsp;interpolation,&nbsp;no&nbsp;elementary&nbsp;integrations&nbsp;are&nbsp;involved<br>
+here,&nbsp;and&nbsp;MF2&nbsp;has&nbsp;to&nbsp;be&nbsp;lagrangian.&nbsp;In&nbsp;the&nbsp;more&nbsp;general&nbsp;case,&nbsp;you&nbsp;would&nbsp;have<br>
+to&nbsp;do&nbsp;a&nbsp;L2&nbsp;projection&nbsp;via&nbsp;the&nbsp;mass&nbsp;matrix.</tt></dd></dl>
+ <dl><dt><a name="-asm_laplacian"><strong>asm_laplacian</strong></a>(mim, mf_u, mf_d, A)</dt><dd><tt>Assembly&nbsp;of&nbsp;the&nbsp;Laplacian&nbsp;(&nbsp;div(a(x)*grad&nbsp;U)&nbsp;with&nbsp;a&nbsp;scalar).</tt></dd></dl>
+ <dl><dt><a name="-asm_linear_elasticity"><strong>asm_linear_elasticity</strong></a>(mim, mf_u, mf_d, lambda_d, mu_d)</dt><dd><tt>Assembles&nbsp;of&nbsp;linear&nbsp;elasticity.<br>
+&nbsp;<br>
+Synopsis:&nbsp;<a href="#-asm_linear_elasticity">asm_linear_elasticity</a>(&nbsp;meshim&nbsp;mim,&nbsp;meshfem&nbsp;mf_u,&nbsp;meshfem&nbsp;mf_d,&nbsp;vec<br>
+lambda_d,&nbsp;vec&nbsp;mu_d)<br>
+Lambda&nbsp;and&nbsp;mu&nbsp;are&nbsp;the&nbsp;usual&nbsp;Lamé&nbsp;coefficients.</tt></dd></dl>
+ <dl><dt><a name="-asm_mass_matrix"><strong>asm_mass_matrix</strong></a>(mim, mf1, mf2<font color="#909090">=None</font>)</dt><dd><tt>Assembly&nbsp;of&nbsp;a&nbsp;mass&nbsp;matrix.</tt></dd></dl>
+ <dl><dt><a name="-asm_stokes"><strong>asm_stokes</strong></a>(mim, mf_u, mf_p, mf_data, visc)</dt><dd><tt>Assembly&nbsp;of&nbsp;matrices&nbsp;for&nbsp;the&nbsp;Stokes&nbsp;problem&nbsp;{&nbsp;visc(x).Delta(U)&nbsp;-&nbsp;p&nbsp;=&nbsp;0,&nbsp;div(U)<br>
+=&nbsp;0&nbsp;}.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[K,B]=<a href="#-asm_stokes">asm_stokes</a>(&nbsp;meshim&nbsp;mim,&nbsp;meshfem&nbsp;mf_u,&nbsp;meshfem&nbsp;mf_p,&nbsp;meshfem<br>
+mf_data,&nbsp;vec&nbsp;visc)<br>
+On&nbsp;output,&nbsp;K&nbsp;is&nbsp;the&nbsp;usual&nbsp;linear&nbsp;elasticity&nbsp;stiffness&nbsp;matrix&nbsp;with&nbsp;lambda=0&nbsp;and<br>
+2*mu=visc.&nbsp;B&nbsp;is&nbsp;a&nbsp;sparse&nbsp;matrix&nbsp;corresponding&nbsp;to&nbsp;$\int&nbsp;p.div&nbsp;v$.</tt></dd></dl>
+ <dl><dt><a name="-asm_volumic"><strong>asm_volumic</strong></a>(CV<font color="#909090">=None</font>, *args)</dt><dd><tt>Generic&nbsp;assembly&nbsp;procedure&nbsp;for&nbsp;volumic&nbsp;assembly.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[...]=<a href="#-asm_volumic">asm_volumic</a>([,CVLST],&nbsp;expr&nbsp;[[,&nbsp;mesh_ims,&nbsp;mesh_fems,&nbsp;data...]])<br>
+The&nbsp;expression&nbsp;'expr'&nbsp;is&nbsp;evaluated&nbsp;over&nbsp;the&nbsp;mesh_fems&nbsp;listed&nbsp;in&nbsp;the&nbsp;arguments<br>
+(with&nbsp;optional&nbsp;data)&nbsp;and&nbsp;assigned&nbsp;to&nbsp;the&nbsp;output&nbsp;arguments.&nbsp;For&nbsp;details&nbsp;about<br>
+the&nbsp;syntax&nbsp;of&nbsp;assembly&nbsp;expressions,&nbsp;please&nbsp;refer&nbsp;to&nbsp;the&nbsp;getfem&nbsp;user&nbsp;manual&nbsp;(or<br>
+look&nbsp;at&nbsp;the&nbsp;file&nbsp;getfem_assembling.h&nbsp;in&nbsp;the&nbsp;getfem++&nbsp;sources).<br>
+&nbsp;<br>
+&nbsp;&nbsp;For&nbsp;example,&nbsp;the&nbsp;L2&nbsp;norm&nbsp;of&nbsp;a&nbsp;field&nbsp;can&nbsp;be&nbsp;computed&nbsp;with<br>
+&nbsp;<br>
+&nbsp;compute_L2&nbsp;norm(mf,&nbsp;U,&nbsp;)&nbsp;or&nbsp;with:<br>
+&nbsp;<br>
+&nbsp;&nbsp;<a href="#-asm_volumic">asm_volumic</a>('u=data(#1);<br>
+V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)<br>
+&nbsp;<br>
+&nbsp;&nbsp;The&nbsp;Laplacian&nbsp;stiffness&nbsp;matrix&nbsp;can&nbsp;be&nbsp;evaluated&nbsp;with<br>
+&nbsp;<br>
+&nbsp;asm_Laplacian(mim,&nbsp;mf,&nbsp;A)&nbsp;or&nbsp;equivalently&nbsp;with:<br>
+&nbsp;<br>
+&nbsp;<a href="#-asm_volumic">asm_volumic</a>('a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,<br>
+i,j).a(j))',&nbsp;mim,mf,&nbsp;A);</tt></dd></dl>
+ <dl><dt><a name="-asm_volumic_source"><strong>asm_volumic_source</strong></a>(mim, mf_u, mf_d, Fd)</dt><dd><tt>Assembly&nbsp;of&nbsp;a&nbsp;volumic&nbsp;source&nbsp;term.<br>
+&nbsp;<br>
+Synopsis:&nbsp;[vec&nbsp;V]=<a href="#-asm_volumic_source">asm_volumic_source</a>(&nbsp;meshim&nbsp;mim,&nbsp;meshfem&nbsp;mf_u,&nbsp;meshfem&nbsp;mf_d,<br>
+@dcvec&nbsp;Fd)<br>
+Output&nbsp;a&nbsp;vector&nbsp;V,&nbsp;assembled&nbsp;on&nbsp;the&nbsp;mesh_fem&nbsp;MF_U,&nbsp;using&nbsp;the&nbsp;data&nbsp;vector&nbsp;FD<br>
+defined&nbsp;on&nbsp;the&nbsp;data&nbsp;mesh_fem&nbsp;MF_D.&nbsp;FD&nbsp;may&nbsp;be&nbsp;real&nbsp;or&nbsp;complex-valued.</tt></dd></dl>
+ <dl><dt><a name="-compute"><strong>compute</strong></a>(mf, U, what, *args)</dt></dl>
+ <dl><dt><a name="-compute_H1_norm"><strong>compute_H1_norm</strong></a>(mf, U, mim, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Compute&nbsp;the&nbsp;H1&nbsp;norm&nbsp;of&nbsp;U.<br>
+&nbsp;<br>
+Synopsis:&nbsp;N&nbsp;=&nbsp;compute_H1&nbsp;norm(mf,&nbsp;U,&nbsp;&nbsp;meshim&nbsp;mim&nbsp;[,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;given,&nbsp;the&nbsp;norm&nbsp;will&nbsp;be&nbsp;computed&nbsp;only&nbsp;on&nbsp;the&nbsp;listed&nbsp;convexes.</tt></dd></dl>
+ <dl><dt><a name="-compute_H1_semi_norm"><strong>compute_H1_semi_norm</strong></a>(mf, U, mim, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Compute&nbsp;the&nbsp;L2&nbsp;norm&nbsp;of&nbsp;grad(U).<br>
+&nbsp;<br>
+Synopsis:&nbsp;N=compute_H1&nbsp;semi&nbsp;norm(mf,&nbsp;U,&nbsp;&nbsp;meshim&nbsp;mim&nbsp;[,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;given,&nbsp;the&nbsp;norm&nbsp;will&nbsp;be&nbsp;computed&nbsp;only&nbsp;on&nbsp;the&nbsp;listed&nbsp;convexes.</tt></dd></dl>
+ <dl><dt><a name="-compute_H2_norm"><strong>compute_H2_norm</strong></a>(mf, U, mim, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Compute&nbsp;the&nbsp;H2&nbsp;norm&nbsp;of&nbsp;U.<br>
+&nbsp;<br>
+Synopsis:&nbsp;N&nbsp;=&nbsp;compute_H2&nbsp;norm(mf,&nbsp;U,&nbsp;&nbsp;meshim&nbsp;mim&nbsp;[,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;given,&nbsp;the&nbsp;norm&nbsp;will&nbsp;be&nbsp;computed&nbsp;only&nbsp;on&nbsp;the&nbsp;listed&nbsp;convexes.</tt></dd></dl>
+ <dl><dt><a name="-compute_H2_semi_norm"><strong>compute_H2_semi_norm</strong></a>(mf, U, mim, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Compute&nbsp;the&nbsp;L2&nbsp;norm&nbsp;of&nbsp;D^2(U).<br>
+&nbsp;<br>
+Synopsis:&nbsp;N&nbsp;=&nbsp;compute_H2&nbsp;semi&nbsp;norm(mf,&nbsp;U,&nbsp;&nbsp;meshim&nbsp;mim&nbsp;[,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;given,&nbsp;the&nbsp;norm&nbsp;will&nbsp;be&nbsp;computed&nbsp;only&nbsp;on&nbsp;the&nbsp;listed&nbsp;convexes.</tt></dd></dl>
+ <dl><dt><a name="-compute_L2_norm"><strong>compute_L2_norm</strong></a>(mf, U, mim, CVLST<font color="#909090">=None</font>)</dt><dd><tt>Compute&nbsp;the&nbsp;L2&nbsp;norm&nbsp;of&nbsp;the&nbsp;(real&nbsp;or&nbsp;complex)&nbsp;field&nbsp;U.<br>
+&nbsp;<br>
+Synopsis:&nbsp;compute_L2&nbsp;norm(mf,&nbsp;U,&nbsp;&nbsp;meshim&nbsp;mim&nbsp;[,CVLST])<br>
+If&nbsp;CVLST&nbsp;is&nbsp;indicated,&nbsp;the&nbsp;norm&nbsp;will&nbsp;be&nbsp;computed&nbsp;only&nbsp;on&nbsp;the&nbsp;listed&nbsp;convexes.</tt></dd></dl>
+ <dl><dt><a name="-compute_error_estimate"><strong>compute_error_estimate</strong></a>(mf, U, MIM)</dt><dd><tt>Compute&nbsp;an&nbsp;a&nbsp;posteriori&nbsp;error&nbsp;estimation.<br>
+&nbsp;<br>
+Synopsis:&nbsp;E=<a href="#-compute_error_estimate">compute_error_estimate</a>(mf,&nbsp;U,&nbsp;&nbsp;meshim&nbsp;MIM)<br>
+Currently&nbsp;there&nbsp;is&nbsp;only&nbsp;one&nbsp;which&nbsp;is&nbsp;available:&nbsp;for&nbsp;each&nbsp;convex,&nbsp;the&nbsp;jump&nbsp;of<br>
+the&nbsp;normal&nbsp;derivative&nbsp;is&nbsp;integrated&nbsp;on&nbsp;its&nbsp;faces.</tt></dd></dl>
+ <dl><dt><a name="-compute_extrapolate_on"><strong>compute_extrapolate_on</strong></a>(mf, U, MF2)</dt><dd><tt>Extrapolate&nbsp;a&nbsp;field&nbsp;on&nbsp;another&nbsp;mesh_fem.<br>
+&nbsp;<br>
+Synopsis:&nbsp;U2&nbsp;=&nbsp;<a href="#-compute_extrapolate_on">compute_extrapolate_on</a>(mf,&nbsp;U,&nbsp;&nbsp;meshfem&nbsp;MF2)<br>
+If&nbsp;the&nbsp;mesh&nbsp;of&nbsp;MF2&nbsp;is&nbsp;stricly&nbsp;included&nbsp;in&nbsp;the&nbsp;mesh&nbsp;of&nbsp;MF,&nbsp;this&nbsp;function&nbsp;does<br>
+stricly&nbsp;the&nbsp;same&nbsp;job&nbsp;as&nbsp;<a href="#-compute_interpolate_on">compute_interpolate_on</a>(mf,&nbsp;U,&nbsp;).&nbsp;However,&nbsp;if&nbsp;the&nbsp;mesh<br>
+of&nbsp;MF2&nbsp;is&nbsp;not&nbsp;exactly&nbsp;included&nbsp;in&nbsp;MF&nbsp;(imagine&nbsp;interpolation&nbsp;between&nbsp;a&nbsp;curved<br>
+refined&nbsp;mesh&nbsp;and&nbsp;a&nbsp;coarse&nbsp;mesh),&nbsp;then&nbsp;values&nbsp;which&nbsp;are&nbsp;slightly&nbsp;outside&nbsp;MF<br>
+will&nbsp;be&nbsp;extrapolated.<br>
+&nbsp;<br>
+See&nbsp;also&nbsp;<a href="#-asm_extrapolation_matrix">asm_extrapolation_matrix</a>()</tt></dd></dl>
+ <dl><dt><a name="-compute_gradient"><strong>compute_gradient</strong></a>(mf, U, MFGRAD)</dt><dd><tt>Compute&nbsp;the&nbsp;gradient&nbsp;of&nbsp;the&nbsp;field&nbsp;U&nbsp;defined&nbsp;on&nbsp;meshfem&nbsp;MFGRAD.<br>
+&nbsp;<br>
+Synopsis:&nbsp;DU&nbsp;=&nbsp;<a href="#-compute_gradient">compute_gradient</a>(mf,&nbsp;U,&nbsp;&nbsp;meshfem&nbsp;MFGRAD)<br>
+The&nbsp;gradient&nbsp;is&nbsp;interpolated&nbsp;on&nbsp;the&nbsp;mesh_fem&nbsp;MFGRAD,&nbsp;and&nbsp;returned&nbsp;in&nbsp;DU.&nbsp;&nbsp;For<br>
+example,&nbsp;if&nbsp;U&nbsp;is&nbsp;defined&nbsp;on&nbsp;a&nbsp;P2&nbsp;mesh_fem,&nbsp;DU&nbsp;should&nbsp;be&nbsp;evaluated&nbsp;on&nbsp;a<br>
+P1-discontinuous&nbsp;mesh_fem.&nbsp;MF&nbsp;and&nbsp;MFGRAD&nbsp;should&nbsp;share&nbsp;the&nbsp;same&nbsp;mesh.&nbsp;&nbsp;U&nbsp;may<br>
+have&nbsp;any&nbsp;number&nbsp;of&nbsp;dimensions&nbsp;(i.e.&nbsp;this&nbsp;function&nbsp;is&nbsp;not&nbsp;restricted&nbsp;to&nbsp;the<br>
+gradient&nbsp;of&nbsp;scalar&nbsp;fields,&nbsp;but&nbsp;may&nbsp;also&nbsp;be&nbsp;used&nbsp;for&nbsp;tensor&nbsp;fields).&nbsp;However<br>
+the&nbsp;last&nbsp;dimension&nbsp;of&nbsp;U&nbsp;has&nbsp;to&nbsp;be&nbsp;equal&nbsp;to&nbsp;the&nbsp;number&nbsp;of&nbsp;dof&nbsp;of&nbsp;MF.&nbsp;For<br>
+example,&nbsp;if&nbsp;U&nbsp;is&nbsp;a&nbsp;3x3xnbdof(MF)&nbsp;array,&nbsp;DU&nbsp;will&nbsp;be&nbsp;a&nbsp;Nx3x3[xQ]xnbdof(MFGRAD)<br>
+array,&nbsp;where&nbsp;N&nbsp;is&nbsp;the&nbsp;dimension&nbsp;of&nbsp;the&nbsp;mesh,&nbsp;and&nbsp;the&nbsp;optional&nbsp;Q&nbsp;dimension&nbsp;is<br>
+inserted&nbsp;if&nbsp;qdim(MF)&nbsp;!=&nbsp;qdim(MFGRAD).</tt></dd></dl>
+ <dl><dt><a name="-compute_hessian"><strong>compute_hessian</strong></a>(mf, U, MFHESS)</dt><dd><tt>Compute&nbsp;the&nbsp;hessian&nbsp;of&nbsp;the&nbsp;field&nbsp;U&nbsp;defined&nbsp;on&nbsp;meshfem&nbsp;MFHESS.</tt></dd></dl>
+ <dl><dt><a name="-compute_interpolate_on"><strong>compute_interpolate_on</strong></a>(mf, U, *args)</dt><dd><tt>Interpolate&nbsp;a&nbsp;field&nbsp;on&nbsp;another&nbsp;mesh_fem&nbsp;or&nbsp;a&nbsp;slice.<br>
+&nbsp;<br>
+Synopsis:&nbsp;U2&nbsp;=&nbsp;<a href="#-compute_interpolate_on">compute_interpolate_on</a>(mf,&nbsp;U,&nbsp;&nbsp;{&nbsp;meshfem&nbsp;MF2&nbsp;|&nbsp;slice&nbsp;SL&nbsp;})<br>
+*&nbsp;interpolation&nbsp;on&nbsp;another&nbsp;mesh_fem&nbsp;MF2:&nbsp;MF2&nbsp;has&nbsp;to&nbsp;be&nbsp;Lagrangian.&nbsp;&nbsp;If&nbsp;MF&nbsp;and<br>
+MF2&nbsp;share&nbsp;the&nbsp;same&nbsp;mesh&nbsp;object,&nbsp;the&nbsp;&nbsp;interpolation&nbsp;will&nbsp;be&nbsp;much&nbsp;faster.<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;interpolation&nbsp;on&nbsp;a&nbsp;slice&nbsp;object:&nbsp;this&nbsp;is&nbsp;similar&nbsp;to&nbsp;interpolation&nbsp;on&nbsp;a<br>
+refined&nbsp;P1-discontinuous&nbsp;mesh,&nbsp;but&nbsp;it&nbsp;is&nbsp;much&nbsp;faster.&nbsp;&nbsp;This&nbsp;can&nbsp;also&nbsp;be&nbsp;used<br>
+with&nbsp;<a href="#Slice">Slice</a>('points')&nbsp;to&nbsp;obtain&nbsp;field&nbsp;values&nbsp;at&nbsp;a&nbsp;given&nbsp;set&nbsp;of&nbsp;points.<br>
+&nbsp;<br>
+See&nbsp;also&nbsp;<a href="#-asm_interpolation_matrix">asm_interpolation_matrix</a>()</tt></dd></dl>
+ <dl><dt><a name="-factory"><strong>factory</strong></a>(id)</dt></dl>
+ <dl><dt><a name="-generic_constructor"><strong>generic_constructor</strong></a>(self, clname, *args)</dt><dd><tt>Internal&nbsp;function&nbsp;--&nbsp;acts&nbsp;as&nbsp;a&nbsp;constructor&nbsp;for&nbsp;all&nbsp;getfem&nbsp;objects.</tt></dd></dl>
+ <dl><dt><a name="-generic_destructor"><strong>generic_destructor</strong></a>(self, destructible<font color="#909090">=True</font>)</dt><dd><tt>Internal&nbsp;function&nbsp;--&nbsp;acts&nbsp;as&nbsp;a&nbsp;destructor&nbsp;for&nbsp;all&nbsp;getfem&nbsp;objects.</tt></dd></dl>
+ <dl><dt><a name="-getfem"><strong>getfem</strong></a>(...)</dt><dd><tt>Execute&nbsp;a&nbsp;getfem&nbsp;command.</tt></dd></dl>
+ <dl><dt><a name="-getfem_from_constructor"><strong>getfem_from_constructor</strong></a>(...)</dt><dd><tt>internal&nbsp;--&nbsp;Execute&nbsp;a&nbsp;getfem&nbsp;command&nbsp;for&nbsp;building&nbsp;a&nbsp;new&nbsp;object.</tt></dd></dl>
+ <dl><dt><a name="-linsolve"><strong>linsolve</strong></a>(what, *args)</dt></dl>
+ <dl><dt><a name="-linsolve_bicgstab"><strong>linsolve_bicgstab</strong></a>(*args)</dt><dd><tt>Solve&nbsp;MX=b&nbsp;with&nbsp;the&nbsp;bi-conjugated&nbsp;gradient&nbsp;stabilized&nbsp;method,&nbsp;using&nbsp;P&nbsp;as&nbsp;a<br>
+preconditioner.</tt></dd></dl>
+ <dl><dt><a name="-linsolve_cg"><strong>linsolve_cg</strong></a>(*args)</dt><dd><tt>Solve&nbsp;MX=b&nbsp;with&nbsp;the&nbsp;conjugated&nbsp;gradient&nbsp;method,&nbsp;using&nbsp;P&nbsp;as&nbsp;a&nbsp;preconditioner.</tt></dd></dl>
+ <dl><dt><a name="-linsolve_gmres"><strong>linsolve_gmres</strong></a>(*args)</dt><dd><tt>Solve&nbsp;MX=b&nbsp;with&nbsp;the&nbsp;generalized&nbsp;minimum&nbsp;residuals&nbsp;method,&nbsp;using&nbsp;P&nbsp;as&nbsp;a<br>
+preconditioner.<br>
+&nbsp;<br>
+Synopsis:&nbsp;linsolve_('gmres',&nbsp;@spmat&nbsp;M,&nbsp;vec&nbsp;b&nbsp;[,&nbsp;int&nbsp;restart][,&nbsp;@precond<br>
+P][,'noisy'][,'res',&nbsp;r][,'maxiter',&nbsp;n])<br>
+The&nbsp;default&nbsp;value&nbsp;of&nbsp;the&nbsp;restart&nbsp;parameter&nbsp;is&nbsp;50.</tt></dd></dl>
+ <dl><dt><a name="-linsolve_lu"><strong>linsolve_lu</strong></a>(M, b, P<font color="#909090">=None</font>)</dt><dd><tt>Alias&nbsp;for&nbsp;linsolve_('superlu')</tt></dd></dl>
+ <dl><dt><a name="-linsolve_superlu"><strong>linsolve_superlu</strong></a>(M, b, P<font color="#909090">=None</font>)</dt><dd><tt>Apply&nbsp;the&nbsp;SuperLU&nbsp;solver&nbsp;(sparse&nbsp;LU&nbsp;factorization).&nbsp;The&nbsp;condition&nbsp;number<br>
+estimate&nbsp;is&nbsp;returned&nbsp;with&nbsp;the&nbsp;solution.</tt></dd></dl>
+ <dl><dt><a name="-memstats"><strong>memstats</strong></a>()</dt></dl>
+ <dl><dt><a name="-register_python_factory"><strong>register_python_factory</strong></a>(...)</dt><dd><tt>register&nbsp;(on&nbsp;initialization)&nbsp;the&nbsp;python&nbsp;function&nbsp;which&nbsp;is&nbsp;used&nbsp;to&nbsp;build&nbsp;objects&nbsp;from&nbsp;a&nbsp;GetfemObject&nbsp;type&nbsp;(internal&nbsp;function)</tt></dd></dl>
+ <dl><dt><a name="-util"><strong>util</strong></a>(what, *args)</dt></dl>
+ <dl><dt><a name="-util_trace_level"><strong>util_trace_level</strong></a>(level)</dt><dd><tt>Set&nbsp;the&nbsp;verbosity&nbsp;of&nbsp;some&nbsp;getfem++&nbsp;routines&nbsp;(typically&nbsp;the&nbsp;messages&nbsp;printed&nbsp;by<br>
+the&nbsp;model&nbsp;bricks),&nbsp;0&nbsp;means&nbsp;no&nbsp;trace&nbsp;message&nbsp;(default&nbsp;is&nbsp;3).</tt></dd></dl>
+ <dl><dt><a name="-util_warning_level"><strong>util_warning_level</strong></a>(level)</dt><dd><tt>Filter&nbsp;the&nbsp;less&nbsp;important&nbsp;warnings&nbsp;displayed&nbsp;by&nbsp;getfem.&nbsp;0&nbsp;means&nbsp;no&nbsp;warnings,<br>
+default&nbsp;level&nbsp;is&nbsp;3.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>__version__</strong> = '$Revision: 2534 $'<br>
+<strong>obj_count</strong> = {}</td></tr></table>
+</body></html>

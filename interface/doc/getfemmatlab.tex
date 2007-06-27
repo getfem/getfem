@@ -2070,7 +2070,7 @@ U4=gf_mesh_fem_get(mf,'eval',\{'x';'y.*z';4;@myfunctionofxyz\})
 gf\_mesh\_fem\_set(MF, 'classical fem', \tfem fem, \tint K [, \tivec CVIDX])
 gf\_mesh\_fem\_set(MF, 'classical discontinuous fem', \tfem fem, \tint K [, \tivec CVIDX])
 gf\_mesh\_fem\_set(MF, 'qdim', \tint Qdim)
-gf\_mesh\_fem\_set(MF, 'dof partition', \ivec DOFP)
+gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)
 @@\end{synopsis}
 \begin{cmddescription}
   \sep{@@gf\_mesh\_fem\_set(MF, 'fem', fem [, CVIDX])@@} \index{FEM}
@@ -2095,7 +2095,7 @@ gf\_mesh\_fem\_set(MF, 'dof partition', \ivec DOFP)
   @@Q=1@@ means that the \tmf describes a scalar field, @@Q=N@@ means
   that the \tmf describes a vector field of dimension @@N@@ (see @@gf_mesh_fem_set('Qdim')@@).
 
-  \sep{@@gf\_mesh\_fem\_set(MF, 'dof partition', \ivec DOFP)@@} : 
+  \sep{@@gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)@@} : 
   change the array which associates an integer (the partition number) to each convex of
   the \tmf (see @@gf\_mesh\_fem\_get(MF, 'dof partition')@@).
 \end{cmddescription}
@@ -2553,7 +2553,7 @@ gf_mdbrick_get(b,'solve', \tmdstate mds [,...])
 \begin{synopsis}
 @@gf_mdbrick_set(b,'param', \tstr name, {\tmf MF,V | V})
 gf_mdbrick_set(b,'constraints', \tspmat H, \tvec R)
-gf_mdbrick_set(b,'constraints_rhs', \tspmat H, \tvec R)@@
+gf_mdbrick_set(b,'constraints_rhs', \tspmat H, \tvec R)
 gf_mdbrick_set(b,'penalization_coef', \tscal eps)@@
 \end{synopsis}
 \begin{cmddescription}

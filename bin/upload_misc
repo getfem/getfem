@@ -1,0 +1,48 @@
+#!/bin/bash
+
+function die {
+    echo "ERROR: $1";
+    exit 1
+}
+
+
+do_delete=0
+do_mrproper=0
+
+where="misc"
+
+me=$(whoami)
+while test "$#" -gt 0; do
+  case $1 in
+    --mrproper)
+        do_mrproper=1
+        ;;
+    --delete)
+        do_delete=1;
+        ;;
+    -*)
+        die "wrong option: $1";
+        ;;
+    *)
+        f=$1;
+        ;;
+  esac
+  shift
+done
+
+options=""
+if [ "$do_delete" != 0 ]; then
+  options="$options --delete"
+fi
+
+if [ "$do_mrproper" != 0 ]; then
+  mkdir -p /tmp/toto00
+  cd /tmp/toto00 || die "arg"
+  rsync --delete -avr --rsh="ssh" "." "$me@download.gna.org:/upload/getfem/$where/"
+  rm -rf /tmp/toto00
+fi
+
+if [ "$f" != "" ]; then
+  echo "uploading directory $f to download.gna.org:/upload/getfem/$where/"
+  rsync $options -avr --rsh="ssh" "$f" "$me@download.gna.org:/upload/getfem/$where/"
+fi

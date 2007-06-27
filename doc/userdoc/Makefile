@@ -40,23 +40,26 @@ html:	getfemuser.tex getfemuser.idx $(PNGFIGS)
 	hyperlatex getfemuser.tex
 	(cd getfemuser && ../cleanup_html_doc.pl)
 
-pdf: getfemuser.pdf
-	if [ -d ../../../getfem_html ]; then \
-           cp getfemuser.pdf ../../../getfem_html; \
-        fi
+pdfupload: getfemuser.pdf
+	../../bin/upload_documentation getfemuser.pdf
+#if [ -d ../../../getfem_html ]; then \
+#          cp getfemuser.pdf ../../../getfem_html; \
+#fi
 
-htmltar: html
+htmlupload: html
 	cp $(PNGFIGS) getfemuser/
 	cp docstyle.css getfemuser/
 	cp logogetfem.png logo_getfem_small.png getfemuser/
 	cp getfemuserrefine.png getfemuser/
 	cp next.gif up.gif previous.gif getfemuser/
-	tar czvf html_getfemuser.tar.gz getfemuser
-	if [ -d ../../../getfem_html ]; then \
-           cp html_getfemuser.tar.gz ../../../getfem_html; \
-        fi
+	../../bin/upload_documentation getfemuser
 
-all: htmltar pdf
+#tar czvf html_getfemuser.tar.gz getfemuser
+#if [ -d ../../../getfem_html ]; then \
+#         cp html_getfemuser.tar.gz ../../../getfem_html; \
+#fi
+
+all: htmlupload pdfupload
 
 clean:
 	-rm -f *.dvi *.log *.toc *.bbl *.aux *.tmp *.ps.gz getfemuser.ps getfemuser.pdf getfemuser.blg getfemuser.out

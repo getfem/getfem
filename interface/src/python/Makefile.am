@@ -54,6 +54,10 @@ _getfem.so: getfem_python.c ../libgetfemint.la $(GETFEM_LIB_LA)
 	touch _getfem.so && rm _getfem.so
 	LDSHARED="$(CXX) -shared" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 
+
+doc: getfem.py
+	pydoc -w getfem && mv getfem.html $(top_srcdir)/interface/doc/getfem_python_reference.html
+
 all: _getfem.so getfem.py
 #pyexec_LTLIBRARIES = libgfpython.la
 #libgfpython_la_LIBADD = ../.libs/libgetfemint.a @GETFEM_STATICLIBS@

@@ -19,9 +19,9 @@ OTHERPNGFIGS=donut.png tripodvonmiseswithmesh.png logogetfemwhitebg.png
 	fig2dev -L eps $(@:.pdf=.fig) > $(@:.pdf=.eps)
 	epstopdf $(@:.pdf=.eps) --outfile=$@
 
-all : getfemmatlab.pdf htmltar
+all : pdfupload htmlupload
 	if [ -d ../../getfem_html ]; then \
-           cp getfemmatlab.pdf ../../getfem_html; \
+           cp getfem_matlab.pdf ../../getfem_html; \
         fi
 
 .eps.pdf:
@@ -46,27 +46,27 @@ fempk51.png: fempk51.pdf
 #	latex $(TEXOPTS) gfm.tex | $(TEXMSGFILTER)
 
 gfm.tex : getfemmatlab.tex
-	perl latexize_mcode.pl < getfemmatlab.tex > gfm.tex;
+	perl ../bin/latexize_mcode.pl < getfemmatlab.tex > gfm.tex;
 
 
 demolaplacian.tex : ../tests/matlab/demo_laplacian.m
-	./latexize_mfile.sh ../tests/matlab/demo_laplacian.m demolaplacian.tex
+	../bin/latexize_mfile.sh ../tests/matlab/demo_laplacian.m demolaplacian.tex
 
 demotripod.tex: ../tests/matlab/demo_tripod.m
-	./latexize_mfile.sh ../tests/matlab/demo_tripod.m demotripod.tex
+	../bin/latexize_mfile.sh ../tests/matlab/demo_tripod.m demotripod.tex
 
 demorefine.tex: ../tests/matlab/demo_refine.m
-	./latexize_mfile.sh ../tests/matlab/demo_refine.m demorefine.tex
+	../bin/latexize_mfile.sh ../tests/matlab/demo_refine.m demorefine.tex
 
 #gfm.dvi : gfm.tex $(PDFFIGS)
 #	-latex $(TEXOPTS) gfm.tex | $(TEXMSGFILTER) && if (grep Rerun gfm.log || grep 'undefined references' gfm.log) ; then echo 'RERUN!'; latex $(TEXOPTS) gfm.tex | $(TEXMSGFILTER); fi;
 #
-#getfemmatlab.ps : gfm.dvi
-#	dvips gfm -z -Pamz -Pcmz -o getfemmatlab.ps -p1
+#getfem_matlab.ps : gfm.dvi
+#	dvips gfm -z -Pamz -Pcmz -o getfem_matlab.ps -p1
 
-getfemmatlab.pdf : $(PDFFIGS) $(PNGFIGS) gfm.tex gfm.idx demolaplacian.tex demotripod.tex demorefine.tex
+getfem_matlab.pdf : $(PDFFIGS) $(PNGFIGS) gfm.tex gfm.idx demolaplacian.tex demotripod.tex demorefine.tex
 	-pdflatex $(TEXOPTS) gfm.tex | $(TEXMSGFILTER) && if (grep Rerun gfm.log || grep 'undefined references' gfm.log) ; then echo 'RERUN!'; pdflatex $(TEXOPTS) gfm.tex | $(TEXMSGFILTER); fi;
-	mv gfm.pdf getfemmatlab.pdf
+	mv gfm.pdf getfem_matlab.pdf
 
 gfm.idx : gfm.tex
 	touch -a gfm.idx
@@ -81,13 +81,19 @@ clean:
 html:	gfm.tex gfm.idx
 	-rm -rf gfm/
 	hyperlatex gfm.tex
-	( cd gfm && ../cleanup_html_doc.pl )
+	( cd gfm && ../cleanup_html_doc.pl ) && mv gfm getfem_matlab
 
-htmltar: html
-	cp $(PNGFIGS) $(BASEPNGFIGS) gfm/
-	cp docstyle.css gfm/
-	cp next.gif up.gif previous.gif gfm/
-	tar czvf html_gfm.tar.gz gfm
-	if [ -d ../../getfem_html ]; then \
-           cp html_gfm.tar.gz ../../getfem_html; \
-        fi
+htmlupload: html
+	cp $(PNGFIGS) $(BASEPNGFIGS) getfem_matlab/
+	cp docstyle.css getfem_matlab/
+	cp next.gif up.gif previous.gif getfem_matlab/
+	../../bin/upload_documentation getfem_matlab
+	../../bin/upload_documentation getfem_python_reference.html
+
+pdfupload: getfem_matlab.pdf
+	../../bin/upload_documentation getfem_matlab.pdf
+
+#tar czvf html_gfm.tar.gz gfm
+#if [ -d ../../../getfem_html ]; then \
+#          cp html_gfm.tar.gz ../../../getfem_html; \
+#       fi

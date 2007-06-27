@@ -35,21 +35,25 @@ html:	gmmuser.tex gmmuser.ilg $(PNGFIGS)
 	hyperlatex gmmuser.tex
 	(cd gmmuser && ../cleanup_html_doc.pl)
 
-pdf: gmmuser.pdf
-	if [ -d ../../../getfem_html ]; then \
-           cp gmmuser.pdf ../../../getfem_html; \
-        fi
+pdfupload: gmmuser.pdf
+	../../bin/upload_documentation gmmuser.pdf
 
-htmltar: html
+#if [ -d ../../../getfem_html ]; then \
+#          cp gmmuser.pdf ../../../getfem_html; \
+#fi
+
+htmlupload: html
 	cp $(PNGFIGS) gmmuser/
 	cp docstyle.css gmmuser/
 	cp next.gif up.gif previous.gif gmmuser/
-	tar czvf html_gmmuser.tar.gz gmmuser
-	if [ -d ../../../getfem_html ]; then \
-           cp html_gmmuser.tar.gz ../../../getfem_html; \
-        fi
+	../../bin/upload_documentation gmmuser
 
-all: htmltar pdf
+#tar czvf html_gmmuser.tar.gz gmmuser
+#if [ -d ../../../getfem_html ]; then \
+#          cp html_gmmuser.tar.gz ../../../getfem_html; \
+#       fi
+
+all: htmlupload pdfupload
 
 clean:
 	-rm -f *.dvi *.log *.toc *.bbl *.aux *.tmp *.ps.gz gmmuser.ps gmmuser.pdf gmmuser.blg gmmuser.out
