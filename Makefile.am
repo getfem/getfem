@@ -1,7 +1,7 @@
 #http://sources.redhat.com/automake/automake.html#Local-Macros
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = m4 cubature superlu src tests interface tests-2.0 contrib bin
+SUBDIRS = m4 cubature superlu src tests interface contrib tests-2.0 bin
 
 EXTRA_DIST = \
 	BUGS \

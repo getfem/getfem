@@ -35,10 +35,11 @@ sub start_program {
   my $h1err = "null";
   open F, "./xfem_dirichlet_demo $tmp $def 2>&1 |" or die("xfem_dirichlet_demo not found");
   while (<F>) {
-    if ($_ =~ /H1 error/) {
+      # print $_;
+      if ($_ =~ /H1 error/) {
       ($a, $h1err) = split(':', $_);
       $h1err += 0.0;
-      #print "La norme en question :", $h1err;
+      # print "La norme en question :", $h1err;
     }
   }
   close(F);
@@ -51,7 +52,7 @@ sub start_program {
 }
 
 $err1 = start_program("", 15);
-if ($err1 > 3e-4) {
+if ($err1 > 7e-4) {
   print "error too large\n"; exit(1);
 }
 

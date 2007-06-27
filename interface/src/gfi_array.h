@@ -29,7 +29,6 @@
 #else
 # ifndef __u_char_defined
   typedef unsigned int u_int;
-//# define u_int unsigned int
 #  endif
 #endif
 

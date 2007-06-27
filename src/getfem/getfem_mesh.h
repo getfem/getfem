@@ -663,9 +663,11 @@ namespace getfem {
    * (i.e. faces which are not shared by two convexes) 
    * + convexes whose dimension is smaller that m.dim()
    */
-  void  outer_faces_of_mesh(const mesh &m, 
-			const dal::bit_vector& cvlst, convex_face_ct& flist);
+  void  outer_faces_of_mesh(const mesh &m, const dal::bit_vector& cvlst,
+			    convex_face_ct& flist);
 
+  inline void outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
+    IS_DEPRECATED;
   inline void outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
   { outer_faces_of_mesh(m,m.convex_index(),flist); }
 

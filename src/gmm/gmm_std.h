@@ -147,7 +147,7 @@ namespace gmm {
   // Remark : the test program dynamic_array tests the lenght of
   //          resulting integers
 
-  template <int s> struct fixed_size_integer_generator {
+  template <size_t s> struct fixed_size_integer_generator {
     typedef void int_base_type;
     typedef void uint_base_type;  
   };
@@ -226,7 +226,7 @@ namespace gmm {
 // # error "impossible to build a 64 bits integer"
 // #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__ICC)
 /* 
    g++ can issue a warning at each usage of a function declared with this special attribute 
    (also works with typedefs and variable declarations)

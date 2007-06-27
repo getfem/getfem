@@ -989,8 +989,6 @@ namespace gmm {
   public:
     MatrixMarket_IO() : f(0) {}
     MatrixMarket_IO(const char *filename) : f(0) { open(filename); }
-    template <typename Matrix>
-    MatrixMarket_IO(const char *filename) : f(0) { open(filename); }
     ~MatrixMarket_IO() { if (f) fclose(f); f = 0; }
 
     int nrows() const { return row; }
