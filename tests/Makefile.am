@@ -49,7 +49,7 @@ CLEANFILES = \
 	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk \
 	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk \
 	plasticity.meshfem plasticity.coef elasto_static_err.vtk \
-	ii_files/* auto_gmm* dyn*.txt
+	ii_files/* auto_gmm* dyn*.txt *.sl
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 

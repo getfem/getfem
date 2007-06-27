@@ -494,14 +494,14 @@ void friction_problem::solve(void) {
     exp->serie_add_object("vonmisessteps");
   }
   
-  std::ofstream fileout1("iter", std::ios::out);   
-  std::ofstream fileout2("nrj", std::ios::out);
-  std::ofstream fileout3("vts", std::ios::out);
-  std::ofstream fileout4("FN0", std::ios::out);
-  std::ofstream fileout5("depl", std::ios::out);
-  std::ofstream fileout6("kenetic_nrj", std::ios::out);
-  std::ofstream fileout7("elastic_nrj", std::ios::out);
-  std::ofstream fileout8("potential_nrj", std::ios::out);  
+//   std::ofstream fileout1("iter", std::ios::out);   
+//   std::ofstream fileout2("nrj", std::ios::out);
+//   std::ofstream fileout3("vts", std::ios::out);
+//   std::ofstream fileout4("FN0", std::ios::out);
+//   std::ofstream fileout5("depl", std::ios::out);
+//   std::ofstream fileout6("kenetic_nrj", std::ios::out);
+//   std::ofstream fileout7("elastic_nrj", std::ios::out);
+//   std::ofstream fileout8("potential_nrj", std::ios::out);  
 
  
   scalar_type Einit = (0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
@@ -786,14 +786,14 @@ void friction_problem::solve(void) {
 	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
 	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
 
-	fileout1 << t << "\n";
-	fileout2 << J1   << "\n";	
-	fileout3 << VV1[N-1] << "\n";
-	fileout4 << -LLN1[ref_dof+N-1] << "\n";
-	fileout5 << UU1[N-1] << "\n";
-	fileout6 << kenetic_nrj   << "\n";		
-	fileout7 << elastic_nrj   << "\n";	
-	fileout8 << potential_nrj  << "\n";	      
+// 	fileout1 << t << "\n";
+// 	fileout2 << J1   << "\n";	
+// 	fileout3 << VV1[N-1] << "\n";
+// 	fileout4 << -LLN1[ref_dof+N-1] << "\n";
+// 	fileout5 << UU1[N-1] << "\n";
+// 	fileout6 << kenetic_nrj   << "\n";		
+// 	fileout7 << elastic_nrj   << "\n";	
+// 	fileout8 << potential_nrj  << "\n";	      
 
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");
