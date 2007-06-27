@@ -82,7 +82,7 @@
       Basic User documentation for getfem++-1.7: <a href="http://download.gna.org/getfem/doc/getfemuser-1.7.pdf">[pdf]</a>
     </li>
     <li>
-      Matlab Interface, v1.7 : <a href="http://download.gna.org/getfem/doc/getfemmatlab-1.7.pdf">[pdf]</a>
+      Matlab Interface, v1.7 : <a href="http://download.gna.org/getfem/doc/getfem_matlab-1.7.pdf">[pdf]</a>
     </li>
     <li>
       GMM user guide, v1.7 : <a href="http://download.gna.org/getfem/doc/gmmuser-1.7.pdf">[pdf]</a>

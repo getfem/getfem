@@ -94,7 +94,13 @@
 	  and to debug them.
       </ul>      
     </div>
-    
+    <div class="faqq">
+      When the getfem-matlab interface does work: it says '<i>libgcc_s.so.1: version `GCC_3.4' not found"</i>'
+    </div>
+    <div class="faqr">
+      <p>
+        The fix for that problem, using LD_PRELOAD,  is explained <a href="https://mail.gna.org/public/getfem-users/2007-03/msg00014.html">here</a>.
+      </p>
   </div>
 <?php include("footer.inc") ?>
 

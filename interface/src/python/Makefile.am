@@ -1,5 +1,3 @@
-if BUILDPYTHON
-
 GETFEM_LIB_LA = ../../../src/libgetfem.la @LIBS@
 
 INCLUDES = $(PYTHON_CPPFLAGS) -I@srcdir@ -I@srcdir@/..
@@ -47,6 +45,8 @@ PSEUDO_MFUNCTIONS = \
 
 getfem.py: getfem.base.py $(PSEUDO_MFUNCTIONS)
 	$(top_srcdir)/interface/bin/extract_pydoc python $(srcdir)/.. > getfem.py || ( rm getfem.py ; /bin/false )
+
+if BUILDPYTHON
 
 PYTHON_CC=$(CC)
 
