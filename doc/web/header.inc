@@ -38,7 +38,6 @@
 	      <a href="support.html">Support/FAQ</a>
 	      <?php if ($thisPage=="Support") : ?>
 	      <ul class="menusub">
-		<li><a href="BUGS.html">Known bugs</a></li>
 		<li><a href="getfem_faq.html">FAQ</a></li>
 	      </ul>
 	      <?php endif ?>
@@ -62,8 +61,8 @@
 	      <a href="download.html">Download</a>
 	      <?php if ($thisPage=="Download") : ?>
 	      <ul class="menusub">
-		<li><a href="stable/">Stable</a></li>
-		<li><a href="unstable/">Unstable</a></li>
+		<li><a href="http://download.gna.org/getfem/stable/">Stable</a></li>
+		<li><a href="http://download.gna.org/getfem/unstable/">Unstable</a></li>
 	      </ul>
 	      <?php endif ?>
 	    </li>
@@ -71,10 +70,10 @@
 	      <a href="doc.html">Documentation</a>
 	      <?php if ($thisPage=="Documentation") : ?>
 	      <ul class="menusub">
-		<li><a href="getfemuser/getfemuser.html">Getfem++ user guide</a></li>
-		<li><a href="gfm/gfm.html">Matlab interface</a></li>
-		<li><a href="getfempython">Python interface</a></li>
-		<li><a href="gmmuser/gmmuser.html">Gmm++ user guide</a></li>
+		<li><a href="http://download.gna.org/getfem/doc/getfemuser/getfemuser.html">Getfem++ user guide</a></li>
+		<li><a href="http://download.gna.org/getfem/doc/getfem_matlab/gfm.html">Matlab interface</a></li>
+		<li><a href="http://download.gna.org/getfem/doc/getfem_python_reference.html">Python interface</a></li>
+		<li><a href="http://download.gna.org/getfem/doc/gmmuser/gmmuser.html">Gmm++ user guide</a></li>
 	      </ul>
 	      <?php endif ?>
 	    </li>
