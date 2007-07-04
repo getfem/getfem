@@ -10,9 +10,8 @@
     <p>
       The latest <span class="embg">stable</span> release of getfem++:
       <ul>
-	<li> core getfem++ library: <a href="http://download.gna.org/getfem/stable/getfem++-2.0.2.tar.gz">getfem++-2.0.2.tar.gz</a> (includes gmm++)</li>
-<li> Matlab and Python interface: <a href="http://download.gna.org/getfem/stable/getfem-interface-2.0.tar.gz">getfem-interface-2.0.tar.gz</a> (updated 2006/03/29 to avoid a <a href="http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16849">bug</a> in gcc-3.3/3.4, <b>updated 2006/04/03</b> for matlab-R13 compat of tests programs and addition of missing gfPrecond.m file)</li>
-	<li> gmm++ standalone: <a href="http://download.gna.org/getfem/stable/gmm-2.02.tar.gz">gmm-2.02.tar.gz</a></li>
+<li> core getfem++ library: <a href="http://download.gna.org/getfem/stable/getfem++-3.0.tar.gz">getfem++-3.0.tar.gz</a> (includes gmm++, Matlab and Python interfaces)</li>
+	<li> gmm++ standalone: <a href="http://download.gna.org/getfem/stable/gmm-3.0.tar.gz">gmm-3.0.tar.gz</a></li>
       </ul>
     </p>
     <p>
