@@ -213,13 +213,14 @@ namespace dal {
 	stored_object_tab::iterator ito = iterator_of_object(*it);
 	GMM_ASSERT1(ito != stored_objects.end(), "An object disapeared !");
 	ito->second.valid = false;
-	std::set<pstatic_stored_object> dep = ito->second.dependencies;
+	std::set<pstatic_stored_object> &dep = ito->second.dependencies;
 	for (itd = dep.begin(); itd != dep.end(); ++itd) {
 	  if (del_dependency(*it, *itd)) {
 	    stored_object_tab::iterator itod=iterator_of_object(*itd);
 	    if (itod->second.perm == AUTODELETE_STATIC_OBJECT
 		&& itod->second.valid) {
 	      itod->second.valid = false;
+	      // cout << "autodelete object deleted : " << *itd << endl;
 	      to_delete.push_back(*itd);
 	    }
 	  }
@@ -229,9 +230,10 @@ namespace dal {
 	  stored_object_tab::iterator itod=iterator_of_object(*itd);
 	  if (itod != stored_objects.end()) {
 	    GMM_ASSERT1(itod->second.perm != PERMANENT_STATIC_OBJECT,
-			"Trying to delete a permanent object");
+			"Trying to delete a permanent object " << *itd);
 	    if (itod->second.valid) {
 	      itod->second.valid = false;
+	      // cout << "non-autodelete object deleted : " << itod->second.p << endl;
 	      to_delete.push_back(itod->second.p);
 	    }
 	  }
@@ -243,6 +245,7 @@ namespace dal {
 
   // Delete an object and its dependencies
   void del_stored_object(pstatic_stored_object o, bool ignore_unstored) {
+    // cout << "object deleted : " << o << endl;
     std::list<pstatic_stored_object> to_delete;
     to_delete.push_back(o);
     del_stored_objects(to_delete, ignore_unstored);

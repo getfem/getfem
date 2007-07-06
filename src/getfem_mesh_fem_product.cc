@@ -71,7 +71,8 @@ namespace getfem {
     std::vector<base_tensor> val_e(2);
     for (size_type k = 0; k < 2; ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab()));
+	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+			       c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.base_value(val_e[k]);
     }
@@ -97,7 +98,8 @@ namespace getfem {
     std::vector<base_tensor> grad_e(2), val_e(2);
     for (size_type k = 0; k < 2; ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab()));
+	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+			       c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.grad_base_value(grad_e[k]);
       c0.base_value(val_e[k]);
@@ -127,7 +129,8 @@ namespace getfem {
     std::vector<base_tensor> hess_e(2), grad_e(2), val_e(2);
     for (size_type k = 0; k < 2; ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab()));
+	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+			       c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.hess_base_value(hess_e[k]);
       c0.grad_base_value(grad_e[k]);

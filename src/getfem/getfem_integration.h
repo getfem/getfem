@@ -321,6 +321,8 @@ namespace getfem
      max. error */
   scalar_type test_integration_error(papprox_integration pim, dim_type order);
 
+  papprox_integration get_approx_im_or_fail(pintegration_method pim);
+
 }  /* end of namespace getfem.                                            */
 
 

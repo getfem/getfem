@@ -328,31 +328,27 @@ void test_convex_ref() {
 }
 
 int main(void) {
-  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
-  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+  getfem::mesh m1;
+  test_convex_ref();
+  test_convex_simplif();
+  test_mesh(m1);
+  test_convex_simplif();
+  test_convex_quality(0.2,0);
+  test_convex_quality(-0.2,0);
+  test_convex_quality(-0.01,-0.2);
+  test_region();
   
-  try {
-    getfem::mesh m1;
-    test_convex_ref();
-    test_convex_simplif();
-    test_mesh(m1);
-    test_convex_simplif();
-    test_convex_quality(0.2,0);
-    test_convex_quality(-0.2,0);
-    test_convex_quality(-0.01,-0.2);
-    test_region();
-
-    for (size_type d = 1; d <= 4 /* 6 */; ++d)
-      test_mesh_matching(d);
-
-    test_refinable(2, 1);
-    test_refinable(2, 2);
-    test_refinable(2, 3);
-    test_refinable(3, 1);
-    test_refinable(3, 2);
-    test_refinable(3, 3);
-  }
-  GMM_STANDARD_CATCH_ERROR;
+  for (size_type d = 1; d <= 4 /* 6 */; ++d)
+    test_mesh_matching(d);
+  
+  test_refinable(2, 1);
+  test_refinable(2, 2);
+  test_refinable(2, 3);
+  test_refinable(3, 1);
+  test_refinable(3, 2);
+  test_refinable(3, 3);
+  
   return 0;
 }
 

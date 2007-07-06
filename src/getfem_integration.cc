@@ -1220,5 +1220,11 @@ namespace getfem {
     return error;
   }
 
+  papprox_integration get_approx_im_or_fail(pintegration_method pim) {
+    GMM_ASSERT1(pim->type() == IM_APPROX,  "error estimate work only with "
+		"approximate integration methods");
+    return pim->approx_method();
+  }
+
 }  /* end of namespace getfem.                                           */
 

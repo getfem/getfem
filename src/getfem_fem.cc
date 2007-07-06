@@ -1050,8 +1050,8 @@ namespace getfem {
     gmm::copy(gmm::identity_matrix(), M);
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
@@ -1146,8 +1146,8 @@ namespace getfem {
     gmm::copy(gmm::identity_matrix(), M);
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0),0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
@@ -1244,8 +1244,8 @@ namespace getfem {
     
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
 
@@ -1436,7 +1436,7 @@ namespace getfem {
       gmm::resize(r, N);
       for (size_type i = 0; i < N; ++i) r[0] = ::exp(i);
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
       gmm::resize(K, N, 1);
     }
     gmm::copy(gmm::identity_matrix(), M);
@@ -1499,7 +1499,7 @@ namespace getfem {
     GMM_ASSERT1(N == 2, "Sorry, this version of hermite "
 		"element works only in dimension two.")
     if (pgt != pgt_stored)
-      { pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0)); }
+      { pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0); }
     gmm::copy(gmm::identity_matrix(), M);
     
     gmm::mult(G, pgp->grad(0), K);
@@ -1570,7 +1570,7 @@ namespace getfem {
     GMM_ASSERT1(N == 3, "Sorry, this version of hermite "
 		"element works only on dimension three.")
     if (pgt != pgt_stored)
-      { pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0)); }
+      { pgt_stored = pgt; pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0); }
     gmm::copy(gmm::identity_matrix(), M);
     
     gmm::mult(G, pgp->grad(0), K);
@@ -1675,8 +1675,8 @@ namespace getfem {
 		"element works only on dimension two.")
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
 
@@ -1844,8 +1844,8 @@ namespace getfem {
 
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     
@@ -2223,7 +2223,8 @@ namespace getfem {
       pf->hess_base_value((*pspt)[i], hpc[i]);
   }
 
-  pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt) {
+  pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt,
+			   dal::pstatic_stored_object dep) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(pre_fem_key_(pf, pspt));
     if (o) {
@@ -2232,7 +2233,9 @@ namespace getfem {
     pfem_precomp p = new fem_precomp_(pf, pspt);
     dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pspt,
 			   dal::AUTODELETE_STATIC_OBJECT);
+    // cout << "adding fem precomp " << dal::pstatic_stored_object(p) << endl;
     if (dal::exists_stored_object(pf)) dal::add_dependency(p, pf);
+    if (dep) dal::add_dependency(p, dep);
     return p;
     
   }

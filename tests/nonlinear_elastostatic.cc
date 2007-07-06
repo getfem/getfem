@@ -462,7 +462,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
     /* let the default non-linear solve (Newton) do its job */
     getfem::standard_solve(MS, final_model, iter);
-    // getfem::nl_solve(MS, final_model, iter);
 
     pl->reset_unvalid_flag();
     final_model.compute_residual(MS);

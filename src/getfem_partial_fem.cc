@@ -74,7 +74,7 @@ namespace getfem {
     base_tensor val_e;
     
     if (c0.have_pfp()) {
-      c0.set_pfp(fem_precomp(org_fem, &c0.pfp()->get_point_tab()));
+      c0.set_pfp(fem_precomp(org_fem, &c0.pfp()->get_point_tab(), c0.pfp()));
     } else { c0.set_pf(org_fem); }
     c0.base_value(val_e);
     
@@ -97,7 +97,7 @@ namespace getfem {
     base_tensor grad_e;
     
     if (c0.have_pfp()) {
-      c0.set_pfp(fem_precomp(org_fem, &c0.pfp()->get_point_tab()));
+      c0.set_pfp(fem_precomp(org_fem, &c0.pfp()->get_point_tab(), c0.pfp()));
     } else { c0.set_pf(org_fem); }
     c0.grad_base_value(grad_e);
     
@@ -123,7 +123,7 @@ namespace getfem {
     base_tensor hess_e;
    
     if (c0.have_pfp()) {
-      c0.set_pfp(fem_precomp(org_fem, &c0.pfp()->get_point_tab()));
+      c0.set_pfp(fem_precomp(org_fem, &c0.pfp()->get_point_tab(), c0.pfp()));
     } else { c0.set_pf(org_fem); }
     c0.hess_base_value(hess_e);
     

@@ -259,7 +259,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
       bgeot::pstored_point_tab pspt = pf->node_tab(cv);
       if (pgt != pgt_old || pspt != pspt_old)
-	pgp = bgeot::geotrans_precomp(pgt, pspt);
+	pgp = bgeot::geotrans_precomp(pgt, pspt, pf);
       pgt_old = pgt; pspt_old = pspt;
       
       size_type nbd = pf->nb_dof(cv); 

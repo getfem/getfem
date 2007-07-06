@@ -126,7 +126,7 @@ namespace dal {
     (std::make_pair(aa,std::make_pair(bb,cc))) {}			\
   }
 
-#define DAL_FOUR_KEY(class_name,var_type1,var_type2,var_type3,var_type4) \
+#define DAL_FOUR_KEY(class_name,var_type1,var_type2,var_type3,var_type4)\
   struct class_name : public						\
   dal::simple_key<std::pair						\
 		  <var_type1, std::pair<var_type2, std::pair		\

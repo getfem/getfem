@@ -80,12 +80,12 @@ namespace getfem
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
-        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab(cv));
+        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab(cv), pf_target);
       }
       pf_targetold = pf_target;
 
       if (pf_old != pf) {
-	pfp = fem_precomp(pf, pf_target->node_tab(cv));
+	pfp = fem_precomp(pf, pf_target->node_tab(cv), pf_target);
       }
       pf_old = pf;
 
@@ -150,12 +150,12 @@ namespace getfem
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
-        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab(cv));
+        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab(cv), pf_target);
       }
       pf_targetold = pf_target;
 
       if (pf_old != pf) {
-	pfp = fem_precomp(pf, pf_target->node_tab(cv));
+	pfp = fem_precomp(pf, pf_target->node_tab(cv), pf_target);
       }
       pf_old = pf;
 

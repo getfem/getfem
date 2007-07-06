@@ -344,7 +344,7 @@ namespace getfem {
 						   size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
-      = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()));
+      = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()), 0);
     base_matrix G(dim(),pgt->nb_points());
     vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context
@@ -365,7 +365,7 @@ namespace getfem {
 							 size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
-      = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes());
+      = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes(), 0);
     base_matrix G(dim(),pgt->nb_points());
     vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context
@@ -376,9 +376,8 @@ namespace getfem {
   scalar_type  mesh::convex_area_estimate(size_type ic, size_type deg) const { 
     base_matrix G;
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
-    papprox_integration pai = 
-      classical_approx_im(trans_of_convex(ic), deg)->approx_method();
-    return getfem::convex_area_estimate(trans_of_convex(ic), G, pai);
+    return getfem::convex_area_estimate
+      (trans_of_convex(ic), G, classical_approx_im(trans_of_convex(ic), deg));
   }
 
   scalar_type  mesh::convex_quality_estimate(size_type ic) const { 
@@ -662,7 +661,7 @@ namespace getfem {
       vectors_to_base_matrix
 	(G, bgeot::equilateral_simplex_of_reference(N)->points());
       gmm::mult(G, bgeot::geotrans_precomp
-		(pgt, &pgt->convex_ref()->points())->grad(0), Gr);
+		(pgt, &pgt->convex_ref()->points(), 0)->grad(0), Gr);
       gmm::lu_inverse(Gr);
       pbm[N-1].swap(Gr);
     }
@@ -672,16 +671,17 @@ namespace getfem {
   
   scalar_type convex_area_estimate(bgeot::pgeometric_trans pgt,
 				   const base_matrix& G, 
-				   const approx_integration *pai) {
+				   pintegration_method pi) {
     double area(0);
     static bgeot::pgeometric_trans pgt_old = 0;
-    static papprox_integration pai_old = 0;
     static bgeot::pgeotrans_precomp pgp = 0;
-    static pintegration_method pim = 0;
-    if (pgt_old != pgt || pai_old != pai) {
+    static pintegration_method pim_old = 0;
+    papprox_integration pai = get_approx_im_or_fail(pi);
+    if (pgt_old != pgt || pim_old != pi) {
       pgt_old = pgt;
+      pim_old = pi;
       pgp = bgeot::geotrans_precomp
-	(pgt,&pai->integration_points());
+	(pgt,&pai->integration_points(), pi);
     }
     bgeot::geotrans_interpolation_context gic(pgp, 0, G);
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
@@ -702,7 +702,7 @@ namespace getfem {
     static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
       pgt_old=pgt;
-      pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points());
+      pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points(), 0);
     }
 
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
@@ -727,7 +727,7 @@ namespace getfem {
     static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
       pgt_old=pgt;
-      pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points());
+      pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points(), 0);
     }
     size_type N = G.nrows();
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
@@ -916,8 +916,9 @@ namespace getfem {
 	mesh2.add_convex(pgt, &ipt[0]);
       }
 
+      if (pspt) dal::del_stored_object(pspt);
       pspt = bgeot::store_point_tab(mesh2.points());
-      pgp = bgeot::geotrans_precomp(pgt, pspt);
+      pgp = bgeot::geotrans_precomp(pgt, pspt, 0);
     }
     
     base_node pt(n);
@@ -1024,6 +1025,7 @@ namespace getfem {
     if (d0 != d) {
       d0 = d;
       Bank_build_first_mesh(mesh1, d);
+      //      if (pspt1) dal::del_stored_object(pspt1);
       pspt1 = bgeot::store_point_tab(mesh1.points());
     }
     
@@ -1050,7 +1052,7 @@ namespace getfem {
     for (size_type i = 0; i < ipt.size(); ++i)
       gs.ipt_loc[i] = loc_ind[gs.ipt_loc[i]];
 
-    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt1, pspt1);
+    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt1, pspt1, 0);
   
     std::vector<size_type> ipt1(pspt1->size());
     base_node pt(n);
@@ -1082,13 +1084,14 @@ namespace getfem {
         
     
     bgeot::pstored_point_tab pspt3 = bgeot::store_point_tab(mesh3.points());
-    pgp = bgeot::geotrans_precomp(pgt, pspt3);
+    pgp = bgeot::geotrans_precomp(pgt, pspt3, 0);
     
     ipt1.resize(pspt3->size());
     for (size_type ip = 0; ip < pspt3->size(); ++ip) {
       pgp->transform(points_of_convex(ic), ip, pt);
       ipt1[ip] = add_point(pt);
     }
+    dal::del_stored_object(pspt3);
     
     ipt2.resize(pgt->nb_points());
     for (size_type icc = 0; icc < mesh3.nb_convex(); ++icc) {

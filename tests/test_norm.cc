@@ -82,17 +82,17 @@ void test_norm(bgeot::pgeometric_trans pgt,
   cout << "|U2|_l2=" << U2_l2 << "|U2|_h1=" << U2_h1 << "\n";
 
   scalar_type d_l2, d_h1;
-  getfem::solutions_distance(mf2,U2,mf1,U1,im->approx_method(), &d_l2, &d_h1);
+  getfem::solutions_distance(mf2,U2,mf1,U1,im, &d_l2, &d_h1);
   d_h1 = sqrt(gmm::sqr(d_l2) + gmm::sqr(d_h1));
   cout << "distance_l2 = " << d_l2 << ", distance_h1 = " 
        << d_h1 << "\n";
-  getfem::solutions_distance(mf1,U1,mf2,U2,im->approx_method(), &d_l2, &d_h1);
+  getfem::solutions_distance(mf1,U1,mf2,U2,im, &d_l2, &d_h1);
   d_h1 = sqrt(gmm::sqr(d_l2) + gmm::sqr(d_h1));
   cout << "distance_l2 = " << d_l2 << ", distance_h1 = " 
        << d_h1 << "\n";
   std::fill(U2.begin(), U2.end(),0.);
   scalar_type d2_l2, d2_h1;
-  getfem::solutions_distance(mf1,U1,mf2,U2,im->approx_method(), &d2_l2, &d2_h1);  
+  getfem::solutions_distance(mf1,U1,mf2,U2,im, &d2_l2, &d2_h1);  
   d2_h1 = sqrt(gmm::sqr(d2_l2) + gmm::sqr(d2_h1));
   cout << "norm_l2 = " << d2_l2 << "(diff=" << d2_l2 - U1_l2 
        << "), norm_h1 = " << d2_h1 << " (diff=" << d2_h1 - U1_h1 << ")\n";

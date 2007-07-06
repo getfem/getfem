@@ -37,8 +37,6 @@
 
 namespace getfem {
 
-  papprox_integration get_approx_im_or_fail(pintegration_method pim);
-
   class interelt_boundary_integration_
     : virtual public dal::static_stored_object {
     

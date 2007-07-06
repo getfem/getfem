@@ -677,12 +677,15 @@ namespace bgeot {
   }
 
   pgeotrans_precomp geotrans_precomp(pgeometric_trans pg,
-				     pstored_point_tab pspt) {
+				     pstored_point_tab pspt,
+				     dal::pstatic_stored_object dep) {
     dal::pstatic_stored_object o
       = dal::search_stored_object(pre_geot_key_(pg, pspt));
     if (o) return dal::stored_cast<geotrans_precomp_>(o);
     pgeotrans_precomp p = new geotrans_precomp_(pg, pspt);
-    dal::add_stored_object(new pre_geot_key_(pg, pspt), p, pg, pspt);
+    dal::add_stored_object(new pre_geot_key_(pg, pspt), p, pg, pspt,
+			   dal::AUTODELETE_STATIC_OBJECT);
+    if (dep) dal::add_dependency(p, dep);
     return p;
   }
 

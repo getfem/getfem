@@ -241,8 +241,8 @@ namespace getfem {
 		"element works only on dimension two.");
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     
@@ -478,8 +478,8 @@ namespace getfem {
 		"element works only on dimension two.");
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
-      pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
-      pfp = fem_precomp(this, node_tab(0));
+      pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
+      pfp = fem_precomp(this, node_tab(0), 0);
     }
     gmm::copy(gmm::identity_matrix(), M);
     

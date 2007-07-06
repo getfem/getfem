@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file gmm_solver_Newton.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Michel Fournie, fournie@mip.ups-tlse.fr
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author  Michel Fournie <fournie@mip.ups-tlse.fr>
    @date January 24, 2006.
 */
 #ifndef GMM_SOLVERS_NEWTON_H__
@@ -71,7 +72,7 @@ namespace gmm {
 
   struct default_newton_line_search : public abstract_newton_line_search {
     double alpha, alpha_mult, first_res, alpha_max_ratio;
-    double alpha_min, prev_res;
+    double alpha_min, prev_res, alpha_max_augment;
     virtual void init_search(double r, size_t git) {
       glob_it = git;
       conv_alpha = alpha = double(1);
@@ -81,7 +82,8 @@ namespace gmm {
     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
     virtual bool is_converged(double r) {
       if (glob_it == 0 || (r < first_res / double(2))
-	  || (conv_alpha <= alpha_min) || it >= itmax)
+	  || (conv_alpha <= alpha_min && r < first_res * alpha_max_augment)
+	  || it >= itmax)
 	{ conv_r = r; return true; }
       if (it > 1 && r > prev_res && prev_res < alpha_max_ratio * first_res)
 	return true;
@@ -91,9 +93,9 @@ namespace gmm {
     default_newton_line_search
     (size_t imax = size_t(-1),
      double a_max_ratio = 5.0/3.0,
-     double a_min = 1.0/1000.0, double a_mult = 3.0/5.0)
+     double a_min = 1.0/1000.0, double a_mult = 3.0/5.0, double a_augm = 2.0)
       : alpha_mult(a_mult), alpha_max_ratio(a_max_ratio),
-	alpha_min(a_min) { itmax = imax; }
+	alpha_min(a_min), alpha_max_augment(a_augm) { itmax = imax; }
   };
 
 

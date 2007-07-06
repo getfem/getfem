@@ -519,7 +519,8 @@ namespace getfem {
    typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
 
     TYPEDEF_MODEL_STATE_TYPES;
-    gmm::default_newton_line_search ls;
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
     model_problem<MODEL_STATE> mdpb(MS, problem, ls);
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before

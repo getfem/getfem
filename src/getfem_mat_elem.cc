@@ -95,7 +95,7 @@ namespace getfem {
 			   bool prefer_comp_on_real_element) {
       
       pgt = pg;
-      pgp = bgeot::geotrans_precomp(pg, &(pi->integration_points()));
+      pgp = bgeot::geotrans_precomp(pg, &(pi->integration_points()), pi);
       pme = pm;
       switch (pi->type()) {
       case IM_EXACT: 
@@ -172,7 +172,7 @@ namespace getfem {
 	it = pme->begin(), ite = pme->end();
 	for (size_type k = 0; it != ite; ++it, ++k)
 	  if ((*it).pfi)
-	    pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
+	    pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()), pi);
 	  else pfp[k] = 0;
 	elmt_stored.resize(pme->size());
       }

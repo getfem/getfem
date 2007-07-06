@@ -27,12 +27,6 @@
 
 namespace getfem {
 
-  papprox_integration get_approx_im_or_fail(pintegration_method pim) {
-    GMM_ASSERT1(pim->type() == IM_APPROX,  "error estimate work only with "
-		"approximate integration methods");
-    return pim->approx_method();
-  }
-
   interelt_boundary_integration_::interelt_boundary_integration_
     (pintegration_method pa1, pintegration_method pa2)
     : pai1(get_approx_im_or_fail(pa1)), pai2(get_approx_im_or_fail(pa2)),
@@ -119,12 +113,12 @@ namespace getfem {
     bgeot::mesh_structure::ind_set neighbours;
     
     pgt1 = m.trans_of_convex(cv);
-    papprox_integration pai1 =
-      get_approx_im_or_fail(mim.int_method_of_element(cv));
+    pintegration_method pi1 = mim.int_method_of_element(cv);
+    papprox_integration pai1 = get_approx_im_or_fail(pi1);
     pfem pf1 = mf.fem_of_element(cv);
     
     if (pf1 != pf1_old || pai1 != pai_old) {
-      pfp1 = fem_precomp(pf1, &pai1->integration_points());
+      pfp1 = fem_precomp(pf1, &pai1->integration_points(), pi1);
       pf1_old = pf1; pai_old = pai1;
     }
     
@@ -137,12 +131,12 @@ namespace getfem {
 	   it = neighbours.begin(); it != neighbours.end(); ++it) {
       size_type cv2 = *it;
       
-      papprox_integration pai2 = 
-	get_approx_im_or_fail(mim.int_method_of_element(cv2));
+      pintegration_method pi2 = mim.int_method_of_element(cv2);
+      papprox_integration pai2 = get_approx_im_or_fail(pi2);
       pfem pf2 = mf.fem_of_element(cv2);
       
       if (pai1 != pai1_old || pai2 != pai2_old || pf2 != pf2_old) {
-	pfp2 = fem_precomp(pf2, &pai2->integration_points());
+	pfp2 = fem_precomp(pf2, &pai2->integration_points(), pi2);
 	pibi = interelt_boundary_integration
 	  (mim.int_method_of_element(cv),
 	   mim.int_method_of_element(cv2));

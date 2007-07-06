@@ -76,7 +76,8 @@ namespace getfem
     for (size_type k=0; k < uniq_pfe.size(); ++k) {
       vc[k] = c0; 
       if (c0.have_pfp()) {
-	vc[k].set_pfp(fem_precomp(uniq_pfe[k], &c0.pfp()->get_point_tab()));
+	vc[k].set_pfp(fem_precomp(uniq_pfe[k], &c0.pfp()->get_point_tab(),
+				  c0.pfp()));
       } else { vc[k].set_pf(uniq_pfe[k]); }
     }
   }
@@ -100,7 +101,7 @@ namespace getfem
     base_tensor tt; 
     if (pfb) {
       if (c0.have_pfp())
-	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab()));
+	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab(), c0.pfp()));
       else  c0.set_pf(pfb); 
       c0.base_value(tt);
     }
@@ -131,7 +132,7 @@ namespace getfem
     base_tensor tt; 
     if (pfb) {
       if (c0.have_pfp())
-	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab()));
+	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab(), c0.pfp()));
       else  c0.set_pf(pfb); 
       c0.grad_base_value(tt);
     }

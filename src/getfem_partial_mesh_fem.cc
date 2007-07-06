@@ -57,7 +57,7 @@ namespace getfem {
     bgeot::pgeotrans_precomp pgp2 = 0;
     getfem::pfem pf_old = 0;
     getfem::pfem_precomp pfp = 0;
-    papprox_integration pai1 = 0;
+    pintegration_method pim1 = 0;
     
     std::vector<scalar_type> areas(mf.nb_dof()), area_supports(mf.nb_dof());
     dal::bit_vector kept_dofs;
@@ -73,18 +73,18 @@ namespace getfem {
       papprox_integration pai2= pim->approx_method();
       static papprox_integration pai2_old = 0;
       if (pgt_old != pgt || pai2 != pai2_old) {
-	pai1 = getfem::classical_approx_im(pgt, 2)->approx_method();
-      	pgp2 = bgeot::geotrans_precomp(pgt, &(pai2->integration_points()));
+	pim1 = getfem::classical_approx_im(pgt, 2);
+      	pgp2 = bgeot::geotrans_precomp(pgt,&(pai2->integration_points()),pim);
       }
       if (pai2 != pai2_old || pf != pf_old) {
 	pf_old = pf;
-	pfp = getfem::fem_precomp(pf, &(pai2->integration_points()));
+	pfp = getfem::fem_precomp(pf, &(pai2->integration_points()), pim);
       }
       pai2_old = pai2;
       pgt_old = pgt;
 
       bgeot::geotrans_interpolation_context c2(pgp2, 0, G);
-      scalar_type area1 = convex_area_estimate(pgt, G, pai1);
+      scalar_type area1 = convex_area_estimate(pgt, G, pim1);
 
       for (size_type i = 0; i < pai2->nb_points_on_convex(); ++i) {
 	for (unsigned d = 0; d < pf->nb_dof(cv); ++d) {

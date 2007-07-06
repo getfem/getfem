@@ -35,6 +35,7 @@
 #include "getfem/getfem_partial_mesh_fem.h"
 #include "getfem/getfem_Coulomb_friction.h"
 #include "getfem/getfem_import.h"
+#include "getfem/getfem_inter_element.h"
 #include "gmm/gmm.h"
 
 /* some Getfem++ types that we will be using */
@@ -246,6 +247,79 @@ void asm_stabilization_symm_term
   assem.assembly(rg);
 }
 
+/*
+ * Elementary extrapolation matrices
+ */
+
+void compute_mass_matrix_extra_element
+(base_matrix &M, const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
+ size_type cv1, size_type cv2) {
+
+  getfem::pfem pf1_old = 0;
+  static getfem::pfem_precomp pfp1 = 0;
+  static getfem::papprox_integration pai1_old = 0;
+  bgeot::geotrans_inv_convex gic;
+  bgeot::base_tensor t1, t2;
+  getfem::base_matrix G1, G2;
+  
+  const getfem::mesh &m(mf.linked_mesh());
+  
+  GMM_ASSERT1(mf.convex_index().is_in(cv1) && mim.convex_index().is_in(cv1) &&
+	      mf.convex_index().is_in(cv2) && mim.convex_index().is_in(cv2),
+	      "Bad element");
+    
+  bgeot::pgeometric_trans pgt1 = m.trans_of_convex(cv1);
+  getfem::papprox_integration pai1 =
+    getfem::get_approx_im_or_fail(mim.int_method_of_element(cv1));
+  getfem::pfem pf1 = mf.fem_of_element(cv1);
+  size_type nbd1 = pf1->nb_dof(cv1);
+  
+  if (pf1 != pf1_old || pai1 != pai1_old) {
+    pfp1 = fem_precomp(pf1, &pai1->integration_points());
+    pf1_old = pf1; pai1_old = pai1;
+  }
+  
+  bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv1));
+  getfem::fem_interpolation_context ctx1(pgt1, pfp1, 0, G1, cv1,size_type(-1));
+  
+  getfem::pfem pf2 = mf.fem_of_element(cv2);
+  size_type nbd2 = pf1->nb_dof(cv2);
+  base_node xref2(pf2->dim());
+  bgeot::pgeometric_trans pgt2 = m.trans_of_convex(cv2);
+  gic.init(m.points_of_convex(cv2), pgt2);
+
+  gmm::resize(M, nbd1, nbd2); gmm::clear(M);
+
+  bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
+  
+  getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(pgt2->dim()),
+					 G2, cv2, size_type(-1));
+
+  for (unsigned ii=0; ii < pai1->nb_points_on_convex(); ++ii) {
+    ctx1.set_ii(ii);
+    scalar_type coeff = pai1->integration_coefficients()[ii] * ctx1.J();
+    bool converged;
+    gic.invert(ctx1.xreal(), xref2, converged);
+    GMM_ASSERT1(converged, "geometric transformation not well inverted ... !");
+    // cout << "xref2 = " << xref2 << endl;
+    ctx2.set_xref(xref2);
+
+    pf1->real_base_value(ctx1, t1);
+    pf2->real_base_value(ctx2, t2);
+    
+    for (size_type i = 0; i < nbd1; ++i)
+      for (size_type j = 0; j < nbd2; ++j)
+	M(i,j) += t1[i] * t2[j] * coeff;
+  }
+  // cout << "M = " << M << endl;
+}
+
+
+
+
+
+
+
 /* 
  * Main program 
  */
@@ -403,16 +477,20 @@ int main(int argc, char *argv[]) {
       cout << "Computation of the extrapolation operator" << endl;
       dal::bit_vector elt_black_list, dof_black_list;
       size_type nbe = mf_P0.nb_dof();
+      plain_vector ratios(nbe);
       sparse_matrix MC1(nbe, nbe), MC2(nbe, nbe);
       getfem::asm_mass_matrix(MC1, mim, mf_P0);
       getfem::asm_mass_matrix(MC2, uncutmim, mf_P0);
-      for (size_type i = 0; i < nbe; ++i)
-	if (gmm::abs(MC1(i,i)) < min_ratio * gmm::abs(MC2(i,i)))
-	  elt_black_list.add(mf_P0.first_convex_of_dof(i));
+      for (size_type i = 0; i < nbe; ++i) {
+	size_type cv = mf_P0.first_convex_of_dof(i);
+	ratios[cv] = gmm::abs(MC1(i,i)) / gmm::abs(MC2(i,i));
+	if (ratios[cv] > 0 && ratios[cv] < min_ratio) elt_black_list.add(cv);
+      }
+      
 	
-      sparse_matrix EO(nb_dof, nb_dof), T1(nb_dof, nb_dof);
-      asm_stiffness_matrix_for_homogeneous_laplacian(EO, uncutmim, mf);
-      gmm::clean(EO, 1e-13);
+      sparse_matrix EO(nb_dof, nb_dof);
+      sparse_row_matrix T1(nb_dof, nb_dof), EX(nb_dof, nb_dof);
+      asm_mass_matrix(EO, uncutmim, mf);
 
       for (size_type i = 0; i < nb_dof; ++i) {
 	bool found = false;
@@ -422,26 +500,47 @@ int main(int argc, char *argv[]) {
 	  if (!elt_black_list.is_in(*it)) found = true;
 	if (found)
 	  { gmm::clear(gmm::mat_col(EO, i)); EO(i,i) = scalar_type(1); }
-	else {
+	else
 	  dof_black_list.add(i);
-	  cout << "dof " << i << " blacklisté, " << mf.point_of_dof(i)<<endl;
+      }
+
+      bgeot::mesh_structure::ind_set is;
+      base_matrix Mloc;
+      for (dal::bv_visitor i(elt_black_list); !i.finished(); ++i) {
+	mesh.neighbours_of_convex(i, is);
+	size_type cv2 = size_type(-1);
+	scalar_type ratio = scalar_type(0);
+	for (size_type j = 0; j < is.size(); ++j) {
+	  scalar_type r = ratios[is[j]];
+	  if (r > ratio) { ratio = r; cv2 = is[j]; }
 	}
+	GMM_ASSERT1(cv2 != size_type(-1), "internal error");
+	compute_mass_matrix_extra_element(Mloc, uncutmim, mf, i, cv2);
+	for (size_type ii = 0; ii < gmm::mat_nrows(Mloc); ++ii) 
+	  for (size_type jj = 0; jj < gmm::mat_ncols(Mloc); ++jj)
+	    EX(mf.ind_dof_of_element(i)[ii], mf.ind_dof_of_element(cv2)[jj])
+	      += Mloc(ii, jj);
       }
 
       gmm::copy(gmm::identity_matrix(), E1);
       gmm::copy(gmm::identity_matrix(), T1);
       for (dal::bv_visitor i(dof_black_list); !i.finished(); ++i)
-	T1(i,i) = scalar_type(0);
+	gmm::copy(gmm::mat_row(EX, i), gmm::mat_row(T1, i));
+
       plain_vector BE(nb_dof), BS(nb_dof);
       for (dal::bv_visitor i(dof_black_list); !i.finished(); ++i) {
 	BE[i] = scalar_type(1);
 	// TODO: store LU decomp.
 	double rcond; 
 	gmm::SuperLU_solve(EO, BS, BE, rcond);
-	gmm::mult(T1, BS, gmm::mat_row(E1, i));
+	gmm::mult(gmm::transposed(T1), BS, gmm::mat_row(E1, i));
 	BE[i] = scalar_type(0);
       }
       gmm::clean(E1, 1e-13);
+
+//       gmm::clean(EO, 1e-13); cout << "E0 = " << gmm::transposed(EO) << endl; getchar();
+//       cout << "T1 = " << T1 << endl; getchar();
+      
 
       cout << "Extrapolation operator computed" << endl;
 
@@ -617,6 +716,7 @@ int main(int argc, char *argv[]) {
     plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
     sl.interpolate(mf, U, UU);
     gmm::vecsave("xfem_dirichlet.slU", UU);
+    // gmm::scale(LAMBDA, 0.005);
     sll.interpolate(mf_mult, LAMBDA, LL);
     gmm::vecsave("xfem_dirichlet.slL", LL);
   }

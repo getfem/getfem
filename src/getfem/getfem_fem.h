@@ -594,7 +594,8 @@ namespace getfem {
      If you need a set of "temporary" getfem::fem_precomp_, create
      them via a getfem::fem_precomp_pool structure. All memory will be
      freed when this structure will be destroyed.  */
-  pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt);
+  pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt,
+			   dal::pstatic_stored_object dep);
 
   /** Request for the removal of a pfem_precomp */
   inline void delete_fem_precomp(pfem_precomp pfp)
@@ -625,7 +626,7 @@ namespace getfem {
 	the fem_precomp_pool is destroyed.
     */
     pfem_precomp operator()(pfem pf, bgeot::pstored_point_tab pspt) {
-      pfem_precomp p = fem_precomp(pf, pspt);
+      pfem_precomp p = fem_precomp(pf, pspt, 0);
       precomps.insert(p);
       return p;
     }

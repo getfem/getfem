@@ -295,13 +295,15 @@ namespace bgeot {
      *  points in the reference convex. 
      */
     friend pgeotrans_precomp
-    geotrans_precomp(pgeometric_trans pg, pstored_point_tab ps);
+    geotrans_precomp(pgeometric_trans pg, pstored_point_tab ps,
+		     dal::pstatic_stored_object dep);
 
   };
 
 
   pgeotrans_precomp
-  geotrans_precomp(pgeometric_trans pg, pstored_point_tab ps);
+  geotrans_precomp(pgeometric_trans pg, pstored_point_tab ps,
+		   dal::pstatic_stored_object dep);
 
   template <typename CONT, typename VEC> 
   void geotrans_precomp_::transform(const CONT& G, size_type j,
@@ -336,8 +338,9 @@ namespace bgeot {
 
   public :
     
-    pgeotrans_precomp operator()(pgeometric_trans pg, pstored_point_tab pspt) {
-      pgeotrans_precomp p = geotrans_precomp(pg, pspt);
+    pgeotrans_precomp operator()(pgeometric_trans pg,
+				 pstored_point_tab pspt) {
+      pgeotrans_precomp p = geotrans_precomp(pg, pspt, 0);
       precomps.insert(p);
       return p;
     }

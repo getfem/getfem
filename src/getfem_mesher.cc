@@ -294,7 +294,7 @@ namespace getfem {
       vectors_to_base_matrix(G,  bgeot::equilateral_simplex_of_reference(N)
 			     ->points());
       gmm::mult(G, bgeot::geotrans_precomp(pgt,&pgt->convex_ref()
-					   ->points())->grad(0), W);
+					   ->points(), 0)->grad(0), W);
       gmm::lu_inverse(W);
       do_build_mesh(m,fixed_points);
     }

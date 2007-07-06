@@ -38,7 +38,8 @@ namespace getfem
     const mesh_fem &mf1, &mf2;
     const VECT1& U1;
     const VECT2& U2;
-    papprox_integration im;
+    papprox_integration pai;
+    pintegration_method pim;
     int what; /* combiantion of L2_NORM, H1_SEMI_NORM .. */    
     bgeot::pgeotrans_precomp gp;
     bgeot::geotrans_inv_convex gti;
@@ -47,9 +48,9 @@ namespace getfem
     scalar_type l2_norm_sqr, h1_semi_norm_sqr, linf_norm;
     slicer_compute_norm_diff(const mesh_fem& mf1_, const VECT1 &U1_, 
 			     const mesh_fem& mf2_, const VECT2 &U2_, 
-			     papprox_integration im_, int what_=L2_NORM) 
+			     pintegration_method pim_, int what_=L2_NORM) 
       : slicer_mesh_with_mesh(mf2_.linked_mesh()), mf1(mf1_), mf2(mf2_), U1(U1_), U2(U2_), 
-	im(im_), what(what_), gp(0) {
+	pai(get_approx_im_or_fail(pim_)), pim(pim_), what(what_), gp(0) {
 	l2_norm_sqr = 0.; h1_semi_norm_sqr = 0.; linf_norm = 0.; maxd=0.;
       }
     scalar_type norm(int w) { 
@@ -80,14 +81,15 @@ namespace getfem
 				     size_type(-1));
 
       /* coordinates on the ref convex of each mesh */
-      std::vector<base_node> nodes1(im->nb_points_on_convex()), 
-	nodes2(im->nb_points_on_convex());
+      std::vector<base_node> nodes1(pai->nb_points_on_convex()), 
+	nodes2(pai->nb_points_on_convex());
       gti.init(m2.convex(slmcv).points(), pgt2);
       //cout << "hello, doing cv " << ms.cv << " <-> " << slmcv << " [" << ms.splx_in.card() << " simplexes]\n";
       for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
 	const slice_simplex &s = ms.simplexes[is];
-	if (gp == 0 || s.dim() != im->dim()) 
-	  gp = bgeot::geotrans_precomp(bgeot::simplex_geotrans(s.dim(),1), &im->integration_points());
+	if (gp == 0 || s.dim() != pai->dim()) 
+	  gp = bgeot::geotrans_precomp(bgeot::simplex_geotrans(s.dim(),1),
+				       &pai->integration_points(), pim);
 	//GMM_ASSERT1(false, "incompatible dimension of the slice");
 	base_matrix M(s.dim(),s.dim());
 
@@ -116,13 +118,13 @@ namespace getfem
 	gmm::copy(gmm::sub_vector(U1,gmm::sub_index(mf1.ind_dof_of_element(ms.cv))),coeff1);
 	gmm::copy(gmm::sub_vector(U2,gmm::sub_index(mf2.ind_dof_of_element(slmcv))),coeff2);
 
-	for (size_type i=0; i < im->nb_points_on_convex(); ++i) {
+	for (size_type i=0; i < pai->nb_points_on_convex(); ++i) {
 	  ctx1.set_xref(nodes1[i]); ctx2.set_xref(nodes2[i]);
 	  if (what & (L2_NORM | LINF_NORM)) {
 	    pf1->interpolation(ctx1, coeff1, val1, qdim);
 	    pf2->interpolation(ctx2, coeff2, val2, qdim);
 	    for (size_type q=0; q < qdim; ++q) {
-	      l2_norm_sqr += gmm::sqr(val1[q]-val2[q])*J*im->coeff(i);
+	      l2_norm_sqr += gmm::sqr(val1[q]-val2[q])*J*pai->coeff(i);
 	      linf_norm = std::max(linf_norm, gmm::abs(val1[q]-val2[q]));
 	    }
 	  }
@@ -130,9 +132,9 @@ namespace getfem
 	    pf1->interpolation_grad(ctx1, coeff1, gval1, qdim);
 	    pf2->interpolation_grad(ctx2, coeff2, gval2, qdim);
 	    for (size_type q=0; q < qdim*mdim; ++q) {
-	      scalar_type v = gmm::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
+	      scalar_type v = gmm::sqr(gval1[q]-gval2[q])*J*pai->coeff(i);
 	      if (v > maxd) { cout << "new maxd: " << v << ", J=" << J << " at " << ctx1.xreal() << ", " << ctx2.xreal() << ", v1=" << gval1[q] << ", v2=" << gval2[q] << "\n"; maxd = v; }
-	      h1_semi_norm_sqr += gmm::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
+	      h1_semi_norm_sqr += gmm::sqr(gval1[q]-gval2[q])*J*pai->coeff(i);
 	    }
 	  }
 	}
@@ -143,7 +145,7 @@ namespace getfem
   template<typename VECT1, typename VECT2>
   void solutions_distance(const mesh_fem& mf1, const VECT1& U1, 
 			  const mesh_fem& mf2, const VECT2& U2,
-			  papprox_integration im, scalar_type *pl2=0, scalar_type *psh1=0) {
+			  pintegration_method im, scalar_type *pl2=0, scalar_type *psh1=0) {
     mesh_slicer slicer(mf1.linked_mesh()); 
     slicer_compute_norm_diff<VECT1,VECT2> 
       cn(mf1,U1,mf2,U2,im, (pl2 ? L2_NORM : 0) +

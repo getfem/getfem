@@ -106,7 +106,8 @@ namespace getfem {
       virtual ~mesh_receiver() {}
   };
 
-  class approx_integration;
+  class integration_method;
+  typedef boost::intrusive_ptr<const integration_method> pintegration_method;
 
   /* ********************************************************************* */
   /*								   	   */
@@ -631,7 +632,7 @@ namespace getfem {
    */
   scalar_type convex_area_estimate(bgeot::pgeometric_trans pgt,
 				   const base_matrix& pts, 
-				   const approx_integration* pai);
+				   pintegration_method pim);
 
   /** rough estimate of the maximum value of the condition 
    * number of the jacobian of the geometric transformation */

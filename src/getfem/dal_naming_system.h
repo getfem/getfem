@@ -264,6 +264,7 @@ namespace dal {
 	
 	pstatic_stored_object_key k = key_of_stored_object(pm);
 	if (!k) {
+	  // cout << "adding " << dal::pstatic_stored_object(pm) << endl;
 	  add_stored_object(new method_key(nname), pm,
 			    dal::PERMANENT_STATIC_OBJECT);
 	  for (size_type j = 0; j < dependencies.size(); ++j)
