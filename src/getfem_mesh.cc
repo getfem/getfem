@@ -1021,11 +1021,11 @@ namespace getfem {
     size_type d = ipt.size() - 1, n = structure_of_convex(ic)->dim();
     static size_type d0 = 0;
     static bgeot::pstored_point_tab pspt1 = 0;
-    mesh &mesh1 = dal::singleton<mesh_cache_for_Bank_build_green_simplexes>::instance();
+    mesh &mesh1
+      = dal::singleton<mesh_cache_for_Bank_build_green_simplexes>::instance();
     if (d0 != d) {
       d0 = d;
       Bank_build_first_mesh(mesh1, d);
-      //      if (pspt1) dal::del_stored_object(pspt1);
       pspt1 = bgeot::store_point_tab(mesh1.points());
     }
     

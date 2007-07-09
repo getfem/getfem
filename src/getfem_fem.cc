@@ -459,6 +459,7 @@ namespace getfem {
   //             dof_description_comp__::operator,
   //             product_dof, et dof_hierarchical_compatibility.
   int dof_description_compare(pdof_description a, pdof_description b) {
+    if (a == b) return 0;
     int nn;
     if ((nn = int(a->coord_index) - int(b->coord_index)) != 0) return nn;
     if ((nn = int(a->linkable) - int(b->linkable)) != 0) return nn;
