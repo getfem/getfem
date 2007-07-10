@@ -119,7 +119,7 @@ namespace getfem {
     Bank_info = 0;
   }
 
-  mesh::mesh(dim_type NN) : bgeot::basic_mesh(NN) { init(); }
+  mesh::mesh(void)  { init(); }
 
   mesh::mesh(const bgeot::basic_mesh &m) : bgeot::basic_mesh(m) { init(); }
 
@@ -181,36 +181,6 @@ namespace getfem {
   }
 #endif
 
-  size_type mesh::add_point(const base_node &pt) {
-    static scalar_type prec_factor = gmm::default_tol(scalar_type())
-      * scalar_type(10000);
-    scalar_type npt = gmm::vect_norm2(pt);
-    if (nb_points() == 0) {
-      dimension = pt.size();
-      characteristic_size = max_radius = npt;
-      pts.comparator().c.eps = characteristic_size * prec_factor;
-      return pts.add(pt);
-    }
-    else {
-      GMM_ASSERT1(pt.size() == dimension,
-		  "mesh::add_point : dimensions mismatch");
-      max_radius = std::max(max_radius, npt);
-
-      if (max_radius > scalar_type(10)*characteristic_size) {
-	characteristic_size = max_radius;
-	pts.comparator().c.eps = characteristic_size * prec_factor;
-	pts.resort();
-      }
-      
-      bgeot::basic_mesh::PT_TAB::const_sorted_iterator it = pts.sorted_ge(pt); 
-      if (it.index() != ST_NIL && pts.comparator()(pt, *it) == 0)
-	{ return it.index(); }
-      
-      size_type i = pts.add(pt);
-      return i;
-    }
-  }
-
   void mesh::optimize_structure() {
     size_type i, j;
     j = nb_convex();
@@ -234,24 +204,12 @@ namespace getfem {
     return cmk_order;
   }
 
-  void mesh::translation(base_small_vector V) {
-    for (dal::bv_visitor i(pts.index()); !i.finished(); ++i)
-      pts[i] += V;
-    pts.resort();
-  }
+  void mesh::translation(const base_small_vector &V)
+  { pts.translation(V); }
 
-  void mesh::transformation(base_matrix M) {
-    base_small_vector w(M.nrows());
-    GMM_ASSERT1(gmm::mat_nrows(M) != 0 && gmm::mat_ncols(M) == dim(),
-		"invalid dimensions for the transformation matrix");
-    for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
-      w = pts[i];
-      gmm::resize(pts[i], gmm::mat_nrows(M));
-      gmm::mult(M,w,pts[i]);
-    }
-    dimension = gmm::mat_nrows(M);
+  void mesh::transformation(const base_matrix &M) {
+    pts.transformation(M);
     if (Bank_info) { delete Bank_info; Bank_info = 0; }
-    pts.resort();
   }
 
   void mesh::bounding_box(base_node& Pmin, base_node& Pmax) const {
@@ -267,7 +225,6 @@ namespace getfem {
   }
 
   void mesh::clear(void) {
-    dimension = dim_type(-1);
     mesh_structure::clear();
     pts.clear();
     gtab.clear(); trans_exists.clear();
@@ -450,8 +407,6 @@ namespace getfem {
 	                       || tmp[0] == '.')
 	  { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
 	please_get = false;
-	if (dimension == dim_type(-1)) dimension = d;
-	else GMM_ASSERT1(dimension == d, "Points of different dimensions.");
 	base_node v(d);
 	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
 	size_type ipl = add_point(v);

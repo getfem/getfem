@@ -1,3 +1,16 @@
+2006-07-10  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/bgeot_node_tab.h: the structure bgeot::node_tab is created
+	to store the nodes of a mesh and identify the too close nodes.
+	This replace the dal::dynamic_tree_sorted with the special
+	comparison which was not completely robust.
+
+2006-07-06  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+
+	* src/bgeot_geometric_trans.cc, src/getfem_fem.cc: adding the
+	dependence beetween geotrans_precomp and fem_precomp structures
+	to fix an important  memory leakage problem.
+
 2006-02-09 Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
 	* interface/*: integrating Matlab and Python interfaces into Getfem

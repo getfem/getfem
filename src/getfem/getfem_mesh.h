@@ -159,7 +159,6 @@ namespace getfem {
     
     typedef linkmsg_sender<mesh_receiver> msg_sender;
     typedef gmm::approx_less<scalar_type> val_comp;
-    typedef bgeot::basic_mesh::pt_comp pt_comp;
     typedef bgeot::basic_mesh::PT_TAB PT_TAB;
     typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
     typedef bgeot::mesh_structure::ind_set ind_set;
@@ -184,7 +183,6 @@ namespace getfem {
     
     mutable bool cuthill_mckee_uptodate;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
-    scalar_type max_radius, characteristic_size;
     void init(void);
 
 #if GETFEM_PARA_LEVEL > 1
@@ -225,12 +223,12 @@ namespace getfem {
 #endif
     
     /// Constructor.
-    mesh(dim_type NN = dim_type(-1)); 
+    mesh(void); 
     mesh(const bgeot::basic_mesh &m);
     msg_sender &lmsg_sender(void) const { return lkmsg; }
     void update_from_context(void) const {}
     /// Mesh dimension.
-    dim_type dim(void) const { return dimension; }
+    dim_type dim(void) const { return pts.dim(); }
     /// Return the array of PT.
     const PT_TAB &points(void) const { return pts; }
     /// Return the array of PT.
@@ -261,7 +259,7 @@ namespace getfem {
 	already existing point.
 	@param pt the point coordinates.
     */
-    size_type add_point(const base_node &pt);
+    size_type add_point(const base_node &pt) { return pts.add_node(pt); }
     //			scalar_type characteristic_size = scalar_type(1));
     
     /// Give the number of geometrical nodes in the mesh.
@@ -279,7 +277,7 @@ namespace getfem {
 	the mesh nodes, size_type(-1) if not found.
     */
     size_type search_point(const base_node &pt) const
-    { return pts.search(pt); }
+    { return pts.search_node(pt); }
     /** Return the bgeot::geometric_trans attached to a convex.
 	@param ic the convex number.
     */
@@ -452,9 +450,9 @@ namespace getfem {
     /** Return an estimate of the convex smallest dimension. @see getfem::convex_radius_estimate */
     scalar_type minimal_convex_radius_estimate() const;
     /** Apply the given translation to each mesh node. */
-    void translation(base_small_vector);
+    void translation(const base_small_vector &);
     /** apply the given matrix transformation to each mesh node. */
-    void transformation(base_matrix);
+    void transformation(const base_matrix &);
     /** Return the bounding box [Pmin - Pmax] of the mesh. */
     void bounding_box(base_node& Pmin, base_node &Pmax) const;
     /** Return the region of index 'id'. Regions stored in mesh are

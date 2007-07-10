@@ -102,18 +102,12 @@ void test_norm(bgeot::pgeometric_trans pgt,
 
 int main(int /*argc*/, char **/*argv*/) {
 
-  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
-  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
-
-  try {    
-    test_norm(bgeot::geometric_trans_descriptor("GT_PK(2,1)"),
-	      getfem::fem_descriptor("FEM_PK(2,2)"),
-	      getfem::int_method_descriptor("IM_TRIANGLE(3)"),false);
-    /*test_norm(bgeot::geometric_trans_descriptor("GT_PK(3,1)"),
-	      getfem::fem_descriptor("FEM_PK(3,1)"),
-	      getfem::int_method_descriptor("IM_TETRAHEDRON(1)"),false);*/
-  }
-  GMM_STANDARD_CATCH_ERROR;
-
+  test_norm(bgeot::geometric_trans_descriptor("GT_PK(2,1)"),
+	    getfem::fem_descriptor("FEM_PK(2,2)"),
+	    getfem::int_method_descriptor("IM_TRIANGLE(3)"),false);
+  /*test_norm(bgeot::geometric_trans_descriptor("GT_PK(3,1)"),
+    getfem::fem_descriptor("FEM_PK(3,1)"),
+    getfem::int_method_descriptor("IM_TETRAHEDRON(1)"),false);*/
+  
   return 0; 
 }

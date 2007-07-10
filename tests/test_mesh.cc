@@ -23,6 +23,7 @@
 #include "getfem/bgeot_poly_composite.h"
 #include "getfem/bgeot_comma_init.h"
 #include "getfem/getfem_export.h"
+#include "getfem/bgeot_node_tab.h"
 
 
 using getfem::size_type;
@@ -327,7 +328,137 @@ void test_convex_ref() {
   }
 }
 
+
+
+struct basic_mesh_point_comparator2
+  : public std::binary_function<base_node, base_node, int> {
+  double eps;
+  std::vector<double> v;
+  
+  int operator()(const base_node &x, const base_node &y) const {
+    double a = gmm::vect_sp(x, v), b =  gmm::vect_sp(y, v);
+    if (a < b - eps) return -1; else if (a > b + eps) return +1; else return 0;
+  }
+  
+  basic_mesh_point_comparator2(unsigned dim_ = 3, double e = double(10000)
+			       *gmm::default_tol(double()))
+    : eps(e), v(dim_) {
+    gmm::fill_random(v);
+    gmm::scale(v, 1.0/gmm::vect_norm2(v));
+  }
+};
+
+
+void test_mesh_building(int dim, int Nsubdiv) {
+
+  double exectime = gmm::uclock_sec();
+
+  std::vector<size_type> nsubdiv(dim, Nsubdiv);
+  getfem::mesh m;
+  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(dim, 1);
+  getfem::regular_unit_mesh(m, nsubdiv, pgt,false);
+
+  cout << "Time to create mesh : "
+       << gmm::uclock_sec() - exectime << endl;
+
+  // Test of a simple sort on one "random" component
+  exectime = gmm::uclock_sec();
+  typedef basic_mesh_point_comparator2 pt_comp2;
+  typedef dal::dynamic_tree_sorted<base_node, pt_comp2> PT_TAB2;
+  
+  PT_TAB2 pttab2 = PT_TAB2(pt_comp2(dim));
+
+  for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
+    for (int j = 0; j <= dim; ++j)
+      pttab2.add_norepeat(m.points_of_convex(i)[j]);
+  }
+  cout << "Time to insert points in structure with random component: "
+       << gmm::uclock_sec() - exectime << endl;
+  GMM_ASSERT1(pttab2.card() == m.nb_points(),
+	      "Problem in identifying points " << pttab2.card()
+	      << " : " << m.nb_points());
+  
+
+  // Test on the new structure
+  exectime = gmm::uclock_sec();
+  
+  bgeot::node_tab pttab3;
+
+  for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
+    for (int j = 0; j <= dim; ++j)
+      pttab3.add_node(m.points_of_convex(i)[j]);
+  }
+  cout << "Time to insert points in new structure: "
+       << gmm::uclock_sec() - exectime << endl;
+  GMM_ASSERT1(pttab3.card() == m.nb_points(),
+	      "Problem in identifying points " << pttab3.card()
+	      << " : " << m.nb_points());
+  
+
+
+  // Test of a simple sort on one "random" componentwith Bkdtree
+  exectime = gmm::uclock_sec();
+  std::vector<base_node> T0;
+  bgeot::kdtree trees[30];
+  bgeot::kdtree_tab_type ipts;
+  
+  for (dal::bv_visitor ic(m.convex_index()); !ic.finished(); ++ic) {
+    for (int jp = 0; jp <= dim; ++jp) {
+
+      // insert a point.
+      T0.push_back(m.points_of_convex(ic)[jp]);
+
+      if (T0.size() >= 4) {
+	size_type i = 0;
+	for (; i < 30; ++i)
+	  if (trees[i].nb_points() == 0) break;
+
+	// cout << "building tree " << i << endl;
+	
+	for (size_type j = 0; j < 4; ++j)
+	  trees[i].add_point(T0[j]);
+	T0.resize(0);
+
+	for (size_type j = 0; j < i; ++j) {
+	  for (size_type k = 0; k < trees[j].nb_points(); ++k)
+	    trees[i].add_point(trees[j].points()[k].n);
+	  trees[j].clear();
+	}
+	trees[i].points_in_box(ipts, base_node(dim), base_node(dim));
+      }
+      
+
+    }
+  }
+
+  cout << "Time to insert points in bkdtree: "
+       << gmm::uclock_sec() - exectime << endl;
+
+
+
+  getfem::mesh_fem mf1(m);
+  mf1.set_finite_element( getfem::classical_fem(pgt, 1) );
+  cout << "nb points = " << m.nb_points()
+       << "nb dof = " << mf1.nb_dof() <<  endl;
+  GMM_ASSERT1(m.nb_points() == mf1.nb_dof(), "Problem in identifying dofs");
+
+  // shake a little bit the mesh
+  getfem::mesh::PT_TAB &pts = m.points();
+  for (size_type i = 0; i < m.nb_points(); ++i)
+    for (int k = 0; k < dim; ++k)
+      pts[i][k] += gmm::random(double()) * 1e-10;
+  getfem::mesh_fem mf2(m);
+  mf2.set_finite_element( getfem::classical_fem(pgt, 1) );
+  cout << "nb points = " << m.nb_points()
+       << "nb dof = " << mf2.nb_dof() <<  endl;
+  GMM_ASSERT1(m.nb_points() == mf2.nb_dof(), "Problem in identifying dofs");
+
+}
+
+
 int main(void) {
+
+  test_mesh_building(2, 50); 
 
   getfem::mesh m1;
   test_convex_ref();

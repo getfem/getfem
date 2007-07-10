@@ -31,23 +31,24 @@
 
 #include "bgeot_mesh_structure.h"
 #include "bgeot_geometric_trans.h"
+#include "bgeot_node_tab.h"
 
 namespace bgeot {
 
-  struct basic_mesh_point_comparator
-    : public std::binary_function<base_node, base_node, int> {
-    gmm::approx_less<scalar_type> c; 
-    double eps;
+//   struct basic_mesh_point_comparator
+//     : public std::binary_function<base_node, base_node, int> {
+//     gmm::approx_less<scalar_type> c; 
+//     double eps;
     
-    int operator()(const base_node &x, const base_node &y) const {
-      return gmm::lexicographical_compare(x.begin(), x.end(),
-					  y.begin(), y.end(), c);
-    }
+//     int operator()(const base_node &x, const base_node &y) const {
+//       return gmm::lexicographical_compare(x.begin(), x.end(),
+// 					  y.begin(), y.end(), c);
+//     }
 
-    basic_mesh_point_comparator(double e = scalar_type(10000)
-				*gmm::default_tol(scalar_type()))
-      : c(0), eps(e) {}
-  };
+//     basic_mesh_point_comparator(double e = scalar_type(10000)
+// 				*gmm::default_tol(scalar_type()))
+//       : c(0), eps(e) {}
+//   };
 
   /** @internal mesh structure + points
    */
@@ -55,8 +56,8 @@ namespace bgeot {
 
   public :
     
-    typedef basic_mesh_point_comparator pt_comp;
-    typedef dal::dynamic_tree_sorted<base_node, pt_comp> PT_TAB;
+    // typedef basic_mesh_point_comparator pt_comp;
+    typedef bgeot::node_tab PT_TAB;
     typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
     typedef bgeot::mesh_structure::ind_set ind_set;
     typedef bgeot::mesh_structure::ind_pt_face_ct ind_pt_face_ct;
@@ -71,7 +72,6 @@ namespace bgeot {
     
   protected :
     
-    dim_type dimension;
     PT_TAB pts;
 
     dal::dynamic_array<bgeot::pgeometric_trans> gtab;
@@ -79,7 +79,7 @@ namespace bgeot {
  
   public :
 
-    dim_type dim(void) const { return dimension; }
+    dim_type dim(void) const { return pts.dim(); }
 
     bgeot::pgeometric_trans trans_of_convex(size_type ic) const {
       GMM_ASSERT2(trans_exists[ic], "internal error");
@@ -93,11 +93,7 @@ namespace bgeot {
       return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
     } 
 
-    size_type add_point(const base_node &pt) {
-      if (dimension == dim_type(-1)) dimension = pt.size();
-       GMM_ASSERT2(pt.size() == dimension, "dimensions mismatch");
-      return pts.add_norepeat(pt); // add_norepeat valable ?
-    }
+    size_type add_point(const base_node &pt) { return pts.add_node(pt); }
 
     template<class ITER>
     size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
@@ -123,8 +119,6 @@ namespace bgeot {
       size_type ipt[4]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d;
       return add_convex(simplex_geotrans(3, 1), &(ipt[0]));
     }
-
-    basic_mesh(dim_type NN = dim_type(-1)) { dimension = NN; }
   };
 
   typedef basic_mesh *pbasic_mesh;

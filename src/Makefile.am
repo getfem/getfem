@@ -80,6 +80,7 @@ nobase_include_HEADERS =                   		\
 	getfem/bgeot_mesh.h                		\
 	getfem/bgeot_poly_composite.h      		\
 	getfem/bgeot_rtree.h		   		\
+	getfem/bgeot_node_tab.h		   		\
 	getfem/bgeot_small_vector.h        		\
 	getfem/bgeot_sparse_tensors.h      		\
 	getfem/bgeot_tensor.h              		\
@@ -152,6 +153,7 @@ SRC =                                      		\
 	bgeot_kdtree.cc		           		\
 	bgeot_mesh_structure.cc            		\
 	bgeot_rtree.cc		           		\
+	bgeot_node_tab.cc		          	\
 	bgeot_small_vector.cc              		\
 	bgeot_sparse_tensors.cc            		\
 	bgeot_poly.cc                      		\
