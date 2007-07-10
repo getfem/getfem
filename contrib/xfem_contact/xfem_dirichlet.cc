@@ -269,13 +269,14 @@ void compute_mass_matrix_extra_element
 	      "Bad element");
     
   bgeot::pgeometric_trans pgt1 = m.trans_of_convex(cv1);
+  getfem::pintegration_method pim1 = mim.int_method_of_element(cv1);
   getfem::papprox_integration pai1 =
-    getfem::get_approx_im_or_fail(mim.int_method_of_element(cv1));
+    getfem::get_approx_im_or_fail(pim1);
   getfem::pfem pf1 = mf.fem_of_element(cv1);
   size_type nbd1 = pf1->nb_dof(cv1);
   
   if (pf1 != pf1_old || pai1 != pai1_old) {
-    pfp1 = fem_precomp(pf1, &pai1->integration_points());
+    pfp1 = fem_precomp(pf1, &pai1->integration_points(), pim1);
     pf1_old = pf1; pai1_old = pai1;
   }
   
