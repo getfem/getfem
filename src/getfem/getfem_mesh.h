@@ -153,12 +153,11 @@ namespace getfem {
   */
 
   class mesh : virtual public dal::static_stored_object,
-		      public bgeot::basic_mesh,
-		      public context_dependencies {
+		       public bgeot::basic_mesh,
+		       public context_dependencies {
   public :
     
     typedef linkmsg_sender<mesh_receiver> msg_sender;
-    typedef gmm::approx_less<scalar_type> val_comp;
     typedef bgeot::basic_mesh::PT_TAB PT_TAB;
     typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
     typedef bgeot::mesh_structure::ind_set ind_set;
@@ -266,8 +265,10 @@ namespace getfem {
     size_type nb_points(void) const { return pts.card(); }
     /// Return the points index
     const dal::bit_vector &points_index(void) const { return pts.index(); }
-    /// Delete the point of index i from the mesh.
-    void sup_point(size_type i) { if (!is_point_valid(i)) pts.sup(i); }
+    /** Delete the point of index i from the mesh if it is not linked to a
+	convex.
+    */
+    void sup_point(size_type i) { if (!is_point_valid(i)) pts.sup_node(i); }
     /// Swap the indexes of points of index i and j in the whole structure.
     void swap_points(size_type i, size_type j)
     { if (i != j) { pts.swap(i,j); mesh_structure::swap_points(i,j); } }

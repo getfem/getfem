@@ -81,8 +81,8 @@
 
 #include "getfem_config.h"
 #include "bgeot_convex_ref.h"
-#include "dal_tree_sorted.h"
 #include "bgeot_geometric_trans.h"
+#include "bgeot_node_tab.h"
 
 namespace getfem
 {
@@ -135,73 +135,70 @@ namespace getfem
 
 
   class approx_integration {
-    protected :
-
-      typedef dal::dynamic_tree_sorted<base_node,
-      gmm::lexicographical_less<base_node,
-      gmm::approx_less<scalar_type> > > PT_TAB;
-
-      bgeot::pconvex_ref cvr;
-      bgeot::pstored_point_tab pint_points;
-      std::vector<scalar_type> int_coeffs;
-      std::vector<size_type> repartition;
-
+  protected :
+    
+    typedef bgeot::node_tab PT_TAB;
+    bgeot::pconvex_ref cvr;
+    bgeot::pstored_point_tab pint_points;
+    std::vector<scalar_type> int_coeffs;
+    std::vector<size_type> repartition;
+    
     // index 0 : points for volumic integration, index > 0 : points for faces
-      std::vector<PT_TAB> pt_to_store; 
-      bool valid;
-
-    public :
-
-      /// Dimension of reference convex.
-      dim_type dim(void) const { return cvr->structure()->dim(); }
-      size_type nb_points(void) const { return int_coeffs.size(); }
-      /// Number of integration nodes on the reference element.
-      size_type nb_points_on_convex(void) const { return repartition[0]; }
-      /// Number of integration nodes on the face f of the reference element.
-      size_type nb_points_on_face(short_type f) const
-      { return repartition[f+1] - repartition[f]; }
-      size_type ind_first_point_on_face(short_type f) const 
-      { return repartition[f]; }
-      /// Structure of the reference element.
-      bgeot::pconvex_structure structure(void) const
-        { return cvr->structure()->basic_structure(); }
-      bgeot::pconvex_ref ref_convex(void) const { return cvr; }
-
-      const std::vector<size_type> &repart(void) const { return repartition; }
-
-      /// Gives an array of integration nodes.
-      const bgeot::stored_point_tab  &
-        integration_points(void) const
-      { return *(pint_points); }
-      /// Gives the integration node i on the reference element.
-      const base_node &point(size_type i) const
-      { return (*pint_points)[i]; }
-      /// Gives the integration node i of the face f.
-      const base_node &
-	point_on_face(short_type f, size_type i) const 
-      { return (*pint_points)[repartition[f] + i]; }
-      /// Gives an array of the integration coefficients.
-      const std::vector<scalar_type> &integration_coefficients(void) const
-      { return int_coeffs; }
-      /// Gives the integration coefficient corresponding to node i.
-      scalar_type coeff(size_type i) const { return int_coeffs[i]; }
-      /// Gives the integration coefficient corresponding to node i of face f.
-      scalar_type coeff_on_face(short_type f, size_type i) const
-      { return int_coeffs[repartition[f] + i]; }
-
-      void add_point(const base_node &pt, scalar_type w,
-		     short_type f=short_type(-1));
-      void add_point_norepeat(const base_node &pt, scalar_type w,
-			      short_type f=short_type(-1));
-      void add_point_full_symmetric(base_node pt, scalar_type w);
-      void add_method_on_face(pintegration_method ppi, short_type f);
-      void valid_method(void);
-
-      approx_integration(void) : valid(false) { }
-      approx_integration(bgeot::pconvex_ref cr)
-	: cvr(cr), repartition(cr->structure()->nb_faces()+1),
-	  pt_to_store(cr->structure()->nb_faces()+1), valid(false)
-      { std::fill(repartition.begin(), repartition.end(), 0); } 
+    std::vector<PT_TAB> pt_to_store; 
+    bool valid;
+    
+  public :
+    
+    /// Dimension of reference convex.
+    dim_type dim(void) const { return cvr->structure()->dim(); }
+    size_type nb_points(void) const { return int_coeffs.size(); }
+    /// Number of integration nodes on the reference element.
+    size_type nb_points_on_convex(void) const { return repartition[0]; }
+    /// Number of integration nodes on the face f of the reference element.
+    size_type nb_points_on_face(short_type f) const
+    { return repartition[f+1] - repartition[f]; }
+    size_type ind_first_point_on_face(short_type f) const 
+    { return repartition[f]; }
+    /// Structure of the reference element.
+    bgeot::pconvex_structure structure(void) const
+    { return cvr->structure()->basic_structure(); }
+    bgeot::pconvex_ref ref_convex(void) const { return cvr; }
+    
+    const std::vector<size_type> &repart(void) const { return repartition; }
+    
+    /// Gives an array of integration nodes.
+    const bgeot::stored_point_tab  &
+    integration_points(void) const
+    { return *(pint_points); }
+    /// Gives the integration node i on the reference element.
+    const base_node &point(size_type i) const
+    { return (*pint_points)[i]; }
+    /// Gives the integration node i of the face f.
+    const base_node &
+    point_on_face(short_type f, size_type i) const 
+    { return (*pint_points)[repartition[f] + i]; }
+    /// Gives an array of the integration coefficients.
+    const std::vector<scalar_type> &integration_coefficients(void) const
+    { return int_coeffs; }
+    /// Gives the integration coefficient corresponding to node i.
+    scalar_type coeff(size_type i) const { return int_coeffs[i]; }
+    /// Gives the integration coefficient corresponding to node i of face f.
+    scalar_type coeff_on_face(short_type f, size_type i) const
+    { return int_coeffs[repartition[f] + i]; }
+    
+    void add_point(const base_node &pt, scalar_type w,
+		   short_type f=short_type(-1));
+    void add_point_norepeat(const base_node &pt, scalar_type w,
+			    short_type f=short_type(-1));
+    void add_point_full_symmetric(base_node pt, scalar_type w);
+    void add_method_on_face(pintegration_method ppi, short_type f);
+    void valid_method(void);
+    
+    approx_integration(void) : valid(false) { }
+    approx_integration(bgeot::pconvex_ref cr)
+      : cvr(cr), repartition(cr->structure()->nb_faces()+1),
+	pt_to_store(cr->structure()->nb_faces()+1), valid(false)
+    { std::fill(repartition.begin(), repartition.end(), 0); } 
     
   };
 

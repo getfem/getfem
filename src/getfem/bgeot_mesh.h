@@ -35,21 +35,6 @@
 
 namespace bgeot {
 
-//   struct basic_mesh_point_comparator
-//     : public std::binary_function<base_node, base_node, int> {
-//     gmm::approx_less<scalar_type> c; 
-//     double eps;
-    
-//     int operator()(const base_node &x, const base_node &y) const {
-//       return gmm::lexicographical_compare(x.begin(), x.end(),
-// 					  y.begin(), y.end(), c);
-//     }
-
-//     basic_mesh_point_comparator(double e = scalar_type(10000)
-// 				*gmm::default_tol(scalar_type()))
-//       : c(0), eps(e) {}
-//   };
-
   /** @internal mesh structure + points
    */
   class basic_mesh :  public bgeot::mesh_structure {

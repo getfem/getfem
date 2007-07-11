@@ -155,9 +155,7 @@ struct Chrono {
 
   struct point_stock {
     
-    dal::dynamic_tree_sorted
-    <base_node, gmm::lexicographical_less<base_node,
-		gmm::approx_less<scalar_type> > > points;
+    bgeot::node_tab points;
     std::vector<dal::bit_vector> constraints_;
     std::vector<scalar_type> radius_;
     const std::vector<const mesher_signed_distance*> &list_constraints;
@@ -172,35 +170,35 @@ struct Chrono {
 
     size_type add(const base_node &pt, const dal::bit_vector &bv,
 		    scalar_type r) {
-      size_type j = points.search(pt);
+      size_type j = points.search_node(pt);
       if (j == size_type(-1)) {
-	j = points.add(pt);
+	j = points.add_node(pt);
 	constraints_.push_back(bv);
 	radius_.push_back(r);
       }
       return j;
     }
     size_type add(const base_node &pt, scalar_type r) {
-      size_type j = points.search(pt);
+      size_type j = points.search_node(pt);
       if (j == size_type(-1)) {
 	dal::bit_vector bv;
 	for (size_type i = 0; i < list_constraints.size(); ++i)
 	  if (gmm::abs((*(list_constraints[i]))(pt)) < 1E-8*radius_cv)
 	    bv.add(i);
-	j = points.add(pt);
+	j = points.add_node(pt);
 	constraints_.push_back(bv);
 	radius_.push_back(r);
       }
       return j;
     }
     size_type add(const base_node &pt) {
-      size_type j = points.search(pt);
+      size_type j = points.search_node(pt);
       if (j == size_type(-1)) {
 	dal::bit_vector bv;
 	for (size_type i = 0; i < list_constraints.size(); ++i)
 	  if (gmm::abs((*(list_constraints[i]))(pt)) < 1E-8*radius_cv)
 	    bv.add(i);
-	j = points.add(pt);
+	j = points.add_node(pt);
 	constraints_.push_back(bv);
 	scalar_type r = min_curvature_radius_estimate(list_constraints,pt,bv);
 	radius_.push_back(r);
@@ -251,8 +249,7 @@ struct Chrono {
 
     point_stock(const std::vector<const mesher_signed_distance*> &ls,
 		scalar_type rcv)
-      : points(gmm::lexicographical_less<base_node,
-	       gmm::approx_less<scalar_type> >(1E-7)), list_constraints(ls),
+      : points(scalar_type(10000000)), list_constraints(ls),
 	radius_cv(rcv) {}
   };
 

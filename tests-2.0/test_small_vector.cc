@@ -582,23 +582,21 @@ namespace getfem {
     }
     cout << " comparaison: " << c.toc().cpu() << " sec\n";
     
-    //bgeot::mesh<V> m;
+    getfem::mesh m;
 
-    dal::dynamic_tree_sorted<V,
-      dal::lexicographical_less<V, getfem::mesh::val_comp> > mm;
-    
-    cout << "mesh<base_node> : empty size = " << mm.memsize() << "\n";
+    cout << "mesh<base_node> : empty size = " << m.memsize() << "\n";
     init(vv);
     c.init().tic();
     std::random_shuffle(vv.begin(), vv.end());
     for (size_type i=0; i < N; ++i) {
-      mm.clear();
+      m.clear();
       for (size_type j=0; j < vv.size(); ++j) {
-	mm.add(vv[j]);
+	m.add_point(vv[j]);
       }
     }
-    cout << "mesh<base_node> : size for " << mm.index().card() 
-	 << " points: " << mm.memsize() << " bytes, cpu=" << c.toc().cpu() << " sec\n";
+    cout << "mesh<base_node> : size for " << m.nb_points() 
+	 << " points: " << m.memsize()
+	 << " bytes, cpu=" << c.toc().cpu() << " sec\n";
     
   }
 

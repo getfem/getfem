@@ -47,6 +47,7 @@ namespace bgeot {
   }
   
   size_type node_tab::search_node(const base_node &pt) const {
+    if (card() == 0) return size_type(-1);
     for (size_type is = 0; ; ++is) {
       if (is >= sorters.size()) add_sorter();
       
@@ -78,13 +79,13 @@ namespace bgeot {
     
     if (this->card() == 0) {
       dim_ = pt.size();
-      return this->add(pt);
+      return dal::dynamic_tas<base_node>::add(pt);
     }
     else {
       GMM_ASSERT1(dim_ == pt.size(), "Nodes should have the same dimension");
       size_type id = search_node(pt);
       if (id == size_type(-1)) {
-	id = this->add(pt);
+	id = dal::dynamic_tas<base_node>::add(pt);
 	for (size_type i = 0; i < sorters.size(); ++i) sorters[i].insert(id);
       }
       return id;
@@ -104,6 +105,14 @@ namespace bgeot {
 	if (existi) sorters[is].insert(j);
 	if (existj) sorters[is].insert(i);
       }
+    }
+  }
+
+  void node_tab::sup_node(size_type i) {
+    if (index().is_in(i)) {
+      for (size_type is = 0; is < sorters.size(); ++is)
+	sorters[is].erase(i);
+      dal::dynamic_tas<base_node>::sup(i);
     }
   }
 

@@ -36,6 +36,10 @@
 #include "bgeot_imbricated_box.h"
 #include "bgeot_mesh.h"
 
+// TODO : Use of rtree instead of dal::dynamic_tree_sorted<base_node,
+//        imbricated_box_less>
+
+
 namespace bgeot {
 
   struct mesh_precomposite {

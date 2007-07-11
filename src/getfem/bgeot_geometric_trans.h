@@ -314,6 +314,8 @@ namespace bgeot {
     for (typename CONT::const_iterator itk = G.begin(); 
          itk != G.end(); ++itk, ++k)
       gmm::add(gmm::scaled(*itk, c[j][k]), pt);
+    GMM_ASSERT1(k == pgt->nb_points(),
+		"Wrong number of points in tranformation");
   }
 
   template <typename CONT> 

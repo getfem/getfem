@@ -192,16 +192,6 @@ namespace getfem {
     return size_type(-1);
   }
 
-//   size_type mesh_fem::ind_in_convex_of_dof(size_type d) const {
-//     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
-//       size_type j = dof_structure.first_convex_of_point(i);
-//       if (j != size_type(-1))
-// 	return (dof_structure.ind_in_first_convex_of_point(i)
-// 		* Qdim / f_elems[j]->target_dim());
-//     }
-//     return size_type(-1);
-//   }
-
   const mesh::ind_cv_ct &mesh_fem::convex_to_dof(size_type d) const {
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
@@ -210,23 +200,24 @@ namespace getfem {
     GMM_ASSERT1(false, "Inexistent dof");
   }
 
+  struct fem_dof {
+    size_type ind_node;
+    pdof_description pnd;
+    size_type part;
+  };
+
   struct dof_comp_ { 
-    gmm::approx_less<scalar_type> comp;
-    int operator()(const fem_dof& m, const fem_dof& n) const { 
-      int d = gmm::lexicographical_compare(m.P.begin(), m.P.end(),
-					   n.P.begin(), n.P.end(), comp);
-      if (d != 0) return (d < 0);
+    bool operator()(const fem_dof& m, const fem_dof& n) const {
+      if (m.ind_node < n.ind_node) return true;
+      if (m.ind_node > n.ind_node) return false;
       if (m.part == n.part)
 	return dof_description_compare(m.pnd, n.pnd) < 0;
       else if (m.part < n.part) return true;
       else /*if (m.part > n.part)*/ return false;
     }
-    dof_comp_(double e = 1.0E-10) : comp(e) { }
   };
 
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
-
-  // static double enumerate_dof_time = 0;
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
@@ -237,10 +228,12 @@ namespace getfem {
     }
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
     
+    bgeot::node_tab dof_nodes(scalar_type(100000));
     dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
     dal::dynamic_array<size_type> ind_global_dof;
     std::vector<size_type> tab;
+    base_node P;
     size_type nbdof = 0;
 
     size_type cv = fe_convex.first_true();
@@ -267,7 +260,7 @@ namespace getfem {
       tab.resize(nbd);
 
       for (size_type i = 0; i < nbd; i++) {
-	fd.P.resize(linked_mesh().dim()); 
+	P.resize(linked_mesh().dim()); 
 	fd.pnd = pf->dof_types()[i];
 	fd.part = get_dof_partition(cv);
 	if (fd.pnd == andof) {
@@ -283,7 +276,8 @@ namespace getfem {
 	  tab[i] = nbdof;
 	  nbdof += Qdim / pf->target_dim();
 	} else {
-	  pgp->transform(linked_mesh().points_of_convex(cv), i, fd.P);
+	  pgp->transform(linked_mesh().points_of_convex(cv), i, P);
+	  fd.ind_node = dof_nodes.add_node(P);
 
 	  std::pair<dof_sort_type::iterator, bool>
 	    pa = dof_sort.insert(std::make_pair(fd, nbdof));

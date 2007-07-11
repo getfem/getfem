@@ -677,9 +677,8 @@ namespace getfem {
     for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
-	if ( gmm::lexicographical_less<base_node,
-	     gmm::approx_less<scalar_type> >()
-	     (fi2->node_of_dof(0,i), fi1->node_of_dof(0,j)) == 0
+	if ( gmm::vect_dist2(fi2->node_of_dof(0,i),
+			     fi1->node_of_dof(0,j)) < 1e-13
 	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
 					       fi1->dof_types()[j]))
 	    { found = true; break; }
@@ -714,9 +713,8 @@ namespace getfem {
     for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
-	if ( gmm::lexicographical_less<base_node,
-	     gmm::approx_less<scalar_type> >()
-	     (fi2->node_of_dof(0,i), fi1->node_of_dof(0,j)) == 0
+	if ( gmm::vect_dist2(fi2->node_of_dof(0,i),
+			     fi1->node_of_dof(0,j)) < 1e-13
 	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
 					       fi1->dof_types()[j]))
 	  { found = true; break; }

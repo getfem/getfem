@@ -1772,7 +1772,7 @@ int main(int argc, char *argv[]) {
 
    cerr << "\n\n-----------------------------SIMPLE MESH TESTS---------------------\n\n";
    {
-     getfem::mesh m(2);
+     getfem::mesh m;
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
      m.add_triangle_by_points(mknode(0.,0.),mknode(-1.2,0.),mknode(0.1,1.5));
      std::vector<base_node> pts;

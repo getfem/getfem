@@ -905,7 +905,7 @@ namespace getfem {
 	if (ipp == i1) ++found;
 	if (ipp == i2) ++found;
       }
-      assert(found <= 2);
+      GMM_ASSERT1(found <= 2, "Invalid convex with repeated nodes ");
       if (found == 2) ipt.push_back(cv);
     }
   }
@@ -964,6 +964,7 @@ namespace getfem {
 
   void mesh::Bank_build_green_simplexes(size_type ic,
 					std::vector<size_type> &ipt) {
+    GMM_ASSERT1(convex_index().is_in(ic), "Internal error");
     size_type igs = Bank_info->green_simplices.add(green_simplex());
     green_simplex &gs(Bank_info->green_simplices[igs]);
     std::vector<base_node> pt_tab(nb_points_of_convex(ic));

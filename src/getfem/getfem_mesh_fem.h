@@ -130,12 +130,6 @@ namespace getfem {
     
     value_type operator [](size_type ii) const { return *(begin() + ii);}
   };
-
-  struct fem_dof {
-    base_node P;
-    pdof_description pnd;
-    size_type part;
-  };
   
   /** Describe a finite element method linked to a mesh.
    *    

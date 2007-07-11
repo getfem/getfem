@@ -361,78 +361,78 @@ void test_mesh_building(int dim, int Nsubdiv) {
   cout << "Time to create mesh : "
        << gmm::uclock_sec() - exectime << endl;
 
-  // Test of a simple sort on one "random" component
-  exectime = gmm::uclock_sec();
-  typedef basic_mesh_point_comparator2 pt_comp2;
-  typedef dal::dynamic_tree_sorted<base_node, pt_comp2> PT_TAB2;
+//   // Test of a simple sort on one "random" component
+//   exectime = gmm::uclock_sec();
+//   typedef basic_mesh_point_comparator2 pt_comp2;
+//   typedef dal::dynamic_tree_sorted<base_node, pt_comp2> PT_TAB2;
   
-  PT_TAB2 pttab2 = PT_TAB2(pt_comp2(dim));
+//   PT_TAB2 pttab2 = PT_TAB2(pt_comp2(dim));
 
-  for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
-    for (int j = 0; j <= dim; ++j)
-      pttab2.add_norepeat(m.points_of_convex(i)[j]);
-  }
-  cout << "Time to insert points in structure with random component: "
-       << gmm::uclock_sec() - exectime << endl;
-  GMM_ASSERT1(pttab2.card() == m.nb_points(),
-	      "Problem in identifying points " << pttab2.card()
-	      << " : " << m.nb_points());
-  
-
-  // Test on the new structure
-  exectime = gmm::uclock_sec();
-  
-  bgeot::node_tab pttab3;
-
-  for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
-    for (int j = 0; j <= dim; ++j)
-      pttab3.add_node(m.points_of_convex(i)[j]);
-  }
-  cout << "Time to insert points in new structure: "
-       << gmm::uclock_sec() - exectime << endl;
-  GMM_ASSERT1(pttab3.card() == m.nb_points(),
-	      "Problem in identifying points " << pttab3.card()
-	      << " : " << m.nb_points());
+//   for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
+//     for (int j = 0; j <= dim; ++j)
+//       pttab2.add_norepeat(m.points_of_convex(i)[j]);
+//   }
+//   cout << "Time to insert points in structure with random component: "
+//        << gmm::uclock_sec() - exectime << endl;
+//   GMM_ASSERT1(pttab2.card() == m.nb_points(),
+// 	      "Problem in identifying points " << pttab2.card()
+// 	      << " : " << m.nb_points());
   
 
-
-  // Test of a simple sort on one "random" componentwith Bkdtree
-  exectime = gmm::uclock_sec();
-  std::vector<base_node> T0;
-  bgeot::kdtree trees[30];
-  bgeot::kdtree_tab_type ipts;
+//   // Test on the new structure
+//   exectime = gmm::uclock_sec();
   
-  for (dal::bv_visitor ic(m.convex_index()); !ic.finished(); ++ic) {
-    for (int jp = 0; jp <= dim; ++jp) {
+//   bgeot::node_tab pttab3;
 
-      // insert a point.
-      T0.push_back(m.points_of_convex(ic)[jp]);
+//   for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
+//     for (int j = 0; j <= dim; ++j)
+//       pttab3.add_node(m.points_of_convex(i)[j]);
+//   }
+//   cout << "Time to insert points in new structure: "
+//        << gmm::uclock_sec() - exectime << endl;
+//   GMM_ASSERT1(pttab3.card() == m.nb_points(),
+// 	      "Problem in identifying points " << pttab3.card()
+// 	      << " : " << m.nb_points());
+  
 
-      if (T0.size() >= 4) {
-	size_type i = 0;
-	for (; i < 30; ++i)
-	  if (trees[i].nb_points() == 0) break;
 
-	// cout << "building tree " << i << endl;
+//   // Test of a simple sort on one "random" componentwith Bkdtree
+//   exectime = gmm::uclock_sec();
+//   std::vector<base_node> T0;
+//   bgeot::kdtree trees[30];
+//   bgeot::kdtree_tab_type ipts;
+  
+//   for (dal::bv_visitor ic(m.convex_index()); !ic.finished(); ++ic) {
+//     for (int jp = 0; jp <= dim; ++jp) {
+
+//       // insert a point.
+//       T0.push_back(m.points_of_convex(ic)[jp]);
+
+//       if (T0.size() >= 4) {
+// 	size_type i = 0;
+// 	for (; i < 30; ++i)
+// 	  if (trees[i].nb_points() == 0) break;
+
+// 	// cout << "building tree " << i << endl;
 	
-	for (size_type j = 0; j < 4; ++j)
-	  trees[i].add_point(T0[j]);
-	T0.resize(0);
+// 	for (size_type j = 0; j < 4; ++j)
+// 	  trees[i].add_point(T0[j]);
+// 	T0.resize(0);
 
-	for (size_type j = 0; j < i; ++j) {
-	  for (size_type k = 0; k < trees[j].nb_points(); ++k)
-	    trees[i].add_point(trees[j].points()[k].n);
-	  trees[j].clear();
-	}
-	trees[i].points_in_box(ipts, base_node(dim), base_node(dim));
-      }
+// 	for (size_type j = 0; j < i; ++j) {
+// 	  for (size_type k = 0; k < trees[j].nb_points(); ++k)
+// 	    trees[i].add_point(trees[j].points()[k].n);
+// 	  trees[j].clear();
+// 	}
+// 	trees[i].points_in_box(ipts, base_node(dim), base_node(dim));
+//       }
       
 
-    }
-  }
+//     }
+//   }
 
-  cout << "Time to insert points in bkdtree: "
-       << gmm::uclock_sec() - exectime << endl;
+//   cout << "Time to insert points in bkdtree: "
+//        << gmm::uclock_sec() - exectime << endl;
 
 
 
@@ -458,7 +458,7 @@ void test_mesh_building(int dim, int Nsubdiv) {
 
 int main(void) {
 
-  test_mesh_building(2, 50); 
+  test_mesh_building(2, 100); 
 
   getfem::mesh m1;
   test_convex_ref();

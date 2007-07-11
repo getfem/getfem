@@ -246,9 +246,9 @@ namespace getfem {
     if (gmm::abs(w) > 1.0E-15) {
       ++f;
       GMM_ASSERT1(f <= cvr->structure()->nb_faces(), "Wrong argument.");
-      size_type i = pt_to_store[f].search(pt);
+      size_type i = pt_to_store[f].search_node(pt);
       if (i == size_type(-1)) {
-	i = pt_to_store[f].add(pt);
+	i = pt_to_store[f].add_node(pt);
 	int_coeffs.resize(int_coeffs.size() + 1); 
 	for (size_type j = f; j <= cvr->structure()->nb_faces(); ++j)
 	  repartition[j] += 1;
@@ -264,7 +264,7 @@ namespace getfem {
 					      scalar_type w,
 					      short_type f) {
     short_type f2 = f; ++f2;
-    if (pt_to_store[f2].search(pt) == size_type(-1)) add_point(pt,w,f);
+    if (pt_to_store[f2].search_node(pt) == size_type(-1)) add_point(pt,w,f);
   }
 
   void approx_integration::add_point_full_symmetric(base_node pt,
@@ -343,20 +343,19 @@ namespace getfem {
 
   void approx_integration::valid_method(void) {
     std::vector<base_node> ptab(int_coeffs.size());
-    std::vector<scalar_type> int_coeffs2(int_coeffs);
+    // std::vector<scalar_type> int_coeffs2(int_coeffs);
     size_type i = 0;
     for (short_type f = 0; f <= cvr->structure()->nb_faces(); ++f) {
-      size_type j = i;
-      for (PT_TAB::const_sorted_iterator it = pt_to_store[f].sorted_begin();
-	   it != pt_to_store[f].sorted_end(); ++it) {
-	int_coeffs[i] = int_coeffs2[j+it.index()];
+      // size_type j = i;
+      for (PT_TAB::const_iterator it = pt_to_store[f].begin();
+	   it != pt_to_store[f].end(); ++it /* , ++j */) {
+	// int_coeffs[i] = int_coeffs2[j];
 	ptab[i++] = *it;
       }
     }
     GMM_ASSERT1(i == int_coeffs.size(), "internal error.");
     pint_points = bgeot::store_point_tab(ptab);
     pt_to_store = std::vector<PT_TAB>();
-    pt_to_store.clear();
     valid = true;
   }
 

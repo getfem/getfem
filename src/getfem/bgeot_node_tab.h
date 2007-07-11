@@ -75,6 +75,9 @@ namespace bgeot {
 	point.
     */
     size_type add_node(const base_node &pt);
+    size_type add(const base_node &pt) { return add_node(pt); }
+    void sup_node(size_type i);
+    void sup(size_type i) { sup_node(i); }
     // void resort(void) { sorters = std::vector<sorter>(); }
     dim_type dim(void) const { return dim_; }
     void translation(const base_small_vector &V);
