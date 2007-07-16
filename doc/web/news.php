@@ -3,6 +3,11 @@
   <h1>What's new ?</h1>
 
   <div class="gfnews">
+    <h2>2007/07/12 Getfem++-3.0.1. minor update</h2>
+     <p>
+      Two bugs were fixed: a memory leakage problem
+      and a bad identification of some dofs.
+    </p>
     <h2>2007/06/27</h2>
       <p>Getfem++ 3.0 is now available !</p>
       <p>Not so many changes, but some of them are incompatible with getfem 2.0:</p>

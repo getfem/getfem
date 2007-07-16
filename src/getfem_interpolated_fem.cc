@@ -385,7 +385,7 @@ namespace getfem {
     is_equiv = real_element_defined = true;
     gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
     ntarget_dim = 1; // An extension for vectorial elements should be easy
-    // The detection should be done and the multilication of components
+    // The detection should be done and the multiplication of components
     // for scalar elements interpolated.
     update_from_context();
   }
