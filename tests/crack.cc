@@ -38,6 +38,7 @@
 #include "getfem/getfem_mesh_fem_global_function.h"
 #include "getfem/getfem_spider_fem.h"
 #include "getfem/getfem_mesh_fem_sum.h"
+#include "getfem/getfem_crack_sif.h"
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
 
@@ -91,6 +92,11 @@ void elasticite2lame(const scalar_type young_modulus,
 		     scalar_type& lambda, scalar_type& mu) {
   mu = young_modulus/(2*(1+poisson_ratio));
   lambda = 2*mu*poisson_ratio/(1-poisson_ratio);
+}
+
+/* plane stress */
+scalar_type young_modulus(scalar_type lambda, scalar_type mu){
+  return 4*mu*(lambda + mu)/(lambda+2*mu);
 }
 
 void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
@@ -277,7 +283,7 @@ struct exact_solution {
 	assert(0);
 	break;
     }
-    gmm::scale(U, coeff);
+    gmm::scale(U, coeff/young_modulus(lambda,mu));
   }
 };
 
@@ -369,6 +375,7 @@ struct crack_problem {
   bgeot::md_param PARAM;
 
   bool solve(plain_vector &U);
+  void compute_sif(const plain_vector &U);
   void init(void);
   crack_problem(void) : mls(mesh), mim(mls), 
 			mf_pre_u(mesh), mf_pre_mortar(mesh), mf_mult(mesh),
@@ -902,6 +909,27 @@ bool crack_problem::solve(plain_vector &U) {
   return (iter.converged());
 }
 
+void crack_problem::compute_sif(const plain_vector &U) {
+  cout << "Computing stress intensity factors\n";
+  base_node tip; base_small_vector T, N;
+  getfem::get_crack_tip_and_orientation(ls, tip, T, N);
+  cout << "crack tip is : " << tip << ", T=" << T << ", N=" << N << "\n";
+  cout << "young modulus: " << young_modulus(lambda, mu) << "\n";
+  scalar_type ring_radius = 0.2;
+  
+  scalar_type KI, KII;
+  estimate_crack_stress_intensity_factors(ls, mf_u(), U, 
+                                          young_modulus(lambda, mu), 
+                                          KI, KII, 1e-2);
+  cout << "estimation of crack SIF: " << KI << ", " << KII << "\n";
+  
+  compute_crack_stress_intensity_factors(ls, mim, mf_u(), U, ring_radius, 
+                                         lambda, mu, 
+                                         young_modulus(lambda, mu), 
+                                         KI, KII);
+  cout << "computation of crack SIF: " << KI << ", " << KII << "\n";
+}
+
 /**************************************************************************/
 /*  main program.                                                         */
 /**************************************************************************/
@@ -922,6 +950,8 @@ int main(int argc, char *argv[]) {
 
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
+
+    p.compute_sif(U);
     
     { 
       getfem::mesh mcut;
