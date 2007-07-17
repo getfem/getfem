@@ -1754,6 +1754,8 @@ namespace getfem {
       if (&imtab[i]->linked_mesh() != &m)
 	ASM_THROW_ERROR("the mesh_fem/mesh_im live on different meshes!");
     }
+    if (imtab.size() == 0) 
+      ASM_THROW_ERROR("no integration method !");
   }
 
   void generic_assembly::assembly(const mesh_region &r) {
