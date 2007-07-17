@@ -97,7 +97,7 @@ namespace getfem {
     
     size_type memsize() const { return mesh_fem::memsize(); }
     
-    mesh_fem_global_function(mesh &me, dim_type q=1) : mesh_fem(me, q) {}
+    mesh_fem_global_function(const mesh &me, dim_type q=1) : mesh_fem(me, q) {}
 
     void set_functions(pglobal_function f) 
     { fun.resize(1); fun[0]=f; adapt(); }
