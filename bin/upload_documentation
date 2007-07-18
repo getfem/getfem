@@ -42,5 +42,6 @@ fi
 
 if [ "$f" != "" ]; then
   echo "uploading directory $f to download.gna.org:/upload/getfem/doc/"
+  chmod -R a+rw $f
   rsync $options -avr --rsh="ssh" "$f" "$me@download.gna.org:/upload/getfem/doc/"
 fi
