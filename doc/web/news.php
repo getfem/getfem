@@ -8,7 +8,7 @@
       Two bugs were fixed: a memory leakage problem
       and a bad identification of some dofs.
     </p>
-    <h2>2007/06/27</h2>
+    <h2>2007/06/27 Getfem++-3.0 released</h2>
       <p>Getfem++ 3.0 is now available !</p>
       <p>Not so many changes, but some of them are incompatible with getfem 2.0:</p>
       <ul>
@@ -21,7 +21,7 @@
          <li>Some C1 composite elements have been added (triangles and quadrilaterals)</li>
          <li>Levelset support has been improved</li>
       </ul>
-      The full list of changes is available in the <a href="http://svn.gna.org/viewcvs/getfem/trunk/getfem%2B%2B/ChangeLog?rev=2555&amp;view=auto">ChangeLog</a>.
+      The full list of changes is available in the <a href="http://svn.gna.org/viewcvs/getfem/trunk/getfem%2B%2B/ChangeLog?rev=2640&amp;view=auto">ChangeLog</a>.
     <h2>2006/11/10 Getfem++-2.0.2, minor update</h2>
     <p>
       The GMSH mesh import has been fixed.

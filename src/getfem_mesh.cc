@@ -871,7 +871,7 @@ namespace getfem {
 	mesh2.add_convex(pgt, &ipt[0]);
       }
 
-      if (pspt) dal::del_stored_object(pspt);
+      // if (pspt) dal::del_stored_object(pspt);
       pspt = bgeot::store_point_tab(mesh2.points());
       pgp = bgeot::geotrans_precomp(pgt, pspt, 0);
     }
@@ -1047,7 +1047,7 @@ namespace getfem {
       pgp->transform(points_of_convex(ic), ip, pt);
       ipt1[ip] = add_point(pt);
     }
-    dal::del_stored_object(pspt3);
+    // dal::del_stored_object(pspt3);
     
     ipt2.resize(pgt->nb_points());
     for (size_type icc = 0; icc < mesh3.nb_convex(); ++icc) {
@@ -1081,7 +1081,6 @@ namespace getfem {
     std::vector<size_type> ipt;
     edge_set marked_convexes;
     while (Bank_info->edges.size()) {
-     
       marked_convexes.clear();
       b = convex_index();
       edge_set::const_iterator it = Bank_info->edges.begin();

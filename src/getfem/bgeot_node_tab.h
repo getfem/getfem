@@ -58,10 +58,9 @@ namespace bgeot {
     mutable scalar_type c;
     scalar_type eps, prec_factor, max_radius;
     unsigned dim_;
-    
+
     void add_sorter(void) const;
-    
-    
+
   public :
     
     /// reset the array, remove all points
@@ -86,7 +85,8 @@ namespace bgeot {
     void swap_points(size_type i, size_type j);
     
     node_tab(scalar_type prec_loose = scalar_type(10000));
-    
+    node_tab(const node_tab &t);
+    node_tab &operator =(const node_tab &t);
   };
 
 

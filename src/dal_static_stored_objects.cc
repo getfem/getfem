@@ -132,8 +132,8 @@ namespace dal {
       cerr << "Problem adding dependency between " << o1 << " of type "
 	   << typeid(*o1).name() << " and " << o2 << " of type "
 	   << typeid(*o2).name() << ". ";
-      if (it1 == stored_objects.end()) cerr << "First object does non exist.";
-      if (it2 == stored_objects.end()) cerr << "Second object does non exist.";
+      if (it1 == stored_objects.end()) cerr << "First object does not exist.";
+      if (it2 == stored_objects.end()) cerr << "Second object does not exist.";
       cerr << endl;
       GMM_ASSERT1(false, "Add_dependency : Inexistent object");
     }

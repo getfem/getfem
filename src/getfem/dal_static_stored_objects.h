@@ -42,8 +42,7 @@
     You can add a dependency of your new object with
     @code
     add_dependency(pointer_on_your_object,
-                   pointer_on_the_object_object_from_which_it_depends,
-                   permanence);
+                   pointer_on_the_object_object_from_which_it_depends);
     @endcode
     and then your object will be automatically deleted if the second object is
     deleted.
