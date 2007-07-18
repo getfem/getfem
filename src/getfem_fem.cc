@@ -1312,7 +1312,7 @@ namespace getfem {
 	for (size_type i = 0; i < nc; ++i) {
 	  base_[j+i*(nc*(nc+1)/2)] = lambda[k] * grad_lambda[l][i]
 	    - lambda[l] * grad_lambda[k][i]; 
-	  cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
+	  //	  cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
 	}
 	
 	base_node pt = (cvr->points()[k] + cvr->points()[l]) / scalar_type(2);
@@ -1868,7 +1868,7 @@ namespace getfem {
       for (unsigned j = 0; j < 6; ++j)
 	W(i-3, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
-    cout << "W = " << W << endl; getchar();
+    //    cout << "W = " << W << endl; getchar();
     
     static base_matrix A(3, 3);
     static bgeot::base_vector w(3), coeff(3);

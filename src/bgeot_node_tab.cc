@@ -26,6 +26,7 @@
 namespace bgeot {
 
   bool node_tab::component_comp::operator()(size_type i1, size_type i2) const {
+    if (i1 == i2) return false;
     scalar_type a = (i1==size_type(-1)) ? *c : gmm::vect_sp((*vbn)[i1], v);
     scalar_type b = (i2==size_type(-1)) ? *c : gmm::vect_sp((*vbn)[i2], v);
     if (a != b) return a < b;
@@ -115,17 +116,11 @@ namespace bgeot {
   }
 
   void node_tab::sup_node(size_type i) {
-    // cout << "entering sup node " << i << endl;
     if (index().is_in(i)) {
-      for (size_type is = 0; is < sorters.size(); ++is) {
-	// cout << "erasing in sorter " << is << " size : "
-	//     << sorters[is].size() << endl;
+      for (size_type is = 0; is < sorters.size(); ++is)
 	sorters[is].erase(i);
-	// cout << "ok erasing in sorter " << endl;
-      }
       dal::dynamic_tas<base_node>::sup(i);
     }
-    // cout << "entering sup node" << endl;
   }
 
   void node_tab::translation(const base_small_vector &V) {
@@ -148,7 +143,7 @@ namespace bgeot {
   }
   
   
-  node_tab::node_tab(scalar_type prec_loose) {
+  node_tab::node_tab(scalar_type prec_loose) : c(0) {
     max_radius = scalar_type(1e-60);
     sorters.reserve(5);
     prec_factor = gmm::default_tol(scalar_type()) * prec_loose;
@@ -156,12 +151,13 @@ namespace bgeot {
   }
 
   node_tab::node_tab(const node_tab &t)
-    : dal::dynamic_tas<base_node>(t), sorters(), eps(t.eps),
+    : dal::dynamic_tas<base_node>(t), sorters(), c(0), eps(t.eps),
       prec_factor(t.prec_factor), max_radius(t.max_radius), dim_(t.dim_)  {}
 
   node_tab &node_tab::operator =(const node_tab &t) {
     dal::dynamic_tas<base_node>::operator =(t);
     sorters = std::vector<sorter>();
+    c = scalar_type(0);
     eps = t.eps; prec_factor = t.prec_factor;
     max_radius = t.max_radius; dim_ = t.dim_;
     return *this;

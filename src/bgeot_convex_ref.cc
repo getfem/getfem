@@ -220,7 +220,6 @@ namespace bgeot {
 	  ("product_ref_::is_in : Dimension does not match");
       std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
       std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
-      //cout << "pt = " << pt << " 1 : " << cvr1->is_in(pt1) << " 2 : " <<  cvr2->is_in(pt2) << endl;
       return std::max(cvr1->is_in(pt1), cvr2->is_in(pt2));
     }
 
