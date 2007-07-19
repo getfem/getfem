@@ -75,8 +75,9 @@ namespace bgeot {
     return begin;
   }
   /* 
-     build (recursively) a complete tree for points in the interval [begin, end[
-     dir is the splitting direction
+     build (recursively) a complete tree for points in the interval
+     [begin, end[ dir is the splitting direction.
+     (may be ameliorated doing a single sort on each component at the begining)
   */
   static kdtree_elt_base *build_tree_(ITER begin, ITER end, unsigned dir) {
     if (begin == end) return 0;
