@@ -46,16 +46,16 @@ namespace bgeot {
     
     struct component_comp {
       const dal::dynamic_tas<base_node> *vbn;
-      const scalar_type *c;
-      std::vector<scalar_type> v;
+      const base_node *c;
+      base_small_vector v;
       bool operator()(size_type i1, size_type i2) const;
       component_comp(const dal::dynamic_tas<base_node> &vbn_,
-		     const scalar_type &c_, unsigned dim);
+		     const base_node &c_, unsigned dim);
     };
     typedef std::set<size_type, component_comp> sorter;
     
     mutable std::vector<sorter> sorters;
-    mutable scalar_type c;
+    mutable base_node c;
     scalar_type eps, prec_factor, max_radius;
     unsigned dim_;
 
