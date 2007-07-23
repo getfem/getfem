@@ -266,7 +266,6 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   getfem::mdbrick_constraint<> PERIODIC(FRICTION);
   PERIODIC.set_constraints(BP, F);
   getfem::standard_model_state MS(PERIODIC);
-  
   FRICTION.set_r(r); 
    
   plain_vector WT(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
@@ -388,9 +387,12 @@ void friction_problem::solve(void) {
   getfem::mdbrick_Coulomb_friction<>
     FRICTION(DIRICHLET, BN, gap,
 	     friction_coef * ((scheme == 3) ? (1./theta) : 1.), BT);
+  FRICTION.set_r(r);
 
   // Dynamic brick.
   getfem::mdbrick_dynamic<> DYNAMIC(FRICTION, rho);
+  sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
+  gmm::copy(DYNAMIC.get_M(), MM);
   if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
 
   // Eventual periodic condition (lagrange element only).
@@ -495,9 +497,9 @@ void friction_problem::solve(void) {
   }
   
 //   std::ofstream fileout1("iter", std::ios::out);   
-//   std::ofstream fileout2("nrj", std::ios::out);
+  std::ofstream fileout2("nrj", std::ios::out);
 //   std::ofstream fileout3("vts", std::ios::out);
-//   std::ofstream fileout4("FN0", std::ios::out);
+  std::ofstream fileout4("FN0", std::ios::out);
 //   std::ofstream fileout5("depl", std::ios::out);
 //   std::ofstream fileout6("kenetic_nrj", std::ios::out);
 //   std::ofstream fileout7("elastic_nrj", std::ios::out);
@@ -609,8 +611,12 @@ void friction_problem::solve(void) {
       	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
       	  if (UN[i] < -1E-13) FRICTION.get_gap()[i] = 1.E13;
       }
-
-      getfem::standard_solve(MS, PERIODIC, iter);
+  
+      gmm::default_newton_line_search ls(size_type(-1), 4.0/3.0,
+					 1.0/20.0, 9.0/10.0, 1.1);
+      getfem::standard_solve(MS, PERIODIC, iter,
+			     getfem::default_linear_solver(PERIODIC), ls);
+    
       if (scheme  == 5 || scheme == 6)
 	gmm::copy(ELAS.get_solution(MS), U2);
       else
@@ -749,6 +755,7 @@ void friction_problem::solve(void) {
 	}
       }
 
+      cout << "r = " << FRICTION.get_r() << endl;
       cout << "t = " << t << " energy : ";
       if (scheme == 5 || scheme == 6) cout << Jdemi;
       else if (scheme == 2) cout << J1 << " energy at midpoint : " << Jdemi;
@@ -773,23 +780,21 @@ void friction_problem::solve(void) {
 	//	scalar_type h = mesh.minimal_convex_radius_estimate();
 	// Pas bon, il faut multiplier par l'inverse de la matrice de masse
 	// sur le bord.
-	sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
-	gmm::copy(DYNAMIC.get_M(), MM);
 	scalar_type rr = MM(ref_dof+N-1, ref_dof+N-1);
-	cout << "\n\n" ;
-	cout << "rr = " << rr << "\n\n"; 
-	cout << "LLN1[ref_dof+N-1] = " << LLN1[ref_dof+N-1] <<"\n\n";
+// 	cout << "\n\n" ;
+// 	cout << "rr = " << rr << "\n\n"; 
+// 	cout << "LLN1[ref_dof+N-1] = " << LLN1[ref_dof+N-1] <<"\n\n";
 	LLN1[ref_dof+N-1] = rho*LLN1[ref_dof+N-1]/rr; 
-	cout << "rho/rr " << rho/rr <<"\n\n";
-	cout << "LLN1 = " <<  LLN1[ref_dof+N-1] <<  "\n\n";
+// 	cout << "rho/rr " << rho/rr <<"\n\n";
+// 	cout << "LLN1 = " <<  LLN1[ref_dof+N-1] <<  "\n\n";
 
 	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
 	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
 
 // 	fileout1 << t << "\n";
-// 	fileout2 << J1   << "\n";	
+	fileout2 << J1   << "\n";	
 // 	fileout3 << VV1[N-1] << "\n";
-// 	fileout4 << -LLN1[ref_dof+N-1] << "\n";
+ 	fileout4 << -LLN1[ref_dof+N-1] << "\n";
 // 	fileout5 << UU1[N-1] << "\n";
 // 	fileout6 << kenetic_nrj   << "\n";		
 // 	fileout7 << elastic_nrj   << "\n";	

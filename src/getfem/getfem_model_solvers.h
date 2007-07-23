@@ -516,11 +516,10 @@ namespace getfem {
   standard_solve
   (MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
    gmm::iteration &iter,
-   typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
+   typename useful_types<MODEL_STATE>::plsolver_type lsolver,
+   gmm::abstract_newton_line_search &ls) {
 
     TYPEDEF_MODEL_STATE_TYPES;
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
     model_problem<MODEL_STATE> mdpb(MS, problem, ls);
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
@@ -544,7 +543,10 @@ namespace getfem {
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 		 gmm::iteration &iter) {
-    standard_solve(MS, problem, iter, default_linear_solver(problem));
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
+    standard_solve(MS, problem, iter, default_linear_solver(problem), ls);
+    
   }
 
 

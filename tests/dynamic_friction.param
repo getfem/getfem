@@ -39,8 +39,8 @@ SCHEME =1 ; % 0 = theta-method, 1 = Newmark, 2 = midpoint
             % 8 = Laursen Chawla ? (to be verified).
 	    
 THETA = 1.0;
-BETA = 1.0;
-GAMMA= 1.0;
+BETA = 1.0;             % Newmark scheme parameter in [0, 1]
+GAMMA= 1.0;             % Newmark scheme parameter in [1/2, 1]
 RESTIT = 0.6;           % Restitution coefficient for Paoli-Schatzman scheme
 NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
 PERIODICITY=0;          % Periodic condition
