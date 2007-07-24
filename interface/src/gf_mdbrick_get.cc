@@ -206,12 +206,14 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	else THROW_BADARG("missing solver name for " << opt);
       } else THROW_BADARG("bad option: " << opt);
     }
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
     if (!md->is_complex()) {
       getfem::standard_solve(md->real_mdstate(), b->real_mdbrick(), iter,
-			     getfem::select_linear_solver(b->real_mdbrick(), lsolver));
+			     getfem::select_linear_solver(b->real_mdbrick(), lsolver), ls);
     } else {
       getfem::standard_solve(md->cplx_mdstate(), b->cplx_mdbrick(), iter,
-			     getfem::select_linear_solver(b->cplx_mdbrick(), lsolver));
+			     getfem::select_linear_solver(b->cplx_mdbrick(), lsolver), ls);
     }
 
 
