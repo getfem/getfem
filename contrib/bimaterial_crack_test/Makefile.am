@@ -7,7 +7,7 @@ check_PROGRAMS =                 \
 CLEANFILES = 
 
 bimaterial_crack_test_SOURCES = bimaterial_crack_test.cc
-crack_SOURCES = crack.cc
+crack_SOURCES = crack.cc crack_exact_solution.cc
 SUPLDFLAGS = @SUPLDFLAGS@
 MUMPS_LIBS = @MUMPS_LIBS@
 MUMPS_CFLAGS = @MUMPS_CFLAGS@

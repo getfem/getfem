@@ -24,9 +24,9 @@ else
 end;
 
 
-NX = 20;            	          % space step.
+NX = 40;            	          % space step.
 
-MESH_NOISED = 1; % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
 

@@ -16,10 +16,10 @@ LAMBDA_DOWN=1.0;
 MU_UP = 3.0;
 MU_DOWN = 1.0;
 
-REFINEMENT_RADIUS = 0.3;  % 0 for no refinement
+REFINEMENT_RADIUS = 0.;  % 0 for no refinement
 REFINEMENT_PROCESS = 2;
 
-ADAPTED_REFINE = 0;      % 0 to disable adapted refinement 
+ADAPTED_REFINE = 1;      % 0 to disable adapted refinement 
                          % 1 to enable it
 CONV_MAX = 60000;        % maximal number of convexes
 
@@ -54,7 +54,7 @@ all_dirichlet = 0;     % Choose 1 To impose a dirichlet displacement all over th
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-FEM_TYPE = 'FEM_PK(2, 3)';  % PK element
+FEM_TYPE = 'FEM_PK(2, 2)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
@@ -67,7 +67,7 @@ DIRICHLET_VERSION = 2;
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 
-DATA_FEM_TYPE = 'FEM_PK(2,3)';
+DATA_FEM_TYPE = 'FEM_PK(2,2)';
 %DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
 %INTEGRATION = 'IM_TETRAHEDRON(6)';  % quadrature rule for polynomials up
