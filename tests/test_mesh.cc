@@ -456,6 +456,78 @@ void test_mesh_building(int dim, int Nsubdiv) {
 }
 
 
+void test_search_point() {
+  const char *s = "BEGIN POINTS LIST\n"
+    "  POINT  1  -4  6  2\n"
+    "  POINT  2  0  6  0\n"
+    "  POINT  3  0  2  0\n"
+    "  POINT  4  -2  6  2\n"
+    "  POINT  5  0  4  0\n"
+    "  POINT  6  -1.5  4.5  0.5\n"
+    "  POINT  7  1  2  0\n"
+    "  POINT  8  1.5  1.5  0\n"
+    "  POINT  9  5  5  0\n"
+    "  POINT  10  2  1  0\n"
+    "  POINT  11  6  3  0\n"
+    "  POINT  12  2  0  0\n"
+    "  POINT  13  6  0  0\n"
+    "  POINT  14  2  4  0\n"
+    "  POINT  15  4  2  0\n"
+    "  POINT  17  3  6  0\n"
+    "  POINT  18  2  -2  2\n"
+    "  POINT  19  2  -2  -2\n"
+    "  POINT  20  6  -2  2\n"
+    "  POINT  21  6  -2  -2\n"
+    "  POINT  22  2  -1  1\n"
+    "  POINT  23  2  -2.5  0\n"
+    "  POINT  24  2  -1  -1\n"
+    "  POINT  25  6  -1  1\n"
+    "  POINT  26  6  -2.5  0\n"
+    "  POINT  27  6  -1  -1\n"
+    "  POINT  28  -1  6  -1\n"
+    "  POINT  29  -1  2  -1\n"
+    "  POINT  30  1  6  -2\n"
+    "  POINT  31  1  2  -2\n"
+    "  POINT  32  0  6  -3\n"
+    "  POINT  33  0  2  -3\n"
+    "  POINT  34  2  -5  -2\n"
+    "  POINT  35  2  -4  0\n"
+    "  POINT  36  4  -5  2\n"
+    "  POINT  37  6  -5  -2\n"
+    "  POINT  38  6  -5  0\n"
+    "  POINT  46  4  4  0\n"
+    "  POINT  49  6  -5  2\n"
+    "\n"
+    "END POINTS LIST\n"
+    "\n"
+    "\n"
+    "\n"
+    "BEGIN MESH STRUCTURE DESCRIPTION\n"
+    "\n"
+    "CONVEX 0    'GT_PK(2,2)'      1  4  2  6  5  3\n"
+    "CONVEX 1    'GT_QK(2,1)'      2  17  3  7\n"
+    "CONVEX 2    'GT_QK(2,2)'      7  8  10  14  46  15  17  9  11\n"
+    "CONVEX 3    'GT_QK(2,1)'      10  12  11  13\n"
+    "CONVEX 4    'GT_PRODUCT(GT_PK(2,2),GT_PK(1,1))'      12  22  18  24  23  19  13  25  20  27  26  21\n"
+    "CONVEX 5    'GT_PRODUCT(GT_PK(1,1),GT_PK(1,3))'      2  3  28  29  30  31  32  33\n"
+    "CONVEX 8    'GT_PRODUCT(GT_PK(1,2),GT_PRODUCT(GT_PK(1,1),GT_PK(1,1)))'      19  23  18  21  26  20  34  35  36  37  38  49\n"
+    "\n"
+    "END MESH STRUCTURE DESCRIPTION\n";
+  std::stringstream ss(s);
+  getfem::mesh m; m.read_from_file(ss);
+  cout << "read " << m.nb_points() << " points and " << m.convex_index().card() << " convexes\n";
+  dal::bit_vector pid = m.points().index();
+  cout << "point index: " << pid << "\n";
+  for (dal::bv_visitor ii(pid); !ii.finished(); ++ii) {
+    base_node P = m.points()[ii];
+    size_type j=m.search_point(P);
+    cerr << "search point " << ii << ": " << P << " -> " << j << "\n";
+    assert(j == ii);
+  }
+  base_node P(m.dim()); gmm::fill_random(P);
+  assert(m.search_point(P) == size_type(-1));
+}
+
 int main(void) {
 
   test_mesh_building(2, 100); 
@@ -469,6 +541,8 @@ int main(void) {
   test_convex_quality(-0.2,0);
   test_convex_quality(-0.01,-0.2);
   test_region();
+
+  test_search_point();
   
   for (size_type d = 1; d <= 4 /* 6 */; ++d)
     test_mesh_matching(d);
@@ -479,7 +553,7 @@ int main(void) {
   test_refinable(3, 1);
   test_refinable(3, 2);
   test_refinable(3, 3);
-  
+
   return 0;
 }
 
