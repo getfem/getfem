@@ -86,7 +86,8 @@ void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
      Return the list of integration points for a face.
      @*/
     check_not_exact(im); 
-    size_type f = in.pop().to_integer(1, pai->structure()->nb_faces())-config::base_index();
+    size_type nbf = pai->structure()->nb_faces();
+    size_type f = in.pop().to_face_number(nbf);
     darray w = out.pop().create_darray(imdim, pai->nb_points_on_face(f));
     for (size_type j=0; j < pai->nb_points_on_face(f); ++j)
       for (size_type i=0; i < imdim; ++i)
@@ -102,7 +103,7 @@ void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Returns the coefficients associated to each integration of a face.
       @*/
     check_not_exact(im); 
-    size_type f = in.pop().to_integer(1, pai->structure()->nb_faces())-config::base_index();
+    size_type f = in.pop().to_face_number(pai->structure()->nb_faces());
     darray w = out.pop().create_darray_h(pai->nb_points_on_face(f));
     for (size_type j=0; j < pai->nb_points_on_face(f); ++j)
       w[j]=pai->coeff_on_face(f,j);

@@ -62,13 +62,13 @@ void gf_cvstruct_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   } else if (check_cmd(cmd, "face", in, out, 1, 1, 0, 1)) {
     /*@RDATTR  CVSTRUCT:GET('face', @int F)
       Return the structure of the face F.@*/
-    size_type f = in.pop().to_integer(1,cs->nb_faces()) - config::base_index();
+    size_type f = in.pop().to_face_number(cs->nb_faces());
     out.pop().from_object_id(getfemint::ind_convex_structure(cs->faces_structure()[f]),
 			     CVSTRUCT_CLASS_ID);    
   } else if (check_cmd(cmd, "facepts", in, out, 1, 1, 0, 1)) {
     /*@GET I=CVSTRUCT:GET('facepts', @int F)
       Return the list of point indices for the face F.@*/
-    short_type f = short_type(in.pop().to_integer(1,cs->nb_faces()) - config::base_index());
+    short_type f = short_type(in.pop().to_face_number(cs->nb_faces()));
     iarray w = out.pop().create_iarray_h(cs->nb_points_of_face(f));
     for (size_type i=0; i < w.size(); ++i) w[i] = cs->ind_points_of_face(f)[i]+config::base_index();
   } else bad_cmd(cmd);

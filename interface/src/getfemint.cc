@@ -235,6 +235,14 @@ namespace getfemint {
     return cv;
   }
 
+  size_type 
+  mexarg_in::to_face_number(size_type nbf) 
+  {
+    size_type f = to_integer(config::base_index(), 
+                             config::base_index()+nbf-1);
+    f -= config::base_index();
+    return f;
+  }
 
   bool
   mexarg_in::is_object_id(id_type *pid, id_type *pcid) 

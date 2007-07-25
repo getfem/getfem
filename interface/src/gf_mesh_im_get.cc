@@ -145,9 +145,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     } else {
       unsigned nbf = 
 	mim->linked_mesh().structure_of_convex(cv)->nb_faces();
-      id_type f = in.pop().to_integer(config::base_index(), 
-				      nbf - config::base_index());
-      f -= config::base_index();
+      size_type f = in.pop().to_face_number(nbf);
       pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), f, cv);
     }
     out.pop().from_tensor(t);

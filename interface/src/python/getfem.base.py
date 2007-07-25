@@ -102,6 +102,7 @@ class Mesh:
     #@GET    MESH:GET('max cvid')
     #@GET    MESH:GET('pid from cvid')
     #@GET    MESH:GET('pid from coords')
+    #@GET    MESH:GET('orphaned pid')
     #@GET    MESH:GET('cvid from pid')
     #@GET    MESH:GET('faces from pid')
     #@GET    MESH:GET('faces from cvid')

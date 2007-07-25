@@ -46,7 +46,7 @@ function check_asm(iverbose,idebug)
 
   pack;
   assert('size(X)==[4 27]');
-  assert('abs(sum(sum(abs(X)))-10.5) < 4e-15');
+  assert('abs(sum(sum(abs(X)))-10.5) < 8e-15');
   asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf3)');
   X=gf_asm('volumic','V(qdim(#1),#1)+=comp(vBase(#1)){2,1}',mim,mf3);
   assert('nnz(X)==27');

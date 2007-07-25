@@ -235,6 +235,7 @@ normal_of_face(const getfem::mesh& mesh, size_type cv, bgeot::dim_type f, size_t
   @GET    MESH:GET('pid from cvid')
   @GET    MESH:GET('pid from coords')
   @GET    MESH:GET('cvid from pid')
+  @GET    MESH:GET('orphaned pid')
   @GET    MESH:GET('faces from pid')
   @GET    MESH:GET('faces from cvid')
   @GET    MESH:GET('outer faces')
@@ -463,6 +464,16 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (id == getfem::size_type(-1)) w[j] = -1;
       else w[j] = id + config::base_index();
     }
+  } else if (check_cmd(cmd, "orphaned pid", in, out, 0, 0, 0, 1)) {
+    /*@GET [@ivec PIDLST]=MESH:GET('orphaned pid')
+      Returns the list of mesh nodes which are not linked to a convex.
+      @*/
+    dal::bit_vector bv = pmesh->points().index();
+    for (dal::bv_visitor cv(pmesh->convex_index()); !cv.finished(); ++cv) {
+      for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
+        bv.sup(pmesh->ind_points_of_convex(cv)[i]);
+    }
+    out.pop().from_bit_vector(bv);
   } else if (check_cmd(cmd, "cvid from pid", in, out, 1, 1, 0, 1)) {
     /*@GET [@ivec CVLST]=MESH:GET('cvid from pid', @ivec PIDLST)
       Returns the convex #ids that share the point #ids given in PIDLST@MATLAB{ in a row vector (possibly empty)}.
@@ -583,8 +594,8 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       If FPTNUM is not specified, then the normal is evaluated at each
       geometrical node of the face.
       @*/
-    size_type cv = in.pop().to_integer() - config::base_index();
-    size_type f  = in.pop().to_integer() - config::base_index();
+    size_type cv = in.pop().to_convex_number(*pmesh);
+    size_type f  = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
     size_type node = 0; 
     if (in.remaining()) node = in.pop().to_integer(config::base_index(),10000)-config::base_index(); 
     bgeot::base_node N = normal_of_face(*pmesh, cv, f, node);
