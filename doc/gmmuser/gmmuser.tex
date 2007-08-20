@@ -241,9 +241,11 @@ Of course \cpp{gmm::row_matrix<VECT>} is a row matrix and it is impossible to ac
 
 \subsection{dense matrices}
 \index{gmm::dense_matrix$<$T$>$}
-A matrix type like \cpp{gmm::row_matrix< std::vector<double> >} or \cpp{gmm::col_matrix< std::vector<double> >} represents a dense matrix. \gmm provides also the type \\[0.2cm]
- \cpp{gmm::dense_matrix<T>}  \\[0.2cm]
-which is a dense matrix with a contiguous memory and Fortran type access (column major). It is considered as a column and row matrix (column preferred) which means that you can access both to the columns and rows. This type can be interfaced with Lapack.
+It is recommended to use the type \\[0.2cm]
+\cpp{gmm::dense_matrix<T>}  \\[0.2cm]
+to represent a dense matrix type because it is compatible with the Fortran format (column major) and some operations are interfaced with blas and Lapack (see section \ref{sec:lapack}). It is considered as a column and row matrix (column preferred) which means that you can access both to the columns and rows.
+
+However, matrix types as \cpp{gmm::row_matrix< std::vector<double> >} or \cpp{gmm::col_matrix< std::vector<double> >} represent also some dense matrices.
 
 \subsection{sparse matrices}
 \index{gmm::csr_matrix$<$T$>$}
@@ -759,7 +761,7 @@ A standard procedure, \cpp{GMM\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{gmm/
 
 It is highly recommended to catch the errors at least in the main function, because if you do not so, you will not be able to see error messages.
 
-\section{Interface with BLAS, LAPACK or ATLAS}
+\section{Interface with BLAS, LAPACK or ATLAS} \label{sec:lapack}
 \index{LAPACK} \index{ATLAS}
 
 For better performance on dense matrices, it is possible to interface some operations of the type \cpp{gmm::dense_matrix<T>} with \cpp{LAPACK} (http://www.netlib.org/lapack/) or \cpp{ATLAS} (http://math-atlas.sourceforge.net/), for \cpp{T = float, double, std::complex<float> or std::complex<double>}. In fact, concerning \cpp{ATLAS} no specific interface has been made untill now, so the fortran interface of \cpp{ATLAS} should be used.

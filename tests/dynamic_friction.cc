@@ -496,7 +496,7 @@ void friction_problem::solve(void) {
     exp->serie_add_object("vonmisessteps");
   }
   
-//   std::ofstream fileout1("iter", std::ios::out);   
+  std::ofstream fileout1("time", std::ios::out);   
   std::ofstream fileout2("nrj", std::ios::out);
 //   std::ofstream fileout3("vts", std::ios::out);
   std::ofstream fileout4("FN0", std::ios::out);
@@ -791,7 +791,7 @@ void friction_problem::solve(void) {
 	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
 	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
 
-// 	fileout1 << t << "\n";
+ 	fileout1 << t << "\n";
 	fileout2 << J1   << "\n";	
 // 	fileout3 << VV1[N-1] << "\n";
  	fileout4 << -LLN1[ref_dof+N-1] << "\n";
