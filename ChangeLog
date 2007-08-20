@@ -1,22 +1,26 @@
-2006-07-10  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-08-20 Yves Renard  <Yves.Renard@insa-lyon.fr>
+	* src/bgeot_node_tab.h: fixed a little bug due to the fact that the
+	method swap was not overloaded in bgeot::node_tab.
+
+2007-07-10  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/bgeot_node_tab.h: the structure bgeot::node_tab is created
 	to store the nodes of a mesh and identify the too close nodes.
 	This replace the dal::dynamic_tree_sorted with the special
 	comparison which was not completely robust.
 
-2006-07-06  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-07-06  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/bgeot_geometric_trans.cc, src/getfem_fem.cc: adding the
 	dependence beetween geotrans_precomp and fem_precomp structures
 	to fix an important  memory leakage problem.
 
-2006-02-09 Julien Pommier  <pommier@gmm.insa-tlse.fr>
+2007-02-09 Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* interface/*: integrating Matlab and Python interfaces into Getfem
 	  tree.
 
-2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/gmm/gmm_except.h: changing error managing. Errors are now handle
 	thanks to three macros: GMM_ASSERT1(test, msg), GMM_ASSERT2(test, msg),
@@ -27,7 +31,7 @@
 	that the test could not be executed. For instance
 	GMM_ASSERT2(++iteration < 1000, "not converged") is not safe.
 
-2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/*.h: moving header files of Gmm and Getfem into sub-directories
 	src/gmm and src/getfem respectively. dal_std.h, dal_ref.h,
@@ -37,42 +41,42 @@
 	the namespace gmm.
 	
 
-2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/linkmsg.h: moved to src/getfem_linkmsg.h. Integrated to
 	  namespace getfem.
 	
-2006-01-30  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/ftool.h, src/ftool.cc: moved to src/bgeot_ftool.h and
 	  src/bgeot_ftool.cc. Integrated to namespace bgeot.
 	
-2006-01-04  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-01-04  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/bgeot_mesh_level_set.cc: making tests depending on the convex
 	radius for fine refinements. 
 
-2006-01-03  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2007-01-03  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/bgeot_mesh.h: modification of the test which decides when
 	two points are coinciding. Making it more context dependent.
 
-2006-11-10  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-11-10  Yves Renard  <Yves.Renard@insa-lyon.fr>
 
 	* src/dal_ref.h: modification of tab_ref_reg_spaced iterators to fix
 	a bug with VC++ on Gmm++.
 
-2006-11-06  Julien Pommier  <pommier@gmm.insa-tlse.fr>
-	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-11-06  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+	    Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem_composite.cc: fixed a bug in reduced HCT and for
 	finite element having nonsquared M matrix (see kernel documentation).
 
-2006-10-05  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+2006-10-05  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* src/getfem_assembling.h: added asm_H2_dist
 
-2006-09-28  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+2006-09-28  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* src/getfem_mesh_fem.h: added an optional partition of convexes
 	in the mesh_fem which allows to partition the dof in disconnected
@@ -83,7 +87,7 @@
 	convexes, not the intersection of the mesh border with this set of
 	convexes.
 
-2006-07-28  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-07-28  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem_composite.h: adding P1 fem on triangle with an 
 	  additional piecewise linear bubble function.
@@ -124,7 +128,7 @@
 	without 'secondary' part (i.e. non-crack levelsets).
 	
 
-2006-04-21 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-04-21 Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem_composite.cc Adding a C1 composite finite element
 	  on quadrilaterals.
@@ -133,25 +137,25 @@
 
 	* src/getfem_mat_elem_type.cc bug fixed for nonlinear terms.
 
-2006-04-04  Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
+2006-04-04  Yves Renard  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* tests-2.0/ A copy of test programs corresponding to version 2.0
 	is made in this directory in order to test the compatibility of
 	future changes with 2.0 version of Getfem.
 
-2006-02-20  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-02-20  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/gmm_blas_interface.h bug fixed for the interface of matrix-matrix
 	  multiplications with blas. Bug reported by william.greene@att.net on
 	  version 1.7.
 
-2006-02-01  Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-02-01  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_mesh.h adding Bank refinement procedures for simplex
 	meshes. The mesh_fem, mesh_im and mesh_region objects are updated.
 
-2006-01-26  Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
+2006-01-26  Yves Renard  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* src/getfem_fem.cc adding HCT triangle and Raviart-Thomas RT0
@@ -161,19 +165,19 @@
 
 	* src/bgeot_vector.h suppression of class vsvector.
 
-2006-01-21 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-01-21 Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/bgeot_convex_hull.h, src/bgeot_simplexify.h suppression of
 	this files (not well written) only used to simplexify reference
 	elements. Replaced by src/bgeot_convex_ref_simplexified.cc which
 	store the simplexifcation of standard reference elements.
 
-2006-01-07 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2006-01-07 Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/bgeot_poly.h Adding a method to read a polynomial on a stream
 	or a character string.
 
-2006-01-06 Yves Renard,  <Yves.Renard@insa-toulouse.fr>,
+2006-01-06 Yves Renard  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* src/getfem_fem.cc Some bug fixed for non tau-equivalent elements.
@@ -183,11 +187,11 @@
 	* src/getfem_fourth_order.h Adding tools to deal with fourth order
 	pdes like bilaplacian problem. Adding bilaplacian test program.
 
-2005-12-30 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2005-12-30 Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem.cc Hermite segment is fixed !
 
-2005-12-29 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2005-12-29 Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/ftool.h, src/ftool.cc modification of get_token which is now
 	more elaborated and allows to analyze a "Matlab like" langages.
@@ -197,7 +201,7 @@
 	of the format of mesh files (the compatibility with the old version
 	is maintened).
 
-2005-12-27 Yves Renard,  <Yves.Renard@insa-toulouse.fr>
+2005-12-27 Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_modeling.h, src/getfem_assembling.h important modification
 	in the treatment of the Dirichlet condition. The penalization is
@@ -205,7 +209,7 @@
 	treatment of the generalized Dirichlet condition (hu = r) is separated
 	from the classical one (u=r).
 
-2005-12-20 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+2005-12-20 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/bgeot_mesh_structure.h simplification of the structure
 	bgeot::mesh_structure. Important modification of the interface
@@ -219,7 +223,7 @@
 
 	* src/dal_alloc.h suppression of this file.
 
-2005-12-10 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+2005-12-10 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/getfem_config.h deals now with the level of parallelization
 	of Getfem. GETFEM_PARA_LEVEL = 0 : sequential version.
@@ -295,7 +299,7 @@
 	deals with the fem representation of discontinuities across some
 	level sets.
 
-2005-02-25 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+2005-02-25 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/dal_static_stored_object.h, src/dal_static_stored_object.cc
 	centralize the management of the static objects (convex structures,
@@ -306,16 +310,16 @@
 	from boost is introduced and replace the simple pointers on the static
 	stored objects.
 
-2005-02-04 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+2005-02-04 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* contrib/icare/icare.cc a Navier-Stokes solver in Getfem.
 
-2005-02-01 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+2005-02-01 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/dal_std.h, src/gmm_def.h : mathematical definitions are
 	moved from dal_std.h to gmm_def.h
 
-2005-01-31 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+2005-01-31 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/getfem_level_set.h addition of a representation of level sets
 
