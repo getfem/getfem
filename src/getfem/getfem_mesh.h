@@ -271,7 +271,7 @@ namespace getfem {
     void sup_point(size_type i) { if (!is_point_valid(i)) pts.sup_node(i); }
     /// Swap the indexes of points of index i and j in the whole structure.
     void swap_points(size_type i, size_type j)
-    { if (i != j) { pts.swap(i,j); mesh_structure::swap_points(i,j); } }
+    { if (i != j) { pts.swap_points(i,j); mesh_structure::swap_points(i,j); } }
     /** Search a point given its coordinates.
 	@param pt the point that is searched.
 	@return the point index if pt was found in (or approximatively in)

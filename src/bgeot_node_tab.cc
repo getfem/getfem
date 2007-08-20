@@ -95,7 +95,10 @@ namespace bgeot {
       id = search_node(pt);
       if (id == size_type(-1)) {
 	id = dal::dynamic_tas<base_node>::add(pt);
-	for (size_type i = 0; i < sorters.size(); ++i) sorters[i].insert(id);
+	for (size_type i = 0; i < sorters.size(); ++i) {
+	  sorters[i].insert(id);
+	  GMM_ASSERT3(sorters[i].size() == card(), "internal error");
+	}
       }
     }
     return id;

@@ -83,6 +83,7 @@ namespace bgeot {
     void transformation(const base_matrix &M);
 
     void swap_points(size_type i, size_type j);
+    void swap(size_type i, size_type j) { swap_points(i,j); }
     
     node_tab(scalar_type prec_loose = scalar_type(10000));
     node_tab(const node_tab &t);

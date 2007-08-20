@@ -520,7 +520,7 @@ void test_search_point() {
   cout << "point index: " << pid << "\n";
   for (dal::bv_visitor ii(pid); !ii.finished(); ++ii) {
     base_node P = m.points()[ii];
-    size_type j=m.search_point(P);
+    size_type j = m.search_point(P);
     cerr << "search point " << ii << ": " << P << " -> " << j << "\n";
     assert(j == ii);
   }
@@ -553,7 +553,7 @@ int main(void) {
   test_refinable(3, 1);
   test_refinable(3, 2);
   test_refinable(3, 3);
-
+  
   return 0;
 }
 
