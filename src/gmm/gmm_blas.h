@@ -1980,7 +1980,7 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
-    if (is_sparse(l1) || is_sparse(l2)) {
+    if (is_sparse(l1) && is_sparse(l2)) {
       GMM_WARNING3("Inefficient row matrix - col matrix mult for "
 		  "sparse matrices, using temporary");
       mult_row_col_with_temp(l1, l2, l3, 
