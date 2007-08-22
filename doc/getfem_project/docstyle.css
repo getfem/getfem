@@ -8,7 +8,33 @@ body {
 a:link, #textbar a:link {color: #00C;}
 a:visited, #textbar a:visited {color: #909;}
 
-.mlabcode, .cppcode {
+.cppcode {
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	width: auto;
+	margin-left: 5%;
+	color:#000;
+	background-color:#ccc;
+	}
+
+.inlinecppcode {
+	color:#600;
+}
+
+.inlinecppcode a {
+  color:#A00;
+  text-decoration: none; 
+  /*border-bottom: 1px dashed #800;*/
+}
+
+.inlinecppcode a:hover {
+  color:#F00;
+  text-decoration: underline; 
+  /*border-bottom: 1px dashed #800;*/
+}
+
+.mlabcode {
   border-style: dotted;
   border-width:1px;
   border-color:#AAA;
@@ -18,21 +44,21 @@ a:visited, #textbar a:visited {color: #909;}
   color:#000;
   background-color:#DDD;
 }
-.mlabcode pre, .cppcode pre {
+.mlabcode pre {
   margin:0;padding:2px;
   /*overflow : auto;*/
 }
 
-.inlinemlabcode, .inlinecppcode {
-  color:#600;
-}
+.inlinemlabcode {
+	color:#600;
+	}
 
 table 	{
-  border: solid;
-  border-width:1px;
-  border-color:#888;
-  background:#eee;	
-}
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	background:#eee;	
+	}
 
 a.matlab { 
   color:#004;
@@ -94,17 +120,17 @@ div#content {
   color:#009;
   text-align:center;
   margin:0;
-  padding-left:2em;
-  padding-right:2em;
+  padding-left:1em;
+  padding-right:1em;
   padding-bottom:.5em;
   font-size:200%;font-family:monospace;
 }
 
 #content h2 { 
   color:#000;
-  text-align:center;
+  text-align:left;
   margin:0;
-  padding-left:2em;
+  padding-left:0em;
   padding-right:2em;
   padding-bottom:.5em;
   font-size:150%;font-family:monospace;

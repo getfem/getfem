@@ -113,7 +113,7 @@ The following functions build the descriptions:
 
 The vertices correspond to the classical vertices for such reference element. For instance the vertices for the triangle are $(0, 0), (1, 0)$ and $(0, 1)$. It corresponds to the configuration shown in Figure \ref{fig:elem}
 
-If {\tt p} is of type {\tt bgeot::pconvex\_ref } then {\tt p->structure()} is the corresponding convex structure. Thus for example {\tt p->structure()->nb\_points()} gives the number of vertices. The function {\tt p->points()} give the array of vertices, for example {\tt p->points()[0]} is the first vertex. The function {\tt p->is\_in(const base\_node \&pt)} return a real which is negative if the point {\tt pt} is in the element. The function {\tt p->is\_in\_face(short\_type f, const base\_node \&pt)} return a real which is null if the point {\tt pt} is in the face {\tt k} of the element. Other functions can be found in {\tt bgeot\_convex\_ref.h} and {\tt bgeot\_convex.h}.
+If {\tt p} is of type {\tt bgeot::pconvex\_ref } then {\tt p->structure()} is the corresponding convex structure. Thus, for instance, {\tt p->structure()->nb\_points()} gives the number of vertices. The function {\tt p->points()} give the array of vertices and {\tt p->points()[0]} is the first vertex. The function {\tt p->is\_in(const base\_node \&pt)} return a real which is negative if the point {\tt pt} is in the element. The function {\tt p->is\_in\_face(short\_type f, const base\_node \&pt)} return a real which is null if the point {\tt pt} is in the face {\tt k} of the element. Other functions can be found in {\tt bgeot\_convex\_ref.h} and {\tt bgeot\_convex.h}.
 
 
 \section{Base function type}

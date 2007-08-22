@@ -116,14 +116,24 @@ div#content {
   max-width:50em;
 }
 
-#content h2, #content h1 { 
-  color:#000;
+#content h1 { 
+  color:#009;
   text-align:center;
   margin:0;
   padding-left:2em;
   padding-right:2em;
   padding-bottom:.5em;
   font-size:200%;font-family:monospace;
+}
+
+#content h2 { 
+  color:#000;
+  text-align:center;
+  margin:0;
+  padding-left:2em;
+  padding-right:2em;
+  padding-bottom:.5em;
+  font-size:150%;font-family:monospace;
 }
 
 #content pre { 
