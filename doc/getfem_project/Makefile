@@ -11,7 +11,24 @@ FIGS=getfemuserelemf.fig diagram.fig getfemelemelem.fig getfemelemtrans.fig \
      getfemlisttriangleP1comp.fig getfemlisttriangleP1comphier.fig          \
      getfemlistRT0.fig getfemlistnedelec.fig getfemlistsegmenthermite.fig   \
      getfemlistsegmentbubble.fig getfemlisttriangleP1bubble.fig             \
-     getfemlisttriangleP2bubble.fig
+     getfemlisttriangleP2bubble.fig getfemlisttriangleP1withP2face.fig      \
+     getfemlisttriangleP1bubbleface.fig getfemlisttriangleP1linbubble.fig   \
+     getfemlisttriangleP1nonconforming.fig getfemlisttrianglehermite.fig    \
+     getfemlistmorley.fig getfemlistargyris.fig getfemlistHCT.fig           \
+     getfemlistreducedHCT.fig getfemlistquadc1composite.fig                 \
+     getfemlistreducedquadc1composite.fig getfemlisttetrahedronP1bubble.fig \
+     getfemlisttetrahedronP2bubble.fig getfemlisttetrahedronP3bubble.fig    \
+     getfemlisttetrahedronP1bubbleface.fig getfemlisttetrahedronhermite.fig \
+     getfemlistintmethodtriangle1.fig getfemlistintmethodtriangle2.fig      \
+     getfemlistintmethodtriangle3.fig getfemlistintmethodtriangle4.fig      \
+     getfemlistintmethodtriangle5.fig getfemlistintmethodtriangle6.fig      \
+     getfemlistintmethodtriangle7.fig getfemlistintmethodquad2.fig          \
+     getfemlistintmethodquad3.fig getfemlistintmethodquad5.fig              \
+     getfemlistintmethodtriangle2comp.fig getfemlistintmethodtetrahedron1.fig \
+     getfemlistintmethodtetrahedron2.fig getfemlistintmethodtetrahedron3.fig  \
+     getfemlistintmethodtetrahedron5.fig
+
+
 
 
 PDFFIGS=$(FIGS:.fig=.pdf)
@@ -20,7 +37,7 @@ PNGFIGS=$(PDFFIGS:.pdf=.png)
 .SUFFIXES: .tex .dvi .ps .pdf .eps .fig .png
 
 .fig.eps:
-	fig2eps $(@:.eps=.fig)
+	~/bin/fig2eps $(@:.eps=.fig)
 #	fig2dev -L eps $(@:.eps=.fig) > $@
 
 .eps.pdf:
