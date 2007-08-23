@@ -1,6 +1,19 @@
 all : getfem_project.pdf
 
-FIGS=getfemuserelemf.fig diagram.fig getfemelemelem.fig getfemelemtrans.fig
+FIGS=getfemuserelemf.fig diagram.fig getfemelemelem.fig getfemelemtrans.fig \
+     getfemlistsymbols.fig getfemlistsegmentPk.fig getfemlisttriangleP1.fig \
+     getfemlisttriangleP2.fig getfemlisttriangleP3.fig                      \
+     getfemlisttriangleP6.fig getfemlisttetrahedronP1.fig                   \
+     getfemlisttetrahedronP2.fig getfemlisttetrahedronP4.fig                \
+     getfemlistquadQ1.fig getfemlistquadQ3.fig getfemlistcubeQ1.fig         \
+     getfemlistcubeQ3.fig getfemlistprismP1.fig getfemlistprismP3.fig       \
+     getfemlistprismP2P1.fig getfemlistquad8.fig getfemlistsegmenthier.fig  \
+     getfemlisttriangleP1comp.fig getfemlisttriangleP1comphier.fig          \
+     getfemlistRT0.fig getfemlistnedelec.fig getfemlistsegmenthermite.fig   \
+     getfemlistsegmentbubble.fig getfemlisttriangleP1bubble.fig             \
+     getfemlisttriangleP2bubble.fig
+
+
 PDFFIGS=$(FIGS:.fig=.pdf)
 PNGFIGS=$(PDFFIGS:.pdf=.png)
 

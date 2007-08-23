@@ -3,7 +3,8 @@ body {
   color: black; 
   font: 14px Verdana, sans-serif;
   margin: 0; padding: 0.5em; border-width: 0;
-  min-width: 55em !important; position: relative;}
+  min-width: 55em !important; position: relative;
+}
 
 a:link, #textbar a:link {color: #00C;}
 a:visited, #textbar a:visited {color: #909;}
@@ -117,23 +118,39 @@ div#content {
 }
 
 #content h1 { 
-  color:#009;
+  color:#00B;
+  text-decoration:underline;
   text-align:center;
   margin:0;
-  padding-left:2em;
-  padding-right:2em;
+  padding-left:1em;
+  padding-right:1em;
+  padding-top:0.5em;
   padding-bottom:.5em;
   font-size:200%;font-family:monospace;
 }
 
 #content h2 { 
-  color:#000;
-  text-align:center;
+  color:#009;
+  text-align:left;
+  text-decoration:underline;
+  margin:0;
+  padding-left:0em;
+  padding-right:2em;
+  padding-top:1em;
+  padding-bottom:0.2em;
+  font-size:150%;font-family:monospace;
+}
+
+#content h3 { 
+  color:#009;
+  text-align:left;
+  text-decoration:none;
   margin:0;
   padding-left:2em;
   padding-right:2em;
-  padding-bottom:.5em;
-  font-size:150%;font-family:monospace;
+  padding-top:1em;
+  padding-bottom:0.2em;
+  font-size:120%;font-family:monospace;
 }
 
 #content pre { 
@@ -150,10 +167,10 @@ div#content {
 
 /* try to get real subscripts and superscripts */
 #content sup { 
-  color:#800;vertical-align: 70%;
+  color:#000;vertical-align: 50%; padding-left:0.1em;
 }
 #content sub { 
-  color:#080;vertical-align: -30%;
+  color:#000;vertical-align: -30%; padding-left:0.1em;
 }
 
 img { 
