@@ -59,7 +59,8 @@
       href="http://www.osl.iu.edu/research/mtl/" title="Matrix Template Library">MTL</a>. The major
       differences are : simpler use, built as an interface for existing
       matrix types, sub-matrices for any matrix types. The efficiency
-      is comparable.
+      is comparable (see <a href="http://grh.mur.at/misc/sparselib_benchmark/">
+      http://grh.mur.at/misc/sparselib_benchmark/</a> for instance).
     </p>
 
     <p>

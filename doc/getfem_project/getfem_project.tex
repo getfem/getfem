@@ -30,8 +30,8 @@
 \newcommand{\ds}{\displaystyle}
 \oddsidemargin -0.9cm
 \evensidemargin -0.9cm
-\topmargin -1cm
-\textheight 22.5cm
+\topmargin -2.5cm
+\textheight 24cm
 \textwidth 17.6cm
 \headheight 1.0cm
 }
@@ -181,7 +181,7 @@
   {\LARGE Documentation, part \Huge 1} \\[0.5cm]
   \fbox{\Huge \sc Description of the project} \\[0.5cm]
   { \large Yves {\sc Renard}, Julien {\sc Pommier} \footnote{ \it ICJ - CNRS UMR 5208, INSA de Lyon, 20, rue Albert Einstein, 69621 Villeurbanne Cedex, FRANCE, Yves.Renard@insa-lyon.fr } } \\[1.0cm]
-  \today \\[1.0cm]
+  \today \\[2cm]
 }
 \htmlonly{
   \xlink{\htmlimg{logogetfem.png}{The Getfem++ logo}}{http://home.gna.org/getfem/}\\[2cm]
@@ -214,9 +214,9 @@
 The \gf project focuses on the development of a generic finite element library.
 The goal is to provide a finite element framework which allows to easily build  numerical code for the modelisation of system described by partial differential equations (p.d.e.). A special attention is paid to the flexibility of the use of the library in the sense that the switch from a method offered by the library to another is made as easy as possible.
 
-The major point allowing this compared to traditional finite element codes is the complete separation between the description of p.d.e. models and finite element methods. Moreover, a separation is made between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees described on a reference element. \gf can be used to build very general finite elements codes, where the finite elements, integration methods, dimension of the meshes, are just some parameters that can be changed very easily, thus allowing a large spectrum of experimentations. Numerous examples are available in the \filename{tests} directory of the distribution.
+The major point allowing this, compared to traditional finite element codes, is the complete separation between the description of p.d.e. models and finite element methods. Moreover, a separation is made between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees described on a reference element. \gf can be used to build very general finite elements codes, where the finite elements, integration methods, dimension of the meshes, are just some parameters that can be changed very easily, thus allowing a large spectrum of experimentations. Numerous examples are available in the \filename{tests} directory of the distribution.
 
-The goal is also to make the addition of new finite element method as simple as possible. For standard method, a description of the finite element shape functions and the type of connection of degrees of freedom on the reference element is sufficient. Extensions are provided for Hermite elements, piecewise polynomial, non-polynomial and vectorial elements, XFem. Examples of predefined available methods are Pk on simplices in arbitrary degrees and dimensions, Qk on parallelepipeds, P1, P2 with bubble functions, Hermite elements, elements with hierarchic basis (for multigrid methods for instance), discontinuous Pk or Qk, XFem, Argyris, HCT, Raviart-Thomas.
+The goal is also to make the addition of new finite element method as simple as possible. For standard method, a description of the finite element shape functions and the type of connection of degrees of freedom on the reference element is sufficient. Extensions are provided for Hermite elements, piecewise polynomial, non-polynomial, vectorial elements and XFem. Examples of predefined available methods are Pk on simplices in arbitrary degrees and dimensions, Qk on parallelepipeds, P1, P2 with bubble functions, Hermite elements, elements with hierarchic basis (for multigrid methods for instance), discontinuous Pk or Qk, XFem, Argyris, HCT, Raviart-Thomas.
 
 The library also includes the usual tools for finite elements such as assembly procedures for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions, post-processing tools such as extraction of slices from a mesh ...
 
@@ -230,6 +230,8 @@ The future of the project is to continue to develop the finite element framework
   \item Developpement of innovating methods.
   \item Reflection on the optimal way to represent complex p.d.e. models with the maximum of flexibility and reusability. The brick system is a first step in this direction.
 \end{itemize}
+
+The vocation of \gf is to remain a free open source project. The advantage given by the fact to be an open source project is that by proposing a free use, one profits from the experiments of the users who by their tests and the difficulties or bug which they meet make progress the robustness of the algorithms. One also profits from the possible contributions of the users who can find interest to develop new functinalities within the proposed framework. That allows constructive exchanges which clarify the weak points and the strong points of the project.
 
 
 \newpage
@@ -390,9 +392,9 @@ We refer to the file \cpp{getfem\_fem.C} for how to define a new finite element 
 
 \subsection{\gmm library}
 
-\subsubsection{Decription}
+\subsubsection{Description}
 
- \gmm is a linear algebra library which was originally designed to make an interface between the need in linear algebra procedure of \gf and existing linear algebra libraries (MTL, Superlu, Blas, Lapack originally). It rapidly evolves to an independent self-consistent library with its own vector and matrix types. It is now used as a base linear algebra library by several other projects (projet KDE, http://websvn.kde.org/trunk/kdesupport/gmm for instance).
+ \gmm is a linear algebra library which was originally designed to make an interface between the need in linear algebra procedures of \gf and existing linear algebra libraries (MTL, Superlu, Blas, Lapack originally). It rapidly evolves to an independent self-consistent library with its own vector and matrix types. It is now used as a base linear algebra library by several other projects (projet KDE, http://websvn.kde.org/trunk/kdesupport/gmm for instance).
 
 However, it preserves the characteristic to be a potential interface for more specific package. Any vector or matrix type having the minimum of compatibility can be used by generic algorithms of \gmm writing a \cpp{linalg\_traits} structure.
 
@@ -411,22 +413,50 @@ For the moment, \gmm cover the needs of \gf concerning the basic linear algebra 
 
 \subsubsection{Perspectives}
 
-There is potentatialy several points for which \gmm could be improved (partial introduction of expression template for some base types of matrix and vectors, reflection on the way to represent in a more coherent manner sparse sub-vectors and sub-matrices, introduction of concepts ...). However, since \gmm globally cover the needs of \gf and since there exists some other project like Glas  (http://glas.sourceforge.net/) to build a reference C++ library for linear algebra, a global reflection seems not necessary for the moment. This part is considered to be stabilized.
+There is potentatialy several points to be improved in \gmm (partial introduction of expression template for some base types of matrix and vectors, reflection on the way to represent in a more coherent manner sparse sub-vectors and sub-matrices, introduction of C++ concepts ...). However, since \gmm globally cover the needs of \gf and since there exists some other project like Glas  (http://glas.sourceforge.net/) to build a reference C++ library for linear algebra, a global reflection seems not necessary for the moment. This part is considered to be stabilized.
+
+The current vocation of \gmm is to continue to collect generic algorithms and interfaces to some other packages in order to cover new needs of the whole project. The library is now frequently used as a separate package and has also the vocation to collect the contribution of any person who propose some improvements, new algorithms or new interfaces to \gmm.
 
 \subsection{Mesh module}
 
-to be done
+\subsubsection{Description}
 
-\subsubsection{Decription}
+This part of the library has the role to store and manage the meshes, i.e. a collection of elements (real elements) connected to each other by some of their faces. For that, it develops concepts of elements, elements of reference, structure of meshes, collection of nodes, geometric transformations.
+
++ current management of the link between grid and structures which use it (messages ...).
+
+to be finished
+
 \subsubsection{State}
+
+The main C++ source header files are
+\begin{ctableau}{|m{0.3\linewidth}|m{0.6\linewidth}|}{ll} 
+\hline \cpp{bgeot\_convex\_structure.h} & Describes the structure of an element disregarding the coordinates of its vertices.\\
+\hline \cpp{bgeot\_mesh\_structure.h} & Describes the structure of a mesh disregarding the coordinates of the nodes.\\
+\hline \cpp{bgeot\_node\_tab.h} & A node container allowing the fast search of a node.\\
+\hline \cpp{bgeot\_convex.h} & Describes an element with its vertices.\\
+\hline \cpp{bgeot\_convex\_ref.h} & Describe reference elements.\\
+\hline \cpp{bgeot\_mesh.h} & Describes a mesh with the collection of node (but without the description of geometric transformations).\\
+\hline \cpp{bgeot\_geometric\_trans.h} & Describes geometric transformations.\\
+\hline \cpp{bgeot\_geotrans\_inv.h} & A tool to invert geometric transformations.\\
+\hline \cpp{getfem\_mesh.h} & Fully describes a mesh (with the geometric transformations). Includes the Bank algorithm to refine a mesh.\\
+\hline \cpp{getfem\_mesher.h} & An attempt to develop a mesher. To be use with care.\\
+\texonly{\hline}
+\end{ctableau}
+
 \subsubsection{Perspectives}
+
+For the moment, the module is for the moment split into two part which lie in two different namespaces.
+Of course, It would be more coherent to gather the module in only one namespace (\cpp{getfem}).
+
+The file \cpp{bgeot\_mesh.h} could be renamed \cpp{getfem\_basic\_mesh.h}.
 
 
 \subsection{FEM module}
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -435,7 +465,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -444,7 +474,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -453,7 +483,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -462,7 +492,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -471,7 +501,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -480,7 +510,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -489,7 +519,7 @@ to be done
 
 to be done
 
-\subsubsection{Decription}
+\subsubsection{Description}
 \subsubsection{State}
 \subsubsection{Perspectives}
 
@@ -668,7 +698,7 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 
  \subsection{Elements with hierarchical basis}
 
-The idea behind hierarchical basis is the desciption of the solution at different level : a rought level, a more refined level ... In the same discretisation some degrees of freedom represent the rought description, some other the more rafined and so on. This correspond to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of these spaces (this is not the case in classical Lagrange elements when the mesh is refined).\\[0.5cm]
+The idea behind hierarchical basis is the description of the solution at different level : a rought level, a more refined level ... In the same discretisation some degrees of freedom represent the rought description, some other the more rafined and so on. This correspond to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of these spaces (this is not the case in classical Lagrange elements when the mesh is refined).\\[0.5cm]
 Among the advantages, the condition number of  rigidity matrices can be greatly improved, it allows local raffinement and a resolution with a multigrid approach.
 
 \subsubsection{Hiercarchical elements with respect to the degree}
@@ -735,7 +765,7 @@ It is important to use a corresponding composite integration method.
 
 \subsection{Classical vectorial elements}
 
-\subsubsection{Raviart-Thomas 0 elements}
+\subsubsection{Raviart-Thomas of lowest order elements}
 
 \begin{figure}[H]
   \begin{center}
@@ -745,10 +775,10 @@ It is important to use a corresponding composite integration method.
   \label{fig:triangle_comp}
 \end{figure}
 
-\femtab{Raviart-Thomas 0 element on simplices}{"FEM\_RT0(P)"}
+\femtab{Raviart-Thomas of lowest order element on simplices}{"FEM\_RT0(P)"}
 {$1$}{$P$}{$P+1$}{$H(div)$}{Yes \mbox{($Q = P$)}}{No}{Yes}
 
-\femtab{Raviart-Thomas 0 element on parallelepipeds (quadrilaterals, hexahedrals)}{"FEM\_RT0Q(P)"}
+\femtab{Raviart-Thomas of lowest order element on parallelepipeds (quadrilaterals, hexahedrals)}{"FEM\_RT0Q(P)"}
 {$1$}{$P$}{$2P$}{$H(div)$}{Yes \mbox{($Q = P$)}}{No}{Yes}
 
 \subsubsection{Nedelec (or Whitney) edge elements}

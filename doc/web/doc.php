@@ -59,19 +59,11 @@
       </tr>
       <tr>
 	<td class="docptr">
-	  Getfem++ FEM reference<br> <a href="http://download.gna.org/getfem/doc/getfemlist.pdf">[pdf]</a>
+	  Getfem++ project documentation<br> <a href="http://download.gna.org/getfem/doc/getfem_project.pdf">[pdf]</a> <a href="http://download.gna.org/getfem/doc/getfem_project/getfem_project.html">[html]</a>
 	</td>
 	<td>
-	  Description of finite element and integration methods implemented in Getfem.
+	  Description of the project including the present state, the perspectives and the exhaustive list of finite element and integration methods implemented in Getfem.
 	</td>	
-      </tr>
-      <tr>
-	<td class="docptr">
-	  Getfem++ kernel documentation<br> <a href="http://download.gna.org/getfem/doc/getfemelem.pdf">[pdf]</a>
-	</td>
-	<td>
-	  An introduction to the finite element kernel. Describe extensively the geometric transformations, computation of elementary tensors.
-	</td>
       </tr>
   </table>
   <p>

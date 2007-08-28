@@ -35,7 +35,7 @@
     <li>
     <p> Benchmark of C++ Libraries for Sparse Matrix Computation </p> 
     <a href="http://grh.mur.at/misc/sparselib_benchmark/"> 
-			   http://grh.mur.at/misc/sparselib_benchmark/
+			   http://grh.mur.at/misc/sparselib_benchmark/</a>.
     </li>
     </ul>
     </div>
