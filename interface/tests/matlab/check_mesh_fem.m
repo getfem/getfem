@@ -97,6 +97,10 @@ function check_mesh_fem(iverbose,idebug)
   P=gf_mesh_get(m,'pts');
   V=gf_mesh_get(m, 'pid from coords', P);
   pid=gf_mesh_get(m,'pid');
+  find(V~=-1)
+  pid
+  P
+  gf_mesh_get(m, 'char')
   assert('find(V~=-1)==pid');
   a=gf_mesh_get(m, 'faces from pid', pid);
   b=[1 1 1 2 1 3 2 1 2 2 2 3 2 4 6 1 6 2 6 3 6 4 3 1 3 2 3 3 3 4 4 ...

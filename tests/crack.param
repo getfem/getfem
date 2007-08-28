@@ -72,7 +72,7 @@ ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
 	                % 5 = spider fem enrichment
 
 
-RADIUS_ENR_AREA = 0.2;
+RADIUS_ENR_AREA = 0.1;
 CUTOFF_FUNC = 2; % 0 for the exponential cutoff. 
                  % 1 for a 3rd degree polynomial cutoff.
                  % 2 for a 5th degree polynomial cutoff. 

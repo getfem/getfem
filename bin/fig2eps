@@ -1,0 +1,65 @@
+#!/bin/bash
+# please don't try to understand how it works !
+# Yves.Renard@imag.fr, 04.01.98
+# Last modification :  04.01.99
+
+gg=$(basename "$1" .fig)
+cd $(dirname "$1");
+ff="$gg"
+
+if [ ! -f "$ff.fig" ]; then
+  echo "Usage : fig2eps filename or fig2eps filename.fig"
+  exit
+fi
+
+echo "processing $gg.fig"
+echo "xfig figure + latex formula --> eps. "
+echo "this may take a while ..."
+
+tex="$ff.tex_0954236"
+
+rm -f ${ff}.ps_0954236 ${ff}.tex_0954236 ${ff}_0954236.tex ${ff}_0954236.log
+rm -f ${ff}_0954236.input ${ff}_0954236.aux  ${ff}_0954236.dvi missfont.log
+
+# anciennement les rapports etaient -m0.9976 et -m1.04794
+fig2dev -L pstex -m1.0 ${ff}.fig > ${ff}.ps_0954236
+fig2dev -L pstex_t -m1.0 -p ${ff}.ps_0954236 ${ff}.fig > ${ff}.tex_0954236
+
+echo "\\documentclass[a4paper,12pt,twoside]{article}" > ${ff}_0954236.tex
+echo "\\usepackage{amsmath,amssymb}" >> ${ff}_0954236.tex
+echo "\\usepackage[dvips]{color}" >> ${ff}_0954236.tex
+echo "\\usepackage{amsfonts}" >> ${ff}_0954236.tex
+echo "\\usepackage[dvips]{graphicx}" >> ${ff}_0954236.tex
+echo "\\usepackage{eepic,epic,epsfig}" >> ${ff}_0954236.tex
+echo "\\usepackage{here}" >> ${ff}_0954236.tex
+echo "\\newfont{\\emtwelv}{cmr10 scaled 4}" >> ${ff}_0954236.tex
+echo "\\pagestyle{empty}"  >> ${ff}_0954236.tex
+echo "\\oddsidemargin -2.6cm"  >> ${ff}_0954236.tex
+echo "\\evensidemargin -2.6cm"  >> ${ff}_0954236.tex
+echo "\\topmargin -1cm"  >> ${ff}_0954236.tex
+echo "\\textheight 29.7cm"  >> ${ff}_0954236.tex
+echo "\\textwidth 21cm"  >> ${ff}_0954236.tex
+echo "\\headheight 0cm"  >> ${ff}_0954236.tex
+echo "\\newfont{\\msbmtwelve} {msbm10 scaled \\magstep1}" >> ${ff}_0954236.tex
+echo "\\begin{document} \\noindent" >> ${ff}_0954236.tex
+echo "{\\emtwelv \\textcolor{white}{.}}\\\\" >> ${ff}_0954236.tex
+echo "\\mbox{\\input{"${ff}".tex_0954236}}" >> ${ff}_0954236.tex
+echo "{\\emtwelv \\textcolor{white}{.}}" >> ${ff}_0954236.tex
+echo "\\end{document}" >> ${ff}_0954236.tex
+echo R > ${ff}_0954236.input
+
+# rm -f ${ff}.log
+latex ${ff}_0954236.tex < ${ff}_0954236.input > /dev/null
+dvips -E ${ff}_0954236 -o ${ff}_0954236.ps >& /dev/null
+
+mv -f ${ff}_0954236.ps ${ff}.eps
+
+# la suite est pour quand l'inclusion de fichier compactes marchera en Latex ..
+# rm -f ${ff}.eps.bb ${ff}.eps.gz
+# grep %%BoundingBox ${ff}.eps > ${ff}.eps.bb
+# gzip ${ff}.eps
+
+rm -f ${ff}.ps_0954236 ${ff}.tex_0954236 ${ff}_0954236.tex ${ff}_0954236.log
+rm -f ${ff}_0954236.input ${ff}_0954236.aux  ${ff}_0954236.dvi missfont.log
+
+epstopdf ${ff}.eps

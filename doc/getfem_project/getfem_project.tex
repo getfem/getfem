@@ -421,12 +421,16 @@ The current vocation of \gmm is to continue to collect generic algorithms and in
 
 \subsubsection{Description}
 
+<<<<<<< .mine
+\subsubsection{Description}
+=======
 This part of the library has the role to store and manage the meshes, i.e. a collection of elements (real elements) connected to each other by some of their faces. For that, it develops concepts of elements, elements of reference, structure of meshes, collection of nodes, geometric transformations.
 
 + current management of the link between grid and structures which use it (messages ...).
 
 to be finished
 
+>>>>>>> .r2670
 \subsubsection{State}
 
 The main C++ source header files are
@@ -517,13 +521,46 @@ to be done
 
 \subsection{Matlab and Python interfaces}
 
-to be done
+A simplified interface of getfem++ is provided, so that it is possible to use getfem in other languages.
 
 \subsubsection{Description}
+
+All sources are located in the \texttt{interface/src} directory. The interface is composed of one large library \texttt{getfemint} (which stands for getfem interaction), which is acts as a layer above the getfem++ library, and is used by both the python and matlab interfaces.
+
+This interface is not something that is generated automatically from c++ sources (as that could be the case with tools such as swig). It is something that has been designed as a simplified and consistent interface to getfem. Porting it to a new language should be quite easy (assuming the language provides some structures for dense arrays manipulations).
+
 \subsubsection{State}
+
+Here is a list of the various files, with a short description:
+\begin{itemize}
+\item \cpp{getfem_interface.cc}. This is the bridge between the script language and the getfem interface. The function getfem_interface_main is exported as an \cpp{extern "C"} function, so this is a sort of c++ barrier between the script language and the getfem interface (exporting only a C interface avoids many compilation problems).
+\item \cpp{matlab/gfm_mex.c}. The matlab interface. The only thing it knows about getfem is in \cpp{getfem_interface.hh}.
+\item \cpp{python/getfem_python.c}. The python interface. The only thing it knows about getfem is in \cpp{getfem_interface.hh}.
+
+\item \cpp{gfi_array.h, gfi_array.c}. Both gfm_mex.c and getfem_python.c need a simple convention on how to send and receive arrays, and object handles, from \cpp{getfem_interface_main()}. This file provide such functionnality.
+
+\item \cpp{getfemint_object.h}. Not all getfem objects are exported, only a selected subset, mostly mesh, mesh_im, mesh_fem, slice, bricks, etc. They are all wrapped in a common interface, which is \cpp{getfemint::getfem_object}. 
+
+\item \cpp{getfemint_mesh.h, getfemint_mesh_fem.h, ...}. All the wrapped getfem++ objects. Some of them are quite complicated (getfemint_gsparse which export some kind of mutable sparse matrix that can switch between different storage types, and real of complex elements).
+
+\item \cpp{gf_workspace.cc, gf_delete.cc}. Memory management for getfem objects. There is a layer in getfemint::getfem_object which handles the dependency between for example a \cpp{getfemint_mesh} and a \cpp{getfemint_mesh_fem}. It makes sure that no object will be destroyed while there is still another getfem_object using it. The goal is to make sure that under no circumstances the user is able to crash getfem (and the host program, matlab or python) by passing incorrect argument to the getfem interface. 
+
+It also provides a kind of workspace stack, which was designed to simplify handling and cleaning of many getfem objects in matlab (since matlab does not have 'object destructors').
+
+\item \cpp{getfemint.h, getfemint.cc}. Define the \cpp{mexarg_in}, \cpp{mexarg_out} classes, which are used to parse the list of input and output arguments to the getfem interface functions. The name is not adequate anymore since any reference to ``mex'' has been moved into \cpp{gfm_mex.c}.
+
+\item \cpp{gf_mesh.cc, gf_mesh_get.cc, gf_mesh_set.cc, gf_fem.cc, ...}. All the functions exported be the getfem interfaces, sorted by object type (\cpp{gf_mesh*}, \cpp{gf_mesh_fem*}, \cpp{gf_fem*}), and then organized as one for the object construction (\cpp{gf_mesh}), one for the object modification (\cpp{gf_mesh_set}), and one for the object inquiry (\cpp{gf_mesh_get}). Each of these files contain one main function, that receives a \cpp{mexargs_in} and \cpp{mexargs_out} stack of arguments. It parses then, and usually interprets the first argument as the name of a subfunction (\cpp{gf_mesh_get('nbpts')} in matlab,  or \cpp{Mesh.nbpts()} in python).
+
+\item \cpp{matlab/gfm_rpx_mexint.c}. An alternative to \cpp{gfm_mex.c} which is used when the ``\cpp{--enable-matlab-rpc}'' is passed to the \cpp{./configure} script. The main use for that is debugging the interface, since in that case, the matlab interface communicates via sockets with a ``getfem_server'' program, so it is possible to debug that server program, and identify memory leaks or anything else without having to mess with matlab (it is pain to debug).
+
+\item \cpp{python/getfem.base.py}. The python interface is available as a '\cpp{getfem.py}' file which is built during compilation. Its source file is \cpp{getfem.base.py}, it contains just the list of classes, and for each class the names of the member functions.
+
+\end{itemize}
+
+\emph{Adding a new function to the getfem interface}: if one want to add a new function \cpp{gf_mesh_get(m, ``foobar'', ...)}, then the main file to modify is \cpp{gf_mesh_get.cc}. Remember to check every argument passed to the function in order to make sure that the user cannot crash matlab or python when using that function. 
+Do not forget to add documentation for that function: in \cpp{gf_mesh_get.cc}, this is the documentation that appears in the matlab help files (that is when on type '\cpp{help gf_mesh_get}' at the matlab prompt), and in the getfem_python autogenerated documentation. In order to have ``foobar'' as a member function of the python Mesh class, it is necessary to add it in the \cpp{getfem.base.py} file. It is also necessary to add documentation in the \cpp{interface/doc/getfemmatlab.tex}, which was at the beginning the only documentation available. It is still very matlab oriented, and a little bit redundant with the documentation embedded in \cpp{gf_mesh_get.cc}.
+
 \subsubsection{Perspectives}
-
-
 
 \section{Global perspectives of structuration, consolidation and growth}
 

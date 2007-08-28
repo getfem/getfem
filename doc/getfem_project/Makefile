@@ -37,7 +37,7 @@ PNGFIGS=$(PDFFIGS:.pdf=.png)
 .SUFFIXES: .tex .dvi .ps .pdf .eps .fig .png
 
 .fig.eps:
-	~/bin/fig2eps $(@:.eps=.fig)
+	../../bin/fig2eps $(@:.eps=.fig)
 #	fig2dev -L eps $(@:.eps=.fig) > $@
 
 .eps.pdf:
