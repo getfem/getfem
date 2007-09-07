@@ -62,7 +62,7 @@
 	  Getfem++ project documentation<br> <a href="http://download.gna.org/getfem/doc/getfem_project.pdf">[pdf]</a> <a href="http://download.gna.org/getfem/doc/getfem_project/getfem_project.html">[html]</a>
 	</td>
 	<td>
-	  Description of the project including the present state, the perspectives and the exhaustive list of finite element and integration methods implemented in Getfem.
+	  Description of the project including the present state, the perspectives and an exhaustive list of finite element and integration methods implemented in Getfem.
 	</td>	
       </tr>
   </table>

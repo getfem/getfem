@@ -14,6 +14,7 @@
 %\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs mais le fichier produit n'est pas beau
 \usepackage[english]{babel}
 \usepackage{alltt}
+\usepackage[english]{babel}
 % \usepackage{textcomp]
 
 
@@ -88,6 +89,7 @@
   \newcommand{\sum}{\htmlsym{sum}}
   \newcommand{\subset}{\htmlsym{sub}}
   \newcommand{\int}{{\Large\htmlsym{int}}}
+  \newcommand{\tild}{~}
 }
 \texonly{
   \newcommand{\WEB}[2]{\href{#1}{#2}}
@@ -394,9 +396,9 @@ We refer to the file \cpp{getfem\_fem.C} for how to define a new finite element 
 
 \subsubsection{Description}
 
- \gmm is a linear algebra library which was originally designed to make an interface between the need in linear algebra procedures of \gf and existing linear algebra libraries (MTL, Superlu, Blas, Lapack originally). It rapidly evolves to an independent self-consistent library with its own vector and matrix types. It is now used as a base linear algebra library by several other projects (projet KDE, http://websvn.kde.org/trunk/kdesupport/gmm for instance).
+ \gmm is a linear algebra library which was originally designed to make an interface between the need in linear algebra procedures of \gf and existing free linear algebra libraries (MTL, Superlu, Blas, Lapack originally). It rapidly evolves to an independent self-consistent library with its own vector and matrix types. It is now used as a base linear algebra library by several other projects (projet KDE, \WEBB{http://websvn.kde.org/trunk/kdesupport/gmm} for instance).
 
-However, it preserves the characteristic to be a potential interface for more specific package. Any vector or matrix type having the minimum of compatibility can be used by generic algorithms of \gmm writing a \cpp{linalg\_traits} structure.
+However, it preserves the characteristic to be a potential interface for more specific packages. Any vector or matrix type having the minimum of compatibility can be used by generic algorithms of \gmm writing a \cpp{linalg\_traits} structure.
 
 A \gmm standalone version is distributed since release 1.5 of \gf. It is however developed inside the \gf project even though since release 3.0 it is completely independent of any \gf file.
 
@@ -413,27 +415,24 @@ For the moment, \gmm cover the needs of \gf concerning the basic linear algebra 
 
 \subsubsection{Perspectives}
 
-There is potentatialy several points to be improved in \gmm (partial introduction of expression template for some base types of matrix and vectors, reflection on the way to represent in a more coherent manner sparse sub-vectors and sub-matrices, introduction of C++ concepts ...). However, since \gmm globally cover the needs of \gf and since there exists some other project like Glas  (http://glas.sourceforge.net/) to build a reference C++ library for linear algebra, a global reflection seems not necessary for the moment. This part is considered to be stabilized.
+There is potentatialy several points to be improved in \gmm (partial introduction of expression template for some base types of matrix and vectors, reflection on the way to represent in a more coherent manner sparse sub-vectors and sub-matrices, introduction of C++ concepts ...). However, since \gmm globally cover the needs of \gf and since there exists some other project like Glas  (\WEBB{http://glas.sourceforge.net/}) to build a reference C++ library for linear algebra, a global reflection seems not necessary for the moment. This part is considered to be stabilized.
 
-The current vocation of \gmm is to continue to collect generic algorithms and interfaces to some other packages in order to cover new needs of the whole project. The library is now frequently used as a separate package and has also the vocation to collect the contribution of any person who propose some improvements, new algorithms or new interfaces to \gmm.
+The current vocation of \gmm is to continue to collect generic algorithms and interfaces to some other packages in order to cover new needs of the whole project. The library is now frequently used as a separate package and has also the vocation to collect the contribution of any person who propose some improvements, new algorithms or new interfaces.
 
 \subsection{Mesh module}
 
 \subsubsection{Description}
 
-<<<<<<< .mine
-\subsubsection{Description}
-=======
-This part of the library has the role to store and manage the meshes, i.e. a collection of elements (real elements) connected to each other by some of their faces. For that, it develops concepts of elements, elements of reference, structure of meshes, collection of nodes, geometric transformations.
 
-+ current management of the link between grid and structures which use it (messages ...).
+This part of the library has the role to store and manage the meshes, i.e. a collection of elements (real elements) connected to each other by some of their faces. For that, it develops concepts of elements, elements of reference, structure of meshes, collection of nodes, geometric transformations, subpart of the boundary or subzone of the mesh.
 
-to be finished
+There is no really effective meshing capabilities  available for the moment in \gf. The meshes of complex objects must be imported from existing meshers such as gmsh or GiD. Some importing functions of meshes have been written and can be easily extended for other formats.
 
->>>>>>> .r2670
+The object which represents a mesh declared in the file \cpp{getfem\_mesh.h} and which is used as a basis for handling of the mehses in \gf manages also the possibility for the structures depending on a mesh (see MESHFEM and MESHIM modules) to react to the evolution of the mesh (addition or removal of elements ...).
+
 \subsubsection{State}
 
-The main C++ source header files are
+The main C++ header files are
 \begin{ctableau}{|m{0.3\linewidth}|m{0.6\linewidth}|}{ll} 
 \hline \cpp{bgeot\_convex\_structure.h} & Describes the structure of an element disregarding the coordinates of its vertices.\\
 \hline \cpp{bgeot\_mesh\_structure.h} & Describes the structure of a mesh disregarding the coordinates of the nodes.\\
@@ -443,30 +442,100 @@ The main C++ source header files are
 \hline \cpp{bgeot\_mesh.h} & Describes a mesh with the collection of node (but without the description of geometric transformations).\\
 \hline \cpp{bgeot\_geometric\_trans.h} & Describes geometric transformations.\\
 \hline \cpp{bgeot\_geotrans\_inv.h} & A tool to invert geometric transformations.\\
-\hline \cpp{getfem\_mesh.h} & Fully describes a mesh (with the geometric transformations). Includes the Bank algorithm to refine a mesh.\\
-\hline \cpp{getfem\_mesher.h} & An attempt to develop a mesher. To be use with care.\\
-\texonly{\hline}
+\hline \cpp{getfem\_mesh.h} & Fully describes a mesh (with the geometric transformations, subparts of the mesh, support for parallelization). Includes the Bank algorithm to refine a mesh.\\
+\hline \cpp{getfem\_mesher.h} & An attempt to develop a mesher. To be use with care.
+\texonly{\\ \hline}
 \end{ctableau}
+
+A prototype of mesher is in the files \cpp{getfem\_mesher.h} and \cpp{getfem\_mesher.cc} which makes it possible to mesh geometries defined by some level sets. However, the continuation of the development of this mesher is not planned for the moment because the project \gf has vocation to focus on the finite element methods themselves.
 
 \subsubsection{Perspectives}
 
-For the moment, the module is for the moment split into two part which lie in two different namespaces.
+For the moment, the module is split into two parts which lie into two different namespaces.
 Of course, It would be more coherent to gather the module in only one namespace (\cpp{getfem}).
 
-The file \cpp{bgeot\_mesh.h} could be renamed \cpp{getfem\_basic\_mesh.h}.
+(Note: The file \cpp{bgeot\_mesh.h} could be renamed \cpp{getfem\_basic\_mesh.h}).
 
+A possible work to do on this part would be to examine the manner of storing the meshes and possibly to make a bibliographical study on the manner of storing a mesh. It would be necessary to supplement documentation and to examine also the management of the events and the way in which the structures which depend on the mesh react to these events.
 
 \subsection{FEM module}
 
-to be done
-
 \subsubsection{Description}
+
+The FEM module is the part of \gf which describes the finite elements at the element level and the degrees of freedom. Finite element methods can be of different types. They could be scalar or vectorial, polynomial, piecewise polynomial or non-polynomial, equivalent via the geometric transformation or not. Moreover, the description of the degrees of freedom have to be such that it is possible to gather the compatible degrees of freedom between two neighbor elements in a generic way (for instance connecting a Lagrange 2D element to another Lagrange 1D element).
+
 \subsubsection{State}
+
+The main files of the module are
+\begin{ctableau}{|m{0.3\linewidth}|m{0.6\linewidth}|}{ll} 
+\hline \cpp{getfem\_fem.h} & Abstract definition of a finite element and a degree of freedom. Interface for the exported functions of \cpp{getfem\_fem.cc} and \cpp{getfem\_fem\_composite.cc}. \\
+\hline \cpp{getfem\_fem.cc} & Definition of the polynomial finite elements and interface to get the descriptor on these elements (function \cpp{pfem fem\_descriptor(std::string name)}).\\
+\hline \cpp{getfem\_fem\_composite.cc} & Definition of the piecewise polynomial finite elements.
+\texonly{\\ \hline}
+\end{ctableau}
+
+The two files \cpp{getfem\_fem.cc} and \cpp{getfem\_fem\_composite.cc} mainly contains all the finite element description for basic elements. A exhaustive list of the defined finite elements is given in Appendix A.
+
+Some other files define some specific finite element such as
+\cpp{getfem\_fem\_level\_set.h} which is a complex construction which
+allows to ``cut'' a existing element by one or several level sets (see
+the LEVELSET module).
+
+The manner to describe the degrees of freedom globally satisfies the
+needing (connecting dof from an element to another in a generic way)
+but is a little bit obscure and too much complicated.
+
+Conversely, the way to represent non-equivalent elements with the
+supplementary matrix \cpp{M} has proven its efficiency on several
+elements (Hermites elements, Argyris ...).
+
 \subsubsection{Perspectives}
+
+the principal dissatisfaction of this module is that description of
+the degrees of freedom is not completely satisfactory. It is the
+principal reason why one documentation on how to build an element from
+A to Z was not made for the moment because description of the degrees
+of freedom was conceived to be temporary. An effort of design is thus
+to be provided to completely stabilize this module mainly thus with
+regard to the description of degrees of freedom but also perhaps the
+description of finite elements which could be partially externalized in
+a similar way to the cubature methods , at least for the simplest
+finite elements (equivalent and polynomial finite elements).
 
 
 \subsection{CUBATURE module}
 
+\subsubsection{Description}
+
+The CUBATURE module gives access to the numerical integration methods
+on reference elements. In fact it does not only contain some cubature
+formulas because it also give access to some exact integration
+methods. However, the exact integration methods are only usable for
+polynomial element and affine geometric transformations. This explain
+why exact integration methods are not widely used. The description of
+cubature formulas is done either directly in the file
+\cpp{getfem\_integration.h} or via a description file in the directory
+\cpp{cubature} of \gf. The addition of new cubature formulas in then
+very simple, it suffices to reference the element on which it is
+defined and the list of Gauss points in a file and add it to this
+directory. Additionally, In order to integrate terms defined on a
+boundary of a domain, the description should also contains the
+reference to a method of same order on each face of the element.
+
+\subsubsection{State}
+
+This module meets the present needs for the project and is considered
+as stabilized.  The list of available cubature formulas is given in
+Appendix B.
+
+
+\subsubsection{Perspectives}
+
+No change needed for the moment. An effort could be done on the documentation to describe completely how to add a new cubature formula (format off descritption files).
+
+
+\subsection{MESHFEM module}
+
 to be done
 
 \subsubsection{Description}
@@ -474,7 +543,7 @@ to be done
 \subsubsection{Perspectives}
 
 
-\subsection{MESHFEM module}
+\subsection{LEVELSET module}
 
 to be done
 
@@ -596,6 +665,8 @@ The conclusion of this is that \cpp{dal} and \cpp{bgeot} namespaces can be advan
 \subsection{Basic types used}
 
 Basic type of integer, real ... used. to be done.
+
+\newpage
 
 \section{Appendix A. Finite element method list}
 
@@ -1163,6 +1234,7 @@ This element is not \mbox{$\tau$-equivalent} (The matrix $M$ is not equal to ide
 \femtab{Hermite element on a tetrahedron}{"FEM\_HERMITE(3)"}
 {$3$}{$3$}{$20$}{$C^0$}{No \mbox{($Q = 1$)}}{No}{Yes}
 
+\newpage
 
 \section{Appendix B. Cubature method list}
 
@@ -1678,8 +1750,7 @@ For the HCT element, it is advised to use the \cpp{IM\_HCT\_COMPOSITE(im)} compo
 
 
 
-
-
+\newpage
 
 \section{Appendix C. Some basic computations between reference and real elements}
 \subsection{Volume integral}
@@ -1759,7 +1830,7 @@ Those two tensor can be computed once on the whole reference element if the geom
 
 \bibitem{EncyclopCubature}
   R. {\texonly{\sc} Cools}
-  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, \cpp{http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, \WEB{http://www.cs.kuleuven.ac.be/\tild ines/research/ecf/ecf.html}{http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
   
 \bibitem{Xfem}
   N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}

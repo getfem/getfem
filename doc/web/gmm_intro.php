@@ -1,9 +1,9 @@
 <?php $thisPage="Gmm++ HomePage"; include("header.inc") ?>
   <div id="content">
-    <h1>What is GMM++</h1>
+    <h1>What is Gmm++</h1>
     <div id="biglogo"><img src="images/logo_gmm.png" alt="the Gmm++ logo"></div>
     <p>
-      <abbr title="Generic Matrix Methods">GMM++</abbr> is a
+      <abbr title="Generic Matrix Methods">Gmm++</abbr> is a
       generic C++ template library for sparse, dense and skyline
       matrices. It is built as a set of generic algorithms (mult, add,
       copy, sub-matrices, dense and sparse solvers ...) for any
@@ -55,7 +55,7 @@
 	<li> Eigenvalues computation for dense matrices.</li>
       </ul>
     <p>
-      The structure of GMM++ is largely inspired from <a
+      The structure of Gmm++ is largely inspired from <a
       href="http://www.osl.iu.edu/research/mtl/" title="Matrix Template Library">MTL</a>. The major
       differences are : simpler use, built as an interface for existing
       matrix types, sub-matrices for any matrix types. The efficiency
@@ -81,23 +81,23 @@
     </p>
 
     <p>
-      GMM++ has been tested with
+      Gmm++ has been tested with
       <a href="http://www.cs.berkeley.edu/~yozo">QD</a>
       an
       efficient library for double double and quadruple double
       precision. See on the documentation how to link QD. This means
-      that GMM++ should work with any reasonable arbitrary precision
+      that Gmm++ should work with any reasonable arbitrary precision
       floating point library.
     </p>
 
     <h1>Licence</h1>     
-    GMM++ is freely distributed under the terms of the <a
+    Gmm++ is freely distributed under the terms of the <a
     href="http://www.gnu.org/copyleft/lesser.html">Gnu Lesser General
     Public License</a>.
 
-    <h1>Contribute to GMM++</h1>
+    <h1>Contribute to Gmm++</h1>
     <p>
-      GMM++ offers a framework to develop efficient methods for linear algebra. This library is open-source and will remain open-source. Here are some examples of possible extensions:
+      Gmm++ offers a framework to develop efficient methods for linear algebra. This library is and will remain open-source. Here are some examples of possible extensions:
     </p>
       <ul>
 	<li>Specialize some algorithms to optimize them for particular matrix implementation.</li>
@@ -105,6 +105,14 @@
 	<li>Eigenvalues computation for sparse matrices. </li>
 	<li> ...</li>
       </ul>
+
+    <h1>Gmm++ contributors</h1>
+    <p>
+       Michel Fournié (Additive Schwarz), Julien Pommier, Benjamin Schleimer (least square CG).
+    </p>
+    <p>
+       Many thanks to Jeremy G. Siek and Lie-Quan Lee for their nice work developing MTL-ITL on which Gmm++ is greatly inspired.
+    </p>
 
     <h1>Random test procedures</h1>
     <p>
@@ -122,7 +130,7 @@
     
     <p> 
       You are encouraged to test them, runing a "make
-      check" on the distribution of GMM++ and sending us a bug report
+      check" on the distribution of Gmm++ and sending us a bug report
       if it fails. We will also appreciate if you send us new test
       procedures.
     </p>

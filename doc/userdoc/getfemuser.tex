@@ -641,7 +641,7 @@ A name of a method can be retrieved thanks to the following functions\\[0.5cm]
 \begin{cppcode}
   std::string femname = getfem::name\_of\_fem(pf);
 \end{cppcode}
-A non exhautive list (see \cite{FEMLIST} or \getfemfemh for exhaustive lists) of finite element methods is given by
+A non exhautive list (see \cite{GETFEMPROJECT} or \getfemfemh for exhaustive lists) of finite element methods is given by
 \input{../kernel/getfemelemfem.tex}
 
 An alternative way to obtain a Lagrange polynomial fem suitable for a given geometric transformation is to use
@@ -786,7 +786,7 @@ A name of a method can be retrieved with
 \begin{cppcode}
   std::string im\_name = getfem::name\_of\_int\_method(ppi);
 \end{cppcode}
-A non exhautive list (see \cite{FEMLIST} or \getfemintegrationh for exhaustive lists) of integration methods is given below.
+A non exhautive list (see \cite{GETFEMPROJECT} or \getfemintegrationh for exhaustive lists) of integration methods is given below.
 
 Examples of exact integration methods:
 \input{../kernel/getfemelemint.tex}
@@ -2512,7 +2512,7 @@ The program \filename{elastostatic} is built in a same way and compute the solut
 
 \bibitem{EncyclopCubature}
   R. {\texonly{\sc} Cools}
-  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, \WEBB{http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
   
 \bibitem{Xfem}
   N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
@@ -2524,13 +2524,9 @@ The program \filename{elastostatic} is built in a same way and compute the solut
   {\it The Finite Element Method Displayed}, 
   J. Wiley \& Sons,  New York, 1984.
 
-\bibitem{BASCOMP}
+\bibitem{GETFEMPROJECT}
   Y. {\texonly{\sc} Renard},
-  {\it Elementary Computations in \gf }, 2002.
-
-\bibitem{FEMLIST}
-  Y. {\texonly{\sc} Renard},
-  {\it Description of Finite Element and Integration Methods in \gf }, 2002.
+  {\it The \gf project }, \WEBB{http://download.gna.org/getfem/doc/getfem_project.pdf}
 
 \end{thebibliography}
 
