@@ -3,11 +3,12 @@
   <div id="content">
     <div style="text-align:center;"><img src="images/logo_getfem.png" alt="the Getfem++ logo"></div>
     <h1>What is Getfem++</h1>
-    <p>The Getfem++ project focuses on the development of a generic and efficient
-      C++ library for finite element methods elementary computations. The
+    <p>The Getfem++ project focuses on the development of a generic and
+      efficient C++ library for finite element methods. The
       goal is to provide a library allowing the computation of any elementary
       matrix (even for mixed finite element methods) on the largest class of
-      methods and elements, and for arbitrary dimension (i.e. not only 2D and 3D problems). 
+      methods and elements, and for arbitrary dimension
+      (i.e. not only 2D and 3D problems). 
     </p>
     <p>
       It offers a complete separation between integration methods
@@ -25,12 +26,11 @@
     </p>
     <p>
       The addition of a new finite element method is
-      straightforward. Its description on the 
+      relatively easy. Its description on the 
       reference element must be provided (in most of
       the cases, this is the description of the basis functions, and
       nothing more).  Extensions are provided for Hermite elements,
-      piecewise polynomial, non-polynomial and vectorial elements,
-      XFem.
+      piecewise polynomial, non-polynomial, vectorial elements and XFem.
     </p>
     <p>
       The library also includes the usual tools for finite
@@ -44,12 +44,12 @@
       codes, where the finite elements, integration methods, dimension
       of the meshes, are just some parameters that can be changed very
       easily, thus allowing a large spectrum of
-      experimentations. Numerous examples are provided (see the <a
+      experimentations. Several examples are provided (see the <a
       href="shots.html">screenshot section</a>).
     </p>
 
     <p>
-      Getfem++ has no meshing capabilities (apart regular meshes),
+      Getfem++ has no meshing capabilities (apart regular meshes and a small attempt),
       hence it is necessary to import meshes. Imports formats
       currently known by getfem are <a
       href="http://gid.cimne.upc.es/">GiD</a> , <a

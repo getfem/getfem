@@ -456,7 +456,7 @@ Of course, It would be more coherent to gather the module in only one namespace 
 
 (Note: The file \cpp{bgeot\_mesh.h} could be renamed \cpp{getfem\_basic\_mesh.h}).
 
-A possible work to do on this part would be to examine the manner of storing the meshes and possibly to make a bibliographical study on the manner of storing a mesh. It would be necessary to supplement documentation and to examine also the management of the events and the way in which the structures which depend on the mesh react to these events.
+A possible work to do on this part would be to examine the manner of storing the meshes and possibly to make a bibliographical study on the manner of storing a mesh (for instance see \cite{remacle2002}). It would be necessary to supplement documentation and to examine also the management of the events and the way in which the structures which depend on the mesh react to these events.
 
 \subsection{FEM module}
 
@@ -531,7 +531,9 @@ Appendix B.
 
 \subsubsection{Perspectives}
 
-No change needed for the moment. An effort could be done on the documentation to describe completely how to add a new cubature formula (format off descritption files).
+No change needed for the moment. An effort could be done on the
+documentation to describe completely how to add a new cubature formula
+(format off descritption files).
 
 
 \subsection{MESHFEM module}
@@ -1815,34 +1817,40 @@ Those two tensor can be computed once on the whole reference element if the geom
 % \bibliography{all}
 
 \bibitem{bank1983}
-  R.E. {\texonly{\sc} Bank, A.H. Sherman, A. Weiser}
+  R.E. Bank, A.H. Sherman, A. Weiser
   {\it Refinement algorithms and data structures for regular local mesh refinement},
-  in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, 1983
+  in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, (1983).
 
 \bibitem{ciarlet1978}
-  P.G.. {\texonly{\sc} Ciarlet},
-  {\it The finite element method for elliptic problems}, Studies in Mathematics and its Applications vol. 4, North-Holland, 1978.
+  P.G.. Ciarlet,
+  {\it The finite element method for elliptic problems}, Studies in Mathematics and its Applications vol. 4 (1978), North-Holland.
 
 \bibitem{dh-to1984} 
-  {\texonly{\sc} G. Dhatt, and  G. Touzot}
+  G. Dhatt, and  G. Touzot
   {\it The Finite Element Method Displayed}, 
-  J. Wiley \& Sons,  New York, 1984.
+  J. Wiley \& Sons,  New York, (1984).
 
 \bibitem{EncyclopCubature}
-  R. {\texonly{\sc} Cools}
+  R. Cools
   {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, \WEB{http://www.cs.kuleuven.ac.be/\tild ines/research/ecf/ecf.html}{http://www.cs.kuleuven.ac.be/\tilda ines/research/ecf/ecf.html}
   
 \bibitem{Xfem}
-  N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
+  N. Moës, J. Dolbow and T. Belytschko
   {\it A finite element method for crack growth without remeshing },
-  Int. J. Num. Meth. Engng. 46, 131-150 (1999).  
+  Int. J. Num. Meth. Engng. 46 (1999), 131-150.  
 
 \bibitem{nedelec1991}
-  J.-C. {\texonly{\sc} Nedelec},
-  {\it Notions sur les techniques d'{\'e}l{\'e}ments finis}, Ellipses, SMAI, Math{\'e}matiques \& Applications n$^o7$, 1991.
+  J.-C. Nedelec,
+  {\it Notions sur les techniques d'{\'e}l{\'e}ments finis}, Ellipses, SMAI, Math{\'e}matiques \& Applications n$^o7$, (1991).
+
+\bibitem{remacle2002}
+  J-F. Remacle, M. Shephard,
+  {\it An algorithm oriented database}
+  Int. J. Num. Meth. Engng. 58 (2003), 349-374.  
+
 
 \bibitem{so-se-do2004}
-  P. {\texonly{\sc} Solin, K. Segeth, I. Dolezel},
+  P. Solin, K. Segeth, I. Dolezel,
   {\it Higher-Order Finite Element Methods}, Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
 
 \end{thebibliography}

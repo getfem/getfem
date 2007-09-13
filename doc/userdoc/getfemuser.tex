@@ -1212,15 +1212,15 @@ expression is reduced against the hook tensor.
   \item[\cpp{Hess(\#i)}] : evaluate the value of the Hessian of the
     base functions of the \textit{ith} \cpp{mesh\_fem}
 
-  \item[\cpp{Normal()}]: (New in getfem++-1.7) evaluate the unit
+  \item[\cpp{Normal()}]: evaluate the unit
     normal (should not be used for volumic integrations !)
 
-  \item[\cpp{NonLinear\$x(\#mf1,\ldots\#mfn)}] : (New in getfem++-1.7)
+  \item[\cpp{NonLinear\$x(\#mf1,\ldots\#mfn)}] :
     evaluate the \textit{xth} non-linear term (inserted with
     \cpp{push\_nonlinear\_term(pnonlinear\_elem\_term)}) using the listed
     mesh\_fem objects.
   
-  \item (New in getfem++-1.7) you may reference any data object inside
+  \item you may reference any data object inside
     the \cpp{comp} command, and perform reductions inside the
     \cpp{comp()}. This feature is mostly interesting for speeding up
     assembly of nonlinear terms (see \getfemnonlinearelasticityh for
