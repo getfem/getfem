@@ -1265,13 +1265,15 @@ void asm_H2_semi_dist_map(const getfem::mesh_im &mim,
   assem.push_vec(V);
   assem.assembly(rg);
 }
+
+}
   
 void bilaplacian_crack_problem::compute_H2_error_field(const plain_vector &U) {
 
     getfem::mesh_fem mf_P0(mesh);
     mf_P0.set_finite_element(mesh.convex_index(), getfem::classical_fem(mesh.trans_of_convex(0), 0));
     plain_vector V(mf_P0.nb_dof());
-    asm_H2_semi_dist_map(mim, mf_u(), U, exact_sol.mf, exact_sol.U, mf_P0, V);
+    getfem::asm_H2_semi_dist_map(mim, mf_u(), U, exact_sol.mf, exact_sol.U, mf_P0, V);
     cout << "exporting H2 error map\n";
     getfem::vtk_export exp2(datafilename + "_H2.vtk");
     exp2.exporting(mf_P0);
@@ -1281,7 +1283,6 @@ void bilaplacian_crack_problem::compute_H2_error_field(const plain_vector &U) {
     gmm::vecsave(datafilename + "_H2.V", V);
 }
 
-}
 //function to save a vector for matlab
 template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
   std::ofstream f(fname.c_str()); f.precision(16);
