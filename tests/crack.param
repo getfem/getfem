@@ -24,7 +24,7 @@ else
 end;
 
 
-NX = 40;            	          % space step.
+NX = 15;            	          % space step.
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
@@ -34,7 +34,8 @@ if (~QUAD)
   %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
   FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
-  INTEGRATION = 'IM_TRIANGLE(6)';
+  INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
+  %INTEGRATION = 'IM_TRIANGLE(6)';
   FEM_TYPE_P = 'FEM_PK(2,1)';
   MORTAR_FEM_TYPE = FEM_TYPE;
 else
@@ -64,7 +65,7 @@ ADDITIONAL_CRACK = 0;
 %GLOBAL_FUNCTION_MF = "crack.meshfem"
 %GLOBAL_FUNCTION_U  = "crack.U"
 
-ENRICHMENT_OPTION = 1;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 5;  % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
@@ -81,8 +82,8 @@ CUTOFF1 = 0.01;
 CUTOFF0 = 0.49;
 
 SPIDER_RADIUS =  0.3;
-SPIDER_NR = 30;         % size of the cartesian mesh in r for spider fem
-SPIDER_NTHETA = 30;      % size of the cartesian mesh in theta for spider fem
+SPIDER_NR = 15;         % size of the cartesian mesh in r for spider fem
+SPIDER_NTHETA = 15;      % size of the cartesian mesh in theta for spider fem
 
 SPIDER_K=1;             % order of the  spider fem 
 

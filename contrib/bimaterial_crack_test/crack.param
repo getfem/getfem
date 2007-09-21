@@ -14,17 +14,18 @@ LAMBDA = 1.0;           % Lamé coefficient.
 QUAD = 0;
 
 
-BIMATERIAL = 0;         % 1 : To enable the bimaterial case
+BIMATERIAL = 1;         % 1 : To enable the bimaterial case
 
 if BIMATERIAL
-  LAMBDA_UP = 1.0;
+  LAMBDA_UP = 10.0;
   LAMBDA_DOWN = 1.0;
-  MU_UP = 1.0;	
+  MU_UP = 10.0;	
   MU_DOWN = 1.0;
 end
 
 REFERENCE_TEST = 0;
 ERROR_TO_REF_SOL = 0;
+
 %%%%%   discretisation parameters  :                     	      %%%%%
 
 if (~QUAD) 
@@ -34,7 +35,7 @@ else
   MESH_TYPE = 'GT_QK(2, 1)';
 end;
 
-NX = 15;          	          % space step.
+NX = 20;  	          % space step.
 
 
 
@@ -78,7 +79,7 @@ ADDITIONAL_CRACK = 0;
 %GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 5;  % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
@@ -87,6 +88,7 @@ ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 
 
 RADIUS_ENR_AREA = 0.2;
+
 CUTOFF_FUNC = 2; % 0 for the exponential cutoff. 
                  % 1 for a 3rd degree polynomial cutoff
                  % 2 for a 5th degree polynomial cutoff
@@ -94,12 +96,13 @@ CUTOFF = 0.2;
 CUTOFF1 = 0.01;
 CUTOFF0 = 0.49;
 
-SPIDER_RADIUS =  0.3;
-SPIDER_NR = 30;         % size of the cartesian mesh in r for spider fem
-SPIDER_NTHETA = 30;      % size of the cartesian mesh in theta for spider fem
-
-SPIDER_K=1;             % order of the  spider fem 
-
+SPIDER_RADIUS =  0.4;
+SPIDER_NR = 65;               % size of the cartesian mesh in r for spider fem
+SPIDER_NTHETA = 65;           % size of the cartesian mesh in theta for spider fem
+SPIDER_K=1;                   % order of the  spider fem 
+SPIDER_BIMAT_ENRICHMENT = 1;  % 0 for a sqrt spider enrichment
+                              % 1 for sqrt(r)cos(ln(r)) and sqrt(r)sin(ln(r)) spider enrichment
+                              
 
 RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 
@@ -107,5 +110,5 @@ RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 ROOTFILENAME = 'crack';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
 
-EXACT_SOL_NUM=6 % 1 for mode I, 2 for mode II, 6 for a combination
+EXACT_SOL_NUM=1 % 1 for mode I, 2 for mode II, 6 for a combination
                 % of modes

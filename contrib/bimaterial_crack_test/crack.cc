@@ -72,7 +72,22 @@ struct crack_problem {
   getfem::mesh_fem mf_partition_of_unity;
   getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
-  getfem::spider_fem *spider;
+  
+  base_small_vector translation;
+
+  struct spider_param {
+    getfem::spider_fem *fem;
+    scalar_type theta0;
+    scalar_type radius;
+    unsigned Nr;
+    unsigned Ntheta;
+    int K;
+    int bimat_enrichment;
+    scalar_type epsilon;
+  };
+
+  spider_param spider;
+
   getfem::mesh_fem mf_us;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
@@ -90,12 +105,7 @@ struct crack_problem {
   double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
-  base_small_vector translation;
-  scalar_type theta0;
-  scalar_type spider_radius;
-  unsigned spider_Nr;
-  unsigned spider_Ntheta;
-  int spider_K;
+ 
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
@@ -192,16 +202,56 @@ void crack_problem::init(void) {
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  spider_radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
-  spider_Nr = PARAM.int_value("SPIDER_NR","Spider_Nr ");
-  spider_Ntheta = PARAM.int_value("SPIDER_NTHETA","Ntheta ");
-  spider_K = PARAM.int_value("SPIDER_K","K ");
+  bimaterial = PARAM.int_value("BIMATERIAL", "bimaterial interface crack");
+  
+  if (bimaterial == 1){
+    mu = PARAM.real_value("MU", "Lame coefficient mu"); 
+    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
+    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
+    lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
+    lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
+    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
+  }
+  else{
 
+    mu = PARAM.real_value("MU", "Lame coefficient mu");
+    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
+  }
+  
+  
+  spider.radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
+  spider.Nr = PARAM.int_value("SPIDER_NR","Spider_Nr ");
+  spider.Ntheta = PARAM.int_value("SPIDER_NTHETA","Ntheta ");
+  spider.K = PARAM.int_value("SPIDER_K","K ");
+  spider.theta0 = 0;
+  spider.bimat_enrichment = PARAM.int_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment");
+
+  /* The following constants are taken from the Chang and Xu paper of 2007 
+     titled The singular stress field and stress intensity factors of a crack 
+     terminating at a bimaterial interface published in IJMECSCI. epsilon 
+     being the constant present in the asymptotic displacement analytic solution: 
+     r^{1/2} * cos (\epsilon Ln(r)) * f(\theta) and  r^{1/2} * sin (\epsilon Ln(r)) * f(\theta).
+  */
+  
+  if (spider.bimat_enrichment == 1){
+    scalar_type nu1 = (lambda_up) / (2.*lambda_up + mu_up);
+    scalar_type nu2 = (lambda_down) / (2.*lambda_down + mu_down);
+    scalar_type kappa1 = 3. - 4. * nu1;
+    scalar_type kappa2 = 3. - 4. * nu2;
+    if (lambda_up == lambda_down && mu_up == mu_down)
+      cout << "ERROR... Connot use the spider bimaterial enrichment with an isotropic homogenuous material (beta = 0/0!!!)... You should either use a bimaterial or disable the spider bimaterial enrichment" << endl;
+    
+    scalar_type beta = (mu_up*(kappa2-1.) - mu_down*(kappa1-1.)) / (mu_up*(kappa2+1.) - mu_down*(kappa1+1.));
+      spider.epsilon = 1./(2.*M_PI) * log( (1.-beta) / (1.+beta) );
+  
+    
+    //spider.epsilon = PARAM.real_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment");
+  }
+  
   translation.resize(2); 
   translation[0] =0.5;
   translation[1] =0.;
-  theta0 =0;
-  
+
   /* First step : build the mesh */
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
@@ -220,30 +270,12 @@ void crack_problem::init(void) {
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
   
-  bimaterial = PARAM.int_value("BIMATERIAL", "bimaterial interface crack");
-
   GLOBAL_FUNCTION_MF = PARAM.string_value("GLOBAL_FUNCTION_MF");
   GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
 
   reference_test = PARAM.int_value("REFERENCE_TEST", "Reference test"); 
 
   unsigned EXACT_SOL_NUM = PARAM.int_value("EXACT_SOL_NUM", "Exact solution function number"); 
-  
-
-
-  if (bimaterial == 1){
-    mu = PARAM.real_value("MU", "Lame coefficient mu"); 
-    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
-    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
-    lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
-    lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
-    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-  }
-  else{
-
-    mu = PARAM.real_value("MU", "Lame coefficient mu");
-    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-  }
   
 
   cutoff_func = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
@@ -493,18 +525,20 @@ bool crack_problem::solve(plain_vector &U) {
   
   mf_sing_u.set_functions(vfunc);
   
-  
-  if (enrichment_option == 3 || enrichment_option == 4) {
-    spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-				    spider_Ntheta, spider_K, translation,
-				    theta0);
-    mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
+
+  if (enrichment_option == SPIDER_FEM_ALONE || 
+      enrichment_option == SPIDER_FEM_ENRICHMENT) {
+    spider.fem = new getfem::spider_fem(spider.radius, mim, spider.Nr,
+					spider.Ntheta, spider.K, translation,
+					spider.theta0, spider.bimat_enrichment,
+					spider.epsilon);
+    mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
 	mf_us.set_finite_element(i,0);
       }
     }
-    spider->check();
+    spider.fem->check();
   }
 
   switch (enrichment_option) {
@@ -717,7 +751,7 @@ bool crack_problem::solve(plain_vector &U) {
     F[i] = -0.2;
   getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
   
-  if (bimaterial ==1)
+  if (bimaterial == 1)
     pNEUMANN = & NEUMANN1;
   else
     pNEUMANN = & NEUMANN;
@@ -819,14 +853,15 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Total number of variables : " << final_model->nb_dof() << endl;
   getfem::standard_model_state MS(*final_model);
   gmm::iteration iter(residual, 1, 40000);
+  cout << "Solving..." << endl;
   getfem::standard_solve(MS, *final_model, iter);
-  
+  cout << "Solving... done" << endl;
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
   
   if(reference_test)
     {
-      cout << "Reference solution export...";
+      cout << "Exporting reference solution...";
       dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
       getfem::mesh_fem mf_refined(mesh, N);
       std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
@@ -1068,12 +1103,12 @@ int main(int argc, char *argv[]) {
 	
 	//gmm::add(gmm::scaled(interp_U, -1), ref_U);
 	  
-
-	cout << "TO ref L2 ERROR:"<< getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
-						  ref_mf, ref_U)
-	     << endl << "To ref H1 ERROR:"
-	     << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
-				    ref_mf, ref_U) << "\n";
+	
+	cout << "To ref L2 ERROR:" << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
+							  ref_mf, ref_U) << endl;
+	
+	cout << "To ref H1 ERROR:" << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
+							  ref_mf, ref_U) << endl;
 	
 	//cout << "L2 ERROR:"<< getfem::asm_L2_norm(ref_mim, ref_mf, ref_U)
 	//     << endl << "H1 ERROR:"
@@ -1081,21 +1116,21 @@ int main(int argc, char *argv[]) {
 	
       }
       
-      
 #ifdef VALIDATE_XFEM
-      cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
-						p.exact_sol.mf, p.exact_sol.U)
-	   << endl << "H1 ERROR:"
-	   << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
-	   			  p.exact_sol.mf, p.exact_sol.U) << "\n";
 
-      // cout << "Relative L2 Error"  << getfem::asm_L2_norm(p.mim,p.mf_u(),U)<<endl;
-      //cout << "Relative L2 Error"  << getfem::asm_H1_norm(p.mim,p.mf_u(),U)<<endl;
-      
-      
-           
+      else {
+	cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
+						  p.exact_sol.mf, p.exact_sol.U)
+	     << endl << "H1 ERROR:"
+	     << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
+				    p.exact_sol.mf, p.exact_sol.U) << "\n";
+	
+      }
+
       cout << "L2 norm of the solution:"  << getfem::asm_L2_norm(p.mim,p.mf_u(),U)<<endl;
       cout << "H1 norm of the solution:"  << getfem::asm_H1_norm(p.mim,p.mf_u(),U)<<endl;
+      
+      
 
       /* cout << "OLD ERROR L2:" 
 	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 

@@ -34,16 +34,18 @@
 #include "getfem_regular_meshes.h"
 
 namespace getfem {
-
-
+  
+  
   struct Xfem_sqrtr : public virtual_Xfem_func {
+    
+    
     virtual scalar_type val(const Xfem_func_context &c)
     { return ::sqrt(c.xreal[0]); }
-    //    { return ::sqrt(c.xreal[0])*cos(log(c.xreal[0])); }
+    //   { return ::sqrt(c.xreal[0])*cos(log(c.xreal[0])); }
     virtual base_small_vector grad(const Xfem_func_context &c)
     { base_small_vector V(2); 
       V[0] = 1. / (2.* ::sqrt(c.xreal[0])); return V; }
-      // V[0] =  (1./::sqrt(c.xreal[0]))( (cos(log(::sqrt(c.xreal[0])^2)))/2. - sin(log(::sqrt(c.xreal[0])^2)) ); return V; }
+    // V[0] =  (1./::sqrt(c.xreal[0]))( (cos(log(::sqrt(c.xreal[0])^2)))/2. - sin(log(::sqrt(c.xreal[0])^2)) ); return V; }
     virtual base_matrix hess(const Xfem_func_context &c) {
       base_matrix m(2,2); 
       m(0,0) = 1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]);
@@ -51,24 +53,66 @@ namespace getfem {
       return m;
     }
   };
+  
+  
+  struct Xfem_sqrtrcos : public virtual_Xfem_func {
+    
+    scalar_type eps;
+    virtual scalar_type val(const Xfem_func_context &c) {
+      return ::sqrt(c.xreal[0]) * cos( eps*log(c.xreal[0]) ); 
+    }
+    
+    virtual base_small_vector grad(const Xfem_func_context &c) {
+      base_small_vector V(2); 
+      V[0] =  ( 1./::sqrt(c.xreal[0]) ) * ( cos( eps*log(c.xreal[0]) )/2. - eps*sin( eps*log(c.xreal[0]) ) ); 
+      return V; 
+    }
+    
+    virtual base_matrix hess(const Xfem_func_context &c) {
+      base_matrix m(2,2); 
+      m(0,0) = (1./::pow(sqrt(c.xreal[0]),3)) * (  ((-1./4.) - pow(eps,2)) *  cos( eps*log(c.xreal[0]) ) );
+      return m;
+    }
+  };
+  
 
+  struct Xfem_sqrtrsin : public virtual_Xfem_func {
+    
+    scalar_type eps; 
+    virtual scalar_type val(const Xfem_func_context &c) {
+      return ::sqrt(c.xreal[0]) * sin( eps*log(c.xreal[0]) );  
+    }
+      
+    virtual base_small_vector grad(const Xfem_func_context &c) {
+      base_small_vector V(2); 
+      V[0] =  ( 1./::sqrt(c.xreal[0]) ) * ( sin( eps*log(c.xreal[0]) )/2. - eps*cos( eps*log(c.xreal[0]) ) );
+      return V;
+    }
+      
+    virtual base_matrix hess(const Xfem_func_context &c) {
+      base_matrix m(2,2); 
+      m(0,0) = (1./::pow(sqrt(c.xreal[0]),3)) * (  ((-1./4.) - pow(eps,2)) *  sin( eps*log(c.xreal[0]) ) );
+      return m;
+    }
+  };
+  
   /*
-  struct Xfem_sqrtr : public virtual_Xfem_func {
+    struct Xfem_sqrtr : public virtual_Xfem_func {
     virtual scalar_type val(const Xfem_func_context &c)
     { return 1; }
     virtual base_small_vector grad(const Xfem_func_context &c)
     { base_small_vector V(2); return V; }
     virtual base_matrix hess(const Xfem_func_context &c) {
-      base_matrix m(2,2); return m;
+    base_matrix m(2,2); return m;
     }
-  };
+    };
   */
-
+  
   struct interpolated_transformation : public virtual_interpolated_func{
     /* Polar transformation and its gradient. */
     base_small_vector trans;
     scalar_type theta0;
-     
+    
     virtual void val(const base_node &xreal, base_node &v) const {
       base_node w =  xreal - trans;
       v[0] = gmm::vect_norm2(w);
@@ -99,6 +143,10 @@ namespace getfem {
     scalar_type R;
     unsigned Nr, Ntheta, K;
     Xfem_sqrtr Sqrtr;
+    Xfem_sqrtrcos Sqrtrcos;
+    Xfem_sqrtrsin Sqrtrsin;
+    int bimat_enrichment;
+    scalar_type epsilon;
     pfem final_fem;
     interpolated_transformation itt;
 
@@ -108,9 +156,9 @@ namespace getfem {
     
     ~spider_fem () { if (final_fem) del_interpolated_fem(final_fem); }
     spider_fem(scalar_type R_, mesh_im &mim, unsigned Nr_, unsigned Ntheta_,
-	       unsigned K_, base_small_vector translation, scalar_type theta0)
+	       unsigned K_, base_small_vector translation, scalar_type theta0, int bimat_enrichment_, scalar_type epsilon_)
         : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_),
-	  Ntheta(Ntheta_), K(K_), final_fem(0) {
+	  Ntheta(Ntheta_), K(K_), bimat_enrichment(bimat_enrichment_), epsilon(epsilon_), final_fem(0) {
         
 	itt.trans = translation;
 	itt.theta0 = theta0;
@@ -140,9 +188,19 @@ namespace getfem {
 	std::stringstream Qkname;
 	Qkname << "FEM_QK(2," << K << ")";
 	Qk = fem_descriptor(Qkname.str());
-	enriched_Qk.add_func(Qk, &Sqrtr);
+	if(bimat_enrichment == 0){
+	  cout << "Using SpiderFem homogenuous isotropic enrichment [sqrt(r)]..." << endl;
+	  enriched_Qk.add_func(Qk, &Sqrtr);
+	}
+	else {
+	  cout << "Using SpiderFem bimaterial enrichement..." << endl;
+	  Sqrtrcos.eps = epsilon;
+	  Sqrtrsin.eps = epsilon;
+	  enriched_Qk.add_func(Qk, &Sqrtrsin);
+	  //enriched_Qk.add_func(Qk, &Sqrtrcos);
+	}
 	enriched_Qk.valid();
-
+	
 	cartesian_fem.set_finite_element(cartesian.convex_index(),
 					 &enriched_Qk);  
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
