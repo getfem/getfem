@@ -60,7 +60,7 @@ namespace getfem {
   /* return the crack tip in P,
      and the outgoing tangent of the crack in T,
      and the normal in N */
-  void get_crack_tip_and_orientation(const level_set &ls,
+  void get_crack_tip_and_orientation(const level_set &/* ls */,
                                      base_node &P, 
                                      base_small_vector &T, base_small_vector &N) {
     cerr << __PRETTY_FUNCTION__ << " IS TO BE DONE\n";

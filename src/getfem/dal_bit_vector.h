@@ -295,10 +295,10 @@ namespace dal {
       else return (((*(const bit_container*)(this))[i / WD_BIT]) & 
 		   (bit_support(1) << (i & WD_MASK))) ? true : false; }
     void add(size_type i) { (*this)[i] = true; }
-    /** set the interval [i...i+nb-1] to true */
+    /** set the interval [i .. i+nb-1] to true */
     void add(size_type i, size_type nb);
     void sup(size_type i) { (*this)[i] = false; }
-    /** set the interval [i...i+nb-1] to true */
+    /** set the interval [i .. i+nb-1] to false */
     void sup(size_type i, size_type nb);
     int first(void) const { return (card() == 0) ? -1 : int(first_true()); }
     int last(void) const { return (card() == 0) ? -1 : int(last_true()); }

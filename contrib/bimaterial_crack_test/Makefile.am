@@ -1,7 +1,8 @@
 # SUBDIRS = 
 
 check_PROGRAMS =                 \
-	bimaterial_crack_test
+	bimaterial_crack_test    \
+	crack
 
 CLEANFILES = 
 

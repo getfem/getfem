@@ -147,7 +147,10 @@ namespace gmm {
 	}
 	if (unbounded) lambda *= R(10);
 	else  lambda = (lambda_max + lambda_min) / R(2);
-	if (valy <= R(2)*valx &&
+	// valy <= R(2)*valx replaced by
+	// valy <= valx + gmm::abs(derivative)*lambda_init
+	// for compatibility with negative values (08.24.07).
+	if (valy <= valx + R(2)*gmm::abs(derivative)*lambda &&
 	    (lambda < R(lambda_init*1E-8) ||
 	     (!unbounded && lambda_max-lambda_min < R(lambda_init*1E-8))))
 	{ blocked = true; lambda = lambda_init; break; }

@@ -131,6 +131,7 @@ namespace getfem {
     virtual ~interpolated_transformation() {}
   };
 
+  DAL_SIMPLE_KEY(special_cartesianfem_key, pfem);
 
   class spider_fem {
     
@@ -139,7 +140,7 @@ namespace getfem {
     mesh cartesian;
     mesh_fem cartesian_fem;
     pfem Qk;
-    Xfem enriched_Qk;
+    Xfem *penriched_Qk;
     scalar_type R;
     unsigned Nr, Ntheta, K;
     Xfem_sqrtr Sqrtr;
@@ -154,10 +155,14 @@ namespace getfem {
     
     pfem get_pfem(void) { return final_fem; }
     
-    ~spider_fem () { if (final_fem) del_interpolated_fem(final_fem); }
+    ~spider_fem () { 
+      pfem pf = penriched_Qk;
+      dal::del_stored_object(pf);
+      if (final_fem) del_interpolated_fem(final_fem);
+    }
     spider_fem(scalar_type R_, mesh_im &mim, unsigned Nr_, unsigned Ntheta_,
-	       unsigned K_, base_small_vector translation, scalar_type theta0, int bimat_enrichment_, scalar_type epsilon_)
-        : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_),
+	       unsigned K_, base_small_vector translation, scalar_type theta0, int bimat_enrichment_, scalar_type epsilon_ = scalar_type(0))
+        : cartesian_fem(cartesian), R(R_), Nr(Nr_),
 	  Ntheta(Ntheta_), K(K_), bimat_enrichment(bimat_enrichment_), epsilon(epsilon_), final_fem(0) {
         
 	itt.trans = translation;
@@ -188,21 +193,25 @@ namespace getfem {
 	std::stringstream Qkname;
 	Qkname << "FEM_QK(2," << K << ")";
 	Qk = fem_descriptor(Qkname.str());
+	penriched_Qk = new Xfem(0);
 	if(bimat_enrichment == 0){
 	  cout << "Using SpiderFem homogenuous isotropic enrichment [sqrt(r)]..." << endl;
-	  enriched_Qk.add_func(Qk, &Sqrtr);
+	  penriched_Qk->add_func(Qk, &Sqrtr);
 	}
 	else {
 	  cout << "Using SpiderFem bimaterial enrichement..." << endl;
 	  Sqrtrcos.eps = epsilon;
 	  Sqrtrsin.eps = epsilon;
-	  enriched_Qk.add_func(Qk, &Sqrtrsin);
-	  //enriched_Qk.add_func(Qk, &Sqrtrcos);
+	  penriched_Qk->add_func(Qk, &Sqrtrsin);
+	  penriched_Qk->add_func(Qk, &Sqrtrcos);
 	}
-	enriched_Qk.valid();
-	
-	cartesian_fem.set_finite_element(cartesian.convex_index(),
-					 &enriched_Qk);  
+	penriched_Qk->valid();
+	pfem pf = penriched_Qk;
+	dal::add_stored_object(new special_cartesianfem_key(pf), pf,
+			   pf->ref_convex(0),
+			   pf->node_tab(0));
+
+	cartesian_fem.set_finite_element(cartesian.convex_index(), pf);  
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
 	//	cout << "blocked dofs = " <<  blocked_dof << endl;
 

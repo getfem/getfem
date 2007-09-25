@@ -21,7 +21,8 @@
 //========================================================================
 
 /**@file gmm_MUMPS_interface.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date December 8, 2005.
    @brief Interface with MUMPS (LU direct solver for sparse matrices).
 */
