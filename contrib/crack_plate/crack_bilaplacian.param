@@ -3,70 +3,77 @@
 % parameters for program bilaplacian                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% domain parameters                   %%%%%
+%%%%%  domain parameters                   %%%%%
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
 
-
+%%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-MESH_NOISED_ANALYTICALY = 0 ; 
-NX = 9;                 % space step
-
-
-
-
-D = 10.0;    % "flexion modulus"
-KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
-            % plate model (N=2 only).
-if (KL)     % For Kirchhoff-Love plate model only
-  NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
-end;
-
- % MESH_FILE='/home-local/jlasry/source++/getfem++/tests/meshes/disc_P2_h2.mesh'
-
-QUAD = 1;
+NX = 21;                 % space step
+MESH_FILE='/home-local/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_12.mesh'
+TRANSLAT_X = 0.02 ;
+TRANSLAT_Y = 0.03 ;
  
 
-TRI_MESH_TYPE = 'GT_PK(2,1)';        % triangles
-% TRI_INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
-% TRI_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
-TRI_DATA_FEM_TYPE = 'FEM_PK(2, 5)';
-TRI_PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
-if 0   % hermite element
-	TRI_FEM_TYPE = 'FEM_PK(2,1)'; %HERMITE(2)';   % not conformal -> problem
-	TRI_DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-elseif 0  % argyris element
-	TRI_FEM_TYPE = 'FEM_ARGYRIS';
-	TRI_INTEGRATION = 'IM_TRIANGLE(13)';
-	TRI_DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-else
-	%    TRI_FEM_TYPE = 'FEM_HCT_TRIANGLE';
-	TRI_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
-	TRI_DIRICHLET_FEM_TYPE = 'FEM_PK(2,1)';
-	%     TRI_DIRICHLET_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE' ;    
-	TRI_DIRICHLET_DER_FEM_TYPE = 'FEM_PK(2,1)';
-	% TRI_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
-	TRI_INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
-	%     TRI_MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';    
-	TRI_MORTAR_FEM_TYPE ='FEM_PK(2,1)';
-	TRI_MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
+% Parameters for the plate   ------------------------------------------
+FT = 5.0;      % parameter for the exact solution
+D = 10.0;      % "flexion modulus"
+KL = 1;        % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
+               % plate model (N=2 only).
+if (KL)        % For Kirchhoff-Love plate model only
+  NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
 end;
+EPSILON=0.1 % thickness 
 
 
 
-QUAD_MESH_TYPE = 'GT_QK(2,1)';
-QUAD_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE'; 
-%QUAD_FEM_TYPE = 'FEM_QK(2,2)';
-%QUAD_FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
-QUAD_DATA_FEM_TYPE = 'FEM_QK(2,3)';
-QUAD_DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
-QUAD_DIRICHLET_DER_FEM_TYPE = 'FEM_QK(2,1)';
-%QUAD_MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
-QUAD_MORTAR_FEM_TYPE = 'FEM_QK(2,1)' ;
-QUAD_MORTAR_DERIV_FEM_TYPE = 'FEM_QK(2,1)' ;
-QUAD_PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
-QUAD_INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(6))';
+% Parameters for the finite element method
 
+QUAD = 0;
+ 
+if (~QUAD)
+  MESH_TYPE = 'GT_PK(2,1)';        % triangles
+% INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
+% INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
+  DATA_FEM_TYPE = 'FEM_PK(2, 5)';
+  PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+  if 0   % hermite element
+     FEM_TYPE = 'FEM_PK(2,1)'; %HERMITE(2)';   % not conformal -> problem
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+  elseif 0  % argyris element
+     FEM_TYPE = 'FEM_ARGYRIS';
+     INTEGRATION = 'IM_TRIANGLE(13)';
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
+  else
+%    FEM_TYPE = 'FEM_HCT_TRIANGLE';
+     FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,1)';
+%     DIRICHLET_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE' ;    
+     DIRICHLET_DER_FEM_TYPE = 'FEM_PK(2,1)';
+   % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
+     INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(13))';
+ %    MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';    
+    MORTAR_FEM_TYPE ='FEM_PK(2,1)';
+   %  MORTAR_FEM_TYPE = 'FEM_HERMITE(2)';
+     MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
+%    MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+  end;
+end
+
+if (QUAD)
+  MESH_TYPE = 'GT_QK(2,1)';
+  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE'; 
+  %FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
+  DATA_FEM_TYPE = 'FEM_QK(2,3)';
+  DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
+  DIRICHLET_DER_FEM_TYPE = 'FEM_QK(2,1)';
+  MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  %MORTAR_FEM_TYPE = 'FEM_QK(2,1)' ;
+  MORTAR_DERIV_FEM_TYPE = 'FEM_QK(2,1)' ;
+  %MORTAR_DERIV_FEM_TYPE = 'FEM_QK_DISCONTINUOUS(2,1)';
+  PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(6))';
+end
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
@@ -78,38 +85,39 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
 
 
-ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
+
+ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
-			% 3 = Integral matching (mortar)
-			
+			% 3 = Integral matching (mortar)			
 RADIUS_ENR_AREA = 0.15;
 
+
+
+%%%%%    Parameters for the integral matching
 MULT_WITH_H = 1 ;           % 0 = mutlipliers without the H ddl ; 1 = multipliers with the H ddls
 MORTAR_WITHOUT_SINGUL = 0 ; % 0 = mortar with singuls ; 1 = mortar without singuls
 MORTAR_TYPE = 2 ;        % version 1 or 2 of the integral matching
-
-EPSILON=0.1 % thickness 
-
-RESIDUAL = 1E-9;     	% residual for conjugate gradient.
-
-DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
 MORTAR_VERSION = 0 ;    % 0=multipliers, 1=penalization, 2=elimination
-EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
-                               % Dirichlet condition with penalization 
 EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
                                % integral matching with penalization 
-ASM_H1_AND_H2_DIST = 1 ;	       
-
-SEUIL_MORTAR = 1e-25 ;   % threshold for elimination of dofs at the end of the integral matching
-SEUIL = 1e-26 ;          % threshold for elimination of H-function dofs, having a null contribution to the rigidity matrix
+SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integral matching
 
 
-RADIUS_SPLIT_DOMAIN = 0.
-PENALI = 1.0 ;
-	
+
+%%%%%  computation parameters 
+RESIDUAL = 1E-9;     	% residual for conjugate gradient.
+DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
+EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
+                               % Dirichlet condition with penalization 
+
+%%%%%  error computation parameters
+NORM_EXACT = 1 ; % set to 0 if you don't want to calculate the norm of the exaxt solution
+RADIUS_SPLIT_DOMAIN = 0.0
+
+
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'crack_bilaplacian';     % Root of data files.
 VTK_EXPORT = 4; % export solution to a .vtk file ?
 MATLAB_EXPORT = 0;
-DX_EXPORT = 0 ;
+
