@@ -42,7 +42,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 int main(int argc, char *argv[]) {
 
-  try {
+  // try {
     bilaplacian_crack_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
@@ -180,8 +180,7 @@ int main(int argc, char *argv[]) {
     
     //getchar(); 
     
-  }
-  GMM_STANDARD_CATCH_ERROR;
+  // } GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }
 

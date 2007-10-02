@@ -227,7 +227,7 @@ void validate_fem_derivatives(const getfem::mesh_fem &mf) {
 
 
 // functions for assembling the constraints of the integral matching 
-namespace getfem {  
+  
 template<typename MAT, typename VECT1, typename VECT2>
 void asm_normal_derivative_dirichlet_constraints_bis
 (MAT &H, VECT1 &R, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_u,
@@ -290,15 +290,8 @@ void asm_constraint_gradient_vectorial_mult
   }
 }
 
-} // end namespace getfem
 
-scalar_type crack_level(base_node P) {
-return P[1];
-}
 
-scalar_type crack_tip_level(base_node P) {
-return P[0];
-}
 
 /*                                                          */
 /*****  Methods for class bilaplacian_crack_problem  ********/
@@ -310,23 +303,17 @@ return P[0];
 
 void bilaplacian_crack_problem::init(void) {
   std::string MESH_FILE = PARAM.string_value("MESH_FILE");
-  std::string TRI_MESH_TYPE = PARAM.string_value("TRI_MESH_TYPE","Mesh type ");
-  std::string QUAD_MESH_TYPE = PARAM.string_value("QUAD_MESH_TYPE","Mesh type ");
-  std::string TRI_FEM_TYPE  = PARAM.string_value("TRI_FEM_TYPE","FEM name");
-  std::string QUAD_FEM_TYPE  = PARAM.string_value("QUAD_FEM_TYPE","FEM name");
-  std::string TRI_INTEGRATION = PARAM.string_value("TRI_INTEGRATION",
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  std::string QUAD_INTEGRATION = PARAM.string_value("QUAD_INTEGRATION",
-					       "Name of integration method");
-  
-  cout << "TRI_MESH_TYPE=" << TRI_MESH_TYPE << "\n";
-  cout << "TRI_FEM_TYPE="  << TRI_FEM_TYPE << "\n";
-  cout << "TRI_INTEGRATION=" << TRI_INTEGRATION << "\n";
-  cout << "QUAD_MESH_TYPE=" << QUAD_MESH_TYPE << "\n";
-  cout << "QUAD_FEM_TYPE="  << QUAD_FEM_TYPE << "\n";
-  cout << "QUAD_INTEGRATION=" << QUAD_INTEGRATION << "\n";
-  
-  size_type N_tri = 2, N_quad = 2 ;
+  cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+  cout << "FEM_TYPE="  << FEM_TYPE << "\n";
+  cout << "INTEGRATION=" << INTEGRATION << "\n";
+
+  size_type N = 2 ;
+
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
     
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
@@ -338,132 +325,66 @@ void bilaplacian_crack_problem::init(void) {
     
     /* First step : build the mesh */
     
-    bgeot::pgeometric_trans pgt_tri = 
-      bgeot::geometric_trans_descriptor(TRI_MESH_TYPE);
-    bgeot::pgeometric_trans pgt_quad = 
-      bgeot::geometric_trans_descriptor(QUAD_MESH_TYPE);
-    N_tri = pgt_tri->dim();
-    N_quad = pgt_quad->dim();
-    GMM_ASSERT1(N_tri == 2, "For a plate problem, N should be 2");
-    GMM_ASSERT1(N_quad == 2, "For a plate problem, N should be 2");
-    std::vector<size_type> nsubdiv(N_tri);
+ 
+    if (!MESH_FILE.empty()) {
+    mesh.read_from_file(MESH_FILE);
+    base_small_vector tt(N); 
+    tt[0] = PARAM.real_value("TRANSLAT_X") ; //0.02 ; 
+    tt[1] = PARAM.real_value("TRANSLAT_Y") ;// 0.04 ; 
+    cout << "TRANSLAT_X = " << tt[0] << " ; TRANSLAT_Y = " << tt[1] << "\n" ;
+    mesh.translation(tt); 
+    MESH_TYPE = bgeot::name_of_geometric_trans
+      (mesh.trans_of_convex(mesh.convex_index().first_true()));
+    bgeot::pgeometric_trans pgt = 
+      bgeot::geometric_trans_descriptor(MESH_TYPE);
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+    N = mesh.dim();
+    } else {
+    bgeot::pgeometric_trans pgt = 
+      bgeot::geometric_trans_descriptor(MESH_TYPE);
+    N = pgt->dim();
+    GMM_ASSERT1(N == 2, "For a plate problem, N should be 2");
+    std::vector<size_type> nsubdiv(N);
     NX = PARAM.int_value("NX", "Number of space steps ") ;
     std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
-    if (!PARAM.int_value("QUAD"))
-    getfem::regular_unit_mesh(mesh, nsubdiv, pgt_tri, PARAM.int_value("MESH_NOISED") != 0);
-    else 
-    getfem::regular_unit_mesh(mesh, nsubdiv, pgt_quad, PARAM.int_value("MESH_NOISED") != 0);
-    
-    bgeot::base_matrix M(N_tri,N_tri);
-    for (size_type i=0; i < N_tri; ++i) {
+    getfem::regular_unit_mesh(mesh, nsubdiv, pgt, PARAM.int_value("MESH_NOISED") != 0);
+
+    bgeot::base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) {
       static const char *t[] = {"LX","LY","LZ"};
       M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
     }
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
     
-    base_small_vector tt(N_tri); 
-    tt[0] = -0.5 ;
-    tt[1] = -0.5;
+    base_small_vector tt(N); 
+    tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ; 
+    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ; 
     mesh.translation(tt); 
-  
-    dal::bit_vector quad_among_cvx, tri_among_cvx ;
+  }
     
-    if (PARAM.real_value("QUAD") == 1 ) {
-       cout << "transforming quad in two triangles\n";
-       unsigned cpt ;
-       base_small_vector values_ls(4), values_ls_tip(4) ;
-       std::vector<bgeot::size_type> ind(3) ;
-       std::vector<size_type> index_nodes_of_a_face(2), ind_sommets_cvx(4) ; 
-       // For each quadrangle, we test wether or not it is crossed by the crack.
-       // If it is so, we delete the quadrangle and create two triangles.
-       for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
-       
-       
-       
-	   // we store the values of the level-set on the four nodes
-	   //cout << "(mesh.points_of_convex(i)).size() = " << (mesh.points_of_convex(i)).size() << "\n";
-	   for (unsigned node = 0 ; node < (mesh.points_of_convex(i)).size() ; ++node){
-	       values_ls[node] = crack_level(mesh.points_of_convex(i)[node] ) ;
-	       values_ls_tip[node] = crack_tip_level(mesh.points_of_convex(i)[node]) ;
-	       }
-	   // We iterate on the four faces. If 2 faces or more are
-	   // crossed by the level-set, we conclude that the quadrangle is completly
-	   // crossed by the level-set.
-	   cpt = 0 ;
-	   for (int j = 0 ; j < 4 ; j++) {
-	       // we store the local indexes of the two nodes of the current face 
-	       for (unsigned k = 0 ; k < (mesh.structure_of_convex(i)->ind_points_of_face(j)).size() ; k++ )
-	         index_nodes_of_a_face[k] = (mesh.structure_of_convex(i)->ind_points_of_face(j))[k] ;
-	       
-	       //cout << "index_nodes_of_a_face = " << index_nodes_of_a_face << "\n" ;
-		 
-	       if ( ( values_ls[index_nodes_of_a_face[0]] * values_ls[index_nodes_of_a_face[1]] < 0 ) 
-	           && (values_ls_tip[0] < 0) && (values_ls_tip[1] < 0) ) 
-		  cpt++;
-           }
-	   
-	   if (cpt >= 2) { // we add two triangles and delete the quadrangle
-	      // we store the global indexes of the nodes of the i convex
-	      //cout << "Convex " << i << "to split ; values of the level_set : " << values_ls << "\n" ;
-	      for (unsigned j = 0 ; j < (mesh.ind_points_of_convex(i)).size() ; ++j)
-	          ind_sommets_cvx[j] = mesh.ind_points_of_convex(i)[j] ;
-              
-	      mesh.sup_convex(i) ;   // delete pathologic quadrangle
-              // Cut the quadrangle along the shortest diagonal
-	      
-	      std::vector<bgeot::base_node> P(4) ;
-	      for (unsigned node = 0 ; node < (mesh.points_of_convex(i)).size() ; ++node)
-	          P[node] = mesh.points_of_convex(i)[node] ;
-	      scalar_type dist1 = 0., dist2 = 0. ;
-	      for(int k = 0 ; k < 2 ; k++){ 
-	          dist1 += (P[0][k] - P[3][k]) * (P[0][k] - P[3][k]) ;
-		  dist2 += (P[2][k] - P[1][k]) * (P[2][k] - P[1][k]) ; 
-	      }
-	      
-	      if ( dist1 > dist2){ //then cut along the [s1 s2] diagonal
-	         ind[0] = ind_sommets_cvx[0] ;
-                 ind[1] = ind_sommets_cvx[1] ;
-                 ind[2] = ind_sommets_cvx[2] ;
-	      }
-	      else{  // cut along the [s0 s3] diagonal
-	         ind[0] = ind_sommets_cvx[0] ;
-                 ind[1] = ind_sommets_cvx[2] ;
-                 ind[2] = ind_sommets_cvx[3] ;
-	      }
-	      mesh.add_convex(pgt_tri, ind.begin());  // add first triangle
-	      if ( dist1 > dist2)
-	         ind[0] = ind_sommets_cvx[3] ;
-              else
-	         ind[1] = ind_sommets_cvx[1] ;
-	      mesh.add_convex(pgt_tri, ind.begin());  // add second triangle 
-	      }
-	      else quad_among_cvx.add(i) ;
-	   }
-	   // save the information of what is triangle or quadrangle
-	   for (dal::bv_visitor j(mesh.convex_index()); !j.finished(); ++j)
-	       if (!quad_among_cvx[j]) tri_among_cvx.add(j) ;
-// 	   cout << "convex indexes : " << mesh.convex_index() << "\n" ;
-// 	   cout << "convex tri : " << tri_among_cvx << "\n" ;
-// 	   cout << "convex quad : " << quad_among_cvx << "\n" ;
-	   // The procedure used beyond was made possible to use thanks to the
-	   // structure of the containers returned : the elements are ordered 
-	   // in accordance with the numerotation of the vertex and faces in a quadrangle:
-// 	   2____3        _2__
-// 	   |    |     1 |    |  0
-// 	   |____|       |____|
-// 	   0    1         3
-    }
-    else {
-    for(dal::bv_visitor i(mesh.convex_index()); !i.finished() ; ++i )
-       tri_among_cvx.add(i) ;
-    }
-    
-    
-    scalar_type quality = 1.0;
-    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
+    scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
+    scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
+    size_type cpt = 0 ; 
+    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
     	quality = std::min(quality, mesh.convex_quality_estimate(i));
+	area = mesh.convex_area_estimate(i) ;
+	radius = mesh.convex_radius_estimate(i) ;
+	avg_area += area ;
+	avg_radius += radius ;
+	min_radius = std::min(radius, min_radius) ;
+	max_radius = std::max(radius, max_radius) ;	
+	min_area = std::min(min_area, area) ; 
+	max_area = std::max(max_area, area) ;
+	cpt++ ;
+    }
+    avg_area /= cpt ;
+    avg_radius /= cpt ; 
     cout << "quality of mesh : " << quality << endl;
+    cout << "average radius : " << avg_radius << endl;
+    cout << "radius min : " << min_radius << " ; radius max : " << max_radius << endl;
+    cout << "average area : " << avg_area << endl ;
+    cout << "area min : " << min_area << " ; area max : " << max_area << endl;        
     
    /* read the parameters   */
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
@@ -473,93 +394,67 @@ void bilaplacian_crack_problem::init(void) {
   mortar_version = getfem::constraints_type(mv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
-  KL = (PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0);
+  KL = PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0;
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
 
  // Setting the integration methods
   
-  getfem::pfem pf_u_tri = getfem::fem_descriptor(TRI_FEM_TYPE);
-  getfem::pfem pf_u_quad = getfem::fem_descriptor(QUAD_FEM_TYPE);
-  getfem::pintegration_method ppi_tri = 
-    getfem::int_method_descriptor(TRI_INTEGRATION);
-  getfem::pintegration_method ppi_quad = 
-    getfem::int_method_descriptor(QUAD_INTEGRATION);
+  getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
+  getfem::pintegration_method ppi = 
+    getfem::int_method_descriptor(INTEGRATION);
   getfem::pintegration_method sppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
   getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
 		getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
     
-  mim.set_integration_method(tri_among_cvx, ppi_tri);
-  mim.set_integration_method(quad_among_cvx, ppi_quad);
+  mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
   mim.set_simplex_im(sppi, sing_ppi);
   
   /* Setting the finite element on the mf_u */  
-  mf_pre_u.set_finite_element(tri_among_cvx, pf_u_tri); 
-  mf_pre_u.set_finite_element(quad_among_cvx, pf_u_quad);  
-  getfem::pfem pf_partition_of_unity_tri = getfem::fem_descriptor(PARAM.string_value("TRI_PARTITION_OF_UNITY_FEM_TYPE")) ;
-  getfem::pfem pf_partition_of_unity_quad = getfem::fem_descriptor(PARAM.string_value("QUAD_PARTITION_OF_UNITY_FEM_TYPE")) ; 
-  mf_partition_of_unity.set_finite_element(tri_among_cvx, pf_partition_of_unity_tri);
-  mf_partition_of_unity.set_finite_element(quad_among_cvx, pf_partition_of_unity_quad);      
-  mf_pre_mortar.set_finite_element(tri_among_cvx,
-             getfem::fem_descriptor(PARAM.string_value("TRI_MORTAR_FEM_TYPE")));
-  mf_pre_mortar_deriv.set_finite_element(tri_among_cvx,
-             getfem::fem_descriptor(PARAM.string_value("TRI_MORTAR_DERIV_FEM_TYPE")));
-  mf_pre_mortar.set_finite_element(quad_among_cvx,
-             getfem::fem_descriptor(PARAM.string_value("QUAD_MORTAR_FEM_TYPE")));
-  mf_pre_mortar_deriv.set_finite_element(quad_among_cvx,
-             getfem::fem_descriptor(PARAM.string_value("QUAD_MORTAR_DERIV_FEM_TYPE")));  
-	     
+  mf_pre_u.set_finite_element(mesh.convex_index(), pf_u); 
+  getfem::pfem pf_partition_of_unity = getfem::fem_descriptor(PARAM.string_value("PARTITION_OF_UNITY_FEM_TYPE")) ; 
+  mf_partition_of_unity.set_finite_element(mesh.convex_index(), pf_partition_of_unity);     
+  
   // set the mesh_fem of the multipliers (for the dirichlet condition)    
-  std::string dirichlet_fem_name_tri = PARAM.string_value("TRI_DIRICHLET_FEM_TYPE");
-  std::string dirichlet_fem_name_quad = PARAM.string_value("QUAD_DIRICHLET_FEM_TYPE");
-  if (dirichlet_fem_name_tri.size() == 0){
-    mf_mult.set_finite_element(tri_among_cvx, pf_u_tri);
-    mf_mult.set_finite_element(quad_among_cvx, pf_u_quad);    
-    }
+  std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
+  if (dirichlet_fem_name.size() == 0)
+    mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   else {
-    cout << "TRI_DIRICHLET_FEM_TYPE="  << dirichlet_fem_name_tri << "\n";
-    cout << "QUAD_DIRICHLET_FEM_TYPE="  << dirichlet_fem_name_quad << "\n";
-    mf_mult.set_finite_element(tri_among_cvx, 
-			       getfem::fem_descriptor(dirichlet_fem_name_tri));
-    mf_mult.set_finite_element(quad_among_cvx, 
-			       getfem::fem_descriptor(dirichlet_fem_name_quad));
+    cout << "DIRICHLET_FEM_TYPE="  << dirichlet_fem_name << "\n";
+    mf_mult.set_finite_element(mesh.convex_index(), 
+			       getfem::fem_descriptor(dirichlet_fem_name));
   }
-  std::string dirichlet_der_fem_name_tri
-    = PARAM.string_value("TRI_DIRICHLET_DER_FEM_TYPE", "");
-  std::string dirichlet_der_fem_name_quad
-    = PARAM.string_value("QUAD_DIRICHLET_DER_FEM_TYPE", "");
-  if (dirichlet_der_fem_name_tri.size() == 0){
-    mf_mult_d.set_finite_element(tri_among_cvx, pf_u_tri);
-    mf_mult_d.set_finite_element(quad_among_cvx, pf_u_quad);
-  }
+  std::string dirichlet_der_fem_name
+    = PARAM.string_value("DIRICHLET_DER_FEM_TYPE", "");  // for the dirichlet condition on the derivative
+  if (dirichlet_der_fem_name.size() == 0)
+    mf_mult_d.set_finite_element(mesh.convex_index(), pf_u);
   else {
-    cout << "TRI_DIRICHLET_DER_FEM_TYPE="  << dirichlet_der_fem_name_tri << "\n";
-    cout << "QUADDIRICHLET_DER_FEM_TYPE="  << dirichlet_der_fem_name_quad << "\n";
-    mf_mult_d.set_finite_element(tri_among_cvx, 
-			     getfem::fem_descriptor(dirichlet_der_fem_name_tri));
-    mf_mult_d.set_finite_element(quad_among_cvx, 
-			     getfem::fem_descriptor(dirichlet_der_fem_name_quad));
+    cout << "DIRICHLET_DER_FEM_TYPE="  << dirichlet_der_fem_name << "\n";
+    mf_mult_d.set_finite_element(mesh.convex_index(), 
+			     getfem::fem_descriptor(dirichlet_der_fem_name));
   }
 
   /* set the finite element on mf_rhs (same as mf_u if DATA_FEM_TYPE is
      not used in the .param file */
-  std::string data_fem_name_tri = PARAM.string_value("TRI_DATA_FEM_TYPE");
-  std::string data_fem_name_quad = PARAM.string_value("QUAD_DATA_FEM_TYPE");
-  if (data_fem_name_tri.size() == 0) {
-    GMM_ASSERT1(pf_u_tri->is_lagrange(), "You are using a non-lagrange FEM. "
+  std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
+  if (data_fem_name.size() == 0) {
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    mf_rhs.set_finite_element(tri_among_cvx, pf_u_tri);
-    mf_rhs.set_finite_element(quad_among_cvx, pf_u_quad);
+    mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
-    mf_rhs.set_finite_element(tri_among_cvx, 
-			      getfem::fem_descriptor(data_fem_name_tri));
-    mf_rhs.set_finite_element(quad_among_cvx, 
-			      getfem::fem_descriptor(data_fem_name_quad));
+    mf_rhs.set_finite_element(mesh.convex_index(), 
+			      getfem::fem_descriptor(data_fem_name));
   }
-  
+
+  // set the mesh_fem for the multipliers for the case the Integral Matching  
+  mf_pre_mortar.set_finite_element(mesh.convex_index(),
+             getfem::fem_descriptor(PARAM.string_value("MORTAR_FEM_TYPE")));
+  mf_pre_mortar_deriv.set_finite_element(mesh.convex_index(),
+             getfem::fem_descriptor(PARAM.string_value("MORTAR_DERIV_FEM_TYPE")));
+	     
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -578,29 +473,29 @@ void bilaplacian_crack_problem::init(void) {
 void bilaplacian_crack_problem::compute_error(plain_vector &U) {
 
   if (PARAM.real_value("RADIUS_SPLIT_DOMAIN") == 0){
-// plain_vector V(gmm::vect_size(U)) ;
-// gmm::clear(V) ;
-//   cout << "L2 ERROR : "
-//        << getfem::asm_L2_dist(mim, mf_u(), V,
-// 			      exact_sol.mf, exact_sol.U) << "\n";
-//   cout << "H1 ERROR : "
-//        << getfem::asm_H1_dist(mim, mf_u(), V,
-// 			      exact_sol.mf, exact_sol.U) << "\n";
-//   cout << "H2 ERROR : "
-//        << getfem::asm_H2_dist(mim, mf_u(), V, 
-//                               exact_sol.mf, exact_sol.U) << "\n"; 
+     plain_vector V(gmm::vect_size(U)) ;
+     gmm::clear(V) ;
 
-  cout << "L2 ERROR : "
+    cout << "\nL2 ERROR : "
        << getfem::asm_L2_dist(mim, mf_u(), U,
 			      exact_sol.mf, exact_sol.U) << "\n";
-  if (PARAM.int_value("ASM_H1_AND_H2_DIST") == 1){
     cout << "H1 ERROR : "
          << getfem::asm_H1_dist(mim, mf_u(), U,
   	  		      exact_sol.mf, exact_sol.U) << "\n";
     cout << "H2 ERROR : "
          << getfem::asm_H2_dist(mim, mf_u(), U, 
                               exact_sol.mf, exact_sol.U) << "\n"; 
-  }
+    if ( PARAM.int_value("NORM_EXACT") ){
+    cout << "L2 exact : "
+         << getfem::asm_L2_dist(mim, mf_u(), V,
+			      exact_sol.mf, exact_sol.U) << "\n";
+    cout << "H1 exact : "
+         << getfem::asm_H1_dist(mim, mf_u(), V,
+			      exact_sol.mf, exact_sol.U) << "\n";
+    cout << "H2 exact : "
+         << getfem::asm_H2_dist(mim, mf_u(), V, 
+                              exact_sol.mf, exact_sol.U) << "\n";
+    } 
   }
   else {
   getfem::mesh_region r_center, r_ext ;
@@ -657,17 +552,16 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-bool bilaplacian_crack_problem::solve(plain_vector &U) {
+bool bilaplacian_crack_problem::solve(plain_vector &U) {  
   size_type nb_dof_rhs = mf_rhs.nb_dof();
-  //size_type N = mesh.dim();
   
   // Setting the level-set
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
-    ls.values(0)[d] = y  ; //+ 1./4.*(x + .25);   // To modify in accordance with: scalar_type crack_level(bas_node P)
-    ls.values(1)[d] = x;                          // idem, with: scalar_type crack_tip_level(bas_node P)
+    ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
+    ls.values(1)[d] = x;
   }
   //ls.simplify(0.5);
   ls.touch();  
@@ -705,9 +599,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
        for (unsigned j=0; j < mesh.nb_points_of_convex(i); ++j) {
 	 if (gmm::sqr(mesh.points_of_convex(i)[j][0]) + 
 	     gmm::sqr(mesh.points_of_convex(i)[j][1]) > 
-	     gmm::sqr(enr_area_radius)) {
+	     gmm::sqr(enr_area_radius)) 
 	   pm_convexes.sup(i); break;
-	 }
        }
      }
       
@@ -739,32 +632,30 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
             if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
 	           enriched_dofs.add(j);
           }
-          cout << "enriched_dofs: " << enriched_dofs << "\n";
-          if (enriched_dofs.card() < 3)
-             GMM_WARNING0("There is " << enriched_dofs.card() <<
+      cout << "enriched_dofs: " << enriched_dofs << "\n";
+      if (enriched_dofs.card() < 3)
+            GMM_WARNING0("There is " << enriched_dofs.card() <<
 		   " enriched dofs for the crack tip");
-          mf_u_product.set_enrichment(enriched_dofs);
-          mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
-          cout << "enrichment done \n" ;}
-	  break ;
+      mf_u_product.set_enrichment(enriched_dofs);
+      mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
+      cout << "enrichment done \n" ;}
+      break ;
   case 3 : // Integral matching (mortar)
     {
-    cout << "\nIntegral Matching (Mortar)\n" ;
-    
-    dal::bit_vector cvlist_in_area;
-    dal::bit_vector cvlist_out_area;
+    cout << "\nIntegral Matching (Mortar)\n" ;    
+    dal::bit_vector cvlist_in_area, cvlist_out_area;
+    bool in_area = true;
     for (dal::bv_visitor cv(mesh.convex_index()); 
 	   !cv.finished(); ++cv) {
-	bool in_area = true;
+	in_area = true;
 	/* For each element, we test all of its nodes. 
 	   If all the nodes are inside the enrichment area,
 	   then the element is completly inside the area too */ 
 	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
-	      gmm::sqr(enr_area_radius)) {
+	      gmm::sqr(enr_area_radius)) 
 	    in_area = false; break;
-	  }
 	}
 
 	/* "remove" the global function on convexes outside the enrichment
@@ -800,12 +691,34 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
       cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
       
+      // an optional treatment : creating a representation of the enrichment area     
+      getfem::mesh_fem mf_enrich(mesh);
+      getfem::pfem pf_mef = getfem::classical_discontinuous_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 0 );
+      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
+      std::fill(UU.begin(), UU.end() ,0.) ;
+      cout << "exporting the enrichment zone: \n" ;
+      for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){
+//           cout << "container : \n "  ;
+// 	  for (int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
+// 	      cout << "elt : " << mf_enrich.ind_dof_of_element(i)[j] << "\n" ;
+	  UU[mf_enrich.ind_dof_of_element(i)[0]] = 1. ;         
+      }
+      cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
+      getfem::vtk_export exp("enrichment_zone.vtk", false);
+      exp.exporting(mf_enrich); 
+      exp.write_point_data(mf_enrich, UU, "enrichment");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d enrichment_zone.vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+      
+	
+      // Another optional treatment :
       // Searching the elements that are both crossed by the crack
-      // and with one of his border which constitutes a part of the 
+      // and with one of their faces which constitutes a part of the 
       // boundary between the enriched zone and the rest of the domain.
       getfem::mesh_region &boundary = mesh.region(MORTAR_BOUNDARY_IN);
-      
-      unsigned cpt = 0 ;
+      unsigned int cpt = 0 ;
       for (dal::bv_visitor i(cvlist_in_area); !i.finished(); ++i) {
          if (mls.is_convex_cut(i)){
 	    // Among the faces of the convex, we search if some are
@@ -815,15 +728,14 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	        if (boundary.is_in(i,j))
 		   cpt += 1;
 	    }
-	 if (cpt) {
-            cout << "\n The convex number " << i << " is crossed by the crack :\n" ;
-	    cout << "  it has : " << cpt << " face(s) among the boundary.\n \n " ;
+	    if (cpt) {
+               cout << "\n The convex number " << i << " is crossed by the crack :\n" ;
+	       cout << "  it has : " << cpt << " face(s) among the boundary.\n \n " ;
+	    }
 	 }
-	 }
-	 
       }
  
-    }
+    }  // end of "enrichment_option = 3"
     break ;
   default : 
 	GMM_ASSERT1(false, "Enrichment_option parameter is undefined");
@@ -831,7 +743,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	}
   mesh.write_to_file("toto.mesh");
   
-  if (0) {
+  if (0) {  // printing the type of each dof
     unsigned Q = mf_u().get_qdim();
     for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
       printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
@@ -897,8 +809,9 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
   NDER_DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-
-
+  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
+    NDER_DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
+  
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs);
   getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
@@ -910,19 +823,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   DIRICHLET.set_constraints_type(getfem::constraints_type(dirichlet_version));  
   if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
     DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
-  
   getfem::mdbrick_abstract<> *final_model = &DIRICHLET ;
-      
-    getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
-
-          
-//     getfem::mdbrick_constraint<> &extra = 
-//       *(new getfem::mdbrick_constraint<>(mortar, 0));   
-
-    getfem::mdbrick_constraint<> &extra = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));   
-
+  
   if (enrichment_option == 3 ) {
      /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
@@ -931,8 +833,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
        getfem::mesh_fem &mf_mortar = (mult_with_H == 1) ? mfls_mortar : mf_pre_mortar;
        getfem::mesh_fem &mf_mortar_deriv = (mult_with_H == 1) ? mfls_mortar_deriv : mf_pre_mortar_deriv;
        
-//     getfem::mdbrick_constraint<> &mortar = 
-//       *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
+    getfem::mdbrick_constraint<> &mortar = 
+      *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
     mortar.set_constraints_type(getfem::constraints_type(mortar_version));  
     if (mortar_version == getfem::PENALIZED_CONSTRAINTS)
       mortar.set_penalization_parameter(PARAM.real_value("EPS_MORTAR_PENAL")) ;
@@ -941,9 +843,12 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
        H(mf_mortar_deriv.nb_dof(), mf_u().nb_dof());
     getfem::base_vector R(mf_mortar.nb_dof());
       
-    
     if (mortar_type == 1) {
-      // older version of integral matching (jan-feb 2007)      
+      /* older version of integral matching (jan-feb 2007) :
+       *
+       *  \int_Gamma (u-v) \lambda + \partial_n ( u + v) \partial_n \lambda = 0, for all \lambda in \Lambda      
+      */
+ 
       /* build the list of dof for the "(u-v) lambda" and for the  "\partial_n(u-v) \partial_n lambda" term in the mortar condition */  
       dal::bit_vector bv_mortar;
       dal::bit_vector bv_deriv;
@@ -957,7 +862,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       
       gmm::resize(R, gmm::mat_nrows(MD));
       asm_normal_derivative_dirichlet_constraints_bis(MD, R, mim, mf_mortar,
-                                                      mf_mortar, mf_pre_mortar, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
+            mf_mortar, mf_pre_mortar, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
       
       for (size_type i=0; i < mf_mortar.nb_dof(); ++i) {
 	if ( (MM(i,i) > 1e-15) & (MD(i,i) > 1e-15) ) { 
@@ -974,9 +879,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	  bv_union.add(i);
 	}
       }
-      
-      //cout << "matrice des dérivées normales du mesh_fem_mortar : \n" << MD << "\n" ;
-      
+           
       for (dal::bv_visitor d(bv_mortar); !d.finished(); ++d)
 	ind_mortar.push_back(d);
       for (dal::bv_visitor d(bv_deriv); !d.finished(); ++d)
@@ -991,15 +894,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	 sometimes return too much dof when the mesh_fem is enriched. */
       
       
-      
-      
       /* building matrices */
       cout << "Handling mortar junction (" << ind_union.size() << 
-	" dof for the lagrange multiplier)\n";
-      
+	" dof for the lagrange multiplier)\n";    
       gmm::resize(H0, mf_mortar.nb_dof(), mf_u().nb_dof()) ;
       gmm::resize(H,  ind_union.size(),   mf_u().nb_dof()) ;
-      
       cout << "bv_mortar = " << bv_mortar << "\n";
       cout << "bv_deriv = " << bv_deriv << "\n" ;
       cout << "bv_union = " << bv_union << "\n" ;
@@ -1039,12 +938,94 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
                                                       mf_mortar, mf_pre_u, R, MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
       gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i2, sub_j), -1.), gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
       
-
       // -----------------------------------
     }
-    else{
+    if (mortar_type == 3 ) {
+      /* other version of the integral matching :
+       *     \int_Gamma        (u-v) \lambda  = 0, for all \lambda in \Lambda
+       *     \int_Gamma \partial_n (u-v)\mu  = 0, for all \mu in M
+      */
+      
+      /* build the list of dof for the "(u-v) lambda" condition  */  
+      dal::bit_vector bv_mortar;
+      dal::bit_vector bv_deriv;
+      sparse_matrix MM(mf_mortar.nb_dof(), mf_mortar.nb_dof());
+      sparse_matrix MD(mf_mortar_deriv.nb_dof(), mf_mortar_deriv.nb_dof());
+      std::vector<size_type> ind_mortar;
+      std::vector<size_type> ind_deriv;
+      getfem::asm_mass_matrix(MM, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
+      getfem::asm_mass_matrix(MD, mim, mf_mortar_deriv, MORTAR_BOUNDARY_OUT);
+
+      for (size_type i=0; i < mf_mortar.nb_dof(); ++i)
+	if (MM(i,i) > 1e-15) { 
+	  // cout << "dof " << i << " MM = " << MM(i,i) << endl;
+	  bv_mortar.add(i); ind_mortar.push_back(i);
+	}
+      for (size_type i=0; i < mf_mortar_deriv.nb_dof(); ++i)
+	if (MD(i,i) > 1e-15) { bv_deriv.add(i); ind_deriv.push_back(i); }
+      
+      // building matrices
+      
+      cout << "Handling mortar junction (" << ind_mortar.size() << 
+	" dof for the lagrange multiplier of the displacement, " <<
+	ind_deriv.size() << " dof for the lagrange multiplier of the derivative)\n";
+      
+      gmm::resize(H0, mf_mortar.nb_dof(), mf_u().nb_dof()) ;
+      gmm::resize(H,  ind_mortar.size() + ind_deriv.size(), mf_u().nb_dof()) ; 
+      
+      // Defining sub_indexes of the matrices calculated with the 
+      // complete set of dofs.
+      gmm::sub_index sub_i(ind_mortar);
+      gmm::sub_index sub_i1(ind_deriv);
+      gmm::sub_interval sub_j(0, mf_u().nb_dof());
+      
+      gmm::sub_interval sub_val_H(0, ind_mortar.size()) ;
+      gmm::sub_interval sub_deriv_H(ind_mortar.size(), ind_deriv.size()) ;
+      
+      cout << "sub_indexes built\n" ;
+      /* build the mortar constraint matrix -- note that the integration
+	 method is conformal to the crack
+      */
+      gmm::clear(H0);
+      getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_OUT);
+      gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), gmm::sub_matrix(H, sub_val_H, sub_j) );
     
-      // for the condition \int_\Gamma \mu \nabla \u = 0, with \mu vectorial
+      gmm::clear(H0);
+      getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_IN);
+      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), gmm::sub_matrix(H, sub_val_H, sub_j) );
+      
+      
+      cout << "first contraint asm\n" ;
+      gmm::resize(R, ind_deriv.size());
+      gmm::clear(H0);
+      gmm::resize(H0, mf_mortar_deriv.nb_dof(), mf_u().nb_dof() ) ;
+
+      getfem::asm_normal_derivative_dirichlet_constraints
+	(H0, R, mim, mf_u(),
+	 mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
+
+      gmm::add(gmm::sub_matrix(H0, sub_i1, sub_j),
+	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
+      
+      cout << "first step \n" ;
+      gmm::clear(H0);
+
+      getfem::asm_normal_derivative_dirichlet_constraints
+	(H0, R, mim, mf_u(),
+	 mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
+      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), +1.0),
+	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
+      
+    }
+
+    if (mortar_type == 2 ) {
+      /* other version of the integral matching :
+       *     \int_Gamma        (u-v) \lambda  = 0, for all \lambda in \Lambda
+       *     \int_Gamma \nabla (u-v).\mu      = 0, for all \mu in M    (be carefull : \mu is vectorial.
+      */
+      
+      
+      // for the condition \int_\Gamma \mu \nabla \u = 0, with \mu vectorial :
       mf_mortar_deriv.set_qdim(2) ;
       
       /* New version of the integral matching -----------------------------------------------*/
@@ -1123,15 +1104,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	(H0, mim, mf_u(), mf_mortar_deriv, 
 	 MORTAR_BOUNDARY_IN, getfem::ASMDIR_BUILDH) ;
       gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), -1),
-	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;    
-	       
-      // getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
+	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
       
       
       // ------------------------------------------ end of new version
     }
-    
-    
     /* because of the discontinuous partition of mf_u(), some levelset 
        enriched functions do not contribute any more to the
        mass-matrix (the ones which are null on one side of the
@@ -1140,11 +1117,12 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
     getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
     //gmm::HarwellBoeing_IO::write("M2.hb", M2);
+    cout << "PARAM.real_value(\"SEUIL\") : " << PARAM.real_value("SEUIL") << "\n" ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       //       if (M2(d,d) < 1e-7) cout << "  weak mf_u() dof " << d << " @ " << 
       // 	  mf_u().point_of_dof(d) << " M2(d,d) = " << M2(d,d) << "\n";
-      if (M2(d,d) < PARAM.real_value("SEUIL_MORTAR")) {
-	cout << "removed : " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
+      if (M2(d,d) < PARAM.real_value("SEUIL")) {
+	cout << "removed\n";	
 	unsigned n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
@@ -1155,7 +1133,14 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     final_model = &mortar;
     gmm::Harwell_Boeing_save("H.hb", H);        
     //------------------------------------------------------------------
-    // Matching of the normal derivative
+    // /* Matching of the normal derivative, another type of matching ;
+    //  * the second condition is replaced by a matching that only concerns the
+    //  * normal derivative :
+    //  *   \int_\Gamma \partial_n (u + v) \mu = 0, for all mu in M
+    //  *   (be carefull : \mu is scalar here) 
+    //  */
+    //  
+    //     mf_mortar_deriv.set_qdim(1) ;
     //     getfem::mdbrick_constraint<> &mortar_derivative = 
     //       *(new getfem::mdbrick_constraint<>(mortar,0));
     //       
@@ -1176,16 +1161,12 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     //     gmm::resize(R, ind_mortar.size());
     //     mortar_derivative.set_constraints(H,R);
     //     final_model = &mortar_derivative ;
-  } 
+  }
+  // end of "if (enrichment_option == 3){ ... "
   
   
-  
-  // suppression of nodes with a very small term on the mass matrix diag
-  // (due to the fact that the elements are cut very close to the nodes by the level set).   
-  //getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(DIRICHLET, 0)); 
-  
-  if (PARAM.real_value("SEUIL") != 0. ) { 
-
+  if (0) { // suppression of nodes with a very small term on the stiffness matrix diag
+    getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
     extra.set_constraints_type(getfem::constraints_type(dirichlet_version));  
     if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
       extra.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL"));
@@ -1194,9 +1175,10 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     sparse_matrix H(0, mf_u().nb_dof());
     //getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
     base_vector RR(mf_rhs.nb_dof(), 1.0);
-    //getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), mf_rhs, RR);
-    getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
-    
+    getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
+                                                 mf_rhs, RR);
+    cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;  
+    cout << "SEUIL = " << PARAM.real_value("SEUIL") << "\n" ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
 	cout << "OULALA " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
@@ -1210,6 +1192,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     final_model = &extra;
     gmm::Harwell_Boeing_save("M2.hb", M2);
   }
+
   
   cout << "Total number of variables : " << final_model->nb_dof() << endl;
   getfem::standard_model_state MS(*final_model);
@@ -1219,30 +1202,9 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(BIL.get_solution(MS), U);
-  return (iter.converged());
+  return true;
 }
 
-// void bilaplacian_crack_problem::split_quadrangle(size_type cv_id, size_type dof) {
-// // constitute the list of vertex of the 2 sub-triangles
-// // itérer sur ce container mesh.ind_points_of_convex(i)
-// //  
-//  
-// std::vector<bgeot::base_node> pts1(3), pts2(3);
-// pts1[0] = mf_u().point_of_dof(dof) ;  
-// pts2[0] = mf_u().point_of_dof(dof) ;  
-// 
-// pts[1] = mymesh.add_point(bgeot::base_node(0.0, 1.0, 0.0);
-// pts[2] = mymesh.add_point(bgeot::base_node(0.0, 0.0, 1.0);      
-// 
-// 
-// mesh.sup_convex(i) ; // delete the pathologic quadrangle
-// bgeot::pgeometric_trans pgt = 
-//       bgeot::geometric_trans_descriptor("GT_PK(2,1)");
-// i = mesh.add_convex(pgt, it);
-// 
-// }
-
-namespace getfem{
 template<typename VEC1, typename VEC2>
 void asm_H2_semi_dist_map(const getfem::mesh_im &mim, 
                           const getfem::mesh_fem &mf1, const VEC1 &U1,
@@ -1265,15 +1227,13 @@ void asm_H2_semi_dist_map(const getfem::mesh_im &mim,
   assem.push_vec(V);
   assem.assembly(rg);
 }
-
-}
   
 void bilaplacian_crack_problem::compute_H2_error_field(const plain_vector &U) {
 
     getfem::mesh_fem mf_P0(mesh);
     mf_P0.set_finite_element(mesh.convex_index(), getfem::classical_fem(mesh.trans_of_convex(0), 0));
     plain_vector V(mf_P0.nb_dof());
-    getfem::asm_H2_semi_dist_map(mim, mf_u(), U, exact_sol.mf, exact_sol.U, mf_P0, V);
+    asm_H2_semi_dist_map(mim, mf_u(), U, exact_sol.mf, exact_sol.U, mf_P0, V);
     cout << "exporting H2 error map\n";
     getfem::vtk_export exp2(datafilename + "_H2.vtk");
     exp2.exporting(mf_P0);
@@ -1283,8 +1243,3 @@ void bilaplacian_crack_problem::compute_H2_error_field(const plain_vector &U) {
     gmm::vecsave(datafilename + "_H2.V", V);
 }
 
-//function to save a vector for matlab
-template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
-  std::ofstream f(fname.c_str()); f.precision(16);
-  for (size_type i=0; i < V.size(); ++i) f << V[i] << "\n"; 
-}
