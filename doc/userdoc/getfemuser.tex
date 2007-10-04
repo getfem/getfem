@@ -27,8 +27,6 @@
 \usepackage{xspace} % insere un espace si necessaire 
 \usepackage{underscore}
 
-\newcommand{\ds}{\displaystyle}
-\newcommand{\Frac}[2]{{\ds \frac{\ds #1}{\ds #2}}}
 \oddsidemargin -0.9cm
 \evensidemargin -0.9cm
 \topmargin -1cm
@@ -68,12 +66,28 @@
   \newcommand{\Omega}{\htmlsym{Omega}}
   \newcommand{\omega}{\htmlsym{omega}}
   \newcommand{\partial}{\htmlsym{part}}
+  \newcommand{\otimes}{\htmlsym{otimes}}
+  \newcommand{\prod}{\htmlsym{Pi}}
+  \newcommand{\tau}{\htmlsym{tau}}
+  \newcommand{\partial}{\htmlsym{part}}
   \newcommand{\sum}{\htmlsym{sum}}
+  \newcommand{\subset}{\htmlsym{sub}}
   \newcommand{\int}{{\Large\htmlsym{int}}}
+  \newcommand{\tild}{~}
 }
 \texonly{
   \newcommand{\WEB}[2]{\href{#1}{#2}}
 }
+
+\T \newcommand{\Reel}{{\rm I\hspace{-0.15em}R}}
+\W \newcommand{\Reel}{\htmlsym{real}}
+\T \newcommand{\ds}{\displaystyle}
+\W \newcommand{\ds}{}
+\newcommand{\Frac}[2]{{\ds \frac{\ds #1}{\ds #2}}}
+
+\T \newcommand{\equat}[1] { \begin{equation*} #1 \end{equation*} }
+\W \newcommand{\equat}[1] { \begin{center} $ #1 $ \end{center} }
+
 \T \newcommand{\Div}{\textrm{div}}
 \W \newcommand{\Div}{div}
 \T \newcommand{\Grad}{\textrm{grad}}
@@ -95,6 +109,9 @@
 \T \newcommand{\cpp}[1]{\texttt{#1}}
 \T \newcommand{\filename}[1]{\texttt{#1}}
 
+\T \newcommand{\icgraphic}[3] { \includegraphics[width=#1]{#2.pdf} }
+\W \newcommand{\icgraphic}[3] { \htmlimg{#2.png}{#3} }
+
 %doxfilename and doxref : used by doxygenlinks.tex
 \T \newcommand{\doxfilename}[2]{\texttt{#1}}
 \T \newcommand{\doxref}[2]{\cpp{#1}}
@@ -108,6 +125,40 @@
 \W \newenvironment{ctableau}[2]{\xmlattributes*{table}{border=1 align="center"}\begin{tabular}{#2}}{\end{tabular}}
 
 \newcommand{\WEBB}[1]{\WEB{#1}{#1}}
+
+\texonly{
+  \newcommand{\femtab}[9]{
+    \begin{center}
+      \begin{tabular}{m{17cm}}
+      \begin{tabular}{|m{16.109cm}|} \hline
+        {\bf #1}\\
+        {\tt #2} 
+      \end{tabular} \\ \vspace{-0.12em} 
+      \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+        Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+        #3 & #4 & #5 & #6 & #7 & #8 & #9 \\ \hline
+      \end{tabular}
+    \end{tabular}
+  \end{center}
+  }
+}
+
+\htmlonly{
+  \newcommand{\femtab}[9]{
+    ~\\~\\
+    \begin{center}
+      \begin{ctableau}{|m{16.109cm}|}{c} \hline
+        {\bf #1}\\
+        {\tt #2} 
+      \end{ctableau}
+      \begin{ctableau}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|}{lllllll} \hline 
+        Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+         #3 & #4 & #5 & #6 & #7 & #8 & #9
+      \end{ctableau}
+      ~\\
+    \end{center}
+  }
+}
 
 
 % macros for linking filenames and classnames to the doxygen doc of getfem
@@ -630,7 +681,6 @@ where \cpp{i} is the index of the element and \cpp{pf} is the descriptor (of typ
 \end{cppcode}
 which set the finite elements for either the convexes listed in the \cpp{bit\_vector cvs}, or all the convexes of the mesh.
 
-The list of all available descriptors of finite element methods is in the file \getfemfemh. A short description is also given in \cite{BASCOMP}. 
 Descriptors for finite element methods and integration methods are available thanks to the following function\\[0.5cm]
 \index{GETFEM!getfem::fem\_descriptor("name")}\index{GETFEM!getfem::pfem}
 \begin{cppcode}
@@ -641,8 +691,24 @@ A name of a method can be retrieved thanks to the following functions\\[0.5cm]
 \begin{cppcode}
   std::string femname = getfem::name\_of\_fem(pf);
 \end{cppcode}
-A non exhautive list (see \cite{GETFEMPROJECT} or \getfemfemh for exhaustive lists) of finite element methods is given by
-\input{../kernel/getfemelemfem.tex}
+A non exhautive list (see Appendix A or \getfemfemh for exhaustive lists) of finite element methods is given by
+
+\begin{center} \begin{tabular}{|m{0.40\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "FEM\_PK(n,k)"} & Classical $P_K$ methods on simplexes of dimension  {\tt n} with degree {\tt k} polynomials.\\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.40\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "FEM\_QK(n,k)"} & Classical $Q_K$ methods on parallelepiped of dimension {\tt n}. Tensorial product of degree {\tt k} $P_K$ method on the segment. \\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.40\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "FEM\_PK\_PRISM(n,k)"} & Classical methods on prism of dimension {\tt n}. Tensorial product of two degree {\tt k} $P_K$ method. \\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.40\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "FEM\_PRODUCT(a,b)"} & Tensorial product of the two polynomial finite element method {\tt a} and {\tt b}. \\ \hline
+\end{tabular}   
+\begin{tabular}{|m{0.40\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "FEM\_PK\_DISCONTINUOUS(n,k)"} & discontinuous $P_K$ methods on simplexes of dimension  {\tt n} with degree {\tt k} polynomials. \\ \hline
+\end{tabular}  
+\end{center}
 
 An alternative way to obtain a Lagrange polynomial fem suitable for a given geometric transformation is to use
 \index{GETFEM!getfem::classical\_fem(pgt,degree)}\index{GETFEM!getfem::classical\_discontinuous\_fem(pgt,degree)}
@@ -786,13 +852,64 @@ A name of a method can be retrieved with
 \begin{cppcode}
   std::string im\_name = getfem::name\_of\_int\_method(ppi);
 \end{cppcode}
-A non exhautive list (see \cite{GETFEMPROJECT} or \getfemintegrationh for exhaustive lists) of integration methods is given below.
+A non exhautive list (see Appendix B or \getfemintegrationh for exhaustive lists) of integration methods is given below.
 
 Examples of exact integration methods:
-\input{../kernel/getfemelemint.tex}
+\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_NONE()"} & Dummy integration method (new in getfem++-1.7).\\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_EXACT\_SIMPLEX(n)"} & Description of the exact integration of polynomials on the simplex of reference of dimension {\tt n}. \\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_PRODUCT(a, b)"} & Description of the exact integration on the convex which is the direct product of the convex in {\tt a} and in {\tt b}.\\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_EXACT\_PARALLELEPIPED(n)"} & Description of the exact integration of polynomials on the parallelepiped of reference of dimension {\tt n}\\ \hline
+\end{tabular}  
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_EXACT\_PRISM(n)"} & Description of the exact integration of polynomials on the prism of reference of dimension {\tt n}\\ \hline
+\end{tabular} \end{center}
 Examples of approximated integration methods:
 \input{../kernel/getfemeleminta.tex}
-
+%\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_GAUSS1D(k)" } & Description of the Gauss integration on a segment of order {\tt k}. Available for all odd values of k <= 99.\\ \hline
+%\end{tabular}  
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_NC(n,k)"} & Description of the integration on a simplex of reference of dimension {\tt n} for polynomials of degree {\tt k} with the Newton Cotes method (based on Lagrange interpolation).\\ \hline
+%\end{tabular}  
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_PRODUCT(a,b)"} & Build a method doing the direct product of methods {\tt a} and {\tt b}. \\ \hline
+%\end{tabular}  
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_TRIANGLE(2)"} & Integration on a triangle of order 2 with 3 points. \\ \hline
+%\end{tabular}
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_TRIANGLE(7)"} & Integration on a triangle of order 7 with 13 points. \\ \hline
+%\end{tabular} 
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_TRIANGLE(19)"} & Integration on a triangle of order 19 with 73 points. \\ \hline
+%\end{tabular} 
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_QUAD(2)"} & Integration on quadrilaterals of order 2 with 3 points. \\ \hline
+%\end{tabular}
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_GAUSS\_PARALLELEPIPED(2,3)"} & Integration on quadrilaterals of order 3 with 4 points (shortcut for {\tt "IM\_PRODUCT(IM\_GAUSS1D(3),IM\_GAUSS1D(3))"}). \\ \hline
+%\end{tabular}
+%\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+%{\tt "IM\_TETRAHEDRON(5)"} & Integration on a tetrahedron of order 5 with 15 points. \\ \hline
+%\end{tabular} \end{center}
+\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_GAUSS1D(k)" } & Description of the Gauss integration on a segment of order {\tt k}. Available for all odd values of k <= 99.\\ \hline
+{\tt "IM\_NC(n,k)"} & Description of the integration on a simplex of reference of dimension {\tt n} for polynomials of degree {\tt k} with the Newton Cotes method (based on Lagrange interpolation).\\ \hline
+{\tt "IM\_PRODUCT(a,b)"} & Build a method doing the direct product of methods {\tt a} and {\tt b}. \\ \hline
+{\tt "IM\_TRIANGLE(2)"} & Integration on a triangle of order 2 with 3 points. \\ \hline
+{\tt "IM\_TRIANGLE(7)"} & Integration on a triangle of order 7 with 13 points. \\ \hline
+{\tt "IM\_TRIANGLE(19)"} & Integration on a triangle of order 19 with 73 points. \\ \hline
+{\tt "IM\_QUAD(2)"} & Integration on quadrilaterals of order 2 with 3 points. \\ \hline
+{\tt "IM\_GAUSS\_PARALLELEPIPED(2,3)"} & Integration on quadrilaterals of order 3 with 4 points (shortcut for {\tt "IM\_PRODUCT(IM\_GAUSS1D(3),IM\_GAUSS1D(3))"}). \\ \hline
+{\tt "IM\_TETRAHEDRON(5)"} & Integration on a tetrahedron of order 5 with 15 points. \\ \hline
+\end{tabular} \end{center}
 
 Remark: note that \texttt{IM\_QUAD(3)} is not able to integrate
 exactly the base functions of the \texttt{FEM_QK(2,3)} finite element!
@@ -2495,6 +2612,1088 @@ Once the program is compiled you can test it executing the command
 The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The program print the $L^2$ and $H^1$ error from an exact solution.\\[0.5cm]
 \index{elastostatic}
 The program \filename{elastostatic} is built in a same way and compute the solution of linear elasticity problem. Many more examples can be found in the tests directory.
+
+\newpage
+
+\section{Appendix A. Finite element method list}
+
+Let us recall that all finite element methods defined in \gf are declared in the file \cpp{getfem\_fem.h} and that a descriptor on a finite element method is obtained thanks to the function
+
+\cpp{getfem::pfem pf = getfem::fem\_descriptor("name of method");}
+
+where \cpp{"name of method"} is a string to be choosen among the existing methods.
+
+\subsection{Dof graphical codification}
+
+\begin{figure}[H] \label{fig:symbols}
+  \begin{center}
+    \icgraphic{15cm}{getfemlistsymbols}{Dof graphical codification}
+  \end{center}
+  \caption{ \it Symbols representing degree of freedom types}
+\end{figure}
+
+\subsection{Classical $P_K$ Lagrange elements on simplices}
+
+It is possible to define a classical $P_K$ Lagrange element of arbitrary dimension and arbitrary degree. Each degree of freedom of such an element corresponds to the value of the function on a corresponding node. The grid of node is the so-called Lagrange grid. Figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk} show examples in dimension 1, 2 and 3.
+\begin{figure}[H] 
+  \begin{center}
+    \icgraphic{14cm}{getfemlistsegmentPk}{Lagrange fem on a segment}
+    \caption{ \it Examples of classical $P_K$ Lagrange elements on a segment.} \label{fig:segmentpk}
+  \end{center}
+\end{figure}
+\begin{figure}[H]
+  \begin{center}
+    \begin{tabular}{m{7cm}m{7cm}}
+      \icgraphic{5cm}{getfemlisttriangleP1}{Lagrange triangle P1} &
+      \icgraphic{5cm}{getfemlisttriangleP2}{Lagrange triangle P2}  \\
+      $P_1$ element, 3 d.o.f., $C^0$ & $P_2$ element, 6 d.o.f., $C^0$ \\ \\
+      \icgraphic{5cm}{getfemlisttriangleP3}{Lagrange triangle P3} &
+      \icgraphic{5cm}{getfemlisttriangleP6}{Lagrange triangle P6}  \\
+      $P_3$ element, 10 d.o.f., $C^0$ & $P_6$ element, 28 d.o.f., $C^0$
+    \end{tabular}
+  \end{center}
+  \caption{ \it Examples of classical $P_K$ Lagrange elements on a triangle.} \label{fig:trianglepk}
+\end{figure}
+
+The number of degree of freedom for a classical $P_K$ Lagrange element of dimension $P$ and degree $K$ is $\Frac{(P+K)!}{P!K!}$. For instance, in dimension 2 ($P = 2$), this value is $\Frac{(P+1) (P+2)}{2}$ and in dimension 3 ($P = 3$), it is $\Frac{(P+1) (P+2) (P+3)}{6}$.
+
+\begin{figure}[H]
+  \begin{center}
+    \begin{tabular}{m{7cm}m{7cm}}
+      \icgraphic{5cm}{getfemlisttetrahedronP1}{Lagrange tetrahedron P1} &
+      \icgraphic{5cm}{getfemlisttetrahedronP2}{Lagrange tetrahedron P2} \\
+      $P_1$ element, 4 d.o.f., $C^0$, & $P_2$ element, 10 d.o.f., $C^0$ \\
+      \icgraphic{5cm}{getfemlisttetrahedronP4}{Lagrange tetrahedron P4} &\\
+      $P_4$ element, 35 d.o.f., $C^0$ &
+    \end{tabular}
+  \end{center}
+  \caption{ \it Examples of classical $P_K$ Lagrange elements on a tetrahedron.} \label{fig:tetrahedronpk}
+\end{figure}
+
+The particular way used in \gf to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let
+\equat{ i_0, i_1, ... i_P, }
+be somme indices such that
+\equat{0 \leq i_0, i_1, ... i_P \leq K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.}
+Then, the coordinate of a node can be computed as
+\equat{ a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0,}
+where $S_0, S_1, ... S_N$ are the vertices of the simplex (for $K = 0$ the particular choice $a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n$ has been chosen).
+Then each base function, corresponding of each node $a_{i_0, i_1, ... i_P}$ is defined by
+\equat{\phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).}
+where $\lambda_n$ are the barycentric coordinates, i.e. the polynomials of degree 1 whose value is $1$ on the vertex $S_n$ and whose value is $0$ on other vertices. On the reference element, one has
+\equat{ \lambda_n = x_n, \ \ 0 \leq n < P,}
+\equat{ \lambda_P = 1 - x_0 - x_1 - ... - x_{P-1}.}
+
+When between two elements of the same degrees (even with different dimensions), the d.o.f. of a common face are linked, the element is of class $C^0$. This means that the global polynomial is continuous. If you try to link elements of different degrees, you will get some trouble with the unlinked d.o.f. This is not automatically supported by \gf, so you will have to support it (add constraints on these d.o.f.).\\
+
+For some applications (computation of a gradient for instance) one may not want the d.o.f. of a common face to be linked. This is why there are two versions of the classical $P_K$ Lagrange element.\\[1cm]
+
+\femtab{Classical $P_K$ Lagrange element}{"FEM\_PK(P, K)"}{\small $K$, \mbox{$0 \leq K \leq 255$}}{\small $P$, \mbox{$~ 1 \leq P \leq 255$}}{$\Frac{(K+P)!}{K! P!}$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+\femtab{Discontinuous $P_K$ Lagrange element}{"FEM\_PK\_DISCONTINUOUS(P, K)"}
+{\small $K$, \mbox{$0 \leq K \leq 255$}}{\small $P$, \mbox{$~ 1 \leq P \leq 255$}}{$\Frac{(K+P)!}{K! P!}$}{discon\-tinuous}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+Even thought Lagrange elements are defined for arbitrary degrees, to choose a hight degree can be problematic for a large number of applications due to the ``noisy'' caracteristic of the lagrange basis. Those element are recommended for the basic interpolation but for p.d.e. applications elements with hierarchical basis are preferable (see the corresponding section).
+
+\subsection{Classical Lagrange elements on other geometries}
+
+Classical Lagrange elements on parallelepipeds or prisms are obtained as tensor product of Lagrange elements on simplices. When two element are defined, one on a dimension $P^1$ and the other in dimension $P^2$, one obtains the base functions of the tensorial product (on the reference element) as
+\equat{\phi'_{ij}(x,y) = \phi'^1_i(x) \phi'^2_j(y), ~~ x \in \Reel^{P^1}, y \in  \Reel^{P^2},}
+where $\phi'^1_i$ and $\phi'^2_i$ are respectively the base functions of the first and second element.
+
+\begin{figure}[H]
+  \begin{center} \begin{tabular}{m{7cm}m{7cm}}
+      \icgraphic{5cm}{getfemlistquadQ1}{2D Q1 element} &
+      \icgraphic{5cm}{getfemlistquadQ3}{2D Q3 element} \\
+    $Q_1$ element, 4 d.o.f., $C^0$ & $Q_3$ element, 16 d.o.f., $C^0$ \\
+  \end{tabular} \end{center}
+  \caption{ \it Examples of classical $Q_K$ Lagrange elements in dimension 2} \label{fig:prodpkdeux}
+\end{figure}
+
+The $Q_K$ element on a parallelepiped of dimension $P$ is obtained as the tensorial product of $P$ classical $P_K$ element on the segment. Examples in dimension $2$ are shown in figure \ref{fig:prodpkdeux} and in dimension $3$ in figure \ref{fig:prodpktrois}. \\
+
+A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-1$ with a segment. The $P_K \otimes P_K$ element on this prism is the tensorial product of the classical $P_K$ element on a simplex of dimension $P-1$ with the classical $P_K$ element on a segment. For $P=2$ this coincide with a parallelepiped. Examples in dimension $3$ are shown in figure \ref{fig:prodpktrois}. This is also possible not to have the same degree on each dimension. An example is shown on figure \ref{fig:prism_P2_p1}. 
+
+\begin{figure}[H]
+  \begin{center} \begin{tabular}{m{7cm}m{7cm}}
+      \icgraphic{5cm}{getfemlistcubeQ1}{3D Q1 element} &
+      \icgraphic{5cm}{getfemlistcubeQ3}{3D Q3 element} \\
+      $Q_1$ element, 8 d.o.f., $C^0$ & $Q_3$ element, 64 d.o.f., $C^0$ \\
+      \icgraphic{5cm}{getfemlistprismP1}{3D prism P1 element} &
+      \icgraphic{5cm}{getfemlistprismP3}{3D prism P3 element} \\
+    $P_1 \otimes P_1$ element, 6 d.o.f., $C^0$ & $P_3 \otimes P_3$ element, 40 d.o.f., $C^0$ \\
+  \end{tabular} \end{center}
+  \caption{ \it Examples of classical Lagrange elements in dimension 3} \label{fig:prodpktrois}
+\end{figure}
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{3.5cm}{getfemlistprismP2P1}{3D prism P2xP1 element}
+  \end{center}
+  \caption{ \it $P_2 \otimes P_1$ Lagrange element on a prism, 12 d.o.f., $C^0$} 
+  \label{fig:prism_P2_p1}
+\end{figure}
+
+
+\femtab{$Q_K$ Lagrange element on parallelepipeds}{"FEM\_QK(P, K)"}
+{\small $KP$, \mbox{$0 \leq K \leq 255$}}{\small $P$, \mbox{$~ 2 \leq P \leq 255$}}{$(K+1)^P$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+\femtab{$P_K \otimes P_K$ Lagrange element on prisms}{"FEM\_PK\_PRISM(P, K)"}
+{\small $2K$, \mbox{$0 \leq K \leq 255$}}{\small $P$, \mbox{$~ 2 \leq P \leq 255$}}{\mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$}}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+\femtab{$P_{K_1} \otimes P_{K_2}$ Lagrange element on prisms}{"FEM\_PRODUCT(FEM\_PK(P-1, K$_1$), FEM\_PK(1, K$_2$))"}{\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \leq K_1,K_2 \leq 255$}}{\small $P$, \mbox{$~ 2 \leq P \leq 255$}}{\mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$}}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlistquad8}{2D Quad8 element} \\
+    Incomplete $Q_2$ element, 8 d.o.f., $C^0$  \\
+  \end{center}
+\end{figure}
+
+\femtab{Incomplete $Q_2$ Lagrange element on quadrilateral (Quad 8 serendipity element)}{"FEM\_INCOMPLETE\_Q2"}
+{$3$}{2}{8}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+ \subsection{Elements with hierarchical basis}
+
+The idea behind hierarchical basis is the description of the solution at different level : a rought level, a more refined level ... In the same discretisation some degrees of freedom represent the rought description, some other the more rafined and so on. This correspond to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of these spaces (this is not the case in classical Lagrange elements when the mesh is refined).\\[0.5cm]
+Among the advantages, the condition number of  rigidity matrices can be greatly improved, it allows local raffinement and a resolution with a multigrid approach.
+
+\subsubsection{Hiercarchical elements with respect to the degree}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlistsegmenthier}{$P_K$ Hierarchical element on a segment}
+  \end{center}
+  \caption{ \it $P_K$ Hierarchical element on a segment, $C^0$} 
+  \label{fig:seg_hier}
+\end{figure}
+
+\femtab{$P_{K}$ Classical Lagrange element on simplices but with a hierarchical basis with respect to the degree}{"FEM\_PK\_HIERARCHICAL(P,K)"}
+{\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$}}{\small $P$, \mbox{$~ 1 \leq P \leq 255$}}{\mbox{$\Frac{(K+P)!}{K! P!}$}}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+\femtab{$Q_{K}$ Classical Lagrange element on parallelepipeds but with a hierarchical basis with respect to the degree}{"FEM\_QK\_HIERARCHICAL(P,K)"}
+{\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$}}{\small $P$, \mbox{$~ 2 \leq P \leq 255$}}{\mbox{$(K+1)^P$}}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+\femtab{$P_{K}$ Classical Lagrange element on prisms but with a hierarchical basis with respect to the degree}{"FEM\_PK\_PRISM\_HIERARCHICAL(P,K)"}
+{\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$}}{\small $P$, \mbox{$~ 2 \leq P \leq 255$}}{\mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$}}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+
+some particular choices : $P_4$ will be build with the basis of the $P_1$, the additional basis of the $P_2$ then the additionnal basis of the $P_4$.
+
+$P_6$ will be build  with the basis of the $P_1$, the additional basis of the $P_2$ then the additionnal basis of the $P_6$ (not with the basis of the $P_1$, 
+the additional basis of the $P_3$ then the additionnal basis of the $P_6$, this is possible to build the latter with \cpp{"FEM\_GEN\_HIERARCHICAL(a,b)})
+
+\subsubsection{Composite elements}
+
+The principal interest of the composite elements is to build hierarchical elements. But this tool can also be used to build piecewise polynomial elements.
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlisttriangleP1comp}{a composite element}
+  \end{center}
+  \caption{ \it composite element {\tt "FEM\_STRUCTURED\_COMPOSITE(FEM\_PK(2,1), 3)"}} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+\femtab{Composition of a finite element method on a element with {\tt S} subdivisions}{"FEM\_STRUCTURED\_COMPOSITE(FEM1, S)"}
+{degree of FEM1}{dimension of FEM1}{variable}{variable}{No \mbox{($Q = 1$)}}{If {\tt FEM1} is}{piecewise}
+
+It is important to use a corresponding composite integration method.
+
+\subsubsection{Hierarchical composite elements}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlisttriangleP1comphier}{a hierarchical composite element}
+  \end{center}
+  \caption{ \it hierarchical composite element {\tt "FEM\_PK\_HIERARCHICAL\_COMPOSITE(2,1,3)"}} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+\femtab{Hierarchical composition of a $P_K$ finite element method on a simplex with {\tt S} subdivisions}{"FEM\_PK\_HIERARCHICAL\_COMPOSITE(P,K,S)"}
+{K}{P}{\mbox{$\Frac{(SK+P)!}{(SK)! P!}$}}{variable}{No \mbox{($Q = 1$)}}{If {\tt FEM1} is}{piecewise}
+
+\femtab{hierarchical composition of a hierarchical $P_K$ finite element method on a simplex with {\tt S} subdivisions}{"FEM\_PK\_FULL\_HIERARCHICAL\_COMPOSITE(P,K,S)"}
+{K}{P}{\mbox{$\Frac{(SK+P)!}{(SK)! P!}$}}{variable}{No \mbox{($Q = 1$)}}{If {\tt FEM1} is}{piecewise}
+
+Other constructions are possible thanks to {\tt "FEM\_GEN\_HIERARCHICAL(FEM1, FEM2)"} and \\ {\tt "FEM\_STRUCTURED\_COMPOSITE(FEM1, S)"}
+
+It is important to use a corresponding composite integration method.
+
+
+\subsection{Classical vectorial elements}
+
+\subsubsection{Raviart-Thomas of lowest order elements}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{10cm}{getfemlistRT0}{RT0 elements}
+  \end{center}
+  \caption{ \it RT0 elements in dimension two and three. (P+1 dof, H(div))} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+\femtab{Raviart-Thomas of lowest order element on simplices}{"FEM\_RT0(P)"}
+{$1$}{$P$}{$P+1$}{$H(div)$}{Yes \mbox{($Q = P$)}}{No}{Yes}
+
+\femtab{Raviart-Thomas of lowest order element on parallelepipeds (quadrilaterals, hexahedrals)}{"FEM\_RT0Q(P)"}
+{$1$}{$P$}{$2P$}{$H(div)$}{Yes \mbox{($Q = P$)}}{No}{Yes}
+
+\subsubsection{Nedelec (or Whitney) edge elements}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{10cm}{getfemlistnedelec}{Nedelec edge elements}
+  \end{center}
+  \caption{ \it Nedelec edge elements in dimension two and three. (P(P+1)/2 dof, H(rot))} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+\femtab{Nedelec (or Whitney) edge element}{"FEM\_NEDELEC(P)"}
+{$1$}{$P$}{$P(P+1)/2$}{$H(rot)$}{Yes \mbox{($Q = P$)}}{No}{Yes}
+
+\subsection{Specific elements in dimension 1}
+
+\subsubsection{GaussLobatto element}
+
+The 1D GaussLobatto $P_K$ element is similar to the classical $P_K$ fem on the segment, but
+the nodes are given by the Gauss-Lobatto-Legendre quadrature rule of
+order $2K-1$. This FEM is known to lead to better conditioned linear
+systems, and can be used with the correspounding quadrature to perform
+mass-lumping (on segments or parallelepipeds).
+
+The polynomials coefficients have been pre-computed with Maple (they require the inversion of an ill-conditionned system), hence they are only available for the following values \\ of $K$: $1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 24, 32$. Note that for $K=1$ and $K=2$, this is the classical $P1$ and $P2$ fem.
+
+\femtab{GaussLobatto $P_K$ element on the segment}{"FEM\_PK\_GAUSSLOBATTO1D(K)"}{$K$}{$1$}{$K+1$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\subsubsection{Hermite element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlistsegmenthermite}{$P_3$ Hermite element on a segment}
+  \end{center}
+  \caption{ \it $P_3$ Hermite element on a segment, 4 d.o.f., $C^1$} 
+  \label{fig:segment_hermite}
+\end{figure}
+
+Base functions on the reference element
+\equat{
+  \begin{array}{ll}
+    \varphi'_0 = (2x+1)(x-1)^2,&\ \ \ \varphi'_1 = x(x-1)^2, \\
+    \varphi'_2 = x^2(3-2x),& \ \ \ \varphi'_3 = x^2(x - 1). 
+  \end{array}
+}
+
+This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation. The matrix $M$ is not equal to identity but is still diagonal.
+
+\femtab{Hermite element on the segment}{"FEM\_HERMITE(1)"}
+{$3$}{$1$}{$4$}{$C^1$}{No \mbox{($Q = 1$)}}{No}{Yes}
+
+\subsubsection{Lagrange element with an additional bubble function}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlistsegmentbubble}{$P_1$ Lagrange element on a segment with additional internal bubble function}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a segment with additional internal bubble function, 3 d.o.f., $C^0$} 
+  \label{fig:segment_bubble}
+\end{figure}
+
+\femtab{Lagrange $P_1$ element with an additional internal bubble function}{"FEM\_PK\_WITH\_CUBIC\_BUBBLE(1, 1)"}{$2$}{$1$}{$3$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\subsection{Specific elements in dimension 2}
+\subsubsection{Elements with additional bubble functions}
+
+\begin{figure}[H]
+  \begin{center}
+    \begin{tabular}{m{7cm}m{7cm}}
+      \icgraphic{5cm}{getfemlisttriangleP1bubble}{P1 triangle with additional cubic bubble} &
+      \icgraphic{5cm}{getfemlisttriangleP2bubble}{P2 triangle with additional cubic bubble} \\
+      $P_1$ with additional bubble function, 4 d.o.f., $C^0$ & $P_2$ with additional bubble function, 7 d.o.f., $C^0$
+    \end{tabular}
+  \end{center}
+  \caption{ \it Lagrange element on a triangle with additional internal bubble function} 
+  \label{fig:triangle_p1_bubble}
+\end{figure}
+
+\femtab{Lagrange $P_1$ or $P_2$ element with an additional internal bubble function}{"FEM\_PK\_WITH\_CUBIC\_BUBBLE(2, K)"}
+{$3$}{$2$}{$4$ or $7$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\begin{figure}[H]
+  \begin{center}
+      \icgraphic{5cm}{getfemlisttriangleP1linbubble}{$P_1$ Lagrange element on a triangle with additional internal piecewise linear bubble function}  \\
+      $P_1$ with additional bubble function, 4 d.o.f., $C^0$
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a triangle with additional internal piecewise linear bubble function} 
+  \label{fig:triangle_p1_bubblepie}
+\end{figure}
+
+\femtab{Lagrange $P_1$ with an additional internal piecewise linear bubble function}{"FEM\_P1\_PIECEWISE\_LINEAR\_BUBBLE"}
+{$1$}{$2$}{$4$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Piecewise}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlisttriangleP1bubbleface}{$P_1$ Lagrange element on a triangle with additional bubble function on face 0}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a triangle with additional bubble function on face 0, 4 d.o.f., $C^0$} 
+  \label{fig:triangle_p1_bubble_face}
+\end{figure}
+
+\femtab{Lagrange $P_1$ element with an additional bubble function on face 0}{"FEM\_P1\_BUBBLE\_FACE(2)"}
+{$2$}{$2$}{$4$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlisttriangleP1withP2face}{$P_1$ Lagrange element on a triangle with additional d.o.f on face 0}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a triangle with additional d.o.f on face 0, 4 d.o.f., $C^0$} 
+  \label{fig:triangle_p1_p2_face}
+\end{figure}
+
+\femtab{$P_1$ Lagrange element on a triangle with additional d.o.f on face 0}{"FEM\_P1\_BUBBLE\_FACE\_LAG"}
+{$2$}{$2$}{$4$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\subsubsection{Non-conforming $P_1$ element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlisttriangleP1nonconforming}{$P_1$ non-conforming element on a triangle}
+  \end{center}
+  \caption{ \it $P_1$ non-conforming element on a triangle, 3 d.o.f., discontinuous} 
+  \label{fig:triangle_non_conforming}
+\end{figure}
+
+\femtab{$P_1$ non-conforming element on a triangle}{"FEM\_P1\_NONCONFORMING"}
+{$1$}{$2$}{$3$}{discon\-tinuous}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\subsubsection{Hermite element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{6cm}{getfemlisttrianglehermite}{Hermite element on a triangle}
+  \end{center}
+  \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$ }
+  \label{fig:triangle_hermite}
+\end{figure}
+
+Base functions on the reference element:
+\equat{
+\begin{array}{ll}
+  \varphi'_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\varphi'_0(0,0) = 1), \\
+  \varphi'_1 = x(1-x-y)(1-x-2y), & (\partial_x\varphi'_1(0,0) = 1), \\
+  \varphi'_2 = y(1-x-y)(1-2x-y), & (\partial_y\varphi'_2(0,0) = 1), \\
+  \varphi'_3 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\varphi'_3(1,0) = 1), \\
+  \varphi'_4 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\varphi'_4(1,0) = 1), \\
+  \varphi'_5 = xy(y+2x-1), & (\partial_y\varphi'_5(1,0) = 1), \\
+  \varphi'_6 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\varphi'_6(0,1) = 1), \\
+  \varphi'_7 = xy(x+2y-1), & (\partial_x\varphi'_7(0,1) = 1), \\
+  \varphi'_8 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\varphi'_8(0,1) = 1), \\
+  \varphi'_9 = 27xy(1-x-y), & (\varphi'_9(1/3,1/3) = 1), \\
+\end{array}
+}
+This element is not \mbox{$\tau$-equivalent} (The matrix $M$ is not equal to identity). On the real element linear combinaisons of $\varphi'_4$ and $\varphi'_7$ are used to match the gradient on the corresponding vertex. Idem for the two couples ($\varphi'_5$, $\varphi'_8$) and  ($\varphi'_6$, $\varphi'_9$) for the two other vertices.  
+
+\femtab{Hermite element on a triangle}{"FEM\_HERMITE(2)"}
+{$3$}{$2$}{$10$}{$C^0$}{No \mbox{($Q = 1$)}}{No}{Yes}
+
+\subsubsection{Morley element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{6cm}{getfemlistmorley}{triangle Morley element}
+  \end{center}
+  \caption{ \it triangle Morley element, $P_2$, 6 d.o.f., $C^0$ }
+  \label{fig:triangle_morley}
+\end{figure}
+
+This element is not \mbox{$\tau$-equivalent} (The matrix $M$ is not equal to identity). In particular, it can be used for non-conforming discretization of fourth order problems, despite the fact that it is not ${\cal C}^0$.
+
+\femtab{Morley element on a triangle}{"FEM\_MORLEY"}
+{$2$}{$2$}{$6$}{  }{No \mbox{($Q = 1$)}}{No}{Yes}
+
+\subsubsection{Argyris element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{6cm}{getfemlistargyris}{Argyris element}
+  \end{center}
+  \caption{ \it Argyris element, $P_5$, 21 d.o.f., $C^1$}
+  \label{fig:argyris}
+\end{figure}
+
+The base functions on the reference element are:
+\equat{ \begin{array}{ll}
+\varphi'_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\varphi'_0(0,0) = 1), \\
+\varphi'_{1}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\varphi'_1(0,0) = 1),\\
+\varphi'_{2}(x,y) = y - 11x^2y - 6y^3 + 18x^3y + 10x^2y^2 + 8y^4 - 8x^4y - 10x^3y^2 + x^2y^3 - 3y^5, & (\partial_y\varphi'_2(0,0) = 1),\\
+\varphi'_{3}(x,y) = 0.5x^2 - 1.5x^3 + 1.5x^4 - 1.5x^2y^2 - 0.5x^5 + 1.5x^3y^2 + x^2y^3, & (\partial^2_{xx}\varphi'_3(0,0) = 1),\\
+\varphi'_{4}(x,y) = xy - 4x^2y - 4xy^2 + 5x^3y + 10x^2y^2 + 5xy^3 - 2x^4y - 6x^3y^2 - 6x^2y^3 - 2xy^4, & (\partial^2_{xy}\varphi'_{4}(0,0) = 1),\\
+\varphi'_{5}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\varphi'_{5}(0,0) = 1),\\
+\varphi'_{6}(x,y) = 10x^3 - 15x^4 + 15x^2y^2 + 6x^5 - 15x^3y^2 - 15x^2y^3, & (\varphi'_6(1,0) = 1),\\
+\varphi'_{7}(x,y) = -4x^3 + 7x^4 - 3.5x^2y^2 - 3x^5 + 3.5x^3y^2 + 3.5x^2y^3, & (\partial_x\varphi'_7(1,0) = 1),\\
+\varphi'_{8}(x,y) = -5x^2y + 14x^3y + 18.5x^2y^2 - 8x^4y - 18.5x^3y^2 - 13.5x^2y^3, & (\partial_y\varphi'_8(1,0) = 1),\\
+\varphi'_{9}(x,y) = 0.5x^3 - x^4 + 0.25x^2y^2 + 0.5x^5 - 0.25x^3y^2 - 0.25x^2y^3, & (\partial^2_{xx}\varphi'_{9}(1,0) = 1),\\
+\varphi'_{10}(x,y) = x^2y - 3x^3y - 3.5x^2y^2 + 2x^4y + 3.5x^3y^2 + 2.5x^2y^3, & (\partial^2_{xy}\varphi'_{10}(1,0) = 1),\\
+\varphi'_{11}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\varphi'_{11}(1,0) = 1),\\
+\varphi'_{12}(x,y) = 10y^3 + 15x^2y^2 - 15y^4 - 15x^3y^2 - 15x^2y^3 + 6y^5, & (\varphi'_{12}(0,1) = 1),\\
+\varphi'_{13}(x,y) = -5xy^2 + 18.5x^2y^2 + 14xy^3 - 13.5x^3y^2 - 18.5x^2y^3 - 8xy^4, & (\partial_x\varphi'_{13}(0,1) = 1),\\
+\varphi'_{14}(x,y) = -4y^3 - 3.5x^2y^2 + 7y^4 + 3.5x^3y^2 + 3.5x^2y^3 - 3y^5, & (\partial_y\varphi'_{14}(0,0) = 1),\\
+\varphi'_{15}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\varphi'_{15}(0,1) = 1),\\
+\varphi'_{16}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\varphi'_{16}(0,1) = 1),\\
+\varphi'_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\varphi'_{17}(0,1) = 1),\\
+\varphi'_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & ~\hspace{-10.5em}(\sqrt{0.5}(\partial_{x}\varphi'_{18}(0.5,0.5) + \partial_{y}\varphi'_{18}(0.5,0.5)) = 1),\\
+\varphi'_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\varphi'_{19}(0,0.5) = 1),\\
+\varphi'_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\varphi'_{20}(0.5,0) = 1),\\
+\end{array}
+}
+
+This element is not \mbox{$\tau$-equivalent} (The matrix $M$ is not equal to identity). On the real element linear combinaisons of the transformed base functions $\varphi'_i$ are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  $M$ allows to define Argyris element even with nonlinear geometric transformations (for instance to treat curved boundaries).
+
+
+\femtab{Argyris element on a triangle}{"FEM\_ARGYRIS"}
+{$5$}{$2$}{$21$}{$C^1$}{No \mbox{($Q = 1$)}}{No}{Yes}
+
+\subsubsection{Hsieh-Clough-Tocher element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{6cm}{getfemlistHCT}{Hsieh-Clough-Tocher (HCT) element}
+  \end{center}
+  \caption{ \it Hsieh-Clough-Tocher (HCT) element, $P_3$, 12 d.o.f., $C^1$}
+  \label{fig:HCT_tr}
+\end{figure}
+
+This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure \ref{fig:HCT_tr} and \cite{ciarlet1978}). It is strongly advised to use a \cpp{ IM\_HCT\_COMPOSITE } integration method with this finite element. The numeration of the dof is the following : 0, 3 and 6 for the lagrange dof on the first second and third vertex respectively; 1, 4, 7 for the derivative with respects to the first variable; 2, 5, 8 for the derivative with respects to the second variable and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.\\
+
+\femtab{HCT element on a triangle}{"FEM\_HCT\_TRIANGLE"}
+{$3$}{$2$}{$12$}{$C^1$}{No \mbox{($Q = 1$)}}{No}{piecewise}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5.5cm}{getfemlistreducedHCT}{ Reduced Hsieh-Clough-Tocher (reduced HCT) element}
+  \end{center}
+  \caption{ \it Reduced Hsieh-Clough-Tocher (reduced HCT) element, $P_3$, 9 d.o.f., $C^1$}
+  \label{fig:reduced_HCT_tr}
+\end{figure}
+
+This element exists also in its reduced form, where the normal derivatives is assumed to be polynomial of degree one on each edge (see figure \ref{fig:reduced_HCT_tr})
+
+
+\femtab{Reduced HCT element on a triangle}{"FEM\_REDUCED\_HCT\_TRIANGLE"}
+{$3$}{$2$}{$9$}{$C^1$}{No \mbox{($Q = 1$)}}{No}{piecewise}
+
+\subsubsection{A composite $C^1$ element on quadrilaterals}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{6cm}{getfemlistquadc1composite}{$C^1$ composite element on quadrilaterals}
+  \end{center}
+  \caption{ \it Composite element on quadrilaterals, piecewise $P_3$, 16 d.o.f., $C^1$}
+  \label{fig:QC1_tr}
+\end{figure}
+
+This element is not \mbox{$\tau$-equivalent}. This is a composite element. Polynomial of degree 3 on each of the four sub-triangles (see figure \ref{fig:QC1_tr}). At least on the reference element it correponds to the Fraeijs de Veubeke-Sander element (see \cite{ciarlet1978}). It is strongly advised to use a \cpp{ IM\_QUADC1\_COMPOSITE } integration method with this finite element. \\
+
+\femtab{$C^1$ composite element on a quadrilateral (FVS)}{"FEM\_QUADC1\_COMPOSITE"}
+{$3$}{$2$}{$16$}{$C^1$}{No \mbox{($Q = 1$)}}{No}{piecewise}
+
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5.5cm}{getfemlistreducedquadc1composite}{Reduced $C^1$ composite element on quadrilaterals}
+  \end{center}
+  \caption{ \it Reduced composite element on quadrilaterals, piecewise $P_3$, 12 d.o.f., $C^1$}
+  \label{fig:reduced_QC1_tr}
+\end{figure}
+
+This element exists also in its reduced form, where the normal derivatives is assumed to be polynomial of degree one on each edge (see figure \ref{fig:reduced_QC1_tr})
+
+\femtab{Reduced $C^1$ composite element on a quadrilateral (reduced FVS)}{"FEM\_REDUCED\_QUADC1\_COMPOSITE"}
+{$3$}{$2$}{$12$}{$C^1$}{No \mbox{($Q = 1$)}}{No}{piecewise}
+
+
+\subsection{Specific elements in dimension 3}
+\subsubsection{Elements with additional bubble functions}
+\begin{figure}[H]
+  \begin{center}
+    \begin{tabular}{m{5cm}m{5cm}m{5cm}}
+      \icgraphic{4.5cm}{getfemlisttetrahedronP1bubble}{$P_1$ with additional bubble function in 3D} &
+      \icgraphic{4.5cm}{getfemlisttetrahedronP2bubble}{$P_2$ with additional bubble function in 3D} &
+      \icgraphic{4.5cm}{getfemlisttetrahedronP3bubble}{$P_3$ with additional bubble function in 3D} \\
+      $P_1$ with additional bubble function, 5 d.o.f., $C^0$ & $P_2$ with additional bubble function, 11 d.o.f., $C^0$ & $P_3$ with additional bubble function, 21 d.o.f., $C^0$
+    \end{tabular}
+  \end{center}
+  \caption{ \it Lagrange element on a tetrahedron with additional internal bubble function.} 
+  \label{fig:tetrahedron_p1_bubble}
+\end{figure}
+
+\femtab{$P_K$ Lagrange element with an additional internal bubble function}
+{"FEM\_PK\_WITH\_CUBIC\_BUBBLE(3, K)"}
+{$4$}{$3$}{$5$, $11$ or $21$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlisttetrahedronP1bubbleface}{$P_1$ Lagrange element on a tetrahedron with additional bubble function on face 0}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a tetrahedron with additional bubble function on face 0, 5 d.o.f., $C^0$} 
+  \label{fig:tetrahedron_p1_bubble_face}
+\end{figure}
+
+\femtab{Lagrange $P_1$ element with an additional bubble function on face 0}
+{"FEM\_P1\_BUBBLE\_FACE(3)"}
+{$3$}{$3$}{$5$}{$C^0$}{No \mbox{($Q = 1$)}}{Yes}{Yes}
+
+\subsubsection{Hermite element}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{6cm}{getfemlisttetrahedronhermite}{Hermite element on a tetrahedron}
+  \end{center}
+  \caption{ \it Hermite element on a tetrahedron, $P_3$, 20 d.o.f., $C^0$}
+  \label{fig:tetrahedron_hermite}
+\end{figure}
+
+Base functions on the reference element:
+\equat{
+  \begin{array}{ll}
+\varphi'_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
+ ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\varphi'_0(0,0,0) = 1),\\
+\varphi'_{1}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\partial_x\varphi'_1(0,0,0) = 1),\\
+\varphi'_{2}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\partial_y\varphi'_2(0,0,0) = 1),\\
+\varphi'_{3}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\partial_z\varphi'_3(0,0,0) = 1),\\
+\varphi'_{4}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\varphi'_4(1,0,0) = 1),\\
+\varphi'_{5}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\partial_x\varphi'_5(1,0,0) = 1),\\
+\varphi'_{6}(x,y) = -xy + 2x^2y + xy^2, & (\partial_y\varphi'_6(1,0,0) = 1),\\
+\varphi'_{7}(x,y) = -xz + 2x^2z + xz^2, & (\partial_z\varphi'_7(1,0,0) = 1),\\
+\varphi'_{8}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\varphi'_8(0,1,0) = 1),\\
+\varphi'_{9}(x,y) = -xy + x^2y + 2xy^2, & (\partial_x\varphi'_9(0,1,0) = 1),\\
+\varphi'_{10}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\partial_y\varphi'_{10}(0,1,0) = 1),\\
+\varphi'_{11}(x,y) = -yz + 2y^2z + yz^2, & (\partial_z\varphi'_{11}(0,1,0) = 1),\\
+\varphi'_{12}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\varphi'_{12}(0,0,1) = 1),\\
+\varphi'_{13}(x,y) = -xz + x^2z + 2xz^2, & (\partial_x\varphi'_{13}(0,0,1) = 1),\\
+\varphi'_{14}(x,y) = -yz + y^2z + 2yz^2, & (\partial_y\varphi'_{14}(0,0,1) = 1),\\
+\varphi'_{15}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\partial_z\varphi'_{15}(0,0,1) = 1),\\
+\varphi'_{16}(x,y) = 27xyz, & (\varphi'_{16}(1/3,1/3,1/3) = 1),\\
+\varphi'_{17}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\varphi'_{17}(0,1/3,1/3) = 1),\\
+\varphi'_{18}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\varphi'_{18}(1/3,0,1/3) = 1),\\
+\varphi'_{19}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\varphi'_{19}(1/3,1/3,0) = 1),\\
+  \end{array}
+}
+This element is not \mbox{$\tau$-equivalent} (The matrix $M$ is not equal to identity). On the real element linear combinaisons of $\varphi'_8$, $\varphi'_{12}$ and $\varphi'_{16}$ are used to match the gradient on the corresponding vertex. Idem on the orther vertices. 
+
+\femtab{Hermite element on a tetrahedron}{"FEM\_HERMITE(3)"}
+{$3$}{$3$}{$20$}{$C^0$}{No \mbox{($Q = 1$)}}{No}{Yes}
+
+\newpage
+
+\section{Appendix B. Cubature method list}
+
+The integration methods are of two kinds. Exact integrations of polynomials and approximated integrations (cubature formulas) of any function. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
+
+A descriptor on an integration method is given by the function
+
+\cpp{ppi = getfem::int\_method\_descriptor("name of method");}
+
+where \cpp{\tt "name of method"} is a string to be choosen among the existing methods.
+
+The program \cpp{integration} located in the \cpp{tests} directory lists and checks the degree of each integration method.
+
+\subsection{Exact Integration methods}
+
+The list of available Exact integration methods is the following
+
+
+\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+\cpp{"IM\_NONE()"} & Dummy integration method.\\ \hline
+\cpp{"IM\_EXACT\_SIMPLEX(n)"} & Description of the exact integration of polynomials on the simplex of reference of dimension {\tt n}. \\ \hline
+\cpp{"IM\_PRODUCT(a, b)"} & Description of the exact integration on the convex which is the direct product of the convex in {\tt a} and in {\tt b}.\\ \hline
+\cpp{"IM\_EXACT\_PARALLELEPIPED(n)"} & Description of the exact integration of polynomials on the parallelepiped of reference of dimension {\tt n}\\ \hline
+\cpp{"IM\_EXACT\_PRISM(n)"} & Description of the exact integration of polynomials on the prism of reference of dimension {\tt n}\\ \hline
+\end{tabular} \end{center}
+
+Even though a description of exact integration method exists on parallelepipeds or prisms, most of the time the geometric transformations on such elements are not linear and the exact integration cannot be used.\\
+
+Beware : In fact a lot of computation cannot be done with exact integration methods. So, it is recommended to use cubature formulas instead.
+
+\subsection{Newton cotes Integration methods}
+
+use \cpp{"IM\_NC(N,K)"}, \cpp{ "IM\_NC\_PARALLELEPIPED(N,K)"}
+and \cpp{ "IM\_NC\_PRISM(N,K)"} to have the Newton cotes integration of order \cpp{K} on simplices, parallelepipeds and prisms respectively.
+
+
+\subsection{Gauss Integration methods on dimension 1}
+
+use \cpp{ "IM\_GAUSS1D(K)"} to have the Gauss-Legendre integration on the segment of order \cpp{ K} (with \cpp{ K}/2 + 1 points), and \cpp{ "IM\_GAUSSLOBATTO1D(K)"} to have the Gauss-Lobatto-Legendre integration on the segment of order \cpp{ K} (with \cpp{ K}/2 + 1 points). The latter integration method is only available for odd values of $K$. The Gauss-Lobatto integration method can be used in conjunction with \cpp{ "FEM\_PK\_GAUSSLOBATTO1D(K/2)"} to perform mass-lumping.
+
+\subsection{Gauss Integration methods on dimension 2}
+
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline 
+graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tabular} & weights & function to call / order \\ \hline
+\texonly{
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+  \hline& & &\\ 
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle1}{IM\_TRIANGLE(1)} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/3$ & $1/3$ 
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      1/2
+    \end{tabular}
+  & \cpp{ \small "IM\_TRIANGLE(1)"} \hspace{9em} 
+    1 point, order 1. \\ \hline
+\texonly{
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+  \hline& & &\\ 
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle2}{"IM\_TRIANGLE(2)"} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/6$ & $1/6$ \\ \\
+      $2/3$ & $1/6$  \\ \\
+      $1/6$ & $2/3$
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      1/6 \\ \\
+      1/6 \\ \\
+      1/6
+    \end{tabular}
+  & \cpp{ \small "IM\_TRIANGLE(2)"} \hspace{9em} 3 points, order 2. \\ \hline
+\texonly{
+\end{tabular} 
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+  \hline& & &\\ 
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle3}{"IM\_TRIANGLE(3)"} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/3$ & $1/3$ \\ \\
+      $1/5$ & $1/5$ \\ \\
+      $3/5$ & $1/5$ \\ \\
+      $1/5$ & $3/5$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      -27/96 \\ \\
+      25/96 \\ \\
+      25/96 \\ \\ 
+      25/96 
+    \end{tabular} }
+  & \cpp{ \small "IM\_TRIANGLE(3)"} \hspace{9em} 4 points, order 3. \\ \hline
+\texonly{
+\end{tabular} 
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+  \hline& & &\\
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle4}{"IM\_TRIANGLE(4)"} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $a$ & $a$ \\ 
+      $1-2a$ & $a$ \\ 
+      $a$ & $1-2a$ \\ 
+      $b$ & $b$ \\ 
+      $1-2b$ & $b$  \\ 
+      $b$ & $1-2b$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      c \\ 
+      c \\ 
+      c \\ 
+      d \\ 
+      d \\ 
+      d
+    \end{tabular} }
+  & \cpp{ \small "IM\_TRIANGLE(4)"} \hspace{7em} \mbox{6 points, order 4,}\hspace{7em} \mbox{a = 0.445948490915965,}\hspace{5em} \mbox{b = 0.091576213509771,}\hspace{5em} \mbox{c = 0.111690794839005,}\hspace{5em} \mbox{d = 0.054975871827661.} \\ \hline
+\texonly{
+\end{tabular} 
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+  \hline& & &\\
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle5}{"IM\_TRIANGLE(5)"} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/3$ & $1/3$ \\ 
+      $a$ & $a$ \\ 
+      $1-2a$ & $a$ \\ 
+      $a$ & $1-2a$ \\ 
+      $b$ & $b$ \\ 
+      $1-2b$ & $b$  \\ 
+      $b$ & $1-2b$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      9/80 \\ 
+      c \\ 
+      c \\ 
+      c \\ 
+      d \\ 
+      d \\ 
+      d 
+    \end{tabular} }
+  & \cpp{ \small "IM\_TRIANGLE(5)"} \hspace{7em} \mbox{7 points, order 5,}\hspace{7em} \mbox{$a = \Frac{6+\sqrt{15}}{21}$,}\hspace{5em} \mbox{$b = 4/7 - a$,}\hspace{8em} \mbox{$c = \Frac{155+\sqrt{15}}{2400}$,}\hspace{5em} \mbox{$d = 31/240 - c$.} \\ \hline
+\texonly{
+\end{tabular}  
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+\hline& & &\\
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle6}{"IM\_TRIANGLE(6)"} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $a$ & $a$ \\ 
+      $1-2a$ & $a$ \\ 
+      $a$ & $1-2a$ \\ 
+      $b$ & $b$ \\ 
+      $1-2b$ & $b$ \\ 
+      $b$ & $1-2b$ \\ 
+      $c$ & $d$ \\ 
+      $d$ & $c$ \\ 
+      $1-c-d$ & $c$ \\ 
+      $1-c-d$ & $d$ \\ 
+      $c$ & $1-c-d$ \\ 
+      $d$ & $1-c-d$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      e \\
+      e \\ 
+      e \\ 
+      f \\  
+      f \\ 
+      f \\ 
+      g \\ 
+      g \\ 
+      g \\ 
+      g \\ 
+      g \\ 
+      g
+    \end{tabular} }
+  & \cpp{ \small "IM\_TRIANGLE(6)"} \hspace{7em} \mbox{12 points, order 6,}\hspace{7em}
+  \mbox{$a = 0.063089104491502$,}\hspace{5em}
+  \mbox{$b = 0.249286745170910$,}\hspace{8em}
+  \mbox{$c = 0.310352451033785$,}\hspace{5em}
+  \mbox{$d = 0.053145049844816$,}\hspace{5em}
+  \mbox{$e = 0.025422453185103$,}\hspace{5em}
+  \mbox{$f = 0.058393137863189$,}\hspace{5em}
+  \mbox{$g = 0.041425537809187$.}\hspace{5em}
+  \\ \hline
+\texonly{
+\end{tabular}  
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+  \hline& & &\\
+  \icgraphic{2.5cm}{getfemlistintmethodtriangle7}{"IM\_TRIANGLE(7)"} &
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $a$ & $a$ \\ 
+      $b$ & $a$ \\ 
+      $a$ & $b$ \\ 
+      $c$ & $e$ \\ 
+      $d$ & $c$ \\ 
+      $e$ & $d$ \\ 
+      $d$ & $e$ \\ 
+      $c$ & $d$ \\ 
+      $e$ & $c$ \\ 
+      $f$ & $f$ \\ 
+      $g$ & $f$ \\ 
+      $f$ & $g$ \\
+      $1/3$ & $1/3$ 
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      h \\
+      h \\ 
+      h \\ 
+      i \\  
+      i \\ 
+      i \\ 
+      i \\ 
+       i \\ 
+       i \\
+       j \\
+       j \\
+       j \\
+       k
+     \end{tabular} }
+   & \cpp{ \small "IM\_TRIANGLE(7)"} \hspace{7em} \mbox{13 points, order 7,}\hspace{7em}
+   \mbox{$a = 0.0651301029022$,}\hspace{5em}
+   \mbox{$b = 0.8697397941956$,}\hspace{5em}
+   \mbox{$c = 0.3128654960049$,}\hspace{5em}
+   \mbox{$d = 0.6384441885698$,}\hspace{5em}
+   \mbox{$e = 0.0486903154253$,}\hspace{5em}
+   \mbox{$f = 0.2603459660790$,}\hspace{5em}
+   \mbox{$g = 0.4793080678419$,}\hspace{5em}
+   \mbox{$h = 0.0266736178044$,}\hspace{5em}
+   \mbox{$i = 0.0385568804451$,}\hspace{5em}
+   \mbox{$j = 0.0878076287166$,}\hspace{5em}
+   \mbox{$k = -0.0747850222338$.}\hspace{5em}
+   \\ \hline
+\texonly{
+ \end{tabular}  
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_TRIANGLE(8)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{16 points, order 8}\hspace{7em} \\ \hline
+\texonly{
+ \end{tabular}
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_TRIANGLE(9)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{19 points, order 9}\hspace{7em} \\ \hline
+\texonly{ \end{tabular}
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_TRIANGLE(10)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{25 points, order 10}\hspace{7em} \\ \hline
+\texonly{ \end{tabular}
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_TRIANGLE(13)"}~(see \cite{EncyclopCubature}) \hspace{7em} \mbox{37 points, order 13}\hspace{7em} \\ \hline
+\texonly{ \end{tabular}
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+   \hline& & &\\
+   \icgraphic{2.5cm}{getfemlistintmethodquad2}{"IM\_QUAD(2)"} &
+   { \small
+     \begin{tabular}{m{3cm}m{3cm}}
+       $1/2+\sqrt{1/6}$ & $1/2$ \\ \\
+       $1/2-\sqrt{1/24}$ & $1/2\pm\sqrt{1/8}$ 
+     \end{tabular}
+     }
+   & 
+     \begin{tabular}{c}
+       1/3 \\ \\
+       1/3
+     \end{tabular}
+   & \cpp{ \small "IM\_QUAD(2)"} \hspace{11em} 3 points, order 2. \\ \hline
+\texonly{
+ \end{tabular}  
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+   \hline& & &\\ 
+   \icgraphic{2.5cm}{getfemlistintmethodquad3}{"IM\_QUAD(3)"} &
+   { \small
+     \begin{tabular}{m{3cm}m{3cm}}
+       $1/2\pm\sqrt{1/6}$ & $1/2$ \\ \\
+       $1/2$ & $1/2\pm\sqrt{1/6}$ 
+     \end{tabular}
+     }
+   & 
+     \begin{tabular}{c}
+       1/4 \\ \\
+       1/4
+     \end{tabular}
+   & \cpp{ \small "IM\_QUAD(3)"} \hspace{11em} 4 points, order 3. \\ \hline
+\texonly{
+ \end{tabular} 
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|}
+}
+   \hline& & &\\ 
+   \icgraphic{2.5cm}{getfemlistintmethodquad5}{"IM\_QUAD(5)"} &
+   { \small
+     \begin{tabular}{m{3cm}m{3cm}}
+       1/2 & 1/2 \\ \\
+       $1/2 \pm \sqrt{7/30}$ & 1/2\\ \\
+       $1/2\pm\sqrt{1/12}$ & $1/2\pm\sqrt{3/20}$ 
+     \end{tabular}
+     }
+   & 
+     \begin{tabular}{c}
+       2/7 \\ \\
+       5/63 \\ \\
+       5/36
+     \end{tabular}
+   & \cpp{ \small "IM\_QUAD(5)"} \hspace{11em} 7 points, order 5. \\ \hline
+\texonly{
+ \end{tabular}  
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_QUAD(7)"} \hspace{7em} \mbox{12 points, order 7}\hspace{7em} \\ \hline
+\texonly{
+ \end{tabular}
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_QUAD(9)"} \hspace{7em} \mbox{20 points, order 9}\hspace{7em} \\ \hline
+\texonly{
+ \end{tabular}
+ \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{6.5cm}|} \hline
+}
+ &&&\cpp{ \small "IM\_QUAD(17)"} \hspace{7em} \mbox{70 points, order 17}\hspace{7em} \\ \hline
+ \end{tabular}
+ ~\\[0.2cm]
+
+There is also the \cpp{IM\_GAUSS\_PARALLELEPIPED(n,k)} which is a direct product of 1D gauss integrations.\\
+
+\textbf{Important note:} do not forget that \cpp{IM\_QUAD(k)} is exact for polynomials up to degree $k$, and that a $Q_k$ polynomial has a degree of $2*k$. For example, \cpp{IM\_QUAD(7)} cannot integrate exactly the product of two $Q_{2}$ polynomials. On the other hand, \cpp{IM\_GAUSS\_PARALLELEPIPED(2,4)} can integrate exactly that product\ldots
+
+\subsection{Gauss Integration methods on dimension 3}
+
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|} \hline 
+  graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x & y & z \end{tabular} & weights & function to call / order \\ \hline
+\texonly{
+\end{tabular}  
+\begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
+}
+   \hline& & &\\
+   \icgraphic{2.5cm}{getfemlistintmethodtetrahedron1}{"IM\_TETRAHEDRON(1)"} &
+   { \small
+     \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}}
+       $1/4$ & $1/4$ & $1/4$  
+     \end{tabular}
+     }
+   & 
+     { \small \begin{tabular}{c}
+       1/6
+     \end{tabular} }
+   & \cpp{ \small "IM\_TETRAHEDRON(1)"} \hspace{9em} 
+     1 point, order 1. \\ \hline
+\texonly{
+\end{tabular}  
+ \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
+}
+   \hline& & &\\ 
+   \icgraphic{2.5cm}{getfemlistintmethodtetrahedron2}{"IM\_TETRAHEDRON(2)"} &
+   { \small
+     \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}}
+       $a$ & $a$ & $a$ \\
+       $a$ & $b$ & $a$ \\
+       $a$ & $a$ & $b$ \\
+       $b$ & $a$ & $a$ 
+     \end{tabular}
+     }
+   & 
+     { \small \begin{tabular}{c}
+       1/24 \\
+       1/24 \\
+       1/24 \\
+       1/24       
+     \end{tabular} }
+   & \cpp{ \small "IM\_TETRAHEDRON(2)"} \hspace{7em} 
+     \mbox{4 points, order 2} \hspace{7em}
+     \mbox{$a = \Frac{5 - \sqrt{5}}{20}$,}\hspace{5em}
+     \mbox{$b = \Frac{5 + 3\sqrt{5}}{20}$.}\hspace{5em} \hspace{5em} \hspace{5em}
+   \\ \hline
+\texonly{
+\end{tabular}  
+ \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
+}
+   \hline& & &\\ 
+   \icgraphic{2.5cm}{getfemlistintmethodtetrahedron3}{"IM\_TETRAHEDRON(3)"} &
+   { \small
+     \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}}
+       $1/4$ & $1/4$ & $1/4$ \\
+       $1/6$ & $1/6$ & $1/6$ \\
+       $1/6$ & $1/2$ & $1/6$ \\
+       $1/6$ & $1/6$ & $1/2$ \\
+       $1/2$ & $1/6$ & $1/6$      
+     \end{tabular}
+     }
+   & 
+     { \small \begin{tabular}{c}
+       -2/15 \\
+       3/40 \\
+       3/40 \\
+       3/40       
+     \end{tabular} }
+   & \cpp{ \small "IM\_TETRAHEDRON(3)"} \hspace{7em} 
+     \mbox{5 points, order 3} \hspace{7em} \\ \hline
+\texonly{ \end{tabular}  
+ \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{7.01cm}|}
+}
+   \hline& & &\\ 
+   \icgraphic{2.5cm}{getfemlistintmethodtetrahedron5}{"IM\_TETRAHEDRON(5)"} &
+   { \small
+     \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}}
+       $1/4$ & $1/4$ & $1/4$ \\
+       $a$ & $a$ & $a$ \\
+       $a$ & $a$ & $c$ \\
+       $a$ & $c$ & $a$ \\
+       $c$ & $a$ & $a$ \\ 
+       $b$ & $b$ & $b$ \\
+       $b$ & $b$ & $d$ \\
+       $b$ & $d$ & $b$ \\
+       $d$ & $b$ & $b$ \\
+       $e$ & $e$ & $f$ \\
+       $e$ & $f$ & $e$ \\
+       $f$ & $e$ & $e$ \\
+       $e$ & $f$ & $f$ \\
+       $f$ & $e$ & $f$ \\
+       $f$ & $f$ & $e$ 
+     \end{tabular}
+     }
+   & 
+     { \small \begin{tabular}{c}
+       8/405 \\
+       h \\
+       h \\
+       h \\
+       h \\      
+       i \\
+       i \\
+       i \\
+       i \\
+       5/567 \\
+       5/567 \\
+       5/567 \\
+       5/567 \\
+       5/567 \\
+       5/567
+     \end{tabular} }
+   & \cpp{ \small "IM\_TETRAHEDRON(5)"} \hspace{7em} 
+     \mbox{15 points, order 5} \hspace{7em}
+     \mbox{$a = \Frac{7 + \sqrt{15}}{34}$,}
+     \mbox{$b = \Frac{7 - \sqrt{15}}{34}$,}\hspace{5em}
+     \mbox{$c = \Frac{13 + 3\sqrt{15}}{34}$,}
+     \mbox{$d = \Frac{13 - 3\sqrt{15}}{34}$,}\hspace{5em}
+     \mbox{$e = \Frac{5 - \sqrt{15}}{20}$,}
+     \mbox{$f = \Frac{5 + \sqrt{15}}{20}$,}\hspace{5em}
+     \mbox{$h = \Frac{2665 - 14\sqrt{15}}{226800}$,}\hspace{5em} 
+     \mbox{$i = \Frac{2665 + 14\sqrt{15}}{226800}$,}\hspace{5em} 
+   \\ \hline
+ \end{tabular}
+
+ Others methods are:
+ \begin{center}
+   \begin{tabular}{|lll|}
+     \hline name & convex type & nb of points\\
+     \hline \cpp{IM\_TETRAHEDRON(6)} & 3D simplex & 24\\
+     \cpp{IM\_TETRAHEDRON(8)} & 3D simplex & 43\\
+     \cpp{IM\_SIMPLEX4D(3)}   & 4D simplex & 6\\
+     \cpp{IM\_HEXAHEDRON(5)}  & 3D parallelepipeded & 14\\
+     \cpp{IM\_HEXAHEDRON(9)}  & 3D parallelepipeded & 58\\
+     \cpp{IM\_HEXAHEDRON(11)}  & 3D parallelepipeded & 90\\
+     \cpp{IM\_CUBE4D(5)}      & 4D parallelepipeded & 24\\
+     \cpp{IM\_CUBE4D(9)}      & 4D parallelepipeded & 145\\
+     \hline
+   \end{tabular}
+ \end{center}
+
+\subsection{Direct product of integration methods}
+
+You can use \cpp{ "IM\_PRODUCT(IM1, IM2)"} to produce integration methods on quadrilateral or prisms. It gives the direct product of two integration mathods. For instance \cpp{IM\_GAUSS\_PARALLELEPIPED(2,k)} is an alias for \cpp{IM\_PRODUCT(IM\_GAUSS1D(2,k),IM\_GAUSS1D(2,k))} and ca be use instead of the \cpp{IM\_QUAD} integrations.
+
+\subsection{Composite integration methods}
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{5cm}{getfemlistintmethodtriangle2comp}{"IM\_STRUCTURED\_COMPOSITE(IM\_TRIANGLE(2), 3)"}
+  \end{center}
+  \caption{ \it composite method \cpp{ "IM\_STRUCTURED\_COMPOSITE(IM\_TRIANGLE(2), 3)"}} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+
+use \cpp{ "IM\_STRUCTURED\_COMPOSITE(IM1, S)"} to copy \cpp{ IM1} on an element with \cpp{ S} subdivisions. The resulting integration method has the same order but with more points. This could be more stable to use composite method rather than to improve the order of the method. Those methods have to be used also with composite elements. Most of the time for composite element, it is preferable to choose the basic method \cpp{IM1} with no points on the boundary (because the gradient coulb be not defined on the boundary of sub-elements). 
+
+
+For the HCT element, it is advised to use the \cpp{IM\_HCT\_COMPOSITE(im)} composite integration (which split the original triangle into 3 sub-triangles).
+
 
 \begin{thebibliography}{99}
 % \bibliographystyle{apalike}

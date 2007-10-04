@@ -1,34 +1,6 @@
 all : getfem_project.pdf
 
-FIGS=getfemuserelemf.fig diagram.fig getfemelemelem.fig getfemelemtrans.fig \
-     getfemlistsymbols.fig getfemlistsegmentPk.fig getfemlisttriangleP1.fig \
-     getfemlisttriangleP2.fig getfemlisttriangleP3.fig                      \
-     getfemlisttriangleP6.fig getfemlisttetrahedronP1.fig                   \
-     getfemlisttetrahedronP2.fig getfemlisttetrahedronP4.fig                \
-     getfemlistquadQ1.fig getfemlistquadQ3.fig getfemlistcubeQ1.fig         \
-     getfemlistcubeQ3.fig getfemlistprismP1.fig getfemlistprismP3.fig       \
-     getfemlistprismP2P1.fig getfemlistquad8.fig getfemlistsegmenthier.fig  \
-     getfemlisttriangleP1comp.fig getfemlisttriangleP1comphier.fig          \
-     getfemlistRT0.fig getfemlistnedelec.fig getfemlistsegmenthermite.fig   \
-     getfemlistsegmentbubble.fig getfemlisttriangleP1bubble.fig             \
-     getfemlisttriangleP2bubble.fig getfemlisttriangleP1withP2face.fig      \
-     getfemlisttriangleP1bubbleface.fig getfemlisttriangleP1linbubble.fig   \
-     getfemlisttriangleP1nonconforming.fig getfemlisttrianglehermite.fig    \
-     getfemlistmorley.fig getfemlistargyris.fig getfemlistHCT.fig           \
-     getfemlistreducedHCT.fig getfemlistquadc1composite.fig                 \
-     getfemlistreducedquadc1composite.fig getfemlisttetrahedronP1bubble.fig \
-     getfemlisttetrahedronP2bubble.fig getfemlisttetrahedronP3bubble.fig    \
-     getfemlisttetrahedronP1bubbleface.fig getfemlisttetrahedronhermite.fig \
-     getfemlistintmethodtriangle1.fig getfemlistintmethodtriangle2.fig      \
-     getfemlistintmethodtriangle3.fig getfemlistintmethodtriangle4.fig      \
-     getfemlistintmethodtriangle5.fig getfemlistintmethodtriangle6.fig      \
-     getfemlistintmethodtriangle7.fig getfemlistintmethodquad2.fig          \
-     getfemlistintmethodquad3.fig getfemlistintmethodquad5.fig              \
-     getfemlistintmethodtriangle2comp.fig getfemlistintmethodtetrahedron1.fig \
-     getfemlistintmethodtetrahedron2.fig getfemlistintmethodtetrahedron3.fig  \
-     getfemlistintmethodtetrahedron5.fig
-
-
+FIGS=getfemuserelemf.fig diagram.fig getfemelemelem.fig getfemelemtrans.fig
 
 
 PDFFIGS=$(FIGS:.fig=.pdf)
