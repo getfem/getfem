@@ -1197,7 +1197,12 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   cout << "Total number of variables : " << final_model->nb_dof() << endl;
   getfem::standard_model_state MS(*final_model);
   gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(MS, *final_model, iter);
+
+
+  // getfem::useful_types<getfem::standard_model_state>::plsolver_type p;
+  // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
+
+  getfem::standard_solve(MS, *final_model, iter /* , p*/);
 
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
