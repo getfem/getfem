@@ -10,9 +10,9 @@ N = 2;
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 NX = 21;                 % space step
-MESH_FILE='/home-local/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_12.mesh'
-TRANSLAT_X = 0.02 ;
-TRANSLAT_Y = 0.03 ;
+MESH_FILE='/home/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_39.mesh'
+TRANSLAT_X = 0.0 ;
+TRANSLAT_Y = 0.0 ;
  
 
 % Parameters for the plate   ------------------------------------------
@@ -24,6 +24,7 @@ if (KL)        % For Kirchhoff-Love plate model only
   NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
 end;
 EPSILON=0.1 % thickness 
+
 
 
 
@@ -47,6 +48,7 @@ if (~QUAD)
   else
 %    FEM_TYPE = 'FEM_HCT_TRIANGLE';
      FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+%     FEM_TYPE = 'FEM_ARGYRIS' ;
      DIRICHLET_FEM_TYPE = 'FEM_PK(2,1)';
 %     DIRICHLET_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE' ;    
      DIRICHLET_DER_FEM_TYPE = 'FEM_PK(2,1)';
@@ -67,8 +69,8 @@ if (QUAD)
   DATA_FEM_TYPE = 'FEM_QK(2,3)';
   DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
   DIRICHLET_DER_FEM_TYPE = 'FEM_QK(2,1)';
-  MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
-  %MORTAR_FEM_TYPE = 'FEM_QK(2,1)' ;
+  % MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  MORTAR_FEM_TYPE = 'FEM_QK(2,2)' ;
   MORTAR_DERIV_FEM_TYPE = 'FEM_QK(2,1)' ;
   %MORTAR_DERIV_FEM_TYPE = 'FEM_QK_DISCONTINUOUS(2,1)';
   PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
@@ -86,18 +88,21 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 
 
 
 
-ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
+
+ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement	
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)			
-RADIUS_ENR_AREA = 0.15;
+RADIUS_ENR_AREA = 0.25;
 
 
 
 %%%%%    Parameters for the integral matching
 MULT_WITH_H = 1 ;           % 0 = mutlipliers without the H ddl ; 1 = multipliers with the H ddls
 MORTAR_WITHOUT_SINGUL = 0 ; % 0 = mortar with singuls ; 1 = mortar without singuls
-MORTAR_TYPE = 2 ;        % version 1 or 2 of the integral matching
+MORTAR_TYPE = 3 ;         % 1 = version 1 of the integral matching
+                          % 2 = entire gradient matched
+                          % 3 = normal derivative only
 MORTAR_VERSION = 0 ;    % 0=multipliers, 1=penalization, 2=elimination
 EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
                                % integral matching with penalization 
@@ -112,7 +117,7 @@ EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
                                % Dirichlet condition with penalization 
 
 %%%%%  error computation parameters
-NORM_EXACT = 1 ; % set to 0 if you don't want to calculate the norm of the exaxt solution
+NORM_EXACT = 0 ; % set to 0 if you don't want to calculate the norm of the exaxt solution
 RADIUS_SPLIT_DOMAIN = 0.0
 
 
