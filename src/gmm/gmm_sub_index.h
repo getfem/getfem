@@ -23,7 +23,7 @@
 /**@file gmm_sub_index.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 13, 2002.
-   @brief sub-indexes.
+   @brief sub-indices.
 */
 
 #ifndef GMM_SUB_INDEX_H__
@@ -34,7 +34,7 @@
 namespace gmm {
 
   /* ******************************************************************** */
-  /*		sub indexes                               		  */
+  /*		sub indices                               		  */
   /* ******************************************************************** */
 
   struct basic_index : public std::vector<size_t> {
@@ -97,27 +97,29 @@ namespace gmm {
 	{ first_ = std::min(first_, *it); last_ = std::max(last_, *it); }
     }
 
-    inline void test_rind(void) const
-      { if (!rind) rind = index_generator::create_rindex(ind); }
+    // inline void test_rind(void) const
+    //  { if (!rind) rind = index_generator::create_rindex(ind); }
     size_type size(void) const { return ind->size(); }
     size_type first(void) const { return first_; }
     size_type last(void) const { return last_; }
     size_type index(size_type i) const { return (*ind)[i]; }
     size_type rindex(size_type i) const {
-      test_rind();
+      // test_rind();
       if (i < rind->size()) return (*rind)[i]; else return size_type(-1);
     }
    
     const_iterator  begin(void) const { return  ind->begin(); }
     const_iterator    end(void) const { return  ind->end();   }
-    const_iterator rbegin(void) const { test_rind(); return rind->begin(); }
-    const_iterator   rend(void) const { test_rind(); return rind->end();   }
+    const_iterator rbegin(void) const {/*test_rind();*/ return rind->begin(); }
+    const_iterator   rend(void) const {/*test_rind();*/ return rind->end();   }
 
     sub_index() : ind(0), rind(0) {}
     template <typename IT> sub_index(IT it, IT ite)
-      : ind(index_generator::create_index(it, ite)), rind(0) { comp_extr(); }
+      : ind(index_generator::create_index(it, ite)),
+	rind(index_generator::create_rindex(ind)) { comp_extr(); }
     template <typename CONT> sub_index(const CONT &c)
-      : ind(index_generator::create_index(c.begin(), c.end())), rind(0)
+      : ind(index_generator::create_index(c.begin(), c.end())),
+	rind(index_generator::create_rindex(ind))
         { comp_extr(); }
     ~sub_index()
       { index_generator::unattach(rind); index_generator::unattach(ind); }
