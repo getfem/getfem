@@ -64,7 +64,7 @@ namespace getfem {
     
     virtual base_small_vector grad(const Xfem_func_context &c) {
       base_small_vector V(2); 
-      V[0] =  ( 1./::sqrt(c.xreal[0]) ) * ( cos( eps*log(c.xreal[0]) )/2. - eps*sin( eps*log(c.xreal[0]) ) ); 
+      V[0] =  ( 1./::sqrt( c.xreal[0]) ) * ( cos( eps*log(c.xreal[0]) )/2. - eps*sin( eps*log(c.xreal[0]) ) ); 
       return V; 
     }
     
@@ -85,7 +85,7 @@ namespace getfem {
       
     virtual base_small_vector grad(const Xfem_func_context &c) {
       base_small_vector V(2); 
-      V[0] =  ( 1./::sqrt(c.xreal[0]) ) * ( sin( eps*log(c.xreal[0]) )/2. - eps*cos( eps*log(c.xreal[0]) ) );
+      V[0] =  ( 1./::sqrt(c.xreal[0]) ) * ( sin( eps*log(c.xreal[0]) )/2. + eps*cos( eps*log(c.xreal[0]) ) );
       return V;
     }
       
@@ -95,6 +95,8 @@ namespace getfem {
       return m;
     }
   };
+
+
   
   /*
     struct Xfem_sqrtr : public virtual_Xfem_func {
@@ -202,8 +204,9 @@ namespace getfem {
 	  cout << "Using SpiderFem bimaterial enrichement..." << endl;
 	  Sqrtrcos.eps = epsilon;
 	  Sqrtrsin.eps = epsilon;
-	  penriched_Qk->add_func(Qk, &Sqrtrsin);
+	  //cout << "epsilon = " << epsilon << endl;
 	  penriched_Qk->add_func(Qk, &Sqrtrcos);
+	  penriched_Qk->add_func(Qk, &Sqrtrsin);
 	}
 	penriched_Qk->valid();
 	pfem pf = penriched_Qk;

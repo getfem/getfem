@@ -259,6 +259,36 @@ void crack_problem::init(void) {
   base_small_vector tt(N); tt[1] = -0.5;
   mesh.translation(tt); 
   
+
+  scalar_type refinement_radius;
+  refinement_radius = PARAM.real_value("REFINEMENT_RADIUS","Refinement Radius");
+  size_type refinement_process;
+  refinement_process = PARAM.int_value("REFINEMENT_PROCESS","Refinement process");
+  dal::bit_vector conv_to_refine;
+  size_type ref = 1;  
+  if (refinement_radius > 0){
+    while(ref <= refinement_process){
+      conv_to_refine.clear();
+      for(dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
+      for(size_type j=0; j < 3; ++j)
+	if(fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][0])<refinement_radius 
+	   && fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][1])<refinement_radius){
+	  conv_to_refine.add(i);
+	}
+      }
+      mesh.Bank_refine(conv_to_refine);
+      
+      ref = ref + 1; 
+      refinement_radius = refinement_radius/3.;
+      if(refinement_radius > 1e-16 )
+	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
+      
+    }
+  cout<<"refining process complete." << endl ;
+  }
+
+
+
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL");
   if (residual == 0.) residual = 1e-10;
@@ -724,9 +754,9 @@ bool crack_problem::solve(plain_vector &U) {
   if(bimaterial ==  1){
     //down side
     for(size_type i = 1; i<F.size(); i=i+2) 
-      F[i] = -0.2;
+      F[i] = -0.4;
     for(size_type i = 0; i<F.size(); i=i+2) 
-      F[i] = -0;
+      F[i] = -0.2;
   }
   
   getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);   
@@ -735,15 +765,15 @@ bool crack_problem::solve(plain_vector &U) {
   for(size_type i = 1; i<F.size(); i=i+2) 
     F[i] = 0.;
   for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = -0.1;
+    F[i] = -0.;
   getfem::mdbrick_source_term<> NEUMANN_HOM(NEUMANN, mf_rhs, F,NEUMANN_HOMOGENE_BOUNDARY_NUM);
    
     //upper side
   gmm::clear(F);
   for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i] = 0.2;
+    F[i] = 0.4;
   for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = -0.2;
+    F[i] = 0.;
   getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
   
   if (bimaterial == 1)
@@ -987,7 +1017,7 @@ int main(int argc, char *argv[]) {
 					 ("IM_TRIANGLE(6)"));
 
       getfem::mesh_fem mf_refined(mcut_refined, Q);
-      mf_refined.set_classical_discontinuous_finite_element(4, 0.0001);
+      mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
       plain_vector W(mf_refined.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
@@ -1005,7 +1035,7 @@ int main(int argc, char *argv[]) {
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
 	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
-	mf_refined_vm.set_classical_discontinuous_finite_element(3, 0.0001);
+	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
 	cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
 	plain_vector VM(mf_refined_vm.nb_dof());
 
