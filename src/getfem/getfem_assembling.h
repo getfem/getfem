@@ -21,10 +21,10 @@
 //========================================================================
 
 /** @file getfem_assembling.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-   @date November 17, 2000.
- *  @brief Miscelleanous assembly routines for common PDEs.
+    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
+    @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+    @date November 17, 2000.
+    @brief Miscelleanous assembly routines for common PDEs.
  */
 
 /** @defgroup asm Assembly routines */
