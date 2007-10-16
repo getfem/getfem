@@ -132,8 +132,12 @@ namespace gmm {
 	add(x, scaled(d, lambda), y);
 	valy = f(y);
 	if (iter.get_noisy() >= 2) {
+	  cout.precision(15);
 	  cout << "Wolfe line search, lambda = " << lambda 
-	       << " value = " << valy /print_norm << endl;
+ 	       << " value = " << valy /print_norm << endl;
+// 	       << " derivative = " << derivative
+// 	       << " lambda min = " << lambda_min << " lambda max = "
+// 	       << lambda_max << endl; getchar();
 	}
 	if (valy <= valx + m1 * lambda * derivative) {
 	  grad(y, r2); grad_computed = true;
@@ -147,6 +151,7 @@ namespace gmm {
 	}
 	if (unbounded) lambda *= R(10);
 	else  lambda = (lambda_max + lambda_min) / R(2);
+	if (lambda == lambda_max || lambda == lambda_min) break;
 	// valy <= R(2)*valx replaced by
 	// valy <= valx + gmm::abs(derivative)*lambda_init
 	// for compatibility with negative values (08.24.07).
