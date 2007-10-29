@@ -180,7 +180,7 @@ AC_ARG_WITH(blas,
 case $with_blas in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas" ;;
+        -* | */* | *.a | *.so | *.so.* | *.o| builtin) BLAS_LIBS="$with_blas" ;;
         *) BLAS_LIBS="-l$with_blas" ;;
 esac
 

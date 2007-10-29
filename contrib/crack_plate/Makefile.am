@@ -1,7 +1,7 @@
 # SUBDIRS = 
 
 if QHULL
-check_PROGRAMS = crack_mindlin crack_bilaplacian mortar_bilaplacian serie
+check_PROGRAMS = crack_mindlin crack_bilaplacian mortar_bilaplacian # serie
 else
 check_PROGRAMS =
 endif
@@ -11,7 +11,7 @@ CLEANFILES =
 if QHULL
 crack_mindlin_SOURCES = crack_mindlin.cc
 mortar_bilaplacian_SOURCES = mortar_bilaplacian.cc mortar_bilaplacian.h
-serie_SOURCES = serie.cc crack_bilaplacian.h
+# serie_SOURCES = serie.cc crack_bilaplacian.h
 crack_bilaplacian_SOURCES = crack_bilaplacian.cc crack_bilaplacian_singularities.cc crack_bilaplacian_problem.cc crack_bilaplacian.h
 endif
 
@@ -31,8 +31,8 @@ EXTRA_DIST = \
 	crack_mindlin.pl                  \
 	crack_mindlin.param \
 	crack_bilaplacian.param \
-	mortar_bilaplacian.param \
-	serie.param
+	mortar_bilaplacian.param
+#       serie.param
 
 
 TESTS_ENVIRONMENT = perl
