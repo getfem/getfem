@@ -69,7 +69,7 @@ namespace getfem {
   nonlinear_elem_term::~nonlinear_elem_term() {
     for (std::set<pmat_elem_type>::iterator it=melt_list.begin();
 	 it != melt_list.end(); ++it)
-      dal::del_stored_object(*it);
+    if (exists_stored_object(*it)) dal::del_stored_object(*it);
   }
 
   pmat_elem_type mat_elem_base(pfem pfi) {
