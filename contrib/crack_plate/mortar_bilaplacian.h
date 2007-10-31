@@ -529,8 +529,12 @@ bool bilaplacian_mortar_problem::solve(plain_vector &U) {
    getfem::base_vector R; 
    
    if (PARAM.int_value("MORTAR_MATCHING") == 1)	{
-    // older version of integral matching (jan-feb 2007)      
-    /* build the list of dof for the "(u-v) lambda" and for the  "\partial_n(u-v) \partial_n lambda" term in the mortar condition */  
+    /* older version of integral matching (jan-feb 2007) :
+     * \int_\Gamma (u-v) \lambda + \partial_n (u+v) \partial_n \lambda = 0, for all \lambda \in \Lambda
+     */
+          
+    /* build the list of dof for the "(u-v) lambda" and for the  
+    "\partial_n(u+v) \partial_n lambda" term in the mortar condition */  
     dal::bit_vector bv_mortar;
     dal::bit_vector bv_deriv;
     dal::bit_vector bv_union;
@@ -707,16 +711,16 @@ bool bilaplacian_mortar_problem::solve(plain_vector &U) {
     getfem::asm_constraint_gradient_vectorial_mult
 	(H0, mim, mf_u, mf_mortar_deriv,
 	 MORTAR_BOUNDARY_IN, getfem::ASMDIR_BUILDH) ;
-    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), 1),
+    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), -1),
              gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
     
     }
     
-        if (PARAM.int_value("MORTAR_MATCHING") == 3 ){
+    if (PARAM.int_value("MORTAR_MATCHING") == 3 ){
        
     /* Other version of the integral matching :
      *     \int_Gamma        (u-v) \lambda  = 0, for all \lambda in \Lambda
-     *     \int_Gamma \partial_n (u-v)\mu  = 0, for all \mu in M 
+     *     \int_Gamma \partial_n (u+v)\mu  = 0, for all \mu in M 
      */
 
 // selecting nodes indices on the two meth. mult.
@@ -772,7 +776,8 @@ bool bilaplacian_mortar_problem::solve(plain_vector &U) {
 
     gmm::clear(H0);
     getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u, MORTAR_BOUNDARY_IN);
-    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), gmm::sub_matrix(H, sub_val_H, sub_j) );
+    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), 
+             gmm::sub_matrix(H, sub_val_H, sub_j) );
 
 
     cout << "first contraint asm\n" ;
