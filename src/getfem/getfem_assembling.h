@@ -383,7 +383,15 @@ namespace getfem {
   void asm_mass_matrix(const MAT &M, const mesh_im &mim,
 		       const mesh_fem &mf_u1,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
-    asm_mass_matrix(const_cast<MAT &>(M), mim, mf_u1, mf_u1, rg);
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1)
+      assem.set("M(#1,#1)+=sym(comp(Base(#1).Base(#1)))");
+    else
+      assem.set("M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,i));");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
   }
 
   /** 
@@ -391,24 +399,18 @@ namespace getfem {
    *  boundary) 
    */
   template<typename MAT>
-  void asm_mass_matrix(MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
+  void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
 		       const mesh_fem &mf_u2,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem;
-    if (&mf_u1 != &mf_u2)
-      if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
-	assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
-      else
-	assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
+    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
     else
-      if (mf_u1.get_qdim() == 1)
-	assem.set("M(#1,#2)+=sym(comp(Base(#1).Base(#2)))");
-      else
-	assem.set("M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,i));");
+      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
     assem.push_mi(mim);
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2);
-    assem.push_mat(M);
+    assem.push_mat(const_cast<MAT &>(M));
     assem.assembly(rg);
   }
 
