@@ -601,7 +601,7 @@ namespace getfem {
       size_type n = fdim() == 2 ? fsizes()[0] : 1;
       VEC v(n*n);
       for (unsigned i=0; i < n; ++i) v[i*n+i] = w;
-      set(w);
+      set(v);
     }
     template <typename W> void set_diagonal_(const W &w, gmm::linalg_true) {
       size_type n = fdim() == 2 ? fsizes()[0] : 1;
@@ -651,16 +651,16 @@ namespace getfem {
 		      mdbrick_abstract_common_base *b,
 		      size_type N=0, size_type M=0) :
       mdbrick_abstract_parameter(name__, mf_,b,N,M) { }
-    mdbrick_parameter(const std::string &name__, const mesh &mesh,
+    mdbrick_parameter(const std::string &name__, const mesh &m,
 		      mdbrick_abstract_common_base *b,
 		      size_type N=0, size_type M=0) :
-      mdbrick_abstract_parameter(name__, classical_mesh_fem(mesh, 0),b,N,M) { }
+      mdbrick_abstract_parameter(name__, classical_mesh_fem(m, 0),b,N,M) { }
     void realloc() const { gmm::resize(value_, fsize()*mf().nb_dof()); }
     template <typename W> void set(const mesh_fem &mf_, const W &w) {
       this->set_(mf_, w, typename gmm::is_gmm_interfaced<W>::result());
     }
-    template <typename W> void set(const mesh &mesh, const W &w) {
-      this->set_(classical_mesh_fem(mesh, 0), w,
+    template <typename W> void set(const mesh &m, const W &w) {
+      this->set_(classical_mesh_fem(m, 0), w,
 		 typename gmm::is_gmm_interfaced<W>::result());
     }
     template <typename W> void set(const W &w) {
@@ -1148,7 +1148,8 @@ namespace getfem {
 
     /** Constructor not defining the rhs
 	@param problem the sub-problem to which this brick applies.
-	@param bound the mesh boundary number on which the source term is applied 
+	@param bound the mesh boundary number on which the source term
+	       is applied 
 	(by default, it is a volumic source term as the whole mesh is taken).
 	@param num_fem_ the mesh_fem number on which this brick is is applied.
     */
