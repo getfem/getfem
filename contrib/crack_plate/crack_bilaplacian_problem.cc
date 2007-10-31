@@ -324,13 +324,12 @@ void bilaplacian_crack_problem::init(void) {
 				     "radius of the enrichment area");
     
     /* First step : build the mesh */
-    
- 
-    if (!MESH_FILE.empty()) {
+
+ if (!MESH_FILE.empty()) {
     mesh.read_from_file(MESH_FILE);
     base_small_vector tt(N); 
-    tt[0] = PARAM.real_value("TRANSLAT_X") ; //0.02 ; 
-    tt[1] = PARAM.real_value("TRANSLAT_Y") ;// 0.04 ; 
+    tt[0] = PARAM.real_value("TRANSLAT_X") ;  
+    tt[1] = PARAM.real_value("TRANSLAT_Y") ; 
     cout << "TRANSLAT_X = " << tt[0] << " ; TRANSLAT_Y = " << tt[1] << "\n" ;
     mesh.translation(tt); 
     MESH_TYPE = bgeot::name_of_geometric_trans
@@ -339,7 +338,7 @@ void bilaplacian_crack_problem::init(void) {
       bgeot::geometric_trans_descriptor(MESH_TYPE);
     cout << "MESH_TYPE=" << MESH_TYPE << "\n";
     N = mesh.dim();
-    } else {
+ } else {
     bgeot::pgeometric_trans pgt = 
       bgeot::geometric_trans_descriptor(MESH_TYPE);
     N = pgt->dim();
@@ -361,7 +360,7 @@ void bilaplacian_crack_problem::init(void) {
     tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ; 
     tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ; 
     mesh.translation(tt); 
-  }
+ }    
     
     scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
     scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
@@ -655,7 +654,13 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
 	      gmm::sqr(enr_area_radius)) 
+<<<<<<< .mine
+	          in_area = false; 
+		  break;
+=======
 	    in_area = false; break;
+>>>>>>> .r2692
+	}
 	}
 
 	/* "remove" the global function on convexes outside the enrichment
@@ -691,6 +696,30 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
       cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
       
+<<<<<<< .mine
+      // an optional treatment : creating a representation of the enrichment area     
+      getfem::mesh_fem mf_enrich(mesh);
+      getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
+      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
+      std::fill(UU.begin(), UU.end() ,0.) ;
+      cout << "exporting the enrichment zone: \n" ;
+      for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
+	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
+	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
+      }
+      
+      cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
+      getfem::vtk_export exp("enrichment_zone.vtk", false);
+      exp.exporting(mf_enrich); 
+      exp.write_point_data(mf_enrich, UU, "enrichment");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d enrichment_zone.vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+      
+	
+      // Another optional treatment :
+=======
       // an optional treatment : creating a representation of the enrichment area     
       getfem::mesh_fem mf_enrich(mesh);
       getfem::pfem pf_mef = getfem::classical_discontinuous_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 0 );
@@ -714,6 +743,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       
 	
       // Another optional treatment :
+>>>>>>> .r2692
       // Searching the elements that are both crossed by the crack
       // and with one of their faces which constitutes a part of the 
       // boundary between the enriched zone and the rest of the domain.
