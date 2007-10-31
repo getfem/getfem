@@ -39,6 +39,15 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
+size_type is_global_dof_type(getfem::pdof_description dof){
+size_type global_dof = 0 ;
+   for (unsigned d = 0; d < 4 ; ++d){
+       if (dof == getfem::global_dof(d)) {
+          global_dof = 1;
+	      }
+   }
+return global_dof ;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -50,8 +59,48 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file("mesh.m") ;
     if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
 
+//     cout << "liste des dofs sur lesquels les singuls sont définies : \n" ;
+//     cout << "p.mf_sing_u.dof_on_set(4) \n" << p.mf_sing_u.dof_on_set(4) << "\n" ;
+//     cout << "p.mf_sing_u.ind_dof_of_element(4) \n"  ;
+//     
+//     plain_vector INDICES(p.mf_sing_u.ind_dof_of_element(4).size()) ;
+//     for (int i=0 ; i < p.mf_sing_u.ind_dof_of_element(4).size() ; i++){
+//     INDICES[i] = p.mf_sing_u.ind_dof_of_element(4)[i] ;
+//     }
+// //    gmm::copy(INDICES, p.mf_sing_u.ind_dof_of_element(4) ) ;
+//     cout << INDICES << "\n" ;
+
+//     getfem::pfem pf_u = getfem::fem_descriptor(p.PARAM.string_value("FEM_TYPE"));
+//     cout << "avant la boucle\n" ;
+//     for (unsigned d = 0; d < p.mf_u().nb_dof() ; d++){
+//        if (pf_u->dof_types().at(d) == getfem::global_dof(d) ){
+//           printf("dof %4d has value : ", d) ; 
+// 	  printf("%f  (name of dof : %.16s) \n", U[d], name_of_dof(pf_u->dof_types().at(d)).c_str() ) ;
+//        }
+//     }
+  
+    unsigned q = p.mf_u().get_qdim();
+    for (unsigned d=0; d < p.mf_u().nb_dof(); d += q) {
+         unsigned cv = p.mf_u().first_convex_of_dof(d) ;
+         getfem::pfem pf = p.mf_u().fem_of_element(cv);   
+         unsigned ld = unsigned(-1);
+         for (unsigned dd = 0; dd < p.mf_u().nb_dof_of_element(cv); dd += q) {
+	     if (p.mf_u().ind_dof_of_element(cv)[dd] == d) {
+	        ld = dd/q; break;
+	     }
+         }   
+         if (ld == unsigned(-1)) {
+	    cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
+         } 
+         else {
+	      if ( is_global_dof_type(pf->dof_types().at(ld)) ){
+	         printf("dof %4d @ %+6.2f:%+6.2f: ", d, p.mf_u().point_of_dof(d)[0], p.mf_u().point_of_dof(d)[1]);
+                 printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
+	         cout << " coeff donant le FIC : " << U[d] << "\n";}
+         }
+    }  
     p.compute_error(U);
-    p.compute_H2_error_field(U) ;
+    //p.compute_H2_error_field(U) ;
 
     // visualisation, export au format .vtk
     getfem::mesh mcut;
@@ -116,8 +165,14 @@ int main(int argc, char *argv[]) {
 
     
     getfem::interpolation(p.mf_u(), mf_refined, U, W);
-
-
+    
+//     getfem::mesh_fem mf_grad(mcut, 2) ;
+//     plain_vector VGRAD(mf_grad.nb_dof() ) ;
+//     getfem::compute_gradient(p.mls, p.mf_u(), mf_grad_u, U, GRAD) ;
+//     getfem::mesh_fem mf_grad_refined(mcut_refined, 2) ;
+//     plain_vector WGRAD(mf_grad_refined.nb_dof()) ;
+//     getfem::interpolation(mf_grad, mf_grad_refined, GRAD, WGRAD) ;
+    
     int VTK_EXPORT = p.PARAM.int_value("VTK_EXPORT");
     if (VTK_EXPORT ) {
       cout << "exporting solution to " << p.datafilename + ".vtk" << "..\n";
@@ -177,7 +232,14 @@ int main(int argc, char *argv[]) {
       cout << "gf_plot(mf, U-EXACT, 'refine',1); hold on; gf_plot_mesh(m0); hold off; colorbar;\n";
     }
 
-    
+    if (p.PARAM.int_value("DX_EXPORT")) {
+    cout << "export solution to " << p.datafilename + ".dx" << "..\n";
+    getfem::dx_export exp(p.datafilename + ".dx",
+			   p.PARAM.int_value("DX_EXPORT")==1);
+    exp.exporting(mf_refined); 
+    exp.write_point_data(mf_refined, W, "vertical_displacement");
+    cout << "export done for open dx \n" ;
+    }
     //getchar(); 
     
   // } GMM_STANDARD_CATCH_ERROR;
