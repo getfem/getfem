@@ -110,10 +110,11 @@ namespace getfem {
       faces_computed = volume_computed = false;
       is_linear = pgt->is_linear();
       computed_on_real_element = !is_linear || (prefer_comp_on_real_element && !is_ppi);
+      // computed_on_real_element = true;
       nbf = pgt->structure()->nb_faces();
       dim = pgt->structure()->dim();
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
-      size_type d = pgt->dim();
+      //      size_type d = pgt->dim();
       
       for (size_type k = 0; it != ite; ++it, ++k) {
 	if ((*it).pfi) {
@@ -132,7 +133,13 @@ namespace getfem {
 	  case GETFEM_BASE_    :
 	    if ((*it).pfi->target_dim() > 1) {
 	      ++k;
-	      if ((*it).pfi->target_dim() == d) K_reduction.push_back(k);
+	      switch((*it).pfi->vectorial_type()) {
+	      case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+		K_reduction.push_back(k); break;
+	      case virtual_fem::VECTORIAL_DUAL_TYPE:
+		grad_reduction.push_back(k); break;
+	      default: break;
+	      }
 	    }
 	    break;
 	  case GETFEM_UNIT_NORMAL_ : 
@@ -142,19 +149,30 @@ namespace getfem {
 	    ++k; computed_on_real_element = true; break;
 	  case GETFEM_GRAD_    : { 
 	    ++k;
-	    if ((*it).pfi->target_dim() > 1) {
-	      if ((*it).pfi->target_dim() == d) K_reduction.push_back(k);
-	      ++k;
+	    switch((*it).pfi->vectorial_type()) {
+	    case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	      K_reduction.push_back(k); break;
+	    case virtual_fem::VECTORIAL_DUAL_TYPE:
+	      grad_reduction.push_back(k); break;
+	    default: break;
 	    }
-	    if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
+	    if ((*it).pfi->target_dim() > 1) ++k;
+	    if (!((*it).pfi->is_on_real_element()))
+	      grad_reduction.push_back(k);
 	  } break;
 	  case GETFEM_HESSIAN_ : {
 	    ++k;
-	    if ((*it).pfi->target_dim() > 1) {
-	      if ((*it).pfi->target_dim() == d) K_reduction.push_back(k);
-	      ++k;
+	    switch((*it).pfi->vectorial_type()) {
+	    case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	      K_reduction.push_back(k); break;
+	    case virtual_fem::VECTORIAL_DUAL_TYPE:
+	      grad_reduction.push_back(k); break;
+	    default: break;
 	    }
-	    if (!((*it).pfi->is_on_real_element())) hess_reduction.push_back(k); 
+	    
+	    if ((*it).pfi->target_dim() > 1) ++k;
+	    if (!((*it).pfi->is_on_real_element()))
+	      hess_reduction.push_back(k); 
 	  } break;
 	  case GETFEM_NONLINEAR_ : {
 	    if ((*it).nl_part == 0) {
@@ -504,6 +522,7 @@ namespace getfem {
 	    ite = K_reduction.end();
 	  for ( ; it != ite; ++it) {
 	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, ctx.K(), *it);
+	    // (flag ? t:taux).mat_transp_reduction(flag ? taux:t, B, *it);
 	    flag = !flag;
 	  }
 	}

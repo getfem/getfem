@@ -217,6 +217,9 @@ namespace getfem {
   
   /** @brief Base class for finite element description */
   class virtual_fem : virtual public dal::static_stored_object {
+  public :
+    enum vec_type { VECTORIAL_NOTRANSFORM_TYPE, VECTORIAL_PRIMAL_TYPE,
+		    VECTORIAL_DUAL_TYPE };
 
   protected :
 
@@ -240,6 +243,8 @@ namespace getfem {
     bool real_element_defined;
     short_type es_degree; // estimated polynomial degree of the FEM
     short_type hier_raff; /// hierarchical refinement of the FEM
+    vec_type vtype; // for vectorial elements, type of transformation
+                    // from the reference element.
     std::string debug_name_;
     
   public :
@@ -268,6 +273,8 @@ namespace getfem {
     dim_type &dim(void) { return dim_; }
     /// dimension of the target space.
     dim_type target_dim(void) const { return ntarget_dim; }
+    /// Type of vectorial element.
+    vec_type vectorial_type(void) const { return vtype; }
     /// Return the convex of the reference element.
     virtual bgeot::pconvex_ref ref_convex(size_type) const { return cvr; }
     /// @internal
@@ -425,6 +432,7 @@ namespace getfem {
       is_equiv = is_pol = is_polycomp = is_lag = false;
       pspt_valid = false; hier_raff = 0; real_element_defined = false;
       es_degree = 5;
+      vtype = VECTORIAL_NOTRANSFORM_TYPE;
       cvs_node = bgeot::new_convex_structure();
     }
     virtual_fem(const virtual_fem& f) : dal::static_stored_object()
@@ -443,6 +451,7 @@ namespace getfem {
       cvr = f.cvr;
       dim_ = f.dim_;
       ntarget_dim = f.ntarget_dim;
+      vtype = f.vtype;
       is_equiv = f.is_equiv;
       is_lag = f.is_lag;
       is_pol = f.is_pol;

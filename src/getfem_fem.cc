@@ -64,20 +64,22 @@ namespace getfem {
     else {
       base_tensor u;
       if (have_pfp()) {
-	if (pf()->target_dim() > 1 && 
-	    pf()->target_dim() == pf()->structure(convex_num())->dim())
-	   t.mat_transp_reduction(pfp_->val(ii()), K(), 1);
-	 else
-	   t=pfp_->val(ii());
+	switch(pf()->vectorial_type()) {
+	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	  t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
+	case virtual_fem::VECTORIAL_DUAL_TYPE:
+	  t.mat_transp_reduction(pfp_->val(ii()), B(), 1); break;
+	default: t=pfp_->val(ii());
+	}
       }
       else {
-	if (pf()->target_dim() > 1 && 
-	    pf()->target_dim() == pf()->structure(convex_num())->dim()) {
-	  pf()->base_value(xref(), u);
-	  t.mat_transp_reduction(u, K(), 1);
+	switch(pf()->vectorial_type()) {
+	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	  pf()->base_value(xref(), u); t.mat_transp_reduction(u,K(),1); break;
+	case virtual_fem::VECTORIAL_DUAL_TYPE:
+	  pf()->base_value(xref(), u); t.mat_transp_reduction(u,B(),1); break;
+	default: pf()->base_value(xref(), t);
 	}
-	else
-	  pf()->base_value(xref(), t);
       }
       if (!(pf()->is_equivalent()) && withM)
 	{ u = t; t.mat_transp_reduction(u, M(), 0); }
@@ -91,20 +93,26 @@ namespace getfem {
     else {
       base_tensor u;
       if (have_pfp()) {
-	t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-	if (pf()->target_dim() > 1 && 
-	    pf()->target_dim() == pf()->structure(convex_num())->dim()) {
-	  u = t;
-	  t.mat_transp_reduction(u, K(), 1);
+	switch(pf()->vectorial_type()) {
+	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	  u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	  t.mat_transp_reduction(u, K(), 1); break;
+	case virtual_fem::VECTORIAL_DUAL_TYPE:
+	  u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+	  t.mat_transp_reduction(u, B(), 1); break;
+	default: t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
 	}
+
       } else {
 	pf()->grad_base_value(xref(), u);
 	if (u.size()) { /* only if the FEM can provide grad_base_value */
 	  t.mat_transp_reduction(u, B(), 2);
-	  if (pf()->target_dim() > 1 && 
-	      pf()->target_dim() == pf()->structure(convex_num())->dim()) {
-	    u = t;
-	    t.mat_transp_reduction(u, K(), 1);
+	  switch(pf()->vectorial_type()) {
+	  case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	    u = t; t.mat_transp_reduction(u, K(), 1); break;
+	  case virtual_fem::VECTORIAL_DUAL_TYPE:
+	    u = t; t.mat_transp_reduction(u, B(), 1); break;
+	  default: break;
 	  }
 	}
       }
@@ -119,16 +127,16 @@ namespace getfem {
       pf()->real_hess_base_value(*this, t);
     else {
       base_tensor tt;
-      if (have_pfp()) {
-	tt = pfp()->hess(ii());
-      } else {
-	pf()->hess_base_value(xref(), tt);
+      if (have_pfp()) tt = pfp()->hess(ii()); else pf()->hess_base_value(xref(), tt);
+
+      switch(pf()->vectorial_type()) {
+      case virtual_fem::VECTORIAL_PRIMAL_TYPE:
+	{ base_tensor u = tt; tt.mat_transp_reduction(u, K(), 1); } break;
+      case virtual_fem::VECTORIAL_DUAL_TYPE:
+	{ base_tensor u = tt; tt.mat_transp_reduction(u, B(), 1); } break;
+      default: break;
       }
-      if (pf()->target_dim() > 1 && 
-	  pf()->target_dim() == pf()->structure(convex_num())->dim()) {
-	base_tensor u = tt;
-	tt.mat_transp_reduction(u, K(), 1);
-      }
+
       if (tt.size()) { /* only if the FEM can provide hess_base_value */
 	bgeot::multi_index mim(3);
 	mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
@@ -1060,7 +1068,7 @@ namespace getfem {
 	{ gmm::mult(G, pgp->grad(i), K); gmm::lu_inverse(K); }
       bgeot::base_small_vector n(nc);
       gmm::mult(gmm::transposed(K), cvr->normals()[i], n);
-
+      
       M(i,i) = gmm::vect_norm2(n);
       n /= M(i,i);
       scalar_type ps = gmm::vect_sp(n, norient);
@@ -1085,6 +1093,7 @@ namespace getfem {
     is_pol = true;
     is_lag = is_equiv = false;
     ntarget_dim = nc;
+    vtype = VECTORIAL_PRIMAL_TYPE;
     base_.resize(nc*(nc+1));
 
     
@@ -1181,6 +1190,7 @@ namespace getfem {
     is_pol = true;
     is_lag = is_equiv = false;
     ntarget_dim = nc;
+    vtype = VECTORIAL_PRIMAL_TYPE;
     base_.resize(nc*2*nc);
 
     for (size_type j = 0; j < size_type(nc*2*nc); ++j)
@@ -1218,12 +1228,11 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*	Element de Nedelec.                                               */
+  /*	Nedelec Element.                                                  */
   /* ******************************************************************** */
   
   struct P1_nedelec_ : public fem<base_poly> {
     dim_type nc;
-    mutable base_matrix K;
     base_small_vector norient;
     std::vector<base_small_vector> tangents;
     mutable bgeot::pgeotrans_precomp pgp;
@@ -1235,37 +1244,31 @@ namespace getfem {
     P1_nedelec_(dim_type nc_);
   };
 
-  void P1_nedelec_::mat_trans(base_matrix &M,
-			  const base_matrix &G,
-			  bgeot::pgeometric_trans pgt) const {
+  void P1_nedelec_::mat_trans(base_matrix &M, const base_matrix &G,
+			      bgeot::pgeometric_trans pgt) const {    
     dim_type N = G.nrows();
-    // gmm::copy(gmm::identity_matrix(), M);
-    
+    GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
+    bgeot::base_small_vector t(nc), v(nc);
+
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
       pgp = bgeot::geotrans_precomp(pgt, node_tab(0), 0);
       pfp = fem_precomp(this, node_tab(0), 0);
     }
-    GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
+    fem_interpolation_context ctx(pgp,pfp,0,G,0);
 
-    gmm::mult(G, pgp->grad(0), K);
     for (unsigned i = 0; i < nb_dof(0); ++i) {
-      if (!(pgt->is_linear()))
-	{ gmm::mult(G, pgp->grad(i), K); }
-      bgeot::base_small_vector t(nc), v(nc);
-      gmm::mult(K, tangents[i], t);
-
+      ctx.set_ii(i);
+      gmm::mult(ctx.K(), tangents[i], t);
       t /= gmm::vect_norm2(t);
-
+      // gmm::mult(gmm::transposed(K), t, v);
+      gmm::mult(gmm::transposed(ctx.B()), t, v);
       scalar_type ps = gmm::vect_sp(t, norient);
-      if (ps < 0) t *= scalar_type(-1);
+      if (ps < 0) v *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
 	GMM_WARNING2("nedelec : The normal orientation may be not correct");
 
-      gmm::mult(gmm::transposed(K), t, v);
-      
       const bgeot::base_tensor &tt = pfp->val(i);
-
       for (size_type j = 0; j < nb_dof(0); ++j) {
 	scalar_type a = scalar_type(0);
 	for (size_type k = 0; k < nc; ++k) a += tt(j, k) * v[k];
@@ -1278,7 +1281,6 @@ namespace getfem {
   P1_nedelec_::P1_nedelec_(dim_type nc_) {
     nc = nc_;
     pgt_stored = 0;
-    gmm::resize(K, nc, nc);
     gmm::resize(norient, nc);
     norient[0] = M_PI;
     for (unsigned i = 1; i < nc; ++i) norient[i] = norient[i-1]*M_PI;
@@ -1290,7 +1292,7 @@ namespace getfem {
     is_pol = true;
     is_lag = is_equiv = false;
     ntarget_dim = nc;
-
+    vtype = VECTORIAL_DUAL_TYPE;
     base_.resize(nc*(nc+1)*nc/2);
     tangents.resize(nc*(nc+1)*nc/2);
     
@@ -1312,13 +1314,14 @@ namespace getfem {
 	for (size_type i = 0; i < nc; ++i) {
 	  base_[j+i*(nc*(nc+1)/2)] = lambda[k] * grad_lambda[l][i]
 	    - lambda[l] * grad_lambda[k][i]; 
-	  //	  cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
+	  // cout << "base(" << j << "," << i << ") = " <<  base_[j+i*(nc*(nc+1)/2)] << endl;
 	}
 	
 	base_node pt = (cvr->points()[k] + cvr->points()[l]) / scalar_type(2);
 	add_node(edge_component_dof(nc), pt);
 	tangents[j] = cvr->points()[l] - cvr->points()[k];
 	tangents[j] /= gmm::vect_norm2(tangents[j]);
+	// cout << "tangent(" << j << ") = " << tangents[j] << endl;
       }
   }
 
