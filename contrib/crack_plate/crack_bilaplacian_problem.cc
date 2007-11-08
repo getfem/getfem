@@ -361,7 +361,7 @@ void bilaplacian_crack_problem::init(void) {
     tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ; 
     mesh.translation(tt); 
  }    
-    
+ 
     scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
     scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
     size_type cpt = 0 ; 
@@ -653,14 +653,10 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
-	      gmm::sqr(enr_area_radius)) 
-<<<<<<< .mine
+	      gmm::sqr(enr_area_radius)) {
 	          in_area = false; 
 		  break;
-=======
-	    in_area = false; break;
->>>>>>> .r2692
-	}
+	  }
 	}
 
 	/* "remove" the global function on convexes outside the enrichment
@@ -696,7 +692,6 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
       cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
       
-<<<<<<< .mine
       // an optional treatment : creating a representation of the enrichment area     
       getfem::mesh_fem mf_enrich(mesh);
       getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
@@ -716,34 +711,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d enrichment_zone.vtk -f "
 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
-      
 	
       // Another optional treatment :
-=======
-      // an optional treatment : creating a representation of the enrichment area     
-      getfem::mesh_fem mf_enrich(mesh);
-      getfem::pfem pf_mef = getfem::classical_discontinuous_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 0 );
-      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
-      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
-      std::fill(UU.begin(), UU.end() ,0.) ;
-      cout << "exporting the enrichment zone: \n" ;
-      for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){
-//           cout << "container : \n "  ;
-// 	  for (int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
-// 	      cout << "elt : " << mf_enrich.ind_dof_of_element(i)[j] << "\n" ;
-	  UU[mf_enrich.ind_dof_of_element(i)[0]] = 1. ;         
-      }
-      cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
-      getfem::vtk_export exp("enrichment_zone.vtk", false);
-      exp.exporting(mf_enrich); 
-      exp.write_point_data(mf_enrich, UU, "enrichment");
-      cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d enrichment_zone.vtk -f "
-	"WarpScalar -m BandedSurfaceMap -m Outline\n";
-      
-	
-      // Another optional treatment :
->>>>>>> .r2692
       // Searching the elements that are both crossed by the crack
       // and with one of their faces which constitutes a part of the 
       // boundary between the enriched zone and the rest of the domain.
