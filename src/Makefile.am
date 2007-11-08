@@ -119,6 +119,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_partial_mesh_fem.h		\
 	getfem/getfem_mesh_level_set.h          	\
 	getfem/getfem_mesh_im_level_set.h         	\
+	getfem/getfem_crack_sif.h        	   	\
 	getfem/getfem_mesh_fem_level_set.h	   	\
 	getfem/getfem_mesh_fem_product.h	   	\
 	getfem/getfem_trace_mesh_fem_level_set.h  	\
