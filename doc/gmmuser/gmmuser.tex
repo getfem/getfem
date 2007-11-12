@@ -103,7 +103,7 @@
   \today \\[1.0cm]
 }
 \htmlonly{
-  \xlink{\htmlimg{gmmlogo.png}{the gmm logo}}{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}\\[2cm]
+  \xlink{\htmlimg{gmmlogo.png}{the gmm logo}}{http://home.gna.org/getfem/gmm_intro}\\[2cm]
   a Generic Template Matrix C++ Library \\ \par\par
   {\Huge Short User Documentation } \\ \par
   { \large \xlink{Yves Renard}{mailto:Yves.Renard@gmm.insa-tlse.fr}, \xlink{Julien Pommier}{mailto:Julien.Pommier@gmm.insa-tlse.fr}}\\
@@ -680,7 +680,7 @@ Here is the list of available linear solvers.
 
   gmm::qmr(A, X, B, PR, iter) // Quasi-Minimal Residual method.
 
-  gmm::least_square_cg(A, X, B, iter) // unpreconditionned least square CG.
+  gmm::least_squares_cg(A, X, B, iter) // unpreconditionned least square CG.
 \end{cppcode}
 
 The solver \cpp{gmm::constrained_cg(A, C, X, B, PS, PR, iter);} solve a system with linear constaints, \cpp{C} is a matrix which represents the constraints. But it is still experimental.\\
@@ -705,7 +705,7 @@ The following preconditioners, to be used with linear solvers, are available:
 
   gmm::ildlt_precond<matrix_type> P(SM); // incomplete (level 0) ldlt 
                                         // preconditioner. Fast to be
-                                        // conputed but less efficient than
+                                        // computed but less efficient than
                                         // gmm::ildltt_precond.
 
   // incomplete ldlt with k fill-in and threshold preconditioner.

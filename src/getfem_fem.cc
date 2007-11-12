@@ -1245,10 +1245,10 @@ namespace getfem {
   };
 
   void P1_nedelec_::mat_trans(base_matrix &M, const base_matrix &G,
-			      bgeot::pgeometric_trans pgt) const {    
-    dim_type N = G.nrows();
-    GMM_ASSERT1(N == nc, "Sorry, this element works only in dimension " << nc);
+			      bgeot::pgeometric_trans pgt) const {
     bgeot::base_small_vector t(nc), v(nc);
+    GMM_ASSERT1(G.nrows() == nc,
+		"Sorry, this element works only in dimension " << nc);
 
     if (pgt != pgt_stored) {
       pgt_stored = pgt;
@@ -1261,12 +1261,12 @@ namespace getfem {
       ctx.set_ii(i);
       gmm::mult(ctx.K(), tangents[i], t);
       t /= gmm::vect_norm2(t);
-      // gmm::mult(gmm::transposed(K), t, v);
       gmm::mult(gmm::transposed(ctx.B()), t, v);
       scalar_type ps = gmm::vect_sp(t, norient);
       if (ps < 0) v *= scalar_type(-1);
       if (gmm::abs(ps) < 1E-8)
-	GMM_WARNING2("nedelec : The normal orientation may be not correct");
+	GMM_WARNING2("Nedelec element: "
+		     "The normal orientation may be uncorrect");
 
       const bgeot::base_tensor &tt = pfp->val(i);
       for (size_type j = 0; j < nb_dof(0); ++j) {
@@ -1275,6 +1275,8 @@ namespace getfem {
 	M(j, i) = a;
       }
     }
+    // In fact matrix M is diagonal (at least for linear transformations).
+    // The computation can be simplified.
     gmm::lu_inverse(M);
   }
 

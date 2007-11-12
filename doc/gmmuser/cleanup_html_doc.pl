@@ -72,7 +72,7 @@ sub transform_line {
   }
   if (/<body>/) {
     print FOUT "<body>\n<div id=\"menu\">\n";
-    print FOUT "<p><a href=\"../doc\"><img src=\"gmmlogo_small.png\" title=\"getfem documentation index\" alt=\"getfem documentation index\"></img></a></p>\n";
+    print FOUT "<p><a href=\"http://home.gna.org/getfem/gmm_intro\"><img src=\"gmmlogo_small.png\" title=\"getfem documentation index\" alt=\"getfem documentation index\"></img></a></p>\n";
     print FOUT "<h1>Gmm++ User Documentation</h1>\n";
     print FOUT $content;
     print FOUT "</div><div id=\"content\">\n";
