@@ -644,7 +644,7 @@ bool crack_problem::solve(plain_vector &U) {
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
     spider.fem = new getfem::spider_fem(spider.radius, mim, spider.Nr,
 					spider.Ntheta, spider.K, translation,
-					spider.theta0, 0);
+					spider.theta0, int(0), scalar_type(0));
     mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
