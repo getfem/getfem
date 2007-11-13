@@ -163,7 +163,8 @@ namespace getfem {
       if (final_fem) del_interpolated_fem(final_fem);
     }
     spider_fem(scalar_type R_, mesh_im &mim, unsigned Nr_, unsigned Ntheta_,
-	       unsigned K_, base_small_vector translation, scalar_type theta0, int bimat_enrichment_, scalar_type epsilon_ = scalar_type(0))
+	       unsigned K_, base_small_vector translation, scalar_type theta0,
+	       int bimat_enrichment_ = 0, scalar_type epsilon_ = scalar_type(0))
         : cartesian_fem(cartesian), R(R_), Nr(Nr_),
 	  Ntheta(Ntheta_), K(K_), bimat_enrichment(bimat_enrichment_), epsilon(epsilon_), final_fem(0) {
         
