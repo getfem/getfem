@@ -38,7 +38,7 @@ m=Mesh('cartesian', range(0, 3), range(0,3))
   </pre>
 
   <p>
-    If the <tt>getfem.py</tt> (and the internal getfem_.so) module is not installed in a standard location for python, you may have to set the <tt>PYTHON_PATH</tt> environnement variable to its location.
+    If the <tt>getfem.py</tt> (and the internal getfem_.so) module is not installed in a standard location for python, you may have to set the <tt>PYTHONPATH</tt> environnement variable to its location.
   </p>
 
   <p>
