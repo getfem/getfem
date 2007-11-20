@@ -928,6 +928,16 @@ void crack_problem::compute_sif(const plain_vector &U) {
                                          young_modulus(lambda, mu), 
                                          KI, KII);
   cout << "computation of crack SIF: " << KI << ", " << KII << "\n";
+
+//   if (enrichment_option == GLOBAL_WITH_CUTOFF
+//       || enrichment_option == GLOBAL_WITH_MORTAR) {
+//     cout << "SIFU = " << gmm::sub_vector(U, gmm::sub_interval(0, 8)) << endl;
+//     cout << "EXACTU = " << exact_sol.U << endl;
+//     size_type cv = mf_u().first_convex_of_dof(0);
+//     getfem::pfem pf = mf_u().fem_of_element(cv);
+//     cout << "type of dof : " << name_of_dof(pf->dof_types()[0]) << endl;
+//   }
+
 }
 
 /**************************************************************************/
