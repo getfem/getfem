@@ -882,6 +882,7 @@ namespace getfem {
 
     void proper_update_K(void) {
       GMM_TRACE2("Assembling mass matrix for mdbrick_mass_matrix");
+      gmm::clear(this->K);
       asm_mass_matrix_param
 	(this->K, this->mim, this->mf_u, rho().mf(), rho().get(), 
 	 this->mf_u.linked_mesh().get_mpi_region());
@@ -929,6 +930,7 @@ namespace getfem {
       VECTOR w(wave_number().get());
       for (unsigned i=0; i < gmm::vect_size(w); ++i) 
 	w[i] = gmm::sqr(w[i]);
+      gmm::clear(this->K);
       asm_Helmholtz(this->K, this->mim, this->mf_u, wave_number().mf(), w,
 		    this->mf_u.linked_mesh().get_mpi_region());
     }
@@ -986,6 +988,7 @@ namespace getfem {
     mdbrick_parameter<VECTOR> coeff_;
 
     void proper_update_K(void) {
+      gmm::clear(this->K);
       if (coeff_.fdim() == 0) {
 	if (this->mf_u.get_qdim() > 1)
 	  asm_stiffness_matrix_for_laplacian_componentwise(this->K, this->mim, this->mf_u,
@@ -1100,6 +1103,7 @@ namespace getfem {
 	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	F_uptodate = true;
 	GMM_TRACE2("Assembling a source term");
+	gmm::clear(F_);
 	asm_source_term(F_, *(this->mesh_ims[0]), mf_u, B_.mf(), B_.get(),
 			mf_u.linked_mesh().get_mpi_sub_region(boundary));
 	this->parameters_set_uptodate();
@@ -1213,6 +1217,7 @@ namespace getfem {
       if (!F_uptodate || this->parameters_is_any_modified()) {
 	F_uptodate = true;
 	GMM_TRACE2("Assembling a source term");
+	gmm::clear(F_);
 	asm_normal_source_term
 	  (F_, *(this->mesh_ims[0]), mf_u(), B_.mf(), B_.get(),
 	   mf_u().linked_mesh().get_mpi_sub_region(boundary));
@@ -2207,6 +2212,7 @@ namespace getfem {
 
     void proper_update_M(void) {
       GMM_TRACE2("Assembling mass matrix for mdbrick_dynamic");
+      gmm::clear(M_);
       asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, RHO_.mf(),
 			    RHO_.get());
 
