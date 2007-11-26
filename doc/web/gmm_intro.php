@@ -90,10 +90,10 @@
       floating point library.
     </p>
 
-    <h1>Licence</h1>     
-    Gmm++ is freely distributed under the terms of the <a
-    href="http://www.gnu.org/copyleft/lesser.html">Gnu Lesser General
-    Public License</a>.
+    <h1>Licence</h1>   
+    Gmm++ is freely distributed under the terms of the
+    <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">
+       Gnu Lesser General Public License, version 2.1</a>.
 
     <h1>Contribute to Gmm++</h1>
     <p>

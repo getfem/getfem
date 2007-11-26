@@ -2,9 +2,9 @@
   <div id="content">
     <h1> Download Getfem++</h1>
     <p>
-      Getfem++ is freely distributed under the terms of the <a
-      href="http://www.gnu.org/copyleft/lesser.html">Gnu Lesser
-      General Public License</a>.
+      Getfem++ is freely distributed under the terms of the
+      <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">
+       Gnu Lesser General Public License, version 2.1</a>.
     </p>
 
     <p>
