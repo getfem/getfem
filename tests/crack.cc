@@ -1,24 +1,23 @@
 // -*- c++ -*- (enables emacs c++ mode)
-//========================================================================
+//===========================================================================
 //
-// Copyright (C) 2002-2007 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2008 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
-// Getfem++ is free software; you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation; version 2.1 of the License.
+// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-// You should have received a copy of the GNU Lesser General Public
-// License along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
-// USA.
-//
-//========================================================================
+//===========================================================================
   
 /**
  * Linear Elastostatic problem with a crack.
@@ -929,15 +928,37 @@ void crack_problem::compute_sif(const plain_vector &U) {
                                          KI, KII);
   cout << "computation of crack SIF: " << KI << ", " << KII << "\n";
 
-//   if (enrichment_option == GLOBAL_WITH_CUTOFF
-//       || enrichment_option == GLOBAL_WITH_MORTAR) {
-//     cout << "SIFU = " << gmm::sub_vector(U, gmm::sub_interval(0, 8)) << endl;
-//     cout << "EXACTU = " << exact_sol.U << endl;
-//     size_type cv = mf_u().first_convex_of_dof(0);
-//     getfem::pfem pf = mf_u().fem_of_element(cv);
-//     cout << "type of dof : " << name_of_dof(pf->dof_types()[0]) << endl;
-//   }
 
+  if (enrichment_option == GLOBAL_WITH_CUTOFF
+      || enrichment_option == GLOBAL_WITH_MORTAR) {
+    /* Compare the computed coefficients of the global functions with
+     * the exact one.
+     */
+    size_type Qdim = mf_u().get_qdim(), ind_fisrt_global_dof = size_type(-1);
+    for (dal::bv_visitor cv(mesh.convex_index());
+	 !cv.finished() && (ind_fisrt_global_dof == size_type(-1)); ++cv) {
+      getfem::pfem pf = mf_u().fem_of_element(cv);
+      for (size_type i = 0; i < pf->nb_dof(cv); ++i) {
+	// cout << "type of dof : " << name_of_dof(pf->dof_types()[i]) << endl;
+	if (pf->dof_types()[i] == getfem::global_dof(mesh.dim())) {
+	  if (ind_fisrt_global_dof == size_type(-1))
+	    ind_fisrt_global_dof =  mf_u().ind_dof_of_element(cv)[i*Qdim];
+	  // cout << "A global dof : "
+	  //      << mf_u().ind_dof_of_element(cv)[i*Qdim] << endl;
+	}
+      }
+    }
+      
+    cout << "first global dof = " << ind_fisrt_global_dof << endl;
+    plain_vector diff(8);
+    gmm::copy(gmm::sub_vector(U,gmm::sub_interval(ind_fisrt_global_dof, 8)),
+	      diff);
+
+    cout << "GLOBAPPROX = " << diff << endl;
+    cout << "GLOBEXACT = " << exact_sol.U << endl;
+    gmm::add(gmm::scaled(exact_sol.U, -1.0),diff);
+    cout << "euclidean error: " << gmm::vect_norm2(diff) << endl;
+  }
 }
 
 /**************************************************************************/
