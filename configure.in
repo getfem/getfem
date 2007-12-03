@@ -492,6 +492,21 @@ fi;
 AC_SUBST(DISTCLEANMESH)
 
 
+dnl -----------------------------------------------
+dnl switch for using the getfem_boost supplied files, or the real boost
+dnl -----------------------------------------------
+
+AC_ARG_ENABLE(boost, [  --enable-boost    Assume that boost is installed and use it],
+[case "${enableval}" in
+  yes) useboost=YES ;;
+  no)  useboost=NO ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-boost]) ;;
+esac],[useboost=NO])
+
+if test "x$useboost" = "xYES"; then
+        AC_DEFINE_UNQUOTED(HAVE_BOOST,1,[Tell getfem to use the real boost library])
+fi;
+
 
 dnl -----------------------------------------------
 dnl MATLAB Interface

@@ -58,7 +58,13 @@
 #define DAL_STATIC_STORED_OBJECTS_H__
 
 #include "dal_config.h"
-#include <getfem_boost/intrusive_ptr.hpp>
+
+#include "getfem/getfem_arch_config.h"
+#ifdef GETFEM_HAVE_BOOST
+# include <boost/intrusive_ptr.hpp>
+#else
+# include <getfem_boost/intrusive_ptr.hpp>
+#endif
 
 namespace dal {
 
