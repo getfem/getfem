@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-#include "crack_bilaplacian.h"
+
 #include "crack_bilaplacian.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */

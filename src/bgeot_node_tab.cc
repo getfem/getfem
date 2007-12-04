@@ -127,7 +127,7 @@ namespace bgeot {
 
   void node_tab::translation(const base_small_vector &V) {
     for (dal::bv_visitor i(index()); !i.finished(); ++i) (*this)[i] += V;
-    sorters = std::vector<sorter>();
+    resort();
   }
   
   void node_tab::transformation(const base_matrix &M) {
@@ -140,7 +140,7 @@ namespace bgeot {
       gmm::resize((*this)[i], dim_);
       gmm::mult(M,w,(*this)[i]);
     }
-    sorters = std::vector<sorter>();
+    resort();
   }
   
   node_tab::node_tab(scalar_type prec_loose) {

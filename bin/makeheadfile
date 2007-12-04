@@ -14,6 +14,7 @@ sub clean_line {
 sub print_license  {
 
   my $RES   = $_[0];
+  my $NAME = $_[1];
 
   print RES <<
 //===========================================================================
@@ -34,6 +35,23 @@ sub print_license  {
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
+
+;
+  if ($NAME =~ /\.h/) {
+    print RES <<
+// As a special exception,  you may use this file  as part of a free software
+// library  without  restriction.  Specifically,  if  other files instantiate
+// templates or use macros or inline functions from this file, or you compile
+// this  file  and  link  it  with other files to produce an executable, this
+// file  does  not  by itself cause the resulting executable to be covered by
+// the  GNU  General  Public  License.   This   exception  does  not  however
+// invalidate  any  other reasons why the executable file might be covered by
+// the GNU General Public License.
+//
+
+;
+  }
+print RES <<
 //===========================================================================
 
 ;
@@ -57,30 +75,6 @@ while ($name = $ARGV[0]) {
 
   while ($li = <FILE>) {
 
-    if ($li =~ /Library/ && !$libname) {
-      ($li, $l1) = split(':', $li, 2);
-      clean_line($l1);
-      $libname = $l1;
-    }
-    if ($li =~ /File/ && !$filename) {
-      ($li, $l1) = split(':', $li, 2);
-      ($l1, $l2) = split(':', $l1, 2);
-      clean_line($l1);
-      $filename=$l1; # a comparer avec $name
-      $l1=$l2;
-      clean_line($l1);
-      $comment1=$l1;
-      $l1=<FILE>;
-      if (!($li =~ /Date/)) {
-	clean_line($l1);
-	$comment2=$l1;
-      }
-    }
-    if ($li =~ /Date/ && !$date) {
-      ($li, $l1) = split(':', $li, 2);
-      clean_line($l1);
-      $date=$l1;
-    }
     if ($li =~ /Copyright/ && !$year1) {
       ($li, $l1) = split('\)', $li, 2);
       clean_line($l1);
@@ -92,7 +86,7 @@ while ($name = $ARGV[0]) {
       clean_line($copyauth);
     }
     if ($li =~ /MERCHANTABILITY/) { $license = 1; }
-    if ($li =~ /USA./) { $li = <FILE>; $li = <FILE>; $li = <FILE>; last; }
+    if (($license == 1) && ($li =~ /=========/)) { $li = <FILE>; last; }
     if ($li =~ /^#/) { last; }
   }
 
@@ -108,7 +102,7 @@ while ($name = $ARGV[0]) {
     # open(FILE, "$name");
     open(RES, ">$name".".newhead");
     print RES $enablecpp;
-    print_license(RES);
+    print_license(RES, $name);
   }
   else {
 
@@ -124,7 +118,7 @@ while ($name = $ARGV[0]) {
     open(RES, ">$name".".newhead");
 
     print RES $enablecpp;
-    print_license(RES);
+    print_license(RES, $name);
   }
 
 

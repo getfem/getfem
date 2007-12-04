@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-#include "crack_exact_solution.h"
+
 #include "crack_exact_solution.h"
 
 /* returns sin(theta/2) where theta is the angle
