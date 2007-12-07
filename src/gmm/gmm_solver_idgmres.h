@@ -29,7 +29,8 @@
 //===========================================================================
 
 /**@file gmm_solver_idgmres.h
-   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author  Caroline Lecalvez <Caroline.Lecalvez@gmm.insa-tlse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 6, 2003.
    @brief Implicitly restarted and deflated Generalized Minimum Residual.
 */
