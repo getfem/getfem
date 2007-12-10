@@ -21,6 +21,10 @@
     For older releases, look <a href="http://download.gna.org/getfem/stable/">here</a>.
     </p>
     <p>
+    You can also directly access the svn repository
+    <a href="https://gna.org/projects/getfem">here</a>. 
+    </p>
+    <p>
       Building a portable c++ library is not an easy task. We try to
       build it with many combinations of OS and compilers.
       The last stable version has been tested on the following configurations:

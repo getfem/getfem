@@ -84,7 +84,14 @@
 
     <h1>Python interface</h1>
 
-      A <a href="http://www.python.org">python</a> interface is also available, it is very similar to the Matlab one, although it lacks the graphical abilities of the Matlab interface.
+      A <a href="http://www.python.org">python</a> interface is also
+      available, it is very similar to the Matlab one. Coming soon:
+      the graphical fpost_processing unctions with tvtk.
+
+    <h1>Awards</h1>
+      
+      Getfem++ has been awarded by the second price at the
+      <a href="http://www.tropheesdulibre.org/"> "Trophées du Libre 2007"</a> int the category of scientific softwares.
 
     <h1>Licence</h1>
 

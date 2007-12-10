@@ -4,8 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = m4 cubature superlu src tests interface contrib tests-2.0 bin
 
 EXTRA_DIST = \
-	BUGS \
-	MTL-ITL-LICENSE
+	BUGS
 
 CLEANFILES = so_locations _configs.sed
 
