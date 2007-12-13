@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-#ifndef DEBUG_SMALL_VECTOR
+
 /*
 #ifndef DEBUG_SMALL_VECTOR
 # define DEBUG_SMALL_VECTOR
