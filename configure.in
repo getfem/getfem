@@ -521,7 +521,7 @@ AC_ARG_ENABLE(matlab,
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-matlab]) ;;
 esac],[usematlab=NO])
 
-AC_ARG_WITH(toolbox-dir, [  --with-toolbox-dir : directory in which the matlab interface will be installed],
+AC_ARG_WITH(matlab-toolbox-dir, [  --with-matlab-toolbox-dir : directory in which the matlab interface will be installed],
             TOOLBOXDIR="$withval",TOOLBOXDIR="$prefix/getfem_toolbox")
 AC_SUBST(TOOLBOXDIR)
 
