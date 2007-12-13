@@ -10,8 +10,8 @@
     function interpolated on the mesh):
   </p>
   <p align="center">
-    <a href="strangemesh.png"><img src="images/strangemesh_small.png" alt="strange mesh" border="none"></a>
-    <a href="strangernd.png"><img src="images/strangernd_small.png" alt="strange mesh with random data" border="none"></a>
+    <a href="images/strangemesh.png"><img src="images/strangemesh_small.png" alt="strange mesh" border="none"></a>
+    <a href="images/strangernd.png"><img src="images/strangernd_small.png" alt="strange mesh with random data" border="none"></a>
   </p>
   <p>
     The mesh is 3D. There is a quadrangle, a curved quadrangle/triangle, a kind of
@@ -43,7 +43,7 @@
     and discontinuous P1 for the pressure field). The source code is <a
       href="demo_stokes_tube2D.html">here</a>. 
   </p>
-  <p align="center"><a href="tube.png"><img src="images/tube_small.png" alt="2D tube" border="none"></a>
+  <p align="center"><a href="images/tube.png"><img src="images/tube_small.png" alt="2D tube" border="none"></a>
   </p>
 
   <a name="stokes3d"></a>
@@ -51,7 +51,7 @@
     tank. The picture show the norm of the fluid velocity, with some streamlines.
   </p>
 
-  <p align="center"><a href="cuve.png"><img
+  <p align="center"><a href="images/cuve.png"><img
 	src="images/cuve_3D_streamlines_small.png" alt="3D tank" border="none"></a></p>
 
   <a name="helmholtz"></a><h3 class="sshot">Helmholtz equation</h3>
