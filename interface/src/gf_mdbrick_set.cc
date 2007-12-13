@@ -123,7 +123,12 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	d_expected2.ndim() == 1 && 
 	d.dim(0)==1 && d.dim(1) == d_expected2.dim(0)) 
       sz_ok = true;
-
+    
+    /* for python, a 1d of size n is ok if we were expecting a 1 x n matrix */
+    if (!sz_ok && config::has_1D_arrays() &&
+        d_expected2.ndim() == 2 && d_expected2.dim(0) == 1 &&
+        d.ndim() == 1 && d.dim(0) == d_expected2.dim(1))
+      sz_ok = true;
     if (!sz_ok) THROW_BADARG("wrong size for the parameter " << pname 
 			     << ", expected an array of size " 
 			     << d_expected2 << " ( or " << d_expected1 << 
