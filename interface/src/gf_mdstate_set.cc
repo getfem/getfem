@@ -39,6 +39,7 @@ using namespace getfemint;
   @SET MDSTATE:SET('compute_reduced_residual')
   @SET MDSTATE:SET('compute_residual')
   @SET MDSTATE:SET('compute_tangent_matrix')
+  @SET MDSTATE:SET('state')
   @SET MDSTATE:SET('clear')
 
   $Id$
@@ -83,6 +84,17 @@ void gf_mdstate_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (!md->is_complex()) 
          b->real_mdbrick().compute_tangent_matrix(md->real_mdstate());
     else b->cplx_mdbrick().compute_tangent_matrix(md->cplx_mdstate());
+  } else if (check_cmd(cmd, "state", in, out, 1, 1, 0, 0)) {
+    /*@SET MDSTATE:SET('state', @vec U)
+      Update the internal state with the vector U.
+      @*/
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray(-1);
+      md->real_mdstate().state().assign(st.begin(), st.end());
+    } else {
+      carray st = in.pop().to_carray(-1);
+      md->cplx_mdstate().state().assign(st.begin(), st.end());
+    }
   } else if (check_cmd(cmd, "clear", in, out, 0, 0, 0, 1)) {
     /*@SET MDSTATE:SET('clear')
       Clear the model state.

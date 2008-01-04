@@ -62,7 +62,7 @@ for step in range(0, nbstep):
     print 'step %d' % (step,)
     b2.set_param('source_term', mfd, [F[step,0],F[step,1]])
     b2.solve(mds, 'very noisy', 'max_iter', 1000, 'max_res', 1e-6)
-  
+
     U=mds.state()[0:mfu.nbdof()]
     VM = b0.von_mises(mds, mfdu)
   

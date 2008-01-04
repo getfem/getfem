@@ -346,6 +346,7 @@ class MdState:
     #@SET MDSTATE:SET('compute_reduced_residual')
     #@SET MDSTATE:SET('compute_residual')
     #@SET MDSTATE:SET('compute_tangent_matrix')
+    #@SET MDSTATE:SET('state')
     #@SET MDSTATE:SET('clear')
     
 class GeoTrans:

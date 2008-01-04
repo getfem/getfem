@@ -21,6 +21,7 @@ def ExceptionsRewrite(d):
     d = string.replace(d, "SLICE:SET('pts'", "SLICE:SET('set_pts'")
     d = string.replace(d, "MESHFEM:SET('qdim'", "MESHFEM:SET('set_qdim'")
     d = string.replace(d, "MESHFEM:SET('fem'", "MESHFEM:SET('set_fem'")
+    d = string.replace(d, "MDSTATE:SET('state'", "MESHFEM:SET('set_state'")
     d = string.replace(d, "MESHIM:SET('integ'", "MESHIM:SET('set_integ'")
     d = re.sub("(MESHFEM:SET\('classical[ _]fem')",
                "MESHFEM:SET('set_classical_fem'", d)

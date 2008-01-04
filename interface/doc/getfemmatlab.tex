@@ -2667,6 +2667,7 @@ Modify a model state \index{mdstate} object @@mds@@.
 gf_mdstate_set(mds,'compute_reduced_residual')
 gf_mdstate_set(mds,'compute_residual', \tmdbrick B)
 gf_mdstate_set(mds,'compute_tangent_matrix', \tmdbrick B)
+gf_mdstate_set(mds,'state', \tvec U)
 gf_mdstate_set(mds,'clear')@@
 \end{synopsis}
 \begin{cmddescription}
@@ -2681,6 +2682,9 @@ compute the residual for the brick B.
 
 \sep{@@gf_mdstate_set(mds,'compute_tangent_matrix', \tmdbrick B)@@} :
 update the tangent matrix from the brick B.
+
+\sep{@@gf_mdstate_set(mds,'state', \tvec U)@@} :
+update the internal state with the vector U.
 
 \sep{@@gf_mdstate_set(mds,'clear')@@} :
 clear the model state.
