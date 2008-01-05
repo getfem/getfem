@@ -31,7 +31,6 @@ $root = `pwd`; chomp $root; $root = "$root/gmm++_standalone";
 print `(cd $getfem_root/src && cp $gmm_files $root/include/gmm)`;
 print `(cd $getfem_root/tests && cp $test_files $root/tests)`;
 print `cp $getfem_root/gmm-config.in $root`;
-print `cp $getfem_root/MTL-ITL-LICENSE $root`;
 print `cp $getfem_root/COPYING $root`;
 print `cp $getfem_root/config.sub $root`;
 print `cp $getfem_root/config.guess $root`;
@@ -97,7 +96,6 @@ print F <<
 \nACLOCAL_AMFLAGS = -I m4\n
 SUBDIRS = include tests\n
 EXTRA_DIST = \\
-        MTL-ITL-LICENSE \\
         m4/ax_check_cxx_flag.m4  m4/ax_prefix_config_h.m4\n
 CLEANFILES = so_locations\n
 
