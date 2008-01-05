@@ -110,7 +110,7 @@ VM.tofile('tripod.VM')
 
 if with_graphics:
   fig = getfem_tvtk.Figure()
-  fig.show(mfu, deformation=U, data=(mfe,VM))
+  fig.show(mfu, deformation=U, data=(mfe,VM), deformation_scale='20%')
   print "Press Q to continue.."
   fig.set_colormap('tripod')
   fig.loop()
