@@ -171,9 +171,13 @@ namespace gmm
   };
 
   template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
+    size_type nr = std::min(nrows(), m);
     li.resize(m);
-    for (size_type i=0; i < m; ++i) gmm::resize(li[i], n);
-    nc = n;
+    for (size_type i=nr; i < m; ++i) gmm::resize(li[i], n);
+    if (n != nc) {
+      for (size_type i=0; i < nr; ++i) gmm::resize(li[i], n);    
+      nc = n;
+    }
   }
 
 
@@ -274,9 +278,13 @@ namespace gmm
   };
 
   template<typename V> void col_matrix<V>::resize(size_type m, size_type n) {
+    size_type nc = std::min(ncols(), n);
     li.resize(n);
-    for (size_type i=0; i < n; ++i) gmm::resize(li[i], m);
-    nr = m;
+    for (size_type i=nc; i < n; ++i) gmm::resize(li[i], m);
+    if (m != nr) {
+      for (size_type i=0; i < nc; ++i) gmm::resize(li[i], m);    
+      nr = m;
+    }
   }
 
   template<typename V> void col_matrix<V>::clear_mat()
