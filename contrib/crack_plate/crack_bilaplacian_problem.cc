@@ -1,24 +1,3 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2007-2008 Yves Renard, Julien Pommier.
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-//===========================================================================
-
 #include "crack_bilaplacian.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -30,9 +9,9 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type BB = 0.1 ;
+scalar_type BB = 0.0 ;
 scalar_type AAA = BB * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type DD = 0.0 ;
+scalar_type DD = 1.0 ;
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
  
 
@@ -108,7 +87,7 @@ return res ; }
 void exact_solution::init(getfem::level_set &ls) {
   std::vector<getfem::pglobal_function> cfun(4) ;
   for (unsigned j=0; j < 4; ++j)
-    cfun[j] = bilaplacian_crack_singular(j, ls) ;
+    cfun[j] = bilaplacian_crack_singular(j, ls, nu) ;
   mf.set_functions(cfun);
   U.resize(4); assert(mf.nb_dof() == 4);
   // scalar_type A1 = 1., nu = 0.3 ;
@@ -408,10 +387,14 @@ void bilaplacian_crack_problem::init(void) {
     
    /* read the parameters   */
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
+  nu = PARAM.real_value("NU", "nu") ;
+  D = PARAM.real_value("D", "Flexure modulus") ;
   int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
   int mv = PARAM.int_value("MORTAR_VERSION", "Mortar version");
+  int cv = PARAM.int_value("CLOSING_VERSION");  
   dirichlet_version = getfem::constraints_type(dv);
   mortar_version = getfem::constraints_type(mv);
+  closing_version = getfem::constraints_type(cv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   KL = PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0;
@@ -480,12 +463,47 @@ void bilaplacian_crack_problem::init(void) {
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-    mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
-    mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
+  if (PARAM.int_value("SOL_REF") == 0){
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+         mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+         mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
+     }
   }
   
+  if (PARAM.int_value("SOL_REF") == 1){
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+        base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+        un /= gmm::vect_norm2(un);
+        //if ( (un[0] <= -0.9) || (un[0] >= 0.9) ) {
+	if  (gmm::abs(un[0]) >= 0.999)  {
+	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+           //mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+	} else
+           mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+           mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f()); 
+     }
+  }
   exact_sol.init(ls);
+  
+  cout << "initialisation de la level-set : \n" ;
+  size_type nb_dof_rhs = mf_rhs.nb_dof();
+  
+  // Setting the level-set
+  ls.reinit();  
+  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
+    ls.values(1)[d] = x;
+  }
+  //ls.simplify(0.5);
+  ls.touch();  
+  mls.adapt();
+  mim.adapt();
+  mfls_u.adapt();
+  mfls_mortar.adapt();
+  mfls_mortar_deriv.adapt();
+  cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
 }
 
 
@@ -496,23 +514,23 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
      plain_vector V(gmm::vect_size(U)) ;
      gmm::clear(V) ;
 
-    cout << "\nL2 ERROR : "
+    cout << "\nL2 ERROR:"
        << getfem::asm_L2_dist(mim, mf_u(), U,
 			      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H1 ERROR : "
+    cout << "H1 ERROR:"
          << getfem::asm_H1_dist(mim, mf_u(), U,
   	  		      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H2 ERROR : "
+    cout << "H2 ERROR:"
          << getfem::asm_H2_dist(mim, mf_u(), U, 
                               exact_sol.mf, exact_sol.U) << "\n"; 
     if ( PARAM.int_value("NORM_EXACT") ){
-    cout << "L2 exact : "
+    cout << "L2 exact:"
          << getfem::asm_L2_dist(mim, mf_u(), V,
 			      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H1 exact : "
+    cout << "H1 exact:"
          << getfem::asm_H1_dist(mim, mf_u(), V,
 			      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H2 exact : "
+    cout << "H2 exact:"
          << getfem::asm_H2_dist(mim, mf_u(), V, 
                               exact_sol.mf, exact_sol.U) << "\n";
     } 
@@ -537,30 +555,30 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
   }
   scalar_type L2_center, H1_center, H2_center;
   cout << "ERROR SPLITTED - RADIUS =  " << radius_split_domain << "\n";
-  cout << "Error on the crack tip zone : \n" ;
+  cout << "Error on the crack tip zone:\n" ;
         L2_center = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-  cout << "  L2 error : " << L2_center << "\n";
+  cout << "  L2 error:" << L2_center << "\n";
 	H1_center = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-  cout << "  H1 error : " << H1_center << "\n";
+  cout << "  H1 error:" << H1_center << "\n";
 	H2_center = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-  cout << "  H2 error : " << H2_center << "\n";
+  cout << "  H2 error:" << H2_center << "\n";
  	
-  cout << "Error on the remaining part of the domain : \n"; 
+  cout << "Error on the remaining part of the domain:\n"; 
   scalar_type L2_ext, H1_ext, H2_ext;
         L2_ext = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-  cout << "  L2 error : " << L2_ext << "\n";
+  cout << "  L2 error:" << L2_ext << "\n";
 	H1_ext = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-  cout << "  H1 error : " << H1_ext << "\n";
+  cout << "  H1 error:" << H1_ext << "\n";
 	H2_ext = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-  cout << "  H2 error : " << H2_ext << "\n";
+  cout << "  H2 error:" << H2_ext << "\n";
 
-  cout << "Error on the hole domain : \n";
-  cout << "L2 ERROR : "
+  cout << "Error on the hole domain:\n";
+  cout << "L2 ERROR:"
        << gmm::sqrt( gmm::sqr(L2_center) + gmm::sqr(L2_ext) ) << "\n";
 
-    cout << "H1 ERROR : "
+    cout << "H1 ERROR:"
          << gmm::sqrt( gmm::sqr(H1_center) + gmm::sqr(H1_ext) ) << "\n";
-    cout << "H2 ERROR : "
+    cout << "H2 ERROR:"
          << gmm::sqrt( gmm::sqr(H2_center) + gmm::sqr(H2_ext) ) << "\n";
   }
 }
@@ -594,11 +612,21 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   
   // setting singularities 
   cout << "setting singularities \n" ;
-  std::vector<getfem::pglobal_function> ufunc(4);
-  for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
-    ufunc[i] = bilaplacian_crack_singular(i, ls);
-  }
+  if (PARAM.int_value("SING_BASE_TYPE") == 0){
+	std::vector<getfem::pglobal_function> ufunc(4);
+	for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
+	ufunc[i] = bilaplacian_crack_singular(i, ls, nu);
+	}
   mf_sing_u.set_functions(ufunc);
+  }
+  if (PARAM.int_value("SING_BASE_TYPE") == 1){
+	std::vector<getfem::pglobal_function> ufunc(2);
+	for (size_type i = 0 ; i < ufunc.size()  ; ++i) {                              
+	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu);
+	}
+  mf_sing_u.set_functions(ufunc);
+  }
+
   
   
   // Setting the enrichment --------------------------------------------/
@@ -652,7 +680,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
             if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
 	           enriched_dofs.add(j);
           }
-      cout << "enriched_dofs: " << enriched_dofs << "\n";
+      //cout << "enriched_dofs: " << enriched_dofs << "\n";
       if (enriched_dofs.card() < 3)
             GMM_WARNING0("There is " << enriched_dofs.card() <<
 		   " enriched dofs for the crack tip");
@@ -707,60 +735,61 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       else
          mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
       
-      cout << "cvlist_in_area: " << cvlist_in_area << "\n";
+      //cout << "cvlist_in_area: " << cvlist_in_area << "\n";
       cout << "mfls_u.nb_dof: " << mfls_u.nb_dof() << "\n";
       cout << "mf_u_sum.nb_dof: " << mf_u_sum.nb_dof() << "\n";
-      cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
-      cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
+      //cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
+      //cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
       
-      // an optional treatment : creating a representation of the enrichment area     
-      getfem::mesh_fem mf_enrich(mesh);
-      getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
-      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
-      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
-      std::fill(UU.begin(), UU.end() ,0.) ;
-      cout << "exporting the enrichment zone: \n" ;
-      for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
-	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
-	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
-      }
-      
-      cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
-      getfem::vtk_export exp("enrichment_zone.vtk", false);
-      exp.exporting(mf_enrich); 
-      exp.write_point_data(mf_enrich, UU, "enrichment");
-      cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d enrichment_zone.vtk -f "
-	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+//       // an optional treatment : creating a representation of the enrichment area     
+//       getfem::mesh_fem mf_enrich(mesh);
+//       getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
+//       mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+//       std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
+//       std::fill(UU.begin(), UU.end() ,0.) ;
+//       cout << "exporting the enrichment zone: \n" ;
+//       for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
+// 	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
+// 	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
+//       }
+//       
+//       cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
+//       getfem::vtk_export exp("enrichment_zone.vtk", false);
+//       exp.exporting(mf_enrich); 
+//       exp.write_point_data(mf_enrich, UU, "enrichment");
+//       cout << "export done, you can view the data file with (for example)\n"
+// 	"mayavi -d enrichment_zone.vtk -f "
+// 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
 	
-      // Another optional treatment :
-      // Searching the elements that are both crossed by the crack
-      // and with one of their faces which constitutes a part of the 
-      // boundary between the enriched zone and the rest of the domain.
-      getfem::mesh_region &boundary = mesh.region(MORTAR_BOUNDARY_IN);
-      unsigned int cpt = 0 ;
-      for (dal::bv_visitor i(cvlist_in_area); !i.finished(); ++i) {
-         if (mls.is_convex_cut(i)){
-	    // Among the faces of the convex, we search if some are
-	    // part of the boundary
-	    cpt = 0 ;
-	    for (unsigned j=0; j < mesh.structure_of_convex(i) ->nb_faces(); ++j) {
-	        if (boundary.is_in(i,j))
-		   cpt += 1;
-	    }
-	    if (cpt) {
-               cout << "\n The convex number " << i << " is crossed by the crack :\n" ;
-	       cout << "  it has : " << cpt << " face(s) among the boundary.\n \n " ;
-	    }
-	 }
-      }
+//       // Another optional treatment :
+//       // Searching the elements that are both crossed by the crack
+//       // and with one of their faces which constitutes a part of the 
+//       // boundary between the enriched zone and the rest of the domain.
+//       getfem::mesh_region &boundary = mesh.region(MORTAR_BOUNDARY_IN);
+//       unsigned int cpt = 0 ;
+//       for (dal::bv_visitor i(cvlist_in_area); !i.finished(); ++i) {
+//          if (mls.is_convex_cut(i)){
+// 	    // Among the faces of the convex, we search if some are
+// 	    // part of the boundary
+// 	    cpt = 0 ;
+// 	    for (unsigned j=0; j < mesh.structure_of_convex(i) ->nb_faces(); ++j) {
+// 	        if (boundary.is_in(i,j))
+// 		   cpt += 1;
+// 	    }
+// 	    if (cpt) {
+//                cout << "\n The convex number " << i << " is crossed by the crack :\n" ;
+// 	       cout << "  it has : " << cpt << " face(s) among the boundary.\n \n " ;
+// 	    }
+// 	 }
+//       }
  
     }  // end of "enrichment_option = 3"
     break ;
   default : 
 	GMM_ASSERT1(false, "Enrichment_option parameter is undefined");
 	break ;  
-	}
+	}  // end of switch
+	
   mesh.write_to_file("toto.mesh");
   
   if (0) {  // printing the type of each dof
@@ -887,7 +916,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       for (size_type i=0; i < mf_mortar.nb_dof(); ++i) {
 	if ( (MM(i,i) > 1e-15) & (MD(i,i) > 1e-15) ) { 
 	  bv_mortar.add(i);
-	  bv_deriv.add(i);
+	  bv_deriv.add(i); 
 	  bv_union.add(i);
 	}
 	if ( (MM(i,i) > 1e-15) & (MD(i,i) <= 1e-15) ) { 
@@ -919,9 +948,9 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	" dof for the lagrange multiplier)\n";    
       gmm::resize(H0, mf_mortar.nb_dof(), mf_u().nb_dof()) ;
       gmm::resize(H,  ind_union.size(),   mf_u().nb_dof()) ;
-      cout << "bv_mortar = " << bv_mortar << "\n";
-      cout << "bv_deriv = " << bv_deriv << "\n" ;
-      cout << "bv_union = " << bv_union << "\n" ;
+//       cout << "bv_mortar = " << bv_mortar << "\n";
+//       cout << "bv_deriv = " << bv_deriv << "\n" ;
+//       cout << "bv_union = " << bv_union << "\n" ;
       
       gmm::sub_index sub_i(ind_union);
       gmm::sub_index sub_i1(ind_mortar);
@@ -1227,7 +1256,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(BIL.get_solution(MS), U);
-  return true;
+  return true;  
 }
 
 template<typename VEC1, typename VEC2>
