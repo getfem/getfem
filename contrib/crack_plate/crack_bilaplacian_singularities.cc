@@ -54,6 +54,14 @@ scalar_type bilaplacian_singular_functions::sing_function(scalar_type x, scalar_
     case 3: {
       return r*sqrt(r)*cos(theta/2);
     } break;
+    case 4: {
+      scalar_type c_1 = (nu + 7.)/ (3. * (nu - 1.)) ;
+      return r*sqrt(r)* ( cos(theta/2) + c_1 * cos(3.0 * theta/2) );
+    } break;
+    case 5: {
+      scalar_type c_2 = (3. * nu + 5.)/ (3. * (nu - 1.)) ;
+      return r*sqrt(r)* ( sin(theta/2) + c_2 * sin(3.0 * theta/2) );
+    } break;
     default: assert(0); 
   }
   return 0;
@@ -87,6 +95,24 @@ void bilaplacian_singular_functions::sing_function_grad(scalar_type x, scalar_ty
     case 3: {
       g[0] = 3.0/2.0*sqrt(r)*cos(theta/2.0)*cos(theta)+sqrt(r)*sin(theta/2.0)*sin(theta)/2.0;
       g[1] = 3.0/2.0*sqrt(r)*cos(theta/2.0)*sin(theta)-sqrt(r)*sin(theta/2.0)*cos(theta)/2.0;
+    } break;
+    case 4: {
+    scalar_type c_1 = (nu + 7.)/ (3. * (nu - 1.)) ;
+      g[0] = c_1 * (
+             3.0/2.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/2.0*sqrt(r)*cos(3.0/2.0*theta)*cos(theta) )
+           + 3.0/2.0*sqrt(r)*cos(theta/2.0)*cos(theta)+sqrt(r)*sin(theta/2.0)*sin(theta)/2.0 ;
+      g[1] = c_1 * (
+             3.0/2.0*sqrt(r)*cos(3.0/2.0*theta)*sin(theta)-3.0/2.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta) )
+	   + 3.0/2.0*sqrt(r)*cos(theta/2.0)*sin(theta)-sqrt(r)*sin(theta/2.0)*cos(theta)/2.0 ;
+    } break;
+    case 5: {
+    scalar_type c_2 = (3. * nu + 5.)/ (3. * (nu - 1.)) ;
+      g[0] = 3.0/2.0*sqrt(r)*sin(theta/2.0)*cos(theta)-sqrt(r)*cos(theta/2.0)*sin(theta)/2.0
+           + c_2 * (
+	   3.0/2.0*sqrt(r)* ( sin(3.0/2.0*theta)*cos(theta)-cos(3.0/2.0*theta)*sin(theta) )) ;
+      g[1] = 3.0/2.0*sqrt(r)*sin(theta/2.0)*sin(theta)+sqrt(r)*cos(theta/2.0)*cos(theta)/2.0
+           + c_2 * (
+	   3.0/2.0*sqrt(r)* ( sin(3.0/2.0*theta)*sin(theta)+cos(3.0/2.0*theta)*cos(theta) )) ;
     } break;
     default: assert(0); 
   }
@@ -151,6 +177,52 @@ void bilaplacian_singular_functions::sing_function_hess(scalar_type x, scalar_ty
 		 cos(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*sin(theta)/4.0+5.0/4.0
 					     *sqrt(r)*cos(theta/2.0)*cos(theta))*cos(theta)/r;
       he(0,1) = he(1,0) ;
+    } break;
+      case 4: {
+      scalar_type c_1 = (nu + 7.)/ (3. * (nu - 1.)) ;
+      he(0,0) = c_1 * ( (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
+                 cos(3.0/2.0*theta)*cos(theta))*cos(theta)-(3.0/4.0*sqrt(r)*
+                 cos(3.0/2.0*theta)*sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*sin(theta)/r )
+		 + (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
+		 sin(theta)/4.0)*cos(theta)-(-sqrt(r)*sin(theta/2.0)*cos(theta)/4.0-5.0/4.0
+					     *sqrt(r)*cos(theta/2.0)*sin(theta))*sin(theta)/r;
+		 
+      he(1,0) = c_1 * ( (3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)*
+                 cos(3.0/2.0*theta)*cos(theta))*sin(theta)+(3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)
+                      *sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*cos(theta)/r )
+		 + (3.0/4.0/sqrt(r)*cos(theta/2.0)*cos(theta)+1/sqrt(r)*sin(theta/2.0)*
+		 sin(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*cos(theta)/4.0-5.0/4.0
+					     *sqrt(r)*cos(theta/2.0)*sin(theta))*cos(theta)/r;
+					     
+      he(1,1) =  c_1 * ( (3.0/4.0/sqrt(r)*cos(3.0/2.0*theta)*sin(theta)-3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)
+		 *cos(theta))*sin(theta)+(-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta)
+                                          -3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)*cos(theta))*cos(theta)/r)
+		+ (3.0/4.0/sqrt(r)*cos(theta/2.0)*sin(theta)-1/sqrt(r)*sin(theta/2.0)*
+		 cos(theta)/4.0)*sin(theta)+(-sqrt(r)*sin(theta/2.0)*sin(theta)/4.0+5.0/4.0
+					     *sqrt(r)*cos(theta/2.0)*cos(theta))*cos(theta)/r;
+      he(0,1) = he(1,0) ;
+    } break;
+      case 5: {
+      scalar_type c_2= (3. * nu + 5.)/ (3. * (nu - 1.)) ;
+      he(0,0) = (3.0/4.0/sqrt(r)*sin(theta/2.0)*cos(theta)-1/sqrt(r)*cos(theta/2.0)*
+		 sin(theta)/4.0)*cos(theta)-(sqrt(r)*cos(theta/2.0)*cos(theta)/4.0-5.0/4.0*
+					     sqrt(r)*sin(theta/2.0)*sin(theta))*sin(theta)/r
+                + c_2* ((3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)
+                 *cos(3.0/2.0*theta)*sin(theta))*cos(theta)-(3.0/4.0*sqrt(r)*
+                  cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*sin(theta)/r) ;
+      he(1,0) = (3.0/4.0/sqrt(r)*sin(theta/2.0)*cos(theta)-1/sqrt(r)*cos(theta/2.0)*
+		 sin(theta)/4.0)*sin(theta)+(sqrt(r)*cos(theta/2.0)*cos(theta)/4.0-5.0/4.0*
+					     sqrt(r)*sin(theta/2.0)*sin(theta))*cos(theta)/r
+                + c_2* ((3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*cos(theta)-3.0/4.0/sqrt(r)
+		 *cos(3.0/2.0*theta)*sin(theta))*sin(theta)+(3.0/4.0*sqrt(r)*
+                  cos(3.0/2.0*theta)*cos(theta)+3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*sin(theta))*cos(theta)/r);
+      he(0,1) = he(1,0);
+      he(1,1) = (3.0/4.0/sqrt(r)*sin(theta/2.0)*sin(theta)+1/sqrt(r)*cos(theta/2.0)*
+		 cos(theta)/4.0)*sin(theta)+(sqrt(r)*cos(theta/2.0)*sin(theta)/4.0+5.0/4.0*
+					     sqrt(r)*sin(theta/2.0)*cos(theta))*cos(theta)/r
+                + c_2* ((3.0/4.0/sqrt(r)*sin(3.0/2.0*theta)*sin(theta)+3.0/4.0/sqrt(r)
+		 *cos(3.0/2.0*theta)*cos(theta))*sin(theta)+(3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)
+                        *sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*cos(theta)/r);
     } break;
     default: assert(0); 
   }
@@ -221,7 +293,7 @@ void bilaplacian_singular_functions::hess(const getfem::fem_interpolation_contex
     
 void bilaplacian_singular_functions::update_from_context(void) const { cv =  size_type(-1); }
 
-bilaplacian_singular_functions::bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_) : l(l_), ls(ls_) {
+bilaplacian_singular_functions::bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu_) : l(l_), ls(ls_), nu(nu_) {
   cv = size_type(-1);
   this->add_dependency(ls);
 }

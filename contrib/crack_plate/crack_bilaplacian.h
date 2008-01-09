@@ -58,6 +58,7 @@ base_small_vector neumann_val(const base_node &x);
 
 struct bilaplacian_singular_functions : public getfem::global_function, public getfem::context_dependencies {
   size_type l;             // singular function number
+  scalar_type nu;          // Poison's coefficient
   const getfem::level_set &ls;
   mutable getfem::mesher_level_set mls0, mls1;
   mutable size_type cv;
@@ -72,11 +73,11 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
 		    base_small_vector &v) const;
   virtual void hess(const getfem::fem_interpolation_context& c, base_matrix &he) const;
   void update_from_context(void) const;
-  bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_);
+  bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu);
 };
 
-inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls){ 
-  return new bilaplacian_singular_functions(i, ls);
+inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls, scalar_type nu){ 
+  return new bilaplacian_singular_functions(i, ls, nu);
 }
 
 struct exact_solution {
@@ -150,7 +151,7 @@ struct bilaplacian_crack_problem {
                               /* the normal derivative.                     */
   
   scalar_type residual;     /* max residual for the iterative solvers       */
-  getfem::constraints_type dirichlet_version, mortar_version;
+  getfem::constraints_type dirichlet_version, mortar_version, closing_version;
   
   scalar_type cutoff_radius, enr_area_radius;
   int enrichment_option, mortar_type ;
@@ -165,13 +166,17 @@ struct bilaplacian_crack_problem {
 				  area when point-wise matching is used.*/
   
   scalar_type epsilon ;      /* half-plate thickness */
+  scalar_type nu ;
+  scalar_type D ;
   
   exact_solution exact_sol;
     
   bool solve(plain_vector &U);
+  bool solve_moment(plain_vector &U) ;
   void init(void);
   void compute_error(plain_vector &U);
   void compute_H2_error_field(const plain_vector &U) ;
+  void move_nodes_close_to_crack(void);
 
   bilaplacian_crack_problem(void) : ls(mesh, 1, true), 
 				    mls(mesh), mim(mls), mf_pre_u(mesh),  

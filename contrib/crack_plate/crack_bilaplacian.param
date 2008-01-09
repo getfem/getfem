@@ -9,23 +9,27 @@ N = 2;
 
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 21;                 % space step
-MESH_FILE='/home/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_39.mesh'
+NX = 11;                 % space step
+%MESH_FILE='/home-local/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_10.mesh'
+MESH_FILE='/home-local/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/demi_plaque.mesh'
 TRANSLAT_X = 0.0 ;
 TRANSLAT_Y = 0.0 ;
  
 
 % Parameters for the plate   ------------------------------------------
 FT = 5.0;      % parameter for the exact solution
-D = 10.0;      % "flexion modulus"
+D = 1.0;      % "flexion modulus"
 KL = 1;        % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
                % plate model (N=2 only).
 if (KL)        % For Kirchhoff-Love plate model only
   NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
 end;
-EPSILON=0.1 % thickness 
+EPSILON=0.01 % thickness 
 
-
+CRACK_SEMI_LENGTH = 0.25 ;
+SOL_REF = 1 ;
+closing_version = 0 ;
+EPS_CLOSING_PENAL = 1e-12 ;
 
 
 % Parameters for the finite element method
@@ -49,13 +53,13 @@ if (~QUAD)
 %    FEM_TYPE = 'FEM_HCT_TRIANGLE';
      FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
 %     FEM_TYPE = 'FEM_ARGYRIS' ;
-     DIRICHLET_FEM_TYPE = 'FEM_PK(2,1)';
+     DIRICHLET_FEM_TYPE = 'FEM_PK(2,2)';
 %     DIRICHLET_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE' ;    
      DIRICHLET_DER_FEM_TYPE = 'FEM_PK(2,1)';
    % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
      INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(13))';
  %    MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';    
-    MORTAR_FEM_TYPE ='FEM_PK(2,1)';
+    MORTAR_FEM_TYPE ='FEM_PK(2,2)';
    %  MORTAR_FEM_TYPE = 'FEM_HERMITE(2)';
      MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
 %    MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
@@ -67,7 +71,7 @@ if (QUAD)
   FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE'; 
   %FEM_TYPE = 'FEM_QUADC1_COMPOSITE';  
   DATA_FEM_TYPE = 'FEM_QK(2,3)';
-  DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
+  DIRICHLET_FEM_TYPE = 'FEM_QK(2,2)';
   DIRICHLET_DER_FEM_TYPE = 'FEM_QK(2,1)';
   % MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
   MORTAR_FEM_TYPE = 'FEM_QK(2,2)' ;
@@ -93,8 +97,9 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)			
-RADIUS_ENR_AREA = 0.25;
-
+RADIUS_ENR_AREA = 0.15;
+SING_BASE_TYPE = 1 ;    % 0 = 4 dofs, 1 = 2 dofs
+SHOW_DX = 0 ;
 
 
 %%%%%    Parameters for the integral matching
@@ -119,6 +124,8 @@ EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
 %%%%%  error computation parameters
 NORM_EXACT = 0 ; % set to 0 if you don't want to calculate the norm of the exaxt solution
 RADIUS_SPLIT_DOMAIN = 0.0
+MOVE_NODES = 0 ;
+MOVE_NODES_PARAMETER = 1e-12 ;
 
 
 %%%%%   saving parameters                             %%%%%

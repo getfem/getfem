@@ -267,7 +267,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 	}
   mesh.write_to_file("toto.mesh");
   
-  if (1) {  // printing the type of each dof
+  if (0) {  // printing the type of each dof
     unsigned Q = mf_u().get_qdim();
     for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
       printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
