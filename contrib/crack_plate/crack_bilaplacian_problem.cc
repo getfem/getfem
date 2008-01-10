@@ -9,9 +9,9 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type BB = 0.0 ;
+scalar_type BB = 0.1 ;
 scalar_type AAA = BB * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type DD = 1.0 ;
+scalar_type DD = 0.0 ;
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
  
 
@@ -355,12 +355,72 @@ void bilaplacian_crack_problem::init(void) {
     }
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
-    
     base_small_vector tt(N); 
     tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ; 
     tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ; 
     mesh.translation(tt); 
- }    
+    
+ if (PARAM.int_value("MOVE_NODES")){
+    cout << "déplacement des noeuds \n" ;
+    size_type nb_x_pos, nb_y_pos = 0 ;
+    scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
+    scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
+    
+    
+for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
+   nb_x_pos = 0 ;
+   nb_y_pos = 0 ;
+   for (int j=0; j<4 ; ++j){
+       if (mesh.points_of_convex(i)[j][0] > 0.) 
+           nb_x_pos += 1 ;
+       if (mesh.points_of_convex(i)[j][1] > 0.) 
+           nb_y_pos += 1 ;
+   }
+ 
+   if (nb_x_pos == 0){
+       if ( nb_y_pos == 1){
+	  for (int j=0; j<4 ; ++j){
+	      if ( (mesh.points_of_convex(i)[j][1] > 0.)
+               &&  (mesh.points_of_convex(i)[j][1] < seuil_select )  // 1./5./NX
+	       ){
+	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
+	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
+                    bgeot::base_node& P = mesh.points()[ip];
+	            if( gmm::vect_dist2(P, Q) < 1e-8){
+		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+		      //P[1] = 1./2./NX ;
+		      //P[1] = 1./2./NX ;
+		      P[1] = seuil_move ;
+		      cout << P[1] << "\n" ;
+	            }  
+	        }
+              }
+	  }
+       } 
+    if ( nb_y_pos == 3){
+	  for (int j=0; j<4 ; ++j){
+	      if ( (mesh.points_of_convex(i)[j][1] < 0.)
+               &&  (mesh.points_of_convex(i)[j][1] > -1.*seuil_select ) // -1./5./NX 
+	       ){
+	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
+	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
+                    bgeot::base_node& P = mesh.points()[ip];
+	            if( gmm::vect_dist2(P, Q) < 1e-8){
+		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+		      //P[1] = - 1./2./NX ;
+		      //P[1] = -1./2./NX ;
+		      P[1] = -1. *seuil_move ;
+		      cout << P[1] << "\n" ;
+	            }  
+	        }
+              }
+	  }
+       } 
+
+       }
+   }
+  }     
+ }
  
     scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
     scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
@@ -741,25 +801,25 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       //cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
       //cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
       
-//       // an optional treatment : creating a representation of the enrichment area     
-//       getfem::mesh_fem mf_enrich(mesh);
-//       getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
-//       mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
-//       std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
-//       std::fill(UU.begin(), UU.end() ,0.) ;
-//       cout << "exporting the enrichment zone: \n" ;
-//       for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
-// 	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
-// 	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
-//       }
-//       
-//       cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
-//       getfem::vtk_export exp("enrichment_zone.vtk", false);
-//       exp.exporting(mf_enrich); 
-//       exp.write_point_data(mf_enrich, UU, "enrichment");
-//       cout << "export done, you can view the data file with (for example)\n"
-// 	"mayavi -d enrichment_zone.vtk -f "
-// 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+      // an optional treatment : creating a representation of the enrichment area     
+      getfem::mesh_fem mf_enrich(mesh);
+      getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
+      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
+      std::fill(UU.begin(), UU.end() ,0.) ;
+      cout << "exporting the enrichment zone: \n" ;
+      for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
+	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
+	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
+      }
+      
+      cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
+      getfem::vtk_export exp("enrichment_zone.vtk", false);
+      exp.exporting(mf_enrich); 
+      exp.write_point_data(mf_enrich, UU, "enrichment");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d enrichment_zone.vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
 	
 //       // Another optional treatment :
 //       // Searching the elements that are both crossed by the crack
@@ -1226,7 +1286,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     base_vector RR(mf_rhs.nb_dof(), 1.0);
     getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
                                                  mf_rhs, RR);
-    cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;  
+    //cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;  
     cout << "SEUIL = " << PARAM.real_value("SEUIL") << "\n" ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL")) {

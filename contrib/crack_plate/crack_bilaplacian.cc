@@ -54,8 +54,6 @@ int main(int argc, char *argv[]) {
     bilaplacian_crack_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    if (p.PARAM.int_value("MOVE_NODES"))
-     p.move_nodes_close_to_crack() ;
     plain_vector U;
     p.mesh.write_to_file("mesh.m") ;
     if (p.PARAM.int_value("SOL_REF") == 0) {
