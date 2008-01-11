@@ -51,7 +51,6 @@ size_type is_dy_dof_type(getfem::pdof_description dof){
   char s[200];
   size_type dy_dof = 0 ;
     for (unsigned r = 0; r < 2; ++r) {
-      cout << "début de is_dy_dof_type \n" ;
       if (dof == getfem::derivative_dof(2,1)){
          sprintf(s, "D_%c[%d]", "xyzuvw"[r], 2);
          dy_dof = 1 ;
