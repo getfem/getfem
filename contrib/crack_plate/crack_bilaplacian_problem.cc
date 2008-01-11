@@ -367,60 +367,70 @@ void bilaplacian_crack_problem::init(void) {
     scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
     
     
-for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
-   nb_x_pos = 0 ;
-   nb_y_pos = 0 ;
-   for (int j=0; j<4 ; ++j){
-       if (mesh.points_of_convex(i)[j][0] > 0.) 
-           nb_x_pos += 1 ;
-       if (mesh.points_of_convex(i)[j][1] > 0.) 
-           nb_y_pos += 1 ;
-   }
- 
-   if (nb_x_pos == 0){
-       if ( nb_y_pos == 1){
-	  for (int j=0; j<4 ; ++j){
-	      if ( (mesh.points_of_convex(i)[j][1] > 0.)
-               &&  (mesh.points_of_convex(i)[j][1] < seuil_select )  // 1./5./NX
-	       ){
-	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
-	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
+// for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
+//    nb_x_pos = 0 ; // nombre de noeuds d'abscisse positive
+//    nb_y_pos = 0 ; // nombre de noeuds d'ordonnée positive
+//    for (int j=0; j<4 ; ++j){
+//        if (mesh.points_of_convex(i)[j][0] > 0.) 
+//            nb_x_pos += 1 ;
+//        if (mesh.points_of_convex(i)[j][1] > 0.) 
+//            nb_y_pos += 1 ;
+//    }
+//  
+//    if (nb_x_pos < 4){ // juste pour éviter de traiter des éléments inutiles
+//        if ( nb_y_pos == 1){
+// 	  for (int j=0; j<4 ; ++j){
+// 	      if ( (mesh.points_of_convex(i)[j][1] > 0.)
+//                &&  (mesh.points_of_convex(i)[j][1] < seuil_select )  // 1./5./NX
+// 	       ){
+// 	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
+// 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
+//                     bgeot::base_node& P = mesh.points()[ip];
+// 	            if( gmm::vect_dist2(P, Q) < 1e-8){
+// 		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+// 		      //P[1] = 1./2./NX ;
+// 		      //P[1] = 1./2./NX ;
+// 		      P[1] = seuil_move ;
+// 		      cout << P[1] << "\n" ;
+// 	            }  
+// 	        }
+//               }
+// 	  }
+//        } 
+//     if ( nb_y_pos == 3){
+// 	  for (int j=0; j<4 ; ++j){
+// 	      if ( (mesh.points_of_convex(i)[j][1] < 0.)
+//                &&  (mesh.points_of_convex(i)[j][1] > -1.*seuil_select ) // -1./5./NX 
+// 	       ){
+// 	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
+// 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
+//                     bgeot::base_node& P = mesh.points()[ip];
+// 	            if( gmm::vect_dist2(P, Q) < 1e-8){
+// 		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+// 		      //P[1] = - 1./2./NX ;
+// 		      //P[1] = -1./2./NX ;
+// 		      P[1] = -1. *seuil_move ;
+// 		      cout << P[1] << "\n" ;
+// 	            }  
+// 	        }
+//               }
+// 	  }
+//        } 
+// 
+//        }
+//    }
+    
+  
+   for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
                     bgeot::base_node& P = mesh.points()[ip];
-	            if( gmm::vect_dist2(P, Q) < 1e-8){
+	            if( gmm::abs(P[1]) < seuil_select){
 		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
-		      //P[1] = 1./2./NX ;
-		      //P[1] = 1./2./NX ;
-		      P[1] = seuil_move ;
+		      P[1] = 0. ;
 		      cout << P[1] << "\n" ;
-	            }  
-	        }
-              }
-	  }
-       } 
-    if ( nb_y_pos == 3){
-	  for (int j=0; j<4 ; ++j){
-	      if ( (mesh.points_of_convex(i)[j][1] < 0.)
-               &&  (mesh.points_of_convex(i)[j][1] > -1.*seuil_select ) // -1./5./NX 
-	       ){
-	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
-	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
-                    bgeot::base_node& P = mesh.points()[ip];
-	            if( gmm::vect_dist2(P, Q) < 1e-8){
-		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
-		      //P[1] = - 1./2./NX ;
-		      //P[1] = -1./2./NX ;
-		      P[1] = -1. *seuil_move ;
-		      cout << P[1] << "\n" ;
-	            }  
-	        }
-              }
-	  }
-       } 
-
-       }
-   }
-  }     
- }
+	            }
+    } 
+  } // end of moving nodes		     
+ } // end of else
  
     scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
     scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
@@ -693,7 +703,22 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
    
   switch(enrichment_option) {
   case 0 :  // No enrichment
+    {
     mf_u_sum.set_mesh_fems(mfls_u);
+      // an optional treatment : exporting a representation of the mesh     
+      getfem::mesh_fem mf_enrich(mesh);
+      getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
+      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
+      std::fill(UU.begin(), UU.end() ,0.) ;
+      cout << "exporting mesh to " << "mesh_representation.vtk" << "..\n";
+      getfem::vtk_export exp("mesh_representation.vtk", false);
+      exp.exporting(mf_enrich); 
+      exp.write_point_data(mf_enrich, UU, "mesh");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d mesh_representation.vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+    }
     break ;
   case 1 : 
     {
@@ -852,7 +877,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	
   mesh.write_to_file("toto.mesh");
   
-  if (0) {  // printing the type of each dof
+  if (PARAM.int_value("SHOW_NAME_OF_DOF")==1) {  // printing the type of each dof
     unsigned Q = mf_u().get_qdim();
     for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
       printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
@@ -1274,7 +1299,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // end of "if (enrichment_option == 3){ ... "
   
   
-  if (0) { // suppression of nodes with a very small term on the stiffness matrix diag
+  if ( PARAM.real_value("SEUIL_FINAL")!=0 ) { 
+  // suppression of nodes with a very small term on the stiffness matrix diag
     getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
     extra.set_constraints_type(getfem::constraints_type(dirichlet_version));  
     if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
@@ -1282,14 +1308,20 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
     sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
     sparse_matrix H(0, mf_u().nb_dof());
-    //getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
+    getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
     base_vector RR(mf_rhs.nb_dof(), 1.0);
-    getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
+    /*getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
                                                  mf_rhs, RR);
-    //cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;  
-    cout << "SEUIL = " << PARAM.real_value("SEUIL") << "\n" ;
+						 */
+    //cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;
+    cout << "termes diagonaux, de la matrice de masse, inférieurs à 1e-10 : " ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
-      if (M2(d,d) < PARAM.real_value("SEUIL")) {
+        if (M2(d,d) < 1e-10) cout << M2(d,d) << " ; " ;
+    }  
+    cout << "\n" ;
+    cout << "SEUIL_FINAL = " << PARAM.real_value("SEUIL_FINAL") << "\n" ;
+    for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
+      if (M2(d,d) < PARAM.real_value("SEUIL_FINAL")) {
 	cout << "OULALA " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
         unsigned n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
