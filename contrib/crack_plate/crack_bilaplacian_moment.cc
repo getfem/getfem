@@ -8,7 +8,8 @@
 
 
 scalar_type moment = 1. ;
-scalar_type epsilon = 1e-2 ;
+scalar_type beta = M_PI / 4. ;
+//scalar_type epsilon = 1e-1 ;
 
 base_matrix sol_moment(const base_node &x)
 { base_matrix m(x.size(), x.size()); 
@@ -25,6 +26,23 @@ base_small_vector sol_ff(const base_node &x)
   }  
   res[0] = 0. ;
   return res ;}
+
+scalar_type sol_beta(const base_node &x){
+base_matrix m(2,2) ;
+m(0,0) = m(1,1) = cos(beta) ;
+m(0,1) = - sin(beta) ;
+m(1,0) = sin(beta) ;
+base_node z(2) ;
+gmm::mult(m, x, z) ;
+return - moment * cos(beta) * sin(beta) * z[0] * z[1] / 0.7 ; }
+
+base_matrix moment_beta(const base_node &x)
+{ base_matrix m(x.size(), x.size()); 
+  m(1,0) = m(0,1) = moment * sin(beta) * cos(beta) ;
+  return m; }
+
+  
+/***********************************/
 
 size_type is_lagrange_dof_type(getfem::pdof_description dof){
   size_type displ_dof = 0 ;
@@ -302,20 +320,29 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
   BIL.D().set(D);
   if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
   
-  // Volumic source term brick.
+//   // Volumic source term brick.
   size_type N = mesh.dim();
   plain_vector F(nb_dof_rhs);
-  getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);  
+//   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
   
   // Defining the prescribed momentum.
   gmm::resize(F, nb_dof_rhs*N*N);
-  getfem::mdbrick_normal_derivative_source_term<>
-  MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+  if (PARAM.int_value("SOL_REF")==1){
+     getfem::interpolation_function(mf_rhs, F, sol_moment, MOMENTUM_BOUNDARY_NUM);
+  }
+  if (PARAM.int_value("SOL_REF")==2){
+     getfem::interpolation_function(mf_rhs, F, moment_beta, MOMENTUM_BOUNDARY_NUM);
+  }
+//   getfem::mdbrick_normal_derivative_source_term<>
+//   MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+getfem::mdbrick_normal_derivative_source_term<>
+  MOMENTUM(BIL, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
   
   // Defining the Neumann condition right hand side.
   plain_vector HH(nb_dof_rhs*N*N);
+  gmm::clear(F);
   gmm::resize(F, nb_dof_rhs*N);
-  getfem::interpolation_function(mf_rhs, F, sol_ff, FORCE_BOUNDARY_NUM);
+  //getfem::interpolation_function(mf_rhs, F, sol_ff, FORCE_BOUNDARY_NUM);
 
   // Neumann condition brick.
   getfem::mdbrick_neumann_KL_term<> NEUMANN(MOMENTUM, mf_rhs, HH, F, FORCE_BOUNDARY_NUM);
@@ -351,7 +378,8 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 	     if (mf_u().ind_dof_of_element(cv)[dd] == i) {
 	        ld = dd/q; break;
 	     }
-         }  
+         }
+      if (PARAM.int_value("SOL_REF")==1){  
 //       if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) > (0.5-1e-6) )
 //       //  && ( gmm::abs(mf_u().point_of_dof(i)[0]) > (0.5-1e-6) )
 //         && ( is_lagrange_dof_type(pf->dof_types().at(ld)) ) ){
@@ -369,27 +397,39 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 // 	    C(nb_line_C - 1, i) = 1 ;
 //       }
       if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 )
-        && ( mf_u().point_of_dof(i)[0] > (0.5-1e-6) )
+        && ( gmm::abs(mf_u().point_of_dof(i)[0]) > (0.5-1e-6) )
         && ( is_lagrange_dof_type(pf->dof_types().at(ld)) ) ){
 	    cout << "valeur \n" ;
 	    nb_line_C += 1 ;
 	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
 	    C(nb_line_C - 1, i) = 1 ;
       }
-      if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 ) 
-        && ( mf_u().point_of_dof(i)[0] > (0.5-1e-6) ) 
-        && ( is_dy_dof_type(pf->dof_types().at(ld)) ) ){
-	    cout << "dérivée par rapport à y \n" ;
-	    cout << name_of_dof(pf->dof_types().at(ld)) << "\n" ;
-	    nb_line_C += 1 ;
-	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-	    C(nb_line_C - 1, i) = 1 ;
-      }
+//       if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 ) 
+//         && ( mf_u().point_of_dof(i)[0] > (0.5-1e-6) ) 
+//         && ( is_dy_dof_type(pf->dof_types().at(ld)) ) ){
+// 	    cout << "dérivée par rapport à y \n" ;
+// 	    cout << name_of_dof(pf->dof_types().at(ld)) << "\n" ;
+// 	    nb_line_C += 1 ;
+// 	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
+// 	    C(nb_line_C - 1, i) = 1 ;
+//       }
       
       if ( mf_u().point_of_dof(i)[1] > (0.5 - 1e-6) ){
          dofs_up.add(i) ;      }
       if ( mf_u().point_of_dof(i)[1] < ( -0.5 + 1e-6) ){
          dofs_down.add(i) ;    }
+	 }
+	 
+     if (PARAM.int_value("SOL_REF")==2){
+        if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 )
+        && ( gmm::abs(mf_u().point_of_dof(i)[0]) < 1e-6 )
+        && ( is_lagrange_dof_type(pf->dof_types().at(ld)) ) ){
+	    cout << "valeur \n" ;
+	    nb_line_C += 1 ;
+	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
+	    C(nb_line_C - 1, i) = 1 ;
+        }
+     }
   }
 
 //   size_type cpt = 0 ;
@@ -548,4 +588,29 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 
 
   return true;  
+}
+
+void bilaplacian_crack_problem::compute_error_beta(plain_vector &U) {
+  std::vector<scalar_type> V(mf_rhs.nb_dof());
+  getfem::interpolation(mf_u(), mf_rhs, U, V);
+  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
+    V[i] -= sol_beta(mf_rhs.point_of_dof(i));
+  cout.precision(8);
+//   cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
+//         << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
+//         << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V)  << endl
+//         /*<< "Linfty error = " << gmm::vect_norminf(V)  << endl*/; 
+//   cout  << "semi-norme H1 = " << getfem::asm_H1_semi_norm(mim, mf_rhs, V)  << endl 
+//         << "semi-norme H2 = " << getfem::asm_H2_semi_norm(mim, mf_rhs, V)  << endl ;
+cout << "erreur L2 / erreur H1 / erreur H2 / semi-H1 / semi-H2 :\n" << getfem::asm_L2_norm(mim, mf_rhs, V) << " ";
+cout << getfem::asm_H1_norm(mim, mf_rhs, V) << " " << getfem::asm_H2_norm(mim, mf_rhs, V) << " ";
+cout << getfem::asm_H1_semi_norm(mim, mf_rhs, V) << " " <<getfem::asm_H2_semi_norm(mim, mf_rhs, V) << endl ;
+  if(PARAM.real_value("NORM_EXACT") != 0. ){
+    for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
+        V[i] = sol_beta(mf_rhs.point_of_dof(i));
+    cout << "display exact solution: \n" ; 
+    cout << "L2 norm: " <<  getfem::asm_L2_norm(mim, mf_rhs, V) << endl ;
+    cout << "H1 norm: " <<  getfem::asm_H1_norm(mim, mf_rhs, V) << endl ;
+    cout << "H2 norm: " <<  getfem::asm_H2_norm(mim, mf_rhs, V) << endl ;
+    }
 }

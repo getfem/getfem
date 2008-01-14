@@ -540,7 +540,7 @@ void bilaplacian_crack_problem::init(void) {
      }
   }
   
-  if (PARAM.int_value("SOL_REF") == 1){
+  if (PARAM.int_value("SOL_REF") == 1 || PARAM.int_value("SOL_REF") == 2){
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
@@ -553,18 +553,29 @@ void bilaplacian_crack_problem::init(void) {
            mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f()); 
      }
   }
+
   exact_sol.init(ls);
   
   cout << "initialisation de la level-set : \n" ;
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   
   // Setting the level-set
-  ls.reinit();  
+  ls.reinit(); 
+  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
-    ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
-    ls.values(1)[d] = x;
+    if (PARAM.int_value("SOL_REF") == 0){
+       ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
+       ls.values(1)[d] = x;}
+    if (PARAM.int_value("SOL_REF") == 1){
+     ls.values(0)[d] = y  ;
+     ls.values(1)[d] = x - a ; //x * x - a * a ;
+    }
+    if (PARAM.int_value("SOL_REF") == 2){
+     ls.values(0)[d] = y - x ;
+     ls.values(1)[d] = gmm::abs(x + y) - a ; //x * x - a * a ;
+    }
   }
   //ls.simplify(0.5);
   ls.touch();  
