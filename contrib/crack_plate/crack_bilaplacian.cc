@@ -69,6 +69,10 @@ int main(int argc, char *argv[]) {
 	  }
        }*/ 
     }
+    if (p.PARAM.int_value("SOL_REF") == 2) {
+       if (!p.solve_moment(U)) GMM_ASSERT1(false, "Solve has failed");
+       p.compute_error_beta(U) ;
+    }
     
 
     // Post-traitement pour l'affichage, le plus simple :
@@ -121,6 +125,8 @@ int main(int argc, char *argv[]) {
 
     unsigned q = p.mf_u().get_qdim();
     
+    base_small_vector tab_fic(4) ;
+    unsigned cpt = 0;
     if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){  // affichage des coeffs devant les singularités, avec le raccord integral
 	for (unsigned d=0; d < p.mf_u().nb_dof(); d += q) {
 		unsigned cv = p.mf_u().first_convex_of_dof(d) ;
@@ -139,11 +145,31 @@ int main(int argc, char *argv[]) {
 	// 	         printf("dof %4d @ %+6.2f:%+6.2f: ", d, p.mf_u().point_of_dof(d)[0], p.mf_u().point_of_dof(d)[1]);
 	//                  printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
 	// 	         cout << " coeff donant le FIC;" << U[d] << "\n";
-			cout << "FIC:" << U[d] << "\n" ;
+			cout << "coeff:" << U[d] << "\n" ;
+			tab_fic[cpt] = U[d] ;
+			cpt +=1 ;
 			}
 		}
 	}  
-    } // fin affichage fic
+    // calcul du FIC k1 :
+    scalar_type E, k1, nu2 ;
+    nu2 = p.nu * p.nu ;
+    E = 3. * (1. - nu2) * p.D / (2. * p.epsilon * p.epsilon * p.epsilon) ;
+    if (p.PARAM.int_value("SING_BASE_TYPE") == 0){
+       k1 = tab_fic[2] * (nu2 + 12. * p.nu - 5.) / (4. * (p.nu - 1.)) 
+          + tab_fic[3] * (p.nu - 5.) / (2. * (p.nu - 1.))  ;
+       k1 *= - ( sqrt(2) * E * p.epsilon ) / (1 - nu2)  ;
+    }
+    if (p.PARAM.int_value("SING_BASE_TYPE") == 1){
+       k1 = - tab_fic[0] * sqrt(2) * p.epsilon * E * (p.nu + 3.) / (1. - nu2) ;
+    }
+    cout << "value of the SIF k1:" << k1 << "\n" ;
+    if (p.PARAM.int_value("SOL_REF") == 1.){
+       cout << "exact SIF k1:" << 3. * sqrt(p.PARAM.real_value("CRACK_SEMI_LENGTH")) / (2. * p.epsilon * p.epsilon) ;
+       cout << "\n(To multipliy by Mo, which is usually set to 1).\n" ; 
+    }
+    }
+     // fin affichage fic
 
     //p.compute_H2_error_field(U) ;
 
