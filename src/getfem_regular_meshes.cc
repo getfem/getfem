@@ -148,10 +148,25 @@ namespace getfem
       c1*=(x[i]*(1.-x[i]));
       c2*=(.5 - gmm::abs(x[i]-.5));
     }
-    z[0] = x[0] + c1;
+    z[0] = x[0] + c1;  // 1.
     for (size_type i=1; i < x.size(); ++i) {
-      z[i] = x[i] + c2/10.;
+      z[i] = x[i] + c2/3.; // /10
     }
+    return z;
+  }
+  
+    static base_node radial_deformation(const base_node& x) {
+    GMM_ASSERT1(x.size() == 2, "regular mesh, noised : you have to use this with qdim = 2 \n");
+    base_node z(x.size());
+    z[0] = x[0] - 0.5 ;
+    z[1] = x[1] - 0.5 ;
+    scalar_type r = sqrt( z[0] * z[0] + z[1] * z[1] ) ;
+    scalar_type theta = atan2(z[1], z[0]);
+    if ( r < 0.5 - 1.e-6)
+//        theta += 1000. * gmm::sqrt(r) * (0.5 - r) * (0.5 - r) * (0.5 - r) * (0.5 - r) * gmm::sqrt(gmm::abs(0.1 - r)) * gmm::sqrt(gmm::abs(0.15 - r))  ;
+    theta += 10000. * gmm::sqrt(r) * (0.5 - r) * (0.5 - r) * (0.5 - r) * (0.5 - r) * (0.1 - r) * (0.15 - r)  ;
+    z[0] = r * cos(theta) + 0.5;
+    z[1] = r * sin(theta) + 0.5;
     return z;
   }
 
@@ -165,9 +180,10 @@ namespace getfem
 	  is_border = true;
       }
       if (!is_border) { 
-	P = shake_func(P); 
+	P = shake_func(P);
+	P = radial_deformation(P) ; 
 	for (size_type i=0; i < N; ++i)
-	  P[i] += 0.20*(1./(nsubdiv[i]* pgt->complexity()))
+	  P[i] += 0.*(1./(nsubdiv[i]* pgt->complexity()))
 	    * gmm::random(double());
       }
     }
