@@ -9,6 +9,7 @@ N = 2;
 
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
 NX = 6;                 % space step
 %MESH_FILE='/home-local/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_10.mesh'
 MESH_FILE='./demi_plaque_raffinee.mesh'
