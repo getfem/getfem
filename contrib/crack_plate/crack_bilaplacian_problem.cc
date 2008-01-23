@@ -839,8 +839,10 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       
       // an optional treatment : creating a representation of the enrichment area     
       getfem::mesh_fem mf_enrich(mesh);
-      getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
-      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+      for (dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
+          getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(i), 1 );
+          mf_enrich.set_finite_element(i, pf_mef) ;
+      }
       std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
       std::fill(UU.begin(), UU.end() ,0.) ;
       cout << "exporting the enrichment zone: \n" ;
@@ -1319,13 +1321,13 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
     sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
     sparse_matrix H(0, mf_u().nb_dof());
-    getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
+    //getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
     base_vector RR(mf_rhs.nb_dof(), 1.0);
-    /*getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
+    getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
                                                  mf_rhs, RR);
-						 */
+						 
     //cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;
-    cout << "termes diagonaux, de la matrice de masse, inférieurs à 1e-10 : " ;
+    cout << "termes diagonaux, de la matrice de rigidité, inférieurs à 1e-10 : " ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
         if (M2(d,d) < 1e-10) cout << M2(d,d) << " ; " ;
     }  

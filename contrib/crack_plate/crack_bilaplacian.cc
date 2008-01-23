@@ -47,13 +47,16 @@ size_type global_dof = 0 ;
    }
 return global_dof ;
 }
-
+ 
 int main(int argc, char *argv[]) {
 
    try {
     bilaplacian_crack_problem p;
     p.PARAM.read_command_line(argc, argv);
-    p.init();
+    if (p.PARAM.int_value("MIXED_ELEMENTS"))
+       p.init_mixed_elements();
+    else
+       p.init();
     plain_vector U;
     p.mesh.write_to_file("mesh.m") ;
     if (p.PARAM.int_value("SOL_REF") == 0) {
@@ -156,9 +159,8 @@ int main(int argc, char *argv[]) {
     nu2 = p.nu * p.nu ;
     E = 3. * (1. - nu2) * p.D / (2. * p.epsilon * p.epsilon * p.epsilon) ;
     if (p.PARAM.int_value("SING_BASE_TYPE") == 0){
-       k1 = tab_fic[2] * (nu2 + 12. * p.nu - 5.) / (4. * (p.nu - 1.)) 
-          + tab_fic[3] * (p.nu - 5.) / (2. * (p.nu - 1.))  ;
-       k1 *= - ( sqrt(2) * E * p.epsilon ) / (1 - nu2)  ;
+       k1 = tab_fic[2] * (3.*(p.nu - 1.)) + tab_fic[3] * (3. * p.nu + 5.) ;
+       k1 *= - ( sqrt(2.) * E * p.epsilon ) / (4. * (1. - nu2) ) ;
     }
     if (p.PARAM.int_value("SING_BASE_TYPE") == 1){
        k1 = - tab_fic[0] * sqrt(2) * p.epsilon * E * (p.nu + 3.) / (1. - nu2) ;

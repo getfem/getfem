@@ -178,7 +178,8 @@ struct bilaplacian_crack_problem {
   void compute_H2_error_field(const plain_vector &U) ;
   void move_nodes_close_to_crack(void); // bugged
   void compute_error_beta(plain_vector &U) ;
-
+  void init_mixed_elements(void) ;
+  
   bilaplacian_crack_problem(void) : ls(mesh, 1, true), 
 				    mls(mesh), mim(mls), mf_pre_u(mesh),  
 				    mf_pre_mortar(mesh), mf_pre_mortar_deriv(mesh), mfls_u(mls, mf_pre_u), 

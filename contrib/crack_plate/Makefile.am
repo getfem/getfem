@@ -32,7 +32,8 @@ EXTRA_DIST = \
 	crack_bilaplacian.param \
 	mortar_bilaplacian.param \
 	serie.param \
-	serie_temp.param
+	serie_bis.param \
+	crack_bilaplacian_mixed.param
 
 
 TESTS_ENVIRONMENT = perl
