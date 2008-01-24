@@ -77,7 +77,8 @@ int main(int argc, char *argv[]) {
        p.compute_error_beta(U) ;
     }
     
-
+    
+    if (p.PARAM.int_value("VTK_EXPORT")){
     // Post-traitement pour l'affichage, le plus simple :
     getfem::mesh mcut;
     p.mls.global_cut_mesh(mcut);
@@ -123,7 +124,7 @@ int main(int argc, char *argv[]) {
 	   << "mayavi -d " << p.datafilename
 	   << ".vtk -m BandedSurfaceMap -m Outline -f WarpScalar\n";
     }
-
+    }
 	   
 
     unsigned q = p.mf_u().get_qdim();
