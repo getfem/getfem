@@ -155,8 +155,8 @@ namespace getfem
     return z;
   }
   
-    static base_node radial_deformation(const base_node& x) {
-    GMM_ASSERT1(x.size() == 2, "regular mesh, noised : you have to use this with qdim = 2 \n");
+  static base_node radial_deformation(const base_node& x) {
+    GMM_ASSERT1(x.size() == 2, "For two-dimensional meshes only. \n");
     base_node z(x.size());
     z[0] = x[0] - 0.5 ;
     z[1] = x[1] - 0.5 ;
@@ -170,7 +170,8 @@ namespace getfem
     return z;
   }
 
-  static void noise_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, bgeot::pgeometric_trans pgt) {
+  static void noise_unit_mesh(mesh& m, std::vector<size_type> nsubdiv,
+			      bgeot::pgeometric_trans pgt) {
     size_type N = nsubdiv.size();
     for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
       bool is_border = false;
@@ -181,7 +182,7 @@ namespace getfem
       }
       if (!is_border) { 
 	P = shake_func(P);
-	P = radial_deformation(P) ; 
+	if (N == 2) P = radial_deformation(P) ; 
 	for (size_type i=0; i < N; ++i)
 	  P[i] += 0.*(1./(nsubdiv[i]* pgt->complexity()))
 	    * gmm::random(double());
