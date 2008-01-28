@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     if (p.PARAM.int_value("SHOW_DX") == 1 ){  // au lieu d'afficher la solution, on affiche sa dérivée en y
        getfem::compute_gradient(mf, mf_grad, V, GRAD) ;
        gmm::resize(V, mf_grad.nb_dof()) ;
-       for (int i=0 ; i< mf_grad.nb_dof(); i++){
+       for (unsigned i=0 ; i< mf_grad.nb_dof(); i++){
            V[i] = GRAD[2*i+1] ;
        }
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
@@ -131,7 +131,8 @@ int main(int argc, char *argv[]) {
     
     base_small_vector tab_fic(4) ;
     unsigned cpt = 0;
-    if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){  // affichage des coeffs devant les singularités, avec le raccord integral
+    if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){  
+    // affichage des coeffs devant les singularités, avec le raccord integral
 	for (unsigned d=0; d < p.mf_u().nb_dof(); d += q) {
 		unsigned cv = p.mf_u().first_convex_of_dof(d) ;
 		getfem::pfem pf = p.mf_u().fem_of_element(cv);   
@@ -155,23 +156,110 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}  
-    // calcul du FIC k1 :
-    scalar_type E, k1, nu2 ;
+    // calcul des FIC k1 et k2 :
+    scalar_type E, nu2 ;
+    base_small_vector k(2) ;
     nu2 = p.nu * p.nu ;
     E = 3. * (1. - nu2) * p.D / (2. * p.epsilon * p.epsilon * p.epsilon) ;
     if (p.PARAM.int_value("SING_BASE_TYPE") == 0){
-       k1 = tab_fic[2] * (3.*(p.nu - 1.)) + tab_fic[3] * (3. * p.nu + 5.) ;
-       k1 *= - ( sqrt(2.) * E * p.epsilon ) / (4. * (1. - nu2) ) ;
+       k[0] = tab_fic[2] * (3.*(p.nu - 1.)) + tab_fic[3] * (3. * p.nu + 5.) ;
+       k[0] *= - ( sqrt(2.) * E * p.epsilon ) / (4. * (1. - nu2) ) ;
+       k[1] = (tab_fic[0] + 3. * tab_fic[1]) ;
+       k[1] *= - E * p.epsilon * sqrt(2.) * (3. + p.nu) / (4. * (1. + p.nu) * (1. + p.nu) ) ;
     }
     if (p.PARAM.int_value("SING_BASE_TYPE") == 1){
-       k1 = - tab_fic[0] * sqrt(2) * p.epsilon * E * (p.nu + 3.) / (1. - nu2) ;
+       scalar_type A ;
+       A =  sqrt(2) * p.epsilon * E * (p.nu + 3.) / (1. - nu2) ;
+       k[0] = - tab_fic[0] * A ;
+       k[1] =   tab_fic[1] * A ; 
     }
-    cout << "value of the SIF k1:" << k1 << "\n" ;
-    if (p.PARAM.int_value("SOL_REF") == 1.){
-       cout << "exact SIF k1:" << 3. * sqrt(p.PARAM.real_value("CRACK_SEMI_LENGTH")) / (2. * p.epsilon * p.epsilon) ;
-       cout << "\n(To multipliy by Mo, which is usually set to 1).\n" ; 
+    cout << "value of the SIF k1:" << k[0] << "\n" ;
+    cout << "value of the SIF k2:" << k[1] << "\n" ;
+    
+    // Compute relative error
+    base_small_vector err_rel_coeff(4), k_exact(2), err_rel_fic(2) ;
+    if (p.PARAM.int_value("SOL_REF") == 0.){
+       if (p.PARAM.int_value("SING_BASE_TYPE") == 0){
+          // 1.relative error on the coefs :
+          for (int i=0 ; i< 4 ; ++i){
+             if (p.exact_sol.U[i] != 0.)
+	         err_rel_coeff[i] = gmm::abs(tab_fic[i] - p.exact_sol.U[i]) / gmm::abs(p.exact_sol.U[i]) ;
+	     else
+	         err_rel_coeff[i] = gmm::abs(tab_fic[i] - p.exact_sol.U[i]) ;
+          }
+          // 2. Compute exact fic
+          k_exact[0] = p.exact_sol.U[2] * (3.*(p.nu - 1.)) + p.exact_sol.U[3] * (3. * p.nu + 5.) ;
+          k_exact[0] *= - ( sqrt(2.) * E * p.epsilon ) / (4. * (1. - nu2) ) ;
+          k_exact[1] = (p.exact_sol.U[0] + 3. * p.exact_sol.U[1]) ;
+          k_exact[1] *= - E * p.epsilon * sqrt(2.) * (3. + p.nu) / (4. * (1. + p.nu) * (1. + p.nu) ) ;
+	  // 3. Only in the 4 dofs case : measure the error of 
+	  //    realisation of the singularity
+	  base_small_vector err_to_singul(2) ;
+	  cout << "FIC : Default of realisation of the singularity \n" ;  
+	  if (p.exact_sol.U[2] != 0. && p.exact_sol.U[3] != 0.){
+	     err_to_singul[0] = gmm::abs(tab_fic[2] - tab_fic[3] * (p.nu + 7.) / (3. * (p.nu - 1.))) ;
+	     err_to_singul[0] /= gmm::abs(p.exact_sol.U[2]) ;
+	     cout << "fic1 : err_to_singul:" << err_to_singul[0] << "\n" ;
+	  } 
+	  else cout << "coeffs 3 or 4 to compare with 0 => no comparison possible \n" ; 
+	  if (p.exact_sol.U[0] != 0. && p.exact_sol.U[1] != 0.){
+	     err_to_singul[1] = gmm::abs(tab_fic[1] - tab_fic[0] * (3. * p.nu + 5.) / (3. * (p.nu - 1.))) ;
+	     err_to_singul[1] /= gmm::abs(p.exact_sol.U[1]) ;
+	     cout << "fic 2 : err_to_singul:" << err_to_singul[1] << "\n" ;
+	  } 
+	  else cout << "coeffs 1 or 2 to compare with 0 => no comparison possible \n" ; 
+       }
+       else {
+          // 1.relative error on the coefs :
+          if (p.exact_sol.U[3] != 0.)
+	      err_rel_coeff[0] = gmm::abs(tab_fic[0] - p.exact_sol.U[3]) / gmm::abs(p.exact_sol.U[3]) ;
+	  else
+	      err_rel_coeff[0] = gmm::abs(tab_fic[0] - p.exact_sol.U[3]) ;
+          if (p.exact_sol.U[0] != 0.)
+	      err_rel_coeff[1] = gmm::abs(tab_fic[1] - p.exact_sol.U[0]) / gmm::abs(p.exact_sol.U[0]) ;
+	  else
+	      err_rel_coeff[1] = gmm::abs(tab_fic[1] - p.exact_sol.U[0]) ;
+          // 2. Compute exact fic
+	  scalar_type A =  sqrt(2) * p.epsilon * E * (p.nu + 3.) / (1. - nu2) ;
+          k_exact[0] = - p.exact_sol.U[3] * A ;
+          k_exact[1] = p.exact_sol.U[0] * A ; 
+       }
+       cout << "Exact value of SIF : \n" ;
+	  for (int i = 0; i<2 ; ++i){
+	     cout << "k" << i+1 << "_exact = " << k_exact[i] << "\n" ; 
+       } 
+       // 2. Compute relative error on the fic
+       for (int i=0 ; i< 2 ; ++i){
+          err_rel_fic[i] = gmm::abs( k[i] - k_exact[i] ) ;
+          if (k_exact[i] != 0.)
+              err_rel_fic[i] /= gmm::abs(k_exact[i]) ;
+       }
+       
+       cout << "FIC : Relative errors on the coeffs :\n" ;
+       int nb_coeffs ;
+       (p.PARAM.int_value("SING_BASE_TYPE") == 0) ? nb_coeffs = 4 : nb_coeffs = 2 ;
+       for (int i=0 ; i< nb_coeffs ; ++i)
+           cout << "err_rel_coeff:" << err_rel_coeff[i] << "\n" ;
+       cout << "FIC : Relative errors on the fics :\n" ;
+       for (int i=0 ; i < 2 ; ++i){
+           cout << "err_rel_fic:" << err_rel_fic[i] << "\n" ;
+	   if (k_exact[i] == 0.){
+	      cout << "Beware, absolute error is print, because exact value is 0.\n" ;
+	   }
+       }
     }
+          
+      
+
+      if (p.PARAM.int_value("SOL_REF") == 1){
+        scalar_type k1_exact = 3. * sqrt(p.PARAM.real_value("CRACK_SEMI_LENGTH")) / (2. * p.epsilon * p.epsilon) ;
+        cout << "exact SIF k1:" << k1_exact ;
+        cout << "\n(To multipliy by Mo, which is usually set to 1).\n" ; 
+	cout << "relative_error:" << gmm::abs(k[0] - k1_exact) / gmm::abs(k1_exact) ;
+      }
+    
     }
+    
      // fin affichage fic
 
     //p.compute_H2_error_field(U) ;
