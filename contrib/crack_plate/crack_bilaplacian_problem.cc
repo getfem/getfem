@@ -9,26 +9,26 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type BB = 0.1 ;
-scalar_type AAA = BB * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type DD = 0.0 ;
-scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*BB*nu*nu-6.0*nu*BB+15.0*BB)/(nu*nu-2.0*nu+5.0);
+scalar_type AAA = 0.9 ;
+scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
+scalar_type DD = 0.1 ;
+scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*AAA*nu*nu-6.0*nu*AAA+15.0*AAA)/(nu*nu-2.0*nu+5.0);
  
 
 scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  //scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
  scalar_type theta = atan2(x[1], x[0]);
- //return sqrt(r*r*r) * (sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
- return sqrt(r*r*r)*(AAA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0));
+ //return sqrt(r*r*r) * (sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
+ return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0));
 }
  
 scalar_type sol_lapl_u(const base_node &x) {
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  scalar_type theta = atan2(x[1], x[0]);
- return 2.0*(BB*sin(theta/2.0)+DD*cos(theta/2.0))/sqrt(r);
- /* return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-AAA*sin(theta/
-    2.0)/4.0-9.0/4.0*BB*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); */ }
+ return 2.0*(AAA*sin(theta/2.0)+DD*cos(theta/2.0))/sqrt(r);
+ /* return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-BB*sin(theta/
+    2.0)/4.0-9.0/4.0*AAA*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); */ }
 
 scalar_type sol_f(const base_node &)
 { return 0. ; }
@@ -37,21 +37,21 @@ base_small_vector sol_du(const base_node &x) {
  base_small_vector res(x.size());
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  scalar_type theta = atan2(x[1], x[0]);
-res[0] = 3.0/2.0*sqrt(r)*(AAA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
-+DD*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*AAA*cos(3.0/2.0*theta)+
-BB*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*sin(theta );
+res[0] = 3.0/2.0*sqrt(r)*(BB*sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
++DD*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*BB*cos(3.0/2.0*theta)+
+AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*sin(theta );
 
-res[1] = 3.0/2.0*sqrt(r)*(AAA*sin(3.0/2.0*theta)+BB*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
-+DD*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*AAA*cos(3.0/2.0*theta)+
-BB*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*cos(theta);
+res[1] = 3.0/2.0*sqrt(r)*(BB*sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
++DD*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*BB*cos(3.0/2.0*theta)+
+AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*cos(theta);
 
 /*
-res[0] =  3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+AAA*
-cos(theta/2.0)/2.0-3.0/2.0*BB*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*sin(
+res[0] =  3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+BB*
+cos(theta/2.0)/2.0-3.0/2.0*AAA*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*sin(
 theta);
  
-res[1] = 3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+BB*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+AAA*
-cos(theta/2.0)/2.0-3.0/2.0*BB*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*cos(
+res[1] = 3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+BB*
+cos(theta/2.0)/2.0-3.0/2.0*AAA*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*cos(
 theta);
 */
   return res;
@@ -92,12 +92,11 @@ void exact_solution::init(getfem::level_set &ls) {
   U.resize(4); assert(mf.nb_dof() == 4);
   // scalar_type A1 = 1., nu = 0.3 ;
   // scalar_type b1_ = 3. + (A2 / A1) * (24. * nu) / (3. * nu * nu - 6. * nu + 5. ) ; 
-  U[0] = BB ;
-  U[1] = AAA ;
+  U[0] = AAA ;
+  U[1] = BB ;
   U[2] = CC ;
   U[3] = DD ;
 }
-
 
 scalar_type eval_fem_gradient_with_finite_differences(getfem::pfem pf, 
 					       const base_vector &coeff,
@@ -362,9 +361,9 @@ void bilaplacian_crack_problem::init(void) {
     
  if (PARAM.int_value("MOVE_NODES")){
     cout << "déplacement des noeuds \n" ;
-    size_type nb_x_pos, nb_y_pos = 0 ;
+//    size_type nb_x_pos, nb_y_pos = 0 ;
     scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
-    scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
+//    scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
     
     
 // for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
@@ -557,7 +556,6 @@ void bilaplacian_crack_problem::init(void) {
   exact_sol.init(ls);
   
   cout << "initialisation de la level-set : \n" ;
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
   
   // Setting the level-set
   ls.reinit(); 
