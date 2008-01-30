@@ -62,18 +62,18 @@ scalar_type nu = 0.3 ;
 
 scalar_type A0 = 1. ;
 
-scalar_type A1 = 0.1 ;
+scalar_type A1 = 0.0 ;
 scalar_type B1 = 0.0 ;
 scalar_type C1 = 3.* A1 ;   
 scalar_type D1 = 0.0 ;  
 
-scalar_type A2 = 0.1 ;
+scalar_type A2 = 0.0 ;
 scalar_type B2 = 0.0 ;
 scalar_type C2 = 3.* A2 + nu * (D1 - B1) ; 
 scalar_type D2 = B2 ;  
  
 
-// Singular functions for Mindlin ------------------------------
+// Class for the Singular functions ------------------------------
 
 struct mindlin_singular_functions : public getfem::global_function, public getfem::context_dependencies {
   size_type l;             // singular function number
@@ -142,19 +142,17 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       g[1] =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
     } break;
     case 4: {  // usefull for isotropic_linear_elasticity_2D   -> expression to check with maple !
-      g[0] =   (   sin(theta/2.0) - sin(5.0/2.0*theta) )  / 4.0   / sqrt(r) ; 
+      g[0] =   ( 3./4. * sin(theta/2.0) - 1./4. * sin(5.0/2.0*theta) )    / sqrt(r) ; 
       g[1] =   (   cos(theta/2.0) + cos(5.0/2.0*theta) )  / 4.0   / sqrt(r) ; 
     } break;
     case 5: {  // usefull for isotropic_linear_elasticity_2D   -> expression to check with maple !
-      g[0] = (  3./2.* cos(theta/2.0) - cos(5.0/2.0*theta) / 2.0)   / 2.0   / sqrt(r) ; 
+      g[0] = (  3./4.* cos(theta/2.0) - 1./4. * cos(5.0/2.0*theta) )   / sqrt(r) ; 
       g[1] = (       - sin(theta/2.0) - sin(5.0/2.0*theta)      )   / 4.0   / sqrt(r) ; 
     } break;
     default: assert(0); 
     }
   }
-   
- 
-   
+  
   
   virtual scalar_type val(const getfem::fem_interpolation_context& c) const {
 
@@ -275,19 +273,23 @@ struct crack_mindlin_problem{
   size_type mitc ;
   size_type sol_ref ;          /* sol_ref = 0 : plate subject to vertical pressure, 
                                                 positive or negative on each side of the crack.
+						(no exact solution)
 		                  sol_ref = 1 : same as sol_ref = 2 but a side is clamped on a 
 				                side and the other is subjected to a 2 M0 
-						horizontal moment.   
+						horizontal moment. (exact K1 known)  
 			          sol_ref = 2 : plate subject to horizontal moment M0 on the
-				                2 vertical bounds of the plate      
+				                2 vertical bounds of the plate (exact K1 known)     
 				  sol_ref = 3 : non-homogeneous Dirichlet conditions on the
 				                4 boundaries of the plate. The exact solution
 						is equal to the singularities.   */
+  size_type dx_export ;        /* dx_export = 1 : exporting the "finite element solution"
+                                  dx_export = 2 : exporting the "exact solution" (usefull in the case of sol_ref = 3) */
 
   scalar_type h_crack_length ;  // half-crack-length
 
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type epsilon, pressure ;
+  
   
   exact_solution exact_sol;
   
@@ -296,6 +298,8 @@ struct crack_mindlin_problem{
   bool solve(plain_vector &UT, plain_vector &U3, plain_vector &THETA);
   void init(void);
   void compute_error(plain_vector &UT, plain_vector &U3, plain_vector &THETA);
+  scalar_type u3_exact_yves(base_node P) ;
+  base_small_vector theta_exact_yves(base_node P) ;
   crack_mindlin_problem(void) : mls(mesh), mim(mls),
   			mf_pre_ut(mesh), mf_pre_u3(mesh), mf_pre_theta(mesh), 
 			mfls_ut(mls, mf_pre_ut), mfls_u3(mls, mf_pre_u3), mfls_theta(mls, mf_pre_theta),
@@ -310,6 +314,28 @@ struct crack_mindlin_problem{
 
 };
 
+scalar_type crack_mindlin_problem::u3_exact_yves(base_node P){
+    scalar_type r = sqrt(P[0]*P[0] + P[1]*P[1]);
+    scalar_type theta = atan2(P[1],P[0]);
+    
+    scalar_type gamma = 2. * mu ;
+    return 2. * sqrt(r) * (  sin(theta/2.) * mu * (30. * lambda + 60. * mu - 5. * gamma * r * r)
+                           - sin(5. * theta / 2.) * r * r * gamma * (4. * lambda + 3. * mu) ) ;
+}
+
+base_small_vector crack_mindlin_problem::theta_exact_yves(base_node P) {
+    scalar_type r = sqrt(P[0]*P[0] + P[1]*P[1]);
+    scalar_type theta = atan2(P[1],P[0]);
+    base_small_vector res(2) ;
+    
+    scalar_type gamma = 2. * mu ;
+    res[0] = res[1] = 5. * gamma * sqrt( r * r * r ) ;
+    res[0] *= sin(theta/2.) * mu + sin(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+    res[1] *= cos(theta/2.) * mu + cos(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+    
+    return res ;
+}  
+  
 void crack_mindlin_problem::init(void) {
   
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
@@ -360,6 +386,7 @@ void crack_mindlin_problem::init(void) {
   cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
   h_crack_length = PARAM.real_value("HALF_CRACK_LENGTH") ;
   sol_ref = PARAM.int_value("SOL_REF") ;
+  dx_export = PARAM.int_value("DX_EXPORT") ;
   
   mf_ut().set_qdim(N);
   mf_theta().set_qdim(N);
@@ -460,6 +487,9 @@ void crack_mindlin_problem::init(void) {
     case 3 : // Dirichlet on the hole boundary of the domain
         mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f()); 
       break ;
+    case 4 : // Dirichlet on the hole boundary of the domain
+        mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f()); 
+      break ;
     default : {
         cout << "wrong parameter for sol_ref. One should set sol_ref to 0, 1 or 3 \n" ;
       }
@@ -481,7 +511,7 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
 
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-  if (sol_ref == 0 || sol_ref == 3) {
+  if (sol_ref == 0 || sol_ref == 3 || sol_ref == 4) {
     ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
     ls.values(1)[d] =  (ls.get_mesh_fem().point_of_dof(d))[0];}
   if (sol_ref == 1){
@@ -636,29 +666,45 @@ A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
     (VOL_F, DIRICHLET_BOUNDARY_NUM, 0,getfem::AUGMENTED_CONSTRAINTS);
        
-  SIMPLE = &SIMPLE1 ;
+  //SIMPLE = &SIMPLE1 ;
 
   
 
   cout << "Setting the Dirichlet condition brick : \n " ;
   
-  getfem::mdbrick_Dirichlet<> DIRICHLET_U3(*SIMPLE, DIRICHLET_BOUNDARY_NUM, mf_mult_u3, 1);
-  DIRICHLET_U3.rhs().set(exact_sol.mf_u3, exact_sol.U3);
+  getfem::mdbrick_Dirichlet<> DIRICHLET_U3(VOL_F, DIRICHLET_BOUNDARY_NUM, mf_mult_u3, 1);
+  if (sol_ref == 3)  DIRICHLET_U3.rhs().set(exact_sol.mf_u3, exact_sol.U3);
+  if (sol_ref == 4){
+     plain_vector V3(mf_pre_u3.nb_dof()) ;
+     for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
+         V3[i] = u3_exact_yves(mf_pre_u3.point_of_dof(i));
+     DIRICHLET_U3.rhs().set(mf_pre_u3, V3);
+  }
   DIRICHLET_U3.set_constraints_type(getfem::constraints_type(dirichlet_version)); 
   cout << " md_brick DIRICHLET_U3 done     \n" ;
   
   getfem::mdbrick_Dirichlet<> DIRICHLET_THETA(DIRICHLET_U3, DIRICHLET_BOUNDARY_NUM, mf_mult_theta, 2);
+  if (sol_ref == 3){
+  cerr << "nbd=" << exact_sol.mf_theta.nb_dof() << " - THETA=" << exact_sol.THETA << "\n";
   DIRICHLET_THETA.rhs().set(exact_sol.mf_theta, exact_sol.THETA);
+  }
+  if (sol_ref == 4){
+     plain_vector VTHETA(mf_pre_theta.nb_dof()) ;
+     cout << "mf_pre_theta.nb_dof() = " << mf_pre_theta.nb_dof() << "\n" ;
+     for (size_type i = 0; i < mf_pre_theta.nb_dof() / mf_pre_theta.get_qdim() ; ++i) {
+         VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
+	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
+	 }
+     DIRICHLET_THETA.rhs().set(mf_pre_theta, VTHETA);
+  }
   DIRICHLET_THETA.set_constraints_type(getfem::constraints_type(dirichlet_version));  
+
+  cerr << "hop\n";
+
   cout << " md_brick DIRICHLET_THETA done     \n" ;
   
-  getfem::mdbrick_Dirichlet<> DIRICHLET_UT(DIRICHLET_THETA, DIRICHLET_BOUNDARY_NUM, mf_mult_ut, 0);
-  DIRICHLET_UT.rhs().set(exact_sol.mf_ut, exact_sol.UT);
-  DIRICHLET_UT.set_constraints_type(getfem::constraints_type(dirichlet_version)); 
-  cout << " md_brick DIRICHLET_UT done     \n" ;
-  
   if (sol_ref == 0 || sol_ref == 1) LAST = &SIMPLE1 ;
-  if (sol_ref == 3 )                LAST = &DIRICHLET_UT ;
+  if (sol_ref == 3 )                LAST = &DIRICHLET_THETA ;
   
   getfem::mdbrick_plate_closing<> final_model(*LAST, 0, 1);
   
@@ -678,28 +724,56 @@ A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3
 
   gmm::resize(THETA, mf_theta().nb_dof());
   gmm::copy(ELAS1.get_theta(MS), THETA);  
-  cout << "vecteur solution u3 : \n" << U3 << "\n" ;
+  //cout << "vecteur solution u3 : \n" << U3 << "\n" ;
 //   gmm::resize(U, mf_ut().nb_dof() + mf_u3().nb_dof() + mf_theta().nb_dof() );
 //   gmm::copy(ELAS1.get_solution(MS), U);
   return (iter.converged());
 }
 
 /* compute the error with respect to the exact solution */
-void crack_mindlin_problem::compute_error(plain_vector &, plain_vector &U3, plain_vector &THETA ) {
-  cout << "Relative error on the vertical displacement u3 :\n" ;
+void crack_mindlin_problem::compute_error(plain_vector &U, plain_vector &U3, plain_vector &THETA ) {
+  if (sol_ref == 3){
+  cout << "Error on the vertical displacement u3 :\n" ;
   cout << "L2 ERROR:"
        << getfem::asm_L2_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) 
-        / getfem::asm_L2_norm(mim, exact_sol.mf_u3, exact_sol.U3)<< "\n";
+       // / getfem::asm_L2_norm(mim, exact_sol.mf_u3, exact_sol.U3)
+	<< "\n";
   cout << "H1 ERROR:"
        << getfem::asm_H1_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3)
-        / getfem::asm_H1_norm(mim, exact_sol.mf_u3, exact_sol.U3) << "\n";
-  cout << "Relative error on the section rotations theta = (theta_1, theta_2 ) :\n" ;
+       // / getfem::asm_H1_norm(mim, exact_sol.mf_u3, exact_sol.U3) 
+	<< "\n";
+  cout << "Error on the section rotations theta = (theta_1, theta_2 ) :\n" ;
+  exact_sol.mf_theta.set_qdim(2);
+  exact_sol.mf_ut.set_qdim(2);
   cout << "L2 ERROR:"
        << getfem::asm_L2_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA)
-        / getfem::asm_L2_norm(mim, exact_sol.mf_theta, exact_sol.THETA) << "\n";
+       // / getfem::asm_L2_norm(mim, exact_sol.mf_theta, exact_sol.THETA) 
+	<< "\n";
   cout << "H1 ERROR:"
        << getfem::asm_H1_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA)
-        / getfem::asm_H1_norm(mim, exact_sol.mf_theta, exact_sol.THETA) << "\n";
+       // / getfem::asm_H1_norm(mim, exact_sol.mf_theta, exact_sol.THETA) 
+	<< "\n";
+	}
+  if (sol_ref == 4){
+     plain_vector V3(mf_pre_u3.nb_dof()) ;
+     for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
+         V3[i] -= u3_exact_yves(mf_pre_u3.point_of_dof(i));
+     plain_vector VTHETA(mf_pre_theta.nb_dof()) ;
+     for (size_type i = 0; i < mf_pre_theta.nb_dof() / mf_pre_theta.get_qdim() ; ++i) {
+         VTHETA[2 * i    ] -= theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
+	 VTHETA[2 * i + 1] -= theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
+	 }
+     cout << "Error on the vertical displacement u3 :\n" ;
+     cout << "L2 ERROR:"
+       << getfem::asm_L2_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) << "\n";
+  cout << "H1 ERROR:"
+       << getfem::asm_H1_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) << "\n";
+  cout << "Relative error on the section rotations theta = (theta_1, theta_2 ) :\n" ;
+  cout << "L2 ERROR:"
+       << getfem::asm_L2_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA) << "\n";
+  cout << "H1 ERROR:"
+       << getfem::asm_H1_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA) << "\n";
+   }
 }
 
 
@@ -786,11 +860,19 @@ int main(int argc, char *argv[]) {
 //     getfem::pfem pmf = getfem::fem_descriptor
 //         ("FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1, 2, 0.0001), FEM_PK_DISCONTINUOUS(1, 2, 0.0001))") ;
 //     mf.set_finite_element(pmf) ; 
-    plain_vector V3(mf.nb_dof()), VT(mf.nb_dof()*2), VTHETA(mf.nb_dof()*2);    
-    getfem::interpolation(p.mf_ut(), mf, UT, VT);
-    getfem::interpolation(p.mf_u3(), mf, U3, V3);
-    getfem::interpolation(p.mf_theta(), mf, THETA, VTHETA);
-    
+    plain_vector V3(mf.nb_dof()), VT(mf.nb_dof()*2), VTHETA(mf.nb_dof()*2); 
+    if ( p.dx_export == 1){  // exporting the "finite element" solution
+	getfem::interpolation(p.mf_ut(), mf, UT, VT);
+	getfem::interpolation(p.mf_u3(), mf, U3, V3);
+	getfem::interpolation(p.mf_theta(), mf, THETA, VTHETA);
+	}
+    else if (p.dx_export == 2) { // exporting the "exact" solution
+        p.exact_sol.mf_ut.set_qdim(2) ;
+        p.exact_sol.mf_theta.set_qdim(2) ;
+	getfem::interpolation(p.exact_sol.mf_ut,    mf, p.exact_sol.UT, VT);
+	getfem::interpolation(p.exact_sol.mf_u3,    mf, p.exact_sol.U3, V3);
+	getfem::interpolation(p.exact_sol.mf_theta, mf, p.exact_sol.THETA, VTHETA);
+    }
 
     getfem::mesh m3d; getfem::extrude(mcut_triangles_only,m3d,1);
     getfem::base_matrix trans(3,3); 
