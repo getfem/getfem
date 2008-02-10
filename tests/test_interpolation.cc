@@ -311,6 +311,83 @@ void test0() {
   getfem::interpolation(mf1, mf2, M);
 }
 
+/* this test is raising a dimension mismatch except in bgeot::geotrans_inv_convex::invert_nonlin
+   at line 123         gmm::mult(gmm::transposed(K), rn, vres);
+   K is 2x3 , rn size is 3, vres is 3
+*/
+void testDim_3D() {
+  std::stringstream sm1("BEGIN POINTS LIST\n"
+                        "POINT  0  2  -1.5  0\n"
+                        "POINT  1  3.1  -1.5  0\n"
+                        "POINT  2  2.1  -0.5  0\n"
+                        "POINT  3  3.3  -0.4  0\n"
+                        "END POINTS LIST\n"
+                        "BEGIN MESH STRUCTURE DESCRIPTION\n"
+                        "CONVEX 0    'GT_QK(2,1)'      0  1  2  3\n"
+                        "END MESH STRUCTURE DESCRIPTION\n");
+  std::stringstream sm2("BEGIN POINTS LIST\n"
+                        "\n"
+                        "POINT 0 2.841036604023573 -0.7909688187947341 0\n"
+                        "POINT 1 2.625 -0.975 0\n"
+                        "POINT 2 2.672953683840865 -0.639324213113946 0\n"
+                        "POINT 3 2.100005908812348 -0.9978258300516371 0\n"
+                        "POINT 4 2.236730472703533 -1.301146402929032 0\n"
+                        "POINT 5 2.898295977980105 -0.9631175661747781 0\n"
+                        "POINT 6 2.565046316159135 -1.394675786886054 0\n"
+                        "\n"
+                        "END POINTS LIST\n"
+                        "\n"
+                        "BEGIN MESH STRUCTURE DESCRIPTION\n"
+                        "\n"
+                        "CONVEX 0 'GT_PK(2,1)' 0 1 2\n"
+                        "CONVEX 1 'GT_PK(2,1)' 2 1 3\n"
+                        "CONVEX 2 'GT_PK(2,1)' 1 4 3\n"
+                        "CONVEX 3 'GT_PK(2,1)' 0 1 5\n"
+                        "CONVEX 4 'GT_PK(2,1)' 5 1 6\n"
+                        "CONVEX 5 'GT_PK(2,1)' 1 4 6\n"
+                        "\n"
+                        "END MESH STRUCTURE DESCRIPTION\n");
+
+  std::stringstream smf1("BEGIN MESH_FEM\n"
+                         "\n"
+                         "QDIM 1\n"
+                         "CONVEX 0 'FEM_QK(2,1)'\n"
+                         "BEGIN DOF_ENUMERATION\n"
+                         "0: 0 1 2 3\n"
+                         "END DOF_ENUMERATION\n"
+                         "END MESH_FEM\n");
+
+  std::stringstream smf2("BEGIN MESH_FEM\n"
+                         "\n"
+                         "QDIM 1\n"
+                         "CONVEX 0 'FEM_PK(2,1)'\n"
+                         "CONVEX 1 'FEM_PK(2,1)'\n"
+                         "CONVEX 2 'FEM_PK(2,1)'\n"
+                         "CONVEX 3 'FEM_PK(2,1)'\n"
+                         "CONVEX 4 'FEM_PK(2,1)'\n"
+                         "CONVEX 5 'FEM_PK(2,1)'\n"
+                         "BEGIN DOF_ENUMERATION\n"
+                         "0: 0 1 2\n"
+                         "1: 2 1 4\n"
+                         "2: 1 5 4\n"
+                         "3: 0 1 3\n"
+                         "4: 3 1 6\n"
+                         "5: 1 5 6\n"
+                         "END DOF_ENUMERATION\n"
+                         "END MESH_FEM\n");
+
+  mesh m1, m2;
+  m1.read_from_file(sm1);
+  m2.read_from_file(sm2);
+  mesh_fem mf1(m1), mf2(m2);
+  mf1.read_from_file(smf1);
+  mf2.read_from_file(smf2);
+  std::vector<double> U(mf1.nb_dof()); gmm::fill(U, 1.0);
+  std::vector<double> V(mf2.nb_dof());
+  getfem::interpolation(mf1, mf2, U, V);
+  cerr << "congratulations !";
+}
+
 int main(int argc, char *argv[]) {
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
@@ -319,6 +396,7 @@ int main(int argc, char *argv[]) {
 
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
   try {
+    testDim_3D();
     test0();
     for (int mat_version = 0; mat_version < 5; ++mat_version) {
       const char *msg[] = {"Testing interpolation", 
@@ -333,9 +411,9 @@ int main(int argc, char *argv[]) {
       test_different_mesh(mat_version, 2, 2, quick ? 17 : 80,1);
       test_different_mesh(mat_version, 3, 3, quick ? 6 : 15,1);
       if (mat_version == 0) {
-	test_different_mesh(0, 2, 1, 100, 2);
-	test_different_mesh(0, 3, 1, 500, 1);
-	test_different_mesh(0, 3, 2, quick ? 8 : 50, 2);
+        test_different_mesh(0, 2, 1, 100, 2);
+        test_different_mesh(0, 3, 1, 500, 1);
+        test_different_mesh(0, 3, 2, quick ? 8 : 50, 2);
       }
     }
   }  
