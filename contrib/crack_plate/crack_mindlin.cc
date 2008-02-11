@@ -80,6 +80,7 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
   const getfem::level_set &ls;
   mutable getfem::mesher_level_set mls0, mls1;
   mutable size_type cv;
+  scalar_type lambda, mu; // lame coefficient, usefull for exact solution
   
   void update_mls(size_type cv_) const { 
     if (cv_ != cv) { 
@@ -112,6 +113,18 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     } break;
     case 5: {   // usefull for isotropic_linear_elasticity_2D
       return sqrt(r)*cos(theta/2)*cos(theta);
+    } break;
+    case 6: {   // usefull for Yves's exact solution only (not for finite element computation)
+      return 2. * sqrt(r) * (  sin(theta/2.) * mu * (30. * lambda + 60. * mu - 5. * 2. * mu * r * r)
+                           - sin(5. * theta / 2.) * r * r * 2. * mu * (4. * lambda + 3. * mu) ) ;
+    } break;
+    case 7: {   // same comment as case 6
+      scalar_type gamma = 2. * mu ;
+      return 5. * gamma * sqrt( r * r * r ) * sin(theta/2.) * mu + sin(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+    } break;
+    case 8: {    // same comment as case 6
+      scalar_type gamma = 2. * mu ;
+      return 5. * gamma * sqrt( r * r * r )  * cos(theta/2.) * mu + cos(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
     } break;
     default: assert(0); 
     }
@@ -149,6 +162,18 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       g[0] = (  3./4.* cos(theta/2.0) - 1./4. * cos(5.0/2.0*theta) )   / sqrt(r) ; 
       g[1] = (       - sin(theta/2.0) - sin(5.0/2.0*theta)      )   / 4.0   / sqrt(r) ; 
     } break;
+    case 6: {
+      g[0] = 0. ;
+      g[1] = 0. ;
+    } break;
+    case 7: {
+      g[0] = 0. ;
+      g[1] = 0. ;
+    } break;    
+    case 8: {
+      g[0] = 0. ;
+      g[1] = 0. ;
+    } break;
     default: assert(0); 
     }
   }
@@ -183,58 +208,90 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     
   void update_from_context(void) const { cv =  size_type(-1); }
 
-  mindlin_singular_functions(size_type l_, const getfem::level_set &ls_) : l(l_), ls(ls_) {
+  mindlin_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type lambda_, scalar_type mu_) : l(l_), ls(ls_), lambda(lambda_), mu(mu_) {
     cv = size_type(-1);
     this->add_dependency(ls);
   }
 
 };
 
-getfem::pglobal_function mindlin_crack_singular(size_type i, const getfem::level_set &ls){ 
-  return new mindlin_singular_functions(i, ls);
+getfem::pglobal_function mindlin_crack_singular(size_type i, const getfem::level_set &ls, scalar_type lambda, scalar_type mu){ 
+  return new mindlin_singular_functions(i, ls, lambda, mu);
 }
+
 
 
 struct exact_solution {
   getfem::mesh_fem_global_function mf_ut, mf_u3, mf_theta;
-  getfem::base_vector UT ;
-  getfem::base_vector U3 ; 
-  getfem::base_vector THETA;
+  getfem::base_vector UT, U3, THETA ;
   
   exact_solution(getfem::mesh &me) : mf_ut(me), mf_u3(me), mf_theta(me) {}
   
-  void init(getfem::level_set &ls) {
-    std::vector<getfem::pglobal_function> cfun_ut(4), cfun_u3(1), cfun_theta(4) ;
-    for (unsigned j=0; j < 4; ++j) {
-      cfun_ut[j] = mindlin_crack_singular(j+2, ls) ;
-      cfun_theta[j] = mindlin_crack_singular(j, ls) ;
+  void init(getfem::level_set &ls, size_type sol_ref, scalar_type lambda, scalar_type mu) {
+    if (sol_ref == 3){
+	std::vector<getfem::pglobal_function> cfun_ut(4), cfun_u3(1), cfun_theta(4) ;
+	for (unsigned j=0; j < 4; ++j) {
+	cfun_ut[j] = mindlin_crack_singular(j+2, ls, lambda, mu) ;
+	cfun_theta[j] = mindlin_crack_singular(j, ls, lambda, mu) ;
+	}
+	cfun_u3[0] = mindlin_crack_singular(3,ls, lambda, mu) ;
+	
+	// Initialising  ut
+	mf_ut.set_qdim(1) ;
+	mf_ut.set_functions(cfun_ut);   
+	UT.resize(8); assert(mf_ut.nb_dof() == 4);
+	for( unsigned i = 0; i< 8 ; ++i)
+		UT[i] = 0. ;
+	
+	// Initialising  theta
+	mf_theta.set_qdim(1) ;
+	mf_theta.set_functions(cfun_theta);   
+	THETA.resize(8); assert(mf_theta.nb_dof() == 4);
+	THETA[0] = A1 ;
+	THETA[1] = A2 ;
+	THETA[2] = B1 ;
+	THETA[3] = B2 ;
+	THETA[4] = C1 ;
+	THETA[5] = C2 ;
+	THETA[6] = D1 ;
+	THETA[7] = D2 ;
+	cout << "Initialising THETA exact. THETA = " << THETA << "\n" ;
+	
+	// Initialising u3
+	mf_u3.set_functions(cfun_u3) ;
+	U3.resize(1) ;
+	U3[0] = A0 ;  
     }
-    cfun_u3[0] = mindlin_crack_singular(3,ls) ;
-    
-    // Initialising  ut
-    mf_ut.set_qdim(2) ;
-    mf_ut.set_functions(cfun_ut);   
-    UT.resize(8); assert(mf_ut.nb_dof() == 8);
-    for( unsigned i = 0; i< 8 ; ++i)
-        UT[i] = 0. ;
-      
-    // Initialising  theta
-    mf_theta.set_qdim(2) ;
-    mf_theta.set_functions(cfun_theta);   
-    THETA.resize(8); assert(mf_theta.nb_dof() == 8);
-    THETA[0] = A1 ;
-    THETA[1] = A2 ;
-    THETA[2] = B1 ;
-    THETA[3] = B2 ;
-    THETA[4] = C1 ;
-    THETA[5] = C2 ;
-    THETA[6] = D1 ;
-    THETA[7] = D2 ;
-    
-    // Initialising u3
-    mf_u3.set_functions(cfun_u3) ;
-    U3.resize(1) ;
-    U3[0] = A0 ;  
+    if (sol_ref == 4){
+	std::vector<getfem::pglobal_function> cfun_ut(4), cfun_u3(1), cfun_theta(2) ;
+	for (unsigned j=0; j < 4; ++j) {
+        	cfun_ut[j] = mindlin_crack_singular(j+2, ls, lambda, mu) ;
+	}
+	cfun_u3[0] = mindlin_crack_singular(6, ls, lambda, mu) ;
+	cfun_theta[0] = mindlin_crack_singular(7, ls, lambda, mu) ;
+	cfun_theta[1] = mindlin_crack_singular(8, ls, lambda, mu) ;
+
+	// Initialising  ut
+	mf_ut.set_qdim(1) ;
+	mf_ut.set_functions(cfun_ut);   
+	UT.resize(8); assert(mf_ut.nb_dof() == 4);
+	for( unsigned i = 0; i< 8 ; ++i)
+		UT[i] = 0. ;
+	
+	// Initialising  theta
+	mf_theta.set_qdim(1) ;
+	mf_theta.set_functions(cfun_theta);   
+	THETA.resize(4); assert(mf_theta.nb_dof() == 2);
+	THETA[0] = 0.01 ;
+	THETA[1] = 0. ;
+	THETA[2] = 0. ;
+	THETA[3] = 0.01 ;
+	
+	// Initialising u3
+	mf_u3.set_functions(cfun_u3) ;
+	U3.resize(1) ;
+	U3[0] = 0.01 ;  
+    }
   }
   
 };
@@ -287,7 +344,7 @@ struct crack_mindlin_problem{
 
   scalar_type h_crack_length ;  // half-crack-length
 
-  scalar_type lambda, mu;    /* Lamé coefficients.                           */
+  scalar_type lambda, mu;    /* Lamï¿½ coefficients.                           */
   scalar_type epsilon, pressure ;
   
   
@@ -314,27 +371,28 @@ struct crack_mindlin_problem{
 
 };
 
-scalar_type crack_mindlin_problem::u3_exact_yves(base_node P){
-    scalar_type r = sqrt(P[0]*P[0] + P[1]*P[1]);
-    scalar_type theta = atan2(P[1],P[0]);
-    
-    scalar_type gamma = 2. * mu ;
-    return 2. * sqrt(r) * (  sin(theta/2.) * mu * (30. * lambda + 60. * mu - 5. * gamma * r * r)
-                           - sin(5. * theta / 2.) * r * r * gamma * (4. * lambda + 3. * mu) ) ;
-}
-
-base_small_vector crack_mindlin_problem::theta_exact_yves(base_node P) {
-    scalar_type r = sqrt(P[0]*P[0] + P[1]*P[1]);
-    scalar_type theta = atan2(P[1],P[0]);
-    base_small_vector res(2) ;
-    
-    scalar_type gamma = 2. * mu ;
-    res[0] = res[1] = 5. * gamma * sqrt( r * r * r ) ;
-    res[0] *= sin(theta/2.) * mu + sin(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
-    res[1] *= cos(theta/2.) * mu + cos(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
-    
-    return res ;
-}  
+/* deprecated : -------------------------------------------------------------------------- */
+// scalar_type crack_mindlin_problem::u3_exact_yves(base_node P){
+//     scalar_type r = sqrt(P[0]*P[0] + P[1]*P[1]);
+//     scalar_type theta = atan2(P[1],P[0]);
+//     
+//     scalar_type gamma = 2. * mu ;
+//     return 2. * sqrt(r) * (  sin(theta/2.) * mu * (30. * lambda + 60. * mu - 5. * gamma * r * r)
+//                            - sin(5. * theta / 2.) * r * r * gamma * (4. * lambda + 3. * mu) ) ;
+// }
+// 
+// base_small_vector crack_mindlin_problem::theta_exact_yves(base_node P) {
+//     scalar_type r = sqrt(P[0]*P[0] + P[1]*P[1]);
+//     scalar_type theta = atan2(P[1],P[0]);
+//     base_small_vector res(2) ;
+//     
+//     scalar_type gamma = 2. * mu ;
+//     res[0] = res[1] = 5. * gamma * sqrt( r * r * r ) ;
+//     res[0] *= sin(theta/2.) * mu + sin(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+//     res[1] *= cos(theta/2.) * mu + cos(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+//     
+//     return res ;
+// }  
   
 void crack_mindlin_problem::init(void) {
   
@@ -381,8 +439,8 @@ void crack_mindlin_problem::init(void) {
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
-  mu = PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  mu = PARAM.real_value("MU", "Lamï¿½ coefficient mu");
+  lambda = PARAM.real_value("LAMBDA", "Lamï¿½ coefficient lambda");
   cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
   h_crack_length = PARAM.real_value("HALF_CRACK_LENGTH") ;
   sol_ref = PARAM.int_value("SOL_REF") ;
@@ -497,7 +555,7 @@ void crack_mindlin_problem::init(void) {
     }
   }
   
-  exact_sol.init(ls);
+  exact_sol.init(ls, sol_ref, lambda, mu);
   
 }
 
@@ -534,10 +592,10 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   
 
   for (size_type i = 0 ; i < 4 ; ++i){
-        utfunc[i] = mindlin_crack_singular(i+2, ls); 
-	theta_func[i] = mindlin_crack_singular(i, ls);
+        utfunc[i] = mindlin_crack_singular(i+2, ls, lambda, mu); 
+	theta_func[i] = mindlin_crack_singular(i, ls, lambda, mu);
   }  
-  u3func[0] = mindlin_crack_singular(3, ls) ;
+  u3func[0] = mindlin_crack_singular(3, ls, lambda, mu) ;
   
   mf_sing_ut.set_functions(utfunc);
   mf_sing_u3.set_functions(u3func);
@@ -600,7 +658,7 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
   scalar_type r, theta, E, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
-  E = - 4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
+  E =  4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
   for (size_type i = 0; i < nb_dof_rhs; ++i){
   if (sol_ref == 0){
     if (mf_rhs.point_of_dof(i)[1] > 0 )
@@ -615,50 +673,54 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   if (sol_ref == 3) {
      r = sqrt ( mf_rhs.point_of_dof(i)[0] * mf_rhs.point_of_dof(i)[0] + mf_rhs.point_of_dof(i)[1] * mf_rhs.point_of_dof(i)[1] ) ;
      theta = atan2( mf_rhs.point_of_dof(i)[1], mf_rhs.point_of_dof(i)[0] ) ;
-     F[3*i+2] = - epsilon * E / (1.+nu) / sqrt(r) * ( 
-                   (A1 + C1/2. + B2 + D2/2.) * cos(theta/2.)
-                 + (B1 - D1/2. - A2 + C2/2.) * sin(theta/2.)
-                 + (- A1/2. + B2/2. ) * cos(5. * theta/2.) 
-                 + (- B1/2. - A2/2. ) * sin(5. * theta/2.)     ) ;  
-      
-      MapleGenVar1 = E ;
-      MapleGenVar3 = epsilon*epsilon*epsilon;
-      MapleGenVar5 = 1/(3.0+3.0*nu);
-      MapleGenVar7 = 2.0/(1.0-nu)*(-((A1+C1/2.0)*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/
-2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A1+
-C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0
-/4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta))+(1.0+nu)/(1.0-nu)*(-((A2+C2/2.0)*
-cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0)-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/
-sqrt(r*r*r)*sin(theta)/2.0+(-(A2+C2/2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+
-5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
-      MapleGenVar6 = MapleGenVar7-((B1+D1/2.0)*cos(theta/2.0)+(-A1+C1/2.0)*sin(theta/
-2.0)+B1*cos(5.0/2.0*theta)/2.0-A1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B1+
-D1/2.0)*sin(theta/2.0)/2.0+(-A1+C1/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B1*sin(5.0/2.0*theta)
--5.0/4.0*A1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*cos(theta)
-/2.0-A0/sqrt(r)*cos(theta/2.0)*sin(theta)/2.0+sqrt(r)*(A1*cos(3.0/2.0*theta)+B1*sin(3.0/2.0*
-theta)+C1*cos(theta/2.0)+D1*sin(theta/2.0)))*epsilon*epsilon;
-      MapleGenVar4 = MapleGenVar5*MapleGenVar6;
-      MapleGenVar2 = MapleGenVar3*MapleGenVar4;
-      M[2*i] = MapleGenVar1*MapleGenVar2;
-      MapleGenVar1 = -4.*mu*(mu+lambda) / (2. * mu + lambda);
-      MapleGenVar3 = epsilon*epsilon*epsilon;
-      MapleGenVar5 = 1/(3.0+3.0*nu);
-      MapleGenVar7 = 2.0/(1.0-nu)*(-((B2+D2/2.0)*cos(theta/2.0)+(-A2+C2/2.0)*sin(theta/
-2.0)+B2*cos(5.0/2.0*theta)/2.0-A2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B2+
-D2/2.0)*sin(theta/2.0)/2.0+(-A2+C2/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B2*sin(5.0/2.0*theta)
--5.0/4.0*A2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta))+(1.0+nu)/(1.0-nu)*(-((A1+C1/2.0
-)*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0
-)/sqrt(r*r*r)*sin(theta)/2.0+(-(A1+C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/
-2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0/4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
-      MapleGenVar6 = MapleGenVar7-((A2+C2/2.0)*cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0
-)-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A2+C2/
-2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/
-4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*sin(theta)/2.0+
-A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3.0/2.0*theta)+C2
-*cos(theta/2.0)+D2*sin(theta/2.0)))*epsilon*epsilon;
-      MapleGenVar4 = MapleGenVar5*MapleGenVar6;
-      MapleGenVar2 = MapleGenVar3*MapleGenVar4;
-      M[2*i+1 ] = MapleGenVar1*MapleGenVar2;
+      M[2*i  ]  = - sin(theta/2.0)  / 2.0   / sqrt(r) ; 
+      M[2*i+1]  =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
+      M[2*i]   *= E * epsilon / (1.+nu) ;
+      M[2*i+1] *= E * epsilon / (1.+nu) ;
+//      F[3*i+2] = - epsilon * E / (1.+nu) / sqrt(r) * ( 
+//                    (A1 + C1/2. + B2 + D2/2.) * cos(theta/2.)
+//                  + (B1 - D1/2. - A2 + C2/2.) * sin(theta/2.)
+//                  + (- A1/2. + B2/2. ) * cos(5. * theta/2.) 
+//                  + (- B1/2. - A2/2. ) * sin(5. * theta/2.)     ) ;  
+//       
+//       MapleGenVar1 = E ;
+//       MapleGenVar3 = epsilon*epsilon*epsilon;
+//       MapleGenVar5 = 1/(3.0+3.0*nu);
+//       MapleGenVar7 = 2.0/(1.0-nu)*(-((A1+C1/2.0)*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/
+// 2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A1+
+// C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0
+// /4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta))+(1.0+nu)/(1.0-nu)*(-((A2+C2/2.0)*
+// cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0)-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/
+// sqrt(r*r*r)*sin(theta)/2.0+(-(A2+C2/2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+
+// 5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
+//       MapleGenVar6 = MapleGenVar7-((B1+D1/2.0)*cos(theta/2.0)+(-A1+C1/2.0)*sin(theta/
+// 2.0)+B1*cos(5.0/2.0*theta)/2.0-A1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B1+
+// D1/2.0)*sin(theta/2.0)/2.0+(-A1+C1/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B1*sin(5.0/2.0*theta)
+// -5.0/4.0*A1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*cos(theta)
+// /2.0-A0/sqrt(r)*cos(theta/2.0)*sin(theta)/2.0+sqrt(r)*(A1*cos(3.0/2.0*theta)+B1*sin(3.0/2.0*
+// theta)+C1*cos(theta/2.0)+D1*sin(theta/2.0)))*epsilon*epsilon;
+//       MapleGenVar4 = MapleGenVar5*MapleGenVar6;
+//       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
+//       M[2*i] = MapleGenVar1*MapleGenVar2;
+//       MapleGenVar1 = -4.*mu*(mu+lambda) / (2. * mu + lambda);
+//       MapleGenVar3 = epsilon*epsilon*epsilon;
+//       MapleGenVar5 = 1/(3.0+3.0*nu);
+//       MapleGenVar7 = 2.0/(1.0-nu)*(-((B2+D2/2.0)*cos(theta/2.0)+(-A2+C2/2.0)*sin(theta/
+// 2.0)+B2*cos(5.0/2.0*theta)/2.0-A2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B2+
+// D2/2.0)*sin(theta/2.0)/2.0+(-A2+C2/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B2*sin(5.0/2.0*theta)
+// -5.0/4.0*A2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta))+(1.0+nu)/(1.0-nu)*(-((A1+C1/2.0
+// )*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0
+// )/sqrt(r*r*r)*sin(theta)/2.0+(-(A1+C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/
+// 2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0/4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
+//       MapleGenVar6 = MapleGenVar7-((A2+C2/2.0)*cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0
+// )-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A2+C2/
+// 2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/
+// 4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*sin(theta)/2.0+
+// A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3.0/2.0*theta)+C2
+// *cos(theta/2.0)+D2*sin(theta/2.0)))*epsilon*epsilon;
+//       MapleGenVar4 = MapleGenVar5*MapleGenVar6;
+//       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
+//       M[2*i+1 ] = MapleGenVar1*MapleGenVar2;
   } 
   } 
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
@@ -673,38 +735,45 @@ A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3
   cout << "Setting the Dirichlet condition brick : \n " ;
   
   getfem::mdbrick_Dirichlet<> DIRICHLET_U3(VOL_F, DIRICHLET_BOUNDARY_NUM, mf_mult_u3, 1);
-  if (sol_ref == 3)  DIRICHLET_U3.rhs().set(exact_sol.mf_u3, exact_sol.U3);
-  if (sol_ref == 4){
-     plain_vector V3(mf_pre_u3.nb_dof()) ;
-     for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
-         V3[i] = u3_exact_yves(mf_pre_u3.point_of_dof(i));
-     DIRICHLET_U3.rhs().set(mf_pre_u3, V3);
+  if (sol_ref == 3 || sol_ref == 4)  {
+     DIRICHLET_U3.rhs().set(exact_sol.mf_u3, exact_sol.U3);
+     cerr << "nbd=" << exact_sol.mf_u3.nb_dof() << " - U3=" << exact_sol.U3 << "\n";
   }
+// deprecated :
+//   if (sol_ref == 4){ 
+//      plain_vector V3(mf_pre_u3.nb_dof()) ;
+//      for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
+//          V3[i] = u3_exact_yves(mf_pre_u3.point_of_dof(i));
+//      DIRICHLET_U3.rhs().set(mf_pre_u3, V3);
+//   }
   DIRICHLET_U3.set_constraints_type(getfem::constraints_type(dirichlet_version)); 
   cout << " md_brick DIRICHLET_U3 done     \n" ;
   
   getfem::mdbrick_Dirichlet<> DIRICHLET_THETA(DIRICHLET_U3, DIRICHLET_BOUNDARY_NUM, mf_mult_theta, 2);
-  if (sol_ref == 3){
+  if (sol_ref == 3 || sol_ref == 4){
   cerr << "nbd=" << exact_sol.mf_theta.nb_dof() << " - THETA=" << exact_sol.THETA << "\n";
   DIRICHLET_THETA.rhs().set(exact_sol.mf_theta, exact_sol.THETA);
   }
-  if (sol_ref == 4){
-     plain_vector VTHETA(mf_pre_theta.nb_dof()) ;
-     cout << "mf_pre_theta.nb_dof() = " << mf_pre_theta.nb_dof() << "\n" ;
-     for (size_type i = 0; i < mf_pre_theta.nb_dof() / mf_pre_theta.get_qdim() ; ++i) {
-         VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
-	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
-	 }
-     DIRICHLET_THETA.rhs().set(mf_pre_theta, VTHETA);
-  }
+//   // deprecated
+//   if (sol_ref == 4){
+//      plain_vector VTHETA(mf_pre_theta.nb_dof() * 2) ;
+//      cout << "mf_pre_theta.nb_dof() = " << mf_pre_theta.nb_dof() << "\n" ;
+//      for (size_type i = 0; i < mf_pre_theta.nb_dof() ; ++i) {
+//          VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
+// 	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
+// 	 }
+//      DIRICHLET_THETA.rhs().set(mf_pre_theta, VTHETA);
+//   }
   DIRICHLET_THETA.set_constraints_type(getfem::constraints_type(dirichlet_version));  
 
   cerr << "hop\n";
 
   cout << " md_brick DIRICHLET_THETA done     \n" ;
   
+  getfem::mdbrick_Dirichlet<> DIRICHLET_UT(DIRICHLET_THETA, DIRICHLET_BOUNDARY_NUM, mf_mult_ut, 0);
+
   if (sol_ref == 0 || sol_ref == 1) LAST = &SIMPLE1 ;
-  if (sol_ref == 3 )                LAST = &DIRICHLET_THETA ;
+  if (sol_ref == 3 || sol_ref == 4) LAST = &DIRICHLET_UT ;
   
   getfem::mdbrick_plate_closing<> final_model(*LAST, 0, 1);
   
@@ -731,8 +800,8 @@ A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3
 }
 
 /* compute the error with respect to the exact solution */
-void crack_mindlin_problem::compute_error(plain_vector &U, plain_vector &U3, plain_vector &THETA ) {
-  if (sol_ref == 3){
+void crack_mindlin_problem::compute_error(plain_vector &UT, plain_vector &U3, plain_vector &THETA ) {
+  if (sol_ref == 3 || sol_ref == 4){
   cout << "Error on the vertical displacement u3 :\n" ;
   cout << "L2 ERROR:"
        << getfem::asm_L2_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) 
@@ -754,26 +823,31 @@ void crack_mindlin_problem::compute_error(plain_vector &U, plain_vector &U3, pla
        // / getfem::asm_H1_norm(mim, exact_sol.mf_theta, exact_sol.THETA) 
 	<< "\n";
 	}
-  if (sol_ref == 4){
-     plain_vector V3(mf_pre_u3.nb_dof()) ;
-     for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
-         V3[i] -= u3_exact_yves(mf_pre_u3.point_of_dof(i));
-     plain_vector VTHETA(mf_pre_theta.nb_dof()) ;
-     for (size_type i = 0; i < mf_pre_theta.nb_dof() / mf_pre_theta.get_qdim() ; ++i) {
-         VTHETA[2 * i    ] -= theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
-	 VTHETA[2 * i + 1] -= theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
-	 }
-     cout << "Error on the vertical displacement u3 :\n" ;
-     cout << "L2 ERROR:"
-       << getfem::asm_L2_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) << "\n";
-  cout << "H1 ERROR:"
-       << getfem::asm_H1_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) << "\n";
-  cout << "Relative error on the section rotations theta = (theta_1, theta_2 ) :\n" ;
-  cout << "L2 ERROR:"
-       << getfem::asm_L2_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA) << "\n";
-  cout << "H1 ERROR:"
-       << getfem::asm_H1_dist(mim, mf_theta(), THETA, exact_sol.mf_theta, exact_sol.THETA) << "\n";
-   }
+//   // deprecated
+//   if (sol_ref == 4){
+//      plain_vector V3(mf_pre_u3.nb_dof()) ;
+//      for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
+//          V3[i] = u3_exact_yves(mf_pre_u3.point_of_dof(i));
+//      plain_vector VTHETA(mf_pre_theta.nb_dof()) ;
+//      for (size_type i = 0; i < mf_pre_theta.nb_dof() / mf_pre_theta.get_qdim() ; ++i) {
+//          VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
+// 	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
+// 	 }
+//      cout << "Error on the vertical displacement u3 :\n" ;
+//      cout << "mf_u3().nb_dof() = " << mf_u3().nb_dof() << "\n"; 
+//      cout << "U3.size() = " << U3.size() << "\n" ;
+//      cout << "mf_pre_u3.nb_dof() = " << mf_u3().nb_dof() << "\n";
+//      cout << "V3.size() = " << V3.size() << "\n" ;
+//      cout << "L2 ERROR:"
+//        << getfem::asm_L2_dist(mim, mf_u3(), U3, mf_pre_u3, V3) << "\n";
+//   cout << "H1 ERROR:"
+//        << getfem::asm_H1_dist(mim, mf_u3(), U3, mf_pre_u3, V3) << "\n";
+//   cout << "Relative error on the section rotations theta = (theta_1, theta_2 ) :\n" ;
+//   cout << "L2 ERROR:"
+//        << getfem::asm_L2_dist(mim, mf_theta(), THETA, mf_pre_theta, VTHETA) << "\n";
+//   cout << "H1 ERROR:"
+//        << getfem::asm_H1_dist(mim, mf_theta(), THETA, mf_pre_theta, VTHETA) << "\n";
+//    }
 }
 
 
@@ -841,7 +915,7 @@ int main(int argc, char *argv[]) {
     plain_vector UT, U3, THETA;
     if (!p.solve(UT, U3, THETA))
       GMM_ASSERT1(false, "Solve has failed");
-    if (p.sol_ref == 3) p.compute_error(UT, U3, THETA) ;
+    if (p.sol_ref == 3 || p.sol_ref == 4) p.compute_error(UT, U3, THETA) ;
           
     cout << "post-traitement pour l'affichage :\n" ;
     getfem::mesh mcut;
