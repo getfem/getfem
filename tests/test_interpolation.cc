@@ -385,37 +385,33 @@ void testDim_3D() {
   std::vector<double> U(mf1.nb_dof()); gmm::fill(U, 1.0);
   std::vector<double> V(mf2.nb_dof());
   getfem::interpolation(mf1, mf2, U, V);
-  cerr << "congratulations !";
+  cerr << "Ok, it works !\n";
 }
 
 int main(int argc, char *argv[]) {
 
-  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
-  try {
-    testDim_3D();
-    test0();
-    for (int mat_version = 0; mat_version < 5; ++mat_version) {
-      const char *msg[] = {"Testing interpolation", 
-			   "Testing stored interpolator in rsc matrix",
-			   "Testing stored interpolator in rsr matrix",
-			   "Testing stored interpolator in wsc matrix",
-			   "Testing stored interpolator in wsr matrix"};
-      cout << msg[mat_version] << "..\n";
-      test_same_mesh(mat_version, 2,quick ? 17 : 80,1);
-      test_same_mesh(mat_version, 2,quick ? 8 : 20,4);
-      test_same_mesh(mat_version, 3,quick ? 5 : 15,1);
-      test_different_mesh(mat_version, 2, 2, quick ? 17 : 80,1);
-      test_different_mesh(mat_version, 3, 3, quick ? 6 : 15,1);
-      if (mat_version == 0) {
-        test_different_mesh(0, 2, 1, 100, 2);
-        test_different_mesh(0, 3, 1, 500, 1);
-        test_different_mesh(0, 3, 2, quick ? 8 : 50, 2);
-      }
+  
+  testDim_3D();
+  test0();
+  for (int mat_version = 0; mat_version < 5; ++mat_version) {
+    const char *msg[] = {"Testing interpolation", 
+			 "Testing stored interpolator in rsc matrix",
+			 "Testing stored interpolator in rsr matrix",
+			 "Testing stored interpolator in wsc matrix",
+			 "Testing stored interpolator in wsr matrix"};
+    cout << msg[mat_version] << "..\n";
+    test_same_mesh(mat_version, 2,quick ? 17 : 80,1);
+    test_same_mesh(mat_version, 2,quick ? 8 : 20,4);
+    test_same_mesh(mat_version, 3,quick ? 5 : 15,1);
+    test_different_mesh(mat_version, 2, 2, quick ? 17 : 80,1);
+    test_different_mesh(mat_version, 3, 3, quick ? 6 : 15,1);
+    if (mat_version == 0) {
+      test_different_mesh(0, 2, 1, 100, 2);
+      test_different_mesh(0, 3, 1, 500, 1);
+      test_different_mesh(0, 3, 2, quick ? 8 : 50, 2);
     }
-  }  
-  GMM_STANDARD_CATCH_ERROR;
+  }
 }

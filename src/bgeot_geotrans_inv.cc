@@ -19,8 +19,6 @@
 //
 //===========================================================================
 
-
-
 #include "getfem/bgeot_geotrans_inv.h"
 #include "gmm/gmm_solver_bfgs.h"
 namespace bgeot
@@ -103,8 +101,8 @@ namespace bgeot
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
-					  base_node& x, scalar_type IN_EPS,
-					  bool &converged, bool throw_except) {
+	       			  base_node& x, scalar_type IN_EPS,
+				  bool &converged, bool throw_except) {
     base_node xn(P), y, z,x0;
     /* find an initial guess */
     x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
@@ -115,11 +113,13 @@ namespace bgeot
         { d = d2; x0 = pgt->geometric_nodes()[j]; y = cvpts[j]; }
     }
     x = x0;
-    base_node vres(N);
+
+    base_node vres(P);
     base_node rn(xreal); rn -= y; 
 
     pgt->poly_vector_grad(x, pc);
     update_B();
+    
     gmm::mult(gmm::transposed(K), rn, vres);
     scalar_type res = gmm::vect_norm2(vres);
 
