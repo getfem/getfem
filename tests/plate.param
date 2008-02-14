@@ -10,7 +10,7 @@ LX = 1.0 ;
 LY = 1.0 ; 
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-EPSILON = 0.0001;       % half-thickness of the plate
+EPSILON = 0.005;       % half-thickness of the plate
 
 %%%%% parameters for testing some analytical solutions :
  			
@@ -32,7 +32,7 @@ PRESSURE = 0.0005;       % pressure on the top surface of the plate
 			% (only usefull if SOL_REF = 0 or 1)  
 			% will be multiplied by EPSILON^3.
 			  
-ETA = 1e-9;             % only usefull if SOL_REF = 2 :
+ETA = 1e-4;             % only usefull if SOL_REF = 2 :
 			% if eta  = 0 => solution of the Kirchoff-Love model
 			% if eta != 0 => solution of the Mindlin-Reissner model
 			% To be taken of order epsilon^2 ?
@@ -41,12 +41,13 @@ N_Four = 100             % only usefull if SOL_REF = 4
 			
 %%%%% parameters for computation :
 
-QUAD = 0;
+QUAD = 1;
 
-NX = 20   ;              % number of element on an edge.
+NX = 10   ;              % number of element on an edge.
 RESIDU = 1E-9;     	% residu for iterative methods.
-MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
+SOL_EXACTE = 0 ;
 MIXED = 0;
 MITC = 0;
 SYMMETRIZED = 0;
@@ -60,7 +61,7 @@ FEM_TYPE_U3 = 'FEM_QK(2,1)';
 FEM_TYPE_THETA= 'FEM_QK(2,1)';
 
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2, 1)';
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
  DATA_FEM_TYPE = 'FEM_QK(2,1)';
 end;
@@ -82,5 +83,5 @@ end;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'plate';     % Root of data files.
 VTK_EXPORT = 1 ; % export solution to a .vtk file ?
-DX_EXPORT = 0 ;
+DX_EXPORT = 1 ;
 SAUV = 1 ;

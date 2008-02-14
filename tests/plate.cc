@@ -99,6 +99,7 @@ struct plate_problem {
  * and integration methods and selects the boundaries.
  */
 void plate_problem::init(void) {
+  std::string MESH_FILE = PARAM.string_value("MESH_FILE");
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE_UT  = PARAM.string_value("FEM_TYPE_UT","FEM name");
   std::string FEM_TYPE_U3  = PARAM.string_value("FEM_TYPE_U3","FEM name");
@@ -113,15 +114,25 @@ void plate_problem::init(void) {
   cout << "INTEGRATION_CT=" << INTEGRATION_CT << "\n";
 
   /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
+  size_type N;
+    bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
-  size_type N = pgt->dim();
+  if (!MESH_FILE.empty()) {
+    cout << "MESH_FILE=" << MESH_FILE << "\n";
+    mesh.read_from_file(MESH_FILE);
+    MESH_TYPE = bgeot::name_of_geometric_trans
+      (mesh.trans_of_convex(mesh.convex_index().first_true()));
+    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+    N = mesh.dim();
+  } else {
+  N = pgt->dim();
   GMM_ASSERT1(N == 2, "For a plate problem, N should be 2");
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Number of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
+  }
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
@@ -366,6 +377,10 @@ scalar_type plate_problem::u3_exact(base_node P) {
 /* compute the error with respect to the exact solution */
 void plate_problem::compute_error(plain_vector &U) {
   cout.precision(16);
+  if (PARAM.int_value("SOL_EXACTE") == 1){
+     for (int i=0 ; i < U.size() ; ++i)
+        U[i] = 0. ;
+  }
 
   std::vector<scalar_type> V(mf_rhs.nb_dof()*2);
   
@@ -392,11 +407,11 @@ void plate_problem::compute_error(plain_vector &U) {
   }
   mf_rhs.set_qdim(2);
   l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  h1 += gmm::sqr(getfem::asm_H1_semi_norm(mim, mf_rhs, V));
   linf = std::max(linf, gmm::vect_norminf(V));
   mf_rhs.set_qdim(1);
-  cout << "L2 error = " << sqrt(l2) << endl
-       << "H1 error = " << sqrt(h1) << endl
+  cout << "L2 error theta:" << sqrt(l2) << endl
+       << "H1 error theta:" << sqrt(h1) << endl
        << "Linfty error = " << linf << endl;
 
   gmm::resize(V, mf_rhs.nb_dof());
@@ -406,13 +421,13 @@ void plate_problem::compute_error(plain_vector &U) {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= u3_exact(mf_rhs.point_of_dof(i));
 
-  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 = gmm::sqr(getfem::asm_H1_semi_norm(mim, mf_rhs, V));
   linf = std::max(linf, gmm::vect_norminf(V));
 
   cout.precision(16);
-  cout << "L2 error = " << sqrt(l2) << endl
-       << "H1 error = " << sqrt(h1) << endl
+  cout << "L2 error u3:" << sqrt(l2) << endl
+       << "H1 error u3:" << sqrt(h1) << endl
        << "Linfty error = " << linf << endl;
   
        // stockage de l'erreur H1 :
