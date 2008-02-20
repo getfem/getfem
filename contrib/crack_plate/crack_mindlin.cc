@@ -80,7 +80,7 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
   const getfem::level_set &ls;
   mutable getfem::mesher_level_set mls0, mls1;
   mutable size_type cv;
-  scalar_type lambda, mu; // lame coefficient, usefull for exact solution
+  scalar_type lambda, mu, epsilon; // lame coefficient and half-thickness, usefull for exact solution
   
   void update_mls(size_type cv_) const { 
     if (cv_ != cv) { 
@@ -94,7 +94,11 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
   scalar_type sing_function(scalar_type x, scalar_type y) const {
     scalar_type r = sqrt(x*x + y*y);
     scalar_type theta = atan2(y,x); 
- 
+    
+    scalar_type lambda_ = lambda; //2. * epsilon * lambda ;
+    scalar_type mu_= mu ; // 2. * epsilon * mu ;
+    scalar_type gamma =  3. * mu_ / ( epsilon * epsilon) ;
+    
     switch (l) {
     case 0: {
       return sqrt(r)*cos(3.0 * theta/2);
@@ -115,16 +119,14 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       return sqrt(r)*cos(theta/2)*cos(theta);
     } break;
     case 6: {   // usefull for Yves's exact solution only (not for finite element computation)
-      return 2. * sqrt(r) * (  sin(theta/2.) * mu * (30. * lambda + 60. * mu - 5. * 2. * mu * r * r)
-                           - sin(5. * theta / 2.) * r * r * 2. * mu * (4. * lambda + 3. * mu) ) ;
+      return 2. * sqrt(r) * (  sin(theta/2.) * mu_ * (30. * lambda_ + 60. * mu_ - 5. * gamma * r * r)
+                           - sin(5. * theta / 2.) * r * r * gamma * (4. * lambda_ + 3. * mu_) ) ;
     } break;
     case 7: {   // same comment as case 6
-      scalar_type gamma = 2. * mu ;
-      return 5. * gamma * sqrt( r * r * r ) * sin(theta/2.) * mu + sin(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+      return 5. * gamma * sqrt( r * r * r ) * ( 5. * sin(theta/2.) * mu_ + sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) );
     } break;
     case 8: {    // same comment as case 6
-      scalar_type gamma = 2. * mu ;
-      return 5. * gamma * sqrt( r * r * r )  * cos(theta/2.) * mu + cos(5. * theta / 2.) * (4. * lambda + 3. * mu) ;
+      return 5. * gamma * sqrt( r * r * r ) * ( cos(theta/2.) * mu_ + cos(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
     } break;
     default: assert(0); 
     }
@@ -208,15 +210,18 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     
   void update_from_context(void) const { cv =  size_type(-1); }
 
-  mindlin_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type lambda_, scalar_type mu_) : l(l_), ls(ls_), lambda(lambda_), mu(mu_) {
+  mindlin_singular_functions(size_type l_, const getfem::level_set &ls_, 
+                             scalar_type lambda_, scalar_type mu_, scalar_type epsi) 
+			     : l(l_), ls(ls_), lambda(lambda_), mu(mu_), epsilon(epsi) {
     cv = size_type(-1);
     this->add_dependency(ls);
   }
 
 };
 
-getfem::pglobal_function mindlin_crack_singular(size_type i, const getfem::level_set &ls, scalar_type lambda, scalar_type mu){ 
-  return new mindlin_singular_functions(i, ls, lambda, mu);
+getfem::pglobal_function mindlin_crack_singular(size_type i, 
+  const getfem::level_set &ls, scalar_type lambda, scalar_type mu, scalar_type epsilon){ 
+  return new mindlin_singular_functions(i, ls, lambda, mu, epsilon);
 }
 
 
@@ -227,14 +232,14 @@ struct exact_solution {
   
   exact_solution(getfem::mesh &me) : mf_ut(me), mf_u3(me), mf_theta(me) {}
   
-  void init(getfem::level_set &ls, size_type sol_ref, scalar_type lambda, scalar_type mu) {
+  void init(getfem::level_set &ls, size_type sol_ref, scalar_type lambda, scalar_type mu, scalar_type epsilon) {
     if (sol_ref == 3){
 	std::vector<getfem::pglobal_function> cfun_ut(4), cfun_u3(1), cfun_theta(4) ;
 	for (unsigned j=0; j < 4; ++j) {
-	cfun_ut[j] = mindlin_crack_singular(j+2, ls, lambda, mu) ;
-	cfun_theta[j] = mindlin_crack_singular(j, ls, lambda, mu) ;
+	cfun_ut[j] = mindlin_crack_singular(j+2, ls, lambda, mu, epsilon) ;
+	cfun_theta[j] = mindlin_crack_singular(j, ls, lambda, mu, epsilon) ;
 	}
-	cfun_u3[0] = mindlin_crack_singular(3,ls, lambda, mu) ;
+	cfun_u3[0] = mindlin_crack_singular(3,ls, lambda, mu, epsilon) ;
 	
 	// Initialising  ut
 	mf_ut.set_qdim(1) ;
@@ -265,11 +270,11 @@ struct exact_solution {
     if (sol_ref == 4){
 	std::vector<getfem::pglobal_function> cfun_ut(4), cfun_u3(1), cfun_theta(2) ;
 	for (unsigned j=0; j < 4; ++j) {
-        	cfun_ut[j] = mindlin_crack_singular(j+2, ls, lambda, mu) ;
+        	cfun_ut[j] = mindlin_crack_singular(j+2, ls, lambda, mu, epsilon) ;
 	}
-	cfun_u3[0] = mindlin_crack_singular(6, ls, lambda, mu) ;
-	cfun_theta[0] = mindlin_crack_singular(7, ls, lambda, mu) ;
-	cfun_theta[1] = mindlin_crack_singular(8, ls, lambda, mu) ;
+	cfun_u3[0] = mindlin_crack_singular(6, ls, lambda, mu, epsilon) ;
+	cfun_theta[0] = mindlin_crack_singular(7, ls, lambda, mu, epsilon) ;
+	cfun_theta[1] = mindlin_crack_singular(8, ls, lambda, mu, epsilon) ;
 
 	// Initialising  ut
 	mf_ut.set_qdim(1) ;
@@ -555,7 +560,7 @@ void crack_mindlin_problem::init(void) {
     }
   }
   
-  exact_sol.init(ls, sol_ref, lambda, mu);
+  exact_sol.init(ls, sol_ref, lambda, mu, epsilon);
   
 }
 
@@ -592,10 +597,10 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   
 
   for (size_type i = 0 ; i < 4 ; ++i){
-        utfunc[i] = mindlin_crack_singular(i+2, ls, lambda, mu); 
-	theta_func[i] = mindlin_crack_singular(i, ls, lambda, mu);
+        utfunc[i] = mindlin_crack_singular(i+2, ls, lambda, mu, epsilon); 
+	theta_func[i] = mindlin_crack_singular(i, ls, lambda, mu, epsilon);
   }  
-  u3func[0] = mindlin_crack_singular(3, ls, lambda, mu) ;
+  u3func[0] = mindlin_crack_singular(3, ls, lambda, mu, epsilon) ;
   
   mf_sing_ut.set_functions(utfunc);
   mf_sing_u3.set_functions(u3func);
@@ -659,6 +664,7 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   plain_vector M(nb_dof_rhs * 2);
   scalar_type r, theta, E, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
   E =  4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
+  nu = lambda / (2. * mu + lambda);
   for (size_type i = 0; i < nb_dof_rhs; ++i){
   if (sol_ref == 0){
     if (mf_rhs.point_of_dof(i)[1] > 0 )

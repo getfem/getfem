@@ -5,30 +5,32 @@
 %%%%% pde parameters : %%%%%
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-EPSILON = 0.1 ;         
+EPSILON = 0.5 ;         
 PRESSURE = 0.00025 ; 
 HALF_CRACK_LENGTH = 0.25 ;        
 SOL_REF = 4 ;
 
+
 %%%%%   discretisation parameters  : %%%%%
 MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
-FEM_TYPE_UT = 'FEM_QK(2,3)';
+FEM_TYPE_UT = 'FEM_QK(2,1)';
 FEM_TYPE_U3 = 'FEM_QK(2,1)';
-FEM_TYPE_THETA= 'FEM_QK(2,2)';
+FEM_TYPE_THETA= 'FEM_QK(2,1)';
 DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                    % to degree 6 on tetra
 				   
 
-NX = 9;            	          % space step.
+NX = 10;                       % space step.
 MITC = 0;
 MESH_NOISE = 0;                % Set to one if you want to "shake" the mesh
+SOL_EXACTE = 0 ;               % Set to one if you want to compute de norms of the exact solution
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
-DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
+DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
 
 
 
@@ -36,13 +38,13 @@ CUTOFF=0.3;
 ENRICHMENT_OPTION = 0	% 0 = without enrichment
 			% 1 = global functions with cutoff
 	              	% 2 = standard XFEM on a fixed zone 
-RADIUS_ENR_AREA = 0.1;
+RADIUS_ENR_AREA = 0.15;
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 %%%%%   saving parameters  %%%%%
 ROOTFILENAME = 'crack_mindlin';     % Root of data files.
 VTK_EXPORT = 0 % export solution to a .vtk file ?
-DX_EXPORT = 2 ;
+DX_EXPORT = 1 ;
 
 
 
