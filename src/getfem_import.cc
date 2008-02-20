@@ -171,10 +171,13 @@ namespace getfem {
       if (version == 2) { /* Format version 2 */	
 	unsigned nbtags, mesh_part;
 	f >> id >> type >> nbtags;
-	if (nbtags != 3) 
+	if (nbtags == 0 || nbtags > 3) 
 	  GMM_ASSERT1(false, "Number of tags" << nbtags 
-		      << " is not managed.");      
-	f >> region >> dummy >> mesh_part;
+		      << " is not managed.");   
+           
+	f >> region; 
+        if (nbtags > 1) f >> dummy;
+        if (nbtags > 2) f >> mesh_part;
       }
       else
 	f >> id >> type >> region >> dummy >> cv_nb_nodes;
