@@ -58,19 +58,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 // Parameters for the exact solution  ---------------------------
 
 
-scalar_type nu = 0.3 ;
 
-scalar_type A0 = 1. ;
-
-scalar_type A1 = 0.0 ;
-scalar_type B1 = 0.0 ;
-scalar_type C1 = 3.* A1 ;   
-scalar_type D1 = 0.0 ;  
-
-scalar_type A2 = 0.0 ;
-scalar_type B2 = 0.0 ;
-scalar_type C2 = 3.* A2 + nu * (D1 - B1) ; 
-scalar_type D2 = B2 ;  
  
 
 // Class for the Singular functions ------------------------------
@@ -252,6 +240,20 @@ struct exact_solution {
 	mf_theta.set_qdim(1) ;
 	mf_theta.set_functions(cfun_theta);   
 	THETA.resize(8); assert(mf_theta.nb_dof() == 4);
+	scalar_type nu = 0.3 ;
+
+	// mode I   : A1 != 0, B2 != 0
+	// mode II  : B1 != 0, D1 != 0, A2 != 0
+	// mode III : A0 != 0
+	scalar_type A0 = 0. ;
+	scalar_type A1 = 0.0 ;
+	scalar_type B1 = 1.0 ;
+	scalar_type C1 = 3.* A1 ;   
+	scalar_type D1 = 1.0 ;  
+	scalar_type A2 = 1.0 ;
+	scalar_type B2 = 0.0 ;
+	scalar_type C2 = 3.* A2 + (D1 - B1) * lambda / (lambda + 2. * mu) ; 
+	scalar_type D2 = B2 ;  
 	THETA[0] = A1 ;
 	THETA[1] = A2 ;
 	THETA[2] = B1 ;
@@ -659,10 +661,11 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   
   ELAS = &ELAS1;
 
-  // Defining the surface source term.
+  cout << "Defining the surface source term... \n" ;
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
-  scalar_type r, theta, E, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
+  scalar_type r, theta, E, nu, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
+  scalar_type MapleGenVar8, MapleGenVar9, MapleGenVar10, MapleGenVar11, MapleGenVar12, MapleGenVar13, MapleGenVar14 ;
   E =  4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
   nu = lambda / (2. * mu + lambda);
   for (size_type i = 0; i < nb_dof_rhs; ++i){
@@ -677,12 +680,105 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
     }
   
   if (sol_ref == 3) {
-     r = sqrt ( mf_rhs.point_of_dof(i)[0] * mf_rhs.point_of_dof(i)[0] + mf_rhs.point_of_dof(i)[1] * mf_rhs.point_of_dof(i)[1] ) ;
+     r = gmm::sqrt(gmm::abs( mf_rhs.point_of_dof(i)[0] * mf_rhs.point_of_dof(i)[0] + mf_rhs.point_of_dof(i)[1] * mf_rhs.point_of_dof(i)[1] )) ;
      theta = atan2( mf_rhs.point_of_dof(i)[1], mf_rhs.point_of_dof(i)[0] ) ;
-      M[2*i  ]  = - sin(theta/2.0)  / 2.0   / sqrt(r) ; 
-      M[2*i+1]  =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
-      M[2*i]   *= E * epsilon / (1.+nu) ;
-      M[2*i+1] *= E * epsilon / (1.+nu) ;
+     scalar_type t = theta ;
+     scalar_type a = exact_sol.U3[0] ;
+     scalar_type a1 = exact_sol.THETA[0] ;
+     scalar_type a2 = exact_sol.THETA[1] ;
+     scalar_type b1 = exact_sol.THETA[2] ;
+     scalar_type b2 = exact_sol.THETA[3] ;
+     scalar_type c1 = exact_sol.THETA[4] ;
+     scalar_type c2 = exact_sol.THETA[5] ;
+     scalar_type d1 = exact_sol.THETA[6] ;
+     scalar_type d2 = exact_sol.THETA[7] ;
+     F[3*i+2] = -epsilon * mu * (cos(t) * a1 * cos(3.0/2.0*t) + cos(t) * b1 * sin(3.0/2.0*t) + cos(t) * c1 * cos(t/2.0) + cos(t) * d1 * sin(t/2.0) + 3.0*sin(t) * a1 * sin(3.0/2.0*t) - 3.0*sin(t) * b1 * cos(3.0/2.0*t) + sin(t) * c1 * sin(t/2.0) - sin(t) * d1 * cos(t/2.0) + sin(t) * a2 * cos(3.0/2.0*t) + sin(t) * b2 * sin(3.0/2.0*t) + sin(t) * c2 * cos(t/2.0) + sin(t) * d2 * sin(t/2.0) - 3.0 * cos(t) * a2 * sin(3.0/2.0*t) + 3.0 * cos(t) * b2 * cos(3.0/2.0*t) - cos(t) * c2 * sin(t/2.0) + cos(t) * d2 * cos(t/2.0)) / sqrt(r) ;
+/**********************/
+     MapleGenVar1 = -1.0/3.0;      MapleGenVar3 = epsilon*epsilon;
+      MapleGenVar6 = 2.0;
+      MapleGenVar8 = epsilon;
+      MapleGenVar10 = (lambda+2.0*mu)*((-1/sqrt(r*r*r)*(a1*cos(3.0/2.0*t)+b1*
+sin(3.0/2.0*t)+c1*cos(t/2.0)+d1*sin(t/2.0))*cos(t)/4.0+1/sqrt(r*r*r)*(-3.0/2.0*
+a1*sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0/2.0*t)-c1*sin(t/2.0)/2.0+d1*cos(t/2.0)/2.0
+)*sin(t)/2.0)*cos(t)-(-1/sqrt(r)*(-3.0/2.0*a1*sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0
+/2.0*t)-c1*sin(t/2.0)/2.0+d1*cos(t/2.0)/2.0)*cos(t)/2.0-1/sqrt(r)*(a1*cos(3.0/
+2.0*t)+b1*sin(3.0/2.0*t)+c1*cos(t/2.0)+d1*sin(t/2.0))*sin(t)/2.0-1/sqrt(r)*(
+-9.0/4.0*a1*cos(3.0/2.0*t)-9.0/4.0*b1*sin(3.0/2.0*t)-c1*cos(t/2.0)/4.0-d1*sin(t
+/2.0)/4.0)*sin(t))*sin(t)/r);
+      MapleGenVar12 = (lambda+mu)*((-1/sqrt(r*r*r)*(a2*cos(3.0/2.0*t)+b2*sin(
+3.0/2.0*t)+c2*cos(t/2.0)+d2*sin(t/2.0))*cos(t)/4.0+1/sqrt(r*r*r)*(-3.0/2.0*a2*
+sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin(t/2.0)/2.0+d2*cos(t/2.0)/2.0)*
+sin(t)/2.0)*sin(t)+(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/
+2.0*t)-c2*sin(t/2.0)/2.0+d2*cos(t/2.0)/2.0)*cos(t)/2.0-1/sqrt(r)*(a2*cos(3.0/
+2.0*t)+b2*sin(3.0/2.0*t)+c2*cos(t/2.0)+d2*sin(t/2.0))*sin(t)/2.0-1/sqrt(r)*(
+-9.0/4.0*a2*cos(3.0/2.0*t)-9.0/4.0*b2*sin(3.0/2.0*t)-c2*cos(t/2.0)/4.0-d2*sin(t
+/2.0)/4.0)*sin(t))*cos(t)/r);
+      MapleGenVar13 = mu*((-1/sqrt(r*r*r)*(a1*cos(3.0/2.0*t)+b1*sin(3.0/2.0*t)+
+c1*cos(t/2.0)+d1*sin(t/2.0))*sin(t)/4.0-1/sqrt(r*r*r)*(-3.0/2.0*a1*sin(3.0/2.0*
+t)+3.0/2.0*b1*cos(3.0/2.0*t)-c1*sin(t/2.0)/2.0+d1*cos(t/2.0)/2.0)*cos(t)/2.0)*
+sin(t)+(-1/sqrt(r)*(-3.0/2.0*a1*sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0/2.0*t)-c1*sin
+(t/2.0)/2.0+d1*cos(t/2.0)/2.0)*sin(t)/2.0+1/sqrt(r)*(a1*cos(3.0/2.0*t)+b1*sin(
+3.0/2.0*t)+c1*cos(t/2.0)+d1*sin(t/2.0))*cos(t)/2.0+1/sqrt(r)*(-9.0/4.0*a1*cos(
+3.0/2.0*t)-9.0/4.0*b1*sin(3.0/2.0*t)-c1*cos(t/2.0)/4.0-d1*sin(t/2.0)/4.0)*cos(t
+))*cos(t)/r);
+      MapleGenVar11 = MapleGenVar12+MapleGenVar13;
+      MapleGenVar9 = MapleGenVar10+MapleGenVar11;
+      MapleGenVar7 = MapleGenVar8*MapleGenVar9;
+      MapleGenVar5 = MapleGenVar6*MapleGenVar7;
+      MapleGenVar6 = -6.0*mu/epsilon*(a/sqrt(r)*sin(t/2.0)*cos(t)/2.0-a/sqrt(r)
+*cos(t/2.0)*sin(t)/2.0+sqrt(r)*(a1*cos(3.0/2.0*t)+b1*sin(3.0/2.0*t)+c1*cos(t/
+2.0)+d1*sin(t/2.0)));
+      MapleGenVar4 = MapleGenVar5+MapleGenVar6;
+      MapleGenVar2 = MapleGenVar3*MapleGenVar4;
+      M[2 * i] = MapleGenVar1*MapleGenVar2;
+
+      /*****************/
+      
+      MapleGenVar1 = -1.0/3.0;      MapleGenVar3 = epsilon*epsilon;
+      MapleGenVar6 = 2.0;
+      MapleGenVar8 = epsilon;
+      MapleGenVar10 = (lambda+2.0*mu)*((-1/sqrt(r*r*r)*(a2*cos(3.0/2.0*t)+b2*
+sin(3.0/2.0*t)+c2*cos(t/2.0)+d2*sin(t/2.0))*sin(t)/4.0-1/sqrt(r*r*r)*(-3.0/2.0*
+a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin(t/2.0)/2.0+d2*cos(t/2.0)/2.0
+)*cos(t)/2.0)*sin(t)+(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0
+/2.0*t)-c2*sin(t/2.0)/2.0+d2*cos(t/2.0)/2.0)*sin(t)/2.0+1/sqrt(r)*(a2*cos(3.0/
+2.0*t)+b2*sin(3.0/2.0*t)+c2*cos(t/2.0)+d2*sin(t/2.0))*cos(t)/2.0+1/sqrt(r)*(
+-9.0/4.0*a2*cos(3.0/2.0*t)-9.0/4.0*b2*sin(3.0/2.0*t)-c2*cos(t/2.0)/4.0-d2*sin(t
+/2.0)/4.0)*cos(t))*cos(t)/r);
+      MapleGenVar12 = (lambda+mu)*((-1/sqrt(r*r*r)*(a1*cos(3.0/2.0*t)+b1*sin(
+3.0/2.0*t)+c1*cos(t/2.0)+d1*sin(t/2.0))*cos(t)/4.0+1/sqrt(r*r*r)*(-3.0/2.0*a1*
+sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0/2.0*t)-c1*sin(t/2.0)/2.0+d1*cos(t/2.0)/2.0)*
+sin(t)/2.0)*sin(t)+(-1/sqrt(r)*(-3.0/2.0*a1*sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0/
+2.0*t)-c1*sin(t/2.0)/2.0+d1*cos(t/2.0)/2.0)*cos(t)/2.0-1/sqrt(r)*(a1*cos(3.0/
+2.0*t)+b1*sin(3.0/2.0*t)+c1*cos(t/2.0)+d1*sin(t/2.0))*sin(t)/2.0-1/sqrt(r)*(
+-9.0/4.0*a1*cos(3.0/2.0*t)-9.0/4.0*b1*sin(3.0/2.0*t)-c1*cos(t/2.0)/4.0-d1*sin(t
+/2.0)/4.0)*sin(t))*cos(t)/r);
+      MapleGenVar13 = mu*((-1/sqrt(r*r*r)*(a2*cos(3.0/2.0*t)+b2*sin(3.0/2.0*t)+
+c2*cos(t/2.0)+d2*sin(t/2.0))*cos(t)/4.0+1/sqrt(r*r*r)*(-3.0/2.0*a2*sin(3.0/2.0*
+t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin(t/2.0)/2.0+d2*cos(t/2.0)/2.0)*sin(t)/2.0)*
+cos(t)-(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin
+(t/2.0)/2.0+d2*cos(t/2.0)/2.0)*cos(t)/2.0-1/sqrt(r)*(a2*cos(3.0/2.0*t)+b2*sin(
+3.0/2.0*t)+c2*cos(t/2.0)+d2*sin(t/2.0))*sin(t)/2.0-1/sqrt(r)*(-9.0/4.0*a2*cos(
+3.0/2.0*t)-9.0/4.0*b2*sin(3.0/2.0*t)-c2*cos(t/2.0)/4.0-d2*sin(t/2.0)/4.0)*sin(t
+))*sin(t)/r);
+      MapleGenVar11 = MapleGenVar12+MapleGenVar13;
+      MapleGenVar9 = MapleGenVar10+MapleGenVar11;
+      MapleGenVar7 = MapleGenVar8*MapleGenVar9;
+      MapleGenVar5 = MapleGenVar6*MapleGenVar7;
+      MapleGenVar6 = -6.0*mu/epsilon*(a/sqrt(r)*sin(t/2.0)*sin(t)/2.0+a/sqrt(r)
+*cos(t/2.0)*cos(t)/2.0+sqrt(r)*(a2*cos(3.0/2.0*t)+b2*sin(3.0/2.0*t)+c2*cos(t/
+2.0)+d2*sin(t/2.0)));
+      MapleGenVar4 = MapleGenVar5+MapleGenVar6;
+      MapleGenVar2 = MapleGenVar3*MapleGenVar4;
+      M[2*i+1] = MapleGenVar1*MapleGenVar2;
+
+
+/*****************************************************************/
+//       M[2*i  ]  = - sin(theta/2.0)  / 2.0   / sqrt(r) ; 
+//       M[2*i+1]  =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
+//       M[2*i]   *= E * epsilon / (1.+nu) ;
+//       M[2*i+1] *= E * epsilon / (1.+nu) ;
+/*****************************************************************/
 //      F[3*i+2] = - epsilon * E / (1.+nu) / sqrt(r) * ( 
 //                    (A1 + C1/2. + B2 + D2/2.) * cos(theta/2.)
 //                  + (B1 - D1/2. - A2 + C2/2.) * sin(theta/2.)
@@ -728,7 +824,8 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
 //       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
 //       M[2*i+1 ] = MapleGenVar1*MapleGenVar2;
   } 
-  } 
+  }
+  cout << "source term computed. \n" ; 
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
@@ -808,6 +905,12 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
 /* compute the error with respect to the exact solution */
 void crack_mindlin_problem::compute_error(plain_vector &UT, plain_vector &U3, plain_vector &THETA ) {
   if (sol_ref == 3 || sol_ref == 4){
+     if (PARAM.int_value("SOL_EXACTE") == 1){
+        for (int i=0 ; i < U3.size() ; ++i)
+	     U3[i] = 0. ;
+	for (int i=0 ; i < THETA.size() ; ++i)
+	     THETA[i] = 0. ;
+     }
   cout << "Error on the vertical displacement u3 :\n" ;
   cout << "L2 ERROR:"
        << getfem::asm_L2_dist(mim, mf_u3(), U3, exact_sol.mf_u3, exact_sol.U3) 
