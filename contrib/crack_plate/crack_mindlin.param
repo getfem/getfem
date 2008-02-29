@@ -6,9 +6,9 @@
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 EPSILON = 0.5 ;         
-PRESSURE = 0.00025 ; 
+PRESSURE = 0.0025 ; 
 HALF_CRACK_LENGTH = 0.25 ;        
-SOL_REF = 4 ;
+SOL_REF = 3 ;
 
 
 %%%%%   discretisation parameters  : %%%%%
@@ -22,7 +22,7 @@ SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                    % to degree 6 on tetra
 				   
 
-NX = 10;                       % space step.
+NX = 9;                       % space step.
 MITC = 0;
 MESH_NOISE = 0;                % Set to one if you want to "shake" the mesh
 SOL_EXACTE = 0 ;               % Set to one if you want to compute de norms of the exact solution
@@ -35,7 +35,7 @@ DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
 
 
 CUTOFF=0.3;
-ENRICHMENT_OPTION = 0	% 0 = without enrichment
+ENRICHMENT_OPTION = 2	% 0 = without enrichment
 			% 1 = global functions with cutoff
 	              	% 2 = standard XFEM on a fixed zone 
 RADIUS_ENR_AREA = 0.15;
