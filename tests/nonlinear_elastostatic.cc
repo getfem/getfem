@@ -504,6 +504,7 @@ int main(int argc, char *argv[]) {
     plain_vector U(p.mf_u.nb_dof());
     if (p.PARAM.int_value("VTK_EXPORT")) {
       if (!p.solve(U)) cerr << "Solve has failed\n";
+      gmm::vecsave(p.datafilename + ".U", U);
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
