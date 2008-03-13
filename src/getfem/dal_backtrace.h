@@ -37,7 +37,9 @@
 #define DAL_BACKTRACE
 
 #include "getfem/getfem_arch_config.h"
-#include <stdio.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 
 
