@@ -765,7 +765,7 @@ namespace gmm {
 				  sub_vector(sdiag, SUBI),
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
 
-      symmetric_qr_stop_criterion(diag, sdiag, p, q, tol*R(2));
+      symmetric_qr_stop_criterion(diag, sdiag, p, q, tol*R(3));
       ++ite;
       GMM_ASSERT1(ite < n*100, "QR algorithm failed.");
     }
