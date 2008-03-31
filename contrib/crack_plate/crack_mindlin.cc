@@ -107,8 +107,7 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       return sqrt(r)*cos(theta/2)*cos(theta);
     } break;
     case 6: {   // usefull for Yves's exact solution only (not for finite element computation)
-      return 2. * sqrt(r) * (  sin(theta/2.) * mu_ * (30. * lambda_ + 60. * mu_ - 5. * gamma * r * r)
-                           - sin(5. * theta / 2.) * r * r * gamma * (4. * lambda_ + 3. * mu_) ) ;
+      return  sqrt(r) * (  10. * mu_ * sin(theta/2.) * ( 12. * mu_ + 6. * lambda_ - gamma * r * r) - 2. * r * r * gamma *  sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
     } break;
     case 7: {   // same comment as case 6
       return 5. * gamma * sqrt( r * r * r ) * ( 5. * sin(theta/2.) * mu_ + sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) );
@@ -661,6 +660,7 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   
   ELAS = &ELAS1;
 
+  
   cout << "Defining the surface source term... \n" ;
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
@@ -771,59 +771,11 @@ cos(t)-(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin
       MapleGenVar4 = MapleGenVar5+MapleGenVar6;
       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
       M[2*i+1] = MapleGenVar1*MapleGenVar2;
-
-
-/*****************************************************************/
-//       M[2*i  ]  = - sin(theta/2.0)  / 2.0   / sqrt(r) ; 
-//       M[2*i+1]  =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
-//       M[2*i]   *= E * epsilon / (1.+nu) ;
-//       M[2*i+1] *= E * epsilon / (1.+nu) ;
-/*****************************************************************/
-//      F[3*i+2] = - epsilon * E / (1.+nu) / sqrt(r) * ( 
-//                    (A1 + C1/2. + B2 + D2/2.) * cos(theta/2.)
-//                  + (B1 - D1/2. - A2 + C2/2.) * sin(theta/2.)
-//                  + (- A1/2. + B2/2. ) * cos(5. * theta/2.) 
-//                  + (- B1/2. - A2/2. ) * sin(5. * theta/2.)     ) ;  
-//       
-//       MapleGenVar1 = E ;
-//       MapleGenVar3 = epsilon*epsilon*epsilon;
-//       MapleGenVar5 = 1/(3.0+3.0*nu);
-//       MapleGenVar7 = 2.0/(1.0-nu)*(-((A1+C1/2.0)*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/
-// 2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A1+
-// C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0
-// /4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta))+(1.0+nu)/(1.0-nu)*(-((A2+C2/2.0)*
-// cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0)-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/
-// sqrt(r*r*r)*sin(theta)/2.0+(-(A2+C2/2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+
-// 5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
-//       MapleGenVar6 = MapleGenVar7-((B1+D1/2.0)*cos(theta/2.0)+(-A1+C1/2.0)*sin(theta/
-// 2.0)+B1*cos(5.0/2.0*theta)/2.0-A1*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B1+
-// D1/2.0)*sin(theta/2.0)/2.0+(-A1+C1/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B1*sin(5.0/2.0*theta)
-// -5.0/4.0*A1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*cos(theta)
-// /2.0-A0/sqrt(r)*cos(theta/2.0)*sin(theta)/2.0+sqrt(r)*(A1*cos(3.0/2.0*theta)+B1*sin(3.0/2.0*
-// theta)+C1*cos(theta/2.0)+D1*sin(theta/2.0)))*epsilon*epsilon;
-//       MapleGenVar4 = MapleGenVar5*MapleGenVar6;
-//       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
-//       M[2*i] = MapleGenVar1*MapleGenVar2;
-//       MapleGenVar1 = -4.*mu*(mu+lambda) / (2. * mu + lambda);
-//       MapleGenVar3 = epsilon*epsilon*epsilon;
-//       MapleGenVar5 = 1/(3.0+3.0*nu);
-//       MapleGenVar7 = 2.0/(1.0-nu)*(-((B2+D2/2.0)*cos(theta/2.0)+(-A2+C2/2.0)*sin(theta/
-// 2.0)+B2*cos(5.0/2.0*theta)/2.0-A2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*sin(theta)/2.0+(-(B2+
-// D2/2.0)*sin(theta/2.0)/2.0+(-A2+C2/2.0)*cos(theta/2.0)/2.0-5.0/4.0*B2*sin(5.0/2.0*theta)
-// -5.0/4.0*A2*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta))+(1.0+nu)/(1.0-nu)*(-((A1+C1/2.0
-// )*cos(theta/2.0)+(B1-D1/2.0)*sin(theta/2.0)-A1*cos(5.0/2.0*theta)/2.0-B1*sin(5.0/2.0*theta)/2.0
-// )/sqrt(r*r*r)*sin(theta)/2.0+(-(A1+C1/2.0)*sin(theta/2.0)/2.0+(B1-D1/2.0)*cos(theta/2.0)/
-// 2.0+5.0/4.0*A1*sin(5.0/2.0*theta)-5.0/4.0*B1*cos(5.0/2.0*theta))/sqrt(r*r*r)*cos(theta));
-//       MapleGenVar6 = MapleGenVar7-((A2+C2/2.0)*cos(theta/2.0)+(B2-D2/2.0)*sin(theta/2.0
-// )-A2*cos(5.0/2.0*theta)/2.0-B2*sin(5.0/2.0*theta)/2.0)/sqrt(r*r*r)*cos(theta)/2.0-(-(A2+C2/
-// 2.0)*sin(theta/2.0)/2.0+(B2-D2/2.0)*cos(theta/2.0)/2.0+5.0/4.0*A2*sin(5.0/2.0*theta)-5.0/
-// 4.0*B2*cos(5.0/2.0*theta))/sqrt(r*r*r)*sin(theta)-3.0*(A0/sqrt(r)*sin(theta/2.0)*sin(theta)/2.0+
-// A0/sqrt(r)*cos(theta/2.0)*cos(theta)/2.0+sqrt(r)*(A2*cos(3.0/2.0*theta)+B2*sin(3.0/2.0*theta)+C2
-// *cos(theta/2.0)+D2*sin(theta/2.0)))*epsilon*epsilon;
-//       MapleGenVar4 = MapleGenVar5*MapleGenVar6;
-//       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
-//       M[2*i+1 ] = MapleGenVar1*MapleGenVar2;
-  } 
+     } 
+  }
+  if (sol_ref == 4){
+     gmm::clear(F);
+     gmm::clear(M);
   }
   cout << "source term computed. \n" ; 
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
