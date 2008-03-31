@@ -1664,10 +1664,10 @@ These functions return the $L^2$ and $H^1$ norms of $u_1 - u_2$.
 The file \getfemderivativesh  defines the following function to compute the gradient of a solution
 \index{GETFEM!getfem::compute\_gradient}
 \begin{cppcode}
-getfem::compute\_gradient(mim, mf1, mf2, U, V);
+getfem::compute\_gradient(mf1, mf2, U, V);
 \end{cppcode}
 where \cpp{mf1} is a variable of type \getfemmeshfem and describes the finite element method on which the solution is defined, \cpp{mf2} describes the finite element method to compute the gradient, \cpp{U} is a vector representing the solution and should be of size \cpp{mf1.nb\_dof()}, \cpp{V} is the vector on which the gradient will be computed and should be of size
-\cpp{N * mf2.nb\_dof()} , with \cpp{N} the dimension of the domain. IMPORTANT : This function only works when \cpp{mf2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
+\cpp{N * mf2.nb\_dof()} , with \cpp{N} the dimension of the domain. IMPORTANT : This function only works when \cpp{mf2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::FEM\_PK\_DISCONTINUOUS(n, k)}), the gradient is not continuous.
 
 \section{Export and view a solution}
 

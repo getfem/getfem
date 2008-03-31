@@ -6,7 +6,8 @@ function check_mesh_fem(iverbose,idebug)
     if (nargin == 2),
       gdebug = idebug;
     else 
-      gdebug = 0; end;
+      gdebug = 0;
+    end;
   else 
     gverbose = 0;
   end;
@@ -326,5 +327,4 @@ function check_mesh_fem(iverbose,idebug)
   D2U=gf_compute(mf, DU, 'gradient', mf);
   
   D2U2=gf_compute(mf, U, 'hessian', mf);
-  
-  assert('max(max(abs(D2U(:)-D2U2(:)))) < 1e-10');
+  assert('max(max(abs(D2U(:)-D2U2(:)))) < 1e-9');
