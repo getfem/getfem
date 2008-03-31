@@ -360,7 +360,7 @@ void bilaplacian_crack_problem::init(void) {
     mesh.translation(tt); 
     
  if (PARAM.int_value("MOVE_NODES")){
-    cout << "déplacement des noeuds \n" ;
+    cout << "dï¿½placement des noeuds \n" ;
 //    size_type nb_x_pos, nb_y_pos = 0 ;
     scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
 //    scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
@@ -368,7 +368,7 @@ void bilaplacian_crack_problem::init(void) {
     
 // for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
 //    nb_x_pos = 0 ; // nombre de noeuds d'abscisse positive
-//    nb_y_pos = 0 ; // nombre de noeuds d'ordonnée positive
+//    nb_y_pos = 0 ; // nombre de noeuds d'ordonnï¿½e positive
 //    for (int j=0; j<4 ; ++j){
 //        if (mesh.points_of_convex(i)[j][0] > 0.) 
 //            nb_x_pos += 1 ;
@@ -376,7 +376,7 @@ void bilaplacian_crack_problem::init(void) {
 //            nb_y_pos += 1 ;
 //    }
 //  
-//    if (nb_x_pos < 4){ // juste pour éviter de traiter des éléments inutiles
+//    if (nb_x_pos < 4){ // juste pour ï¿½viter de traiter des ï¿½lï¿½ments inutiles
 //        if ( nb_y_pos == 1){
 // 	  for (int j=0; j<4 ; ++j){
 // 	      if ( (mesh.points_of_convex(i)[j][1] > 0.)
@@ -386,7 +386,7 @@ void bilaplacian_crack_problem::init(void) {
 // 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
 //                     bgeot::base_node& P = mesh.points()[ip];
 // 	            if( gmm::vect_dist2(P, Q) < 1e-8){
-// 		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+// 		      cout << "dï¿½placï¿½ de (" << P[0] << " ; " << P[1] << ") ï¿½ : " ;
 // 		      //P[1] = 1./2./NX ;
 // 		      //P[1] = 1./2./NX ;
 // 		      P[1] = seuil_move ;
@@ -405,7 +405,7 @@ void bilaplacian_crack_problem::init(void) {
 // 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
 //                     bgeot::base_node& P = mesh.points()[ip];
 // 	            if( gmm::vect_dist2(P, Q) < 1e-8){
-// 		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+// 		      cout << "dï¿½placï¿½ de (" << P[0] << " ; " << P[1] << ") ï¿½ : " ;
 // 		      //P[1] = - 1./2./NX ;
 // 		      //P[1] = -1./2./NX ;
 // 		      P[1] = -1. *seuil_move ;
@@ -423,7 +423,7 @@ void bilaplacian_crack_problem::init(void) {
    for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
                     bgeot::base_node& P = mesh.points()[ip];
 	            if( gmm::abs(P[1]) < seuil_select){
-		      cout << "déplacé de (" << P[0] << " ; " << P[1] << ") à : " ;
+		      cout << "dï¿½placï¿½ de (" << P[0] << " ; " << P[1] << ") ï¿½ : " ;
 		      P[1] = 0. ;
 		      cout << P[1] << "\n" ;
 	            }
@@ -595,8 +595,8 @@ void bilaplacian_crack_problem::init(void) {
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
-  mfls_mult.adapt();
-  mfls_mult_d.adapt();
+//   mfls_mult.adapt();
+//   mfls_mult_d.adapt();
   mfls_mortar.adapt();
   mfls_mortar_deriv.adapt();
   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
@@ -702,8 +702,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
-  mfls_mult.adapt();
-  mfls_mult_d.adapt();
+//   mfls_mult.adapt();
+//   mfls_mult_d.adapt();
   mfls_mortar.adapt();
   mfls_mortar_deriv.adapt();
   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
@@ -1265,7 +1265,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
                                                  mf_rhs, RR);
 						 
     //cout << "stiffness_matrix_for_bilaplacian : " << M2 << "\n" ;
-    cout << "termes diagonaux, de la matrice de rigidité, inférieurs à 1e-10 : " ;
+    cout << "termes diagonaux, de la matrice de rigiditï¿½, infï¿½rieurs ï¿½ 1e-10 : " ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
         if (M2(d,d) < 1e-10) cout << M2(d,d) << " ; " ;
     }  
