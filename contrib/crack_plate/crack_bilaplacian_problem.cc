@@ -9,9 +9,9 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type AAA = 0.1 ;
+scalar_type AAA = 1.0 ;
 scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type DD = 0.0 ;
+scalar_type DD = 0.1 ;
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*AAA*nu*nu-6.0*nu*AAA+15.0*AAA)/(nu*nu-2.0*nu+5.0);
  
 
@@ -994,6 +994,18 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
        the enriched area and the rest of the mesh */
        int mult_with_H = PARAM.int_value("MULT_WITH_H") ;
        mortar_type = PARAM.int_value("MORTAR_TYPE") ;
+       // MODIFICATION : trying to define 1-Dimensionnal 
+       // multipliers on the boundary of enrichment zone.
+//   cout << "Re-initialisation des mesh_fem mortar : " ;
+//   mf_pre_mortar.set_finite_element(MORTAR_BOUNDARY_IN,
+//              getfem::fem_descriptor(PARAM.string_value("MORTAR_FEM_TYPE")));
+//   mf_pre_mortar_deriv.set_finite_element(MORTAR_BOUNDARY_IN,
+//              getfem::fem_descriptor(PARAM.string_value("MORTAR_DERIV_FEM_TYPE")));
+//   cout << " OK !! \n" ;
+// 
+//   mfls_mortar.adapt();
+//   mfls_mortar_deriv.adapt();
+       // END MODIFICATION
        getfem::mesh_fem &mf_mortar = (mult_with_H == 1) ? mfls_mortar : mf_pre_mortar;
        getfem::mesh_fem &mf_mortar_deriv = (mult_with_H == 1) ? mfls_mortar_deriv : mf_pre_mortar_deriv;
        
@@ -1127,18 +1139,22 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
       for (size_type i=0; i < mf_mortar.nb_dof(); ++i)
 	if (MM(i,i) > 1e-15) { 
-	  // cout << "dof " << i << " MM = " << MM(i,i) << endl;
-	  bv_mortar.add(i); ind_mortar.push_back(i);
+	  bv_mortar.add(i); 
+	  ind_mortar.push_back(i);
 	}
       for (size_type i=0; i < mf_mortar_deriv.nb_dof(); ++i)
-	if (MD(i,i) > 1e-15) { bv_deriv.add(i); ind_deriv.push_back(i); }
+	if (MD(i,i) > 1e-15) { 
+	  bv_deriv.add(i); 
+	  ind_deriv.push_back(i); 
+        }
       
       // building matrices
       
       cout << "Handling mortar junction (" << ind_mortar.size() << 
 	" dof for the lagrange multiplier of the displacement, " <<
 	ind_deriv.size() << " dof for the lagrange multiplier of the derivative)\n";
-      
+      gmm::clear(H0);
+      gmm::clear(H);
       gmm::resize(H0, mf_mortar.nb_dof(), mf_u().nb_dof()) ;
       gmm::resize(H,  ind_mortar.size() + ind_deriv.size(), mf_u().nb_dof()) ; 
       
@@ -1155,7 +1171,6 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       /* build the mortar constraint matrix -- note that the integration
 	 method is conformal to the crack
       */
-      gmm::clear(H0);
       getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_OUT);
       gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), gmm::sub_matrix(H, sub_val_H, sub_j) );
     
@@ -1182,16 +1197,70 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       
       cout << "first step \n" ;
       gmm::clear(H0);
-      if (mortar_type == 2)
+      if (mortar_type == 2) {
          asm_constraint_gradient_vectorial_mult
 	   (H0, mim, mf_u(), mf_mortar_deriv, 
 	   MORTAR_BOUNDARY_IN, getfem::ASMDIR_BUILDH) ;
-      if (mortar_type == 3)
+      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), - 1.0),
+	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ; 
+      }
+      if (mortar_type == 3) {
          getfem::asm_normal_derivative_dirichlet_constraints
 	   (H0, R, mim, mf_u(), mf_mortar_deriv, mf_pre_u, R,
 	    MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
-      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), +1.0),
+      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), + 1.0),
 	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
+      }
+
+//  MODIFICATION : trying to define 1-Dimensionnal 
+//    multipliers on the boundary of enrichment zone. 
+
+//       gmm::resize(H0, mf_mortar.nb_dof(), mf_u().nb_dof()) ;
+//       gmm::resize(H,  mf_mortar.nb_dof() + mf_mortar_deriv.nb_dof(), mf_u().nb_dof()) ;
+// 
+//       // Defining usefull sub intervals :
+//       gmm::sub_interval sub_i1(0, mf_mortar.nb_dof()) ;
+//       gmm::sub_interval sub_i2(mf_mortar.nb_dof(), mf_mortar_deriv.nb_dof()) ;
+//       gmm::sub_interval sub_j(0, mf_u().nb_dof() ) ;
+// 
+//       // assembling constraint matrix
+//       gmm::clear(H0);
+//       getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_OUT);
+//       gmm::copy(H0, gmm::sub_matrix(H, sub_i1, sub_j) );
+//     
+//       gmm::clear(H0);
+//       getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_IN);
+//       gmm::add(gmm::scaled(H0, -1), gmm::sub_matrix(H, sub_i1, sub_j) );
+//       
+//       
+//       cout << "first contraint asm\n" ;
+//       gmm::resize(R, mf_mortar_deriv.nb_dof());
+//       gmm::clear(H0);
+//       gmm::resize(H0, mf_mortar_deriv.nb_dof(), mf_u().nb_dof() ) ;
+//       if (mortar_type == 2)
+//          asm_constraint_gradient_vectorial_mult
+//            (H0, mim, mf_u(), mf_mortar_deriv,
+//            MORTAR_BOUNDARY_OUT, getfem::ASMDIR_BUILDH) ;
+//       if (mortar_type == 3)
+//          getfem::asm_normal_derivative_dirichlet_constraints
+// 	   (H0, R, mim, mf_u(), mf_mortar_deriv, mf_pre_u, R,
+// 	    MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
+// 
+//       gmm::add(H0, gmm::sub_matrix(H, sub_i2, sub_j)) ;
+//       
+//       cout << "first step \n" ;
+//       gmm::clear(H0);
+//       if (mortar_type == 2)
+//          asm_constraint_gradient_vectorial_mult
+// 	   (H0, mim, mf_u(), mf_mortar_deriv, 
+// 	   MORTAR_BOUNDARY_IN, getfem::ASMDIR_BUILDH) ;
+//       if (mortar_type == 3)
+//          getfem::asm_normal_derivative_dirichlet_constraints
+// 	   (H0, R, mim, mf_u(), mf_mortar_deriv, mf_pre_u, R,
+// 	    MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
+// 
+//       gmm::add(gmm::scaled(H0, +1.0),
+// 	       gmm::sub_matrix(H, sub_i2, sub_j)) ;
     }
 
     /* because of the discontinuous partition of mf_u(), some levelset 
