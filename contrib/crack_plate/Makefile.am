@@ -26,14 +26,15 @@ else
 TESTS =
 endif
 
-EXTRA_DIST = \
-	crack_mindlin.pl                  \
-	crack_mindlin.param \
-	crack_bilaplacian.param \
-	mortar_bilaplacian.param \
-	serie.param \
-	serie_bis.param \
+EXTRA_DIST =		 		\
+	crack_mindlin.pl		\
+	crack_mindlin.param 		\
+	crack_bilaplacian.param 	\
+	mortar_bilaplacian.param 	\
 	crack_bilaplacian_mixed.param
 
+#	serie.param \
+#	serie_bis.param \
+#
 
 TESTS_ENVIRONMENT = perl
