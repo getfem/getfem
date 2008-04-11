@@ -170,7 +170,9 @@ struct bilaplacian_crack_problem {
   scalar_type D ;
   
   exact_solution exact_sol;
-    
+  size_type sol_ref ;    /* 0 : solution made of pure singularities
+                            1 : infinite plate with central crack subject to 
+                                moments (pure K1 mode) -> work in progress*/
   bool solve(plain_vector &U);
   bool solve_moment(plain_vector &U) ;
   void init(void);
@@ -179,6 +181,7 @@ struct bilaplacian_crack_problem {
   void move_nodes_close_to_crack(void); // bugged
   void compute_error_beta(plain_vector &U) ;
   void init_mixed_elements(void) ;
+  void set_matrix_mortar(sparse_matrix &H) ;
   
   bilaplacian_crack_problem(void) : ls(mesh, 1, true), 
 				    mls(mesh), mim(mls), mf_pre_u(mesh),  

@@ -7,8 +7,8 @@
 
 
 
-scalar_type moment = 1. ;
-scalar_type beta = M_PI / 4. ;
+scalar_type moment = - 1. ;
+scalar_type bbeta = M_PI / 4. ;
 //scalar_type epsilon = 1e-1 ;
 
 base_matrix sol_moment(const base_node &x)
@@ -29,16 +29,16 @@ base_small_vector sol_ff(const base_node &x)
 
 scalar_type sol_beta(const base_node &x){
 base_matrix m(2,2) ;
-m(0,0) = m(1,1) = cos(beta) ;
-m(0,1) = - sin(beta) ;
-m(1,0) = sin(beta) ;
+m(0,0) = m(1,1) = cos(bbeta) ;
+m(0,1) = - sin(bbeta) ;
+m(1,0) = sin(bbeta) ;
 base_node z(2) ;
 gmm::mult(m, x, z) ;
-return - moment * cos(beta) * sin(beta) * z[0] * z[1] / 0.7 ; }
+return - moment * cos(bbeta) * sin(bbeta) * z[0] * z[1] / 0.7 ; }
 
 base_matrix moment_beta(const base_node &x)
 { base_matrix m(x.size(), x.size()); 
-  m(1,0) = m(0,1) = moment * sin(beta) * cos(beta) ;
+  m(1,0) = m(0,1) = moment * sin(bbeta) * cos(bbeta) ;
   return m; }
 
   
@@ -81,41 +81,42 @@ return dy_dof ;
 bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {  
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   
-  // Setting the level-set
-  ls.reinit();  
-  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ;
-  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
-    if (PARAM.int_value("SOL_REF") == 0){
-    ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
-    ls.values(1)[d] = x;}
-    if (PARAM.int_value("SOL_REF") == 1){
-     ls.values(0)[d] = y  ;
-     ls.values(1)[d] = x - a ; //x * x - a * a ;
-    }
-  }
-  //ls.simplify(0.5);
-  ls.touch();  
-  mls.adapt();
-  mim.adapt();
-  mfls_u.adapt();
-  mfls_mortar.adapt();
-  mfls_mortar_deriv.adapt();
-  cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
-  
+//   // Setting the level-set
+//   ls.reinit();  
+//   scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ;
+//   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+//     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
+//     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+//     if (PARAM.int_value("SOL_REF") == 0){
+//     ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
+//     ls.values(1)[d] = x;}
+//     if (PARAM.int_value("SOL_REF") == 1){
+//      ls.values(0)[d] = y  ;
+//      ls.values(1)[d] = x  ; //x * x - a * a ;
+//     }
+//   }
+//   //ls.simplify(0.5);
+//   ls.touch();  
+//   mls.adapt();
+//   mim.adapt();
+//   mfls_u.adapt();
+//   mfls_mortar.adapt();
+//   mfls_mortar_deriv.adapt();
+//   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
+
+
   // setting singularities 
   cout << "setting singularities \n" ;
   if (PARAM.int_value("SING_BASE_TYPE") == 0){
 	std::vector<getfem::pglobal_function> ufunc(4);
-	for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
+	for (size_type i = 0 ; i < ufunc.size() ; ++i) {
 	ufunc[i] = bilaplacian_crack_singular(i, ls, nu);
 	}
   mf_sing_u.set_functions(ufunc);
   }
   if (PARAM.int_value("SING_BASE_TYPE") == 1){
 	std::vector<getfem::pglobal_function> ufunc(2);
-	for (size_type i = 0 ; i < ufunc.size() ; ++i) {                              
+	for (size_type i = 0 ; i < ufunc.size() ; ++i) {
 	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu);
 	}
   mf_sing_u.set_functions(ufunc);
@@ -276,7 +277,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 	 }
       }
  
-    }  // end of "enrichment_option = 3"
+    }
     break ;
   default : 
 	GMM_ASSERT1(false, "Enrichment_option parameter is undefined");
@@ -319,12 +320,10 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
   getfem::mdbrick_bilaplacian<> BIL(mim, mf_u());
   BIL.D().set(D);
   if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
-  
-//   // Volumic source term brick.
+
   size_type N = mesh.dim();
   plain_vector F(nb_dof_rhs);
-//   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
-  
+
   // Defining the prescribed momentum.
   gmm::resize(F, nb_dof_rhs*N*N);
   if (PARAM.int_value("SOL_REF")==1){
@@ -337,211 +336,45 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 //   MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
 getfem::mdbrick_normal_derivative_source_term<>
   MOMENTUM(BIL, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
-  
-  // Defining the Neumann condition right hand side.
-  plain_vector HH(nb_dof_rhs*N*N);
-  gmm::clear(F);
-  gmm::resize(F, nb_dof_rhs*N);
-  //getfem::interpolation_function(mf_rhs, F, sol_ff, FORCE_BOUNDARY_NUM);
-
-  // Neumann condition brick.
-  getfem::mdbrick_neumann_KL_term<> NEUMANN(MOMENTUM, mf_rhs, HH, F, FORCE_BOUNDARY_NUM);
- 
 
   // Normal derivative Dirichlet condition brick
   gmm::resize(F, nb_dof_rhs*N);
   gmm::clear(F);
   getfem::mdbrick_normal_derivative_Dirichlet<> 
-	NDER_DIRICHLET(NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult_d);
+	NDER_DIRICHLET(MOMENTUM, CLAMPED_BOUNDARY_NUM, mf_mult_d);
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.rhs().set(mf_rhs, F);
 
-  getfem::mdbrick_constraint<> CLOSING_MODEL(NDER_DIRICHLET, 0);
-  
-  
-  CLOSING_MODEL.set_constraints_type(getfem::constraints_type(closing_version));  
-    if (closing_version == getfem::PENALIZED_CONSTRAINTS)
-      CLOSING_MODEL.set_penalization_parameter(PARAM.real_value("EPS_CLOSING_PENAL")) ;
-  
-  cout << "building constraints matrix : \n" ;
-  base_matrix C(1, mf_u().nb_dof() );
-  int nb_line_C = 0 ;
-  
-  unsigned q = mf_u().get_qdim();
-  unsigned cv, ld = unsigned(-1);
-  dal::bit_vector dofs_up, dofs_down ;
-  for (size_type i=0; i< mf_u().nb_dof(); ++i){
-      cv = mf_u().first_convex_of_dof(i) ;
-      getfem::pfem pf = mf_u().fem_of_element(cv);
-      ld = unsigned(-1) ;
-      for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += q) {
-	     if (mf_u().ind_dof_of_element(cv)[dd] == i) {
-	        ld = dd/q; break;
-	     }
-         }
-      if (PARAM.int_value("SOL_REF")==1){  
-//       if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) > (0.5-1e-6) )
-//       //  && ( gmm::abs(mf_u().point_of_dof(i)[0]) > (0.5-1e-6) )
-//         && ( is_lagrange_dof_type(pf->dof_types().at(ld)) ) ){
-// 	    nb_line_C += 1 ;
-// 	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-// 	    C(nb_line_C - 1, i) = 1 ;     
-//       }
+  // Dirichlet condition brick.
+  getfem::mdbrick_Dirichlet<>
+    DIRICHLET(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
+  DIRICHLET.set_constraints_type(dirichlet_version);
+  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
+    DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
+  gmm::resize(F, nb_dof_rhs);
+  gmm::clear(F) ;
+  DIRICHLET.rhs().set(mf_rhs, F);
 
-//       if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) > (0.5-1e-6) ) 
-//         && ( gmm::abs(mf_u().point_of_dof(i)[0]) > (0.5-1e-6) ) 
-//         && ( is_dx_dof_type(pf->dof_types().at(ld)) ) ){
-// 	    cout << name_of_dof(pf->dof_types().at(ld)) << "\n" ;
-// 	    nb_line_C += 1 ;
-// 	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-// 	    C(nb_line_C - 1, i) = 1 ;
-//       }
-      if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 )
-        && ( gmm::abs(mf_u().point_of_dof(i)[0]) > (0.5-1e-6) )
-        && ( is_lagrange_dof_type(pf->dof_types().at(ld)) ) ){
-	    cout << "valeur \n" ;
-	    nb_line_C += 1 ;
-	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-	    C(nb_line_C - 1, i) = 1 ;
-      }
-//       if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 ) 
-//         && ( mf_u().point_of_dof(i)[0] > (0.5-1e-6) ) 
-//         && ( is_dy_dof_type(pf->dof_types().at(ld)) ) ){
-// 	    cout << "dérivée par rapport à y \n" ;
-// 	    cout << name_of_dof(pf->dof_types().at(ld)) << "\n" ;
-// 	    nb_line_C += 1 ;
-// 	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-// 	    C(nb_line_C - 1, i) = 1 ;
-//       }
-      
-      if ( mf_u().point_of_dof(i)[1] > (0.5 - 1e-6) ){
-         dofs_up.add(i) ;      }
-      if ( mf_u().point_of_dof(i)[1] < ( -0.5 + 1e-6) ){
-         dofs_down.add(i) ;    }
-	 }
-	 
-     if (PARAM.int_value("SOL_REF")==2){
-        if ( ( gmm::abs(mf_u().point_of_dof(i)[1]) < 1e-6 )
-        && ( gmm::abs(mf_u().point_of_dof(i)[0]) < 1e-6 )
-        && ( is_lagrange_dof_type(pf->dof_types().at(ld)) ) ){
-	    cout << "valeur \n" ;
-	    nb_line_C += 1 ;
-	    gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-	    C(nb_line_C - 1, i) = 1 ;
-        }
-     }
-  }
+//   // model brick constraint for the integral matching
+//   getfem::mdbrick_constraint<> &mortar = 
+//       *(new getfem::mdbrick_constraint<>(NDER_DIRICHLET, 0));
 
-//   size_type cpt = 0 ;
-//   for (unsigned i = 0 ; i < mf_u().nb_dof() ; ++i){  
-//      if (dofs_up[i]){
-//         if (cpt){
-//         nb_line_C += 1 ;
-// 	gmm::resize(C, nb_line_C, mf_u().nb_dof()) ;
-// 	C(nb_line_C - 1, i  ) = 1 ;
-// 	C(nb_line_C - 1, i-1) = -1 ;
-//         }
-//      else cpt +=1 ;
-//      }
-//   }
+  getfem::mdbrick_abstract<> *final_model = &DIRICHLET ;
 
-
-  cout << "nbre de lignes de C : " << gmm::mat_nrows(C) << "\n" ;
-  plain_vector R(gmm::mat_nrows(C)) ;
-  CLOSING_MODEL.set_constraints(C, R);
-  
-  getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(CLOSING_MODEL, 0));    
   if (enrichment_option == 3 ) {
      /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
-       int mult_with_H = PARAM.int_value("MULT_WITH_H") ;
-       mortar_type = PARAM.int_value("MORTAR_TYPE") ;
-       getfem::mesh_fem &mf_mortar = (mult_with_H == 1) ? mfls_mortar : mf_pre_mortar;
-       getfem::mesh_fem &mf_mortar_deriv = (mult_with_H == 1) ? mfls_mortar_deriv : mf_pre_mortar_deriv;     
- 
-    mortar.set_constraints_type(getfem::constraints_type(mortar_version));  
+
+    getfem::mdbrick_constraint<> &mortar = 
+      *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
+    mortar.set_constraints_type(getfem::constraints_type(mortar_version));
     if (mortar_version == getfem::PENALIZED_CONSTRAINTS)
       mortar.set_penalization_parameter(PARAM.real_value("EPS_MORTAR_PENAL")) ;
 
-    sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()), 
-       H(mf_mortar_deriv.nb_dof(), mf_u().nb_dof());
-    gmm::resize(R, mf_mortar.nb_dof());
-  /* other version of the integral matching :
-       *     \int_Gamma        (u-v) \lambda  = 0, for all \lambda in \Lambda
-       *     \int_Gamma \partial_n (u-v)\mu  = 0, for all \mu in M
-      */
-      
-      /* build the list of dof for the "(u-v) lambda" condition  */  
-      dal::bit_vector bv_mortar;
-      dal::bit_vector bv_deriv;
-      sparse_matrix MM(mf_mortar.nb_dof(), mf_mortar.nb_dof());
-      sparse_matrix MD(mf_mortar_deriv.nb_dof(), mf_mortar_deriv.nb_dof());
-      std::vector<size_type> ind_mortar;
-      std::vector<size_type> ind_deriv;
-      getfem::asm_mass_matrix(MM, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
-      getfem::asm_mass_matrix(MD, mim, mf_mortar_deriv, MORTAR_BOUNDARY_OUT);
+    plain_vector R(1) ;
+    sparse_matrix H(1, mf_u().nb_dof());
+    (*this).set_matrix_mortar(H) ;
 
-      for (size_type i=0; i < mf_mortar.nb_dof(); ++i)
-	if (MM(i,i) > 1e-15) { 
-	  // cout << "dof " << i << " MM = " << MM(i,i) << endl;
-	  bv_mortar.add(i); ind_mortar.push_back(i);
-	}
-      for (size_type i=0; i < mf_mortar_deriv.nb_dof(); ++i)
-	if (MD(i,i) > 1e-15) { bv_deriv.add(i); ind_deriv.push_back(i); }
-      
-      // building matrices
-      
-      cout << "Handling mortar junction (" << ind_mortar.size() << 
-	" dof for the lagrange multiplier of the displacement, " <<
-	ind_deriv.size() << " dof for the lagrange multiplier of the derivative)\n";
-      
-      gmm::resize(H0, mf_mortar.nb_dof(), mf_u().nb_dof()) ;
-      gmm::resize(H,  ind_mortar.size() + ind_deriv.size(), mf_u().nb_dof()) ; 
-      
-      // Defining sub_indexes of the matrices calculated with the 
-      // complete set of dofs.
-      gmm::sub_index sub_i(ind_mortar);
-      gmm::sub_index sub_i1(ind_deriv);
-      gmm::sub_interval sub_j(0, mf_u().nb_dof());
-      
-      gmm::sub_interval sub_val_H(0, ind_mortar.size()) ;
-      gmm::sub_interval sub_deriv_H(ind_mortar.size(), ind_deriv.size()) ;
-      
-      cout << "sub_indexes built\n" ;
-      /* build the mortar constraint matrix -- note that the integration
-	 method is conformal to the crack
-      */
-      gmm::clear(H0);
-      getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_OUT);
-      gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), gmm::sub_matrix(H, sub_val_H, sub_j) );
-    
-      gmm::clear(H0);
-      getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), MORTAR_BOUNDARY_IN);
-      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), gmm::sub_matrix(H, sub_val_H, sub_j) );
-      
-      
-      cout << "first contraint asm\n" ;
-      gmm::resize(R, ind_deriv.size());
-      gmm::clear(H0);
-      gmm::resize(H0, mf_mortar_deriv.nb_dof(), mf_u().nb_dof() ) ;
-
-      getfem::asm_normal_derivative_dirichlet_constraints
-	(H0, R, mim, mf_u(),
-	 mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_OUT, 0, getfem::ASMDIR_BUILDH) ;
-
-      gmm::add(gmm::sub_matrix(H0, sub_i1, sub_j),
-	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
-      
-      cout << "first step \n" ;
-      gmm::clear(H0);
-
-      getfem::asm_normal_derivative_dirichlet_constraints
-	(H0, R, mim, mf_u(),
-	 mf_mortar_deriv, mf_pre_u, R, MORTAR_BOUNDARY_IN, 0, getfem::ASMDIR_BUILDH) ;
-      gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i1, sub_j), +1.0),
-	       gmm::sub_matrix(H, sub_deriv_H, sub_j)) ;
-	       
     /* because of the discontinuous partition of mf_u(), some levelset 
        enriched functions do not contribute any more to the
        mass-matrix (the ones which are null on one side of the
@@ -563,29 +396,20 @@ getfem::mdbrick_normal_derivative_source_term<>
     }  
     gmm::resize(R, gmm::mat_nrows(H)); 
     mortar.set_constraints(H,R);
-    cout << "Total number of variables : " << mortar.nb_dof() << endl;
-    getfem::standard_model_state MS(mortar);
-    gmm::iteration iter(residual, 1, 40000); 
-    getfem::standard_solve(MS, mortar, iter /* , p*/);  
-    // getfem::useful_types<getfem::standard_model_state>::plsolver_type p;
-    // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
-  // Solution extraction
-  gmm::resize(U, mf_u().nb_dof());
-  gmm::copy(BIL.get_solution(MS), U); 
+    final_model = &mortar;
+    gmm::Harwell_Boeing_save("H.hb", H);
+
   }
-  else{
-    cout << "Total number of variables : " << CLOSING_MODEL.nb_dof() << endl;
-    getfem::standard_model_state MS(CLOSING_MODEL);
+
+    cout << "Total number of variables : " << final_model->nb_dof() << endl;
+    getfem::standard_model_state MS(*final_model);
     gmm::iteration iter(residual, 1, 40000);
-    getfem::standard_solve(MS, CLOSING_MODEL, iter /* , p*/);  
+    getfem::standard_solve(MS, *final_model, iter /* , p*/);  
     // getfem::useful_types<getfem::standard_model_state>::plsolver_type p;
     // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
     // Solution extraction
     gmm::resize(U, mf_u().nb_dof());
     gmm::copy(BIL.get_solution(MS), U); 
-    
-  }
-
 
   return true;  
 }
