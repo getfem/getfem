@@ -9,11 +9,11 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type AAA = 0.0 ; // 1.0 ;
+scalar_type AAA = 0. ; // 1.0 ;
 scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
-scalar_type DD = 0.0 ; // 0.1 ;
+scalar_type DD = 0.1 ; // 0.1 ;
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*AAA*nu*nu-6.0*nu*AAA+15.0*AAA)/(nu*nu-2.0*nu+5.0);
-scalar_type EE = 1.  ;
+scalar_type EE = 0.  ;
 
 
 scalar_type sol_u(const base_node &x){
@@ -548,103 +548,103 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
 }
 
-/* compute the relative error with respect to the exact solution */
-void bilaplacian_crack_problem::compute_error(plain_vector &U) {
-  std::vector<scalar_type> V(mf_rhs.nb_dof());
-  getfem::interpolation(mf_u(), mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_dof(i));
-  cout.precision(16);
-  cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
-        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
-        << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V)  << endl
-        /*<< "Linfty error = " << gmm::vect_norminf(V)  << endl*/; 
-  cout  << "semi-norme H1 = " << getfem::asm_H1_semi_norm(mim, mf_rhs, V)  << endl 
-        << "semi-norme H2 = " << getfem::asm_H2_semi_norm(mim, mf_rhs, V)  << endl ;
-       
-}
-
-// /* compute the error with respect to the exact solution */
+// /* compute the relative error with respect to the exact solution */
 // void bilaplacian_crack_problem::compute_error(plain_vector &U) {
-// 
-//   if (PARAM.real_value("RADIUS_SPLIT_DOMAIN") == 0){
-//      plain_vector V(gmm::vect_size(U)) ;
-//      gmm::clear(V) ;
-// 
-//     cout << "\nL2 ERROR:"
-//        << getfem::asm_L2_dist(mim, mf_u(), U,
-// 			      exact_sol.mf, exact_sol.U) << "\n";
-// //     cout << "H1 ERROR:"
-// //          << getfem::asm_H1_dist(mim, mf_u(), U,
-// //   	  		      exact_sol.mf, exact_sol.U) << "\n";
-// //     cout << "H2 ERROR:"
-// //          << getfem::asm_H2_dist(mim, mf_u(), U, 
-// //                               exact_sol.mf, exact_sol.U) << "\n"; 
+//   std::vector<scalar_type> V(mf_rhs.nb_dof());
+//   getfem::interpolation(mf_u(), mf_rhs, U, V);
+//   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
+//     V[i] -= sol_u(mf_rhs.point_of_dof(i));
+//   cout.precision(16);
+//   cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
+//         << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
+//         << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V)  << endl
+//         /*<< "Linfty error = " << gmm::vect_norminf(V)  << endl*/; 
+//   cout  << "semi-norme H1 = " << getfem::asm_H1_semi_norm(mim, mf_rhs, V)  << endl 
+//         << "semi-norme H2 = " << getfem::asm_H2_semi_norm(mim, mf_rhs, V)  << endl ;
+//        
+// }
+
+/* compute the error with respect to the exact solution */
+void bilaplacian_crack_problem::compute_error(plain_vector &U) {
+
+  if (PARAM.real_value("RADIUS_SPLIT_DOMAIN") == 0){
+     plain_vector V(gmm::vect_size(U)) ;
+     gmm::clear(V) ;
+
+    cout << "L2 ERROR:"
+       << getfem::asm_L2_dist(mim, mf_u(), U,
+			      exact_sol.mf, exact_sol.U) << "\n";
+    cout << "H1 ERROR:"
+         << getfem::asm_H1_dist(mim, mf_u(), U,
+  	  		      exact_sol.mf, exact_sol.U) << "\n";
+    cout << "H2 ERROR:"
+         << getfem::asm_H2_dist(mim, mf_u(), U, 
+                              exact_sol.mf, exact_sol.U) << "\n"; 
 //     cout << "SEMI H1 ERROR:"
 //          << getfem::asm_H1_semi_dist(mim, mf_u(), U, 
 //                               exact_sol.mf, exact_sol.U) << "\n"; 
 //     cout << "SEMI H2 ERROR:"
 //          << getfem::asm_H2_semi_dist(mim, mf_u(), U, 
 //                               exact_sol.mf, exact_sol.U) << "\n"; 
-//     if ( PARAM.int_value("NORM_EXACT") ){
-//     cout << "L2 exact:"
-//          << getfem::asm_L2_dist(mim, mf_u(), V,
-// 			      exact_sol.mf, exact_sol.U) << "\n";
-//     cout << "H1 exact:"
-//          << getfem::asm_H1_dist(mim, mf_u(), V,
-// 			      exact_sol.mf, exact_sol.U) << "\n";
-//     cout << "H2 exact:"
-//          << getfem::asm_H2_dist(mim, mf_u(), V, 
-//                               exact_sol.mf, exact_sol.U) << "\n";
-//     } 
-//   }
-//   else {
-//   getfem::mesh_region r_center, r_ext ;
-//   scalar_type radius_split_domain = PARAM.real_value("RADIUS_SPLIT_DOMAIN") ;
-//   bool in_area ;
-//   for (dal::bv_visitor cv(mesh.convex_index()) ; !cv.finished() ; ++cv){
-// 	in_area = true;
-// 	/* For each element, we test all of its nodes. 
-// 	   If all the nodes are inside the enrichment area,
-// 	   then the element is completly inside the area too */ 
-// 	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
-// 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
-// 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
-// 	      gmm::sqr(radius_split_domain)) 
-// 	    in_area = false; break; 
-// 	}
-// 	  if (in_area) r_center.add(cv) ;
-// 	  else r_ext.add(cv) ;
-//   }
-//   scalar_type L2_center, H1_center, H2_center;
-//   cout << "ERROR SPLITTED - RADIUS =  " << radius_split_domain << "\n";
-//   cout << "Error on the crack tip zone:\n" ;
-//         L2_center = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-//   cout << "  L2 error:" << L2_center << "\n";
-// 	H1_center = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-//   cout << "  H1 error:" << H1_center << "\n";
-// 	H2_center = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-//   cout << "  H2 error:" << H2_center << "\n";
-//  	
-//   cout << "Error on the remaining part of the domain:\n"; 
-//   scalar_type L2_ext, H1_ext, H2_ext;
-//         L2_ext = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-//   cout << "  L2 error:" << L2_ext << "\n";
-// 	H1_ext = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-//   cout << "  H1 error:" << H1_ext << "\n";
-// 	H2_ext = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-//   cout << "  H2 error:" << H2_ext << "\n";
-// 
-//   cout << "Error on the hole domain:\n";
-//   cout << "L2 ERROR:"
-//        << gmm::sqrt( gmm::sqr(L2_center) + gmm::sqr(L2_ext) ) << "\n";
-// 
-//     cout << "H1 ERROR:"
-//          << gmm::sqrt( gmm::sqr(H1_center) + gmm::sqr(H1_ext) ) << "\n";
-//     cout << "H2 ERROR:"
-//          << gmm::sqrt( gmm::sqr(H2_center) + gmm::sqr(H2_ext) ) << "\n";
-//   }
-// }
+    if ( PARAM.int_value("NORM_EXACT") ){
+    cout << "L2 exact:"
+         << getfem::asm_L2_dist(mim, mf_u(), V,
+			      exact_sol.mf, exact_sol.U) << "\n";
+    cout << "H1 exact:"
+         << getfem::asm_H1_dist(mim, mf_u(), V,
+			      exact_sol.mf, exact_sol.U) << "\n";
+    cout << "H2 exact:"
+         << getfem::asm_H2_dist(mim, mf_u(), V, 
+                              exact_sol.mf, exact_sol.U) << "\n";
+    } 
+  }
+  else {
+  getfem::mesh_region r_center, r_ext ;
+  scalar_type radius_split_domain = PARAM.real_value("RADIUS_SPLIT_DOMAIN") ;
+  bool in_area ;
+  for (dal::bv_visitor cv(mesh.convex_index()) ; !cv.finished() ; ++cv){
+	in_area = true;
+	/* For each element, we test all of its nodes. 
+	   If all the nodes are inside the enrichment area,
+	   then the element is completly inside the area too */ 
+	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
+	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
+	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
+	      gmm::sqr(radius_split_domain)) 
+	    in_area = false; break; 
+	}
+	  if (in_area) r_center.add(cv) ;
+	  else r_ext.add(cv) ;
+  }
+  scalar_type L2_center, H1_center, H2_center;
+  cout << "ERROR SPLITTED - RADIUS =  " << radius_split_domain << "\n";
+  cout << "Error on the crack tip zone:\n" ;
+        L2_center = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
+  cout << "  L2 error:" << L2_center << "\n";
+	H1_center = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
+  cout << "  H1 error:" << H1_center << "\n";
+	H2_center = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
+  cout << "  H2 error:" << H2_center << "\n";
+ 	
+  cout << "Error on the remaining part of the domain:\n"; 
+  scalar_type L2_ext, H1_ext, H2_ext;
+        L2_ext = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
+  cout << "  L2 error:" << L2_ext << "\n";
+	H1_ext = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
+  cout << "  H1 error:" << H1_ext << "\n";
+	H2_ext = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
+  cout << "  H2 error:" << H2_ext << "\n";
+
+  cout << "Error on the hole domain:\n";
+  cout << "L2 ERROR:"
+       << gmm::sqrt( gmm::sqr(L2_center) + gmm::sqr(L2_ext) ) << "\n";
+
+    cout << "H1 ERROR:"
+         << gmm::sqrt( gmm::sqr(H1_center) + gmm::sqr(H1_ext) ) << "\n";
+    cout << "H2 ERROR:"
+         << gmm::sqrt( gmm::sqr(H2_center) + gmm::sqr(H2_ext) ) << "\n";
+  }
+}
 
 
 
@@ -944,13 +944,13 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs);
-  getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
-
+  
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<>
     DIRICHLET(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); //mfls_mult
-  //DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-  DIRICHLET.rhs().set(mf_rhs, F) ;
+  DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
+  //getfem::interpolation_function(mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
+  //DIRICHLET.rhs().set(mf_rhs, F) ;  -> wrong (near the crack).
   DIRICHLET.set_constraints_type(getfem::constraints_type(dirichlet_version));  
   if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
     DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
