@@ -62,6 +62,9 @@ scalar_type bilaplacian_singular_functions::sing_function(scalar_type x, scalar_
       scalar_type c_2 = (3. * nu + 5.)/ (3. * (nu - 1.)) ;
       return r*sqrt(r)* ( sin(theta/2) + c_2 * sin(3.0 * theta/2) );
     } break;
+    case 6: {
+      return cos(y) + y * y /2.0 ; //x * x - nu * y * y ;
+    } break;
     default: assert(0); 
   }
   return 0;
@@ -114,10 +117,14 @@ void bilaplacian_singular_functions::sing_function_grad(scalar_type x, scalar_ty
            + c_2 * (
 	   3.0/2.0*sqrt(r)* ( sin(3.0/2.0*theta)*sin(theta)+cos(3.0/2.0*theta)*cos(theta) )) ;
     } break;
+    case 6: {
+      g[0] =  0. ; //2. * x ;
+      g[1] = -sin(y) + y ; // -2. * nu * y ;
+    } break;
     default: assert(0); 
   }
 }
-   
+
 void bilaplacian_singular_functions::sing_function_hess(scalar_type x, scalar_type y, base_matrix &he) const {
   he.resize(2,2);
   scalar_type r = sqrt(x*x + y*y);
@@ -224,11 +231,17 @@ void bilaplacian_singular_functions::sing_function_hess(scalar_type x, scalar_ty
 		 *cos(3.0/2.0*theta)*cos(theta))*sin(theta)+(3.0/4.0*sqrt(r)*cos(3.0/2.0*theta)
                         *sin(theta)-3.0/4.0*sqrt(r)*sin(3.0/2.0*theta)*cos(theta))*cos(theta)/r);
     } break;
+    case  6:{
+      he(0,0) = 0. ; // 2. ;
+      he(1,0) = 0. ;
+      he(0,1) = he(1,0) ;
+      he(1,1) = 1 - cos(y) ; // -2. * nu ;
+    } break;
     default: assert(0); 
   }
 }
-   
-  
+
+
 scalar_type bilaplacian_singular_functions::val(const getfem::fem_interpolation_context& c) const {
 
   assert(ls.get_mesh_fem().convex_index().is_in(c.convex_num()));
@@ -290,10 +303,10 @@ void bilaplacian_singular_functions::hess(const getfem::fem_interpolation_contex
   gmm::mult(c.B3(), hh, vhe);
   gmm::mult_add(c.B32(), gmm::scaled(dref,-1), vhe);
 }
-    
+
 void bilaplacian_singular_functions::update_from_context(void) const { cv =  size_type(-1); }
 
-bilaplacian_singular_functions::bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu_) : l(l_), ls(ls_), nu(nu_) {
+bilaplacian_singular_functions::bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu_, scalar_type pos_) : l(l_), ls(ls_), nu(nu_), pos(pos_) {
   cv = size_type(-1);
   this->add_dependency(ls);
 }

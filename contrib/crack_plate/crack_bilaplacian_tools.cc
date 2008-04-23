@@ -320,7 +320,7 @@ void bilaplacian_crack_problem::init_mixed_elements(void) {
   cout << "QUAD_FEM_TYPE="  << QUAD_FEM_TYPE << "\n";
   cout << "QUAD_INTEGRATION=" << QUAD_INTEGRATION << "\n";
   
-  size_type N_tri = 2, N_quad = 2, N = 2 ;
+  size_type /*N_tri = 2, N_quad = 2,*/ N = 2 ;
     
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
                                          "Name of simplex integration method");
@@ -416,9 +416,9 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     
     if (PARAM.int_value("MOVE_NODES")){
        cout << "d�placement des noeuds \n" ;
-       size_type nb_x_pos, nb_y_pos = 0 ;
+       //size_type nb_x_pos, nb_y_pos = 0 ;
        scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
-       scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
+       //scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
     
     
 // for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){

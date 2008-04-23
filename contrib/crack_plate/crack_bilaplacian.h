@@ -57,9 +57,10 @@ base_small_vector neumann_val(const base_node &x);
 
 
 struct bilaplacian_singular_functions : public getfem::global_function, public getfem::context_dependencies {
-  size_type l;             // singular function number
-  scalar_type nu;          // Poison's coefficient
+  size_type l ;            // singular function number
   const getfem::level_set &ls;
+  scalar_type nu;          // Poison's coefficient
+  scalar_type pos ;        // x-position of the crack-tip
   mutable getfem::mesher_level_set mls0, mls1;
   mutable size_type cv;
   
@@ -73,11 +74,11 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
 		    base_small_vector &v) const;
   virtual void hess(const getfem::fem_interpolation_context& c, base_matrix &he) const;
   void update_from_context(void) const;
-  bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu);
+  bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu, scalar_type pos_ );
 };
 
-inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls, scalar_type nu){ 
-  return new bilaplacian_singular_functions(i, ls, nu);
+inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls, scalar_type nu, scalar_type pos){ 
+  return new bilaplacian_singular_functions(i, ls, nu, pos);
 }
 
 struct exact_solution {

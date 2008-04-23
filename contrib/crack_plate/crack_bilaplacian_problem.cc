@@ -9,18 +9,19 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type AAA = 0.1 ; // 1.0 ;
+scalar_type AAA = 0.0 ; // 1.0 ;
 scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
 scalar_type DD = 0.0 ; // 0.1 ;
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*AAA*nu*nu-6.0*nu*AAA+15.0*AAA)/(nu*nu-2.0*nu+5.0);
- 
+scalar_type EE = 1.  ;
+
 
 scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  //scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
  scalar_type theta = atan2(x[1], x[0]);
  //return sqrt(r*r*r) * (sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
- return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0));
+ return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0)) + EE * ( cos(x[1]) +  x[1] * x[1] / 2.0) ;  // (x[0] * x[0] - nu * x[1] * x[1]) ;
 }
  
 scalar_type sol_lapl_u(const base_node &x) {
@@ -30,8 +31,8 @@ scalar_type sol_lapl_u(const base_node &x) {
  /* return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-BB*sin(theta/
     2.0)/4.0-9.0/4.0*AAA*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); */ }
 
-scalar_type sol_f(const base_node &)
-{ return 0. ; }
+scalar_type sol_f(const base_node &x)
+{return EE * cos(x[1]) ; }
 
 base_small_vector sol_du(const base_node &x) {
  base_small_vector res(x.size());
@@ -43,7 +44,7 @@ AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*sin(
 
 res[1] = 3.0/2.0*sqrt(r)*(BB*sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
 +DD*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*BB*cos(3.0/2.0*theta)+
-AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*cos(theta);
+AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*cos(theta) + x[1] - sin(x[1]) ;
 
 /*
 res[0] =  3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+BB*
@@ -85,18 +86,23 @@ return res ; }
 
 
 void exact_solution::init(getfem::level_set &ls) {
-  std::vector<getfem::pglobal_function> cfun(4) ;
+  std::vector<getfem::pglobal_function> cfun(5) ;
   for (unsigned j=0; j < 4; ++j)
-    cfun[j] = bilaplacian_crack_singular(j, ls, nu) ;
+    cfun[j] = bilaplacian_crack_singular(j, ls, nu, 0.) ;
+  cfun[4] = bilaplacian_crack_singular(6, ls, nu, 0.) ;
   mf.set_functions(cfun);
-  U.resize(4); assert(mf.nb_dof() == 4);
+  U.resize(5); assert(mf.nb_dof() == 5);
   // scalar_type A1 = 1., nu = 0.3 ;
   // scalar_type b1_ = 3. + (A2 / A1) * (24. * nu) / (3. * nu * nu - 6. * nu + 5. ) ; 
   U[0] = AAA ;
   U[1] = BB ;
   U[2] = CC ;
   U[3] = DD ;
+  U[4] = EE ;
 }
+
+
+
 
 scalar_type eval_fem_gradient_with_finite_differences(getfem::pfem pf, 
 					       const base_vector &coeff,
@@ -520,7 +526,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
     if (sol_ref == 0){
        ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
-       ls.values(1)[d] = x;}
+       ls.values(1)[d] = x  ;}
     if (sol_ref == 1){
      ls.values(0)[d] = y  ;
      ls.values(1)[d] = x  ; //x * x - a * a ;
@@ -542,82 +548,103 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
 }
 
-
-/* compute the error with respect to the exact solution */
+/* compute the relative error with respect to the exact solution */
 void bilaplacian_crack_problem::compute_error(plain_vector &U) {
-
-  if (PARAM.real_value("RADIUS_SPLIT_DOMAIN") == 0){
-     plain_vector V(gmm::vect_size(U)) ;
-     gmm::clear(V) ;
-
-    cout << "\nL2 ERROR:"
-       << getfem::asm_L2_dist(mim, mf_u(), U,
-			      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H1 ERROR:"
-         << getfem::asm_H1_dist(mim, mf_u(), U,
-  	  		      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H2 ERROR:"
-         << getfem::asm_H2_dist(mim, mf_u(), U, 
-                              exact_sol.mf, exact_sol.U) << "\n"; 
-    if ( PARAM.int_value("NORM_EXACT") ){
-    cout << "L2 exact:"
-         << getfem::asm_L2_dist(mim, mf_u(), V,
-			      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H1 exact:"
-         << getfem::asm_H1_dist(mim, mf_u(), V,
-			      exact_sol.mf, exact_sol.U) << "\n";
-    cout << "H2 exact:"
-         << getfem::asm_H2_dist(mim, mf_u(), V, 
-                              exact_sol.mf, exact_sol.U) << "\n";
-    } 
-  }
-  else {
-  getfem::mesh_region r_center, r_ext ;
-  scalar_type radius_split_domain = PARAM.real_value("RADIUS_SPLIT_DOMAIN") ;
-  bool in_area ;
-  for (dal::bv_visitor cv(mesh.convex_index()) ; !cv.finished() ; ++cv){
-	in_area = true;
-	/* For each element, we test all of its nodes. 
-	   If all the nodes are inside the enrichment area,
-	   then the element is completly inside the area too */ 
-	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
-	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
-	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
-	      gmm::sqr(radius_split_domain)) 
-	    in_area = false; break; 
-	}
-	  if (in_area) r_center.add(cv) ;
-	  else r_ext.add(cv) ;
-  }
-  scalar_type L2_center, H1_center, H2_center;
-  cout << "ERROR SPLITTED - RADIUS =  " << radius_split_domain << "\n";
-  cout << "Error on the crack tip zone:\n" ;
-        L2_center = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-  cout << "  L2 error:" << L2_center << "\n";
-	H1_center = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-  cout << "  H1 error:" << H1_center << "\n";
-	H2_center = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
-  cout << "  H2 error:" << H2_center << "\n";
- 	
-  cout << "Error on the remaining part of the domain:\n"; 
-  scalar_type L2_ext, H1_ext, H2_ext;
-        L2_ext = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-  cout << "  L2 error:" << L2_ext << "\n";
-	H1_ext = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-  cout << "  H1 error:" << H1_ext << "\n";
-	H2_ext = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
-  cout << "  H2 error:" << H2_ext << "\n";
-
-  cout << "Error on the hole domain:\n";
-  cout << "L2 ERROR:"
-       << gmm::sqrt( gmm::sqr(L2_center) + gmm::sqr(L2_ext) ) << "\n";
-
-    cout << "H1 ERROR:"
-         << gmm::sqrt( gmm::sqr(H1_center) + gmm::sqr(H1_ext) ) << "\n";
-    cout << "H2 ERROR:"
-         << gmm::sqrt( gmm::sqr(H2_center) + gmm::sqr(H2_ext) ) << "\n";
-  }
+  std::vector<scalar_type> V(mf_rhs.nb_dof());
+  getfem::interpolation(mf_u(), mf_rhs, U, V);
+  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
+    V[i] -= sol_u(mf_rhs.point_of_dof(i));
+  cout.precision(16);
+  cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
+        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
+        << "H2 error = " << getfem::asm_H2_norm(mim, mf_rhs, V)  << endl
+        /*<< "Linfty error = " << gmm::vect_norminf(V)  << endl*/; 
+  cout  << "semi-norme H1 = " << getfem::asm_H1_semi_norm(mim, mf_rhs, V)  << endl 
+        << "semi-norme H2 = " << getfem::asm_H2_semi_norm(mim, mf_rhs, V)  << endl ;
+       
 }
+
+// /* compute the error with respect to the exact solution */
+// void bilaplacian_crack_problem::compute_error(plain_vector &U) {
+// 
+//   if (PARAM.real_value("RADIUS_SPLIT_DOMAIN") == 0){
+//      plain_vector V(gmm::vect_size(U)) ;
+//      gmm::clear(V) ;
+// 
+//     cout << "\nL2 ERROR:"
+//        << getfem::asm_L2_dist(mim, mf_u(), U,
+// 			      exact_sol.mf, exact_sol.U) << "\n";
+// //     cout << "H1 ERROR:"
+// //          << getfem::asm_H1_dist(mim, mf_u(), U,
+// //   	  		      exact_sol.mf, exact_sol.U) << "\n";
+// //     cout << "H2 ERROR:"
+// //          << getfem::asm_H2_dist(mim, mf_u(), U, 
+// //                               exact_sol.mf, exact_sol.U) << "\n"; 
+//     cout << "SEMI H1 ERROR:"
+//          << getfem::asm_H1_semi_dist(mim, mf_u(), U, 
+//                               exact_sol.mf, exact_sol.U) << "\n"; 
+//     cout << "SEMI H2 ERROR:"
+//          << getfem::asm_H2_semi_dist(mim, mf_u(), U, 
+//                               exact_sol.mf, exact_sol.U) << "\n"; 
+//     if ( PARAM.int_value("NORM_EXACT") ){
+//     cout << "L2 exact:"
+//          << getfem::asm_L2_dist(mim, mf_u(), V,
+// 			      exact_sol.mf, exact_sol.U) << "\n";
+//     cout << "H1 exact:"
+//          << getfem::asm_H1_dist(mim, mf_u(), V,
+// 			      exact_sol.mf, exact_sol.U) << "\n";
+//     cout << "H2 exact:"
+//          << getfem::asm_H2_dist(mim, mf_u(), V, 
+//                               exact_sol.mf, exact_sol.U) << "\n";
+//     } 
+//   }
+//   else {
+//   getfem::mesh_region r_center, r_ext ;
+//   scalar_type radius_split_domain = PARAM.real_value("RADIUS_SPLIT_DOMAIN") ;
+//   bool in_area ;
+//   for (dal::bv_visitor cv(mesh.convex_index()) ; !cv.finished() ; ++cv){
+// 	in_area = true;
+// 	/* For each element, we test all of its nodes. 
+// 	   If all the nodes are inside the enrichment area,
+// 	   then the element is completly inside the area too */ 
+// 	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
+// 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
+// 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
+// 	      gmm::sqr(radius_split_domain)) 
+// 	    in_area = false; break; 
+// 	}
+// 	  if (in_area) r_center.add(cv) ;
+// 	  else r_ext.add(cv) ;
+//   }
+//   scalar_type L2_center, H1_center, H2_center;
+//   cout << "ERROR SPLITTED - RADIUS =  " << radius_split_domain << "\n";
+//   cout << "Error on the crack tip zone:\n" ;
+//         L2_center = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
+//   cout << "  L2 error:" << L2_center << "\n";
+// 	H1_center = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
+//   cout << "  H1 error:" << H1_center << "\n";
+// 	H2_center = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_center) ;
+//   cout << "  H2 error:" << H2_center << "\n";
+//  	
+//   cout << "Error on the remaining part of the domain:\n"; 
+//   scalar_type L2_ext, H1_ext, H2_ext;
+//         L2_ext = getfem::asm_L2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
+//   cout << "  L2 error:" << L2_ext << "\n";
+// 	H1_ext = getfem::asm_H1_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
+//   cout << "  H1 error:" << H1_ext << "\n";
+// 	H2_ext = getfem::asm_H2_dist(mim, mf_u(), U, exact_sol.mf, exact_sol.U, r_ext) ;
+//   cout << "  H2 error:" << H2_ext << "\n";
+// 
+//   cout << "Error on the hole domain:\n";
+//   cout << "L2 ERROR:"
+//        << gmm::sqrt( gmm::sqr(L2_center) + gmm::sqr(L2_ext) ) << "\n";
+// 
+//     cout << "H1 ERROR:"
+//          << gmm::sqrt( gmm::sqr(H1_center) + gmm::sqr(H1_ext) ) << "\n";
+//     cout << "H2 ERROR:"
+//          << gmm::sqrt( gmm::sqr(H2_center) + gmm::sqr(H2_ext) ) << "\n";
+//   }
+// }
 
 
 
@@ -626,47 +653,25 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-bool bilaplacian_crack_problem::solve(plain_vector &U) {  
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
-  
-  // Setting the level-set
-  ls.reinit();  
-  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
-    ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
-    ls.values(1)[d] = x;
-  }
-  //ls.simplify(0.5);
-  ls.touch();  
-  mls.adapt();
-  mim.adapt();
-  mfls_u.adapt();
-//   mfls_mult.adapt();
-//   mfls_mult_d.adapt();
-  mfls_mortar.adapt();
-  mfls_mortar_deriv.adapt();
-  cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
-  
+bool bilaplacian_crack_problem::solve(plain_vector &U) {
+
   // setting singularities 
   cout << "setting singularities \n" ;
   if (PARAM.int_value("SING_BASE_TYPE") == 0){
 	std::vector<getfem::pglobal_function> ufunc(4);
 	for (size_type i = 0 ; i < ufunc.size() ; ++i) {
-        	ufunc[i] = bilaplacian_crack_singular(i, ls, nu);
+        	ufunc[i] = bilaplacian_crack_singular(i, ls, nu, 0.);
 	}
   mf_sing_u.set_functions(ufunc);
   }
   if (PARAM.int_value("SING_BASE_TYPE") == 1){
 	std::vector<getfem::pglobal_function> ufunc(2);
 	for (size_type i = 0 ; i < ufunc.size()  ; ++i) {
-        	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu);
+        	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu, 0.);
 	}
   mf_sing_u.set_functions(ufunc);
   }
 
-  
-  
   // Setting the enrichment --------------------------------------------/
    
   switch(enrichment_option) {
@@ -879,27 +884,33 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   //cout << "validate mf_sing_u():\n"; validate_fem_derivatives(mf_sing_u);
 
   //cout << "validate mf_u():\n"; validate_fem_derivatives(mf_u());
-  
+
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   // Bilaplacian brick.
   getfem::mdbrick_bilaplacian<> BIL(mim, mf_u());
   BIL.D().set(D);
   if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
-  
-  // Defining the normal derivative Dirichlet condition value.
-  plain_vector F;
 
+//   // Defining the volumic source term.
+  size_type nb_dof_rhs = mf_rhs.nb_dof();
+  plain_vector F(nb_dof_rhs);
+  getfem::interpolation_function(mf_rhs, F, sol_f);
+
+  // Volumic source term brick.
+  getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
+
+  // Defining the normal derivative Dirichlet condition value.
 
   /* WRONG !! 
 
     F.resize(nb_dof_rhs*N);
-  getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);  
-   
+  getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
+
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
-    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult);       
- 
+    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult);
+
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.rhs().set(mf_rhs, F);
   */
@@ -909,13 +920,28 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
-    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult_d);  // mfls_mult_d  
+    NDER_DIRICHLET(VOL_F, CLAMPED_BOUNDARY_NUM, mf_mult_d);
+
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
   NDER_DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
   if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
     NDER_DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
   
+
+//   // Defining the normal derivative Dirichlet condition value.
+//   gmm::resize(F, nb_dof_rhs*2);
+//   gmm::clear(F);
+//   getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
+// 
+//   // Normal derivative Dirichlet condition brick
+//   getfem::mdbrick_normal_derivative_Dirichlet<> 
+// 	NDER_DIRICHLET(VOL_F, CLAMPED_BOUNDARY_NUM, mf_mult);
+// 
+//     
+//   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
+//   NDER_DIRICHLET.rhs().set(mf_rhs, F);
+
   // Defining the Dirichlet condition value.
   gmm::resize(F, nb_dof_rhs);
   getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
@@ -923,7 +949,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<>
     DIRICHLET(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); //mfls_mult
-  DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
+  //DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
+  DIRICHLET.rhs().set(mf_rhs, F) ;
   DIRICHLET.set_constraints_type(getfem::constraints_type(dirichlet_version));  
   if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
     DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
@@ -939,6 +966,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     if (mortar_version == getfem::PENALIZED_CONSTRAINTS)
       mortar.set_penalization_parameter(PARAM.real_value("EPS_MORTAR_PENAL")) ;
 
+    // calcul des matrices de contraintes
     plain_vector R(1) ;
     sparse_matrix H(1, mf_u().nb_dof());
     (*this).set_matrix_mortar(H) ;
@@ -1018,7 +1046,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(BIL.get_solution(MS), U);
-  return true;  
+  return true;
 }
 
 template<typename VEC1, typename VEC2>

@@ -78,7 +78,7 @@ size_type is_dy_dof_type(getfem::pdof_description dof){
 return dy_dof ;
 }
 
-bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {  
+bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   
 //   // Setting the level-set
@@ -110,14 +110,14 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
   if (PARAM.int_value("SING_BASE_TYPE") == 0){
 	std::vector<getfem::pglobal_function> ufunc(4);
 	for (size_type i = 0 ; i < ufunc.size() ; ++i) {
-	ufunc[i] = bilaplacian_crack_singular(i, ls, nu);
+	ufunc[i] = bilaplacian_crack_singular(i, ls, nu, 0.);
 	}
   mf_sing_u.set_functions(ufunc);
   }
   if (PARAM.int_value("SING_BASE_TYPE") == 1){
 	std::vector<getfem::pglobal_function> ufunc(2);
 	for (size_type i = 0 ; i < ufunc.size() ; ++i) {
-	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu);
+	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu, 0.);
 	}
   mf_sing_u.set_functions(ufunc);
   }

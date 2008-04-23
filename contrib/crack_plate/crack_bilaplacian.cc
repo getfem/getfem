@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file("mesh.m") ;
     if (p.PARAM.int_value("SOL_REF") == 0) {
        if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
-       p.compute_error(U) ;
+       if (p.PARAM.int_value("COMPUTE_ERROR") == 1) p.compute_error(U) ;
     }
     if (p.PARAM.int_value("SOL_REF") == 1) {
        if (!p.solve_moment(U)) GMM_ASSERT1(false, "Solve has failed");
@@ -89,10 +89,10 @@ int main(int argc, char *argv[]) {
     base_small_vector tab_fic(4) ;
     unsigned cpt = 0;
     if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){  
-    // affichage des coeffs devant les singularités, avec le raccord integral
+    // affichage des coeffs devant les singularites, avec le raccord integral
 	for (unsigned d=0; d < p.mf_u().nb_dof(); d += q) {
 		unsigned cv = p.mf_u().first_convex_of_dof(d) ;
-		getfem::pfem pf = p.mf_u().fem_of_element(cv);   
+		getfem::pfem pf = p.mf_u().fem_of_element(cv);
 		unsigned ld = unsigned(-1);
 		for (unsigned dd = 0; dd < p.mf_u().nb_dof_of_element(cv); dd += q) {
 		if (p.mf_u().ind_dof_of_element(cv)[dd] == d) {
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 			cpt +=1 ;
 			}
 		}
-	}  
+	}
     // calcul des FIC k1 et k2 :
     scalar_type E, nu2 ;
     base_small_vector k(2) ;
@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
 
 
 //     // Printing the normal rotation (= derivative of the vertical displacement)
-//     if (p.PARAM.int_value("SHOW_DX") == 1 ){  // au lieu d'afficher la solution, on affiche sa dérivée en y
+//     if (p.PARAM.int_value("SHOW_DX") == 1 ){  // au lieu d'afficher la solution, on affiche sa derivee en y
 //        getfem::compute_gradient(mf, mf_grad, V, GRAD) ;
 //        gmm::resize(V, mf_grad.nb_dof()) ;
 //        for (unsigned i=0 ; i< mf_grad.nb_dof(); i++){
