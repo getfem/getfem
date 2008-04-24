@@ -413,14 +413,14 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   ls.touch(); 
   mls.add_level_set(ls); 
   mls.adapt();
-    
+
     if (PARAM.int_value("MOVE_NODES")){
        cout << "d�placement des noeuds \n" ;
        //size_type nb_x_pos, nb_y_pos = 0 ;
        scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
        //scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
-    
-    
+
+
 // for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
 //    nb_x_pos = 0 ; // nombre de noeuds d'abscisse positive
 //    nb_y_pos = 0 ; // nombre de noeuds d'ordonn�e positive
@@ -614,8 +614,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   getfem::pfem pf_partition_of_unity_tri = getfem::fem_descriptor(PARAM.string_value("TRI_PARTITION_OF_UNITY_FEM_TYPE")) ;
   getfem::pfem pf_partition_of_unity_quad = getfem::fem_descriptor(PARAM.string_value("QUAD_PARTITION_OF_UNITY_FEM_TYPE")) ; 
   mf_partition_of_unity.set_finite_element(tri_among_cvx, pf_partition_of_unity_tri);
-  mf_partition_of_unity.set_finite_element(quad_among_cvx, pf_partition_of_unity_quad);      
-  
+  mf_partition_of_unity.set_finite_element(quad_among_cvx, pf_partition_of_unity_quad);
+
   mf_pre_mortar.set_finite_element(tri_among_cvx,
              getfem::fem_descriptor(PARAM.string_value("TRI_MORTAR_FEM_TYPE")));
   mf_pre_mortar_deriv.set_finite_element(tri_among_cvx,
@@ -673,7 +673,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     mf_rhs.set_finite_element(quad_among_cvx, 
                               getfem::fem_descriptor(data_fem_name_quad));
   }
-	     
+
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -685,7 +685,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
          mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
      }
   }
-  
+
   if (sol_ref == 1 || sol_ref == 2){
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
@@ -700,7 +700,27 @@ sol_ref = PARAM.int_value("SOL_REF") ;
      }
   }
 
-  // Updating things concerning the level-set 
+  // Updating things concerning the level-set
+  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
+  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    if (sol_ref == 0){
+       ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
+       ls.values(1)[d] = x;}
+    if (sol_ref == 1){
+     ls.values(0)[d] = y  ;
+     ls.values(1)[d] = x - a ; //x * x - a * a ;
+    }
+    if (sol_ref == 2){
+     ls.values(0)[d] = y - x ;
+     ls.values(1)[d] = gmm::abs(x + y) - a ; //x * x - a * a ;
+    }
+  }
+  //ls.simplify(0.5);
+  ls.touch(); 
+  mls.add_level_set(ls); 
+  mls.adapt();
   exact_sol.init(ls);
   mim.adapt();
   mfls_u.adapt();
