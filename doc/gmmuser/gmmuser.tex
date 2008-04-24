@@ -952,7 +952,7 @@ You have more than one possibility to solve a linear system. If you have a dense
   M(0,0) = M(1,1) = M(2,2) = 2.0; // M = 2 * Id.
   M(1,2) = 1.0;
 
-  std::vector<double> X(3), B(3), Bagain;
+  std::vector<double> X(3), B(3), Bagain(3);
   B[0] = 1.0; B[1] = 2.0; B[2] = 3.0;  // B = [1 2 3]
  
   gmm::lu_solve(M, X, B);
