@@ -9,80 +9,24 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type AAA = 0. ; // 1.0 ;
-scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;  // (-3.0+nu*nu-2.0*nu)/(nu*nu-2.0*nu+5.0);
+scalar_type AAA = 1.0 ; // 1.0 ;
+scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;
 scalar_type DD = 0.1 ; // 0.1 ;
-scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;   //  (-8.0*nu+3.0*AAA*nu*nu-6.0*nu*AAA+15.0*AAA)/(nu*nu-2.0*nu+5.0);
-scalar_type EE = 0.  ;
+scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;
+scalar_type EE = 3.0  ;
 
 
 scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  //scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
  scalar_type theta = atan2(x[1], x[0]);
- //return sqrt(r*r*r) * (sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0));
- return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0)) + EE * ( cos(x[1]) +  x[1] * x[1] / 2.0) ;  // (x[0] * x[0] - nu * x[1] * x[1]) ;
+ return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0)) + EE * x[1] * (10. * x[1] * x[1]* x[1] + 1.) ;
+
 }
- 
-scalar_type sol_lapl_u(const base_node &x) {
- scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
- scalar_type theta = atan2(x[1], x[0]);
- return 2.0*(AAA*sin(theta/2.0)+DD*cos(theta/2.0))/sqrt(r);
- /* return 9.0/4.0/sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))+1/sqrt(r)*(-9.0/4.0*sin(3.0/2.0*theta)-BB*sin(theta/
-    2.0)/4.0-9.0/4.0*AAA*cos(3.0/2.0*theta)-CC*cos(theta/2.0)/4.0); */ }
 
 scalar_type sol_f(const base_node &x)
-{return EE * cos(x[1]) ; }
-
-base_small_vector sol_du(const base_node &x) {
- base_small_vector res(x.size());
- scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
- scalar_type theta = atan2(x[1], x[0]);
-res[0] = 3.0/2.0*sqrt(r)*(BB*sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
-+DD*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*BB*cos(3.0/2.0*theta)+
-AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*sin(theta );
-
-res[1] = 3.0/2.0*sqrt(r)*(BB*sin(3.0/2.0*theta)+AAA*sin(theta/2.0)+CC*cos(3.0/2.0*theta)
-+DD*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*BB*cos(3.0/2.0*theta)+
-AAA*cos(theta/2.0)/2.0-3.0/2.0*CC*sin(3.0/2.0*theta)-DD*sin(theta/2.0)/2.0)*cos(theta) + x[1] - sin(x[1]) ;
-
-/*
-res[0] =  3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*cos(theta)-sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+BB*
-cos(theta/2.0)/2.0-3.0/2.0*AAA*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*sin(
-theta);
- 
-res[1] = 3.0/2.0*sqrt(r)*(sin(3.0/2.0*theta)+BB*sin(theta/2.0)+AAA*cos(3.0/2.0*theta)+CC*cos(theta/2.0))*sin(theta)+sqrt(r)*(3.0/2.0*cos(3.0/2.0*theta)+BB*
-cos(theta/2.0)/2.0-3.0/2.0*AAA*sin(3.0/2.0*theta)-CC*sin(theta/2.0)/2.0)*cos(
-theta);
-*/
-  return res;
+{return EE * D *  240. ;//256. * cos(2. * x[1]) ; 
 }
-
-base_small_vector neumann_val(const base_node &x)
-{ base_small_vector res(x.size());
-  res[0] = 0. ;
-  res[1] = 0. ;
-return res ; }
-
-// base_matrix sol_hessian(const base_node &x) {
-//   base_matrix m(x.size(), x.size());
-//   // remplir la matrice hessienne de la solution exacte 
-//   return m;
-// }
-
-// base_matrix sol_mtensor(const base_node &x) {
-//   // moment de flexion de la solution exacte 
-//   base_matrix m = sol_hessian(x), mm(x.size(), x.size());
-//   scalar_type l = sol_lapl_u(x);
-//   for (size_type i = 0; i < x.size(); ++i) mm(i,i) = l * nu;
-//   gmm::scale(m, (1-nu));
-//   gmm::add(mm, m);
-//   gmm::scale(m, -D);
-//   return m;
-// }
-
-// base_small_vector sol_bf(const base_node &x)
-// { return -D * neumann_val(x); }
 
 
 void exact_solution::init(getfem::level_set &ls) {
@@ -92,8 +36,6 @@ void exact_solution::init(getfem::level_set &ls) {
   cfun[4] = bilaplacian_crack_singular(6, ls, nu, 0.) ;
   mf.set_functions(cfun);
   U.resize(5); assert(mf.nb_dof() == 5);
-  // scalar_type A1 = 1., nu = 0.3 ;
-  // scalar_type b1_ = 3. + (A2 / A1) * (24. * nu) / (3. * nu * nu - 6. * nu + 5. ) ; 
   U[0] = AAA ;
   U[1] = BB ;
   U[2] = CC ;
@@ -270,10 +212,10 @@ sol_ref = PARAM.int_value("SOL_REF") ;
  if (!MESH_FILE.empty()) {
     mesh.read_from_file(MESH_FILE);
     base_small_vector tt(N);
-    tt[0] = PARAM.real_value("TRANSLAT_X") ;  
-    tt[1] = PARAM.real_value("TRANSLAT_Y") ; 
+    tt[0] = PARAM.real_value("TRANSLAT_X") ;
+    tt[1] = PARAM.real_value("TRANSLAT_Y") ;
     if (sol_ref == 1){
-       tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
+       tt[0] -= PARAM.real_value("CRACK_SEMI_LENGTH") ;
     }
     cout << "TRANSLAT_X = " << tt[0] << " ; TRANSLAT_Y = " << tt[1] << "\n" ;
     mesh.translation(tt); 
@@ -301,11 +243,14 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     }
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
-    base_small_vector tt(N); 
-    tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ; 
-    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ; 
-    mesh.translation(tt); 
-    
+    base_small_vector tt(N);
+    tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ;
+    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    if (sol_ref == 1){
+       tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
+    }
+    mesh.translation(tt);
+
  if (PARAM.int_value("MOVE_NODES")){
     cout << "d�placement des noeuds \n" ;
 //    size_type nb_x_pos, nb_y_pos = 0 ;
@@ -489,8 +434,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
-        //if ( (un[0] <= -0.9) || (un[0] >= 0.9) ) {
-	if  ( -un[0] >= 0.999  )  {
+        if ( (un[0] <= -0.9999) || (un[0] >= 0.9999) ) {
+	//if  ( -un[0] >= 0.999  )  {
 	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
         
 	}
@@ -678,7 +623,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   case 0 :  // No enrichment
     {
     mf_u_sum.set_mesh_fems(mfls_u);
-      // an optional treatment : exporting a representation of the mesh     
+      // an optional treatment : exporting a representation of the mesh
+      if (!PARAM.int_value("MIXED_ELEMENTS")){
       getfem::mesh_fem mf_enrich(mesh);
       getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
       mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
@@ -690,7 +636,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       exp.write_point_data(mf_enrich, UU, "mesh");
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d mesh_representation.vtk -f "
-	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";}
     }
     break ;
   case 1 : 

@@ -80,30 +80,6 @@ return dy_dof ;
 
 bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
-  
-//   // Setting the level-set
-//   ls.reinit();  
-//   scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ;
-//   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-//     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-//     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
-//     if (PARAM.int_value("SOL_REF") == 0){
-//     ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
-//     ls.values(1)[d] = x;}
-//     if (PARAM.int_value("SOL_REF") == 1){
-//      ls.values(0)[d] = y  ;
-//      ls.values(1)[d] = x  ; //x * x - a * a ;
-//     }
-//   }
-//   //ls.simplify(0.5);
-//   ls.touch();  
-//   mls.adapt();
-//   mim.adapt();
-//   mfls_u.adapt();
-//   mfls_mortar.adapt();
-//   mfls_mortar_deriv.adapt();
-//   cout << "mfls_u.nb_dof()=" << mfls_u.nb_dof() << "\n";
-
 
   // setting singularities 
   cout << "setting singularities \n" ;

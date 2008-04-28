@@ -63,7 +63,7 @@ scalar_type bilaplacian_singular_functions::sing_function(scalar_type x, scalar_
       return r*sqrt(r)* ( sin(theta/2) + c_2 * sin(3.0 * theta/2) );
     } break;
     case 6: {
-      return cos(y) + y * y /2.0 ; //x * x - nu * y * y ;
+      return y * (10. * y * y* y + 1.) ;//cos(4. * y) + 8. * y * y ; //x * x - nu * y * y ;
     } break;
     default: assert(0); 
   }
@@ -119,7 +119,7 @@ void bilaplacian_singular_functions::sing_function_grad(scalar_type x, scalar_ty
     } break;
     case 6: {
       g[0] =  0. ; //2. * x ;
-      g[1] = -sin(y) + y ; // -2. * nu * y ;
+      g[1] = 40. * y * y * y  + 1. ;//- 4. * sin(4. * y) + 16. * y ; // -2. * nu * y ;
     } break;
     default: assert(0); 
   }
@@ -235,7 +235,7 @@ void bilaplacian_singular_functions::sing_function_hess(scalar_type x, scalar_ty
       he(0,0) = 0. ; // 2. ;
       he(1,0) = 0. ;
       he(0,1) = he(1,0) ;
-      he(1,1) = 1 - cos(y) ; // -2. * nu ;
+      he(1,1) = 120. * y * y ;// 16. *(1. -  cos(4. * y) ) ; // -2. * nu ;
     } break;
     default: assert(0); 
   }
