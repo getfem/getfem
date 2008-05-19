@@ -480,7 +480,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
 
-  if (law_num == 3) delete pINCOMP;
+  if (law_num == 3 || law_num == 1) delete pINCOMP;
   
   return (iter.converged());
 }

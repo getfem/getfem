@@ -17,7 +17,7 @@ AC_ARG_PROGRAM
 PACKAGE="getfem++"
 MAJOR_VERSION="3"
 MINOR_VERSION="0"
-PATCH_VERSION="3"
+PATCH_VERSION="4"
 dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
 AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
@@ -125,7 +125,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 	AC_CHECK_CXX_FLAG([-Wconversion],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wredundant-decls],CXXFLAGS)
 	dnl -Wno-long-double fixes a warning on Darwin
-	AC_CHECK_CXX_FLAG([-Wno-long-double],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-Wno-long-double],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-long-long],CXXFLAGS)
 	dnl -rdynamic used for backtraces
 	AC_CHECK_CXX_FLAG([-rdynamic],SUPLDFLAGS)
@@ -707,6 +707,8 @@ AC_CONFIG_FILES(\
 	contrib/bimaterial_crack_test/Makefile \
 	contrib/bimat_contact_crack_test/Makefile \
 	contrib/mixed_elastostatic/Makefile \
+	contrib/contact_grd_trans/Makefile \
+	contrib/mixed_dynamic_friction/Makefile \
 	contrib/xfem_contact/Makefile \
 	contrib/crack_plate/Makefile \
 	contrib/inter_element_test/Makefile \
