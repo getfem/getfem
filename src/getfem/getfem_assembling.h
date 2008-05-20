@@ -441,6 +441,30 @@ namespace getfem {
 
 
   /** 
+     generic mass matrix assembly with an additional parameter
+     (on the whole mesh or on the specified boundary) 
+     @ingroup asm
+   */
+  template<typename MAT, typename VECT>
+  void asm_mass_matrix_param
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
+   const mesh_fem &mf_data, const VECT &F,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+      assem.set("F=data(#3);M(#1,#2)+=comp(Base(#1).Base(#2).Base(#3))(:,:,i).F(i)");
+    else
+      assem.set("F=data(#3);M(#1,#2)+=comp(vBase(#1).vBase(#2).Base(#3))(:,i,:,i,j).F(j);");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mf(mf_data);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.push_data(F);
+    assem.assembly(rg);
+  }
+
+  /** 
       source term (for both volumic sources and boundary (Neumann) sources).
       @ingroup asm
    */
