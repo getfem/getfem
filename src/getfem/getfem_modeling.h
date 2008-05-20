@@ -2378,84 +2378,8 @@ namespace getfem {
 	  }
 	}
       }
-
-      cerr << "d = " << d << "\ne = " << e << "\n";
-
-
-//       VECTOR G(mf_u->get_qdim());
-      
-//       gmm::fill(X, 1.0 / sqrt(N));
-      
-//       for (size_type d=0; d < mf_u->get_qdim(); ++d) {
-// 	gmm::clear(Y); 
-// 	for (size_type i=0; i < mf_u->nb_dof(); i += N) 
-// 	  Y[i] = mf_u->point_of_dof(i)[d];
-	
-// 	gmm::mult(M_, Y, MY);
-// 	G[d] = gmm::vect_sp(X,MY);
-//       }
-
-//       cerr << "The gravity center is: G=" << G << "\n";
+      // cerr << "d = " << d << "\ne = " << e << "\n";
     }
-
-
-
-
-
-
-
-/*
-la matrice de masse redistribue
-for (;i < n;){
-for (;j < n;){
-if (M0(i,j) = 0)
-then M(i,j) = M0(i,j);
-}
-}
-while ||lam - lam1 || > eps {
-lam[0] = lam[1] = lam[2] = 0.001;
-M(i,j) - M0(i,j) + lam1*X^T (In(i,j) - M0(i,j)) X 
-                 + lam2*X^T (In(i,j) - M0(i,j)) Yk 
-                 + lam3*Yk^T (In(i,j) - M0(i,j)) Yl = 0;
-lam[0] = max{lam[0] + r* X^T (M - M0) X, 0};  
-lam[1] = max{lam[1] + r* X^T (M - M0) Yk, 0};  
-lam[2] = max{lam[2] + r* Yk^T (M - M0) Yl, 0};  
-lam1 = lam;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-*/
-
-
-
-
-    /* pour matrice de masse diagonale ou de l'unite */
-   //  virtual void proper_update(void) {
-//       mf_u = this->mesh_fems[num_fem];
-//       gmm::clear(M_); gmm::resize(M_, mf_u->nb_dof(), mf_u->nb_dof());
-//       mesh_im im(mf_u->linked_mesh());
-//       im.set_integration_method(int_method_descriptor("IM_NC(2,1)"));
-//       //      asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, mf_data, RHO_);
-//       asm_mass_matrix_param(M_, im, *mf_u, mf_data, RHO_);
-//       cout << "mass matrix " << M_ << endl;
-//       if (have_subs) {
-// 	gmm::sub_interval SUBI(0, mf_u->nb_dof());
-// 	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
-// 	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));	
-//       }
-//     }
-
 
   public :
 
@@ -2506,13 +2430,6 @@ lam1 = lam;
 	boundary_sup.insert(b);
 	this->force_update();
       }
-//    dal::bit_vector dof_mass;
-//       for (mr_visitor ii(mf_u->linked_mesh().region(b)); !ii.finished(); ++ii) {
-// 	size_type cv = ii.cv();
-// 	for (size_type i=0; i < mf_u->nb_dof_of_element(cv); ++i) {
-// 	  if (!mf_u->is_dof_on_region(b, i)) dof_mass.add(i);
-// 	}
-//       }
     }
 
     /**
