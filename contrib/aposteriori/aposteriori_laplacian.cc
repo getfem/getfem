@@ -96,7 +96,7 @@ struct crack_problem {
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
   scalar_type residual;      /* max residual for the iterative solvers       */
-  scalar_type conv_max;
+  scalar_type conv_max, threshold ;
   unsigned dir_with_mult, option;
   
   std::string datafilename;
@@ -149,7 +149,7 @@ void crack_problem::init(void) {
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
   size_type NX = PARAM.int_value("NX", "Nomber of space steps ");
-  if (option == 1) NX *= 2;
+  if (option == 1) NX = ((NX+3) / 4) * 4;
   std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
@@ -158,7 +158,7 @@ void crack_problem::init(void) {
       base_node pt = gmm::mean_value(mesh.points_of_convex(i)) ;
       bool kill = true;
       for (size_type j = 0; j < N; ++j)
-	if (pt[j] < 0.5) kill = false;
+	if (pt[j] < 0.75) kill = false;
       if (kill) mesh.sup_convex(i, true);
     }
   
@@ -217,6 +217,9 @@ void crack_problem::init(void) {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 			      getfem::fem_descriptor(data_fem_name));
   }
+
+  threshold = PARAM.real_value("REFINE_THRESHOLD",
+			       "threshold for the refinement");
   
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
@@ -257,8 +260,8 @@ base_small_vector ls_function(const base_node P, int option) {
   case 1:
     //       res[0] =  2.2* x - y - 0.6;
     //       res[1] =  1.0 - (x + 2.2*y);
-    res[0] =  (2.* x - y - 0.5) / sqrt(5); // crack tip on (0.375, 0.25).
-    res[1] =  (7./8. - (x + 2.*y)) / sqrt(5);
+    res[0] =  (2.* x - y - 0.75) / sqrt(5);
+    res[1] =  (21./16. - (x + 2.*y)) / sqrt(5);
     break;
   default: assert(0);
   }
@@ -309,9 +312,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
       ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::sqr(res);
     }
 
-    scalar_type ee = ERR[cv];
-    if (ERR[cv] > 100)
-      cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;
+    scalar_type ee1 = ERR[cv];
 
     // Stress on the level set.
    
@@ -342,12 +343,8 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	}
       }
     }
-
-    if (ERR[cv]-ee > 100) {
-      cout << "Erreur en contrainte sur la level set sur element " << cv
-	   << " : " << ERR[cv]-ee << "  radius = " << radius << endl;
-    }
-    ee = ERR[cv];
+    
+    scalar_type ee2 = ERR[cv] - ee1;
  
     // jump of the stress between the element ant its neighbours.
     for (unsigned f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
@@ -389,9 +386,12 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
       
     }
 
-    if (ERR[cv]-ee > 100)
-      cout << "Erreur en contrainte inter element sur element " << cv << " : " << ERR[cv]-ee << endl;
-    ee = ERR[cv];
+    scalar_type ee3 = ERR[cv] - ee2 - ee1;
+
+    if (ERR[cv] > threshold)
+      cout << "Element " << cv << " radius " << radius << " residu " 
+	   << ee1 <<  " level set error " << ee2 << " inter element error "
+	   << ee3 << endl;
 
   }
   
@@ -485,8 +485,6 @@ bool crack_problem::solve(plain_vector &U) {
       // cout << "ERR = " << ERR << endl; 
     
       cout << "max = " << gmm::vect_norminf(ERR) << endl;
-      scalar_type threshold = PARAM.real_value("REFINE_THRESHOLD",
-					       "threshold for the refinement");
       scalar_type min_radius_elt = PARAM.real_value("MIN_RADIUS_ELT",
 						  "Min radius for an element");
       scalar_type min_ = 1e18;
@@ -502,7 +500,8 @@ bool crack_problem::solve(plain_vector &U) {
 	min_ = std::min(min_, ERR[i]);
       }
       cout << "min = " << min_ << endl;
-      cout << "Refining " <<  conv_to_refine.card() << " elements..."<< endl;  
+      cout << "Refining " <<  conv_to_refine.card() << " elements..."<< endl; 
+      cout << "Refining elements " << conv_to_refine << endl;
       mesh.Bank_refine(conv_to_refine);
     }
 
@@ -578,15 +577,14 @@ int main(int argc, char *argv[]) {
 	if (d < dmin || i == 0) { dmin = d; Pmin = P; }
       }
       
-      if (dmin < 1e-5)
-	nrefine[cv] = nn*8;
-      else if (dmin < .1) 
-	nrefine[cv] = nn*2;
-      else nrefine[cv] = nn;
-      // nrefine[cv] = 1;
-      // if (dmin < .01)
-      //  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin 
-      //       << " " << nrefine[cv] << "\n";
+//       if (dmin < 1e-5)
+// 	nrefine[cv] = nn*8;
+//       else if (dmin < .1) 
+// 	nrefine[cv] = nn*2;
+//       else nrefine[cv] = nn;
+
+      nrefine[cv] = 1;
+      
     }
     
     {
@@ -619,11 +617,24 @@ int main(int argc, char *argv[]) {
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
       exp.exporting(mf_refined); 
-      //exp.write_point_data(mf_refined_vm, DN, "error");
       exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d " << p.datafilename << ".vtk -f "
 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+
+      cout << "export to " << p.datafilename + "_org.vtk" << "..\n";
+      getfem::vtk_export exp2(p.datafilename + "_org.vtk",
+			     p.PARAM.int_value("VTK_EXPORT")==1);
+      exp2.exporting(p.mf_u()); 
+      exp2.write_point_data(p.mf_u(), U, "elastostatic_displacement");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d " << p.datafilename << "_org.vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+
+
+       
+
+
     }
   }
   

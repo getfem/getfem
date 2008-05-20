@@ -7,7 +7,7 @@
 
 ADAPTED_REFINE = 1;      % 0 to disable adapted refinement 
                          % 1 to enable it
-REFINE_THRESHOLD = 0.001;
+REFINE_THRESHOLD = 0.00002;
 % REFINE_THRESHOLD = 1E-8;
 
 MIN_RADIUS_ELT = 1E-7;  % Min radius for an element in the refinement process.
@@ -17,7 +17,7 @@ CONV_MAX = 12000;        % maximal number of elements
 CUTOFF_FUNC = 2; % 0 for the exponential cutoff. 
                  % 1 for a 3rd degree polynomial cutoff.
                  % 2 for a 5th degree polynomial cutoff. 
-CUTOFF = 0.4;
+CUTOFF = 0.3;
 CUTOFF1 = 0.2;
 CUTOFF0 = 0.3;
 
@@ -43,7 +43,6 @@ FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,2, 0.0001)';
 DIRICHLET_VERSION = 0;
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
-
 % DATA_FEM_TYPE = 'FEM_PK(2,2)';
 % DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
@@ -58,7 +57,6 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 1
 
 INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';
-
 %INTEGRATION = 'IM_TRIANGLE(6)';
 
 
