@@ -28,36 +28,35 @@ MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDU = 1E-8;     	% residu for Newton.
 
 NOISY = 0;
-FFFF = 1E+20;
 	    
-DT_ADAPT = 0;           % Time step adaptation regarding the energy
 R = 100.0;              % Augmentation parameter
 
 DIRICHLET = 0;
 DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet
-INIT_VERT_SPEED = 2E+2;  % Initial vertical velocity
+INIT_VERT_SPEED = -100;  % Initial vertical velocity
 INIT_VERT_POS = 10;       % Initial vertical position
 FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of th	e rigid foundation
 
 if (N == 2)
   % MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[30,30];NSUBDIV=[10,10]';
   %%%%% disque en P2 %%%%%
-  % MESHNAME='meshes/disc_P2_h11.mesh';
-  % MESHNAME='meshes/disc_P2_h8.mesh';
-  % MESHNAME='meshes/disc_P2_h6.mesh';
-  MESHNAME='meshes/disc_P2_h4.mesh';
-  % MESHNAME='meshes/disc_P2_h2.mesh';
-  % MESHNAME='meshes/disc_P2_h1.mesh';
-  % MESHNAME='meshes/disc_P2_h0.5.mesh';
-  % MESHNAME='meshes/disc_P2_h0.3.mesh';
-  FEM_TYPE_U = 'FEM_PK(2, 2)';     % Main FEM
-  FEM_TYPE_V = 'FEM_PK(2, 1)';     % Main FEM
+  % MESHNAME='../../tests/meshes/disc_P2_h11.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h8.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h6.mesh';
+  MESHNAME='../../tests/meshes/disc_P2_h4.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h2.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h1.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h0.5.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h0.3.mesh';
+  % FEM_TYPE_U = 'FEM_PK(2, 2)';     % FEM for the displacement U
+  FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+  FEM_TYPE_V = 'FEM_PK(2, 0)';     % FEM for the velocity V
   DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 end;
 
 if (N == 3)
-  % MESHNAME='meshes/donut_regulier_8_elements_288ddl.mesh';
+  % MESHNAME='../../tests/meshes/donut_regulier_8_elements_288ddl.mesh';
   % MESHNAME='donut_regulier_64_elements_1920ddl.mesh';
   % MESHNAME='donut_regulier_512_elements_13824ddl.mesh';
   % MESHNAME='donut_regulier_32_elements.mesh';
@@ -69,8 +68,8 @@ if (N == 3)
   % MESHNAME='donut_regulier_512_elements.mesh';
   % MESHNAME='donut_regulier_648_elements.mesh';
   % MESHNAME='donut_regulier_800_elements.mesh';
-  FEM_TYPE_U = 'FEM_PK(3, 2)';     % Main FEM
-  FEM_TYPE_V = 'FEM_PK(1, 1)';     % Main FEM
+  FEM_TYPE_U = 'FEM_PK(3, 2)';     % FEM for the displacement U
+  FEM_TYPE_V = 'FEM_PK(3, 1)';     % FEM for the velocity V
   DATA_FEM_TYPE = 'FEM_PK(3,2)'; % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TETRAHEDRON(6)'; % Quadrature rule
 end;
@@ -78,6 +77,6 @@ end;
 
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'dynamic_friction';     % Root of data files.
+ROOTFILENAME = 'mixed_dynamic_friction';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
 DT_EXPORT = 0.001; % Time step for the export

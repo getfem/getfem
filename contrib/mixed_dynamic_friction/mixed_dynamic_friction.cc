@@ -74,14 +74,15 @@ struct friction_problem {
   scalar_type T, dt, r;
   scalar_type init_vert_pos, init_vert_speed, hspeed, dtexport;
   scalar_type Dirichlet_ratio;
-  bool dt_adapt, dxexport, Dirichlet;
+  bool  dxexport, Dirichlet;
 
   std::string datafilename;
   bgeot::md_param PARAM;
 
   void solve(void);
   void init(void);
-  friction_problem(void) : mim(mesh), mf_u(mesh), mf_v(mesh), mf_rhs(mesh), mf_vm(mesh) {}
+  friction_problem(void) : mim(mesh), mf_u(mesh), mf_v(mesh),
+			   mf_rhs(mesh), mf_vm(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -112,13 +113,13 @@ void friction_problem::init(void) {
   rho = PARAM.real_value("RHO", "Density");
   PG = PARAM.real_value("PG", "Gravity constant");
   friction_coef = PARAM.real_value("FRICTION_COEF", "Friction coefficient");
+  GMM_ASSERT1(friction_coef == 0., "Sorry, friction desactived");
 
   Dirichlet = PARAM.int_value("DIRICHLET","Dirichlet condition or not");
   Dirichlet_ratio = PARAM.real_value("DIRICHLET_RATIO",
 				     "parameter for Dirichlet condition");
   T = PARAM.real_value("T", "from [0,T] the time interval");
   dt = PARAM.real_value("DT", "time step");
-  dt_adapt = (PARAM.int_value("DT_ADAPT", "time step adaptation") != 0);
   dxexport = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format")
 	      != 0);
   dtexport = PARAM.real_value("DT_EXPORT", "time step for the export");
@@ -214,6 +215,146 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
 
 
 /**************************************************************************/
+/*  Brique dynamique mixte.                                               */
+/**************************************************************************/
+
+namespace getfem {
+
+# define MDBRICK_MIXED_DYNAMIC 738053
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_mixed_dynamic : public mdbrick_abstract<MODEL_STATE>  {
+    
+    TYPEDEF_MODEL_STATE_TYPES;
+
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    const mesh_fem *mf_u;
+     const mesh_fem &mf_v;
+    mdbrick_parameter<VECTOR> RHO_;
+    VECTOR DFU, DFV;
+    T_MATRIX B_, C_;
+    size_type num_fem;
+    value_type Bcoef, Kcoef, Ccoef;
+    std::set<size_type> boundary_sup;
+    bool M_uptodate;
+
+    virtual void proper_update(void) {
+      mf_u = this->mesh_fems[num_fem];
+      M_uptodate = false;
+    }
+
+    void proper_update_M(void) {
+      GMM_TRACE2("Assembling mass matrices for mdbrick_mixed_dynamic");
+      gmm::clear(B_);
+      gmm::resize(B_, mf_v.nb_dof(), mf_u->nb_dof());
+      asm_mass_matrix_param(B_, *(this->mesh_ims[0]), mf_v, *mf_u,
+			    RHO_.mf(), RHO_.get());
+      gmm::clear(C_);
+      gmm::resize(C_, mf_v.nb_dof(), mf_v.nb_dof());
+      asm_mass_matrix_param(C_, *(this->mesh_ims[0]), mf_v,
+			    RHO_.mf(), RHO_.get());
+    }
+
+  public :
+
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					   size_type) {
+      gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_v.nb_dof());
+      gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem],
+			     mf_u->nb_dof());
+
+      if (Kcoef != value_type(1)) gmm::scale(MS.tangent_matrix(), Kcoef);
+      gmm::copy(gmm::scaled(get_B(), Bcoef),
+		gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+      gmm::copy(gmm::transposed(gmm::scaled(get_B(), Bcoef)),
+		gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+      gmm::copy(gmm::scaled(get_C(), -Ccoef),
+		gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+    }
+    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
+				   size_type) {
+      gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_v.nb_dof());
+      gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem],
+			     mf_u->nb_dof());
+
+      if (Kcoef != value_type(1))  gmm::scale(MS.residual(), Kcoef);
+      gmm::mult(get_B(), gmm::scaled(gmm::sub_vector(MS.state(), SUBJ), Bcoef),
+		gmm::sub_vector(MS.residual(), SUBI));
+      gmm::mult_add(gmm::transposed(get_B()),
+		    gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Bcoef),
+		    gmm::sub_vector(MS.residual(), SUBJ));
+      gmm::mult_add(get_C(),
+		    gmm::scaled(gmm::sub_vector(MS.state(), SUBI), -Ccoef),
+		    gmm::sub_vector(MS.residual(), SUBI));
+      if (gmm::vect_size(DFU) > 0)
+	gmm::add(gmm::scaled(DFU, -value_type(1)),
+		 gmm::sub_vector(MS.residual(), SUBJ));
+      if (gmm::vect_size(DFV) > 0)
+	gmm::add(gmm::scaled(DFV, -value_type(1)),
+		 gmm::sub_vector(MS.residual(), SUBI));
+    }
+
+    void set_dynamic_coeff(value_type a, value_type b, value_type c)
+    { Bcoef=a; Kcoef=b; Ccoef = c; }
+    template <class VEC> void set_DFU(const VEC &DF_)
+    { gmm::resize(DFU, gmm::vect_size(DF_)); gmm::copy(DF_, DFU); }
+    template <class VEC> void set_DFV(const VEC &DF_)
+    { gmm::resize(DFV, gmm::vect_size(DF_)); gmm::copy(DF_, DFV); }
+
+    const T_MATRIX &get_B(void) {
+      this->context_check();
+      if (!M_uptodate || this->parameters_is_any_modified()) {
+	proper_update_M();
+	M_uptodate = true;
+	this->parameters_set_uptodate();
+      }
+      return B_; 
+    }
+
+    const T_MATRIX &get_C(void) {
+      this->context_check();
+      if (!M_uptodate || this->parameters_is_any_modified()) {
+	proper_update_M();
+	M_uptodate = true;
+	this->parameters_set_uptodate();
+      }
+      return C_; 
+    }
+
+    /** provide access to the value of the solution corresponding to
+	the local mesh_fem mf_v. */
+    SUBVECTOR get_V(MODEL_STATE &MS) {
+      gmm::sub_interval SUBU = gmm::sub_interval(this->first_index()
+				     + sub_problem.nb_dof(), mf_v.nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
+    }
+
+    /**
+       @param num_fem_ the mesh_fem number on which this brick is is applied.
+    */
+    mdbrick_mixed_dynamic(mdbrick_abstract<MODEL_STATE> &problem,
+			  const mesh_fem &mf_v_, value_type RHO__, 
+			  size_type num_fem_=0)
+      : sub_problem(problem), mf_v(mf_v_), RHO_("rho", this),
+	num_fem(num_fem_) {
+      
+      Bcoef = Kcoef = Ccoef = value_type(1);
+      this->add_sub_brick(sub_problem);
+      this->proper_is_coercive_ = false;
+      this->add_proper_mesh_fem(mf_v, MDBRICK_MIXED_DYNAMIC);
+      this->force_update();
+      
+      RHO_.set(classical_mesh_fem(mf_u->linked_mesh(), 0), RHO__);
+    }
+  };
+
+
+
+}
+
+
+
+/**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
 
@@ -269,52 +410,44 @@ void friction_problem::solve(void) {
     }
 
   getfem::mdbrick_Coulomb_friction<>
-    FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
+    // FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
+    FRICTION(DIRICHLET, BN, gap);
   FRICTION.set_r(r);
 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> DYNAMIC(FRICTION, rho);
-  sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
-  gmm::copy(DYNAMIC.get_M(), MM);
+  getfem::mdbrick_mixed_dynamic<> DYNAMIC(FRICTION, mf_v, rho);
   
   cout << "Total number of variables: " << DYNAMIC.nb_dof() << endl;
   getfem::standard_model_state MS(DYNAMIC);
 
   plain_vector WT(mf_u.nb_dof()), WN(mf_u.nb_dof());
-  plain_vector DF(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
-  plain_vector U2(mf_u.nb_dof());
-  plain_vector U0(mf_u.nb_dof()), V0(mf_u.nb_dof()), MA0(mf_u.nb_dof());
-  plain_vector A0(mf_u.nb_dof());
-  plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), MA1(mf_u.nb_dof());
-  plain_vector A1(mf_u.nb_dof());
-  plain_vector Udemi(mf_u.nb_dof()), Vdemi(mf_u.nb_dof());
+  plain_vector DFU(mf_u.nb_dof()), DFV(mf_v.nb_dof());
+  plain_vector HSPEED(mf_u.nb_dof());
+  plain_vector U0(mf_u.nb_dof()), V0(mf_v.nb_dof());
+  plain_vector U1(mf_u.nb_dof()), V1(mf_v.nb_dof());
+  plain_vector Udemi(mf_u.nb_dof()), Vdemi(mf_v.nb_dof());
   plain_vector LT0(gmm::mat_nrows(BT)), LN0(gmm::mat_nrows(BN));
-  plain_vector UN(gmm::mat_nrows(BN));
   plain_vector LT1(gmm::mat_nrows(BT)), LN1(gmm::mat_nrows(BN));
-  scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport), beta_(0);
-  scalar_type alpha_(0), J_friction0(0), J_friction1(0);
-  plain_vector one(mf_u.nb_dof());
-  std::fill(one.begin(), one.end(), 1.0);
+  scalar_type t(0), t_export(dtexport), beta_(0);
+  scalar_type alpha_(0);
 
-  sparse_matrix BBT(gmm::mat_nrows(BN), gmm::mat_nrows(BN));
-
-  // Initial conditions (U0, V0, M A0 = F)
+  // Initial conditions (U0, V0)
   gmm::clear(U0); gmm::clear(V0); gmm::clear(LT0);
   for (size_type i=0; i < mf_u.nb_dof(); ++i)
     if ((i % N) == 0) { 
       U0[i+N-1] = Dirichlet ? (Dirichlet_ratio * mf_u.point_of_dof(i)[N-1])
 	: init_vert_pos;
-      V0[i+N-1] = Dirichlet ? 0.0 : init_vert_speed;
       HSPEED[i] = hspeed;
     }
+
+  for (size_type i=0; i < mf_v.nb_dof(); ++i)
+    if ((i % N) == 0) V0[i+N-1] = Dirichlet ? 0.0 : init_vert_speed;
   
- 
-  gmm::clear(MA0);
   gmm::iteration iter(residual, 0, 40000);
   iter.set_noisy(noisy);
 
   scalar_type J0 = 0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
-    + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V0, V0)
+    + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)
     - gmm::vect_sp(VOL_F.get_F(), U0);
 
   std::auto_ptr<getfem::dx_export> exp;
@@ -336,29 +469,28 @@ void friction_problem::solve(void) {
   }
   
   std::ofstream fileout1("time", std::ios::out);   
-  std::ofstream fileout2("nrj", std::ios::out);
-  std::ofstream fileout4("FN0", std::ios::out);
+  std::ofstream fileout2("energy", std::ios::out);
  
   scalar_type Einit = (0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
-		       + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V0, V0)
+		       + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)
 		       - gmm::vect_sp(VOL_F.get_F(), U0));
   cout << "t=0, initial energy: " << Einit << endl;
   
   while (t <= T) {
 
-    a = 4./(dt*dt); b = 1.; beta_ = 2./dt; alpha_ = 1.;
-    gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
-    gmm::mult(DYNAMIC.get_M(), U1, DF);
+    beta_ = 2./dt; alpha_ = 1.;
+    gmm::mult(gmm::transposed(DYNAMIC.get_B()), gmm::scaled(V0, 2./dt), DFU);
+    gmm::mult(DYNAMIC.get_B(), gmm::scaled(U0, 2./dt), DFV);
     gmm::copy(gmm::scaled(U0, -1.), WT);
     gmm::clear(WN);
-    
-    
     gmm::add(gmm::scaled(HSPEED, -1./beta_), WT);
-    FRICTION.set_WN(WN); 
-    FRICTION.set_WT(WT); FRICTION.set_r(r); FRICTION.set_beta(beta_);
+
+    FRICTION.set_WN(WN); FRICTION.set_r(r); 
+    // FRICTION.set_WT(WT); FRICTION.set_beta(beta_);
     FRICTION.set_alpha(alpha_); 
-    DYNAMIC.set_dynamic_coeff(a, b);
-    DYNAMIC.set_DF(DF);
+    DYNAMIC.set_dynamic_coeff(2./dt, 1., 1.);
+    DYNAMIC.set_DFU(DFU);
+    DYNAMIC.set_DFV(DFV);
     
     iter.init();
     gmm::default_newton_line_search ls(size_type(-1), 4.0/3.0,
@@ -367,36 +499,23 @@ void friction_problem::solve(void) {
 			   getfem::default_linear_solver(DYNAMIC), ls);
     
     
-    gmm::copy(ELAS.get_solution(MS), U1);
+    gmm::copy(ELAS.get_solution(MS), Udemi);
+    gmm::copy(DYNAMIC.get_V(MS), Vdemi);
     gmm::copy(FRICTION.get_LN(MS), LN1);
     gmm::copy(FRICTION.get_LT(MS), LT1);
-    std::vector<scalar_type> BU(gmm::mat_nrows(BN)), AA(gmm::mat_nrows(BN));
+
+    gmm::add(gmm::scaled(V0, -1.), gmm::scaled(Vdemi, 2.), V1);
+    gmm::add(gmm::scaled(U0, -1.), gmm::scaled(Udemi, 2.), U1);
     
-    
-    gmm::copy(U1, V1); gmm::copy(U1, Udemi);
-    gmm::add(gmm::scaled(V1, 2.), gmm::scaled(U0, -1.), U1);
-    gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
-    gmm::copy(gmm::scaled(V1, 0.5), Vdemi);
-    J_friction1 = J_friction0 + dt * 0.5 * gmm::vect_sp(BT, V1, LT1);
-    gmm::add(gmm::scaled(V0, -1), V1);
-    
-    scalar_type J1(0), Jdemi(0), potential_nrj(0), elastic_nrj(0), kenetic_nrj(0);
-    
-    J1 = Jdemi = 0.5*gmm::vect_sp(ELAS.get_K(), Udemi, Udemi)
-      + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), Vdemi, Vdemi)
+    scalar_type J1 =  0.5*gmm::vect_sp(ELAS.get_K(), U1, U1)
+      + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V1, V1)
+      - gmm::vect_sp(VOL_F.get_F(), U1);
+
+    scalar_type Jdemi = 0.5*gmm::vect_sp(ELAS.get_K(), Udemi, Udemi)
+      + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), Vdemi, Vdemi)
       - gmm::vect_sp(VOL_F.get_F(), Udemi);
-    
-    kenetic_nrj = 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V1, V1);
-    elastic_nrj = 0.5*gmm::vect_sp(ELAS.get_K(), U1, U1);
-    potential_nrj = - gmm::vect_sp(VOL_F.get_F(), U1);
-    J1 = kenetic_nrj + elastic_nrj + potential_nrj;
 
     t += dt;
-    
-    scalar_type LTtot = gmm::vect_sp(BT,one, LT1);
-    scalar_type LNtot = -gmm::vect_sp(BN,one, LN1);
-    scalar_type Friction_coef_ap = (LNtot >= 0.) ? 0.
-      : gmm::abs(LTtot / LNtot);
     
     size_type nbsl= 0, nbst = 0;
     for (size_type i = 0; i < gmm::mat_nrows(BN); ++i) {
@@ -409,34 +528,15 @@ void friction_problem::solve(void) {
     }
     
     cout << "r = " << FRICTION.get_r() << endl;
-    cout << "t = " << t << " energy : ";
-    cout << J1 << " energy at midpoint : " << Jdemi;
-    cout << " friction energy : " << J_friction1
-	 << " app. fric. coef : " << Friction_coef_ap
-	 << " (st " << nbst << ", sl " << nbsl << ")" << endl;
-    dt = std::min(2.*dt, dt0);
-    // cout << "LN1 = " << LN1 << endl;
+    cout << "t = " << t << " J1 = " << J1 << " Jdemi = " << Jdemi;
+    cout << " (st " << nbst << ", sl " << nbsl << ")" << endl;
     
-    gmm::copy(U1, U0); gmm::copy(V1, V0);
-    gmm::copy(A1, A0); gmm::copy(MA1, MA0); J0 = J1;
-    gmm::copy(LN1, LN0); gmm::copy(LT1, LT0); J_friction0 = J_friction1;
+    gmm::copy(U1, U0); gmm::copy(V1, V0);  J0 = J1;
+    gmm::copy(LN1, LN0); gmm::copy(LT1, LT0);
     if (dxexport && t >= t_export-dt/20.0) {
-      plain_vector UU1(N), VV1(N);
-      plain_vector LLN1(gmm::vect_size(U0));
-      gmm::mult(gmm::transposed(BN), LN1, LLN1);
-      
-      //	scalar_type h = mesh.minimal_convex_radius_estimate();
-      // Pas bon, il faut multiplier par l'inverse de la matrice de masse
-      // sur le bord.
-      scalar_type rr = MM(ref_dof+N-1, ref_dof+N-1);
-      LLN1[ref_dof+N-1] = rho*LLN1[ref_dof+N-1]/rr; 
-      
-      gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
-      gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
       
       fileout1 << t << "\n";
       fileout2 << J1   << "\n";	
-      fileout4 << -LLN1[ref_dof+N-1] << "\n";
       
       exp->write_point_data(mf_u, U0);
       exp->serie_add_object("deformationsteps");
