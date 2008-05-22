@@ -68,8 +68,8 @@ if (N == 3)
   % MESHNAME='donut_regulier_512_elements.mesh';
   % MESHNAME='donut_regulier_648_elements.mesh';
   % MESHNAME='donut_regulier_800_elements.mesh';
-  FEM_TYPE_U = 'FEM_PK(3, 2)';     % FEM for the displacement U
-  FEM_TYPE_V = 'FEM_PK(3, 1)';     % FEM for the velocity V
+  FEM_TYPE_U = 'FEM_PK(3, 2)';   % FEM for the displacement U
+  FEM_TYPE_V = 'FEM_PK(3, 1)';   % FEM for the velocity V
   DATA_FEM_TYPE = 'FEM_PK(3,2)'; % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TETRAHEDRON(6)'; % Quadrature rule
 end;

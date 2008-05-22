@@ -420,6 +420,8 @@ void friction_problem::solve(void) {
   cout << "Total number of variables: " << DYNAMIC.nb_dof() << endl;
   getfem::standard_model_state MS(DYNAMIC);
 
+  // cout << "C = " << DYNAMIC.get_C() << endl;
+
   plain_vector WT(mf_u.nb_dof()), WN(mf_u.nb_dof());
   plain_vector DFU(mf_u.nb_dof()), DFV(mf_v.nb_dof());
   plain_vector HSPEED(mf_u.nb_dof());
@@ -527,7 +529,6 @@ void friction_problem::solve(void) {
       }
     }
     
-    cout << "r = " << FRICTION.get_r() << endl;
     cout << "t = " << t << " J1 = " << J1 << " Jdemi = " << Jdemi;
     cout << " (st " << nbst << ", sl " << nbsl << ")" << endl;
     
