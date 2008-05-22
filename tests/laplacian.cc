@@ -258,13 +258,13 @@ bool laplacian_problem::solve(void) {
   gmm::iteration iter(residual, 1, 40000);
   double time = gmm::uclock_sec();
   if (1) {
-    gmm::identity_matrix P;
+    // gmm::identity_matrix P;
     // gmm::diagonal_precond<sparse_matrix_type> P(SM);
     // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
     // gmm::ildlt_precond<sparse_matrix_type> P(SM);
-    // gmm::ildltt_precond<sparse_matrix_type> P(SM, 50, 1E-9);
-    // gmm::ilut_precond<sparse_matrix_type> P(SM, 50, 1E-9);
-    // gmm::ilutp_precond<sparse_matrix_type> P(SM, 50, 1E-9);
+    // gmm::ildltt_precond<sparse_matrix_type> P(SM, 20, 1E-6);
+    gmm::ilut_precond<sparse_matrix_type> P(SM, 20, 1E-6);
+    // gmm::ilutp_precond<sparse_matrix_type> P(SM, 20, 1E-6);
     // gmm::ilu_precond<sparse_matrix_type> P(SM);
     cout << "Time to compute preconditionner : "
 	 << gmm::uclock_sec() - time << " seconds\n";
@@ -272,8 +272,8 @@ bool laplacian_problem::solve(void) {
   
     //gmm::HarwellBoeing_IO::write("SM", SM);
 
-    gmm::cg(SM, U, B, P, iter);
-    // gmm::gmres(SM, U, B, P, 50, iter);
+    // gmm::cg(SM, U, B, P, iter);
+    gmm::gmres(SM, U, B, P, 50, iter);
   } else {
     double rcond; 
     gmm::SuperLU_solve(SM, U, B, rcond); 

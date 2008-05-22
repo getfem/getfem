@@ -120,16 +120,16 @@ namespace gmm {
       copy(sub_vector(mat_const_row(A, i), indperm), w);
       double norm_row = gmm::vect_norm2(mat_const_row(A, i)); 
 
-      typename _wsvector::iterator wkold = w.begin();
-      bool itfirst = true;
+      typename _wsvector::iterator wkold = w.end();
       for (typename _wsvector::iterator wk = w.begin();
 	   wk != w.end() && wk->first < i; )  {
 	size_type k = wk->first;
 	tmp = (wk->second) * indiag[k];
 	if (gmm::abs(tmp) < eps * norm_row) w.erase(k); 
 	else { wk->second += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
-	if (itfirst) wk = w.begin(); else wk = ++wkold;
-	if (wk != w.end() && wk->first == k) { ++wk; itfirst = false; }
+	if (wkold == w.end()) wk = w.begin(); else { wk = wkold; ++wk; }
+	if (wk != w.end() && wk->first == k)
+	  { if (wkold == w.end()) wkold = w.begin(); else ++wkold; ++wk; }
       }
 
       gmm::clean(w, eps * norm_row);
