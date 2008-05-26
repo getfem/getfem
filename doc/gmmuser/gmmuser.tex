@@ -1018,7 +1018,7 @@ If you do not need to keep old values of the components, or if you want to reall
 
   ... your code
 
-  std::swap(M, MATRIX_TYPE(m2, n2)); // resize matrix M.
+  { MATRIX_TYPE(m2, n2) M2; std::swap(M, M2); } // resize matrix M.
 \end{cppcode}
 Of course, this works also for a vector.
 
