@@ -195,7 +195,7 @@ gc_alloc(gcollect *gc, size_t sz) {
   if (p) {
     gc->allocated = ptr_collect_push_front(gc->allocated, p);
   } else {
-    PyErr_Format(PyExc_RuntimeError, "could not allocate %d bytes: memory exhausted", sz);
+    PyErr_Format(PyExc_RuntimeError, "could not allocate %d bytes: memory exhausted", (int)sz);
   }
   return p;
 }

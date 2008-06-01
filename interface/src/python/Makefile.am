@@ -50,9 +50,12 @@ if BUILDPYTHON
 
 PYTHON_CC=$(CC)
 
+
+# ARCHFLAGS is set to empty to disable universal binaries with python 2.5 on macos 10.5
 _getfem.so: getfem_python.c ../libgetfemint.la $(GETFEM_LIB_LA)
 	touch _getfem.so && rm _getfem.so
-	LDSHARED="$(CXX) -shared" python setup.py -v build --build-temp . --build-base . --build-lib . --force
+	ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
+#LDSHARED="$(CXX) -shared" ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 
 
 doc: getfem.py
