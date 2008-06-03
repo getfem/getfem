@@ -17,6 +17,7 @@ TESTS = $(top_srcdir)/contrib/mixed_dynamic_friction/mixed_dynamic_friction.pl
 EXTRA_DIST = \
 	mixed_dynamic_friction.pl                  \
 	mixed_dynamic_friction.param               \
-	mixed_scalar_hyperbolic.param
+	mixed_scalar_hyperbolic.param              \
+	mixed_scalar_hyperbolic.net
 
 TESTS_ENVIRONMENT = perl

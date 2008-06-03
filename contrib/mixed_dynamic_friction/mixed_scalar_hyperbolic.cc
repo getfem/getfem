@@ -67,7 +67,7 @@ struct hyperbolic_problem {
   getfem::mesh_fem mf_mult;  /* mesh_fem for the Dirichlet condition.        */
 
   scalar_type residual;      /* max residual for the iterative solvers       */
-  size_type N, noisy;
+  size_type N, noisy, scheme;
   scalar_type T, dt, r;
   scalar_type dirichlet_val, dtexport;
   bool  dxexport;
@@ -114,6 +114,7 @@ void hyperbolic_problem::init(void) {
  
   r = PARAM.real_value("R", "augmentation parameter");
   noisy = (PARAM.int_value("NOISY", "verbosity of iterative methods") != 0);
+  scheme = PARAM.int_value("SCHEME", "scheme");
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE_U);
@@ -151,9 +152,6 @@ void hyperbolic_problem::init(void) {
     mf_mult.set_finite_element(mesh.convex_index(), 
 			       getfem::fem_descriptor(mult_fem_name));
   }
-
-
-
   
   /* set boundary conditions */
   base_node center(0.,0.,20.);
@@ -165,11 +163,13 @@ void hyperbolic_problem::init(void) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
-	if (un[N-1] < -0.000001 && (N != 3 || (gmm::vect_dist2(pt, center)
-			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
-	  mesh.region(CONTACT_BOUNDARY).add(cv, f);
-	if (un[N-1] > 0.1)
-	  mesh.region(DIRICHLET_BOUNDARY).add(cv, f);
+	mesh.region(DIRICHLET_BOUNDARY).add(cv, f);
+
+	// if (un[N-1] < -0.000001 && (N != 3 || (gmm::vect_dist2(pt, center)
+	//		   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
+	//  mesh.region(CONTACT_BOUNDARY).add(cv, f);
+	// if (un[N-1] > 0.1)
+	//  mesh.region(DIRICHLET_BOUNDARY).add(cv, f);
       }
     }
   }
@@ -326,10 +326,15 @@ void hyperbolic_problem::solve(void) {
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
   cout << "Number of dof for v: " << mf_v.nb_dof() << endl;
 
-  size_type ref_dof = 0;
+  // Choosing a reference dof.
+  size_type ref_dof = 0, ref_mult = size_type(-1);
+  base_node P(N); gmm::fill(P, 0.5);
   for (size_type i = 1; i < mf_u.nb_dof(); ++i)
-    if (mf_u.point_of_dof(i)[N-1] < mf_u.point_of_dof(ref_dof)[N-1])
+    if (gmm::vect_dist2(mf_u.point_of_dof(i), P)
+	< gmm::vect_dist2(mf_u.point_of_dof(ref_dof), P))
       ref_dof = i;
+  cout << "ref_dof = " << ref_dof << " point = "
+       << mf_u.point_of_dof(ref_dof) << endl;
 
   // Linearized elasticity brick.
   getfem::mdbrick_generic_elliptic<> ELAS(mim, mf_u);
@@ -346,8 +351,11 @@ void hyperbolic_problem::solve(void) {
   getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
 
   // Dirichlet condition brick.
-  gmm::clear(F);
   gmm::fill(F, dirichlet_val);
+//   for (size_type i = 0;i < mf_rhs.nb_dof(); ++i)
+//     F[i] = dirichlet_val * (1.0 - gmm::sqr(0.5 - mf_rhs.point_of_dof(i)[0]))
+//       * (1.0 - 0.2*mf_rhs.point_of_dof(i)[1]);
+  
   getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, DIRICHLET_BOUNDARY, mf_mult);
   DIRICHLET.rhs().set(mf_rhs, F);
   
@@ -362,13 +370,17 @@ void hyperbolic_problem::solve(void) {
     }
 
  
-  cout << "cn = " << cn << endl;
+  //  cout << "cn = " << cn << endl;
   cout << "Number of contacting nodes : " << cn.card() << endl;
   sparse_matrix BN(cn.card(), mf_u.nb_dof());
   plain_vector gap(cn.card());
   size_type jj = 0;
-  for (dal::bv_visitor i(cn); !i.finished(); ++i)
-    { BN(jj, i) = -1.; ++jj; }
+  for (dal::bv_visitor i(cn); !i.finished(); ++i) {
+    BN(jj, i) = -1.;
+    if (i == ref_dof) ref_mult = jj;
+    ++jj;
+  }
+  GMM_ASSERT1(ref_mult != size_type(-1), "No ref_mult !");
 
   getfem::mdbrick_Coulomb_friction<> FRICTION(DIRICHLET, BN, gap);
   FRICTION.set_r(r);
@@ -386,35 +398,62 @@ void hyperbolic_problem::solve(void) {
   plain_vector U0(mf_u.nb_dof()), V0(mf_v.nb_dof());
   plain_vector U1(mf_u.nb_dof()), V1(mf_v.nb_dof());
   plain_vector Udemi(mf_u.nb_dof()), Vdemi(mf_v.nb_dof());
-  plain_vector LN0(gmm::mat_nrows(BN)), LN1(gmm::mat_nrows(BN));
+  plain_vector LN1(gmm::mat_nrows(BN));
   scalar_type t(0), t_export(dtexport), beta_(0);
   scalar_type alpha_(0);
 
   // Initial conditions (U0, V0)
-  gmm::fill(U0, dirichlet_val); gmm::clear(V0);
+  gmm::clear(V0);
+  {  // projection of F on U0.
+    sparse_matrix BB(mf_u.nb_dof(), mf_rhs.nb_dof());
+    sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
+    plain_vector BBF(mf_u.nb_dof());
+    getfem::asm_mass_matrix(MM, mim, mf_u);
+    getfem::asm_mass_matrix(BB, mim, mf_u, mf_rhs);
+    gmm::mult(BB, F, BBF);
+    double rcond;
+    gmm::SuperLU_solve(MM, U0, BBF, rcond);
+  }
   
   gmm::iteration iter(residual, 0, 40000);
   iter.set_noisy(noisy);
 
-  std::ofstream fileout1("time", std::ios::out);   
-  std::ofstream fileout2("energy", std::ios::out);
+  std::auto_ptr<getfem::dx_export> exp;
+  getfem::stored_mesh_slice sl;
+  if (dxexport) {
+    exp.reset(new getfem::dx_export(datafilename + ".dx", false));
+    if (N <= 2)
+      sl.build(mesh, getfem::slicer_none(),4);
+    else
+      sl.build(mesh, getfem::slicer_boundary(mesh),4);
+    exp->exporting(sl,true);
+    exp->exporting_mesh_edges();
+    exp->write_point_data(mf_u, U0, "stepinit"); 
+    exp->serie_add_object("deformationsteps");
+  }
+
+  std::ofstream fileout((datafilename+".data").c_str(), std::ios::out);
  
   cout << "t=0, initial energy: " << 0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
     + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)
     - gmm::vect_sp(VOL_F.get_F(), U0) << endl;
   
 
-  size_type niter = 0;
+  size_type nitexp = 0;
   while (t <= T) {
 
-    beta_ = 2./dt; alpha_ = 1.;
-    gmm::mult(gmm::transposed(DYNAMIC.get_B()), gmm::scaled(V0, 2./dt), DFU);
-    gmm::mult(DYNAMIC.get_B(), gmm::scaled(U0, 2./dt), DFV);
+    switch(scheme) {
+    case 0 : beta_ = 1./dt; alpha_ = 1.; break;
+    case 1 : beta_ = 2./dt; alpha_ = 1.; break;
+    }
+    
+    gmm::mult(DYNAMIC.get_B(), gmm::scaled(U0, beta_), DFV);    
+    gmm::mult(gmm::transposed(DYNAMIC.get_B()), gmm::scaled(V0, beta_), DFU);
     gmm::clear(WN);
 
     FRICTION.set_WN(WN); FRICTION.set_r(r); 
-    FRICTION.set_alpha(alpha_); 
-    DYNAMIC.set_dynamic_coeff(2./dt, 1., 1.);
+    FRICTION.set_alpha(1.); 
+    DYNAMIC.set_dynamic_coeff(beta_, alpha_, 1.);
     DYNAMIC.set_DFU(DFU);
     DYNAMIC.set_DFV(DFV);
     
@@ -429,8 +468,16 @@ void hyperbolic_problem::solve(void) {
     gmm::copy(DYNAMIC.get_V(MS), Vdemi);
     gmm::copy(FRICTION.get_LN(MS), LN1);
 
-    gmm::add(gmm::scaled(V0, -1.), gmm::scaled(Vdemi, 2.), V1);
-    gmm::add(gmm::scaled(U0, -1.), gmm::scaled(Udemi, 2.), U1);
+    switch(scheme) {
+    case 0 :
+      gmm::copy(Vdemi, V1);
+      gmm::copy(Udemi, U1);
+      break;
+    case 1 :
+      gmm::add(gmm::scaled(V0, -1.), gmm::scaled(Vdemi, 2.), V1);
+      gmm::add(gmm::scaled(U0, -1.), gmm::scaled(Udemi, 2.), U1);
+      break;
+    }
 
     scalar_type J1 =  0.5*gmm::vect_sp(ELAS.get_K(), U1, U1)
       + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V1, V1)
@@ -440,8 +487,7 @@ void hyperbolic_problem::solve(void) {
       + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), Vdemi, Vdemi)
       - gmm::vect_sp(VOL_F.get_F(), Udemi);
 
-    t += dt; ++niter;
-
+    t += dt; 
     scalar_type umin = dirichlet_val;
     size_type nbco = 0;
     for (dal::bv_visitor i(pcn); !i.finished(); ++i)
@@ -450,22 +496,25 @@ void hyperbolic_problem::solve(void) {
 	 << " nbcontact : " << nbco << " umin = " << umin << endl;
     
     gmm::copy(U1, U0); gmm::copy(V1, V0);
-    gmm::copy(LN1, LN0);
+
+    fileout << t << "   \t" << J1 << "   \t" << Udemi[ref_dof] << "   \t"
+	    << LN1[ref_mult] << "\n";
+
+    
     if (dxexport && t >= t_export-dt/20.0) {
       
-      fileout1 << t << "\n";
-      fileout2 << J1   << "\n";	
-      
-      t_export += dtexport;
+      t_export += dtexport; ++nitexp;
+
+      exp->write_point_data(mf_u, Udemi);
+      exp->serie_add_object("deformationsteps");
 
       if (PARAM.int_value("VTK_EXPORT")) {
-	char numit[10];
-	sprintf(numit, "%d", niter);
+	char numit[100]; sprintf(numit, "%d", int(nitexp));
 	cout << "export to " << datafilename + numit + ".vtk" << "..\n";
-	getfem::vtk_export exp(datafilename + numit + ".vtk",
+	getfem::vtk_export vexp(datafilename + numit + ".vtk",
 			   PARAM.int_value("VTK_EXPORT")==1);
-	exp.exporting(mf_u); 
-	exp.write_point_data(mf_u, U1, "solution");
+	vexp.exporting(mf_u); 
+	vexp.write_point_data(mf_u, Udemi, "solution");
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << datafilename << numit << ".vtk -f "
 	  "WarpScalar -m BandedSurfaceMap -m Outline\n";
@@ -489,8 +538,14 @@ int main(int argc, char *argv[]) {
   p.init();
   p.solve();
   
+  cout << "To see the simulation, you have to set DX_EXPORT to 1 in "
+    "dynamic_friction.param and DT_EXPORT to a suitable value (for "
+    "instance equal to DT). Then you can use Open_DX (type just \"dx\" "
+    "if it is installed on your system) with the Visual Program "
+    "mixed_scalar_hyperbolic.net (use for instance \"Edit Visual Programs ...\" "
+    "with dynamic_friction.net, then \"execute once\" in Execute menu and "
+    "use the sequencer to start the animation).\n";
   
-
 
   return 0; 
 }
