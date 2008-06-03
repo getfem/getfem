@@ -281,6 +281,10 @@ fi
 
 # Generic BLAS library?
 if test $acx_blas_ok = no; then
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])
+fi
+
+if test $acx_blas_ok = no; then
         AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas -lg2c"])
 fi
 
