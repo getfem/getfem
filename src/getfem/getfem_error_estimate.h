@@ -105,8 +105,8 @@ namespace getfem {
     (const VECT1 &UU, VECT2 &errr, const getfem::mesh_im &mmim,
      const getfem::mesh_fem &mmf)
       : compute_on_inter_element(mmim, mmf), U(UU), err(errr) {
-      GMM_ASSERT1(mf.get_qdim() > 1,
-		  "Vectorial elements not taken into account ... to be done");
+//       GMM_ASSERT1(mf.get_qdim() <= 1,
+// 		  "Vectorial elements not taken into account ... to be done");
     }
 
   };

@@ -22,7 +22,7 @@ mfd=MeshFem(m,1) # data
 mfe=MeshFem(m,1) 
 mim=MeshIm(m, Integ('IM_TETRAHEDRON(5)'))
 degree = 2
-linear = True
+linear = False
 incompressible = False # ensure that degree > 1 when incompressible is on..
 
 mfu.set_fem(Fem('FEM_PK(3,%d)' % (degree,)));
