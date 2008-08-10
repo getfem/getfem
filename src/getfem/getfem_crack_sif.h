@@ -29,7 +29,7 @@
 //===========================================================================
 
 /**@file getfem_crack_sif.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, J. Pommier
+   @author  Julien Pommier
    @date July 2007
    @brief crack support functions for computation of SIF (stress intensity factors)
 */
