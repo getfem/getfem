@@ -24,9 +24,10 @@ else
 end;
 
 
-NX = 15;            	          % space step.
+NX = 160;            	% space step.
+MODE = 2;               % Mode for the reference solution
 
-MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;	% Set to one if you want to "shake" the mesh
 
 
 

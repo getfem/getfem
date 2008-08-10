@@ -228,7 +228,7 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
 				5*cost*s2*lambda*c2*c2
 				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
     }
-  } else assert(0);
+  } else GMM_ASSERT1(false, "Unvalid mode");
   if (isnan(U[0]))
     cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig="
 	 << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r="
@@ -279,7 +279,7 @@ struct exact_solution {
 	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
       } break;
       default:
-	assert(0);
+	GMM_ASSERT1(false, "Unvalid mode");
 	break;
     }
     gmm::scale(U, coeff/young_modulus(lambda,mu));
@@ -351,6 +351,7 @@ struct crack_problem {
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
+  int mode;
   
   scalar_type enr_area_radius;
   struct cutoff_param {
@@ -511,6 +512,7 @@ void crack_problem::init(void) {
   
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
+  mode = PARAM.int_value("MODE","Mode for the reference solution");
   dir_with_mult = PARAM.int_value("DIRICHLET_VERSINO");
   if (mixed_pressure) {
     std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
@@ -559,7 +561,7 @@ void crack_problem::init(void) {
   
   
 #ifdef VALIDATE_XFEM
-  exact_sol.init(1, lambda, mu, ls);
+  exact_sol.init(mode, lambda, mu, ls);
 #endif
 }
 
@@ -957,7 +959,7 @@ void crack_problem::compute_sif(const plain_vector &U) {
     cout << "GLOBAPPROX = " << diff << endl;
     cout << "GLOBEXACT = " << exact_sol.U << endl;
     gmm::add(gmm::scaled(exact_sol.U, -1.0),diff);
-    cout << "euclidean error: " << gmm::vect_norm2(diff) << endl;
+    cout << "euclidean error %: " << 100.0*gmm::vect_norm2(diff)/gmm::vect_norm2(exact_sol.U) << endl;
   }
 }
 
