@@ -355,6 +355,66 @@ namespace gmm {
   geev_int_leftc(zgeev_, BLAS_Z) 
     
 
+
+  /* ********************************************************************* */
+  /* Interface to SVD. Does not correspond to a Gmm++ functionnality.      */
+  /* Author : Sebastian Nowozin <sebastian.nowozin@tuebingen.mpg.de>       */
+  /* ********************************************************************* */
+    
+
+  extern "C" {
+    void sgesvd_(...); void dgesvd_(...);
+  }
+  
+# define gesvd_interface(lapack_name, base_type) inline                 \
+  void svd(dense_matrix<base_type> &X,					\
+	   dense_matrix<base_type> &U,                                  \
+           dense_matrix<base_type> &Vtransposed,			\
+	   std::vector<base_type> &sigma) {				\
+    GMMLAPACK_TRACE("gesvd_interface");					\
+    int m(mat_nrows(X)), n(mat_ncols(X));				\
+    int mn_min = m < n ? m : n;						\
+    sigma.resize(mn_min);						\
+    std::vector<base_type> work(15 * mn_min);				\
+    int lwork(work.size());						\
+    resize(U, m, n);							\
+    resize(Vtransposed, n, n);						\
+    char job = 'A';							\
+    int info = -1;							\
+    lapack_name(&job, &job, &m, &n, &X(0,0), &m, &sigma[0], &U(0,0),	\
+		&m, &Vtransposed(0,0), &n, &work[0], &lwork, &info);	\
+  }
+
+# define cgesvd_interface(lapack_name, base_type, base_type2) inline    \
+  void svd(dense_matrix<base_type> &X,					\
+	   dense_matrix<base_type> &U,                                  \
+           dense_matrix<base_type> &Vtransposed,			\
+	   std::vector<base_type2> &sigma) {				\
+    GMMLAPACK_TRACE("gesvd_interface");					\
+    int m(mat_nrows(X)), n(mat_ncols(X));				\
+    int mn_min = m < n ? m : n;						\
+    sigma.resize(mn_min);						\
+    std::vector<base_type> work(15 * mn_min);				\
+    std::vector<base_type2> rwork(5 * mn_min);				\
+    int lwork(work.size());						\
+    resize(U, m, n);							\
+    resize(Vtransposed, n, n);						\
+    char job = 'A';							\
+    int info = -1;							\
+    lapack_name(&job, &job, &m, &n, &X(0,0), &m, &sigma[0], &U(0,0),	\
+		&m, &Vtransposed(0,0), &n, &work[0], &lwork,            \
+		&rwork[0], &info);					\
+  }
+  
+  gesvd_interface(sgesvd_, BLAS_S)
+  gesvd_interface(dgesvd_, BLAS_D)
+  cgesvd_interface(cgesvd_, BLAS_C, BLAS_S)
+  cgesvd_interface(zgesvd_, BLAS_Z, BLAS_D)
+    
+    
+
+
+
 }
 
 #endif // GMM_LAPACK_INTERFACE_H

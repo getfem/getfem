@@ -123,7 +123,7 @@
 
 \section*{Introduction}
 
-\gmm provides some basic types of sparse and dense matrices and vectors. It provides some generic operations on them (copy, addition, multiplication, sub-vector and sub-matrices, solvers ... ). The syntax of \gmm is very close to MTL and ITL (see http://www.osl.iu.edu/research/mtl/). Especially, the code for most of the iterative solvers has been imported from ITL. The performance of \gmm is also close to the one of MTL, sometimes better. The difference is that basically \gmm has been written to be able to interface other libraries and gives an access to sub matrices and sub vectors in all cases. Also some optimizations has been made for matrix-matrix multiplication, usage of reference has been somewhat cleared, const qualifier usage is clarified, and we hope it is somewhat easier to use.\\ \\[3cm]
+\gmm provides some basic types of sparse and dense matrices and vectors. It provides some generic operations on them (copy, addition, multiplication, sub-vector and sub-matrices, solvers ... ). The syntax of \gmm is very close to MTL and ITL (see http://www.osl.iu.edu/research/mtl/). Especially, the code for most of the iterative solvers has been imported from ITL. The performance of \gmm is also close to the one of MTL, sometimes better. The difference is that basically \gmm has been written to be able to interface other libraries and gives an access to sub matrices and sub vectors in all cases. Also some optimizations has been made for matrix-matrix multiplication, usage of reference has been somewhat cleared, const qualifier usage is clarified, and we hope it is somewhat easier to use.\\ \\[2.5cm]
 \htmlonly{\\\\\\}
 \input{../license.tex}
 
@@ -883,6 +883,17 @@ The following operations are interfaced:
 
 Of course, it is not difficult to interface another operation if needed.
 
+The following interface does not correspond to an algorithm existing in \gmm:
+
+The interface to \cpp{gesvd} (singular value decomposition).
+
+\begin{cppcode}
+   svd(dense_matrix<T> &X, dense_matrix<T> &U,
+       dense_matrix<T> &Vt, std::vector<T> sigma);
+   svd(dense_matrix<std::complex<T> > &X, dense_matrix<std::complex<T> > &U,
+       dense_matrix<std::complex<T> > &Vt, std::vector<T> sigma);
+\end{cppcode}
+     
 \section{Interface with SuperLU}
 
 It is possible to call SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/) from \gmm. The following function defined in the file \filename{gmm/gmm_superlu_interface.h} is available
