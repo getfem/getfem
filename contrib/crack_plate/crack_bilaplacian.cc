@@ -59,12 +59,15 @@ int main(int argc, char *argv[]) {
        p.init();
     plain_vector U;
     p.mesh.write_to_file("mesh.m") ;
+    scalar_type ring_radius = p.PARAM.real_value("RING_RADIUS");
     if (p.PARAM.int_value("SOL_REF") == 0) {
        if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
+       p.compute_sif(U, ring_radius);
        if (p.PARAM.int_value("COMPUTE_ERROR") == 1) p.compute_error(U) ;
     }
     if (p.PARAM.int_value("SOL_REF") == 1) {
        if (!p.solve_moment(U)) GMM_ASSERT1(false, "Solve has failed");
+       p.compute_sif(U, ring_radius);
 /*       cout << "valeur des dofs sur les bords horizontaux : \n" ;
        for (size_type i = 0; i< p.mf_u().nb_dof() ; i++){
           if ( gmm::abs(p.mf_u().point_of_dof(i)[1]) > 0.499){
@@ -88,7 +91,7 @@ int main(int argc, char *argv[]) {
     
     base_small_vector tab_fic(4) ;
     unsigned cpt = 0;
-    if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){  
+    if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){
     // affichage des coeffs devant les singularites, avec le raccord integral
 	for (unsigned d=0; d < p.mf_u().nb_dof(); d += q) {
 		unsigned cv = p.mf_u().first_convex_of_dof(d) ;
@@ -205,22 +208,22 @@ int main(int argc, char *argv[]) {
 	   }
        }
     }
-          
-      
+
+
 
       if (p.PARAM.int_value("SOL_REF") == 1){
         scalar_type k1_exact = 3. * sqrt(p.PARAM.real_value("CRACK_SEMI_LENGTH")) / (2. * p.epsilon * p.epsilon) ;
-        cout << "exact SIF k1:" << k1_exact ;
-        cout << "\n(To multipliy by Mo, which is usually set to 1).\n" ; 
-	cout << "relative_error:" << gmm::abs(k[0] - k1_exact) / gmm::abs(k1_exact) ;
+        cout << "exact SIF k1:" << k1_exact << "\n" ;
+        cout << "(To multipliy by Mo, which is usually set to 1).\n" ; 
+        cout << "relative_error:" << gmm::abs(k[0] - k1_exact) / gmm::abs(k1_exact) << "\n" ;
       }
-    
+
     } // End printing SIFs
-     
+
     // --------------------------------------------------
     // Post-treatment for pretty printing of the solution
     // --------------------------------------------------
-    
+
     int VTK_EXPORT = p.PARAM.int_value("VTK_EXPORT");
     int MATLAB_EXPORT = p.PARAM.int_value("MATLAB_EXPORT");
     int DX_EXPORT = p.PARAM.int_value("DX_EXPORT");
@@ -234,8 +237,8 @@ int main(int argc, char *argv[]) {
     getfem::mesh_fem mf(mcut, Q);
     mf.set_classical_discontinuous_finite_element(3, 0.001);
     plain_vector V(mf.nb_dof()) ;
-    getfem::interpolation(p.mf_u(), mf, U, V);  
-    
+    getfem::interpolation(p.mf_u(), mf, U, V);
+
     size_type N = mcut.dim() ;
     getfem::mesh_fem mf_grad(mcut, Q);
     mf_grad.set_classical_discontinuous_finite_element(2, 0.001);
@@ -276,8 +279,8 @@ int main(int argc, char *argv[]) {
 // 	   << "mayavi -d " << p.datafilename
 // 	   << ".vtk -m BandedSurfaceMap -m Outline -f WarpScalar\n";
 //     }
-    
 
+    cout << "first part OK \n" ;
 
     getfem::stored_mesh_slice sl;
     getfem::mesh mcut_refined;
@@ -309,8 +312,9 @@ int main(int argc, char *argv[]) {
 	cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
     }
 
+    cout << "second part OK \n" ;
 
-    getfem::mesh_slicer slicer(mcut); 
+    getfem::mesh_slicer slicer(mcut);
     getfem::slicer_build_mesh bmesh(mcut_refined);
     slicer.push_back_action(bmesh);
     slicer.exec(nrefine, getfem::mesh_region::all_convexes());
@@ -327,7 +331,7 @@ int main(int argc, char *argv[]) {
     mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
     plain_vector W(mf_refined.nb_dof());
 
-    
+    cout << "OK before last interpolation \n" ;
     getfem::interpolation(p.mf_u(), mf_refined, U, W);
     
 //     getfem::mesh_fem mf_grad(mcut, 2) ;

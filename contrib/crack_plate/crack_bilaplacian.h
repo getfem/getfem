@@ -183,6 +183,7 @@ struct bilaplacian_crack_problem {
   void compute_error_beta(plain_vector &U) ;
   void init_mixed_elements(void) ;
   void set_matrix_mortar(sparse_matrix &H) ;
+  void compute_sif(const plain_vector &U, scalar_type ring_radius);
   
   bilaplacian_crack_problem(void) : ls(mesh, 1, true), 
 				    mls(mesh), mim(mls), mf_pre_u(mesh),  

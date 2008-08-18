@@ -9,11 +9,11 @@
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type AAA = 1.0 ; // 1.0 ;
+scalar_type AAA = 0.0 ; //1.0 ;    // mode II
 scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;
-scalar_type DD = 0.1 ; // 0.1 ;
+scalar_type DD = 1.0 ; // 1.0 ;   // mode 1
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;
-scalar_type EE = 3.0  ;
+scalar_type EE = 3.0 ; //3.0  ;
 
 
 scalar_type sol_u(const base_node &x){
@@ -704,9 +704,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	   If all the nodes are inside the enrichment area,
 	   then the element is completly inside the area too */ 
 	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
-	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
-	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
-	      gmm::sqr(enr_area_radius)) {
+// 	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] ) + 
+// 	      gmm::sqr(mesh.points_of_convex(cv)[j][1] ) > 
+// 	      gmm::sqr(enr_area_radius)) {
+          if ( (gmm::abs(mesh.points_of_convex(cv)[j][0] ) > enr_area_radius) || 
+               (gmm::abs(mesh.points_of_convex(cv)[j][1] ) > enr_area_radius)) {
 	          in_area = false; 
 		  break;
 	  }

@@ -65,6 +65,18 @@ scalar_type bilaplacian_singular_functions::sing_function(scalar_type x, scalar_
     case 6: {
       return y * (10. * y * y* y + 1.) ;//cos(4. * y) + 8. * y * y ; //x * x - nu * y * y ;
     } break;
+    case 311: {
+      return - cos(theta/2.) / ( r * sqrt(r) ) ;
+    } break;
+    case 312: {
+      return - sin(3. * theta/2.) / ( r * sqrt(r) ) ;
+    } break;
+    case 321: {
+      return - sin(3.* theta/2.) / ( r * sqrt(r) ) ;
+    } break;
+    case 322: {
+      return  cos(theta/2.) / ( r * sqrt(r) ) ;
+    } break;
     default: assert(0); 
   }
   return 0;
