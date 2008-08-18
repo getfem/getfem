@@ -3,33 +3,36 @@
 % parameters for program bilaplacian                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%% Choice of the solution of reference ----------------------------
+SOL_REF = 0 ;  % 0 = the exact solution is taken equal to the singularities 
+               % 1 = plate subject to bending moments  
+	       %     (only the SIF is known, and it's "work in progress")
+
+CRACK_SEMI_LENGTH = 0.1 ; 
+
 %%%%%  domain parameters                   %%%%%
-LX = 0.5; LY = 2.*LX; LZ = LX;	% sizes of the domain.
 N = 2;
+if SOL_REF == 0
+   LX = 1. ; LY = LX; LZ = LX;	% sizes of the domain.
+elseif SOL_REF == 1
+   LX = 0.5; LY = 1.0; LZ = LY;
+end;
 
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
-NX = 21;                 % space step
-%MESH_FILE='/home-local/jlasry/RESULTATS_XFEM/KL/MAILLAGES_MATLAB/tri_10.mesh'
+NX = 11 ;                 % space step
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARRE/tri_70.mesh'
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/DEMI_PLAQUE/demi_plaque_21.mesh'
 %MESH_FILE='./demi_plaque_raffinee.mesh'
 %MESH_FILE='./demi_plaque_21.mesh'
 
 
 TRANSLAT_X = 0.0 ;
 TRANSLAT_Y = 0.0 ;
- 
-%%%%% Choice of the solution of reference ----------------------------
-SOL_REF = 1 ;  % 0 = the exact solution is taken equal to the singularities 
-               % 1 = plate subject to bending moments  
-	       %     (only the SIF is known, and it's "work in progress")
 
-CRACK_SEMI_LENGTH = 0.1 ; 
-closing_version = 0 ;
-EPS_CLOSING_PENAL = 1e-12 ;
 
 % Parameters for the plate   ------------------------------------------
-FT = 5.0;      % parameter for the exact solution
 D = 1.0;      % "flexion modulus"
 KL = 1;        % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
                % plate model (N=2 only).
@@ -49,7 +52,7 @@ SHOW_NAME_OF_DOF = 0 ;
 
 % Parameters for the finite element method -------------------------------
 
-QUAD = 0;
+QUAD = 1;
  
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
@@ -113,7 +116,7 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)			
-RADIUS_ENR_AREA = 0.09;
+RADIUS_ENR_AREA = 0.15;
 SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
 SHOW_DX = 0 ;
@@ -134,10 +137,11 @@ SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integra
 
 %%%%%  computation parameters 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
-DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
+DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
 EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
                                % Dirichlet condition with penalization 
-COMPUTE_ERROR = 1; 
+COMPUTE_ERROR = 0; 
+RING_RADIUS = 0.13 ;
 
 %%%%%  error computation parameters
 NORM_EXACT = 0 ; % set to 0 if you don't want to calculate the norm of the exact solution
@@ -145,7 +149,7 @@ RADIUS_SPLIT_DOMAIN = 0.0
 
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'crack_bilaplacian';     % Root of data files.
-VTK_EXPORT = 4; % export solution to a .vtk file ?
+VTK_EXPORT = 2; % export solution to a .vtk file ?
 MATLAB_EXPORT = 0;
 
 
