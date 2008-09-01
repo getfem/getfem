@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2006-2006 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
 
  This file is a part of GETFEM++
 
@@ -18,6 +18,15 @@
  License along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
  USA.
+
+ As a special exception, you may use this file as part of a free software
+ library without restriction.  Specifically, if other files instantiate
+ templates or use macros or inline functions from this file, or you compile
+ this file and link it with other files to produce an executable, this
+ file does not by itself cause the resulting executable to be covered by
+ the GNU General Public License.  This exception does not however
+ invalidate any other reasons why the executable file might be covered by
+ the GNU General Public License.
 
  ========================================================================*/
 

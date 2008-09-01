@@ -1,4 +1,4 @@
-2008-05-22 Yves Renard  <Yves.Renard@insa-lyon.fr>
+2008-08-11 Yves Renard  <Yves.Renard@insa-lyon.fr>
 	* src/gmm/gmm_lapack_interface.h 
 	Adding the interface to degsvd given by
 	Sebastian Nowozin <sebastian.nowozin@tuebingen.mpg.de>
