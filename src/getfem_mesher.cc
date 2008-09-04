@@ -25,7 +25,7 @@ namespace getfem {
 
   void mesher_level_set::init_grad(void) const {
     gradient.resize(base.dim());
-    for (unsigned d=0; d < base.dim(); ++d) {
+    for (dim_type d=0; d < base.dim(); ++d) {
       gradient[d] = base; gradient[d].derivative(d);
     }
     initialized = 1; 
@@ -34,8 +34,8 @@ namespace getfem {
   void mesher_level_set::init_hess(void) const {
     if (initialized < 1) init_grad();
     hessian.resize(base.dim()*base.dim());
-    for (unsigned d=0; d < base.dim(); ++d) {
-      for (unsigned e=0; e < base.dim(); ++e) {
+    for (dim_type d=0; d < base.dim(); ++d) {
+      for (dim_type e=0; e < base.dim(); ++e) {
 	hessian[d*base.dim()+e] = gradient[d];
 	hessian[d*base.dim()+e].derivative(e);
       }
@@ -282,7 +282,8 @@ namespace getfem {
       if (N == 2) { 
 	L0mult = 1.2; deltat = .2; geps = .001*h0; 
       } else {
-	L0mult=1+.4/pow(2,(N-1)); deltat=.1; geps=1e-1*h0;
+	L0mult=1+0.4/pow(scalar_type(2),scalar_type(N-1));
+	deltat=.1; geps=1e-1*h0;
       }
       deps=sqrt(1e-8)*h0;
       dist.register_constraints(this->constraints);
@@ -290,8 +291,8 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,1);
       gmm::resize(W,N,N);
       base_matrix G(N,N+1); 
-      vectors_to_base_matrix(G,  bgeot::equilateral_simplex_of_reference(N)
-			     ->points());
+      vectors_to_base_matrix(G,
+	    bgeot::equilateral_simplex_of_reference(dim_type(N))->points());
       gmm::mult(G, bgeot::geotrans_precomp(pgt,&pgt->convex_ref()
 					   ->points(), 0)->grad(0), W);
       gmm::lu_inverse(W);
@@ -311,7 +312,7 @@ namespace getfem {
     scalar_type worst_element, best_element;
     
     scalar_type fbcond_cost_function(const base_vector &c) {
-      unsigned nbt = gmm::mat_ncols(t);
+      unsigned nbt = unsigned(gmm::mat_ncols(t));
       scalar_type cost = 0;
       base_matrix S(N,N), SW(N,N);
       worst_element = 1.; best_element = 1E40;
@@ -326,8 +327,8 @@ namespace getfem {
 	else {
 	  scalar_type qual = gmm::Frobenius_condition_number_sqr(SW);
 	  cost += qual;
-	  worst_element = std::max(worst_element, qual / (N*N));
-	  best_element = std::min(best_element, qual / (N*N));
+	  worst_element = std::max(worst_element, qual / scalar_type(N*N));
+	  best_element = std::min(best_element, qual / scalar_type(N*N));
 	}
       }
       return cost / scalar_type(N * N);
@@ -337,7 +338,7 @@ namespace getfem {
 					 base_vector &grad) {
       gmm::clear(grad);
       base_matrix Dcond(N,N), G(N,N), S(N,N), SW(N,N);
-      unsigned nbt = gmm::mat_ncols(t);
+      unsigned nbt = unsigned(gmm::mat_ncols(t));
       
       for (unsigned i=0; i < nbt; ++i) {
 	for (size_type j=0; j < N; ++j) {
@@ -411,7 +412,8 @@ namespace getfem {
       }
       
       if (noisy > 0) {     
-	cout << "Initial quality: " << fbcond_cost_function(X)/nbt;
+	cout << "Initial quality: "
+	     << fbcond_cost_function(X)/scalar_type(nbt);
 	cout << ", best element: " << sqrt(best_element)
 	     << " worst element: " << sqrt(worst_element) << endl;      
       }  
@@ -421,7 +423,8 @@ namespace getfem {
 		fbcond_cost_function_derivative_object(*this),
 		X, 10, iter, 0, 0.001, float(gmm::mat_ncols(t)));
 
-      if (noisy > 0) cout << "Final quality: " << fbcond_cost_function(X)/nbt
+      if (noisy > 0) cout << "Final quality: "
+			  << fbcond_cost_function(X)/scalar_type(nbt)
 			  << ", best element: " << sqrt(best_element)
 			  << " worst element: " << sqrt(worst_element) << endl;
 
@@ -448,7 +451,7 @@ namespace getfem {
 	dal::bit_vector ii = m.convex_index(), points_to_project;
 	size_type ic, ipt;	
 	for (ic << ii; ic != size_type(-1); ic << ii) {
-	  for (unsigned f = 0; f <= N; ++f) {
+	  for (short_type f = 0; f <= N; ++f) {
 	    if (!m.is_convex_having_neighbour(ic,f)) {
 	      for (unsigned i = 0; i < N; ++i) {
 		ipt = m.ind_points_of_face_of_convex(ic, f)[i];
@@ -484,7 +487,7 @@ namespace getfem {
 	for (ic << ii; ic != size_type(-1); ic << ii) {
 	  scalar_type max_flatness = -2.0;
 	  normals.resize(0);
-	  for (unsigned f = 0; f <= N; ++f) {
+	  for (short_type f = 0; f <= N; ++f) {
 	    if (!m.is_convex_having_neighbour(ic,f)) {
 	      if (quality_of_element(ic) < 1E-8) max_flatness = 1E-8;
 	      else {
@@ -729,9 +732,9 @@ namespace getfem {
       base_node P(N), Q(N);
       for (size_type i=0; i < nbpt; ++i) {
 	for (size_type k=0, r = i; k < N; ++k) {
-	  unsigned p =  r % gridnx[k];
+	  unsigned p =  unsigned(r % gridnx[k]);
 	  P[k] = p * (bounding_box_max[k] - bounding_box_min[k]) / 
-	    (gridnx[k]-1) + bounding_box_min[k];
+	    scalar_type((gridnx[k]-1)) + bounding_box_min[k];
 	  if (N==2 && k==0 && ((r/gridnx[0])&1)==1) P[k] += h0/2;
 	  r /= gridnx[k];
 	}
@@ -892,7 +895,7 @@ namespace getfem {
 	if (!ext_simplex) {
 	  G = pts[t(0,i)];
 	  for (size_type k=1; k <= N; ++k) G += pts[t(k,i)];
-	  gmm::scale(G, 1./(N+1));
+	  gmm::scale(G, scalar_type(1)/scalar_type(N+1));
 	  dG = dist(G);
 	  gmm::clear(weights);
 	  
@@ -921,7 +924,10 @@ namespace getfem {
 	  delete_element(i);
 	} else {
 	  ++i;
-	  if (q < worst_q) { worst_q = q; worst_q_P = G*(1./(N+1)); }
+	  if (q < worst_q) {
+	    worst_q = q;
+	    worst_q_P = G*(scalar_type(1)/scalar_type(N+1));
+	  }
 	}
       }
       
@@ -946,7 +952,8 @@ namespace getfem {
 	  cvnum = m.add_convex(bgeot::simplex_geotrans(N,1), &t[i*(N+1)]);
 	  assert(cvnum == i);
 	} else {
-	  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,degree);
+	  bgeot::pgeometric_trans pgt =
+	    bgeot::simplex_geotrans(N,short_type(degree));
 	  cvpts2.resize(pgt->nb_points());
 	  for (size_type k=0; k < pgt->nb_points(); ++k) {
 	    cvpts2[k] = bgeot::simplex_geotrans(N,1)->transform
@@ -981,7 +988,7 @@ namespace getfem {
       if (cvs->dim() == 0) return;
       else if (cvs->dim() > 1) {
 	std::vector<size_type> fpts;
-	for (size_type f=0; f < cvs->nb_faces(); ++f) {
+	for (short_type f=0; f < cvs->nb_faces(); ++f) {
 	  fpts.resize(cvs->nb_points_of_face(f));
 	  for (size_type k=0; k < fpts.size(); ++k)
 	    fpts[k] = ipts[cvs->ind_points_of_face(f)[k]];
@@ -1195,10 +1202,10 @@ namespace getfem {
 	  base_node C(A); C+=B; C /= scalar_type(2);
 	  L[ie] = gmm::vect_dist2(A, B);
 	  L0[ie] = edge_len(C);
-	  sL += pow(L[ie],N);
-	  sL0 += pow(L0[ie],N);
+	  sL += pow(L[ie],scalar_type(N));
+	  sL0 += pow(L0[ie],scalar_type(N));
 	}
-	gmm::scale(L0, L0mult * pow(sL/sL0, 1./N));
+	gmm::scale(L0, L0mult * pow(sL/sL0, scalar_type(1)/scalar_type(N)));
 
 	// Moving the points with standard strategy
 	base_vector X(pts.size() * N);
@@ -1267,7 +1274,7 @@ namespace getfem {
 	      if (quality_of_element(cv) < 0.05) {
 		base_node G = pts[t(0,cv)];
 		for (size_type k=1; k <= N; ++k) G += pts[t(k,cv)];
-		gmm::scale(G, 1./(N+1));
+		gmm::scale(G, scalar_type(1)/scalar_type(N+1));
 		pts.push_back(G);
 		pts_attr.push_back(get_attr(false, dal::bit_vector()));
 	      }
@@ -1412,7 +1419,7 @@ namespace getfem {
     facetT *facet;	          /* set by FORALLfacets */
     int curlong, totlong;	  /* memory remaining after qh_memfreeshort */
     vertexT *vertex, **vertexp;
-    exitcode = qh_new_qhull (dim, pts.size(), &Pts[0], ismalloc,
+    exitcode = qh_new_qhull (int(dim), int(pts.size()), &Pts[0], ismalloc,
                              flags, outfile, errfile);
     if (!exitcode) { /* if no error */ 
       size_type nbf=0;

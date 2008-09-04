@@ -165,7 +165,8 @@ namespace getfem {
       sl.poriginal_mesh = &ms.m; sl.dim_ = sl.linked_mesh().dim();
       sl.cv2pos.clear(); sl.cv2pos.resize(sl.linked_mesh().convex_index().last_true() + 1, size_type(-1));
     } else if (sl.poriginal_mesh != &ms.m) GMM_ASSERT1(false, "wrong mesh..");
-    sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, ms.fcnt, ms.splx_in, ms.discont);
+    sl.set_convex(ms.cv, ms.cvr, ms.nodes, ms.simplexes, dim_type(ms.fcnt),
+		  ms.splx_in, ms.discont);
   }
 
   void stored_mesh_slice::set_convex(size_type cv, bgeot::pconvex_ref cvr, 
@@ -184,7 +185,7 @@ namespace getfem {
       sc = &cvlst.back();
       sc->cv_num = cv;
       sc->cv_dim = cvr->structure()->dim();
-      sc->cv_nbfaces = cvr->structure()->nb_faces();
+      sc->cv_nbfaces = dim_type(cvr->structure()->nb_faces());
       sc->fcnt = fcnt;
       sc->global_points_count = points_cnt;
       sc->discont = discont;
@@ -350,7 +351,7 @@ namespace getfem {
     merged_nodes_idx.push_back(0);
     for (size_type i=0; i < nb_points(); ++i) {
       merged_nodes[i].P = nv[iv[i]];
-      merged_nodes[i].pos = iv[i];
+      merged_nodes[i].pos = unsigned(iv[i]);
       //cout << "i=" << i << " -> {" << merged_nodes[i].P->pt << "," << merged_nodes[i].pos << "}\n";
       if (i == nb_points()-1 || to_merged_index[iv[i+1]] != to_merged_index[iv[i]]) 
 	merged_nodes_idx.push_back(i+1);

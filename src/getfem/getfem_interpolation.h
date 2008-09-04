@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -240,8 +240,8 @@ namespace getfem {
 				 MAT &M, int version) {
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     base_matrix G;
-    size_type qdim = mf_source.get_qdim();
-    size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
+    dim_type qdim = mf_source.get_qdim();
+    dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
     std::vector<T> val(qdim);
     std::vector<std::vector<T> > coeff;
     std::vector<size_type> dof_source;
@@ -331,8 +331,8 @@ namespace getfem {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     const mesh &msh(mf_source.linked_mesh());
-    size_type qdim_s = mf_source.get_qdim();
-    size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
+    dim_type qdim_s = mf_source.get_qdim();
+    dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
 
     mti.distribute(extrapolation);
     std::vector<size_type> itab;    

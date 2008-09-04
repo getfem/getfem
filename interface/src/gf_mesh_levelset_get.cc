@@ -58,6 +58,6 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& in,
   } else if (check_cmd(cmd, "crack_tip_convexes", in, out, 0, 0, 0, 1)) {
     out.pop().from_bit_vector(mls.crack_tip_convexes());
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    out.pop().from_integer(mls.memsize());
+    out.pop().from_integer(int(mls.memsize()));
   } else bad_cmd(cmd);
 }

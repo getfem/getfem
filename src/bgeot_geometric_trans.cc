@@ -29,9 +29,10 @@
 namespace bgeot {
 
   const base_node& geotrans_interpolation_context::xref() const { 
-    if (!have_xref()) 
+    if (!have_xref()) {
       if (pspt_) xref_ = (*pspt_)[ii_];
       else GMM_ASSERT1(false, "missing xref");
+    }
     return xref_; 
   }
 
@@ -256,23 +257,23 @@ namespace bgeot {
     void calc_base_func(base_poly &p, size_type i, short_type K) const {
       dim_type N = dim();
       base_poly l0(N, 0), l1(N, 0);
-      power_index w(N+1);
+      power_index w(short_type(N+1));
       l0.one(); l1.one(); p = l0;
-      for (int nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
+      for (short_type nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
       
       w[0] = K;
       for (int nn = 1; nn <= N; ++nn) {
-	w[nn]=int(floor(0.5+(((cvr->points())[i])[nn-1]*double(K))));
-	w[0]-=w[nn];
+	w[nn]=short_type(floor(0.5+(((cvr->points())[i])[nn-1]*double(K))));
+	w[0]=short_type(w[0]-w[nn]);
       }
       
-      for (int nn = 0; nn <= N; ++nn)
-	for (int j = 0; j < w[nn]; ++j)
+      for (short_type nn = 0; nn <= N; ++nn)
+	for (short_type j = 0; j < w[nn]; ++j)
 	  if (nn == 0)
 	    p *= (l0 * (scalar_type(K) / scalar_type(j+1))) 
 	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
 	  else
-	    p *= (base_poly(N, 1, nn-1) * (scalar_type(K) / scalar_type(j+1))) 
+	    p *= (base_poly(N, 1, short_type(nn-1)) * (scalar_type(K) / scalar_type(j+1))) 
 	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
     }
 
@@ -299,8 +300,8 @@ namespace bgeot {
     GMM_ASSERT1(n >= 0 && n < 100 && k >= 0 && k <= 150 &&
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
-    dependencies.push_back(simplex_of_reference(n, k));
-    return new simplex_trans_(n, k);
+    dependencies.push_back(simplex_of_reference(dim_type(n), dim_type(k)));
+    return new simplex_trans_(dim_type(n), dim_type(k));
   }
 
   /* ******************************************************************** */
@@ -559,7 +560,7 @@ namespace bgeot {
     return pgt;
   }
 
-  static std::string name_of_linear_qk_trans(int dim) {
+  static std::string name_of_linear_qk_trans(size_type dim) {
     switch (dim) {
     case 1: return "GT_PK(1,1)";
     default: return std::string("GT_LINEAR_PRODUCT(")

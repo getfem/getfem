@@ -52,7 +52,7 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 /* set the classical fem of order on the mesh_fem, with a classical integration
    method */
 static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in, bool discontinuous) {
-  dim_type K = in.pop().to_integer(0,255); //, IM_DEGREE = dim_type(-1);
+  dim_type K = dim_type(in.pop().to_integer(0,255)); //, IM_DEGREE = dim_type(-1);
   dal::bit_vector bv;
   if (in.remaining() == 1) {
     bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -1);
@@ -120,7 +120,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Q=1 means that the @tmf describes a scalar field, Q=N means
       that the @tmf describes a vector field of dimension N. @*/
     size_type q_dim = in.pop().to_integer(1,255);
-    mf->set_qdim(q_dim);
+    mf->set_qdim(dim_type(q_dim));
   } else if (check_cmd(cmd, "dof partition", in, out, 1, 1, 0, 0)) {
     /*@SET MESHFEM:SET('dof partition', @ivec DOFP)
       Change the dof_partition array.
@@ -128,7 +128,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       DOFP is a vector holding a integer value for each convex of the mesh_fem.
       See MESHFEM:GET('dof partition') for a description of "dof partition".
       @*/
-    iarray v = in.pop().to_iarray(mf->linked_mesh().convex_index().last_true()+1);
+    iarray v = in.pop().to_iarray(int(mf->linked_mesh().convex_index().last_true()+1));
     for (unsigned i=0; i < v.size(); ++i)
       mf->set_dof_partition(i, v[i]);
   } else bad_cmd(cmd);

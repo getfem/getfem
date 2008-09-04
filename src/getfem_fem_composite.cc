@@ -83,12 +83,12 @@ namespace getfem {
 		"Bad type of parameters");
     pfem pf = params[0].method();
     int k = int(::floor(params[1].num() + 0.01));
-    GMM_ASSERT1((pf->is_polynomial()) || !(pf->is_equivalent()) && k > 0
+    GMM_ASSERT1(((pf->is_polynomial()) || !(pf->is_equivalent())) && k > 0
 		&& k <= 150 && double(k) == params[1].num(), "Bad parameters");
     bgeot::pbasic_mesh pm;
     bgeot::pmesh_precomposite pmp;
 
-    structured_mesh_for_convex(pf->ref_convex(0), k, pm, pmp);
+    structured_mesh_for_convex(pf->ref_convex(0), short_type(k), pm, pmp);
 
     mesh m(*pm);
     mesh_fem mf(m);
@@ -234,7 +234,7 @@ namespace getfem {
   void HCT_triangle__::mat_trans(base_matrix &M, const base_matrix &G,
 				 bgeot::pgeometric_trans pgt) const {
     
-    dim_type N = G.nrows();
+    dim_type N = dim_type(G.nrows());
     
     GMM_ASSERT1(N == 2, "Sorry, this version of HCT "
 		"element works only on dimension two.");
@@ -471,7 +471,7 @@ namespace getfem {
   void quadc1p3__::mat_trans(base_matrix &M, const base_matrix &G,
 				 bgeot::pgeometric_trans pgt) const {
     
-    dim_type N = G.nrows();
+    dim_type N = dim_type(G.nrows());
     
     GMM_ASSERT1(N == 2, "Sorry, this version of reduced HCT "
 		"element works only on dimension two.");

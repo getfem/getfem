@@ -101,7 +101,7 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     d_expected1.assign(p->fsizes());
     d_expected2.assign(p->fsizes());
-    d_expected2.push_back(mf->nb_dof()); 
+    d_expected2.push_back(unsigned(mf->nb_dof())); 
       
     if (cp) {
       cw = in.pop().to_carray(); d = cw;
@@ -186,11 +186,11 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     H->to_csc();
     if (!b->is_complex()) {
       gf_real_sparse_csc_const_ref C(H->real_csc()); //; in.pop().to_sparse(C);
-      darray rhs = in.pop().to_darray(gmm::mat_nrows(C));
+      darray rhs = in.pop().to_darray(int(gmm::mat_nrows(C)));
       to_constraints_brick(b, scalar_type())->set_constraints(C, rhs);
     } else {
       gf_cplx_sparse_csc_const_ref C(H->cplx_csc()); //; in.pop().to_sparse(C);
-      carray rhs = in.pop().to_carray(gmm::mat_nrows(C));
+      carray rhs = in.pop().to_carray(int(gmm::mat_nrows(C)));
       to_constraints_brick(b, complex_type())->set_constraints(C, rhs);
     }
   } else if (check_cmd(cmd, "constraints_rhs", in, out, 1, 1, 0, 0)) {

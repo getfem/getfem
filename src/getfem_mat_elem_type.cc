@@ -145,7 +145,7 @@ namespace getfem {
 				    std::vector<pfem> pfi) {
     GMM_ASSERT1(pfi.size() != 0, "mat_elem_nonlinear with no pfem!");
     pmat_elem_type me = mat_elem_nonlinear_(nlt, pfi[0], 0);
-    for (size_type i=1; i < pfi.size(); ++i)
+    for (unsigned i=1; i < pfi.size(); ++i)
       me = mat_elem_product(mat_elem_nonlinear_(nlt, pfi[i], i),me);
     return me;
   }
@@ -170,15 +170,15 @@ namespace getfem {
     for (size_type i = 0, j = 0; i < size(); ++i, ++j) {
       switch ((*this)[i].t) {
 	case GETFEM_BASE_ :
-	  mii[j] = (*this)[i].pfi->nb_base(cv);
+	  mii[j] = short_type((*this)[i].pfi->nb_base(cv));
 	  if ((*this)[i].pfi->target_dim() != 1) ++j;
 	  break;
 	case GETFEM_GRAD_ :
-	  mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
+	  mii[j] = short_type((*this)[i].pfi->nb_base(cv)); ++j;
 	  if ((*this)[i].pfi->target_dim() != 1) ++j;
 	  break;     
 	case GETFEM_HESSIAN_   :
-	  mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
+	  mii[j] = short_type((*this)[i].pfi->nb_base(cv)); ++j;
 	  if ((*this)[i].pfi->target_dim() != 1) ++j;
 	  break;
 	case GETFEM_UNIT_NORMAL_ :

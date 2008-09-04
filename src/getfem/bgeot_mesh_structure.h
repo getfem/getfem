@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -98,13 +98,13 @@ namespace bgeot {
     size_type local_ind_of_convex_point(size_type ic, size_type ip) const;
     /// Return the pconvex_structure of the convex ic.
     pconvex_structure structure_of_convex(size_type ic) const
-      { return convex_tab[ic].cstruct; }
+    { return convex_tab[ic].cstruct; }
     /// Return the number of points of convex ic.
     short_type nb_points_of_convex(size_type ic) const
-      { return convex_tab[ic].cstruct->nb_points(); }
+    { return convex_tab[ic].cstruct->nb_points(); }
     /// Return the number of faces of convex ic.
     dim_type nb_faces_of_convex(size_type ic) const 
-      { return convex_tab[ic].cstruct->nb_faces(); }
+    { return dim_type(convex_tab[ic].cstruct->nb_faces()); }
     /// Exchange two point IDs
     void swap_points(size_type i, size_type j);
     /// Exchange two convex IDs
@@ -238,7 +238,7 @@ namespace bgeot {
   template<class ITER> bool
   mesh_structure::is_convex_face_having_points(size_type ic, size_type face_num,
 					    short_type nb, ITER pit) const {
-    ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, face_num);
+    ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, short_type(face_num));
     for (short_type i = 0; i < nb; ++i, ++pit)
       if (std::find(pt.begin(), pt.end(), *pit) == pt.end()) return false;
     return true;

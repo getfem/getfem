@@ -71,8 +71,8 @@ void gf_precond_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Return the dimensions of the preconditioner.
       @*/
     iarray sz = out.pop().create_iarray_h(2);
-    sz[0] = precond->bprecond().nrows();
-    sz[1] = precond->bprecond().ncols();
+    sz[0] = int(precond->bprecond().nrows());
+    sz[1] = int(precond->bprecond().ncols());
   } else if (check_cmd(cmd, "is_complex", in, out, 0, 0, 0, 1)) {
     /*@GET PRECOND:GET('is_complex')
       Return 1 if the preconditioner stores complex values.

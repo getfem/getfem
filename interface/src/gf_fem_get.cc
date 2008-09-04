@@ -72,7 +72,7 @@ void gf_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       number. 
     @*/
     size_type cv = get_optional_convex_number(in, gfi_fem, cmd);
-    out.pop().from_scalar(fem->nb_dof(cv));
+    out.pop().from_scalar(double(fem->nb_dof(cv)));
   } else if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
     /*@RDATTR FEM:GET('dim')
       Return the dimension (dimension of the reference convex) of the FEM.

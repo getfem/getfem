@@ -75,7 +75,7 @@ void test_refinable(unsigned dim, unsigned degree) {
   std::vector<size_type> nsubdiv(dim, Nsubdiv);
   getfem::mesh m;
   getfem::regular_unit_mesh
-    (m, nsubdiv, bgeot::simplex_geotrans(dim, degree), false);
+    (m, nsubdiv, bgeot::simplex_geotrans(dim, bgeot::short_type(degree)), false);
   dal::bit_vector b; b.add(0);
   
   cout << "\nrefine mesh in dimension " << dim << " and degree "
@@ -111,7 +111,7 @@ void test_mesh_matching(size_type dim) {
   { vects[i] = VECT(dim); vects[i][i] = 1.0 / Nsubdiv; iref[i] = Nsubdiv; }
   
 
-  getfem::parallelepiped_regular_simplex_mesh(m, dim, pt1, vects.begin(),
+  getfem::parallelepiped_regular_simplex_mesh(m, bgeot::dim_type(dim), pt1, vects.begin(),
 					      iref.begin());
 
   test_conforming(m);
@@ -176,7 +176,7 @@ void test_mesh(getfem::mesh &m) {
     { vects[i] = VECT(dim); gmm::clear(vects[i]);; vects[i][i] = 1.0; iref[i] = 3; }
   
 
-  getfem::parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
+  getfem::parallelepiped_regular_simplex_mesh(m, bgeot::dim_type(dim),pt1, vects.begin(), iref.begin());
   m.write_to_file("test_mesh.mesh");
   getfem::mesh m3; m3.read_from_file("test_mesh.mesh");
   m.copy_from(m3);
@@ -306,7 +306,7 @@ void test_region() {
 }
 
 void test_convex_ref() {
-  for (unsigned k=1; k <= 2; ++k) {
+  for (bgeot::short_type k=1; k <= 2; ++k) {
     bgeot::pconvex_ref cvr  = bgeot::simplex_of_reference(1,k);
     base_node P(1); P[0] = .5;
     assert(gmm::abs(cvr->is_in(P)+.5) < 1e-6);

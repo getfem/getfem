@@ -91,7 +91,8 @@ namespace getfem {
     bgeot::pbasic_mesh pm;
     bgeot::pmesh_precomposite pmp;
 
-    structured_mesh_for_convex(pim->approx_method()->ref_convex(), k, pm, pmp);
+    structured_mesh_for_convex(pim->approx_method()->ref_convex(),
+			       short_type(k), pm, pmp);
     mesh m(*pm);
     mesh_im mi(m);
     mi.set_integration_method(pm->convex_index(), pim);

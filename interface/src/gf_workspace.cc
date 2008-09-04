@@ -82,8 +82,9 @@ do_stats() {
 		    match_workspace(workspace_stack::anonymous_workspace))) {
     do_stat(workspace_stack::anonymous_workspace);
   }
-  for (dal::bv_visitor_c wid(workspace().get_wrk_list().index()); !wid.finished(); ++wid)
-    do_stat(wid);
+  for (dal::bv_visitor_c wid(workspace().get_wrk_list().index());
+       !wid.finished(); ++wid)
+    do_stat(id_type(wid));
 }
 
 /*MLABCOM

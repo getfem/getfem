@@ -62,7 +62,7 @@ void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR INTEG:GET('dim')
       Return the dimension of the ref. convex of the method.
       @*/
-    out.pop().from_scalar(imdim);
+    out.pop().from_scalar(double(imdim));
   } else if (check_cmd(cmd, "nbpts", in, out, 0, 0, 0, 1)) {
     /*@RDATTR INTEG:GET('nbpts')
       Return the total number of integration points. 
@@ -71,9 +71,9 @@ void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       @*/
    check_not_exact(im);
     iarray w = out.pop().create_iarray_h(1+pai->structure()->nb_faces());
-    w[0] = pai->nb_points_on_convex();
-    for (size_type i=0; i < pai->structure()->nb_faces(); ++i) 
-      w[i+1] = pai->nb_points_on_face(i);
+    w[0] = int(pai->nb_points_on_convex());
+    for (short_type i=0; i < pai->structure()->nb_faces(); ++i) 
+      w[i+1] = int(pai->nb_points_on_face(i));
   } else if (check_cmd(cmd, "pts", in, out, 0, 0, 0, 1)) {
     /*@GET INTEG:GET('pts')
       Return the list of integration points (only for approximate methods).
@@ -86,8 +86,9 @@ void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
      @*/
     check_not_exact(im); 
     size_type nbf = pai->structure()->nb_faces();
-    size_type f = in.pop().to_face_number(nbf);
-    darray w = out.pop().create_darray(imdim, pai->nb_points_on_face(f));
+    short_type f = short_type(in.pop().to_face_number(nbf));
+    darray w = out.pop().create_darray(unsigned(imdim),
+				       unsigned(pai->nb_points_on_face(f)));
     for (size_type j=0; j < pai->nb_points_on_face(f); ++j)
       for (size_type i=0; i < imdim; ++i)
 	w(i,j)=pai->point_on_face(f,j)[i];
@@ -102,8 +103,8 @@ void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Returns the coefficients associated to each integration of a face.
       @*/
     check_not_exact(im); 
-    size_type f = in.pop().to_face_number(pai->structure()->nb_faces());
-    darray w = out.pop().create_darray_h(pai->nb_points_on_face(f));
+    short_type f = short_type(in.pop().to_face_number(pai->structure()->nb_faces()));
+    darray w = out.pop().create_darray_h(unsigned(pai->nb_points_on_face(f)));
     for (size_type j=0; j < pai->nb_points_on_face(f); ++j)
       w[j]=pai->coeff_on_face(f,j);
   } else if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {

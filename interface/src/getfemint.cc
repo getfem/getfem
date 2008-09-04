@@ -238,7 +238,7 @@ namespace getfemint {
   mexarg_in::to_face_number(size_type nbf) 
   {
     size_type f = to_integer(config::base_index(), 
-                             config::base_index()+nbf-1);
+                             int(config::base_index()+nbf-1));
     f -= config::base_index();
     return f;
   }
@@ -958,8 +958,8 @@ namespace getfemint {
   mexarg_in::to_bit_vector(const dal::bit_vector *subsetof, int shift) {
     dal::bit_vector bv;
     iarray v = to_iarray();
-    for (size_type i = 0; i < v.size(); i++) {
-      int idx = (int)v[i] + shift;
+    for (unsigned i = 0; i < v.size(); i++) {
+      int idx = int(v[i]) + shift;
       if (idx < 0 || idx > 1000000000) {
 	THROW_BADARG("Argument " << argnum << 
 		     " should only contain values greater or equal to "
@@ -979,7 +979,7 @@ namespace getfemint {
   mexarg_in::to_sub_index() {
     iarray ia = to_iarray(-1);
     std::vector<size_type> va(ia.size());
-    for (size_type i=0; i < ia.size(); ++i) {
+    for (unsigned i=0; i < ia.size(); ++i) {
       va[i] = ia[i] - config::base_index();
     }
     return sub_index(va);
@@ -1007,7 +1007,7 @@ namespace getfemint {
 
   void
   mexarg_out::from_object_id(std::vector<id_type> ids, id_type cid)
-  { arg = create_object_id(ids.size(), &ids[0], cid); }
+  { arg = create_object_id(int(ids.size()), &ids[0], cid); }
 
   void
   mexarg_out::from_integer(int i)
@@ -1032,20 +1032,20 @@ namespace getfemint {
 
   void
   mexarg_out::from_bit_vector(const dal::bit_vector& bv, int shift) {
-    iarray w = create_iarray_h(bv.card());
+    iarray w = create_iarray_h(unsigned(bv.card()));
     size_type j = 0;
     for (dal::bv_visitor i(bv); !i.finished(); ++i) {
-      w[j++] = i + shift;
+      w[unsigned(j++)] = int(i + shift);
     }
     if (j != bv.card()) THROW_INTERNAL_ERROR;
   }
 
   void
   mexarg_out::from_mesh_region(const getfem::mesh_region &region) {
-    iarray w = create_iarray(2,region.size());
+    iarray w = create_iarray(2, unsigned(region.size()));
     unsigned j=0; 
     for (getfem::mr_visitor i(region); !i.finished(); ++i, ++j) {
-      w(0,j) = i.cv() + config::base_index(); 
+      w(0,j) = int(i.cv() + config::base_index()); 
       w(1,j) = i.f()  + config::base_index(); 
     }
   }
@@ -1075,8 +1075,8 @@ namespace getfemint {
       M.to_csc();
       size_type nnz = M.nnz();
       size_type ni = M.nrows(), nj = M.ncols();
-      arg = checked_gfi_create_sparse(ni, nj, nnz, 
-				      M.is_complex() ? GFI_COMPLEX : GFI_REAL); 
+      arg = checked_gfi_create_sparse(int(ni), int(nj), int(nnz), 
+				     M.is_complex() ? GFI_COMPLEX : GFI_REAL); 
       assert(arg != NULL);
       double *pr;
       unsigned *ir, *jc;
@@ -1105,7 +1105,8 @@ namespace getfemint {
   void
   mexarg_out::from_tensor(const getfem::base_tensor& t) {
     std::vector<int> tab(t.sizes().begin(), t.sizes().end());
-    arg = checked_gfi_array_create(t.order(), &(tab.begin()[0]), GFI_DOUBLE);
+    arg = checked_gfi_array_create(int(t.order()), &(tab.begin()[0]),
+				   GFI_DOUBLE);
     double *q = (double *)(gfi_double_get_data(arg));
     std::copy(t.begin(), t.end(), q);
   }
@@ -1356,10 +1357,11 @@ namespace getfemint {
     pop().from_object_id(uid, class_id);
     if (remaining()) {
       std::map<id_type,id_type> m;
-      for (size_type i=0; i < uid.size(); ++i) m[uid[i]]=i+config::base_index();
-      iarray v = pop().create_iarray_h(id.size());
+      for (size_type i=0; i < uid.size(); ++i)
+	m[uid[i]]= unsigned(i + config::base_index());
+      iarray v = pop().create_iarray_h(unsigned(id.size()));
       for (size_type i=0; i < id.size(); ++i) 
-	v[i] = (id[i] != id_type(-1)) ? m[id[i]] : id_type(-1);
+	v[unsigned(i)] = (id[i] != id_type(-1)) ? m[id[i]] : id_type(-1);
     }
   }
 

@@ -149,7 +149,8 @@ namespace getfem {
     clear();
     
     pfem pf
-      = classical_fem(bgeot::simplex_geotrans(linked_mesh().dim(), 1), degree);
+      = classical_fem(bgeot::simplex_geotrans(linked_mesh().dim(), 1),
+		      short_type(degree));
     base_matrix G;
     std::vector<base_node> pts;
     size_type mfndof = mf.nb_dof();
@@ -186,8 +187,8 @@ namespace getfem {
 	scalar_type lenght_estimate(0);
 	base_small_vector up(msh.dim());
 	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
-	  unsigned f; bool lisin = false;
-	  for (f = 0; f < pgt2->structure()->nb_faces(); ++f) {
+	  bool lisin = false;
+	  for (short_type f = 0; f < pgt2->structure()->nb_faces(); ++f) {
 	    
 	    // for each face of the sub-elements, testing if this face is on
 	    // the level-set.
@@ -317,10 +318,10 @@ namespace getfem {
 	int nb_nnz(0), lasti(0), lastj(0);
 	ttouched = false;
 	
-	for (size_type i = 0; i < mf.nb_dof(); ++i) { // to be optimized ... 
+	for (int i = 0; i < int(mf.nb_dof()); ++i) { // to be optimized ... 
 	  if (gmm::nnz(pairs[i]) > 0) {
 	    lasti = i;
-	    lastj = gmm::vect_const_begin(pairs[i]).index();
+	    lastj = int(gmm::vect_const_begin(pairs[i]).index());
 	    ++nb_nnz;
 	    if (gmm::nnz(pairs[i]) == 1) {
 	      selected_comb[lasti].push_back(++nbdof);
@@ -349,7 +350,7 @@ namespace getfem {
       //   d - if b and c gives no result, a pair is selected, preferabily
       //       having no common dof with selected pairs. loop to a.
 
-      for (size_type i = 0; i < mf.nb_dof(); ++i)
+      for (int i = 0; i < int(mf.nb_dof()); ++i)
 	if (pairs(i,i) == true) {
 	  if (gmm::nnz(pairs[i]) == 1) selected_comb[i].push_back(++nbdof);
 	  pairs[i].sup(i);
@@ -360,10 +361,10 @@ namespace getfem {
 	int nb_nnz(0), lasti(0), lastj(0);
 	ttouched = false;
 
-	for (size_type i = 0; i < mf.nb_dof(); ++i) { // to be optimized ... 
+	for (int i = 0; i < int(mf.nb_dof()); ++i) { // to be optimized ... 
 	  if (gmm::nnz(pairs[i]) == 1 && selected_comb[i].size() == 0) {
 	    lasti = i;
-	    lastj = gmm::vect_const_begin(pairs[i]).index();
+	    lastj = int(gmm::vect_const_begin(pairs[i]).index());
 	    selected_comb[lasti].push_back(++nbdof);
 	    selected_comb[lastj].push_back(nbdof);
 	    pairs[lasti].sup(lastj); pairs[lastj].sup(lasti);
@@ -371,14 +372,14 @@ namespace getfem {
 	  }
 	}
 
-	for (size_type i = 0; i < mf.nb_dof(); ++i) { // to be optimized ...
+	for (int i = 0; i < int(mf.nb_dof()); ++i) { // to be optimized ...
 	  size_type a1 = selected_comb[i].size(), b1 = gmm::nnz(pairs[i]);
 	  gmm::linalg_traits<gmm::rsvector<bool> >::const_iterator
 	    it = gmm::vect_const_begin(pairs[i]),
 	    ite = gmm::vect_const_end(pairs[i]);
 	  for (; it != ite; ++it) {
 	    lasti = i; ++nb_nnz;
-	    lastj = it.index();
+	    lastj = int(it.index());
 	    // cout << "lastj = " << lastj << endl;
 	    size_type a2 = selected_comb[lastj].size();
 	    size_type b2 = gmm::nnz(pairs[lastj]);

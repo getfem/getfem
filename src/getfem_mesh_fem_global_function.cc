@@ -58,7 +58,8 @@ namespace getfem {
   void global_function_fem::real_base_value(const fem_interpolation_context& c,
 					    base_tensor &t, bool) const {
 
-    mib.resize(2); mib[0] = target_dim(); mib[1] = functions.size();
+    mib.resize(2); mib[0] = target_dim();
+    mib[1] = short_type(functions.size());
     assert(target_dim() == 1);
     t.adjust_sizes(mib);
     for (size_type i=0; i < functions.size(); ++i) {
@@ -73,7 +74,8 @@ namespace getfem {
   void global_function_fem::real_grad_base_value
   (const fem_interpolation_context& c, base_tensor &t, bool) const {
     mig.resize(3); 
-    mig[2] = dim(); mig[1] = target_dim(); mig[0] = functions.size();
+    mig[2] = dim(); mig[1] = target_dim();
+    mig[0] = short_type(functions.size());
     assert(target_dim() == 1);
     t.adjust_sizes(mig);
     base_small_vector G(dim());
@@ -87,7 +89,8 @@ namespace getfem {
   void global_function_fem::real_hess_base_value
   (const fem_interpolation_context &c, base_tensor &t, bool) const { 
     mih.resize(4); 
-    mih[3] = mih[2] = dim(); mih[1] = target_dim(); mih[0] = functions.size();
+    mih[3] = mih[2] = dim(); mih[1] = target_dim();
+    mih[0] = short_type(functions.size());
     assert(target_dim() == 1);
     t.adjust_sizes(mih);
     base_matrix H(dim(),dim());
@@ -504,7 +507,7 @@ namespace getfem {
     base_node ptref;
     size_type cv;
     base_vector coeff;
-    size_type q = mf.get_qdim(), N = mf.linked_mesh().dim();
+    dim_type q = mf.get_qdim(), N = mf.linked_mesh().dim();
     if (find_a_point(pt, ptref, cv)) {
       pfem pf = mf.fem_of_element(cv);
       bgeot::pgeometric_trans pgt = 

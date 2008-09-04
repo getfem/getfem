@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% pour l'animation (en sh):
 %% for i in *.png; do convert $i `basename $i png`jpg; done
-%% mencoder "mf://dyn*.jpg" -mf fps=25 -o output.avi -ovc lavc
+%% mencoder "mf://dyn*.jpg" -mf fps=25 -o output.avi -ovc lavc -lavcopts vcodec=mpeg4
 
 
 %%%%% pde parameters :	        				      %%%%%

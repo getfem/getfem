@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -81,7 +81,8 @@ namespace dal {
     { return (depth==0) ? ST_NIL : path[depth-1];}
     inline size_type father(void) const
     { return (depth<=1) ? ST_NIL : path[depth-2];}
-    inline size_type index_(void) const { return path[depth-1]; }
+    inline size_type index_(void) const
+    { return path[depth-1]; }
     inline short_type direction(void) const
     { return (depth==0) ? 0 : dir[depth-1];}
     inline void up(void) { if (depth > 0) depth--; }
@@ -188,7 +189,7 @@ namespace dal {
     { return (depth<=1) ? ST_NIL : path[depth-2];}
     inline size_type index_(void) const { return path[depth-1]; }
     inline short_type direction(void) const
-    { return (depth==0) ? 0 : dir[depth-1];}
+    { return (depth==0) ? short_type(0) : dir[depth-1];}
     inline void up(void) { if (depth > 0) depth--; }
     void down_left(void);
     void down_right(void);
@@ -355,7 +356,7 @@ namespace dal {
       size_type right_elt(size_type n) const { return nodes[n].r; }
       size_type left_elt(size_type n)  const { return nodes[n].l; }
       short_type balance(size_type n) const
-      { return (n == ST_NIL) ? 0 : nodes[n].eq; }
+      { return short_type((n == ST_NIL) ? 0 : nodes[n].eq); }
       size_type search(const T &elt) const {
 	const_sorted_iterator it(*this);
 	search_sorted_iterator(elt,it);
@@ -442,9 +443,9 @@ namespace dal {
     short_type uba = pnf->eq, ubb = nodes[pnf->r].eq;
     pni->l = rotate_left(f); f = rotate_right(i);
     pnf = &(nodes[f]);
-    pnf->eq = uba - 1;
-    nodes[pnf->l].eq = uba - 1 - ((ubb == 1) ? 1 : 0);
-    nodes[pnf->r].eq = ((ubb == -1) ? 1 : 0);
+    pnf->eq = short_type(uba - 1);
+    nodes[pnf->l].eq = short_type(uba - 1 - ((ubb == 1) ? 1 : 0));
+    nodes[pnf->r].eq = short_type(((ubb == -1) ? 1 : 0));
 
     if (uba == 0 && ubb == 1)
     { 
@@ -460,9 +461,9 @@ namespace dal {
     size_type f = nodes[i].r;
     short_type uba = nodes[f].eq, ubb = nodes[nodes[f].l].eq;
     nodes[i].r = rotate_right(f); f = rotate_left(i);
-    nodes[f].eq = uba + 1;
-    nodes[nodes[f].r].eq = uba + 1 + ((ubb == -1) ? 1 : 0);
-    nodes[nodes[f].l].eq = ((ubb == +1) ? -1 : 0);
+    nodes[f].eq = short_type(uba + 1);
+    nodes[nodes[f].r].eq = short_type(uba + 1 + ((ubb == -1) ? 1 : 0));
+    nodes[nodes[f].l].eq = short_type(((ubb == +1) ? -1 : 0));
 
     if (uba == 0 && ubb == -1) {
       nodes[f].r = balance_again(nodes[f].r);
@@ -581,9 +582,9 @@ namespace dal {
       
       while(it.index() != ST_NIL) {
 	short_type *peq = &(nodes[it.index()].eq);
-	if (*peq == 0) *peq += dir;
+	if (*peq == 0) *peq = short_type(*peq + dir);
 	else { 
-	  *peq += dir; 
+	  *peq = short_type(*peq + dir);
 	  size_type f = balance_again(it.index());
 	  dir = it.direction();
 	  it.up();
@@ -682,7 +683,7 @@ namespace dal {
 
     while (it.index() != ST_NIL) {
       short_type ub = pnc->eq;
-      pnc->eq -= dir;
+      pnc->eq = short_type(pnc->eq - dir);
       if (ub == 0) break;
       f = balance_again(ic);
       ub = nodes[f].eq;

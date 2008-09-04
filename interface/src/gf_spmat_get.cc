@@ -30,8 +30,8 @@ template <typename MAT>
 void copydiags(const MAT &M, const std::vector<size_type> &v, 
 	       garray<typename MAT::value_type> &w) {
   size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
-  for (size_type ii=0; ii < v.size(); ++ii) {
-    int d = v[ii], i,j;
+  for (unsigned ii=0; ii < v.size(); ++ii) {
+    int d = int(v[ii]), i,j;
     if (d < 0) { i = -d; j = 0; } else { i = 0; j = d; }
     cout << "m=" << m << "n=" << n << ", d=" << d << ", i=" << i << ", j=" << j << "\n";
     for (; i < int(m) && j < int(n); ++i,++j)
@@ -63,7 +63,7 @@ gf_spmat_get_full(gsparse &gsp, getfemint::mexargs_in& in, getfemint::mexargs_ou
     default: THROW_INTERNAL_ERROR;
     }
   }
-  std::copy(ww.begin(), ww.end(), out.pop().create_array(m,n,T()).begin());
+  std::copy(ww.begin(), ww.end(), out.pop().create_array(int(m),int(n),T()).begin());
 }
 
 template <typename T> static void 
@@ -73,8 +73,8 @@ gf_spmat_mult_or_tmult(gsparse &gsp,
   size_type nj = gsp.ncols(), ni = gsp.nrows();
   if (tmult) std::swap(ni,nj);
   //cout << "NJ=" << nj << "NI=" << ni << ", tmaul=" << tmult << "\n";
-  garray<T> v = in.pop().to_garray(nj,T());
-  garray<T> w = out.pop().create_array_v(ni, T());
+  garray<T> v = in.pop().to_garray(int(nj),T());
+  garray<T> w = out.pop().create_array_v(unsigned(ni), T());
   gsp.mult_or_transposed_mult(v,w,tmult);
   /*switch (gsp.storage()) {
   case gsparse::CSCMAT: 
@@ -96,10 +96,10 @@ gf_spmat_get_diag(gsparse &gsp,
   std::vector<size_type> v;
   if (in.remaining()) {
     iarray vv = in.pop().to_iarray(-1);
-    for (size_type i=0; i < vv.size(); ++i)
+    for (unsigned i=0; i < vv.size(); ++i)
       v.push_back(vv[i]);
   } else v.push_back(0);
-  garray<T> w = out.pop().create_array(std::min(gsp.nrows(), gsp.ncols()), v.size(), T());
+  garray<T> w = out.pop().create_array(unsigned(std::min(gsp.nrows(), gsp.ncols())), unsigned(v.size()), T());
   switch (gsp.storage()) {
   case gsparse::CSCMAT: copydiags(gsp.csc(T()), v, w); break;
   case gsparse::WSCMAT: copydiags(gsp.wsc(T()), v, w); break;
@@ -112,15 +112,17 @@ gf_spmat_get_data(gmm::csc_matrix_ref<const T*, const unsigned int *, const unsi
 		  getfemint::mexargs_out& out, int which) {
   size_type nz = M.jc[M.nc];
   if (which == 0) {
-    iarray w = out.pop().create_iarray_h(M.nc+1);
-    for (size_type i=0; i < M.nc+1; ++i) { w[i] = M.jc[i] + config::base_index(); }
+    iarray w = out.pop().create_iarray_h(unsigned(M.nc+1));
+    for (unsigned i=0; i < M.nc+1; ++i)
+      { w[i] = M.jc[i] + config::base_index(); }
     if (out.remaining()) {
-      w = out.pop().create_iarray_h(nz);
-      for (size_type i=0; i < nz; ++i) { w[i] = M.ir[i] + config::base_index(); }
+      w = out.pop().create_iarray_h(unsigned(nz));
+      for (unsigned i=0; i < nz; ++i)
+	{ w[i] = M.ir[i] + config::base_index(); }
     }
   } else {
-    garray<T> w = out.pop().create_array_h(nz, T());
-    for (size_type i=0; i < M.nc+1; ++i) { w[i] = M.pr[i]; }
+    garray<T> w = out.pop().create_array_h(unsigned(nz), T());
+    for (unsigned i=0; i < M.nc+1; ++i) { w[i] = M.pr[i]; }
   }
 }
 
@@ -175,7 +177,7 @@ void gf_spmat_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET SPMAT:GET('nnz')
       Return the number of non-null values stored in the sparse matrix.
       @*/
-    out.pop().from_integer(gsp.nnz());
+    out.pop().from_integer(int(gsp.nnz()));
   } else if (check_cmd(cmd, "full", in, out, 0, 2, 0, 1)) {
     /*@GET SPMAT:GET('full' [,I [,J]])
       Return a full (sub-)matrix of M.
@@ -221,8 +223,8 @@ void gf_spmat_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       Return a vector [ni, nj] where ni and nj are the dimensions of the matrix.
       @*/
     iarray sz = out.pop().create_iarray_h(2);
-    sz[0] = gsp.nrows();
-    sz[1] = gsp.ncols();
+    sz[0] = int(gsp.nrows());
+    sz[1] = int(gsp.ncols());
   } else if (check_cmd(cmd, "is_complex", in, out, 0, 0, 0, 1)) {
     /*@GET SPMAT:GET('is_complex') 
       Return 1 if the matrix contains complex values.
@@ -273,9 +275,11 @@ void gf_spmat_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       (dimensions, filling, ..).
       @*/
     std::stringstream ss;
-    ss << gsp.nrows() << "x" << gsp.ncols() << " " << (gsp.is_complex() ? "COMPLEX" : "REAL") 
-       << " " << gsp.name() << ", NNZ=" << gsp.nnz() 
-       << " (filling=" << double(gsp.nnz())/(double(gsp.nrows())*gsp.ncols())*100. << "%)";
+    ss << gsp.nrows() << "x" << gsp.ncols() << " "
+       << (gsp.is_complex() ? "COMPLEX" : "REAL") << " " << gsp.name()
+       << ", NNZ=" << gsp.nnz() << " (filling="
+       << double(gsp.nnz())/(double(gsp.nrows())*double(gsp.ncols()))*100.
+       << "%)";
     out.pop().from_string(ss.str().c_str());
   } else if (check_cmd(cmd, "save", in, out, 2, 2, 0, 0)) {
     /*@GET SPMAT:GET('save', @str format, @str filename)

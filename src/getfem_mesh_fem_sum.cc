@@ -58,7 +58,7 @@ namespace getfem {
     //cerr << "fem_sum::mat_trans " << debug_name_ << " / smart_global_dof_linking_ = " << smart_global_dof_linking_<< "\n";
     pdof_description gdof = 0, lagdof = lagrange_dof(dim());
     std::vector<pdof_description> hermdof(dim());
-    for (size_type id = 0; id < dim(); ++id)
+    for (dim_type id = 0; id < dim(); ++id)
       hermdof[id] = derivative_dof(dim(), id);
     if (pfems.size()) gdof = global_dof(dim());
     gmm::copy(gmm::identity_matrix(), M);
@@ -147,7 +147,7 @@ namespace getfem {
 				base_tensor &t, 
 				bool withM) const {
     bgeot::multi_index mi(2);
-    mi[1] = target_dim(); mi[0] = nb_dof(0);
+    mi[1] = target_dim(); mi[0] = short_type(nb_dof(0));
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
 
@@ -179,7 +179,8 @@ namespace getfem {
   void fem_sum::real_grad_base_value(const fem_interpolation_context &c,
 				     base_tensor &t, bool withM) const {
     bgeot::multi_index mi(3);
-    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_dof(0);
+    mi[2] = short_type(c.N()); mi[1] = target_dim();
+    mi[0] = short_type(nb_dof(0));
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
     
@@ -213,7 +214,8 @@ namespace getfem {
   void fem_sum::real_hess_base_value(const fem_interpolation_context &c,
 				     base_tensor &t, bool withM) const {
     bgeot::multi_index mi(4);
-    mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_dof(0);
+    mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
+    mi[0] = short_type(nb_dof(0));
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
     

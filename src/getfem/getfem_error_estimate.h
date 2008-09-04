@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -81,8 +81,8 @@ namespace getfem {
 		  (U, gmm::sub_index(mf.ind_dof_of_element(cv2))), coeff2);
 	
 	gmm::resize(grad1, qdim, N); gmm::resize(grad2, qdim, N);
-	pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
-	pf2->interpolation_grad(ctx2, coeff2, grad2, qdim);
+	pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
+	pf2->interpolation_grad(ctx2, coeff2, grad2, dim_type(qdim));
 	
 	gradn.resize(qdim); up.resize(N);
 	const base_matrix& B = ctx1.B();
@@ -128,7 +128,7 @@ namespace getfem {
     inter_element_normal_derivative_jump<VECT1, VECT2> iendj(U, err, mim, mf);
 
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1)
-      for (unsigned f=0; f < m.structure_of_convex(cv1.cv())->nb_faces(); ++f)
+      for (short_type f=0; f<m.structure_of_convex(cv1.cv())->nb_faces(); ++f)
 	iendj.compute_on_face(cv1.cv(), f);
     
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1)

@@ -45,7 +45,7 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.front().is_string()) {
       s = in.pop().to_string();
     } else {
-      v = in.pop().to_darray(ls.get_mesh_fem().nb_dof());
+      v = in.pop().to_darray(int(ls.get_mesh_fem().nb_dof()));
     }
     if (in.remaining()) {
       if (!ls.has_secondary())
@@ -53,7 +53,7 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (in.front().is_string()) {
 	s2 = in.pop().to_string();
       } else {
-	v2 = in.pop().to_darray(ls.get_mesh_fem().nb_dof());
+	v2 = in.pop().to_darray(int(ls.get_mesh_fem().nb_dof()));
       }
     }
     ls.values(0).resize(ls.get_mesh_fem().nb_dof());

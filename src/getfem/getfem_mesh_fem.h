@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -61,16 +61,16 @@ namespace getfem {
     dim_type ii;
 
     iterator &operator ++()
-      { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
+    { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
     iterator &operator --() 
-      { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
+    { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
    
     iterator &operator +=(difference_type i)
-      { it += (i+ii)/N; ii = (ii + i) % N; return *this; }
+    { it += (i+ii)/N; ii = dim_type((ii + i) % N); return *this; }
     iterator &operator -=(difference_type i)
-      { it -= (i+N-ii-1)/N; ii = (ii - i + N * i) % N; return *this; }
+    { it -= (i+N-ii-1)/N; ii = (ii - i + N * i) % N; return *this; }
     iterator operator +(difference_type i) const 
     { iterator itt = *this; return (itt += i); }
     iterator operator -(difference_type i) const
@@ -82,10 +82,10 @@ namespace getfem {
     value_type operator [](int i) { return *(this + i); }
 
     bool operator ==(const iterator &i) const
-      { return (it == i.it) && (ii == i.ii); }
+    { return (it == i.it) && (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const
-      { return (it < i.it) && (ii < i.ii); }
+    { return (it < i.it) && (ii < i.ii); }
 
     tab_scal_to_vect_iterator(void) {}
     tab_scal_to_vect_iterator(const ITER &iter, dim_type n, dim_type i)
@@ -125,9 +125,9 @@ namespace getfem {
     const_iterator begin(void) const { return iterator(it, N, 0); }
     const_iterator end(void) const { return iterator(ite, N, 0); }
     const_reverse_iterator rbegin(void) const
-      { return const_reverse_iterator(end()); }
+    { return const_reverse_iterator(end()); }
     const_reverse_iterator rend(void) const
-      { return const_reverse_iterator(begin()); }
+    { return const_reverse_iterator(begin()); }
     
     value_type front(void) const { return *begin(); }
     value_type back(void) const { return *(--(end())); }
@@ -199,7 +199,7 @@ namespace getfem {
 	always be the product of get_qdim_m and get_qdim_n */
     void set_qdim_mn(dim_type M, dim_type N) {
       if (M != QdimM || N != QdimN) {
-	QdimM = M; QdimN = N; Qdim = N*M;
+	QdimM = M; QdimN = N; Qdim = dim_type(N*M);
 	dof_enumeration_made = false; touch();
       }
     }
@@ -268,7 +268,7 @@ namespace getfem {
       ind_dof_of_element(size_type cv) const {
       if (!dof_enumeration_made) enumerate_dof();
       return ind_dof_ct(dof_structure.ind_points_of_convex(cv),
-				 Qdim /fem_of_element(cv)->target_dim());
+			dim_type(Qdim /fem_of_element(cv)->target_dim()));
     }
     /** Give an array of the dof numbers lying of a convex face (all
       	degrees of freedom whose associated base function is non-zero
@@ -283,7 +283,7 @@ namespace getfem {
       if (!dof_enumeration_made) enumerate_dof();
       return ind_dof_face_ct
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
-	 Qdim /fem_of_element(cv)->target_dim());
+	 dim_type(Qdim /fem_of_element(cv)->target_dim()));
     }
     /** Return the number of dof lying on the given convex face.
 	@param cv the convex number.
@@ -354,7 +354,7 @@ namespace getfem {
       }
     }
     unsigned get_dof_partition(size_type cv) const {
-      return (cv < dof_partition.size() ? dof_partition[cv] : 0); 
+      return (cv < dof_partition.size() ? unsigned(dof_partition[cv]) : 0); 
     }
     void clear_dof_partition() { dof_partition.clear(); }
 

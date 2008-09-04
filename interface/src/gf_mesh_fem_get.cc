@@ -163,7 +163,8 @@ get_cv_dof_list(getfem::mesh_fem *mf, mexargs_in& in) {
     if (!mf->convex_index().is_in(cv))
       THROW_ERROR( "convex " << cv+1 << " has no FEM!"); 
     if (f != dim_type(-1)) {
-      getfem::mesh_fem::ind_dof_face_ct c = mf->ind_dof_of_face_of_element(cv,f); 
+      getfem::mesh_fem::ind_dof_face_ct
+	c = mf->ind_dof_of_face_of_element(cv,short_type(f)); 
     //std::for_each(c.begin(), c.end(), std::bind1st(std::mem_fun(&dal::bit_vector::add),&dof)); // not SGI STL compliant !?
       for (unsigned i=0; i < c.size(); ++i)
 	dof.add(c[i]); 
@@ -189,27 +190,30 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out)
   
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
     check_cv_fem(mf, ic);
-    for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+    for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
       bgeot::short_type q;
       if (!m.is_convex_having_neighbour(ic, f)) {
 	q = 2;
       } else {
 	q = 1;
       }      
-      for (size_type i = 0; i < mf.ind_dof_of_face_of_element(ic,f).size(); ++i) {
-	dcnt[mf.ind_dof_of_face_of_element(ic,f)[i]]+=q;
+      for (short_type i = 0; i < mf.ind_dof_of_face_of_element(ic,f).size();
+	   ++i) {
+	size_type ind = mf.ind_dof_of_face_of_element(ic,f)[i];
+	dcnt[ind]= short_type(dcnt[ind] + q);
       }
     }
   }
-  iarray w = out.pop().create_iarray_h(std::count_if(dcnt.begin(), dcnt.end(), 
-		     std::bind2nd(std::equal_to<bgeot::short_type>(),1)));
+  iarray w = out.pop().create_iarray_h
+    (unsigned(std::count_if(dcnt.begin(), dcnt.end(), 
+		   std::bind2nd(std::equal_to<bgeot::short_type>(),1))));
   size_type i,j=0;
   /*
   std::copy_if(dcnt.begin(), dcnt.end(), 
 	       std::bind2nd(std::less_equal<bgeot::short_type>(),1)));
   */
   for (i=0; i < dcnt.size(); ++i) {
-    if (dcnt[i] == 1) w[j++] = i+config::base_index();
+    if (dcnt[i] == 1) w[j++] = int(i+config::base_index());
   }
 }
 
@@ -242,7 +246,7 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
   assert(u.dim(u.ndim()-1) == pmf->linked_mesh().convex_index().last_true()+1);
   array_dimensions ad; 
   for (unsigned i=0; i < u.ndim()-1; ++i) ad.push_back(u.dim(i));
-  ad.push_back(pmf->nb_dof());
+  ad.push_back(unsigned(pmf->nb_dof()));
   garray<T> w = out.pop().create_array(ad, T());
   size_type q = u.size() / u.dim(u.ndim()-1);
   assert(w.size() == q * pmf->nb_dof());
@@ -329,7 +333,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR I = MESHFEM:GET('nbdof')
       Return the number of Degrees of Freedom (DoF) of the @tmf MF.
       @*/
-    out.pop().from_integer(mf->nb_dof());
+    out.pop().from_integer(int(mf->nb_dof()));
   } else if (check_cmd(cmd, "dof from cv", in, out, 1, 1, 0, 1)) {
     /*@GET I = MESHFEM:GET('dof from cv', CVLST)
       Return the DoF of the convexes listed in CVLST. 
@@ -387,25 +391,27 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     }
     /* phase two: allocation */
-    iarray pid = out.pop().create_iarray_h(pcnt);
+    iarray pid = out.pop().create_iarray_h(unsigned(pcnt));
     bool fill_idx = out.remaining();
-    iarray idx; if (fill_idx) idx = out.pop().create_iarray_h(cvlst.card() + 1);
+    iarray idx;
+    if (fill_idx) idx = out.pop().create_iarray_h(unsigned(cvlst.card() + 1));
 
     pcnt = 0;
     size_type cvcnt = 0;
     /* phase three: build the list */
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-      if (fill_idx) idx[cvcnt] = pcnt + config::base_index();
+      if (fill_idx) idx[cvcnt] = int(pcnt + config::base_index());
       if (mf->convex_index().is_in(cv)) {
 	for (getfem::mesh_fem::ind_dof_ct::const_iterator pit = 
 	       mf->ind_dof_of_element(cv).begin();
 	     pit != mf->ind_dof_of_element(cv).end(); ++pit) {
-	  pid[pcnt++] = (*pit) + config::base_index();
+	  pid[pcnt++] = int((*pit) + config::base_index());
 	}
       }
       cvcnt++;
     }
-    if (fill_idx) idx[idx.size()-1] = pcnt+config::base_index(); /* for the last convex */
+    if (fill_idx)
+      idx[idx.size()-1] = int(pcnt+config::base_index()); /* for the last convex */
   } else if (check_cmd(cmd, "non conformal dof", in, out, 0, 1, 0, 1)) { 
     /*@GET MESHFEM:GET('non conformal dof' [,CVLST])
       Return partially linked degrees of freedom.
@@ -496,7 +502,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_dof());
     if (in.remaining())
       dof_lst = in.pop().to_bit_vector(&dof_lst);
-    darray w = out.pop().create_darray(mf->linked_mesh().dim(), dof_lst.card());
+    darray w = out.pop().create_darray(mf->linked_mesh().dim(), unsigned(dof_lst.card()));
     size_type j = 0;
     for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
       if (mf->point_of_dof(dof).size() != w.getm() || j >= w.getn()) THROW_INTERNAL_ERROR;
@@ -514,7 +520,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       which have the same partition number, hence it is possible to
       create partially discontinuous mesh_fem very easily.
       @*/
-    iarray v = out.pop().create_iarray_h(mf->linked_mesh().convex_index().last_true()+1);
+    iarray v = out.pop().create_iarray_h(unsigned(mf->linked_mesh().convex_index().last_true()+1));
     for (unsigned cv=0; cv < v.size(); ++cv) v[cv] = mf->get_dof_partition(cv);
   } else if (check_cmd(cmd, "save", in, out, 1, 2, 0, 0)) {
     /*@GET MESHFEM:GET('save', filename [, opt])
@@ -575,7 +581,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       const getfem::mesh_fem *mf2 = mf;
       if (in.remaining() >= 2 && in.front().is_mesh_fem())
         mf2 = in.pop().to_const_mesh_fem();        
-      darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(mf2->nb_dof());
+      darray U = in.pop().to_darray();
+      in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
       exp.write_point_data(*mf2, U, get_vtk_dataset_name(in, count));
       count+=1;
     }
@@ -618,7 +625,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       const getfem::mesh_fem *mf2 = mf;
       if (in.remaining() >= 2 && in.front().is_mesh_fem())
         mf2 = in.pop().to_const_mesh_fem();        
-      darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(mf2->nb_dof());
+      darray U = in.pop().to_darray();
+      in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
       exp.write_point_data(*mf2, U, get_dx_dataset_name(in));
       if (serie_name.size()) exp.serie_add_object(serie_name);
     }
@@ -654,7 +662,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
       Example of use: MESHFEM:GET('interpolate_convex_data', MESH:GET('quality'))
       @*/
-    in.front().check_trailing_dimension(mf->linked_mesh().convex_index().last_true()+1);
+    in.front().check_trailing_dimension(int(mf->linked_mesh().convex_index().last_true()+1));
     if (in.front().is_complex()) 
       interpolate_convex_data(mf, in.pop().to_darray(), out);
     else interpolate_convex_data(mf, in.pop().to_carray(), out);    
@@ -664,7 +672,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
       The result does not take into account the linked mesh object.
       @*/
-    out.pop().from_integer(mf->memsize());
+    out.pop().from_integer(int(mf->memsize()));
   } else if (check_cmd(cmd, "has_linked_mesh_levelset", in, out, 0, 0, 0, 1)) {
     getfem::mesh_fem_level_set *mfls = 
       dynamic_cast<getfem::mesh_fem_level_set*>(mf);

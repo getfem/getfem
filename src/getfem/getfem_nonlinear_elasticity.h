@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -193,7 +193,7 @@ namespace getfem {
       for (size_type i = 0; i < mf_data.nb_dof_of_element(cv); ++i)
 	for (size_type k = 0; k < nb; ++k)
 	  coeff[i * nb + k] = PARAMS[mf_data.ind_dof_of_element(cv)[i]*nb+k];
-      ctx.pf()->interpolation(ctx, coeff, params, nb);
+      ctx.pf()->interpolation(ctx, coeff, params, dim_type(nb));
     } 
     
   };
@@ -320,7 +320,7 @@ namespace getfem {
 
     template <class VECTVM>
     void compute_Von_Mises_or_Tresca(MODEL_STATE &MS, const mesh_fem &mf_vm, VECTVM &VM, bool tresca) {
-      unsigned int N = mf_u.linked_mesh().dim(), NP = AHL.nb_params();
+      unsigned N = mf_u.linked_mesh().dim(), NP = unsigned(AHL.nb_params());
       VECTOR GRAD(mf_vm.nb_dof()*N*N), PARAMS(mf_vm.nb_dof()*NP);
       
       interpolation(PARAMS_.mf(), mf_vm, PARAMS_.get(), PARAMS);

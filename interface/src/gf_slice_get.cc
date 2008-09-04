@@ -55,7 +55,7 @@ export_slice_to_povray(std::ofstream &f, const getfem::stored_mesh_slice& sl) {
 	const getfem::slice_node &B = sl.nodes(ic)[it->inodes[1]];
 	const getfem::slice_node &C = sl.nodes(ic)[it->inodes[2]];
 	getfem::slice_node::faces_ct common_faces = (A.faces & B.faces & C.faces);
-	size_type fnum = 0;
+	short_type fnum = 0;
 	for (; common_faces.any(); ++fnum) if (common_faces[fnum]) break;
 	if (fnum < m.structure_of_convex(sl.convex_num(ic))->nb_faces()) {
 	  f << "smooth_triangle {";
@@ -106,7 +106,7 @@ interpolate_convex_data(const getfem::stored_mesh_slice *sl,
   assert(u.dim(u.ndim()-1) == sl->linked_mesh().convex_index().last_true()+1);
   array_dimensions ad; 
   for (unsigned i=0; i < u.ndim()-1; ++i) ad.push_back(u.dim(i));
-  ad.push_back(sl->nb_points());
+  ad.push_back(unsigned(sl->nb_points()));
   garray<T> w = out.pop().create_array(ad, T());
   size_type q = u.size() / u.dim(u.ndim()-1);
   size_type pos = 0;
@@ -156,7 +156,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR SLICE:GET('dim')
       Return the dimension of the slice (2 for a 2D mesh, etc..).
       @*/
-    out.pop().from_integer(sl->dim());
+    out.pop().from_integer(int(sl->dim()));
   } else if (check_cmd(cmd, "area", in, out, 0, 0, 0, 1)) {
     /*@GET SLICE:GET('area')
       Return the area of the slice.
@@ -167,13 +167,14 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET CVLST=SLICE:GET('cvs')
       Return the list of convexes of the original mesh contained in the slice.
       @*/
-    iarray w = out.pop().create_iarray_h(sl->nb_convex());
-    for (size_type i=0; i < sl->nb_convex(); ++i) w[i] = sl->convex_num(i) + config::base_index();
+    iarray w = out.pop().create_iarray_h(unsigned(sl->nb_convex()));
+    for (size_type i=0; i < sl->nb_convex(); ++i)
+      w[i] = int(sl->convex_num(i) + config::base_index());
   } else if (check_cmd(cmd, "nbpts", in, out, 0, 0, 0, 1)) {
     /*@RDATTR SLICE:GET('nbpts')
       Return the number of points in the slice.
       @*/
-    out.pop().from_integer(sl->nb_points());
+    out.pop().from_integer(int(sl->nb_points()));
   } else if (check_cmd(cmd, "nbsplxs", in, out, 0, 1, 0, 1)) {
     /*@RDATTR SLICE:GET('nbsplxs' [,@int DIM])
       Return the number of simplexes in the slice.
@@ -186,7 +187,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::vector<size_type> v; sl->nb_simplexes(v);
     if (in.remaining()) {
       size_type i= in.pop().to_integer(0,100);
-      out.pop().from_integer(i < v.size() ? v[i] : 0);
+      out.pop().from_integer(int(i < v.size() ? v[i] : 0));
     } else {
       out.pop().from_ivector(v);
     }
@@ -194,7 +195,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET P=SLICE:GET('pts')
       Return the list of point coordinates.
       @*/
-    darray w = out.pop().create_darray(sl->dim(), sl->nb_points());
+    darray w = out.pop().create_darray(unsigned(sl->dim()), unsigned(sl->nb_points()));
     for (size_type ic=0, cnt=0; ic < sl->nb_convex(); ++ic) {
       for (getfem::mesh_slicer::cs_nodes_ct::const_iterator it=sl->nodes(ic).begin();
            it != sl->nodes(ic).end(); ++it) {
@@ -211,12 +212,13 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       any convex stored in the slice. For example @MATLAB{S(:,CV2SPLX(4):CV2SPLX(5)-1)}@PYTHON{S[:,CV2SPLX[4]:CV2SPLX[5]]}
       gives the list of simplexes for the fourth convex.
       @*/
-    size_type sdim = in.pop().to_integer(0,sl->dim());
-    iarray w = out.pop().create_iarray(sdim+1, sl->nb_simplexes(sdim));
+    size_type sdim = in.pop().to_integer(0,int(sl->dim()));
+    iarray w = out.pop().create_iarray(unsigned(sdim+1), unsigned(sl->nb_simplexes(sdim)));
     size_type Scnt = 0;
     iarray cv2splx;
     if (out.remaining()) {
-      cv2splx = out.pop().create_iarray_h(sl->nb_convex()+1); Scnt = config::base_index();
+      cv2splx = out.pop().create_iarray_h(unsigned(sl->nb_convex()+1));
+      Scnt = config::base_index();
     }
     for (size_type ic=0, cnt=0, pcnt=0; ic < sl->nb_convex(); ++ic) {
       size_type scnt = 0;
@@ -224,16 +226,16 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
            it != sl->simplexes(ic).end(); ++it) {
         if ((*it).dim() == sdim) {
           for (size_type k=0; k < sdim+1; ++k)
-            w[cnt++] = (*it).inodes[k] + pcnt + config::base_index();
+            w[cnt++] = int((*it).inodes[k] + pcnt + config::base_index());
 	  scnt++; 
 	}
       }      
       pcnt += sl->nodes(ic).size();
       if (Scnt) {	
-	cv2splx[ic] = Scnt; Scnt+=scnt;
+	cv2splx[ic] = int(Scnt); Scnt+=scnt;
       }
     }
-    if (Scnt) cv2splx[sl->nb_convex()] = Scnt;
+    if (Scnt) cv2splx[sl->nb_convex()] = int(Scnt);
   } else if (check_cmd(cmd, "edges", in, out, 0, 0, 0, 3)) {
     /*@GET [mat P, ivec E1, ivec E2]=SLICE:GET('edges')
       Return the edges of the linked mesh contained in the slice.
@@ -252,9 +254,9 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /* return a point list, a connectivity array, and optionnaly a list of edges with are part of the slice */
     double nan = get_NaN();
     dal::bit_vector bv = m.points().index();
-    darray P = out.pop().create_darray(m.dim(), bv.last_true()+1);
-    iarray T1 = out.pop().create_iarray(2, m.nb_convex() - slice_edges.card());
-    iarray T2 = out.pop().create_iarray(2, slice_edges.card());
+    darray P = out.pop().create_darray(m.dim(), unsigned(bv.last_true()+1));
+    iarray T1 = out.pop().create_iarray(2, unsigned(m.nb_convex() - slice_edges.card()));
+    iarray T2 = out.pop().create_iarray(2, unsigned(slice_edges.card()));
     for (size_type j = 0; j < bv.last_true()+1; j++) {
       for (size_type i = 0; i < m.dim(); i++) {
 	P(i,j) = (bv.is_in(j)) ? (m.points()[j])[i] : nan;
@@ -262,11 +264,15 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     iarray::iterator itt1=T1.begin(), itt2=T2.begin();
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
-      if (!slice_edges[cv]) {  
-	gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1); 
+      if (!slice_edges[cv]) { 
+	itt1[0] = int(m.ind_points_of_convex(cv)[0]);
+	itt1[1] = int(m.ind_points_of_convex(cv)[1]);
+	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1); 
 	itt1[0] += config::base_index(); itt1[1] += config::base_index(); itt1 += 2;
       } else {
-	gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2); 
+	itt2[0] = int(m.ind_points_of_convex(cv)[0]);
+	itt2[1] = int(m.ind_points_of_convex(cv)[1]);
+	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2); 
 	itt2[0] += config::base_index(); itt2[1] += config::base_index(); itt2 += 2;
       }
     }
@@ -280,7 +286,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
       Example of use: SLICE:GET('interpolate_convex_data', MESH:GET('quality'))
       @*/
-    in.front().check_trailing_dimension(sl->linked_mesh().convex_index().last_true()+1);
+    in.front().check_trailing_dimension(int(sl->linked_mesh().convex_index().last_true()+1));
     if (in.front().is_complex()) 
       interpolate_convex_data(sl, in.pop().to_darray(), out);
     else interpolate_convex_data(sl, in.pop().to_carray(), out);
@@ -293,7 +299,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET ms=SLICE:GET('memsize')
       Return the amount of memory (in bytes) used by the slice object.
       @*/
-    out.pop().from_integer(sl->memsize());
+    out.pop().from_integer(int(sl->memsize()));
   } else if (check_cmd(cmd, "export to vtk",in, out, 1, -1, 0, 0)) {
     /*@GET SLICE:GET('export to vtk', @str FILENAME ... [, 'ascii'][, 'edges'] ...)
       Export a slice to VTK.
@@ -348,10 +354,10 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
           const getfem::mesh_fem &mf = 
 	    *in.pop().to_const_mesh_fem();
-          darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(mf.nb_dof());
+          darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
           exp.write_point_data(mf,U,get_vtk_dataset_name(in, count));
         } else if (in.remaining()) {
-          darray slU = in.pop().to_darray(); in.last_popped().check_trailing_dimension(vtk_slice->nb_points());
+          darray slU = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(vtk_slice->nb_points()));
           exp.write_sliced_point_data(slU,get_vtk_dataset_name(in, count));
         } else THROW_BADARG("don't know what to do with this argument")
             count+=1;
@@ -418,10 +424,10 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
           const getfem::mesh_fem &mf = 
 	    *in.pop().to_const_mesh_fem();
-          darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(mf.nb_dof());
+          darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
           exp.write_point_data(mf,U,get_dx_dataset_name(in));
         } else if (in.remaining()) {
-          darray slU = in.pop().to_darray(); in.last_popped().check_trailing_dimension(sl->nb_points());
+          darray slU = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(sl->nb_points()));
           exp.write_sliced_point_data(slU,get_dx_dataset_name(in));
         } else THROW_BADARG("don't know what to do with this argument");
         if (serie_name.size()) exp.serie_add_object(serie_name);

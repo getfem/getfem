@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -63,7 +63,7 @@ namespace gmm {
   void SuperLU_solve(const MAT &A, const V1& X, const V2& B, double& rcond_, int permc_spec = 3) {
     typedef typename gmm::linalg_traits<MAT>::value_type T;
     
-    int m = mat_nrows(A), n = mat_ncols(A);
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A));
     gmm::csc_matrix<T> csc_A(m,n); 
     gmm::copy(A,csc_A);
     std::vector<T> rhs(m), sol(m);
@@ -86,7 +86,7 @@ namespace gmm {
 
     /** Do the factorization of the supplied sparse matrix. */
     template <class MAT> void build_with(const MAT &A,  int permc_spec = 3) {
-      int m = mat_nrows(A), n = mat_ncols(A);
+      int m = int(mat_nrows(A)), n = int(mat_ncols(A));
       gmm::csc_matrix<T> csc_A(m,n); 
       gmm::copy(A,csc_A);
       build_with(csc_A, permc_spec);

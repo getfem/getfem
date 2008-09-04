@@ -41,7 +41,7 @@ namespace bgeot {
 		<< n << " bytes\n");
     if (first_unfilled[n] == size_type(-1)) {
       blocks.push_back(block(n)); blocks.back().init();
-      insert_block_into_unfilled(blocks.size()-1);
+      insert_block_into_unfilled(gmm::uint32_type(blocks.size()-1));
       GMM_ASSERT1(first_unfilled[n] <
 		  (node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ)),
 		  "allocation slots exhausted for objects of size " << n
@@ -76,9 +76,10 @@ namespace bgeot {
     b.refcnt(vid) = 0;
     if (b.count_unused_chunk++ == 0) {
       insert_block_into_unfilled(bid); 
-      b.first_unused_chunk = vid;
+      b.first_unused_chunk = gmm::uint16_type(vid);
     } else {
-      b.first_unused_chunk = std::min<size_type>(b.first_unused_chunk,vid);
+      b.first_unused_chunk = std::min(b.first_unused_chunk,
+				      gmm::uint16_type(vid));
       if (b.count_unused_chunk == BLOCKSZ) b.clear();
     }
   }
@@ -95,7 +96,7 @@ namespace bgeot {
 	  used_cnt += BLOCKSZ - blocks[i].count_unused_chunk;
 	  mem_total += (BLOCKSZ+1)*blocks[i].objsz;
 	}
-	mem_total += sizeof(block);
+	mem_total = gmm::uint32_type(mem_total + sizeof(block));
       }
       if (mem_total)
 	cout << " sz " << d << ", memory used = " << mem_total << " bytes for " 
@@ -106,7 +107,7 @@ namespace bgeot {
   }
   void block_allocator::insert_block_into_unfilled(block_allocator::size_type bid) {
     SVEC_ASSERT(bid < blocks.size());
-    dim_type dim = blocks[bid].objsz;
+    dim_type dim = dim_type(blocks[bid].objsz);
     SVEC_ASSERT(bid != first_unfilled[dim]);
     SVEC_ASSERT(blocks[bid].prev_unfilled+1 == 0);
     SVEC_ASSERT(blocks[bid].next_unfilled+1 == 0);
@@ -121,7 +122,7 @@ namespace bgeot {
   }
   void block_allocator::remove_block_from_unfilled(block_allocator::size_type bid) {
     SVEC_ASSERT(bid < blocks.size());
-    dim_type dim = blocks[bid].objsz;
+    dim_type dim = dim_type(blocks[bid].objsz);
     //cout << "** bloc " << bid << " is going to be REMOVE unfilled list, which is now"; show_unfilled(bid);
     size_type p = blocks[bid].prev_unfilled; blocks[bid].prev_unfilled = size_type(-1);
     size_type n = blocks[bid].next_unfilled; blocks[bid].next_unfilled = size_type(-1);

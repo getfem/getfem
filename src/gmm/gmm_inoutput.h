@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -173,11 +173,11 @@ namespace gmm {
       SECURE_STRNCPY(s, 100, p, len); s[len] = 0;
       if ( Valflag != 'F' && !strchr(s,'E')) {
 	/* insert a char prefix for exp */
-	int last = strlen(s);
+	int last = int(strlen(s));
 	for (int j=last+1;j>=0;j--) {
 	  s[j] = s[j-1];
 	  if ( s[j] == '+' || s[j] == '-' ) {
-	    s[j-1] = Valflag;                    
+	    s[j-1] = char(Valflag);                    
 	    break;
 	  }
 	}
@@ -295,7 +295,7 @@ namespace gmm {
 	       &Neltvl) < 1)
 #endif
       IOHBTerminate("Invalid Type info, line 3 of Harwell-Boeing file.\n");
-    for (size_type i = 0; i < 3; ++i) Type[i] = toupper(Type[i]);
+    for (size_type i = 0; i < 3; ++i) Type[i] = char(toupper(Type[i]));
     
       /*  Fourth line:  */
 #ifdef GMM_SECURE_CRT
@@ -546,7 +546,7 @@ namespace gmm {
       if (mat_nrows(A) == mat_ncols(A)) t = "CUA"; else t = "CRA";
     else
       if (mat_nrows(A) == mat_ncols(A)) t = "RUA"; else t = "RRA";
-    writeHB_mat_double(filename, mat_nrows(A), mat_ncols(A),
+    writeHB_mat_double(filename, int(mat_nrows(A)), int(mat_ncols(A)),
 		       A.jc[mat_ncols(A)], A.jc, A.ir,
 		       (const double *)A.pr,
 		       0, 0, 0, 0, "GETFEM++ CSC MATRIX", "CSCMAT",
@@ -563,7 +563,7 @@ namespace gmm {
     else
       if (mat_nrows(A) == mat_ncols(A)) t = "RUA"; else t = "RRA";
     int Nrhs = gmm::vect_size(rhs) / mat_nrows(A);
-    writeHB_mat_double(filename, mat_nrows(A), mat_ncols(A),
+    writeHB_mat_double(filename, int(mat_nrows(A)), int(mat_ncols(A)),
 		       A.jc[mat_ncols(A)], A.jc, A.ir,
 		       (const double *)A.pr,
 		       Nrhs, (const double *)(&rhs[0]), 0, 0,
@@ -825,10 +825,10 @@ namespace gmm {
 #endif
       return MM_PREMATURE_EOF;
 
-    for (p=mtx; *p!='\0'; *p=tolower(*p),p++);  /* convert to lower case */
-    for (p=crd; *p!='\0'; *p=tolower(*p),p++);  
-    for (p=data_type; *p!='\0'; *p=tolower(*p),p++);
-    for (p=storage_scheme; *p!='\0'; *p=tolower(*p),p++);
+    for (p=mtx; *p!='\0'; *p=char(tolower(*p)),p++) {};  /* convert to lower case */
+    for (p=crd; *p!='\0'; *p=char(tolower(*p)),p++) {};  
+    for (p=data_type; *p!='\0'; *p=char(tolower(*p)),p++) {};
+    for (p=storage_scheme; *p!='\0'; *p=char(tolower(*p)),p++) {};
 
     /* check for banner */
     if (strncmp(banner, MatrixMarketBanner, strlen(MatrixMarketBanner)) != 0)
@@ -1098,11 +1098,11 @@ namespace gmm {
     for (size_type j=0; j < mat_ncols(A); ++j) {      
       for (size_type i = A.jc[j]; i < A.jc[j+1]; ++i) {
 	I[i] = A.ir[i] + 1 - shift;
-	J[i] = j + 1;
+	J[i] = int(j + 1);
       }
     }
-    mm_write_mtx_crd(filename, mat_nrows(A), mat_ncols(A),
-		     nz, &I[0], &J[0], (const double *)A.pr, t);
+    mm_write_mtx_crd(filename, int(mat_nrows(A)), int(mat_ncols(A)),
+		     int(nz), &I[0], &J[0], (const double *)A.pr, t);
   }
 
 

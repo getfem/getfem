@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -487,7 +487,7 @@ namespace getfem {
     std::vector<FUNC> &base(void) { return base_; }
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
-      mi[1] = target_dim(); mi[0] = nb_base(0);
+      mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
       t.adjust_sizes(mi);
       size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
@@ -497,7 +497,7 @@ namespace getfem {
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
       dim_type n = dim();
-      mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base(0);
+      mi[2] = n; mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
       t.adjust_sizes(mi);
       size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
@@ -508,7 +508,8 @@ namespace getfem {
     void hess_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(4);
       dim_type n = dim();
-      mi[3] = n; mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base(0);
+      mi[3] = n; mi[2] = n; mi[1] = target_dim();
+      mi[0] = short_type(nb_base(0));
       t.adjust_sizes(mi);
       size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
@@ -757,7 +758,7 @@ namespace getfem {
 				       dim_type Qdim) const {
     typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
-    dim_type N = c.N();
+    dim_type N = dim_type(c.N());
     GMM_ASSERT1(gmm::mat_ncols(val) == N && gmm::mat_nrows(val) == Qdim,
 		"dimensions mismatch");
     
@@ -782,7 +783,7 @@ namespace getfem {
 				       dim_type Qdim) const {
     typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
-    dim_type N = c.N();
+    dim_type N = dim_type(c.N());
     GMM_ASSERT1(gmm::mat_ncols(val) == gmm::size_type(N*N)
 		&& gmm::mat_nrows(val) == Qdim, "dimensions mismatch");
     

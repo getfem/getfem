@@ -87,7 +87,7 @@ namespace getfemint
       /* list of objects to delete */
       dal::bit_vector dellst;
       for (dal::bv_visitor ii(obj.index()); !ii.finished(); ++ii)
-	mark_deletable_objects(ii, dellst);
+	mark_deletable_objects(id_type(ii), dellst);
       
       if (dellst.card()) {
         /* clear each deletable objects. After the clear there should
@@ -125,7 +125,7 @@ namespace getfemint
 
   /* inserts a new object (and gives it an id) */
   id_type workspace_stack::push_object(getfem_object *o) {
-    id_type obj_id = obj.add(o);
+    id_type obj_id = id_type(obj.add(o));
     //if (!o->is_static())
     o->set_workspace(current_workspace);
     if (o->is_static() && o->ikey == 0) 
@@ -139,7 +139,8 @@ namespace getfemint
 
   /* create a new workspace on top of the stack */
   void workspace_stack::push_workspace(std::string n) { 
-    id_type new_workspace = wrk.add(workspace_data(n, current_workspace));
+    id_type new_workspace
+      = id_type(wrk.add(workspace_data(n, current_workspace)));
     current_workspace = new_workspace;
   }
 
@@ -171,7 +172,7 @@ namespace getfemint
       if (owid != anonymous_workspace && !wrk.index_valid(owid))
 	THROW_INTERNAL_ERROR;
       if (owid == wid) {
-	delete_object(oid);
+	delete_object(id_type(oid));
       }
     }
   }

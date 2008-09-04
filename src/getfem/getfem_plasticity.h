@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -284,8 +284,8 @@ namespace getfem {
 
       t.adjust_sizes(sizes_);
    
-      for (size_type i=0; i < N; ++i) {
-	for (size_type j=0; j < N; ++j) {
+      for (dim_type i=0; i < N; ++i) {
+	for (dim_type j=0; j < N; ++j) {
 	  sigma(i,j) = 2*params[1]*(gradU(i,j)+gradU(j,i))/2.
 	    + sigma_bar(cv,ii,i,j);
 	  if(i==j) sigma(i,i) += ltrace_eps;
@@ -299,17 +299,17 @@ namespace getfem {
       // (ie, when fill_sigma_bar is set)
       if (fill_sigma_bar && flag_proj==0) {
 
-	for (size_type i=0; i < N; ++i)
-	  for (size_type j=0; j < N; ++j)
+	for (dim_type i=0; i < N; ++i)
+	  for (dim_type j=0; j < N; ++j)
 	    saved_proj(cv,ii,i,j) = proj(i,j);
 
 	
 	gmm::add(gmm::scaled(gradU, -params[1]), proj);
 	gmm::add(gmm::scaled(gmm::transposed(gradU), -params[1]), proj);
 
-	for (size_type i=0; i < N; ++i) {
+	for (dim_type i=0; i < N; ++i) {
 	  proj(i,i) += ltrace_eps;
-	  for (size_type j=0; j < N; ++j)
+	  for (dim_type j=0; j < N; ++j)
 	    sigma_bar(cv,ii,i,j) = proj(i,j);
 	}
       }
@@ -424,7 +424,7 @@ namespace getfem {
     void real_base_value(const fem_interpolation_context& c, 
 			 base_tensor &t, bool = true) const {
       bgeot::multi_index mi(2);
-      mi[1] = target_dim(); mi[0] = nb_base(0);
+      mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
       t.adjust_sizes(mi);
       GMM_ASSERT1(c.have_pfp(), "Cannot extrapolate the value outside "
 		  "of the gauss points !");
@@ -560,7 +560,7 @@ namespace getfem {
 	      }
 	    if (!tresca) {
 	      /* von mises: 1/2 deviator(sigma):deviator(sigma) */
-	      scalar_type s = gmm::mat_trace(sigma)/N;
+	      scalar_type s = gmm::mat_trace(sigma)/scalar_type(N);
 	      for (unsigned i=0; i < N; ++i)
 		sigma(i,i) -= s;
 	      uvm[ii] = gmm::mat_euclidean_norm(sigma);

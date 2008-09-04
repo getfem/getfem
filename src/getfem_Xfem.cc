@@ -91,7 +91,7 @@ namespace getfem
   void Xfem::real_base_value(const fem_interpolation_context &c,
 			     base_tensor &t, bool) const {
     bgeot::multi_index mi(2);
-    mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
     t.adjust_sizes(mi);
     scalar_type a;
     Xfem_func_context ctx(c);
@@ -123,7 +123,8 @@ namespace getfem
   void Xfem::real_grad_base_value(const fem_interpolation_context &c,
 				  base_tensor &t, bool) const {
     bgeot::multi_index mi(3);
-    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[2] = short_type(c.N()); mi[1] = target_dim();
+    mi[0] = short_type(nb_base(0));
     t.adjust_sizes(mi);
     
     Xfem_func_context ctx(c);

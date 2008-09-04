@@ -44,7 +44,7 @@ void gf_levelset_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) il = in.pop().to_integer(0, 1);
     if (il != 0 && !ls.has_secondary())
       THROW_BADARG("The levelset has not secondary term");
-    out.pop().from_dcvector(ls.values(il));
+    out.pop().from_dcvector(ls.values(unsigned(il)));
   } else if (check_cmd(cmd, "degree", in, out, 0, 0, 0, 1)) {
     out.pop().from_integer(ls.degree());
   } else if (check_cmd(cmd, "mf", in, out, 0, 0, 0, 1)) {
@@ -56,6 +56,6 @@ void gf_levelset_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       cerr << "mf = " << &ls.get_mesh_fem() << " == " << &gmf->mesh_fem() << "\n";*/
     out.pop().from_object_id(gmf->get_id(), gmf->class_id());
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    out.pop().from_integer(ls.memsize());
+    out.pop().from_integer(int(ls.memsize()));
   } else bad_cmd(cmd);
 }

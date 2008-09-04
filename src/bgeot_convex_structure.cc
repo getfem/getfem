@@ -110,7 +110,8 @@ namespace bgeot {
     if (o) return dal::stored_cast<convex_structure>(o);
     
     simplex_structure_ *p = new simplex_structure_;
-    p->Nc = nc; p->nbpt = nc+1; p->nbf = nc+1;
+    p->Nc = dim_type(nc); p->nbpt = short_type(nc+1);
+    p->nbf = short_type(nc+1);
     p->faces_struct.resize(p->nbf);
     p->faces.resize(p->nbf);
     p->dir_points_.resize(p->Nc + 1);
@@ -121,19 +122,19 @@ namespace bgeot {
       (p->faces[0])[0] = 0;
     }
     else
-      for (int i = 0; i < p->nbf; i++) { 
+      for (short_type i = 0; i < p->nbf; i++) { 
 	p->dir_points_[i] = i;
-	p->faces_struct[i] = simplex_structure(nc-1).get();
+	p->faces_struct[i] = simplex_structure(dim_type(nc-1)).get();
 	p->faces[i].resize(nc);
-	for (int j = 0; j < nc; j++)
-	  (p->faces[i])[j] = (j >= i) ? (j + 1) : j;
+	for (short_type j = 0; j < nc; j++)
+	  (p->faces[i])[j] = (j >= i) ? short_type(j + 1) : j;
       }
     if (nc == 0)
       dal::add_stored_object(new convex_structure_key(0, nc, 1), p,
 			     dal::PERMANENT_STATIC_OBJECT);
     else
       dal::add_stored_object(new convex_structure_key(0, nc, 1), p, 
-			     simplex_structure(nc-1),
+			     simplex_structure(dim_type(nc-1)),
 			     dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
@@ -145,7 +146,7 @@ namespace bgeot {
   struct K_simplex_structure_ : public convex_structure {
     
     K_simplex_structure_(dim_type NN, short_type KK) {
-      Nc = NN; nbpt = alpha(Nc, KK); nbf = Nc+1;
+      Nc = NN; nbpt = short_type(alpha(Nc, KK)); nbf = short_type(Nc+1);
       basic_pcvs = simplex_structure(NN).get();
       faces_struct.resize(nbf);
       faces.resize(nbf);
@@ -153,7 +154,7 @@ namespace bgeot {
       
       for (int i = 0; i < nbf; i++) { 
 	if (KK > 0) {
-	  faces_struct[i] = simplex_structure(Nc-1, KK).get(); 
+	  faces_struct[i] = simplex_structure(dim_type(Nc-1), KK).get(); 
 	  faces[i].resize(faces_struct[i]->nb_points());
 	}
 	else {
@@ -171,7 +172,7 @@ namespace bgeot {
 	dir_points_[pd++] = 0;
       }
       
-      for (size_type r = 1; r < nbpt; ++r) {
+      for (short_type r = 1; r < nbpt; ++r) {
 	l = 0;
 	c[l] += scalar_type(1.0) / scalar_type(KK); ++sum;
 	while (sum > KK) {
@@ -198,7 +199,7 @@ namespace bgeot {
     if (o) return dal::stored_cast<convex_structure>(o);
     pconvex_structure p = new K_simplex_structure_(nc, K);
     dal::add_stored_object(new convex_structure_key(0, nc, K), p,
-			   simplex_structure(nc-1, K),
+			   simplex_structure(dim_type(nc-1), K),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
@@ -213,9 +214,9 @@ namespace bgeot {
   
   pconvex_structure polygon_structure(short_type nbt) {
     if (nbt <= 1) return simplex_structure(0);
-    if (nbt <= 3) return simplex_structure(nbt-1);
+    if (nbt <= 3) return simplex_structure(dim_type(nbt-1));
     dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_structure_key(1, nbt));
+      = dal::search_stored_object(convex_structure_key(1, dim_type(nbt)));
     if (o) return dal::stored_cast<convex_structure>(o);
 
     polygon_structure_ *p = new polygon_structure_;
@@ -229,14 +230,14 @@ namespace bgeot {
       p->faces_struct[i] = simplex_structure(1).get();
       p->faces[i] = std::vector<short_type>(2);
       for (int j = 0; j < 2; j++)
-	(p->faces[i])[j] = ((i+j) % nbt);
+	(p->faces[i])[j] = short_type((i+j) % nbt);
     }
     
     p->dir_points_[0] = 0;
     p->dir_points_[1] = 1;
-    p->dir_points_[2] = nbt - 1;
+    p->dir_points_[2] = short_type(nbt - 1);
     
-    dal::add_stored_object(new convex_structure_key(1, nbt), p,
+    dal::add_stored_object(new convex_structure_key(1, dim_type(nbt)), p,
 			   simplex_structure(1),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;
@@ -250,10 +251,10 @@ namespace bgeot {
 
   struct cv_pr_structure_ : public convex_structure {
     cv_pr_structure_(pconvex_structure cv1, pconvex_structure cv2) {
-      Nc = cv1->dim() + cv2->dim();
+      Nc = dim_type(cv1->dim() + cv2->dim());
       prod_a = cv1; prod_b = cv2;
-      nbpt = cv1->nb_points() * cv2->nb_points();
-      nbf = cv1->nb_faces() + cv2->nb_faces();
+      nbpt = short_type(cv1->nb_points() * cv2->nb_points());
+      nbf = short_type(cv1->nb_faces() + cv2->nb_faces());
       if (cv1->basic_structure() != cv1 || cv2->basic_structure() != cv2)
 	basic_pcvs = convex_product_structure(cv1->basic_structure(),
 					      cv2->basic_structure()).get();
@@ -266,14 +267,16 @@ namespace bgeot {
 	dir_points_ = std::vector<short_type>(Nc + 1);
 
 	for (int i = 0; i <= cv1->dim(); i++)
-	  dir_points_[i] = cv1->ind_dir_points()[i]
-	    + cv2->ind_dir_points()[0] * cv1->nb_points();
+	  dir_points_[i]
+	    = short_type(cv1->ind_dir_points()[i]
+			 + cv2->ind_dir_points()[0] * cv1->nb_points());
 	for (int i = 1; i <= cv2->dim(); i++)
-	  dir_points_[cv1->dim()+i] = cv1->ind_dir_points()[0]
-	    + cv2->ind_dir_points()[i] * cv1->nb_points();
+	  dir_points_[cv1->dim()+i]
+	    = short_type(cv1->ind_dir_points()[0]
+			 + cv2->ind_dir_points()[i] * cv1->nb_points());
       }
 
-      for (int i = 0; i < cv1->nb_faces(); i++) { 
+      for (short_type i = 0; i < cv1->nb_faces(); i++) { 
 	if (cv1->nb_points_of_face(i) == 1)
 	  faces_struct[i] = cv2.get();
 	else
@@ -284,14 +287,15 @@ namespace bgeot {
 	faces[i] = std::vector<short_type>(cv1->nb_points_of_face(i)
 					      * cv2->nb_points());
 
-	for (int j = 0; j < cv1->nb_points_of_face(i); j++)
-	  for (int l = 0; l < cv2->nb_points(); l++) {
+	for (short_type j = 0; j < cv1->nb_points_of_face(i); j++)
+	  for (short_type l = 0; l < cv2->nb_points(); l++) {
 	    (faces[i])[l*cv1->nb_points_of_face(i)+j]
-	      = (cv1->ind_points_of_face(i))[j] + l * cv1->nb_points();
+	      = short_type((cv1->ind_points_of_face(i))[j]
+			   + l * cv1->nb_points());
 	  }
       }
-      for (int i = 0; i < cv2->nb_faces(); i++) { 
-	int k = cv1->nb_faces();
+      for (short_type i = 0; i < cv2->nb_faces(); i++) { 
+	short_type k = cv1->nb_faces();
 	if (cv2->nb_points_of_face(i) == 1)
 	  faces_struct[i+k] = cv1.get();
 	else
@@ -302,10 +306,11 @@ namespace bgeot {
 	faces[i+k] = std::vector<short_type>(cv2->nb_points_of_face(i)
 					      * cv1->nb_points());
 
-	for (int j = 0; j < cv2->nb_points_of_face(i); j++)
-	  for (int l = 0; l < cv1->nb_points(); l++) {
+	for (short_type j = 0; j < cv2->nb_points_of_face(i); j++)
+	  for (short_type l = 0; l < cv1->nb_points(); l++) {
 	    (faces[i+k])[j*cv1->nb_points()+l]
-	      = l + (cv2->ind_points_of_face(i))[j] * cv1->nb_points(); 
+	      = short_type(l + (cv2->ind_points_of_face(i))[j]
+			   * cv1->nb_points()); 
 	  }
       }
     }
@@ -342,7 +347,7 @@ namespace bgeot {
       = dal::search_stored_object(parallelepiped_key_(nc));
     if (o) return (dal::stored_cast<parallelepiped_>(o))->p;
     parallelepiped_ *p = new parallelepiped_;
-    p->p = convex_product_structure(parallelepiped_structure(nc-1),
+    p->p = convex_product_structure(parallelepiped_structure(dim_type(nc-1)),
 				    simplex_structure(1));
     dal::add_stored_object(new parallelepiped_key_(nc), p, p->p,
 			   dal::PERMANENT_STATIC_OBJECT);
@@ -359,26 +364,29 @@ namespace bgeot {
   pconvex_structure generic_dummy_structure(dim_type nc, size_type n,
 					    size_type nf) {
     dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_structure_key(2, nc, n, nf));
+      = dal::search_stored_object(convex_structure_key(2, nc,
+					     short_type(n), short_type(nf)));
     if (o) return dal::stored_cast<convex_structure>(o);
     dummy_structure_ *p = new dummy_structure_;
-    p->Nc = nc; p->nbpt = n; p->nbf = 0;
+    p->Nc = nc; p->nbpt = short_type(n); p->nbf = 0;
     p->faces_struct.resize(nf);
     p->faces.resize(nf);
     for (size_type j = 0; j < nf; ++j) {
       if (nc == 0) p->faces_struct[j] = p;
-      else p->faces_struct[j] = generic_dummy_structure(nc-1, n, nc).get();
+      else p->faces_struct[j] = generic_dummy_structure(dim_type(nc-1), n, nc).get();
       p->faces[j].resize(n);
-      for (size_type k = 0; k < n; ++k) p->faces[j][k] = k;
+      for (short_type k = 0; k < n; ++k) p->faces[j][k] = k;
     }
     p->dir_points_.resize(0);
     p->basic_pcvs = p;
     if (nc == 0)
-      dal::add_stored_object(new convex_structure_key(2, nc, n, nf), p,
+      dal::add_stored_object(new convex_structure_key(2, nc, short_type(n),
+						      short_type(nf)), p,
 			     dal::PERMANENT_STATIC_OBJECT);
     else
-      dal::add_stored_object(new convex_structure_key(2, nc, n, nf), p,
-			     generic_dummy_structure(nc-1, n, nc),
+      dal::add_stored_object(new convex_structure_key(2, nc, short_type(n),
+						      short_type(nf)), p,
+			     generic_dummy_structure(dim_type(nc-1), n, nc),
 			     dal::PERMANENT_STATIC_OBJECT);
     return p;
   }

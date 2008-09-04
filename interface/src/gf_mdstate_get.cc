@@ -123,20 +123,20 @@ void gf_mdstate_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (!md->is_complex()) {
       size_type nred = gmm::vect_size(md->real_mdstate().reduced_residual());
       size_type n    = gmm::vect_size(md->real_mdstate().residual());
-      darray Ured = in.pop().to_darray(nred);
-      darray U    = out.pop().create_darray_v(n);
+      darray Ured = in.pop().to_darray(int(nred));
+      darray U    = out.pop().create_darray_v(unsigned(n));
       md->real_mdstate().unreduced_solution(Ured, U);
     } else {
       size_type nred = gmm::vect_size(md->cplx_mdstate().reduced_residual());
       size_type n    = gmm::vect_size(md->cplx_mdstate().residual());
-      carray Ured = in.pop().to_carray(nred);
-      carray U    = out.pop().create_carray_v(n);
+      carray Ured = in.pop().to_carray(int(nred));
+      carray U    = out.pop().create_carray_v(unsigned(n));
       md->cplx_mdstate().unreduced_solution(Ured, U);
     }
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
     /*@GET MDSTATE:GET('memsize')
       Return the amount of memory (in bytes) used by the model state.
       @*/
-    out.pop().from_integer(md->memsize());
+    out.pop().from_integer(int(md->memsize()));
   } else bad_cmd(cmd);
 }

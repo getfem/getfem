@@ -31,14 +31,14 @@
 namespace bgeot {
 
   bool read_until(std::istream &ist, const char *st) {
-    int i = 0, l = strlen(st); char c;
+    int i = 0, l = int(strlen(st)); char c;
     while (!ist.eof() && i < l)
       { ist.get(c); if (toupper(c) == toupper(st[i])) i++; else i = 0; }
     if (ist.eof()) return false; else return true;
   }
   
 #define get_c__(r, c) {	ist.get(c); if (ist.eof()) return r;  \
-    if (to_up) c = toupper(c); }
+    if (to_up) c = char(toupper(c)); }
 
 #define sdouble__(c, e) {  st.push_back(c); get_c__(5, d); \
     if (d == e) { st.push_back(e); return 6; }		   \
@@ -429,7 +429,7 @@ namespace bgeot {
   }
   
   double md_param::real_value(const std::string &name, const char *comment) {
-    if (parameters.find(name) == parameters.end())
+    if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return 0.0;
       else {
 	double f;
@@ -437,6 +437,7 @@ namespace bgeot {
 	cout << comment << " : "; cin >> f;
 	parameters[name] = param_value(f);
       }
+    }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == REAL_VALUE,
 		"Parameter " << name << " is not real");
@@ -444,7 +445,7 @@ namespace bgeot {
   }
   
   long md_param::int_value(const std::string &name, const char *comment) {
-    if (parameters.find(name) == parameters.end())
+    if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return 0;
       else {
 	long f;
@@ -452,6 +453,7 @@ namespace bgeot {
 	cout << comment << " : "; cin >> f;
 	parameters[name] = param_value(double(f));
       }
+    }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == REAL_VALUE,
 		"Parameter " << name << " is not real");
@@ -461,7 +463,7 @@ namespace bgeot {
   const std::string &md_param::string_value(const std::string &name,
 				     const char *comment) {
     static std::string empty_string;
-    if (parameters.find(name) == parameters.end())
+    if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return empty_string;
       else {
 	std::string s;
@@ -469,6 +471,7 @@ namespace bgeot {
 	cout << comment << " : "; cin >> s;
 	parameters[name] = param_value(s);
       }
+    }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == STRING_VALUE, "Parameter " << name
 		<< " is not a character string");
@@ -479,7 +482,7 @@ namespace bgeot {
   md_param::array_value(const std::string &name, const char *comment) {
 
     static std::vector<md_param::param_value> empty_array;
-    if (parameters.find(name) == parameters.end())
+    if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return empty_array;
       else {
 	std::string s;
@@ -487,6 +490,7 @@ namespace bgeot {
 	cout << comment << " : "; cin >> s;
 	parameters[name] = param_value(s);
       }
+    }
     param_value &p(parameters[name]);
     GMM_ASSERT1(p.type_of_param() == ARRAY_VALUE, "Parameter " << name
 		<< " is not an array");

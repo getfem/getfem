@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -64,15 +64,16 @@ namespace bgeot {
     { return ((*this)[size()-1] >= m[size()-1]); }
     
     multi_index(size_t n) : std::vector<short_type>(n)
-    { std::fill(begin(), end(), 0); }
+    { std::fill(begin(), end(), short_type(0)); }
     
     multi_index(size_type i, size_type j)
       : std::vector<short_type>(2) {
-      (*this)[0] = i; (*this)[1] = j; 
+      (*this)[0] = short_type(i); (*this)[1] = short_type(j); 
     } 
     multi_index(size_type i, size_type j, size_type k, size_type l)
       : std::vector<short_type>(4) {
-      (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; 
+      (*this)[0] = short_type(i); (*this)[1] = short_type(j);
+      (*this)[2] = short_type(k); (*this)[3] = short_type(l); 
     } 
 
     multi_index(void) {}
@@ -185,7 +186,7 @@ namespace bgeot {
 	size_type d = 1;
 	sizes_ = c; coeff.resize(c.size());
 	multi_index::iterator p = coeff.begin(), pe = coeff.end();
-	for ( ; p != pe; ++p, ++it) { *p = d; d *= *it; }
+	for ( ; p != pe; ++p, ++it) { *p = short_type(d); d *= *it; }
 	resize(d);
       }
 
@@ -246,7 +247,7 @@ namespace bgeot {
     GMM_ASSERT2(dimt == m.ncols(), "dimensions mismatch");
     GMM_ASSERT2(&t != this, "does not work when t and *this are the same");
 
-    (*mi)[ni] = dim;
+    (*mi)[ni] = short_type(dim);
     if (tmp->size() < dimt) tmp->resize(dimt);
     adjust_sizes(*mi);
     const_iterator pft = t.begin();
@@ -256,7 +257,8 @@ namespace bgeot {
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
       if ((*mi)[ni] != 0) { 
-	for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
+	for (short_type k = 0; k <= ni; ++k)
+	  (*mi)[k] = short_type(sizes()[k] - 1);
 	pf += dd; pft += ddt;
       }
       else {

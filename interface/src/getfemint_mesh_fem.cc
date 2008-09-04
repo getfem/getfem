@@ -61,7 +61,7 @@ namespace getfemint {
 			       size_type q_dim) { 
     //assert(::workspace == 0);
     getfem::mesh_fem *mf = new getfem::mesh_fem(m->mesh());
-    mf->set_qdim(q_dim);
+    mf->set_qdim(dim_type(q_dim));
     getfemint_mesh_fem *gmf = get_from(mf);
     assert(gmf->linked_mesh_id() == m->get_id());
     return gmf;

@@ -115,7 +115,7 @@ namespace getfem {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       //      size_type d = pgt->dim();
       
-      for (size_type k = 0; it != ite; ++it, ++k) {
+      for (short_type k = 0; it != ite; ++it, ++k) {
 	if ((*it).pfi) {
 	  if ((*it).pfi->is_on_real_element()) computed_on_real_element = true;
 	  GMM_ASSERT1(!is_ppi || (((*it).pfi->is_polynomial()) && is_linear 
@@ -217,7 +217,7 @@ namespace getfem {
 	  case GETFEM_GRAD_    :
 	    if (trans) {
 	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k], icb != 0);
-	      *mit++ = ctx.N();
+	      *mit++ = short_type(ctx.N());
 	    }
 	    else
 	      elmt_stored[k] = pfp[k]->grad(ctx.ii());
@@ -225,7 +225,7 @@ namespace getfem {
 	  case GETFEM_HESSIAN_ :
 	    if (trans) {
 	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k], icb != 0);
-	      *mit++ = gmm::sqr(ctx.N());
+	      *mit++ = short_type(gmm::sqr(ctx.N()));
 	    }
 	    else {
 	      base_tensor tt = pfp[k]->hess(ctx.ii());
@@ -237,9 +237,9 @@ namespace getfem {
 	    }
 	    break;
 	  case GETFEM_UNIT_NORMAL_ :
-	    *(mit-1) = ctx.N();
+	    *(mit-1) = short_type(ctx.N());
 	    { 
-	      bgeot::multi_index sz(1); sz[0] = ctx.N();
+	      bgeot::multi_index sz(1); sz[0] = short_type(ctx.N());
 	      elmt_stored[k].adjust_sizes(sz);
 	    }
 	    std::copy(up.begin(), up.end(), elmt_stored[k].begin());
@@ -253,8 +253,8 @@ namespace getfem {
 	    }
 	    const base_matrix &A = (it->t==GETFEM_GRAD_GEOTRANS_) ? ctx.K():Bt;
 	    bgeot::multi_index sz(2);
-	    *(mit-1) = sz[0] = gmm::mat_nrows(A);
-	    *mit++ = sz[1] = gmm::mat_ncols(A);
+	    *(mit-1) = sz[0] = short_type(gmm::mat_nrows(A));
+	    *mit++ = sz[1] = short_type(gmm::mat_ncols(A));
 	    elmt_stored[k].adjust_sizes(sz);
 	    std::copy(A.begin(), A.end(), elmt_stored[k].begin());
 	  } break;
@@ -304,7 +304,7 @@ namespace getfem {
 	pts[k] = elmt_stored[k].begin();
       
       size_type k0 = 0;
-      unsigned n0 = elmt_stored[0].size();
+      unsigned n0 = unsigned(elmt_stored[0].size());
       /*while (elmt_stored[k0].size() == 1 && k0+1 < pme->size()) {
         J *= elmt_stored[k0][0];
         ++k0; n0 = elmt_stored[k0].size();
@@ -350,7 +350,7 @@ namespace getfem {
       if (nm == 0) {
         t[0] += J;
       } else {
-        int n0 = es_end[0] - es_beg[0];
+        int n0 = int(es_end[0] - es_beg[0]);
         base_tensor::const_iterator pts0 = pts[0];
 
         /* very heavy reduction .. takes much time */
@@ -417,7 +417,8 @@ namespace getfem {
 	  switch ((*it).t) {
 	    case GETFEM_GRAD_    : Q.derivative(*mit); ++mit; break;
 	    case GETFEM_HESSIAN_ :
-	      Q.derivative(*mit % dim); Q.derivative(*mit / dim);
+	      Q.derivative(short_type(*mit % dim));
+	      Q.derivative(short_type(*mit / dim));
 	      ++mit; break;
 	    case GETFEM_BASE_ : break;
 	    case GETFEM_GRAD_GEOTRANS_:
@@ -444,7 +445,8 @@ namespace getfem {
 	      switch ((*it).t) {
 	      case GETFEM_GRAD_    : R.derivative(*mit); ++mit; break;
 	      case GETFEM_HESSIAN_ :
-		R.derivative(*mit % dim); R.derivative(*mit / dim);
+		R.derivative(short_type(*mit % dim));
+		R.derivative(short_type(*mit / dim));
 		++mit; break;
 	      case GETFEM_BASE_ : break;
 	      case GETFEM_UNIT_NORMAL_ :
@@ -459,7 +461,7 @@ namespace getfem {
 	  R = P * Q;
 	  if (volumic) mref[0](mi) = ppi->int_poly(R);
 	  for (f = 0; f < nbf && !volumic; ++f)
-	    mref[f+1](mi) = ppi->int_poly_on_face(R, f);
+	    mref[f+1](mi) = ppi->int_poly_on_face(R, short_type(f));
 	}
       }
       else { 
@@ -469,7 +471,7 @@ namespace getfem {
 	  nb_pt_l = nb_ptc, nb_pt_tot =(volumic ? nb_ptc : pai->nb_points());
 	for (size_type ip = (volumic ? 0:nb_ptc); ip < nb_pt_tot; ++ip) {
 	  while (ip == nb_pt_l && ind_l < nbf)
-	    { nb_pt_l += pai->nb_points_on_face(ind_l); ind_l++; }
+	    { nb_pt_l += pai->nb_points_on_face(short_type(ind_l)); ind_l++; }
 	  ctx.set_ii(ip); 
 	  add_elem(mref[ind_l], ctx, 1.0, first, false, NULL, sizes);
 	  first = false;
@@ -482,8 +484,8 @@ namespace getfem {
 
     void compute(base_tensor &t, const base_matrix &G, size_type ir,
 		 size_type elt, mat_elem_integration_callback *icb = 0) const {
-      dim_type P = dim, N = G.nrows();
-      short_type NP = pgt->nb_points();
+      dim_type P = dim_type(dim), N = dim_type(G.nrows());
+      short_type NP = short_type(pgt->nb_points());
       fem_interpolation_context ctx(pgp,0,0,G,elt, ir-1);
       bgeot::multi_index sizes = pme->sizes(elt);
 
@@ -529,7 +531,7 @@ namespace getfem {
 	if (hess_reduction.size() > 0) {
 	  std::deque<short_type>::const_iterator it = hess_reduction.begin(),
 	    ite = hess_reduction.end();
-	  for (short_type l = 1; it != ite; ++it, l *= 2) {
+	  for (short_type l = 1; it != ite; ++it, l = short_type(l*2)) {
 	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, ctx.B3(), *it);
 	    flag = !flag;
 	  }

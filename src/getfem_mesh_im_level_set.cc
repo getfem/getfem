@@ -317,7 +317,7 @@ namespace getfem {
 
       // pgt2 = msh.trans_of_convex(i);
 
-      for (unsigned f = 0; f < pgt2->structure()->nb_faces(); ++f) {
+      for (short_type f = 0; f < pgt2->structure()->nb_faces(); ++f) {
 	short_type ff = short_type(-1);
 	unsigned isin = unsigned(-1);
 

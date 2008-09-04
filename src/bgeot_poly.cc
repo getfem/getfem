@@ -51,16 +51,16 @@ namespace bgeot {
   }
 
   const power_index &power_index::operator ++() {
-    short_type n = size(), l;
+    short_type n = short_type(size()), l;
     if (n > 0) {
       size_type g_idx = global_index_; short_type deg = degree_;
       iterator it = begin() + (n-2);
-      for (l = n-2; l != short_type(-1); --l, --it)
+      for (l = short_type(n-2); l != short_type(-1); --l, --it)
 	if (*it != 0) break;
       short_type a = (*this)[n-1]; (*this)[n-1] = 0;
-      (*this)[short_type(l+1)] = a + 1;
+      (*this)[short_type(l+1)] = short_type(a + 1);
       if (l != short_type(-1)) ((*this)[l])--;
-      else if (short_type(deg+1)) degree_ = deg+1;
+      else if (short_type(deg+1)) degree_ = short_type(deg+1);
       if (g_idx+1) global_index_ = g_idx+1;
       //degree_ = short_type(-1);
     }
@@ -68,16 +68,17 @@ namespace bgeot {
   }
   
   const power_index &power_index::operator --() {
-    short_type n = size(), l;
+    short_type n = short_type(size()), l;
     if (n > 0) {
       size_type g_idx = global_index_; short_type deg = degree_;
       iterator it = begin() + (n-1);
-      for (l = n-1; l != short_type(-1); --l, --it)
+      for (l = short_type(n-1); l != short_type(-1); --l, --it)
 	if (*it != 0) break;
       if (l != short_type(-1)) {
-	short_type a = (*this)[l]; (*this)[l] = 0; (*this)[n-1] = a - 1;
+	short_type a = (*this)[l];
+	(*this)[l] = 0; (*this)[n-1] = short_type(a - 1);
 	if (l > 0) ((*this)[l-1])++; 
-        else if (short_type(deg+1)) degree_ = deg-1;
+        else if (short_type(deg+1)) degree_ = short_type(deg-1);
       }
       if (g_idx+1) global_index_ = g_idx-1;
     }
@@ -86,17 +87,17 @@ namespace bgeot {
   
   short_type power_index::degree() const {
     if (degree_ != short_type(-1)) return degree_;
-    degree_ = std::accumulate(begin(), end(), 0); 
+    degree_ = short_type(std::accumulate(begin(), end(), 0)); 
     return degree_;
   }
 
   size_type power_index::global_index(void) const {
     if (global_index_ != size_type(-1)) return global_index_;
-    short_type d = degree(), n = size();
+    short_type d = degree(), n = short_type(size());
     global_index_ = 0;
     const_iterator it = begin(), ite = end();
     for ( ; it != ite && d > 0; ++it)
-    { global_index_ += alpha_(n, d-1); d -= *it; --n; }
+      { global_index_ += alpha_(n,short_type(d-1)); d=short_type(d-*it); --n; }
     return global_index_;
   }
  

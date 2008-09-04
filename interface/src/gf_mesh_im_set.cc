@@ -55,7 +55,7 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
    method */
 static void gf_mesh_im_set_classical_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in) {
   dim_type IM_DEGREE = dim_type(-1);
-  if (in.remaining()) IM_DEGREE = in.pop().to_integer(-1,255);
+  if (in.remaining()) IM_DEGREE = dim_type(in.pop().to_integer(-1,255));
   dal::bit_vector bv;
   if (in.remaining() == 1) {
     bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -1);

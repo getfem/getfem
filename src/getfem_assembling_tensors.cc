@@ -40,20 +40,20 @@ namespace getfem {
     r.resize(size());      
     for (const_iterator it = begin(); it != end(); ++it, ++cnt) {
       if ((*it).is_mf_ref()) {
-	r[cnt] = (*it).pmf->nb_dof_of_element(cv); 
+	r[cnt] = unsigned((*it).pmf->nb_dof_of_element(cv)); 
 	//mesh_fem::ind_dof_ct::const_iterator ii = (*it).pmf->ind_dof_of_element(cv).begin();
 	str[cnt].resize(r[cnt]);
 	for (index_type j=0; j < r[cnt]; ++j) {
-	  str[cnt][j] = (*it).pmf->ind_dof_of_element(cv)[j]*s;
+	  str[cnt][j] = int((*it).pmf->ind_dof_of_element(cv)[j]*s);
 	}
       } else {
-	r[cnt] = (*it).dim;
+	r[cnt] = int((*it).dim);
 	str[cnt].resize(r[cnt]);
 	for (index_type j=0; j < (*it).dim; ++j) {
 	  str[cnt][j] = j*s;
 	}
       }
-      s *= (*it).dim;
+      s *= stride_type((*it).dim);
     }
   }
 
@@ -227,13 +227,15 @@ namespace getfem {
     }
     void update_childs_required_shape() {
       tensor_shape ts = req_shape; 
-      ts.set_ndim_noclean(ts.ndim()+1);
+      ts.set_ndim_noclean(dim_type(ts.ndim()+1));
       ts.shift_dim_num_ge(slice_dim,+1);
-      ts.push_mask(tensor_mask(child(0).ranges()[slice_dim],tensor_mask::Slice(slice_dim, slice_idx)));
+      ts.push_mask(tensor_mask(child(0).ranges()[slice_dim],
+		   tensor_mask::Slice(slice_dim, index_type(slice_idx))));
       child(0).merge_required_shape(ts);
     }
     void reinit() {
-      tensor() = tensor_ref(child(0).tensor(),  tensor_mask::Slice(slice_dim, slice_idx));
+      tensor() = tensor_ref(child(0).tensor(),
+		   tensor_mask::Slice(slice_dim, index_type(slice_idx)));
     }
   private:
     void exec_(size_type, dim_type) {}
@@ -325,8 +327,9 @@ namespace getfem {
         tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
       }
       red.do_reduction();
-      int one = 1, n = red.out_data.size(); assert(n);
-      daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])), &one, (double*)&(t[0]), &one);
+      int one = 1, n = int(red.out_data.size()); assert(n);
+      daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])),
+	     &one, (double*)&(t[0]), &one);
     }
     void resize_t(bgeot::base_tensor &t) {
       bgeot::multi_index r; 
@@ -435,7 +438,8 @@ namespace getfem {
 	break;
       default:
 	unsigned d = 0;
-	if (!only_reduced || !reduced(d)) rng.push_back(pmf->nb_dof_of_element(cv));
+	if (!only_reduced || !reduced(d))
+	  rng.push_back(unsigned(pmf->nb_dof_of_element(cv)));
 	++d; 
 	if (vshape == mf_comp::VECTORIZED_SHAPE) {
 	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim());
@@ -449,11 +453,13 @@ namespace getfem {
 	}
         
 	if (op == GRAD || op == HESS) {
-	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
+	  if (!only_reduced || !reduced(d))
+	    rng.push_back(pmf->linked_mesh().dim());
 	  ++d;
 	}
 	if (op == HESS) {
-	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
+	  if (!only_reduced || !reduced(d))
+	    rng.push_back(pmf->linked_mesh().dim());
 	  ++d;
 	}
 	break;
@@ -551,7 +557,7 @@ namespace getfem {
       v.resize(r);
       for (index_type i=0; i < r; ++i) v[i] = s*i;
       assert(tref.masks().size() == tref.strides().size());
-      tref.set_ndim_noclean(tref.ndim()+1);
+      tref.set_ndim_noclean(dim_type(tref.ndim()+1));
       tref.push_mask(m);
       tref.strides().push_back(v);
       return s*r;
@@ -561,7 +567,8 @@ namespace getfem {
        where target_dim > 1
      */
     stride_type add_vdim(const tensor_ranges& rng, dim_type d, 
-			 index_type target_dim, stride_type s, tensor_ref &tref) {
+			 index_type target_dim, stride_type s,
+			 tensor_ref &tref) {
       assert(d < rng.size()-1);
       index_type r = rng[d], q=rng[d+1];
       index_type qmult = q/target_dim;
@@ -569,7 +576,7 @@ namespace getfem {
 
       tensor_strides v;
       tensor_ranges trng(2); trng[0] = q; trng[1] = r;
-      index_set ti(2); ti[0] = d+1; ti[1] = d;
+      index_set ti(2); ti[0] = dim_type(d+1); ti[1] = d;
       tensor_mask m(trng,ti);
       v.resize(r*target_dim);
       tensor_ranges cnt(2);
@@ -581,7 +588,7 @@ namespace getfem {
 	}
       }
       assert(tref.masks().size() == tref.strides().size());
-      tref.set_ndim_noclean(tref.ndim()+2);
+      tref.set_ndim_noclean(dim_type(tref.ndim()+2));
       tref.push_mask(m);
       tref.strides().push_back(v);
       return s*(r/qmult)*target_dim;
@@ -624,7 +631,7 @@ namespace getfem {
 
       tensor_strides v;
       tensor_ranges trng(3); trng[0] = q; trng[1] = p; trng[2] = r;
-      index_set ti(3); ti[0] = d+1; ti[1] = d+2; ti[2] = d;
+      index_set ti(3); ti[0] = dim_type(d+1); ti[1] = dim_type(d+2); ti[2] = d;
       tensor_mask m(trng,ti);
       v.resize(r*target_dim);
       tensor_ranges cnt(3);
@@ -640,7 +647,7 @@ namespace getfem {
 	}
       }
       assert(tref.masks().size() == tref.strides().size());
-      tref.set_ndim_noclean(tref.ndim()+3);
+      tref.set_ndim_noclean(dim_type(tref.ndim()+3));
       tref.push_mask(m);
       //cerr << "rng = " << rng << "\nr=" << r << ", q=" << q << ", p=" << p << ", qmult =" << qmult << ", target_dim= " << target_dim << "\n";
       //cerr << "m = " << m << "\nv=" << v << "\n";
@@ -688,18 +695,18 @@ namespace getfem {
 				bgeot::tensor_ref &tref, size_type tsz=1) {
       if (mc.op == mf_comp::NONLIN) {
 	for (size_type j=0; j < mc.nlt->sizes().size(); ++j)
-	  tsz = add_dim(rng, d++, tsz, tref);
+	  tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
       } else if (mc.op == mf_comp::DATA) {
         assert(tsz == 1);
 	tref = mc.data->tensor();
 	tsz *= tref.card();
 	d += tref.ndim();
       } else if (mc.op == mf_comp::NORMAL) {
-	tsz = add_dim(rng, d++, tsz, tref);
+	tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
       } else if (mc.op == mf_comp::GRADGT || 
 		 mc.op == mf_comp::GRADGTINV) {
-	tsz = add_dim(rng, d++, tsz, tref);
-	tsz = add_dim(rng, d++, tsz, tref);
+	tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
+	tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
       } else {
         size_type target_dim = mc.pmf->fem_of_element(cv)->target_dim();
         size_type qdim = mc.pmf->get_qdim();
@@ -707,27 +714,29 @@ namespace getfem {
 	//cerr << "target_dim = " << target_dim << ", qdim = " << qdim << ", vectorize=" << mc.vectorize << ", rng=" << rng << " d=" << d << ", tsz=" << tsz << "\n";
 	if (mc.vshape == mf_comp::VECTORIZED_SHAPE) {
 	  if (target_dim == qdim) {
-	    tsz = add_dim(rng, d++, tsz, tref);
-	    tsz = add_dim(rng, d++, tsz, tref);
+	    tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
+	    tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
 	  } else {
-	    tsz = add_vdim(rng, d, target_dim, tsz, tref);
+	    tsz = add_vdim(rng,dim_type(d),index_type(target_dim),
+			   stride_type(tsz), tref);
 	    d += 2;
 	  }
 	} else if (mc.vshape == mf_comp::MATRIXIZED_SHAPE) {
 	  if (target_dim == qdim) {
-	    tsz = add_dim(rng, d++, tsz, tref);
-	    tsz = add_dim(rng, d++, tsz, tref);
-	    tsz = add_dim(rng, d++, tsz, tref);
+	    tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
+	    tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
+	    tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
 	  } else {
-	    tsz = add_mdim(rng, d, target_dim, tsz, tref);	    
+	    tsz = add_mdim(rng, dim_type(d), index_type(target_dim),
+			   stride_type(tsz), tref);
 	    d += 3;
 	  }
-	} else tsz = add_dim(rng, d++, tsz, tref);
+	} else tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
 	if (mc.op == mf_comp::GRAD || mc.op == mf_comp::HESS) {
-	  tsz = add_dim(rng, d++, tsz, tref);
+	  tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
 	}
 	if (mc.op == mf_comp::HESS) {
-	  tsz = add_dim(rng, d++, tsz, tref);
+	  tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
 	}
       }
       return tsz;
@@ -762,7 +771,7 @@ namespace getfem {
       //cout << "\n done inline reduction : " << name() << "\n";
       icb.red.result(tensor());
       r_.resize(tensor().ndim()); 
-      for (unsigned i=0; i < tensor().ndim(); ++i) r_[i] = tensor().dim(i);
+      for (dim_type i=0; i < tensor().ndim(); ++i) r_[i] = tensor().dim(i);
       tsize = tensor().card();
       //cerr << "update_shape_with_inline_reduction: tensor=" << tensor() << "\nr_=" << r_ << ", tsize=" << tsize << "\n";
     }
@@ -771,7 +780,7 @@ namespace getfem {
       icb.red.clear();
       unsigned d = 0;
       for (size_type i=0; i < mfcomp.size(); ++i) {
-	tsize = push_back_mfcomp_dimensions(cv, mfcomp[i], d, r_, tensor(), tsize);
+	tsize = stride_type(push_back_mfcomp_dimensions(cv, mfcomp[i], d, r_, tensor(), tsize));
       }
       assert(d == r_.size());
       tensor().update_idx2mask();
@@ -918,11 +927,11 @@ namespace getfem {
       for (dim_type i=0; i < vdim.size(); ++i) {
 	if (vdim[i].is_mf_ref()) {
 	  if (vdim[i].pmf->nb_dof_of_element(cv) != ranges()[i]) {
-	    r_[i] = vdim[i].pmf->nb_dof_of_element(cv);
+	    r_[i] = unsigned(vdim[i].pmf->nb_dof_of_element(cv));
 	    shape_updated_ = true;
 	  }
 	} else if (vdim[i].dim != ranges()[i]) {
-	  r_[i] = vdim[i].dim;
+	  r_[i] = unsigned(vdim[i].dim);
 	  shape_updated_ = true;
 	}
       }
@@ -1101,7 +1110,7 @@ namespace getfem {
       do {
 	cout << " @[";
 	for (size_type i=0; i < child(0).ranges().size(); ++i)
-	  cout <<(i>0?",":"") << mti.index(i);
+	  cout <<(i>0 ? "," : "") << mti.index(dim_type(i));
 	cout << "] = " << mti.p(0) << endl;
       } while (mti.qnext1());
     }
@@ -1205,7 +1214,7 @@ namespace getfem {
 	if (tok_type() == COLON) {
 	  s.push_back(' '); advance(); j++;
 	} else if (tok_type() == IDENT) {
-	  if (tok().length()==1 && isalpha(tok()[0]) || islower(tok()[0])) {
+	  if ((tok().length()==1 && isalpha(tok()[0])) || islower(tok()[0])) {
 	    s.push_back(tok()[0]); advance(); j++;
 	  } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() << 
 				       "', only lower case characters allowed");
@@ -1346,9 +1355,9 @@ namespace getfem {
 	if (tok_type() == COLON) {
 	  s.push_back(' '); advance(); j++;
 	} else if (tok_type() == NUMBER) {
-	  t = record(new ATN_sliced_tensor(*t, j, tok_number_ival())); advance();
+	  t = record(new ATN_sliced_tensor(*t, dim_type(j), tok_number_ival())); advance();
 	} else if (tok_type() == IDENT) {
-	  if (tok().length()==1 && isalpha(tok()[0]) || islower(tok()[0])) {
+	  if ((tok().length()==1 && isalpha(tok()[0])) || islower(tok()[0])) {
 	    s.push_back(tok()[0]); advance(); j++;
 	  } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() << 
 				       "', only lower case characters allowed");
@@ -1431,10 +1440,10 @@ namespace getfem {
 	if (check_permut.is_in(i)) { /* on prend la diagonale du tenseur */
 	  t = tnode(record(new ATN_diagonal_tensor(*t.tensor(), dim_type(i), dim_type(j))));
 	  check_permut.add(j);
-	  reorder.push_back(j);
+	  reorder.push_back(dim_type(j));
 	} else { 
 	  check_permut.add(i);
-	  reorder.push_back(i);
+	  reorder.push_back(dim_type(i));
 	}
 	advance();
 	if (advance_if(CLOSE_BRACE)) break;
@@ -1567,7 +1576,8 @@ namespace getfem {
 	if (outvec[arg_num] == 0) {
 	  if (vec_fact != 0) {
 	    tensor_ranges r(vds.size());
-	    for (size_type i=0; i < vds.size(); ++i) r[i] = vds[i].dim;
+	    for (size_type i=0; i < vds.size(); ++i)
+	      r[i] = unsigned(vds[i].dim);
 	    outvec[arg_num] = vec_fact->create_vec(r);
 	  }
 	  else ASM_THROW_PARSE_ERROR("output vector $" << arg_num+1 << " does not exist");
@@ -1696,8 +1706,8 @@ namespace getfem {
 	pfem pfa(mf[i]->fem_of_element(a));
 	pfem pfb(mf[i]->fem_of_element(b));
 	/* sort by nb_dof and then by fem */
-	unsigned nba = pfa->nb_dof(a);
-	unsigned nbb = pfb->nb_dof(b);
+	unsigned nba = unsigned(pfa->nb_dof(a));
+	unsigned nbb = unsigned(pfb->nb_dof(b));
 	if (nba < nbb) {
 	  return true;
 	} else if (nba > nbb) {
@@ -1771,7 +1781,7 @@ namespace getfem {
       while (nf.any()) {
 	//cerr << "generic_assembly::exec(" << cv[i] << ")\n";
 	if (nf[0]) exec(cv[i],f);
-	nf >>= 1; f+=1;
+	nf >>= 1; f++;
       }
     }
   }

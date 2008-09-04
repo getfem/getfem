@@ -230,14 +230,14 @@ namespace getfem {
   }
 
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 
-    cv_(size_type(-1)), f_(size_type(-1)), finished_(false) {
+    cv_(size_type(-1)), f_(short_type(-1)), finished_(false) {
     s.from_mesh(m);
     init(s);
   }
   
 
   mesh_region::visitor::visitor(const mesh_region &s) :
-    cv_(size_type(-1)), f_(size_type(-1)), finished_(false) {
+    cv_(size_type(-1)), f_(short_type(-1)), finished_(false) {
     init(s);
   }
 

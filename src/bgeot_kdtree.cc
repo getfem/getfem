@@ -36,7 +36,7 @@ namespace bgeot {
     kdtree_tab_type::const_iterator it;
     kdtree_leaf(kdtree_tab_type::const_iterator begin, 
 		kdtree_tab_type::const_iterator end) : 
-      kdtree_elt_base(std::distance(begin,end)) { it = begin; }
+      kdtree_elt_base(unsigned(std::distance(begin,end))) { it = begin; }
   };
   
   struct kdtree_node : public kdtree_elt_base {
@@ -85,7 +85,7 @@ namespace bgeot {
       ITER itmedian;
       scalar_type median;
       size_type N = begin->n.size();
-      unsigned ndir_tests = dir/N; dir %= N;
+      unsigned ndir_tests = unsigned(dir/N); dir = unsigned(dir % N);
       if (npts > 50) {
 	/* too much points for an exact median: estimation of the median .. */
         std::vector<index_node_pair> v(30);
@@ -113,12 +113,12 @@ namespace bgeot {
 	if (ndir_tests == N-1) /* tested all N direction ? so all points are strictly the same */
 	  return new kdtree_leaf(begin,end); 
         else return new kdtree_node(median, 
-				    build_tree_(begin, itmedian, (dir+1)%N + (ndir_tests+1)*N), 0);
+				    build_tree_(begin, itmedian, unsigned((dir+1)%N + (ndir_tests+1)*N)), 0);
       else { /* the general case */
 	assert((*itmedian).n[dir] > median && (*(itmedian-1)).n[dir] <= median);
 	return new kdtree_node(median, 
-			       build_tree_(begin, itmedian, (dir+1)%N), 
-			       build_tree_(itmedian,end, (dir+1)%N));
+			       build_tree_(begin, itmedian, unsigned((dir+1)%N)), 
+			       build_tree_(itmedian,end, unsigned((dir+1)%N)));
       }
     } else {
       return new kdtree_leaf(begin,end);
@@ -152,9 +152,9 @@ namespace bgeot {
     if (!t->isleaf()) {
       const kdtree_node *tn = static_cast<const kdtree_node*>(t);
       if (p.bmin[dir] <= tn->split_v && tn->left)
-        points_in_box_(p, tn->left, (dir+1)%p.N);
+        points_in_box_(p, tn->left, unsigned((dir+1)%p.N));
       if (p.bmax[dir] > tn->split_v && tn->right)
-        points_in_box_(p, tn->right, (dir+1)%p.N);
+        points_in_box_(p, tn->right, unsigned((dir+1)%p.N));
     } else {
       const kdtree_leaf *tl = static_cast<const kdtree_leaf*>(t);
       kdtree_tab_type::const_iterator itpt = tl->it;

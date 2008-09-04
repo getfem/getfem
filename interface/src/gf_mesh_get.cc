@@ -81,7 +81,7 @@ transform_edge_list(const getfem::mesh &m, unsigned N, const bgeot::edge_list &e
     for (size_type i = 0; i < N; i++) {
       getfem::base_node pt;
       
-      pt = A +  (B-A)*(i/(double)(N-1));
+      pt = A +  (B-A)*(double(i)/double(N-1));
       pt = pgt->transform(pt, m.points_of_convex(cv));
       std::copy(pt.begin(), pt.end(), &w(0,i, ecnt));
     }
@@ -107,7 +107,7 @@ faces_from_pid(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
       if (!convex_tested.is_in(ic)) {
 	convex_tested.add(ic);
 	/* loop over the convex faces */
-	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+	for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
 	  bgeot::mesh_structure::ind_pt_face_ct pt = m.ind_points_of_face_of_convex(ic, f);
 	  bool ok = true;
 	  for (unsigned ii=0; ii < pt.size(); ++ii) {
@@ -120,10 +120,10 @@ faces_from_pid(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
       }
     }
   }
-  iarray w = out.pop().create_iarray(2,lst.size());
+  iarray w = out.pop().create_iarray(2,unsigned(lst.size()));
   for (size_type j=0; j < lst.size(); j++) { 
-    w(0,j) = lst[j].cv+config::base_index(); 
-    w(1,j) = lst[j].f+config::base_index(); 
+    w(0,j) = int(lst[j].cv+config::base_index()); 
+    w(1,j) = int(lst[j].f+config::base_index()); 
   }
 }
 
@@ -139,7 +139,8 @@ struct mesh_faces_by_pts_list_elt  {
     return ptid < e.ptid;
   }
 
-  mesh_faces_by_pts_list_elt(size_type cv_, size_type f_, std::vector<size_type>& p) : cv(cv_), f(f_) {
+  mesh_faces_by_pts_list_elt(size_type cv_, size_type f_,
+		    std::vector<size_type>& p) : cv(int(cv_)), f(int(f_)) {
     cnt = 0;
     if (p.size() == 0) THROW_INTERNAL_ERROR;
     std::sort(p.begin(), p.end());
@@ -165,7 +166,7 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
   
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
     if (m.structure_of_convex(ic)->dim() == m.dim()) {
-      for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+      for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
 	bgeot::mesh_structure::ind_pt_face_ct pt = m.ind_points_of_face_of_convex(ic, f);
 	std::vector<size_type> p(pt.begin(), pt.end());
 	size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,f,p));
@@ -186,7 +187,7 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
     fcnt += (lst[i].cnt == 1 ? 1 : 0);
   }
 
-  iarray w = out.pop().create_iarray(2,fcnt);
+  iarray w = out.pop().create_iarray(2,unsigned(fcnt));
   fcnt = 0;
   for (size_type j=0; j < lst.size(); j++) { 
     if (lst[j].cnt == 1) {
@@ -275,12 +276,12 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR MESH:GET('nbpts')
       Get the number of points of the mesh.
       @*/
-    out.pop().from_integer(pmesh->nb_points());
+    out.pop().from_integer(int(pmesh->nb_points()));
   } else if (check_cmd(cmd, "nbcvs", in, out, 0, 0, 0, 1)) {
     /*@RDATTR MESH:GET('nbcvs')
       Get the number of convexes of the mesh.
       @*/
-    out.pop().from_integer(pmesh->nb_convex());
+    out.pop().from_integer(int(pmesh->nb_convex()));
   } else if (check_cmd(cmd, "pts", in, out, 0, 1, 0, 1)) {
     /*@GET [@dmat PT]=MESH:GET('pts' [, @ivec PIDLST])
       Return the list of point coordinates of the mesh.\\\\
@@ -298,7 +299,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     double nan = get_NaN();
     if (!in.remaining()) {
       dal::bit_vector bv = pmesh->points().index();
-      darray w = out.pop().create_darray(pmesh->dim(), bv.last_true()+1);
+      darray w = out.pop().create_darray(pmesh->dim(), unsigned(bv.last_true()+1));
       for (size_type j = 0; j < bv.last_true()+1; j++) {
 	for (size_type i = 0; i < pmesh->dim(); i++) {
 	  w(i,j) = (bv.is_in(j)) ? (pmesh->points()[j])[i] : nan;
@@ -306,7 +307,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     } else {
       dal::bit_vector pids = in.pop().to_bit_vector();
-      darray w = out.pop().create_darray(pmesh->dim(), pids.card());
+      darray w = out.pop().create_darray(pmesh->dim(), unsigned(pids.card()));
       size_type cnt=0;
       for (dal::bv_visitor j(pids); !j.finished(); ++j) {
 	if (!pmesh->points().index().is_in(j))
@@ -377,25 +378,26 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     }
     /* phase two: allocation */
-    iarray pid = out.pop().create_iarray_h(pcnt);
+    iarray pid = out.pop().create_iarray_h(unsigned(pcnt));
     bool fill_idx = out.remaining();
-    iarray idx; if (fill_idx) idx = out.pop().create_iarray_h(cvlst.card() + 1);
+    iarray idx;
+    if (fill_idx) idx = out.pop().create_iarray_h(unsigned(cvlst.card() + 1));
 
     pcnt = 0;
     size_type cvcnt = 0;
     /* phase three: build the list */
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-      if (fill_idx) idx[cvcnt] = pcnt + config::base_index();
+      if (fill_idx) idx[cvcnt] = int(pcnt + config::base_index());
       if (pmesh->convex_index().is_in(cv)) {
 	for (bgeot::mesh_structure::ind_cv_ct::const_iterator pit = 
 	       pmesh->ind_points_of_convex(cv).begin();
 	     pit != pmesh->ind_points_of_convex(cv).end(); ++pit) {
-	  pid[pcnt++] = (*pit) + config::base_index();
+	  pid[pcnt++] = int((*pit) + config::base_index());
 	}
       }
       cvcnt++;
     }
-    if (fill_idx) idx[idx.size()-1] = pcnt+config::base_index(); /* for the last convex */
+    if (fill_idx) idx[idx.size()-1] = int(pcnt+config::base_index()); /* for the last convex */
   } else if (check_cmd(cmd, "edges", in, out, 0, 2, 0, 2)) {
     /*@GET [E,C]=MESH:GET('edges' [, CVLST][,'merge'])
       [OBSOLETE FUNCTION! will be removed in a future release]\\\\
@@ -411,16 +413,16 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       associated with each edge.@*/
     bgeot::edge_list el;
     build_edge_list(*pmesh, el, in);
-    iarray w   = out.pop().create_iarray(2, el.size());
+    iarray w   = out.pop().create_iarray(2, unsigned(el.size()));
     /* copy the edge list to the matlab array */
     for (size_type j = 0; j < el.size(); j++) { 
-      w(0,j) = el[j].i + config::base_index();
-      w(1,j) = el[j].j + config::base_index();
+      w(0,j) = int(el[j].i + config::base_index());
+      w(1,j) = int(el[j].j + config::base_index());
     }
     if (out.remaining()) {
-      iarray cv = out.pop().create_iarray_h(el.size());
+      iarray cv = out.pop().create_iarray_h(unsigned(el.size()));
       for (size_type j = 0; j < el.size(); j++) { 
-	cv[j] = el[j].cv+config::base_index();
+	cv[j] = int(el[j].cv+config::base_index());
       }
     }
   } else if (check_cmd(cmd, "curved edges", in, out, 1, 2, 0, 2)) {    
@@ -439,12 +441,13 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     bgeot::edge_list el;
     size_type N = in.pop().to_integer(2,10000);
     build_edge_list(*pmesh, el, in);
-    darray w   = out.pop().create_darray(pmesh->dim(), N, el.size());
-    transform_edge_list(*pmesh, N, el, w);
+    darray w   = out.pop().create_darray(pmesh->dim(), unsigned(N),
+					 unsigned(el.size()));
+    transform_edge_list(*pmesh, unsigned(N), el, w);
     if (out.remaining()) {
-      iarray cv = out.pop().create_iarray_h(el.size());
+      iarray cv = out.pop().create_iarray_h(unsigned(el.size()));
       for (size_type j = 0; j < el.size(); j++) { 
-	cv[j] = el[j].cv + config::base_index();
+	cv[j] = int(el[j].cv + config::base_index());
       }
     }
   } else if (check_cmd(cmd, "pid from coords", in, out, 1, 1, 0, 1)) {
@@ -457,11 +460,12 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     check_empty_mesh(pmesh);
     darray v   = in.pop().to_darray(pmesh->dim(), -1);
     iarray w   = out.pop().create_iarray_h(v.getn());
-    for (size_type j=0; j < v.getn(); j++) {
-      getfem::base_node P = v.col_to_bn(j); getfem::size_type id = size_type(-1);
+    for (unsigned j=0; j < v.getn(); j++) {
+      getfem::base_node P = v.col_to_bn(j);
+      getfem::size_type id = size_type(-1);
       if (!is_NaN(P[0])) id = pmesh->search_point(P);
       if (id == getfem::size_type(-1)) w[j] = -1;
-      else w[j] = id + config::base_index();
+      else w[j] = int(id + config::base_index());
     }
   } else if (check_cmd(cmd, "orphaned pid", in, out, 0, 0, 0, 1)) {
     /*@GET [@ivec PIDLST]=MESH:GET('orphaned pid')
@@ -510,8 +514,9 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	}
       }
     }
-    iarray w = out.pop().create_iarray_h(cvlst.size());
-    for (size_type j=0; j < cvlst.size(); j++) w[j] = cvlst[j]+config::base_index();
+    iarray w = out.pop().create_iarray_h(unsigned(cvlst.size()));
+    for (size_type j=0; j < cvlst.size(); j++)
+      w[j] = int(cvlst[j]+config::base_index());
   } else if (check_cmd(cmd, "faces from pid", in, out, 1, 1, 0, 1)) {
     /*@GET [@imat CVFLST]=MESH:GET('faces from pid', @ivec PIDLST)
       Return the convex faces whose vertex #ids are in PIDLST.\\\\
@@ -551,7 +556,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     //getfem::convex_face_ct flst;
     size_type cnt = 0;
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt) {
-      for (size_type f=0; f < pmesh->structure_of_convex(cv)->nb_faces(); ++f) {
+      for (short_type f=0; f < pmesh->structure_of_convex(cv)->nb_faces(); ++f) {
 	bool add = true;
 	if (!merge) {
 	  bgeot::mesh_structure::ind_set neighbours;
@@ -597,7 +602,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type f  = in.pop().to_face_number(pmesh->structure_of_convex(cv)->nb_faces());
     size_type node = 0; 
     if (in.remaining()) node = in.pop().to_integer(config::base_index(),10000)-config::base_index(); 
-    bgeot::base_node N = normal_of_face(*pmesh, cv, f, node);
+    bgeot::base_node N = normal_of_face(*pmesh, cv, dim_type(f), node);
     out.pop().from_dcvector(N);
   } else if (check_cmd(cmd, "normal of faces", in, out, 1, 1, 0, 1)) {
     /*@GET [@mat N] = MESH:GET('normal of faces', @imat CVFLST)
@@ -610,7 +615,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     for (size_type j=0; j < v.getn(); j++) {
       size_type cv = v(0,j) - config::base_index();
       size_type f  = v(1,j) - config::base_index();
-      bgeot::base_node N = normal_of_face(*pmesh, cv, f, 0);
+      bgeot::base_node N = normal_of_face(*pmesh, cv, dim_type(f), 0);
       for (size_type i=0; i < pmesh->dim(); ++i) w(i,j)=N[i];
     }
   } else if (check_cmd(cmd, "quality", in, out, 0, 1, 0, 1)) {
@@ -620,7 +625,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     dal::bit_vector bv; 
     if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
     else bv = pmesh->convex_index();
-    darray w = out.pop().create_darray_h(bv.card());
+    darray w = out.pop().create_darray_h(unsigned(bv.card()));
     size_type cnt = 0;
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt) 
       w[cnt] = pmesh->convex_quality_estimate(cv);
@@ -631,7 +636,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     dal::bit_vector bv; 
     if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
     else bv = pmesh->convex_index();
-    darray w = out.pop().create_darray_h(bv.card());
+    darray w = out.pop().create_darray_h(unsigned(bv.card()));
     size_type cnt = 0;
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt) 
       w[cnt] = pmesh->convex_area_estimate(cv);
@@ -655,10 +660,10 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET BLST = MESH:GET('regions')
       Return the list of valid regions stored in the mesh.
       @*/
-    iarray w = out.pop().create_iarray_h(pmesh->regions_index().card());
+    iarray w = out.pop().create_iarray_h(unsigned(pmesh->regions_index().card()));
     size_type i=0; 
     for (dal::bv_visitor k(pmesh->regions_index()); !k.finished(); ++k, ++i) {
-      w[i] = k;
+      w[i] = int(k);
     }
     if (i != w.size()) THROW_INTERNAL_ERROR;
   } else if (check_cmd(cmd, "boundary", in, out, 1, 1, 0, 1) ||
@@ -674,10 +679,10 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::vector<unsigned> cvlst;
     std::vector<unsigned> facelst;
     for (getfem::mr_visitor i(pmesh->region(bnum)); !i.finished(); ++i) {
-      cvlst.push_back(i.cv());
+      cvlst.push_back(unsigned(i.cv()));
       facelst.push_back(i.f());
     }
-    iarray w = out.pop().create_iarray(2, cvlst.size());
+    iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
     for (size_type j=0; j < cvlst.size(); j++) { 
       w(0,j) = cvlst[j]+config::base_index(); 
       w(1,j) = facelst[j]+config::base_index(); 
@@ -751,6 +756,6 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET MESH:GET('memsize')
       Return the amount of memory (in bytes) used by the mesh.
       @*/
-    out.pop().from_integer(pmesh->memsize());
+    out.pop().from_integer(int(pmesh->memsize()));
   } else bad_cmd(cmd);
 }

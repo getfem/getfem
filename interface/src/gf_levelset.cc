@@ -55,7 +55,7 @@ void gf_levelset(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     
 
   getfem::level_set *ls = 
-    new getfem::level_set(mm->mesh(),degree,with_secondary);
+    new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
   getfemint_levelset *gls = getfemint_levelset::get_from(ls);
   if (s1.size()) gls->values_from_poly(0, s1);
   if (s2.size()) gls->values_from_poly(1, s2);

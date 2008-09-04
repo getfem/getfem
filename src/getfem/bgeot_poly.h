@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -284,7 +284,7 @@ namespace bgeot
     size_type l = this->size();
     for ( ; it != ite; --it, --l) { if (*it != T(0)) break; }
     short_type dd = degree();
-    while (dd > 0 && alpha(n, dd-1) > l) --dd;
+    while (dd > 0 && alpha(n, short_type(dd-1)) > l) --dd;
     return dd;
   }
   
@@ -352,9 +352,10 @@ namespace bgeot
 	    power_index::iterator mita = mia.begin(), mitq = miq.begin();
 	    power_index::iterator mit = mitot.begin(), mite = mia.end();
 	    for ( ; mita != mite; ++mita, ++mitq, ++mit)
-	      *mit = (*mita) + (*mitq); /* on pourrait calculer
+	      *mit = short_type((*mita) + (*mitq)); /* on pourrait calculer
 					   directement l'index global. */
-	    //	     cerr << "*= : " << *this << ", itq*ita=" << (*itq) * (*ita) << endl;
+	    //	     cerr << "*= : " << *this << ", itq*ita="
+	    //            << (*itq) * (*ita) << endl;
 	    //	     cerr << " itq = " << *itq << endl;
 	    //	     cerr << " ita = " << *ita << endl;
 	    add_monomial((*itq) * (*ita), mitot);
@@ -368,7 +369,7 @@ namespace bgeot
     void polynomial<T>::direct_product(const polynomial &Q) { 
     polynomial aux = *this;
 
-    change_degree(0); n += Q.dim(); (*this)[0] = T(0);
+    change_degree(0); n = short_type(n+Q.dim()); (*this)[0] = T(0);
     
     power_index miq(Q.dim()), mia(aux.dim()), mitot(dim());
     if (Q.dim() > 0) miq[Q.dim()-1] = Q.degree();
@@ -413,7 +414,7 @@ namespace bgeot
          { mi[k]--; (*this)[mi.global_index()] = (*it) * T(mi[k] + 1); mi[k]++; }
        *it = T(0);
      }
-     if (d > 0) change_degree(d-1);
+     if (d > 0) change_degree(short_type(d-1));
   }
 
    template<typename T> template<typename ITER>
@@ -423,8 +424,10 @@ namespace bgeot
       return (*this)[mi.global_index()];
     else {
       T v = (*(it+k-1)), res = T(0);
-      for (mi[k-1] = degree() - de; mi[k-1] != short_type(-1); (mi[k-1])--)
-	res = horner(mi, k-1, de + mi[k-1], it) + v * res;
+      for (mi[k-1] = short_type(degree() - de); mi[k-1] != short_type(-1);
+	   (mi[k-1])--)
+	res = horner(mi, short_type(k-1), short_type(de + mi[k-1]), it)
+	  + v * res;
       mi[k-1] = 0;
       return res;
     }
@@ -580,7 +583,7 @@ namespace bgeot
 	Spow.push_back(S*Spow.back());
       const polynomial<T>& p = Spow[pi[subs_dim]];
       bgeot::power_index pi2(pi);
-      for (size_type i=0; i < p.size(); ++i) {
+      for (short_type i=0; i < p.size(); ++i) {
 	pi2[subs_dim] = i;
 	res.add_monomial(p[i]*P[k],pi2);
       }

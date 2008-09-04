@@ -38,7 +38,7 @@ namespace getfemint
   }
 
   id_type ind_integ(getfem::pintegration_method p)
-  { init_tab(); return integ_tab->add_norepeat(p); }
+  { init_tab(); return id_type(integ_tab->add_norepeat(p)); }
   
   getfem::pintegration_method addr_integ(id_type i)
   { init_tab(); return (*integ_tab)[i]; }

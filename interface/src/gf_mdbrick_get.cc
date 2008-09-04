@@ -69,14 +69,14 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       This is the sum of the brick specific dof plus the dof of the
       parent bricks.
       @*/
-    out.pop().from_integer(b->mdbrick().nb_dof());
+    out.pop().from_integer(int(b->mdbrick().nb_dof()));
   } else if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
     /*@RDATTR MDBRICK:GET('dim')
       Get the dimension of the main mesh (2 for a 2D mesh, etc).
       @*/
     out.pop().from_integer(b->mdbrick().dim());
   } else if (check_cmd(cmd, "nb_constraints", in, out, 0, 0, 0, 1)) {
-    out.pop().from_integer(b->mdbrick().nb_constraints());
+    out.pop().from_integer(int(b->mdbrick().nb_constraints()));
   } else if (check_cmd(cmd, "is_linear", in, out, 0, 0, 0, 1)) {
     /*@RDATTR MDBRICK:GET('is_linear')
       Return true if the problem is linear.
@@ -141,14 +141,14 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     cplx_mdbrick_parameter *cp = dynamic_cast<cplx_mdbrick_parameter*>(p);
     
     bool is_default_mf = p->is_using_default_mesh_fem();
-    unsigned ll = (is_default_mf ? p->mf().nb_dof() : 1);
+    unsigned ll = unsigned(is_default_mf ? p->mf().nb_dof() : 1);
 
     array_dimensions ad; 
     if (!config::has_1D_arrays() && p->fsizes().size() == 0 && !is_default_mf) {
       /* prefer a row vector for matlab */
       ad.push_back(1);
     } else ad.assign(p->fsizes()); 
-    if (!is_default_mf) ad.push_back(p->mf().nb_dof()); 
+    if (!is_default_mf) ad.push_back(unsigned(p->mf().nb_dof())); 
     if (rp) {
       darray a = out.pop().create_array(ad, double());
       assert(a.size() == rp->get().size()/ll);
@@ -236,7 +236,7 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     bool tresca = cmd_strmatch(cmd, "tresca");
     getfemint_mdstate *mds = in.pop().to_getfemint_mdstate();
     const getfem::mesh_fem &mf_vm = *in.pop().to_const_mesh_fem();
-    darray w = out.pop().create_darray_h(mf_vm.nb_dof());
+    darray w = out.pop().create_darray_h(unsigned(mf_vm.nb_dof()));
     bool ok = false;
     if (!ok) {
       getfem::mdbrick_isotropic_linearized_elasticity<real_model_state> *bb = 
@@ -269,7 +269,7 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET MDBRICK:GET('memsize')
       Return the amount of memory (in bytes) used by the model brick.
       @*/
-    out.pop().from_integer(b->memsize());
+    out.pop().from_integer(int(b->memsize()));
   } else bad_cmd(cmd);
   if (in.remaining()) THROW_BADARG("too many arguments!");
 }

@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -250,7 +250,7 @@ namespace getfem {
     /// Return a (pseudo)container of points of face of a given convex 
     ref_mesh_face_pt_ct points_of_face_of_convex(size_type ic,
 						 size_type f) const {
-      ind_pt_face_ct rct = ind_points_of_face_of_convex(ic,f);
+      ind_pt_face_ct rct = ind_points_of_face_of_convex(ic, short_type(f));
       return ref_mesh_face_pt_ct(pts.begin(), rct.begin(), rct.end());
     }
 
@@ -601,7 +601,7 @@ namespace getfem {
     size_type mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
 					                           ITER ipts)
   {
-    short_type nb = pgt->nb_points();
+    short_type nb = short_type(pgt->nb_points());
     std::vector<size_type> ind(nb);
     for (short_type i = 0; i < nb; ++ipts, ++i) ind[i] = add_point(*ipts);
     return add_convex(pgt, ind.begin());
@@ -652,6 +652,8 @@ namespace getfem {
 				     const base_matrix& pts);
 
   /* stores a convex face. if f == -1, it is the whole convex.             */
+  struct convex_face;
+  typedef std::vector<convex_face> convex_face_ct;
   struct convex_face  {
     size_type cv;
     size_type f;    
@@ -664,8 +666,7 @@ namespace getfem {
     bool is_face() const { return f != size_type(-1); }
     convex_face(size_type cv_, size_type f_=size_type(-1)) : cv(cv_), f(f_) {}
     convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
-  } IS_DEPRECATED;
-  typedef std::vector<convex_face> convex_face_ct;
+  }; //  IS_DEPRECATED;
 
   /** returns a list of "exterior" faces of a mesh
    * (i.e. faces which are not shared by two convexes) 

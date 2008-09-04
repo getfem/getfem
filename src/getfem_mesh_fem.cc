@@ -33,7 +33,7 @@ namespace getfem {
       size_type cv = v.cv();
       if (convex_index().is_in(cv)) {
 	if (v.is_face()) {
-	  size_type f = v.f();
+	  short_type f = short_type(v.f());
 	  size_type nbb =
 	    dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
 	  for (size_type i = 0; i < nbb; ++i) {
@@ -64,7 +64,7 @@ namespace getfem {
   void mesh_fem::receipt(const MESH_ADD_CONVEX &m) {
     if (auto_add_elt_K != size_type(-1)) {
       pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(m.icv), 
-				      auto_add_elt_K);
+				      short_type(auto_add_elt_K));
       set_finite_element(m.icv, pf);
     }
   }
@@ -180,7 +180,7 @@ namespace getfem {
     size_type cv = first_convex_of_dof(d);
     GMM_ASSERT1(cv != size_type(-1), "Inexistent dof");
     size_type tdim = f_elems[cv]->target_dim();
-    return dof_structure.ind_in_convex_of_point(cv, d) % (Qdim / tdim);
+    return dim_type(dof_structure.ind_in_convex_of_point(cv, d) % (Qdim/tdim));
   }
 
   size_type mesh_fem::first_convex_of_dof(size_type d) const {
@@ -348,7 +348,7 @@ namespace getfem {
 	bgeot::get_token(ist, tmp);
 	if (bgeot::casecmp(tmp, "DOF_PARTITION") == 0) {
 	  for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
-	    size_type d; ist >> d; set_dof_partition(cv,d);
+	    size_type d; ist >> d; set_dof_partition(cv, unsigned(d));
 	  }
 	  ist >> bgeot::skip("END DOF_PARTITION");
 	} else if (bgeot::casecmp(tmp, "DOF_ENUMERATION") == 0) {
@@ -395,7 +395,7 @@ namespace getfem {
 	bgeot::get_token(ist, tmp);
 	int q = atoi(tmp.c_str());
 	GMM_ASSERT1(q > 0 && q <= 250, "invalid qdim: " << q);
-	set_qdim(q);
+	set_qdim(dim_type(q));
       } else if (tmp.size()) {
 	GMM_ASSERT1(false, "Unexpected token '" << tmp <<
 		    "' [pos=" << std::streamoff(ist.tellg()) << "]");

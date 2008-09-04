@@ -55,12 +55,12 @@ namespace getfem {
 	    r.add(icv[jc]);
 	
 	bgeot::geotrans_inv_convex giv;
-	for (size_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
+	for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 	  if (r[ic][f+1]) {
 
 	    for (size_type jc = 0; jc < icv.size(); ++jc) {
 	      bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
-	      for (size_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
+	      for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
 		   ++fsub) {
 		neighbours_of_convex(icv[jc], fsub, s);
 		ind_set::const_iterator it = s.begin(), ite = s.end();
@@ -92,7 +92,7 @@ namespace getfem {
 	    r.add(ic);
 	  bgeot::geotrans_inv_convex giv;
 	  bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
-	  for (size_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
+	  for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
 	       ++fsub)
 	    if (r[icv[jc]][fsub+1]) {
 	      base_node pt, barycentre
@@ -102,7 +102,7 @@ namespace getfem {
 	      giv.init(points_of_convex(ic), pgt);
 	      giv.invert(pt, barycentre);
 	      
-	      for (size_type f = 0; f < pgt->structure()->nb_faces(); ++f)
+	      for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f)
 		if (pgt->convex_ref()->is_in_face(f, barycentre) < 0.1)
 		  { r.add(ic, f); break; }
 	  }
@@ -333,7 +333,8 @@ namespace getfem {
     base_matrix G;
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     return getfem::convex_area_estimate
-      (trans_of_convex(ic), G, classical_approx_im(trans_of_convex(ic), deg));
+      (trans_of_convex(ic), G, classical_approx_im(trans_of_convex(ic),
+						   dim_type(deg)));
   }
 
   scalar_type  mesh::convex_quality_estimate(size_type ic) const { 
@@ -661,7 +662,7 @@ namespace getfem {
 
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 1;
-    size_type N = G.nrows(), P = pgt->structure()->dim();
+    dim_type N = dim_type(G.nrows()), P = pgt->structure()->dim();
     base_matrix K(N,P);
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(G, pgp->grad(ip), K);
@@ -703,7 +704,7 @@ namespace getfem {
 		      convex_face_ct& flist) {
     for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
       if (m.structure_of_convex(ic)->dim() == m.dim()) {
-	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+	for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
 	  if (m.neighbour_of_convex(ic,f) == size_type(-1)) {
 	    flist.push_back(convex_face(ic,f));
 	  }
@@ -720,7 +721,7 @@ namespace getfem {
     cvlst.error_if_not_convexes();
     for (mr_visitor i(cvlst); !i.finished(); ++i) {
       if (m.structure_of_convex(i.cv())->dim() == m.dim()) {
-	for (size_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
+	for (short_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
 	     f++) {
 	  size_type cv2 = m.neighbour_of_convex(i.cv(), f);
 	  if (cv2 == size_type(-1) || !cvlst.is_in(cv2)) {
@@ -829,14 +830,14 @@ namespace getfem {
   }
 
   void mesh::Bank_build_first_mesh(mesh &m, size_type n) {
-    bgeot::pconvex_ref pcr = bgeot::simplex_of_reference(n, 2);
+    bgeot::pconvex_ref pcr = bgeot::simplex_of_reference(dim_type(n), 2);
     m.clear(); 
     for (size_type ip = 0; ip < pcr->nb_points(); ++ip)
       m.add_point(pcr->points()[ip]);
     size_type *tab;
     size_type nbc = bgeot::refinement_simplexe_tab(n, &tab);
     for (size_type ic = 0; ic < nbc; ++ic, tab+=(n+1))
-      m.add_simplex(n, tab);
+      m.add_simplex(dim_type(n), tab);
   }
 
   struct mesh_cache_for_Bank_basic_refine_convex : public mesh {};
@@ -1002,7 +1003,7 @@ namespace getfem {
     mesh mesh2;
     for (size_type ip = 0; ip < loc_ind.size(); ++ip)
       mesh2.add_point(pgt->geometric_nodes()[loc_ind[ip]]);
-    size_type ic1 = mesh2.add_simplex(d, gs.ipt_loc.begin());
+    size_type ic1 = mesh2.add_simplex(dim_type(d), gs.ipt_loc.begin());
     bgeot::pgeometric_trans pgt1 = mesh2.trans_of_convex(ic1);
     for (size_type i = 0; i < ipt.size(); ++i)
       gs.ipt_loc[i] = loc_ind[gs.ipt_loc[i]];
@@ -1023,7 +1024,7 @@ namespace getfem {
 	ipt2[j] = ipt1[mesh1.ind_points_of_convex(i)[j]];
       for (size_type j = d+1; j <= n; ++j)
 	ipt2[j] = ipt_other[j-d-1];
-      mesh2.add_simplex(n, ipt2.begin());
+      mesh2.add_simplex(dim_type(n), ipt2.begin());
     }
 
     mesh mesh3;    

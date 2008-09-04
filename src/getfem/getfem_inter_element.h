@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -58,7 +58,7 @@ namespace getfem {
     interelt_boundary_integration_(pintegration_method pa1,
 				   pintegration_method pa2);
     
-    std::vector<size_type> &face_indices(size_type f1, size_type f2) const;
+    std::vector<size_type> &face_indices(short_type f1, short_type f2) const;
     const base_node &additional_point(size_type i) const
     { return add_points[i]; }
 
@@ -91,7 +91,7 @@ namespace getfem {
     pinterelt_boundary_integration pibi;
     base_matrix G1, G2;
     bgeot::pgeometric_trans pgt1, pgt2;
-    size_type f1, f2;
+    short_type f1, f2;
 
 
     virtual void compute_on_gauss_point
@@ -105,7 +105,7 @@ namespace getfem {
       : mim(mmim), mf(mmf), pf1_old(0), pf2_old(0), pai_old(0),
 	pai1_old(0), pai2_old(0), pfp1(0), pfp2(0), pibi(0) {}
     
-    void compute_on_face(size_type cv, size_type f);
+    void compute_on_face(size_type cv, short_type f);
     
     virtual ~compute_on_inter_element() {}
     

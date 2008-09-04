@@ -166,7 +166,7 @@ void gf_mesh_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) {
       unsigned q_dim2 = in.pop().to_integer(0,256);
       mmf = getfemint_mesh_fem::new_from(mm,q_dim * q_dim2); 
-      mmf->mesh_fem().set_qdim_mn(q_dim, q_dim2);
+      mmf->mesh_fem().set_qdim_mn(dim_type(q_dim), dim_type(q_dim2));
     } else
       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
     //out.pop().from_object_id(workspace().push_object(mmf), MESHFEM_CLASS_ID);

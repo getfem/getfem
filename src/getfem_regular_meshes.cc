@@ -83,7 +83,7 @@ namespace getfem
   (mesh &me, dim_type N, const base_node &org,
    const base_small_vector *ivect, const size_type *iref) {
     mesh aux;
-    parallelepiped_regular_simplex_mesh_(aux, N-1, org, ivect, iref);
+    parallelepiped_regular_simplex_mesh_(aux, dim_type(N-1), org, ivect, iref);
     std::vector<base_node> ptab(2 * N);
     
     for (dal::bv_visitor cv(aux.convex_index()); !cv.finished(); ++cv) {
@@ -184,7 +184,7 @@ namespace getfem
 	P = shake_func(P);
 	if (N == 2) P = radial_deformation(P) ; 
 	for (size_type i=0; i < N; ++i)
-	  P[i] += 0.*(1./(nsubdiv[i]* pgt->complexity()))
+	  P[i] += 0.*(double(1)/double(nsubdiv[i]* pgt->complexity()))
 	    * gmm::random(double());
       }
     }
@@ -194,7 +194,7 @@ namespace getfem
   void regular_unit_mesh(mesh& m, std::vector<size_type> nsubdiv, 
 			 bgeot::pgeometric_trans pgt, bool noised) {
     mesh msh;
-    size_type N = nsubdiv.size();
+    dim_type N = dim_type(nsubdiv.size());
     base_node org(N); gmm::clear(org);
     std::vector<base_small_vector> vtab(N);
     for (dim_type i = 0; i < N; i++) { 

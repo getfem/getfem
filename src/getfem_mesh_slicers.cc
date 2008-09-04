@@ -26,7 +26,7 @@
 #include "getfem/getfem_mesh_level_set.h"
 
 namespace getfem {
-  const float slicer_action::EPS = 1e-13;
+  const float slicer_action::EPS = float(1e-13);
 
   /* ------------------------------ slicers ------------------------------- */
 
@@ -324,12 +324,12 @@ namespace getfem {
     //cout << "slicer_mesh_with_mesh: convex " << ms.cv << ", " << ms.splx_in.card() << " candidates\n";
     for (size_type i=0; i < slmcvs.size(); ++i) {
       size_type slmcv = slmcvs[i];
-      dim_type fcnt_save=ms.fcnt;
+      dim_type fcnt_save = dim_type(ms.fcnt);
       ms.simplexes.resize(scnt0); 
       ms.splx_in = splx_in_save; ms.simplex_index = simplex_index_save; ms.nodes_index = nodes_index_save;
       //cout << "test intersection of " << ms.cv << " and " << slmcv << "\n";
       /* loop over the faces and apply slicer_half_space */
-      for (size_type f=0; f < slm.structure_of_convex(slmcv)->nb_faces(); ++f) {
+      for (short_type f=0; f<slm.structure_of_convex(slmcv)->nb_faces(); ++f) {
 	base_node x0,n;
 	if (slm.structure_of_convex(slmcv)->dim() == 3 && slm.dim() == 3) {
 	  x0 = slm.points_of_face_of_convex(slmcv,f)[0];
@@ -403,10 +403,10 @@ namespace getfem {
   void slicer_union::exec(mesh_slicer &ms) {
     dal::bit_vector splx_in_base = ms.splx_in;
     size_type c = ms.simplexes.size();
-    dim_type fcnt_0 = ms.fcnt;
+    dim_type fcnt_0 = dim_type(ms.fcnt);
     A->exec(ms); 
     dal::bit_vector splx_inA(ms.splx_in);
-    dim_type fcnt_1 = ms.fcnt;
+    dim_type fcnt_1 = dim_type(ms.fcnt);
 
     dal::bit_vector splx_inB = splx_in_base; splx_inB.add(c, ms.simplexes.size()-c);
     splx_inB.setminus(splx_inA);
@@ -472,7 +472,7 @@ namespace getfem {
 	for (size_type j=0; j < s.dim(); ++j)
 	  M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
       scalar_type v = gmm::abs(gmm::lu_det(M));
-      for (size_type d=2; d <= s.dim(); ++d) v /= d;
+      for (size_type d=2; d <= s.dim(); ++d) v /= scalar_type(d);
       a += v;
     }
   }
@@ -599,7 +599,7 @@ namespace getfem {
     faces.resize(pts.size());
     for (size_type i=0; i < pts.size(); ++i) {
       faces[i].reset();      
-      for (size_type f=0; f < cvr->structure()->nb_faces(); ++f)
+      for (short_type f=0; f < cvr->structure()->nb_faces(); ++f)
         faces[i][f] = (gmm::abs(cvr->is_in_face(f, pts[i])) < 1e-10);
     }
   }
@@ -782,10 +782,10 @@ namespace getfem {
     
     dal::bit_vector pt_in_face; pt_in_face.sup(0, cvm.points().index().last_true()+1);
     for (dal::bv_visitor ip(cvm.points().index()); !ip.finished(); ++ip)
-      if (cvr->is_in_face(f, cvm.points()[ip])) pt_in_face.add(ip);
+      if (cvr->is_in_face(short_type(f), cvm.points()[ip])) pt_in_face.add(ip);
 
     for (dal::bv_visitor_c ic(cvm.convex_index()); !ic.finished(); ++ic) {
-      for (unsigned ff=0; ff < cvm.nb_faces_of_convex(ic); ++ff) {
+      for (short_type ff=0; ff < cvm.nb_faces_of_convex(ic); ++ff) {
 	bool face_ok = true;
 	for (unsigned i=0; i < N; ++i) {
 	  if (!pt_in_face.is_in(cvm.ind_points_of_face_of_convex(ic,ff)[i])) {
@@ -793,7 +793,7 @@ namespace getfem {
 	  }
 	}
 	if (face_ok) {
-	  tmp_mesh_struct.add_convex(bgeot::simplex_structure(N-1), 
+	  tmp_mesh_struct.add_convex(bgeot::simplex_structure(dim_type(N-1)), 
 				     cvm.ind_points_of_face_of_convex(ic, ff).begin());
 	}
       }
@@ -826,10 +826,11 @@ namespace getfem {
       if (prev_cvr != cvr || nrefine != prev_nrefine || discont || prev_discont) {
 	if (discont) {
 	  //if (prev_cv != it.cv())
-	  cvm = &refined_simplex_mesh_for_convex_cut_by_level_set(mls->mesh_of_convex(cv), 
-								  nrefine);
+	  cvm = &refined_simplex_mesh_for_convex_cut_by_level_set
+	    (mls->mesh_of_convex(cv), unsigned(nrefine));
 	} else {
-	  cvm = bgeot::refined_simplex_mesh_for_convex(cvr, nrefine);
+	  cvm = bgeot::refined_simplex_mesh_for_convex(cvr,
+						       short_type(nrefine));
 	}
 	cvm_pts.resize(cvm->points().card());
 	std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
@@ -839,7 +840,7 @@ namespace getfem {
       }
       if (face < dim_type(-1)) {
 	if (!discont) {
-	  cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
+	  cvms = bgeot::refined_simplex_mesh_for_convex_faces(cvr, short_type(nrefine))[face];
 	} else {
 	  cvms = &refined_simplex_mesh_for_convex_faces_cut_by_level_set(face);
 	}
@@ -869,7 +870,7 @@ namespace getfem {
 	       itp != simplexes[snum].inodes.end(); ++itp) {
 	    G += cvm_pts[*itp];
 	  }
-	  G /= simplexes[snum].inodes.size();
+	  G /= scalar_type(simplexes[snum].inodes.size());
 	}
 	  
 

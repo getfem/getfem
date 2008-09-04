@@ -77,7 +77,7 @@ int main(void)
     {
       if (!(i % 10000)) cout <<" no " << i << " nb_elt " << tsa.card() << endl;
       
-      if ((rand() & 1 == 1 || tsa.card() < 30) && (tsa.card() < 100))
+      if (((rand() & 1) == 1 || tsa.card() < 30) && (tsa.card() < 100))
 	{
 	  int j = rand() % 10;
 	  tsa.add(j);
@@ -89,8 +89,9 @@ int main(void)
 	  
 	  // cout << " sup of " << k << endl;
 	  int k;
-	  for (k = rand() % (tsa.index()).last_true(); !((tsa.index())[k]); 
-	       k = rand() % (tsa.index()).last_true() ) ;
+	  for (k = int(rand() % (tsa.index()).last_true());
+	       !((tsa.index())[k]); 
+	       k = int(rand() % (tsa.index()).last_true()) ) {};
 	  
 	  tsa.sup(k);
 	  //    cout << tsa << endl;
@@ -109,7 +110,7 @@ int main(void)
       for (unsigned i=0; i < 1000; ++i) {
 	v.add("toto"); v.add("hop"); v.add_norepeat("grr");
 	std::string s; 
-	for (int j=0; j < 5; ++j) s.push_back('a' + (rand() % 26));
+	for (int j=0; j < 5; ++j) s.push_back(char('a' + (rand() % 26)));
 	v.add(s);
       }
       {

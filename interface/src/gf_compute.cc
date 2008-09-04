@@ -58,7 +58,7 @@ static void
 mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N, 
                       mexargs_in &in, mexargs_out &out)
 {
-  size_type mdim = mf->linked_mesh().dim();
+  unsigned mdim = mf->linked_mesh().dim();
   if (mf->get_qdim() != mdim) {
     THROW_BADARG( "Error, the mesh is of dimension " << mdim << 
 		  " while its Qdim is " << mf->get_qdim());
@@ -68,7 +68,7 @@ mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
 
   build_edge_list(m, el, in);
   
-  darray w   = out.pop().create_darray(mdim, N, el.size());
+  darray w   = out.pop().create_darray(mdim, N, unsigned(el.size()));
 
   bgeot::edge_list::const_iterator it = el.begin();
   size_type nbe = 0;
@@ -99,7 +99,7 @@ mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
       getfem::base_node A = pgt->convex_ref()->points()[iA];
       getfem::base_node B = pgt->convex_ref()->points()[iB];
       for (size_type i = 0; i < N; i++) {
-	pt[pcnt++] = A +  (B-A)*(i/(double)(N-1));
+	pt[pcnt++] = A +  (B-A)*(double(i)/double(N-1));
       }
     }
     if (pcnt != ecnt * N) THROW_INTERNAL_ERROR;
@@ -135,10 +135,10 @@ gf_compute_gradient(getfemint::mexargs_out& out,
   garray<T> DU;
   unsigned N = mf.linked_mesh().dim();
   array_dimensions dims(N); 
-  unsigned qqdim = dims.push_back(U,0,U.ndim()-1,true);
+  unsigned qqdim = unsigned(dims.push_back(U,0,U.ndim()-1,true));
   
-  if (qm != 1) dims.push_back(qm);
-  dims.push_back(mf_grad.nb_dof());
+  if (qm != 1) dims.push_back(unsigned(qm));
+  dims.push_back(unsigned(mf_grad.nb_dof()));
   DU = out.pop().create_array(dims, T());
   std::vector<T> tmp(mf_grad.nb_dof() * qm * N);
   for (unsigned qq=0; qq < qqdim; ++qq) {
@@ -162,10 +162,10 @@ gf_compute_hessian(getfemint::mexargs_out& out,
   garray<T> D2U;
   unsigned N = mf.linked_mesh().dim();
   array_dimensions dims(N); dims.push_back(N);
-  unsigned qqdim = dims.push_back(U,0,U.ndim()-1,true);
+  unsigned qqdim = unsigned(dims.push_back(U,0,U.ndim()-1,true));
   
-  if (qm != 1) dims.push_back(qm);
-  dims.push_back(mf_hess.nb_dof());
+  if (qm != 1) dims.push_back(unsigned(qm));
+  dims.push_back(unsigned(mf_hess.nb_dof()));
   D2U = out.pop().create_array(dims, T());
   std::vector<T> tmp(mf_hess.nb_dof() * qm * N * N);
   for (unsigned qq=0; qq < qqdim; ++qq) {
@@ -194,8 +194,8 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
       THROW_ERROR("Cannot interpolate a mesh_fem with qdim = " << 
 		  int(mf.get_qdim()) << " onto a mesh_fem whose qdim is " 
 		  << int(mf_dest.get_qdim()));
-    if (qmult != 1) dims.push_back(qmult);
-    dims.push_back(mf_dest.nb_dof());
+    if (qmult != 1) dims.push_back(unsigned(qmult));
+    dims.push_back(unsigned(mf_dest.nb_dof()));
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims,T());
     getfem::interpolation(mf, mf_dest, U, V);
@@ -208,7 +208,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
       THROW_BADARG("the slice is not compatible with the mesh_fem (cannot find convex " << sl->convex_num(i) << ")");
 
     if (mf.get_qdim() != 1) dims.push_back(mf.get_qdim());
-    dims.push_back(sl->nb_points());
+    dims.push_back(unsigned(sl->nb_points()));
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims, T());
     sl->interpolate(mf, U, V);
@@ -290,7 +290,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
   const getfem::mesh_fem *mf   = in.pop().to_const_mesh_fem();
   rcarray U              = in.pop().to_rcarray(); 
-  in.last_popped().check_trailing_dimension(mf->nb_dof());
+  in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
   std::string cmd        = in.pop().to_string();
 
   if (check_cmd(cmd, "L2 norm", in, out, 1, 2, 0, 1) && U_is_a_vector(U,cmd)) {
@@ -435,10 +435,10 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const getfem::mesh_fem *mf_dest = in.pop().to_const_mesh_fem();
     error_for_non_lagrange_elements(*mf_dest, true);
     if (!U.is_complex()) {
-      darray V = out.pop().create_darray(1, mf_dest->nb_dof());
+      darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
       getfem::interpolation(*mf, *mf_dest, U.real(), V, true);
     } else {
-      carray V = out.pop().create_carray(1, mf_dest->nb_dof());
+      carray V = out.pop().create_carray(1, unsigned(mf_dest->nb_dof()));
       getfem::interpolation(*mf, *mf_dest, U.cplx(), V, true);
     }
   } else if (check_cmd(cmd, "mesh edges deformation", in, out, 1, 2, 0, 1)) {
@@ -454,7 +454,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       @*/
     const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
     darray err = 
-      out.pop().create_darray_h(mim.linked_mesh().convex_index().last_true()+1);
+      out.pop().create_darray_h(unsigned(mim.linked_mesh().convex_index().last_true()+1));
     if (!U.is_complex())
       getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
     else 

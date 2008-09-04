@@ -221,7 +221,8 @@ namespace bgeot {
     
     for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
       size_type icv = points_tab[pt[0]][i];
-      if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
+      if (icv != ic && is_convex_having_points(icv, short_type(pt.size()),
+					       pt.begin())
 	  && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
 	s.push_back(icv);
     }
@@ -230,12 +231,13 @@ namespace bgeot {
   void mesh_structure::neighbours_of_convex(size_type ic, ind_set &s) const {
     s.resize(0);
     unsigned nbf = nb_faces_of_convex(ic);
-    for (unsigned iff = 0; iff < nbf; ++iff) {
+    for (short_type iff = 0; iff < nbf; ++iff) {
       ind_pt_face_ct pt = ind_points_of_face_of_convex(ic, iff);
       
       for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
 	size_type icv = points_tab[pt[0]][i];
-	if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
+	if (icv != ic && is_convex_having_points(icv, short_type(pt.size()),
+						 pt.begin())
 	    && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
 	  if (std::find(s.begin(), s.end(), icv) == s.end())
 	    s.push_back(icv);
@@ -249,7 +251,8 @@ namespace bgeot {
     
     for (size_type i = 0; i < points_tab[pt[0]].size(); ++i) {
       size_type icv = points_tab[pt[0]][i];
-      if (icv != ic && is_convex_having_points(icv, pt.size(), pt.begin())
+      if (icv != ic && is_convex_having_points(icv, short_type(pt.size()),
+					       pt.begin())
 	  && (convex_tab[ic].cstruct->dim()==convex_tab[icv].cstruct->dim()))
 	return icv;
     }
@@ -272,13 +275,13 @@ namespace bgeot {
   void mesh_edge_list_convex(pconvex_structure cvs, std::vector<size_type> points_of_convex, 
                              size_type cv_id, edge_list &el, bool merge_convex)
   { // a tester ... optimisable.
-    size_type n = cvs->dim();
-    size_type nbp = cvs->nb_points();
+    dim_type n = cvs->dim();
+    short_type nbp = cvs->nb_points();
     size_type ncv = merge_convex ? 0 : cv_id;
 
     if (nbp == n+1 && cvs == simplex_structure(n)) {
       for (dim_type k = 0; k < n; ++k)
-	for (dim_type l = k+1; l <= n; ++l)
+	for (dim_type l = dim_type(k+1); l <= n; ++l)
 	  el.add(edge_list_elt(points_of_convex[k],
 			       points_of_convex[l], ncv));
     }
@@ -292,7 +295,7 @@ namespace bgeot {
     }
     else if (nbp == 2 * n && cvs == prism_structure(n)) {
       for (dim_type k = 0; k < n - 1; ++k)
-	for (dim_type l = k+1; l < n; ++l) {
+	for (dim_type l = dim_type(k+1); l < n; ++l) {
 	  el.add(edge_list_elt(points_of_convex[k],
 			       points_of_convex[l], ncv));
 	  el.add(edge_list_elt(points_of_convex[k+n],
@@ -329,7 +332,7 @@ namespace bgeot {
 	else {
 	  size_type nf = cvs->nb_faces();
 	  //cerr << "ncs = " << ncs << ",cvs->dim=" << int(cvs->dim()) << ", nb_faces=" << nf << endl;
-	  for (size_type f = 0; f < nf; ++f) {
+	  for (short_type f = 0; f < nf; ++f) {
 	    cvstab[ncs+f] = (cvs->faces_structure())[f];
 	    indpttab[ncs+f].resize(cvs->nb_points_of_face(f));
 	    /*
@@ -413,7 +416,7 @@ namespace bgeot {
 	  ite =  ms.convex_to_point(ip).end();
 	for ( ; it != ite; ++it)
 	  if (connectivity[*it] != size_type(-1))
-	    { connectivity[*it] = size_type(-1); pile.push_front(*it); }
+	    { connectivity[*it] = size_type(-1); pile.push_front(int(*it)); }
       }
       if (pile.empty()) {
 	cv = std::min_element(connectivity.begin(), connectivity.end()) - connectivity.begin();

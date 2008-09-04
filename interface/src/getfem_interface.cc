@@ -168,7 +168,7 @@ char* getfem_interface_main(int config_id, const char *function,
     *pout_args = (gfi_array**)gfi_calloc(out.args().size(), sizeof(gfi_array*));
     if (!*pout_args) GMM_THROW(getfemint_error, "memory exhausted..");
     out.set_okay(1);
-    *nb_out_args = out.args().size();
+    *nb_out_args = int(out.args().size());
     std::copy(out.args().begin(), out.args().end(), *pout_args);
   }
   catch (getfemint_bad_arg e) {

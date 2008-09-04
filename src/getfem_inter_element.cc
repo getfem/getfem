@@ -38,8 +38,8 @@ namespace getfem {
 
 
   std::vector<size_type> &
-    interelt_boundary_integration_::face_indices(size_type f1,
-						 size_type f2) const {
+    interelt_boundary_integration_::face_indices(short_type f1,
+						 short_type f2) const {
     GMM_ASSERT1(f1 <= pai1->structure()->nb_faces()
 		&& f2 <= pai2->structure()->nb_faces(), "face number invalid");
     std::vector<size_type> &ind=indices[f1*pai2->structure()->nb_faces()+f2];
@@ -48,7 +48,7 @@ namespace getfem {
       ind.resize(pai1->nb_points_on_face(f1));
       bgeot::pconvex_ref cvr1 = pai1->ref_convex();
       bgeot::pconvex_ref cvr2 = pai2->ref_convex();
-      dim_type N = pai1->structure()->dim() - 1;
+      dim_type N = dim_type(pai1->structure()->dim() - 1);
       base_matrix A1(N+1, N), A2(N+1, N), A(N, N), B(N, N+1);
       base_node o1 = (cvr1->dir_points_of_face(f1))[0];
       base_node o2 = (cvr2->dir_points_of_face(f2))[0];
@@ -102,7 +102,7 @@ namespace getfem {
   }
   
 
-  void compute_on_inter_element::compute_on_face(size_type cv, size_type ff1) {
+  void compute_on_inter_element::compute_on_face(size_type cv,short_type ff1) {
     
     f1 = ff1;
     const getfem::mesh &m(mf.linked_mesh());

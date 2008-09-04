@@ -38,7 +38,7 @@ namespace getfemint
   }
 
   id_type ind_convex_structure(bgeot::pconvex_structure p)
-  { init_tab(); return convex_structure_tab->add_norepeat(p); }
+  { init_tab(); return id_type(convex_structure_tab->add_norepeat(p)); }
   
   bgeot::pconvex_structure addr_convex_structure(id_type i)
   { init_tab(); return (*convex_structure_tab)[i]; }

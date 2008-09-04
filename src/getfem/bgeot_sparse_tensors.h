@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -160,14 +160,14 @@ namespace bgeot {
 	s[i+1]=s[i]*r[i];
       }
     }
-    index_type ndim() const { return r.size(); }
+    index_type ndim() const { return index_type(r.size()); }
     index_type size() const { return s[r.size()]; }
     void set_card(index_type c) const { card_ = c; card_uptodate = true; }
     void unset_card() const { card_uptodate = false; }
     index_type card(bool just_look=false) const {       
       if (!card_uptodate || just_look) {
-	index_type c = std::count_if(m.begin(), m.end(), 
-				     std::bind2nd(std::equal_to<bool>(),true));
+	index_type c = index_type(std::count_if(m.begin(), m.end(), 
+			          std::bind2nd(std::equal_to<bool>(),true)));
 	if (just_look) return c;
 	card_ = c;
       }
@@ -199,7 +199,7 @@ namespace bgeot {
     /* cree un masque de tranche */
     void set_slice(index_type dim, index_type range, index_type islice) {
       r.resize(1); r[0] = range;
-      idxs.resize(1); idxs[0] = dim;
+      idxs.resize(1); idxs[0] = dim_type(dim);
       m.clear(); m.assign(range,false); m[islice] = 1; set_card(1);
       eval_strides();
     }
@@ -216,7 +216,7 @@ namespace bgeot {
     void set_diagonal(index_type n, index_type i0, index_type i1) {
       assert(n);
       r.resize(2); r[0] = r[1] = n;
-      idxs.resize(2); idxs[0] = i0; idxs[1] = i1;
+      idxs.resize(2); idxs[0] = dim_type(i0); idxs[1] = dim_type(i1);
       m.assign(n*n, false); 
       for (index_type i=0; i < n; ++i) m[n*i+i]=true;
       set_card(n);
@@ -228,7 +228,7 @@ namespace bgeot {
     void set_triangular(index_type n, index_type i0, index_type i1) {
       assert(n);
       r.resize(2); r[0] = r[1] = n;
-      idxs.resize(2); idxs[0] = i0; idxs[1] = i1;
+      idxs.resize(2); idxs[0] = dim_type(i0); idxs[1] = dim_type(i1);
       m.assign(n*n,false); unset_card();
       for (index_type i=0; i < n; ++i)
 	for (index_type j=i; j < n; ++j) m[i*n+j]=true;
@@ -237,14 +237,14 @@ namespace bgeot {
     void set_full(index_type dim, index_type range) {
       assert(range);
       r.resize(1); r[0] = range;
-      idxs.resize(1); idxs[0] = dim;
+      idxs.resize(1); idxs[0] = dim_type(dim);
       m.assign(range, true); set_card(range);
       eval_strides();
     }
     void set_empty(index_type dim, index_type range) {
       assert(range);
       r.resize(1); r[0] = range;
-      idxs.resize(1); idxs[0] = dim;
+      idxs.resize(1); idxs[0] = dim_type(dim);
       m.assign(range,false); set_card(0);
       eval_strides();
     }
@@ -256,7 +256,7 @@ namespace bgeot {
     }
     void shift_dim_num_ge(dim_type dim, int shift) {
       for (dim_type i=0; i < idxs.size(); ++i) {
-	if (idxs[i] >= dim) idxs[i]+=shift;
+	if (idxs[i] >= dim) idxs[i] = dim_type(idxs[i] + shift);
       }
       check_assertions();
     }
@@ -333,7 +333,8 @@ namespace bgeot {
 
   protected:
     dim_type index_to_mask_num(dim_type ii) const { 
-      if (index_is_valid(ii)) return idx2mask[ii].mask_num; else return dim_type(-1); 
+      if (index_is_valid(ii))
+	return dim_type(idx2mask[ii].mask_num); else return dim_type(-1); 
     }
   public:
     void clear() { masks_.resize(0); idx2mask.resize(0); }
@@ -341,7 +342,7 @@ namespace bgeot {
       idx2mask.swap(ts.idx2mask);
       masks_.swap(ts.masks_);
     }
-    dim_type ndim() const { return idx2mask.size(); }
+    dim_type ndim() const { return dim_type(idx2mask.size()); }
     bool index_is_valid(dim_type ii) const {  
       assert(ii < idx2mask.size()); return idx2mask[ii].is_valid(); 
     }
@@ -349,7 +350,7 @@ namespace bgeot {
       assert(index_is_valid(ii)); return masks_[idx2mask[ii].mask_num]; 
     }
     dim_type index_to_mask_dim(dim_type ii) const { 
-      assert(index_is_valid(ii)); return idx2mask[ii].mask_dim; 
+      assert(index_is_valid(ii)); return dim_type(idx2mask[ii].mask_dim); 
     }
     index_type dim(dim_type ii) const 
     { assert(index_is_valid(ii)); return index_to_mask(ii).ranges()[index_to_mask_dim(ii)]; 
@@ -439,7 +440,7 @@ namespace bgeot {
       /* quelques verifs de base */
       GMM_ASSERT3(ts2.ndim() == ndim(), "");
       if (ts2.ndim()==0) return; /* c'est un scalaire */
-      for (index_type i = 0; i < ndim(); ++i) 
+      for (dim_type i = 0; i < ndim(); ++i) 
 	if (index_is_valid(i) && ts2.index_is_valid(i))
 	  GMM_ASSERT3(ts2.dim(i) == dim(i), "");
 
@@ -447,9 +448,9 @@ namespace bgeot {
       dal::bit_vector mask_treated1; mask_treated1.sup(0,masks().size());
       dal::bit_vector mask_treated2; mask_treated2.sup(0,ts2.masks().size());
       std::vector<const tensor_mask*> lstA, lstB; lstA.reserve(10); lstB.reserve(10);
-      for (index_type i = 0; i < ndim(); ++i) {
-	dim_type i1 = index_to_mask_num(i);
-	dim_type i2 = ts2.index_to_mask_num(i);
+      for (dim_type i = 0; i < ndim(); ++i) {
+	dim_type i1 = dim_type(index_to_mask_num(i));
+	dim_type i2 = dim_type(ts2.index_to_mask_num(i));
 	lstA.clear(); lstB.clear();
 	if (index_is_valid(i) && !mask_treated1[i1])
 	  find_linked_masks(i1, *this, ts2, mask_treated1, mask_treated2,
@@ -493,7 +494,7 @@ namespace bgeot {
 	  }
 	}
       }
-      set_ndim_noclean(p.size());
+      set_ndim_noclean(dim_type(p.size()));
       update_idx2mask();
     }
 
@@ -717,17 +718,17 @@ namespace bgeot {
 	}
       }
     }
-    dim_type ndim() const { return idxval.size(); }
+    dim_type ndim() const { return dim_type(idxval.size()); }
     /* get back the value of an index from then current iterator position */
     index_type index(dim_type ii) {
       index_value_data& iv = idxval[ii];
-      index_type cnt = (*iv.ppinc - iv.pincbase)/iv.nn;
+      index_type cnt = index_type((*iv.ppinc - iv.pincbase)/iv.nn);
       return ((iv.pposbase[cnt]) % iv.mod)/ iv.div;
     }
     index_type vectorized_size() const { return vectorized_size_; }
     const std::vector<stride_type>& vectorized_strides() const { return vectorized_strides_; }
     bool next(unsigned i_stop = unsigned(-1), unsigned i0_ = unsigned(-2)) {//=pr.size()-1) {
-      unsigned i0 = (i0_ == unsigned(-2) ? pr.size()-1 : i0_);
+      unsigned i0 = unsigned(i0_ == unsigned(-2) ? pr.size()-1 : i0_);
       while (i0 != i_stop) {
 	for (unsigned n = pr[i0].n; n < N; ++n) {
 	  //	  index_type pos = pr[i0].cnt * (N-pri[i0].n) + (n - pri[i0].n);
@@ -870,7 +871,7 @@ namespace bgeot {
       for (index_type i=0; i < s.length(); ++i) {
 	size_type pos = s.find(s[i]);
 	if (s[i] != ' ' && pos != i) { // ce n'est pas de l'indice => reduction sur la diagonale
-	  ts = ts.diag_shape(tensor_mask::Diagonal(pos,i));
+	  ts = ts.diag_shape(tensor_mask::Diagonal(dim_type(pos),dim_type(i)));
 	}
       }
     }

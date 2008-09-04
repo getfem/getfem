@@ -38,7 +38,7 @@ namespace getfemint
   }
 
   id_type ind_matelemtype(getfem::pmat_elem_type p)
-  { init_tab(); return matelemtype_tab->add_norepeat(p); }
+  { init_tab(); return id_type(matelemtype_tab->add_norepeat(p)); }
   
   getfem::pmat_elem_type addr_matelemtype(id_type i)
   { init_tab(); return (*matelemtype_tab)[i]; }

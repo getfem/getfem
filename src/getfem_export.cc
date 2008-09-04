@@ -122,7 +122,7 @@ namespace getfem
 
 
   void vtk_export::exporting(const stored_mesh_slice& sl) {
-    psl = &sl; dim_ = sl.dim();
+    psl = &sl; dim_ = dim_type(sl.dim());
     GMM_ASSERT1(psl->dim() <= 3, "attempt to export a " << int(dim_)
 		<< "D slice (not supported)");
   }
@@ -154,8 +154,8 @@ namespace getfem
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
       pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
-      int degree = ((pf != classical_pf1 && pf->estimated_degree() > 1) || 
-                     pgt->structure() != pgt->basic_structure()) ? 2 : 1;
+      short_type degree = short_type(((pf != classical_pf1 && pf->estimated_degree() > 1) || 
+				      pgt->structure() != pgt->basic_structure()) ? 2 : 1);
       pmf->set_finite_element(cv, discontinuous ? 
                               classical_discontinuous_fem(pgt, degree) : 
                               classical_fem(pgt, degree));
@@ -290,7 +290,7 @@ namespace getfem
     os << "DATASET UNSTRUCTURED_GRID\n";
     os << "POINTS " << pmf_dof_used.card() << " float\n";
     std::vector<int> dofmap(pmf->nb_dof());
-    size_type cnt = 0;
+    int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
       base_node P = pmf->point_of_dof(d);
@@ -396,7 +396,7 @@ namespace getfem
 
 
   bool dx_export::new_mesh(std::string &name) {
-    name = default_name(name, meshes.size(), "mesh");
+    name = default_name(name, int(meshes.size()), "mesh");
     std::list<dxMesh>::iterator it = get_mesh(name, false);
     if (it != meshes.end()) {
       if (&(*it) != &current_mesh())
@@ -413,7 +413,7 @@ namespace getfem
     if (!new_mesh(name)) return;
     psl_use_merged = merge_points;
     if (merge_points) sl.merge_nodes();
-    psl = &sl; dim_ = sl.dim();
+    psl = &sl; dim_ = dim_type(sl.dim());
     GMM_ASSERT1(psl->dim() <= 3, "4D slices and more are not supported");
     for (dim_type d = 0; d <= psl->dim(); ++d) {
       if (psl->nb_simplexes(d)) {
@@ -427,7 +427,7 @@ namespace getfem
 
  
   void dx_export::exporting(const mesh_fem& mf, std::string name) {
-    name = default_name(name, meshes.size(), "mesh");
+    name = default_name(name, int(meshes.size()), "mesh");
     if (!new_mesh(name)) return;
     const mesh &m = mf.linked_mesh();
     GMM_ASSERT1(mf.linked_mesh().convex_index().card() != 0,
@@ -459,7 +459,7 @@ namespace getfem
       pmf->set_finite_element(cv, classical_pf1);
     }
     pmf_dof_used.add(0, pmf->nb_dof());
-    connections_dim = pmf->nb_dof_of_element(m.convex_index().first_true());
+    connections_dim = dim_type(pmf->nb_dof_of_element(m.convex_index().first_true()));
   }
 
   void dx_export::exporting(const mesh& m, std::string name) {
@@ -549,7 +549,7 @@ namespace getfem
     unsigned long lu_end, lu_series;
     do { 
       real_os.seekg(-1, std::ios::cur); 
-      c = real_os.peek();
+      c = char(real_os.peek());
     } while (++count < 512 && c != '#');
     real_os.getline(line, sizeof line);
     if (sscanf(line, "#E \"THE_END\" %lu %lu", &lu_series, &lu_end) != 2)

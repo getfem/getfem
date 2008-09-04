@@ -193,7 +193,7 @@ namespace getfem {
 
 	if (version == 2) { /* For version 2 */
 	  ci.set_nb_nodes();
-	  cv_nb_nodes = ci.nodes.size();
+	  cv_nb_nodes = unsigned(ci.nodes.size());
 	}
 	else
 	  ci.nodes.resize(cv_nb_nodes);
@@ -249,7 +249,8 @@ namespace getfem {
 		 it = ct.begin(); it != ct.end(); ++it) {
 	    for (unsigned face=0;
 		 face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-	      if (m.is_convex_face_having_points(*it,face,ci.nodes.size(),
+	      if (m.is_convex_face_having_points(*it,face,
+						 short_type(ci.nodes.size()),
 						 ci.nodes.begin())) {
 		m.region(ci.region+1000).add(*it,face);
 		cvok = true;

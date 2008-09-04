@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -139,7 +139,8 @@ namespace getfemint
     unsigned size() const { return sz; }
     unsigned ndim() const { return ndim_; }
     /* dim(0) = first dimension, dim(-1) = last dimension, ..*/
-    unsigned dim(int d) const { if (d < 0) d = ndim_ + d; return d >= 0 && d < int(ndim_) ? sizes_[d] : 1; }
+    unsigned dim(int d) const
+    { if (d < 0) d = ndim_ + d; return d >= 0 && d < int(ndim_) ? sizes_[d] : 1; }
     unsigned getm() const { return dim(0); }
     unsigned getn() const { return dim(1); }
     unsigned getp() const { return dim(2); }
@@ -165,15 +166,17 @@ namespace getfemint
   protected:
     dal::shared_array<T> data;
   public:
-    value_type& operator[](unsigned i) { if (i >= size()) THROW_INTERNAL_ERROR; return data[i]; }
-    const value_type& operator[](unsigned i) const { if (i >= size()) THROW_INTERNAL_ERROR; return data[i]; }
-    value_type& operator()(unsigned i, unsigned j, unsigned k=0) { 
+    value_type& operator[](size_type i)
+    { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
+    const value_type& operator[](size_type i)
+      const { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
+    value_type& operator()(size_type i, size_type j, size_type k=0) { 
       if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR; 
-      return data[i+j*getm()+k*getm()*getn()]; 
+      return data[unsigned(i+j*getm()+k*getm()*getn())]; 
     }
-    const value_type& operator()(unsigned i, unsigned j, unsigned k=0) const { 
+    const value_type& operator()(size_type i, size_type j, size_type k=0) const { 
       if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR;
-      return data[i+j*getm()+k*getm()*getn()]; 
+      return data[unsigned(i+j*getm()+k*getm()*getn())]; 
     }
     iterator begin() { return data.get(); }
     iterator end() { return data.get()+size(); }
@@ -544,11 +547,11 @@ private:
 
     template<class VECT> void from_dcvector(VECT& v) {
       typedef typename VECT::value_type T;
-      create_array_h(v.size(), T());
+      create_array_h(unsigned(v.size()), T());
       std::copy(v.begin(), v.end(), gfi_get_data(arg, T()));
     }
     template<class VECT> void from_ivector(VECT& v) {
-      create_iarray_h(v.size());
+      create_iarray_h(unsigned(v.size()));
       std::copy(v.begin(), v.end(), gfi_int32_get_data(arg));
     }
     template<class VEC_CONT> void from_vector_container(const VEC_CONT& vv);
@@ -557,7 +560,7 @@ private:
   template<class STR_CONT> void 
   mexarg_out::from_string_container(const STR_CONT& s)
   {
-    arg = checked_gfi_array_create_2(s.size(), 1, GFI_CELL);
+    arg = checked_gfi_array_create_2(int(s.size()), 1, GFI_CELL);
     gfi_array **c = gfi_cell_get_data(arg);
     typename STR_CONT::const_iterator it;
     size_type cnt = 0;
@@ -572,7 +575,7 @@ private:
   {
     size_type n = vv.size();
     size_type m = (n == 0) ? 0 : vv[0].size();
-    darray w  = create_darray(m,n);
+    darray w  = create_darray(unsigned(m),unsigned(n));
     for (size_type j=0; j < n; ++j)
       std::copy(vv[j].begin(), vv[j].end(), &w(0,j));
   }
@@ -602,7 +605,7 @@ private:
       if (decal >= idx.card()) THROW_INTERNAL_ERROR;
       while (decal>0) { i++; check(); if (idx.is_in(i)) decal--; }
       idx.sup(i); 
-      if (out_idx) *out_idx = i;
+      if (out_idx) *out_idx = int(i);
       return in[i];
     }
     mexarg_in &pop(size_type decal=0) { 
@@ -613,9 +616,13 @@ private:
     }
     mexarg_in &last_popped() { return last; }
     void restore(size_type i) { idx.add(i); }
-    mexarg_in front() const { check(); return mexarg_in(in[idx.first_true()],idx.first_true()); }
+    mexarg_in front() const {
+      check();
+      return mexarg_in(in[idx.first_true()],
+		       int(idx.first_true()));
+    }
     int narg() const { return nb_arg; }
-    int remaining() const { return idx.card(); }
+    int remaining() const { return int(idx.card()); }
     void get_array(const gfi_array **& m) {
       if (remaining()) {
 	m = new const gfi_array *[remaining()];

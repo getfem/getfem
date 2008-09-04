@@ -134,7 +134,7 @@ namespace bgeot {
     base_small_vector w(M.nrows());
     GMM_ASSERT1(gmm::mat_nrows(M) != 0 && gmm::mat_ncols(M) == dim(),
 		"invalid dimensions for the transformation matrix");
-    dim_ = gmm::mat_nrows(M);
+    dim_ = unsigned(gmm::mat_nrows(M));
     for (dal::bv_visitor i(index()); !i.finished(); ++i) {
       w = (*this)[i];
       gmm::resize((*this)[i], dim_);

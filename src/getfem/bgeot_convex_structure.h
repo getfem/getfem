@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -95,7 +95,7 @@ namespace bgeot {
      *	@param i the face number.
      */
     inline short_type nb_points_of_face(short_type i) const
-    { return faces[i].size(); }
+    { return short_type(faces[i].size()); }
     /** Give an array of the indexes of the vertices of a face. 
      *	The indexes are "local" to the convex.
      *	@param i the face number.
@@ -167,7 +167,7 @@ namespace bgeot {
    *   i.e. the direct product of a simplex of dimension d-1 and a segment.
    */
   inline pconvex_structure prism_structure(dim_type nc) { 
-    return convex_product_structure(simplex_structure(nc-1),
+    return convex_product_structure(simplex_structure(dim_type(nc-1)),
 				    simplex_structure(1));
   }
 

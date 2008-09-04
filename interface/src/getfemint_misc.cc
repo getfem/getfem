@@ -76,8 +76,8 @@ namespace getfemint {
   gfi_array *
   convert_to_gfi_sparse(const gf_real_sparse_by_row& smat, double threshold)
   {
-    int ni = gmm::mat_nrows(smat);
-    int nj = gmm::mat_ncols(smat);
+    int ni = int(gmm::mat_nrows(smat));
+    int nj = int(gmm::mat_ncols(smat));
     unsigned nnz = 0;
     gfi_array *mxA;
     std::vector<int> ccnt(nj);
@@ -150,8 +150,8 @@ namespace getfemint {
   convert_to_gfi_sparse(const gf_real_sparse_by_col& smat, double threshold)
   {
     
-    int ni = gmm::mat_nrows(smat);
-    int nj = gmm::mat_ncols(smat);
+    int ni = int(gmm::mat_nrows(smat));
+    int nj = int(gmm::mat_ncols(smat));
     unsigned nnz = 0;
     gfi_array *mxA;
 
@@ -212,7 +212,7 @@ namespace getfemint {
       for (; its != itse; ++its) {
 	if ((*its) != 0. && /* (*its) != 0 => max(rowmax,colmax) != 0 */
 	    gmm::abs((*its))/std::max(colmax[j], rowmax[its.index()]) > threshold) {
-	  ir[jc[j]+ccnt[j]] = its.index();
+	  ir[jc[j]+ccnt[j]] = unsigned(its.index());
 	  pr[jc[j]+ccnt[j]] = (*its);
 	  ccnt[j]++;
 	}
@@ -230,7 +230,8 @@ namespace getfemint {
     bgeot::edge_list::const_iterator it = elcv.begin();
     for (it = elcv.begin(); it != elcv.end(); it++) {
       if (f != -1) {
-	bgeot::mesh_structure::ind_pt_face_ct pt = m.ind_points_of_face_of_convex(cv, f);
+	bgeot::mesh_structure::ind_pt_face_ct
+	  pt = m.ind_points_of_face_of_convex(cv, short_type(f));
 	if (std::find(pt.begin(), pt.end(), (*it).i) == pt.end()) continue;
 	if (std::find(pt.begin(), pt.end(), (*it).j) == pt.end()) continue;
       }
@@ -266,7 +267,7 @@ namespace getfemint {
       /* loop over the rows -- if face numbers are given, the performance will
 	 be better if the columns are grouped by convex numbers */
       while (j < v.getn()) {
-	size_type cv = size_type(v(0,j)-config::base_index());
+	size_type cv = size_type(v(0,unsigned(j))-config::base_index());
 	bgeot::edge_list elcv;
 
 	if (!m.convex_index().is_in(cv)) 
@@ -277,11 +278,11 @@ namespace getfemint {
 	if (v.getm() == 2) { /* face numbers present */
 	  /* loop while the convex number is do not change */
 	  do {
-	    mesh_edge_list_merge(m, el, elcv, cv, size_type(v(1,j)-config::base_index()));
+	    mesh_edge_list_merge(m, el, elcv, int(cv), int(v(1,unsigned(j))-config::base_index()));
 	    j++;
-	  } while (j < v.getn() && size_type(v(0,j)-config::base_index()) == cv);
+	  } while (j < v.getn() && size_type(v(0,unsigned(j))-config::base_index()) == cv);
 	} else { /* merge all edges of the convex */
-	  mesh_edge_list_merge(m,el, elcv, cv, -1);
+	  mesh_edge_list_merge(m,el, elcv, int(cv), -1);
 	  j++;
 	}
       }
@@ -294,7 +295,7 @@ namespace getfemint {
     if (v) {
       if (v->getm() != 1 && v->getm()!=2) THROW_ERROR("too much rows (2 max)");
       l.resize(v->getn());
-      for (size_type i=0; i < v->getn(); ++i) {
+      for (unsigned i=0; i < v->getn(); ++i) {
 	l[i].cv = size_type(v->operator()(0,i))-config::base_index();
 	if (!m.convex_index()[l[i].cv]) 
 	  THROW_ERROR("the convex " << l[i].cv+config::base_index() << " is not part of the mesh");
@@ -319,7 +320,7 @@ namespace getfemint {
   to_mesh_region(const iarray &v) {
     getfem::mesh_region rg;
     if (v.getm() != 1 && v.getm()!=2) THROW_ERROR("too much rows for mesh_region description (2 max)");
-    for (size_type i=0; i < v.getn(); ++i) {
+    for (unsigned i=0; i < v.getn(); ++i) {
       size_type cv = size_type(v(0,i))-config::base_index();
       size_type f  = size_type(-1);
       if (v.getm() == 2)
@@ -363,7 +364,7 @@ namespace getfemint {
   {
     assert(mf->convex_index().is_in(cv));
     getfem::pfem cv_fem = mf->fem_of_element(cv); 
-    size_type qdim = mf->get_qdim();
+    dim_type qdim = mf->get_qdim();
     /* largely inspired by getfem_export.h */
 
     /* interpolation of the solution.                                  */
@@ -387,7 +388,7 @@ namespace getfemint {
 					  cv_fem, getfem::base_node(), G, cv);
     for (size_type row = 0; row < U.getm(); ++row) {
       for (size_type j = 0; j < coeff.size(); j++)
-	coeff[j] = U(row, mf->ind_dof_of_element(cv)[j]);
+	coeff[j] = U(unsigned(row), unsigned(mf->ind_dof_of_element(cv)[j]));
       for (size_type j = 0; j < pt.size(); ++j) {
 	ctx.set_xref(pt[j]);
 	cv_fem->interpolation(ctx, coeff, val, qdim);
@@ -431,7 +432,7 @@ namespace getfemint {
       B = V[0] + (V[1] - V[0]) * c;
 
       for (size_type inode = 0; inode <= layer; inode++, pcnt++) {
-	spt[pcnt] = A + (B-A) * ((inode)/(getfem::scalar_type)layer);
+	spt[pcnt] = A + (B-A) * (scalar_type(inode)/scalar_type(layer));
       }
     }
     if (!(pcnt == spt.size())) THROW_INTERNAL_ERROR;
@@ -503,14 +504,16 @@ namespace getfemint {
 	if (!(n[0] < pt.size()) || !(n[1] < pt.size()) || !(n[2] < pt.size())) {
 	  THROW_INTERNAL_ERROR;
 	}	
-	for (size_type ipt = 0; ipt < 3; ++ipt) {
-	  for (size_type idim = 0; idim < mesh_dim; ++idim) {
-	    w(ipt * mesh_dim + idim, tri_cnt+refined_tri_cnt) = pt[n[ipt]][idim];
+	for (unsigned ipt = 0; ipt < 3; ++ipt) {
+	  for (unsigned idim = 0; idim < mesh_dim; ++idim) {
+	    w(unsigned(ipt * mesh_dim + idim),
+	      unsigned(tri_cnt+refined_tri_cnt)) = pt[n[ipt]][idim];
 	  }
 	  if (pmf) {
 	    for (size_type row = 0; row < U.getm(); ++row) {
 	      for (size_type q = 0; q < qdim; ++q) {
-		w(3*mesh_dim + row*qdim*3 + ipt*qdim + q,  tri_cnt + refined_tri_cnt) = pt_val(q,n[ipt]);
+		w(unsigned(3*mesh_dim + row*qdim*3 + ipt*qdim + q),
+		  unsigned(tri_cnt + refined_tri_cnt)) = pt_val(q,n[ipt]);
 	      }
 	    }
 	  }
@@ -569,7 +572,8 @@ namespace getfemint {
       }
     }
 
-    darray w = out.pop().create_darray(3*mesh_dim + 3*qdim*U.getm(), nb_tri);
+    darray w = out.pop().create_darray(3*mesh_dim + 3*qdim*U.getm(),
+				       unsigned(nb_tri));
 
     /* second pass */
     size_type tri_cnt = 0;
@@ -588,7 +592,8 @@ namespace getfemint {
 	ipts.resize(cv_ref->nb_points());
 	for (size_type j=0; j < ipts.size(); ++j) ipts[j]=j;
       } else {
-	const bgeot::convex_ind_ct& pts = cv_struc->ind_points_of_face(cvf[i].f);
+	const bgeot::convex_ind_ct&
+	  pts = cv_struc->ind_points_of_face(short_type(cvf[i].f));
 	ipts.resize(pts.size());
 	std::copy(pts.begin(), pts.end(), ipts.begin());
 	cv_struc = cv_struc->faces_structure()[cvf[i].f];
@@ -597,7 +602,7 @@ namespace getfemint {
 
       /* for each point, count the nb of faces it belongs */
       std::vector<size_type> fcnt(cv_struc->nb_points(), 0);
-      for (size_type f = 0; f < cv_struc->nb_faces(); ++f) {
+      for (short_type f = 0; f < cv_struc->nb_faces(); ++f) {
 	for (size_type fp = 0; fp < cv_struc->nb_points_of_face(f); ++fp) {
 	  fcnt[cv_struc->ind_points_of_face(f)[fp]]++;
 	}
@@ -612,13 +617,13 @@ namespace getfemint {
       }
       ipts.resize(j);      
 
-#define DO_TRIANGLE(a,b,c) { \
-      vertices[0] = cv_ref->points()[ipts[a]]; \
-      vertices[1] = cv_ref->points()[ipts[b]]; \
-      vertices[2] = cv_ref->points()[ipts[c]]; \
-      add_refined_tri(mesh, cvf[i].cv, vertices, \
-                      n_refine, \
-                      w, tri_cnt, pmf, U); tri_cnt += n_refine*n_refine; }
+#define DO_TRIANGLE(a,b,c) {				\
+	vertices[0] = cv_ref->points()[ipts[a]];	\
+	vertices[1] = cv_ref->points()[ipts[b]];	\
+	vertices[2] = cv_ref->points()[ipts[c]];	\
+	add_refined_tri(mesh, cvf[i].cv, vertices,			\
+			int(n_refine),					\
+			w, tri_cnt, pmf, U); tri_cnt += n_refine*n_refine; }
 
       if (ipts.size() == 3) {
 	DO_TRIANGLE(0,1,2);

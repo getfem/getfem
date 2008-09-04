@@ -73,13 +73,13 @@ void lap_pb::init(void)
   LY = PARAM.real_value("LY", "Size in Y");
   LZ = PARAM.real_value("LZ", "Size in Y");
   incline = PARAM.real_value("INCLINE", "incline of the mesh");
-  NX = PARAM.int_value("NX", "Nomber of sace steps ");
-  integration = PARAM.int_value("INTEGRATION", "integration method");
-  mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
+  NX = int(PARAM.int_value("NX", "Nomber of sace steps "));
+  integration = int(PARAM.int_value("INTEGRATION", "integration method"));
+  mesh_type = int(PARAM.int_value("MESH_TYPE", "Mesh type "));
   residual = PARAM.real_value("RESIDUAL", "Residu for c.g.");
-  K = PARAM.int_value("K", "Finite element degree");
-  KI = PARAM.int_value("KI", "Integration degree");
-  fem_type = PARAM.int_value("FEM_TYPE", "Finite element method");
+  K = int(PARAM.int_value("K", "Finite element degree"));
+  KI = int(PARAM.int_value("KI", "Integration degree"));
+  fem_type = int(PARAM.int_value("FEM_TYPE", "Finite element method"));
   datafilename = std::string( PARAM.string_value("ROOTFILENAME",
 			     "File name for saving"));
 
@@ -101,11 +101,11 @@ void lap_pb::init(void)
 
   switch (mesh_type) {
   case 0 : getfem::parallelepiped_regular_simplex_mesh
-		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+      (mesh, bgeot::dim_type(N), org, vtab.begin(), ref.begin()); break;
   case 1 : getfem::parallelepiped_regular_mesh
-		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+      (mesh, bgeot::dim_type(N), org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
-		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+      (mesh, bgeot::dim_type(N), org, vtab.begin(), ref.begin()); break;
   default : GMM_ASSERT1(false, "Unknown type of mesh");
   }
 
@@ -135,7 +135,7 @@ void lap_pb::init(void)
 
   getfem::pintegration_method ppi;
   char meth[500];
-  nn = mesh.convex_index(N);
+  nn = mesh.convex_index(bgeot::dim_type(N));
   switch (integration) {
   case 0 :
     switch (mesh_type) { 

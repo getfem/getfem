@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -120,11 +120,11 @@ namespace gmm {
   
     while (! iter.finished_vect(r)) {
     
-      if (rho == R(0) || xi == R(0))
+      if (rho == R(0) || xi == R(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
-
+      }
       gmm::copy(gmm::scaled(v_tld, T(R(1)/rho)), v);
       gmm::scale(y, T(R(1)/rho));
 
@@ -132,11 +132,11 @@ namespace gmm {
       gmm::scale(z, T(R(1)/xi));
 
       delta = gmm::vect_sp(z, y);
-      if (delta == T(0)) 
+      if (delta == T(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
-
+      }
       gmm::right_mult(M1, y, y_tld);		
       gmm::transposed_left_mult(M1, z, z_tld);
 
@@ -151,17 +151,17 @@ namespace gmm {
       gmm::mult(A, p, p_tld);
 
       ep = gmm::vect_sp(q, p_tld);
-      if (ep == T(0)) 
+      if (ep == T(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
-
+      }
       beta = ep / delta;
-      if (beta == T(0))
+      if (beta == T(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
-
+      }
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
       gmm::left_mult(M1, v_tld, y);
 
@@ -180,11 +180,11 @@ namespace gmm {
       theta = rho / (gamma_1 * beta);
       gamma = T(1) / gmm::sqrt(T(1) + gmm::sqr(theta));
 
-      if (gamma == T(0)) 
+      if (gamma == T(0)) {
 	if (iter.get_maxiter() == size_type(-1)) 
 	  { GMM_ASSERT1(false, "QMR failed to converge"); }
 	else { GMM_WARNING1("QMR failed to converge"); return; }
-      
+      }
       eta = -eta * T(rho_1) * gmm::sqr(gamma) / (beta * gmm::sqr(gamma_1));
 
       if (iter.first()) {

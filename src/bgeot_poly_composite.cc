@@ -308,9 +308,9 @@ namespace bgeot {
 					  const std::vector<base_node> *opt_gt_pts,
 					  short_type k, pbasic_mesh &pm) {
     size_type nbp = cvs->basic_structure()->nb_points();
-    size_type n = cvs->dim();
+    dim_type n = cvs->dim();
     /* Identifying simplexes.                                           */    
-    if (nbp == n+1 && 
+    if (nbp == size_type(n+1) && 
 	cvs->basic_structure()==simplex_structure(n)) {
       // smc.pm->write_to_file(cout);
       structured_mesh_for_simplex_(cvs,opt_gt,opt_gt_pts,k,pm);
@@ -318,7 +318,7 @@ namespace bgeot {
     } else if (nbp == (size_type(1) << n) && 
 	       cvs->basic_structure() == parallelepiped_structure(n)) {
       structured_mesh_for_parallelepiped_(cvs,opt_gt,opt_gt_pts,k,pm);
-    } else if (nbp == 2 * n && 
+    } else if (nbp == size_type(2 * n) && 
 	       cvs->basic_structure() == prism_structure(n)) {
       GMM_ASSERT1(false, "Sorry, structured_mesh not implemented for prisms.");
     } else {
@@ -339,8 +339,9 @@ namespace bgeot {
     }
     //cerr << "on_face=" << on_face << endl;
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
-      for (size_type ff = 0; ff < m.structure_of_convex(cv)->nb_faces(); ++ff) {
-        mesh_structure::ind_pt_face_ct ipts=m.ind_points_of_face_of_convex(cv,ff);
+      for (short_type ff=0; ff < m.structure_of_convex(cv)->nb_faces(); ++ff) {
+        mesh_structure::ind_pt_face_ct
+	  ipts=m.ind_points_of_face_of_convex(cv,ff);
         bool allin = true;
         for (size_type i=0; i < ipts.size(); ++i) if (!on_face[ipts[i]])
 	  { allin = false; break; }

@@ -190,7 +190,7 @@ namespace getfem {
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type cv;
 
-    mi2[1] = target_dim(); mi2[0] = e.nb_dof;
+    mi2[1] = target_dim(); mi2[0] = short_type(e.nb_dof);
     t.adjust_sizes(mi2);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (e.nb_dof == 0) return;
@@ -239,7 +239,7 @@ namespace getfem {
     elt_interpolation_data &e = elements.at(c.convex_num());
     size_type nbdof = e.nb_dof, cv;
 
-    mi3[2] = N0; mi3[1] = target_dim(); mi3[0] = nbdof;
+    mi3[2] = short_type(N0); mi3[1] = target_dim(); mi3[0] = short_type(nbdof);
     t.adjust_sizes(mi3);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (nbdof == 0) return;
@@ -351,7 +351,7 @@ namespace getfem {
       maxg = std::max(maxg, v[cv]);
       meang += v[cv];
     }
-    meang /= mf.linked_mesh().convex_index().card();
+    meang /= scalar_type(mf.linked_mesh().convex_index().card());
   }
 
   size_type interpolated_fem::memsize() const {

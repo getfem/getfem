@@ -61,7 +61,7 @@ void gf_geotrans_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR GEOTRANS:GET('nbpts')
       return the number of points of the geometric transformation.
       @*/
-    out.pop().from_scalar(pgt->nb_points());
+    out.pop().from_scalar(double(pgt->nb_points()));
   } else if (check_cmd(cmd, "pts", in, out, 0, 0, 0, 1)) {
     /*@GET GEOTRANS:GET('pts') 
       Return the reference convex points.
@@ -98,8 +98,8 @@ void gf_geotrans_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       @*/
     getfem::base_matrix G = in.pop().to_darray(-1, -1).row_col_to_bm();
     darray pts = in.pop().to_darray(pgt->dim(), -1);
-    darray w = out.pop().create_darray(G.nrows(), pts.getn());
-    for (size_type i=0; i < pts.getn(); ++i) {
+    darray w = out.pop().create_darray(unsigned(G.nrows()), pts.getn());
+    for (unsigned i=0; i < pts.getn(); ++i) {
       getfem::base_node P = pgt->transform(pts.col_to_bn(i), G);
       for (size_type k=0; i < P.size(); ++k) w(k,i) = P[k];
     }

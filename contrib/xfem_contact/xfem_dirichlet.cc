@@ -64,80 +64,113 @@ double u_alpha = 1.5;
 double u_B = 20;
 double u_n = 7.0;
 double dtheta = M_PI/36;
+
 double u_exact(const base_node &p) {
-  double norm_sqr = gmm::vect_norm2_sqr(p);
+  double R = Radius, r=gmm::vect_norm2(p), T=atan2(p[1], p[0])+dtheta;
   switch (u_version) {
     case 0: {
       double sum = std::accumulate(p.begin(), p.end(), double(0));
       
-      return 5.0 * sin(sum) * (norm_sqr - Radius*Radius);
+      return 5.0 * sin(sum) * (r*r - Radius*Radius);
     }
     case 1: {
-      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
-      return Radius*Radius - r*r *(1+A*(1.0 + sin(n*T)));
+      double A=u_alpha, n=u_n;
+      return (R*R - r*r *(1+A*(1.0 + sin(n*T))));
     }
     case 2: {
-      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
-      return (Radius*Radius - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
+      double A=u_alpha, n=u_n, B=u_B;
+      return (R*R - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
+    }
+    case 3: {
+      double A=u_alpha, n=u_n;
+      return 5*(R*R*R*R - r*r*r*r*(1+A*(1.0 + sin(n*T))));      
     }
   }
   GMM_ASSERT1(false, "Invalid exact solution");
 }
 
 double g_exact(const base_node &p) {
-  double norm_sqr = gmm::vect_norm2_sqr(p);
+  // value of the normal derivative. Due to the pb idem than the opposite of
+  // norm of the gradient.
+  double R = Radius, r=gmm::vect_norm2(p);
   switch (u_version) {
-    case 0: {
-      double sum = std::accumulate(p.begin(), p.end(), double(0));
-      if (norm_sqr < 1e-10) norm_sqr = 1e-10;
-      return 5.0 * (sum * cos(sum) * (norm_sqr - Radius*Radius)
-		    + 2.0 * norm_sqr * sin(sum)) / sqrt(norm_sqr);
-    }
-    case 1: {
-      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
-      return - sqrt(r*r*pow(2.0*sin(T)+2.0*sin(T)*A+2.0*sin(T)*A*sin(n*T)+cos(T)*A*cos(n*T)*n,2.0)+r*r*pow(-2.0*cos(T)-2.0*cos(T)*A-2.0*cos(T)*A*sin(n*T)+sin(T)*A*cos(n*T)*n,2.0));
-    } 
-    case 2: {
-      double R=Radius, r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
-      if (gmm::abs(r) < 1e-10) r = 1e-10;
-      return -(4.0*r*cos(B*r)+8.0*r*cos(B*r)*A+8.0*r*cos(B*r)*A*A+2.0*sin(B*r)*B*R*R-2.0*sin(B*r)*B*r*r+r*A*A*pow(cos(n*T),2.0)*n*n*cos(B*r)+8.0*r*cos(B*r)*A*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*sin(n*T)+2.0*sin(B*r)*B*r*r*A*A*pow(cos(n*T),2.0)-4.0*r*cos(B*r)*A*A*pow(cos(n*T),2.0)+8.0*r*cos(B*r)*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*A-4.0*sin(B*r)*B*r*r*A+2.0*sin(B*r)*B*R*R*A+2.0*sin(B*r)*B*R*R*A*sin(n*T))/sqrt(A*A*pow(cos(n*T),2.0)*n*n+4.0+8.0*A+8.0*A*sin(n*T)+8.0*A*A+8.0*A*A*sin(n*T)-4.0*A*A*pow(cos(n*T),2.0));
-    }
+  case 0: {
+    double sum=std::accumulate(p.begin(), p.end(), double(0)), norm_sqr = r*r;
+    if (norm_sqr < 1e-10) norm_sqr = 1e-10;
+    return 5.0 * (sum * cos(sum) * (norm_sqr - R*R)
+		  + 2.0 * norm_sqr * sin(sum)) / sqrt(norm_sqr);
+  }
+  case 1: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+    return - sqrt(r*r*pow(2.0*sin(T)+2.0*sin(T)*A+2.0*sin(T)*A*sin(n*T)+cos(T)*A*cos(n*T)*n,2.0)+r*r*pow(-2.0*cos(T)-2.0*cos(T)*A-2.0*cos(T)*A*sin(n*T)+sin(T)*A*cos(n*T)*n,2.0));
+  } 
+  case 2: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
+    if (gmm::abs(r) < 1e-10) r = 1e-10;
+    return -(4.0*r*cos(B*r)+8.0*r*cos(B*r)*A+8.0*r*cos(B*r)*A*A
+	     +2.0*sin(B*r)*B*R*R-2.0*sin(B*r)*B*r*r
+	     +r*A*A*pow(cos(n*T),2.0)*n*n*cos(B*r)+8.0*r*cos(B*r)*A*A*sin(n*T)
+	     -4.0*sin(B*r)*B*r*r*A*sin(n*T)
+	     +2.0*sin(B*r)*B*r*r*A*A*pow(cos(n*T),2.0)
+	     -4.0*r*cos(B*r)*A*A*pow(cos(n*T),2.0)+8.0*r*cos(B*r)*A*sin(n*T)
+	     -4.0*sin(B*r)*B*r*r*A*A*sin(n*T)-4.0*sin(B*r)*B*r*r*A*A
+	     -4.0*sin(B*r)*B*r*r*A+2.0*sin(B*r)*B*R*R*A
+	     +2.0*sin(B*r)*B*R*R*A*sin(n*T))
+      / sqrt(A*A*pow(cos(n*T),2.0)*n*n +4.0+8.0*A+8.0*A*sin(n*T)
+	     +8.0*A*A+8.0*A*A*sin(n*T)-4.0*A*A*pow(cos(n*T),2.0));
+  }
+  case 3: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+    return -5*r*r*r*sqrt(16.0 + 32.0*A*A + 32.0*A*sin(n*T) + 32.0*A
+			+ 32.0*A*A*sin(n*T) - 16*gmm::sqr(A*cos(n*T))
+		       + gmm::sqr(A*cos(n*T)*n));
+  }   
   }
   return 0;
 }
 
 double rhs(const base_node &p) {
+  double R = Radius, r=gmm::vect_norm2(p);
   switch (u_version) {
-    case 0: {
-      double sum = std::accumulate(p.begin(), p.end(), double(0));
-      double norm_sqr = gmm::vect_norm2_sqr(p);
-      double N = double(gmm::vect_size(p));
-      return 5.0 * (N * sin(sum) * (norm_sqr - Radius*Radius-2.0)
-		    - 4.0 * sum * cos(sum));
-    }
-    case 1: {
-      double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
-      return -(-4.0-4.0*A-4.0*A*sin(n*T)+A*sin(n*T)*n*n);
-    }
-    case 2: {
-      double R=Radius, r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n,B=u_B;
-      if (gmm::abs(r) < 1e-10) r = 1e-10;
-      return (4.0*r*cos(B*r)*A*sin(n*T)-5.0*sin(B*r)*B*r*r*A+4.0*r*cos(B*r)+4.0*
-r*cos(B*r)*A+sin(B*r)*B*R*R-5.0*sin(B*r)*B*r*r-5.0*sin(B*r)*B*r*r*A*sin(n*T)-r*
-r*r*cos(B*r)*B*B-r*A*sin(n*T)*n*n*cos(B*r)+r*cos(B*r)*B*B*R*R-r*r*r*cos(B*r)*B*
-	      B*A-r*r*r*cos(B*r)*B*B*A*sin(n*T))/r;
-    }
+  case 0: {
+    double sum = std::accumulate(p.begin(), p.end(), double(0));
+    double norm_sqr = r*r, N = double(gmm::vect_size(p));
+    return 5.0 * (N * sin(sum) * (norm_sqr - R*R-2.0)
+		  - 4.0 * sum * cos(sum));
+  }
+  case 1: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+    return -(-4.0-4.0*A-4.0*A*sin(n*T)+A*sin(n*T)*n*n);
+  }
+  case 2: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n, B=u_B;
+    if (gmm::abs(r) < 1e-10) r = 1e-10;
+    return (4.0*r*cos(B*r)*A*sin(n*T)-5.0*sin(B*r)*B*r*r*A+4.0*r*cos(B*r)
+	    +4.0*r*cos(B*r)*A+sin(B*r)*B*R*R-5.0*sin(B*r)*B*r*r
+	    -5.0*sin(B*r)*B*r*r*A*sin(n*T)-r*r*r*cos(B*r)*B*B
+	    -r*A*sin(n*T)*n*n*cos(B*r)+r*cos(B*r)*B*B*R*R
+	    -r*r*r*cos(B*r)*B*B*A-r*r*r*cos(B*r)*B*B*A*sin(n*T))/r;
+  }
+  case 3: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+    return -5*r*r*(-16.0-16.0*A*sin(n*T)-16.0*A+A*sin(n*T)*n*n);
+  }
   }
   return 0;
 }
 
 double ls_value(const base_node &p) {
+  double R = Radius, r=gmm::vect_norm2(p);
   switch (u_version) {
-    case 0: return gmm::vect_norm2_sqr(p)-Radius*Radius;
-    case 1: case 2: {
-      double r=gmm::vect_norm2(p), A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
-      return (r*r*(1+A*(1.0 + sin(n*T))) - Radius*Radius) / 15.0;
-    }
+  case 0: return gmm::vect_norm2_sqr(p) - R*R;
+  case 1: case 2: {
+    double A=u_alpha, T=atan2(p[1],p[0])+dtheta, n=u_n;
+    return -(R*R - r*r*(1+A*(1.0 + sin(n*T)))) / 15.0;
+  }
+  case 3: {
+    double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
+    return -(R*R*R*R - r*r*r*r*(1+A*(1.0 + sin(n*T)))) / 4.0;      
+  } 
   }
   return 0;
 }
@@ -627,10 +660,10 @@ int main(int argc, char *argv[]) {
     else Eint[i] = 0.0;
   cout << "Linfty error: " << 100.0 * errmax / exactmax << "%" << endl;
   cout << "L2 error: " << 100.0
-    * getfem::asm_L2_dist(mim, mf_rhs, Uint, mf_rhs, Vint)
+    * getfem::asm_L2_dist(mim, mf, U, mf_rhs, Vint)
     / getfem::asm_L2_norm(mim, mf_rhs, Vint) << "%" << endl;
   cout << "H1 error: " << 100.0
-    * getfem::asm_H1_dist(mim, mf_rhs, Uint, mf_rhs, Vint)
+    * getfem::asm_H1_dist(mim, mf, U, mf_rhs, Vint)
     / getfem::asm_H1_norm(mim, mf_rhs, Vint) << "%" << endl;
 
   // computation of error on multipliers.

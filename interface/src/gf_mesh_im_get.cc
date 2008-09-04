@@ -145,7 +145,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       unsigned nbf = 
 	mim->linked_mesh().structure_of_convex(cv)->nb_faces();
       size_type f = in.pop().to_face_number(nbf);
-      pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), f, cv);
+      pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), short_type(f), cv);
     }
     out.pop().from_tensor(t);
   } else if (check_cmd(cmd, "im_nodes", in, out, 0, 1, 0, 1)) {
@@ -184,7 +184,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	tmp.push_back(w);
       }
     }
-    darray ww = out.pop().create_darray(N+1, tmp.size() / (N+1));
+    darray ww = out.pop().create_darray(N+1, unsigned(tmp.size() / (N+1)));
     std::copy(tmp.begin(), tmp.end(), &ww[0]);
   } else if (check_cmd(cmd, "save", in, out, 1, 2, 0, 0)) {
     /*@GET MESHIM:GET('save', filename [,'with mesh'])
@@ -226,6 +226,6 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
       The result does not take into account the linked mesh object.
       @*/
-    out.pop().from_integer(mim->memsize());
+    out.pop().from_integer(int(mim->memsize()));
   } else bad_cmd(cmd);
 }

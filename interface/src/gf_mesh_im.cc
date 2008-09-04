@@ -120,7 +120,7 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       else {
 	const char *slst[] = {"inside", "outside", "boundary", "all"};
 	for (unsigned i=0; i < 4; ++i) {
-	  if (cmd_strmatchn(swhere, slst[i], strlen(slst[i]))) {
+	  if (cmd_strmatchn(swhere, slst[i], unsigned(strlen(slst[i])))) {
 	    csg_description.assign(swhere.begin() + strlen(slst[i]), swhere.end());
 	    if (i == 0)      where = getfem::mesh_im_level_set::INTEGRATE_INSIDE;
 	    else if (i == 1) where = getfem::mesh_im_level_set::INTEGRATE_OUTSIDE;

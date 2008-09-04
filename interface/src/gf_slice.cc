@@ -98,7 +98,7 @@ namespace getfem {
       dim_type f = dim_type(-1);
       scalar_type best_f = 1e10;
       size_type cnt = 0;
-      for (size_type i=0; i < ml.structure_of_convex(cv)->nb_faces(); ++i) {
+      for (short_type i=0; i < ml.structure_of_convex(cv)->nb_faces(); ++i) {
         scalar_type v = ml.trans_of_convex(cv)->convex_ref()->is_in_face(i,refP);
         cnt++;
         if (v < best_f || cnt == 0) { best_f = v; f = dim_type(i); }
@@ -208,7 +208,9 @@ namespace getfem {
         if (change_convex || store_convex_and_stop) {
           /* store streamline of previous convex */
           dal::bit_vector splx_in; splx_in.add(0, ssimplexes.size());
-          set_convex(cv, pgt->convex_ref(), snodes, ssimplexes, pgt->convex_ref()->structure()->nb_faces(), splx_in, false);
+          set_convex(cv, pgt->convex_ref(), snodes, ssimplexes,
+		     dim_type(pgt->convex_ref()->structure()->nb_faces()),
+		     splx_in, false);
         }
         P0 = P1; refP0 = refP1;
       } while (!store_convex_and_stop);
@@ -239,7 +241,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   } else if (check_cmd(cmd, "isovalues", in, 4, 4)) {
     int orient = in.pop().to_integer(-1,2);
     const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
-    darray U = in.pop().to_darray(1, mf.nb_dof());
+    darray U = in.pop().to_darray(1, int(mf.nb_dof()));
     slicers.push_back(new getfem::slicer_isovalues(getfem::mesh_slice_cv_dof_data<darray>(mf,U),
 						   in.pop().to_scalar(), orient));
   } else if (check_cmd(cmd, "boundary", in, 0, 1)) {
@@ -555,7 +557,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.front().is_mesh_fem() && in.remaining()  >=  3) {
       mm = object_to_mesh(workspace().object(in.front().to_getfemint_mesh_fem()->linked_mesh_id()));
       const getfem::mesh_fem& mf = *in.pop().to_const_mesh_fem();
-      darray Udef = in.pop().to_darray(-2, mf.nb_dof());
+      darray Udef = in.pop().to_darray(-2, int(mf.nb_dof()));
       if (!(mf.get_qdim() == mm->mesh().dim() && Udef.getm() == 1) &&
 	  !(mf.get_qdim() == 1 && Udef.getm() == mm->mesh().dim())) {
 	THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->mesh().dim()) << 
@@ -609,10 +611,10 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (check_cmd(cmd, "streamlines", in, 3, 3)) {
       const getfem::mesh_fem *mf = in.front().to_const_mesh_fem();
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
-      darray U = in.pop().to_darray(mf->nb_dof());
+      darray U = in.pop().to_darray(int(mf->nb_dof()));
       darray v = in.pop().to_darray(mm->mesh().dim(), -1);      
       std::vector<getfem::base_node> seeds(v.getn());
-      for (size_type j=0; j < v.getn(); ++j)
+      for (unsigned j=0; j < v.getn(); ++j)
         seeds[j] = v.col_to_bn(j);
       getfem::mesh_slice_cv_dof_data<darray> mfU(*mf,U);
       pstored.reset(new getfem::mesh_slice_streamline(&mfU, seeds, true, true));
@@ -625,7 +627,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
       darray w = in.pop().to_darray(mm->mesh().dim(), -1);
       std::vector<getfem::base_node> N(w.getn());
-      for (size_type i=0; i < w.getn(); ++i) N[i] = w.col_to_bn(i);
+      for (unsigned i=0; i < w.getn(); ++i) N[i] = w.col_to_bn(i);
       slicer.exec(N);
     } else if (check_cmd(cmd, "load", in, 1, 2)) {
       std::string fname = in.pop().to_string();

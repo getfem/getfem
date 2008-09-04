@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -106,7 +106,7 @@ namespace getfem
 	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
 	  N*(qdim/target_qdim);
 	ctx.set_ii(j);
-	pf->interpolation_grad(ctx, coeff, gradt, qdim);
+	pf->interpolation_grad(ctx, coeff, gradt, dim_type(qdim));
         gmm::copy(gmm::transposed(gradt),grad);
 	std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
       }
@@ -176,7 +176,7 @@ namespace getfem
 	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
 	  N*N*(qdim/target_qdim);
 	ctx.set_ii(j);
-	pf->interpolation_hess(ctx, coeff, hesst, qdim);
+	pf->interpolation_hess(ctx, coeff, hesst, dim_type(qdim));
         gmm::copy(gmm::transposed(hesst), hess);
 	std::copy(hess.begin(), hess.end(), V.begin() + dof_t);
       }

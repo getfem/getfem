@@ -40,7 +40,7 @@ namespace getfem {
     init_cvs_node();
     GMM_ASSERT1(org_fem->target_dim() == 1, "Vectorial fems not supported");
 
-    for (size_type k = 0; k < org_fem->nb_dof(cv); ++k) {
+    for (unsigned k = 0; k < org_fem->nb_dof(cv); ++k) {
       if (selected_dofs.is_in(k)) {
 	ind.push_back(k);
 	add_node(org_fem->dof_types()[k], org_fem->node_of_dof(cv,k));
@@ -65,7 +65,7 @@ namespace getfem {
   void partial_fem::real_base_value(const fem_interpolation_context &c,
 				    base_tensor &t, bool) const {
     bgeot::multi_index mi(2);
-    mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
 
@@ -88,7 +88,8 @@ namespace getfem {
   void partial_fem::real_grad_base_value(const fem_interpolation_context &c,
 					   base_tensor &t, bool) const {
     bgeot::multi_index mi(3);
-    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[2] = short_type(c.N()); mi[1] = target_dim();
+    mi[0] = short_type(nb_base(0));
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
     
@@ -114,7 +115,8 @@ namespace getfem {
   void partial_fem::real_hess_base_value(const fem_interpolation_context &c,
 				  base_tensor &t, bool) const {
     bgeot::multi_index mi(4);
-    mi[3] = mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
+    mi[0] = short_type(nb_base(0));
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin(), itf;
     

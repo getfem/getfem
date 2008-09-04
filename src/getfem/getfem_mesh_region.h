@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -141,7 +141,8 @@ namespace getfem {
     class visitor {
       mesh_region::map_t::const_iterator it,ite;
       face_bitset c;
-      size_type cv_, f_;
+      size_type cv_;
+      short_type f_;
       bool finished_;
       void init(const mesh_region &s);
     public: 
@@ -149,11 +150,11 @@ namespace getfem {
       visitor(const mesh_region &s, const mesh &m);
       size_type cv() const { return cv_; }
       size_type is_face() const { return f_ != 0; }
-      size_type f() const { return f_-1; }
+      short_type f() const { return short_type(f_-1); }
       bool next() {
 	while (c.none()) {
 	  if (it == ite) { finished_=true; return false; }
-	  c = (*it).second; cv_ = (*it).first; f_ = size_type(-1);
+	  c = (*it).second; cv_ = (*it).first; f_ = short_type(-1);
 	  ++it; 
 	  if (c.none()) continue;
 	}

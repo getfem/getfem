@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -486,7 +486,8 @@ namespace getfem {
 	  f += gmm::sqr(gmm::neg(vd[k]));
 	  g *= gmm::pos(vd[k]);
 	}
-	d = isin ? -gmm::sqrt(f) : pow(g, scalar_type(1) / dists.size());
+	d = isin ? -gmm::sqrt(f)
+	  : pow(g, scalar_type(1) / scalar_type(dists.size()));
       }
       return d;
     }
@@ -539,13 +540,13 @@ namespace getfem {
 	  if (isin) 
 	    Gloc *= -gmm::neg(vd[k]);
 	  else 
-	    Gloc *= pow(d, dists.size()) / vd[k];
+	    Gloc *= pow(d, scalar_type(dists.size())) / vd[k];
 	  if (!k) G = Gloc; else G += Gloc;
 	}
 	if (isin)
 	  G *= scalar_type(1) / d;
 	else
-	  G /= pow(d, dists.size() - 1) * dists.size();
+	  G /= pow(d, scalar_type(dists.size()-1)) * scalar_type(dists.size());
 	return d;
       }
     }

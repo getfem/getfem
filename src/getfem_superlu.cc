@@ -149,8 +149,8 @@ namespace gmm {
      */
     typedef typename gmm::number_traits<T>::magnitude_type R;
 
-    int m = mat_nrows(csc_A), n = mat_ncols(csc_A), nrhs = 1, info = 0;
-    int nz = nnz(csc_A);
+    int m = int(mat_nrows(csc_A)), n = int(mat_ncols(csc_A));
+    int nrhs = 1, info = 0, nz = int(nnz(csc_A));
 
     GMM_ASSERT1(nz != 0, "Cannot factor a matrix full of zeros!");
     GMM_ASSERT1(n == m, "Cannot factor a non-square matrix");
@@ -261,11 +261,11 @@ namespace gmm {
      *   permc_spec = 3: use approximate minimum degree column ordering
      */
     free_supermatrix();
-    int n = mat_nrows(A), m = mat_ncols(A), info = 0;
+    int n = int(mat_nrows(A)), m = int(mat_ncols(A)), info = 0;
 
     rhs.resize(m); sol.resize(m);
     gmm::clear(rhs);
-    int nz = nnz(A);
+    int nz = int(nnz(A));
 
     GMM_ASSERT1(nz != 0, "Cannot factor a matrix full of zeros!");
     GMM_ASSERT1(n == m, "Cannot factor a non-square matrix");

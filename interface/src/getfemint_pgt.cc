@@ -38,7 +38,7 @@ namespace getfemint
   }
 
   id_type ind_pgt(bgeot::pgeometric_trans p)
-  { init_tab(); return pgt_tab->add_norepeat(p); }
+  { init_tab(); return id_type(pgt_tab->add_norepeat(p)); }
   
   bgeot::pgeometric_trans addr_pgt(id_type i)
   { init_tab(); return (*pgt_tab)[i]; }

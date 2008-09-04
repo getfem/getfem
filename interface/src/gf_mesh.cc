@@ -36,7 +36,7 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
 
   std::vector<darray> ppos(dim);
   std::vector<size_type> npts(dim);
-  dal::uint32_type grid_npoints=1, grid_nconvex=1;
+  size_type grid_npoints=1, grid_nconvex=1;
   for (size_type i = 0; i < dim; i++) {
     ppos[i] = in.pop().to_darray();
     npts[i] = ppos[i].size();
@@ -46,9 +46,9 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
   
   /* add the points in 'fortran style' order */
   getfem::base_node pt(dim);
-  for (dal::uint32_type i=0; i < grid_npoints; i++) {
-    dal::uint32_type k = i;    
-    for (getfemint::size_type j = 0; j < dim; j++) {
+  for (size_type i=0; i < grid_npoints; i++) {
+    size_type k = i;    
+    for (size_type j = 0; j < dim; j++) {
       pt[j] = ppos[j][k % (npts[j])];
       k /= (npts[j]);
     }
@@ -67,24 +67,24 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
   
 
   std::vector<int> ipt(dim);
-  std::vector<getfem::base_node> pts(1 << dim+1);
+  std::vector<getfem::base_node> pts(1 << (dim+1));
   
   bgeot::pgeometric_trans pgt = bgeot::parallelepiped_linear_geotrans(dim);
 
   /* add the convexes */
-  for (dal::uint32_type i=0; i < grid_nconvex; i++) {
-    dal::uint32_type k = i;
+  for (size_type i=0; i < grid_nconvex; i++) {
+    size_type k = i;
 
     /* find point location */
-    for (getfemint::size_type j = 0; j < dim; j++) {
-      ipt[j] = k % (npts[j]-1);
+    for (size_type j = 0; j < dim; j++) {
+      ipt[j] = int(k % (npts[j]-1));
       k /= (npts[j]-1);
     }
 
     /* build the vertices list */
-    for (getfemint::size_type j = 0; j < (unsigned(1)<<dim); j++) {
+    for (size_type j = 0; j < (unsigned(1)<<dim); j++) {
       pts[j].resize(dim);
-      for (dal::uint32_type d=0; d < dim; d++) {
+      for (size_type d=0; d < dim; d++) {
 	if ((j >> d) & 1) {
 	  pts[j][d] = ppos[d][ipt[d]+1];
 	} else {
@@ -164,7 +164,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
       nsubdiv.push_back(xyz.back().size() - 1);
     }
   }
-  unsigned N = nsubdiv.size();
+  unsigned N = unsigned(nsubdiv.size());
 
   getfem::base_node org(N); 
   std::vector<getfem::base_small_vector> vtab(N);
@@ -178,9 +178,9 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
   else pmesh2 = &msh;
 
   getfem::parallelepiped_regular_simplex_mesh
-    (*pmesh2, N, org, vtab.begin(), nsubdiv.begin());
+    (*pmesh2, dim_type(N), org, vtab.begin(), nsubdiv.begin());
 
-  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N, K);
+  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N, short_type(K));
 
   if (K > 1) {
     /* build a mesh with a geotrans of degree K */
@@ -268,8 +268,8 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
 
   size_type warn_cnt = 0;
   std::vector<id_type> id_tab(P.getn());
-  for (size_type i = 0; i < P.getn(); ++i) {
-    id_tab[i] = mesh->add_point(P.col_to_bn(i));
+  for (unsigned i = 0; i < P.getn(); ++i) {
+    id_tab[i] = id_type(mesh->add_point(P.col_to_bn(i)));
 
     /* une hypothèse bien commode pour la "compatibilité pdetool" */
     if (id_tab[i] != i && warn_cnt++ == 0) {

@@ -4,12 +4,12 @@ gf_workspace('clear all');
 mf = gfMeshFem('load', 'xfem_dirichlet_ls.mf');
 lsU = -load('xfem_dirichlet_ls.U')';
 
-nn=5 % 0 : plot the exported mf
+nn=4 % 0 : plot the exported mf
      % 1 : 
      % 2 : 
      % 3 : 
      % 4 : plotting the lagrange multipliers on the dirichlet boundary
-     % 5 : plot some convergence curvesthe solution. 
+     % 5 : the solution. 
      % 6 : plot some convergence curves. 
 
 
@@ -105,27 +105,27 @@ elseif nn==5,
 elseif nn==6,
 
   % Without stabilization, FEM_RHS = 'FEM_PK(2,3)'; LEVEL_SET_DEGREE = 2;
-  H    = [1/320   1/160  1/80   1/40    1/20    1/10    1/5];
+  H    = [1/320   1/160  1/80   1/40  1/20  1/10  1/5];
   % P1/P0 Non stabilisé
-  L2_1 = [3.93    8.93   16.65  25.11   77.88   118     95 ];
-  H1_1 = [15.44   23.89  34.83  45.18   62.96   85      102];
-  L2C_1= [41700   31300  18300  9560    5000    6620    323];
+  L2_1 = [2.74    7.4    11.7   26    48.9  70    82 ];
+  H1_1 = [15.28   24     31     44    59.5  77    89 ];
+  L2C_1= [41700   31300  18300  9560  5000  6620  323];
   % P1+/P0 Non stabilisé
-  L2_2 = [0.14    0.25   1.26   3.67    23      73.17   133];
-  H1_2 = [2.99    5.28   10.7   20.73   41.2    66.67   82];
-  L2C_2= [3870    816    271    2351    5466    176     66];
+  L2_2 = [0.021   0.083  0.31   1.0   5.5   14    29];
+  H1_2 = [1.73    3.5    6.89   13.4  28    48    64];
+  L2C_2= [435     1320   659    384   868   230   92];
   % P2/P1 Non stabilisé
-  L2_3 = [0.0095  0.0417 0.203  1.00    7.42    42.1    109];
-  H1_3 = [0.061   0.223  0.797  2.74    9.76    27.41   57];
-  L2C_3= [0.222   1.22   3.03   3.59    16.3    10.3    74.5];
+  L2_3 = [0.0011  0.0016 0.0049 0.038 0.43  4     12];
+  H1_3 = [0.017   0.05   0.204  0.773 2.9   11    32];
+  L2C_3= [0.23    0.89   0.798  1.78  4.5   10    38];
   % Q1/Q0 Non stabilisé
-  L2_4 = [0.0383  0.154  0.63   2.86    15.04   39.57   251];
-  H1_4 = [2.29    4.57   9.07   18.05   34.81   63.54   149];
-  L2C_4= [18.64   10.9   25.29  591     259     136     95];
+  L2_4 = [0.018   0.066  0.24   0.95  3.5   10    38];
+  H1_4 = [1.55    3.1    6.12   12    23    43    70];
+  L2C_4= [12.42   10.5   3.70   6.36  13.7  45    44];
   % Q2/Q1 Non stabilisé
-  L2_5 = [0.00442 0.0199 0.086  0.43    2.47    17.92   68.52];
-  H1_5 = [0.0451  0.3224 0.596  2.07    6.90    20.99   57.85];
-  L2C_5= [0.132   15.51  1.22   1.69    2.07    5.89    40.43];
+  L2_5 = [0.0059  0.013  0.031  0.11  0.41  5     11];
+  H1_5 = [0.037   0.11   0.19   0.68  2.10  7.3   24];
+  L2C_5= [1.07    1.03   1.06   2.79  4.3   5.9   21];
   
 
   loglog(H(1:7), L2_1(1:7), 'o-k', 'linewidth', 2, 'MarkerSize', 15);
@@ -135,10 +135,10 @@ elseif nn==6,
   loglog(H(1:7), L2_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), L2_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(L2_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(L2_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(L2_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(L2_4(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2_4(1:5)), 1);
   P5 = polyfit(log(H(2:5)), log(L2_5(2:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
@@ -152,7 +152,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('L^2(\Omega) relative error');
+  ylabel('L^2(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -164,11 +164,11 @@ elseif nn==6,
   loglog(H(1:7), H1_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), H1_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(H1_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(H1_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(H1_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(H1_4(1:7)), 1);
-  P5 = polyfit(log(H(1:7)), log(H1_5(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(H1_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(H1_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(H1_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(H1_4(1:5)), 1);
+  P5 = polyfit(log(H(1:5)), log(H1_5(1:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
          strcat('P2/P1  (slope=',num2str(P3(1)), ')'), ...
@@ -181,7 +181,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('H^1(\Omega) relative error');
+  ylabel('H^1(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -194,11 +194,11 @@ elseif nn==6,
   loglog(H(1:7), L2C_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), L2C_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(L2C_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(L2C_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(L2C_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(L2C_4(1:7)), 1);
-  P5 = polyfit(log(H(1:7)), log(L2C_5(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2C_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2C_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2C_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2C_4(1:5)), 1);
+  P5 = polyfit(log(H(1:5)), log(L2C_5(1:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
          strcat('P2/P1  (slope=',num2str(P3(1)), ')'), ...
@@ -211,7 +211,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('L^2(\Gamma_D) relative error');
+  ylabel('L^2(\Gamma_D) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -219,27 +219,27 @@ elseif nn==6,
 
   % With BB stabilization, gamma0 = 0.1, FEM_RHS = 'FEM_PK(2,3)';
   % LEVEL_SET_DEGREE = 2;
-  H    = [1/320   1/160  1/80   1/40    1/20    1/10    1/5];
+  H    = [1/320     1/160   1/80   1/40  1/20  1/10  1/5];
   % P1/P0 stabilisé
-  L2_1 = [0.058   0.231  0.971  3.74    17.23   69.08   71];
-  H1_1 = [2.77    5.54   10.98  21.74   41.40   71.06   96.8];
-  L2C_1= [3.40    5.86   10.98  32.42   42.34   48.59   70.91];
+  L2_1 = [0.022     0.086   0.34   1.3   5.2   16    41];
+  H1_1 = [2.0       3.7     7.3    14    28    50    74];
+  L2C_1= [5.8       4.2     9      16    35    59    57];
   % P1+/P0 stabilisé
-  L2_2 = [0.054   0.214  0.88   3.43    16.27   64.18   83.37];
-  H1_2 = [2.58    5.14   10.21  20.0    38.67   64.91   82.69];
-  L2C_2= [3.28    3.86   7.31   21.93   31.59   42.60   42.07];
+  L2_2 = [0.02      0.078   0.30   1.14  4.5   19    51];
+  H1_2 = [1.73      3.4     6.7    13    26    80    62];
+  L2C_2= [1.81      4.14    5.4    9     28    60    38];
   % P2/P1 stabilisé
-  L2_3 = [0.0095  0.041  0.20   1.01    7.40    42.6    120];
-  H1_3 = [0.0613  0.358  0.80   2.75    10.55   27.4    72];
-  L2C_3= [0.030   0.801  1.12   1.35    17.85   7.78    53];
+  L2_3 = [0.000062  0.0005  0.0037 0.033 0.34  2.44  9.9];
+  H1_3 = [0.012     0.054   0.58   1.12  3.26  10.5  33];
+  L2C_3= [0.017     0.061   1      1.03  1.93  6.3   19];
   % Q1/Q0 stabilisé
-  L2_4 = [0.036   0.1451 0.577  2.33    9.56    37.43   52.72];
-  H1_4 = [2.29    4.58   9.09   17.95   35.02   61.98   94.34];
-  L2C_4= [0.87    3.36   3.35   6.68    14.86   31.82   38.15];
+  L2_4 = [0.014     0.05    0.22   0.87  3.23  9.9   23];
+  H1_4 = [1.65      3.10    6.14   12.08 23.43 44    69];
+  L2C_4= [0.9       1.63    2.82   6.55  15.19 34    33];
   % Q2/Q1 stabilisé
-  L2_5 = [0.0044  0.0262 0.087  0.439   2.51    18.44   137];
-  H1_5 = [0.127   0.433  0.61   2.40    8.15    36.89   74];
-  L2C_5= [0.172   0.22   0.25   0.578   2.39    11.32   65];
+  L2_5 = [0.000035  0.00033 0.0029 0.018 0.13  1.1   17];
+  H1_5 = [0.0093    0.051   0.15   0.58  1.9   6.9   65];
+  L2C_5= [0.019     0.079   0.17   0.38  0.8   4.2   17];
 
 
   loglog(H(1:7), L2_1(1:7), 'o-k', 'linewidth', 2, 'MarkerSize', 15);
@@ -249,10 +249,10 @@ elseif nn==6,
   loglog(H(1:7), L2_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), L2_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(L2_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(L2_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(L2_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(L2_4(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2_4(1:5)), 1);
   P5 = polyfit(log(H(2:5)), log(L2_5(2:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
@@ -266,7 +266,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('L^2(\Omega) relative error');
+  ylabel('L^2(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -278,11 +278,11 @@ elseif nn==6,
   loglog(H(1:7), H1_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), H1_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(H1_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(H1_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(H1_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(H1_4(1:7)), 1);
-  P5 = polyfit(log(H(1:7)), log(H1_5(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(H1_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(H1_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(H1_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(H1_4(1:5)), 1);
+  P5 = polyfit(log(H(1:5)), log(H1_5(1:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
          strcat('P2/P1  (slope=',num2str(P3(1)), ')'), ...
@@ -295,7 +295,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('H^1(\Omega) relative error');
+  ylabel('H^1(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -308,11 +308,11 @@ elseif nn==6,
   loglog(H(1:7), L2C_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), L2C_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(L2C_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(L2C_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(L2C_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(L2C_4(1:7)), 1);
-  P5 = polyfit(log(H(1:7)), log(L2C_5(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2C_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2C_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2C_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2C_4(1:5)), 1);
+  P5 = polyfit(log(H(1:5)), log(L2C_5(1:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
          strcat('P2/P1  (slope=',num2str(P3(1)), ')'), ...
@@ -325,7 +325,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('L^2(\Gamma_D) relative error');
+  ylabel('L^2(\Gamma_D) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -334,27 +334,27 @@ elseif nn==6,
 
   % With BB stabilization and stabilized normal derivative, gamma0 = 0.1,
   % FEM_RHS = 'FEM_PK(2,3)'; LEVEL_SET_DEGREE = 2; MINIMAL_ELT_RATIO = 0.01;
-  H    = [1/320   1/160  1/80   1/40    1/20    1/10    1/5];
+  H    = [1/320     1/160    1/80   1/40  1/20  1/10  1/5];
   % P1/P0 fully stabilised
-  L2_1 = [0.058   0.231  0.955  3.73    17.24   69.08   71];
-  H1_1 = [2.77    5.53   10.98  21.60   40.95   71      96.8];
-  L2C_1= [3.27    5.74   10.70  22.36   30.67   48      71];   
+  L2_1 = [0.022     0.086    0.34   1.31  5.2   16    41];
+  H1_1 = [2.27      3.69     7.3    14    29    51    74];
+  L2C_1= [5.5       4.15     10     16    44    65    57];   
   % P1+/P0 fully stabilised
-  L2_2 = [0.054   0.21   0.88   3.43    16.36   64.17   83.43];
-  H1_2 = [2.62    5.15   10.20  19.9    38.12   64.81   82.64];
-  L2C_2= [2.39    3.83   7.24   15.73   30.32   41.64   41.85];
+  L2_2 = [0.02      0.078    0.30   1.14  4.55  13    24];
+  H1_2 = [1.88      3.4      6.7    13.2  25.6  46    61];
+  L2C_2= [1.81      2.6      5.3    8.8   27.9  45    35];
   % P2/P1 fully stabilised
-  L2_3 = [0.0094  0.041  0.20   1.01    7.38    42.6    119];
-  H1_3 = [0.06    0.22   0.79   2.75    10.38   27.8    71.8];
-  L2C_3= [0.030   0.064  0.182  0.66    9.01    10.7    41];
+  L2_3 = [0.000063  0.0005   0.004  0.032 0.34  2.44  9.9];
+  H1_3 = [0.012     0.054    0.6    1.11  3.26  10.5  32];
+  L2C_3= [0.046     0.056    1.1    0.92  1.9   5.8   18];
   % Q1/Q0 fully stabilised
-  L2_4 = [0.036   0.1451 0.577  2.33    9.56    37.80   52.20];
-  H1_4 = [2.29    4.58   9.09   17.95   35.02   61.96   94.39];
-  L2C_4= [0.78    3.31   3.16   6.67    14.34   30.16   39.01];
+  L2_4 = [0.014     0.057    0.22   0.87  3.22  9.86  23];
+  H1_4 = [1.6       3.1      6.14   12.1  24    44.4  70];
+  L2C_4= [0.87      1.37     2.45   5.8   11.7  21.1  33];
   % Q2/Q1 fully stabilised
-  L2_5 = [0.0044  0.0262 0.087  0.439   2.51    18.22   137];
-  H1_5 = [0.045   0.533  0.61   2.40    8.32    23.22   74];
-  L2C_5= [0.021   0.32   0.27   0.56    2.63    6.06    65];
+  L2_5 = [0.000035  0.000033 0.0033 0.019 0.13  1.09  16];
+  H1_5 = [0.0096    0.051    0.16   0.58  1.92  6.63  64];
+  L2C_5= [0.019     0.079    0.18   0.38  0.79  4.04  17];
 
 
   loglog(H(1:7), L2_1(1:7), 'o-k', 'linewidth', 2, 'MarkerSize', 15);
@@ -364,10 +364,10 @@ elseif nn==6,
   loglog(H(1:7), L2_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), L2_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(L2_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(L2_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(L2_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(L2_4(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2_4(1:5)), 1);
   P5 = polyfit(log(H(2:5)), log(L2_5(2:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
@@ -381,7 +381,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('L^2(\Omega) relative error');
+  ylabel('L^2(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -393,11 +393,11 @@ elseif nn==6,
   loglog(H(1:7), H1_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), H1_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(H1_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(H1_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(H1_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(H1_4(1:7)), 1);
-  P5 = polyfit(log(H(1:7)), log(H1_5(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(H1_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(H1_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(H1_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(H1_4(1:5)), 1);
+  P5 = polyfit(log(H(1:5)), log(H1_5(1:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
          strcat('P2/P1  (slope=',num2str(P3(1)), ')'), ...
@@ -410,7 +410,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('H^1(\Omega) relative error');
+  ylabel('H^1(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;
@@ -423,11 +423,11 @@ elseif nn==6,
   loglog(H(1:7), L2C_4(1:7), '*-k', 'linewidth', 2, 'MarkerSize', 15);
   loglog(H(1:7), L2C_5(1:7), 's-.k', 'linewidth', 2, 'MarkerSize', 15);
   hold off;
-  P1 = polyfit(log(H(1:7)), log(L2C_1(1:7)), 1);
-  P2 = polyfit(log(H(1:7)), log(L2C_2(1:7)), 1);
-  P3 = polyfit(log(H(1:7)), log(L2C_3(1:7)), 1);
-  P4 = polyfit(log(H(1:7)), log(L2C_4(1:7)), 1);
-  P5 = polyfit(log(H(1:7)), log(L2C_5(1:7)), 1);
+  P1 = polyfit(log(H(1:5)), log(L2C_1(1:5)), 1);
+  P2 = polyfit(log(H(1:5)), log(L2C_2(1:5)), 1);
+  P3 = polyfit(log(H(1:5)), log(L2C_3(1:5)), 1);
+  P4 = polyfit(log(H(1:5)), log(L2C_4(1:5)), 1);
+  P5 = polyfit(log(H(1:5)), log(L2C_5(1:5)), 1);
   legend(strcat('P1/P0  (slope=',num2str(P1(1)), ')'), ...
          strcat('P1+/P0 (slope=',num2str(P2(1)), ')'), ...
          strcat('P2/P1  (slope=',num2str(P3(1)), ')'), ...
@@ -440,7 +440,7 @@ elseif nn==6,
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
   set(axesobj, 'linewidth', 2);
   xlabel('h');
-  ylabel('L^2(\Gamma_D) relative error');
+  ylabel('L^2(\Gamma_D) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
   % axis([0.05 7 1e-4 10]);
   pause;

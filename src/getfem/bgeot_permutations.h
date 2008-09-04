@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 #include <vector>
@@ -45,10 +45,19 @@ namespace bgeot {
   public:
     permutation(size_type n) : std::vector<dim_type>(n) { reset(); }
     size_type nb_permutations() { return permutation::nb_permutations(size()); }
-    static size_type nb_permutations(size_type n) { size_type f=1; for (; n>1; --n) f *= n; return f; }
-    void reset() { remaining = 1; for (size_type i=0; i < size(); ++i) { (*this)[i] = i; remaining *= (i+1); }}
+    static size_type nb_permutations(size_type n)
+    { size_type f=1; for (; n>1; --n) f *= n; return f; }
+    void reset() {
+      remaining = 1;
+      for (size_type i=0; i < size(); ++i)
+	{ (*this)[i] = dim_type(i); remaining *= (i+1); }
+    }
     permutation& to_rank(size_type r);
-    permutation inversed() const { permutation pinv(*this); for (size_type i=0; i < size(); ++i) pinv[(*this)[i]] = i; return pinv; }
+    permutation inversed() const {
+      permutation pinv(*this);
+      for (size_type i=0; i < size(); ++i) pinv[(*this)[i]] = dim_type(i);
+      return pinv;
+    }
     size_type rank() const;
     bool finished() const { return remaining == 0; }
     /* increment in lexicographical order (not the best, but it is simple) */

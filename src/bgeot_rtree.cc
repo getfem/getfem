@@ -184,14 +184,14 @@ namespace bgeot {
 				     unsigned last_dir) {
     size_type N=bmin.size();
     scalar_type split_v; 
-    unsigned split_dir = (last_dir+1)%N;
+    unsigned split_dir = unsigned((last_dir+1)%N);
     //cout << " build_tree_ [b.size=" << b.size() << "], bmin=" << bmin << ", bmax=" << bmax << "\n";
     bool split_ok = false;
     if (b.size() > rtree_elt_base::RECTS_PER_LEAF) {
       for (size_type itry=0; itry < N; ++itry) {
 	//cout << "split_test: dir=" << split_dir << "\n";
 	if (split_test(b, bmin, bmax, split_dir, split_v)) { split_ok = true; break; }
-	split_dir = (split_dir+1)%N;
+	split_dir = unsigned((split_dir+1)%N);
       }
       //if (!split_ok && b.size() > rtree_elt_base::RECTS_PER_LEAF*2) cout << "FAILED TO SPLIT ...\n";
     }

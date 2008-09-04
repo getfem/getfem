@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -88,20 +88,21 @@ namespace gmm {
   template <typename DenseMatrix, typename Pvector>
   size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
+    typedef typename linalg_traits<Pvector>::value_type int_T;
     typedef typename number_traits<T>::magnitude_type R;
     size_type info(0), i, j, jp, M(mat_nrows(A)), N(mat_ncols(A));
     size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
     
     GMM_ASSERT2(ipvt.size()+1 >= NN, "IPVT too small");
-    for (i = 0; i+1 < NN; ++i) ipvt[i] = i;
+    for (i = 0; i+1 < NN; ++i) ipvt[i] = int_T(i);
       
     if (M || N) {
       for (j = 0; j+1 < NN; ++j) {
 	R max = gmm::abs(A(j,j)); jp = j;
 	for (i = j+1; i < M; ++i)		   /* find pivot.          */
 	  if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
-	ipvt[j] = jp + 1;
+	ipvt[j] = int_T(jp + 1);
 	
 	if (max == R(0)) { info = j + 1; break; }
         if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
@@ -111,7 +112,7 @@ namespace gmm {
 	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
 				 sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
-      ipvt[j] = j + 1;
+      ipvt[j] = int_T(j + 1);
     }
     return info;
   }

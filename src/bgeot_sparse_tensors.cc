@@ -73,11 +73,11 @@ namespace bgeot {
       for (unsigned int i=0; i < idxs.size(); ++i) {
 	index_set::const_iterator f=std::find(idxnums.begin(), idxnums.end(), idxs[i]);	
 	if (f == idxnums.end()) {
-	  ilst2idxnums.push_back(idxnums.size());
+	  ilst2idxnums.push_back(dim_type(idxnums.size()));
 	  idxnums.push_back(idxs[i]);
 	  ranges.push_back(r[i]);
 	} else {
-	  ilst2idxnums.push_back(f-idxnums.begin());
+	  ilst2idxnums.push_back(dim_type(f-idxnums.begin()));
 	  assert(ranges[ilst2idxnums.back()] == r[i]);
 	}
       }
@@ -282,7 +282,7 @@ namespace bgeot {
     m.assign(size(), false);
     bmit.insert(indexes(), ranges(), strides(), 0);
     bmit.prepare(); 
-    unsigned int N = tm.size();
+    unsigned N = unsigned(tm.size());
     bool finished = false;
     while (!finished) {
       bool is_in = true;
@@ -435,7 +435,7 @@ namespace bgeot {
     }
     /* shift all indexes greater than dim */
     shift_dim_num_ge(slice.dim,-1);
-    set_ndim_noclean(ndim()-1);
+    set_ndim_noclean(dim_type(ndim()-1));
     update_idx2mask();
   }
 
@@ -455,7 +455,7 @@ namespace bgeot {
   };
 
   void multi_tensor_iterator::init(std::vector<tensor_ref> trtab, bool with_index_values) {
-    N = trtab.size();
+    N = index_type(trtab.size());
     index_type N_packed_idx = 0;
 
     /* non null elements across all tensors */
@@ -495,14 +495,14 @@ namespace bgeot {
     /* evaluation of "ranks" per indice */
 
     index_type pmi = 0;
-    for (index_type mi = 0; mi < ts.masks().size(); ++mi) {
+    for (dim_type mi = 0; mi < ts.masks().size(); ++mi) {
       if (packed_idx[mi]) {
-	index_type n;
+	dim_type n;
 	pri[pmi].original_masknum = mi;
 	pri[pmi].range = ts.masks()[mi].card();
 	for (n = 0; n < N; n++)
 	  if (trtab[n].index_is_valid(mi)) break;
-	pri[pmi].n = pr[pmi].n = n;
+	pri[pmi].n = n; pr[pmi].n = n;
 	pmi++;
       }
     }
@@ -547,7 +547,7 @@ namespace bgeot {
     /* optimize them w/r to mean strides (without modifying the "ranks") */
     index_set pr_reorder(pri.size());
     for (pmi = 0; pmi < pri.size(); ++pmi) {
-      pr_reorder[pmi]=pmi;
+      pr_reorder[pmi]=dim_type(pmi);
     }
     std::sort(pr_reorder.begin(), pr_reorder.end(), compare_packed_range(pri));
     {
@@ -580,7 +580,7 @@ namespace bgeot {
 	}
 	for (dim_type i=0; i < ts.masks()[mi].indexes().size(); ++i) {
 	  dim_type ii = ts.masks()[mi].indexes()[i];
-	  idxval[ii].cnt_num = pmi; //packed_idx[mi] ? pmi : dim_type(-1);
+	  idxval[ii].cnt_num = dim_type(pmi); //packed_idx[mi] ? pmi : dim_type(-1);
 	  idxval[ii].pos_ = (pmi != index_type(-1)) ? 0 : v[0];
 	  idxval[ii].mod = ts.masks()[mi].strides()[i+1];
 	  idxval[ii].div = ts.masks()[mi].strides()[i];
@@ -593,8 +593,8 @@ namespace bgeot {
      */
     vectorized_strides_.resize(N); vectorized_size_ = 0;
     std::fill(vectorized_strides_.begin(), vectorized_strides_.end(), 0);
-    vectorized_pr_dim = pri.size();
-    for (vectorized_pr_dim = pri.size()-1; vectorized_pr_dim != index_type(-1); vectorized_pr_dim--) {
+    vectorized_pr_dim = index_type(pri.size());
+    for (vectorized_pr_dim = index_type(pri.size()-1); vectorized_pr_dim != index_type(-1); vectorized_pr_dim--) {
       std::vector<packed_range_info>::const_iterator pp = pri.begin() + vectorized_pr_dim;
       if (vectorized_pr_dim == pri.size()-1) {
         if (pp->have_regular_strides.count() == N) vectorized_size_ = pp->range;
@@ -692,10 +692,10 @@ namespace bgeot {
       assert(it->ridx.size() == it->tr().ndim());
       it->rdim.resize(it->ridx.size());
       //cout << " rix = '" << it->ridx << "'\n";
-      for (unsigned i =0; i < it->ridx.size(); ++i) {
+      for (dim_type i =0; i < it->ridx.size(); ++i) {
 	if (it->ridx[i] == ' ') {
 	  reduced_range.push_back(it->tr().dim(i));
-	  it->rdim[i] = reduced_range.size()-1;
+	  it->rdim[i] = dim_type(reduced_range.size()-1);
 	} else it->rdim[i] = dim_type(-1);
       }
     }
@@ -740,11 +740,12 @@ namespace bgeot {
       for (unsigned tnum=0; tnum < trtab.size(); ++tnum) {
 	if (!idx_occurences[ir][tnum]) continue;
         std::bitset<32> once(reduction_chars.size());
-	for (size_type i=0; i < trtab[tnum].tr().ndim(); ++i) {
+	for (dim_type i=0; i < trtab[tnum].tr().ndim(); ++i) {
 	  bool ignore = false;
 	  for (dal::bv_visitor j(lst); !j.finished(); ++j) {
-	    if (trtab[tnum].ridx[i] == reduction_chars[j]) 
+	    if (trtab[tnum].ridx[i] == reduction_chars[j]) {
               if (once[j]) ignore = true; else once[j] = true;
+	    }
           }
 	  if (!ignore)
 	    redsz *= trtab[tnum].tr().dim(i);
@@ -850,20 +851,20 @@ namespace bgeot {
     for (trtab_iterator it = trtab.begin(); it != trtab.end(); ++it) {
       assert(it->rdim.size() == it->tr().ndim());
       it->gdim = it->rdim;
-      for (unsigned i=0; i < it->ridx.size(); ++i) {
+      for (dim_type i=0; i < it->ridx.size(); ++i) {
         if (it->rdim[i] == dim_type(-1)) {
           assert(it->ridx[i] != ' '); 
           std::string::size_type p = global_chars.find(it->ridx[i]);
           if (p == std::string::npos) {
             global_chars.push_back(it->ridx[i]);
             global_range.push_back(it->tr().dim(i));
-            it->gdim[i] = global_range.size() - 1;
+            it->gdim[i] = dim_type(global_range.size() - 1);
           } else {
 	    GMM_ASSERT1(it->tr().dim(i) == global_range[p],
 			"inconsistent dimensions for reduction index " 
                         << it->ridx[i] << "(" << int(it->tr().dim(i)) 
                         << " != " << int(global_range[p]) << ")");
-            it->gdim[i] = p;
+            it->gdim[i] = dim_type(p);
           }
         }
       }
@@ -997,7 +998,7 @@ namespace bgeot {
       }
     }
     mti.rewind();
-    dim_type N = trtab.size();
+    dim_type N = dim_type(trtab.size());
     if (N == 1) {
       do_reduction1(mti);
     } else if (N == 2) {
@@ -1073,9 +1074,10 @@ namespace bgeot {
 	    o << ")={";
 	  }
 	  o << (m[lpos(l.cnt)] ? 1 : 0);
-	  if (l.cnt[0] == r[0]-1) 
+	  if (l.cnt[0] == r[0]-1) {
 	    if (l.cnt[1] != r[1]-1) o << ","; 
 	    else if (idxs.size() > 2) o << "}";
+	  }
 	}
       }
       o << "}" << endl;

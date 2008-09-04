@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -535,7 +535,7 @@ namespace gmm
     jc = new IND_TYPE[nc+1];
     jc[0] = shift;
     for (size_type j = 0; j < nc; ++j) {
-      jc[j+1] = jc[j] + nnz(mat_const_col(B, j));
+      jc[j+1] = IND_TYPE(jc[j] + nnz(mat_const_col(B, j)));
     }
     pr = new T[jc[nc]];
     ir = new IND_TYPE[jc[nc]];
@@ -543,8 +543,10 @@ namespace gmm
       col_type col = mat_const_col(B, j);
       typename linalg_traits<col_type>::const_iterator
 	it = vect_const_begin(col), ite = vect_const_end(col);
-      for (size_type k = 0; it != ite; ++it, ++k)
-	{ pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index() + shift; }
+      for (size_type k = 0; it != ite; ++it, ++k) {
+	pr[jc[j]-shift+k] = *it;
+	ir[jc[j]-shift+k] = IND_TYPE(it.index() + shift);
+      }
     }
   }
   

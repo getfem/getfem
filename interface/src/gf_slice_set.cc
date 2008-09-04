@@ -56,7 +56,7 @@ void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       the slice (the number of rows of P is not required to be equal to
       SLICE:GET('dim')).
       @*/
-    darray w = in.pop().to_darray(-1, sl->nb_points());
+    darray w = in.pop().to_darray(-1, int(sl->nb_points()));
     size_type min_dim = 0;
     for (size_type ic=0; ic < sl->nb_convex(); ++ic) {
       for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it = sl->simplexes(ic).begin();

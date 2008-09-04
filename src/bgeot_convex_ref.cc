@@ -30,7 +30,7 @@ namespace bgeot {
   static void simplexify_convex(pconvex_structure cvs, mesh_structure &m) {
     m.clear();
     cvs = cvs->basic_structure();
-    size_type n = cvs->dim();
+    dim_type n = cvs->dim();
     std::vector<size_type> ipts(n+1);
     if (cvs->nb_points() == n + 1) {
       for (size_type i = 0; i <= n; ++i) ipts[i] = i;
@@ -149,7 +149,7 @@ namespace bgeot {
       if (f > 0) return gmm::abs(pt[f-1]);
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
-      for (; it != ite; e += *it, ++it);
+      for (; it != ite; e += *it, ++it) {};
       return gmm::abs(e);
     }
     K_simplex_of_ref_(dim_type NN, short_type KK) {
@@ -231,7 +231,7 @@ namespace bgeot {
       std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
       std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
       if (f < cvr1->structure()->nb_faces()) return cvr1->is_in_face(f, pt1);
-      else return cvr2->is_in_face(f - cvr1->structure()->nb_faces(), pt2);
+      else return cvr2->is_in_face(short_type(f - cvr1->structure()->nb_faces()), pt2);
     }
 
     product_ref_(pconvex_ref a, pconvex_ref b) { 
@@ -281,7 +281,7 @@ namespace bgeot {
     static dim_type ncd = 1;
     if (nc <= 1) return simplex_of_reference(nc);
     if (nc > ncd) { 
-      tab[nc] = convex_ref_product(parallelepiped_of_reference(nc-1),
+      tab[nc] = convex_ref_product(parallelepiped_of_reference(dim_type(nc-1)),
 				   simplex_of_reference(1));
       ncd = nc;
     }
@@ -290,7 +290,7 @@ namespace bgeot {
 
   pconvex_ref prism_of_reference(dim_type nc) {
     if (nc <= 2) return parallelepiped_of_reference(nc);
-    else return convex_ref_product(simplex_of_reference(nc-1),
+    else return convex_ref_product(simplex_of_reference(dim_type(nc-1)),
 				   simplex_of_reference(1));
   }
 
@@ -298,7 +298,7 @@ namespace bgeot {
   class equilateral_simplex_of_ref_ : public convex_of_reference {
   public:
     scalar_type is_in(const base_node &pt) const {
-      scalar_type d;
+      scalar_type d(0);
       for (size_type f = 0; f < normals().size(); ++f) {
         const base_node &x0 = (f ? convex<base_node>::points()[f-1]
 			       : convex<base_node>::points().back());
@@ -313,13 +313,13 @@ namespace bgeot {
       return gmm::abs(gmm::vect_sp(pt-x0, normals()[f])); 
     }
     equilateral_simplex_of_ref_(size_type N) {
-      pconvex_ref prev = equilateral_simplex_of_reference(N-1);
+      pconvex_ref prev = equilateral_simplex_of_reference(dim_type(N-1));
       basic_convex_ref_ = this;
-      cvs = simplex_structure(N, 1);
+      cvs = simplex_structure(dim_type(N), 1);
       convex<base_node>::points().resize(N+1);
       normals_.resize(N+1);
       base_node G(N); G.fill(0.);
-      for (size_type i=0; i < N+1; ++i) {
+      for (short_type i=0; i < N+1; ++i) {
         convex<base_node>::points()[i].resize(N);
         if (i != N) {
           std::copy(prev->convex<base_node>::points()[i].begin(),
@@ -327,13 +327,13 @@ namespace bgeot {
 		    convex<base_node>::points()[i].begin());
           convex<base_node>::points()[i][N-1] = 0.;
         } else {
-          convex<base_node>::points()[i] = 1./N * G;
+          convex<base_node>::points()[i] = scalar_type(1)/scalar_type(N) * G;
           convex<base_node>::points()[i][N-1]
 	    = sqrt(1. - gmm::vect_norm2_sqr(convex<base_node>::points()[i]));
         }
         G += convex<base_node>::points()[i];
       }
-      gmm::scale(G, 1./(N+1));
+      gmm::scale(G, scalar_type(1)/scalar_type(N+1));
       for (size_type f=0; f < N+1; ++f) {
         normals_[f] = G - convex<base_node>::points()[f]; 
         gmm::scale(normals_[f], 1/gmm::vect_norm2(normals_[f]));
@@ -378,10 +378,12 @@ namespace bgeot {
   pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n,
 				       size_type nf) {
     dal::pstatic_stored_object o
-      = dal::search_stored_object(convex_of_reference_key(2, nc, n, nf));
+      = dal::search_stored_object(convex_of_reference_key(2, nc,
+					    short_type(n), short_type(nf)));
     if (o) return dal::stored_cast<convex_of_reference>(o);
     pconvex_ref p = new generic_dummy_(nc, n, nf);
-    dal::add_stored_object(new convex_of_reference_key(2, nc, n, nf), p,
+    dal::add_stored_object(new convex_of_reference_key(2, nc,
+					   short_type(n), short_type(nf)), p,
 			   p->structure(), &(p->points()),
 			   dal::PERMANENT_STATIC_OBJECT);
     return p;

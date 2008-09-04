@@ -17,14 +17,14 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
+// As a special exception, you  may use  this file  as it is a part of a free
+// software  library  without  restriction.  Specifically,  if   other  files
+// instantiate  templates  or  use macros or inline functions from this file,
+// or  you compile this  file  and  link  it  with other files  to produce an
+// executable, this file  does  not  by itself cause the resulting executable
+// to be covered  by the GNU Lesser General Public License.  This   exception
+// does not  however  invalidate  any  other  reasons why the executable file
+// might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
 
@@ -151,7 +151,7 @@ namespace getfem {
   template<class IT> void vtk_export::write_vec(IT p) {
     float v[3];
     for (size_type i=0; i < dim_; ++i) {
-      v[i] = p[i];
+      v[i] = float(p[i]);
     }
     for (size_type i=dim_; i < 3; ++i) v[i] = 0.0f;
     write_val(v[0]);write_val(v[1]);write_val(v[2]);
@@ -162,7 +162,7 @@ namespace getfem {
     memset(v, 0, sizeof v);
     for (size_type i=0; i < dim_; ++i) {
       for (size_type j=0; j < dim_; ++j)
-        v[i][j] = p[i + j*dim_];
+        v[i][j] = float(p[i + j*dim_]);
     }
     for (size_type i=0; i < 3; ++i) {
       for (size_type j=0; j < 3; ++j) {
@@ -405,7 +405,7 @@ namespace getfem {
         for (size_type q=0; q < Q; ++q)
           sU[i*Q+q] += U[psl->merged_point_nodes(i)[j].pos*Q+q];
       for (size_type q=0; q < Q; ++q)
-        sU[i*Q+q] /= psl->merged_point_cnt(i);
+        sU[i*Q+q] /= double(psl->merged_point_cnt(i));
     }
   }
 
@@ -448,7 +448,7 @@ namespace getfem {
   dx_export::write_dataset_(const VECT& U, std::string name, bool cell_data) {
     write_mesh();
     objects.push_back(dxObject()); 
-    name = default_name(name, objects.size(), "gf_field"); 
+    name = default_name(name, int(objects.size()), "gf_field"); 
     objects.back().name = name;
     objects.back().mesh = current_mesh_name();
     size_type nb_val = 0;

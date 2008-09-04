@@ -113,7 +113,7 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     @*/
   if (check_cmd(cmd, "pts", in, out, 1, 1, 0, 1)) {
     darray P = in.pop().to_darray(pmesh->dim(), 
-				  pmesh->points().index().last_true()+1);
+				  int(pmesh->points().index().last_true()+1));
     for (dal::bv_visitor i(pmesh->points().index()); !i.finished(); ++i) {
       for (unsigned k=0; k < pmesh->dim(); ++k)
 	pmesh->points()[i][k] = P(k,i);
@@ -133,8 +133,8 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     check_empty_mesh(pmesh);
     darray v = in.pop().to_darray(pmesh->dim(), -1);
     iarray w = out.pop().create_iarray_h(v.getn());
-    for (size_type j=0; j < v.getn(); j++) {
-      w[j] = pmesh->add_point(v.col_to_bn(j)) + config::base_index();
+    for (int j=0; j < int(v.getn()); j++) {
+      w[j] = unsigned(pmesh->add_point(v.col_to_bn(j)) + config::base_index());
     }
   } else if (check_cmd(cmd, "del point", in, out, 1, 1, 0, 0)) {
     /*@SET MESH:SET('del point', @ivec PIDLST)
@@ -167,17 +167,17 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     @*/
     check_empty_mesh(pmesh);
     bgeot::pgeometric_trans pgt = in.pop().to_pgt();
-    darray v = in.pop().to_darray(pmesh->dim(), pgt->nb_points(), -1);
+    darray v = in.pop().to_darray(pmesh->dim(), int(pgt->nb_points()), -1);
     iarray w = out.pop().create_iarray_h(v.getp());
 
     std::vector<getfemint::id_type> qp(pgt->nb_points());
     /* loop over convexes */
-    for (size_type k=0; k < v.getp(); k++) {
+    for (unsigned k=0; k < v.getp(); k++) {
       /* loop over convex points */
-      for (size_type j=0; j < v.getn(); j++) {
-	qp[j] = pmesh->add_point(v.col_to_bn(j,k));
+      for (unsigned j=0; j < v.getn(); j++) {
+	qp[j] = unsigned(pmesh->add_point(v.col_to_bn(j,k)));
       }
-      id_type cv_id = pmesh->add_convex(pgt, qp.begin());
+      id_type cv_id = id_type(pmesh->add_convex(pgt, qp.begin()));
       w[k] = cv_id+config::base_index();
     }
   } else if (check_cmd(cmd, "del convex", in, out, 1, 1, 0, 0)) {

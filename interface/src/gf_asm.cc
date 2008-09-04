@@ -36,7 +36,7 @@ namespace getfemint {
       if (siz == 0) ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
       std::vector<int> tab(r.size());
       std::copy(r.begin(), r.end(), tab.begin());
-      mx = checked_gfi_array_create(r.size(), &(tab.begin()[0]),GFI_DOUBLE);
+      mx = checked_gfi_array_create(int(r.size()), &(tab.begin()[0]),GFI_DOUBLE);
       assign(mx);
     }
   };
@@ -159,12 +159,12 @@ gf_dirichlet(getfemint::mexargs_out& out,
   unsigned q_dim = mf_u.get_qdim(); 
   
   garray<T> h = in_h.to_garray(T());
-  if (h.ndim() == 2) in_h.check_dimensions(h, q_dim* q_dim, mf_d.nb_dof());
-  else               in_h.check_dimensions(h, q_dim, q_dim, mf_d.nb_dof());
-  garray<T> r = in_r.to_garray(q_dim, mf_d.nb_dof(), T());
+  if (h.ndim() == 2) in_h.check_dimensions(h, q_dim* q_dim,int(mf_d.nb_dof()));
+  else               in_h.check_dimensions(h, q_dim, q_dim,int(mf_d.nb_dof()));
+  garray<T> r = in_r.to_garray(q_dim, int(mf_d.nb_dof()), T());
   gmm::col_matrix<gmm::wsvector<T> > H(mf_u.nb_dof(), mf_u.nb_dof());
   mexarg_out out_H    = out.pop();
-  garray<T> R         = out.pop().create_array_v(mf_u.nb_dof(), T());
+  garray<T> R         = out.pop().create_array_v(unsigned(mf_u.nb_dof()), T());
   getfem::asm_generalized_dirichlet_constraints(H, R, mim, mf_u, mf_d, mf_d, h, r, boundary_num);
   out_H.from_sparse(H/*,threshold*/);
 }
@@ -192,12 +192,12 @@ void assemble_source(size_type boundary_num,
   const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
   unsigned q_dim = mf_u->get_qdim();
   if (!in.front().is_complex()) {
-    darray g               = in.pop().to_darray(q_dim, mf_d->nb_dof());
-    darray F               = out.pop().create_darray_v(mf_u->nb_dof());
+    darray g               = in.pop().to_darray(q_dim, int(mf_d->nb_dof()));
+    darray F               = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
   } else {
-    carray g               = in.pop().to_carray(q_dim, mf_d->nb_dof());
-    carray F               = out.pop().create_carray_v(mf_u->nb_dof());
+    carray g               = in.pop().to_carray(q_dim, int(mf_d->nb_dof()));
+    carray F               = out.pop().create_carray_v(unsigned(mf_u->nb_dof()));
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
   }
 }
@@ -263,7 +263,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-    darray A               = in.pop().to_darray(mf_d->nb_dof());
+    darray A               = in.pop().to_darray(int(mf_d->nb_dof()));
     gf_real_sparse_by_col M(mf_u->nb_dof(), mf_u->nb_dof());
     getfem::asm_stiffness_matrix_for_laplacian(M, *mim, *mf_u, *mf_d, A);
     out.pop().from_sparse(M);
@@ -276,8 +276,8 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-    darray lambda          = in.pop().to_darray(mf_d->nb_dof());
-    darray mu              = in.pop().to_darray(mf_d->nb_dof());
+    darray lambda          = in.pop().to_darray(int(mf_d->nb_dof()));
+    darray mu              = in.pop().to_darray(int(mf_d->nb_dof()));
     gf_real_sparse_by_col M(mf_u->nb_dof(), mf_u->nb_dof());
     getfem::asm_stiffness_matrix_for_linear_elasticity(M, *mim, *mf_u, *mf_d, lambda, mu);
     out.pop().from_sparse(M);
@@ -309,12 +309,12 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	@*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
-    darray U = in.pop().to_darray(mf_u->nb_dof());
+    darray U = in.pop().to_darray(int(mf_u->nb_dof()));
     std::string lawname = in.pop().to_string();
     /* a refaire , pas bon, le terme incompressible se passe de loi */
     std::auto_ptr<getfem::abstract_hyperelastic_law> l = abstract_hyperelastic_law_from_name(lawname);
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();    
-    darray param = in.pop().to_darray(l->nb_params(), mf_d->nb_dof());
+    darray param = in.pop().to_darray(int(l->nb_params()), int(mf_d->nb_dof()));
     while (in.remaining()) {
       std::string what = in.pop().to_string();
       if (cmd_strmatch(what, "tangent matrix")) {
@@ -322,11 +322,11 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U, *mf_d, param, *l);
 	out.pop().from_sparse(K);
       } else if (cmd_strmatch(what, "rhs")) {
-	darray B = out.pop().create_darray_v(mf_u->nb_dof());
+	darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
 	getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, *mf_d, param, *l);
       } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
 	const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
-	darray P = in.pop().to_darray(mf_p->nb_dof());
+	darray P = in.pop().to_darray(int(mf_p->nb_dof()));
 	gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof()), 
 	  B(mf_u->nb_dof(), mf_p->nb_dof());
 	getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u, *mf_p, U, P);
@@ -334,9 +334,9 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	out.pop().from_sparse(B);
       } else if (cmd_strmatch(what, "incompressible rhs")) {
 	const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
-	darray P = in.pop().to_darray(mf_p->nb_dof());
-	darray RU = out.pop().create_darray_v(mf_u->nb_dof());
-	darray RB = out.pop().create_darray_v(mf_p->nb_dof());
+	darray P = in.pop().to_darray(int(mf_p->nb_dof()));
+	darray RU = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+	darray RB = out.pop().create_darray_v(unsigned(mf_p->nb_dof()));
 	getfem::asm_nonlinear_incomp_rhs(RU, RB, *mim, *mf_u, *mf_p, U, P);
       } else {
 	THROW_BADARG("expecting 'tangent matrix' or 'rhs', or "
@@ -356,7 +356,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-    darray           vec_d = in.pop().to_darray(mf_d->nb_dof());
+    darray           vec_d = in.pop().to_darray(int(mf_d->nb_dof()));
     gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
     gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
     getfem::asm_stokes(K, B, *mim, *mf_u, *mf_p, *mf_d, vec_d);
@@ -369,7 +369,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-    carray           wn = in.pop().to_carray(mf_d->nb_dof());
+    carray           wn = in.pop().to_carray(int(mf_d->nb_dof()));
     std::vector<complex_type> WN(wn.size());
     for (size_type i=0; i < wn.size(); ++i) WN[i] = gmm::sqr(wn[i]);
     gf_cplx_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
@@ -383,7 +383,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-    darray           a = in.pop().to_darray(mf_d->nb_dof());
+    darray           a = in.pop().to_darray(int(mf_d->nb_dof()));
     gf_real_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
     getfem::asm_stiffness_matrix_for_bilaplacian(A, *mim, *mf_u, *mf_d, a);
     out.pop().from_sparse(A);
@@ -455,15 +455,15 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     unsigned q_dim = mf_u->get_qdim();
     if (!in.front().is_complex()) {
       darray q            = in.pop().to_darray();
-      if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, mf_d->nb_dof());
-      else               in.last_popped().check_dimensions(q, q_dim, q_dim, mf_d->nb_dof());
+      if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
+      else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
       gf_real_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
       getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
       out.pop().from_sparse(Q);
     } else {
       carray q            = in.pop().to_carray();
-      if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, mf_d->nb_dof());
-      else               in.last_popped().check_dimensions(q, q_dim, q_dim, mf_d->nb_dof());
+      if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
+      else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
       gf_cplx_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
       getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
       out.pop().from_sparse(Q);      

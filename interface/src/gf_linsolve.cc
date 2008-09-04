@@ -33,8 +33,8 @@ typedef enum { GMM_GMRES, GMM_CG, GMM_BICGSTAB /*, GMM_QMR*/ } iterative_gmm_sol
 template <typename T> static void
 iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
 		    getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
-  garray<T> b = in.pop().to_garray(gsp.nrows(), T());
-  garray<T> x = out.pop().create_array_v(gsp.nrows(), T());
+  garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
+  garray<T> x = out.pop().create_array_v(int(gsp.nrows()), T());
 
   int restart = 50;
   if (in.remaining() && stype == GMM_GMRES) restart = in.pop().to_integer(1,1000000);
@@ -85,7 +85,7 @@ void iterative_gmm_solver(iterative_gmm_solver_type stype,
 template <typename T> static void 
 superlu_solver(gsparse &gsp, 
 	       getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) { 
-  garray<T> b = in.pop().to_garray(gsp.nrows(), T()); 
+  garray<T> b = in.pop().to_garray(int(gsp.nrows()), T()); 
   garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
   double rcond; 
   gsp.to_csc();

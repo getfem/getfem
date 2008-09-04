@@ -76,7 +76,7 @@ spmat_set_or_add_sub_matrix(gsparse &gsp, getfemint::mexargs_in& in,
       default: THROW_INTERNAL_ERROR;
     }
   } else {
-    garray<T> v = in.pop().to_garray(m,n,T());
+    garray<T> v = in.pop().to_garray(int(m),int(n),T());
     gmm::dense_matrix<T> M(m,n); std::copy(v.begin(), v.end(), M.begin());
     if (do_add) gmm::add (M, gmm::sub_matrix(gsp.wsc(T()), ii, jj));
     else        gmm::copy(M, gmm::sub_matrix(gsp.wsc(T()), ii, jj));

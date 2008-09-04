@@ -120,7 +120,7 @@ struct Chrono {
     if (cvs->dim() == 0) return;
     else if (cvs->dim() > 1) {
       std::vector<size_type> fpts;
-      for (size_type f=0; f < cvs->nb_faces(); ++f) {
+      for (short_type f=0; f < cvs->nb_faces(); ++f) {
 	fpts.resize(cvs->nb_points_of_face(f));
 	for (size_type k=0; k < fpts.size(); ++k)
 	  fpts[k] = ipts[cvs->ind_points_of_face(f)[k]];
@@ -254,10 +254,11 @@ struct Chrono {
 
 
   static mesher_signed_distance *new_ref_element(bgeot::pgeometric_trans pgt) {
-    size_type n = pgt->structure()->dim();
+    dim_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
     /* Identifying simplexes.                                          */
-    if (nbp == n+1 && pgt->basic_structure() == bgeot::simplex_structure(n)) {
+    if (nbp == size_type(n+1) &&
+	pgt->basic_structure() == bgeot::simplex_structure(n)) {
 	return new mesher_simplex_ref(n);
     }
     
@@ -270,7 +271,8 @@ struct Chrono {
     }
     
     /* Identifying prisms.                                             */
-    if (nbp == 2 * n && pgt->basic_structure() == bgeot::prism_structure(n)) {
+    if (nbp == size_type(2 * n) &&
+	pgt->basic_structure() == bgeot::prism_structure(n)) {
       return new mesher_prism_ref(n);
     }
     
@@ -440,8 +442,8 @@ struct Chrono {
 
       for (size_type i=0; i < nbpt; ++i) {
 	for (size_type k=0, r = i; k < n; ++k) { // building grid point
-	  unsigned p =  r % gridnx[k];
-	  P[k] = p * 1. / (gridnx[k]-1);
+	  unsigned p =  unsigned(r % gridnx[k]);
+	  P[k] = p * scalar_type(1) / scalar_type(gridnx[k]-1);
 	  r /= gridnx[k];
 	}
 	co.clear(); co_v.resize(0);
@@ -614,7 +616,7 @@ struct Chrono {
       /* detect the faces lying on level_set boundaries
 	 (not exact, some other faces maybe be found, use this only for vizualistion) */
       for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
-	for (size_type f = 0; f <= n; ++f) {
+	for (short_type f = 0; f <= n; ++f) {
 	  const mesh::ind_pt_face_ct &fpts
 	    = msh.ind_points_of_face_of_convex(i, f);
 	  
@@ -639,7 +641,7 @@ struct Chrono {
 	dal::bit_vector ptdone;
 	std::vector<size_type> ipts;
 	for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
-	  for (size_type f = 0; f <= n; ++f) {
+	  for (short_type f = 0; f <= n; ++f) {
 	    const mesh::ind_pt_face_ct &fpts
 	      = msh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
@@ -673,7 +675,8 @@ struct Chrono {
        */
       base_matrix G;
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
-      papprox_integration pai = classical_approx_im(pgt2,2*K)->approx_method();
+      papprox_integration
+	pai = classical_approx_im(pgt2,dim_type(2*K))->approx_method();
       approx_integration new_approx(pgt->convex_ref());
       base_matrix KK(n,n), CS(n,n);
       base_matrix pc(pgt2->nb_points(), n); 
