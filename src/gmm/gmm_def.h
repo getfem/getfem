@@ -373,7 +373,7 @@ namespace gmm {
   template <typename T> inline T real(std::complex<T> a) { return a.real(); }
   template <typename T> inline T imag(T ) { return T(0); }
   template <typename T> inline T imag(std::complex<T> a) { return a.imag(); }  
-  template <typename T> inline T sqrt(T a) { return ::sqrt(a); }
+  template <typename T> inline T sqrt(T a) { return T(::sqrt(a)); }
   template <typename T> inline std::complex<T> sqrt(std::complex<T> a) {
     T x = a.real(), y = a.imag();
     if (x == T(0)) {

@@ -129,16 +129,16 @@ namespace getfem
 	for (size_type i=0; i < pai->nb_points_on_convex(); ++i) {
 	  ctx1.set_xref(nodes1[i]); ctx2.set_xref(nodes2[i]);
 	  if (what & (L2_NORM | LINF_NORM)) {
-	    pf1->interpolation(ctx1, coeff1, val1, qdim);
-	    pf2->interpolation(ctx2, coeff2, val2, qdim);
+	    pf1->interpolation(ctx1, coeff1, val1, dim_type(qdim));
+	    pf2->interpolation(ctx2, coeff2, val2, dim_type(qdim));
 	    for (size_type q=0; q < qdim; ++q) {
 	      l2_norm_sqr += gmm::sqr(val1[q]-val2[q])*J*pai->coeff(i);
 	      linf_norm = std::max(linf_norm, gmm::abs(val1[q]-val2[q]));
 	    }
 	  }
 	  if (what & H1_SEMI_NORM) {
-	    pf1->interpolation_grad(ctx1, coeff1, gval1, qdim);
-	    pf2->interpolation_grad(ctx2, coeff2, gval2, qdim);
+	    pf1->interpolation_grad(ctx1, coeff1, gval1, dim_type(qdim));
+	    pf2->interpolation_grad(ctx2, coeff2, gval2, dim_type(qdim));
 	    for (size_type q=0; q < qdim*mdim; ++q) {
 	      scalar_type v = gmm::sqr(gval1[q]-gval2[q])*J*pai->coeff(i);
 	      if (v > maxd) { cout << "new maxd: " << v << ", J=" << J << " at " << ctx1.xreal() << ", " << ctx2.xreal() << ", v1=" << gval1[q] << ", v2=" << gval2[q] << "\n"; maxd = v; }
