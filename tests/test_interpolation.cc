@@ -30,6 +30,7 @@
 
 using getfem::scalar_type;
 using getfem::size_type;
+using getfem::short_type;
 using getfem::dim_type;
 using getfem::mesh;
 using getfem::mesh_fem;
@@ -68,9 +69,9 @@ struct chrono {
 public:
   chrono() { }
   chrono& init() { cpu_=0; return *this; }
-  void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
+  void tic() { t = float(::clock())/float(CLOCKS_PER_SEC); }
   chrono& toc() {
-    float t2 = ::clock()/float(CLOCKS_PER_SEC);
+    float t2 = float(::clock())/float(CLOCKS_PER_SEC);
     cpu_ += t2 - t; t = t2; return *this;
   }
   float cpu() const { return cpu_; }
@@ -98,7 +99,8 @@ base_node shake_func(const base_node& x) {
   return z;
 }
 
-void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX, size_type K, bool noised) {
+void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N,
+		size_type NX, size_type K, bool noised) {
   mesh msh;
   base_node org(N); gmm::clear(org);
   std::vector<base_small_vector> vtab(N);
@@ -109,11 +111,11 @@ void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX
   }
   switch (MESH_TYPE) {
   case 0 : getfem::parallelepiped_regular_simplex_mesh
-      (msh, N, org, vtab.begin(), ref.begin()); break;
+      (msh, dim_type(N), org, vtab.begin(), ref.begin()); break;
   case 1 : getfem::parallelepiped_regular_mesh
-      (msh, N, org, vtab.begin(), ref.begin()); break;
+      (msh, dim_type(N), org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
-      (msh, N, org, vtab.begin(), ref.begin()); break;
+      (msh, dim_type(N), org, vtab.begin(), ref.begin()); break;
   default: GMM_ASSERT1(false, "invalid mesh type\n");
   }
   msh.optimize_structure();
@@ -122,9 +124,9 @@ void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX
   {
     bgeot::pgeometric_trans pgt;
     switch (MESH_TYPE) {
-    case 0: pgt = bgeot::simplex_geotrans(N,K); break;
-    case 1: pgt = bgeot::parallelepiped_geotrans(N,K); break;
-    case 2: pgt = bgeot::prism_geotrans(N,K); break;
+    case 0: pgt = bgeot::simplex_geotrans(dim_type(N),short_type(K)); break;
+    case 1: pgt = bgeot::parallelepiped_geotrans(dim_type(N),short_type(K)); break;
+    case 2: pgt = bgeot::prism_geotrans(dim_type(N),short_type(K)); break;
     default: assert(0);
     }
     for (dal::bv_visitor cv(msh.convex_index()); !cv.finished(); ++cv) {
@@ -149,7 +151,7 @@ void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX
       for (size_type i=0; i < N; ++i) { if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10) is_border = true; }
       if (!is_border) { 
 	P = shake_func(P); 
-	for (size_type i=0; i < N; ++i) P[i] += 0.05*(1./NX)*gmm::random(double());
+	for (size_type i=0; i < N; ++i) P[i] += 0.05*(1./double(NX))*gmm::random(double());
       }
     }
   }
@@ -158,7 +160,7 @@ void build_mesh(mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX
   if (dim > N) {
     getfem::base_matrix T(dim,N);
     for (unsigned i=0; i < N; ++i) T(i,i) = 1;
-    for (unsigned i=N; i < dim; ++i) T(i, i%N) = -.5;
+    for (unsigned i=unsigned(N); i < dim; ++i) T(i, i%N) = -.5;
     m.transformation(T);
     assert(m.dim() == dim);
   }
@@ -222,8 +224,10 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
        << ", P" << K << "<->P" << K+1 << ":"; cout.flush();
   mesh m;
   build_mesh(m, 0, N, N, NX, K, false);
-  mesh_fem mf1(m,Qdim1); mf1.set_finite_element(getfem::PK_fem(N,K));
-  mesh_fem mf2(m,Qdim2); mf2.set_finite_element(getfem::PK_fem(N,K+1));
+  mesh_fem mf1(m,dim_type(Qdim1));
+  mf1.set_finite_element(getfem::PK_fem(dim_type(N),short_type(K)));
+  mesh_fem mf2(m,dim_type(Qdim2));
+  mf2.set_finite_element(getfem::PK_fem(dim_type(N),short_type(K+1)));
   /* force evaluation of a number of things which are not part of interpolation */
   size_type d = mf1.nb_dof(); d -= mf2.nb_dof();
   double err = 0.;  
@@ -249,8 +253,8 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
   size_type gK=1;
   build_mesh(m1, 0, dim, N, NX, gK, true);
   build_mesh(m2, 0, dim, N, NX, gK, true);
-  mesh_fem mf1(m1); mf1.set_finite_element(getfem::PK_fem(N,K));
-  mesh_fem mf2(m2); mf2.set_finite_element(getfem::PK_fem(N,K));
+  mesh_fem mf1(m1); mf1.set_finite_element(getfem::PK_fem(dim_type(N),short_type(K)));
+  mesh_fem mf2(m2); mf2.set_finite_element(getfem::PK_fem(dim_type(N),short_type(K)));
   /* force evaluation of a number of things which are not part of interpolation */
   size_type d = mf1.nb_dof(); d -= mf2.nb_dof();
   double err = 0;

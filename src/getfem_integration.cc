@@ -133,9 +133,9 @@ namespace getfem {
     int n = int(::floor(params[0].num() + 0.01));
     GMM_ASSERT1(n > 0 && n < 100 && double(n) == params[0].num(),
 		"Bad parameters");
-    dependencies.push_back(bgeot::simplex_structure(n));
+    dependencies.push_back(bgeot::simplex_structure(dim_type(n)));
     return new integration_method
-          (new simplex_poly_integration_(bgeot::simplex_structure(n)));
+      (new simplex_poly_integration_(bgeot::simplex_structure(dim_type(n))));
   }
 
   /* ******************************************************************** */
@@ -170,7 +170,8 @@ namespace getfem {
     if (f < nfx)
       return cv1->int_monomial_on_face(mi1,f) * cv2->int_monomial(mi2);
     else
-      return cv1->int_monomial(mi1) * cv2->int_monomial_on_face(mi2, f-nfx);
+      return cv1->int_monomial(mi1)
+	* cv2->int_monomial_on_face(mi2, short_type(f-nfx));
   }
   
   plyint_mul_structure_::plyint_mul_structure_(ppoly_integration a, 
@@ -525,7 +526,7 @@ namespace getfem {
     }
     else {
       integration_method *p
-	= new integration_method(new gauss_approx_integration_(n/2 + 1));
+	= new integration_method(new gauss_approx_integration_(short_type(n/2 + 1)));
       dependencies.push_back(p->approx_method()->ref_convex());
       dependencies.push_back(&(p->approx_method()->integration_points()));
       return p;
@@ -636,7 +637,7 @@ namespace getfem {
 		double(n) == params[0].num() && double(k) == params[1].num(),
 		"Bad parameters");
     integration_method *p
-      = new integration_method(new Newton_Cotes_approx_integration_(n, k));
+      = new integration_method(new Newton_Cotes_approx_integration_(dim_type(n), short_type(k)));
     dependencies.push_back(p->approx_method()->ref_convex());
     dependencies.push_back(&(p->approx_method()->integration_points()));
     return p;
@@ -909,7 +910,7 @@ namespace getfem {
 	  size_type fp = size_type(-1);
 	  if (i >= base_im->nb_points_on_convex()) {
 	    size_type ii = i - base_im->nb_points_on_convex();
-	    for (size_type ff=0; ff < base_im->structure()->nb_faces(); ++ff) {
+	    for (short_type ff=0; ff < base_im->structure()->nb_faces(); ++ff) {
 	      if (ii < base_im->nb_points_on_face(ff)) { fp = ff; break; }
 	      else ii -= base_im->nb_points_on_face(ff);
 	    }
@@ -965,14 +966,14 @@ namespace getfem {
 	  if (i <  base_im->nb_points_on_convex())
 	    add_point(P2, base_im->coeff(i)*J1/J2, short_type(-1));
 	  else if (J1 > 1E-10) {
-	    size_type f = size_type(-1);
-	    for (size_type ff = 0; ff <= N; ++ff)
+	    short_type f = short_type(-1);
+	    for (short_type ff = 0; ff <= N; ++ff)
 	      if (gmm::abs(pgt2->convex_ref()->is_in_face(ff, P2)) < 1E-8) {
-		GMM_ASSERT1(f == size_type(-1),
+		GMM_ASSERT1(f == short_type(-1),
 			    "An integration point is common to two faces");
 		f = ff;
 	      }
-	    if (f != size_type(-1)) {
+	    if (f != short_type(-1)) {
 	      gmm::mult(K, normal2, normal1);
 	      add_point(P2,base_im->coeff(i)*J1*gmm::vect_norm2(normal1)/J2,f);
 	    }
@@ -1115,19 +1116,19 @@ namespace getfem {
     /* Identifying P1-simplexes.                                          */
 
     if (nbp == n+1)
-      if (cvs == bgeot::simplex_structure(n))
+      if (cvs == bgeot::simplex_structure(dim_type(n)))
     	{ name << "IM_EXACT_SIMPLEX("; found = true; }
     
     /* Identifying Q1-parallelepiped.                                     */
 
     if (!found && nbp == (size_type(1) << n))
-      if (cvs == bgeot::parallelepiped_structure(n))
+      if (cvs == bgeot::parallelepiped_structure(dim_type(n)))
     	{ name << "IM_EXACT_PARALLELEPIPED("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
  
     if (!found && nbp == 2 * n)
-      if (cvs == bgeot::prism_structure(n))
+      if (cvs == bgeot::prism_structure(dim_type(n)))
      	{ name << "IM_EXACT_PRISM("; found = true; }
      
     // To be completed
@@ -1154,7 +1155,7 @@ namespace getfem {
 
     degree = std::max<dim_type>(degree, 1);
     bgeot::pconvex_structure a, b;
-    if (cvs->basic_structure() == bgeot::simplex_structure(n)) {
+    if (cvs->basic_structure() == bgeot::simplex_structure(dim_type(n))) {
       /* Identifying P1-simplexes. */
       switch (n) {
       case 0: return int_method_descriptor("IM_NC(0,0)");
@@ -1203,7 +1204,7 @@ namespace getfem {
   /* try to integrate all monomials up to order 'order' and return the 
      max. error */
   scalar_type test_integration_error(papprox_integration pim, dim_type order) {
-    size_type dim = pim->dim();
+    short_type dim = pim->dim();
     pintegration_method exact = classical_exact_im(pim->structure());
     opt_long_scalar_type error(0);
     for (bgeot::power_index idx(dim); idx.degree() <= order; ++idx) {
@@ -1227,5 +1228,3 @@ namespace getfem {
   }
 
 }  /* end of namespace getfem.                                           */
-
-
