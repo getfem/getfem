@@ -35,6 +35,7 @@ using bgeot::base_small_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
+using bgeot::short_type;
 using bgeot::dim_type;
 
 typedef gmm::wsvector<scalar_type> sparse_vector_type;
@@ -97,9 +98,9 @@ struct chrono {
 public:
   chrono() { }
   void init() { cpu_=0; }
-  void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
+  void tic() { t = float(::clock())/float(CLOCKS_PER_SEC); }
   void toc() {
-    float t2 = ::clock()/float(CLOCKS_PER_SEC);
+    float t2 = float(::clock())/float(CLOCKS_PER_SEC);
     cpu_ += t2 - t; t = t2;
   }
   float cpu() const { return cpu_; }
@@ -140,13 +141,13 @@ void g_params::init(int argc, char *argv[]) {
   PARAM.read_command_line(argc, argv);
   NX = PARAM.int_value("NX", "Domaine dimension");
   Ndim = PARAM.int_value("NDIM", "Number of dimensions");
-  mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
-  K = PARAM.int_value("K", "Finite element degree");
-  K2 = PARAM.int_value("K", "Finite element degree");
-  Kdata = PARAM.int_value("KDATA", "Finite element degree for data meshfem");
+  mesh_type = int(PARAM.int_value("MESH_TYPE", "Mesh type "));
+  K = int(PARAM.int_value("K", "Finite element degree"));
+  K2 = int(PARAM.int_value("K", "Finite element degree"));
+  Kdata = int(PARAM.int_value("KDATA", "Finite element degree for data meshfem"));
   do_new = PARAM.int_value("BENCH_NEW", "bench new assembly routines");
   do_old = PARAM.int_value("BENCH_OLD", "bench old assembly routines");
-  do_what = PARAM.int_value("BENCH_WHAT", "which test do you want to run?");
+  do_what = int(PARAM.int_value("BENCH_WHAT", "which test do you want to run?"));
 }
 
 namespace getfem {
@@ -275,25 +276,25 @@ namespace getfem {
 	    pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
 	  }
 
-	  for (f = 0; f < MAX_FACES_PER_CV; ++f) if (nf[f]) {
-
-	    pmec->gen_compute_on_face(t,
-				      mf1.linked_mesh().points_of_convex(cv),
-				      f, cv);
+	  for (f = 0; f < MAX_FACES_PER_CV; ++f)
+	    if (nf[f]) {
+	      pmec->gen_compute_on_face(t,
+					mf1.linked_mesh().points_of_convex(cv),
+					short_type(f), cv);
 	    
-	    base_tensor::iterator p = t.begin();
-	    for (size_type i = 0; i < nbd2; i++) {
-	      size_type dof2 = mf2.ind_dof_of_element(cv)[i];
-	      // cout << "cv = " << cv << " dof2 = " << dof2 << endl;
-	      for (size_type j = 0; j < nbd1; j++, ++p) {
-		size_type dof1 = mf1.ind_dof_of_element(cv)[j];
-		// cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
-		for (size_type k = 0; k < N; k++)
-		  M(dof1*N + k, dof2*N + k) += (*p);
+	      base_tensor::iterator p = t.begin();
+	      for (size_type i = 0; i < nbd2; i++) {
+		size_type dof2 = mf2.ind_dof_of_element(cv)[i];
+		// cout << "cv = " << cv << " dof2 = " << dof2 << endl;
+		for (size_type j = 0; j < nbd1; j++, ++p) {
+		  size_type dof1 = mf1.ind_dof_of_element(cv)[j];
+		  // cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
+		  for (size_type k = 0; k < N; k++)
+		    M(dof1*N + k, dof2*N + k) += (*p);
+		}
 	      }
+	      if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
 	    }
-	    if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
-	  }
 	}
       }
   }
@@ -817,16 +818,16 @@ void gen_mesh(getfem::mesh& mesh) {
     (vtab[i])[i] = 1. / scalar_type(param.NX);
   }
   switch (param.mesh_type) {
-  case 0: getfem::parallelepiped_regular_simplex_mesh(mesh, param.Ndim, org,
-						      vtab.begin(), ref.begin()); 
+  case 0: getfem::parallelepiped_regular_simplex_mesh
+      (mesh, dim_type(param.Ndim), org,vtab.begin(), ref.begin()); 
     cerr << mesh.convex_index().card() << " " << param.Ndim << "D simplexes generated\n";
     break;
   case 1 : getfem::parallelepiped_regular_mesh
-		   (mesh, param.Ndim, org, vtab.begin(), ref.begin()); 
+      (mesh, dim_type(param.Ndim), org, vtab.begin(), ref.begin()); 
     cerr << mesh.convex_index().card() << " " << param.Ndim << "D parallelepipeds generated\n";
     break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
-		     (mesh, param.Ndim, org, vtab.begin(), ref.begin()); 
+      (mesh, dim_type(param.Ndim), org, vtab.begin(), ref.begin()); 
     cerr << mesh.convex_index().card() << " " << param.Ndim << "D prisms generated\n";
     break;
   default : GMM_ASSERT1(false, "Unknown type of mesh");
@@ -854,15 +855,15 @@ void gen_mesh(getfem::mesh& mesh) {
 
 void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
   if (datamf)
-    mf.set_classical_finite_element(param.Kdata);
+    mf.set_classical_finite_element(dim_type(param.Kdata));
   else {
     dal::bit_vector cvlst = mf.linked_mesh().convex_index();
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       if ((cv+1) % 100) {
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,short_type(param.K)));
       } else {
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,short_type(param.K2)));
       }
     }
   }
@@ -875,12 +876,12 @@ void init_mesh_im(getfem::mesh_im &mim, bool use_exact_im=true) {
     bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
     if ((cv+1) % 100) {
       mim.set_integration_method(cv, 
-				 (use_exact_im && (rand() % 10)==0) ? getfem::classical_exact_im(pgt) : 
-				 getfem::classical_approx_im(pgt,param.K*3));
+	(use_exact_im && (rand() % 10)==0) ? getfem::classical_exact_im(pgt) : 
+				 getfem::classical_approx_im(pgt,dim_type(param.K*3)));
     } else {
       mim.set_integration_method(cv, 
-				 (use_exact_im && (rand() % 10)==0)  ? getfem::classical_exact_im(pgt) : 
-				 getfem::classical_approx_im(pgt,param.K2*3));
+      (use_exact_im && (rand() % 10)==0)  ? getfem::classical_exact_im(pgt) : 
+				 getfem::classical_approx_im(pgt,dim_type(param.K2*3)));
     }
   }
 }
@@ -1107,7 +1108,8 @@ void tensor_ref_check2() {
 }  
 
 bgeot::tensor_ref tr_from_matrix(const base_matrix &A, scalar_type *&p) {
-  bgeot::tensor_ranges r(2); r[0] = A.nrows(); r[1] = A.ncols();
+  bgeot::tensor_ranges r(2);
+  r[0] = unsigned(A.nrows()); r[1] = unsigned(A.ncols());
   bgeot::tensor_ref tr(r); tr.set_base(p);
   return tr;
 }
@@ -1186,7 +1188,7 @@ run_tests(getfem::mesh_im &mim,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(M1); c.tic();
-	getfem::old_asm_mass_matrix_on_boundary(M1, mim, mf, mfd, 1, Ndim);
+	getfem::old_asm_mass_matrix_on_boundary(M1, mim, mf, mfd, 1, dim_type(Ndim));
 	c.toc(); cout << "#" << flushy; 
       }
       cout << "done " << c << endl;
@@ -1239,7 +1241,7 @@ run_tests(getfem::mesh_im &mim,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V1q); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-	getfem::old_asm_volumic_source_term(V1q, mim, mf, mfd, Aq, Ndim);
+	getfem::old_asm_volumic_source_term(V1q, mim, mf, mfd, Aq, dim_type(Ndim));
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1289,7 +1291,7 @@ run_tests(getfem::mesh_im &mim,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-      getfem::old_asm_mass_matrix(M1, mim, mf, mfd, Ndim);
+      getfem::old_asm_mass_matrix(M1, mim, mf, mfd, dim_type(Ndim));
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1336,7 +1338,8 @@ run_tests(getfem::mesh_im &mim,
 
   /* ---- L2 NORM, Q=1 ---- */
   if (do_what[DO_SCAL_L2_NORM]) {
-    for (size_type i=0; i < mf.nb_dof(); ++i) { V1[i] = V2[i] = float(rand())/RAND_MAX; }
+    for (size_type i=0; i < mf.nb_dof(); ++i)
+      { V1[i] = V2[i] = float(rand())/float(RAND_MAX); }
     if (do_old) {
       cout << "L2 norm, Q=" << 1 << ", old way [" << nloop << " times] .." << flushy;
       c.init();
@@ -1373,7 +1376,8 @@ run_tests(getfem::mesh_im &mim,
 
   /* ---- VECT H1 NORM ---- */
   if (do_what[DO_VECT_H1_NORM]) {
-    for (size_type i=0; i < mfq.nb_dof(); ++i) { V1q[i] = V2q[i] = float(rand())/RAND_MAX; }
+    for (size_type i=0; i < mfq.nb_dof(); ++i)
+      { V1q[i] = V2q[i] = float(rand())/float(RAND_MAX); }
     if (do_old) {
       cout << "H1 norm, Q=" << Ndim << ", old way [" << nloop << " times] .." << flushy;
       c.init();
@@ -1449,7 +1453,8 @@ run_tests(getfem::mesh_im &mim,
 struct dummy_nonlin : public getfem::nonlinear_elem_term {
   unsigned i,j;
   bgeot::multi_index sizes_;
-  dummy_nonlin(size_type N) : sizes_(2) { sizes_[0] = sizes_[1] = N; }
+  dummy_nonlin(size_type N) : sizes_(2)
+  { sizes_[0] = sizes_[1] = short_type(N); }
   const bgeot::multi_index &sizes() const { return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& /*ctx*/,
 		       bgeot::base_tensor &t) {

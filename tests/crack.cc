@@ -46,6 +46,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type; 
+using bgeot::short_type; 
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -397,7 +399,7 @@ struct crack_problem {
 std::string name_of_dof(getfem::pdof_description dof) {
   char s[200];
   sprintf(s, "UnknownDof[%p]", (void*)dof);
-  for (unsigned d = 0; d < 4; ++d) {
+  for (dim_type d = 0; d < 4; ++d) {
     if (dof == getfem::lagrange_dof(d)) {
       sprintf(s, "Lagrange[%d]", d); goto found;
     }
@@ -414,11 +416,11 @@ std::string name_of_dof(getfem::pdof_description dof) {
       sprintf(s, "Xfem[idx:%d]", int(dof_xfem_index(dof)));
     }
     
-    for (unsigned r = 0; r < d; ++r) {
+    for (dim_type r = 0; r < d; ++r) {
       if (dof == getfem::derivative_dof(d, r)) {
 	sprintf(s, "D_%c[%d]", "xyzuvw"[r], d); goto found;
       }
-      for (unsigned t = 0; t < d; ++t) {
+      for (dim_type t = 0; t < d; ++t) {
 	if (dof == getfem::second_derivative_dof(d, r, t)) {
 	  sprintf(s, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d); 
 	  goto found;
@@ -452,9 +454,9 @@ void crack_problem::init(void) {
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   spider.radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
-  spider.Nr = PARAM.int_value("SPIDER_NR","Spider_Nr ");
-  spider.Ntheta = PARAM.int_value("SPIDER_NTHETA","Ntheta ");
-  spider.K = PARAM.int_value("SPIDER_K","K ");
+  spider.Nr = unsigned(PARAM.int_value("SPIDER_NR","Spider_Nr "));
+  spider.Ntheta = unsigned(PARAM.int_value("SPIDER_NTHETA","Ntheta "));
+  spider.K = int(PARAM.int_value("SPIDER_K","K "));
   spider.theta0 =0;
 
   translation.resize(2); 
@@ -486,7 +488,7 @@ void crack_problem::init(void) {
   cutoff.radius = PARAM.real_value("CUTOFF", "Cutoff");
   cutoff.radius1 = PARAM.real_value("CUTOFF1", "Cutoff1");
   cutoff.radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
-  mf_u().set_qdim(N);
+  mf_u().set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -507,13 +509,13 @@ void crack_problem::init(void) {
   mf_pre_mortar.set_finite_element(mesh.convex_index(), 
 				   getfem::fem_descriptor(PARAM.string_value("MORTAR_FEM_TYPE")));
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
   mf_partition_of_unity.set_classical_finite_element(1);
   
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
-  mode = PARAM.int_value("MODE","Mode for the reference solution");
-  dir_with_mult = PARAM.int_value("DIRICHLET_VERSINO");
+  mode = int(PARAM.int_value("MODE","Mode for the reference solution"));
+  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSINO"));
   if (mixed_pressure) {
     std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
     mf_p.set_finite_element(mesh.convex_index(),
@@ -624,15 +626,16 @@ bool crack_problem::solve(plain_vector &U) {
   for (size_type i = 0; i < vfunc.size(); ++i) {
     /* use the singularity */
     getfem::abstract_xy_function *s = 
-      new getfem::crack_singular_xy_function(i);
+      new getfem::crack_singular_xy_function(unsigned(i));
     if (enrichment_option != FIXED_ZONE && 
 	enrichment_option != GLOBAL_WITH_MORTAR) {
       /* use the product of the singularity function
 	 with a cutoff */
       getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(cutoff.fun_num,
+	new getfem::cutoff_xy_function(int(cutoff.fun_num),
 				       cutoff.radius, 
-				       cutoff.radius1,cutoff.radius0);
+				       cutoff.radius1,
+				       cutoff.radius0);
       s = new getfem::product_of_xy_functions(*s, *c);
     }
     vfunc[i] = getfem::global_function_on_level_set(ls, *s);
@@ -758,7 +761,7 @@ bool crack_problem::solve(plain_vector &U) {
 
       const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
       for (unsigned i=0; i < cvs.size(); ++i) {
-	unsigned cv = cvs[i];
+	unsigned cv = unsigned(cvs[i]);
 	//if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
 
 	getfem::pfem pf = mf_u().fem_of_element(cv);
@@ -883,7 +886,7 @@ bool crack_problem::solve(plain_vector &U) {
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < 1e-10) {
 	cout << "  removing null mf_u() dof " << d << "\n";
-	unsigned n = gmm::mat_nrows(H);
+	size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }
@@ -989,7 +992,7 @@ int main(int argc, char *argv[]) {
     { 
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
-      unsigned Q = p.mf_u().get_qdim();
+      dim_type Q = p.mf_u().get_qdim();
       getfem::mesh_fem mf(mcut, Q);
       mf.set_classical_discontinuous_finite_element(2, 0.001);
       // mf.set_finite_element
@@ -1006,7 +1009,7 @@ int main(int argc, char *argv[]) {
       getfem::stored_mesh_slice sl;
       getfem::mesh mcut_refined;
 
-      unsigned NX = p.PARAM.int_value("NX"), nn;
+      unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
       if (NX < 6) nn = 8;
       else if (NX < 12) nn = 8;
       else if (NX < 30) nn = 3;
@@ -1024,10 +1027,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (dmin < 1e-5)
-	  nrefine[cv] = nn*4;
+	  nrefine[cv] = short_type(nn*4);
 	else if (dmin < .1) 
-	  nrefine[cv] = nn*2;
-	else nrefine[cv] = nn;
+	  nrefine[cv] = short_type(nn*2);
+	else nrefine[cv] = short_type(nn);
 	if (dmin < .01)
 	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
       }
@@ -1046,14 +1049,14 @@ int main(int argc, char *argv[]) {
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 ("IM_TRIANGLE(6)"));
 
-      getfem::mesh_fem mf_refined(mcut_refined, Q);
+      getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
       mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
       plain_vector W(mf_refined.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
 #ifdef VALIDATE_XFEM
-      p.exact_sol.mf.set_qdim(Q);
+      p.exact_sol.mf.set_qdim(dim_type(Q));
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 

@@ -41,6 +41,7 @@ using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::complex_type; /* = std::complex<double> */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -97,18 +98,21 @@ void Helmholtz_problem::init(void) {
     Nr=PARAM.int_value("NR", "Nomber of space steps ");
   size_type gt_order = PARAM.int_value("GTDEGREE",
 		       "polynomial degree of geometric transformation");
-  scalar_type dtheta=2*M_PI*1./Nt;
+  scalar_type dtheta=2*M_PI*1./scalar_type(Nt);
   scalar_type R0 = PARAM.real_value("R0","R0");
   scalar_type R1 = PARAM.real_value("R1","R1");
-  scalar_type dR = (R1-R0)/(Nr-1);
-  bgeot::pgeometric_trans pgt = bgeot::parallelepiped_geotrans(2, gt_order);
+  scalar_type dR = (R1-R0)/scalar_type(Nr-1);
+  bgeot::pgeometric_trans
+    pgt = bgeot::parallelepiped_geotrans(2, short_type(gt_order));
   for (size_type i=0; i < Nt; ++i) {
     for (size_type j=0; j < Nr-1; ++j) {
       std::vector<size_type> ipts; ipts.reserve(gmm::sqr(gt_order+1));
       for (size_type ii=0; ii <= gt_order; ++ii) {
         for (size_type jj=0; jj <= gt_order; ++jj) {
-          scalar_type r = R0 + j*dR + jj*(dR/gt_order);
-          scalar_type t = i*dtheta + ii*dtheta/gt_order;
+          scalar_type r = R0 + scalar_type(j)*dR
+	    + scalar_type(jj)*(dR/scalar_type(gt_order));
+          scalar_type t = scalar_type(i)*dtheta
+	    + scalar_type(ii)*dtheta/scalar_type(gt_order);
           ipts.push_back(mesh.add_point(base_node(r*cos(t),r*sin(t))));
         }
       }
@@ -123,8 +127,8 @@ void Helmholtz_problem::init(void) {
     (PARAM.real_value("WAVENUM_R", "Real part of the wave number"),
      PARAM.real_value("WAVENUM_I", "Imaginary part of the wave number"));
 
-  with_mult = PARAM.int_value("DIRICHLET_VERSION",
-			      "Dirichlet condition version");
+  with_mult = int(PARAM.int_value("DIRICHLET_VERSION",
+				  "Dirichlet condition version"));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 

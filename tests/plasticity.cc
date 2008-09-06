@@ -133,7 +133,7 @@ void plasticity_problem::init(void)
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(bgeot::dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 

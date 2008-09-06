@@ -232,7 +232,7 @@ void bilaplacian_problem::init(void) {
     mesh.transformation(M);
   }
 
-  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
   dirichlet_version = getfem::constraints_type(dv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;

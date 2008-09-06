@@ -110,7 +110,7 @@ void stokes_problem::init(void) {
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosité");
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(bgeot::dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 

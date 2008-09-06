@@ -39,6 +39,7 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -143,8 +144,8 @@ void plate_problem::init(void) {
 
   cout << "MITC = " ;
   if (mitc) cout << "true \n" ; else cout << "false \n" ;
-  sol_ref = (PARAM.int_value("SOL_REF") ) ;
-  study_flag = (PARAM.int_value("STUDY_FLAG") ) ;
+  sol_ref = int(PARAM.int_value("SOL_REF") ) ;
+  study_flag = int(PARAM.int_value("STUDY_FLAG") ) ;
   eta = (PARAM.real_value("ETA") );
   N_Four = (PARAM.int_value("N_Four") ) ;
   
@@ -181,8 +182,8 @@ void plate_problem::init(void) {
      e2 = epsilon * epsilon ;
      for(size_type i = 0 ; i < N_Four ; i++) {
         for(size_type j = 0 ; j < N_Four ; j++) {
-	   A = (j + 1) * M_PI / LX ; 
-	   B = (i + 1) * M_PI / LY ; 
+	   A = scalar_type(j + 1) * M_PI / LX ; 
+	   B = scalar_type(i + 1) * M_PI / LY ; 
 	   Jmn(0, 0) = 2. * A * A / (1. - nu) + B * B + 3. / e2   ;
 	   Jmn(0, 1) = A * B * (1. +nu) / (1. - nu) ;
 	   Jmn(0, 2) = A * 3. / e2 ;
@@ -196,7 +197,7 @@ void plate_problem::init(void) {
 	   
 	   // calcul du développement de Fourrier du chargement :
 	   if ( ( (i + 1) % 2 == 1 ) && ( (j + 1) % 2 == 1) ) {
-	      Pmn =  16. * pressure / ( (i + 1) * (j + 1) * M_PI * M_PI) ; }
+	      Pmn =  16. * pressure / ( scalar_type(i + 1) * scalar_type(j + 1) * M_PI * M_PI) ; }
 	   else {
 	      Pmn = 0. ; }	      
 	   Bmn[0] = 0. ;
@@ -235,8 +236,8 @@ void plate_problem::init(void) {
         }
      }
 
-  mf_ut.set_qdim(N);
-  mf_theta.set_qdim(N);
+  mf_ut.set_qdim(dim_type(N));
+  mf_theta.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_ut = getfem::fem_descriptor(FEM_TYPE_UT);
@@ -336,8 +337,8 @@ base_small_vector plate_problem::theta_exact(base_node P) {
      theta[1] = 0. ;
      for(size_type i = 0 ; i < N_Four ; i ++) {
         for(size_type j = 0 ; j < N_Four ; j ++) {
-	   theta[0] += theta1_Four(i, j) * cos( (j + 1) * M_PI * P[0] / LX ) * sin( (i + 1) * M_PI * P[1] / LY ) ;
-	   theta[0] += theta2_Four(i, j) * sin( (j + 1) * M_PI * P[0] / LX ) * cos( (i + 1) * M_PI * P[1] / LY ) ;
+	   theta[0] += theta1_Four(i, j) * cos( scalar_type(j + 1) * M_PI * P[0] / LX ) * sin( scalar_type(i + 1) * M_PI * P[1] / LY ) ;
+	   theta[0] += theta2_Four(i, j) * sin( scalar_type(j + 1) * M_PI * P[0] / LX ) * cos( scalar_type(i + 1) * M_PI * P[1] / LY ) ;
            }
         }
      }
@@ -365,7 +366,7 @@ scalar_type plate_problem::u3_exact(base_node P) {
        u3_local = 0. ;
        for(size_type i = 0 ; i < N_Four ; i ++) {
           for(size_type j = 0 ; j < N_Four ; j ++) 
-	     u3_local += u3_Four(i, j) * sin( (j + 1) * M_PI * P[0] / LX ) * sin( (i + 1) * M_PI * P[1] / LY ) ;
+	     u3_local += u3_Four(i, j) * sin( scalar_type(j + 1) * M_PI * P[0] / LX ) * sin( scalar_type(i + 1) * M_PI * P[1] / LY ) ;
 	     }
        return (u3_local) ;
        break ; 
@@ -378,7 +379,7 @@ scalar_type plate_problem::u3_exact(base_node P) {
 void plate_problem::compute_error(plain_vector &U) {
   cout.precision(16);
   if (PARAM.int_value("SOL_EXACTE") == 1){
-     for (int i=0 ; i < U.size() ; ++i)
+     for (size_type i=0 ; i < U.size() ; ++i)
         U[i] = 0. ;
   }
 

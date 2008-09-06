@@ -40,6 +40,7 @@ using bgeot::base_vector;
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::short_type;  /* = short */
+using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
@@ -126,9 +127,9 @@ int main(int argc, char *argv[]) {
     mesh.translation(Pmin);
 
     // Level set definition
-    unsigned lsdeg = PARAM.int_value("LEVEL_SET_DEGREE", "level set degree");
+    unsigned lsdeg = unsigned(PARAM.int_value("LEVEL_SET_DEGREE", "level set degree"));
     Radius = PARAM.real_value("RADIUS", "Domain radius");
-    getfem::level_set ls(mesh, lsdeg);
+    getfem::level_set ls(mesh, dim_type(lsdeg));
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
     for (unsigned i = 0; i < lsmf.nb_dof(); ++i)
       ls.values()[i] = gmm::vect_norm2_sqr(lsmf.point_of_dof(i))-Radius*Radius;

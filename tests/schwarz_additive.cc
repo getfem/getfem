@@ -40,6 +40,8 @@
 using bgeot::base_vector;
 using bgeot::base_node;
 using bgeot::size_type;
+using bgeot::dim_type;
+using bgeot::short_type;
 using bgeot::scalar_type;
 
 typedef gmm::row_matrix<gmm::rsvector<scalar_type> > general_sparse_matrix;
@@ -98,7 +100,7 @@ void pb_data::init(bgeot::md_param &params) {
   /***********************************************************************/
   
   /* parametres physiques */
-  N = params.int_value("N", "Dimension");
+  N = int(params.int_value("N", "Dimension"));
   mu = params.real_value("MU", "Stiffness parameter mu");
   gravity = params.real_value("PG", "G");
   rho = params.real_value("RHO", "RHO");
@@ -110,13 +112,13 @@ void pb_data::init(bgeot::md_param &params) {
   LX = params.real_value("LX", "Size in X");
   LY = params.real_value("LY", "Size in Y");
   LZ = params.real_value("LZ", "Size in Y");
-  NX = params.int_value("NX", "Nomber of space step ");
-  NXCOARSE = params.int_value("NXCOARSE", "Nombre of space step ");
-  USECOARSE = params.int_value("USECOARSE", "Coarser mesh or not");
+  NX = int(params.int_value("NX", "Nomber of space step "));
+  NXCOARSE = int(params.int_value("NXCOARSE", "Nombre of space step "));
+  USECOARSE = int(params.int_value("USECOARSE", "Coarser mesh or not"));
   residual = params.real_value("RESIDUAL", "residual");
   overlap = params.real_value("OVERLAP", "overlap");
-  K = params.int_value("K", "Degree");
-  solver = params.int_value("SOLVER", "solver");
+  K = int(params.int_value("K", "Degree"));
+  solver = int(params.int_value("SOLVER", "solver"));
   subdomsize = params.real_value("SUBDOMSIZE", "sub-domains size");  
   std::string meshname(params.string_value("MESHNAME",
 			     "mesh file name"));
@@ -139,7 +141,7 @@ void pb_data::init(bgeot::md_param &params) {
       vtab[i] = bgeot::base_small_vector(N); gmm::clear(vtab[i]);
       (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
     }
-    getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
+    getfem::parallelepiped_regular_simplex_mesh(mesh, dim_type(N), org,
 						&(vtab[0]), &(ref[0]));
   }
 
@@ -152,14 +154,14 @@ void pb_data::init(bgeot::md_param &params) {
       (vtab[i])[i] = 
 	((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NXCOARSE);
     }
-    getfem::parallelepiped_regular_simplex_mesh(mesh_coarse, N, org,
+    getfem::parallelepiped_regular_simplex_mesh(mesh_coarse, dim_type(N), org,
 						&(vtab[0]), &(ref[0]));
   }
   
   mesh.trans_of_convex(0);
   mesh.optimize_structure();
 
-  dal::bit_vector nn = mesh.convex_index(N);
+  dal::bit_vector nn = mesh.convex_index(dim_type(N));
   char method[500];
   sprintf(method, "IM_EXACT_SIMPLEX(%d)", N);
   getfem::pintegration_method ppi = getfem::int_method_descriptor(method);
@@ -167,17 +169,17 @@ void pb_data::init(bgeot::md_param &params) {
   sprintf(method, "FEM_PK(%d, %d)", N, K);
   mim.set_integration_method(nn, ppi);
   mef.set_finite_element(nn, getfem::fem_descriptor(method));
-  mef_coarse.set_finite_element(mesh_coarse.convex_index(N),
+  mef_coarse.set_finite_element(mesh_coarse.convex_index(dim_type(N)),
 				getfem::fem_descriptor(method));
   mef_data.set_finite_element(nn, getfem::fem_descriptor(method));
-  mef.set_qdim(N);
-  mef_coarse.set_qdim(N);
+  mef.set_qdim(dim_type(N));
+  mef_coarse.set_qdim(dim_type(N));
 
-  nn = mesh.convex_index(N);
+  nn = mesh.convex_index(dim_type(N));
   base_vector un(N);
   for (int j = nn.take_first(); j >= 0; j << nn) {
     int k = mesh.structure_of_convex(j)->nb_faces();
-    for (int i = 0; i < k; i++) {
+    for (short_type i = 0; i < k; i++) {
       if (mesh.is_convex_having_neighbour(j, i)) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	gmm::scale(un, 1/gmm::vect_norm2(un));
@@ -221,7 +223,7 @@ int pb_data::solve_cg(void) {
   gmm::iteration iter(residual, 1, 1000000);
   gmm::ildlt_precond<general_sparse_matrix> P(RM);
   gmm::cg(RM, U, F, gmm::identity_matrix(), P, iter);
-  return iter.get_iteration();
+  return int(iter.get_iteration());
 }
 
 int pb_data::solve_superlu(void) {
@@ -233,7 +235,7 @@ int pb_data::solve_superlu(void) {
 int pb_data::solve_cg2(void) {
   gmm::iteration iter(residual, 1, 1000000);
   gmm::cg(RM, U, F, gmm::identity_matrix(), gmm::identity_matrix(), iter);
-  return iter.get_iteration();
+  return int(iter.get_iteration());
 }
 
 int pb_data::solve_schwarz(int version) {
