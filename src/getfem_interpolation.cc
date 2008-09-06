@@ -54,7 +54,7 @@ namespace getfem {
 	  bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
 	  bool toadd = extrapolation || gicisin;
 	  double isin = pgt->convex_ref()->is_in(pt_ref);
-	  cout << "i = " << ind << " isin = " << isin << endl;
+
 	  if (toadd && npt[ind]) {
 	    if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
 	    else toadd = false;
