@@ -40,7 +40,6 @@ namespace getfem {
     base_node min, max, pt_ref; /* bound of the box enclosing the convex */
     bgeot::kdtree_tab_type boxpts;
 
-
     for (dal::bv_visitor j(msh.convex_index()); !j.finished(); ++j) {
       //pts_cvx[j].clear();
       bgeot::pgeometric_trans pgt = msh.trans_of_convex(j);
@@ -48,12 +47,14 @@ namespace getfem {
       for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
       gic.init(msh.points_of_convex(j), pgt);
       points_in_box(boxpts, min, max);
+
       for (size_type l = 0; l < boxpts.size(); ++l) {
 	size_type ind = boxpts[l].i;
 	if (!(npt[ind]) || dist[ind] > 0) {
 	  bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
 	  bool toadd = extrapolation || gicisin;
 	  double isin = pgt->convex_ref()->is_in(pt_ref);
+	  cout << "i = " << ind << " isin = " << isin << endl;
 	  if (toadd && npt[ind]) {
 	    if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
 	    else toadd = false;

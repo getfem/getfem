@@ -74,7 +74,8 @@ namespace getfem {
      *        into account, else test them on the frontiere convexes.
      */
     void distribute(bool extrapolation = false);
-    mesh_trans_inv(const mesh &m) : bgeot::geotrans_inv(1E-12), msh(m) {}
+    mesh_trans_inv(const mesh &m, double EPS_ = 1E-12)
+      : bgeot::geotrans_inv(EPS_), msh(m) {}
   private :
     void add_point_with_id(base_node, size_type) {}
   };
@@ -208,7 +209,8 @@ namespace getfem {
   */
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, bool extrapolation = false);
+		     const VECTU &U, VECTV &V, bool extrapolation = false,
+		     double EPS = 1E-10);
 
   /**
      @brief Build the interpolation matrix of mf_source on mf_target.
@@ -219,7 +221,7 @@ namespace getfem {
    */
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, bool extrapolation = false);
+		     MAT &M, bool extrapolation = false, double EPS = 1E-10);
 
 
   /* --------------------------- Implementation ---------------------------*/
@@ -431,10 +433,11 @@ namespace getfem {
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		       const VECTU &U, VECTV &V, MAT &M,
-		       int version, bool extrapolation = false) {
+		       int version, bool extrapolation = false,
+		       double EPS = 1E-10) {
 
     const mesh &msh(mf_source.linked_mesh());
-    getfem::mesh_trans_inv mti(msh);
+    getfem::mesh_trans_inv mti(msh, EPS);
     size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
     GMM_ASSERT1(qdim_s == qdim_t || qdim_t == 1,
 		"Attempt to interpolate a field of dimension "
@@ -455,7 +458,8 @@ namespace getfem {
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, bool extrapolation) {
+		     const VECTU &U, VECTV &V, bool extrapolation,
+		     double EPS = 1E-10) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
 		&& (gmm::vect_size(V) % mf_target.nb_dof()) == 0
@@ -464,12 +468,12 @@ namespace getfem {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     }
     else 
-      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation);
+      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation, EPS);
   }
 
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, bool extrapolation) {
+		     MAT &M, bool extrapolation, double EPS = 1E-10) {
     GMM_ASSERT1(mf_source.nb_dof() == gmm::mat_ncols(M)
 		&& (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
 		&& gmm::mat_nrows(M) != 0, "Dimensions mismatch");
@@ -478,7 +482,7 @@ namespace getfem {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);
     }
     else 
-      interpolation(mf_source, mf_target, U, V, M, 1, extrapolation);
+      interpolation(mf_source, mf_target, U, V, M, 1, extrapolation, EPS);
   }
 
   //
