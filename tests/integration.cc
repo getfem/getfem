@@ -370,8 +370,8 @@ static int inspect_results() {
     bgeot::pgeometric_trans pgt = (*it).first.pgt;
     const matrix_collection &mc = (*it).second;
     if (f == -1) {
-      cout << "inspecting " << bgeot::name_of_geometric_trans(pgt) << "/K=" << K << "\n";
-      cout << "  VOLUME:\n";
+      cout << "inspecting " << bgeot::name_of_geometric_trans(pgt)
+	   << "/K=" << K << "\n" << "  VOLUME:\n";
     } else {
       cout << "  FACE " << f << ":\n";
     }
@@ -386,8 +386,10 @@ static int inspect_results() {
       else     cout << "    [ERROR!] ";
       cout << std::setw(70) << mc.im_names[i] << " : sum= " << std::setw(6) << sum << ", dist=" << std::setw(9) << dist << "\n";
       if (!ok) {
-	// cerr << mc.lst[0] << "\n" << mc.lst[i] << "\n";
-	//	cerr << " !!integration: error with " << mc.im_names[i] << " or " << mc.im_names[0] << "\n";
+	 cerr << mc.lst[0] << "\n" << mc.lst[i] << "\n";
+	 cerr << " !!integration: error with " << mc.im_names[i]
+	      << " or " << mc.im_names[0] << "\n";
+		getchar();
 	++failcnt;
       }
     }
