@@ -47,6 +47,7 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -267,11 +268,11 @@ void elastostatic_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  sol_sing = PARAM.int_value("SOL_SING", "Optional singular solution");
+  sol_sing = int(PARAM.int_value("SOL_SING", "Optional singular solution"));
   refine = (PARAM.int_value("REFINE", "Optional refinement") != 0);
   sol_lambda = lambda; sol_mu = mu;
-  mf_u.set_qdim(N);
-  mf_mult.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
+  mf_mult.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -357,7 +358,7 @@ void elastostatic_problem::compute_error(plain_vector &U) {
   
 
   cout.precision(16);
-  mf_rhs.set_qdim(N);
+  mf_rhs.set_qdim(dim_type(N));
   scalar_type l2 = getfem::asm_L2_norm(mim, mf_rhs, V);
   scalar_type h1 = getfem::asm_H1_norm(mim, mf_rhs, V);
 

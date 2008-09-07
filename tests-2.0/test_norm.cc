@@ -32,7 +32,7 @@ using bgeot::size_type;   /* = unsigned long */
 scalar_type interp_fun(base_node x) {
   scalar_type res = 0.;
   for (size_type i=0; i < x.size(); ++i) {
-    res += sin(3*x[i]*(i+1.))+cos(3*x[i]/scalar_type(i+1));
+    res += sin(3*x[i]*scalar_type(i+1))+cos(3*x[i]/scalar_type(i+1));
   }
   return res;
 }

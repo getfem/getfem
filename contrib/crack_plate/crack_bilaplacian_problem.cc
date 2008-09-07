@@ -24,8 +24,8 @@ scalar_type sol_u(const base_node &x){
 
 }
 
-scalar_type sol_f(const base_node &x)
-{return EE * D *  240. ;//256. * cos(2. * x[1]) ; 
+scalar_type sol_f(const base_node &) {
+  return EE * D *  240. ;//256. * cos(2. * x[1]) ;
 }
 
 
@@ -92,7 +92,7 @@ scalar_type eval_fem_hessian_with_finite_differences(getfem::pfem pf,
 
 void validate_fem_derivatives(getfem::pfem pf, unsigned cv, 
 			      bgeot::pgeometric_trans pgt, const base_matrix &G) {
-  unsigned N = gmm::mat_nrows(G);
+  unsigned N = unsigned(gmm::mat_nrows(G));
   scalar_type h = 1e-5;
 
   std::vector<base_node> pts(gmm::mat_ncols(G));
@@ -165,7 +165,7 @@ void validate_fem_derivatives(const getfem::mesh_fem &mf) {
   for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
     //if (mf.nb_dof_of_element(cv) > 12) {
       vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
-      validate_fem_derivatives(mf.fem_of_element(cv), cv, mf.linked_mesh().trans_of_convex(cv), G);
+      validate_fem_derivatives(mf.fem_of_element(cv), unsigned(cv), mf.linked_mesh().trans_of_convex(cv), G);
       //}
   }
 }
@@ -200,8 +200,8 @@ void bilaplacian_crack_problem::init(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
-  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
-				      "Enrichment option");
+  enrichment_option = int(PARAM.int_value("ENRICHMENT_OPTION",
+					  "Enrichment option"));
     enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
 
@@ -338,8 +338,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 	max_area = std::max(max_area, area) ;
 	cpt++ ;
     }
-    avg_area /= cpt ;
-    avg_radius /= cpt ; 
+    avg_area /= scalar_type(cpt) ;
+    avg_radius /= scalar_type(cpt) ; 
     cout << "quality of mesh : " << quality << endl;
     cout << "average radius : " << avg_radius << endl;
     cout << "radius min : " << min_radius << " ; radius max : " << max_radius << endl;
@@ -350,9 +350,9 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
   nu = PARAM.real_value("NU", "nu") ;
   D = PARAM.real_value("D", "Flexure modulus") ;
-  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
-  int mv = PARAM.int_value("MORTAR_VERSION", "Mortar version");
-  int cv = PARAM.int_value("CLOSING_VERSION");  
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
+  int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version"));
+  int cv = int(PARAM.int_value("CLOSING_VERSION"));  
   dirichlet_version = getfem::constraints_type(dv);
   mortar_version = getfem::constraints_type(mv);
   closing_version = getfem::constraints_type(cv);
@@ -808,8 +808,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       
       
       const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
-      for (unsigned i=0; i < cvs.size(); ++i) {
-        unsigned cv = cvs[i];
+      for (size_type i=0; i < cvs.size(); ++i) {
+        size_type cv = cvs[i];
         //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
         
         getfem::pfem pf = mf_u().fem_of_element(cv);
@@ -822,7 +822,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
         if (ld == unsigned(-1)) {
           cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
         } else {
-          printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
+          printf(" %3d:%.16s", int(cv), name_of_dof(pf->dof_types().at(ld)).c_str());
         }
       }
       printf("\n");
@@ -933,7 +933,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       // 	  mf_u().point_of_dof(d) << " M2(d,d) = " << M2(d,d) << "\n";
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
 	cout << "removed\n";	
-	unsigned n = gmm::mat_nrows(H);
+	size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }
@@ -969,7 +969,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL_FINAL")) {
 	cout << "OULALA " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
-        unsigned n = gmm::mat_nrows(H);
+        size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }

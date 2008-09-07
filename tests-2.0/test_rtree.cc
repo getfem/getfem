@@ -213,8 +213,8 @@ static void check_tree() {
   cout << "2D/1D random check\n";
   tree.clear(); rmin.clear(); rmax.clear();
   for (size_type i=0; i < 600; ++i) {
-    rmin.push_back(base_node(i/10000.,0.));
-    rmax.push_back(base_node((i+1)/10000.,0.));
+    rmin.push_back(base_node(double(i)/10000.,0.));
+    rmax.push_back(base_node(double(i+1)/10000.,0.));
     tree.add_box(rmin.back(),rmax.back());
   }
   verify(rmin, rmax, tree);

@@ -122,7 +122,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 	AC_CHECK_CXX_FLAG([-Wpointer-arith],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wcast-qual],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wwrite-strings],CXXFLAGS)
-dnl	AC_CHECK_CXX_FLAG([-Wconversion],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wconversion],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wredundant-decls],CXXFLAGS)
 	dnl -Wno-long-double fixes a warning on Darwin
 	dnl AC_CHECK_CXX_FLAG([-Wno-long-double],CXXFLAGS)

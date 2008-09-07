@@ -41,6 +41,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -107,7 +109,8 @@ namespace getfem {
     bgeot::base_vector coeff;
     bgeot::multi_index sizes_;
   public:
-    position_vector(unsigned NN) : N(NN) { sizes_.resize(1); sizes_[0] = N; }
+    position_vector(unsigned NN) : N(NN)
+    { sizes_.resize(1); sizes_[0] = short_type(N); }
     const bgeot::multi_index &sizes() const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t)
@@ -210,7 +213,7 @@ void friction_problem::init(void) {
   double h = 0;
   for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
     h += mesh.convex_radius_estimate(i);
-  h /= mesh.convex_index().card();
+  h /= double(mesh.convex_index().card());
   cout << "mean h = " << 2*h << endl;
   
   for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
@@ -246,8 +249,8 @@ void friction_problem::init(void) {
   if (contact_condition == 2)
     gamma = PARAM.real_value("GAMMA", "Stabilization parameter");
   noisy = PARAM.int_value("NOISY", "verbosity of iterative methods");
-  mf_u.set_qdim(N);
-  mf_l.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
+  mf_l.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -279,7 +282,7 @@ void friction_problem::init(void) {
   std::cout << "Reperage des bord de contact et Dirichlet\n";  
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
-    for (size_type f = 0; f < nf; f++) {
+    for (short_type f = 0; f < nf; f++) {
       if (!mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
@@ -833,7 +836,7 @@ void friction_problem::solve(void) {
     {
       MS.adapt_sizes(FRICTION);
       if (Dirichlet == 3) gmm::fill(MS.state(), scalar_type(-1));
-      gmm::iteration iter(residual, noisy, 40000);
+      gmm::iteration iter(residual, int(noisy), 40000);
       
       gmm::default_newton_line_search
 	ls(size_type(-1), 5.0/3.0, 1.0/1000.0, 3.0/5.0);
@@ -853,7 +856,7 @@ void friction_problem::solve(void) {
     break;
   case 1 :
     {
-      gmm::iteration iter(residual, noisy);
+      gmm::iteration iter(residual, int(noisy));
       iter.set_maxiter(1000000);
       Coulomb_NewtonAS_struct NS(FRICTION);
       build_vB(NS.vB, mf_u, mf_u.dof_on_set(CONTACT_BOUNDARY),

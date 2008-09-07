@@ -36,6 +36,7 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrices. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -108,7 +109,7 @@ struct problem_definition {
   }
   virtual void validate_solution(navier_stokes_problem &p, scalar_type t) {
     plain_vector R; dirichlet_condition(p, t, R);
-    p.mf_rhs.set_qdim(p.N);
+    p.mf_rhs.set_qdim(dim_type(p.N));
     scalar_type err = getfem::asm_L2_dist(p.mim, 
 					  p.mf_u, p.Un1,
 					  p.mf_rhs, R);
@@ -308,10 +309,10 @@ void navier_stokes_problem::init(void) {
   dt = PARAM.real_value("DT", "Time step");
   T = PARAM.real_value("T", "Final time");
   dt_export = PARAM.real_value("DT_EXPORT", "Time step for export");
-  noisy = PARAM.int_value("NOISY", "");
-  option = PARAM.int_value("OPTION", "option");
+  noisy = int(PARAM.int_value("NOISY", ""));
+  option = int(PARAM.int_value("OPTION", "option"));
 
-  int prob = PARAM.int_value("PROBLEM", "the problem");
+  int prob = int(PARAM.int_value("PROBLEM", "the problem"));
   switch (prob) {
     case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
     case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
@@ -319,11 +320,11 @@ void navier_stokes_problem::init(void) {
     default: GMM_ASSERT1(false, "wrong PROBLEM value");
   }
 
-  export_to_opendx = PARAM.int_value("DX_EXPORT", "");
+  export_to_opendx = int(PARAM.int_value("DX_EXPORT", ""));
   first_export = true;
 
   Re = 1 / nu;
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -692,7 +693,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   sparse_matrix B(nbdof_p, nbdof_u);
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
   
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
   dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_region(DIRICHLET_BOUNDARY_NUM);
   dal::bit_vector dofon_nonref =mf_mult.dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
   dofon_Dirichlet.setminus(dofon_nonref);
@@ -726,7 +727,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   cout << "Nb of Normal par Dirichlet constraints : " << nbdof_NDir << endl;
 
   // Dirichlet condition
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
   size_type nbdof_Dir = dofon_Dirichlet.card();
   std::vector<size_type> ind_ct_dir;
   for (dal::bv_visitor i(dofon_Dirichlet); !i.finished(); ++i) 

@@ -129,7 +129,7 @@ void elastostatic_problem::init(void) {
   p2 = PARAM.real_value("P2", "Second Elastic coefficient");
   p3 = PARAM.real_value("P3", "Third Elastic coefficient");
   
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(bgeot::dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -255,7 +255,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     case 3: pINCOMP = new getfem::mdbrick_nonlinear_incomp<>(ELAS, mf_p);
   }
 
-  int nb_step = PARAM.int_value("NBSTEP");
+  int nb_step = int(PARAM.int_value("NBSTEP"));
   scalar_type deltat = PARAM.real_value("DELTAT", "Time step");
  
   // contact condition for Lagrange elements
@@ -276,7 +276,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     }
   
     // creating force density vectors
-  int nbc = jj;
+  int nbc = int(jj);
   sparse_matrix MMBN(nbc, nbc), MMBT(nbc*(N-1), nbc*(N-1));
   plain_vector LN1(nbc), LT1(nbc*(N-1));
   {
@@ -356,7 +356,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     FRICTION.set_WT(gmm::scaled(U0, -1.0));
 
 
-    iter = gmm::iteration(residual, PARAM.int_value("NOISY"),
+    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")),
 			  maxit ? maxit : 40000);
     cout << "|U| = " << gmm::vect_norm2(MS.state()) << "\n";
     

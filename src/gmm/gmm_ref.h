@@ -376,7 +376,7 @@ namespace gmm {
     { return (N ? (it - ii.it) / N : 0) + i - ii.i; }
 
     reference operator *() const { return *(it + i*N); }
-    reference operator [](int ii) const { return *(it + (i+ii)*N); }
+    reference operator [](size_type ii) const { return *(it + (i+ii)*N); }
 
     bool operator ==(const iterator &ii) const
     { return (*this - ii) == difference_type(0); }

@@ -352,7 +352,7 @@ namespace gmm {
   template <typename T> inline T sqr(T a) { return T(a * a); }
   template <typename T> inline T abs(T a) { return (a < T(0)) ? T(-a) : a; }
   template <typename T> inline T abs(std::complex<T> a)
-  { T x = a.real(), y = a.imag(); return ::sqrt(x*x+y*y); }
+  { T x = a.real(), y = a.imag(); return T(::sqrt(x*x+y*y)); }
   template <typename T> inline T abs_sqr(T a) { return T(a*a); }
   template <typename T> inline T abs_sqr(std::complex<T> a)
   { return gmm::sqr(a.real()) + gmm::sqr(a.imag()); }
@@ -365,7 +365,7 @@ namespace gmm {
   template <typename T> inline std::complex<T> random(std::complex<T>)
   { return std::complex<T>(gmm::random(T()), gmm::random(T())); }
   template <typename T> inline T irandom(T max)
-  { return T(gmm::random() * max); }
+  { return T(gmm::random() * double(max)); }
   template <typename T> inline T conj(T a) { return a; }
   template <typename T> inline std::complex<T> conj(std::complex<T> a)
   { return std::conj(a); }
@@ -377,10 +377,10 @@ namespace gmm {
   template <typename T> inline std::complex<T> sqrt(std::complex<T> a) {
     T x = a.real(), y = a.imag();
     if (x == T(0)) {
-      T t = ::sqrt(gmm::abs(y) / T(2));
+      T t = T(::sqrt(gmm::abs(y) / T(2)));
       return std::complex<T>(t, y < T(0) ? -t : t);
     }
-    T t = ::sqrt(T(2) * (gmm::abs(a) + gmm::abs(x))), u = t / T(2);
+    T t = T(::sqrt(T(2) * (gmm::abs(a) + gmm::abs(x)))), u = t / T(2);
     return x > T(0) ? std::complex<T>(u, y / t)
       : std::complex<T>(gmm::abs(y) / t, y < T(0) ? -u : u);
   }

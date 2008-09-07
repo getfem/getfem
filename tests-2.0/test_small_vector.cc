@@ -32,6 +32,11 @@
 #include <getfem/bgeot_small_vector.h>
 #include <unistd.h>
 
+using bgeot::size_type;
+using bgeot::short_type;
+using bgeot::dim_type;
+
+
 bool quick = false;
 
 #ifdef GETFEM_HAVE_SYS_TIMES
@@ -62,9 +67,9 @@ struct chrono {
 public:
   chrono() { }
   chrono& init() { cpu_=0; return *this; }
-  void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
+  void tic() { t = float(::clock())/float(CLOCKS_PER_SEC); }
   chrono& toc() {
-    float t2 = ::clock()/float(CLOCKS_PER_SEC);
+    float t2 = float(::clock())/float(CLOCKS_PER_SEC);
     cpu_ += t2 - t; t = t2; return *this;
   }
   float cpu() const { return cpu_; }
@@ -148,7 +153,7 @@ namespace test {
       return blocks[id.bid()].data + BLOCKSZ + (id.chunkid())*blocks[id.bid()].objsz;
     }
     dim_type obj_sz(node_id id) {
-      return blocks[id.bid()].objsz;
+      return dim_type(blocks[id.bid()].objsz);
     }
     /* reference counting */
     unsigned char& refcnt(node_id id) {
@@ -352,7 +357,7 @@ namespace test {
     //cout << "dim = " << n << " ";
     if (first_unfilled[n] == size_type(-1)) {
       blocks.push_back(block(n)); blocks.back().init();
-      insert_block_into_unfilled(blocks.size()-1);
+      insert_block_into_unfilled(gmm::uint32_type(blocks.size()-1));
       if (first_unfilled[n] >= (1<<(31-p2_BLOCKSZ))) {//(node_id(1)<<(sizeof(node_id)*CHAR_BIT - p2_BLOCKSZ))) {
 	GMM_THROW(dal::failure_error, "allocation slots exhausted for objects of size " << 
 		  n << " (" << first_unfilled[n] << " allocated!),\n" << 
@@ -387,9 +392,9 @@ namespace test {
     b.refcnt(vid) = 0;
     if (b.count_unused_chunk++ == 0) {
       insert_block_into_unfilled(bid); 
-      b.first_unused_chunk = vid;
+      b.first_unused_chunk = gmm::uint16_type(vid);
     } else {
-      b.first_unused_chunk = std::min<size_type>(b.first_unused_chunk,vid);
+      b.first_unused_chunk = std::min(b.first_unused_chunk,gmm::uint16_type(vid));
       if (b.count_unused_chunk == BLOCKSZ) b.clear();
     }
   }
@@ -406,7 +411,7 @@ namespace test {
 	  used_cnt += BLOCKSZ - blocks[i].count_unused_chunk;
 	  mem_total += (BLOCKSZ+1)*blocks[i].objsz;
 	}
-	mem_total += sizeof(block);
+	mem_total += gmm::uint32_type(sizeof(block));
       }
       if (mem_total)
 	cout << " sz " << d << ", memory used = " << mem_total << " bytes for " 
@@ -417,7 +422,7 @@ namespace test {
   }
   void block_allocator::insert_block_into_unfilled(block_allocator::size_type bid) {
     SVEC_ASSERT(bid < blocks.size());
-    dim_type dim = blocks[bid].objsz;
+    dim_type dim = dim_type(blocks[bid].objsz);
     SVEC_ASSERT(bid != first_unfilled[dim]);
     SVEC_ASSERT(blocks[bid].prev_unfilled+1 == 0);
     SVEC_ASSERT(blocks[bid].next_unfilled+1 == 0);
@@ -432,7 +437,7 @@ namespace test {
   }
   void block_allocator::remove_block_from_unfilled(block_allocator::size_type bid) {
     SVEC_ASSERT(bid < blocks.size());
-    dim_type dim = blocks[bid].objsz;
+    dim_type dim = dim_type(blocks[bid].objsz);
     //cout << "** bloc " << bid << " is going to be REMOVE unfilled list, which is now"; show_unfilled(bid);
     size_type p = blocks[bid].prev_unfilled; blocks[bid].prev_unfilled = size_type(-1);
     size_type n = blocks[bid].next_unfilled; blocks[bid].next_unfilled = size_type(-1);
@@ -523,7 +528,7 @@ namespace getfem {
     for (size_type i=0; i < vv.size(); ++i) {
       vv[i].resize(2);
       vv[i] = V(2);
-      vv[i][0] = i; vv[i][1] = i/23.; //vv[i][2] = i;
+      vv[i][0] = double(i); vv[i][1] = double(i)/23.; //vv[i][2] = i;
     }
   }
 
@@ -545,8 +550,8 @@ namespace getfem {
     for (size_type i=0; i < N*5; ++i) {
       for (size_type j=0; j < vv.size(); ++j) {
 	for (size_type k=0; k < vv[j].size(); ++k) {
-	  vv[j][k] = j+k;
-	  assert(vv[j][k] == j+k);
+	  vv[j][k] = double(j+k);
+	  assert(vv[j][k] == double(j+k));
 	}
 	vv[j] = vv[j];
 	for (size_type k=0; k < vv[j].size(); ++k) assert(vv[j][k] == j+k);
@@ -558,7 +563,8 @@ namespace getfem {
     for (size_type i=0; i < N*5; ++i) {
       for (size_type j=0; j < vv.size(); ++j) {
 	for (size_type k=0; k < vv[j].size(); ++k) {
-	  if (gmm::abs(vv[j][k] - (j+k))>1e-14) { cout << "vv[j][k]=" << vv[j][k] << "!=" << j+k << "\n"; abort(); }
+	  if (gmm::abs(vv[j][k] - double(j+k))>1e-14)
+	    { cout << "vv[j][k]=" << vv[j][k] << "!=" << j+k << "\n"; abort(); }
 	}
       }
     }

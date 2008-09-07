@@ -121,18 +121,18 @@ void test0() {
 }
 
 void test_inversion(bool verbose) {
-  for (size_type N=1; N <= 4; ++N) {
-    for (size_type K=1; K < ((N<4) ? 3 : 2); ++K) {
+  for (dim_type N=1; N <= 4; ++N) {
+    for (dim_type K=1; K < ((N<4) ? 3 : 2); ++K) {
       test_inversion(bgeot::simplex_geotrans(N,K),verbose);
     }
   }
-  for (size_type N=1; N <= 3; ++N) {
-    for (size_type K=1; K < 3; ++K) {
+  for (dim_type N=1; N <= 3; ++N) {
+    for (dim_type K=1; K < 3; ++K) {
       test_inversion(bgeot::parallelepiped_geotrans(N,K),verbose);
     }
   }
-  for (size_type N=2; N <= 3; ++N) {
-    for (size_type K=1; K < 3; ++K) {
+  for (dim_type N=2; N <= 3; ++N) {
+    for (dim_type K=1; K < 3; ++K) {
       test_inversion(bgeot::prism_geotrans(N,K),verbose);
     }
   }
@@ -153,13 +153,13 @@ int main(int argc, char *argv[]) {
     test0();
     test_inversion(true);
     PARAM.read_command_line(argc, argv);
-    N = PARAM.int_value("N", "Domaine dimension");
+    N = dim_type(PARAM.int_value("N", "Domaine dimension"));
     NB_POINTS = PARAM.int_value("NB_POINTS", "Nb points");
     LX = PARAM.real_value("LX", "Size in X");
     LY = PARAM.real_value("LY", "Size in Y");
     LZ = PARAM.real_value("LZ", "Size in Y");
     NX = PARAM.int_value("NX", "Nomber of sace steps ");
-    MESH_TYPE = PARAM.int_value("MESH_TYPE", "Mesh type ");
+    MESH_TYPE = dim_type(PARAM.int_value("MESH_TYPE", "Mesh type "));
  
     cout << "Mesh generation\n";
 

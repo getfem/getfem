@@ -20,6 +20,8 @@
 //===========================================================================
 #include <getfem/bgeot_poly.h>
 
+using bgeot::short_type;
+
 std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
 			 bgeot::short_type k, bgeot::short_type de) {
   char s[1024];
@@ -30,14 +32,17 @@ std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
   } else {
     std::string str;
     //T v = (*(it+k-1)), res = T(0);
-    for (mi[k-1] = degree-de; mi[k-1] != bgeot::short_type(-1); (mi[k-1])--) {
+    for (mi[k-1] = short_type(degree-de);
+	 mi[k-1] != short_type(-1); (mi[k-1])--) {
       //res = horner(mi, k-1, de + mi[k-1], it) + v * res;
       if (str.size())
 	sprintf(s, "%s + %c*(%s)",
-		horner_print(degree, mi,k-1,de+mi[k-1]).c_str(), xyz[k-1],
+		horner_print(degree, mi, short_type(k-1),
+			     short_type(de+mi[k-1])).c_str(), xyz[k-1],
 		str.c_str());
       else 
-	sprintf(s, "%s", horner_print(degree, mi,k-1,de+mi[k-1]).c_str());
+	sprintf(s, "%s", horner_print(degree, mi,short_type(k-1),
+				      short_type(de+mi[k-1])).c_str());
       str = s;
     }
     mi[k-1] = 0;
@@ -47,12 +52,12 @@ std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,
 
 
 void dump_poly_eval() {
-  for (unsigned dim = 1; dim <= 3; ++dim) {
+  for (short_type dim = 1; dim <= 3; ++dim) {
     cout << "case " << dim << ": {\n";
-    for (unsigned k=0; k < dim; ++k) {
+    for (short_type k=0; k < dim; ++k) {
       cout << "T " << "xyzZ"[k] << " = it[" << k << "];\n";
     }
-    for (unsigned dg=2; dg <= 6; ++dg) {
+    for (short_type dg=2; dg <= 6; ++dg) {
       cout << "  if (deg == " << dg << ") ";
       bgeot::power_index mi(dim);
       cout << "    return " << horner_print(dg, mi, dim, 0) << ";\n";
@@ -102,8 +107,8 @@ int main(void)
     
     cout << "P(1.0, 2.0) = " << P.eval(&(tab[0])) << endl;
 
-    for (unsigned dg=0; dg <= 6; ++dg) {
-      for (unsigned dim=0; dim <= 3; ++dim) {
+    for (short_type dg=0; dg <= 6; ++dg) {
+      for (short_type dim=0; dim <= 3; ++dim) {
 	bgeot::base_poly PP(dim, dg);
 	for (unsigned i=0; i < PP.size(); ++i) 
 	  PP[i] = bgeot::opt_long_scalar_type(rand())
@@ -167,7 +172,7 @@ int main(void)
     bgeot::opt_long_scalar_type z=0;
     for (unsigned i=0; i < 100000; ++i) {
       bgeot::base_poly P2(P);
-      for (unsigned k=0; k < P.dim(); ++k) { 
+      for (short_type k=0; k < P.dim(); ++k) { 
         P2.derivative(k); z += P2[0];
       }
     }

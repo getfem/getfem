@@ -45,6 +45,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;  
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -239,7 +241,7 @@ struct exact_solution {
 	mf_theta.set_qdim(1) ;
 	mf_theta.set_functions(cfun_theta);   
 	THETA.resize(8); assert(mf_theta.nb_dof() == 4);
-	scalar_type nu = 0.3 ;
+	//	scalar_type nu = 0.3 ;
 
 	// mode I   : A1 != 0, B2 != 0
 	// mode II  : B1 != 0, D1 != 0, A2 != 0
@@ -410,8 +412,8 @@ void crack_mindlin_problem::init(void) {
 					       "Name of integration method");
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
-  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
-				      "Enrichment option");
+  enrichment_option = int(PARAM.int_value("ENRICHMENT_OPTION",
+					  "Enrichment option"));
 
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE_UT="  << FEM_TYPE_UT << "\n";
@@ -439,7 +441,7 @@ void crack_mindlin_problem::init(void) {
   epsilon = PARAM.real_value("EPSILON", "thickness") ; 
   mitc = (PARAM.int_value("MITC") != 0);
   pressure = PARAM.real_value("PRESSURE") ;
-  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
   dirichlet_version = getfem::constraints_type(dv);
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
@@ -452,8 +454,8 @@ void crack_mindlin_problem::init(void) {
   sol_ref = PARAM.int_value("SOL_REF") ;
   dx_export = PARAM.int_value("DX_EXPORT") ;
   
-  mf_ut().set_qdim(N);
-  mf_theta().set_qdim(N);
+  mf_ut().set_qdim(dim_type(N));
+  mf_theta().set_qdim(dim_type(N));
   
   // set the finite element method on ut, u3, theta
   getfem::pfem pf_ut = getfem::fem_descriptor(FEM_TYPE_UT);
@@ -858,9 +860,9 @@ cos(t)-(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin
 void crack_mindlin_problem::compute_error(plain_vector &UT, plain_vector &U3, plain_vector &THETA ) {
   if (sol_ref == 3 || sol_ref == 4){
      if (PARAM.int_value("SOL_EXACTE") == 1){
-        for (int i=0 ; i < U3.size() ; ++i)
+        for (size_type i=0 ; i < U3.size() ; ++i)
 	     U3[i] = 0. ;
-	for (int i=0 ; i < THETA.size() ; ++i)
+	for (size_type i=0 ; i < THETA.size() ; ++i)
 	     THETA[i] = 0. ;
      }
   cout << "Error on the vertical displacement u3 :\n" ;

@@ -689,7 +689,7 @@ namespace gmm
     jc = new IND_TYPE[nr+1];
     jc[0] = shift;
     for (size_type j = 0; j < nr; ++j) {
-      jc[j+1] = jc[j] + nnz(mat_const_row(B, j));
+      jc[j+1] = IND_TYPE(jc[j] + nnz(mat_const_row(B, j)));
     }
     pr = new T[jc[nr]];
     ir = new IND_TYPE[jc[nr]];
@@ -697,8 +697,10 @@ namespace gmm
       row_type row = mat_const_row(B, j);
       typename linalg_traits<row_type>::const_iterator
 	it = vect_const_begin(row), ite = vect_const_end(row);
-      for (size_type k = 0; it != ite; ++it, ++k)
-	{ pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index()+shift; }
+      for (size_type k = 0; it != ite; ++it, ++k) {
+	pr[jc[j]-shift+k] = *it;
+	ir[jc[j]-shift+k] = IND_TYPE(it.index()+shift);
+      }
     }
   }
 

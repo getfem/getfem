@@ -42,6 +42,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;   /* = unsigned long */
+using bgeot::dim_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -157,8 +159,8 @@ void hyperbolic_problem::init(void) {
   base_node center(0.,0.,20.);
   std::cout << "Reperage des bord de contact et Dirichlet\n";  
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
-    size_type nf = mesh.structure_of_convex(cv)->nb_faces();
-    for (size_type f = 0; f < nf; f++) {
+    short_type nf = mesh.structure_of_convex(cv)->nb_faces();
+    for (short_type f = 0; f < nf; f++) {
       if (!mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
@@ -416,7 +418,7 @@ void hyperbolic_problem::solve(void) {
   }
   
   gmm::iteration iter(residual, 0, 40000);
-  iter.set_noisy(noisy);
+  iter.set_noisy(int(noisy));
 
   std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;

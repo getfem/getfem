@@ -42,6 +42,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type; 
+using bgeot::short_type; 
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -110,7 +112,7 @@ void stokes_problem::init(void) {
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosité");
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 

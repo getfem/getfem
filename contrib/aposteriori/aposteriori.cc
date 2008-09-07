@@ -48,6 +48,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
+using bgeot::dim_type; 
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -150,7 +152,7 @@ struct crack_problem {
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
   scalar_type residual;      /* max residual for the iterative solvers       */
-  scalar_type conv_max;
+  size_type conv_max;
   unsigned dir_with_mult, option;
   
   std::string datafilename;
@@ -190,7 +192,7 @@ void crack_problem::init(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
-  option = PARAM.int_value("OPTION", "option");
+  option = unsigned(PARAM.int_value("OPTION", "option"));
 
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -237,7 +239,7 @@ void crack_problem::init(void) {
   mu = PARAM.real_value("MU", "Lame coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   
-  mf_u().set_qdim(N);
+  mf_u().set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -256,9 +258,9 @@ void crack_problem::init(void) {
   mimbound.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
 
-  dir_with_mult = PARAM.int_value("DIRICHLET_VERSION");
+  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSION"));
 
   cutoff.fun_num = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
   cutoff.radius = PARAM.real_value("CUTOFF", "Cutoff");
@@ -362,7 +364,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
       
       base_small_vector res = sol_f(pai1->point(ii));
       ctx1.set_xref(pai1->point(ii));
-      pf1->interpolation_hess(ctx1, coeff1, hess1, qdim);
+      pf1->interpolation_hess(ctx1, coeff1, hess1, dim_type(qdim));
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
 	  res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j);
@@ -398,7 +400,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	  base_node ptref = pai_crack->point(ii) + e * 1.0E-7 * gradls;
 	  if (pgt1->convex_ref()->is_in(ptref) > 0.) continue;
 	  ctx1.set_xref(ptref);
-	  pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
+	  pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
 	  // cout << "coeff1 = " << coeff1 << endl;
 	  // cout << "grad1 = " << grad1 << endl;
 	  gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
@@ -436,7 +438,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
     ee = ERR[cv];
  
     // jump of the stress between the element ant its neighbours.
-    for (unsigned f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
+    for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
       if (gmm::abs(mmls(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
@@ -459,7 +461,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	up /= norm;
 	scalar_type coefficient = pai1->coeff_on_face(f1, ii) * ctx1.J() * norm; 
 	
-	pf1->interpolation_grad(ctx1, coeff1, grad1, qdim);
+	pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
 	gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
 	gmm::scale(E, 0.5);
 	scalar_type trace = gmm::mat_trace(E);
@@ -472,7 +474,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	GMM_ASSERT1(converged, "geometric transformation not well inverted ... !");
 	
 	ctx2.set_xref(xref2);
-	pf2->interpolation_grad(ctx2, coeff2, grad2, qdim);
+	pf2->interpolation_grad(ctx2, coeff2, grad2, dim_type(qdim));
 	gmm::copy(grad2, E); gmm::add(gmm::transposed(grad2), E);
 	gmm::scale(E, 0.5);
 	trace = gmm::mat_trace(E);
@@ -525,12 +527,12 @@ bool crack_problem::solve(plain_vector &U) {
  
     cout << "Setting up the singular functions for the enrichment\n";
     std::vector<getfem::pglobal_function> vfunc(4);
-    for (size_type i = 0; i < vfunc.size(); ++i) {
+    for (unsigned i = 0; i < vfunc.size(); ++i) {
       /* use the singularity */
       getfem::abstract_xy_function *s = 
 	new getfem::crack_singular_xy_function(i);
       getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(cutoff.fun_num,
+	new getfem::cutoff_xy_function(int(cutoff.fun_num),
 				       cutoff.radius, 
 				       cutoff.radius1, cutoff.radius0);
       s = new getfem::product_of_xy_functions(*s, *c);
@@ -619,7 +621,7 @@ bool crack_problem::solve(plain_vector &U) {
        <<  mesh.convex_index().card() << " convexes "<<endl;
   
   dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
-  getfem::mesh_fem mf_printed(mesh, N), mf_printed_vm(mesh);
+  getfem::mesh_fem mf_printed(mesh, dim_type(N)), mf_printed_vm(mesh);
   std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
   mf_printed.set_finite_element(mesh.convex_index(),
 				getfem::fem_descriptor(FEM_DISC));
@@ -661,7 +663,7 @@ int main(int argc, char *argv[]) {
     getfem::mesh mcut;
     p.mls.global_cut_mesh(mcut);
     unsigned Q = p.mf_u().get_qdim();
-    getfem::mesh_fem mf(mcut, Q);
+    getfem::mesh_fem mf(mcut, dim_type(Q));
     mf.set_classical_discontinuous_finite_element(2, 0.001);
     // mf.set_finite_element
     //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
@@ -692,10 +694,10 @@ int main(int argc, char *argv[]) {
       }
       
       if (dmin < 1e-5)
-	nrefine[cv] = nn*8;
+	nrefine[cv] = short_type(nn*8);
       else if (dmin < .1) 
-	nrefine[cv] = nn*2;
-      else nrefine[cv] = nn;
+	nrefine[cv] = short_type(nn*2);
+      else nrefine[cv] = short_type(nn);
       // nrefine[cv] = 1;
       // if (dmin < .01)
       //  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin 
@@ -716,7 +718,7 @@ int main(int argc, char *argv[]) {
     mim_refined.set_integration_method(getfem::int_method_descriptor
 				       ("IM_TRIANGLE(6)"));
     
-    getfem::mesh_fem mf_refined(mcut_refined, Q);
+    getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
     mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
     plain_vector W(mf_refined.nb_dof());
     

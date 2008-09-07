@@ -45,6 +45,8 @@ using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::base_vector; /* dense vector. */
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type; 
+using bgeot::dim_type; 
 using bgeot::base_matrix; /* dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -101,7 +103,7 @@ struct exact_solution {
 inline std::string name_of_dof(getfem::pdof_description dof) {
   char s[200];
   sprintf(s, "UnknownDof[%p]", (void*)dof);
-  for (unsigned d = 0; d < 4; ++d) {
+  for (dim_type d = 0; d < 4; ++d) {
     if (dof == getfem::lagrange_dof(d)) {
       sprintf(s, "Lagrange[%d]", d); goto found;
     }
@@ -118,11 +120,11 @@ inline std::string name_of_dof(getfem::pdof_description dof) {
       sprintf(s, "Xfem[idx:%d]", int(dof_xfem_index(dof)));
     }
     
-    for (unsigned r = 0; r < d; ++r) {
+    for (dim_type r = 0; r < d; ++r) {
       if (dof == getfem::derivative_dof(d, r)) {
 	sprintf(s, "D_%c[%d]", "xyzuvw"[r], d); goto found;
       }
-      for (unsigned t = 0; t < d; ++t) {
+      for (dim_type t = 0; t < d; ++t) {
 	if (dof == getfem::second_derivative_dof(d, r, t)) {
 	  sprintf(s, "D2%c%c[%d]", "xyzuvw"[r], "xyzuvw"[t], d); 
 	  goto found;

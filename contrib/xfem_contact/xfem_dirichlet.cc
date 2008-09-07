@@ -44,6 +44,7 @@ using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::short_type;  /* = short */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -182,7 +183,7 @@ double ls_value(const base_node &p) {
 void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
 	      bool bound) {
   if (!u_version) {
-    unsigned N =  mim.linked_mesh().dim();
+    unsigned N =  unsigned(mim.linked_mesh().dim());
     size_type nbdof = mf_rhs.nb_dof();
     plain_vector V(nbdof), W(1);
     std::fill(V.begin(), V.end(), 1.0);
@@ -220,7 +221,7 @@ template<typename VECT1> class level_set_unit_normal
 public:
   level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
     : mf(mf_), U(U_), N(mf_.linked_mesh().dim()), gradU(1, N)
-  { sizes_.resize(1); sizes_[0] = N; }
+  { sizes_.resize(1); sizes_[0] = short_type(N); }
   const bgeot::multi_index &sizes() const {  return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& ctx,
 		       bgeot::base_tensor &t) {
@@ -365,7 +366,7 @@ int main(int argc, char *argv[]) {
   // Read parameters.
   bgeot::md_param PARAM;
   PARAM.read_command_line(argc, argv);
-  u_version = PARAM.int_value("EXACT_SOL", "Which exact solution");
+  u_version = int(PARAM.int_value("EXACT_SOL", "Which exact solution"));
   
   // Load the mesh
   getfem::mesh mesh;
@@ -383,13 +384,13 @@ int main(int argc, char *argv[]) {
   cout << "h = " << h << endl;
   
   // Level set definition
-  unsigned lsdeg = PARAM.int_value("LEVEL_SET_DEGREE", "level set degree");
+  unsigned lsdeg = unsigned(PARAM.int_value("LEVEL_SET_DEGREE", "level set degree"));
   bool simplify_level_set = 
     (PARAM.int_value("SIMPLIFY_LEVEL_SET",
 		     "simplification or not of the level sets") != 0);
   Radius = PARAM.real_value("RADIUS", "Domain radius");
-  getfem::level_set ls(mesh, lsdeg);
-  getfem::level_set lsup(mesh, lsdeg, true), lsdown(mesh, lsdeg, true);
+  getfem::level_set ls(mesh, dim_type(lsdeg));
+  getfem::level_set lsup(mesh, dim_type(lsdeg), true), lsdown(mesh, dim_type(lsdeg), true);
   const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
   for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
     lsup.values()[i] = lsdown.values()[i] = ls.values()[i]
@@ -492,8 +493,8 @@ int main(int argc, char *argv[]) {
   getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
 
   int stabilized_dirichlet =
-    PARAM.int_value("STABILIZED_DIRICHLET", "Stabilized version of "
-		    "Dirichlet condition or not");
+    int(PARAM.int_value("STABILIZED_DIRICHLET", "Stabilized version of "
+			"Dirichlet condition or not"));
   scalar_type dir_gamma0(0);
   sparse_matrix MA(nb_dof_mult, nb_dof_mult), KA(nb_dof, nb_dof);
   sparse_matrix BA(nb_dof_mult, nb_dof);

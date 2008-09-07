@@ -46,6 +46,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -251,9 +253,10 @@ namespace getfem {
 	mf_theta(mf_theta_), lambda_inv_("lambda", mf_u_.linked_mesh(), this),
 	mu_inv_("mu", mf_u_.linked_mesh(), this) {
       size_type N = mf_u_.linked_mesh().dim();
-      cout << "lambda_inv = " << -lambdai/(2*mui*(N*lambdai+2*mui)) << endl;
+      cout << "lambda_inv = " << -lambdai/(2*mui*(double(N)*lambdai+2*mui))
+	   << endl;
       cout << "mu_inv = " << 1. / (4. * mui) << endl;
-      lambda_inv_.set(-lambdai/(2*mui*(N*lambdai+2*mui)));
+      lambda_inv_.set(-lambdai/(2*mui*(double(N)*lambdai+2*mui)));
       mu_inv_.set(1. / (4. * mui));
       init_();
     }
@@ -470,9 +473,9 @@ void elastostatic_problem::init(void) {
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   sol_lambda = lambda; sol_mu = mu;
-  mf_u.set_qdim(N);
-  mf_mult.set_qdim(N);
-  mf_sigma.set_qdim_mn(N, N);
+  mf_u.set_qdim(dim_type(N));
+  mf_mult.set_qdim(dim_type(N));
+  mf_sigma.set_qdim_mn(dim_type(N), dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE_U);
@@ -532,7 +535,7 @@ void elastostatic_problem::compute_error(plain_vector &U) {
   }
 
   cout.precision(16);
-  mf_rhs.set_qdim(N);
+  mf_rhs.set_qdim(dim_type(N));
   scalar_type l2 = getfem::asm_L2_norm(mim, mf_rhs, V);
   scalar_type h1 = getfem::asm_H1_norm(mim, mf_rhs, V);
 

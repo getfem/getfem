@@ -82,8 +82,8 @@ void asm_constraint_gradient_vectorial_mult
 
 void bilaplacian_crack_problem::set_matrix_mortar(sparse_matrix &H){
 
-  int mult_with_H = PARAM.int_value("MULT_WITH_H") ;
-       mortar_type = PARAM.int_value("MORTAR_TYPE") ;
+  int mult_with_H = int(PARAM.int_value("MULT_WITH_H")) ;
+  mortar_type = int(PARAM.int_value("MORTAR_TYPE")) ;
        // MODIFICATION : trying to define 1-Dimensionnal 
        // multipliers on the boundary of enrichment zone.
 //   cout << "Re-initialisation des mesh_fem mortar : " ;
@@ -325,8 +325,8 @@ void bilaplacian_crack_problem::init_mixed_elements(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
                                          "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
-  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
-                                      "Enrichment option");
+  enrichment_option = int(PARAM.int_value("ENRICHMENT_OPTION",
+					  "Enrichment option"));
     enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
                                      "radius of the enrichment area");
 
@@ -568,8 +568,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 	max_area = std::max(max_area, area) ;
 	cpt++ ;
     }
-    avg_area /= cpt ;
-    avg_radius /= cpt ; 
+    avg_area /= scalar_type(cpt) ;
+    avg_radius /= scalar_type(cpt) ; 
     cout << "quality of mesh : " << quality << endl;
     cout << "average radius : " << avg_radius << endl;
     cout << "radius min : " << min_radius << " ; radius max : " << max_radius << endl;
@@ -580,9 +580,9 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
   nu = PARAM.real_value("NU", "nu") ;
   D = PARAM.real_value("D", "Flexure modulus") ;
-  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
-  int mv = PARAM.int_value("MORTAR_VERSION", "Mortar version");
-  int cv = PARAM.int_value("CLOSING_VERSION");  
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
+  int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version"));
+  int cv = int(PARAM.int_value("CLOSING_VERSION"));  
   dirichlet_version = getfem::constraints_type(dv);
   mortar_version = getfem::constraints_type(mv);
   closing_version = getfem::constraints_type(cv);

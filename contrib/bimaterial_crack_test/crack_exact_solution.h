@@ -36,6 +36,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type; 
+using bgeot::short_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 #define VALIDATE_XFEM

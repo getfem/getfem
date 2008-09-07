@@ -163,7 +163,8 @@ namespace gmm {
   template <typename L> inline
   void fill_random(L& l, double cfill, abstract_vector) {
     typedef typename linalg_traits<L>::value_type T;
-    size_type ntot = std::min(vect_size(l), size_type(vect_size(l)*cfill) + 1);
+    size_type ntot = std::min(vect_size(l),
+			      size_type(double(vect_size(l))*cfill) + 1);
     for (size_type nb = 0; nb < ntot;) {
       size_type i = gmm::irandom(vect_size(l));
       if (l[i] == T(0)) { 

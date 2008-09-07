@@ -47,6 +47,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -188,7 +190,7 @@ void bilaplacian_problem::init(void) {
     mesh.transformation(M);
   }
 
-  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
   dirichlet_version = getfem::constraints_type(dv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;

@@ -78,7 +78,7 @@ namespace gmm {
     inline difference_type operator -(const scaled_const_iterator &i) const
       { return difference_type(it - i.it); }
     
-    inline value_type operator  *() const { return (*it) * r; }
+    inline value_type operator  *() const { return (*it) * value_type(r); }
     inline value_type operator [](size_type ii) const { return it[ii] * r; }
     
     inline bool operator ==(const scaled_const_iterator &i) const
@@ -106,7 +106,7 @@ namespace gmm {
 	origin(linalg_origin(v)), size_(vect_size(v)), r(rr) {}
 
     reference operator[](size_type i) const
-    { return r * linalg_traits<V>::access(origin, begin_, end_, i); }
+    { return value_type(r) * linalg_traits<V>::access(origin, begin_, end_, i); }
   };
 
   template <typename V, typename S> struct linalg_traits<scaled_vector_const_ref<V,S> > {

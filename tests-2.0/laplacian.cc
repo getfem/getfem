@@ -238,7 +238,7 @@ void laplacian_problem::assembly(void) {
     gmm::clean(H, 1e-12);
 //     cout << "H = " << H << endl;
 //     cout << "R = " << R << endl;
-    int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
+    size_type nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
     // cout << "Number of irreductible unknowns : " << nbcols << endl;
     gmm::resize(NS, gmm::mat_ncols(H),nbcols);
 

@@ -328,8 +328,8 @@ void bilaplacian_mortar_problem::init(void) {
     
    /* read the parameters   */
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
-  int dv = PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version");
-  int mv = PARAM.int_value("MORTAR_VERSION", "Mortar version");
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
+  int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version"));
   dirichlet_version = getfem::constraints_type(dv);
   mortar_version = getfem::constraints_type(mv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
@@ -822,7 +822,7 @@ bool bilaplacian_mortar_problem::solve(plain_vector &U) {
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
 	cout << "  removing null mf_u dof " << d << " @ " << 
 	  mf_u.point_of_dof(d) << "\n";	
-	unsigned n = gmm::mat_nrows(H);
+	size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }

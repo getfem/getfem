@@ -42,6 +42,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;
+using bgeot::short_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -115,7 +117,7 @@ void friction_problem::init(void) {
   PG = PARAM.real_value("PG", "Gravity constant");
   friction_coef = PARAM.real_value("FRICTION_COEF", "Friction coefficient");
 
-  scheme = PARAM.int_value("SCHEME", "Time scheme");
+  scheme = int(PARAM.int_value("SCHEME", "Time scheme"));
   theta = PARAM.real_value("THETA", "Parameter for the theta-method"); 
   beta = PARAM.real_value("BETA", "Parameter beta for Newmark");
   gamma = PARAM.real_value("GAMMA", "Parameter gamma for Newmark");
@@ -144,7 +146,7 @@ void friction_problem::init(void) {
 				     "initial condition is stationary") != 0);
   pert_stationary = PARAM.real_value("PERT_STATIONARY",
 				     "Perturbation on the initial velocity");
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -174,7 +176,7 @@ void friction_problem::init(void) {
   std::cout << "Reperage des bord de contact et Dirichlet\n";  
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     size_type nf = mesh.structure_of_convex(cv)->nb_faces();
-    for (size_type f = 0; f < nf; f++) {
+    for (short_type f = 0; f < nf; f++) {
       if (!mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
@@ -275,7 +277,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   FRICTION.set_stationary(true);
 
   cout << "Computation of the stationary problem\n";
-  gmm::iteration iter(residual, noisy, 40000);
+  gmm::iteration iter(residual, int(noisy), 40000);
   getfem::standard_solve(MS, PERIODIC, iter);
 
   gmm::copy(ELAS.get_solution(MS), U0);
@@ -464,7 +466,7 @@ void friction_problem::solve(void) {
     gmm::mult_add(gmm::transposed(BT), LT0, FA);
     gmm::cg(DYNAMIC.get_M(), A0, FA, gmm::identity_matrix(), iter);
   }
-  iter.set_noisy(noisy);
+  iter.set_noisy(int(noisy));
 
   scalar_type J0 = 0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
     + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V0, V0)

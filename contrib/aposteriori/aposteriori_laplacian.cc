@@ -48,6 +48,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;   /* = unsigned long */
+using bgeot::dim_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -96,7 +98,8 @@ struct crack_problem {
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
   scalar_type residual;      /* max residual for the iterative solvers       */
-  scalar_type conv_max, threshold ;
+  size_type conv_max;
+  scalar_type threshold ;
   unsigned dir_with_mult, option;
   
   std::string datafilename;
@@ -136,7 +139,7 @@ void crack_problem::init(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
-  option = PARAM.int_value("OPTION", "option");
+  option = unsigned(PARAM.int_value("OPTION", "option"));
 
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
@@ -198,7 +201,7 @@ void crack_problem::init(void) {
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
 
-  dir_with_mult = PARAM.int_value("DIRICHLET_VERSION");
+  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSION"));
 
   cutoff.fun_num = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
   cutoff.radius = PARAM.real_value("CUTOFF", "Cutoff");
@@ -347,7 +350,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
     scalar_type ee2 = ERR[cv] - ee1;
  
     // jump of the stress between the element ant its neighbours.
-    for (unsigned f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
+    for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
 
       if (gmm::abs(mmls(mesh.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
 
@@ -423,12 +426,12 @@ bool crack_problem::solve(plain_vector &U) {
  
     cout << "Setting up the singular functions for the enrichment\n";
     std::vector<getfem::pglobal_function> vfunc(1);
-    for (size_type i = 0; i < vfunc.size(); ++i) {
+    for (unsigned i = 0; i < vfunc.size(); ++i) {
       /* use the singularity */
       getfem::abstract_xy_function *s = 
 	new getfem::crack_singular_xy_function(i);
       getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(cutoff.fun_num,
+	new getfem::cutoff_xy_function(int(cutoff.fun_num),
 				       cutoff.radius, 
 				       cutoff.radius1, cutoff.radius0);
       s = new getfem::product_of_xy_functions(*s, *c);
@@ -547,7 +550,7 @@ int main(int argc, char *argv[]) {
     getfem::mesh mcut;
     p.mls.global_cut_mesh(mcut);
     unsigned Q = p.mf_u().get_qdim();
-    getfem::mesh_fem mf(mcut, Q);
+    getfem::mesh_fem mf(mcut, dim_type(Q));
     mf.set_classical_discontinuous_finite_element(2, 0.001);
     // mf.set_finite_element
     //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
@@ -563,7 +566,7 @@ int main(int argc, char *argv[]) {
 //     else if (NX < 12) nn = 8;
 //     else if (NX < 30) nn = 3;
 //     else nn = 1;
-    unsigned nn = 1;
+//    unsigned nn = 1;
     
     // choose an adequate slice refinement based on the distance to
     // the crack tip
@@ -601,7 +604,7 @@ int main(int argc, char *argv[]) {
     mim_refined.set_integration_method(getfem::int_method_descriptor
 				       ("IM_TRIANGLE(6)"));
     
-    getfem::mesh_fem mf_refined(mcut_refined, Q);
+    getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
     mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
     plain_vector W(mf_refined.nb_dof());
     

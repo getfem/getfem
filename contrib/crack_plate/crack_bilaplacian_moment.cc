@@ -46,7 +46,7 @@ base_matrix moment_beta(const base_node &x)
 
 size_type is_lagrange_dof_type(getfem::pdof_description dof){
   size_type displ_dof = 0 ;
-  for (unsigned k = 0; k < 4; ++k) {
+  for (dim_type k = 0; k < 4; ++k) {
       if (dof == getfem::lagrange_dof(k)) 
          displ_dof = 1 ;
     }
@@ -270,7 +270,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
       
       const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
       for (unsigned i=0; i < cvs.size(); ++i) {
-        unsigned cv = cvs[i];
+        size_type cv = cvs[i];
         //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
         
         getfem::pfem pf = mf_u().fem_of_element(cv);
@@ -283,7 +283,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
         if (ld == unsigned(-1)) {
           cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
         } else {
-          printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
+          printf(" %3d:%.16s", int(cv), name_of_dof(pf->dof_types().at(ld)).c_str());
         }
       }
       printf("\n");
@@ -365,7 +365,7 @@ getfem::mdbrick_normal_derivative_source_term<>
       // 	  mf_u().point_of_dof(d) << " M2(d,d) = " << M2(d,d) << "\n";
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
 	cout << "removed\n";	
-	unsigned n = gmm::mat_nrows(H);
+	size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }

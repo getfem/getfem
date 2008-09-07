@@ -42,6 +42,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. 
@@ -131,8 +133,8 @@ void friction_problem::init(void) {
   init_vert_speed = PARAM.real_value("INIT_VERT_SPEED","initial speed");
   hspeed = PARAM.real_value("FOUNDATION_HSPEED","initial speed");
 
-  mf_u.set_qdim(N);
-  mf_v.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
+  mf_v.set_qdim(dim_type(N));
   
 
   /* set the finite element on the mf_u */
@@ -164,8 +166,8 @@ void friction_problem::init(void) {
   base_node center(0.,0.,20.);
   std::cout << "Reperage des bord de contact et Dirichlet\n";  
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
-    size_type nf = mesh.structure_of_convex(cv)->nb_faces();
-    for (size_type f = 0; f < nf; f++) {
+    short_type nf = mesh.structure_of_convex(cv)->nb_faces();
+    for (short_type f = 0; f < nf; f++) {
       if (!mesh.is_convex_having_neighbour(cv, f)) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
@@ -446,7 +448,7 @@ void friction_problem::solve(void) {
     if ((i % N) == 0) V0[i+N-1] = Dirichlet ? 0.0 : init_vert_speed;
   
   gmm::iteration iter(residual, 0, 40000);
-  iter.set_noisy(noisy);
+  iter.set_noisy(int(noisy));
 
   scalar_type J0 = 0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
     + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)

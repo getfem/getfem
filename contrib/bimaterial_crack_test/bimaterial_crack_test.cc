@@ -48,6 +48,8 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type; 
+using bgeot::dim_type; 
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are builtmayavi -d crack.vtk -f WarpVector -m BandedSurfaceMap -m Outline
@@ -246,7 +248,7 @@ struct exact_solution {
 	    getfem::level_set &ls) {
     std::vector<getfem::pglobal_function> cfunc(4);
    
- for (size_type i = 0; i < 4; ++i) {
+ for (unsigned i = 0; i < 4; ++i) {
     /* use the singularity */
     getfem::abstract_xy_function *s = 
       new getfem::crack_singular_xy_function(i);
@@ -341,7 +343,7 @@ struct crack_problem {
   base_small_vector translation;
 
   scalar_type residual;       /* max residual for the iterative solvers        */
-  scalar_type conv_max;
+  size_type conv_max;
   unsigned dir_with_mult;
   
   std::string datafilename;
@@ -435,9 +437,9 @@ void crack_problem::init(void) {
   residual = PARAM.real_value("RESIDUAL");
   if (residual == 0.) residual = 1e-10;
   
-  bimaterial = PARAM.int_value("BIMATERIAL", "Bimaterial interface crack");
+  bimaterial = int(PARAM.int_value("BIMATERIAL", "Bimaterial interface crack"));
   all_dirichlet = PARAM.int_value("all_dirichlet", "Dirichlet condition");
-  mode = PARAM.int_value("mode","mode");
+  mode = int(PARAM.int_value("mode","mode"));
 
   //F11 = PARAM.real_value("F11","F11");
   //F12 = PARAM.real_value("F12","F12");
@@ -452,11 +454,11 @@ void crack_problem::init(void) {
 
   if (bimaterial == 1){
     mu = PARAM.real_value("MU", "Lame coefficient mu"); 
-    lambda_up = PARAM.int_value("LAMBDA_UP", "Lame Coef");
-    lambda_down = PARAM.int_value("LAMBDA_DOWN", "Lame Coef");
+    lambda_up = PARAM.real_value("LAMBDA_UP", "Lame Coef");
+    lambda_down = PARAM.real_value("LAMBDA_DOWN", "Lame Coef");
     lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-    mu_up = PARAM.int_value("MU_UP", "Lame Coef");
-    mu_down = PARAM.int_value("MU_DOWN", "Lame Coef");
+    mu_up = PARAM.real_value("MU_UP", "Lame Coef");
+    mu_down = PARAM.real_value("MU_DOWN", "Lame Coef");
     
   }
   else{
@@ -466,7 +468,7 @@ void crack_problem::init(void) {
   }
   
 
-  mf_u().set_qdim(N);
+  mf_u().set_qdim(dim_type(N));
 
 
   /* set the finite element on the mf_u */
@@ -487,10 +489,10 @@ void crack_problem::init(void) {
   mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
 
 
-  dir_with_mult = PARAM.int_value("DIRICHLET_VERSINO");
+  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSINO"));
  
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -621,8 +623,8 @@ bool crack_problem::solve(plain_vector &U) {
 	cout<<"______________________________________________________________________________"<<endl;
 	cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
 	cout<<"______________________________________________________________________________"<<endl;
-	std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
-	std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
+	std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
+	std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
 	
 	cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
 	
@@ -748,7 +750,7 @@ bool crack_problem::solve(plain_vector &U) {
     cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
     
     dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
-    getfem::mesh_fem mf_printed(mesh, N);
+    getfem::mesh_fem mf_printed(mesh, dim_type(N));
     std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
     mf_printed.set_finite_element(mesh.convex_index(),
 				  getfem::fem_descriptor(FEM_DISC));
@@ -769,7 +771,7 @@ bool crack_problem::solve(plain_vector &U) {
     int mode_counter = 1;
     plain_vector W12;
     W12.clear();
-    getfem::mesh_fem mf_printed(mesh, N);
+    getfem::mesh_fem mf_printed(mesh, dim_type(N));
     dal::bit_vector blocked_dof;
     
     std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
@@ -815,8 +817,8 @@ bool crack_problem::solve(plain_vector &U) {
 	  cout<<"______________________________________________________________________________"<<endl;
 	  cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
 	  cout<<"______________________________________________________________________________"<<endl;
-	  std::vector<float> bi_lambda(ELAS.lambda().mf().nb_dof());
-	  std::vector<float> bi_mu(ELAS.lambda().mf().nb_dof());
+	  std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
+	  std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
 	  
 	  cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
 	  
@@ -1020,7 +1022,7 @@ int main(int argc, char *argv[]) {
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
-      getfem::mesh_fem mf(mcut, Q);
+      getfem::mesh_fem mf(mcut, dim_type(Q));
       mf.set_classical_discontinuous_finite_element(2, 0.001);
       // mf.set_finite_element
       //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
@@ -1031,7 +1033,7 @@ int main(int argc, char *argv[]) {
       getfem::stored_mesh_slice sl;
       getfem::mesh mcut_refined;
 
-      unsigned NX = p.PARAM.int_value("NX"), nn;
+      unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
       if (NX < 6) nn = 24;
       else if (NX < 12) nn = 8;
       else if (NX < 30) nn = 3;
@@ -1049,10 +1051,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (dmin < 1e-5)
-	  nrefine[cv] = nn*8;
+	  nrefine[cv] = short_type(nn*8);
 	else if (dmin < .1) 
-	  nrefine[cv] = nn*2;
-	else nrefine[cv] = nn;
+	  nrefine[cv] = short_type(nn*2);
+	else nrefine[cv] = short_type(nn);
 	if (dmin < .01)
 	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
       }
@@ -1071,14 +1073,14 @@ int main(int argc, char *argv[]) {
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 ("IM_TRIANGLE(6)"));
 
-      getfem::mesh_fem mf_refined(mcut_refined, Q);
+      getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
       mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
       plain_vector W(mf_refined.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
 #ifdef VALIDATE_XFEM
-      p.exact_sol.mf.set_qdim(Q);
+      p.exact_sol.mf.set_qdim(dim_type(Q));
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 

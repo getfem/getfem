@@ -36,6 +36,7 @@ using bgeot::base_small_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
+using bgeot::short_type;
 using bgeot::dim_type;
 
 typedef gmm::wsvector<scalar_type> sparse_vector_type;
@@ -69,15 +70,15 @@ void lap_pb::init(void) {
   /* READING PARAMETER FILE                                              */
   /***********************************************************************/
   
-  N = PARAM.int_value("N", "Domaine dimension");
+  N = int(PARAM.int_value("N", "Domaine dimension"));
   LX = PARAM.real_value("LX", "Size in X");
   LY = PARAM.real_value("LY", "Size in Y");
   LZ = PARAM.real_value("LZ", "Size in Y");
-  NX1 = PARAM.int_value("NX1", "Nomber of sace steps ");
-  NX2 = PARAM.int_value("NX2", "Nomber of sace steps ");
-  integration = PARAM.int_value("INTEGRATION", "integration method");
-  K = PARAM.int_value("K", "Finite element degree");
-  KI = PARAM.int_value("KI", "Integration degree");
+  NX1 = int(PARAM.int_value("NX1", "Nomber of sace steps "));
+  NX2 = int(PARAM.int_value("NX2", "Nomber of sace steps "));
+  integration = int(PARAM.int_value("INTEGRATION", "integration method"));
+  K = int(PARAM.int_value("K", "Finite element degree"));
+  KI = int(PARAM.int_value("KI", "Integration degree"));
   
   /***********************************************************************/
   /*  BUILD MESH.                                                        */
@@ -94,7 +95,7 @@ void lap_pb::init(void) {
     vtab[i] = base_small_vector(N); gmm::clear(vtab[i]);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX1);
   }
-  getfem::parallelepiped_regular_simplex_mesh(mesh1, N, org,
+  getfem::parallelepiped_regular_simplex_mesh(mesh1, dim_type(N), org,
 					      vtab.begin(), ref.begin());
   mesh1.optimize_structure();
 
@@ -104,7 +105,7 @@ void lap_pb::init(void) {
     vtab[i] = base_small_vector(N); gmm::clear(vtab[i]);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX2);
   }
-  getfem::parallelepiped_regular_simplex_mesh(mesh2, N, org,
+  getfem::parallelepiped_regular_simplex_mesh(mesh2, dim_type(N), org,
 					      vtab.begin(), ref.begin());
   mesh2.optimize_structure();
   cout << "Selecting finite element method.\n";
@@ -132,19 +133,19 @@ void lap_pb::init(void) {
   ppi = getfem::int_method_descriptor(meth);
   
   sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
-  nn = mesh1.convex_index(N);
+  nn = mesh1.convex_index(dim_type(N));
   mim1.set_integration_method(nn, ppi);
   mef1.set_finite_element(nn, getfem::fem_descriptor(meth));
-  nn = mesh2.convex_index(N);
+  nn = mesh2.convex_index(dim_type(N));
   mim2.set_integration_method(nn, ppi);
   mef2.set_finite_element(nn, getfem::fem_descriptor(meth));
-  nn = mesh1.convex_index(N);
+  nn = mesh1.convex_index(dim_type(N));
   mefinterpolated.set_finite_element(nn,
 				     getfem::new_interpolated_fem(mef2, mim1));
 }
 
 void lap_pb::assemble(void) {
-  int nb_dof1 = mef1.nb_dof(), nb_dof2 = mef2.nb_dof();
+  size_type nb_dof1 = mef1.nb_dof(), nb_dof2 = mef2.nb_dof();
   sparse_matrix_type RM1(nb_dof2, nb_dof2);
   double sum, diff;
   
@@ -206,7 +207,7 @@ void test2() {
 
   std::vector<base_node> v;
   for (size_type k=0; k < 6; ++k) {
-    scalar_type c = k/5. * M_PI/2;
+    scalar_type c = scalar_type(k)/5. * M_PI/2;
     v.push_back(base_node(cos(c), sin(c)));
   }
   m2.add_convex_by_points(bgeot::geometric_trans_descriptor("GT_PK(1,5)"),

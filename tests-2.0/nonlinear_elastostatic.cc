@@ -43,6 +43,8 @@ using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::base_vector;
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type; 
+using bgeot::dim_type; 
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -257,7 +259,7 @@ void elastostatic_problem::init(void) {
   p2 = PARAM.real_value("P2", "Second Elastic coefficient");
   p3 = PARAM.real_value("P3", "Third Elastic coefficient");
   
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -405,7 +407,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   }
   // Volumic source term brick.
-  int nb_step = PARAM.int_value("NBSTEP");
+  int nb_step = int(PARAM.int_value("NBSTEP"));
 
 
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
@@ -458,7 +460,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     final_model.rhs().set(F2);
 
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
-    iter = gmm::iteration(residual, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
+    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
     /* let the default non-linear solve (Newton) do its job */

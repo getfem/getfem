@@ -45,6 +45,7 @@ using bgeot::base_vector;
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::short_type;  /* = short */
+using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
@@ -203,8 +204,8 @@ void crack_problem::init(void) {
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
 
 
-  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
-				      "Enrichment option");
+  enrichment_option = int(PARAM.int_value("ENRICHMENT_OPTION",
+					  "Enrichment option"));
   prescribed_disp = PARAM.real_value("PRESCRIBED_DISPLACEMENT",
 				     "prescribed displacement");
   is_prescribed_disp = (PARAM.int_value("IS_PRESCRIBED_DISPLACEMENT",
@@ -233,7 +234,7 @@ void crack_problem::init(void) {
   Gc = PARAM.real_value("GC", "Fracture energy density");
   neumann_force = PARAM.real_value("NEUMANN_FORCE", "Neumann force");
 
-  mf_u().set_qdim(N);
+  mf_u().set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -254,12 +255,12 @@ void crack_problem::init(void) {
   mim_crack.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
   mf_partition_of_unity.set_classical_finite_element(1);
-  mf_SD.set_qdim(N);
+  mf_SD.set_qdim(dim_type(N));
   mf_SD.set_classical_finite_element(ls.degree());
 
-  dir_with_mult = PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS", "Well");
+  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS", "Well"));
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -533,7 +534,7 @@ namespace getfem {
 			       const VECT1 &phin_, int version_) 
       : mf(mf_), phi0(phi0_), phin(phin_), N(mf_.linked_mesh().dim()), Phi(1),
 	gradPhin(1,N), sizes_(1), version(version_)
-    { sizes_[0] = (version == 1) ? 1 : N; }
+    { sizes_[0] = short_type((version == 1) ? 1 : N); }
     
     const bgeot::multi_index &sizes() const { return sizes_; }
     
@@ -967,9 +968,9 @@ void crack_problem::save_U(plain_vector &U) {
       if (d < dmin || i == 0) { dmin = d; PPmin = P; }
     }
     
-    if (dmin < 1e-5) { nrefine[cv] = nn*4; reflst.add(cv); }
-    else if (dmin < .1) nrefine[cv] = nn*2;
-    else nrefine[cv] = nn;
+    if (dmin < 1e-5) { nrefine[cv] = short_type(nn*4); reflst.add(cv); }
+    else if (dmin < .1) nrefine[cv] = short_type(nn*2);
+    else nrefine[cv] = short_type(nn);
   }
   
   mfcut.set_classical_discontinuous_finite_element(reflst, 6, 0.001);

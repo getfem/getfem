@@ -34,12 +34,13 @@ using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::opt_long_scalar_type;
 using bgeot::dim_type;
+using bgeot::short_type;
 
 void print_method(getfem::pintegration_method ppi) {
   cout << "methode : " << getfem::name_of_int_method(ppi) << endl;
   getfem::papprox_integration pai = ppi->approx_method();
   cout << "Nb points on convex " << pai->nb_points_on_convex() << endl;
-  for (size_type k = 0; k < pai->structure()->nb_faces(); ++k)
+  for (short_type k = 0; k < pai->structure()->nb_faces(); ++k)
     cout << "Nb points on face " << k << " : "
 	 <<  pai->nb_points_on_face(k) << endl;
   for (size_type k = 0; k < pai->nb_points(); ++k) {
@@ -86,8 +87,8 @@ static void check_method(const std::string& im_name, getfem::pintegration_method
   assert(ppi!=0); assert(pgt!=0);
   cout << "checking " << im_name << "..." << std::flush; 
   m.add_convex_by_points(pgt, pgt->convex_ref()->points().begin());
-  mf1.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,k/2));
-  mf2.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,(k-k/2)));
+  mf1.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,short_type(k/2)));
+  mf2.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,short_type(k-k/2)));
 
   getfem::pmat_elem_type pme = getfem::mat_elem_product(getfem::mat_elem_base(mf1.fem_of_element(0)),getfem::mat_elem_base(mf2.fem_of_element(0)));
   getfem::pmat_elem_computation pmec = getfem::mat_elem(pme, ppi, pgt);
@@ -98,7 +99,7 @@ static void check_method(const std::string& im_name, getfem::pintegration_method
   mc.lst.push_back(t);
   mc.im_names.push_back(im_name);
   
-  for (unsigned f = 0; f < m.structure_of_convex(0)->nb_faces(); ++f) {
+  for (short_type f = 0; f < m.structure_of_convex(0)->nb_faces(); ++f) {
     pmec->gen_compute_on_face(t, m.points_of_convex(0), f, 0);
     std::stringstream s; s << im_name << "/FACE" << f;
     matrix_collection &mcf = ME[pgt_K_f_idx(pgt,k,f)];
@@ -115,7 +116,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
   size_type pts_on_boundary = 0;
   size_type pts_outside = 0;
   if (ppi->type() == getfem::IM_APPROX) {
-    size_type dim = ppi->approx_method()->dim();
+    short_type dim = ppi->approx_method()->dim();
     for (bgeot::power_index idx(dim); idx.degree() <= pk; ++idx) {
       opt_long_scalar_type sum = 0, realsum = 1.;
       for (size_type i=0; i < ppi->approx_method()->nb_points_on_convex(); ++i) {
@@ -124,7 +125,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
 	  prod *= pow(opt_long_scalar_type(ppi->approx_method()->point(i)[d]), idx[d]);
 	sum += prod;
       }
-      if (ppi->structure()->basic_structure() == bgeot::simplex_structure(dim)) {        
+      if (ppi->structure()->basic_structure() == bgeot::simplex_structure(dim_type(dim))) {        
         size_type fa = 1;
         for (size_type z = 0; z < dim; z++)
           for (size_type k = 1; k <= idx[z]; ++k, ++fa)
@@ -132,7 +133,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
         for (size_type k = 0; k < dim; k++) { realsum /= opt_long_scalar_type(scalar_type(fa)); fa++; }
     /*	for (size_type d=dim-1, c=0; d+1 != 0; --d) { c += idx[d]+1; realsum *= opt_long_scalar_type(c); }
       realsum = opt_long_scalar_type(1.)/realsum;*/
-      } else if (ppi->structure()->basic_structure() == bgeot::parallelepiped_structure(dim)) {
+      } else if (ppi->structure()->basic_structure() == bgeot::parallelepiped_structure(dim_type(dim))) {
 	for (size_type d=0; d < dim; ++d) realsum *= opt_long_scalar_type(idx[d]+1);
 	realsum = opt_long_scalar_type(1.)/realsum;
       }
@@ -147,7 +148,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
     for (size_type i=0; i < ppi->approx_method()->nb_points_on_convex(); ++i) {
       const base_node& P = ppi->approx_method()->point(i);
       if (ppi->approx_method()->ref_convex()->is_in(P) > 1e-8) pts_outside++;
-      for (size_type f = 0; f < ppi->approx_method()->structure()->nb_faces(); ++f) {
+      for (short_type f = 0; f < ppi->approx_method()->structure()->nb_faces(); ++f) {
 	if (gmm::abs(ppi->approx_method()->ref_convex()->is_in_face(f,P)) < 1e-8) {
 	  pts_on_boundary++; break;
 	}
@@ -306,8 +307,8 @@ static void check_methods() {
     check_method(s,ppi,1,bgeot::parallelepiped_linear_geotrans(4));
   }
 
-  for (size_type d=2; d < 5; ++d) {
-    for (size_type k=0; k < 7-d; ++k) {
+  for (dim_type d=2; d < 5; ++d) {
+    for (dim_type k=0; k < 7-d; ++k) {
       sprintf(s,"IM_EXACT_PRISM(%d)",int(d));
       ppi = getfem::int_method_descriptor(s);
       
@@ -316,13 +317,13 @@ static void check_methods() {
       sprintf(s,"IM_NC_PRISM(%d,%d)", int(d),int(k));
       ppi = getfem::int_method_descriptor(s);
       check_method(s, getfem::int_method_descriptor(s), k,
-		   bgeot::prism_geotrans(d, std::max(k, size_type(1))));
+		   bgeot::prism_geotrans(d, std::max(k, dim_type(1))));
     
       if (d == 3) {	
 	sprintf(s,"IM_PRODUCT(IM_TRIANGLE(6),IM_GAUSS1D(6))");
 	ppi = getfem::int_method_descriptor(s);
 	check_method(s, getfem::int_method_descriptor(s), k,
-		     bgeot::prism_geotrans(d,std::max<size_type>(k,1)));
+		     bgeot::prism_geotrans(d,std::max(k,dim_type(1))));
       }
     }
   }

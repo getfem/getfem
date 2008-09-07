@@ -58,13 +58,12 @@ int main(void)
     
     tsa.clear();
     
-    for (int i = 0; i < 50; i++)
-      { 
-	int j = rand() % 1000; 
-	cout << " add no " << i << " : " << j << endl;
-	
-	tsa.add(j);
-      }
+    for (int i = 0; i < 50; i++) { 
+      int j = rand() % 1000; 
+      cout << " add no " << i << " : " << j << endl;
+      
+      tsa.add(j);
+    }
     
     {
       dal::dynamic_tree_sorted<int>::iterator it= tsa.begin(), end = tsa.end();
@@ -73,30 +72,28 @@ int main(void)
     }
     cout << tsa << endl;
     
-    for (unsigned long i = 0; i < 50 /*50000*/; i++)
-    {
-      if (!(i % 10000)) cout <<" no " << i << " nb_elt " << tsa.card() << endl;
+    for (unsigned long i = 0; i < 50 /*50000*/; i++) {
+      if (!(i % 10000))
+	cout <<" no " << i << " nb_elt " << tsa.card() << endl;
       
-      if (((rand() & 1) == 1 || tsa.card() < 30) && (tsa.card() < 100))
-	{
-	  int j = rand() % 10;
-	  tsa.add(j);
-	  // if (!(i % 10)) cout << tsa << endl;
-	  tsa.verify_balance();
-	}
-      else
-	{
-	  
-	  // cout << " sup of " << k << endl;
-	  int k;
-	  for (k = int(rand() % (tsa.index()).last_true());
-	       !((tsa.index())[k]); 
-	       k = int(rand() % (tsa.index()).last_true()) ) {};
-	  
-	  tsa.sup(k);
-	  //    cout << tsa << endl;
-	  tsa.verify_balance();
-	}
+      if (((rand() & 1) == 1 || tsa.card() < 30) && (tsa.card() < 100)) {
+	int j = rand() % 10;
+	tsa.add(j);
+	// if (!(i % 10)) cout << tsa << endl;
+	tsa.verify_balance();
+      }
+      else {
+	
+	// cout << " sup of " << k << endl;
+	int k;
+	for (k = int(rand() % (tsa.index()).last_true());
+	     !((tsa.index())[k]); 
+	     k = int(rand() % (tsa.index()).last_true()) ) {};
+	
+	tsa.sup(k);
+	//    cout << tsa << endl;
+	tsa.verify_balance();
+      }
     }
     
     {

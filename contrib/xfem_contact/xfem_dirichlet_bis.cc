@@ -44,6 +44,7 @@ using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::short_type;  /* = short */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -183,7 +184,7 @@ int main(int argc, char *argv[]) {
     // Read parameters.
     bgeot::md_param PARAM;
     PARAM.read_command_line(argc, argv);
-    u_version = PARAM.int_value("EXACT_SOL", "Which exact solution");
+    u_version = int(PARAM.int_value("EXACT_SOL", "Which exact solution"));
     
     // Load the mesh
     getfem::mesh mesh;
@@ -201,10 +202,10 @@ int main(int argc, char *argv[]) {
     cout << "h = " << h << endl;
 
     // Level set definition
-    unsigned lsdeg = PARAM.int_value("LEVEL_SET_DEGREE", "level set degree");
+    unsigned lsdeg = unsigned(PARAM.int_value("LEVEL_SET_DEGREE", "level set degree"));
     Radius = PARAM.real_value("RADIUS", "Domain radius");
-    getfem::level_set ls(mesh, lsdeg);
-    getfem::level_set lsup(mesh, lsdeg, true), lsdown(mesh, lsdeg, true);
+    getfem::level_set ls(mesh, dim_type(lsdeg));
+    getfem::level_set lsup(mesh, dim_type(lsdeg), true), lsdown(mesh, dim_type(lsdeg), true);
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
     for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
       lsup.values()[i] = lsdown.values()[i] = ls.values()[i]
@@ -287,10 +288,10 @@ int main(int argc, char *argv[]) {
     
     getfem::trace_mesh_fem_level_set
       mf_mult(mlsdown, pre_mf_mult,
-	      PARAM.int_value("FEM_MULT_DEGREE",
-			      "Degree for multipliers definition"),
-	      PARAM.int_value("FEM_MULT_STRATEGY",
-			      "Strategy for multipliers definition"));
+	      unsigned(PARAM.int_value("FEM_MULT_DEGREE",
+				       "Degree for multipliers definition")),
+	      unsigned(PARAM.int_value("FEM_MULT_STRATEGY",
+				       "Strategy for multipliers definition")));
     mf_mult.adapt();
 
     // getfem::partial_mesh_fem mf_mult(pre_mf_mult);
