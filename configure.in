@@ -17,7 +17,7 @@ AC_ARG_PROGRAM
 PACKAGE="getfem++"
 MAJOR_VERSION="3"
 MINOR_VERSION="0"
-PATCH_VERSION="4"
+PATCH_VERSION="5"
 dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
 AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
@@ -40,12 +40,13 @@ USER_CXXFLAGS="$CXXFLAGS"
 USER_CFLAGS="$CFLAGS"
 AC_PROG_CXX(g++ cxx KCC CC cc++ xlC aCC c++ icpc)
 AC_PROG_CC(gcc icc cc)
-AC_PROG_F77
+AC_PROG_FC
 
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
 CFLAGS="${USER_CFLAGS}"
 SUPLDFLAGS=""
+AC_FC_LIBRARY_LDFLAGS
 
 AC_LANG_CPLUSPLUS
 
@@ -171,8 +172,8 @@ AC_SUBST([LIBTOOL_DEPS])
 dnl -------------------------------BLAS----------------------------------
 
 dnl why I hate autoconf: if the code below is put into a separate file,
-dnl the generated ./configure will stop if no f77 compiler is found. always. even
-dnl if no AC_F77_FUNC is executed.
+dnl the generated ./configure will stop if no Fortran compiler is found. always. even
+dnl if no AC_FC_FUNC is executed.
 acx_blas_ok=no
 
 AC_ARG_WITH(blas,
@@ -185,13 +186,13 @@ case $with_blas in
 esac
 
 # Get fortran linker names of BLAS functions to check for.
-if test x"$F77" = "x"; then
+if test x"$FC" = "x"; then
   echo "No fortran compiler found, assuming c-name for SGEMM is 'sgemm_'"
   sgemm=sgemm_
   dgemm=dgemm_
 else
-  AC_F77_FUNC(sgemm)
-  AC_F77_FUNC(dgemm)
+  AC_FC_FUNC(sgemm)
+  AC_FC_FUNC(dgemm)
 fi
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
@@ -225,7 +226,7 @@ if test $acx_blas_ok = no; then
                 [AC_CHECK_LIB(f77blas, $sgemm,
                 [AC_CHECK_LIB(cblas, cblas_dgemm,
                         [acx_blas_ok=yes
-                         BLAS_LIBS="-lf77blas -latlas -lg2c"],
+                         BLAS_LIBS="-lf77blas -latlas $FCLIBS"],
                         [], [-lf77blas -latlas])],
                         [], [-latlas])])
 fi
@@ -285,7 +286,7 @@ if test $acx_blas_ok = no; then
 fi
 
 if test $acx_blas_ok = no; then
-        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas -lg2c"])
+        AC_CHECK_LIB(blas, $sgemm, [acx_blas_ok=yes; BLAS_LIBS="-lblas $FCLIBS"])
 fi
 
 fi # if BLAS_LIBS=builtin
@@ -308,11 +309,11 @@ CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
 
 
 dnl ------------------------------SuperLU config-------------------------
-if test x"$F77" = "x"; then
+if test x"$FC" = "x"; then
   sgemm="sgemm_"
 else
   AC_FC_FUNC(sgemm)
-  echo "F77=$F77"
+  echo "FC=$FC"
 fi
 
 case $sgemm in
