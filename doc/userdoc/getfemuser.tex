@@ -1611,9 +1611,9 @@ of the first f.e.m., assuming that \cpp{mf} describes the finite
 element method and \cpp{mim} is the chosen integration method.
 
 \begin{cppcode}
-  getfem::mesh\_fem mf\_interpole(mf.linked\_mesh());
+  getfem::mesh\_fem mf\_interpole(mfu.linked\_mesh());
   pfem ifem = getfem::new_interpolated\_fem(mf, mim);
-  dal::bit\_vector nn = mf.convex\_index();
+  dal::bit\_vector nn = mfu.convex\_index();
   mf\_interpole.set\_finite\_element(nn, ifem);
   getfem::asm\_mass\_matrix(SM1, mim, mfu, mf\_interpole);
   del_interpolated_fem(ifem);
