@@ -125,7 +125,7 @@ namespace gmm {
 	l(i,j) = x;
   }
 
-  /** fill a vector or matrix with random value (uniform [0,1]). */
+  /** fill a vector or matrix with random value (uniform [-1,1]). */
   template <typename L> inline void fill_random(L& l)
   { fill_random(l, typename linalg_traits<L>::linalg_type()); }
 
