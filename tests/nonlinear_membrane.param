@@ -1,0 +1,143 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for nonlinear membrane 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% pde parameters :	        				      %%%%%
+
+% geometry
+LX =50;%cm		% size in X.
+LY =25;%			% size in Y.
+NX =10;%            	          % space step.
+NY =6;%            	          % space step.
+
+% material properties
+P0 =1500;	% young modulus, X' axis (N/cm)
+P1 =0.01;	% poison XY coeff ( v YX will be computed as vYX=Ey*vxy/Ex)
+P2 =1500;	% young modulus, Y' axis (N/cm)
+P3 =0;		% shear modulus (N/cm), if 0, computed as G=Ex/(2* (1 + v yx))
+
+
+
+%  Bdy Limit	(0 to set dirichlet on the face, 1 to set neumann BL on the face, -1 not to set any BL on the face )
+bdyUp=0;	
+bdyLow=0;	
+bdyLeft=0;	
+bdyRight=0;
+
+%specify type of boundary condition to impose on specific elements (set 0 for dirichlet, 1 for neumann, -1 not to set any BL on elements)
+bdy_type=-1;
+
+% specify specific elements  and faces on which to impose  BL ( set face nbr to -1 if not used)	
+bdy_element1= 9;%431 ;
+bdy_face1= 1;%0;
+bdy_element2= 29;%432 ;
+bdy_face2= 1;%1;
+bdy_element3=235;% 435 ;
+bdy_face3=-1;%0 ;
+bdy_element4=218;% 436 ;
+bdy_face4= -1;%1 ;
+bdy_element5=219;%439 ;
+bdy_face5= -1;%0;
+bdy_element6= -1;
+bdy_face6= -1;
+bdy_element7= -1 ;
+bdy_face7= -1 ;
+bdy_element8= -1 ;
+bdy_face8= -1 ;
+
+%imposed displacement on Dirichlet BL
+dx=0;
+dy=0;
+dz=0;
+
+%set to 1 to reverse imposed displacements on opposite boundaries
+%(This will inverse the sign of imposed disp, dx => -dx if x < half max x, dy => -dy if y < half max y,
+%to allow to impose an expansion of the domain (one border is moved  towards positive values of the corresponding axis, the opposite border if moved 
+%the same distance towards negative values), set this param to 1
+opposite_bdy_reversed=0;	
+
+%set initial random vertical displ on free dofs
+%set to 1 to impose random initial displacement to avoid tg matrix singularities along Z' axis
+%(needed if no pretension)
+INITIAL_DISP=1;		
+initialDispAmplitude=1e-1;	%amplitude of initial displacement
+
+% print convex description
+PRINT_CONVEXES=0;	%set to 1 to print convex description
+PRINT_STRESSES=0;	%set to 1 to print stresses
+
+%
+% applied forces
+%
+
+%pretension (could also help avoid convergence problems due to wrinkling)
+PRETENSION_X=0;% N/cm		pretension on X' axis
+PRETENSION_Y=0;%1e-6;% N/cm		pretension on Y' axis
+
+%source forces is applied to neumann limit region if src_type=1,otherwize volumic src term on all convexes
+src_type=0;
+
+% source forces in N/cm2 if src_type=0 (volumic forces) or in N/cm if src_type=1 (bdy forces)
+FORCEX = 0;          % Amplitude of the external force
+FORCEY = 0;
+FORCEZ = 10;
+
+% punctual forces
+PUNCTUAL_DOF1=0;%	dof nbr to set punctual force
+PUNCTUAL_FORCE1=0;	% N
+PUNCTUAL_DOF2=0;%	%dof nbr to set punctual force
+PUNCTUAL_FORCE2=0;
+
+%%%%%   discretisation parameters  :                     	      %%%%%
+MESH_TYPE = 'GT_PK(2,1)';
+%%MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
+%MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
+FEM_TYPE = 'FEM_PK(2,1)';
+%FEM_TYPE = 'FEM_PK(3,2)';  % P1 for triangles
+%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 1)';
+%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
+%%FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
+%FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
+
+FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
+%FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
+
+% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
+%DATA_FEM_TYPE = 'FEM_PK(2,1)';
+
+VONMISES_FEM_TYPE = 'FEM_PK_DISCONTINUOUS(2,1)';%must be discontinuous!, ! degree 1 gives vtk reading error!!
+
+%INTEGRATION_CT='IM_TRIANGLE(6)';
+%INTEGRATION = 'IM_TETRAHEDRON(6)'
+INTEGRATION = 'IM_TRIANGLE(3)'; % quadrature rule for polynomials up	PK fem
+                               % to degree 6 on triangles
+%INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
+%INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
+%INTEGRATION = 'IM_NC_PARALLELEPIPED(2,6)'; % newton-cotes, degree 6,	QK fem
+                                          % quadrangles 
+%INTEGRATION ='IM_QUAD(7)';
+%INTEGRATION = 'IM_NC_PRISM(3,12)'; % newton-cotes, degree 12, prims
+%INTEGRATION = 'IM_NC_PRISM(2,8)'; % test jyh
+%INTEGRATION = 'IM_GAUSS1D(10)'; % Gauss-Legendre integration on the
+                               % segment of order 10
+%INTEGRATION = 'IM_GAUSSLOBATTO1D(10)'; % Gauss-Lobatto-Legendre
+                                      % integration on the segment
+                                      % of order 10
+%INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,5)'; % Product of two
+                                              % IM_GAUSS1D(10) (for
+                                              % quadrangles)
+%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(5), 3)';
+%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
+
+RESIDUAL = 1E-8;     	% residu for iterative solvers.
+MAXITER = 15;
+DIRICHLET_VERSION=0;
+NBSTEP =10;
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'nonlinear_membrane';     % Root of data files.
+VTK_EXPORT = 1 % export solution to a ascii .vtk file ?
+NOISY=1;

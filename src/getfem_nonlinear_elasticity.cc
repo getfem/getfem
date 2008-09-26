@@ -110,6 +110,58 @@ namespace getfem {
       }
   }
 
+  scalar_type membrane_elastic_law::strain_energy
+  (const base_matrix & /* E */, const base_vector & /* params */) const {
+    // to be done if needed
+    GMM_ASSERT1(false, "To be done");
+    return 0;
+  }
+  
+  void membrane_elastic_law::sigma
+  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+    // should be optimized, maybe deriving sigma from strain energy
+    base_tensor tt(2,2,2,2);
+    size_type N = gmm::mat_nrows(E);
+    grad_sigma(E,tt,params);
+    for (size_type i = 0; i < N; ++i)
+      for (size_type j = 0; j < N; ++j) {
+	result(i,j)=0.0;
+	for (size_type k = 0; k < N; ++k)
+	  for (size_type l = 0; l < N; ++l) 
+	    result(i,j)+=tt(i,j,k,l)*E(k,l);
+      }
+    // add pretension in X' direction
+    if(params[4]!=0) result(0,0)+=params[4];	
+    // add pretension in Y' direction
+    if(params[5]!=0) result(1,1)+=params[5];
+    //	cout<<"sigma="<<result<<endl;
+  }
+  
+  void membrane_elastic_law::grad_sigma
+  (const base_matrix & /* E */, base_tensor &result,
+   const base_vector &params) const {
+    // to be optimized!!
+    std::fill(result.begin(), result.end(), scalar_type(0));
+    scalar_type poisonXY=params[0]*params[1]/params[2];	//Ex*vYX=Ey*vXY
+    scalar_type Ghalf=( params[3] == 0) ? params[0]/(4*(1+params[1])) : params[3]/2;	//if no G entered, compute G=E/(2*(1+v))	to be cfmd!!
+    std::fill(result.begin(), result.end(), scalar_type(0));
+    result(0,0,0,0) = params[0]/(1-params[1]*poisonXY);
+    // result(0,0,0,1) = 0;
+    // result(0,0,1,0) = 0;
+    result(0,0,1,1) = params[1]*params[0]/(1-params[1]*poisonXY);
+    result(1,1,0,0) = params[1]*params[0]/(1-params[1]*poisonXY);
+    // result(1,1,0,1) = 0;
+    // result(1,1,1,0) = 0;
+    result(1,1,1,1) = params[2]/(1-params[1]*poisonXY);
+    // result(0,1,0,0) = 0;
+    result(0,1,0,1) = Ghalf;
+    result(0,1,1,0) = Ghalf;
+    // result(0,1,1,1) = 0;
+    // result(1,0,0,0) = 0;
+    result(1,0,0,1) = Ghalf;
+    result(1,0,1,0) = Ghalf;
+    // result(1,0,1,1) = 0;
+  }
 
   scalar_type Mooney_Rivlin_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params) const {
@@ -200,6 +252,23 @@ namespace getfem {
 	      + (C(i, j) * C(k, l)) * det*c*scalar_type(4);
       }
   }
+
+
+  int levi_civita(int i, int j, int k) {
+    int ii=i+1;
+    int jj=j+1;
+    int kk=k+1;	//i,j,k from 0 to 2 !
+    return static_cast<int>
+      (int(- 1)*(static_cast<int>(pow(double(ii-jj),2.))%3)
+       * (static_cast<int> (pow(double(ii-kk),2))%3 )
+       * (static_cast<int> (pow(double(jj-kk),2))%3)
+       * (pow(double(jj-(ii%3))-double(0.5),2)-double(1.25)));
+  }
+
+
+
+
+
 
 }  /* end of namespace getfem.                                             */
 

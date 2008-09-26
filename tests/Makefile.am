@@ -35,6 +35,7 @@ check_PROGRAMS =                 \
 	helmholtz                \
 	plate                    \
 	nonlinear_elastostatic   \
+	nonlinear_membrane       \
 	schwarz_additive         \
 	$(optprogs)              \
 	plasticity               \
@@ -64,6 +65,7 @@ test_interpolation_SOURCES = test_interpolation.cc
 elastostatic_SOURCES = elastostatic.cc
 stokes_SOURCES = stokes.cc
 nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.cc
+nonlinear_membrane_SOURCES = nonlinear_membrane.cc
 helmholtz_SOURCES = helmholtz.cc
 integration_SOURCES = integration.cc
 poly_SOURCES = poly.cc
@@ -119,6 +121,7 @@ TESTS = \
 	$(top_srcdir)/tests/plate.pl                   \
 	$(optpl)                                       \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl  \
+	$(top_srcdir)/tests/nonlinear_membrane.pl      \
 	$(top_srcdir)/tests/dynamic_friction.pl        \
 	$(top_srcdir)/tests/plasticity.pl              \
 	$(top_srcdir)/tests/helmholtz.pl               \
@@ -163,6 +166,8 @@ EXTRA_DIST = \
 	elastostatic.param                \
 	stokes.param                      \
 	nonlinear_elastostatic.pl         \
+	nonlinear_membrane.pl             \
+	nonlinear_membrane.param          \
 	dynamic_friction.pl               \
 	dynamic_friction.param            \
 	dynamic_friction.net              \

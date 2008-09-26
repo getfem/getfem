@@ -29,7 +29,8 @@
 //===========================================================================
 
 /**@file getfem_nonlinear_elasticity.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date July 6, 2004.
    @brief Non-linear elasticty brick.
 */
@@ -89,6 +90,24 @@ namespace getfem {
     SaintVenant_Kirchhoff_hyperelastic_law(void) { nb_params_ = 2; }
   };
 
+
+  /** Linear law for a membrane (plane stress), orthotropic material
+      caracterized by Ex, Ey, vYX and G, with optional orthotropic prestresses.
+      due to Jean-Yves Heddebaut <jyhed@alpino.be>
+  */
+
+  struct membrane_elastic_law : 
+    public abstract_hyperelastic_law {
+    virtual scalar_type strain_energy(const base_matrix &E,
+				      const base_vector &params) const;
+    virtual void sigma(const base_matrix &E, base_matrix &result,
+		       const base_vector &params) const;
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
+			    const base_vector &params) const;
+    membrane_elastic_law(void) { nb_params_ = 6; }
+  };
+
+
   /** Mooney-Rivlin hyperelastic law 
       
       To be used for incompressible problems (with getfem::mdbrick_nonlinear_incomp).
@@ -127,6 +146,7 @@ namespace getfem {
     const mesh_fem &mf_data;
     const VECT2 &PARAMS;
     size_type N;
+    size_type NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff;
     base_matrix E, Sigma, gradU;
@@ -139,8 +159,9 @@ namespace getfem {
 			      const abstract_hyperelastic_law &AHL_,
 			      int version_) 
       : mf(mf_), U(U_), mf_data(mf_data_), PARAMS(PARAMS_), 
-	N(mf_.get_qdim()), AHL(AHL_), params(AHL_.nb_params()),
-	E(N, N), Sigma(N, N), gradU(N, N), tt(N, N, N, N), sizes_(N, N, N, N),
+	N(mf_.linked_mesh().dim()), NFem(mf_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), E(N, N), Sigma(N, N), gradU(NFem, N),
+	tt(N, N, N, N), sizes_(NFem, N, NFem, N),
 	version(version_)
     { if (version == 1) sizes_.resize(2); }
     const bgeot::multi_index &sizes() const {  return sizes_; }
@@ -152,20 +173,23 @@ namespace getfem {
 		coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       gmm::mult(gmm::transposed(gradU), gradU, E);
-      gmm::add(gradU, E);
-      gmm::add(gmm::transposed(gradU), E);
+      gmm::add(gmm::sub_matrix(gradU, gmm::sub_interval(0,N),
+			       gmm::sub_interval(0,N)),E);
+      gmm::add(gmm::sub_matrix(gmm::transposed(gradU),
+			 gmm::sub_interval(0,N),gmm::sub_interval(0,N)),E);
       gmm::scale(E, scalar_type(0.5));
-      gmm::add(gmm::identity_matrix(), gradU);
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)+= scalar_type(1);
 
 
       AHL.sigma(E, Sigma, params);
 
       if (version == 0) {	  
 	AHL.grad_sigma(E, tt, params);	
-	for (size_type n = 0; n < N; ++n)
+	for (size_type n = 0; n < NFem; ++n)
 	  for (size_type m = 0; m < N; ++m)
 	    for (size_type l = 0; l < N; ++l)
-	      for (size_type k = 0; k < N; ++k) {
+	      for (size_type k = 0; k < NFem; ++k) {
 		scalar_type aux = (k == n) ? Sigma(m,l) : 0.0;
 		for (size_type j = 0; j < N; ++j)
 		  for (size_type i = 0; i < N; ++i) {
@@ -176,7 +200,7 @@ namespace getfem {
       } else {
         if (gmm::lu_det(gradU) < 0) AHL.inc_unvalid_flag();
 
-	for (size_type i = 0; i < N; ++i)
+	for (size_type i = 0; i < NFem; ++i)
 	  for (size_type j = 0; j < N; ++j) {
 	    scalar_type aux(0);
 	    for (size_type k = 0; k < N; ++k)
@@ -213,7 +237,7 @@ namespace getfem {
 					       const abstract_hyperelastic_law &AHL,
 					       const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &K = const_cast<MAT &>(K_);
-    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+    GMM_ASSERT1(mf.get_qdim() >= mf.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT1, VECT2>
@@ -246,7 +270,7 @@ namespace getfem {
 				    const abstract_hyperelastic_law &AHL,
 				    const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R = const_cast<VECT1 &>(R_);
-    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+    GMM_ASSERT1(mf.get_qdim() >= mf.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
     elasticity_nonlinear_term<VECT2, VECT3>
@@ -263,6 +287,8 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+    // added by Jean-Yves Heddebaut <jyhed@alpino.be>
+    int levi_civita(int i,int j,int k);
 
 # define MDBRICK_NONLINEAR_ELASTICITY 821357
 
@@ -318,40 +344,86 @@ namespace getfem {
       return gmm::sub_vector(MS.state(), SUBU);
     }
 
+
+
+    /* modified by Jean-Yves Heddebaut <jyhed@alpino.be> sep08, to handle
+       cases where mesh dim <> fem qdim.
+
+       For the membrane case, the cauchy stresses are calculated starting
+       from the 2X2 lagrange tensor.
+       To compute the jacobian in case of 2D mesh with 3D displacements,
+       a 3th column is added to gradphi, expressing that the  unit vector
+       perpendicular to the reference surface eZ' (0,0,1), is transformed
+       in a  unit vector perpendicular to the deformed surface. (eZ is the
+       vector eX X eY, with eX and eY = images of eX' and eY')
+       (to be validated!)
+    */
+
     template <class VECTVM>
-    void compute_Von_Mises_or_Tresca(MODEL_STATE &MS, const mesh_fem &mf_vm, VECTVM &VM, bool tresca) {
-      unsigned N = mf_u.linked_mesh().dim(), NP = unsigned(AHL.nb_params());
-      VECTOR GRAD(mf_vm.nb_dof()*N*N), PARAMS(mf_vm.nb_dof()*NP);
-      
+    void compute_Von_Mises_or_Tresca(MODEL_STATE &MS, const mesh_fem &mf_vm,
+				     VECTVM &VM, bool tresca) {
+      unsigned N = unsigned(mf_u.linked_mesh().dim());
+      unsigned NP = unsigned(AHL.nb_params()), NFem = mf_u.get_qdim();
+      VECTOR GRAD(mf_vm.nb_dof()*NFem*N), PARAMS(mf_vm.nb_dof()*NP);      
       interpolation(PARAMS_.mf(), mf_vm, PARAMS_.get(), PARAMS);
       compute_gradient(mf_u, mf_vm, get_solution(MS), GRAD);
       GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
 		  "The vector has not the good size");
-      base_matrix E(N, N), gradphi(N,N), Id(N, N), sigmahathat(N,N),
-	aux(N,N), sigma(N,N);
+      base_matrix E(N, N), gradphi(NFem,N),gradphit(N,NFem), Id(N, N),
+	sigmahathat(N,N),aux(NFem,N), sigma(NFem,NFem),
+	IdNFem(NFem, NFem);
       base_vector p(NP);
-      base_vector eig(N);
+      base_vector eig(NFem);
+      base_vector ez(NFem);	// vector normal at deformed surface, (ex X ey)
+      double normEz(0);		//norm of ez
       gmm::copy(gmm::identity_matrix(), Id);
+      gmm::copy(gmm::identity_matrix(), IdNFem);
       for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
-	std::copy(GRAD.begin()+i*N*N, GRAD.begin()+(i+1)*N*N,
-		  gradphi.begin());
-	gmm::add(Id, gradphi);
+	gmm::resize(gradphi,NFem,N);
+	std::copy(GRAD.begin()+i*NFem*N, GRAD.begin()+(i+1)*NFem*N,
+		  gradphit.begin());
+	gmm::copy(gmm::transposed(gradphit),gradphi);
+	for (unsigned int alpha = 0; alpha <N; ++alpha)
+	  gradphi(alpha, alpha)+=1;
 	gmm::mult(gmm::transposed(gradphi), gradphi, E);
 	gmm::add(gmm::scaled(Id, -scalar_type(1)), E);
 	gmm::scale(E, scalar_type(1)/scalar_type(2));
 	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
 	AHL.sigma(E, sigmahathat, p);
+	//jyh : compute ez, normal on deformed surface
+	for (unsigned int l = 0; l <NFem; ++l)  {
+	  ez[l]=0;
+	  for (unsigned int m = 0; m <NFem; ++m) 
+	    for (unsigned int n = 0; n <NFem; ++n){
+	      ez[l]+=levi_civita(l,m,n)*gradphi(m,0)*gradphi(n,1);
+	    }
+	  normEz= gmm::vect_norm2(ez);
+	}
+	//jyh : end compute ez
 	gmm::mult(gradphi, sigmahathat, aux);
 	gmm::mult(aux, gmm::transposed(gradphi), sigma);
+	
+	/* jyh : complete gradphi for virtual 3rd dim (perpendicular to
+	   deformed surface, same thickness) */
+	gmm::resize(gradphi,NFem,NFem);
+	for (unsigned int ll = 0; ll <NFem; ++ll) 
+	  for (unsigned int ii = 0; ii <NFem; ++ii) 
+	    for (unsigned int jj = 0; jj <NFem; ++jj) 
+	      gradphi(ll,2)+=(levi_civita(ll,ii,jj)*gradphi(ii,0)
+			      *gradphi(jj,1))/normEz;
+	//jyh : end complete graphi
+	
 	gmm::scale(sigma, scalar_type(1) / gmm::lu_det(gradphi));
-
+	
 	if (!tresca) {
 	  /* von mises: norm(deviator(sigma)) */
-	  gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma);
+	  gmm::add(gmm::scaled(IdNFem, -gmm::mat_trace(sigma) / NFem), sigma);
 	  
-	  VM[i] = gmm::mat_euclidean_norm(sigma);
+	  //jyh : von mises stress=sqrt(3/2)* norm(sigma) ?
+	  VM[i] = sqrt(3.0/2)*gmm::mat_euclidean_norm(sigma);
 	} else {
 	  /* else compute the tresca criterion */
+	  //jyh : to be adapted for membrane if necessary
 	  gmm::symmetric_qr_algorithm(sigma, eig);
 	  std::sort(eig.begin(), eig.end());
 	  VM[i] = eig.back() - eig.front();
