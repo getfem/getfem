@@ -702,7 +702,7 @@ namespace gmm {
     size_type ncols(void) const { return nc; }
    
     value_type operator()(size_type i, size_type j) const
-      { return mat_col(*this, i)[j]; }
+      { return mat_row(*this, i)[j]; }
   };
   
   template <typename PT1, typename PT2, typename PT3, int shift>
