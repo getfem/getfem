@@ -1042,7 +1042,7 @@ namespace getfem {
 
     /** Switch between a scalar coefficient, a NxN matrix field (with
 	N = mf_u.linked_mesh().dim()), and a NxNxNxN tensor field. */
-    void set_coeff_dimension(unsigned d) { coeff_.redim(d); }
+    void set_coeff_dimension(unsigned d) { coeff_.redim(d); reshape_coeff(); }
 
     /** Constructor, the default coeff is a scalar equal to one
 	(i.e. it gives the Laplace operator).
@@ -1966,7 +1966,7 @@ namespace getfem {
 
     /** Switch between a scalar coefficient, a N vector field or a NxN
 	matrix field. */
-    void set_coeff_dimension(unsigned d) { R_.redim(d); }
+    void set_coeff_dimension(unsigned d) { R_.redim(d); reshape_coeff(); }
 
     /** Constructor which does not define the rhs (i.e. which sets an
      *	homogeneous Dirichlet condition)
