@@ -24,7 +24,7 @@ else
 end;
 
 
-NX = 160;            	% space step.
+NX = 20;            	% space step.
 MODE = 2;               % Mode for the reference solution
 
 MESH_NOISED = 0;	% Set to one if you want to "shake" the mesh
@@ -72,6 +72,9 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
 		        % 3 = global functions with cutoff
 			% 4 = spider fem alone
 	                % 5 = spider fem enrichment
+VECTORIAL_ENRICHMENT = 1; % 1 = vectorial enrichment (2 dof) instead of
+			  % enriching each components with 4 dofs.
+			  % For global enrichment only.
 
 
 RADIUS_ENR_AREA = 0.4;

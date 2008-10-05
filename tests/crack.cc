@@ -56,6 +56,7 @@ using bgeot::base_matrix; /* small dense matrix. */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
+typedef gmm::dense_matrix<scalar_type>  dense_matrix;
 
 /**************************************************************************/
 /*  Exact solution.                                                       */
@@ -354,6 +355,7 @@ struct crack_problem {
   bool mixed_pressure, add_crack;
   unsigned dir_with_mult;
   int mode;
+  size_type ind_first_global_dof;
   
   scalar_type enr_area_radius;
   struct cutoff_param {
@@ -369,6 +371,8 @@ struct crack_problem {
 		 SPIDER_FEM_ALONE=4,
 		 SPIDER_FEM_ENRICHMENT=5 } enrichment_option_enum;
   enrichment_option_enum enrichment_option;
+  bool vectorial_enrichment;
+  dense_matrix Qsing;
 
   std::string datafilename;
   
@@ -391,7 +395,7 @@ struct crack_problem {
 			exact_sol(mesh), 
 #endif
 			ls(mesh, 1, true), ls2(mesh, 1, true),
-			ls3(mesh, 1, true) {}
+			ls3(mesh, 1, true), Qsing(8,8) {}
 
 };
 
@@ -448,7 +452,9 @@ void crack_problem::init(void) {
   add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
   enrichment_option = 
     enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
-					   "Enrichment option"));
+			   "Enrichment option"));
+  vectorial_enrichment = (PARAM.int_value("VECTORIAL_ENRICHMENT",
+					  "Vectorial enrichment option") != 0);
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -658,7 +664,6 @@ bool crack_problem::solve(plain_vector &U) {
     spider.fem->check();
   }
 
-
   switch (enrichment_option) {
 
 
@@ -746,6 +751,45 @@ bool crack_problem::solve(plain_vector &U) {
     } break;
   
   }
+
+
+  gmm::clear(Qsing); gmm::resize(Qsing, 8, 8);
+  ind_first_global_dof = size_type(-1);
+  
+  if (enrichment_option == GLOBAL_WITH_MORTAR
+      || enrichment_option == GLOBAL_WITH_CUTOFF) {
+    // compute a base to the orthogonal to the mode I and mode II in the
+    // linear combination of singular function in order to reduce the problem
+    // on a vectorial enrichment with only two dofs.
+
+    exact_solution es1(mesh), es2(mesh);
+    es1.init(1, lambda, mu, ls);
+    es2.init(2, lambda, mu, ls);
+
+    gmm::copy(gmm::identity_matrix(), Qsing);
+    gmm::copy(es1.U, gmm::mat_col(Qsing, 0));
+    gmm::copy(es2.U, gmm::mat_col(Qsing, 1));
+    gmm::lu_inverse(Qsing);
+
+    // Search the position of the singular enrichment dofs.
+
+    size_type Qdim = mf_u().get_qdim();
+    for (dal::bv_visitor cv(mesh.convex_index());
+	 !cv.finished() && (ind_first_global_dof == size_type(-1)); ++cv) {
+      getfem::pfem pf = mf_u().fem_of_element(cv);
+      for (size_type i = 0; i < pf->nb_dof(cv); ++i) {
+	// cout << "type of dof : " << name_of_dof(pf->dof_types()[i]) << endl;
+	if (pf->dof_types()[i] == getfem::global_dof(mesh.dim())) {
+	  if (ind_first_global_dof == size_type(-1))
+	    ind_first_global_dof =  mf_u().ind_dof_of_element(cv)[i*Qdim];
+	}
+      }
+    }
+      
+    cout << "first global dof = " << ind_first_global_dof << endl;
+    GMM_ASSERT1(ind_first_global_dof != size_type(-1), "internal error");
+  }
+
   
 
   U.resize(mf_u().nb_dof());
@@ -795,7 +839,28 @@ bool crack_problem::solve(plain_vector &U) {
       = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
     incomp->penalization_coeff().set(1.0/lambda);
     pINCOMP = incomp;
-  } else pINCOMP = &ELAS;
+  }
+  else pINCOMP = &ELAS;
+
+
+  getfem::mdbrick_abstract<> *pVECTCONS;
+  if (vectorial_enrichment && (enrichment_option == GLOBAL_WITH_MORTAR
+			       || enrichment_option == GLOBAL_WITH_CUTOFF)) {
+
+    getfem::mdbrick_constraint<> *vectcons
+      = new getfem::mdbrick_constraint<>(*pINCOMP);
+    sparse_matrix BB(6, mf_u().nb_dof());
+
+    gmm::copy(gmm::sub_matrix(Qsing, gmm::sub_interval(2,6),
+			      gmm::sub_interval(0,8)),
+	      gmm::sub_matrix(BB, gmm::sub_interval(0,6),
+			      gmm::sub_interval(ind_first_global_dof, 8)));
+    vectcons->set_constraints(BB, plain_vector(6));
+    pVECTCONS = vectcons;
+
+  }
+  else pVECTCONS = pINCOMP;
+
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -804,7 +869,7 @@ bool crack_problem::solve(plain_vector &U) {
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
   // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
+  getfem::mdbrick_source_term<> VOL_F(*pVECTCONS, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
   gmm::clear(F);
@@ -939,30 +1004,21 @@ void crack_problem::compute_sif(const plain_vector &U) {
     /* Compare the computed coefficients of the global functions with
      * the exact one.
      */
-    size_type Qdim = mf_u().get_qdim(), ind_fisrt_global_dof = size_type(-1);
-    for (dal::bv_visitor cv(mesh.convex_index());
-	 !cv.finished() && (ind_fisrt_global_dof == size_type(-1)); ++cv) {
-      getfem::pfem pf = mf_u().fem_of_element(cv);
-      for (size_type i = 0; i < pf->nb_dof(cv); ++i) {
-	// cout << "type of dof : " << name_of_dof(pf->dof_types()[i]) << endl;
-	if (pf->dof_types()[i] == getfem::global_dof(mesh.dim())) {
-	  if (ind_fisrt_global_dof == size_type(-1))
-	    ind_fisrt_global_dof =  mf_u().ind_dof_of_element(cv)[i*Qdim];
-	  // cout << "A global dof : "
-	  //      << mf_u().ind_dof_of_element(cv)[i*Qdim] << endl;
-	}
-      }
-    }
-      
-    cout << "first global dof = " << ind_fisrt_global_dof << endl;
     plain_vector diff(8);
-    gmm::copy(gmm::sub_vector(U,gmm::sub_interval(ind_fisrt_global_dof, 8)),
+    gmm::copy(gmm::sub_vector(U,gmm::sub_interval(ind_first_global_dof, 8)),
 	      diff);
-
     cout << "GLOBAPPROX = " << diff << endl;
     cout << "GLOBEXACT = " << exact_sol.U << endl;
-    gmm::add(gmm::scaled(exact_sol.U, -1.0),diff);
-    cout << "euclidean error %: " << 100.0*gmm::vect_norm2(diff)/gmm::vect_norm2(exact_sol.U) << endl;
+    
+    if (!vectorial_enrichment) {
+      gmm::add(gmm::scaled(exact_sol.U, -1.0),diff);
+      cout << "euclidean error %: " << 100.0*gmm::vect_norm2(diff)/gmm::vect_norm2(exact_sol.U) << endl;
+    }
+    else {
+      plain_vector rr(8);
+      gmm::mult(Qsing, diff, rr);
+      cout << "KIh = " << rr[0] << "  KIIh = " << rr[1] << endl;
+    }
   }
 }
 
