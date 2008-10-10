@@ -199,25 +199,29 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims,T());
     getfem::interpolation(mf, mf_dest, U, V);
-  } else if (in.front().is_mesh_slice()) {
+  }
+  else if (in.front().is_mesh_slice()) {
     getfem::stored_mesh_slice *sl = 
       &in.pop().to_getfemint_mesh_slice()->mesh_slice();
 
     for (size_type i=0; i < sl->nb_convex(); ++i)
       if (!mf.linked_mesh().convex_index().is_in(sl->convex_num(i))) 
-      THROW_BADARG("the slice is not compatible with the mesh_fem (cannot find convex " << sl->convex_num(i) << ")");
+      THROW_BADARG("the slice is not compatible with the mesh_fem "
+		   "(cannot find convex " << sl->convex_num(i) << ")");
 
     if (mf.get_qdim() != 1) dims.push_back(mf.get_qdim());
     dims.push_back(unsigned(sl->nb_points()));
     dims.opt_transform_col_vect_into_row_vect();
     garray<T> V = out.pop().create_array(dims, T());
     sl->interpolate(mf, U, V);
-  } else THROW_BADARG("expecting a mesh_fem or a mesh_slice for interpolation");
+  }
+  else THROW_BADARG("expecting a mesh_fem or a mesh_slice for interpolation");
 }
 
 bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
   if (U.sizes().size() == U.sizes().dim(-1)) return true;
-  else THROW_BADARG("the U argument for the function " << cmd << " must be a one-dimensional array");
+  else THROW_BADARG("the U argument for the function " << cmd
+		    << " must be a one-dimensional array");
   return false;
 }
 

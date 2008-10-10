@@ -103,6 +103,10 @@ namespace bgeot
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal,
 	       			  base_node& x, scalar_type IN_EPS,
 				  bool &converged, bool throw_except) {
+
+    //    for (size_type j = 0; j < pgt->nb_points(); ++j) 
+    //       cout << "point " << j << " : " << cvpts[j] << endl;
+
     base_node xn(P), y, z,x0;
     /* find an initial guess */
     x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
@@ -136,6 +140,8 @@ namespace bgeot
 	
 	pgt->poly_vector_grad(z, pc);
 	update_B();
+
+	// cout << "K =  " << K << endl;
 	
 	if (P != N) {
 	  gmm::mult(gmm::transposed(K), rn, vres);
@@ -146,7 +152,7 @@ namespace bgeot
 	if (newres < 1.5*res) break;
       }
       x = z; res = newres;
-      //cerr << "cnt=" << cnt << ", x=" << x << ", res=" << res << "\n";
+      // cerr << "cnt=" << cnt << ", x=" << x << ", res=" << res << "\n";
     }
     //cerr << " invert_nonlin done\n";
     //cerr << "cnt=" << cnt << ", P=" << P << ", N=" << N << ", G=" << G << "\nX=" << xreal << " Xref=" << x << "\nresidu=" << res << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n-------------------^^^^^^^^\n";
@@ -159,7 +165,7 @@ namespace bgeot
       rn = pgt->transform(x,cvpts) - xreal; 
       
       if (pgt->convex_ref()->is_in(x) < IN_EPS &&
-	  N==P && gmm::vect_norm2(rn) > IN_EPS) {
+	  (N==P && gmm::vect_norm2(rn) > IN_EPS)) {
 	GMM_ASSERT1(!throw_except,
 		    "inversion of non-linear geometric transformation "
 		    "failed ! (too much iterations -- xreal=" << xreal
@@ -175,8 +181,10 @@ namespace bgeot
     if (pgt->convex_ref()->is_in(x) < IN_EPS
         && (P == N || gmm::vect_norm2(rn) < IN_EPS)) {
       //cout << "point " << x << "in IN (" << pgt->convex_ref()->is_in(x) << ")\n";
+      converged = true;
       return true;
     } //else cout << "point IS OUT\n";
+    converged = false;
     return false;
   }
 
