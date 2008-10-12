@@ -118,7 +118,7 @@ getfem_server_SOURCES = gfi_rpc_server.c \
 	gfi_rpc_xdr.c
 # for backtrace, need to link with g++ and -rdynamic
 getfem_server_LINK=$(CXXLINK)
-getfem_server_LDADD = libgetfemint.la ../src/getfem/libgetfem.la @RPC_LIB@ -lm #-lstdc++ <- a corrgier pour icc
+getfem_server_LDADD = libgetfemint.la ../../src/libgetfem.la @RPC_LIB@ -lm #-lstdc++ <- a corrgier pour icc
 getfem_server_LDFLAGS = @GFSERVERFLAGS@ @SUPLDFLAGS@
 getfem_server_INCLUDES = -I$(RPC_INC_DIR) -I$(top_srcdir)/src -I../../src
 getfem_server_LIBS = libgetfemint.la
