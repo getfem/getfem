@@ -1092,6 +1092,7 @@ namespace getfemint {
 	memcpy(ir, M.cplx_csc().ir, sizeof(int)*nnz);
 	memcpy(jc, M.cplx_csc().jc, sizeof(int)*(nj+1));	
       }
+      M.deallocate(); // avoid nasty leak
     }
   }
 
