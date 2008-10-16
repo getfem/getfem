@@ -51,7 +51,8 @@ namespace getfem {
       for (size_type l = 0; l < boxpts.size(); ++l) {
 	size_type ind = boxpts[l].i;
 	if (!(npt[ind]) || dist[ind] > 0) {
-	  bool gicisin; gic.invert(boxpts[l].n, pt_ref, gicisin, EPS);
+	  bool converged;
+	  bool gicisin = gic.invert(boxpts[l].n, pt_ref, converged, EPS);
 	  bool toadd = extrapolation || gicisin;
 	  double isin = pgt->convex_ref()->is_in(pt_ref);
 

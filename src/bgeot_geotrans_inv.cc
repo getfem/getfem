@@ -107,6 +107,7 @@ namespace bgeot
     //    for (size_type j = 0; j < pgt->nb_points(); ++j) 
     //       cout << "point " << j << " : " << cvpts[j] << endl;
 
+    converged = true;
     base_node xn(P), y, z,x0;
     /* find an initial guess */
     x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
@@ -180,11 +181,10 @@ namespace bgeot
     // Test un peu sevère peut-être en ce qui concerne rn.
     if (pgt->convex_ref()->is_in(x) < IN_EPS
         && (P == N || gmm::vect_norm2(rn) < IN_EPS)) {
-      //cout << "point " << x << "in IN (" << pgt->convex_ref()->is_in(x) << ")\n";
-      converged = true;
+      // cout << "point " << x << "is IN (" << pgt->convex_ref()->is_in(x)
+      //      << ")\n";
       return true;
-    } //else cout << "point IS OUT\n";
-    converged = false;
+    } // else cout << "point IS OUT\n";
     return false;
   }
 
