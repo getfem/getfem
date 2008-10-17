@@ -100,6 +100,7 @@
       <a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">
       Gnu Lesser General Public License, either version 2.1 of the license or any later version</a>.
     </p>
+    <!-- Mise en commentaire de la suite
     <div class="footer">  
       <p>This project is supported by the <a
 					     href="http://www-gmm.insa-toulouse.fr/">Department of
@@ -117,6 +118,7 @@
 	    Fourni&eacute; and Abderrahmanne Bendali for their
 	    collaboration. </p>
     </div>
+     -->
 <a href="http://gna.org/projects/getfem"><img
   src="images/hostedbygna.png" alt="gna" border="none"></a>
  </div>

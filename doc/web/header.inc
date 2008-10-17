@@ -84,8 +84,9 @@
       </div>
 
       <div class="foot">
-     	<a href="http://www-gmm.insa-toulouse.fr"><img src="images/logoINSAt.png" border="none" alt="INSA logo"></a>
-	<a href="http://mip.ups-tlse.fr"><img src="images/logoMIPt.png" border="none" alt="MIP logo"></a>
+     	<a href="http://www.insa-lyon.fr"><img src="images/logoINSAt.png" border="none" alt="INSA logo"></a>
+	<a href="http://math.univ-lyon1.fr"><img src="images/icj.png" border="none" alt="Lamcos logo"></a>
+	<a href="http://lamcos.insa-lyon.fr"><img src="images/logolamcos.png" border="none" alt="Lamcos logo"></a>
       </div>
     </div>
 
