@@ -40,7 +40,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 size_type is_global_dof_type(getfem::pdof_description dof){
 size_type global_dof = 0 ;
-   for (unsigned d = 0; d < 4 ; ++d){
+   for (dim_type d = 0; d < 4 ; ++d){
        if (dof == getfem::global_dof(d)) {
           global_dof = 1;
 	      }
@@ -93,8 +93,8 @@ int main(int argc, char *argv[]) {
     unsigned cpt = 0;
     if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){
     // affichage des coeffs devant les singularites, avec le raccord integral
-	for (unsigned d=0; d < p.mf_u().nb_dof(); d += q) {
-		unsigned cv = p.mf_u().first_convex_of_dof(d) ;
+	for (size_type d=0; d < p.mf_u().nb_dof(); d += q) {
+		size_type cv = p.mf_u().first_convex_of_dof(d) ;
 		getfem::pfem pf = p.mf_u().fem_of_element(cv);
 		unsigned ld = unsigned(-1);
 		for (unsigned dd = 0; dd < p.mf_u().nb_dof_of_element(cv); dd += q) {
@@ -225,9 +225,9 @@ int main(int argc, char *argv[]) {
     // Post-treatment for pretty printing of the solution
     // --------------------------------------------------
 
-    int VTK_EXPORT = p.PARAM.int_value("VTK_EXPORT");
-    int MATLAB_EXPORT = p.PARAM.int_value("MATLAB_EXPORT");
-    int DX_EXPORT = p.PARAM.int_value("DX_EXPORT");
+    int VTK_EXPORT = int(p.PARAM.int_value("VTK_EXPORT"));
+    int MATLAB_EXPORT = int(p.PARAM.int_value("MATLAB_EXPORT"));
+    int DX_EXPORT = int(p.PARAM.int_value("DX_EXPORT"));
 	
     if (VTK_EXPORT || MATLAB_EXPORT || DX_EXPORT){
     // Post-traitement pour l'affichage, le plus simple :
@@ -235,13 +235,13 @@ int main(int argc, char *argv[]) {
     p.mls.global_cut_mesh(mcut);
     unsigned Q = p.mf_u().get_qdim();
     assert( Q == 1 ) ;
-    getfem::mesh_fem mf(mcut, Q);
+    getfem::mesh_fem mf(mcut, dim_type(Q));
     mf.set_classical_discontinuous_finite_element(3, 0.001);
     plain_vector V(mf.nb_dof()) ;
     getfem::interpolation(p.mf_u(), mf, U, V);
 
     size_type N = mcut.dim() ;
-    getfem::mesh_fem mf_grad(mcut, Q);
+    getfem::mesh_fem mf_grad(mcut, dim_type(Q));
     mf_grad.set_classical_discontinuous_finite_element(2, 0.001);
         // mf.set_finite_element
     //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
     getfem::stored_mesh_slice sl;
     getfem::mesh mcut_refined;
 
-    unsigned NX = p.PARAM.int_value("NX"), nn;
+    unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
     if (NX < 6) nn = 12;
     else if (NX < 12) nn = 8;
     else if (NX < 30) nn = 3;
@@ -305,10 +305,10 @@ int main(int argc, char *argv[]) {
       }
 
       if (dmin < 1e-5)
-	nrefine[cv] = nn*2;
+	nrefine[cv] = short_type(nn*2);
       else if (dmin < .1) 
-	nrefine[cv] = nn*2;
-      else nrefine[cv] = nn;
+	nrefine[cv] = short_type(nn*2);
+      else nrefine[cv] = short_type(nn);
       /*if (dmin < .01)
 	cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";*/
     }
@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
     mim_refined.set_integration_method(getfem::int_method_descriptor
 				       ("IM_TRIANGLE(6)"));
 
-    getfem::mesh_fem mf_refined(mcut_refined, Q);
+    getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
     mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
     plain_vector W(mf_refined.nb_dof());
 
@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
 	"mayavi -d " << p.datafilename  << ".vtk -f "
 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
 
-      p.exact_sol.mf.set_qdim(Q);
+      p.exact_sol.mf.set_qdim(dim_type(Q));
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());   
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
@@ -382,7 +382,7 @@ int main(int argc, char *argv[]) {
       cout << "exporting solution to " << p.datafilename + ".mf" << " and " << p.datafilename << ".U\n";
       mf_refined.write_to_file(p.datafilename + ".mf", true);
       gmm::vecsave(p.datafilename + ".U", W);
-      p.exact_sol.mf.set_qdim(Q);
+      p.exact_sol.mf.set_qdim(dim_type(Q));
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());   // ??
       plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
