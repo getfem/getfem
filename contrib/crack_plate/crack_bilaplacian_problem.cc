@@ -5,6 +5,15 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_superlu.h"
 
+size_type is_global_dof_type_bis(getfem::pdof_description dof){
+size_type global_dof = 0 ;
+   for (unsigned d = 0; d < 4 ; ++d){
+       if (dof == getfem::global_dof(d)) {
+          global_dof = 1;
+	      }
+   }
+return global_dof ;
+}
 
 /******** Exact Solution *******************************/
 
@@ -855,7 +864,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   plain_vector F(nb_dof_rhs);
   getfem::interpolation_function(mf_rhs, F, sol_f);
 
-  Volumic source term brick.
+//  Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
 
   // Defining the normal derivative Dirichlet condition value.
@@ -963,7 +972,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       extra.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL"));
 
     sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
-    sparse_matrix H(0, mf_u().nb_dof());
+    sparse_matrix H1(0, mf_u().nb_dof());
     //getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
     base_vector RR(mf_rhs.nb_dof(), 1.0);
     getfem::asm_stiffness_matrix_for_bilaplacian(M2, mim, mf_u(), 
@@ -980,12 +989,12 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       if (M2(d,d) < PARAM.real_value("SEUIL_FINAL")) {
 	cout << "OULALA " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
         size_type n = gmm::mat_nrows(H);
-	gmm::resize(H, n+1, gmm::mat_ncols(H));
-	H(n, d) = 1;
+	gmm::resize(H1, n+1, gmm::mat_ncols(H1));
+	H1(n, d) = 1;
       }
     }
-    base_vector R(gmm::mat_nrows(H)); 
-    extra.set_constraints(H,R);
+    base_vector R(gmm::mat_nrows(H1)); 
+    extra.set_constraints(H1,R);
     final_model = &extra;
     gmm::Harwell_Boeing_save("M2.hb", M2);
   }
@@ -1000,17 +1009,19 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
 
   getfem::standard_solve(MS, *final_model, iter /* , p*/);
-sparse_matrix A = MS.reduced_tangent_matrix() ;
+  sparse_matrix A = MS.reduced_tangent_matrix() ;
   plain_vector b = MS.residual() ;
   gmm::scale(b, -1.) ;
   plain_vector X(b) ;
   scalar_type condest ;
-  //SuperLU_solve(A, X, b, condest, 1) ;
-  //cout << "cond super LU = " << 1./condest << "\n" ;
+  SuperLU_solve(A, X, b, condest, 1) ;
+  cout << "cond super LU = " << 1./condest << "\n" ;
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(BIL.get_solution(MS), U);
-  gmm::copy(U, X) ;
+  cout << "size(U) = " << U.size() << endl;
+  cout << "size(X) = " << X.size() << endl;
+  //gmm::copy(U, X) ;
  /****************************/
 
 
