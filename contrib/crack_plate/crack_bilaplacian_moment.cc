@@ -211,47 +211,47 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
       //cout << "MORTAR_BOUNDARY_IN: " << mesh.region(MORTAR_BOUNDARY_IN) << "\n";
       //cout << "MORTAR_BOUNDARY_OUT: " << mesh.region(MORTAR_BOUNDARY_OUT) << "\n";
       
-      // an optional treatment : creating a representation of the enrichment area     
-      getfem::mesh_fem mf_enrich(mesh);
-      getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
-      mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
-      std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
-      std::fill(UU.begin(), UU.end() ,0.) ;
-      cout << "exporting the enrichment zone: \n" ;
-      for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
-	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
-	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
-      }
-      
-      cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
-      getfem::vtk_export exp("enrichment_zone.vtk", false);
-      exp.exporting(mf_enrich); 
-      exp.write_point_data(mf_enrich, UU, "enrichment");
-      cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d enrichment_zone.vtk -f "
-	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+//       // an optional treatment : creating a representation of the enrichment area     
+//       getfem::mesh_fem mf_enrich(mesh);
+//       getfem::pfem pf_mef = getfem::classical_fem(mesh.trans_of_convex(mesh.convex_index().first_true()), 1 );
+//       mf_enrich.set_finite_element(mesh.convex_index(), pf_mef) ;
+//       std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
+//       std::fill(UU.begin(), UU.end() ,0.) ;
+//       cout << "exporting the enrichment zone: \n" ;
+//       for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
+// 	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
+// 	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
+//       }
+//       
+//       cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
+//       getfem::vtk_export exp("enrichment_zone.vtk", false);
+//       exp.exporting(mf_enrich); 
+//       exp.write_point_data(mf_enrich, UU, "enrichment");
+//       cout << "export done, you can view the data file with (for example)\n"
+// 	"mayavi -d enrichment_zone.vtk -f "
+// 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
 	
-      // Another optional treatment :
-      // Searching the elements that are both crossed by the crack
-      // and with one of their faces which constitutes a part of the 
-      // boundary between the enriched zone and the rest of the domain.
-      getfem::mesh_region &boundary = mesh.region(MORTAR_BOUNDARY_IN);
-      unsigned int cpt = 0 ;
-      for (dal::bv_visitor i(cvlist_in_area); !i.finished(); ++i) {
-         if (mls.is_convex_cut(i)){
-	    // Among the faces of the convex, we search if some are
-	    // part of the boundary
-	    cpt = 0 ;
-	    for (unsigned j=0; j < mesh.structure_of_convex(i) ->nb_faces(); ++j) {
-	        if (boundary.is_in(i,j))
-		   cpt += 1;
-	    }
-	    if (cpt) {
-               cout << "\n The convex number " << i << " is crossed by the crack :\n" ;
-	       cout << "  it has : " << cpt << " face(s) among the boundary.\n \n " ;
-	    }
-	 }
-      }
+//       // Another optional treatment :
+//       // Searching the elements that are both crossed by the crack
+//       // and with one of their faces which constitutes a part of the 
+//       // boundary between the enriched zone and the rest of the domain.
+//       getfem::mesh_region &boundary = mesh.region(MORTAR_BOUNDARY_IN);
+//       unsigned int cpt = 0 ;
+//       for (dal::bv_visitor i(cvlist_in_area); !i.finished(); ++i) {
+//          if (mls.is_convex_cut(i)){
+// 	    // Among the faces of the convex, we search if some are
+// 	    // part of the boundary
+// 	    cpt = 0 ;
+// 	    for (unsigned j=0; j < mesh.structure_of_convex(i) ->nb_faces(); ++j) {
+// 	        if (boundary.is_in(i,j))
+// 		   cpt += 1;
+// 	    }
+// 	    if (cpt) {
+//                cout << "\n The convex number " << i << " is crossed by the crack :\n" ;
+// 	       cout << "  it has : " << cpt << " face(s) among the boundary.\n \n " ;
+// 	    }
+// 	 }
+//       }
  
     }
     break ;

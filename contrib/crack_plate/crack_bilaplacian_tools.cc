@@ -83,7 +83,7 @@ void asm_constraint_gradient_vectorial_mult
 void bilaplacian_crack_problem::set_matrix_mortar(sparse_matrix &H){
 
   int mult_with_H = int(PARAM.int_value("MULT_WITH_H")) ;
-  mortar_type = int(PARAM.int_value("MORTAR_TYPE")) ;
+       mortar_type = int(PARAM.int_value("MORTAR_TYPE")) ;
        // MODIFICATION : trying to define 1-Dimensionnal 
        // multipliers on the boundary of enrichment zone.
 //   cout << "Re-initialisation des mesh_fem mortar : " ;
@@ -326,7 +326,7 @@ void bilaplacian_crack_problem::init_mixed_elements(void) {
                                          "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
   enrichment_option = int(PARAM.int_value("ENRICHMENT_OPTION",
-					  "Enrichment option"));
+                                      "Enrichment option"));
     enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
                                      "radius of the enrichment area");
 
@@ -366,6 +366,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     std::vector<size_type> nsubdiv(N);
     NX = PARAM.int_value("NX", "Number of space steps ") ;
     std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
+    if (sol_ref == 1)  nsubdiv[0] = NX / 2 ;
     if (PARAM.int_value("QUAD") == 0)
        getfem::regular_unit_mesh(mesh, nsubdiv, pgt_tri, PARAM.int_value("MESH_NOISED") != 0);
     else
@@ -379,14 +380,16 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     mesh.transformation(M);
     base_small_vector tt(N); 
     tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ; 
-    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ; 
+    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    if (sol_ref == 1){
+       tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
+    }
     mesh.translation(tt); 
     
     /* MODIFICATION RELATIVE TO THE USUAL WAY OF PROGRAMMING :
         In the other xfem programs, the level-set is initialized 
         after the mesh_fems. However, to define the mesh_fem, here, 
-        we need to select the cut quadrangles. So, it is necessary to
-        switch the orders here :
+        we need to select the cut quadrangles. So, it is necessary to switch the orders here :
 		- first, the level-set is initialized
 		- second, the mesh_fem are initialized too.
     */
@@ -402,7 +405,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
        ls.values(1)[d] = x;}
     if (sol_ref == 1){
      ls.values(0)[d] = y  ;
-     ls.values(1)[d] = x - a ; //x * x - a * a ;
+     ls.values(1)[d] = x  ; //x * x - a * a ;
     }
     if (sol_ref == 2){
      ls.values(0)[d] = y - x ;
@@ -415,7 +418,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   mls.adapt();
 
     if (PARAM.int_value("MOVE_NODES")){
-       cout << "d�placement des noeuds \n" ;
+       cout << "deplacement des noeuds \n" ;
        //size_type nb_x_pos, nb_y_pos = 0 ;
        scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
        //scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
@@ -478,7 +481,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
    for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
                     bgeot::base_node& P = mesh.points()[ip];
 	            if( gmm::abs(P[1]) < seuil_select){
-		      cout << "d�plac� de (" << P[0] << " ; " << P[1] << ") � : " ;
+		      cout << "deplace de (" << P[0] << " ; " << P[1] << ") a : " ;
 		      P[1] = 0. ;
 		      cout << P[1] << "\n" ;
 	            }
@@ -498,7 +501,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 	      quad_crossed.add(i) ;
            }
        }
-       cout << "quadrangles travers�s par la fissure : \n" << quad_crossed << "\n" ;
+       cout << "quadrangles traverses par la fissure : \n" << quad_crossed << "\n" ;
        // Replace quadrangles by two triangles
        for (dal::bv_visitor i(quad_crossed) ; !i.finished() ; ++i){
               //cout << "Convex " << i << "to split ; values of the level_set : " << values_ls << "\n" ;
@@ -685,20 +688,47 @@ sol_ref = PARAM.int_value("SOL_REF") ;
          mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
      }
   }
+  if (sol_ref == 1 ){
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+        base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+        un /= gmm::vect_norm2(un);
+        if ( (un[0] <= -0.9999) || (un[0] >= 0.9999) ) {
+	//if  ( -un[0] >= 0.999  )  {
+	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+        
+	}
+	if  (gmm::abs(un[1]) >= 0.999)  {
+	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+	   mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+	}  
+     }
+  }
 
-  if (sol_ref == 1 || sol_ref == 2){
+    if (sol_ref == 2 ){
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
         //if ( (un[0] <= -0.9) || (un[0] >= 0.9) ) {
-	if  (gmm::abs(un[0]) >= 0.999)  {
-	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
-           //mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
-	} else
-           mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
-           mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f()); 
+	if  (gmm::abs(un[1]) >= 0.999)  {
+	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+           mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+	} 
      }
-  }
+    }
+
+//   if (sol_ref == 1 || sol_ref == 2){
+//      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+//         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+//         un /= gmm::vect_norm2(un);
+//         if ( (un[0] <= -0.9999) || (un[0] >= 0.9999) ) {
+// 	//if  (gmm::abs(un[0]) >= 0.999)  {
+// 	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+//            //mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+// 	} else
+//            mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+//            mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f()); 
+//      }
+//   }
 
   // Updating things concerning the level-set
   scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
@@ -710,7 +740,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
        ls.values(1)[d] = x;}
     if (sol_ref == 1){
      ls.values(0)[d] = y  ;
-     ls.values(1)[d] = x - a ; //x * x - a * a ;
+     ls.values(1)[d] = x ; //x * x - a * a ;
     }
     if (sol_ref == 2){
      ls.values(0)[d] = y - x ;

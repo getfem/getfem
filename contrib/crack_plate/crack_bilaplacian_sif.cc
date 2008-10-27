@@ -105,13 +105,23 @@ namespace getfem {
   template <typename VECT>
   void compute_crack_stress_intensity_factors_KL(const level_set &ls,
                                               const mesh_im &mim,
+                                              const mesh_fem &mf_pre_u, 
                                               const mesh_fem &mf, 
                                               const VECT &U,
                                               scalar_type ring_radius, 
                                               scalar_type D, scalar_type nu,
                                               scalar_type young_modulus, scalar_type epsilon,
                                               scalar_type &KI, scalar_type &KII) {
+    // build mesh and geometrical features
     const mesh &mring = mim.linked_mesh();
+    base_node crack_tip;
+    base_small_vector T, N;
+    get_crack_tip_and_orientation(ls, crack_tip, T, N);
+
+    dal::bit_vector cvring = build_sif_ring_from_mesh(mring, crack_tip, 
+                                                      ring_radius);
+
+    // set mesh_fem
     mesh_fem_global_function mf_mode(mring, 1), mf_mode_3(mring, 1);
     mesh_fem mf_q(mring,1);
 
@@ -128,66 +138,118 @@ namespace getfem {
     mf_mode_3.set_qdim(2) ;
 
     mf_mode.set_qdim(1);
-    mf_q.set_classical_finite_element(1);
 
-    base_node crack_tip;
-    base_small_vector T, N;
-    get_crack_tip_and_orientation(ls, crack_tip, T, N);
 
-    dal::bit_vector cvring = build_sif_ring_from_mesh(mring, crack_tip, 
-                                                      ring_radius);
 
-    /* fill the "q" ring field with a approximately linear field, equal to 
+    //std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+    getfem::pfem pf ;
+
+
+//     for (dal::bv_visitor i(mring.convex_index()) ; !i.finished() ; ++i){
+//         pf = mf_pre_u.fem_of_element(mf_pre_u.convex_index()[i]) ;
+//         mf_q.set_finite_element(i, pf);
+//     }
+//     cout << "OKKK\n" ;
+
+//     pf = mf.fem_of_element(mf.convex_index()[mring.convex_index().first_true()]) ;
+//     mf_q.set_finite_element(pf);  // mettre du FVS/HCT réduits
+
+
+
+    /* fill the "q" ring field with a C^1 field, equal to 
        1 on the inner boundary, and equal to zero on the outer boundary */
-    std::vector<scalar_type> q(mf_q.nb_dof());
-    for (unsigned d = 0; d < mf_q.nb_dof(); ++d) {
-      base_node P = mf_q.point_of_dof(d);
-      q[d] = (gmm::vect_dist2(P, crack_tip) > ring_radius) ? 0 : 1;
+//     std::vector<scalar_type> q(mf_q.nb_dof());
+//     for (unsigned d = 0; d < mf_q.nb_dof(); ++d) {
+//         // getting a getfem::pdof_description about the curent dof
+//         const getfem::mesh::ind_cv_ct cvs = mf_q.convex_to_dof(d);
+//         unsigned cv = cvs[0], ld = unsigned(-1);
+//         //getfem::pfem pf = mf_q.fem_of_element(cv);
+//         // getting the local index  (ld)
+//         for (unsigned dd = 0; dd < mf_q.nb_dof_of_element(cv); dd += 1) {
+//            if (mf_q.ind_dof_of_element(cv)[dd] == d) {
+//              ld = dd; break;}
+//         }
+//         if ( pf->dof_types().at(ld) == getfem::lagrange_dof(2)){ 
+//                 // pf-> dof_types gives a std_vector<pdof_desciption>
+// //        if (ld == 0 || ld == 3 || ld == 6 || ld == 9){
+//            base_node P = mf_q.point_of_dof(d);
+//            q[d] = (gmm::vect_dist2(P, crack_tip) > ring_radius) ? 0. : 1.; 
+//         }
+//         else
+//            q[d] = 0. ;
+//     }
+
+    /* fill the "q" ring field with a C^1 field, equal to 
+       1 on the inner boundary, and equal to zero on the outer boundary */
+    std::vector<scalar_type> q(mf_pre_u.nb_dof());
+    for (unsigned d = 0; d < mf_pre_u.nb_dof(); ++d) {
+        // getting a getfem::pdof_description about the curent dof
+        const getfem::mesh::ind_cv_ct cvs = mf_pre_u.convex_to_dof(d);
+        unsigned cv = cvs[0], ld = unsigned(-1);
+        // getting the local index  (ld)
+        for (unsigned dd = 0; dd < mf_pre_u.nb_dof_of_element(cv); dd += 1) {
+           if (mf_pre_u.ind_dof_of_element(cv)[dd] == d) {
+             ld = dd; 
+             break;}
+        }
+        pf = mf_pre_u.fem_of_element(cv);
+        if ( pf->dof_types().at(ld) == getfem::lagrange_dof(2)){ 
+                // pf-> dof_types gives a std_vector<pdof_desciption>
+//        if (ld == 0 || ld == 3 || ld == 6 || ld == 9){
+           base_node P = mf_pre_u.point_of_dof(d);
+           q[d] = (gmm::vect_dist2(P, crack_tip) > ring_radius) ? 0. : 1.; 
+        }
+        else
+           q[d] = 0. ;
     }
+
 
     base_vector U_mode(mf_mode.nb_dof()); assert(U_mode.size() == 2);
     base_vector U_mode_3(mf_mode_3.nb_dof()); assert(U_mode_3.size() == 8);
 
-
+cout << "OK avant assemblage\n" ;
     // Remaillage conforme des mailles coupées par la fissure
 
+// ESSAI : dérivation du champs solution de U3, pour prendre le laplacien
+// dans l'assemblage (probleme : on perd de la régularité en route)
 
-    mesh_fem mf_du(mim.linked_mesh(), 1) ;
-    mf_du.set_classical_finite_element(3);
-    plain_vector GRAD(mf_du.nb_dof() * 2) ;
-    getfem::compute_gradient(mf, mf_du, U, GRAD) ;
-    // separation des 2 composantes 
-    plain_vector D1(mf_du.nb_dof()), D2(mf_du.nb_dof()) ;
-    for (unsigned i=0 ; i < mf_du.nb_dof() ; ++i){
-       D1[i] = GRAD[2*i] ;
-       D2[i] = GRAD[2*i+1] ;
-    }
-    cout << "1er derivation OK \n " ;
-
-    mesh_fem mf_d2u(mim.linked_mesh(), 1) ;
-    mf_d2u.set_classical_discontinuous_finite_element(2);
-    plain_vector GRAD_U1(mf_d2u.nb_dof() * 2), GRAD_U2(mf_d2u.nb_dof() * 2) ;
-    getfem::compute_gradient(mf_du, mf_d2u, D1, GRAD_U1) ;
-    getfem::compute_gradient(mf_du, mf_d2u, D2, GRAD_U2) ;
-    cout << "2e derivation : OK \n" ; 
-    // calcul du laplacien
-    plain_vector LAP(mf_d2u.nb_dof()) ;
-    cout << "taille GRAD_U1 = " << GRAD_U1.size() << "\n" ;
-    cout << "taille GRAD_U1 = " << GRAD_U1.size() << "\n" ;
+//     mesh_fem mf_du(mim.linked_mesh(), 1) ;
+//     mf_du.set_classical_finite_element(3);
+//     plain_vector GRAD(mf_du.nb_dof() * 2) ;
+//     getfem::compute_gradient(mf, mf_du, U, GRAD) ;
+//     // separation des 2 composantes 
+//     plain_vector D1(mf_du.nb_dof()), D2(mf_du.nb_dof()) ;
+//     for (unsigned i=0 ; i < mf_du.nb_dof() ; ++i){
+//        D1[i] = GRAD[2*i] ;
+//        D2[i] = GRAD[2*i+1] ;
+//     }
+//     cout << "1er derivation OK \n " ;
+// 
+//     mesh_fem mf_d2u(mim.linked_mesh(), 1) ;
+//     mf_d2u.set_classical_discontinuous_finite_element(2);
+//     plain_vector GRAD_U1(mf_d2u.nb_dof() * 2), GRAD_U2(mf_d2u.nb_dof() * 2) ;
+//     getfem::compute_gradient(mf_du, mf_d2u, D1, GRAD_U1) ;
+//     getfem::compute_gradient(mf_du, mf_d2u, D2, GRAD_U2) ;
+//     cout << "2e derivation : OK \n" ; 
+//     // calcul du laplacien
+//     plain_vector LAP(mf_d2u.nb_dof()) ;
+//     cout << "taille GRAD_U1 = " << GRAD_U1.size() << "\n" ;
+//     cout << "taille GRAD_U1 = " << GRAD_U1.size() << "\n" ;
+//     
+//     for (unsigned i=0 ; i < mf_d2u.nb_dof() ; ++i)
+//        LAP[i] = GRAD_U1[2*i] + GRAD_U2[2*i+1] ;
+// 
+//     //dérivation :
+//     mesh_fem mf_d3u(mim.linked_mesh(), 1) ;
+//     mf_d3u.set_classical_discontinuous_finite_element(1);
+//     plain_vector D3U(mf_d3u.nb_dof() * 2) ;
+//     cout << "juste avant la 3e derivation \n";
+//     getfem::compute_gradient(mf_d2u, mf_d3u, LAP, D3U) ;
+//     mf_d3u.set_qdim(2) ;
+//     cout << "derivations : OK ! \n" ;
     
-    for (unsigned i=0 ; i < mf_d2u.nb_dof() ; ++i)
-       LAP[i] = GRAD_U1[2*i] + GRAD_U2[2*i+1] ;
 
-    // dérivation :
-    mesh_fem mf_d3u(mim.linked_mesh(), 1) ;
-    mf_d3u.set_classical_discontinuous_finite_element(1);
-    plain_vector D3U(mf_d3u.nb_dof() * 2) ;
-    cout << "juste avant la 3e derivation \n";
-    getfem::compute_gradient(mf_d2u, mf_d3u, LAP, D3U) ;
-    mf_d3u.set_qdim(2) ;
-    cout << "derivations : OK ! \n" ;
-    
-
+// 
 //     mesh_fem mf_du1(mim.linked_mesh(), 1) ;
 //     mf_du1.set_classical_finite_element(5);
 //     //mf_du.set_qdim(2) ; // peut-etre a enlever ?...
@@ -210,8 +272,21 @@ namespace getfem {
 //             "V()+=minus(p).D_1_nu(p).t(i,j,i,k,j).x1(k) + minus(p).D_nu(p).t(i,i,j,k,j).x1(k);"
 //             "V()+=minus(p).D_1_nu(p).t(i,k,i,j,j).x1(k) + minus(p).D_nu(p).t(j,k,i,i,j).x1(k);"
 //             "V()+=D_1_nu(p).t(i,j,i,j,k).x1(k) + D_nu(p).t(i,i,j,j,k).x1(k);");
+//     generic_assembly
+//       assem("D_1_nu=data$1(1); D_nu=data$2(1); minus=data$3(1); D=data$4(1); x1=data$5(mdim(#1)); U1=data$6(#1); U2=data$7(#2); q=data$8(#3); U3=data$9(#4); D3U=data$10(#5);"
+//             "T=U1(i).U2(j).q(k).comp(Hess(#1).Hess(#2).Grad(#3))(i,:,:,j,:,:,k,:);"
+//             "t=T;"
+//             "V()+=minus(p).D_1_nu(p).t(i,j,i,k,j).x1(k) + minus(p).D_nu(p).t(i,i,j,k,j).x1(k);"
+//             "V()+=minus(p).D_1_nu(p).t(i,k,i,j,j).x1(k) + minus(p).D_nu(p).t(j,k,i,i,j).x1(k);"
+//             "V()+=D_1_nu(p).t(i,j,i,j,k).x1(k) + D_nu(p).t(i,i,j,j,k).x1(k);"
+//             "T2=U3(i).U1(j).q(k).comp(vBase(#4).Grad(#1).Grad(#3))(i,:,j,:,k,:);"
+//             "t2=T2;"
+//             "V()+=D(p).T2(i,j,i).x1(j);"
+//             "T1=D3U(i).U2(j).q(k).comp(vBase(#5).Grad(#2).Grad(#3))(i,:,j,:,k,:);"
+//             "t1=T1;"
+//             "V()+=D(p).T1(i,j,i).x1(j);");
     generic_assembly
-      assem("D_1_nu=data$1(1); D_nu=data$2(1); minus=data$3(1); D=data$4(1); x1=data$5(mdim(#1)); U1=data$6(#1); U2=data$7(#2); q=data$8(#3); U3=data$9(#4); D3U=data$10(#5);"
+      assem("D_1_nu=data$1(1); D_nu=data$2(1); minus=data$3(1); D=data$4(1); x1=data$5(mdim(#1)); U1=data$6(#1); U2=data$7(#2); q=data$8(#3); U3=data$9(#4);"
             "T=U1(i).U2(j).q(k).comp(Hess(#1).Hess(#2).Grad(#3))(i,:,:,j,:,:,k,:);"
             "t=T;"
             "V()+=minus(p).D_1_nu(p).t(i,j,i,k,j).x1(k) + minus(p).D_nu(p).t(i,i,j,k,j).x1(k);"
@@ -220,14 +295,15 @@ namespace getfem {
             "T2=U3(i).U1(j).q(k).comp(vBase(#4).Grad(#1).Grad(#3))(i,:,j,:,k,:);"
             "t2=T2;"
             "V()+=D(p).T2(i,j,i).x1(j);"
-            "T1=D3U(i).U2(j).q(k).comp(vBase(#5).Grad(#2).Grad(#3))(i,:,j,:,k,:);"
-            "t1=T1;"
-            "V()+=D(p).T1(i,j,i).x1(j);");
+            "T11=U1(i).U2(j).q(k).comp(Hess(#1).Grad(#2).Hess(#3))(i,:,:,j,:,k,:,:);"
+            "t11=T11;"
+            "V()+=minus(p).D(p).t11(i,i,j,k,k).x1(j);"
+            "V()+=minus(p).D(p).t(i,i,j,k,k).x1(j);"
+);
     assem.push_mf(mf);
     assem.push_mf(mf_mode);
-    assem.push_mf(mf_q);
+    assem.push_mf(mf_pre_u);//assem.push_mf(mf_q);
     assem.push_mf(mf_mode_3);
-    assem.push_mf(mf_d3u);
     assem.push_mi(mim);
     base_vector vD_1_nu(1); vD_1_nu[0] =  D * (1. - nu);
     base_vector vD_nu(1); vD_nu[0] = D * nu ;
@@ -242,7 +318,6 @@ namespace getfem {
     assem.push_data(U_mode);
     assem.push_data(q);
     assem.push_data(U_mode_3);
-    assem.push_data(D3U);
     base_vector V(1);
     assem.push_vec(V);
 
@@ -318,10 +393,10 @@ namespace getfem {
           *it++ = 1.;        /* mode I */
           *it++ = 0.;      /* mode II */
           /* "colonne" 1: ux, colonne 2: uy */
-          *it_3++ = 1.;     *it_3++ = 0.; /* - cos(theta/2.) */
+          *it_3++ = 1.;     *it_3++ = 0.; /* - cos(3 *theta/2.) */
           *it_3++ = 0.;     *it_3++ = 1.; /* - sin(3 *theta/2.) */
-          *it_3++ = 0.;     *it_3++ = 0.; /* - sin(3 *theta/2.)*/ 
-          *it_3++ = 0.;     *it_3++ = 0.; /* cos(theta/2.) */
+          *it_3++ = 0.;     *it_3++ = 0.; /* - sin(3 *theta/2.) */
+          *it_3++ = 0.;     *it_3++ = 0.; /*   cos(3 *theta/2.) */
         } break;
         case 2: {
           *it++ = 0.;
@@ -377,6 +452,6 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
                                           KI, KII, 1e-2);
   cout << "estimation of crack SIF: " << KI << ", " << KII << "\n";*/
   
-  compute_crack_stress_intensity_factors_KL(ls, mim, mf_u(), U, ring_radius, D, nu, E, epsilon, KI, KII);
-  cout << "computation of crack SIF: " << KI << ", " << KII << "\n";
+  compute_crack_stress_intensity_factors_KL(ls, mim, mf_pre_u, mf_u(), U, ring_radius, D, nu, E, epsilon, KI, KII);
+  cout << "computation of crack SIF via J-Integral \nK1:" << KI << "\nK2:" << KII << "\n";
 }
