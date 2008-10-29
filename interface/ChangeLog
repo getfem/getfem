@@ -1,0 +1,1239 @@
+2006-06-21  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* a number of internal changes to support some exotic fem,
+	mesh_fems and mesh_ims from getfem++. Preliminary interfaces to
+	getfem::mesh_fem_sum , getfem::mesh_fem_level_set,
+	getfem::mesh_im_level_set, getfem::partial_mesh_fem, and
+	getfem::interpolated_fem.
+
+	* new objects: levelset and mesh_levelset.
+	
+2006-04-03  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* some fixes in the tests for matlab-R13 compatibility
+
+------------------------------------ getfem-interface-2.0 --------------------------
+
+2005-03-07  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* moved/renamed functions:
+	
+	- mesh_fem.get('eltm') and mesh_fem.get('eltm on face')
+	were merged & moved to mesh_im('eltm')
+
+	- compute('L2 norm'), compute('H1 semi norm'), compute('H1 norm') necessitent un mesh_im
+
+	- asm('dirichlet nullspace') moved to spmat.get('dirichlet nullspace')
+	
+	- all assembly function require now an mesh_im as their second argument.
+
+2005-02-28  julien pommier
+        * fixed a memory leak in gfm_mex.c, and updated the
+	released getfem-interface-1.7.tar.gz 
+
+2005-01-06  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* release 1.7
+
+2004-09-01  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gf_asm.C: asm(dirichlet) and asm(qu_term) now handle
+	3D-arrays argument for the description of matrices on each
+	dof. This is now the recommended way to use them, as it avoid
+	ambiguities on the ordering of array values for python/matlab.
+
+2004-08-31  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gf_slice_get.C src/gf_mesh_fem_get.C export to dx/vtk now
+	support vector and tensor fields.
+
+2004-08-30  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gf_compute.C (gf_compute): handles gradient and
+	interpolation of tensor fields.
+
+2004-08-27  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gf_compute.C (gf_compute): added hability to handled complex
+	vectors.
+
+2004-06-17  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gf_geotrans_get.C: added gf_geotrans_get(gt, 'transform',..)
+
+2004-06-11  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* getfem-matlab was renamed to getfem-interface. Initial support
+	for python interface was added.
+
+	The interface now handles integer and complex arrays (matlab
+	arrays or numpy arrays). 
+
+	A basic interface to GMM was added (gf_spmat*, gf_precond*), it
+	was necessary since numpy does not have any support for sparse
+	matrices.
+	
+2004-02-02  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gf_slice.C, src/gf_slice_get.C, src/gf_slice_set.C: updated
+	slices according to the changes in getfem++ fixed a microbug for
+	intersections with more than 2 slices.
+
+	* src/Makefile.am, src/gfm_mex.c: fixes for mingw.
+	
+2003-03-11 16:00  pommier
+
+	* tests/demo_wave2D.m: ajout de demo_wave2D
+
+2003-03-11 16:00  pommier
+
+	* ChangeLog, doc/Makefile, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_fem_get_eval.m, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_plot.m, matlabint/matlabint.C,
+	matlabint/matlabint_misc.C, tests/demo_laplacian1D.m: creation du
+	changelog
+
+2003-03-11 12:15  pommier
+
+	* config/depcomp: passage au depcomp d'automake 1.7.2 qui gere les
+	dependances de cxx
+
+2003-03-10 14:30  pommier
+
+	* doc/: Makefile, getfemmatlab.tex, gfm.css: [no log message]
+
+2003-03-08 13:54  pommier
+
+	* doc/Makefile: fix makefile
+
+2003-03-07 15:07  pommier
+
+	* configure.in: correction du probleme d'installation qd configure
+	est fait sans utiliser --prefix
+
+2003-03-04 19:34  pommier
+
+	* doc/: Makefile, getfemmatlab.tex, gfm.css, next.gif,
+	previous.gif, tripodvonmises.png, tripodvonmiseswithmesh_small.png,
+	up.gif: [no log message]
+
+2003-03-03 18:29  pommier
+
+	* tests/demo_tripod.m, doc/getfemmatlab.tex: [no log message]
+
+2003-02-27 17:34  pommier
+
+	* configure.in, doc/Makefile, doc/getfemmatlab.tex,
+	doc/latexize_mcode.pl, matlabcom/Makefile.am, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_get.C, matlabint/matlabint.C,
+	matlabint/matlabint_std.h, matlabint/matlabint_workspace.C: improve
+	friendlyness with gcc2.95
+
+2003-02-25 08:45  pommier
+
+	* doc/: Makefile, getfemmatlab.tex: [no log message]
+
+2003-02-24 16:59  pommier
+
+	* configure.in, matlabcom/Makefile.am, matlabcom/gf_solve.m,
+	tests/Makefile.am, tests/check_all.sh, tests/check_mesh_fem.m:
+	getfem_matlab is ready for distribution:
+
+2003-02-24 12:27  pommier
+
+	* matlabcom/Makefile.am: [no log message]
+
+2003-02-24 00:53  pommier
+
+	* BUGS_AND_REMARKS, Makefile.am, README.alpha_cxx, README.cxx,
+	doc/getfemmatlab.tex, doc/hierarchy.eps, doc/hierarchy.fig,
+	matlabcom/gf_plot.m: [no log message]
+
+2003-02-23 20:27  pommier
+
+	* matlabcom/: Makefile.am, gf_mesh_get.C: [no log message]
+
+2003-02-22 23:39  pommier
+
+	* matlabcom/gf_mesh_fem_get_eval.m, doc/Makefile,
+	doc/getfemmatlab.tex: [no log message]
+
+2003-02-22 20:20  pommier
+
+	* Makefile.am, configure.in, matlabcom/Makefile.am,
+	matlabcom/gf_solve.m, tests/Makefile.am, tests/check_all.m,
+	tests/check_all.sh, tests/check_solve.m,
+	tests/demo_stokes_tube2D.m: fignolage
+
+2003-02-21 17:21  pommier
+
+	* matlabcom/gf_solve.m, tests/Makefile.am, tests/demo_poiseuille.m,
+	tests/demo_stokes_tube2D.m, tests/tripod.GiD.msh,
+	tests/tube_2D_spline.GiD.msh, tests/valid_stokes_quad.m: commit du
+	jour
+
+2003-02-21 15:27  pommier
+
+	* Makefile.am, configure.in, config/bootstrap, config/config.guess,
+	config/config.sub, config/ltmain.sh, matlabcom/gf_plot.m,
+	matlabcom/gf_plot_mesh.m, matlabcom/gf_solve.m,
+	matlabint/Makefile.am, tests/Makefile.am, tests/check_all.sh,
+	tests/check_mesh_fem.m, tests/laplacian1D.m,
+	tests/demo_laplacian.m, tests/demo_laplacian1D.m,
+	tests/demo_stokes_tube2D.m, tests/demo_tripod.m: commit du jour
+
+2003-02-19 19:29  pommier
+
+	* matlabcom/: Contents.m, gf_asm.C, gf_compute.C, gf_plot.m,
+	gf_plot_mesh.m, gf_solve.m: update du soir
+
+2003-02-19 16:29  pommier
+
+	* doc/: Makefile, getfemmatlab.tex, tripodvonmiseswithmesh.png: [no
+	log message]
+
+2003-02-19 12:22  pommier
+
+	* doc/donut.png: ajout donut en binaire
+
+2003-02-19 12:21  pommier
+
+	* doc/donut.png: [no log message]
+
+2003-02-19 12:20  pommier
+
+	* doc/: getfemmatlab.tex, donut.png: update doc
+
+2003-02-18 14:55  pommier
+
+	* doc/: Makefile, getfemmatlab.tex: la doc avance..
+
+2003-02-18 10:41  pommier
+
+	* doc/license.tex: +gnou
+
+2003-02-18 10:36  pommier
+
+	* doc/Makefile, doc/getfemmatlab.tex, doc/latexize_mcode.pl,
+	matlabcom/gf_asm.C, matlabcom/gf_fem.C, matlabcom/gf_fem_get.C,
+	matlabcom/gf_mesh_fem.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_get.C, tests/check_mesh_fem.m, doc/fempk51.eps:
+	update doc
+
+2003-02-17 12:44  pommier
+
+	* doc/Makefile, doc/getfemmatlab.tex, doc/latexize_mcode.pl,
+	matlabcom/gf_asm.C, matlabcom/gf_cvstruct_get.C,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_get.C, matlabcom/gf_mesh_set.C,
+	matlabcom/gf_plot.m, matlabcom/gf_plot_mesh.m,
+	matlabcom/gf_solve.m, matlabcom/gf_workspace.C,
+	matlabcom/@gfMeshFem/subsref.m, matlabcom/private/getopt.m,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, matlabint/matlabint_misc.h,
+	tests/check_mesh_fem.m, tests/check_solve.m, tests/laplacian1D.m,
+	tests/laplacian2D.m, tests/valid_stokes_quad.m: doc updates
+
+2003-02-14 14:05  pommier
+
+	* matlabcom/gfObject.m, matlabcom/@gfCvStruct/get.m,
+	matlabcom/@gfEltm/display.m, matlabcom/@gfFem/get.m,
+	matlabcom/@gfGeoTrans/get.m, matlabcom/@gfInteg/get.m,
+	tests/check_mesh_fem.m, tests/check_workspace.m, README.sgiCC:
+	ajout
+
+2003-02-14 14:02  pommier
+
+	* doc/getfemmatlab.tex, matlabcom/gf_asm_pdetoolbc.m,
+	matlabcom/gf_compute.C, matlabcom/gf_compute_Q1grid_interp.m,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_fem_set.C,
+	matlabcom/gf_mesh_get.C, matlabcom/gf_plot.m,
+	matlabcom/gf_plot_mesh.m, matlabcom/gf_solve.m,
+	matlabcom/@gfCvStruct/display.m,
+	matlabcom/@gfCvStruct/gfCvStruct.m, matlabcom/@gfFem/display.m,
+	matlabcom/@gfGeoTrans/display.m, matlabcom/@gfMesh/display.m,
+	matlabcom/@gfMesh/subsref.m, matlabcom/@gfMeshFem/subsref.m,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, tests/check_all.m, tests/check_oo.m,
+	tests/check_solve.m, tests/laplacian1D.m, tests/laplacian2D.m,
+	tests/valid_lin_elast.m, tests/valid_stokes.m,
+	tests/valid_stokes_quad.m: divers modifs
+
+2003-02-13 19:40  renard
+
+	* configure.in: fast option pour cxx
+
+2003-02-11 16:32  pommier
+
+	* matlabcom/gf_mesh_fem_get.C, matlabint/matlabint_misc.C: bugfix
+	du bugfix
+
+2003-02-11 15:22  pommier
+
+	* matlabcom/gf_compute.C, tests/private/assert.m,
+	tests/private/asserterr.m: ajout tests/private
+
+2003-02-11 15:20  pommier
+
+	* matlabcom/gf_compute.C, matlabcom/gf_compute_Q1grid_interp.m,
+	matlabcom/gf_plot_mesh.m, tests/check_solve.m: [no log message]
+
+2003-02-11 12:34  pommier
+
+	* matlabcom/@gfMeshFem/gfMeshFem.m, matlabint/matlabint_misc.C,
+	tests/check_solve.m: bugfix
+
+2003-02-11 12:25  pommier
+
+	* matlabcom/gf_compute.C, matlabint/matlabint.h,
+	matlabint/matlabint_std.h, tests/check_all.m, tests/check_asm.m,
+	tests/check_fem.m, tests/check_geotrans.m, tests/check_integ.m,
+	tests/check_oo.m, tests/check_solve.m: ajout check_xxx
+
+2003-02-11 12:01  pommier
+
+	* matlabcom/Makefile.am, matlabcom/gf_asm.C,
+	matlabcom/gf_cvstruct_get.C, matlabcom/gf_delete.C,
+	matlabcom/gf_eltm.C, matlabcom/gf_fem.C, matlabcom/gf_fem_get.C,
+	matlabcom/gf_geotrans.C, matlabcom/gf_geotrans_get.C,
+	matlabcom/gf_integ.C, matlabcom/gf_integ_get.C,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_mesh_set.C, matlabcom/gf_plot_mesh.m,
+	matlabcom/gf_workspace.C, matlabcom/@gfCvStruct/display.m,
+	matlabcom/@gfCvStruct/gfCvStruct.m, matlabcom/@gfEltm/gfEltm.m,
+	matlabcom/@gfFem/char.m, matlabcom/@gfFem/display.m,
+	matlabcom/@gfFem/gfFem.m, matlabcom/@gfFem/subsref.m,
+	matlabcom/@gfGeoTrans/char.m, matlabcom/@gfGeoTrans/display.m,
+	matlabcom/@gfGeoTrans/gfGeoTrans.m,
+	matlabcom/@gfGeoTrans/subsref.m, matlabcom/@gfInteg/char.m,
+	matlabcom/@gfInteg/display.m, matlabcom/@gfInteg/gfInteg.m,
+	matlabcom/@gfInteg/subsref.m, matlabcom/@gfMesh/char.m,
+	matlabcom/@gfMesh/display.m, matlabcom/@gfMesh/get.m,
+	matlabcom/@gfMesh/gfMesh.m, matlabcom/@gfMesh/loadobj.m,
+	matlabcom/@gfMesh/saveobj.m, matlabcom/@gfMesh/set.m,
+	matlabcom/@gfMesh/subsref.m, matlabcom/@gfMeshFem/char.m,
+	matlabcom/@gfMeshFem/display.m, matlabcom/@gfMeshFem/get.m,
+	matlabcom/@gfMeshFem/gfMeshFem.m, matlabcom/@gfMeshFem/loadobj.m,
+	matlabcom/@gfMeshFem/saveobj.m, matlabcom/@gfMeshFem/set.m,
+	matlabcom/@gfMeshFem/subsref.m, matlabint/Makefile.am,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_convex_structure.C,
+	matlabint/matlabint_convex_structure.h, matlabint/matlabint_mesh.h,
+	matlabint/matlabint_mesh_fem.h, matlabint/matlabint_object.h,
+	matlabint/matlabint_pfi.h, matlabint/matlabint_poly.h,
+	matlabint/matlabint_std.h: ajout des interfaces oo matlab
+
+2003-02-07 19:15  pommier
+
+	* doc/getfemmatlab.tex: doc update
+
+2003-02-07 19:14  pommier
+
+	* matlabcom/gf_plot.m, matlabcom/gf_plot_mesh.m,
+	tests/valid_stokes_quad.m: [no log message]
+
+2003-02-07 18:01  pommier
+
+	* matlabcom/: gf_compute.C, gf_plot_mesh.m: [no log message]
+
+2003-02-07 16:29  pommier
+
+	* matlabcom/gf_plot.m, matlabcom/gf_plot_mesh.m,
+	matlabint/matlabint_misc.C, tests/valid_stokes.m: [no log message]
+
+2003-02-07 14:30  pommier
+
+	* matlabcom/gf_compute.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_plot.m, matlabcom/gf_plot_mesh.m,
+	matlabint/matlabint_misc.C, matlabint/matlabint_misc.h: modif
+	diverses pour la visu
+
+2003-02-07 14:29  pommier
+
+	* matlabint/matlabint.C: [no log message]
+
+2003-02-05 09:00  pommier
+
+	* matlabcom/gf_compute.C, matlabint/matlabint.C: rebugfix
+	eval_on_P1_tri
+
+2003-02-04 17:11  renard
+
+	* doc/: getfem_logo.eps, hierarchy.eps: [no log message]
+
+2003-02-04 17:01  pommier
+
+	* doc/: underscore.sty, getfemlogo.eps, getfemmatlab.tex: [no log
+	message]
+
+2003-02-04 11:33  pommier
+
+	* configure.in, config/ltmain.sh, matlabcom/gf_compute.C,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem_set.C,
+	matlabcom/gf_mesh_get.C, matlabcom/gf_plot.m,
+	matlabcom/gf_plot_mesh.m: modifs diverses pour les triangles/tetra
+	avec trans geo non lin
+
+2003-01-30 18:13  pommier
+
+	* configure.in: bon..
+
+2003-01-30 18:08  pommier
+
+	* configure.in: le configure devrait finir par marcher...
+
+2003-01-30 17:52  pommier
+
+	* configure.in: [no log message]
+
+2003-01-30 17:46  pommier
+
+	* configure.in: [no log message]
+
+2003-01-30 17:37  pommier
+
+	* configure.in: [no log message]
+
+2003-01-30 17:11  pommier
+
+	* configure.in, doc/getfemmatlab.tex, matlabcom/gf_asm.C,
+	matlabcom/gf_mesh.C, matlabint/matlabint.h: [no log message]
+
+2003-01-28 14:50  pommier
+
+	* matlabcom/Makefile.am, matlabcom/gf_compute.C,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_get.C, matlabint/matlabint.C,
+	matlabint/matlabint.h, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h, matlabint/matlabint_std.h,
+	matlabint/matlabint_workspace.C, matlabint/matlabint_workspace.h:
+	updates sgi + update eval_on_P1_tri_mesh
+
+2003-01-28 13:24  pommier
+
+	* configure.in: [no log message]
+
+2003-01-24 19:20  pommier
+
+	* TOBEDONE, doc/getfemmatlab.tex, matlabcom/gf_asm.C,
+	matlabcom/gf_asm_pdetoolbc.m, matlabcom/gf_compute.C,
+	matlabcom/gf_mesh_fem.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_plot.m,
+	matlabcom/gf_solve.m, matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_mesh_fem.h, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h, tests/laplacian1D.m,
+	tests/valid_lin_elast.m, tests/valid_stokes.m,
+	tests/valid_stokes_quad.m: ajout nouvel assemblage -- tenseur creux
+
+2003-01-10 13:30  pommier
+
+	* config/bootstrap: le config arrive enfin à se relancer tout seul
+	!
+
+2002-12-05 11:43  pommier
+
+	* matlabcom/gf_mesh_fem_get.C: ajout de la possibilite de lister
+	les dofs par faces
+
+2002-11-27 10:08  pommier
+
+	* matlabcom/gf_mesh_get.C: normal of faces
+
+2002-11-12 13:21  pommier
+
+	* configure.in, doc/getfemmatlab.tex, matlabcom/gf_mesh_fem_get.C,
+	matlabint/matlabint_misc.C: [no log message]
+
+2002-11-07 17:37  pommier
+
+	* doc/getfemmatlab.tex, matlabcom/gf_mesh_fem.C,
+	matlabcom/gf_mesh_fem_get.C, tests/laplacian2D.m: ajout de quelques
+	fonctions (sauvegarde de mesh_fem, affichage des fem, contour plot,
+	etc)
+
+2002-11-07 15:37  pommier
+
+	* matlabcom/gf_plot.m: [no log message]
+
+2002-11-07 14:26  pommier
+
+	* doc/getfemmatlab.tex, matlabcom/gf_asm.C, matlabcom/gf_compute.C,
+	matlabcom/gf_delete.C, matlabcom/gf_eltm.C, matlabcom/gf_fem.C,
+	matlabcom/gf_geotrans.C, matlabcom/gf_integ.C, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_mesh_set.C, matlabcom/gf_poly.C,
+	matlabcom/gf_workspace.C, matlabint/matlabint.C,
+	matlabint/matlabint.h: [no log message]
+
+2002-11-07 11:08  pommier
+
+	* configure.in, doc/getfemmatlab.tex, matlabcom/gf_asm_pdetoolbc.m,
+	matlabcom/gf_mesh_fem_get.C, matlabint/matlabint_misc.C: [no log
+	message]
+
+2002-11-05 14:08  pommier
+
+	* matlabcom/Makefile.am: [no log message]
+
+2002-11-04 19:22  pommier
+
+	* matlabcom/gf_asm.C, matlabcom/gf_solve.m, matlabint/matlabint.C,
+	matlabint/matlabint.h, matlabint/matlabint_misc.C: [no log message]
+
+2002-11-04 14:59  renard
+
+	* configure.in, matlabcom/gf_asm.C, matlabint/matlabint.C,
+	matlabint/matlabint.h, matlabint/matlabint_misc.C: [no log message]
+
+2002-11-04 11:37  pommier
+
+	* matlabcom/gf_compute_Q1grid_interp.m: [no log message]
+
+2002-10-31 16:57  pommier
+
+	* matlabcom/gf_asm.C, matlabint/matlabint_misc.C,
+	matlabint/matlabint.C, matlabint/matlabint_misc.h,
+	matlabint/matlabint.h, doc/Makefile, tests/laplacian1D.m: [no log
+	message]
+
+2002-10-31 14:40  pommier
+
+	* matlabcom/gf_workspace.C: correction bug mineur 'pop'
+
+2002-10-31 14:40  pommier
+
+	* matlabcom/gf_solve.m: correction bug pcg
+
+2002-10-30 13:54  renard
+
+	* matlabcom/gf_asm.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C: [no log message]
+
+2002-10-18 15:07  pommier
+
+	* matlabcom/: gf_solve.m, gf_plot_mesh.m, gf_plot.m: correction bug
+	(passage de mlab 6.1 à 6.5)
+
+2002-10-18 13:41  pommier
+
+	* doc/getfemmatlab.tex: ajout d'un exemple tout couillon
+
+2002-10-17 18:33  pommier
+
+	* doc/getfemmatlab.tex, matlabcom/gf_asm.C, matlabcom/gf_solve.m,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, matlabint/matlabint_std.h,
+	matlabint/matlabint_workspace.C, matlabint/matlabint_workspace.h,
+	tests/tests.m, tests/valid_lin_elast.m: divers
+
+2002-10-17 09:36  pommier
+
+	* doc/getfemmatlab.tex: ajout exemple 1d
+
+2002-10-17 09:14  pommier
+
+	* tests/: laplacian1D.m, laplacian2D.m, valid_stokes_quad.m: ajout
+	de quelques tests
+
+2002-10-17 09:03  pommier
+
+	* README.cxx, doc/getfemmatlab.tex, doc/hierarchy.fig,
+	tests/valid_stokes_mesh_tube.mat: ajout README.cxx
+
+2002-10-17 08:37  pommier
+
+	* matlabcom/gf_solve.m: nettoyage -- suppression des stiff springs
+	pour dirichlet (piqués dans pdetool, et qui de plus ne marche pas
+	du tout sur des quadrangles...)
+
+2002-10-16 18:00  pommier
+
+	* matlabcom/: gf_asm.C, gf_solve.m: [no log message]
+
+2002-10-16 11:36  pommier
+
+	* configure.in, doc/getfemmatlab.tex, matlabcom/gf_asm_pdetoolbc.m,
+	matlabcom/gf_mesh_get.C, matlabcom/gf_mesh_set.C,
+	matlabcom/gf_solve.m, matlabint/matlabint.C,
+	matlabint/matlabint_misc.C: [no log message]
+
+2002-10-14 13:25  pommier
+
+	* README, configure.in, matlabcom/Makefile.am,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_std.h: getfem/matlab fonctionne correctement
+	sur linux et alpha/cxx
+
+2002-10-11 19:10  pommier
+
+	* configure.in, matlabcom/Makefile.am, matlabint/Makefile.am: fix
+	tordu pour la compil/le plantage sur dec
+
+2002-10-11 15:21  pommier
+
+	* configure.in, matlabcom/Makefile.am, matlabcom/gf_asm.C,
+	matlabcom/gf_delete.C, matlabcom/gf_poly.C, matlabcom/gf_solve.m,
+	matlabint/Makefile.am, matlabint/matlabint_misc.C,
+	matlabint/matlabint_pgt.h: modif autoconf/automake
+
+2002-10-10 12:28  pommier
+
+	* configure.in, doc/Makefile, doc/getfemmatlab.tex,
+	matlabcom/gf_asm.C, matlabcom/gf_delete.C, matlabcom/gf_mesh.C,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, matlabint/matlabint_pgt.h,
+	matlabint/matlabint_std.h, matlabint/matlabint_workspace.C,
+	matlabint/matlabint_workspace.h, tests/valid_stockes_mesh_tube.mat:
+	[no log message]
+
+2002-10-08 11:35  pommier
+
+	* matlabcom/gf_asm.C: [no log message]
+
+2002-10-07 19:49  pommier
+
+	* matlabcom/gf_asm.C, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h, matlabint/matlabint_std.h: dirichlet
+
+2002-10-04 17:51  pommier
+
+	* doc/Makefile, doc/getfemmatlab.tex, matlabcom/gf_asm.C,
+	matlabcom/gf_asm_pdetoolbc.m, matlabcom/gf_compute.C,
+	matlabcom/gf_mesh_fem_set.C, tests/valid_stokes.m: [no log message]
+
+2002-10-04 17:26  pommier
+
+	* tests/: valid_lin_elast.m, valid_stockes.m, valid_stokes.m:
+	correction grosse faute d'orthographe sur stokes
+
+2002-09-30 19:20  pommier
+
+	* doc/Makefile, doc/getfem_logo.eps, doc/getfemmatlab.tex,
+	matlabcom/gf_delete.C, matlabcom/gf_eltm.C, matlabcom/gf_fem.C,
+	matlabcom/gf_integ.C, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_mesh_set.C, matlabcom/gf_workspace.C: begining of the
+	doc
+
+2002-09-20 16:06  pommier
+
+	* configure.in, matlabint/matlabint_misc.C: [no log message]
+
+2002-09-20 14:17  pommier
+
+	* matlabcom/gf_compute.C, matlabcom/gf_mesh_fem_set.C,
+	matlabcom/gf_mesh_get.C, matlabint/matlabint.h: [no log message]
+
+2002-09-18 13:23  pommier
+
+	* matlabcom/gf_compute.C, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_mesh_set.C, matlabcom/gf_workspace.C,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_workspace.C, matlabint/matlabint_workspace.h:
+	[no log message]
+
+2002-09-16 12:52  pommier
+
+	* matlabcom/gf_eltm.C, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_mesh_set.C, matlabcom/gf_plot_mesh.m,
+	matlabint/matlabint.C, matlabint/matlabint_misc.C,
+	matlabint/matlabint_std.h, matlabint/matlabint_workspace.h,
+	tests/valid_lin_elast.m: [no log message]
+
+2002-09-09 18:00  pommier
+
+	* Makefile.am, configure.in, matlabcom/Makefile.am,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_get.C, matlabcom/gf_mesh_set.C,
+	matlabcom/gf_poly.C, matlabcom/gf_stockes.m,
+	matlabcom/gf_stockes_cgsolve.m, matlabcom/gf_workspace.C,
+	matlabint/Makefile.am, matlabint/matlabint.C,
+	matlabint/matlabint.h, matlabint/matlabint_misc.h: [no log message]
+
+2002-09-09 12:20  renard
+
+	* AUTHORS: [no log message]
+
+2002-09-09 10:40  renard
+
+	* matlabcom/Makefile.am: [no log message]
+
+2002-09-09 10:36  renard
+
+	* matlabint/Makefile.am: [no log message]
+
+2002-09-05 16:53  pommier
+
+	* matlabcom/gf_assema.m, matlabcom/gf_intset.C,
+	matlabint/matlabint_intset.h, matlabcom/curved_mesh.m,
+	matlabcom/gf_simplif.m: [no log message]
+
+2002-09-05 16:48  pommier
+
+	* matlabcom/Makefile.am, matlabcom/gf_asm.C,
+	matlabcom/gf_asm_pdetoolbc.m, matlabcom/gf_compute.C,
+	matlabcom/gf_cvstruc.C, matlabcom/gf_geotrans.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_plot.m, matlabcom/gf_plot_mesh.m,
+	matlabint/Makefile.am, matlabint/matlabint.C,
+	matlabint/matlabint_cvs.C, matlabint/matlabint_cvs.h,
+	tests/valid_lin_elast.m: [no log message]
+
+2002-09-03 16:32  pommier
+
+	* matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_get.C, matlabint/matlabint.h,
+	tests/valid_lin_elast.m, tests/valid_stockes.m: [no log message]
+
+2002-09-02 11:29  pommier
+
+	* matlabcom/gf_asm_pdetoolbc.m, matlabcom/gf_assemb.m,
+	matlabcom/gf_compute.C, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_mesh_set.C, matlabcom/gf_plot.m,
+	matlabcom/gf_plot_mesh.m, matlabcom/gf_workspace.C,
+	matlabint/matlabint_misc.C, tests/valid_lin_elast.m,
+	tests/valid_stockes.m, tests/valid_stockes_mesh_tube.mat: [no log
+	message]
+
+2002-08-27 18:22  pommier
+
+	* matlabcom/draw_mesh.m, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_plot.m, matlabcom/gf_plot_mesh.m,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, tests/tests.m, tests/valid_lin_elast.m:
+	gf_plot_mesh is now working
+
+2002-08-26 16:30  pommier
+
+	* matlabcom/gf_asm_pdetoolbc.m, matlabcom/gf_compute.C,
+	matlabcom/gf_integ.C, matlabcom/gf_mesh_fem_set.C,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_pfi.C, matlabint/matlabint_pfi.h,
+	tests/valid_lin_elast.m: maj
+
+2002-08-23 18:34  pommier
+
+	* matlabcom/gf_asm_pdetoolbc.m, matlabcom/gf_compute.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_pdeplot.m, matlabcom/gf_plot.m, matlabint/matlabint.C,
+	matlabint/matlabint.h, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h, tests/mesh_mini.mat, tests/tests.m,
+	tests/valid_lin_elast.m, tests/valid_lin_elast_mesh.mat: validation
+	de la partie elasticite lineaire
+
+2002-08-22 18:55  pommier
+
+	* matlabcom/Makefile.am, matlabcom/gf_asm.C,
+	matlabcom/gf_asm_pdetoolbc.m, matlabint/matlabint.C,
+	matlabint/matlabint.h: l'assemblage a l'air de marcher
+
+2002-08-22 18:18  pommier
+
+	* matlabcom/gf_asm.C, matlabcom/gf_asm_pdetoolbc.m,
+	matlabcom/gf_assem.C, matlabcom/gf_assemb.m,
+	matlabcom/gf_compute.C, matlabcom/gf_delete.C,
+	matlabcom/gf_intset.C, matlabcom/gf_mesh.C,
+	matlabcom/gf_mesh_fem.C, matlabcom/gf_mesh_fem_get.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_workspace.C,
+	matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, matlabint/matlabint_workspace.C: [no
+	log message]
+
+2002-08-21 16:23  pommier
+
+	* matlabint/matlabint.C, matlabint/matlabint.h,
+	matlabint/matlabint_mesh.h, matlabint/matlabint_mesh_fem.h,
+	matlabint/matlabint_object.h, matlabint/matlabint_workspace.C,
+	matlabcom/gf_fem.C, matlabcom/gf_integ.C,
+	matlabcom/gf_mesh_fem_get.C, matlabcom/gf_mesh_get.C,
+	matlabcom/gf_workspace.C: [no log message]
+
+2002-08-21 14:32  renard
+
+	* matlabcom/Makefile.am: [no log message]
+
+2002-08-21 14:21  renard
+
+	* configure.in: [no log message]
+
+2002-08-20 17:43  pommier
+
+	* matlabcom/Makefile.am, matlabcom/gf_fem.C, matlabcom/gf_integ.C,
+	matlabcom/gf_mesh.C, matlabcom/gf_mesh_fem.C,
+	matlabcom/gf_mesh_fem_set.C, matlabcom/gf_mesh_set.C,
+	matlabcom/gf_poly.C, matlabcom/gf_workspace.C,
+	matlabcom/intro_doc.h, matlabint/matlabint.C,
+	matlabint/matlabint.h, matlabint/matlabint_mesh_fem.h,
+	matlabint/matlabint_object.h, matlabint/matlabint_pfi.C,
+	matlabint/matlabint_pfi.h, matlabint/matlabint_workspace.C,
+	matlabint/matlabint_workspace.h: [no log message]
+
+2002-08-19 11:54  pommier
+
+	* configure.in: ajout de -Wall -W
+
+2002-08-19 11:54  pommier
+
+	* matlabint/: Makefile.am, matlabint.C, matlabint.h,
+	matlabint_cvs.h, matlabint_intset.C, matlabint_intset.h,
+	matlabint_matelem.h, matlabint_matelemtype.h, matlabint_mesh.C,
+	matlabint_mesh.h, matlabint_mesh_fem.C, matlabint_mesh_fem.h,
+	matlabint_misc.C, matlabint_misc.h, matlabint_object.h,
+	matlabint_pfem.h, matlabint_pfi.h, matlabint_pgt.h,
+	matlabint_poly.C, matlabint_poly.h, matlabint_std.h,
+	matlabint_workspace.C, matlabint_workspace.h: nouvelle version des
+	fichiers
+
+2002-08-19 11:38  pommier
+
+	* matlabcom/: Makefile.am, PK_discontinuous_fem.C, PK_fem.C,
+	PK_with_cubic_bubble_fem.C, QK_fem.C, add_convex_to_mesh.C,
+	add_point_to_mesh.C, add_poly.C, add_to_intset.C,
+	boundary_evaluation_data.C, card_intset.C, clear_all_intset.C,
+	clear_all_mesh.C, clear_all_mesh_fem.C, clear_all_poly.C,
+	convex_product_structure.C, convex_product_trans.C,
+	curved_mesh_C.C, del_intset.C, del_mesh.C, del_mesh_fem.C,
+	del_poly.C, gf_assem.C, gf_assem_general_boundary_cond.C,
+	gf_assem_linear_elasticity.C, gf_assem_mass_matrix.C,
+	gf_assem_stockes_pressure_term.C, gf_assem_volumic_term.C,
+	gf_cartesian_mesh.C, gf_compute.C, gf_compute_gradient.C,
+	gf_cvstruc.C, gf_delete.C, gf_eltm.C, gf_fem.C,
+	gf_get_deformed_mesh_points.C, gf_get_faces_boundary_numbers.C,
+	gf_get_interpolation_pts.C, gf_get_mesh_dim.C,
+	gf_get_refined_P1_tri_mesh.C, gf_integ.C,
+	gf_interpolate_on_other_mesh.C, gf_intmethod_Gauss.C,
+	gf_intmethod_approx_product.C, gf_intmethod_approx_simplex.C,
+	gf_intmethod_exact_simplex.C, gf_intmethod_triangle4.C,
+	gf_intset.C, gf_mesh.C, gf_mesh_fem.C, gf_mesh_fem_get.C,
+	gf_mesh_fem_set.C, gf_mesh_get.C, gf_mesh_set.C, gf_nb_dof.C,
+	gf_poly.C, gf_workspace.C, list_intset.C, mat_elem.C,
+	mat_elem_base.C, mat_elem_grad.C, mat_elem_hess.C,
+	mat_elem_on_face.C, mat_elem_product.C, mesh_from_pdetool.C,
+	mesh_to_edges.C, mesh_transformation.C, mesh_translation.C,
+	mul_poly.C, new_intset.C, new_mesh.C, new_mesh_fem.C, new_poly.C,
+	points_of_mesh.C, print_poly.C, prismatic_mesh.C, product_fem.C,
+	set_boundary_number.C, set_finite_element.C, set_poly.C,
+	simplex_structure.C, simplex_trans.C, sup_convex_to_mesh.C,
+	sup_point_to_mesh.C, sup_to_intset.C: nouvelle version des fichiers
+
+2002-07-31 11:37  renard
+
+	* matlabcom/: gf_intmethod_Gauss.C, gf_intmethod_triangle4.C,
+	Makefile.am: [no log message]
+
+2002-07-30 12:56  renard
+
+	* configure.in: [no log message]
+
+2002-07-29 12:29  pommier
+
+	* matlabint/matlabint.C: [no log message]
+
+2002-07-16 10:29  renard
+
+	* matlabint/: matlabint_misc.C: [no log message]
+
+2002-07-15 16:25  renard
+
+	* matlabcom/: gf_assem_general_boundary_cond.C,
+	gf_get_deformed_mesh_points.C, gf_get_faces_boundary_numbers.C,
+	gf_get_interpolation_pts.C: [no log message]
+
+2002-07-15 14:00  renard
+
+	* CHANGES: [no log message]
+
+2002-07-12 12:56  renard
+
+	* matlabcom/Makefile.am: [no log message]
+
+2002-07-12 11:18  renard
+
+	* Makefile.am, matlabcom/Makefile.am, matlabint/Makefile.am: [no
+	log message]
+
+2002-07-12 11:08  renard
+
+	* matlabcom/Makefile.am: [no log message]
+
+2002-07-12 11:00  renard
+
+	* matlabcom/set_boundary_number.C: [no log message]
+
+2002-07-12 10:36  renard
+
+	* configure.in, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h: [no log message]
+
+2002-07-11 12:29  renard
+
+	* configure.in, matlabcom/Makefile.am: [no log message]
+
+2002-07-10 19:16  renard
+
+	* matlabcom/gf_assem_mass_matrix.C, matlabint/Makefile.am: [no log
+	message]
+
+2002-07-10 13:26  renard
+
+	* matlabcom/: Makefile.am, gf_assem_linear_elasticity.C,
+	gf_assem_mass_matrix.C, prismatic_mesh.C: [no log message]
+
+2002-07-10 11:24  renard
+
+	* matlabint/Makefile.am: [no log message]
+
+2002-06-20 18:55  pommier
+
+	* matlabcom/gf_assem_general_boundary_cond.C,
+	matlabcom/gf_assem_linear_elasticity.C,
+	matlabcom/gf_assem_stockes_pressure_term.C,
+	matlabcom/gf_compute_gradient.C, matlabcom/mesh_to_edges.C,
+	matlabint/Makefile.am, matlabint/matlabint.h,
+	matlabint/matlabint_misc.C, matlabint/matlabint_misc.h,
+	matlabint/matlabint_poly.h, matlabint/matlabint_smatrix.h: [no log
+	message]
+
+2002-06-19 17:22  pommier
+
+	* configure.in: [no log message]
+
+2002-06-19 14:06  pommier
+
+	* matlabcom/: Newton_Cotes_simplex_integration.C,
+	assem_linear_elasticity.C, assem_stockes_pressure_term.C,
+	gf_compute_gradient.C, simplex_exact_integration.C: virage des
+	commentaires dans gf_compute_gradient
+
+2002-06-19 11:32  renard
+
+	* matlabint/matlabint_intset.C: [no log message]
+
+2002-06-18 17:41  renard
+
+	* matlabcom/new_intset.C: [no log message]
+
+2002-06-18 17:00  pommier
+
+	* matlabcom/: boundary_evaluation_data.C,
+	gf_assem_general_boundary_cond.C, gf_assem_linear_elasticity.C,
+	gf_assem_stockes_pressure_term.C, gf_assem_volumic_term.C,
+	gf_assema.m, gf_assemb.m, gf_cartesian_mesh.C,
+	gf_compute_gradient.C, gf_get_deformed_mesh_points.C,
+	gf_get_faces_boundary_numbers.C, gf_get_interpolation_pts.C,
+	gf_get_mesh_dim.C, gf_get_refined_P1_tri_mesh.C,
+	gf_interpolate_on_grid.m, gf_interpolate_on_other_mesh.C,
+	gf_intmethod_approx_product.C, gf_intmethod_approx_simplex.C,
+	gf_intmethod_exact_simplex.C, gf_mesh_permuts.m, gf_nb_dof.C,
+	gf_pdeplot.m, gf_simplif.m, gf_stockes.m, gf_stockes_cgsolve.m,
+	set_boundary_number.C: blah
+
+2002-06-18 16:57  pommier
+
+	* matlabcom/Makefile.am, matlabcom/QK_fem.C, matlabcom/mat_elem.C,
+	matlabcom/mat_elem_on_face.C, matlabcom/mesh_to_edges.C,
+	matlabcom/mesh_transformation.C, matlabcom/new_intset.C,
+	matlabcom/points_of_mesh.C, matlabcom/set_finite_element.C,
+	matlabint/matlabint_intset.C, matlabint/matlabint_mesh.C,
+	matlabint/matlabint_misc.C, matlabint/matlabint_misc.h: blah blah
+
+2002-06-18 16:00  pommier
+
+	* configure.in: [no log message]
+
+2002-06-14 13:30  renard
+
+	* configure.in: [no log message]
+
+2002-05-27 18:40  renard
+
+	* matlabcom/Newton_Cotes_simplex_integration.C,
+	matlabcom/PK_discontinuous_fem.C, matlabcom/PK_fem.C,
+	matlabcom/PK_with_cubic_bubble_fem.C, matlabcom/QK_fem.C,
+	matlabcom/add_convex_to_mesh.C, matlabcom/add_point_to_mesh.C,
+	matlabcom/add_poly.C, matlabcom/add_to_intset.C,
+	matlabcom/assem_linear_elasticity.C,
+	matlabcom/assem_stockes_pressure_term.C, matlabcom/card_intset.C,
+	matlabcom/clear_all_intset.C, matlabcom/clear_all_mesh.C,
+	matlabcom/clear_all_mesh_fem.C, matlabcom/del_poly.C,
+	matlabcom/intro_doc.h, matlabcom/list_intset.C,
+	matlabcom/mat_elem.C, matlabcom/mat_elem_base.C,
+	matlabcom/mat_elem_grad.C, matlabcom/mat_elem_hess.C,
+	matlabcom/mat_elem_on_face.C, matlabcom/mat_elem_product.C,
+	matlabcom/mesh_from_pdetool.C, matlabcom/mesh_to_edges.C,
+	matlabcom/mesh_transformation.C, matlabcom/mesh_translation.C,
+	matlabcom/mul_poly.C, matlabcom/new_intset.C, matlabcom/new_mesh.C,
+	matlabcom/new_mesh_fem.C, matlabcom/new_poly.C,
+	matlabcom/points_of_mesh.C, matlabcom/print_poly.C,
+	matlabcom/prismatic_mesh.C, matlabcom/product_fem.C,
+	matlabcom/set_finite_element.C, matlabcom/set_poly.C,
+	matlabcom/simplex_exact_integration.C,
+	matlabcom/simplex_structure.C, matlabcom/simplex_trans.C,
+	matlabcom/sup_convex_to_mesh.C, matlabcom/sup_point_to_mesh.C,
+	matlabcom/sup_to_intset.C, matlabint/matlabint.h,
+	matlabint/matlabint_cvs.C, matlabint/matlabint_intset.C,
+	matlabint/matlabint_matelem.C, matlabint/matlabint_matelem.h,
+	matlabint/matlabint_matelemtype.C,
+	matlabint/matlabint_matelemtype.h, matlabint/matlabint_mesh.C,
+	matlabint/matlabint_mesh.h, matlabint/matlabint_mesh_fem.C,
+	matlabint/matlabint_mesh_fem.h, matlabint/matlabint_pfem.C,
+	matlabint/matlabint_pfem.h, matlabint/matlabint_pfi.C,
+	matlabint/matlabint_pfi.h, matlabint/matlabint_pgt.C,
+	matlabint/matlabint_pgt.h, matlabint/matlabint_poly.C,
+	matlabint/matlabint_poly.h, matlabint/matlabint_smatrix.h: [no log
+	message]
+
+2002-05-27 18:13  renard
+
+	* Makefile.in, aclocal.m4, configure, install-sh, libtool,
+	config/Makefile.in, config/aclocal.m4, matlabcom/Makefile.in,
+	matlabint/Makefile.in: [no log message]
+
+2002-05-14 09:49  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-07 12:14  renard
+
+	* matlabcom/: Makefile.am, Makefile.in: [no log message]
+
+2002-05-06 08:56  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-03 16:26  pommier
+
+	* matlabcom/: Makefile.am, PK_discontinuous_fem.C,
+	PK_with_cubic_bubble_fem.C: fem for stockes
+
+2002-05-03 15:27  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-03 15:22  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-03 15:05  renard
+
+	* Makefile, config.log, config.status, configure.in, libtool,
+	config/Makefile, matlabcom/Makefile, matlabint/Makefile,
+	Makefile.in, configure: [no log message]
+
+2002-05-03 14:21  renard
+
+	* Makefile, Makefile.in, config.log, config.status, configure,
+	config/Makefile, config/Makefile.in, matlabcom/Makefile,
+	matlabcom/Makefile.in, matlabint/Makefile, matlabint/Makefile.in,
+	Makefile.am: [no log message]
+
+2002-05-02 18:50  renard
+
+	* configure.in: [no log message]
+
+2002-05-02 18:44  renard
+
+	* configure.in, matlabcom/Makefile.am: [no log message]
+
+2002-05-02 14:28  renard
+
+	* Makefile, config.log, config.status, config/Makefile,
+	matlabcom/Makefile, matlabcom/Makefile.am, matlabcom/Makefile.in,
+	matlabint/Makefile: [no log message]
+
+2002-05-02 13:07  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-02 13:02  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-02 12:56  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-02 12:53  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-02 12:45  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-02 11:26  renard
+
+	* configure: [no log message]
+
+2002-05-02 11:18  renard
+
+	* configure.in: [no log message]
+
+2002-05-02 11:07  renard
+
+	* matlabcom/: Makefile.am, Makefile.in: [no log message]
+
+2002-05-02 11:02  renard
+
+	* configure, configure.in, matlabcom/Makefile.am,
+	matlabcom/Makefile.in: [no log message]
+
+2002-04-30 17:16  pommier
+
+	* Makefile.am: [no log message]
+
+2002-04-30 10:10  renard
+
+	* Makefile, config.log, config.status, configure, libtool,
+	config/Makefile, matlabcom/Makefile, matlabcom/Makefile.am,
+	matlabcom/Makefile.in, matlabint/Makefile: [no log message]
+
+2002-04-30 09:47  renard
+
+	* configure.in: [no log message]
+
+2002-04-29 20:00  pommier
+
+	* Makefile, Makefile.am, Makefile.in, config.log, config.status,
+	configure, configure.in, libtool, config/Makefile,
+	matlabcom/Makefile, matlabcom/Makefile.am, matlabint/Makefile: [no
+	log message]
+
+2002-04-29 19:29  pommier
+
+	* Makefile, Makefile.in, config.log, config.status, configure,
+	configure.in, libtool, config/Makefile, config/Makefile.in,
+	config/bootstrap, matlabcom/Makefile, matlabcom/Makefile.am,
+	matlabcom/Makefile.in, matlabint/Makefile, matlabint/Makefile.in:
+	[no log message]
+
+2002-04-29 16:33  pommier
+
+	* Makefile.in, configure.in: [no log message]
+
+2002-04-29 16:25  renard
+
+	* Makefile, Makefile.am, Makefile.in, config.log, config.status,
+	configure, configure.in, matlabcom/Makefile, matlabcom/Makefile.am,
+	matlabcom/Makefile.in: [no log message]
+
+2002-04-26 17:04  renard
+
+	* configure.in: [no log message]
+
+2002-04-26 16:59  renard
+
+	* AUTHORS, BUGS_AND_REMARKS, CHANGES, CONTAINS, COPYING, ChangeLog,
+	INSTALL, MODIFS, Makefile, Makefile.am, Makefile.in, NEWS, README,
+	TOBEDONE, aclocal.m4, config.log, config.status, configure,
+	configure.in, install-sh, libtool, config/Makefile,
+	config/Makefile.am, config/Makefile.in, config/aclocal.m4,
+	config/bootstrap, config/config.guess, config/config.sub,
+	config/depcomp, config/install-sh, config/ltmain.sh,
+	config/missing, config/mkinstalldirs, matlabcom/Makefile,
+	matlabcom/Makefile.am, matlabcom/Makefile.in,
+	matlabcom/Newton_Cotes_simplex_integration.C, matlabcom/PK_fem.C,
+	matlabcom/QK_fem.C, matlabcom/add_convex_to_mesh.C,
+	matlabcom/add_point_to_mesh.C, matlabcom/add_poly.C,
+	matlabcom/add_to_intset.C, matlabcom/assem_linear_elasticity.C,
+	matlabcom/assem_stockes_pressure_term.C, matlabcom/card_intset.C,
+	matlabcom/check.pl, matlabcom/clear_all_intset.C,
+	matlabcom/clear_all_mesh.C, matlabcom/clear_all_mesh_fem.C,
+	matlabcom/clear_all_poly.C, matlabcom/convex_product_structure.C,
+	matlabcom/convex_product_trans.C, matlabcom/curved_mesh.m,
+	matlabcom/curved_mesh_C.C, matlabcom/del_intset.C,
+	matlabcom/del_mesh.C, matlabcom/del_mesh_fem.C,
+	matlabcom/del_poly.C, matlabcom/draw_mesh.m, matlabcom/intro_doc.h,
+	matlabcom/list_intset.C, matlabcom/mat_elem.C,
+	matlabcom/mat_elem_base.C, matlabcom/mat_elem_grad.C,
+	matlabcom/mat_elem_hess.C, matlabcom/mat_elem_on_face.C,
+	matlabcom/mat_elem_product.C, matlabcom/mesh_from_pdetool.C,
+	matlabcom/mesh_to_edges.C, matlabcom/mesh_transformation.C,
+	matlabcom/mesh_translation.C, matlabcom/mul_poly.C,
+	matlabcom/new_intset.C, matlabcom/new_mesh.C,
+	matlabcom/new_mesh_fem.C, matlabcom/new_poly.C,
+	matlabcom/points_of_mesh.C, matlabcom/print_poly.C,
+	matlabcom/prismatic_mesh.C, matlabcom/product_fem.C,
+	matlabcom/set_finite_element.C, matlabcom/set_poly.C,
+	matlabcom/simplex_exact_integration.C,
+	matlabcom/simplex_structure.C, matlabcom/simplex_trans.C,
+	matlabcom/sup_convex_to_mesh.C, matlabcom/sup_point_to_mesh.C,
+	matlabcom/sup_to_intset.C, matlabint/Makefile,
+	matlabint/Makefile.am, matlabint/Makefile.in,
+	matlabint/matlabint.h, matlabint/matlabint_cvs.C,
+	matlabint/matlabint_cvs.h, matlabint/matlabint_intset.C,
+	matlabint/matlabint_intset.h, matlabint/matlabint_matelem.C,
+	matlabint/matlabint_matelem.h, matlabint/matlabint_matelemtype.C,
+	matlabint/matlabint_matelemtype.h, matlabint/matlabint_mesh.C,
+	matlabint/matlabint_mesh.h, matlabint/matlabint_mesh_fem.C,
+	matlabint/matlabint_mesh_fem.h, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h, matlabint/matlabint_pfem.C,
+	matlabint/matlabint_pfem.h, matlabint/matlabint_pfi.C,
+	matlabint/matlabint_pfi.h, matlabint/matlabint_pgt.C,
+	matlabint/matlabint_pgt.h, matlabint/matlabint_poly.C,
+	matlabint/matlabint_poly.h, matlabint/matlabint_smatrix.h: Initial
+	revision
+
+2002-04-26 16:59  renard
+
+	* AUTHORS, BUGS_AND_REMARKS, CHANGES, CONTAINS, COPYING, ChangeLog,
+	INSTALL, MODIFS, Makefile, Makefile.am, Makefile.in, NEWS, README,
+	TOBEDONE, aclocal.m4, config.log, config.status, configure,
+	configure.in, install-sh, libtool, config/Makefile,
+	config/Makefile.am, config/Makefile.in, config/aclocal.m4,
+	config/bootstrap, config/config.guess, config/config.sub,
+	config/depcomp, config/install-sh, config/ltmain.sh,
+	config/missing, config/mkinstalldirs, matlabcom/Makefile,
+	matlabcom/Makefile.am, matlabcom/Makefile.in,
+	matlabcom/Newton_Cotes_simplex_integration.C, matlabcom/PK_fem.C,
+	matlabcom/QK_fem.C, matlabcom/add_convex_to_mesh.C,
+	matlabcom/add_point_to_mesh.C, matlabcom/add_poly.C,
+	matlabcom/add_to_intset.C, matlabcom/assem_linear_elasticity.C,
+	matlabcom/assem_stockes_pressure_term.C, matlabcom/card_intset.C,
+	matlabcom/check.pl, matlabcom/clear_all_intset.C,
+	matlabcom/clear_all_mesh.C, matlabcom/clear_all_mesh_fem.C,
+	matlabcom/clear_all_poly.C, matlabcom/convex_product_structure.C,
+	matlabcom/convex_product_trans.C, matlabcom/curved_mesh.m,
+	matlabcom/curved_mesh_C.C, matlabcom/del_intset.C,
+	matlabcom/del_mesh.C, matlabcom/del_mesh_fem.C,
+	matlabcom/del_poly.C, matlabcom/draw_mesh.m, matlabcom/intro_doc.h,
+	matlabcom/list_intset.C, matlabcom/mat_elem.C,
+	matlabcom/mat_elem_base.C, matlabcom/mat_elem_grad.C,
+	matlabcom/mat_elem_hess.C, matlabcom/mat_elem_on_face.C,
+	matlabcom/mat_elem_product.C, matlabcom/mesh_from_pdetool.C,
+	matlabcom/mesh_to_edges.C, matlabcom/mesh_transformation.C,
+	matlabcom/mesh_translation.C, matlabcom/mul_poly.C,
+	matlabcom/new_intset.C, matlabcom/new_mesh.C,
+	matlabcom/new_mesh_fem.C, matlabcom/new_poly.C,
+	matlabcom/points_of_mesh.C, matlabcom/print_poly.C,
+	matlabcom/prismatic_mesh.C, matlabcom/product_fem.C,
+	matlabcom/set_finite_element.C, matlabcom/set_poly.C,
+	matlabcom/simplex_exact_integration.C,
+	matlabcom/simplex_structure.C, matlabcom/simplex_trans.C,
+	matlabcom/sup_convex_to_mesh.C, matlabcom/sup_point_to_mesh.C,
+	matlabcom/sup_to_intset.C, matlabint/Makefile,
+	matlabint/Makefile.am, matlabint/Makefile.in,
+	matlabint/matlabint.h, matlabint/matlabint_cvs.C,
+	matlabint/matlabint_cvs.h, matlabint/matlabint_intset.C,
+	matlabint/matlabint_intset.h, matlabint/matlabint_matelem.C,
+	matlabint/matlabint_matelem.h, matlabint/matlabint_matelemtype.C,
+	matlabint/matlabint_matelemtype.h, matlabint/matlabint_mesh.C,
+	matlabint/matlabint_mesh.h, matlabint/matlabint_mesh_fem.C,
+	matlabint/matlabint_mesh_fem.h, matlabint/matlabint_misc.C,
+	matlabint/matlabint_misc.h, matlabint/matlabint_pfem.C,
+	matlabint/matlabint_pfem.h, matlabint/matlabint_pfi.C,
+	matlabint/matlabint_pfi.h, matlabint/matlabint_pgt.C,
+	matlabint/matlabint_pgt.h, matlabint/matlabint_poly.C,
+	matlabint/matlabint_poly.h, matlabint/matlabint_smatrix.h: getfem
+	(matlab interface)
+
