@@ -3,22 +3,16 @@
 % parameters for program crack                                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% pde parameters :	        				      %%%%%
-% MU = 77.0;	        % Lamé coefficient.
-% LAMBDA = 107.0;   	% Lamé coefficient.
 
 MU = 1.0;	        % Lamé coefficient.
-LAMBDA = 1.0;           % Lamé coefficient.
+
 
 
 QUAD = 0;
 
-
-BIMATERIAL = 1;         % 1 : To enable the bimaterial case
+BIMATERIAL = 0;         % 1 : To enable the bimaterial case
 
 if BIMATERIAL
-  LAMBDA_UP = 10.0;
-  LAMBDA_DOWN = 1.0;
   MU_UP = 10.0;	
   MU_DOWN = 1.0;
 end
@@ -31,22 +25,12 @@ ERROR_TO_REF_SOL = 1; % 1 to compute errors with respect to the reference soluti
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-if (~QUAD) 
-  MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-else
-  % MESH_TYPE = 'GT_LINEAR_QK(2)';
-  MESH_TYPE = 'GT_QK(2, 1)';
-end;
-
 NX =    10;	          % space step.
-
-
-
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
-
 if (~QUAD)
+  MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
   %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
   FEM_TYPE = 'FEM_PK(2, 1)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
@@ -54,11 +38,21 @@ if (~QUAD)
   FEM_TYPE_P = 'FEM_PK(2,1)'; 
   MORTAR_FEM_TYPE = FEM_TYPE;
 else
+  % MESH_TYPE = 'GT_LINEAR_QK(2)';
+  MESH_TYPE = 'GT_QK(2, 1)';
   FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
   DATA_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 1), 5)';
   FEM_TYPE_P = 'FEM_QK(2,1)'; 
   MORTAR_FEM_TYPE = FEM_TYPE;
+end;
+
+
+
+if (~QUAD)
+
+else
+ 
 end;
 
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)';  % Discontinuous P1 for triangles

@@ -101,7 +101,7 @@ struct crack_problem {
   getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
  
   scalar_type residual;      /* max residual for the iterative solvers      */
-  bool mixed_pressure, add_crack;
+  bool mixed_pressure;
   unsigned dir_with_mult;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
@@ -189,7 +189,6 @@ void crack_problem::init(void) {
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
 
-  add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
   enrichment_option = enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
 							     "Enrichment option"));
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
@@ -321,8 +320,7 @@ void crack_problem::init(void) {
   
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
-  if (add_crack) { mls.add_level_set(ls2); mls.add_level_set(ls3); }
-
+  
   mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_pre_mortar.set_finite_element(mesh.convex_index(), 
@@ -453,22 +451,6 @@ bool crack_problem::solve(plain_vector &U) {
     ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
   }
   ls.touch();
-
-  if (add_crack) {
-    ls2.reinit();
-    for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
-      ls2.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 1)[0];
-      ls2.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 1)[1];
-    }
-    ls2.touch();
-    
-    ls3.reinit();
-    for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
-      ls3.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[0];
-      ls3.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[1];
-    }
-    ls3.touch(); 
-  }
 
   mls.adapt();
   mim.adapt();
