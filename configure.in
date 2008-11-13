@@ -715,6 +715,7 @@ AC_CONFIG_FILES(\
 	contrib/mixed_elastostatic/Makefile \
 	contrib/contact_grd_trans/Makefile \
 	contrib/mixed_dynamic_friction/Makefile \
+	contrib/xfem_large_strain/Makefile \
 	contrib/xfem_contact/Makefile \
 	contrib/crack_plate/Makefile \
 	contrib/inter_element_test/Makefile \
