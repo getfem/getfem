@@ -57,7 +57,7 @@ end;
 
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)';  % Discontinuous P1 for triangles
 
-MIXED_PRESSURE=0;       % Mixed version or not.
+MIXED_PRESSURE=1;       % Mixed version or not.
 DIRICHLET_VERSION = 2;
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
@@ -76,7 +76,7 @@ ADDITIONAL_CRACK = 0;
 %GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 5;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
@@ -97,15 +97,13 @@ SPIDER_RADIUS =  0.4;
 SPIDER_NR = 10;               % size of the cartesian mesh in r for spider fem
 SPIDER_NTHETA = 10;           % size of the cartesian mesh in theta for spider fem
 SPIDER_K=1;                   % order of the  spider fem 
-SPIDER_BIMAT_ENRICHMENT = 1;  % 0 for a sqrt spider enrichment
+SPIDER_BIMAT_ENRICHMENT = 0;  % 0 for a sqrt spider enrichment
                               % 1 for sqrt(r)cos(ln(r)) and sqrt(r)sin(ln(r)) spider enrichment
                               
 
 RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'crack';     % Root of data files.
+ROOTFILENAME = 'xfem_large_strain';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
 
-EXACT_SOL_NUM=1 % 1 for mode I, 2 for mode II, 6 for a combination
-                % of modes

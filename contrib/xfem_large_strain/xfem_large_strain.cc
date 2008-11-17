@@ -40,7 +40,16 @@
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
 
-#include "crack_exact_solution.h"
+/* some Getfem++ types that we will be using */
+using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
+using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
+using bgeot::scalar_type; /* = double */
+using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type; 
+using bgeot::short_type;
+using bgeot::base_matrix; /* small dense matrix. */
+
+
 
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
@@ -87,18 +96,14 @@ struct crack_problem {
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   // getfem::mesh_fem& mf_u() { return mf_us; }
   
-  scalar_type lambda, mu;    /* Lame coefficients.                */
+  scalar_type mu;            /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
-#ifdef VALIDATE_XFEM
-  crack_exact_solution exact_sol;
-#endif
   
   
   int bimaterial;           /* For bimaterial interface fracture */
-  double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
+  double mu_up, mu_down;  /*Lame coeff for bimaterial case*/
   getfem::level_set ls;      /* The two level sets defining the crack.       */
-  getfem::level_set ls2, ls3; /* The two level-sets defining the add. cracks.*/
  
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure;
@@ -132,11 +137,7 @@ struct crack_problem {
 			mf_product(mf_partition_of_unity, mf_sing_u),
 
 			mf_u_sum(mesh), mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
-#ifdef VALIDATE_XFEM
-			exact_sol(mesh), 
-#endif
-			ls(mesh, 1, true), ls2(mesh, 1, true),
-			ls3(mesh, 1, true) {}
+			ls(mesh, 1, true) {}
 
 };
 
@@ -197,18 +198,10 @@ void crack_problem::init(void) {
 
   bimaterial = int(PARAM.int_value("BIMATERIAL", "bimaterial interface crack"));
   
+  mu = PARAM.real_value("MU", "Lame coefficient mu"); 
   if (bimaterial == 1){
-    mu = PARAM.real_value("MU", "Lame coefficient mu"); 
     mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
     mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
-    lambda_up = PARAM.real_value("LAMBDA_UP", "Lame Coef");
-    lambda_down = PARAM.real_value("LAMBDA_DOWN", "Lame Coef");
-    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-  }
-  else{
-
-    mu = PARAM.real_value("MU", "Lame coefficient mu");
-    lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   }
   
   
@@ -227,13 +220,11 @@ void crack_problem::init(void) {
   */
   
   if (spider.bimat_enrichment == 1){
-    scalar_type nu1 = (lambda_up) / (2.*lambda_up + mu_up);
-    scalar_type nu2 = (lambda_down) / (2.*lambda_down + mu_down);
+    scalar_type nu1 = 10;
+    scalar_type nu2 = 3;
     scalar_type kappa1 = 3. - 4. * nu1;
     scalar_type kappa2 = 3. - 4. * nu2;
-    if (lambda_up == lambda_down && mu_up == mu_down)
-      cout << "ERROR... Connot use the spider bimaterial enrichment with an isotropic homogenuous material (beta = 0/0!!!)... You should either use a bimaterial or disable the spider bimaterial enrichment" << endl;
-    
+        
     scalar_type beta = (mu_up*(kappa2-1.) - mu_down*(kappa1-1.)) / (mu_up*(kappa2+1.) - mu_down*(kappa1+1.));
       spider.epsilon = 1./(2.*M_PI) * log( (1.-beta) / (1.+beta) );
   
@@ -298,8 +289,6 @@ void crack_problem::init(void) {
 
   reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test")); 
 
-  unsigned EXACT_SOL_NUM = unsigned(PARAM.int_value("EXACT_SOL_NUM", "Exact solution function number")); 
-  
 
   cutoff_func = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
 
@@ -396,11 +385,7 @@ void crack_problem::init(void) {
       }
     }
     else {
-      
-#ifdef VALIDATE_XFEM
-      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
-#else
-      base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+      un = mesh.normal_of_face_of_convex(i.cv(), i.f());
       un /= gmm::vect_norm2(un);
       if (un[0] - 1.0 < -1.0E-7) { // new Neumann face
 	mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
@@ -408,15 +393,10 @@ void crack_problem::init(void) {
 	cout << "normal = " << un << endl;
 	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
       }
-#endif
     }
   }
   
   
-  
-#ifdef VALIDATE_XFEM
-  exact_sol.init(EXACT_SOL_NUM, lambda, mu, ls);
-#endif
 }
 
 
@@ -676,12 +656,12 @@ bool crack_problem::solve(plain_vector &U) {
   
   
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u(), mixed_pressure ? 0.0 : lambda, mu);
+    ELAS(mim, mf_u(), mixed_pressure ? 0.0 : 0.0, mu);
 
   
   if(bimaterial == 1){
     cout<<"______________________________________________________________________________"<<endl;
-    cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
+    cout<<"CASE OF BIMATERIAL CRACK  with mu_up = "<<mu_up<<" and mu_down = "<<mu_down<<endl;
     cout<<"______________________________________________________________________________"<<endl;
     std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
     std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
@@ -690,11 +670,11 @@ bool crack_problem::solve(plain_vector &U) {
     
     for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
       if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
-	bi_lambda[ite] = lambda_up;
+	bi_lambda[ite] = 0;
 	bi_mu[ite] = mu_up;
       }
 	else{
-	  bi_lambda[ite] = lambda_down;
+	  bi_lambda[ite] = 0;
 	  bi_mu[ite] = mu_down;
 	}
     }
@@ -711,72 +691,26 @@ bool crack_problem::solve(plain_vector &U) {
   if (mixed_pressure) {
     getfem::mdbrick_linear_incomp<> *incomp
       = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
-    incomp->penalization_coeff().set(1.0/lambda);
+    // incomp->penalization_coeff().set(1.0/lambda);
     pINCOMP = incomp;
   } else pINCOMP = &ELAS;
 
-  // Defining the volumic source term.
-  plain_vector F(nb_dof_rhs * N);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  
-  // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
-
   // Defining the Neumann condition right hand side.
-  gmm::clear(F);
-  
+  plain_vector F(nb_dof_rhs * N);
+
   // Neumann condition brick.
   
-  getfem::mdbrick_abstract<> *pNEUMANN;
-  
-  
-  if(bimaterial ==  1){
-    //down side
-    for(size_type i = 1; i<F.size(); i=i+2) 
-      F[i] = -0.4;
-    for(size_type i = 0; i<F.size(); i=i+2) 
-      F[i] = -0.2;
-  }
-  
-  getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);   
-  //left side (crack opening side)
-  gmm::clear(F);
+  //down side
   for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i] = 0.;
+    F[i] = -0.4;
   for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = -0.;
-  getfem::mdbrick_source_term<> NEUMANN_HOM(NEUMANN, mf_rhs, F,NEUMANN_HOMOGENE_BOUNDARY_NUM);
-   
-    //upper side
-  gmm::clear(F);
-  for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i] = 0.4;
-  for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = 0.;
-  getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
+    F[i] = -0.2;
   
-  if (bimaterial == 1)
-    pNEUMANN = & NEUMANN1;
-  else
-    pNEUMANN = & NEUMANN;
-  
-  
-  
-  //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
-  //assert(toto.mf.nb_dof() == 1);
+  getfem::mdbrick_source_term<> NEUMANN(*pINCOMP, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> DIRICHLET(*pNEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
-  
-  if (bimaterial == 1)
-    DIRICHLET.rhs().set(exact_sol.mf,0);
-  else {
-#ifdef VALIDATE_XFEM
-    DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-#endif
-  }
+  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
+    
   DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
   getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
@@ -1004,16 +938,6 @@ int main(int argc, char *argv[]) {
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
 
-#ifdef VALIDATE_XFEM
-      p.exact_sol.mf.set_qdim(dim_type(Q));
-      assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
-      plain_vector EXACT(mf_refined.nb_dof());
-      getfem::interpolation(p.exact_sol.mf, mf_refined, 
-			    p.exact_sol.U, EXACT);
-
-      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
-#endif
-
       if (p.PARAM.int_value("VTK_EXPORT")) {
 	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
 	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
@@ -1026,13 +950,6 @@ int main(int argc, char *argv[]) {
 	plain_vector D(mf_refined_vm.nb_dof() * Q), 
 	  DN(mf_refined_vm.nb_dof());
 	
-#ifdef VALIDATE_XFEM
-	getfem::interpolation(mf_refined, mf_refined_vm, DIFF, D);
-	for (unsigned i=0; i < DN.size(); ++i) {
-	  DN[i] = gmm::vect_norm2(gmm::sub_vector(D, gmm::sub_interval(i*Q, Q)));
-	}
-#endif
-
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
 			       p.PARAM.int_value("VTK_EXPORT")==1);
@@ -1050,31 +967,6 @@ int main(int argc, char *argv[]) {
 				    line_x0, line_dir, line_nb_points,
 				    "von_mises_on_line.data");
 
-#ifdef VALIDATE_XFEM
-
-	plain_vector VM_EXACT(mf_refined_vm.nb_dof());
-
-
-	/* getfem::mesh_fem_global_function mf(mcut_refined,Q);
-	   std::vector<getfem::pglobal_function> cfun(4);
-	   for (unsigned j=0; j < 4; ++j)
-	   cfun[j] = getfem::isotropic_crack_singular_2D(j, p.ls);
-	   mf.set_functions(cfun);
-	   getfem::interpolation_von_mises(mf, mf_refined_vm, p.exact_sol.U,
-	   VM_EXACT);
-	*/
-
-
-	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, EXACT, VM_EXACT);
-	getfem::vtk_export exp2("crack_exact.vtk");
-	exp2.exporting(mf_refined);
-	exp2.write_point_data(mf_refined_vm, VM_EXACT, "exact von mises stress");
-	exp2.write_point_data(mf_refined, EXACT, "reference solution");
-	
-	export_interpolated_on_line(mf_refined_vm, VM_EXACT, 
-				    line_x0, line_dir, line_nb_points,
-				    "von_mises_on_line_exact.data");
-#endif
 	
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f  "
@@ -1122,31 +1014,6 @@ int main(int argc, char *argv[]) {
 	
       }
       
-#ifdef VALIDATE_XFEM
-
-      else {
-	cout << "L2 ERROR:"<< getfem::asm_L2_dist(p.mim, p.mf_u(), U,
-						  p.exact_sol.mf, p.exact_sol.U)
-	     << endl << "H1 ERROR:"
-	     << getfem::asm_H1_dist(p.mim, p.mf_u(), U,
-				    p.exact_sol.mf, p.exact_sol.U) << "\n";
-	
-      }
-
-      cout << "L2 norm of the solution:"  << getfem::asm_L2_norm(p.mim,p.mf_u(),U)<<endl;
-      cout << "H1 norm of the solution:"  << getfem::asm_H1_norm(p.mim,p.mf_u(),U)<<endl;
-      
-      
-
-      /* cout << "OLD ERROR L2:" 
-	 << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
-	 << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,
-	 EXACT,mf_refined,W)  << "\n";
-	 
-	 cout << "ex = " << p.exact_sol.U << "\n";
-	 cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
-      */
-#endif
     }
 
   }
