@@ -17,8 +17,8 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 
-REFINEMENT_RADIUS = 0.; %REF: 0.3;  % 0 for no refinement
-REFINEMENT_PROCESS = 3;  % nb of desired refinement steps
+REFINEMENT_RADIUS = 0.0; %REF: 0.3;  % 0 for no refinement
+REFINEMENT_PROCESS = 10;  % nb of desired refinement steps
 
 REFERENCE_TEST = 0; % 1 to compute a reference solution to be exported into files
 ERROR_TO_REF_SOL = 1; % 1 to compute errors with respect to the reference solution
@@ -31,8 +31,8 @@ MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-  %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-  FEM_TYPE = 'FEM_PK(2, 1)';  % PK element %REF: P3
+  FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
+  % FEM_TYPE = 'FEM_PK(2, 2)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   FEM_TYPE_P = 'FEM_PK(2,1)'; 

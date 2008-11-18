@@ -64,8 +64,9 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 struct crack_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, NEUMANN_BOUNDARY_NUM1=2, NEUMANN_HOMOGENE_BOUNDARY_NUM=3, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN1_BOUNDARY_NUM = 1, NEUMANN2_BOUNDARY_NUM=2, NEUMANN3_BOUNDARY_NUM=3, NEUMANN4_BOUNDARY_NUM=4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
   getfem::mesh mesh;  /* the mesh */
+  getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_pre_u, mf_pre_mortar;
@@ -76,7 +77,10 @@ struct crack_problem {
   getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
   
-  base_small_vector translation;
+  getfem::mesh_fem mf_pre_p; /* mesh_fem for the pressure for mixed form     */
+  getfem::mesh_fem_level_set mfls_p;   /* mesh_fem for the pressure enriched with H.   */
+
+  base_small_vector cracktip;
 
   struct spider_param {
     getfem::spider_fem *fem;
@@ -98,12 +102,10 @@ struct crack_problem {
   
   scalar_type mu;            /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   
   
   int bimaterial;           /* For bimaterial interface fracture */
   double mu_up, mu_down;  /*Lame coeff for bimaterial case*/
-  getfem::level_set ls;      /* The two level sets defining the crack.       */
  
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure;
@@ -129,15 +131,16 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), 
+  crack_problem(void) : ls(mesh, 1, true), mls(mesh), mim(mls), 
 			mf_pre_u(mesh), mf_pre_mortar(mesh), mf_mult(mesh),
-			mfls_u(mls, mf_pre_u), mfls_mortar(mls, mf_pre_mortar), 
+			mfls_u(mls, mf_pre_u), mfls_mortar(mls, mf_pre_mortar),	
 			mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
 
-			mf_u_sum(mesh), mf_us(mesh), mf_rhs(mesh), mf_p(mesh),
-			ls(mesh, 1, true) {}
+			mf_u_sum(mesh), mf_pre_p(mesh), mfls_p(mls, mf_pre_p),
+			mf_us(mesh), mf_rhs(mesh)
+ {}
 
 };
 
@@ -232,9 +235,6 @@ void crack_problem::init(void) {
     //spider.epsilon = PARAM.real_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment");
   }
   
-  translation.resize(2); 
-  translation[0] =0.5;
-  translation[1] =0.;
 
   /* First step : build the mesh */
   bgeot::pgeometric_trans pgt = 
@@ -248,22 +248,22 @@ void crack_problem::init(void) {
   base_small_vector tt(N); tt[1] = -0.5;
   mesh.translation(tt); 
   
+  cracktip.resize(2); // Coordonnée du fond de fissure
+  cracktip[0] = 0.5;
+  cracktip[1] = 0.;
 
   scalar_type refinement_radius;
   refinement_radius = PARAM.real_value("REFINEMENT_RADIUS","Refinement Radius");
   size_type refinement_process;
   refinement_process = PARAM.int_value("REFINEMENT_PROCESS","Refinement process");
-  dal::bit_vector conv_to_refine;
-  size_type ref = 1;  
-  if (refinement_radius > 0){
-    while(ref <= refinement_process){
-      conv_to_refine.clear();
+  if (refinement_radius > 0) {
+    for (size_type ref = 0; ref < refinement_process; ++ref){
+      dal::bit_vector conv_to_refine;
       for(dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
-      for(size_type j=0; j < 3; ++j)
-	if(fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][0])<refinement_radius 
-	   && fabs(mesh.points()[mesh.ind_points_of_convex(i)[j]][1])<refinement_radius){
-	  conv_to_refine.add(i);
-	}
+	for(size_type j=0; j < 3; ++j)
+	  if(gmm::vect_dist2(mesh.points_of_convex(i)[j],cracktip)
+	     < refinement_radius )
+	    conv_to_refine.add(i);
       }
       mesh.Bank_refine(conv_to_refine);
       
@@ -276,6 +276,7 @@ void crack_problem::init(void) {
   cout<<"refining process complete." << endl ;
   }
 
+  mesh.write_to_file("toto.mesh");
 
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
@@ -320,7 +321,7 @@ void crack_problem::init(void) {
   
 //   if (enrichment_option == 3 || enrichment_option == 4) {
 //     spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-// 				    spider_Ntheta, spider_K, translation,
+// 				    spider_Ntheta, spider_K, cracktip,
 // 				    theta0);
 //     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
 //     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
@@ -335,7 +336,7 @@ void crack_problem::init(void) {
   dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSINO"));
   if (mixed_pressure) {
     std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
-    mf_p.set_finite_element(mesh.convex_index(),
+    mf_pre_p.set_finite_element(mesh.convex_index(),
 			    getfem::fem_descriptor(FEM_TYPE_P));
   }
 
@@ -361,37 +362,25 @@ void crack_problem::init(void) {
     
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if(bimaterial == 1) {
-      
-      if (un[0]  > 1.0E-7 ) { // new Neumann face
-	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
-      } else {
-	if (un[1]  > 1.0E-7 ) {
+    
+    if (un[0]  > 1.0E-7 ) { // new Neumann face
+      mesh.region(NEUMANN1_BOUNDARY_NUM).add(i.cv(), i.f());
+    } else {
+      if (un[1]  > 1.0E-7 ) {
+	cout << "normal = " << un << endl;
+	mesh.region(NEUMANN2_BOUNDARY_NUM).add(i.cv(), i.f());
+      }
+      else {
+	if (un[1]  < -1.0E-7 ) {
 	  cout << "normal = " << un << endl;
-	  mesh.region(NEUMANN_BOUNDARY_NUM1).add(i.cv(), i.f());
+	  mesh.region(NEUMANN3_BOUNDARY_NUM).add(i.cv(), i.f());
 	}
 	else {
-	  if (un[1]  < -1.0E-7 ) {
+	  if (un[0]  < -1.0E-7 ) {
 	    cout << "normal = " << un << endl;
-	    mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
-	  }
-	  else {
-	    if (un[0]  < -1.0E-7 ) {
-	      cout << "normal = " << un << endl;
-	      mesh.region(NEUMANN_HOMOGENE_BOUNDARY_NUM).add(i.cv(), i.f());
-	    }
+	    mesh.region(NEUMANN4_BOUNDARY_NUM).add(i.cv(), i.f());
 	  }
 	}
-      }
-    }
-    else {
-      un = mesh.normal_of_face_of_convex(i.cv(), i.f());
-      un /= gmm::vect_norm2(un);
-      if (un[0] - 1.0 < -1.0E-7) { // new Neumann face
-	mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
-      } else {
-	cout << "normal = " << un << endl;
-	mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
       }
     }
   }
@@ -435,10 +424,29 @@ bool crack_problem::solve(plain_vector &U) {
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
+  mfls_p.adapt();
   mfls_mortar.adapt(); mfls_mortar.set_qdim(2);
 
   bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
  
+  // find the dofs on the upper right and lower right corners
+
+  scalar_type d1 = 1.0, d2 = 1.0;
+  size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
+  base_node corner1 = base_node(1.0, -0.5);
+  base_node corner2 = base_node(1.0, 0.5);
+  for (size_type i = 0; i < mf_u().nb_dof(); i+=N) {
+    scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_dof(i), corner1);
+    if (dd1 < d1) { icorner1 = i; d1 = dd1; }
+    scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_dof(i), corner2);
+    if (dd2 < d2) { icorner2 = i; d2 = dd2; }
+  }
+
+  GMM_ASSERT1(((d1 < 1E-8) && (d2 < 1E-8)),
+	      "Upper right or lower right corners not found");
+
+
+
   cout << "Setting up the singular functions for the enrichment\n";
 
   std::vector<getfem::pglobal_function> vfunc(4);
@@ -515,7 +523,7 @@ bool crack_problem::solve(plain_vector &U) {
   if (enrichment_option == SPIDER_FEM_ALONE || 
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
     spider.fem = new getfem::spider_fem(spider.radius, mim, spider.Nr,
-					spider.Ntheta, spider.K, translation,
+					spider.Ntheta, spider.K, cracktip,
 					spider.theta0, spider.bimat_enrichment,
 					spider.epsilon);
     mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
@@ -563,8 +571,8 @@ bool crack_problem::solve(plain_vector &U) {
 	   If all the nodes are inside the enrichment area,
 	   then the element is completly inside the area too */ 
 	for (unsigned j=0; j < mesh.nb_points_of_convex(cv); ++j) {
-	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] - translation[0]) + 
-	      gmm::sqr(mesh.points_of_convex(cv)[j][1] - translation[1]) > 
+	  if (gmm::sqr(mesh.points_of_convex(cv)[j][0] - cracktip[0]) + 
+	      gmm::sqr(mesh.points_of_convex(cv)[j][1] - cracktip[1]) > 
 	      gmm::sqr(enr_area_radius)) {
 	    in_area = false; break;
 	  }
@@ -621,7 +629,7 @@ bool crack_problem::solve(plain_vector &U) {
   U.resize(mf_u().nb_dof());
 
 
-  if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
+  if (mixed_pressure) cout << "Number of dof for P: " << mfls_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   unsigned Q = mf_u().get_qdim();
@@ -690,7 +698,7 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure) {
     getfem::mdbrick_linear_incomp<> *incomp
-      = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
+      = new getfem::mdbrick_linear_incomp<>(ELAS, mfls_p);
     // incomp->penalization_coeff().set(1.0/lambda);
     pINCOMP = incomp;
   } else pINCOMP = &ELAS;
@@ -701,15 +709,33 @@ bool crack_problem::solve(plain_vector &U) {
   // Neumann condition brick.
   
   //down side
-  for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i] = -0.4;
-  for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = -0.2;
+  for(size_type i = 1; i < F.size(); i=i+N) F[i] = 1;
+  for(size_type i = 0; i < F.size(); i=i+2) F[i] = 1;
   
-  getfem::mdbrick_source_term<> NEUMANN(*pINCOMP, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  getfem::mdbrick_source_term<> NEUMANN1(*pINCOMP, mf_rhs, F,
+					 NEUMANN1_BOUNDARY_NUM);
+  gmm::scale(F, -1.0);
+  getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F,
+					 NEUMANN2_BOUNDARY_NUM);
+  gmm::scale(F, -1.0);
+  getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F,
+					 NEUMANN3_BOUNDARY_NUM);
+  gmm::scale(F, -1.0);
+  getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F,
+					 NEUMANN4_BOUNDARY_NUM);
   
+
+  getfem::mdbrick_constraint<> KILL_RIGID_MOTIONS(NEUMANN4);
+  GMM_ASSERT1(N==2, "To be corrected for 3D computation");
+  sparse_matrix BB(3, mf_u().nb_dof());
+  BB(0, icorner1) = 1.0;
+  BB(0, icorner1+1) = 1.0;
+  BB(0, icorner2) = 1.0;
+  KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
+  KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
+
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
+  getfem::mdbrick_Dirichlet<> DIRICHLET(KILL_RIGID_MOTIONS, DIRICHLET_BOUNDARY_NUM, mf_mult);
     
   DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
@@ -879,12 +905,15 @@ int main(int argc, char *argv[]) {
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
       getfem::mesh_fem mf(mcut, dim_type(Q));
-      mf.set_classical_discontinuous_finite_element(2, 0.001);
+      mf.set_classical_discontinuous_finite_element(2, 0.00001);
       // mf.set_finite_element
       //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
       plain_vector V(mf.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf, U, V);
+
+      mf.write_to_file(p.datafilename + ".meshfem", true);
+      gmm::vecsave(p.datafilename + ".U", V);
 
       getfem::stored_mesh_slice sl;
       getfem::mesh mcut_refined;
