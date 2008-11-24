@@ -1,5 +1,9 @@
 #!/bin/bash
 # http://sources.redhat.com/automake/automake.html#Local-Macros
+
+# when upgrading libtool change :
+#   ltmain.sh with /usr/share/libtool/config/ltmain.sh
+
 function die {
       echo "ERROR: $1";
           exit 1
