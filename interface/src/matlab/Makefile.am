@@ -99,6 +99,8 @@ endif !BUILDMEXRPC
 endif !USE_MINGW_MEX
 endif 
 
+# -largeArrayDims
+
 M_FILES = \
 	Contents.m \
 	gf_asm_pdetoolbc.m \

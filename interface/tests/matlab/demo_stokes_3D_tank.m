@@ -55,7 +55,7 @@ if (compute),
   set(b2, 'param', 'source_term', mfd, get(mfd, 'eval', {0;-10;0}));
   DIRICHLET_TYPE = 'penalized';
   bconst = gfMdBrick('constraint', b2, 'augmented', 1);
-  set(bconst, 'constraints', sparse([ones(1, get(mfp, 'nbdof'))]), 0);
+  set(bconst, 'constraints', [ones(1, get(mfp, 'nbdof'))], 0);
   bdir1 = gfMdBrick('dirichlet', bconst   , 1, mfu, DIRICHLET_TYPE);
   bdir2 = gfMdBrick('dirichlet', bdir1, 2, mfu, DIRICHLET_TYPE);
   bdir3 = gfMdBrick('dirichlet on normal component', bdir2, 3, mfd, DIRICHLET_TYPE);
