@@ -255,9 +255,12 @@ void crack_problem::init(void) {
   cracktip[1] = 0.;
 
   scalar_type refinement_radius;
-  refinement_radius = PARAM.real_value("REFINEMENT_RADIUS","Refinement Radius");
+  refinement_radius
+    = PARAM.real_value("REFINEMENT_RADIUS", "Refinement Radius");
   size_type refinement_process;
-  refinement_process = PARAM.int_value("REFINEMENT_PROCESS","Refinement process");
+  refinement_process
+    = PARAM.int_value("REFINEMENT_PROCESS", "Refinement process");
+  
   if (refinement_radius > 0) {
     for (size_type ref = 0; ref < refinement_process; ++ref){
       dal::bit_vector conv_to_refine;
@@ -269,13 +272,11 @@ void crack_problem::init(void) {
       }
       mesh.Bank_refine(conv_to_refine);
       
-      ref = ref + 1; 
       refinement_radius = refinement_radius/3.;
-      if(refinement_radius > 1e-16 )
-	cout<<"refining process step " << ref << "... refining "<< conv_to_refine.size() <<" convexes..." << endl ; 
-      
+      cout <<"refining process step " << ref << " ... refining "
+	   << conv_to_refine.size() <<" convexes..." << endl;
     }
-  cout<<"refining process complete." << endl ;
+    cout << "refinement process completed." << endl ;
   }
 
   mesh.write_to_file("toto.mesh");
@@ -335,7 +336,8 @@ void crack_problem::init(void) {
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
-  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSINO"));
+  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSION",
+					   "Version of Dirichlet"));
   if (mixed_pressure) {
     std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
     mf_pre_p.set_finite_element(mesh.convex_index(),
@@ -803,20 +805,17 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   // Generic solve.
   cout << "Total number of variables : " << final_model->nb_dof() << endl;
   getfem::standard_model_state MS(*final_model);
-  gmm::iteration iter(residual, 1, 40000);
+  gmm::iteration iter(residual, 2, 40000);
   cout << "Solving..." << endl;
-  getfem::standard_solve(MS, *final_model, iter);
+  getfem::standard_solve(MS, *final_model, iter,
+			 getfem::select_linear_solver(*final_model,"superlu"));
   cout << "Solving... done" << endl;
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
-  if (mixed_pressure) {
-    gmm::copy(incomp->get_pressure(MS), P);
-  }
-  
+  if (mixed_pressure)  gmm::copy(incomp->get_pressure(MS), P);
 
   
-  if(reference_test)
-    {
+  if (reference_test) {
       cout << "Exporting reference solution...";
       dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
       getfem::mesh_fem mf_refined(mesh, dim_type(N));
@@ -884,17 +883,12 @@ int main(int argc, char *argv[]) {
   cout << " p.mfls_p.nb_dof() = " << p.mfls_p.nb_dof() << endl;
   if (!p.solve(U, P)) GMM_ASSERT1(false,"Solve has failed");
   
-  //        for (size_type i = 4; i < U.size(); ++i)
-  //U[i] = 0;
-  //cout << "The solution" << U ;
-  gmm::vecsave("crack.U", U);
-  cout << "vecsave done"<<endl;
   { 
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
       getfem::mesh_fem mf(mcut, dim_type(Q));
-      mf.set_classical_discontinuous_finite_element(2, 0.000001);
+      mf.set_classical_discontinuous_finite_element(2, 1E-7);
       plain_vector V(mf.nb_dof());
       getfem::interpolation(p.mf_u(), mf, U, V);
 
@@ -902,7 +896,7 @@ int main(int argc, char *argv[]) {
       gmm::vecsave(p.datafilename + ".U", V);
 
       getfem::mesh_fem mf_p(mcut);
-      mf_p.set_classical_discontinuous_finite_element(2, 0.000001);
+      mf_p.set_classical_discontinuous_finite_element(2, 1E-7);
       plain_vector PP(mf_p.nb_dof());
 
       getfem::interpolation(p.mfls_p, mf_p, P, PP);

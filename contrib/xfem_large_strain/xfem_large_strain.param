@@ -6,8 +6,6 @@
 
 MU = 10.0;	        % Lamé coefficient.
 
-
-
 QUAD = 0;
 
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case
@@ -17,15 +15,15 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 
-REFINEMENT_RADIUS = 0.3; %REF: 0.3;  % 0 for no refinement
-REFINEMENT_PROCESS = 20;  % nb of desired refinement steps
+REFINEMENT_RADIUS = 0.0; %REF: 0.3;  % 0 for no refinement
+REFINEMENT_PROCESS = 7;  % nb of desired refinement steps
 
 REFERENCE_TEST = 0; % 1 to compute a reference solution to be exported into files
 ERROR_TO_REF_SOL = 1; % 1 to compute errors with respect to the reference solution
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =   160;	          % space step.
+NX =   10;	          % space step.
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
@@ -47,14 +45,6 @@ else
   MORTAR_FEM_TYPE = FEM_TYPE;
 end;
 
-
-
-if (~QUAD)
-
-else
- 
-end;
-
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)';  % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=1;       % Mixed version or not.
@@ -69,14 +59,12 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
-ADDITIONAL_CRACK = 0;
-
 %Enable the following two lines to use the precalculated solution as enrichement 
 %GLOBAL_FUNCTION_MF = "bimaterial_crack12.meshfem"
 %GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 0;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
