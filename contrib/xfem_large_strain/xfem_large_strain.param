@@ -4,7 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-MU = 1.0;	        % Lamé coefficient.
+MU = 10.0;	        % Lamé coefficient.
 
 
 
@@ -17,15 +17,15 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 
-REFINEMENT_RADIUS = 0.0; %REF: 0.3;  % 0 for no refinement
-REFINEMENT_PROCESS = 10;  % nb of desired refinement steps
+REFINEMENT_RADIUS = 0.3; %REF: 0.3;  % 0 for no refinement
+REFINEMENT_PROCESS = 20;  % nb of desired refinement steps
 
 REFERENCE_TEST = 0; % 1 to compute a reference solution to be exported into files
 ERROR_TO_REF_SOL = 1; % 1 to compute errors with respect to the reference solution
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =    10;	          % space step.
+NX =   160;	          % space step.
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
@@ -58,7 +58,7 @@ end;
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)';  % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=1;       % Mixed version or not.
-DIRICHLET_VERSION = 2;
+DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
@@ -105,5 +105,5 @@ RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'xfem_large_strain';     % Root of data files.
-VTK_EXPORT = 2 % export solution to a .vtk file ?
+VTK_EXPORT = 0 % 2 export solution to a .vtk file ?
 

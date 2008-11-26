@@ -79,6 +79,8 @@ struct crack_problem {
   
   getfem::mesh_fem mf_pre_p; /* mesh_fem for the pressure for mixed form     */
   getfem::mesh_fem_level_set mfls_p;   /* mesh_fem for the pressure enriched with H.   */
+ 
+
 
   base_small_vector cracktip;
 
@@ -129,7 +131,7 @@ struct crack_problem {
 
   bgeot::md_param PARAM;
 
-  bool solve(plain_vector &U);
+  bool solve(plain_vector &U, plain_vector &P);
   void init(void);
   crack_problem(void) : ls(mesh, 1, true), mls(mesh), mim(mls), 
 			mf_pre_u(mesh), mf_pre_mortar(mesh), mf_mult(mesh),
@@ -363,26 +365,10 @@ void crack_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     
-    if (un[0]  > 1.0E-7 ) { // new Neumann face
-      mesh.region(NEUMANN1_BOUNDARY_NUM).add(i.cv(), i.f());
-    } else {
-      if (un[1]  > 1.0E-7 ) {
-	cout << "normal = " << un << endl;
-	mesh.region(NEUMANN2_BOUNDARY_NUM).add(i.cv(), i.f());
-      }
-      else {
-	if (un[1]  < -1.0E-7 ) {
-	  cout << "normal = " << un << endl;
-	  mesh.region(NEUMANN3_BOUNDARY_NUM).add(i.cv(), i.f());
-	}
-	else {
-	  if (un[0]  < -1.0E-7 ) {
-	    cout << "normal = " << un << endl;
-	    mesh.region(NEUMANN4_BOUNDARY_NUM).add(i.cv(), i.f());
-	  }
-	}
-      }
-    }
+    if (un[0]  > 0.5) mesh.region(NEUMANN1_BOUNDARY_NUM).add(i.cv(), i.f());
+    if (un[1]  > 0.5) mesh.region(NEUMANN2_BOUNDARY_NUM).add(i.cv(), i.f());
+    if (un[0]  < -0.5) mesh.region(NEUMANN3_BOUNDARY_NUM).add(i.cv(), i.f());
+    if (un[1]  < -0.5) mesh.region(NEUMANN4_BOUNDARY_NUM).add(i.cv(), i.f());
   }
   
   
@@ -410,7 +396,7 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   return res;
 }
 
-bool crack_problem::solve(plain_vector &U) {
+bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();  
@@ -428,23 +414,6 @@ bool crack_problem::solve(plain_vector &U) {
   mfls_mortar.adapt(); mfls_mortar.set_qdim(2);
 
   bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
- 
-  // find the dofs on the upper right and lower right corners
-
-  scalar_type d1 = 1.0, d2 = 1.0;
-  size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
-  base_node corner1 = base_node(1.0, -0.5);
-  base_node corner2 = base_node(1.0, 0.5);
-  for (size_type i = 0; i < mf_u().nb_dof(); i+=N) {
-    scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_dof(i), corner1);
-    if (dd1 < d1) { icorner1 = i; d1 = dd1; }
-    scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_dof(i), corner2);
-    if (dd2 < d2) { icorner2 = i; d2 = dd2; }
-  }
-
-  GMM_ASSERT1(((d1 < 1E-8) && (d2 < 1E-8)),
-	      "Upper right or lower right corners not found");
-
 
 
   cout << "Setting up the singular functions for the enrichment\n";
@@ -517,8 +486,7 @@ bool crack_problem::solve(plain_vector &U) {
   }
   
   
-  mf_sing_u.set_functions(vfunc);
-  
+  mf_sing_u.set_functions(vfunc);  
 
   if (enrichment_option == SPIDER_FEM_ALONE || 
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
@@ -627,6 +595,7 @@ bool crack_problem::solve(plain_vector &U) {
   
 
   U.resize(mf_u().nb_dof());
+  P.resize(mfls_p.nb_dof());
 
 
   if (mixed_pressure) cout << "Number of dof for P: " << mfls_p.nb_dof() << endl;
@@ -660,6 +629,24 @@ bool crack_problem::solve(plain_vector &U) {
     }
   }
   
+
+  // find the dofs on the upper right and lower right corners
+
+  scalar_type d1 = 1.0, d2 = 1.0;
+  size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
+  base_node corner1 = base_node(1.0, -0.5);
+  base_node corner2 = base_node(1.0, 0.5);
+  for (size_type i = 0; i < mf_u().nb_dof(); i+=N) {
+    scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_dof(i), corner1);
+    if (dd1 < d1) { icorner1 = i; d1 = dd1; }
+    scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_dof(i), corner2);
+    if (dd2 < d2) { icorner2 = i; d2 = dd2; }
+  }
+
+  GMM_ASSERT1(((d1 < 1E-8) && (d2 < 1E-8)),
+	      "Upper right or lower right corners not found d1 = "
+	      << d1 << " d2 = " << d2);
+
   // Linearized elasticity brick.
   
   
@@ -696,9 +683,9 @@ bool crack_problem::solve(plain_vector &U) {
   
 
   getfem::mdbrick_abstract<> *pINCOMP;
+  getfem::mdbrick_linear_incomp<> *incomp;
   if (mixed_pressure) {
-    getfem::mdbrick_linear_incomp<> *incomp
-      = new getfem::mdbrick_linear_incomp<>(ELAS, mfls_p);
+    incomp = new getfem::mdbrick_linear_incomp<>(ELAS, mfls_p);
     // incomp->penalization_coeff().set(1.0/lambda);
     pINCOMP = incomp;
   } else pINCOMP = &ELAS;
@@ -714,13 +701,11 @@ bool crack_problem::solve(plain_vector &U) {
   
   getfem::mdbrick_source_term<> NEUMANN1(*pINCOMP, mf_rhs, F,
 					 NEUMANN1_BOUNDARY_NUM);
-  gmm::scale(F, -1.0);
   getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F,
 					 NEUMANN2_BOUNDARY_NUM);
   gmm::scale(F, -1.0);
   getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F,
 					 NEUMANN3_BOUNDARY_NUM);
-  gmm::scale(F, -1.0);
   getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F,
 					 NEUMANN4_BOUNDARY_NUM);
   
@@ -729,8 +714,8 @@ bool crack_problem::solve(plain_vector &U) {
   GMM_ASSERT1(N==2, "To be corrected for 3D computation");
   sparse_matrix BB(3, mf_u().nb_dof());
   BB(0, icorner1) = 1.0;
-  BB(0, icorner1+1) = 1.0;
-  BB(0, icorner2) = 1.0;
+  BB(1, icorner1+1) = 1.0;
+  BB(2, icorner2) = 1.0;
   KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
   KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
@@ -824,6 +809,11 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Solving... done" << endl;
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
+  if (mixed_pressure) {
+    gmm::copy(incomp->get_pressure(MS), P);
+  }
+  
+
   
   if(reference_test)
     {
@@ -880,40 +870,45 @@ void export_interpolated_on_line(const getfem::mesh_fem &mf,
 
 int main(int argc, char *argv[]) {
   
-  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   //getfem::getfem_mesh_level_set_noisy();
 
 
-  try {
-    crack_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
-
-    plain_vector U(p.mf_u().nb_dof());
-    if (!p.solve(U)) GMM_ASSERT1(false,"Solve has failed");
- 
-    //        for (size_type i = 4; i < U.size(); ++i)
-    //U[i] = 0;
-    //cout << "The solution" << U ;
-     gmm::vecsave("crack.U", U);
-     cout << "vecsave done"<<endl;
-    { 
+  crack_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  p.mesh.write_to_file(p.datafilename + ".mesh");
+  
+  plain_vector U, P;
+  cout << " p.mfls_p.nb_dof() = " << p.mfls_p.nb_dof() << endl;
+  if (!p.solve(U, P)) GMM_ASSERT1(false,"Solve has failed");
+  
+  //        for (size_type i = 4; i < U.size(); ++i)
+  //U[i] = 0;
+  //cout << "The solution" << U ;
+  gmm::vecsave("crack.U", U);
+  cout << "vecsave done"<<endl;
+  { 
       getfem::mesh mcut;
       p.mls.global_cut_mesh(mcut);
       unsigned Q = p.mf_u().get_qdim();
       getfem::mesh_fem mf(mcut, dim_type(Q));
-      mf.set_classical_discontinuous_finite_element(2, 0.00001);
-      // mf.set_finite_element
-      //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
+      mf.set_classical_discontinuous_finite_element(2, 0.000001);
       plain_vector V(mf.nb_dof());
-
       getfem::interpolation(p.mf_u(), mf, U, V);
 
       mf.write_to_file(p.datafilename + ".meshfem", true);
       gmm::vecsave(p.datafilename + ".U", V);
+
+      getfem::mesh_fem mf_p(mcut);
+      mf_p.set_classical_discontinuous_finite_element(2, 0.000001);
+      plain_vector PP(mf_p.nb_dof());
+
+      getfem::interpolation(p.mfls_p, mf_p, P, PP);
+
+      mf_p.write_to_file(p.datafilename + ".p_meshfem", true);
+      gmm::vecsave(p.datafilename + ".P", PP);
 
       getfem::stored_mesh_slice sl;
       getfem::mesh mcut_refined;
@@ -930,11 +925,11 @@ int main(int argc, char *argv[]) {
       std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
       for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
 	scalar_type dmin=0, d;
-	base_node Pmin,P;
+	base_node Pmin,Pp;
 	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
-	  P = mcut.points_of_convex(cv)[i];
-	  d = gmm::vect_norm2(ls_function(P));
-	  if (d < dmin || i == 0) { dmin = d; Pmin = P; }
+	  Pp = mcut.points_of_convex(cv)[i];
+	  d = gmm::vect_norm2(ls_function(Pp));
+	  if (d < dmin || i == 0) { dmin = d; Pmin = Pp; }
 	}
 
 	if (dmin < 1e-5)
@@ -942,8 +937,8 @@ int main(int argc, char *argv[]) {
 	else if (dmin < .1) 
 	  nrefine[cv] = short_type(nn*2);
 	else nrefine[cv] = short_type(nn);
-	if (dmin < .01)
-	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
+	// if (dmin < .01)
+	//  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
       }
 
       {
@@ -1006,8 +1001,8 @@ int main(int argc, char *argv[]) {
       
       if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
 	cout << "Coputing error with respect to a reference solution..." << endl;
-	std::string REFERENCE_MF = "crack_refined_test.meshfem";
-	std::string REFERENCE_U = "crack_refined_test.U";
+	std::string REFERENCE_MF = "large_strain_refined_test.meshfem";
+	std::string REFERENCE_U = "large_strain_refined_test.U";
 	
 	cout << "Load reference meshfem and solution from " << REFERENCE_MF << " and " << REFERENCE_U << "\n";
 	getfem::mesh ref_m; 
@@ -1044,9 +1039,6 @@ int main(int argc, char *argv[]) {
       }
       
     }
-
-  }
-  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }
