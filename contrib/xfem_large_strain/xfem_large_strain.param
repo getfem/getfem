@@ -20,10 +20,11 @@ REFINEMENT_PROCESS = 7;  % nb of desired refinement steps
 
 REFERENCE_TEST = 0; % 1 to compute a reference solution to be exported into files
 ERROR_TO_REF_SOL = 1; % 1 to compute errors with respect to the reference solution
+INF_SUP_COMP = 1; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =   10;	          % space step.
+NX =   20;	          % space step.
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 

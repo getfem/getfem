@@ -398,6 +398,72 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   return res;
 }
 
+
+
+struct matrix_G {
+
+  const sparse_matrix &B;
+  const sparse_matrix &S;
+  mutable plain_vector W1, W2;
+
+  gmm::SuperLU_factor<scalar_type> SLUF;
+
+  matrix_G(const sparse_matrix &BB, const sparse_matrix &SS)
+    : B(BB), S(SS), W1(gmm::mat_nrows(SS)), W2(gmm::mat_nrows(SS)) {
+    SLUF.build_with(SS);
+  }
+  
+};
+
+template <typename vector1, typename vector2>
+void mult(const matrix_G &G, const vector1 &X, vector2 &Y) {
+  gmm::mult(gmm::transposed(G.B), X, G.W1);
+  // gmm::iteration it(1E-6, 0);
+  // gmm::cg(G.S, G.W2, G.W1,  gmm::identity_matrix(), it);
+  G.SLUF.solve(G.W2, G.W1);
+  gmm::mult(G.B, G.W2, Y);
+}
+
+template <typename vector1, typename vector2>
+void mult(const matrix_G &G, const vector1 &X, const vector2 &b, vector2 &Y)
+{ mult(G, X, Y); gmm::add(b, Y); }
+
+
+scalar_type smallest_eigen_value(const sparse_matrix &B,
+				 const sparse_matrix &M,
+				 const sparse_matrix &S) {
+
+  size_type n = gmm::mat_nrows(M);
+  scalar_type lambda;
+  plain_vector V(n), W(n), V2(n);
+  gmm::fill_random(V2);
+  matrix_G G(B, S);
+  
+  do {
+    gmm::copy(V2, V);
+    gmm::scale(V, 1./gmm::vect_norm2(V));
+    gmm::mult(M, V, W);
+    
+    gmm::iteration it(1E-3, 0);
+    gmm::cg(G, V2, W,  gmm::identity_matrix(), it);    
+    lambda = gmm::vect_norm2(V2);
+
+//  compute the Rayleigh quotient
+//     mult(G, V2, W);
+//     scalar_type lambda2 = gmm::vect_sp(V2, W);
+//     gmm::mult(M, V2, W);
+//     lambda2 /= gmm::vect_sp(V2, W);
+//     cout << "lambda2 = " << sqrt(lambda2) << endl;
+
+    cout << "lambda = " << sqrt(1./lambda) << endl;
+    cout << "residu = " << gmm::vect_dist2(V2, gmm::scaled(V, lambda)) << endl;
+  } while (gmm::vect_dist2(V2, gmm::scaled(V, lambda)) > 1E-3);
+  
+  return sqrt(1./lambda);
+
+}
+
+
 bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
@@ -802,6 +868,26 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     final_model = &mortar;
   }
 
+
+
+  // Computation of the inf-sup bound 
+  if (PARAM.int_value("INF_SUP_COMP") && mixed_pressure) {
+    
+    sparse_matrix Mis(mfls_p.nb_dof(), mfls_p.nb_dof());
+    sparse_matrix Sis(mf_u().nb_dof(), mf_u().nb_dof());
+
+    getfem::asm_mass_matrix(Mis, mim, mfls_p);
+    getfem::asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
+      (Sis, mim, mf_u());
+    getfem::asm_mass_matrix(Sis, mim, mf_u());
+    
+    cout << "computing inf-sup" << endl;
+    scalar_type lambda = smallest_eigen_value(incomp->get_B(), Mis, Sis);
+    cout << "inf-sup = " << lambda << endl;
+  }
+
+
+
   // Generic solve.
   cout << "Total number of variables : " << final_model->nb_dof() << endl;
   getfem::standard_model_state MS(*final_model);
@@ -997,38 +1083,49 @@ int main(int argc, char *argv[]) {
 	cout << "Coputing error with respect to a reference solution..." << endl;
 	std::string REFERENCE_MF = "large_strain_refined_test.meshfem";
 	std::string REFERENCE_U = "large_strain_refined_test.U";
+	std::string REFERENCE_MFP = "large_strain_refined_test.p_meshfem";
+	std::string REFERENCE_P = "large_strain_refined_test.P";
 	
-	cout << "Load reference meshfem and solution from " << REFERENCE_MF << " and " << REFERENCE_U << "\n";
+	cout << "Load reference displacement from "
+	     << REFERENCE_MF << " and " << REFERENCE_U << "\n";
 	getfem::mesh ref_m; 
 	ref_m.read_from_file(REFERENCE_MF);
 	getfem::mesh_fem ref_mf(ref_m); 
 	ref_mf.read_from_file(REFERENCE_MF);
-	std::fstream f(REFERENCE_U.c_str(), std::ios::in);
 	plain_vector ref_U(ref_mf.nb_dof());
-      
-	for (unsigned i=0; i < ref_mf.nb_dof(); ++i) {
-	  f >> ref_U[i]; if (!f.good()) GMM_ASSERT1(f.good(), "problem while reading " << REFERENCE_U);
-	}
+	gmm::vecload(REFERENCE_U, ref_U);
+	
+	cout << "Load reference pressure from "
+	     << REFERENCE_MFP << " and " << REFERENCE_P << "\n";
+	getfem::mesh_fem ref_mfp(ref_m); 
+	ref_mfp.read_from_file(REFERENCE_MFP);
+	plain_vector ref_P(ref_mfp.nb_dof());
+	gmm::vecload(REFERENCE_P, ref_P);
 	
 	getfem::mesh_im ref_mim(ref_m);
 	getfem::pintegration_method ppi = 
 	  getfem::int_method_descriptor("IM_TRIANGLE(6)");
 	ref_mim.set_integration_method(ref_m.convex_index(), ppi);
 	plain_vector interp_U(ref_mf.nb_dof());
-	getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);
+	getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);	  
 	
-	//gmm::add(gmm::scaled(interp_U, -1), ref_U);
-	  
+	cout << "To ref L2 ERROR on U:"
+	     << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
+				    ref_mf, ref_U) << endl;
 	
-	cout << "To ref L2 ERROR:" << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
-							  ref_mf, ref_U) << endl;
+	cout << "To ref H1 ERROR on U:"
+	     << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
+				    ref_mf, ref_U) << endl;
 	
-	cout << "To ref H1 ERROR:" << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
-							  ref_mf, ref_U) << endl;
-	
-	//cout << "L2 ERROR:"<< getfem::asm_L2_norm(ref_mim, ref_mf, ref_U)
-	//     << endl << "H1 ERROR:"
-	//     << getfem::asm_H1_norm(ref_mim, ref_mf, ref_U) << "\n";
+	plain_vector interp_P(ref_mfp.nb_dof());
+	getfem::interpolation(p.mfls_p, ref_mfp, P, interp_P);
+
+	cout << "To ref L2 ERROR on P:"
+	     << getfem::asm_L2_dist(ref_mim, ref_mfp, interp_P,
+				    ref_mfp, ref_P) << endl;
+
+	gmm::add(gmm::scaled(interp_U, -1.), ref_U);
+	gmm::vecsave(p.datafilename + ".diff_ref", ref_U);
 	
       }
       
