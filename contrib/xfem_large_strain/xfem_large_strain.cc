@@ -468,7 +468,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();  
-  cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
+  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
     ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
@@ -666,7 +666,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   P.resize(mfls_p.nb_dof());
 
 
-  if (mixed_pressure) cout << "Number of dof for P: " << mfls_p.nb_dof() << endl;
+  if (mixed_pressure)
+    cout << "Number of dof for P: " << mfls_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   unsigned Q = mf_u().get_qdim();
@@ -756,7 +757,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     incomp = new getfem::mdbrick_linear_incomp<>(ELAS, mfls_p);
     // incomp->penalization_coeff().set(1.0/lambda);
     pINCOMP = incomp;
-  } else pINCOMP = &ELAS;
+  } else { pINCOMP = &ELAS; incomp = 0; }
 
   // Defining the Neumann condition right hand side.
   plain_vector F(nb_dof_rhs * N);
@@ -873,6 +874,9 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   // Computation of the inf-sup bound 
   if (PARAM.int_value("INF_SUP_COMP") && mixed_pressure) {
     
+    cout << "Sparse matrices computation for the test of inf-sup condition"
+	 << endl;
+
     sparse_matrix Mis(mfls_p.nb_dof(), mfls_p.nb_dof());
     sparse_matrix Sis(mf_u().nb_dof(), mf_u().nb_dof());
 
@@ -881,12 +885,10 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
       (Sis, mim, mf_u());
     getfem::asm_mass_matrix(Sis, mim, mf_u());
     
-    cout << "computing inf-sup" << endl;
+    cout << "Inf-sup condition test" << endl;
     scalar_type lambda = smallest_eigen_value(incomp->get_B(), Mis, Sis);
-    cout << "inf-sup = " << lambda << endl;
+    cout << "The inf-sup test gives " << lambda << endl;
   }
-
-
 
   // Generic solve.
   cout << "Total number of variables : " << final_model->nb_dof() << endl;
@@ -966,170 +968,166 @@ int main(int argc, char *argv[]) {
   p.mesh.write_to_file(p.datafilename + ".mesh");
   
   plain_vector U, P;
-  cout << " p.mfls_p.nb_dof() = " << p.mfls_p.nb_dof() << endl;
   if (!p.solve(U, P)) GMM_ASSERT1(false,"Solve has failed");
   
-  { 
-      getfem::mesh mcut;
-      p.mls.global_cut_mesh(mcut);
-      unsigned Q = p.mf_u().get_qdim();
-      getfem::mesh_fem mf(mcut, dim_type(Q));
-      mf.set_classical_discontinuous_finite_element(2, 1E-7);
-      plain_vector V(mf.nb_dof());
-      getfem::interpolation(p.mf_u(), mf, U, V);
-
-      mf.write_to_file(p.datafilename + ".meshfem", true);
-      gmm::vecsave(p.datafilename + ".U", V);
-
-      getfem::mesh_fem mf_p(mcut);
-      mf_p.set_classical_discontinuous_finite_element(2, 1E-7);
-      plain_vector PP(mf_p.nb_dof());
-
-      getfem::interpolation(p.mfls_p, mf_p, P, PP);
-
-      mf_p.write_to_file(p.datafilename + ".p_meshfem", true);
-      gmm::vecsave(p.datafilename + ".P", PP);
-
-      getfem::stored_mesh_slice sl;
-      getfem::mesh mcut_refined;
-
-      unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
-//  unsigned NX = (unsigned)sqrt(p.mesh.convex_index().card()); 
-//    unsigned nn;
-      if (NX < 6) nn = 24;
-      else if (NX < 12) nn = 6;
-      else if (NX < 30) nn = 3;
-      else nn = 3;
-
-      /* choose an adequate slice refinement based on the distance to the crack tip */
-      std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
-      for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
-	scalar_type dmin=0, d;
-	base_node Pmin,Pp;
-	for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
-	  Pp = mcut.points_of_convex(cv)[i];
-	  d = gmm::vect_norm2(ls_function(Pp));
-	  if (d < dmin || i == 0) { dmin = d; Pmin = Pp; }
-	}
-
-	if (dmin < 1e-5)
-	  nrefine[cv] = short_type(nn*8);
-	else if (dmin < .1) 
-	  nrefine[cv] = short_type(nn*2);
-	else nrefine[cv] = short_type(nn);
-	// if (dmin < .01)
-	//  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
-      }
-
-      {
-	getfem::mesh_slicer slicer(mcut); 
-	getfem::slicer_build_mesh bmesh(mcut_refined);
-	slicer.push_back_action(bmesh);
-	slicer.exec(nrefine, getfem::mesh_region::all_convexes());
-      }
-      /*
-      sl.build(mcut, 
-      getfem::slicer_build_mesh(mcut_refined), nrefine);*/
-
-      getfem::mesh_im mim_refined(mcut_refined); 
-      mim_refined.set_integration_method(getfem::int_method_descriptor
-					 ("IM_TRIANGLE(6)"));
-
-      getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
-      mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
-      plain_vector W(mf_refined.nb_dof());
-
-      getfem::interpolation(p.mf_u(), mf_refined, U, W);
-
-
-      if (p.PARAM.int_value("VTK_EXPORT")) {
-	getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
-	mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
-	cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
-	plain_vector VM(mf_refined_vm.nb_dof());
-
-	cout << "computing von mises\n";
-	getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
-
-	plain_vector D(mf_refined_vm.nb_dof() * Q), 
-	  DN(mf_refined_vm.nb_dof());
-	
-	cout << "export to " << p.datafilename + ".vtk" << "..\n";
-	getfem::vtk_export exp(p.datafilename + ".vtk",
-			       p.PARAM.int_value("VTK_EXPORT")==1);
-
-	exp.exporting(mf_refined); 
-	//exp.write_point_data(mf_refined_vm, DN, "error");
-	exp.write_point_data(mf_refined_vm, VM, "von mises stress");
-
-	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-
-	base_node line_x0(0.70001,0);
-	base_small_vector line_dir(0, 0.5001);
-	unsigned line_nb_points = 1000;
-	export_interpolated_on_line(mf_refined_vm, VM, 
-				    line_x0, line_dir, line_nb_points,
-				    "von_mises_on_line.data");
-
-	
-	cout << "export done, you can view the data file with (for example)\n"
-	  "mayavi -d " << p.datafilename << ".vtk -f  "
-	  "WarpVector -m BandedSurfaceMap -m Outline\n";
-      }
-
-      //bool error_to_ref_sol = 0;
+  cout << "Saving the solution" << endl;
+  getfem::mesh mcut;
+  p.mls.global_cut_mesh(mcut);
+  unsigned Q = p.mf_u().get_qdim();
+  getfem::mesh_fem mf(mcut, dim_type(Q));
+  mf.set_classical_discontinuous_finite_element(2, 1E-7);
+  plain_vector V(mf.nb_dof());
+  getfem::interpolation(p.mf_u(), mf, U, V);
+  
+  mf.write_to_file(p.datafilename + ".meshfem", true);
+  gmm::vecsave(p.datafilename + ".U", V);
+  
+  getfem::mesh_fem mf_p(mcut);
+  mf_p.set_classical_discontinuous_finite_element(2, 1E-7);
+  plain_vector PP(mf_p.nb_dof());
+  
+  getfem::interpolation(p.mfls_p, mf_p, P, PP);
+  
+  mf_p.write_to_file(p.datafilename + ".p_meshfem", true);
+  gmm::vecsave(p.datafilename + ".P", PP);
       
-      if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
-	cout << "Coputing error with respect to a reference solution..." << endl;
-	std::string REFERENCE_MF = "large_strain_refined_test.meshfem";
-	std::string REFERENCE_U = "large_strain_refined_test.U";
-	std::string REFERENCE_MFP = "large_strain_refined_test.p_meshfem";
-	std::string REFERENCE_P = "large_strain_refined_test.P";
-	
-	cout << "Load reference displacement from "
-	     << REFERENCE_MF << " and " << REFERENCE_U << "\n";
-	getfem::mesh ref_m; 
-	ref_m.read_from_file(REFERENCE_MF);
-	getfem::mesh_fem ref_mf(ref_m); 
-	ref_mf.read_from_file(REFERENCE_MF);
-	plain_vector ref_U(ref_mf.nb_dof());
-	gmm::vecload(REFERENCE_U, ref_U);
-	
-	cout << "Load reference pressure from "
-	     << REFERENCE_MFP << " and " << REFERENCE_P << "\n";
-	getfem::mesh_fem ref_mfp(ref_m); 
-	ref_mfp.read_from_file(REFERENCE_MFP);
-	plain_vector ref_P(ref_mfp.nb_dof());
-	gmm::vecload(REFERENCE_P, ref_P);
-	
-	getfem::mesh_im ref_mim(ref_m);
-	getfem::pintegration_method ppi = 
-	  getfem::int_method_descriptor("IM_TRIANGLE(6)");
-	ref_mim.set_integration_method(ref_m.convex_index(), ppi);
-	plain_vector interp_U(ref_mf.nb_dof());
-	getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);	  
-	
-	cout << "To ref L2 ERROR on U:"
-	     << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
-				    ref_mf, ref_U) << endl;
-	
-	cout << "To ref H1 ERROR on U:"
-	     << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
-				    ref_mf, ref_U) << endl;
-	
-	plain_vector interp_P(ref_mfp.nb_dof());
-	getfem::interpolation(p.mfls_p, ref_mfp, P, interp_P);
-
-	cout << "To ref L2 ERROR on P:"
-	     << getfem::asm_L2_dist(ref_mim, ref_mfp, interp_P,
-				    ref_mfp, ref_P) << endl;
-
-	gmm::add(gmm::scaled(interp_U, -1.), ref_U);
-	gmm::vecsave(p.datafilename + ".diff_ref", ref_U);
-	
-      }
-      
+  cout << "Interpolating solution for the drawing" << endl;
+  getfem::stored_mesh_slice sl;
+  getfem::mesh mcut_refined;
+  
+  unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
+  if (NX < 6) nn = 24;
+  else if (NX < 12) nn = 6;
+  else if (NX < 30) nn = 3;
+  else nn = 3;
+  
+  /* choose an adequate slice refinement based on the distance
+     to the crack tip */
+  std::vector<bgeot::short_type> nrefine(mcut.convex_index().last_true()+1);
+  for (dal::bv_visitor cv(mcut.convex_index()); !cv.finished(); ++cv) {
+    scalar_type dmin=0, d;
+    base_node Pmin,Pp;
+    for (unsigned i=0; i < mcut.nb_points_of_convex(cv); ++i) {
+      Pp = mcut.points_of_convex(cv)[i];
+      d = gmm::vect_norm2(ls_function(Pp));
+      if (d < dmin || i == 0) { dmin = d; Pmin = Pp; }
     }
-
+    
+    if (dmin < 1e-5)
+      nrefine[cv] = short_type(nn*8);
+    else if (dmin < .1) 
+      nrefine[cv] = short_type(nn*2);
+    else nrefine[cv] = short_type(nn);
+    // if (dmin < .01)
+    //  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin
+    //       << " " << nrefine[cv] << "\n";
+  }
+  
+  {
+    getfem::mesh_slicer slicer(mcut); 
+    getfem::slicer_build_mesh bmesh(mcut_refined);
+    slicer.push_back_action(bmesh);
+    slicer.exec(nrefine, getfem::mesh_region::all_convexes());
+  }
+  /*
+    sl.build(mcut, 
+    getfem::slicer_build_mesh(mcut_refined), nrefine);*/
+  
+  getfem::mesh_im mim_refined(mcut_refined); 
+  mim_refined.set_integration_method(getfem::int_method_descriptor
+				     ("IM_TRIANGLE(6)"));
+  
+  getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
+  mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
+  plain_vector W(mf_refined.nb_dof());
+  
+  getfem::interpolation(p.mf_u(), mf_refined, U, W);
+  
+  
+  if (p.PARAM.int_value("VTK_EXPORT")) {
+    getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
+    mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
+    cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
+    plain_vector VM(mf_refined_vm.nb_dof());
+    
+    cout << "computing von mises\n";
+    getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
+    
+    plain_vector D(mf_refined_vm.nb_dof() * Q), 
+      DN(mf_refined_vm.nb_dof());
+    
+    cout << "export to " << p.datafilename + ".vtk" << "..\n";
+    getfem::vtk_export exp(p.datafilename + ".vtk",
+			   p.PARAM.int_value("VTK_EXPORT")==1);
+    
+    exp.exporting(mf_refined); 
+    //exp.write_point_data(mf_refined_vm, DN, "error");
+    exp.write_point_data(mf_refined_vm, VM, "von mises stress");
+    
+    exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+    
+    base_node line_x0(0.70001,0);
+    base_small_vector line_dir(0, 0.5001);
+    unsigned line_nb_points = 1000;
+    export_interpolated_on_line(mf_refined_vm, VM, 
+				line_x0, line_dir, line_nb_points,
+				"von_mises_on_line.data");
+    
+    
+    cout << "export done, you can view the data file with (for example)\n"
+      "mayavi -d " << p.datafilename << ".vtk -f  "
+      "WarpVector -m BandedSurfaceMap -m Outline\n";
+  }
+    
+  if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
+    cout << "Computing error with respect to a reference solution..." << endl;
+    std::string REFERENCE_MF = "large_strain_refined_test.meshfem";
+    std::string REFERENCE_U = "large_strain_refined_test.U";
+    std::string REFERENCE_MFP = "large_strain_refined_test.p_meshfem";
+    std::string REFERENCE_P = "large_strain_refined_test.P";
+    
+    cout << "Load reference displacement from "
+	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
+    getfem::mesh ref_m; 
+    ref_m.read_from_file(REFERENCE_MF);
+    getfem::mesh_fem ref_mf(ref_m); 
+    ref_mf.read_from_file(REFERENCE_MF);
+    plain_vector ref_U(ref_mf.nb_dof());
+    gmm::vecload(REFERENCE_U, ref_U);
+    
+    cout << "Load reference pressure from "
+	 << REFERENCE_MFP << " and " << REFERENCE_P << "\n";
+    getfem::mesh_fem ref_mfp(ref_m); 
+    ref_mfp.read_from_file(REFERENCE_MFP);
+    plain_vector ref_P(ref_mfp.nb_dof());
+    gmm::vecload(REFERENCE_P, ref_P);
+    
+    getfem::mesh_im ref_mim(ref_m);
+    getfem::pintegration_method ppi = 
+      getfem::int_method_descriptor("IM_TRIANGLE(6)");
+    ref_mim.set_integration_method(ref_m.convex_index(), ppi);
+    plain_vector interp_U(ref_mf.nb_dof());
+    getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);	  
+    
+    cout << "To ref L2 ERROR on U:"
+	 << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
+				ref_mf, ref_U) << endl;
+    
+    cout << "To ref H1 ERROR on U:"
+	 << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
+				ref_mf, ref_U) << endl;
+    
+    plain_vector interp_P(ref_mfp.nb_dof());
+    getfem::interpolation(p.mfls_p, ref_mfp, P, interp_P);
+    
+    cout << "To ref L2 ERROR on P:"
+	 << getfem::asm_L2_dist(ref_mim, ref_mfp, interp_P,
+				ref_mfp, ref_P) << endl;
+    
+    gmm::add(gmm::scaled(interp_U, -1.), ref_U);
+    gmm::vecsave(p.datafilename + ".diff_ref", ref_U);
+    
+  }
+  
   return 0; 
 }

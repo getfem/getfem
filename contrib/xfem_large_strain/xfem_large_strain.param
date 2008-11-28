@@ -15,17 +15,17 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 
-REFINEMENT_RADIUS = 0.0; %REF: 0.3;  % 0 for no refinement
-REFINEMENT_PROCESS = 7;  % nb of desired refinement steps
+REFINEMENT_RADIUS = 0.0;  % REF: 0.4;  % 0 for no refinement
+REFINEMENT_PROCESS = 2;  % nb of desired refinement steps
 
-REFERENCE_TEST = 0; % 1 to compute a reference solution to be exported into files
-ERROR_TO_REF_SOL = 1; % 1 to compute errors with respect to the reference solution
-INF_SUP_COMP = 1; % Compute or not the inf_sup condition
+REFERENCE_TEST = 0;   % 1 to compute a reference solution exported into files
+ERROR_TO_REF_SOL = 1; % 1 to compute errors wrt the reference solution
+INF_SUP_COMP = 0; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =   20;	          % space step.
-MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
+NX =   40;	        % space step.
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
 if (~QUAD)
@@ -46,7 +46,7 @@ else
   MORTAR_FEM_TYPE = FEM_TYPE;
 end;
 
-FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)';  % Discontinuous P1 for triangles
+FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)'; % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=1;       % Mixed version or not.
 DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
@@ -54,15 +54,16 @@ DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
 % integration meth. for sub-simplexe of elements crossed by the level-set
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
 
-% integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
+% integration meth. for quasi-polar integration of sub-simplexes
+% adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9)';
 
-%Enable the following two lines to use the precalculated solution as enrichement 
-%GLOBAL_FUNCTION_MF = "bimaterial_crack12.meshfem"
-%GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
+% Enable the following 2 lines to use the precomputed solution as enrichement 
+% GLOBAL_FUNCTION_MF = "bimaterial_crack12.meshfem"
+% GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
 ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
