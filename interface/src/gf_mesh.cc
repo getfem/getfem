@@ -31,7 +31,7 @@ static void
 cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
 {
   getfemint::size_type dim = in.remaining();
-  
+
   if (dim == 0) THROW_BADARG( "not enough input arguments");
 
   std::vector<darray> ppos(dim);
@@ -43,11 +43,11 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
     grid_npoints *= npts[i];
     grid_nconvex *= (npts[i]-1);
   }
-  
+
   /* add the points in 'fortran style' order */
   getfem::base_node pt(dim);
   for (size_type i=0; i < grid_npoints; i++) {
-    size_type k = i;    
+    size_type k = i;
     for (size_type j = 0; j < dim; j++) {
       pt[j] = ppos[j][k % (npts[j])];
       k /= (npts[j]);
@@ -55,20 +55,20 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
 
     size_type id_pt = pmesh->add_point(pt);
     if (id_pt != i) {
-      THROW_ERROR( 
+      THROW_ERROR(
 		"something has changed in getfem, you need to reconsider "
-		"gf_mesh('cartesian')\nfor point " << i << 
+		"gf_mesh('cartesian')\nfor point " << i <<
 		", the index is " << id_pt << endl);
     }
     /*    if (i == grid_npoints-1) {
       cerr << "nb de pts ajoutes: " << grid_npoints << " id dernier =" << id_pt << endl;
       }*/
   }
-  
+
 
   std::vector<int> ipt(dim);
   std::vector<getfem::base_node> pts(1 << (dim+1));
-  
+
   bgeot::pgeometric_trans pgt = bgeot::parallelepiped_linear_geotrans(dim);
 
   /* add the convexes */
@@ -96,7 +96,7 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
     // we don't use the add_parall since the geometric transformation
     // is linear (the mesh is cartesian)
     //pmesh->add_parallelepiped_by_points(dim, pts.begin());
-    pmesh->add_convex_by_points(pgt, pts.begin()); 
+    pmesh->add_convex_by_points(pgt, pts.begin());
   }
 }
 
@@ -105,7 +105,7 @@ static void
 triangles_grid_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
 {
   if (in.remaining() != 2) THROW_BADARG( "not enough input arguments");
-  
+
   darray X = in.pop().to_darray();
   darray Y = in.pop().to_darray();
   if (X.size() < 1 || Y.size() < 1) THROW_BADARG( "bad dimensions");
@@ -130,7 +130,7 @@ triangles_grid_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
 
 /*static void
 regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
-  std::vector<size_type> nsubdiv = 
+  std::vector<size_type> nsubdiv =
     in.pop().to_iarray(-1).to_vector<std::vector<size_type> >();
   unsigned N = nsubdiv.size();
   bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N, 1);
@@ -166,9 +166,9 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
   }
   unsigned N = unsigned(nsubdiv.size());
 
-  getfem::base_node org(N); 
+  getfem::base_node org(N);
   std::vector<getfem::base_small_vector> vtab(N);
-  for (dim_type i = 0; i < N; i++) { 
+  for (dim_type i = 0; i < N; i++) {
     vtab[i] = getfem::base_small_vector(N);
     (vtab[i])[i] = 1;
   }
@@ -198,7 +198,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
   getfem::base_small_vector diff(N);
   for (unsigned k=0; k < N; ++k) {
     diff[k] = std::abs(xyz[k][1] - xyz[k][0]);
-    for (unsigned i=1; i < xyz[k].size(); ++i) 
+    for (unsigned i=1; i < xyz[k].size(); ++i)
       diff[k] = std::min(diff[k], std::abs(xyz[k][i] - xyz[k][i-1]));
   }
 
@@ -211,7 +211,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
       if (ii != xyz[k].size()-1)
 	p[k] = (1-a) * xyz[k][ii] + a*xyz[k][ii+1];
       else p[k] = xyz[k][ii];
-      if (noised && ii != 0 && ii != nsubdiv[k]) 
+      if (noised && ii != 0 && ii != nsubdiv[k])
 	p[k] += diff[k] * gmm::random(double()) * 0.2 / K;
     }
   }
@@ -273,7 +273,7 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
 
     /* une hypothèse bien commode pour la "compatibilité pdetool" */
     if (id_tab[i] != i && warn_cnt++ == 0) {
-      GMM_WARNING1("The numbering of mesh points will be different, pt#" << 
+      GMM_WARNING1("The numbering of mesh points will be different, pt#" <<
 		   i+config::base_index() << " gets id#" << id_tab[i] + config::base_index());
     }
   }
@@ -298,7 +298,7 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
   (this will instruct Matlab to consider the getfem mesh as a regular
   matlab object that can be manipulated with get() and set() methods).
 
-  
+
   @INIT MESH:INIT ('empty')
   @INIT MESH:INIT ('cartesian')
   @INIT MESH:INIT ('regular simplices')
@@ -312,12 +312,12 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
   @INIT MESH:INIT ('from string')
   @INIT MESH:INIT ('import')
   @INIT MESH:INIT ('clone')
- 
+
   $Id$
 MLABCOM*/
 void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
-  getfemint_mesh *mi_mesh = 
+  getfemint_mesh *mi_mesh =
     getfemint_mesh::get_from(new getfem::mesh);
   out.pop().from_object_id(mi_mesh->get_id(), MESH_CLASS_ID);
   getfem::mesh *pmesh = &mi_mesh->mesh();
@@ -328,54 +328,54 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
   std::string cmd    = in.pop().to_string();
   if (check_cmd(cmd, "empty", in, out, 1, 1, 0, 1)) {
-    /*@INIT  M=MESH:INIT('empty', @int dim)
+    /*@INIT M = MESH:INIT('empty', @int dim)
       Create a new empty mesh.
       @*/
     size_type dim = in.pop().to_integer(1,255);
-    getfem::base_node pt(dim); 
+    getfem::base_node pt(dim);
     /* just to initialize the dimension of the mesh
        (this is not very nice, i know) */
-    pmesh->sup_point(pmesh->add_point(pt)); 
+    pmesh->sup_point(pmesh->add_point(pt));
   } else if (check_cmd(cmd, "cartesian", in, out, 1, 32, 0, 1)) {
-    /*@INIT  M=MESH:INIT('cartesian', @dvec X[, @dvec Y[, @dvec Z,..]])
+    /*@INIT M = MESH:INIT('cartesian', @dvec X[, @dvec Y[, @dvec Z,..]])
       Build quickly a regular mesh of quadrangles, cubes, etc.
       @*/
     cartesian_mesh(pmesh, in);
   } else if (check_cmd(cmd, "triangles grid", in, out, 2, 2, 0, 1)) {
-    /*@INIT  M=MESH:INIT('triangles grid', @dvec X, @dvec Y)
-      Build quickly a regular mesh of triangles. 
+    /*@INIT M = MESH:INIT('triangles grid', @dvec X, @dvec Y)
+      Build quickly a regular mesh of triangles.
 
       This is a very limited and somehow deprecated function (See also
       MESH:INIT('ptND'), MESH:INIT('regular simplices') and
       MESH:INIT('cartesian')). @*/
     triangles_grid_mesh(pmesh, in);
   } else if (check_cmd(cmd, "regular simplices", in, out, 1, 32, 0, 1)) {
-    /*@INIT M=MESH:INIT('regular simplices', @dvec X[, @dvec Y[, @dvec Z,.., ]]['degree', @int K]['noised'])
+    /*@INIT M = MESH:INIT('regular simplices', @dvec X[, @dvec Y[, @dvec Z,.., ]]['degree', @int K]['noised'])
       Mesh a n-dimensionnal parallelepipeded with simplices
       (triangles, tetrahedrons etc) .
 
       The optional degree may be used to build meshes with non linear
-      geometric transformations. 
+      geometric transformations.
       @*/
     regular_simplices_mesh(pmesh, in);
   } else if (check_cmd(cmd, "curved", in, out, 2, 2, 0, 1)) {
-    /*@INIT  M=MESH:INIT('curved', M0, @dvec F)
-      Build a curved (n+1)-dimensions mesh from a n-dimensions mesh M0. 
+    /*@INIT M = MESH:INIT('curved', M0, @dvec F)
+      Build a curved (n+1)-dimensions mesh from a n-dimensions mesh M0.
 
       The points of the new mesh have one additional coordinate, given by
       the vector F. This can be used to obtain meshes for shells. M0 may
-      be a @tmf object, in that case its linked mesh will be used. 
+      be a @tmf object, in that case its linked mesh will be used.
       @*/
     curved_mesh(pmesh, in);
   } else if (check_cmd(cmd, "prismatic", in, out, 2, 2, 0, 1)) {
-    /*@INIT  M=MESH:INIT('prismatic', M0, @int NLAY)
-      Extrude a prismatic mesh M from a mesh M0. 
-      
+    /*@INIT M = MESH:INIT('prismatic', M0, @int NLAY)
+      Extrude a prismatic mesh M from a mesh M0.
+
       In the additional dimension there are NLAY layers of elements built
       from 0 to 1. @*/
     prismatic_mesh(pmesh, in);
   } else if (check_cmd(cmd, "pt2D", in, out, 2, 3, 0, 1)) {
-    /*@INIT  M=MESH:INIT('pt2D', @dmat P, @ivec T[, @int N])
+    /*@INIT M = MESH:INIT('pt2D', @dmat P, @ivec T[, @int N])
       Build a mesh from a 2D triangulation.
 
       Each column of P contains a point coordinate, and each column of T contains the point indices of a triangle. N is optional and
@@ -385,7 +385,7 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       @*/
     ptND_mesh(pmesh, true, in);
   } else if (check_cmd(cmd, "ptND", in, out, 2, 2, 0, 1)) {
-    /*@INIT  M=MESH:INIT('ptND', @dmat P, @imat T)
+    /*@INIT M = MESH:INIT('ptND', @dmat P, @imat T)
       Build a mesh from a N-dimensional "triangulation".
 
       Similar function to 'pt2D', for building simplexes meshes from a
@@ -395,30 +395,33 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       @*/
     ptND_mesh(pmesh, 0, in);
   } else if (check_cmd(cmd, "load", in, out, 1, 1, 0, 1)) {
-    /*@INIT  M=MESH:INIT('load', @str FILENAME)
+    /*@INIT M = MESH:INIT('load', @str FILENAME)
       Load a mesh from a GETFEM++ ascii mesh file. See also
       MESH:GET('save',FILENAME). @*/
     std::string fname = in.pop().to_string();
     pmesh->read_from_file(fname);
   } else if (check_cmd(cmd, "from string", in, out, 1, 1, 0, 1)) {
-    /*@INIT  M=MESH:INIT('from string', @str S)
+    /*@INIT M = MESH:INIT('from string', @str S)
       Load a mesh from a string description. For example, a string returned
       by MESH:GET('char').
       @*/
     std::stringstream ss(in.pop().to_string());
     pmesh->read_from_file(ss);
   } else if (check_cmd(cmd, "import", in, out, 2, 2, 0, 1)) {
-    /*@INIT  M=MESH:INIT('import', @str FORMAT, @str FILENAME)
+    /*@INIT M = MESH:INIT('import', @str FORMAT, @str FILENAME)
       Import a mesh, FORMAT may be:<Par>
-      - 'gmsh'   for a mesh created with gmsh ( http://www.geuz.org/gmsh )<par>
-      - 'gid'    for a mesh created with GiD  ( http://gid.cimne.upc.es )<par>
-      - 'am_fmt' for a mesh created with emc2 ( http://pauillac.inria.fr/cdrom/www/emc2/fra.htm )
+      - 'gmsh' or 'gmshv2'<par>
+         for a mesh created with gmsh (http://www.geuz.org/gmsh)<par>
+      - 'gid'<par>
+         for a mesh created with GiD  (http://gid.cimne.upc.es)<par>
+      - 'am_fmt'<par>
+         for a mesh created with emc2 (http://pauillac.inria.fr/cdrom/www/emc2/fra.htm)
       @*/
     std::string fmt = in.pop().to_string();
     std::string fname = in.pop().to_string();
     getfem::import_mesh(fname, fmt, *pmesh);
   } else if (check_cmd(cmd, "clone", in, out, 1, 1, 0, 1)) {
-    /*@INIT  M=MESH:INIT('clone', @tmesh M2)
+    /*@INIT M = MESH:INIT('clone', @tmesh M2)
       Create a copy of a mesh.
       @*/
     const getfem::mesh *m2 = in.pop().to_const_mesh();
