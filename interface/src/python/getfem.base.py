@@ -144,7 +144,7 @@ class MeshFem:
         """General constructor for MeshFem objects.
 
 * MeshFem(mesh M [, int Qdim=1])
-Build a new MeshFem object. The Qdim parameter is optional.
+   Build a new MeshFem object. The Qdim parameter is optional.
         @INIT MESHFEM:INIT('load')
         @INIT MESHFEM:INIT('from string')
         @INIT MESHFEM:INIT('clone')
@@ -163,24 +163,24 @@ Build a new MeshFem object. The Qdim parameter is optional.
                (self.qdim(),self.nbdof(),self.memsize(), \
                 self.linked_mesh().memsize())
     #@RDATTR MESHFEM:GET('nbdof')
-    #@GET    MESHFEM:GET('dof from cv')
-    #@GET    MESHFEM:GET('dof from cvid')
-    #@GET    MESHFEM:GET('non conformal dof')
+    #@GET MESHFEM:GET('dof from cv')
+    #@GET MESHFEM:GET('dof from cvid')
+    #@GET MESHFEM:GET('non conformal dof')
     #@RDATTR MESHFEM:GET('qdim')
-    #@GET    MESHFEM:GET('fem')
-    #@GET    MESHFEM:GET('is_lagrangian')
-    #@GET    MESHFEM:GET('is_equivalent')
-    #@GET    MESHFEM:GET('is_polynomial')
-    #@GET    MESHFEM:GET('dof on region')
-    #@GET    MESHFEM:GET('dof nodes')
-    #@GET    MESHFEM:GET('dof partition')
-    #@GET    MESHFEM:GET('interpolate_convex_data')
-    #@GET    MESHFEM:GET('save')
-    #@GET    MESHFEM:GET('char')
-    #@GET    MESHFEM:GET('linked mesh')
-    #@GET    MESHFEM:GET('export to vtk')
-    #@GET    MESHFEM:GET('export to dx')
-    #@GET    MESHFEM:GET('memsize')
+    #@GET MESHFEM:GET('fem')
+    #@GET MESHFEM:GET('is_lagrangian')
+    #@GET MESHFEM:GET('is_equivalent')
+    #@GET MESHFEM:GET('is_polynomial')
+    #@GET MESHFEM:GET('dof on region')
+    #@GET MESHFEM:GET('dof nodes')
+    #@GET MESHFEM:GET('dof partition')
+    #@GET MESHFEM:GET('interpolate_convex_data')
+    #@GET MESHFEM:GET('save')
+    #@GET MESHFEM:GET('char')
+    #@GET MESHFEM:GET('linked mesh')
+    #@GET MESHFEM:GET('export to vtk')
+    #@GET MESHFEM:GET('export to dx')
+    #@GET MESHFEM:GET('memsize')
     #@SET MESHFEM:SET('fem')
     #@SET MESHFEM:SET('classical fem')
     #@SET MESHFEM:SET('classical discontinuous fem')
@@ -189,9 +189,10 @@ Build a new MeshFem object. The Qdim parameter is optional.
     def eval(self, expression):
         """interpolate an expression on the (lagrangian) MeshFem.
 
-        Examples:
-          mf.eval('x[0]*x[1]') interpolates the function 'x*y'
-          mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
+Examples:
+
+mf.eval('x[0]*x[1]') interpolates the function 'x*y'
+mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         """
         P=self.dof_nodes()
         nbd = P.shape[1];
@@ -213,8 +214,9 @@ class MeshIm:
         """General constructor for MeshIm objects.
 
 * MeshIm(mesh M, [{Integ Im|int IM_DEGREE}])
-Build a new MeshIm object. For convenience, optional arguments (IM or IM_DEGREE) can be provided, in that case a call to MESHIM:SET('integ') is issued with these arguments.
-
+   Build a new MeshIm object. For convenience, optional arguments (IM or\
+   IM_DEGREE) can be provided, in that case a call to MeshIm.integ() is\
+   issued with these arguments.
         @INIT MESHIM:INIT('load')
         @INIT MESHIM:INIT('from string')
         @INIT MESHIM:INIT('clone')
@@ -308,16 +310,14 @@ class MdState:
     def __init__(self, *args):
         """General constructor for MdState objects.
 
-        These objects hold the global model data of a chain of
-        MdBricks, such as the right hand side, the tangent matrix and
-        the constraints.
+These objects hold the global model data of a chain of\
+MdBricks, such as the right hand side, the tangent matrix and\
+the constraints.
 
-        * MDS=MdState(mdbrick B)
-        Build a modelstate for the brick B (selects the real or
-        complex state from the complexity of B).
-
+* MDS=MdState(mdbrick B)
+   Build a modelstate for the brick B (selects the real or complex state from\
+   the complexity of B).
         @INIT MDSTATE:INIT ('real')
-
         @INIT MDSTATE:INIT ('complex')
         """
         generic_constructor(self,'mdstate',*args)
@@ -350,8 +350,10 @@ class MdState:
     #@SET MDSTATE:SET('clear')
     
 class GeoTrans:
+    """General function for building descriptors to geometric transformations."""
     def __init__(self, *args):
-        """
+        """Build a GeoTrans object from a string description.
+
         @TEXT GEOTRANS:INIT('GEOTRANS_init')
         """
         generic_constructor(self,'geotrans',*args)
@@ -406,7 +408,8 @@ class Fem:
 class Integ:
     """Integration Method Objects."""
     def __init__(self, *args):
-        """
+        """Return a FEM Integration Method from a string description.
+
         @TEXT INTEG:INIT('INTEG_init')
         """
         generic_constructor(self,'integ',*args)
@@ -430,7 +433,8 @@ class Integ:
 class Eltm:
     """Descriptor for an elementary matrix type."""
     def __init__(self, *args):
-        """
+        """Generates a descriptor for an elementary matrix type.
+
         @TEXT ELTM:INIT('ELTM_init')
         """
         generic_constructor(self,'eltm',*args)
@@ -460,17 +464,17 @@ class Poly:
 class Slice:
     """Mesh slices.
 
-    The slices may be considered as a (non-conformal) mesh of
-    simplexes which provides fast interpolation on a P1-discontinuous
-    MeshFem.
+The slices may be considered as a (non-conformal) mesh of\
+simplexes which provides fast interpolation on a P1-discontinuous\
+MeshFem.
     
-    It is used mainly for post-processing purposes.
+It is used mainly for post-processing purposes.
     """
     def __init__(self, *args):
         """General constructor for Slice objects.
 
-@TEXT SLICE:INIT('constructor description')
-"""
+        @TEXT SLICE:INIT('constructor description')
+        """
         generic_constructor(self,'slice',*args)
     def __del__(self):
         generic_destructor(self,destructible=True)
@@ -499,7 +503,8 @@ class Slice:
 class Spmat:
     """Getfem sparse matrix."""
     def __init__(self, *args):
-        """
+        """General constructor for getfem sparse matrices.
+
         @TEXT SPMAT:INIT('SPMAT_init')
         """
         generic_constructor(self,'spmat',*args)
@@ -576,7 +581,8 @@ class Spmat:
 class Precond:
     """Getfem preconditioner."""
     def __init__(self, *args):
-        """
+        """General constructor for getfem preconditioners.
+
         @TEXT PRECOND:INIT('PRECOND_init')
         """
         generic_constructor(self,'precond',*args)
