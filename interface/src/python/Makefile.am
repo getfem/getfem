@@ -46,6 +46,9 @@ PSEUDO_MFUNCTIONS = \
 getfem.py: getfem.base.py $(PSEUDO_MFUNCTIONS)
 	$(top_srcdir)/interface/bin/extract_pydoc python $(srcdir)/.. > getfem.py || ( rm getfem.py ; /bin/false )
 
+clean: clean-am
+	rm -f getfem.py _getfem.so
+
 if BUILDPYTHON
 
 PYTHON_CC=$(CC)
