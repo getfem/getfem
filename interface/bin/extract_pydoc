@@ -6,6 +6,7 @@ import os
 import textwrap
 import sys
 #from docutils import core
+
 class ParseError(Exception):
     def __init__(self, value):
         self.value = value
@@ -45,25 +46,28 @@ def find_closing_brace(s):
     lev = 0
     cnt = 0
     for c in s:
-        if (c == '{'): lev+=1;
+        if (c == '{'):
+            lev+=1
         if (c == '}'):
-            lev-=1;
-            if (lev == -1): return cnt;
+            lev-=1
+            if (lev == -1):
+                return cnt
         cnt += 1
     raise ParseError, s
 
 def CellToTuples(d):
     while 1:
-        s=''
+        s = ''
         p = d.find('@CELL{')
         #sys.stderr.write('p=%d\n' % (p,))
         if (p == -1):
-            s+=d
+            s += d
             break
-        s+=d[:p]+'('; d = d[p+6:];
-        p2=find_closing_brace(d)
+        s += d[:p]+'('
+        d = d[p+6:]
+        p2 = find_closing_brace(d)
         #sys.stderr.write(d[:p2]+'| p2=%d\n' % (p2,))
-        s+=d[:p2]+')'+d[p2+1:]
+        s += d[:p2]+')'+d[p2+1:]
         d = s
     return d
 
@@ -72,14 +76,14 @@ def FilterMatlabOrPythonSections(d, what):
         w = 1
     else: w = 0
     markup = ['@MATLAB{', '@PYTHON{']
-    ll=d.split(markup[w])
-    d = ll[0];
+    ll = d.split(markup[w])
+    d = ll[0]
     for l in ll[1:]:
         d += l[(find_closing_brace(l)+1):]
-    ll=d.split(markup[1-w])
-    d = ll[0];
+    ll = d.split(markup[1-w])
+    d = ll[0]
     for l in ll[1:]:
-        p = find_closing_brace(l)        
+        p = find_closing_brace(l)
         d += l[:p] + l[p+1:]
     return d
 
@@ -97,7 +101,8 @@ def SubstituteTypes(d):
                    '@tmesh':'mesh',
                    '@tmim':'meshim',
                    '@tmf':'meshfem',
-                   '@tbrick':'mdbrick'}
+                   '@tbrick':'mdbrick',
+                   '@tstate':'mdstate'}
     for (k,v) in transtypes.items():
         d = string.replace(d, k, v)
     return d
@@ -135,7 +140,7 @@ def WrapParagraphs(d, indent):
 #            doc+=flush_par(par, state,indent)
 #            par = l
 #            state = in_pre
-#        else:            
+#        else:
 #            if (len(l.strip()) == 0):
 #                doc+=flush_par(par, state,indent)
 #                par = ''
@@ -143,21 +148,34 @@ def WrapParagraphs(d, indent):
 #            else:
 #                if (state == 0): state = in_par
 #                par +=l.strip()+' '
-                
+
 #    doc+=flush_par(par,state,indent)
-    
-    for l in re.split(r'(<[Pp]ar>)', d):        
+
+    for l in re.split(r'(<[Pp]ar>)', d):
         if l.startswith('<Par>'):
             doc += textwrap.fill(l[5:],78)
             doc += '\n\n'
         elif l.startswith('<par>'):
             doc += textwrap.fill(l[5:],78)
             doc += '\n'
-        else: doc += textwrap.fill(l, 78)
+        else: doc += textwrap.fill(l,78)
     doc = doc.strip('\n')
     return doc
 
-def PythonRewriteDoc(d):
+def PythonWrapParagraphs(d, indent):
+    doc = ''
+    for l in re.split(r'(<[Pp]ar>[..\n]*)', d):
+        if l.startswith('<Par>'):
+            doc += '\n\n'
+        elif l.startswith('<par>'):
+            doc += '\n'
+        elif len(l)>0:
+            doc += textwrap.fill(l,78,initial_indent=indent,
+                   subsequent_indent=indent).replace('\n','\\\n')
+    doc = doc.strip('\n')
+    return doc
+    
+def PythonRewriteDoc(d,indent):
     d = d.strip('\n')
     d = CellToTuples(d)
     d = RemoveSpacesInFNames(FilterMatlabOrPythonSections(d,'PYTHON'))
@@ -176,7 +194,7 @@ def PythonRewriteDoc(d):
              'MDSTATE:GET':r'MdState.\1(\3)', \
              'MDSTATE:SET':r'MdState.\1(\3)', \
              'CVSTRUCT:GET': r"CvStruct.\1(\3)", \
-             'GEOTRANS:GET': r"CvStruct.\1(\3)", \
+             'GEOTRANS:GET': r"GeoTrans.\1(\3)", \
              'INTEG:GET': r"Integ.\1(\3)", \
              'FEM:GET': r"Fem.\1(\3)", \
              'SPMAT:GET': r"Spmat.\1(\3)", \
@@ -204,7 +222,7 @@ def PythonRewriteDoc(d):
     d = string.replace(d,'::UTIL','util_')
 
     d = SubstituteTypes(d)
-    d = WrapParagraphs(d, "    ")
+    d = PythonWrapParagraphs(d,indent)
     return d
 
 def MatlabRewriteDoc(d):
@@ -276,7 +294,7 @@ def SynopsisToArgs(s0):
     else: cro2 = -1
     if (cro2 != -1):
         need_star_args = 1
-    
+
     ll = [re.sub('@[a-z]*','',l).strip() for l in s.split(',')]
     args = []
     in_opt_arg = 0
@@ -298,63 +316,59 @@ def SynopsisToArgs(s0):
         args += ['*args']
     #sys.stderr.write('to_args(%s)\n %d,%d -> %s\n' % (s0, need_star_args, cro2, str(args)))
     return args
-    
+
 class ExtractDoc:
     def __init__(self, s):
-        (self.type, self.synopsis)=s.split('\n',1)[0].split(' ',1)
+        (self.type, self.synopsis) = s.split('\n',1)[0].split(' ',1)
         m = re.search(r"([A-Z:]+) *\( *'([a-z0-9A-Z _]*)'(.*)\)",self.synopsis)
         if (not m):
             raise ParseError, s
-        self.categ= m.group(1) # 'MESH:GET' etc
-        self.name = m.group(2) # 'pts', 'optimize_structure',...
-        self.args = m.group(3) # ', int dim, ...'
+        self.categ = m.group(1) # 'MESH:GET' etc
+        self.name = m.group(2)  # 'pts', 'optimize_structure',...
+        self.args = m.group(3)  # ', int dim, ...'
 
-        l=s.split('\n',1)
+        l = s.split('\n',1)
         if (len(l)==2):
             self.rawdoc = textwrap.dedent(l[1])
         else:
             self.doc = "Undocumented."
     def __repr__(self):
         return "cat='%s' type='%s', name='%s', args='%s'" % \
-               (self.categ, self.type,self.name,self.args)
+               (self.categ,self.type,self.name,self.args)
 
 def ExtractDocFromCppFile(fname):
-    f=open(fname)
-    all=f.readlines()
-    
     docs = {}
+    in_doc = 0
 
     sys.stderr.write('reading %s:' % (fname))
-    in_doc = 0;
-    for l in all:
+    f = open(fname)
+    for l in f:
         if (l.strip().startswith('/*@')):
             in_doc = 1
             docline = l.strip()[3:].strip()+'\n'
         elif (l.find('@*/') != -1):
-            
-            docline += l[:l.find('@*/')]
             in_doc = 0
+            docline += l[:l.find('@*/')]
             ed = ExtractDoc(docline)
             docs[ed.name] = ed
             sys.stderr.write(' '+ed.name)
         elif (in_doc):
-            docline+=l
-
+            docline += l
+    f.close()
     sys.stderr.write('\n')
-    return docs;
+    return docs
 
 def CommaIf(cond):
     return cond and ", " or ""
 
 def WritePythonFunction(ed):
-#    sys.stderr.write('SYNOPSIS: %s\n  -> args=%s\n' % (ed.synopsis,SynopsisToArgs(ed.synopsis)))
+    #sys.stderr.write('SYNOPSIS: %s\n  -> args=%s\n' % (ed.synopsis,SynopsisToArgs(ed.synopsis)))
     tmp = ExceptionsRewrite('@'+ed.type + ' ' +ed.categ + "('" + ed.name + "')")
     #sys.stderr.write('tmp = %s\n' % tmp)
     name = ExtractDoc(tmp).name
-    arg_first_dic = { '::COMPUTE':'mf,U', '::ASM':'', '::LINSOLVE':'', '::UTIL':'' }
+    arg_first_dic = { '::COMPUTE':'mf, U', '::ASM':'', '::LINSOLVE':'', '::UTIL':'' }
     arg_list = ", ".join(SynopsisToArgs(ed.synopsis))
-    if (not ed.type == 'FUNC'):        
-        
+    if (not ed.type == 'FUNC'):
         print '    def %s(self%s%s):' % (string.replace(name,' ','_'), CommaIf(len(arg_list)), arg_list)
         print '       ',
     else:
@@ -363,16 +377,16 @@ def WritePythonFunction(ed):
                                    arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list)
         print '   ',
 
-    arg_list = string.replace(arg_list, '=None','')
-    d = ed.rawdoc.split('\n');
+    arg_list = string.replace(arg_list,'=None','')
+    d = ed.rawdoc.split('\n')
     while (len(d) and (len(d[0].strip()) == 0)):
         d = d[1:]
     if (len(d)>2 and (len(d[1].strip()) == 0)):
-        doc = d[0] + '<Par>Synopsis: %s<par>' % (RemoveSpacesInFNames(ed.synopsis),)
+        doc = d[0]+'<Par>Synopsis: %s<Par>' % (RemoveSpacesInFNames(ed.synopsis),)
         doc += '\n'.join(d[2:])
     else:
         doc = '\n'.join(d)
-    print '"""%s"""' % (PythonRewriteDoc(doc),)
+    print '"""%s"""' % (PythonRewriteDoc(doc,""),)
     if (ed.type == 'FUNC'):
         if (len(arg_first)):
             print "    return getfem('%s',%s,'%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),
@@ -384,14 +398,12 @@ def WritePythonFunction(ed):
     else:
         print '        return self.set("%s"%s%s)\n' % (ed.name, CommaIf(len(arg_list)), arg_list)
 
-        
 def WritePythonSubConstructor(ed):
     if (ed.type != 'TEXT'):
-        print PythonRewriteDoc(' * '+ed.synopsis+r'<par>  '+ed.rawdoc)
+        print PythonRewriteDoc('* '+ed.synopsis,"")
+        print PythonRewriteDoc(ed.rawdoc,"   ")
     else:
-        print PythonRewriteDoc(ed.rawdoc)
-
-
+        print PythonRewriteDoc(ed.rawdoc,"")
 
 def WriteMatlabSubFunctionDoc(ed):
     if (ed.type != 'TEXT'):
@@ -402,7 +414,7 @@ def WriteMatlabSubFunctionDoc(ed):
 
 def LookupDoc(what):
     """return the ExtractDoc for what = @RDATTR MESH:GET('nbpts') etc"""
-    what=what.strip()
+    what = what.strip()
     ed = ExtractDoc(what)
     if (not docs.has_key(ed.categ)):
         sys.stderr.write('Undocumented category : %s\n' % ed.categ)
@@ -414,11 +426,10 @@ def LookupDoc(what):
         raise ParseError, 'WRONG TYPE : for %s:%s\n  Found %s, expected %s' % (ed.categ,ed.name,ed.type,d[ed.name].type)
     return d[ed.name]
 
-
 def UpdatePythonDoc():
-    all=open(os.path.join(src_dir,'python/getfem.base.py')).readlines()
     currentclass = None;
-    for l in all:
+    f = open(os.path.join(src_dir,'python/getfem.base.py'))
+    for l in f:
         if (l.strip().startswith("class ")):
             print l,
             currentclass = l.strip()[6:].split(':')[0].strip()
@@ -426,14 +437,16 @@ def UpdatePythonDoc():
         elif (l.strip().startswith('#@')):
             print '\n'+l,
             WritePythonFunction(LookupDoc(l.strip()[2:]))
-        elif l.strip().startswith('@'):            
+        elif l.strip().startswith('@'):
             WritePythonSubConstructor(LookupDoc(l.strip()[1:]))
         else:
             print l,
+    f.close()
+
 def UpdateMatlabDoc(fname):
-#    sys.stderr.write("$$$update: %s\n" % (fname));
-    Cfname=string.replace(fname,'.m','.cc')
-    all=open(os.path.join(src_dir,Cfname)).read().split('/*MLABCOM',1)[1].split('MLABCOM*/')[0].strip()
+    #sys.stderr.write("$$$update: %s\n" % (fname));
+    Cfname = string.replace(fname,'.m','.cc')
+    all = open(os.path.join(src_dir,Cfname)).read().split('/*MLABCOM',1)[1].split('MLABCOM*/')[0].strip()
     for l in all.split('\n'):
         if (l.strip().startswith('@')):
             ed = LookupDoc(l.strip()[1:])
@@ -442,14 +455,13 @@ def UpdateMatlabDoc(fname):
             print l
 
 if (len(sys.argv) < 2):
-    sys.stderr.write("give the filename to update\n")
-    exit
+    raise SystemExit, "give the filename to update, or just 'python'"
 
 if (len(sys.argv) == 3):
     src_dir = sys.argv[2]
 else:
     src_dir = ''
-        
+
 fmap = {'gf_mesh.cc':'MESH:INIT',
         'gf_mesh_get.cc':'MESH:GET',
         'gf_mesh_set.cc':'MESH:SET',
@@ -491,23 +503,14 @@ fmap = {'gf_mesh.cc':'MESH:INIT',
         'gf_linsolve.cc':'::LINSOLVE',
         'gf_util.cc':'::UTIL',
         'gf_compute.cc':'::COMPUTE'}
+
 docs = {}
 for (fname,cat) in fmap.items():
     docs[cat] = ExtractDocFromCppFile(os.path.join(src_dir,fname))
 
-if (len(sys.argv) < 2):
-    sys.stderr.write("give the filename to update, or just 'python'\n")
+if (sys.argv[1] == 'python'):
+    UpdatePythonDoc()
+elif (sys.argv[1].endswith('.m')):
+    UpdateMatlabDoc(sys.argv[1])
 else:
-    if (len(sys.argv) == 3):
-        src_dir = sys.argv[2]
-    else:
-        src_dir = ''
-
-    
-    if (sys.argv[1] == 'python'):
-        UpdatePythonDoc()
-    elif (sys.argv[1].endswith('.m')):
-        UpdateMatlabDoc(sys.argv[1])
-    else:
-        sys.stderr.write("don't know file "+sys.argv[1]+"\n")
-
+    raise SystemExit, "don't know file "+sys.argv[1]
