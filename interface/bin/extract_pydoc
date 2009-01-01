@@ -33,6 +33,7 @@ def ExceptionsRewrite(d):
     d = string.replace(d, "MDBRICK:SET('param'", "MDBRICK:SET('set_param'")
     d = string.replace(d, "MDBRICK:SET('constraints'", "MDBRICK:SET('set_constraints'")
     d = string.replace(d, "MDBRICK:SET('constraints_rhs'", "MDBRICK:SET('set_constraints_rhs'")
+    d = string.replace(d, "LEVELSET:SET('values'", "LEVELSET:SET('set_values'")
     return d;
 
 def RemoveSpacesInFNames(d):
@@ -94,15 +95,22 @@ def SubstituteTypes(d):
                    '@dvec':'vec',
                    '@vec':'vec',
                    '@int' :'int',
-                   '@real' :'real',
-                   '@scalar' :'scalar',
-                   '@str' :'string',
+                   '@bool':'bool',
+                   '@real':'real',
+                   '@scalar':'scalar',
+                   '@str':'string',
                    '@imat':'imat',
                    '@tmesh':'mesh',
                    '@tmim':'meshim',
                    '@tmf':'meshfem',
                    '@tbrick':'mdbrick',
-                   '@tstate':'mdstate'}
+                   '@tstate':'mdstate',
+                   '@teltm':'eltm',
+                   '@tfem':'fem',
+                   '@tgt':'geotrans',
+                   '@tinteg':'integ',
+                   '@tls':'levelset',
+                   }
     for (k,v) in transtypes.items():
         d = string.replace(d, k, v)
     return d
@@ -162,7 +170,7 @@ def WrapParagraphs(d, indent):
     doc = doc.strip('\n')
     return doc
 
-def PythonWrapParagraphs(d, indent):
+def PythonWrapParagraphs(d,indent,subindent,endline):
     doc = ''
     for l in re.split(r'(<[Pp]ar>[..\n]*)', d):
         if l.startswith('<Par>'):
@@ -170,12 +178,13 @@ def PythonWrapParagraphs(d, indent):
         elif l.startswith('<par>'):
             doc += '\n'
         elif len(l)>0:
-            doc += textwrap.fill(l,78,initial_indent=indent,
-                   subsequent_indent=indent).replace('\n','\\\n')
+            text = textwrap.fill(l,78,initial_indent=indent,
+                   subsequent_indent=subindent).replace('\n',endline+'\n')
+            doc += text
     doc = doc.strip('\n')
     return doc
     
-def PythonRewriteDoc(d,indent):
+def PythonRewriteDoc(d,indent,subindent,endline):
     d = d.strip('\n')
     d = CellToTuples(d)
     d = RemoveSpacesInFNames(FilterMatlabOrPythonSections(d,'PYTHON'))
@@ -200,6 +209,8 @@ def PythonRewriteDoc(d,indent):
              'SPMAT:GET': r"Spmat.\1(\3)", \
              'SPMAT:SET': r"Spmat.\1(\3)", \
              'PRECOND:GET': r"Precond.\1(\3)", \
+             'LEVELSET:GET': r"LevelSet.\1(\3)", \
+             'LEVELSET:SET': r"LevelSet.\1(\3)", \
              '::COMPUTE':r'compute_\1(mf, U, \3)', \
              '::ASM':r'asm_\1(\3)'}
     for retry in [1,2,3]: #pour les appels imbriques
@@ -222,7 +233,7 @@ def PythonRewriteDoc(d,indent):
     d = string.replace(d,'::UTIL','util_')
 
     d = SubstituteTypes(d)
-    d = PythonWrapParagraphs(d,indent)
+    d = PythonWrapParagraphs(d,indent,subindent,endline)
     return d
 
 def MatlabRewriteDoc(d):
@@ -248,6 +259,8 @@ def MatlabRewriteDoc(d):
              'SPMAT:GET': r"gf_spmat_get(M,'\1'\2", \
              'SPMAT:SET': r"gf_spmat_set(M,'\1'\2", \
              'PRECOND:GET': r"gf_precond_get(P,'\1'\2", \
+             'LEVELSET:GET': r"gf_levelset_get(ls,'\1'\2", \
+             'LEVELSET:SET': r"gf_levelset_set(ls,'\1'\2", \
              '::COMPUTE' : r"gf_compute(MF, U,'\1'\2", \
              '::ASM' : r"gf_asm('\1'\2"}
     for (k,v) in trans.items():
@@ -275,25 +288,20 @@ def MatlabRewriteDoc(d):
 
 def SynopsisToArgs(s0):
     s = s0
-    if (s.find('=') != -1):
-        s = s.split('=',1)[1]
+    need_star_args = 0
     if (s.find('(') != -1):
         s = s.split('(',1)[1].split(')',1)[0]
-    cro1 = s.find('{')
-    need_star_args = 0
-    if (cro1 != -1):
-        s = s[:cro1]
+    if (s.find('{') != -1):
+        s = s[:s.find('{')]
         need_star_args = 1
     if (s.find('...') != -1):
-        need_star_args = 1
         s = s[:s.find('...')]
-    cro1 = s.find('[')
-    if (cro1 != -1):
-        cro2 = s[cro1+1:].find('[')
-        s = s[:cro2]
-    else: cro2 = -1
-    if (cro2 != -1):
         need_star_args = 1
+    if (s.find('[',1+s.find('[')) != -1):
+        s = s[:s.find('[',1+s.find('['))]
+        need_star_args = 1
+    if (s.find(']') != -1):
+        s = s[:s.find(']')]
 
     ll = [re.sub('@[a-z]*','',l).strip() for l in s.split(',')]
     args = []
@@ -302,19 +310,21 @@ def SynopsisToArgs(s0):
         c = 0
         for l in l0.split('['):
             in_opt_arg += c
-            l = l.strip();
+            l = l.strip()
             if (len(l)):
                 if (l[0] != "'"):
                     if not in_opt_arg:
                         args += [l]
-                    else: args += [l+'=None']
+                    elif (l.find('=')==-1):
+                        args += [l+'=None']
+                    else:
+                        args += [l]
                 elif (in_opt_arg):
-                    cro2 = 1
                     need_star_args = 0
             c = 1
     if (need_star_args == 1):
         args += ['*args']
-    #sys.stderr.write('to_args(%s)\n %d,%d -> %s\n' % (s0, need_star_args, cro2, str(args)))
+    #sys.stderr.write('to_args(%s)\n %d -> %s\n' % (s0, need_star_args, str(args)))
     return args
 
 class ExtractDoc:
@@ -386,7 +396,7 @@ def WritePythonFunction(ed):
         doc += '\n'.join(d[2:])
     else:
         doc = '\n'.join(d)
-    print '"""%s"""' % (PythonRewriteDoc(doc,""),)
+    print '"""%s"""' % (PythonRewriteDoc(doc,"","",""),)
     if (ed.type == 'FUNC'):
         if (len(arg_first)):
             print "    return getfem('%s',%s,'%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),
@@ -400,10 +410,10 @@ def WritePythonFunction(ed):
 
 def WritePythonSubConstructor(ed):
     if (ed.type != 'TEXT'):
-        print PythonRewriteDoc('* '+ed.synopsis,"")
-        print PythonRewriteDoc(ed.rawdoc,"   ")
+        print PythonRewriteDoc('* '+ed.synopsis,"","","\\")
+        print PythonRewriteDoc(ed.rawdoc,"   ","   ","")
     else:
-        print PythonRewriteDoc(ed.rawdoc,"")
+        print PythonRewriteDoc(ed.rawdoc,"","   ","")
 
 def WriteMatlabSubFunctionDoc(ed):
     if (ed.type != 'TEXT'):
