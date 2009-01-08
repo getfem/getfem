@@ -34,8 +34,8 @@ Mu=80769
 von_mises_threshold=8000
 
 P=m.pts()
-pidleft=numarray.compress((abs(P[0,:])<1e-6), range(0, m.nbpts()))
-pidright=numarray.compress((abs(P[0,:] - L)<1e-6), range(0, m.nbpts()))
+pidleft=compress((abs(P[0,:])<1e-6), range(0, m.nbpts()))
+pidright=compress((abs(P[0,:] - L)<1e-6), range(0, m.nbpts()))
 
 fleft  = m.faces_from_pid(pidleft)
 fright = m.faces_from_pid(pidright)

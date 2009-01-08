@@ -22,19 +22,18 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #                                                                         
 """Getfem-interface classes.
-
 Provides access to the pseudo-objects exported by the getfem-python interface.
 """
 
 
 __version__ = "$Revision$"
-# $Source: /var/lib/cvs/getfem_matlab/src/python/getfem.base.py,v $
+# $Source: getfem++/interface/src/python/getfem.base.py,v $
 
 import sys
-#import Numeric
-import numarray
+##import Numeric
+#import numarray
+import numpy
 
-sys.path.insert(0,'build/lib.linux-i686-2.3/');
 from _getfem import *
 obj_count = {}
 getfem('workspace','clear all')
@@ -62,14 +61,18 @@ def generic_destructor(self,destructible=True):
 # stub classes for getfem-interface objects
 
 class Mesh:
-    """Class for getfem mesh objects."""
+    """Getfem Mesh Object.
+
+Thos object is able to store any element in any dimension even 
+if you mix elements with different dimensions.
+    """
     def __init__(self, *args):
         """General constructor for Mesh objects.
 
         @INIT MESH:INIT ('empty')
         @INIT MESH:INIT ('cartesian')
-        @INIT MESH:INIT ('regular simplices')
         @INIT MESH:INIT ('triangles grid')
+        @INIT MESH:INIT ('regular simplices')
         @INIT MESH:INIT ('curved')
         @INIT MESH:INIT ('prismatic')
         @INIT MESH:INIT ('pt2D')
@@ -92,26 +95,27 @@ class Mesh:
         return '<getfem.Mesh %dD, %d points, %d convexes, %d bytes>' % \
                (self.dim(),self.nbpts(),self.nbcvs(),self.memsize())
     #@RDATTR MESH:GET('dim')
-    #@GET    MESH:GET('pts')
     #@RDATTR MESH:GET('nbpts')
     #@RDATTR MESH:GET('nbcvs')
+    #@GET    MESH:GET('pts')
     #@GET    MESH:GET('pid')
     #@GET    MESH:GET('cvid')
     #@GET    MESH:GET('max pid')
     #@GET    MESH:GET('max cvid')
     #@GET    MESH:GET('pid from cvid')
+    #@GET    MESH:GET('edges')
+    #@GET    MESH:GET('curved edges')
     #@GET    MESH:GET('pid from coords')
     #@GET    MESH:GET('orphaned pid')
     #@GET    MESH:GET('cvid from pid')
     #@GET    MESH:GET('faces from pid')
-    #@GET    MESH:GET('faces from cvid')
     #@GET    MESH:GET('outer faces')
-    #@GET    MESH:GET('edges')
-    #@GET    MESH:GET('curved edges')
+    #@GET    MESH:GET('faces from cvid')
     #@GET    MESH:GET('triangulated surface')
     #@GET    MESH:GET('normal of face')
     #@GET    MESH:GET('normal of faces')
     #@GET    MESH:GET('quality')
+    #@GET    MESH:GET('convex area')
     #@GET    MESH:GET('cvstruct')
     #@GET    MESH:GET('geotrans')
     #@GET    MESH:GET('regions')
@@ -122,32 +126,35 @@ class Mesh:
     #@GET    MESH:GET('export to dx')
     #@GET    MESH:GET('memsize')
 
-    #@SET MESH:SET('pts')
-    #@SET MESH:SET('add point')
-    #@SET MESH:SET('del point')
-    #@SET MESH:SET('add convex')
-    #@SET MESH:SET('del convex')
-    #@SET MESH:SET('del convex of dim')
-    #@SET MESH:SET('translate')
-    #@SET MESH:SET('transform')
-    #@SET MESH:SET('merge')
-    #@SET MESH:SET('optimize structure')
-    #@SET MESH:SET('refine')
-    #@SET MESH:SET('region')
-    #@SET MESH:SET('region_intersect')
-    #@SET MESH:SET('region_merge')
-    #@SET MESH:SET('region_substract')
-    #@SET MESH:SET('delete region')
+    #@SET    MESH:SET('pts')
+    #@SET    MESH:SET('add point')
+    #@SET    MESH:SET('del point')
+    #@SET    MESH:SET('add convex')
+    #@SET    MESH:SET('del convex')
+    #@SET    MESH:SET('del convex of dim')
+    #@SET    MESH:SET('translate')
+    #@SET    MESH:SET('transform')
+    #@SET    MESH:SET('region')
+    #@SET    MESH:SET('region_intersect')
+    #@SET    MESH:SET('region_merge')
+    #@SET    MESH:SET('region_substract')
+    #@SET    MESH:SET('delete region')
+    #@SET    MESH:SET('merge')
+    #@SET    MESH:SET('optimize structure')
+    #@SET    MESH:SET('refine')
+
 
 class MeshFem:
     def __init__(self, *args):
         """General constructor for MeshFem objects.
 
-* MeshFem(mesh M [, int Qdim=1])
-   Build a new MeshFem object. The Qdim parameter is optional.
         @INIT MESHFEM:INIT('load')
         @INIT MESHFEM:INIT('from string')
         @INIT MESHFEM:INIT('clone')
+        @INIT MESHFEM:INIT('sum')
+        @INIT MESHFEM:INIT('levelset')
+        @INIT MESHFEM:INIT('partial')
+        @INIT MESHFEM:INIT('.mesh')
         """
         generic_constructor(self,'mesh_fem',*args)
     def __del__(self):
@@ -163,29 +170,34 @@ class MeshFem:
                (self.qdim(),self.nbdof(),self.memsize(), \
                 self.linked_mesh().memsize())
     #@RDATTR MESHFEM:GET('nbdof')
-    #@GET MESHFEM:GET('dof from cv')
-    #@GET MESHFEM:GET('dof from cvid')
-    #@GET MESHFEM:GET('non conformal dof')
+    #@GET    MESHFEM:GET('dof from cv')
+    #@GET    MESHFEM:GET('dof from cvid')
+    #@GET    MESHFEM:GET('non conformal dof')
     #@RDATTR MESHFEM:GET('qdim')
-    #@GET MESHFEM:GET('fem')
-    #@GET MESHFEM:GET('is_lagrangian')
-    #@GET MESHFEM:GET('is_equivalent')
-    #@GET MESHFEM:GET('is_polynomial')
-    #@GET MESHFEM:GET('dof on region')
-    #@GET MESHFEM:GET('dof nodes')
-    #@GET MESHFEM:GET('dof partition')
-    #@GET MESHFEM:GET('interpolate_convex_data')
-    #@GET MESHFEM:GET('save')
-    #@GET MESHFEM:GET('char')
-    #@GET MESHFEM:GET('linked mesh')
-    #@GET MESHFEM:GET('export to vtk')
-    #@GET MESHFEM:GET('export to dx')
-    #@GET MESHFEM:GET('memsize')
-    #@SET MESHFEM:SET('fem')
-    #@SET MESHFEM:SET('classical fem')
-    #@SET MESHFEM:SET('classical discontinuous fem')
-    #@SET MESHFEM:SET('qdim')
-    #@SET MESHFEM:SET('dof partition')
+    #@GET    MESHFEM:GET('fem')
+    #@GET    MESHFEM:GET('convex_index')
+    #@GET    MESHFEM:GET('is_lagrangian')
+    #@GET    MESHFEM:GET('is_equivalent')
+    #@GET    MESHFEM:GET('is_polynomial')
+    #@GET    MESHFEM:GET('dof on region')
+    #@GET    MESHFEM:GET('dof nodes')
+    #@GET    MESHFEM:GET('dof partition')
+    #@GET    MESHFEM:GET('save')
+    #@GET    MESHFEM:GET('char')
+    #@GET    MESHFEM:GET('linked mesh')
+    #@GET    MESHFEM:GET('export to vtk')
+    #@GET    MESHFEM:GET('export to dx')
+    #@GET    MESHFEM:GET('dof_from_im')
+    #@GET    MESHFEM:GET('interpolate_convex_data')
+    #@GET    MESHFEM:GET('memsize')
+    #@GET    MESHFEM:GET('has_linked_mesh_levelset')
+    #@GET    MESHFEM:GET('linked_mesh_levelset')
+
+    #@SET    MESHFEM:SET('fem')
+    #@SET    MESHFEM:SET('classical fem')
+    #@SET    MESHFEM:SET('classical discontinuous fem')
+    #@SET    MESHFEM:SET('qdim')
+    #@SET    MESHFEM:SET('dof partition')
     def eval(self, expression):
         """interpolate an expression on the (lagrangian) MeshFem.
 
@@ -194,18 +206,19 @@ Examples:
 mf.eval('x[0]*x[1]') interpolates the function 'x*y'
 mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         """
-        P=self.dof_nodes()
+        P = self.dof_nodes()
         nbd = P.shape[1];
 
         if not self.is_lagrangian:
             raise RuntimeError('cannot eval on a non-Lagragian MeshFem')
         if self.qdim() != 1:
             raise RuntimeError('only works (for now) with qdim == 1')
-        x=P[:,0]; r=numarray.array(eval(expression))
-        Z=numarray.zeros(r.shape + (nbd,),'d')
+        x = P[:,0]
+        r = numpy.array(eval(expression))
+        Z = numpy.zeros(r.shape + (nbd,),'d')
         for i in range(0,nbd):
-            x=P[:,i]
-            Z[...,i]=eval(expression)
+            x = P[:,i]
+            Z[...,i] = eval(expression)
         return Z
 
 
@@ -213,13 +226,11 @@ class MeshIm:
     def __init__(self, *args):
         """General constructor for MeshIm objects.
 
-* MeshIm(mesh M, [{Integ Im|int IM_DEGREE}])
-   Build a new MeshIm object. For convenience, optional arguments (IM or\
-   IM_DEGREE) can be provided, in that case a call to MeshIm.integ() is\
-   issued with these arguments.
         @INIT MESHIM:INIT('load')
         @INIT MESHIM:INIT('from string')
         @INIT MESHIM:INIT('clone')
+        @INIT MESHIM:INIT('levelset')
+        @INIT MESHIM:INIT('.mesh')
         """
         generic_constructor(self,'mesh_im',*args)
     def __del__(self):
@@ -234,16 +245,29 @@ class MeshIm:
         return '<getfem.MeshIm %d (+%d) bytes>' % \
                (self.memsize(), \
                 self.linked_mesh().memsize())
-    #@GET    MESHIM:GET('integ')
-    #@GET    MESHIM:GET('eltm')
-    #@GET    MESHIM:GET('save')
-    #@GET    MESHIM:GET('char')
-    #@GET    MESHIM:GET('linked mesh')
-    #@GET    MESHIM:GET('memsize')
+    #@GET MESHIM:GET('integ')
+    #@GET MESHFEM:GET('convex_index')
+    #@GET MESHIM:GET('eltm')
+    #@GET MESHIM:GET('im_nodes')
+    #@GET MESHIM:GET('save')
+    #@GET MESHIM:GET('char')
+    #@GET MESHIM:GET('linked mesh')
+    #@GET MESHIM:GET('memsize')
+
     #@SET MESHIM:SET('integ')
 
 
 class MdBrick:
+    """Getfem MdBrick Object.
+
+A model brick is basically an object which modifies a global tangent
+matrix and its associated right hand side. Typical modifications are
+insertion of the stiffness matrix for the problem considered (linear
+elasticity, laplacian, ...), handling of a set of contraints, Dirichlet
+condition, addition of a source term to the right hand side, etc. The
+global tangent matrix and its right hand side are stored in a MdState
+object.
+    """
     def __init__(self, *args):
         """General constructor for MdBrick objects.
 
@@ -266,8 +290,8 @@ class MdBrick:
         @INIT MDBRICK:INIT ('nonlinear elasticity incompressibility term')
         @INIT MDBRICK:INIT ('small deformations plasticity')
         @INIT MDBRICK:INIT ('dynamic')
-        @INIT MDBRICK:INIT ('navier stokes')
         @INIT MDBRICK:INIT ('bilaplacian')
+        @INIT MDBRICK:INIT ('navier stokes')
         @INIT MDBRICK:INIT ('isotropic_linearized_plate')
         @INIT MDBRICK:INIT ('mixed_isotropic_linearized_plate')
         @INIT MDBRICK:INIT ('plate_source_term')
@@ -289,34 +313,38 @@ class MdBrick:
                (self.memsize(),)
     #@RDATTR MDBRICK:GET('nbdof')
     #@RDATTR MDBRICK:GET('dim')
+    #@RDATTR MDBRICK:GET('nb_constraints')
     #@RDATTR MDBRICK:GET('is_linear')
     #@RDATTR MDBRICK:GET('is_symmetric')
     #@RDATTR MDBRICK:GET('is_coercive')
     #@RDATTR MDBRICK:GET('is_complex')
-    #@GET MDBRICK:GET('mixed_variables') 
+    #@GET    MDBRICK:GET('mixed_variables') 
     #@RDATTR MDBRICK:GET('subclass')
-    #@GET MDBRICK:GET('param_list')
-    #@GET MDBRICK:GET('param')
-    #@GET MDBRICK:GET('solve')
-    #@GET MDBRICK:GET('von mises')
-    #@GET MDBRICK:GET('memsize')
-    #@GET MDBRICK:GET('tresca')
-    #@SET MDBRICK:SET('param')
-    #@SET MDBRICK:SET('constraints');
-    #@SET MDBRICK:SET('constraints_rhs');
-    #@SET MDBRICK:SET('penalization_epsilon');
+    #@GET    MDBRICK:GET('param_list')
+    #@GET    MDBRICK:GET('param')
+    #@GET    MDBRICK:GET('solve')
+    #@GET    MDBRICK:GET('von mises')
+    #@GET    MDBRICK:GET('tresca')
+    #@GET    MDBRICK:GET('memsize')
+
+    #@SET    MDBRICK:SET('param')
+    #@SET    MDBRICK:SET('penalization_epsilon');
+    #@SET    MDBRICK:SET('constraints');
+    #@SET    MDBRICK:SET('constraints_rhs');
 
 class MdState:
+    """Getfem MdState Object.
+
+A model state is an object which store the state data for a chain of
+model bricks. This includes the global tangent matrix, the right hand
+side and the constraints.
+    """
     def __init__(self, *args):
         """General constructor for MdState objects.
+There are two sorts of model states, the 'real' and the 'complex'
+model states.
 
-These objects hold the global model data of a chain of\
-MdBricks, such as the right hand side, the tangent matrix and\
-the constraints.
-
-* MDS=MdState(mdbrick B)
-   Build a modelstate for the brick B (selects the real or complex state from\
-   the complexity of B).
+        @INIT MDSTATE:INIT('.mdbrick')
         @INIT MDSTATE:INIT ('real')
         @INIT MDSTATE:INIT ('complex')
         """
@@ -333,24 +361,31 @@ the constraints.
         return '<getfem.MdState %d bytes>' % \
                (self.memsize(),)
     #@RDATTR MDSTATE:GET('is_complex')
-    #@GET MDSTATE:GET('tangent_matrix')
-    #@GET MDSTATE:GET('constraints_matrix')
-    #@GET MDSTATE:GET('reduced_tangent_matrix')
-    #@GET MDSTATE:GET('constraints_nullspace')
-    #@GET MDSTATE:GET('state')
-    #@GET MDSTATE:GET('residual')
-    #@GET MDSTATE:GET('reduced_residual')
-    #@GET MDSTATE:GET('unreduce')
-    #@GET MDSTATE:GET('memsize')
-    #@SET MDSTATE:SET('compute_reduced_system')
-    #@SET MDSTATE:SET('compute_reduced_residual')
-    #@SET MDSTATE:SET('compute_residual')
-    #@SET MDSTATE:SET('compute_tangent_matrix')
-    #@SET MDSTATE:SET('state')
-    #@SET MDSTATE:SET('clear')
+    #@GET    MDSTATE:GET('tangent_matrix')
+    #@GET    MDSTATE:GET('constraints_matrix')
+    #@GET    MDSTATE:GET('reduced_tangent_matrix')
+    #@GET    MDSTATE:GET('constraints_nullspace')
+    #@GET    MDSTATE:GET('state')
+    #@GET    MDSTATE:GET('residual')
+    #@GET    MDSTATE:GET('reduced_residual')
+    #@GET    MDSTATE:GET('unreduce')
+    #@GET    MDSTATE:GET('memsize')
+
+    #@SET    MDSTATE:SET('compute_reduced_system')
+    #@SET    MDSTATE:SET('compute_reduced_residual')
+    #@SET    MDSTATE:SET('compute_residual')
+    #@SET    MDSTATE:SET('compute_tangent_matrix')
+    #@SET    MDSTATE:SET('state')
+    #@SET    MDSTATE:SET('clear')
     
 class GeoTrans:
-    """General function for building descriptors to geometric transformations."""
+    """General function for building descriptors to geometric transformations.
+
+The geometric transformation must be used when you are building
+a custom mesh convex by convex (see the add_convex() function of 
+getfem.Mesh): it also defines the kind of convex (triangle,
+hexahedron, prism, etc..)    
+    """
     def __init__(self, *args):
         """Build a GeoTrans object from a string description.
 
@@ -368,10 +403,10 @@ class GeoTrans:
     #@RDATTR GEOTRANS:GET('dim')
     #@RDATTR GEOTRANS:GET('is_linear')
     #@RDATTR GEOTRANS:GET('nbpts')
-    #@GET GEOTRANS:GET('pts')
-    #@GET GEOTRANS:GET('normals')
-    #@GET GEOTRANS:GET('transform')
-    #@GET GEOTRANS:GET('char')
+    #@GET    GEOTRANS:GET('pts')
+    #@GET    GEOTRANS:GET('normals')
+    #@GET    GEOTRANS:GET('transform')
+    #@GET    GEOTRANS:GET('char')
 
 class Fem:
     """FEM (Finite Element Method) objects."""
@@ -379,6 +414,8 @@ class Fem:
         """Build a FEM object from a string description.
 
         @TEXT FEM:INIT('FEM_list')
+
+**SPECIAL FEM:**
 
         @INIT FEM:INIT('interpolated_fem')
         """
@@ -394,19 +431,23 @@ class Fem:
     #@RDATTR FEM:GET('nbdof')
     #@RDATTR FEM:GET('dim')
     #@RDATTR FEM:GET('target_dim')
-    #@GET FEM:GET('pts')
+    #@GET    FEM:GET('pts')
     #@RDATTR FEM:GET('is_equivalent')
     #@RDATTR FEM:GET('is_lagrange')
     #@RDATTR FEM:GET('is_polynomial')
     #@RDATTR FEM:GET('estimated_degree')
-    #@GET FEM:GET('base_value')
-    #@GET FEM:GET('grad_base_value')
-    #@GET FEM:GET('hess_base_value')
-    #@GET FEM:GET('poly_str')
-    #@GET FEM:GET('char')
+    #@GET    FEM:GET('base_value')
+    #@GET    FEM:GET('grad_base_value')
+    #@GET    FEM:GET('hess_base_value')
+    #@GET    FEM:GET('poly_str')
+    #@GET    FEM:GET('char')
     
 class Integ:
-    """Integration Method Objects."""
+    """Integration Method Objects.
+
+General object for obtaining handles to various integrations
+methods on convexes (used when the elementary matrices are built).
+    """
     def __init__(self, *args):
         """Return a FEM Integration Method from a string description.
 
@@ -424,14 +465,20 @@ class Integ:
     #@RDATTR INTEG:GET('is_exact')
     #@RDATTR INTEG:GET('dim')
     #@RDATTR INTEG:GET('nbpts')
-    #@GET INTEG:GET('pts')
-    #@GET INTEG:GET('coeffs')
-    #@GET INTEG:GET('face_pts')
-    #@GET INTEG:GET('face_coeffs')
-    #@GET INTEG:GET('char')
+    #@GET    INTEG:GET('pts')
+    #@GET    INTEG:GET('face_pts')
+    #@GET    INTEG:GET('coeffs')
+    #@GET    INTEG:GET('face_coeffs')
+    #@GET    INTEG:GET('char')
 
 class Eltm:
-    """Descriptor for an elementary matrix type."""
+    """Descriptor for an elementary matrix type.
+
+If you have very particular assembling needs, or if you just want to 
+check the content of an elementary matrix, this function might be
+useful. But the generic assembly abilities of getfem.asm_* should 
+suit most needs.
+    """
     def __init__(self, *args):
         """Generates a descriptor for an elementary matrix type.
 
@@ -443,7 +490,12 @@ class Eltm:
 
     
 class CvStruct:
-    """Descriptor for a convex structure."""
+    """Descriptor for a convex structure.
+
+The convex structures are internal structures of getfem++. They do
+not contain points positions. These structures are recursive, since
+the faces of a convex structures are convex structures.
+    """
     def __init__(self, *args):
         generic_constructor(self,'cvstruct',*args)
     def __del__(self):
@@ -456,7 +508,7 @@ class CvStruct:
     #@RDATTR CVSTRUCT:GET('dim')
     #@RDATTR CVSTRUCT:GET('basic structure')
     #@RDATTR CVSTRUCT:GET('face')
-    #@GET CVSTRUCT:GET('facepts')
+    #@GET    CVSTRUCT:GET('facepts')
 
 class Poly:
     pass
@@ -464,9 +516,8 @@ class Poly:
 class Slice:
     """Mesh slices.
 
-The slices may be considered as a (non-conformal) mesh of\
-simplexes which provides fast interpolation on a P1-discontinuous\
-MeshFem.
+The slices may be considered as a (non-conformal) mesh of simplexes
+which provides fast interpolation on a P1-discontinuous MeshFem.
     
 It is used mainly for post-processing purposes.
     """
@@ -485,20 +536,21 @@ It is used mainly for post-processing purposes.
     def mesh(self):
         return self.get('linked_mesh')
     #@RDATTR SLICE:GET('dim')
-    #@GET SLICE:GET('area')
-    #@GET SLICE:GET('cvs')
+    #@GET    SLICE:GET('area')
+    #@GET    SLICE:GET('cvs')
     #@RDATTR SLICE:GET('nbpts')
-    #@GET SLICE:GET('pts')
     #@RDATTR SLICE:GET('nbsplxs')
-    #@GET SLICE:GET('splxs')
-    #@GET SLICE:GET('edges')
-    #@GET SLICE:GET('interpolate_convex_data')
-    #@GET SLICE:GET('linked mesh')
-    #@GET SLICE:GET('export to vtk')
-    #@GET SLICE:GET('export to pov')
-    #@GET SLICE:GET('export to dx')
-    #@GET SLICE:GET('memsize')
-    #@SET SLICE:SET('pts')
+    #@GET    SLICE:GET('pts')
+    #@GET    SLICE:GET('splxs')
+    #@GET    SLICE:GET('edges')
+    #@GET    SLICE:GET('interpolate_convex_data')
+    #@GET    SLICE:GET('linked mesh')
+    #@GET    SLICE:GET('memsize')
+    #@GET    SLICE:GET('export to vtk')
+    #@GET    SLICE:GET('export to pov')
+    #@GET    SLICE:GET('export to dx')
+
+    #@SET    SLICE:SET('pts')
 
 class Spmat:
     """Getfem sparse matrix."""
@@ -532,18 +584,18 @@ class Spmat:
         The result is another Spmat object.
         """
         if (isinstance(other,(int,float,complex))):
-            m=Spmat('copy',self)
+            m = Spmat('copy',self)
             m.set('scale',other)
-        elif (isinstance(other,list) or isinstance(other, numarray.NDArray)):
-            m=self.mult(other)
+        elif (isinstance(other,list) or isinstance(other, numpy.ndarray)):
+            m = self.mult(other)
         else:
-            m=Spmat('mult',self,other)
-        return m;
+            m = Spmat('mult',self,other)
+        return m
     def __rmul__(self, other):
         if (isinstance(other,(int,float,complex))):
             m=Spmat('copy',self)
             m.set('scale',other)
-        elif (isinstance(other,list) or isinstance(other, numarray.NDArray)):
+        elif (isinstance(other,list) or isinstance(other, numpy.ndarray)):
             m=self.tmult(other)
         else:
             m=Spmat('mult',other,self)
@@ -552,19 +604,20 @@ class Spmat:
         return getfem('spmat_get',self.id, *args)
     def set(self, *args):
         return getfem('spmat_set',self.id, *args)
-    #@GET SPMAT:GET('size')
     #@GET SPMAT:GET('nnz')
-    #@GET SPMAT:GET('is_complex')
-    #@GET SPMAT:GET('storage')
     #@GET SPMAT:GET('full')
     #@GET SPMAT:GET('mult')
     #@GET SPMAT:GET('tmult')
     #@GET SPMAT:GET('diag')
+    #@GET SPMAT:GET('storage')
+    #@GET SPMAT:GET('size')
+    #@GET SPMAT:GET('is_complex')
     #@GET SPMAT:GET('csc_ind')
     #@GET SPMAT:GET('csc_val')
     #@GET SPMAT:GET('dirichlet nullspace')
     #@GET SPMAT:GET('info')
     #@GET SPMAT:GET('save')
+
     #@SET SPMAT:SET('clear')
     #@SET SPMAT:SET('scale')
     #@SET SPMAT:SET('transpose')
@@ -618,14 +671,15 @@ class Precond:
 #@FUNC ::COMPUTE('extrapolate on')
 #@FUNC ::COMPUTE('error estimate')
 
-#@FUNC ::ASM('volumic source')
-#@FUNC ::ASM('boundary source')
 #@FUNC ::ASM('mass matrix')
 #@FUNC ::ASM('laplacian')
 #@FUNC ::ASM('linear elasticity')
+#@FUNC ::ASM('nonlinear elasticity')
 #@FUNC ::ASM('stokes')
 #@FUNC ::ASM('helmholtz')
 #@FUNC ::ASM('bilaplacian')
+#@FUNC ::ASM('volumic source')
+#@FUNC ::ASM('boundary source')
 #@FUNC ::ASM('dirichlet')
 #@FUNC ::ASM('boundary qu term')
 #@FUNC ::ASM('volumic')
@@ -637,9 +691,24 @@ class Precond:
 #@FUNC ::UTIL('warning level')
 
 class LevelSet:
-    """Getfem Level-set."""
+    """Getfem Level-Set Object.
+
+getfem++ deals with level-set definied by piecewise polynomial
+function on a mesh. It will be defined as the zero of this function.
+The level-set is represented by a function defined on a lagrange fem
+of a certain degree on a mesh.
+
+**IMPORTANT:**
+
+All tools listed below needs the package qhull installed on your
+system. This package is widely available. It computes convex hull
+and delaunay triangulations in arbitrary dimension. Everything
+here is considered *work in progress*, it is still subject to
+major changes if needed.
+    """
     def __init__(self, *args):
-        """
+        """General constructor for LevelSet objects.
+
         @TEXT LEVELSET:INIT('LEVELSET_init')
         """
         generic_constructor(self,'levelset',*args)
@@ -650,6 +719,13 @@ class LevelSet:
     def set(self, *args):
         return getfem('levelset_set',self.id, *args)
 
+    #@GET    LEVELSET:GET('values')
+    #@RDATTR LEVELSET:GET('degree')
+    #@GET    LEVELSET:GET('mf')
+    #@RDATTR LEVELSET:GET('memsize')
+
+    #@SET    LEVELSET:SET('values')
+    #@SET    LEVELSET:SET('simplify')
 
 def memstats():
     print "*** Getfem view of the workspace:"

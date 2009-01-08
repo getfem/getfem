@@ -687,7 +687,7 @@ AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
 
 if test x$usepython = xYES; then
   echo "Building with python support (use --enable-python=no to disable it)"
-  echo "You will need the python-numarray package."
+  echo "You will need the python-numpy package."
 dnl  AM_PATH_PYTHON(2.2)
   AC_PYTHON_DEVEL
 fi
@@ -796,7 +796,7 @@ done
 echo "---------------------------------------"
 echo "Ready to build getfem++"
 echo "  building MATLAB interface: $usematlab"
-echo "  building PYTHON interface: $usepython (requires numarray)"
+echo "  building PYTHON interface: $usepython (requires numpy)"
 echo "---------------------------------------"
 
 case $host in

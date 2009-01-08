@@ -1,6 +1,6 @@
 Building the python interface on Mingw32:
 
-I assume python 2.4 or better is installed, with the numarray extension.
+I assume python 2.4 or better is installed, with the numpy extension.
 
 I have installed mingw, and the msys shell.
 

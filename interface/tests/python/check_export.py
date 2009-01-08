@@ -1,6 +1,5 @@
 from getfem import *
-from Numeric import *
-import RandomArray 
+from numpy import *
 
 m0=Mesh('cartesian',[0,1,2,3],[0,1,2],[-3,-2])
 
@@ -30,8 +29,8 @@ m0.add_convex(GeoTrans('GT_QK(3,2)'), [array([0, .5, 1, 0, .5, 1, 0, .5, 1, 0, .
 
 m1=Mesh('cartesian',[0,1,2,3],[0,1,2],[-3,-2])
 
-mf0=MeshFem(m0); mf0.set_classical_fem(1,-1); mf0.export_to_vtk('check_export0.vtk','ascii')
-mf1=MeshFem(m1); mf1.set_classical_fem(1,-1); mf1.export_to_vtk('check_export1.vtk','ascii')
+mf0=MeshFem(m0); mf0.set_classical_fem(1); mf0.export_to_vtk('check_export0.vtk','ascii')
+mf1=MeshFem(m1); mf1.set_classical_fem(1); mf1.export_to_vtk('check_export1.vtk','ascii')
 
 m0.export_to_vtk('check_export2.vtk','quality')
 m1.export_to_vtk('check_export3.vtk','quality')
@@ -47,8 +46,6 @@ sl=Slice(('boundary',),m0,6)
 sl.export_to_dx('check_export1.dx','ascii')
 sl.export_to_dx('check_export1.dx','append','edges')
 
-U=RandomArray.normal(0,1,[mf0.nbdof()])
+U=random.standard_normal(mf0.nbdof())
 sl.export_to_dx('check_export1.dx','append','serie','rndserie',mf0,[U])
 sl.export_to_dx('check_export1.dx','append','serie','rndserie',mf0,[U])
-
-#sl.export_to_dx('check_export1.dx','append','edges')

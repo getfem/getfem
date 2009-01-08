@@ -37,8 +37,8 @@ P=m.pts()
 print 'test', P[1,:]
 ctop=(abs(P[1,:] - 13) < 1e-6);
 cbot=(abs(P[1,:] + 10) < 1e-6);
-pidtop=numarray.compress(ctop, range(0, m.nbpts()))
-pidbot=numarray.compress(cbot, range(0, m.nbpts()))
+pidtop=compress(ctop, range(0, m.nbpts()))
+pidbot=compress(cbot, range(0, m.nbpts()))
 
 ftop=m.faces_from_pid(pidtop)
 fbot=m.faces_from_pid(pidbot)

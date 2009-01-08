@@ -21,9 +21,10 @@
 //
 //========================================================================
 #include <Python.h>
-#include "numarray/libnumarray.h"
-#include "numarray/arrayobject.h"
-//#include "Numeric/arrayobject.h"
+//#include "numarray/libnumarray.h"
+//#include "numarray/arrayobject.h"
+////#include "Numeric/arrayobject.h"
+#include "numpy/arrayobject.h"
 #include "structmember.h"
 #include "gfi_array.h"
 #include "getfem_interface.h"
@@ -54,7 +55,7 @@ GetfemObject_hash(PyGetfemObject *key) {
   return key->objid + (key->classid << 14);
 }
 
-static int 
+static int
 GetfemObject_compare(PyGetfemObject *self, PyGetfemObject *other) {
   if (self->classid < other->classid) return -1;
   else if (self->objid < other->objid) return +1;
@@ -141,13 +142,13 @@ static PyTypeObject PyGetfemObject_Type = {
 #endif
 PyMODINIT_FUNC
 init_getfem(void)
-{  
+{
   PyObject *m;
   PyGetfemObject_Type.tp_new = PyType_GenericNew;
   if (PyType_Ready(&PyGetfemObject_Type) < 0)
     return;
-  m = Py_InitModule3("_getfem", module_methods, "The Getfem-python interface module.");  
-  import_array(); /* init Numeric */  
+  m = Py_InitModule3("_getfem", module_methods, "The Getfem-python interface module.");
+  import_array(); /* init Numeric */
   //import_libnumarray(); /* init Numarray */
   Py_INCREF(&PyGetfemObject_Type);
   PyModule_AddObject(m, "GetfemObject", (PyObject *)&PyGetfemObject_Type);
@@ -169,7 +170,7 @@ typedef struct gcollect {
   ptr_collect *pyobjects;
 } gcollect;
 
-static ptr_collect * 
+static ptr_collect *
 ptr_collect_push_front(ptr_collect *col, void *p) {
   if (col == NULL || col->n == COLLECTCHUNK) {
     ptr_collect *pcol = col;
@@ -183,14 +184,14 @@ ptr_collect_push_front(ptr_collect *col, void *p) {
 }
 
 /* mark a pyobject as referenced */
-static void 
+static void
 gc_ref(gcollect *gc, PyObject *o) {
   gc->pyobjects = ptr_collect_push_front(gc->pyobjects, o);
 }
 
 /* allocate a collectable chunk of memory */
 static void *
-gc_alloc(gcollect *gc, size_t sz) {  
+gc_alloc(gcollect *gc, size_t sz) {
   //printf("gc_alloc(%lu)\n", sz);
   void *p = malloc(sz == 0 ? 1 : sz);
   if (p) {
@@ -203,7 +204,7 @@ gc_alloc(gcollect *gc, size_t sz) {
 
 /* release allocated memory and decrement refcount of
    referenced objects */
-static void 
+static void
 gc_release(gcollect *gc) {
   ptr_collect *p, *np;
   int i;
@@ -219,7 +220,7 @@ gc_release(gcollect *gc) {
     //fprintf(stderr, "release bloc: n=%d, next=%p\n", p->n, p->next);
     for (i=0; i < p->n; ++i) {
       //fprintf(stderr, " i=%d release %p\n", i, p->p[i]);
-      free(p->p[i]); 
+      free(p->p[i]);
     }
     np = p->next; free(p);
   }
@@ -233,7 +234,7 @@ itemsize_of_PyArray(PyArrayObject *pa) {
     case PyArray_DOUBLE : return sizeof(double);
     case PyArray_INT:     return sizeof(int);
     case PyArray_CDOUBLE: return sizeof(double)*2;
-    default: PyErr_SetString(PyExc_RuntimeError, "invalid numeric array type"); return 0; 
+    default: PyErr_SetString(PyExc_RuntimeError, "invalid numeric array type"); return 0;
   }
 }
 
@@ -281,13 +282,13 @@ copy_PyArray_data(PyArrayObject *pa, void *fortran_array, int revert) {
       //printf("i=%d, cnt= ",i); for (j = 0; j < pa->nd; ++j) printf("%d ",cnt[j]); printf("pos = %d",pos);
       switch (pa->descr->type_num) {
         case PyArray_CDOUBLE: {
-          if (revert == 0) { 
+          if (revert == 0) {
             ((double*)fortran_array)[0] = ((double*)(pa->data+pos))[0];
             ((double*)fortran_array)[1] = ((double*)(pa->data+pos))[1];
           } else {
             ((double*)(pa->data+pos))[0] = ((double*)fortran_array)[0];
             ((double*)(pa->data+pos))[1] = ((double*)fortran_array)[1];
-          } 
+          }
         } break;
         case PyArray_DOUBLE: {
           if (revert == 0) *((double*)fortran_array) = *((double*)(pa->data+pos));
@@ -379,11 +380,11 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     int i;
     t->storage.type = GFI_CELL;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
-    TGFISTORE(cell,len) = PyTuple_GET_SIZE(o); 
+    TGFISTORE(cell,len) = PyTuple_GET_SIZE(o);
     if (!(TGFISTORE(cell,val) = gc_alloc(gc,sizeof(gfi_array*)*TGFISTORE(cell,len)))) return NULL;
     gfi_array **p = TGFISTORE(cell,val);
     for (i=0; i < PyTuple_GET_SIZE(o); ++i) {
-      p[i] = PyObject_to_gfi_array(gc, PyTuple_GET_ITEM(o,i)); 
+      p[i] = PyObject_to_gfi_array(gc, PyTuple_GET_ITEM(o,i));
       if (!p[i]) return NULL;
     }
   } else if (PyObject_is_GetfemObject(o, &id)) {
@@ -391,19 +392,19 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     t->storage.type = GFI_OBJID;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
     t->storage.gfi_storage_u.objid.objid_len = 1;
-    if (!(t->storage.gfi_storage_u.objid.objid_val = 
-	  gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;    
+    if (!(t->storage.gfi_storage_u.objid.objid_val =
+	  gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;
     t->storage.gfi_storage_u.objid.objid_val[0] = id;
   } else {
     /* and finally, numpy arrays (and anything convertible to a numpy array) */
     int type = -1;
     if (!PyArray_Check(o)) {
       switch (PyArray_ObjectType(o, PyArray_INT)) {
-        case PyArray_INT: 
+        case PyArray_INT:
 #ifdef PyArray_UNSIGNED_TYPES
         case PyArray_UINT:
 #endif
-          //        case PyArray_LONG: 
+          //        case PyArray_LONG:
           type = PyArray_INT; break;
         case PyArray_FLOAT:
         case PyArray_DOUBLE:
@@ -440,7 +441,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         if (PyArray_IsFortranCompatible(ao)) {
           TGFISTORE(double,val) = (double*)ao->data; // no copy
         } else {
-          if (!(TGFISTORE(double,val) = gc_alloc(gc, ndouble * sizeof(double)))) 
+          if (!(TGFISTORE(double,val) = gc_alloc(gc, ndouble * sizeof(double))))
             return NULL;
           if (copy_PyArray_data(ao, TGFISTORE(double,val), 0) != 0) return NULL;
         }
@@ -452,14 +453,14 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         if (PyArray_IsFortranCompatible(ao)) {
           TGFISTORE(int32,val) = (int*)ao->data; // no copy
         } else {
-          if (!(TGFISTORE(int32,val) = gc_alloc(gc, nint * sizeof(int)))) 
+          if (!(TGFISTORE(int32,val) = gc_alloc(gc, nint * sizeof(int))))
             return NULL;
           if (copy_PyArray_data(ao, TGFISTORE(int32,val), 0) != 0) return NULL;
         }
       } break;
     }
 
-    t->dim.dim_len = ao->nd; 
+    t->dim.dim_len = ao->nd;
     int *d = ao->dimensions;
     t->dim.dim_val = (u_int*)d;
   }
@@ -471,11 +472,11 @@ PyGetfemObject_FromObjId(gfi_object_id id, int in__init__) {
   PyObject *o;
   PyGetfemObject *go = PyObject_New(PyGetfemObject, &PyGetfemObject_Type); Py_INCREF(go);
   //printf("PyGetfemObject_FromObjId(cid=%d, oid=%d,in__init__=%d)\n", id.cid,id.id,in__init__);
-  if (!go) return NULL;    
+  if (!go) return NULL;
   go->classid = id.cid; go->objid = id.id;
   if (!in__init__) {
     PyObject *arg;
-    if (!(arg = Py_BuildValue("(O)", go))) return NULL; 
+    if (!(arg = Py_BuildValue("(O)", go))) return NULL;
     //printf("  -> arg= "); PyObject_Print(arg,stdout,0); printf("\n");
     o = PyEval_CallObject(python_factory, arg);
     Py_DECREF(arg);
@@ -492,7 +493,7 @@ build_gfi_array_list(gcollect *gc, PyObject *tuple, char **pfunction_name, int *
     PyErr_SetString(PyExc_RuntimeError, "missing function name"); return NULL;
   }
   if (!PyString_Check(PyTuple_GET_ITEM(tuple,0))) {
-    PyErr_SetString(PyExc_RuntimeError, "expecting function name as a string"); return NULL;    
+    PyErr_SetString(PyExc_RuntimeError, "expecting function name as a string"); return NULL;
   }
   *pfunction_name = PyString_AsString(PyTuple_GET_ITEM(tuple,0));
   *nb = PyTuple_GET_SIZE(tuple) - 1;
@@ -513,7 +514,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
   PyObject *o = NULL;
   assert(t);
   switch (t->storage.type) {
-  case GFI_UINT32: 
+  case GFI_UINT32:
   case GFI_INT32: {
     if (t->dim.dim_len == 0) return PyInt_FromLong(TGFISTORE(int32,val)[0]);
     else {
@@ -555,12 +556,12 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
       int i;
       if (!(o = PyArray_FromDims(t->dim.dim_len, (int*)t->dim.dim_val, PyArray_OBJECT))) return NULL;
       if (!PyArray_IsFortranCompatible((PyArrayObject*)o)) { // I'm just too lazy to transpose matrices
-	PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects", 
+	PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
 		     t->dim.dim_len, t->storage.gfi_storage_u.objid.objid_len);
 	return NULL;
       }
       for (i = 0; i < t->storage.gfi_storage_u.objid.objid_len; ++i) {
-	((PyObject**)(((PyArrayObject*)o)->data))[i] = 
+	((PyObject**)(((PyArrayObject*)o)->data))[i] =
 	  PyGetfemObject_FromObjId(t->storage.gfi_storage_u.objid.objid_val[i], in__init__);
       }
 #else
@@ -580,7 +581,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
     }
   } break;
   case GFI_SPARSE: {
-    PyErr_SetString(PyExc_RuntimeError, 
+    PyErr_SetString(PyExc_RuntimeError,
                     "Numpy does not have Native sparse matrices. "
                     "Use getfem sparse objects instead.");
   } break;
@@ -619,7 +620,7 @@ call_getfem_(PyObject *self, PyObject *args, int in__init__)
       //fprintf(stderr, "%s : success, nb_out = %d\n", function_name, out_cnt);
       if (out_cnt == 0) {
 	result = Py_None; Py_INCREF(Py_None);
-      } else if (out) { 
+      } else if (out) {
 	int i, err = 0;
 	PyObject *d[out_cnt];
 	for (i = 0; i < out_cnt; ++i) {
@@ -659,12 +660,12 @@ register_types(PyObject *self, PyObject *args)
 		       &PyDerivedTypes[ELTM_CLASS_ID],
 		       &PyDerivedTypes[CVSTRUCT_CLASS_ID],
 		       &PyDerivedTypes[POLY_CLASS_ID],
-		       &PyDerivedTypes[SLICE_CLASS_ID])) return NULL; 
+		       &PyDerivedTypes[SLICE_CLASS_ID])) return NULL;
   //Py_INCREF(PyDerivedTypes[MESH_CLASS_ID]);
   PyObject_Print(PyDerivedTypes[MESH_CLASS_ID],stderr,0);
-  if (!PyClass_Check(PyDerivedTypes[MESH_CLASS_ID])) { 
+  if (!PyClass_Check(PyDerivedTypes[MESH_CLASS_ID])) {
     PyErr_Format(PyExc_RuntimeError, "Not a class..");
-    return NULL; 
+    return NULL;
   }
   return Py_None;
   }*/

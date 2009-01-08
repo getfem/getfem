@@ -23,8 +23,8 @@ P=m.pts()
 
 ctop=(abs(P[1,:] - 13) < 1e-6);
 cbot=(abs(P[1,:] + 10) < 1e-6);
-pidtop=numarray.compress(ctop, range(0, m.nbpts()))
-pidbot=numarray.compress(cbot, range(0, m.nbpts()))
+pidtop=compress(ctop, range(0, m.nbpts()))
+pidbot=compress(cbot, range(0, m.nbpts()))
 
 ftop=m.faces_from_pid(pidtop)
 fbot=m.faces_from_pid(pidbot)
@@ -43,7 +43,7 @@ F = asm_boundary_source(NEUMANN_BOUNDARY, mim, mfu,mfd,repeat([[0],[-100],[0]], 
 K = asm_linear_elasticity(mim, mfu, mfd, repeat([Lambda], mfd.nbdof()), repeat([Mu], mfd.nbdof()));
 
 # handle Dirichlet condition
-(H,R)=asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('numarray.identity(3)'), mfd.eval('[0,0,0]'));
+(H,R)=asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('numpy.identity(3)'), mfd.eval('[0,0,0]'));
 (N,U0)=H.dirichlet_nullspace(R)
 Nt=Spmat('copy',N); Nt.transpose()
 KK=Nt*K*N

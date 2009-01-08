@@ -9,7 +9,6 @@
 
 try:
     from enthought.tvtk.api import tvtk
-    from enthought.util.numerix import array
 except:
     print "\n\n** Could not load tvtk. Did you install it ?\n"
     print "   ( https://svn.enthought.com/enthought/wiki/TVTK ) **\n\n"
@@ -18,12 +17,11 @@ except:
 import os
 import sys
 import getfem
-import numarray
 import numpy
 
 def gf_colormap(name):
     if name == 'tripod':
-        s=64; s1=20; s2=25; s3=48;s4=55;
+        s=64; s1=20; s2=25; s3=48; s4=55;
         c = []
         for i in range(1,s):
             c1 = max(min((i-s1)/(s2-s1),1),0);
@@ -32,7 +30,7 @@ def gf_colormap(name):
                   (1-c2)*((1-c1)*0.7) + c2*.8,
                   (1-c2)*((1-c1)*0.7) + c2*.2]
     elif name == 'chouette':
-        c = [ .8, 1, .8,
+        c = [.8,  1, .8,
              .7, .9, .4,
              .3, .8, .2,
              .1, .7, .4,
@@ -65,24 +63,23 @@ def gf_colormap(name):
     elif name == 'earth':
         c = [252, 233, 79, #   Butter 1
              247, 222, 30,
-             237, 212,   0, #   Butter 2
-             216, 180,   0,
-             196, 160,   0, #   Butter 3
-             138, 226,  52, #   Chameleon 1
-             115, 210,  22, #   Chameleon 2
+             237, 212,  0, #   Butter 2
+             216, 180,  0,
+             196, 160,  0, #   Butter 3
+             138, 226, 52, #   Chameleon 1
+             115, 210, 22, #   Chameleon 2
              78, 154,   6]
-        c = numarray.array(c) / 255.0;
-    c = numarray.array(c);
-    c.setshape((c.size()/3,3))
+        c = numpy.array(c) / 255.0;
+    c = numpy.array(c);
+    c.shape = (-1,3)
     return c
 
 def _getfem_to_tvtk_points(points):
     (N,nbpt) = points.shape
     if N<3:
-        points=numarray.concatenate((points,
-                                     numarray.zeros([3-N, nbpt])))
-    points.transpose()
-    points=array(points, 'd')
+        points=numpy.concatenate((points,
+                                  numpy.zeros([3-N, nbpt])), axis=0)
+    points=numpy.array(points.transpose(), 'd')
     return points
 
 class FigureItem:
@@ -168,19 +165,18 @@ class FigureItem:
         #self.scalar_data_range = (min(self.scalar_data),
         #                          max(self.scalar_data))
         m = self.scalar_data.mean()
-        s = self.scalar_data.stddev()
+        s = self.scalar_data.std()
         self.scalar_data_range = (max(m - s, self.scalar_data.min()),
                                   min(m + s, self.scalar_data.max()))
 
     def set_vector_data(self, vdata, name='vectors'):
         d = self.dfield_on_slice(vdata)
         n = self.sl.nbpts()
-        if d.size() % n != 0:
+        if d.size % n != 0:
             raise Exception, "non consistent dimension for data"
-        if d.size() > n:
-            d.transpose()
-            numarray.reshape(d, (-1, d.size() / n))
-#            numarray.reshape(d, (d.size() / n, -1))
+        if d.size > n:
+            d = d.transpose()
+            d.shape = (n,-1)
         self.vector_data = d
         if self.glyph_name is None:
             self.glyph_name = 'default'
@@ -206,7 +202,7 @@ class FigureItem:
             lut = tvtk.LookupTable()
             c=gf_colormap(c)
             lut.number_of_table_values=c.shape[0]
-            for i in range(0,c.shape[0]):
+            for i in range(c.shape[0]):
                 lut.set_table_value(i,c[i,0],c[i,1],c[i,2],1)
         elif isinstance(c, tvtk.LookupTable):
             lut = c
@@ -222,13 +218,12 @@ class FigureItem:
             self.actors = []
             points=_getfem_to_tvtk_points(self.sl.pts())
             (triangles,cv2tr)=self.sl.splxs(2);
-            triangles.transpose();
-            triangles=array(triangles, 'I');
+            triangles=numpy.array(triangles.transpose(), 'I');
             data = tvtk.PolyData(points=points, polys=triangles)
             if self.scalar_data is not None:
-                data.point_data.scalars = array(self.scalar_data)
+                data.point_data.scalars = numpy.array(self.scalar_data)
             if self.vector_data is not None:
-                data.point_data.vectors = array(self.vector_data)
+                data.point_data.vectors = numpy.array(self.vector_data)
             if self.glyph_name is not None:
                 mask = tvtk.MaskPoints()
                 mask.maximum_number_of_points = self.glyph_nb_pts
@@ -284,10 +279,10 @@ class FigureItem:
                 self.actors += [tvtk.Actor(mapper=self.mapper)]
             if self.show_edges:
                 (Pe, E1, E2)=self.sl.edges();
-                if Pe.size():
-                    E1.transpose()
-                    E2.transpose()
-                    E = array(numarray.concatenate((E1,E2),axis=0), 'I')
+                if Pe.size:
+                    E = numpy.array(numpy.concatenate((E1.transpose(),
+                                                       E2.transpose()),
+                                                      axis=0), 'I')
                     edges=tvtk.PolyData(points=_getfem_to_tvtk_points(Pe),
                                         polys=E)
                     mapper_edges = tvtk.PolyDataMapper(input=edges);
@@ -301,9 +296,8 @@ class FigureItem:
             if self.sl.nbsplxs(1):
                 # plot tubes
                 (seg,cv2seg)=self.sl.splxs(1)
-                seg.transpose()
-                seg=array(seg,'I')
-                data = tvtk.Axes(origin=(0,0,0), scale_factor=0.5, symmetric=1)
+                seg=numpy.array(seg.transpose(),'I')
+                data=tvtk.Axes(origin=(0,0,0), scale_factor=0.5, symmetric=1)
                 data=tvtk.PolyData(points=points, lines=seg)
                 tube = tvtk.TubeFilter(radius=0.4, number_of_sides=10,
                                        vary_radius='vary_radius_off',
