@@ -329,8 +329,7 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   std::string cmd    = in.pop().to_string();
   if (check_cmd(cmd, "empty", in, out, 1, 1, 0, 1)) {
     /*@INIT M = MESH:INIT('empty', @int dim)
-      Create a new empty mesh.
-      @*/
+    Create a new empty mesh.@*/
     size_type dim = in.pop().to_integer(1,255);
     getfem::base_node pt(dim);
     /* just to initialize the dimension of the mesh
@@ -338,92 +337,93 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     pmesh->sup_point(pmesh->add_point(pt));
   } else if (check_cmd(cmd, "cartesian", in, out, 1, 32, 0, 1)) {
     /*@INIT M = MESH:INIT('cartesian', @dvec X[, @dvec Y[, @dvec Z,..]])
-      Build quickly a regular mesh of quadrangles, cubes, etc.
-      @*/
+    Build quickly a regular mesh of quadrangles, cubes, etc.@*/
     cartesian_mesh(pmesh, in);
   } else if (check_cmd(cmd, "triangles grid", in, out, 2, 2, 0, 1)) {
     /*@INIT M = MESH:INIT('triangles grid', @dvec X, @dvec Y)
-      Build quickly a regular mesh of triangles.
+    Build quickly a regular mesh of triangles.
 
-      This is a very limited and somehow deprecated function (See also
-      MESH:INIT('ptND'), MESH:INIT('regular simplices') and
-      MESH:INIT('cartesian')). @*/
+    This is a very limited and somehow deprecated function (See also
+    MESH:INIT('ptND'), MESH:INIT('regular simplices') and
+    MESH:INIT('cartesian')).@*/
     triangles_grid_mesh(pmesh, in);
   } else if (check_cmd(cmd, "regular simplices", in, out, 1, 32, 0, 1)) {
-    /*@INIT M = MESH:INIT('regular simplices', @dvec X[, @dvec Y[, @dvec Z,.., ]]['degree', @int K]['noised'])
-      Mesh a n-dimensionnal parallelepipeded with simplices
-      (triangles, tetrahedrons etc) .
+    /*@INIT M = MESH:INIT('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
+    Mesh a n-dimensionnal parallelepipeded with simplices (triangles, tetrahedrons etc) .
 
-      The optional degree may be used to build meshes with non linear
-      geometric transformations.
-      @*/
+    The optional degree may be used to build meshes with non linear
+    geometric transformations.@*/
     regular_simplices_mesh(pmesh, in);
   } else if (check_cmd(cmd, "curved", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('curved', M0, @dvec F)
-      Build a curved (n+1)-dimensions mesh from a n-dimensions mesh M0.
+    /*@INIT M = MESH:INIT('curved', @tmesh m0, @dvec F)
+    Build a curved (n+1)-dimensions mesh from a n-dimensions mesh `m0`.
 
-      The points of the new mesh have one additional coordinate, given by
-      the vector F. This can be used to obtain meshes for shells. M0 may
-      be a @tmf object, in that case its linked mesh will be used.
-      @*/
+    The points of the new mesh have one additional coordinate, given by
+    the vector `F`. This can be used to obtain meshes for shells. `m0`
+    may be a @tmf object, in that case its linked mesh will be used.@*/
     curved_mesh(pmesh, in);
   } else if (check_cmd(cmd, "prismatic", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('prismatic', M0, @int NLAY)
-      Extrude a prismatic mesh M from a mesh M0.
+    /*@INIT M = MESH:INIT('prismatic', @tmesh m0, @int NLAY)
+    Extrude a prismatic @tmesh `M` from a @tmesh `m0`.
 
-      In the additional dimension there are NLAY layers of elements built
-      from 0 to 1. @*/
+    In the additional dimension there are `NLAY` layers of elements
+    built from 0 to 1.@*/
     prismatic_mesh(pmesh, in);
   } else if (check_cmd(cmd, "pt2D", in, out, 2, 3, 0, 1)) {
-    /*@INIT M = MESH:INIT('pt2D', @dmat P, @ivec T[, @int N])
-      Build a mesh from a 2D triangulation.
+    /*@INIT M = MESH:INIT('pt2D', @dmat P, @ivec T[, @int n])
+    Build a mesh from a 2D triangulation.
 
-      Each column of P contains a point coordinate, and each column of T contains the point indices of a triangle. N is optional and
-      is a zone number. If N is specified then only the zone number
-      'N' is converted (in that case, T is expected to have 4 rows,
-      the fourth containing these zone numbers).@MATLAB{<Par>Can be used to Convert a "pdetool" triangulation exported in variables P and T into a GETFEM mesh.}
-      @*/
+    Each column of `P` contains a point coordinate, and each column
+    of `T` contains the point indices of a triangle. `n` is optional
+    and is a zone number. If `n` is specified then only the zone
+    number `n` is converted (in that case, `T` is expected to have
+    4 rows, the fourth containing these zone numbers).@MATLAB{<Par>
+    Can be used to Convert a "pdetool" triangulation exported in
+    variables P and T into a GETFEM mesh.}@*/
     ptND_mesh(pmesh, true, in);
   } else if (check_cmd(cmd, "ptND", in, out, 2, 2, 0, 1)) {
     /*@INIT M = MESH:INIT('ptND', @dmat P, @imat T)
-      Build a mesh from a N-dimensional "triangulation".
+    Build a mesh from a N-dimensional "triangulation".
 
-      Similar function to 'pt2D', for building simplexes meshes from a
-      triangulation given in T, and a list of points given in P. The
-      dimension of the mesh will be the number of rows of P, and the
-      dimension of the simplexes will be the number of rows of T.
-      @*/
+    Similar function to 'pt2D', for building simplexes meshes from a
+    triangulation given in `T`, and a list of points given in `P`. The
+    dimension of the mesh will be the number of rows of `P`, and the
+    dimension of the simplexes will be the number of rows of `T`.@*/
     ptND_mesh(pmesh, 0, in);
   } else if (check_cmd(cmd, "load", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('load', @str FILENAME)
-      Load a mesh from a GETFEM++ ascii mesh file. See also
-      MESH:GET('save',FILENAME). @*/
+    /*@INIT M = MESH:INIT('load', @str filename)
+    Load a mesh from a GETFEM++ ascii mesh file.
+
+    See also MESH:GET('save',filename).@*/
     std::string fname = in.pop().to_string();
     pmesh->read_from_file(fname);
   } else if (check_cmd(cmd, "from string", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('from string', @str S)
-      Load a mesh from a string description. For example, a string returned
-      by MESH:GET('char').
-      @*/
+    /*@INIT M = MESH:INIT('from string', @str s)
+    Load a mesh from a string description.
+
+    For example, a string returned by MESH:GET('char').@*/
     std::stringstream ss(in.pop().to_string());
     pmesh->read_from_file(ss);
   } else if (check_cmd(cmd, "import", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('import', @str FORMAT, @str FILENAME)
-      Import a mesh, FORMAT may be:<Par>
-      - 'gmsh' or 'gmshv2'<par>
-         for a mesh created with gmsh (http://www.geuz.org/gmsh)<par>
-      - 'gid'<par>
-         for a mesh created with GiD  (http://gid.cimne.upc.es)<par>
-      - 'am_fmt'<par>
-         for a mesh created with emc2 (http://pauillac.inria.fr/cdrom/www/emc2/fra.htm)
-      @*/
+    /*@INIT M = MESH:INIT('import', @str format, @str filename)
+    Import a mesh.
+
+    `format` may be:<par>
+     - 'gmsh' or 'gmshv2'<par>
+        for a mesh created with gmsh<par>
+        http://www.geuz.org/gmsh<par>
+     - 'gid'<par>
+        for a mesh created with GiD<par>
+        http://gid.cimne.upc.es<par>
+     - 'am_fmt'<par>
+        for a mesh created with emc2<par>
+        http://pauillac.inria.fr/cdrom/www/emc2/fra.htm@*/
     std::string fmt = in.pop().to_string();
     std::string fname = in.pop().to_string();
     getfem::import_mesh(fname, fmt, *pmesh);
   } else if (check_cmd(cmd, "clone", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('clone', @tmesh M2)
-      Create a copy of a mesh.
-      @*/
+    /*@INIT M = MESH:INIT('clone', @tmesh m2)
+    Create a copy of a mesh.@*/
     const getfem::mesh *m2 = in.pop().to_const_mesh();
     pmesh->copy_from(*m2);
   } else bad_cmd(cmd);

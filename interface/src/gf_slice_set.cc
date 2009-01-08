@@ -48,14 +48,13 @@ void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::stored_mesh_slice *sl = &mi_sl->mesh_slice();
   std::string cmd                  = in.pop().to_string();
   if (check_cmd(cmd, "pts", in, out, 1, 1, 0, 0)) {
-    /*@SET SLICE:SET('pts', @dmat P)
-      Replace the points of the slice.
-      
-      The new points P are stored in the columns the matrix. Note that you can use
-      the function to apply a deformation to a slice, or to change the dimension of
-      the slice (the number of rows of P is not required to be equal to
-      SLICE:GET('dim')).
-      @*/
+    /*@SET SLICE:SET('pts',@dmat P)
+    Replace the points of the slice.
+
+    The new points `P` are stored in the columns the matrix. Note that
+    you can use the function to apply a deformation to a slice, or to
+    change the dimension of the slice (the number of rows of `P` is not
+    required to be equal to SLICE:GET('dim')).@*/
     darray w = in.pop().to_darray(-1, int(sl->nb_points()));
     size_type min_dim = 0;
     for (size_type ic=0; ic < sl->nb_convex(); ++ic) {
@@ -63,8 +62,8 @@ void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	   it != sl->simplexes(ic).end(); ++it)
 	min_dim = std::max(min_dim, it->dim());
     }
-    if (w.getm() < min_dim) 
-      GMM_THROW(getfemint_error, "can't reduce the dimension of the slice to " << 
+    if (w.getm() < min_dim)
+      GMM_THROW(getfemint_error, "can't reduce the dimension of the slice to " <<
 		w.getm() << " (it contains simplexes of dimension " << min_dim << ")");
     sl->set_dim(w.getm()); /* resize the points */
     for (size_type ic=0, cnt=0; ic < sl->nb_convex(); ++ic) {

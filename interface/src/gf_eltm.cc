@@ -32,30 +32,30 @@ using namespace getfemint;
 MLABCOM*/
 
 /*@TEXT ELTM:INIT('ELTM_init')
-  Generates a descriptor for an elementary matrix type.<Par>
+@teltm = ELTM:INIT(...)<Par>
 
-  * ELTM:INIT('base', @tfem FEM)<par>
-  Integration of shape functions on elements, using the fem FEM.<Par>
+* ELTM:INIT('base', @tfem FEM)<par>
+   return a descriptor for the integration of shape functions on<par>
+   elements, using the @tfem `FEM`.<par>
+* ELTM:INIT('grad', @tfem FEM)<par>
+   return a descriptor for the integration of the gradient of shape<par>
+   functions on elements, using the @tfem `FEM`.<par>
+* ELTM:INIT('hessian', @tfem FEM)<par>
+   return a descriptor for the integration of the hessian of shape<par>
+   functions on elements, using the @tfem `FEM`.<par>
+* ELTM:INIT('normal')<par>
+   return a descriptor for the unit normal of convex faces.<par>
+* ELTM:INIT('grad_geotrans')<par>
+   return a descriptor to the gradient matrix of the geometric<par>
+   transformation.<par>
+* ELTM:INIT('grad_geotrans_inv')<par>
+   return a descriptor to the inverse of the gradient matrix of the<par>
+   geometric transformation (this is rarely used).<par>
+* ELTM:INIT('product', @teltm A, @teltm B)<par>
+   return a descriptor for the integration of the tensorial product<par>
+   of elementary matrices `A` and `B`.<Par>
 
-  * ELTM:INIT('grad', @tfem FEM)<par>
-  Integration of gradient of shape functions on elements, using the fem FEM.<Par>
-
-  * ELTM:INIT('hessian', @tfem FEM)<par>
-  Integration of hessian of shape functions on elements, using the fem FEM.<Par>
-
-  * ELTM:INIT('normal')<par>
-  The unit normal to the current convex face<Par>
-
-  * ELTM:INIT('grad_geotrans')<par>
-  The gradient of the geometric transformation.
-
-  * ELTM:INIT('grad_geotrans_inv')<par>
-  The inverse of the gradient of the geometric transformation.
-
-  * ELTM:INIT('product', @eltm A, @eltm B)<par>
-  Integration of the tensorial product of elementary matrices A and B.<Par>
-  
-  In order to obtain a numerical value of theses matrices, see MESHIM:GET('eltm').
+In order to obtain a numerical value of theses matrices, see MESHIM:GET('eltm').
 @*/
 
 
@@ -66,23 +66,22 @@ void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
   std::string cmd                  = in.pop().to_string();
   getfem::pmat_elem_type pme = 0;
-  if (check_cmd(cmd, "base", in, out, 1, 1, 0, 1)) {  
+  if (check_cmd(cmd, "base", in, out, 1, 1, 0, 1)) {
     pme = getfem::mat_elem_base(in.pop().to_fem());
-  } else if (check_cmd(cmd, "grad", in, out, 1, 1, 0, 1)) {  
+  } else if (check_cmd(cmd, "grad", in, out, 1, 1, 0, 1)) {
     pme = getfem::mat_elem_grad(in.pop().to_fem());
-  } else if (check_cmd(cmd, "hessian", in, out, 1, 1, 0, 1)) {  
+  } else if (check_cmd(cmd, "hessian", in, out, 1, 1, 0, 1)) {
     pme = getfem::mat_elem_hessian(in.pop().to_fem());
-  } else if (check_cmd(cmd, "normal", in, out, 0, 0, 0, 1)) {  
+  } else if (check_cmd(cmd, "normal", in, out, 0, 0, 0, 1)) {
     pme = getfem::mat_elem_unit_normal();
   } else if (check_cmd(cmd, "grad_geotrans", in, out, 0, 0, 0, 1)) {
-    pme = getfem::mat_elem_grad_geotrans(false); 
+    pme = getfem::mat_elem_grad_geotrans(false);
   } else if (check_cmd(cmd, "grad_geotrans_inv", in, out, 0, 0, 0, 1)) {
-    pme = getfem::mat_elem_grad_geotrans(true); 
-  } else if (check_cmd(cmd, "product", in, out, 2, 2, 0, 1)) {  
+    pme = getfem::mat_elem_grad_geotrans(true);
+  } else if (check_cmd(cmd, "product", in, out, 2, 2, 0, 1)) {
     getfem::pmat_elem_type  m1 = in.pop().to_mat_elem_type();
     getfem::pmat_elem_type  m2 = in.pop().to_mat_elem_type();
     pme = getfem::mat_elem_product(m1,m2);
   } else bad_cmd(cmd);
   out.pop().from_object_id(getfemint::ind_matelemtype(pme), ELTM_CLASS_ID);
 }
-

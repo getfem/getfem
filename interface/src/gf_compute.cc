@@ -33,7 +33,7 @@ error_for_non_lagrange_elements(const getfem::mesh_fem &mf, bool warning_only = 
   size_type cnt=0, total=0, cnt_no_fem=0;
   for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished(); ++cv) {
     if (!mf.convex_index()[cv]) cnt_no_fem++;
-    else if (!mf.fem_of_element(cv)->is_lagrange()) cnt++; 
+    else if (!mf.fem_of_element(cv)->is_lagrange()) cnt++;
     total++;
   }
   if (cnt) {
@@ -55,19 +55,19 @@ error_for_non_lagrange_elements(const getfem::mesh_fem &mf, bool warning_only = 
 
 
 static void
-mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N, 
+mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
                       mexargs_in &in, mexargs_out &out)
 {
   unsigned mdim = mf->linked_mesh().dim();
   if (mf->get_qdim() != mdim) {
-    THROW_BADARG( "Error, the mesh is of dimension " << mdim << 
+    THROW_BADARG( "Error, the mesh is of dimension " << mdim <<
 		  " while its Qdim is " << mf->get_qdim());
   }
   bgeot::edge_list el;
   const getfem::mesh &m = mf->linked_mesh();
 
   build_edge_list(m, el, in);
-  
+
   darray w   = out.pop().create_darray(mdim, N, unsigned(el.size()));
 
   bgeot::edge_list::const_iterator it = el.begin();
@@ -95,7 +95,7 @@ mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
       /* get local point numbers in the convex */
       bgeot::size_type iA = m.local_ind_of_convex_point(cv, (*eit).i);
       bgeot::size_type iB = m.local_ind_of_convex_point(cv, (*eit).j);
-      
+
       getfem::base_node A = pgt->convex_ref()->points()[iA];
       getfem::base_node B = pgt->convex_ref()->points()[iB];
       for (size_type i = 0; i < N; i++) {
@@ -110,7 +110,7 @@ mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
 
     if (pt_val.size() != ecnt * N * mdim) THROW_INTERNAL_ERROR;
 
-    /* evaluate the point location on the real mesh, adds it 
+    /* evaluate the point location on the real mesh, adds it
        the 'deformation' field pt_val interpolated from U,
        and write the result in the destination vector */
     for (ecnt = 0; it != nit; it++, ecnt++, nbe++) {
@@ -126,17 +126,17 @@ mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
   }
 }
 
-template <typename T> static void 
-gf_compute_gradient(getfemint::mexargs_out& out, 
-		    const getfem::mesh_fem& mf, 
+template <typename T> static void
+gf_compute_gradient(getfemint::mexargs_out& out,
+		    const getfem::mesh_fem& mf,
 		    const getfem::mesh_fem& mf_grad,
 		    const garray<T> &U,
 		    size_type qm) {
   garray<T> DU;
   unsigned N = mf.linked_mesh().dim();
-  array_dimensions dims(N); 
+  array_dimensions dims(N);
   unsigned qqdim = unsigned(dims.push_back(U,0,U.ndim()-1,true));
-  
+
   if (qm != 1) dims.push_back(unsigned(qm));
   dims.push_back(unsigned(mf_grad.nb_dof()));
   DU = out.pop().create_array(dims, T());
@@ -145,7 +145,7 @@ gf_compute_gradient(getfemint::mexargs_out& out,
     // compute_gradient also checks that the meshes are the same
     getfem::compute_gradient(mf, mf_grad, gmm::sub_vector(U, gmm::sub_slice(qq, mf.nb_dof(),qqdim)), tmp);
     for (unsigned j=0, pos=qq*N; j < tmp.size(); j+=N) {
-      for (unsigned k=0; k < N; ++k) DU[pos+k] = tmp[j+k]; 
+      for (unsigned k=0; k < N; ++k) DU[pos+k] = tmp[j+k];
       pos += qqdim*N;
     }
   }
@@ -153,9 +153,9 @@ gf_compute_gradient(getfemint::mexargs_out& out,
 
 
 
-template <typename T> static void 
-gf_compute_hessian(getfemint::mexargs_out& out, 
-		   const getfem::mesh_fem& mf, 
+template <typename T> static void
+gf_compute_hessian(getfemint::mexargs_out& out,
+		   const getfem::mesh_fem& mf,
 		   const getfem::mesh_fem& mf_hess,
 		   const garray<T> &U,
 		   size_type qm) {
@@ -163,7 +163,7 @@ gf_compute_hessian(getfemint::mexargs_out& out,
   unsigned N = mf.linked_mesh().dim();
   array_dimensions dims(N); dims.push_back(N);
   unsigned qqdim = unsigned(dims.push_back(U,0,U.ndim()-1,true));
-  
+
   if (qm != 1) dims.push_back(unsigned(qm));
   dims.push_back(unsigned(mf_hess.nb_dof()));
   D2U = out.pop().create_array(dims, T());
@@ -173,7 +173,7 @@ gf_compute_hessian(getfemint::mexargs_out& out,
     getfem::compute_hessian(mf, mf_hess, gmm::sub_vector(U, gmm::sub_slice(qq, mf.nb_dof(),qqdim)), tmp);
     //cerr << "tmp = " << tmp << "\n";
     for (unsigned j=0, pos=qq*N*N; j < tmp.size(); j+=N*N) {
-      for (unsigned k=0; k < N*N; ++k) D2U[pos+k] = tmp[j+k]; 
+      for (unsigned k=0; k < N*N; ++k) D2U[pos+k] = tmp[j+k];
       /* TODO A VERFIEIER !*/
       pos += qqdim*N*N;
     }
@@ -182,7 +182,7 @@ gf_compute_hessian(getfemint::mexargs_out& out,
 
 
 template <typename T> static void
-gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out, 
+gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
 	       const getfem::mesh_fem& mf, const garray<T> &U) {
   array_dimensions dims;
   dims.push_back(U,0,U.ndim()-1,true);
@@ -190,9 +190,9 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     const getfem::mesh_fem& mf_dest = *in.pop().to_const_mesh_fem();
     error_for_non_lagrange_elements(mf_dest, true);
     size_type qmult = mf.get_qdim() / mf_dest.get_qdim();
-    if (qmult == 0) 
-      THROW_ERROR("Cannot interpolate a mesh_fem with qdim = " << 
-		  int(mf.get_qdim()) << " onto a mesh_fem whose qdim is " 
+    if (qmult == 0)
+      THROW_ERROR("Cannot interpolate a mesh_fem with qdim = " <<
+		  int(mf.get_qdim()) << " onto a mesh_fem whose qdim is "
 		  << int(mf_dest.get_qdim()));
     if (qmult != 1) dims.push_back(unsigned(qmult));
     dims.push_back(unsigned(mf_dest.nb_dof()));
@@ -201,11 +201,11 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     getfem::interpolation(mf, mf_dest, U, V);
   }
   else if (in.front().is_mesh_slice()) {
-    getfem::stored_mesh_slice *sl = 
+    getfem::stored_mesh_slice *sl =
       &in.pop().to_getfemint_mesh_slice()->mesh_slice();
 
     for (size_type i=0; i < sl->nb_convex(); ++i)
-      if (!mf.linked_mesh().convex_index().is_in(sl->convex_num(i))) 
+      if (!mf.linked_mesh().convex_index().is_in(sl->convex_num(i)))
       THROW_BADARG("the slice is not compatible with the mesh_fem "
 		   "(cannot find convex " << sl->convex_num(i) << ")");
 
@@ -241,7 +241,7 @@ bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
   @FUNC ::COMPUTE('extrapolate on')
   @FUNC ::COMPUTE('error estimate')
 
-  * [U2[,MF2,[,X[,Y[,Z]]]]] = gf_compute(MF,U,'interpolate on Q1 grid', 
+  * [U2[,MF2,[,X[,Y[,Z]]]]] = gf_compute(MF,U,'interpolate on Q1 grid',
                                {'regular h', hxyz | 'regular N',Nxyz |
            			   X[,Y[,Z]]}
 
@@ -250,11 +250,11 @@ bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
   via the MATLAB command 'pcolor'. The first dimension is the Qdim of
   MF (i.e.  1 if U is a scalar field)
 
-  example (mf_u is a 2D mesh_fem): 
+  example (mf_u is a 2D mesh_fem):
    >> Uq=gf_compute(mf_u, U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
    >> pcolor(squeeze(Uq(1,:,:)));
 
-  * E = gf_compute(MF, U, 'mesh edges deformation', N [,vec or 
+  * E = gf_compute(MF, U, 'mesh edges deformation', N [,vec or
                    mat CVLIST])
   [OBSOLETE FUNCTION! will be removed in a future release]
   Evaluates the deformation of the mesh caused by the field U (for a
@@ -293,102 +293,98 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
 
   const getfem::mesh_fem *mf   = in.pop().to_const_mesh_fem();
-  rcarray U              = in.pop().to_rcarray(); 
+  rcarray U              = in.pop().to_rcarray();
   in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
   std::string cmd        = in.pop().to_string();
 
   if (check_cmd(cmd, "L2 norm", in, out, 1, 2, 0, 1) && U_is_a_vector(U,cmd)) {
-    /*@FUNC ::COMPUTE('L2 norm', @tmim mim [,CVLST])
-      Compute the L2 norm of the (real or complex) field U.
+    /*@FUNC n = ::COMPUTE('L2 norm',@tmim mim[, @mat CVids])
+    Compute the L2 norm of the (real or complex) field `U`.
 
-      If CVLST is indicated, the norm will be computed only on the listed
-      convexes. @*/
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
     const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
-    dal::bit_vector bv = in.remaining() ? 
+    dal::bit_vector bv = in.remaining() ?
       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-    if (!U.is_complex()) 
+    if (!U.is_complex())
       out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.real(), bv));
     else out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.cplx(), bv));
   } else if (check_cmd(cmd, "H1 semi norm", in, out, 1, 2, 0, 1) && U_is_a_vector(U,cmd)) {
-    /*@FUNC N=::COMPUTE('H1 semi norm', @tmim mim [,CVLST])
-      Compute the L2 norm of grad(U).
+    /*@FUNC n = ::COMPUTE('H1 semi norm',@tmim mim[, @mat CVids])
+    Compute the L2 norm of grad(`U`).
 
-      If CVLST is given, the norm will be computed only on the listed
-      convexes.
-      @*/    
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
     const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
-    dal::bit_vector bv = in.remaining() ? 
+    dal::bit_vector bv = in.remaining() ?
       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-    if (!U.is_complex()) 
+    if (!U.is_complex())
       out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf, U.real(), bv));
     else out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim, *mf, U.cplx(), bv));
   } else if (check_cmd(cmd, "H1 norm", in, out, 1, 2, 0, 1) && U_is_a_vector(U,cmd)) {
-      /*@FUNC N = ::COMPUTE('H1 norm', @tmim mim [,CVLST])
-        Compute the H1 norm of U.
+    /*@FUNC n = ::COMPUTE('H1 norm',@tmim mim[, @mat CVids])
+    Compute the H1 norm of `U`.
 
-        If CVLST is given, the norm will be computed only on the listed
-        convexes.
-        @*/
-
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
     const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
-    dal::bit_vector bv = in.remaining() ? 
+    dal::bit_vector bv = in.remaining() ?
       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-    if (!U.is_complex()) 
+    if (!U.is_complex())
       out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.real(), bv));
     else out.pop().from_scalar(getfem::asm_H1_norm(*mim, *mf, U.cplx(), bv));
   } else if (check_cmd(cmd, "H2 semi norm", in, out, 1, 2, 0, 1) && U_is_a_vector(U,cmd)) {
-      /*@FUNC N = ::COMPUTE('H2 semi norm', @tmim mim [,CVLST])
-        Compute the L2 norm of D^2(U).
+    /*@FUNC n = ::COMPUTE('H2 semi norm',@tmim mim[, @mat CVids])
+    Compute the L2 norm of D^2(`U`).
 
-        If CVLST is given, the norm will be computed only on the listed
-        convexes.
-        @*/
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
     const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
-    dal::bit_vector bv = in.remaining() ? 
+    dal::bit_vector bv = in.remaining() ?
       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-    if (!U.is_complex()) 
+    if (!U.is_complex())
       out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf, U.real(), bv));
     else out.pop().from_scalar(getfem::asm_H2_semi_norm(*mim, *mf, U.cplx(), bv));
   } else if (check_cmd(cmd, "H2 norm", in, out, 1, 2, 0, 1) && U_is_a_vector(U,cmd)) {
-      /*@FUNC N = ::COMPUTE('H2 norm', @tmim mim [,CVLST])
-        Compute the H2 norm of U.
+    /*@FUNC n = ::COMPUTE('H2 norm',@tmim mim[, @mat CVids])
+    Compute the H2 norm of `U`.
 
-        If CVLST is given, the norm will be computed only on the listed
-        convexes.
-        @*/
-
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
     const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
-    dal::bit_vector bv = in.remaining() ? 
+    dal::bit_vector bv = in.remaining() ?
       in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
-    if (!U.is_complex()) 
+    if (!U.is_complex())
       out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.real(), bv));
     else out.pop().from_scalar(getfem::asm_H2_norm(*mim, *mf, U.cplx(), bv));
   } else if (check_cmd(cmd, "gradient", in, out, 1, 1, 0, 1)) {
-    /*@FUNC DU = ::COMPUTE('gradient', @tmf MFGRAD)
-      Compute the gradient of the field U defined on meshfem MFGRAD.
-      
-      The gradient is interpolated on the mesh_fem MFGRAD, and
-      returned in DU.  For example, if U is defined on a P2 mesh_fem,
-      DU should be evaluated on a P1-discontinuous mesh_fem. MF and
-      MFGRAD should share the same mesh.
+    /*@FUNC DU = ::COMPUTE('gradient',@tmf mf_du)
+    Compute the gradient of the field `U` defined on @tmf `mf_du`.
 
-      U may have any number of dimensions (i.e. this function is not
-      restricted to the gradient of scalar fields, but may also be
-      used for tensor fields). However the last dimension of U has to
-      be equal to the number of dof of MF. For example, if U is a
-      3x3xnbdof(MF) array, DU will be a Nx3x3[xQ]xnbdof(MFGRAD) array,
-      where N is the dimension of the mesh, and the optional Q
-      dimension is inserted if qdim(MF) != qdim(MFGRAD). 
-      @*/
+    The gradient is interpolated on the @tmf `mf_du`, and returned in
+    `DU`. For example, if `U` is defined on a P2 @tmf, `DU` should be
+    evaluated on a P1-discontinuous @tmf. `mf` and `mf_du` should
+    share the same mesh.<Par>
+
+    `U` may have any number of dimensions (i.e. this function is not
+    restricted to the gradient of scalar fields, but may also be used
+    for tensor fields). However the last dimension of `U` has to be
+    equal to the number of dof of `mf`. For example, if `U` is a
+    [3x3xNmf] array (where Nmf is the number of dof of `mf`), `DU` will
+    be a [Nx3x3[xQ]xNmf_du] array, where N is the dimension of the mesh,
+    Nmf_du is the number of dof of `mf_du`, and the optional Q dimension
+    is inserted if `Qdim_mf != Qdim_mf_du`, where Qdim_mf is the Qdim of
+    `mf` and Qdim_mf_du is the Qdim of `mf_du`.@*/
     const getfem::mesh_fem *mf_grad = in.pop().to_const_mesh_fem();
     error_for_non_lagrange_elements(*mf_grad);
     size_type qm = (mf_grad->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
     if (!U.is_complex()) gf_compute_gradient<scalar_type>(out, *mf, *mf_grad, U.real(), qm);
     else                 gf_compute_gradient<complex_type>(out, *mf, *mf_grad, U.cplx(), qm);
   } else if (check_cmd(cmd, "hessian", in, out, 1, 1, 0, 1)) {
-    /*@FUNC DU = ::COMPUTE('hessian', @tmf MFHESS)
-      Compute the hessian of the field U defined on meshfem MFHESS.
-      @*/
+    /*@FUNC HU = ::COMPUTE('hessian',@tmf mf_h)
+    Compute the hessian of the field `U` defined on @tmf `mf_h`.
+
+    See also ::COMPUTE('gradient', @tmf mf_du).@*/
     const getfem::mesh_fem *mf_hess = in.pop().to_const_mesh_fem();
     error_for_non_lagrange_elements(*mf_hess);
     size_type qm = (mf_hess->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
@@ -403,39 +399,37 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     } else build_convex_face_lst(mf->linked_mesh(), cvf, 0);
     if (U.sizes().getn() != mf->nb_dof()) {
       THROW_BADARG("Wrong number of columns (need transpose?)");
-    }  
+    }
     eval_on_triangulated_surface(&mf->linked_mesh(), Nrefine, cvf, out, mf, U.real());
   } else if (check_cmd(cmd, "interpolate on", in, out, 1, 1, 0, 1)) {
-    /*@FUNC U2 = ::COMPUTE('interpolate on', { @tmf MF2 | slice SL })
-      Interpolate a field on another mesh_fem or a slice.
+    /*@FUNC Ui = ::COMPUTE('interpolate on',{@tmf mfi | @tsl sli})
+    Interpolate a field on another @tmf or a @tsl.
 
-      * interpolation on another mesh_fem MF2: MF2 has to be Lagrangian. 
-      If MF and MF2 share the same mesh object, the 
-      interpolation will be much faster.
-      <Par>
+    - Interpolation on another @tmf `mfi`:<par>
+       `mfi` has to be Lagrangian. If `mf` and `mfi` share the same<par>
+       mesh object, the interpolation will be much faster.<par>
+    - Interpolation on a @tsl `sli`:<par>
+       this is similar to interpolation on a refined P1-discontinuous<par>
+       mesh, but it is much faster. This can also be used with<par>
+       SLICE:INIT('points') to obtain field values at a given set of<par>
+       points.<Par>
 
-      * interpolation on a slice object: this is similar to interpolation on a
-      refined P1-discontinuous mesh, but it is much faster.  This can also be
-      used with SLICE:INIT('points') to obtain field values at a given set of
-      points.
-
-      <Par>See also ::ASM('interpolation matrix')
-      @*/
+    See also ::ASM('interpolation matrix')
+    @*/
     if (!U.is_complex()) gf_interpolate(in, out, *mf, U.real());
     else                 gf_interpolate(in, out, *mf, U.cplx());
   } else if (check_cmd(cmd, "extrapolate on", in, out, 1, 1, 0, 1)) {
-    /*@FUNC U2 = ::COMPUTE('extrapolate on', @tmf MF2)
-      Extrapolate a field on another mesh_fem.
+    /*@FUNC Ue = ::COMPUTE('extrapolate on',@tmf mfe)
+    Extrapolate a field on another @tmf.
 
-      If the mesh of MF2 is stricly included in the mesh of MF, this
-      function does stricly the same job as
-      ::COMPUTE('interpolate_on'). However, if the mesh of MF2 is not
-      exactly included in MF (imagine interpolation between a curved
-      refined mesh and a coarse mesh), then values which are slightly
-      outside MF will be extrapolated.
+    If the mesh of `mfe` is stricly included in the mesh of `mf`, this
+    function does stricly the same job as ::COMPUTE('interpolate_on').
+    However, if the mesh of `mfe` is not exactly included in `mf`
+    (imagine interpolation between a curved refined mesh and a coarse
+    mesh), then values which are slightly outside `mf` will be
+    extrapolated.<Par>
 
-      <Par>See also ::ASM('extrapolation matrix')
-      @*/
+    See also ::ASM('extrapolation matrix')@*/
     const getfem::mesh_fem *mf_dest = in.pop().to_const_mesh_fem();
     error_for_non_lagrange_elements(*mf_dest, true);
     if (!U.is_complex()) {
@@ -450,18 +444,17 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     unsigned N = in.pop().to_integer(2,10000);
     mesh_edges_deformation(mf, U.real(), N, in, out);
   } else if (check_cmd(cmd, "error_estimate", in, out, 1, 1, 0, 1)) {
-    /*@FUNC E=::COMPUTE('error estimate', @tmim MIM)
-      Compute an a posteriori error estimation.
+    /*@FUNC E = ::COMPUTE('error estimate',@tmim mim)
+    Compute an a posteriori error estimation.
 
-      Currently there is only one which is available: for each convex,
-      the jump of the normal derivative is integrated on its faces.
-      @*/
+    Currently there is only one which is available: for each convex,
+    the jump of the normal derivative is integrated on its faces.@*/
     const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
-    darray err = 
+    darray err =
       out.pop().create_darray_h(unsigned(mim.linked_mesh().convex_index().last_true()+1));
     if (!U.is_complex())
       getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
-    else 
+    else
       getfem::error_estimate(mim, *mf, U.cplx(), err, mim.convex_index());
   } else  bad_cmd(cmd);
 }

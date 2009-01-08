@@ -46,7 +46,7 @@ using namespace getfemint;
 
 static void
 get_integ_of_convexes(const getfem::mesh_im& mim, mexargs_in& in, mexargs_out& out)
-{  
+{
   dal::bit_vector cvlst;
   if (in.remaining()) cvlst = in.pop().to_bit_vector(&mim.linked_mesh().convex_index());
   else { cvlst = mim.linked_mesh().convex_index(); }
@@ -91,25 +91,23 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::mesh_im *mim   = &mi_mim->mesh_im();
   std::string cmd        = in.pop().to_string();
   if (check_cmd(cmd, "integ", in, out, 0, 1, 0, 2)) {
-    /*@GET [INTEG, CV2I] = MESHIM:GET('integ' [, CVLIST])
-      Return a list of integration methods used by the @tmim.
+    /*@GET @CELL{I, CV2I} = MESHIM:GET('integ'[, @mat CVids])
+    Return a list of integration methods used by the @tmim.
 
-      INTEG is an array of all @tinteg objects found in the convexes
-      given in CVLST. If CV2F was supplied as an output argument, it
-      contains, for each convex listed in CVLST, the index of its
-      correspounding integration method in INTEG.
+    `I` is an array of all @tinteg objects found in the convexes
+    given in `CVids`. If `CV2I` was supplied as an output argument, it
+    contains, for each convex listed in `CVids`, the index of its
+    correspounding integration method in `I`.
 
-      Convexes which are not part of the mesh, or convexes which do
-      not have any integration method have their correspounding entry
-      in CV2I set to -1.
-      @*/
+    Convexes which are not part of the mesh, or convexes which do
+    not have any integration method have their correspounding entry
+    in `CV2I` set to -1.@*/
     get_integ_of_convexes(*mim, in, out);
   } else if (check_cmd(cmd, "convex_index", in, out, 0, 0, 0, 1)) {
-    /*@GET CVLST = MESHFEM:GET('convex_index')
-      Return the list of convexes who have a integration
-      method. Convexes who have the dummy IM_NONE method are not
-      listed.
-      @*/
+    /*@GET CVids = MESHFEM:GET('convex_index')
+    Return the list of convexes who have a integration method.
+
+    Convexes who have the dummy IM_NONE method are not listed.@*/
     dal::bit_vector bv = mim->convex_index();
     for (dal::bv_visitor ic(mim->convex_index()); !ic.finished(); ++ic) {
       if (mim->int_method_of_element(ic)->type() == getfem::IM_NONE)
@@ -117,44 +115,42 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     out.pop().from_bit_vector(bv);
   } else if (check_cmd(cmd, "eltm", in, out, 2, 3, 0, 1)) {
-    /*@GET M = MESHIM:GET('eltm', @eltm MET, @int CV [@int F])
-      Return the elementary matrix (or tensor) integrated on the convex CV.
+    /*@GET M = MESHIM:GET('eltm',@teltm em, @int cv [@int f])
+    Return the elementary matrix (or tensor) integrated on the convex `cv`.
 
-      !!WARNING!! Be sure that the fem used for the construction of
-      MET is compatible with the fem assigned to element CV ! This is
-      not checked by the function ! If the argument F is given, then
-      the elementary tensor is integrated on the face F of CV instead
-      of the whole convex.
-      @*/
+    **WARNING**
+    Be sure that the fem used for the construction of `em` is compatible
+    with the fem assigned to element `cv` ! This is not checked by the
+    function ! If the argument `f` is given, then the elementary tensor
+    is integrated on the face `f` of `cv` instead of the whole convex.@*/
     getfem::pmat_elem_type pmet = in.pop().to_mat_elem_type();
     size_type cv = in.pop().to_convex_number(mim->linked_mesh());
-    /* one should check that the fem given to the MET is 
+    /* one should check that the fem given to the MET is
        compatible with the fem of the element (not easy ..) */
     getfem::base_tensor t;
-    /* if the convex has a IM, then it has been added to the convex index 
-       of the mesh_fem 
+    /* if the convex has a IM, then it has been added to the convex index
+       of the mesh_fem
     */
     check_cv_im(*mim, cv);
-    getfem::pmat_elem_computation pmec = 
-      getfem::mat_elem(pmet, 
-		       mim->int_method_of_element(cv) , 
+    getfem::pmat_elem_computation pmec =
+      getfem::mat_elem(pmet,
+		       mim->int_method_of_element(cv) ,
 		       mim->linked_mesh().trans_of_convex(cv));
     if (!in.remaining()) {
       pmec->gen_compute(t, mim->linked_mesh().points_of_convex(cv), cv);
     } else {
-      unsigned nbf = 
+      unsigned nbf =
 	mim->linked_mesh().structure_of_convex(cv)->nb_faces();
       size_type f = in.pop().to_face_number(nbf);
       pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), short_type(f), cv);
     }
     out.pop().from_tensor(t);
   } else if (check_cmd(cmd, "im_nodes", in, out, 0, 1, 0, 1)) {
-    /*@GET MESHIM:GET('im_nodes' [, CVLST]) 
-      Return the coordinates of the integration points, with their
-      weights.
+    /*@GET Ip = MESHIM:GET('im_nodes'[, @mat CVids])
+    Return the coordinates of the integration points, with their weights.
 
-      CVLST may be a list of convexes, or a list of convex faces, such
-      as returned by MESH:GET('region') @*/
+    `CVids` may be a list of convexes, or a list of convex faces, such
+    as returned by MESH:GET('region')@*/
     getfem::base_vector tmp;
     unsigned N = mim->linked_mesh().dim();
     getfem::mesh_region mr;
@@ -167,7 +163,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (pim->type() != getfem::IM_APPROX) continue;
       getfem::papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim->linked_mesh().trans_of_convex(cv);
-      size_type nbpt = 
+      size_type nbpt =
 	(ir.is_face() ? pai->nb_points_on_face(ir.f()) : pai->nb_points_on_convex());
       for (unsigned ii=0; ii < nbpt; ++ii) {
 	getfem::base_node Pref;
@@ -187,9 +183,8 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     darray ww = out.pop().create_darray(N+1, unsigned(tmp.size() / (N+1)));
     std::copy(tmp.begin(), tmp.end(), &ww[0]);
   } else if (check_cmd(cmd, "save", in, out, 1, 2, 0, 0)) {
-    /*@GET MESHIM:GET('save', filename [,'with mesh'])
-      Saves a @tmim in a text file (and optionaly its linked mesh object).
-      @*/
+    /*@GET MESHIM:GET('save',@str filename[, 'with mesh'])
+    Saves a @tmim in a text file (and optionaly its linked mesh object).@*/
     std::string s = in.pop().to_string();
     bool with_mesh = false;
     if (in.remaining()) {
@@ -205,27 +200,25 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     mim->write_to_file(o);
     o.close();
   } else if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {
-    /*@GET MESHIM:GET('char' [,'with mesh'])
-      Output a string description of the mesh_im. 
+    /*@GET MESHIM:GET('char'[,'with mesh'])
+    Output a string description of the @tmim.
 
-      By default, it does not include the description of the linked
-      mesh object. @*/
+    By default, it does not include the description of the linked
+    @tmesh object.@*/
     std::stringstream s;
     if (in.remaining() && cmd_strmatch(in.pop().to_string(),"with mesh"))
       mim->linked_mesh().write_to_file(s);
     mim->write_to_file(s);
     out.pop().from_string(s.str().c_str());
   } else if (check_cmd(cmd, "linked mesh", in, out, 0, 0, 0, 1)) {
-    /*@GET M=MESHIM:GET('linked mesh')
-      Returns a reference to the mesh object linked to MIM.
-      @*/
+    /*@GET m = MESHIM:GET('linked mesh')
+    Returns a reference to the @tmesh object linked to `mim`.@*/
     out.pop().from_object_id(mi_mim->linked_mesh_id(), MESH_CLASS_ID);
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    /*@GET MESHIM:GET('memsize')
-      Return the amount of memory (in bytes) used by the mesh_im object.
+    /*@GET z = MESHIM:GET('memsize')
+    Return the amount of memory (in bytes) used by the @tmim object.
 
-      The result does not take into account the linked mesh object.
-      @*/
+    The result does not take into account the linked @tmesh object.@*/
     out.pop().from_integer(int(mim->memsize()));
   } else bad_cmd(cmd);
 }

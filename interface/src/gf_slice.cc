@@ -34,10 +34,10 @@ namespace getfem {
   class mesh_slice_streamline : public stored_mesh_slice {
     scalar_type EPS;
   public:
-    mesh_slice_streamline(mesh_slice_cv_dof_data_base *mfU, 
-			  std::vector<base_node>& seeds, 
+    mesh_slice_streamline(mesh_slice_cv_dof_data_base *mfU,
+			  std::vector<base_node>& seeds,
 			  bool forward, bool backward) : EPS(1e-10) {
-			    
+
       poriginal_mesh = &mfU->pmf->linked_mesh();
       const mesh &ml = mfU->pmf->linked_mesh();
       bgeot::geotrans_inv gti;
@@ -65,9 +65,9 @@ namespace getfem {
        +1 if it falls outside and -1 if it is inside
     */
     int do_runge_kutta(bgeot::geotrans_inv_convex& gti, size_type cv,
-                       const base_matrix& G, pfem pf, bgeot::pgeometric_trans pgt, 
-		       const base_vector& coeff, const base_node& P0, 
-		       const base_node& refP0, scalar_type h, 
+                       const base_matrix& G, pfem pf, bgeot::pgeometric_trans pgt,
+		       const base_vector& coeff, const base_node& P0,
+		       const base_node& refP0, scalar_type h,
 		       base_node& P1, base_node& refP1) {
       fem_interpolation_context ctx(pgt,pf,refP0,G,cv);
       base_node k1(P0.size());
@@ -93,7 +93,7 @@ namespace getfem {
       return -1;
     }
 
-    size_type find_convex_of_point(const mesh& ml, size_type cv, const base_node& P, base_node& refP, bgeot::geotrans_inv_convex& gti) {      
+    size_type find_convex_of_point(const mesh& ml, size_type cv, const base_node& P, base_node& refP, bgeot::geotrans_inv_convex& gti) {
       /* find on which face is the point (approximately) */
       dim_type f = dim_type(-1);
       scalar_type best_f = 1e10;
@@ -121,8 +121,8 @@ namespace getfem {
       }
       if (cnt == 0) return size_type(-1); else return best;
     }
-    
-    void extract_streamline(mesh_slice_cv_dof_data_base *mfU, size_type cv, 
+
+    void extract_streamline(mesh_slice_cv_dof_data_base *mfU, size_type cv,
                             const base_node& seed, const base_node& seed_ref, double dir) {
       getfem::mesh_slicer::cs_nodes_ct snodes;
       getfem::mesh_slicer::cs_simplexes_ct ssimplexes;
@@ -132,7 +132,7 @@ namespace getfem {
       scalar_type h = 0;
       pfem pf = 0;
       bgeot::pgeometric_trans pgt = 0;
-      base_vector coeff; 
+      base_vector coeff;
       base_matrix G;
       bgeot::geotrans_inv_convex gti(mfU->pmf->linked_mesh().convex(cv), mfU->pmf->linked_mesh().trans_of_convex(cv));
       bool store_convex_and_stop = false;
@@ -144,7 +144,7 @@ namespace getfem {
           //cerr << "changement de convexe, ancien=" << cv << endl;
           /* init convex-dependant data */
           if (!first) {
-            
+
             cv = find_convex_of_point(mfU->pmf->linked_mesh(), cv, P0, refP0, gti);
             //cerr << "nouveau convexe: " << cv << endl;
             if (cv == size_type(-1)) {
@@ -161,14 +161,14 @@ namespace getfem {
           for (size_type i=0; i < pgt->nb_points(); ++i) {
             for (size_type j=0; j < pgt->nb_points(); ++j) {
               if (j!=i) {
-                h = std::min(h, gmm::vect_dist2_sqr(mfU->pmf->linked_mesh().points_of_convex(cv)[i], 
+                h = std::min(h, gmm::vect_dist2_sqr(mfU->pmf->linked_mesh().points_of_convex(cv)[i],
                                                       mfU->pmf->linked_mesh().points_of_convex(cv)[j]));
               }
             }
           }
           h = sqrt(h);
           scalar_type z=gmm::vect_norminf(coeff);
-          if (z > EPS) 
+          if (z > EPS)
             h = h/(10*z);
           else h=0; /* on va s'arreter */
 
@@ -185,7 +185,7 @@ namespace getfem {
           //cerr << "->>> on va sortir du convexe, debut dichotomie\n";
           change_convex = true;
           scalar_type h0 = 0, h1 = 1;
-          while (h1 - h0 > 1e-7*h) { 
+          while (h1 - h0 > 1e-7*h) {
             rk = do_runge_kutta(gti, cv, G, pf, pgt, coeff, P0, refP0, (h0+h1)/2, P1, refP1);
             if (rk == 0) break;
             else if (rk > 0) h1 = (h0 + h1)/2;
@@ -193,14 +193,14 @@ namespace getfem {
           }
           //cerr << "fin dichotomie, h0=" << h0 << ", h1=" << h1 << ", rk=" << rk << endl;
         }
-        
+
         //cerr << "AJOUT: cv = " << cv << ": P0=" << P0 << " - P1=" << P1 << endl;
 
         /* add the segment */
-        snodes.push_back(slice_node(P1,refP1)); 
+        snodes.push_back(slice_node(P1,refP1));
 	snodes.back().faces.reset();
-        ssimplexes.push_back(slice_simplex(2)); 
-	ssimplexes.back().inodes[0] = snodes.size()-2; 
+        ssimplexes.push_back(slice_simplex(2));
+	ssimplexes.back().inodes[0] = snodes.size()-2;
 	ssimplexes.back().inodes[1] = snodes.size()-1;
 
         if (++cnt > 3000) { infomsg() << "too much iterations for streamline extraction\n"; store_convex_and_stop = true; }
@@ -218,14 +218,16 @@ namespace getfem {
   };
 }
 
-static getfem::slicer_action* 
-build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> & slicers, 
+static getfem::slicer_action*
+build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> & slicers,
               const gfi_array *arg) {
   GMM_ASSERT1(gfi_array_get_class(arg) == GFI_CELL, "slices must be "
 	      "described as imbricated cell arrays");
-  mexargs_in in(1, &arg, true); 
+  mexargs_in in(1, &arg, true);
   std::string cmd = in.pop().to_string();
-  if (check_cmd(cmd, "planar", in, 3, 3)) {
+  if (check_cmd(cmd, "none", in, 0, 0)) {
+    slicers.push_back(new getfem::slicer_none());
+  } else if (check_cmd(cmd, "planar", in, 3, 3)) {
     int orient = in.pop().to_integer(-1,2);
     getfem::base_node x0 = in.pop().to_base_node();
     slicers.push_back(new getfem::slicer_half_space(x0, in.pop().to_base_node(), orient));
@@ -255,16 +257,9 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
     getfem::mesh_region cvflst;
     getfem::outer_faces_of_mesh(m, m.convex_index(), cvflst);
     slicers.push_back(new getfem::slicer_boundary(m,*s1,cvflst));
-  } else if (check_cmd(cmd, "none", in, 0, 0)) {
-    slicers.push_back(new getfem::slicer_none());
-  } else if (check_cmd(cmd, "diff", in, 2, 2)) {
-    getfem::slicer_action *s1 = build_slicers(m, slicers, in.pop().arg);
-    getfem::slicer_action *s2 = build_slicers(m, slicers, in.pop().arg);
-    slicers.push_back(new getfem::slicer_complementary(*s2));
-    slicers.push_back(new getfem::slicer_intersect(*s1, *slicers.back()));
-  } else if (check_cmd(cmd, "comp", in, 1, 1)) {
-    getfem::slicer_action *s = build_slicers(m, slicers, in.pop().arg);
-    slicers.push_back(new getfem::slicer_complementary(*s));
+  } else if (check_cmd(cmd, "explode", in, 1, 1)) {
+    scalar_type c = in.pop().to_scalar();
+    slicers.push_back(new getfem::slicer_explode(c));
   } else if (check_cmd(cmd, "union", in, 1, -1)) {
     getfem::slicer_action *s1 = build_slicers(m, slicers, in.pop().arg);
     while (in.remaining()) {
@@ -279,12 +274,17 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
       slicers.push_back(new getfem::slicer_intersect(*s1,*s2));
       s1 = slicers.back();
     }
+  } else if (check_cmd(cmd, "diff", in, 2, 2)) {
+    getfem::slicer_action *s1 = build_slicers(m, slicers, in.pop().arg);
+    getfem::slicer_action *s2 = build_slicers(m, slicers, in.pop().arg);
+    slicers.push_back(new getfem::slicer_complementary(*s2));
+    slicers.push_back(new getfem::slicer_intersect(*s1, *slicers.back()));
+  } else if (check_cmd(cmd, "comp", in, 1, 1)) {
+    getfem::slicer_action *s = build_slicers(m, slicers, in.pop().arg);
+    slicers.push_back(new getfem::slicer_complementary(*s));
   } else if (check_cmd(cmd, "mesh", in, 1, 1)) {
     const getfem::mesh &m2 = *in.pop().to_const_mesh();
     slicers.push_back(new getfem::slicer_mesh_with_mesh(m2));
-  } else if (check_cmd(cmd, "explode", in, 1, 1)) {
-    scalar_type c = in.pop().to_scalar();
-    slicers.push_back(new getfem::slicer_explode(c));
   } else bad_cmd(cmd);
   return slicers.back();
 }
@@ -302,8 +302,8 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   Creation of a mesh slice. Mesh slices are very similar to a
   P1-discontinuous mesh_fem on which interpolation is very fast. The
   slice is built from a mesh object, and a description of the slicing
-  operation, for example, 
-  
+  operation, for example,
+
   sl = gf_slice({'planar',+1,[0;0],[1;0]}, m, 5);
 
   cuts the original mesh with the half space {y>0}. Each convex of the
@@ -315,7 +315,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
    - intersection or union of slices
    - isovalues surfaces/volumes
    - "points", "streamlines" (see below)
-  
+
   If the first argument is a mesh_fem mf instead of a mesh, and if it
   is followed by a field U (with size(U,1) == gf_mesh_fem_get(mf,U)),
   then the deformation U will be applied to the mesh before the
@@ -333,7 +333,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
 
   Does not cut the mesh.
 
-  * {'planar', orient, p, n} 
+  * {'planar', orient, p, n}
 
   Planar cut. p and n define a half-space, p being a point belong to
   the boundary of the half-space, and n being its normal. If orient is
@@ -343,7 +343,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   will be sliced, but both the outer and inner parts will be kept.
 
   * {'ball', orient, c, r}
-  
+
   Cut with a ball of center c and radius r.
 
   * {'cylinder', orient, p1, p2, r}
@@ -359,7 +359,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   ORIENT.
 
   * {'boundary'[, SLICEOP]}
-  
+
   Return the boundary of the result of SLICEOP, where SLICEOP is any
   slicing operation. If SLICEOP is not specified, then the whole mesh
   is considered (i.e. it is equivalent to {'boundary',{'none'}}).
@@ -367,7 +367,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   * {'explode', coef}
 
   Build an 'exploded' view of the mesh: each convex is shrinked (0 <
-  coef <= 1). In the case of 3D convexes, only their faces are kept. 
+  coef <= 1). In the case of 3D convexes, only their faces are kept.
 
   * {'union', SLICEOP1, SLICEOP2}
   * {'intersection', SLICEOP1, SLICEOP2}
@@ -384,7 +384,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   stricly contained into a convex of each mesh.
 
   EXAMPLE:
-  
+
   sl = gf_slice({intersection',{'planar',+1,[0;0;0],[0;0;1]},...
                 {'isovalues',-1,mf2,U2,0}},mf,U,5);
 
@@ -430,121 +430,101 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.front().is_cell()) {
 
     /*@TEXT SLICE:INIT('constructor description')
-  sl = SLICE:INIT(sliceop, mesh M, int REFINE [, CVFLST])<par>
-  sl = SLICE:INIT(sliceop, mesh_fem MF, vec U, int REFINE [, CVFLST])<par>
-  sl = SLICE:INIT(sliceop, slice SL)<par>
-  sl = SLICE:INIT('streamlines', mesh_fem MF, vec U, mat SEEDS)<par>
-  sl = SLICE:INIT('points', mesh M, mat PTS)<par>
-  sl = SLICE:INIT('load', mesh M)<par><par>
+- SLICE:INIT(sliceop, @tmesh m, int refine[, @mat CVfids])<par>
+- SLICE:INIT(sliceop, @tmf mf, vec U, @int refine[, @mat CVfids])<par>
+- SLICE:INIT(sliceop, @tsl sl)<par>
+- SLICE:INIT('streamlines', @tmf mf, @vec U, @mat SEEDS)<par>
+- SLICE:INIT('points', @tmesh m, @mat PTS)<par>
+- SLICE:INIT('load', @tmesh m)<Par>
 
-  Creation of a mesh slice. Mesh slices are very similar to a
-  P1-discontinuous mesh_fem on which interpolation is very fast. The
-  slice is built from a mesh object, and a description of the slicing
-  operation, for example, <par><par>
-  
-  sl = SLICE:INIT(@CELL{'planar',+1,[0;0],[1;0]}, m, 5);<par><par>
+Creation of a mesh slice. Mesh slices are very similar to a<par>
+P1-discontinuous @tmf on which interpolation is very fast. The<par>
+slice is built from a mesh object, and a description of the<par>
+slicing operation, for example:<Par>
 
-  cuts the original mesh with the half space {y>0}. Each convex of the
-  original mesh m is simplexified (for example a quadrangle is
-  splitted into 2 triangles), and each simplex is refined 5 times.<par><par>
+sl = SLICE:INIT(@CELL{'planar',+1,@MATLAB{[0;0],[1;0]}@PYTHON{array([[0],[0]]),array([[0],[1]])}}, m, 5);<Par>
 
-  Slicing operations can be:<par>
-   - cutting with a plane, a sphere or a cylinder<par>
-   - intersection or union of slices<par>
-   - isovalues surfaces/volumes<par>
-   - "points", "streamlines" (see below)<par><par>
-  
-  If the first argument is a mesh_fem mf instead of a mesh, and if it
-  is followed by a field U @MATLAB{(with size(U,1) == MESHFEM:GET('nbdof'))},
-  then the deformation U will be applied to the mesh before the
-  slicing operation.<par><par>
+cuts the original mesh with the half space {y>0}. Each convex of the<par>
+original mesh `m` is simplexified (for example a quadrangle is<par>
+splitted into 2 triangles), and each simplex is refined 5 times.<Par>
 
-  The first argument can also be a slice.<par><par>
+Slicing operations can be:<Par>
 
-  Slicing operations:<par>===============<par>
-  They are specified with @MATLAB{Matlab CELL arrays (i.e. with braces)}@PYTHON{TUPLES, do not forget the extra parentheses!}. The first element is the name of the operation, followed the slicing
-  options.<par><par>
+- cutting with a plane, a sphere or a cylinder<par>
+- intersection or union of slices<par>
+- isovalues surfaces/volumes<par>
+- "points", "streamlines" (see below)<Par>
 
+If the first argument is a @tmf mf instead of a mesh, and if it<par>
+is followed by a field `U`@MATLAB{ (with size(U,1) == MESHFEM:GET('nbdof'))},
+then the deformation U will be applied<par>
+to the mesh before the slicing operation.<Par>
 
-  * @CELL{'none'}<par>
+The first argument can also be a slice.<Par>
 
-  Does not cut the mesh.<par><par>
+**Slicing operations:**<Par>
+They are specified with @MATLAB{Matlab CELL arrays (i.e. with braces)}
+@PYTHON{TUPLES, do not forget the extra parentheses!}.<par>
+The first element is the name of the operation, followed the slicing<par>
+options.<Par>
 
-  * @CELL{'planar', orient, p, n}<par> 
+* @CELL{'none'}<par>
+   Does not cut the mesh.<par>
+* @CELL{'planar', @int orient, @vec p, @vec n}<par>
+   Planar cut. `p` and `n` define a half-space, `p` being a point belong
+   to the boundary of the half-space, and `n` being its normal. If
+   `orient` is equal to -1 (resp. 0, +1), then the slicing operation
+   will cut the mesh with the "interior" (resp. "boundary", "exterior")
+   of the half-space. `orient` may also be set to +2 which means that
+   the mesh will be sliced, but both the outer and inner parts will be
+   kept.<par>
+* @CELL{'ball', @int orient, @vec c, @scalar r}<par>
+   Cut with a ball of center `c` and radius `r`.<par>
+* @CELL{'cylinder', @int orient, @vec p1, @vec p2, @scalar r}<par>
+   Cut with a cylinder whose axis is the line `(p1,p2)` and whose
+   radius is `r`.<par>
+* @CELL{'isovalues', @int orient, @tmf mf, @vec U, @scalar V}<par>
+   Cut using the isosurface of the field `U` (defined on the @tmf `mf`).
+   The result is the set `{x such that U(x) <= V}` or `{x such that
+   U(x)=V}` or `{x such that U(x) >= V}` depending on the value of
+   `orient`.<par>
+* @CELL{'boundary'[, SLICEOP]}<par>
+   Return the boundary of the result of SLICEOP, where SLICEOP is any
+   slicing operation. If SLICEOP is not specified, then the whole mesh
+   is considered (i.e. it is equivalent to @CELL{'boundary',{'none'}}).<par>
+* @CELL{'explode', @mat Coef}<par>
+   Build an 'exploded' view of the mesh: each convex is shrinked (0 <
+   Coef <= 1). In the case of 3D convexes, only their faces are kept.<par>
+* @CELL{'union', SLICEOP1, SLICEOP2}<par>
+* @CELL{'intersection', SLICEOP1, SLICEOP2}<par>
+* @CELL{'diff', SLICEOP1, SLICEOP2}<par>
+* @CELL{'comp', SLICEOP}<par>
+   Boolean operations: returns the union,intersection, difference or
+   complementary of slicing operations.<par>
+* @CELL{'mesh', @tmesh m}<par>
+   Build a slice which is the intersection of the sliced mesh with
+   another mesh. The slice is such that all of its simplexes are
+   stricly contained into a convex of each mesh.<Par>
 
-  Planar cut. p and n define a half-space, p being a point belong to
-  the boundary of the half-space, and n being its normal. If orient is
-  equal to -1 (resp. 0, +1), then the slicing operation will cut the
-  mesh with the "interior" (resp. "boundary", "exterior") of the
-  half-space. Orient may also be set to +2 which means that the mesh
-  will be sliced, but both the outer and inner parts will be kept.<par><par>
+   EXAMPLE:<Par>
 
-  * @CELL{'ball', orient, c, r}<par>
-  
-  Cut with a ball of center c and radius r.<par><par>
+   sl = SLICE:INIT(@CELL{'intersection',@CELL{'planar',+1,[0;0;0],[0;0;1]},
+   ...,@CELL{'isovalues',-1,mf2,U2,0}},mf,U,5);<Par>
 
-  * @CELL{'cylinder', orient, p1, p2, r}<par>
+**SPECIAL SLICES**:<Par>
 
-  Cut with a cylinder whose axis is the line (p1,p2) and whose radius
-  is r.<par><par>
+There are also some special calls to SLICE:INIT(...)<Par>
 
-  * @CELL{'isovalues',orient, mesh_fem MF, vec U, scalar V}<par>
-
-  Cut using the isosurface of the field U (defined on the mesh_fem
-  MF). The result is the set {x such that U(x) <= V} or {x such that
-  U(x) == V} or {x such that U(x) <= V} depending on the value of
-  ORIENT.<par><par>
-
-  * @CELL{'boundary'[, SLICEOP]}<par>
-  
-  Return the boundary of the result of SLICEOP, where SLICEOP is any
-  slicing operation. If SLICEOP is not specified, then the whole mesh
-  is considered (i.e. it is equivalent to @CELL{'boundary',{'none'}}).<par><par>
-
-  * @CELL{'explode', coef}<par>
-
-  Build an 'exploded' view of the mesh: each convex is shrinked (0 <
-  coef <= 1). In the case of 3D convexes, only their faces are kept.<par><par>
-
-  * @CELL{'union', SLICEOP1, SLICEOP2}<par>
-  * @CELL{'intersection', SLICEOP1, SLICEOP2}<par>
-  * @CELL{'comp', SLICEOP}<par>
-  * @CELL{'diff', SLICEOP1, SLICEOP2}<par>
-
-  Boolean operations: returns the union,intersection,complementary or
-  difference of slicing operations.<par><par>
-
-  * @CELL{'mesh', MESH}<par>
-
-  Build a slice which is the intersection of the sliced mesh with
-  another mesh. The slice is such that all of its simplexes are
-  stricly contained into a convex of each mesh.<par><par>
-
-  EXAMPLE:<par>
-  
-  sl = SLICE:INIT(@CELL{intersection',@CELL{'planar',+1,[0;0;0],[0;0;1]},...<par>
-                @CELL{'isovalues',-1,mf2,U2,0}},mf,U,5);<par><par>
-
-
-  SPECIAL SLICES:<par><par>
-
-  There are also some special calls to SLICE:INIT(...)<par><par>
-
-  * SLICE:INIT('streamlines',mf, U, @dmat SEEDS)<par><par>
-
-  compute streamlines of the (vector) field U, with seed points given
-  by the columns of SEEDS.<par><par>
-
-  * SLICE:INIT('points', m, @dmat PTS)<par><par>
-
-  return the "slice" composed of points given by the columns of PTS
-  (useful for interpolation on a given set of sparse points, see
-  ::COMPUTE('interpolate on',sl).
-
-  * SLICE:INIT('load', filename [, m])<par><par>
-
-  load the slice (and its linked_mesh if it is not given as an
-  argument) from a text file.
+* SLICE:INIT('streamlines',@tmf mf, @mat U, @dmat Seeds)<par>
+   compute streamlines of the (vector) field `U`, with seed points
+   given by the columns of `Seeds`.<par>
+* SLICE:INIT('points', @tmesh m, @dmat Pts)<par>
+   return the "slice" composed of points given by the columns of
+   `Pts` (useful for interpolation on a given set of sparse points,
+   see ::COMPUTE('interpolate on',sl).<par>
+* SLICE:INIT('load', @str filename[, @tmesh m])<par>
+   load the slice (and its linked mesh if it is not given as an
+   argument) from a text file.
       @*/
 
     /* build slicers */
@@ -560,7 +540,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       darray Udef = in.pop().to_darray(-2, int(mf.nb_dof()));
       if (!(mf.get_qdim() == mm->mesh().dim() && Udef.getm() == 1) &&
 	  !(mf.get_qdim() == 1 && Udef.getm() == mm->mesh().dim())) {
-	THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->mesh().dim()) << 
+	THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->mesh().dim()) <<
 		     ", either the data must have " << int(mm->mesh().dim()) << " rows");
       }
       mfdef.reset(new getfem::mesh_slice_cv_dof_data<darray>(mf,Udef));
@@ -576,7 +556,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
 
     dal::ptr_collection<getfem::slicer_action> slicers;
-    getfem::slicer_action * s = build_slicers(mm->mesh(), slicers, arg);  
+    getfem::slicer_action * s = build_slicers(mm->mesh(), slicers, arg);
 
     /* build the slice */
     pstored.reset(new getfem::stored_mesh_slice());
@@ -590,7 +570,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     slicer.push_back_action(slicer_store);
 
     /* not building from slice ? */
-    if (source_slice == 0) { 
+    if (source_slice == 0) {
       if (in.remaining() == 0) THROW_BADARG("Not enough input arguments");
       size_type nrefine = in.pop().to_integer(1,1000);
       /*std::vector<convex_face> cvf;
@@ -612,7 +592,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       const getfem::mesh_fem *mf = in.front().to_const_mesh_fem();
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
       darray U = in.pop().to_darray(int(mf->nb_dof()));
-      darray v = in.pop().to_darray(mm->mesh().dim(), -1);      
+      darray v = in.pop().to_darray(mm->mesh().dim(), -1);
       std::vector<getfem::base_node> seeds(v.getn());
       for (unsigned j=0; j < v.getn(); ++j)
         seeds[j] = v.col_to_bn(j);
@@ -621,7 +601,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     } else if (check_cmd(cmd, "points", in, 2, 2)) {
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
       pstored.reset(new getfem::stored_mesh_slice());
-      getfem::mesh_slicer slicer(mm->mesh()); 
+      getfem::mesh_slicer slicer(mm->mesh());
       getfem::slicer_build_stored_mesh_slice slicer_store(*pstored.get());
       slicer.push_back_action(slicer_store);
 

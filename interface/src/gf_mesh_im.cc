@@ -35,12 +35,12 @@ void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in);
 
   General constructor for @tmim object (integration methods on a mesh).
 
-  * gf_mesh_im(mesh M [{integ IM|int IM_DEGREE}])
+  * gf_mesh_im(mesh m[{integ im|int im_degree}])
 
-  Return a getfem handle to the newly created mesh_im object. For
-  convenience, optional arguments (IM or IM_DEGREE) can be provided,
-  in that case a call to gf_mesh_im_set(mim, 'integ', ..) is issued with these
-  arguments.
+  Return a getfem handle to the newly created @tmim object. For
+  convenience, optional arguments ('im' or 'im_degree') can be provided,
+  in that case a call to gf_mesh_im_set(mim, 'integ', ..) is issued with
+  these arguments.
 
   @INIT MESHIM:INIT('load')
   @INIT MESHIM:INIT('from string')
@@ -58,12 +58,12 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.front().is_string()) {
     std::string cmd = in.pop().to_string();
     if (check_cmd(cmd, "load", in, out, 1, 2, 0, 1)) {
-      /*@INIT MESHIM:INIT('load', fname[, @tmesh M]) 
-	Load a @tmim from a file. 
-	
-	If the mesh M is not supplied (this kind of file does not
-	store the mesh), then it is read from the file and its
-	descriptor is returned as the second output argument. @*/
+      /*@INIT MESHIM:INIT('load', @str fname[, @tmesh m])
+      Load a @tmim from a file.
+
+      If the mesh `m` is not supplied (this kind of file does not store
+      the mesh), then it is read from the file and its descriptor is
+      returned as the second output argument.@*/
       std::string fname = in.pop().to_string();
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
@@ -74,11 +74,10 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       mim = getfemint_mesh_im::new_from(mm);
       mim->mesh_im().read_from_file(fname);
     } else if (check_cmd(cmd, "from string", in, out, 1, 2, 0, 1)) {
-      /*@INIT MESHIM:INIT('from string', str[, mesh M])
-	Create a @tmim object from its string description.
-	
-	See also MESHIM:GET('char')
-	@*/      
+      /*@INIT MESHIM:INIT('from string', @str s[, mesh M])
+      Create a @tmim object from its string description.
+
+      See also MESHIM:GET('char')@*/
       std::stringstream ss(in.pop().to_string());
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
@@ -89,9 +88,8 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       mim = getfemint_mesh_im::new_from(mm);
       mim->mesh_im().read_from_file(ss);
     } else if (check_cmd(cmd, "clone", in, out, 1, 1, 0, 1)) {
-      /*@INIT MESHIM:INIT('clone', @tmim MIM2)
-	Create a copy of a @tmim.
-	@*/
+      /*@INIT MESHIM:INIT('clone', @tmim mim2)
+      Create a copy of a @tmim.@*/
       getfemint_mesh_im *mim2 = in.pop().to_getfemint_mesh_im();
       mm = object_to_mesh(workspace().object(mim2->linked_mesh_id()));
       mim = getfemint_mesh_im::new_from(mm);
@@ -99,15 +97,13 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       mim2->mesh_im().write_to_file(ss);
       mim->mesh_im().read_from_file(ss);
     } else if (check_cmd(cmd, "levelset", in, out, 2, 4, 0, 1)) {
-      /*@INIT MESHIM:INIT('levelset', @tmls MLS, @tstr WHERE, @integ IM [, @integ IMTIP])
-	Build an integration method conformal to a partition defined
-	implicitely by a levelset.
+      /*@INIT MESHIM:INIT('levelset', @tls ls, @str where, @tinteg im[, @tinteg im_tip])
+      Build an integration method conformal to a partition defined
+      implicitely by a levelset.
 
-	The WHERE argument define the domain of integration with
-	respect to the levelset, it has to be chosen among 'ALL',
-	'INSIDE', 'OUTSIDE' and 'BOUNDARY'. 
-	
-	@*/
+      The `where` argument define the domain of integration with
+      respect to the levelset, it has to be chosen among 'ALL',
+      'INSIDE', 'OUTSIDE' and 'BOUNDARY'.@*/
       getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
       std::string swhere = in.pop().to_string();
       getfem::pintegration_method pim  = in.pop().to_integration_method();
@@ -115,7 +111,7 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (in.remaining()) pim2 = in.pop().to_integration_method();
       int where = 0;
       std::string csg_description;
-      if (cmd_strmatch(swhere, "all")) 
+      if (cmd_strmatch(swhere, "all"))
 	where = getfem::mesh_im_level_set::INTEGRATE_ALL;
       else {
 	const char *slst[] = {"inside", "outside", "boundary", "all"};
@@ -135,7 +131,7 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
       cerr << "csg_description: " << csg_description << "\n";
 
-      getfem::mesh_im_level_set *mimls = 
+      getfem::mesh_im_level_set *mimls =
 	new getfem::mesh_im_level_set(gmls->mesh_levelset(),
 				      where, pim, pim2);
       mimls->set_integration_method(mimls->linked_mesh().convex_index(), 1);
@@ -147,6 +143,12 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       mimls->adapt();
     } else bad_cmd(cmd);
   } else {
+    /*@INIT MESHIM:INIT('.mesh',@tmesh m, [{@tinteg im|int im_degree}])
+    Build a new @tmim object.
+
+    For convenience, optional arguments (`im` or `im_degree`) can be
+    provided, in that case a call to MeshIm.integ() is issued with
+    these arguments.@*/
     if (!out.narg_in_range(1, 1)) THROW_BADARG("Wrong number of output arguments");
     mm = in.pop().to_getfemint_mesh();
     mim = getfemint_mesh_im::new_from(mm);
@@ -157,4 +159,3 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
   out.pop().from_object_id(mim->get_id(), MESHIM_CLASS_ID);
 }
-

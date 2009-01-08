@@ -36,7 +36,7 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
   } else {
     bv = mf->linked_mesh().convex_index();
   }
-  
+
   /* check for the validity of the operation */
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
     if (!mf->linked_mesh().convex_index().is_in(cv))
@@ -44,7 +44,7 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
     if (fem->basic_structure(cv) != mf->linked_mesh().structure_of_convex(cv)->basic_structure())
       infomsg() << "Warning: structure of the FEM seems to be incompatible with the structure of the convex (if you are using high degree geom. transf. ignore this)\n";
   }
-    
+
   /* all the work done here */
   mf->set_finite_element(bv, fem);
 }
@@ -70,7 +70,7 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in, b
   FUNCTION [x] = gf_mesh_fem_set(meshfem MF, operation [, args])
 
   General function for modifying mesh_fem objects.
-  
+
   @SET MESHFEM:SET('fem')
   @SET MESHFEM:SET('classical fem')
   @SET MESHFEM:SET('classical discontinuous fem')
@@ -89,45 +89,41 @@ void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::mesh_fem *mf = in.pop().to_mesh_fem();
   std::string cmd        = in.pop().to_string();
   if (check_cmd(cmd, "fem", in, out, 1, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('fem', @tfem FEM [, @ivec CVIDX])
-      Set the Finite Element Method.
-      
-      Assign a FEM to all convexes whose #ids are listed in CVIDX. If
-      CVIDX is not given, the integration is assigned to all convexes.
+    /*@SET MESHFEM:SET('fem',@tfem f[, @ivec CVids])
+    Set the Finite Element Method.
 
-      See the help of FEM:INIT to obtain a list of available FEM methods.
-      @*/
+    Assign a FEM `f` to all convexes whose #ids are listed in `CVids`.
+    If `CVids` is not given, the integration is assigned to all convexes.
+
+    See the help of FEM:INIT to obtain a list of available FEM methods.@*/
     set_fem(mf, in);
   } else if (check_cmd(cmd, "classical fem", in, out, 1, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('classical fem', @int K, [,@ivec CVIDX])
-      Assign a classical (Lagrange polynomial) fem of order K to the @tmf.
-      
-      Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc. 
-      @*/
+    /*@SET MESHFEM:SET('classical fem',@int k[, @ivec CVids])
+    Assign a classical (Lagrange polynomial) fem of order `k` to the @tmf.
+
+    Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.@*/
     set_classical_fem(mf, in, false);
   } else if (check_cmd(cmd, "classical discontinuous fem", in, out, 1, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('classical discontinuous fem', @int K, [@int IM_DEGREE [,@ivec CVIDX]])
-      Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
-      
-      Similar to MESHFEM:SET('classical fem') except that
-      FEM_PK_DISCONTINUOUS is used.
-      @*/
+    /*@SET MESHFEM:SET('classical discontinuous fem',@int K, [@int IM_DEGREE [,@ivec CVIDX]])
+    Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
+
+    Similar to MESHFEM:SET('classical fem') except that
+    FEM_PK_DISCONTINUOUS is used.@*/
     set_classical_fem(mf, in, true);
   } else if (check_cmd(cmd, "qdim", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHFEM:SET('qdim', @int Q)
-      Change the Q dimension of the field that is interpolated by the @tmf.
-      
-      Q=1 means that the @tmf describes a scalar field, Q=N means
-      that the @tmf describes a vector field of dimension N. @*/
+    /*@SET MESHFEM:SET('qdim',@int Q)
+    Change the `Q` dimension of the field that is interpolated by the @tmf.
+
+    `Q = 1` means that the @tmf describes a scalar field, `Q = N` means
+    that the @tmf describes a vector field of dimension N.@*/
     size_type q_dim = in.pop().to_integer(1,255);
     mf->set_qdim(dim_type(q_dim));
   } else if (check_cmd(cmd, "dof partition", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHFEM:SET('dof partition', @ivec DOFP)
-      Change the dof_partition array.
+    /*@SET MESHFEM:SET('dof partition',@ivec DOFP)
+    Change the 'dof_partition' array.
 
-      DOFP is a vector holding a integer value for each convex of the mesh_fem.
-      See MESHFEM:GET('dof partition') for a description of "dof partition".
-      @*/
+    `DOFP` is a vector holding a integer value for each convex of the @tmf.
+    See MESHFEM:GET('dof partition') for a description of "dof partition".@*/
     iarray v = in.pop().to_iarray(int(mf->linked_mesh().convex_index().last_true()+1));
     for (unsigned i=0; i < v.size(); ++i)
       mf->set_dof_partition(i, v[i]);

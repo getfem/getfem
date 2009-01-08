@@ -28,28 +28,27 @@ using namespace getfemint;
 /*@TEXT LEVELSET:INIT('LEVELSET_init')
 @tls = LEVELSET:INIT(...)<Par>
 
-The level-set object is represented by a primary level-set and<par>
-optionally a secondary level-set used to represent fractures (if<par>
-p(x) is the primary level-set function and s(x) is the secondary<par>
-level-set, the crack is defined by p(x)=0 and s(x)<=0: the role<par>
-of the secondary is stop the crack).<Par>
+The level-set object is represented by a primary level-set and optionally<par>
+a secondary level-set used to represent fractures (if p(x) is the primary<par>
+level-set function and s(x) is the secondary level-set, the crack is defined<par>
+by p(x)=0 and s(x)<=0: the role of the secondary is stop the crack).<Par>
 
 * LEVELSET:INIT(@tmesh m, @int d)<par>
-   Create a @tls object on a @tmesh m represented by a primary<par>
-   function defined on a lagrange @tfem of degree d.<par>
+   Create a @tls object on a @tmesh m represented by a primary function<par>
+   defined on a lagrange @tfem of degree d.<par>
 * LEVELSET:INIT(@tmesh m, @int d, @str poly1)<par>
-   Create a @tls object on a @tmesh m represented by a primary<par>
-   function defined by the polynomial expression poly1 on a<par>
-   lagrange @tfem of degree d.<par>
+   Create a @tls object on a @tmesh m represented by a primary function<par>
+   defined by the polynomial expression poly1 on a lagrange @tfem of<par>
+   degree d.<par>
 * LEVELSET:INIT(@tmesh m, @int d, 'with_secondary' [, @str poly2])<par>
-   Create a @tls object on a @tmesh m represented by a primary<par>
-   function defined by the polynomial expression poly1 and a<par>
-   secondary function, both on a lagrange @tfem of degree d.<par>
-* LEVELSET:INIT(@tmesh m, @int d, @str poly1, @str poly2)<par>
-   Create a @tls object on a @tmesh m represented by a primary<par>
-   function defined by the polynomial expression poly1 and a<par>
-   secondary function defined by the polynomial expression poly2,<par>
+   Create a @tls object on a @tmesh m represented by a primary function<par>
+   defined by the polynomial expression poly1 and a secondary function,<par>
    both on a lagrange @tfem of degree d.<par>
+* LEVELSET:INIT(@tmesh m, @int d, @str poly1, @str poly2)<par>
+   Create a @tls object on a @tmesh m represented by a primary function<par>
+   defined by the polynomial expression poly1 and a secondary function<par>
+   defined by the polynomial expression poly2, both on a lagrange @tfem<par>
+   of degree d.<par>
   @*/
 void gf_levelset(
 getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -77,7 +76,6 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
   if (in.remaining())
     THROW_BADARG("too many arguments");
-
 
   getfem::level_set *ls =
     new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);

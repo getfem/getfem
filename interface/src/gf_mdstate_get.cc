@@ -39,7 +39,7 @@ using namespace getfemint;
     gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplx_mdstate().WHAT()),	\
 			    gmm::mat_ncols(md->cplx_mdstate().WHAT())); \
     out.pop().from_sparse(M);						\
-  }						 
+  }
 
 #define RETURN_VECTOR(WHAT)				\
   if (!md->is_complex()) {				\
@@ -52,7 +52,7 @@ using namespace getfemint;
 
   FUNCTION M = gf_mdstate_get(cmd, [, args])
   Get information from a model state object.
-  
+
 
   @RDATTR MDSTATE:GET('is_complex')
   @GET MDSTATE:GET('tangent_matrix')
@@ -76,50 +76,41 @@ void gf_mdstate_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfemint_mdstate *md  = in.pop().to_getfemint_mdstate();
   std::string cmd        = in.pop().to_string();
   if (check_cmd(cmd, "is_complex", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR MDSTATE:GET('is_complex')
-      Return 0 is the model state is real, 1 if it is complex.
-      @*/
+    /*@RDATTR b = MDSTATE:GET('is_complex')
+    Return 0 is the model state is real, 1 if it is complex.@*/
     out.pop().from_integer(md->is_complex());
   } else if (check_cmd(cmd, "tangent_matrix", in, out, 0, 0, 0, 1)) {
-    /*@GET MDSTATE:GET('tangent_matrix')
-      Return the tangent matrix stored in the model state.
-      @*/
+    /*@GET T = MDSTATE:GET('tangent_matrix')
+    Return the tangent matrix stored in the model state.@*/
     RETURN_SPARSE(tangent_matrix);
   } else if (check_cmd(cmd, "constraints_matrix", in, out, 0, 0, 0, 1)) {
-    /*@GET MDSTATE:GET('constraints_matrix')
-      Return the constraints matrix stored in the model state.
-      @*/
+    /*@GET C = MDSTATE:GET('constraints_matrix')
+    Return the constraints matrix stored in the model state.@*/
     RETURN_SPARSE(constraints_matrix);
   } else if (check_cmd(cmd, "reduced_tangent_matrix", in, out, 0, 0, 0, 1)) {
-    /*@GET MDSTATE:GET('reduced_tangent_matrix')
-      Return the reduced tangent matrix (i.e. the tangent matrix after
-      elimination of the constraints). 
-      @*/
+    /*@GET A = MDSTATE:GET('reduced_tangent_matrix')
+    Return the reduced tangent matrix (i.e. the tangent matrix after
+    elimination of the constraints).@*/
     RETURN_SPARSE(reduced_tangent_matrix);
   } else if (check_cmd(cmd, "constraints_nullspace", in, out, 0, 0, 0, 1)) {
     /*@GET MDSTATE:GET('constraints_nullspace')
-      Return the nullspace of the constraints matrix.
-      @*/
+    Return the nullspace of the constraints matrix.@*/
     RETURN_SPARSE(constraints_nullspace);
   } else if (check_cmd(cmd, "state", in, out, 0, 0, 0, 1)) {
     /*@GET MDSTATE:GET('state')
-      Return the vector of unknowns, which contains the solution after MDBRICK:GET('solve').
-      @*/
+    Return the vector of unknowns, which contains the solution after MDBRICK:GET('solve').@*/
     RETURN_VECTOR(state);
   } else if (check_cmd(cmd, "residual", in, out, 0, 0, 0, 1)) {
     /*@GET MDSTATE:GET('residual')
-      Return the residual.
-      @*/
+    Return the residual.@*/
     RETURN_VECTOR(residual);
   } else if (check_cmd(cmd, "reduced_residual", in, out, 0, 0, 0, 1)) {
     /*@GET MDSTATE:GET('reduced_residual')
-      Return the residual on the reduced system.
-      @*/
+    Return the residual on the reduced system.@*/
     RETURN_VECTOR(reduced_residual);
   } else if (check_cmd(cmd, "unreduce", in, out, 1, 1, 0, 1)) {
-    /*@GET MDSTATE:GET('unreduce', @vec U)
-      Reinsert the constraint eliminated from the system.
-      @*/
+    /*@GET MDSTATE:GET('unreduce',@vec U)
+    Reinsert the constraint eliminated from the system.@*/
     if (!md->is_complex()) {
       size_type nred = gmm::vect_size(md->real_mdstate().reduced_residual());
       size_type n    = gmm::vect_size(md->real_mdstate().residual());
@@ -134,9 +125,8 @@ void gf_mdstate_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       md->cplx_mdstate().unreduced_solution(Ured, U);
     }
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    /*@GET MDSTATE:GET('memsize')
-      Return the amount of memory (in bytes) used by the model state.
-      @*/
+    /*@GET z = MDSTATE:GET('memsize')
+    Return the amount of memory (in bytes) used by the model state.@*/
     out.pop().from_integer(int(md->memsize()));
   } else bad_cmd(cmd);
 }

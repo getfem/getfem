@@ -43,7 +43,7 @@ iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
   gprecond<T> *precond = &id_precond;
   if (in.remaining()) precond = &in.pop().to_precond()->precond(T());
   precond->set_dimensions(gsp.nrows(), gsp.ncols());
-  
+
   getfemint::interruptible_iteration iter(1e-16);
 
   while (in.remaining() && in.front().is_string()) {
@@ -72,22 +72,22 @@ iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
   }
 }
 
-void iterative_gmm_solver(iterative_gmm_solver_type stype, 
+void iterative_gmm_solver(iterative_gmm_solver_type stype,
 			 getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse(); 
+  dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
   gsparse &gsp = *pgsp;
-  if (!gsp.is_complex() && in.front().is_complex()) 
+  if (!gsp.is_complex() && in.front().is_complex())
     THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
   if (gsp.is_complex()) iterative_gmm_solver(stype, gsp, in, out, complex_type());
   else                  iterative_gmm_solver(stype, gsp, in, out, scalar_type());
 }
 
-template <typename T> static void 
-superlu_solver(gsparse &gsp, 
-	       getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) { 
-  garray<T> b = in.pop().to_garray(int(gsp.nrows()), T()); 
+template <typename T> static void
+superlu_solver(gsparse &gsp,
+	       getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
+  garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
   garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
-  double rcond; 
+  double rcond;
   gsp.to_csc();
   gmm::SuperLU_solve(gsp.csc(T()),x,b,rcond,1);
   if (out.remaining())
@@ -109,42 +109,43 @@ void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.narg() < 1) {
     THROW_BADARG( "Wrong number of input arguments");
   }
-  
+
   std::string cmd = in.pop().to_string();
 
   if (check_cmd(cmd, "gmres", in, out, 2, 30, 0, 1)) {
-    /*@FUNC ::LINSOLVE('gmres', @spmat M, @vec b [, @int restart][, @precond P][,'noisy'][,'res', r][,'maxiter', n])
-      Solve MX=b with the generalized minimum residuals method, using P as a preconditioner. 
+    /*@FUNC X = ::LINSOLVE('gmres',@tsp M, @vec b[, @int restart][, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
+    Solve `M.X = b` with the generalized minimum residuals method.
 
-      The default value of the restart parameter is 50.
-      @*/
+    Optionally using `P` as preconditioner. The default value of the
+    restart parameter is 50.@*/
     iterative_gmm_solver(GMM_GMRES, in, out);
   } else if (check_cmd(cmd, "cg", in, out, 2, 30, 0, 1)) {
-    /*@FUNC ::LINSOLVE('cg', @spmat M, @vec b [, @precond P][,'noisy'][,'res', r][,'maxiter', n])
-      Solve MX=b with the conjugated gradient method, using P as a preconditioner.
-      @*/
+    /*@FUNC X = ::LINSOLVE('cg',@tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
+    Solve `M.X = b` with the conjugated gradient method.
+
+    Optionally using `P` as preconditioner.@*/
     iterative_gmm_solver(GMM_CG, in, out);
   } else if (check_cmd(cmd, "bicgstab", in, out, 2, 30, 0, 1)) {
-    /*@FUNC ::LINSOLVE('bicgstab', @spmat M, @vec b [, @precond P][,'noisy'][,'res', r][,'maxiter', n])
-      Solve MX=b with the bi-conjugated gradient stabilized method, using P as a preconditioner.
-      @*/
+    /*@FUNC X = ::LINSOLVE('bicgstab',@tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
+    Solve `M.X = b` with the bi-conjugated gradient stabilized method.
+
+    Optionally using `P` as a preconditioner.@*/
     iterative_gmm_solver(GMM_BICGSTAB, in, out);
     /*} else if (check_cmd(cmd, "qmr", in, out, 0, 1, 0, 1)) {
       iterative_gmm_solver(GMM_QMR, in, out);*/
-  } else if (check_cmd(cmd, "lu", in, out, 2, 2, 0, 1) ||  
+  } else if (check_cmd(cmd, "lu", in, out, 2, 2, 0, 1) ||
 	     check_cmd(cmd, "superlu", in, out, 2, 2, 0, 1)) {
-    /*@FUNC U,cond = ::LINSOLVE('lu', @spmat M, @vec b [, @precond P])
-      Alias for ::LINSOLVE('superlu')
-      @*/
-    /*@FUNC U,cond = ::LINSOLVE('superlu', @spmat M, @vec b [, @precond P])
-      Apply the SuperLU solver (sparse LU factorization). The condition number estimate is returned with the solution.
-      @*/
+    /*@FUNC @CELL{U, cond} = ::LINSOLVE('lu',@tsp M, @vec b [, @tpre P])
+    Alias for ::LINSOLVE('superlu',...)@*/
+    /*@FUNC @CELL{U, cond} = ::LINSOLVE('superlu',@tsp M, @vec b [, @tpre P])
+    Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
 
-    dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();  
-    gsparse &gsp = *pgsp; 
-    if (!gsp.is_complex() && in.front().is_complex())  
-      THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one"); 
-    if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type()); 
-    else                  superlu_solver(gsp, in, out, scalar_type()); 
+    The condition number estimate `cond` is returned with the solution `U`.@*/
+    dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+    gsparse &gsp = *pgsp;
+    if (!gsp.is_complex() && in.front().is_complex())
+      THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+    if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
+    else                  superlu_solver(gsp, in, out, scalar_type());
   } else bad_cmd(cmd);
 }

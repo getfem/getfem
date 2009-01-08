@@ -30,17 +30,20 @@ using namespace getfemint;
 MLABCOM*/
 
 /*@TEXT GEOTRANS:INIT('GEOTRANS_init')
-GEOTRANS:INIT(@str descriptors)<Par>
-Possible descriptions are (non exhaustive list):<Par>
-* GT_PK(N,K)<par>
-   Transformation on simplexes, dim N, degree K.<par>
-* GT_QK(N,K)<par>
-   Transformation on parallelepipeds, dim N, degree K.<par>
-* GT_PRISM(N,K)<par>
-   Transformation on prisms, dim N, degree K.<par>
-* GT_PRODUCT(a,b)<par>
+@tgt = GEOTRANS:INIT(@str name)<Par>
+
+The name argument contains the specification of the geometric<par>
+transformation as a string, which may be:<Par>
+
+* GT_PK(n,k)<par>
+   Transformation on simplexes, dim `n`, degree `k`.<par>
+* GT_QK(n,k)<par>
+   Transformation on parallelepipeds, dim `n`, degree `k`.<par>
+* GT_PRISM(n,k)<par>
+   Transformation on prisms, dim `n`, degree `k`.<par>
+* GT_PRODUCT(A,B)<par>
    Tensorial product of two transformations.<par>
-* GT_LINEAR_PRODUCT(a,b)<par>
+* GT_LINEAR_PRODUCT(A,B)<par>
    Linear tensorial product of two transformations
 @*/
 

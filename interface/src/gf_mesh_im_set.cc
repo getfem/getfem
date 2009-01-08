@@ -37,16 +37,16 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
   } else {
     bv = mim->linked_mesh().convex_index();
   }
-  
+
   /* check for the validity of the operation */
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
     if (!mim->linked_mesh().convex_index().is_in(cv))
       THROW_ERROR("Convex " << cv+config::base_index() << " was not found in mesh");
-    if (pim->structure() != 
+    if (pim->structure() !=
 	mim->linked_mesh().structure_of_convex(cv)->basic_structure())
       infomsg() << "Warning: structure of the Integration Method seems to be incompatible with the structure of the convex\n";
   }
-    
+
   /* all the work done here */
   mim->set_integration_method(bv, pim);
 }
@@ -69,7 +69,7 @@ static void gf_mesh_im_set_classical_integ(getfem::mesh_im *mim, getfemint::mexa
 void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in) {
   if (in.front().is_object_id())
     gf_mesh_im_set_integ_(mim, in);
-  else 
+  else
     gf_mesh_im_set_classical_integ(mim, in);
 }
 
@@ -77,7 +77,7 @@ void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in) {
   FUNCTION [x] = gf_mesh_im_set(meshim MIM, operation [, args])
 
   General function for modifying mesh_im objects
-  
+
   @SET MESHIM:SET('integ')
 
   $Id$
@@ -92,18 +92,17 @@ void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::mesh_im *mim = in.pop().to_mesh_im();
   std::string cmd        = in.pop().to_string();
   if (check_cmd(cmd, "integ", in, out, 1, 2, 0, 0)) {
-    /*@SET MESHIM:SET('integ', {@integ IM|@int IM_DEGREE} [, @ivec CVIDX])
-      Set the integration method.
-      
-      Assign an integration method to all convexes whose #ids are
-      listed in CVIDX. If CVIDX is not given, the integration is
-      assigned to all convexes. It is possible to assign a specific
-      integration method with an integration method handle IM obtained
-      via INTEG:INIT('IM_SOMETHING'), or to let getfem choose a
-      suitable integration method with IM_DEGREE (choosen such that
-      polynomials of degree <= IM_DEGREE are exactly integrated. If
-      IM_DEGREE=-1, then the dummy integration method IM_NONE will be
-      used.) @*/
+    /*@SET MESHIM:SET('integ',{@tinteg im|@int im_degree}[, @ivec CVids])
+    Set the integration method.
+
+    Assign an integration method to all convexes whose #ids are
+    listed in `CVids`. If `CVids` is not given, the integration is
+    assigned to all convexes. It is possible to assign a specific
+    integration method with an integration method handle `im` obtained
+    via INTEG:INIT('IM_SOMETHING'), or to let getfem choose a suitable
+    integration method with `im_degree` (choosen such that polynomials
+    of `degree <= im_degree` are exactly integrated. If `im_degree=-1`,
+    then the dummy integration method IM_NONE will be used.)@*/
     gf_mesh_im_set_integ(mim, in);
   } else bad_cmd(cmd);
 }

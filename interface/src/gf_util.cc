@@ -69,22 +69,22 @@ void gf_util(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       gf_cplx_sparse_csc_const_ref H;  in.pop().to_sparse(H);
       gmm::csc_matrix<complex_type> cscH; gmm::copy(H,cscH);
       if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
-      else           gmm::MatrixMarket_save(fname.c_str(), cscH);      
+      else           gmm::MatrixMarket_save(fname.c_str(), cscH);
     }
   } else if (check_cmd(cmd, "load matrix", in, out, 2, 2, 1, 1)) {
     spmat_load(in, out, mexarg_out::USE_NATIVE_SPARSE);
   } else if (check_cmd(cmd, "trace level", in, out, 1, 1, 0, 0)) {
-    /*@FUNC ::UTIL('trace level', @int level)
-      Set the verbosity of some getfem++ routines (typically the messages
-      printed by the model bricks), 0 means no trace message (default is 3).
-      @*/
+    /*@FUNC ::UTIL('trace level',@int level)
+    Set the verbosity of some getfem++ routines.
+
+    Typically the messages printed by the model bricks, 0 means no
+    trace message (default is 3).@*/
     gmm::set_traces_level(in.pop().to_integer(0, 100));
   } else if (check_cmd(cmd, "warning level", in, out, 1, 1, 0, 0)) {
-    /*@FUNC ::UTIL('warning level', @int level)       
-      Filter the less important warnings displayed by getfem. 0 means no
-      warnings, default level is 3.
-      @*/
+    /*@FUNC ::UTIL('warning level',@int level)
+    Filter the less important warnings displayed by getfem.
+
+    0 means no warnings, default level is 3.@*/
     gmm::set_warning_level(in.pop().to_integer(0, 100));
   } else bad_cmd(cmd);
 }
-

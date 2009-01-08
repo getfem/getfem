@@ -49,7 +49,7 @@ export_slice_to_povray(std::ofstream &f, const getfem::stored_mesh_slice& sl) {
   const getfem::mesh &m = sl.linked_mesh();
   for (size_type ic=0; ic < sl.nb_convex(); ++ic) {
     for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=sl.simplexes(ic).begin();
-	 it != sl.simplexes(ic).end(); ++it) {      
+	 it != sl.simplexes(ic).end(); ++it) {
       if (it->dim() == 2) {
 	const getfem::slice_node &A = sl.nodes(ic)[it->inodes[0]];
 	const getfem::slice_node &B = sl.nodes(ic)[it->inodes[1]];
@@ -100,11 +100,11 @@ static std::string get_dx_dataset_name(getfemint::mexargs_in &in) {
   return s;
 }
 
-template <typename T> static void 
+template <typename T> static void
 interpolate_convex_data(const getfem::stored_mesh_slice *sl,
 			const garray<T> &u, getfemint::mexargs_out& out) {
   assert(u.dim(u.ndim()-1) == sl->linked_mesh().convex_index().last_true()+1);
-  array_dimensions ad; 
+  array_dimensions ad;
   for (unsigned i=0; i < u.ndim()-1; ++i) ad.push_back(u.dim(i));
   ad.push_back(unsigned(sl->nb_points()));
   garray<T> w = out.pop().create_array(ad, T());
@@ -153,37 +153,32 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   const getfem::stored_mesh_slice *sl = &mi_sl->mesh_slice();
   std::string cmd                  = in.pop().to_string();
   if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR SLICE:GET('dim')
-      Return the dimension of the slice (2 for a 2D mesh, etc..).
-      @*/
+    /*@RDATTR d = SLICE:GET('dim')
+    Return the dimension of the slice (2 for a 2D mesh, etc..).@*/
     out.pop().from_integer(int(sl->dim()));
   } else if (check_cmd(cmd, "area", in, out, 0, 0, 0, 1)) {
-    /*@GET SLICE:GET('area')
-      Return the area of the slice.
-      @*/
+    /*@GET a = SLICE:GET('area')
+    Return the area of the slice.@*/
     getfem::slicer_compute_area s; sl->replay(s);
     out.pop().from_scalar(s.area());
   } else if (check_cmd(cmd, "cvs", in, out, 0, 0, 0, 1)) {
-    /*@GET CVLST=SLICE:GET('cvs')
-      Return the list of convexes of the original mesh contained in the slice.
-      @*/
+    /*@GET CVids = SLICE:GET('cvs')
+    Return the list of convexes of the original mesh contained in the slice.@*/
     iarray w = out.pop().create_iarray_h(unsigned(sl->nb_convex()));
     for (size_type i=0; i < sl->nb_convex(); ++i)
       w[i] = int(sl->convex_num(i) + config::base_index());
   } else if (check_cmd(cmd, "nbpts", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR SLICE:GET('nbpts')
-      Return the number of points in the slice.
-      @*/
+    /*@RDATTR n = SLICE:GET('nbpts')
+    Return the number of points in the slice.@*/
     out.pop().from_integer(int(sl->nb_points()));
   } else if (check_cmd(cmd, "nbsplxs", in, out, 0, 1, 0, 1)) {
-    /*@RDATTR SLICE:GET('nbsplxs' [,@int DIM])
-      Return the number of simplexes in the slice.
-      
-      Since the slice may contain points (simplexes of dim 0), segments
-      (simplexes of dimension 1), triangles etc., the result is a vector of size
-      SLICE:GET('dim')+1 , except if the optional argument DIM is used. 
-      @*/
+    /*@RDATTR ns = SLICE:GET('nbsplxs'[, @int dim])
+    Return the number of simplexes in the slice.
 
+    Since the slice may contain points (simplexes of dim 0), segments
+    (simplexes of dimension 1), triangles etc., the result is a vector
+    of size SLICE:GET('dim')+1 , except if the optional argument `dim`
+    is used.@*/
     std::vector<size_type> v; sl->nb_simplexes(v);
     if (in.remaining()) {
       size_type i= in.pop().to_integer(0,100);
@@ -192,9 +187,8 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       out.pop().from_ivector(v);
     }
   } else if (check_cmd(cmd, "pts", in, out, 0, 0, 0, 1)) {
-    /*@GET P=SLICE:GET('pts')
-      Return the list of point coordinates.
-      @*/
+    /*@GET P = SLICE:GET('pts')
+    Return the list of point coordinates.@*/
     darray w = out.pop().create_darray(unsigned(sl->dim()), unsigned(sl->nb_points()));
     for (size_type ic=0, cnt=0; ic < sl->nb_convex(); ++ic) {
       for (getfem::mesh_slicer::cs_nodes_ct::const_iterator it=sl->nodes(ic).begin();
@@ -204,14 +198,14 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     }
   } else if (check_cmd(cmd, "splxs", in, out, 1, 1, 0, 2)) {
-    /*@GET [S,CV2SPLX]=SLICE:GET('splxs', @int DIM)
-      Return the list of simplexes of dimension DIM.
-      
-      On output, S has DIM+1 rows, each column contains the point numbers of a
-      simplex.  The vector CV2SPLX can be used to find the list of simplexes for
-      any convex stored in the slice. For example @MATLAB{S(:,CV2SPLX(4):CV2SPLX(5)-1)}@PYTHON{S[:,CV2SPLX[4]:CV2SPLX[5]]}
-      gives the list of simplexes for the fourth convex.
-      @*/
+    /*@GET @CELL{S, CV2S} = SLICE:GET('splxs',@int dim)
+    Return the list of simplexes of dimension `dim`.
+
+    On output, S has 'dim+1' rows, each column contains the point
+    numbers of a simplex.  The vector `CV2S` can be used to find the
+    list of simplexes for any convex stored in the slice. For example
+    '@MATLAB{S(:,CV2S(4):CV2S(5)-1)}@PYTHON{S[:,CV2S[4]:CV2S[5]]}'
+    gives the list of simplexes for the fourth convex.@*/
     size_type sdim = in.pop().to_integer(0,int(sl->dim()));
     iarray w = out.pop().create_iarray(unsigned(sdim+1), unsigned(sl->nb_simplexes(sdim)));
     size_type Scnt = 0;
@@ -227,28 +221,27 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         if ((*it).dim() == sdim) {
           for (size_type k=0; k < sdim+1; ++k)
             w[cnt++] = int((*it).inodes[k] + pcnt + config::base_index());
-	  scnt++; 
+	  scnt++;
 	}
-      }      
+      }
       pcnt += sl->nodes(ic).size();
-      if (Scnt) {	
+      if (Scnt) {
 	cv2splx[ic] = int(Scnt); Scnt+=scnt;
       }
     }
     if (Scnt) cv2splx[sl->nb_convex()] = int(Scnt);
   } else if (check_cmd(cmd, "edges", in, out, 0, 0, 0, 3)) {
-    /*@GET [mat P, ivec E1, ivec E2]=SLICE:GET('edges')
-      Return the edges of the linked mesh contained in the slice.
-      
-      P contains the list of all edge vertices, E1 contains the indices of each
-      mesh edge in P, and E2 contains the indices of each "edges" which is on the
-      border of the slice. This function is useless except for post-processing
-      purposes.
-      @*/
-    getfem::mesh m; 
+    /*@GET @CELL{P, E1, E2} = SLICE:GET('edges')
+    Return the edges of the linked mesh contained in the slice.
+
+    `P` contains the list of all edge vertices, `E1` contains
+    the indices of each mesh edge in `P`, and `E2` contains the
+    indices of each "edges" which is on the border of the slice.
+    This function is useless except for post-processing purposes.@*/
+    getfem::mesh m;
     dal::bit_vector slice_edges;
     getfem::mesh_slicer slicer(sl->linked_mesh());
-    getfem::slicer_build_edges_mesh action(m,slice_edges); 
+    getfem::slicer_build_edges_mesh action(m,slice_edges);
     slicer.push_back_action(action); slicer.exec(*sl);
 
     /* return a point list, a connectivity array, and optionnaly a list of edges with are part of the slice */
@@ -264,65 +257,62 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     iarray::iterator itt1=T1.begin(), itt2=T2.begin();
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
-      if (!slice_edges[cv]) { 
+      if (!slice_edges[cv]) {
 	itt1[0] = int(m.ind_points_of_convex(cv)[0]);
 	itt1[1] = int(m.ind_points_of_convex(cv)[1]);
-	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1); 
+	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1);
 	itt1[0] += config::base_index(); itt1[1] += config::base_index(); itt1 += 2;
       } else {
 	itt2[0] = int(m.ind_points_of_convex(cv)[0]);
 	itt2[1] = int(m.ind_points_of_convex(cv)[1]);
-	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2); 
+	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2);
 	itt2[0] += config::base_index(); itt2[1] += config::base_index(); itt2 += 2;
       }
     }
   } else if (check_cmd(cmd, "interpolate_convex_data", in, out, 1, 1, 0, 1)) {
-    /*@GET Usl=SLICE:GET('interpolate_convex_data', Ucv)
-      Interpolate data given on each convex of the mesh to the slice
-      nodes.
+    /*@GET Usl = SLICE:GET('interpolate_convex_data',@mat Ucv)
+    Interpolate data given on each convex of the mesh to the slice nodes.
 
-      The input array Ucv may have any number of dimensions, but its
-      last dimension should be equal to MESH:GET('max cvid').
+    The input array `Ucv` may have any number of dimensions, but its
+    last dimension should be equal to MESH:GET('max cvid').<Par>
 
-      Example of use: SLICE:GET('interpolate_convex_data', MESH:GET('quality'))
-      @*/
+    Example of use: SLICE:GET('interpolate_convex_data', MESH:GET('quality')).@*/
     in.front().check_trailing_dimension(int(sl->linked_mesh().convex_index().last_true()+1));
-    if (in.front().is_complex()) 
+    if (in.front().is_complex())
       interpolate_convex_data(sl, in.pop().to_darray(), out);
     else interpolate_convex_data(sl, in.pop().to_carray(), out);
   } else if (check_cmd(cmd, "linked mesh", in, out, 0, 0, 0, 1)) {
-    /*@GET m=SLICE:GET('linked mesh')
-      Return the mesh on which the slice was taken.
-      @*/
+    /*@GET m = SLICE:GET('linked mesh')
+    Return the mesh on which the slice was taken.@*/
     out.pop().from_object_id(mi_sl->linked_mesh_id(), MESH_CLASS_ID);
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    /*@GET ms=SLICE:GET('memsize')
-      Return the amount of memory (in bytes) used by the slice object.
-      @*/
+    /*@GET z = SLICE:GET('memsize')
+    Return the amount of memory (in bytes) used by the slice object.@*/
     out.pop().from_integer(int(sl->memsize()));
   } else if (check_cmd(cmd, "export to vtk",in, out, 1, -1, 0, 0)) {
-    /*@GET SLICE:GET('export to vtk', @str FILENAME ... [, 'ascii'][, 'edges'] ...)
-      Export a slice to VTK.
+    /*@GET SLICE:GET('export to vtk',@str filename ... [, 'ascii'][, 'edges'] ...)
+    Export a slice to VTK.
 
-      Following the file name, you may use any of the following options:
+    Following the `filename`, you may use any of the following options:<Par>
 
-        - if 'ascii' is not used, the file will contain binary data (non portable, but fast).
+    - if 'ascii' is not used, the file will contain binary data<par>
+      (non portable, but fast).<par>
+    - if 'edges' is used, the edges of the original mesh will be<par>
+      written instead of the slice content.<Par>
 
-        - if 'edges' is used, the edges of the original mesh will be written instead of the slice content.
+    More than one dataset may be written, just list them. Each dataset
+    consists of either:<Par>
 
-      More than one dataset may be written, just list them. Each dataset
-      consists of either:
+    - a field interpolated on the slice (scalar, vector or tensor),<par>
+      followed by an optional name.<par>
+    - a mesh_fem and a field, followed by an optional name.<Par>
 
-        * a field interpolated on the slice, followed by an optional name.
-        * a mesh_fem and a field, followed by an optional name.
+    Examples:<Par>
 
-      The field might be a scalar field, a vector field or a tensor field.
-
-      examples:
-      @SLICE:GET('export to vtk', 'test.vtk', Uslice, 'first_dataset', mf, U2, 'second_dataset')
-      @SLICE:GET('export to vtk', 'test.vtk', 'ascii', mf, U2)
-      @SLICE:GET('export to vtk', 'test.vtk', 'edges', 'ascii', Uslice)
-      @*/
+    - SLICE:GET('export to vtk','test.vtk',Usl,'first_dataset', mf,<par>
+      U2, 'second_dataset')<par>
+    - SLICE:GET('export to vtk','test.vtk','ascii',mf,U2)<par>
+    - SLICE:GET('export to vtk','test.vtk','edges','ascii',Uslice)@*/
     std::string fname = in.pop().to_string();
     bool ascii = false;
     bool edges = false;
@@ -352,7 +342,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) {
       do {
         if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-          const getfem::mesh_fem &mf = 
+          const getfem::mesh_fem &mf =
 	    *in.pop().to_const_mesh_fem();
           darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
           exp.write_point_data(mf,U,get_vtk_dataset_name(in, count));
@@ -364,37 +354,31 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       } while (in.remaining());
     }
   } else if (check_cmd(cmd, "export to pov",in, out, 1, 1, 0, 0)) {
-    /*@GET SLICE:GET('export to pov', @str FILENAME, ...)
-      Export a the triangles of the slice to POV-RAY.
-      @*/
+    /*@GET SLICE:GET('export to pov',@str filename, ...)
+    Export a the triangles of the slice to POV-RAY.@*/
     std::string fname = in.pop().to_string();
     std::ofstream f(fname.c_str());
     export_slice_to_povray(f,*sl);
   } else if (check_cmd(cmd, "export to dx", in, out, 1, -1, 0, 0)) {
-    /*@GET SLICE:GET('export to dx', @str FILENAME, ...)
-      Export a slice to OpenDX.
+    /*@GET SLICE:GET('export to dx',@str filename, ...)
+    Export a slice to OpenDX.
 
-      Following the file name, you may use any of the following
-      options:<Par>
+    Following the file name, you may use any of the following
+    options:<Par>
 
-        - if 'ascii' is not used, the file will contain binary data
-        (non portable, but fast).
-  
-        - if 'edges' is used, the edges of the original mesh will be
-        written instead of the slice content.
+    - if 'ascii' is not used, the file will contain binary data<par>
+      (non portable, but fast).<par>
+    - if 'edges' is used, the edges of the original mesh will be<par>
+      written instead of the slice content.<par>
+    - if 'append' is used, the opendx file will not be overwritten,<par>
+      and the new data will be added at the end of the file.<Par>
 
-        - if 'append' is used, the opendx file will not be
-        overwritten, and the new data will be added at the end of the
-        file.
+    More than one dataset may be written, just list them. Each dataset
+    consists of either:<Par>
 
-      More than one dataset may be written, just list them. Each dataset
-      consists of either:<Par>
-
-        - a field interpolated on the slice (scalar, vector or
-        tensor), followed by an optional name.
-
-        - a mesh_fem and a field, followed by an optional name.
-      @*/
+    - a field interpolated on the slice (scalar, vector or tensor),<par>
+      followed by an optional name.<par>
+    - a mesh_fem and a field, followed by an optional name.@*/
     std::string fname = in.pop().to_string();
     bool ascii = false;
     bool edges = false;
@@ -422,7 +406,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) {
       do {
         if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-          const getfem::mesh_fem &mf = 
+          const getfem::mesh_fem &mf =
 	    *in.pop().to_const_mesh_fem();
           darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
           exp.write_point_data(mf,U,get_dx_dataset_name(in));
@@ -435,4 +419,3 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
   } else bad_cmd(cmd);
 }
-

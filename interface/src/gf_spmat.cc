@@ -45,11 +45,11 @@ template <typename T> static void
 gf_spmat_Dirichlet_nullspace(gsparse &gsp,
 			     getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
   garray<T> R            = in.pop().to_garray(T());
-  
+
   gf_real_sparse_by_col      NS(gmm::mat_ncols(H), gmm::mat_nrows(H));
     std::vector<double>   Ud(H.ncols());
-    
-    size_type nl = getfem::Dirichlet_nullspace(H, NS, 
+
+    size_type nl = getfem::Dirichlet_nullspace(H, NS,
 					       R.to_vector<std::vector<double> >(), Ud);
     gmm::resize(NS,gmm::mat_nrows(NS),nl); /* remove unused columns */
     //NS.resize(nl);
@@ -62,7 +62,7 @@ gf_spmat_Dirichlet_nullspace(gsparse &gsp,
 				 getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   if (gsp.is_complex())
     gf_spmat_Dirichlet_nullspace(gsp, in, out, complex_type());
-  else gf_spmat_get_Dirichlet_nullspace(gsp, in, out, scalar_type());      
+  else gf_spmat_get_Dirichlet_nullspace(gsp, in, out, scalar_type());
 }
 #endif
 
@@ -77,14 +77,14 @@ copy_spmat(gsparse &src, gsparse &dest, mexargs_in &in, T) {
     }
   } else {
     sub_index ii = in.pop().to_sub_index().check_range(src.nrows());
-    sub_index jj = in.remaining() ? 
+    sub_index jj = in.remaining() ?
       in.pop().to_sub_index().check_range(src.ncols()) : ii.check_range(src.ncols());
     size_type m = ii.size(), n = jj.size();
     dest.allocate(m, n, src.storage(), T());
     switch (src.storage()) {
-      case gsparse::WSCMAT: gmm::copy(gmm::sub_matrix(src.wsc(T()), ii, jj), 
+      case gsparse::WSCMAT: gmm::copy(gmm::sub_matrix(src.wsc(T()), ii, jj),
 				      dest.wsc(T())); break;
-      case gsparse::CSCMAT: gmm::copy(gmm::sub_matrix(src.csc(T()), ii, jj), 
+      case gsparse::CSCMAT: gmm::copy(gmm::sub_matrix(src.csc(T()), ii, jj),
 				      dest.csc_w(T())); break;
       default: THROW_INTERNAL_ERROR;
     }
@@ -94,7 +94,7 @@ copy_spmat(gsparse &src, gsparse &dest, mexargs_in &in, T) {
 void load_spmat(mexargs_in& in, gsparse &gsp) {
   std::string mt = in.pop().to_string();
   std::string fname = in.pop().to_string();
-  if (cmd_strmatch(mt, "hb") || 
+  if (cmd_strmatch(mt, "hb") ||
       cmd_strmatch(mt, "harwell-boeing")) {
     gmm::HarwellBoeing_IO h; h.open(fname.c_str());
     if (h.is_complex()) {
@@ -106,11 +106,11 @@ void load_spmat(mexargs_in& in, gsparse &gsp) {
       h.read(cscH);
       gsp.destructive_assign(cscH);
     }
-  } else if (cmd_strmatch(mt, "mm") || 
+  } else if (cmd_strmatch(mt, "mm") ||
 	     cmd_strmatch(mt, "matrix-market")) {
     gmm::MatrixMarket_IO h; h.open(fname.c_str());
     if (h.is_complex()) {
-      gf_cplx_sparse_by_col H; h.read(H); 
+      gf_cplx_sparse_by_col H; h.read(H);
       gsp.destructive_assign(H);
     } else {
       gf_real_sparse_by_col H; h.read(H);
@@ -125,64 +125,51 @@ void load_spmat(mexargs_in& in, gsparse &gsp) {
 MLABCOM*/
 
 /*@TEXT SPMAT:INIT('SPMAT_init')
-  General constructor for getfem sparse matrices @MATLAB{(i.e. sparse matrices
-  which are stored in the getfem workspace, not the matlab sparse
-  matrices)}.<Par>
+@MATLAB{(i.e. sparse matrices which are stored in the getfem workspace,
+not the matlab sparse matrices).}<Par>
+These sparse matrix can be stored as CSC (compressed column sparse), which<par>
+is the format used by Matlab, or they can be stored as WSC (internal format<par>
+to getfem). The CSC matrices are not writable (it would be very inefficient),<par>
+but they are optimized for multiplication with vectors, and memory usage.<par>
+The WSC are writable, they are very fast with respect to random read/write<par>
+operation. However their memory overhead is higher than CSC matrices, and<par>
+they are a little bit slower for matrix-vector multiplications.<Par>
 
-  These sparse matrix can be stored as CSC (compressed column sparse),
-  which is the format used by Matlab, or they can be stored as WSC
-  (internal format to getfem). The CSC matrices are not writable (it
-  would be very inefficient), but they are optimized for
-  multiplication with vectors, and memory usage. The WSC are writable,
-  they are very fast with respect to random read/write
-  operation. However their memory overhead is higher than CSC
-  matrices, and they are a little bit slower for matrix-vector
-  multiplications.<Par>
+By default, all newly created matrices are build as WSC matrices. This can<par>
+be changed later with SPMAT:SET('to_csc',...), or may be changed automatically<par>
+by getfem (for example ::LINSOLVE() converts the matrices to CSC).<Par>
 
-  By default, all newly created matrices are build as WSC
-  matrices. This can be changed later with SPMAT:SET('to_csc'), or may
-  be changed automatically by getfem (for example ::LINSOLVE()
-  converts the matrices to CSC).<Par>
+The matrices may store REAL or COMPLEX values.<Par>
 
-  The matrices may store REAL or COMPLEX values.<Par>
-
-  * SPMAT:INIT('empty', @tint m [, @tint n])<par>
-  Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
-  m x n.  If n is omitted, the matrix dimension is m x m.<Par>
-
-  * SPMAT:INIT('identity', @tint n)<par>
-  Create a n x n identity matrix.<Par>
-
-  * SPMAT:SET('diag', @dmat D [, @ivec E [, @int n [,@int m]]])
-  Create a diagonal matrix. If E is given, D might be a matrix and
-  each column of E will contain the sub-diagonal number that will be
-  filled with the corresponding column of D.<Par>
-
-  * SPMAT:INIT('copy', @spmat K [,I [,J]])<par>
-
-  Duplicate a matrix K (which might be a gfSpmat @MATLAB{or a native
-  matlab sparse matrix}). If I and/or J are given, the matrix M will
-  be a submatrix of K. For example<par> 
-  M = gf_spmat('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])<par>
-  will return a 40x5 matrix.<Par>
-
-  * SPMAT:INIT('mult', @spmat A, @spmat B)<par>
-  Create a sparse matrix as the product of the sparse matrices A and
-  B.  It requires that A and B be both real or both complex, you may
-  have to use SPMAT:SET('to_complex')<Par>
-
-  * SPMAT:INIT('add', @spmat A, @spmat B)<par>
-  Create a sparse matrix as the sum of the sparse matrices A and
-  B. Adding a real matrix with a complex matrix is possible.<Par>
-
-  * SPMAT:INIT('load','hb'|'harwell-boeing', filename)<par>
-  Read a sparse matrix from an Harwell-Boeing file. 
-  @MATLAB{See also ::UTIL('load matrix').}<Par>
-
-  * SPMAT:INIT('mm', filename)<par>
-  * SPMAT:INIT('matrix-market', filename)<par>
-  Read a sparse matrix from a Matrix-Market file. 
-  @MATLAB{See also ::UTIL('load matrix').}
+* SPMAT:INIT('empty', @int m [, @int n])<par>
+   Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
+   `m x n`. If `n` is omitted, the matrix dimension is `m x m`.<par>
+* SPMAT:INIT('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J]])<par>
+   Duplicate a matrix K (which might be a @tsp@MATLAB{ or a native matlab
+   sparse matrix}). If (index) `I` and/or `J` are given, the matrix will
+   be a submatrix of `K`. For example:<Par>
+   @MATLAB{M = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
+   @PYTHON{M = SPMAT:INIT('copy', SPMAT:INIT('empty',50,50), range(40), [6, 7, 8, 3, 10])}<Par>
+   will return a 40x5 matrix.<par>
+* SPMAT:INIT('identity', @int n)<par>
+   Create a `n x n` identity matrix.<par>
+* SPMAT:INIT('mult', @spmat A, @spmat B)<par>
+   Create a sparse matrix as the product of the sparse matrices `A` and
+   `B`. It requires that `A` and `B` be both real or both complex, you
+   may have to use SPMAT:SET('to_complex')<par>
+* SPMAT:INIT('add', @spmat A, @spmat B)<par>
+   Create a sparse matrix as the sum of the sparse matrices `A` and
+   `B`. Adding a real matrix with a complex matrix is possible.<par>
+* SPMAT:SET('diag', @dmat D [, @ivec E [, @int n [,@int m]]])<par>
+   Create a diagonal matrix. If `E` is given, `D` might be a matrix
+   and each column of `E` will contain the sub-diagonal number that
+   will be filled with the corresponding column of `D`.<par>
+* SPMAT:INIT('load','hb'|'harwell-boeing', @str filename)<par>
+   Read a sparse matrix from an Harwell-Boeing file.
+   @MATLAB{See also ::UTIL('load matrix').}<par>
+* SPMAT:INIT('load','mm'|'matrix-market', filename)<par>
+   Read a sparse matrix from a Matrix-Market file.
+   @MATLAB{See also ::UTIL('load matrix').}<par>
   @*/
 
 
@@ -212,8 +199,8 @@ void gf_spmat(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     dal::shared_ptr<gsparse> A = in.pop().to_sparse();
     dal::shared_ptr<gsparse> B = in.pop().to_sparse();
     size_type m = A->nrows(), n = B->ncols();
-      
-    if (A->is_complex() != B->is_complex()) 
+
+    if (A->is_complex() != B->is_complex())
       THROW_BADARG("cannot multiply a complex matrix with a real one, use to_complex()");
     if (!A->is_complex()) gsp.real_wsc(new gsparse::t_wscmat_r(m,n));
     else gsp.cplx_wsc(new gsparse::t_wscmat_c(m,n));
@@ -251,4 +238,3 @@ void gf_spmat(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     load_spmat(in, gsp);
   } else bad_cmd(cmd);
 }
-

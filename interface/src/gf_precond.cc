@@ -28,10 +28,10 @@ using namespace getfemint;
 /* moved out of the gprecond class to avoid
    the stupid inlining bug of gcc-3.3 and gcc-3.4
    ( http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16849 ) */
-   
+
    namespace getfemint {
-     template<typename T> size_type 
-     gprecond<T>::memsize() const { 
+     template<typename T> size_type
+     gprecond<T>::memsize() const {
        size_type sz = sizeof(*this);
        switch (type) {
 	 case IDENTITY: break;
@@ -40,7 +40,7 @@ using namespace getfemint;
 	 case ILU:     sz += ilu->memsize(); break;
 	 case ILDLT:   sz += ildlt->memsize(); break;
 	 case ILDLTT:  sz += ildltt->memsize(); break;
-	 case SUPERLU: 
+	 case SUPERLU:
 	   sz += size_type(superlu->memsize()); break;
 	 case SPMAT:   sz += gsp->memsize(); break;
        }
@@ -52,7 +52,7 @@ using namespace getfemint;
 template <typename T> static gprecond<T>&
 precond_new(mexargs_out& out, T) {
   getfemint_precond *precond = new getfemint_precond(gsparse::REAL);
-  out.pop().from_object_id(workspace().push_object(precond), PRECOND_CLASS_ID);  
+  out.pop().from_object_id(workspace().push_object(precond), PRECOND_CLASS_ID);
   return precond->precond(T());
 }
 
@@ -87,10 +87,10 @@ precond_ilut(gsparse &M, int additional_fillin, double threshold, mexargs_out& o
   p.ilut.reset(new gmm::ilut_precond<typename gprecond<T>::cscmat>(M.csc(T()), additional_fillin, threshold));
 }
 
-template <typename T> static void                         
+template <typename T> static void
 precond_superlu(gsparse &M, mexargs_out& out, T) {
-  gprecond<T> &p = precond_new(out, T());  
-  p.type = gprecond_base::SUPERLU;                       
+  gprecond<T> &p = precond_new(out, T());
+  p.type = gprecond_base::SUPERLU;
   p.superlu.reset(new gmm::SuperLU_factor<T>()); p.superlu.get()->build_with(M.csc(T()));
 }
 
@@ -109,50 +109,41 @@ precond_spmat(getfemint_gsparse *gsp, mexargs_out& out) {
 MLABCOM*/
 
 /*@TEXT PRECOND:INIT('PRECOND_init')
-  General constructor for getfem preconditioners.<Par>
+The preconditioners may store REAL or COMPLEX values. They accept<par>
+getfem sparse matrices and Matlab sparse matrices.<Par>
 
-  The preconditioners may store REAL or COMPLEX values. They accept
-  getfem sparse matrices and Matlab sparse matrices.<Par>
-
-  * PRECOND:INIT('identity')<par>
-  Create a REAL identity precondioner.<Par>
-
-  * PRECOND:INIT('cidentity')<par>
-  Create a COMPLEX identity precondioner.<Par>
-  
-  * PRECOND:INIT('diagonal', @dcvec D)<par>
-  Create a diagonal precondioner.<Par>
-
-  * PRECOND:INIT('ildlt', @spmat M)<par>
-  Create an ILDLT (Cholesky) preconditioner for the (symmetric) sparse matrix M.<par>
-  This preconditioner has the same sparsity pattern than M (no fill-in).<Par>
-
-  * PRECOND:INIT('ilu', @spmat M)<par>
-  Create an ILU (Incomplete LU) preconditioner for the sparse matrix M.<par>
-  This preconditioner has the same sparsity pattern than M (no fill-in).<Par>
-
-  * PRECOND:INIT('ildltt', @spmat M [, @int fillin [, @scalar threshold]])<par>
-  Create an ILDLT (Cholesky with filling) preconditioner for the (symmetric) sparse matrix M.<par>
-
-  The preconditioner may add at most 'fillin' additional non-zero entries on
-  each line. The default value for 'fillin' is 10, and the default threshold is
-  1e-7.<Par>
-
-  * PRECOND:INIT('ilut', @spmat M [, @int fillin [, @scalar threshold]])<par>
-  Create an ILUT (Incomplete LU with filling) preconditioner for the sparse matrix M.<par>
-
-  The preconditioner may add at most 'fillin' additional non-zero entries on
-  each line. The default value for 'fillin' is 10, and the default threshold is
-  1e-7.<Par>
-
-  * PRECOND:INIT('superlu', @spmat M)<par>
-  Uses SuperLU to build an exact factorization of the sparse matrix M.
-
-  This preconditioner is only available if the getfem-interface was built with
-  SuperLU support. Note that LU factorization is likely to eat all your memory
-  for 3D problems.  
+* PRECOND:INIT('identity')<par>
+   Create a REAL identity precondioner.<par>
+* PRECOND:INIT('cidentity')<par>
+   Create a COMPLEX identity precondioner.<par>
+* PRECOND:INIT('diagonal', @dcvec D)<par>
+   Create a diagonal precondioner.<par>
+* PRECOND:INIT('ildlt', @tsp m)<par>
+   Create an ILDLT (Cholesky) preconditioner for the (symmetric)<par>
+   sparse matrix `m`. This preconditioner has the same sparsity<par>
+   pattern than `m` (no fill-in).<par>
+* PRECOND:INIT('ilu', @tsp m)<par>
+   Create an ILU (Incomplete LU) preconditioner for the sparse<par>
+   matrix `m`. This preconditioner has the same sparsity pattern<par>
+   than `m` (no fill-in).<par>
+* PRECOND:INIT('ildltt', @tsp m[, @int fillin[, @scalar threshold]])<par>
+   Create an ILDLT (Cholesky with filling) preconditioner for the<par>
+   (symmetric) sparse matrix `m`. The preconditioner may add at most<par>
+   `fillin` additional non-zero entries on each line. The default<par>
+   value for `fillin` is 10, and the default threshold is1e-7.<par>
+* PRECOND:INIT('ilut', @tsp m[, @int fillin[, @scalar threshold]])<par>
+   Create an ILUT (Incomplete LU with filling) preconditioner for the<par>
+   sparse matrix `m`. The preconditioner may add at most `fillin`<par>
+   additional non-zero entries on each line. The default value for<par>
+   `fillin` is 10, and the default threshold is 1e-7.<par>
+* PRECOND:INIT('superlu', @tsp m)<par>
+   Uses SuperLU to build an exact factorization of the sparse matrix<par>
+   `m`. This preconditioner is only available if the getfem-interface<par>
+   was built with SuperLU support. Note that LU factorization is likely<par>
+   to eat all your memory for 3D problems.
+* PRECOND:INIT('spmat', @tsp M)<par>
+   ???
   @*/
-
 
 void gf_precond(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {

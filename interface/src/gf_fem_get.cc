@@ -24,13 +24,13 @@
 
 using namespace getfemint;
 
-static size_type get_optional_convex_number(getfemint::mexargs_in &in, 
-					    getfemint_pfem *gfi_fem, 
+static size_type get_optional_convex_number(getfemint::mexargs_in &in,
+					    getfemint_pfem *gfi_fem,
 					    const std::string cmd) {
-  size_type cv = 0; 
+  size_type cv = 0;
   if (!in.remaining() && gfi_fem->nbdof_need_convex_number())
     THROW_BADARG("This FEM requires a convex number for " << cmd);
-  if (in.remaining()) 
+  if (in.remaining())
     cv = in.pop().to_integer() - config::base_index();
   return cv;
 }
@@ -38,7 +38,7 @@ static size_type get_optional_convex_number(getfemint::mexargs_in &in,
 /*MLABCOM
   FUNCTION I = gf_fem_get(F, ...)
     General function for querying information about FEM objects.
-    
+
     @RDATTR FEM:GET('nbdof')
     @RDATTR FEM:GET('dim')
     @RDATTR FEM:GET('target_dim')
@@ -63,84 +63,88 @@ void gf_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::pfem fem = gfi_fem->pfem();//in.pop().to_fem();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "nbdof", in, out, 0, 1, 0, 1)) {
-    /*@RDATTR FEM:GET('nbdof' [, @int CV])
-      Return the number of DOF for the FEM.
+    /*@RDATTR n = FEM:GET('nbdof'[, @int cv])
+    Return the number of dof for the @tfem.
 
-      Some specific FEM (for example 'interpolated_fem') may require a
-      convex number CV to give their result (interpolated fems for
-      example). In most of the case, you can omit this convex
-      number. 
-    @*/
+    Some specific @tfem (for example 'interpolated_fem') may require a
+    convex number `cv` to give their result. In most of the case, you
+    can omit this convex number.@*/
     size_type cv = get_optional_convex_number(in, gfi_fem, cmd);
     out.pop().from_scalar(double(fem->nb_dof(cv)));
   } else if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR FEM:GET('dim')
-      Return the dimension (dimension of the reference convex) of the FEM.
-      @*/
+    /*@RDATTR d = FEM:GET('dim')
+    Return the dimension (dimension of the reference convex) of the @tfem.@*/
     out.pop().from_scalar(fem->dim());
   } else if (check_cmd(cmd, "target_dim", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR FEM:GET('target_dim')
-      Return the dimension of the target space.
+    /*@RDATTR td = FEM:GET('target_dim')
+    Return the dimension of the target space.
 
-      The target space dimension is usually 1, except for vector FEMs
-      (none of them has been implemented in getfem++ for now)@*/
+    The target space dimension is usually 1, except for vector @tfem
+    (none of them has been implemented in getfem++ for now).@*/
     out.pop().from_scalar(fem->target_dim());
   } else if (check_cmd(cmd, "pts", in, out, 0, 1, 0, 1)) {
-    /*@GET FEM:GET('pts' [, @int CV])
-      Get the location of the degrees of freedom on the reference element.
-      
-      Some specific FEM may require a convex number CV to give their
-      result (interpolated fems for example). In most of the case, you
-      can omit this convex number.
-      @*/
+    /*@GET P = FEM:GET('pts'[, @int cv])
+    Get the location of the dof on the reference element.
+
+    Some specific @tfem may require a convex number `cv` to give their
+    result (for example 'interpolated_fem'). In most of the case, you
+    can omit this convex number.@*/
     size_type cv = get_optional_convex_number(in, gfi_fem, cmd);
     out.pop().from_vector_container(fem->node_convex(cv).points());
   } else if (check_cmd(cmd, "is_equivalent", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR FEM:GET('is_equivalent')
-      Return 0 if the FEM is not equivalent.
-      
-      Equivalent FEM are evaluated on the reference convex. This is the
-      case of most classical FEMs.@*/
+    /*@RDATTR b = FEM:GET('is_equivalent')
+    Return 0 if the @tfem is not equivalent.
+
+    Equivalent @tfem are evaluated on the reference convex. This is
+    the case of most classical @tfem's.@*/
     out.pop().from_scalar(fem->is_equivalent());
   } else if (check_cmd(cmd, "is_lagrange", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR FEM:GET('is_lagrange')
-    Return 0 if the FEM is not of Lagrange type.@*/
+    /*@RDATTR b = FEM:GET('is_lagrange')
+    Return 0 if the @tfem is not of Lagrange type.@*/
     out.pop().from_scalar(fem->is_lagrange());
   } else if (check_cmd(cmd, "is_polynomial", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR FEM:GET('is_polynomial')
+    /*@RDATTR b = FEM:GET('is_polynomial')
     Return 0 if the basis functions are not polynomials.@*/
     out.pop().from_scalar(fem->is_polynomial());
   } else if (check_cmd(cmd, "estimated_degree", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR FEM:GET('estimated_degree')
-    Return an estimation of the polynomial degree of the FEM.@*/
+    /*@RDATTR d = FEM:GET('estimated_degree')
+    Return an estimation of the polynomial degree of the @tfem.
+
+    This is an estimation for fem which are not polynomials.@*/
     out.pop().from_scalar(fem->estimated_degree());
   } else if (check_cmd(cmd, "base_value", in, out, 1, 1, 0, 1)) {
-    /*@GET FEM:GET('base_value',X)
-    Evaluate all base functions at the given point.@*/
+    /*@GET E = FEM:GET('base_value',@mat p)
+    Evaluate all basis functions of the FEM at point `p`.
+
+    `p` is supposed to be in the reference convex!@*/
     getfem::base_tensor t;
     getfem::base_node x = in.pop().to_base_node(fem->dim());
     fem->base_value(x,t);
     out.pop().from_tensor(t);
   } else if (check_cmd(cmd, "grad_base_value", in, out, 1, 1, 0, 1)) {
-    /*@GET FEM:GET('grad_base_value',X)
-    Evaluate the gradient of all base functions at the given point.@*/
+    /*@GET ED = FEM:GET('grad_base_value',@mat p)
+    Evaluate the gradient of all base functions of the @tfem at point `p`.
+
+    `p` is supposed to be in the reference convex!@*/
     getfem::base_tensor t;
     getfem::base_node x = in.pop().to_base_node(fem->dim());
     fem->grad_base_value(x,t);
     out.pop().from_tensor(t);
   } else if (check_cmd(cmd, "hess_base_value", in, out, 1, 1, 0, 1)) {
-    /*@GET FEM:GET('hess_base_value',X)
-    Evaluate the Hessian of all base functions at the given point.@*/
+    /*@GET EH = FEM:GET('hess_base_value',@mat p)
+    Evaluate the Hessian of all base functions of the @tfem at point `p`.
+
+    `p` is supposed to be in the reference convex!.@*/
     getfem::base_tensor t;
     getfem::base_node x = in.pop().to_base_node(fem->dim());
     fem->hess_base_value(x,t);
     out.pop().from_tensor(t);
   } else if (check_cmd(cmd, "poly_str", in, out, 0, 0, 0, 1)) {
     /*@GET FEM:GET('poly_str')
-      Return (if possible) the polynomial expressions of the base functions in the reference element.
+    Return the polynomial expressions of its basis functions in the reference convex.
 
-      This function will of course fail for non-polynomial FEMs.
-      @*/
+    The result is expressed as a @MATLAB{cell array}@PYTHON{tuple} of
+    strings. Of course this will fail on non-polynomial @tfem's.@*/
     getfem::ppolyfem pf = dynamic_cast<getfem::ppolyfem>(&(*fem));
     if (pf) {
       std::vector<std::string> s(pf->base().size());
@@ -151,13 +155,12 @@ void gf_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       out.pop().from_string_container(s);
     } else THROW_BADARG("Cannot return the poly_str of non-polynomial FEMs");
   } else if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {
-    /*@GET FEM:GET('char')
-    Ouput a (unique) string representation of the FEM.
+    /*@GET @str = FEM:GET('char')
+    Ouput a (unique) string representation of the @tfem.
 
-    This can be used to perform comparisons between two different FEM
-    objects.
-    @*/
-    std::string s = getfem::name_of_fem(fem);    
+    This can be used to perform comparisons between two different @tfem
+    objects.@*/
+    std::string s = getfem::name_of_fem(fem);
     out.pop().from_string(s.c_str());
   } else bad_cmd(cmd);
 }

@@ -43,34 +43,32 @@ void gf_cvstruct_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   bgeot::pconvex_structure cs = in.pop().to_convex_structure();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "nbpts", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR CVSTRUCT:GET('nbpts')
-      Get the number of points of the convex structure.@*/
+    /*@RDATTR n = CVSTRUCT:GET('nbpts')
+    Get the number of points of the convex structure.@*/
     out.pop().from_scalar(cs->nb_points());
   } else if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR CVSTRUCT:GET('dim')
-      Get the dimension of the convex structure.@*/
+    /*@RDATTR d = CVSTRUCT:GET('dim')
+    Get the dimension of the convex structure.@*/
     out.pop().from_scalar(cs->dim());
   } else if (check_cmd(cmd, "basic_structure", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR  cs=CVSTRUCT:GET('basic structure')
-      Get the simplest structure.
-      
-      For example, the 'basic structure' of the 6-node triangle, is the
-      canonical 3-noded triangle.@*/
+    /*@RDATTR cs = CVSTRUCT:GET('basic structure')
+    Get the simplest convex structure.
+
+    For example, the *basic structure* of the 6-node triangle, is the
+    canonical 3-noded triangle.@*/
     out.pop().from_object_id(getfemint::ind_convex_structure(cs->basic_structure()),
 			     CVSTRUCT_CLASS_ID);
   } else if (check_cmd(cmd, "face", in, out, 1, 1, 0, 1)) {
-    /*@RDATTR  CVSTRUCT:GET('face', @int F)
-      Return the structure of the face F.@*/
+    /*@RDATTR cs = CVSTRUCT:GET('face',@int F)
+    Return the convex structure of the face `F`.@*/
     size_type f = in.pop().to_face_number(cs->nb_faces());
     out.pop().from_object_id(getfemint::ind_convex_structure(cs->faces_structure()[f]),
-			     CVSTRUCT_CLASS_ID);    
+			     CVSTRUCT_CLASS_ID);
   } else if (check_cmd(cmd, "facepts", in, out, 1, 1, 0, 1)) {
-    /*@GET I=CVSTRUCT:GET('facepts', @int F)
-      Return the list of point indices for the face F.@*/
+    /*@GET I = CVSTRUCT:GET('facepts',@int F)
+    Return the list of point indices for the face `F`.@*/
     short_type f = short_type(in.pop().to_face_number(cs->nb_faces()));
     iarray w = out.pop().create_iarray_h(cs->nb_points_of_face(f));
     for (size_type i=0; i < w.size(); ++i) w[i] = cs->ind_points_of_face(f)[i]+config::base_index();
   } else bad_cmd(cmd);
 }
-
-

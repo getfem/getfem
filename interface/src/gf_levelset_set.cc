@@ -28,7 +28,7 @@ using namespace getfemint;
 /*MLABCOM
   FUNCTION I = gf_levelset_set(LS, ...)
     General function for modification of LEVELSET objects.
-    
+
 MLABCOM*/
 
 void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -40,7 +40,13 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::level_set &ls = gls->levelset();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 1, 2, 0, 0)) {
-    std::string s, s2; 
+    /*@SET LEVELSET:SET('values',{@mat v1|@str poly1}[, {@mat v2|@str poly2}])
+    Set values of the vector of dof for the level-set functions.
+
+    Set the primary function with the vector of dof `v1` (or the polynomial
+    expression `poly1`) and the secondary function (if any) with  the vector
+    of dof `v2` (or the polynomial expression `poly2`)@*/
+    std::string s, s2;
     darray v, v2;
     if (in.front().is_string()) {
       s = in.pop().to_string();
@@ -70,7 +76,12 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	ls.values(1).assign(v2.begin(), v2.end());
       }
     }
-  } else if (check_cmd(cmd, "simplify", in, out, 0, 0, 0, 0)) {
-    ls.simplify();
+  } else if (check_cmd(cmd, "simplify", in, out, 0, 1, 0, 0)) {
+    /*@SET LEVELSET:SET('simplify'[@scaler eps=0.01])
+    Simplify dof of level-set optionally with the parameter `eps`.@*/
+    if (in.remaining()==0) ls.simplify();
+    else{
+      ls.simplify(in.pop().to_scalar());
+    }
   } else bad_cmd(cmd);
 }

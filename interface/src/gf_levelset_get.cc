@@ -41,24 +41,23 @@ void gf_levelset_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 0, 1, 0, 1)) {
-    /*@GET @mat = LEVELSET:GET('values', @int nls)
-    Return the vector of DOF for nls funtion.
+    /*@GET V = LEVELSET:GET('values',@int nls)
+    Return the vector of dof for `nls` funtion.
 
-    If nls is 0, the method return the vector of DOF for
-    the primary level-set funtion, so that these values
-    can be set. If nls is 1, the method return the vector
-    of DOF for the secondary level-set functionif any.@*/
+    If `nls` is 0, the method return the vector of dof for the primary
+    level-set funtion. If `nls` is 1, the method return the vector of
+    dof for the secondary level-set function (if any).@*/
     size_type il = 0;
     if (in.remaining()) il = in.pop().to_integer(0, 1);
     if (il != 0 && !ls.has_secondary())
       THROW_BADARG("The levelset has not secondary term");
     out.pop().from_dcvector(ls.values(unsigned(il)));
   } else if (check_cmd(cmd, "degree", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR @int = LEVELSET:GET('degree')
+    /*@RDATTR d = LEVELSET:GET('degree')
     Return the degree of lagrange representation.@*/
     out.pop().from_integer(ls.degree());
   } else if (check_cmd(cmd, "mf", in, out, 0, 0, 0, 1)) {
-    /*@GET @tmf = LEVELSET:GET('mf')
+    /*@GET mf = LEVELSET:GET('mf')
     Return a reference on the @tmf object.@*/
     getfem::mesh_fem *pmf = const_cast<getfem::mesh_fem*>(&ls.get_mesh_fem());
     getfemint_mesh_fem *gmf =
@@ -67,7 +66,7 @@ void gf_levelset_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       cerr << "mf = " << &ls.get_mesh_fem() << " == " << &gmf->mesh_fem() << "\n";*/
     out.pop().from_object_id(gmf->get_id(), gmf->class_id());
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR @int = LEVELSET:GET('memsize')
+    /*@RDATTR z = LEVELSET:GET('memsize')
     Return the amount of memory (in bytes) used by the level-set.@*/
     out.pop().from_integer(int(ls.memsize()));
   } else bad_cmd(cmd);

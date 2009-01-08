@@ -29,47 +29,53 @@ using namespace getfemint;
 MLABCOM*/
 
 /*@TEXT INTEG:INIT('INTEG_init')
-INTEG:INIT(@str method)<Par>
-Possible descriptions are (non exhaustive list):<Par>
+@tinteg = INTEG:INIT(@str method)<Par>
+
+Here is a list of some integration methods defined in getfem++<par>
+(see the description of finite element and integration methods<par>
+for a complete reference):<Par>
+
 * IM_EXACT_SIMPLEX(n)<par>
-   Exact integration on simplices (works only with linear geometric
-   transformations and PK FEMs). Note that 'exact integration'
-   should be avoided in general, since they only apply to linear
-   geometric transformations, are quite slow, and subject to
-   numerical stability problems for high degree FEMs.<par>
-* IM_PRODUCT(a, b)<par>
+   Exact integration on simplices (works only with linear geometric<par>
+   transformations and PK @tfem's).<par>
+* IM_PRODUCT(A,B)<par>
    Product of two integration methods.<par>
 * IM_EXACT_PARALLELEPIPED(n)<par>
    Exact integration on parallelepipeds.<par>
 * IM_EXACT_PRISM(n)<par>
    Exact integration on prisms.<par>
-* IM_GAUSS1D(K)<par>
-   Gauss method on the segment, order K (K=1,3,...99).<par>
-* IM_NC(N,K)<par>
-   Newton-Cotes approximative integration on simplexes, order K.<par>
-* IM_NC_PARALLELEPIPED(N,K)<par>
+* IM_GAUSS1D(k)<par>
+   Gauss method on the segment, order `k=1,3,...99`.<par>
+* IM_NC(n,k)<par>
+   Newton-Cotes approximative integration on simplexes, order `k`.<par>
+* IM_NC_PARALLELEPIPED(n,k)<par>
    Product of Newton-Cotes integration on parallelepipeds.<par>
-* IM_NC_PRISM(N,K)<par>
+* IM_NC_PRISM(n,k)<par>
    Product of Newton-Cotes integration on prisms.<par>
-* IM_GAUSS_PARALLELEPIPED(N,K) <par>
+* IM_GAUSS_PARALLELEPIPED(n,k) <par>
    Product of Gauss1D integration on parallelepipeds.<par>
-* IM_TRIANGLE(K)<par>
-   Gauss methods on triangles (K=1,3,5,6,7,8,9,10,13,17,19).<par>
-* IM_QUAD(K)<par>
-   Gauss methods on quadrilaterons (K=2, 3, 5, .. 17). Note that
-   IM_GAUSS_PARALLELEPIPED should be prefered for QK FEMs.<par>
-* IM_TETRAHEDRON(K)<par>
-   Gauss methods on tetrahedrons (K=1, 2, 3, 5, 6 or 8).<par>
+* IM_TRIANGLE(k)<par>
+   Gauss methods on triangles `k=1,3,5,6,7,8,9,10,13,17,19`.<par>
+* IM_QUAD(k)<par>
+   Gauss methods on quadrilaterons `k=2, 3, 5, .. 17`. Note that
+   IM_GAUSS_PARALLELEPIPED should be prefered for QK @tfem's.<par>
+* IM_TETRAHEDRON(k)<par>
+   Gauss methods on tetrahedrons `k=1, 2, 3, 5, 6 or 8`.<par>
 * IM_SIMPLEX4D(3)<par>
    Gauss method on a 4-dimensional simplex.<par>
-* IM_STRUCTURED_COMPOSITE(IM1, K)<par>
-   Composite method on a grid with K divisions.<par>
-* IM_HCT_COMPOSITE(IM1)<par>
+* IM_STRUCTURED_COMPOSITE(im,k)<par>
+   Composite method on a grid with `k` divisions.<par>
+* IM_HCT_COMPOSITE(im)<par>
    Composite integration suited to the HCT composite finite element.<Par>
-   example:<par>
-    - INTEG:INIT('IM_PRODUCT(IM_GAUSS1D(5),IM_GAUSS1D(5))')<par>
-   is the same as:<par>
-    - INTEG:INIT('IM_GAUSS_PARALLELEPIPED(2,5)')<par>
+
+Example:<par>
+- INTEG:INIT('IM_PRODUCT(IM_GAUSS1D(5),IM_GAUSS1D(5))')<par>
+is the same as:<par>
+- INTEG:INIT('IM_GAUSS_PARALLELEPIPED(2,5)')<Par>
+
+Note that 'exact integration' should be avoided in general, since they<par>
+only apply to linear geometric transformations, are quite slow, and<par>
+subject to numerical stability problems for high degree @tfem's.<par>
 @*/
 
 void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -81,4 +87,3 @@ void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   out.pop().from_object_id(getfemint::ind_integ(getfem::int_method_descriptor(cmd)),
 			   INTEG_CLASS_ID);
 }
-

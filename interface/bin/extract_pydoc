@@ -93,23 +93,29 @@ def SubstituteTypes(d):
                    '@mat':'mat',
                    '@ivec':'ivec',
                    '@dvec':'vec',
+                   '@cvec':'vec',
+                   '@dcvec':'vec',
                    '@vec':'vec',
                    '@int' :'int',
                    '@bool':'bool',
                    '@real':'real',
                    '@scalar':'scalar',
                    '@str':'string',
+                   '@list':'list',
                    '@imat':'imat',
-                   '@tmesh':'mesh',
-                   '@tmim':'meshim',
-                   '@tmf':'meshfem',
-                   '@tbrick':'mdbrick',
-                   '@tstate':'mdstate',
-                   '@teltm':'eltm',
-                   '@tfem':'fem',
-                   '@tgt':'geotrans',
-                   '@tinteg':'integ',
-                   '@tls':'levelset',
+                   '@tmesh':'Mesh',
+                   '@tmim':'MeshIm',
+                   '@tmf':'MeshFem',
+                   '@tbrick':'MdBrick',
+                   '@tstate':'MdState',
+                   '@teltm':'Eltm',
+                   '@tfem':'Fem',
+                   '@tgt':'GeoTrans',
+                   '@tinteg':'Integ',
+                   '@tls':'LevelSet',
+                   '@tsl':'Slice',
+                   '@tsp':'Spmat',
+                   '@tpre':'Precond',
                    }
     for (k,v) in transtypes.items():
         d = string.replace(d, k, v)
@@ -212,7 +218,9 @@ def PythonRewriteDoc(d,indent,subindent,endline):
              'LEVELSET:GET': r"LevelSet.\1(\3)", \
              'LEVELSET:SET': r"LevelSet.\1(\3)", \
              '::COMPUTE':r'compute_\1(mf, U, \3)', \
-             '::ASM':r'asm_\1(\3)'}
+             '::ASM':r'asm_\1(\3)', \
+             '::LINSOLVE':r'linsolve_\1(\3)', \
+             }
     for retry in [1,2,3]: #pour les appels imbriques
         for (k,v) in trans.items():
             d = re.sub(k+r"\( *'([^)']*)' *(,?)([^\)]*)\)",v, d)
@@ -229,11 +237,11 @@ def PythonRewriteDoc(d,indent,subindent,endline):
     d = string.replace(d,'PRECOND:INIT','Precond')
     d = string.replace(d,'LEVELSET:INIT','LevelSet')
     d = string.replace(d,'MESHLEVELSET:INIT','MeshLevelSet')
-    d = string.replace(d,'::LINSOLVE','linsolve_')
     d = string.replace(d,'::UTIL','util_')
 
     d = SubstituteTypes(d)
     d = PythonWrapParagraphs(d,indent,subindent,endline)
+    d = re.sub("(.)[ ]{2,}","\\1 ",d)
     return d
 
 def MatlabRewriteDoc(d):
@@ -330,12 +338,17 @@ def SynopsisToArgs(s0):
 class ExtractDoc:
     def __init__(self, s):
         (self.type, self.synopsis) = s.split('\n',1)[0].split(' ',1)
-        m = re.search(r"([A-Z:]+) *\( *'([a-z0-9A-Z _]*)'(.*)\)",self.synopsis)
+        m = re.search(r"([A-Z:]+) *\( *'([a-z0-9A-Z _.]*)'(.*)\)",self.synopsis)
         if (not m):
             raise ParseError, s
         self.categ = m.group(1) # 'MESH:GET' etc
         self.name = m.group(2)  # 'pts', 'optimize_structure',...
         self.args = m.group(3)  # ', int dim, ...'
+
+        if (self.name[0]=='.'):# that is the case of name hidden in synopsis
+          syn = self.synopsis
+          syn = syn[:syn.find("'")]+syn[syn.find(",",syn.find("'")+1)+1:]
+          self.synopsis = syn
 
         l = s.split('\n',1)
         if (len(l)==2):
@@ -387,7 +400,7 @@ def WritePythonFunction(ed):
                                    arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list)
         print '   ',
 
-    arg_list = string.replace(arg_list,'=None','')
+    arg_list = re.sub("=[ 0-9.None]*","",arg_list)
     d = ed.rawdoc.split('\n')
     while (len(d) and (len(d[0].strip()) == 0)):
         d = d[1:]
@@ -410,7 +423,7 @@ def WritePythonFunction(ed):
 
 def WritePythonSubConstructor(ed):
     if (ed.type != 'TEXT'):
-        print PythonRewriteDoc('* '+ed.synopsis,"","","\\")
+        print PythonRewriteDoc('* '+ed.synopsis,"",""," \\")
         print PythonRewriteDoc(ed.rawdoc,"   ","   ","")
     else:
         print PythonRewriteDoc(ed.rawdoc,"","   ","")

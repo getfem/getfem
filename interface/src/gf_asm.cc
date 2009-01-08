@@ -30,7 +30,7 @@
 using namespace getfemint;
 namespace getfemint {
   struct darray_with_gfi_array : public darray {
-    gfi_array *mx;    
+    gfi_array *mx;
     darray_with_gfi_array(const bgeot::tensor_ranges& r) {
       size_type siz = 1; for (size_type i=0; i < r.size(); ++i) siz *= r[i];
       if (siz == 0) ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
@@ -68,19 +68,19 @@ namespace gmm {
     { return it[i]; }
     static reference access(origin_type *, const iterator &it,
 			    const iterator &, size_type i)
-    { return it[i]; }  
+    { return it[i]; }
   };
 }
 
 namespace getfem {
-  template<> class vec_factory<darray_with_gfi_array> : 
+  template<> class vec_factory<darray_with_gfi_array> :
     public base_vec_factory, private std::deque<asm_vec<getfemint::darray_with_gfi_array> > {
   public:
     base_asm_vec* create_vec(const tensor_ranges& r) {
       asm_vec<getfemint::darray_with_gfi_array> v(new getfemint::darray_with_gfi_array(r));
       push_back(v); return &this->back();
     }
-    ~vec_factory() { 
+    ~vec_factory() {
       for (size_type i=0; i < this->size(); ++i) {
 	delete (*this)[i].vec(); // but it does not deallocate the gfi_array !! that's fine
       }
@@ -91,10 +91,10 @@ namespace getfem {
 static void
 do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
 {
-  getfem::mesh_region rg = getfem::mesh_region::all_convexes(); 
+  getfem::mesh_region rg = getfem::mesh_region::all_convexes();
   if (!on_boundary) {
     if (in.remaining() && !in.front().is_string()) {
-      rg = in.pop().to_mesh_region(); 
+      rg = in.pop().to_mesh_region();
     }
   } else rg = getfem::mesh_region(in.pop().to_integer());
 
@@ -120,27 +120,27 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   for (size_type i=0; i < vtab.size(); ++i) assem.push_data(vtab[i]);
 
   /* set the kind of matrix/vector to build */
-  getfem::mat_factory<gf_real_sparse_by_col> mat_fact; 
-  getfem::vec_factory<darray_with_gfi_array> vec_fact; 
+  getfem::mat_factory<gf_real_sparse_by_col> mat_fact;
+  getfem::vec_factory<darray_with_gfi_array> vec_fact;
   assem.set_mat_factory(&mat_fact);
   assem.set_vec_factory(&vec_fact);
-  
+
   assem.assembly(rg);
   // get the matrix back
   for (size_type i=0; out.remaining() && i < assem.mat().size(); ++i) {
     if (assem.mat()[i] != 0) {
       getfem::base_asm_mat *BM = assem.mat()[i];
-      getfem::asm_mat<gf_real_sparse_by_col> * M = 
+      getfem::asm_mat<gf_real_sparse_by_col> * M =
 	static_cast<getfem::asm_mat<gf_real_sparse_by_col>*>(BM);
       out.pop().from_sparse(*M->mat());
     }
   }
-    
+
   if (out.remaining()) {
     for (size_type i=0; out.remaining() && i < assem.vec().size(); ++i) {
       if (assem.vec()[i] != 0) {
 	getfem::base_asm_vec *BV = assem.vec()[i];
-	getfem::asm_vec<darray_with_gfi_array> *V = 
+	getfem::asm_vec<darray_with_gfi_array> *V =
 	  static_cast<getfem::asm_vec<darray_with_gfi_array> *>(BV);
 	mexarg_out mo = out.pop(); mo.arg = V->vec()->mx;
       }
@@ -150,14 +150,14 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
 
 
 template<typename T> static void
-gf_dirichlet(getfemint::mexargs_out& out, 
-	     const getfem::mesh_im &mim, 
+gf_dirichlet(getfemint::mexargs_out& out,
+	     const getfem::mesh_im &mim,
 	     const getfem::mesh_fem &mf_u,
 	     const getfem::mesh_fem &mf_d,
 	     mexarg_in in_h, mexarg_in in_r, int boundary_num, T)
-{    
-  unsigned q_dim = mf_u.get_qdim(); 
-  
+{
+  unsigned q_dim = mf_u.get_qdim();
+
   garray<T> h = in_h.to_garray(T());
   if (h.ndim() == 2) in_h.check_dimensions(h, q_dim* q_dim,int(mf_d.nb_dof()));
   else               in_h.check_dimensions(h, q_dim, q_dim,int(mf_d.nb_dof()));
@@ -185,7 +185,7 @@ static const getfem::mesh_im *get_mim(mexargs_in &in) {
   return in.pop().to_const_mesh_im();
 }
 
-void assemble_source(size_type boundary_num, 
+void assemble_source(size_type boundary_num,
 		     mexargs_in &in, mexargs_out &out) {
   const getfem::mesh_im *mim = get_mim(in);
   const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
@@ -203,7 +203,7 @@ void assemble_source(size_type boundary_num,
 }
 
 /*MLABCOM
-  
+
   FUNCTION gf_asm(operation[, arg])
 
   General assembly function.
@@ -214,7 +214,7 @@ void assemble_source(size_type boundary_num,
   equal to 1: if mf_d is used to describe vector or tensor data, you
   just have to "stack" (in fortran ordering) as many scalar fields as
   necessary.
-  
+
   @FUNC ::ASM('volumic source')
   @FUNC ::ASM('boundary source')
   @FUNC ::ASM('mass matrix')
@@ -246,20 +246,27 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   std::string cmd = in.pop().to_string();
 
   if (check_cmd(cmd, "mass matrix", in, out, 2, 3, 0, 1)) {
-    /*@FUNC ::ASM('mass matrix', mim, mf1[, mf2])
-      Assembly of a mass matrix.
-      @*/
+    /*@FUNC M = ::ASM('mass matrix',@tmim mim, @tmf mf1[, @tmf mf2])
+    Assembly of a mass matrix.
+
+    Return a @tsp object.
+    @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_u2 = in.remaining() ? in.pop().to_const_mesh_fem() : mf_u1;
-    
+
     gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
     getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2);
     out.pop().from_sparse(M);
   } else if (check_cmd(cmd, "laplacian", in, out, 4, 4,0, 1)) {
-    /*@FUNC ::ASM('laplacian', mim, @tmf mf_u, @tmf mf_d, @dvec A)
-      Assembly of the Laplacian ( div(a(x)*grad U) with a scalar).
-      @*/
+    /*@FUNC L = ::ASM('laplacian',@tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
+    Assembly of the matrix for the Laplacian problem.
+
+    @MATLAB{div(a(x)*grad(u))}@PYTHON{:math:`\\nabla\\cdot(a(x)\\nabla u)`}
+    with `a` scalar.<Par>
+
+    Return a @tsp object.
+    @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
@@ -268,11 +275,14 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::asm_stiffness_matrix_for_laplacian(M, *mim, *mf_u, *mf_d, A);
     out.pop().from_sparse(M);
   } else if (check_cmd(cmd, "linear elasticity", in, out, 5, 5, 0, 1)) {
-    /*@FUNC ::ASM('linear elasticity', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec lambda_d, @dvec mu_d)
-      Assembles of linear elasticity.
+    /*@FUNC Le = ::ASM('linear elasticity',@tmim mim, @tmf mf_u, @tmf mf_d, @dvec lambda_d, @dvec mu_d)
+    Assembles of the matrix for the linear (isotropic) elasticity problem.
 
-      Lambda and mu are the usual Lamé coefficients.
-      @*/
+    @MATLAB{div(C(x):grad(u))}@PYTHON{:math:`\\nabla\\cdot(C(x):\\nabla u)`}
+    with @MATLAB{C}@PYTHON{:math:`C`} defined via `lambda_d` and `mu_d`.<Par>
+
+    Return a @tsp object.
+    @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
@@ -282,38 +292,41 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::asm_stiffness_matrix_for_linear_elasticity(M, *mim, *mf_u, *mf_d, lambda, mu);
     out.pop().from_sparse(M);
   } else if (check_cmd(cmd, "nonlinear elasticity", in, out, 3,-1,0,-1)) {
-    /*@FUNC []=::ASM('nonlinear elasticity',@tmim mim, @tmf mf_u, @dvec U, @str law, @tmf mf_d, @dmat params, {'tangent matrix' | 'rhs' | 'incompressible tangent matrix',mf_p,P | 'incompressible rhs', mf_p, P})
-      Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
+    /*@FUNC TRHS = ::ASM('nonlinear elasticity',@tmim mim, @tmf mf_u, @dvec U, @str law, @tmf mf_d, @dmat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', @tmf mf_p, @dvec P|'incompressible rhs', @tmf mf_p, @dvec P})
+    Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
 
-      The solution U is required at the current time-step. The law may be choosen among:
+    The solution `U` is required at the current time-step. The `law`
+    may be choosen among:<par>
+    - 'SaintVenant Kirchhoff':<par>
+       Linearized law, should be avoided). This law has the two usual<par>
+       Lame coefficients as parameters, called lambda and mu.<par>
+    - 'Mooney Rivlin':<par>
+       Only for incompressibility. This law has two parameters,<par>
+       called C1 and C2.<par>
+    - 'Ciarlet Geymonat':<par>
+       This law has 3 parameters, called lambda, mu and gamma, with<par>
+       gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.<Par>
 
-        - 'SaintVenant Kirchhoff' (linearized law, should be
-        avoided). This law has the two usual Lamé coefficients as
-        parameters: params = [lambda; mu]
+    The parameters of the material law are described on the @tmf `mf_d`.
+    The matrix `params` should have `nbdof(mf_d)` columns, each row
+    correspounds to a parameter.<Par>
 
-        - 'Mooney Rivlin' (only for incompressibility). This law has
-        two parameters, called C1 and C2.
+    The last argument selects what is to be built: either the tangent
+    matrix, or the right hand side. If the incompressibility is
+    considered, it should be followed by a @tmf `mf_p`, for the
+    pression.<Par>
 
-	- 'Ciarlet Geymonat'. This law has 3 parameters : params =
-	[lambda; mu; gamma'(1)], with gamma'(1) chosen such that
-	gamma'(1) is in ]-lambda/2-mu, -mu[
-
-	The parameters of the material law are described of the
-	mesh_fem mf_d. The matrix 'params' should have nbdof(mf_d)
-	columns, each row correspounds to a parameter.
-
-	The last argument selects what is to be built: either the
-	tangent matrix, or the right hand side. If the
-	incompressibility is considered, it should be followed by a
-	mesh_fem 'mf_p', for the pression.
-	@*/
+    Return a @tsp object (tangent matrix), @dcvec object (right hand
+    side), tuple of @tsp objects (incompressible tangent matrix), or
+    tuple of @dcvec objects (incompressible right hand side).
+    @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
     darray U = in.pop().to_darray(int(mf_u->nb_dof()));
     std::string lawname = in.pop().to_string();
     /* a refaire , pas bon, le terme incompressible se passe de loi */
     std::auto_ptr<getfem::abstract_hyperelastic_law> l = abstract_hyperelastic_law_from_name(lawname);
-    const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();    
+    const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
     darray param = in.pop().to_darray(int(l->nb_params()), int(mf_d->nb_dof()));
     while (in.remaining()) {
       std::string what = in.pop().to_string();
@@ -327,7 +340,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
 	const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
 	darray P = in.pop().to_darray(int(mf_p->nb_dof()));
-	gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof()), 
+	gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof()),
 	  B(mf_u->nb_dof(), mf_p->nb_dof());
 	getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u, *mf_p, U, P);
 	out.pop().from_sparse(K);
@@ -343,14 +356,23 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		     "'incomp tangent matrix' or 'incomp rhs', got '" << what << "'");
       }
     }
-    if (in.remaining()) 
+    if (in.remaining())
       THROW_BADARG("too much arguments for asm(nonlinear_elasticity)");
   } else if (check_cmd(cmd, "stokes", in, out, 5, 5, 0, 2)) {
-    /*@FUNC [K,B]=::ASM('stokes', @tmim mim, @tmf mf_u, @tmf mf_p, @tmf mf_data, @dvec visc)      
-    Assembly of matrices for the Stokes problem { visc(x).Delta(U) - p = 0, div(U) = 0 }.
+    /*@FUNC @CELL{K, B} = ::ASM('stokes',@tmim mim, @tmf mf_u, @tmf mf_p, @tmf mf_d, @dvec nu)
+    Assembly of matrices for the Stokes problem.
 
-    On output, K is the usual linear elasticity stiffness matrix with lambda=0 and 2*mu=visc.
-    B is a sparse matrix corresponding to $\int p.div v$. 
+    @MATLAB{`-nu(x).Delta(u) + grad(p) = 0`}@PYTHON{:math:`-\\nu(x)\\Delta u + \\nabla p = 0`}<Par>
+    @MATLAB{`div(u) = 0`}@PYTHON{:math:`\\nabla\cdot u  = 0`}<Par>
+    with @MATLAB{`nu`}@PYTHON{:math:`\\nu` (`nu`)}, the fluid's dynamic
+    viscosity.<Par>
+
+    On output, `K` is the usual linear elasticity stiffness matrix with
+    @MATLAB{lambda = 0}@PYTHON{:math:`\\lambda = 0`} and
+    @MATLAB{2mu = nu}@PYTHON{:math:`2\\mu = \\nu`}. `B` is a matrix
+    corresponding to @MATLAB{$\int p.div v$}@PYTHON{:math:`\\int p\\nabla\cdot\\phi`}.<Par>
+
+    `K` and `B` are @tsp object's.
     @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
@@ -363,8 +385,13 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     out.pop().from_sparse(K);
     out.pop().from_sparse(B);
   } else if (check_cmd(cmd, "helmholtz", in, out, 4, 4, 0, 1)) {
-    /*@FUNC [A]=::ASM('helmholtz', @tmim mim, @tmf mf_u, @tmf mf_data, @cvec k2)
-    Assembly of the matrix for the Helmholtz problem { Laplacian(u) + k^2u = 0 }
+    /*@FUNC A = ::ASM('helmholtz',@tmim mim, @tmf mf_u, @tmf mf_d, @cvec k)
+    Assembly of the matrix for the Helmholtz problem.
+
+    @MATLAB{`Laplacian(u) + k^2 u` = 0}@PYTHON{:math:`\\Delta u + k^2 u` = 0}
+    with `k` complex scalar.<Par>
+
+    Return a @tsp object.
     @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
@@ -375,10 +402,15 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     gf_cplx_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
     getfem::asm_Helmholtz(A, *mim, *mf_u, *mf_d, WN);
     out.pop().from_sparse(A);
-    
+
   } else if (check_cmd(cmd, "bilaplacian", in, out, 4, 4, 0, 1)) {
-    /*@FUNC [A]=::ASM('bilaplacian', @tmim mim, @tmf mf_u, @tmf mf_data, @dvec a)
-    Assembly of the matrix for the Bilaplacian problem { Laplacian(a(x)*Laplacian(u)) }
+    /*@FUNC A = ::ASM('bilaplacian',@tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
+    Assembly of the matrix for the Bilaplacian problem.
+
+    @MATLAB{`Laplacian(a(x)*Laplacian(u)) = 0`}@PYTHON{:math:`\\Delta(a(x)\\Delta u) = 0`}
+    with `a` scalar.<Par>
+
+    Return a @tsp object.
     @*/
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
@@ -388,43 +420,50 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::asm_stiffness_matrix_for_bilaplacian(A, *mim, *mf_u, *mf_d, a);
     out.pop().from_sparse(A);
   } else if (check_cmd(cmd, "volumic source", in, out, 4, 4, 1, 1)) {
-    /*@FUNC [@dvec V]=::ASM('volumic source', @tmim mim, @tmf mf_u, @tmf mf_d, @dcvec Fd)
-      Assembly of a volumic source term.
+    /*@FUNC V = ::ASM('volumic source',@tmim mim, @tmf mf_u, @tmf mf_d, @dcvec fd)
+    Assembly of a volumic source term.
 
-      Output a vector V, assembled on the mesh_fem MF_U, using the
-      data vector FD defined on the data mesh_fem MF_D. FD may be real
-      or complex-valued.
-      @*/
+    Output a vector `V`, assembled on the @tmf `mf_u`, using the data
+    vector `fd` defined on the data @tmf `mf_d`. `fd` may be real or
+    complex-valued.<Par>
+
+    Return a @dcvec object.
+    @*/
     assemble_source(size_type(-1), in, out);
   } else if (check_cmd(cmd, "boundary source", in, out, 5, 5, 0, 1)) {
-    /*@FUNC ::ASM('boundary source', boundary_num, @tmim mim, @tmf mf_u, @tmf mf_d, @dvec G)
-      Assembly of a boundary source term.
-      
-      G should be a [QDIM x N] matrix, where N is the number of degree of freedom
-      of mf_d, and QDIM=MESHFEM::GET{mf_u}('qdim').
-      @*/
-    int boundary_num       = in.pop().to_integer();
+    /*@FUNC B = ::ASM('boundary source',@int bnum, @tmim mim, @tmf mf_u, @tmf mf_d, @dvec G)
+    Assembly of a boundary source term.
+
+    `G` should be a [Qdim x N] matrix, where N is the number of dof
+    of `mf_d`, and Qdim is the dimension of the unkown u (that is set
+    when creating the @tmf).<Par>
+
+    Return a @dcvec object.
+    @*/
+    int boundary_num = in.pop().to_integer();
     assemble_source(boundary_num, in, out);
   } else if (check_cmd(cmd, "dirichlet", in, out, 6, 7, 2, 2)) {
-    /*@FUNC [HH,RR]=::ASM('dirichlet', @int boundary_num, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat H, @dvec R [, threshold])
-    Assembly of Dirichlet conditions of type 'h.u = r'.
+    /*@FUNC @CELL{HH, RR} = ::ASM('dirichlet',@int bnum, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat H, @dvec R [, threshold])
+    Assembly of Dirichlet conditions of type `h.u = r`.
 
-    Handle 'h.u = r' where h is a square matrix (of any rank) whose size is
-    equal to MESHFEM:GET{mf_u}('qdim'). This matrix is stored in 'H', one
-    column per dof in 'mf_d', each column containing the values of the matrix
-    'h' stored in fortran order: H(:,j) = [h11(x_j) h21(x_j) h12(x_j) h22(x_j)]
+    Handle `h.u = r` where h is a square matrix (of any rank) whose
+    size is equal to the dimension of the unkown u. This matrix is
+    stored in `H`, one column per dof in `mf_d`, each column containing
+    the values of the matrix h stored in fortran order:<Par>
+
+    `H(:,j) = [h11(x_j) h21(x_j) h12(x_j) h22(x_j)]`<Par>
+
     if u is a 2D vector field.<Par>
 
-    Of course, if the unknown is a scalar field, you just have to set H =
-    ones(1, MESFEM:GET{mf_d}('nbdof')).<Par>
-    
-    This is basically the same than calling ::ASM('boundary qu term')
-    for H and calling ::ASM('neumann') for R, except that this
-    function tries to produce a 'better' (more diagonal) constraints
-    matrix (when possible).
+    Of course, if the unknown is a scalar field, you just have to set
+    `H = ones(1, N)`, where N is the number of dof of `mf_d`.<Par>
 
-    see also SPMAT:GET('Dirichlet_nullspace').
-    @*/    
+    This is basically the same than calling ::ASM('boundary qu term')
+    for `H` and calling ::ASM('neumann') for `R`, except that this
+    function tries to produce a 'better' (more diagonal) constraints
+    matrix (when possible).<Par>
+
+    See also SPMAT:GET('Dirichlet_nullspace').@*/
     int boundary_num       = in.pop().to_integer();
     const getfem::mesh_im *mim = get_mim(in);
     const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
@@ -441,11 +480,14 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       gf_dirichlet(out, *mim, *mf_u, *mf_d, in_h, in_r, boundary_num, complex_type());
     else gf_dirichlet(out, *mim, *mf_u, *mf_d, in_h, in_r, boundary_num, scalar_type());
   } else if (check_cmd(cmd, "boundary qu term", in, out, 5, 5, 0, 1)) {
-    /*@FUNC M=::ASM('boundary qu term', @int boundary_num, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat q)
+    /*@FUNC Q = ::ASM('boundary qu term',@int boundary_num, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat q)
+    Assembly of a boundary qu term.
 
-    Q should be be a [Qdim x Qdim x N] array, where N is the number
-    of degree of freedom of mf_d, and QDIM is dimension of the unkown u
-    (that is set when creating the mesh_fem). 
+    `q` should be be a [Qdim x Qdim x N] array, where N is the number
+    of dof of `mf_d`, and Qdim is the dimension of the unkown u (that
+    is set when creating the @tmf).<Par>
+
+    Return a @tsp object.
     @*/
     int boundary_num       = in.pop().to_integer();
     const getfem::mesh_im *mim = get_mim(in);
@@ -466,64 +508,69 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
       gf_cplx_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
       getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
-      out.pop().from_sparse(Q);      
+      out.pop().from_sparse(Q);
     }
   } else if (check_cmd(cmd, "volumic", in, out, 2, -1, 0, -1)) {
-    /*@FUNC [...]=::ASM('volumic' [,CVLST], expr [[, mesh_ims, mesh_fems, data...]])
-      Generic assembly procedure for volumic assembly. 
+    /*@FUNC @CELL{...} = ::ASM('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])
+    Generic assembly procedure for volumic assembly.
 
-      The expression 'expr' is evaluated over the mesh_fems listed in the
-      arguments (with optional data) and assigned to the output arguments. For
-      details about the syntax of assembly expressions, please refer to the
-      getfem user manual (or look at the file getfem_assembling.h in the
-      getfem++ sources).<Par>
+    The expression `expr` is evaluated over the @tmf's listed in the
+    arguments (with optional data) and assigned to the output arguments.
+    For details about the syntax of assembly expressions, please refer
+    to the getfem user manual (or look at the file getfem_assembling.h
+    in the getfem++ sources).<Par>
 
-      For example, the L2 norm of a field can be computed with<Par>
-      ::COMPUTE('L2 norm') or with:<Par>
+    For example, the L2 norm of a field can be computed with<Par>
 
-      ::ASM('volumic','u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)<Par>
+    ::COMPUTE('L2 norm') or with:<Par>
 
-      The Laplacian stiffness matrix can be evaluated with<Par>
-      ::ASM('Laplacian',mim, mf, A) or equivalently with:<Par>
-      ::ASM('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf, A);
-@*/    do_generic_assembly(in, out, false);
+    ::ASM('volumic','u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)<Par>
+
+    The Laplacian stiffness matrix can be evaluated with<Par>
+
+    ::ASM('laplacian',mim, mf, A) or equivalently with:<Par>
+
+    ::ASM('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf, A);@*/
+    do_generic_assembly(in, out, false);
   } else if (check_cmd(cmd, "boundary", in, out, 3, -1, 0, -1)) {
-    /*@FUNC [...]=::ASM('boundary', @tint bnum, @str expr [[, mesh_ims, mesh_fems, data...]])
-      Generic boundary assembly.
-      
-      See the help for ::ASM('volumic').
-      @*/
+    /*@FUNC @CELL{...} = ::ASM('boundary',@int bnum, @str expr [, @tmim mim, @tmf mf, data...])
+    Generic boundary assembly.
+
+    See the help for ::ASM('volumic').@*/
     do_generic_assembly(in, out, true);
   } else if (check_cmd(cmd, "interpolation matrix", in, out, 2, 2, 0, 1)) {
-    /*@FUNC M=::ASM('interpolation matrix', MF1, MF2)
-      Build the interpolation matrix from a @tmf onto another @tmf.
+    /*@FUNC Mi = ::ASM('interpolation matrix',@tmf mf, @tmf mfi)
+    Build the interpolation matrix from a @tmf onto another @tmf.
 
-      Return a sparse matrix M, such that V=M*U is equal to
-      ::COMPUTE{MF1,U}('interpolate_on',MF2). Useful for repeated
-      interpolations. Note that this is just interpolation, no
-      elementary integrations are involved here, and MF2 has to be
-      lagrangian. In the more general case, you would have to do a L2
-      projection via the mass matrix.
-      @*/
+    Return a matrix `Mi`, such that `V = Mi.U` is equal to
+    ::COMPUTE('interpolate_on',mfi). Useful for repeated interpolations.
+    Note that this is just interpolation, no elementary integrations
+    are involved here, and `mfi` has to be lagrangian. In the more
+    general case, you would have to do a L2 projection via the mass
+    matrix.<Par>
 
+    `Mi` is a @tsp object.
+    @*/
     interpolate_or_extrapolate(in, out, false);
   } else if (check_cmd(cmd, "extrapolation matrix", in, out, 2, 2, 0, 1)) {
-    /*@FUNC M=::ASM('extrapolation matrix', MF1, MF2)
-      Build the extrapolation matrix from a @tmf onto another @tmf.
+    /*@FUNC Me = ::ASM('extrapolation matrix',@tmf mf, @tmf mfe)
+    Build the extrapolation matrix from a @tmf onto another @tmf.
 
-      Return a sparse matrix M, such that V=M*U is equal to
-      ::COMPUTE{MF1,U}('extrapolate_on',MF2). Useful for repeated
-      extrapolations.
-      @*/
+    Return a matrix `Me`, such that `V = Me.U` is equal to
+    ::COMPUTE('extrapolate_on',mfe). Useful for repeated
+    extrapolations.
+
+    `Me` is a @tsp object.
+    @*/
     interpolate_or_extrapolate(in, out, true);
   } else bad_cmd(cmd);
 }
 
-    /*@FUNC [Q,G,H,R,F]=::ASM('pdetool boundary conditions',mf_u, mf_d, b, e[, f_expr])
-      Assembly of pdetool boundary conditions. 
+    /*@FUNC @CELL{Q, G, H, R, F} = ::ASM('pdetool boundary conditions',mf_u, mf_d, b, e[, f_expr])
+    Assembly of pdetool boundary conditions.
 
-      B is the boundary matrix exported by pdetool, and E is the edges
-      array. 'F_EXPR' is an optionnal expression (or vector) for the
-      volumic term. On return Q,G,H,R,F contain the assembled boundary
-      conditions (Q and H are matrices), similar to the ones returned
-      by the function ASSEMB from PDETOOL. @*/
+    `B` is the boundary matrix exported by pdetool, and `E` is the
+    edges array. `f_expr` is an optionnal expression (or vector) for
+    the volumic term. On return `Q, G, H, R, F` contain the assembled
+    boundary conditions (`Q` and `H` are matrices), similar to the
+    ones returned by the function ASSEMB from PDETOOL.@*/

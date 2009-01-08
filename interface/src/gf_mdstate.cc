@@ -51,7 +51,7 @@ using namespace getfemint;
 
   @INIT MDSTATE:INIT ('real')
   @INIT MDSTATE:INIT ('complex')
- 
+
   $Id$
 MLABCOM*/
 void gf_mdstate(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -61,27 +61,29 @@ void gf_mdstate(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
 
   getfemint_mdstate * md = new getfemint_mdstate();
-  out.pop().from_object_id(workspace().push_object(md), 
+  out.pop().from_object_id(workspace().push_object(md),
 			   MDSTATE_CLASS_ID);
 
   if (in.front().is_string()) {
     std::string cmd    = in.pop().to_string();
     if (check_cmd(cmd, "real", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS=MDSTATE:INIT('real')
-	Build a model state for real unknowns.
-	@*/
+      /*@INIT MDS = MDSTATE:INIT('real')
+      Build a model state for real unknowns.@*/
       md->set(new real_model_state);
     } else if (check_cmd(cmd, "complex", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS=MDSTATE:INIT('complex')
-	Build a model state for complex unknowns.
-	@*/
+      /*@INIT MDS = MDSTATE:INIT('complex')
+      Build a model state for complex unknowns.@*/
       md->set(new cplx_model_state);
     } else bad_cmd(cmd);
   } else if (in.front().is_mdbrick()) {
+    /*@INIT MDS = MDSTATE:INIT('.mdbrick',@tbrick B)
+    Build a modelstate for the brick `B`.
+
+    Selects the real or complex state from the complexity of `B`.@*/
     getfemint_mdbrick *b = in.pop().to_getfemint_mdbrick();
-    if (!b->is_complex()) 
+    if (!b->is_complex())
       md->set(new real_model_state(b->real_mdbrick()));
-    else 
+    else
       md->set(new cplx_model_state(b->cplx_mdbrick()));
   } else THROW_BADARG("expected a string or a mdbrick");
 
