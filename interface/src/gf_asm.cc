@@ -296,7 +296,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
 
     The solution `U` is required at the current time-step. The `law`
-    may be choosen among:<par>
+    may be choosen among:<Par>
     - 'SaintVenant Kirchhoff':<par>
        Linearized law, should be avoided). This law has the two usual<par>
        Lame coefficients as parameters, called lambda and mu.<par>

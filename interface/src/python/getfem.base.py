@@ -124,6 +124,7 @@ if you mix elements with different dimensions.
     #@GET    MESH:GET('char')
     #@GET    MESH:GET('export to vtk')
     #@GET    MESH:GET('export to dx')
+    #@GET    MESH:GET('export to pos')
     #@GET    MESH:GET('memsize')
 
     #@SET    MESH:SET('pts')
@@ -187,6 +188,7 @@ class MeshFem:
     #@GET    MESHFEM:GET('linked mesh')
     #@GET    MESHFEM:GET('export to vtk')
     #@GET    MESHFEM:GET('export to dx')
+    #@GET    MESHFEM:GET('export to pos')
     #@GET    MESHFEM:GET('dof_from_im')
     #@GET    MESHFEM:GET('interpolate_convex_data')
     #@GET    MESHFEM:GET('memsize')
@@ -207,12 +209,14 @@ mf.eval('x[0]*x[1]') interpolates the function 'x*y'
 mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         """
         P = self.dof_nodes()
-        nbd = P.shape[1];
+        nbd = P.shape[1]
 
         if not self.is_lagrangian:
             raise RuntimeError('cannot eval on a non-Lagragian MeshFem')
         if self.qdim() != 1:
-            raise RuntimeError('only works (for now) with qdim == 1')
+            Ind = numpy.arange(0,nbd,self.qdim()) # = sdof
+            P   = P[:,Ind]
+            nbd = P.shape[1] # = nb_sdof
         x = P[:,0]
         r = numpy.array(eval(expression))
         Z = numpy.zeros(r.shape + (nbd,),'d')

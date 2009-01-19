@@ -621,6 +621,31 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       exp.write_point_data(*mf2, U, get_dx_dataset_name(in));
       if (serie_name.size()) exp.serie_add_object(serie_name);
     }
+  } else if (check_cmd(cmd, "export to pos", in, out, 1, -1, 0, 0)) {
+    /*@GET MESHFEM:GET('export to pos',@str filename[, @mat U1, @str nameU1[, @mat U2, @str nameU2,...])
+    Export a @tmf and some fields to a pos file.
+
+    The FEM and geometric transformations will be mapped to order 1
+    isoparametric Pk (or Qk) FEMs (as GMSH does not handle higher
+    order elements).@*/
+    std::string fname = in.pop().to_string();
+    getfem::pos_export exp(fname);
+    exp.write(*mf);
+    while (in.remaining()) {
+      const getfem::mesh_fem *mf2 = mf;
+      if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
+        mf2 = in.pop().to_const_mesh_fem();
+      }
+      darray U = in.pop().to_darray();
+      size_type nb_sdof = mf2->nb_dof()/mf2->get_qdim();
+      in.last_popped().check_trailing_dimension(int(nb_sdof));
+
+      if (in.remaining() >= 1 && in.front().is_string()) {
+        fname = in.pop().to_string();
+      } else THROW_BADARG("expecting string darray_name")
+
+      exp.write(*mf2, U, fname);
+    }
   } else if (check_cmd(cmd, "dof_from_im", in, out, 1, 2, 0, 1)) {
     /*@GET MESHFEM:GET('dof_from_im',@tmim mim[, @int p])
     Return a selection of dof who contribute significantly to the

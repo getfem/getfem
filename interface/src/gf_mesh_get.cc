@@ -733,6 +733,14 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     exp.write_mesh();
     if (edges) exp.exporting_mesh_edges();
     if (serie_name.size()) exp.serie_add_object(serie_name,mesh_name);
+  } else if (check_cmd(cmd, "export to pos", in, out, 1, 1, 0, 0)) {
+    /*@GET MESH:GET('export to pos',@str filename)
+    Exports a mesh to a POS file .
+
+    See also MESHFEM:GET('export to pos'), SLICE:GET('export to pos').@*/
+    std::string fname = in.pop().to_string();
+    getfem::pos_export exp(fname);
+    exp.write(*pmesh);
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
     /*@GET z = MESH:GET('memsize')
     Return the amount of memory (in bytes) used by the mesh.@*/

@@ -16,24 +16,24 @@ PSEUDO_MFUNCTIONS = \
 	$(srcdir)/../gf_geotrans.cc \
 	$(srcdir)/../gf_geotrans_get.cc \
 	$(srcdir)/../gf_compute.cc \
-	$(srcdir)/../gf_mesh_fem.cc \
-	$(srcdir)/../gf_mesh_fem_set.cc \
-	$(srcdir)/../gf_mesh_fem_get.cc \
-	$(srcdir)/../gf_mesh_im.cc \
-	$(srcdir)/../gf_mesh_im_set.cc \
-	$(srcdir)/../gf_mesh_im_get.cc \
 	$(srcdir)/../gf_eltm.cc \
 	$(srcdir)/../gf_mesh.cc \
-	$(srcdir)/../gf_mesh_set.cc \
 	$(srcdir)/../gf_mesh_get.cc \
+	$(srcdir)/../gf_mesh_set.cc \
 	$(srcdir)/../gf_slice.cc \
 	$(srcdir)/../gf_slice_get.cc \
 	$(srcdir)/../gf_slice_set.cc \
+	$(srcdir)/../gf_mesh_fem.cc \
+	$(srcdir)/../gf_mesh_fem_get.cc \
+	$(srcdir)/../gf_mesh_fem_set.cc \
+	$(srcdir)/../gf_mesh_im.cc \
+	$(srcdir)/../gf_mesh_im_get.cc \
+	$(srcdir)/../gf_mesh_im_set.cc \
 	$(srcdir)/../gf_precond.cc \
 	$(srcdir)/../gf_precond_get.cc \
 	$(srcdir)/../gf_spmat.cc \
-	$(srcdir)/../gf_spmat_set.cc \
 	$(srcdir)/../gf_spmat_get.cc \
+	$(srcdir)/../gf_spmat_set.cc \
 	$(srcdir)/../gf_linsolve.cc \
 	$(srcdir)/../gf_asm.cc \
 	$(srcdir)/../gf_fem.cc \
@@ -41,13 +41,25 @@ PSEUDO_MFUNCTIONS = \
 	$(srcdir)/../gf_integ.cc \
 	$(srcdir)/../gf_integ_get.cc \
 	$(srcdir)/../gf_workspace.cc \
-	$(srcdir)/../gf_delete.cc
+	$(srcdir)/../gf_delete.cc \
+	$(srcdir)/../gf_mdbrick.cc \
+	$(srcdir)/../gf_mdbrick_get.cc \
+	$(srcdir)/../gf_mdbrick_set.cc \
+	$(srcdir)/../gf_mdstate.cc \
+	$(srcdir)/../gf_mdstate_get.cc \
+	$(srcdir)/../gf_mdstate_set.cc \
+	$(srcdir)/../gf_levelset.cc \
+	$(srcdir)/../gf_levelset_get.cc \
+	$(srcdir)/../gf_levelset_set.cc \
+	$(srcdir)/../gf_mesh_levelset.cc \
+	$(srcdir)/../gf_mesh_levelset_get.cc \
+	$(srcdir)/../gf_mesh_levelset_set.cc
 
-getfem.py: getfem.base.py $(PSEUDO_MFUNCTIONS)
+getfem.py: getfem.base.py $(PSEUDO_MFUNCTIONS) ../../bin/extract_pydoc
 	$(top_srcdir)/interface/bin/extract_pydoc python $(srcdir)/.. > getfem.py || ( rm getfem.py ; /bin/false )
 
 clean: clean-am
-	rm -f getfem.py _getfem.so
+	rm -f getfem.py _getfem.so $(top_srcdir)/interface/doc/getfem_python_reference.html
 
 if BUILDPYTHON
 

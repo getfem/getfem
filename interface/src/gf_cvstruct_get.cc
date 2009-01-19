@@ -54,7 +54,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR cs = CVSTRUCT:GET('basic structure')
     Get the simplest convex structure.
 
-    For example, the *basic structure* of the 6-node triangle, is the
+    For example, the 'basic structure' of the 6-node triangle, is the
     canonical 3-noded triangle.@*/
     out.pop().from_object_id(getfemint::ind_convex_structure(cs->basic_structure()),
 			     CVSTRUCT_CLASS_ID);
