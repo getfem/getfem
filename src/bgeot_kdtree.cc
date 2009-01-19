@@ -115,7 +115,7 @@ namespace bgeot {
         else return new kdtree_node(median, 
 				    build_tree_(begin, itmedian, unsigned((dir+1)%N + (ndir_tests+1)*N)), 0);
       else { /* the general case */
-	assert((*itmedian).n[dir] > median && (*(itmedian-1)).n[dir] <= median);
+	assert((*itmedian).n[dir] >= median && median >= (*(itmedian-1)).n[dir]);
 	return new kdtree_node(median, 
 			       build_tree_(begin, itmedian, unsigned((dir+1)%N)), 
 			       build_tree_(itmedian,end, unsigned((dir+1)%N)));
