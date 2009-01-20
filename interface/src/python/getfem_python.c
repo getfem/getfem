@@ -44,7 +44,7 @@ typedef struct PyGetfemObject {
 } PyGetfemObject;
 
 static PyObject *
-GetfemObject_name(PyGetfemObject* self)
+GetfemObject_name(PyGetfemObject *self)
 {
   return PyString_FromFormat("getfem.GetfemObject(classid=%d,objid=%d)",
 			     self->classid, self->objid);
@@ -233,6 +233,7 @@ itemsize_of_PyArray(PyArrayObject *pa) {
   switch (pa->descr->type_num) {
     case PyArray_DOUBLE : return sizeof(double);
     case PyArray_INT:     return sizeof(int);
+    case PyArray_LONG:    return sizeof(long);
     case PyArray_CDOUBLE: return sizeof(double)*2;
     default: PyErr_SetString(PyExc_RuntimeError, "invalid numeric array type"); return 0;
   }
@@ -455,7 +456,8 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         } else {
           if (!(TGFISTORE(int32,val) = gc_alloc(gc, nint * sizeof(int))))
             return NULL;
-          if (copy_PyArray_data(ao, TGFISTORE(int32,val), 0) != 0) return NULL;
+          if (copy_PyArray_data(ao, TGFISTORE(int32,val), 0) != 0)
+            return NULL;
         }
       } break;
     }
