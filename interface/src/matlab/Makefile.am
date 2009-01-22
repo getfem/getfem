@@ -81,7 +81,7 @@ gf_matlab@MATLAB_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_arra
 else !USE_MINGW_MEX
 if BUILDMEXRPC
 gf_matlab@MATLAB_COM_EXT@: ../gfi_rpc_clnt.c gfm_rpc_mexint.c gfm_common.c ../gfi_rpc_xdr.c ../gfi_array.c
-	$(MEX) -output gf_matlab -g CDEBUGFLAGS="$(CFLAGS)" $(RPC_LIB) \
+	$(MEX) -largeArrayDims -output gf_matlab -g CDEBUGFLAGS="$(CFLAGS)" $(RPC_LIB) \
 	-I@srcdir@ -I@srcdir@/.. -DMATLAB_RELEASE=@MATLAB_RELEASE@ -DUSE_RPC \
 	@srcdir@/gfm_rpc_mexint.c @srcdir@/gfm_common.c @srcdir@/../gfi_rpc_clnt.c \
         @srcdir@/../gfi_rpc_xdr.c @srcdir@/../gfi_array.c || (rm $@; false)
@@ -91,7 +91,7 @@ else !BUILDMEXRPC
 # compiled with ifc (i.e. mumps)) of the command line, as it 
 # break the linking with g++-3.3 and matlab R14/R13 on debian (at least) ..
 gf_matlab@MATLAB_COM_EXT@: gfm_mex.c gfm_common.c ../libgetfemint.la ../gfi_array.c $(GETFEM_LIB_LA)
-	$(MEX) -output gf_matlab -g CDEBUGFLAGS="$(CFLAGS)" LD="$(CXX)" \
+	$(MEX) -largeArrayDims -output gf_matlab -g CDEBUGFLAGS="$(CFLAGS)" LD="$(CXX)" \
 	-I@srcdir@ -I@srcdir@/.. -DMATLAB_RELEASE=@MATLAB_RELEASE@ \
 	@srcdir@/gfm_mex.c @srcdir@/gfm_common.c @srcdir@/../gfi_array.c \
 	../.libs/libgetfemint.a $(GETFEM_STATIC_LIB) @STDCPP_STATICLIBS@ || (rm $@; false)
