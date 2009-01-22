@@ -21,8 +21,10 @@ end;
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
-NX = 11 ;                 % space step
-%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_100.mesh'
+NX = 10 ;                 % space step
+
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_15.mesh'
+MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_15.mesh'
 %MESH_FILE='./demi_plaque_raffinee.mesh'
 %MESH_FILE='./demi_plaque_21.mesh'
 
@@ -51,13 +53,13 @@ SHOW_NAME_OF_DOF = 0 ;
 
 % Parameters for the finite element method -------------------------------
 
-QUAD = 1;
+QUAD = 0;
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
 % INTEGRATION = 'IM_TRIANGLE(13)'; % quadrature of order 10 on triangles
 % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(10), 3)';
-  DATA_FEM_TYPE = 'FEM_PK(2, 5)';
+  DATA_FEM_TYPE = 'FEM_PK(2, 3)';
   PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
   if 0   % hermite element
      FEM_TYPE = 'FEM_PK(2,1)'; %HERMITE(2)';   % not conformal -> problem
@@ -108,12 +110,13 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 
 
 %%%% XFEM Parameters
 
-ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement	
+ENRICHMENT_OPTION = 3;  %-1 = classical FEM (needs conformal mesh)
+			% 0 = Pas d'enrichissement (fonction H seule)	
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)			
 RADIUS_ENR_AREA = 0.15;
-SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
+SING_BASE_TYPE = 0 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
 SHOW_DX = 0 ;
 
@@ -124,7 +127,7 @@ MORTAR_WITHOUT_SINGUL = 0 ; % 0 = mortar with singuls ; 1 = mortar without singu
 MORTAR_TYPE = 3 ;         % 1 = version 1 of the integral matching
                           % 2 = entire gradient matched
                           % 3 = normal derivative only
-MORTAR_VERSION = 1 ;    % 0=multipliers, 1=penalization, 2=elimination
+MORTAR_VERSION = 0 ;    % 0=multipliers, 1=penalization, 2=elimination
 EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
                                % integral matching with penalization 
 SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integral matching
@@ -136,8 +139,9 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 DIRICHLET_VERSION = 0; % 0=multipliers, 1=penalization, 2=elimination
 EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
                                % Dirichlet condition with penalization 
-COMPUTE_ERROR = 0;
-RING_RADIUS = 0.10 ;
+COMPUTE_ERROR = 1;
+RING_RADIUS = 0.20 ;
+FIC_ORTHO = 0 ;
 
 %%%%%  error computation parameters
 NORM_EXACT = 0 ; % set to 0 if you don't want to calculate the norm of the exact solution
@@ -145,7 +149,7 @@ RADIUS_SPLIT_DOMAIN = 0.0
 
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'crack_bilaplacian';     % Root of data files.
-VTK_EXPORT = 4; % export solution to a .vtk file ?
+VTK_EXPORT = 1; % export solution to a .vtk file ?
 MATLAB_EXPORT = 0;
 
 

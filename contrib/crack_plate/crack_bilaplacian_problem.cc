@@ -19,14 +19,18 @@ return global_dof ;
 
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
-scalar_type AAA = 1.0 ;    // mode II
+scalar_type AAA = 0.1 ;    // mode II
 scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;
-scalar_type DD = 1.0 ;   // mode 1
+scalar_type DD = 0.0 ;   // mode 1
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;
-scalar_type EE = 0.0 ; //3.0  ; // singul 61
+scalar_type EE = 0.0 ;           // singul 61
 scalar_type FF = 0.0 ;           // singul 62
 scalar_type GG = 0.0 ;           // singul 63
-scalar_type HH = 0.0 ;          // singul 6 
+scalar_type HH = 0.0 ; //3.0     // singul 6 
+
+scalar_type P0 = 0.0 ;
+scalar_type P1 = 0.0 ;
+scalar_type P2 = 0.0 ;
 
 scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
@@ -42,16 +46,19 @@ scalar_type sol_f(const base_node &x)
 
 
 void exact_solution::init(getfem::level_set &ls) {
-  std::vector<getfem::pglobal_function> cfun(8) ;
+  std::vector<getfem::pglobal_function> cfun(11) ;
   for (unsigned j=0; j < 4; ++j)
     cfun[j] = bilaplacian_crack_singular(j, ls, nu, 0.) ;
   cfun[4] = bilaplacian_crack_singular(61, ls, nu, 0.) ;
   cfun[5] = bilaplacian_crack_singular(62, ls, nu, 0.) ;
   cfun[6] = bilaplacian_crack_singular(63, ls, nu, 0.) ;  
   cfun[7] = bilaplacian_crack_singular(6, ls, nu, 0.) ;
+  cfun[8] = bilaplacian_crack_singular(10, ls, nu, 0.) ;
+  cfun[9] = bilaplacian_crack_singular(11, ls, nu, 0.) ;
+  cfun[10] = bilaplacian_crack_singular(12, ls, nu, 0.) ;
 
   mf.set_functions(cfun);
-  U.resize(8); assert(mf.nb_dof() == 8);
+  U.resize(11); assert(mf.nb_dof() == 11);
   U[0] = AAA ;
   U[1] = BB ;
   U[2] = CC ;
@@ -60,6 +67,10 @@ void exact_solution::init(getfem::level_set &ls) {
   U[5] = FF ;
   U[6] = GG ;
   U[7] = HH ;
+  U[8] = P0 ;
+  U[9] = P1 ;
+  U[10] = P2 ;
+
 }
 
 
@@ -219,8 +230,8 @@ void bilaplacian_crack_problem::init(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
-  enrichment_option = int(PARAM.int_value("ENRICHMENT_OPTION",
-				      "Enrichment option"));
+  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
+				      "Enrichment option");
     enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
 
@@ -271,7 +282,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     mesh.translation(tt);
 
  if (PARAM.int_value("MOVE_NODES")){
-    cout << "deplacement des noeuds \n" ;
+    cout << "displacement of nodes \n" ;
 //    size_type nb_x_pos, nb_y_pos = 0 ;
     scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
 //    scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
@@ -334,7 +345,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
    for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
                     bgeot::base_node& P = mesh.points()[ip];
 	            if( gmm::abs(P[1]) < seuil_select){
-		      cout << "deplace de (" << P[0] << " ; " << P[1] << ") a : " ;
+		      cout << "moved from (" << P[0] << " ; " << P[1] << ") to : " ;
 		      P[1] = 0. ;
 		      cout << P[1] << "\n" ;
 	            }
@@ -369,9 +380,9 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
   nu = PARAM.real_value("NU", "nu") ;
   D = PARAM.real_value("D", "Flexure modulus") ;
-  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
-  int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version"));
-  int cv = int(PARAM.int_value("CLOSING_VERSION"));  
+  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version") );
+  int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version") );
+  int cv = int(PARAM.int_value("CLOSING_VERSION") );  
   dirichlet_version = getfem::constraints_type(dv);
   mortar_version = getfem::constraints_type(mv);
   closing_version = getfem::constraints_type(cv);
@@ -639,6 +650,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Setting the enrichment --------------------------------------------/
    
   switch(enrichment_option) {
+  case -1: // classical FEM
+    {
+    mf_u_sum.set_mesh_fems(mf_pre_u);
+    }
+    break ;
   case 0 :  // No enrichment
     {
     mf_u_sum.set_mesh_fems(mfls_u);
@@ -809,16 +825,16 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 // 	    }
 // 	 }
 //       }
- 
+
     }  // end of "enrichment_option = 3"
     break ;
   default : 
 	GMM_ASSERT1(false, "Enrichment_option parameter is undefined");
 	break ;  
 	}  // end of switch
-	
+
   mesh.write_to_file("toto.mesh");
-  
+
   if (PARAM.int_value("SHOW_NAME_OF_DOF")==1) {  // printing the type of each dof
     unsigned Q = mf_u().get_qdim();
     for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
@@ -862,10 +878,10 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Defining the volumic source term.
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs);
-  getfem::interpolation_function(mf_rhs, F, sol_f);
+  //getfem::interpolation_function(mf_rhs, F, sol_f);
 
-//  Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
+  //Volumic source term brick.
+ //getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
 
   // Defining the normal derivative Dirichlet condition value.
 
@@ -887,7 +903,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
-    NDER_DIRICHLET(VOL_F, CLAMPED_BOUNDARY_NUM, mf_mult_d);
+    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult_d);
 
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
@@ -936,6 +952,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
     // calcul des matrices de contraintes
     plain_vector R(1) ;
+//     sparse_matrix H(1, mf_u().nb_dof());
     (*this).set_matrix_mortar(H) ;
 
     /* because of the discontinuous partition of mf_u(), some levelset 
@@ -951,8 +968,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       //       if (M2(d,d) < 1e-7) cout << "  weak mf_u() dof " << d << " @ " << 
       // 	  mf_u().point_of_dof(d) << " M2(d,d) = " << M2(d,d) << "\n";
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
-	cout << "removed\n";	
-	size_type n = gmm::mat_nrows(H);
+	cout << "removed : " << mf_u().point_of_dof(d) << "\n";	
+	unsigned n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }
@@ -988,8 +1005,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL_FINAL")) {
 	cout << "OULALA " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
-        size_type n = gmm::mat_nrows(H);
-	gmm::resize(H1, n+1, gmm::mat_ncols(H1));
+        unsigned n = gmm::mat_nrows(H);
+	gmm::resize(H1, n+1, gmm::mat_ncols(H));
 	H1(n, d) = 1;
       }
     }
@@ -1009,108 +1026,145 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
 
   getfem::standard_solve(MS, *final_model, iter /* , p*/);
-  sparse_matrix A = MS.reduced_tangent_matrix() ;
-  plain_vector b = MS.residual() ;
-  gmm::scale(b, -1.) ;
-  plain_vector X(b) ;
-  scalar_type condest ;
-  SuperLU_solve(A, X, b, condest, 1) ;
-  cout << "cond super LU = " << 1./condest << "\n" ;
+  
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(BIL.get_solution(MS), U);
-  cout << "size(U) = " << U.size() << endl;
-  cout << "size(X) = " << X.size() << endl;
-  //gmm::copy(U, X) ;
- /****************************/
 
+  /****************************/
+  if (PARAM.int_value("FIC_ORTHO") ) {
 
-
-   unsigned q = mf_u().get_qdim();
-
-    base_small_vector tab_fic(4);
-    std::vector<size_type> ind_sing(2) ;
-    unsigned cpt = 0;
-    if (PARAM.int_value("ENRICHMENT_OPTION") == 3){
-    // affichage des coeffs devant les singularites, avec le raccord integral
-	for (unsigned d=0; d < mf_u().nb_dof(); d += q) {
-		unsigned cv = mf_u().first_convex_of_dof(d) ;
-		getfem::pfem pf = mf_u().fem_of_element(cv);
-		unsigned ld = unsigned(-1);
-		for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += q) {
-		if (mf_u().ind_dof_of_element(cv)[dd] == d) {
-			ld = dd/q; break;
-		}
-		}   
-		if (ld == unsigned(-1)) {
-		cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
-		} 
-		else {
-		if ( is_global_dof_type_bis(pf->dof_types().at(ld)) ){
-			cout << "coeff:" << U[d] << "\n" ;
-			cout << "dof index:" << d << "\n" ;
-			tab_fic[cpt] = U[d] ;
-			ind_sing[cpt] = d ;
-			cpt +=1 ;
+	sparse_matrix A = MS.reduced_tangent_matrix() ;
+	plain_vector b = MS.residual() ;
+	gmm::scale(b, -1.) ;
+	plain_vector X(b) ;
+	scalar_type condest ;
+	SuperLU_solve(A, X, b, condest, 1) ;
+	cout << "cond super LU = " << 1./condest << "\n" ;
+	cout << "X = " << gmm::sub_vector(X, gmm::sub_interval(0, 10)) << "\n" ;
+	cout << "U = " << gmm::sub_vector(U, gmm::sub_interval(0, 10)) << "\n" ;
+	
+	
+	unsigned q = mf_u().get_qdim();
+	
+	base_small_vector tab_fic(4);
+	std::vector<size_type> ind_sing(2) ;
+	unsigned cpt = 0;
+	if (PARAM.int_value("ENRICHMENT_OPTION") == 3){
+	// affichage des coeffs devant les singularites, avec le raccord integral
+		for (unsigned d=0; d < mf_u().nb_dof(); d += q) {
+			unsigned cv = mf_u().first_convex_of_dof(d) ;
+			getfem::pfem pf = mf_u().fem_of_element(cv);
+			unsigned ld = unsigned(-1);
+			for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += q) {
+			if (mf_u().ind_dof_of_element(cv)[dd] == d) {
+				ld = dd/q; break;
+			}
+			}   
+			if (ld == unsigned(-1)) {
+			cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
+			} 
+			else {
+			if ( is_global_dof_type_bis(pf->dof_types().at(ld)) ){
+				cout << "coeff:" << U[d] << "\n" ;
+				cout << "dof index:" << d << "\n" ;
+				tab_fic[cpt] = U[d] ;
+				ind_sing[cpt] = d ;
+				cpt +=1 ;
+				}
 			}
 		}
 	}
-     }
-
-
-   plain_vector b1(gmm::mat_nrows(A)), b2(b1), X1(b1), X2(b1) ;
-
-   scalar_type as1, as2, as1s2, bs1, bs2 ;
-   as1 = A(ind_sing[0], ind_sing[0])  ;
-   as2 = A(ind_sing[1], ind_sing[1])  ;
-   as1s2 = A(ind_sing[0], ind_sing[1])  ;
-   bs1 = b[ind_sing[0]] ;
-   bs2 = b[ind_sing[1]] ;
-   gmm::copy(gmm::mat_col(A, ind_sing[0]), b1) ;
-   gmm::copy(gmm::mat_col(A, ind_sing[1]), b2) ;
-
-   for (int i=0 ; i < 2 ; i++){
-       for (unsigned j=0 ; j < gmm::mat_nrows(A) ; j++){
-           A(ind_sing[i],j) = 0. ;
-           A(j,ind_sing[i]) = 0. ;
-       }
-       A(ind_sing[i], ind_sing[i]) = 1.  ;
-       b[ind_sing[i]] = 0. ;
-       b1[ind_sing[i]] = 0. ;
-       b2[ind_sing[i]] = 0. ;
-   }
-
-
-
-   SuperLU_solve(A, X1, b1, condest, 1) ;
-   cout << "solving for s1 OK, cond = " << 1./condest << "\n" ;
-   SuperLU_solve(A, X2, b2, condest, 1) ;
-   cout << "solving for s2 OK, cond = " << 1./condest << "\n" ;
-   cout << "X1[ind_sing[0]] = " << X1[ind_sing[0]] << "\n" ;
-   cout << "X1 = " << gmm::sub_vector(X1, gmm::sub_interval(0, 10)) << "\n" ;
-
-   base_matrix M(2,2) ;
-   plain_vector AX1(gmm::mat_nrows(A)), AX2(AX1) ;
-   gmm::mult(A, X1, AX1) ;
-   gmm::mult(A, X2, AX2) ;
-   M(0,0) = as1 - 2. * gmm::vect_sp(b1, X1) + gmm::vect_sp(X1, AX1) ;
-   M(1,1) = as2 - 2. * gmm::vect_sp(b2, X2) + gmm::vect_sp(X2, AX2) ;
-   M(0,1) = as1s2 - gmm::vect_sp(b1, X2) - gmm::vect_sp(b2, X1) + gmm::vect_sp(X1, AX2) ;
-   M(1,0) = M(0,1) ;
-   plain_vector Z(2), FIC_ORTHO(2) ;
-   Z[0] = bs1 - gmm::vect_sp(X1, b) ;
-   Z[1] = bs2 - gmm::vect_sp(X2, b) ;
-   gmm::lu_solve(M, FIC_ORTHO, Z) ;
-
-   cout << "[as1 as2 as1s2] = " << as1 << " ; " << as2 << " ; " << as1s2 << "\n" ;
-   cout << "[bs1 bs2] = " << bs1 << " ; " << bs2 << "\n" ;
-   cout << "M = " << M << "\n" ;
-   cout << "Z = " << Z << "\n" ; 
-
-   cout << "FIC1 ORTHO = " << FIC_ORTHO[0] << "\n" ;
-   cout << "FIC2 ORTHO = " << FIC_ORTHO[1] << "\n" ;
-   cout << "-----------------------\n" ;
-
+	
+	
+	plain_vector b1(gmm::mat_nrows(A)), b2(b1), X1(b1), X2(b1) ;
+	
+	scalar_type as1, as2, as1s2, bs1, bs2 ;
+	as1 = A(ind_sing[0], ind_sing[0])  ;
+	scalar_type max = 0. ;
+	size_type imax = 0 ;
+	for (unsigned i = 0 ;  i < gmm::mat_nrows(A) ; i++){
+	if (gmm::abs(A(ind_sing[0],i)) > max && i!= ind_sing[0] && i!= ind_sing[1]){
+		max = gmm::abs(A(ind_sing[0],i)) ;
+		imax = i ;
+	}
+	}
+	cout << "imax = " << imax << endl ;
+	cout << "max = " << max << endl ;
+	if (imax < mf_u().nb_dof())
+	cout << "position de imax = [" << mf_u().point_of_dof(imax)[0] << " ; " << mf_u().point_of_dof(imax)[1] << "\n" ;
+	as2 = A(ind_sing[1], ind_sing[1])  ;
+	as1s2 = A(ind_sing[0], ind_sing[1])  ;
+	bs1 = b[ind_sing[0]] ;
+	bs2 = b[ind_sing[1]] ;
+	gmm::copy(gmm::mat_col(A, ind_sing[0]), b1) ;
+	gmm::copy(gmm::mat_col(A, ind_sing[1]), b2) ;
+	//cout << "gmm::mat_col(A, ind_sing[0]) = " << b1 << "\n" ;
+	//cout << "gmm::mat_col(A, ind_sing[1]) = " << b2 << "\n" ;
+	
+	for (int i=0 ; i < 2 ; i++){
+	for (unsigned j=0 ; j < gmm::mat_nrows(A) ; j++){
+		A(ind_sing[i],j) = 0. ;
+		A(j,ind_sing[i]) = 0. ;
+	}
+	A(ind_sing[i], ind_sing[i]) = 1.  ;
+	b[ind_sing[i]] = 0. ;
+	b1[ind_sing[i]] = 0. ;
+	b2[ind_sing[i]] = 0. ;
+	}
+	
+	
+	
+	SuperLU_solve(A, X1, b1, condest, 1) ;
+	cout << "solving for s1 OK, cond = " << 1./condest << "\n" ;
+	SuperLU_solve(A, X2, b2, condest, 1) ;
+	cout << "solving for s2 OK, cond = " << 1./condest << "\n" ;
+	cout << "X1[ind_sing[0]] = " << X1[ind_sing[0]] << "\n" ;
+	cout << "X1 = " << gmm::sub_vector(X1, gmm::sub_interval(0, 10)) << "\n" ;
+	scalar_type max1 = 0., max2 = 0. ;
+	size_type imax1 = 0 , imax2 = 0 ;
+	for (unsigned i = 0 ;  i < X1.size() ; i++){
+	if (gmm::abs(X1[i]) > max1){
+		max1 = gmm::abs(X1[i]) ;
+		imax1 = i ;
+	}
+	if (gmm::abs(X2[i]) > max2){
+		max2 = gmm::abs(X2[i]) ;
+		imax2 = i ;
+	}
+	}
+	cout << "imax1 = " << imax1 << endl ;
+	cout << "max1 = " << max1 << endl ;
+	if (imax1 < mf_u().nb_dof())
+	cout << "position de imax1 = [" << mf_u().point_of_dof(imax1)[0] << " ; " << mf_u().point_of_dof(imax1)[1] << "\n" ;
+	cout << "imax2 = " << imax2 << endl ;
+	cout << "max2 = " << max2 << endl ;
+	if (imax2 < mf_u().nb_dof())
+	cout << "position de imax2 = [" << mf_u().point_of_dof(imax2)[0] << " ; " << mf_u().point_of_dof(imax2)[1] << "\n" ;
+	//cout << "X1 = " << gmm::sub_vector(X1, gmm::sub_interval(0, 100)) << "\n" ;
+	//cout << "X2 = " << gmm::sub_vector(X2, gmm::sub_interval(0, 100)) << "\n" ;
+	base_matrix M(2,2) ;
+	plain_vector AX1(gmm::mat_nrows(A)), AX2(AX1) ;
+	gmm::mult(A, X1, AX1) ;
+	gmm::mult(A, X2, AX2) ;
+	M(0,0) = as1 - 2. * gmm::vect_sp(b1, X1) + gmm::vect_sp(X1, AX1) ;
+	M(1,1) = as2 - 2. * gmm::vect_sp(b2, X2) + gmm::vect_sp(X2, AX2) ;
+	M(0,1) = as1s2 - gmm::vect_sp(b1, X2) - gmm::vect_sp(b2, X1) + gmm::vect_sp(X1, AX2) ;
+	M(1,0) = M(0,1) ;
+	plain_vector Z(2), FIC_ORTHO(2) ;
+	Z[0] = bs1 - gmm::vect_sp(X1, b) ;
+	Z[1] = bs2 - gmm::vect_sp(X2, b) ;
+	gmm::lu_solve(M, FIC_ORTHO, Z) ;
+	
+	cout << "[as1 as2 as1s2] = " << as1 << " ; " << as2 << " ; " << as1s2 << "\n" ;
+	cout << "[bs1 bs2] = " << bs1 << " ; " << bs2 << "\n" ;
+	cout << "M = " << M << "\n" ;
+	cout << "Z = " << Z << "\n" ; 
+	
+	cout << "FIC1 ORTHO = " << FIC_ORTHO[0] << "\n" ;
+	cout << "FIC2 ORTHO = " << FIC_ORTHO[1] << "\n" ;
+	cout << "-----------------------\n" ;
+  }
   /************************************************/
   return true;
 }

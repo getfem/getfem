@@ -426,7 +426,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 
 // for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
 //    nb_x_pos = 0 ; // nombre de noeuds d'abscisse positive
-//    nb_y_pos = 0 ; // nombre de noeuds d'ordonn�e positive
+//    nb_y_pos = 0 ; // nombre de noeuds d'ordonnee positive
 //    for (int j=0; j<4 ; ++j){
 //        if (mesh.points_of_convex(i)[j][0] > 0.) 
 //            nb_x_pos += 1 ;
@@ -434,7 +434,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 //            nb_y_pos += 1 ;
 //    }
 //  
-//    if (nb_x_pos < 4){ // juste pour �viter de traiter des �l�ments inutiles
+//    if (nb_x_pos < 4){ // juste pour eviter de traiter des elements inutiles
 //        if ( nb_y_pos == 1){
 // 	  for (int j=0; j<4 ; ++j){
 // 	      if ( (mesh.points_of_convex(i)[j][1] > 0.)
@@ -444,7 +444,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 // 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
 //                     bgeot::base_node& P = mesh.points()[ip];
 // 	            if( gmm::vect_dist2(P, Q) < 1e-8){
-// 		      cout << "d�plac� de (" << P[0] << " ; " << P[1] << ") � : " ;
+// 		      cout << "deplace de (" << P[0] << " ; " << P[1] << ") a : " ;
 // 		      //P[1] = 1./2./NX ;
 // 		      //P[1] = 1./2./NX ;
 // 		      P[1] = seuil_move ;
@@ -463,7 +463,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 // 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
 //                     bgeot::base_node& P = mesh.points()[ip];
 // 	            if( gmm::vect_dist2(P, Q) < 1e-8){
-// 		      cout << "d�plac� de (" << P[0] << " ; " << P[1] << ") � : " ;
+// 		      cout << "deplace de (" << P[0] << " ; " << P[1] << ") a : " ;
 // 		      //P[1] = - 1./2./NX ;
 // 		      //P[1] = -1./2./NX ;
 // 		      P[1] = -1. *seuil_move ;

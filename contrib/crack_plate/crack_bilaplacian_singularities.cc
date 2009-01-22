@@ -86,6 +86,15 @@ scalar_type bilaplacian_singular_functions::sing_function(scalar_type x, scalar_
     case 322: {
       return  cos(3. * theta/2.) / ( r * sqrt(r) ) ;
     } break;
+    case 10: {
+      return 1.0 ;
+    } break;
+    case 11: {
+      return 10. * x  ;
+    } break;
+    case 12: {
+      return  x * x ; //2. * y * y ;
+    } break;
     default: assert(0); 
   }
   return 0;
@@ -153,6 +162,18 @@ void bilaplacian_singular_functions::sing_function_grad(scalar_type x, scalar_ty
     case 63: {
       g[0] = 3. * x * x - 3. * nu * y * y;
       g[1] = - 6. * nu * x * y;
+    } break;
+    case 10: {
+      g[0] =  0.;
+      g[1] =  0.;
+    } break;
+    case 11: {
+      g[0] =  10.;
+      g[1] =  0.;
+    } break;
+    case 12: {
+      g[0] =  2. * x ;
+      g[1] =  0. ;
     } break;
     default: assert(0); 
   }
@@ -287,6 +308,24 @@ void bilaplacian_singular_functions::sing_function_hess(scalar_type x, scalar_ty
       he(1,0) = - 6. * nu * y ;
       he(0,1) = he(1,0) ;
       he(1,1) = - 6. * nu * x ;
+    } break;
+    case  10:{
+      he(0,0) = 0.  ; 
+      he(1,0) = 0. ;
+      he(0,1) = he(1,0) ;
+      he(1,1) = 0. ;
+    } break;
+    case  11:{
+      he(0,0) = 0.  ; 
+      he(1,0) = 0. ;
+      he(0,1) = he(1,0) ;
+      he(1,1) = 0. ;
+    } break;
+    case  12:{
+      he(0,0) = 2.  ; 
+      he(1,0) = 0. ;
+      he(0,1) = he(1,0) ;
+      he(1,1) = 0. ;
     } break;
     default: assert(0); 
   }
