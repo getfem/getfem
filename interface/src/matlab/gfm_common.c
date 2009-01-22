@@ -63,10 +63,13 @@ int
 mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
 {
   int n = mxGetNumberOfElements(mx);
+  mwSize n2;
+  n2=n;
+  
   assert(t);
   switch (mxGetClassID(mx)) {    
     case mxCELL_CLASS: {
-      int i;
+      mwSize i;
       t->storage.type = GFI_CELL;
       t->storage.gfi_storage_u.data_cell.data_cell_len = n;
       t->storage.gfi_storage_u.data_cell.data_cell_val = (gfi_array**)mxCalloc(n, sizeof(gfi_array*));
@@ -81,7 +84,8 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
       t->storage.type = GFI_CHAR;
       t->storage.gfi_storage_u.data_char.data_char_len = n;    
       t->storage.gfi_storage_u.data_char.data_char_val = mxCalloc(n+1,sizeof(char));
-      mxGetString(mx,t->storage.gfi_storage_u.data_char.data_char_val,n+1);
+      mxGetString(mx,t->storage.gfi_storage_u.data_char.data_char_val,n2+1);                           
+      
     } break;
     case mxINT32_CLASS: {
       t->storage.type = GFI_INT32;
@@ -124,11 +128,40 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
           }
         }
       } else {
+        /*******************************************/
         int nnz = mxGetNzmax(mx);
+        int i, lgs;
+        mwIndex *ptr2;
+        int *ptr;
+        
         t->storage.type = GFI_SPARSE;
-	t->storage.gfi_storage_u.sp.is_complex = is_complex;
-        t->storage.gfi_storage_u.sp.ir.ir_len = nnz; t->storage.gfi_storage_u.sp.ir.ir_val = mxGetIr(mx);
-        t->storage.gfi_storage_u.sp.jc.jc_len = mxGetN(mx)+1; t->storage.gfi_storage_u.sp.jc.jc_val = mxGetJc(mx);
+        t->storage.gfi_storage_u.sp.is_complex = is_complex;
+        t->storage.gfi_storage_u.sp.ir.ir_len = nnz;
+        ptr=mxCalloc(nnz,sizeof(int));
+        ptr2=mxGetIr(mx);
+        
+        for (i=0; i < nnz; ++i)
+        {
+            ptr[i]=ptr2[i];
+        }
+        t->storage.gfi_storage_u.sp.ir.ir_val = ptr;
+        /*t->storage.gfi_storage_u.sp.ir.ir_val = mxGetIr(mx);*/
+        
+        /*******************************************/
+        lgs=mxGetN(mx)+1;
+        t->storage.gfi_storage_u.sp.jc.jc_len = lgs;
+        ptr=mxCalloc(lgs,sizeof(int));
+        ptr2=mxGetJc(mx);
+        
+        for (i=0; i < lgs; ++i)
+        {
+            ptr[i]=ptr2[i];
+        }
+        
+        t->storage.gfi_storage_u.sp.jc.jc_val = ptr;
+        /*t->storage.gfi_storage_u.sp.jc.jc_val = mxGetJc(mx);*/  
+        
+        /********************************************/
         t->storage.gfi_storage_u.sp.pr.pr_len = nnz * (is_complex ? 2 : 1);
         if (!is_complex) {
           t->storage.gfi_storage_u.sp.pr.pr_val = mxGetPr(mx);        
@@ -177,8 +210,18 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
     } break;
 #endif
   }
+  mwSize *pm;
+  int k,kkk,dmlen;
   t->dim.dim_len = mxGetNumberOfDimensions(mx);
-  t->dim.dim_val = (u_int*)mxGetDimensions(mx);
+  dmlen=t->dim.dim_len;
+  pm=(mwSize *)mxGetDimensions(mx);
+  t->dim.dim_val = (u_int*)mxCalloc(dmlen,sizeof(int));
+  
+  for (k=0; k <dmlen; ++k) 
+  {   
+   kkk=(int)pm[k];   
+   t->dim.dim_val[k]=kkk;
+  }
   return 0;
 }
 
@@ -192,20 +235,45 @@ gfi_array_to_mxarray(gfi_array *t) {
   int ndim = (t->dim.dim_len == 0 ? 1 : t->dim.dim_len);
   static const int one = 1;
   const int *dim = (t->dim.dim_len == 0 ? &one : (const int *)t->dim.dim_val);
+  mwSize ndim2, *dim2;
+  char msg[80];
+  int number = 450;
+  int ij;
+  /****************** dimensions array in mwSize */  
+  ndim2=ndim;
+  dim2=mxCalloc(ndim,sizeof(mwSize));
+   
+  for (ij=0;ij<ndim;ij++)
+   {
+        dim2[ij]=dim[ij];     
+   }
+  /*************** end dimensions array in mwSize */  
 
   switch (t->storage.type) {
     case GFI_UINT32: 
     case GFI_INT32: {
-      m = mxCreateNumericArray(ndim, dim, (t->storage.type == GFI_UINT32) ? mxUINT32_CLASS:mxINT32_CLASS, mxREAL);
-      memcpy(mxGetData(m), t->storage.gfi_storage_u.data_int32.data_int32_val, sizeof(int)*t->storage.gfi_storage_u.data_int32.data_int32_len);
+      int i;
+      int *pr; 
+      m = mxCreateNumericArray(ndim2, dim2, (t->storage.type == GFI_UINT32) ? mxUINT32_CLASS:mxINT32_CLASS, mxREAL);
+      pr = mxGetData(m);
+      for (i=0; i < t->storage.gfi_storage_u.data_int32.data_int32_len; ) 
+      {   
+        *pr++=(int)t->storage.gfi_storage_u.data_int32.data_int32_val[i++];      
+      }
     } break;
     case GFI_DOUBLE: {
+      int i;
+      double *pr, *pi;
       if (!gfi_array_is_complex(t)) {
-        m = mxCreateNumericArray(ndim, dim, mxDOUBLE_CLASS, mxREAL);
-        memcpy(mxGetData(m), t->storage.gfi_storage_u.data_double.data_double_val, sizeof(double)*t->storage.gfi_storage_u.data_double.data_double_len);
+        m = mxCreateNumericArray(ndim2, dim2, mxDOUBLE_CLASS, mxREAL);
+        pr=mxGetData(m);  
+         for (i=0; i < t->storage.gfi_storage_u.data_double.data_double_len; ) 
+         {
+            *pr++=t->storage.gfi_storage_u.data_double.data_double_val[i++];
+         }      
       } else {
         double *pr, *pi; int i;
-        m = mxCreateNumericArray(ndim, dim, mxDOUBLE_CLASS, mxCOMPLEX);
+        m = mxCreateNumericArray(ndim2, dim2, mxDOUBLE_CLASS, mxCOMPLEX);
         pr = mxGetData(m); pi = mxGetImagData(m);
         for (i=0; i < t->storage.gfi_storage_u.data_double.data_double_len; ) {
           *pr++ = t->storage.gfi_storage_u.data_double.data_double_val[i++];
@@ -220,35 +288,61 @@ gfi_array_to_mxarray(gfi_array *t) {
     } break;
     case GFI_CELL: {
       unsigned i;
-      m = mxCreateCellArray(ndim, dim);
+      m = mxCreateCellArray(ndim2, dim2);
       for (i=0; i < t->storage.gfi_storage_u.data_cell.data_cell_len; ++i)
         mxSetCell(m,i,gfi_array_to_mxarray(t->storage.gfi_storage_u.data_cell.data_cell_val[i]));
     } break;
     case GFI_OBJID: {
-      unsigned i,j=1;
+      unsigned i;
+      mwSize j,i2;
       static const char *fields[] = {"id","cid"};
-      mxArray *mxid, *mxcid;
-      m = mxCreateStructArray(1, (const int*)&t->storage.gfi_storage_u.objid.objid_len, 2, fields);
-      for (i=0; i < t->storage.gfi_storage_u.objid.objid_len; ++i) {
-        mxid = mxCreateNumericArray(1, (const int*)&j, mxUINT32_CLASS, mxREAL);
-        *(int*)mxGetData(mxid) = t->storage.gfi_storage_u.objid.objid_val[i].id;
-        mxSetField(m,i,fields[0], mxid);
-        mxcid = mxCreateNumericArray(1, (const int*)&j, mxUINT32_CLASS, mxREAL);
-        *(int*)mxGetData(mxcid) = t->storage.gfi_storage_u.objid.objid_val[i].cid;
-        mxSetField(m,i,fields[1], mxcid);
+      mxArray *mxid, *mxcid;    
+      j=t->storage.gfi_storage_u.objid.objid_len;
+      m = mxCreateStructArray(1, (const mwSize*)&j, 2, fields);
+      
+      j=1;
+      
+      for (i=0; i < t->storage.gfi_storage_u.objid.objid_len; ++i) 
+      {
+        mxid = mxCreateNumericArray(1, (const mwSize*)&j, mxUINT32_CLASS, mxREAL);        
+        *(int*)mxGetData(mxid) = t->storage.gfi_storage_u.objid.objid_val[i].id;       
+        i2=i;       
+        mxSetField(m,i2,fields[0], mxid);
+        
+        mxcid = mxCreateNumericArray(1, (const mwSize*)&j, mxUINT32_CLASS, mxREAL);                
+        *(int*)mxGetData(mxcid) = t->storage.gfi_storage_u.objid.objid_val[i].cid;      
+        mxSetField(m,i2,fields[1], mxcid);
       }
     } break;
     case GFI_SPARSE: {
+        
+     /****************** Ir treatement */
       assert(ndim == 2);
-      m = mxCreateSparse(t->dim.dim_val[0], t->dim.dim_val[1], 
-                         t->storage.gfi_storage_u.sp.pr.pr_len,
-                         gfi_array_is_complex(t) ? mxCOMPLEX : mxREAL);
-      memcpy(mxGetIr(m), 
-             t->storage.gfi_storage_u.sp.ir.ir_val, 
-             t->storage.gfi_storage_u.sp.ir.ir_len * sizeof(int));
-      memcpy(mxGetJc(m), 
-             t->storage.gfi_storage_u.sp.jc.jc_val, 
-             t->storage.gfi_storage_u.sp.jc.jc_len * sizeof(int));
+      int i;
+      mwIndex d1,d2,nnz;
+      mwIndex *pr2;
+      
+      d1=t->dim.dim_val[0];
+      d2=t->dim.dim_val[1];
+      nnz=t->storage.gfi_storage_u.sp.pr.pr_len;
+      m = mxCreateSparse(d1,d2,nnz,
+                         gfi_array_is_complex(t) ? mxCOMPLEX : mxREAL);                 
+      pr2=mxGetIr(m);
+      
+      for (i=0; i <  t->storage.gfi_storage_u.sp.ir.ir_len; i++) {
+          *pr2 = t->storage.gfi_storage_u.sp.ir.ir_val[i];
+          pr2++;
+      }      
+     /****************** end Ir treatement */
+     /****************** Jc treatement */      
+      pr2=mxGetJc(m);
+      
+        for (i=0; i <  t->storage.gfi_storage_u.sp.jc.jc_len; i++) {
+          *pr2 =  t->storage.gfi_storage_u.sp.jc.jc_val[i];
+          pr2++;
+        }      
+     /****************** end Jc treatement */
+      
       if (!gfi_array_is_complex(t)) {
         memcpy(mxGetPr(m), t->storage.gfi_storage_u.sp.pr.pr_val, t->storage.gfi_storage_u.sp.pr.pr_len * sizeof(double));
       } else {
@@ -264,19 +358,33 @@ gfi_array_to_mxarray(gfi_array *t) {
       assert(0);
     } break;
   }
+  mxFree(dim2); 
   return m;
 }
+
+/*******************************************************/
 
 gfi_array_list *
 build_gfi_array_list(int nrhs, const mxArray *prhs[]) {
   gfi_array_list *l;
   int i;
+  char msg[80];
+  gfi_array **pin;
+  
+  
   l = mxCalloc(1,sizeof(gfi_array_list));
   l->arg.arg_len = nrhs;
   l->arg.arg_val = mxCalloc(nrhs, sizeof(gfi_array));
-  for (i=0; i < nrhs; ++i) {
+  for (i=0; i < nrhs; ++i) {   
     if (mxarray_to_gfi_array(prhs[i], &l->arg.arg_val[i]) != 0) return NULL;
   }
+  
+  /*-------------*/
+  pin = gfi_calloc(l->arg.arg_len, sizeof(gfi_array*));
+  for (i=0; i < l->arg.arg_len; ++i) {
+    pin[i] = &l->arg.arg_val[i];       
+  }
+  
   return l;
 }
 
