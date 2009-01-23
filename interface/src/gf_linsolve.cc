@@ -135,9 +135,9 @@ void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       iterative_gmm_solver(GMM_QMR, in, out);*/
   } else if (check_cmd(cmd, "lu", in, out, 2, 2, 0, 1) ||
 	     check_cmd(cmd, "superlu", in, out, 2, 2, 0, 1)) {
-    /*@FUNC @CELL{U, cond} = ::LINSOLVE('lu',@tsp M, @vec b [, @tpre P])
+    /*@FUNC @CELL{U, cond} = ::LINSOLVE('lu',@tsp M, @vec b)
     Alias for ::LINSOLVE('superlu',...)@*/
-    /*@FUNC @CELL{U, cond} = ::LINSOLVE('superlu',@tsp M, @vec b [, @tpre P])
+    /*@FUNC @CELL{U, cond} = ::LINSOLVE('superlu',@tsp M, @vec b)
     Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
 
     The condition number estimate `cond` is returned with the solution `U`.@*/
