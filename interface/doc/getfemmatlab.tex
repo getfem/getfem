@@ -497,7 +497,7 @@ a quick way to obtain the list of getfem functions).
 ##gf\_mdstate\_set         & modify a \mdstate object.\\
 ##gf\_plot\_mesh        & plotting of mesh\\
 ##gf\_plot            & plotting of 2D and 3D fields\\
-##gf\_plot_1D          & plotting of 1D fields\\
+##gf\_plot\_1D          & plotting of 1D fields\\
 ##gf\_plot\_slice     & plotting of a mesh slice\\
 \hline
 \end{tabular}
@@ -1214,7 +1214,7 @@ M = gf_mesh('clone', \tcmesh M0)
 \begin{cmddescription}
   The function @@gf\_mesh@@ (or @@gfMesh@@) creates a new mesh object.
   The @@gf\_mesh@@ version returns a matlab structure, which can be
-  manipulated with @@gf_\_mesh\_get(M,...)@@ and
+  manipulated with @@gf\_mesh\_get(M,...)@@ and
   @@gf\_mesh\_set(M,...)@@, while the @@gfMesh@@ version returns an
   ``object'' (in the matlab sense) @@M@@ which can also be manipulated
   with @@get(M, ...)@@ and @@set(M, ...)@@.
@@ -1275,7 +1275,7 @@ M = gf_mesh('clone', \tcmesh M0)
   a mesh from a file. For the moment, only three formats are
   supported:
   \begin{itemize}
-  \item mesh objects created with \WEB{http://www.geuz.org/gmsh}{gmsh}\index{gmsh} (GPL meshing/post processing tool): @@gf_mesh('import', 'gmsh', filename)@@. Note that gmsh meshes always use 3D points, even for planar meshes. However, you can remove the z-component of the planar mesh with @@gf_mesh_set(m, 'transform', [1 0 0; 0 1 0])@@.
+  \item mesh objects created with \WEB{http://www.geuz.org/gmsh}{gmsh}\index{gmsh} (GPL meshing/post processing tool): @@gf_mesh('import', 'gmsh', filename)@@. Note that gmsh meshes always use 3D points, even for planar meshes. However, you can remove the z-component of the planar mesh with @@gf_mesh_set(m, 'transform', [1 0 0; 0 1 0])@@. Use @@gf_mesh('import', 'gmshv2', filename)@@ for gmsh file-format version 2.0.
   \item mesh objects created with \WEB{http://gid.cimne.upc.es}{GiD}\index{GiD} (only
     limited version is free, but it is able to generate quadratic elements):
     @@gf_mesh('import', 'gid', filename)@@.
@@ -1323,7 +1323,7 @@ m2 = gf_mesh(\str{curved}, m, V);
 \tivec CVID = gf\_mesh\_get(M, 'cvid')
 \tint I = gf\_mesh\_get(M, 'max pid')
 \tint I = gf\_mesh\_get(M, 'max cvid')
-[\tivec IDX,\tivec PID] = gf\_mesh\_get(M, 'pid from cvid'[,\tivec CVLST])
+[\tivec PID,\tivec IDX] = gf\_mesh\_get(M, 'pid from cvid'[,\tivec CVLST])
 \tivec V = gf\_mesh\_get(M, 'pid from coords', \tmat PT)
 \tivec V = gf\_mesh\_get(M, 'cvid from pid', \tivec PTID)
 \tivec V = gf\_mesh\_get(M, 'orphaned pid')
@@ -1387,7 +1387,7 @@ gf_mesh_get(M,'export_to_dx', filename, ...[,'ascii'][,'append'][,'as', name,[,'
   \sep{@@gf\_mesh\_get(M, 'max cvid')@@} : 
   return the maximum ID of all convexes in the mesh (see @@'max pid'@@).
   
-  \sep{@@[IDX,PID]=gf\_mesh\_get(M, 'pid from cvid'[, CVLST])@@} 
+  \sep{@@[PID,IDX]=gf\_mesh\_get(M, 'pid from cvid'[, CVLST])@@} 
 can be used in order to find the points of the
   convexes listed in @@CVLST@@ (if not used, then the points of all
   convexes will be returned, which is equivalent to @@CVLST=1:gf\_mesh\_get(M,'max cvid')@@). Since the convexes might have different
@@ -1784,7 +1784,7 @@ gf_fem_get(f, 'poly_str')
 \end{mcode}
 \end{cmdexamples}
 \begin{gfseealso}
-@@gf__fem@@
+@@gf_fem@@
 \end{gfseealso}
 \newpage
 
@@ -1919,7 +1919,7 @@ General constructor for \tmf object. Returns a \gf handle
 \begin{synopsis}
 @@\tint N = gf\_mesh\_fem\_get(MF, 'nbdof')
 \tivec DOF = gf\_mesh\_fem\_get(MF, 'dof from cv', \tivec CVLST)
-\tivec [DOF,CV2DOF] = gf\_mesh\_fem\_get(MF, 'dof from cv', [\tivec CVLST])
+\tivec [DOF,CV2DOF] = gf\_mesh\_fem\_get(MF, 'dof from cvid', [\tivec CVLST])
 \tivec DOF = gf\_mesh\_fem\_get(MF, 'non conformal dof' [, \tivec CVLST])
 \tfem FEMLST[, \tivec CV2F] = gf\_mesh\_fem\_get(MF, 'fem' [, \tivec CVLST])
 \tivec CVLST = gf\_mesh\_fem\_get(MF, 'convex\_index')
@@ -3596,7 +3596,7 @@ E = gf\_compute(mf, U, 'error estimate',  \tmim MIM)
   P1-discontinuous \tmf. @@mf@@ and @@mfgrad@@ should share the same
   mesh.  If they also have the same @@Qdim@@, then
   @@size(DU)==mdim$\times$nbdof(mfgrad)@@, where @@mdim@@ is the dimension of the
-  common mesh. But if @@qdim(mfgrad)==1@@ and @@qdim(mf)~=1@@, then DU is given
+  common mesh. But if @@qdim(mfgrad)==1@@ and @@qdim(mf)\~{}=1@@, then DU is given
   as a 3D array of dimensions @@mdim@@$\times$@@qdim(mf)@@$\times$@@nbdof(MFGRAD)@@.
 
   \sep{@@D2U=gf\_compute(mf, U, 'hessian', mfhess)@@} : compute the second derivative of the field @@U@@.
