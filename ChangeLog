@@ -1,3 +1,7 @@
+2008-09-26 Yves Renard  <Yves.Renard@insa-lyon.fr>
+	* src/getfem_interpolated_fem.cc
+	 Allowing vectorial fems
+
 2008-09-26 Artem Napov <anapov@ulb.ac.be>
 	* interface/src/matlab/gfm_common.c
 	Correction for the compilation of the Matlab toolbox on a 64 bit

@@ -139,8 +139,8 @@ void lap_pb::init(void) {
   mim2.set_integration_method(nn, ppi);
   mef2.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh1.convex_index(dim_type(N));
-  mefinterpolated.set_finite_element(nn,
-				     getfem::new_interpolated_fem(mef2, mim1));
+  mefinterpolated.set_finite_element
+    (nn, getfem::new_interpolated_fem(mef2, mim1));
 }
 
 void lap_pb::assemble(void) {
@@ -156,10 +156,10 @@ void lap_pb::assemble(void) {
   cout << "Assembling interpolated mass matrix" << endl;
   getfem::asm_mass_matrix(RM1, mim1, mefinterpolated, mefinterpolated);
 
-  cout << "Matrice de masse\n";
+  cout << "Mass Matrix\n";
   sum = 0.0;
   for (size_type i = 0; i < RM1.nrows(); i++) { 
-    cout << "ligne " << i << " [ ";
+    cout << "line " << i << " [ ";
     scalar_type slig = 0;
     for (size_type l = 0; l < RM1.nrows(); l++)
       if (RM1(i, l) != 0.0) {
@@ -175,10 +175,10 @@ void lap_pb::assemble(void) {
   cout << "Assembling normal mass matrix" << endl;
   getfem::asm_mass_matrix(RM2, mim2, mef2);
   
-  cout << "Matrice de masse\n";
+  cout << "Mass Matrix\n";
   sum = 0.0; diff = 0.0;
   for (size_type i = 0; i < RM2.nrows(); i++) { 
-    cout << "ligne " << i << " [ ";
+    cout << "line " << i << " [ ";
     scalar_type slig = 0;
     for (size_type l = 0; l < RM2.nrows(); l++) {
       diff += gmm::abs(RM2(i, l) - RM1(i, l));
@@ -234,6 +234,71 @@ void test2() {
   cout << "MM=" << MM << "\n";
   cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()="
        << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
+  cout << "Mass Matrix\n";
+  scalar_type sum = 0.0; 
+  for (size_type i = 0; i < MM.nrows(); i++) { 
+    scalar_type slig = 0;
+    for (size_type l = 0; l < MM.ncols(); l++) {
+      slig = slig + MM(i, l);
+      // cout << "M(" << i << "," << l << ")=" << MM(i,l) << ", slig = "
+      //      << slig << "\n";
+    }
+    sum += slig;
+    cout << "sum(line)=" << slig << endl;
+  }
+  cout << endl << " sum: " << sum << endl << endl;
+  GMM_ASSERT1(gmm::abs(sum - M_PI/2.0) < 1e-5,
+	      "Test for scalar fem failed : " << gmm::abs(sum - M_PI/2.0));
+  sparse_matrix_type MM2 = sparse_matrix_type(mf2.nb_dof(), mf2.nb_dof());
+  getfem::asm_mass_matrix(MM2, mim, mf2, mf2);
+  cout << "MM2=" << MM2 << "\n";
+  sparse_matrix_type MM3 = sparse_matrix_type(mflnk.nb_dof(), mflnk.nb_dof());
+
+  asm_stiffness_matrix_for_homogeneous_laplacian(MM3, mim, mflnk);
+}
+
+
+/* integration of a quarter of circle (approximated with a degree 5 segment) against a planar regular mesh : vector version */
+void test3() {
+  getfem::mesh m1, m2;
+  std::vector<size_type> nsubdiv(2); nsubdiv[0] = nsubdiv[1] = 5;
+
+  getfem::regular_unit_mesh
+    (m1, nsubdiv, bgeot::geometric_trans_descriptor("GT_QK(2,2)"), false);
+
+  std::vector<base_node> v;
+  for (size_type k=0; k < 6; ++k) {
+    scalar_type c = scalar_type(k)/5. * M_PI/2;
+    v.push_back(base_node(cos(c), sin(c)));
+  }
+  m2.add_convex_by_points(bgeot::geometric_trans_descriptor("GT_PK(1,5)"),
+			  v.begin());
+  //m2.add_segment_by_points(bgeot::base_node(.45,.35),
+  //                         bgeot::base_node(.75,.65));
+  //m2.add_segment_by_points(bgeot::base_node(.8,.7),bgeot::base_node(.23,.3));
+  getfem::mesh_fem mf1(m1), mf2(m2);
+  getfem::mesh_im mim(m2);
+  // getfem::pintegration_method pim1
+  //   = getfem::int_method_descriptor("IM_QUAD(17)");
+  getfem::pintegration_method pim2
+    = getfem::int_method_descriptor("IM_GAUSS1D(10)");
+  mim.set_integration_method(m2.convex_index(), pim2);
+  mf1.set_finite_element(m1.convex_index(),
+			 getfem::fem_descriptor("FEM_QK(2,1)"));
+  mf1.set_qdim(2);
+  mf2.set_finite_element(m2.convex_index(),
+			 getfem::fem_descriptor("FEM_PK(1,3)"));
+  mf2.set_qdim(2);
+  
+  getfem::mesh_fem mflnk(m2);
+  mflnk.set_qdim(2);
+  getfem::pfem ifem = getfem::new_interpolated_fem(mf1, mim);
+  mflnk.set_finite_element(m2.convex_index(), ifem);
+  sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
+  getfem::asm_mass_matrix(MM, mim, mf2, mflnk);
+  cout << "MM=" << MM << "\n";
+  cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()="
+       << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
   cout << "Matrice de masse\n";
   scalar_type sum = 0.0; 
   for (size_type i = 0; i < MM.nrows(); i++) { 
@@ -247,14 +312,17 @@ void test2() {
     cout << "sum(line)=" << slig << endl;
   }
   cout << endl << " sum: " << sum << endl << endl;
-  assert(gmm::abs(sum - 1.57079) < 1e-5); /* if not PI/2 there is a bug.. */
-  sparse_matrix_type MM2 = sparse_matrix_type(mf2.nb_dof(), mf2.nb_dof());
-  getfem::asm_mass_matrix(MM2, mim, mf2, mf2);
-  cout << "MM2=" << MM2 << "\n";
-  sparse_matrix_type MM3 = sparse_matrix_type(mflnk.nb_dof(), mflnk.nb_dof());
+  GMM_ASSERT1(gmm::abs(sum - M_PI) < 5e-5,
+	      "Test for vectorial fem failed : " << gmm::abs(sum - M_PI));
 
-  asm_stiffness_matrix_for_homogeneous_laplacian(MM3, mim, mflnk);
+  // Il faudrait tester les gradients aussi ...
 }
+
+
+
+
+
+
 
 /**************************************************************************/
 /*  main program.                                                         */
@@ -262,18 +330,18 @@ void test2() {
 
 int main(int argc, char *argv[]) {
   
-  try {
-    test2();
-    lap_pb p;
+  // try {
+  test3(); // test for vectorial fems
+  test2(); // test for scalar fems
+  lap_pb p;
     
-    cout << "initialisation ...\n";
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    
-    cout << "Assembling \n";
-    p.assemble();
-    
-  }
-  GMM_STANDARD_CATCH_ERROR;
+  cout << "initialisation ...\n";
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  
+  cout << "Assembling \n";
+  p.assemble();
+  
+  // } GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }

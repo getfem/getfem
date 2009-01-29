@@ -61,8 +61,6 @@ namespace getfem {
     dim_ = dim_type(-1);
     build_rtree();
     
-
-    //cerr << "interpolated_fem::update from context : convex_index = " << mim.convex_index() << "\n";
     std::vector<elt_interpolation_data> vv(mim.convex_index().last_true() + 1);
     elements.swap(vv);
     base_node gpt;
@@ -78,7 +76,7 @@ namespace getfem {
 		  "Convexes of different dimension: to be done");
       pintegration_method pim = mim.int_method_of_element(cv);
       GMM_ASSERT1(pim->type() == IM_APPROX, "You have to use approximated "
-		  "integration to interpolate an fem");
+		  "integration to interpolate a fem");
       papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
       elements[cv].gausspt.resize(pai->nb_points());
@@ -91,7 +89,7 @@ namespace getfem {
 			     mim.linked_mesh().points_of_convex(cv));
 	gpid.iflags = find_a_point(gpt, gpid.ptref, gpid.elt) ? 1 : 0;
 	if (gpid.iflags && last_cv != gpid.elt) {
-	  size_type nbd = mf.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
+	  size_type nbd = mf.nb_dof_of_element(gpid.elt);
 	  for (size_type i = 0; i < nbd; ++i) {
 	    size_type idof = mf.ind_dof_of_element(gpid.elt)[i];
 	    if (!(blocked_dof[idof])) dofs.add(idof);
@@ -109,7 +107,7 @@ namespace getfem {
       for (size_type k = 0; k < pai->nb_points(); ++k) {
 	gausspt_interpolation_data &gpid = elements[cv].gausspt[k];
 	if (gpid.iflags) {
-	  size_type nbd = mf.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
+	  size_type nbd = mf.nb_dof_of_element(gpid.elt);
 	  gpid.local_dof.resize(nbd);
 	  for (size_type i = 0; i < nbd; ++i) {
 	    size_type ndof = mf.ind_dof_of_element(gpid.elt)[i];
@@ -203,19 +201,21 @@ namespace getfem {
       if (gpid.iflags & 1) {
 	cv = gpid.elt;
 	pfem pf = mf.fem_of_element(cv);
+	uint rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
 	if (gpid.iflags & 2) { t = gpid.base_val; return; }
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_base_value(fictx, taux);
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	  if (gpid.local_dof[i] != size_type(-1))
+	  if (gpid.local_dof[i*rdim] != size_type(-1))
 	    for (size_type j = 0; j < target_dim(); ++j)
-	      t(gpid.local_dof[i],j) = taux(i, j);
+	      t(gpid.local_dof[i*rdim+j*mdim],j) = taux(i, j*(1-mdim));
 	if (store_values) { gpid.base_val = t; gpid.iflags |= 2; }
       }
     }
     else {
       if (find_a_point(c.xreal(), ptref, cv)) {
 	pfem pf = mf.fem_of_element(cv);
+	uint rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
 	actualize_fictx(pf, cv, ptref);
 	pf->real_base_value(fictx, taux);
 	for (size_type i = 0; i < e.nb_dof; ++i) {
@@ -223,8 +223,8 @@ namespace getfem {
 	}
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	  for (size_type j = 0; j < target_dim(); ++j)
-	    if (ind_dof.at(mf.ind_dof_of_element(cv)[i]) != size_type(-1)) {
-	      t(ind_dof[mf.ind_dof_of_element(cv)[i]], j) = taux(i, j);
+	    if (ind_dof.at(mf.ind_dof_of_element(cv)[i*rdim+j*mdim]) != size_type(-1)) {
+	      t(ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]], j) = taux(i, j*(1-mdim));
 	    }
 	for (size_type i = 0; i < elements[c.convex_num()].nb_dof; ++i)
 	  ind_dof[e.inddof[i]] = size_type(-1);
@@ -260,6 +260,7 @@ namespace getfem {
       if (gpid.iflags & 1) {
 	cv = gpid.elt;
 	pfem pf = mf.fem_of_element(cv);
+	uint rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
 	if (gpid.iflags & 4) { t = gpid.grad_val; return; }
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_grad_base_value(fictx, taux);
@@ -267,21 +268,21 @@ namespace getfem {
 	if (pif) {
 	  pif->grad(c.xreal(), trans);
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    if (gpid.local_dof[i] != size_type(-1))
+	    if (gpid.local_dof[i*rdim] != size_type(-1))
 	      for (size_type j = 0; j < target_dim(); ++j)
 		for (size_type k = 0; k < N0; ++k) {
 		  scalar_type ee(0);
 		  for (size_type l = 0; l < N0; ++l)
-		    ee += trans(l, k) * taux(i, j, l);
-		  t(gpid.local_dof[i], j, k) = ee;
+		    ee += trans(l, k) * taux(i, j*(1-mdim), l);
+		  t(gpid.local_dof[i*rdim+j*mdim], j, k) = ee;
 		}
 	}
 	else {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    if (gpid.local_dof[i] != size_type(-1))
+	    if (gpid.local_dof[i*rdim] != size_type(-1))
 	      for (size_type j = 0; j < target_dim(); ++j)
 		for (size_type k = 0; k < N0; ++k)
-		  t(gpid.local_dof[i], j, k) = taux(i, j, k);
+		  t(gpid.local_dof[i*rdim+j*mdim], j, k) = taux(i, j*(1-mdim), k);
 	  if (store_values) { gpid.grad_val = t; gpid.iflags |= 4; }
 	}
       }
@@ -292,6 +293,7 @@ namespace getfem {
       
       if (find_a_point(c.xreal(), ptref, cv)) {
 	pfem pf = mf.fem_of_element(cv);
+	uint rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
 	actualize_fictx(pf, cv, ptref);
 	pf->real_grad_base_value(fictx, taux);
 	for (size_type i = 0; i < nbdof; ++i)
@@ -301,19 +303,19 @@ namespace getfem {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
 	      for (size_type k = 0; k < N0; ++k)
-		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1)) {
+		if (ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]] != size_type(-1)) {
 		  scalar_type ee(0);
 		  for (size_type l = 0; l < N0; ++l)
-		    ee += trans(l, k) * taux(i, j, l);
-		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = ee;
+		    ee += trans(l, k) * taux(i, j*(1-mdim), l);
+		  t(ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]],j,k) = ee;
 		}
 	}
 	else {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
 	      for (size_type k = 0; k < N0; ++k)
-		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
-		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
+		if (ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]] != size_type(-1))
+		  t(ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]],j,k) = taux(i,j*(1-mdim),k);
 	}
 	  for (size_type i = 0; i < nbdof; ++i)
 	    ind_dof[e.inddof[i]] = size_type(-1);
@@ -376,16 +378,12 @@ namespace getfem {
 				     bool store_val)
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
-    GMM_ASSERT1(mef.get_qdim() == 1,
-		"interpolated_fem do not handle qdim != 1");
     this->add_dependency(mf);
     this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;
     is_equiv = real_element_defined = true;
     gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
-    ntarget_dim = 1; // An extension for vectorial elements should be easy
-    // The detection should be done and the multiplication of components
-    // for scalar elements interpolated.
+    ntarget_dim = mef.get_qdim();
     update_from_context();
   }
 
