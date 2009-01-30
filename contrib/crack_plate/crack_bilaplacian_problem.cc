@@ -241,6 +241,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 
  if (!MESH_FILE.empty()) {
     mesh.read_from_file(MESH_FILE);
+    // printing number of elements
+    cout << "Number of element of the mesh: " << mesh.convex_index().card() << "\n" ;
     base_small_vector tt(N);
     tt[0] = PARAM.real_value("TRANSLAT_X") ;
     tt[1] = PARAM.real_value("TRANSLAT_Y") ;

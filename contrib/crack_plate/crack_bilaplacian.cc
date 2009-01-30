@@ -376,6 +376,18 @@ int main(int argc, char *argv[]) {
 	  "mayavi -d " << p.datafilename  << "_diff.vtk -f "
 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
       }
+      if ((VTK_EXPORT & 5)) {
+	cout << "exporting Von Mises \n";
+	getfem::vtk_export exp3(p.datafilename + "_VM.vtk");
+	exp3.exporting(mf_refined);
+	plain_vector VM(mf_refined.nb_dof()) ;
+	calcul_von_mises(p.mf_u(), U, mf_refined, VM, p.D) ;
+	exp3.write_point_data(mf_refined, W, "difference solution");
+	exp3.write_point_data(mf_refined, VM, "Von Mises");
+	cout << "export done, you can view the data file with (for example)\n"
+	  "mayavi -d " << p.datafilename  << "_diff.vtk -f "
+	"WarpScalar -m BandedSurfaceMap -m Outline\n";
+      }
       }
     
     if (MATLAB_EXPORT) {
