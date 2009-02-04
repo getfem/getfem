@@ -91,7 +91,7 @@
     <h1>Awards</h1>
       
       Getfem++ has been awarded by the second price at the
-      <a href="http://www.tropheesdulibre.org/"> "Trophées du Libre 2007"</a> int the category of scientific softwares.
+      <a href="http://www.tropheesdulibre2007.org/"> "Trophées du Libre 2007"</a> in the category of scientific softwares.
 
     <h1>Licence</h1>
 

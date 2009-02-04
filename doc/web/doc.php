@@ -85,7 +85,7 @@
       A presentation (in french) of getfem++ <a href="http://download.gna.org/getfem/doc/presentation_2003.pdf">presentation_2003.pdf</a>.
     </p>
     <p>
-      A Getfem++ poster (in french) <a href="http://download.gna.org/getfem/doc/poster_getfem.pdf">poster_getfem.pdf</a>.
+      A Getfem++ poster <a href="http://download.gna.org/getfem/doc/poster_getfem.pdf">poster_getfem.pdf (in french)</a>, <a href="http://download.gna.org/getfem/doc/poster_english.pdf">poster_getfem.pdf (in english)</a>.
     </p>
   </div>
 <?php include("footer.inc") ?>
