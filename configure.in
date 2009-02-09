@@ -735,7 +735,7 @@ AC_CONFIG_FILES(\
 	Makefile \
 	m4/Makefile \
 	cubature/Makefile \
-	$SUPERLU_MAKEFILE \
+	superlu/Makefile \
 	src/Makefile \
 	tests/Makefile \
 	tests/meshes/Makefile \
