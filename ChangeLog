@@ -1,3 +1,14 @@
+2009-01-30 Luis Saavedra  <lsaavedr@dim.uchile.cl>
+	* configure.in
+	* src/gmm/gmm_superlu_interface.h
+	* src/Makefile.am
+	* src/getfem_superlu.cc
+	* interface/Makefile.am
+	* Makefile.am
+	Allowing disable superlu support (enable by default).
+	With this you can use your own superlu (superlu v3.1 for example),
+	and the maintenance of superlu in the svn is liberated.
+
 2008-09-26 Yves Renard  <Yves.Renard@insa-lyon.fr>
 	* src/getfem_interpolated_fem.cc
 	 Allowing vectorial fems

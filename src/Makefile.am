@@ -200,7 +200,7 @@ SRC =                                      		\
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
-libgetfem_la_LIBADD = ../superlu/libsuperlu.la
+libgetfem_la_LIBADD = @SUPERLU_LIBS@
 
 CLEANFILES = ii_files/* *.o.d
 DISTCLEANFILES = getfem/getfem_im_list.h getfem/getfem_arch_config.h

@@ -310,34 +310,68 @@ CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
 
 
 dnl ------------------------------SuperLU config-------------------------
-if test x"$FC" = "x"; then
-  sgemm="sgemm_"
+AC_ARG_ENABLE(superlu,
+[  --enable-superlu    Turn on/off SuperLU support],
+[case "${enableval}" in
+  yes) usesuperlu=YES ;;
+  no)  usesuperlu=NO ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-superlu]) ;;
+esac],[usesuperlu=YES])
+
+SUPERLU_CPPFLAGS=""
+SUPERLU_SRC=""
+SUPERLU_LIBS=""
+SUPERLU_MAKEFILE=""
+
+if test x$usesuperlu = xYES; then
+  echo "Building with SuperLU support (use --enable-superlu=no to disable it)"
+  if test x"$FC" = "x"; then
+    sgemm="sgemm_"
+  else
+    AC_FC_FUNC(sgemm)
+    echo "FC=$FC"
+  fi
+  case $sgemm in
+    sgemm)
+          F77_CALL_C="NOCHANGE";
+          ;;
+    sgemm_)
+          F77_CALL_C="ADD_";
+          ;;
+    SGEMM)
+          F77_CALL_C="UPCASE";
+          ;;
+    sgemm__)
+          F77_CALL_C="ADD__";
+          ;;
+    *)
+          AC_MSG_ERROR(["superlu won't handle this calling convention: sgemm -> $sgemm"])
+          ;;
+  esac
+  SUPERLU_CPPFLAGS="$CPPFLAGS -DUSE_VENDOR_BLAS -DF77_CALL_C=$F77_CALL_C"
+  SUPERLU_SRC="superlu"
+  SUPERLU_LIBS="\$(top_srcdir)/$SUPERLU_SRC/libsuperlu.la"
+  SUPERLU_MAKEFILE="$SUPERLU_SRC/Makefile"
 else
-  AC_FC_FUNC(sgemm)
-  echo "FC=$FC"
+  echo "Building without SuperLU support (use --enable-superlu=yes to enable it)"
+  AC_CHECK_LIB([superlu], [dCreate_CompCol_Matrix],[],
+               [AC_MSG_ERROR([SuperLU library not found])])
+
+  AC_CHECK_HEADERS(superlu/supermatrix.h,[usesuperlu="yes"],
+  [
+    if test "x$usesuperlu" = "xyes"; then
+      AC_MSG_ERROR([header files superlu/supermatrix.h not found. Use --enable-superlu=yes flag]);
+    fi;
+  ])
+
+  SUPERLU_LIBS="-lsuperlu"
+  LIBS="$LIBS $SUPERLU_LIBS"
 fi
 
-case $sgemm in
-  sgemm)
-        F77_CALL_C="NOCHANGE";
-        ;;
-  sgemm_)
-        F77_CALL_C="ADD_";
-        ;;
-  SGEMM)
-        F77_CALL_C="UPCASE";
-        ;;
-  sgemm__)
-        F77_CALL_C="ADD__";
-        ;;
-  *)
-        AC_MSG_ERROR(["superlu won't handle this calling convention: sgemm -> $sgemm"])
-        ;;
-esac
-SUPERLU_CPPFLAGS="$CPPFLAGS -DUSE_VENDOR_BLAS -DF77_CALL_C=$F77_CALL_C"
-AC_SUBST(SUPERLU_CPPFLAGS)
+AC_SUBST([SUPERLU_CPPFLAGS])
+AC_SUBST([SUPERLU_SRC])
+AC_SUBST([SUPERLU_LIBS])
 AM_CONDITIONAL(USEBLASLITE, test x$HAVE_VENDOR_BLAS = x0)
-
 echo "Configuration of SuperLU done"
 
 if test "$MUMPS_CFLAGS" -o "$MUMPS_LIBS"; then
@@ -701,7 +735,7 @@ AC_CONFIG_FILES(\
 	Makefile \
 	m4/Makefile \
 	cubature/Makefile \
-        superlu/Makefile \
+	$SUPERLU_MAKEFILE \
 	src/Makefile \
 	tests/Makefile \
 	tests/meshes/Makefile \

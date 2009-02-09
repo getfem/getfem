@@ -1,5 +1,5 @@
 from getfem import *
-from numarray import *
+from numpy import *
 
 NX=10.0
 mixed = True

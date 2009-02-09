@@ -50,21 +50,21 @@ typedef int int_t;
 # undef FALSE
 #endif
 
-#include "SRC/slu_Cnames.h"
-#include "SRC/supermatrix.h"
-#include "SRC/slu_util.h"
+#include "superlu/slu_Cnames.h"
+#include "superlu/supermatrix.h"
+#include "superlu/slu_util.h"
 
 namespace SuperLU_S {
-#include "SRC/slu_sdefs.h"
+#include "superlu/slu_sdefs.h"
 }
 namespace SuperLU_D {
-#include "SRC/slu_ddefs.h"
+#include "superlu/slu_ddefs.h"
 }
 namespace SuperLU_C {
-#include "SRC/slu_cdefs.h"
+#include "superlu/slu_cdefs.h"
 }
 namespace SuperLU_Z {
-#include "SRC/slu_zdefs.h" 
+#include "superlu/slu_zdefs.h" 
 }
 
 
