@@ -8,10 +8,11 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(install-sh)
-AM_CONFIG_HEADER(config.h)
+AC_INIT
+AC_CONFIG_SRCDIR([install-sh])
+AC_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM) 
-AC_PREREQ(2.56)
+AC_PREREQ(2.61)
 AC_ARG_PROGRAM
 
 PACKAGE="getfem++"
@@ -49,7 +50,7 @@ CFLAGS="${USER_CFLAGS}"
 SUPLDFLAGS=""
 AC_FC_LIBRARY_LDFLAGS
 
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 
 if test "x$prefix" = "xNONE"; then
   GFPREFIX=/usr/local;
@@ -61,14 +62,15 @@ dnl AC_CXX_FULL_SPECIALIZATION_SYNTAX (c)Luc Maisonobe v 1.1.1.1 (2001/07/26)   
 dnl with some modification to test partial specialization
 AC_CACHE_CHECK(whether the compiler recognizes the partial specialization syntax,
 ac_cv_cxx_partial_specialization_syntax,
-[AC_LANG_SAVE
- AC_LANG_CPLUSPLUS
- AC_TRY_COMPILE([
+[AC_DIAGNOSE([obsolete],[Instead of using `AC_LANG', `AC_LANG_SAVE', and `AC_LANG_RESTORE',
+you should use `AC_LANG_PUSH' and `AC_LANG_POP'.])dnl
+AC_LANG_SAVE
+ AC_LANG([C++])
+ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 template<class T> class A        { public : int f () const { return 1; } };
-template<class T> class A<T*>    { public:  int f () const { return 0; } };],[
-A<float*> a; return a.f();],
- ac_cv_cxx_partial_specialization_syntax=yes, ac_cv_cxx_partial_specialization_syntax=no)
- AC_LANG_RESTORE
+template<class T> class A<T*>    { public:  int f () const { return 0; } };]], [[
+A<float*> a; return a.f();]])],[ac_cv_cxx_partial_specialization_syntax=yes],[ac_cv_cxx_partial_specialization_syntax=no])
+ AC_LANG_POP([])
 ])
 if test "$ac_cv_cxx_partial_specialization_syntax" != yes; then
   echo "Your compiler ($CXX) does not support partial template specialization, trash it"
@@ -178,7 +180,7 @@ dnl if no AC_FC_FUNC is executed.
 acx_blas_ok=no
 
 AC_ARG_WITH(blas,
-        [AC_HELP_STRING([--with-blas=<lib>], [use BLAS library <lib>])])
+        [AS_HELP_STRING([--with-blas=<lib>],[use BLAS library <lib>])])
 case $with_blas in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
@@ -357,10 +359,12 @@ else
   AC_CHECK_LIB([superlu], [dCreate_CompCol_Matrix],[],
                [AC_MSG_ERROR([SuperLU library not found])])
 
-  AC_CHECK_HEADERS(superlu/supermatrix.h,[usesuperlu="yes"],
+  AC_CHECK_HEADERS(
+  [superlu/colamd.h superlu/slu_Cnames.h superlu/slu_*defs.h superlu/slu_*complex.h],
+  [usesuperlu="yes"],
   [
     if test "x$usesuperlu" = "xyes"; then
-      AC_MSG_ERROR([header files superlu/supermatrix.h not found. Use --enable-superlu=yes flag]);
+      AC_MSG_ERROR([header files of superlu not found. Use --enable-superlu=yes flag]);
     fi;
   ])
 
@@ -396,7 +400,7 @@ if test "x$useQDlib" = "xyes" ; then
   LIBS="$LIBS $QDLIB -lm"
   CPPFLAGS="$CPPFLAGS $QDINC"
 dnl #define NO_INLINE
-  AC_TRY_RUN([
+  AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <qd/qd.h>
 #include <qd/dd.h>
 #include <qd/fpu.h>
@@ -420,7 +424,7 @@ int main() {
   else ok = 0;
   fpu_fix_end(&old_cw); return 1-ok;
 }
-  ], [echo "checking if qd library is working...yes"], [ echo "QD library is not working (check config.log)"; exit 1])
+  ]])],[echo "checking if qd library is working...yes"],[ echo "QD library is not working (check config.log)"; exit 1],[])
   AC_DEFINE_UNQUOTED([HAVE_QDLIB],1,[defined if the qd library was found and is working])
   HAVE_QDLIB=1;
   if test "x$QD_PREC" = "xquad"; then
@@ -476,9 +480,8 @@ AC_CHECK_HEADERS(sys/times.h,[],[SUPERLU_CPPFLAGS="$SUPERLU_CPPFLAGS -DNO_TIMER"
 AC_CHECK_HEADERS(cxxabi.h)
 dnl ---------------------------- CHECK FOR __PRETTY_FUNCTION__ MACRO --------
 AC_CACHE_CHECK([for __PRETTY_FUNCTION__], ac_have_pretty_function, [
-        AC_TRY_COMPILE(
-                [],
-                [ const char *s = __PRETTY_FUNCTION__; ],
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [
+                [ const char *s = __PRETTY_FUNCTION__; ]])],
                 [ ac_have_pretty_function="yes" ],
                 [ ac_have_pretty_function=="no"  ])])
 if test "x$ac_have_pretty_function" = "xyes"; then
@@ -488,10 +491,9 @@ fi;
 
 dnl ---------------------------- CHECK FOR GLIBC BACKTRACE availability -----
 AC_CACHE_CHECK([for execinfo.h and backtrace], ac_have_backtrace, [
-        AC_TRY_COMPILE(
-                [ #include <execinfo.h>       
-                ],
-                [ void* trace[256]; int n = backtrace(trace, 256); ],
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+                [[ #include <execinfo.h>  ]],
+                [[ void* trace[256]; int n = backtrace(trace, 256); ]])],
                 [ ac_have_backtrace="yes" ],
                 [ ac_have_backtrace="no"  ])])
 if test "x$ac_have_backtrace" = "xyes"; then
@@ -500,10 +502,9 @@ fi;
 
 dnl ---------------------------- CHECK FOR feenableexcept -----
 AC_CACHE_CHECK([for fenv.h and feenableexcept], ac_have_feenableexcept, [
-        AC_TRY_COMPILE(
-                [ #include <fenv.h>       
-                ],
-                [ feenableexcept(FE_DIVBYZERO | FE_INVALID); ],
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+                [[ #include <fenv.h>           ]], 
+                [[ feenableexcept(FE_DIVBYZERO | FE_INVALID); ]])],
                 [ ac_have_feenableexcept="yes" ],
                 [ ac_have_feenableexcept="no"  ])])
 if test "x$ac_have_feenableexcept" = "xyes"; then
@@ -562,7 +563,7 @@ AC_ARG_ENABLE(matlab,
 esac],[usematlab=NO])
 
 AC_ARG_WITH(matlab-toolbox-dir, [  --with-matlab-toolbox-dir : directory in which the matlab interface will be installed],
-            TOOLBOXDIR="$withval",TOOLBOXDIR="$prefix/getfem_toolbox")
+            TOOLBOXDIR="$withval",TOOLBOXDIR="$GFPREFIX/getfem_toolbox")
 AC_SUBST(TOOLBOXDIR)
 
 AC_ARG_ENABLE(python,
