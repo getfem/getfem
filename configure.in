@@ -352,7 +352,7 @@ if test x$usesuperlu = xYES; then
   esac
   SUPERLU_CPPFLAGS="$CPPFLAGS -DUSE_VENDOR_BLAS -DF77_CALL_C=$F77_CALL_C"
   SUPERLU_SRC="superlu"
-  SUPERLU_LIBS="\$(top_srcdir)/$SUPERLU_SRC/libsuperlu.la"
+  SUPERLU_LIBS="../$SUPERLU_SRC/libsuperlu.la"
   SUPERLU_MAKEFILE="$SUPERLU_SRC/Makefile"
 else
   echo "Building without SuperLU support (use --enable-superlu=yes to enable it)"
