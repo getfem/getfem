@@ -31,8 +31,8 @@
    a pde directly with the assembly procedures.
 */
 
-#include "getfem/getfem_assembling.h" /* assembly methods (and comp. of norms) */
-#include "getfem/getfem_export.h"   /* export functions (save solutions in a file) */
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_superlu.h"
@@ -50,6 +50,7 @@ using bgeot::size_type;   /* = unsigned long */
 typedef gmm::rsvector<scalar_type> sparse_vector_type;
 typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
+typedef std::vector<scalar_type> plain_vector;
 
 /* Definitions for the exact solution of the Laplacian problem,
  *  i.e. Delta(sol_u) + sol_f = 0
@@ -134,7 +135,8 @@ void laplacian_problem::init(void) {
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
-  residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
+  residual = PARAM.real_value("RESIDUAL");
+  if (residual == 0.) residual = 1e-10;
   sol_K.resize(N);
   for (size_type j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
@@ -253,7 +255,89 @@ void laplacian_problem::assembly(void) {
   }
 }
 
+
+
+#ifdef a_test_follows
+
+
+// This is a test to solve a sparse system with a Schmidt decomposition
+typedef std::vector< std::set<size_type> > connectivity_table;
+
+
+template<typename V> void add_conn(const V &v, size_type i,
+				   connectivity_table &t) {
+  typename gmm::linalg_traits<V>::const_iterator
+      it = vect_const_begin(v), ite = vect_const_end(v);
+  for (; it != ite; ++it)
+    { t[it.index()].insert(i); t[i].insert(it.index()); }
+}
+
+
+void see_schmidt(const sparse_matrix_type &A, plain_vector &,
+		   const plain_vector &) {
+  size_type N = gmm::mat_ncols(A), nbconnect;
+  connectivity_table /*prec(N), */ cbase(N), cpresent(N);
+  std::set<size_type>::iterator it1, it2;
+  dal::bit_vector presents;
+
+  for (size_type i = 0; i < N; ++i)
+    add_conn(gmm::mat_row(A, i), i, cbase);
+
+//   for (size_type i = 0; i < N; ++i) {
+//     for (it1 = prec[i].begin(); it1 != prec[i].end(); ++it1) {
+//       for (it2 = prec[i].begin(); it2 != prec[i].end(); ++it2)
+// 	if (*it2 != *it1) cbase[*it1].insert(*it2);
+//     }
+//   }
+
+//   for (size_type i = 0; i < N; ++i) {
+//     cout << "connectivity of " << i << " : " << cbase[i].size() << endl;
+//     for (it1 = cbase[i].begin(); it1 != cbase[i].end(); ++it1)
+//       cout << " : " << *it1;
+//     cout << endl;
+//   }
+  
+  for (nbconnect = 0; nbconnect < N; ++nbconnect) {
+
+//   shuffle ...
+//     std::vector<size_type> ind;
+//     for (size_type i = 0; i < N; ++i)
+//       if (!(presents.is_in(i)) && cpresent[i].size() <= nbconnect)
+// 	ind.push_back(i);
+//     size_type NN = ind.size();
+//     for (size_type i = 0; i < ind.size()/2; ++i)
+//       std::swap(ind[rand()%NN], ind[rand()%NN]);
+//
+//   for (size_type j = 0; j < NN; ++j) {
+//     size_type i = ind[j];
+    for (size_type i = 0; i < N; ++i) {
+      if (!(presents.is_in(i)) && cpresent[i].size() <= nbconnect) {
+	// cout  << "adding " << i << "with " << nbconnect << endl;
+	presents.add(i);
+	cpresent[i].insert(i);
+	for (it1 = cbase[i].begin(); it1 != cbase[i].end(); ++it1)
+	  if (!(presents.is_in(*it1)))
+	  cpresent[*it1].insert(cpresent[i].begin(), cpresent[i].end());
+	// + orthogonalisation ...
+      }
+    }
+
+    if (presents.card() >= N) break;
+  }
+
+  cout << "nbconnect = " << nbconnect << endl;
+  
+}
+
+#endif
+
+
+
+
 bool laplacian_problem::solve(void) {
+
+  // see_schmidt(SM, U, B);
+
   cout << "Compute preconditionner\n";
   gmm::iteration iter(residual, 1, 40000);
   double time = gmm::uclock_sec();

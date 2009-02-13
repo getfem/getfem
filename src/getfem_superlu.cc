@@ -31,21 +31,21 @@ typedef int int_t;
 # undef FALSE
 #endif
 
-#include "superlu/slu_Cnames.h"
-#include "superlu/supermatrix.h"
-#include "superlu/slu_util.h"
+#include "../superlu/slu_Cnames.h"
+#include "../superlu/supermatrix.h"
+#include "../superlu/slu_util.h"
 
 namespace SuperLU_S {
-#include "superlu/slu_sdefs.h"
+#include "../superlu/slu_sdefs.h"
 }
 namespace SuperLU_D {
-#include "superlu/slu_ddefs.h"
+#include "../superlu/slu_ddefs.h"
 }
 namespace SuperLU_C {
-#include "superlu/slu_cdefs.h"
+#include "../superlu/slu_cdefs.h"
 }
 namespace SuperLU_Z {
-#include "superlu/slu_zdefs.h" 
+#include "../superlu/slu_zdefs.h" 
 }
 
 
