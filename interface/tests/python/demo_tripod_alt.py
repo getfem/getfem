@@ -2,7 +2,7 @@ print 'This is the "old" tripod demo, which uses the low level approach:'
 print 'building the linear system by hand, handling Dirichlet, calling the solver etc...'
 
 from getfem import *
-from numarray import *
+from numpy import *
 
 print 'importing the mesh..',
 m=Mesh('import','gid','../meshes/tripod.GiD.msh')

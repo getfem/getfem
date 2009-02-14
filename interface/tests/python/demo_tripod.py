@@ -1,5 +1,5 @@
 from getfem import *
-from numarray import *
+from numpy import *
 
 print 'This is the "modern" tripod demo, which uses the getfem model bricks'
 print 'importing the mesh..',

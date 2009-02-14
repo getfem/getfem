@@ -2,7 +2,7 @@
 # with optional graphical vizualisation (requires tvtk)
 
 from getfem import *
-from numarray import *
+from numpy import *
 
 with_graphics=True
 try:

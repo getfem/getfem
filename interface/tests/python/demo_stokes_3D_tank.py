@@ -1,5 +1,5 @@
 from getfem import *
-from numarray import *
+from numpy import *
 
 print '3D stokes demonstration on a quadratic mesh -- 512MB of memory needed for the solve!!'
 

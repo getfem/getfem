@@ -1,5 +1,5 @@
 import getfem
-from numarray import *
+from numpy import *
 
 mfu=getfem.MeshFem('load','tank_3D.mfu')
 m=mfu.linked_mesh()
