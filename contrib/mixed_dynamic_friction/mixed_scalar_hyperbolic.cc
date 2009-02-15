@@ -362,13 +362,12 @@ void hyperbolic_problem::solve(void) {
   DIRICHLET.rhs().set(mf_rhs, F);
   
   // Contact condition for Lagrange elements
-  dal::bit_vector cn, dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY), pcn;
+  dal::bit_vector cn, dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
   for (size_type i = 0; i < mf_u.nb_dof(); ++i)
     if (!dn.is_in(i)) {
 
-      if (mesh.points().search_node(mf_u.point_of_dof(i)) != size_type(-1)) {
-	pcn.add(i); cn.add(i);
-      }
+      if (mesh.points().search_node(mf_u.point_of_dof(i)) != size_type(-1))
+	cn.add(i);
     }
 
  
@@ -492,7 +491,7 @@ void hyperbolic_problem::solve(void) {
     t += dt; 
     scalar_type umin = dirichlet_val;
     size_type nbco = 0;
-    for (dal::bv_visitor i(pcn); !i.finished(); ++i)
+    for (dal::bv_visitor i(cn); !i.finished(); ++i)
       { umin = std::min(Udemi[i], umin); if (Udemi[i] < 1E-4) nbco++; }
     cout << "t = " << t << " J1 = " << J1 << " Jdemi = " << Jdemi
 	 << " nbcontact : " << nbco << " umin = " << umin << endl;

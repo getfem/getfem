@@ -12,10 +12,11 @@ LAMBDA = 10
 FRICTION_COEF = 0.0;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
-RHO = 6e-6;     	% "realistic" density for steel
+% RHO = 6e-6;     	% "realistic" density for steel
+RHO = 5.71e-7           % To fit with houari results ...
 
 T = 0.1;
-DT = 0.0001;            % Time step
+DT = 1E-5;              % Time step
 
  
 
@@ -25,17 +26,18 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDU = 1E-8;     	% residu for Newton.
-
+RESIDU = 1E-9;     	% residu for Newton.
+CONTACT_TYPE = 1; % 0 = on finite element nodes
+		  % 1 = on mesh nodes
 NOISY = 0;
 	    
 R = 100.0;              % Augmentation parameter
 
 DIRICHLET = 0;
 DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet
-INIT_VERT_SPEED = -100;  % Initial vertical velocity
-INIT_VERT_POS = 10;       % Initial vertical position
-FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of th	e rigid foundation
+INIT_VERT_SPEED = -100;    % Initial vertical velocity
+INIT_VERT_POS = 10;        % Initial vertical position
+FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of the rigid foundation
 
 if (N == 2)
   % MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[30,30];NSUBDIV=[10,10]';
@@ -43,15 +45,16 @@ if (N == 2)
   % MESHNAME='../../tests/meshes/disc_P2_h11.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h8.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h6.mesh';
-  MESHNAME='../../tests/meshes/disc_P2_h4.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h4.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h2.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h1.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h0.5.mesh';
-  % MESHNAME='../../tests/meshes/disc_P2_h0.3.mesh';
-  % FEM_TYPE_U = 'FEM_PK(2, 2)';     % FEM for the displacement U
-  FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-  FEM_TYPE_V = 'FEM_PK(2, 0)';     % FEM for the velocity V
-  DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
+  MESHNAME='../../tests/meshes/disc_P2_h0.25.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h0.15.mesh';
+  FEM_TYPE_U = 'FEM_PK(2, 2)';    % FEM for the displacement U
+  % FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+  FEM_TYPE_V = 'FEM_PK(2, 1)';    % FEM for the velocity V
+  DATA_FEM_TYPE = 'FEM_PK(2,2)';  % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 end;
 
@@ -80,3 +83,5 @@ end;
 ROOTFILENAME = 'mixed_dynamic_friction';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
 DT_EXPORT = 0.001; % Time step for the export
+COMPARE = 1;  % Convergence test to be done or not
+REFROOTNAME = 'mixed_dynamic_friction_ref';
