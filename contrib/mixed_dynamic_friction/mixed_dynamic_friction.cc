@@ -93,8 +93,7 @@ struct friction_problem {
 void friction_problem::init(void) {
   std::string FEM_TYPE_U  = PARAM.string_value("FEM_TYPE_U","FEM name");
   std::string FEM_TYPE_V  = PARAM.string_value("FEM_TYPE_V","FEM name");
-  INTEGRATION = PARAM.string_value("INTEGRATION",
-					       "Name of integration method");
+  INTEGRATION = PARAM.string_value("INTEGRATION","Name of integration method");
   cout << "FEM_TYPE_U = "  << FEM_TYPE_U << "\n";
   cout << "FEM_TYPE_V = "  << FEM_TYPE_V << "\n";
   cout << "INTEGRATION = " << INTEGRATION << "\n";
@@ -133,7 +132,7 @@ void friction_problem::init(void) {
   dtexport = dt * double(int(dtexport / dt + 0.5));
  
   r = PARAM.real_value("R", "augmentation parameter");
-  noisy = (PARAM.int_value("NOISY", "verbosity of iterative methods") != 0);
+  noisy = PARAM.int_value("NOISY", "verbosity of iterative methods");
   init_vert_pos = PARAM.real_value("INIT_VERT_POS", "initial position");
   init_vert_speed = PARAM.real_value("INIT_VERT_SPEED","initial speed");
   hspeed = PARAM.real_value("FOUNDATION_HSPEED","initial speed");

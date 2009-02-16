@@ -26,13 +26,13 @@ SCHEME = 1;             % 0 = Backward Euler
 			% 1 = Midpoint
 
 if (N == 2)
-  MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[1,1];NSUBDIV=[20,20]';
+  MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[1,1];NSUBDIV=[160,160]';
   %%%%% disque en P2 %%%%%
   % MESHNAME='../../tests/meshes/disc_P2_h11.mesh';
-  % FEM_TYPE_U = 'FEM_PK(2, 1)';     % FEM for the displacement U
-  FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)'; % FEM for the displacement U
-  FEM_TYPE_V = 'FEM_PK(2, 0)';    % FEM for the velocity V
-  MULT_FEM_TYPE = 'FEM_PK(2, 1)'; % FEM for the Dirichlet condition
+  FEM_TYPE_U = 'FEM_PK(2, 2)';     % FEM for the displacement U
+  % FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)'; % FEM for the displacement U
+  FEM_TYPE_V = 'FEM_PK(2, 1)';    % FEM for the velocity V
+  MULT_FEM_TYPE = 'FEM_PK(2,2)'; % FEM for the Dirichlet condition
   DATA_FEM_TYPE = 'FEM_PK(2,2)';  % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 end;
@@ -54,3 +54,5 @@ ROOTFILENAME = 'mixed_scalar_hyperbolic';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
 DT_EXPORT = 0.01; % Time step for the export
 VTK_EXPORT = 0;
+COMPARE = 1;  % Convergence test to be done or not
+REFROOTNAME = 'mixed_scalar_hyperbolic_ref';

@@ -16,7 +16,7 @@ PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 RHO = 5.71e-7           % To fit with houari results ...
 
 T = 0.1;
-DT = 1E-5;              % Time step
+DT = 16E-4;              % Time step
 
  
 
@@ -42,14 +42,11 @@ FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of the rigid foundation
 if (N == 2)
   % MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[30,30];NSUBDIV=[10,10]';
   %%%%% disque en P2 %%%%%
-  % MESHNAME='../../tests/meshes/disc_P2_h11.mesh';
-  % MESHNAME='../../tests/meshes/disc_P2_h8.mesh';
-  % MESHNAME='../../tests/meshes/disc_P2_h6.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h4.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h2.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h1.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h0.5.mesh';
-  MESHNAME='../../tests/meshes/disc_P2_h0.25.mesh';
+  % MESHNAME='../../tests/meshes/disc_P2_h0.25.mesh';
   % MESHNAME='../../tests/meshes/disc_P2_h0.15.mesh';
   FEM_TYPE_U = 'FEM_PK(2, 2)';    % FEM for the displacement U
   % FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';

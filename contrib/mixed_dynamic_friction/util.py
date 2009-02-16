@@ -13,7 +13,7 @@ except:
 print 'Some tests with python',
 
 
-m=Mesh('load', '../../tests/meshes/disc_P2_h0.15.mesh')
+m=Mesh('load', '../../tests/meshes/disc_P2_h4.mesh')
 
 
 if with_graphics:
