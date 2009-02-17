@@ -21,10 +21,10 @@ end;
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
-NX = 10 ;                 % space step
+NX = 21 ;                 % space step
 
-%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_15.mesh'
-MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_15.mesh'
+MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_10.mesh'
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_10.mesh'
 %MESH_FILE='./demi_plaque_raffinee.mesh'
 %MESH_FILE='./demi_plaque_21.mesh'
 
@@ -71,11 +71,11 @@ if (~QUAD)
   else
 %    FEM_TYPE = 'FEM_HCT_TRIANGLE';
      FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
-     DIRICHLET_FEM_TYPE = 'FEM_PK(2,1)';
+     DIRICHLET_FEM_TYPE =  'FEM_PK(2,1)';
      DIRICHLET_DER_FEM_TYPE = 'FEM_PK(2,1)';
    % INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(5), 3)';
      INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(13))';
-     MORTAR_FEM_TYPE ='FEM_PK(2,1)';
+     MORTAR_FEM_TYPE ='FEM_PK(2,2)';
      MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
   %  MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
 %    MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
@@ -90,7 +90,7 @@ if (QUAD)
   DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
   DIRICHLET_DER_FEM_TYPE = 'FEM_QK(2,1)';
   %MORTAR_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
-  MORTAR_FEM_TYPE = 'FEM_QK(2,1)' ;
+  MORTAR_FEM_TYPE = 'FEM_QK(2,2)' ;
   %MORTAR_FEM_TYPE = 'FEM_HERMITE(1)' ;
   MORTAR_DERIV_FEM_TYPE = 'FEM_QK(2,1)' ;
   %MORTAR_DERIV_FEM_TYPE = 'FEM_QK_DISCONTINUOUS(2,1)';
@@ -110,13 +110,13 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 
 
 %%%% XFEM Parameters
 
-ENRICHMENT_OPTION = 3;  %-1 = classical FEM (needs conformal mesh)
+ENRICHMENT_OPTION = -1;  %-1 = classical FEM (needs conformal mesh)
 			% 0 = Pas d'enrichissement (fonction H seule)	
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)			
 RADIUS_ENR_AREA = 0.15;
-SING_BASE_TYPE = 0 ;    % 0 = singularities developped on 4 dofs
+SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
 SHOW_DX = 0 ;
 
@@ -136,7 +136,7 @@ SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integra
 
 %%%%%  computation parameters 
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
-DIRICHLET_VERSION = 0; % 0=multipliers, 1=penalization, 2=elimination
+DIRICHLET_VERSION = 1; % 0=multipliers, 1=penalization, 2=elimination
 EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
                                % Dirichlet condition with penalization 
 COMPUTE_ERROR = 1;
@@ -149,7 +149,7 @@ RADIUS_SPLIT_DOMAIN = 0.0
 
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'crack_bilaplacian';     % Root of data files.
-VTK_EXPORT = 1; % export solution to a .vtk file ?
+VTK_EXPORT = 4; % export solution to a .vtk file ?
 MATLAB_EXPORT = 0;
 
 

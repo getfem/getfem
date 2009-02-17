@@ -457,10 +457,31 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   if (sol_ref == 0){
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-         mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
-         mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
-     }
-  }
+        base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+        un /= gmm::vect_norm2(un);
+        if ( gmm::abs(un[0]) >= 0.9999 ) {
+	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+           mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
+	}
+	else{
+	   unsigned id_point_1_of_face, id_point_2_of_face ;
+	   scalar_type x1, x2 ;
+	   id_point_1_of_face = mesh.structure_of_convex(i.cv())->ind_points_of_face(i.f())[0] ;
+	   id_point_2_of_face = mesh.structure_of_convex(i.cv())->ind_points_of_face(i.f())[1] ;
+           x1 = mesh.points_of_convex(i.cv())[id_point_1_of_face][1] ;
+           x2 = mesh.points_of_convex(i.cv())[id_point_2_of_face][1] ;
+           if ( gmm::abs(x1) > 0.4999 && gmm::abs(x2) > 0.4999 ) {// on the boundary => clamped
+	     mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+             mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+	   }
+	   else { // on the crack => free boundary condition
+	   mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
+	   mesh.region(FORCE_BOUNDARY_NUM).add(i.cv(), i.f());
+	   }
+	}
+      }
+   }
+  
   
   if (sol_ref == 1 ){
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
@@ -883,8 +904,21 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   //getfem::interpolation_function(mf_rhs, F, sol_f);
 
   //Volumic source term brick.
- //getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
-
+  //getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
+  
+  // Defining the moment condition (for free edge condition)
+  size_type N ; N = mesh.dim() ;
+  gmm::resize(F, nb_dof_rhs*N*N);
+  getfem::mdbrick_normal_derivative_source_term<>
+     MOMENTUM(BIL, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+  // Defining the imposed force condtion (also for free edge condition)
+  plain_vector tensor_H(nb_dof_rhs*N*N);
+  gmm::resize(F, nb_dof_rhs*N);
+  
+  getfem::mdbrick_abstract<> *NEUMANN;
+  NEUMANN = new getfem::mdbrick_neumann_KL_term<>
+       (MOMENTUM, mf_rhs, tensor_H, F, FORCE_BOUNDARY_NUM);
+  
   // Defining the normal derivative Dirichlet condition value.
 
   /* WRONG !! 
@@ -905,7 +939,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
-    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult_d);
+    NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult_d);
 
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
