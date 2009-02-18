@@ -31,10 +31,8 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_Navier_Stokes.h"
 #include "icare.h"
+//#include <iostream>
 //#include "gmm/gmm_MUMPS_interface.h"
-
-#include <iostream.h>
-#include <fstream.h>
 
 
 /* some Getfem++ types that we will be using */
@@ -214,9 +212,9 @@ struct problem_definition_Green_Taylor_analytic : public problem_definition {
     r[1] =  +sin(x)*cos(y)*exp(-2*t*p.nu);
   }
   virtual void source_term(navier_stokes_problem &p,
-			   const base_node &P, scalar_type t,
+			   const base_node &/* P */, scalar_type /* t */,
 			   base_small_vector &F) {
-    scalar_type x = P[0], y = P[1];
+    //    scalar_type x = P[0], y = P[1];
     F = base_small_vector(p.N);
     //F[0] = -exp(-4.*t*p.nu)*sin(2.*x);
     //F[1] = -exp(-4.*t*p.nu)*sin(2.*y);
@@ -237,6 +235,7 @@ struct problem_rotating_cylinder : public problem_definition {
     getfem::mesh_region r; 
     getfem::outer_faces_of_mesh(p.mesh, r);
     unsigned N = p.mesh.dim();
+
 
     if (N==2){
 
@@ -348,13 +347,13 @@ struct problem_rotating_cylinder : public problem_definition {
   }
   virtual base_small_vector initial_velocity(navier_stokes_problem &p,const base_node &) { 
     unsigned N = p.mesh.dim();
-    if (N==2){
-    base_small_vector r(2); r[0] = 1; r[1] = 0; return r;
+    base_small_vector r(N);
+    switch(N) {
+    case 1 : r[0] = 1; break;
+    case 2 : r[0] = 1; break;
+    case 3 : r[0] = 1; break;
     }
-
-    if (N==3){
-    base_small_vector r(3); r[0] = 1; r[1] = 0; r[2] = 0; return r;
-    }
+    return r;
   }
 
 
@@ -404,12 +403,11 @@ void navier_stokes_problem::init(void) {
     case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
     case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
     case 3: pdef.reset(new problem_rotating_cylinder(PARAM.real_value("CYL_ROT_SPEED"))); break;
-    default: DAL_THROW(dal::failure_error, "wrong PROBLEM value");
+  default: GMM_ASSERT1(false, "wrong PROBLEM value");
   }
 
   non_reflective_bc = PARAM.int_value("NON_REFLECTIVE_BC", "the type of non-reflective boundary condition");
-  if (non_reflective_bc < 0 || non_reflective_bc > 2)
-    DAL_THROW(dal::failure_error, "arg wrong bc");
+  GMM_ASSERT1(non_reflective_bc >= 0 && non_reflective_bc <= 2, "arg wrong bc");
 
   export_to_opendx = PARAM.int_value("DX_EXPORT", "");
   first_export = true;
@@ -431,11 +429,9 @@ void navier_stokes_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -444,11 +440,9 @@ void navier_stokes_problem::init(void) {
 
   std::string mult_fem_name = PARAM.string_value("MULTIPLIER_FEM_TYPE");
   if (mult_fem_name.size() == 0) {
-    if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "MULTIPLIER_FEM_TYPE in the .param file");
-    }
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_mult.set_finite_element(mesh.convex_index(), 
@@ -474,7 +468,7 @@ void navier_stokes_problem::solve() {
   case 2 : solve_FULLY_CONSERVATIVE(); break;
   case 3 : solve_PREDICTION_CORRECTION(); break;
   case 4 : solve_PREDICTION_CORRECTION2(); break;
-  default: DAL_THROW(dal::failure_error, "unknown method");
+  default: GMM_ASSERT1(false, "unknown method");
   }
 }
 
@@ -904,8 +898,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   }
   ////// initialiser t et eviter les 2 initialisations suivantes
 
-  ofstream coeffTP("coeffTP.data");
-  ofstream ptPartData("ptPart.data");
+  std::ofstream coeffTP("coeffTP.data");
+  std::ofstream ptPartData("ptPart.data");
 
   // Recherche d'un point de réference pour le calcul des coeff de trainée ...
 
@@ -1064,9 +1058,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       // ?? gmm::bicgstab(A1,X,Y,gmm::diagonal_precond<sparse_matrix>(A1),iter);
 
 
-            MUMPS_solve(A1,X,Y);
+      //MUMPS_solve(A1,X,Y);
 
-	    //      SuperLU_solve(A1, X, Y, rcond);
+	          SuperLU_solve(A1, X, Y, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
       gmm::copy(gmm::sub_vector(X, I1), USTAR);
     }
@@ -1133,14 +1127,14 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 	mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_NUM);
 
        plain_vector Pref(mf_p.nb_dof());
-       for (int i=0; i<mf_p.nb_dof(); ++i){ Pref[i] = Pn1[ptRef[0]];}
+       for (size_type i=0; i<mf_p.nb_dof(); ++i) { Pref[i] = Pn1[size_type(ptRef[0])];}
        gmm::add(Pn1,gmm::scaled(Pref,-1.0),Pref);
 
        getfem :: traineePortance2D(Cxn,Cxp,Cyn,Cyp,mim,mf_rhs,mf_p,nuDxU,nuDyU,nuDxV,nuDyV,Pref,mpioncylinder);
       
        coeffTP << t <<" " <<  2*Cxn[0]<<" "<<2*Cxp[0]<<" "<< 2*(Cxn[0]+Cxp[0])<<" "<< 2*Cyn[0]<<" "<< 2*Cyp[0] <<" "<< 2*(Cyn[0]+Cyp[0])<<" " << endl;
 
-      ptPartData << t << " " << Un1[ptPartU[0]] << " " << Un1[ptPartU[0] + 1] << " " << Pn1[ptPartP[0]] << endl;
+       ptPartData << t << " " << Un1[size_type(ptPartU[0])] << " " << Un1[size_type(ptPartU[0]) + 1] << " " << Pn1[size_type(ptPartP[0])] << endl;
 
 
     }
@@ -1330,7 +1324,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 int main(int argc, char *argv[]) {
 
-  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  // DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -1340,7 +1334,7 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.solve();
    }
-  DAL_STANDARD_CATCH_ERROR;
+  GMM_STANDARD_CATCH_ERROR;
 
   return 0; 
 }
