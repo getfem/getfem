@@ -424,9 +424,9 @@ namespace getfem {
       pb.compute_tangent_matrix();
       gmm::clear(dr);
       gmm::copy(gmm::scaled(pb.residual(), T(-1)), b);
-      if (iter.get_noisy() > 1)
-	cout << "starting solving linear system" << endl;
+      if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
       linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+      if (iter.get_noisy() > 1) cout << "linear solver done" << endl;      
       R alpha = pb.line_search(dr, iter); // it is assumed that the line
       // search execute a pb.compute_residual();
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";

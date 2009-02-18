@@ -223,6 +223,8 @@ namespace getfem {
 	else
 	  ci.nodes.resize(cv_nb_nodes);
 
+	cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
+
         for (size_type i=0; i < cv_nb_nodes; ++i) {
           size_type j;
           f >> j;
@@ -231,15 +233,19 @@ namespace getfem {
                       << " in gmsh convex " << ci.id);
         }
         ci.set_pgt();
-	if (ci.type == 8) { /* Second order line */
+	// Reordering nodes for certain elements (should be completed ?)
+	switch(ci.type) {
+	case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
+	case 8 : { /* Second order line */
 	  std::vector<size_type> tmp_nodes(3);
-	  tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[2],
-	    tmp_nodes[2] = ci.nodes[1];
-
-	  ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-	    ci.nodes[2] = tmp_nodes[2];
+	  tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
+	  tmp_nodes[2] = ci.nodes[1];
+	  
+	  ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+	  ci.nodes[2] = tmp_nodes[2];
 	}
-	else if (ci.type == 9)  { /* Second order triangle */
+	  break;
+	case 9 : /* Second order triangle */
 	  std::vector<size_type> tmp_nodes(6);
 	  tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
 	    tmp_nodes[2] = ci.nodes[1];
@@ -250,9 +256,8 @@ namespace getfem {
 	    ci.nodes[2] = tmp_nodes[2];
 	  ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
 	    ci.nodes[5] = tmp_nodes[5];
+	  break;
 	}
-	else
-	  continue;
       }
     }
     nb_cv = cvlst.size();
