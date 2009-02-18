@@ -744,6 +744,7 @@ AC_CONFIG_FILES(\
 	contrib/Makefile \
 	contrib/icare/Makefile \
 	contrib/delaminated_crack/Makefile \
+	contrib/signorini_schwarz/Makefile \
 	contrib/static_friction/Makefile \
 	contrib/bimaterial_crack_test/Makefile \
 	contrib/bimat_contact_crack_test/Makefile \
