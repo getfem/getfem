@@ -1,33 +1,4 @@
 // -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2007-2008 Yves Renard, Julien Pommier.
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you  may use  this file  as it is a part of a free
-// software  library  without  restriction.  Specifically,  if   other  files
-// instantiate  templates  or  use macros or inline functions from this file,
-// or  you compile this  file  and  link  it  with other files  to produce an
-// executable, this file  does  not  by itself cause the resulting executable
-// to be covered  by the GNU Lesser General Public License.  This   exception
-// does not  however  invalidate  any  other  reasons why the executable file
-// might be covered by the GNU Lesser General Public License.
-//
-//===========================================================================
-
 #ifndef NAVIER_STOKES_H_
 #define NAVIER_STOKES_H_
 
@@ -59,6 +30,113 @@ namespace getfem {
     assem.push_mat(const_cast<MAT&>(M));
     assem.assembly(rg);
   }
+
+ template<typename VEC, typename VECTOR>
+ void traineePortance2D(VEC &Cxn, VEC &Cxp,VEC &Cyn, VEC &Cyp, const mesh_im &mim,
+			const mesh_fem &mf1, const mesh_fem &mf2,
+			const VECTOR &nuDxU, const VECTOR &nuDyU,
+			const VECTOR &nuDxV, const VECTOR &nuDyV,
+			const VECTOR &PP, const mesh_region &rg) {
+
+   generic_assembly assem;
+   // assem.set("r=data$1(#1); p=data$2(#2); V$1()+=comp(vBase(#1).Normal())(i,j,j).r(i); V$2()+=comp(Base(#2))(i).p(i);");
+
+   //   assem.set("r=data$1(#1); p=data$2(#2); V$1()+=comp(vBase(#1).Normal())(i,1,2).r(i); V$2()+=comp(Base(#2))(i).p(i);");
+
+   assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDxV=data$3(#1); nuDyV=data$4(#1); p=data$5(#2);"
+	     "t1=comp(vBase(#1).Normal());"
+             "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,1,2).nuDyU(i) + t1(i,1,2).nuDxV(i);"
+	     "t2=comp(vBase(#2).Normal());"
+             "V$2()+=-1*t2(i,1,1).p(i);"
+	     "t3=comp(vBase(#1).Normal());"
+             "V$3()+=2*t3(i,1,2).nuDyV(i) + t3(i,1,1).nuDyU(i) + t3(i,1,1).nuDxV(i);"
+	     "t4=comp(vBase(#2).Normal());"
+             "V$4()+=-1*t4(i,1,2).p(i);");
+
+   assem.push_mi(mim);
+
+   assem.push_mf(mf1);
+   assem.push_mf(mf2);
+
+   assem.push_data(nuDxU);
+   assem.push_data(nuDyU);
+   assem.push_data(nuDxV);  
+   assem.push_data(nuDyV);
+   assem.push_data(PP);
+
+   assem.push_vec(Cxn); 
+   assem.push_vec(Cxp);
+   assem.push_vec(Cyn); 
+   assem.push_vec(Cyp);
+
+   assem.assembly(rg); //region = bord du cylindre
+						 
+ }
+
+
+
+
+ template<typename VEC, typename VECTOR>
+ void traineePortance3D(VEC &Cxn, VEC &Cxp,VEC &Cyn, VEC &Cyp, const mesh_im &mim,
+			const mesh_fem &mf1, const mesh_fem &mf2,
+			const VECTOR &nuDxU, const VECTOR &nuDyU, const VECTOR &nuDzU,
+			const VECTOR &nuDxV, const VECTOR &nuDyV, const VECTOR &nuDzV, 
+			const VECTOR &nuDxW, const VECTOR &nuDyW, const VECTOR &nuDzW, 
+			const VECTOR &PP, const mesh_region &rg) {
+
+   generic_assembly assem;
+
+   assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDzU=data$3(#1); nuDxV=data$4(#1); nuDyU=data$5(#1); nuDzU=data$6(#1); nuDxW=data$7(#1); nuDyW=data$8(#1);  nuDzW=data$9(#1);    p=data$10(#2);"
+	     "t1=comp(vBase(#1).Normal());"
+             "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,2,2).nuDxU(i) + t1(i,1,2).nuDxV(i) + t1(i,1,3).nuDxW(i) + t1(i,3,3).nuDxU(i);"
+	     "t2=comp(vBase(#2).Normal());"
+             "V$2()+=t2(i,1,1).p(i);"
+	     "t3=comp(vBase(#1).Normal());"
+             "V$3()+=2*t3(i,2,2).nuDxV(i) + t3(i,2,1).nuDxU(i) + t3(i,1,1).nuDxV(i) + t3(i,2,3).nuDxW(i) + t3(i,3,3).nuDxV(i);"
+	     "t4=comp(vBase(#2).Normal());"
+             "V$4()+=t4(i,1,2).p(i);");
+
+
+
+
+   assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDxV=data$3(#1); nuDyV=data$4(#1); p=data$5(#2);"
+	     "t1=comp(vBase(#1).Normal());"
+             "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,1,2).nuDyU(i) + t1(i,2,2).nuDxV(i);"
+	     "t2=comp(vBase(#2).Normal());"
+             "V$2()+=-1*t2(i,1,1).p(i);"
+	     "t3=comp(vBase(#1).Normal());"
+             "V$3()+=2*t3(i,2,2).nuDyV(i) + t3(i,1,1).nuDyU(i) + t3(i,2,1).nuDxV(i);"
+	     "t4=comp(vBase(#2).Normal());"
+             "V$4()+=-1*t4(i,1,2).p(i);");
+
+
+   assem.push_mi(mim);
+
+   assem.push_mf(mf1);
+   assem.push_mf(mf2);
+
+   assem.push_data(nuDxU);   
+   assem.push_data(nuDyU);
+   assem.push_data(nuDzU);
+
+   assem.push_data(nuDxV);   
+   assem.push_data(nuDyV);
+   assem.push_data(nuDzV);
+
+   assem.push_data(nuDxW);   
+   assem.push_data(nuDyW);
+   assem.push_data(nuDzW);
+   
+   assem.push_data(PP);
+
+   assem.push_vec(Cxn); 
+   assem.push_vec(Cxp);
+   assem.push_vec(Cyn); 
+   assem.push_vec(Cyp);
+  
+   assem.assembly(rg); //region = bord du cylindre
+						 
+ }
 
 
   template<typename MODEL_STATE = standard_model_state>
@@ -147,7 +225,6 @@ namespace getfem {
 
     std::stringstream ss;
     ss << "u=data$1(#1); "
-    "sel=data$1(#2);"
      "V(#1)+=comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
  
     assem.set(ss.str());
@@ -233,10 +310,10 @@ namespace getfem {
 	boundary(bound) {
       dt = dt_;
       mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
-      GMM_ASSERT1(mf_mult->get_qdim() == mf_u().get_qdim(),
-		  "The lagrange multipliers mesh fem "
-		  "for the mdbrick_NS_nonref1 brick should have the same "
-		  "Qdim as the main mesh_fem");
+      if (mf_mult->get_qdim() != mf_u().get_qdim()) 
+	DAL_THROW(dal::failure_error, "The lagrange multipliers mesh fem "
+		  "for the mdbrick_NS_nonref1 brick should have the same Qdim as "
+		  "the main mesh_fem");
 
       this->add_proper_boundary_info(this->num_fem, boundary, 
 				     MDBRICK_DIRICHLET);
@@ -245,6 +322,102 @@ namespace getfem {
       this->force_update();
     }
   };
+
+
+
+  /* non reflective boundary conditions */
+
+
+  // construction du terme de droite dans [M]*Unp1=F
+  // mise en place de Un + Un.N*(dUn/dn).N
+  template <typename VEC1, typename VEC2>
+  void asm_basic_non_reflective_bc(VEC1 &VV, 
+				   const getfem::mesh_im &mim, 
+				   const getfem::mesh_fem &mf_u, 
+				   const VEC2 &Un0, 
+				   const getfem::mesh_fem &mf_mult,
+				   scalar_type dt, scalar_type nu,
+				   const getfem::mesh_region &rg) {
+    getfem::generic_assembly assem;
+    std::stringstream ss;
+    ss << "u=data$1(#1); "
+      "V(#2)+="
+       << -dt << "*"
+      " comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))(l,i,i,m,k,j,j,:,k).u(l).u(m)+"     //"(l,i,i,m,j,k,j,:,k).u(l).u(m)+"
+      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)"                                                  //"comp(vBase(#1).vBase(#2).u(j))(j,i,:,i)";
+       <<-nu<<"*" << dt << "*"
+      "comp(vGrad(#1).vGrad(#2))(l,i,j,:,i,j).u(l)"
+       <<-nu<<"*" << dt << "*"
+      "comp(vGrad(#1).Normal().vGrad(#2).Normal())(l,i,j,j,:,i,k,k).u(l)";
+    assem.set(ss.str());
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_mult);  
+    assem.push_data(Un0);
+    assem.push_vec(VV);
+    assem.assembly(rg);
+  }
+
+
+  template<typename VECT1> class improved_non_reflective_bc_nonlinear_term 
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf;
+    const VECT1 &U;
+    scalar_type dt, nu;
+    size_type N;
+    base_vector coeff, valU;
+    base_matrix gradU, hessU;
+    bgeot::multi_index sizes_;
+  public:
+    improved_non_reflective_bc_nonlinear_term
+    (const mesh_fem &mf_, const VECT1 &U_, scalar_type dt_, scalar_type nu_)
+      : mf(mf_), U(U_), dt(dt_), nu(nu_), N(mf_.get_qdim()), 
+	valU(N), gradU(N, N), hessU(N,N*N)
+    { sizes_.resize(1); sizes_[0] = N; /*assert(N == 2);*/ }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf.nb_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+		coeff);
+      ctx.pf()->interpolation(ctx, coeff, valU, mf.get_qdim());
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
+      ctx.pf()->interpolation_hess(ctx, coeff, hessU, mf.get_qdim());
+
+      if (N==2){
+	t[0] = (valU[0] +  nu *dt* hessU(0,3) ) / (1 + gradU(0,0)*dt);
+	t[1] = valU[1] +   nu *dt* hessU(1,3) - dt * t[0] * gradU(1,0);
+      }
+      if (N==3) {
+	t[0] = (valU[0] + nu *dt* hessU(0,4) ) / (1 + gradU(0,0)*dt);
+	t[1] =  valU[1] + nu *dt* hessU(1,4) - dt * t[0] * gradU(1,0);
+	t[2] =  valU[2] + nu *dt* hessU(2,4)  - dt * t[0] * gradU(2,0);
+      }
+    }
+  };
+
+
+  template <typename VEC1, typename VEC2>
+  void asm_improved_non_reflective_bc(VEC1 &VV, 
+				      const getfem::mesh_im &mim, 
+				      const getfem::mesh_fem &mf_u, 
+				      const VEC2 &Un0, 
+				      const getfem::mesh_fem &mf_mult,
+				      scalar_type dt, scalar_type nu,
+				      const getfem::mesh_region &rg) {
+    getfem::generic_assembly assem;
+    improved_non_reflective_bc_nonlinear_term<VEC2> nlterm(mf_u, Un0, dt, nu);
+    assem.set("V(#2)+=comp(NonLin(#1).vBase(#2))(i,:,i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_mult);  
+    assem.push_vec(VV);
+    assem.push_nonlinear_term(&nlterm);
+    assem.assembly(rg);
+  }
+
+
 
 }
 #endif

@@ -1,23 +1,24 @@
 // -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2002-2008 Michel Fournié, Julien Pommier,
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-//===========================================================================
+/* *********************************************************************** */
+/*                                                                         */
+/* Copyright (C) 2002-2005 Michel Fournié, Julien Pommier,                 */
+/*                         Yves Renard, Nicolas Roux.                      */
+/*                                                                         */
+/* This program is free software; you can redistribute it and/or modify    */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
+/*                                                                         */
+/* This program is distributed in the hope that it will be useful,         */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/* GNU Lesser General Public License for more details.                     */
+/*                                                                         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
+/*                                                                         */
+/* *********************************************************************** */
 
 /**@file icare.cc
    @brief Fluid flow (Navier-Stokes) around an obstacle.
@@ -30,13 +31,17 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_Navier_Stokes.h"
 #include "icare.h"
+//#include "gmm/gmm_MUMPS_interface.h"
+
+#include <iostream.h>
+#include <fstream.h>
+
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
-using bgeot::dim_type;
 using bgeot::base_matrix; /* small dense matrices. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -49,7 +54,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 enum {
   DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM,
   NORMAL_PART_DIRICHLET_BOUNDARY_NUM,
-  NONREFLECTIVE_BOUNDARY_NUM
+  NONREFLECTIVE_BOUNDARY_NUM, ON_CYLINDER_NUM
 };
 
 
@@ -69,11 +74,12 @@ struct navier_stokes_problem {
   getfem::mesh_fem mf_mult;  /* mesh_fem for Dirichlet condition.            */
   scalar_type Re;            /* Reynolds number */
   scalar_type nu;            /* 1/Re */
-  scalar_type dt, T, dt_export;
+  scalar_type dt, T, Tinitial, dt_export;
   unsigned N;
   scalar_type residual;      /* max residual for the iterative solvers       */
   int noisy;
   int export_to_opendx;
+  int non_reflective_bc;
 
   std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
@@ -86,7 +92,7 @@ struct navier_stokes_problem {
   std::auto_ptr<problem_definition> pdef;
 
   std::string datafilename;
-  bgeot::md_param PARAM;
+  ftool::md_param PARAM;
 
   plain_vector Un1, Un0, Pn1, Pn0; /* U_{n+1}, U_{n}, P_{n+1} and P_{n} */
 
@@ -109,7 +115,7 @@ struct problem_definition {
   }
   virtual void validate_solution(navier_stokes_problem &p, scalar_type t) {
     plain_vector R; dirichlet_condition(p, t, R);
-    p.mf_rhs.set_qdim(dim_type(p.N));
+    p.mf_rhs.set_qdim(p.N);
     scalar_type err = getfem::asm_L2_dist(p.mim, 
 					  p.mf_u, p.Un1,
 					  p.mf_rhs, R);
@@ -212,8 +218,10 @@ struct problem_definition_Green_Taylor_analytic : public problem_definition {
 			   base_small_vector &F) {
     scalar_type x = P[0], y = P[1];
     F = base_small_vector(p.N);
-    F[0] = -exp(-4.*t*p.nu)*sin(2.*x);
-    F[1] = -exp(-4.*t*p.nu)*sin(2.*y);
+    //F[0] = -exp(-4.*t*p.nu)*sin(2.*x);
+    //F[1] = -exp(-4.*t*p.nu)*sin(2.*y);
+    F[0] =0;
+    F[1] =0;
   }
   virtual scalar_type initial_pressure(navier_stokes_problem &p,
 				       const base_node &P) {
@@ -228,34 +236,103 @@ struct problem_rotating_cylinder : public problem_definition {
   virtual void choose_boundaries(navier_stokes_problem &p) {
     getfem::mesh_region r; 
     getfem::outer_faces_of_mesh(p.mesh, r);
-    for (getfem::mr_visitor i(r); !i.finished(); ++i) {
-      base_node G = gmm::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
-      /*if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
-	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
-      else if (gmm::abs(G[1] - p.BBmax[1]) < 1e-7
-	       || gmm::abs(G[1] - p.BBmin[1]) < 1e-7)
-	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
-	else */
+    unsigned N = p.mesh.dim();
+
+    if (N==2){
+
+
+      
+
+ for (getfem::mr_visitor i(r); !i.finished(); ++i) {
+
+  	base_node G = gmm ::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
+ 
+      
+      cout << "x=" << G[0] << "     y="<< G[1] << "\n";
+   
+	   if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+	{p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+	  cout <<" Non Ref"<< "\n";}
+      else if ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7
+		|| gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7) )
+	{p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+	  cout <<" Normal"<< "\n";}
+
+      else 
 	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+        if (gmm::sqr(G[0]*G[0] + G[1]*G[1]) < 1.2)
+    	  { p.mesh.region(ON_CYLINDER_NUM).add(i.cv(),i.f());
+	  cout <<" Dir"<< "\n";}
+
     }
   }
+
+  if (N==3){
+    for (getfem::mr_visitor i(r); !i.finished(); ++i) {
+      base_node G = gmm ::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
+      if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+      else if ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7
+		|| gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7) )
+	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+      else if ((gmm::abs(G[2] - p.BBmax[2] < 1e-7) 
+                || gmm::abs(G[2] - p.BBmin[2] < 1e-7) ) && 
+                !(gmm::abs(G[1] - p.BBmax[1]) < 1e-7 || gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && 
+                !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7))
+        p.mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(),i.f());
+      else 
+	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+        if (gmm::sqr(G[0]*G[0] + G[1]*G[1] + G[2]*G[2]) < 1.2)
+	  p.mesh.region(ON_CYLINDER_NUM).add(i.cv(),i.f());
+    }
+  }
+  }
+
+
   virtual void dirichlet_condition(navier_stokes_problem &p,
 				   const base_node &P, scalar_type /*t*/,
 				   base_small_vector &r) {
-    r = base_small_vector(p.N);
+    r = base_small_vector(p.N); 
+
+    if (p.N==2){
     scalar_type x = P[0], y = P[1];
-    bool on_cylinder = true;
-    if (gmm::abs(x-p.BBmin[0]) < 1e-7) on_cylinder = false;
-    if (gmm::abs(y-p.BBmin[1]) < 1e-7) on_cylinder = false;
-    if (gmm::abs(x-p.BBmax[0]) < 1e-7) on_cylinder = false;
-    if (gmm::abs(y-p.BBmax[1]) < 1e-7) on_cylinder = false;
-    if (!on_cylinder) {
-      //if (!(gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1])< 1e-7))
-      r[0] = 1;
-    } else {
-      r[0] = -2.*alpha*y; /* HYPOTHESIS: cylinder centered at (0,0) */
-      r[1] = 2.*alpha*x;
+    if (gmm::abs(x - p.BBmax[0]) < 1e-7)
+      {}
+      else if ((gmm::abs(y - p.BBmax[1]) < 1e-7
+		|| gmm::abs(y - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(x - p.BBmin[0]) < 1e-7) ){}
+      else{ 
+        r[0] = 1.0;
+        r[1] = 0.0;
+        if (gmm::sqr(x*x + y*y) < 1.2){
+    	    r[0] = -2.*alpha*y; /* HYPOTHESIS: cylinder centered at (0,0) */
+	    r[1] = 2.*alpha*x;
+	}
+      }
     }
+
+    if (p.N==3){
+    scalar_type x = P[0], y = P[1], z = P[2];
+    if (gmm::abs(x - p.BBmax[0]) < 1e-7)
+	{}
+      else if ((gmm::abs(y - p.BBmax[1]) < 1e-7
+		|| gmm::abs(y - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(x - p.BBmin[0]) < 1e-7) ){}
+      else if ((gmm::abs(z - p.BBmax[2] < 1e-7) 
+                || gmm::abs(z - p.BBmin[2] < 1e-7) ) && 
+                !(gmm::abs(y - p.BBmax[1]) < 1e-7 || gmm::abs(y - p.BBmin[1]) < 1e-7 ) && 
+                !(gmm::abs(x - p.BBmin[0]) < 1e-7)){}
+      else{ 
+        r[0] = 1.0;
+        r[1] = 0.0;
+        r[2] = 0.0;
+        if (gmm::sqr(x*x + y*y + z*z) < 1.2){
+	  r[0] = -2.*alpha*y; 
+	  r[1] = 2.*alpha*x;
+	  r[2] = 0.0;
+	}
+      }
+    }  
+
+
   }
 
    virtual void source_term(navier_stokes_problem &p,
@@ -269,14 +346,23 @@ struct problem_rotating_cylinder : public problem_definition {
 	 << gmm::vect_norm2(p.Un1) << ", |p|="
 	 << gmm::vect_norm2(p.Pn1) << "\n";
   }
-  virtual base_small_vector initial_velocity(navier_stokes_problem &,
-					     const base_node &) {
+  virtual base_small_vector initial_velocity(navier_stokes_problem &p,const base_node &) { 
+    unsigned N = p.mesh.dim();
+    if (N==2){
     base_small_vector r(2); r[0] = 1; r[1] = 0; return r;
+    }
+
+    if (N==3){
+    base_small_vector r(3); r[0] = 1; r[1] = 0; r[2] = 0; return r;
+    }
   }
+
+
   virtual scalar_type initial_pressure(navier_stokes_problem &,
 				       const base_node &) {
-    return 0.;
+    return 0.0; 
   }
+
   problem_rotating_cylinder(scalar_type aa) : alpha(aa) {}
 };
 
@@ -307,24 +393,29 @@ void navier_stokes_problem::init(void) {
 
   nu = PARAM.real_value("NU", "Viscosity");
   dt = PARAM.real_value("DT", "Time step");
-  T = PARAM.real_value("T", "Final time");
+  T  = PARAM.real_value("T", "Final time");
+  Tinitial = PARAM.real_value("Tinitial","Initial Time");
   dt_export = PARAM.real_value("DT_EXPORT", "Time step for export");
-  noisy = int(PARAM.int_value("NOISY", ""));
-  option = int(PARAM.int_value("OPTION", "option"));
+  noisy = PARAM.int_value("NOISY", "");
+  option = PARAM.int_value("OPTION", "option");
 
-  int prob = int(PARAM.int_value("PROBLEM", "the problem"));
+  int prob = PARAM.int_value("PROBLEM", "the problem");
   switch (prob) {
     case 1: pdef.reset(new problem_definition_Stokes_analytic); break;
     case 2: pdef.reset(new problem_definition_Green_Taylor_analytic); break;
     case 3: pdef.reset(new problem_rotating_cylinder(PARAM.real_value("CYL_ROT_SPEED"))); break;
-    default: GMM_ASSERT1(false, "wrong PROBLEM value");
+    default: DAL_THROW(dal::failure_error, "wrong PROBLEM value");
   }
 
-  export_to_opendx = int(PARAM.int_value("DX_EXPORT", ""));
+  non_reflective_bc = PARAM.int_value("NON_REFLECTIVE_BC", "the type of non-reflective boundary condition");
+  if (non_reflective_bc < 0 || non_reflective_bc > 2)
+    DAL_THROW(dal::failure_error, "arg wrong bc");
+
+  export_to_opendx = PARAM.int_value("DX_EXPORT", "");
   first_export = true;
 
   Re = 1 / nu;
-  mf_u.set_qdim(dim_type(N));
+  mf_u.set_qdim(N);
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -340,9 +431,11 @@ void navier_stokes_problem::init(void) {
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
-    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM "
+    if (!pf_u->is_lagrange()) {
+      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
+    }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
@@ -351,9 +444,11 @@ void navier_stokes_problem::init(void) {
 
   std::string mult_fem_name = PARAM.string_value("MULTIPLIER_FEM_TYPE");
   if (mult_fem_name.size() == 0) {
-    GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM "
+    if (!pf_u->is_lagrange()) {
+      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
 		<< FEM_TYPE << ". In that case you need to set "
 		<< "MULTIPLIER_FEM_TYPE in the .param file");
+    }
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_mult.set_finite_element(mesh.convex_index(), 
@@ -379,7 +474,7 @@ void navier_stokes_problem::solve() {
   case 2 : solve_FULLY_CONSERVATIVE(); break;
   case 3 : solve_PREDICTION_CORRECTION(); break;
   case 4 : solve_PREDICTION_CORRECTION2(); break;
-  default: GMM_ASSERT1(false, "unknown method");
+  default: DAL_THROW(dal::failure_error, "unknown method");
   }
 }
 
@@ -466,6 +561,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   getfem::standard_model_state MSL(velocity_dyn), MSM(mixed_dyn);
   
   do_export(0);
+  
   for (scalar_type t = dt; t <= T; t += dt) {
 
     if (!stokes_only) velocity_nonlin->set_U0(Un0);
@@ -616,6 +712,13 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof()), 
     USTAR(mf_u.nb_dof()), USTARbis(mf_u.nb_dof());
 
+
+
+  /////// REPRISE DES CALCULS EVENTUELS //////
+  /////// utiliser gmm::vecload("sortie.U100",Un0) 
+  //////  gmm::vecload("sortie.P100",Pn0)
+  ////// initialiser t et eviter les 2 initialisations suivantes
+
   pdef->initial_condition_u(*this, Un0);
   pdef->initial_condition_p(*this, Pn0);
 
@@ -686,22 +789,21 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   // Mass Matrix
   sparse_matrix M(nbdof_u, nbdof_u);
   asm_mass_matrix(M, mim, mf_u, mpirg);
-  
-
+ 
 
   // Matrix p div u
   sparse_matrix B(nbdof_p, nbdof_u);
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
   
-  mf_mult.set_qdim(dim_type(N));
-  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_region(DIRICHLET_BOUNDARY_NUM);
-  dal::bit_vector dofon_nonref =mf_mult.dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
+  mf_mult.set_qdim(N);
+  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
+  dal::bit_vector dofon_nonref =mf_mult.dof_on_set(NONREFLECTIVE_BOUNDARY_NUM);
   dofon_Dirichlet.setminus(dofon_nonref);
 
   // Normal part Dirichlet condition
   mf_mult.set_qdim(1);
   dal::bit_vector dofon_NDirichlet
-    = mf_mult.dof_on_region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
+    = mf_mult.dof_on_set(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   std::vector<size_type> ind_ct_ndir;
   for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) {
     if (dofon_Dirichlet.is_in(i*N) || dofon_nonref.is_in(i*N)) 
@@ -727,7 +829,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   cout << "Nb of Normal par Dirichlet constraints : " << nbdof_NDir << endl;
 
   // Dirichlet condition
-  mf_mult.set_qdim(dim_type(N));
+  mf_mult.set_qdim(N);
   size_type nbdof_Dir = dofon_Dirichlet.card();
   std::vector<size_type> ind_ct_dir;
   for (dal::bv_visitor i(dofon_Dirichlet); !i.finished(); ++i) 
@@ -778,24 +880,88 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   gmm::sub_interval IP(0, nbdof_p);
   asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K2, IP),
 						 mim, mf_p, mpirg);
-  K2(nbdof_p, 0) = K2(0, nbdof_p) = 1.0; // set the first pressure dof to 0
-  
 
+  for (unsigned i=0;i<nbdof_p-1; ++i) {
+    K2(nbdof_p,i) = K2(i,nbdof_p) = 1.0;}
+    //K2(nbdof_p, 0) = K2(0, nbdof_p) = 1.0;} // set the first pressure dof to 0
+  K2(nbdof_p,nbdof_p) = 0.0;
   // 
   // dynamic problem
   //
   plain_vector DF(nbdof_u), F(nbdof_rhs), USTAR(nbdof_u), USTARbis(nbdof_u);
   plain_vector Phi(nbdof_p);
 
+  /////// REPRISE DES CALCULS EVENTUELS //////
+  std::string initfile_U = PARAM.string_value("INIT_FILE_U");
+  std::string initfile_P = PARAM.string_value("INIT_FILE_P");
+  
+  if (initfile_U.size() == 0 || initfile_P.size() == 0) {
   pdef->initial_condition_u(*this, Un0);
   pdef->initial_condition_p(*this, Pn0);
+  }  else {
+  gmm::vecload(initfile_U,Un0); 
+  gmm::vecload(initfile_P,Pn0);
+  }
+  ////// initialiser t et eviter les 2 initialisations suivantes
 
-  //gmm::clear(Un0); gmm::clear(Pn0);
-  gmm::vecsave("Un0", Un0);
-  gmm::vecsave("Pn0", Pn0);
+  ofstream coeffTP("coeffTP.data");
+  ofstream ptPartData("ptPart.data");
+
+  // Recherche d'un point de réference pour le calcul des coeff de trainée ...
+
+  scalar_type BoxXmin =  PARAM.real_value("BOXXmin", "Particular Point xMin");
+  scalar_type BoxXmax =  PARAM.real_value("BOXXmax", "Particular Point xMax");
+  scalar_type BoxYmin =  PARAM.real_value("BOXYmin", "Particular Point yMin");
+  scalar_type BoxYmax =  PARAM.real_value("BOXYmax", "Particular Point yMax");
+
+  base_node ptRef(3), ptPartU(3), ptPartP(3);
+
+  /* for (dal::bv_visitor i(mesh.points_index()); !i.finished(); ++i){
+    base_node BN =  mesh.points()[i];
+    if (BN[0]==BBmin[0] && BN[1]==BBmin[1] ) {
+      //cout << mesh.points()[i] << "   "<< i << endl;
+      ptRef[0] = i;
+      ptRef[1] = BN[0];
+      ptRef[2] = BN[1];
+    }
+    }*/
+
+ for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+    bgeot :: base_node BN =  mf_p.point_of_dof(i);
+    if (BN[0]==BBmin[0] && BN[1]==BBmin[1] ) {
+      cout << "Reference Point " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
+      ptRef[0] = i;
+      ptRef[1] = BN[0];
+      ptRef[2] = BN[1];
+    }
+  } 
+  
+  
+  for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+    bgeot :: base_node BN =  mf_p.point_of_dof(i);
+    if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
+      cout << "Point in Box " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
+      ptPartP[0] = i;
+      ptPartP[1] = BN[0];
+      ptPartP[2] = BN[1];
+    }
+  } 
+  
+  for (unsigned i=0; i< mf_u.nb_dof(); ++i){
+    bgeot :: base_node BN =  mf_u.point_of_dof(i);
+    if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
+      cout << "Point in Box " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
+      ptPartU[1] = BN[0];
+      ptPartU[2] = BN[1]; 
+      // Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
+      // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
+      // D'ou la modif suivante
+      ptPartU[0] = i - N + 1;
+    } 
+  }
   
   do_export(0);
-  for (scalar_type t = dt; t <= T; t += dt) {
+  for (scalar_type t = Tinitial + dt; t <= T; t += dt) {
 
     //
     // Assembly of the first linear system
@@ -821,7 +987,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
     //    plain_vector subY1(nbdof_u);
     // gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
-    /*
+
     plain_vector subY1(nbdof_u);
     gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
 
@@ -829,7 +995,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     pdef->source_term(*this, t, F);
     getfem::asm_source_term(subY1, mim, mf_u, mf_rhs, F,
 			    mpirg);
-    */
+
     // Normal Dirichlet condition
     gmm::copy(HND, gmm::sub_matrix(A1, I2, I1));
     gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A1, I1, I2));
@@ -859,33 +1025,24 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A2, I1, I4));
     {
       plain_vector VV(mf_mult.nb_dof());
-    /*  if (t < 0.2)
-	getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg);
-      else {
-	*/
-	//getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
-	
+      /*  if (t < 0.2)
+	  getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpinonrefrg);
+	  else {
+      */
+      //getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, Un0, mpinonrefrg);
+      
       //}
-	getfem::generic_assembly assem;
-    // construction du terme de droite dans [M]*Unp1=F
-    
-    // mise en place de Un + Un.N*(dUn/dn).N
-
-    std::stringstream ss;
-    ss << "u=data$1(#1); "
-      "V(#1)+="
-       << -dt << "*"
-      " comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))"
-      "(l,i,i,m,j,k,j,:,k).u(l).u(m)+"
-      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";
- 
-    assem.set(ss.str());
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_mult);  
-    assem.push_data(Un0);
-    assem.push_vec(VV);
-    assem.assembly(mpinonrefrg);
+      getfem::generic_assembly assem;
+      // construction du terme de droite dans [M]*Unp1=F
+      
+      // mise en place de Un + Un.N*(dUn/dn).N
+      
+      
+      if (non_reflective_bc == 1) {
+	asm_basic_non_reflective_bc(VV, mim, mf_u, Un0, mf_mult, dt, nu, mpinonrefrg);
+      } else {
+	asm_improved_non_reflective_bc(VV, mim, mf_u, Un0, mf_mult, dt, nu, mpinonrefrg);
+      }
       gmm::copy(gmm::sub_vector(VV, SUB_CT_NONREF), gmm::sub_vector(Y, I4));
     }
 
@@ -899,13 +1056,19 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     {
       double rcond;
       plain_vector X(sizelsystem);
-      SuperLU_solve(A1, X, Y, rcond);
+      
+ 
+      gmm::iteration iter(1E-8);
+      // gmm::gmres(A1,X,Y,gmm::identity_matrix(),10,iter);
+      //gmm::bicgstab(A1,X,Y,gmm::identity_matrix(),iter);
+      // ?? gmm::bicgstab(A1,X,Y,gmm::diagonal_precond<sparse_matrix>(A1),iter);
+
+
+            MUMPS_solve(A1,X,Y);
+
+	    //      SuperLU_solve(A1, X, Y, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
       gmm::copy(gmm::sub_vector(X, I1), USTAR);
-      
-      gmm::HarwellBoeing_IO::write("A1.hb", A1);
-      gmm::vecsave("Y", Y);
-      gmm::vecsave("USTAR", USTAR); exit(1);
     }
 
     cout << "U* - Un0 = " << gmm::vect_dist2(USTAR, Un0) << endl;
@@ -940,20 +1103,110 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::add(gmm::scaled(Phi, 1./dt), Pn0, Pn1);
     
     pdef->validate_solution(*this, t);
-    cout << "Un1 - Un0 = " << gmm::vect_dist2(Un1, Un0) << ", t=" << t << ", T=" << T << endl;
+    cout << "Un1 - Un0 = " << gmm::vect_dist2(Un1, Un0) << endl;
     
     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+
     do_export(t);
+ 
+   
+    if (N==2) {
+
+      plain_vector DU(mf_rhs.nb_dof() * N * N);
+      plain_vector nuDxU(mf_rhs.nb_dof());
+      plain_vector nuDyU(mf_rhs.nb_dof());
+      plain_vector nuDxV(mf_rhs.nb_dof());
+      plain_vector nuDyV(mf_rhs.nb_dof());
+      plain_vector PP(mf_p.nb_dof());
+
+      compute_gradient(mf_u, mf_rhs, Un0, DU);
+      for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
+	nuDxU[i] = nu*DU[i*N*N + 0]; // DxUx
+        nuDyU[i] = nu*DU[i*N*N + 1]; // DyUx
+        nuDxV[i] = nu*DU[i*N*N + 2]; // DxUy
+        nuDyV[i] = nu*DU[i*N*N + 3]; // DyUy
+         }
+
+      std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
+      //sparse_matrix v(1,1), w(1,1);
+      getfem :: mesh_region mpioncylinder = 
+	mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_NUM);
+
+       plain_vector Pref(mf_p.nb_dof());
+       for (int i=0; i<mf_p.nb_dof(); ++i){ Pref[i] = Pn1[ptRef[0]];}
+       gmm::add(Pn1,gmm::scaled(Pref,-1.0),Pref);
+
+       getfem :: traineePortance2D(Cxn,Cxp,Cyn,Cyp,mim,mf_rhs,mf_p,nuDxU,nuDyU,nuDxV,nuDyV,Pref,mpioncylinder);
+      
+       coeffTP << t <<" " <<  2*Cxn[0]<<" "<<2*Cxp[0]<<" "<< 2*(Cxn[0]+Cxp[0])<<" "<< 2*Cyn[0]<<" "<< 2*Cyp[0] <<" "<< 2*(Cyn[0]+Cyp[0])<<" " << endl;
+
+      ptPartData << t << " " << Un1[ptPartU[0]] << " " << Un1[ptPartU[0] + 1] << " " << Pn1[ptPartP[0]] << endl;
+
+
+    }
+
+//     if (N==3) {
+//       plain_vector DU(mf_rhs.nb_dof() * N * N);
+//       plain_vector nuDxU(mf_rhs.nb_dof()); 
+//       plain_vector nuDyU(mf_rhs.nb_dof());
+//       plain_vector nuDzU(mf_rhs.nb_dof());
+//       plain_vector nuDxV(mf_rhs.nb_dof()); 
+//       plain_vector nuDyV(mf_rhs.nb_dof());
+//       plain_vector nuDzV(mf_rhs.nb_dof());
+//       plain_vector nuDxW(mf_rhs.nb_dof());  
+//       plain_vector nuDyW(mf_rhs.nb_dof());
+//       plain_vector nuDzW(mf_rhs.nb_dof());
+
+//       plain_vector PP(mf_p.nb_dof());
+
+//       compute_gradient(mf_u, mf_rhs, Un0, DU);
+//       for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
+// 	nuDxU[i] = nu*DU[i*N*N + 0];
+//         nuDyU[i] = nu*DU[i*N*N + 1];
+// 	nuDzU[i] = nu*DU[i*N*N + 2];
+//         nuDxV[i] = nu*DU[i*N*N + 3];
+//         nuDyV[i] = nu*DU[i*N*N + 4];
+// 	nuDzV[i] = nu*DU[i*N*N + 5];
+// 	nuDxW[i] = nu*DU[i*N*N + 6];
+//         nuDyW[i] = nu*DU[i*N*N + 7];
+// 	nuDzW[i] = nu*DU[i*N*N + 8];
+//          }
+
+//       std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
+//       //sparse_matrix v(1,1), w(1,1);
+//       getfem :: mesh_region mpioncylinder = 
+// 	mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_NUM);
+
+//        plain_vector Pref(mf_p.nb_dof());
+//        for (int i=0; i<mf_p.nb_dof(); ++i){ Pref[i] = Pn1[ptRef[0]];}
+//        gmm::add(Pn1,gmm::scaled(Pref,-1.0),Pref);
+
+//        getfem :: traineePortance3D(Cxn,Cxp,Cyn,Cyp,mim,mf_u,mf_p,nuDxU,nuDyU,nuDzU,nuDxV,nuDyV,nuDzV,nuDxW,nuDyW,nuDzW,Pref,mpioncylinder);
+      
+//        coeffTP << t <<" " <<  2*Cxn[0]<<" "<<2*Cxp[0]<<" "<< 2*(Cxn[0]-Cxp[0])<<" "<< 2*Cyn[0]<<" "<< 2*Cyp[0] <<" "<< 2*(Cyn[0] - Cyp[0])<<" " << endl;
+
+//       ptPartData << t << " " << Un1[ptPartU[0]] << " " << Un1[ptPartU[0] + 1] << " " << Pn1[ptPartP[0]] << endl;
+//     }
+
+
   }
+  coeffTP.close();
+  ptPartData.close();
 }
 
 
 
-void navier_stokes_problem::do_export(scalar_type t) {
+
+
+  void navier_stokes_problem::do_export(scalar_type t) {
+    /*dal :: bit_vector  ddd = mf_p.points_index();
+      cout << ddd  << endl;*/ 
   if (!export_to_opendx) return;
   if (first_export) {
-    mf_u.write_to_file("icare.mf_u", true);
-    mf_p.write_to_file("icare.mf_p", true);
+    mf_u.write_to_file("SolIcare/icare.mf_u", true);
+    mf_p.write_to_file("SolIcare/icare.mf_p", true);
+    mim.write_to_file("SolIcare/icare.mim",true);
+    
 
     exp.reset(new getfem::dx_export(datafilename + ".dx", false));
     if (N <= 2)
@@ -969,7 +1222,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
     t_export += dt_export;
     
     static int cnt = 0;
-    char s[128]; sprintf(s, "icare.U%d", cnt++);
+    char s[128]; sprintf(s, "SolIcare/icare.U%d", cnt++);
     gmm::vecsave(s, Un0);
     
     exp->write_point_data(mf_u, Un0);
@@ -977,10 +1230,10 @@ void navier_stokes_problem::do_export(scalar_type t) {
     cout << "Saving Pressure, |p| = " << gmm::vect_norm2(Pn1) << "\n";
     exp->write_point_data(mf_p, Pn1);
     exp->serie_add_object("pressure");
-
-        
+  
+         
     static int cntp=0;
-    char sp[128]; sprintf(sp, "icare.P%d", cntp++);
+    char sp[128]; sprintf(sp, "SolIcare/icare.P%d", cntp++);
     gmm::vecsave(sp, Pn0);
     
     if (N == 2) {
@@ -994,7 +1247,80 @@ void navier_stokes_problem::do_export(scalar_type t) {
       cout << "Saving Rot, |rot| = " << gmm::vect_norm2(Rot) << "\n";
       exp->write_point_data(mf_rhs, Rot);
       exp->serie_add_object("rot");
+    
+   if (PARAM.int_value("VTK_EXPORT")) {
+            cout << "export to " << datafilename + "U.vtk" << "..\n";
+      static int cnta=0;
+      char sa[128]; sprintf(sa, "SolIcare/icareU%d.vtk", cnta++);
+      getfem::vtk_export tata( sa,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      tata.exporting(mf_u); 
+      tata.write_point_data(mf_u, Un0, "vitesse");
+
+      static int cnte=0;
+      char se[128]; sprintf(se, "SolIcare/icareP%d.vtk", cnte++);
+      getfem::vtk_export tete( se,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      tete.exporting(mf_p);
+      tete.write_point_data(mf_p, Pn0, "pression");
+
+      static int cnti=0;
+      char si[128]; sprintf(si, "SolIcare/icareRot%d.vtk", cnti++);
+      getfem::vtk_export titi( si,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      titi.exporting(mf_rhs);
+      titi.write_point_data(mf_rhs, Rot, "rotationnel");
+      }
     }
+    else if (N == 3) {
+      plain_vector DU(mf_rhs.nb_dof() * N * N);
+      plain_vector RotX(mf_rhs.nb_dof());
+      plain_vector RotY(mf_rhs.nb_dof());
+      plain_vector RotZ(mf_rhs.nb_dof());
+      compute_gradient(mf_u, mf_rhs, Un0, DU);
+      for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
+	RotX[i] = DU[i*N*N + 7] - DU[i*N*N + 5];
+        RotY[i] = DU[i*N*N + 2] - DU[i*N*N + 6];
+        RotZ[i] = DU[i*N*N + 3] - DU[i*N*N + 1];
+      } 
+    if (PARAM.int_value("VTK_EXPORT")) {
+            cout << "export to " << datafilename + "U.vtk" << "..\n";
+      static int cntq=0;
+      char sq[128]; sprintf(sq, "SolIcare/icareU%d.vtk", cntq++);
+      getfem::vtk_export tata( sq,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      tata.exporting(mf_u); 
+      tata.write_point_data(mf_u, Un0, "vitesse");
+      static int cntr=0;
+      char sr[128]; sprintf(sr, "SolIcare/icareP%d.vtk", cntr++);
+      getfem::vtk_export toto( sr,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      toto.exporting(mf_p);
+      toto.write_point_data(mf_p, Pn0, "pression");
+      static int cntt=0;
+      char st[128]; sprintf(st, "SolIcare/icareRotX%d.vtk", cntt++);
+      getfem::vtk_export titi( st,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      titi.exporting(mf_rhs);
+      titi.write_point_data(mf_rhs, RotX, "rotationnelX");
+      
+      static int cntu=0;
+      char su[128]; sprintf(su, "SolIcare/icareRotY%d.vtk", cntu++);
+      getfem::vtk_export tete( su,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      tete.exporting(mf_rhs);
+      tete.write_point_data(mf_rhs, RotY, "rotationnelY");
+      
+      static int cntv=0;
+      char sv[128]; sprintf(sv, "SolIcare/icareRotZ%d.vtk", cntv++);
+      getfem::vtk_export tyty( sv,
+                             PARAM.int_value("VTK_EXPORT")==1);
+      tyty.exporting(mf_rhs);
+      tyty.write_point_data(mf_rhs, RotZ, "rotationnelZ");
+    }
+    }
+
+
   }
 }
 
@@ -1004,7 +1330,7 @@ void navier_stokes_problem::do_export(scalar_type t) {
 
 int main(int argc, char *argv[]) {
 
-  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
+  DAL_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   try {    
@@ -1013,8 +1339,8 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.solve();
-  }
-  GMM_STANDARD_CATCH_ERROR;
+   }
+  DAL_STANDARD_CATCH_ERROR;
 
   return 0; 
 }
