@@ -104,6 +104,7 @@
 /* ********************************************************************** */
 /*	C++ Standard Headers.						  */
 /* ********************************************************************** */
+#include <clocale>
 #include <cstdlib>
 #include <cstddef>
 #include <cmath>
@@ -133,6 +134,35 @@ using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 
 namespace gmm {
+
+  /* ********************************************************************* */
+  /*       Change locale temporarily.                                      */
+  /* ********************************************************************* */
+
+  class standard_locale {
+    std::string cloc;
+    std::locale cinloc;
+    
+  public :
+    inline standard_locale(void)
+      : cloc(setlocale(LC_NUMERIC, 0)), cinloc(cin.getloc())
+    { setlocale(LC_NUMERIC,"C"); cin.imbue(std::locale("C")); }
+    inline ~standard_locale()
+    { setlocale(LC_NUMERIC, cloc.c_str()); cin.imbue(cinloc); }
+  };
+
+  class stream_standard_locale {
+    std::locale cloc;
+    std::ios &io;
+    
+  public :
+    inline stream_standard_locale(std::ios &i)
+      : cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
+    inline ~stream_standard_locale() { io.imbue(cloc); }
+  };
+
+
+
 
   /* ******************************************************************* */
   /*       Clock functions.                                              */

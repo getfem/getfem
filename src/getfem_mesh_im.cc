@@ -106,6 +106,7 @@ namespace getfem {
 
 
   void mesh_im::read_from_file(std::istream &ist) {
+    gmm::stream_standard_locale sl(ist);
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
     std::string tmp;
@@ -154,8 +155,8 @@ namespace getfem {
     o.close();
   }
 
-  void mesh_im::write_to_file(std::ostream &ost) const
-  {
+  void mesh_im::write_to_file(std::ostream &ost) const {
+    gmm::stream_standard_locale sl(ost);
     ost << '\n' << "BEGIN MESH_IM" << '\n' << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << " CONVEX " << cv;

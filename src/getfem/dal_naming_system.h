@@ -96,14 +96,20 @@ namespace dal {
     };
     
     int mns_lexem(std::string s, size_type i, size_type &lenght);
+    pmethod method_(std::string name, size_type &i, bool throw_if_not_found);
     
+
+
+
   public :
     
     void add_suffix(std::string name, pfunction pf);
     void add_generic_function(pgenfunction pf);
     std::string normative_name_of_method(pmethod pm) const;
     std::string shorter_name_of_method(pmethod pm) const;
-    pmethod method(std::string name, size_type &i, bool throw_if_not_found);
+    pmethod method(std::string name, size_type &i,
+		   bool throw_if_not_found = true)
+    { gmm::standard_locale sl; return method_(name, i, throw_if_not_found); }
     naming_system(std::string pr) : prefix(pr) { nb_genfunctions = 0; }
     
   };
@@ -179,8 +185,8 @@ namespace dal {
   
   template <class METHOD>
   typename naming_system<METHOD>::pmethod
-  naming_system<METHOD>::method(std::string name, size_type &i,
-				bool throw_if_not_found = true) {
+  naming_system<METHOD>::method_(std::string name, size_type &i,
+				 bool throw_if_not_found) {
     int state = 0;
     bool error = false;
     bool isend = false;
@@ -213,7 +219,7 @@ namespace dal {
 	switch (lex) {
 	case 1  : i += l; break;
 	case 2  : 
-	  pm = method(name, i, throw_if_not_found);
+	  pm = method_(name, i, throw_if_not_found);
 	  if (!pm) return pm;
 	  params.push_back(parameter(pm));
 	  state = 3; break;
@@ -238,7 +244,7 @@ namespace dal {
       GMM_ASSERT1(!error, "Syntax error on position " << i
 		  << " of the string : " << name);
       if (isend) {
-	std::stringstream norm_name;
+	std::stringstream norm_name; norm_name.imbue(std::locale("C"));
 	norm_name << suff;
 	if (params.size() > 0) {
 	  norm_name << '(';

@@ -132,6 +132,7 @@ namespace getfem {
   */
   static void import_gmsh_msh_file(std::ifstream& f, mesh& m, int deprecate=0)
   {
+    gmm::stream_standard_locale sl(f);
     /* print general warning */
     GMM_WARNING3("" << endl
               << "  All regions must have different number!");
@@ -303,6 +304,7 @@ namespace getfem {
   supports linear and quadratic elements (quadrilaterals, use 9(or 27)-noded elements)
   */
   static void import_gid_msh_file(std::ifstream& f, mesh& m) {
+    gmm::stream_standard_locale sl(f);
     /* read the node list */
     size_type dim;
     enum { LIN,TRI,QUAD,TETR, PRISM, HEX,BADELTYPE } eltype=BADELTYPE;
@@ -466,6 +468,7 @@ namespace getfem {
   (only triangular 2D meshes)
   */
   static void import_am_fmt_file(std::ifstream& f, mesh& m) {
+    gmm::stream_standard_locale sl(f);
     /* read the node list */
     std::vector<size_type> tri;
     size_type nbs,nbt;
@@ -491,6 +494,7 @@ namespace getfem {
   triangular/quadrangular 2D meshes
   */
   static void import_emc2_mesh_file(std::ifstream& f, mesh& m) {
+    gmm::stream_standard_locale sl(f);
     /* read the node list */
     std::vector<size_type> tri;
     size_type nbs=0,nbt=0,nbq=0,dummy;

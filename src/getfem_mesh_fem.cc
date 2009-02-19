@@ -316,6 +316,7 @@ namespace getfem {
   mesh_fem::~mesh_fem() {}
 
   void mesh_fem::read_from_file(std::istream &ist) {
+    gmm::stream_standard_locale sl(ist);
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
     std::string tmp, tmp2;
@@ -413,6 +414,7 @@ namespace getfem {
   }
 
   void mesh_fem::write_to_file(std::ostream &ost) const {
+    gmm::stream_standard_locale sl(ost);
     ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
     ost << "QDIM " << size_type(get_qdim()) << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {

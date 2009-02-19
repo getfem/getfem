@@ -1133,6 +1133,7 @@ namespace getfem {
   }
   
   void asm_tokenizer::get_tok() {
+    gmm::standard_locale sl;
     std::string sub = str.substr(tok_pos, 10);
     //cerr << "tok_pos=" << tok_pos << "... '" << sub << "'..." << endl;
     curr_tok_ival = -1;

@@ -123,6 +123,9 @@ namespace bgeot {
   }
 
   static base_poly read_expression(short_type n, std::istream &f) {
+    gmm::stream_standard_locale sl(f);
+    gmm::standard_locale sll;
+    
     base_poly result(n,0);
     std::string s;
     int i = get_next_token(s, f), j;

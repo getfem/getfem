@@ -376,10 +376,7 @@ namespace getfem {
   };
 
   void mesh::read_from_file(std::istream &ist) {
-    /* if the application does a setlocale, then we have a problem..*/
-    GMM_ASSERT1(atof("1.5") == 1.5f,
-	       "Go fix your locales! The numerical separator MUST be the dot");
-
+    gmm::stream_standard_locale sl(ist);
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
     std::string tmp;
@@ -545,6 +542,7 @@ namespace getfem {
 
   void mesh::write_to_file(std::ostream &ost) const {
     ost.precision(16);
+    gmm::stream_standard_locale sl(ost);
     ost << '\n' << "BEGIN POINTS LIST" << '\n' << '\n';
     for (size_type i = 0; i < points_tab.size(); ++i)
       if (is_point_valid(i) ) {
@@ -559,30 +557,6 @@ namespace getfem {
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
 
     for (dal::bv_visitor bnum(valid_cvf_sets); !bnum.finished(); ++bnum) {
-      /*if (region(bnum).is_boundary()) {
-	ost << " BEGIN BOUNDARY " << bnum;	
-	size_type cnt = 0;
-	for (dal::bv_visitor cv(cvf_sets[bnum].index()); !cv.finished();
-	     ++cv) {
-	  for (size_type f = 0; f < MAX_FACES_PER_CV; ++f)
-	    if (cvf_sets[bnum].faces_of_convex(cv)[f]) {
-	      if ((cnt++ % 10) == 0) ost << '\n' << " ";
-	      ost << " " << cv << "/" << f;
-	  }
-	}
-	ost << '\n' << " END BOUNDARY " << bnum << '\n';
-      }
-      else {
-	ost << " BEGIN CONVEX SET " << bnum;
-	size_type cnt = 0;
-	for (dal::bv_visitor cv(cvf_sets[bnum].index()); !cv.finished();
-	     ++cv, ++cnt) {
-	  if ((cnt % 20) == 0) ost << '\n' << " ";
-	  ost << " " << cv;
-	}
-	ost << '\n' << " END CONVEX SET " << bnum << '\n';
-      }
-      */
       ost << "BEGIN REGION " << bnum << "\n" << region(bnum) << "\n"
 	  << "END REGION " << bnum << "\n";
     }

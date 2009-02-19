@@ -47,7 +47,6 @@ namespace bgeot
   /*       Read a char string.                                             */
   /* ********************************************************************* */
 
-
   bool read_until(std::istream &ist, const char *st);
 
   /** Very simple lexical analysis of general interest for reading small

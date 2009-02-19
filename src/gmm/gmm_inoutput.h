@@ -211,6 +211,8 @@ namespace gmm {
       int Valperline, Valwidth, Valprec, Nentries;
       int Valflag;           /* Indicates 'E','D', or 'F' float format */
       char line[BUFSIZ];
+      gmm::standard_locale sl;
+
 
       /*  Parse the array input formats from Line 3 of HB file  */
       ParseIfmt(Ptrfmt,&Ptrperline,&Ptrwidth);
@@ -383,6 +385,7 @@ namespace gmm {
     int Valperline, Valwidth, Valprec;
     int Valflag;           /* Indicates 'E','D', or 'F' float format */
     char pformat[16],iformat[16],vformat[19],rformat[19];
+    gmm::standard_locale sl;
     
     if ( Type[0] == 'C' )
       { nvalentries = 2*nz; nrhsentries = 2*M; }
@@ -808,6 +811,7 @@ namespace gmm {
     char data_type[MM_MAX_TOKEN_LENGTH];
     char storage_scheme[MM_MAX_TOKEN_LENGTH];
     char *p;
+    gmm::standard_locale sl;
     /*    int ret_code; */
     
     mm_clear_typecode(matcode);  
@@ -1041,6 +1045,7 @@ namespace gmm {
 
 
   inline void MatrixMarket_IO::open(const char *filename) {
+    gmm::standard_locale sl;
     if (f) { fclose(f); }
     SECURE_FOPEN(&f, filename, "r");
     GMM_ASSERT1(f, "Sorry, cannot open file " << filename);
@@ -1062,6 +1067,7 @@ namespace gmm {
   }
 
   template <typename Matrix> void MatrixMarket_IO::read(Matrix &A) {
+    gmm::standard_locale sl;
     typedef typename linalg_traits<Matrix>::value_type T;
     GMM_ASSERT1(f, "no file opened!");
     GMM_ASSERT1(!is_complex_double__(T()) || isComplex,
@@ -1088,6 +1094,7 @@ namespace gmm {
   template <typename T, typename INDI, typename INDJ, int shift> void 
   MatrixMarket_IO::write(const char *filename, 
 			 const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A) {
+    gmm::standard_locale sl;
     static MM_typecode t1 = {'M', 'C', 'R', 'G'};
     static MM_typecode t2 = {'M', 'C', 'C', 'G'};
     MM_typecode t;
@@ -1116,14 +1123,14 @@ namespace gmm {
   }
 
   template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
-    std::ofstream f(fname.c_str()); f.precision(16);
+    std::ofstream f(fname.c_str()); f.precision(16); f.imbue(std::locale("C"));
     for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n"; 
   } 
 
   template<typename VEC> static void vecload(std::string fname,
 					     const VEC& V_) {
     VEC &V(const_cast<VEC&>(V_));
-    std::ifstream f(fname.c_str());
+    std::ifstream f(fname.c_str()); f.imbue(std::locale("C"));
     for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i]; 
   }
 }
