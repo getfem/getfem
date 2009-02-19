@@ -59,14 +59,12 @@ PERT_STATIONARY = 0.0;     % Perturbation of the initial velocity
 if (N == 2)
   % MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[30,30];NSUBDIV=[10,10]';
   %%%%% disque en P2 %%%%%
-  % MESHNAME='meshes/disc_P2_h11.mesh';
-  % MESHNAME='meshes/disc_P2_h8.mesh';
-  % MESHNAME='meshes/disc_P2_h6.mesh';
   MESHNAME='meshes/disc_P2_h4.mesh';
   % MESHNAME='meshes/disc_P2_h2.mesh';
   % MESHNAME='meshes/disc_P2_h1.mesh';
   % MESHNAME='meshes/disc_P2_h0.5.mesh';
-  % MESHNAME='meshes/disc_P2_h0.3.mesh';
+  % MESHNAME='meshes/disc_P2_h0.25.mesh';
+  % MESHNAME='meshes/disc_P2_h0.15.mesh';
   FEM_TYPE = 'FEM_PK(2, 2)';     % Main FEM
   DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule

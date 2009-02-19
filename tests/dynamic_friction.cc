@@ -820,6 +820,13 @@ void friction_problem::solve(void) {
 
 int main(int argc, char *argv[]) {
 
+  /* In order to test if french locale works */
+  std::locale lc("fr_FR.UTF-8");
+  cin.imbue(lc);
+  cout.imbue(lc);
+  setlocale(LC_NUMERIC,"fr_FR.UTF-8");
+
+
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
