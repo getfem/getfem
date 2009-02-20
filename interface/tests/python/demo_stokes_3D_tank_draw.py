@@ -9,11 +9,9 @@ P = fromfile('tank_3D.P', 'd')
 
 sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,0],[0,1,0]),('planar',+1,[0,0,0],[1,0,0]))),m,3);
 
-import locale # (bug #13014)
 print "importing tvtk.."
 import getfem_tvtk
 print "import done"
-locale.setlocale(locale.LC_NUMERIC,('en_US','UTF8')) # (bug #13014)
 
 fig = getfem_tvtk.Figure(gui='tvtk')
 

@@ -4,7 +4,6 @@
 from getfem import *
 from numpy import *
 
-import locale # (bug #13014)
 with_graphics=True
 try:
     import getfem_tvtk
@@ -13,7 +12,6 @@ except:
     import time
     time.sleep(2)
     with_graphics=False
-locale.setlocale(locale.LC_NUMERIC,('en_US','UTF8')) # (bug #13014)
 
 L=100
 H=20

@@ -45,7 +45,7 @@ namespace dal {
   */
 
 
-  /** Associate a name to a method descriptor and store method descriptors. 
+  /** Associate a name to a method descriptor and store method descriptors.
    *
    * Methods may have parameters such as integer or other methods.
    *  The class METHOD have to derive from dal::static_stored_object
@@ -55,28 +55,28 @@ namespace dal {
   public :
 
     typedef boost::intrusive_ptr<const METHOD> pmethod;
-    
+
     struct parameter {
       int type_; // 0 = numeric value, 1 = pointer on another method.
       double num_;
       pmethod pm_;
-      
+
       pmethod method(void) const { return pm_; }
       double num(void) const { return num_; }
       int type(void) const { return type_; }
       parameter(double e) : type_(0), num_(e), pm_(0) {}
       parameter(pmethod p) : type_(1), num_(0.), pm_(p) {}
     };
-    
+
     typedef std::deque<parameter> param_list;
     typedef pmethod (* pfunction)(param_list &,
 				  std::vector<pstatic_stored_object> &);
     typedef pmethod (* pgenfunction)(std::string,
 				     std::vector<pstatic_stored_object> &);
     typedef size_t size_type;
-    
+
   protected :
-    
+
     std::string prefix;
     dynamic_tree_sorted<std::string> suffixes;
     dynamic_array<pfunction> functions;
@@ -84,25 +84,25 @@ namespace dal {
     std::map<std::string, std::string> shorter_names;
     std::map<std::string, std::string> aliases;
     int nb_genfunctions;
-    
+
     struct method_key : virtual public static_stored_object_key {
       std::string name;
-      
+
       virtual bool compare(const static_stored_object_key &oo) const {
 	const method_key &o = dynamic_cast<const method_key &>(oo);
 	if (name < o.name) return true; else return false;
       }
       method_key(const std::string &name_) : name(name_) {}
     };
-    
+
     int mns_lexem(std::string s, size_type i, size_type &lenght);
     pmethod method_(std::string name, size_type &i, bool throw_if_not_found);
-    
+
 
 
 
   public :
-    
+
     void add_suffix(std::string name, pfunction pf);
     void add_generic_function(pgenfunction pf);
     std::string normative_name_of_method(pmethod pm) const;
@@ -111,9 +111,9 @@ namespace dal {
 		   bool throw_if_not_found = true)
     { gmm::standard_locale sl; return method_(name, i, throw_if_not_found); }
     naming_system(std::string pr) : prefix(pr) { nb_genfunctions = 0; }
-    
+
   };
-  
+
   template <class METHOD>
   void naming_system<METHOD>::add_suffix(std::string name,
 		       typename naming_system<METHOD>::pfunction pf) {
@@ -125,9 +125,9 @@ namespace dal {
   void naming_system<METHOD>::add_generic_function(pgenfunction pf) {
     genfunctions[nb_genfunctions++] = pf;
   }
-  
+
   template <class METHOD>
-  std::string naming_system<METHOD>::normative_name_of_method(typename 
+  std::string naming_system<METHOD>::normative_name_of_method(typename
 			         naming_system<METHOD>::pmethod pm)  const {
     pstatic_stored_object_key k = key_of_stored_object(pm);
     const method_key *p;
@@ -135,10 +135,10 @@ namespace dal {
       return prefix + "_UNKNOWN";
     return p->name;
   }
-  
+
   template <class METHOD> std::string
   naming_system<METHOD>::shorter_name_of_method(typename
-			        naming_system<METHOD>::pmethod pm)  const { 
+			        naming_system<METHOD>::pmethod pm)  const {
     pstatic_stored_object_key k = key_of_stored_object(pm);
     const method_key *p;
     if (!k || !(p = dynamic_cast<const method_key *>(k)))
@@ -149,7 +149,7 @@ namespace dal {
     if (it != shorter_names.end()) return it->second;
     return name;
   }
-  
+
   /* 0 = end of the string
      1 = espace
      2 = method name
@@ -173,7 +173,7 @@ namespace dal {
     if (isdigit(c) || c == '-' || c == '+') {
       for (c = s[++i] ; isdigit(c) || c == 'e' || c == 'E' ||
 	     c == '.' || c == '-' || c == '+' ; c = s[++i]) ++lenght;
-      return 3; 
+      return 3;
     }
     if (c == '(') return 4;
     if (c == ')') return 5;
@@ -181,8 +181,8 @@ namespace dal {
     GMM_ASSERT1(false, "Invalid character on position " << i
 		<< " of the string : " << s);
   }
-  
-  
+
+
   template <class METHOD>
   typename naming_system<METHOD>::pmethod
   naming_system<METHOD>::method_(std::string name, size_type &i,
@@ -195,7 +195,7 @@ namespace dal {
     size_type l;
     param_list params;
     std::string suff;
-    
+
     for(;;) {
       int lex = mns_lexem(name, i, l);
       switch (state) {
@@ -218,16 +218,18 @@ namespace dal {
       case 2 :
 	switch (lex) {
 	case 1  : i += l; break;
-	case 2  : 
+	case 2  :
 	  pm = method_(name, i, throw_if_not_found);
 	  if (!pm) return pm;
 	  params.push_back(parameter(pm));
 	  state = 3; break;
-	case 3  :
+	case 3  : {
 	  char *p;
+	  gmm::standard_locale sl;
 	  params.push_back(parameter(strtod(&(name[i]), &p)));
 	  i += l; if (p < &(name[i])) error = true;
 	  state = 3; break;
+	}
 	case 5  : i += l; isend = true; break;
 	default : error = true;
 	}
@@ -252,7 +254,7 @@ namespace dal {
 	    ite = params.end();
 	  for (; it != ite; ++it) {
 	    if ((*it).type() == 0) norm_name << (*it).num();
-	    if ((*it).type() == 1) 
+	    if ((*it).type() == 1)
 	      norm_name << normative_name_of_method((*it).method());
 	    if (it+1 != ite) norm_name << ',';
 	  }
@@ -298,8 +300,8 @@ namespace dal {
 	return pm;
       }
     }
-    
+
   }
-  
+
 }
 #endif
