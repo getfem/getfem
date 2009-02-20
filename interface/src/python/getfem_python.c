@@ -21,13 +21,12 @@
 //
 //========================================================================
 #include <Python.h>
-//#include "numarray/libnumarray.h"
-//#include "numarray/arrayobject.h"
-////#include "Numeric/arrayobject.h"
 #include "numpy/arrayobject.h"
 #include "structmember.h"
+
 #include "gfi_array.h"
 #include "getfem_interface.h"
+
 static PyObject *call_getfem(PyObject *self, PyObject *args);
 static PyObject *call_getfem_from_constructor(PyObject *self, PyObject *args);
 //static PyObject *register_types(PyObject *self, PyObject *args);
@@ -156,8 +155,6 @@ init_getfem(void)
 
 
 
-
-
 #define COLLECTCHUNK 2
 typedef struct ptr_collect {
   void *p[COLLECTCHUNK];
@@ -227,128 +224,7 @@ gc_release(gcollect *gc) {
   gc->allocated = NULL;
 }
 
-/* returns 0 for unsupported types */
-static inline unsigned
-itemsize_of_PyArray(PyArrayObject *pa) {
-  switch (pa->descr->type_num) {
-    case PyArray_DOUBLE : return sizeof(double);
-    case PyArray_INT:     return sizeof(int);
-    case PyArray_LONG:    return sizeof(long);
-    case PyArray_CDOUBLE: return sizeof(double)*2;
-    default: PyErr_SetString(PyExc_RuntimeError, "invalid numeric array type"); return 0;
-  }
-}
 
-/* Check if the strides are compatible with fortran ..
-   always return true for 1D arrays, or 1x1xN arrays etc.
-*/
-static int PyArray_IsFortranCompatible(PyArrayObject *pa) {
-  unsigned itemsize=itemsize_of_PyArray(pa);
-  if (itemsize == 0) return 0;
-  int i, s = itemsize;
-  for (i=0; i < pa->nd; ++i) {
-    if (pa->dimensions[i] > 1) {
-      if (pa->strides[i] != s) return 0;
-    }
-    s *= pa->dimensions[i];
-  }
-  return 1;
-}
-
-/* transfert the content of pa into a fortran_array (all gfi_arrays follow
- fortran ordering convention ... why did the numpy people choose c-order ?)
- if revert is non null, the fortran data is copied to the PyArray
- returns -1 on error, 0 on success
-*/
-static int
-copy_PyArray_data(PyArrayObject *pa, void *fortran_array, int revert) {
-  unsigned itemsize, size;
-  if ((itemsize = itemsize_of_PyArray(pa)) == 0) return -1;
-  size = PyArray_Size((PyObject*)pa);
-  /*printf("copying array of size %d (x%d) dir=%d\n", size, itemsize, revert);
-  { int i; printf("dim/strides = "); for (i = 0; i < pa->nd; ++i) printf("%d/%d ", pa->dimensions[i], pa->strides[i]); printf("\n"); }
-  */
-  if (pa->nd == 0) return 0;
-  else if (PyArray_IsFortranCompatible(pa)) {
-    /* fine, we can just copy raw memory */
-    if (revert == 0) memcpy(fortran_array,pa->data,size*itemsize);
-    else memcpy(pa->data,fortran_array,size*itemsize);
-  } else {
-    /* arg, we need to convert between the pyarray and fortran ordering */
-    int i,j;
-    int cnt[pa->nd], pos = 0;
-    //printf("not fortran compatible..\n");
-    for (i = 0; i < pa->nd; ++i) cnt[i] = 0;
-    for (i = 0; i < size; ++i, fortran_array += itemsize) {
-      //printf("i=%d, cnt= ",i); for (j = 0; j < pa->nd; ++j) printf("%d ",cnt[j]); printf("pos = %d",pos);
-      switch (pa->descr->type_num) {
-        case PyArray_CDOUBLE: {
-          if (revert == 0) {
-            ((double*)fortran_array)[0] = ((double*)(pa->data+pos))[0];
-            ((double*)fortran_array)[1] = ((double*)(pa->data+pos))[1];
-          } else {
-            ((double*)(pa->data+pos))[0] = ((double*)fortran_array)[0];
-            ((double*)(pa->data+pos))[1] = ((double*)fortran_array)[1];
-          }
-        } break;
-        case PyArray_DOUBLE: {
-          if (revert == 0) *((double*)fortran_array) = *((double*)(pa->data+pos));
-          else *((double*)(pa->data+pos)) = *((double*)fortran_array);
-          /*if (revert == 0) printf(" -> %g\n", *((double*)fortran_array));
-            else printf(" -> %g\n", *((double*)(pa->data+pos)));*/
-        } break;
-        case PyArray_INT: {
-          if (revert == 0) *((int*)fortran_array) = *((int*)(pa->data+pos));
-          else *((int*)(pa->data+pos)) = *((int*)fortran_array);
-          //if (revert == 0) printf(" -> %d\n", *((int*)fortran_array));
-          //else printf(" -> %d\n", *((int*)(pa->data+pos)));
-        } break;
-      }
-      j = 0;
-      while (1) {
-	cnt[j]++; pos += pa->strides[j];
-	if (cnt[j] >= pa->dimensions[j]) {
-	  pos -= pa->strides[j]*pa->dimensions[j];
-	  cnt[j] = 0; ++j;
-	  if (j == pa->nd) break;
-	} else break;
-      }
-    }
-  }
-  return 0;
-}
-int
-PyArray_cp_FArray(PyArrayObject *pa, void *fa, int revert)
-{
-  unsigned itemsize, size;
-
-  itemsize = PyArray_ITEMSIZE(pa); /*size of elements*/
-  size = PyArray_Size((PyObject *)pa); /*number of elements*/
-
-  if (pa->nd == 0 && size == 0) return 1;
-  else if (PyArray_ISFARRAY(pa)) { // fine, we can just copy raw memory
-    if (revert == 0) memcpy(fa, pa->data, size*itemsize);
-    else memcpy(pa->data, fa, size*itemsize);
-  } else {
-    // arg, we need to convert between the pyarray corder and fortranorder
-    PyArrayObject *aux = (PyArrayObject *)PyArray_NewCopy(pa, NPY_FORTRANORDER);
-    if (aux == NULL) return (int)PyErr_NoMemory();
-
-    if (revert == 0) {
-      memcpy(fa, aux->data, size*itemsize);
-      Py_DECREF(aux);
-    } else {
-      memcpy(aux->data, fa, size*itemsize);
-
-      Py_DECREF(pa);
-      pa = (PyArrayObject *)PyArray_NewCopy(aux, NPY_CORDER);
-      Py_DECREF(aux);
-
-      if (pa == NULL) return (int)PyErr_NoMemory();
-    }
-  }
-  return 1;
-}
 
 int
 PyObject_is_GetfemObject(PyObject *o, gfi_object_id *pid)
@@ -379,6 +255,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
 #define TGFISTORE(T,field) TGFISTORE0(T).TGFISTORE1(T,field)
   PyErr_Clear();
   if (PyString_Check(o)) {
+    //printf("String\n");
     /* for strings, the pointer is shared, no copy */
     int L = strlen(PyString_AsString(o));
     char *s = PyString_AsString(o);
@@ -389,6 +266,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     TGFISTORE(char,len)=L;
     TGFISTORE(char,val)=s;
   } else if (PyInt_Check(o) || PyLong_Check(o)) {
+    //printf("Int or Long\n");
     /* usual python integer */
     int d = (int)PyInt_AsLong(o);
     if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_OverflowError))
@@ -400,6 +278,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     if (!(TGFISTORE(int32,val)=gc_alloc(gc,sizeof(int)))) return NULL;
     TGFISTORE(int32,val)[0] = d;
   } else if (PyFloat_Check(o)) {
+    //printf("Float\n");
     /* usual python float */
     double df = PyFloat_AsDouble(o);
     t->storage.type = GFI_DOUBLE;
@@ -409,6 +288,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     if (!(TGFISTORE(double,val)=gc_alloc(gc,sizeof(double)))) return NULL;
     TGFISTORE(double,val)[0] = df;
   } else if (PyComplex_Check(o)) {
+    //printf("Complex\n");
     /* usual python complex number */
     double real = PyComplex_RealAsDouble(o);
     double imag = PyComplex_ImagAsDouble(o);
@@ -420,6 +300,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     TGFISTORE(double,val)[0] = real;
     TGFISTORE(double,val)[1] = imag;
   } else if (PyTuple_Check(o)) {
+    //printf("Tuple\n");
     /* python tuples are stored in 'cell arrays' (i.e. matlab's lists of inhomogeneous elements) */
     int i;
     t->storage.type = GFI_CELL;
@@ -432,6 +313,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
       if (!p[i]) return NULL;
     }
   } else if (PyObject_is_GetfemObject(o, &id)) {
+    //printf("Getfem\n");
     /* getfem objects are refered to with a couple (classid, objectid) */
     t->storage.type = GFI_OBJID;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
@@ -439,11 +321,19 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     if (!(t->storage.gfi_storage_u.objid.objid_val =
 	  gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;
     t->storage.gfi_storage_u.objid.objid_val[0] = id;
-  } else if (PyArray_Check(o)) {
-    int dtype = PyArray_TYPE(o);
+  } else {
+    //} else if (PyList_Check(o) || PyArray_Check(o)) {
+    //  printf("List or Array\n");
+    int dtype = PyArray_ObjectType(o,0);
+
     PyObject *po = NULL;
-    if (PyArray_ISNUMBER(o)) {
+    if (PyTypeNum_ISNUMBER(dtype)) {
       switch (dtype) {
+        case NPY_BOOL:
+        case NPY_BYTE:
+        case NPY_UBYTE:
+        case NPY_SHORT:
+        case NPY_USHORT:
         case NPY_INT:
         case NPY_UINT:
         case NPY_LONG:
@@ -452,19 +342,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         case NPY_ULONGLONG:
           t->storage.type = GFI_INT32;
 
-          po = PyArray_Cast((PyArrayObject *)o,NPY_INT);
-          if(!po) return (gfi_array *)PyErr_NoMemory();
-          unsigned nint = PyArray_Size(po);
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
+               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+          if(!po) { PyErr_NoMemory(); return NULL;}
 
-          if (PyArray_ISFARRAY(po)) {
-            gc_ref(gc,po);
-            TGFISTORE(int32,val) = (int *)((PyArrayObject *)po)->data; // no copy
-          } else {
-            if (!(TGFISTORE(int32,val) = gc_alloc(gc, nint * sizeof(int))))
-              return NULL;
-            if (PyArray_cp_FArray((PyArrayObject *)po, TGFISTORE(int32,val), 0) != 1)
-              return NULL;
-          }
+          gc_ref(gc,po);
+          TGFISTORE(int32,val) = (int *)((PyArrayObject *)po)->data; // no new copy
           break;
         case NPY_FLOAT:
         case NPY_DOUBLE:
@@ -472,19 +355,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           t->storage.type = GFI_DOUBLE;
           t->storage.gfi_storage_u.data_double.is_complex = 0;
 
-          po = PyArray_Cast((PyArrayObject *)o,NPY_DOUBLE);
-          if(!po) return (gfi_array *)PyErr_NoMemory();
-          unsigned ndouble = PyArray_Size(po);
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
+               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+          if(!po) { PyErr_NoMemory(); return NULL;}
 
-          if (PyArray_ISFARRAY(po)) {
-            gc_ref(gc,po);
-            TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no copy
-          } else {
-            if (!(TGFISTORE(double,val) = gc_alloc(gc, ndouble * sizeof(double))))
-              return NULL;
-            if (PyArray_cp_FArray((PyArrayObject *)po, TGFISTORE(double,val), 0) != 1)
-              return NULL;
-          }
+          gc_ref(gc,po);
+          TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
           break;
         case NPY_CFLOAT:
         case NPY_CDOUBLE:
@@ -492,26 +368,28 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           t->storage.type = GFI_DOUBLE;
           t->storage.gfi_storage_u.data_double.is_complex = 1;
 
-          po = PyArray_Cast((PyArrayObject *)o,NPY_CDOUBLE);
-          if(!po) return (gfi_array *)PyErr_NoMemory();
-          unsigned ncdouble = 2*PyArray_Size(po);
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
+               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+          if(!po) { PyErr_NoMemory(); return NULL;}
 
-          if (PyArray_ISFARRAY(po)) {
-            gc_ref(gc,po);
-            TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no copy
-          } else {
-            if (!(TGFISTORE(double,val) = gc_alloc(gc, ncdouble * sizeof(double))))
-              return NULL;
-            if (PyArray_cp_FArray((PyArrayObject *)po, TGFISTORE(double,val), 0) != 1)
-              return NULL;
-          }
+          gc_ref(gc,po);
+          TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
           break;
-        default:
-          PyErr_Format(PyExc_RuntimeError, "invalid numeric array dtype: %d", dtype);
+        default: {
+          PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
+          PyErr_Format(PyExc_RuntimeError, "invalid numeric dtype: %s",
+            PyString_AsString(sdtype));
+          Py_DECREF(sdtype);
           return NULL;
+        }
       }
     } else {
-      PyErr_Format(PyExc_RuntimeError, "unhandled array dtype : %d", dtype);
+      PyObject *stype = PyObject_Str((PyObject*)o->ob_type);
+      PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
+      PyErr_Format(PyExc_RuntimeError, "unhandled argument (type, dtype): (%s, %s)",
+        PyString_AsString(stype), PyString_AsString(sdtype));
+      Py_DECREF(stype);
+      Py_DECREF(sdtype);
       return NULL;
     }
     t->dim.dim_len = ((PyArrayObject *)po)->nd;
@@ -520,76 +398,6 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     int i;
     for (i=0; i < t->dim.dim_len; ++i)
       t->dim.dim_val[i] = (u_int)((PyArrayObject *)po)->dimensions[i];
-  } else {
-    /* and finally, anything convertible to a numpy array */
-    int type = -1;
-    if (!PyArray_Check(o)) {
-      switch (PyArray_ObjectType(o, PyArray_INT)) {
-        case PyArray_INT:
-#ifdef PyArray_UNSIGNED_TYPES
-        case PyArray_UINT:
-#endif
-          //        case PyArray_LONG:
-          type = PyArray_INT; break;
-        case PyArray_FLOAT:
-        case PyArray_DOUBLE:
-          type = PyArray_DOUBLE; break;
-        case PyArray_CFLOAT:
-        case PyArray_CDOUBLE:
-          type = PyArray_CDOUBLE; break;
-      }
-    } else if (PyArray_CanCastSafely(((PyArrayObject*)o)->descr->type_num, PyArray_INT)) {
-      //printf("got a pyarray(INT)\n");
-      type = PyArray_INT;
-    } else if (PyArray_CanCastSafely(((PyArrayObject*)o)->descr->type_num, PyArray_DOUBLE)) {
-      type = PyArray_DOUBLE;
-    } else if (PyArray_CanCastSafely(((PyArrayObject*)o)->descr->type_num, PyArray_CDOUBLE)) {
-      type = PyArray_CDOUBLE;
-    }
-
-    PyArrayObject *ao = NULL;
-    if (type != -1) ao = (PyArrayObject*) PyArray_FromObject(o,type,0,0);
-
-    if (!ao) {
-      PyObject *stype = PyObject_Str((PyObject*)o->ob_type);
-      PyErr_Format(PyExc_RuntimeError, "unhandled argument type: %s", PyString_AsString(stype));
-      Py_DECREF(stype);
-      return NULL;
-    }
-    gc_ref(gc, (PyObject*)ao);
-
-    switch (type) {
-      case PyArray_CDOUBLE:
-      case PyArray_DOUBLE: {
-        t->storage.type = GFI_DOUBLE;
-        t->storage.gfi_storage_u.data_double.is_complex = (type == PyArray_CDOUBLE) ? 1 : 0;
-        unsigned ndouble = PyArray_Size((PyObject*)ao) * ((type == PyArray_CDOUBLE) ? 2 : 1);
-        if (PyArray_IsFortranCompatible(ao)) {
-          TGFISTORE(double,val) = (double*)ao->data; // no copy
-        } else {
-          if (!(TGFISTORE(double,val) = gc_alloc(gc, ndouble * sizeof(double))))
-            return NULL;
-          if (copy_PyArray_data(ao, TGFISTORE(double,val), 0) != 0) return NULL;
-        }
-        TGFISTORE(double,len) = ndouble;
-      } break;
-      case PyArray_INT: {
-        t->storage.type = GFI_INT32;
-        unsigned nint = PyArray_Size((PyObject*)ao);
-        if (PyArray_IsFortranCompatible(ao)) {
-          TGFISTORE(int32,val) = (int *)ao->data; // no copy
-        } else {
-          if (!(TGFISTORE(int32,val) = gc_alloc(gc, nint * sizeof(int))))
-            return NULL;
-          if (copy_PyArray_data(ao, TGFISTORE(int32,val), 0) != 0)
-            return NULL;
-        }
-      } break;
-    }
-
-    t->dim.dim_len = ao->nd;
-    int *d = ao->dimensions;
-    t->dim.dim_val = (u_int*)d;
   }
   return t;
 }
@@ -643,31 +451,54 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
   switch (t->storage.type) {
   case GFI_UINT32:
   case GFI_INT32: {
+    //printf("GFI_INT32\n");
     if (t->dim.dim_len == 0) return PyInt_FromLong(TGFISTORE(int32,val)[0]);
     else {
-      if (!(o = PyArray_FromDims(t->dim.dim_len, (int*)t->dim.dim_val, PyArray_INT))) return NULL;
-      if (copy_PyArray_data((PyArrayObject*)o, TGFISTORE(int32,val), 1) != 0) return NULL;
+      npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
+      int i;
+      for(i=0; i< t->dim.dim_len; i++)
+        dim[i] = (npy_intp)t->dim.dim_val[i];
+      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_INT, 1))) return NULL;
+      PyDimMem_FREE(dim);
+
+      npy_intp itemsize = PyArray_ITEMSIZE(o); /*size of elements*/
+      npy_intp size = PyArray_Size(o);         /*number of elements*/
+      memcpy(((PyArrayObject*)o)->data, TGFISTORE(int32,val), size*itemsize); // new copy
     }
   } break;
   case GFI_DOUBLE: {
+    //printf("GFI_DOUBLE\n");
     if (!gfi_array_is_complex(t)) {
       if (t->dim.dim_len == 0) return PyFloat_FromDouble(TGFISTORE(double,val)[0]);
       else {
-        //int i;  printf("received an array of dimension %d, val=", t->dim.dim_len); for (i=0; i < t->dim.dim_len; ++i) printf("%d ",t->dim.dim_val[i]); printf("\n");
-        if (!(o = PyArray_FromDims(t->dim.dim_len, (int*)t->dim.dim_val, PyArray_DOUBLE))) return NULL;
+        npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
+        int i;
+        for(i=0; i< t->dim.dim_len; i++)
+          dim[i] = (npy_intp)t->dim.dim_val[i];
+        if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_DOUBLE, 1))) return NULL;
+        PyDimMem_FREE(dim);
       }
     } else {
       if (t->dim.dim_len == 0) return PyComplex_FromDoubles(TGFISTORE(double,val)[0], TGFISTORE(double,val)[1]);
       else {
-        if (!(o = PyArray_FromDims(t->dim.dim_len, (int*)t->dim.dim_val, PyArray_CDOUBLE))) return NULL;
+        npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
+        int i;
+        for(i=0; i< t->dim.dim_len; i++)
+          dim[i] = (npy_intp)t->dim.dim_val[i];
+        if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_CDOUBLE, 1))) return NULL;
+        PyDimMem_FREE(dim);
       }
     }
-    if (copy_PyArray_data((PyArrayObject*)o, TGFISTORE(double,val), 1) != 0) return NULL;
+    npy_intp itemsize = PyArray_ITEMSIZE(o); /*size of elements*/
+    npy_intp size = PyArray_Size(o);         /*number of elements*/
+    memcpy(((PyArrayObject*)o)->data, TGFISTORE(double,val), size*itemsize); // new copy
   } break;
   case GFI_CHAR: {
+    //printf("GFI_CHAR\n");
     o = PyString_FromStringAndSize(TGFISTORE(char,val),TGFISTORE(char,len));
   } break;
   case GFI_CELL: {
+    //printf("GFI_CELL\n");
     unsigned i;
     if (!(o = PyTuple_New(TGFISTORE(cell,len)))) return NULL;
     for (i=0; i < TGFISTORE(cell,len); ++i) {
@@ -677,12 +508,13 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
     }
   } break;
   case GFI_OBJID: {
+    //printf("GFI_OBJID\n");
     if (t->storage.gfi_storage_u.objid.objid_len != 1) {
 #if 0
       /* PyArray_OBJECT is not supported in numarray ... */
       int i;
       if (!(o = PyArray_FromDims(t->dim.dim_len, (int*)t->dim.dim_val, PyArray_OBJECT))) return NULL;
-      if (!PyArray_IsFortranCompatible((PyArrayObject*)o)) { // I'm just too lazy to transpose matrices
+      if (!PyArray_ISFARRAY((PyArrayObject*)o)) { // I'm just too lazy to transpose matrices
 	PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
 		     t->dim.dim_len, t->storage.gfi_storage_u.objid.objid_len);
 	return NULL;
@@ -708,6 +540,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
     }
   } break;
   case GFI_SPARSE: {
+    //printf("GFI_SPARSE\n");
     PyErr_SetString(PyExc_RuntimeError,
                     "Numpy does not have Native sparse matrices. "
                     "Use getfem sparse objects instead.");

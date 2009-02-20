@@ -9,9 +9,11 @@ P = fromfile('tank_3D.P', 'd')
 
 sl=getfem.Slice(('boundary',('intersection',('planar',+1,[0,0,0],[0,1,0]),('planar',+1,[0,0,0],[1,0,0]))),m,3);
 
+import locale # (bug #13014)
 print "importing tvtk.."
 import getfem_tvtk
 print "import done"
+locale.setlocale(locale.LC_NUMERIC,('en_US','UTF8')) # (bug #13014)
 
 fig = getfem_tvtk.Figure(gui='tvtk')
 
@@ -37,7 +39,8 @@ fig.show(sl2, faces=False, edges_color=(1,1,1))
 
 
 hh=array([[1, 5, 9, 12.5, 16, 19.5]]);
-H=concatenate((zeros((2,hh.size())), hh));
+H=concatenate((zeros((2,hh.size)), hh));
+
 tsl=getfem.Slice('streamlines', mfu, U, H);
 
 fig.show(tsl, tube_color=(1,1,1));

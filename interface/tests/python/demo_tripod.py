@@ -4,6 +4,7 @@ from numpy import *
 print 'This is the "modern" tripod demo, which uses the getfem model bricks'
 print 'importing the mesh..',
 
+import locale # (bug #13014)
 with_graphics=True
 try:
     import getfem_tvtk
@@ -12,6 +13,7 @@ except:
     import time
     time.sleep(2)
     with_graphics=False
+locale.setlocale(locale.LC_NUMERIC,('en_US','UTF8')) # (bug #13014)
 
 
 m=Mesh('import','gid','../meshes/tripod.GiD.msh')

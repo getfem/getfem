@@ -60,6 +60,7 @@ getfem.py: getfem.base.py $(PSEUDO_MFUNCTIONS) ../../bin/extract_pydoc
 
 clean: clean-am
 	rm -f getfem.py _getfem.so $(top_srcdir)/interface/doc/getfem_python_reference.html
+	rm -f *.o
 
 if BUILDPYTHON
 

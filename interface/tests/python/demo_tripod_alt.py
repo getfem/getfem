@@ -69,7 +69,7 @@ for i in range(0, DU.shape[2]):
   d = array(DU[:,:,i]);
   E = (d+transpose(d))*0.5
   Sigma[:,:,i]=E
-  VM[i] = sum(E.flat**2) - (1./3.)*sum(diagonal(E))**2
+  VM[i] = sum(E.ravel()**2) - (1./3.)*sum(diagonal(E))**2
 
 print 'Von Mises range: ', VM.min(), VM.max()
 
