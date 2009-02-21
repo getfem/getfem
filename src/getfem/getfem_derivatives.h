@@ -78,7 +78,7 @@ namespace getfem
     pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
     bgeot::pgeometric_trans pgt;
 
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
       GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
@@ -148,7 +148,7 @@ namespace getfem
     pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
     bgeot::pgeometric_trans pgt;
 
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
       GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
