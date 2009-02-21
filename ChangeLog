@@ -1,3 +1,9 @@
+2009-02-20 Yves Renard  <Yves.Renard@insa-lyon.fr>
+	* src/gmm/gmm_std.h
+	Adding standard_locale and stream_standard_locale allowing to change
+	the locale temporarily to the standard one in order to make in-output
+	function locale independent (fix bug bug #13014).
+
 2009-01-30 Luis Saavedra  <lsaavedr@dim.uchile.cl>
 	* configure.in
 	* src/gmm/gmm_superlu_interface.h
