@@ -224,7 +224,7 @@ namespace getfem {
 	else
 	  ci.nodes.resize(cv_nb_nodes);
 
-	cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
+	// cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
 
         for (size_type i=0; i < cv_nb_nodes; ++i) {
           size_type j;
@@ -241,7 +241,7 @@ namespace getfem {
 	  std::vector<size_type> tmp_nodes(3);
 	  tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
 	  tmp_nodes[2] = ci.nodes[1];
-	  
+
 	  ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
 	  ci.nodes[2] = tmp_nodes[2];
 	}
