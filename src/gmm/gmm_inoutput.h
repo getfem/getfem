@@ -220,8 +220,6 @@ namespace gmm {
       if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
 	ParseRfmt(Valfmt,&Valperline,&Valwidth,&Valprec,&Valflag);
       }
-
-      cout << "Valwidth = " << Valwidth << endl; getchar();
     
       /*  Read column pointer array:   */
       offset = 0;         /* if base 0 storage is declared (via macro def),  */
