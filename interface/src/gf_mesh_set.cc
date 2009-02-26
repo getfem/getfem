@@ -33,7 +33,7 @@ static void check_empty_mesh(const getfem::mesh *pmesh)
 
 static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in)
 {
-  unsigned boundary_num  = in.pop().to_integer(1,100000);
+  unsigned boundary_num  = in.pop().to_integer(1);
   iarray v               = in.pop().to_iarray(2,-1);
 
   getfem::mesh_region &rg = mesh.region(boundary_num);
@@ -45,7 +45,7 @@ static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in)
     if (!mesh.convex_index().is_in(cv)) {
       THROW_BADARG( "Invalid convex number '" << cv+config::base_index() << "' at column " << j+config::base_index());
     }
-    if (f >= mesh.structure_of_convex(cv)->nb_faces()) {
+    if (int(f) >= mesh.structure_of_convex(cv)->nb_faces()) {
       THROW_BADARG( "Invalid face number '" << f+config::base_index() << "' at column " << j+config::base_index());
     }
     if (f == size_type(-1)) rg.add(cv);
