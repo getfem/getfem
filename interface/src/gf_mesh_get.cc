@@ -659,9 +659,9 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     On output, the first row of `CVfids` contains the convex numbers,
     and the second row contains the face numbers (and @MATLAB{0}
     @PYTHON{-1} when the whole convex is in the region).@*/
-    int bnum = in.pop().to_integer(1,100000);
+    int bnum = in.pop().to_integer(1);
     std::vector<unsigned> cvlst;
-    std::vector<unsigned> facelst;
+    std::vector<short> facelst;
     for (getfem::mr_visitor i(pmesh->region(bnum)); !i.finished(); ++i) {
       cvlst.push_back(unsigned(i.cv()));
       facelst.push_back(i.f());
