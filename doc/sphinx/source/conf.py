@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# proyecto documentation build configuration file, created by
-# sphinx-quickstart on Mon Dec 15 00:22:02 2008.
+# GetFEM++ documentation build configuration file.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -27,19 +26,18 @@ sys.path.append('../../interface/src/python/')
 extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
               'sphinx.ext.refcounting','sphinx.ext.coverage',
               'sphinx.ext.doctest', 'pyspecific']
-autoclass_content = "init"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+#source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8'
+source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'pygfi'
+#master_doc = 'pygfi'
 
 # General information about the project.
 project = u'GetFEM++'
@@ -106,7 +104,7 @@ html_title = 'GetFEM++'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'images/logo_getfem_small.png'
+html_logo = 'python/images/logo_getfem_small.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -159,7 +157,7 @@ html_split_index = True
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'UserDocumentation'
+htmlhelp_basename = 'getfem' + release.replace('.', '')
 
 # Options for LaTeX output
 # ------------------------
@@ -173,15 +171,15 @@ htmlhelp_basename = 'UserDocumentation'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-    ('pygfi', 'PythonGetfemInterface.tex', ur'Python GetFEM++ Interface',
-     ur'Luis Saavedra', 'manual'),
+    ('python/index', 'python.tex',
+     'Python GetFEM++ Interface', 'Luis Saavedra', 'manual'),
     ('whatsnew/' + version, 'whatsnew.tex',
      'What\'s New in GetFEM++', ' ', 'howto'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = 'images/logogetfem.png'
+latex_logo = 'python/images/logogetfem.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
