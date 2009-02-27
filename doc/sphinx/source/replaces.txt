@@ -1,0 +1,27 @@
+.. |authors| replace:: Yves Renard, Julien Pommier
+.. |copy| unicode:: 0xA9 .. copyright sign
+.. |gnu| replace:: GNU
+.. |c++| replace:: C++
+.. |gmsh| replace:: Gmsh
+.. |gid| replace:: GID
+.. |emc2| replace:: emc2
+.. |py| replace:: Python
+.. |gf| replace:: GetFEM++
+.. |sphinx| replace:: Sphinx
+.. |gfi| replace:: getfem-interface
+.. |mf| replace:: mesh_fem
+.. |mim| replace:: mesh_im
+.. |py_cs| replace:: CvStruct
+.. |py_gt| replace:: GeoTrans
+.. |py_fem| replace:: Fem
+.. |py_int| replace:: Integ
+.. |py_mf| replace:: MeshFem
+.. |py_mim| replace:: MeshIm
+.. |py_mbr| replace:: MdBrick
+.. |py_ms| replace:: MdState
+.. _specific guides: http://home.gna.org/getfem/doc.html
+.. _VTK: http://www.vtk.org
+.. _MayaVi: http://mayavi.sourceforge.net
+.. _OpenDX: http://www.opendx.org
+.. _Gmsh: http://www.geuz.org/gmsh
+.. _Python: http://www.python.org
