@@ -528,28 +528,31 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     check_empty_mesh(pmesh);
     outer_faces(*pmesh, in, out);
   } else if (check_cmd(cmd, "faces from cvid", in, out, 0, 2, 0, 1)) {
-    /*@GET CVfids = MESH:GET('faces from cvid',@ivec CVids[, 'merge'])
+    /*@GET CVfids = MESH:GET('faces from cvid'[, @ivec CVids][, 'merge'])
     Return a list of convexes faces from a list of convex #id.
 
     `CVfids` is a two-rows matrix, the first row lists convex #ids,
-    and the second lists face numbers. The optional argument 'merge'
-    merges faces shared by two convexes of `CVids`.@*/
+    and the second lists face numbers. If `CVids` is not given, all
+    convexes are considered. The optional argument 'merge' merges
+    faces shared by the convex of `CVids`.@*/
     check_empty_mesh(pmesh);
     dal::bit_vector bv;
-    if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
-    else bv = pmesh->convex_index();
+    if (in.remaining() && !in.front().is_string())
+      bv = in.pop().to_bit_vector(&pmesh->convex_index());
+    else
+      bv = pmesh->convex_index();
     bool merge = false;
-    if (in.remaining()) {
+    if (in.remaining() && in.front().is_string()) {
       std::string s = in.pop().to_string();
-      if (cmd_strmatch(s, "merge")) merge = true; else bad_cmd(s);
+      if (cmd_strmatch(s, "merge")) merge = true;
+      else bad_cmd(s);
     }
     getfem::mesh_region flst;
-    //getfem::convex_face_ct flst;
     size_type cnt = 0;
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt) {
       for (short_type f=0; f < pmesh->structure_of_convex(cv)->nb_faces(); ++f) {
 	bool add = true;
-	if (!merge) {
+	if (merge) {
 	  bgeot::mesh_structure::ind_set neighbours;
 	  pmesh->neighbours_of_convex(cv, f, neighbours);
 	  for (bgeot::mesh_structure::ind_set::const_iterator it = neighbours.begin();
@@ -557,14 +560,9 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	    if (*it < cv) { add = false; break; }
 	  }
 	}
-	if (add) flst.add(cv,f); //push_back(getfem::convex_face(cv,f));
+	if (add) flst.add(cv,f);
       }
     }
-    /*iarray w = out.pop().create_iarray(2,flst.size());
-      for (size_type i=0; i < flst.size(); ++i) {
-      w(0,i) = flst[i].cv + config::base_index();
-      w(1,i) = flst[i].f  + config::base_index();
-      }*/
     out.pop().from_mesh_region(flst);
   } else if (check_cmd(cmd, "triangulated surface", in, out, 1, 2, 0, 1)) {
     /*@GET [@mat T] = MESH:GET('triangulated surface',@int Nrefine [,CVLIST])
