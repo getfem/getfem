@@ -17,7 +17,7 @@ import sys, os, time
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 sys.path.append(os.path.abspath('../tools/sphinxext'))
-sys.path.append('../../src/python/')
+sys.path.append('../../interface/src/python/')
 
 # General configuration
 # ---------------------
