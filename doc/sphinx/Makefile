@@ -22,6 +22,7 @@ help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
 	@echo "  htmlhelp  to make HTML files and a HTML help project"
+	@echo "  htmlview  to make and view standalone HTML files"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  alldoc    to make pdfLaTeX and HTML files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  changes   to make an overview over all changed/added/deprecated items"
