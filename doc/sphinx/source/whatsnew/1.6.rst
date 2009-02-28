@@ -1,0 +1,39 @@
+******************************
+  What's New in GetFEM++ 1.6
+******************************
+
+   Released, 2004/01/23:
+
+   * Getfem++ 1.6 is mostly a bugfix and performance improvements release:
+
+     * Some new integration methods were added (high order methods for
+       triangles such as ``IM_TRIANGLE(19)`` from P. Solin, K. Segeth
+       and I. Dolezel: *Higher-Order & Finite Element Methods*,
+       Chapman & Hall/CRC Press, 2003).
+
+     * Performance of interpolation and geometric transformation inversion
+       was much improved.
+
+     * Support for emc2 meshes.
+
+   * The Gmm++ library has been much improved version 1.6 and version 1.5.
+     We have especially focused on its robustness:
+
+     * Many bugs were fixed, especially for complex matrices.
+
+     * QR algorithms were introduced for dense matrices.
+
+     * A `LAPACK/ATLAS` interface is available.
+
+     * `SuperLU 2.0` interface.
+
+     * Small simplification in ``linalg_traits`` structure.
+
+     * Generic resize procedures for vector and matrices were introduced.
+
+     * It is possible to use a column or row matrix view of a vector with
+       ``gmm::row_vector`` and ``gmm::col_vector``.
+
+     * Generic ``gmm::reshape`` and ``gmm::conjugated`` functions.
+
+     * Intensive tests with random type of matrices and vectors.

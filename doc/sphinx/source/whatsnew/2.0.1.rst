@@ -1,0 +1,8 @@
+********************************
+  What's New in GetFEM++ 2.0.1
+********************************
+
+   Minor update, 2006/04/06:
+
+   * Two bugs were fixed which could be toggled in particular
+     conditions with nonlinear terms.

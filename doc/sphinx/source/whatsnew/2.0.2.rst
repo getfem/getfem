@@ -1,0 +1,7 @@
+********************************
+  What's New in GetFEM++ 2.0.2
+********************************
+
+   Minor update, 2006/11/10:
+
+   * The `Gmsh <http://geuz.org/gmsh/>`_ mesh import has been fixed.

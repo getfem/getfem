@@ -1,0 +1,58 @@
+******************************
+  What's New in GetFEM++ 1.7
+******************************
+
+   Released, 2005/01/05:
+
+   * An important number of improvements have been done on Getfem++ 1.7.
+     Note that the next release will be getfem 2.0, some of its changes
+     won't maintain backward compatibility with getfem++-1.7:
+
+     * Introduction of the `model brick` system, which provides a
+       general framework for the solution of common PDEs. Each brick
+       is dedicated to a specific task (i.e. "handle Dirichlet
+       conditions", "assembly of the Stokes Problem", "solve a
+       linear system", etc.). These bricks are then connected to
+       each other. Examples of use can be found in the "tests/"
+       directory of getfem++.
+
+     * New models : Small strain plasticity, large strain
+       elasticity, contact and friction conditions, linearized
+       plates, incompressibility in small and large strain
+       elasticity.
+
+     * Simplifications and optimizations in elementary computations.
+
+     * A direct sparse solver (`SuperLU 3.0
+       <http://crd.lbl.gov/~xiaoye/SuperLU/>`_) is available "out of
+       the box".
+
+     * Ability to export results to `VTK <http://www.vtk.org>`_ and
+       `OpenDX <http://www.opendx.org>`_.
+
+   * Major changes in Gmm++ 1.7:
+
+     * New preconditionner ILUTP.
+
+     * A BFGS algorithm has been developped.
+
+     * gmm++ now handles (valid) operations mixing complex and
+       scalars.
+
+     * gmm::real_part(V) and gmm::imag_part(V) gives a possibly
+       writable reference on the real and imaginary part of a
+       complex vector or matrix.
+
+     * The SuperLU interface has been updated for SuperLU 3.0.
+
+getfem-matlab has been renamed "getfem-interface" since it now
+provides an interface for Matlab and `Python
+<http://www.python.org>`_ (with the `Numarray
+<http://www.stsci.edu/resources/software_hardware/numarray>`_
+package). Note that, while it is `documented
+<http://home.gna.org/getfem/getfem_python_reference.html>`_ and
+working, the python interface is still considered a *work in
+progress*. You have to enable it explicitly with ``./configure
+--enable-python``. An example of use can be found `here
+<http://home.gna.org/getfem/demo_tripod.py.html>`_. An interface to 
+the gmm++ sparse matrices and solvers is also provided.

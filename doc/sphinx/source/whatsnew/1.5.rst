@@ -1,0 +1,21 @@
+******************************
+  What's New in GetFEM++ 1.5
+******************************
+
+   Released, 2003/07/25:
+
+   * First standalone release of Gmm++, which now includes some
+     preconditioners and harwell-boeing/matrix-market data file
+     support.
+
+   * It is now possible to use high precision computations of
+     elementary integrals with the (optional) QD library.
+
+   * Quadrature data has been moved into data files in the cubature/
+     directory.
+
+   * Initial support for XFem.
+
+   * Mesh slices in getfem++ and getfem-matlab.
+
+   * The Matlab interface was merged into a single giant mex-file.

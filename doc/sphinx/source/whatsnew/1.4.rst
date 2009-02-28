@@ -1,0 +1,13 @@
+******************************
+  What's New in GetFEM++ 1.4
+******************************
+
+   Released, 2003/03/03:
+
+   * The Matlab interface is now fully working and documented.
+
+   * Huge speed improvement on elementary computations.
+
+   * New generic assembly procedures.
+
+   * Introduction of Gmm++.

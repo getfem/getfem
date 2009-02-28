@@ -1,0 +1,9 @@
+******************************
+  What's New in GetFEM++ 1.1
+******************************
+
+   Released, 2002/07/18:
+
+   * Many improvements.
+
+   * Introduction of the Matlab interface.

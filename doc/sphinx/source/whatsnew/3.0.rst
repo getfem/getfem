@@ -1,0 +1,33 @@
+******************************
+  What's New in GetFEM++ 3.0
+******************************
+
+Getfem++ 3.0 is now available !
+
+Not so many changes, but some of them are incompatible with getfem 
+2.0:
+
+   Released, 2007/06/27:
+
+   * The getfem and gmm header files have been moved into their
+     respective subdirectories. So, as a consequence, the include
+     directives have to be updated:
+
+     * ``#include "gmm_xxx.h"`` should be replaced with
+       ``#include "gmm/gmm_xxx.h"`` 
+
+     * ``#include "getfem_xxx.h"`` should be replaced with
+       ``#include "getfem/getfem_xxx.h"``
+
+   * The getfem interface (python and matlab) is now included in the
+     getfem tar.gz file, in the `interface` subdirectory. They can
+     be enabled with the ``--enable-python`` or ``--enable-matlab``
+     switch of the configure script.
+
+   * Some `C1` composite elements have been added (triangles and
+     quadrilaterals).
+
+   * Levelset support has been improved.
+
+The full list of changes is available in the `ChangeLog
+<http://svn.gna.org/viewcvs/getfem/trunk/getfem%2B%2B/ChangeLog?rev=2640&view=auto>`_.

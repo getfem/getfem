@@ -1,0 +1,46 @@
+******************************
+  What's New in GetFEM++ 2.0
+******************************
+
+   Released, 2006/03/20:
+
+   * This is a major update to getfem++, which make some
+     backward-incompatible changes:
+
+     * The old mesh_fem has been split into two disjoint classes:
+       ``mesh_fem`` which handles all that is related to FEM, and
+       ``mesh_im`` which handles the integration methods on a mesh.
+
+     * The old ``getfem::getfem_mesh`` class has been renamed to
+       ``getfem::mesh``.
+
+     * The "boundaries" which were attached to a ``mesh_fem`` in
+       previous versions, are now attached to a ``mesh``, and they
+       are now called "regions" (because they can stored boundaries,
+       and also sets of convexes).
+
+     * The model bricks have been reworked -- especially the
+       Dirichlet conditions.
+
+   * Some news features have been introduced in this release:
+
+     * Introduction of level-set objects. Integration methods can be 
+       cut with respect to these level-set and discontinuous
+       elements across the level-set are provided.
+
+     * Parallelization of the assembly.
+
+     * Interface to `MUMPS`.
+
+     * Many news elements, Hermite and vectorial elements are now
+       fully supported: 1D, 2D and 3D hermite, Argyris triangle, HCT
+       triangle, RT0 and Nedelec elements are now available.
+
+     * Automatic mesh refinement.
+
+Major changes for the matlab and python interface: they follow the
+changes that occured in getfem. An interface to the getfem++ model
+bricks has been added.
+
+Next releases of getfem++ will try to maintain backward
+compatability with this release.

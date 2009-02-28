@@ -1,0 +1,12 @@
+******************************
+  What's New in GetFEM++ 1.2
+******************************
+
+   Released, 2002/08/21:
+
+   * Introduction of the Hermite element (not fully working).
+
+   * Support for non-tau-equivalent elements.
+
+   * Introduction of a consistent naming system for FEMs, geometric
+     transformations and integration methods.
