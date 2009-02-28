@@ -14,8 +14,8 @@ This document describes the style guide for our documentation, the custom
 reStructuredText markup introduced to support Python documentation and how it
 should be used, as well as the Sphinx build system.
 
-.. _reStructuredText: http://docutils.sf.net/rst.html
-.. _docutils: http://docutils.sf.net/
+.. _reStructuredText: http://docutils.sourceforge.net/rst.html
+.. _docutils: http://docutils.sourceforge.net/
 .. _Sphinx: http://sphinx.pocoo.org/
 
 If you're interested in contributing to GetFEM++'s documentation, there's no

@@ -92,8 +92,6 @@ Glossary
       the basis for many features including functions, methods, properties,
       class methods, static methods, and reference to super classes.
 
-      For more information about descriptors' methods, see :ref:`descriptors`.
-
    dictionary
       An associative array, where arbitrary keys are mapped to values.  The use
       of :class:`dict` closely resembles that for :class:`list`, but the keys can
@@ -291,8 +289,6 @@ Glossary
       with an iterator will just return the same exhausted iterator object used
       in the previous iteration pass, making it appear like an empty container.
 
-      More information can be found in :ref:`typeiter`.
-
    keyword argument
       Arguments which are preceded with a ``variable_name=`` in the call.
       The variable name designates the local name in the function to which the
@@ -337,8 +333,6 @@ Glossary
       powerful, elegant solutions.  They have been used for logging attribute
       access, adding thread-safety, tracking object creation, implementing
       singletons, and many other tasks.
-
-      More information can be found in :ref:`metaclasses`.
 
    method
       A function which is defined inside a class body.  If called as an attribute
@@ -388,8 +382,6 @@ Glossary
       types like :class:`list` and :class:`dict`.  Only new-style classes can
       use Python's newer, versatile features like :attr:`__slots__`,
       descriptors, properties, and :meth:`__getattribute__`.
-
-      More information can be found in :ref:`newstyle`.
 
    object
       Any data with state (attributes or value) and defined behavior
@@ -459,8 +451,7 @@ Glossary
    special method
       A method that is called implicitly by Python to execute a certain
       operation on a type, such as addition.  Such methods have names starting
-      and ending with double underscores.  Special methods are documented in
-      :ref:`specialnames`.
+      and ending with double underscores.
 
    statement
       A statement is part of a suite (a "block" of code).  A statement is either

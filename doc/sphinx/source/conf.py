@@ -41,7 +41,7 @@ source_encoding = 'utf-8'
 
 # General information about the project.
 project = u'GetFEM++'
-copyright = '2008-%s, Luis Saavedra'% time.strftime('%Y')
+copyright = '2000-%s, Yves Renard, Julien Pommier'% time.strftime('%Y')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
