@@ -402,19 +402,28 @@ void friction_problem::solve(void) {
   
   // contact condition for Lagrange elements
   dal::bit_vector cn, dn = mf_u.dof_on_set(CONTACT_BOUNDARY);
-  for (size_type i = 0; i < mf_u.nb_dof(); ++i)
-    if (dn.is_in(i) && i % N == 0) {
-      switch (contact_type) {
-      case 0 :
-	cn.add(i); break;
-      case 1 :
-	if (mesh.points().search_node(mf_u.point_of_dof(i)) != size_type(-1))
-	  cn.add(i);
-	break;
-      default : GMM_ASSERT1(false, "Bad contact type.");
+  // cout << "dn = " << dn << endl;
+  for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv)
+    for (size_type i = 0; i < mf_u.nb_dof_of_element(cv); ++i) {
+      size_type j = mf_u.ind_dof_of_element(cv)[i];
+      if (dn.is_in(j) && j % N == 0) {
+        switch (contact_type) {
+	case 0 :
+	  cn.add(j); break;
+	case 1 :
+	  {
+	    base_node pt = mf_u.fem_of_element(cv)->node_of_dof(0,i/N);
+	    bool state = true;
+	    for (unsigned k = 0; k < pt.size(); ++k)
+	      if (gmm::abs(pt[k]) > 1E-12 && gmm::abs(pt[k]-1.0) > 1E-12)
+		state = false;
+	    if (state) cn.add(j);
+	  }
+	  break;
+	default : GMM_ASSERT1(false, "Bad contact type.");
+	}
       }
-    }
-  dal::bit_vector pcn = cn;
+  }
 
   cout << "cn = " << cn << endl;
   sparse_matrix BN(cn.card(), mf_u.nb_dof());
