@@ -429,10 +429,13 @@ void friction_problem::solve(void) {
   sparse_matrix BN(cn.card(), mf_u.nb_dof());
   sparse_matrix BT((N-1)*cn.card(), mf_u.nb_dof());
   plain_vector gap(cn.card());
-  size_type jj = 0;
+  size_type jj = 0, lower_dof_u = 0, lower_dof_s = 0;
+  scalar_type heighmin = 1E10;
   for (dal::bv_visitor i(cn); !i.finished(); ++i) {
     BN(jj, i+N-1) = -1.;
     gap[jj] = mf_u.point_of_dof(i)[N-1];
+    if (gap[jj] < heighmin)
+      { heighmin = gap[jj]; lower_dof_u = i+N-1; lower_dof_s = jj; }
     for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
     ++jj;
   }
@@ -498,8 +501,10 @@ void friction_problem::solve(void) {
     exp->serie_add_object("vonmisessteps");
   }
   
-  std::ofstream fileout1("time", std::ios::out);   
-  std::ofstream fileout2("energy", std::ios::out);
+  std::ofstream fileout1((datafilename + ".t").c_str(), std::ios::out);   
+  std::ofstream fileout2((datafilename + ".e").c_str(), std::ios::out);
+  std::ofstream fileout3((datafilename + ".s").c_str(), std::ios::out);
+  std::ofstream fileout4((datafilename + ".u").c_str(), std::ios::out);
  
   scalar_type Einit = (0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
 		       + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)
@@ -565,7 +570,9 @@ void friction_problem::solve(void) {
     if (dxexport && t >= t_export-dt/20.0) {
       
       fileout1 << t << "\n";
-      fileout2 << J1   << "\n";	
+      fileout2 << J1   << "\n";
+      fileout3 << LN0[lower_dof_s] << "\n";
+      fileout4 << U0[lower_dof_u] << "\n";
       
       exp->write_point_data(mf_u, U0);
       exp->serie_add_object("deformationsteps");

@@ -45,13 +45,15 @@ rcParams.update(params)
 
 if 1:
 
-    T = loadtxt('time');
-    E = loadtxt('energy');
+    T = loadtxt('mixed_dynamic_friction.t');
+    E = loadtxt('mixed_dynamic_friction.e');
+    u = loadtxt('mixed_dynamic_friction.u');
+    s = loadtxt('mixed_dynamic_friction.s');
     plot(T, E, '-', lw=2, alpha=0.9);
     xlabel(r"mesh size $h$", fontsize=20);
     ylabel(r'$H_1$ and $L_2$ error', fontsize=20);
     show()
-
+    
 
 if 0:
 
