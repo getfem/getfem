@@ -29,6 +29,7 @@ check_PROGRAMS =                 \
 	test_assembly            \
 	test_norm	         \
 	test_interpolated_fem    \
+	test_range_basis         \
 	laplacian                \
 	elastostatic             \
 	stokes                   \
@@ -76,6 +77,7 @@ test_interpolated_fem_SOURCES = test_interpolated_fem.cc
 test_tree_sorted_SOURCES = test_tree_sorted.cc
 test_mat_elem_SOURCES = test_mat_elem.cc
 test_slice_SOURCES = test_slice.cc
+test_range_basis_SOURCES = test_range_basis.cc
 test_norm_SOURCES = test_norm.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
@@ -115,6 +117,7 @@ TESTS = \
 	$(top_srcdir)/tests/integration.pl             \
 	$(top_srcdir)/tests/test_assembly.pl           \
 	$(top_srcdir)/tests/test_interpolated_fem.pl   \
+	$(top_srcdir)/tests/test_range_basis.pl        \
 	$(top_srcdir)/tests/laplacian.pl               \
 	$(top_srcdir)/tests/elastostatic.pl            \
 	$(top_srcdir)/tests/stokes.pl                  \
@@ -157,6 +160,8 @@ EXTRA_DIST = \
 	xfem_dirichlet_demo.pl		  \
 	xfem_dirichlet_demo.param	  \
 	laplacian.param                   \
+	test_range_basis.param            \
+	test_range_basis.pl               \
 	bilaplacian.param                 \
 	bilaplacian.pl                    \
 	plate.param                       \
