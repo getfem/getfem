@@ -8,14 +8,14 @@ INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
 N = 2;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
-NX = 20;                   % space step.
+NX = 400;                   % space step.
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh
 
 if (N == 1)
   FT = 5.0;
   MESH_TYPE = 'GT_PK(1,1)';       % segments
-  FEM_TYPE = 'FEM_PK(1,2)';       % P1 for segments
-  MULT_FEM_TYPE = 'FEM_PK(1,2)';
+  FEM_TYPE = 'FEM_PK(1,1)';       % P1 for segments
+  MULT_FEM_TYPE = 'FEM_PK(1,1)';
 %  FEM_TYPE = 'FEM_HERMITE(1)'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
   INTEGRATION = 'IM_GAUSS1D(6)';  % Gauss-Legendre integration on segments
 end
@@ -23,7 +23,7 @@ end
 if (N == 2 && ~QUAD)
   FT = 10.0;
   MESH_TYPE = 'GT_PK(2,1)';       % triangles
-  FEM_TYPE = 'FEM_PK(2,1)';       % P1 for triangles
+  FEM_TYPE = 'FEM_PK(2,2)';       % P1 for triangles
   MULT_FEM_TYPE = 'FEM_PK(2,2)';
   %FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,3)';
   %INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';

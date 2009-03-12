@@ -191,21 +191,17 @@ void laplacian_problem::assembly(void) {
   getfem::asm_mass_matrix(B, mim, mf_mult, mf_u, DIRICHLET_BOUNDARY_NUM);
   
   
-  std::vector<bool> columns;
+  std::set<int> columns;
 
   cout << "depart" << endl;
   gmm::range_basis(gmm::transposed(B), columns);
-  cout << "columns = " << columns << endl;
+
+  for (std::set<int>::iterator it = columns.begin();
+       it != columns.end(); ++it) 
+    cout << " " << *it;
+  cout << endl;
   
 }
-
-
-
-
-
-
-
-
 
 
 /**************************************************************************/
