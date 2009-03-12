@@ -50,6 +50,7 @@ nobase_include_HEADERS =                   		\
 	gmm/gmm_lapack_interface.h         		\
 	gmm/gmm_condition_number.h         		\
 	gmm/gmm_least_squares_cg.h         		\
+	gmm/gmm_range_basis.h         			\
 	gmm/gmm_opt.h                      		\
 	gmm/gmm_algobase.h                 		\
 	gmm/gmm_ref.h                      		\

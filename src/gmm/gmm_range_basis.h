@@ -46,12 +46,14 @@ namespace gmm {
     Extract a basis of the range of a (sparse) matrix from the columns of
     this matrix.
   */
-  template <typename Mat> range_basis(const Mat &B, double EPS,
-				      col_major) {
+  template <typename Mat>
+  void range_basis(const Mat &B, std::vector<bool> &columns,
+		   double EPS, col_major) {
+   
     size_type nc = mat_ncols(B), nc_r = nc;
-    std::vector<bool> b(nc, true);
+    columns.resize(nc); gmm::fill(columns, true);
 
-    typedef typename linalg_traits<V>::value_type T
+    typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
     R norm_max = R(0);
@@ -59,90 +61,112 @@ namespace gmm {
       norm_max=std::max(norm_max, vect_norm2(mat_col(B, i)));
 
     // Is there a better strategy ?
-    for (size_type i = 0; i < nc; ++i)
+    for (size_type i = 0; i < nc; ++i) {
+      // cout << "i : " << vect_norm2(mat_col(B, i)); 
       if (vect_norm2(mat_col(B, i)) < norm_max*EPS)
-	{ b[i] = false; nc--; }
+	{ columns[i] = false; --nc_r; /* cout << " elminated" << endl; */ }
+      // else  cout << " kept" << endl;
+    }
 
-    std::vector<T> w(mat_nrows(B))
+    std::vector<T> w(mat_nrows(B));
     
     while (nc_r) {
 
-      std::vector<T> v(nc_r);
+      // cout << "nc_r = " << nc_r << endl;
+      std::vector<T> v(nc_r), v0(nc_r);
 
-      // recherche du rayon spectral de B^* B
+      // Spectral radius of B^* B
       
-      R rho = 0;
+      R rho = R(0), rho2 = R(0);
 
       gmm::fill_random(v);
-      for (size_type i = 0; i < 1000 /* ...*/ ; ++i) {
+      for (size_type i = 0; i < 1000000; ++i) {
+	R rho_old = rho;
 	gmm::clear(w);
+	gmm::copy(v, v0);
 	size_type k = 0;
-	for (size_type j = 0; j < nc)
-	  if (b[j]) { gmm::add(gmm::scaled(mat_col(B, j), v[k]), w); k++; }
+	for (size_type j = 0; j < nc; ++j)
+	  if (columns[j]) { add(scaled(mat_col(B, j), v[k]), w); ++k; }
 	
 	k = 0;
-	for (size_type j = 0; j < nc)
-	  if (b[j]) { v[k] = gmm::vect_hp(w, mat_col(B, j)); k++; }
+	for (size_type j = 0; j < nc; ++j)
+	  if (columns[j]) { v[k] = vect_hp(w, mat_col(B, j)); ++k; }
+
+	rho = vect_hp(v, v0) / vect_hp(v0, v0); // Rayleigh quotient
+
+	if (gmm::abs(rho_old-rho) <= rho*1E-3) break;
 	  
 	gmm::scale(v, T(1)/vect_norm2(v));
-
-	// + calcul coefficient de rayleight
-
       }
 
+      rho *= R(4)/R(7);
 
-
-      // recherche d'un élément du noyau de B^* B
+      // Computing an element of the null space of de B^* B
 
       gmm::fill_random(v);
-      for (size_type i = 0; i < 1000 /* ...*/ ; ++i) {
+      for (size_type i = 0; i < 1000000; ++i) {
+	R rho_old = rho2;
 	gmm::clear(w);
+	gmm::copy(v, v0);
 	size_type k = 0;
-	for (size_type j = 0; j < nc)
-	  if (b[j]) { gmm::add(gmm::scaled(mat_col(B, j), v[k]), w); k++; }
+	for (size_type j = 0; j < nc; ++j)
+	  if (columns[j]) { add(scaled(mat_col(B, j), v[k]), w); ++k; }
 	
 	k = 0;
-	for (size_type j = 0; j < nc)
-	  if (b[j]) {
-	    v[k] = gmm::vect_hp(w, mat_col(B, j)) - v[k]*rho*R(4)/R(7);
-	    k++;
+	for (size_type j = 0; j < nc; ++j)
+	  if (columns[j]) {
+	    v[k] = vect_hp(w, mat_col(B, j)) - v[k]*rho;
+	    ++k;
 	  }
-	  
+	GMM_ASSERT1(k == nc_r, "Internal error");
+
+	rho2 = vect_hp(v, v0) / vect_hp(v0, v0); // Rayleigh quotient
+	if (gmm::abs(rho_old-rho2) <= rho*EPS/R(1000)) break;
+
 	gmm::scale(v, T(1)/vect_norm2(v));
-
-	// + calcul coefficient de rayleight
-
       }
       
-
-      // + selection du terme maximal dans v si la valeur propre est proche
-      // de rho*R(4)/R(7) sinon break
-
-
-
-
+      // cout << "rho = " << rho << " rho2 = " << rho2 << " rho+rho2 " << (rho+rho2)/rho << endl;
+    
+      if (gmm::abs(rho+rho2) < EPS*rho) {
+	size_type k = 0, j_max = size_type(-1);
+	R val_max = R(0);
+	for (size_type j = 1; j < nc; ++j)
+	  if (columns[j]) {
+	    if (gmm::abs(v[k]) > val_max) {
+	      val_max = gmm::abs(v[k]);
+	      j_max = j;
+	    }
+	    ++k;
+	  }
+	GMM_ASSERT1(j_max != size_type(-1), "Internal error");
+	cout << "Eliminating " << j_max << endl;
+	cout << "v = " << v << endl;
+	columns[j_max] = false; --nc_r;
+      }
+      else break;
     }
-
 
   }
 
-  template <typename Mat> range_basis(const Mat &B, double EPS,
-                                      row_major) {
-    col_matrix< rs_vector<typename linalg_traits<Mat>::value_type >
-      BB(mat_nrows(B), mat_ncols(B));
+  template <typename Mat>
+  void range_basis(const Mat &B, std::vector<bool> &columns,
+		   double EPS, row_major) {
+    typedef typename  linalg_traits<Mat>::value_type T;
+    gmm::col_matrix< rsvector<T> > BB(mat_nrows(B), mat_ncols(B));
     GMM_WARNING3("A copy of a row matrix is done into a column matrix "
 		 "for range basis algorithm.");
     gmm::copy(B, BB);
-    range_basis(BB, EPS);
+    range_basis(BB, columns, EPS);
   }
 
-  template <typename Mat> range_basis(const Mat &B, double EPS=1E-14) {
-    range_basis(B, EPS,
+  template <typename Mat>
+  void range_basis(const Mat &B, std::vector<bool> &columns,
+		   double EPS=1E-12) {
+    range_basis(B, columns, EPS,
 		typename principal_orientation_type
 		<typename linalg_traits<Mat>::sub_orientation>::potype());
   }
-  
-
 
 }
 
