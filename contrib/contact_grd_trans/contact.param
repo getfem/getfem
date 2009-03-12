@@ -4,8 +4,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-LX = 0.01;		% size in X.
-LY = 0.02;	        % size in Y.
+LX = 0.02;		% size in X.
+LY = 0.01;	        % size in Y.
 LZ = 0.01;		% size in Z.
 P1 = 2000E6;	        % First elastic coefficient.
 P2 = 200E6;   	        % Second elastic coefficient.

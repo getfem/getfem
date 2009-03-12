@@ -68,7 +68,7 @@ struct elastostatic_problem {
   getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */
   scalar_type p1, p2, p3;    /* elastic coefficients.                        */
   scalar_type LX, LY, LZ;    /* system dimensions   */
-    scalar_type lambda, mu;    /* Lamé coefficients.                           */
+  scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type residual;        /* max residual for the iterative solvers         */
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -345,7 +345,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	cout << "beginning of step " << step+1 << ", number of variables : " << final_model.nb_dof() << endl ;
 
     for (size_type i = 0; i < nb_dof_rhs; ++i) {
-      F2[i*N+N-1] = dz;
+      // F2[i*N+N-1] = dz;
+      F2[i*N+N-1] = (step < 10) ? (dz * step/10.0) : dz;
      // F2[i*N+N-1] = dz+dz*3*step/nb_step;
       F2[i*N+N-2] = step*deltat*dyv;
     }
@@ -443,8 +444,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::vecsave(datafilename + s + ".U",U);
 
 
-    plain_vector VM(mf_vm.nb_dof());
-    ELAS.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
+//    plain_vector VM(mf_vm.nb_dof());
+//    ELAS.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
 
    
      gmm::copy(U, U0);   

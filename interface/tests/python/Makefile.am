@@ -1,4 +1,4 @@
-EXTRA_DIST=demo_tripod.py demo_tripod_alt.py demo_plate.py check_export.py
+EXTRA_DIST=demo_tripod.py demo_tripod_alt.py demo_plate.py check_export.py getfem_tvtk.py
 
 clean: clean-am
 	rm -f *.vtk

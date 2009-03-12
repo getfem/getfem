@@ -8,8 +8,7 @@
 
 N = 2;
 T = 0.7;
-DT = 0.064;              % Time step
-
+DT = 0.002;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 NX = 10;            	          % space step.
