@@ -5,7 +5,9 @@
 .. toctree::
 
    whatsnew/index.rst
+   whatis/index.rst
    python/index.rst
+   install/index.rst
    documenting/index.rst
    glossary.rst
 

@@ -1,10 +1,15 @@
-.. include:: ../replaces.txt
+.. include:: ../python/replaces.txt
 
-Instalation
-===========
+.. highlightlang:: none
+
+.. _install-index:
+
+***********************
+  Installing GetFEM++
+***********************
 
 In a debian/ubuntu system
--------------------------
+=========================
 
 If you have a problem installing the packages, please report it as a bug.
 
@@ -17,16 +22,20 @@ where
 
 distro = `debian` xor `ubuntu`,
 
-then, do a ``aptitude update`` and ``aptitude install python-getfem``.
+then, do a ``aptitude update`` and:
 
-In a general unix/linux based systems
--------------------------------------
+* ``aptitude install libgetfem++-dev`` for install GetFEM++ kernel library.
+* ``aptitude install python-getfem`` for install Python interface.
+* There isn't a package to install Matlab interface. See below...
+
+In a general unix based systems
+===============================
 
 Since we use standard |gnu| tools, the installation of the |py| |gf| is
 somewhat standard.
 
 Requirements
-^^^^^^^^^^^^
+------------
 
 It requires the python developpement files (python.h etc.) to be available
 (package `python-all-dev` in debian distribution), and also the numpy
@@ -34,15 +43,17 @@ package to be installed (package `python-numpy` in debian distribution).
 In case of troubles with a non-GNU compiler, gcc/g++ (>= 3.0) should be a
 safe solution (package `build-essential` in debian distribution).
 
-If you want mesh generation, it requires the package qhull installed on
-your system (package `libqhull-dev` in debian distribution).
+If you want to:
 
-If you want to build binaries from svn to get the latest changes,
-improvements, bugfixes, new bugs, etc. It requires an svn client,
-automake, and libtool.
+* mesh generation, it requires the package qhull installed on your system
+  (package `libqhull-dev` in debian distribution).
+
+* build binaries from svn to get the latest changes, improvements, bugfixes,
+  new bugs, etc. It requires an svn client, automake, and libtool.
 
 Download sources
-^^^^^^^^^^^^^^^^
+----------------
+
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
@@ -80,7 +91,7 @@ The latest unstable releases is:
      bash autogen.sh
 
 Compilling
-^^^^^^^^^^
+----------
 
 Configure with::
 

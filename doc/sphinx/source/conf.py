@@ -170,11 +170,14 @@ htmlhelp_basename = 'getfem' + release.replace('.', '')
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
+_stdauthor = r'Yves Renard, Julien Pommier'
 latex_documents = [
     ('python/index', 'python.tex',
      'Python GetFEM++ Interface', 'Luis Saavedra', 'manual'),
+    ('install/index', 'install.tex',
+     'Installing GetFEM++', 'Luis Saavedra', 'manual'),
     ('whatsnew/' + version, 'whatsnew.tex',
-     'What\'s New in GetFEM++', ' ', 'howto'),
+     'What\'s New in GetFEM++', _stdauthor, 'howto'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

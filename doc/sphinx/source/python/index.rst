@@ -1,4 +1,4 @@
-.. include:: replaces.txt
+.. include:: ../replaces.txt
 
 .. _contents:
 

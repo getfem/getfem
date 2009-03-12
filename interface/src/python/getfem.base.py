@@ -2,14 +2,14 @@
 # -*- coding: iso-8859-1 -*-
 #
 #
-# Getfem-Python interface
+# Python GetFEM++ interface
 #
 # Date : March, 2004.
 # Author : Julien Pommier, pommier@gmm.insa-tlse.fr
 #                                                       
 # This file is a part of GETFEM++                                         
 #                                                                         
-# Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
 # (at your option) any later version.
@@ -22,7 +22,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #                                                                         
 """Getfem-interface classes.
-Provides access to the pseudo-objects exported by the getfem-python interface.
+Provides access to the pseudo-objects exported by the python-getfem interface.
 """
 
 
@@ -30,8 +30,6 @@ __version__ = "$Revision$"
 # $Source: getfem++/interface/src/python/getfem.base.py,v $
 
 import sys
-##import Numeric
-#import numarray
 import numpy
 
 from _getfem import *
@@ -99,13 +97,16 @@ if you mix elements with different dimensions.
     #@RDATTR MESH:GET('nbcvs')
     #@GET    MESH:GET('pts')
     #@GET    MESH:GET('pid')
+    #@GET    MESH:GET('pid in faces')
+    #@GET    MESH:GET('pid in cvids')
+    #@GET    MESH:GET('pid in regions')
+    #@GET    MESH:GET('pid from coords')
+    #@GET    MESH:GET('pid from cvid')
     #@GET    MESH:GET('cvid')
     #@GET    MESH:GET('max pid')
     #@GET    MESH:GET('max cvid')
-    #@GET    MESH:GET('pid from cvid')
     #@GET    MESH:GET('edges')
     #@GET    MESH:GET('curved edges')
-    #@GET    MESH:GET('pid from coords')
     #@GET    MESH:GET('orphaned pid')
     #@GET    MESH:GET('cvid from pid')
     #@GET    MESH:GET('faces from pid')
