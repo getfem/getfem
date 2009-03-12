@@ -237,6 +237,23 @@ namespace getfem {
 	// Reordering nodes for certain elements (should be completed ?)
 	switch(ci.type) {
 	case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
+	case 5 : { /* First order hexaedron */
+	  std::vector<size_type> tmp_nodes(8);
+	  tmp_nodes[0] = ci.nodes[0]; 
+	  tmp_nodes[1] = ci.nodes[1];
+	  tmp_nodes[2] = ci.nodes[3]; 
+	  tmp_nodes[3] = ci.nodes[2];
+	  tmp_nodes[4] = ci.nodes[4]; 
+	  tmp_nodes[5] = ci.nodes[5];
+	  tmp_nodes[6] = ci.nodes[7]; 
+	  tmp_nodes[7] = ci.nodes[6];
+	  ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+	    ci.nodes[2] = tmp_nodes[2];
+	  ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+	    ci.nodes[5] = tmp_nodes[5];
+	  ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7];
+	}
+	  break;
 	case 8 : { /* Second order line */
 	  std::vector<size_type> tmp_nodes(3);
 	  tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
