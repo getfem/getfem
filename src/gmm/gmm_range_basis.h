@@ -31,48 +31,38 @@
 /**@file gmm_range_basis.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date March 10, 2009.
-   @brief Extract a basis of the range of a (sparse) matrix from the columns of
-          this matrix.
+   @brief Extract a basis of the range of a (large sparse) matrix from the 
+          columns of this matrix.
 */
 #ifndef GMM_RANGE_BASIS_H
 #define GMM_RANGE_BASIS_H
 
 #include "gmm_kernel.h"
 #include "gmm_iter.h"
+#include <set>
+
 
 namespace gmm {
 
   /** Range Basis :     
-    Extract a basis of the range of a (sparse) matrix from the columns of
+    Extract a basis of the range of a (large sparse) matrix from the columns of
     this matrix.
   */
   template <typename Mat>
-  void range_basis(const Mat &B, std::vector<bool> &columns,
-		   double EPS, col_major) {
+  void range_basis_eff(const Mat &B, std::set<int> &columns,
+		       double EPS) {
    
-    size_type nc = mat_ncols(B), nc_r = nc;
-    columns.resize(nc); gmm::fill(columns, true);
-
+    typedef std::set<int> TAB;
     typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    R norm_max = R(0);
-    for (size_type i = 0; i < nc; ++i)
-      norm_max=std::max(norm_max, vect_norm2(mat_col(B, i)));
-
-    // Is there a better strategy ?
-    for (size_type i = 0; i < nc; ++i) {
-      // cout << "i : " << vect_norm2(mat_col(B, i)); 
-      if (vect_norm2(mat_col(B, i)) < norm_max*EPS)
-	{ columns[i] = false; --nc_r; /* cout << " elminated" << endl; */ }
-      // else  cout << " kept" << endl;
-    }
+    size_type nc_r = columns.size(), k;
+    double SQRTEPS = gmm::sqrt(EPS);
 
     std::vector<T> w(mat_nrows(B));
     
     while (nc_r) {
 
-      // cout << "nc_r = " << nc_r << endl;
       std::vector<T> v(nc_r), v0(nc_r);
 
       // Spectral radius of B^* B
@@ -84,73 +74,180 @@ namespace gmm {
 	R rho_old = rho;
 	gmm::clear(w);
 	gmm::copy(v, v0);
-	size_type k = 0;
-	for (size_type j = 0; j < nc; ++j)
-	  if (columns[j]) { add(scaled(mat_col(B, j), v[k]), w); ++k; }
+	k = 0;
+	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
+	  add(scaled(mat_col(B, *it), v[k]), w);
 	
 	k = 0;
-	for (size_type j = 0; j < nc; ++j)
-	  if (columns[j]) { v[k] = vect_hp(w, mat_col(B, j)); ++k; }
+	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
+	  v[k] = vect_hp(w, mat_col(B, *it));
 
-	rho = vect_hp(v, v0) / vect_hp(v0, v0); // Rayleigh quotient
+	rho = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0)); // Rayleigh quotient
 
-	if (gmm::abs(rho_old-rho) <= rho*1E-3) break;
+	if (gmm::abs(rho_old-rho) <= rho*1E-5) break;
 	  
 	gmm::scale(v, T(1)/vect_norm2(v));
       }
 
-      rho *= R(4)/R(7);
+      rho *= R(8)/R(15);
 
       // Computing an element of the null space of de B^* B
-
       gmm::fill_random(v);
       for (size_type i = 0; i < 1000000; ++i) {
 	R rho_old = rho2;
 	gmm::clear(w);
 	gmm::copy(v, v0);
-	size_type k = 0;
-	for (size_type j = 0; j < nc; ++j)
-	  if (columns[j]) { add(scaled(mat_col(B, j), v[k]), w); ++k; }
+	k = 0;
+	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
+	  add(scaled(mat_col(B, *it), v[k]), w);
 	
 	k = 0;
-	for (size_type j = 0; j < nc; ++j)
-	  if (columns[j]) {
-	    v[k] = vect_hp(w, mat_col(B, j)) - v[k]*rho;
-	    ++k;
-	  }
-	GMM_ASSERT1(k == nc_r, "Internal error");
+	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
+	  v[k] = vect_hp(w, mat_col(B, *it)) - v[k]*rho;
 
-	rho2 = vect_hp(v, v0) / vect_hp(v0, v0); // Rayleigh quotient
-	if (gmm::abs(rho_old-rho2) <= rho*EPS/R(1000)) break;
+	rho2 = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0)); // Rayleigh quotient
+	if (gmm::abs(rho_old-rho2) <= rho*EPS/R(50)) break;
+	if (gmm::abs(rho_old-rho2) <= rho*SQRTEPS
+	    && gmm::abs(rho2 - rho)*SQRTEPS > gmm::abs(rho_old-rho2))
+	  break;
 
 	gmm::scale(v, T(1)/vect_norm2(v));
       }
       
-      // cout << "rho = " << rho << " rho2 = " << rho2 << " rho+rho2 " << (rho+rho2)/rho << endl;
-    
-      if (gmm::abs(rho+rho2) < EPS*rho) {
-	size_type k = 0, j_max = size_type(-1);
+      if (gmm::abs(rho-rho2) < EPS*rho) {
+	size_type j_max = size_type(-1);
 	R val_max = R(0);
-	for (size_type j = 1; j < nc; ++j)
-	  if (columns[j]) {
-	    if (gmm::abs(v[k]) > val_max) {
-	      val_max = gmm::abs(v[k]);
-	      j_max = j;
-	    }
-	    ++k;
+
+	k = 0;
+	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it) {
+	  if (gmm::abs(v[k]) > val_max) {
+	    val_max = gmm::abs(v[k]);
+	    j_max = *it;
 	  }
+	  ++k;
+	}
 	GMM_ASSERT1(j_max != size_type(-1), "Internal error");
-	cout << "Eliminating " << j_max << endl;
-	cout << "v = " << v << endl;
-	columns[j_max] = false; --nc_r;
+	columns.erase(j_max); nc_r = columns.size();
       }
       else break;
     }
-
   }
 
+
+//   template <typename Mat>
+//   void range_basis_rec(const Mat &B, std::set<int> &columns,
+// 		   double EPS) {
+   
+//     typedef typename linalg_traits<Mat>::value_type T;
+//     typedef typename number_traits<T>::magnitude_type R;
+
+//     size_type nc_r = columns.size();
+//     if (nc_r > 100) {
+//       std::set<int> c1, c2, c3, c4, c5, c6, c7, c8;
+//       size_type k = 0;
+//       for (std::set<int>::iterator it = columns.begin();
+// 	   it != columns.end(); ++it, ++k) 
+// 	if (k < nc_r/8) c1.insert(*it);
+// 	else if (k < 2*nc_r/8) c2.insert(*it);
+// 	else if (k < 3*nc_r/8) c3.insert(*it);
+// 	else if (k < 4*nc_r/8) c4.insert(*it);
+// 	else if (k < 5*nc_r/8) c5.insert(*it);
+// 	else if (k < 6*nc_r/8) c6.insert(*it);
+// 	else if (k < 7*nc_r/8) c7.insert(*it);
+// 	else c8.insert(*it);
+//       size_type c1size = c1.size();
+//       range_basis_rec(B, c1, EPS);
+//       if (c1.size() < c1size) {
+// 	range_basis_rec(B, c2, EPS);
+// 	range_basis_rec(B, c3, EPS);
+// 	range_basis_rec(B, c4, EPS);
+// 	range_basis_rec(B, c5, EPS);
+// 	range_basis_rec(B, c6, EPS);
+// 	range_basis_rec(B, c7, EPS);
+// 	range_basis_rec(B, c8, EPS);
+// 	columns = c1;
+// 	for (std::set<int>::iterator it = c2.begin(); it != c2.end(); ++it)
+// 	  columns.insert(*it);
+// 	for (std::set<int>::iterator it = c3.begin(); it != c3.end(); ++it)
+// 	  columns.insert(*it);
+// 	for (std::set<int>::iterator it = c4.begin(); it != c4.end(); ++it)
+// 	  columns.insert(*it);
+// 	for (std::set<int>::iterator it = c5.begin(); it != c5.end(); ++it)
+// 	  columns.insert(*it);
+// 	for (std::set<int>::iterator it = c6.begin(); it != c6.end(); ++it)
+// 	  columns.insert(*it);
+// 	for (std::set<int>::iterator it = c7.begin(); it != c7.end(); ++it)
+// 	  columns.insert(*it);
+// 	for (std::set<int>::iterator it = c8.begin(); it != c8.end(); ++it)
+// 	  columns.insert(*it);
+//       }
+//     }
+//     range_basis_eff(B, columns, EPS);
+//   }
+
+
   template <typename Mat>
-  void range_basis(const Mat &B, std::vector<bool> &columns,
+  void range_basis_rec(const Mat &B, std::set<int> &columns,
+		   double EPS) {
+   
+    typedef typename linalg_traits<Mat>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    size_type nc_r = columns.size();
+    if (nc_r > 50) {
+      std::set<int> c1, cres;
+      for (std::set<int>::iterator it = columns.begin();
+	   it != columns.end(); ++it) {
+	c1.insert(*it);
+	if (c1.size() >= 40) {
+	  size_type c1size = c1.size();
+	  range_basis_eff(B, c1, EPS);
+	  if (c1.size() != c1size) {
+	    for (std::set<int>::iterator it2=c1.begin(); it2 != c1.end();
+		 ++it2)
+	      cres.insert(*it2);
+	  }
+	  else {
+	    for (size_type i = 0; it != columns.end() && i < 1000; ++it, ++i) ;
+	  }
+	  c1.clear(); 
+	}
+      }
+      
+      if (c1.size() > 10) {
+	range_basis_eff(B, c1, EPS);
+	for (std::set<int>::iterator it = c1.begin(); it != c1.end(); ++it)
+	  cres.insert(*it); 
+      }
+      columns = cres;
+    }
+    range_basis_eff(B, columns, EPS);
+  }
+
+
+
+  template <typename Mat>
+  void range_basis(const Mat &B, std::set<int> &columns,
+		   double EPS, col_major) {
+   
+    typedef typename linalg_traits<Mat>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+  
+    R norm_max = R(0);
+    for (size_type i = 0; i < mat_ncols(B); ++i)
+      norm_max=std::max(norm_max, vect_norm2(mat_col(B, i)));
+    
+    columns.clear();
+    for (size_type i = 0; i < mat_ncols(B); ++i)
+      if (vect_norm2(mat_col(B, i)) >= norm_max*EPS)
+	columns.insert(i);
+
+    range_basis_rec(B, columns, EPS);
+  }
+
+
+  template <typename Mat>
+  void range_basis(const Mat &B, std::set<int> &columns,
 		   double EPS, row_major) {
     typedef typename  linalg_traits<Mat>::value_type T;
     gmm::col_matrix< rsvector<T> > BB(mat_nrows(B), mat_ncols(B));
@@ -161,8 +258,8 @@ namespace gmm {
   }
 
   template <typename Mat>
-  void range_basis(const Mat &B, std::vector<bool> &columns,
-		   double EPS=1E-12) {
+  void range_basis(const Mat &B, std::set<int> &columns,
+		   double EPS=1E-11) {
     range_basis(B, columns, EPS,
 		typename principal_orientation_type
 		<typename linalg_traits<Mat>::sub_orientation>::potype());
