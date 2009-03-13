@@ -6,9 +6,9 @@
 LX = 1.0; LY = LX; LZ = LX; % sizes of the domain.
 INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
-N = 2;                      % domain in dimension N
+N = 3;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
-NX = 400;                   % space step.
+NX = 15;                   % space step.
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh
 
 if (N == 1)
@@ -23,7 +23,7 @@ end
 if (N == 2 && ~QUAD)
   FT = 10.0;
   MESH_TYPE = 'GT_PK(2,1)';       % triangles
-  FEM_TYPE = 'FEM_PK(2,2)';       % P1 for triangles
+  FEM_TYPE = 'FEM_PK(2,1)';       % P1 for triangles
   MULT_FEM_TYPE = 'FEM_PK(2,2)';
   %FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,3)';
   %INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
@@ -47,7 +47,8 @@ end
 
 if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
-  FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
+  FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
+  MULT_FEM_TYPE = 'FEM_PK(3,2)';
   INTEGRATION = 'IM_TETRAHEDRON(2)'; % quadrature rule for polynomials up
                                      % to degree 6 on tetrahedrons
 end

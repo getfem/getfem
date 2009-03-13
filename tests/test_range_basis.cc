@@ -188,19 +188,34 @@ void laplacian_problem::assembly(void) {
   cout << "Number of dof : " << nb_dof << endl;
   cout << "Number of dof mult : " << nb_dof_mult << endl;
   cout << "Assembling mass matrix" << endl;
-  getfem::asm_mass_matrix(B, mim, mf_mult, mf_u, DIRICHLET_BOUNDARY_NUM);
+  getfem::asm_mass_matrix(B, mim, mf_mult, mf_u, NEUMANN_BOUNDARY_NUM);
   
   
-  std::set<int> columns;
+  std::set<size_type> columns;
 
-  cout << "depart" << endl;
+  double t = gmm::uclock_sec();
+  cout << "depart range basis" << endl;
   gmm::range_basis(gmm::transposed(B), columns);
+  cout << "temps range basis : " << gmm::uclock_sec() - t << endl;
 
-  for (std::set<int>::iterator it = columns.begin();
-       it != columns.end(); ++it) 
-    cout << " " << *it;
-  cout << endl;
+  cout << "rang de B : " << columns.size() << " dimension du noyau : "
+       <<  nb_dof_mult-columns.size() << "(ou " << nb_dof-columns.size()
+       << ")" << endl;
   
+  
+
+  // similaire mais ne fait pas la même chose : calcule le noyau sur u.
+  t = gmm::uclock_sec();
+  NS.resize(nb_dof, nb_dof);
+  cout << "depart Dirichlet_nullspace" << endl;
+  plain_vector U0(nb_dof);
+  col_sparse_matrix_type BB( nb_dof_mult, nb_dof);
+  gmm::copy(B, BB);
+  size_type nk
+    = getfem::Dirichlet_nullspace(BB, NS, plain_vector(gmm::mat_nrows(B)), U0);
+  cout << "temps Dirichlet_nullspace : " << gmm::uclock_sec() - t << endl;		  
+  cout << " dimension du noyau : " << nk << endl;
+
 }
 
 

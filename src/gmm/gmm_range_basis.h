@@ -44,15 +44,11 @@
 
 namespace gmm {
 
-  /** Range Basis :     
-    Extract a basis of the range of a (large sparse) matrix from the columns of
-    this matrix.
-  */
   template <typename Mat>
-  void range_basis_eff(const Mat &B, std::set<int> &columns,
+  void range_basis_eff(const Mat &B, std::set<size_type> &columns,
 		       double EPS) {
    
-    typedef std::set<int> TAB;
+    typedef std::set<size_type> TAB;
     typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
@@ -134,8 +130,49 @@ namespace gmm {
   }
 
 
+  template <typename Mat>
+  void range_basis_eff_dense(const Mat &B, std::set<size_type> &columns,
+			     double EPS) {
+   
+    typedef std::set<size_type> TAB;
+    typedef typename linalg_traits<Mat>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    size_type nc_r = columns.size(), nc = mat_ncols(B), nr = mat_nrows(B);
+
+
+    gmm::row_matrix< gmm::wsvector<T> > H(nc, nc_r), BB(nr, nc_r);
+    
+    size_type i = 0;
+    for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++i)
+      H(*it, i) = T(1);
+
+    gmm::mult(B, H, BB);
+    gmm::dense_matrix<T> M(nc_r, nc_r);
+    gmm::mult(gmm::transposed(BB), BB, M);
+
+    std::vector<size_type> ipvt(nc_r);
+    gmm::lu_factor(M, ipvt);
+
+    R elt_max = R(0);
+    for (i = 0; i < nc_r; ++i) {
+      elt_max = std::max(elt_max, gmm::abs(M(i,i)));
+      // cout << gmm::abs(M(i,i)) << "  ";
+    }
+    // cout << endl << endl;
+
+    i = 0;
+    std::set<size_type> c = columns;
+    for (TAB::iterator it = c.begin(); it != c.end(); ++it, ++i)
+      if (gmm::abs(M(i,i)) <= EPS*elt_max) columns.erase(*it);   
+  }
+
+
+
+
+
 //   template <typename Mat>
-//   void range_basis_rec(const Mat &B, std::set<int> &columns,
+//   void range_basis_rec(const Mat &B, std::set<size_type> &columns,
 // 		   double EPS) {
    
 //     typedef typename linalg_traits<Mat>::value_type T;
@@ -143,9 +180,9 @@ namespace gmm {
 
 //     size_type nc_r = columns.size();
 //     if (nc_r > 100) {
-//       std::set<int> c1, c2, c3, c4, c5, c6, c7, c8;
+//       std::set<size_type> c1, c2, c3, c4, c5, c6, c7, c8;
 //       size_type k = 0;
-//       for (std::set<int>::iterator it = columns.begin();
+//       for (std::set<size_type>::iterator it = columns.begin();
 // 	   it != columns.end(); ++it, ++k) 
 // 	if (k < nc_r/8) c1.insert(*it);
 // 	else if (k < 2*nc_r/8) c2.insert(*it);
@@ -166,19 +203,19 @@ namespace gmm {
 // 	range_basis_rec(B, c7, EPS);
 // 	range_basis_rec(B, c8, EPS);
 // 	columns = c1;
-// 	for (std::set<int>::iterator it = c2.begin(); it != c2.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c2.begin(); it != c2.end(); ++it)
 // 	  columns.insert(*it);
-// 	for (std::set<int>::iterator it = c3.begin(); it != c3.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c3.begin(); it != c3.end(); ++it)
 // 	  columns.insert(*it);
-// 	for (std::set<int>::iterator it = c4.begin(); it != c4.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c4.begin(); it != c4.end(); ++it)
 // 	  columns.insert(*it);
-// 	for (std::set<int>::iterator it = c5.begin(); it != c5.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c5.begin(); it != c5.end(); ++it)
 // 	  columns.insert(*it);
-// 	for (std::set<int>::iterator it = c6.begin(); it != c6.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c6.begin(); it != c6.end(); ++it)
 // 	  columns.insert(*it);
-// 	for (std::set<int>::iterator it = c7.begin(); it != c7.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c7.begin(); it != c7.end(); ++it)
 // 	  columns.insert(*it);
-// 	for (std::set<int>::iterator it = c8.begin(); it != c8.end(); ++it)
+// 	for (std::set<size_type>::iterator it = c8.begin(); it != c8.end(); ++it)
 // 	  columns.insert(*it);
 //       }
 //     }
@@ -187,7 +224,7 @@ namespace gmm {
 
 
   template <typename Mat>
-  void range_basis_rec(const Mat &B, std::set<int> &columns,
+  void range_basis_rec(const Mat &B, std::set<size_type> &columns,
 		   double EPS) {
    
     typedef typename linalg_traits<Mat>::value_type T;
@@ -195,39 +232,42 @@ namespace gmm {
 
     size_type nc_r = columns.size();
     if (nc_r > 50) {
-      std::set<int> c1, cres;
-      for (std::set<int>::iterator it = columns.begin();
+      cout << "begin small range basis" << endl;
+      std::set<size_type> c1, cres;
+      for (std::set<size_type>::iterator it = columns.begin();
 	   it != columns.end(); ++it) {
 	c1.insert(*it);
-	if (c1.size() >= 40) {
+	if (c1.size() >= 250) {
 	  size_type c1size = c1.size();
-	  range_basis_eff(B, c1, EPS);
-	  if (c1.size() != c1size) {
-	    for (std::set<int>::iterator it2=c1.begin(); it2 != c1.end();
-		 ++it2)
-	      cres.insert(*it2);
-	  }
-	  else {
-	    for (size_type i = 0; it != columns.end() && i < 1000; ++it, ++i) ;
+	  range_basis_eff_dense(B, c1, EPS);
+	  for (std::set<size_type>::iterator it2=c1.begin(); it2 != c1.end();
+	       ++it2) cres.insert(*it2);
+
+	  if (c1.size() == c1size) {
+	    for (size_type i = 0; it != columns.end() && i < 1000; ++it, ++i)
+	      cres.insert(*it);
 	  }
 	  c1.clear(); 
 	}
       }
       
       if (c1.size() > 10) {
-	range_basis_eff(B, c1, EPS);
-	for (std::set<int>::iterator it = c1.begin(); it != c1.end(); ++it)
+	range_basis_eff_dense(B, c1, EPS);
+	for (std::set<size_type>::iterator it = c1.begin(); it != c1.end(); ++it)
 	  cres.insert(*it); 
       }
       columns = cres;
     }
+    cout << "begin global range basis for " << columns.size() << " columns " << endl;
     range_basis_eff(B, columns, EPS);
+    cout << "begin global dense range basis for " << columns.size() << " columns " << endl;
+    range_basis_eff_dense(B, columns, EPS);
   }
 
 
 
   template <typename Mat>
-  void range_basis(const Mat &B, std::set<int> &columns,
+  void range_basis(const Mat &B, std::set<size_type> &columns,
 		   double EPS, col_major) {
    
     typedef typename linalg_traits<Mat>::value_type T;
@@ -247,7 +287,7 @@ namespace gmm {
 
 
   template <typename Mat>
-  void range_basis(const Mat &B, std::set<int> &columns,
+  void range_basis(const Mat &B, std::set<size_type> &columns,
 		   double EPS, row_major) {
     typedef typename  linalg_traits<Mat>::value_type T;
     gmm::col_matrix< rsvector<T> > BB(mat_nrows(B), mat_ncols(B));
@@ -257,9 +297,13 @@ namespace gmm {
     range_basis(BB, columns, EPS);
   }
 
+  /** Range Basis :     
+    Extract a basis of the range of a (large sparse) matrix from the columns of
+    this matrix.
+  */
   template <typename Mat>
-  void range_basis(const Mat &B, std::set<int> &columns,
-		   double EPS=1E-11) {
+  void range_basis(const Mat &B, std::set<size_type> &columns,
+		   double EPS=1E-13) {
     range_basis(B, columns, EPS,
 		typename principal_orientation_type
 		<typename linalg_traits<Mat>::sub_orientation>::potype());
