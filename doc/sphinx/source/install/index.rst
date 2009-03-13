@@ -1,4 +1,4 @@
-.. include:: ../python/replaces.txt
+.. include:: ../replaces.txt
 
 .. highlightlang:: none
 
