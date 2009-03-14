@@ -281,79 +281,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     if (sol_ref == 1){
        tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
     }
-    mesh.translation(tt);
-
- if (PARAM.int_value("MOVE_NODES")){
-    cout << "displacement of nodes \n" ;
-//    size_type nb_x_pos, nb_y_pos = 0 ;
-    scalar_type seuil_select = PARAM.real_value("SEUIL_SELECT") ;
-//    scalar_type seuil_move = PARAM.real_value("SEUIL_MOVE") ;
-    
-    
-// for(dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
-//    nb_x_pos = 0 ; // nombre de noeuds d'abscisse positive
-//    nb_y_pos = 0 ; // nombre de noeuds d'ordonn�e positive
-//    for (int j=0; j<4 ; ++j){
-//        if (mesh.points_of_convex(i)[j][0] > 0.) 
-//            nb_x_pos += 1 ;
-//        if (mesh.points_of_convex(i)[j][1] > 0.) 
-//            nb_y_pos += 1 ;
-//    }
-//  
-//    if (nb_x_pos < 4){ // juste pour �viter de traiter des �l�ments inutiles
-//        if ( nb_y_pos == 1){
-// 	  for (int j=0; j<4 ; ++j){
-// 	      if ( (mesh.points_of_convex(i)[j][1] > 0.)
-//                &&  (mesh.points_of_convex(i)[j][1] < seuil_select )  // 1./5./NX
-// 	       ){
-// 	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
-// 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
-//                     bgeot::base_node& P = mesh.points()[ip];
-// 	            if( gmm::vect_dist2(P, Q) < 1e-8){
-// 		      cout << "d�plac� de (" << P[0] << " ; " << P[1] << ") � : " ;
-// 		      //P[1] = 1./2./NX ;
-// 		      //P[1] = 1./2./NX ;
-// 		      P[1] = seuil_move ;
-// 		      cout << P[1] << "\n" ;
-// 	            }  
-// 	        }
-//               }
-// 	  }
-//        } 
-//     if ( nb_y_pos == 3){
-// 	  for (int j=0; j<4 ; ++j){
-// 	      if ( (mesh.points_of_convex(i)[j][1] < 0.)
-//                &&  (mesh.points_of_convex(i)[j][1] > -1.*seuil_select ) // -1./5./NX 
-// 	       ){
-// 	         bgeot::base_node Q = mesh.points_of_convex(i)[j] ;
-// 	         for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
-//                     bgeot::base_node& P = mesh.points()[ip];
-// 	            if( gmm::vect_dist2(P, Q) < 1e-8){
-// 		      cout << "d�plac� de (" << P[0] << " ; " << P[1] << ") � : " ;
-// 		      //P[1] = - 1./2./NX ;
-// 		      //P[1] = -1./2./NX ;
-// 		      P[1] = -1. *seuil_move ;
-// 		      cout << P[1] << "\n" ;
-// 	            }  
-// 	        }
-//               }
-// 	  }
-//        } 
-// 
-//        }
-//    }
-    
-  
-   for (dal::bv_visitor ip(mesh.points().index()); !ip.finished(); ++ip) {
-                    bgeot::base_node& P = mesh.points()[ip];
-	            if( gmm::abs(P[1]) < seuil_select){
-		      cout << "moved from (" << P[0] << " ; " << P[1] << ") to : " ;
-		      P[1] = 0. ;
-		      cout << P[1] << "\n" ;
-	            }
-    } 
-  } // end of moving nodes		     
- } // end of else
+    mesh.translation(tt);	     
+  } 
  
     scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
     scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
@@ -372,11 +301,11 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     }
     avg_area /= scalar_type(cpt) ;
     avg_radius /= scalar_type(cpt) ; 
-    cout << "quality of mesh : " << quality << endl;
+/*    cout << "quality of mesh : " << quality << endl;
     cout << "average radius : " << avg_radius << endl;
     cout << "radius min : " << min_radius << " ; radius max : " << max_radius << endl;
     cout << "average area : " << avg_area << endl ;
-    cout << "area min : " << min_area << " ; area max : " << max_area << endl;        
+    cout << "area min : " << min_area << " ; area max : " << max_area << endl;  */      
     
    /* read the parameters   */
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
@@ -393,6 +322,11 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   KL = PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0;
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
+  
+  cutoff.fun_num = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
+  cutoff.radius = PARAM.real_value("CUTOFF", "Cutoff");
+  cutoff.radius1 = PARAM.real_value("CUTOFF1", "Cutoff1");
+  cutoff.radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
 
  // Setting the integration methods
 
@@ -459,11 +393,11 @@ sol_ref = PARAM.int_value("SOL_REF") ;
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
-        if ( gmm::abs(un[0]) >= 0.9999 ) {
+        if ( gmm::abs(un[0]) >= 0.9999 ) { // vertical edges
 	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
            mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f()); 
 	}
-	else{
+	else{ // horizontal edges
 	   unsigned id_point_1_of_face, id_point_2_of_face ;
 	   scalar_type x1, x2 ;
 	   id_point_1_of_face = mesh.structure_of_convex(i.cv())->ind_points_of_face(i.f())[0] ;
@@ -652,24 +586,63 @@ void bilaplacian_crack_problem::compute_error(plain_vector &U) {
 /**************************************************************************/
 
 bool bilaplacian_crack_problem::solve(plain_vector &U) {
-
-  // setting singularities 
-  cout << "setting singularities \n" ;
-  if (PARAM.int_value("SING_BASE_TYPE") == 0){
-	std::vector<getfem::pglobal_function> ufunc(4);
-	for (size_type i = 0 ; i < ufunc.size() ; ++i) {
-        	ufunc[i] = bilaplacian_crack_singular(i, ls, nu, 0.);
+  
+  if (enrichment_option == 2 || enrichment_option == 3){
+	cout << "setting singularities \n" ;
+	if (PARAM.int_value("SING_BASE_TYPE") == 0){
+		std::vector<getfem::pglobal_function> ufunc(4);
+		for (size_type i = 0 ; i < ufunc.size() ; ++i) {
+			ufunc[i] = bilaplacian_crack_singular(i, ls, nu, 0.);
+		}
+	mf_sing_u.set_functions(ufunc);
 	}
-  mf_sing_u.set_functions(ufunc);
-  }
-  if (PARAM.int_value("SING_BASE_TYPE") == 1){
-	std::vector<getfem::pglobal_function> ufunc(2);
-	for (size_type i = 0 ; i < ufunc.size()  ; ++i) {
-        	ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu, 0.);
+	if (PARAM.int_value("SING_BASE_TYPE") == 1){
+		std::vector<getfem::pglobal_function> ufunc(2);
+		for (size_type i = 0 ; i < ufunc.size()  ; ++i) {
+			ufunc[i] = bilaplacian_crack_singular(i + 4, ls, nu, 0.);
+		}
+	mf_sing_u.set_functions(ufunc);
 	}
-  mf_sing_u.set_functions(ufunc);
   }
-
+  else if (enrichment_option == 4){
+	cout << "Setting up the singular functions for the cutoff enrichment\n";
+	if (PARAM.int_value("SING_BASE_TYPE") == 0){
+		std::vector<getfem::pglobal_function> vfunc(4);
+		for (size_type i = 0; i < vfunc.size(); ++i) {
+		/* use the singularity */
+		getfem::abstract_xy_function *s = 
+		new crack_singular_bilaplacian_xy_function(i, ls, nu, 0.);
+		/* use the product of the singularity function
+			with a cutoff */
+		getfem::abstract_xy_function *cc = 
+			new getfem::cutoff_xy_function(int(cutoff.fun_num),
+						cutoff.radius, 
+						cutoff.radius1,
+						cutoff.radius0);
+		s = new getfem::product_of_xy_functions(*s, *cc);
+		vfunc[i] = getfem::global_function_on_level_set(ls, *s);
+		}
+	mf_sing_u.set_functions(vfunc);
+	}
+	if (PARAM.int_value("SING_BASE_TYPE") == 1){
+		std::vector<getfem::pglobal_function> vfunc(2);
+		for (size_type i = 0; i < vfunc.size(); ++i) {
+		/* use the singularity */
+		getfem::abstract_xy_function *s = 
+		new crack_singular_bilaplacian_xy_function(i+4, ls, nu, 0.);
+		/* use the product of the singularity function
+			with a cutoff */
+		getfem::abstract_xy_function *cc = 
+			new getfem::cutoff_xy_function(int(cutoff.fun_num),
+						cutoff.radius, 
+						cutoff.radius1,
+						cutoff.radius0);
+		s = new getfem::product_of_xy_functions(*s, *cc);
+		vfunc[i] = getfem::global_function_on_level_set(ls, *s);
+		}
+	mf_sing_u.set_functions(vfunc);
+	}
+  }
   // Setting the enrichment --------------------------------------------/
    
   switch(enrichment_option) {
@@ -750,6 +723,31 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       mf_u_sum.set_mesh_fems(mf_u_product, mfls_u);
       cout << "enrichment done \n" ;}
       break ;
+  case 4 :{
+      if(cutoff.fun_num == getfem::cutoff_xy_function::EXPONENTIAL_CUTOFF)
+	cout<<"Using exponential Cutoff..."<<endl;
+      else
+	cout<<"Using Polynomial Cutoff..."<<endl;
+//       dal::bit_vector enriched_dofs;
+//       enriched_dofs.clear() ;
+//       cout << "mf_cutoff.nb_dof() = " << mf_cutoff.nb_dof() << "\n" ;
+//       
+//       for (size_type j = 0; j < mf_cutoff.nb_dof(); ++j) {
+//             enriched_dofs.add(j);
+//           }
+//       for (dal::bv_visitor j(enriched_dofs) ; !j.finished() ; ++j){
+//           cout << j << " ; " ; 
+//       }
+//       cout << "\n" ;
+//       cout << "mf_prod_cutoff.nb_dof() = " << mf_prod_cutoff.nb_dof() << "\n" ;
+//       cout << "mf_sing_u.nb_dof() = " << mf_sing_u.nb_dof() << "\n" ;
+//       mf_prod_cutoff.set_enrichment(enriched_dofs) ;
+//       
+//       cout << "mf_prod_cutoff.nb_dof() = " << mf_prod_cutoff.nb_dof() << "\n" ;
+      
+      //mf_u_sum.set_mesh_fems(mf_prod_cutoff, mfls_u);
+      mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
+    } break;
   case 3 : // Integral matching (mortar)
     {
     cout << "\nIntegral Matching (Mortar)\n" ;    

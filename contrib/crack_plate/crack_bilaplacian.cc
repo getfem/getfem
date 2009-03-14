@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     
     base_small_vector tab_fic(4) ;
     unsigned cpt = 0;
-    if (p.PARAM.int_value("ENRICHMENT_OPTION") == 3){
+    if (p.PARAM.int_value("ENRICHMENT_OPTION") > 2){
     // affichage des coeffs devant les singularites, avec le raccord integral
 	for (size_type d=0; d < p.mf_u().nb_dof(); d += q) {
 		size_type cv = p.mf_u().first_convex_of_dof(d) ;
@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
     plain_vector W(mf_refined.nb_dof());
 
     cout << "OK before last interpolation \n" ;
-    getfem::interpolation(p.mf_u(), mf_refined, U, W);
+    getfem::interpolation(mf, mf_refined, V, W);
     
 //     getfem::mesh_fem mf_grad(mcut, 2) ;
 //     plain_vector VGRAD(mf_grad.nb_dof() ) ;
@@ -376,7 +376,7 @@ int main(int argc, char *argv[]) {
 	  "mayavi -d " << p.datafilename  << "_diff.vtk -f "
 	"WarpScalar -m BandedSurfaceMap -m Outline\n";
       }
-      if ((VTK_EXPORT & 5)) {
+      if ((VTK_EXPORT == 5)) {
 	cout << "exporting Von Mises \n";
 	getfem::vtk_export exp3(p.datafilename + "_VM.vtk");
 	exp3.exporting(mf_refined);
@@ -418,10 +418,107 @@ int main(int argc, char *argv[]) {
     exp.write_point_data(mf_refined, W, "vertical_displacement");
     cout << "export done for open dx \n" ;
     }
+
+    
+    
+    
+    
+    /*************************************/
+    // PRINTING IN 3D 
+    /************************************/
+    
+
+    if (DX_EXPORT > 29){
+    mf.clear() ;
+    getfem::mesh_fem mf(mcut_refined, 1);
+    mf.set_classical_discontinuous_finite_element(3, 0.001);
+    
+    
+    plain_vector V3(mf.nb_dof()), VT(mf.nb_dof()*2), VTHETA(mf.nb_dof()*2); 
+    if ( DX_EXPORT == 31){  // exporting the "finite element" solution on lagrange discont.
+	// getfem::interpolation( "mesh_fem of exact sol", mf, "VECTOR of exact sol", VT); -> for membrane
+	getfem::interpolation(mf_refined, mf, W, V3);
+	plain_vector GRAD_U(mf_refined.nb_dof() * 2) ;
+	getfem::compute_gradient(mf_refined, mf_refined, W, GRAD_U);
+	getfem::interpolation(mf_refined, mf, GRAD_U, VTHETA);	
+// 	getfem::interpolation(p.mf_u(), mf, U, V3);
+// 	plain_vector GRAD_U(p.mf_rhs.nb_dof() * 2) ;
+// 	getfem::compute_gradient(p.mf_u(), p.mf_rhs, U, GRAD_U);
+// 	getfem::interpolation(p.mf_rhs, mf, GRAD_U, VTHETA);
+	}
+    else if (DX_EXPORT == 32) { // exporting the "exact" solution
+        //p.exact_sol.mf_ut.set_qdim(2) ;  -> to modifify for taking account  of the membrane displacement
+        //p.exact_sol.mf.set_qdim(2) ;
+	//getfem::interpolation(p.exact_sol.mf_ut,    mf, p.exact_sol.UT, VT);
+	getfem::interpolation(p.exact_sol.mf,    mf, p.exact_sol.U, V3);
+	getfem::interpolation(p.exact_sol.mf,    mf_refined, p.exact_sol.U, W);
+	plain_vector GRAD_U(mf_refined.nb_dof() * 2) ; // compute exact gradient on P3 mesh_fem
+	getfem::compute_gradient(mf_refined, mf_refined, W, GRAD_U);
+	getfem::interpolation(mf_refined, mf, GRAD_U, VTHETA);
     }
-    //getchar(); 
+    
+    getfem::mesh m3d; getfem::extrude(mcut_refined,m3d,1);
+    getfem::base_matrix trans(3,3); 
+    trans(0,0) = trans(1,1) = 1; trans(2,2) = p.epsilon;
+    m3d.transformation(trans);
+    getfem::mesh_fem mf3d(m3d);
+    mf3d.set_classical_discontinuous_finite_element(3, 0.001);
     
     
+    gmm::resize(V, mf3d.nb_dof()*3);
+    bgeot::kdtree tree; tree.reserve(mf.nb_dof());
+    for (unsigned i=0; i < mf.nb_dof(); ++i)
+      tree.add_point_with_id(mf.point_of_dof(i),i);
+    bgeot::kdtree_tab_type pts;
+    for (unsigned i=0; i < mf3d.nb_dof(); ++i) {
+      base_node P = mf3d.point_of_dof(i);
+      base_node P2d0(2), P2d1(2); 
+      scalar_type EPS = 1e-6;
+      P2d0[0] = P[0]-EPS; P2d0[1] = P[1]-EPS;
+      P2d1[0] = P[0]+EPS; P2d1[1] = P[1]+EPS;
+      tree.points_in_box(pts, P2d0, P2d1);
+      //cout << "P = " << P << ", P2d0=" << P2d0 << " " << P2d1 << ", pts.size=" << pts.size() << "\n";
+      assert(pts.size() == 1);
+      size_type j=pts[0].i;
+      scalar_type x3 = P[2];
+      assert(finite(VTHETA[2*j]));
+      //assert(finite(VT[2*j]));
+      V[3*i+0] = - x3 * VTHETA[2*j+0]; //V[3*i+0] = VT[2*j+0] + x3 * VTHETA.at(2*j+0);
+      V[3*i+1] = - x3 * VTHETA[2*j+1]; //V[3*i+1] = VT[2*j+1] + x3 * VTHETA[2*j+1];
+      V[3*i+2] = V3[j];
+      assert(finite(V[3*i]));
+      assert(finite(V[3*i+1]));
+      assert(finite(V[3*i+2]));
+    }
+    
+    cout << "export to " << p.datafilename + "_3d.dx" << "..\n";
+	getfem::dx_export exp(p.datafilename + "_3d.dx",
+			       p.PARAM.int_value("DX_EXPORT")>30);
+    getfem::stored_mesh_slice sl_tetra;
+    getfem::mesh mtetra;
+    sl_tetra.build(m3d, getfem::slicer_build_mesh(mtetra), 1);
+    getfem::mesh_fem mftetra(mtetra,3); 
+    mftetra.set_classical_discontinuous_finite_element(3, 0.001);
+    
+    plain_vector Vtetra(mftetra.nb_dof());
+    mf3d.set_qdim(3);
+    getfem::interpolation(mf3d, mftetra, V, Vtetra);
+    /* evaluating Von Mises*/
+    getfem::mesh_fem mf_vm(mtetra,1) ; 
+    mf_vm.set_classical_discontinuous_finite_element(3, 0.001);
+    plain_vector VM(mf_vm.nb_dof()) ;
+    calcul_von_mises(mftetra, Vtetra, mf_vm, VM) ;   // to do: add a mu value in additional last argument
+        
+    exp.exporting(mftetra);
+    exp.write_point_data(mftetra, Vtetra, "plate_displacement");
+    size_type deb=1;
+    if (deb==1){ 
+        exp.exporting(mf_vm);
+        exp.write_point_data(mf_vm, VM, "von_mises_stress");
+    }
+    }
+    }
+   //getchar(); 
    } GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }

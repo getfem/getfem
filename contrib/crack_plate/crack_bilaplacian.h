@@ -88,6 +88,20 @@ struct bilaplacian_singular_functions : public getfem::global_function, public g
   bilaplacian_singular_functions(size_type l_, const getfem::level_set &ls_, scalar_type nu, scalar_type pos_ );
 };
 
+struct crack_singular_bilaplacian_xy_function : public getfem::abstract_xy_function {
+  size_type l ;
+  const getfem::level_set &ls;
+  scalar_type nu;          // Poison's coefficient
+  scalar_type pos ;        // x-position of the crack-tip
+  
+  virtual scalar_type val(scalar_type x, scalar_type y) const;
+  virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+  virtual base_matrix hess(scalar_type x, scalar_type y) const;
+  crack_singular_bilaplacian_xy_function(size_type l_, const getfem::level_set &ls_, scalar_type nu, scalar_type pos_) ;
+};
+
+
+  
 inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const getfem::level_set &ls, scalar_type nu, scalar_type pos){ 
   return new bilaplacian_singular_functions(i, ls, nu, pos);
 }
@@ -151,9 +165,9 @@ struct bilaplacian_crack_problem {
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_pre_u, mf_pre_mortar, mf_pre_mortar_deriv ; 
   getfem::mesh_fem_level_set mfls_u, mfls_mortar, mfls_mortar_deriv ; 
-  getfem::mesh_fem_global_function mf_sing_u ;
+  getfem::mesh_fem_global_function mf_sing_u, mf_cutoff ;
   getfem::mesh_fem mf_partition_of_unity ;
-  getfem::mesh_fem_product mf_u_product ;
+  getfem::mesh_fem_product mf_u_product, mf_prod_cutoff ;
   getfem::mesh_fem_sum mf_u_sum ;
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
  
@@ -185,6 +199,13 @@ struct bilaplacian_crack_problem {
   size_type sol_ref ;    /* 0 : solution made of pure singularities
                             1 : infinite plate with central crack subject to 
                                 moments (pure K1 mode) -> work in progress*/
+
+  struct cutoff_param {
+    scalar_type radius, radius1, radius0;
+    size_type fun_num;
+  };
+  cutoff_param cutoff;
+  
   bool solve(plain_vector &U);
   bool solve_moment(plain_vector &U) ;
   void init(void);
@@ -200,8 +221,9 @@ struct bilaplacian_crack_problem {
 				    mls(mesh), mim(mls), mf_pre_u(mesh),  
 				    mf_pre_mortar(mesh), mf_pre_mortar_deriv(mesh), mfls_u(mls, mf_pre_u), 
 				    mfls_mortar(mls, mf_pre_mortar), mfls_mortar_deriv(mls, mf_pre_mortar_deriv),  
-				    mf_sing_u(mesh), mf_partition_of_unity(mesh),
-				    mf_u_product(mf_partition_of_unity, mf_sing_u), mf_u_sum(mesh),
+				    mf_sing_u(mesh), mf_cutoff(mesh), mf_partition_of_unity(mesh),
+				    mf_u_product(mf_partition_of_unity, mf_sing_u), 
+				    mf_prod_cutoff(mf_cutoff, mf_sing_u), mf_u_sum(mesh),
 				    mf_rhs(mesh), mf_mult(mesh), mf_mult_d(mesh), exact_sol(mesh)   
 				    { KL = true; } 
 };

@@ -23,7 +23,8 @@ MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
 NX = 21 ;                 % space step
 
-MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_10.mesh'
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONF_STRUCT/tri_10.mesh
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_39.mesh'
 %MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_10.mesh'
 %MESH_FILE='./demi_plaque_raffinee.mesh'
 %MESH_FILE='./demi_plaque_21.mesh'
@@ -42,12 +43,6 @@ if (KL)        % For Kirchhoff-Love plate model only
 end;
 EPSILON=0.045 % thickness 
 
-% Parameters for moving pathological nodes that are located very close 
-% to the fracture.
-MOVE_NODES = 0. ;  % set to 0 if you don't want to move the nodes
-SEUIL_MOVE = 0. ;  % distance to the crack the node will be set
-SEUIL_SELECT = 0.3/NX  ;  % distance to the crack under which a node
-                           % is considered "pathological
 SEUIL_FINAL =  0 ;
 SHOW_NAME_OF_DOF = 0 ;
 
@@ -101,20 +96,32 @@ end
 % integration meth. for sub-simplexe of elements crossed by the level-set
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
 
+
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
-% SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
+%SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+%SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
 
+WHERE = 4 ;
+INTEGRATION_LINE = 'IM_TRIANGLE(6)' ;
+
+%SIMPLEX_INTEGRATION_LINE = 'IM_GAUSS1D(4)';
+%SIMPLEX_INTEGRATION_LINE = 'IM_TRIANGLE(6)' ;
+SIMPLEX_INTEGRATION_LINE = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
+
+%SINGULAR_INTEGRATION_LINE = 'IM_GAUSS1D(4)';
+SINGULAR_INTEGRATION_LINE = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+%SINGULAR_INTEGRATION_LINE = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
 
 %%%% XFEM Parameters
 
-ENRICHMENT_OPTION = -1;  %-1 = classical FEM (needs conformal mesh)
+ENRICHMENT_OPTION = 4;  %-1 = classical FEM (needs conformal mesh)
 			% 0 = Pas d'enrichissement (fonction H seule)	
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
-			% 3 = Integral matching (mortar)			
+			% 3 = Integral matching (mortar)
+			% 4 = global enrichment times cut-off function			
 RADIUS_ENR_AREA = 0.15;
 SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
@@ -132,11 +139,17 @@ EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
                                % integral matching with penalization 
 SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integral matching
 
+%%%%%    Parameters for the cut-off function
+CUTOFF_FUNC = 2; % 0 for the exponential cutoff. 
+                 % 1 for a 3rd degree polynomial cutoff.
+                 % 2 for a 5th degree polynomial cutoff. 
+CUTOFF = 0.4;  % usefull only for exponential cutoff (parameter of the speed of decreasing)
+CUTOFF1 = 0.01; % radius
+CUTOFF0 = 0.15;
 
-
-%%%%%  computation parameters 
+%%%%%  computation parameters 	
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
-DIRICHLET_VERSION = 1; % 0=multipliers, 1=penalization, 2=elimination
+DIRICHLET_VERSION = 0; % 0=multipliers, 1=penalization, 2=elimination
 EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
                                % Dirichlet condition with penalization 
 COMPUTE_ERROR = 1;
@@ -151,6 +164,7 @@ RADIUS_SPLIT_DOMAIN = 0.0
 ROOTFILENAME = 'crack_bilaplacian';     % Root of data files.
 VTK_EXPORT = 4; % export solution to a .vtk file ?
 MATLAB_EXPORT = 0;
+DX_EXPORT = 0 ; % set to 31 to export solution, set to 32 to export exact solution
 
 
 
