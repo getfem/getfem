@@ -103,8 +103,14 @@ namespace getfem {
 /* compute with great precision the stress intensity factors using
      integral computed on a ring around the crack tip, for BILAPLACIAN PLATE PROBLEM */
   template <typename VECT>
-  void compute_crack_stress_intensity_factors_KL(const level_set &ls,
+  void compute_crack_stress_intensity_factors_KL(const level_set &ls, 
+                                              const level_set &ls2,
+                                              const level_set &ls3,
+					      const mesh_level_set &mls2,
+					      const mesh_level_set &mls3,
                                               const mesh_im &mim,
+                                              const mesh_im &mim2,
+                                              const mesh_im &mim3,
                                               const mesh_fem &mf_pre_u, 
                                               const mesh_fem &mf, 
                                               const VECT &U,
@@ -197,18 +203,28 @@ namespace getfem {
                 // pf-> dof_types gives a std_vector<pdof_desciption>
 //        if (ld == 0 || ld == 3 || ld == 6 || ld == 9){
            base_node P = mf_pre_u.point_of_dof(d);
-           q[d] = (gmm::vect_dist2(P, crack_tip) > ring_radius) ? 0. : 1.; 
+           q[d] = (gmm::vect_dist2(P, crack_tip) > 0.999 * ring_radius) ? 0. : 1.; 
         }
         else
            q[d] = 0. ;
     }
 
-
+      std::string datafilename_q = "q_field.vtk" ;
+      cout << "export q field to " << datafilename_q << "..\n";
+      getfem::vtk_export exp(datafilename_q, 1);
+      exp.exporting(mf_pre_u); 
+      exp.write_point_data(mf_pre_u, q, "q_field_displacement");
+      cout << "export done, you can view the data file with (for example)\n"
+	   << "mayavi -d " << datafilename_q
+	   << " -m BandedSurfaceMap -m Outline -f WarpScalar\n";
+ 
     base_vector U_mode(mf_mode.nb_dof()); assert(U_mode.size() == 2);
     base_vector U_mode_3(mf_mode_3.nb_dof()); assert(U_mode_3.size() == 8);
+    
+  
 
 cout << "OK avant assemblage\n" ;
-    // Remaillage conforme des mailles coupées par la fissure
+  
 
 // ESSAI : dérivation du champs solution de U3, pour prendre le laplacien
 // dans l'assemblage (probleme : on perd de la régularité en route)
@@ -286,7 +302,7 @@ cout << "OK avant assemblage\n" ;
 //             "t1=T1;"
 //             "V()+=D(p).T1(i,j,i).x1(j);");
     generic_assembly
-      assem("D_1_nu=data$1(1); D_nu=data$2(1); minus=data$3(1); D=data$4(1); x1=data$5(mdim(#1)); U1=data$6(#1); U2=data$7(#2); q=data$8(#3); U3=data$9(#4);"
+      assem("D_1_nu=data$1(1); D_nu=data$2(1); minus=data$3(1); D=data$4(1); x1=data$5(mdim(#1)); U1=data$6(#1); U2=data$7(#2); q=data$8(#3); U3=data$9(#4); x2=data$10(mdim(#1));"
             "T=U1(i).U2(j).q(k).comp(Hess(#1).Hess(#2).Grad(#3))(i,:,:,j,:,:,k,:);"
             "t=T;"
             "V()+=minus(p).D_1_nu(p).t(i,j,i,k,j).x1(k) + minus(p).D_nu(p).t(i,i,j,k,j).x1(k);"
@@ -299,12 +315,20 @@ cout << "OK avant assemblage\n" ;
             "t11=T11;"
             "V()+=minus(p).D(p).t11(i,i,j,k,k).x1(j);"
             "V()+=minus(p).D(p).t(i,i,j,k,k).x1(j);"
+// 	    "TT2=U1(i).U2(j).q(k).comp(Hess(#1).Grad(#2).Grad(#3))(i,:,:,j,:,k,:);"
+// 	    "TT3=U1(i).U2(j).q(k).comp(%3, Hess(#1).Grad(#2).Grad(#3))(i,:,:,j,:,k,:);"
+// 	    "tt2=TT2;"
+// 	    "tt3=TT3;"
+// 	    "V()+=D(p).tt2(i,i,j,k).x1(j).x2(k);"
+// 	    "V()+=D(p).tt3(i,i,j,k).x1(j).x2(k);"
 );
     assem.push_mf(mf);
     assem.push_mf(mf_mode);
     assem.push_mf(mf_pre_u);//assem.push_mf(mf_q);
     assem.push_mf(mf_mode_3);
     assem.push_mi(mim);
+    assem.push_mi(mim2);
+    assem.push_mi(mim3);
     base_vector vD_1_nu(1); vD_1_nu[0] =  D * (1. - nu);
     base_vector vD_nu(1); vD_nu[0] = D * nu ;
     base_vector minus(1); minus[0] = -1. ;
@@ -318,70 +342,15 @@ cout << "OK avant assemblage\n" ;
     assem.push_data(U_mode);
     assem.push_data(q);
     assem.push_data(U_mode_3);
+    assem.push_data(N); // Upward normal to the crack
     base_vector V(1);
     assem.push_vec(V);
 
-//     mesh_fem mf_du1(mim.linked_mesh(), 1) ;
-//     mf_du1.set_qdim(2) ; // peut-etre a enlever ?...
-//     mf_du1.set_classical_finite_element(5);
-//     plain_vector DU1(mf_du1.nb_dof() * 2), D1U1(mf_du1.nb_dof()), D2U1(D1U1) ;
-//     getfem::compute_gradient(mf, mf_du1, U, DU1) ;
-// 
-//       mesh_fem mf_du2(mim.linked_mesh(), 1) ;
-//       mf_du2.set_classical_finite_element(5);
-//       //mf_du.set_qdim(2) ; // peut-etre a enlever ?...
-//       plain_vector DU2(mf_du2.nb_dof() * 2), D1U2(mf_du2.nb_dof()), D2U2(D1U2) ;
-// 
-// //     getfem::compute_gradient(mf, mf_du2, U_mode, DU2) ;
-// 
-//     for(unsigned i=0 ; i < mf_du1.nb_dof() ; ++i) {
-//        D1U1[i] = DU1[2*i] ;
-//        D2U1[i] = DU1[2*i+1] ;}
-// //     for(unsigned i=0 ; i < mf_du2.nb_dof() ; ++i) {
-// //        D1U2[i] = DU2[2*i] ;
-// //        D2U2[i] = DU2[2*i+1] ;}
-// //getfem::interpolation(mf1, mf2, U, V) ;
-//     cout << "interpolations OK \n" ;
-// 
-//     generic_assembly
-//             assem("D_1_nu=data$1(1); D_nu=data$2(1); x1=data$3(mdim(#1)); U1=data$4(#1); U2=data$5(#2); q=data$6(#3); D1U1=data$7(#4); D2U1=data$8(#4); D1U2=data$9(#5); D2U1=data$10(#5); x2=data$11(mdim(#1));"
-//             "T=U1(i).U2(j).q(k).comp(Hess(#1).Hess(#2).Grad(#3))(i,:,:,j,:,:,k,:);"
-//             "T1=D1U1(i).U2(j).q(k).comp(Hess(#4).Grad(#2).Grad(#3))(i,:,:,j,:,k,:);"
-//             "T2=D2U1(i).U2(j).q(k).comp(Hess(#4).Grad(#2).Grad(#3))(i,:,:,j,:,k,:);"
-//             "T3=D1U2(i).U1(j).q(k).comp(Hess(#5).Grad(#1).Grad(#3))(i,:,:,j,:,k,:);"
-//             "T4=D2U2(i).U1(j).q(k).comp(Hess(#5).Grad(#1).Grad(#3))(i,:,:,j,:,k,:);"
-//             "t=T;"
-//             "V()+=D_1_nu(p).t(i,j,i,k,j).x1(k) + D_nu(p).t(i,i,j,k,j).x1(k);"
-//             "V()+=D_1_nu(p).t(i,k,i,j,j).x1(k) + D_nu(p).t(j,k,i,i,j).x1(k);"
-//             "V()+=D_1_nu(p).t(i,j,i,j,k).x1(k) + D_nu(p).t(i,i,j,j,k).x1(k);"
-//             "t1=T1;"
-//             "t2=T2;"
-//             "t3=T3;"
-//             "t4=T4;"
-//             "V()+=D_1_nu(p).t1(k,i,i,k).x1(k) + D_nu(p).t1(i,i,k,k).x1(k);"
-//             "V()+=D_1_nu(p).t2(k,i,i,k).x2(k) + D_nu(p).t2(i,i,j,k).x1(j).x2(k);");
-//     assem.push_mf(mf);
-//     assem.push_mf(mf_mode);
-//     assem.push_mf(mf_q);
-//     assem.push_mf(mf_du1);
-//     assem.push_mf(mf_du2);
-//     assem.push_mi(mim);
-//     base_vector vD_1_nu(1); vD_1_nu[0] = - D * (nu - 1.);
-//     base_vector vD_nu(1); vD_nu[0] = - D * nu ;
-//     assem.push_data(vD_1_nu); 
-//     assem.push_data(vD_nu); 
-//     assem.push_data(T); // outgoing tangent of the crack
-//     assem.push_data(U); 
-//     assem.push_data(U_mode);
-//     assem.push_data(q);
-//     assem.push_data(D1U1);
-//     assem.push_data(D2U1);
-//     assem.push_data(D1U2);
-//     assem.push_data(D2U2);
-//     assem.push_data(N); // Normal to the crack (for x2).
-//     base_vector V(1);
-//     assem.push_vec(V);
 
+
+
+      
+    
     /* fill with the crack opening mode I or mode II */
     for (unsigned mode = 1; mode <= 2; ++mode) {
       base_vector::iterator it = U_mode.begin();
@@ -451,7 +420,91 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
                                           E, 
                                           KI, KII, 1e-2);
   cout << "estimation of crack SIF: " << KI << ", " << KII << "\n";*/
-  
-  compute_crack_stress_intensity_factors_KL(ls, mim, mf_pre_u, mf_u(), U, ring_radius, D, nu, E, epsilon, KI, KII);
+    getfem::level_set ls2(mesh, 1, true) ;
+    getfem::level_set ls3(mesh, 1, true) ;
+    getfem::mesh_level_set mls2(mesh);
+    getfem::mesh_level_set mls3(mesh);
+    mls2.add_level_set(ls2);
+    mls3.add_level_set(ls3);
+    
+    cout << "initialisations ls2, ls3, mls2, mls3 : OK\n" ;
+    std::string INTEGRATION = PARAM.string_value("INTEGRATION_LINE",
+					       "Name of integration method");
+    std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION_LINE",
+					 "Name of simplex integration method");
+    std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION_LINE");
+    
+    getfem::pintegration_method ppi = 
+    getfem::int_method_descriptor(INTEGRATION);
+    getfem::pintegration_method sppi = 
+    getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
+    getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
+		getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
+    
+   int where = PARAM.int_value("WHERE") ;
+// 1	getfem::mesh_im_level_set::INTEGRATE_INSIDE (integrate over p(x)<0),
+// 2	getfem::mesh_im_level_set::INTEGRATE_OUTSIDE (integrate over p(x)>0),
+// 3	getfem::mesh_im_level_set::INTEGRATE_ALL,
+// 4	getfem::mesh_im_level_set::INTEGRATE_BOUNDARY (integrate over p(x)=0 and s(x) <= 0)
+   switch (where){
+   case 3: {
+   where = getfem::mesh_im_level_set::INTEGRATE_ALL ;}
+   break ;
+   case 4:{
+   where = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY ;}
+   break;
+   }
+   getfem::mesh_im_level_set mim2(mls2, where, sppi, sing_ppi  ) ;
+   getfem::mesh_im_level_set mim3(mls3, where, sppi, sing_ppi  ) ;
+   cout << "SIMPLEX_INTEGRATION = " << SIMPLEX_INTEGRATION << "\n" ;
+   cout << "SINGULAR_INTEGRATION = " << SINGULAR_INTEGRATION << "\n" ;
+   
+   
+    cout << "initialisations mim2, mim3 : OK\n" ;
+    
+    mim2.set_integration_method(mesh.convex_index(), ppi);
+    mim3.set_integration_method(mesh.convex_index(), ppi);
+    
+    cout << "mim2.set_integration_method(... -> OK\n";
+    
+    mls2.add_level_set(ls2);
+    mls3.add_level_set(ls3);
+    mim2.set_simplex_im(sppi, sing_ppi);
+    mim3.set_simplex_im(sppi, sing_ppi);
+    
+					       
+    cout << "Setting the two additional level-set (for integration purpose)... \n" ;
+    ls2.reinit();
+    cout << "ls2.reinit() ; -> OK \n" ;
+    
+    scalar_type x, y ;
+    cout << "ls2.get_mesh_fem().nb_dof() = " << ls2.get_mesh_fem().nb_dof() << "\n" ;
+    for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
+      //cout << "d = " << d << "\n" ;
+      x = ls2.get_mesh_fem().point_of_dof(d)[0];
+      y = ls2.get_mesh_fem().point_of_dof(d)[1];
+      ls2.values(0)[d] = y + 0.2 ;
+      ls2.values(1)[d] = x ;
+      }
+    ls2.touch();
+    cout << "ls2.touch() -> OK \n" ;
+    mls2.adapt();
+    cout << "mls2.adapt() -> OK \n" ;
+    mim2.adapt();
+    
+    cout << "ls2 -> OK \n" ;
+    
+    ls3.reinit();
+    for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
+      x = ls3.get_mesh_fem().point_of_dof(d)[0];
+      y = ls3.get_mesh_fem().point_of_dof(d)[1];
+      ls3.values(0)[d] = y - 1e-4 ;
+      ls3.values(1)[d] = x ;
+      }
+    ls3.touch();
+    mls3.adapt();
+    mim3.adapt();
+    cout << "done.\nEntering in compute_crack_stress_intensity_factors_KL(... \n" ;
+  compute_crack_stress_intensity_factors_KL(ls, ls2, ls3, mls2, mls3, mim, mim2, mim3, mf_pre_u, mf_u(), U, ring_radius, D, nu, E, epsilon, KI, KII);
   cout << "computation of crack SIF via J-Integral \nK1:" << KI << "\nK2:" << KII << "\n";
 }
