@@ -452,8 +452,23 @@ fi;
 AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
 dnl -----------------------------END OF QHULL TEST--------------------------
 
-
 dnl ------------------------------LAPACK TEST--------------------------------
+
+if test x"$acx_blas_ok" = xyes; then
+  if test x"$FC" = "x"; then
+    dgetrf=dgetrf_
+  else
+    AC_FC_FUNC(dgetrf)
+  fi;
+
+  AC_CHECK_LIB(lapack, dgetrf_, [acx_lapack_ok=yes; LAPACK_LIBS="-llapack "])
+
+  if test x"$acx_lapack_ok" = xyes; then
+     CPPFLAGS="$CPPFLAGS -DGMM_USES_LAPACK"
+     LIBS="$LIBS $LAPACK_LIBS"
+  fi
+fi
+
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
 
@@ -814,6 +829,12 @@ echo "You can give the location of your prefered blas library with either"
 echo "the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo 'for example: ./configure BLAS_LIBS="-L/usr/lib/atlas/sse2 -lblas"'
 echo
+
+if test x"$acx_lapack_ok" = xyes; then
+  echo "Lapack library found : $LAPACK_LIBS"
+else
+  echo "No lapack library found : generic (less effective) algorithms will be used"
+fi
 
 if test -z ""`echo $srcdir | grep "^/"`; then
   addpathm="../../"
