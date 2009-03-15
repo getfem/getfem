@@ -8,7 +8,7 @@ INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
 N = 3;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
-NX = 15;                   % space step.
+NX = 20;                    % space step.
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh
 
 if (N == 1)
@@ -49,7 +49,7 @@ if (N == 3 && ~QUAD)
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
   FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
   MULT_FEM_TYPE = 'FEM_PK(3,2)';
-  INTEGRATION = 'IM_TETRAHEDRON(2)'; % quadrature rule for polynomials up
+  INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                      % to degree 6 on tetrahedrons
 end
 

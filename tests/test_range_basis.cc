@@ -196,11 +196,9 @@ void laplacian_problem::assembly(void) {
   double t = gmm::uclock_sec();
   cout << "depart range basis" << endl;
   gmm::range_basis(gmm::transposed(B), columns);
-  cout << "temps range basis : " << gmm::uclock_sec() - t << endl;
-
-  cout << "rang de B : " << columns.size() << " dimension du noyau : "
-       <<  nb_dof_mult-columns.size() << "(ou " << nb_dof-columns.size()
-       << ")" << endl;
+  cout << "Elaps time for range basis : " << gmm::uclock_sec() - t << endl;
+  cout << "Rank of B : " << columns.size() << " null space dimension : "
+       << nb_dof-columns.size() << endl;
   
   
 
@@ -213,8 +211,12 @@ void laplacian_problem::assembly(void) {
   gmm::copy(B, BB);
   size_type nk
     = getfem::Dirichlet_nullspace(BB, NS, plain_vector(gmm::mat_nrows(B)), U0);
-  cout << "temps Dirichlet_nullspace : " << gmm::uclock_sec() - t << endl;		  
-  cout << " dimension du noyau : " << nk << endl;
+  cout << "Elaps time for Dirichlet_nullspace : " << gmm::uclock_sec() - t
+       << endl;		  
+  cout << "Null space dimension : " << nk << endl;
+
+  GMM_ASSERT1(nk == nb_dof-columns.size(),
+	      "Different results for the dimension of the null space");
 
 }
 
