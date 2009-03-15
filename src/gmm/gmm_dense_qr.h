@@ -584,7 +584,7 @@ namespace gmm {
   template <typename MAT1, typename VECT>
     void implicit_qr_algorithm(const MAT1 &a, VECT &eigval,
 			       tol_type_for_qr tol = default_tol_for_qr) {
-    dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
+    dense_matrix<typename linalg_traits<MAT1>::value_type> m(1,1);
     implicit_qr_algorithm(a, eigval, m, tol, false); 
   }
 

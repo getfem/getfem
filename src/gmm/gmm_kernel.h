@@ -48,6 +48,7 @@
 #include "gmm_matrix.h"
 #include "gmm_tri_solve.h"
 #include "gmm_blas_interface.h"
+#include "gmm_lapack_interface.h"
 
 
 #endif //  GMM_KERNEL_H__

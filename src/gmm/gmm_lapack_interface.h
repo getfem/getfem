@@ -34,7 +34,7 @@
    @brief gmm interface for LAPACK
 */
 
-#if defined(GMM_USES_LAPACK) || defined(GMM_USES_ATLAS)
+#if defined(GMM_USES_LAPACK)
 
 #ifndef GMM_LAPACK_INTERFACE_H
 #define GMM_LAPACK_INTERFACE_H
@@ -83,6 +83,7 @@ namespace gmm {
     void sormqr_(...); void dormqr_(...); void cunmqr_(...); void zunmqr_(...);
     void sgees_ (...); void dgees_ (...); void cgees_ (...); void zgees_ (...);
     void sgeev_ (...); void dgeev_ (...); void cgeev_ (...); void zgeev_ (...);
+    void sgesvd_(...); void dgesvd_(...); void cgesvd_(...); void zgesvd_(...);
   }
 
   /* ********************************************************************* */
@@ -361,11 +362,6 @@ namespace gmm {
   /* Author : Sebastian Nowozin <sebastian.nowozin@tuebingen.mpg.de>       */
   /* ********************************************************************* */
     
-
-  extern "C" {
-    void sgesvd_(...); void dgesvd_(...);
-  }
-  
 # define gesvd_interface(lapack_name, base_type) inline                 \
   void svd(dense_matrix<base_type> &X,					\
 	   dense_matrix<base_type> &U,                                  \
@@ -419,4 +415,4 @@ namespace gmm {
 
 #endif // GMM_LAPACK_INTERFACE_H
 
-#endif // GMM_USES_LAPACK || GMM_USES_ATLAS
+#endif // GMM_USES_LAPACK
