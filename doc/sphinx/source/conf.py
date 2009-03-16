@@ -27,6 +27,8 @@ extensions = ['sphinx.ext.pngmath','sphinx.ext.autodoc',
               'sphinx.ext.refcounting','sphinx.ext.coverage',
               'sphinx.ext.doctest', 'pyspecific']
 
+autoclass_content = "both"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
 
