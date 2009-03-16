@@ -43,15 +43,15 @@
 #include "set"
 
 namespace bgeot {
-  
-  
+
+
   /** Store a set of points, identifying points
       that are nearer than a certain very small distance.
   */
   class node_tab : public dal::dynamic_tas<base_node> {
-    
+
   protected :
-    
+
     struct component_comp {
       const dal::dynamic_tas<base_node> *vbn;
       const base_node *c;
@@ -61,7 +61,7 @@ namespace bgeot {
 		     const base_node &c_, unsigned dim);
     };
     typedef std::set<size_type, component_comp> sorter;
-    
+
     mutable std::vector<sorter> sorters;
     mutable base_node c;
     scalar_type eps, prec_factor, max_radius;
@@ -70,14 +70,14 @@ namespace bgeot {
     void add_sorter(void) const;
 
   public :
-    
+
     /// reset the array, remove all points
     void clear(void);
-    
+
     /** Search a node in the array. return its index if it exists
 	or size_type(-1) otherwise.
     */
-    size_type search_node(const base_node &pt) const;
+    size_type search_node(const base_node &pt, const scalar_type radius=0) const;
     /** Add a point to the array or identify it with a very close existing
 	point.
     */
@@ -92,13 +92,13 @@ namespace bgeot {
 
     void swap_points(size_type i, size_type j);
     void swap(size_type i, size_type j) { swap_points(i,j); }
-    
+
     node_tab(scalar_type prec_loose = scalar_type(10000));
     node_tab(const node_tab &t);
     node_tab &operator =(const node_tab &t);
   };
 
 
- 
+
 }
 #endif

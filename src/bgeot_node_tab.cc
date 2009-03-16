@@ -23,7 +23,7 @@
 #include "getfem/bgeot_node_tab.h"
 
 namespace bgeot {
-  
+
   bool node_tab::component_comp::operator()(size_type i1,size_type i2) const {
     if (i1 == i2) return false;
     const base_node &pt1((i1 == size_type(-1)) ? *c : (*vbn)[i1]);
@@ -51,19 +51,24 @@ namespace bgeot {
     for (dal::bv_visitor i(index()); !i.finished(); ++i)
       sorters.back().insert(size_type(i));
   }
-  
-  size_type node_tab::search_node(const base_node &pt) const {
+
+  size_type node_tab::search_node(const base_node &pt, const scalar_type radius) const {
     if (card() == 0) return size_type(-1);
+
+    scalar_type eps_radius = std::max(eps, radius);
     for (size_type is = 0; ; ++is) {
       if (is >= sorters.size()) add_sorter();
-      c = pt - eps * sorters[is].key_comp().v;
+
+      c = pt - eps_radius * sorters[is].key_comp().v;
+
       sorter::const_iterator it = sorters[is].lower_bound(size_type(-1));
       scalar_type up_bound
-	= gmm::vect_sp(pt, sorters[is].key_comp().v) + eps + eps;
+        = gmm::vect_sp(pt, sorters[is].key_comp().v) + 2*eps_radius;
       size_type count = 0;
       for (; it != sorters[is].end() && count < 20; ++it, ++count) {
 	const base_node &pt2 = (*this)[*it];
-	if (gmm::vect_dist2(pt, pt2) < eps) return *it;
+	if (gmm::vect_dist2(pt, pt2) < eps_radius)
+	  return *it;
 	if (gmm::vect_sp(pt2, sorters[is].key_comp().v) > up_bound)
 	  return size_type(-1);
       }
@@ -71,18 +76,19 @@ namespace bgeot {
       GMM_ASSERT1(is < 10, "Problem in node structure");
     }
   }
-  
+
   void node_tab::clear(void) {
     dal::dynamic_tas<base_node>::clear();
     sorters = std::vector<sorter>();
     max_radius = scalar_type(1e-60);
     eps = max_radius * prec_factor;
   }
-  
+
   size_type node_tab::add_node(const base_node &pt) {
     scalar_type npt = gmm::vect_norm2(pt);
     max_radius = std::max(max_radius, npt);
     eps = max_radius * prec_factor;
+
     size_type id;
     if (this->card() == 0) {
       dim_ = pt.size();
@@ -129,7 +135,7 @@ namespace bgeot {
     for (dal::bv_visitor i(index()); !i.finished(); ++i) (*this)[i] += V;
     resort();
   }
-  
+
   void node_tab::transformation(const base_matrix &M) {
     base_small_vector w(M.nrows());
     GMM_ASSERT1(gmm::mat_nrows(M) != 0 && gmm::mat_ncols(M) == dim(),
@@ -142,7 +148,7 @@ namespace bgeot {
     }
     resort();
   }
-  
+
   node_tab::node_tab(scalar_type prec_loose) {
     max_radius = scalar_type(1e-60);
     sorters.reserve(5);

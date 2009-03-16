@@ -395,21 +395,23 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
 
     out.pop().from_bit_vector(pids);
-  } else if (check_cmd(cmd, "pid from coords", in, out, 1, 1, 0, 1)) {
-    /*@GET PIDs = MESH:GET('pid from coords',@mat Pts)
-    Search point #id whose coordinates are listed in `Pts`.
+  } else if (check_cmd(cmd, "pid from coords", in, out, 1, 2, 0, 1)) {
+    /*@GET PIDs = MESH:GET('pid from coords',@mat PTS[, @scalar radius])
+    Search point #id whose coordinates are listed in `PTS`.
 
-    `Pts` is an array containing a list of point coordinates. On
+    `PTS` is an array containing a list of point coordinates. On
     return, `PIDs` is a @MATLAB{row }vector containing points
-    #id for each point found, and -1 for those which where not
-    found in the mesh.@*/
+    #id for each point found in `eps` range, and -1 for those
+    which where not found in the mesh.@*/
     check_empty_mesh(pmesh);
     darray v = in.pop().to_darray(pmesh->dim(), -1);
+    scalar_type radius = 0;
+    if (in.remaining()) radius = in.pop().to_scalar(0);
     iarray w = out.pop().create_iarray_h(v.getn());
     for (unsigned j=0; j < v.getn(); j++) {
       getfem::base_node P = v.col_to_bn(j);
       getfem::size_type id = size_type(-1);
-      if (!is_NaN(P[0])) id = pmesh->search_point(P);
+      if (!is_NaN(P[0])) id = pmesh->search_point(P,radius);
       if (id == getfem::size_type(-1)) w[j] = -1;
       else w[j] = int(id + config::base_index());
     }
