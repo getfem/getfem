@@ -396,7 +396,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     out.pop().from_bit_vector(pids);
   } else if (check_cmd(cmd, "pid from coords", in, out, 1, 2, 0, 1)) {
-    /*@GET PIDs = MESH:GET('pid from coords',@mat PTS[, @scalar radius])
+    /*@GET PIDs = MESH:GET('pid from coords',@mat PTS[, @scalar radius=0])
     Search point #id whose coordinates are listed in `PTS`.
 
     `PTS` is an array containing a list of point coordinates. On
