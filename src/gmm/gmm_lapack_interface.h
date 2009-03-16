@@ -93,7 +93,7 @@ namespace gmm {
 # define getrf_interface(lapack_name, base_type) inline                    \
   size_type lu_factor(dense_matrix<base_type > &A, std::vector<int> &ipvt){\
     GMMLAPACK_TRACE("getrf_interface");                                    \
-    int m(mat_nrows(A)), n(mat_ncols(A)), lda(m), info(0);                 \
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A)), lda(m), info(0);     \
     if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);       \
     return size_type(info);                                                \
   }
@@ -112,7 +112,7 @@ namespace gmm {
 	      const std::vector<int> &ipvt, std::vector<base_type > &x,    \
 	      const std::vector<base_type > &b) {                          \
     GMMLAPACK_TRACE("getrs_interface");                                    \
-    int n(mat_nrows(A)), info, nrhs(1);                                    \
+    int n = int(mat_nrows(A)), info, nrhs(1);                              \
     gmm::copy(b, x); trans1;                                               \
     if (n)                                                                 \
       lapack_name(&t, &n, &nrhs, &(A(0,0)),&n,&ipvt[0], &x[0], &n, &info); \
@@ -140,7 +140,7 @@ namespace gmm {
     GMMLAPACK_TRACE("getri_interface");                                    \
     dense_matrix<base_type >&                                              \
     A = const_cast<dense_matrix<base_type > &>(A_);                        \
-    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    int n = int(mat_nrows(A)), info, lwork(-1); base_type work1;           \
     if (n) {                                                               \
       gmm::copy(LU, A);                                                    \
       lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);       \
@@ -163,7 +163,8 @@ namespace gmm {
 # define geqrf_interface(lapack_name1, base_type) inline		   \
   void qr_factor(dense_matrix<base_type > &A){			           \
     GMMLAPACK_TRACE("geqrf_interface");				           \
-    int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A)), info, lwork(-1);     \
+    base_type work1;                                                       \
     if (m && n) {							   \
       std::vector<base_type > tau(n);					   \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info); \
@@ -185,7 +186,8 @@ namespace gmm {
   void qr_factor(const dense_matrix<base_type > &A,                        \
        dense_matrix<base_type > &Q, dense_matrix<base_type > &R) {         \
     GMMLAPACK_TRACE("geqrf_interface2");                                   \
-    int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A)), info, lwork(-1);     \
+    base_type work1;		 					   \
     if (m && n) {                                                          \
       gmm::copy(A, Q);                                                     \
       std::vector<base_type > tau(n);                                      \
@@ -219,7 +221,7 @@ namespace gmm {
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface");                                     \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
-    int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
+    int n = int(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;     \
     if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
@@ -241,7 +243,7 @@ namespace gmm {
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     GMMLAPACK_TRACE("gees_interface2");                                    \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
-    int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
+    int n = int(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;     \
     if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
@@ -266,7 +268,7 @@ namespace gmm {
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q) {		                           \
     GMMLAPACK_TRACE("geev_interface");                                     \
-    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    int n = int(mat_nrows(A)), info, lwork(-1); base_type work1;           \
     if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvl = 'N', jobvr = 'V';                                         \
@@ -287,7 +289,7 @@ namespace gmm {
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q) {		                           \
     GMMLAPACK_TRACE("geev_interface");                                     \
-    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    int n = int(mat_nrows(A)), info, lwork(-1); base_type work1;           \
     if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvl = 'N', jobvr = 'V';                                         \
@@ -313,7 +315,7 @@ namespace gmm {
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q) {	 	                           \
     GMMLAPACK_TRACE("geev_interface");                                     \
-    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    int n = int(mat_nrows(A)), info, lwork(-1); base_type work1;           \
     if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvl = 'V', jobvr = 'N';                                         \
@@ -334,7 +336,7 @@ namespace gmm {
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q) {		                           \
     GMMLAPACK_TRACE("geev_interface");                                     \
-    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    int n = int(mat_nrows(A)), info, lwork(-1); base_type work1;           \
     if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvl = 'V', jobvr = 'N';                                         \
@@ -368,11 +370,11 @@ namespace gmm {
            dense_matrix<base_type> &Vtransposed,			\
 	   std::vector<base_type> &sigma) {				\
     GMMLAPACK_TRACE("gesvd_interface");					\
-    int m(mat_nrows(X)), n(mat_ncols(X));				\
+    int m = int(mat_nrows(X)), n = int(mat_ncols(X));	       		\
     int mn_min = m < n ? m : n;						\
     sigma.resize(mn_min);						\
     std::vector<base_type> work(15 * mn_min);				\
-    int lwork(work.size());						\
+    int lwork = int(work.size());	       				\
     resize(U, m, n);							\
     resize(Vtransposed, n, n);						\
     char job = 'A';							\
@@ -387,12 +389,12 @@ namespace gmm {
            dense_matrix<base_type> &Vtransposed,			\
 	   std::vector<base_type2> &sigma) {				\
     GMMLAPACK_TRACE("gesvd_interface");					\
-    int m(mat_nrows(X)), n(mat_ncols(X));				\
+    int m = int(mat_nrows(X)), n = int(mat_ncols(X));			\
     int mn_min = m < n ? m : n;						\
     sigma.resize(mn_min);						\
     std::vector<base_type> work(15 * mn_min);				\
     std::vector<base_type2> rwork(5 * mn_min);				\
-    int lwork(work.size());						\
+    int lwork = int(work.size());			       		\
     resize(U, m, n);							\
     resize(Vtransposed, n, n);						\
     char job = 'A';							\
