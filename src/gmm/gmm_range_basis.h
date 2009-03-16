@@ -45,6 +45,7 @@
 namespace gmm {
 
   // Range basis with the power method
+  // Complex version not verified
   template <typename Mat>
   void range_basis_eff_power(const Mat &B, std::set<size_type> &columns,
 		       double EPS) {
@@ -103,7 +104,7 @@ namespace gmm {
 	  v[k] = vect_hp(w, mat_col(B, *it)) - v[k]*rho;
 
 	rho2 = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0)); // Rayleigh quotient
-	if (gmm::abs(rho_old-rho2) <= rho*EPS/R(50)) break;
+	if (gmm::abs(rho_old-rho2) <= rho*EPS) break;
 	if (gmm::abs(rho_old-rho2) <= rho*SQRTEPS
 	    && gmm::abs(rho2 - rho)*SQRTEPS > gmm::abs(rho_old-rho2))
 	  break;
@@ -111,7 +112,7 @@ namespace gmm {
 	gmm::scale(v, T(1)/vect_norm2(v));
       }
       
-      if (gmm::abs(rho-rho2) < EPS*rho) {
+      if (gmm::abs(rho-rho2) < EPS*rho*1000) {
 	size_type j_max = size_type(-1);
 	R val_max = R(0);
 
@@ -133,6 +134,7 @@ namespace gmm {
   }
 
   // Range basis with LU decomposition. Not stable from a numerical viewpoint.
+  // Complex version not verified
   template <typename Mat>
   void range_basis_eff_lu(const Mat &B, std::set<size_type> &columns,
 			     std::vector<bool> &c_ortho, double EPS) {
@@ -161,9 +163,9 @@ namespace gmm {
       gmm::mult(B, Hr, BBr);
       gmm::mult(B, Ho, BBo);
       gmm::dense_matrix<T> M(nc_r, nc_r), BBB(nc_r, nc_o), MM(nc_r, nc_r);
-      gmm::mult(gmm::transposed(BBr), BBr, M);
-      gmm::mult(gmm::transposed(BBr), BBo, BBB);
-      gmm::mult(BBB, gmm::transposed(BBB), MM);
+      gmm::mult(gmm::conjugated(BBr), BBr, M);
+      gmm::mult(gmm::conjugated(BBr), BBo, BBB);
+      gmm::mult(BBB, gmm::conjugated(BBB), MM);
       gmm::add(gmm::scaled(MM, T(-1)), M);
       
       std::vector<int> ipvt(nc_r);
@@ -183,11 +185,13 @@ namespace gmm {
   }
 
 
-  // Range basis with Gram-Schmidt orthogonalization
+  // Range basis with Gram-Schmidt orthogonalization (sparse version)
+  // Complex version not verified
   template <typename Mat>
-  void range_basis_eff_gram_schmidt(const Mat &BB,
-				    std::set<size_type> &columns,
-				    std::vector<bool> &c_ortho, double EPS) {
+  void range_basis_eff_gram_schmidt_sparse(const Mat &BB,
+					   std::set<size_type> &columns,
+					   std::vector<bool> &c_ortho,
+					   double EPS) {
    
     typedef std::set<size_type> TAB;
     typedef typename linalg_traits<Mat>::value_type T;
@@ -243,6 +247,76 @@ namespace gmm {
       columns.erase(*it);
 
   }
+
+
+  // Range basis with Gram-Schmidt orthogonalization (dense version)
+  // Complex version not verified
+  template <typename Mat>
+  void range_basis_eff_gram_schmidt_dense(const Mat &B,
+					  std::set<size_type> &columns,
+					  std::vector<bool> &c_ortho,
+					  double EPS) {
+    
+    typedef std::set<size_type> TAB;
+    typedef typename linalg_traits<Mat>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    size_type nc_r = columns.size(), nc = mat_ncols(B), nr = mat_nrows(B), i;
+    std::set<size_type> rc;
+ 
+    row_matrix< gmm::rsvector<T> > H(nc, nc_r), BB(nr, nc_r);
+    std::vector<T> v(nc_r);
+    std::vector<size_type> ind(nc_r);
+      
+    i = 0;
+    for (TAB::iterator it = columns.begin(); it != columns.end(); ++it, ++i)
+      H(*it, i) = T(1) / vect_norm2(mat_col(B, *it));
+     
+    mult(B, H, BB);
+    dense_matrix<T> M(nc_r, nc_r);
+    mult(gmm::conjugated(BB), BB, M);
+    
+    i = 0;
+    for (TAB::iterator it = columns.begin(); it != columns.end(); ++it, ++i)
+      if (c_ortho[*it]) {
+	gmm::copy(mat_row(M, i), v);
+	rank_one_update(M, scaled(v, T(-1)), v);
+	M(i, i) = T(1);
+      }
+      else { rc.insert(i); ind[i] = *it; }
+
+    while (rc.size() > 0) {
+
+      // Next pivot
+      R nmax = R(0); size_type imax = size_type(-1);
+      for (TAB::iterator it = rc.begin(); it != rc.end(); ++it) {
+	R a = M(*it, *it);
+	if (a > nmax) { nmax = a; imax = *it; }
+	if (a < EPS) { rc.erase(*it); columns.erase(ind[*it]); }
+      }
+
+      // cout << "nmax = " << nmax << endl;
+      if (nmax < EPS) break;
+
+      // Normalization
+      gmm::scale(mat_row(M, imax), T(1) / sqrt(nmax));
+      gmm::scale(mat_col(M, imax), T(1) / sqrt(nmax));
+      
+      // orthogonalization
+      copy(mat_row(M, imax), v);
+      rank_one_update(M, scaled(v, T(-1)), v);
+      M(imax, imax) = T(1);
+
+      rc.erase(imax);
+      
+    }
+    
+    // cout << "remaining = " << rc.size() << endl; getchar();
+    for (std::set<size_type>::iterator it=rc.begin(); it!=rc.end(); ++it)
+      columns.erase(ind[*it]);
+  }
+
+
 
   template <typename L> size_type nnz_eps(const L& l, double eps) { 
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
@@ -301,8 +375,8 @@ namespace gmm {
     size_type sizesm[5] = {50, 125, 200, 350, 450};
     for (int k = 0; columns.size() > sizesm[k] && k < 4; ++k) {
       size_type nc_r = columns.size();
-//       cout << "begin small range basis with " << columns.size()
-// 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
+      cout << "begin small range basis with " << columns.size()
+ 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
       std::set<size_type> c1, cres;
       for (std::set<size_type>::iterator it = columns.begin();
 	   it != columns.end(); ++it) {
@@ -311,7 +385,7 @@ namespace gmm {
 	  // sizesm = 100 + size_type(gmm::random() * 100);
 	  size_type c1size = c1.size();
 	  // range_basis_eff_lu(B, c1, c_ortho, EPS);
-	  range_basis_eff_gram_schmidt(B, c1, c_ortho, EPS);
+	  range_basis_eff_gram_schmidt_dense(B, c1, c_ortho, EPS);
 	  for (std::set<size_type>::iterator it2=c1.begin(); it2 != c1.end();
 	       ++it2) cres.insert(*it2);
 
@@ -325,20 +399,21 @@ namespace gmm {
 	}
       }
       // if (c1.size() > 10) range_basis_eff_lu(B, c1, c_ortho, EPS);
-      if (c1.size() > 10) range_basis_eff_gram_schmidt(B, c1, c_ortho, EPS);
+      if (c1.size() > 10)
+	range_basis_eff_gram_schmidt_dense(B, c1, c_ortho, EPS);
       for (std::set<size_type>::iterator it = c1.begin(); it != c1.end(); ++it)
 	cres.insert(*it);
       columns = cres;
       if (columns.size() == nc_r) break;
 
     }
-//     cout << "begin global dense range basis for " << columns.size()
-// 	 << " columns " << endl;
+    cout << "begin global dense range basis for " << columns.size()
+ 	 << " columns " << endl;
 
-    if (columns.size() > 200)
+    if (columns.size() > 500)
       range_basis_eff_power(B, columns, EPS);
     else
-      range_basis_eff_gram_schmidt(B, columns, c_ortho, EPS);
+      range_basis_eff_gram_schmidt_dense(B, columns, c_ortho, EPS);
     // range_basis_eff_lu(B, columns, c_ortho, EPS);
 
   }
@@ -356,8 +431,9 @@ namespace gmm {
   }
 
   /** Range Basis :     
-    Extract a basis of the range of a (large sparse) matrix from the columns of
-    this matrix.
+    Extract a basis of the range of a (large sparse) matrix selecting some
+    column vectors of this matrix. This is in particular usefull to select
+    an independent set of linear constraints.
 
     The algorithm is optimized for two cases :
        - when the (not trivial) kernel is small. An iterativ algorithm
