@@ -209,6 +209,42 @@ namespace getfemint {
     return false;
   }
 
+  bool mexarg_in::is_bool() {
+    if (gfi_array_nb_of_elements(arg) != 1) return false;
+    if (is_complex()) return false;
+
+    switch (gfi_array_get_class(arg)) {
+      case GFI_UINT32: {
+	unsigned uv = *gfi_uint32_get_data(arg);
+	if (uv > 1.0) return false;
+	return true;
+      } break;
+      case GFI_INT32: {
+	int iv = *gfi_int32_get_data(arg);
+	if (iv < 0.0 || iv > 1.0) return false;
+	return true;
+      } break;
+      case GFI_DOUBLE: {
+	double dv = *gfi_double_get_data(arg);
+	if (dv != int(dv) || dv < 0.0 || dv > 1.0) return false;
+	return true;
+      } break;
+      default: return false;
+    }
+    return false;
+  }
+
+  bool
+  mexarg_in::to_bool()
+  {
+    double dv = to_scalar_(true);
+    if (dv != floor(dv) || dv < 0.0 || dv > 1.0) {
+      THROW_BADARG("Argument " << argnum <<
+		" is not an bool value");
+    }
+    return (bool)dv;
+  }
+
   int
   mexarg_in::to_integer(int minval, int maxval)
   {

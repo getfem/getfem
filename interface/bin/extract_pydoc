@@ -400,7 +400,7 @@ def WritePythonFunction(ed):
                                    arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list)
         print '   ',
 
-    arg_list = re.sub("=[ 0-9.None]*","",arg_list)
+    arg_list = re.sub("=[ .\d\w\"\']*","",arg_list)
     d = ed.rawdoc.split('\n')
     while (len(d) and (len(d[0].strip()) == 0)):
         d = d[1:]

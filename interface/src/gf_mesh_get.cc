@@ -542,12 +542,21 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         bv.sup(pmesh->ind_points_of_convex(cv)[i]);
     }
     out.pop().from_bit_vector(bv);
-  } else if (check_cmd(cmd, "cvid from pid", in, out, 1, 1, 0, 1)) {
-    /*@GET CVIDs = MESH:GET('cvid from pid',@ivec PIDs)
-    Search convex #ids that share the point #ids given in `PIDs`@MATLAB{ in a row vector (possibly empty)}.@*/
+  } else if (check_cmd(cmd, "cvid from pid", in, out, 1, 2, 0, 1)) {
+    /*@GET CVIDs = MESH:GET('cvid from pid',@ivec PIDs[, @bool share=False])
+    Search convex #ids related with the point #ids given in `PIDs`.
+
+    If `share=False`, search convex #ids whith the point #ids given
+    in `PIDs`. If `share=True`, search convex #ids that share the
+    point #ids given in `PIDs`. `CVIDs` is a @MATLAB{row} vector
+    (possibly empty).@*/
     check_empty_mesh(pmesh);
     dal::bit_vector pts = in.pop().to_bit_vector(&pmesh->points().index());
     dal::bit_vector cvchecked;
+
+    bool share = false;
+    if (in.remaining() && in.front().is_bool())
+      share = in.pop().to_bool();
 
     std::vector<size_type> cvlst;
 
@@ -564,16 +573,17 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	//	cerr << "cv = " << ic+1 << endl;
 
 	if (!cvchecked.is_in(ic)) {
-	  bool ok = true;
-
-	  bgeot::mesh_structure::ind_cv_ct cvpt = pmesh->ind_points_of_convex(ic);
-	  /* check that each point of the convex is in the list */
-	  for (unsigned ii=0; ii < cvpt.size(); ++ii) {
-	    if (!pts.is_in(cvpt[ii])) {
-	      ok = false; break;
+	  if (share) cvlst.push_back(ic);
+	  else { /* check that each point of the convex is in the list */
+	    bool ok = true;
+	    bgeot::mesh_structure::ind_cv_ct cvpt = pmesh->ind_points_of_convex(ic);
+	    for (unsigned ii=0; ii < cvpt.size(); ++ii) {
+	      if (!pts.is_in(cvpt[ii])) {
+	        ok = false; break;
+	      }
 	    }
+	    if (ok) cvlst.push_back(ic);
 	  }
-	  if (ok) cvlst.push_back(ic);
 	  cvchecked.add(ic);
 	}
       }

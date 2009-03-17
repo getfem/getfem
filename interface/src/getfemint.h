@@ -403,6 +403,8 @@ namespace getfemint {
     bool                        is_gsparse();
     bool                        is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
     bool                        is_integer();
+    bool                        is_bool();
+    bool                        to_bool();
     int                         to_integer(int min_val=INT_MIN, int max_val=INT_MAX);
     size_type                   to_convex_number(const getfem::mesh &m);
     size_type                   to_face_number(size_type nbf);
