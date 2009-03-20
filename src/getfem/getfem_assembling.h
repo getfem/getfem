@@ -62,7 +62,8 @@ namespace getfem {
     assem.push_vec(w);
     assem.assembly(rg);
     v.push_back(w[0]);
-    MPI_SUM_VECTOR(v);
+    w.resize(2);
+    MPI_SUM_VECTOR(v, w);
     return v[1]/v[0];
   }
 
