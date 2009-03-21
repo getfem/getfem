@@ -127,6 +127,12 @@ namespace gmm {
   /* lower_tri_solve(conjugated(dense_matrix<T>), std::vector<T>, k, b)    */
   /* upper_tri_solve(conjugated(dense_matrix<T>), std::vector<T>, k, b)    */
   /*                                                                       */
+  /* rank_one_update(dense_matrix<T>, std::vector<T>, std::vector<T>)      */
+  /* rank_one_update(dense_matrix<T>, scaled(std::vector<T>),              */
+  /*                                  std::vector<T>)                      */
+  /* rank_one_update(dense_matrix<T>, std::vector<T>,                      */
+  /*                                  scaled(std::vector<T>))              */
+  /*                                                                       */
   /* ********************************************************************* */
 
   /* ********************************************************************* */
@@ -152,6 +158,7 @@ namespace gmm {
     BLAS_C cdotc_(...); BLAS_Z zdotc_(...);
     BLAS_S snrm2_(...); BLAS_D dnrm2_(...);
     BLAS_S scnrm2_(...); BLAS_D dznrm2_(...);
+    void  sger_(...); void  dger_(...); void  cgerc_(...); void  zgerc_(...); 
   }
 
   /* ********************************************************************* */
@@ -540,6 +547,63 @@ namespace gmm {
 		  BLAS_C, row_major)
   gemv_interface2(gem_p1_c, gem_trans1_c, gemv_p2_s, gemv_trans2_s, zgemv_,
 		  BLAS_Z, row_major)
+
+
+  /* ********************************************************************* */
+  /* Rank one update.                                                      */
+  /* ********************************************************************* */
+
+# define ger_interface(blas_name, base_type)                               \
+  inline void rank_one_update(const dense_matrix<base_type > &A,           \
+			      const std::vector<base_type > &V,	   	   \
+			      const std::vector<base_type > &W) {	   \
+    GMMLAPACK_TRACE("ger_interface");                                      \
+    int m(int(mat_nrows(A))), lda = m, n(int(mat_ncols(A)));		   \
+    int incx = 1, incy = 1;						   \
+    base_type alpha(1);                                                    \
+    if (m && n)								   \
+      blas_name(&m, &n, &alpha, &V[0], &incx, &W[0], &incy, &A(0,0), &lda);\
+  }
+
+  ger_interface(sger_, BLAS_S)
+  ger_interface(dger_, BLAS_D)
+  ger_interface(cgerc_, BLAS_C)
+  ger_interface(zgerc_, BLAS_Z)
+
+# define ger_interface_sn(blas_name, base_type)                            \
+  inline void rank_one_update(const dense_matrix<base_type > &A,	   \
+			      gemv_p2_s(base_type),			   \
+			      const std::vector<base_type > &W) {	   \
+    GMMLAPACK_TRACE("ger_interface");                                      \
+    gemv_trans2_s(base_type); 						   \
+    int m(int(mat_nrows(A))), lda = m, n(int(mat_ncols(A)));		   \
+    int incx = 1, incy = 1;						   \
+    if (m && n)								   \
+      blas_name(&m, &n, &alpha, &x[0], &incx, &W[0], &incy, &A(0,0), &lda);\
+  }
+
+  ger_interface_sn(sger_, BLAS_S)
+  ger_interface_sn(dger_, BLAS_D)
+  ger_interface_sn(cgerc_, BLAS_C)
+  ger_interface_sn(zgerc_, BLAS_Z)
+
+# define ger_interface_ns(blas_name, base_type)                            \
+  inline void rank_one_update(const dense_matrix<base_type > &A,	   \
+			      const std::vector<base_type > &V,		   \
+			      gemv_p2_s(base_type)) {			   \
+    GMMLAPACK_TRACE("ger_interface");                                      \
+    gemv_trans2_s(base_type); 						   \
+    int m(int(mat_nrows(A))), lda = m, n(int(mat_ncols(A)));		   \
+    int incx = 1, incy = 1;						   \
+    base_type al2 = gmm::conj(alpha);					   \
+    if (m && n)								   \
+      blas_name(&m, &n, &al2, &V[0], &incx, &x[0], &incy, &A(0,0), &lda);  \
+  }
+
+  ger_interface_ns(sger_, BLAS_S)
+  ger_interface_ns(dger_, BLAS_D)
+  ger_interface_ns(cgerc_, BLAS_C)
+  ger_interface_ns(zgerc_, BLAS_Z)
 
   /* ********************************************************************* */
   /* dense matrix x dense matrix multiplication.                           */
