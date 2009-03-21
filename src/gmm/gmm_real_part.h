@@ -358,7 +358,7 @@ namespace gmm {
 
     reference operator()(size_type i, size_type j) const {
       return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(begin_+j, i),
+					 linalg_traits<M>::access(begin_+i, j),
 					 PART(), value_type()));
     }
   };
