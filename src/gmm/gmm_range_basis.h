@@ -40,94 +40,135 @@
 #include "gmm_kernel.h"
 #include "gmm_iter.h"
 #include <set>
+#include <list>
 
 
 namespace gmm {
 
-  // Range basis with the power method
-  // Complex version not verified
+
+  template <typename T, typename VECT, typename MAT1>
+  void tridiag_qr_algorithm
+  (std::vector<typename number_traits<T>::magnitude_type> diag,
+   std::vector<T> sdiag, const VECT &eigval_, const MAT1 &eigvect_,
+   bool compvect, tol_type_for_qr tol = default_tol_for_qr) {
+    VECT &eigval = const_cast<VECT &>(eigval_);
+    MAT1 &eigvect = const_cast<MAT1 &>(eigvect_);
+    typedef typename number_traits<T>::magnitude_type R;
+
+    if (compvect) gmm::copy(identity_matrix(), eigvect);
+
+    size_type n = diag.size(), q = 0, p, ite = 0;
+    if (n == 0) return;
+    if (n == 1) { eigval[0] = gmm::real(diag[0]); return; }
+    
+    symmetric_qr_stop_criterion(diag, sdiag, p, q, tol);
+    
+    while (q < n) {
+      sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
+      if (!compvect) SUBK = sub_interval(0,0);
+      
+      symmetric_Wilkinson_qr_step(sub_vector(diag, SUBI),
+				  sub_vector(sdiag, SUBI),
+				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
+
+      symmetric_qr_stop_criterion(diag, sdiag, p, q, tol*R(3));
+      ++ite;
+      GMM_ASSERT1(ite < n*100, "QR algorithm failed.");
+    }
+    
+    gmm::copy(diag, eigval);
+  }
+
+  // Range basis with a restarted Lanczos method
   template <typename Mat>
-  void range_basis_eff_power(const Mat &B, std::set<size_type> &columns,
-		       double EPS) {
-   
+  void range_basis_eff_Lanczos(const Mat &BB, std::set<size_type> &columns,
+		       double EPS) {   
     typedef std::set<size_type> TAB;
     typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type nc_r = columns.size(), k;
-    double SQRTEPS = gmm::sqrt(EPS);
+    col_matrix< rsvector<T> > B(mat_nrows(BB), mat_ncols(BB));
+
+    k = 0;
+    for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
+      gmm::copy(scaled(mat_col(BB, *it), T(1)/vect_norm2(mat_col(BB, *it))),
+		mat_col(B, *it));
 
     std::vector<T> w(mat_nrows(B));
+    size_type restart = 80;
+    std::vector<T> sdiag(restart);
+    std::vector<R> eigval(restart), diag(restart);
+    dense_matrix<T> eigvect(restart, restart);
+    
+    R rho = R(-1), rho2;
     
     while (nc_r) {
 
-      std::vector<T> v(nc_r), v0(nc_r);
+      std::vector<T> v(nc_r), v0(nc_r), wl(nc_r);
+      dense_matrix<T> lv(nc_r, restart);
 
-      // Spectral radius of B^* B
-      
-      R rho = R(0), rho2 = R(0);
-
-      gmm::fill_random(v);
-      for (size_type i = 0; i < 1000000; ++i) {
-	R rho_old = rho;
-	gmm::clear(w);
-	gmm::copy(v, v0);
-	k = 0;
-	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
-	  add(scaled(mat_col(B, *it), v[k]), w);
-	
-	k = 0;
-	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
-	  v[k] = vect_hp(w, mat_col(B, *it));
-
-	rho = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0)); // Rayleigh quotient
-
-	if (gmm::abs(rho_old-rho) <= rho*1E-5) break;
-	  
-	gmm::scale(v, T(1)/vect_norm2(v));
-      }
-
-      rho *= R(8)/R(15);
-
-      // Computing an element of the null space of de B^* B
-      gmm::fill_random(v);
-      for (size_type i = 0; i < 1000000; ++i) {
-	R rho_old = rho2;
-	gmm::clear(w);
-	gmm::copy(v, v0);
-	k = 0;
-	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
-	  add(scaled(mat_col(B, *it), v[k]), w);
-	
-	k = 0;
-	for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
-	  v[k] = vect_hp(w, mat_col(B, *it)) - v[k]*rho;
-
-	rho2 = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0)); // Rayleigh quotient
-	if (gmm::abs(rho_old-rho2) <= rho*EPS) break;
-	if (gmm::abs(rho_old-rho2) <= rho*SQRTEPS
-	    && gmm::abs(rho2 - rho)*SQRTEPS > gmm::abs(rho_old-rho2))
-	  break;
-
-	gmm::scale(v, T(1)/vect_norm2(v));
-      }
-      
-      if (gmm::abs(rho-rho2) < EPS*rho*1000) {
-	size_type j_max = size_type(-1);
-	R val_max = R(0);
-
-	k = 0;
-	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it) {
-	  if (gmm::abs(v[k]) > val_max) {
-	    val_max = gmm::abs(v[k]);
-	    j_max = *it;
-	  }
-	  ++k;
+      if (rho < R(0)) { // Estimate of the spectral radius of B^* B
+	gmm::fill_random(v);
+	for (size_type i = 0; i < 100; ++i) {
+	  gmm::scale(v, T(1)/vect_norm2(v));
+	  gmm::copy(v, v0);
+	  k = 0; gmm::clear(w);
+	  for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++k)
+	    add(scaled(mat_col(B, *it), v[k]), w);
+	  k = 0;
+	  for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++k)
+	    v[k] = vect_hp(w, mat_col(B, *it));
+	  rho = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0));
 	}
-	GMM_ASSERT1(j_max != size_type(-1), "Internal error");
+      }
+
+      // Computing vectors of the null space of de B^* B with restarted Lanczos
+      rho2 = 0;
+      gmm::fill_random(v);
+      for(;;) {
+	R rho_old = rho2;
+	R beta = R(0), alpha;
+	gmm::scale(v, T(1)/vect_norm2(v));
+	for (size_type i = 0; i < restart; ++i) { // Lanczos iterations
+	  gmm::copy(v, mat_col(lv, i));
+	  gmm::clear(w);
+	  k = 0;
+	  for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++k)
+	    add(scaled(mat_col(B, *it), v[k]), w);
+	  k = 0;
+	  for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++k)
+	    wl[k] = v[k]*rho - vect_hp(w, mat_col(B, *it)) - beta*v0[k];
+	  alpha = gmm::real(vect_hp(wl, v));
+	  diag[i] = alpha;
+	  gmm::add(gmm::scaled(v, -alpha), wl);
+	  sdiag[i] = beta = vect_norm2(wl);
+	  gmm::copy(v, v0);
+	  gmm::copy(gmm::scaled(wl, T(1) / beta), v);
+	}
+
+	tridiag_qr_algorithm(diag, sdiag, eigval, eigvect, true);
+
+	size_type num = size_type(-1);
+	rho2 = R(0);
+	for (size_type j = 0; j < restart; ++j)
+	  { R nvp=gmm::abs(eigval[j]); if (nvp > rho2) { rho2=nvp; num=j; } }
+	GMM_ASSERT1(num != size_type(-1), "Internal error");
+
+	gmm::mult(lv, mat_col(eigvect, num), v);
+
+	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)*R(1000)) break;
+	if (gmm::abs(rho-rho2) <= rho*R(gmm::sqrt(EPS))) break;
+      }
+
+      if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
+	size_type j_max = size_type(-1), j = 0;
+	R val_max = R(0);
+	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
+	  if (gmm::abs(v[j]) > val_max)
+	    { val_max = gmm::abs(v[j]); j_max = *it; }
+       
 	columns.erase(j_max); nc_r = columns.size();
-	cout << "column " << j_max << " supressed, remaining "
-	     << columns.size() << endl;
       }
       else break;
     }
@@ -178,7 +219,7 @@ namespace gmm {
       std::set<size_type> c = columns;
       for (TAB::iterator it = c.begin(); it != c.end(); ++it)
 	if (!(c_ortho[*it])) {
-	  if (gmm::abs(M(i,i)) <= EPS*emax) columns.erase(*it);
+	  if (gmm::abs(M(i,i)) <= R(EPS)*emax) columns.erase(*it);
 	  ++i;
 	}
     }
@@ -186,9 +227,11 @@ namespace gmm {
 
 
   // Range basis with Gram-Schmidt orthogonalization (sparse version)
+  // The sparse version is better when the sparsity is high and less efficient
+  // than the dense version for high degree elements (P3, P4 ...)
   // Complex version not verified
   template <typename Mat>
-  void range_basis_eff_gram_schmidt_sparse(const Mat &BB,
+  void range_basis_eff_Gram_Schmidt_sparse(const Mat &BB,
 					   std::set<size_type> &columns,
 					   std::vector<bool> &c_ortho,
 					   double EPS) {
@@ -198,6 +241,7 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type nc = mat_ncols(BB), nr = mat_nrows(BB);
+    std::set<size_type> c = columns, rc = columns;
 
     gmm::col_matrix< rsvector<T> > B(nr, nc);
     for (std::set<size_type>::iterator it = columns.begin();
@@ -206,53 +250,42 @@ namespace gmm {
       gmm::scale(mat_col(B, *it), T(1)/vect_norm2(mat_col(B, *it)));
     }
 
-    std::set<size_type> c = columns, rc = columns;
-    // cout << "debut ortho groupee" << endl;
-    
     for (std::set<size_type>::iterator it = c.begin(); it != c.end(); ++it)
       if (c_ortho[*it]) {
 	for (std::set<size_type>::iterator it2 = rc.begin();
 	     it2 != rc.end(); ++it2)
 	  if (!(c_ortho[*it2])) {
 	    T r = -vect_hp(mat_col(B, *it2), mat_col(B, *it));
-	    add(scaled(mat_col(B, *it), r), mat_col(B, *it2));
+	    if (r != T(0)) add(scaled(mat_col(B, *it), r), mat_col(B, *it2));
 	  }
 	rc.erase(*it);
       }
-    
-    // cout << "debut ortho un par un" << endl;
     
     while (rc.size()) {
       R nmax = R(0); size_type cmax = size_type(-1);
       for (std::set<size_type>::iterator it=rc.begin(); it!=rc.end(); ++it) {
 	R n = vect_norm2(mat_col(B, *it));
 	if (nmax < n) { nmax = n; cmax = *it; }
-	if (n < EPS) { columns.erase(*it); rc.erase(*it); }
+	if (n < R(EPS)) { columns.erase(*it); rc.erase(*it); }
       }
       
-      if (nmax < EPS) break;
-      
-//       cout << "selecting " << cmax << " nmax = " << nmax
-// 	   << " nmin = " << nmin << endl;
-      
+      if (nmax < R(EPS)) break;
+       
       gmm::scale(mat_col(B, cmax), T(1)/vect_norm2(mat_col(B, cmax)));
       rc.erase(cmax);
       for (std::set<size_type>::iterator it=rc.begin(); it!=rc.end(); ++it) {
 	T r = -vect_hp(mat_col(B, *it), mat_col(B, cmax));
-	add(scaled(mat_col(B, cmax), r), mat_col(B, *it));
+	if (r != T(0)) add(scaled(mat_col(B, cmax), r), mat_col(B, *it));
       }
     }
-    
     for (std::set<size_type>::iterator it=rc.begin(); it!=rc.end(); ++it)
       columns.erase(*it);
-
   }
 
 
   // Range basis with Gram-Schmidt orthogonalization (dense version)
-  // Complex version not verified
   template <typename Mat>
-  void range_basis_eff_gram_schmidt_dense(const Mat &B,
+  void range_basis_eff_Gram_Schmidt_dense(const Mat &B,
 					  std::set<size_type> &columns,
 					  std::vector<bool> &c_ortho,
 					  double EPS) {
@@ -290,13 +323,12 @@ namespace gmm {
       // Next pivot
       R nmax = R(0); size_type imax = size_type(-1);
       for (TAB::iterator it = rc.begin(); it != rc.end(); ++it) {
-	R a = M(*it, *it);
+	R a = gmm::abs(M(*it, *it));
 	if (a > nmax) { nmax = a; imax = *it; }
-	if (a < EPS) { rc.erase(*it); columns.erase(ind[*it]); }
+	if (a < R(EPS)) { rc.erase(*it); columns.erase(ind[*it]); }
       }
 
-      // cout << "nmax = " << nmax << endl;
-      if (nmax < EPS) break;
+      if (nmax < R(EPS)) break;
 
       // Normalization
       gmm::scale(mat_row(M, imax), T(1) / sqrt(nmax));
@@ -308,15 +340,10 @@ namespace gmm {
       M(imax, imax) = T(1);
 
       rc.erase(imax);
-      
     }
-    
-    // cout << "remaining = " << rc.size() << endl; getchar();
     for (std::set<size_type>::iterator it=rc.begin(); it!=rc.end(); ++it)
       columns.erase(ind[*it]);
   }
-
-
 
   template <typename L> size_type nnz_eps(const L& l, double eps) { 
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
@@ -361,61 +388,48 @@ namespace gmm {
 
     columns.clear();
     for (size_type i = 0; i < nc; ++i)
-      if (norms[i] >= norm_max*EPS) { 
+      if (norms[i] >= norm_max*R(EPS)) { 
 	columns.insert(i);
-	nnzs[nnz_eps(mat_col(B, i), EPS * norms[i])].insert(i);
+	nnzs[nnz_eps(mat_col(B, i), R(EPS) * norms[i])].insert(i);
       }
     
     for (size_type i = 1; i < nr; ++i)
       for (std::set<size_type>::iterator it = nnzs[i].begin();
 	   it != nnzs[i].end(); ++it)
-	if (reserve__rb(mat_col(B, *it), booked, EPS * norms[*it]))
+	if (reserve__rb(mat_col(B, *it), booked, R(EPS) * norms[*it]))
 	  c_ortho[*it] = true;
 
-    size_type sizesm[5] = {50, 125, 200, 350, 450};
-    for (int k = 0; columns.size() > sizesm[k] && k < 4; ++k) {
+    size_type sizesm[7] = {125, 200, 350, 550, 800, 1100, 1500}, actsize;
+    for (int k = 0; k < 7; ++k) {
       size_type nc_r = columns.size();
-      cout << "begin small range basis with " << columns.size()
- 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
+//       cout << "begin small range basis with " << columns.size()
+// 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
       std::set<size_type> c1, cres;
+      actsize = sizesm[k];
       for (std::set<size_type>::iterator it = columns.begin();
 	   it != columns.end(); ++it) {
 	c1.insert(*it);
-	if (c1.size() >= sizesm[k]) {
-	  // sizesm = 100 + size_type(gmm::random() * 100);
-	  size_type c1size = c1.size();
-	  // range_basis_eff_lu(B, c1, c_ortho, EPS);
-	  range_basis_eff_gram_schmidt_dense(B, c1, c_ortho, EPS);
+	if (c1.size() >= actsize) {
+	  range_basis_eff_Gram_Schmidt_dense(B, c1, c_ortho, EPS);
 	  for (std::set<size_type>::iterator it2=c1.begin(); it2 != c1.end();
 	       ++it2) cres.insert(*it2);
-
-	  if (c1.size() == c1size && false) { // a supprimer ?
-	    for (size_type i = 0; it != columns.end() && i < 1000; ++it, ++i)
-	      cres.insert(*it);
-	    if (it != columns.end()) cres.insert(*it);
-	  }
-	  
 	  c1.clear(); 
 	}
       }
-      // if (c1.size() > 10) range_basis_eff_lu(B, c1, c_ortho, EPS);
       if (c1.size() > 10)
-	range_basis_eff_gram_schmidt_dense(B, c1, c_ortho, EPS);
+	range_basis_eff_Gram_Schmidt_dense(B, c1, c_ortho, EPS);
       for (std::set<size_type>::iterator it = c1.begin(); it != c1.end(); ++it)
 	cres.insert(*it);
       columns = cres;
+      if (nc_r <= actsize) return;
       if (columns.size() == nc_r) break;
-
+      if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
-    cout << "begin global dense range basis for " << columns.size()
- 	 << " columns " << endl;
 
-    if (columns.size() > 500)
-      range_basis_eff_power(B, columns, EPS);
+    if (columns.size() > std::max(size_type(500), actsize))
+      range_basis_eff_Lanczos(B, columns, EPS);
     else
-      range_basis_eff_gram_schmidt_dense(B, columns, c_ortho, EPS);
-    // range_basis_eff_lu(B, columns, c_ortho, EPS);
-
+      range_basis_eff_Gram_Schmidt_dense(B, columns, c_ortho, EPS);
   }
 
 
@@ -440,8 +454,13 @@ namespace gmm {
          based on Lanczos method is applied
        - when the (not trivial) kernel is large and most of the dependencies
          can be detected locally. An block Gram-Schmidt is applied first then
-         the Lanczos method when the remaining kernel is greatly smaller.
-    The LU decomposition has been tested fr local elimination but gives bad
+         a restarted Lanczos method when the remaining kernel is greatly
+         smaller.
+    The restarted Lanczos method could be improved or replaced by a block
+    Lanczos method, a block Wiedelann method (in order to be parallelized for
+    instance) or simply could compute more than one vector of the null
+    space at each iteration.
+    The LU decomposition has been tested for local elimination but gives bad
     results : the algorithm is unstable and do not permit to give the right
     number of vector at the end of the process. Moreover, the number of final
     vector depend greatly on the number of vectors in a block of the local
