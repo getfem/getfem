@@ -106,8 +106,8 @@
   \xlink{\htmlimg{gmmlogo.png}{the gmm logo}}{http://home.gna.org/getfem/gmm_intro}\\[2cm]
   a Generic Template Matrix C++ Library \\ \par\par
   {\Huge Short User Documentation } \\ \par
-  { \large \xlink{Yves Renard}{mailto:Yves.Renard@gmm.insa-tlse.fr}, \xlink{Julien Pommier}{mailto:Julien.Pommier@gmm.insa-tlse.fr}}\\
-  {\it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France.}\par
+  { \large \xlink{Yves Renard}{mailto:Yves.Renard@insa-lyon.fr}, \xlink{Julien Pommier}{mailto:Julien.Pommier@gmm.insa-tlse.fr}}\\
+% {\it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France.}\par
   \today \\ \par\par
 }
 \end{center}
@@ -655,7 +655,7 @@ Some possibilities :
                        // reached, iter.converged() is then false.
 \end{cppcode}
 
-\subsection{various solvers}
+\subsection{Linear solvers}
 Here is the list of available linear solvers.
 \index{gmm::cg}
 \index{gmm::bicgstab}
@@ -687,7 +687,7 @@ The solver \cpp{gmm::constrained_cg(A, C, X, B, PS, PR, iter);} solve a system w
 
 (Version 1.7) The solver \cpp{gmm::bfgs(F, GRAD, X, restart, iter)} is a BFGS quasi-Newton algorithm with a Wolfe line search for large scale problems. It minimizes the function \cpp{F} without constraints, be given its gradient \cpp{GRAD}. \cpp{restart} is the max number of stored update vectors.
 
-\subsection{various preconditioners}
+\subsection{Preconditioners}
 The following preconditioners, to be used with linear solvers, are available: 
 \index{gmm::diagonal_precond}
 \index{gmm::ilu_precond}
@@ -732,7 +732,7 @@ Except \cpp{ildltt\_precond}, all these precontionners come from ITL. \cpp{ilut_
 \subsection{Additive Schwarz method}
 The additive Schwarz method is a decomposition domain method allowing the resolution of huge linear systems (see \cite{SCHADD} for the principle of the method).
 
-For the moment, the method is not parallelized (this should be done soon ...). The call is the following: 
+For the moment, the method is not parallelized (this should be done ...). The call is the following: 
 
 \begin{cppcode}
  gmm::sequential_additive_schwarz(A, u, f, P, vB, iter, local_solver, global_solver)
@@ -744,6 +744,32 @@ The test program \cpp{schwarz_additive.C} is the directory \cpp{tests} of Getfem
 In the case of multiple solves with the same linear system, it is possible to store the preconditioners or the LU factorisations to save computation time.\\
 
 A (too) simple program in \cpp{gmm/gmm_domain_decomp.h} allows to build a regular domain decomposition with a certain ratio of overlap. It directly produces the vector of matrices \cpp{vB} for the additive Schwarz method.
+
+\subsection{Range basis function}
+
+\index{gmm::range_basis}
+The function \cpp{gmm\_range\_basis(B, columns, EPS=1e-12)} defined in \filename{gmm/gmm\_range\_basis.h} allows to select from the columns of a sparse matrix \cpp{B} a basis of the range of this matrix. The result is returned in \cpp{columns} which should be of type \cpp{std::set<size_type>} and which contains the indices of the selected columns.
+
+The algorithm is specially designed to select independent constraints from a large matrix with linearly dependent columns.
+
+There is four step in the implemented algorithm
+
+\begin{enumerate}
+  \item Elimination of null columns.
+  \item Selection of a set of already orthogonal columns.
+  \item Elimination of locally dependent columns by a blockwise Gram-Schmidt algorithm.
+  \item Computation of vectors of the remaining null space by a global restarted Lanczos algorithm and deduction of some columns to be eliminated. 
+\end{enumerate} 
+
+The algorithm is efficient if after the local Gram-Schmidt algorithm it remains a low dimension null space. The implemented restarted Lanczos algorithm find the null space vectors one by one.
+
+The Global restarted Lanczos algorithm may be improved or replaced by
+a block Lanczos method (see \cite{ca-re-so1994} for instance), a block
+Wiedelann method (in order to be parallelized) or simply
+the computation of more than one vector of the null space at each
+iteration.
+
+
 
 \section{Catch errors}
 \index{errors}
@@ -1269,11 +1295,14 @@ On some type of matrices such as \cpp{gmm::dense_matrix} some verification are m
 
 
 \begin{thebibliography}{99}
-  \bibitem{SCHADD}
-     L. F. {\texonly{\sc} Pavarino},
-    {\it Domain decomposition algorithms for the p-version finite
-         element method for elliptic problems, Luca F. Pavarino},
-        PhD thesis, Courant Institute of Mathematical Sciences, 1992.
+\bibitem{ca-re-so1994}
+  D. Calvetti, L. Reichel and D.C. Sorensen. An implicitely restarted Lanczos method for large symmetric eigenvalue problems. {\it Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
+
+\bibitem{SCHADD}
+  L. F. { Pavarino}.
+  Domain decomposition algorithms for the p-version finite
+    element method for elliptic problems, Luca F. Pavarino.
+  {\it PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
 \end{thebibliography}
 
 \section{Index}
