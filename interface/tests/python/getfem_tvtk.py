@@ -18,6 +18,7 @@ import os
 import sys
 import getfem
 import numpy
+import scipy
 
 def gf_colormap(name):
     if name == 'tripod':

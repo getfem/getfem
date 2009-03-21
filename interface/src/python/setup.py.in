@@ -42,6 +42,6 @@ setup (name = 'getfem-interface',
        license='LGPL',
        version = '1.0',
        maintainer="Julien Pommier",
-       maintainer_email="pommier@gmm.insa-tlse.fr",
+       maintainer_email="julien.pommier@insa-toulouse.fr",
        description = "This is the getfem-python-interface module",
        ext_modules = [getfemmod])
