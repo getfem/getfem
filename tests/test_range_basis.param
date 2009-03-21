@@ -8,10 +8,10 @@ INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
 N = 3;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
-NX = 20;                    % space step.
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh
 
 if (N == 1)
+  NX = 200;
   FT = 5.0;
   MESH_TYPE = 'GT_PK(1,1)';       % segments
   FEM_TYPE = 'FEM_PK(1,1)';       % P1 for segments
@@ -21,6 +21,7 @@ if (N == 1)
 end
 
 if (N == 2 && ~QUAD)
+  NX = 200;
   FT = 10.0;
   MESH_TYPE = 'GT_PK(2,1)';       % triangles
   FEM_TYPE = 'FEM_PK(2,1)';       % P1 for triangles
@@ -34,6 +35,7 @@ if (N == 2 && ~QUAD)
 end
 
 if (N == 2 && QUAD)
+  NX = 15;
   FT = 1.0;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(2,1)';       % quadrilaterons
@@ -46,14 +48,16 @@ if (N == 2 && QUAD)
 end
 
 if (N == 3 && ~QUAD)
+  NX = 15;
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
-  FEM_TYPE = 'FEM_PK(3,1)';          % P1 for tetrahedrons
-  MULT_FEM_TYPE = 'FEM_PK(3,2)';
+  FEM_TYPE = 'FEM_PK(3,3)';          % P1 for tetrahedrons
+  MULT_FEM_TYPE = 'FEM_PK(3,4)';
   INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                      % to degree 6 on tetrahedrons
 end
 
 if (N == 3 && QUAD)
+  NX = 15;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(3,1)';       % hexahedrons
   else
@@ -65,9 +69,9 @@ end
 
 
 if (N > 3)
-  error('Correct the parameter file for N > 3');
+  error('No parameters specified for N > 3');
 end
 
 RESIDUAL = 1E-9;     	     % residual for conjugate gradient.
-ROOTFILENAME = 'laplacian'   % Root of data files.
+ROOTFILENAME = 'test_range_basis'   % Root of data files.
 

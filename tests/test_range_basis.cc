@@ -187,7 +187,7 @@ void laplacian_problem::assembly(void) {
   
   cout << "Number of dof : " << nb_dof << endl;
   cout << "Number of dof mult : " << nb_dof_mult << endl;
-  cout << "Assembling mass matrix" << endl;
+  cout << "Assembly of the mass matrix" << endl;
   getfem::asm_mass_matrix(B, mim, mf_mult, mf_u, NEUMANN_BOUNDARY_NUM);
   
   
@@ -202,7 +202,7 @@ void laplacian_problem::assembly(void) {
   
   
 
-  // similaire mais ne fait pas la même chose : calcule le noyau sur u.
+  // compute the kernel on u.
   t = gmm::uclock_sec();
   NS.resize(nb_dof, nb_dof);
   cout << "depart Dirichlet_nullspace" << endl;
@@ -218,6 +218,23 @@ void laplacian_problem::assembly(void) {
   GMM_ASSERT1(nk == nb_dof-columns.size(),
 	      "Different results for the dimension of the null space");
 
+
+  // the same test with complex numbers
+  cout << "Repeated the test with complex numbers" << endl;
+  gmm::row_matrix< gmm::rsvector< std::complex<double> > >
+    B2(nb_dof_mult, nb_dof);
+  getfem::asm_mass_matrix(gmm::imag_part(B2), mim, mf_mult, mf_u,
+			  NEUMANN_BOUNDARY_NUM);
+  // gmm::copy(B, gmm::imag_part(B2));
+  t = gmm::uclock_sec();
+  cout << "depart range basis" << endl;
+  gmm::range_basis(gmm::transposed(B2), columns);
+  cout << "Elaps time for range basis : " << gmm::uclock_sec() - t << endl;
+  cout << "Rank of B2 : " << columns.size() << " null space dimension : "
+       << nb_dof-columns.size() << endl;
+
+  GMM_ASSERT1(nk == nb_dof-columns.size(),
+	      "Different results for the dimension of the null space");
 }
 
 
@@ -230,15 +247,11 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
-    laplacian_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
-    p.assembly();
-    // if (!p.solve()) GMM_ASSERT1(false, "Solve procedure has failed");
-  }
-  GMM_STANDARD_CATCH_ERROR;
-
+  laplacian_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  p.mesh.write_to_file(p.datafilename + ".mesh");
+  p.assembly();
+  
   return 0; 
 }
