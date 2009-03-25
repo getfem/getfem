@@ -390,28 +390,32 @@ namespace getfem {
 	gmm::scale(E, scalar_type(1)/scalar_type(2));
 	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
 	AHL.sigma(E, sigmahathat, p);
-	//jyh : compute ez, normal on deformed surface
-	for (unsigned int l = 0; l <NFem; ++l)  {
-	  ez[l]=0;
-	  for (unsigned int m = 0; m <NFem; ++m) 
-	    for (unsigned int n = 0; n <NFem; ++n){
-	      ez[l]+=levi_civita(l,m,n)*gradphi(m,0)*gradphi(n,1);
-	    }
-	  normEz= gmm::vect_norm2(ez);
+	if (Nfem == 3 && N == 2) {
+	  //jyh : compute ez, normal on deformed surface
+	  for (unsigned int l = 0; l <NFem; ++l)  {
+	    ez[l]=0;
+	    for (unsigned int m = 0; m <NFem; ++m) 
+	      for (unsigned int n = 0; n <NFem; ++n){
+		ez[l]+=levi_civita(l,m,n)*gradphi(m,0)*gradphi(n,1);
+	      }
+	    normEz= gmm::vect_norm2(ez);
+	  }
+	  //jyh : end compute ez
 	}
-	//jyh : end compute ez
 	gmm::mult(gradphi, sigmahathat, aux);
 	gmm::mult(aux, gmm::transposed(gradphi), sigma);
 	
 	/* jyh : complete gradphi for virtual 3rd dim (perpendicular to
 	   deformed surface, same thickness) */
-	gmm::resize(gradphi,NFem,NFem);
-	for (unsigned int ll = 0; ll <NFem; ++ll) 
-	  for (unsigned int ii = 0; ii <NFem; ++ii) 
-	    for (unsigned int jj = 0; jj <NFem; ++jj) 
-	      gradphi(ll,2)+=(levi_civita(ll,ii,jj)*gradphi(ii,0)
-			      *gradphi(jj,1))/normEz;
-	//jyh : end complete graphi
+	if (Nfem == 3 && N == 2) {
+	  gmm::resize(gradphi,NFem,NFem);
+	  for (unsigned int ll = 0; ll <NFem; ++ll) 
+	    for (unsigned int ii = 0; ii <NFem; ++ii) 
+	      for (unsigned int jj = 0; jj <NFem; ++jj) 
+		gradphi(ll,2)+=(levi_civita(ll,ii,jj)*gradphi(ii,0)
+				*gradphi(jj,1))/normEz;
+	  //jyh : end complete graphi
+	}
 	
 	gmm::scale(sigma, scalar_type(1) / gmm::lu_det(gradphi));
 	

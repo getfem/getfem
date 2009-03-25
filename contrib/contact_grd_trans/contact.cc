@@ -388,7 +388,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::copy(FRICTION.get_LN(MS), LN1);
 
     double force_totale = 0.;
-    for (i = 0; i < nbc; ++i) 
+    for (int i = 0; i < nbc; ++i) 
       force_totale += LN1[i];
     cout << "Force totale = " << force_totale << endl;
 
