@@ -390,7 +390,7 @@ namespace getfem {
 	gmm::scale(E, scalar_type(1)/scalar_type(2));
 	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
 	AHL.sigma(E, sigmahathat, p);
-	if (Nfem == 3 && N == 2) {
+	if (NFem == 3 && N == 2) {
 	  //jyh : compute ez, normal on deformed surface
 	  for (unsigned int l = 0; l <NFem; ++l)  {
 	    ez[l]=0;
@@ -407,7 +407,7 @@ namespace getfem {
 	
 	/* jyh : complete gradphi for virtual 3rd dim (perpendicular to
 	   deformed surface, same thickness) */
-	if (Nfem == 3 && N == 2) {
+	if (NFem == 3 && N == 2) {
 	  gmm::resize(gradphi,NFem,NFem);
 	  for (unsigned int ll = 0; ll <NFem; ++ll) 
 	    for (unsigned int ii = 0; ii <NFem; ++ii) 
