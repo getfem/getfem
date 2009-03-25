@@ -155,15 +155,6 @@ namespace getfem {
     }
     return op;
   }
-      
-  template <typename VECT> inline void MPI_MERGE_VECTOR(VECT& V) {
-    typedef typename gmm::linalg_traits<VECT>::value_type T;
-    std::vector<T> W(gmm::vect_size(V)); gmm::copy(V, W);
-    MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), mpi_type(T()),
-		  mpi_take_one_op<T>, MPI_COMM_WORLD);
-  }
-#else
-  template <typename VECT> inline void MPI_MERGE_VECTOR(VECT& ) {}
 #endif
 
   // TODO : verify that rhs is a lagrange fem
@@ -185,7 +176,6 @@ namespace getfem {
     if (dofs.card() > 0)
       interpolation_function_(mf_target, const_cast<VECT &>(V), f, dofs,
 			      f(mf_target.point_of_dof(dofs.first())));
-    //MPI_MERGE_VECTOR(V);
   }
 
   /* ********************************************************************* */

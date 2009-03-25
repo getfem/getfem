@@ -161,6 +161,8 @@ void elastostatic_problem::init(void) {
   mf_coef.set_finite_element(mesh.convex_index(),
 			     getfem::classical_fem(pgt,0));
 
+  mf_vm.set_classical_discontinuous_finite_element(1);
+
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -348,7 +350,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
       // F2[i*N+N-1] = dz;
       F2[i*N+N-1] = (step < 10) ? (dz * step/10.0) : dz;
      // F2[i*N+N-1] = dz+dz*3*step/nb_step;
-      F2[i*N+N-2] = step*deltat*dyv;
+      F2[i*N+N-2] = (step < 10) ? 0.0 : (step-10)*deltat*dyv;
     }
     final_model.rhs().set(F2);
 
@@ -384,6 +386,12 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::copy(ELAS.get_solution(MS), U);
 
     gmm::copy(FRICTION.get_LN(MS), LN1);
+
+    double force_totale = 0.;
+    for (i = 0; i < nbc; ++i) 
+      force_totale += LN1[i];
+    cout << "Force totale = " << force_totale << endl;
+
     gmm::copy(FRICTION.get_LT(MS), LT1);
     
     {
@@ -444,8 +452,10 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::vecsave(datafilename + s + ".U",U);
 
 
-//    plain_vector VM(mf_vm.nb_dof());
-//    ELAS.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
+   plain_vector VM(mf_vm.nb_dof());
+   ELAS.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
+   gmm::vecsave(datafilename + s + ".VM",VM);
+   
 
    
      gmm::copy(U, U0);   
@@ -479,13 +489,14 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
+  //  try {    
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.mf_u.write_to_file(p.datafilename + ".mf", true);
     p.mf_rhs.write_to_file(p.datafilename + ".mfd", true);
+    p.mf_vm.write_to_file(p.datafilename + ".mfvm", true);
     plain_vector U(p.mf_u.nb_dof());
     if (!p.solve(U)) cerr << "Solve has failed\n";
     if (p.PARAM.int_value("VTK_EXPORT")) {
@@ -498,8 +509,7 @@ int main(int argc, char *argv[]) {
 	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline &\n";
     }
-  }
-  GMM_STANDARD_CATCH_ERROR;
+    // }  GMM_STANDARD_CATCH_ERROR;
 
   return 0;
   
