@@ -41,11 +41,11 @@ scalar_type sol_u(const base_node &x){
 }
 
 scalar_type sol_f(const base_node &x)
-{return 0.  ;//EE * D *  240. ;//256. * cos(2. * x[1]) ; 
+{return 1.  ;//EE * D *  240. ;//256. * cos(2. * x[1]) ; 
 }
 
 
-void exact_solution::init(getfem::level_set &ls) {
+void exact_solution_bilap::init(getfem::level_set &ls) {
   std::vector<getfem::pglobal_function> cfun(11) ;
   for (unsigned j=0; j < 4; ++j)
     cfun[j] = bilaplacian_crack_singular(j, ls, nu, 0.) ;
@@ -223,85 +223,101 @@ void bilaplacian_crack_problem::init(void) {
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  size_type N = 2 ;
-
-    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
-    
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
 				      "Enrichment option");
-    enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
+  enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
 
-sol_ref = PARAM.int_value("SOL_REF") ;
-    
-    /* First step : build the mesh */
-
- if (!MESH_FILE.empty()) {
-    mesh.read_from_file(MESH_FILE);
-    // printing number of elements
-    cout << "Number of element of the mesh: " << mesh.convex_index().card() << "\n" ;
-    base_small_vector tt(N);
-    tt[0] = PARAM.real_value("TRANSLAT_X") ;
-    tt[1] = PARAM.real_value("TRANSLAT_Y") ;
-    if (sol_ref == 1){
-       tt[0] -= PARAM.real_value("CRACK_SEMI_LENGTH") ;
-    }
-    cout << "TRANSLAT_X = " << tt[0] << " ; TRANSLAT_Y = " << tt[1] << "\n" ;
-    mesh.translation(tt); 
-    MESH_TYPE = bgeot::name_of_geometric_trans
-      (mesh.trans_of_convex(mesh.convex_index().first_true()));
-    bgeot::pgeometric_trans pgt = 
-      bgeot::geometric_trans_descriptor(MESH_TYPE);
-    cout << "MESH_TYPE=" << MESH_TYPE << "\n";
-    N = mesh.dim();
- } else {
-    bgeot::pgeometric_trans pgt = 
-      bgeot::geometric_trans_descriptor(MESH_TYPE);
-    N = pgt->dim();
-    GMM_ASSERT1(N == 2, "For a plate problem, N should be 2");
-    std::vector<size_type> nsubdiv(N);
-    NX = PARAM.int_value("NX", "Number of space steps ") ;
-    std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
-    if (sol_ref == 1)  nsubdiv[0] = NX / 2 ; 
-    getfem::regular_unit_mesh(mesh, nsubdiv, pgt, PARAM.int_value("MESH_NOISED") != 0);
+  sol_ref = PARAM.int_value("SOL_REF") ;
+  size_type N = 2 ;
+  /* First step : build the mesh */
+  if (!MESH_FILE.empty()) {
+     mesh.read_from_file(MESH_FILE);
+     // printing number of elements
+     cout << "Number of element of the mesh: " << mesh.convex_index().card() << "\n" ;
+     base_small_vector tt(N);
+     tt[0] = PARAM.real_value("TRANSLAT_X") ;
+     tt[1] = PARAM.real_value("TRANSLAT_Y") ;
+     if (sol_ref > 0){
+        tt[0] -= PARAM.real_value("CRACK_SEMI_LENGTH") ;
+     }
+     cout << "TRANSLAT_X = " << tt[0] << " ; TRANSLAT_Y = " << tt[1] << "\n" ;
+     mesh.translation(tt); 
+     MESH_TYPE = bgeot::name_of_geometric_trans
+       (mesh.trans_of_convex(mesh.convex_index().first_true()));
+     bgeot::pgeometric_trans pgt = 
+       bgeot::geometric_trans_descriptor(MESH_TYPE);
+     cout << "MESH_TYPE=" << MESH_TYPE << "\n";
+     N = mesh.dim();
+  } 
+  else {
+     bgeot::pgeometric_trans pgt = 
+       bgeot::geometric_trans_descriptor(MESH_TYPE);
+     N = pgt->dim();
+     GMM_ASSERT1(N == 2, "For a plate problem, N should be 2");
+     std::vector<size_type> nsubdiv(N);
+     NX = PARAM.int_value("NX", "Number of space steps ") ;
+     std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
+     if (sol_ref == 1)  nsubdiv[0] = NX / 2 ; 
+     if (sol_ref == 2) {
+        size_type NY = PARAM.int_value("NY") ;
+	nsubdiv[1] = NY ;
+     }
+     getfem::regular_unit_mesh(mesh, nsubdiv, pgt, PARAM.int_value("MESH_NOISED") != 0);
 
     bgeot::base_matrix M(N,N);
     for (size_type i=0; i < N; ++i) {
       static const char *t[] = {"LX","LY","LZ"};
       M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
     }
+    if (sol_ref == 2){
+      M(0, 0) = 1500. ;
+      M(1, 1) = 1000. ;
+    }
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
     base_small_vector tt(N);
-    tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ;
-    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
-    if (sol_ref == 1){
+    switch (sol_ref) {
+    case 0 : {
+       tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ;
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
+    case 1 : {
        tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
+    case 2 : {
+       tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH");
+       tt[1] = - 500. + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
+    default : 
+       GMM_ASSERT1(false, "SOL_REF parameter is undefined");
+      break ;  
     }
     mesh.translation(tt);	     
   } 
  
-    scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
-    scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
-    size_type cpt = 0 ; 
-    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
-    	quality = std::min(quality, mesh.convex_quality_estimate(i));
-	area = mesh.convex_area_estimate(i) ;
-	radius = mesh.convex_radius_estimate(i) ;
-	avg_area += area ;
-	avg_radius += radius ;
-	min_radius = std::min(radius, min_radius) ;
-	max_radius = std::max(radius, max_radius) ;	
-	min_area = std::min(min_area, area) ; 
-	max_area = std::max(max_area, area) ;
-	cpt++ ;
-    }
-    avg_area /= scalar_type(cpt) ;
-    avg_radius /= scalar_type(cpt) ; 
-/*    cout << "quality of mesh : " << quality << endl;
+  scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
+  scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
+  size_type cpt = 0 ; 
+  for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i){
+     quality = std::min(quality, mesh.convex_quality_estimate(i));
+     area = mesh.convex_area_estimate(i) ;
+     radius = mesh.convex_radius_estimate(i) ;
+     avg_area += area ;
+     avg_radius += radius ;
+     min_radius = std::min(radius, min_radius) ;
+     max_radius = std::max(radius, max_radius) ;	
+     min_area = std::min(min_area, area) ; 
+     max_area = std::max(max_area, area) ;
+     cpt++ ;
+  }
+  avg_area /= scalar_type(cpt) ;
+  avg_radius /= scalar_type(cpt) ; 
+/*  cout << "quality of mesh : " << quality << endl;
     cout << "average radius : " << avg_radius << endl;
     cout << "radius min : " << min_radius << " ; radius max : " << max_radius << endl;
     cout << "average area : " << avg_area << endl ;
@@ -437,11 +453,13 @@ sol_ref = PARAM.int_value("SOL_REF") ;
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
-        //if ( (un[0] <= -0.9) || (un[0] >= 0.9) ) {
-	if  (gmm::abs(un[1]) >= 0.999)  {
+	if (un[0] < -0.999) { // symetry condition
+	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+	} 
+	else{
 	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
            mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
-	} 
+	}
      }
     }
   
@@ -465,7 +483,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     }
     if (sol_ref == 2){ // to modify if rotation is supported
      ls.values(0)[d] = y ;
-     ls.values(1)[d] = gmm::abs(x) - a ; //x * x - a * a ;
+     ls.values(1)[d] = x ; //x * x - a * a ;
     }
   }
   //ls.simplify(0.5);
@@ -888,27 +906,30 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   //cout << "validate mf_u():\n"; validate_fem_derivatives(mf_u());
 
-  cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
-
+  cout << "Number of dof for u --> : " << mf_u().nb_dof() << endl;
+  scalar_type pressure ;
+  pressure = PARAM.real_value("PRESSURE") ;
   // Bilaplacian brick.
   getfem::mdbrick_bilaplacian<> BIL(mim, mf_u());
   BIL.D().set(D);
   if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
 
-
   // Defining the volumic source term.
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs);
-  //getfem::interpolation_function(mf_rhs, F, sol_f);
-
+  if (sol_ref == 2){
+     getfem::interpolation_function(mf_rhs, F, sol_f);
+     gmm::scale(F, pressure) ;
+     }
   //Volumic source term brick.
-  //getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
+  getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
   
   // Defining the moment condition (for free edge condition)
   size_type N ; N = mesh.dim() ;
   gmm::resize(F, nb_dof_rhs*N*N);
+  gmm::clear(F) ;
   getfem::mdbrick_normal_derivative_source_term<>
-     MOMENTUM(BIL, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+     MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
   // Defining the imposed force condtion (also for free edge condition)
   plain_vector tensor_H(nb_dof_rhs*N*N);
   gmm::resize(F, nb_dof_rhs*N);
@@ -938,7 +959,9 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
     NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult_d);
-
+  if (sol_ref == 2) 
+    std::fill(exact_sol.U.begin(), exact_sol.U.end(), 0.) ;   
+    
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
   NDER_DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
@@ -963,15 +986,30 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   gmm::resize(F, nb_dof_rhs);
   
   // Dirichlet condition brick.
+
   getfem::mdbrick_Dirichlet<>
-    DIRICHLET(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); //mfls_mult
-  DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
+    DIRICHLET_0(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); //mfls_mult
+  DIRICHLET_0.rhs().set(exact_sol.mf,exact_sol.U);
+  DIRICHLET_0.set_constraints_type(getfem::constraints_type(dirichlet_version));  
+  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
+    DIRICHLET_0.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;  
+  
+  getfem::mdbrick_Dirichlet<>
+    DIRICHLET_2(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); 
+  DIRICHLET_2.rhs().set(exact_sol.mf,exact_sol.U);  
+  DIRICHLET_2.set_constraints_type(getfem::constraints_type(dirichlet_version));  
+  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
+    DIRICHLET_2.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;  
+  
+  getfem::mdbrick_abstract<> *DIRICHLET = &DIRICHLET_0 ;  
+  if (sol_ref == 2)
+     DIRICHLET = &DIRICHLET_2 ;   
+
+  
   //getfem::interpolation_function(mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
   //DIRICHLET.rhs().set(mf_rhs, F) ;  -> wrong (near the crack).
-  DIRICHLET.set_constraints_type(getfem::constraints_type(dirichlet_version));  
-  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-    DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
-  getfem::mdbrick_abstract<> *final_model = &DIRICHLET ;
+
+  getfem::mdbrick_abstract<> *final_model = DIRICHLET ;
   
   sparse_matrix H(1, mf_u().nb_dof());
   if (enrichment_option == 3 ) {
@@ -979,7 +1017,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
        the enriched area and the rest of the mesh */
 
     getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
+      *(new getfem::mdbrick_constraint<>(*DIRICHLET, 0));
     mortar.set_constraints_type(getfem::constraints_type(mortar_version));
     if (mortar_version == getfem::PENALIZED_CONSTRAINTS)
       mortar.set_penalization_parameter(PARAM.real_value("EPS_MORTAR_PENAL")) ;
@@ -1017,7 +1055,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   if ( PARAM.real_value("SEUIL_FINAL")!=0 ) { 
   // suppression of nodes with a very small term on the stiffness matrix diag
-    getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
+    getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(*DIRICHLET, 0));
     extra.set_constraints_type(getfem::constraints_type(dirichlet_version));  
     if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
       extra.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL"));

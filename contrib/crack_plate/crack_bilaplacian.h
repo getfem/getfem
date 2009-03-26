@@ -106,11 +106,11 @@ inline getfem::pglobal_function bilaplacian_crack_singular(size_type i, const ge
   return new bilaplacian_singular_functions(i, ls, nu, pos);
 }
 
-struct exact_solution {
+struct exact_solution_bilap {
   getfem::mesh_fem_global_function mf;
   getfem::base_vector U;
 
-  exact_solution(getfem::mesh &me) : mf(me) {}
+  exact_solution_bilap(getfem::mesh &me) : mf(me) {}
   void init(getfem::level_set &ls);
 };
 
@@ -195,7 +195,7 @@ struct bilaplacian_crack_problem {
   scalar_type nu ;
   scalar_type D ;
   
-  exact_solution exact_sol;
+  exact_solution_bilap exact_sol;
   size_type sol_ref ;    /* 0 : solution made of pure singularities
                             1 : infinite plate with central crack subject to 
                                 moments (pure K1 mode) -> work in progress*/
@@ -212,10 +212,13 @@ struct bilaplacian_crack_problem {
   void compute_error(plain_vector &U);
   void compute_H2_error_field(const plain_vector &U) ;
   void move_nodes_close_to_crack(void); // bugged
-  void compute_error_beta(plain_vector &U) ;
+  void compute_error_beta(plain_vector &U) ;  // to be done
   void init_mixed_elements(void) ;
   void set_matrix_mortar(sparse_matrix &H) ;
   void compute_sif(const plain_vector &U, scalar_type ring_radius);
+  void sif_direct_estimation(const plain_vector &U);
+  void exact_sif(scalar_type &KI, scalar_type &KII);
+  void export_solution(const plain_vector &U) ;
   
   bilaplacian_crack_problem(void) : ls(mesh, 1, true), 
 				    mls(mesh), mim(mls), mf_pre_u(mesh),  
