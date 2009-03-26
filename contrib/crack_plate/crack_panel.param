@@ -1,0 +1,139 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program crack_panel                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%% Choice of the solution of reference ----------------------------
+SOL_REF = 2 ; 
+
+N = 2;
+
+LX = 1500. ; LY = 1000. ; LZ = 1.; % size of the domain.
+E = 7.4e10 ;
+NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
+EPSILON=0.8 % half-thickness 
+
+D = 2 * E * EPSILON * EPSILON * EPSILON / (3 * (1 - NU * NU)) ;       % "flexion modulus"
+KL = 1;        % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
+               % plate model (N=2 only).
+
+CRACK_SEMI_LENGTH = 100 ; 
+PRESSURE = 6e4 ;  % vertical loading
+
+
+%%%%%   mesh parameters -----------------------------------------------
+NX = 15 ;                 % space step
+NY = 11 ;
+
+
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
+TRANSLAT_X = 0.0 ;
+TRANSLAT_Y = 0.0 ;
+SEUIL_FINAL =  0 ;
+SHOW_NAME_OF_DOF = 0 ;
+
+% Parameters for the finite element method -------------------------------
+
+QUAD = 1;
+
+if (~QUAD)
+  MESH_TYPE = 'GT_PK(2,1)';        % triangles
+  DATA_FEM_TYPE = 'FEM_PK(2, 3)';
+  PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+  FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+  DIRICHLET_FEM_TYPE =  'FEM_PK(2,1)';
+  DIRICHLET_DER_FEM_TYPE = 'FEM_PK(2,1)';
+  INTEGRATION = 'IM_HCT_COMPOSITE(IM_TRIANGLE(13))';
+  MORTAR_FEM_TYPE ='FEM_PK(2,2)';
+  MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
+  
+  INTEGRATION_LINE = 'IM_TRIANGLE(13)' ;
+  SIMPLEX_INTEGRATION_LINE = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
+end
+
+if (QUAD)
+  MESH_TYPE = 'GT_QK(2,1)';
+  FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  DATA_FEM_TYPE = 'FEM_QK(2,3)';
+  DIRICHLET_FEM_TYPE = 'FEM_QK(2,1)';
+  DIRICHLET_DER_FEM_TYPE = 'FEM_QK(2,1)';
+  MORTAR_FEM_TYPE = 'FEM_QK(2,2)' ;
+  MORTAR_DERIV_FEM_TYPE = 'FEM_QK(2,1)' ;
+  PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
+  INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(13))';
+  
+  INTEGRATION_LINE = 'IM_QUAD(17)' ;
+  SIMPLEX_INTEGRATION_LINE = 'IM_QUAD(17)';
+end
+
+% integration meth. for sub-simplexe of elements crossed by the level-set
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
+
+
+% integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
+% (comment it to disable quasipolar integration). Should be a
+% method defined on a square for 2D, or defined on a prism for 3D.
+%SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
+
+WHERE = 4 ;
+
+%%%% XFEM Parameters
+
+ENRICHMENT_OPTION = 3;  %-1 = classical FEM (needs conformal mesh)
+			% 0 = Pas d'enrichissement (fonction H seule)	
+                        % 1 = Pointwise matching
+                        % 2 = standard XFEM on a fixed zone
+			% 3 = Integral matching (mortar)
+			% 4 = global enrichment times cut-off function			
+RADIUS_ENR_AREA = 80.;
+RING_RADIUS = 100. ;
+SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
+                        % 1 = singularities developped on 2 dofs
+SHOW_DX = 0 ;
+
+
+%%%%%    Parameters for the integral matching
+MULT_WITH_H = 1 ;           % 0 = mutlipliers without the H ddl ; 1 = multipliers with the H ddls
+MORTAR_WITHOUT_SINGUL = 0 ; % 0 = mortar with singuls ; 1 = mortar without singuls
+MORTAR_TYPE = 3 ;         % 1 = version 1 of the integral matching
+                          % 2 = entire gradient matched
+                          % 3 = normal derivative only
+MORTAR_VERSION = 0 ;    % 0=multipliers, 1=penalization, 2=elimination
+EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
+                               % integral matching with penalization 
+SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integral matching
+
+%%%%%    Parameters for the cut-off function
+CUTOFF_FUNC = 3; % 0 for the exponential cutoff. 
+                 % 1 for a 3rd degree polynomial cutoff.
+                 % 2 for a 5th degree polynomial cutoff. 
+CUTOFF = 0.4;  % usefull only for exponential cutoff (parameter of the speed of decreasing)
+CUTOFF1 = 0.01; % radius
+CUTOFF0 = 0.25;
+
+%%%%%  computation parameters 	
+RESIDUAL = 1E-9;     	% residual for conjugate gradient.
+DIRICHLET_VERSION = 0; % 0=multipliers, 1=penalization, 2=elimination
+EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
+                               % Dirichlet condition with penalization 
+COMPUTE_ERROR = 0;
+
+FIC_ORTHO = 0 ;
+
+%%%%%  error computation parameters
+NORM_EXACT = 0 ; % set to 0 if you don't want to calculate the norm of the exact solution
+RADIUS_SPLIT_DOMAIN = 0.0
+
+%%%%%   saving parameters                             %%%%%
+ROOTFILENAME = 'crack_panel';     % Root of data files.
+VTK_EXPORT = 4; % export solution to a .vtk file ?
+MATLAB_EXPORT = 0;
+DX_EXPORT = 31 ; % set to 31 to export solution, set to 32 to export exact solution
+
+
+
+
