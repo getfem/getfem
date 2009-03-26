@@ -400,3 +400,31 @@ bilaplacian_singular_functions::bilaplacian_singular_functions(size_type l_, con
   cv = size_type(-1);
   this->add_dependency(ls);
 }
+
+
+scalar_type crack_singular_bilaplacian_xy_function::val(scalar_type x, scalar_type y) const {
+    bilaplacian_singular_functions bsf = bilaplacian_singular_functions(l, ls, nu, pos) ;
+    return bsf.sing_function(x,y) ;
+  }
+
+base_small_vector crack_singular_bilaplacian_xy_function::grad(scalar_type x, scalar_type y) const {
+    base_small_vector res(2);
+    bilaplacian_singular_functions bsf = bilaplacian_singular_functions(l, ls, nu, pos) ;
+    bsf.sing_function_grad(x, y, res) ;
+    return res;
+  }
+
+  base_matrix crack_singular_bilaplacian_xy_function::hess(scalar_type x, scalar_type y) const {
+    base_matrix res(2,2);
+    bilaplacian_singular_functions bsf = bilaplacian_singular_functions(l, ls, nu, pos) ;
+    bsf.sing_function_hess(x, y, res) ;
+    return res;
+  }
+  
+crack_singular_bilaplacian_xy_function::crack_singular_bilaplacian_xy_function(size_type l_, const getfem::level_set &ls_, scalar_type nu_, scalar_type pos_) : l(l_), ls(ls_), nu(nu_), pos(pos_) {
+}
+  
+  
+  
+  
+  
