@@ -11,6 +11,7 @@ function die {
 
 aclocal -I ./m4 || die "aclocal failed";
 autoheader || die "autoheader failed";
+autoreconf
 autoconf || die "autoconf failed";
 #pas de ./ devant les noms des makefiles !!!
 automake -a --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'` || die "automake failed";
