@@ -1,22 +1,18 @@
 #!/bin/bash
-# please don't try to understand how it works !
 # Yves.Renard@imag.fr, 04.01.98
-# Last modification :  04.01.99
 
-gg=$(basename "$1" .fig)
-cd $(dirname "$1");
-ff="$gg"
+while (test $# -gt 0); do
 
-if [ ! -f "$ff.fig" ]; then
+export gg=`basename "$1" .fig`
+export ff=`dirname "$1"`/${gg}
+
+if !(test -f ${ff}.fig); then
   echo "Usage : fig2eps filename or fig2eps filename.fig"
   exit
 fi
 
-echo "processing $gg.fig"
-echo "xfig figure + latex formula --> eps. "
-echo "this may take a while ..."
-
-tex="$ff.tex_0954236"
+echo processing ${gg}.fig
+# echo "xfig figure + latex formula --> eps. "
 
 rm -f ${ff}.ps_0954236 ${ff}.tex_0954236 ${ff}_0954236.tex ${ff}_0954236.log
 rm -f ${ff}_0954236.input ${ff}_0954236.aux  ${ff}_0954236.dvi missfont.log
@@ -30,8 +26,6 @@ echo "\\usepackage{amsmath,amssymb}" >> ${ff}_0954236.tex
 echo "\\usepackage[dvips]{color}" >> ${ff}_0954236.tex
 echo "\\usepackage{amsfonts}" >> ${ff}_0954236.tex
 echo "\\usepackage[dvips]{graphicx}" >> ${ff}_0954236.tex
-echo "\\usepackage{eepic,epic,epsfig}" >> ${ff}_0954236.tex
-echo "\\usepackage{here}" >> ${ff}_0954236.tex
 echo "\\newfont{\\emtwelv}{cmr10 scaled 4}" >> ${ff}_0954236.tex
 echo "\\pagestyle{empty}"  >> ${ff}_0954236.tex
 echo "\\oddsidemargin -2.6cm"  >> ${ff}_0954236.tex
@@ -62,4 +56,6 @@ mv -f ${ff}_0954236.ps ${ff}.eps
 rm -f ${ff}.ps_0954236 ${ff}.tex_0954236 ${ff}_0954236.tex ${ff}_0954236.log
 rm -f ${ff}_0954236.input ${ff}_0954236.aux  ${ff}_0954236.dvi missfont.log
 
-epstopdf ${ff}.eps
+
+ shift 1
+done

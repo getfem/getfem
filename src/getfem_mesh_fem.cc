@@ -25,6 +25,32 @@
 #include "getfem/getfem_mesh_fem.h"
 
 namespace getfem {
+
+  void mesh_fem::update_from_context(void) const {
+    for (dal::bv_visitor i(fe_convex); !i.finished(); ++i) {
+      if (linked_mesh_->convex_index().is_in(i)) {
+	if (v_num_update < linked_mesh_->convex_version_number(i)) {
+	  if (auto_add_elt_K != dim_type(-1))
+	    const_cast<mesh_fem *>(this)
+	      ->set_classical_finite_element(i, auto_add_elt_K);
+	  else
+	    const_cast<mesh_fem *>(this)
+	      ->set_finite_element(i, 0);
+	}
+      }
+      else const_cast<mesh_fem *>(this)->set_finite_element(i, 0);
+    }
+    for (dal::bv_visitor i(linked_mesh_->convex_index());
+	 !i.finished(); ++i) {
+      if (!fe_convex.is_in(i)
+	  && v_num_update < linked_mesh_->convex_version_number(i)) {
+	if (auto_add_elt_K != dim_type(-1))
+	  const_cast<mesh_fem *>(this)
+	    ->set_classical_finite_element(i, auto_add_elt_K);
+      }
+    }
+    v_num_update = act_counter();
+  }
   
   dal::bit_vector mesh_fem::dof_on_region(const mesh_region &b) const {
     if (!dof_enumeration_made) this->enumerate_dof();
@@ -54,45 +80,9 @@ namespace getfem {
     }
     return res;
   }
-  
-  void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
-  void mesh_fem::receipt(const MESH_DELETE &) { clear(); }
-  void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
-    if (fe_convex[m.icv])
-      { fe_convex[m.icv] = false; dof_enumeration_made = false; }
-  }
-  void mesh_fem::receipt(const MESH_ADD_CONVEX &m) {
-    if (auto_add_elt_K != size_type(-1)) {
-      pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(m.icv), 
-				      short_type(auto_add_elt_K));
-      set_finite_element(m.icv, pf);
-    }
-  }
-  void mesh_fem::receipt(const MESH_SWAP_CONVEX &m) { 
-    fe_convex.swap(m.icv1, m.icv2);
-    f_elems.swap(m.icv1, m.icv2);
-  }
-
-  /* keep the FEM and dof_partition when the mesh is refined */
-  void mesh_fem::receipt(const MESH_REFINE_CONVEX &m) { 
-    if (m.is_refine) {
-      if (fe_convex[m.icv])
-	for (size_type i = 0; i < m.sub_cv_list.size(); ++i) {
-	  f_elems[m.sub_cv_list[i]] = f_elems[m.icv];
-	  fe_convex.add(m.sub_cv_list[i]);
-	}
-      for (size_type i = 0; i < m.sub_cv_list.size(); ++i) {
-	set_dof_partition(m.sub_cv_list[i], get_dof_partition(m.icv));
-      }
-    }
-    else if (fe_convex[m.sub_cv_list[0]]) {
-      f_elems[m.icv] = f_elems[m.sub_cv_list[0]];
-      fe_convex.add(m.icv);
-      set_dof_partition(m.icv, get_dof_partition(m.sub_cv_list[0]));
-    }
-  }
    
   void mesh_fem::set_finite_element(size_type cv, pfem pf) {
+    context_check();
     if (pf == 0) {
       if (fe_convex.is_in(cv)) {
 	fe_convex.sup(cv);
@@ -127,6 +117,13 @@ namespace getfem {
   void mesh_fem::set_finite_element(pfem ppf)
   { set_finite_element(linked_mesh().convex_index(), ppf); }
   
+  void mesh_fem::set_classical_finite_element(size_type cv,
+					      dim_type fem_degree) {
+    pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(cv), 
+				    fem_degree);
+    set_finite_element(cv, pf);
+  }
+
   void mesh_fem::set_classical_finite_element(const dal::bit_vector &cvs, 
 					      dim_type fem_degree) {
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
@@ -176,7 +173,7 @@ namespace getfem {
   }
 
   dim_type mesh_fem::dof_qdim(size_type d) const {
-    if (!dof_enumeration_made) enumerate_dof();
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
     size_type cv = first_convex_of_dof(d);
     GMM_ASSERT1(cv != size_type(-1), "Inexistent dof");
     size_type tdim = f_elems[cv]->target_dim();
@@ -184,6 +181,7 @@ namespace getfem {
   }
 
   size_type mesh_fem::first_convex_of_dof(size_type d) const {
+    context_check();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return j;
@@ -220,6 +218,7 @@ namespace getfem {
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
+    context_check();
     if (fe_convex.card() == 0) {
       dof_enumeration_made = true;
       nb_total_dof = 0;
@@ -302,15 +301,11 @@ namespace getfem {
   }
 
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
-    : dof_enumeration_made(false), auto_add_elt_K(size_type(-1)), 
+    : dof_enumeration_made(false), auto_add_elt_K(dim_type(-1)), 
       Qdim(Q), QdimM(1), QdimN(1) {
     linked_mesh_ = &me;
     this->add_dependency(me);
-    add_sender(me.lmsg_sender(), *this,
-	       mask(MESH_CLEAR::ID)   | mask(MESH_SUP_CONVEX::ID) |
-	       mask(MESH_SWAP_CONVEX::ID) | mask(MESH_DELETE::ID) |
-	       mask(MESH_ADD_CONVEX::ID)|
-	       mask(MESH_REFINE_CONVEX::ID));
+    v_num_update = act_counter();
   }
 
   mesh_fem::~mesh_fem() {}
@@ -414,6 +409,7 @@ namespace getfem {
   }
 
   void mesh_fem::write_to_file(std::ostream &ost) const {
+    context_check();
     gmm::stream_standard_locale sl(ost);
     ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
     ost << "QDIM " << size_type(get_qdim()) << '\n';
@@ -458,53 +454,43 @@ namespace getfem {
     write_to_file(o);
   }
 
-  struct mf__key_ {
+  struct mf__key_ : public context_dependencies {
     const mesh *pmesh;
     dim_type order;
-    mf__key_(const mesh &msh, dim_type o) : pmesh(&msh),order(o) {}
+    mf__key_(const mesh &msh, dim_type o) : pmesh(&msh), order(o)
+    { add_dependency(msh); }
     bool operator <(const mf__key_ &a) const {
     if (pmesh < a.pmesh) return true; else
       if (a.pmesh < pmesh) return false; else
 	if (order < a.order) return true; else return false;
     }
+    void update_from_context(void) const {}
+    mf__key_(const mf__key_ &mfk)
+    { pmesh = mfk.pmesh; order = mfk.order; add_dependency(*pmesh); }
+  private :
+    mf__key_& operator=(const mf__key_ &mfk);
   };
 
 
-  class classical_mesh_fem_pool : public mesh_receiver {
+  class classical_mesh_fem_pool {
 
     typedef const mesh_fem * pmesh_fem;
     typedef std::map<mf__key_, pmesh_fem> mesh_fem_tab;
 
     mesh_fem_tab mfs;
 
-    // void receipt(const MESH_CLEAR &) {}
-    void receipt(const MESH_DELETE &M) {
-      for (mesh_fem_tab::iterator it = mfs.begin(); it != mfs.end(); ) {
-	mesh_fem_tab::iterator it2 = it; it2 ++;
-	if (it->first.pmesh == M.msh) mfs.erase(it);
-	it = it2;
-      }
-    }
-//     void receipt(const MESH_ADD_CONVEX &m) {}
-//     void receipt(const MESH_SUP_CONVEX &m) {}
-//     void receipt(const MESH_SWAP_CONVEX &m) {}
-
   public :
 
     const mesh_fem &operator()(const mesh &msh, dim_type o) {
+      for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
+	if (!(itt->first.is_context_valid())) 
+	  { delete itt->second; mfs.erase(itt); }
 
       mf__key_ key(msh, o);
       mesh_fem_tab::iterator it = mfs.find(key);
       assert(it == mfs.end() || it->second->is_context_valid());
       
       if (it == mfs.end()) {
-	// the list of mesh pointers should be sorted ...
-	for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
-	  if (itt->first.pmesh == &msh) goto nothing_to_do;
-	add_sender(msh.lmsg_sender(), *this, mask(MESH_DELETE::ID));
-	
-      nothing_to_do :
-	
 	mesh_fem *pmf = new mesh_fem(msh);
 	pmf->set_auto_add(o);
 	pmf->set_classical_finite_element(o);
@@ -527,7 +513,9 @@ namespace getfem {
     mesh_fem mf;
     dummy_mesh_fem_() : mf(m) {}
   };
-  const mesh_fem &dummy_mesh_fem(void) { return dal::singleton<dummy_mesh_fem_>::instance().mf; }
+
+  const mesh_fem &dummy_mesh_fem(void)
+  { return dal::singleton<dummy_mesh_fem_>::instance().mf; }
 
 
 

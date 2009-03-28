@@ -26,6 +26,11 @@
 
 namespace getfem {
 
+  gmm::uint64_type act_counter(void) {
+    static gmm::uint64_type c = gmm::uint64_type(0);
+    return ++c;
+  }
+
   void mesh::sup_convex_from_regions(size_type c) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
       cvf_sets[i].sup_all(c);
@@ -228,8 +233,9 @@ namespace getfem {
     pts.clear();
     gtab.clear(); trans_exists.clear();
     cvf_sets.clear(); valid_cvf_sets.clear();
-    lmsg_sender().send(MESH_CLEAR()); touch();
+    cvs_v_num.clear();
     if (Bank_info) { delete Bank_info; Bank_info = 0; }
+    touch();
   }
 
   size_type mesh::add_segment(size_type a, size_type b) {
@@ -272,7 +278,7 @@ namespace getfem {
     trans_exists.sup(ic);
     sup_convex_from_regions(ic);
     if (Bank_info) Bank_sup_convex_from_green(ic);
-    lmsg_sender().send(MESH_SUP_CONVEX(ic)); touch();
+    touch();
   }
 
   void mesh::swap_convex(size_type i, size_type j) {
@@ -282,7 +288,7 @@ namespace getfem {
       gtab.swap(i,j);
       swap_convex_in_regions(i, j);
       if (Bank_info) Bank_swap_convex(i,j);
-      lmsg_sender().send(MESH_SWAP_CONVEX(i, j)); touch();
+      cvs_v_num[i] = cvs_v_num[j] = act_counter(); touch();
     }
   }
 
@@ -361,8 +367,10 @@ namespace getfem {
   void mesh::copy_from(const mesh& m) {
     clear();
     bgeot::basic_mesh::operator=(m);
+    cvs_v_num.clear();
+    gmm::uint64_type d = act_counter();
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
-      lmsg_sender().send(MESH_ADD_CONVEX(i));
+      cvs_v_num[i] = d;
     if (Bank_info) delete Bank_info;
     if (m.Bank_info) {
       Bank_info = new Bank_info_struct;
@@ -863,7 +871,6 @@ namespace getfem {
 	ipt2[j] = ipt[mesh2.ind_points_of_convex(ic)[j]];
       icl.push_back(add_convex(pgt, ipt2.begin()));
     }
-    lmsg_sender().send(MESH_REFINE_CONVEX(i, icl, true));
     handle_region_refinement(i, icl, true);
     sup_convex(i, true);
   }
@@ -914,7 +921,6 @@ namespace getfem {
       green_simplex &gs = Bank_info->green_simplices[igs];
 
       size_type icc = add_convex_by_points(gs.pgt, gs.cv.points().begin());
-      lmsg_sender().send(MESH_REFINE_CONVEX(icc, gs.sub_simplices, false));
       handle_region_refinement(icc, gs.sub_simplices, false);
       for (size_type ic = 0; ic < gs.sub_simplices.size(); ++ic) {
 	sup_convex(gs.sub_simplices[ic], true);
@@ -1037,7 +1043,6 @@ namespace getfem {
       for (size_type ip2 = ip1+1; ip2 < ipt.size(); ++ip2)
 	Bank_info->edges.insert(edge(ipt[ip1], ipt[ip2]));
 
-    lmsg_sender().send(MESH_REFINE_CONVEX(ic, gs.sub_simplices, true));
     handle_region_refinement(ic, gs.sub_simplices, true);
     sup_convex(ic, true);
   }

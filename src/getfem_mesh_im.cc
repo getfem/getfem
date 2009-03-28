@@ -24,34 +24,21 @@
 
 namespace getfem {
   
-  void mesh_im::receipt(const MESH_CLEAR &) { clear(); }
-  void mesh_im::receipt(const MESH_DELETE &) {
-    clear(); is_valid_ = false;
-    sup_sender(linked_mesh_->lmsg_sender());
-  }
-  void mesh_im::receipt(const MESH_SUP_CONVEX &m) { 
-    if (im_convexes[m.icv])
-      { im_convexes[m.icv] = false; }
-  }
-  void mesh_im::receipt(const MESH_SWAP_CONVEX &m) { 
-    im_convexes.swap(m.icv1, m.icv2);
-    ims.swap(m.icv1, m.icv2);
-  }
-  void mesh_im::receipt(const MESH_REFINE_CONVEX &m) {
-    if (m.is_refine) {
-      if (ims[m.icv])
-	for (size_type i = 0; i < m.sub_cv_list.size(); ++i) {
-	  ims[m.sub_cv_list[i]] = ims[m.icv];
-	  im_convexes.add(m.sub_cv_list[i]);
-	}
+  void mesh_im::update_from_context(void) const {
+    for (dal::bv_visitor i(im_convexes); !i.finished(); ++i) {
+      if (linked_mesh_->convex_index().is_in(i)) {
+	if (v_num_update < linked_mesh_->convex_version_number(i))
+	  const_cast<mesh_im *>(this)
+	    ->set_integration_method(i, 0);
+      }
+      else const_cast<mesh_im *>(this)->set_integration_method(i, 0);
     }
-    else if (ims[m.sub_cv_list[0]]) {
-      ims[m.icv] = ims[m.sub_cv_list[0]];
-      im_convexes.add(m.icv);
-    }
+    v_num_update = act_counter(); 
   }
 
+
   void mesh_im::set_integration_method(size_type cv, pintegration_method pim) {
+    context_check();
     if (pim == NULL)
       { if (im_convexes.is_in(cv)) { im_convexes.sup(cv); touch(); } }
     else if (!im_convexes.is_in(cv) || ims[cv] != pim) {
@@ -94,12 +81,9 @@ namespace getfem {
   }
 
   mesh_im::mesh_im(mesh &me) {
-    linked_mesh_ = &me; is_valid_ = true;
+    linked_mesh_ = &me;
     this->add_dependency(me);
-    add_sender(me.lmsg_sender(), *this,
-	       mask(MESH_CLEAR::ID) | mask(MESH_SUP_CONVEX::ID) |
-	       mask(MESH_SWAP_CONVEX::ID) | mask(MESH_DELETE::ID) |
-	       mask(MESH_REFINE_CONVEX::ID));
+    v_num_update = act_counter();
   }
 
   mesh_im::~mesh_im() {}
@@ -156,6 +140,7 @@ namespace getfem {
   }
 
   void mesh_im::write_to_file(std::ostream &ost) const {
+    context_check();
     gmm::stream_standard_locale sl(ost);
     ost << '\n' << "BEGIN MESH_IM" << '\n' << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {

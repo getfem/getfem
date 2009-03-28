@@ -100,9 +100,6 @@ namespace getfem {
     void adapt(void);
     void clear(void);
     
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    
     size_type memsize() const { return mesh_fem::memsize(); }
     
     mesh_fem_global_function(const mesh &me, dim_type q=1) : mesh_fem(me, q) {}

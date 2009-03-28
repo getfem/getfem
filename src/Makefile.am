@@ -90,9 +90,9 @@ nobase_include_HEADERS =                   		\
 	getfem/bgeot_ftool.h               		\
 	getfem/getfem_arch_config.h        		\
 	getfem/getfem_integration.h        		\
-	getfem/getfem_context.h            		\
 	getfem/getfem_assembling.h         		\
 	getfem/getfem_assembling_tensors.h 		\
+	getfem/getfem_context.h 			\
 	getfem/getfem_external_data_fem.h  		\
 	getfem/getfem_config.h             		\
 	getfem/getfem_interpolation.h      		\
@@ -130,6 +130,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_norm.h         	           	\
 	getfem/getfem_regular_meshes.h            	\
 	getfem/getfem_modeling.h                  	\
+	getfem/getfem_models.h                  	\
 	getfem/getfem_model_solvers.h             	\
 	getfem/getfem_linearized_plates.h         	\
 	getfem/getfem_Coulomb_friction.h          	\
@@ -138,8 +139,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_Navier_Stokes.h             	\
 	getfem/getfem_superlu.h		   		\
 	getfem/getfem_plasticity.h                	\
-	getfem/getfem_mesher.h                    	\
-	getfem/getfem_linkmsg.h
+	getfem/getfem_mesher.h                    	
 
 SRC =                                      		\
 	dal_backtrace.cc                   		\
@@ -162,7 +162,9 @@ SRC =                                      		\
 	bgeot_poly_composite.cc            		\
 	bgeot_ftool.cc                     		\
 	getfem_superlu.cc		   		\
-	getfem_context.cc                  		\
+	getfem_mesh.cc                     		\
+	getfem_mesh_region.cc              		\
+	getfem_context.cc                 		\
 	getfem_mesh_fem.cc                 		\
 	getfem_mesh_im.cc                  		\
 	getfem_integration.cc              		\
@@ -174,8 +176,6 @@ SRC =                                      		\
 	getfem_fem_composite.cc            		\
 	getfem_mat_elem.cc                 		\
 	getfem_mat_elem_type.cc            		\
-	getfem_mesh.cc                     		\
-	getfem_mesh_region.cc              		\
 	getfem_inter_element.cc           		\
 	getfem_level_set.cc	           		\
 	getfem_mesh_level_set.cc           		\

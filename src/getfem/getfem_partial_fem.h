@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard
+// Copyright (C) 2006-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -28,7 +28,8 @@
 //
 //===========================================================================
 /**@file getfem_partial_fem.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 7, 2006.
    @brief Implement a special fem which disables some dof of another fem.
 */
@@ -41,7 +42,7 @@
 
 namespace getfem {
   
-  /** @internal FEM used in parital_mesh_fem objects. */
+  /** @internal FEM used in partial_mesh_fem objects. */
   class partial_fem : public virtual_fem {
     pfem org_fem;
     dal::bit_vector selected_dofs;

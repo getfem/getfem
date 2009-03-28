@@ -43,85 +43,16 @@
 #include "bgeot_mesh.h"
 #include "bgeot_convex_ref.h"
 #include "bgeot_geotrans_inv.h"
-#include "getfem_linkmsg.h"
 #include "getfem_context.h"
 #include "getfem_mesh_region.h"
 
 namespace getfem {
 
-  /* ********************************************************************* */
-  /*								   	   */
-  /*	I. Classes of message                                		   */
-  /*									   */
-  /* ********************************************************************* */
-
-  class mesh;
-
-  struct MESH_CLEAR { /* clear message for the structure.                  */
-    enum { ID = 0 };
-  };
-  struct MESH_DELETE { /* clear message for the structure.                  */
-    enum { ID = 1 };
-    const mesh *msh;
-    MESH_DELETE(const mesh &m) : msh(&m) {}
-  };
-  struct MESH_ADD_CONVEX {
-    enum { ID = 5 };
-    size_t icv;
-    MESH_ADD_CONVEX(size_t i) { icv = i; }
-    MESH_ADD_CONVEX(void) {}
-  };
-  struct MESH_SUP_CONVEX {
-    enum { ID = 6 };
-    size_t icv;
-    MESH_SUP_CONVEX(size_t i) { icv = i; }
-    MESH_SUP_CONVEX(void) {}
-  };
-  struct MESH_SWAP_CONVEX {
-    enum { ID = 7 };
-    size_t icv1, icv2;
-    MESH_SWAP_CONVEX(size_t i, size_t j) { icv1 = i; icv2 = j; }
-    MESH_SWAP_CONVEX(void) {}
-  };
-  struct MESH_REFINE_CONVEX {
-    enum { ID = 8 };
-    size_t icv;
-    std::vector<size_type> &sub_cv_list;
-    bool is_refine; // true : refine, false unrefine.
-    MESH_REFINE_CONVEX(size_t i, std::vector<size_type> &s, bool r)
-      : icv(i), sub_cv_list(s), is_refine(r) { }
-    // MESH_SWAP_CONVEX(void) {}
-  };
-
-  /** base class for objects that receive notification messages from a
-      mesh. */
-  class mesh_receiver : public virtual_linkmsg_receiver {
-    public :
-
-      virtual void receipt(const MESH_CLEAR           &)
-      { GMM_ASSERT1(false, "internal error"); }
-      virtual void receipt(const MESH_DELETE          &)
-      { GMM_ASSERT1(false, "internal error"); }
-      virtual void receipt(const MESH_ADD_CONVEX      &)
-      { GMM_ASSERT1(false, "internal error"); }
-      virtual void receipt(const MESH_SUP_CONVEX      &)
-      { GMM_ASSERT1(false, "internal error"); }
-      virtual void receipt(const MESH_SWAP_CONVEX     &)
-      { GMM_ASSERT1(false, "internal error"); }
-      virtual void receipt(const MESH_REFINE_CONVEX   &)
-      { GMM_ASSERT1(false, "internal error"); }
-
-      virtual ~mesh_receiver() {}
-  };
+  /* Version counter for convexes. */
+  gmm::uint64_type act_counter(void);
 
   class integration_method;
   typedef boost::intrusive_ptr<const integration_method> pintegration_method;
-
-  /* ********************************************************************* */
-  /*								   	   */
-  /*	II. Class getfem::mesh                                 		   */
-  /*									   */
-  /* ********************************************************************* */
 
   /**@addtogroup mesh*/
   /**@{*/
@@ -165,7 +96,6 @@ namespace getfem {
 		       public context_dependencies {
   public :
 
-    typedef linkmsg_sender<mesh_receiver> msg_sender;
     typedef bgeot::basic_mesh::PT_TAB PT_TAB;
     typedef bgeot::mesh_structure::ind_cv_ct ind_cv_ct;
     typedef bgeot::mesh_structure::ind_set ind_set;
@@ -181,14 +111,13 @@ namespace getfem {
      * When a new field is added, do NOT forget to add it in copy_from method!
      */
 
-    mutable msg_sender lkmsg; /* gestionnaire de msg.                    */
-
     dal::dynamic_array<mesh_region> cvf_sets;
     dal::bit_vector valid_cvf_sets;
     void handle_region_refinement(size_type, const std::vector<size_type> &,
 				  bool);
 
     mutable bool cuthill_mckee_uptodate;
+    dal::dynamic_array<gmm::uint64_type> cvs_v_num;
     mutable std::vector<size_type> cmk_order; // cuthill-mckee
     void init(void);
 
@@ -232,7 +161,6 @@ namespace getfem {
     /// Constructor.
     mesh(void);
     mesh(const bgeot::basic_mesh &m);
-    msg_sender &lmsg_sender(void) const { return lkmsg; }
     void update_from_context(void) const {}
     /// Mesh dimension.
     dim_type dim(void) const { return pts.dim(); }
@@ -296,6 +224,10 @@ namespace getfem {
       return gtab[ic];
     }
 
+    /// return the version number of the convex ic.
+    gmm::uint64_type convex_version_number(size_type ic) const
+    { return cvs_v_num[ic]; }
+
     /** Add a convex to the mesh.
 	This methods assume that the convex nodes have already been
 	added to the mesh.
@@ -309,7 +241,7 @@ namespace getfem {
       size_type i = bgeot::mesh_structure::add_convex(pgt->structure(),
 						       ipts, &present);
       gtab[i] = pgt; trans_exists[i] = true;
-      if (!present) { lmsg_sender().send(MESH_ADD_CONVEX(i)); touch(); }
+      if (!present) { cvs_v_num[i] = act_counter(); touch(); }
       return i;
     }
 
@@ -527,7 +459,6 @@ namespace getfem {
     void copy_from(const mesh& m); /* might be the copy constructor */
     size_type memsize(void) const;
     ~mesh() {
-      lmsg_sender().send(MESH_DELETE(*this));
       if (Bank_info) delete Bank_info;
     }
 

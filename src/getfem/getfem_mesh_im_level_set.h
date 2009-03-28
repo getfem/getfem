@@ -111,12 +111,6 @@ namespace getfem {
       base_singular_pim = sing;
     }
     
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    // void receipt(const MESH_ADD_CONVEX &m)  // to be modified ?
-    // void receipt(const MESH_SUP_CONVEX &m)  // to be modified ?
-    // void receipt(const MESH_SWAP_CONVEX &m) // to be modified ?
-    
     size_type memsize() const {
       return mesh_im::memsize(); // + ... ;
     }

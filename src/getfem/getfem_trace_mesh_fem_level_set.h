@@ -93,9 +93,6 @@ namespace getfem {
     void adapt(void);
     void clear(void);
 
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    
     size_type memsize() const {
       return mesh_fem::memsize(); // + ... ;
     }

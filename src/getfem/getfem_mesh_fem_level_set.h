@@ -64,12 +64,6 @@ namespace getfem {
 
     const mesh_level_set &linked_mesh_level_set() const { return mls; }
     
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    // void receipt(const MESH_ADD_CONVEX &m)  // to be modified ?
-    // void receipt(const MESH_SUP_CONVEX &m)  // to be modified ?
-    // void receipt(const MESH_SWAP_CONVEX &m) // to be modified ?
-    
     size_type memsize() const {
       return mesh_fem::memsize(); // + ... ;
     }

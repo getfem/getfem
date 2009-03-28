@@ -144,7 +144,7 @@ namespace getfem {
    *  @see mesh
    *  @see mesh_im
    */
-  class mesh_fem : public mesh_receiver, public context_dependencies {
+  class mesh_fem : public context_dependencies {
   protected :
     
     dal::dynamic_array<pfem> f_elems;
@@ -153,19 +153,20 @@ namespace getfem {
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
-    size_type auto_add_elt_K; /* Degree of the fem for automatic addition */
+    dim_type auto_add_elt_K; /* Degree of the fem for automatic addition */
                        /* of element option. (-1 = no automatic addition) */
     dim_type Qdim; /* this is the "global" target_dim */
     dim_type QdimM, QdimN; /* for matrix field with QdimM lines and QdimN */
                            /* columnsQdimM * QdimN = Qdim.                */
     std::vector<size_type> dof_partition;
+    mutable gmm::uint64_type v_num_update;
     
   public :
     typedef base_node point_type;
     typedef tab_scal_to_vect<mesh::ind_cv_ct> ind_dof_ct;
     typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_dof_face_ct;
 
-    void update_from_context(void) const {}
+    void update_from_context(void) const;
 
     /** Get the set of convexes where a finite element has been assigned.
      */
@@ -178,9 +179,7 @@ namespace getfem {
     /** Set the degree of the fem for automatic addition
      *  of element option. K=-1 disables the automatic addition.
      */
-    void set_auto_add(size_type K) {
-      auto_add_elt_K = K;
-    }
+    void set_auto_add(dim_type K) { auto_add_elt_K = K; }
 
     /** Return the Q dimension. A mesh_fem used for scalar fields has
 	Q=1, for vector fields, Q is typically equal to
@@ -225,6 +224,12 @@ namespace getfem {
     /** shortcut for set_finite_element(linked_mesh().convex_index(),pf); */
     void set_finite_element(pfem pf);
     /** Set a classical (i.e. lagrange polynomial) finite element on
+	a convex.
+	@param cv is the convex number.
+	@param fem_degree the polynomial degree of the finite element.
+    */
+    void set_classical_finite_element(size_type cv, dim_type fem_degree);
+    /** Set a classical (i.e. lagrange polynomial) finite element on
 	a set of convexes.
 	@param cvs the set of convexes, as a dal::bit_vector.
 	@param fem_degree the polynomial degree of the finite element.
@@ -266,7 +271,7 @@ namespace getfem {
      */
     ind_dof_ct
       ind_dof_of_element(size_type cv) const {
-      if (!dof_enumeration_made) enumerate_dof();
+      context_check(); if (!dof_enumeration_made) enumerate_dof();
       return ind_dof_ct(dof_structure.ind_points_of_convex(cv),
 			dim_type(Qdim /fem_of_element(cv)->target_dim()));
     }
@@ -357,17 +362,6 @@ namespace getfem {
       return (cv < dof_partition.size() ? unsigned(dof_partition[cv]) : 0); 
     }
     void clear_dof_partition() { dof_partition.clear(); }
-
-    /* explicit calls to parent class 
-       for HP aCC and mipspro CC who complain about hidden functions 
-       (they're right)
-    */
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m);
-    void receipt(const MESH_SUP_CONVEX &m);
-    void receipt(const MESH_SWAP_CONVEX &m);
-    void receipt(const MESH_REFINE_CONVEX &m);
     
     size_type memsize() const {
       return dof_structure.memsize() + 

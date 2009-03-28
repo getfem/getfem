@@ -48,8 +48,7 @@ namespace getfem {
 
       Note that the cutting won't be conformal.
   */
-  class mesh_level_set : public mesh_receiver,
-			 public context_dependencies {
+  class mesh_level_set : public context_dependencies {
   public:
     typedef std::string subzone;
     typedef std::set<const subzone *> zone;
@@ -97,12 +96,6 @@ namespace getfem {
     /// Gives a reference to the linked mesh of type mesh.
     mesh &linked_mesh(void) const { return *linked_mesh_; }
     void clear(void);
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
-    void receipt(const MESH_SUP_CONVEX &);
-    void receipt(const MESH_SWAP_CONVEX &);
-    void receipt(const MESH_REFINE_CONVEX &) {}
     
     size_type memsize() const {
       size_type res = sizeof(mesh_level_set)

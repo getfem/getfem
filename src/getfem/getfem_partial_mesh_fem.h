@@ -29,7 +29,8 @@
 //===========================================================================
 
 /**@file getfem_partial_mesh_fem.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 08, 2006.
    @brief a subclass of getfem::mesh_fem which allows to eliminate a number
           of dof of the original mesh_fem.
@@ -65,9 +66,6 @@ namespace getfem {
 	       const dal::bit_vector &rejected_elt = dal::bit_vector());
     void clear(void);
 
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    
     size_type memsize() const {
       return mesh_fem::memsize(); // + ... ;
     }
@@ -85,6 +83,8 @@ namespace getfem {
      (default mf.linked_mesh().dim()).
 
      An example of use can be found in the contrib/xfem_contact/ directory.
+
+     A more efficient algorithm is now present in gmm_range_basis.h
    */
   dal::bit_vector select_dofs_from_im(const mesh_fem &mf, const mesh_im &mim,
 				      unsigned P = unsigned(-1));

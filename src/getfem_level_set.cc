@@ -33,12 +33,12 @@ namespace getfem {
     this->add_dependency(*mf);
   }
 
-  level_set::~level_set() {
-  }
+  level_set::~level_set() { }
 
   void level_set::reinit(void) {
     primary_.resize(mf->nb_dof());
     if (has_secondary()) secondary_.resize(mf->nb_dof());
+    touch();
   }
 
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
@@ -80,6 +80,7 @@ namespace getfem {
       }
 
     }
+    touch();
   }
 
   

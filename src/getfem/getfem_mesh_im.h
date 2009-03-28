@@ -43,16 +43,16 @@
 namespace getfem {
 
   /// Describe an integration method linked to a mesh.
-  class mesh_im : public mesh_receiver, public context_dependencies {
+  class mesh_im : public context_dependencies {
   protected :
     
     dal::dynamic_array<pintegration_method> ims;
     dal::bit_vector im_convexes;
     mesh *linked_mesh_;
-    bool is_valid_;
+    mutable gmm::uint64_type v_num_update;
+
   public :
-    bool is_valid() const { return is_valid_; }
-    void update_from_context(void) const {}
+    void update_from_context(void) const;
 
     /** Get the set of convexes where an integration method has been assigned.
      */
@@ -94,12 +94,6 @@ namespace getfem {
     virtual pintegration_method int_method_of_element(size_type cv) const
     { return  ims[cv]; }
     void clear(void);
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) { mesh_receiver::receipt(m); }
-    void receipt(const MESH_SUP_CONVEX &m);
-    void receipt(const MESH_SWAP_CONVEX &m);
-    void receipt(const MESH_REFINE_CONVEX &m);
     
     size_type memsize() const {
       return 

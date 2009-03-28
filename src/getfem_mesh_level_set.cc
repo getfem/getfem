@@ -75,25 +75,10 @@ struct Chrono {
   static bool noisy = false;
   void getfem_mesh_level_set_noisy(void) { noisy = true; }
 
-
-  void mesh_level_set::receipt(const MESH_CLEAR &)
-  { clear(); is_adapted_ = false; }
-  void mesh_level_set::receipt(const MESH_DELETE &) {
-    clear(); is_adapted_ = false;
-    sup_sender(linked_mesh_->lmsg_sender());
-  }
-  void mesh_level_set::receipt(const MESH_SUP_CONVEX &m) { 
-    cut_cv.erase(m.icv);
-  }
-  void mesh_level_set::receipt(const MESH_SWAP_CONVEX &) { 
-    is_adapted_ = false;
-  }
-
   void mesh_level_set::clear(void) {
     cut_cv.clear();
     is_adapted_ = false; touch();
   }
-
 
   const dal::bit_vector &mesh_level_set::crack_tip_convexes() const {
     return crack_tip_convexes_;
@@ -103,9 +88,6 @@ struct Chrono {
   mesh_level_set::mesh_level_set(mesh &me) {
     linked_mesh_ = &me; is_adapted_ = false; 
     this->add_dependency(me);
-    add_sender(me.lmsg_sender(), *this,
-	       mask(MESH_CLEAR::ID) | mask(MESH_SUP_CONVEX::ID) |
-	       mask(MESH_SWAP_CONVEX::ID) | mask(MESH_DELETE::ID));
   }
 
   mesh_level_set::~mesh_level_set() {}

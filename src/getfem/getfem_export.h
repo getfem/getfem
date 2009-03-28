@@ -38,6 +38,7 @@
 
 #include "getfem_interpolation.h"
 #include "getfem_mesh_slice.h"
+#include <list>
 
 namespace getfem {
 

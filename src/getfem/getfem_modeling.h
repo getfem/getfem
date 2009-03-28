@@ -110,7 +110,7 @@ namespace getfem {
     T_MATRIX tangent_matrix_;
     C_MATRIX constraints_matrix_;
     VECTOR state_, residual_, constraints_rhs_;
-    long ident_;
+    gmm::uint64_type ident_;
     
     T_MATRIX SM;
     gmm::col_matrix<gmm::rsvector<value_type> > NS; /* constraints nullspace */
@@ -156,8 +156,8 @@ namespace getfem {
     void compute_reduced_system();
     void compute_reduced_residual();
     VECTOR &residual(void) { return residual_; }
-    long ident(void) { return ident_; }
-    void touch(void) { ident_ = context_dependencies::new_ident(); }
+    gmm::uint64_type ident(void) { return ident_; }
+    void touch(void) { ident_ = act_counter(); }
     void adapt_sizes(mdbrick_abstract<model_state> &problem);
     model_state(void) { touch(); }
     model_state(mdbrick_abstract<model_state> &problem)

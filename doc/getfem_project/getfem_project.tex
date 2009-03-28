@@ -9,7 +9,7 @@
 \usepackage{array}
 \usepackage{supertabular}
 %\usepackage{fancyheadings}
-\usepackage{here}
+\usepackage{float}
 \usepackage{eepic,epic}
 %\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs mais le fichier produit n'est pas beau
 \usepackage[english]{babel}
@@ -19,6 +19,7 @@
 
 
 \texonly{\newcommand{\tilda}{{$_{\widetilde{\ }}$}}}
+\texonly{\newcommand{\tild}{{$_{\widetilde{\ }}$}}}
 %\texonly{\newcommand{\tilda}{{\~{}}}}
 \htmlonly{\newcommand{\tilda}{\verb+~+}}
 
@@ -369,13 +370,13 @@ where \cpp{"name of trans"} can be chosen among the following list.
 \subsection{Finite element methods description}
 
 A finite element method is defined on a reference element $T' \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
-\equat{\varphi' ^i : T' \subset \Reel^P \longrightarrow \Reel^Q,}
+\equat{(\varphi')^i : T' \subset \Reel^P \longrightarrow \Reel^Q,}
 Denoting
-\equat{\psi^i(x) = \varphi' ^i(x') = \varphi' ^i(\tau^{-1}(x)),}
+\equat{\psi^i(x) = (\varphi')^i(x') = (\varphi')^i(\tau^{-1}(x)),}
 a supplementary linear transformation is allowed for the real base function
 \equat{\varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \psi^j(x),}
 where $M$ is a $n_d \times n_d$ matrix possibly depending on the geometric transformation (i.e. on the real element). For basic elements as Lagrange elements this matrix is the identity matrix (it is simply ignored). In this case, we will say that the element is $\tau$-equivalent. This approach allows to define hermite elements (Argyris for instance) in a generic way, even with non linear transformations (i.e. mainly for curved boundaries).
-We denote $[\varphi'(x')]$ the $n_d \times Q$ matrix whose ith line is $\varphi' ^i(x')$. Whis this notation, for a function is defined by 
+We denote $[\varphi'(x')]$ the $n_d \times Q$ matrix whose ith line is $(\varphi')^i(x')$. Whis this notation, for a function is defined by 
 \begin{center}$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $\end{center}
 one has
 \begin{center} \texonly{$ \fbox}{$\hspace{1em} f(\tau(x')) = \alpha^T M [\varphi'(x')],\hspace{1em}$} \texonly{$}\end{center}
@@ -590,6 +591,36 @@ to be done
 \subsubsection{State}
 \subsubsection{Perspectives}
 
+\subsection{Events management}
+
+\subsubsection{Description}
+The \cpp{mesh}, \cpp{mesh_fem}, \cpp{mesh_im} and model description are linkedtogether in the sense that there is some dependencies between them. For instance, when an element is suppressed to a mesh, the mesh_fem object has to react.  
+\subsubsection{State}
+The main tool to deal with simple dependence of object is in \cpp{getfem_context.h}. An object \cpp{context_dependencies} is defined there. In order to deal with the dependencies of an object, the object \cpp{context_dependencies} needs to be a parent class of this object. It adds the following methods to the object :
+\begin{ctableau}{|m{0.3\linewidth}|m{0.6\linewidth}|}{ll} 
+  \hline \cpp{add_dependency(ct)} & add an object (which has to have \cpp{context_dependencies} as a parent class) to the list of objects from which the current object depend.\\
+  \hline \cpp{touch()} & indicates to the dependent objects that
+  something has change in the object. \\
+  \hline \cpp{context_check()} & check if the object has to be
+  updated. if it is the case it makes first a check to the dependency
+  list and call the update function of the object.  (the update
+  function of the dependencies are called
+  before the update function of the current object).\\
+  \hline \cpp{context_valid()} & says if the object has still a valid context, i.e. if the object in the dependency list still exist.\\
+\hline 
+\end{ctableau}
+Moreover, the object has to define a method\\
+\cpp{void update_from_context(void) const}\\
+which is called after a \cpp{context_check()} if the context has changed.
+
+
+An additional system is present in the object \cpp{mesh}. Each individual element has a version number in order for the objects \cpp{mesh_fem} and \cpp{mesh_im} to detect which element has changed between two calls.
+
+\subsubsection{Perspectives}
+
+Some object do not manage satisfactorily events. This is the case for instance of \cpp{mesh_level_set}, \cpp{mesh_fem_level_set}, \cpp{partial_mesh_fem} ... 
+
+This is clear that the event management still have to be tested and improved to have a fully reactive system.
 
 \subsection{Matlab and Python interfaces}
 
@@ -606,8 +637,8 @@ This interface is not something that is generated automatically from c++ sources
 Here is a list of the various files, with a short description:
 \begin{itemize}
 \item \cpp{getfem_interface.cc}. This is the bridge between the script language and the getfem interface. The function getfem_interface_main is exported as an \cpp{extern "C"} function, so this is a sort of c++ barrier between the script language and the getfem interface (exporting only a C interface avoids many compilation problems).
-\item \cpp{matlab/gfm_mex.c}. The matlab interface. The only thing it knows about getfem is in \cpp{getfem_interface.hh}.
-\item \cpp{python/getfem_python.c}. The python interface. The only thing it knows about getfem is in \cpp{getfem_interface.hh}.
+\item \cpp{matlab/gfm_mex.c}. The matlab interface. The only thing it knows about getfem is in \cpp{getfem_interface.h}.
+\item \cpp{python/getfem_python.c}. The python interface. The only thing it knows about getfem is in \cpp{getfem_interface.h}.
 
 \item \cpp{gfi_array.h, gfi_array.c}. Both gfm_mex.c and getfem_python.c need a simple convention on how to send and receive arrays, and object handles, from \cpp{getfem_interface_main()}. This file provide such functionnality.
 
@@ -647,7 +678,7 @@ Modifications to be done are of three kind.
 \begin{itemize}
   \item Background consolidation of the existing modules (with a reflection on the optimal representation of meshes, degrees of freedom, finite element methods ...).
   \item Developpement of innovating methods.
-  \item Reflection on the optimal way to represent complex p.d.e. models with the maximum of flexibility and reusability. The brick system is a first step in this direction.
+  \item Reflection on the optimal way to represent complex p.d.e. models with the maximum of flexibility and reusability. The brick system is a first step in this direction. It should be replaced soon by a more elaborated system.
 \end{itemize}
 
 \subsection{Namespace changes}
@@ -662,7 +693,7 @@ After the elimination of the small namespaces \cpp{linkmsg} and \cpp{ftool} in r
 
 It is clear that the separation into these remaining four namespaces is mainly historical. The separate gmm namespace for \gmm is clearly justified. The contour of nemaspaces \cpp{dal} and \cpp{bgeot} is more vague. Historically, those two namespaces had their own justifications.
 
-In the very begining of \gf (the first files was written in 1995) the S.T.L. was not available and the containers defined in the \cpp{dal} namespace was used everywhere. Now, in \gf, the S.T.L. containers are mainly used. The remaining uses of \cpp{dal} containers are eather historical or due to the specificities of these containers. It is however clear that this is not the aim of the \gf project to developp new container concept. So, the use of the \cpp{dal} containers has to be as much as possible reduces.
+In the very begining of \gf (the first files was written in 1995) the S.T.L. was not available and the containers defined in the \cpp{dal} namespace was used everywhere. Now, in \gf, the S.T.L. containers are mainly used. The remaining uses of \cpp{dal} containers are eather historical or due to the specificities of these containers. It is however clear that this is not the aim of the \gf project to developp new container concept. So, the use of the \cpp{dal} containers has to be as much as possible reduced.
 
 Now, concerning \cpp{bgeot}, it was containing some other geometrical object at the begining and was originally designed to be a self-consistent library of geometric concepts. It slowly derived to be like it is now, a collection of algorithms and object definition more or less related to geometry (rtree, kdtree, ftool, polynomials ...).
 
@@ -718,9 +749,9 @@ one has
 Assume one needs to compute the elementary ``matrix'':
 \equat{t(i_0, i_1, ..., i_7) = \int_{T} \varphi_{i_1}^{i_0}\; \partial_{i_4} \varphi_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi_{i_6}^{i_5} dx,}
 The computations to be made on the reference elements are
-\equat{ t'_0(i_0, i_1, ..., i_7) = \int_{T'} \varphi'_{i_1}^{i_0}\; \partial_{i_4} \varphi'_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi'_{i_6}^{i_5}  J(x') dx',}
+\equat{ t'_0(i_0, i_1, ..., i_7) = \int_{T'} (\varphi')_{i_1}^{i_0}\; \partial_{i_4} (\varphi')_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} (\varphi')_{i_6}^{i_5}  J(x') dx',}
 and
-\equat{t'_1(i_0, i_1, ..., i_7) = \int_{T'} \varphi'_{i_1}^{i_0}\; \partial_{i_4} \varphi'_{i_3}^{i_2}\; \partial_{i_7} \varphi'_{i_6}^{i_5}  J(x') dx',}
+\equat{t'_1(i_0, i_1, ..., i_7) = \int_{T'} (\varphi')_{i_1}^{i_0}\; \partial_{i_4} (\varphi')_{i_3}^{i_2}\; \partial_{i_7} (\varphi')_{i_6}^{i_5}  J(x') dx',}
 Those two tensor can be computed once on the whole reference element if the geometric transformation is linear (because $J(x')$ is constant). If the geometric transformation is non-linear, what has to be stored is the value on each integration point. To compute the integral on the real element a certain number of reductions have to be made:
 \begin{itemize}
     \item Concerning the first term ($\varphi_{i_1}^{i_0}$) nothing.

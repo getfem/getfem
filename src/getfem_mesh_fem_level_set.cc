@@ -23,10 +23,6 @@
 
 namespace getfem {
   
-  void mesh_fem_level_set::receipt(const MESH_CLEAR &)
-  { clear(); is_adapted = false; }
-  void mesh_fem_level_set::receipt(const MESH_DELETE &)
-  { clear(); is_adapted = false; }
   void mesh_fem_level_set::clear_build_methods() {
     for (size_type i = 0; i < build_methods.size(); ++i)
       del_stored_object(build_methods[i]);
