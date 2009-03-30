@@ -9,11 +9,11 @@ function die {
           exit 1
 }
 
+libtoolize -f || die "libtoolize failed";
 aclocal -I ./m4 || die "aclocal failed";
 autoheader || die "autoheader failed";
 autoreconf
 autoconf || die "autoconf failed";
 #pas de ./ devant les noms des makefiles !!!
-automake -a --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'` || die "automake failed";
+automake -a -f --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'` || die "automake failed";
 echo "autogen.sh is ok, you can run the ./configure script"
-
