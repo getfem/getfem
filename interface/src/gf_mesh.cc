@@ -271,7 +271,7 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
   for (unsigned i = 0; i < P.getn(); ++i) {
     id_tab[i] = id_type(mesh->add_point(P.col_to_bn(i)));
 
-    /* une hypothèse bien commode pour la "compatibilité pdetool" */
+    /* une hypothese bien commode pour la "compatibilite pdetool" */
     if (id_tab[i] != i && warn_cnt++ == 0) {
       GMM_WARNING1("The numbering of mesh points will be different, pt#" <<
 		   i+config::base_index() << " gets id#" << id_tab[i] + config::base_index());
@@ -344,8 +344,8 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     Build quickly a regular mesh of triangles.
 
     This is a very limited and somehow deprecated function (See also
-    MESH:INIT('ptND'), MESH:INIT('regular simplices') and
-    MESH:INIT('cartesian')).@*/
+    ``MESH:INIT('ptND')``, ``MESH:INIT('regular simplices')`` and
+    ``MESH:INIT('cartesian')``).@*/
     triangles_grid_mesh(pmesh, in);
   } else if (check_cmd(cmd, "regular simplices", in, out, 1, 32, 0, 1)) {
     /*@INIT M = MESH:INIT('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
@@ -367,7 +367,7 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     Extrude a prismatic @tmesh `M` from a @tmesh `m0`.
 
     In the additional dimension there are `NLAY` layers of elements
-    built from 0 to 1.@*/
+    built from ``0`` to ``1``.@*/
     prismatic_mesh(pmesh, in);
   } else if (check_cmd(cmd, "pt2D", in, out, 2, 3, 0, 1)) {
     /*@INIT M = MESH:INIT('pt2D', @dmat P, @ivec T[, @int n])
@@ -399,25 +399,23 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     pmesh->read_from_file(fname);
   } else if (check_cmd(cmd, "from string", in, out, 1, 1, 0, 1)) {
     /*@INIT M = MESH:INIT('from string', @str s)
-    Load a mesh from a string description.
+    Load a mesh from a string description.<Par>
 
-    For example, a string returned by MESH:GET('char').@*/
+    For example, a string returned by ``MESH:GET('char')``.@*/
     std::stringstream ss(in.pop().to_string());
     pmesh->read_from_file(ss);
   } else if (check_cmd(cmd, "import", in, out, 2, 2, 0, 1)) {
     /*@INIT M = MESH:INIT('import', @str format, @str filename)
     Import a mesh.
 
-    `format` may be:<par>
-     - 'gmsh' or 'gmshv2'<par>
-        for a mesh created with gmsh<par>
-        http://www.geuz.org/gmsh<par>
-     - 'gid'<par>
-        for a mesh created with GiD<par>
-        http://gid.cimne.upc.es<par>
-     - 'am_fmt'<par>
-        for a mesh created with emc2<par>
-        http://pauillac.inria.fr/cdrom/www/emc2/fra.htm@*/
+    `format` may be:
+
+    - 'gmsh' for a mesh created with `gmsh
+      <http://www.geuz.org/gmsh>`_<par>
+    - 'gid' for a mesh created with `GiD
+      <http://gid.cimne.upc.es>`_<par>
+    - 'am_fmt' for a mesh created with `emc2
+      <http://pauillac.inria.fr/cdrom/www/emc2/fra.htm>`_@*/
     std::string fmt = in.pop().to_string();
     std::string fname = in.pop().to_string();
     getfem::import_mesh(fname, fmt, *pmesh);

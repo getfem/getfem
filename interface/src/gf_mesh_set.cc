@@ -95,9 +95,9 @@ static void substract_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
     @SET MESH:SET('optimize structure')
     @SET MESH:SET('refine')
     @SET MESH:SET('region')
-    @SET MESH:SET('region_merge')
-    @SET MESH:SET('region_intersect')
-    @SET MESH:SET('region_substract')
+    @SET MESH:SET('region merge')
+    @SET MESH:SET('region intersect')
+    @SET MESH:SET('region substract')
     @SET MESH:SET('delete region')
   MLABCOM*/
 void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -109,8 +109,8 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::mesh *pmesh = in.pop().to_mesh();
   std::string cmd            = in.pop().to_string();
   if (check_cmd(cmd, "pts", in, out, 1, 1, 0, 1)) {
-    /*@SET IDx = MESH:SET('pts',@mat P)
-    Replace the coordinates of the mesh points with those given in P.@*/
+    /*@SET PIDs = MESH:SET('pts',@mat PTS)
+    Replace the coordinates of the mesh points with those given in `PTS`.@*/
     darray P = in.pop().to_darray(pmesh->dim(),
 				  int(pmesh->points().index().last_true()+1));
     for (dal::bv_visitor i(pmesh->points().index()); !i.finished(); ++i) {
@@ -118,16 +118,17 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	pmesh->points()[i][k] = P(k,i);
     }
   } if (check_cmd(cmd, "add point", in, out, 1, 1, 0, 1)) {
-    /*@SET IDx = MESH:SET('add point',@mat Pt)
-    Insert new points in the mesh and return their #id.
+    /*@SET PIDs = MESH:SET('add point',@mat PTS)
+    Insert new points in the mesh and return their #ids.
 
-    `Pt` should be an [n x m] matrix , where n is the mesh dimension,
-    and m is the number of points that will be added to the mesh. On
-    output, `IDx` contains the indices of these new points.<Par>
+    `PTS` should be an ``nxm`` matrix , where ``n`` is the mesh
+    dimension, and ``m`` is the number of points that will be
+    added to the mesh. On output, `PIDs` contains the point #ids
+    of these new points.<Par>
 
     Remark: if some points are already part of the mesh (with a small
-    tolerance of approximately 1e-8), they won't be inserted again,
-    and `IDx` will contain the previously assigned indices of the
+    tolerance of approximately ``1e-8``), they won't be inserted again,
+    and `PIDs` will contain the previously assigned #ids of these
     points.@*/
     check_empty_mesh(pmesh);
     darray v = in.pop().to_darray(pmesh->dim(), -1);
@@ -136,10 +137,10 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       w[j] = unsigned(pmesh->add_point(v.col_to_bn(j)) + config::base_index());
     }
   } else if (check_cmd(cmd, "del point", in, out, 1, 1, 0, 0)) {
-    /*@SET MESH:SET('del point',@ivec Pids)
+    /*@SET MESH:SET('del point',@ivec PIDs)
     Removes one or more points from the mesh.
 
-    `Pids` should contain the point #id, such as the one returned by
+    `PIDs` should contain the point #ids, such as the one returned by
     the 'add point' command.@*/
     check_empty_mesh(pmesh);
     iarray v = in.pop().to_iarray();
@@ -153,13 +154,13 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       pmesh->sup_point(id);
     }
   } else if (check_cmd(cmd, "add convex", in, out, 2, 2, 0, 1)) {
-    /*@SET IDx = MESH:SET('add convex',@tgt CVs, @mat CVp)
+    /*@SET CVIDs = MESH:SET('add convex',@tgt GT, @mat PTS)
     Add a new convex into the mesh.
 
-    The convex structure (triangle, prism,...) is given by `CVs`
+    The convex structure (triangle, prism,...) is given by `GT`
     (obtained with GEOTRANS:INIT('...')), and its points are given by
-    the columns of `CVp`. On return, `IDx` contains the convex number.
-    `CVp` might be a 3-dimensional array in order to insert more than
+    the columns of `PTS`. On return, `CVIDs` contains the convex #ids.
+    `PTS` might be a 3-dimensional array in order to insert more than
     one convex (or a two dimensional array correctly shaped according
     to Fortran ordering).@*/
     check_empty_mesh(pmesh);
@@ -178,11 +179,11 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       w[k] = cv_id+config::base_index();
     }
   } else if (check_cmd(cmd, "del convex", in, out, 1, 1, 0, 0)) {
-    /*@SET MESH:SET('del convex',@mat IDx)
+    /*@SET MESH:SET('del convex',@mat CVIDs)
     Remove one or more convexes from the mesh.
 
-    `IDx` should contain the convexes #ids, such as the ones returned
-    by the 'add convex' command.@*/
+    `CVIDs` should contain the convexes #ids, such as the ones
+    returned by the 'add convex' command.@*/
     check_empty_mesh(pmesh);
     iarray v = in.pop().to_iarray();
 
@@ -195,18 +196,18 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     }
   } else if (check_cmd(cmd, "del convex of dim", in, out, 1, 1, 0, 0)) {
-    /*@SET MESH:SET('del convex of dim',@ivec DIM)
-    Remove all convexes of dimension listed in `DIM`.
+    /*@SET MESH:SET('del convex of dim',@ivec DIMs)
+    Remove all convexes of dimension listed in `DIMs`.
 
-    For example MESH:SET('del convex of dim', [1,2]) remove all line
-    segments, triangles and quadrangles.@*/
+    For example; ``MESH:SET('del convex of dim', [1,2])`` remove
+    all line segments, triangles and quadrangles.@*/
     dal::bit_vector bv = in.pop().to_bit_vector(NULL, 0);
     for (dal::bv_visitor_c cv(pmesh->convex_index()); !cv.finished(); ++cv) {
       if (bv.is_in(pmesh->structure_of_convex(cv)->dim())) pmesh->sup_convex(cv);
     }
   } else if (check_cmd(cmd, "translate", in, out, 1, 1, 0, 0)) {
     /*@SET MESH:SET('translate',@vec V)
-    Translates each point of the mesh from V.@*/
+    Translates each point of the mesh from `V`.@*/
     check_empty_mesh(pmesh);
     darray v = in.pop().to_darray(pmesh->dim(),1);
     pmesh->translation(v.col_to_bn(0));
@@ -214,40 +215,39 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@SET MESH:SET('transform',@mat T)
     Applies the matrix `T` to each point of the mesh.
 
-    Note that `T` is not required to be a NxN matrix (with
-    N = MESH:GET('dim')). Hence it is possible to transform
+    Note that `T` is not required to be a ``NxN`` matrix (with
+    ``N = MESH:GET('dim')``). Hence it is possible to transform
     a 2D mesh into a 3D one (and reciprocally).@*/
     check_empty_mesh(pmesh);
     darray v = in.pop().to_darray(-1,-1); //pmesh->dim());
     pmesh->transformation(v.row_col_to_bm());
   } else if (check_cmd(cmd, "boundary", in, out, 2, 2, 0, 0) ||
 	     check_cmd(cmd, "region", in, out, 2, 2, 0, 0)) {
-    /*@SET MESH:SET('region',@int rnum, @dmat CVfids)
+    /*@SET MESH:SET('region',@int rnum, @dmat CVFIDs)
     Assigns the region number `rnum` to the convex faces stored in each
-    column of the matrix `CVfids`.
+    column of the matrix `CVFIDs`.
 
-    The first row of `CVfids` contains a convex number, and the second
-    row contains a face number in the convex (or @MATLAB{0}@PYTHON{-1}
-    for the whole convex (regions are usually used to store a list
-    of convex faces, but you may also use them to store a list of
-    convexes).@*/
+    The first row of `CVFIDs` contains a convex #ids, and the second row
+    contains a face number in the convex (or @MATLAB{0}@PYTHON{``-1``}
+    for the whole convex (regions are usually used to store a list of
+    convex faces, but you may also use them to store a list of convexes).@*/
     set_region(*pmesh, in);
-  } else if (check_cmd(cmd, "region_intersect", in, out, 2, 2, 0, 0)) {
-    /*@SET MESH:SET('region_intersect',@int r1, @int r2)
+  } else if (check_cmd(cmd, "region intersect", in, out, 2, 2, 0, 0)) {
+    /*@SET MESH:SET('region intersect',@int r1, @int r2)
     Replace the region number `r1` with its intersection with region number `r2`.@*/
     intersect_regions(*pmesh,in);
-  } else if (check_cmd(cmd, "region_merge", in, out, 2, 2, 0, 0)) {
-    /*@SET MESH:SET('region_merge',@int r1, @int r2)
+  } else if (check_cmd(cmd, "region merge", in, out, 2, 2, 0, 0)) {
+    /*@SET MESH:SET('region merge',@int r1, @int r2)
     Merge region number `r2` into region number `r1`.@*/
     merge_regions(*pmesh,in);
-  } else if (check_cmd(cmd, "region_substract", in, out, 2, 2, 0, 0)) {
-    /*@SET MESH:SET('region_substract',@int r1, @int r2)
+  } else if (check_cmd(cmd, "region substract", in, out, 2, 2, 0, 0)) {
+    /*@SET MESH:SET('region substract',@int r1, @int r2)
     Replace the region number `r1` with its difference with region number `r2`.@*/
     substract_regions(*pmesh,in);
   } else if (check_cmd(cmd, "delete boundary", in, out, 1, 1, 0, 0) ||
 	     check_cmd(cmd, "delete region", in, out, 1, 1, 0, 0)) {
-    /*@SET MESH:SET('delete region',@ivec Rids)
-    Remove the regions whose #ids are listed in `Rids`@*/
+    /*@SET MESH:SET('delete region',@ivec RIDs)
+    Remove the regions whose #ids are listed in `RIDs`@*/
     dal::bit_vector lst = in.pop().to_bit_vector(&pmesh->regions_index(),0);
     pmesh->sup_region(1);
     for (dal::bv_visitor b(lst); !b.finished(); ++b)
@@ -267,14 +267,14 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     After optimisation, the points (resp. convexes) will
     be consecutively numbered from @MATLAB{1 to MESH:GET('max pid')
-    (resp. MESH:GET('max cvid'))}@PYTHON{0 to MESH:GET('max pid')-1
-    (resp. MESH:GET('max cvid')-1)}.@*/
+    (resp. MESH:GET('max cvid'))}@PYTHON{``0`` to
+    ``MESH:GET('max pid')-1`` (resp. ``MESH:GET('max cvid')-1``)}.@*/
     pmesh->optimize_structure();
   } else if (check_cmd(cmd, "refine", in, out, 0, 1, 0, 0)) {
-    /*@SET MESH:SET('refine'[, @ivec CVids])
+    /*@SET MESH:SET('refine'[, @ivec CVIDs])
     Use a Bank strategy for mesh refinement.
 
-    If `CVids` is not given, the whole mesh is refined. Note
+    If `CVIDs` is not given, the whole mesh is refined. Note
     that the regions, and the finite element methods and
     integration methods of the @tmf and @tmim objects linked
     to this mesh will be automagically refined.@*/

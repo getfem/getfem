@@ -546,10 +546,10 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET CVIDs = MESH:GET('cvid from pid',@ivec PIDs[, @bool share=False])
     Search convex #ids related with the point #ids given in `PIDs`.
 
-    If `share=False`, search convex #ids whith the point #ids given
-    in `PIDs`. If `share=True`, search convex #ids that share the
-    point #ids given in `PIDs`. `CVIDs` is a @MATLAB{row} vector
-    (possibly empty).@*/
+    If `share=False`, search convex whose vertex #ids are in `PIDs`.
+    If `share=True`, search convex #ids that share the point #ids
+    given in `PIDs`. `CVIDs` is a @MATLAB{row} vector (possibly
+    empty).@*/
     check_empty_mesh(pmesh);
     dal::bit_vector pts = in.pop().to_bit_vector(&pmesh->points().index());
     dal::bit_vector cvchecked;
@@ -734,19 +734,28 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (i != w.size()) THROW_INTERNAL_ERROR;
   } else if (check_cmd(cmd, "boundary", in, out, 1, 1, 0, 1) ||
 	     check_cmd(cmd, "region", in, out, 1, 1, 0, 1)) {
-    /*@GET CVFIDs = MESH:GET('region',@int nreg)
-    Return the list of convexes/faces on the region `nreg`.
+    /*@GET CVFIDs = MESH:GET('region',@ivec RIDs)
+    Return the list of convexes/faces on the regions `RIDs`.
 
     On output, the first row of `CVFIDs` contains the convex numbers,
     and the second row contains the face numbers (and @MATLAB{0}
-    @PYTHON{-1} when the whole convex is in the region).@*/
-    int bnum = in.pop().to_integer(1);
+    @PYTHON{-1} when the whole convex is in the regions).@*/
+    check_empty_mesh(pmesh);
+
     std::vector<unsigned> cvlst;
     std::vector<short> facelst;
-    for (getfem::mr_visitor i(pmesh->region(bnum)); !i.finished(); ++i) {
-      cvlst.push_back(unsigned(i.cv()));
-      facelst.push_back(i.f());
+
+    dal::bit_vector rlst = in.pop().to_bit_vector();
+
+    for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
+      if (pmesh->regions_index().is_in(rnum)) {
+        for (getfem::mr_visitor i(pmesh->region(rnum)); !i.finished(); ++i) {
+          cvlst.push_back(unsigned(i.cv()));
+          facelst.push_back(i.f());
+        }
+      }
     }
+
     iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
     for (size_type j=0; j < cvlst.size(); j++) {
       w(0,j) = cvlst[j]+config::base_index();

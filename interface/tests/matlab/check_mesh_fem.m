@@ -260,19 +260,19 @@ function check_mesh_fem(iverbose,idebug)
   R2 = [5 6 3 4 6; 1 3 1 2 1];
   gf_mesh_set(m,'region', 11, R2);
   r2 = gf_mesh_get(m, 'region', 11);
-  gf_mesh_set(m,'region_merge', 11, 10);
+  gf_mesh_set(m,'region merge', 11, 10);
   rr=gf_mesh_get(m,'region',11);
   RR=union(R1',R2','rows')';
   assert('rr==RR');
   
   gf_mesh_set(m,'region', 11, R2);
-  gf_mesh_set(m,'region_substract', 11, 10);
+  gf_mesh_set(m,'region substract', 11, 10);
   rr=gf_mesh_get(m,'region',11);
   RR=setdiff(R2',R1','rows')';
   assert('rr==RR');
 
   gf_mesh_set(m,'region', 11, R2);
-  gf_mesh_set(m,'region_intersect', 11, 10);
+  gf_mesh_set(m,'region intersect', 11, 10);
   rr=gf_mesh_get(m,'region',11);
   RR=intersect(R2',R1','rows')';
   assert('rr==RR');

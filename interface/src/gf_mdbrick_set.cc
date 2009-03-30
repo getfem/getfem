@@ -72,11 +72,14 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@SET MDBRICK:SET('param',@str name,{@tmf mf,V | V})
     Change the value of a brick parameter.
 
-    `V` should contain the new parameter value. If a @tmf is given
-    , `V` should hold the field values over that @tmf (i.e. its
-    last dimension should be MESHFEM:GET('nbdof')).@*/
+    `name` is the name of the parameter. `V` should contain the
+    new parameter value (vector or float). If a @tmf is given,
+    `V` should hold the field values over that @tmf (i.e. its
+    last dimension should be MESHFEM:GET('nbdof') or 1 for
+    constant field).@*/
     std::string pname = in.pop().to_string();
     for (unsigned i=0; i < pname.size(); ++i) if (pname[i] == ' ') pname[i] = '_';
+
     getfem::mdbrick_abstract_parameter *p = b->param(pname);
     if (!p) THROW_BADARG("wrong parameter name for this brick: " << pname);
 
@@ -85,6 +88,7 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     const getfem::mesh_fem *mf = &p->mf();
     array_dimensions d, d_expected1, d_expected2;
+
     darray rw;
     carray cw;
 
@@ -127,6 +131,11 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         d_expected2.ndim() == 2 && d_expected2.dim(0) == 1 &&
         d.ndim() == 1 && d.dim(0) == d_expected2.dim(1))
       sz_ok = true;
+    /* for python, a float is ok if we were expecting a constant field*/
+    if (!sz_ok && config::has_1D_arrays() &&
+        d.ndim() == 0)
+      sz_ok = true;
+
     if (!sz_ok) THROW_BADARG("wrong size for the parameter " << pname
 			     << ", expected an array of size "
 			     << d_expected2 << " ( or " << d_expected1 <<
