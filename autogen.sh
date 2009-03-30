@@ -15,5 +15,5 @@ autoheader || die "autoheader failed";
 autoreconf
 autoconf || die "autoconf failed";
 #pas de ./ devant les noms des makefiles !!!
-automake -a -f --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'` || die "automake failed";
+automake -a --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'` || die "automake failed";
 echo "autogen.sh is ok, you can run the ./configure script"
