@@ -1332,7 +1332,8 @@ namespace getfem {
 	const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
 	gmm::clear(K);
 	gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
-	asm_qu_term(K, *(this->mesh_ims[0]), mf_u, Q().mf(), Q().get(), boundary);
+	asm_qu_term(K, *(this->mesh_ims[0]), mf_u, Q().mf(), Q().get(),
+		    mf_u().linked_mesh().get_mpi_sub_region(boundary));
 	K_uptodate = true;
 	this->parameters_set_uptodate();
       }
