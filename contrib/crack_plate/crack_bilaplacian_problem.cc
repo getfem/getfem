@@ -40,7 +40,7 @@ scalar_type sol_u(const base_node &x){
 
 }
 
-scalar_type sol_f(const base_node &x)
+scalar_type sol_F(const base_node &x)
 {return 1.  ;//EE * D *  240. ;//256. * cos(2. * x[1]) ; 
 }
 
@@ -274,8 +274,8 @@ void bilaplacian_crack_problem::init(void) {
       M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
     }
     if (sol_ref == 2){
-      M(0, 0) = 1500. ;
-      M(1, 1) = 1000. ;
+      M(0, 0) = 1.5 ;
+      M(1, 1) = 1.0 ;
     }
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
@@ -291,7 +291,7 @@ void bilaplacian_crack_problem::init(void) {
     } break ;
     case 2 : {
        tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH");
-       tt[1] = - 500. + PARAM.real_value("TRANSLAT_Y") ;
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
     } break ;
     default : 
        GMM_ASSERT1(false, "SOL_REF parameter is undefined");
@@ -453,7 +453,7 @@ void bilaplacian_crack_problem::init(void) {
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
-	if (un[0] < -0.999) { // symetry condition
+	if (un[0] < - 0.9999) { // symetry condition
 	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
 	} 
 	else{
@@ -895,7 +895,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
         if (ld == unsigned(-1)) {
           cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
         } else {
-          printf(" %3d:%.16s", unsigned(cv), name_of_dof(pf->dof_types().at(ld)).c_str());
+          printf(" %3d:%.16s", unsigned(cv), name_of_dof_2(pf->dof_types().at(ld)).c_str());
         }
       }
       printf("\n");
@@ -917,8 +917,9 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Defining the volumic source term.
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs);
+  gmm::clear(F) ;
   if (sol_ref == 2){
-     getfem::interpolation_function(mf_rhs, F, sol_f);
+     getfem::interpolation_function(mf_rhs, F, sol_F);
      gmm::scale(F, pressure) ;
      }
   //Volumic source term brick.
@@ -959,8 +960,8 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   // Normal derivative Dirichlet condition brick. 
   getfem::mdbrick_normal_derivative_Dirichlet<>                   
     NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult_d);
-  if (sol_ref == 2) 
-    std::fill(exact_sol.U.begin(), exact_sol.U.end(), 0.) ;   
+/*  if (sol_ref == 2) 
+    std::fill(exact_sol.U.begin(), exact_sol.U.end(), 0.) ;*/   
     
   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
   NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
@@ -996,7 +997,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   
   getfem::mdbrick_Dirichlet<>
     DIRICHLET_2(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); 
-  DIRICHLET_2.rhs().set(exact_sol.mf,exact_sol.U);  
+  //DIRICHLET_2.rhs().set(exact_sol.mf,exact_sol.U);  
   DIRICHLET_2.set_constraints_type(getfem::constraints_type(dirichlet_version));  
   if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
     DIRICHLET_2.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;  

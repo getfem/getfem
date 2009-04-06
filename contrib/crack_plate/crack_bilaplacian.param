@@ -3,25 +3,43 @@
 % parameters for program bilaplacian                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+
+%%%%% Parameters for the plate   
+KL = 1;        % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
+               % plate model (N=2 only).
+if (KL)        % For Kirchhoff-Love plate model only
+  NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
+end;
+
 %%%%% Choice of the solution of reference ----------------------------
 SOL_REF = 0 ;  % 0 = the exact solution is taken equal to the singularities 
-               % 1 = plate subject to bending moments  
-	       %     (only the SIF is known, and it's "work in progress")
-
-CRACK_SEMI_LENGTH = 0.1 ; %% only usefull if SOL_REF = 1
+               % 1 = plate subject to bending moments (only the SIF is known)
+               % 2 = panel test case (no exact solution)
 
 %%%%%  domain parameters                   %%%%%
 N = 2;
+CRACK_SEMI_LENGTH = 0.03 ; %% only usefull if SOL_REF = 1 or 2
 if SOL_REF == 0
    LX = 1. ; LY = LX; LZ = LX;	% sizes of the domain.
+   EPSILON=0.045 ; % thickness 
+   D = 1 ;         % "flexion modulus"
 elseif SOL_REF == 1
    LX = 0.5; LY = 1.0; LZ = LY;
+   EPSILON=0.045 % thickness 
+   D = 1 ;       % "flexion modulus"
+elseif SOL_REF == 2
+   LX = 1.5 ; LY = 1.0; LZ = LY;
+   E = 7.4e10 ;
+   EPSILON=8e-4 ;
+   D = 2 * E * EPSILON * EPSILON * EPSILON / (3 * (1 - NU * NU)) ;       % "flexion modulus"
+   PRESSURE = 6e4  ; NY = 11 ; 
 end;
 
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
-NX = 21 ;                 % space step
+NX = 11 ;                 % space step
 
 %MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONF_STRUCT/tri_10.mesh
 %MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_39.mesh'
@@ -34,21 +52,15 @@ TRANSLAT_X = 0.0 ;
 TRANSLAT_Y = 0.0 ;
 
 
-% Parameters for the plate   ------------------------------------------
-D = 1.0;      % "flexion modulus"
-KL = 1;        % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
-               % plate model (N=2 only).
-if (KL)        % For Kirchhoff-Love plate model only
-  NU = 0.3 ; % Poisson ratio (0 <= NU <= 1)
-end;
-EPSILON=0.045 % thickness 
+
+
 
 SEUIL_FINAL =  0 ;
 SHOW_NAME_OF_DOF = 0 ;
 
 % Parameters for the finite element method -------------------------------
 
-QUAD = 0;
+QUAD = 1;
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
@@ -74,6 +86,8 @@ if (~QUAD)
      MORTAR_DERIV_FEM_TYPE = 'FEM_PK(2,1)';
   %  MORTAR_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
 %    MORTAR_DERIV_FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';
+     INTEGRATION_LINE = 'IM_TRIANGLE(13)' ;
+     SIMPLEX_INTEGRATION_LINE = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
   end;
 end
 
@@ -91,6 +105,9 @@ if (QUAD)
   %MORTAR_DERIV_FEM_TYPE = 'FEM_QK_DISCONTINUOUS(2,1)';
   PARTITION_OF_UNITY_FEM_TYPE = 'FEM_REDUCED_QUADC1_COMPOSITE';
   INTEGRATION = 'IM_QUADC1_COMPOSITE(IM_TRIANGLE(13))';
+  
+  INTEGRATION_LINE = 'IM_QUAD(17)' ;
+  SIMPLEX_INTEGRATION_LINE = 'IM_QUAD(17)';
 end
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
@@ -101,28 +118,28 @@ SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
 %SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-%SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
 
 WHERE = 4 ;
-INTEGRATION_LINE = 'IM_TRIANGLE(6)' ;
 
-%SIMPLEX_INTEGRATION_LINE = 'IM_GAUSS1D(4)';
-%SIMPLEX_INTEGRATION_LINE = 'IM_TRIANGLE(6)' ;
-SIMPLEX_INTEGRATION_LINE = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(13),3)';
 
 %SINGULAR_INTEGRATION_LINE = 'IM_GAUSS1D(4)';
-SINGULAR_INTEGRATION_LINE = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+%SINGULAR_INTEGRATION_LINE = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
 %SINGULAR_INTEGRATION_LINE = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 13), 9)';
 
-%%%% XFEM Parameters
+%%%% XFEM Parameters 
 
-ENRICHMENT_OPTION = 4;  %-1 = classical FEM (needs conformal mesh)
-			% 0 = Pas d'enrichissement (fonction H seule)	
-                        % 1 = Pointwise matching
+ENRICHMENT_OPTION = 3;  %-1 = classical FEM (needs conformal mesh)
+			% 0 = No singular enrichment (single H function)	
+                        % 1 = Pointwise matching (bugged)
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)
-			% 4 = global enrichment times cut-off function			
+			% 4 = global enrichment times cut-off function
+
 RADIUS_ENR_AREA = 0.15;
+COMPUTE_ERROR = 0;
+RING_RADIUS = 0.20 ;
+
 SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
 SHOW_DX = 0 ;
@@ -140,20 +157,18 @@ EPS_MORTAR_PENAL = 1E-9;      % parameter for treating the
 SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integral matching
 
 %%%%%    Parameters for the cut-off function
-CUTOFF_FUNC = 2; % 0 for the exponential cutoff. 
+CUTOFF_FUNC = 3; % 0 for the exponential cutoff. 
                  % 1 for a 3rd degree polynomial cutoff.
                  % 2 for a 5th degree polynomial cutoff. 
 CUTOFF = 0.4;  % usefull only for exponential cutoff (parameter of the speed of decreasing)
 CUTOFF1 = 0.01; % radius
-CUTOFF0 = 0.15;
+CUTOFF0 = 0.25;
 
 %%%%%  computation parameters 	
 RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 DIRICHLET_VERSION = 0; % 0=multipliers, 1=penalization, 2=elimination
 EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
                                % Dirichlet condition with penalization 
-COMPUTE_ERROR = 1;
-RING_RADIUS = 0.20 ;
 FIC_ORTHO = 0 ;
 
 %%%%%  error computation parameters

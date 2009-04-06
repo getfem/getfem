@@ -40,7 +40,7 @@
 namespace getfem {
   /* build a "ring" of convexes of given center and radius */
   dal::bit_vector 
-  build_sif_ring_from_mesh(const mesh &m, 
+  build_sif_ring_from_mesh_KL(const mesh &m, 
                            base_node center, scalar_type r) {
     dal::bit_vector bv;
     scalar_type r2 = r - 1e-4;
@@ -63,7 +63,7 @@ namespace getfem {
   /* return the crack tip in P,
      and the outgoing tangent of the crack in T,
      and the normal in N */
-  void get_crack_tip_and_orientation(const level_set &/* ls */,
+  void get_crack_tip_and_orientation_KL(const level_set &/* ls */,
                                      base_node &P, 
                                      base_small_vector &T, base_small_vector &N) {
     cerr << __PRETTY_FUNCTION__ << " IS TO BE DONE\n";
@@ -86,7 +86,7 @@ namespace getfem {
                                                scalar_type &KII, double EPS=1e-2) {
     base_node P(2);
     base_small_vector T(2),N(2); 
-    get_crack_tip_and_orientation(ls, P, T, N);
+    get_crack_tip_and_orientation_KL(ls, P, T, N);
     base_node P1 = P - EPS*T + EPS/100.*N;
     base_node P2 = P - EPS*T - EPS/100.*N;
     std::vector<double> V(4);
@@ -118,9 +118,9 @@ namespace getfem {
     const mesh &mring = mim.linked_mesh();
     base_node crack_tip;
     base_small_vector T, N;
-    get_crack_tip_and_orientation(ls, crack_tip, T, N);
+    get_crack_tip_and_orientation_KL(ls, crack_tip, T, N);
 
-    dal::bit_vector cvring = build_sif_ring_from_mesh(mring, crack_tip, 
+    dal::bit_vector cvring = build_sif_ring_from_mesh_KL(mring, crack_tip, 
                                                       ring_radius);
 
     // set mesh_fem
@@ -384,8 +384,8 @@ cout << "OK avant assemblage\n" ;
       double time = gmm::uclock_sec();
       assem.assembly(cvring);
       W2[0] = 0. ;
-      assem2.assembly(cvring);
       W3[0] = 0. ;
+      assem2.assembly(cvring);
       assem3.assembly(cvring);
       cout << "done (" << gmm::uclock_sec()-time << " sec)\n";
       scalar_type a = 2. * epsilon * M_PI * (1. + nu) / (3. * young_modulus * (3. + nu) ) ;
@@ -405,9 +405,9 @@ cout << "OK avant assemblage\n" ;
 
 } // end of namespace ?
 
-scalar_type young_modulus(scalar_type lambda, scalar_type mu){
-  return 4*mu*(lambda + mu)/(lambda+2*mu);
-}
+// scalar_type young_modulus(scalar_type lambda, scalar_type mu){
+//   return 4*mu*(lambda + mu)/(lambda+2*mu);
+// }
 
 
 
@@ -416,7 +416,7 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
   cout << "Computing stress intensity factors\n";
   base_node tip; 
   base_small_vector T, N;
-  get_crack_tip_and_orientation(ls, tip, T, N);
+  get_crack_tip_and_orientation_KL(ls, tip, T, N);
   cout << "crack tip is : " << tip << ", T=" << T << ", N=" << N << "\n";
   scalar_type E = 3. * (1. - nu * nu) * D / (2. * epsilon * epsilon * epsilon) ;
   cout << "young modulus: " << E << "\n";
@@ -452,20 +452,8 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
     
     
     cout << "initialisations ls2, ls3, mls2, mls3 : OK\n" ;
-    std::string INTEGRATION = PARAM.string_value("INTEGRATION_LINE",
-					       "Name of integration method");
-    std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION_LINE",
-					 "Name of simplex integration method");
-    //std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION_LINE");
     
-    getfem::pintegration_method ppi = 
-    getfem::int_method_descriptor(INTEGRATION);
-    getfem::pintegration_method sppi = 
-    getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
-    //getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
-//		getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
-    
-   int where = PARAM.int_value("WHERE") ;
+    int where = PARAM.int_value("WHERE") ;
 // 1	getfem::mesh_im_level_set::INTEGRATE_INSIDE (integrate over p(x)<0),
 // 2	getfem::mesh_im_level_set::INTEGRATE_OUTSIDE (integrate over p(x)>0),
 // 3	getfem::mesh_im_level_set::INTEGRATE_ALL,
@@ -478,20 +466,64 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
    where = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY ;}
    break;
    }
-   getfem::mesh_im_level_set mim2(mls2, where, sppi) ;
-   getfem::mesh_im_level_set mim3(mls3, where, sppi) ;
-   cout << "SIMPLEX_INTEGRATION = " << SIMPLEX_INTEGRATION << "\n" ;
-   //cout << "SINGULAR_INTEGRATION = " << SINGULAR_INTEGRATION << "\n" ;
+   getfem::mesh_im_level_set mim2(mls2, where) ;
+   getfem::mesh_im_level_set mim3(mls3, where) ;
    
    
-    cout << "initialisations mim2, mim3 : OK\n" ;
-    
-    mim2.set_integration_method(mesh.convex_index(), ppi);
+    if (!PARAM.int_value("MIXED_ELEMENTS")){ 
+        // Must put 2D methods.
+        std::string INTEGRATION = PARAM.string_value("INTEGRATION_LINE",
+   					       "Name of integration method");
+        std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION_LINE",
+    					 "Name of simplex integration method");  
+        //must put a method defined for quadrangles.
+        //std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION_LINE");
+        getfem::pintegration_method ppi = 
+        getfem::int_method_descriptor(INTEGRATION);
+        getfem::pintegration_method sppi = 
+        getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
+        //getfem::pintegration_method sing_ppi = (SINGULAR_INTEGRATION.size() ?
+        //  getfem::int_method_descriptor(SINGULAR_INTEGRATION) : 0);
+        mim2.set_simplex_im(sppi, 0);   // No need to specify a singular sing integration,
+        mim3.set_simplex_im(sppi, 0);   // since the J-integral doesn't meet the crack tip.
+        mim2.set_integration_method(mesh.convex_index(), ppi);
+        mim3.set_integration_method(mesh.convex_index(), ppi);
+    }
+    else{
+        // Must put 2D methods.
+        std::string TRI_INTEGRATION = PARAM.string_value("TRI_INTEGRATION_LINE",
+    					       "Name of integration method");
+        std::string TRI_SIMPLEX_INTEGRATION = PARAM.string_value("TRI_SIMPLEX_INTEGRATION_LINE",
+    					 "Name of simplex integration method");  
+        getfem::pintegration_method tri_ppi = 
+        getfem::int_method_descriptor(TRI_INTEGRATION);
+        getfem::pintegration_method tri_sppi = 
+        getfem::int_method_descriptor(TRI_SIMPLEX_INTEGRATION);
+        std::string QUAD_INTEGRATION = PARAM.string_value("QUAD_INTEGRATION_LINE",
+    					       "Name of integration method");
+        std::string QUAD_SIMPLEX_INTEGRATION = PARAM.string_value("QUAD_SIMPLEX_INTEGRATION_LINE",
+    					 "Name of simplex integration method");  
+        getfem::pintegration_method quad_ppi = 
+        getfem::int_method_descriptor(QUAD_INTEGRATION);
+        getfem::pintegration_method quad_sppi = 
+        getfem::int_method_descriptor(QUAD_SIMPLEX_INTEGRATION);
+	mim2.set_simplex_im(tri_sppi, 0);   // No need to specify a singular sing integration,
+        mim3.set_simplex_im(tri_sppi, 0);   // since the J-integral doesn't meet the crack tip.
+	dal::bit_vector quad_among_cvx, tri_among_cvx ;
+        for (dal::bv_visitor i(mesh.convex_index()) ; !i.finished() ; ++i){
+          if (mesh.points_of_convex(i).size() == 3)
+             tri_among_cvx.add(i) ;
+          else if (mesh.points_of_convex(i).size() == 4)
+             quad_among_cvx.add(i) ;
+          else cout << "WARNING : an element has nor 3 or 4 nodes ! \n" ;
+        }
+        mim2.set_integration_method(tri_among_cvx, tri_ppi);
+        mim2.set_integration_method(quad_among_cvx, quad_ppi);
+        mim3.set_integration_method(tri_among_cvx, tri_ppi);
+        mim3.set_integration_method(quad_among_cvx, quad_ppi);
+    }  
     mim2.adapt() ;
-    
-    mim3.set_integration_method(mesh.convex_index(), ppi);
     mim3.adapt() ;
-    
     cout << "mim2.set_integration_method(... -> OK\n";
     
     cout << "done.\nEntering in compute_crack_stress_intensity_factors_KL(... \n" ;

@@ -357,7 +357,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     
     /* First step : build the mesh */
 
- if (!MESH_FILE.empty()) {
+ if (!MESH_FILE.empty()) { // The case of a quadrangular mesh in a file is not supported.
     mesh.read_from_file(MESH_FILE);
     cout << "WARNING : THE MESH FILES MUST DESIGN A MESH MADE OF TRIANGLES \n" ;
     base_small_vector tt(N); 
@@ -385,6 +385,10 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     NX = PARAM.int_value("NX", "Number of space steps ") ;
     std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
     if (sol_ref == 1)  nsubdiv[0] = NX / 2 ;
+    if (sol_ref == 2) {
+        size_type NY = PARAM.int_value("NY") ;
+	nsubdiv[1] = NY ;
+     }
     if (PARAM.int_value("QUAD") == 0)
        getfem::regular_unit_mesh(mesh, nsubdiv, pgt_tri, PARAM.int_value("MESH_NOISED") != 0);
     else
@@ -394,11 +398,30 @@ sol_ref = PARAM.int_value("SOL_REF") ;
       static const char *t[] = {"LX","LY","LZ"};
       M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
     }
+    if (sol_ref == 2){
+      M(0, 0) = 1.5 ;
+      M(1, 1) = 1.0 ;
+    }
     /* scale the unit mesh to [LX,LY,..] and incline it */
     mesh.transformation(M);
     base_small_vector tt(N); 
-    tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ; 
-    tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    switch (sol_ref) {
+    case 0 : {
+       tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ;
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
+    case 1 : {
+       tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
+    case 2 : {
+       tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH");
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
+    default : 
+       GMM_ASSERT1(false, "SOL_REF parameter is undefined");
+      break ;  
+    }
     if (sol_ref == 1){
        tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
     }
@@ -414,7 +437,7 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 
    // Setting the level-set
   ls.reinit();
-  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
+//  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
@@ -426,8 +449,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
      ls.values(1)[d] = x  ; //x * x - a * a ;
     }
     if (sol_ref == 2){
-     ls.values(0)[d] = y - x ;
-     ls.values(1)[d] = gmm::abs(x + y) - a ; //x * x - a * a ;
+     ls.values(0)[d] = y ;
+     ls.values(1)[d] = x ; 
     }
   }
   //ls.simplify(0.5);
@@ -723,15 +746,17 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   }
 
     if (sol_ref == 2 ){
-     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
-        //if ( (un[0] <= -0.9) || (un[0] >= 0.9) ) {
-	if  (gmm::abs(un[1]) >= 0.999)  {
+	if (un[0] < - 0.9999) { // symetry condition
+	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+	} 
+	else{
 	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
            mesh.region(MOMENTUM_BOUNDARY_NUM).add(i.cv(), i.f());
-	} 
-     }
+	}
+      }
     }
 
 //   if (sol_ref == 1 || sol_ref == 2){
@@ -749,7 +774,10 @@ sol_ref = PARAM.int_value("SOL_REF") ;
 //   }
 
   // Updating things concerning the level-set
-  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
+  // (Not sure this part is mandatory, however, the mesh_fem
+  // were not initialised when we defined the level-set.
+  // So we re-initialize to be sure.
+  //scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
     scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
@@ -761,8 +789,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
      ls.values(1)[d] = x ; //x * x - a * a ;
     }
     if (sol_ref == 2){
-     ls.values(0)[d] = y - x ;
-     ls.values(1)[d] = gmm::abs(x + y) - a ; //x * x - a * a ;
+     ls.values(0)[d] = y ;
+     ls.values(1)[d] = x ; //x * x - a * a ;
     }
   }
   //ls.simplify(0.5);

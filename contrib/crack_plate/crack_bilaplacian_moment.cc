@@ -283,7 +283,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
         if (ld == unsigned(-1)) {
           cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
         } else {
-          printf(" %3d:%.16s", int(cv), name_of_dof(pf->dof_types().at(ld)).c_str());
+          printf(" %3d:%.16s", int(cv), name_of_dof_2(pf->dof_types().at(ld)).c_str());
         }
       }
       printf("\n");

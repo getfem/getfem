@@ -27,7 +27,7 @@
 #include "getfem/getfem_fourth_order.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_superlu.h"
-
+  
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
@@ -69,7 +69,16 @@ int main(int argc, char *argv[]) {
     if (p.PARAM.int_value("SOL_REF") == 0) {
        if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
        p.compute_sif(U, ring_radius);
-       if (p.PARAM.int_value("COMPUTE_ERROR") == 1)     		   p.compute_error(U) ;
+       if (p.PARAM.int_value("FIC_SERIE") ){
+           scalar_type R ;
+           for (unsigned i = 0 ; i < 26 ; i++){
+              R = 0.05 + i * 0.01 ;
+              cout << "R = " << R << "\n" ;
+              p.compute_sif(U, R);
+           }    
+       }
+       if (p.PARAM.int_value("COMPUTE_ERROR") == 1)  
+          p.compute_error(U) ;
     }
     if (p.PARAM.int_value("SOL_REF") == 1) {
        if (!p.solve_moment(U)) GMM_ASSERT1(false, "Solve has failed");
@@ -77,7 +86,8 @@ int main(int argc, char *argv[]) {
     }
     if (p.PARAM.int_value("SOL_REF") == 2) {
        if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
-       p.compute_sif(U, ring_radius);
+       if (p.PARAM.int_value("MIXED_ELEMENTS") == 0)
+           p.compute_sif(U, ring_radius);
     }
     if (p.PARAM.int_value("ENRICHMENT_OPTION") > 2){
         p.sif_direct_estimation(U) ;
@@ -87,16 +97,18 @@ int main(int argc, char *argv[]) {
     p.exact_sif(K1_exact, K2_exact) ;
     cout << "K1_exact = " << K1_exact << " ; K2_exact = " << K2_exact << "\n" ;
 
-    //p.compute_H2_error_field(U) ;    
+    //p.compute_H2_error_field(U) ;
+    //
 
     int VTK_EXPORT = int(p.PARAM.int_value("VTK_EXPORT"));
     int MATLAB_EXPORT = int(p.PARAM.int_value("MATLAB_EXPORT"));
     int DX_EXPORT = int(p.PARAM.int_value("DX_EXPORT"));
 
-    if (VTK_EXPORT || MATLAB_EXPORT || DX_EXPORT)        
-       p.export_solution(U) ;   
+    if (VTK_EXPORT || MATLAB_EXPORT || DX_EXPORT)
+       p.export_solution(U) ;
 
-   //getchar(); 
+   //getchar();
+   cout << "End of program reached\n"; 
    } GMM_STANDARD_CATCH_ERROR;
   return 0; 
 }

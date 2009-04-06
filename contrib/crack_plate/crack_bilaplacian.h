@@ -60,11 +60,11 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /******** Exact Solution *******************************/
 
 
-scalar_type sol_u(const base_node &x);
-scalar_type sol_lapl_u(const base_node &x);
-scalar_type sol_f(const base_node &);
-base_small_vector sol_du(const base_node &x);
-base_small_vector neumann_val(const base_node &x);
+// scalar_type sol_u(const base_node &x);
+// scalar_type sol_lapl_u(const base_node &x);
+// scalar_type sol_f(const base_node &);
+// base_small_vector sol_du(const base_node &x);
+// base_small_vector neumann_val(const base_node &x);
 
 
 struct bilaplacian_singular_functions : public getfem::global_function, public getfem::context_dependencies {
@@ -114,7 +114,7 @@ struct exact_solution_bilap {
   void init(getfem::level_set &ls);
 };
 
-inline std::string name_of_dof(getfem::pdof_description dof) {
+inline std::string name_of_dof_2(getfem::pdof_description dof) {
   char s[200];
   sprintf(s, "UnknownDof[%p]", (void*)dof);
   for (dim_type d = 0; d < 4; ++d) {
