@@ -53,7 +53,7 @@ namespace getfem {
   }
   
   dal::bit_vector mesh_fem::dof_on_region(const mesh_region &b) const {
-    if (!dof_enumeration_made) this->enumerate_dof();
+    context_check(); if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
     for (getfem::mr_visitor v(b,linked_mesh()); !v.finished(); ++v) {
       size_type cv = v.cv();
@@ -159,7 +159,7 @@ namespace getfem {
   }
 
   base_node mesh_fem::point_of_dof(size_type d) const {
-    if (!dof_enumeration_made) enumerate_dof();
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type cv = dof_structure.first_convex_of_point(i);
       if (cv != size_type(-1)) {
@@ -492,8 +492,8 @@ namespace getfem {
       
       if (it == mfs.end()) {
 	mesh_fem *pmf = new mesh_fem(msh);
-	pmf->set_auto_add(o);
 	pmf->set_classical_finite_element(o);
+	pmf->set_auto_add(o);
 	return *(mfs[key] = pmf);
       }
       else return *(it->second);

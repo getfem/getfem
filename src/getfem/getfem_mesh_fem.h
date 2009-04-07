@@ -285,7 +285,7 @@ namespace getfem {
     
     ind_dof_face_ct
     ind_dof_of_face_of_element(size_type cv, short_type f) const {
-      if (!dof_enumeration_made) enumerate_dof();
+      context_check(); if (!dof_enumeration_made) enumerate_dof();
       return ind_dof_face_ct
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
 	 dim_type(Qdim /fem_of_element(cv)->target_dim()));
@@ -340,7 +340,7 @@ namespace getfem {
     void enumerate_dof(void) const;
     /// Return the total number of degrees of freedom.
     size_type nb_dof(void) const
-      { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
+    { context_check(); if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
     /** Get a list of dof lying on a given mesh_region.
 	@param b the mesh_region.
 	@return the list in a dal::bit_vector.
