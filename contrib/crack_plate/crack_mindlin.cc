@@ -112,11 +112,23 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       return  sqrt(r) * (  10. * mu_ * sin(theta/2.) * ( 12. * mu_ + 6. * lambda_ - gamma * r * r) - 2. * r * r * gamma *  sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
     } break;
     case 7: {   // same comment as case 6
-      return 5. * gamma * sqrt( r * r * r ) * ( 5. * sin(theta/2.) * mu_ + sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) );
+      return cos(theta) * 
+      5. * gamma * sqrt( r * r * r ) * ( 5. * sin(theta/2.) * mu_ + sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) )
+      - sin(theta) * 
+      5. * gamma * sqrt( r * r * r ) * ( cos(theta/2.) * mu_ + cos(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) );
     } break;
     case 8: {    // same comment as case 6
-      return 5. * gamma * sqrt( r * r * r ) * ( cos(theta/2.) * mu_ + cos(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
+      return sin(theta) *
+      5. * gamma * sqrt( r * r * r ) * ( 5. * sin(theta/2.) * mu_ +  sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) )
+      + cos(theta) *
+5. * gamma * sqrt( r * r * r ) * ( cos(theta/2.) * mu_ + cos(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
     } break;
+//     case 7: {   // same comment as case 6
+//       return 5. * gamma * sqrt( r * r * r ) * ( 5. * sin(theta/2.) * mu_ + sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) );
+//     } break;
+//     case 8: {    // same comment as case 6
+//       return 5. * gamma * sqrt( r * r * r ) * ( cos(theta/2.) * mu_ + cos(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
+//     } break;
     default: assert(0); 
     }
     return 0;
@@ -127,7 +139,10 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     g.resize(2);
     scalar_type r = sqrt(x*x + y*y);
     scalar_type theta = atan2(y,x);
-
+    scalar_type lambda_ = lambda; //2. * epsilon * lambda ;
+    scalar_type mu_= mu ; // 2. * epsilon * mu ;
+    scalar_type gamma =  3. * mu_ / ( epsilon * epsilon) ;
+    
     switch (l) {
     case 0: {
       g[0] = (   cos(theta/2.0) - cos(5.0/2.0*theta) / 2.0) / sqrt(r) ; 
@@ -154,8 +169,16 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       g[1] = (       - sin(theta/2.0) - sin(5.0/2.0*theta)      )   / 4.0   / sqrt(r) ; 
     } break;
     case 6: {
-      g[0] = 0. ;
-      g[1] = 0. ;
+      g[0] = ( 1/sqrt(r) * (mu_*sin(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)-
+gamma*r*r*sin(5.0/2.0*theta)*(4.0*lambda_+3.0*mu_))+2.0*sqrt(r)*(-10.0*mu_*
+sin(theta/2.0)*gamma*r-2.0*gamma*r*sin(5.0/2.0*theta)*(4.0*lambda_+3.0*mu_)))*
+cos(theta)-2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)/2.0
+-5.0/2.0*gamma*r*r*cos(5.0/2.0*theta)*(4.0*lambda_+3.0*mu_))*sin(theta); 
+      g[1] = (1/sqrt(r)*(mu_*sin(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)-
+gamma*r*r*sin(5.0/2.0*theta)*(4.0*lambda_+3.0*mu_))+2.0*sqrt(r)*(-10.0*mu_*
+sin(theta/2.0)*gamma*r-2.0*gamma*r*sin(5.0/2.0*theta)*(4.0*lambda_+3.0*mu_)))*
+sin(theta)+2.0/sqrt(r)*(mu_*cos(theta/2.0)*(30.0*lambda_+60.0*mu_-5.0*gamma*r*r)/2.0
+-5.0/2.0*gamma*r*r*cos(5.0/2.0*theta)*(4.0*lambda_+3.0*mu_))*cos(theta) ;
     } break;
     case 7: {
       g[0] = 0. ;
@@ -290,15 +313,15 @@ struct exact_solution {
 	mf_theta.set_qdim(1) ;
 	mf_theta.set_functions(cfun_theta);   
 	THETA.resize(4); assert(mf_theta.nb_dof() == 2);
-	THETA[0] = 0.01 ;
+	THETA[0] = 0.0001 ;
 	THETA[1] = 0. ;
 	THETA[2] = 0. ;
-	THETA[3] = 0.01 ;
+	THETA[3] = 0.0001 ;
 	
 	// Initialising u3
 	mf_u3.set_functions(cfun_u3) ;
 	U3.resize(1) ;
-	U3[0] = 0.01 ;  
+	U3[0] = 0.0001 ;  
     }
   }
   
