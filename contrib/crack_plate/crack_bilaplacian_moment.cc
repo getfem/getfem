@@ -260,36 +260,7 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 	break ;  
 	}
   mesh.write_to_file("toto.mesh");
-  
-  if (0) {  // printing the type of each dof
-    unsigned Q = mf_u().get_qdim();
-    for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
-      printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
-             mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
-      
-      
-      const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
-      for (unsigned i=0; i < cvs.size(); ++i) {
-        size_type cv = cvs[i];
-        //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
-        
-        getfem::pfem pf = mf_u().fem_of_element(cv);
-        unsigned ld = unsigned(-1);
-        for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
-          if (mf_u().ind_dof_of_element(cv)[dd] == d) {
-            ld = dd/Q; break;
-          }
-        }
-        if (ld == unsigned(-1)) {
-          cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
-        } else {
-          printf(" %3d:%.16s", int(cv), name_of_dof_2(pf->dof_types().at(ld)).c_str());
-        }
-      }
-      printf("\n");
-    }
-  }
-  
+
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   // Bilaplacian brick.
@@ -391,10 +362,11 @@ getfem::mdbrick_normal_derivative_source_term<>
 }
 
 void bilaplacian_crack_problem::compute_error_beta(plain_vector &U) {
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   std::vector<scalar_type> V(mf_rhs.nb_dof());
   getfem::interpolation(mf_u(), mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_beta(mf_rhs.point_of_dof(i));
+    V[i] -= sol_beta(mf_rhs.point_of_basic_dof(i));
   cout.precision(8);
 //   cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
 //         << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
@@ -407,7 +379,7 @@ cout << getfem::asm_H1_norm(mim, mf_rhs, V) << " " << getfem::asm_H2_norm(mim, m
 cout << getfem::asm_H1_semi_norm(mim, mf_rhs, V) << " " <<getfem::asm_H2_semi_norm(mim, mf_rhs, V) << endl ;
   if(PARAM.real_value("NORM_EXACT") != 0. ){
     for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-        V[i] = sol_beta(mf_rhs.point_of_dof(i));
+        V[i] = sol_beta(mf_rhs.point_of_basic_dof(i));
     cout << "display exact solution: \n" ; 
     cout << "L2 norm: " <<  getfem::asm_L2_norm(mim, mf_rhs, V) << endl ;
     cout << "H1 norm: " <<  getfem::asm_H1_norm(mim, mf_rhs, V) << endl ;

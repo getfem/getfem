@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard.
+// Copyright (C) 2002-2009 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -33,9 +33,9 @@ using getfem::base_small_vector;
 void export_mesh(getfem::mesh &m, const std::string &name) {
   getfem::mesh_fem mf(m);
   mf.set_classical_finite_element(m.convex_index(), 0);
-  std::vector<double> U(mf.nb_dof());
-  for (size_type i = 0; i < mf.nb_dof(); ++i)
-    U[i] = double(mf.first_convex_of_dof(i));
+  std::vector<double> U(mf.nb_basic_dof());
+  for (size_type i = 0; i < mf.nb_basic_dof(); ++i)
+    U[i] = double(mf.first_convex_of_basic_dof(i));
 
   getfem::vtk_export exp(name + ".vtk", false);
   exp.exporting(mf); 
@@ -439,7 +439,8 @@ void test_mesh_building(int dim, int Nsubdiv) {
   mf1.set_finite_element( getfem::classical_fem(pgt, 1) );
   cout << "nb points = " << m.nb_points()
        << "nb dof = " << mf1.nb_dof() <<  endl;
-  GMM_ASSERT1(m.nb_points() == mf1.nb_dof(), "Problem in identifying dofs");
+  GMM_ASSERT1(m.nb_points() == mf1.nb_dof(),
+	      "Problem in identifying dofs");
 
   // shake a little bit the mesh
   getfem::mesh::PT_TAB &pts = m.points();
@@ -450,7 +451,8 @@ void test_mesh_building(int dim, int Nsubdiv) {
   mf2.set_finite_element( getfem::classical_fem(pgt, 1) );
   cout << "nb points = " << m.nb_points()
        << "nb dof = " << mf2.nb_dof() <<  endl;
-  GMM_ASSERT1(m.nb_points() == mf2.nb_dof(), "Problem in identifying dofs");
+  GMM_ASSERT1(m.nb_points() == mf2.nb_dof(),
+	      "Problem in identifying dofs");
 
 }
 

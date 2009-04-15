@@ -21,7 +21,7 @@ gf_workspace('stats')
 gf_workspace('push');
 gf_workspace('pop');
 
-P=get(mf_ls, 'dof nodes');
+P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 
 
@@ -58,7 +58,7 @@ end;
 set(ls, 'values', ULS);
 %set(ls, 'values', 'x-.04');
 %x = P(1,:); y = P(2,:);
-%P2=get(mf_ls2, 'dof nodes', 
+%P2=get(mf_ls2, 'basic dof nodes', 
 ULS2=1000*ones(1,numel(x));
 ULS2s=1000*ones(1,numel(x));
 for i=1:1,
@@ -100,7 +100,7 @@ A=gf_asm('volumic','V()+=comp()',mim_bound)
 
 %hold on; gf_plot(mf_ls, ULS);
 
-dof_mult = get(mf_mult0, 'dof from im', mim_bound);
+dof_mult = get(mf_mult0, 'basic dof from im', mim_bound);
 
 dof_out = get(mfu0, 'dof from im', mim);
 cv_out = get(mim, 'convex_index');

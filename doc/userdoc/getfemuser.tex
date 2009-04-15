@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper]{article}
+documentclass[11pt,a4paper]{article}
 % allow both latex and PDFlatex compatibility  (from pdfTeX FAQ)
 \usepackage{hyperlatex}
 
@@ -9,7 +9,7 @@
 \usepackage{array}
 \usepackage{supertabular}
 %\usepackage{fancyheadings}
-\usepackage{here}
+\usepackage{float}
 \usepackage{eepic,epic}
 %\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs mais le fichier produit n'est pas beau
 \usepackage[english]{babel}
@@ -663,15 +663,26 @@ In that string, all the parameters are optional except GT.
 
 
 
-\section{Selecting finite element methods}
-\index{GETFEM!getfem::mesh\_fem}
-The description of a finite element method on a whole mesh is done thanks to the structure \getfemmeshfem, defined in the file \getfemmeshfemh. Basically, this structure describes the finite element method on each element of the mesh. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows
+\section{Build a finite element method on a mesh}
+The object \getfemmeshfem defined in \getfemmeshfemh is desined to describe a finite element method on a whole mesh, i.e. to describe the finite element space on which some variables will be describe. This is a rather complex object which is central in \gf. Basically, this structure describes the finite element method on each element of the mesh and some additional optional transformations. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows
 \begin{cppcode}
   getfem::mesh\_fem mf(mymesh);
 \end{cppcode}
 where \cpp{mymesh} is an already existing mesh. The structure will be linked to this mesh and will react when modifications will be done on it. \\[0.5cm]
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every \cpp{getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
-To select a particular finite element method on a given element, one can use
+
+There is three levels in the \getfemmeshfem object:
+\begin{itemize}
+  \item The element level : one finite element method per element. It is possible to mix the dimensions of the elements and the property to be vectorial or scalar.
+  \item The optional vectorization (the qdim in getfem jargon, see \WEB{http://download.gna.org/getfem/doc/getfem_project/getfem_project_4.html}). For instance to represent a deplacement fiels in continuum mechanics. Scalar elements are used componentwise. Note that you can mix some intrinsic vectorial elements (Raviart-Thomas element for instance) which will not be vectorized and some scalar element which will be.
+\item (\gf version 4.0) The optional additional linear transformation (reduction) of the degrees of freedom. It will consist in giving two matrices, the reduction matrix and the extension matrix. The reduction matrix should transform the basic dofs into the reduced dofs (the number of reduced dofs should be less or equal than the number of basic dofs). The extension matrix should describe the inverse transformation. The product of the reduction matrix with the extension matrix should be the identity matrix (ensuring in particular that the two matrices are of maximal rank). This optional transformation can be used to reduced the finite element space to a certain region (tipically a boundary) or to prescribe some matching conditions between non naturally compatible fems (for instance fems with different degrees).
+\end{itemize}
+
+One has to keep in mind this construction manipulating the degrees of freedom of a \getfemmeshfem object.
+
+\subsection{first level : manipulating fems on each elements}
+
+To select a particular finite element method on a given element, use the method
 \index{GETFEM!mf.set\_finite\_element(i, pf)}
 \begin{cppcode}
   mf.set\_finite\_element(i, pf);
@@ -682,7 +693,11 @@ where \cpp{i} is the index of the element and \cpp{pf} is the descriptor (of typ
                                     getfem::pfem pf);
   void mesh\_fem::set\_finite\_element(getfem::pfem pf);
 \end{cppcode}
-which set the finite elements for either the convexes listed in the \cpp{bit\_vector cvs}, or all the convexes of the mesh.
+which set the finite elements for either the convexes listed in the \cpp{bit\_vector cvs}, or all the convexes of the mesh. Note that the last method make an call to the method
+\begin{cppcode}
+  void mesh\_fem::set_auto_add(pfem pf);
+\end{cppcode}
+which defines the default finite element method which will be automatically added on new elements of the mesh (this is very usefull, for instance, when a refinement of the mesh is performed).
 
 Descriptors for finite element methods and integration methods are available thanks to the following function\\[0.5cm]
 \index{GETFEM!getfem::fem\_descriptor("name")}\index{GETFEM!getfem::pfem}
@@ -730,6 +745,18 @@ The \cpp{mesh\_fem} can call directly these functions via:\index{GETFEM!getfem::
   void mesh\_fem::set\_classical\_discontinuous\_finite\_element(dim\_type fem\_degree);                           
 \end{cppcode}
 
+Some other methods: \\[0.5cm]
+\begin{center} \texonly{\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline}\htmlonly{\xmlattributes*{table}{border}\begin{tabular}{l|l}}
+
+  \cpp{mf.convex\_index()} & Set of indexes (a \cpp{dal::bit\_vector}) on which a finite element method is defined.  \\ \hline
+
+  \cpp{mf.linked\_mesh()} & gives a reference to the linked mesh.  \\ \hline
+
+  \cpp{mf.fem\_of\_element(i)} & gives a descriptor on the finite element method defined on element of index \cpp{i} (does not take into account the qdim nor the optional reduction).  \\ \hline
+
+  \cpp{mf.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
+\end{tabular} \end{center}
+
 \subsection{Examples}
 For instance if one needs to have a description of a $P_1$ finite element method on a triangle, the way to set it is
 \begin{cppcode}
@@ -741,10 +768,12 @@ where \cpp{i} is still the index of the triangle. It is also possible to select 
                          getfem::fem\_descriptor("FEM\_PK(2, 1)"));
 \end{cppcode}
 selects the method on all the elements of the mesh.\\[0.5cm]
-IMPORTANT: If the finite element represents an unknown for a vectorial
-problem (such as the displacement for linear elasticity), one should
-use \cpp{mf.set\_qdim(Q)} to set the target dimension (see
-\cite{BASCOMP} for the definition of the target dimension $Q$).\\[0.5cm]
+
+\subsection{Second level : the optional ``vectorization''}
+
+If the finite element represents an unknown for a vectorial
+problem, one should
+use \cpp{mf.set\_qdim(Q)} to set the target dimension for the definition of the target dimension $Q$).\\[0.5cm]
 If the target dimension $Q$ is set to a value different of $1$, the
 scalar FEMs (such as $P_k$ fems etc.) are automatically
 ``vectorized'', i.e. each scalar degree of freedom is duplicated $Q$
@@ -757,41 +786,61 @@ times, from the \cpp{mesh\_fem} object point of vue. To sum it up,
 \cpp{mf.nb\_dof\_of\_element(i) == mf.get\_qdim()*mf.fem\_of\_element(i).nb\_dof()}.
 \end{itemize}
 
-
-
-\subsection{Other methods of the \cpp{mesh\_fem} object}
-
-Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]
+At this level are defined the basic degrees of freedom. Some methods of the \getfemmeshfem allows to obtain information on the basic dofs:\\[0.5cm]
 \begin{center} \texonly{\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline}\htmlonly{\xmlattributes*{table}{border}\begin{tabular}{l|l}}
 
-  \cpp{mf.convex\_index()} & Set of indexes (a \cpp{dal::bit\_vector}) on which a finite element method is defined.  \\ \hline
+  \cpp{mf.nb\_basic\_dof\_of\_element(i)} & gives the number of basic degrees of freedom on the element of index \cpp{i}.  \\ \hline
 
-  \cpp{mf.linked\_mesh()} & gives a reference to the linked mesh.  \\ \hline
+  \cpp{mf.ind\_basic\_dof\_of\_element(i)} & gives a container (an array) with all the global indexes of the basic degrees of freedom of element of index \cpp{i}.  \\ \hline
 
-  \cpp{mf.fem\_of\_element(i)} & gives a descriptor on the finite element method defined on element of index \cpp{i}.  \\ \hline
+  \cpp{mf.point\_of\_basic\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the basic dof of local index \cpp{j} on element of index \cpp{i}.  \\ \hline
 
-  \cpp{mf.nb\_dof\_of\_element(i)} & gives the number of degrees of freedom on the element of index \cpp{i}.  \\ \hline
+  \cpp{mf.point\_of\_basic\_dof(j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the basic dof of global index \cpp{j}.  \\ \hline
 
-  \cpp{mf.ind\_dof\_of\_element(i)} & gives a container (an array) with all the global indexes of the degrees of freedom of element of index \cpp{i}.  \\ \hline
+  \cpp{mf.reference\_point\_of\_basic\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the basic dof of local index \cpp{j} on element of index \cpp{i} in the coordinates of the reference element.  \\ \hline
 
-  \cpp{mf.point\_of\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of local index \cpp{j} on element of index \cpp{i}.  \\ \hline
-
-  \cpp{mf.point\_of\_dof(j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of global index \cpp{j}.  \\ \hline
-
-  \cpp{mf.reference\_point\_of\_dof(i, j)} & gives a \cpp{bgeot::base\_node} which represents the point associated with the dof of local index \cpp{j} on element of index \cpp{i} in the coordinates of the reference element.  \\ \hline
-
-  \cpp{mf.first\_convex\_of\_dof(j)} & gives the index of the first element on which the degree of freedom of global index \cpp{j} is defined.  \\ \hline
+  \cpp{mf.first\_convex\_of\_basic\_dof(j)} & gives the index of the first element on which the basic degree of freedom of global index \cpp{j} is defined.  \\ \hline
   
-  \cpp{mf.nb\_dof()} & gives the total number of different degrees of freedom.  \\ \hline
+  \cpp{mf.nb\_basic\_dof()} & gives the total number of different basic degrees of freedom.  \\ \hline
 
   \cpp{mf.get_qdim()} & gives the target dimension \cpp{Q}.  \\ \hline
 
-  \cpp{mf.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
+  \cpp{mf.basic\_dof\_on\_region(i)} & Return a \cpp{dal::bit_vector} which represent the indices of basic dof which are in the set of convexes or the set of faces of index \cpp{i} (see the \cpp{getfem::mesh} object).  \\ \hline
 
-  \cpp{mf.dof_on_set(i)} & Return a \cpp{dal::bit_vector} which represent the indices of dof which are in the set of convexes or the set of faces of index \cpp{i} (see the \cpp{getfem::mesh} object).  \\ \hline
-
+  \cpp{mf.dof\_on\_region(i)} & Return a \cpp{dal::bit_vector} which
+  represent the indices of dof which are in the set of convexes or the
+  set of faces of index \cpp{i} (see the \cpp{getfem::mesh} object).
+  For a reduced mesh_fem,
+  a dof is lying on a region if its potential corresponding shape
+  function is nonzero on this region. The extension matrix is used
+  to make the correspondance between basic and reduced dofs. \\ \hline
 \end{tabular} \end{center}
 
+
+\subsection{Third level : the optional linear transformation (or reduction)}
+
+As describe above, it is possible to provide two matrices, a reduction matrix $R$ and an extension matrix $E$ which will describe a linear transforamtion of the degrees of freedom. If $V$ is the vector of basic degrees of freedom, then $U=RV$ will be the vector of reduced degrees of freedom. Contrarily, given a vector $U$ of reduced dof, $V=EU$ will correspond to a vector of basic dof. In simle cases, $E$ will be simply the transpose of $R$. NOTE that every line of the extension matrix should be sparse. Otherwise, each assembled matrix will be plain !
+
+A natural condition is that $RE = I$ where $I$ is the identity matrix.
+
+
+\begin{center} \texonly{\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline}\htmlonly{\xmlattributes*{table}{border}\begin{tabular}{l|l}}
+
+  \cpp{mf.nb\_dof()} & gives the total number of different degrees of freedom. If the optional reduction is used, this will be the number of columns of the reduction matrix. Otherwise it will return the number of basic degrees of freedom.  \\ \hline
+
+  \cpp{mf.is\_reduced()} & return a boolean. True if the reduction is used.  \\ \hline
+
+  \cpp{mf.reduction\_matrix()} &  return a const reference to the reduction matrix $R$. \\ \hline
+
+  \cpp{mf.extension\_matrix()} &  return a const reference to the extension matrix $E$. \\ \hline
+
+  \cpp{mf.set\_reduction\_matrices(R, E)} &  Set the reduction and extension matrices to \cpp{R} and \cpp{E} and valid their use. \\ \hline
+
+  \cpp{mf.set\_reduction(b)} &  Where $b$ is a boolean. Cancel the reduction if $b$ is true and valid it is \cpp{b} is true. If \cpp{b} is true, the extension and reduction matrices have to be set previously.\\ \hline
+
+  \cpp{mf.reduce_to_basic_dof(idof)} & Set the reduction and extension matricescorrespondinf to keep only the basic dofs present in \cpp{idof}. The parameter \cpp{idof} is either a \cpp{dal::bit_vector} or a \cpp{std::set<size\_type>}. This is equivalent to the use of a \cpp{getfem::partial\_mesh\_fem} object.\\ \hline
+
+\end{tabular} \end{center}
 
 \subsection{Obtaining generic mesh\_fems}
 
@@ -806,6 +855,22 @@ this function are stored in a cache, which means that calling this
 function twice with the same arguments will return the same
 \cpp{mesh_fem} object. A consequence is that you should NEVER modify
 this mesh\_fem!
+
+\subsection{The  partial\_mesh\_fem object}
+\index{GETFEM!getfem::partial\_mesh\_fem}
+
+The \cpp{getfem::partial\_mesh\_fem} object defined in the file \cpp{getfem_partial\_mesh\_fem.h} allows to reduce a \cpp{getfem::mesh\_fem} object to a set of dofs. The interest is this is not a complete description of a finite element method, it refers to the original \cpp{getfem::mesh\_fem} and just add reduction and extension matrices. For instance, you can reduce a \cpp{mesh\_fem} obtained by the function \cpp{getfem::classical\_mesh\_fem(mesh, K)} to obtain a finite element method on a mesh region (which can be a boundary). The \cpp{getfem::partial\_mesh\_fem} is in particular used to obtain multiplier description to prescribed boundary conditions. 
+
+The declaration of a \cpp{getfem::partial\_mesh\_fem} object is the following:
+\begin{cppcode}
+  getfem::partial\_mesh\_fem(mf) partial\_mf;
+\end{cppcode}
+
+Then, one has to call the adapt method as follows:
+\begin{cppcode}
+  partial\_mf.adapt(kept\_dof, rejected\_elt = dal::bit\_vector());
+\end{cppcode}
+where \cpp{kept\_dof} and \cpp{rejected\_elt} are some \cpp{dal::bit\_vector()}. \cpp{kept\_dof} is the list of dof indices of the original \cpp{mesh\_fem} \cpp{mf} to be kept. \cpp{rejected\_elt} is an optional parameter that contains a list of element indices on which the \cpp{getfem::partial\_mesh\_fem} states that there is no finite element method. This is to avoid unnecessary computations during assembly procedures.
 
 \section{Selecting integration methods}
 \index{GETFEM!getfem::mesh\_im}

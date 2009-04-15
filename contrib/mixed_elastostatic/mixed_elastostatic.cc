@@ -527,12 +527,10 @@ void elastostatic_problem::init(void) {
 /* compute the error with respect to the exact solution */
 void elastostatic_problem::compute_error(plain_vector &U) {
   size_type N = mesh.dim();
-  std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
+  std::vector<scalar_type> V(mf_rhs.nb_dof()*N), W(mf_rhs.nb_dof()*N);
   getfem::interpolation(mf_u, mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
-    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
-	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
-  }
+  getfem::interpolation_function(mf_rhs, W, sol_u);
+  gmm::add(gmm::scaled(W, -1.0), V);
 
   cout.precision(16);
   mf_rhs.set_qdim(dim_type(N));

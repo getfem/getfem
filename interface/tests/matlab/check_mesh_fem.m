@@ -147,12 +147,12 @@ function check_mesh_fem(iverbose,idebug)
   m2=gf_mesh('from string',s);
 
   gf_mesh_fem_get(mf,'nbdof');
-  d=gf_mesh_fem_get(mf,'dof from cv',[1 5]);
+  d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5]);
   assert(['d==[1 2 3 4 5 6 37 40 42 43 44 45 46 47 48 49 50 51 52 53 54 55 ' ...
           '56 57]']);
-  d=gf_mesh_fem_get(mf,'dof from cv',[1 5;1 2]);
+  d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5;1 2]);
   assert('d==[3 5 6 37 40 42 45 47 50 52 55 57]');
-  d=gf_mesh_fem_get(mf,'dof from cvid',5);
+  d=gf_mesh_fem_get(mf,'basic dof from cvid',5);
   assert('d==[37 43 44 45 46 47 40 48 49 50 51 52 42 53 54 55 56 57]');
   
   s2=gf_mesh_get(mf,'char');
@@ -167,17 +167,17 @@ function check_mesh_fem(iverbose,idebug)
   mf2=gf_mesh_fem('from string',[s3 s2]); 
   
   
-  d=gf_mesh_fem_get(mf2,'dof from cv',[1 5]);
+  d=gf_mesh_fem_get(mf2,'basic dof from cv',[1 5]);
 %  dd=[1 2 3 4 5 6 7 8 9 10 11 12 73 74 79 80 83 84 85 86 87 88 89 90 91 92 ...
 %      93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 ...
 %      112 113 114];
 %  assert('d==dd');
   
-  d=gf_mesh_fem_get(mf2,'dof from cv',[1 5;1 2]);
+  d=gf_mesh_fem_get(mf2,'basic dof from cv',[1 5;1 2]);
 %  dd=[5 6 9 10 11 12 73 74 79 80 83 84 89 90 93 94 99 100 103 104 109 110 113 ...
 %      114];  
 %  assert('d==dd');
-  d=gf_mesh_fem_get(mf2,'dof from cvid',5);
+  d=gf_mesh_fem_get(mf2,'basic dof from cvid',5);
 %  dd=[73 74 85 86 87 88 89 90 91 92 93 94 79 80 95 96 97 98 99 100 101 102 ...
 %      103 104 83 84 105 106 107 108 109 110 111 112 113 114];  
 %  assert('d==dd');
@@ -208,8 +208,8 @@ function check_mesh_fem(iverbose,idebug)
   gf_mesh_set(m, 'boundary', 3, [1 1 1; 1 2 3]);
   gf_mesh_set(m, 'boundary', 7, [3 4; 3 2]);
   cl=[1:5 7 8];
-  asserterr('gf_mesh_fem_get(mf_u, ''non conformal dof'')');
-  d=gf_mesh_fem_get(mf_u, 'non conformal dof',cl);
+  asserterr('gf_mesh_fem_get(mf_u, ''non conformal basic dof'')');
+  d=gf_mesh_fem_get(mf_u, 'non conformal basic dof',cl);
   %gf_plot_mesh(mf_u, 'dof', 'on');
   assert('d==[11 12 13 14 15 16 21 22]');
 
@@ -290,7 +290,7 @@ function check_mesh_fem(iverbose,idebug)
   d=gf_mesh_get(m,'pid');
   assert('d(:)==c(:)');
   
-  d=gf_mesh_fem_get(mf2,'dof on boundary', 0:100);
+  d=gf_mesh_fem_get(mf2,'basic dof on region', 0:100);
   
   % test for optimize_structure
   maxpid=gf_mesh_get(m,'max pid');

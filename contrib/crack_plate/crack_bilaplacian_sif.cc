@@ -144,14 +144,15 @@ namespace getfem {
 
     /* fill the "q" ring field with a C^1 field, equal to 
        1 on the inner boundary, and equal to zero on the outer boundary */
+    GMM_ASSERT1(!mf_pre_u.is_reduced(), "To be adapted");
     std::vector<scalar_type> q(mf_pre_u.nb_dof());
     for (unsigned d = 0; d < mf_pre_u.nb_dof(); ++d) {
         // getting a getfem::pdof_description about the curent dof
-        const getfem::mesh::ind_cv_ct cvs = mf_pre_u.convex_to_dof(d);
+        const getfem::mesh::ind_cv_ct cvs = mf_pre_u.convex_to_basic_dof(d);
         unsigned cv = cvs[0], ld = unsigned(-1);
         // getting the local index  (ld)
-        for (unsigned dd = 0; dd < mf_pre_u.nb_dof_of_element(cv); dd += 1) {
-           if (mf_pre_u.ind_dof_of_element(cv)[dd] == d) {
+        for (unsigned dd = 0; dd < mf_pre_u.nb_basic_dof_of_element(cv); dd += 1) {
+           if (mf_pre_u.ind_basic_dof_of_element(cv)[dd] == d) {
              ld = dd; 
              break;}
         }
@@ -159,7 +160,7 @@ namespace getfem {
         if ( pf->dof_types().at(ld) == getfem::lagrange_dof(2)){ 
                 // pf-> dof_types gives a std_vector<pdof_desciption>
 //        if (ld == 0 || ld == 3 || ld == 6 || ld == 9){
-           base_node P = mf_pre_u.point_of_dof(d);
+           base_node P = mf_pre_u.point_of_basic_dof(d);
            q[d] = (gmm::vect_dist2(P, crack_tip) > 0.999 * ring_radius) ? 0. : 1.; 
         }
         else
@@ -430,8 +431,8 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
     getfem::level_set ls2(mesh, 1, true) ;
     scalar_type x, y ;
     for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
-      x = ls2.get_mesh_fem().point_of_dof(d)[0];
-      y = ls2.get_mesh_fem().point_of_dof(d)[1];
+      x = ls2.get_mesh_fem().point_of_basic_dof(d)[0];
+      y = ls2.get_mesh_fem().point_of_basic_dof(d)[1];
       ls2.values(0)[d] = y + 1e-6 ;
       ls2.values(1)[d] = x ;
       }
@@ -441,8 +442,8 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
     
     getfem::level_set ls3(mesh, 1, true) ;
     for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
-      x = ls3.get_mesh_fem().point_of_dof(d)[0];
-      y = ls3.get_mesh_fem().point_of_dof(d)[1];
+      x = ls3.get_mesh_fem().point_of_basic_dof(d)[0];
+      y = ls3.get_mesh_fem().point_of_basic_dof(d)[1];
       ls3.values(0)[d] = y - 1e-6 ;
       ls3.values(1)[d] = x ;
       }  
@@ -573,12 +574,13 @@ void bilaplacian_crack_problem::sif_direct_estimation(const plain_vector &U){
                                    // standard or without any enrichment.
 
    // Looking for coefficients corresponding to global singularites
+   GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
    for (size_type d=0; d < mf_u().nb_dof(); d += q) {
-      size_type cv = mf_u().first_convex_of_dof(d) ;
+      size_type cv = mf_u().first_convex_of_basic_dof(d) ;
       getfem::pfem pf = mf_u().fem_of_element(cv);
       unsigned ld = unsigned(-1);
-      for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += q) {
-         if (mf_u().ind_dof_of_element(cv)[dd] == d){ 
+      for (unsigned dd = 0; dd < mf_u().nb_basic_dof_of_element(cv); dd += q) {
+         if (mf_u().ind_basic_dof_of_element(cv)[dd] == d){ 
             ld = dd/q; 
             break;
          }

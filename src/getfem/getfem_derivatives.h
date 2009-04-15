@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard
+// Copyright (C) 2002-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -29,7 +29,8 @@
 //===========================================================================
 
 /**@file getfem_derivatives.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date June 17, 2002.
    @brief Compute the gradient of a field on a getfem::mesh_fem.
 */
@@ -52,18 +53,23 @@ namespace getfem
       be a scalar mesh_fem, in which case the derivatives are stored in
       the order: DxUx,DyUx,DzUx,DxUy,DyUy,...
 
-      in any case, the size of V should be N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
+      in any case, the size of V should be
+      N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
       elements (this is not checked by the function!)
   */
   template<class VECT1, class VECT2>
   void compute_gradient(const mesh_fem &mf, const mesh_fem &mf_target,
-			const VECT1 &U, VECT2 &V) {
+			const VECT1 &UU, VECT2 &VV) {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
 
     size_type N = mf.linked_mesh().dim();
     size_type qdim = mf.get_qdim();
     size_type target_qdim = mf_target.get_qdim();
+    size_type qqdimt = qdim * N / target_qdim;
+    std::vector<T> U(mf.nb_basic_dof());
+    std::vector<T> V(mf_target.nb_basic_dof() * qqdimt);
 
+    mf.extend_vector(UU, U);
 
     GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
 		"meshes are different.");
@@ -99,18 +105,20 @@ namespace getfem
 
       gmm::dense_matrix<T> grad(N,qdim), gradt(qdim,N);
       fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
-      gmm::resize(coeff, mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), 
-		coeff);
+      gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
-	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
-	  N*(qdim/target_qdim);
+	size_type dof_t =
+	  mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
 	ctx.set_ii(j);
 	pf->interpolation_grad(ctx, coeff, gradt, dim_type(qdim));
         gmm::copy(gmm::transposed(gradt),grad);
 	std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
       }
     }
+
+    mf_target.reduce_vector(V, VV);
   }
 
   /** Compute the hessian of a field on a getfem::mesh_fem.
@@ -124,17 +132,23 @@ namespace getfem
       be a scalar mesh_fem, in which case the derivatives are stored in
       the order: DxxUx,DxyUx, DyxUx, DyyUx, ...
 
-      in any case, the size of V should be N*N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
+      in any case, the size of V should be
+      N*N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
       elements (this is not checked by the function!)
   */
   template<class VECT1, class VECT2>
   void compute_hessian(const mesh_fem &mf, const mesh_fem &mf_target,
-			const VECT1 &U, VECT2 &V) {
+			const VECT1 &UU, VECT2 &VV) {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
 
     size_type N = mf.linked_mesh().dim();
     size_type qdim = mf.get_qdim();
     size_type target_qdim = mf_target.get_qdim();
+    size_type qqdimt = qdim * N * N / target_qdim;
+    std::vector<T> U(mf.nb_basic_dof());
+    std::vector<T> V(mf_target.nb_basic_dof() * qqdimt);
+
+    mf.extend_vector(UU, U);
 
     GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
 		"meshes are different.");
@@ -169,18 +183,20 @@ namespace getfem
 
       gmm::dense_matrix<T> hess(N*N,qdim), hesst(qdim,N*N);
       fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
-      gmm::resize(coeff, mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), 
-		coeff);
+      gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
-	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
-	  N*N*(qdim/target_qdim);
+	size_type dof_t
+	  = mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
 	ctx.set_ii(j);
 	pf->interpolation_hess(ctx, coeff, hesst, dim_type(qdim));
         gmm::copy(gmm::transposed(hesst), hess);
 	std::copy(hess.begin(), hess.end(), V.begin() + dof_t);
       }
     }
+
+    mf_target.reduce_vector(V, VV);
   }
 
   /**Compute the Von-Mises stress of a field (only valid for
@@ -208,6 +224,8 @@ namespace getfem
     
     getfem::compute_gradient(mf_u, mf_vm, U, DU);
     
+    GMM_ASSERT1(!mf_vm.is_reduced(), "Sorry, to be done");
+
     scalar_type vm_min, vm_max;
     for (dal::bv_visitor i(mf_vm_dofs); !i.finished(); ++i) {
       VM[i] = 0;
@@ -248,10 +266,12 @@ namespace getfem
       LAMBDA(mf_vm.nb_dof()), MU(mf_vm.nb_dof());
     base_matrix sigma(N,N);
     base_vector eig(N);
-    if (tresca)
-      interpolation(mf_lambda, mf_vm, lambda, LAMBDA);
+    if (tresca) interpolation(mf_lambda, mf_vm, lambda, LAMBDA);
     interpolation(mf_mu, mf_vm, mu, MU);
     compute_gradient(mf_u, mf_vm, U, GRAD);
+
+    GMM_ASSERT1(!mf_vm.is_reduced(), "Sorry, to be done");
+    
     for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
       scalar_type trE = 0;
       for (unsigned j = 0; j < N; ++j)

@@ -212,13 +212,32 @@ struct elastostatic_problem {
 
   std::string datafilename;
   bgeot::md_param PARAM;
-
+  
+  void select_boundaries(void);
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
   elastostatic_problem(void) : mim(mesh),mf_u(mesh), mf_mult(mesh),
 			       mf_rhs(mesh),mf_p(mesh) {}
 };
+
+/* Selects the boundaries */
+
+void elastostatic_problem::select_boundaries(void) {
+  size_type N = mesh.dim();
+  getfem::mesh_region border_faces;
+  getfem::outer_faces_of_mesh(mesh, border_faces);
+  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+    base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
+    un /= gmm::vect_norm2(un);
+    if (gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
+      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+    } else {
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
+    }
+  }
+}
+
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
@@ -279,24 +298,22 @@ void elastostatic_problem::init(void) {
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
-  mim.set_integration_method(mesh.convex_index(), ppi);
-  mf_u.set_finite_element(mesh.convex_index(), pf_u);
+  mim.set_integration_method(ppi);
+  mf_u.set_finite_element(pf_u);
 
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
   if (dirichlet_fem_name.size() == 0)
-    mf_mult.set_finite_element(mesh.convex_index(), pf_u);
+    mf_mult.set_finite_element(pf_u);
   else {
     cout << "DIRICHLET_FEM_TYPE="  << dirichlet_fem_name << "\n";
-    mf_mult.set_finite_element(mesh.convex_index(), 
-			       getfem::fem_descriptor(dirichlet_fem_name));
+    mf_mult.set_finite_element(getfem::fem_descriptor(dirichlet_fem_name));
   }
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
   if (mixed_pressure) {
     std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
-    mf_p.set_finite_element(mesh.convex_index(),
-			    getfem::fem_descriptor(FEM_TYPE_P));
+    mf_p.set_finite_element(getfem::fem_descriptor(FEM_TYPE_P));
   }
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
@@ -306,26 +323,15 @@ void elastostatic_problem::init(void) {
     GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
-    mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
+    mf_rhs.set_finite_element(pf_u);
   } else {
-    mf_rhs.set_finite_element(mesh.convex_index(), 
-			      getfem::fem_descriptor(data_fem_name));
+    mf_rhs.set_finite_element(getfem::fem_descriptor(data_fem_name));
   }
   
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
-  getfem::mesh_region border_faces;
-  getfem::outer_faces_of_mesh(mesh, border_faces);
-  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-    base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
-    un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1] - 1.0) < 0.5) { // new Neumann face
-      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
-    } else {
-      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
-    }
-  }
+  select_boundaries();
 
 #if GETFEM_PARA_LEVEL > 1
   
@@ -345,10 +351,10 @@ void elastostatic_problem::init(void) {
 /* compute the error with respect to the exact solution */
 void elastostatic_problem::compute_error(plain_vector &U) {
   size_type N = mesh.dim();
-  std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
+  std::vector<scalar_type> V(mf_rhs.nb_basic_dof()*N);
   getfem::interpolation(mf_u, mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
-    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
+  for (size_type i = 0; i < mf_rhs.nb_basic_dof(); ++i) {
+    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_basic_dof(i)), -1.0),
 	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
   }
 
@@ -420,7 +426,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   dal::bit_vector cvref;
 
   do { // solve with optional refinement
-
+ 
     // Defining the volumic source term.
     size_type nb_dof_rhs = mf_rhs.nb_dof();
     plain_vector F(nb_dof_rhs * N);

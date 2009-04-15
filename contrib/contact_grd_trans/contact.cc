@@ -261,7 +261,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   scalar_type deltat = PARAM.real_value("DELTAT", "Time step");
  
   // contact condition for Lagrange elements
-  dal::bit_vector cn = mf_u.dof_on_set(FRICTION_BOUNDARY_NUM);
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
+  dal::bit_vector cn = mf_u.basic_dof_on_region(FRICTION_BOUNDARY_NUM);
 //   cout << "cn = " << cn << endl;
 //   cout << "cn.card()/N = " << cn.card()/N << endl;
   sparse_matrix BN(cn.card()/N, mf_u.nb_dof());

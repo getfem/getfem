@@ -341,6 +341,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
   base_node xref2(N);
   base_small_vector up(N), jump(N);
   
+  GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
 
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
     
@@ -353,8 +354,8 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 
     bgeot::vectors_to_base_matrix(G1, mesh.points_of_convex(cv));
 
-    coeff1.resize(mf_u().nb_dof_of_element(cv));
-    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u().ind_dof_of_element(cv))), coeff1);
+    coeff1.resize(mf_u().nb_basic_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u().ind_basic_dof_of_element(cv))), coeff1);
 
     getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, cv);
      
@@ -448,8 +449,8 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
       bgeot::pgeometric_trans pgt2 = mesh.trans_of_convex(cvn);
       getfem::pfem pf2 = mf_u().fem_of_element(cvn);
       bgeot::vectors_to_base_matrix(G2, mesh.points_of_convex(cvn));
-      coeff2.resize(mf_u().nb_dof_of_element(cvn));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u().ind_dof_of_element(cvn))), coeff2);
+      coeff2.resize(mf_u().nb_basic_dof_of_element(cvn));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u().ind_basic_dof_of_element(cvn))), coeff2);
       getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(N), G2, cvn);
       gic.init(mesh.points_of_convex(cvn), pgt2);
 
@@ -513,8 +514,8 @@ bool crack_problem::solve(plain_vector &U) {
     size_type nb_dof_rhs = mf_rhs.nb_dof();
     ls.reinit();
     for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-      base_small_vector v =  ls_function(ls.get_mesh_fem().point_of_dof(d),
-					 option);
+      base_small_vector
+	v = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), option);
       ls.values(0)[d] = v[0];
       ls.values(1)[d] = v[1];
     }
@@ -620,7 +621,7 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "Refining process complete. The mesh contains now "
        <<  mesh.convex_index().card() << " convexes "<<endl;
   
-  dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
+  dal::bit_vector blocked_dof = mf_u().basic_dof_on_region(5);
   getfem::mesh_fem mf_printed(mesh, dim_type(N)), mf_printed_vm(mesh);
   std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
   mf_printed.set_finite_element(mesh.convex_index(),

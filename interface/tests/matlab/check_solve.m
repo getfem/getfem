@@ -40,7 +40,7 @@ function res=check_solve(iverbose,idebug)
   end;
   [U,P]=gf_solve(pde);  
   Uco=gf_compute(pde.mf_u, U, 'interpolate on', mf_comp); % tests interpolation on same mesh
-  dof=gf_mesh_fem_get(mf_comp, 'dof nodes'); Xc=dof(1,1:2:end); Yc=dof(2,1:2:end);
+  dof=gf_mesh_fem_get(mf_comp, 'basic dof nodes'); Xc=dof(1,1:2:end); Yc=dof(2,1:2:end);
   Uex=[-Yc.*(Yc-1); zeros(1,numel(Xc))]; Uex=Uex(:)';
 
   % norm tests
@@ -70,7 +70,7 @@ function res=check_solve(iverbose,idebug)
   asserterr('gf_compute(pde.mf_u, U, ''gradient'', mf_DU)'); % cause different meshes;
   UU=gf_compute(pde.mf_u, U, 'interpolate on', mf_DU); % tests interpolation on other mesh
   DU = gf_compute(mf_DU, UU, 'gradient', mf_DU);
-  dof=gf_mesh_fem_get(mf_DU, 'dof nodes'); Xc=dof(1,1:2:end); Yc=dof(2,1:2:end);
+  dof=gf_mesh_fem_get(mf_DU, 'basic dof nodes'); Xc=dof(1,1:2:end); Yc=dof(2,1:2:end);
   DUex=[1-2*Yc; zeros(1,numel(Xc))]; DUex=DUex(:)';
   diff=norm(DUex-DU(2,:));
   assert('diff>4.62 & diff<4.64');

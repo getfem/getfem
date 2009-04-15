@@ -175,7 +175,7 @@ void gf_workspace(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     workspace().clear_workspace();
   } else if (check_cmd(cmd, "chdir", in, out, 1, 1, 0, 0)) {
-    ::chdir(in.pop().to_string().c_str());
+    if (::chdir(in.pop().to_string().c_str())) {}
   } else if (check_cmd(cmd, "class name", in, out, 0, 1, 0, 1)) {
     id_type id, cid; in.pop().to_object_id(&id, &cid);
     out.pop().from_string(name_of_getfemint_class_id(cid));

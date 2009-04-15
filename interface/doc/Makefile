@@ -81,7 +81,7 @@ clean:
 html:	gfm.tex gfm.idx
 	-rm -rf gfm/
 	hyperlatex gfm.tex
-	( cd gfm && ../cleanup_html_doc.pl ) && mv gfm getfem_matlab
+	( cd gfm && ../cleanup_html_doc.pl ) && rm -fr getfem_matlab && mv gfm getfem_matlab
 
 htmlupload: html
 	cp $(PNGFIGS) $(BASEPNGFIGS) getfem_matlab/

@@ -51,7 +51,7 @@ set(m, 'region', MORTAR_BOUNDARY_OUT, b_out);
 gf_plot_mesh(m,'boundaries',40);
 disp('This is the mortar interface (press a key to continue)'); pause;
 
-indm=get(mfm, 'dof on region', MORTAR_BOUNDARY_OUT);
+indm=get(mfm, 'basic dof on region', MORTAR_BOUNDARY_OUT);
 expr = 'M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i)';
 M =   gf_asm('boundary', MORTAR_BOUNDARY_IN , expr, mim, mfm, mfu);
 M = M-gf_asm('boundary', MORTAR_BOUNDARY_OUT, expr, mim, mfm, mfu);

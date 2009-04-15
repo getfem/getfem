@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -61,10 +61,13 @@ namespace getfem {
     dim_ = dim_type(-1);
     build_rtree();
     
+    GMM_ASSERT1(!mf.is_reduced(),
+		"Interpolated fem works only on non reduced mesh_fems");
+
     std::vector<elt_interpolation_data> vv(mim.convex_index().last_true() + 1);
     elements.swap(vv);
     base_node gpt;
-    ind_dof.resize(mf.nb_dof()); 
+    ind_dof.resize(mf.nb_basic_dof()); 
     dal::bit_vector alldofs;
     size_type max_dof = 0;
     if (mim.convex_index().card() == 0) return;
@@ -89,9 +92,9 @@ namespace getfem {
 			     mim.linked_mesh().points_of_convex(cv));
 	gpid.iflags = find_a_point(gpt, gpid.ptref, gpid.elt) ? 1 : 0;
 	if (gpid.iflags && last_cv != gpid.elt) {
-	  size_type nbd = mf.nb_dof_of_element(gpid.elt);
+	  size_type nbd = mf.nb_basic_dof_of_element(gpid.elt);
 	  for (size_type i = 0; i < nbd; ++i) {
-	    size_type idof = mf.ind_dof_of_element(gpid.elt)[i];
+	    size_type idof = mf.ind_basic_dof_of_element(gpid.elt)[i];
 	    if (!(blocked_dof[idof])) dofs.add(idof);
 	  }
 	  last_cv = gpid.elt;
@@ -107,11 +110,12 @@ namespace getfem {
       for (size_type k = 0; k < pai->nb_points(); ++k) {
 	gausspt_interpolation_data &gpid = elements[cv].gausspt[k];
 	if (gpid.iflags) {
-	  size_type nbd = mf.nb_dof_of_element(gpid.elt);
+	  size_type nbd = mf.nb_basic_dof_of_element(gpid.elt);
 	  gpid.local_dof.resize(nbd);
 	  for (size_type i = 0; i < nbd; ++i) {
-	    size_type ndof = mf.ind_dof_of_element(gpid.elt)[i];
-	    gpid.local_dof[i] = dofs.is_in(ndof) ? ind_dof[ndof] : size_type(-1);
+	    size_type ndof = mf.ind_basic_dof_of_element(gpid.elt)[i];
+	    gpid.local_dof[i] = dofs.is_in(ndof) ? ind_dof[ndof]
+	                                         : size_type(-1);
 	  }
 	}
       }
@@ -150,7 +154,8 @@ namespace getfem {
   (size_type cv) const
   { 
     if (mim.linked_mesh().convex_index().is_in(cv))
-      return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
+      return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv),
+		 mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
     else GMM_ASSERT1(false, "Wrong convex number: " << cv);
   }
 
@@ -194,9 +199,8 @@ namespace getfem {
     if (e.nb_dof == 0) return;
     
     if (c.have_pgp() && 
-	(&c.pgp()->get_point_tab() == &e.pim->approx_method()->integration_points())) {
-      /*(&c.pgp()->get_point_tab() == 
-	&mim.int_method_of_element(c.convex_num())->approx_method()->integration_points())) { */
+	(&c.pgp()->get_point_tab()
+	 == &e.pim->approx_method()->integration_points())) {
       gausspt_interpolation_data &gpid = e.gausspt.at(c.ii());
       if (gpid.iflags & 1) {
 	cv = gpid.elt;
@@ -223,8 +227,10 @@ namespace getfem {
 	}
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	  for (size_type j = 0; j < target_dim(); ++j)
-	    if (ind_dof.at(mf.ind_dof_of_element(cv)[i*rdim+j*mdim]) != size_type(-1)) {
-	      t(ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]], j) = taux(i, j*(1-mdim));
+	    if (ind_dof.at(mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim])
+		!= size_type(-1)) {
+	      t(ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]], j)
+		= taux(i, j*(1-mdim));
 	    }
 	for (size_type i = 0; i < elements[c.convex_num()].nb_dof; ++i)
 	  ind_dof[e.inddof[i]] = size_type(-1);
@@ -245,17 +251,8 @@ namespace getfem {
     if (nbdof == 0) return;
     
     if (c.have_pgp()  && 
-	(&c.pgp()->get_point_tab() == &e.pim->approx_method()->integration_points())) {
-      /*if (c.ii() >= e.gausspt.size()) {
-	cerr << "ATTENTION \n";
-	cerr << "im_nbpt() = " << mim.int_method_of_element(c.convex_num())->approx_method()->nb_points() << "\n";
-	cerr << "e.nb_dof = " << e.nb_dof << "\n";
-	for (unsigned i=0; i < e.gausspt.size(); ++i) {
-	  cerr << "  e.gausspt[" << i << "]={cv=" << e.gausspt[i].elt << ", iflags=" << e.gausspt[i].iflags << "\n";
-	}
-	cerr << "pgp.nb_points = " << c.pgp()->get_point_tab().size() << " , @" << &c.pgp()->get_point_tab() << "\n";
-	cerr << "pgp: trans = " << bgeot::name_of_geometric_trans(c.pgp()->get_trans()) << "\n";
-	}*/
+	(&c.pgp()->get_point_tab()
+	 == &e.pim->approx_method()->integration_points())) {
       gausspt_interpolation_data &gpid = e.gausspt.at(c.ii());
       if (gpid.iflags & 1) {
 	cv = gpid.elt;
@@ -282,13 +279,15 @@ namespace getfem {
 	    if (gpid.local_dof[i*rdim] != size_type(-1))
 	      for (size_type j = 0; j < target_dim(); ++j)
 		for (size_type k = 0; k < N0; ++k)
-		  t(gpid.local_dof[i*rdim+j*mdim], j, k) = taux(i, j*(1-mdim), k);
+		  t(gpid.local_dof[i*rdim+j*mdim], j, k)
+		    = taux(i, j*(1-mdim), k);
 	  if (store_values) { gpid.grad_val = t; gpid.iflags |= 4; }
 	}
       }
     }
     else {
-      cerr << "NON PGP OU MAUVAIS PTS sz=" << elements.size() << ", cv=" << c.convex_num() << " ";
+      cerr << "NON PGP OU MAUVAIS PTS sz=" << elements.size() << ", cv="
+	   << c.convex_num() << " ";
       cerr << "ii=" << c.ii() << ", sz=" << e.gausspt.size() << "\n";
       
       if (find_a_point(c.xreal(), ptref, cv)) {
@@ -303,19 +302,22 @@ namespace getfem {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
 	      for (size_type k = 0; k < N0; ++k)
-		if (ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]] != size_type(-1)) {
+		if (ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]]
+		    != size_type(-1)) {
 		  scalar_type ee(0);
 		  for (size_type l = 0; l < N0; ++l)
 		    ee += trans(l, k) * taux(i, j*(1-mdim), l);
-		  t(ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]],j,k) = ee;
+		  t(ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]],j,k)=ee;
 		}
 	}
 	else {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
 	      for (size_type k = 0; k < N0; ++k)
-		if (ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]] != size_type(-1))
-		  t(ind_dof[mf.ind_dof_of_element(cv)[i*rdim+j*mdim]],j,k) = taux(i,j*(1-mdim),k);
+		if (ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]]
+		    != size_type(-1))
+		  t(ind_dof[mf.ind_basic_dof_of_element(cv)[i*rdim+j*mdim]],j,k)
+		    = taux(i,j*(1-mdim),k);
 	}
 	  for (size_type i = 0; i < nbdof; ++i)
 	    ind_dof[e.inddof[i]] = size_type(-1);
@@ -330,7 +332,8 @@ namespace getfem {
 
   dal::bit_vector interpolated_fem::interpolated_convexes() const {
     dal::bit_vector bv;
-    for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished();
+	 ++cv) {
       for (unsigned ii=0; ii < elements.at(cv).gausspt.size(); ++ii) {
 	if (elements[cv].gausspt[ii].iflags)
 	  bv.add(elements[cv].gausspt[ii].elt);
@@ -339,16 +342,19 @@ namespace getfem {
     return bv;
   }
 
-  void interpolated_fem::gauss_pts_stats(unsigned &ming, unsigned &maxg, scalar_type &meang) const {
+  void interpolated_fem::gauss_pts_stats(unsigned &ming, unsigned &maxg,
+					 scalar_type &meang) const {
     std::vector<unsigned> v(mf.linked_mesh().convex_index().last_true()+1);
-    for (dal::bv_visitor cv(mim.linked_mesh().convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(mim.linked_mesh().convex_index());
+	 !cv.finished(); ++cv) {
       for (unsigned ii=0; ii < elements.at(cv).gausspt.size(); ++ii) {
 	if (elements[cv].gausspt[ii].iflags)
 	  v[elements[cv].gausspt[ii].elt]++;
       }
     }
     ming = 100000; maxg = 0; meang = 0;
-    for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(mf.linked_mesh().convex_index());
+	 !cv.finished(); ++cv) {
       ming = std::min(ming, v[cv]);
       maxg = std::max(maxg, v[cv]);
       meang += v[cv];
@@ -362,7 +368,7 @@ namespace getfem {
     sz += sizeof(*this);
     sz += elements.capacity() * sizeof(elt_interpolation_data);
     for (unsigned i=0; i < elements.size(); ++i) {
-      sz += elements[i].gausspt.capacity() * sizeof(gausspt_interpolation_data);
+      sz += elements[i].gausspt.capacity()*sizeof(gausspt_interpolation_data);
       sz += elements[i].inddof.capacity() * sizeof(size_type);
       for (unsigned j=0; j < elements[i].gausspt.size(); ++j) {
 	sz += elements[i].gausspt[j].local_dof.capacity() * sizeof(size_type);

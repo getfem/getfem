@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 1999-2008 Yves Renard
+// Copyright (C) 1999-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -73,12 +73,14 @@ namespace getfem {
       if (cv1 > cv2) {
 
 	unsigned qdim = mf.get_qdim(), N = mf.linked_mesh().dim();
-	coeff1.resize(mf.nb_dof_of_element(cv1));
+	coeff1.resize(mf.nb_basic_dof_of_element(cv1));
 	gmm::copy(gmm::sub_vector
-		  (U, gmm::sub_index(mf.ind_dof_of_element(cv1))), coeff1);
-	coeff2.resize(mf.nb_dof_of_element(cv2));
+		  (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv1))),
+		  coeff1);
+	coeff2.resize(mf.nb_basic_dof_of_element(cv2));
 	gmm::copy(gmm::sub_vector
-		  (U, gmm::sub_index(mf.ind_dof_of_element(cv2))), coeff2);
+		  (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv2))),
+		  coeff2);
 	
 	gmm::resize(grad1, qdim, N); gmm::resize(grad2, qdim, N);
 	pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
@@ -113,19 +115,22 @@ namespace getfem {
 
   template <typename VECT1, typename VECT2>
   void error_estimate(const mesh_im &mim, const mesh_fem &mf,
-		      const VECT1 &U, VECT2 &err,
+		      const VECT1 &UU, VECT2 &err,
 		      mesh_region rg = mesh_region::all_convexes()) {
     
+    typedef typename gmm::linalg_traits<VECT1>::value_type T;
+    std::vector<T> U(mf.nb_basic_dof());
+    mf.extend_vector(UU, U);
+
     const mesh &m = mim.linked_mesh();
-    GMM_ASSERT3(&m == &mf.linked_mesh() && 
-		gmm::vect_size(U) >= mf.nb_dof() &&
+    GMM_ASSERT3(&m == &mf.linked_mesh() &&
 		gmm::vect_size(err) >= m.convex_index().last_true()+1, "");
     rg.from_mesh(m);
     GMM_ASSERT1(rg.is_only_convexes(), "Invalid mesh region");
     mesh_region sub_rg = rg;
     m.intersect_with_mpi_region(sub_rg);
     gmm::clear(err);
-    inter_element_normal_derivative_jump<VECT1, VECT2> iendj(U, err, mim, mf);
+    inter_element_normal_derivative_jump<std::vector<T>, VECT2> iendj(U, err, mim, mf);
 
     for (mr_visitor cv1(sub_rg); !cv1.finished(); ++cv1)
       for (short_type f=0; f<m.structure_of_convex(cv1.cv())->nb_faces(); ++f)

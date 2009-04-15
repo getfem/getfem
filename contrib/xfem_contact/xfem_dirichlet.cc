@@ -213,26 +213,29 @@ void test_mim(getfem::mesh_im_level_set &mim, getfem::mesh_fem &mf_rhs,
 template<typename VECT1> class level_set_unit_normal 
   : public getfem::nonlinear_elem_term {
   const getfem::mesh_fem &mf;
-  const VECT1 &U;
+  std::vector<scalar_type> U;
   size_type N;
   base_matrix gradU;
   bgeot::base_vector coeff;
   bgeot::multi_index sizes_;
 public:
   level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
-    : mf(mf_), U(U_), N(mf_.linked_mesh().dim()), gradU(1, N)
-  { sizes_.resize(1); sizes_[0] = short_type(N); }
+    : mf(mf_), U(mf_.nb_basic_dof()), N(mf_.linked_mesh().dim()),
+      gradU(1, N) {
+    sizes_.resize(1); sizes_[0] = short_type(N);
+    mf.extend_vector(U_, U);
+  }
   const bgeot::multi_index &sizes() const {  return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& ctx,
 		       bgeot::base_tensor &t) {
     size_type cv = ctx.convex_num();
-    coeff.resize(mf.nb_dof_of_element(cv));
-    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
-	      coeff);
+    coeff.resize(mf.nb_basic_dof_of_element(cv));
+    gmm::copy
+      (gmm::sub_vector(U,gmm::sub_index(mf.ind_basic_dof_of_element(cv))),
+       coeff);
     ctx.pf()->interpolation_grad(ctx, coeff, gradU, 1);
     scalar_type norm = gmm::vect_norm2(gmm::mat_row(gradU, 0));
     for (size_type i = 0; i < N; ++i) t[i] = gradU(0, i) / norm;
-    // cout << "point " << ctx.xreal() << " norm = " << t << endl;
   }
 };
 
@@ -394,9 +397,9 @@ int main(int argc, char *argv[]) {
   const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
   for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
     lsup.values()[i] = lsdown.values()[i] = ls.values()[i]
-      = ls_value(lsmf.point_of_dof(i));
-    lsdown.values(1)[i] = lsmf.point_of_dof(i)[1];
-    lsup.values(1)[i] = -lsmf.point_of_dof(i)[1];
+      = ls_value(lsmf.point_of_basic_dof(i));
+    lsdown.values(1)[i] = lsmf.point_of_basic_dof(i)[1];
+    lsup.values(1)[i] = -lsmf.point_of_basic_dof(i)[1];
   }
   
   if (simplify_level_set) {
@@ -453,7 +456,19 @@ int main(int argc, char *argv[]) {
   pre_mf.set_finite_element(mesh.convex_index(),
 			    getfem::fem_descriptor(FEM));
   getfem::partial_mesh_fem mf(pre_mf);
-  dal::bit_vector kept_dof = select_dofs_from_im(pre_mf, mim);
+
+  dal::bit_vector kept_dof;
+  std::set<size_type> cols;
+//   sparse_matrix BRB(pre_mf.nb_dof(), pre_mf.nb_dof());
+//   getfem::asm_mass_matrix(BRB, mim, pre_mf);
+//   cout << "Selecting dofs" << endl;
+//   gmm::range_basis(BRB, cols);
+//   for (std::set<size_type>::iterator it = cols.begin();
+//        it != cols.end(); ++it)
+//     kept_dof.add(*it);
+  kept_dof = getfem::select_dofs_from_im(pre_mf, mim);
+  cout << "Dof Selected : " << kept_dof.card() << " / "
+       << pre_mf.nb_dof() << endl;  
   dal::bit_vector rejected_elt;
   for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv)
     if (mim.int_method_of_element(cv) == getfem::im_none())
@@ -473,18 +488,28 @@ int main(int argc, char *argv[]) {
   const getfem::mesh_fem &mf_P0 = getfem::classical_mesh_fem(mesh, 0);
   
   // Finite element method for the multipliers
-  getfem::mesh_fem pre_mf_mult(mesh);
+  getfem::mesh_fem mf_mult(mesh);
   std::string FEMM = PARAM.string_value("FEM_MULT", "fem for multipliers");
-  pre_mf_mult.set_finite_element(mesh.convex_index(),
-				 getfem::fem_descriptor(FEMM));
-  getfem::partial_mesh_fem mf_mult(pre_mf_mult);
-  dal::bit_vector kept_dof_mult
-    = select_dofs_from_im(pre_mf_mult, mimbounddown, N-1);
-  mf_mult.adapt(kept_dof_mult, rejected_elt);
+  mf_mult.set_finite_element(mesh.convex_index(),
+			     getfem::fem_descriptor(FEMM));
+  // getfem::partial_mesh_fem mf_mult(pre_mf_mult);
+
+  // Range_basis call
+  cols.clear();
+  sparse_matrix BRBB(nb_dof, mf_mult.nb_dof());
+  getfem::asm_mass_matrix(BRBB, mimbounddown, mf, mf_mult);
+  cout << "Selecting dofs for the multiplier" << endl;
+  cout << "nb_dof_mult = " << mf_mult.nb_dof() << endl;
+  gmm::range_basis(BRBB, cols);
+  mf_mult.reduce_to_basic_dof(cols);
+  // penser à l'optimisation sur les mailles ...
+
+
+  // kept_dof_mult = select_dofs_from_im(pre_mf_mult, mimbounddown, N-1);
+  // mf_mult.adapt(kept_dof_mult, rejected_elt);
   size_type nb_dof_mult = mf_mult.nb_dof();
   cout << "nb_dof_mult = " << nb_dof_mult << endl;
 
- 
   // Mass matrix on the boundary
   sparse_matrix B2(mf_rhs.nb_dof(), nb_dof);
   getfem::asm_mass_matrix(B2, mimboundup, mf_rhs, mf);
@@ -503,6 +528,7 @@ int main(int argc, char *argv[]) {
     sparse_row_matrix E1(nb_dof, nb_dof);
 
     if (stabilized_dirichlet == 2) {
+
       // Computation of the extrapolation operator
       scalar_type min_ratio =
 	PARAM.real_value("MINIMAL_ELT_RATIO",
@@ -516,19 +542,29 @@ int main(int argc, char *argv[]) {
       getfem::asm_mass_matrix(MC1, mim, mf_P0);
       getfem::asm_mass_matrix(MC2, uncutmim, mf_P0);
       for (size_type i = 0; i < nbe; ++i) {
-	size_type cv = mf_P0.first_convex_of_dof(i);
+	size_type cv = mf_P0.first_convex_of_basic_dof(i);
 	ratios[cv] = gmm::abs(MC1(i,i)) / gmm::abs(MC2(i,i));
 	if (ratios[cv] > 0 && ratios[cv] < min_ratio) elt_black_list.add(cv);
       }
       
 	
-      sparse_matrix EO(nb_dof, nb_dof);
-      sparse_row_matrix T1(nb_dof, nb_dof), EX(nb_dof, nb_dof);
-      asm_mass_matrix(EO, uncutmim, mf);
+      sparse_matrix EO(mf.nb_basic_dof(), mf.nb_basic_dof());
+      sparse_row_matrix T1(nb_dof, nb_dof);
+      sparse_row_matrix EX(mf.nb_basic_dof(), mf.nb_basic_dof());
+      asm_mass_matrix(EO, uncutmim, pre_mf);
+//       sparse_matrix MM1(nbe, nb_dof);
+//       getfem::asm_mass_matrix(MM1, mim, mf_P0, mf);
 
-      for (size_type i = 0; i < nb_dof; ++i) {
+      for (size_type i = 0; i < mf.nb_basic_dof(); ++i) {
 	bool found = false;
-	getfem::mesh::ind_cv_ct ct = mf.convex_to_dof(i);
+	
+// 	gmm::linalg_traits<gmm::linalg_traits<sparse_matrix>::sub_col_type >
+// 	  ::iterator it = gmm::vect_begin(gmm::mat_col(MM1, i)),
+// 	             ite = gmm::vect_end(gmm::mat_col(MM1, i));
+// 	for ( ;  it != ite; ++it)
+// 	  if (!elt_black_list.is_in(it.index())) found = true;
+
+	getfem::mesh::ind_cv_ct ct = mf.convex_to_basic_dof(i);
 	getfem::mesh::ind_cv_ct::const_iterator it;
 	for (it = ct.begin(); it != ct.end(); ++it)
 	  if (!elt_black_list.is_in(*it)) found = true;
@@ -549,39 +585,34 @@ int main(int argc, char *argv[]) {
 	  if (r > ratio) { ratio = r; cv2 = is[j]; }
 	}
 	GMM_ASSERT1(cv2 != size_type(-1), "internal error");
-	compute_mass_matrix_extra_element(Mloc, uncutmim, mf, i, cv2);
+	compute_mass_matrix_extra_element(Mloc, uncutmim, pre_mf, i, cv2);
 	for (size_type ii = 0; ii < gmm::mat_nrows(Mloc); ++ii) 
 	  for (size_type jj = 0; jj < gmm::mat_ncols(Mloc); ++jj)
-	    EX(mf.ind_dof_of_element(i)[ii], mf.ind_dof_of_element(cv2)[jj])
+	    EX(mf.ind_basic_dof_of_element(i)[ii],
+	       mf.ind_basic_dof_of_element(cv2)[jj])
 	      += Mloc(ii, jj);
       }
 
       gmm::copy(gmm::identity_matrix(), E1);
       gmm::copy(gmm::identity_matrix(), T1);
       for (dal::bv_visitor i(dof_black_list); !i.finished(); ++i)
-	gmm::copy(gmm::mat_row(EX, i), gmm::mat_row(T1, i));
+	gmm::mult(gmm::transposed(mf.extension_matrix()), gmm::mat_row(EX, i),
+		  gmm::mat_row(T1, i));
 
-      plain_vector BE(nb_dof), BS(nb_dof);
+      plain_vector BE(mf.nb_basic_dof()), BS(mf.nb_basic_dof()), BBS(nb_dof);
       for (dal::bv_visitor i(dof_black_list); !i.finished(); ++i) {
 	BE[i] = scalar_type(1);
 	// TODO: store LU decomp.
 	double rcond; 
 	gmm::SuperLU_solve(EO, BS, BE, rcond);
-	gmm::mult(gmm::transposed(T1), BS, gmm::mat_row(E1, i));
+	gmm::mult(gmm::transposed(mf.extension_matrix()), BS, BBS);
+	gmm::mult(gmm::transposed(T1), BBS, gmm::mat_row(E1, i));
 	BE[i] = scalar_type(0);
       }
       gmm::clean(E1, 1e-13);
-
-//       gmm::clean(EO, 1e-13); cout << "E0 = " << gmm::transposed(EO) << endl; getchar();
-//       cout << "T1 = " << T1 << endl; getchar();
       
 
       cout << "Extrapolation operator computed" << endl;
-
-//       sparse_row_matrix A1(nb_dof, nb_dof);
-//       gmm::mult(E1, gmm::transposed(EO), A1);
-//       gmm::clean(A1, 1e-13);
-//       cout << "A1 = " << A1 << endl;
 
     }
 
@@ -612,7 +643,7 @@ int main(int argc, char *argv[]) {
 
   // Brick system
   getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
-    
+
   getfem::mdbrick_source_term<> brick_volumic_rhs(brick_laplacian);
   plain_vector F(nb_dof_rhs);
   getfem::interpolation_function(mf_rhs, F, rhs);
@@ -644,17 +675,18 @@ int main(int argc, char *argv[]) {
   gmm::copy(brick_constraint.get_mult(MS), LAMBDA);
 
   // interpolation of the solution on mf_rhs
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs);
   getfem::interpolation(mf, mf_rhs, U, Uint);
   for (size_type i = 0; i < nb_dof_rhs; ++i) {
-    Vint[i] = u_exact(mf_rhs.point_of_dof(i));
+    Vint[i] = u_exact(mf_rhs.point_of_basic_dof(i));
     Eint[i] = gmm::abs(Uint[i] - Vint[i]);
   }
     
   // computation of error on u.
   double errmax = 0.0, exactmax = 0.0;
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    if (ls_value(mf_rhs.point_of_dof(i)) <= 0.0) {
+    if (ls_value(mf_rhs.point_of_basic_dof(i)) <= 0.0) {
       errmax = std::max(errmax, Eint[i]);
       exactmax = std::max(exactmax, Vint[i]);
     }
@@ -726,7 +758,7 @@ int main(int argc, char *argv[]) {
     
     getfem::mesh_slicer slicer(mf.linked_mesh());
     getfem::slicer_build_stored_mesh_slice sbuild(sl);
-    getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf,U);
+    getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf, U);
     getfem::slicer_isovalues iso(mfU, 0.0, 0);
     getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
     

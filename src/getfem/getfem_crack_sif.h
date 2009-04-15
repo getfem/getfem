@@ -31,7 +31,8 @@
 /**@file getfem_crack_sif.h
    @author  Julien Pommier
    @date July 2007
-   @brief crack support functions for computation of SIF (stress intensity factors)
+   @brief crack support functions for computation of SIF
+          (stress intensity factors)
 */
 
 #ifndef GETFEM_CRACK_SIF_H
@@ -114,9 +115,9 @@ namespace getfem {
 
     /* fill the "q" ring field with a approximately linear field, equal to 
        1 on the inner boundary, and equal to zero on the outer boundary */
-    std::vector<scalar_type> q(mf_q.nb_dof());
-    for (unsigned d = 0; d < mf_q.nb_dof(); ++d) {
-      base_node P = mf_q.point_of_dof(d);
+    std::vector<scalar_type> q(mf_q.nb_basic_dof());
+    for (unsigned d = 0; d < mf_q.nb_basic_dof(); ++d) {
+      base_node P = mf_q.point_of_basic_dof(d);
       q[d] = (gmm::vect_dist2(P, crack_tip) > ring_radius) ? 0 : 1;
     }
 
@@ -127,7 +128,8 @@ namespace getfem {
        belytschko */
 
     generic_assembly 
-      assem("lambda=data$1(1); mu=data$2(1); x1=data$3(mdim(#1)); U1=data$4(#1); U2=data$5(#2); q=data$6(#3);"
+      assem("lambda=data$1(1); mu=data$2(1); x1=data$3(mdim(#1)); "
+	    "U1=data$4(#1); U2=data$5(#2); q=data$6(#3);"
             "t=U1(i).U2(j).q(k).comp(vGrad(#1).vGrad(#2).Grad(#3))(i,:,:,j,:,:,k,:);"
             "e1=(t{1,2,:,:,:}+t{2,1,:,:,:})/2;"
             "e2=(t{:,:,3,4,:}+t{:,:,4,3,:})/2;"

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -31,9 +31,10 @@
 //                   depend on the mesh fem arguments.
 
 /**@file getfem_mesh_fem_product.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date April 8, 2005.
-   @brief NEED A DESCRIPTION!
+   @brief A kind of product of two mesh_fems. Specific for Xfem enrichment.
 */
 
 #ifndef GETFEM_MESH_FEM_PRODUCT_H__
@@ -50,7 +51,8 @@ namespace getfem {
     
   public:
 
-    fem_product(pfem pf1_, pfem pf2_, size_type i, size_type xfi, const dal::bit_vector &nn)
+    fem_product(pfem pf1_, pfem pf2_, size_type i, size_type xfi,
+		const dal::bit_vector &nn)
       : cv(i), xfem_index(xfi),  enriched_dof1(nn)
     { pfems[0] = pf1_; pfems[1] = pf2_; init(); }
     void init();
@@ -81,12 +83,11 @@ namespace getfem {
 
   public :
     void adapt(void);
-    void update_from_context(void) const { is_adapted = false; }
+    void update_from_context(void) const { is_adapted = false; touch(); }
     void clear(void);
     
-    size_type memsize() const {
-      return mesh_fem::memsize(); // + ... ;
-    }
+    size_type memsize() const
+    { return mesh_fem::memsize(); /* + ... */ }
     
     mesh_fem_product(const mesh_fem &me1, const mesh_fem &me2)
       : mesh_fem(me1.linked_mesh()), mf1(me1), mf2(me2)

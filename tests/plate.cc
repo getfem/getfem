@@ -402,8 +402,10 @@ void plate_problem::compute_error(plain_vector &U) {
 
   getfem::interpolation(mf_theta, mf_rhs,
 			gmm::sub_vector(U, gmm::sub_interval(i1+i2, i3)), V);
+  GMM_ASSERT1(!mf_rhs.is_reduced(),
+	      "To be adapted, use interpolation_function");
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
-    gmm::add(gmm::scaled(theta_exact(mf_rhs.point_of_dof(i)), -1.0),
+    gmm::add(gmm::scaled(theta_exact(mf_rhs.point_of_basic_dof(i)), -1.0),
 	     gmm::sub_vector(V, gmm::sub_interval(i*2, 2)));
   }
   mf_rhs.set_qdim(2);
@@ -420,7 +422,7 @@ void plate_problem::compute_error(plain_vector &U) {
 			gmm::sub_vector(U, gmm::sub_interval(i1, i2)), V);
 
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= u3_exact(mf_rhs.point_of_dof(i));
+    V[i] -= u3_exact(mf_rhs.point_of_basic_dof(i));
 
   l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
   h1 = gmm::sqr(getfem::asm_H1_semi_norm(mim, mf_rhs, V));
@@ -496,7 +498,7 @@ bool plate_problem::solve(plain_vector &U) {
      E = 4.*mu*(mu+lambda) / (2. * mu + lambda);
      nu = lambda / (2. * mu + lambda);
      for (size_type i = 0; i < nb_dof_rhs; ++i) {
-       P   = mf_rhs.point_of_dof(i);
+       P   = mf_rhs.point_of_basic_dof(i);
        sx  = sin(M_PI*P[0]) ;
        cx  = cos(M_PI*P[0]) ;
        sy  = sin(M_PI*P[1]) ;

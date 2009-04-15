@@ -357,12 +357,14 @@ namespace getfemint {
     interpolate the solution (in vector U) on the element cv,
     evaluated at the points 'pt' (given in the reference convex)
   */
-  void interpolate_on_convex_ref(const getfem::mesh_fem *mf, getfem::size_type cv, 
+  void interpolate_on_convex_ref(const getfem::mesh_fem *mf,
+				 getfem::size_type cv, 
 				 const std::vector<getfem::base_node> &pt, 
 				 const darray& U,
 				 getfem::base_matrix &pt_val)
   {
     assert(mf->convex_index().is_in(cv));
+    assert(!mf->is_reduced());
     getfem::pfem cv_fem = mf->fem_of_element(cv); 
     dim_type qdim = mf->get_qdim();
     /* largely inspired by getfem_export.h */
@@ -370,7 +372,8 @@ namespace getfemint {
     /* interpolation of the solution.                                  */
     /* faux dans le cas des éléments non tau-equivalents ou vectoriel. */
     if (cv_fem->target_dim() != 1) 
-      THROW_ERROR("interpolation on vector fem is still to be done! (or at least to be tested...)");
+      THROW_ERROR("interpolation on vector fem is still to be done! "
+		  "(or at least to be tested...)");
     if (U.getn() != mf->nb_dof())
       THROW_ERROR("wrong nb of columns for U");
     assert(cv_fem->is_equivalent());
@@ -381,14 +384,15 @@ namespace getfemint {
 
     if (mf->fem_of_element(cv)->need_G()) 
       bgeot::vectors_to_base_matrix(G, mf->linked_mesh().points_of_convex(cv));
-    getfem::base_vector coeff(mf->nb_dof_of_element(cv));
+    getfem::base_vector coeff(mf->nb_basic_dof_of_element(cv));
     getfem::base_vector val(qdim);
 
-    getfem::fem_interpolation_context ctx(mf->linked_mesh().trans_of_convex(cv),
-					  cv_fem, getfem::base_node(), G, cv);
+    getfem::fem_interpolation_context
+      ctx(mf->linked_mesh().trans_of_convex(cv), cv_fem,
+	  getfem::base_node(), G, cv);
     for (size_type row = 0; row < U.getm(); ++row) {
       for (size_type j = 0; j < coeff.size(); j++)
-	coeff[j] = U(unsigned(row), unsigned(mf->ind_dof_of_element(cv)[j]));
+	coeff[j] = U(unsigned(row), unsigned(mf->ind_basic_dof_of_element(cv)[j]));
       for (size_type j = 0; j < pt.size(); ++j) {
 	ctx.set_xref(pt[j]);
 	cv_fem->interpolation(ctx, coeff, val, qdim);
@@ -400,8 +404,8 @@ namespace getfemint {
 
   /* utility function for eval_on_triangulated_surface */
   static void 
-  eval_sub_nodes(unsigned N, const std::vector<getfem::base_node>& V, std::vector<getfem::base_node>& spt)
-  {
+  eval_sub_nodes(unsigned N, const std::vector<getfem::base_node>& V,
+		 std::vector<getfem::base_node>& spt) {
     assert(N>0);
     spt.resize(((N+1)*(N+2))/2);
     
@@ -501,9 +505,8 @@ namespace getfemint {
 	  n[0] = n[2]+layer+1;
 	}
 	
-	if (!(n[0] < pt.size()) || !(n[1] < pt.size()) || !(n[2] < pt.size())) {
-	  THROW_INTERNAL_ERROR;
-	}	
+	if (!(n[0] < pt.size()) || !(n[1] < pt.size()) || !(n[2] < pt.size()))
+	  { THROW_INTERNAL_ERROR; }	
 	for (unsigned ipt = 0; ipt < 3; ++ipt) {
 	  for (unsigned idim = 0; idim < mesh_dim; ++idim) {
 	    w(unsigned(ipt * mesh_dim + idim),
@@ -556,9 +559,11 @@ namespace getfemint {
       if (cvf[i].f != dim_type(-1)) {
 	cv_struc = cv_struc->faces_structure()[cvf[i].f];
       }
-      if (cv_struc->basic_structure()->nb_points() == 2) continue; /* pas les lignes */
+      if (cv_struc->basic_structure()->nb_points() == 2)  /* pas les lignes */
+	continue;
       if (cv_struc->dim() > 2) 
-	THROW_ERROR("cannot draw a 3D convex (convex nb " << cvf[i].cv << "), please specify "
+	THROW_ERROR("cannot draw a 3D convex (convex nb " << cvf[i].cv
+		    << "), please specify "
 		    "faces (see gf_mesh_get(m,'outer faces') for example)");
       size_type t_inc = 0;
       switch (cv_struc->basic_structure()->nb_points()) {
@@ -598,8 +603,8 @@ namespace getfemint {
 	std::copy(pts.begin(), pts.end(), ipts.begin());
 	cv_struc = cv_struc->faces_structure()[cvf[i].f];
       }
-      if (cv_struc->basic_structure()->nb_points() == 2) continue; /* pas les lignes */
-
+      if (cv_struc->basic_structure()->nb_points() == 2) /* pas les lignes */
+	continue;
       /* for each point, count the nb of faces it belongs */
       std::vector<size_type> fcnt(cv_struc->nb_points(), 0);
       for (short_type f = 0; f < cv_struc->nb_faces(); ++f) {
@@ -633,7 +638,8 @@ namespace getfemint {
       } else {
 	cerr << "convex not handled by eval_on_triangulated_surface: " 
 	     << bgeot::name_of_geometric_trans(mesh->trans_of_convex(cvf[i].cv)) << endl;
-	//cerr << "cv_struc->basic_structure()->nb_points() = " << cv_struc->basic_structure()->nb_points() << endl;
+	//cerr << "cv_struc->basic_structure()->nb_points() = "
+	//     << cv_struc->basic_structure()->nb_points() << endl;
 	//	GMM_ASSERT1(false, "");
       }
       assert(tri_cnt <= nb_tri);
@@ -653,13 +659,17 @@ namespace getfemint {
 					   (xterm because matlab does weird things with its tty (no echo of input..))
 					*/
     if (cmd == NULL) {
-      cerr << "the environment variable $GETFEM_DEBUG_CMD is not set, cancelling the debugger\n"
-	   << "You should set it to something like \"xterm -e gdb /path/to/bin/matlab %d\" (%d will be replaced by the matlab pid)\n";
+      cerr << "the environment variable $GETFEM_DEBUG_CMD is not set, "
+	   << "cancelling the debugger\n"
+	   << "You should set it to something like \"xterm -e "
+	   << "gdb /path/to/bin/matlab %d\" (%d will be replaced by the "
+	   << "matlab pid)\n";
       return;
     }
     parent = ::getpid();
     ::snprintf(cmd_pid, 1024, cmd, parent);
-    std::cerr << "internal error detected\nrunning /bin/sh -c \"" << cmd_pid << "\" ...\n" << std::endl;
+    std::cerr << "internal error detected\nrunning /bin/sh -c \""
+	      << cmd_pid << "\" ...\n" << std::endl;
     switch ((pid=::fork())) {
     case -1: std::cerr << "can't fork gdb\n"; return;
     case 0: /* child */
@@ -671,7 +681,8 @@ namespace getfemint {
     default:
       {
 	int status;
-	std::cout << "When you have finished with gdb, just quit it (type q)\n";
+	std::cout << "When you have finished with gdb, "
+		  << "just quit it (type q)\n";
 	::waitpid(pid, &status, 0);
 	std::cout << "gdb done!\n";
       } break;
@@ -680,7 +691,8 @@ namespace getfemint {
   }
 
   
-  std::auto_ptr<getfem::abstract_hyperelastic_law> abstract_hyperelastic_law_from_name(const std::string &lawname) {
+  std::auto_ptr<getfem::abstract_hyperelastic_law>
+  abstract_hyperelastic_law_from_name(const std::string &lawname) {
     std::auto_ptr<getfem::abstract_hyperelastic_law> l;
     /* a refaire , pas bon, le terme incompressible se passe de loi */
     if (cmd_strmatch(lawname, "SaintVenant Kirchhoff") ||
@@ -692,7 +704,8 @@ namespace getfemint {
     } else if (cmd_strmatch(lawname, "Ciarlet Geymonat") ||
 	       cmd_strmatch(lawname, "cg")) {
       l.reset(new getfem::Ciarlet_Geymonat_hyperelastic_law());
-    } else THROW_BADARG(lawname << " is not the name of a known hyperelastic law");
+    } else THROW_BADARG(lawname <<
+			" is not the name of a known hyperelastic law");
     return l;
   }
 

@@ -87,10 +87,15 @@ static void check_method(const std::string& im_name, getfem::pintegration_method
   assert(ppi!=0); assert(pgt!=0);
   cout << "checking " << im_name << "..." << std::flush; 
   m.add_convex_by_points(pgt, pgt->convex_ref()->points().begin());
-  mf1.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,short_type(k/2)));
-  mf2.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,short_type(k-k/2)));
+  mf1.set_finite_element(m.convex_index(),
+			 getfem::classical_fem(pgt,short_type(k/2)));
+  mf2.set_finite_element(m.convex_index(),
+			 getfem::classical_fem(pgt,short_type(k-k/2)));
 
-  getfem::pmat_elem_type pme = getfem::mat_elem_product(getfem::mat_elem_base(mf1.fem_of_element(0)),getfem::mat_elem_base(mf2.fem_of_element(0)));
+  getfem::pmat_elem_type pme
+    = getfem::mat_elem_product
+    (getfem::mat_elem_base(mf1.fem_of_element(0)),
+     getfem::mat_elem_base(mf2.fem_of_element(0)));
   getfem::pmat_elem_computation pmec = getfem::mat_elem(pme, ppi, pgt);
   base_tensor t;
 

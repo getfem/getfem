@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 1999-2008 Yves Renard
+// Copyright (C) 1999-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -55,7 +55,9 @@ namespace getfem {
 			  const base_matrix &G,
 			  bgeot::pgeometric_trans pgt) const {
 
-    //cerr << "fem_sum::mat_trans " << debug_name_ << " / smart_global_dof_linking_ = " << smart_global_dof_linking_<< "\n";
+    // cerr << "fem_sum::mat_trans " << debug_name_ 
+    //      << " / smart_global_dof_linking_ = " << smart_global_dof_linking_
+    //      << "\n";
     pdof_description gdof = 0, lagdof = lagrange_dof(dim());
     std::vector<pdof_description> hermdof(dim());
     for (dim_type id = 0; id < dim(); ++id)
@@ -106,7 +108,8 @@ namespace getfem {
 		  if (dof_weak_compatibility(pdd, hermdof[id]) == 0) {
 		    pfems[ifem1]->interpolation_grad(fic, coeff, grad, 1);
 		    M(i, j) = -grad(0, id);
-		    cout << "dof " << idof2 << "compatible with hermite " << id << "\n";
+		    cout << "dof " << idof2 << "compatible with hermite "
+			 << id << "\n";
 		    found = true;
 		  }
 		}
@@ -121,7 +124,8 @@ namespace getfem {
       }
     }
     
-    //static int cnt=0; if(++cnt < 40) cout << "fem = " << debug_name_ << ", M = " << M << "\n";
+    // static int cnt=0;
+    // if(++cnt < 40) cout << "fem = " << debug_name_ << ", M = " << M << "\n";
   }
 
   size_type fem_sum::index_of_global_dof(size_type , size_type j) const {
@@ -265,6 +269,11 @@ namespace getfem {
   void mesh_fem_sum::adapt(void) {
     context_check();
     clear();
+
+    for (size_type i = 0; i < mfs.size(); ++i)
+      GMM_ASSERT1(!(mfs[i]->is_reduced()),
+		  "Sorry fem_sum for reduced mesh_fem is not implemented");
+
     for (dal::bv_visitor i(linked_mesh().convex_index()); !i.finished(); ++i) {
       std::vector<pfem> pfems;
       bool is_cv_dep = false;

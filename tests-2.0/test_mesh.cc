@@ -36,7 +36,7 @@ void export_mesh(getfem::mesh &m, const std::string &name) {
   mf.set_classical_finite_element(m.convex_index(), 0);
   std::vector<double> U(mf.nb_dof());
   for (size_type i = 0; i < mf.nb_dof(); ++i)
-    U[i] = double(mf.first_convex_of_dof(i));
+    U[i] = double(mf.first_convex_of_basic_dof(i));
 
   getfem::vtk_export exp(name + ".vtk", false);
   exp.exporting(mf); 

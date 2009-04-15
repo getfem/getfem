@@ -1810,7 +1810,12 @@ namespace getfem {
  	mfdata_set = true;
       }
       size_type nd = mf_u().nb_dof();
-      dal::bit_vector dof_on_bound = mf_mult->dof_on_set(boundary);
+      dal::bit_vector dof_on_bound;
+      if (mf_mult->is_reduced())
+	dof_on_bound.add(0, mf_mult->nb_dof());
+      else
+	dof_on_bound = mf_mult->basic_dof_on_region(boundary);
+
       size_type nb_const = dof_on_bound.card();
       std::vector<size_type> ind_ct;
       for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)
@@ -1926,7 +1931,11 @@ namespace getfem {
  	mfdata_set = true;
       }
       size_type nd = mf_u().nb_dof();
-      dal::bit_vector dof_on_bound = mf_mult.dof_on_set(boundary);
+      dal::bit_vector dof_on_bound;
+      if (mf_mult.is_reduced())
+	dof_on_bound.add(0, nd);
+      else
+	dof_on_bound = mf_mult.basic_dof_on_region(boundary);
       size_type nb_const = dof_on_bound.card();
       std::vector<size_type> ind_ct;
       for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)
@@ -2067,7 +2076,8 @@ namespace getfem {
 	R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
 	gmm::clean(M, tol);
 	std::vector<size_type> ind_ct;
-	dal::bit_vector nn = mf_u().dof_on_set(boundary);
+	GMM_ASSERT1(!mf_u().is_reduced(), "to be adapted");
+	dal::bit_vector nn = mf_u().basic_dof_on_region(boundary);
 	// The following filter is not sufficient for an arbitrary matrix field
 	// H for the multipliers version. To be ameliorated.
 	
@@ -2226,13 +2236,15 @@ namespace getfem {
 			    RHO_.get());
 
       if (!(boundary_sup.empty())) {
+	GMM_ASSERT1(!mf_u->is_reduced(), "To be adapted");
+
 	gmm::unsorted_sub_index SUBS;
 	std::vector<size_type> ind;
 	dal::bit_vector ind_set;
 	
 	for (std::set<size_type>::const_iterator it = boundary_sup.begin();
 	     it != boundary_sup.end(); ++it) {
-	  ind_set = ind_set | mf_u->dof_on_set(*it);
+	  ind_set = ind_set | mf_u->basic_dof_on_region(*it);
 	}
 
 	VECTOR V(mf_u->nb_dof()), MV(mf_u->nb_dof()); 
@@ -2269,6 +2281,7 @@ namespace getfem {
 
     /* valid only for lagrange FEMs */
     void redistribute_mass(const dal::bit_vector &redistributed_dof) {
+      GMM_ASSERT1(mf_u->is_reduced(), "To be adapted");
       size_type N = mf_u->linked_mesh().dim();
       size_type Qdim = mf_u->get_qdim();
       size_type nn = mf_u->nb_dof() / Qdim;
@@ -2280,7 +2293,7 @@ namespace getfem {
 
       /* get the non-zero coef as a vector */
       size_type nz = gmm::nnz(M0);
-      gmm::array1D_reference<value_type*> vM0(M0.pr, nz);
+      gmm::array1D_reference<value_type*> vM0(&M0.pr[0], nz);
 
       //dal::bit_vector removed; removed.sup(0, nz);
       size_type nbmult = 1+N+N*(N+1)/2;
@@ -2292,8 +2305,8 @@ namespace getfem {
       for (size_type j=0, ii=0; j < gmm::mat_ncols(M0); ++j) {
 	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
 	  size_type i=M0.ir[ii];
-	  const base_node Pi = mf_u->point_of_dof(i * Qdim);
-	  const base_node Pj = mf_u->point_of_dof(j * Qdim);
+	  const base_node Pi = mf_u->point_of_basic_dof(i * Qdim);
+	  const base_node Pj = mf_u->point_of_basic_dof(j * Qdim);
 	  C(0, ii) = 1; // X'MX 
 	  d[0] += vM0[ii];
 	
@@ -2364,8 +2377,8 @@ namespace getfem {
 	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
 	  size_type i=M0.ir[ii];
 	  if (i > j) continue; // deal with upper triangle only
-	  const base_node Pi = mf_u->point_of_dof(i * Qdim);
-	  const base_node Pj = mf_u->point_of_dof(j * Qdim);
+	  const base_node Pi = mf_u->point_of_basic_dof(i * Qdim);
+	  const base_node Pj = mf_u->point_of_basic_dof(j * Qdim);
 	  e[0] += vM0[ii];
 	
 	  for (unsigned k=0; k < N; ++k) {

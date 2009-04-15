@@ -913,6 +913,11 @@ namespace getfem {
     typedef typename gmm::linalg_traits<VECT1>::value_type value_type;
     typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
 
+    if ((version & ASMDIR_SIMPLIFY) &&
+	(mf_u.is_reduced() || mf_mult.is_reduced() || mf_r.is_reduced())) {
+      GMM_WARNING1("Sorry, no simplification for reduced fems");
+      version = (version & ASMDIR_BUILDR);
+    }      
     
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
     GMM_ASSERT1(mf_r.get_qdim() == 1,
@@ -930,8 +935,8 @@ namespace getfem {
     pfem pf_u, pf_r, pf_m;
     bool warning_msg1 = false, warning_msg2 = false;
     dal::bit_vector simplifiable_dofs, nonsimplifiable_dofs;
-    std::vector<size_type> simplifiable_indices(mf_mult.nb_dof());
-    std::vector<value_type> simplifiable_values(mf_mult.nb_dof());
+    std::vector<size_type> simplifiable_indices(mf_mult.nb_basic_dof());
+    std::vector<value_type> simplifiable_values(mf_mult.nb_basic_dof());
     std::vector<value_type> v1, v2, v3;
 
     for (mr_visitor v(region); !v.finished(); v.next()) {
@@ -957,11 +962,11 @@ namespace getfem {
       if (!(version & ASMDIR_SIMPLIFY)) continue;
       
       mesh_fem::ind_dof_face_ct pf_u_ct
-	= mf_u.ind_dof_of_face_of_element(cv, f);
+	= mf_u.ind_basic_dof_of_face_of_element(cv, f);
       mesh_fem::ind_dof_face_ct pf_r_ct
-	= mf_r.ind_dof_of_face_of_element(cv, f);
+	= mf_r.ind_basic_dof_of_face_of_element(cv, f);
       mesh_fem::ind_dof_face_ct pf_m_ct
-	= mf_mult.ind_dof_of_face_of_element(cv, f);
+	= mf_mult.ind_basic_dof_of_face_of_element(cv, f);
       
       size_type pf_u_nbdf = pf_u_ct.size();
       size_type pf_m_nbdf = pf_m_ct.size();
@@ -996,59 +1001,6 @@ namespace getfem {
 	    = r_data[pf_r_ct[i/Qratio]*Qratio+(i%Qratio)];
 	}
       }
-//       else { // local inversion of the mass matrix.
-// 	cout << "local inv\n";
-// 	bgeot::base_tensor t1, t2;
-// 	pintegration_method pim = mim.int_method_of_element(cv);
-// 	bgeot::pgeometric_trans pgt = mf_u.linked_mesh().trans_of_convex(cv);
-// 	getfem::pmat_elem_type pme1 =
-// 	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
-// 				   getfem::mat_elem_base(pf_u));
-// 	getfem::mat_elem(pme1,pim,pgt)->gen_compute_on_face
-// 	  (t1, mf_u.linked_mesh().points_of_convex(cv), f, cv);
-// 	getfem::pmat_elem_type pme2 =
-// 	  getfem::mat_elem_product(getfem::mat_elem_base(pf_m),
-// 				   getfem::mat_elem_base(pf_r));
-// 	getfem::mat_elem(pme2, pim, pgt)->gen_compute_on_face
-// 	  (t2, mf_u.linked_mesh().points_of_convex(cv), f, cv);
-	
-// 	base_matrix m1(pf_m_nbdf_loc, pf_u_nbdf_loc);
-// 	base_matrix m2(pf_m_nbdf_loc, pf_r_nbdf_loc);
-	
-// 	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
-// 	  for (size_type j = 0; j < pf_u_nbdf_loc; ++j)
-// 	    m1(i, j) = t1(pf_m->structure(cv)->ind_points_of_face(f)[i],
-// 			  pf_u->structure(cv)->ind_points_of_face(f)[j]);
-// 	for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
-// 	  for (size_type j = 0; j < pf_r_nbdf_loc; ++j)
-// 	    m2(i, j) = t2(pf_m->structure(cv)->ind_points_of_face(f)[i],
-// 			  pf_r->structure(cv)->ind_points_of_face(f)[j]);
-	
-// 	gmm::lu_inverse(m1);
-// 	size_type Q =  pf_u_nbdf / pf_u_nbdf_loc;
-// 	size_type Qu = mf_u.get_qdim();
-	
-// 	v1.resize(pf_r_nbdf_loc * (Qu / Q));
-// 	v2.resize(pf_m_nbdf_loc);
-// 	v3.resize(pf_u_nbdf_loc);
-
-// 	for (size_type k = 0; k < Q; ++k) {
-// 	  if (Q > 1 || (Qu == 1)) {
-// 	    for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
-// 	      v1[i] = r_data[pf_r_ct[i]*Q+k];
-// 	  }
-// 	  else {
-// 	    for (size_type l = 0; l < Qu; ++l)
-// 	      for (size_type i = 0; i < pf_r_nbdf_loc; ++i)
-// 		v1[i*Qu+l] = r_data[pf_r_ct[i]*Qu+l];
-// 	  }
-// 	  gmm::mult(m2, v1, v2);
-// 	  gmm::mult(m1, v2, v3);
-	  
-// 	  for (size_type i = 0; i < pf_m_nbdf_loc; ++i)
-// 	    simplifiable_values[pf_m_ct[i*Q+k]] = v3[i];
-// 	}
-//       }
     }
     
     if (version & ASMDIR_SIMPLIFY) {
@@ -1062,11 +1014,11 @@ namespace getfem {
       for (dal::bv_visitor i(simplifiable_dofs); !i.finished(); ++i)
 	if (!(nonsimplifiable_dofs[i])) {
 	  if (version & ASMDIR_BUILDH) {  /* "erase" the row i */
-	    const mesh::ind_cv_ct &cv_ct = mf_mult.convex_to_dof(i);
+	    const mesh::ind_cv_ct &cv_ct = mf_mult.convex_to_basic_dof(i);
 	    for (size_type j = 0; j < cv_ct.size(); ++j) {
 	      size_type cv = cv_ct[j];
-	      for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
-		H(i, mf_u.ind_dof_of_element(cv)[k]) = value_type(0);
+	      for (size_type k=0; k < mf_u.nb_basic_dof_of_element(cv); ++k)
+		H(i, mf_u.ind_basic_dof_of_element(cv)[k]) = value_type(0);
 	    }
 	    H(i, simplifiable_indices[i]) = value_type(1);
 	  }
@@ -1160,13 +1112,19 @@ namespace getfem {
    int version =  ASMDIR_BUILDALL) {
     pfem pf_u, pf_rh;
 
+    if ((version & ASMDIR_SIMPLIFY) &&
+	(mf_u.is_reduced() || mf_h.is_reduced() || mf_r.is_reduced())) {
+      GMM_WARNING1("Sorry, no simplification for reduced fems");
+      version = (version & ASMDIR_BUILDR);
+    }
+
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();
     GMM_ASSERT1(mf_h.get_qdim() == 1 && mf_r.get_qdim() == 1,
 		"invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       asm_qu_term(H, mim, mf_u, mf_h, h_data, region);
       std::vector<size_type> ind(0);
-      dal::bit_vector bdof = mf_u.dof_on_set(region);
+      dal::bit_vector bdof = mf_u.basic_dof_on_region(region);
       // gmm::clean(H, 1E-15 * gmm::mat_maxnorm(H));
       for (size_type i = 0; i < mf_u.nb_dof(); ++i)
 	if (!(bdof[i])) ind.push_back(i);
@@ -1221,19 +1179,19 @@ namespace getfem {
 		< 1.0E-14) {
 	      /* the dof might be "duplicated" */
 	      for (size_type q = 0; q < Q; ++q) {
-		size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
+		size_type dof_u = mf_u.ind_basic_dof_of_element(cv)[ind_u*Q + q];
 		
 		/* "erase" the row */
 		if (version & ASMDIR_BUILDH)
-		  for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
-		    H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
+		  for (size_type k=0; k < mf_u.nb_basic_dof_of_element(cv); ++k)
+		    H(dof_u, mf_u.ind_basic_dof_of_element(cv)[k]) = 0.0;
 		
-		size_type dof_rh = mf_r.ind_dof_of_element(cv)[ind_rh];
+		size_type dof_rh = mf_r.ind_basic_dof_of_element(cv)[ind_rh];
 		/* set the "simplified" row */
 		if (version & ASMDIR_BUILDH)
 		  for (unsigned jj=0; jj < Q; jj++) {
 		    size_type dof_u2
-		      = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
+		      = mf_u.ind_basic_dof_of_element(cv)[ind_u*Q+jj];
 		    H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
 		  }
 		if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
@@ -1263,7 +1221,7 @@ namespace getfem {
    const VECT2 &F) {
     // Marche uniquement pour des ddl de lagrange.
     size_type Q=mf.get_qdim();
-    dal::bit_vector nndof = mf.dof_on_set(boundary);
+    dal::bit_vector nndof = mf.basic_dof_on_region(boundary);
     pfem pf1;
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
@@ -1271,13 +1229,13 @@ namespace getfem {
       size_type nbd = pf1->nb_dof(cv);
       for (size_type i = 0; i < nbd; i++)
 	{
-	  size_type dof1 = mf.ind_dof_of_element(cv)[i*Q];
+	  size_type dof1 = mf.ind_basic_dof_of_element(cv)[i*Q];
 	  if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof)
 	    {
 	      // cout << "dof : " << i << endl;
 	      for (size_type j = 0; j < nbd; j++)
 		{
-		  size_type dof2 = mf.ind_dof_of_element(cv)[j*Q];
+		  size_type dof2 = mf.ind_basic_dof_of_element(cv)[j*Q];
 		  for (size_type k = 0; k < Q; ++k)
 		    for (size_type l = 0; l < Q; ++l)
 		      {

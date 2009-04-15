@@ -351,7 +351,7 @@ void elastostatic_problem::compute_error(plain_vector &U) {
   std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
   getfem::interpolation(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
-    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
+    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_basic_dof(i)), -1.0),
 	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
   }
 

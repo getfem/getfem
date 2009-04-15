@@ -394,10 +394,11 @@ void bilaplacian_mortar_problem::init(void) {
 
 /* compute the relative error with respect to the exact solution */
 void bilaplacian_mortar_problem::compute_error(plain_vector &U) {
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   std::vector<scalar_type> V(mf_rhs.nb_dof());
   getfem::interpolation(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_dof(i));
+    V[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
   cout.precision(16);
 //   cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
 //         << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
@@ -418,10 +419,11 @@ cout << getfem::asm_H1_semi_norm(mim, mf_rhs, V) << " " <<getfem::asm_H2_semi_no
    This method is only useful for plotting the 2D graph of the error, 
    when we don't need the L2 or H1 norm evaluation of the error. */
 void bilaplacian_mortar_problem::compute_error_without_assembling(plain_vector &U, plain_vector &V) {
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   gmm::resize( V, mf_rhs.nb_dof());
   getfem::interpolation(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_dof(i));
+    V[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
 
 }
 
@@ -816,12 +818,13 @@ bool bilaplacian_mortar_problem::solve(plain_vector &U) {
        levelset, when split in two by the mortar partition, may create
        a "null" dof whose base function is all zero.. */
     sparse_matrix M2(mf_u.nb_dof(), mf_u.nb_dof());
+    GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
     getfem::asm_mass_matrix(M2, mim, mf_u, mf_u);
     //gmm::HarwellBoeing_IO::write("M2.hb", M2);
     for (size_type d = 0; d < mf_u.nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
 	cout << "  removing null mf_u dof " << d << " @ " << 
-	  mf_u.point_of_dof(d) << "\n";	
+	  mf_u.point_of_basic_dof(d) << "\n";	
 	size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;

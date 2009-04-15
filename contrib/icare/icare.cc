@@ -39,6 +39,7 @@
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
+using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrices. */
 
@@ -113,7 +114,7 @@ struct problem_definition {
   }
   virtual void validate_solution(navier_stokes_problem &p, scalar_type t) {
     plain_vector R; dirichlet_condition(p, t, R);
-    p.mf_rhs.set_qdim(p.N);
+    p.mf_rhs.set_qdim(dim_type(p.N));
     scalar_type err = getfem::asm_L2_dist(p.mim, 
 					  p.mf_u, p.Un1,
 					  p.mf_rhs, R);
@@ -137,29 +138,33 @@ struct problem_definition {
     unsigned N = p.mesh.dim();
     gmm::resize(R, N*p.mf_rhs.nb_dof());
     base_small_vector r; 
+    GMM_ASSERT1(!p.mf_rhs.is_reduced(), "To be adapted");
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
-      dirichlet_condition(p, p.mf_rhs.point_of_dof(i), t, r);
+      dirichlet_condition(p, p.mf_rhs.point_of_basic_dof(i), t, r);
       gmm::copy(r, gmm::sub_vector(R, gmm::sub_interval(i*N, N)));
     }
   }
   void source_term(navier_stokes_problem &p, scalar_type t, plain_vector &F) {
     unsigned N = p.mesh.dim();
     gmm::resize(F, N*p.mf_rhs.nb_dof());
+    GMM_ASSERT1(!p.mf_rhs.is_reduced(), "To be adapted");
     base_small_vector f;
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
-      source_term(p, p.mf_rhs.point_of_dof(i), t, f);
+      source_term(p, p.mf_rhs.point_of_basic_dof(i), t, f);
       gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
     }
   }
   
   void initial_condition_u(navier_stokes_problem &p, plain_vector &U0) {
+    GMM_ASSERT1(!p.mf_rhs.is_reduced(), "To be adapted");
     plain_vector R(p.N*p.mf_rhs.nb_dof()), F(p.mf_u.nb_dof());
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
-      base_small_vector r = initial_velocity(p, p.mf_rhs.point_of_dof(i));
+      base_small_vector
+	r = initial_velocity(p, p.mf_rhs.point_of_basic_dof(i));
       gmm::copy(r, gmm::sub_vector(R, gmm::sub_interval(i*p.N, p.N)));
     }
-    /* L2 projection from mf_rhs onto mf_u (we cannot interpolate directly onto mf_u
-     since it can be non-lagrangian) */
+    /* L2 projection from mf_rhs onto mf_u (we cannot interpolate directly
+       onto mf_u since it can be non-lagrangian) */
     sparse_matrix M(p.mf_u.nb_dof(), p.mf_u.nb_dof());
     getfem::asm_mass_matrix(M, p.mim, p.mf_u);
     getfem::asm_source_term(F, p.mim, p.mf_u, p.mf_rhs, R);
@@ -168,9 +173,9 @@ struct problem_definition {
   }
   void initial_condition_p(navier_stokes_problem &p, plain_vector &P0) {
     plain_vector PP(p.mf_rhs.nb_dof());
-
+    GMM_ASSERT1(!p.mf_rhs.is_reduced(), "To be adapted");
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i)
-      PP[i] = initial_pressure(p, p.mf_rhs.point_of_dof(i));
+      PP[i] = initial_pressure(p, p.mf_rhs.point_of_basic_dof(i));
 
     /* L2 projection from mf_rhs onto mf_p */
     plain_vector F(p.mf_p.nb_dof());
@@ -413,7 +418,7 @@ void navier_stokes_problem::init(void) {
   first_export = true;
 
   Re = 1 / nu;
-  mf_u.set_qdim(N);
+  mf_u.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -789,15 +794,18 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   sparse_matrix B(nbdof_p, nbdof_u);
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
   
-  mf_mult.set_qdim(N);
-  dal::bit_vector dofon_Dirichlet = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
-  dal::bit_vector dofon_nonref =mf_mult.dof_on_set(NONREFLECTIVE_BOUNDARY_NUM);
+  mf_mult.set_qdim(dim_type(N));
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
+  dal::bit_vector dofon_Dirichlet
+    = mf_mult.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
+  dal::bit_vector dofon_nonref
+    = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
   dofon_Dirichlet.setminus(dofon_nonref);
 
   // Normal part Dirichlet condition
   mf_mult.set_qdim(1);
   dal::bit_vector dofon_NDirichlet
-    = mf_mult.dof_on_set(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
+    = mf_mult.basic_dof_on_region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   std::vector<size_type> ind_ct_ndir;
   for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) {
     if (dofon_Dirichlet.is_in(i*N) || dofon_nonref.is_in(i*N)) 
@@ -823,7 +831,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   cout << "Nb of Normal par Dirichlet constraints : " << nbdof_NDir << endl;
 
   // Dirichlet condition
-  mf_mult.set_qdim(N);
+  mf_mult.set_qdim(dim_type(N));
   size_type nbdof_Dir = dofon_Dirichlet.card();
   std::vector<size_type> ind_ct_dir;
   for (dal::bv_visitor i(dofon_Dirichlet); !i.finished(); ++i) 
@@ -919,9 +927,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       ptRef[2] = BN[1];
     }
     }*/
-
- for (unsigned i=0; i< mf_p.nb_dof(); ++i){
-    bgeot :: base_node BN =  mf_p.point_of_dof(i);
+  
+  GMM_ASSERT1(!mf_p.is_reduced(), "To be adapted");
+  for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+    bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
     if (BN[0]==BBmin[0] && BN[1]==BBmin[1] ) {
       cout << "Reference Point " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
       ptRef[0] = i;
@@ -932,7 +941,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   
   
   for (unsigned i=0; i< mf_p.nb_dof(); ++i){
-    bgeot :: base_node BN =  mf_p.point_of_dof(i);
+    bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
     if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
       cout << "Point in Box " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
       ptPartP[0] = i;
@@ -941,8 +950,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     }
   } 
   
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   for (unsigned i=0; i< mf_u.nb_dof(); ++i){
-    bgeot :: base_node BN =  mf_u.point_of_dof(i);
+    bgeot :: base_node BN =  mf_u.point_of_basic_dof(i);
     if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
       cout << "Point in Box " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
       ptPartU[1] = BN[0];

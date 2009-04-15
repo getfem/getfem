@@ -197,9 +197,9 @@ namespace getfem {
     const mesh_im &mim;
     const mesh_fem &mf;
     const mesh_fem &mf_data;
-    const std::vector<scalar_type> &U;
-    const std::vector<scalar_type> &stress_threshold;
-    const std::vector<scalar_type> &lambda, &mu;  
+    std::vector<scalar_type> U;
+    std::vector<scalar_type> stress_threshold;
+    std::vector<scalar_type> lambda, mu;  
     bgeot::multi_index sizes_;
     const abstract_constraints_projection  *t_proj; 
     std::vector<std::vector<scalar_type> > &sigma_bar_;
@@ -235,11 +235,18 @@ namespace getfem {
 			  const bool fill_sigma) :
       params(3), N(mf_.linked_mesh().dim()), mim(mim_),
       mf(mf_), mf_data(mf_data_),
-      U(U_),  stress_threshold(stress_threshold_),
-      lambda(lambda_), mu(mu_), sizes_(N, N, N, N), t_proj(t_proj_),
+      U(mf_.nb_basic_dof()),  stress_threshold(mf_data_.nb_basic_dof()),
+      lambda(mf_data_.nb_basic_dof()), mu(mf_data_.nb_basic_dof()),
+      sizes_(N, N, N, N), t_proj(t_proj_),
       sigma_bar_( sigma_bar__),saved_proj_(saved_proj__),
       flag_proj(flag_proj_)  {
-      
+    
+      mf.extend_vector
+	(gmm::sub_vector(U_, gmm::sub_interval(0, mf_.nb_dof())), U);
+      mf_data.extend_vector(stress_threshold_, stress_threshold);
+      mf_data.extend_vector(lambda_, lambda);
+      mf_data.extend_vector(mu_, mu);
+  
       fill_sigma_bar = fill_sigma;   /* always false during resolution, */
       /*                      true when called from compute_constraints */
 
@@ -261,10 +268,10 @@ namespace getfem {
       size_type ii = ctx.ii(); 
 
       pfem pf = ctx.pf();
-      coeff.resize(mf.nb_dof_of_element(cv));
+      coeff.resize(mf.nb_basic_dof_of_element(cv));
       base_matrix gradU(N, N), sigma(N,N);
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
-		coeff);
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       pf->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       
       scalar_type ltrace_eps;
@@ -319,11 +326,11 @@ namespace getfem {
     virtual void prepare(fem_interpolation_context& ctx, size_type ) {
       size_type cv = ctx.convex_num();
 
-      coeff.resize(mf_data.nb_dof_of_element(cv)*3);
-      for (size_type i = 0; i < mf_data.nb_dof_of_element(cv); ++i) {
-	coeff[i * 3] = lambda[mf_data.ind_dof_of_element(cv)[i]];
-	coeff[i * 3+1] = mu[mf_data.ind_dof_of_element(cv)[i]];
-	coeff[i * 3+2] = stress_threshold[mf_data.ind_dof_of_element(cv)[i]];
+      coeff.resize(mf_data.nb_basic_dof_of_element(cv)*3);
+      for (size_type i = 0; i < mf_data.nb_basic_dof_of_element(cv); ++i) {
+	coeff[i * 3] = lambda[mf_data.ind_basic_dof_of_element(cv)[i]];
+	coeff[i * 3+1] = mu[mf_data.ind_basic_dof_of_element(cv)[i]];
+	coeff[i * 3+2] = stress_threshold[mf_data.ind_basic_dof_of_element(cv)[i]];
       }
       ctx.pf()->interpolation(ctx, coeff, params, 3);
     } 
@@ -492,8 +499,10 @@ namespace getfem {
       mdbrick_parameter<VECTOR> &mu(void) { return mu_; }
       const mdbrick_parameter<VECTOR> &mu(void) const { return mu_; }
       /** accessor for the stresh threshold */
-      mdbrick_parameter<VECTOR> &stress_threshold(void) { return stress_threshold_; }
-      const mdbrick_parameter<VECTOR> &stress_threshold(void) const { return stress_threshold_; }
+      mdbrick_parameter<VECTOR> &stress_threshold(void)
+      { return stress_threshold_; }
+      const mdbrick_parameter<VECTOR> &stress_threshold(void) const
+      { return stress_threshold_; }
       
       SUBVECTOR get_solution(MODEL_STATE &MS) {
 	gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
@@ -513,7 +522,8 @@ namespace getfem {
       */
       template <class VECTVM>
       void compute_Von_Mises_or_Tresca(const mesh_fem &mf_vm, 
-				       VECTVM &VM, bool tresca) {
+				       VECTVM &VMM, bool tresca) {
+	std::vector<scalar_type> VM(mf_vm.nb_basic_dof());
 	pintegration_method pim = 0;
 	pfem pf_vm_old = 0;
 	bgeot::pgeometric_trans pgt_old = 0;
@@ -572,10 +582,11 @@ namespace getfem {
 	    }
 	  }
 	  gmm::mult(M, uvm, lvm);
-	  for (unsigned i=0; i < mf_vm.nb_dof_of_element(cv); ++i) {
-	    VM[mf_vm.ind_dof_of_element(cv)[i]] = lvm[i];
+	  for (unsigned i=0; i < mf_vm.nb_basic_dof_of_element(cv); ++i) {
+	    VM[mf_vm.ind_basic_dof_of_element(cv)[i]] = lvm[i];
 	  }
 	}
+	mf_vm.reduce_vector(VM, VMM);
       }
       
       virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
@@ -584,12 +595,14 @@ namespace getfem {
 	T_MATRIX K(mf_u.nb_dof(), mf_u.nb_dof());
 
 	plasticity_projection gradproj(mim, mf_u, lambda_.mf(), MS.state(),
-				       stress_threshold_.get(), lambda_.get(), mu_.get(), &t_proj,
+				       stress_threshold_.get(), lambda_.get(),
+				       mu_.get(), &t_proj,
 				       sigma_bar, saved_proj, 1, false);
 	
 	/* Calculate the actual matrix */
 	GMM_TRACE2("Assembling plasticity tangent matrix");
-	asm_lhs_for_plasticity(K, mim, mf_u, lambda_.mf(), lambda_.get(), mu_.get(), &gradproj);
+	asm_lhs_for_plasticity(K, mim, mf_u, lambda_.mf(), lambda_.get(),
+			       mu_.get(), &gradproj);
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
       

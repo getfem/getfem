@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -104,7 +104,6 @@ namespace getfem {
     /** return true if update_from_context was called */
     bool context_check(void) const;
     void touch(void) const;
-    static long new_ident(void); // outdated function
     virtual ~context_dependencies();
     context_dependencies() : state(CONTEXT_NORMAL), touched(false) {}
 

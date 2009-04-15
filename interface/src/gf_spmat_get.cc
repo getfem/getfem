@@ -261,11 +261,11 @@ void gf_spmat_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET s = SPMAT:GET('info')
     Return a string contains a short summary on the sparse matrix (dimensions, filling, ...).@*/
     std::stringstream ss;
+    size_type ncc = gsp.nrows()*gsp.ncols();
     ss << gsp.nrows() << "x" << gsp.ncols() << " "
        << (gsp.is_complex() ? "COMPLEX" : "REAL") << " " << gsp.name()
        << ", NNZ=" << gsp.nnz() << " (filling="
-       << double(gsp.nnz())/(double(gsp.nrows())*double(gsp.ncols()))*100.
-       << "%)";
+       << 100.*double(gsp.nnz())/(double(ncc == 0 ? 1 : ncc)) << "%)";
     out.pop().from_string(ss.str().c_str());
   } else if (check_cmd(cmd, "save", in, out, 2, 2, 0, 0)) {
     /*@GET SPMAT:GET('save',@str format, @str filename)

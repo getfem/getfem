@@ -600,24 +600,24 @@ bool crack_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
   ls.reinit();  
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
-  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
-    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
+  for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
+    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
+    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
   }
   ls.touch();
 
   if (add_crack) {
     ls2.reinit();
-    for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
-      ls2.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 1)[0];
-      ls2.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 1)[1];
+    for (size_type d = 0; d < ls2.get_mesh_fem().nb_basic_dof(); ++d) {
+      ls2.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 1)[0];
+      ls2.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 1)[1];
     }
     ls2.touch();
     
     ls3.reinit();
-    for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
-      ls3.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[0];
-      ls3.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_dof(d), 2)[1];
+    for (size_type d = 0; d < ls3.get_mesh_fem().nb_basic_dof(); ++d) {
+      ls3.values(0)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 2)[0];
+      ls3.values(1)[d] = ls_function(ls2.get_mesh_fem().point_of_basic_dof(d), 2)[1];
     }
     ls3.touch(); 
   }
@@ -648,7 +648,6 @@ bool crack_problem::solve(plain_vector &U) {
   }
   
   mf_sing_u.set_functions(vfunc);
-
 
   if (enrichment_option == SPIDER_FEM_ALONE || 
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
@@ -772,7 +771,7 @@ bool crack_problem::solve(plain_vector &U) {
     gmm::lu_inverse(Qsing);
 
     // Search the position of the singular enrichment dofs.
-
+    GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
     size_type Qdim = mf_u().get_qdim();
     for (dal::bv_visitor cv(mesh.convex_index());
 	 !cv.finished() && (ind_first_global_dof == size_type(-1)); ++cv) {
@@ -781,7 +780,7 @@ bool crack_problem::solve(plain_vector &U) {
 	// cout << "type of dof : " << name_of_dof(pf->dof_types()[i]) << endl;
 	if (pf->dof_types()[i] == getfem::global_dof(mesh.dim())) {
 	  if (ind_first_global_dof == size_type(-1))
-	    ind_first_global_dof =  mf_u().ind_dof_of_element(cv)[i*Qdim];
+	    ind_first_global_dof =  mf_u().ind_basic_dof_of_element(cv)[i*Qdim];
 	}
       }
     }
@@ -796,34 +795,6 @@ bool crack_problem::solve(plain_vector &U) {
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
-
-  unsigned Q = mf_u().get_qdim();
-  if (0) {
-    for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
-      printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
-	     mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
-
-      const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
-      for (unsigned i=0; i < cvs.size(); ++i) {
-	unsigned cv = unsigned(cvs[i]);
-	//if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
-
-	getfem::pfem pf = mf_u().fem_of_element(cv);
-	unsigned ld = unsigned(-1);
-	for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
-	  if (mf_u().ind_dof_of_element(cv)[dd] == d) {
-	    ld = dd/Q; break;
-	  }
-	}
-	if (ld == unsigned(-1)) {
-	  cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
-	} else {
-	  printf(" %3d:%.16s", cv, name_of_dof(pf->dof_types().at(ld)).c_str());
-	}
-      }
-      printf("\n");
-    }
-  }
   
   // Linearized elasticity brick.
   
@@ -864,9 +835,7 @@ bool crack_problem::solve(plain_vector &U) {
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  getfem::interpolation_function(mf_rhs, F, sol_f);
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(*pVECTCONS, mf_rhs, F);
@@ -909,9 +878,10 @@ bool crack_problem::solve(plain_vector &U) {
     std::vector<size_type> ind_mortar;
     /* unfortunately , dof_on_region sometimes returns too much dof
        when mf_mortar is an enriched one so we have to filter them */
+    GMM_ASSERT1(!mf_mortar.is_reduced(), "To be adapted");
     sparse_matrix M(mf_mortar.nb_dof(), mf_mortar.nb_dof());
     getfem::asm_mass_matrix(M, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
-    for (dal::bv_visitor_c d(mf_mortar.dof_on_region(MORTAR_BOUNDARY_OUT)); 
+    for (dal::bv_visitor_c d(mf_mortar.basic_dof_on_region(MORTAR_BOUNDARY_OUT)); 
 	 !d.finished(); ++d) {
       if (M(d,d) > 1e-8) ind_mortar.push_back(d);
       else cout << "  removing non mortar dof" << d << "\n";

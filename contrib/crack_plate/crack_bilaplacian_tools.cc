@@ -439,8 +439,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   ls.reinit();
 //  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    scalar_type x = ls.get_mesh_fem().point_of_basic_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_basic_dof(d)[1];
     if (sol_ref == 0){
        ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
        ls.values(1)[d] = x;}
@@ -779,8 +779,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
   // So we re-initialize to be sure.
   //scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    scalar_type x = ls.get_mesh_fem().point_of_basic_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_basic_dof(d)[1];
     if (sol_ref == 0){
        ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
        ls.values(1)[d] = x;}
@@ -1043,12 +1043,14 @@ void bilaplacian_crack_problem::export_solution(const plain_vector &U){
     
     
     gmm::resize(V, mf3d.nb_dof()*3);
+    GMM_ASSERT1(!mf_2d.is_reduced(), "To be adapted");
+    GMM_ASSERT1(!mf3d.is_reduced(), "To be adapted");
     bgeot::kdtree tree; tree.reserve(mf_2d.nb_dof());
     for (unsigned i=0; i < mf_2d.nb_dof(); ++i)
-      tree.add_point_with_id(mf_2d.point_of_dof(i),i);
+      tree.add_point_with_id(mf_2d.point_of_basic_dof(i),i);
     bgeot::kdtree_tab_type pts;
     for (unsigned i=0; i < mf3d.nb_dof(); ++i) {
-      base_node P = mf3d.point_of_dof(i);
+      base_node P = mf3d.point_of_basic_dof(i);
       base_node P2d0(2), P2d1(2); 
       scalar_type EPS = 1e-6;
       P2d0[0] = P[0]-EPS; P2d0[1] = P[1]-EPS;

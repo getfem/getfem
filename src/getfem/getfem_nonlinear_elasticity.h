@@ -142,7 +142,7 @@ namespace getfem {
   template<typename VECT1, typename VECT2> class elasticity_nonlinear_term 
     : public getfem::nonlinear_elem_term {
     const mesh_fem &mf;
-    const VECT1 &U;
+    std::vector<scalar_type> U;
     const mesh_fem &mf_data;
     const VECT2 &PARAMS;
     size_type N;
@@ -158,19 +158,21 @@ namespace getfem {
 			      const mesh_fem &mf_data_, const VECT2 &PARAMS_,
 			      const abstract_hyperelastic_law &AHL_,
 			      int version_) 
-      : mf(mf_), U(U_), mf_data(mf_data_), PARAMS(PARAMS_), 
+      : mf(mf_), U(mf_.nb_basic_dof()), mf_data(mf_data_), PARAMS(PARAMS_), 
 	N(mf_.linked_mesh().dim()), NFem(mf_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), E(N, N), Sigma(N, N), gradU(NFem, N),
 	tt(N, N, N, N), sizes_(NFem, N, NFem, N),
-	version(version_)
-    { if (version == 1) sizes_.resize(2); }
+	version(version_) {
+      if (version == 1) sizes_.resize(2);
+      mf.extend_vector(U_, U);
+    }
     const bgeot::multi_index &sizes() const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
-      coeff.resize(mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
-		coeff);
+      coeff.resize(mf.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       gmm::mult(gmm::transposed(gradU), gradU, E);
       gmm::add(gmm::sub_matrix(gradU, gmm::sub_interval(0,N),
@@ -213,10 +215,11 @@ namespace getfem {
       size_type cv = ctx.convex_num();
       size_type nb = AHL.nb_params();
 
-      coeff.resize(mf_data.nb_dof_of_element(cv)*nb);
-      for (size_type i = 0; i < mf_data.nb_dof_of_element(cv); ++i)
+      coeff.resize(mf_data.nb_basic_dof_of_element(cv)*nb);
+      for (size_type i = 0; i < mf_data.nb_basic_dof_of_element(cv); ++i)
 	for (size_type k = 0; k < nb; ++k)
-	  coeff[i * nb + k] = PARAMS[mf_data.ind_dof_of_element(cv)[i]*nb+k];
+	  coeff[i * nb + k]
+	    = PARAMS[mf_data.ind_basic_dof_of_element(cv)[i]*nb+k];
       ctx.pf()->interpolation(ctx, coeff, params, dim_type(nb));
     } 
     
@@ -461,7 +464,7 @@ namespace getfem {
     : public getfem::nonlinear_elem_term {
 
     const mesh_fem &mf;
-    const VECT1 &U;
+    std::vector<scalar_type> U;
     size_type N;
     base_vector coeff;
     base_matrix gradPhi;
@@ -471,18 +474,22 @@ namespace getfem {
   public:
     incomp_nonlinear_term(const mesh_fem &mf_, const VECT1 &U_,
 			      int version_) 
-      : mf(mf_), U(U_),
+      : mf(mf_), U(mf_.nb_basic_dof()),
 	N(mf_.get_qdim()),
 	gradPhi(N, N), sizes_(N, N),
-	version(version_)
-    { if (version == 1) { sizes_.resize(1); sizes_[0] = 1; } }
+	version(version_) {
+      if (version == 1) { sizes_.resize(1); sizes_[0] = 1; }
+      mf.extend_vector(U_, U);
+    }
+
     const bgeot::multi_index &sizes() const { return sizes_; }
+
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
-      coeff.resize(mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
-		coeff);
+      coeff.resize(mf.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradPhi, mf.get_qdim());
       gmm::add(gmm::identity_matrix(), gradPhi);
       scalar_type det = gmm::lu_inverse(gradPhi);

@@ -205,14 +205,20 @@ scalar_type interpolate_check(const mesh_fem &mf1, const mesh_fem& mf2, int i, i
   }
   std::vector<scalar_type> U(mf1.nb_dof()), U2(mf1.nb_dof());
   std::vector<scalar_type> V(mf2.nb_dof());
-  for (size_type d=0; d < mf1.nb_dof(); ++d) U[d] = func(mf1.point_of_dof(d));
+  for (size_type d=0; d < mf1.nb_dof(); ++d)
+    U[d] = func(mf1.point_of_basic_dof(d));
   switch (mat_version) {
-    case 0: getfem::interpolation(mf1,mf2,U,V); getfem::interpolation(mf2,mf1,V,U2);
+    case 0: getfem::interpolation(mf1,mf2,U,V);
+      getfem::interpolation(mf2,mf1,V,U2);
       break;
-    case 1: gmm::mult(*(rsc12.get()), U, V);  gmm::mult(*(rsc21.get()), V, U2); break;
-    case 2: gmm::mult(*(rsr12.get()), U, V);  gmm::mult(*(rsr21.get()), V, U2); break;
-    case 3: gmm::mult(*(wsc12.get()), U, V);  gmm::mult(*(wsc21.get()), V, U2); break;
-    case 4: gmm::mult(*(wsr12.get()), U, V);  gmm::mult(*(wsr21.get()), V, U2); break;
+    case 1: gmm::mult(*(rsc12.get()), U, V);
+      gmm::mult(*(rsc21.get()), V, U2); break;
+    case 2: gmm::mult(*(rsr12.get()), U, V);
+      gmm::mult(*(rsr21.get()), V, U2); break;
+    case 3: gmm::mult(*(wsc12.get()), U, V);
+      gmm::mult(*(wsc21.get()), V, U2); break;
+    case 4: gmm::mult(*(wsr12.get()), U, V);
+      gmm::mult(*(wsr21.get()), V, U2); break;
   }
   gmm::add(gmm::scaled(U,-1.),U2);
   return gmm::vect_norminf(U2)/gmm::vect_norminf(U);

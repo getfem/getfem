@@ -1,3 +1,19 @@
+2009-04-15 Yves Renard  <Yves.Renard@insa-lyon.fr>
+	* src/getfem/getfem_mesh_fem.h
+	* src/getfem_mesh_fem.cc
+	and many other files concerned by the modification. Adding an
+	additional optional linear transformation to the dof of a mesh_fem.
+	A mesh fem now contain a reduction matrix and an extension matrix.
+	This allow for instance to reduce the mesh_fem on a certain region
+	or to gives some constraints on the dofs.
+
+2009-03-29 Yves Renard  <Yves.Renard@insa-lyon.fr>
+	* src/getfem/getfem_mesh.h
+	* src/getfem/getfem_mesh_fem.h
+	* src/getfem/getfem_mesh_im.h
+	and some other related files. Changing the events management by giving
+	up getfem_linkmsg.h for something more simple.
+
 2009-02-20 Yves Renard  <Yves.Renard@insa-lyon.fr>
 	* src/gmm/gmm_std.h
 	Adding standard_locale and stream_standard_locale allowing to change
@@ -35,8 +51,9 @@
 	Sebastian Nowozin <sebastian.nowozin@tuebingen.mpg.de>
 
 2008-05-22 Yves Renard  <Yves.Renard@insa-lyon.fr>
-	* src/gmm/gmm_precond_ilut.h, src/gmm/gmm_precond_ilutp.h Fixed a bug
-	  in the iteration on the current line.
+	* src/gmm/gmm_precond_ilut.h
+	* src/gmm/gmm_precond_ilutp.h
+	Fixed a bug in the iteration on the current line.
 
 2008-02-12 Yves Renard  <Yves.Renard@insa-lyon.fr>
 	* src/bgeot_geotrans_inv.cc Fixed a bug for the inversion of 
@@ -49,30 +66,28 @@
 	* src/getfem/getfem_fem.h Corrected the definition of Nedelec elements.
 
 2007-08-20 Yves Renard  <Yves.Renard@insa-lyon.fr>
-	* src/getfem/bgeot_node_tab.h: fixed a little bug due to the fact
+	* src/getfem/bgeot_node_tab.h: fixed a minor bug due to the fact
 	that the method swap was not overloaded in bgeot::node_tab.
 
 2007-07-10  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
 	* src/getfem/bgeot_node_tab.h: the structure bgeot::node_tab is
 	created to store the nodes of a mesh and identify the too close nodes.
 	This replace the dal::dynamic_tree_sorted with the special
 	comparison which was not completely robust.
 
 2007-07-06  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/bgeot_geometric_trans.cc, src/getfem_fem.cc: adding the
-	dependence beetween geotrans_precomp and fem_precomp structures
-	to fix an important  memory leakage problem.
+	* src/bgeot_geometric_trans.cc
+	* src/getfem_fem.cc
+	adding the dependence beetween geotrans_precomp and fem_precomp
+	structures to fix an important  memory leakage problem.
 
 2007-02-09 Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
 	* interface/*: integrating Matlab and Python interfaces into Getfem
 	  tree.
 
 2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/gmm/gmm_except.h: changing error managing. Errors are now handle
+	* src/gmm/gmm_except.h
+	changing error managing. Errors are now handle
 	thanks to three macros: GMM_ASSERT1(test, msg), GMM_ASSERT2(test, msg),
 	and GMM_ASSERT3(test, msg). GMM_ASSERT1 for non-maskable tests and
 	errors. GMM_ASSERT2 for maskable tests (especially for
@@ -82,8 +97,8 @@
 	GMM_ASSERT2(++iteration < 1000, "not converged") is not safe.
 
 2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/*.h: moving header files of Gmm and Getfem into sub-directories
+	* src/*.h
+	moving header files of Gmm and Getfem into sub-directories
 	src/gmm and src/getfem respectively. dal_std.h, dal_ref.h,
 	dal_algobase.h and dal_except.h are integrated to gmm and renamed
 	gmm_std.h, gmm_ref.h, gmm_algobase.h and gmm_except.h. This means
@@ -92,159 +107,154 @@
 	
 
 2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/linkmsg.h: moved to src/getfem_linkmsg.h. Integrated to
-	  namespace getfem.
+	* src/linkmsg.h
+	moved to src/getfem_linkmsg.h. Integrated to namespace getfem.
 	
 2007-01-30  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/ftool.h, src/ftool.cc: moved to src/bgeot_ftool.h and
-	  src/bgeot_ftool.cc. Integrated to namespace bgeot.
+	* src/ftool.h
+	* src/ftool.cc
+	moved to src/bgeot_ftool.h and src/bgeot_ftool.cc.
+	Integrated to namespace bgeot.
 	
 2007-01-04  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/bgeot_mesh_level_set.cc: making tests depending on the convex
-	radius for fine refinements. 
+	* src/bgeot_mesh_level_set.cc
+	making tests depending on the convex radius for fine refinements. 
 
 2007-01-03  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/bgeot_mesh.h: modification of the test which decides when
+	* src/bgeot_mesh.h
+	modification of the test which decides when
 	two points are coinciding. Making it more context dependent.
 
 2006-11-10  Yves Renard  <Yves.Renard@insa-lyon.fr>
-
-	* src/dal_ref.h: modification of tab_ref_reg_spaced iterators to fix
+	* src/dal_ref.h
+	modification of tab_ref_reg_spaced iterators to fix
 	a bug with VC++ on Gmm++.
 
 2006-11-06  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 	    Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_fem_composite.cc: fixed a bug in reduced HCT and for
+	* src/getfem_fem_composite.cc
+	fixed a bug in reduced HCT and for
 	finite element having nonsquared M matrix (see kernel documentation).
 
 2006-10-05  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_assembling.h: added asm_H2_dist
+	* src/getfem_assembling.h
+	added asm_H2_dist
 
 2006-09-28  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+	* src/getfem_mesh_fem.h
+	added an optional partition of convexes in the mesh_fem which allows
+	to partition the dof in disconnected area (used for the mortar joint
+	in the tests/crack.cc program)
 
-	* src/getfem_mesh_fem.h: added an optional partition of convexes
-	in the mesh_fem which allows to partition the dof in disconnected
-	area (used for the mortar joint in the tests/crack.cc program)
-
-	* src/getfem_mesh.cc: modified outer_faces_of_mesh when a list of
-	convex is supplied to it: now it returns the border of this set of
-	convexes, not the intersection of the mesh border with this set of
-	convexes.
+	* src/getfem_mesh.cc
+	modified outer_faces_of_mesh when a list of convex is supplied to it:
+	now it returns the border of this set of convexes, not the
+	intersection of the mesh border with this set of convexes.
 
 2006-07-28  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_fem_composite.h: adding P1 fem on triangle with an 
-	  additional piecewise linear bubble function.
+	* src/getfem_fem_composite.h
+	adding P1 fem on triangle with an additional piecewise linear
+	bubble function.
 
 2006-06-08  julien pommier  <pommier@gmm.insa-tlse.fr>
 	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_partial_mesh_fem.h: a new mesh fem allowing to
-	  select dofs.
+	* src/getfem_partial_mesh_fem.h
+	a new mesh fem allowing to select dofs.
 
 2006-06-08  julien pommier  <pommier@gmm.insa-tlse.fr>
-
-	* src/getfem_mesh_slice.cc (include): initial support for levelset
-	in slices. added write_to_file and read_from_file.
+	* src/getfem_mesh_slice.cc (include)
+	initial support for levelset in slices.
+	added write_to_file and read_from_file.
 
 2006-06-07  julien pommier  <pommier@gmm.insa-tlse.fr>
 	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_mesh.cc: added getfem::mesh::convex_area_estimate()
+	* src/getfem_mesh.cc
+	added getfem::mesh::convex_area_estimate()
 
 2006-06-05  julien pommier  <pommier@gmm.insa-tlse.fr>,
 	    Yves Renard,  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_mesh_im_level_set.cc: fixed a bug for integration method
-	  inside or outside a level-set. Fixed a bug for 1D and 3D domains
-	  also. Fixed a bug for the integration on the boundary of the
-	  level-set.
+	* src/getfem_mesh_im_level_set.cc
+	fixed a bug for integration method inside or outside a level-set.
+	Fixed a bug for 1D and 3D domains also. Fixed a bug for the
+	integration on the boundary of the level-set.
 	
-	* src/getfem_integration.cc: fixed a minor bug in function
-	  classical_approx_im.
+	* src/getfem_integration.cc
+	fixed a minor bug in function classical_approx_im.
 
 2006-06-01  julien pommier  <pommier@gmm.insa-tlse.fr>
+	* src/getfem_linearized_plates.h
+	fixed a minor bug in mdbrick_plate_source_term for non-homogeneous rhs.
 
-	* src/getfem_linearized_plates.h: fixed a minor bug in
-	mdbrick_plate_source_term for non-homogeneous rhs.
-
-	* src/getfem_mesh_level_set.cc: fixed a bug which broke levelsets
-	without 'secondary' part (i.e. non-crack levelsets).
-	
+	* src/getfem_mesh_level_set.cc
+	fixed a bug which broke levelsets without 'secondary' part
+	(i.e. non-crack levelsets).
 
 2006-04-21 Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_fem_composite.cc Adding a C1 composite finite element
-	  on quadrilaterals.
+	* src/getfem_fem_composite.cc
+	Adding a C1 composite finite element on quadrilaterals.
 
 2006-04-04 Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_mat_elem_type.cc bug fixed for nonlinear terms.
+	* src/getfem_mat_elem_type.cc
+	bug fixed for nonlinear terms.
 
 2006-04-04  Yves Renard  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* tests-2.0/ A copy of test programs corresponding to version 2.0
-	is made in this directory in order to test the compatibility of
-	future changes with 2.0 version of Getfem.
+	* tests-2.0/
+	A copy of test programs corresponding to version 2.0 is made in
+	this directory in order to test the compatibility of future
+	changes with 2.0 version of Getfem.
 
 2006-02-20  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/gmm_blas_interface.h bug fixed for the interface of matrix-matrix
-	  multiplications with blas. Bug reported by william.greene@att.net on
-	  version 1.7.
+	* src/gmm_blas_interface.h
+	bug fixed for the interface of matrix-matrix multiplications
+	with blas. Bug reported by william.greene@att.net on version 1.7.
 
 2006-02-01  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_mesh.h adding Bank refinement procedures for simplex
-	meshes. The mesh_fem, mesh_im and mesh_region objects are updated.
+	* src/getfem_mesh.h
+	adding Bank refinement procedures for simplex meshes.
+	The mesh_fem, mesh_im and mesh_region objects are updated.
 
 2006-01-26  Yves Renard  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+	* src/getfem_fem.cc
+	adding HCT triangle and Raviart-Thomas RT0 elements and Nedelec
+	elements in dimension >=2. To build ths HCT triangle a new version
+	of composite polynomial has been added in the new file
+	getfem_fem_composite2.cc.
 
-	* src/getfem_fem.cc adding HCT triangle and Raviart-Thomas RT0
-	elements and Nedelec elements in dimension >=2. To build ths HCT
-	triangle a new version of composite polynomial has been added in
-	the new file getfem_fem_composite2.cc.
-
-	* src/bgeot_vector.h suppression of class vsvector.
+	* src/bgeot_vector.h
+	suppression of class vsvector.
 
 2006-01-21 Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/bgeot_convex_hull.h, src/bgeot_simplexify.h suppression of
-	this files (not well written) only used to simplexify reference
-	elements. Replaced by src/bgeot_convex_ref_simplexified.cc which
-	store the simplexifcation of standard reference elements.
+	* src/bgeot_convex_hull.h
+	* src/bgeot_simplexify.h
+	suppression of this files (not well written) only used to
+	simplexify reference elements. Replaced by
+	src/bgeot_convex_ref_simplexified.cc which store the
+	simplexifcation of standard reference elements.
 
 2006-01-07 Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/bgeot_poly.h Adding a method to read a polynomial on a stream
-	or a character string.
+	* src/bgeot_poly.h
+	Adding a method to read a polynomial on a stream or a character string.
 
 2006-01-06 Yves Renard  <Yves.Renard@insa-toulouse.fr>,
 	   Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+	* src/getfem_fem.cc
+	Some bug fixed for non tau-equivalent elements. Hermite elements on
+	triangle and tetrahedron and Argyris element are working.
 
-	* src/getfem_fem.cc Some bug fixed for non tau-equivalent elements.
-	Hermite elements on triangle and tetrahedron and Argyris element
-	are working.
-
-	* src/getfem_fourth_order.h Adding tools to deal with fourth order
-	pdes like bilaplacian problem. Adding bilaplacian test program.
+	* src/getfem_fourth_order.h
+	Adding tools to deal with fourth order pdes like bilaplacian problem.
+	Adding bilaplacian test program.
 
 2005-12-30 Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_fem.cc Hermite segment is fixed !
+	* src/getfem_fem.cc
+	Hermite segment is fixed !
 
 2005-12-29 Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/ftool.h, src/ftool.cc modification of get_token which is now
-	more elaborated and allows to analyze a "Matlab like" langages.
+	* src/ftool.h, src/ftool.cc
+	modification of get_token which is now more elaborated and
+	allows to analyze a "Matlab like" langages.
 	The class md_param which reads the parameter files allows now
 	basic computations (+, -, *, /, <, >, <=, >=, &&, ||, ~, ~=) and
 	an "if else" instruction. A consequence is a slight modification
@@ -252,107 +262,106 @@
 	is maintened).
 
 2005-12-27 Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_modeling.h, src/getfem_assembling.h important modification
-	in the treatment of the Dirichlet condition. The penalization is
-	available as a new option in the Dirichleet condition brick. The
-	treatment of the generalized Dirichlet condition (hu = r) is separated
-	from the classical one (u=r).
+	* src/getfem_modeling.h
+	* src/getfem_assembling.h
+	important modification in the treatment of the Dirichlet condition.
+	The penalization is available as a new option in the Dirichleet
+	condition brick. The treatment of the generalized Dirichlet
+	condition (hu = r) is separated from the classical one (u=r).
 
 2005-12-20 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* src/bgeot_mesh_structure.h simplification of the structure
-	bgeot::mesh_structure. Important modification of the interface
-	of this class.
+	* src/bgeot_mesh_structure.h
+	simplification of the structure bgeot::mesh_structure.
+	Important modification of the interface of this class.
 
 	* src/bgeot_mesh.h suppression of this file and the corresponding
 	class bgeot::mesh.
 
-	* src/getfem_mesh.h the new structure getfem::mesh replace the old
+	* src/getfem_mesh.h
+	the new structure getfem::mesh replace the old
 	one getfem::getfem_mesh merging bgeot::mesh and getfem::getfem_mesh.
 
-	* src/dal_alloc.h suppression of this file.
+	* src/dal_alloc.h
+	suppression of this file.
 
 2005-12-10 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* src/getfem_config.h deals now with the level of parallelization
-	of Getfem. GETFEM_PARA_LEVEL = 0 : sequential version.
+	* src/getfem_config.h
+	deals now with the level of parallelization of Getfem.
+	GETFEM_PARA_LEVEL = 0 : sequential version.
 	GETFEM_PARA_LEVEL = 1 parallelization of the linear solver,
 	GETFEM_PARA_LEVEL = 2 parallelization of the assembly procedures also.
 	GETFEM_PARA_SOLVER should describe the parallel solver used.
 	A set of macro are defined to deal with mpi and metis.
 
-	* src/dal_except.h changing Warning syntax DAL_WARNING2("msg")
-	 instead of DAL_WARNING(2, "msg"). In order to be able to hide
+	* src/dal_except.h
+	changing Warning syntax DAL_WARNING2("msg")
+	instead of DAL_WARNING(2, "msg"). In order to be able to hide
 	some warning level at the compile time.	Adding also DAL_TRACE0("msg")
 	to DAL_TRACE4("msg") on the same format.
 	
 2005-12-09  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+	* src/gmm_MUMPS_interface.h
+	added sequential mumps interface (direct solver for sparse matrices).
 
-	* src/gmm_MUMPS_interface.h: added sequential mumps interface
-	(direct solver for sparse matrices).
-
-	* src/getfem_modeling.h: large modification of the mdbricks
+	* src/getfem_modeling.h
+	large modification of the mdbricks
 
 2005-12-08 Julien pommier, Yves Renard <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_modeling.h,
-	  important simplifications in the brick system. creation of brick
+	* src/getfem_modeling.h
+	important simplifications in the brick system. creation of brick
 	parameter, simplification of the constructors. A default mf_data
 	is assumed for constant parameters. A generic linear pde brick
 	is built to make the construction of new brick for linear pdes easy.
 
 2005-11-22  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_mesh_fem.h (getfem): mesh_fem::linked_mesh() is now const.
+	* src/getfem_mesh_fem.h
+	mesh_fem::linked_mesh() is now const.
 
 2005-11-04  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/bgeot_poly.h (bgeot): optimized common polynomial evaluation
-	(dim <= 3, degree <= 6).
+	* src/bgeot_poly.h
+	optimized common polynomial evaluation (dim <= 3, degree <= 6).
 
 2005-10-24  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_assembling_tensors.cc: optimization of the assembly
-	for xfem-type problems (i.e. when the FEM changes often on the
-	elements).
+	* src/getfem_assembling_tensors.cc
+	optimization of the assembly for xfem-type problems
+	(i.e. when the FEM changes often on the elements).
 
 2005-06-30  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_import.cc: updated the gmsh import such that it uses
+	* src/getfem_import.cc
+	updated the gmsh import such that it uses
 	the 'gmsh physical regions' as getfem mesh regions.
 
-	* src/getfem_mesh.h: added 'bounding_box' method
+	* src/getfem_mesh.h
+	added 'bounding_box' method
 
 2005-05-30  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_mesh_region.h: replaced mesh_cvf_set with the
-	getfem::mesh_region structure, which can hold sets of
-	convexes/faces of convexes, and is now used as an argument to the
-	assembly functions. The generic_assembly::volumic_assembly() and
+	* src/getfem_mesh_region.h
+	replaced mesh_cvf_set with the getfem::mesh_region structure,
+	which can hold sets of convexes/faces of convexes, and is now used
+	as an argument to the assembly functions.
+	The generic_assembly::volumic_assembly() and
 	boundary_assembly() methods were merged into
 	generic_assembly::assembly(const mesh_region&).
 
 2005-05-19 Julien pommier, Yves Renard
-
-	* src/getfem_modeling.h, Simplification of the model bricks system.
+	* src/getfem_modeling.h
+	Simplification of the model bricks system.
 
 2005-05-13  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_fem.cc (getfem): Added 'alpha' param.
-	for FEM_QK_DISCONTINUOUS.
+	* src/getfem_fem.cc (getfem)
+	Added 'alpha' param. for FEM_QK_DISCONTINUOUS.
 
 2005-03-11 Julien pommier, Yves Renard
-
-	* src/getfem_fem_level_set.h, src/getfem_fem_level_set.cc,
+	* src/getfem_fem_level_set.h
+	* src/getfem_fem_level_set.cc
 	getfem_mesh_fem_level_set.h, getfem_mesh_fem_level_set.cc
 	deals with the fem representation of discontinuities across some
 	level sets.
 
 2005-02-25 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* src/dal_static_stored_object.h, src/dal_static_stored_object.cc
-	centralize the management of the static objects (convex structures,
+	* src/dal_static_stored_object.h
+	* src/dal_static_stored_object.cc
+	Centralize the management of the static objects (convex structures,
 	geometric transformations, fems, precomps, mat elems ...), and store
 	the dependencies between them to be able to delete consistently a
 	part of them. Many changements in the rest of Getfem : ftool_naming
@@ -361,287 +370,272 @@
 	stored objects.
 
 2005-02-04 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* contrib/icare/icare.cc a Navier-Stokes solver in Getfem.
+	* contrib/icare/icare.cc
+	A Navier-Stokes solver in Getfem.
 
 2005-02-01 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* src/dal_std.h, src/gmm_def.h : mathematical definitions are
-	moved from dal_std.h to gmm_def.h
+	* src/dal_std.h
+	* src/gmm_def.h
+	mathematical definitions are moved from dal_std.h to gmm_def.h
 
 2005-01-31 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* src/getfem_level_set.h addition of a representation of level sets
+	* src/getfem_level_set.h
+	addition of a representation of level sets
 
 2005-01-24 Yves Renard, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_mesh_im the description of integration methods on a mesh
-	has moved from the object mesh_fem to a new separated object mesh_im.
+	* src/getfem_mesh_im
+	the description of integration methods on a mesh has moved from
+	the object mesh_fem to a new separated object mesh_im.
 	A consequence is that this new object is a parameter of all assembly
 	procedure.
 
 2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
-
-	* src/getfem_mesh the description of the boundaries is moved
+	* src/getfem_mesh
+	the description of the boundaries is moved
 	from the structure mesh_fem to getfem_mesh. The methods in
 	mesh_fem are declared deprecated. Consequences : incompatibility
 	of the description of the set of faces : bitset in place of a 
 	dal::bit_vector, incompatibility of the mesh and mesh_fem files.
 
-	* Changing the extension from .C to .cc for compatibility with
-	Windows.
+2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
+	*.C
+	Changing the extension from .C to .cc for compatibility with Windows.
 
 2005-01-06  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
 	* minor changes for MinGW (getfem-1.7.1)
-
-2005-01-03
-	* Getfem-1.7 released.
-
+	
 2004-12-10  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_mat_elem_type.h adding the unit normal to a boundary
-	available for elementary computations.
+	* src/getfem_mat_elem_type.h
+	adding the unit normal to a boundary available for elementary
+	computations.
 
 2004-12-08  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* superlu/BLAS.c configure.in: added a f2c-ed BLAS, used when no
-	other suitable blas is found.
+	* superlu/BLAS.c
+	configure.in: added a f2c-ed BLAS, used when no other suitable blas
+	is found.
 
 2004-12-02  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/bgeot_geotrans_inv.C (bgeot): Made inversion geometric
-	transformations more robust (linear search in the Newton
-	algorithm).
-
-2005-01-05  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_linearized_plate.h linearized plate brick
+	* src/bgeot_geotrans_inv.C
+	Made inversion geometric transformations more robust
+	(linear search in the Newton algorithm).
 
 2004-11-25  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_linearized_plate.h linearized plate brick
-
-2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_fem_sum.h introduction of a fem which is the direct
-	sum of two fems..
+	* src/getfem_linearized_plate.h
+	linearized plate brick
 
 2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+	* src/getfem_fem_sum.h
+	introduction of a fem which is the direct sum of two fems..
 
-	* src/getfem_fem_virtual_link.h replaced by
-	getfem_interpolated_fem.h redefinition of the interpolation of a
-	fem with real element fems.
+2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+	* src/getfem_fem_virtual_link.h
+	replaced by getfem_interpolated_fem.h redefinition of the
+	interpolation of a fem with real element fems.
 
 2004-10-19  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/gmm_precond_ilutp.h: New preconditionner, incomplete LU with
-	  fill-in, threshold and column pivoting.
+	* src/gmm_precond_ilutp.h
+	New preconditionner, incomplete LU with fill-in, threshold and
+	column pivoting.
 
 2004-10-15  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/gmm_vector.h: bug fixed and optimization of the copy toward
-	a rsvector<T> : the unsorted indices were not taken into account.
+	* src/gmm_vector.h
+	bug fixed and optimization of the copy toward a rsvector<T> :
+	the unsorted indices were not taken into account.
 
 2004-09-15  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/gmm_solver_bfgs.h: A BFGS and a DFP algorithm for
-	unconstrained optimization.
+	* src/gmm_solver_bfgs.h
+	A BFGS and a DFP algorithm for unconstrained optimization.
 
 2004-09-15  Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/gmm_blas.h: 
+	* src/gmm_blas.h
 	gmm now handles (valid) operations mixing complex and scalars
 	(e.g. multiplication of a complex vector with a real matrix)
 
 2004-08-27  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_fem.h, src/getfem_interpolation.h: added hability to
-	interpolate complex-valued fields.
+	* src/getfem_fem.h
+	* src/getfem_interpolation.h
+	added hability to interpolate complex-valued fields.
 
 2004-08-09  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_assembling_tensors.C, src/bgeot_sparse_tensors.C,
-	src/getfem_mat_elem.C: Added the ability to perform reductions
-	during the integration of elementary tensors, and daxpy is used
-	when possible: huge speedup for the assembly of nonlinear tangent
-	matrices.
+	* src/getfem_assembling_tensors.C
+	* src/bgeot_sparse_tensors.C
+	* src/getfem_mat_elem.C
+	Added the ability to perform reductions during the integration of
+	elementary tensors, and daxpy is used when possible:
+	huge speedup for the assembly of nonlinear tangent matrices.
 
 2004-08-03  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-	* superlu: SuperLU is included into getfem, which does now depend
-	on BLAS.
+	* superlu
+	SuperLU is included into getfem, which does now depend on BLAS.
 
 2004-08-02  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-	* src/gmm_dense_qr.h: Bug fixed on the computation of Schur vectors.
+	* src/gmm_dense_qr.h
+	Bug fixed on the computation of Schur vectors.
 	the reductible 2x2 blocks has to be reduced to obtain the Schur
 	vectors (this is not necessary just to obtain eigenvalues).
 	(Bug report from Kasper Peeters <kasper.peeters@aei.mpg.de>).
 
 2004-07-20  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-	* src/getfem_fem.h etc.: interpolation_grad now stores the
-	gradients in the rows of the matrix, no more in the columns.
+	* src/getfem_fem.h
+	interpolation_grad now stores the gradients in the rows of the
+	matrix, no more in the columns.
 	
 2004-07-05  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-	* src/getfem_export.C: added VTK and OpenDX export of slices,
-	getfem_mesh and mesh_fem objects.
+	* src/getfem_export.C
+	added VTK and OpenDX export of slices, getfem_mesh and mesh_fem
+	objects.
 
-2004-06-25 
-	* src/gmm_real_part.h : added the functions gmm::real_part and
-	gmm::imag_part.
-
-2004-06-18  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-	* src/getfem_fem.h : Now a dof has to be on the boundary if
-	his corresponding shape function is non-zero on that boundary
-	(a P0 node is on each boundary).
+2004-06-25  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+	* src/gmm_real_part.h
+	added the functions gmm::real_part and gmm::imag_part.
 
 2004-06-18  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-	* src/getfem_context.h : New structure to deal with interdependency
-	of objects.
+	* src/getfem_fem.h
+	Now a dof has to be on the boundary if his corresponding shape
+	function is non-zero on that boundary (a P0 node is on each boundary).
 
 2004-06-18  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-	* src/getfem_modeling.h : New structures defining elementary
-	bricks to build complete models: linearized elasticity, boundary
-	conditions ...
+	* src/getfem_context.h
+	New structure to deal with interdependency of objects.
+
+2004-06-18  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+	* src/getfem_modeling.h
+	New structures defining elementary bricks to build complete models:
+	linearized elasticity, boundary conditions ...
 
 2004-06-17  julien pommier  <Julien.Pommier@insa-toulouse.fr> 
-        * src/gmm_matrix.h: fixed the swap() method for csc_matrix and 
-        csr_matrix. 
+	* src/gmm_matrix.h
+	fixed the swap() method for csc_matrix and csr_matrix. 
 
 2004-06-04  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-	* src/gmm_sub_index.h : the sturcture unsorted_sub_index is
-	defined to represent a non-sorted sub-vector or sub-matrix, for
-	instance a permutation of a vector.
-	All linalg_traits have been modified, a new component called
-	index_sorted has been added. The algorithms in gmm_blas.h have been
-	modified to take into account the fact that a sparse index can be
-	unsorted.
+	* src/gmm_sub_index.h
+	the sturcture unsorted_sub_index is defined to represent a
+	non-sorted sub-vector or sub-matrix, for instance a permutation
+	of a vector. All linalg_traits have been modified, a new
+	component called index_sorted has been added. The algorithms in
+	gmm_blas.h have been modified to take into account the fact that
+	a sparse index can be unsorted.
 
 2004-06-01  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-	* src/getfem_export.h : the interpolation function has been moved
-	in the new file src/getfem_interpolation.h. An option for the
+	* src/getfem_export.h
+	the interpolation function has been moved in the new file
+	src/getfem_interpolation.h. An option for the
 	extrapolation of points just outside the boundary has bee added.
 	the function interpolation_solution is now just called interpolation.
 
 2004-05-28  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_assembling.h (getfem): minor speedup for the assembly
-	of linear elasticity.
+	* src/getfem_assembling.h
+	minor speedup for the assembly of linear elasticity.
 	
-	* src/bgeot_small_vector.h : small_vectors are now initialized
-	with zeros.
+	* src/bgeot_small_vector.h
+	small_vectors are now initialized with zeros.
 
-	* src/dal_singleton.h, *.C: added ability to cleanup allocated
+	* src/dal_singleton.h, *.C
+	added ability to cleanup allocated
 	static data on exit -- mostly for valgrind --leak-check=yes.
 	
 2004-05-14  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/gmm_solvers_Schwarz_additive.h: A sequential version of
-	the domain decomposition / precnditionner is finalized. Gmres,
-	Bicgstag or CG can be used as local or global solvers. Superlu
-	can be used as local solver.
+	* src/gmm_solvers_Schwarz_additive.h
+	A sequential version of the domain decomposition / precnditionner
+	is finalized. Gmres, Bicgstag or CG can be used as local or global
+	solvers. Superlu can be used as local solver.
 	
 2004-05-14  julien pommier  <Julien.Pommier@insa-toulouse.fr>
+	* src/gmm_solver_gmres.h
+	fixed an incorrect computation of the residu in gmres in cases where
+	a preconditioner was used.
 
-	* src/gmm_solver_gmres.h: fixed an incorrect computation of the
-	residu in gmres in cases where a preconditioner was used.
-
-	* src/gmm_vector.h: fixed a bug in the constructor of slvector
-	(thanks to li zhipeng).
+	* src/gmm_vector.h
+	fixed a bug in the constructor of slvector (thanks to li zhipeng).
 	
 2004-04-02  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* tests/elastostatic.C tests/laplacian.C: now take into account
-	the GENERIC_DIRICHLET parameter
-
-2004-03-31  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_fem.h, src/getfem_import.h: added a method giving
-	an interpolation matrix, useful for repeated interpolations of one
-	field onto another.
+	* tests/elastostatic.C
+	* tests/laplacian.C
+	now take into account the GENERIC_DIRICHLET parameter
 
 2004-03-31  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+	* src/getfem_fem.h
+	* src/getfem_import.h
+	added a method giving an interpolation matrix, useful for repeated
+	interpolations of one field onto another.
 
-	* src/gmm_superlu_interface.h: The superlu interface is now
-	uptodate with the lastest release of superlu (v.3.0).  A new
-	structure was introduced for storing an LU decomposition and doing
-	tri_solves later.
+2004-03-31  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+	* src/gmm_superlu_interface.h
+	The superlu interface is now uptodate with the lastest release of
+	superlu (v.3.0).  A new structure was introduced for storing an
+	LU decomposition and doing tri_solves later.
 
 2004-03-26  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/gmm_precond_ildltt.h: fix bug which slowed the ildltt from
-	a factor of about 50.
+	* src/gmm_precond_ildltt.h
+	fix bug which slowed the ildltt from a factor of about 50.
 
 2004-03-11  julien pommier  <Julien.Pommier@insa-toulouse.fr>
+	* src/getfem_fem.C
+	added a classical_discontinuous_fem similar to the classical_fem
+	already available.
 
-	* src/getfem_fem.C (getfem): added a classical_discontinuous_fem
-	similar to the classical_fem already available.
-
-	* src/getfem_integration.C (getfem): added the classical_approx_im
-	function, which returns an approx. integration method for a given
-	{geometric_trans,degree}. Renamed exact_classical_im to
-	classical_exact_im.
+	* src/getfem_integration.C
+	added the classical_approx_im function, which returns an approx.
+	integration method for a given {geometric_trans,degree}.
+	Renamed exact_classical_im to classical_exact_im.
 	
 2004-03-09  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/bgeot_geometric_trans.C (bgeot): added compute_local_basis
-	which returns the normal of a face + tangents
+	* src/bgeot_geometric_trans.C
+	added compute_local_basis which returns the normal of a face + tangents
 
 2004-02-26  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_fem.C (getfem): correction the wrong quadrature rules
+	* src/getfem_fem.C
+	correction the wrong quadrature rules
 	for IM_GAUSSLOBATTO1D. Addition of a new fem:
 	FEM_PK_GAUSSLOBATTO1D. Integration points are now sorted.
 
 2004-02-09  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_fem.[Ch] src/getfem_precomp.[Ch],
-	src/bgeot_precomp.[Ch], etc: large modifications of the fem
-	interpolation interface. Now uses fem_interpolation_context (and
-	geotrans_interpolation_context). geotrans_precomp is now part of
+	* src/getfem_fem.[Ch]
+	* src/getfem_precomp.[Ch]
+	* src/bgeot_precomp.[Ch]
+	large modifications of the fem interpolation interface.
+	Now uses fem_interpolation_context
+	(and geotrans_interpolation_context). geotrans_precomp is now part of
 	namespace bgeot.
 
 2004-02-04  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_precomp.[Ch] (getfem): cleaned up getfem_precomp,
-	replaced the ugly fem_precomp_not_stored and
-	geotrans_precomp_not_stored with the much better fem_precomp_pool
+	* src/getfem_precomp.[Ch]
+	cleaned up getfem_precomp, replaced the ugly fem_precomp_not_stored
+	and geotrans_precomp_not_stored with the much better fem_precomp_pool
 	and geotrans_precomp_pool.
 
-	* src/getfem_Xfem.C (getfem): small perf improvement (better use
-	of pgeotrans_precomp).
+	* src/getfem_Xfem.C
+	small perf improvement (better use of pgeotrans_precomp).
 
 2004-02-02  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_mesh_slice.[Ch], src/getfem_mesh_slicers.[Ch]: the
-	mesh_slices have been splitted in two parts: 
-
+	* src/getfem_mesh_slice.[Ch]
+	* src/getfem_mesh_slicers.[Ch]
+	the mesh_slices have been splitted in two parts: 
 	- the mesh_slicer object, which takes a mesh, simplexifies it and
 	sends thes simplexes to a list of "slicer_action" objects
-
 	- the stored_mesh_slice object, which contains all simplexes that
 	have been constructed by the mesh_slicer. This recording of
 	simplexes is done via the slicer_build_stored_mesh_slice (derived
 	from slicer_action) class.
 
-	src/getfem_export.h: interpolation to a set of sparse points can 
-	now interpolate the gradient of a field.
+	* src/getfem_export.h
+	interpolation to a set of sparse points can now interpolate the
+	gradient of a field.
 	
 2004-01-29  julien pommier  <Julien.Pommier@insa-toulouse.fr>
-
-	* src/getfem_export.h: removed some obsolete interpolation functions. 
+	* src/getfem_export.h
+	removed some obsolete interpolation functions. 
 
 2004-01-27  Yves Renard <renard@insa-toulouse.fr>
-	
-	* tests/elastostatic.C: simplification, copied from laplacian.C 
-	(elastostatique -> elastostatic)
+	* tests/elastostatic.C
+	simplification, copied from laplacian.C 
 	
 2004-01-27  julien pommier  <Julien.Pommier@insa-toulouse.fr>
+	* tests/laplacian.C
+	huge simplification of the sources..
 
-	* tests/laplacian.C: huge simplification of the sources..
-
-	* removed obsolete getfem_norm.h
-
-	* src/getfem_mesh_slice.C: fixed the problem (missing simplexes)
+	* src/getfem_mesh_slice.C
+	fixed the problem (missing simplexes)
 	with 'union' operation on slice. Moreover, the slice boundary
 	flagging is now better than ever. Added a bounding_box member
 	function in geometric_trans.

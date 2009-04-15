@@ -32,8 +32,8 @@ namespace getfem {
   static ppolycompfem composite_fe_method(const bgeot::mesh_precomposite &mp, 
 				   const mesh_fem &mf, bgeot::pconvex_ref cr) {
     
-//     if (&(bgeot::basic_mesh(mf.linked_mesh()) != &(mp.linked_mesh()))
-//       GMM_ASSERT1(false, "Meshes are different.");
+    GMM_ASSERT1(!mf.is_reduced(),
+		"Sorry, does not work for reduced mesh_fems");
     fem<bgeot::polynomial_composite> *p = new fem<bgeot::polynomial_composite>;
 
     p->mref_convex() = cr;
@@ -44,9 +44,9 @@ namespace getfem {
     p->estimated_degree() = 0;
     p->init_cvs_node();
 
-    std::vector<bgeot::polynomial_composite> base(mf.nb_dof());
+    std::vector<bgeot::polynomial_composite> base(mf.nb_basic_dof());
     std::fill(base.begin(), base.end(), bgeot::polynomial_composite(mp));
-    std::vector<pdof_description> dofd(mf.nb_dof());
+    std::vector<pdof_description> dofd(mf.nb_basic_dof());
     
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pfem pf1 = mf.fem_of_element(cv);
@@ -59,15 +59,15 @@ namespace getfem {
       p->estimated_degree() = std::max(p->estimated_degree(),
 				       pf->estimated_degree());
       for (size_type k = 0; k < pf->nb_dof(cv); ++k) {
-	size_type igl = mf.ind_dof_of_element(cv)[k];
+	size_type igl = mf.ind_basic_dof_of_element(cv)[k];
 	base_poly fu = pf->base()[k];
 	base[igl].poly_of_subelt(cv) = fu;
 	dofd[igl] = pf->dof_types()[k];
       }
     }
-    p->base().resize(mf.nb_dof());
-    for (size_type k = 0; k < mf.nb_dof(); ++k) {  
-      p->add_node(dofd[k], mf.point_of_dof(k));
+    p->base().resize(mf.nb_basic_dof());
+    for (size_type k = 0; k < mf.nb_basic_dof(); ++k) {  
+      p->add_node(dofd[k], mf.point_of_basic_dof(k));
       p->base()[k] = base[k];
     }
     return p;

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2008 Julien Pommier
+// Copyright (C) 2003-2009 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -49,8 +49,12 @@ namespace getfem {
     struct convex_slice {
       size_type cv_num; 
       dim_type cv_dim;
-      dim_type fcnt, cv_nbfaces; // number of faces of the convex (fcnt also counts the faces created by the slicing of the convex)
-      bool discont; // when true, it is assumed that the interpolated data inside the convex may be discontinuous (for ex. levelset discont function)
+      dim_type fcnt, cv_nbfaces; // number of faces of the convex
+                                 // (fcnt also counts the faces created by
+                                 // the slicing of the convex)
+      bool discont; // when true, it is assumed that the interpolated data
+                    // inside the convex may be discontinuous
+                    // (for ex. levelset discont function)
       mesh_slicer::cs_nodes_ct nodes;
       mesh_slicer::cs_simplexes_ct simplexes;
       size_type global_points_count;
@@ -64,14 +68,15 @@ namespace getfem {
     /* these three arrays allow the association of a global point
        number to a merged point number, and of a merged point to a
        list of global points */
-    mutable std::vector<merged_node_t> merged_nodes;     /* size = points_cnt */
-    mutable std::vector<size_type> merged_nodes_idx;     /* size = nb of merged points + 1 */
-    mutable std::vector<size_type> to_merged_index;      /* size = points_cnt */
+    mutable std::vector<merged_node_t> merged_nodes; /* size = points_cnt */
+    mutable std::vector<size_type> merged_nodes_idx; /* size = merged pts + 1*/
+    mutable std::vector<size_type> to_merged_index;  /* size = points_cnt */
     mutable bool merged_nodes_available;
 
-    /* keep track of the original mesh (hence it should not be destroyed before the slice) */
+    /* keep track of the original mesh (hence it should not be destroyed
+     * before the slice) */
     const mesh *poriginal_mesh;
-    std::vector<size_type> simplex_cnt; // count simplexes of dimension 0,1,...,dim
+    std::vector<size_type> simplex_cnt; // count simplexes of dim 0,1,...,dim
     size_type points_cnt;
     cvlst_ct cvlst;
     size_type dim_;
@@ -79,7 +84,8 @@ namespace getfem {
     friend class slicer_build_stored_mesh_slice;
     friend class mesh_slicer;
   public:
-    stored_mesh_slice() : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { }
+    stored_mesh_slice() : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1))
+    { }
     /** Shortcut constructor to simplexify a mesh with refinement. */
     explicit stored_mesh_slice(const getfem::mesh& m, size_type nrefine = 1) 
       : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { 
@@ -165,22 +171,26 @@ namespace getfem {
     void build(const getfem::mesh& m, const slicer_action &a, 
 	       size_type nrefine = 1) { build(m,&a,0,0,nrefine); }
     /** Build the slice, by applying two slicer_action operations. */
-    void build(const getfem::mesh& m, const slicer_action &a, const slicer_action &b, 
+    void build(const getfem::mesh& m, const slicer_action &a,
+	       const slicer_action &b, 
 	       size_type nrefine = 1) { build(m,&a,&b,0,nrefine); }
     /** Build the slice, by applying three slicer_action operations. */
-    void build(const getfem::mesh& m, const slicer_action &a, const slicer_action &b, const slicer_action &c, 
+    void build(const getfem::mesh& m, const slicer_action &a,
+	       const slicer_action &b, const slicer_action &c, 
 	       size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
-    void build(const getfem::mesh& m, const slicer_action *a, const slicer_action *b, const slicer_action *c, 
+    void build(const getfem::mesh& m, const slicer_action *a,
+	       const slicer_action *b, const slicer_action *c, 
 	       size_type nrefine);
       
     /** @brief Apply the listed slicer_action(s) to the slice object.
-
-    the stored_mesh_slice is not modified. This can be used to build a
-    new stored_mesh_slice from a stored_mesh_slice.
+	the stored_mesh_slice is not modified. This can be used to build a
+	new stored_mesh_slice from a stored_mesh_slice.
     */
     void replay(slicer_action &a) const { replay(&a,0,0); }
-    void replay(slicer_action &a, slicer_action &b) const { replay(&a, &b, 0); }
-    void replay(slicer_action &a, slicer_action &b, slicer_action &c) const { replay(&a, &b, &c); }
+    void replay(slicer_action &a, slicer_action &b) const
+    { replay(&a, &b, 0); }
+    void replay(slicer_action &a, slicer_action &b, slicer_action &c) const
+    { replay(&a, &b, &c); }
     void replay(slicer_action *a, slicer_action *b, slicer_action *c) const;
 
     /** @brief Save a slice content to a text file.
@@ -206,15 +216,26 @@ namespace getfem {
 	field on the slice (values given on each node of the slice).
     */
     template<typename V1, typename V2> void 
-    interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) const {
+    interpolate(const getfem::mesh_fem &mf, const V1& UU, V2& V) const {
       typedef typename gmm::linalg_traits<V2>::value_type T;
       std::vector<base_node> refpts;
       std::vector<std::vector<T> > coeff;
       base_matrix G;
       size_type qdim = mf.get_qdim();
-      size_type qqdim = gmm::vect_size(U)/mf.nb_dof();
+      size_type qqdim = gmm::vect_size(UU) / mf.nb_dof();
       size_type pos = 0;
       coeff.resize(qqdim);
+      std::vector<T> U(mf.nb_basic_dof()*qqdim);
+      if (mf.is_reduced()) {
+	for (size_type k = 0; k < qqdim; ++k)
+	  gmm::mult(mf.extension_matrix(),
+		    gmm::sub_vector(UU, gmm::sub_slice(k, mf.nb_dof(),
+						       qqdim)),
+		    gmm::sub_vector(U,gmm::sub_slice(k, mf.nb_basic_dof(),
+						     qqdim)));
+      }
+      else
+	gmm::copy(UU, U);
 
       gmm::clear(V);
       for (size_type i=0; i < nb_convex(); ++i) {
@@ -234,9 +255,9 @@ namespace getfem {
 	fem_precomp_pool fppool;
         pfem_precomp pfp = fppool(pf, store_point_tab(refpts));
         
-        mesh_fem::ind_dof_ct dof = mf.ind_dof_of_element(cv);
+        mesh_fem::ind_dof_ct dof = mf.ind_basic_dof_of_element(cv);
         for (size_type qq=0; qq < qqdim; ++qq) {
-          coeff[qq].resize(mf.nb_dof_of_element(cv));
+          coeff[qq].resize(mf.nb_basic_dof_of_element(cv));
           typename std::vector<T>::iterator cit = coeff[qq].begin();
           for (mesh_fem::ind_dof_ct::const_iterator it=dof.begin();
 	       it != dof.end(); ++it, ++cit)

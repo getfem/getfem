@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 1999-2008 Yves Renard
+// Copyright (C) 1999-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -176,11 +176,15 @@ namespace getfem {
   void mesh_fem_product::adapt(void) {
     context_check();
     clear();
+
+    GMM_ASSERT1(!mf1.is_reduced() && !mf2.is_reduced(),
+		"Sorry, mesh_fem_product not defined for reduced mesh_fems");
+
     for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished();
 	 ++cv) {
       dal::bit_vector local_enriched_dof;
-      for (size_type i = 0; i < mf1.nb_dof_of_element(cv); ++i)
-	if (enriched_dof.is_in(mf1.ind_dof_of_element(cv)[i]))
+      for (size_type i = 0; i < mf1.nb_basic_dof_of_element(cv); ++i)
+	if (enriched_dof.is_in(mf1.ind_basic_dof_of_element(cv)[i]))
 	  local_enriched_dof.add(i);
       if (local_enriched_dof.card() > 0) {
 	pfem pf = new fem_product(mf1.fem_of_element(cv),

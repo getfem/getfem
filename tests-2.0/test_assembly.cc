@@ -184,10 +184,10 @@ namespace getfem {
 	  base_tensor::iterator p = t.begin();
 	  for (size_type i = 0; i < nbd2; i++)
 	    {
-	      size_type dof2 = mfdata.ind_dof_of_element(cv)[i];
+	      size_type dof2 = mfdata.ind_basic_dof_of_element(cv)[i];
 	      for (size_type j = 0; j < nbd1; j++, ++p)
 		{
-		  size_type dof1 = mf.ind_dof_of_element(cv)[j];
+		  size_type dof1 = mf.ind_basic_dof_of_element(cv)[j];
 		  for (size_type k = 0; k < N; k++) {
 		    B[dof1*N + k] += F[dof2*N+k]*(*p);
 		  }
@@ -231,10 +231,10 @@ namespace getfem {
 	base_tensor::iterator p = t.begin();
 	for (size_type i = 0; i < nbd2; i++)
 	  {
-	    size_type dof2 = mfdata.ind_dof_of_element(cv)[i];
+	    size_type dof2 = mfdata.ind_basic_dof_of_element(cv)[i];
 	    for (size_type j = 0; j < nbd1; j++, ++p)
 	      {
-		size_type dof1 = mf.ind_dof_of_element(cv)[j];
+		size_type dof1 = mf.ind_basic_dof_of_element(cv)[j];
 		for (size_type k = 0; k < N; k++) B[dof1*N + k] += F[dof2*N+k]*(*p);
 	      }
 	  }
@@ -283,10 +283,10 @@ namespace getfem {
 	    
 	    base_tensor::iterator p = t.begin();
 	    for (size_type i = 0; i < nbd2; i++) {
-	      size_type dof2 = mf2.ind_dof_of_element(cv)[i];
+	      size_type dof2 = mf2.ind_basic_dof_of_element(cv)[i];
 	      // cout << "cv = " << cv << " dof2 = " << dof2 << endl;
 	      for (size_type j = 0; j < nbd1; j++, ++p) {
-		size_type dof1 = mf1.ind_dof_of_element(cv)[j];
+		size_type dof1 = mf1.ind_basic_dof_of_element(cv)[j];
 		// cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
 		for (size_type k = 0; k < N; k++)
 		  M(dof1*N + k, dof2*N + k) += (*p);
@@ -333,11 +333,11 @@ namespace getfem {
 	base_tensor::iterator p = t.begin();
 	for (size_type i = 0; i < nbd2; i++)
 	  {
-	    size_type dof2 = mf2.ind_dof_of_element(cv)[i];
+	    size_type dof2 = mf2.ind_basic_dof_of_element(cv)[i];
 	    // cout << "cv = " << cv << " dof2 = " << dof2 << endl;
 	    for (size_type j = 0; j < nbd1; j++, ++p)
 	      {
-		size_type dof1 = mf1.ind_dof_of_element(cv)[j];
+		size_type dof1 = mf1.ind_basic_dof_of_element(cv)[j];
 		// cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
 		for (size_type k = 0; k < N; k++)
 		  M(dof1*N + k, dof2*N + k) += (*p);
@@ -394,12 +394,12 @@ namespace getfem {
 		scalar_type vmax = gmm::vect_norminf(base_vector(t));
 
 		for (size_type j = 0; j < nbdof_u; j++) {
-		  size_type dof_j = mf_u.ind_dof_of_element(cv)[j];
+		  size_type dof_j = mf_u.ind_basic_dof_of_element(cv)[j];
 		  for (size_type i = 0; i < nbdof_u; i++) {
-		    size_type dof_i = mf_u.ind_dof_of_element(cv)[i];
+		    size_type dof_i = mf_u.ind_basic_dof_of_element(cv)[i];
 		    for (size_type id = 0; id < nbdof_d; id++) {
 
-		      size_type dof_d = mf_d.ind_dof_of_element(cv)[id];
+		      size_type dof_d = mf_d.ind_basic_dof_of_element(cv)[id];
 
 		      /* for every element of the matrix Q */
 		      for (int ii=0; ii < N; ii++) {
@@ -474,20 +474,20 @@ namespace getfem {
 	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
 	base_tensor::iterator p = t.begin();
       
-	size_type nbd = mf.nb_dof_of_element(cv);
+	size_type nbd = mf.nb_basic_dof_of_element(cv);
 
 	for (size_type r = 0; r < nbd2; r++)
 	  {
-	    size_type dof3 = mfdata.ind_dof_of_element(cv)[r];
+	    size_type dof3 = mfdata.ind_basic_dof_of_element(cv)[r];
 	    for (dim_type l = 0; l < N; l++)
 	      for (size_type j = 0; j < nbd; j++)
 		{
-		  size_type dof2 = mf.ind_dof_of_element(cv)[j];
+		  size_type dof2 = mf.ind_basic_dof_of_element(cv)[j];
 	    
 		  for (dim_type k = 0; k < N; k++)
 		    for (size_type i = 0; i < nbd; i++, ++p)
 		      {
-			size_type dof1 = mf.ind_dof_of_element(cv)[i];
+			size_type dof1 = mf.ind_basic_dof_of_element(cv)[i];
 		
 			if (dof1*N + k >= dof2*N + l)
 			  {
@@ -566,9 +566,9 @@ namespace getfem {
       
       base_tensor::iterator p = t.begin();
       for (size_type i = 0; i < nbdof_d; i++) {
-	size_type dof_d = mf_d.ind_dof_of_element(cv)[i];
+	size_type dof_d = mf_d.ind_basic_dof_of_element(cv)[i];
 	for (size_type j = 0; j < nbdof_p; j++) {
-	  size_type dof_p = mf_p.ind_dof_of_element(cv)[j];
+	  size_type dof_p = mf_p.ind_basic_dof_of_element(cv)[j];
 	  for (size_type l = 0; l < N; l++) {
 	    // loop over derivation directions (d/dx, d/dy ..)
 	    //	    for (size_type m = 0; m < N; m++) {
@@ -582,7 +582,7 @@ namespace getfem {
 		  
 		ssert(finite(*p));
 	      */
-	      size_type dof_u = mf_u.ind_dof_of_element(cv)[k];
+	      size_type dof_u = mf_u.ind_basic_dof_of_element(cv)[k];
 	      B(dof_u*N+l, dof_p) += DATA[dof_d]*(*p);
 	      //		}
 	      p++;
@@ -628,13 +628,13 @@ namespace getfem {
 	// cout << "elem matrix " << t << endl;
 	base_tensor::iterator p = t.begin();
 	for (size_type r = 0; r < nbd2; r++) {
-	  size_type dof3 = mfdata.ind_dof_of_element(cv)[r];
+	  size_type dof3 = mfdata.ind_basic_dof_of_element(cv)[r];
 	  for (size_type l = 0; l < N; l++) {
 	    for (size_type i = 0; i < nbd1; i++) {
-	      size_type dof2 = mf.ind_dof_of_element(cv)[i];
+	      size_type dof2 = mf.ind_basic_dof_of_element(cv)[i];
 	      p += l * nbd1;
 	      for (size_type j = 0; j < nbd1; j++, ++p) {
-		size_type dof1 = mf.ind_dof_of_element(cv)[j];
+		size_type dof1 = mf.ind_basic_dof_of_element(cv)[j];
 		if (dof1 >= dof2) { 
 		  RM(dof1, dof2) += A[dof3]*(*p);
 		  RM(dof2, dof1) = RM(dof1, dof2);
@@ -667,7 +667,7 @@ namespace getfem {
 	pf1 =     mf.fem_of_element(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mim.int_method_of_element(cv);
-	size_type nbd = mf.nb_dof_of_element(cv);
+	size_type nbd = mf.nb_basic_dof_of_element(cv);
 	if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
 	  {
 	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf1));
@@ -679,7 +679,7 @@ namespace getfem {
 
 	for (size_type i = 0; i < nbd; i++)
 	  { 
-	    size_type dof1 = mf.ind_dof_of_element(cv)[i];
+	    size_type dof1 = mf.ind_basic_dof_of_element(cv)[i];
 	    if (vval[i].size() != N) vval[i] = base_vector(N); 
 	    for (size_type k = 0; k < N; k++) (vval[i])[k] = U[dof1*N+k];
 	  }
@@ -710,7 +710,7 @@ namespace getfem {
 	pf1 =     mf.fem_of_element(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mim.int_method_of_element(cv);
-	size_type nbd = mf.nb_dof_of_element(cv);
+	size_type nbd = mf.nb_basic_dof_of_element(cv);
 	if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
 	  {
 	    pme = mat_elem_product(mat_elem_grad(pf1), mat_elem_grad(pf1));
@@ -721,7 +721,7 @@ namespace getfem {
 	base_tensor::iterator p = t.begin();
 	for (size_type i = 0; i < nbd; i++)
 	  { 
-	    size_type dof1 = mf.ind_dof_of_element(cv)[i];
+	    size_type dof1 = mf.ind_basic_dof_of_element(cv)[i];
 	    if (vval[i].size() != N) vval[i] = base_vector(N); 
 	    for (size_type k = 0; k < N; k++) (vval[i])[k] = U[dof1*N+k];
 	  }
@@ -1685,8 +1685,8 @@ public:
 		       bgeot::base_tensor &t) {
     assert(t.size() == N*N);
     /*size_type cv = ctx.convex_num();
-    coeff.resize(mf.nb_dof_of_element(cv));
-    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+    coeff.resize(mf.nb_basic_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))),
 	      coeff);
     ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
     gmm::copy(gradU, E); gmm::add(gmm::transposed(gradU), E);

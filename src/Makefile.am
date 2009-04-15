@@ -116,14 +116,12 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_error_estimate.h          	\
 	getfem/getfem_inter_element.h           	\
 	getfem/getfem_level_set.h	        	\
-	getfem/getfem_partial_fem.h			\
 	getfem/getfem_partial_mesh_fem.h		\
 	getfem/getfem_mesh_level_set.h          	\
 	getfem/getfem_mesh_im_level_set.h         	\
 	getfem/getfem_crack_sif.h        	   	\
 	getfem/getfem_mesh_fem_level_set.h	   	\
 	getfem/getfem_mesh_fem_product.h	   	\
-	getfem/getfem_trace_mesh_fem_level_set.h  	\
 	getfem/getfem_fem_level_set.h             	\
 	getfem/getfem_mesh_slicers.h	           	\
 	getfem/getfem_mesh_slice.h	           	\
@@ -183,9 +181,7 @@ SRC =                                      		\
 	getfem_mesh_fem_level_set.cc       		\
 	getfem_mesh_fem_product.cc         		\
 	getfem_mesh_fem_sum.cc             		\
-	getfem_trace_mesh_fem_level_set.cc 		\
 	getfem_fem_level_set.cc            		\
-	getfem_partial_fem.cc		   		\
 	getfem_partial_mesh_fem.cc         		\
 	getfem_mesh_slicers.cc	           		\
 	getfem_mesh_slice.cc	           		\
@@ -196,6 +192,7 @@ SRC =                                      		\
 	getfem_assembling_tensors.cc       		\
 	getfem_mesher.cc		   		\
 	getfem_modeling.cc                 		\
+	getfem_models.cc                 		\
 	getfem_nonlinear_elasticity.cc
 
 lib_LTLIBRARIES = libgetfem.la

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 1999-2008 Yves Renard
+// Copyright (C) 1999-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -30,6 +30,10 @@ namespace getfem {
     for (dal::bv_visitor i(fe_convex); !i.finished(); ++i) {
       if (linked_mesh_->convex_index().is_in(i)) {
 	if (v_num_update < linked_mesh_->convex_version_number(i)) {
+	  if (auto_add_elt_pf != 0)
+	    const_cast<mesh_fem *>(this)
+	      ->set_finite_element(i, auto_add_elt_pf);
+	  else
 	  if (auto_add_elt_K != dim_type(-1))
 	    const_cast<mesh_fem *>(this)
 	      ->set_classical_finite_element(i, auto_add_elt_K);
@@ -44,15 +48,18 @@ namespace getfem {
 	 !i.finished(); ++i) {
       if (!fe_convex.is_in(i)
 	  && v_num_update < linked_mesh_->convex_version_number(i)) {
-	if (auto_add_elt_K != dim_type(-1))
+	if (auto_add_elt_pf != 0)
+	  const_cast<mesh_fem *>(this)
+	    ->set_finite_element(i, auto_add_elt_pf);
+	else if (auto_add_elt_K != dim_type(-1))
 	  const_cast<mesh_fem *>(this)
 	    ->set_classical_finite_element(i, auto_add_elt_K);
       }
     }
-    v_num_update = act_counter();
+    v_num = v_num_update = act_counter();
   }
   
-  dal::bit_vector mesh_fem::dof_on_region(const mesh_region &b) const {
+  dal::bit_vector mesh_fem::basic_dof_on_region(const mesh_region &b) const {
     context_check(); if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
     for (getfem::mr_visitor v(b,linked_mesh()); !v.finished(); ++v) {
@@ -63,7 +70,7 @@ namespace getfem {
 	  size_type nbb =
 	    dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
 	  for (size_type i = 0; i < nbb; ++i) {
-	    size_type n = Qdim / fem_of_element(cv)->target_dim();
+	    size_type n = Qdim/fem_of_element(cv)->target_dim();
 	    for (size_type ll = 0; ll < n; ++ll)
 	      res.add(dof_structure.ind_points_of_face_of_convex(cv,f)[i]+ll);
 	  }
@@ -71,7 +78,7 @@ namespace getfem {
 	  size_type nbb =
 	    dof_structure.structure_of_convex(cv)->nb_points();
 	  for (size_type i = 0; i < nbb; ++i) {
-	    size_type n = Qdim / fem_of_element(cv)->target_dim();
+	    size_type n = Qdim/fem_of_element(cv)->target_dim();
 	    for (size_type ll = 0; ll < n; ++ll)
 	      res.add(dof_structure.ind_points_of_convex(cv)[i]+ll);
 	  }
@@ -80,6 +87,26 @@ namespace getfem {
     }
     return res;
   }
+
+  template <typename V>
+  static void add_e_line__(const V &v, dal::bit_vector &r) {
+    typedef typename gmm::linalg_traits<V>::value_type T;
+    typename gmm::linalg_traits<V>::const_iterator it = gmm::vect_begin(v);
+    typename gmm::linalg_traits<V>::const_iterator ite = gmm::vect_end(v);
+    for (; it != ite; ++it) if (*it != T(0)) r.add(it.index());
+  }
+
+  dal::bit_vector mesh_fem::dof_on_region(const mesh_region &b) const {
+    dal::bit_vector res = basic_dof_on_region(b);
+    if (is_reduced()) {
+      dal::bit_vector basic = res;
+      res.clear();
+      for (dal::bv_visitor i(basic); !i.finished(); ++i)
+	add_e_line__(gmm::mat_row(E_, i), res);
+    }
+    return res;
+  }
+
    
   void mesh_fem::set_finite_element(size_type cv, pfem pf) {
     context_check();
@@ -87,7 +114,7 @@ namespace getfem {
       if (fe_convex.is_in(cv)) {
 	fe_convex.sup(cv);
 	dof_enumeration_made = false;
-	touch();
+	touch(); v_num = act_counter();
       }
     }
     else {
@@ -104,7 +131,7 @@ namespace getfem {
 	fe_convex.add(cv);
 	f_elems[cv] = pf;
 	dof_enumeration_made = false;  
-	touch();
+	touch(); v_num = act_counter();
       }
     }
   }
@@ -115,7 +142,7 @@ namespace getfem {
   }
 
   void mesh_fem::set_finite_element(pfem ppf)
-  { set_finite_element(linked_mesh().convex_index(), ppf); }
+  { set_finite_element(linked_mesh().convex_index(), ppf); set_auto_add(ppf); }
   
   void mesh_fem::set_classical_finite_element(size_type cv,
 					      dim_type fem_degree) {
@@ -151,14 +178,15 @@ namespace getfem {
 					       fem_degree,alpha);
   }
 
-  base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
+  base_node mesh_fem::point_of_basic_dof(size_type cv, size_type i) const {
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
     pfem pf = f_elems[cv];
     return linked_mesh().trans_of_convex(cv)->transform
       (pf->node_of_dof(cv, i * pf->target_dim() / Qdim),
        linked_mesh().points_of_convex(cv));
   }
 
-  base_node mesh_fem::point_of_dof(size_type d) const {
+  base_node mesh_fem::point_of_basic_dof(size_type d) const {
     context_check(); if (!dof_enumeration_made) enumerate_dof();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type cv = dof_structure.first_convex_of_point(i);
@@ -172,15 +200,15 @@ namespace getfem {
     GMM_ASSERT1(false, "Inexistent dof");
   }
 
-  dim_type mesh_fem::dof_qdim(size_type d) const {
+  dim_type mesh_fem::basic_dof_qdim(size_type d) const {
     context_check(); if (!dof_enumeration_made) enumerate_dof();
-    size_type cv = first_convex_of_dof(d);
+    size_type cv = first_convex_of_basic_dof(d);
     GMM_ASSERT1(cv != size_type(-1), "Inexistent dof");
     size_type tdim = f_elems[cv]->target_dim();
     return dim_type(dof_structure.ind_in_convex_of_point(cv, d) % (Qdim/tdim));
   }
 
-  size_type mesh_fem::first_convex_of_dof(size_type d) const {
+  size_type mesh_fem::first_convex_of_basic_dof(size_type d) const {
     context_check();
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
@@ -189,7 +217,7 @@ namespace getfem {
     return size_type(-1);
   }
 
-  const mesh::ind_cv_ct &mesh_fem::convex_to_dof(size_type d) const {
+  const mesh::ind_cv_ct &mesh_fem::convex_to_basic_dof(size_type d) const {
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return dof_structure.convex_to_point(i);
@@ -293,22 +321,45 @@ namespace getfem {
     nb_total_dof = nbdof;
   }
 
+  void mesh_fem::reduce_to_basic_dof(const dal::bit_vector &kept_dof) {
+    gmm::row_matrix<gmm::rsvector<scalar_type> >
+      RR(kept_dof.card(), nb_basic_dof());
+    size_type j = 0;
+    for (dal::bv_visitor i(kept_dof); !i.finished(); ++i, ++j)
+      RR(j, i) = scalar_type(1);
+    set_reduction_matrices(RR, gmm::transposed(RR));
+  }
+
+  void mesh_fem::reduce_to_basic_dof(const std::set<size_type> &kept_dof) {
+    gmm::row_matrix<gmm::rsvector<scalar_type> >
+      RR(kept_dof.size(), nb_basic_dof());
+    size_type j = 0;
+    for (std::set<size_type>::iterator it = kept_dof.begin();
+	 it != kept_dof.end(); ++it, ++j)
+      RR(j, *it) = scalar_type(1);
+    set_reduction_matrices(RR, gmm::transposed(RR));
+  }
+
   void mesh_fem::clear(void) {
     fe_convex.clear();
     dof_enumeration_made = false;
-    touch();
+    touch(); v_num = act_counter();
     dof_structure.clear();
+    use_reduction = false;
+    R_ = REDUCTION_MATRIX();
+    E_ = EXTENSION_MATRIX();
   }
 
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
-    : dof_enumeration_made(false), auto_add_elt_K(dim_type(-1)), 
-      Qdim(Q), QdimM(1), QdimN(1) {
+    : dof_enumeration_made(false), auto_add_elt_pf(0),
+      auto_add_elt_K(dim_type(-1)), Qdim(Q), QdimM(1), QdimN(1) {
     linked_mesh_ = &me;
+    use_reduction = false;
     this->add_dependency(me);
-    v_num_update = act_counter();
+    v_num = v_num_update = act_counter();
   }
 
-  mesh_fem::~mesh_fem() {}
+  mesh_fem::~mesh_fem() { }
 
   void mesh_fem::read_from_file(std::istream &ist) {
     gmm::stream_standard_locale sl(ist);
@@ -316,6 +367,7 @@ namespace getfem {
     dal::dynamic_array<double> tmpv;
     std::string tmp, tmp2;
     bool dof_read = false;
+    gmm::col_matrix< gmm::wsvector<scalar_type> > RR, EE;
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
@@ -349,7 +401,8 @@ namespace getfem {
 	  ist >> bgeot::skip("END DOF_PARTITION");
 	} else if (bgeot::casecmp(tmp, "DOF_ENUMERATION") == 0) {
 	  dal::bit_vector doflst;
-	  dof_structure.clear(); dof_enumeration_made = false; touch();
+	  dof_structure.clear(); dof_enumeration_made = false;
+	  touch(); v_num = act_counter();
 	  while (true) {
 	    bgeot::get_token(ist, tmp);
 	    if (bgeot::casecmp(tmp, "END")==0) { 
@@ -360,9 +413,10 @@ namespace getfem {
 	    size_type ic = atoi(tmp.c_str());
 	    std::vector<size_type> tab;
 	    if (convex_index().is_in(ic) && tmp.size() &&
-		isdigit(tmp[0]) && tmp2 == ":") { // && tmp[tmp.size()-1] == ':') {
-	      tab.resize(nb_dof_of_element(ic));
-	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic); i++) {
+		isdigit(tmp[0]) && tmp2 == ":") {
+	      tab.resize(nb_basic_dof_of_element(ic));
+	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic);
+		   i++) {
 		ist >> tab[i];
 		for (size_type q=0; q < size_type(get_qdim())
 		       / fem_of_element(ic)->target_dim(); ++q)
@@ -379,10 +433,71 @@ namespace getfem {
 	  } 
 	  dof_read = true;
 	  this->dof_enumeration_made = true;
-	  touch();
+	  touch(); v_num = act_counter();
 	  this->nb_total_dof = doflst.card();
 	  ist >> bgeot::skip("DOF_ENUMERATION");
-	} else if (tmp.size())
+	} else if  (bgeot::casecmp(tmp, "REDUCTION_MATRIX")==0) {
+	  bgeot::get_token(ist, tmp);
+	  GMM_ASSERT1(bgeot::casecmp(tmp, "NROWS")==0,
+		      "Missing number of rows");
+	  size_type nrows; ist >> nrows;
+	  bgeot::get_token(ist, tmp);
+	  GMM_ASSERT1(bgeot::casecmp(tmp, "NCOLS")==0,
+		      "Missing number of columns");
+	  size_type ncols; ist >> ncols;
+	  bgeot::get_token(ist, tmp);
+	  GMM_ASSERT1(bgeot::casecmp(tmp, "NNZ")==0,
+		      "Missing number of nonzero elements");
+	  size_type nnz; ist >> nnz;
+	  gmm::clear(RR); gmm::resize(RR, nrows, ncols);
+	  for (size_type i = 0; i < ncols; ++i) {
+	    bgeot::get_token(ist, tmp);
+	    GMM_ASSERT1(bgeot::casecmp(tmp, "COL")==0,
+			"Missing some columns");
+	    size_type nnz_col; ist >> nnz_col;
+	    for (size_type j=0; j<nnz_col; ++j) {
+	      size_type ind; ist >> ind;
+	      scalar_type val; ist >> val;
+	      RR(ind, i) = val; // can be optimized using a csc matrix
+	    }
+	  }
+	  R_ = REDUCTION_MATRIX(nrows, ncols);
+	  gmm::copy(RR, R_);
+	  use_reduction = true;
+	  ist >> bgeot::skip("END");
+	  ist >> bgeot::skip("REDUCTION_MATRIX");
+	} else if  (bgeot::casecmp(tmp, "EXTENSION_MATRIX")==0) {
+	  bgeot::get_token(ist, tmp);
+	  GMM_ASSERT1(bgeot::casecmp(tmp, "NROWS")==0,
+		      "Missing number of rows");
+	  size_type nrows; ist >> nrows;
+	  bgeot::get_token(ist, tmp);
+	  GMM_ASSERT1(bgeot::casecmp(tmp, "NCOLS")==0,
+		      "Missing number of columns");
+	  size_type ncols; ist >> ncols;
+	  bgeot::get_token(ist, tmp);
+	  GMM_ASSERT1(bgeot::casecmp(tmp, "NNZ")==0,
+		      "Missing number of nonzero elements");
+	  size_type nnz; ist >> nnz;
+	  gmm::clear(EE); gmm::resize(EE, nrows, ncols);
+	  for (size_type i = 0; i < nrows; ++i) {
+	    bgeot::get_token(ist, tmp);
+	    GMM_ASSERT1(bgeot::casecmp(tmp, "ROW")==0,
+			"Missing some rows");
+	    size_type nnz_row; ist >> nnz_row;
+	    for (size_type j=0; j < nnz_row; ++j) {
+	      size_type ind; ist >> ind;
+	      scalar_type val; ist >> val;
+	      EE(i, ind) = val; // can be optimized using a csc matrix
+	    }
+	  }
+	  E_ = EXTENSION_MATRIX(nrows, ncols);
+	  gmm::copy(EE, E_);
+	  use_reduction = true;
+	  ist >> bgeot::skip("END");
+	  ist >> bgeot::skip("EXTENSION_MATRIX");
+	}
+	else if (tmp.size())
 	  GMM_ASSERT1(false, "Syntax error in file at token '"
 		      << tmp << "' [pos=" << std::streamoff(ist.tellg())
 		      << "]");
@@ -408,10 +523,40 @@ namespace getfem {
     read_from_file(o);
   }
 
-  void mesh_fem::write_to_file(std::ostream &ost) const {
-    context_check();
-    gmm::stream_standard_locale sl(ost);
-    ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
+  template<typename VECT> static void
+  write_col(std::ostream &ost, const VECT &v) {
+    typename gmm::linalg_traits<VECT>::const_iterator it = v.begin();
+    ost << gmm::nnz(v);
+    for (; it != v.end(); ++it)
+      ost << " " << it.index() << " " << *it;
+    ost << "\n";
+  }
+
+  void mesh_fem::write_reduction_matrices_to_file(std::ostream &ost) const {
+    if (use_reduction) {
+      ost.precision(16);
+      ost << " BEGIN REDUCTION_MATRIX " << '\n';
+      ost << "  NROWS " <<  gmm::mat_nrows(R_) << '\n'; 
+      ost << "  NCOLS " <<  gmm::mat_ncols(R_) << '\n';
+      ost << "  NNZ " << gmm::nnz(R_) << '\n';
+      for (size_type i = 0; i < gmm::mat_ncols(R_); ++i) {
+	ost << "  COL ";
+	write_col(ost, gmm::mat_col(R_, i));
+      }
+      ost << " END REDUCTION_MATRIX " << '\n';
+      ost << " BEGIN EXTENSION_MATRIX " << '\n';
+      ost << "  NROWS " <<  gmm::mat_nrows(E_) << '\n'; 
+      ost << "  NCOLS " <<  gmm::mat_ncols(E_) << '\n';
+      ost << "  NNZ " << gmm::nnz(E_) << '\n';
+      for (size_type i = 0; i < gmm::mat_nrows(E_); ++i) {
+	ost << "  ROW ";
+	write_col(ost, gmm::mat_row(E_, i));
+      }
+      ost << " END EXTENSION_MATRIX " << '\n';
+    }
+  }
+
+  void mesh_fem::write_basic_to_file(std::ostream &ost) const {
     ost << "QDIM " << size_type(get_qdim()) << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << " CONVEX " << cv;
@@ -431,17 +576,25 @@ namespace getfem {
     ost << " BEGIN DOF_ENUMERATION " << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << "  " << cv << ": ";
-      ind_dof_ct::const_iterator it = ind_dof_of_element(cv).begin();
-      while (it != ind_dof_of_element(cv).end()) {
+      ind_dof_ct::const_iterator it = ind_basic_dof_of_element(cv).begin();
+      while (it != ind_basic_dof_of_element(cv).end()) {
 	ost << " " << *it;
 	// skip repeated dofs for "pseudo" vector elements
 	for (size_type i=0;
-	     i < size_type(get_qdim())/fem_of_element(cv)->target_dim(); ++i)
-	  ++it;
+	     i < size_type(get_qdim())/fem_of_element(cv)->target_dim();
+	     ++i) ++it;
       }
       ost << '\n';
     }
     ost << " END DOF_ENUMERATION " << '\n';
+  }
+
+  void mesh_fem::write_to_file(std::ostream &ost) const {
+    context_check();
+    gmm::stream_standard_locale sl(ost);
+    ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
+    write_basic_to_file(ost);
+    write_reduction_matrices_to_file(ost);
     ost << "END MESH_FEM" << '\n';
   }
 

@@ -339,8 +339,8 @@ bool crack_problem::solve(plain_vector &U) {
     ls.reinit();  
     cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
     for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-      ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
-      ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
+      ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
+      ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
     }
     ls.touch();
     mls.adapt();
@@ -358,16 +358,16 @@ bool crack_problem::solve(plain_vector &U) {
       getfem::pfem pf = mf_u().fem_of_element(icv);
       for (size_type j = 0; j < pf->nb_dof(icv); ++j) {
 	if (getfem::dof_xfem_index(pf->dof_types()[j]) == xfem_index) {
-	  size_type ndof = mf_u().ind_dof_of_element(icv)[2*j+1];
+	  size_type ndof = mf_u().ind_basic_dof_of_element(icv)[2*j+1];
 	  // cout << "ndof = " << ndof << endl;
 	  if (!nn[ndof]) {
-	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+1])
+	    BN(k, mf_u().ind_basic_dof_of_element(icv)[2*j+1])
 	      = invert_contact ? 1.0 : -1.0;
-	    BN(k, mf_u().ind_dof_of_element(icv)[2*j+3])
+	    BN(k, mf_u().ind_basic_dof_of_element(icv)[2*j+3])
 	      = invert_contact ? -1.0 : 1.0;
 	    ++k; nn.add(ndof);
 	  }
-	  // cout << "dof " << j << " of cv " << icv << " ; " << getfem::dof_xfem_index(pf->dof_types()[j])-mfls_u.get_xfem_index() << " : " << " : " << mf_u().ind_dof_of_element(icv)[2*j+1] << " : " << mf_u().ind_dof_of_element(icv)[2*j+3] << endl;
+	  // cout << "dof " << j << " of cv " << icv << " ; " << getfem::dof_xfem_index(pf->dof_types()[j])-mfls_u.get_xfem_index() << " : " << " : " << mf_u().ind_basic_dof_of_element(icv)[2*j+1] << " : " << mf_u().ind_basic_dof_of_element(icv)[2*j+3] << endl;
 	}
       }
     }
@@ -392,9 +392,10 @@ bool crack_problem::solve(plain_vector &U) {
       std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
     
       cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
+      GMM_ASSERT1(!ELAS.lambda().mf().is_reduced(), "To be adapted");
+
       for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-	if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
+	if (ELAS.lambda().mf().point_of_basic_dof(ite)[1] > 0){
 	  bi_lambda[ite] = lambda_up;
 	  bi_mu[ite] = mu_up;
 	}
@@ -414,7 +415,7 @@ bool crack_problem::solve(plain_vector &U) {
     // Defining the volumic source term.
     plain_vector F(nb_dof_rhs * N);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+      gmm::copy(sol_f(mf_rhs.point_of_basic_dof(i)),
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
     // Volumic source term brick.
@@ -506,7 +507,7 @@ bool crack_problem::solve(plain_vector &U) {
   mesh.write_to_file(datafilename + ".meshh");
   cout << "Refining process complete. The mesh contains now " <<  mesh.convex_index().size() << " convexes "<<endl;
   
-  dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
+  dal::bit_vector blocked_dof = mf_u().basic_dof_on_region(5);
   getfem::mesh_fem mf_printed(mesh, dim_type(N)), mf_printed_vm(mesh);
   std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
   mf_printed.set_finite_element(mesh.convex_index(),

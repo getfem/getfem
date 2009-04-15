@@ -236,13 +236,15 @@ void membrane_problem::init(void) {
   This is not needed if there is a pretension.
 */
 
-void setInitialDisp(plain_vector &U,size_type nb_dof,dal::bit_vector dirichlet_dof,float initialDispAmplitude){
-  for (size_type dof=0;dof< nb_dof;++dof)
-    {
-      if(!dirichlet_dof[dof]&& (dof%3==2)){
-	U[dof]=(double(rand()%100)*initialDispAmplitude/100)-.5*initialDispAmplitude;
-      }
+void setInitialDisp(plain_vector &U,
+		    size_type nb_dof,
+		    dal::bit_vector dirichlet_dof,
+		    float initialDispAmplitude){
+  for (size_type dof = 0; dof < nb_dof; ++dof) {
+    if(!dirichlet_dof[dof]&& (dof%3==2)){
+      U[dof]=(double(rand()%100)*initialDispAmplitude/100)-.5*initialDispAmplitude;
     }
+  }
   //	cout<<"init displ="<<U<<endl;
 }
 
@@ -273,10 +275,12 @@ void convexDescription (getfem::mesh_fem &mymesh_fem){
 	} 
     }
   
+  GMM_ASSERT1(!mymesh_fem.is_reduced(), "To be adapted");
+  
   //print dof coordinate 
   cout<<"Dof of points"<<endl<<endl;
-  for  (size_type ii = 0; ii < mymesh_fem.nb_dof(); ++ii){
-    cout<<"dof "<< ii<<"coord="<<mymesh_fem.point_of_dof(ii)<<endl;
+  for  (size_type ii = 0; ii < mymesh_fem.nb_basic_dof(); ++ii){
+    cout<<"dof "<< ii<<"coord="<<mymesh_fem.point_of_basic_dof(ii)<<endl;
   }
   
 }//end convexDescription
@@ -343,17 +347,20 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   fd[1] = PARAM.real_value("dy","Amplitude of the imposed Y displacement on dirichlet BL");
   fd[2] = PARAM.real_value("dz","Amplitude of the imposed Z displacement on dirichlet BL");
   fdr[2]=fd[2];
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "to be adapted");
   plain_vector Frhs(nb_dof_rhs * NFem);
   for (size_type i = 0; i < nb_dof_rhs; ++i) {
-    const base_node P = mf_rhs.point_of_dof(i);
-    for (size_type j = 0; j < 2; ++j) fdr[j]=(opposite_bdy_reversed && P[j]<LH[j] ? int(-1)*fd[j]:fd[j]);
+    const base_node P = mf_rhs.point_of_basic_dof(i);
+    for (size_type j = 0; j < 2; ++j)
+      fdr[j]=(opposite_bdy_reversed && P[j]<LH[j] ? int(-1)*fd[j]:fd[j]);
     gmm::copy(fdr, gmm::sub_vector(Frhs, gmm::sub_interval(i*NFem, NFem)));
   }
   
   
   getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
   final_model.rhs().set(mf_rhs, Frhs);
-  final_model.set_constraints_type(getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
+  final_model.set_constraints_type
+    (getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
   
   
   // Generic solver.
@@ -363,10 +370,12 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   
   //set initial value for MS.state to prevent initial null transverse rigidity
   //not needed if prestressed
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   if(INITIAL_DISP==1)
-    setInitialDisp(MS.state(),mf_u.nb_dof(),
-		   mf_u.dof_on_set(DIRICHLET_BOUNDARY_NUM),
-		   float(PARAM.real_value("initialDispAmplitude","Amplitude of initial displacement set to avoid 3th dim singularities")));
+    setInitialDisp(MS.state(), mf_u.nb_dof(),
+		   mf_u.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM),
+		   float(PARAM.real_value("initialDispAmplitude",
+    "Amplitude of initial displacement set to avoid 3th dim singularities")));
   
   for (int step = 0; step < nb_step; ++step) 
     {

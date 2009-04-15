@@ -59,7 +59,8 @@ getfem.py: getfem.base.py $(PSEUDO_MFUNCTIONS) ../../bin/extract_pydoc
 	$(top_srcdir)/interface/bin/extract_pydoc python $(srcdir)/.. > getfem.py || ( rm getfem.py ; /bin/false )
 
 clean: clean-am
-	rm -f getfem.py _getfem.so $(top_srcdir)/interface/doc/getfem_python_reference.html
+	rm -f getfem.py _getfem.so getfem.html
+	rm -f $(top_srcdir)/interface/doc/getfem_python_reference.html
 	rm -f *.o
 
 if BUILDPYTHON
@@ -74,10 +75,12 @@ _getfem.so: getfem_python.c ../libgetfemint.la $(GETFEM_LIB_LA)
 #LDSHARED="$(CXX) -shared" ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 
 
-doc: getfem.py
-	pydoc -w getfem && mv getfem.html $(top_srcdir)/interface/doc/getfem_python_reference.html
+getfem_python_reference.html: getfem.py
+	cp getfem.py getfem_python_reference.py
+	pydoc -w getfem_python_reference && cp getfem_python_reference.html $(top_srcdir)/interface/doc/getfem_python_reference.html
+	rm -f getfem_python_reference.py
 
-all: _getfem.so getfem.py
+all: _getfem.so getfem.py getfem_python_reference.html
 #pyexec_LTLIBRARIES = libgfpython.la
 #libgfpython_la_LIBADD = ../.libs/libgetfemint.a @GETFEM_STATICLIBS@
 #libgfpython_la_SOURCES = \

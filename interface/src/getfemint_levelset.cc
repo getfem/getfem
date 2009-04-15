@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2007-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2007-2009 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -48,11 +48,12 @@ namespace getfemint {
   void getfemint_levelset::values_from_poly(unsigned idx, 
 					    const std::string &s) {
     const getfem::mesh_fem &mf = levelset().get_mesh_fem();
+    assert(!mf.is_reduced());
     bgeot::base_poly p = 
       bgeot::read_base_poly(mf.linked_mesh().dim(), s);
     ls->values(idx).resize(mf.nb_dof());
     for (unsigned i=0; i < mf.nb_dof(); ++i) {
-      const getfem::base_node x = mf.point_of_dof(i);
+      const getfem::base_node x = mf.point_of_basic_dof(i);
       ls->values(idx)[i] = p.eval(x.begin());
     }
   }

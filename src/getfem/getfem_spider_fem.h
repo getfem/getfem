@@ -224,7 +224,8 @@ namespace getfem {
 			   pf->node_tab(0));
 
 	cartesian_fem.set_finite_element(cartesian.convex_index(), pf);  
-	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
+	GMM_ASSERT1(!cartesian_fem.is_reduced(), "To be adapted");
+	dal::bit_vector blocked_dof = cartesian_fem.basic_dof_on_region(0);
 	//	cout << "blocked dofs = " <<  blocked_dof << endl;
 
 	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof, false);

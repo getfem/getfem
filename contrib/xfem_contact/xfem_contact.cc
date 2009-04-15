@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2009 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     getfem::level_set ls(mesh, bgeot::dim_type(lsdeg));
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
     for (unsigned i = 0; i < lsmf.nb_dof(); ++i)
-      ls.values()[i] = gmm::vect_norm2_sqr(lsmf.point_of_dof(i))-Radius*Radius;
+      ls.values()[i] = gmm::vect_norm2_sqr(lsmf.point_of_basic_dof(i))-Radius*Radius;
     getfem::mesh_level_set mls(mesh);
     mls.add_level_set(ls);
     mls.adapt();
@@ -254,14 +254,14 @@ int main(int argc, char *argv[]) {
     // interpolation of the solution on mf_rhs
     plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs);
     getfem::interpolation(mf, mf_rhs, U, Uint);
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      Vint[i] = u_exact(mf_rhs.point_of_dof(i));
+    getfem::interpolation_function(mf_rhs, Vint, u_exact);
 
     // computation of max error.
     if (!signorini) {
+      GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
       double errmax = 0.0;
       for (size_type i = 0; i < nb_dof_rhs; ++i)
-	if (gmm::vect_norm2(mf_rhs.point_of_dof(i)) < Radius)
+	if (gmm::vect_norm2(mf_rhs.point_of_basic_dof(i)) < Radius)
 	  errmax = std::max(errmax, gmm::abs(Uint[i]-Vint[i]));
       cout << "Linfty error: " << errmax << endl;
       cout << "L2 error: " << getfem::asm_L2_dist(mim,mf_rhs,Uint,mf_rhs,Vint)

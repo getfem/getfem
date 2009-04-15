@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard
+// Copyright (C) 2006-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -45,6 +45,10 @@
 #include "getfem_mesh_fem.h"
 #include "getfem_mesh_im.h"
 
+
+// a ajuster : mesh, qdim, qdim_mn, 
+
+
 namespace getfem {
   /**
      a subclass of mesh_fem which allows to eliminate a number of dof
@@ -53,12 +57,11 @@ namespace getfem {
   class partial_mesh_fem : public mesh_fem, public boost::noncopyable {
   protected :
     const mesh_fem &mf;
-    mutable std::vector<pfem> build_methods;
     mutable bool is_adapted;
-    void clear_build_methods();
 
   public :
-    void update_from_context(void) const { is_adapted = false; }
+    void update_from_context(void) const
+    { mf.context_check(); is_adapted = false; }
 
     /** build the mesh_fem keeping only the dof of the original
 	mesh_fem which are listed in kept_dof. */
@@ -66,13 +69,56 @@ namespace getfem {
 	       const dal::bit_vector &rejected_elt = dal::bit_vector());
     void clear(void);
 
-    size_type memsize() const {
-      return mesh_fem::memsize(); // + ... ;
-    }
-    
-    partial_mesh_fem(const mesh_fem &mef);
+    pfem fem_of_element(size_type cv) const
+    { return  mf.fem_of_element(cv); }
 
-    ~partial_mesh_fem() { clear_build_methods(); }
+    ind_dof_ct ind_basic_dof_of_element(size_type cv) const
+    { return  mf.ind_basic_dof_of_element(cv); }
+
+    ind_dof_face_ct
+    ind_basic_dof_of_face_of_element(size_type cv, short_type f) const
+    { return  mf.ind_basic_dof_of_face_of_element(cv, f); }
+
+    size_type nb_basic_dof_of_face_of_element(size_type cv, short_type f) const
+    { return  mf.nb_basic_dof_of_face_of_element(cv, f); }
+    
+    size_type nb_basic_dof_of_element(size_type cv) const
+    { return  mf.nb_basic_dof_of_element(cv); }
+
+    base_node point_of_basic_dof(size_type cv, size_type i) const
+    { return  mf.point_of_basic_dof(cv, i); }
+
+    base_node point_of_basic_dof(size_type d) const
+    { return  mf.point_of_basic_dof(d); }
+
+    dim_type basic_dof_qdim(size_type d) const
+    { return  mf.basic_dof_qdim(d); }
+
+    size_type first_convex_of_basic_dof(size_type d) const
+    { return mf.first_convex_of_basic_dof(d); }
+
+    const mesh::ind_cv_ct &convex_to_basic_dof(size_type d) const
+    { return mf.convex_to_basic_dof(d); }
+
+    size_type nb_dof(void) const {
+      context_check();
+      return use_reduction ? gmm::mat_nrows(R_) : mf.nb_dof(); 
+    }
+
+    size_type nb_basic_dof(void) const
+    { return mf.nb_basic_dof(); }
+
+    dal::bit_vector basic_dof_on_region(const mesh_region &b) const
+    { return mf.basic_dof_on_region(b); }
+    
+    void read_from_file(std::istream &)
+    { GMM_ASSERT1(false, "You cannot directely read this kind of mesh_fem"); }
+    void write_to_file(std::ostream &ost) const;
+
+
+    partial_mesh_fem(const mesh_fem &mef);
+    partial_mesh_fem(const mesh_fem *mef);
+
   };
 
   /**
@@ -88,6 +134,7 @@ namespace getfem {
    */
   dal::bit_vector select_dofs_from_im(const mesh_fem &mf, const mesh_im &mim,
 				      unsigned P = unsigned(-1));
+  
   
 }  /* end of namespace getfem.                                            */
 

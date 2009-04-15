@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2008 Julien Pommier
+// Copyright (C) 2003-2009 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -44,8 +44,11 @@
 #include "getfem_mat_elem.h"
 #include <map>
 
-#define ASM_THROW_PARSE_ERROR(x) GMM_ASSERT1(false, "parse error: " << x << endl << "found here:\n " << syntax_err_print());
-#define ASM_THROW_TENSOR_ERROR(x) GMM_ASSERT1(false, "tensor error: " << x);
+#define ASM_THROW_PARSE_ERROR(x)				      \
+  GMM_ASSERT1(false, "parse error: " << x << endl << "found here:\n " \
+	      << syntax_err_print());
+#define ASM_THROW_TENSOR_ERROR(x)		\
+  GMM_ASSERT1(false, "tensor error: " << x);
 #define ASM_THROW_ERROR(x) GMM_ASSERT1(false, "error: " << x);
 
 namespace getfem {
@@ -68,14 +71,15 @@ namespace getfem {
   */
   class ATN {
     std::deque< ATN_tensor* > childs_;
-    std::string name_;   /* the name is a part of the parsed string */
-    unsigned number_;    /* a unique number, which is used for the ordering of the tree */
+    std::string name_;/* the name is a part of the parsed string            */
+    unsigned number_; /* a unique number, used for the ordering of the tree */
   protected:
     size_type current_cv;
     dim_type current_face;
   public:
     ATN(const std::string& n=std::string("unnamed")) : 
-      name_(n), number_(unsigned(-1)), current_cv(size_type(-1)), current_face(dim_type(-1)) {}
+      name_(n), number_(unsigned(-1)), current_cv(size_type(-1)),
+      current_face(dim_type(-1)) {}
     virtual ~ATN() {}
 
     void add_child(ATN_tensor& a) { childs_.push_back(&a); }
@@ -178,24 +182,29 @@ namespace getfem {
 			      std::vector<tensor_strides >& str) const;
   };
 
-  /* final node for array output: array means full array of 0,1,2,3 or more dimensions,
-     stored in a vector VEC in fortran order
+  /* final node for array output: array means full array of 0,1,2,3 or
+     more dimensions, stored in a vector VEC in fortran order
   */     
   template< typename VEC > class ATN_array_output : public ATN {
     VEC& v;
     vdim_specif_list vdim;
     multi_tensor_iterator mti;
     tensor_strides strides;
+    const mesh_fem *pmf;   /* could be zero. */
   public:
-    ATN_array_output(ATN_tensor& a, VEC& v_, vdim_specif_list &d) : v(v_), vdim(d) {
+    ATN_array_output(ATN_tensor& a, VEC& v_, vdim_specif_list &d,
+		     const mesh_fem *pmf_)
+      : v(v_), vdim(d), pmf(pmf_) {
       strides.resize(vdim.size()+1);
       add_child(a);
       strides[0] = 1;
       for (size_type i=0; i < vdim.size(); ++i)
 	strides[i+1] = strides[i]*int(vdim[i].dim);
       if (gmm::vect_size(v) != size_type(strides[vdim.size()])) 
-	ASM_THROW_TENSOR_ERROR("wrong size for output vector: supplied vector size is " << 
-			       gmm::vect_size(v) << " while it should be " << strides[vdim.size()]);      
+	ASM_THROW_TENSOR_ERROR("wrong size for output vector: supplied "
+			       "vector size is " <<  gmm::vect_size(v)
+			       << " while it should be "
+			       << strides[vdim.size()]);      
     }
   private:
     void reinit() {
@@ -206,24 +215,72 @@ namespace getfem {
       std::vector< tensor_strides > str;
       vdim.build_strides_for_cv(cv, r, str);
       if (child(0).ranges() != r) {
-	ASM_THROW_TENSOR_ERROR("can't output a tensor of dimensions " << child(0).ranges() << 
+	ASM_THROW_TENSOR_ERROR("can't output a tensor of dimensions "
+			       << child(0).ranges() << 
 			       " into an output array of size " << r);
       }
       mti.rewind();
-      do {
-	typename gmm::linalg_traits<VEC>::iterator it = gmm::vect_begin(v);
-	for (dim_type i = 0; i < mti.ndim(); ++i) it+=str[i][mti.index(i)];
-	*it += mti.p(0);
-      } while (mti.qnext1());
+      if (pmf && pmf->is_reduced()) {
+	do {
+	  size_type nb_dof =  pmf->nb_dof();
+	  dim_type qqdim = dim_type(gmm::vect_size(v) / nb_dof);
+	 
+	  if (qqdim == 1) {
+	    size_type i = 0;
+	    for (dim_type j=0; j < mti.ndim(); ++j) i += str[j][mti.index(j)];
+	    gmm::add(gmm::scaled(gmm::mat_row(pmf->extension_matrix(), i),
+				 mti.p(0)), v);
+	  }
+	  else {
+	    GMM_ASSERT1(false, "To be verified ... ");
+	    size_type i = 0;
+	    for (dim_type j=0; j < mti.ndim(); ++j) i += str[j][mti.index(j)];
+	    gmm::add(gmm::scaled(gmm::mat_row(pmf->extension_matrix(),i/qqdim),
+				 mti.p(0)),
+		     gmm::sub_vector(v, gmm::sub_slice(i%qqdim,nb_dof,qqdim)));
+	  }
+	} while (mti.qnext1());
+      }
+      else {
+	do {
+	  typename gmm::linalg_traits<VEC>::iterator it = gmm::vect_begin(v);
+	  for (dim_type j = 0; j < mti.ndim(); ++j) it += str[j][mti.index(j)];
+	  *it += mti.p(0);
+	} while (mti.qnext1());
+      }
     }
   };
+
+  template <typename MAT, typename ROW, typename COL>
+  void asmrankoneupdate(MAT &m, const ROW &row, const COL &col,
+			scalar_type r) {
+    typename gmm::linalg_traits<ROW>::const_iterator itr = row.begin();
+    for (; itr != row.end(); ++itr) {
+      typename gmm::linalg_traits<COL>::const_iterator itc = col.begin();
+      for (; itc != col.end(); ++itc)
+	m(itr.index(), itc.index()) += (*itr) * (*itc) * r;
+    }
+  }
+  
+  template <typename MAT, typename ROW>
+  void asmrankoneupdate(MAT &m, const ROW &row, size_type j, scalar_type r) {
+    typename gmm::linalg_traits<ROW>::const_iterator itr = row.begin();
+    for (; itr != row.end(); ++itr) m(itr.index(), j) += (*itr) * r;
+  }
+
+  template <typename MAT, typename COL>
+  void asmrankoneupdate(MAT &m, size_type j, const COL &col, scalar_type r) {
+    typename gmm::linalg_traits<COL>::const_iterator itc = col.begin();
+    for (; itc != col.end(); ++itc) m(j, itc.index()) += (*itc) * r;
+  }
 
   /* final node for sparse matrix output */
   template< typename MAT > class ATN_smatrix_output : public ATN {
     const mesh_fem &mf_r, &mf_c;
     MAT& m;
     multi_tensor_iterator mti;
-    struct ijv { // just a fast cache for the mti output (yes it makes a small difference)
+    struct ijv { // just a fast cache for the mti output
+                 // (yes it makes a small difference)
       scalar_type *p;
       unsigned i,j;
     };
@@ -241,8 +298,8 @@ namespace getfem {
       it.resize(0);
     }
     void exec_(size_type cv, dim_type) {
-      size_type nb_r = mf_r.nb_dof_of_element(cv);
-      size_type nb_c = mf_c.nb_dof_of_element(cv);
+      size_type nb_r = mf_r.nb_basic_dof_of_element(cv);
+      size_type nb_c = mf_c.nb_basic_dof_of_element(cv);
       if (child(0).tensor().ndim() != 2)
 	ASM_THROW_TENSOR_ERROR("cannot write a " << 
 			       int(child(0).tensor().ndim()) << 
@@ -250,14 +307,15 @@ namespace getfem {
       if (child(0).tensor().dim(0) != nb_r ||
 	  child(0).tensor().dim(1) != nb_c) {
 	ASM_THROW_TENSOR_ERROR("size mismatch for sparse matrix output:"
-			       " tensor dimension is " << 
-			       child(0).ranges()
+			       " tensor dimension is " << child(0).ranges()
 			       << ", while the elementary matrix for convex "
 			       << cv << " should have " << nb_r << "x"
 			       << nb_c << " elements");
       }
-      std::vector<size_type> cvdof_r(mf_r.ind_dof_of_element(cv).begin(), mf_r.ind_dof_of_element(cv).end());
-      std::vector<size_type> cvdof_c(mf_c.ind_dof_of_element(cv).begin(), mf_c.ind_dof_of_element(cv).end());
+      std::vector<size_type> cvdof_r(mf_r.ind_basic_dof_of_element(cv).begin(),
+				     mf_r.ind_basic_dof_of_element(cv).end());
+      std::vector<size_type> cvdof_c(mf_c.ind_basic_dof_of_element(cv).begin(),
+				     mf_c.ind_basic_dof_of_element(cv).end());
       /*mti.rewind();
       do {
 	if (mti.p(0)) {
@@ -277,9 +335,34 @@ namespace getfem {
 	  it.push_back(v);
 	} while (mti.qnext1());
       }
-      for (unsigned i=0; i < it.size(); ++i)
-	if (*it[i].p) 
-	  m(cvdof_r[it[i].i], cvdof_c[it[i].j]) += *it[i].p;
+
+      if (mf_r.is_reduced()) {
+	if (mf_c.is_reduced()) {
+	  for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
+	    asmrankoneupdate(m, gmm::mat_row(mf_r.extension_matrix(),
+					     cvdof_r[it[i].i]),
+			     gmm::mat_row(mf_c.extension_matrix(),
+					  cvdof_c[it[i].j]), *it[i].p);
+	}
+	else {
+	  for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
+	    asmrankoneupdate(m, gmm::mat_row(mf_r.extension_matrix(),
+					     cvdof_r[it[i].i]),
+			     cvdof_c[it[i].j], *it[i].p);
+	}
+      }
+      else {
+	if (mf_c.is_reduced()) {
+	  for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
+	    asmrankoneupdate(m, cvdof_r[it[i].i],
+			     gmm::mat_row(mf_c.extension_matrix(),
+					  cvdof_c[it[i].j]), *it[i].p);
+	}
+	else {
+	    for (unsigned i=0; i < it.size(); ++i) if (*it[i].p)
+	      m(cvdof_r[it[i].i], cvdof_c[it[i].j]) += *it[i].p;
+	}
+      }
     }
   };
 
@@ -292,7 +375,9 @@ namespace getfem {
   class base_asm_data {
   public:
     virtual size_type vect_size() const = 0;
-    virtual void copy_with_mti(const std::vector<tensor_strides> &, multi_tensor_iterator &) const = 0;
+    virtual void copy_with_mti(const std::vector<tensor_strides> &,
+			       multi_tensor_iterator &,
+			       const mesh_fem *) const = 0;
     virtual ~base_asm_data() {}
   };
 
@@ -303,21 +388,35 @@ namespace getfem {
     size_type vect_size() const {
       return gmm::vect_size(v); 
     }
-    /* used to transfert the data for the current convex to the mti of ATN_tensor_from_dofs_data */
-    void copy_with_mti(const std::vector<tensor_strides> &str, multi_tensor_iterator &mti) const {
+    /* used to transfert the data for the current convex to the mti of
+       ATN_tensor_from_dofs_data */
+    void copy_with_mti(const std::vector<tensor_strides> &str,
+		       multi_tensor_iterator &mti, const mesh_fem *pmf) const {
       size_type ppos;
-      do {
-	ppos = 0;
-	for (dim_type i = 0; i < mti.ndim(); ++i) ppos+=str[i][mti.index(i)];
-	mti.p(0) = v[ppos];
-      } while (mti.qnext1());
+      if (pmf && pmf->is_reduced()) {
+	do {
+	  ppos = 0;
+	  for (dim_type i = 0; i < mti.ndim(); ++i) ppos+=str[i][mti.index(i)];
+	  mti.p(0)
+	    = gmm::vect_sp(gmm::mat_row(pmf->extension_matrix(), ppos), v);
+	} while (mti.qnext1());
+
+      }
+      else {
+	do {
+	  ppos = 0;
+	  for (dim_type i = 0; i < mti.ndim(); ++i) ppos+=str[i][mti.index(i)];
+	  mti.p(0) = v[ppos];
+	} while (mti.qnext1());
+      }
     }
   };
 
   class base_asm_vec {
   public:
     virtual ATN* build_output_tensor(ATN_tensor &a, 
-					    vdim_specif_list& vdim)=0;
+				     vdim_specif_list& vdim,
+				     const mesh_fem *pmf)=0;
     virtual ~base_asm_vec() {}
   };
 
@@ -326,8 +425,9 @@ namespace getfem {
   public:
     asm_vec(VEC *v_) : v(v_) {}
     virtual ATN* build_output_tensor(ATN_tensor &a, 
-				     vdim_specif_list& vdim) {
-      ATN *t = new ATN_array_output<VEC>(a, *v, vdim); return t;
+				     vdim_specif_list& vdim,
+				     const mesh_fem *pmf) {
+      ATN *t = new ATN_array_output<VEC>(a, *v, vdim, pmf); return t;
     }
     VEC *vec() { return v; }
     ~asm_vec() {}
@@ -342,11 +442,13 @@ namespace getfem {
     virtual ~base_vec_factory() {}
   };
 
-  template< typename VEC > class vec_factory : public base_vec_factory, private std::deque<asm_vec<VEC> > {
+  template< typename VEC > class vec_factory
+    : public base_vec_factory, private std::deque<asm_vec<VEC> > {
   public:
     base_asm_vec* create_vec(const tensor_ranges& r) {
       size_type sz = 1; for (size_type i=0; i < r.size(); ++i) sz *= r[i];
-      if (sz == 0) ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
+      if (sz == 0)
+	ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
       asm_vec<VEC> v(new VEC(sz));
       push_back(v); return &this->back();
     }
@@ -362,7 +464,8 @@ namespace getfem {
   class base_asm_mat {
   public:
     virtual ATN*
-    build_output_tensor(ATN_tensor& a, const mesh_fem& mf1, const mesh_fem& mf2) = 0;
+    build_output_tensor(ATN_tensor& a, const mesh_fem& mf1,
+			const mesh_fem& mf2) = 0;
     virtual ~base_asm_mat() {}
   };
 
@@ -371,7 +474,8 @@ namespace getfem {
   public:
     asm_mat(MAT* m_) : m(m_) {}
     ATN*
-    build_output_tensor(ATN_tensor& a, const mesh_fem& mf1, const mesh_fem& mf2) {
+    build_output_tensor(ATN_tensor& a, const mesh_fem& mf1,
+			const mesh_fem& mf2) {
       return new ATN_smatrix_output<MAT>(a, mf1, mf2, *m);
     }
     MAT *mat() { return m; }
@@ -384,7 +488,8 @@ namespace getfem {
     virtual ~base_mat_factory() {};
   };
 
-  template< typename MAT > class mat_factory : public base_mat_factory, private std::deque<asm_mat<MAT> > {
+  template< typename MAT > class mat_factory
+    : public base_mat_factory, private std::deque<asm_mat<MAT> > {
   public:
     base_asm_mat* create_mat(size_type m, size_type n) { 
       push_back(asm_mat<MAT>(new MAT(m, n))); return &this->back();
@@ -442,43 +547,49 @@ namespace getfem {
     std::string tok() const { return curr_tok; }
     tok_type_enum tok_type() const { return curr_tok_type; }
     size_type tok_mark() { return tok_pos; }
-    std::string tok_substr(size_type i1, size_type i2) { return str.substr(i1, i2-i1); }
+    std::string tok_substr(size_type i1, size_type i2)
+    { return str.substr(i1, i2-i1); }
     void err_set_mark() {
       err_msg_mark = tok_pos;
     }
     void push_mark() { marks.push_back(tok_pos); }
     void pop_mark() { assert(marks.size()); marks.pop_back(); }
-    std::string mark_txt() { assert(marks.size()); return tok_substr(marks.back(),tok_pos); }
+    std::string mark_txt() {
+      assert(marks.size());
+      return tok_substr(marks.back(),tok_pos);
+    }
 
     /* returns a friendly message indicated the location of the syntax error */
     std::string syntax_err_print();
     void accept(tok_type_enum t, const char *msg_="syntax error") { 
       if (tok_type() != t) ASM_THROW_PARSE_ERROR(msg_); advance();
     }
-    void accept(tok_type_enum t, tok_type_enum t2, const char *msg_="syntax error") {
-      if (tok_type() != t && tok_type() != t2) ASM_THROW_PARSE_ERROR(msg_); advance();
+    void accept(tok_type_enum t, tok_type_enum t2,
+		const char *msg_="syntax error") {
+      if (tok_type() != t && tok_type() != t2)
+	ASM_THROW_PARSE_ERROR(msg_);
+      advance();
     }
     bool advance_if(tok_type_enum t) { 
       if (tok_type() == t) { advance(); return true; } else return false; 
     }
-    void advance() {
-      tok_pos += tok_len;
-      get_tok();
-    }
+    void advance() { tok_pos += tok_len; get_tok(); }
     void get_tok();
-    double tok_number_dval() { assert(tok_type()==NUMBER); return curr_tok_dval; }
+    double tok_number_dval()
+    { assert(tok_type()==NUMBER); return curr_tok_dval; }
     int tok_number_ival(int maxval=10000000) {
       int n=int(tok_number_dval());
-      if (n != curr_tok_dval) ASM_THROW_PARSE_ERROR("non an integer"); 
+      if (n != curr_tok_dval) ASM_THROW_PARSE_ERROR("not an integer"); 
       if (n > maxval) ASM_THROW_PARSE_ERROR("out of bound integer");
       return n-1; /* -1 pour un indicage qui commence à 1! */ 
     }
-    size_type tok_mfref_num() { assert(tok_type()==MFREF); return curr_tok_ival; }
-    size_type tok_imref_num() { assert(tok_type()==IMREF); return curr_tok_ival; }
-    size_type tok_argnum() { assert(tok_type()==ARGNUM_SELECTOR); return curr_tok_ival; }
+    size_type tok_mfref_num()
+    { assert(tok_type()==MFREF); return curr_tok_ival; }
+    size_type tok_imref_num()
+    { assert(tok_type()==IMREF); return curr_tok_ival; }
+    size_type tok_argnum()
+    { assert(tok_type()==ARGNUM_SELECTOR); return curr_tok_ival; }
   };
-
-
 
 
   /** Generic assembly of vectors, matrices. 
@@ -486,26 +597,31 @@ namespace getfem {
       Many examples of use available @link asm here@endlink.
    */
   class generic_assembly : public asm_tokenizer {
-    std::vector<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
-    std::vector<const mesh_im *> imtab;/* list of the mesh_im used in the computation */
-    std::vector<pnonlinear_elem_term> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
-    std::vector<base_asm_data*> indata;              /* data sources */
-    std::vector<base_asm_vec*> outvec;               /* vectors in which is done the assembly */
-    std::vector<base_asm_mat*> outmat;               /* matrices in which is done the assembly */
+    std::vector<const mesh_fem *> mftab; /* list of the mesh_fem used.    */
+    std::vector<const mesh_im *> imtab;  /* list of the mesh_im used.     */
+    std::vector<pnonlinear_elem_term> innonlin;  /* alternatives to base, */
+    /*                  grad, hess in comp() for non-linear computations) */
+    std::vector<base_asm_data*> indata;          /* data sources          */
+    std::vector<base_asm_vec*> outvec; /* vectors in which is done the    */
+                                       /* assembly                        */
+    std::vector<base_asm_mat*> outmat; /* matrices in which is done the   */
+                                       /* assembly                        */
 
-    base_vec_factory *vec_fact; /* if non null, used to fill the outvec list with a given vector class */
-    base_mat_factory *mat_fact; /* if non null, used to fill the outmat list with a given matrix class */
+    base_vec_factory *vec_fact; /* if non null, used to fill the outvec   */
+                                /* list with a given vector class         */
+    base_mat_factory *mat_fact; /* if non null, used to fill the outmat   */
+                                /* list with a given matrix class         */
 
-    std::vector<ATN*> outvars;        /* the list of "final tensors" which produce some
-						   output in outvec and outmat */
+    std::vector<ATN*> outvars; /* the list of "final tensors" which       */
+			       /* produce some output in outvec and outmat*/
     
     std::map<std::string, ATN_tensor *> vars; /* the list of user variables */
-    std::vector<ATN_tensor*> atn_tensors;     /* keep track of all tensors objects (except the ones listed in 'outvars')
-						for deallocation when all is done 
-						note that they are not stored in a random order, but are reordered such that
-						the childs of the i-th ATN_tensor are all stored at indices j < i
-						this assumption is largely used for calls to shape updates and exec(cv,f)
-					     */
+    std::vector<ATN_tensor*> atn_tensors;  /* keep track of all tensors     */
+    /* objects (except the ones listed in 'outvars') for deallocation when  */
+    /* all is done. Note that they are not stored in a random order, but    */
+    /* are reordered such that the childs of the i-th ATN_tensor are all    */
+    /* stored at indices j < i.	This assumption is largely used for calls   */
+    /* to shape updates and exec(cv,f).                                     */
     bool parse_done;
 
   public:
@@ -527,10 +643,12 @@ namespace getfem {
       for (size_type i = 0; i < atn_tensors.size(); ++i) delete atn_tensors[i];
       for (size_type i = 0; i < outvars.size(); ++i) delete outvars[i];
       for (size_type i = 0; i < indata.size(); ++i) delete indata[i];
-      /* the destruction of outvec and outmat is assured, if necessary
-	 by the vec_fact and asm_fact (since they derive from deque<asm_mat>) */
-      if (vec_fact==0) for (size_type i = 0; i < outvec.size(); ++i) delete outvec[i];
-      if (mat_fact==0) for (size_type i = 0; i < outmat.size(); ++i) delete outmat[i];
+      /* the destruction of outvec and outmat is assured, if necessary by  */
+      /* the vec_fact and asm_fact (since they derive from deque<asm_mat>) */
+      if (vec_fact==0)
+	for (size_type i = 0; i < outvec.size(); ++i) delete outvec[i];
+      if (mat_fact==0)
+	for (size_type i = 0; i < outmat.size(); ++i) delete outmat[i];
     }
 
     void set(const std::string& s_) { set_str(s_); }
@@ -619,7 +737,7 @@ namespace getfem {
     /* do the assembly on the specified boundary */
     //void boundary_assembly(size_type boundary_number);
 
-    /** do the assembly on the specified region (boundary or set of convexes) */
+    /** do the assembly on the specified region (boundary or set of convexes)*/
     void assembly(const mesh_region &region = 
 		  mesh_region::all_convexes());
   };

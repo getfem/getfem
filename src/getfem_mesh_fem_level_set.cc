@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -50,7 +50,7 @@ namespace getfem {
   void mesh_fem_level_set::build_method_of_convex(size_type cv) {
     pfem pf = new fem_level_set(gmm::index_ref_iterator
 				(dof_enrichments.begin(),
-				 mf.ind_dof_of_element(cv).begin()) ,
+				 mf.ind_basic_dof_of_element(cv).begin()) ,
 				mf.fem_of_element(cv), mls, xfem_index);
     dal::add_stored_object(new special_mfls_key(pf), pf,
 			   pf->ref_convex(0),
@@ -62,12 +62,15 @@ namespace getfem {
   void mesh_fem_level_set::adapt(void) {
     context_check();
     clear();
+    GMM_ASSERT1(!mf.is_reduced(), "Mesh fem level set not defined for reduced "
+		"mesh fems (difficult or impossible to define it in the "
+		"general case)");
     enriched_dofs.clear(); enriched_elements.clear();
     dof_enrichments.resize(0);
-    dof_enrichments.resize(mf.nb_dof(), 0);
+    dof_enrichments.resize(mf.nb_basic_dof(), 0);
 
-    for (size_type i = 0; i < mf.nb_dof(); ++i) {
-      const mesh::ind_cv_ct &ct = mf.convex_to_dof(i);
+    for (size_type i = 0; i < mf.nb_basic_dof(); ++i) {
+      const mesh::ind_cv_ct &ct = mf.convex_to_basic_dof(i);
       bool touch_cut = false;
       for (mesh::ind_cv_ct::const_iterator it = ct.begin();
 	   it != ct.end(); ++it)
@@ -87,7 +90,7 @@ namespace getfem {
 	  }
 	}
 	
-	if (zones.size() != 1) { // stockage dans un set et map
+	if (zones.size() != 1) {
 	  dof_enrichments[i] = &(*(enrichments.insert(zones).first));
 	  enriched_dofs.add(i);
 	  for (mesh::ind_cv_ct::const_iterator it = ct.begin();

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2000-2008 Julien Pommier
+// Copyright (C) 2000-2009 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -52,7 +52,8 @@ namespace getfem {
        3D mesh, the file will also contain the mesh of the
        boundary (2D elements) and the boundary of the boundary (line
        elements!).
-       getfem makes use of the physical "region" number stored with each element in the gmsh file
+       getfem makes use of the physical "region" number stored with each
+       element in the gmsh file
        to fill the corresponding region of the mesh object.
 
        For a mesh of dimension N, getfem builds a mesh with the

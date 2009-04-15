@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2009 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -28,6 +28,7 @@
 #include <getfemint_mesh_levelset.h>
 #include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_partial_mesh_fem.h>
+#include <getfemint_gsparse.h>
 
 /*
   $Id$
@@ -65,7 +66,8 @@
   more work on gf_spmat and python interface
 
   Revision 1.6  2004/06/11 10:10:28  pommier
-  commit recent work: handling of integer and complex arrays, interface to gmm preconditioners and sparse matrices
+  commit recent work: handling of integer and complex arrays, interface
+  to gmm preconditioners and sparse matrices
 
   Revision 1.5  2004/03/03 16:04:05  pommier
   renamed matlabint_* to getfemint_*
@@ -104,38 +106,38 @@ using namespace getfemint;
 
 typedef enum {IS_LAGRANGE, IS_EQUIVALENT, IS_POLYNOMIAL} test_what;
 static void
-test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in, mexargs_out& out)
-{
+test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
+	  mexargs_out& out) {
   dal::bit_vector cvlst;
   bool return_bool = false;
   dal::bit_vector islst;
-  if (in.remaining()) cvlst = in.pop().to_bit_vector(&mf->linked_mesh().convex_index());
+  if (in.remaining())
+    cvlst = in.pop().to_bit_vector(&mf->linked_mesh().convex_index());
   else { cvlst = mf->linked_mesh().convex_index(); return_bool = true; }
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     bool it_is = false;
-    if (!mf->linked_mesh().convex_index()[cv]) THROW_ERROR( "convex " << cv+1 << " does not exist");
+    if (!mf->linked_mesh().convex_index()[cv])
+      THROW_ERROR( "convex " << cv+1 << " does not exist");
     check_cv_fem(*mf, cv);
     switch (what) { /* hope the compiler will optimize that */
     case IS_LAGRANGE:   it_is = mf->fem_of_element(cv)->is_lagrange(); break;
     case IS_EQUIVALENT: it_is = mf->fem_of_element(cv)->is_equivalent(); break;
     case IS_POLYNOMIAL: it_is = mf->fem_of_element(cv)->is_polynomial(); break;
     }
-    if (it_is) {
-      islst.add(cv);
-    }
+    if (it_is) islst.add(cv);
   }
-  if (return_bool) {
-    out.pop().from_integer(islst.card() == mf->linked_mesh().convex_index().card() ? 1 : 0);
-  } else {
+  if (return_bool)
+    out.pop().from_integer
+      (islst.card() == mf->linked_mesh().convex_index().card() ? 1 : 0);
+  else
     out.pop().from_bit_vector(islst);
-  }
 }
 
-static void
-get_fem_of_convexes(const getfem::mesh_fem& mf, mexargs_in& in, mexargs_out& out)
-{
+static void get_basic_fem_of_convexes(const getfem::mesh_fem& mf,
+				      mexargs_in& in, mexargs_out& out) {
   dal::bit_vector cvlst;
-  if (in.remaining()) cvlst = in.pop().to_bit_vector(&mf.linked_mesh().convex_index());
+  if (in.remaining())
+    cvlst = in.pop().to_bit_vector(&mf.linked_mesh().convex_index());
   else { cvlst = mf.linked_mesh().convex_index(); }
   std::vector<id_type> ids; ids.reserve(cvlst.card());
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
@@ -164,12 +166,12 @@ get_cv_dof_list(getfem::mesh_fem *mf, mexargs_in& in) {
       THROW_ERROR( "convex " << cv+1 << " has no FEM!");
     if (f != dim_type(-1)) {
       getfem::mesh_fem::ind_dof_face_ct
-	c = mf->ind_dof_of_face_of_element(cv,short_type(f));
+	c = mf->ind_basic_dof_of_face_of_element(cv,short_type(f));
     //std::for_each(c.begin(), c.end(), std::bind1st(std::mem_fun(&dal::bit_vector::add),&dof)); // not SGI STL compliant !?
       for (unsigned i=0; i < c.size(); ++i)
 	dof.add(c[i]);
     } else {
-      getfem::mesh_fem::ind_dof_ct cvdof = mf->ind_dof_of_element(cv);
+      getfem::mesh_fem::ind_dof_ct cvdof = mf->ind_basic_dof_of_element(cv);
       for (unsigned i=0; i < cvdof.size(); ++i)
 	dof.add(cvdof[i]);
     }
@@ -178,16 +180,15 @@ get_cv_dof_list(getfem::mesh_fem *mf, mexargs_in& in) {
 }
 
 static void
-non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out)
-{
+non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
   dal::bit_vector cvlst;
   const getfem::mesh &m = mf.linked_mesh();
-
-  std::vector<bgeot::short_type> dcnt(mf.nb_dof());
-
+  
+  std::vector<bgeot::short_type> dcnt(mf.nb_basic_dof());
+  
   if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
   else cvlst = m.convex_index();
-
+  
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
     check_cv_fem(mf, ic);
     for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
@@ -197,9 +198,9 @@ non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out)
       } else {
 	q = 1;
       }
-      for (short_type i = 0; i < mf.ind_dof_of_face_of_element(ic,f).size();
+      for (short_type i = 0; i < mf.ind_basic_dof_of_face_of_element(ic,f).size();
 	   ++i) {
-	size_type ind = mf.ind_dof_of_face_of_element(ic,f)[i];
+	size_type ind = mf.ind_basic_dof_of_face_of_element(ic,f)[i];
 	dcnt[ind]= short_type(dcnt[ind] + q);
       }
     }
@@ -246,21 +247,21 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
   assert(u.dim(u.ndim()-1) == pmf->linked_mesh().convex_index().last_true()+1);
   array_dimensions ad;
   for (unsigned i=0; i < u.ndim()-1; ++i) ad.push_back(u.dim(i));
-  ad.push_back(unsigned(pmf->nb_dof()));
+  ad.push_back(unsigned(pmf->nb_basic_dof()));
   garray<T> w = out.pop().create_array(ad, T());
   size_type q = u.size() / u.dim(u.ndim()-1);
   assert(w.size() == q * pmf->nb_dof());
-  std::vector<unsigned> dofcnt(pmf->nb_dof());
+  std::vector<unsigned> dofcnt(pmf->nb_basic_dof());
 
   /* stupid smoothing when the mesh_fem is not discontinuous */
   for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv)
-    for (unsigned k=0; k < pmf->nb_dof_of_element(cv); ++k)
-      dofcnt[pmf->ind_dof_of_element(cv)[k]]++;
+    for (unsigned k=0; k < pmf->nb_basic_dof_of_element(cv); ++k)
+      dofcnt[pmf->ind_basic_dof_of_element(cv)[k]]++;
 
 
   for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-    for (unsigned k=0; k < pmf->nb_dof_of_element(cv); ++k) {
-      size_type d = pmf->ind_dof_of_element(cv)[k];
+    for (unsigned k=0; k < pmf->nb_basic_dof_of_element(cv); ++k) {
+      size_type d = pmf->ind_basic_dof_of_element(cv)[k];
       for (unsigned j=0; j < q; ++j)
 	w[d*q+j] += u[cv*q+j] / T(dofcnt[d]);
     }
@@ -273,9 +274,10 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
   General function for inquiry about mesh_fem objects.
 
   @RDATTR MESHFEM:GET('nbdof')
-  @GET    MESHFEM:GET('dof from cv')
-  @GET    MESHFEM:GET('dof from cvid')
-  @GET    MESHFEM:GET('non conformal dof')
+  @RDATTR MESHFEM:GET('nb basic dof')
+  @GET    MESHFEM:GET('basic dof from cv')
+  @GET    MESHFEM:GET('basic dof from cvid')
+  @GET    MESHFEM:GET('non conformal basic dof')
   @RDATTR MESHFEM:GET('qdim')
   @GET    MESHFEM:GET('fem')
   Example:
@@ -289,9 +291,13 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
   @GET    MESHFEM:GET('is_lagrangian')
   @GET    MESHFEM:GET('is_equivalent')
   @GET    MESHFEM:GET('is_polynomial')
+  @RDATTR MESHFEM:GET('is_reduced')
+  @GET    MESHFEM:GET('reduction matrix')
+  @GET    MESHFEM:GET('extension matrix')
+  @GET    MESHFEM:GET('basic dof on region')
   @GET    MESHFEM:GET('dof on region')
-  @GET    MESHFEM:GET('dof nodes')
-  @GET    MESHFEM:GET('dof from im')
+  @GET    MESHFEM:GET('basic dof nodes')
+  @GET    MESHFEM:GET('basic dof from im')
   @GET    MESHFEM:GET('dof partition')
   @GET    MESHFEM:GET('interpolate_convex_data')
   @GET    MESHFEM:GET('save')
@@ -321,11 +327,8 @@ MLABCOM*/
   MLABEXT*/
 
 
-void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+  if (in.narg() < 2) THROW_BADARG( "Wrong number of input arguments");
   getfemint_mesh_fem *mi_mf = in.pop().to_getfemint_mesh_fem();
   getfem::mesh_fem *mf   = &mi_mf->mesh_fem();
   std::string cmd        = in.pop().to_string();
@@ -333,38 +336,45 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@RDATTR n = MESHFEM:GET('nbdof')
     Return the number of degrees of freedom (dof) of the @tmf.@*/
     out.pop().from_integer(int(mf->nb_dof()));
+  } else if (check_cmd(cmd, "nb basic dof", in, out, 0, 0, 0, 1)) {
+    /*@RDATTR n = MESHFEM:GET('nb basic dof')
+    Return the number of basic degrees of freedom (dof) of the @tmf.@*/
+    out.pop().from_integer(int(mf->nb_basic_dof()));
   } else if (check_cmd(cmd, "dof from cv", in, out, 1, 1, 0, 1)) {
     /*@GET DOF = MESHFEM:GET('dof from cv',@mat CVids)
+    Deprecated function. Use MESHFEM:GET('basic dof from cv') instead. @*/
+    infomsg() << "WARNING : gf_mesh_fem_get('dof from cv', ...) is a "
+	      << "deprecated command.\n"
+	      << "          Use gf_mesh_fem_get('basic dof from cv', "
+	      << "...) instead." << endl;
+    dal::bit_vector dof = get_cv_dof_list(mf, in);
+    out.pop().from_bit_vector(dof);
+  } else if (check_cmd(cmd, "basic dof from cv", in, out, 1, 1, 0, 1)) {
+    /*@GET DOF = MESHFEM:GET('basic dof from cv',@mat CVids)
     Return the dof of the convexes listed in `CVids`.
 
     WARNING: the Degree of Freedom might be returned in ANY order, do
-    not use this function in your assembly routines. Use 'dof from cvid'
+    not use this function in your assembly routines. Use 'basic dof from cvid'
     instead, if you want to be able to map a convex number with its
     associated degrees of freedom.
 
-    One can also get the list of dof on a set on convex faces, by
+    One can also get the list of basic dof on a set on convex faces, by
     indicating on the second row of `CVids` the faces numbers (with
     respect to the convex number on the first row).@*/
     dal::bit_vector dof = get_cv_dof_list(mf, in);
-
     out.pop().from_bit_vector(dof);
-#if 0
-  } else if (check_cmd(cmd, "ordered dof from cv", in, out, 1, 1, 0, 1)) {
-    /*@GET ODOF = MESHFEM:GET('ordered dof from cv',@ivec CV)
-    Return the dof of the convex `CV`, in the order used in elementary matrices.
-
-    Since 2004/10/24, this function is obsolete and shall be
-    removed (replaced by MESHFEM:GET('dof from cvid')).@*/
-    size_type cv = in.pop().to_convex_number(mf->linked_mesh());
-    check_cv_fem(*mf, cv);
-    getfem::mesh_fem::ind_dof_ct cvdof = mf->ind_dof_of_element(cv);
-    iarray w = out.pop().create_iarray_h(std::distance(cvdof.begin(), cvdof.end()));
-    for (size_type i=0; i < cvdof.size(); i++) {
-      w[i] = cvdof[i] + config::base_index();
+  } else if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2) ||
+	     check_cmd(cmd, "basic dof from cvid", in, out, 0, 1, 0, 2)) {
+    if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2)) {
+      /*@GET DOF = MESHFEM:GET('dof from cvid'[, @mat CVids])
+	Deprecated function. Use MESHFEM:GET('basic dof from cvid') instead.
+	@*/
+      infomsg() << "WARNING : gf_mesh_fem_get('dof from cvid', ...) is a "
+		<< "deprecated command.\n          Use gf_mesh_fem_get('basic "
+		<< "dof from cvid', ...) instead." << endl;
     }
-#endif
-  } else if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2)) {
-    /*@GET @CELL{DOFs, IDx} = MESHFEM:GET('dof from cvid'[, @mat CVids])
+
+    /*@GET @CELL{DOFs, IDx} = MESHFEM:GET('basic dof from cvid'[, @mat CVids])
     Return the degrees of freedom attached to each convex of the mesh.
 
     If `CVids` is omitted, all the convexes will be considered (equivalent
@@ -387,7 +397,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /* phase one: count the total number of dof */
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
       if (mf->convex_index().is_in(cv)) {
-	pcnt += mf->nb_dof_of_element(cv);
+	pcnt += mf->nb_basic_dof_of_element(cv);
       }
     }
     /* phase two: allocation */
@@ -403,23 +413,31 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (fill_idx) idx[cvcnt] = int(pcnt + config::base_index());
       if (mf->convex_index().is_in(cv)) {
 	for (getfem::mesh_fem::ind_dof_ct::const_iterator pit =
-	       mf->ind_dof_of_element(cv).begin();
-	     pit != mf->ind_dof_of_element(cv).end(); ++pit) {
+	       mf->ind_basic_dof_of_element(cv).begin();
+	     pit != mf->ind_basic_dof_of_element(cv).end(); ++pit) {
 	  pid[pcnt++] = int((*pit) + config::base_index());
 	}
       }
       cvcnt++;
     }
-    if (fill_idx)
-      idx[idx.size()-1] = int(pcnt+config::base_index()); /* for the last convex */
+    if (fill_idx)  /* for the last convex */
+      idx[idx.size()-1] = int(pcnt+config::base_index());
   } else if (check_cmd(cmd, "non conformal dof", in, out, 0, 1, 0, 1)) {
     /*@GET MESHFEM:GET('non conformal dof'[, @mat CVids])
+      Deprecated function. Use MESHFEM:GET('non conformal basic dof') instead.
+      @*/
+      infomsg() << "WARNING : gf_mesh_fem_get('non conformal dof', ...) is a "
+		<< "deprecated command.\n          Use gf_mesh_fem_get('non "
+		<< "conformal basic dof', ...) instead." << endl;
+    non_conformal_dof(*mf, in, out);
+  } else if (check_cmd(cmd, "non conformal basic dof", in, out, 0, 1, 0, 1)) {
+    /*@GET MESHFEM:GET('non conformal basic dof'[, @mat CVids])
     Return partially linked degrees of freedom.
 
-    Return the dof located on the border of a convex and which belong
+    Return the basic dof located on the border of a convex and which belong
     to only one convex, except the ones which are located on the border
     of the mesh.  For example, if the convex 'a' and 'b' share a common
-    face, 'a' has a P1 FEM, and 'b' has a P2 FEM, then the dof on the
+    face, 'a' has a P1 FEM, and 'b' has a P2 FEM, then the basic dof on the
     middle of the face will be returned by this function (this can be
     useful when searching the interfaces between classical FEM and
     hierarchical FEM).@*/
@@ -441,7 +459,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     Convexes which are not part of the mesh, or convexes which do not
     have any FEM have their correspounding entry in `CV2F` set to -1.@*/
-    get_fem_of_convexes(*mf, in, out);
+    get_basic_fem_of_convexes(*mf, in, out);
   } else if (check_cmd(cmd, "convex_index", in, out, 0, 0, 0, 1)) {
     /*@GET CVs = MESHFEM:GET('convex_index')
     Return the list of convexes who have a FEM.@*/
@@ -470,12 +488,32 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     See MESHFEM:GET('is_lagrangian')@*/
     test_fems(IS_POLYNOMIAL, mf, in, out);
-  } else if (check_cmd(cmd, "dof on boundary", in, out, 1, 1, 0, 1) ||
-	     check_cmd(cmd, "dof on region", in, out, 1, 1, 0, 1)) {
-    /*@GET DOFs = MESHFEM:GET('dof on region',@mat Rs)
-    Return the list of dof lying on one of the mesh regions listed in `Rs`.
+  } else if (check_cmd(cmd, "is_reduced", in, out, 0, 0, 0, 1)) {
+    /*@RDATTR bB = MESHFEM:GET('is_reduced')
+    Return 1 if the optional reduction matrix is applied to the dofs.@*/
+    out.pop().from_integer(mf->is_reduced() ? 1 : 0);
+  } else if (check_cmd(cmd, "reduction matrix", in, out, 0, 0, 0, 1)) {
+    /*@GET bB = MESHFEM:GET('reduction matrix')
+    Return the optional reduction matrix.@*/
+    getfemint::gf_real_sparse_by_col
+      M(gmm::mat_nrows(mf->reduction_matrix()),
+	gmm::mat_ncols(mf->reduction_matrix()));
+    gmm::copy(mf->reduction_matrix(), M);
+    out.pop().from_sparse(M);
+  } else if (check_cmd(cmd, "extension matrix", in, out, 0, 0, 0, 1)) {
+    /*@GET bB = MESHFEM:GET('extension matrix')
+    Return the optional extension matrix.@*/
+    getfemint::gf_real_sparse_by_col
+      M(gmm::mat_nrows(mf->extension_matrix()),
+	gmm::mat_ncols(mf->extension_matrix()));
+    gmm::copy(mf->extension_matrix(), M);
+    out.pop().from_sparse(M);
+  } else if (check_cmd(cmd, "basic dof on region", in, out, 1, 1, 0, 1)) {
+    /*@GET DOFs = MESHFEM:GET('basic dof on region',@mat Rs)
+    Return the list of basic dof (before the optional reduction) lying on one
+    of the mesh regions listed in `Rs`.
 
-    More precisely, this function returns the dof whose support is
+    More precisely, this function returns the basic dof whose support is
     non-null on one of regions whose #ids are listed in `Rs` (note
     that for boundary regions, some dof nodes may not lie exactly
     on the boundary, for example the dof of Pk(n,0) lies on the center
@@ -483,26 +521,69 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     border).@*/
     iarray bnums = in.pop().to_iarray(-1);
     dal::bit_vector bv;
-    for (size_type i=0; i < bnums.size(); ++i) {
-      bv |= mf->dof_on_set(bnums[i]);
-    }
+    for (size_type i=0; i < bnums.size(); ++i)
+      bv |= mf->basic_dof_on_region(bnums[i]);
+    out.pop().from_bit_vector(bv);
+  } else if (check_cmd(cmd, "dof on region", in, out, 1, 1, 0, 1)) {
+    /*@GET DOFs = MESHFEM:GET('dof on region',@mat Rs)
+    Return the list of dof (after the optional reduction) lying on one
+    of the mesh regions listed in `Rs`.
+
+    More precisely, this function returns the basic dof whose support is
+    non-null on one of regions whose #ids are listed in `Rs` (note
+    that for boundary regions, some dof nodes may not lie exactly
+    on the boundary, for example the dof of Pk(n,0) lies on the center
+    of the convex, but the base function in not null on the convex
+    border). 
+    
+    For a reduced mesh_fem
+    a dof is lying on a region if its potential corresponding shape
+    function is nonzero on this region. The extension matrix is used
+    to make the correspondance between basic and reduced dofs.@*/
+    iarray bnums = in.pop().to_iarray(-1);
+    dal::bit_vector bv;
+    for (size_type i=0; i < bnums.size(); ++i)
+      bv |= mf->dof_on_region(bnums[i]);
     out.pop().from_bit_vector(bv);
   } else if (check_cmd(cmd, "dof nodes", in, out, 0, 1, 0, 2)) {
     /*@GET DOFpts = MESHFEM:GET('dof nodes'[, @mat DOFids])
-    Get location of degrees of freedom.
-
-    Return the list of interpolation points for the specified
-    dof #IDs in `DOFids` (if `DOFids` is omitted, all dof are
-    considered).@*/
-    dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_dof());
+    Deprecated function. Use MESHFEM:GET('basic dof nodes') instead. @*/
+    infomsg() << "WARNING : gf_mesh_fem_get('dof nodes', ...) is a deprecated "
+	 << "command.\n          Use gf_mesh_fem_get('basic dof nodes', "
+	 << "...) instead." << endl;
+ 
+    dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
     if (in.remaining())
       dof_lst = in.pop().to_bit_vector(&dof_lst);
-    darray w = out.pop().create_darray(mf->linked_mesh().dim(), unsigned(dof_lst.card()));
+    darray w = out.pop().create_darray(mf->linked_mesh().dim(),
+				       unsigned(dof_lst.card()));
     size_type j = 0;
     for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
-      if (mf->point_of_dof(dof).size() != w.getm() || j >= w.getn()) THROW_INTERNAL_ERROR;
-      for (size_type i=0; i < w.getm(); i++) w(i,j)= mf->point_of_dof(dof)[i];
-      //      std::copy(mf->point_of_dof(dof).begin(),mf->point_of_dof(dof).end(), &w(0,j));
+      if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
+	THROW_INTERNAL_ERROR;
+      for (size_type i=0; i < w.getm(); i++)
+	w(i,j)= mf->point_of_basic_dof(dof)[i];
+    }
+  } else if (check_cmd(cmd, "basic dof nodes", in, out, 0, 1, 0, 2)) {
+    /*@GET DOFpts = MESHFEM:GET('basic dof nodes'[, @mat DOFids])
+    Get location of basic degrees of freedom.
+
+    Return the list of interpolation points for the specified
+    dof #IDs in `DOFids` (if `DOFids` is omitted, all basic dof are
+    considered).@*/
+    dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
+    if (in.remaining())
+      dof_lst = in.pop().to_bit_vector(&dof_lst);
+    darray w = out.pop().create_darray(mf->linked_mesh().dim(),
+				       unsigned(dof_lst.card()));
+    size_type j = 0;
+    for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
+      if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
+	THROW_INTERNAL_ERROR;
+      for (size_type i=0; i < w.getm(); i++)
+	w(i,j)= mf->point_of_basic_dof(dof)[i];
+      // std::copy(mf->point_of_dof(dof).begin(),mf->point_of_dof(dof).end(),
+      //           &w(0,j));
     }
   } else if (check_cmd(cmd, "dof partition", in, out, 0, 0, 0, 1)) {
     /*@GET DOFP = MESHFEM:GET('dof partition')
@@ -514,7 +595,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     only to the dof of neighbouring convexes which have the same
     partition number, hence it is possible to create partially
     discontinuous @tmf very easily.@*/
-    iarray v = out.pop().create_iarray_h(unsigned(mf->linked_mesh().convex_index().last_true()+1));
+    iarray v = out.pop().create_iarray_h
+      (unsigned(mf->linked_mesh().convex_index().last_true()+1));
     for (unsigned cv=0; cv < v.size(); ++cv) v[cv] = mf->get_dof_partition(cv);
   } else if (check_cmd(cmd, "save", in, out, 1, 2, 0, 0)) {
     /*@GET MESHFEM:GET('save',@str filename[, @str opt])
@@ -675,7 +757,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     MESH:GET('max cvid') elements.
 
     Example of use: MESHFEM:GET('interpolate_convex_data', MESH:GET('quality'))@*/
-    in.front().check_trailing_dimension(int(mf->linked_mesh().convex_index().last_true()+1));
+    in.front().check_trailing_dimension
+      (int(mf->linked_mesh().convex_index().last_true()+1));
     if (in.front().is_complex())
       interpolate_convex_data(mf, in.pop().to_darray(), out);
     else interpolate_convex_data(mf, in.pop().to_carray(), out);

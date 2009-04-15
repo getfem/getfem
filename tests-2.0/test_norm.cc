@@ -55,11 +55,11 @@ void test_norm(bgeot::pgeometric_trans pgt,
   std::vector<scalar_type> U1(mf1.nb_dof()), U2(mf2.nb_dof());
   getfem::mesh_trans_inv gti(mf1.linked_mesh());
   for (size_type d=0; d < mf1.nb_dof(); ++d) {
-    U1[d] = interp_fun(mf1.point_of_dof(d));
-    gti.add_point(mf1.point_of_dof(d));
+    U1[d] = interp_fun(mf1.point_of_basic_dof(d));
+    gti.add_point(mf1.point_of_basic_dof(d));
   }
   for (size_type d=0; d < mf2.nb_dof(); ++d)
-    U2[d] = interp_fun(mf2.point_of_dof(d));
+    U2[d] = interp_fun(mf2.point_of_basic_dof(d));
 
   std::vector<scalar_type> V1(mf1.nb_dof());
   getfem::interpolation(mf1,gti,U1,V1);

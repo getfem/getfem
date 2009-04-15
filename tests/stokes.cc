@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2009 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -177,9 +177,7 @@ bool stokes_problem::solve(plain_vector &U) {
   
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  getfem::interpolation_function(mf_rhs, F, sol_f);
   
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(INCOMP, mf_rhs, F);

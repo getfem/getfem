@@ -35,23 +35,6 @@
    @brief Model representation in Getfem.
 */
 
-// TODO étape 1 :
-// 1 - Refaire le partial mesh_fem en le faisant géré par la structure mesh
-//     fem elle même dans le gout de se qui est fait pour la vectorisation
-//     implicite. Faire qlq chose de plus carré et documenté qui permette
-//     de séléctionner ou à la limite de faire des combinaisons linéaires de
-//     dofs au niveau de la structure mesh_fem sans refaire des pfems ce qui
-//     est très couteux. Devrait gérer aussi le dof_partition.
-// 2 - Remplacer toute les utilisation de partial_mesh_fem avec la nouvelle
-//     structure. Voir au niveau de Xfem ce que l'on peut gérer comme ca
-//     (et fem sum ...).
-// 3 - Compléter la gestion des variables dans les modèles, leur taille,
-//     prise en compte des événements.
-// 4 - documentation (avec avertissement -> pour version 4.0 de Getfem)
-//     passer à 4.0 avant de committer.
-
-
-
 #ifndef GETFEM_MODELS_H__
 #define GETFEM_MODELS_H__
 
@@ -65,13 +48,18 @@ namespace getfem {
   typedef gmm::rsvector<complex_type> model_complex_sparse_vector;
   typedef std::vector<scalar_type> model_real_plain_vector;
   typedef std::vector<complex_type> model_complex_plain_vector;
+
+  // utiliser le même type que l'interface matlab/python pour représenter
+  // les vecteurs/matrices ?
+  // Cela faciliterait les échanges et réduirait les composantes de la 
+  // classe model.
   
   typedef gmm::col_matrix<model_real_sparse_vector> model_real_sparse_matrix;
   typedef gmm::col_matrix<model_complex_sparse_vector>
     model_complex_sparse_matrix;
 
  
-  class model {
+  class model : public context_dependencies {
 
     // State variables of the model
     bool complex_version;
@@ -84,12 +72,13 @@ namespace getfem {
 
     // Variables and parameters of the model
 
-    typedef enum  var_description_filter {
+    enum  var_description_filter {
       VDESCRFILTER_NO,     // Variable being directly the dofs of a given fem
-      VDESCRFILTER_REGION, // Variable being the dofs of a fem on a mesh region
-      VDESCRFILTER_INFSUP  // Variable being the dofs of a fem on a mesh region
-                           // with an additional filter on a mass matrix with
-                           // respect to another fem.
+      VDESCRFILTER_REGION, /* Variable being the dofs of a fem on a mesh region
+			    * (uses mf.dof_on_region). */
+      VDESCRFILTER_INFSUP  /* Variable being the dofs of a fem on a mesh region
+			    * with an additional filter on a mass matrix with
+                            * respect to another fem. */
     };
 
     struct var_description {
@@ -100,89 +89,62 @@ namespace getfem {
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
-      int n_iter; //  number of version of the variable stored (for time
+      size_type n_iter; //  number of version of the variable stored (for time
                   // integration schemes.
 
       // fem description of the variable
       const mesh_fem *mf;          // Principal fem of the variable.
-      // la structure partial_mesh_fem n'est pas très efficace (elle définie
-      // de nouveau fems), il faudrait
-      // donner une certaine liberté entre fem et mesh_fem qui permette
-      // de faire l'opération de séléction à l'interieur du mesh_fem
-      // comme est faite l'opération qui consiste à vectoriser un fem non
-      // vectoriel.
-      partial_mesh_fem partial_mf; // Filter with repsect to mf.
+      const mesh_im *mim;          // Optional mesh_im for filter.
+      partial_mesh_fem *partial_mf; // Filter with respect to mf.
       int m_region;                // Optional mesh_region for the filter.
       std::string filter_var;      // Optional variable name for the filter
-                           // with the mass matrix of the correpsonding fem.
+                           // with the mass matrix of the corresponding fem.
 
-      size_type qdim;  // une donnée peut avoir un qdim != du fem.
-                       // dim per dof for dof variables.
+      dim_type qdim;  // une donnée peut avoir un qdim != du fem.
+                      // dim per dof for dof data.
+      gmm::uint64_type v_num;
 
       gmm::sub_interval I; // For a variable : indices on the whole system
   
-      model_real_plain_vector real_value;
-      model_complex_plain_vector complex_value;
+      std::vector<model_real_plain_vector> real_value;
+      std::vector<model_complex_plain_vector> complex_value;
 
-
+      var_description(bool is_var = false, bool is_com = false,
+		      bool is_fem = false, size_type n_it = 1,
+		      var_description_filter fil = VDESCRFILTER_NO,
+		      const mesh_fem *mmf = 0, const mesh_im *im = 0,
+		      int m_reg = 0, dim_type Q = 1,
+		      const std::string &filter_v = std::string(""))
+	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
+	  filter(fil), n_iter(n_it), mf(mmf), mim(im), partial_mf(0),
+	  m_region(m_reg),
+	  filter_var(filter_v), qdim(Q), v_num(act_counter()) {
+	if (filter != VDESCRFILTER_NO && mf != 0)
+	  partial_mf = new partial_mesh_fem(*mf);
+      }
 
       const mesh_fem &associated_mf(void) const {
 	GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
-	if (filter == VDESCRFILTER_NO) return *mf; else return partial_mf; 
+	if (filter == VDESCRFILTER_NO) return *mf; else return *partial_mf; 
       }
+
+      ~var_description() { if (partial_mf) delete partial_mf; }
 
       size_type size(void) const // devrait contrôler que la variable
       // a bien été initialisée avec la bonne taille par actualize_sizes.
-      { if (is_complex) complex_value.size(); else real_value.size(); }
+      { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
-      size_type set_size(size_type s) 
-      { if (is_complex) complex_value.resize(s); else real_value.resize(s); }
-
-      var_description(...) : partial_mf(*mf) {
-
+      void set_size(size_type s) {
+	for (size_type i = 0; i < n_iter; ++i)
+	  if (is_complex) complex_value[i].resize(s);
+	  else real_value[i].resize(s);
       }
     };
     
-    typedef typename std::map<std::string, var_description> VAR_SET;
+    typedef std::map<std::string, var_description> VAR_SET;
     VAR_SET variables;
 
-    actualize_sizes(void) { // corps à mettre dans le .cc;
-      // mets à jour la taille des variables, les filtres ...
-      // à refaire dés que : on ajoute une variable, un fem change, une
-      //    variable non fem change de taille.
-
-      // doit mettre aussi à jour les paramêtres en adaptant la taille
-      // des vecteurs -> warning si la taille change.
-
-      size_type tot_size = 0;
-      
-      for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-	   ++it) {
-	if (it->is_fem_dofs) {
-	  size_type s(0);
-	  switch (it->filter) {
-	  case VDESCRFILTER_NO:
-	    s = it->mf->nb_dof();
-	    if (!it->is_variable && it->mf->get_qdim() != it->qdim)
-	      s *= it->qdim;
-	    break;
-	  case VDESCRFILTER_REGION: ...; break;
-	  case VDESCRFILTER_INF_SUP: ...; break;
-	  }
-	  it->set_size(s);
-	}
-	if (it->is_variable) {
-	  it->I = gmm::sub_interval(tot_size, it->size());
-	  tot_size += it->size();
-	}
-
-	// + fixer la taille des vecteurs globaux du modèle ...
-
-      }
-      
-
-
-    }
+    void actualize_sizes(void);
 
     // Faire la doc avec les différents types de variables gérées
     //   (fem, mult ...)
@@ -213,6 +175,26 @@ namespace getfem {
 
     bool is_complex_version(void) const { return complex_version; }
 
+
+    void add_fixed_size_variable(const std::string &name, size_type size,
+				 size_type niter = 1, bool is_complex = false);
+
+    void add_fixed_size_constant(const std::string &name, size_type size,
+				 size_type niter = 1, bool is_complex = false);
+
+    void add_fem_variable(const std::string &name, const mesh_fem &mf,
+			  size_type niter = 1, bool is_complex = false);
+
+    void add_fem_constant(const std::string &name, const mesh_fem &mf,
+			  dim_type qdim = 1, size_type niter = 1,
+			  bool is_complex = false);
+    
+    void add_mult_on_region(const std::string &name, const mesh_fem &mf,
+			    const mesh_im &mim,
+			    const std::string &primal_name, int region,
+			    size_type niter = 1, bool is_complex = false);
+
+
     const model_real_sparse_matrix &real_tangent_matrix() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       return rTM;
@@ -223,12 +205,12 @@ namespace getfem {
       return cTM;
     }
     
-    const model_real_sparse_matrix &real_rhs() const {
+    const model_real_plain_vector &real_rhs() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       return rrhs;
     }
     
-    const model_complex_sparse_matrix &complex_rhs() const {
+    const model_complex_plain_vector &complex_rhs() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       return crhs;
     }

@@ -115,16 +115,20 @@ namespace getfem {
     base_vector coeff;
     base_matrix G;
     bool ref_pts_changed = false;
-    if (ms.cvr != ms.prev_cvr || defdata->pmf->fem_of_element(ms.cv) != pf) {
+    if (ms.cvr != ms.prev_cvr
+	|| defdata->pmf->fem_of_element(ms.cv) != pf) {
       pf = defdata->pmf->fem_of_element(ms.cv);
       if (pf->need_G()) 
-	bgeot::vectors_to_base_matrix(G, defdata->pmf->linked_mesh().points_of_convex(ms.cv));
+	bgeot::vectors_to_base_matrix
+	  (G, defdata->pmf->linked_mesh().points_of_convex(ms.cv));
     }
-    /* check that the points are still the same -- or recompute the fem_precomp */
+    /* check that the points are still the same 
+     * -- or recompute the fem_precomp */
     std::vector<base_node> ref_pts2; ref_pts2.reserve(ms.nodes_index.card());
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i) {
       ref_pts2.push_back(ms.nodes[i].pt_ref);
-      if (ref_pts2.size() > ref_pts.size() || gmm::vect_dist2_sqr(ref_pts2[i],ref_pts[i])>1e-20) 
+      if (ref_pts2.size() > ref_pts.size()
+	  || gmm::vect_dist2_sqr(ref_pts2[i],ref_pts[i])>1e-20) 
 	ref_pts_changed = true;
     }
     if (ref_pts2.size() != ref_pts.size()) ref_pts_changed = true;
@@ -378,7 +382,8 @@ namespace getfem {
     if (pf == 0) return;
     fem_precomp_pool fprecomp;
     if (pf->need_G()) 
-      bgeot::vectors_to_base_matrix(G, mfU->pmf->linked_mesh().points_of_convex(cv));
+      bgeot::vectors_to_base_matrix
+	(G,mfU->pmf->linked_mesh().points_of_convex(cv));
     for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
     pfem_precomp pfp = fprecomp(pf, store_point_tab(refpts));
     mfU->copy(cv, coeff);
@@ -395,7 +400,9 @@ namespace getfem {
       pt_bin[i] = (gmm::abs(Uval[i] - val) < EPS * val_scaling);
       pt_in[i] = (Uval[i] - val < 0); if (orient>0) pt_in[i] = !pt_in[i]; 
       pt_in[i] = pt_in[i] || pt_bin[i];
-      //cerr << "cv=" << cv << ", node["<< i << "]=" << nodes[i].pt << ", Uval[i]=" << Uval[i] << ", pt_in[i]=" << pt_in[i] << ", pt_bin[i]=" << pt_bin[i] << endl;
+      // cerr << "cv=" << cv << ", node["<< i << "]=" << nodes[i].pt
+      //      << ", Uval[i]=" << Uval[i] << ", pt_in[i]=" << pt_in[i]
+      //      << ", pt_bin[i]=" << pt_bin[i] << endl;
     }
   }
 
@@ -408,7 +415,8 @@ namespace getfem {
     dal::bit_vector splx_inA(ms.splx_in);
     dim_type fcnt_1 = dim_type(ms.fcnt);
 
-    dal::bit_vector splx_inB = splx_in_base; splx_inB.add(c, ms.simplexes.size()-c);
+    dal::bit_vector splx_inB = splx_in_base;
+    splx_inB.add(c, ms.simplexes.size()-c);
     splx_inB.setminus(splx_inA);
     for (dal::bv_visitor_c i(splx_inB); !i.finished(); ++i) {
       if (!ms.simplex_index[i]) splx_inB.sup(i);

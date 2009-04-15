@@ -370,9 +370,12 @@ void friction_problem::solve(void) {
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
   cout << "Number of dof for v: " << mf_v.nb_dof() << endl;
 
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
+
   size_type ref_dof = 0;
   for (size_type i = 1; i < mf_u.nb_dof(); ++i)
-    if (mf_u.point_of_dof(i)[N-1] < mf_u.point_of_dof(ref_dof)[N-1])
+    if (mf_u.point_of_basic_dof(i)[N-1]
+	< mf_u.point_of_basic_dof(ref_dof)[N-1])
       ref_dof = i;
 
   // Linearized elasticity brick.
@@ -396,16 +399,16 @@ void friction_problem::solve(void) {
   // Dirichlet condition brick.
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
+    F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_basic_dof(i)[N-1];
   getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, DIRICHLET_BOUNDARY);
   DIRICHLET.rhs().set(mf_rhs, F);
   
   // contact condition for Lagrange elements
-  dal::bit_vector cn, dn = mf_u.dof_on_set(CONTACT_BOUNDARY);
+  dal::bit_vector cn, dn = mf_u.basic_dof_on_region(CONTACT_BOUNDARY);
   // cout << "dn = " << dn << endl;
   for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv)
-    for (size_type i = 0; i < mf_u.nb_dof_of_element(cv); ++i) {
-      size_type j = mf_u.ind_dof_of_element(cv)[i];
+    for (size_type i = 0; i < mf_u.nb_basic_dof_of_element(cv); ++i) {
+      size_type j = mf_u.ind_basic_dof_of_element(cv)[i];
       if (dn.is_in(j) && j % N == 0) {
         switch (contact_type) {
 	case 0 :
@@ -433,7 +436,7 @@ void friction_problem::solve(void) {
   scalar_type heighmin = 1E10;
   for (dal::bv_visitor i(cn); !i.finished(); ++i) {
     BN(jj, i+N-1) = -1.;
-    gap[jj] = mf_u.point_of_dof(i)[N-1];
+    gap[jj] = mf_u.point_of_basic_dof(i)[N-1];
     if (gap[jj] < heighmin)
       { heighmin = gap[jj]; lower_dof_u = i+N-1; lower_dof_s = jj; }
     for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
@@ -464,11 +467,12 @@ void friction_problem::solve(void) {
   scalar_type t(0), t_export(dtexport), beta_(0);
   scalar_type alpha_(0);
 
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   // Initial conditions (U0, V0)
   gmm::clear(U0); gmm::clear(V0); gmm::clear(LT0);
   for (size_type i=0; i < mf_u.nb_dof(); ++i)
     if ((i % N) == 0) { 
-      U0[i+N-1] = Dirichlet ? (Dirichlet_ratio * mf_u.point_of_dof(i)[N-1])
+      U0[i+N-1] = Dirichlet ? (Dirichlet_ratio * mf_u.point_of_basic_dof(i)[N-1])
 	: init_vert_pos;
       HSPEED[i] = hspeed;
     }

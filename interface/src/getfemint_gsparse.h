@@ -68,9 +68,13 @@ namespace getfemint
 	return t_cscmat_ref_r(gfi_sparse_get_pr(gfimat), 
 			      gfi_sparse_get_ir(gfimat), 
 			      gfi_sparse_get_jc(gfimat),
-			      gfi_array_get_dim(gfimat)[0],gfi_array_get_dim(gfimat)[1]);
-      else if (pcscmat_r) return t_cscmat_ref_r(pcscmat_r->pr, pcscmat_r->ir, pcscmat_r->jc, 
-						gmm::mat_nrows(*pcscmat_r), gmm::mat_ncols(*pcscmat_r));
+			      gfi_array_get_dim(gfimat)[0],
+			      gfi_array_get_dim(gfimat)[1]);
+      else if (pcscmat_r)
+	return t_cscmat_ref_r(&pcscmat_r->pr[0], &pcscmat_r->ir[0],
+			      &pcscmat_r->jc[0], 
+			      gmm::mat_nrows(*pcscmat_r),
+			      gmm::mat_ncols(*pcscmat_r));
       else THROW_INTERNAL_ERROR;
     }
     t_cscmat_r& real_csc_w(t_cscmat_r *p=0) { if (p) { v = REAL; pcscmat_r = p; } return *pcscmat_r; }
@@ -79,9 +83,13 @@ namespace getfemint
 	return t_cscmat_ref_c((complex_type*)gfi_sparse_get_pr(gfimat), 
 			      gfi_sparse_get_ir(gfimat), 
 			      gfi_sparse_get_jc(gfimat),
-			      gfi_array_get_dim(gfimat)[0],gfi_array_get_dim(gfimat)[1]);
-      else if (pcscmat_c) return t_cscmat_ref_c(pcscmat_c->pr, pcscmat_c->ir, pcscmat_c->jc, 
-						gmm::mat_nrows(*pcscmat_c), gmm::mat_ncols(*pcscmat_c)); 
+			      gfi_array_get_dim(gfimat)[0],
+			      gfi_array_get_dim(gfimat)[1]);
+      else if (pcscmat_c)
+	return t_cscmat_ref_c(&pcscmat_c->pr[0], &pcscmat_c->ir[0],
+			      &pcscmat_c->jc[0], 
+			      gmm::mat_nrows(*pcscmat_c),
+			      gmm::mat_ncols(*pcscmat_c)); 
       else THROW_INTERNAL_ERROR;
     }
     t_cscmat_c& cplx_csc_w(t_cscmat_c *p=0) { if (p) { v = COMPLEX; pcscmat_c = p; } return *pcscmat_c; }

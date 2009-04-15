@@ -96,7 +96,7 @@ else
   load 'demo_nonlinear_elasticity_U.mat';
   nb_step = size(UU,1);
 end;
-P=get(mfd, 'dof_nodes');
+P=get(mfd, 'basic dof_nodes');
 r = sqrt(P(1 ,:).^2 + P(3, :).^2);
 theta = atan2(P(3,:),P(1,:));
 
@@ -111,8 +111,8 @@ for step=1:nbstep,
     dtheta =  pi;
     dtheta2 = pi/2;
     
-    i_top = get(mfd, 'dof on boundary', 1);
-    i_bot = get(mfd, 'dof on boundary', 2);
+    i_top = get(mfd, 'basic dof on region', 1);
+    i_bot = get(mfd, 'basic dof on region', 2);
     dd = max(P(1,i_top)*sin(w*dtheta));
     if (w < 1), 
       RT1 = axrot_matrix([0 h*.75 0], [0 h*.75 1], w*dtheta);

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2007-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2007-2009 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -47,6 +47,11 @@ using bgeot::scalar_type;
 typedef gmm::row_matrix<gmm::rsvector<scalar_type> > general_sparse_matrix;
 typedef std::vector<scalar_type>                     linalg_vector;
 
+double scw_rho, gravity;
+
+base_vector vol_force(const base_node &x)
+{ base_vector res(x.size()); res[x.size()-1] = -scw_rho*gravity; return res; }
+
 
 struct pb_data {
   getfem::mesh mesh;
@@ -57,7 +62,7 @@ struct pb_data {
   getfem::mesh_fem mef_data;
   getfem::mesh_fem mef_coarse;
 
-  double mu, lambda, rho, gravity;
+  double mu, lambda;
   double LX, LY, LZ, residual, overlap, subdomsize;
   int NX, N, NXCOARSE, USECOARSE, K;
   base_vector D;
@@ -85,9 +90,6 @@ struct pb_data {
     return 0;
   }
 
-  base_vector vol_force(const base_node &x)
-  { base_vector res(x.size()); res[N-1] = -rho*gravity; return res; }
-
   pb_data(void) : mim(mesh), mef(mesh), mef_data(mesh), mef_coarse(mesh_coarse)  {}
 };
 
@@ -103,7 +105,7 @@ void pb_data::init(bgeot::md_param &params) {
   N = int(params.int_value("N", "Dimension"));
   mu = params.real_value("MU", "Stiffness parameter mu");
   gravity = params.real_value("PG", "G");
-  rho = params.real_value("RHO", "RHO");
+  scw_rho = params.real_value("RHO", "RHO");
   lambda = params.real_value("LAMBDA", "lambda");
   D.resize(N); gmm::clear(D);
   D[N-1] = params.real_value("D", "Dirichlet condition");
@@ -193,7 +195,6 @@ void pb_data::assemble(void) {
   size_type nb_dof = mef.nb_dof();
   std::cout << "number of dof : "<< nb_dof << endl;
   size_type nb_dof_data = mef_data.nb_dof();
-  dal::bit_vector ddlD = mef.dof_on_set(0);
  
   F.resize(nb_dof); gmm::clear(F);
   U.resize(nb_dof); gmm::clear(U);
@@ -208,9 +209,7 @@ void pb_data::assemble(void) {
 
   std::cout << "Assembly of source term" << endl;
   linalg_vector STF(N * nb_dof_data);
-  for (size_type j = 0; j < nb_dof_data; j++)
-    for (int k = 0; k < N; k++)
-      STF[j*N + k] = (vol_force(mef_data.point_of_dof(j)))[k];
+  interpolation_function(mef_data, STF, vol_force);
   getfem::asm_source_term(F, mim, mef, mef_data, STF);
   
   linalg_vector UD(nb_dof);
@@ -240,9 +239,10 @@ int pb_data::solve_cg2(void) {
 
 int pb_data::solve_schwarz(int version) {
 
-  size_type nb_dof = mef.nb_dof();
+  GMM_ASSERT1(!mef.is_reduced(), "To be adapted");
+  size_type nb_dof = mef.nb_basic_dof();
   std::vector<base_node> pts(nb_dof);
-  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_dof(i);
+  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_basic_dof(i);
 
   std::vector<general_sparse_matrix> vB;
   gmm::rudimentary_regular_decomposition(pts, subdomsize, overlap, vB);

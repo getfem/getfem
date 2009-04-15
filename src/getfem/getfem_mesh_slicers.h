@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Julien Pommier
+// Copyright (C) 2004-2009 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -33,21 +33,23 @@
    @date February 2004.
    @brief Define various mesh slicers.
    
-   Mesh slices are analogous to a refined P1-discontinuous mesh_fem, a list of nodes/simplexes on which the interpolation is very fast.
+   Mesh slices are analogous to a refined P1-discontinuous mesh_fem, a
+   list of nodes/simplexes on which the interpolation is very fast.
 
    A slice is built from a mesh, by applying some slicing operations
    (cut the mesh with a plane, intersect with a sphere, take the
    boundary faces, etc..).
 
-   They are used for post-treatment (exportation of results to VTK or OpenDX, etc.)
+   They are used for post-treatment (exportation of results to VTK or OpenDX,
+   etc.)
 */
 
 #ifndef GETFEM_MESH_SLICERS_H
 #define GETFEM_MESH_SLICERS_H
 
 #include <bitset>
+#include <memory>
 #include "gmm/gmm_kernel.h"
-#include <memory> // auto_ptr for g++ 2.95
 #include "getfem_mesh_fem.h"
 #include "bgeot_rtree.h"
 
@@ -119,7 +121,8 @@ namespace getfem {
     bool discont; // true when mls->is_convex_cut(cv) == true
 
     mesh tmp_mesh; // used only when mls != 0
-    bgeot::mesh_structure tmp_mesh_struct; // used only when mls != 0 for faces structure.
+    bgeot::mesh_structure tmp_mesh_struct; // used only when mls != 0
+                                           //  for faces structure.
 
     void pack(); /* not used, indeed */
     void update_nodes_index();
@@ -134,7 +137,8 @@ namespace getfem {
 
     size_type add_simplex(const slice_simplex& s, bool isin) {
       size_type i = simplexes.size();
-      simplexes.push_back(s); splx_in[i] = isin; simplex_index.add(i); return i;
+      simplexes.push_back(s); splx_in[i] = isin; simplex_index.add(i);
+      return i;
     }
     void sup_simplex(size_type i) {
       splx_in.sup(i); simplex_index.sup(i);
@@ -145,12 +149,13 @@ namespace getfem {
     }
     void simplex_orientation(slice_simplex& s);
     /**@brief build a new mesh_slice.
-       @param nrefine number of refinments for each convex of the original mesh (size_type or a vector indexed by the convex number)
-       @param cvlst the list of convex numbers (or convex faces) of m that will 
-       be taken into account for the slice
+       @param nrefine number of refinments for each convex of the original
+        mesh (size_type or a vector indexed by the convex number)
+       @param cvlst the list of convex numbers (or convex faces) of m that
+       will be taken into account for the slice
     */
     void exec(size_type nrefine, const mesh_region& cvlst); 
-    void exec(const std::vector<short_type> &nrefine, const mesh_region& cvlst); 
+    void exec(const std::vector<short_type> &nrefine,const mesh_region& cvlst);
     void exec(size_type nrefine = 1);
     /**
        @brief build a new mesh slice.
@@ -167,8 +172,10 @@ namespace getfem {
     void exec_(const short_type *pnrefine, 
 	       int nref_stride, 
 	       const mesh_region& cvlst);
-    const mesh& refined_simplex_mesh_for_convex_cut_by_level_set(const mesh &cvm, unsigned nrefine);
-    const bgeot::mesh_structure &refined_simplex_mesh_for_convex_faces_cut_by_level_set(size_type f);
+    const mesh& refined_simplex_mesh_for_convex_cut_by_level_set
+    (const mesh &cvm, unsigned nrefine);
+    const bgeot::mesh_structure &
+    refined_simplex_mesh_for_convex_faces_cut_by_level_set(size_type f);
  
     void update_cv_data(size_type cv_, size_type f_ = size_type(-1));
     void init_indexes();
@@ -176,8 +183,8 @@ namespace getfem {
   };
 
 
-  /* stupid class in order to use any vector type for field data associated to mesh_fems
-     in slices (used for slice deformation and isovalues) */
+  /* stupid class in order to use any vector type for field data associated
+     to mesh_fems in slices (used for slice deformation and isovalues) */
   class mesh_slice_cv_dof_data_base {
   public:
     const mesh_fem *pmf;    
@@ -188,17 +195,24 @@ namespace getfem {
   };
 
   /**
-     Use this structure to specify that the mesh must be deformed before the slicing operation.
-     (with a mesh_fem and an associated field)
+     Use this structure to specify that the mesh must be deformed before
+     the slicing operation (with a mesh_fem and an associated field).
   */
   template<typename VEC> class mesh_slice_cv_dof_data
     : public mesh_slice_cv_dof_data_base {
-    const VEC u;
+    VEC u;
   public:
-    mesh_slice_cv_dof_data(const mesh_fem &mf_, VEC &u_) : u(u_) { pmf=&mf_; }
+    mesh_slice_cv_dof_data(const mesh_fem &mf_, const VEC &u_) : u(u_) {
+      pmf=&mf_;
+      if (mf_.is_reduced()) {
+	gmm::resize(u, mf_.nb_basic_dof());
+	gmm::mult(mf_.extension_matrix(), u_, u);
+      }
+      else gmm::copy(u_, u);
+    }
     virtual void copy(size_type cv, base_vector& coeff) const {
-      coeff.resize(pmf->nb_dof_of_element(cv));
-      const mesh_fem::ind_dof_ct &dof = pmf->ind_dof_of_element(cv);
+      coeff.resize(pmf->nb_basic_dof_of_element(cv));
+      const mesh_fem::ind_dof_ct &dof = pmf->ind_basic_dof_of_element(cv);
       base_vector::iterator out = coeff.begin();
       for (mesh_fem::ind_dof_ct::iterator it=dof.begin(); it != dof.end();
 	   ++it, ++out)
@@ -240,8 +254,10 @@ namespace getfem {
                     const mesh_slicer::cs_nodes_ct& nodes) const;
     void build_from(const mesh& m, const mesh_region& cvflst);
   public:
-    slicer_boundary(const mesh& m, slicer_action &sA, const mesh_region& fbound);
-    slicer_boundary(const mesh& m, slicer_action &sA = slicer_none::static_instance());
+    slicer_boundary(const mesh& m, slicer_action &sA,
+		    const mesh_region& fbound);
+    slicer_boundary(const mesh& m,
+		    slicer_action &sA = slicer_none::static_instance());
     void exec(mesh_slicer &ms);
   };
 
@@ -254,16 +270,19 @@ namespace getfem {
  public:
     slicer_apply_deformation(mesh_slice_cv_dof_data_base &defdata_) 
       : defdata(&defdata_), pf(0) {
-      if (defdata && defdata->pmf->get_qdim() != defdata->pmf->linked_mesh().dim()) 
+      if (defdata &&
+	  defdata->pmf->get_qdim() != defdata->pmf->linked_mesh().dim()) 
 	GMM_ASSERT1(false, "wrong Q(=" << int(defdata->pmf->get_qdim()) 
 		    << ") dimension for slice deformation: should be equal to "
-		    "the mesh dimension which is " << int(defdata->pmf->linked_mesh().dim()));
+		    "the mesh dimension which is "
+		    << int(defdata->pmf->linked_mesh().dim()));
     }
     void exec(mesh_slicer &ms);
   };
 
   /**
-     Base class for general slices of a mesh (planar, sphere, cylinder,isosurface)
+     Base class for general slices of a mesh (planar, sphere,
+     cylinder,isosurface)
   */
   class slicer_volume : public slicer_action {
   public:
@@ -282,7 +301,9 @@ namespace getfem {
     
     /** Overload either 'prepare' or 'test_point'.
      */
-    virtual void prepare(size_type /*cv*/, const mesh_slicer::cs_nodes_ct& nodes, const dal::bit_vector& nodes_index) {
+    virtual void prepare(size_type /*cv*/,
+			 const mesh_slicer::cs_nodes_ct& nodes,
+			 const dal::bit_vector& nodes_index) {
       pt_in.clear(); pt_bin.clear();
       for (dal::bv_visitor i(nodes_index); !i.finished(); ++i) {
 	bool in, bin; test_point(nodes[i].pt, in, bin);        
@@ -290,10 +311,12 @@ namespace getfem {
         if (bin) pt_bin.add(i);
       }
     }
-    virtual void test_point(const base_node&, bool& in, bool& bound) const { in=true; bound=true; }
+    virtual void test_point(const base_node&, bool& in, bool& bound) const
+    { in=true; bound=true; }
     /** edge_intersect should always be overloaded */
-    virtual scalar_type edge_intersect(size_type /*i*/, size_type /*j*/, 
-				       const mesh_slicer::cs_nodes_ct& /*nodes*/) const = 0;
+    virtual scalar_type
+    edge_intersect(size_type /*i*/, size_type /*j*/, 
+		   const mesh_slicer::cs_nodes_ct& /*nodes*/) const = 0;
 
     slicer_volume(int orient_) : orient(orient_) {}
 
@@ -307,8 +330,10 @@ namespace getfem {
       if (gmm::abs(s1-.5) < gmm::abs(s2-.5)) return s1; else return s2;
     }
     void split_simplex(mesh_slicer &ms,
-                       slice_simplex s, /* s is NOT a reference, it is on purpose (push_back in the function)*/
-                       size_type sstart, std::bitset<32> spin, std::bitset<32> spbin);
+                       slice_simplex s, /* s is NOT a reference, it is on
+					 * purpose(push_back in the function)*/
+                       size_type sstart, std::bitset<32> spin,
+		       std::bitset<32> spbin);
   public:
     void exec(mesh_slicer &ms);
   };
@@ -320,14 +345,17 @@ namespace getfem {
     const base_node x0, n; /* normal directed from inside toward outside */
     void test_point(const base_node& P, bool& in, bool& bound) const {
       scalar_type s = gmm::vect_sp(P-x0,n);
-      in = (s <= 0); bound = (s*s <= EPS); //*gmm::vect_norm2_sqr(P-x0)); NO!No!
-      // do not try to be smart with the boundary check .. easily broken with slicer_mesh_with_mesh
+      in = (s <= 0); bound = (s*s <= EPS); // gmm::vect_norm2_sqr(P-x0)); No!
+      // do not try to be smart with the boundary check .. easily broken with
+      // slicer_mesh_with_mesh
     }
-    scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slicer::cs_nodes_ct& nodes) const {
+    scalar_type edge_intersect(size_type iA, size_type iB,
+			       const mesh_slicer::cs_nodes_ct& nodes) const {
       const base_node& A=nodes[iA].pt;
       const base_node& B=nodes[iB].pt;
       scalar_type s1 = 0., s2 = 0.;
-      for (unsigned i=0; i < A.size(); ++i) { s1 += (A[i] - B[i])*n[i]; s2 += (A[i]-x0[i])*n[i]; }
+      for (unsigned i=0; i < A.size(); ++i)
+	{ s1 += (A[i] - B[i])*n[i]; s2 += (A[i]-x0[i])*n[i]; }
       if (gmm::abs(s1) < EPS) return 1./EPS;
       else return s2/s1;
     }
@@ -349,11 +377,13 @@ namespace getfem {
       bound = (R2 >= (1-EPS)*R*R && R2 <= (1+EPS)*R*R);
       in = R2 <= R*R;
     }
-    scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slicer::cs_nodes_ct& nodes) const {
+    scalar_type edge_intersect(size_type iA, size_type iB,
+			       const mesh_slicer::cs_nodes_ct& nodes) const {
       const base_node& A=nodes[iA].pt;
       const base_node& B=nodes[iB].pt;
       scalar_type a,b,c; // a*x^2 + b*x + c = 0
-      a = gmm::vect_norm2_sqr(B-A); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
+      a = gmm::vect_norm2_sqr(B-A);
+      if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS;
       b = 2*gmm::vect_sp(A-x0,B-A);
       c = gmm::vect_norm2_sqr(A-x0)-R*R;
       return slicer_volume::trinom(a,b,c);
@@ -363,7 +393,8 @@ namespace getfem {
        orient = 0  => select boundary 
        orient = +1 => select exterior */
     slicer_sphere(base_node x0_, scalar_type R_, int orient_) : 
-      slicer_volume(orient_), x0(x0_), R(R_) {} //cerr << "slicer_volume, x0=" << x0 << ", R=" << R << endl; }
+      slicer_volume(orient_), x0(x0_), R(R_) {}
+    //cerr << "slicer_volume, x0=" << x0 << ", R=" << R << endl; }
   };
   
   /**
@@ -379,16 +410,19 @@ namespace getfem {
       bound = gmm::abs(dist2-R*R) < EPS;
       in = dist2 < R*R;
     }
-    scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slicer::cs_nodes_ct& nodes) const {
+    scalar_type edge_intersect(size_type iA, size_type iB,
+			       const mesh_slicer::cs_nodes_ct& nodes) const {
       base_node F=nodes[iA].pt-x0; scalar_type Fd = gmm::vect_sp(F,d);
-      base_node D=nodes[iB].pt-nodes[iA].pt; scalar_type Dd = gmm::vect_sp(D,d);
-      scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
+      base_node D=nodes[iB].pt-nodes[iA].pt;
+      scalar_type Dd = gmm::vect_sp(D,d);
+      scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd);
+      if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
       scalar_type b = 2*(gmm::vect_sp(F,D) - Fd*Dd);
       scalar_type c = gmm::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
       return slicer_volume::trinom(a,b,c);
     }
   public:
-    slicer_cylinder(base_node x0_, base_node x1_, scalar_type R_, int orient_) : 
+    slicer_cylinder(base_node x0_, base_node x1_,scalar_type R_,int orient_) : 
       slicer_volume(orient_), x0(x0_), d(x1_-x0_), R(R_) {
       d /= gmm::vect_norm2(d);
     }
@@ -403,9 +437,11 @@ namespace getfem {
     scalar_type val;
     scalar_type val_scaling; /* = max(abs(U)) */
     std::vector<scalar_type> Uval;
-    void prepare(size_type cv, const mesh_slicer::cs_nodes_ct& nodes, const dal::bit_vector& nodes_index);
-    scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slicer::cs_nodes_ct& /*nodes*/) const {
-      assert(iA < Uval.size() && iB < Uval.size()); /* this should never happen! */
+    void prepare(size_type cv, const mesh_slicer::cs_nodes_ct& nodes,
+		 const dal::bit_vector& nodes_index);
+    scalar_type edge_intersect(size_type iA, size_type iB,
+			       const mesh_slicer::cs_nodes_ct&) const {
+      assert(iA < Uval.size() && iB < Uval.size());
       if (((Uval[iA] < val) && (Uval[iB] > val)) ||
 	  ((Uval[iA] > val) && (Uval[iB] < val)))
 	return (val-Uval[iA])/(Uval[iB]-Uval[iA]);
@@ -413,13 +449,15 @@ namespace getfem {
     }
   public:
     /* orient = -1: u(x) <= val, 0: u(x) == val, +1: u(x) >= val */
-    slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU_, scalar_type val_, int orient_) : 
+    slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU_,
+		     scalar_type val_, int orient_) : 
       slicer_volume(orient_), mfU(mfU_.clone()), val(val_) {
-      GMM_ASSERT1(mfU->pmf->get_qdim() == 1, "can't compute isovalues of a vector field !");
+      GMM_ASSERT1(mfU->pmf->get_qdim() == 1,
+		  "can't compute isovalues of a vector field !");
 	val_scaling = mfU->maxval();
-      }
+    }
   };
-
+  
   /** 
       Slices a mesh with another mesh. (of same dimension,
       and whose convex are preferably linear). Note that slicing
@@ -430,7 +468,8 @@ namespace getfem {
     const mesh& slm;
     bgeot::rtree tree; /* tree of bounding boxes for slm */
   protected:
-    virtual void intersection_callback(mesh_slicer &/*ms*/, size_type /*slmcv*/) {}
+    virtual void intersection_callback(mesh_slicer &/*ms*/,
+				       size_type /*slmcv*/) {}
   public:
     slicer_mesh_with_mesh(const mesh&);
     void exec(mesh_slicer &ms);
@@ -492,14 +531,16 @@ namespace getfem {
     dal::bit_vector *pslice_edges;
   public:
     /**  @param edges_m_ the mesh that will be filled with edges. */
-    slicer_build_edges_mesh(mesh& edges_m_) : edges_m(edges_m_), pslice_edges(0) {}
+    slicer_build_edges_mesh(mesh& edges_m_)
+      : edges_m(edges_m_), pslice_edges(0) {}
     /**  @param edges_m_ the mesh that will be filled with edges.
 	 @param bv will contain on output the list of edges numbers
      (as convex numbers in edges_m_) which where not part of the
      original mesh, but became apparent when some convex faces were
      sliced. 
     */
-    slicer_build_edges_mesh(mesh& edges_m_, dal::bit_vector& bv) : edges_m(edges_m_), pslice_edges(&bv) {}
+    slicer_build_edges_mesh(mesh& edges_m_, dal::bit_vector& bv)
+      : edges_m(edges_m_), pslice_edges(&bv) {}
     void exec(mesh_slicer &ms);
   };
 

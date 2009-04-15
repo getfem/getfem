@@ -182,7 +182,7 @@ bool stokes_problem::solve(plain_vector &U) {
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+      gmm::copy(sol_f(mf_rhs.point_of_basic_dof(i)),
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
   // Volumic source term brick.

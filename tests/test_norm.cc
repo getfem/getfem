@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2007-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2007-2009 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -52,14 +52,14 @@ void test_norm(bgeot::pgeometric_trans pgt,
   mim2.set_integration_method(mesh2.convex_index(), im);  
   mf1.set_finite_element(mesh1.convex_index(), pf);
   mf2.set_finite_element(mesh2.convex_index(), pf);
-  std::vector<scalar_type> U1(mf1.nb_dof()), U2(mf2.nb_dof());
+  std::vector<scalar_type> U1(mf1.nb_basic_dof()), U2(mf2.nb_basic_dof());
   getfem::mesh_trans_inv gti(mf1.linked_mesh());
-  for (size_type d=0; d < mf1.nb_dof(); ++d) {
-    U1[d] = interp_fun(mf1.point_of_dof(d));
-    gti.add_point(mf1.point_of_dof(d));
+  for (size_type d=0; d < mf1.nb_basic_dof(); ++d) {
+    U1[d] = interp_fun(mf1.point_of_basic_dof(d));
+    gti.add_point(mf1.point_of_basic_dof(d));
   }
-  for (size_type d=0; d < mf2.nb_dof(); ++d)
-    U2[d] = interp_fun(mf2.point_of_dof(d));
+  for (size_type d=0; d < mf2.nb_basic_dof(); ++d)
+    U2[d] = interp_fun(mf2.point_of_basic_dof(d));
 
   std::vector<scalar_type> V1(mf1.nb_dof());
   getfem::interpolation(mf1,gti,U1,V1);

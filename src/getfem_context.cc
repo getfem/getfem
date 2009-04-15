@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -25,11 +25,6 @@
 
 namespace getfem {
 
-  static long current_id(0);
-  
-  long context_dependencies::new_ident(void)
-  { return ++current_id; }
-  
   void context_dependencies::sup_dependent_
   (const context_dependencies &cd) const {
     size_type s = dependent.size();
@@ -57,7 +52,6 @@ namespace getfem {
   }
 
   void context_dependencies::add_dependency(const context_dependencies &cd) {
-    // cout << "adding dep " << &cd << " à " << this << endl;
     cd.context_check(); cd.touched = false;
     iterator_list it = dependencies.begin(), ite = dependencies.end();
     for (; it != ite; ++it) if ((*it) == &cd) return;
@@ -74,8 +68,7 @@ namespace getfem {
       update_from_context();
       return true;
     }
-    else if (state == CONTEXT_INVALID)
-      GMM_ASSERT1(false, "Invalid context");
+    GMM_ASSERT1(state != CONTEXT_INVALID, "Invalid context");
     return false;
   }
   
@@ -83,22 +76,16 @@ namespace getfem {
     if (!touched) {
       touched = true;
       iterator_list it = dependent.begin(), ite = dependent.end();
-      for (; it != ite; ++it)
-	(*it)->change_context();
+      for (; it != ite; ++it) (*it)->change_context();
     }
   }
  
   context_dependencies::~context_dependencies() {
-    //cout << "destruction de " << this <<  " " << typeid(*this).name() << endl;
-    //cout << "state = " << state << endl;
-    //cout << "nb dep = " << dependent.size() << endl;
-    //cout << "nb depies = " << dependencies.size() << endl;
     invalid_context();
     iterator_list it = dependencies.begin(), ite = dependencies.end();
     for (; it != ite; ++it) (*it)->sup_dependent_(*this);
     it = dependent.begin(), ite = dependent.end();
-    for (; it != ite; ++it)
-      (*it)->sup_dependency_(*this);
+    for (; it != ite; ++it) (*it)->sup_dependency_(*this);
   }
   
 }

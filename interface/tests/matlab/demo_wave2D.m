@@ -137,7 +137,7 @@ for i=2:Nc,
   n=i-1;  
   S = S + C(i)*exp(1i*n*theta) + C(N-(n-1))*exp(-1i*n*theta);
 end;
-P=gf_mesh_fem_get(mfd,'dof nodes');
+P=gf_mesh_fem_get(mfd,'basic dof nodes');
 [T,R]=cart2pol(P(1,:),P(2,:));
 Uex=zeros(size(R));
 nbes=1;

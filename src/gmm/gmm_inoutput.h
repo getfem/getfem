@@ -335,13 +335,11 @@ namespace gmm {
 		"Bad HB matrix format (file contains a REAL matrix)");
     GMM_ASSERT1(is_complex_double__(T()) || Type[0] != 'C',
 		"Bad HB matrix format (file contains a COMPLEX matrix)");
-    if (A.pr) { delete[] A.pr; delete[] A.ir; delete[] A.jc; }
     A.nc = ncols(); A.nr = nrows();
-    A.pr = 0;
-    A.jc = new IND_TYPE[ncols()+1];
-    A.ir = new IND_TYPE[nnz()];
-    A.pr = new T[nnz()];
-    readHB_data(A.jc, A.ir, (double*)A.pr);
+    A.jc.resize(ncols()+1);
+    A.ir.resize(nnz());
+    A.pr.resize(nnz());
+    readHB_data(&A.jc[0], &A.ir[0], (double*)&A.pr[0]);
     for (int i = 0; i <= ncols(); ++i) { A.jc[i] += shift; A.jc[i] -= 1; }
     for (int i = 0; i < nnz(); ++i)    { A.ir[i] += shift; A.ir[i] -= 1; }
   }
@@ -528,16 +526,18 @@ namespace gmm {
   template <typename T, int shift> void
   HarwellBoeing_IO::write(const char *filename,
 			  const csc_matrix<T, shift>& A) {
-    write(filename, csc_matrix_ref<T*, unsigned*, unsigned *, shift>
-	  (A.pr, A.ir, A.jc, A.nr, A.nc));
+    write(filename, csc_matrix_ref<const T*, const unsigned*,
+	  const unsigned *, shift>
+	  (&A.pr[0], &A.ir[0], &A.jc[0], A.nr, A.nc));
   }
 
   template <typename T, int shift> void
   HarwellBoeing_IO::write(const char *filename,
 			  const csc_matrix<T, shift>& A,
 			  const std::vector<T> &rhs) {
-    write(filename, csc_matrix_ref<T*, unsigned*, unsigned *, shift>
-	  (A.pr, A.ir, A.jc, A.nr, A.nc), rhs);
+    write(filename, csc_matrix_ref<const T*, const unsigned*,
+	  const unsigned *, shift>
+	  (&A.pr[0], &A.ir[0], &A.jc[0], A.nr, A.nc), rhs);
   }
 
   template <typename T, typename INDI, typename INDJ, int shift> void
@@ -1085,8 +1085,9 @@ namespace gmm {
 
   template <typename T, int shift> void 
   MatrixMarket_IO::write(const char *filename, const csc_matrix<T, shift>& A) {
-    write(filename, csc_matrix_ref<T*,unsigned*,unsigned*,shift>
-	  (A.pr, A.ir, A.jc, A.nr, A.nc));
+    write(filename, csc_matrix_ref<const T*, const unsigned*,
+	  const unsigned*,shift>
+	  (&A.pr[0], &A.ir[0], &A.jc[0], A.nr, A.nc));
   }
 
   template <typename T, typename INDI, typename INDJ, int shift> void 

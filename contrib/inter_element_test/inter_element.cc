@@ -67,23 +67,23 @@ class mass_matrix_jump : public getfem::compute_on_inter_element {
 
     for (size_type i = 0; i < pf1->nb_dof(cv1); ++i)
       for (size_type j = 0; j < pf1->nb_dof(cv1); ++j)
-	M(mf.ind_dof_of_element(cv1)[i],
-	  mf.ind_dof_of_element(cv1)[j])
+	M(mf.ind_basic_dof_of_element(cv1)[i],
+	  mf.ind_basic_dof_of_element(cv1)[j])
 	  += coeff_ * J * w * t1[i] * t1[j];
        
     for (size_type i = 0; i < pf2->nb_dof(cv2); ++i)
       for (size_type j = 0; j < pf2->nb_dof(cv2); ++j)
-	M(mf.ind_dof_of_element(cv2)[i],
-	  mf.ind_dof_of_element(cv2)[j])
+	M(mf.ind_basic_dof_of_element(cv2)[i],
+	  mf.ind_basic_dof_of_element(cv2)[j])
 	  += coeff_ * J * w * t2[i] * t2[j];
     
     for (size_type i = 0; i < pf1->nb_dof(cv1); ++i)
       for (size_type j = 0; j < pf2->nb_dof(cv2); ++j) {
-	M(mf.ind_dof_of_element(cv1)[i],
-	  mf.ind_dof_of_element(cv2)[j])
+	M(mf.ind_basic_dof_of_element(cv1)[i],
+	  mf.ind_basic_dof_of_element(cv2)[j])
 	  -= coeff_ * J * w * t1[i] * t2[j];
-	M(mf.ind_dof_of_element(cv2)[j],
-	  mf.ind_dof_of_element(cv1)[i])
+	M(mf.ind_basic_dof_of_element(cv2)[j],
+	  mf.ind_basic_dof_of_element(cv1)[i])
 	  -= coeff_ * J * w * t1[i] * t2[j];
       }
   }
@@ -214,18 +214,20 @@ int main(void) {
   // Characteristic constants for the different regions.
   double slow(1.), supper(1.);
   rg = m.region(1);
+  GMM_ASSERT1(!mfd.is_reduced(), "To be adapted");
   for (getfem::mr_visitor i(rg); !i.finished(); ++i) {
-    A[ mfd.ind_dof_of_element( i.cv() )[0] ] = slow;
+    A[ mfd.ind_basic_dof_of_element( i.cv() )[0] ] = slow;
   }
   rg = m.region(3);
   for (getfem::mr_visitor i(rg); !i.finished(); ++i) {
-    A[ mfd.ind_dof_of_element( i.cv() )[0] ] = supper;
+    A[ mfd.ind_basic_dof_of_element( i.cv() )[0] ] = supper;
   }
 
   // Assembly of the stiffness matrix for the laplacian.
   getfem::asm_stiffness_matrix_for_laplacian(M, mim, mf, mfd, A);
 
   // Assembly of the jump on in the interface.  
+  GMM_ASSERT1(!mf.is_reduced(), "To be adapted");
   mass_matrix_jump MMJ(M, mim, mf, 2.);
   getfem::mesh_region interface = m.region(UPPER_BOUNDARY);
   for (getfem::mr_visitor v(interface); !v.finished(); ++v)
@@ -233,7 +235,7 @@ int main(void) {
 
   // Set the Dirichlet constraints.
   for (unsigned int j = 0; j < mf.nb_dof(); j++) {
-    if ( mf.point_of_dof(j)[1] == .5 ) X[j] = 1.;
+    if ( mf.point_of_basic_dof(j)[1] == .5 ) X[j] = 1.;
   }
   getfem::assembling_Dirichlet_condition(M, B, mf, 1010, X);
 

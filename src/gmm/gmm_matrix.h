@@ -489,9 +489,9 @@ namespace gmm
   struct csc_matrix {
     typedef unsigned int IND_TYPE;
 
-    T *pr;        // values.
-    IND_TYPE *ir; // row indices.
-    IND_TYPE *jc; // column repartition on pr and ir.
+    std::vector<T> pr;
+    std::vector<IND_TYPE> ir;
+    std::vector<IND_TYPE> jc;
     size_type nc, nr;
 
     typedef T value_type;
@@ -512,16 +512,15 @@ namespace gmm
 
     void init_with_identity(size_type n);
 
-    csc_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
+    csc_matrix(void) :  nc(0), nr(0) {}
     csc_matrix(size_type nnr, size_type nnc);
-    ~csc_matrix() { if (pr) { delete[] pr; delete[] ir; delete[] jc; } }
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
     void swap(csc_matrix<T, shift> &m) { 
       std::swap(pr, m.pr); 
-      std::swap(ir,m.ir); std::swap(jc, m.jc); 
-      std::swap(nc, m.nc); std::swap(nr,m.nr);
+      std::swap(ir, m.ir); std::swap(jc, m.jc); 
+      std::swap(nc, m.nc); std::swap(nr, m.nr);
     }
     value_type operator()(size_type i, size_type j) const
     { return mat_col(*this, j)[i]; }
@@ -530,15 +529,14 @@ namespace gmm
   template <typename T, int shift> template<typename Matrix>
   void csc_matrix<T, shift>::init_with_good_format(const Matrix &B) {
     typedef typename linalg_traits<Matrix>::const_sub_col_type col_type;
-    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = mat_ncols(B); nr = mat_nrows(B);
-    jc = new IND_TYPE[nc+1];
+    jc.resize(nc+1);
     jc[0] = shift;
     for (size_type j = 0; j < nc; ++j) {
       jc[j+1] = IND_TYPE(jc[j] + nnz(mat_const_col(B, j)));
     }
-    pr = new T[jc[nc]];
-    ir = new IND_TYPE[jc[nc]];
+    pr.resize(jc[nc]);
+    ir.resize(jc[nc]);
     for (size_type j = 0; j < nc; ++j) {
       col_type col = mat_const_col(B, j);
       typename linalg_traits<col_type>::const_iterator
@@ -561,9 +559,7 @@ namespace gmm
   void csc_matrix<T, shift>::init_with_identity(size_type n) {
     if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = nr = n; 
-    pr = new T[nc];
-    ir = new IND_TYPE[nc];
-    jc = new IND_TYPE[nc+1];
+    pr.resize(nc); ir.resize(nc); jc.resize(nc+1);
     for (size_type j = 0; j < nc; ++j)
       { ir[j] = jc[j] = shift + j; pr[j] = T(1); }
     jc[nc] = shift + nc;
@@ -572,8 +568,7 @@ namespace gmm
   template <typename T, int shift>
   csc_matrix<T, shift>::csc_matrix(size_type nnr, size_type nnc)
     : nc(nnc), nr(nnr) {
-    pr = new T[1];  ir = new IND_TYPE[1];
-    jc = new IND_TYPE[nc+1];
+    pr.resize(1);  ir.resize(1); jc.resize(nc+1);
     for (size_type j = 0; j <= nc; ++j) jc[j] = shift;
   }
 
@@ -603,15 +598,17 @@ namespace gmm
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.pr, m.ir, m.jc, m.nr, m.pr); }
-    static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.pr, m.ir, m.jc + m.nc, m.nr, m.pr); }
+    { return const_col_iterator(&m.pr[0],&m.ir[0],&m.jc[0], m.nr, &m.pr[0]); }
+    static const_col_iterator col_end(const this_type &m) {
+      return const_col_iterator(&m.pr[0],&m.ir[0],&m.jc[0]+m.nc,
+				m.nr,&m.pr[0]);
+    }
     static const_sub_col_type col(const const_col_iterator &it) {
       return const_sub_col_type(it.pr + *(it.jc) - shift,
 				it.ir + *(it.jc) - shift,
 				*(it.jc + 1) - *(it.jc), it.n);
     }
-    static const origin_type* origin(const this_type &m) { return m.pr; }
+    static const origin_type* origin(const this_type &m) { return &m.pr[0]; }
     static void do_clear(this_type &m) { m.do_clear(); }
     static value_type access(const const_col_iterator &itcol, size_type j)
     { return col(itcol)[j]; }
@@ -641,9 +638,9 @@ namespace gmm
 
     typedef unsigned int IND_TYPE;
 
-    T *pr;        // values.
-    IND_TYPE *ir; // col indices.
-    IND_TYPE *jc; // row repartition on pr and ir.
+    std::vector<T> pr;        // values.
+    std::vector<IND_TYPE> ir; // col indices.
+    std::vector<IND_TYPE> jc; // row repartition on pr and ir.
     size_type nc, nr;
 
     typedef T value_type;
@@ -665,9 +662,8 @@ namespace gmm
     template <typename Matrix> void init_with(const Matrix &A);
     void init_with_identity(size_type n);
 
-    csr_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
+    csr_matrix(void) : nc(0), nr(0) {}
     csr_matrix(size_type nnr, size_type nnc);
-    ~csr_matrix() { if (pr) { delete[] pr; delete[] ir; delete[] jc; } }
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
@@ -684,15 +680,14 @@ namespace gmm
   template <typename T, int shift> template <typename Matrix>
   void csr_matrix<T, shift>::init_with_good_format(const Matrix &B) {
     typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
-    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = mat_ncols(B); nr = mat_nrows(B);
-    jc = new IND_TYPE[nr+1];
+    jc.resize(nr+1);
     jc[0] = shift;
     for (size_type j = 0; j < nr; ++j) {
       jc[j+1] = IND_TYPE(jc[j] + nnz(mat_const_row(B, j)));
     }
-    pr = new T[jc[nr]];
-    ir = new IND_TYPE[jc[nr]];
+    pr.resize(jc[nr]);
+    ir.resize(jc[nr]);
     for (size_type j = 0; j < nr; ++j) {
       row_type row = mat_const_row(B, j);
       typename linalg_traits<row_type>::const_iterator
@@ -713,11 +708,8 @@ namespace gmm
 
   template <typename T, int shift> 
   void csr_matrix<T, shift>::init_with_identity(size_type n) {
-    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = nr = n; 
-    pr = new T[nr];
-    ir = new IND_TYPE[nr];
-    jc = new IND_TYPE[nr+1];
+    pr.resize(nr); ir.resize(nr); jc.resize(nr+1);
     for (size_type j = 0; j < nr; ++j)
       { ir[j] = jc[j] = shift + j; pr[j] = T(1); }
     jc[nr] = shift + nr;
@@ -726,8 +718,7 @@ namespace gmm
   template <typename T, int shift>
   csr_matrix<T, shift>::csr_matrix(size_type nnr, size_type nnc)
     : nc(nnc), nr(nnr) {
-    pr = new T[1];  ir = new IND_TYPE[1];
-    jc = new IND_TYPE[nr+1];
+    pr.resize(1);  ir.resize(1); jc.resize(nr+1);
     for (size_type j = 0; j < nr; ++j) jc[j] = shift;
     jc[nr] = shift;
   }
@@ -759,15 +750,15 @@ namespace gmm
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.pr, m.ir, m.jc, m.nc, m.pr); }
+    { return const_row_iterator(&m.pr[0], &m.ir[0], &m.jc[0], m.nc, &m.pr[0]); }
     static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.pr, m.ir, m.jc + m.nr, m.nc, m.pr); }
+    { return const_row_iterator(&m.pr[0], &m.ir[0], &m.jc[0] + m.nr, m.nc, &m.pr[0]); }
     static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.pr + *(it.jc) - shift,
 				it.ir + *(it.jc) - shift,
 				*(it.jc + 1) - *(it.jc), it.n);
     }
-    static const origin_type* origin(const this_type &m) { return m.pr; }
+    static const origin_type* origin(const this_type &m) { return &m.pr[0]; }
     static void do_clear(this_type &m) { m.do_clear(); }
     static value_type access(const const_row_iterator &itrow, size_type j)
     { return row(itrow)[j]; }

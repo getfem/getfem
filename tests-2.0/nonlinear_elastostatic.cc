@@ -448,7 +448,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
       extension *= (step+1)/scalar_type(nb_step);
       base_node G(N); G[0] = G[1] = 0.5;
       for (size_type i = 0; i < nb_dof_rhs; ++i) {
-	const base_node P = mf_rhs.point_of_dof(i) - G;
+	const base_node P = mf_rhs.point_of_basic_dof(i) - G;
 	scalar_type r = sqrt(P[0]*P[0]+P[1]*P[1]),
 	  theta = atan2(P[1],P[0]);    
 	F2[i*N+0] = r*cos(theta + (torsion*P[2])) - P[0]; 

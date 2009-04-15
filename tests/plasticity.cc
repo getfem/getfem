@@ -280,20 +280,19 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
-    plasticity_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
-    plain_vector U(p.mf_u.nb_dof());
-    if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
-
-    cout << "Resultats dans fichier : "<<p.datafilename<<".* \n";
-    p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
-    scalar_type t[2]={p.mu,p.lambda};
-    vecsave(p.datafilename+".coef", std::vector<scalar_type>(t, t+2));    
-  }
-  GMM_STANDARD_CATCH_ERROR;
+  // try {    
+  plasticity_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  p.mesh.write_to_file(p.datafilename + ".mesh");
+  plain_vector U(p.mf_u.nb_dof());
+  if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
+  
+  cout << "Resultats dans fichier : "<<p.datafilename<<".* \n";
+  p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
+  scalar_type t[2]={p.mu,p.lambda};
+  vecsave(p.datafilename+".coef", std::vector<scalar_type>(t, t+2));    
+  // } GMM_STANDARD_CATCH_ERROR;
   
   return 0; 
 }

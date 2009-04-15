@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 1999-2008 Yves Renard
+// Copyright (C) 1999-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -147,19 +147,27 @@ namespace getfem {
   class mesh_fem : public context_dependencies {
   protected :
     
+    typedef gmm::csc_matrix<scalar_type> REDUCTION_MATRIX;
+    typedef gmm::csr_matrix<scalar_type> EXTENSION_MATRIX;
+    
     dal::dynamic_array<pfem> f_elems;
     dal::bit_vector fe_convex;
     const mesh *linked_mesh_;
+    REDUCTION_MATRIX R_;
+    EXTENSION_MATRIX E_;
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
-    dim_type auto_add_elt_K; /* Degree of the fem for automatic addition */
+    pfem auto_add_elt_pf; /* fem for automatic addition                   */
+                       /* of element option. (0 = no automatic addition)  */
+    dim_type auto_add_elt_K; /* Degree of the fem for automatic addition  */
                        /* of element option. (-1 = no automatic addition) */
     dim_type Qdim; /* this is the "global" target_dim */
     dim_type QdimM, QdimN; /* for matrix field with QdimM lines and QdimN */
                            /* columnsQdimM * QdimN = Qdim.                */
     std::vector<size_type> dof_partition;
-    mutable gmm::uint64_type v_num_update;
+    mutable gmm::uint64_type v_num_update, v_num;
+    bool use_reduction;    /* A reduction matrix is applied or not.       */
     
   public :
     typedef base_node point_type;
@@ -167,19 +175,110 @@ namespace getfem {
     typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_dof_face_ct;
 
     void update_from_context(void) const;
+    gmm::uint64_type version_number(void) const
+    { context_check(); return v_num; }
 
     /** Get the set of convexes where a finite element has been assigned.
      */
     inline const dal::bit_vector &convex_index(void) const
-      { return fe_convex; }
+    { context_check(); return fe_convex; }
     
+    /// Return true if a reduction matrix is applied to the dofs.
+    bool is_reduced(void) const { return use_reduction; }
+    
+    /// Return the reduction matrix applied to the dofs.
+    const REDUCTION_MATRIX &reduction_matrix(void) const { return R_; }
+
+    /// Return the extension matrix corresponding to reduction applied (RE=I).
+    const EXTENSION_MATRIX &extension_matrix(void) const { return E_; }
+    
+    /** Allows to set the reduction and the extension matrices.
+     * Should satify (RR*EE=I). */
+    template <typename MATR, typename MATE>
+    void set_reduction_matrices(const MATR &RR, const MATE &EE) {
+      context_check();
+      GMM_ASSERT1(gmm::mat_ncols(RR) == nb_basic_dof() &&
+		  gmm::mat_nrows(EE) == nb_basic_dof() &&
+		  gmm::mat_nrows(RR) == gmm::mat_ncols(EE),
+		  "Wrong dimension of reduction and/or extension matrices");
+      R_ = REDUCTION_MATRIX(gmm::mat_nrows(RR), gmm::mat_ncols(RR));
+      E_ = EXTENSION_MATRIX(gmm::mat_nrows(EE), gmm::mat_ncols(EE));
+      gmm::copy(RR, R_);
+      gmm::copy(EE, E_);
+      use_reduction = true;
+      touch(); v_num = act_counter();
+    }
+
+    /** Allows to set the reduction and the extension matrices in order
+     *  to keep only a certain number of dof. */
+    void reduce_to_basic_dof(const dal::bit_vector &kept_basic_dof);
+    void reduce_to_basic_dof(const std::set<size_type> &kept_basic_dof);
+
+    /// Validate or invalidate the reduction (keeping the reduction matrices).
+    void set_reduction(bool r) {
+      if (r != use_reduction) {
+	use_reduction = r;
+	if (use_reduction) {
+	  context_check();
+	  GMM_ASSERT1(gmm::mat_ncols(R_) == nb_basic_dof() &&
+		      gmm::mat_nrows(E_) == nb_basic_dof() &&
+		      gmm::mat_nrows(R_) == gmm::mat_ncols(E_),
+		    "Wrong dimension of reduction and/or extension matrices");
+	}
+	touch(); v_num = act_counter();
+      }
+    }
+
+    template<typename VECT1, typename VECT2>
+    void reduce_vector(const VECT1 &V1, const VECT2 &V2) const {
+      if (is_reduced()) {
+	size_type qqdim = gmm::vect_size(V1) / nb_basic_dof();
+	if (qqdim == 1)
+	  gmm::mult(reduction_matrix(), V1, const_cast<VECT2 &>(V2));
+	else
+	  for (size_type k = 0; k < qqdim; ++k)
+	    gmm::mult(reduction_matrix(),
+		      gmm::sub_vector(V1, gmm::sub_slice(k, nb_basic_dof(),
+							 qqdim)),
+		      gmm::sub_vector(const_cast<VECT2 &>(V2),
+				      gmm::sub_slice(k, nb_dof(),
+						     qqdim)));
+      }
+      else gmm::copy(V1, const_cast<VECT2 &>(V2));
+    }
+
+    template<typename VECT1, typename VECT2>
+    void extend_vector(const VECT1 &V1, const VECT2 &V2) const {
+      if (is_reduced()) {
+	size_type qqdim = gmm::vect_size(V1) / nb_dof();
+	if (qqdim == 1)
+	  gmm::mult(extension_matrix(), V1, const_cast<VECT2 &>(V2));
+	else
+	  for (size_type k = 0; k < qqdim; ++k)
+	    gmm::mult(extension_matrix(),
+		      gmm::sub_vector(V1, gmm::sub_slice(k, nb_dof(),
+							 qqdim)),
+		      gmm::sub_vector(const_cast<VECT2 &>(V2),
+				      gmm::sub_slice(k, nb_basic_dof(),
+						     qqdim)));
+      }
+      else gmm::copy(V1, const_cast<VECT2 &>(V2));
+    }
+    
+
     /// Return a reference to the underlying mesh.
     const mesh &linked_mesh(void) const { return *linked_mesh_; }
 
     /** Set the degree of the fem for automatic addition
      *  of element option. K=-1 disables the automatic addition.
      */
-    void set_auto_add(dim_type K) { auto_add_elt_K = K; }
+    void set_auto_add(dim_type K) { auto_add_elt_K = K; auto_add_elt_pf = 0; }
+
+    /** Set the fem for automatic addition
+     *  of element option. pf=0 disables the automatic addition.
+     */
+    void set_auto_add(pfem pf)
+    { auto_add_elt_pf = pf; auto_add_elt_K = dim_type(-1);}
 
     /** Return the Q dimension. A mesh_fem used for scalar fields has
 	Q=1, for vector fields, Q is typically equal to
@@ -190,7 +289,7 @@ namespace getfem {
     void set_qdim(dim_type q) {
       if (q != Qdim || q != QdimM) {
 	QdimM = Qdim = q; QdimN = 1;
-	dof_enumeration_made = false; touch();
+	dof_enumeration_made = false; touch(); v_num = act_counter();
       }
     }
 
@@ -199,7 +298,7 @@ namespace getfem {
     void set_qdim_mn(dim_type M, dim_type N) {
       if (M != QdimM || N != QdimN) {
 	QdimM = M; QdimN = N; Qdim = dim_type(N*M);
-	dof_enumeration_made = false; touch();
+	dof_enumeration_made = false; touch(); v_num = act_counter();
       }
     }
 
@@ -221,7 +320,8 @@ namespace getfem {
 	@endcode
     */
     void set_finite_element(const dal::bit_vector &cvs, pfem pf);
-    /** shortcut for set_finite_element(linked_mesh().convex_index(),pf); */
+    /** shortcut for set_finite_element(linked_mesh().convex_index(),pf);
+        and set_auto_add(pf). */
     void set_finite_element(pfem pf);
     /** Set a classical (i.e. lagrange polynomial) finite element on
 	a convex.
@@ -258,23 +358,26 @@ namespace getfem {
      *  ,...)
      */
     void set_classical_discontinuous_finite_element(dim_type fem_degree,
-						    scalar_type alpha=0);
-    
-    /** Return the fem associated with an element (in no fem is
-	associated, the function will crash! use the convex_index() of
-	the mesh_fem to check that a fem is associated to a given
-	convex) */
-    pfem fem_of_element(size_type cv) const { return  f_elems[cv]; }
+						    scalar_type alpha=0);   
+    /** Return the basic fem associated with an element (in no fem is
+     *	associated, the function will crash! use the convex_index() of
+     *  the mesh_fem to check that a fem is associated to a given
+     *  convex). This fem does not take into account the optional
+     *  vectorization due to qdim nor the optional reduction.
+     */
+    virtual pfem fem_of_element(size_type cv) const
+    { return  f_elems[cv]; }
     /** Give an array of the dof numbers a of convex.
      *  @param cv the convex number.
      *  @return a pseudo-container of the dof number.
      */
-    ind_dof_ct
-      ind_dof_of_element(size_type cv) const {
+    virtual ind_dof_ct ind_basic_dof_of_element(size_type cv) const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       return ind_dof_ct(dof_structure.ind_points_of_convex(cv),
-			dim_type(Qdim /fem_of_element(cv)->target_dim()));
+			dim_type(Qdim/fem_of_element(cv)->target_dim()));
     }
+    ind_dof_ct ind_dof_of_element(size_type cv) const IS_DEPRECATED
+    { return ind_basic_dof_of_element(cv); }
     /** Give an array of the dof numbers lying of a convex face (all
       	degrees of freedom whose associated base function is non-zero
 	on the convex face).
@@ -282,29 +385,36 @@ namespace getfem {
 	@param f the face number.
 	@return a pseudo-container of the dof number.
     */
-    
-    ind_dof_face_ct
-    ind_dof_of_face_of_element(size_type cv, short_type f) const {
+    virtual ind_dof_face_ct
+    ind_basic_dof_of_face_of_element(size_type cv, short_type f) const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       return ind_dof_face_ct
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
-	 dim_type(Qdim /fem_of_element(cv)->target_dim()));
+	 dim_type(Qdim/fem_of_element(cv)->target_dim()));
     }
+    ind_dof_face_ct
+    ind_dof_of_face_of_element(size_type cv,short_type f) const IS_DEPRECATED
+    { return ind_basic_dof_of_face_of_element(cv, f); }
     /** Return the number of dof lying on the given convex face.
 	@param cv the convex number.
 	@param f the face number.
     */
-    size_type nb_dof_of_face_of_element(size_type cv, short_type f) const {
+    virtual size_type nb_basic_dof_of_face_of_element(size_type cv,
+					      short_type f) const {
       pfem pf = f_elems[cv];
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
 	* Qdim / pf->target_dim();
     }
-
+    size_type nb_dof_of_face_of_element(size_type cv,
+					short_type f) const IS_DEPRECATED
+    { return nb_basic_dof_of_face_of_element(cv, f); }
     /** Return the number of  degrees of freedom attached to a given convex.
 	@param cv the convex number.
     */
-    size_type nb_dof_of_element(size_type cv) const
+    virtual size_type nb_basic_dof_of_element(size_type cv) const
     { pfem pf = f_elems[cv]; return pf->nb_dof(cv) * Qdim / pf->target_dim(); }
+    size_type nb_dof_of_element(size_type cv) const IS_DEPRECATED
+    { return nb_basic_dof_of_element(cv); }
     
     /* Return the geometrical location of a degree of freedom in the
        reference convex.
@@ -319,34 +429,60 @@ namespace getfem {
 	@param cv the convex number.
 	@param i the local dof number.
      */
-    base_node point_of_dof(size_type cv, size_type i) const;
+    virtual base_node point_of_basic_dof(size_type cv, size_type i) const;
+    base_node point_of_dof(size_type cv, size_type i) const IS_DEPRECATED
+    { return point_of_basic_dof(cv, i); }
     /** Return the geometrical location of a degree of freedom.
 	@param d the global dof number.
     */
-    base_node point_of_dof(size_type d) const;
+    virtual base_node point_of_basic_dof(size_type d) const;
+    base_node point_of_dof(size_type d) const IS_DEPRECATED
+    { return point_of_basic_dof(d); }
     /** Return the dof component number (0<= x <Qdim) */
-    dim_type dof_qdim(size_type d) const;
+    virtual dim_type basic_dof_qdim(size_type d) const;
+    dim_type dof_qdim(size_type d) const IS_DEPRECATED
+    { return basic_dof_qdim(d); }
     /** Shortcut for convex_to_dof(d)[0] 
  	@param d the global dof number.
     */
-    size_type first_convex_of_dof(size_type d) const;
+    virtual size_type first_convex_of_basic_dof(size_type d) const;
+    size_type first_convex_of_dof(size_type d) const IS_DEPRECATED
+    { return first_convex_of_basic_dof(d); }
     /** Return the list of convexes attached to the specified dof 
 	@param d the global dof number.
 	@return an array of convex numbers.
      */
-    const mesh::ind_cv_ct &convex_to_dof(size_type d) const;
+    virtual const mesh::ind_cv_ct &convex_to_basic_dof(size_type d) const;
+    const mesh::ind_cv_ct &convex_to_dof(size_type d) const IS_DEPRECATED
+    { return convex_to_basic_dof(d); }
     /** Renumber the degrees of freedom. You should not have
      * to call this function, as it is done automatically */
     void enumerate_dof(void) const;
+    /** Return the total number of basic degrees of freedom (before the
+     * optional redution). */
+    virtual size_type nb_basic_dof(void) const {
+      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      return nb_total_dof;
+    }
     /// Return the total number of degrees of freedom.
-    size_type nb_dof(void) const
-    { context_check(); if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
-    /** Get a list of dof lying on a given mesh_region.
+    virtual size_type nb_dof(void) const {
+      context_check(); if (!dof_enumeration_made) enumerate_dof();
+      return use_reduction ? gmm::mat_nrows(R_) : nb_total_dof;
+    }
+    /** Get a list of basic dof lying on a given mesh_region.
 	@param b the mesh_region.
 	@return the list in a dal::bit_vector.
     */
+    virtual dal::bit_vector basic_dof_on_region(const mesh_region &b) const;
+    /** Get a list of dof lying on a given mesh_region. For a reduced mesh_fem
+	a dof is lying on a region if its potential corresponding shape
+	function is nonzero on this region. The extension matrix is used
+	to make the correspondance between basic and reduced dofs.
+	@param b the mesh_region.
+	@return the list in a dal::bit_vector.
+    */    
     dal::bit_vector dof_on_region(const mesh_region &b) const;
-    dal::bit_vector dof_on_set(const mesh_region &b) const 
+    dal::bit_vector dof_on_set(const mesh_region &b) const IS_DEPRECATED
     { return dof_on_region(b); }
 
     void set_dof_partition(size_type cv, unsigned partition_num) {
@@ -374,16 +510,20 @@ namespace getfem {
     */
     explicit mesh_fem(const mesh &me, dim_type Q = 1);
     virtual ~mesh_fem();
-    void clear(void);
+    virtual void clear(void);
     /** Read the mesh_fem from a stream. 
 	@param ist the stream.
      */
-    void read_from_file(std::istream &ist);
+    virtual void read_from_file(std::istream &ist);
     /** Read the mesh_fem from a file.
         @param name the file name. */
     void read_from_file(const std::string &name);
+    /* internal usage. */
+    void write_basic_to_file(std::ostream &ost) const;
+    /* internal usage. */
+    void write_reduction_matrices_to_file(std::ostream &ost) const;
     /** Write the mesh_fem to a stream. */
-    void write_to_file(std::ostream &ost) const;
+    virtual void write_to_file(std::ostream &ost) const;
     /** Write the mesh_fem to a file. 
 
 	@param name the file name

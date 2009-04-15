@@ -316,21 +316,21 @@ void friction_problem::init(void) {
     else {
       
       base_node top = center; top[N-1] = Pmax[N-1];
-      
+      GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
       for (size_type k = 0; k < N-1; ++k) {
 	scalar_type dist_to_center = gmm::vect_dist2(Pmin, center);
 	scalar_type dist_to_top = gmm::vect_dist2(Pmin, top);
 	size_type indmid = size_type(-1), indtop = size_type(-1);
 	for (size_type i = 0; i < mf_u.nb_dof(); i+=N) {
 	  
-	  if (gmm::abs(mf_u.point_of_dof(i)[k]) < 1e-7) {
-	    if (gmm::vect_dist2(mf_u.point_of_dof(i), center)<dist_to_center) {
+	  if (gmm::abs(mf_u.point_of_basic_dof(i)[k]) < 1e-7) {
+	    if (gmm::vect_dist2(mf_u.point_of_basic_dof(i), center)<dist_to_center) {
 	      indmid = i;
-	      dist_to_center = gmm::vect_dist2(mf_u.point_of_dof(i), center); 
+	      dist_to_center = gmm::vect_dist2(mf_u.point_of_basic_dof(i), center); 
 	    }
-	    if (gmm::vect_dist2(mf_u.point_of_dof(i), top) < dist_to_top) {
+	    if (gmm::vect_dist2(mf_u.point_of_basic_dof(i), top) < dist_to_top) {
 	      indtop = i;
-	      dist_to_top = gmm::vect_dist2(mf_u.point_of_dof(i), top); 
+	      dist_to_top = gmm::vect_dist2(mf_u.point_of_basic_dof(i), top); 
 	    }
 	  }
 	}
@@ -338,9 +338,9 @@ void friction_problem::init(void) {
 		    "No dof found to kill rigid motions : " << indmid
 		    << " : " << indtop);
 	cout << "Blocking dof " << indmid+k << " : "
-	     << mf_u.point_of_dof(indmid+k) << endl;
+	     << mf_u.point_of_basic_dof(indmid+k) << endl;
 	cout << "Blocking dof " << indtop+k << " : "
-	     << mf_u.point_of_dof(indtop+k) << endl;
+	     << mf_u.point_of_basic_dof(indtop+k) << endl;
 	blocked_dofs.push_back(indmid+k); 
 	blocked_dofs.push_back(indtop+k);
       }
@@ -430,32 +430,34 @@ void build_vB(std::vector<sparse_matrix> &vB,
   
   size_type N = mf_u.linked_mesh().dim();
 
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
+
   std::vector<base_node> pts;
   size_type i;
   for (i = 0; i < mf_u.nb_dof(); ++i)
-    pts.push_back(mf_u.point_of_dof(i));
+    pts.push_back(mf_u.point_of_basic_dof(i));
 
   //   std::vector<size_type> links(nbc * N);
   //   std::vector<size_type> links_coarse(nbc_coarse * N);
     
   for (dal::bv_visitor j(dofgammad); !j.finished(); ++j, ++i)
-    pts.push_back(mf_u.point_of_dof(j));
+    pts.push_back(mf_u.point_of_basic_dof(j));
 
   for (dal::bv_visitor j(dofgammac); !j.finished(); ++j) {
-    if ((j % N) == 0) { pts.push_back(mf_u.point_of_dof(j)); ++i; }
+    if ((j % N) == 0) { pts.push_back(mf_u.point_of_basic_dof(j)); ++i; }
   }
 
   for (dal::bv_visitor j(dofgammac); !j.finished(); ++j) {
-    if ((j % N) != 0) { pts.push_back(mf_u.point_of_dof(j)); ++i; }
+    if ((j % N) != 0) { pts.push_back(mf_u.point_of_basic_dof(j)); ++i; }
   }
 
   //   for (size_type i = 0; i < nbc; ++i) { // Ne marche pas dans tous cas ...
   //     size_type j 
   //       = gmm::vect_const_begin(gmm::mat_row(coulomb.get_BN(), i)).index();
-  //     pts[nb_dof + i] = mf_u.point_of_dof(j);
+  //     pts[nb_dof + i] = mf_u.point_of_basic_dof(j);
   //     //    links[i] = j;
   //     for (size_type k = 0; k < N-1;  ++k) {
-  //       pts[nb_dof + nbc + i*(N-1) + k] = mf_u.point_of_dof(j);
+  //       pts[nb_dof + nbc + i*(N-1) + k] = mf_u.point_of_basic_dof(j);
   //       // links[nbc + i*(N-1) + k] = j+k-N+1;
   //     }
   //   }
@@ -704,11 +706,11 @@ void friction_problem::solve(void) {
       gmm::copy(f,gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::mdbrick_source_term<MODEL_STATE> NEUMANN_F(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY);
  
-
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   // Dirichlet condition brick.
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i*N+N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
+    F[i*N+N-1] = Dirichlet_ratio * mf_rhs.point_of_basic_dof(i)[N-1];
 
   getfem::mdbrick_constraint<MODEL_STATE> RIGID_MOTIONS(NEUMANN_F);
   if (Dirichlet == 3) {
@@ -732,15 +734,16 @@ void friction_problem::solve(void) {
 
     
   // contact condition for Lagrange elements
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   dal::bit_vector cn, dn;
   size_type nbc;
   if (contact_condition == 0) {
-    cn = mf_u.dof_on_set(CONTACT_BOUNDARY); // cout << "cn = " << cn << endl;
-    dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY); // cout << "dn = " << dn << endl;
+    cn = mf_u.basic_dof_on_region(CONTACT_BOUNDARY); // cout << "cn = " << cn << endl;
+    dn = mf_u.basic_dof_on_region(DIRICHLET_BOUNDARY); // cout << "dn = " << dn << endl;
   }
   else {
-    cn = mf_l.dof_on_set(CONTACT_BOUNDARY);
-    dn = mf_l.dof_on_set(DIRICHLET_BOUNDARY);
+    cn = mf_l.basic_dof_on_region(CONTACT_BOUNDARY);
+    dn = mf_l.basic_dof_on_region(DIRICHLET_BOUNDARY);
   }
   cn.setminus(dn); // not to be done for P0 ...
   nbc = cn.card()/N;
@@ -760,7 +763,7 @@ void friction_problem::solve(void) {
       for (dal::bv_visitor i(cn); !i.finished(); ++i)
 	if (i % N == 0) {
 	  BN(jj, i+N-1) = -1.;
-	  gap[jj] = mf_u.point_of_dof(i)[N-1];
+	  gap[jj] = mf_u.point_of_basic_dof(i)[N-1];
 	  for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
 	  ++jj;
 	}
@@ -793,7 +796,7 @@ void friction_problem::solve(void) {
 
       plain_vector pregap(mf_u.nb_dof());
       for (size_type i=0; i < mf_u.nb_dof(); ++i)
-        if (i % N == N-1) pregap[i] = -mf_u.point_of_dof(i)[N-1];
+        if (i % N == N-1) pregap[i] = -mf_u.point_of_basic_dof(i)[N-1];
       gmm::mult(BN, pregap, gap);
       // gmm::clear(gap);
 
@@ -856,11 +859,12 @@ void friction_problem::solve(void) {
     break;
   case 1 :
     {
+      GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
       gmm::iteration iter(residual, int(noisy));
       iter.set_maxiter(1000000);
       Coulomb_NewtonAS_struct NS(FRICTION);
-      build_vB(NS.vB, mf_u, mf_u.dof_on_set(CONTACT_BOUNDARY),
-	       mf_u.dof_on_set(DIRICHLET_BOUNDARY), subdomsize, overlap);
+      build_vB(NS.vB, mf_u, mf_u.basic_dof_on_region(CONTACT_BOUNDARY),
+	       mf_u.basic_dof_on_region(DIRICHLET_BOUNDARY), subdomsize, overlap);
       gmm::fill_random(MS.state());
       gmm::Newton_additive_Schwarz(NS, MS.state(), iter,
 				   gmm::identity_matrix(),

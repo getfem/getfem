@@ -186,7 +186,7 @@ bool Helmholtz_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = incoming_field(mf_rhs.point_of_dof(i), wave_number.real());
+    F[i] = incoming_field(mf_rhs.point_of_basic_dof(i), wave_number.real());
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<MODELSTATE> 

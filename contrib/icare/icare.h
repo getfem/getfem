@@ -273,7 +273,11 @@ namespace getfem {
 
     virtual void recompute_B_sizes(void) {
       size_type nd = mf_u().nb_dof();
-      dal::bit_vector dof_on_bound = mf_mult->dof_on_set(boundary);
+      dal::bit_vector dof_on_bound;
+      if (mf_mult->is_reduced())
+	dof_on_bound.add(0, nd);
+      else
+	dof_on_bound = mf_mult->basic_dof_on_region(boundary);
       size_type nb_const = dof_on_bound.card();
       std::vector<size_type> ind_ct;
       for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)
@@ -361,7 +365,7 @@ namespace getfem {
   template<typename VECT1> class improved_non_reflective_bc_nonlinear_term 
     : public getfem::nonlinear_elem_term {
     const mesh_fem &mf;
-    const VECT1 &U;
+    std::vector<scalar_type> U;
     scalar_type dt, nu;
     size_type N;
     base_vector coeff, valU;
@@ -370,15 +374,17 @@ namespace getfem {
   public:
     improved_non_reflective_bc_nonlinear_term
     (const mesh_fem &mf_, const VECT1 &U_, scalar_type dt_, scalar_type nu_)
-      : mf(mf_), U(U_), dt(dt_), nu(nu_), N(mf_.get_qdim()), 
-	valU(N), gradU(N, N), hessU(N,N*N)
-    { sizes_.resize(1); sizes_[0] = N; /*assert(N == 2);*/ }
+      : mf(mf_), U(mf_.nb_basic_dof()), dt(dt_), nu(nu_), N(mf_.get_qdim()), 
+	valU(N), gradU(N, N), hessU(N,N*N) {
+      sizes_.resize(1); sizes_[0] = short_type(N); /*assert(N == 2);*/
+      mf.extend_vector(U_, U);
+    }
     const bgeot::multi_index &sizes() const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
-      coeff.resize(mf.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+      coeff.resize(mf.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))),
 		coeff);
       ctx.pf()->interpolation(ctx, coeff, valU, mf.get_qdim());
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());

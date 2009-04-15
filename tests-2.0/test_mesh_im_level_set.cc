@@ -38,19 +38,19 @@ void test_2d() {
   const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
   scalar_type R1=.4;
   for (unsigned i=0; i < ls1mf.nb_dof(); ++i) {
-    ls1.values()[i] = gmm::vect_dist2_sqr(ls1mf.point_of_dof(i), 
+    ls1.values()[i] = gmm::vect_dist2_sqr(ls1mf.point_of_basic_dof(i), 
 					  getfem::base_node(0,0)) -R1*R1;
   }
   const getfem::mesh_fem &ls2mf = ls2.get_mesh_fem();
   scalar_type R2=.1;
   for (unsigned i=0; i < ls2mf.nb_dof(); ++i) {
-    ls2.values()[i] = gmm::vect_dist2_sqr(ls2mf.point_of_dof(i), 
+    ls2.values()[i] = gmm::vect_dist2_sqr(ls2mf.point_of_basic_dof(i), 
 					  getfem::base_node(0,0.3)) -R2*R2;
   }
   const getfem::mesh_fem &ls3mf = ls3.get_mesh_fem();
   scalar_type R3=.08;
   for (unsigned i=0; i < ls3mf.nb_dof(); ++i) {
-    ls3.values()[i] = -gmm::vect_dist2_sqr(ls3mf.point_of_dof(i), 
+    ls3.values()[i] = -gmm::vect_dist2_sqr(ls3mf.point_of_basic_dof(i), 
 					   getfem::base_node(0,0.48)) +R3*R3;
   }
     
@@ -107,19 +107,19 @@ void test_3d() {
   const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
   scalar_type R1=.4;
   for (unsigned i=0; i < ls1mf.nb_dof(); ++i) {
-    ls1.values()[i] = gmm::vect_dist2_sqr(ls1mf.point_of_dof(i), 
+    ls1.values()[i] = gmm::vect_dist2_sqr(ls1mf.point_of_basic_dof(i), 
 					  getfem::base_node(0,0,0)) -R1*R1;
   }
   const getfem::mesh_fem &ls2mf = ls2.get_mesh_fem();
   scalar_type R2=.1;
   for (unsigned i=0; i < ls2mf.nb_dof(); ++i) {
-    ls2.values()[i] = gmm::vect_dist2_sqr(ls2mf.point_of_dof(i), 
+    ls2.values()[i] = gmm::vect_dist2_sqr(ls2mf.point_of_basic_dof(i), 
 					  getfem::base_node(0,0.3,0)) -R2*R2;
   }
   const getfem::mesh_fem &ls3mf = ls3.get_mesh_fem();
   scalar_type R3=.08;
   for (unsigned i=0; i < ls3mf.nb_dof(); ++i) {
-    ls3.values()[i] = -gmm::vect_dist2_sqr(ls3mf.point_of_dof(i), 
+    ls3.values()[i] = -gmm::vect_dist2_sqr(ls3mf.point_of_basic_dof(i), 
 					   getfem::base_node(0,0.48,0)) +R3*R3;
   }
     

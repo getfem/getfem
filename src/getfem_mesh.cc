@@ -27,7 +27,7 @@
 namespace getfem {
 
   gmm::uint64_type act_counter(void) {
-    static gmm::uint64_type c = gmm::uint64_type(0);
+    static gmm::uint64_type c = gmm::uint64_type(1);
     return ++c;
   }
 

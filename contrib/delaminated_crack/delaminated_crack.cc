@@ -328,7 +328,7 @@ template<typename VECT1> class shape_der_nonlinear_term
   : public getfem::nonlinear_elem_term {
   
   const getfem::mesh_fem &mf;
-  const VECT1 &U;
+  std::vector<scalar_type> U;
   size_type N;
   base_vector coeff;
   base_matrix gradU, E, Sigma;
@@ -338,18 +338,20 @@ template<typename VECT1> class shape_der_nonlinear_term
 public:
   shape_der_nonlinear_term(const getfem::mesh_fem &mf_, const VECT1 &U_,
 			  scalar_type lambda_, scalar_type mu_) 
-    : mf(mf_), U(U_),
-      N(mf_.get_qdim()),
+    : mf(mf_), U(mf_.nb_basic_dof()), N(mf_.get_qdim()),
       gradU(N, N), E(N, N), Sigma(N,N), sizes_(N,N),
-      lambda(lambda_), mu(mu_) { assert(N == mf_.linked_mesh().dim()); }
+      lambda(lambda_), mu(mu_) {
+    assert(N == mf_.linked_mesh().dim());
+    mf.extend_vector(U_, U);
+  }
   
   const bgeot::multi_index &sizes() const { return sizes_; }
   
   virtual void compute(getfem::fem_interpolation_context& ctx,
 		       bgeot::base_tensor &t) {
     size_type cv = ctx.convex_num();
-    coeff.resize(mf.nb_dof_of_element(cv));
-    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+    coeff.resize(mf.nb_basic_dof_of_element(cv));
+    gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))),
 	      coeff);
     ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
     gmm::copy(gradU, E); gmm::add(gmm::transposed(gradU), E);
@@ -522,7 +524,7 @@ namespace getfem {
     : public getfem::nonlinear_elem_term {
     
     const mesh_fem &mf;
-    const VECT1 &phi0, &phin;
+    std::vector<scalar_type> phi0, phin;
     size_type N;
     base_vector coeff, Phi;
     base_matrix gradPhin;
@@ -532,21 +534,25 @@ namespace getfem {
   public:
     transportdc_nonlinear_term(const mesh_fem &mf_, const VECT1 &phi0_,
 			       const VECT1 &phin_, int version_) 
-      : mf(mf_), phi0(phi0_), phin(phin_), N(mf_.linked_mesh().dim()), Phi(1),
-	gradPhin(1,N), sizes_(1), version(version_)
-    { sizes_[0] = short_type((version == 1) ? 1 : N); }
+      : mf(mf_), phi0(mf_.nb_basic_dof()), phin(mf_.nb_basic_dof()),
+	N(mf_.linked_mesh().dim()), Phi(1),
+	gradPhin(1,N), sizes_(1), version(version_) {
+      mf.extend_vector(phi0_, phi0);
+      mf.extend_vector(phin_, phin);
+      sizes_[0] = short_type((version == 1) ? 1 : N);
+    }
     
     const bgeot::multi_index &sizes() const { return sizes_; }
     
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
-      coeff.resize(mf.nb_dof_of_element(cv));
+      coeff.resize(mf.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(phi0,
-				gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+				gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation(ctx, coeff, Phi, 1);
       gmm::copy(gmm::sub_vector(phin,
-				gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+				gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       
       scalar_type sgnphi = gmm::sgn(Phi[0]);
       scalar_type no = ::tanh(Phi[0]);
@@ -826,8 +832,8 @@ bool crack_problem::solve(plain_vector &U) {
 
       for (dal::bv_visitor cv(crack_tip_convexes); !cv.finished(); ++cv) {
 	//cerr << "inspecting convex centered at " << gmm::mean_value(mf_partition_of_unity.linked_mesh().points_of_convex(cv)) << "\n";
-	for (unsigned j=0; j < mf_partition_of_unity.nb_dof_of_element(cv); ++j) {
-	  size_type d = mf_partition_of_unity.ind_dof_of_element(cv)[j];
+	for (unsigned j=0; j < mf_partition_of_unity.nb_basic_dof_of_element(cv); ++j) {
+	  size_type d = mf_partition_of_unity.ind_basic_dof_of_element(cv)[j];
 	  if (!enriched_dofs.is_in(d)) {
 	    enriched_dofs.add(d);
 	    /*cerr << "added supplementary cracktip dof " << d << ", distance is:"
@@ -863,7 +869,7 @@ bool crack_problem::solve(plain_vector &U) {
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+    gmm::copy(sol_f(mf_rhs.point_of_basic_dof(i)),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   // Volumic source term brick.
   getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
@@ -875,7 +881,7 @@ bool crack_problem::solve(plain_vector &U) {
   if (!is_prescribed_disp) {
     base_small_vector f(N); f[N-1] = neumann_force;
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      if (mf_rhs.point_of_dof(i)[0] > 0.8 * Pmax[0])
+      if (mf_rhs.point_of_basic_dof(i)[0] > 0.8 * Pmax[0])
 	gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   }
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
@@ -883,8 +889,8 @@ bool crack_problem::solve(plain_vector &U) {
   gmm::clear(F);
   if (is_prescribed_disp) {
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      if (mf_rhs.point_of_dof(i)[0] > 0.4 * Pmax[0])
-	if (mf_rhs.point_of_dof(i)[2] >= Pmax[2]/2.0)
+      if (mf_rhs.point_of_basic_dof(i)[0] > 0.4 * Pmax[0])
+	if (mf_rhs.point_of_basic_dof(i)[2] >= Pmax[2]/2.0)
 	  F[i*N+2] = prescribed_disp;
   }
   // Dirichlet condition brick.
@@ -1036,7 +1042,7 @@ int main(int argc, char *argv[]) {
     // Level-set initialization
     p.ls.reinit();
     for (size_type d = 0; d < p.ls.get_mesh_fem().nb_dof(); ++d) {
-      const base_node P = p.ls.get_mesh_fem().point_of_dof(d);
+      const base_node P = p.ls.get_mesh_fem().point_of_basic_dof(d);
       p.ls.values(0)[d] = ls_function(P)[0];
       p.ls.values(1)[d] = ls_function(P)[1];
       //+ 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;

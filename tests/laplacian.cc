@@ -379,10 +379,10 @@ bool laplacian_problem::solve(void) {
 
 /* compute the error with respect to the exact solution */
 void laplacian_problem::compute_error() {
-  std::vector<scalar_type> V(mf_rhs.nb_dof());
+  std::vector<scalar_type> V(mf_rhs.nb_basic_dof());
   getfem::interpolation(mf_u, mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_dof(i));
+  for (size_type i = 0; i < mf_rhs.nb_basic_dof(); ++i)
+    V[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
   cout.precision(16);
   cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl

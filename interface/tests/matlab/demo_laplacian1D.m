@@ -22,7 +22,7 @@ expr_f = 'sin(x/2)/4'; %'-2*sin(x).*sin(y)';
 
 mferr=gfMeshFem(m,1); 
 gf_mesh_fem_set(mferr,'fem',gf_fem('FEM_PK(1,4)'));
-x = gf_mesh_fem_get(mferr, 'dof nodes');
+x = gf_mesh_fem_get(mferr, 'basic dof nodes');
 eU = eval(expr_u);
 
 bord = gf_mesh_get(m,'outer faces');

@@ -49,10 +49,12 @@ namespace getfem {
     dal::dynamic_array<pintegration_method> ims;
     dal::bit_vector im_convexes;
     mesh *linked_mesh_;
-    mutable gmm::uint64_type v_num_update;
+    mutable gmm::uint64_type v_num_update, v_num;
 
   public :
     void update_from_context(void) const;
+    gmm::uint64_type version_number(void) const
+    { context_check(); return v_num; }
 
     /** Get the set of convexes where an integration method has been assigned.
      */

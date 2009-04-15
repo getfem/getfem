@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -65,10 +65,10 @@ namespace getfem {
 
 
   struct gausspt_interpolation_data {
-    size_type elt;        // convex of the interpolated mesh_fem under this gauss point
-    size_type iflags;      // flags & 1 : there is an element or not
-    // flags & 2 : base_val is stored
-    // flags & 4 : grad_val is stored
+    size_type elt; // convex of the interpolated mesh_fem under the gauss point
+    size_type iflags;     // flags & 1 : there is an element or not
+                          // flags & 2 : base_val is stored
+                          // flags & 4 : grad_val is stored
     base_node ptref;      // coords on reference element of mf1 element
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
@@ -84,8 +84,6 @@ namespace getfem {
   class interpolated_fem : public virtual_fem, public context_dependencies {
     
   protected :
-
-
 
     struct elt_interpolation_data {
       size_type nb_dof;
@@ -108,7 +106,9 @@ namespace getfem {
     mutable std::vector<elt_interpolation_data> elements;
     mutable bgeot::rtree boxtree; // Tree containing the bounding box
                                   // of mf1 elements
-    mutable std::vector<size_type> ind_dof; /* all functions using this work array should keep it full of size_type(-1) */
+    mutable std::vector<size_type> ind_dof; /* all functions using this work
+					       array should keep it full of
+					       size_type(-1) */
     mutable size_type cv_stored;
     mutable bgeot::rtree::pbox_set boxlst;
     mutable bgeot::geotrans_inv_convex gic;
@@ -148,11 +148,13 @@ namespace getfem {
 			      base_tensor &, bool = true) const;
 
     /** return the list of convexes of the interpolated mesh_fem which
-       contain at least one gauss point (should be all convexes)! */
+     *  contain at least one gauss point (should be all convexes)! */
     dal::bit_vector interpolated_convexes() const;
     
-    /** return the min/max/mean number of gauss points in the convexes of the interpolated mesh_fem */
-    void gauss_pts_stats(unsigned &ming, unsigned &maxg, scalar_type &meang) const; 
+    /** return the min/max/mean number of gauss points in the convexes
+     *  of the interpolated mesh_fem */
+    void gauss_pts_stats(unsigned &ming, unsigned &maxg,
+			 scalar_type &meang) const; 
     size_type memsize() const;
   private:
     interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
@@ -169,10 +171,13 @@ namespace getfem {
 
   /** create a new interpolated FEM. 
       @param mef the mesh_fem that will be interpolated.
-      @param mim the integration method on the final mesh (not the mesh of mef!).
-      @param pif an optional geometric transformation applied to mef.linked_mesh() (used for getfem::spider_fem)
+      @param mim the integration method on the final mesh (not the mesh
+             of mef!).
+      @param pif an optional geometric transformation applied to
+             mef.linked_mesh() (used for getfem::spider_fem)
       @param blocked_dof list of dof of mef which won't be interpolated.
-      @param store_val if true, the values/gradients of interpolated base function are cached at each gauss point (eats much memory).
+      @param store_val if true, the values/gradients of interpolated base
+             function are cached at each gauss point (eats much memory).
   */
   pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
 			    pinterpolated_func pif = 0,

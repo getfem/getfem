@@ -193,7 +193,7 @@ void pb_data::assemble(void) {
   size_type nb_dof = mef.nb_dof();
   std::cout << "number of dof : "<< nb_dof << endl;
   size_type nb_dof_data = mef_data.nb_dof();
-  dal::bit_vector ddlD = mef.dof_on_set(0);
+  dal::bit_vector ddlD = mef.basic_dof_on_region(0);
  
   F.resize(nb_dof); gmm::clear(F);
   U.resize(nb_dof); gmm::clear(U);
@@ -210,7 +210,7 @@ void pb_data::assemble(void) {
   linalg_vector STF(N * nb_dof_data);
   for (size_type j = 0; j < nb_dof_data; j++)
     for (int k = 0; k < N; k++)
-      STF[j*N + k] = (vol_force(mef_data.point_of_dof(j)))[k];
+      STF[j*N + k] = (vol_force(mef_data.point_of_basic_dof(j)))[k];
   getfem::asm_source_term(F, mim, mef, mef_data, STF);
   
   linalg_vector UD(nb_dof);
@@ -242,7 +242,7 @@ int pb_data::solve_schwarz(int version) {
 
   size_type nb_dof = mef.nb_dof();
   std::vector<base_node> pts(nb_dof);
-  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_dof(i);
+  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_basic_dof(i);
 
   std::vector<general_sparse_matrix> vB;
   gmm::rudimentary_regular_decomposition(pts, subdomsize, overlap, vB);

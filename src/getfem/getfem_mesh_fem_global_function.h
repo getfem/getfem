@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -120,7 +120,7 @@ namespace getfem {
   */
   struct interpolator_on_mesh_fem {
     const mesh_fem &mf;
-    const std::vector<scalar_type> U;
+    std::vector<scalar_type> U;
 
     mutable bgeot::rtree boxtree;
     mutable size_type cv_stored;
@@ -130,7 +130,13 @@ namespace getfem {
     
     interpolator_on_mesh_fem(const mesh_fem &mf_, 
 			     const std::vector<scalar_type> &U_) :
-      mf(mf_), U(U_) { init(); }
+      mf(mf_), U(U_) {
+      if (mf.is_reduced()) {
+	gmm::resize(U, mf.nb_basic_dof());
+	gmm::mult(mf.extension_matrix(), U_, U);
+      }
+      init();
+    }
 
     void init();
     bool find_a_point(base_node pt, base_node &ptr,

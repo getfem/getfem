@@ -520,7 +520,11 @@ namespace getfem {
  	mfdata_set = true;
       }
       size_type nd = mf_u().nb_dof();
-      dal::bit_vector dof_on_bound = mf_mult->dof_on_set(boundary);
+      dal::bit_vector dof_on_bound;
+      if (mf_mult->is_reduced())
+	dof_on_bound.add(0, mf_mult->nb_dof());
+      else
+	dof_on_bound = mf_mult->basic_dof_on_region(boundary);
       size_type nb_const = dof_on_bound.card();
       std::vector<size_type> ind_ct;
       for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)

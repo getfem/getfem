@@ -876,7 +876,8 @@ struct Chrono {
   int mesh_level_set::is_not_crossed_by(size_type cv, plevel_set ls,
 					unsigned lsnum, scalar_type radius) {
     const mesh_fem &mf = ls->get_mesh_fem();
-    const mesh_fem::ind_dof_ct &dofs = mf.ind_dof_of_element(cv);
+    GMM_ASSERT1(!mf.is_reduced(), "Internal error");
+    const mesh_fem::ind_dof_ct &dofs = mf.ind_basic_dof_of_element(cv);
     pfem pf = mf.fem_of_element(cv);
     int p = -2;
     scalar_type EPS = 1e-8 * radius;

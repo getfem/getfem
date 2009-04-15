@@ -37,8 +37,8 @@
 #include "getfem_export.h"
 #include "bgeot_rtree.h"
 
-namespace getfem
-{
+namespace getfem {
+
   enum { L2_NORM=1, H1_SEMI_NORM=2, H1_NORM=3, LINF_NORM=4 };
 
   template<typename VECT1, typename VECT2>
@@ -57,7 +57,8 @@ namespace getfem
     slicer_compute_norm_diff(const mesh_fem& mf1_, const VECT1 &U1_, 
 			     const mesh_fem& mf2_, const VECT2 &U2_, 
 			     pintegration_method pim_, int what_=L2_NORM) 
-      : slicer_mesh_with_mesh(mf2_.linked_mesh()), mf1(mf1_), mf2(mf2_), U1(U1_), U2(U2_), 
+      : slicer_mesh_with_mesh(mf2_.linked_mesh()), mf1(mf1_), mf2(mf2_),
+	U1(U1_), U2(U2_), 
 	pai(get_approx_im_or_fail(pim_)), pim(pim_), what(what_), gp(0) {
 	l2_norm_sqr = 0.; h1_semi_norm_sqr = 0.; linf_norm = 0.; maxd=0.;
       }
@@ -92,7 +93,8 @@ namespace getfem
       std::vector<base_node> nodes1(pai->nb_points_on_convex()), 
 	nodes2(pai->nb_points_on_convex());
       gti.init(m2.convex(slmcv).points(), pgt2);
-      //cout << "hello, doing cv " << ms.cv << " <-> " << slmcv << " [" << ms.splx_in.card() << " simplexes]\n";
+      // cout << "hello, doing cv " << ms.cv << " <-> " << slmcv
+      //      << " [" << ms.splx_in.card() << " simplexes]\n";
       for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
 	const slice_simplex &s = ms.simplexes[is];
 	if (gp == 0 || s.dim() != pai->dim()) 
@@ -103,7 +105,8 @@ namespace getfem
 
 	for (size_type i=0; i < s.dim(); ++i) 
 	  for (size_type j=0; j < s.dim(); ++j)
-	    M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
+	    M(i,j) = ms.nodes[s.inodes[i+1]].pt[j]
+	      - ms.nodes[s.inodes[0]].pt[j];
 	
 	scalar_type J = gmm::abs(gmm::lu_det(M));
 	
@@ -122,9 +125,14 @@ namespace getfem
 	for (size_type k=0; k < nodes1.size(); ++k) 
 	  nodes1[k] = gp->transform(k,G);
 	
-	base_vector coeff1(mf1.nb_dof_of_element(ms.cv)), coeff2(mf2.nb_dof_of_element(slmcv));
-	gmm::copy(gmm::sub_vector(U1,gmm::sub_index(mf1.ind_dof_of_element(ms.cv))),coeff1);
-	gmm::copy(gmm::sub_vector(U2,gmm::sub_index(mf2.ind_dof_of_element(slmcv))),coeff2);
+	base_vector coeff1(mf1.nb_basic_dof_of_element(ms.cv)),
+	  coeff2(mf2.nb_basic_dof_of_element(slmcv));
+	gmm::copy(gmm::sub_vector
+		  (U1,gmm::sub_index(mf1.ind_basic_dof_of_element(ms.cv))),
+		  coeff1);
+	gmm::copy(gmm::sub_vector
+		  (U2,gmm::sub_index(mf2.ind_basic_dof_of_element(slmcv))),
+		  coeff2);
 
 	for (size_type i=0; i < pai->nb_points_on_convex(); ++i) {
 	  ctx1.set_xref(nodes1[i]); ctx2.set_xref(nodes2[i]);
@@ -141,7 +149,10 @@ namespace getfem
 	    pf2->interpolation_grad(ctx2, coeff2, gval2, dim_type(qdim));
 	    for (size_type q=0; q < qdim*mdim; ++q) {
 	      scalar_type v = gmm::sqr(gval1[q]-gval2[q])*J*pai->coeff(i);
-	      if (v > maxd) { cout << "new maxd: " << v << ", J=" << J << " at " << ctx1.xreal() << ", " << ctx2.xreal() << ", v1=" << gval1[q] << ", v2=" << gval2[q] << "\n"; maxd = v; }
+	      if (v > maxd) {
+		cout << "new maxd: " << v << ", J=" << J << " at "
+		     << ctx1.xreal() << ", " << ctx2.xreal() << ", v1="
+		     << gval1[q] << ", v2=" << gval2[q] << "\n"; maxd = v; }
 	      h1_semi_norm_sqr += gmm::sqr(gval1[q]-gval2[q])*J*pai->coeff(i);
 	    }
 	  }
@@ -150,10 +161,19 @@ namespace getfem
     }
   };
 
+  /** Compute an L2 or H1 norm between two fonctions on two differents meshes
+   *  by computing the error on the intersections of the elements of the
+   *  two meshes. */
   template<typename VECT1, typename VECT2>
-  void solutions_distance(const mesh_fem& mf1, const VECT1& U1, 
-			  const mesh_fem& mf2, const VECT2& U2,
-			  pintegration_method im, scalar_type *pl2=0, scalar_type *psh1=0) {
+  void solutions_distance(const mesh_fem& mf1, const VECT1& UU1, 
+			  const mesh_fem& mf2, const VECT2& UU2,
+			  pintegration_method im, scalar_type *pl2=0,
+			  scalar_type *psh1=0) {
+    typedef typename gmm::linalg_traits<VECT1>::value_type T;
+    std::vector<T> U1(mf1.nb_basic_dof()), U2(mf2.nb_basic_dof());
+    mf1.extend_vector(UU1, U1);
+    mf2.extend_vector(UU2, U2);
+
     mesh_slicer slicer(mf1.linked_mesh()); 
     slicer_compute_norm_diff<VECT1,VECT2> 
       cn(mf1,U1,mf2,U2,im, (pl2 ? L2_NORM : 0) +

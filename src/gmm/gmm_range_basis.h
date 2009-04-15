@@ -82,7 +82,7 @@ namespace gmm {
   // Range basis with a restarted Lanczos method
   template <typename Mat>
   void range_basis_eff_Lanczos(const Mat &BB, std::set<size_type> &columns,
-		       double EPS) {   
+		       double EPS=1E-12) {   
     typedef std::set<size_type> TAB;
     typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -96,7 +96,7 @@ namespace gmm {
 		mat_col(B, *it));
 
     std::vector<T> w(mat_nrows(B));
-    size_type restart = 80;
+    size_type restart = 120;
     std::vector<T> sdiag(restart);
     std::vector<R> eigval(restart), diag(restart);
     dense_matrix<T> eigvect(restart, restart);
@@ -126,7 +126,8 @@ namespace gmm {
       // Computing vectors of the null space of de B^* B with restarted Lanczos
       rho2 = 0;
       gmm::fill_random(v);
-      for(;;) {
+      size_type iter = 0;
+      for(;;++iter) {
 	R rho_old = rho2;
 	R beta = R(0), alpha;
 	gmm::scale(v, T(1)/vect_norm2(v));
@@ -161,13 +162,15 @@ namespace gmm {
 	if (gmm::abs(rho-rho2) <= rho*R(gmm::sqrt(EPS))) break;
       }
 
+      cout << " iter = " << iter << endl;
+
       if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
 	size_type j_max = size_type(-1), j = 0;
 	R val_max = R(0);
 	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
 	  if (gmm::abs(v[j]) > val_max)
 	    { val_max = gmm::abs(v[j]); j_max = *it; }
-       
+	cout << "Eliminate " << j_max  << endl;
 	columns.erase(j_max); nc_r = columns.size();
       }
       else break;
@@ -369,8 +372,8 @@ namespace gmm {
 
   template <typename Mat>
   void range_basis(const Mat &B, std::set<size_type> &columns,
-		   double EPS, col_major) {
-   
+		       double EPS, col_major, bool skip_init=false) {
+    
     typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
@@ -380,30 +383,33 @@ namespace gmm {
     std::vector<bool> c_ortho(nc), booked(nr);
     std::vector< std::set<size_type> > nnzs(mat_nrows(B));
 
-    R norm_max = R(0);
-    for (size_type i = 0; i < nc; ++i) {
-      norms[i] = vect_norminf(mat_col(B, i));
-      norm_max = std::max(norm_max, norms[i]);
-    }
-
-    columns.clear();
-    for (size_type i = 0; i < nc; ++i)
-      if (norms[i] >= norm_max*R(EPS)) { 
-	columns.insert(i);
-	nnzs[nnz_eps(mat_col(B, i), R(EPS) * norms[i])].insert(i);
+    if (!skip_init) {
+      
+      R norm_max = R(0);
+      for (size_type i = 0; i < nc; ++i) {
+	norms[i] = vect_norminf(mat_col(B, i));
+	norm_max = std::max(norm_max, norms[i]);
       }
+      
+      columns.clear();
+      for (size_type i = 0; i < nc; ++i)
+	if (norms[i] >= norm_max*R(EPS)) { 
+	  columns.insert(i);
+	  nnzs[nnz_eps(mat_col(B, i), R(EPS) * norms[i])].insert(i);
+	}
     
-    for (size_type i = 1; i < nr; ++i)
-      for (std::set<size_type>::iterator it = nnzs[i].begin();
-	   it != nnzs[i].end(); ++it)
-	if (reserve__rb(mat_col(B, *it), booked, R(EPS) * norms[*it]))
-	  c_ortho[*it] = true;
+      for (size_type i = 1; i < nr; ++i)
+	for (std::set<size_type>::iterator it = nnzs[i].begin();
+	     it != nnzs[i].end(); ++it)
+	  if (reserve__rb(mat_col(B, *it), booked, R(EPS) * norms[*it]))
+	    c_ortho[*it] = true;
+    }
 
     size_type sizesm[7] = {125, 200, 350, 550, 800, 1100, 1500}, actsize;
     for (int k = 0; k < 7; ++k) {
       size_type nc_r = columns.size();
-//       cout << "begin small range basis with " << columns.size()
-// 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
+       cout << "begin small range basis with " << columns.size()
+ 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
       std::set<size_type> c1, cres;
       actsize = sizesm[k];
       for (std::set<size_type>::iterator it = columns.begin();
@@ -426,6 +432,7 @@ namespace gmm {
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
 
+    cout << "begin global range basis with " << columns.size() <<  endl;
     if (columns.size() > std::max(size_type(500), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
@@ -472,7 +479,7 @@ namespace gmm {
     range_basis(B, columns, EPS,
 		typename principal_orientation_type
 		<typename linalg_traits<Mat>::sub_orientation>::potype());
-  }
+}
 
 }
 

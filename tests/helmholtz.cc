@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2002-2009 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -183,8 +183,10 @@ bool Helmholtz_problem::solve(plain_vector &U) {
   // Defining the Dirichlet condition value.
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs);
+  GMM_ASSERT1(!mf_rhs.is_reduced(),
+	      "To be adapted, use interpolation_function");
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = incoming_field(mf_rhs.point_of_dof(i), wave_number.real());
+    F[i] = incoming_field(mf_rhs.point_of_basic_dof(i), wave_number.real());
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<MODELSTATE> 

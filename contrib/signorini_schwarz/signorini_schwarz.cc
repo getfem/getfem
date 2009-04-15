@@ -261,11 +261,12 @@ void pb_data::init(void)
 }
 
 void pb_data::assemble(void) {
+  GMM_ASSERT1(!mef.is_reduced(), "To be adapted");
   size_type nb_dof = mef.nb_dof();
   std::cout << "nombre de ddl pour l'elasticite lineaire : "<< nb_dof << endl;
   size_type nb_dof_data = mef_data.nb_dof();
-  dal::bit_vector ddlD = mef.dof_on_set(0);
-  dal::bit_vector ddlC = mef.dof_on_set(1);
+  dal::bit_vector ddlD = mef.basic_dof_on_region(0);
+  dal::bit_vector ddlC = mef.basic_dof_on_region(1);
  
   F = linalg_vector(nb_dof);
   gmm::clear(F);
@@ -285,9 +286,7 @@ void pb_data::assemble(void) {
 
   std::cout << "Assemblage du terme source" << endl;
   linalg_vector STF(N * nb_dof_data);
-  for (size_type j = 0; j < nb_dof_data; j++)
-    for (int k = 0; k < N; k++)
-      STF[j*N + k] = (second_membre(mef_data.point_of_dof(j)))[k];
+  getfem::interpolation_function(mef_data, STF, second_membre);
   getfem::asm_source_term(F, mim, mef, mef_data, STF);
   
   UD = linalg_vector(nb_dof);
@@ -319,9 +318,9 @@ void pb_data::visu(void) {
     { ptab[i] = base_node(N); ptab[i].fill(0.0); }
   
   for (c << nn; c != size_type(-1); c << nn) {
-    for (i = 0; i < mef.nb_dof_of_element(c); ++i) {
-      size_type l = mef.ind_dof_of_element(c)[i];
-      size_type k = mesh.search_point(mef.point_of_dof(l));
+    for (i = 0; i < mef.nb_basic_dof_of_element(c); ++i) {
+      size_type l = mef.ind_basic_dof_of_element(c)[i];
+      size_type k = mesh.search_point(mef.point_of_basic_dof(l));
       if (k != size_type(-1)) ptab[k][i % N] = U[l] * muldep;
     }
   }
@@ -355,7 +354,7 @@ int pb_data::solve_schwarz(int version) {
   size_type nb_dof = gmm::mat_nrows(RM);
 
   std::vector<base_node> pts(nb_dof);
-  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_dof(i);
+  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_basic_dof(i);
 
   std::vector<general_sparse_matrix> vB;
   gmm::rudimentary_regular_decomposition(pts, subdomsize, overlap, vB);

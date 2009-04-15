@@ -43,7 +43,7 @@ set(b0, 'param', 'mu', mu);
 mds=gfMdState(b2)
 
 for step=1:8,
-  dd=get(mf0, 'dof_from_cvid');
+  dd=get(mf0, 'basic dof from cvid');
   
   set(b2, 'param','source_term', mfd, F);
   get(b2, 'solve', mds, 'very noisy'); %, 'lsolver', 'superlu');

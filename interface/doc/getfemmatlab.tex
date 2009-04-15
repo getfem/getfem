@@ -44,7 +44,7 @@ colorlinks=true,pdfauthor={Julien Pommier},urlcolor=blue]{hyperref}
 \W \newcommand{\HlxIcons}{./}
 %\W \usepackage{frames} % navigation panel
 \W \htmldirectory{gfm}
-\W htmlname{gfm}
+\W \htmlname{gfm}
 %\W \HlxFramesNavigation
 
 
@@ -1438,7 +1438,7 @@ can be used in order to find the points of the
   on the boundary @@rnum@@. On output, the first row of @@CVFLST@@
   contains the convex numbers, and the second row contains the face
   numbers (0 when the whole convex is is the region). See also
-  @@gf\_mesh\_fem\_get(MF, 'dof on region')@@.
+  @@gf\_mesh\_fem\_get(MF, 'basic dof on region')@@.
 
   \sep{@@E=gf\_mesh\_get(M, 'edges' [, CVLST][, 'merge'])@@}\warning{This function has been obsoleted by \slc objects}
   
@@ -1917,16 +1917,21 @@ General constructor for \tmf object. Returns a \gf handle
 \end{purpose}
 \begin{synopsis}
 @@\tint N = gf\_mesh\_fem\_get(MF, 'nbdof')
-\tivec DOF = gf\_mesh\_fem\_get(MF, 'dof from cv', \tivec CVLST)
-\tivec [DOF,CV2DOF] = gf\_mesh\_fem\_get(MF, 'dof from cvid', [\tivec CVLST])
-\tivec DOF = gf\_mesh\_fem\_get(MF, 'non conformal dof' [, \tivec CVLST])
+\tint N = gf\_mesh\_fem\_get(MF, 'nb basic dof')
+\tivec DOF = gf\_mesh\_fem\_get(MF, 'basic dof from cv', \tivec CVLST)
+\tivec [DOF,CV2DOF] = gf\_mesh\_fem\_get(MF, 'basic dof from cvid', [\tivec CVLST])
+\tivec DOF = gf\_mesh\_fem\_get(MF, 'non conformal basic dof' [, \tivec CVLST])
 \tfem FEMLST[, \tivec CV2F] = gf\_mesh\_fem\_get(MF, 'fem' [, \tivec CVLST])
 \tivec CVLST = gf\_mesh\_fem\_get(MF, 'convex\_index')
 \tint N = gf\_mesh\_fem\_get(MF, 'qdim')
 \tivec I = gf\_mesh\_fem\_get(MF, \{'is\_lagrangian' | 'is\_equivalent' | 'is\_polynomial'\} 
         [, \tivec CVLST])
+\tint N = gf\_mesh\_fem\_get(MF, 'is\_reduced')
+\tspmat R = gf\_mesh\_fem\_get(MF, 'reduction\_matrix')
+\tspmat R = gf\_mesh\_fem\_get(MF, 'extension\_matrix')
+\tivec DOFLST = gf\_mesh\_fem\_get(MF, 'basic dof on region', \tivec rlist)
 \tivec DOFLST = gf\_mesh\_fem\_get(MF, 'dof on region', \tivec rlist)
-\tmat DOF\_XY = gf\_mesh\_fem\_get(MF, 'dof nodes'[, \tivec DOFLST])
+\tmat DOF\_XY = gf\_mesh\_fem\_get(MF, 'basic dof nodes'[, \tivec DOFLST])
 \tivec DOFP = gf\_mesh\_fem\_get(MF, 'dof partition')
 \tvec U = gf\_mesh\_fem\_get(MF, 'interpolate convex data', \tvec Ucv)
 gf\_mesh\_fem\_get(MF, 'save', \tstr filename, ['with mesh'])
@@ -1938,28 +1943,40 @@ gf_mesh_fem_get(MF,'export_to_dx', filename, ... ['as', mesh_name][,'edges']['se
 M=gf_mesh_fem_get(MF, 'memsize')
 @@\end{synopsis}
 \begin{cmddescription}
-  \sep{@@gf\_mesh\_fem\_get(MF, 'nbdof')@@} : return the number of degree
+  \sep{@@gf\_mesh\_fem\_get(MF, 'nbdof')@@} : return the number of degrees
   of freedom of the \tmf @@MF@@.
 
-  \sep{@@gf\_mesh\_fem\_get(MF, 'dof from cv', CVLST)@@} :
-  \index{dof}\index{degrees of freedom} return the dof IDs attached to
-  the convexes listed in @@CVLST@@. WARNING: the Degree of Freedom
+  \sep{@@gf\_mesh\_fem\_get(MF, 'nb basic dof')@@} : return the number of
+  basic degrees of freedom of the \tmf @@MF@@.
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'basic dof from cv', CVLST)@@} :
+  \index{dof}\index{degrees of freedom} return the basic dof IDs attached to
+  the convexes listed in @@CVLST@@. WARNING: the Degrees of Freedom
   might be returned in ANY order, do not use this function in your
-  assembly routines. Use @@'dof from cvid'@@ instead.
+  assembly routines. Use @@'basic dof from cvid'@@ instead.
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'dof from cv', rlist)@@} : Deprecated
+  function. Use @@gf\_mesh\_fem\_get(MF, 'basic dof from cv', rlist)@@ instead.
   
-  \sep{@@gf\_mesh\_fem\_get(MF, 'dof from cvid' [, CVLST])}@@ : return
+  \sep{@@gf\_mesh\_fem\_get(MF, 'basic dof from cvid' [, CVLST])}@@ : return
   the degrees of freedom attached to each convex of the mesh, allowing
   to map a convex number to the list of its associated degrees of
   freedom. It is similar to @@gf\mesh\_get(M, 'pid from cvid')@@.
 
-  \sep{@@gf\_mesh\_fem\_get(MF, 'non conformal dof' [, CVLST])@@} :
-  return the list of DoF which are located on the border of a convex
+  \sep{@@gf\_mesh\_fem\_get(MF, 'dof from cvid', rlist)@@} : Deprecated
+  function. Use @@gf\_mesh\_fem\_get(MF, 'basic dof from cvid', rlist)@@ instead.
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'non conformal basic dof' [, CVLST])@@} :
+  return the list of basic DoF which are located on the border of a convex
   and which belong to only one convex, except those who lie on the
   border of the mesh. For example, if the convex $a$ and $b$ share a
-  common face, $a$ has a P1 FEM, and $b$ has a P2 FEM, then the dof on
+  common face, $a$ has a P1 FEM, and $b$ has a P2 FEM, then the basic dof on
   the middle of the common face will be returned by this function
   (this can be useful when searching the interfaces between classical
   fems and hierarchical fem).
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'non conformal dof', rlist)@@} : Deprecated
+  function. Use @@gf\_mesh\_fem\_get(MF, 'non conformal basic dof', rlist)@@ instead.
 
   \sep{@@gf\_mesh\_fem\_get(MF, \str{Qdim})@@}\index{Qdim} : return the
   dimension @@Q@@ of the fields interpolated by the \tmf (1 for scalar
@@ -1987,16 +2004,45 @@ M=gf_mesh_fem_get(MF, 'memsize')
   @@CVLST@@ is present, returns the convex numbers (with respect to
   @@CVLST@@) which are lagrangian (resp. etc..)
 
-  \sep{@@gf\_mesh\_fem\_get(MF, 'dof on region', rlist)@@} : return the
-  list of dof whose support is non-null on one of the regions whose
+  \sep{@@gf\_mesh\_fem\_get(MF, 'is\_reduced')@@} : 
+  return 1 if the optional reduction matrix is applied to the dofs
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'reduction\_matrix')@@} : 
+  return the optional reduction matrix.
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'extension\_matrix')@@} : 
+  return the optional extension matrix.
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'basic dof on region', rlist)@@} : return the
+  list of basic dof (i.e. before optional reduction) whose support is
+  non-null on one of the regions whose
   ids are listed in @@rlist@@ (note that for boundary regions, some
-  dof nodes may not lie exactly on the boundary, for example the dof
+  basic dof nodes may not lie exactly on the boundary, for example the dof
   of @@FEM_PK(n,0)@@ lies on the center of the convex, but the base
   function in not null on the convex border).
 
-  \sep{@@gf\_mesh\_fem\_get(MF, 'dof nodes'[, DOFLST])@@} : return the
-  list of interpolation points for the specified dof IDs in @@DOFLST@@
-  (if @@DOFLST@@ is omitted, all dof are considered).
+  \sep{@@gf\_mesh\_fem\_get(MF, 'dof on region', rlist)@@} : return the
+  list of dof (i.e. after optional reduction) whose support is
+  non-null on one of the regions whose
+  ids are listed in @@rlist@@ (note that for boundary regions, some
+  basic dof nodes may not lie exactly on the boundary, for example the dof
+  of @@FEM_PK(n,0)@@ lies on the center of the convex, but the base
+  function in not null on the convex border).
+  
+  For a reduced mesh\_fem
+  a dof is lying on a region if its potential corresponding shape
+  function is nonzero on this region. The extension matrix is used
+  to make the correspondance between basic and reduced dofs
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'dof on region', rlist)@@} : Deprecated
+  function. Use @@gf\_mesh\_fem\_get(MF, 'basic dof on region', rlist)@@ instead.
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'basic dof nodes'[, DOFLST])@@} : return the
+  list of interpolation points for the specified basic dof IDs in @@DOFLST@@
+  (if @@DOFLST@@ is omitted, all basic dof are considered).
+
+  \sep{@@gf\_mesh\_fem\_get(MF, 'dof nodes', rlist)@@} : Deprecated
+  function. Use @@gf\_mesh\_fem\_get(MF, 'basic dof nodes', rlist)@@ instead.
 
   \sep{@@gf\_mesh\_fem\_get(MF, 'dof partition')@@} : return the array
   which associates an integer (the partition number) to each convex of
@@ -2070,6 +2116,8 @@ U4=gf_mesh_fem_get(mf,'eval',\{'x';'y.*z';4;@myfunctionofxyz\})
 gf\_mesh\_fem\_set(MF, 'classical fem', \tfem fem, \tint K [, \tivec CVIDX])
 gf\_mesh\_fem\_set(MF, 'classical discontinuous fem', \tfem fem, \tint K [, \tivec CVIDX])
 gf\_mesh\_fem\_set(MF, 'qdim', \tint Qdim)
+gf\_mesh\_fem\_set(MF, 'reduction', \tint s)
+gf\_mesh\_fem\_set(MF, 'reduction matrices', \tspmat R, \tspmat E)
 gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)
 @@\end{synopsis}
 \begin{cmddescription}
@@ -2094,6 +2142,12 @@ gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)
   change the @@Q@@ dimension of the field that is interpolated by the \tmf.
   @@Q=1@@ means that the \tmf describes a scalar field, @@Q=N@@ means
   that the \tmf describes a vector field of dimension @@N@@ (see @@gf_mesh_fem_set('Qdim')@@).
+
+  \sep{@@gf\_mesh\_fem\_set(MF, 'reduction', s)@@} :
+  Set or unset the use of reduction/extension matrices.
+
+  \sep{@@gf\_mesh\_fem\_set(MF, 'reduction matrices', R, E)@@} :
+  Set the reduction and extension matrices and valid their use.
 
   \sep{@@gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)@@} : 
   change the array which associates an integer (the partition number) to each convex of

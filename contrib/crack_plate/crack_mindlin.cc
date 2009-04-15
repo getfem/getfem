@@ -601,11 +601,11 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
   if (sol_ref == 0 || sol_ref == 3 || sol_ref == 4) {
-    ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
-    ls.values(1)[d] =  (ls.get_mesh_fem().point_of_dof(d))[0];}
+    ls.values(0)[d] = (ls.get_mesh_fem().point_of_basic_dof(d))[1];
+    ls.values(1)[d] =  (ls.get_mesh_fem().point_of_basic_dof(d))[0];}
   if (sol_ref == 1){
-    ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[0];
-    ls.values(1)[d] = gmm::abs( (ls.get_mesh_fem().point_of_dof(d))[1] ) - h_crack_length ;}
+    ls.values(0)[d] = (ls.get_mesh_fem().point_of_basic_dof(d))[0];
+    ls.values(1)[d] = gmm::abs( (ls.get_mesh_fem().point_of_basic_dof(d))[1] ) - h_crack_length ;}
     }
   
   ls.touch();
@@ -675,7 +675,7 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   cout << " Solving ---------------------- \n" ;
   
   
-  getfem::mdbrick_abstract<> *ELAS, *SIMPLE, *LAST(0);
+  getfem::mdbrick_abstract<> *ELAS, *LAST(0);
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
@@ -685,28 +685,28 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   
   ELAS = &ELAS1;
 
-  
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   cout << "Defining the surface source term... \n" ;
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
   scalar_type r, theta, E, nu, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
-  scalar_type MapleGenVar8, MapleGenVar9, MapleGenVar10, MapleGenVar11, MapleGenVar12, MapleGenVar13, MapleGenVar14 ;
+  scalar_type MapleGenVar8, MapleGenVar9, MapleGenVar10, MapleGenVar11, MapleGenVar12, MapleGenVar13 ;
   E =  4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
   nu = lambda / (2. * mu + lambda);
   for (size_type i = 0; i < nb_dof_rhs; ++i){
   if (sol_ref == 0){
-    if (mf_rhs.point_of_dof(i)[1] > 0 )
+    if (mf_rhs.point_of_basic_dof(i)[1] > 0 )
       F[3*i+2] = pressure;
     else F[3*i+2] = -pressure;
     }
   if (sol_ref == 1) {
-    if (mf_rhs.point_of_dof(i)[0] <  1E-7 - 0.5 )
+    if (mf_rhs.point_of_basic_dof(i)[0] <  1E-7 - 0.5 )
       M[2*i] =  - 2. * epsilon * epsilon  / (3. * gmm::sqrt(h_crack_length) ) ;
     }
   
   if (sol_ref == 3) {
-     r = gmm::sqrt(gmm::abs( mf_rhs.point_of_dof(i)[0] * mf_rhs.point_of_dof(i)[0] + mf_rhs.point_of_dof(i)[1] * mf_rhs.point_of_dof(i)[1] )) ;
-     theta = atan2( mf_rhs.point_of_dof(i)[1], mf_rhs.point_of_dof(i)[0] ) ;
+     r = gmm::sqrt(gmm::abs( mf_rhs.point_of_basic_dof(i)[0] * mf_rhs.point_of_basic_dof(i)[0] + mf_rhs.point_of_basic_dof(i)[1] * mf_rhs.point_of_basic_dof(i)[1] )) ;
+     theta = atan2( mf_rhs.point_of_basic_dof(i)[1], mf_rhs.point_of_basic_dof(i)[0] ) ;
      scalar_type t = theta ;
      scalar_type a = exact_sol.U3[0] ;
      scalar_type a1 = exact_sol.THETA[0] ;
@@ -880,7 +880,7 @@ cos(t)-(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin
 }
 
 /* compute the error with respect to the exact solution */
-void crack_mindlin_problem::compute_error(plain_vector &UT, plain_vector &U3, plain_vector &THETA ) {
+void crack_mindlin_problem::compute_error(plain_vector &, plain_vector &U3, plain_vector &THETA ) {
   if (sol_ref == 3 || sol_ref == 4){
      if (PARAM.int_value("SOL_EXACTE") == 1){
         for (size_type i=0 ; i < U3.size() ; ++i)
@@ -910,14 +910,15 @@ void crack_mindlin_problem::compute_error(plain_vector &UT, plain_vector &U3, pl
 	<< "\n";
 	}
 //   // deprecated
+//   GMM_ASSERT1(!mf_pre_theta.is_reduced(), "To be adapted");
 //   if (sol_ref == 4){
 //      plain_vector V3(mf_pre_u3.nb_dof()) ;
 //      for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
 //          V3[i] = u3_exact_yves(mf_pre_u3.point_of_dof(i));
 //      plain_vector VTHETA(mf_pre_theta.nb_dof()) ;
 //      for (size_type i = 0; i < mf_pre_theta.nb_dof() / mf_pre_theta.get_qdim() ; ++i) {
-//          VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
-// 	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
+//          VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_basic_dof(i))[0];
+// 	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_basic_dof(i))[1];
 // 	 }
 //      cout << "Error on the vertical displacement u3 :\n" ;
 //      cout << "mf_u3().nb_dof() = " << mf_u3().nb_dof() << "\n"; 
@@ -1041,13 +1042,15 @@ int main(int argc, char *argv[]) {
     getfem::mesh_fem mf3d(m3d);
     mf3d.set_classical_discontinuous_finite_element(2, 0.001);
 
+    GMM_ASSERT1(!mf.is_reduced(), "To be adapted");
     plain_vector V(mf3d.nb_dof()*3);
     bgeot::kdtree tree; tree.reserve(mf.nb_dof());
     for (unsigned i=0; i < mf.nb_dof(); ++i)
-      tree.add_point_with_id(mf.point_of_dof(i),i);
+      tree.add_point_with_id(mf.point_of_basic_dof(i),i);
     bgeot::kdtree_tab_type pts;
+    GMM_ASSERT1(!mf3d.is_reduced(), "To be adapted");
     for (unsigned i=0; i < mf3d.nb_dof(); ++i) {
-      base_node P = mf3d.point_of_dof(i);
+      base_node P = mf3d.point_of_basic_dof(i);
       base_node P2d0(2), P2d1(2); 
       scalar_type EPS = 1e-6;
       P2d0[0] = P[0]-EPS; P2d0[1] = P[1]-EPS;

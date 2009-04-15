@@ -33,14 +33,15 @@ namespace getfem {
       }
       else const_cast<mesh_im *>(this)->set_integration_method(i, 0);
     }
-    v_num_update = act_counter(); 
+    v_num_update = v_num = act_counter();
   }
 
 
   void mesh_im::set_integration_method(size_type cv, pintegration_method pim) {
     context_check();
     if (pim == NULL)
-      { if (im_convexes.is_in(cv)) { im_convexes.sup(cv); touch(); } }
+      { if (im_convexes.is_in(cv))
+	  { im_convexes.sup(cv); touch(); v_num = act_counter(); } }
     else if (!im_convexes.is_in(cv) || ims[cv] != pim) {
       GMM_ASSERT1
 	(pim->type() == IM_NONE || 
@@ -51,7 +52,7 @@ namespace getfem {
 	 bgeot::name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
       im_convexes.add(cv);
       ims[cv] = pim;
-      touch();
+      touch(); v_num = act_counter();
     }
   }
 
@@ -77,13 +78,13 @@ namespace getfem {
 
   void mesh_im::clear(void) {
     ims.clear(); im_convexes.clear();
-    touch();
+    touch(); v_num = act_counter();
   }
 
   mesh_im::mesh_im(mesh &me) {
     linked_mesh_ = &me;
     this->add_dependency(me);
-    v_num_update = act_counter();
+    v_num_update = v_num = act_counter();
   }
 
   mesh_im::~mesh_im() {}

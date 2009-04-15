@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Yves Renard
+// Copyright (C) 2001-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -79,7 +79,8 @@ namespace getfem
       state = IN_CELL_DATA;
       write_separ();
       if (psl) {
-        os << "CELL_DATA " << psl->nb_simplexes(0) + psl->nb_simplexes(1) + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
+        os << "CELL_DATA " << psl->nb_simplexes(0) + psl->nb_simplexes(1)
+	  + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
       } else {
         os << "CELL_DATA " << pmf->convex_index().card() << "\n";
       }
@@ -153,9 +154,12 @@ namespace getfem
         /* could be a better test for discontinuity .. */
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
-      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
-      short_type degree = short_type(((pf != classical_pf1 && pf->estimated_degree() > 1) ||
-				      pgt->structure() != pgt->basic_structure()) ? 2 : 1);
+      pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
+	                                 : classical_fem(pgt, 1);
+      short_type degree = short_type(((pf != classical_pf1 &&
+				       pf->estimated_degree() > 1) ||
+				      pgt->structure() !=
+				      pgt->basic_structure()) ? 2 : 1);
       pmf->set_finite_element(cv, discontinuous ?
                               classical_discontinuous_fem(pgt, degree) :
                               classical_fem(pgt, degree));
@@ -164,7 +168,7 @@ namespace getfem
 
     const mesh &m = pmf->linked_mesh();
     pmf_cell_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
-    pmf_dof_used.sup(0, pmf->nb_dof());
+    pmf_dof_used.sup(0, pmf->nb_basic_dof());
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       int t = -1;
       size_type nbd = pmf->fem_of_element(cv)->nb_dof(cv);
@@ -190,13 +194,14 @@ namespace getfem
 		  << " to a VTK cell type");
       pmf_cell_type[cv] = t;
       const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(t);
-      //cout << "nbd = " << nbd << ", t = " << t << ", dmap = " << dmap << "\n";
-      GMM_ASSERT1(dmap.size() <= pmf->nb_dof_of_element(cv),
+      //cout << "nbd = " << nbd << ", t = " << t << ", dmap = "<<dmap << "\n";
+      GMM_ASSERT1(dmap.size() <= pmf->nb_basic_dof_of_element(cv),
 		  "inconsistency in vtk_dof_mapping");
       for (unsigned i=0; i < dmap.size(); ++i)
-        pmf_dof_used.add(pmf->ind_dof_of_element(cv)[dmap[i]]);
+        pmf_dof_used.add(pmf->ind_basic_dof_of_element(cv)[dmap[i]]);
     }
-    //cout << "mf.nb_dof = " << mf.nb_dof() << ", pmf->nb_dof=" << pmf->nb_dof() << ", dof_used = " << pmf_dof_used.card() << "\n";
+    // cout << "mf.nb_dof = " << mf.nb_dof() << ", pmf->nb_dof="
+    //      << pmf->nb_dof() << ", dof_used = " << pmf_dof_used.card() << "\n";
   }
 
 
@@ -293,7 +298,7 @@ namespace getfem
     int cnt = 0;
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
-      base_node P = pmf->point_of_dof(d);
+      base_node P = pmf->point_of_basic_dof(d);
       write_vec(P.const_begin());
       write_separ();
     }
@@ -308,7 +313,7 @@ namespace getfem
       const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(pmf_cell_type[cv]);
       write_val(int(dmap.size()));
       for (size_type i=0; i < dmap.size(); ++i)
-        write_val(int(dofmap[pmf->ind_dof_of_element(cv)[dmap[i]]]));
+        write_val(int(dofmap[pmf->ind_basic_dof_of_element(cv)[dmap[i]]]));
       write_separ();
     }
 
@@ -327,7 +332,7 @@ namespace getfem
       mf.set_classical_finite_element(0);
       std::vector<scalar_type> q(mf.nb_dof());
       for (size_type d=0; d < mf.nb_dof(); ++d) {
-        q[d] = m.convex_quality_estimate(mf.first_convex_of_dof(d));
+        q[d] = m.convex_quality_estimate(mf.first_convex_of_basic_dof(d));
       }
       write_point_data(mf, q, "convex_quality");
     } else {
@@ -350,8 +355,9 @@ namespace getfem
   dx_export::dx_export(const std::string& fname, bool ascii_, bool append_)
     : os(real_os), ascii(ascii_) {
     real_os.open(fname.c_str(),
-                 std::ios_base::openmode(std::ios_base::in | std::ios_base::out |
-                                         (append_ ? std::ios_base::ate : std::ios_base::trunc)));
+                 std::ios_base::openmode(std::ios_base::in |
+					 std::ios_base::out |
+                  (append_ ? std::ios_base::ate : std::ios_base::trunc)));
     GMM_ASSERT1(real_os.good(), "impossible to write to dx file '"
 		<< fname << "'");
     init();
@@ -367,7 +373,8 @@ namespace getfem
 
   void dx_export::init() {
     strcpy(header, "Exported by getfem++");
-    psl = 0; dim_ = dim_type(-1); connections_dim = dim_type(-1);  psl_use_merged = false;
+    psl = 0; dim_ = dim_type(-1); connections_dim = dim_type(-1);
+    psl_use_merged = false;
     header_written = false;
   }
 
@@ -458,8 +465,8 @@ namespace getfem
       pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
-    pmf_dof_used.add(0, pmf->nb_dof());
-    connections_dim = dim_type(pmf->nb_dof_of_element(m.convex_index().first_true()));
+    pmf_dof_used.add(0, pmf->nb_basic_dof());
+    connections_dim = dim_type(pmf->nb_basic_dof_of_element(m.convex_index().first_true()));
   }
 
   void dx_export::exporting(const mesh& m, std::string name) {
@@ -685,8 +692,8 @@ namespace getfem
     os << " data follows\n";
 
     /* possible improvement: detect structured grids */
-    for (size_type d = 0; d < pmf->nb_dof(); ++d) {
-      const base_node P = pmf->point_of_dof(d);
+    for (size_type d = 0; d < pmf->nb_basic_dof(); ++d) {
+      const base_node P = pmf->point_of_basic_dof(d);
       for (size_type k=0; k < dim_; ++k)
 	write_val(float(P[k]));
       write_separ();
@@ -701,7 +708,7 @@ namespace getfem
 
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       for (size_type i=0; i < connections_dim; ++i)
-        write_val(int(pmf->ind_dof_of_element(cv)[i]));
+        write_val(int(pmf->ind_basic_dof_of_element(cv)[i]));
       write_separ();
     }
     write_convex_attributes(pmf->linked_mesh().structure_of_convex(pmf->convex_index().first_true())->basic_structure());
@@ -713,11 +720,13 @@ namespace getfem
     if (psl) write_mesh_edges_from_slice(with_slice_edges);
     else write_mesh_edges_from_mesh();
     current_mesh().flags |= dxMesh::WITH_EDGES;
-    os << "\nobject \"" << name_of_edges_array(current_mesh_name()) << "\" class field\n"
+    os << "\nobject \"" << name_of_edges_array(current_mesh_name())
+       << "\" class field\n"
        << "  component \"positions\" value \""
        << name_of_pts_array(current_mesh_name()) << "\"\n"
        << "  component \"connections\" value \""
-       << name_of_conn_array(name_of_edges_array(current_mesh_name())) << "\"\n";
+       << name_of_conn_array(name_of_edges_array(current_mesh_name()))
+       << "\"\n";
   }
 
   void dx_export::write_mesh_edges_from_slice(bool with_slice_edges) {
@@ -725,7 +734,8 @@ namespace getfem
     dal::bit_vector slice_edges;
     psl->get_edges(edges, slice_edges, psl_use_merged);
     if (with_slice_edges) slice_edges.clear();
-    os << "\nobject \"" << name_of_conn_array(name_of_edges_array(current_mesh_name()))
+    os << "\nobject \""
+       << name_of_conn_array(name_of_edges_array(current_mesh_name()))
        << "\" class array type int rank 1 shape 2"
        << " items " << edges.size()/2 - slice_edges.card();
     if (!ascii) os << " " << endianness() << " binary";
@@ -743,7 +753,8 @@ namespace getfem
 
   void dx_export::write_mesh_edges_from_mesh() {
     bgeot::mesh_structure ms(pmf->linked_mesh()); ms.to_edges();
-    os << "\nobject \"" << name_of_conn_array(name_of_edges_array(current_mesh_name()))
+    os << "\nobject \""
+       << name_of_conn_array(name_of_edges_array(current_mesh_name()))
        << "\" class array type int rank 1 shape 2"
        << " items " << ms.convex_index().card();
     if (!ascii) os << " " << endianness() << " binary";
@@ -849,12 +860,12 @@ namespace getfem
       pmf_cell_type[cv] = t;
 
       const std::vector<unsigned>& dmap = getfem_to_pos_dof_mapping(t);
-      GMM_ASSERT1(dmap.size() <= pmf->nb_dof_of_element(cv),
+      GMM_ASSERT1(dmap.size() <= pmf->nb_basic_dof_of_element(cv),
                   "inconsistency in pos_dof_mapping");
       std::vector<unsigned> cell_dof;
       cell_dof.resize(dmap.size(),unsigned(-1));
       for (size_type i=0; i < dmap.size(); ++i)
-        cell_dof[i] = unsigned(pmf->ind_dof_of_element(cv)[dmap[i]]);
+        cell_dof[i] = unsigned(pmf->ind_basic_dof_of_element(cv)[dmap[i]]);
       pmf_cell_dof.push_back(cell_dof);
     }
     state = STRUCTURE_WRITTEN;
@@ -887,7 +898,7 @@ namespace getfem
     for (size_type i=0; i< dof.size(); ++i){
       for(size_type j=0; j< dim; ++j){
         if(0!=i || 0!=j) os << ",";
-        os << pmf->point_of_dof(dof[i])[j];
+        os << pmf->point_of_basic_dof(dof[i])[j];
       }
       for (size_type j=dim; j< 3; ++j){
         os << ",0.00";

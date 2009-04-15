@@ -331,14 +331,15 @@ void hyperbolic_problem::solve(void) {
   cout << "Number of dof for v: " << mf_v.nb_dof() << endl;
 
   // Choosing a reference dof.
+  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   size_type ref_dof = 0, ref_mult = size_type(-1);
   base_node P(N); gmm::fill(P, 0.5);
   for (size_type i = 1; i < mf_u.nb_dof(); ++i)
-    if (gmm::vect_dist2(mf_u.point_of_dof(i), P)
-	< gmm::vect_dist2(mf_u.point_of_dof(ref_dof), P))
+    if (gmm::vect_dist2(mf_u.point_of_basic_dof(i), P)
+	< gmm::vect_dist2(mf_u.point_of_basic_dof(ref_dof), P))
       ref_dof = i;
   cout << "ref_dof = " << ref_dof << " point = "
-       << mf_u.point_of_dof(ref_dof) << endl;
+       << mf_u.point_of_basic_dof(ref_dof) << endl;
 
   // Linearized elasticity brick.
   getfem::mdbrick_generic_elliptic<> ELAS(mim, mf_u);
@@ -364,11 +365,11 @@ void hyperbolic_problem::solve(void) {
   DIRICHLET.rhs().set(mf_rhs, F);
   
   // Contact condition for Lagrange elements
-  dal::bit_vector cn, dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
+  dal::bit_vector cn, dn = mf_u.basic_dof_on_region(DIRICHLET_BOUNDARY);
   for (size_type i = 0; i < mf_u.nb_dof(); ++i)
     if (!dn.is_in(i)) {
 
-      if (mesh.points().search_node(mf_u.point_of_dof(i)) != size_type(-1))
+      if (mesh.points().search_node(mf_u.point_of_basic_dof(i)) != size_type(-1))
 	cn.add(i);
     }
 

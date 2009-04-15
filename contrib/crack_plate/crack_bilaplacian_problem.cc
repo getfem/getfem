@@ -7,7 +7,7 @@
 
 size_type is_global_dof_type_bis(getfem::pdof_description dof){
 size_type global_dof = 0 ;
-   for (unsigned d = 0; d < 4 ; ++d){
+   for (dim_type d = 0; d < 4 ; ++d){
        if (dof == getfem::global_dof(d)) {
           global_dof = 1;
 	      }
@@ -40,10 +40,9 @@ scalar_type sol_u(const base_node &x){
 
 }
 
-scalar_type sol_F(const base_node &x)
+scalar_type sol_F(const base_node &)
 {return 1.  ;//EE * D *  240. ;//256. * cos(2. * x[1]) ; 
 }
-
 
 void exact_solution_bilap::init(getfem::level_set &ls) {
   std::vector<getfem::pglobal_function> cfun(11) ;
@@ -470,10 +469,10 @@ void bilaplacian_crack_problem::init(void) {
   
   // Setting the level-set
   ls.reinit(); 
-  scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
+  // scalar_type a = PARAM.real_value("CRACK_SEMI_LENGTH") ; 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    scalar_type x = ls.get_mesh_fem().point_of_dof(d)[0];
-    scalar_type y = ls.get_mesh_fem().point_of_dof(d)[1];
+    scalar_type x = ls.get_mesh_fem().point_of_basic_dof(d)[0];
+    scalar_type y = ls.get_mesh_fem().point_of_basic_dof(d)[1];
     if (sol_ref == 0){
        ls.values(0)[d] = y  ; // + 1/4.*(x + .25);
        ls.values(1)[d] = x  ;}
@@ -500,10 +499,11 @@ void bilaplacian_crack_problem::init(void) {
 
 // /* compute the relative error with respect to the exact solution */
 // void bilaplacian_crack_problem::compute_error(plain_vector &U) {
+//   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
 //   std::vector<scalar_type> V(mf_rhs.nb_dof());
 //   getfem::interpolation(mf_u(), mf_rhs, U, V);
 //   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-//     V[i] -= sol_u(mf_rhs.point_of_dof(i));
+//     V[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
 //   cout.precision(16);
 //   cout  << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V)  << endl
 //         << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V)  << endl
@@ -830,9 +830,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       std::vector<scalar_type> UU(mf_enrich.nb_dof()) ;
       std::fill(UU.begin(), UU.end() ,0.) ;
       cout << "exporting the enrichment zone: \n" ;
+      GMM_ASSERT1(!mf_enrich.is_reduced(), "To be adapted");
       for (dal::bv_visitor i(cvlist_in_area) ; !i.finished() ; ++i){ 
-	  for (unsigned int j = 0 ; j < mf_enrich.ind_dof_of_element(i).size() ; ++j )  
-	  UU[mf_enrich.ind_dof_of_element(i)[j]] = 1. ;         
+	  for (unsigned int j = 0 ;
+	       j < mf_enrich.ind_basic_dof_of_element(i).size() ; ++j )  
+	  UU[mf_enrich.ind_basic_dof_of_element(i)[j]] = 1. ;         
       }
       
       cout << "exporting enrichment to " << "enrichment_zone.vtk" << "..\n";
@@ -876,19 +878,20 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
   if (PARAM.int_value("SHOW_NAME_OF_DOF")==1) {  // printing the type of each dof
     unsigned Q = mf_u().get_qdim();
+    GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");  
     for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
       printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
-             mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
+             mf_u().point_of_basic_dof(d)[0], mf_u().point_of_basic_dof(d)[1]);
 
-      const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
+      const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_basic_dof(d);
       for (size_type i=0; i < cvs.size(); ++i) {
         unsigned cv = cvs[i];
         //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
 
         getfem::pfem pf = mf_u().fem_of_element(cv);
         unsigned ld = unsigned(-1);
-        for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
-          if (mf_u().ind_dof_of_element(cv)[dd] == d) {
+        for (unsigned dd = 0; dd < mf_u().nb_basic_dof_of_element(cv); dd += Q) {
+          if (mf_u().ind_basic_dof_of_element(cv)[dd] == d) {
             ld = dd/Q; break;
           }
         }
@@ -1041,7 +1044,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       //       if (M2(d,d) < 1e-7) cout << "  weak mf_u() dof " << d << " @ " << 
       // 	  mf_u().point_of_dof(d) << " M2(d,d) = " << M2(d,d) << "\n";
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
-	cout << "removed : " << mf_u().point_of_dof(d) << "\n";	
+	cout << "removed : " << mf_u().point_of_basic_dof(d) << "\n";	
 	unsigned n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
@@ -1077,7 +1080,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     cout << "SEUIL_FINAL = " << PARAM.real_value("SEUIL_FINAL") << "\n" ;
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL_FINAL")) {
-	cout << "OULALA " << d << " @ " << mf_u().point_of_dof(d) << " : " << M2(d,d) << "\n";	
+	cout << "OULALA " << d << " @ " << mf_u().point_of_basic_dof(d) << " : " << M2(d,d) << "\n";	
         unsigned n = gmm::mat_nrows(H);
 	gmm::resize(H1, n+1, gmm::mat_ncols(H));
 	H1(n, d) = 1;
@@ -1125,28 +1128,30 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	unsigned cpt = 0;
 	if (PARAM.int_value("ENRICHMENT_OPTION") == 3){
 	// affichage des coeffs devant les singularites, avec le raccord integral
-		for (unsigned d=0; d < mf_u().nb_dof(); d += q) {
-			unsigned cv = mf_u().first_convex_of_dof(d) ;
-			getfem::pfem pf = mf_u().fem_of_element(cv);
-			unsigned ld = unsigned(-1);
-			for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += q) {
-			if (mf_u().ind_dof_of_element(cv)[dd] == d) {
-				ld = dd/q; break;
-			}
-			}   
-			if (ld == unsigned(-1)) {
-			cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
-			} 
-			else {
-			if ( is_global_dof_type_bis(pf->dof_types().at(ld)) ){
-				cout << "coeff:" << U[d] << "\n" ;
-				cout << "dof index:" << d << "\n" ;
-				tab_fic[cpt] = U[d] ;
-				ind_sing[cpt] = d ;
-				cpt +=1 ;
-				}
-			}
-		}
+	  GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
+	  
+	  for (unsigned d=0; d < mf_u().nb_dof(); d += q) {
+	    unsigned cv = mf_u().first_convex_of_basic_dof(d) ;
+	    getfem::pfem pf = mf_u().fem_of_element(cv);
+	    unsigned ld = unsigned(-1);
+	    for (unsigned dd = 0; dd < mf_u().nb_basic_dof_of_element(cv); dd += q) {
+	      if (mf_u().ind_basic_dof_of_element(cv)[dd] == d) {
+		ld = dd/q; break;
+	      }
+	    }   
+	    if (ld == unsigned(-1)) {
+	      cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
+	    } 
+	    else {
+	      if ( is_global_dof_type_bis(pf->dof_types().at(ld)) ){
+		cout << "coeff:" << U[d] << "\n" ;
+		cout << "dof index:" << d << "\n" ;
+		tab_fic[cpt] = U[d] ;
+		ind_sing[cpt] = d ;
+		cpt +=1 ;
+	      }
+	    }
+	  }
 	}
 	
 	
@@ -1165,7 +1170,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	cout << "imax = " << imax << endl ;
 	cout << "max = " << max << endl ;
 	if (imax < mf_u().nb_dof())
-	cout << "position de imax = [" << mf_u().point_of_dof(imax)[0] << " ; " << mf_u().point_of_dof(imax)[1] << "\n" ;
+	cout << "position de imax = [" << mf_u().point_of_basic_dof(imax)[0] << " ; " << mf_u().point_of_basic_dof(imax)[1] << "\n" ;
 	as2 = A(ind_sing[1], ind_sing[1])  ;
 	as1s2 = A(ind_sing[0], ind_sing[1])  ;
 	bs1 = b[ind_sing[0]] ;
@@ -1209,11 +1214,11 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	cout << "imax1 = " << imax1 << endl ;
 	cout << "max1 = " << max1 << endl ;
 	if (imax1 < mf_u().nb_dof())
-	cout << "position de imax1 = [" << mf_u().point_of_dof(imax1)[0] << " ; " << mf_u().point_of_dof(imax1)[1] << "\n" ;
+	cout << "position de imax1 = [" << mf_u().point_of_basic_dof(imax1)[0] << " ; " << mf_u().point_of_basic_dof(imax1)[1] << "\n" ;
 	cout << "imax2 = " << imax2 << endl ;
 	cout << "max2 = " << max2 << endl ;
 	if (imax2 < mf_u().nb_dof())
-	cout << "position de imax2 = [" << mf_u().point_of_dof(imax2)[0] << " ; " << mf_u().point_of_dof(imax2)[1] << "\n" ;
+	cout << "position de imax2 = [" << mf_u().point_of_basic_dof(imax2)[0] << " ; " << mf_u().point_of_basic_dof(imax2)[1] << "\n" ;
 	//cout << "X1 = " << gmm::sub_vector(X1, gmm::sub_interval(0, 100)) << "\n" ;
 	//cout << "X2 = " << gmm::sub_vector(X2, gmm::sub_interval(0, 100)) << "\n" ;
 	base_matrix M(2,2) ;

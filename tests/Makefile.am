@@ -1,11 +1,9 @@
 SUBDIRS = meshes
 
 if QHULL
-optprogs = test_mesh_generation test_mesh_im_level_set crack \
-	xfem_dirichlet_demo
+optprogs = test_mesh_generation test_mesh_im_level_set crack
 optpl = $(top_srcdir)/tests/test_mesh_im_level_set.pl \
-        $(top_srcdir)/tests/crack.pl \
-	$(top_srcdir)/tests/xfem_dirichlet_demo.pl
+        $(top_srcdir)/tests/crack.pl
 else
 optprogs =
 optpl = 
@@ -51,8 +49,8 @@ CLEANFILES = \
 	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk \
 	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk \
 	plasticity.meshfem plasticity.coef elasto_static_err.vtk \
-	ii_files/* auto_gmm* dyn*.txt *.sl time FN0 xfem_dirichlet_demo.U \
-	nonlinear_elastostatic.U crack.mesh xfem_dirichlet_demo.vtk cut.mesh
+	ii_files/* auto_gmm* dyn*.txt *.sl time FN0 \
+	nonlinear_elastostatic.U crack.mesh cut.mesh
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 
@@ -85,7 +83,6 @@ if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
 crack_SOURCES = crack.cc
-xfem_dirichlet_demo_SOURCES = xfem_dirichlet_demo.cc
 endif
 dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
@@ -157,8 +154,6 @@ EXTRA_DIST = \
 	test_mat_elem.pl                  \
 	crack.pl                          \
 	crack.param                       \
-	xfem_dirichlet_demo.pl		  \
-	xfem_dirichlet_demo.param	  \
 	laplacian.param                   \
 	test_range_basis.param            \
 	test_range_basis.pl               \

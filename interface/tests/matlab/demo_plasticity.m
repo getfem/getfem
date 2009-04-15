@@ -35,7 +35,7 @@ VM=zeros(1,get(mfdu, 'nbdof'));
 F=[0 -200; 0 -300; 0 0]';
 nbstep = size(F,2);
 
-dd=get(mf0, 'dof_from_cvid');
+dd=get(mf0, 'basic dof from cvid');
 
 for step=1:nbstep,
 
