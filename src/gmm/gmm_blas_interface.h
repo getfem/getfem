@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2008 Yves Renard
+// Copyright (C) 2003-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -29,7 +29,8 @@
 //===========================================================================
 
 /**@file gmm_blas_interface.h
-   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr, Yves Renard <Yves.Renard@insa-lyon.fr>
+   @author  Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr,
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date October 7, 2003.
    @brief gmm interface for fortran BLAS.
 */
