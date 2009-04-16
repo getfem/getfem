@@ -30,6 +30,7 @@
 #include <getfemint_mesh_im.h>
 #include <getfemint_mdbrick.h>
 #include <getfemint_mdstate.h>
+#include <getfemint_models.h>
 #include <getfemint_matelemtype.h>
 #include <getfemint_matelem.h>
 #include <getfemint_pfem.h>
@@ -58,7 +59,7 @@ namespace getfemint {
   const char *name_of_getfemint_class_id(unsigned cid) {
     static const char *cname[GETFEMINT_NB_CLASS] = {
       "gfMesh", "gfMeshFem", "gfMeshIm", "gfMdBrick", "gfMdState",
-      "gfGeoTrans",
+      "gfModel", "gfGeoTrans",
       "gfFem", "gfInteg","gfEltm","gfCvStruct","gfPoly", "gfSlice",
       "gfSpmat", "gfPrecond", "gfLevelSet", "gfMeshLevelSet"
     };
@@ -112,6 +113,7 @@ namespace getfemint {
       (cid != MESHFEM_CLASS_ID && cid != MESHIM_CLASS_ID &&
        cid != MESH_CLASS_ID &&
        cid != MDBRICK_CLASS_ID && cid != MDSTATE_CLASS_ID &&
+       cid != MODEL_CLASS_ID  &&
        cid != SLICE_CLASS_ID && cid != POLY_CLASS_ID &&
        cid != PRECOND_CLASS_ID && cid != GSPARSE_CLASS_ID &&
        cid != LEVELSET_CLASS_ID && cid != MESH_LEVELSET_CLASS_ID);
@@ -296,7 +298,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESH_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mesh(o));
     } else return false;
   }
@@ -306,7 +308,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESHFEM_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mesh_fem(o));
     } else return false;
   }
@@ -316,7 +318,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESHIM_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mesh_im(o));
     } else return false;
   }
@@ -336,8 +338,18 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MDSTATE_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mdstate(o));
+    } else return false;
+  }
+
+  bool
+  mexarg_in::is_model()
+  {
+    id_type id, cid;
+    if (is_object_id(&id, &cid) && cid == MODEL_CLASS_ID) {
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
+      return (object_is_model(o));
     } else return false;
   }
 
@@ -346,7 +358,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == SLICE_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mesh_slice(o));
     } else return false;
   }
@@ -356,7 +368,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == LEVELSET_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_levelset(o));
     } else return false;
   }
@@ -366,7 +378,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESH_LEVELSET_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mesh_levelset(o));
     } else return false;
   }
@@ -376,7 +388,7 @@ namespace getfemint {
   {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == GSPARSE_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_gsparse(o));
     } else return false;
   }
@@ -584,6 +596,20 @@ namespace getfemint {
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
     error_if_nonwritable(o,writeable);
     return object_to_mdstate(o);
+  }
+
+  getfemint_model *
+  mexarg_in::to_getfemint_model(bool writeable)
+  {
+    id_type id, cid;
+    to_object_id(&id,&cid);
+    if (cid != MODEL_CLASS_ID) {
+      THROW_BADARG("argument " << argnum << " should be a model descriptor, "
+		   "its class is " << name_of_getfemint_class_id(cid));
+    }
+    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
+    error_if_nonwritable(o,writeable);
+    return object_to_model(o);
   }
 
   getfemint_mesh_slice *

@@ -22,7 +22,9 @@ def ExceptionsRewrite(d):
     d = string.replace(d, "SLICE:SET('pts'", "SLICE:SET('set_pts'")
     d = string.replace(d, "MESHFEM:SET('qdim'", "MESHFEM:SET('set_qdim'")
     d = string.replace(d, "MESHFEM:SET('fem'", "MESHFEM:SET('set_fem'")
-    d = string.replace(d, "MDSTATE:SET('state'", "MESHFEM:SET('set_state'")
+    d = string.replace(d, "MDSTATE:SET('state'", "MDSTATE:SET('set_state'")
+    d = string.replace(d, "MODEL:SET('state'", "MODEL:SET('set_state'")
+    d = string.replace(d, "MODEL:SET('variable'", "MODEL:SET('set_variable'")
     d = string.replace(d, "MESHIM:SET('integ'", "MESHIM:SET('set_integ'")
     d = re.sub("(MESHFEM:SET\('classical[ _]fem')",
                "MESHFEM:SET('set_classical_fem'", d)
@@ -108,6 +110,7 @@ def SubstituteTypes(d):
                    '@tmf':'MeshFem',
                    '@tbrick':'MdBrick',
                    '@tstate':'MdState',
+                   '@tmodel':'Model',
                    '@teltm':'Eltm',
                    '@tfem':'Fem',
                    '@tgt':'GeoTrans',
@@ -208,6 +211,8 @@ def PythonRewriteDoc(d,indent,subindent,endline):
              'MDBRICK:SET':r'MdBrick.\1(\3)', \
              'MDSTATE:GET':r'MdState.\1(\3)', \
              'MDSTATE:SET':r'MdState.\1(\3)', \
+             'MODEL:GET':r'Model.\1(\3)', \
+             'MODEL:SET':r'Model.\1(\3)', \
              'CVSTRUCT:GET': r"CvStruct.\1(\3)", \
              'GEOTRANS:GET': r"GeoTrans.\1(\3)", \
              'INTEG:GET': r"Integ.\1(\3)", \
@@ -227,6 +232,7 @@ def PythonRewriteDoc(d,indent,subindent,endline):
     d = string.replace(d,'SLICE:INIT','Slice')
     d = string.replace(d,'MDBRICK:INIT','MdBrick')
     d = string.replace(d,'MDSTATE:INIT','MdState')
+    d = string.replace(d,'MODEL:INIT','Model')
     d = string.replace(d,'MESHFEM:INIT','MeshFem')
     d = string.replace(d,'MESHIM:INIT','MeshIm')
     d = string.replace(d,'GEOTRANS:INIT','GeoTrans')
@@ -260,6 +266,8 @@ def MatlabRewriteDoc(d):
              'MDBRICK:SET': r"gf_mdbrick_set(b,'\1'\2", \
              'MDSTATE:GET': r"gf_mdstate_get(mds,'\1'\2", \
              'MDSTATE:SET': r"gf_mdstate_set(mds,'\1'\2", \
+             'MODEL:GET': r"gf_model_get(mds,'\1'\2", \
+             'MODEL:SET': r"gf_model_set(mds,'\1'\2", \
              'CVSTRUCT:GET': r"gf_cvstruct_get(CVS,'\1'\2", \
              'GEOTRANS:GET': r"gf_geotrans_get(CVS,'\1'\2", \
              'INTEG:GET': r"gf_integ_get(IM,'\1'\2", \
@@ -276,6 +284,7 @@ def MatlabRewriteDoc(d):
     d = string.replace(d,'SLICE:INIT','gf_slice')
     d = string.replace(d,'MDBRICK:INIT','gf_mdbrick')
     d = string.replace(d,'MDSTATE:INIT','gf_mdstate')
+    d = string.replace(d,'MODEL:INIT','gf_model')
     d = string.replace(d,'MESHFEM:INIT','gf_mesh_fem')
     d = string.replace(d,'MESHIM:INIT','gf_mesh_im')
     d = string.replace(d,'GEOTRANS:INIT','gf_geotrans')
@@ -511,6 +520,9 @@ fmap = {'gf_mesh.cc':'MESH:INIT',
         'gf_mdstate.cc':'MDSTATE:INIT',
         'gf_mdstate_get.cc':'MDSTATE:GET',
         'gf_mdstate_set.cc':'MDSTATE:SET',
+        'gf_model.cc':'MODEL:INIT',
+        'gf_model_get.cc':'MODEL:GET',
+        'gf_model_set.cc':'MODEL:SET',
         'gf_spmat.cc':'SPMAT:INIT',
         'gf_spmat_get.cc':'SPMAT:GET',
         'gf_spmat_set.cc':'SPMAT:SET',

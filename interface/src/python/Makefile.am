@@ -48,6 +48,9 @@ PSEUDO_MFUNCTIONS = \
 	$(srcdir)/../gf_mdstate.cc \
 	$(srcdir)/../gf_mdstate_get.cc \
 	$(srcdir)/../gf_mdstate_set.cc \
+	$(srcdir)/../gf_model.cc \
+	$(srcdir)/../gf_model_get.cc \
+	$(srcdir)/../gf_model_set.cc \
 	$(srcdir)/../gf_levelset.cc \
 	$(srcdir)/../gf_levelset_get.cc \
 	$(srcdir)/../gf_levelset_set.cc \

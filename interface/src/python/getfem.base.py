@@ -393,6 +393,51 @@ model states.
     #@SET    MDSTATE:SET('compute_tangent_matrix')
     #@SET    MDSTATE:SET('state')
     #@SET    MDSTATE:SET('clear')
+
+
+class Model:
+    """Getfem Model Object.
+
+A model is an object which store all the state variable and the data of a
+model and a list of bricks. A brick is a component of the model, i.e. a
+term wich link some state variables. The model object  includes the global
+tangent matrix, the right hand side and the constraints.
+    """
+    def __init__(self, *args):
+        """General constructor for Model objects.
+There are two sorts of model states, the 'real' and the 'complex'
+model states.
+
+        @INIT MODEL:INIT ('real')
+        @INIT MODEL:INIT ('complex')
+        """
+        generic_constructor(self,'model',*args)
+    def __del__(self):
+        generic_destructor(self,destructible=True)
+    def get(self, *args):
+        return getfem('model_get',self.id, *args)
+    def set(self, *args):
+        return getfem('model_set',self.id, *args)
+    def __str__(self):
+        return self.char()
+    def __repr__(self):
+        return '<getfem.Model %d bytes>' % \
+               (self.memsize(),)
+    #@RDATTR MODEL:GET('is_complex')
+    #@GET    MODEL:GET('tangent_matrix')
+    #@GET    MODEL:GET('state')
+    #@GET    MODEL:GET('rhs')
+    #@GET    MODEL:GET('memsize')
+    #@GET    MODEL:GET('varlist')
+    #@GET    MODEL:GET('variable')
+
+    #@SET    MODEL:SET('state')
+    #@SET    MODEL:SET('variable')
+    #@SET    MODEL:SET('clear')
+    #@SET    MODEL:SET('add fem variable')
+    #@SET    MODEL:SET('add variable')
+    #@SET    MODEL:SET('add fem data')
+    #@SET    MODEL:SET('add data')
     
 class GeoTrans:
     """General function for building descriptors to geometric transformations.
@@ -768,7 +813,7 @@ def util(what, *args):
 
 def factory(id):
     # must be in the same order than enum getfemint_class_id in gfi_array.h
-    t = (Mesh,MeshFem,MeshIm,MdBrick,MdState,GeoTrans,Fem,Integ,Eltm,CvStruct,Poly,Slice,Spmat,Precond,LevelSet)[id.classid]
+    t = (Mesh,MeshFem,MeshIm,MdBrick,MdState,Model,GeoTrans,Fem,Integ,Eltm,CvStruct,Poly,Slice,Spmat,Precond,LevelSet)[id.classid]
     return t(id)
 
 register_python_factory(factory)

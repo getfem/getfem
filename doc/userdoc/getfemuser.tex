@@ -1,4 +1,4 @@
-documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 % allow both latex and PDFlatex compatibility  (from pdfTeX FAQ)
 \usepackage{hyperlatex}
 
@@ -95,7 +95,7 @@ documentclass[11pt,a4paper]{article}
 \T \newcommand{\Rot}{\textrm{curl}}
 \W \newcommand{\Rot}{curl}
 
-\W \newcommand{\gf}{getfem++~}
+\W \newcommand{\gf}{Getfem++~}
 \T \newcommand{\gf}{{\sc Getfem++}\xspace}
 
 \W \newcommand{\newpage}{}
@@ -161,8 +161,6 @@ documentclass[11pt,a4paper]{article}
 }
 
 
-\newcommand{\modules}[1]{}
-% \newcommand{\modules}[1]{#1}
 
 % macros for linking filenames and classnames to the doxygen doc of getfem
 % (i.e. \getfemmeshh \dalbitvector etc.) 
@@ -1983,9 +1981,10 @@ where \cpp{M} is a row matrix which will be filled with the linear map represent
 \index{model bricks}
  Although it is possible to use assembly
 procedures on their own to make your finite element programs, it is
-now possible to use predefined bricks to build up very quickly a
+ possible to use predefined bricks to build up very quickly a
 certain number of models. Most of the bricks are defined in
-\getfemmodelingh .
+\getfemmodelingh.
+Note that the brick system of \gf 3.x will evoluate on \gf 4.x. The new system is describe in section \ref{sec:model}. The system of \gf 3.x is kept for compatibility reasons.
 
 A model brick is basically an object which modifies a global tangent
 matrix and its associated right hand side. Typical modifications are
@@ -1994,8 +1993,6 @@ elasticity, laplacian, \ldots), handling of a set of contraints, Dirichlet
 condition, addition of a source term to the right hand side etc. The
 global tangent matrix and its right hand side are stored in a
 \cpp{model\_state} structure.\\
-
-\modules{CAUTION: The model bricks as they are described in this section are kept for compatibility reason. They are somewhat obsolete since they are now replacecd by the model description and the modules described in the next section. }
 
 \subsection{The model state variable}
 \index{GETFEM!getfem::model\_state} The \getfemmodelstate object is an
@@ -2615,45 +2612,39 @@ The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of 
 
 
 
-
-\modules{
 \section{The model description}
+\label{sec:model}
 \index{model description}
 
-The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined modules which can be assembled to describe a complex situation. A module can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a module is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of modules. An effort as been made in order to facilitate as much as possible the definition of a new module. A module is mainly defined by its contribution in the tangent linear system to be solved.
+This part is a work in progress for future \gf 4.x. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined modules which can be assembled to describe a complex situation. A module can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a module is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of modules. An effort as been made in order to facilitate as much as possible the definition of a new module. A module is mainly defined by its contribution in the tangent linear system to be solved.
 
-This model description is an evolution of the model bricks of previous versions of \gf. Compared to this old system, it is more flexible, more general, allows the coupling of model in a easier way and facilitate the writing of new components.
+This model description is an evolution of the model bricks of previous versions of \gf. Compared to this old system, it is more flexible, more general, allows the coupling of model (multiphysics) in a easier way and facilitate the writing of new components.
 
-The kernel of the model description is contained in the file \cpp{getfem_model.h}. The two main objects are \cpp{model} and \cpp{module}. Let us first describes these two objects.
+The kernel of the model description is contained in the file \cpp{getfem_models.h}. The two main objects are \cpp{model} and \cpp{module}.
 
 
 \subsection{The model object}
 
-The aim of \cpp{model} object, defined in file \cpp{getfem\_model.h}, is to globally describe a PDE model. It mainly contains three lists: a list of reference to \cpp{mesh\_fem} objects, a list of variables (related or not to the \cpp{mesh\_fem} objects) and a list of modules. The role of the \cpp{model} object is to coordinate the module and make them produce the tangent linear system (if it is needed of course, some method may only use the residu).
+The aim of \cpp{model} object, defined in file \cpp{getfem\_models.h}, is to globally describe a PDE model. It mainly contains two lists: a list of variables (related or not to the \cpp{mesh\_fem} objects) and data (also related or not to the \cpp{mesh\_fem} objects) and a list of modules. The role of the \cpp{model} object is to coordinate the module and make them produce a linear system of equations. If the model is linear, this will simply be the linear system of equation on the corresponding dofs. If the model is nonlinear, this will be the tangent linear system. There is two versions of the \cpp{model} object : a real one and complex one.
 
++ how to declare a \cpp{model} object ...
 
-The \cpp{model} object is parametrized by the types of vectors and matrices used. Exemple of declaration
-\begin{cppcode}
-   getfem::model<sparse\_matrix\_type, writable\_sparse\_matrix\_type, vector\_type> my\_model;
-\end{cppcode}
-However, two predefined type can be directly used:
-\begin{cppcode}
-  standard\_real\_model my\_real\_model;
-  standard\_complex\_model my\_complex\_model;
-\end{cppcode}
++ que veux dire variable ... les différent types de variables
+
 
 The main usefull methods on a \cpp{model} object are
 
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-\cpp{m.add\_fem(const mesh\_fem \&mf)} & Add a fem description to the model and return its index. \\ \hline
-\cpp{m.add\_static\_variable(lenght)} & Add a variable of fixed size to the model. It size will not depend of any fem. For instance it could be some multiplier for a fixed number of constraints. \\ \hline
-\cpp{m.add\_fem\_variable(fem\_num)} & Add a variable corresponding to the degrees of freedom of the fem of index \cpp{fem\_num}. \\ \hline
-\cpp{m.add\_related\_variable(const getfem::model\_type::variable \&v)} & Add a variable having a special behavior. It size is computed with a given rule from the size of one or several fems. \\ \hline
-\cpp{m.add\_static\_constraint(lenght)} & Add \cpp{lenght} contraints to the model. The particularity is that constraints will not be added to the tangent system bu will be integrated to a global constraint matrix. \\ \hline
-\cpp{m.add\_module(module *m, i1, i2=-1, i3=-1, i4=-1)} & Add a module which links variables of indices i1, i2, i3 and i4 (the variable is ignored if it is equal to the default value -1). \\ \hline
+\cpp{m.is\_complex()} & A boolean which says if the model deals with real or complex unknowns and data. \\ \hline
+\cpp{add\_fixed\_size\_variable(name, size, niter=1)} & Add a variable of fixed size. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
+\cpp{add\_fixed\_size\_data(name, size, niter=1)} & Add a data of fixed size. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
+\cpp{add\_fem\_variable(name, mf, niter=1)} & Add a variable being the dofs of a finite element method \cpp{mf}. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
+\cpp{add\_fem\_data(name, mf, niter=1)} & Add a data being the dofs of a finite element method \cpp{mf}. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
+\cpp{add\_mult\_on\_region(name, mf, mim, primal\_name, region, niter=1)} & Add a special variable linked to the finite element method \cpp{mf} and being a multiplier for certain contraints (Dirichlet condition for instance) on a primal variable \cpp{primal\_name}. \cpp{mim} is a an obeject of type \cpp{getfem::mesh\_im} which will used to compute a mass matrix in order to select some independent dof of \cpp{mf}. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
+\cpp{real_variable(name, niter=1)} & Gives the access to the vector value of a variable or data. Real version. \\ \hline
+\cpp{complex_variable(name, niter=1)} & Gives the access to the vector value of a variable or data. Complex version. \\ \hline
 \end{ctableau}
 
-+ que veux dire variable ...
 
 + comment assembler le système ...
 
@@ -2661,10 +2652,13 @@ The main usefull methods on a \cpp{model} object are
 
 \subsection{The module object}
 
+... to be done
+
 
 \subsection{How to build a new module}
 
-}
+... to be done
+
 
 \section{Parallelization of \gf}
 

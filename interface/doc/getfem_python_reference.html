@@ -6,7 +6,7 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2963)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2970)</font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py">/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py</a></font></td></tr></table>
     <p><tt>Getfem-interface&nbsp;classes.<br>
@@ -39,6 +39,7 @@ Provides&nbsp;access&nbsp;to&nbsp;the&nbsp;pseudo-objects&nbsp;exported&nbsp;by&
 </font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#Mesh">Mesh</a>
 </font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#MeshFem">MeshFem</a>
 </font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#MeshIm">MeshIm</a>
+</font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#Model">Model</a>
 </font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#Poly">Poly</a>
 </font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#Precond">Precond</a>
 </font></dt><dt><font face="helvetica, arial"><a href="getfem_python_reference.html#Slice">Slice</a>
@@ -1391,7 +1392,15 @@ the&nbsp;convexes&nbsp;which&nbsp;are&nbsp;not&nbsp;crosses&nbsp;by&nbsp;the&nbs
 
 <dl><dt><a name="MeshFem-dof_nodes"><strong>dof_nodes</strong></a>(self, DOFids<font color="#909090">=None</font>)</dt><dd><tt>Deprecated&nbsp;function.&nbsp;Use&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-basic_dof_nodes">basic_dof_nodes</a>()&nbsp;instead.</tt></dd></dl>
 
-<dl><dt><a name="MeshFem-dof_on_region"><strong>dof_on_region</strong></a>(self, Rs)</dt><dd><tt>Deprecated&nbsp;function.&nbsp;Use&nbsp;<a href="#MeshFem">MeshFem</a>.<a href="#MeshFem-basic_dof_on_region">basic_dof_on_region</a>()&nbsp;instead.</tt></dd></dl>
+<dl><dt><a name="MeshFem-dof_on_region"><strong>dof_on_region</strong></a>(self, Rs)</dt><dd><tt>Return&nbsp;the&nbsp;list&nbsp;of&nbsp;dof&nbsp;(after&nbsp;the&nbsp;optional&nbsp;reduction)&nbsp;lying&nbsp;on&nbsp;one&nbsp;of&nbsp;the&nbsp;mesh<br>
+regions&nbsp;listed&nbsp;in&nbsp;`Rs`.&nbsp;More&nbsp;precisely,&nbsp;this&nbsp;function&nbsp;returns&nbsp;the&nbsp;basic&nbsp;dof<br>
+whose&nbsp;support&nbsp;is&nbsp;non-null&nbsp;on&nbsp;one&nbsp;of&nbsp;regions&nbsp;whose&nbsp;#ids&nbsp;are&nbsp;listed&nbsp;in&nbsp;`Rs`<br>
+(note&nbsp;that&nbsp;for&nbsp;boundary&nbsp;regions,&nbsp;some&nbsp;dof&nbsp;nodes&nbsp;may&nbsp;not&nbsp;lie&nbsp;exactly&nbsp;on&nbsp;the<br>
+boundary,&nbsp;for&nbsp;example&nbsp;the&nbsp;dof&nbsp;of&nbsp;Pk(n,0)&nbsp;lies&nbsp;on&nbsp;the&nbsp;center&nbsp;of&nbsp;the&nbsp;convex,&nbsp;but<br>
+the&nbsp;base&nbsp;function&nbsp;in&nbsp;not&nbsp;null&nbsp;on&nbsp;the&nbsp;convex&nbsp;border).&nbsp;For&nbsp;a&nbsp;reduced&nbsp;mesh_fem<br>
+a&nbsp;dof&nbsp;is&nbsp;lying&nbsp;on&nbsp;a&nbsp;region&nbsp;if&nbsp;its&nbsp;potential&nbsp;corresponding&nbsp;shape&nbsp;function&nbsp;is<br>
+nonzero&nbsp;on&nbsp;this&nbsp;region.&nbsp;The&nbsp;extension&nbsp;matrix&nbsp;is&nbsp;used&nbsp;to&nbsp;make&nbsp;the<br>
+correspondance&nbsp;between&nbsp;basic&nbsp;and&nbsp;reduced&nbsp;dofs.</tt></dd></dl>
 
 <dl><dt><a name="MeshFem-dof_partition"><strong>dof_partition</strong></a>(self, DOFP)</dt><dd><tt>Change&nbsp;the&nbsp;'dof_partition'&nbsp;array.<br>
 &nbsp;<br>
@@ -1650,6 +1659,76 @@ handle&nbsp;`im`&nbsp;obtained&nbsp;via&nbsp;<a href="#Integ">Integ</a>('IM_SOME
 suitable&nbsp;integration&nbsp;method&nbsp;with&nbsp;`im_degree`&nbsp;(choosen&nbsp;such&nbsp;that&nbsp;polynomials&nbsp;of<br>
 `degree&nbsp;&lt;=&nbsp;im_degree`&nbsp;are&nbsp;exactly&nbsp;integrated.&nbsp;If&nbsp;`im_degree=-1`,&nbsp;then&nbsp;the<br>
 dummy&nbsp;integration&nbsp;method&nbsp;IM_NONE&nbsp;will&nbsp;be&nbsp;used.)</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Model">class <strong>Model</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Getfem&nbsp;<a href="#Model">Model</a>&nbsp;Object.<br>
+&nbsp;<br>
+A&nbsp;model&nbsp;is&nbsp;an&nbsp;object&nbsp;which&nbsp;store&nbsp;all&nbsp;the&nbsp;state&nbsp;variable&nbsp;and&nbsp;the&nbsp;data&nbsp;of&nbsp;a<br>
+model&nbsp;and&nbsp;a&nbsp;list&nbsp;of&nbsp;bricks.&nbsp;A&nbsp;brick&nbsp;is&nbsp;a&nbsp;component&nbsp;of&nbsp;the&nbsp;model,&nbsp;i.e.&nbsp;a<br>
+term&nbsp;wich&nbsp;link&nbsp;some&nbsp;state&nbsp;variables.&nbsp;The&nbsp;model&nbsp;object&nbsp;&nbsp;includes&nbsp;the&nbsp;global<br>
+tangent&nbsp;matrix,&nbsp;the&nbsp;right&nbsp;hand&nbsp;side&nbsp;and&nbsp;the&nbsp;constraints.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Model-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Model-__init__"><strong>__init__</strong></a>(self, *args)</dt><dd><tt>General&nbsp;constructor&nbsp;for&nbsp;<a href="#Model">Model</a>&nbsp;objects.<br>
+There&nbsp;are&nbsp;two&nbsp;sorts&nbsp;of&nbsp;model&nbsp;states,&nbsp;the&nbsp;'real'&nbsp;and&nbsp;the&nbsp;'complex'<br>
+model&nbsp;states.<br>
+&nbsp;<br>
+*&nbsp;MDS&nbsp;=&nbsp;<a href="#Model">Model</a>('real')<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;model&nbsp;for&nbsp;real&nbsp;unknowns.<br>
+*&nbsp;MDS&nbsp;=&nbsp;<a href="#Model">Model</a>('complex')<br>
+&nbsp;&nbsp;Build&nbsp;a&nbsp;model&nbsp;for&nbsp;complex&nbsp;unknowns.</tt></dd></dl>
+
+<dl><dt><a name="Model-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Model-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Model-add_data"><strong>add_data</strong></a>(self, name, size, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;data&nbsp;to&nbsp;the&nbsp;model&nbsp;of&nbsp;constant&nbsp;size.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;data&nbsp;name&nbsp;and&nbsp;`niter`<br>
+is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;data&nbsp;for&nbsp;time&nbsp;integration&nbsp;schemes.</tt></dd></dl>
+
+<dl><dt><a name="Model-add_fem_data"><strong>add_fem_data</strong></a>(self, name, mf, qdim<font color="#909090">=None</font>, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;data&nbsp;to&nbsp;the&nbsp;model&nbsp;linked&nbsp;to&nbsp;a&nbsp;<a href="#MeshFem">MeshFem</a>.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;data&nbsp;name,&nbsp;`qdim`<br>
+is&nbsp;the&nbsp;optional&nbsp;dimension&nbsp;of&nbsp;the&nbsp;data&nbsp;over&nbsp;the&nbsp;<a href="#MeshFem">MeshFem</a>&nbsp;and&nbsp;`niter`&nbsp;is&nbsp;the<br>
+optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;data&nbsp;for&nbsp;time&nbsp;integration&nbsp;schemes.</tt></dd></dl>
+
+<dl><dt><a name="Model-add_fem_variable"><strong>add_fem_variable</strong></a>(self, name, mf, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;variable&nbsp;to&nbsp;the&nbsp;model&nbsp;linked&nbsp;to&nbsp;a&nbsp;<a href="#MeshFem">MeshFem</a>.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;variable&nbsp;name<br>
+and&nbsp;`niter`&nbsp;is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;variable&nbsp;for&nbsp;time<br>
+integration&nbsp;schemes.</tt></dd></dl>
+
+<dl><dt><a name="Model-add_variable"><strong>add_variable</strong></a>(self, name, size, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;variable&nbsp;to&nbsp;the&nbsp;model&nbsp;of&nbsp;constant&nbsp;size.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;variable&nbsp;name&nbsp;and<br>
+`niter`&nbsp;is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;variable&nbsp;for&nbsp;time&nbsp;integration<br>
+schemes.</tt></dd></dl>
+
+<dl><dt><a name="Model-clear"><strong>clear</strong></a>(self)</dt><dd><tt>Clear&nbsp;the&nbsp;model.</tt></dd></dl>
+
+<dl><dt><a name="Model-get"><strong>get</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Model-is_complex"><strong>is_complex</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;is&nbsp;the&nbsp;model&nbsp;is&nbsp;real,&nbsp;1&nbsp;if&nbsp;it&nbsp;is&nbsp;complex.</tt></dd></dl>
+
+<dl><dt><a name="Model-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;rough&nbsp;approximation&nbsp;of&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the<br>
+model.</tt></dd></dl>
+
+<dl><dt><a name="Model-rhs"><strong>rhs</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;right&nbsp;hand&nbsp;side&nbsp;of&nbsp;the&nbsp;tangent&nbsp;problem.</tt></dd></dl>
+
+<dl><dt><a name="Model-set"><strong>set</strong></a>(self, *args)</dt></dl>
+
+<dl><dt><a name="Model-set_state"><strong>set_state</strong></a>(self, U)</dt><dd><tt>Update&nbsp;the&nbsp;internal&nbsp;state&nbsp;with&nbsp;the&nbsp;vector&nbsp;`U`.</tt></dd></dl>
+
+<dl><dt><a name="Model-set_variable"><strong>set_variable</strong></a>(self, name, U, niter<font color="#909090">=None</font>)</dt><dd><tt>Set&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;variable&nbsp;or&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="Model-state"><strong>state</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;vector&nbsp;of&nbsp;unknowns,&nbsp;which&nbsp;contains&nbsp;the&nbsp;solution&nbsp;after&nbsp;a&nbsp;solve.</tt></dd></dl>
+
+<dl><dt><a name="Model-tangent_matrix"><strong>tangent_matrix</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;stored&nbsp;in&nbsp;the&nbsp;model&nbsp;.</tt></dd></dl>
+
+<dl><dt><a name="Model-variable"><strong>variable</strong></a>(self, name, niter<font color="#909090">=None</font>)</dt><dd><tt>Gives&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;variable&nbsp;or&nbsp;data.</tt></dd></dl>
+
+<dl><dt><a name="Model-varlist"><strong>varlist</strong></a>(self)</dt><dd><tt>print&nbsp;to&nbsp;the&nbsp;output&nbsp;the&nbsp;list&nbsp;of&nbsp;variables&nbsp;and&nbsp;constants&nbsp;of&nbsp;the&nbsp;model.</tt></dd></dl>
 
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -2454,6 +2533,6 @@ Synopsis:&nbsp;util_('warning_level',int&nbsp;level)<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>__version__</strong> = '$Revision: 2963 $'<br>
+<td width="100%"><strong>__version__</strong> = '$Revision: 2970 $'<br>
 <strong>obj_count</strong> = {}</td></tr></table>
 </body></html>

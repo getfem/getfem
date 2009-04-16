@@ -789,6 +789,7 @@ AC_CONFIG_FILES(\
 	interface/src/matlab/@gfPrecond/Makefile \
 	interface/src/matlab/@gfMdBrick/Makefile \
 	interface/src/matlab/@gfMdState/Makefile \
+	interface/src/matlab/@gfModel/Makefile \
 	interface/src/matlab/@gfLevelSet/Makefile \
 	interface/src/matlab/@gfMeshLevelSet/Makefile \
 	interface/src/matlab/private/Makefile \

@@ -19,6 +19,7 @@
 //
 //===========================================================================
 
+#include <iomanip>
 #include "gmm/gmm_range_basis.h"
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_assembling.h"
@@ -26,6 +27,34 @@
 
 namespace getfem {
 
+  void model::var_description::set_size(size_type s) {
+    if (is_complex)
+      complex_value.resize(n_iter);
+    else
+      real_value.resize(n_iter);
+    for (size_type i = 0; i < n_iter; ++i)
+      if (is_complex)
+	complex_value[i].resize(s);
+      else
+	real_value[i].resize(s);
+  }
+
+  bool model::check_name_valitity(const std::string &name, bool assert) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    if (it != variables.end()) {
+      GMM_ASSERT1(!assert, "Variable " << name << " already exists");
+      return false;
+    }
+    bool valid = true;
+    if (name.size() == 0) valid = false;
+    else {
+      if (!isalpha(name[0])) valid = false;
+      for (size_type i = 1; i < name.size(); ++i)
+	if (!(isalnum(name[i]) || name[i] == '_')) valid = false;
+    }
+    GMM_ASSERT1(!assert || valid, "Illegal variable name : " << name);
+    return valid;
+  }
 
   void model::actualize_sizes(void) {
     // mets à jour la taille des variables, les filtres ...
@@ -135,7 +164,7 @@ namespace getfem {
 	  s += it->second.mf->nb_dof();
 	}
       }
-
+      act_size_to_be_done = false;
     }
 
     size_type tot_size = 0;
@@ -159,36 +188,61 @@ namespace getfem {
       gmm::resize(rrhs, tot_size);
     }
   }
+   
 
-  // Faire la doc avec les différents types de variables gérées
-  //   (fem, mult ...)
+  void model::varlist(std::ostream &ost) const {
+    if (variables.size() == 0)
+      ost << "Model with no variable nor data" << endl;
+    else {
+      ost << "List of model variables and data:" << endl;
+      for (VAR_SET::const_iterator it = variables.begin();
+	   it != variables.end(); ++it) {
+	if (it->second.is_variable) ost << "Variable ";
+	else ost << "Data     ";
+	ost << std::setw(20) << std::left << it->first;
+	if (it->second.n_iter == 1)
+	  ost << " 1 copy   ";
+	else 
+	  ost << std::setw(2) << std::right << it->second.n_iter
+	      << " copies ";
+	if (it->second.is_fem_dofs) ost << "fem dependant ";
+	else ost << "constant size ";
+	size_type d = sizeof(scalar_type);
+	if (is_complex()) d *= 2;
+	ost << std::setw(8) << std::right << it->second.size() * d
+	    << " bytes.";
+	ost << endl;
+      }
+    }
+  }
 
-  // gérer les dépendances entre l'objet et les mesh_fem, mesh_im
-  //    : si un disparaît, l'objet est invalidé ...
 
   void model::add_fixed_size_variable(const std::string &name, size_type size,
-				      size_type niter, bool is_complex) {
-    variables[name] = var_description(true, is_complex, false, niter);
+				      size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(true, is_complex(), false, niter);
     variables[name].set_size(size);
   }
   
-  void model::add_fixed_size_constant(const std::string &name, size_type size,
-				      size_type niter, bool is_complex) {
-    variables[name] = var_description(false, is_complex, false, niter);
+  void model::add_fixed_size_data(const std::string &name, size_type size,
+				      size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(false, is_complex(), false, niter);
     variables[name].set_size(size);
   }
 
   void model::add_fem_variable(const std::string &name, const mesh_fem &mf,
-			       size_type niter, bool is_complex) {
-    variables[name] = var_description(true, is_complex, true, niter,
+			       size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(true, is_complex(), true, niter,
 				      VDESCRFILTER_NO, &mf);
     variables[name].set_size(mf.nb_dof());
   }
   
-  void model::add_fem_constant(const std::string &name, const mesh_fem &mf,
-			       dim_type qdim, size_type niter,
-			       bool is_complex) {
-    variables[name] = var_description(false, is_complex, true, niter,
+  void model::add_fem_data(const std::string &name, const mesh_fem &mf,
+			       dim_type qdim, size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(false, is_complex(), true, niter,
 				      VDESCRFILTER_NO, &mf, 0, 0, qdim);
     variables[name].set_size(mf.nb_dof()*qdim);
   }
@@ -196,13 +250,55 @@ namespace getfem {
   void model::add_mult_on_region(const std::string &name, const mesh_fem &mf,
 				 const mesh_im &mim,
 				 const std::string &primal_name, int region,
-				 size_type niter, bool is_complex) {
-    variables[name] = var_description(true, is_complex, true, niter,
+				 size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(true, is_complex(), true, niter,
 				      VDESCRFILTER_INFSUP, &mf, &mim, region,
 				      1, primal_name);
     variables[name].set_size(mf.nb_dof());
+    act_size_to_be_done = true;
   }
   
+  const model_real_plain_vector &
+  model::real_variable(const std::string &name, size_type niter) const {
+    GMM_ASSERT1(!complex_version, "This model is a complex one");
+    // context_check(); if (act_size_to_be_done) actualize_sizes();
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    return it->second.real_value[niter];
+  }
+  
+  const model_complex_plain_vector &
+  model::complex_variable(const std::string &name, size_type niter) const {
+    GMM_ASSERT1(complex_version, "This model is a real one");
+    // context_check(); if (act_size_to_be_done) actualize_sizes();
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    return it->second.complex_value[niter];    
+  }
+
+  model_real_plain_vector &
+  model::real_variable(const std::string &name, size_type niter) {
+    GMM_ASSERT1(!complex_version, "This model is a complex one");
+    context_check(); if (act_size_to_be_done) actualize_sizes();
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    return it->second.real_value[niter];
+  }
+  
+  model_complex_plain_vector &
+  model::complex_variable(const std::string &name, size_type niter) {
+    GMM_ASSERT1(complex_version, "This model is a real one");
+    context_check(); if (act_size_to_be_done) actualize_sizes();
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    return it->second.complex_value[niter];    
+  }
+ 
 
 }  /* end of namespace getfem.                                             */
 

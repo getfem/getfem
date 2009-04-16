@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Julien Pommier.
+// Copyright (C) 2005-2009 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -28,8 +28,8 @@
 //
 //===========================================================================
 
-/**\file getfemint_mdbrick.h
-   \brief getfem::mdbrick_abstract (and derivatives) interface
+/**\file getfemint_mdstate.h
+   \brief getfem::model_state interface
 */
 
 #include <getfemint_std.h>

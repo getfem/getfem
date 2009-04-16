@@ -1,4 +1,4 @@
-SUBDIRS = @gfCvStruct @gfEltm @gfFem @gfGeoTrans @gfInteg @gfMesh @gfMeshFem @gfMeshIm @gfSpmat @gfPrecond @gfSlice @gfMdBrick @gfMdState @gfLevelSet @gfMeshLevelSet private
+SUBDIRS = @gfCvStruct @gfEltm @gfFem @gfGeoTrans @gfInteg @gfMesh @gfMeshFem @gfMeshIm @gfSpmat @gfPrecond @gfSlice @gfMdBrick @gfMdState @gfModel @gfLevelSet @gfMeshLevelSet private
 
 RPC_INC_DIR=@RPC_INC_DIR@
 
@@ -24,6 +24,9 @@ PSEUDO_MFUNCTIONS = \
 	gf_mdstate.cc \
 	gf_mdstate_get.cc \
 	gf_mdstate_set.cc \
+	gf_model.cc \
+	gf_model_get.cc \
+	gf_model_set.cc \
 	gf_slice.cc \
 	gf_slice_get.cc \
 	gf_slice_set.cc \

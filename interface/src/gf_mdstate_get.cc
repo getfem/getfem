@@ -38,6 +38,7 @@ using namespace getfemint;
   } else {								\
     gf_cplx_sparse_by_col M(gmm::mat_nrows(md->cplx_mdstate().WHAT()),	\
 			    gmm::mat_ncols(md->cplx_mdstate().WHAT())); \
+    gmm::copy(md->cplx_mdstate().WHAT(), M);				\
     out.pop().from_sparse(M);						\
   }
 

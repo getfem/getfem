@@ -175,6 +175,7 @@ namespace getfem {
     typedef tab_scal_to_vect<mesh::ind_pt_face_ct> ind_dof_face_ct;
 
     void update_from_context(void) const;
+
     gmm::uint64_type version_number(void) const
     { context_check(); return v_num; }
 

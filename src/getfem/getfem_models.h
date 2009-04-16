@@ -69,6 +69,7 @@ namespace getfem {
     model_complex_plain_vector cstate;
     model_real_plain_vector rrhs;
     model_complex_plain_vector crhs;
+    mutable bool act_size_to_be_done;
 
     // Variables and parameters of the model
 
@@ -134,17 +135,16 @@ namespace getfem {
       // a bien été initialisée avec la bonne taille par actualize_sizes.
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
-      void set_size(size_type s) {
-	for (size_type i = 0; i < n_iter; ++i)
-	  if (is_complex) complex_value[i].resize(s);
-	  else real_value[i].resize(s);
-      }
+      void set_size(size_type s);
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
     VAR_SET variables;
 
     void actualize_sizes(void);
+    bool check_name_valitity(const std::string &name,
+			     bool assert = true) const;
+
 
     // Faire la doc avec les différents types de variables gérées
     //   (fem, mult ...)
@@ -165,59 +165,137 @@ namespace getfem {
 
 
 
-
-
-    void init(void) { complex_version = false; }
+    void init(void) { complex_version = false; act_size_to_be_done = false; }
 
   public :
+
+    // gerer aussi l'actualisation des mult qui n'est pas fait au début 
+    // état du modèle -> actualize à faire ...
+    void update_from_context(void) const {  act_size_to_be_done = true; };
     
-    // interface for state variables
+    /** Boolean which says if the model deals with real or complex unknowns
+	and data. */
+    bool is_complex(void) const { return complex_version; }
 
-    bool is_complex_version(void) const { return complex_version; }
-
-
+    /** Add a fixed size variable to the model. niter is the number of version
+	of the variable stored, for time integration schemes. */
     void add_fixed_size_variable(const std::string &name, size_type size,
-				 size_type niter = 1, bool is_complex = false);
+				 size_type niter = 1);
 
-    void add_fixed_size_constant(const std::string &name, size_type size,
-				 size_type niter = 1, bool is_complex = false);
+    /** Add a fixed size data to the model. niter is the number of version
+	of the data stored, for time integration schemes. */
+    void add_fixed_size_data(const std::string &name, size_type size,
+				 size_type niter = 1);
 
+    /** Add a variable being the dofs of a finite element method to the model.
+	niter is the number of version of the variable stored, for time
+	integration schemes. */
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
-			  size_type niter = 1, bool is_complex = false);
+			  size_type niter = 1);
 
-    void add_fem_constant(const std::string &name, const mesh_fem &mf,
-			  dim_type qdim = 1, size_type niter = 1,
-			  bool is_complex = false);
+    /** Add a data being the dofs of a finite element method to the model.
+	niter is the number of version of the data stored, for time
+	integration schemes. */
+     void add_fem_data(const std::string &name, const mesh_fem &mf,
+			  dim_type qdim = 1, size_type niter = 1);
     
+    /** Add a particular variable linked to a fem beeing a multiplier with
+	respect to a primal variable. The dof will be filtered with a mass
+	matrix to retain only linearly independant constraints on the primal
+	variable. niter is the number of version of the data stored, for time
+	integration schemes. */
     void add_mult_on_region(const std::string &name, const mesh_fem &mf,
 			    const mesh_im &mim,
 			    const std::string &primal_name, int region,
-			    size_type niter = 1, bool is_complex = false);
+			    size_type niter = 1);
 
+    /** Gives the access to the vector value of a variable. For the real
+	version. */
+    const model_real_plain_vector &
+    real_variable(const std::string &name, size_type niter = 1) const;
 
+    /** Gives the access to the vector value of a variable. For the complex
+	version. */
+    const model_complex_plain_vector &
+    complex_variable(const std::string &name, size_type niter = 1) const;
+
+    /** Gives the access to the vector value of a variable. For the real
+	version. */
+    model_real_plain_vector &
+    real_variable(const std::string &name, size_type niter = 1);
+
+    /** Gives the access to the vector value of a variable. For the complex
+	version. */
+    model_complex_plain_vector &
+    complex_variable(const std::string &name, size_type niter = 1);
+
+    /** Gives the access to the tangent matrix. For the real version. */
     const model_real_sparse_matrix &real_tangent_matrix() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
       return rTM;
     }
     
+    /** Gives the access to the tangent matrix. For the complex version. */
     const model_complex_sparse_matrix &complex_tangent_matrix() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
       return cTM;
     }
     
+    /** Gives the access to the right hand side of the tangent linear system.
+	For the real version. */
     const model_real_plain_vector &real_rhs() const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
       return rrhs;
     }
     
+    /** Gives the access to the right hand side of the tangent linear system.
+	For the complex version. */
     const model_complex_plain_vector &complex_rhs() const {
       GMM_ASSERT1(complex_version, "This model is a real one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
       return crhs;
     }
 
+    const model_real_plain_vector &real_state() const {
+      GMM_ASSERT1(!complex_version, "This model is a complex one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      return rstate;
+    }
+    
+    const model_complex_plain_vector &complex_state() const {
+      GMM_ASSERT1(complex_version, "This model is a real one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      return cstate;
+    }
 
+    model_real_plain_vector &real_state() {
+      GMM_ASSERT1(!complex_version, "This model is a complex one");
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      return rstate;
+    }
+    
+    model_complex_plain_vector &complex_state() {
+      GMM_ASSERT1(complex_version, "This model is a real one");
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      return cstate;
+    }
 
-    model(void) { init(); }
+    /** List the model variables and constant */
+    void varlist(std::ostream &ost) const;
+
+    void clear(void) {
+      variables.clear();
+      rTM = model_real_sparse_matrix();
+      cTM = model_complex_sparse_matrix();
+      rstate = rrhs = model_real_plain_vector();
+      cstate = crhs = model_complex_plain_vector();
+    }
+
+    model(bool comp_version = false)
+    { init(); complex_version = comp_version; }
 
   };
 

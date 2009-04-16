@@ -32,6 +32,9 @@ PSEUDO_MFUNCTIONS = \
 	gf_mdstate.cc \
 	gf_mdstate_get.cc \
 	gf_mdstate_set.cc \
+	gf_model.cc \
+	gf_model_get.cc \
+	gf_model_set.cc \
 	gf_eltm.cc \
 	gf_mesh.cc \
 	gf_mesh_set.cc \
@@ -89,6 +92,7 @@ libgetfemint_la_SOURCES = \
 	getfemint_mdbrick.h \
 	getfemint_mdbrick.cc \
 	getfemint_mdstate.h \
+	getfemint_models.h \
 	getfemint_object.h \
 	getfemint_pgt.h \
 	getfemint_workspace.h \

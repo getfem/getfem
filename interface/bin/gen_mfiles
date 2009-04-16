@@ -13,6 +13,7 @@ rlist=['gfCvStruct',
        'gfInteg',
        'gfMdBrick',
        'gfMdState',
+       'gfModel',
        'gfMesh',
        'gfMeshFem',
        'gfMeshIm',
@@ -36,6 +37,8 @@ for i in rlist:
         mname = 'gf_mdbrick';
     elif (i == 'gfMdState'):
         mname = 'gf_mdstate'
+    elif (i == 'gfModel'):
+        mname = 'gf_model'
     elif (i == 'gfLevelSet'):
         mname = 'gf_levelset'
     elif (i == 'gfMeshLevelSet'):

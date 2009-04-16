@@ -56,6 +56,7 @@ namespace getfem {
 	    ->set_classical_finite_element(i, auto_add_elt_K);
       }
     }
+    if (!dof_enumeration_made) enumerate_dof();
     v_num = v_num_update = act_counter();
   }
   

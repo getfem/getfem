@@ -135,6 +135,7 @@ colorlinks=true,pdfauthor={Julien Pommier},urlcolor=blue]{hyperref}
 \newcommand{\mim}{mesh im\xspace}
 \newcommand{\mdbrick}{mdbrick\xspace}
 \newcommand{\mdstate}{mdstate\xspace}
+\newcommand{\model}{model\xspace}
 \newcommand{\slc}{mesh slice\xspace}
 \newcommand{\spmat}{sparse matrix\xspace}
 \newcommand{\precond}{preconditioner\xspace}
@@ -155,6 +156,7 @@ colorlinks=true,pdfauthor={Julien Pommier},urlcolor=blue]{hyperref}
 \newcommand{\tmf}{\vartype{mesh\_fem}\xspace}
 \newcommand{\tmim}{\vartype{mesh\_im}\xspace}
 \newcommand{\tmdstate}{\vartype{mdstate}\xspace}
+\newcommand{\tmodel}{\vartype{model}\xspace}
 \newcommand{\tmdbrick}{\vartype{mdbrick}\xspace}
 \newcommand{\tslc}{\vartype{mesh\_slice}\xspace}
 \newcommand{\tfem}{\vartype{fem}\xspace}
@@ -494,6 +496,9 @@ a quick way to obtain the list of getfem functions).
 ##gf\_mdstate         & create a ``model state'' \NEW\\
 ##gf\_mdstate\_get         & retrieve information from a \mdstate object.\\
 ##gf\_mdstate\_set         & modify a \mdstate object.\\
+##gf\_model           & create a ``model'' object \NEW\\
+##gf\_model\_get           & retrieve information from a \model object.\\
+##gf\_model\_set           & modify a \model object.\\
 ##gf\_plot\_mesh        & plotting of mesh\\
 ##gf\_plot            & plotting of 2D and 3D fields\\
 ##gf\_plot\_1D          & plotting of 1D fields\\
@@ -528,7 +533,8 @@ a quick way to obtain the list of getfem functions).
   assigned an integration method. Created with  ##gf\_mesh\_im.\\
   \textit{MESHSLICE}\index{slice}: object linked to a mesh, very similar to a P1-discontinuous \mf. Used for fast interpolation and plotting.\\
    \textit{MDBRICK}\index{mdbrick}: ``model brick'' , an abstraction of a part of solver (for example, the part which build the tangent matrix, the part which handles the dirichlet conditions, etc.). These objects are stacked to build a complete solver for a wide variety of problems. They typically use a number of \mf, \mim etc.\\
-   \textit{MDSTATE}\index{mdstate}: ``model state'', holds the global data for a stack of mdbricks (global tangent matrix, right hand side etc.).
+   \textit{MDSTATE}\index{mdstate}: ``model state'', holds the global data for a stack of mdbricks (global tangent matrix, right hand side etc.). 
+   \textit{MODEL}\index{model}: ``model'', holds the global data, variables and description of a model. Evolution of ``model state'' object for 4.0 version of \gf.
 \T \end{minipage}
 \T \end{center}
 \caption{\Gfi objects hierarchy}\label{fig:hierarchy}
@@ -2665,46 +2671,46 @@ mds=gf_mdstate('complex')@@
 Query information on a \tmdstate \index{mdstate} object @@mds@@.
 \end{purpose}
 \begin{synopsis}
-@@gf_mdstate_get('is_complex')
-gf_mdstate_get('tangent_matrix')
-gf_mdstate_get('constraints_matrix')
-gf_mdstate_get('reduced_tangent_matrix')
-gf_mdstate_get('constraints_nullspace')
-gf_mdstate_get('state')
-gf_mdstate_get('residual')
-gf_mdstate_get('reduced_residual')
-gf_mdstate_get('unreduce', \tvec U)
-gf_mdstate_get('memsize')@@
+@@gf_mdstate_get(mds,'is_complex')
+gf_mdstate_get(mds,'tangent_matrix')
+gf_mdstate_get(mds,'constraints_matrix')
+gf_mdstate_get(mds,'reduced_tangent_matrix')
+gf_mdstate_get(mds,'constraints_nullspace')
+gf_mdstate_get(mds,'state')
+gf_mdstate_get(mds,'residual')
+gf_mdstate_get(mds,'reduced_residual')
+gf_mdstate_get(mds,'unreduce', \tvec U)
+gf_mdstate_get(mds,'memsize')@@
 \end{synopsis}
 \begin{cmddescription}
-\sep{@@gf_mdstate_get('is_complex')@@} :
+\sep{@@gf_mdstate_get(mds,'is_complex')@@} :
 return 0 if the model state is real, 1 if it is complex.
 
-\sep{@@gf_mdstate_get('tangent_matrix')@@} :
+\sep{@@gf_mdstate_get(mds,'tangent_matrix')@@} :
 return the tangent matrix stored in the model state.
 
-\sep{@@gf_mdstate_get('constraints_matrix')@@} :
+\sep{@@gf_mdstate_get(mds,'constraints_matrix')@@} :
 return the constraints matrix stored in the model state.
 
-\sep{@@gf_mdstate_get('reduced_tangent_matrix')@@} : 
+\sep{@@gf_mdstate_get(mds,'reduced_tangent_matrix')@@} : 
   return the reduced tangent matrix (i.e. the tangent matrix after
   elimination of the constraints). 
 
-\sep{@@gf_mdstate_get('constraints_nullspace')@@} :
+\sep{@@gf_mdstate_get(mds,'constraints_nullspace')@@} :
 return the nullspace of the constraints matrix.
 
-\sep{@@gf_mdstate_get('state')@@} :
+\sep{@@gf_mdstate_get(mds,'state')@@} :
 return the vector of unknowns, which contains the solution after @@gf_mdbrick_get('solve')@@.
 
-\sep{@@gf_mdstate_get('residual')@@} :
+\sep{@@gf_mdstate_get(mds,'residual')@@} :
 return the residual.
 
-\sep{@@gf_mdstate_get('reduced_residual')@@} :
+\sep{@@gf_mdstate_get(mds,'reduced_residual')@@} :
 return the residual on the reduced system.
-\sep{@@gf_mdstate_get('unreduce', U)@@} :
+\sep{@@gf_mdstate_get(mds,'unreduce', U)@@} :
 reinsert the constraint eliminated from the system.
 
-\sep{@@gf_mdstate_get('memsize')@@} :
+\sep{@@gf_mdstate_get(mds,'memsize')@@} :
 return the amount of memory (in bytes) used by the model state.
 \end{cmddescription}
 \newpage
@@ -2741,6 +2747,108 @@ update the internal state with the vector U.
 
 \sep{@@gf_mdstate_set(mds,'clear')@@} :
 clear the model state.
+\end{cmddescription}
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%% GF_MODEL
+\subsection{gf\_model}
+\begin{purpose}
+\hypertarget{gfmodel}
+General constructor for \tmodel objects. Return a \gf handle 
+ to the newly created \tmodel object\index{model}.
+\end{purpose}
+\begin{synopsis}
+@@mds=gf_model('real')
+mds=gf_model('complex')@@
+\end{synopsis}
+\begin{cmddescription}
+  \gf version 4.0 : ``Model'' variables store the variables, the data and the description of a model. This includes the global tangent matrix, the right hand side
+  and the constraints. There are two sorts of model, the
+  ``real'' and the ``complex'' models.
+\end{cmddescription}
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%% GF_MODEL_GET
+\subsection{gf\_model_get}
+\begin{purpose}
+\hypertarget{gfmodelget}
+Query information on a \tmodel \index{model} object @@md@@.
+\end{purpose}
+\begin{synopsis}
+@@gf_model_get(md,'is_complex')
+gf_model_get(md,'tangent_matrix')
+gf_model_get(md,'state')
+gf_model_get(md,'rhs')
+gf_model_get(md,'varlist')
+gf_model_get(md,'variable')
+gf_model_get(md,'memsize')@@
+\end{synopsis}
+\begin{cmddescription}
+\sep{@@gf_model_get(md,'is_complex')@@} :
+return 0 if the model  is real, 1 if it is complex.
+
+\sep{@@gf_model_get(md,'tangent_matrix')@@} :
+return the tangent matrix stored in the model.
+
+\sep{@@gf_model_get(md,'state')@@} :
+return the vector of unknowns, which contains the solution after a solve.
+
+\sep{@@gf_model_get(md,'rhs')@@} :
+return the right hand side of the tangent problem.
+
+\sep{@@gf_model_get(md,'varlist')@@} :
+print to the output the list of variables and data of the model.
+
+\sep{@@gf_model_get(md,'variable', \tstr name[, \tint niter])@@} :
+return the vector value of the variable `name`. 
+
+\sep{@@gf_model_get(md,'memsize')@@} :
+return the amount of memory (in bytes) used by the model state.
+\end{cmddescription}
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%% GF_MODEL_SET
+\subsection{gf\_model_set}
+\begin{purpose}
+\hypertarget{gfmodelSet}
+Modify a model state \index{model} object @@md@@.
+\end{purpose}
+\begin{synopsis}
+@@
+gf_model_set(md,'state')
+gf_model_set(md,'variable')
+gf_model_set(md,'clear')
+gf_model_set(md,'add fem variable')
+gf_model_set(md,'add variable')
+gf_model_set(md,'add fem data')
+gf_model_set(md,'add data')@@
+\end{synopsis}
+\begin{cmddescription}
+\sep{@@gf_model_set(mds,'state', \tvec U)@@} :
+update the internal state with the vector @@U@@.
+
+\sep{@@gf_model_set(mds,'variable', \tvec U[, \tint niter])@@} :
+update the value vector of a variable with @@U@@.
+
+\\sep{@@gf_model_set(md,'clear')@@} :
+clear the model.
+
+\sep{@@gf_model_set(md,'add fem variable', \tstr name, \tmf mf[, \tint niter])@@} :
+Add a variable to the model linked to a \tmf. @@name@@ is the variable name
+    and @@niter@@ is the optional number of copy of the variable for time
+    integration schemes.
+
+\sep{@@gf_model_set(md,'add variable', \tstr name, \tint size[, \tint niter])@@} :
+Add a fixed size variable to the model. @@name@@ is the variable name, @@size@@ is the fixed size and @@niter@@ is the optional number of copy of the variable for time integration schemes.
+
+\sep{@@gf_model_set(md,'add fem data', \tstr name, \tmf mf[, \tint niter])@@} :
+Add a data to the model linked to a \tmf. @@name@@ is the data name
+    and @@niter@@ is the optional number of copy of the data for time
+    integration schemes.
+
+\sep{@@gf_model_set(md,'add variable', \tstr name, \tint size[, \tint niter])@@} :
+Add a fixed size data to the model. @@name@@ is the data name, @@size@@ is the fixed size and @@niter@@ is the optional number of copy of the data for time integration schemes.
 \end{cmddescription}
 \newpage
 
@@ -4068,6 +4176,7 @@ Avalaible object types are \hypertarget{gfCvStruct}gfCvStruct,
 \hypertarget{gfMeshIm}gfMeshIm, 
 \hypertarget{gfMdBrick}gfMdBrick, 
 \hypertarget{gfMdState}gfMdState, 
+\hypertarget{gfModel}gfModel, 
 \hypertarget{gfSpmat}gfSpmat, 
 \hypertarget{gfPrecond}gfPrecond, 
 \hypertarget{gfSlice}and gfSlice.

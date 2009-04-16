@@ -42,7 +42,7 @@
 
 /* remember to update also the list in getfem.base.py !! */
 typedef enum { MESH_CLASS_ID, MESHFEM_CLASS_ID, MESHIM_CLASS_ID, 
-	       MDBRICK_CLASS_ID, MDSTATE_CLASS_ID, 
+	       MDBRICK_CLASS_ID, MDSTATE_CLASS_ID, MODEL_CLASS_ID, 
 	       GEOTRANS_CLASS_ID, 
 	       FEM_CLASS_ID, INTEG_CLASS_ID, 
 	       ELTM_CLASS_ID, CVSTRUCT_CLASS_ID,

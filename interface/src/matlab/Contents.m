@@ -25,6 +25,11 @@
 %     gf_mdstate_get
 %     gf_mdstate_set
 %
+%   Model objects
+%     gf_model
+%     gf_model_get
+%     gf_model_set
+%
 %   Slices objects
 %     gf_slice
 %     gf_slice_get

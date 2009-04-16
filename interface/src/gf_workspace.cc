@@ -59,7 +59,7 @@ do_stat(id_type wid) {
 	subclassname = "(" + dynamic_cast<getfemint_mdbrick*>(*it)->sub_class() + ")";
       infomsg() << " ID" << std::setw(4) << (*it)->get_id() << " " 
 		<< std::setw(14) << name_of_getfemint_class_id((*it)->class_id())
-	        << std::setw(30) << subclassname 
+	        << std::setw(20) << subclassname 
 		<< "   " << std::setw(9) << (*it)->memsize() << " bytes";
       if ((*it)->is_static()) infomsg() << " * "; else infomsg() << "   ";
       if ((*it)->is_const()) infomsg() << "Const"; else infomsg() << "     ";

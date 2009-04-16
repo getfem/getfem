@@ -95,6 +95,7 @@ namespace getfemint
   class getfemint_mesh_im;
   class getfemint_mdbrick;
   class getfemint_mdstate;
+  class getfemint_model;
   class getfemint_mesh_slice;
   class getfemint_precond;
   class getfemint_gsparse;
@@ -396,6 +397,7 @@ namespace getfemint {
     bool                        is_mesh_im();
     bool                        is_mdbrick();
     bool                        is_mdstate();
+    bool                        is_model();
     bool                        is_mesh_slice();
     bool                        is_levelset();
     bool                        is_mesh_levelset();
@@ -424,6 +426,7 @@ namespace getfemint {
     getfemint_mesh_im *         to_getfemint_mesh_im(bool writeable=false);
     getfemint_mdbrick *         to_getfemint_mdbrick(bool writeable=false);
     getfemint_mdstate *         to_getfemint_mdstate(bool writeable=false);
+    getfemint_model *           to_getfemint_model(bool writeable=false);
     getfem::mesh *       to_mesh();
     getfemint_mesh_slice *      to_getfemint_mesh_slice(bool writeable=false);
     getfemint_levelset *        to_getfemint_levelset(bool writeable=false);
