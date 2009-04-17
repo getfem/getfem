@@ -745,7 +745,7 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::vector<unsigned> cvlst;
     std::vector<short> facelst;
 
-    dal::bit_vector rlst = in.pop().to_bit_vector();
+    dal::bit_vector rlst = in.pop().to_bit_vector(0,0);
 
     for (dal::bv_visitor rnum(rlst); !rnum.finished(); ++rnum) {
       if (pmesh->regions_index().is_in(rnum)) {

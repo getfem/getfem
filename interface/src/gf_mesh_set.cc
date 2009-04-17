@@ -249,7 +249,7 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@SET MESH:SET('delete region',@ivec RIDs)
     Remove the regions whose #ids are listed in `RIDs`@*/
     dal::bit_vector lst = in.pop().to_bit_vector(&pmesh->regions_index(),0);
-    pmesh->sup_region(1);
+    // pmesh->sup_region(1); ??
     for (dal::bv_visitor b(lst); !b.finished(); ++b)
       pmesh->sup_region(b);
   } else if (check_cmd(cmd, "merge", in, out, 1, 1, 0, 0)) {

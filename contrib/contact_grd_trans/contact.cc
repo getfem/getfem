@@ -368,8 +368,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
     
     /* let the default non-linear solve (Newton) do its job */
 
-    
-    
     gmm::default_newton_line_search ls(size_type(-1), 5.0/3.0,
 				       1.0/10.0, 5.0/10.0, 3.0);
     getfem::standard_solve(MS, final_model, iter,
@@ -457,10 +455,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
    ELAS.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
    gmm::vecsave(datafilename + s + ".VM",VM);
    
-
-   
-     gmm::copy(U, U0);   
-        cout << "end of Step n° " << step+1 << " / " << nb_step << endl;
+   gmm::copy(U, U0);   
+   cout << "end of Step n° " << step+1 << " / " << nb_step << endl;
 	
 	
 // 	if (max[step]> Fmax)
