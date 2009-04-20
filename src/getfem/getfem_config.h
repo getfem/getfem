@@ -99,8 +99,9 @@
   A @c mesh_fem can be used to approximate scalar fields (heat, pression,
   ..), or vector fields (displacement, electric field, ..). A @c mesh_im
   will be used to perform numerical integrations on these fields.
-  Although Getfem++ supports vector FEMs, all of the FEM currently
-  available are scalar (hopefully this will change soon). Of course,
+  Although Getfem++ supports vector FEMs, intrinsic vector FEMs are
+  essentially used in mixed methods (for instance Raviart-Thomas element).
+  Most of the FEM currently available are scalar. Of course,
   these scalar FEMs can be used to approximate each component of a
   vector field. This is done by setting the Qdim of the mesh_fem to
   the dimension of the vector field (i.e. Qdim=1 for scalar field,
