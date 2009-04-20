@@ -2778,9 +2778,9 @@ Query information on a \tmodel \index{model} object @@md@@.
 \begin{synopsis}
 @@gf_model_get(md,'is_complex')
 gf_model_get(md,'tangent_matrix')
-gf_model_get(md,'state')
 gf_model_get(md,'rhs')
-gf_model_get(md,'varlist')
+gf_model_get(md,'listvar')
+gf_model_get(md,'listbricks')
 gf_model_get(md,'variable')
 gf_model_get(md,'memsize')@@
 \end{synopsis}
@@ -2791,14 +2791,14 @@ return 0 if the model  is real, 1 if it is complex.
 \sep{@@gf_model_get(md,'tangent_matrix')@@} :
 return the tangent matrix stored in the model.
 
-\sep{@@gf_model_get(md,'state')@@} :
-return the vector of unknowns, which contains the solution after a solve.
-
 \sep{@@gf_model_get(md,'rhs')@@} :
 return the right hand side of the tangent problem.
 
-\sep{@@gf_model_get(md,'varlist')@@} :
+\sep{@@gf_model_get(md,'listvar')@@} :
 print to the output the list of variables and data of the model.
+
+\sep{@@gf_model_get(md,'listbricks')@@} :
+print to the output the list of bricks of the model.
 
 \sep{@@gf_model_get(md,'variable', \tstr name[, \tint niter])@@} :
 return the vector value of the variable `name`. 
@@ -2816,7 +2816,6 @@ Modify a model state \index{model} object @@md@@.
 \end{purpose}
 \begin{synopsis}
 @@
-gf_model_set(md,'state')
 gf_model_set(md,'variable')
 gf_model_set(md,'clear')
 gf_model_set(md,'add fem variable')
@@ -2825,9 +2824,6 @@ gf_model_set(md,'add fem data')
 gf_model_set(md,'add data')@@
 \end{synopsis}
 \begin{cmddescription}
-\sep{@@gf_model_set(mds,'state', \tvec U)@@} :
-update the internal state with the vector @@U@@.
-
 \sep{@@gf_model_set(mds,'variable', \tvec U[, \tint niter])@@} :
 update the value vector of a variable with @@U@@.
 

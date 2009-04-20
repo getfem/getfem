@@ -2616,7 +2616,7 @@ The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of 
 \label{sec:model}
 \index{model description}
 
-This part is a work in progress for future \gf 4.x. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined modules which can be assembled to describe a complex situation. A module can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a module is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of modules. An effort as been made in order to facilitate as much as possible the definition of a new module. A module is mainly defined by its contribution in the tangent linear system to be solved.
+This part is a work in progress for future \gf 4.x. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined bricks which can be assembled to describe a complex situation. A module can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a module is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of bricks. An effort as been made in order to facilitate as much as possible the definition of a new module. A module is mainly defined by its contribution in the tangent linear system to be solved.
 
 This model description is an evolution of the model bricks of previous versions of \gf. Compared to this old system, it is more flexible, more general, allows the coupling of model (multiphysics) in a easier way and facilitate the writing of new components.
 
@@ -2625,7 +2625,7 @@ The kernel of the model description is contained in the file \cpp{getfem_models.
 
 \subsection{The model object}
 
-The aim of \cpp{model} object, defined in file \cpp{getfem\_models.h}, is to globally describe a PDE model. It mainly contains two lists: a list of variables (related or not to the \cpp{mesh\_fem} objects) and data (also related or not to the \cpp{mesh\_fem} objects) and a list of modules. The role of the \cpp{model} object is to coordinate the module and make them produce a linear system of equations. If the model is linear, this will simply be the linear system of equation on the corresponding dofs. If the model is nonlinear, this will be the tangent linear system. There is two versions of the \cpp{model} object : a real one and complex one.
+The aim of \cpp{model} object, defined in file \cpp{getfem\_models.h}, is to globally describe a PDE model. It mainly contains two lists: a list of variables (related or not to the \cpp{mesh\_fem} objects) and data (also related or not to the \cpp{mesh\_fem} objects) and a list of bricks. The role of the \cpp{model} object is to coordinate the module and make them produce a linear system of equations. If the model is linear, this will simply be the linear system of equation on the corresponding dofs. If the model is nonlinear, this will be the tangent linear system. There is two versions of the \cpp{model} object : a real one and complex one.
 
 + how to declare a \cpp{model} object ...
 

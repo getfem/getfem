@@ -57,11 +57,6 @@ namespace getfem {
   }
 
   void model::actualize_sizes(void) {
-    // mets à jour la taille des variables, les filtres ...
-    // à executer avant de lancer le calcul de la matrice tangente.
-    
-    // doit mettre aussi à jour les paramêtres en adaptant la taille
-    // des vecteurs -> warning si la taille change.
 
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
@@ -190,7 +185,7 @@ namespace getfem {
   }
    
 
-  void model::varlist(std::ostream &ost) const {
+  void model::listvar(std::ostream &ost) const {
     if (variables.size() == 0)
       ost << "Model with no variable nor data" << endl;
     else {
@@ -237,6 +232,7 @@ namespace getfem {
     variables[name] = var_description(true, is_complex(), true, niter,
 				      VDESCRFILTER_NO, &mf);
     variables[name].set_size(mf.nb_dof());
+    this->add_dependency(mf);
   }
   
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
@@ -245,6 +241,7 @@ namespace getfem {
     variables[name] = var_description(false, is_complex(), true, niter,
 				      VDESCRFILTER_NO, &mf, 0, 0, qdim);
     variables[name].set_size(mf.nb_dof()*qdim);
+    this->add_dependency(mf); 
   }
 
   void model::add_mult_on_region(const std::string &name, const mesh_fem &mf,
@@ -257,6 +254,166 @@ namespace getfem {
 				      1, primal_name);
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;
+    this->add_dependency(mf); this->add_dependency(mim);
+  }
+
+  size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
+			     const varnamelist &datanames,
+			     const termlist &terms) {
+    bricks.push_back(brick_description(pbr, varnames, datanames, terms));
+    GMM_ASSERT1(!(pbr->is_complex() && !is_complex()),
+		"Impossible to add a complex brick to a real model");
+    if (is_complex() && pbr->is_complex()) {
+      bricks.back().cmatlist.resize(terms.size());
+      bricks.back().cveclist.resize(terms.size());
+    } else {
+      bricks.back().rmatlist.resize(terms.size());
+      bricks.back().rveclist.resize(terms.size());
+    }
+    is_linear = is_linear && pbr->is_linear();
+    is_symmetric = is_symmetric && pbr->is_symmetric();
+    is_coercive = is_coercive && pbr->is_coercive();
+    return size_type(bricks.size() - 1);
+  }
+
+  void model::listbricks(std::ostream &ost) const {
+    if (bricks.size() == 0)
+      ost << "Model with no bricks" << endl;
+    else {
+      ost << "List of model bricks:" << endl;
+      for (size_type i = 0; i < bricks.size(); ++i) {
+	ost << "Brick " << std::setw(3) << std::right << i
+	    << " " << std::setw(20) << std::right
+	    << bricks[i].pbr->brick_name() << endl;
+	ost << "  concerned variables: " << bricks[i].vlist[0];
+	for (size_type j = 1; j < bricks[i].vlist.size(); ++j)
+	  ost << ", " << bricks[i].vlist[j];
+	ost << "." << endl;
+	ost << "  brick with " << bricks[i].tlist.size() << "terms"
+	    << endl;
+	// + lister les termes
+      }
+    }
+  }
+
+  void model::assembly(void) {
+    context_check(); if (act_size_to_be_done) actualize_sizes();
+    if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
+    else { gmm::clear(rTM); gmm::clear(rrhs); }
+
+    for (size_type ib = 0; ib < bricks.size(); ++ib) {
+      brick_description &brick = bricks[ib];
+
+      bool cplx = is_complex() && brick.pbr->is_complex();
+      
+      bool tobecomputed = brick.terms_to_be_computed
+	|| !(brick.pbr->is_linear());
+      
+      // check variable list to test if a mesh_fem as changed. 
+      for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
+	var_description &vd = variables[brick.vlist[i]];
+	if (vd.v_num > brick.v_num)
+	  tobecomputed = true;
+      }
+      
+      // check data list to test if a vector value of a data has changed. 
+      for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
+	var_description &vd = variables[brick.dlist[i]];
+	if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num)
+	  tobecomputed = true;
+      }
+      
+      if (tobecomputed) {
+	// Initialization of vector and matrices.
+	for (size_type j = 0; j < brick.tlist.size(); ++j) {
+	  term_description &term = brick.tlist[j];
+	  size_type nbd1 = variables[term.var1].size();
+	  size_type nbd2 = term.is_matrix_term ?
+	    variables[term.var2].size() : 0;
+	  if (term.is_matrix_term) {
+	    if (cplx)
+	      brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
+	    else
+	      brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
+	  }
+	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear())) {
+	    if (cplx) {
+	      gmm::clear(brick.cveclist[j]);
+	      gmm::resize(brick.cveclist[j], nbd1);
+	    } else {
+	      gmm::clear(brick.rveclist[j]);
+	      gmm::resize(brick.rveclist[j], nbd1);
+	    }
+	  }
+	  brick.v_num = act_counter();
+	}
+	 
+	// Brick call for all terms.
+	if (cplx)
+	  brick.pbr->asm_complex_tangent_terms(brick.vlist, brick.cmatlist,
+					       brick.cveclist);
+	else
+	  brick.pbr->asm_real_tangent_terms(brick.vlist, brick.rmatlist,
+					    brick.rveclist);
+
+	if (brick.pbr->is_linear())
+	  brick.terms_to_be_computed = false;
+	else 
+	  if (cplx) {
+	    brick.cmatlist = complex_matlist(brick.tlist.size());
+	    brick.cveclist = complex_veclist(brick.tlist.size());
+	  } else {
+	    brick.rmatlist = real_matlist(brick.tlist.size());
+	    brick.rveclist = real_veclist(brick.tlist.size());	    
+	  }
+      }
+
+      // Assembly of terms
+      for (size_type j = 0; j < brick.tlist.size(); ++j) {
+	term_description &term = brick.tlist[j];
+	gmm::sub_interval I1 = variables[term.var1].I;
+	gmm::sub_interval I2(0,0);
+	if (term.is_matrix_term) I2 = variables[term.var2].I;
+
+	if (cplx) {
+	  if (term.is_matrix_term) {
+	    gmm::add(brick.cmatlist[j], gmm::sub_matrix(cTM, I1, I2));
+	    if (brick.pbr->is_linear()) {
+	      gmm::mult(brick.cmatlist[j],
+			gmm::scaled(variables[term.var1].complex_value[0],
+				    std::complex<scalar_type>(-1)),
+			gmm::sub_vector(crhs, I1));
+	    }
+	  }
+	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
+	    gmm::add(brick.cveclist[j], gmm::sub_vector(crhs, I1));
+	} else if (is_complex()) {
+	  if (term.is_matrix_term) {
+	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
+	    if (brick.pbr->is_linear()) {
+	      gmm::mult(brick.rmatlist[j],
+			gmm::scaled(variables[term.var1].real_value[0],
+				    scalar_type(-1)),
+			gmm::sub_vector(crhs, I1));
+	    }
+	  }
+	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
+	    gmm::add(brick.rveclist[j], gmm::sub_vector(crhs, I1));
+	} else {
+	  if (term.is_matrix_term) {
+	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
+	    if (brick.pbr->is_linear()) {
+	      gmm::mult(brick.rmatlist[j],
+			gmm::scaled(variables[term.var1].real_value[0],
+				    scalar_type(-1)),
+			gmm::sub_vector(rrhs, I1));
+	    }
+	  }
+	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
+	    gmm::add(brick.rveclist[j], gmm::sub_vector(rrhs, I1));
+	}
+      }
+    }
   }
   
   const model_real_plain_vector &
@@ -280,22 +437,24 @@ namespace getfem {
   }
 
   model_real_plain_vector &
-  model::real_variable(const std::string &name, size_type niter) {
+  model::set_real_variable(const std::string &name, size_type niter) {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    it->second.v_num_data = act_counter();
     return it->second.real_value[niter];
   }
   
   model_complex_plain_vector &
-  model::complex_variable(const std::string &name, size_type niter) {
+  model::set_complex_variable(const std::string &name, size_type niter) {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    it->second.v_num_data = act_counter();    
     return it->second.complex_value[niter];    
   }
  

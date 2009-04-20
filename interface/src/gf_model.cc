@@ -41,7 +41,7 @@ using namespace getfemint;
 
   ``Model'' variables store the variables and the state data and the
   description of a model. This includes the global tangent matrix, the
-  right hand side and the constraints. There are two kinds of model, the
+  right hand side and the constraints. There are two kinds of models, the
   ``real'' and the ``complex'' models.
 
   ``Model'' object is the evolution for Getfem++ 4.0 of the "MdState"

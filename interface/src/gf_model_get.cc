@@ -56,10 +56,10 @@ using namespace getfemint;
 
   @RDATTR MODEL:GET('is_complex')
   @GET MODEL:GET('tangent_matrix')
-  @GET MODEL:GET('state')
   @GET MODEL:GET('rhs')
   @GET MODEL:GET('memsize')
-  @GET MODEL:GET('varlist')
+  @GET MODEL:GET('listvar')
+  @GET MODEL:GET('listbricks')
   @GET MODEL:GET('variable')
 
 MLABCOM*/
@@ -79,10 +79,6 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     /*@GET T = MODEL:GET('tangent_matrix')
     Return the tangent matrix stored in the model .@*/
     RETURN_SPARSE(real_tangent_matrix, complex_tangent_matrix);
-  } else if (check_cmd(cmd, "state", in, out, 0, 0, 0, 1)) {
-    /*@GET MODEL:GET('state')
-    Return the vector of unknowns, which contains the solution after a solve.@*/
-    RETURN_VECTOR(real_state(), complex_state());
   } else if (check_cmd(cmd, "rhs", in, out, 0, 0, 0, 1)) {
     /*@GET MODEL:GET('rhs')
     Return the right hand side of the tangent problem.@*/
@@ -92,10 +88,14 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     Return a rough approximation of the amount of memory (in bytes) used by
     the model.@*/
     out.pop().from_integer(int(md->memsize()));
-  } else if (check_cmd(cmd, "varlist", in, out, 0, 0, 0, 0)) {
-    /*@GET MODEL:GET('varlist')
+  } else if (check_cmd(cmd, "listvar", in, out, 0, 0, 0, 0)) {
+    /*@GET MODEL:GET('listvar')
     print to the output the list of variables and constants of the model.@*/
-    md->model().varlist(infomsg());
+    md->model().listvar(infomsg());
+  } else if (check_cmd(cmd, "listbricks", in, out, 0, 0, 0, 0)) {
+    /*@GET MODEL:GET('listbricks')
+    print to the output the list of bricks of the model.@*/
+    md->model().listbricks(infomsg());
   } else if (check_cmd(cmd, "variable", in, out, 1, 2, 0, 0)) {
     /*@GET V = MODEL:GET('variable', @str name[, @int niter])
     Gives the value of a variable or data.@*/

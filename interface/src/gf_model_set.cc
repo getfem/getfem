@@ -35,7 +35,6 @@ using namespace getfemint;
   FUNCTION M = gf_model_set(cmd, [, args])
   Modify a model object.
 
-  @SET MODEL:SET('state')
   @SET MODEL:SET('variable')
   @SET MODEL:SET('clear')
   @SET MODEL:SET('add fem variable')
@@ -51,21 +50,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
   getfemint_model *md  = in.pop().to_getfemint_model(true);
   std::string cmd        = in.pop().to_string();
-  if (check_cmd(cmd, "state", in, out, 1, 1, 0, 0)) {
-    /*@SET MODEL:SET('state',@vec U)
-      Update the internal state with the vector `U`.@*/
-    if (!md->is_complex()) {
-      darray st = in.pop().to_darray(-1);
-      GMM_ASSERT1(st.size() == md->model().real_state().size(),
-		  "Bad size in assigment");
-      md->model().real_state().assign(st.begin(), st.end());
-    } else {
-      carray st = in.pop().to_carray(-1);
-      GMM_ASSERT1(st.size() == md->model().real_state().size(),
-		  "Bad size in assigment");
-      md->model().complex_state().assign(st.begin(), st.end());
-    }
-  } else if (check_cmd(cmd, "clear", in, out, 0, 0, 0, 1)) {
+  if (check_cmd(cmd, "clear", in, out, 0, 0, 0, 1)) {
     /*@SET MODEL:SET('clear')
     Clear the model.@*/
     md->clear();
@@ -122,7 +107,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (in.remaining()) niter = in.pop().to_integer(0,10);
       GMM_ASSERT1(st.size() == md->model().real_variable(name, niter).size(),
 		  "Bad size in assigment");
-      md->model().real_variable(name, niter).assign(st.begin(), st.end());
+      md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
     } else {
       carray st = in.pop().to_carray(-1);
       size_type niter = 0;
@@ -130,7 +115,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	niter = in.pop().to_integer(0,10) - config::base_index();
       GMM_ASSERT1(st.size() == md->model().real_variable(name, niter).size(),
 		  "Bad size in assigment");
-      md->model().complex_variable(name, niter).assign(st.begin(), st.end());
+      md->model().set_complex_variable(name, niter).assign(st.begin(), st.end());
     }
   } else bad_cmd(cmd);
 }
