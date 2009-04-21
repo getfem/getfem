@@ -190,16 +190,19 @@ namespace getfem {
     vdim_specif_list vdim;
     multi_tensor_iterator mti;
     tensor_strides strides;
-    const mesh_fem *pmf;   /* could be zero. */
+    const mesh_fem *pmf;
   public:
-    ATN_array_output(ATN_tensor& a, VEC& v_, vdim_specif_list &d,
-		     const mesh_fem *pmf_)
-      : v(v_), vdim(d), pmf(pmf_) {
+    ATN_array_output(ATN_tensor& a, VEC& v_, vdim_specif_list &d)
+      : v(v_), vdim(d) {
+      
       strides.resize(vdim.size()+1);
       add_child(a);
       strides[0] = 1;
-      for (size_type i=0; i < vdim.size(); ++i)
+      pmf = 0;
+      for (size_type i=0; i < vdim.size(); ++i) {
+	if (vdim[i].pmf) pmf = vdim[i].pmf;
 	strides[i+1] = strides[i]*int(vdim[i].dim);
+      }
       if (gmm::vect_size(v) != size_type(strides[vdim.size()])) 
 	ASM_THROW_TENSOR_ERROR("wrong size for output vector: supplied "
 			       "vector size is " <<  gmm::vect_size(v)
@@ -415,8 +418,7 @@ namespace getfem {
   class base_asm_vec {
   public:
     virtual ATN* build_output_tensor(ATN_tensor &a, 
-				     vdim_specif_list& vdim,
-				     const mesh_fem *pmf)=0;
+				     vdim_specif_list& vdim)=0;
     virtual ~base_asm_vec() {}
   };
 
@@ -425,9 +427,8 @@ namespace getfem {
   public:
     asm_vec(VEC *v_) : v(v_) {}
     virtual ATN* build_output_tensor(ATN_tensor &a, 
-				     vdim_specif_list& vdim,
-				     const mesh_fem *pmf) {
-      ATN *t = new ATN_array_output<VEC>(a, *v, vdim, pmf); return t;
+				     vdim_specif_list& vdim) {
+      ATN *t = new ATN_array_output<VEC>(a, *v, vdim); return t;
     }
     VEC *vec() { return v; }
     ~asm_vec() {}

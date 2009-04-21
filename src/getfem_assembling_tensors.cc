@@ -1668,9 +1668,7 @@ namespace getfem {
 							      tok_mark())));
     } break;
     case wOUTPUT_ARRAY: {
-      ATN *pout = outvec[arg_num]->build_output_tensor(*t.tensor(), vds,
-						       (vds.nb_mf() >= 1)
-						       ? vds[0].pmf : 0);
+      ATN *pout = outvec[arg_num]->build_output_tensor(*t.tensor(), vds);
       record_out(pout);
     } break;
     case wOUTPUT_MATRIX: {
