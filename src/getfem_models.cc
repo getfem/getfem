@@ -350,11 +350,11 @@ namespace getfem {
 	 
 	// Brick call for all terms.
 	if (cplx)
-	  brick.pbr->asm_complex_tangent_terms(brick.vlist, brick.cmatlist,
-					       brick.cveclist);
+	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist,
+					       brick.cmatlist, brick.cveclist);
 	else
-	  brick.pbr->asm_real_tangent_terms(brick.vlist, brick.rmatlist,
-					    brick.rveclist);
+	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist,
+					    brick.rmatlist, brick.rveclist);
 
 	if (brick.pbr->is_linear())
 	  brick.terms_to_be_computed = false;
@@ -378,11 +378,21 @@ namespace getfem {
 	if (cplx) {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.cmatlist[j], gmm::sub_matrix(cTM, I1, I2));
-	    if (brick.pbr->is_linear()) {
+	    if (brick.pbr->is_linear() && !is_linear) {
 	      gmm::mult(brick.cmatlist[j],
 			gmm::scaled(variables[term.var1].complex_value[0],
 				    std::complex<scalar_type>(-1)),
 			gmm::sub_vector(crhs, I1));
+	    }
+	    if (brick.pbr->is_symmetric() && I1.first() != I2.first()) {
+	      gmm::add(gmm::transposed(brick.cmatlist[j]),
+		       gmm::sub_matrix(cTM, I2, I1));
+	      if (brick.pbr->is_linear() && !is_linear) {
+		gmm::mult(gmm::conjugated(brick.cmatlist[j]),
+			  gmm::scaled(variables[term.var2].complex_value[0],
+				      std::complex<scalar_type>(-1)),
+			  gmm::sub_vector(crhs, I2));
+	      }
 	    }
 	  }
 	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
@@ -390,11 +400,21 @@ namespace getfem {
 	} else if (is_complex()) {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
-	    if (brick.pbr->is_linear()) {
+	    if (brick.pbr->is_linear() && !is_linear) {
 	      gmm::mult(brick.rmatlist[j],
 			gmm::scaled(variables[term.var1].real_value[0],
 				    scalar_type(-1)),
 			gmm::sub_vector(crhs, I1));
+	    }
+	    if (brick.pbr->is_symmetric() && I1.first() != I2.first()) {
+	      gmm::add(gmm::transposed(brick.rmatlist[j]),
+		       gmm::sub_matrix(cTM, I2, I1));
+	      if (brick.pbr->is_linear() && !is_linear) {
+		gmm::mult(gmm::transposed(brick.rmatlist[j]),
+			  gmm::scaled(variables[term.var2].real_value[0],
+				      scalar_type(-1)),
+			  gmm::sub_vector(crhs, I2));
+	      }
 	    }
 	  }
 	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
@@ -402,11 +422,21 @@ namespace getfem {
 	} else {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
-	    if (brick.pbr->is_linear()) {
+	    if (brick.pbr->is_linear() && !is_linear) {
 	      gmm::mult(brick.rmatlist[j],
 			gmm::scaled(variables[term.var1].real_value[0],
 				    scalar_type(-1)),
 			gmm::sub_vector(rrhs, I1));
+	    }
+	    if (brick.pbr->is_symmetric() && I1.first() != I2.first()) {
+	      gmm::add(gmm::transposed(brick.rmatlist[j]),
+		       gmm::sub_matrix(rTM, I2, I1));
+	      if (brick.pbr->is_linear() && !is_linear) {
+		gmm::mult(gmm::transposed(brick.rmatlist[j]),
+			  gmm::scaled(variables[term.var2].real_value[0],
+				      scalar_type(-1)),
+			  gmm::sub_vector(rrhs, I2));
+	      }
 	    }
 	  }
 	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))

@@ -427,11 +427,13 @@ namespace getfem {
     bool is_complex(void)   const { BRICK_NOT_INIT; return iscomplex;   }
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
 
-    virtual void asm_real_tangent_terms(const model::varnamelist &,
+    virtual void asm_real_tangent_terms(const model &,
+					const model::varnamelist &,
 					model::real_matlist &,
 					model::real_veclist &) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
-    virtual void asm_complex_tangent_terms(const model::varnamelist &,
+    virtual void asm_complex_tangent_terms(const model &,
+					   const model::varnamelist &,
 					   model::complex_matlist &,
 					   model::complex_veclist &) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }

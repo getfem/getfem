@@ -11,7 +11,8 @@
 %\usepackage{fancyheadings}
 \usepackage{float}
 \usepackage{eepic,epic}
-%\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs mais le fichier produit n'est pas beau
+%\usepackage{pslatex} % devrait corriger le pb de fontes dans les pdfs 
+%                       mais le fichier produit n'est pas beau.
 \usepackage[english]{babel}
 \usepackage{alltt}
 % \usepackage{textcomp]
@@ -2616,7 +2617,7 @@ The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of 
 \label{sec:model}
 \index{model description}
 
-This part is a work in progress for future \gf 4.x. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined bricks which can be assembled to describe a complex situation. A module can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a module is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of bricks. An effort as been made in order to facilitate as much as possible the definition of a new module. A module is mainly defined by its contribution in the tangent linear system to be solved.
+This part is a work in progress for future \gf 4.x. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined bricks which can be assembled to describe a complex situation. A brick can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a brick is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of bricks. An effort as been made in order to facilitate as much as possible the definition of a new brick. A brick is mainly defined by its contribution in the tangent linear system to be solved.
 
 This model description is an evolution of the model bricks of previous versions of \gf. Compared to this old system, it is more flexible, more general, allows the coupling of model (multiphysics) in a easier way and facilitate the writing of new components.
 
@@ -2650,14 +2651,81 @@ The main usefull methods on a \cpp{model} object are
 
 + comment le faire réagir ...
 
-\subsection{The module object}
+\subsection{The brick object}
 
-... to be done
+A model brick is an object which is supposed to represent a part of a model. It aims to represent some integral terms in a weak formulation of a pde model. The model object will contain a list of brick. All the terms described by the brick will be finally assembled to build the linear system to be solved (the tangent linear system for a nonlinear problem). For instance if a term $\Delta u$ is present on the pde model (laplacian of $u$) then the weak formulaiton will contain the term
+$ \int_{\Omega} \nabla u.\nabla v dx, $
+where $v$ is the test function corresponding to u. Then the role of the correspponding brick is to assemble the term
+$ \int_{\Omega} \nabla \varphi_i.\nabla \varphi_j dx, $
+where $\varphi_i$ and $\varphi_j$ are the shape functions of the finite element method describing $u$. This term will be added by the model object to the global linear system on a diagonal block corresponding to the variable $u$. The only role of the brick is thus to call assembly procedure when the model object ask for it. The construction of a brick for such a linear term is thus very simple.
+
+Basically, the brick object will derive from the object 
+\cpp{virtual\_brick} defined in \cpp{getfem/getfem\_model.h} and should redefine the method \cpp{asm_real_tangent_terms} or \cpp{asm_complex_tangent_terms} depending on whether it is a real term or an intrinsic complex term.
+
+\subsection{How to build a new brick}
+
+According to the spirit in which the brick has been designed, a brick should avoid as much as possible to store additional data. The parameter of a brick should be contained in the variable and data of the model. For instance, the parameter of a linear elasticity brick are the elasticity coefficient. This coefficients have to be some data of the model. When the brick is called by the model obejct, a list of variables and data is given to the brick. The great majority of the predefined bricks do not store any data. This allows to instantiate such a bricks only once.
+
+An example of a brick corresponding to the laplacian term is the following :
+
+\begin{cppcode}
+  class my_brick : public getfem::virtual_brick \{
+
+    public :
+      void asm_real_tangent_terms(const getfem::model &md,
+                                  const getfem::model::varnamelist &varl,
+                                  getfem::model::real_matlist &matl,
+                                  getfem::model::real_veclist &vecl) const \{
+        example of assembly term with   matl[0]
+      \}
+    
+      my_brick(void)
+      \{ set_flags("my Laplacian brick", true  /* linear       */,
+                                         true  /* symmetric    */,
+                                         true  /* coercivity   */,
+                                         true  /* real term    */,
+                                         false /* complex term */); \}
+  \};
+\end{cppcode}
+
+The constructor of a brick should called the method \cpp{set_flags}. The first parameter of this method is a name for the brick (this allows to list the bricks of a model and facilitate their identification). The other parameters are some flags, respectively 
+\begin{itemize}
+\item if the brick terms are all linear or not
+\item if the brick terms are symmetric (conjugated in the complex version). if the flags is set to true, the terms corresponding to two different variables or added twice in the global linear system (the term and the transpose of the term).
+\item if the terms do not affect the coerivity or not.
+\item if the terms have a real version or not. If yes, the method \cpp{asm_real_tangent_terms} should be redefined.
+\item if the terms have a complex version or not. If yes, the method \cpp{asm_complex_tangent_terms} should be redefined.
+\end{itemize}
+
+The parameter \cpp{md} of the \cpp{asm_real_tangent_terms} method is the model that called the brick. The parameter \cpp{varl} is an array of variable/data names defined in this model and needed in the brick. \cpp{matl} is an array of matrices to be computed. \cpp{matl} is an array of vectors to be computed (rhs or residual vectors). A brick can have an arbitrary number of terms. For each term, at least the corresponding matrix or the corresponding vector as to be filled (or both the two).
+
+For the very simple Laplacian brick, only one variable is used ...
 
 
-\subsection{How to build a new module}
++ faire la description pour un terme mixed additionel et la brique correspondante ...
 
-... to be done
++ un exemple ou on utilise des données dans le modèle.
+
+
++ des termes non linéaires ...
+  
+
+\subsection{How to add the brick to a model}
+
++ make a function for that.
+
++ example sur la brique laplacien.
+
+
+\subsection{Generic elliptic brick}
+
+\subsection{Dirichlet condition brick}
+
+\subsection{Source term brick}
+
+\subsection{Example of a complete Poisson problem}
+
+...
 
 
 \section{Parallelization of \gf}
