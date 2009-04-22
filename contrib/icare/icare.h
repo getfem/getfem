@@ -32,42 +32,20 @@ namespace getfem {
   }
 
  template<typename VEC, typename VECTOR>
- void traineePortance2D(VEC &Cxn, VEC &Cxp,VEC &Cyn, VEC &Cyp, const mesh_im &mim,
-			const mesh_fem &mf1, const mesh_fem &mf2,
-			const VECTOR &nuDxU, const VECTOR &nuDyU,
-			const VECTOR &nuDxV, const VECTOR &nuDyV,
-			const VECTOR &PP, const mesh_region &rg) {
+ void traineePortance2D(VEC &Cd, VEC &Cl, const mesh_im &mim,
+			const mesh_fem &mf, const VECTOR &lambda,
+			const mesh_region &rg) {
 
    generic_assembly assem;
-   // assem.set("r=data$1(#1); p=data$2(#2); V$1()+=comp(vBase(#1).Normal())(i,j,j).r(i); V$2()+=comp(Base(#2))(i).p(i);");
-
-   //   assem.set("r=data$1(#1); p=data$2(#2); V$1()+=comp(vBase(#1).Normal())(i,1,2).r(i); V$2()+=comp(Base(#2))(i).p(i);");
-
-   assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDxV=data$3(#1); nuDyV=data$4(#1); p=data$5(#2);"
-	     "t1=comp(vBase(#1).Normal());"
-             "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,1,2).nuDyU(i) + t1(i,1,2).nuDxV(i);"
-	     "t2=comp(vBase(#2).Normal());"
-             "V$2()+=-1*t2(i,1,1).p(i);"
-	     "t3=comp(vBase(#1).Normal());"
-             "V$3()+=2*t3(i,1,2).nuDyV(i) + t3(i,1,1).nuDyU(i) + t3(i,1,1).nuDxV(i);"
-	     "t4=comp(vBase(#2).Normal());"
-             "V$4()+=-1*t4(i,1,2).p(i);");
-
+   assem.set("l=data$1(#1); V$1()+=comp(vBase(#1).Normal())(i,1,1).l(i);V$2()+=comp(vBase(#1).Normal())(i,1,2).l(i);");
+   
    assem.push_mi(mim);
+   
+   assem.push_mf(mf);
+   assem.push_data(lambda);
 
-   assem.push_mf(mf1);
-   assem.push_mf(mf2);
-
-   assem.push_data(nuDxU);
-   assem.push_data(nuDyU);
-   assem.push_data(nuDxV);  
-   assem.push_data(nuDyV);
-   assem.push_data(PP);
-
-   assem.push_vec(Cxn); 
-   assem.push_vec(Cxp);
-   assem.push_vec(Cyn); 
-   assem.push_vec(Cyp);
+   assem.push_vec(Cd);
+   assem.push_vec(Cl);
 
    assem.assembly(rg); //region = bord du cylindre
 						 

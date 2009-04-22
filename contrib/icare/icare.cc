@@ -51,9 +51,9 @@ typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 enum {
-  DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM,
+  DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM,NEUMANN_BOUNDARY_BOUNDARY_NUM,
   NORMAL_PART_DIRICHLET_BOUNDARY_NUM,
-  NONREFLECTIVE_BOUNDARY_NUM, ON_CYLINDER_NUM
+  NONREFLECTIVE_BOUNDARY_NUM, ON_CYLINDER_BOUNDARY_NUM
 };
 
 
@@ -93,15 +93,15 @@ struct navier_stokes_problem {
   std::string datafilename;
   ftool::md_param PARAM;
 
-  plain_vector Un1, Un0, Pn1, Pn0; /* U_{n+1}, U_{n}, P_{n+1} and P_{n} */
+  plain_vector Un1, Un0, Pn1, Pn0, lambda; /* U_{n+1}, U_{n}, P_{n+1} and P_{n} */
 
   base_small_vector sol_f(const base_small_vector &P, scalar_type t);
   base_small_vector Dir_cond(const base_small_vector &P, scalar_type t);
 
   void solve(void);
-  void solve_METHOD_SPLITTING(bool);
-  void solve_FULLY_CONSERVATIVE();
-  void solve_PREDICTION_CORRECTION();
+  //void solve_METHOD_SPLITTING(bool);
+  //void solve_FULLY_CONSERVATIVE();
+  //void solve_PREDICTION_CORRECTION();
   void solve_PREDICTION_CORRECTION2();
   void init(void);
   navier_stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
@@ -243,56 +243,53 @@ struct problem_rotating_cylinder : public problem_definition {
 
 
     if (N==2){
-
-
-      
-
- for (getfem::mr_visitor i(r); !i.finished(); ++i) {
-
-  	base_node G = gmm ::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
- 
-      
-      cout << "x=" << G[0] << "     y="<< G[1] << "\n";
-   
-	   if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
-	{p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
-	  cout <<" Non Ref"<< "\n";}
-      else if ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7
-		|| gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7) )
-	{p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
-	  cout <<" Normal"<< "\n";}
-
-      else 
-	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+      for (getfem::mr_visitor i(r); !i.finished(); ++i) {
+	base_node G = gmm ::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
+   	//cout << "x=" << G[0] << "     y="<< G[1] << "\n";
+	
+	if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+	  {p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+	    // cout <<" Non Ref"<< "\n";
+	  }
+	else if ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7
+		  || gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7) )
+	  {p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+	    // cout <<" Normal"<< "\n";
+	  }
+	
+	else 
+	  p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
         if (gmm::sqr(G[0]*G[0] + G[1]*G[1]) < 1.2)
-    	  { p.mesh.region(ON_CYLINDER_NUM).add(i.cv(),i.f());
-	  cout <<" Dir"<< "\n";}
-
+    	  { p.mesh.region(ON_CYLINDER_BOUNDARY_NUM).add(i.cv(),i.f()); 
+	    //cout <<" Dir"<< "\n";
+	  }
+      }
     }
-  }
-
-  if (N==3){
-    for (getfem::mr_visitor i(r); !i.finished(); ++i) {
-      base_node G = gmm ::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
-      if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
-	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
-      else if ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7
-		|| gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7) )
-	p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
-      else if ((gmm::abs(G[2] - p.BBmax[2] < 1e-7) 
-                || gmm::abs(G[2] - p.BBmin[2] < 1e-7) ) && 
-                !(gmm::abs(G[1] - p.BBmax[1]) < 1e-7 || gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && 
-                !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7))
-        p.mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(),i.f());
-      else 
-	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+    
+    if (N==3){
+      for (getfem::mr_visitor i(r); !i.finished(); ++i) {
+	base_node G = gmm ::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
+	if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+	  p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+	else if ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7
+		  || gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7) )
+	  p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+	else if ((gmm::abs(G[2] - p.BBmax[2] < 1e-7) 
+		  || gmm::abs(G[2] - p.BBmin[2] < 1e-7) ) && 
+		 !(gmm::abs(G[1] - p.BBmax[1]) < 1e-7 || gmm::abs(G[1] - p.BBmin[1]) < 1e-7 ) && 
+		 !(gmm::abs(G[0] - p.BBmin[0]) < 1e-7))
+	  p.mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(),i.f());
+	else 
+	  p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
         if (gmm::sqr(G[0]*G[0] + G[1]*G[1] + G[2]*G[2]) < 1.2)
-	  p.mesh.region(ON_CYLINDER_NUM).add(i.cv(),i.f());
+	  p.mesh.region(ON_CYLINDER_BOUNDARY_NUM).add(i.cv(),i.f());
+	if ( ((gmm::abs(G[2] - p.BBmax[2]) < 1e-7)  || (gmm::abs(G[2] - p.BBmin[2]) < 1e-7))
+	     && ((gmm::abs(G[1] - p.BBmax[1]) < 1e-7)  || (gmm::abs(G[1] - p.BBmin[1]) < 1e-7)  
+		 || (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)  || (gmm::abs(G[0] - p.BBmin[0]) < 1e-7))  )
+	  p.mesh.region(NEUMANN_BOUNDARY_BOUNDARY_NUM).add(i.cv(),i.f());
+      }
     }
   }
-  }
-
-
   virtual void dirichlet_condition(navier_stokes_problem &p,
 				   const base_node &P, scalar_type /*t*/,
 				   base_small_vector &r) {
@@ -467,306 +464,307 @@ void navier_stokes_problem::solve() {
   gmm::resize(Un1, mf_u.nb_dof());
   gmm::resize(Pn0, mf_p.nb_dof());
   gmm::resize(Pn1, mf_p.nb_dof());
-  switch (option) {
-  case 0 : solve_METHOD_SPLITTING(true); break;
-  case 1 : solve_METHOD_SPLITTING(false); break;
-  case 2 : solve_FULLY_CONSERVATIVE(); break;
-  case 3 : solve_PREDICTION_CORRECTION(); break;
-  case 4 : solve_PREDICTION_CORRECTION2(); break;
-  default: GMM_ASSERT1(false, "unknown method");
-  }
+  //  switch (option) {
+  //case 0 : solve_METHOD_SPLITTING(true); break;
+  //case 1 : solve_METHOD_SPLITTING(false); break;
+  //case 2 : solve_FULLY_CONSERVATIVE(); break;
+  //case 3 : solve_PREDICTION_CORRECTION(); break;
+  //case 4 : solve_PREDICTION_CORRECTION2(); break;
+  //default: GMM_ASSERT1(false, "unknown method");
+  //}
+  solve_PREDICTION_CORRECTION2();
 }
 
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
 
-void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
-  // in the splitting method, there are TWO problems:
+// void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
+//   // in the splitting method, there are TWO problems:
 
-  //
-  // definition of the first problem 
-  //
+//   //
+//   // definition of the first problem 
+//   //
 
-  // Velocity brick.
-  getfem::mdbrick_abstract<> *previous;
-  getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
-  previous = &velocity;
+//   // Velocity brick.
+//   getfem::mdbrick_abstract<> *previous;
+//   getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
+//   previous = &velocity;
 
   
-  std::auto_ptr<getfem::mdbrick_NS_uuT<> > velocity_nonlin;
-  if (!stokes_only) {
-    velocity_nonlin.reset(new getfem::mdbrick_NS_uuT<>(velocity));
-    previous = velocity_nonlin.get();
-  }
+//   std::auto_ptr<getfem::mdbrick_NS_uuT<> > velocity_nonlin;
+//   if (!stokes_only) {
+//     velocity_nonlin.reset(new getfem::mdbrick_NS_uuT<>(velocity));
+//     previous = velocity_nonlin.get();
+//   }
   
-  // Volumic source term
-  getfem::mdbrick_source_term<> velocity_f(*previous, 
-					   mf_rhs, 
-					   plain_vector(mf_rhs.nb_dof()*N));
+//   // Volumic source term
+//   getfem::mdbrick_source_term<> velocity_f(*previous, 
+// 					   mf_rhs, 
+// 					   plain_vector(mf_rhs.nb_dof()*N));
 
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
+//   // Dirichlet condition brick.
+//   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
  
-  // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_component_Dirichlet<>
-    velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+//   // Normal part Dirichlet condition brick.
+//   getfem::mdbrick_normal_component_Dirichlet<>
+//     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
-  // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp,
-					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+//   // Non-reflective condition brick
+//   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dirnp,
+// 					     NONREFLECTIVE_BOUNDARY_NUM, dt);
  
-  // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
-  velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
+//   // Dynamic brick.
+//   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
+//   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
-  // 
-  // definition of the second problem
-  //
+//   // 
+//   // definition of the second problem
+//   //
 
-  getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, 1./dt);
+//   getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, 1./dt);
   
-  // Pressure term
-  getfem::mdbrick_linear_incomp<> mixed_p(mixed, mf_p);
+//   // Pressure term
+//   getfem::mdbrick_linear_incomp<> mixed_p(mixed, mf_p);
 
-  // Condition on the pressure
-  sparse_matrix G(1, mf_p.nb_dof());
-  G(0,0) = 1.;
-  plain_vector gr(1);
-  getfem::mdbrick_constraint<> set_pressure(mixed_p, 1);
-  set_pressure.set_constraints(G, gr);
-  set_pressure.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+//   // Condition on the pressure
+//   sparse_matrix G(1, mf_p.nb_dof());
+//   G(0,0) = 1.;
+//   plain_vector gr(1);
+//   getfem::mdbrick_constraint<> set_pressure(mixed_p, 1);
+//   set_pressure.set_constraints(G, gr);
+//   set_pressure.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
     
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, DIRICHLET_BOUNDARY_NUM);
+//   // Dirichlet condition brick.
+//   getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, DIRICHLET_BOUNDARY_NUM);
   
-  // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_component_Dirichlet<>
-    mixed_dirnp(mixed_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+//   // Normal part Dirichlet condition brick.
+//   getfem::mdbrick_normal_component_Dirichlet<>
+//     mixed_dirnp(mixed_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
-  // Dynamic brick.
-  getfem::mdbrick_dynamic<> mixed_dyn(mixed_dirnp, 1.);
-  mixed_dyn.set_dynamic_coeff(0.0, 1.0);
+//   // Dynamic brick.
+//   getfem::mdbrick_dynamic<> mixed_dyn(mixed_dirnp, 1.);
+//   mixed_dyn.set_dynamic_coeff(0.0, 1.0);
 
-  // 
-  // dynamic problem
-  //
+//   // 
+//   // dynamic problem
+//   //
 
-  plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof());
+//   plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof());
 
-  pdef->initial_condition_u(*this, Un0);
+//   pdef->initial_condition_u(*this, Un0);
   
-  gmm::iteration iter(residual, noisy);
-  getfem::standard_model_state MSL(velocity_dyn), MSM(mixed_dyn);
+//   gmm::iteration iter(residual, noisy);
+//   getfem::standard_model_state MSL(velocity_dyn), MSM(mixed_dyn);
   
-  do_export(0);
+//   do_export(0);
   
-  for (scalar_type t = dt; t <= T; t += dt) {
+//   for (scalar_type t = dt; t <= T; t += dt) {
 
-    if (!stokes_only) velocity_nonlin->set_U0(Un0);
-    pdef->source_term(*this, t, F);
-    velocity_f.source_term().set(F);
-    pdef->dirichlet_condition(*this, t, F);
-    velocity_dir.rhs().set(mf_rhs, F);
-    nonreflective.set_Un(Un0);
+//     if (!stokes_only) velocity_nonlin->set_U0(Un0);
+//     pdef->source_term(*this, t, F);
+//     velocity_f.source_term().set(F);
+//     pdef->dirichlet_condition(*this, t, F);
+//     velocity_dir.rhs().set(mf_rhs, F);
+//     nonreflective.set_Un(Un0);
     
-    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
-    velocity_dyn.set_DF(DF);
-    iter.init();
-    getfem::standard_solve(MSL, velocity_dyn, iter);
+//     gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
+//     velocity_dyn.set_DF(DF);
+//     iter.init();
+//     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    gmm::copy(velocity.get_solution(MSL), Un1);
-    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un1, 1./dt), DF);
-    mixed_dyn.set_DF(DF);
-    mixed_dir.rhs().set(mf_rhs, F);
-    iter.init();
-    getfem::standard_solve(MSM, mixed_dyn, iter);
-    gmm::copy(mixed.get_solution(MSM), Un1);
-    gmm::copy(mixed_p.get_pressure(MSM), Pn1);
+//     gmm::copy(velocity.get_solution(MSL), Un1);
+//     gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un1, 1./dt), DF);
+//     mixed_dyn.set_DF(DF);
+//     mixed_dir.rhs().set(mf_rhs, F);
+//     iter.init();
+//     getfem::standard_solve(MSM, mixed_dyn, iter);
+//     gmm::copy(mixed.get_solution(MSM), Un1);
+//     gmm::copy(mixed_p.get_pressure(MSM), Pn1);
 
-    pdef->validate_solution(*this, t);
+//     pdef->validate_solution(*this, t);
 
-    gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
-    do_export(t);
-  }
-}
-
-
-
-void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
-
-  // Velocity brick.    
-  getfem::mdbrick_navier_stokes<> velocity(mim, mf_u, mf_p, nu);
-  // Condition on the pressure
-  sparse_matrix G(1, mf_p.nb_dof());
-  G(0,0) = 1.;
-  plain_vector gr(1);
-  getfem::mdbrick_constraint<> velocity_ctr(velocity);
-  velocity_ctr.set_constraints(G, gr);
-  velocity_ctr.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+//     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+//     do_export(t);
+//   }
+// }
 
 
-  // Volumic source term
-  getfem::mdbrick_source_term<> velocity_f(velocity_ctr, 
-					   mf_rhs, 
-					   plain_vector(mf_rhs.nb_dof()*N));
 
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
+// void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
+
+//   // Velocity brick.    
+//   getfem::mdbrick_navier_stokes<> velocity(mim, mf_u, mf_p, nu);
+//   // Condition on the pressure
+//   sparse_matrix G(1, mf_p.nb_dof());
+//   G(0,0) = 1.;
+//   plain_vector gr(1);
+//   getfem::mdbrick_constraint<> velocity_ctr(velocity);
+//   velocity_ctr.set_constraints(G, gr);
+//   velocity_ctr.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+
+
+//   // Volumic source term
+//   getfem::mdbrick_source_term<> velocity_f(velocity_ctr, 
+// 					   mf_rhs, 
+// 					   plain_vector(mf_rhs.nb_dof()*N));
+
+//   // Dirichlet condition brick.
+//   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
-  // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_component_Dirichlet<>
-    velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+//   // Normal part Dirichlet condition brick.
+//   getfem::mdbrick_normal_component_Dirichlet<>
+//     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
 
-  // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<>
-    nonreflective(velocity_dirnp, NONREFLECTIVE_BOUNDARY_NUM, dt);
+//   // Non-reflective condition brick
+//   getfem::mdbrick_NS_nonref1<>
+//     nonreflective(velocity_dirnp, NONREFLECTIVE_BOUNDARY_NUM, dt);
 
-  // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
-  velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
+//   // Dynamic brick.
+//   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
+//   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
-  // 
-  // dynamic problem
-  //
+//   // 
+//   // dynamic problem
+//   //
 
-  plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof());
+//   plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof());
 
-  pdef->initial_condition_u(*this, Un0);
+//   pdef->initial_condition_u(*this, Un0);
   
-  gmm::iteration iter(residual, noisy);
-  getfem::standard_model_state MSL(velocity_dyn);
+//   gmm::iteration iter(residual, noisy);
+//   getfem::standard_model_state MSL(velocity_dyn);
   
-  do_export(0);
-  for (scalar_type t = dt; t <= T; t += dt) {
+//   do_export(0);
+//   for (scalar_type t = dt; t <= T; t += dt) {
 
   
-    pdef->source_term(*this, t, F);
-    velocity_f.source_term().set(F);
-    pdef->dirichlet_condition(*this, t, F);
-    velocity_dir.rhs().set(mf_rhs, F);
-    nonreflective.set_Un(Un0);
+//     pdef->source_term(*this, t, F);
+//     velocity_f.source_term().set(F);
+//     pdef->dirichlet_condition(*this, t, F);
+//     velocity_dir.rhs().set(mf_rhs, F);
+//     nonreflective.set_Un(Un0);
 
-    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
-    velocity_dyn.set_DF(DF);
-    iter.init();
-    getfem::standard_solve(MSL, velocity_dyn, iter);
+//     gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
+//     velocity_dyn.set_DF(DF);
+//     iter.init();
+//     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    gmm::copy(velocity.get_velocity(MSL), Un1);
-    gmm::copy(velocity.get_pressure(MSL), Pn1);
+//     gmm::copy(velocity.get_velocity(MSL), Un1);
+//     gmm::copy(velocity.get_pressure(MSL), Pn1);
    
-    pdef->validate_solution(*this, t);     
+//     pdef->validate_solution(*this, t);     
 
-    gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
-    do_export(t);
-  }
-}
+//     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+//     do_export(t);
+//   }
+// }
 
-/************************************************************/
-void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
-  // Velocity brick.  
-  getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
-  getfem::mdbrick_NS_uuT<> velocity_nonlin(velocity);
+// /************************************************************/
+// void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
+//   // Velocity brick.  
+//   getfem::mdbrick_generic_elliptic<> velocity(mim, mf_u, nu);
+//   getfem::mdbrick_NS_uuT<> velocity_nonlin(velocity);
 
-  // Volumic source term
-  getfem::mdbrick_source_term<> velocity_f(velocity_nonlin, 
-					   mf_rhs, 
-					   plain_vector(mf_rhs.nb_dof()*N));
+//   // Volumic source term
+//   getfem::mdbrick_source_term<> velocity_f(velocity_nonlin, 
+// 					   mf_rhs, 
+// 					   plain_vector(mf_rhs.nb_dof()*N));
 
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
+//   // Dirichlet condition brick.
+//   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, DIRICHLET_BOUNDARY_NUM);
   
-  // Normal part Dirichlet condition brick.
-  getfem::mdbrick_normal_component_Dirichlet<>
-    velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
+//   // Normal part Dirichlet condition brick.
+//   getfem::mdbrick_normal_component_Dirichlet<>
+//     velocity_dirnp(velocity_dir, NORMAL_PART_DIRICHLET_BOUNDARY_NUM, mf_rhs);
   
-  // Non-reflective condition brick
-  getfem::mdbrick_NS_nonref1<> nonreflective( velocity_dirnp, 
-					      NONREFLECTIVE_BOUNDARY_NUM, dt);
+//   // Non-reflective condition brick
+//   getfem::mdbrick_NS_nonref1<> nonreflective( velocity_dirnp, 
+// 					      NONREFLECTIVE_BOUNDARY_NUM, dt);
   
 
-  // Dynamic brick.
-    getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
-  velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
+//   // Dynamic brick.
+//     getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, 1.);
+//   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
-  // 
-  // Poisson problem for prediction correction scheme
-  //
+//   // 
+//   // Poisson problem for prediction correction scheme
+//   //
   
-  getfem::mdbrick_generic_elliptic<> poisson(mim, mf_p, 1.0);
-  sparse_matrix G(1, mf_p.nb_dof()); G(0,0) = 1.;  
-  getfem::mdbrick_constraint<> poisson_setonedof(poisson);
-  poisson_setonedof.set_constraints(G, plain_vector(1));
-  poisson_setonedof.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
+//   getfem::mdbrick_generic_elliptic<> poisson(mim, mf_p, 1.0);
+//   sparse_matrix G(1, mf_p.nb_dof()); G(0,0) = 1.;  
+//   getfem::mdbrick_constraint<> poisson_setonedof(poisson);
+//   poisson_setonedof.set_constraints(G, plain_vector(1));
+//   poisson_setonedof.set_constraints_type(getfem::ELIMINATED_CONSTRAINTS);
 
-  getfem::mdbrick_source_term<>
-    poisson_source(poisson_setonedof, mf_rhs, plain_vector(mf_rhs.nb_dof()));
+//   getfem::mdbrick_source_term<>
+//     poisson_source(poisson_setonedof, mf_rhs, plain_vector(mf_rhs.nb_dof()));
 
-  sparse_matrix B(mf_p.nb_dof(), mf_u.nb_dof());
-  asm_stokes_B(B, mim, mf_u, mf_p);
+//   sparse_matrix B(mf_p.nb_dof(), mf_u.nb_dof());
+//   asm_stokes_B(B, mim, mf_u, mf_p);
 
-  // 
-  // dynamic problem
-  //
-  plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof()), 
-    USTAR(mf_u.nb_dof()), USTARbis(mf_u.nb_dof());
+//   // 
+//   // dynamic problem
+//   //
+//   plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof()), 
+//     USTAR(mf_u.nb_dof()), USTARbis(mf_u.nb_dof());
 
 
 
-  /////// REPRISE DES CALCULS EVENTUELS //////
-  /////// utiliser gmm::vecload("sortie.U100",Un0) 
-  //////  gmm::vecload("sortie.P100",Pn0)
-  ////// initialiser t et eviter les 2 initialisations suivantes
+//   /////// REPRISE DES CALCULS EVENTUELS //////
+//   /////// utiliser gmm::vecload("sortie.U100",Un0) 
+//   //////  gmm::vecload("sortie.P100",Pn0)
+//   ////// initialiser t et eviter les 2 initialisations suivantes
 
-  pdef->initial_condition_u(*this, Un0);
-  pdef->initial_condition_p(*this, Pn0);
+//   pdef->initial_condition_u(*this, Un0);
+//   pdef->initial_condition_p(*this, Pn0);
 
-  gmm::iteration iter(residual, noisy);
-  getfem::standard_model_state MSL(velocity_dyn), MSM(poisson_source);
+//   gmm::iteration iter(residual, noisy);
+//   getfem::standard_model_state MSL(velocity_dyn), MSM(poisson_source);
   
-  do_export(0);
-  for (scalar_type t = dt; t <= T; t += dt) {
+//   do_export(0);
+//   for (scalar_type t = dt; t <= T; t += dt) {
 
-    velocity_nonlin.set_U0(Un0);
-    nonreflective.set_Un(Un0);
-    pdef->source_term(*this, t, F);
-    velocity_f.source_term().set(F);
-    pdef->dirichlet_condition(*this, t, F);
-    velocity_dir.rhs().set(mf_rhs, F);
+//     velocity_nonlin.set_U0(Un0);
+//     nonreflective.set_Un(Un0);
+//     pdef->source_term(*this, t, F);
+//     velocity_f.source_term().set(F);
+//     pdef->dirichlet_condition(*this, t, F);
+//     velocity_dir.rhs().set(mf_rhs, F);
     
-    gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
-    gmm::mult_add(gmm::transposed(B), gmm::scaled(Pn0, -1.), DF);
-    velocity_dyn.set_DF(DF);
-    iter.init();
-    getfem::standard_solve(MSL, velocity_dyn, iter);
+//     gmm::mult(velocity_dyn.get_M(), gmm::scaled(Un0, 1./dt), DF);
+//     gmm::mult_add(gmm::transposed(B), gmm::scaled(Pn0, -1.), DF);
+//     velocity_dyn.set_DF(DF);
+//     iter.init();
+//     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    gmm::copy(velocity.get_solution(MSL), USTAR);
-    gmm::mult(B, USTAR, Pn1);
+//     gmm::copy(velocity.get_solution(MSL), USTAR);
+//     gmm::mult(B, USTAR, Pn1);
  
-    cout << "PN1 : " << gmm::vect_norm2(Pn1) << endl;
-    cout << "U1 - USTAR = " << gmm::vect_dist2(Un0, USTAR);
+//     cout << "PN1 : " << gmm::vect_norm2(Pn1) << endl;
+//     cout << "U1 - USTAR = " << gmm::vect_dist2(Un0, USTAR);
 
-    poisson_source.set_auxF(Pn1);
-    iter.init();
-    getfem::standard_solve(MSM, poisson_source, iter);
-    gmm::mult(gmm::transposed(B), gmm::scaled(poisson.get_solution(MSM), -1.),
-	      USTARbis);
+//     poisson_source.set_auxF(Pn1);
+//     iter.init();
+//     getfem::standard_solve(MSM, poisson_source, iter);
+//     gmm::mult(gmm::transposed(B), gmm::scaled(poisson.get_solution(MSM), -1.),
+// 	      USTARbis);
 
-    gmm::iteration iter2 = iter; iter2.reduce_noisy(); iter2.init();
-    gmm::cg(velocity_dyn.get_M(), Un1, USTARbis,
-	    gmm::identity_matrix(), iter2);
+//     gmm::iteration iter2 = iter; iter2.reduce_noisy(); iter2.init();
+//     gmm::cg(velocity_dyn.get_M(), Un1, USTARbis,
+// 	    gmm::identity_matrix(), iter2);
 
-    gmm::add(USTAR, Un1);
-    gmm::add(gmm::scaled(poisson.get_solution(MSM), 1./dt), Pn0, Pn1);
+//     gmm::add(USTAR, Un1);
+//     gmm::add(gmm::scaled(poisson.get_solution(MSM), 1./dt), Pn0, Pn1);
     
-    pdef->validate_solution(*this, t);
-    cout << "U1 - Un1 = " << gmm::vect_dist2(Un1, Un0);
+//     pdef->validate_solution(*this, t);
+//     cout << "U1 - Un1 = " << gmm::vect_dist2(Un1, Un0);
     
-    gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
-    do_export(t);
+//     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+//     do_export(t);
 
- }
-}
+//  }
+// }
 
 
 /************************************************************/
@@ -793,55 +791,165 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   // Matrix p div u
   sparse_matrix B(nbdof_p, nbdof_u);
   asm_stokes_B(B, mim, mf_u, mf_p, mpirg);
-  
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// To take into account the BOUNDAY CONDITIONS (Lagrange multipliers)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//<<<<<<< .mine
+//  mf_mult.set_qdim(N);
+//  dal::bit_vector dofon_Dirichlet_Out_Cylinder = mf_mult.dof_on_set(DIRICHLET_BOUNDARY_NUM);
+//  dal::bit_vector dofon_Dirichlet_On_Cylinder = mf_mult.dof_on_set(ON_CYLINDER_BOUNDARY_NUM);
+//  dal::bit_vector dofon_nonref =mf_mult.dof_on_set(NONREFLECTIVE_BOUNDARY_NUM);
+//=======
   mf_mult.set_qdim(dim_type(N));
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
-  dal::bit_vector dofon_Dirichlet
-    = mf_mult.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
-  dal::bit_vector dofon_nonref
-    = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
-  dofon_Dirichlet.setminus(dofon_nonref);
 
-  // Normal part Dirichlet condition
+ dal::bit_vector dofon_Dirichlet_Out_Cylinder 
+    = mf_mult.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
+dal::bit_vector dofon_Dirichlet_On_Cylinder 
+    = mf_mult.basic_dof_on_region(ON_CYLINDER_BOUNDARY_NUM);
+dal::bit_vector dofon_nonref
+    = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
+  //>>>>>>> .r2977
+
+
+
+
+  dofon_Dirichlet_Out_Cylinder.setminus(dofon_nonref);
+  dofon_Dirichlet_Out_Cylinder.setminus(dofon_Dirichlet_On_Cylinder);
+
+  // dofon_Dirichlet_On_Cylinder.setminus(dofon_nonref);
+  // dofon_Dirichlet_On_Cylinder.setminus(dofon_Dirichlet_Out_Cylinder);
+
+  // Normal part Dirichlet condition -- sur v en 2D  -- sur v et w en 3D
   mf_mult.set_qdim(1);
   dal::bit_vector dofon_NDirichlet
     = mf_mult.basic_dof_on_region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   std::vector<size_type> ind_ct_ndir;
   for (dal::bv_visitor i(dofon_NDirichlet); !i.finished(); ++i) {
-    if (dofon_Dirichlet.is_in(i*N) || dofon_nonref.is_in(i*N)) 
+    if (dofon_Dirichlet_Out_Cylinder.is_in(i*N) || dofon_nonref.is_in(i*N)) 
       dofon_NDirichlet.sup(i);  // Suppress i because it is on the
     else                        // Dirichlet or non reflective boundary.
       ind_ct_ndir.push_back(i);
-  }
+  } 
   size_type nbdof_NDir = dofon_NDirichlet.card();
   gmm::sub_index SUB_CT_NDIR(ind_ct_ndir);
   gmm::sub_interval I2(nbdof_u, nbdof_NDir);
   getfem::mesh_region mpindirrg
     =mf_u.linked_mesh().get_mpi_sub_region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
-
+  
   sparse_matrix HND(nbdof_NDir, nbdof_u);
   {
     sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
     getfem::generic_assembly assem;
-    assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+    // assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);"); - Good in 2D / Bad in 3D 
+    assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,2,2);"); // 2ieme composante V = (u,v,w) : v = 0
     assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
     assem.push_mat(A); assem.assembly(mpindirrg);
     gmm::copy(gmm::sub_matrix(A, SUB_CT_NDIR, I1), HND);
   }
   cout << "Nb of Normal par Dirichlet constraints : " << nbdof_NDir << endl;
+ 
+  if (N==3){
+    // Normal part Dirichlet condition Left - Right (in 3D only)
+    sparse_matrix HND1(nbdof_NDir, nbdof_u);
+    gmm:: copy(HND,HND1);
+    gmm::sub_interval I2C(nbdof_u+1, nbdof_NDir);
+    sparse_matrix HND2(nbdof_NDir, nbdof_u);
+    {
+      sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+      getfem::generic_assembly assem;
+      // assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+      assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,3,3);"); // 3ieme composante V = (u,v,w) : w = 0 
+      assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
+      assem.push_mat(A); assem.assembly(mpindirrg);
+      gmm::copy(gmm::sub_matrix(A, SUB_CT_NDIR, I1), HND2);
+    }
+    gmm :: resize(HND,nbdof_NDir+nbdof_NDir, nbdof_u);
+    gmm::copy(HND1,gmm::sub_matrix(HND,I2, I1) );
+    gmm::copy(HND2,gmm::sub_matrix(HND,I2C,I1) );
+    nbdof_NDir = nbdof_NDir +  nbdof_NDir;
+    gmm::copy(HND1,gmm::sub_matrix(HND,I2, I1) );
+    gmm::copy(HND2,gmm::sub_matrix(HND,I2C,I1) );
+    //gmm::sub_interval I2(nbdof_u, nbdof_NDir);
+  }
 
-  // Dirichlet condition
+  // Condition of order 2 on "pressure" Up - Down (in 3D only) : \frac{\partial^2}{\partial z^2} phi = 0
+  
+  if (N==3) {
+    mf_mult.set_qdim(1);
+    dal::bit_vector dofon_Neumann
+      = mf_mult.basic_dof_on_region(NEUMANN_BOUNDARY_NUM);
+    std::vector<size_type> ind_ct_neumann;
+    for (dal::bv_visitor i(dofon_Neumann); !i.finished(); ++i) {
+      // if (dofon_Dirichlet_Out_Cylinder.is_in(i*N) || dofon_nonref.is_in(i*N) || dofon_NDirichlet(i*N)) 
+      //	dofon_Neumann.sup(i);  // Suppress i because it is on the
+      //else                     // Dirichlet or non reflective boundary.
+	ind_ct_neumann.push_back(i);
+    } 
+    size_type nbdof_Neumann = dofon_Neumann.card();
+    gmm::sub_index SUB_CT_NEUMANN(ind_ct_neumann);
+    gmm::sub_interval I2N(nbdof_u, nbdof_Neumann);
+    getfem::mesh_region mpineumannrg
+      =mf_u.linked_mesh().get_mpi_sub_region(NEUMANN_BOUNDARY_NUM);
+    sparse_matrix HNEUMANN(nbdof_Neumann, nbdof_u);
+    {
+      sparse_matrix A(mf_mult.nb_dof(), nbdof_p); 
+      getfem::generic_assembly assem;
+      // assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+      assem.set("M(#2,#1)+=comp(Grad(#2).Grad(#1))(:,3,:,3);"); 
+      assem.push_mi(mim); assem.push_mf(mf_p); assem.push_mf(mf_mult);
+      assem.push_mat(A); assem.assembly(mpineumannrg);
+      gmm::copy(gmm::sub_matrix(A, SUB_CT_NEUMANN, I1), HNEUMANN);
+      gmm::scaled(HNEUMANN,-1.0);
+    }
+  
+    dal::bit_vector  dofon_Neumann_Bc
+      = mf_mult.basic_dof_on_region(NEUMANN_BOUNDARY_BOUNDARY_NUM);
+
+
+    std::vector<size_type> ind_ct_neumann_bc;
+    for (dal::bv_visitor i(dofon_Neumann_Bc); !i.finished(); ++i) {
+      //if (dofon_Dirichlet_Out_Cylinder.is_in(i*N) || dofon_nonref.is_in(i*N) || dofon_NDirichlet(i*N)) 
+      //	dofon_Neumann_Bc.sup(i);  // Suppress i because it is on the
+      //else                     // Dirichlet or non reflective boundary.
+	ind_ct_neumann_bc.push_back(i);
+    } 
+    size_type nbdof_Neumann_Bc = dofon_Neumann_Bc.card();
+    getfem::mesh_region mpineumannbcrg
+      =mf_u.linked_mesh().get_mpi_sub_region(NEUMANN_BOUNDARY_BOUNDARY_NUM);
+    sparse_matrix HNEUMANNBC(nbdof_Neumann_Bc, nbdof_u);
+    {
+      sparse_matrix A(mf_mult.nb_dof(), nbdof_p); 
+      getfem::generic_assembly assem;
+      // assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+      assem.set("M(#2,#1)+=comp(comp(Grad(#2).Base(#1).Normal())(:3,:,3);"); 
+      assem.push_mi(mim); assem.push_mf(mf_p); assem.push_mf(mf_mult);
+      assem.push_mat(A); assem.assembly(mpineumannbcrg);
+      gmm::copy(gmm::sub_matrix(A, SUB_CT_NEUMANN, I1), HNEUMANNBC);
+    }
+    gmm::add(HNEUMANNBC,HNEUMANN);
+
+    gmm :: resize(HND,nbdof_NDir+nbdof_NDir+nbdof_Neumann, nbdof_u);
+
+    gmm::copy(HNEUMANN,gmm::sub_matrix(HND,I2N,I1) );
+    nbdof_NDir = nbdof_NDir +  nbdof_NDir + nbdof_Neumann + nbdof_Neumann_Bc;
+    //  gmm::sub_interval I2(nbdof_u, nbdof_NDir);
+    cout << "Nb of Normal par Dirichlet constraints Up - Down : " << nbdof_Neumann << endl;
+  }
+  
+  // Dirichlet condition except on cylinder
   mf_mult.set_qdim(dim_type(N));
-  size_type nbdof_Dir = dofon_Dirichlet.card();
-  std::vector<size_type> ind_ct_dir;
-  for (dal::bv_visitor i(dofon_Dirichlet); !i.finished(); ++i) 
-    ind_ct_dir.push_back(i);
-  gmm::sub_index SUB_CT_DIR(ind_ct_dir);
-  gmm::sub_interval I3(nbdof_u+nbdof_NDir, nbdof_Dir);
+  size_type nbdof_Dir_Out_Cylinder = dofon_Dirichlet_Out_Cylinder.card();
+  std::vector<size_type> ind_ct_dir_out_cyl;
+  for (dal::bv_visitor i(dofon_Dirichlet_Out_Cylinder); !i.finished(); ++i) 
+    ind_ct_dir_out_cyl.push_back(i);
+  gmm::sub_index SUB_CT_DIR(ind_ct_dir_out_cyl);
+  gmm::sub_interval I3(nbdof_u+nbdof_NDir, nbdof_Dir_Out_Cylinder);
   getfem::mesh_region mpidirrg
     = mf_u.linked_mesh().get_mpi_sub_region(DIRICHLET_BOUNDARY_NUM);
 
-  sparse_matrix HD(nbdof_Dir, nbdof_u);
+  sparse_matrix HD(nbdof_Dir_Out_Cylinder, nbdof_u);
   {
     sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
     getfem::generic_assembly assem;
@@ -850,7 +958,31 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     assem.push_mat(A); assem.assembly(mpidirrg);
     gmm::copy(gmm::sub_matrix(A, SUB_CT_DIR, I1), HD);
   }
-  cout << "Nb of Dirichlet constraints : " << nbdof_Dir << endl;
+  cout << "Nb of Dirichlet constraints without cylinder : " << nbdof_Dir_Out_Cylinder << endl;
+
+
+ // Dirichlet condition on cylinder
+  mf_mult.set_qdim(N);
+  size_type nbdof_Dir_On_Cylinder = dofon_Dirichlet_On_Cylinder.card();
+  std::vector<size_type> ind_ct_dir_on_cylinder;
+  for (dal::bv_visitor i(dofon_Dirichlet_On_Cylinder); !i.finished(); ++i) 
+    ind_ct_dir_on_cylinder.push_back(i);
+  gmm::sub_index SUB_CT_DIR_CYL(ind_ct_dir_on_cylinder);
+  gmm::sub_interval I3C(nbdof_u+nbdof_NDir+nbdof_Dir_Out_Cylinder, nbdof_Dir_On_Cylinder);
+  getfem::mesh_region mpidircylrg
+    = mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_BOUNDARY_NUM);
+
+  sparse_matrix HDC(nbdof_Dir_On_Cylinder, nbdof_u);
+  {
+    sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+    getfem::generic_assembly assem;
+    assem.set("M(#2,#1)+=comp(vBase(#2).vBase(#1))(:,i,:,i);");
+    assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
+    assem.push_mat(A); assem.assembly(mpidircylrg);
+    gmm::copy(gmm::sub_matrix(A, SUB_CT_DIR_CYL, I1), HDC);
+  }
+  cout << "Nb of Dirichlet constraints on cylinder : " << nbdof_Dir_On_Cylinder << endl;
+  gmm :: resize(lambda,  nbdof_Dir_On_Cylinder);
 
 
   // Non reflective condition
@@ -859,7 +991,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   for (dal::bv_visitor i(dofon_nonref); !i.finished(); ++i) 
     ind_ct_nonref.push_back(i);
   gmm::sub_index SUB_CT_NONREF(ind_ct_nonref);
-  gmm::sub_interval I4(nbdof_u+nbdof_NDir+nbdof_Dir, nbdof_nonref);
+  gmm::sub_interval I4(nbdof_u+nbdof_NDir+nbdof_Dir_Out_Cylinder+nbdof_Dir_On_Cylinder, nbdof_nonref);
   getfem::mesh_region mpinonrefrg
     = mf_u.linked_mesh().get_mpi_sub_region(NONREFLECTIVE_BOUNDARY_NUM);
 
@@ -876,6 +1008,9 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   }
   cout << "Nb on Non reflective condition: " << nbdof_nonref << endl;
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Operators to solve NSE
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Discretization of laplace operator for p
   sparse_matrix K2(nbdof_p+1, nbdof_p+1);
@@ -916,79 +1051,87 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   scalar_type BoxYmin =  PARAM.real_value("BOXYmin", "Particular Point yMin");
   scalar_type BoxYmax =  PARAM.real_value("BOXYmax", "Particular Point yMax");
 
-  base_node ptRef(3), ptPartU(3), ptPartP(3);
+  base_node ptRef(N+2);
 
   /* for (dal::bv_visitor i(mesh.points_index()); !i.finished(); ++i){
     base_node BN =  mesh.points()[i];
     if (BN[0]==BBmin[0] && BN[1]==BBmin[1] ) {
       //cout << mesh.points()[i] << "   "<< i << endl;
-      ptRef[0] = i;
+      ptRef[0] = i-N+1;
       ptRef[1] = BN[0];
       ptRef[2] = BN[1];
     }
     }*/
+  //<<<<<<< .mine
+  //
+  ///*for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+  //  bgeot :: base_node BN =  mf_p.point_of_dof(i);
+  //=======
   
   GMM_ASSERT1(!mf_p.is_reduced(), "To be adapted");
-  for (unsigned i=0; i< mf_p.nb_dof(); ++i){
+  /*  for (unsigned i=0; i< mf_p.nb_dof(); ++i){
     bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
+    //>>>>>>> .r2977
     if (BN[0]==BBmin[0] && BN[1]==BBmin[1] ) {
       cout << "Reference Point " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
       ptRef[0] = i;
       ptRef[1] = BN[0];
       ptRef[2] = BN[1];
     }
-  } 
-  
+    }*/
   
   for (unsigned i=0; i< mf_p.nb_dof(); ++i){
     bgeot :: base_node BN =  mf_p.point_of_basic_dof(i);
     if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
-      cout << "Point in Box " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
-      ptPartP[0] = i;
-      ptPartP[1] = BN[0];
-      ptPartP[2] = BN[1];
+      for (unsigned j=0; j< N; j++) {ptRef[j] = BN[j];}
+      ptRef[N] = i; // c'est scalaire sur p
+      ptRef[N+1] = 0;
     }
   } 
   
   GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   for (unsigned i=0; i< mf_u.nb_dof(); ++i){
     bgeot :: base_node BN =  mf_u.point_of_basic_dof(i);
-    if (BN[0]<BoxXmax && BN[0] > BoxXmin && BN[1]< BoxYmax && BN[1] > BoxYmin ) {
-      cout << "Point in Box " << i <<",x="<<BN[0]<<",y="<<BN[1]<< endl;
-      ptPartU[1] = BN[0];
-      ptPartU[2] = BN[1]; 
-      // Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
+    if (N==2) {
+      if (BN[0]==ptRef[0] && BN[1] ==ptRef[1]) {ptRef[3] = i+N-1;}
+      // c'est vectoriel sur u
+      //Attention c'est vectoriel => en sortie i <-> pt sur la dernière composante de la vitesse
       // Vitesse =(U,V,W) alors en 2D --> sur V, en 3D --> sur W
-      // D'ou la modif suivante
-      ptPartU[0] = i - N + 1;
-    } 
-  }
-  
+      // D'ou la modif : non pas i mais i+N-1
+    }
+    if (N==3) {
+      if (BN[0]==ptRef[0] && BN[1] ==ptRef[1] && BN[2] == ptRef[2]) {ptRef[4] = i+N-1;} 
+    }
+  }    
+
+  if (N==2) 
+    cout << "Reference Point for Cd and Cl  : (" <<  ptRef[0]<<","<< ptRef[1]<<")"<<endl;
+  if (N==3)
+    cout << "Reference Point for Cd and Cl  : (" <<  ptRef[0]<<","<< ptRef[1]<<","<< ptRef[2]<<")"<<endl;
+    
   do_export(0);
   for (scalar_type t = Tinitial + dt; t <= T; t += dt) {
-
+    
     //
     // Assembly of the first linear system
     //
-    size_type sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir + nbdof_nonref;
+    size_type sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir_Out_Cylinder + nbdof_Dir_On_Cylinder + nbdof_nonref;
     sparse_matrix A1(sizelsystem, sizelsystem);
-   
     sparse_matrix A2(sizelsystem, sizelsystem);  // sera utilisée pour reappliquer la CNR
     
     plain_vector Y(sizelsystem), YY(nbdof_u);
     // laplace operator
     gmm::copy(K1, gmm::sub_matrix(A1, I1));
-
+    
     // Nonlinear part
     getfem::asm_NS_uuT(gmm::sub_matrix(A1, I1), mim, mf_u, Un0, mpirg);
     // Dynamic part
     gmm::add(gmm::scaled(M, 1./dt), gmm::sub_matrix(A1, I1));
-        
-     gmm::add(M, gmm::sub_matrix(A2, I1));
-
+    
+    gmm::add(M, gmm::sub_matrix(A2, I1));
     
     gmm::mult(M, gmm::scaled(Un0, 1./dt), gmm::sub_vector(Y, I1));
-
+    
     //    plain_vector subY1(nbdof_u);
     // gmm::mult(M, gmm::scaled(Un0, 1./dt), subY1);
 
@@ -1000,6 +1143,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     getfem::asm_source_term(subY1, mim, mf_u, mf_rhs, F,
 			    mpirg);
 
+
     // Normal Dirichlet condition
     gmm::copy(HND, gmm::sub_matrix(A1, I2, I1));
     gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A1, I1, I2));
@@ -1007,20 +1151,31 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::copy(HND, gmm::sub_matrix(A2, I2, I1));
     gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A2, I1, I2));
     
-    // Dirichlet condition
+    // Dirichlet condition except on cylinder
     gmm::copy(HD, gmm::sub_matrix(A1, I3, I1));
     gmm::copy(gmm::transposed(HD), gmm::sub_matrix(A1, I1, I3));
     
     gmm::copy(HD, gmm::sub_matrix(A2, I3, I1));
     gmm::copy(gmm::transposed(HD), gmm::sub_matrix(A2, I1, I3));
-    
+
     gmm::resize(F, N * nbdof_rhs);
     pdef->dirichlet_condition(*this, t, F);
     {
       plain_vector VV(mf_mult.nb_dof());
       getfem::asm_source_term(VV, mim, mf_mult, mf_rhs, F, mpidirrg);
       gmm::copy(gmm::sub_vector(VV, SUB_CT_DIR), gmm::sub_vector(Y, I3));
-    }
+      gmm::copy(gmm::sub_vector(VV, SUB_CT_DIR_CYL), gmm::sub_vector(Y, I3C));
+
+   }
+    // Dirichlet condition on cylinder
+    gmm::copy(HDC, gmm::sub_matrix(A1, I3C, I1));
+    gmm::copy(gmm::transposed(HDC), gmm::sub_matrix(A1, I1, I3C));
+
+    gmm::copy(HDC, gmm::sub_matrix(A2, I3C, I1));
+    gmm::copy(gmm::transposed(HDC), gmm::sub_matrix(A2, I1, I3C));
+   
+    
+
     // Non reflective condition
     gmm::copy(HNR, gmm::sub_matrix(A1, I4, I1));
     gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A1, I1, I4));
@@ -1069,7 +1224,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 
       //MUMPS_solve(A1,X,Y);
-
+     
 	          SuperLU_solve(A1, X, Y, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
       gmm::copy(gmm::sub_vector(X, I1), USTAR);
@@ -1084,6 +1239,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       double rcond;
       plain_vector X(nbdof_p+1), Z(nbdof_p+1);
       gmm::mult(B, USTAR, gmm::sub_vector(Z, IP));
+      
       SuperLU_solve(K2, X, Z, rcond);
       // if (noisy) cout << "condition number: " << 1.0/rcond << endl;
       gmm::copy(gmm::sub_vector(X, IP), Phi);
@@ -1100,6 +1256,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
       SuperLU_solve(A2, X, Y, rcond);     // A2 contient la matrice de masse et les blocs des CL
       gmm::copy(gmm::sub_vector(X, I1), Un1);
 
+      gmm::copy(gmm::sub_vector(X, I3C), lambda);
+
+
+
     }
    
 
@@ -1113,92 +1273,36 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
     do_export(t);
  
-   
+    //
+    // SORTIES : Coefficient de Trainé (Cd) et de Portance (Cl)
+    //
+    std::vector<scalar_type> Cd(1), Cl(1);
+    getfem :: mesh_region mpioncylinder = 
+      mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_BOUNDARY_NUM);
+    
+    plain_vector TmpLambda(nbdof_u);    
+    gmm::copy(lambda,gmm::sub_vector(TmpLambda,SUB_CT_DIR_CYL));
+    
+    getfem :: traineePortance2D(Cd,Cl,mim,mf_u,TmpLambda,mpioncylinder);
+    
+    coeffTP << t <<" " <<  -Cd[0] << " " << -Cl[0] << endl;
+    
+    // Sauvegarde sur le disque ptPart.data
+    // time, coordonnées du point de Ref (x,y) en 2D et (x,y,z) en 3D (P,U,V) en 2D et (P,U,V,W) en 3D  au point de Ref
     if (N==2) {
-
-      plain_vector DU(mf_rhs.nb_dof() * N * N);
-      plain_vector nuDxU(mf_rhs.nb_dof());
-      plain_vector nuDyU(mf_rhs.nb_dof());
-      plain_vector nuDxV(mf_rhs.nb_dof());
-      plain_vector nuDyV(mf_rhs.nb_dof());
-      plain_vector PP(mf_p.nb_dof());
-
-      compute_gradient(mf_u, mf_rhs, Un0, DU);
-      for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
-	nuDxU[i] = nu*DU[i*N*N + 0]; // DxUx
-        nuDyU[i] = nu*DU[i*N*N + 1]; // DyUx
-        nuDxV[i] = nu*DU[i*N*N + 2]; // DxUy
-        nuDyV[i] = nu*DU[i*N*N + 3]; // DyUy
-         }
-
-      std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
-      //sparse_matrix v(1,1), w(1,1);
-      getfem :: mesh_region mpioncylinder = 
-	mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_NUM);
-
-       plain_vector Pref(mf_p.nb_dof());
-       for (size_type i=0; i<mf_p.nb_dof(); ++i) { Pref[i] = Pn1[size_type(ptRef[0])];}
-       gmm::add(Pn1,gmm::scaled(Pref,-1.0),Pref);
-
-       getfem :: traineePortance2D(Cxn,Cxp,Cyn,Cyp,mim,mf_rhs,mf_p,nuDxU,nuDyU,nuDxV,nuDyV,Pref,mpioncylinder);
-      
-       coeffTP << t <<" " <<  2*Cxn[0]<<" "<<2*Cxp[0]<<" "<< 2*(Cxn[0]+Cxp[0])<<" "<< 2*Cyn[0]<<" "<< 2*Cyp[0] <<" "<< 2*(Cyn[0]+Cyp[0])<<" " << endl;
-
-       ptPartData << t << " " << Un1[size_type(ptPartU[0])] << " " << Un1[size_type(ptPartU[0]) + 1] << " " << Pn1[size_type(ptPartP[0])] << endl;
-
-
+      ptPartData <<  t <<" "<<ptRef[0]<<" "<<ptRef[1]<<" "<<  Pn1[int(ptRef[2])] << " " << 
+	Un1[int(ptRef[3])] << " " << Un1[int(ptRef[3]) + 1] << " " <<endl;
     }
-
-//     if (N==3) {
-//       plain_vector DU(mf_rhs.nb_dof() * N * N);
-//       plain_vector nuDxU(mf_rhs.nb_dof()); 
-//       plain_vector nuDyU(mf_rhs.nb_dof());
-//       plain_vector nuDzU(mf_rhs.nb_dof());
-//       plain_vector nuDxV(mf_rhs.nb_dof()); 
-//       plain_vector nuDyV(mf_rhs.nb_dof());
-//       plain_vector nuDzV(mf_rhs.nb_dof());
-//       plain_vector nuDxW(mf_rhs.nb_dof());  
-//       plain_vector nuDyW(mf_rhs.nb_dof());
-//       plain_vector nuDzW(mf_rhs.nb_dof());
-
-//       plain_vector PP(mf_p.nb_dof());
-
-//       compute_gradient(mf_u, mf_rhs, Un0, DU);
-//       for (unsigned i=0; i < mf_rhs.nb_dof(); ++i) {
-// 	nuDxU[i] = nu*DU[i*N*N + 0];
-//         nuDyU[i] = nu*DU[i*N*N + 1];
-// 	nuDzU[i] = nu*DU[i*N*N + 2];
-//         nuDxV[i] = nu*DU[i*N*N + 3];
-//         nuDyV[i] = nu*DU[i*N*N + 4];
-// 	nuDzV[i] = nu*DU[i*N*N + 5];
-// 	nuDxW[i] = nu*DU[i*N*N + 6];
-//         nuDyW[i] = nu*DU[i*N*N + 7];
-// 	nuDzW[i] = nu*DU[i*N*N + 8];
-//          }
-
-//       std::vector<scalar_type> Cxn(1), Cxp(1), Cyn(1), Cyp(1);
-//       //sparse_matrix v(1,1), w(1,1);
-//       getfem :: mesh_region mpioncylinder = 
-// 	mf_u.linked_mesh().get_mpi_sub_region(ON_CYLINDER_NUM);
-
-//        plain_vector Pref(mf_p.nb_dof());
-//        for (int i=0; i<mf_p.nb_dof(); ++i){ Pref[i] = Pn1[ptRef[0]];}
-//        gmm::add(Pn1,gmm::scaled(Pref,-1.0),Pref);
-
-//        getfem :: traineePortance3D(Cxn,Cxp,Cyn,Cyp,mim,mf_u,mf_p,nuDxU,nuDyU,nuDzU,nuDxV,nuDyV,nuDzV,nuDxW,nuDyW,nuDzW,Pref,mpioncylinder);
-      
-//        coeffTP << t <<" " <<  2*Cxn[0]<<" "<<2*Cxp[0]<<" "<< 2*(Cxn[0]-Cxp[0])<<" "<< 2*Cyn[0]<<" "<< 2*Cyp[0] <<" "<< 2*(Cyn[0] - Cyp[0])<<" " << endl;
-
-//       ptPartData << t << " " << Un1[ptPartU[0]] << " " << Un1[ptPartU[0] + 1] << " " << Pn1[ptPartP[0]] << endl;
-//     }
-
-
+    if (N==3) {
+      ptPartData <<  t <<" "<<ptRef[0]<<" "<<ptRef[1]<<" " << ptRef[2] <<  Pn1[int(ptRef[3])] << " " 
+		 << Un1[int(ptRef[4])] << " " << Un1[int(ptRef[4]) + 1] << " " << Un1[int(ptRef[4]) + 2] <<endl;
+    }
+    
+    
+    coeffTP.close();
+    ptPartData.close();
   }
-  coeffTP.close();
-  ptPartData.close();
 }
-
-
 
 
 

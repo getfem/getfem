@@ -3,7 +3,7 @@
 % parameters for program stokes                                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-N = 2;
+N = 3;
 QUAD = 0;
 NU = 1/80;       % Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0;   	  % rate of rotation of the cylinder
@@ -42,7 +42,7 @@ if (N == 2 && ~QUAD)
 % MESHNAME = 'maillage003.mesh'; % name of the mesh file
 %MESHNAME = 'gmshv2:pouet5_v2.msh';
 %MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
-  MESHNAME = 'gmshv2:triangular.msh';
+ MESHNAME = 'gmshv2:triangular.msh';
 %MESHNAME = 'gmshv2:Rkd2.msh';
 %MESHNAME = 'maillage02.mesh';
 %MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[30,30]';
@@ -59,20 +59,29 @@ end
 
 if (N == 2 && QUAD)
 %  MESHNAME = 'structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
-  MESHNAME = 'gmshv2:rectangular.msh';
+  MESHNAME = 'gmshv2:rectangularQ.msh';
   FEM_TYPE = 'FEM_QK(2,2)';  % QK method
   FEM_TYPE_P = 'FEM_QK(2,1)';
   % DATA_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; 
 end
 
-if (N == 3)
+if (N == 3 && ~QUAD)
   %MESHNAME = 'structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NSUBDIV=[5,5,5]';
-  MESHNAME = 'gmshv2:tralala_3D-2.msh';
+  MESHNAME = 'gmshv2:tralala_3D.msh';
   FEM_TYPE = 'FEM_PK(3,2)';  % PK method
   FEM_TYPE_P = 'FEM_PK(3,1)';
   % DATA_FEM_TYPE = 'FEM_PK(3,1)'; 
   INTEGRATION = 'IM_TETRAHEDRON(6)'; 
+end
+
+if (N == 3 && QUAD)
+  MESHNAME = 'gmshv2:rectangularRitesh3D.msh';
+  FEM_TYPE = 'FEM_QK(3,2)';  % QK method
+  FEM_TYPE_P = 'FEM_QK(3,1)';
+  % DATA_FEM_TYPE = 'FEM_QK(3,1)';
+  %INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,10)'; 
+  INTEGRATION = 'IM_HEXAHEDRON(5)'; 
 end
 
 
@@ -82,5 +91,5 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 
 ROOTFILENAME = 'icare';     % Root of data files.
 DX_EXPORT = 1; % export solution to a .dx file ?
-VTK_EXPORT =1; 
+VTK_EXPORT = 1; 
 DT_EXPORT = 250*DT;
