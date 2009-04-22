@@ -36,6 +36,8 @@
 */
 #ifndef GMM_RANGE_BASIS_H
 #define GMM_RANGE_BASIS_H
+#include "gmm_dense_qr.h"
+#include "gmm_dense_lu.h"
 
 #include "gmm_kernel.h"
 #include "gmm_iter.h"
