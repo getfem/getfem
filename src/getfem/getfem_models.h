@@ -38,7 +38,6 @@
 #ifndef GETFEM_MODELS_H__
 #define GETFEM_MODELS_H__
 
-#include "getfem_assembling.h"
 #include "getfem_partial_mesh_fem.h"
 
 namespace getfem {
@@ -134,7 +133,7 @@ namespace getfem {
       const mesh_fem *mf;           // Principal fem of the variable.
       const mesh_im *mim;           // Optional mesh_im for filter.
       partial_mesh_fem *partial_mf; // Filter with respect to mf.
-      int m_region;                 // Optional mesh_region for the filter.
+      size_type m_region;           // Optional mesh_region for the filter.
       std::string filter_var;       // Optional variable name for the filter
                            // with the mass matrix of the corresponding fem.
 
@@ -151,7 +150,7 @@ namespace getfem {
 		      bool is_fem = false, size_type n_it = 1,
 		      var_description_filter fil = VDESCRFILTER_NO,
 		      const mesh_fem *mmf = 0, const mesh_im *im = 0,
-		      int m_reg = 0, dim_type Q = 1,
+		      size_type m_reg = size_type(-1), dim_type Q = 1,
 		      const std::string &filter_v = std::string(""))
 	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
 	  filter(fil), n_iter(n_it), mf(mmf), mim(im), partial_mf(0),
@@ -176,32 +175,30 @@ namespace getfem {
       void set_size(size_type s);
     };
 
-    struct term_description;
-
   public :
 
     typedef var_description *pvariable;
     typedef std::vector<std::string> varnamelist;
-    typedef std::vector<term_description> termlist;
     typedef std::vector<model_real_sparse_matrix> real_matlist;
     typedef std::vector<model_complex_sparse_matrix> complex_matlist;
     typedef std::vector<model_real_plain_vector> real_veclist;
     typedef std::vector<model_complex_plain_vector> complex_veclist;
 
-  private :
-
     struct term_description {
       bool is_matrix_term; // tangent matrix term or rhs term.
       bool is_symmetric;   // Term have to be symmetrized.
-      bool is_linear;      // Term is linear.
       std::string var1, var2;
       term_description(const std::string &v)
 	: is_matrix_term(false), var1(v) {}
       term_description(const std::string &v1, const std::string &v2,
-		       bool issym, bool islin)
-	: is_matrix_term(true), is_symmetric(issym), is_linear(islin),
-	  var1(v1), var2(v2) {}
+		       bool issym)
+	: is_matrix_term(true), is_symmetric(issym), var1(v1), var2(v2) {}
     };
+
+    typedef std::vector<term_description> termlist;
+
+  private :
+
 
     // rmatlist and cmatlist could be csc_matrix vectors to reduced the
     // amount of memory (but this should add a supplementary copy).
@@ -212,6 +209,7 @@ namespace getfem {
       varnamelist vlist;        // List of variables used by the brick.
       varnamelist dlist;        // List of data used by the brick.
       termlist tlist;           // List of terms build by the brick
+      size_type region;         // Optional region size_type(-1) for all.
       real_matlist rmatlist;    // List of matrices the brick have to fill in
                                 // (real version).
       real_veclist rveclist;    // List of rhs the brick have to fill in
@@ -222,9 +220,10 @@ namespace getfem {
                                 // (complex version).
       
       brick_description(pbrick p, const varnamelist &vl,
-			const varnamelist &dl, const termlist &tl)
+			const varnamelist &dl, const termlist &tl,
+			size_type reg)
 	: terms_to_be_computed(true), v_num(0), pbr(p), vlist(vl), dlist(dl),
-	  tlist(tl) { }
+	  tlist(tl), region(reg) { }
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
@@ -293,7 +292,7 @@ namespace getfem {
 	integration schemes. */
     void add_mult_on_region(const std::string &name, const mesh_fem &mf,
 			    const mesh_im &mim,
-			    const std::string &primal_name, int region,
+			    const std::string &primal_name, size_type region,
 			    size_type niter = 1);
 
     /** Gives the access to the vector value of a variable. For the real
@@ -358,7 +357,7 @@ namespace getfem {
 	the variable not only on the fem). */
     size_type add_brick(pbrick pbr, const varnamelist &varnames,
 			const varnamelist &datanames,
-			const termlist &terms);
+			const termlist &terms, size_type region);
 
     /** Assembly of the tangent system taking into account the terms
 	from all bricks. */
@@ -430,19 +429,53 @@ namespace getfem {
     virtual void asm_real_tangent_terms(const model &,
 					const model::varnamelist &,
 					model::real_matlist &,
-					model::real_veclist &) const
+					model::real_veclist &,
+					size_type) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
+
     virtual void asm_complex_tangent_terms(const model &,
 					   const model::varnamelist &,
 					   model::complex_matlist &,
-					   model::complex_veclist &) const
+					   model::complex_veclist &,
+					   size_type) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
     
   };
 
-  // + fonctions rendant des briques classiques.
+  //=========================================================================
+  //
+  //  Functions adding standard bricks to the model.
+  //
+  //=========================================================================
+
+  
+  /** Add a Laplacian term on the variable `varname`. If it is a vector
+      valued variable, the Laplacian term is componentwise
+  */
+  size_type add_Laplacian_brick(model &md, const mesh_im &mim,
+				const std::string &varname,
+				size_type region = size_type(-1));
   
 
+  /** Add an elliptic term on the variable `varname`. The shape of the elliptic
+      term depends both on the variable and the data. This corresponds to a
+      term $-\text{div}(a\nabla u)$ where $a$ is the data and $u$ the variable.
+      The data can be a scalar, a matrix or an order four tensor. The variable
+      can be vector valued or not. If the data is a scalar or a matrix and
+      the variable is vector valued then the term is added componentwise.
+      An order four tensor data is allowed for vector valued variable only.
+      The data can be constant or describbed on a fem. Of course, when
+      the data is a tensor describe on a finite element method (a tensor
+      field) the data can be a huge vector. The components of the
+      matrix/tensor have to be stored with the fortran order (columnwise) in
+      the data vector (compatibility with blas). The symmetry of the given
+      matrix/tensor is not verified (but assumed).
+  */
+  size_type add_generic_elliptic_brick(model &md, const mesh_im &mim,
+				       const std::string &varname,
+				       const std::string &dataname, 
+				       size_type region = size_type(-1));
+  
 
 
 

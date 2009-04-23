@@ -76,8 +76,7 @@ namespace getfem {
     mesh_region() : p(new impl), id_(size_type(-3)), parent_mesh(0) {}
     /** a mesh_region can be built from a integer parameter 
 	(a region number in a mesh),
-	but it won't be usable until 'from_mesh(m)' has been 
-	called 
+	but it won't be usable until 'from_mesh(m)' has been called 
 	Note that these regions are read-only, this constructor is
 	mostly used for backward-compatibiliy.
     */
@@ -88,7 +87,7 @@ namespace getfem {
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv) : 
       p(new impl), id_(size_type(-3)), parent_mesh(0) { add(bv); }
-    /** provide a default value for the mesh_region paramters of assembly
+    /** provide a default value for the mesh_region parameters of assembly
         procedures etc. */
     static mesh_region all_convexes() {
       return mesh_region(size_type(-1)); 

@@ -246,7 +246,8 @@ namespace getfem {
 
   void model::add_mult_on_region(const std::string &name, const mesh_fem &mf,
 				 const mesh_im &mim,
-				 const std::string &primal_name, int region,
+				 const std::string &primal_name,
+				 size_type region,
 				 size_type niter) {
     check_name_valitity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
@@ -259,8 +260,9 @@ namespace getfem {
 
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
 			     const varnamelist &datanames,
-			     const termlist &terms) {
-    bricks.push_back(brick_description(pbr, varnames, datanames, terms));
+			     const termlist &terms, size_type region) {
+    bricks.push_back(brick_description(pbr, varnames, datanames, terms,
+				       region));
     GMM_ASSERT1(!(pbr->is_complex() && !is_complex()),
 		"Impossible to add a complex brick to a real model");
     if (is_complex() && pbr->is_complex()) {
@@ -273,6 +275,14 @@ namespace getfem {
     is_linear = is_linear && pbr->is_linear();
     is_symmetric = is_symmetric && pbr->is_symmetric();
     is_coercive = is_coercive && pbr->is_coercive();
+
+    for (size_type i=0; i < varnames.size(); ++i)
+      GMM_ASSERT1(variables.find(varnames[i]) != variables.end(),
+		  "Undefined model variable" << varnames[i]);
+    for (size_type i=0; i < datanames.size(); ++i)
+      GMM_ASSERT1(variables.find(datanames[i]) != variables.end(),
+		  "Undefined model data or variable" << datanames[i]);
+    
     return size_type(bricks.size() - 1);
   }
 
@@ -351,10 +361,12 @@ namespace getfem {
 	// Brick call for all terms.
 	if (cplx)
 	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist,
-					       brick.cmatlist, brick.cveclist);
+					       brick.cmatlist, brick.cveclist,
+					       brick.region);
 	else
 	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist,
-					    brick.rmatlist, brick.rveclist);
+					    brick.rmatlist, brick.rveclist,
+					    brick.region);
 
 	if (brick.pbr->is_linear())
 	  brick.terms_to_be_computed = false;
@@ -384,7 +396,7 @@ namespace getfem {
 				    std::complex<scalar_type>(-1)),
 			gmm::sub_vector(crhs, I1));
 	    }
-	    if (brick.pbr->is_symmetric() && I1.first() != I2.first()) {
+	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.cmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
 	      if (brick.pbr->is_linear() && !is_linear) {
@@ -406,7 +418,7 @@ namespace getfem {
 				    scalar_type(-1)),
 			gmm::sub_vector(crhs, I1));
 	    }
-	    if (brick.pbr->is_symmetric() && I1.first() != I2.first()) {
+	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
 	      if (brick.pbr->is_linear() && !is_linear) {
@@ -428,7 +440,7 @@ namespace getfem {
 				    scalar_type(-1)),
 			gmm::sub_vector(rrhs, I1));
 	    }
-	    if (brick.pbr->is_symmetric() && I1.first() != I2.first()) {
+	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(rTM, I2, I1));
 	      if (brick.pbr->is_linear() && !is_linear) {
@@ -488,6 +500,37 @@ namespace getfem {
     return it->second.complex_value[niter];    
   }
  
+
+  
+  
+
+
+
+
+
+
+  size_type add_Laplacian_brick(model &md, const mesh_im &mim,
+				const std::string &varname,
+				size_type region) {
+    pbrick pbr = new virtual_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    return md.add_brick(pbr, model::varnamelist(1, varname),
+			model::varnamelist(), tl, region);
+  }
+
+  size_type add_generic_elliptic_brick(model &md, const mesh_im &mim,
+				       const std::string &varname,
+				       const std::string &dataname,
+				       size_type region) {
+    pbrick pbr = new virtual_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    return md.add_brick(pbr, model::varnamelist(1, varname),
+			model::varnamelist(1, dataname), tl, region);
+  }
+
+
 
 }  /* end of namespace getfem.                                             */
 

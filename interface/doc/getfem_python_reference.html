@@ -6,9 +6,9 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2970)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2975)</font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py">/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/homes/doua/goulp/renard/source++/getfem++/gcc_icj5/interface/src/python/getfem_python_reference.py">/homes/doua/goulp/renard/source++/getfem++/gcc_icj5/interface/src/python/getfem_python_reference.py</a></font></td></tr></table>
     <p><tt>Getfem-interface&nbsp;classes.<br>
 Provides&nbsp;access&nbsp;to&nbsp;the&nbsp;pseudo-objects&nbsp;exported&nbsp;by&nbsp;the&nbsp;python-getfem&nbsp;interface.</tt></p>
 <p>
@@ -1711,6 +1711,10 @@ schemes.</tt></dd></dl>
 
 <dl><dt><a name="Model-is_complex"><strong>is_complex</strong></a>(self)</dt><dd><tt>Return&nbsp;0&nbsp;is&nbsp;the&nbsp;model&nbsp;is&nbsp;real,&nbsp;1&nbsp;if&nbsp;it&nbsp;is&nbsp;complex.</tt></dd></dl>
 
+<dl><dt><a name="Model-listbricks"><strong>listbricks</strong></a>(self)</dt><dd><tt>print&nbsp;to&nbsp;the&nbsp;output&nbsp;the&nbsp;list&nbsp;of&nbsp;bricks&nbsp;of&nbsp;the&nbsp;model.</tt></dd></dl>
+
+<dl><dt><a name="Model-listvar"><strong>listvar</strong></a>(self)</dt><dd><tt>print&nbsp;to&nbsp;the&nbsp;output&nbsp;the&nbsp;list&nbsp;of&nbsp;variables&nbsp;and&nbsp;constants&nbsp;of&nbsp;the&nbsp;model.</tt></dd></dl>
+
 <dl><dt><a name="Model-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;rough&nbsp;approximation&nbsp;of&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the<br>
 model.</tt></dd></dl>
 
@@ -1718,17 +1722,11 @@ model.</tt></dd></dl>
 
 <dl><dt><a name="Model-set"><strong>set</strong></a>(self, *args)</dt></dl>
 
-<dl><dt><a name="Model-set_state"><strong>set_state</strong></a>(self, U)</dt><dd><tt>Update&nbsp;the&nbsp;internal&nbsp;state&nbsp;with&nbsp;the&nbsp;vector&nbsp;`U`.</tt></dd></dl>
-
 <dl><dt><a name="Model-set_variable"><strong>set_variable</strong></a>(self, name, U, niter<font color="#909090">=None</font>)</dt><dd><tt>Set&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;variable&nbsp;or&nbsp;data.</tt></dd></dl>
-
-<dl><dt><a name="Model-state"><strong>state</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;vector&nbsp;of&nbsp;unknowns,&nbsp;which&nbsp;contains&nbsp;the&nbsp;solution&nbsp;after&nbsp;a&nbsp;solve.</tt></dd></dl>
 
 <dl><dt><a name="Model-tangent_matrix"><strong>tangent_matrix</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;tangent&nbsp;matrix&nbsp;stored&nbsp;in&nbsp;the&nbsp;model&nbsp;.</tt></dd></dl>
 
 <dl><dt><a name="Model-variable"><strong>variable</strong></a>(self, name, niter<font color="#909090">=None</font>)</dt><dd><tt>Gives&nbsp;the&nbsp;value&nbsp;of&nbsp;a&nbsp;variable&nbsp;or&nbsp;data.</tt></dd></dl>
-
-<dl><dt><a name="Model-varlist"><strong>varlist</strong></a>(self)</dt><dd><tt>print&nbsp;to&nbsp;the&nbsp;output&nbsp;the&nbsp;list&nbsp;of&nbsp;variables&nbsp;and&nbsp;constants&nbsp;of&nbsp;the&nbsp;model.</tt></dd></dl>
 
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -2533,6 +2531,6 @@ Synopsis:&nbsp;util_('warning_level',int&nbsp;level)<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>__version__</strong> = '$Revision: 2970 $'<br>
+<td width="100%"><strong>__version__</strong> = '$Revision: 2975 $'<br>
 <strong>obj_count</strong> = {}</td></tr></table>
 </body></html>
