@@ -250,7 +250,7 @@ void crack_problem::init(void) {
   base_small_vector tt(N); tt[1] = -0.5;
   mesh.translation(tt); 
   
-  cracktip.resize(2); // Coordonnée du fond de fissure
+  cracktip.resize(2); // Coordonnï¿½e du fond de fissure
   cracktip[0] = 0.5;
   cracktip[1] = 0.;
 
@@ -470,8 +470,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   ls.reinit();  
   
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
-    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
+    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[0];
+    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_dof(d), 0)[1];
   }
   ls.touch();
 
@@ -670,16 +670,45 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     cout << "Number of dof for P: " << mfls_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
+  unsigned Q = mf_u().get_qdim();
+  if (0) {
+    for (unsigned d=0; d < mf_u().nb_dof(); d += Q) {
+      printf("dof %4d @ %+6.2f:%+6.2f: ", d, 
+	     mf_u().point_of_dof(d)[0], mf_u().point_of_dof(d)[1]);
+
+      const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_dof(d);
+      for (unsigned i=0; i < cvs.size(); ++i) {
+	size_type cv = cvs[i];
+	//if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
+
+	getfem::pfem pf = mf_u().fem_of_element(cv);
+	unsigned ld = unsigned(-1);
+	for (unsigned dd = 0; dd < mf_u().nb_dof_of_element(cv); dd += Q) {
+	  if (mf_u().ind_dof_of_element(cv)[dd] == d) {
+	    ld = dd/Q; break;
+	  }
+	}
+	if (ld == unsigned(-1)) {
+	  cout << "DOF " << d << "NOT FOUND in " << cv << " BUG BUG\n";
+	} else {
+	  printf(" %3d:%.16s", int(cv), name_of_dof(pf->dof_types().at(ld)).c_str());
+	}
+      }
+      printf("\n");
+    }
+  }
+  
+
   // find the dofs on the upper right and lower right corners
-  GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
+
   scalar_type d1 = 1.0, d2 = 1.0;
   size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
   base_node corner1 = base_node(1.0, -0.5);
   base_node corner2 = base_node(1.0, 0.5);
   for (size_type i = 0; i < mf_u().nb_dof(); i+=N) {
-    scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner1);
+    scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_dof(i), corner1);
     if (dd1 < d1) { icorner1 = i; d1 = dd1; }
-    scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner2);
+    scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_dof(i), corner2);
     if (dd2 < d2) { icorner2 = i; d2 = dd2; }
   }
 
@@ -702,9 +731,9 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
     
     cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    GMM_ASSERT1(!ELAS.lambda().mf().is_reduced(), "To be adapted");
+    
     for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-      if (ELAS.lambda().mf().point_of_basic_dof(ite)[1] > 0){
+      if (ELAS.lambda().mf().point_of_dof(ite)[1] > 0){
 	bi_lambda[ite] = 0;
 	bi_mu[ite] = mu_up;
       }
@@ -784,10 +813,9 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     std::vector<size_type> ind_mortar;
     /* unfortunately , dof_on_region sometimes returns too much dof
        when mf_mortar is an enriched one so we have to filter them */
-    GMM_ASSERT1(!mf_mortar.is_reduced(), "To be adapted");
     sparse_matrix M(mf_mortar.nb_dof(), mf_mortar.nb_dof());
     getfem::asm_mass_matrix(M, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
-    for (dal::bv_visitor_c d(mf_mortar.basic_dof_on_region(MORTAR_BOUNDARY_OUT)); 
+    for (dal::bv_visitor_c d(mf_mortar.dof_on_region(MORTAR_BOUNDARY_OUT)); 
 	 !d.finished(); ++d) {
       if (M(d,d) > 1e-8) ind_mortar.push_back(d);
       else cout << "  removing non mortar dof" << d << "\n";
@@ -876,23 +904,30 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
 
   
   if (reference_test) {
-    GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
-    
-    cout << "Exporting reference solution...";
-    dal::bit_vector blocked_dof = mf_u().basic_dof_on_region(5);
-    getfem::mesh_fem mf_refined(mesh, dim_type(N));
-    std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
-    mf_refined.set_finite_element(mesh.convex_index(),
-				  getfem::fem_descriptor(FEM_DISC));
-    
-    plain_vector W(mf_refined.nb_dof());
-    getfem::interpolation(mf_u(), mf_refined, U, W);
-    
-    
-    mf_refined.write_to_file(datafilename + "_refined_test.meshfem", true);
-    gmm::vecsave(datafilename + "_refined_test.U", W);
-    cout << "done" << endl;
-  }
+      cout << "Exporting reference solution...";
+      dal::bit_vector blocked_dof = mf_u().dof_on_set(5);
+      getfem::mesh_fem mf_refined(mesh, dim_type(N));
+      std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
+      mf_refined.set_finite_element(mesh.convex_index(),
+				    getfem::fem_descriptor(FEM_DISC));
+      
+      plain_vector W(mf_refined.nb_dof());
+      getfem::interpolation(mf_u(), mf_refined, U, W);
+      
+      
+      mf_refined.write_to_file(datafilename + "_refined_test.meshfem_refined", true);
+      gmm::vecsave(datafilename + "_refined_test.U_refined", W);
+
+      
+      mf_refined.set_qdim(1);
+      plain_vector PP(mf_refined.nb_dof());
+      getfem::interpolation(mfls_p, mf_refined, P, PP);
+      mf_refined.write_to_file(datafilename + "_refined_test.p_meshfem_refined", true);
+      gmm::vecsave(datafilename + "_refined_test.P_refined", PP);
+     
+      
+      cout << "done" << endl;
+    }
   
   
   return (iter.converged());
@@ -1055,10 +1090,10 @@ int main(int argc, char *argv[]) {
     
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
-    std::string REFERENCE_MF = "large_strain_refined_test.meshfem";
-    std::string REFERENCE_U = "large_strain_refined_test.U";
-    std::string REFERENCE_MFP = "large_strain_refined_test.p_meshfem";
-    std::string REFERENCE_P = "large_strain_refined_test.P";
+    std::string REFERENCE_MF = "large_strain_refined_test.meshfem_refined";
+    std::string REFERENCE_U = "large_strain_refined_test.U_refined";
+    std::string REFERENCE_MFP = "large_strain_refined_test.p_meshfem_refined";
+    std::string REFERENCE_P = "large_strain_refined_test.P_refined";
     
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
@@ -1081,7 +1116,14 @@ int main(int argc, char *argv[]) {
       getfem::int_method_descriptor("IM_TRIANGLE(6)");
     ref_mim.set_integration_method(ref_m.convex_index(), ppi);
     plain_vector interp_U(ref_mf.nb_dof());
-    getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);	  
+    getfem::interpolation(p.mf_u(), ref_mf, U, interp_U);
+
+
+    plain_vector interp_U_error(ref_mf.nb_dof());
+    gmm::add(interp_U, gmm::scaled(ref_U, -1.), interp_U_error);
+    gmm::vecsave(p.datafilename+".U_map_error", interp_U_error);
+
+
     
     cout << "To ref L2 ERROR on U:"
 	 << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
