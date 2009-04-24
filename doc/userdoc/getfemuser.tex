@@ -2745,7 +2745,7 @@ Note that this simple brick have only one term and is linear. In the case of a l
 
 
 
-+ faire la description pour un terme mixed additionel et la brique correspondante avec donnée dans le modèle mple ou on utilise des données dans le modèle.
++ faire la description pour un terme mixe additionel et la brique correspondante avec donnée dans le modèle mple ou on utilise des données dans le modèle.
 
 
 + des termes non linéaires ...
@@ -2836,7 +2836,12 @@ size_type getfem::add_generic_elliptic_brick(md, mim, varname, dataname,
 \end{cppcode}
 It add a term with an arbitrary coefficient given by the data \cpp{dataname} of the model. This data have to be defined first in the model.
 
-+ un peu plus d'explications sur un term vectoriel + coeff tensoriel ...
+
+Note that very general equations can be obtained with this brick. For instance, linear anisotropic elasticity can be obtained with a tensor data. When an order four tensor is used, the corresponding weak term is the following 
+
+$ \int_{\Omega} \sum_{i,j,k,l} a_{i,j,k,l}\partial_i u_j \partial_k v_l dx$
+
+where $a_{i,j,k,l}$ is the order four tensor and $\partial_i u_j$ is the partial derivative with respect to the i$^{th}$ variable of the component $j$ of the unknown $k$. $v$ is the test function. However, for linear isotropic elasticity, a more adapted brick is available (see below).
 
 ~\\
 
