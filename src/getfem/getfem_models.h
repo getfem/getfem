@@ -166,6 +166,12 @@ namespace getfem {
 	if (filter == VDESCRFILTER_NO) return *mf; else return *partial_mf; 
       }
 
+      const mesh_fem *passociated_mf(void) const {
+	if (!is_fem_dofs) return 0;
+	if (filter == VDESCRFILTER_NO) return mf; else return partial_mf; 
+      }
+
+
       ~var_description() { if (partial_mf) delete partial_mf; }
 
       size_type size(void) const // devrait contrôler que la variable
@@ -179,6 +185,7 @@ namespace getfem {
 
     typedef var_description *pvariable;
     typedef std::vector<std::string> varnamelist;
+    typedef std::vector<const mesh_im *> mimlist;
     typedef std::vector<model_real_sparse_matrix> real_matlist;
     typedef std::vector<model_complex_sparse_matrix> complex_matlist;
     typedef std::vector<model_real_plain_vector> real_veclist;
@@ -209,6 +216,7 @@ namespace getfem {
       varnamelist vlist;        // List of variables used by the brick.
       varnamelist dlist;        // List of data used by the brick.
       termlist tlist;           // List of terms build by the brick
+      mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
       real_matlist rmatlist;    // List of matrices the brick have to fill in
                                 // (real version).
@@ -221,9 +229,9 @@ namespace getfem {
       
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
-			size_type reg)
+			const mimlist &mms, size_type reg)
 	: terms_to_be_computed(true), v_num(0), pbr(p), vlist(vl), dlist(dl),
-	  tlist(tl), region(reg) { }
+	  tlist(tl), mims(mms), region(reg) { }
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
@@ -294,26 +302,33 @@ namespace getfem {
 			    const mesh_im &mim,
 			    const std::string &primal_name, size_type region,
 			    size_type niter = 1);
+    
+    /** Gives the access to the mesh_fem of a variable if any. Throw an
+	exception otherwise. */
+    const mesh_fem &mesh_fem_of_variable(const std::string &name) const;
+
+    /** Gives a pointer to the mesh_fem of a variable if any. 0 otherwise.*/
+    const mesh_fem *pmesh_fem_of_variable(const std::string &name) const;
 
     /** Gives the access to the vector value of a variable. For the real
 	version. */
     const model_real_plain_vector &
-    real_variable(const std::string &name, size_type niter = 1) const;
+    real_variable(const std::string &name, size_type niter = 0) const;
 
     /** Gives the access to the vector value of a variable. For the complex
 	version. */
     const model_complex_plain_vector &
-    complex_variable(const std::string &name, size_type niter = 1) const;
+    complex_variable(const std::string &name, size_type niter = 0) const;
 
     /** Gives the write access to the vector value of a variable. Make a
 	change flag of the variable set. For the real version. */
     model_real_plain_vector &
-    set_real_variable(const std::string &name, size_type niter = 1);
+    set_real_variable(const std::string &name, size_type niter = 0);
 
     /** Gives the write access to the vector value of a variable. Make a
 	change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
-    set_complex_variable(const std::string &name, size_type niter = 1);
+    set_complex_variable(const std::string &name, size_type niter = 0);
 
     /** Gives the access to the tangent matrix. For the real version. */
     const model_real_sparse_matrix &real_tangent_matrix() const {
@@ -357,7 +372,8 @@ namespace getfem {
 	the variable not only on the fem). */
     size_type add_brick(pbrick pbr, const varnamelist &varnames,
 			const varnamelist &datanames,
-			const termlist &terms, size_type region);
+			const termlist &terms, const mimlist &mims, 
+			size_type region);
 
     /** Assembly of the tangent system taking into account the terms
 	from all bricks. */
@@ -428,6 +444,8 @@ namespace getfem {
 
     virtual void asm_real_tangent_terms(const model &,
 					const model::varnamelist &,
+					const model::varnamelist &,
+					const model::mimlist &,
 					model::real_matlist &,
 					model::real_veclist &,
 					size_type) const
@@ -435,6 +453,8 @@ namespace getfem {
 
     virtual void asm_complex_tangent_terms(const model &,
 					   const model::varnamelist &,
+					   const model::varnamelist &,
+					   const model::mimlist &,
 					   model::complex_matlist &,
 					   model::complex_veclist &,
 					   size_type) const
@@ -468,8 +488,8 @@ namespace getfem {
       the data is a tensor describe on a finite element method (a tensor
       field) the data can be a huge vector. The components of the
       matrix/tensor have to be stored with the fortran order (columnwise) in
-      the data vector (compatibility with blas). The symmetry of the given
-      matrix/tensor is not verified (but assumed).
+      the data vector (compatibility with blas). The symmetry and coercivity
+      of the given matrix/tensor is not verified (but assumed).
   */
   size_type add_generic_elliptic_brick(model &md, const mesh_im &mim,
 				       const std::string &varname,

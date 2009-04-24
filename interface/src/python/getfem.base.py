@@ -437,6 +437,8 @@ model states.
     #@SET    MODEL:SET('add variable')
     #@SET    MODEL:SET('add fem data')
     #@SET    MODEL:SET('add data')
+    #@SET    MODEL:SET('add Laplacian brick')
+    #@SET    MODEL:SET('add generic elliptic brick')
     
 class GeoTrans:
     """General function for building descriptors to geometric transformations.

@@ -26,6 +26,8 @@
 #include <getfemint.h>
 #include <getfemint_models.h>
 #include <getfemint_mesh_fem.h>
+#include <getfemint_workspace.h>
+#include <getfemint_mesh_im.h>
 
 using namespace getfemint;
 
@@ -61,6 +63,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     integration schemes. @*/
     std::string name = in.pop().to_string();
     getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+    workspace().set_dependance(md, gfi_mf);
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fem_variable(name, gfi_mf->mesh_fem(), niter);
@@ -82,6 +85,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     integration schemes. @*/
     std::string name = in.pop().to_string();
     getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+    workspace().set_dependance(md, gfi_mf);
     dim_type qdim = 1;
     if (in.remaining()) qdim = dim_type(in.pop().to_integer(1,255));
     size_type niter = 1;
@@ -117,5 +121,51 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		  "Bad size in assigment");
       md->model().set_complex_variable(name, niter).assign(st.begin(), st.end());
     }
+  } else if (check_cmd(cmd, "add Laplacian brick", in, out, 2, 3, 0, 1)) {
+    /*@SET V = MODEL:SET('add Laplacian brick', @tmim mim, @str varname[, @int region])
+    add a Laplacian term to the model relatively to the variable `varname`.
+    If this is a vector valued variable, the Laplacian term is added
+    componentwise. `region` is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_Laplacian_brick(md->model(), mim, varname, region)
+      + config::base_index();
+    out.pop().from_integer(ind);
+  } else if (check_cmd(cmd, "add generic elliptic brick", in, out, 3, 4, 0, 1)) {
+    /*@SET V = MODEL:SET('add generic elliptic brick', @tmim mim, @str varname, @str dataname[, @int region])
+    add a generic elliptic term to the model relatively to the variable `varname`.
+    The shape of the elliptic
+    term depends both on the variable and the data. This corresponds to a
+    term $-\text{div}(a\nabla u)$ where $a$ is the data and $u$ the variable.
+    The data can be a scalar, a matrix or an order four tensor. The variable
+    can be vector valued or not. If the data is a scalar or a matrix and
+    the variable is vector valued then the term is added componentwise.
+    An order four tensor data is allowed for vector valued variable only.
+    The data can be constant or describbed on a fem. Of course, when
+    the data is a tensor describe on a finite element method (a tensor
+    field) the data can be a huge vector. The components of the
+    matrix/tensor have to be stored with the fortran order (columnwise) in
+    the data vector (compatibility with blas). The symmetry of the given
+    matrix/tensor is not verified (but assumed).
+    If this is a vector valued variable, the Laplacian term is added
+    componentwise. `region` is an optional mesh region on which the term is 
+    added. If it is not specified, it is added on the whole mesh. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_generic_elliptic_brick(md->model(), mim, varname,
+					   dataname, region)
+      + config::base_index();
+    out.pop().from_integer(ind);
   } else bad_cmd(cmd);
 }

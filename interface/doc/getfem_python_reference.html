@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2975)</font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/homes/doua/goulp/renard/source++/getfem++/gcc_icj5/interface/src/python/getfem_python_reference.py">/homes/doua/goulp/renard/source++/getfem++/gcc_icj5/interface/src/python/getfem_python_reference.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py">/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py</a></font></td></tr></table>
     <p><tt>Getfem-interface&nbsp;classes.<br>
 Provides&nbsp;access&nbsp;to&nbsp;the&nbsp;pseudo-objects&nbsp;exported&nbsp;by&nbsp;the&nbsp;python-getfem&nbsp;interface.</tt></p>
 <p>
@@ -1690,6 +1690,11 @@ model&nbsp;states.<br>
 
 <dl><dt><a name="Model-__str__"><strong>__str__</strong></a>(self)</dt></dl>
 
+<dl><dt><a name="Model-add_Laplacian_brick"><strong>add_Laplacian_brick</strong></a>(self, mim, varname, region<font color="#909090">=None</font>)</dt><dd><tt>add&nbsp;a&nbsp;Laplacian&nbsp;term&nbsp;to&nbsp;the&nbsp;model&nbsp;relatively&nbsp;to&nbsp;the&nbsp;variable&nbsp;`varname`.&nbsp;If<br>
+this&nbsp;is&nbsp;a&nbsp;vector&nbsp;valued&nbsp;variable,&nbsp;the&nbsp;Laplacian&nbsp;term&nbsp;is&nbsp;added&nbsp;componentwise.<br>
+`region`&nbsp;is&nbsp;an&nbsp;optional&nbsp;mesh&nbsp;region&nbsp;on&nbsp;which&nbsp;the&nbsp;term&nbsp;is&nbsp;added.&nbsp;If&nbsp;it&nbsp;is&nbsp;not<br>
+specified,&nbsp;it&nbsp;is&nbsp;added&nbsp;on&nbsp;the&nbsp;whole&nbsp;mesh.</tt></dd></dl>
+
 <dl><dt><a name="Model-add_data"><strong>add_data</strong></a>(self, name, size, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;data&nbsp;to&nbsp;the&nbsp;model&nbsp;of&nbsp;constant&nbsp;size.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;data&nbsp;name&nbsp;and&nbsp;`niter`<br>
 is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;data&nbsp;for&nbsp;time&nbsp;integration&nbsp;schemes.</tt></dd></dl>
 
@@ -1700,6 +1705,23 @@ optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;data&nbsp;for&nbsp;
 <dl><dt><a name="Model-add_fem_variable"><strong>add_fem_variable</strong></a>(self, name, mf, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;variable&nbsp;to&nbsp;the&nbsp;model&nbsp;linked&nbsp;to&nbsp;a&nbsp;<a href="#MeshFem">MeshFem</a>.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;variable&nbsp;name<br>
 and&nbsp;`niter`&nbsp;is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;variable&nbsp;for&nbsp;time<br>
 integration&nbsp;schemes.</tt></dd></dl>
+
+<dl><dt><a name="Model-add_generic_elliptic_brick"><strong>add_generic_elliptic_brick</strong></a>(self, mim, varname, dataname, region<font color="#909090">=None</font>)</dt><dd><tt>add&nbsp;a&nbsp;generic&nbsp;elliptic&nbsp;term&nbsp;to&nbsp;the&nbsp;model&nbsp;relatively&nbsp;to&nbsp;the&nbsp;variable&nbsp;`varname`.<br>
+The&nbsp;shape&nbsp;of&nbsp;the&nbsp;elliptic&nbsp;term&nbsp;depends&nbsp;both&nbsp;on&nbsp;the&nbsp;variable&nbsp;and&nbsp;the&nbsp;data.&nbsp;This<br>
+corresponds&nbsp;to&nbsp;a&nbsp;term&nbsp;$-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ext{div}(a<br>
+abla&nbsp;u)$&nbsp;where&nbsp;$a$&nbsp;is&nbsp;the&nbsp;data&nbsp;and&nbsp;$u$<br>
+the&nbsp;variable.&nbsp;The&nbsp;data&nbsp;can&nbsp;be&nbsp;a&nbsp;scalar,&nbsp;a&nbsp;matrix&nbsp;or&nbsp;an&nbsp;order&nbsp;four&nbsp;tensor.&nbsp;The<br>
+variable&nbsp;can&nbsp;be&nbsp;vector&nbsp;valued&nbsp;or&nbsp;not.&nbsp;If&nbsp;the&nbsp;data&nbsp;is&nbsp;a&nbsp;scalar&nbsp;or&nbsp;a&nbsp;matrix&nbsp;and<br>
+the&nbsp;variable&nbsp;is&nbsp;vector&nbsp;valued&nbsp;then&nbsp;the&nbsp;term&nbsp;is&nbsp;added&nbsp;componentwise.&nbsp;An&nbsp;order<br>
+four&nbsp;tensor&nbsp;data&nbsp;is&nbsp;allowed&nbsp;for&nbsp;vector&nbsp;valued&nbsp;variable&nbsp;only.&nbsp;The&nbsp;data&nbsp;can&nbsp;be<br>
+constant&nbsp;or&nbsp;describbed&nbsp;on&nbsp;a&nbsp;fem.&nbsp;Of&nbsp;course,&nbsp;when&nbsp;the&nbsp;data&nbsp;is&nbsp;a&nbsp;tensor&nbsp;describe<br>
+on&nbsp;a&nbsp;finite&nbsp;element&nbsp;method&nbsp;(a&nbsp;tensor&nbsp;field)&nbsp;the&nbsp;data&nbsp;can&nbsp;be&nbsp;a&nbsp;huge&nbsp;vector.&nbsp;The<br>
+components&nbsp;of&nbsp;the&nbsp;matrix/tensor&nbsp;have&nbsp;to&nbsp;be&nbsp;stored&nbsp;with&nbsp;the&nbsp;fortran&nbsp;order<br>
+(columnwise)&nbsp;in&nbsp;the&nbsp;data&nbsp;vector&nbsp;(compatibility&nbsp;with&nbsp;blas).&nbsp;The&nbsp;symmetry&nbsp;of&nbsp;the<br>
+given&nbsp;matrix/tensor&nbsp;is&nbsp;not&nbsp;verified&nbsp;(but&nbsp;assumed).&nbsp;If&nbsp;this&nbsp;is&nbsp;a&nbsp;vector&nbsp;valued<br>
+variable,&nbsp;the&nbsp;Laplacian&nbsp;term&nbsp;is&nbsp;added&nbsp;componentwise.&nbsp;`region`&nbsp;is&nbsp;an&nbsp;optional<br>
+mesh&nbsp;region&nbsp;on&nbsp;which&nbsp;the&nbsp;term&nbsp;is&nbsp;added.&nbsp;If&nbsp;it&nbsp;is&nbsp;not&nbsp;specified,&nbsp;it&nbsp;is&nbsp;added<br>
+on&nbsp;the&nbsp;whole&nbsp;mesh.</tt></dd></dl>
 
 <dl><dt><a name="Model-add_variable"><strong>add_variable</strong></a>(self, name, size, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;variable&nbsp;to&nbsp;the&nbsp;model&nbsp;of&nbsp;constant&nbsp;size.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;variable&nbsp;name&nbsp;and<br>
 `niter`&nbsp;is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;variable&nbsp;for&nbsp;time&nbsp;integration<br>

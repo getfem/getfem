@@ -260,10 +260,14 @@ namespace getfem {
 
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
 			     const varnamelist &datanames,
-			     const termlist &terms, size_type region) {
+			     const termlist &terms,
+			     const mimlist &mims, size_type region) {
     bricks.push_back(brick_description(pbr, varnames, datanames, terms,
-				       region));
-    GMM_ASSERT1(!(pbr->is_complex() && !is_complex()),
+				       mims, region));
+    for  (size_type i = 0; i < bricks.back().mims.size(); ++i)
+      add_dependency(*(bricks.back().mims[i]));
+
+    GMM_ASSERT1(pbr->is_real() || is_complex(),
 		"Impossible to add a complex brick to a real model");
     if (is_complex() && pbr->is_complex()) {
       bricks.back().cmatlist.resize(terms.size());
@@ -278,10 +282,10 @@ namespace getfem {
 
     for (size_type i=0; i < varnames.size(); ++i)
       GMM_ASSERT1(variables.find(varnames[i]) != variables.end(),
-		  "Undefined model variable" << varnames[i]);
+		  "Undefined model variable " << varnames[i]);
     for (size_type i=0; i < datanames.size(); ++i)
       GMM_ASSERT1(variables.find(datanames[i]) != variables.end(),
-		  "Undefined model data or variable" << datanames[i]);
+		  "Undefined model data or variable " << datanames[i]);
     
     return size_type(bricks.size() - 1);
   }
@@ -299,8 +303,9 @@ namespace getfem {
 	for (size_type j = 1; j < bricks[i].vlist.size(); ++j)
 	  ost << ", " << bricks[i].vlist[j];
 	ost << "." << endl;
-	ost << "  brick with " << bricks[i].tlist.size() << "terms"
-	    << endl;
+	ost << "  brick with " << bricks[i].tlist.size() << " term";
+	if (bricks[i].tlist.size() > 1) ost << "s";
+	ost << endl;
 	// + lister les termes
       }
     }
@@ -360,11 +365,13 @@ namespace getfem {
 	 
 	// Brick call for all terms.
 	if (cplx)
-	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist,
+	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
+					       brick.mims,
 					       brick.cmatlist, brick.cveclist,
 					       brick.region);
 	else
-	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist,
+	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
+					    brick.mims,
 					    brick.rmatlist, brick.rveclist,
 					    brick.region);
 
@@ -457,13 +464,25 @@ namespace getfem {
       }
     }
   }
+
+  const mesh_fem &model::mesh_fem_of_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    return it->second.associated_mf();
+  }
+  
+  const mesh_fem *model::pmesh_fem_of_variable(const std::string &name) const {
+    VAR_SET::const_iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    return it->second.passociated_mf();
+  }
   
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     // context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
     return it->second.real_value[niter];
   }
@@ -473,7 +492,7 @@ namespace getfem {
     GMM_ASSERT1(complex_version, "This model is a real one");
     // context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::const_iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
     return it->second.complex_value[niter];    
   }
@@ -483,7 +502,7 @@ namespace getfem {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
     it->second.v_num_data = act_counter();
     return it->second.real_value[niter];
@@ -494,40 +513,201 @@ namespace getfem {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
-    GMM_ASSERT1(it!=variables.end(), "Undeclared variable " << name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
     it->second.v_num_data = act_counter();    
     return it->second.complex_value[niter];    
   }
- 
 
+
+  // ----------------------------------------------------------------------
+  //
+  // Generic scalar elliptic brick
+  //
+  // ----------------------------------------------------------------------
+
+  // A bien documenter !
   
-  
+  struct generic_elliptic_brick : public virtual_brick {
 
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Generic Elliptic brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Generic Elliptic brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+		  "Wrong number of variables for Generic Elliptic brick");
 
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type N = m.dim(), Q = mf_u.get_qdim(), s = 1;
+      const mesh_im &mim = *mims[0];
+      const model_real_plain_vector *A = 0;
+      const mesh_fem *mf_a = 0;
+      if (dl.size() > 0) {
+	A = &(md.real_variable(dl[0]));
+	mf_a = md.pmesh_fem_of_variable(dl[0]);
+	s = gmm::vect_size(*A);
+	if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+      }
 
+      if (s == 1) {
+	if (mf_a) {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_laplacian_componentwise
+	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	  else
+	    asm_stiffness_matrix_for_laplacian
+	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
 
+	} else {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
+	      (matl[0], mim, mf_u, m.get_mpi_region());
+	  else
+	    asm_stiffness_matrix_for_homogeneous_laplacian
+	      (matl[0], mim, mf_u, m.get_mpi_region());
+	  if (A) gmm::scale(matl[0], (*A)[0]);
+	}
+      } else if (s == N*N) {
+	if (mf_a) {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_scalar_elliptic_componentwise
+	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	  else
+	    asm_stiffness_matrix_for_scalar_elliptic
+	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	} else {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_homogeneous_scalar_elliptic_componentwise
+	      (matl[0], mim, mf_u, *A, m.get_mpi_region());
+	  else
+	    asm_stiffness_matrix_for_homogeneous_scalar_elliptic
+	      (matl[0], mim, mf_u, *A, m.get_mpi_region());
+	}
+      } else if (s == N*N*Q*Q) {
+	if (mf_a)
+	  asm_stiffness_matrix_for_vector_elliptic
+	    (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	else 
+	  asm_stiffness_matrix_for_homogeneous_vector_elliptic
+	    (matl[0], mim, mf_u, *A, m.get_mpi_region());
+      } else
+	GMM_ASSERT1(false,
+		    "Bad format generic_elliptic_brick coefficient");
+    }
 
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &,
+					   size_type region) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Generic Elliptic brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Generic Elliptic brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+		  "Wrong number of variables for Generic Elliptic brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type N = m.dim(), Q = mf_u.get_qdim(), s = 1;
+      const mesh_im &mim = *mims[0];
+      const model_real_plain_vector *A = 0;
+      const mesh_fem *mf_a = 0;
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+      
+
+      if (dl.size() > 0) {
+	A = &(md.real_variable(dl[0]));
+	mf_a = md.pmesh_fem_of_variable(dl[0]);
+	s = gmm::vect_size(*A);
+	if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+      }
+
+      if (s == 1) {
+	if (mf_a) {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_laplacian_componentwise
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
+	  else
+	    asm_stiffness_matrix_for_laplacian
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
+
+	} else {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
+	      (gmm::real_part(matl[0]), mim, mf_u, rg);
+	  else
+	    asm_stiffness_matrix_for_homogeneous_laplacian
+	      (gmm::real_part(matl[0]), mim, mf_u, rg);
+	  if (A) gmm::scale(matl[0], (*A)[0]);
+	}
+      } else if (s == N*N) {
+	if (mf_a) {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_scalar_elliptic_componentwise
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
+	  else
+	    asm_stiffness_matrix_for_scalar_elliptic
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
+	} else {
+	  if (Q > 1)
+	    asm_stiffness_matrix_for_homogeneous_scalar_elliptic_componentwise
+	      (matl[0], mim, mf_u, *A, rg);
+	  else
+	    asm_stiffness_matrix_for_homogeneous_scalar_elliptic
+	      (matl[0], mim, mf_u, *A, rg);
+	}
+      } else if (s == N*N*Q*Q) {
+	if (mf_a)
+	  asm_stiffness_matrix_for_vector_elliptic
+	    (matl[0], mim, mf_u, *mf_a, *A, rg);
+	else 
+	  asm_stiffness_matrix_for_homogeneous_vector_elliptic
+	    (matl[0], mim, mf_u, *A, rg);
+      } else
+	GMM_ASSERT1(false,
+		    "Bad format generic_elliptic_brick coefficient");
+    }
+
+    generic_elliptic_brick(void) {
+      set_flags("Generic Elliptic", true /*is linear*/,
+		true /*is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+  };
 
   size_type add_Laplacian_brick(model &md, const mesh_im &mim,
 				const std::string &varname,
 				size_type region) {
-    pbrick pbr = new virtual_brick;
+    pbrick pbr = new generic_elliptic_brick;
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     return md.add_brick(pbr, model::varnamelist(1, varname),
-			model::varnamelist(), tl, region);
+			model::varnamelist(), tl, model::mimlist(1, &mim),
+			region);
   }
 
   size_type add_generic_elliptic_brick(model &md, const mesh_im &mim,
 				       const std::string &varname,
 				       const std::string &dataname,
 				       size_type region) {
-    pbrick pbr = new virtual_brick;
+    pbrick pbr = new generic_elliptic_brick;
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     return md.add_brick(pbr, model::varnamelist(1, varname),
-			model::varnamelist(1, dataname), tl, region);
+			model::varnamelist(1, dataname), tl,
+			model::mimlist(1, &mim), region);
   }
 
 

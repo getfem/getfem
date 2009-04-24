@@ -2821,7 +2821,9 @@ gf_model_set(md,'clear')
 gf_model_set(md,'add fem variable')
 gf_model_set(md,'add variable')
 gf_model_set(md,'add fem data')
-gf_model_set(md,'add data')@@
+gf_model_set(md,'add data')
+gf_model_set(md,'add Laplacian brick')
+gf_model_set(md,'add generic elliptic brick')@@
 \end{synopsis}
 \begin{cmddescription}
 \sep{@@gf_model_set(mds,'variable', \tvec U[, \tint niter])@@} :
@@ -2845,6 +2847,31 @@ Add a data to the model linked to a \tmf. @@name@@ is the data name
 
 \sep{@@gf_model_set(md,'add variable', \tstr name, \tint size[, \tint niter])@@} :
 Add a fixed size data to the model. @@name@@ is the data name, @@size@@ is the fixed size and @@niter@@ is the optional number of copy of the data for time integration schemes.
+
+\sep{@@gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tint region])@@} :
+Add a Laplacian term to the model relatively to the variable @@varname@@.
+If this is a vector valued variable, the Laplacian term is added
+componentwise. @@region@@ is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh.
+
+\sep{@@gf_model_set(md,'add generic elliptic  brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])@@} :
+add a generic elliptic term to the model relatively to the variable @@varname@@.
+The shape of the elliptic
+term depends both on the variable and the data. This corresponds to a
+term $-\text{div}(a\nabla u)$ where $a$ is the data and $u$ the variable.
+The data can be a scalar, a matrix or an order four tensor. The variable
+can be vector valued or not. If the data is a scalar or a matrix and
+the variable is vector valued then the term is added componentwise.
+An order four tensor data is allowed for vector valued variable only.
+The data can be constant or describbed on a fem. Of course, when
+the data is a tensor describe on a finite element method (a tensor
+field) the data can be a huge vector. The components of the
+matrix/tensor have to be stored with the fortran order (columnwise) in
+the data vector (compatibility with blas). The symmetry of the given
+matrix/tensor is not verified (but assumed).
+If this is a vector valued variable, the Laplacian term is added
+componentwise. @@region@@ is an optional mesh region on which the term is 
+added. If it is not specified, it is added on the whole mesh.
+
 \end{cmddescription}
 \newpage
 

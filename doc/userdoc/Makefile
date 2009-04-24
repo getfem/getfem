@@ -26,7 +26,7 @@ FIGS=getfemuserelemf.fig getfemuserelem.fig \
      getfemlistintmethodquad3.fig getfemlistintmethodquad5.fig              \
      getfemlistintmethodtriangle2comp.fig getfemlistintmethodtetrahedron1.fig \
      getfemlistintmethodtetrahedron2.fig getfemlistintmethodtetrahedron3.fig  \
-     getfemlistintmethodtetrahedron5.fig
+     getfemlistintmethodtetrahedron5.fig  getfemuserlinearsys.fig
 
 PDFFIGS=$(FIGS:.fig=.pdf)
 PNGFIGS=$(PDFFIGS:.pdf=.png)

@@ -776,6 +776,20 @@ namespace getfem {
 				"(:,i,:,j,k).a(j,i,k)");
   }
 
+  /** The same but with a constant matrix
+   */
+  template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_homogeneous_scalar_elliptic
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
+    /*GMM_ASSERT1(mf_data.get_qdim() == 1,
+      "invalid data mesh fem (Qdim=1 required)");*/
+    asm_real_or_complex_1_param(M,mim,mf,mf,A,rg,
+				"a=data$1(mdim(#1),mdim(#1));"
+				"M$1(#1,#1)+=comp(Grad(#1).Grad(#1))"
+				"(:,i,:,j).a(j,i)");
+  }
+
   /** The same but on each component of mf when mf has a qdim > 1 
    */
   template<typename MAT, typename VECT>
@@ -791,9 +805,24 @@ namespace getfem {
        "(:,l,i,:,l,j,k).a(j,i,k)");
   }
 
+  /** The same but with a constant matrix 
+   */
+  template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_homogeneous_scalar_elliptic_componentwise
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf, const VECT &A, 
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    /* GMM_ASSERT1(mf_data.get_qdim() == 1,
+       "invalid data mesh fem (Qdim=1 required)");*/
+    asm_real_or_complex_1_param
+      (M,mim,mf,mf,A,rg, "a=data$1(mdim(#1),mdim(#1));"
+       "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1))"
+       "(:,l,i,:,l,j).a(j,i)");
+  }
+
+
   /**
      Assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
-     is a NxNxNxN (symmetric positive definite) tensor.
+     is a NxNxNxN (symmetric positive definite) tensor defined on mf_data.
   */
   template<typename MAT, typename VECT> void
   asm_stiffness_matrix_for_vector_elliptic
@@ -806,9 +835,27 @@ namespace getfem {
     */
     asm_real_or_complex_1_param
       (M,mim,mf,mf_data,A,rg, 
-       "a=data$1(mdim(#1),mdim(#1),mdim(#1),mdim(#1),#2);"
+       "a=data$1(qdim(#1),mdim(#1),qdim(#1),mdim(#1),#2);"
        "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-       "M(#1,#1)+= sym(t(:,i,j,:,k,l,p).a(i,j,k,l,p))");
+       "M(#1,#1)+= t(:,i,j,:,k,l,p).a(i,j,k,l,p)");
+  }
+
+  /**
+     Assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
+     is a NxNxNxN (symmetric positive definite) constant tensor.
+  */
+  template<typename MAT, typename VECT> void
+  asm_stiffness_matrix_for_homogeneous_vector_elliptic
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
+    /* 
+       M = a_{i,j,k,l}D_{i,j}(u)D_{k,l}(v)
+    */
+    asm_real_or_complex_1_param
+      (M,mim,mf,mf,A,rg, 
+       "a=data$1(qdim(#1),mdim(#1),qdim(#1),mdim(#1));"
+       "t=comp(vGrad(#1).vGrad(#1));"
+       "M(#1,#1)+= t(:,i,j,:,k,l).a(i,j,k,l)");
   }
 
 
