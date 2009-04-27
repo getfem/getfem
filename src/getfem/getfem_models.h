@@ -168,7 +168,8 @@ namespace getfem {
 
       const mesh_fem *passociated_mf(void) const {
 	if (!is_fem_dofs) return 0;
-	if (filter == VDESCRFILTER_NO) return mf; else return partial_mf.get(); 
+	if (filter == VDESCRFILTER_NO) return mf;
+	else return partial_mf.get(); 
       }
 
       size_type size(void) const // devrait contrôler que la variable
