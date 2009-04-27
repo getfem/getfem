@@ -211,6 +211,19 @@ namespace getfem {
     }
   }
 
+  std::string model::new_name(const std::string &name) {
+    std::string res_name = name;
+    check_name_valitity(res_name);
+    VAR_SET::const_iterator it = variables.find(res_name);
+    for (size_type i = 2; it != variables.end(); ++i) {
+      std::stringstream m;
+      m << name << '_' << i;
+      res_name = m.str();
+      it = variables.find(res_name);
+    }
+    return res_name;
+  }
+
 
   void model::add_fixed_size_variable(const std::string &name, size_type size,
 				      size_type niter) {
@@ -288,6 +301,24 @@ namespace getfem {
 		  "Undefined model data or variable " << datanames[i]);
     
     return size_type(bricks.size() - 1);
+  }
+
+  const std::string &model::varname_of_brick(size_type ind_brick,
+				      size_type ind_var) {
+    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(ind_var < bricks[ind_brick].vlist.size(),
+	       "Inexistent brick variable");
+    return bricks[ind_brick].vlist[ind_var];
+  }
+  
+  const std::string &model::dataname_of_brick(size_type ind_brick,
+					      size_type ind_data) {
+    cout << "ind_brick = " << ind_brick << endl;
+    cout << "ind_data = " << ind_data << " bricks[ind_brick].dlist.size() = " << bricks[ind_brick].dlist.size() << endl;
+    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(ind_data < bricks[ind_brick].dlist.size(),
+		"Inexistent brick data");
+    return bricks[ind_brick].dlist[ind_data];
   }
 
   void model::listbricks(std::ostream &ost) const {
@@ -414,8 +445,8 @@ namespace getfem {
 	      }
 	    }
 	  }
-	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
-	    gmm::add(brick.cveclist[j], gmm::sub_vector(crhs, I1));
+	  // if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
+	  gmm::add(brick.cveclist[j], gmm::sub_vector(crhs, I1));
 	} else if (is_complex()) {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
@@ -436,8 +467,8 @@ namespace getfem {
 	      }
 	    }
 	  }
-	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
-	    gmm::add(brick.rveclist[j], gmm::sub_vector(crhs, I1));
+	  // if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
+	  gmm::add(brick.rveclist[j], gmm::sub_vector(crhs, I1));
 	} else {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
@@ -458,8 +489,8 @@ namespace getfem {
 	      }
 	    }
 	  }
-	  if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
-	    gmm::add(brick.rveclist[j], gmm::sub_vector(rrhs, I1));
+	  // if (!(term.is_matrix_term) || !(brick.pbr->is_linear()))
+	  gmm::add(brick.rveclist[j], gmm::sub_vector(rrhs, I1));
 	}
       }
     }
@@ -526,8 +557,6 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-  // A bien documenter !
-  
   struct generic_elliptic_brick : public virtual_brick {
 
     virtual void asm_real_tangent_terms(const model &md,
@@ -535,13 +564,14 @@ namespace getfem {
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
 					model::real_matlist &matl,
-					model::real_veclist &) const {
+					model::real_veclist &,
+					size_type region) const {
       GMM_ASSERT1(matl.size() == 1,
-		  "Generic Elliptic brick has one and only one term");
+		  "Generic elliptic brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
-		  "Generic Elliptic brick need one and only one mesh_im");
+		  "Generic elliptic brick need one and only one mesh_im");
       GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
-		  "Wrong number of variables for Generic Elliptic brick");
+		  "Wrong number of variables for generic elliptic brick");
 
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const mesh &m = mf_u.linked_mesh();
@@ -549,6 +579,8 @@ namespace getfem {
       const mesh_im &mim = *mims[0];
       const model_real_plain_vector *A = 0;
       const mesh_fem *mf_a = 0;
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
       if (dl.size() > 0) {
 	A = &(md.real_variable(dl[0]));
 	mf_a = md.pmesh_fem_of_variable(dl[0]);
@@ -560,46 +592,46 @@ namespace getfem {
 	if (mf_a) {
 	  if (Q > 1)
 	    asm_stiffness_matrix_for_laplacian_componentwise
-	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
 	  else
 	    asm_stiffness_matrix_for_laplacian
-	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
 
 	} else {
 	  if (Q > 1)
 	    asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
-	      (matl[0], mim, mf_u, m.get_mpi_region());
+	      (matl[0], mim, mf_u, rg);
 	  else
 	    asm_stiffness_matrix_for_homogeneous_laplacian
-	      (matl[0], mim, mf_u, m.get_mpi_region());
+	      (matl[0], mim, mf_u, rg);
 	  if (A) gmm::scale(matl[0], (*A)[0]);
 	}
       } else if (s == N*N) {
 	if (mf_a) {
 	  if (Q > 1)
 	    asm_stiffness_matrix_for_scalar_elliptic_componentwise
-	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
 	  else
 	    asm_stiffness_matrix_for_scalar_elliptic
-	      (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	      (matl[0], mim, mf_u, *mf_a, *A, rg);
 	} else {
 	  if (Q > 1)
 	    asm_stiffness_matrix_for_homogeneous_scalar_elliptic_componentwise
-	      (matl[0], mim, mf_u, *A, m.get_mpi_region());
+	      (matl[0], mim, mf_u, *A, rg);
 	  else
 	    asm_stiffness_matrix_for_homogeneous_scalar_elliptic
-	      (matl[0], mim, mf_u, *A, m.get_mpi_region());
+	      (matl[0], mim, mf_u, *A, rg);
 	}
       } else if (s == N*N*Q*Q) {
 	if (mf_a)
 	  asm_stiffness_matrix_for_vector_elliptic
-	    (matl[0], mim, mf_u, *mf_a, *A, m.get_mpi_region());
+	    (matl[0], mim, mf_u, *mf_a, *A, rg);
 	else 
 	  asm_stiffness_matrix_for_homogeneous_vector_elliptic
-	    (matl[0], mim, mf_u, *A, m.get_mpi_region());
+	    (matl[0], mim, mf_u, *A, rg);
       } else
 	GMM_ASSERT1(false,
-		    "Bad format generic_elliptic_brick coefficient");
+		    "Bad format generic elliptic brick coefficient");
     }
 
     virtual void asm_complex_tangent_terms(const model &md,
@@ -610,11 +642,11 @@ namespace getfem {
 					   model::complex_veclist &,
 					   size_type region) const {
       GMM_ASSERT1(matl.size() == 1,
-		  "Generic Elliptic brick has one and only one term");
+		  "Generic elliptic brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
-		  "Generic Elliptic brick need one and only one mesh_im");
+		  "Generic elliptic brick need one and only one mesh_im");
       GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
-		  "Wrong number of variables for Generic Elliptic brick");
+		  "Wrong number of variables for generic elliptic brick");
 
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const mesh &m = mf_u.linked_mesh();
@@ -623,7 +655,7 @@ namespace getfem {
       const model_real_plain_vector *A = 0;
       const mesh_fem *mf_a = 0;
       mesh_region rg(region);
-      mim.linked_mesh().intersect_with_mpi_region(rg);
+      m.intersect_with_mpi_region(rg);
       
 
       if (dl.size() > 0) {
@@ -676,12 +708,12 @@ namespace getfem {
 	    (matl[0], mim, mf_u, *A, rg);
       } else
 	GMM_ASSERT1(false,
-		    "Bad format generic_elliptic_brick coefficient");
+		    "Bad format generic elliptic brick coefficient");
     }
 
     generic_elliptic_brick(void) {
-      set_flags("Generic Elliptic", true /*is linear*/,
-		true /*is symmetric */, true /* is coercive */,
+      set_flags("Generic elliptic", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
 		true /* is real */, true /* is complex */);
     }
 
@@ -709,6 +741,404 @@ namespace getfem {
 			model::varnamelist(1, dataname), tl,
 			model::mimlist(1, &mim), region);
   }
+
+  // ----------------------------------------------------------------------
+  //
+  // Source term brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct source_term_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &,
+					model::real_veclist &vecl,
+					size_type region) const {
+      GMM_ASSERT1(vecl.size() == 1,
+		  "Source term brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Source term brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 1,
+		  "Wrong number of variables for source term brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_im &mim = *mims[0];
+      const model_real_plain_vector &A = md.real_variable(dl[0]);
+      const mesh_fem *mf_data = md.pmesh_fem_of_variable(dl[0]);
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      size_type s = gmm::vect_size(A);
+      if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
+
+      GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of source term data");
+
+      if (mf_data)
+	asm_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
+      else
+	asm_homogeneous_source_term(vecl[0], mim, mf_u, A, rg);
+
+      if (dl.size() > 1) gmm::add(md.real_variable(dl[1]), vecl[0]);
+
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &,
+					   model::complex_veclist &vecl,
+					   size_type region) const {
+      GMM_ASSERT1(vecl.size() == 1,
+		  "Source term brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Source term brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() > 0 && dl.size() <= 2,
+		  "Wrong number of variables for source term brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_im &mim = *mims[0];
+      const model_complex_plain_vector &A = md.complex_variable(dl[0]);
+      const mesh_fem *mf_data = md.pmesh_fem_of_variable(dl[0]);
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      size_type s = gmm::vect_size(A);
+      if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
+
+      GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of source term data");
+
+      if (mf_data)
+	asm_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
+      else
+	asm_homogeneous_source_term(vecl[0], mim, mf_u, A, rg);
+
+      if (dl.size() > 1) gmm::add(md.complex_variable(dl[1]), vecl[0]);
+
+    }
+
+    source_term_brick(void) {
+      set_flags("Source term", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+
+  };
+
+  size_type add_source_term_brick(model &md, const mesh_im &mim,
+				  const std::string &varname,
+				  const std::string &dataname,
+				  size_type region,
+				  const std::string &directdataname) {
+    pbrick pbr = new source_term_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname));
+    model::varnamelist vdata(1, dataname);
+    if (directdataname.size()) vdata.push_back(directdataname);
+    return md.add_brick(pbr, model::varnamelist(1, varname),
+			vdata, tl, model::mimlist(1, &mim), region);
+  }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Dirichlet condition brick
+  //
+  // ----------------------------------------------------------------------
+  // Two variables : with multipliers
+  // One variable : penalization
+
+  struct Dirichlet_condition_brick : public virtual_brick {
+    
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					size_type region) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Dirichlet condition brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Dirichlet condition brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 2,
+		  "Wrong number of variables for Dirichlet condition brick");
+
+      bool penalized = (vl.size() == 1);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_mult = md.mesh_fem_of_variable(vl[vl.size()-1]);
+      const mesh_im &mim = *mims[0];
+      const model_real_plain_vector *A = 0, *COEFF = 0;
+      const mesh_fem *mf_data = 0;
+
+      if (penalized) {
+	COEFF = &(md.real_variable(dl[0]));
+	GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+		    "Data for coefficient should be a scalar");
+      }
+
+      size_type s = 0, ind = (penalized ? 1 : 0);
+      if (dl.size() > ind) {
+	A = &(md.real_variable(dl[ind]));
+	mf_data = md.pmesh_fem_of_variable(dl[ind]);
+	s = gmm::vect_size(*A);
+	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
+	GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of Dirichlet data");
+      }
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (dl.size()) {
+	if (mf_data)
+	  asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	else
+	  asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
+	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+      }
+
+      asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+      if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vecl,
+					   size_type region) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Dirichlet condition brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Dirichlet condition brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 2,
+		  "Wrong number of variables for Dirichlet condition brick");
+
+      bool penalized = (vl.size() == 1);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_mult = md.mesh_fem_of_variable(vl[vl.size()-1]);
+      const mesh_im &mim = *mims[0];
+      const model_complex_plain_vector *A = 0, *COEFF = 0;
+      const mesh_fem *mf_data = 0;
+    
+      if (penalized) {
+	COEFF = &(md.complex_variable(dl[0]));
+	GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+		    "Data for coefficient should be a scalar");
+      }
+
+      size_type s = 0, ind = (penalized ? 1 : 0);
+      if (dl.size() > ind) {
+	A = &(md.complex_variable(dl[ind]));
+	mf_data = md.pmesh_fem_of_variable(dl[ind]);
+	s = gmm::vect_size(*A);
+	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
+	GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of Dirichlet data");
+      }
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (dl.size() > ind) {
+	if (mf_data)
+	  asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	else
+	  asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
+	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+      }
+
+      asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+      if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+    }
+
+    Dirichlet_condition_brick(bool penalized) {
+      set_flags(penalized ? "Dirichlet with penalization brick"
+		          : "Dirichlet with multipliers brick",
+		true /* is linear*/,
+		true /* is symmetric */, penalized /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+
+  };
+
+  size_type add_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname) {
+    pbrick pbr = new Dirichlet_condition_brick(false);
+    model::termlist tl;
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl;
+    if (dataname.size()) dl.push_back(dataname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+  size_type add_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname) {
+    std::string multname = md.new_name("mult_on_" + varname);
+    md.add_mult_on_region(multname, mf_mult, mim, varname, region);
+    return add_Dirichlet_condition_with_multipliers
+      (md, mim, varname, multname, region, dataname);
+  }
+
+  size_type add_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname) {
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    const mesh_fem &mf_mult = classical_mesh_fem(mf_u.linked_mesh(),
+						 degree, mf_u.get_qdim());
+    return add_Dirichlet_condition_with_multipliers
+      (md, mim, varname, mf_mult, region, dataname);
+  }
+
+  const std::string &mult_varname_Dirichlet(model &md, size_type ind_brick) {
+    return md.varname_of_brick(ind_brick, 1);
+  }
+
+  size_type add_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   size_type region, scalar_type penalisation_coeff,
+   const std::string &dataname) {
+    std::string coeffname = md.new_name("penalization_on_" + varname);
+    md.add_fixed_size_data(coeffname, 1);
+    if (md.is_complex())
+      md.set_complex_variable(coeffname)[0] = penalisation_coeff;
+    else
+      md.set_real_variable(coeffname)[0] = penalisation_coeff;
+    pbrick pbr = new Dirichlet_condition_brick(true);
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl(1, coeffname);
+    if (dataname.size()) dl.push_back(dataname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+  void change_penalization_coeff_Dirichlet(model &md, size_type ind_brick,
+					   scalar_type penalisation_coeff) {
+    const std::string &coeffname = md.dataname_of_brick(ind_brick, 0);
+    if (!md.is_complex()) {
+      model_real_plain_vector &d = md.set_real_variable(coeffname);
+      GMM_ASSERT1(gmm::vect_size(d)==1,
+		  "Wrong coefficient size, may be not a Dirichlet brick "
+		  "with penalization");
+      d[0] = penalisation_coeff;
+    }
+    else {
+      model_complex_plain_vector &d = md.set_complex_variable(coeffname);
+      GMM_ASSERT1(gmm::vect_size(d)==1,
+		  "Wrong coefficient size, may be not a Dirichlet brick "
+		  "with penalization");
+      d[0] = penalisation_coeff;
+    }
+  }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Constraint brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct constraint_brick : public virtual_brick {
+
+    model_real_sparse_matrix rB;
+    model_complex_sparse_matrix cB;
+    model_real_plain_vector rL;
+    model_complex_plain_vector cL;
+    
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					size_type) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Constraint brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 0,
+		  "Constraint brick need no mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 1,
+		  "Wrong number of variables for constraint brick");
+
+      bool penalized = (vl.size() == 1);
+      const model_real_plain_vector *COEFF = 0;
+
+      if (penalized) {
+	COEFF = &(md.real_variable(dl[0]));
+	GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+		    "Data for coefficient should be a scalar");
+      }
+
+      if (penalized) {
+	gmm::mult(gmm::transposed(rB), gmm::scaled(rL, gmm::abs((*COEFF)[0])),
+		  vecl[0]);
+	gmm::mult(gmm::transposed(rB), gmm::scaled(rB, gmm::abs((*COEFF)[0])),
+		  matl[0]);
+      } else {
+	gmm::copy(rL, vecl[0]);
+	gmm::copy(rB, matl[0]);
+      }
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vecl,
+					   size_type) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Constraint brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 0,
+		  "Constraint brick need no mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 1,
+		  "Wrong number of variables for constraint brick");
+      
+      bool penalized = (vl.size() == 1);
+      const model_complex_plain_vector *COEFF = 0;
+
+      if (penalized) {
+	COEFF = &(md.complex_variable(dl[0]));
+	GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+		    "Data for coefficient should be a scalar");
+      }
+
+      if (penalized) {
+	gmm::mult(gmm::transposed(cB), gmm::scaled(cL, gmm::abs((*COEFF)[0])),
+		  vecl[0]);
+	gmm::mult(gmm::transposed(cB), gmm::scaled(cB, gmm::abs((*COEFF)[0])),
+		  matl[0]);
+      } else {
+	gmm::copy(cL, vecl[0]);
+	gmm::copy(cB, matl[0]);
+      }
+    }
+
+    constraint_brick(bool penalized) {
+      set_flags(penalized ? "Constraint with penalization brick"
+		          : "Constraint with multiplier brick",
+		true /* is linear*/,
+		true /* is symmetric */, penalized /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+
+  };
+
+  // à interfacer, dont l'acces aux contraintes stockées dans la brique ...
+  // et a ranger dans une serie de briques "accès direct" ou on peut modifier
+  // les sys linéaire sans intégration de m.e.f.
+
 
 
 

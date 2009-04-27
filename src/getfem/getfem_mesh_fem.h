@@ -544,7 +544,8 @@ namespace getfem {
       the same arguments will return the same mesh_fem object. A
       consequence is that you should NEVER modify this mesh_fem!
    */
-  const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree);
+  const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree,
+				     dim_type qdim = 1);
 
   /* Dummy mehs_fem for default parameter of functions. */
   const mesh_fem &dummy_mesh_fem(void);

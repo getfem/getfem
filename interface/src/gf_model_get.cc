@@ -61,6 +61,7 @@ using namespace getfemint;
   @GET MODEL:GET('listvar')
   @GET MODEL:GET('listbricks')
   @GET MODEL:GET('variable')
+  @GET MODEL:GET('mult varname Dirichlet')
 
 MLABCOM*/
 
@@ -96,7 +97,7 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     /*@GET MODEL:GET('listbricks')
     print to the output the list of bricks of the model.@*/
     md->model().listbricks(infomsg());
-  } else if (check_cmd(cmd, "variable", in, out, 1, 2, 0, 0)) {
+  } else if (check_cmd(cmd, "variable", in, out, 1, 2, 0, 1)) {
     /*@GET V = MODEL:GET('variable', @str name[, @int niter])
     Gives the value of a variable or data.@*/
     std::string name = in.pop().to_string();
@@ -104,5 +105,13 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     if (in.remaining())
       niter = in.pop().to_integer(0,10) - config::base_index();
     RETURN_VECTOR(real_variable(name, niter), complex_variable(name, niter));
+  } else if (check_cmd(cmd, "mult varname Dirichlet", in, out, 1, 2, 0, 0)) {
+    /*@GET V = MODEL:GET('mult varname Dirichlet', @int ind_brick])
+    Gives the name of the multiplier variable for a Dirichlet brick.
+    If the brick is not a Dirichlet condition with multiplier brick,
+    this function has an undefined behavior@*/
+    size_type ind_brick = in.pop().to_integer();
+    out.pop().from_string(getfem::mult_varname_Dirichlet(md->model(),
+							 ind_brick).c_str());
   } else bad_cmd(cmd);
 }

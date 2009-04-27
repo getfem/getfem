@@ -430,6 +430,8 @@ model states.
     #@GET    MODEL:GET('listvar')
     #@GET    MODEL:GET('listbricks')
     #@GET    MODEL:GET('variable')
+    #@GET    MODEL:GET('mult varname Dirichlet')
+
 
     #@SET    MODEL:SET('variable')
     #@SET    MODEL:SET('clear')
@@ -439,6 +441,10 @@ model states.
     #@SET    MODEL:SET('add data')
     #@SET    MODEL:SET('add Laplacian brick')
     #@SET    MODEL:SET('add generic elliptic brick')
+    #@SET    MODEL:SET('add source term brick')
+    #@SET    MODEL:SET('add Dirichlet condition with multiplier')
+    #@SET    MODEL:SET('add Dirichlet condition with penalization')
+    #@SET    MODEL:SET('change penalization coeff Dirichlet')
     
 class GeoTrans:
     """General function for building descriptors to geometric transformations.

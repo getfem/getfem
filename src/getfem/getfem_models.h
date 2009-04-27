@@ -85,7 +85,7 @@ namespace getfem {
   
   typedef gmm::col_matrix<model_real_sparse_vector> model_real_sparse_matrix;
   typedef gmm::col_matrix<model_complex_sparse_vector>
-    model_complex_sparse_matrix;
+  model_complex_sparse_matrix;
 
   /** ``Model'' variables store the variables, the data and the
       description of a model. This includes the global tangent matrix, the
@@ -127,18 +127,18 @@ namespace getfem {
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
       size_type n_iter; //  number of version of the variable stored (for time
-                  // integration schemes.
+      // integration schemes.
 
       // fem description of the variable
       const mesh_fem *mf;           // Principal fem of the variable.
       const mesh_im *mim;           // Optional mesh_im for filter.
-      partial_mesh_fem *partial_mf; // Filter with respect to mf.
+      ppartial_mesh_fem partial_mf; // Filter with respect to mf.
       size_type m_region;           // Optional mesh_region for the filter.
       std::string filter_var;       // Optional variable name for the filter
-                           // with the mass matrix of the corresponding fem.
+      // with the mass matrix of the corresponding fem.
 
       dim_type qdim;  // une donnée peut avoir un qdim != du fem.
-                      // dim per dof for dof data.
+      // dim per dof for dof data.
       gmm::uint64_type v_num, v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system
@@ -153,7 +153,7 @@ namespace getfem {
 		      size_type m_reg = size_type(-1), dim_type Q = 1,
 		      const std::string &filter_v = std::string(""))
 	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
-	  filter(fil), n_iter(n_it), mf(mmf), mim(im), partial_mf(0),
+	  filter(fil), n_iter(n_it), mf(mmf), mim(im),
 	  m_region(m_reg),
 	  filter_var(filter_v), qdim(Q), v_num(act_counter()) {
 	if (filter != VDESCRFILTER_NO && mf != 0)
@@ -168,11 +168,8 @@ namespace getfem {
 
       const mesh_fem *passociated_mf(void) const {
 	if (!is_fem_dofs) return 0;
-	if (filter == VDESCRFILTER_NO) return mf; else return partial_mf; 
+	if (filter == VDESCRFILTER_NO) return mf; else return partial_mf.get(); 
       }
-
-
-      ~var_description() { if (partial_mf) delete partial_mf; }
 
       size_type size(void) const // devrait contrôler que la variable
       // a bien été initialisée avec la bonne taille par actualize_sizes.
@@ -219,13 +216,13 @@ namespace getfem {
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
       real_matlist rmatlist;    // List of matrices the brick have to fill in
-                                // (real version).
+      // (real version).
       real_veclist rveclist;    // List of rhs the brick have to fill in
-                                // (real version).
+      // (real version).
       complex_matlist cmatlist; // List of matrices the brick have to fill in
-                                // (complex version).
+      // (complex version).
       complex_veclist cveclist; // List of rhs the brick have to fill in
-                                // (complex version).
+      // (complex version).
       
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
@@ -254,10 +251,6 @@ namespace getfem {
     // centraliser les mesh_fems de base avec numérotation locale ?
 
 
-    // il faudra gerer les changements de taille des variables si les fems
-    // changent ... avec possibilité de ré-interpoler quand on raffine ...
-
-
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
@@ -271,6 +264,9 @@ namespace getfem {
 	and data. */
     bool is_complex(void) const { return complex_version; }
 
+    /** Gives a non already existing variable name bigining by `name`. */
+    std::string new_name(const std::string &name);
+
     /** Add a fixed size variable to the model. niter is the number of version
 	of the variable stored, for time integration schemes. */
     void add_fixed_size_variable(const std::string &name, size_type size,
@@ -279,7 +275,7 @@ namespace getfem {
     /** Add a fixed size data to the model. niter is the number of version
 	of the data stored, for time integration schemes. */
     void add_fixed_size_data(const std::string &name, size_type size,
-				 size_type niter = 1);
+			     size_type niter = 1);
 
     /** Add a variable being the dofs of a finite element method to the model.
 	niter is the number of version of the variable stored, for time
@@ -290,8 +286,8 @@ namespace getfem {
     /** Add a data being the dofs of a finite element method to the model.
 	niter is the number of version of the data stored, for time
 	integration schemes. */
-     void add_fem_data(const std::string &name, const mesh_fem &mf,
-			  dim_type qdim = 1, size_type niter = 1);
+    void add_fem_data(const std::string &name, const mesh_fem &mf,
+		      dim_type qdim = 1, size_type niter = 1);
     
     /** Add a particular variable linked to a fem beeing a multiplier with
 	respect to a primal variable. The dof will be filtered with a mass
@@ -375,6 +371,17 @@ namespace getfem {
 			const termlist &terms, const mimlist &mims, 
 			size_type region);
 
+    /** Gives the name of the variable of index `ind_var` of the brick
+	of index `ind_brick`. */
+    const std::string &varname_of_brick(size_type ind_brick,
+					size_type ind_var);
+
+    /** Gives the name of the data of index `ind_data` of the brick
+	of index `ind_brick`. */
+    const std::string &dataname_of_brick(size_type ind_brick,
+					 size_type ind_data);
+
+
     /** Assembly of the tangent system taking into account the terms
 	from all bricks. */
     void assembly(void);
@@ -418,7 +425,7 @@ namespace getfem {
     bool islinear;    // The brick add a linear term or not.
     bool issymmetric; // The brick add a symmetric term or not.
     bool iscoercive;  // The brick add a potentialy coercive terms or not. 
-                      //   (in particular, not a term involving a multiplier)
+    //   (in particular, not a term involving a multiplier)
     bool isreal;      // The brick admits a real version or not.
     bool iscomplex;   // The brick admits a complex version or not.
     bool isinit;      // internal flag.
@@ -470,11 +477,13 @@ namespace getfem {
 
   
   /** Add a Laplacian term on the variable `varname`. If it is a vector
-      valued variable, the Laplacian term is componentwise
+      valued variable, the Laplacian term is componentwise. `region` is an
+      optional mesh region on which the term is added. Return the brick index
+      in the model.
   */
-  size_type add_Laplacian_brick(model &md, const mesh_im &mim,
-				const std::string &varname,
-				size_type region = size_type(-1));
+  size_type add_Laplacian_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   size_type region = size_type(-1));
   
 
   /** Add an elliptic term on the variable `varname`. The shape of the elliptic
@@ -489,18 +498,92 @@ namespace getfem {
       field) the data can be a huge vector. The components of the
       matrix/tensor have to be stored with the fortran order (columnwise) in
       the data vector (compatibility with blas). The symmetry and coercivity
-      of the given matrix/tensor is not verified (but assumed).
+      of the given matrix/tensor is not verified (but assumed). `region` is an
+      optional mesh region on which the term is added. Return the brick index
+      in the model.
   */
-  size_type add_generic_elliptic_brick(model &md, const mesh_im &mim,
-				       const std::string &varname,
-				       const std::string &dataname, 
-				       size_type region = size_type(-1));
+  size_type add_generic_elliptic_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region = size_type(-1));
   
 
+  /** Add a source term on the variable `varname`. The source term is
+      represented by the data `dataname` which could be constant or described
+      on a fem.  `region` is an optional mesh region on which the term is
+      added. An additional optional data `directdataname` can be provided. The
+      corresponding data vector will be directly added to the right hand
+      side without assembly. Return the brick index in the model.
+  */
+  size_type add_source_term_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region = size_type(-1),
+   const std::string &directdataname = std::string());
+
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with a multiplier variable `multname` which
+      should be first declared as a multiplier 
+      variable on the mesh region in the model. `dataname` is the optional
+      right hand side of  the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. Return the brick index
+      in the model.
+  */
+  size_type add_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname = std::string());
+
+  /** Same function as the preceeding one but the multipliers variable will
+      be declared to the brick by the function. `mf_mult` is the finite element
+      method on which the multiplier will be build (it will be restricted to
+      the mesh region `region` and eventually some conflicting dofs with some
+      other multiplier variables will be suppressed).
+  */
+  size_type add_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname = std::string());
+
+  /** Same function as the preceeding one but the `mf_mult` parameter is
+      replaced by `degree`. The multiplier will be described on a standard
+      finite element method of the corresponding degree.
+   */
+  size_type add_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname = std::string());
+
+  /** When `ind_brick` is the index of a Dirichlet brick with multiplier on
+      the model `md`, the function return the name of the multiplier variable.
+      Otherwise, it has an undefined behavior.
+  */
+  const std::string &mult_varname_Dirichlet(model &md, size_type ind_brick);
+
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with penalization. The penalization coefficient
+      is intially `penalization_coeff` and will be added to the data of
+      the model. `dataname` is the optional
+      right hand side of  the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. Return the brick index
+      in the model.
+  */
+  size_type add_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   size_type region, scalar_type penalization_coeff = 1E9,
+   const std::string &dataname = std::string());
+
+  /** Change the penalization coefficient of a Dirichlet condition with
+      penalization brick. If the brick is not of this kind,
+      this function has an undefined behavior.
+  */
+  void change_penalization_coeff_Dirichlet(model &md, size_type ind_brick,
+					   scalar_type penalisation_coeff); 
 
 
-
-}  /* end of namespace getfem.                                             */
+    }  /* end of namespace getfem.                                             */
 
 
 #endif /* GETFEM_MODELS_H__  */

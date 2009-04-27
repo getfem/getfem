@@ -167,5 +167,116 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 					   dataname, region)
       + config::base_index();
     out.pop().from_integer(ind);
+  } else if (check_cmd(cmd, "add source term brick", in, out, 3, 5, 0, 1)) {
+    /*@SET V = MODEL:SET('add source term brick', @tmim mim, @str varname, @str dataname[, @int region])
+    add a source term to the model relatively to the variable `varname`.
+    The source term is represented by the data `dataname` which could be
+    constant or described on a fem.  `region` is an optional mesh region
+    on which the term is added. An additional optional data `directdataname`
+    can be provided. The corresponding data vector will be directly added
+    to the right hand side without assembly. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    std::string directdataname;
+    if (in.remaining()) directdataname = in.pop().to_string();
+    size_type ind
+      = getfem::add_source_term_brick(md->model(), mim, varname,
+				      dataname, region, directdataname)
+      + config::base_index();
+    out.pop().from_integer(ind);
+  } else if (check_cmd(cmd, "add Dirichlet condition with multiplier", in, out, 4, 5, 0, 1)) {
+    /*@SET V = MODEL:SET('add Dirichlet condition with multiplier', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
+    Add a Dirichlet condition on the variable `varname` and the mesh
+    region `region`. This region should be a boundary. The Dirichlet
+    condition is prescribed with a multiplier variable described by
+    `mult_description`. If `mult_description` is a string this is assumed
+    to be the variable name correpsonding to the multiplier (which should be
+    first declared as a multiplier  variable on the mesh region in the model).
+    If it is a finite element method (mesh_fem object) then a multiplier
+    variable will be added to the model and build on this finite element
+    method (it will be restricted to the mesh region `region` and eventually
+    some conflicting dofs with some other multiplier variables will be
+    suppressed). If it is an integer, then a  multiplier variable will be
+    added to the model and build on a classical finite element of degree
+    that integer. `dataname` is the optional
+    right hand side of  the Dirichlet condition. It could be constant or
+    described on a fem; scalar or vector valued, depending on the variable
+    on which the Dirichlet condition is prescribed. Return the brick index
+    in the model. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    int version = 0;
+    size_type degree = 0;
+    std::string multname;
+    getfem::mesh_fem *mf_mult = 0;
+    mexarg_in argin = in.pop();
+
+    if (argin.is_integer()) {
+      degree = argin.to_integer();
+      version = 1;
+    } else if (argin.is_string()) {
+      multname = argin.to_string();
+      version = 2;
+    } else {
+      getfemint_mesh_fem *gfi_mf = argin.to_getfemint_mesh_fem();
+      mf_mult = &(gfi_mf->mesh_fem());
+      version = 3;
+    }
+    size_type region = in.pop().to_integer();
+    std::string dataname;
+    if (in.remaining()) dataname = in.pop().to_string();
+    size_type ind = config::base_index();
+    switch(version) {
+    case 1:  ind += getfem::add_Dirichlet_condition_with_multipliers
+	(md->model(), mim, varname, dim_type(degree), region, dataname);
+      break;
+    case 2:  ind += getfem::add_Dirichlet_condition_with_multipliers
+	(md->model(), mim, varname, multname, region, dataname);
+      break;
+    case 3:  ind += getfem::add_Dirichlet_condition_with_multipliers
+	(md->model(), mim, varname, *mf_mult, region, dataname);
+      break;
+    }
+    out.pop().from_integer(ind);
+  } else if (check_cmd(cmd, "add Dirichlet condition with penalization", in, out, 4, 5, 0, 1)) {
+    /*@SET V = MODEL:SET('add Dirichlet condition with penalization', @tmim mim, @str varname, @int region, @scalar coeff[, @str dataname])
+      Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with penalization. The penalization coefficient
+      is intially `coeff` and will be added to the data of
+      the model. `dataname` is the optional
+      right hand side of  the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. Return the brick index
+      in the model.
+      @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    size_type region = in.pop().to_integer();
+    double coeff = in.pop().to_scalar();
+    std::string dataname;
+    if (in.remaining()) dataname = in.pop().to_string();
+    size_type ind = config::base_index();
+    ind += getfem::add_Dirichlet_condition_with_penalization
+      (md->model(), mim, varname, region, coeff, dataname);
+    out.pop().from_integer(ind);
+  } else if (check_cmd(cmd, "change penalization coeff Dirichlet", in, out, 2, 2, 0, 0)) {
+    /*@SET V = MODEL:SET('change penalization coeff Dirichlet', @int ind_brick, @scalar coeff)
+      Change the penalization coefficient of a Dirichlet condition with
+      penalization brick. If the brick is not of this kind,
+      this function has an undefined behavior.
+      @*/
+    size_type ind_brick = in.pop().to_integer();
+    double coeff = in.pop().to_scalar();
+    getfem::change_penalization_coeff_Dirichlet(md->model(), ind_brick, coeff);
   } else bad_cmd(cmd);
 }

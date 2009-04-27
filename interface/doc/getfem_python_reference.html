@@ -6,7 +6,7 @@
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2975)</font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>getfem_python_reference</strong></big></big> (version 2982)</font></td
 ><td align=right valign=bottom
 ><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py">/home/renard/goulp/source++/getfem++/gcc/interface/src/python/getfem_python_reference.py</a></font></td></tr></table>
     <p><tt>Getfem-interface&nbsp;classes.<br>
@@ -1690,6 +1690,30 @@ model&nbsp;states.<br>
 
 <dl><dt><a name="Model-__str__"><strong>__str__</strong></a>(self)</dt></dl>
 
+<dl><dt><a name="Model-add_Dirichlet_condition_with_multiplier"><strong>add_Dirichlet_condition_with_multiplier</strong></a>(self, mim, varname, mult_description, region, dataname<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;on&nbsp;the&nbsp;variable&nbsp;`varname`&nbsp;and&nbsp;the&nbsp;mesh&nbsp;region<br>
+`region`.&nbsp;This&nbsp;region&nbsp;should&nbsp;be&nbsp;a&nbsp;boundary.&nbsp;The&nbsp;Dirichlet&nbsp;condition&nbsp;is<br>
+prescribed&nbsp;with&nbsp;a&nbsp;multiplier&nbsp;variable&nbsp;described&nbsp;by&nbsp;`mult_description`.&nbsp;If<br>
+`mult_description`&nbsp;is&nbsp;a&nbsp;string&nbsp;this&nbsp;is&nbsp;assumed&nbsp;to&nbsp;be&nbsp;the&nbsp;variable&nbsp;name<br>
+correpsonding&nbsp;to&nbsp;the&nbsp;multiplier&nbsp;(which&nbsp;should&nbsp;be&nbsp;first&nbsp;declared&nbsp;as&nbsp;a<br>
+multiplier&nbsp;variable&nbsp;on&nbsp;the&nbsp;mesh&nbsp;region&nbsp;in&nbsp;the&nbsp;model).&nbsp;If&nbsp;it&nbsp;is&nbsp;a&nbsp;finite<br>
+element&nbsp;method&nbsp;(mesh_fem&nbsp;object)&nbsp;then&nbsp;a&nbsp;multiplier&nbsp;variable&nbsp;will&nbsp;be&nbsp;added&nbsp;to<br>
+the&nbsp;model&nbsp;and&nbsp;build&nbsp;on&nbsp;this&nbsp;finite&nbsp;element&nbsp;method&nbsp;(it&nbsp;will&nbsp;be&nbsp;restricted&nbsp;to<br>
+the&nbsp;mesh&nbsp;region&nbsp;`region`&nbsp;and&nbsp;eventually&nbsp;some&nbsp;conflicting&nbsp;dofs&nbsp;with&nbsp;some&nbsp;other<br>
+multiplier&nbsp;variables&nbsp;will&nbsp;be&nbsp;suppressed).&nbsp;If&nbsp;it&nbsp;is&nbsp;an&nbsp;integer,&nbsp;then&nbsp;a<br>
+multiplier&nbsp;variable&nbsp;will&nbsp;be&nbsp;added&nbsp;to&nbsp;the&nbsp;model&nbsp;and&nbsp;build&nbsp;on&nbsp;a&nbsp;classical&nbsp;finite<br>
+element&nbsp;of&nbsp;degree&nbsp;that&nbsp;integer.&nbsp;`dataname`&nbsp;is&nbsp;the&nbsp;optional&nbsp;right&nbsp;hand&nbsp;side&nbsp;of<br>
+the&nbsp;Dirichlet&nbsp;condition.&nbsp;It&nbsp;could&nbsp;be&nbsp;constant&nbsp;or&nbsp;described&nbsp;on&nbsp;a&nbsp;fem;&nbsp;scalar&nbsp;or<br>
+vector&nbsp;valued,&nbsp;depending&nbsp;on&nbsp;the&nbsp;variable&nbsp;on&nbsp;which&nbsp;the&nbsp;Dirichlet&nbsp;condition&nbsp;is<br>
+prescribed.&nbsp;Return&nbsp;the&nbsp;brick&nbsp;index&nbsp;in&nbsp;the&nbsp;model.</tt></dd></dl>
+
+<dl><dt><a name="Model-add_Dirichlet_condition_with_penalization"><strong>add_Dirichlet_condition_with_penalization</strong></a>(self, mim, varname, region, coeff, dataname<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;on&nbsp;the&nbsp;variable&nbsp;`varname`&nbsp;and&nbsp;the&nbsp;mesh&nbsp;region<br>
+`region`.&nbsp;This&nbsp;region&nbsp;should&nbsp;be&nbsp;a&nbsp;boundary.&nbsp;The&nbsp;Dirichlet&nbsp;condition&nbsp;is<br>
+prescribed&nbsp;with&nbsp;penalization.&nbsp;The&nbsp;penalization&nbsp;coefficient&nbsp;is&nbsp;intially&nbsp;`coeff`<br>
+and&nbsp;will&nbsp;be&nbsp;added&nbsp;to&nbsp;the&nbsp;data&nbsp;of&nbsp;the&nbsp;model.&nbsp;`dataname`&nbsp;is&nbsp;the&nbsp;optional&nbsp;right<br>
+hand&nbsp;side&nbsp;of&nbsp;the&nbsp;Dirichlet&nbsp;condition.&nbsp;It&nbsp;could&nbsp;be&nbsp;constant&nbsp;or&nbsp;described&nbsp;on&nbsp;a<br>
+fem;&nbsp;scalar&nbsp;or&nbsp;vector&nbsp;valued,&nbsp;depending&nbsp;on&nbsp;the&nbsp;variable&nbsp;on&nbsp;which&nbsp;the&nbsp;Dirichlet<br>
+condition&nbsp;is&nbsp;prescribed.&nbsp;Return&nbsp;the&nbsp;brick&nbsp;index&nbsp;in&nbsp;the&nbsp;model.</tt></dd></dl>
+
 <dl><dt><a name="Model-add_Laplacian_brick"><strong>add_Laplacian_brick</strong></a>(self, mim, varname, region<font color="#909090">=None</font>)</dt><dd><tt>add&nbsp;a&nbsp;Laplacian&nbsp;term&nbsp;to&nbsp;the&nbsp;model&nbsp;relatively&nbsp;to&nbsp;the&nbsp;variable&nbsp;`varname`.&nbsp;If<br>
 this&nbsp;is&nbsp;a&nbsp;vector&nbsp;valued&nbsp;variable,&nbsp;the&nbsp;Laplacian&nbsp;term&nbsp;is&nbsp;added&nbsp;componentwise.<br>
 `region`&nbsp;is&nbsp;an&nbsp;optional&nbsp;mesh&nbsp;region&nbsp;on&nbsp;which&nbsp;the&nbsp;term&nbsp;is&nbsp;added.&nbsp;If&nbsp;it&nbsp;is&nbsp;not<br>
@@ -1723,9 +1747,20 @@ variable,&nbsp;the&nbsp;Laplacian&nbsp;term&nbsp;is&nbsp;added&nbsp;componentwis
 mesh&nbsp;region&nbsp;on&nbsp;which&nbsp;the&nbsp;term&nbsp;is&nbsp;added.&nbsp;If&nbsp;it&nbsp;is&nbsp;not&nbsp;specified,&nbsp;it&nbsp;is&nbsp;added<br>
 on&nbsp;the&nbsp;whole&nbsp;mesh.</tt></dd></dl>
 
+<dl><dt><a name="Model-add_source_term_brick"><strong>add_source_term_brick</strong></a>(self, mim, varname, dataname, region<font color="#909090">=None</font>)</dt><dd><tt>add&nbsp;a&nbsp;source&nbsp;term&nbsp;to&nbsp;the&nbsp;model&nbsp;relatively&nbsp;to&nbsp;the&nbsp;variable&nbsp;`varname`.&nbsp;The<br>
+source&nbsp;term&nbsp;is&nbsp;represented&nbsp;by&nbsp;the&nbsp;data&nbsp;`dataname`&nbsp;which&nbsp;could&nbsp;be&nbsp;constant&nbsp;or<br>
+described&nbsp;on&nbsp;a&nbsp;fem.&nbsp;`region`&nbsp;is&nbsp;an&nbsp;optional&nbsp;mesh&nbsp;region&nbsp;on&nbsp;which&nbsp;the&nbsp;term&nbsp;is<br>
+added.&nbsp;An&nbsp;additional&nbsp;optional&nbsp;data&nbsp;`directdataname`&nbsp;can&nbsp;be&nbsp;provided.&nbsp;The<br>
+corresponding&nbsp;data&nbsp;vector&nbsp;will&nbsp;be&nbsp;directly&nbsp;added&nbsp;to&nbsp;the&nbsp;right&nbsp;hand&nbsp;side<br>
+without&nbsp;assembly.</tt></dd></dl>
+
 <dl><dt><a name="Model-add_variable"><strong>add_variable</strong></a>(self, name, size, niter<font color="#909090">=None</font>)</dt><dd><tt>Add&nbsp;a&nbsp;variable&nbsp;to&nbsp;the&nbsp;model&nbsp;of&nbsp;constant&nbsp;size.&nbsp;`name`&nbsp;is&nbsp;the&nbsp;variable&nbsp;name&nbsp;and<br>
 `niter`&nbsp;is&nbsp;the&nbsp;optional&nbsp;number&nbsp;of&nbsp;copy&nbsp;of&nbsp;the&nbsp;variable&nbsp;for&nbsp;time&nbsp;integration<br>
 schemes.</tt></dd></dl>
+
+<dl><dt><a name="Model-change_penalization_coeff_Dirichlet"><strong>change_penalization_coeff_Dirichlet</strong></a>(self, ind_brick, coeff)</dt><dd><tt>Change&nbsp;the&nbsp;penalization&nbsp;coefficient&nbsp;of&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;with&nbsp;penalization<br>
+brick.&nbsp;If&nbsp;the&nbsp;brick&nbsp;is&nbsp;not&nbsp;of&nbsp;this&nbsp;kind,&nbsp;this&nbsp;function&nbsp;has&nbsp;an&nbsp;undefined<br>
+behavior.</tt></dd></dl>
 
 <dl><dt><a name="Model-clear"><strong>clear</strong></a>(self)</dt><dd><tt>Clear&nbsp;the&nbsp;model.</tt></dd></dl>
 
@@ -1739,6 +1774,10 @@ schemes.</tt></dd></dl>
 
 <dl><dt><a name="Model-memsize"><strong>memsize</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;rough&nbsp;approximation&nbsp;of&nbsp;the&nbsp;amount&nbsp;of&nbsp;memory&nbsp;(in&nbsp;bytes)&nbsp;used&nbsp;by&nbsp;the<br>
 model.</tt></dd></dl>
+
+<dl><dt><a name="Model-mult_varname_Dirichlet"><strong>mult_varname_Dirichlet</strong></a>(self, ind_brick)</dt><dd><tt>Gives&nbsp;the&nbsp;name&nbsp;of&nbsp;the&nbsp;multiplier&nbsp;variable&nbsp;for&nbsp;a&nbsp;Dirichlet&nbsp;brick.&nbsp;If&nbsp;the&nbsp;brick<br>
+is&nbsp;not&nbsp;a&nbsp;Dirichlet&nbsp;condition&nbsp;with&nbsp;multiplier&nbsp;brick,&nbsp;this&nbsp;function&nbsp;has&nbsp;an<br>
+undefined&nbsp;behavior</tt></dd></dl>
 
 <dl><dt><a name="Model-rhs"><strong>rhs</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;right&nbsp;hand&nbsp;side&nbsp;of&nbsp;the&nbsp;tangent&nbsp;problem.</tt></dd></dl>
 
@@ -2553,6 +2592,6 @@ Synopsis:&nbsp;util_('warning_level',int&nbsp;level)<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>__version__</strong> = '$Revision: 2975 $'<br>
+<td width="100%"><strong>__version__</strong> = '$Revision: 2982 $'<br>
 <strong>obj_count</strong> = {}</td></tr></table>
 </body></html>

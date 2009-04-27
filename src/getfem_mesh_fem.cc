@@ -610,17 +610,22 @@ namespace getfem {
 
   struct mf__key_ : public context_dependencies {
     const mesh *pmesh;
-    dim_type order;
-    mf__key_(const mesh &msh, dim_type o) : pmesh(&msh), order(o)
-    { add_dependency(msh); }
+    dim_type order, qdim;
+    mf__key_(const mesh &msh, dim_type o, dim_type q)
+      : pmesh(&msh), order(o), qdim(q)  { add_dependency(msh); }
     bool operator <(const mf__key_ &a) const {
-    if (pmesh < a.pmesh) return true; else
-      if (a.pmesh < pmesh) return false; else
-	if (order < a.order) return true; else return false;
+      if (pmesh < a.pmesh) return true;
+      else if (pmesh > a.pmesh) return false;
+      else if (order < a.order) return true; 
+      else if (order > a.order) return false;
+      else if (qdim < a.qdim) return true;
+      return false;
     }
     void update_from_context(void) const {}
-    mf__key_(const mf__key_ &mfk)
-    { pmesh = mfk.pmesh; order = mfk.order; add_dependency(*pmesh); }
+    mf__key_(const mf__key_ &mfk) {
+      pmesh = mfk.pmesh; order = mfk.order; qdim = mfk.qdim;
+      add_dependency(*pmesh);
+    }
   private :
     mf__key_& operator=(const mf__key_ &mfk);
   };
@@ -635,12 +640,12 @@ namespace getfem {
 
   public :
 
-    const mesh_fem &operator()(const mesh &msh, dim_type o) {
+    const mesh_fem &operator()(const mesh &msh, dim_type o, dim_type qdim) {
       for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
 	if (!(itt->first.is_context_valid())) 
 	  { delete itt->second; mfs.erase(itt); }
 
-      mf__key_ key(msh, o);
+      mf__key_ key(msh, o, qdim);
       mesh_fem_tab::iterator it = mfs.find(key);
       assert(it == mfs.end() || it->second->is_context_valid());
       
@@ -648,6 +653,7 @@ namespace getfem {
 	mesh_fem *pmf = new mesh_fem(msh);
 	pmf->set_classical_finite_element(o);
 	pmf->set_auto_add(o);
+	pmf->set_qdim(qdim);
 	return *(mfs[key] = pmf);
       }
       else return *(it->second);
@@ -656,10 +662,10 @@ namespace getfem {
   };
 
   const mesh_fem &classical_mesh_fem(const mesh &msh,
-				     dim_type order) {
+				     dim_type order, dim_type qdim) {
     classical_mesh_fem_pool &pool
       = dal::singleton<classical_mesh_fem_pool>::instance();
-    return pool(msh, order);
+    return pool(msh, order, qdim);
   }
 
   struct dummy_mesh_fem_ {

@@ -54,7 +54,8 @@ namespace getfem {
      a subclass of mesh_fem which allows to eliminate a number of dof
      of the original mesh_fem.
   */
-  class partial_mesh_fem : public mesh_fem, public boost::noncopyable {
+  class partial_mesh_fem : public mesh_fem, public boost::noncopyable,
+			   public dal::static_stored_object {
   protected :
     const mesh_fem &mf;
     mutable bool is_adapted;
@@ -120,6 +121,8 @@ namespace getfem {
     partial_mesh_fem(const mesh_fem *mef);
 
   };
+
+  typedef boost::intrusive_ptr<partial_mesh_fem> ppartial_mesh_fem;
 
   /**
      @brief Return a selection of dof who contribute significantly to the

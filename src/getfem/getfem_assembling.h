@@ -487,6 +487,26 @@ namespace getfem {
   }
 
   /** 
+      source term (for both volumic sources and boundary (Neumann) sources).
+      For an homogeneous term.
+      @ingroup asm
+   */
+  template<typename VECT1, typename VECT2>
+  void asm_homogeneous_source_term(const VECT1 &B, const mesh_im &mim,
+				   const mesh_fem &mf, const VECT2 &F,
+		       const mesh_region &rg = mesh_region::all_convexes()) {
+    const char *st;
+    if (mf.get_qdim() == 1)
+      st = "F=data(1); V(#1)+=comp(Base(#1))*F(1);";
+    else
+      st = "F=data(qdim(#1));"
+	"V(#1)+=comp(vBase(#1))(:,i).F(i);";
+    
+    asm_real_or_complex_1_param(const_cast<VECT1 &>(B),mim,mf,mf,F,rg,st);
+  }
+
+
+  /** 
       normal source term (for boundary (Neumann) condition).
       @ingroup asm
    */
@@ -963,7 +983,7 @@ namespace getfem {
     if ((version & ASMDIR_SIMPLIFY) &&
 	(mf_u.is_reduced() || mf_mult.is_reduced() || mf_r.is_reduced())) {
       GMM_WARNING1("Sorry, no simplification for reduced fems");
-      version = (version & ASMDIR_BUILDR);
+      version = (version & (ASMDIR_BUILDR | ASMDIR_BUILDH));
     }      
     
     region.from_mesh(mim.linked_mesh()).error_if_not_faces();

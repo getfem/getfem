@@ -2823,7 +2823,9 @@ gf_model_set(md,'add variable')
 gf_model_set(md,'add fem data')
 gf_model_set(md,'add data')
 gf_model_set(md,'add Laplacian brick')
-gf_model_set(md,'add generic elliptic brick')@@
+gf_model_set(md,'add generic elliptic brick')
+gf_model_set(md,'add source term brick')
+gf_model_set(md,'add Dirichlet condition with multiplier')@@
 \end{synopsis}
 \begin{cmddescription}
 \sep{@@gf_model_set(mds,'variable', \tvec U[, \tint niter])@@} :
@@ -2853,8 +2855,8 @@ Add a Laplacian term to the model relatively to the variable @@varname@@.
 If this is a vector valued variable, the Laplacian term is added
 componentwise. @@region@@ is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh.
 
-\sep{@@gf_model_set(md,'add generic elliptic  brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])@@} :
-add a generic elliptic term to the model relatively to the variable @@varname@@.
+\sep{@@gf_model_set(md,'add generic elliptic  brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region])@@} :
+Add a generic elliptic term to the model relatively to the variable @@varname@@.
 The shape of the elliptic
 term depends both on the variable and the data. This corresponds to a
 term $-\text{div}(a\nabla u)$ where $a$ is the data and $u$ the variable.
@@ -2872,6 +2874,45 @@ If this is a vector valued variable, the Laplacian term is added
 componentwise. @@region@@ is an optional mesh region on which the term is 
 added. If it is not specified, it is added on the whole mesh.
 
+\sep{@@gf_model_set(md,'add source term  brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region[, \tstr directdataname ]])@@} :
+Add a source term to the model relatively to the variable @@varname@@.
+The source term is represented by the data @@dataname@@ which could be
+constant or described on a fem.  @@region@@ is an optional mesh region
+on which the term is added. An additional optional data @@directdataname@@
+can be provided. The corresponding data vector will be directly added
+to the right hand side without assembly.
+
+\sep{@@gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr multname | \tmf mf_mult | \tint degree , \tint region[, \tstr dataname ])@@} :
+Add a Dirichlet condition on the variable @@varname@@ and the mesh
+region @@region@@. This region should be a boundary. The Dirichlet
+condition is prescribed with a multiplier variable which can be either
+directly given by @@multname@@ (should be first declared as a multiplier 
+variable on the mesh region in the model) or added by the function and
+buld on the given finite element method @@mf_mult@@ (it will be restricted to
+the mesh region @@region@@ and eventually some conflicting dofs with some
+other multiplier variables will be suppressed) or added by the function and
+build on a standard finite element method of degree @@degree@@.
+@@dataname@@ is the optional
+right hand side of  the Dirichlet condition. It could be constant or
+described on a fem; scalar or vector valued, depending on the variable
+on which the Dirichlet condition is prescribed. Return the brick index
+in the model.
+
+\sep{@@gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tint region, \tscalar coeff[, \tstr dataname ])@@} :
+Add a Dirichlet condition on the variable @@varname@@ and the mesh
+region @@region@@. This region should be a boundary. The Dirichlet
+condition is prescribed with penalization. The penalization coefficient
+is intially @@coeff@@ and will be added to the data of
+the model. @@dataname@@ is the optional
+right hand side of  the Dirichlet condition. It could be constant or
+described on a fem; scalar or vector valued, depending on the variable
+on which the Dirichlet condition is prescribed. Return the brick index
+in the model.
+
+\sep{@@gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscalar coeff)@@} :
+Change the penalization coefficient of a Dirichlet condition with
+penalization brick. If the brick is not of this kind,
+this function has an undefined behavior.
 \end{cmddescription}
 \newpage
 
