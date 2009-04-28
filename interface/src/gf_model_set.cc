@@ -43,7 +43,9 @@ using namespace getfemint;
   @SET MODEL:SET('add variable')
   @SET MODEL:SET('add mult on region')
   @SET MODEL:SET('add fem data')
+  @SET MODEL:SET('add initialized fem data')
   @SET MODEL:SET('add data')
+  @SET MODEL:SET('add initialized data')
   @SET MODEL:SET('add Laplacian brick')
   @SET MODEL:SET('add generic elliptic brick')
   @SET MODEL:SET('add source term brick')
@@ -116,6 +118,23 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fem_data(name, gfi_mf->mesh_fem(), qdim, niter);
+  } else if (check_cmd(cmd, "add initialized fem data", in, out, 3, 3, 0, 0)) {
+    /*@SET MODEL:SET('add initialized fem data', @str name, @tmf mf, @vec V)
+    Add a data to the model linked to a @tmf. `name` is the data name.
+    The data is initiakized with `V`. The data can be a scalar or vector field.
+    @*/
+    std::string name = in.pop().to_string();
+    getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+    workspace().set_dependance(md, gfi_mf);
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray(-1);
+      std::vector<double> V(st.begin(), st.end());
+      md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
+    } else {
+      carray st = in.pop().to_carray(-1);
+      std::vector<std::complex<double> > V(st.begin(), st.end());
+      md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
+    }
   } else if (check_cmd(cmd, "add data", in, out, 2, 3, 0, 0)) {
     /*@SET MODEL:SET('add data', @str name, @int size[, @int niter])
     Add a data to the model of constant size. `name` is the data name
@@ -126,6 +145,21 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fixed_size_data(name, s, niter);
+  } else if (check_cmd(cmd, "add initialized data", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('add initialized data', @str name, @vec V)
+    Add a fixed size data to the model linked to a @tmf.
+    `name` is the data name, `V` is the value of the data.
+    @*/
+    std::string name = in.pop().to_string();
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray(-1);
+      std::vector<double> V(st.begin(), st.end());
+      md->model().add_initialized_fixed_size_data(name, V);
+    } else {
+      carray st = in.pop().to_carray(-1);
+      std::vector<std::complex<double> > V(st.begin(), st.end());
+      md->model().add_initialized_fixed_size_data(name, V);
+    }
   } else if (check_cmd(cmd, "variable", in, out, 2, 3, 0, 0)) {
     /*@SET V = MODEL:SET('variable', @str name, @vec U[, @int niter])
     Set the value of a variable or data.@*/

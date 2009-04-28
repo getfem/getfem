@@ -313,7 +313,7 @@ namespace getfem {
       if (this->is_complex()) // to be templated .. see later
 	gmm::copy(v, this->set_complex_variable(name));
       else
-	gmm::copy(v, this->set_real_variable(name));
+	gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
 
     /** Add a variable being the dofs of a finite element method to the model.
@@ -332,11 +332,12 @@ namespace getfem {
     template <typename VECT>
     void add_initialized_fem_data(const std::string &name, const mesh_fem &mf,
 				  VECT &v) {
-      this->add_fem_data(name, mf, gmm::vect_size(v) / mf.nb_dof(), 1);
+      this->add_fem_data(name, mf,
+			 dim_type(gmm::vect_size(v) / mf.nb_dof()), 1);
       if (this->is_complex()) // to be templated .. see later
 	gmm::copy(v, this->set_complex_variable(name));
       else
-	gmm::copy(v, this->set_real_variable(name));
+	gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
     
     /** Add a particular variable linked to a fem being a multiplier with

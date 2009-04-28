@@ -274,7 +274,7 @@ the distribution.
 If you want to use MUMPS as the default sparse direct solver instead of SuperLU, see the indication of section \ref{sec:linalgproc}.
 
 \section{Build a mesh}
-As a preliminary, you may want to read this short introduction to the getfem++ ``vocabulary'': \WEBB{http://www-gmm.insa-toulouse.fr/getfem/getfem_reference/main.html}.
+As a preliminary, you may want to read this short introduction to the getfem++ ``vocabulary'': \WEBB{http://download.gna.org/getfem/doc/getfem_reference/index.html}.
 
 
 \index{mesh}
@@ -2132,9 +2132,22 @@ Note that this simple brick have only one term and is linear. In the case of a l
 
 Le us see now a second example of a simple brick which prescribe a Dirichlet condition thanks to the use of a Lagrange multiplier. The Dirichlet condition is of the form
 
-$$ u = u_D \text{ on } \Gamma, $$
+$u = u_D \text{ on } \Gamma, $
 
-where $u$ is the variable, $u_D$ is a given value and $\Gamma$ is a part on the boundary of the considered domain. The brick can be defined as follows:
+where $u$ is the variable, $u_D$ is a given value and $\Gamma$ is a part on the boundary of the considered domain. The weak terms corresponding to this condition prescribed with a Lagrange multiplier are
+
+$ \int_{\Gamma} u \mu d\Gamma = \int_{\Gamma} u_D \mu d\Gamma, ~~\forall \mu \in M, $
+
+where $M$ is a appropriate multiplier space. The contributions to the global linear system can be viewed in Fig. \ref{fig:syslinDir}. The matrix $B$ is the ``mass matrix'' between the finite element space of the variable $u$ and the finite element space of the multiplier $\mu$. $L_{u}$ is the right end side corresponding to the data $u_D$.  
+
+\begin{figure}[H]
+  \begin{center}
+    \icgraphic{12cm}{getfemuserlinsysDir}{The parts added by the simple Dirchlet brick}
+  \end{center}
+  \caption{ \it Contributions of the simple Dirchlet brick} \label{fig:syslinDir}
+\end{figure}
+
+The brick can be defined as follows:
 
 \begin{cppcode}
   struct my_Dirichlet_brick : public getfem::virtual_brick \{
@@ -2178,9 +2191,6 @@ where $u$ is the variable, $u_D$ is a given value and $\Gamma$ is a part on the 
 
 This brick has again only one term but define both the matrix and the right hand side parts. Two variables are concerned, the primal variable on which the Dirichlet condition is prescribed, and the multiplier variable which should be defined on a mesh region corresponding to a boundary (it should be added to the model with the method \cpp{add_mult_on_region}). The term of the brick will be declared symmetric (see the next section).
 
-+ dessin ...
-
-
 The lines 
 \begin{cppcode}
       const getfem::model_real_plain_vector &A = md.real_variable(datal[ind]);
@@ -2198,7 +2208,7 @@ make the assembly of the right hand side. The two versions correspond to a data 
 
 
 
-+ exemples avec des termes non linéaires ...
+( + some example with a nonlinear term ... )
   
 
 \subsection{How to add the brick to a model}
@@ -2266,8 +2276,7 @@ The function allowing to add the simple Dirichlet brick described above can be d
 \begin{cppcode}
 size_t add_my_Dirichlet_condition_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &multname, size_type region,
-   const std::string &dataname) {
+   const std::string &multname, size_t region, const std::string &dataname) \{
     pbrick pbr = new my_Dirichlet_brick;
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
@@ -2276,7 +2285,7 @@ size_t add_my_Dirichlet_condition_brick
     model::varnamelist dl;
     if (dataname.size()) dl.push_back(dataname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
-  }
+  \}
 \end{cppcode}
 Again, here, the term is declared symmetric and then the matrix term and its transpose will be added.
 
@@ -2337,7 +2346,7 @@ The aim of the Dirichlet condition brick is to prescribe a Dirichlet condition o
 
 $ \int_{\Gamma} u \mu d\Gamma = \int_{\Gamma} u_D \mu d\Gamma, \forall \mu \in M. $
 
-where $u$ is the variable, $M$ is the space of multipliers,$u$ is the variable and $\Gamma$ the Dirichlet boundary. For this version, and additional varaible have to be added to represent the multiplier. It can be done directly to the model or thanks to the functions below. There is three functions for the addition of a Dirichlet condition prescribe with a multiplier. The first one is
+where $u$ is the variable, $M$ is the space of multipliers,$u$ is the variable and $\Gamma$ the Dirichlet boundary. For this version, and additional variable have to be added to represent the multiplier. It can be done directly to the model or thanks to the functions below. There is three functions for the addition of a Dirichlet condition prescribe with a multiplier. The first one is
 \begin{cppcode}
   add_Dirichlet_condition_with_multipliers(md, mim, varname,
           multname, region, dataname = std::string());
@@ -2355,7 +2364,7 @@ The only difference is that \cpp{multname} is replaced by \cpp{mf_mult} which me
 \end{cppcode}
 The  parameter \cpp{mf_mult} is replaced by a integer \cpp{degree} indicating thzt the multiplier will be build on a classical finite element method of that degree.
 
-Note, that in all the cases, when a variable is add by the method \cpp{add_mult_on_region} of the model object, the mesh_fem will be filtered (thank to a \cpp{partial_mesh_fem object) in order to retain only the degrees of freedom having a non vanishing contribution on the considered boundary.
+Note, that in all the cases, when a variable is add by the method \cpp{add_mult_on_region} of the model object, the mesh_fem will be filtered (thank to a \cpp{partial_mesh_fem_object} in order to retain only the degrees of freedom having a non vanishing contribution on the considered boundary.
 
 Finally, the variable name of the multiplier can be obtained thank to the function
 \begin{cppcode}

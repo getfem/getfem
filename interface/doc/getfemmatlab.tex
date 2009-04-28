@@ -2820,9 +2820,11 @@ gf_model_set(md,'variable')
 gf_model_set(md,'clear')
 gf_model_set(md,'add fem variable')
 gf_model_set(md,'add variable')
-gf_model_set(md,'add mult on region')
 gf_model_set(md,'add fem data')
+gf_model_set(md,'add initialized fem data')
 gf_model_set(md,'add data')
+gf_model_set(md,'add initialized data')
+gf_model_set(md,'add mult on region')
 gf_model_set(md,'add Laplacian brick')
 gf_model_set(md,'add generic elliptic brick')
 gf_model_set(md,'add source term brick')
@@ -2832,7 +2834,7 @@ gf_model_set(md,'add Dirichlet condition with multiplier')@@
 \sep{@@gf_model_set(mds,'variable', \tvec U[, \tint niter])@@} :
 update the value vector of a variable with @@U@@.
 
-\\sep{@@gf_model_set(md,'clear')@@} :
+\sep{@@gf_model_set(md,'clear')@@} :
 clear the model.
 
 \sep{@@gf_model_set(md,'add fem variable', \tstr name, \tmf mf[, \tint niter])@@} :
@@ -2845,11 +2847,21 @@ Add a fixed size variable to the model. @@name@@ is the variable name, @@size@@ 
 
 \sep{@@gf_model_set(md,'add fem data', \tstr name, \tmf mf[, \tint niter])@@} :
 Add a data to the model linked to a \tmf. @@name@@ is the data name
-    and @@niter@@ is the optional number of copy of the data for time
-    integration schemes.
+and @@niter@@ is the optional number of copy of the data for time
+integration schemes.
 
-\sep{@@gf_model_set(md,'add variable', \tstr name, \tint size[, \tint niter])@@} :
-Add a fixed size data to the model. @@name@@ is the data name, @@size@@ is the fixed size and @@niter@@ is the optional number of copy of the data for time integration schemes.
+\sep{@@gf_model_set(md,'add initialized fem data', \tstr name, \tmf mf, \tvec V)@@} :
+Add a data to the model linked to a \tmf. @@name@@ is the data name.
+The data is initiakized with @@V@@. The data can be a scalar or vector field.
+
+\sep{@@gf_model_set(md,'add data', \tstr name, \tint size[, \tint niter])@@} :
+Add a data to the model of constant size. @@name@@ is the data name
+and @@niter@@ is the optional number of copy of the data for time
+integration schemes.
+
+\sep{@@gf_model_set(md,'add initialized data', \tstr name, \tvec V)@@} :
+Add a fixed size data to the model linked to a @tmf.
+@@name@@ is the data name, @@V@@ is the value of the data.
 
 \sep{@@gf_model_set(md,'add mult on region', \tstr name, \tmf mf, \tmim mim, \tstr primalname, \tint region[, \tint niter])@@} :
 Add a particular variable linked to a fem beeing a multiplier with
@@ -2891,7 +2903,7 @@ on which the term is added. An additional optional data @@directdataname@@
 can be provided. The corresponding data vector will be directly added
 to the right hand side without assembly.
 
-\sep{@@gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr multname | \tmf mf_mult | \tint degree , \tint region[, \tstr dataname ])@@} :
+\sep{@@gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr multname | \tmf mf_mult | \tint degree, \tint region[, \tstr dataname ])@@} :
 Add a Dirichlet condition on the variable @@varname@@ and the mesh
 region @@region@@. This region should be a boundary. The Dirichlet
 condition is prescribed with a multiplier variable which can be either
@@ -2907,7 +2919,7 @@ described on a fem; scalar or vector valued, depending on the variable
 on which the Dirichlet condition is prescribed. Return the brick index
 in the model.
 
-\sep{@@gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tint region, \tscalar coeff[, \tstr dataname ])@@} :
+\sep{@@gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tint region, \tscal coeff[, \tstr dataname ])@@} :
 Add a Dirichlet condition on the variable @@varname@@ and the mesh
 region @@region@@. This region should be a boundary. The Dirichlet
 condition is prescribed with penalization. The penalization coefficient
@@ -2918,7 +2930,7 @@ described on a fem; scalar or vector valued, depending on the variable
 on which the Dirichlet condition is prescribed. Return the brick index
 in the model.
 
-\sep{@@gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscalar coeff)@@} :
+\sep{@@gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscal coeff)@@} :
 Change the penalization coefficient of a Dirichlet condition with
 penalization brick. If the brick is not of this kind,
 this function has an undefined behavior.

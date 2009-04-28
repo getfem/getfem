@@ -1,6 +1,6 @@
 all : getfemuser.pdf
 
-FIGS=getfemuserelemf.fig getfemuserelem.fig \
+FIGS=getfemuserelemf.fig getfemuserelem.fig 				    \
      getfemlistsymbols.fig getfemlistsegmentPk.fig getfemlisttriangleP1.fig \
      getfemlisttriangleP2.fig getfemlisttriangleP3.fig                      \
      getfemlisttriangleP6.fig getfemlisttetrahedronP1.fig                   \
@@ -24,9 +24,11 @@ FIGS=getfemuserelemf.fig getfemuserelem.fig \
      getfemlistintmethodtriangle5.fig getfemlistintmethodtriangle6.fig      \
      getfemlistintmethodtriangle7.fig getfemlistintmethodquad2.fig          \
      getfemlistintmethodquad3.fig getfemlistintmethodquad5.fig              \
-     getfemlistintmethodtriangle2comp.fig getfemlistintmethodtetrahedron1.fig \
-     getfemlistintmethodtetrahedron2.fig getfemlistintmethodtetrahedron3.fig  \
-     getfemlistintmethodtetrahedron5.fig  getfemuserlinearsys.fig
+     getfemlistintmethodtriangle2comp.fig getfemuserlinsysDir.fig           \
+     getfemlistintmethodtetrahedron1.fig getfemuserlinearsys.fig            \
+     getfemlistintmethodtetrahedron2.fig                                    \
+     getfemlistintmethodtetrahedron3.fig                                    \
+     getfemlistintmethodtetrahedron5.fig
 
 PDFFIGS=$(FIGS:.fig=.pdf)
 PNGFIGS=$(PDFFIGS:.pdf=.png)
@@ -47,10 +49,17 @@ doxygenlinks.tex: updatedoxlinks.py
 	python ./updatedoxlinks.py
 
 getfemuserelemf.png: getfemuserelemf.pdf
-	convert -resize 500x500 $(@:.png=.pdf) $@
+	convert -density 80x80 $(@:.png=.pdf) $@
 
 getfemuserelem.png: getfemuserelem.pdf
-	convert -resize 500x500 $(@:.png=.pdf) $@
+	convert -density 80x80 $(@:.png=.pdf) $@
+
+getfemuserlinsysDir.png: getfemuserlinsysDir.pdf
+	convert -density 100x100 $(@:.png=.pdf) $@
+
+getfemuserlinearsys.png: getfemuserlinearsys.pdf
+	convert -density 100x100 $(@:.png=.pdf) $@
+
 
 TEXOPTS='-interaction=nonstopmode'
 TEXMSGFILTER=grep 'LaTeX\|[Ww]arning\|^l\.\|^\!\|^<'
