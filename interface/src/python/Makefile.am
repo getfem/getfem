@@ -78,7 +78,7 @@ _getfem.so: getfem_python.c ../libgetfemint.la $(GETFEM_LIB_LA)
 #LDSHARED="$(CXX) -shared" ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 
 
-getfem_python_reference.html: getfem.py
+getfem_python_reference.html: getfem.py _getfem.so
 	cp getfem.py getfem_python_reference.py
 	pydoc -w getfem_python_reference && cp getfem_python_reference.html $(top_srcdir)/interface/doc/getfem_python_reference.html
 	rm -f getfem_python_reference.py

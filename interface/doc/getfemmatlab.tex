@@ -2820,6 +2820,7 @@ gf_model_set(md,'variable')
 gf_model_set(md,'clear')
 gf_model_set(md,'add fem variable')
 gf_model_set(md,'add variable')
+gf_model_set(md,'add mult on region')
 gf_model_set(md,'add fem data')
 gf_model_set(md,'add data')
 gf_model_set(md,'add Laplacian brick')
@@ -2849,6 +2850,14 @@ Add a data to the model linked to a \tmf. @@name@@ is the data name
 
 \sep{@@gf_model_set(md,'add variable', \tstr name, \tint size[, \tint niter])@@} :
 Add a fixed size data to the model. @@name@@ is the data name, @@size@@ is the fixed size and @@niter@@ is the optional number of copy of the data for time integration schemes.
+
+\sep{@@gf_model_set(md,'add mult on region', \tstr name, \tmf mf, \tmim mim, \tstr primalname, \tint region[, \tint niter])@@} :
+Add a particular variable linked to a fem beeing a multiplier with
+respect to a primal variable. The dof will be filtered with a mass
+matrix (computed with the integration method @@mim@@) to retain only
+linearly independant constraints on the primal
+variable. niter is the number of version of the data stored, for time
+integration schemes.
 
 \sep{@@gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tint region])@@} :
 Add a Laplacian term to the model relatively to the variable @@varname@@.

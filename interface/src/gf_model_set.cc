@@ -41,8 +41,15 @@ using namespace getfemint;
   @SET MODEL:SET('clear')
   @SET MODEL:SET('add fem variable')
   @SET MODEL:SET('add variable')
+  @SET MODEL:SET('add mult on region')
   @SET MODEL:SET('add fem data')
   @SET MODEL:SET('add data')
+  @SET MODEL:SET('add Laplacian brick')
+  @SET MODEL:SET('add generic elliptic brick')
+  @SET MODEL:SET('add source term brick')
+  @SET MODEL:SET('add Dirichlet condition with multiplier')
+  @SET MODEL:SET('add Dirichlet condition with penalization')
+  @SET MODEL:SET('change penalization coeff Dirichlet')
 
 MLABCOM*/
 
@@ -77,6 +84,24 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fixed_size_variable(name, s, niter);
+  } else if (check_cmd(cmd, "add mult on region", in, out, 5, 6, 0, 0)) {
+    /*@SET MODEL:SET('add mult on region', @str name, @tmf mf, @tmim mim, @str primalname,@int region[, @int niter])
+    Add a particular variable linked to a fem beeing a multiplier with
+    respect to a primal variable. The dof will be filtered with a mass
+    matrix (computed with the integration method `mim`) to retain only
+    linearly independant constraints on the primal
+    variable. niter is the number of version of the data stored, for time
+    integration schemes. @*/
+    std::string name = in.pop().to_string();
+    getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    std::string primalname = in.pop().to_string();
+    size_type region = in.pop().to_integer();
+    size_type niter = 1;
+    if (in.remaining()) niter = in.pop().to_integer(1,10);
+    md->model().add_mult_on_region(name, gfi_mf->mesh_fem(),
+				   gfi_mim->mesh_im(), primalname,
+				   region, niter);
   } else if (check_cmd(cmd, "add fem data", in, out, 2, 4, 0, 0)) {
     /*@SET MODEL:SET('add fem data', @str name, @tmf mf[, @int qdim, @int niter])
     Add a data to the model linked to a @tmf. `name` is the data name,
@@ -135,7 +160,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type ind
       = getfem::add_Laplacian_brick(md->model(), mim, varname, region)
       + config::base_index();
-    out.pop().from_integer(ind);
+    out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add generic elliptic brick", in, out, 3, 4, 0, 1)) {
     /*@SET V = MODEL:SET('add generic elliptic brick', @tmim mim, @str varname, @str dataname[, @int region])
     add a generic elliptic term to the model relatively to the variable `varname`.
@@ -166,7 +191,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       = getfem::add_generic_elliptic_brick(md->model(), mim, varname,
 					   dataname, region)
       + config::base_index();
-    out.pop().from_integer(ind);
+    out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add source term brick", in, out, 3, 5, 0, 1)) {
     /*@SET V = MODEL:SET('add source term brick', @tmim mim, @str varname, @str dataname[, @int region])
     add a source term to the model relatively to the variable `varname`.
@@ -188,7 +213,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       = getfem::add_source_term_brick(md->model(), mim, varname,
 				      dataname, region, directdataname)
       + config::base_index();
-    out.pop().from_integer(ind);
+    out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Dirichlet condition with multiplier", in, out, 4, 5, 0, 1)) {
     /*@SET V = MODEL:SET('add Dirichlet condition with multiplier', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
     Add a Dirichlet condition on the variable `varname` and the mesh
@@ -244,7 +269,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	(md->model(), mim, varname, *mf_mult, region, dataname);
       break;
     }
-    out.pop().from_integer(ind);
+    out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Dirichlet condition with penalization", in, out, 4, 5, 0, 1)) {
     /*@SET V = MODEL:SET('add Dirichlet condition with penalization', @tmim mim, @str varname, @int region, @scalar coeff[, @str dataname])
       Add a Dirichlet condition on the variable `varname` and the mesh
@@ -268,7 +293,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type ind = config::base_index();
     ind += getfem::add_Dirichlet_condition_with_penalization
       (md->model(), mim, varname, region, coeff, dataname);
-    out.pop().from_integer(ind);
+    out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "change penalization coeff Dirichlet", in, out, 2, 2, 0, 0)) {
     /*@SET V = MODEL:SET('change penalization coeff Dirichlet', @int ind_brick, @scalar coeff)
       Change the penalization coefficient of a Dirichlet condition with
