@@ -245,7 +245,8 @@ namespace getfem {
     variables[name] = var_description(true, is_complex(), true, niter,
 				      VDESCRFILTER_NO, &mf);
     variables[name].set_size(mf.nb_dof());
-    this->add_dependency(mf);
+    add_dependency(mf);
+    leading_dim = std::max(leading_dim, mf.linked_mesh().dim());
   }
   
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
@@ -254,7 +255,7 @@ namespace getfem {
     variables[name] = var_description(false, is_complex(), true, niter,
 				      VDESCRFILTER_NO, &mf, 0, 0, qdim);
     variables[name].set_size(mf.nb_dof()*qdim);
-    this->add_dependency(mf); 
+    add_dependency(mf); 
   }
 
   void model::add_mult_on_region(const std::string &name, const mesh_fem &mf,
@@ -268,7 +269,7 @@ namespace getfem {
 				      1, primal_name);
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;
-    this->add_dependency(mf); this->add_dependency(mim);
+    add_dependency(mf); add_dependency(mim);
   }
 
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
@@ -289,9 +290,9 @@ namespace getfem {
       bricks.back().rmatlist.resize(terms.size());
       bricks.back().rveclist.resize(terms.size());
     }
-    is_linear = is_linear && pbr->is_linear();
-    is_symmetric = is_symmetric && pbr->is_symmetric();
-    is_coercive = is_coercive && pbr->is_coercive();
+    is_linear_ = is_linear_ && pbr->is_linear();
+    is_symmetric_ = is_symmetric_ && pbr->is_symmetric();
+    is_coercive_ = is_coercive_ && pbr->is_coercive();
 
     for (size_type i=0; i < varnames.size(); ++i)
       GMM_ASSERT1(variables.find(varnames[i]) != variables.end(),
@@ -428,7 +429,7 @@ namespace getfem {
 	if (cplx) {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.cmatlist[j], gmm::sub_matrix(cTM, I1, I2));
-	    if (brick.pbr->is_linear() && !is_linear) {
+	    if (brick.pbr->is_linear() && !is_linear()) {
 	      gmm::mult(brick.cmatlist[j],
 			gmm::scaled(variables[term.var1].complex_value[0],
 				    std::complex<scalar_type>(-1)),
@@ -437,7 +438,7 @@ namespace getfem {
 	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.cmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
-	      if (brick.pbr->is_linear() && !is_linear) {
+	      if (brick.pbr->is_linear() && !is_linear()) {
 		gmm::mult(gmm::conjugated(brick.cmatlist[j]),
 			  gmm::scaled(variables[term.var2].complex_value[0],
 				      std::complex<scalar_type>(-1)),
@@ -450,7 +451,7 @@ namespace getfem {
 	} else if (is_complex()) {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
-	    if (brick.pbr->is_linear() && !is_linear) {
+	    if (brick.pbr->is_linear() && !is_linear()) {
 	      gmm::mult(brick.rmatlist[j],
 			gmm::scaled(variables[term.var1].real_value[0],
 				    scalar_type(-1)),
@@ -459,7 +460,7 @@ namespace getfem {
 	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
-	      if (brick.pbr->is_linear() && !is_linear) {
+	      if (brick.pbr->is_linear() && !is_linear()) {
 		gmm::mult(gmm::transposed(brick.rmatlist[j]),
 			  gmm::scaled(variables[term.var2].real_value[0],
 				      scalar_type(-1)),
@@ -472,7 +473,7 @@ namespace getfem {
 	} else {
 	  if (term.is_matrix_term) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
-	    if (brick.pbr->is_linear() && !is_linear) {
+	    if (brick.pbr->is_linear() && !is_linear()) {
 	      gmm::mult(brick.rmatlist[j],
 			gmm::scaled(variables[term.var1].real_value[0],
 				    scalar_type(-1)),
@@ -481,7 +482,7 @@ namespace getfem {
 	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(rTM, I2, I1));
-	      if (brick.pbr->is_linear() && !is_linear) {
+	      if (brick.pbr->is_linear() && !is_linear()) {
 		gmm::mult(gmm::transposed(brick.rmatlist[j]),
 			  gmm::scaled(variables[term.var2].real_value[0],
 				      scalar_type(-1)),

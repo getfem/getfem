@@ -68,6 +68,7 @@ base_small_vector sol_grad(const base_node &x)
 
 /*
   structure for the Laplacian problem
+  (not mandatory, just to gather the variables)
 */
 struct laplacian_problem {
 
@@ -76,28 +77,18 @@ struct laplacian_problem {
   getfem::mesh_im mim;      /* the integration methods. */
   getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Laplacian solution */
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
-  getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients    */
 
   scalar_type residual;        /* max residual for the iterative solvers */
   size_type N;
-  bool gen_dirichlet;
+  plain_vector U;
 
-  sparse_matrix_type SM;     /* stiffness matrix.                           */
-  std::vector<scalar_type> U, B;      /* main unknown, and right hand side  */
-
-  std::vector<scalar_type> Ud; /* reduced sol. for gen. Dirichlet condition. */
-  col_sparse_matrix_type NS; /* Dirichlet NullSpace 
-			      * (used if gen_dirichlet is true)
-			      */
   std::string datafilename;
   bgeot::md_param PARAM;
 
-  void assembly(void);
   bool solve(void);
   void init(void);
   void compute_error();
-  laplacian_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh),
-			    mf_coef(mesh) {}
+  laplacian_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -161,20 +152,8 @@ void laplacian_problem::init(void) {
 			      getfem::fem_descriptor(data_fem_name));
   }
   
-  /* set the finite element on mf_coef. Here we use a very simple element
-   *  since the only function that need to be interpolated on the mesh_fem 
-   * is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0));
-
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
-  gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET");
-
-  if (!pf_u->is_lagrange() && !gen_dirichlet)
-    GMM_WARNING2("With non lagrange fem prefer the generic "
-		 "Dirichlet condition option");
-
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -190,117 +169,48 @@ void laplacian_problem::init(void) {
   }
 }
 
-void laplacian_problem::assembly(void) {
-  size_type nb_dof = mf_u.nb_dof();
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
-
-  gmm::resize(B, nb_dof); gmm::clear(B);
-  gmm::resize(U, nb_dof); gmm::clear(U); 
-  gmm::resize(SM, nb_dof, nb_dof); gmm::clear(SM);
-  
-  cout << "Number of dof : " << nb_dof << endl;
-  cout << "Assembling stiffness matrix" << endl;
-  getfem::asm_stiffness_matrix_for_laplacian(SM, mim, mf_u, mf_coef, 
-     std::vector<scalar_type>(mf_coef.nb_dof(), 1.0));
-  
-  cout << "Assembling source term" << endl;
-  std::vector<scalar_type> F(nb_dof_rhs);
-  getfem::interpolation_function(mf_rhs, F, sol_f);
-  getfem::asm_source_term(B, mim, mf_u, mf_rhs, F);
-  
-  cout << "Assembling Neumann condition" << endl;
-  gmm::resize(F, nb_dof_rhs*N);
-  getfem::interpolation_function(mf_rhs, F, sol_grad);
-  getfem::asm_normal_source_term(B, mim, mf_u, mf_rhs, F,
-				 NEUMANN_BOUNDARY_NUM);
-
-  cout << "take Dirichlet condition into account" << endl;  
-  if (!gen_dirichlet) {    
-    std::vector<scalar_type> D(nb_dof);
-    getfem::interpolation_function(mf_u, D, sol_u);
-    getfem::assembling_Dirichlet_condition(SM, B, mf_u, 
-					   DIRICHLET_BOUNDARY_NUM, D);
-  } else {
-    gmm::resize(F, nb_dof_rhs);
-    getfem::interpolation_function(mf_rhs, F, sol_u);
-    
-    gmm::resize(Ud, nb_dof);
-    gmm::resize(NS, nb_dof, nb_dof);
-    col_sparse_matrix_type H(nb_dof_rhs, nb_dof);
-    std::vector<scalar_type> R(nb_dof_rhs);
-    std::vector<scalar_type> RHaux(nb_dof);
-
-    /* build H and R such that U mush satisfy H*U = R */
-    getfem::asm_dirichlet_constraints(H, R, mim, mf_u, mf_rhs,
-      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);
-
-    gmm::clean(H, 1e-12);
-//     cout << "H = " << H << endl;
-//     cout << "R = " << R << endl;
-    int nbcols = int(getfem::Dirichlet_nullspace(H, NS, R, Ud));
-    // cout << "Number of irreductible unknowns : " << nbcols << endl;
-    gmm::resize(NS, gmm::mat_ncols(H),nbcols);
-
-    gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
-    gmm::resize(B, nbcols);
-    gmm::resize(U, nbcols);
-    gmm::mult(gmm::transposed(NS), gmm::scaled(RHaux, -1.0), B);
-    sparse_matrix_type SMaux(nbcols, nb_dof);
-    gmm::mult(gmm::transposed(NS), SM, SMaux);
-    gmm::resize(SM, nbcols, nbcols);
-    /* NSaux = NS, but is stored by rows instead of by columns */
-    sparse_matrix_type NSaux(nb_dof, nbcols); gmm::copy(NS, NSaux);
-    gmm::mult(SMaux, NSaux, SM);
-  }
-}
-
-
 bool laplacian_problem::solve(void) {
 
-  // see_schmidt(SM, U, B);
+  getfem::model laplacian_model;
 
-  cout << "Compute preconditionner\n";
+  /* Main unknown of the problem */
+  laplacian_model.add_fem_variable("u", mf_u);
+
+  /* Laplacian term on u. */
+  add_Laplacian_brick(laplacian_model, mim, "u");
+
+  /* Volumic source term. */
+  std::vector<scalar_type> F(mf_rhs.nb_dof());
+  getfem::interpolation_function(mf_rhs, F, sol_f);
+  laplacian_model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  add_source_term_brick(laplacian_model, mim, "u", "VolumicData");
+
+  /* Neumann condition. */
+  gmm::resize(F, mf_rhs.nb_dof()*N);
+  getfem::interpolation_function(mf_rhs, F, sol_grad);
+  laplacian_model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+  add_source_term_brick
+    (laplacian_model, mim, "u", NEUMANN_BOUNDARY_NUM, "NeumannData");
+
+  /* Dirichlet condition. */
+  gmm::resize(F, mf_rhs.nb_dof());
+  getfem::interpolation_function(mf_rhs, F, sol_u);
+  laplacian_model.add_initialized_fem_data("DirichletData", mf_rhs, F);
+  add_Dirichlet_condition_with_multiplier
+    (laplacian_model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+  
   gmm::iteration iter(residual, 1, 40000);
-  double time = gmm::uclock_sec();
-  if (1) {
-    // gmm::identity_matrix P;
-    // gmm::diagonal_precond<sparse_matrix_type> P(SM);
-    // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
-    // gmm::ildlt_precond<sparse_matrix_type> P(SM);
-    // gmm::ildltt_precond<sparse_matrix_type> P(SM, 20, 1E-6);
-    gmm::ilut_precond<sparse_matrix_type> P(SM, 20, 1E-6);
-    // gmm::ilutp_precond<sparse_matrix_type> P(SM, 20, 1E-6);
-    // gmm::ilu_precond<sparse_matrix_type> P(SM);
-    cout << "Time to compute preconditionner : "
-	 << gmm::uclock_sec() - time << " seconds\n";
+  getfem::standard_solve(Laplacian_model, iter);
 
-  
-    //gmm::HarwellBoeing_IO::write("SM", SM);
-
-    // gmm::cg(SM, U, B, P, iter);
-    gmm::gmres(SM, U, B, P, 50, iter);
-  } else {
-    double rcond; 
-    gmm::SuperLU_solve(SM, U, B, rcond); 
-    cout << "cond = " << 1/rcond << "\n";
-  }
-  
-  cout << "Total time to solve : "
-       << gmm::uclock_sec() - time << " seconds\n";
-
-  if (gen_dirichlet) {
-    std::vector<scalar_type> Uaux(mf_u.nb_dof());
-    gmm::mult(NS, U, Ud, Uaux);
-    gmm::resize(U, mf_u.nb_dof());
-    gmm::copy(Uaux, U);
-  }
+  gmm::resize(U, mf_u.nb_dof());
+  gmm::copy(laplacian_model.real_variable("u"), U);
 
   return (iter.converged());
 }
 
 /* compute the error with respect to the exact solution */
 void laplacian_problem::compute_error() {
-  std::vector<scalar_type> V(mf_rhs.nb_basic_dof());
+  plain_vector V(mf_rhs.nb_basic_dof());
   getfem::interpolation(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_basic_dof(); ++i)
     V[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
@@ -324,7 +234,6 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
-    p.assembly();
     if (!p.solve()) GMM_ASSERT1(false, "Solve procedure has failed");
     p.compute_error();
   }

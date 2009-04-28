@@ -96,9 +96,9 @@ namespace getfem {
 
     // State variables of the model
     bool complex_version;
-    bool is_linear;
-    bool is_symmetric;
-    bool is_coercive;
+    bool is_linear_;
+    bool is_symmetric_;
+    bool is_coercive_;
     model_real_sparse_matrix rTM;      // tangent matrix, real version
     model_complex_sparse_matrix cTM;   // tangent matrix, complex version
     model_real_plain_vector rstate;
@@ -106,6 +106,7 @@ namespace getfem {
     model_real_plain_vector rrhs;
     model_complex_plain_vector crhs;
     mutable bool act_size_to_be_done;
+    dim_type leading_dim;
 
     // Variables and parameters of the model
 
@@ -240,72 +241,39 @@ namespace getfem {
     bool check_name_valitity(const std::string &name,
 			     bool assert = true) const;
 
-
-    // Faire la doc avec les différents types de variables gérées
-    //   (fem, mult ...)
-
-    // gérer les dépendances entre l'objet et les mesh_fem, mesh_im
-    //    : si un disparaît, l'objet est invalidé ...
-
-    // faire la mise à jour des intervalles correspondant à chaque variable
-
-    // centraliser les mesh_fems de base avec numérotation locale ?
-
-
-
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
   public :
 
     // gerer aussi l'actualisation des mult qui n'est pas fait au début 
     // état du modèle -> actualize à faire ...
-    void update_from_context(void) const {  act_size_to_be_done = true; };
+    void update_from_context(void) const {  act_size_to_be_done = true; }
     
     /** Boolean which says if the model deals with real or complex unknowns
 	and data. */
     bool is_complex(void) const { return complex_version; }
 
+    /** Return true if all the model terms do not affect the coercivity of
+	the whole tangent system. */    
+    bool is_coercive(void) const { return is_coercive_; }
+
+    /** Return true if all the model terms are linear. */    
+    bool is_linear(void) const { return is_linear_; }
+
+    /** Total number of degrees of freedom in the model. */
+    size_type nb_dof(void) const {
+      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      if (complex_version)
+	return gmm::vect_size(cstate);
+      else
+	return gmm::vect_size(rstate);
+    }
+
+    /** Leading dimension of the meshes used in the model. */
+    dim_type leading_dimension(void) const { return leading_dim; }
+
     /** Gives a non already existing variable name bigining by `name`. */
     std::string new_name(const std::string &name);
-
-    /** Add a fixed size variable to the model. niter is the number of version
-	of the variable stored, for time integration schemes. */
-    void add_fixed_size_variable(const std::string &name, size_type size,
-				 size_type niter = 1);
-
-    /** Add a fixed size data to the model. niter is the number of version
-	of the data stored, for time integration schemes. */
-    void add_fixed_size_data(const std::string &name, size_type size,
-			     size_type niter = 1);
-
-    /** Add a variable being the dofs of a finite element method to the model.
-	niter is the number of version of the variable stored, for time
-	integration schemes. */
-    void add_fem_variable(const std::string &name, const mesh_fem &mf,
-			  size_type niter = 1);
-
-    /** Add a data being the dofs of a finite element method to the model.
-	niter is the number of version of the data stored, for time
-	integration schemes. */
-    void add_fem_data(const std::string &name, const mesh_fem &mf,
-		      dim_type qdim = 1, size_type niter = 1);
-    
-    /** Add a particular variable linked to a fem beeing a multiplier with
-	respect to a primal variable. The dof will be filtered with a mass
-	matrix to retain only linearly independant constraints on the primal
-	variable. niter is the number of version of the data stored, for time
-	integration schemes. */
-    void add_mult_on_region(const std::string &name, const mesh_fem &mf,
-			    const mesh_im &mim,
-			    const std::string &primal_name, size_type region,
-			    size_type niter = 1);
-    
-    /** Gives the access to the mesh_fem of a variable if any. Throw an
-	exception otherwise. */
-    const mesh_fem &mesh_fem_of_variable(const std::string &name) const;
-
-    /** Gives a pointer to the mesh_fem of a variable if any. 0 otherwise.*/
-    const mesh_fem *pmesh_fem_of_variable(const std::string &name) const;
 
     /** Gives the access to the vector value of a variable. For the real
 	version. */
@@ -326,6 +294,68 @@ namespace getfem {
 	change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
     set_complex_variable(const std::string &name, size_type niter = 0);
+
+    /** Add a fixed size variable to the model. niter is the number of version
+	of the variable stored, for time integration schemes. */
+    void add_fixed_size_variable(const std::string &name, size_type size,
+				 size_type niter = 1);
+
+    /** Add a fixed size data to the model. niter is the number of version
+	of the data stored, for time integration schemes. */
+    void add_fixed_size_data(const std::string &name, size_type size,
+			     size_type niter = 1);
+
+
+    /** Add a fixed size data to the model initialized with V. */
+    template <typename VECT>
+    void add_initialized_fixed_size_data(const std::string &name, VECT &v) {
+      this->add_fixed_size_data(name, gmm::vect_size(v), 1);
+      if (this->is_complex()) // to be templated .. see later
+	gmm::copy(v, this->set_complex_variable(name));
+      else
+	gmm::copy(v, this->set_real_variable(name));
+    }
+
+    /** Add a variable being the dofs of a finite element method to the model.
+	niter is the number of version of the variable stored, for time
+	integration schemes. */
+    void add_fem_variable(const std::string &name, const mesh_fem &mf,
+			  size_type niter = 1);
+
+    /** Add a data being the dofs of a finite element method to the model.
+	The data is initialized with V. */
+    void add_fem_data(const std::string &name, const mesh_fem &mf,
+		      dim_type qdim = 1, size_type niter = 1);
+
+    /** Add a fixed size data to the model. niter is the number of version
+	of the data stored, for time integration schemes. */
+    template <typename VECT>
+    void add_initialized_fem_data(const std::string &name, const mesh_fem &mf,
+				  VECT &v) {
+      this->add_fem_data(name, mf, gmm::vect_size(v) / mf.nb_dof(), 1);
+      if (this->is_complex()) // to be templated .. see later
+	gmm::copy(v, this->set_complex_variable(name));
+      else
+	gmm::copy(v, this->set_real_variable(name));
+    }
+    
+    /** Add a particular variable linked to a fem being a multiplier with
+	respect to a primal variable. The dof will be filtered with a mass
+	matrix to retain only linearly independant constraints on the primal
+	variable. niter is the number of version of the data stored, for time
+	integration schemes. */
+    void add_mult_on_region(const std::string &name, const mesh_fem &mf,
+			    const mesh_im &mim,
+			    const std::string &primal_name, size_type region,
+			    size_type niter = 1);
+    
+    /** Gives the access to the mesh_fem of a variable if any. Throw an
+	exception otherwise. */
+    const mesh_fem &mesh_fem_of_variable(const std::string &name) const;
+
+    /** Gives a pointer to the mesh_fem of a variable if any. 0 otherwise.*/
+    const mesh_fem *pmesh_fem_of_variable(const std::string &name) const;
+
 
     /** Gives the access to the tangent matrix. For the real version. */
     const model_real_sparse_matrix &real_tangent_matrix() const {
@@ -397,7 +427,8 @@ namespace getfem {
 
     model(bool comp_version = false) {
       init(); complex_version = comp_version;
-      is_linear = is_symmetric = is_coercive = true;
+      is_linear_ = is_symmetric_ = is_coercive_ = true;
+      leading_dim = 0;
     }
 
   };
