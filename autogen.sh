@@ -9,8 +9,8 @@ function die {
           exit 1
 }
 
-libtoolize -f || die "libtoolize failed";
 aclocal -I ./m4 || die "aclocal failed";
+libtoolize -f || die "libtoolize failed";
 autoheader || die "autoheader failed";
 autoreconf
 autoconf || die "autoconf failed";

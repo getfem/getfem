@@ -10,6 +10,7 @@ define([AC_CACHE_SAVE], )dnl
 
 AC_INIT
 AC_CONFIG_SRCDIR([install-sh])
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM) 
 AC_PREREQ(2.61)
