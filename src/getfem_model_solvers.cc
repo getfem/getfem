@@ -1,0 +1,223 @@
+// -*- c++ -*- (enables emacs c++ mode)
+//===========================================================================
+//
+// Copyright (C) 2009-2009 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+//===========================================================================
+
+#include "getfem/getfem_model_solvers.h"
+
+
+namespace getfem {
+
+
+  //---------------------------------------------------------------------
+  // Default linear solver.   
+  //---------------------------------------------------------------------
+
+  template<typename MATRIX, typename VECTOR>
+  std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  default_linear_solver(const model &md) {
+    std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
+    
+#if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
+#else
+    size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
+# ifdef GMM_USES_MUMPS
+    max3d = 100000;
+# endif
+    if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
+# ifdef GMM_USES_MUMPS
+      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+# else
+      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
+# endif
+    }
+    else {
+      if (md.is_coercive()) 
+	p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
+      else {
+	if (dim <= 2)
+	  p.reset(new
+		  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
+	else
+	  p.reset(new
+		  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
+      }
+    }
+#endif
+    return p;
+  }
+
+
+  static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
+    return default_linear_solver<model_real_sparse_matrix,
+                                 model_real_plain_vector>(md);
+  } 
+
+  static cmodel_plsolver_type cdefault_linear_solver(const model &md) {
+    return default_linear_solver<model_complex_sparse_matrix,
+                                 model_complex_plain_vector>(md);
+  }
+
+#if 0
+
+
+  template <typename MATRIX, typename VECTOR> 
+  struct model_pb {
+
+    model &md;
+    gmm::abstract_newton_line_search &ls;
+    VECTOR stateinit, &state;
+    const VECTOR &rhs;
+    const MATRIX &R;
+
+    void compute_tangent_matrix(void) { md.assembly(); }
+
+    const MATRIX &tangent_matrix(void) { return R; }
+    
+    void compute_residual(void) { md.assembly(); }
+
+    const VECTOR &residual(void) { return rhs; }
+
+    R residual_norm(void) { return gmm::vect_norm2(rhs); }
+
+    R line_search(VECTOR &dr, const gmm::iteration &iter) {
+      gmm::resize(d, md.nb_dof());
+      gmm::resize(stateinit, md.nb_dof());
+      gmm::copy(state, stateinit);
+      R alpha(1), res;
+      
+      ls.init_search(gmm::vect_norm2(residual()), iter.get_iteration());
+      do {
+	alpha = ls.next_try();
+	gmm::add(stateinit, gmm::scaled(d, alpha), state);
+	compute_residual();
+	res = residual_norm();
+      } while (!ls.is_converged(res));
+
+      if (alpha != ls.converged_value()) {
+	alpha = ls.converged_value();
+	gmm::add(stateinit, gmm::scaled(d, alpha), state);
+	res = ls.converged_residual();
+	compute_residual();
+      }
+      return alpha;
+    }
+
+    model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+	     const VECTOR &rhs_, const MATRIX &R_)
+      : md(m), ls(ls_), state(st), rhs(rhs_), R(R_) {}
+
+  };
+
+
+
+ template <typename MODEL_STATE> void
+  standard_solve
+  (MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
+   gmm::iteration &iter,
+   typename useful_types<MODEL_STATE>::plsolver_type lsolver,
+   gmm::abstract_newton_line_search &ls) {
+
+    TYPEDEF_MODEL_STATE_TYPES;
+    model_pb<MODEL_STATE> mdpb(MS, problem, ls);
+
+    MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
+
+    if (problem.is_linear()) {
+      mdpb.compute_tangent_matrix();
+      mdpb.compute_residual();
+      VECTOR dr(gmm::vect_size(mdpb.residual())), d(problem.nb_dof());
+      VECTOR b(gmm::vect_size(dr));
+      gmm::copy(gmm::scaled(mdpb.residual(), value_type(-1)), b);
+      // cout << "tg matrix = " << mdpb.tangent_matrix() << endl;
+      // print_eigval(mdpb.tangent_matrix());
+      (*lsolver)(mdpb.tangent_matrix(), dr, b, iter);
+      MS.unreduced_solution(dr, d);
+      gmm::add(d, MS.state());
+    }
+    else
+      classical_Newton(mdpb, iter, *lsolver);
+
+
+    + assemblage des variables dans le state et "désaszsemblage" à la fin
+      --> des fonctions pour ca dans model ...
+  }
+
+
+
+#endif
+
+  template <typename MATRIX, typename VECTOR, typename PLSOLVER>
+  void standard_solve(model &md, gmm::iteration &iter,
+		 PLSOLVER lsolver,
+		 gmm::abstract_newton_line_search &ls, const MATRIX &R,
+		 const VECTOR &rhs) {
+    
+    // ...
+
+  }
+
+
+
+
+  void standard_solve(model &md, gmm::iteration &iter,
+		      rmodel_plsolver_type lsolver,
+		      gmm::abstract_newton_line_search &ls) {
+    standard_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
+		   md.real_rhs());
+  }
+
+  void standard_solve(model &md, gmm::iteration &iter,
+		      cmodel_plsolver_type lsolver,
+		      gmm::abstract_newton_line_search &ls) {
+    standard_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
+		   md.real_rhs());
+  }
+
+
+  void standard_solve(model &md, gmm::iteration &iter,
+			     rmodel_plsolver_type lsolver) {
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
+    standard_solve(md, iter, lsolver, ls);
+  }
+
+  void standard_solve(model &md, gmm::iteration &iter,
+			     cmodel_plsolver_type lsolver) {
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
+    standard_solve(md, iter, lsolver, ls);
+  }
+
+  void standard_solve(model &md, gmm::iteration &iter) {
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
+    if (md.is_complex())
+      standard_solve(md, iter, cdefault_linear_solver(md), ls);
+    else
+      standard_solve(md, iter, rdefault_linear_solver(md), ls);
+  }
+
+
+
+}  /* end of namespace getfem.                                             */
+

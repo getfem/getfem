@@ -214,10 +214,9 @@ namespace getfem {
     }
   }
 
-#if 0
 
   //---------------------------------------------------------------------
-  // Default linear solver. (to be moved in .cc)     
+  // Standard solve.      
   //---------------------------------------------------------------------
 
   typedef abstract_linear_solver<model_real_sparse_matrix,
@@ -229,60 +228,22 @@ namespace getfem {
   typedef std::auto_ptr<cmodel_linear_solver> cmodel_plsolver_type;
 
 
-  template<typename VECTOR, typename MATRIX>
-  std::auto_ptr<abstract_linear_solver<VECTOR, MATRIX> >
-  default_linear_solver(const model &md) {
-    std::auto_ptr<abstract_linear_solver<VECTOR, MATRIX> > p;
-    
-#if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
-#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
-#else
-    size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
-# ifdef GMM_USES_MUMPS
-    max3d = 100000;
-# endif
-    if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
-# ifdef GMM_USES_MUMPS
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
-# else
-      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
-# endif
-    }
-    else {
-      if (md.is_coercive()) 
-	p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
-      else {
-	if (dim <= 2)
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
-	else
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
-      }
-    }
-#endif
-    return p;
-  }
+  /** A default solver for the model brick system.  
+  Of course it could be not very well suited for a particular
+  problem, so it could be copied and adapted to change solvers,
+  add a special traitement on the problem, etc ...  This is in
+  fact a model for your own solver.
 
+  For small problems, a direct solver is used
+  (getfem::SuperLU_solve), for larger problems, a conjugate
+  gradient gmm::cg (if the problem is coercive) or a gmm::gmres is
+  used (preconditionned with an incomplete factorization).
 
-  rmodel_plsolver_type rdefault_linear_solver(const model &md) {
-    return default_linear_solver<model_real_sparse_matrix,
-                                 model_real_plain_vector>(md);
-  } 
+  When MPI/METIS is enabled, a partition is done via METIS, and a parallel
+  solver can be used.
 
-  cmodel_plsolver_type cdefault_linear_solver(const model &md) {
-    return default_linear_solver<model_complex_sparse_matrix,
-                                 model_complex_plain_vector>(md);
-  }
-
-
-  //---------------------------------------------------------------------
-  // Standard solve.      
-  //---------------------------------------------------------------------
-
-
+  @ingroup bricks
+  */
   void standard_solve(model &md, gmm::iteration &iter,
 		      rmodel_plsolver_type lsolver,
 		      gmm::abstract_newton_line_search &ls);
@@ -290,37 +251,14 @@ namespace getfem {
   void standard_solve(model &md, gmm::iteration &iter,
 		      cmodel_plsolver_type lsolver,
 		      gmm::abstract_newton_line_search &ls);
-
   
-  inline void standard_solve(model &md, gmm::iteration &iter,
-			     rmodel_plsolver_type lsolver) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
-    standard_solve(md, iter, lsolver, ls);
-  }
+  void standard_solve(model &md, gmm::iteration &iter,
+		      rmodel_plsolver_type lsolver);
 
-  inline void standard_solve(model &md, gmm::iteration &iter,
-			     cmodel_plsolver_type lsolver) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
-    standard_solve(md, iter, lsolver, ls);
-  }
+  void standard_solve(model &md, gmm::iteration &iter,
+		      cmodel_plsolver_type lsolver);
 
-  inline void standard_solve(model &md, gmm::iteration &iter) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
-    if (md.is_complex())
-      standard_solve(md, iter, cdefault_linear_solver(md), ls);
-    else
-      standard_solve(md, iter, rdefault_linear_solver(md), ls);
-  }
-
-
-
-
-#endif
-
-
+  void standard_solve(model &md, gmm::iteration &iter);
 
 
   //---------------------------------------------------------------------
@@ -637,8 +575,8 @@ namespace getfem {
   gradient gmm::cg (if the problem is coercive) or a gmm::gmres is
   used (preconditionned with an incomplete factorization).
 
-  When MPI/METIS is enabled, a partition is done via METIS, and the
-  gmm::additive_schwarz is used as the parallel solver.
+  When MPI/METIS is enabled, a partition is done via METIS, and a
+  parallel solver can be used.
 
   @ingroup bricks
   */

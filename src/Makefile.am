@@ -193,6 +193,7 @@ SRC =                                      		\
 	getfem_mesher.cc		   		\
 	getfem_modeling.cc                 		\
 	getfem_models.cc                 		\
+	getfem_model_solvers.cc                		\
 	getfem_nonlinear_elasticity.cc
 
 lib_LTLIBRARIES = libgetfem.la
