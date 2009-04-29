@@ -2069,7 +2069,7 @@ An example of a brick corresponding to the laplacian term is the following (othe
                                 const getfem::model::mimlist &mims,
                                 getfem::model::real_matlist &matl,
                                 getfem::model::real_veclist &vecl,
-                                size_type region) const \{
+                                size_type region, nonlinear_version nl) const \{
       GMM_ASSERT1(matl.size() == 1,
 		  "My Laplacian brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -2103,7 +2103,7 @@ The constructor of a brick should call the method \cpp{set_flags}. The first par
 \end{itemize}
 
 The method \cpp{asm_real_tangent_terms} will be called by the model object for the assembly of the tangent system. The model object gives the whole framework to the brick to build its terms. The parameter \cpp{md} of the \cpp{asm_real_tangent_terms} method is the model that called the brick. The parameter \cpp{varl} is an array of variable/data names defined in this model and needed in the brick. \cpp{mims} is an array of \cpp{mesh_im} pointers. It corresponds to the integration methods needed to assemble the terms. \cpp{matl} is an array of matrices to be computed. \cpp{matl} is an array of vectors to be computed (rhs or residual vectors). A brick can have an arbitrary number of terms. For each term, at least the corresponding matrix or the corresponding vector as to be filled (or both the two%, but only in the nonlinear case, see the description of the terms below, next section
-). \cpp{region} is a mesh region number indicated that the terms have to be assembled on a certain region.
+). \cpp{region} is a mesh region number indicated that the terms have to be assembled on a certain region. \cpp{nl} is for nonlinear bricks only. It says if the tangent matrix or the residual or both the two are to be computed (for linear bricks, all is to be computed at each call).
 
 For the very simple Laplacian brick defined above, only one variable is used and no data and there is only one term. The lines
 \begin{cppcode}
@@ -2158,7 +2158,7 @@ The brick can be defined as follows:
                                 const getfem::model::mimlist &mims,
                                 getfem::model::real_matlist &matl,
                                 getfem::model::real_veclist &vecl,
-                                size_type region) const \{
+                                size_type region, nonlinear_version nl) const \{
       GMM_ASSERT1(matl.size() == 1,
 		  "My Dirichlet brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,

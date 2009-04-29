@@ -413,10 +413,11 @@ namespace getfem {
     const std::string &dataname_of_brick(size_type ind_brick,
 					 size_type ind_data);
 
+    enum assembly_version { BUILD_RHS = 1, BUILD_MATRIX = 2, BUILD_ALL = 3 };
 
     /** Assembly of the tangent system taking into account the terms
 	from all bricks. */
-    void assembly(void);
+    void assembly(assembly_version version);
 
     void clear(void) {
       variables.clear();
@@ -465,6 +466,8 @@ namespace getfem {
     std::string name; // Name of the brick.
    
   public :
+
+    typedef model::assembly_version nonlinear_version;
     
     virtual_brick(void) { isinit = false; }
     void set_flags(const std::string &bname, bool islin, bool issym,
@@ -488,7 +491,7 @@ namespace getfem {
 					const model::mimlist &,
 					model::real_matlist &,
 					model::real_veclist &,
-					size_type) const
+					size_type, nonlinear_version) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
 
     virtual void asm_complex_tangent_terms(const model &,
@@ -497,7 +500,7 @@ namespace getfem {
 					   const model::mimlist &,
 					   model::complex_matlist &,
 					   model::complex_veclist &,
-					   size_type) const
+					   size_type, nonlinear_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
     
   };

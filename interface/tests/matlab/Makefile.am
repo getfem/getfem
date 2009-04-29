@@ -50,7 +50,7 @@ EXTRA_DIST= \
 	private/asserterr.m
 
 TESTS_ENVIRONMENT = \
-	MATLABPATH=@abs_top_builddir@/src:@abs_top_builddir@/tests/matlab:@abs_top_srcdir@/src:@abs_top_srcdir@/tests/matlab \
+	MATLABPATH=@abs_top_builddir@/interface/src:@abs_top_builddir@/interface/tests/matlab:@abs_top_srcdir@/interface/src:@abs_top_srcdir@/interface/tests/matlab \
 	MATLAB_ROOT=@MATLAB_ROOT@
 	PATH=@abs_top_builddir@/src:$(PATH)
 #	LD_LIBRARY_PATH=$(prefix)/lib:@GETFEMLIB@:@abs_top_builddir@/src:$(LD_LIBRARY_PATH) 

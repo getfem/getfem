@@ -89,11 +89,11 @@ namespace getfem {
     const VECTOR &rhs;
     const MATRIX &R;
 
-    void compute_tangent_matrix(void) { md.assembly(); }
+    void compute_tangent_matrix(void) { md.assembly(model::BUILD_MATRIX); }
 
     const MATRIX &tangent_matrix(void) { return R; }
     
-    void compute_residual(void) { md.assembly(); }
+    void compute_residual(void) { md.assembly(model::BUILD_RHS); }
 
     const VECTOR &residual(void) { return rhs; }
 
