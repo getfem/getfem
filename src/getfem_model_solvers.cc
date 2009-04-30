@@ -137,7 +137,6 @@ namespace getfem {
   /*     Standard solve.                                               */
   /* ***************************************************************** */
 
-
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
   void standard_solve(model &md, gmm::iteration &iter,
 		      PLSOLVER lsolver,

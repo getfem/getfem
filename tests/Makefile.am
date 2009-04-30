@@ -29,6 +29,7 @@ check_PROGRAMS =                 \
 	test_interpolated_fem    \
 	test_range_basis         \
 	laplacian                \
+	laplacian_with_bricks    \
 	elastostatic             \
 	stokes                   \
 	helmholtz                \
@@ -59,6 +60,7 @@ test_kdtree_SOURCES = test_kdtree.cc
 test_rtree_SOURCES = test_rtree.cc
 test_assembly_SOURCES = test_assembly.cc
 laplacian_SOURCES = laplacian.cc
+laplacian_with_bricks_SOURCES = laplacian_with_bricks.cc
 plate_SOURCES = plate.cc
 test_interpolation_SOURCES = test_interpolation.cc
 elastostatic_SOURCES = elastostatic.cc
@@ -116,6 +118,7 @@ TESTS = \
 	$(top_srcdir)/tests/test_interpolated_fem.pl   \
 	$(top_srcdir)/tests/test_range_basis.pl        \
 	$(top_srcdir)/tests/laplacian.pl               \
+	$(top_srcdir)/tests/laplacian_with_bricks.pl               \
 	$(top_srcdir)/tests/elastostatic.pl            \
 	$(top_srcdir)/tests/stokes.pl                  \
 	$(top_srcdir)/tests/plate.pl                   \
@@ -138,6 +141,7 @@ EXTRA_DIST = \
 	test_interpolation.pl             \
 	test_assembly.pl                  \
 	laplacian.pl                      \
+	laplacian_with_bricks.pl 	  \
 	elastostatic.pl                   \
 	stokes.pl                         \
 	helmholtz.pl                      \
@@ -155,6 +159,7 @@ EXTRA_DIST = \
 	crack.pl                          \
 	crack.param                       \
 	laplacian.param                   \
+	laplacian_with_bricks.param       \
 	test_range_basis.param            \
 	test_range_basis.pl               \
 	bilaplacian.param                 \

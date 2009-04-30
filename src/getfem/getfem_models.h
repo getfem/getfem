@@ -154,7 +154,7 @@ namespace getfem {
 	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
 	  filter(fil), n_iter(n_it), mf(mmf), mim(im),
 	  m_region(m_reg),
-	  filter_var(filter_v), qdim(Q), v_num(act_counter()) {
+	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()) {
 	if (filter != VDESCRFILTER_NO && mf != 0)
 	  partial_mf = new partial_mesh_fem(*mf);
 	v_num_data = v_num;
@@ -630,6 +630,19 @@ namespace getfem {
    const std::string &dataname, size_type region = size_type(-1),
    const std::string &directdataname = std::string());
 
+  /** Add a source term on the variable `varname` on a boundary `region`. 
+      with a scalar product with the outward normal unit vector to
+      the boundary. The source term is
+      represented by the data `dataname` which could be constant or described
+      on a fem. A sclar product with the outward normal unit vector to
+      the boundary is performed. The main aim of this brick is to represent
+      a Neumann condition with a vector data without performing the
+      scalar product with the normal as a pre-processing.
+  */
+  size_type add_normal_source_term_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region);
+
   /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
@@ -683,7 +696,7 @@ namespace getfem {
   */
   size_type add_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
-   size_type region, scalar_type penalization_coeff = 1E9,
+   scalar_type penalization_coeff, size_type region,
    const std::string &dataname = std::string());
 
   /** Change the penalization coefficient of a Dirichlet condition with

@@ -326,7 +326,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) dataname = in.pop().to_string();
     size_type ind = config::base_index();
     ind += getfem::add_Dirichlet_condition_with_penalization
-      (md->model(), mim, varname, region, coeff, dataname);
+      (md->model(), mim, varname, coeff, region, dataname);
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "change penalization coeff Dirichlet", in, out, 2, 2, 0, 0)) {
     /*@SET V = MODEL:SET('change penalization coeff Dirichlet', @int ind_brick, @scalar coeff)

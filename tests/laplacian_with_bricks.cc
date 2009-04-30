@@ -31,11 +31,9 @@
    a pde directly with the assembly procedures.
 */
 
-#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
-#include "getfem/getfem_derivatives.h"
-#include "getfem/getfem_superlu.h"
 #include "gmm/gmm.h"
 
 /* some Getfem++ types that we will be using */
@@ -73,13 +71,15 @@ base_small_vector sol_grad(const base_node &x)
 struct laplacian_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
+  enum { DIRICHLET_WITH_MULTIPLIERS = 0, DIRICHLET_WITH_PENALIZATION = 1};
   getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods. */
   getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Laplacian solution */
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
 
-  scalar_type residual;        /* max residual for the iterative solvers */
-  size_type N;
+  scalar_type residual;        /* max residual for the iterative solvers     */
+  size_type N, dirichlet_version;
+  scalar_type dirichlet_coefficient; /* Penalization parameter.              */
   plain_vector U;
 
   std::string datafilename;
@@ -127,6 +127,12 @@ void laplacian_problem::init(void) {
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residual = PARAM.real_value("RESIDUAL");
+  dirichlet_version = PARAM.int_value("DIRICHLET_VERSION",
+				      "Type of Dirichlet contion");
+  if (dirichlet_version == 1)
+    dirichlet_coefficient = PARAM.real_value("DIRICHLET_COEFFICIENT",
+					     "Penalization coefficient for "
+					     "Dirichlet condition");
   if (residual == 0.) residual = 1e-10;
   sol_K.resize(N);
   for (size_type j = 0; j < N; j++)
@@ -177,30 +183,39 @@ bool laplacian_problem::solve(void) {
   laplacian_model.add_fem_variable("u", mf_u);
 
   /* Laplacian term on u. */
-  add_Laplacian_brick(laplacian_model, mim, "u");
+  getfem::add_Laplacian_brick(laplacian_model, mim, "u");
 
   /* Volumic source term. */
   std::vector<scalar_type> F(mf_rhs.nb_dof());
   getfem::interpolation_function(mf_rhs, F, sol_f);
   laplacian_model.add_initialized_fem_data("VolumicData", mf_rhs, F);
-  add_source_term_brick(laplacian_model, mim, "u", "VolumicData");
+  getfem::add_source_term_brick(laplacian_model, mim, "u", "VolumicData");
 
-  /* Neumann condition. */
+  /* Neumann condition.   */
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad);
   laplacian_model.add_initialized_fem_data("NeumannData", mf_rhs, F);
-  add_source_term_brick
-    (laplacian_model, mim, "u", NEUMANN_BOUNDARY_NUM, "NeumannData");
+  getfem::add_normal_source_term_brick
+    (laplacian_model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
 
   /* Dirichlet condition. */
   gmm::resize(F, mf_rhs.nb_dof());
   getfem::interpolation_function(mf_rhs, F, sol_u);
   laplacian_model.add_initialized_fem_data("DirichletData", mf_rhs, F);
-  add_Dirichlet_condition_with_multiplier
-    (laplacian_model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+
+  if (dirichlet_version == DIRICHLET_WITH_MULTIPLIERS)
+    getfem::add_Dirichlet_condition_with_multipliers
+      (laplacian_model, mim, "u", mf_u,
+       DIRICHLET_BOUNDARY_NUM, "DirichletData");
+  else
+    getfem::add_Dirichlet_condition_with_penalization
+      (laplacian_model, mim, "u", dirichlet_coefficient,
+       DIRICHLET_BOUNDARY_NUM, "DirichletData");
   
+  laplacian_model.listvar(cout);
+ 
   gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(Laplacian_model, iter);
+  getfem::standard_solve(laplacian_model, iter);
 
   gmm::resize(U, mf_u.nb_dof());
   gmm::copy(laplacian_model.real_variable("u"), U);
@@ -226,18 +241,14 @@ void laplacian_problem::compute_error() {
 
 int main(int argc, char *argv[]) {
 
-  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
-    laplacian_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    p.mesh.write_to_file(p.datafilename + ".mesh");
-    if (!p.solve()) GMM_ASSERT1(false, "Solve procedure has failed");
-    p.compute_error();
-  }
-  GMM_STANDARD_CATCH_ERROR;
+  laplacian_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  p.mesh.write_to_file(p.datafilename + ".mesh");
+  if (!p.solve()) GMM_ASSERT1(false, "Solve procedure has failed");
+  p.compute_error();
 
   return 0; 
 }

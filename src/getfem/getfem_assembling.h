@@ -507,7 +507,7 @@ namespace getfem {
 
 
   /** 
-      normal source term (for boundary (Neumann) condition).
+      Normal source term (for boundary (Neumann) condition).
       @ingroup asm
    */
   template<typename VECT1, typename VECT2>
@@ -525,6 +525,26 @@ namespace getfem {
 	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);";
 
     asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
+  }
+
+  /** 
+      Homogeneous normal source term (for boundary (Neumann) condition).
+      @ingroup asm
+   */
+  template<typename VECT1, typename VECT2>
+  void asm_homogeneous_normal_source_term(VECT1 &B, const mesh_im &mim,
+					  const mesh_fem &mf,
+					  const VECT2 &F,
+					  const mesh_region &rg) {
+    const char *st;
+    if (mf.get_qdim() == 1)
+      st = "F=data(mdim(#1));"
+	"V(#1)+=comp(Base(#1).Normal())(:,k).F(k);";
+    else
+      st = "F=data(qdim(#1),mdim(#1));"
+	"V(#1)+=comp(vBase(#1).Normal())(:,i,j).F(i,j);";
+
+    asm_real_or_complex_1_param(B, mim, mf, mf, F, rg, st);
   }
 
   template <typename V> bool is_Q_symmetric(const V& Q, size_type q,

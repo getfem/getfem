@@ -2377,7 +2377,7 @@ where \cpp{ind_brick} is the brick index in the model. This function has an unde
 The second version of the Dirichlet condition brick is the one with penalization. The function allowing to add this brick is
 \begin{cppcode}
   add_Dirichlet_condition_with_penalization(md, mim, varname,
-          region, penalization_coeff, dataname = std::string());
+          penalization_coeff, region, dataname = std::string());
 \end{cppcode}
 The penalization consists in computing the mass matrix of the variable and add it multiplied by the penalization coefficient to the stiffness matrix. The penalization coefficient is added as a data of the model and can be changed thanks to the function
 \begin{cppcode}

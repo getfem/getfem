@@ -19,6 +19,9 @@ INTEGRATION = 'IM_TRIANGLE(6)';   % quadrature rule for polynomials up
                                   % to degree 6 on triangles
 RESIDUAL = 1E-9;     	          % residu for conjugate gradient.
 ROOTFILENAME = 'laplacian';       % Root of data files.
+DIRICHLET_VERSION = 1;      	  % 0 = With Lagrange multipliers
+			    	  % 1 = penalization.
+DIRICHLET_COEFFICIENT = 1E10;	  % Penalization coefficient.
 
 ;
 close(TMPF);

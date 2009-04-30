@@ -164,7 +164,7 @@ namespace gmm {
 	if (gmm::abs(rho-rho2) <= rho*R(gmm::sqrt(EPS))) break;
       }
 
-      cout << " iter = " << iter << endl;
+      // cout << " iter = " << iter << endl;
 
       if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
 	size_type j_max = size_type(-1), j = 0;
@@ -172,7 +172,7 @@ namespace gmm {
 	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
 	  if (gmm::abs(v[j]) > val_max)
 	    { val_max = gmm::abs(v[j]); j_max = *it; }
-	cout << "Eliminate " << j_max  << endl;
+	//	cout << "Eliminate " << j_max  << endl;
 	columns.erase(j_max); nc_r = columns.size();
       }
       else break;
@@ -410,8 +410,8 @@ namespace gmm {
     size_type sizesm[7] = {125, 200, 350, 550, 800, 1100, 1500}, actsize;
     for (int k = 0; k < 7; ++k) {
       size_type nc_r = columns.size();
-       cout << "begin small range basis with " << columns.size()
- 	   << " columns, sizesm =  " << sizesm[k] <<  endl;
+      // cout << "begin small range basis with " << columns.size()
+      //	   << " columns, sizesm =  " << sizesm[k] <<  endl;
       std::set<size_type> c1, cres;
       actsize = sizesm[k];
       for (std::set<size_type>::iterator it = columns.begin();
@@ -434,7 +434,7 @@ namespace gmm {
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
 
-    cout << "begin global range basis with " << columns.size() <<  endl;
+    // cout << "begin global range basis with " << columns.size() <<  endl;
     if (columns.size() > std::max(size_type(500), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
