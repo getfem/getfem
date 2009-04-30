@@ -99,12 +99,10 @@ namespace getfem {
     bool is_linear_;
     bool is_symmetric_;
     bool is_coercive_;
-    model_real_sparse_matrix rTM;      // tangent matrix, real version
-    model_complex_sparse_matrix cTM;   // tangent matrix, complex version
-    model_real_plain_vector rstate;
-    model_complex_plain_vector cstate;
-    model_real_plain_vector rrhs;
-    model_complex_plain_vector crhs;
+    mutable model_real_sparse_matrix rTM;    // tangent matrix, real version
+    mutable model_complex_sparse_matrix cTM; // tangent matrix, complex version
+    mutable model_real_plain_vector rrhs;
+    mutable model_complex_plain_vector crhs;
     mutable bool act_size_to_be_done;
     dim_type leading_dim;
 
@@ -234,10 +232,10 @@ namespace getfem {
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
-    VAR_SET variables;
+    mutable VAR_SET variables;
     std::vector<brick_description> bricks;
 
-    void actualize_sizes(void);
+    void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
 			     bool assert = true) const;
 
@@ -262,11 +260,11 @@ namespace getfem {
 
     /** Total number of degrees of freedom in the model. */
     size_type nb_dof(void) const {
-      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       if (complex_version)
-	return gmm::vect_size(cstate);
+	return gmm::vect_size(crhs);
       else
-	return gmm::vect_size(rstate);
+	return gmm::vect_size(rrhs);
     }
 
     /** Leading dimension of the meshes used in the model. */
@@ -294,6 +292,57 @@ namespace getfem {
 	change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
     set_complex_variable(const std::string &name, size_type niter = 0);
+
+    template<typename VECTOR, typename T>
+    void from_variables(VECTOR &V, T) const {
+      for (VAR_SET::iterator it = variables.begin();
+	   it != variables.end(); ++it)
+	if (it->second.is_variable)
+	  gmm::copy(it->second.real_value[0],
+		    gmm::sub_vector(V, it->second.I));
+    }
+
+    template<typename VECTOR, typename T>
+    void from_variables(VECTOR &V, std::complex<T>) const {
+      for (VAR_SET::iterator it = variables.begin();
+	   it != variables.end(); ++it)
+	if (it->second.is_variable)
+	  gmm::copy(it->second.complex_value[0],
+		    gmm::sub_vector(V, it->second.I));
+    }
+
+    template<typename VECTOR> void from_variables(VECTOR &V) const {
+      typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+      from_variables(V, T());
+    }
+
+
+    template<typename VECTOR, typename T>
+    void to_variables(VECTOR &V, T) {
+      for (VAR_SET::iterator it = variables.begin();
+	   it != variables.end(); ++it)
+	if (it->second.is_variable) {
+	  gmm::copy(gmm::sub_vector(V, it->second.I),
+		    it->second.real_value[0]);
+	  it->second.v_num_data = act_counter();
+	}
+    }
+
+    template<typename VECTOR, typename T>
+    void to_variables(VECTOR &V, std::complex<T>) {
+      for (VAR_SET::iterator it = variables.begin();
+	   it != variables.end(); ++it)
+	if (it->second.is_variable) {
+	  gmm::copy(gmm::sub_vector(V, it->second.I),
+		    it->second.complex_value[0]);
+	  it->second.v_num_data = act_counter();
+	}
+    }
+
+    template<typename VECTOR> void to_variables(VECTOR &V) {
+      typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+      to_variables(V, T());
+    }
 
     /** Add a fixed size variable to the model. niter is the number of version
 	of the variable stored, for time integration schemes. */
@@ -359,34 +408,60 @@ namespace getfem {
 
 
     /** Gives the access to the tangent matrix. For the real version. */
-    const model_real_sparse_matrix &real_tangent_matrix() const {
+    const model_real_sparse_matrix &real_tangent_matrix(void) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
-      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       return rTM;
     }
     
     /** Gives the access to the tangent matrix. For the complex version. */
-    const model_complex_sparse_matrix &complex_tangent_matrix() const {
+    const model_complex_sparse_matrix &complex_tangent_matrix(void) const {
       GMM_ASSERT1(complex_version, "This model is a real one");
-      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       return cTM;
     }
+
+//     template<typename MATRIX, typename T>
+//     const MATRIX &tangent_matrix(T) const { return real_rhs(); }
+
+//     template<typename MATRIX, typename T>
+//     const MATRIX &tangent_matrix(std::complex<T>) const
+//     { return complex_rhs(); }
+    
+
+//     template<typename MATRIX> const MATRIX &tangent_matrix(void) const {
+//       typedef typename gmm::linalg_traits<MATRIX>::value_type T;
+//       return tangent_matrix<MATRIX>(T());
+//     }
+
     
     /** Gives the access to the right hand side of the tangent linear system.
 	For the real version. */
-    const model_real_plain_vector &real_rhs() const {
+    const model_real_plain_vector &real_rhs(void) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
-      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       return rrhs;
     }
     
     /** Gives the access to the right hand side of the tangent linear system.
 	For the complex version. */
-    const model_complex_plain_vector &complex_rhs() const {
+    const model_complex_plain_vector &complex_rhs(void) const {
       GMM_ASSERT1(complex_version, "This model is a real one");
-      // context_check(); if (act_size_to_be_done) actualize_sizes();
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       return crhs;
     }
+
+//     template<typename VECTOR, typename T>
+//     const VECTOR &rhs(T) const { return real_rhs(); }
+
+//     template<typename VECTOR, typename T>
+//     const VECTOR &rhs(std::complex<T>) const { return complex_rhs(); }
+    
+
+//     template<typename VECTOR> const VECTOR &rhs(void) const {
+//       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+//       return rhs<VECTOR>(T());
+//     }
 
     /** List the model variables and constant. */
     void listvar(std::ostream &ost) const;
@@ -423,8 +498,8 @@ namespace getfem {
       variables.clear();
       rTM = model_real_sparse_matrix();
       cTM = model_complex_sparse_matrix();
-      rstate = rrhs = model_real_plain_vector();
-      cstate = crhs = model_complex_plain_vector();
+      rrhs = model_real_plain_vector();
+      crhs = model_complex_plain_vector();
     }
 
     model(bool comp_version = false) {

@@ -56,7 +56,7 @@ namespace getfem {
     return valid;
   }
 
-  void model::actualize_sizes(void) {
+  void model::actualize_sizes(void) const {
 
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
@@ -165,21 +165,18 @@ namespace getfem {
     size_type tot_size = 0;
 
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-	 ++it) {
+	 ++it)
       if (it->second.is_variable) {
 	it->second.I = gmm::sub_interval(tot_size, it->second.size());
 	tot_size += it->second.size();
       }
-    }
       
     if (complex_version) {
       gmm::resize(cTM, tot_size, tot_size);
-      gmm::resize(cstate, tot_size);
-	gmm::resize(crhs, tot_size);
+      gmm::resize(crhs, tot_size);
     }
     else {
       gmm::resize(rTM, tot_size, tot_size);
-      gmm::resize(rstate, tot_size);
       gmm::resize(rrhs, tot_size);
     }
   }
@@ -381,13 +378,13 @@ namespace getfem {
 	  size_type nbd2 = term.is_matrix_term ?
 	    variables[term.var2].size() : 0;
 	  if (term.is_matrix_term &&
-	      (brick.is_linear() || (version | BUILD_MATRIX))) {
+	      (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
 	    if (cplx)
 	      brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
 	    else
 	      brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
 	  }
-	  if (brick.is_linear() || (version | BUILD_VECTOR)) {
+	  if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
 	    if (cplx) {
 	      gmm::clear(brick.cveclist[j]);
 	      gmm::resize(brick.cveclist[j], nbd1);
@@ -423,7 +420,7 @@ namespace getfem {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
 	    gmm::add(brick.cmatlist[j], gmm::sub_matrix(cTM, I1, I2));
 	    if (brick.pbr->is_linear() && !is_linear()
-		&& (version | BUILD_VECTOR)) {
+		&& (version | BUILD_RHS)) {
 	      gmm::mult(brick.cmatlist[j],
 			gmm::scaled(variables[term.var1].complex_value[0],
 				    std::complex<scalar_type>(-1)),
@@ -433,7 +430,7 @@ namespace getfem {
 	      gmm::add(gmm::transposed(brick.cmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
 	      if (brick.pbr->is_linear() && !is_linear()
-		  && (version | BUILD_VECTOR)) {
+		  && (version | BUILD_RHS)) {
 		gmm::mult(gmm::conjugated(brick.cmatlist[j]),
 			  gmm::scaled(variables[term.var2].complex_value[0],
 				      std::complex<scalar_type>(-1)),
@@ -441,13 +438,13 @@ namespace getfem {
 	      }
 	    }
 	  }
-	  if (version | BUILD_VECTOR)
+	  if (version | BUILD_RHS)
 	    gmm::add(brick.cveclist[j], gmm::sub_vector(crhs, I1));
 	} else if (is_complex()) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
 	    if (brick.pbr->is_linear() && !is_linear()
-		&& (version | BUILD_VECTOR)) {
+		&& (version | BUILD_RHS)) {
 	      gmm::mult(brick.rmatlist[j],
 			gmm::scaled(variables[term.var1].real_value[0],
 				    scalar_type(-1)),
@@ -457,7 +454,7 @@ namespace getfem {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
 	      if (brick.pbr->is_linear() && !is_linear()
-		  && (version | BUILD_VECTOR)) {
+		  && (version | BUILD_RHS)) {
 		gmm::mult(gmm::transposed(brick.rmatlist[j]),
 			  gmm::scaled(variables[term.var2].real_value[0],
 				      scalar_type(-1)),
@@ -465,13 +462,13 @@ namespace getfem {
 	      }
 	    }
 	  }
-	  if (version | BUILD_VECTOR)
+	  if (version | BUILD_RHS)
 	    gmm::add(brick.rveclist[j], gmm::sub_vector(crhs, I1));
 	} else {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
 	    if (brick.pbr->is_linear() && !is_linear()
-		&& (version | BUILD_VECTOR)) {
+		&& (version | BUILD_RHS)) {
 	      gmm::mult(brick.rmatlist[j],
 			gmm::scaled(variables[term.var1].real_value[0],
 				    scalar_type(-1)),
@@ -481,7 +478,7 @@ namespace getfem {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(rTM, I2, I1));
 	      if (brick.pbr->is_linear() && !is_linear()
-		  && (version | BUILD_VECTOR)) {
+		  && (version | BUILD_RHS)) {
 		gmm::mult(gmm::transposed(brick.rmatlist[j]),
 			  gmm::scaled(variables[term.var2].real_value[0],
 				      scalar_type(-1)),
@@ -489,7 +486,7 @@ namespace getfem {
 	      }
 	    }
 	  }
-	  if (version | BUILD_VECTOR)
+	  if (version | BUILD_RHS)
 	    gmm::add(brick.rveclist[j], gmm::sub_vector(rrhs, I1));
 	}
       }
@@ -524,7 +521,7 @@ namespace getfem {
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
-    // context_check(); if (act_size_to_be_done) actualize_sizes();
+    context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
@@ -534,7 +531,7 @@ namespace getfem {
   const model_complex_plain_vector &
   model::complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
-    // context_check(); if (act_size_to_be_done) actualize_sizes();
+    context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");

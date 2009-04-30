@@ -77,21 +77,27 @@ namespace getfem {
                                  model_complex_plain_vector>(md);
   }
 
-#if 0
+  /* ***************************************************************** */
+  /*     Intermediary structure for Newton algorithms.                 */
+  /* ***************************************************************** */
 
-
-  template <typename MATRIX, typename VECTOR> 
+  template <typename MAT, typename VEC> 
   struct model_pb {
+
+    typedef MAT MATRIX;
+    typedef VEC VECTOR;
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
 
     model &md;
     gmm::abstract_newton_line_search &ls;
     VECTOR stateinit, &state;
     const VECTOR &rhs;
-    const MATRIX &R;
+    const MATRIX &K;
 
     void compute_tangent_matrix(void) { md.assembly(model::BUILD_MATRIX); }
 
-    const MATRIX &tangent_matrix(void) { return R; }
+    const MATRIX &tangent_matrix(void) { return K; }
     
     void compute_residual(void) { md.assembly(model::BUILD_RHS); }
 
@@ -100,7 +106,6 @@ namespace getfem {
     R residual_norm(void) { return gmm::vect_norm2(rhs); }
 
     R line_search(VECTOR &dr, const gmm::iteration &iter) {
-      gmm::resize(d, md.nb_dof());
       gmm::resize(stateinit, md.nb_dof());
       gmm::copy(state, stateinit);
       R alpha(1), res;
@@ -108,14 +113,14 @@ namespace getfem {
       ls.init_search(gmm::vect_norm2(residual()), iter.get_iteration());
       do {
 	alpha = ls.next_try();
-	gmm::add(stateinit, gmm::scaled(d, alpha), state);
+	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
 	compute_residual();
 	res = residual_norm();
       } while (!ls.is_converged(res));
 
       if (alpha != ls.converged_value()) {
 	alpha = ls.converged_value();
-	gmm::add(stateinit, gmm::scaled(d, alpha), state);
+	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
 	res = ls.converged_residual();
 	compute_residual();
       }
@@ -123,61 +128,40 @@ namespace getfem {
     }
 
     model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
-	     const VECTOR &rhs_, const MATRIX &R_)
-      : md(m), ls(ls_), state(st), rhs(rhs_), R(R_) {}
+	     const VECTOR &rhs_, const MATRIX &K_)
+      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_) {}
 
   };
 
+  /* ***************************************************************** */
+  /*     Standard solve.                                               */
+  /* ***************************************************************** */
 
-
- template <typename MODEL_STATE> void
-  standard_solve
-  (MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
-   gmm::iteration &iter,
-   typename useful_types<MODEL_STATE>::plsolver_type lsolver,
-   gmm::abstract_newton_line_search &ls) {
-
-    TYPEDEF_MODEL_STATE_TYPES;
-    model_pb<MODEL_STATE> mdpb(MS, problem, ls);
-
-    MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
-
-    if (problem.is_linear()) {
-      mdpb.compute_tangent_matrix();
-      mdpb.compute_residual();
-      VECTOR dr(gmm::vect_size(mdpb.residual())), d(problem.nb_dof());
-      VECTOR b(gmm::vect_size(dr));
-      gmm::copy(gmm::scaled(mdpb.residual(), value_type(-1)), b);
-      // cout << "tg matrix = " << mdpb.tangent_matrix() << endl;
-      // print_eigval(mdpb.tangent_matrix());
-      (*lsolver)(mdpb.tangent_matrix(), dr, b, iter);
-      MS.unreduced_solution(dr, d);
-      gmm::add(d, MS.state());
-    }
-    else
-      classical_Newton(mdpb, iter, *lsolver);
-
-
-    + assemblage des variables dans le state et "désaszsemblage" à la fin
-      --> des fonctions pour ca dans model ...
-  }
-
-
-
-#endif
 
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
   void standard_solve(model &md, gmm::iteration &iter,
-		 PLSOLVER lsolver,
-		 gmm::abstract_newton_line_search &ls, const MATRIX &R,
-		 const VECTOR &rhs) {
+		      PLSOLVER lsolver,
+		      gmm::abstract_newton_line_search &ls, const MATRIX &K,
+		      const VECTOR &rhs) {
+
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+
+    VECTOR state(md.nb_dof());
     
-    // ...
+    md.from_variables(state); // copy the model variables in the state vector
 
+    if (md.is_linear()) {
+      md.assembly(model::BUILD_ALL);
+      (*lsolver)(K, state, rhs, iter);
+    }
+    else {
+      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K);
+      classical_Newton(mdpb, iter, *lsolver);
+    }
+
+    md.to_variables(state); // copy the state vector into the model variables
   }
-
-
-
 
   void standard_solve(model &md, gmm::iteration &iter,
 		      rmodel_plsolver_type lsolver,
@@ -189,8 +173,8 @@ namespace getfem {
   void standard_solve(model &md, gmm::iteration &iter,
 		      cmodel_plsolver_type lsolver,
 		      gmm::abstract_newton_line_search &ls) {
-    standard_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
-		   md.real_rhs());
+    standard_solve(md, iter, lsolver, ls, md.complex_tangent_matrix(),
+		   md.complex_rhs());
   }
 
 
