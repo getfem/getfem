@@ -630,9 +630,8 @@ namespace getfem {
    const std::string &dataname, size_type region = size_type(-1),
    const std::string &directdataname = std::string());
 
-  /** Add a source term on the variable `varname` on a boundary `region`. 
-      with a scalar product with the outward normal unit vector to
-      the boundary. The source term is
+  /** Add a source term on the variable `varname` on a boundary `region`.
+      The source term is
       represented by the data `dataname` which could be constant or described
       on a fem. A sclar product with the outward normal unit vector to
       the boundary is performed. The main aim of this brick is to represent

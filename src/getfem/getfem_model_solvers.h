@@ -43,6 +43,7 @@
 #include "gmm/gmm_solver_Newton.h"
 #include "gmm/gmm_iter.h"
 #include "gmm/gmm_iter_solvers.h"
+#include "gmm/gmm_dense_qr.h"
 
 //#include "gmm/gmm_inoutput.h"
 
@@ -216,7 +217,7 @@ namespace getfem {
 
 
   //---------------------------------------------------------------------
-  // Standard solve.      
+  // Default linear solver.   
   //---------------------------------------------------------------------
 
   typedef abstract_linear_solver<model_real_sparse_matrix,
@@ -226,6 +227,92 @@ namespace getfem {
 				 model_complex_plain_vector>
           cmodel_linear_solver;
   typedef std::auto_ptr<cmodel_linear_solver> cmodel_plsolver_type;
+
+
+  template<typename MATRIX, typename VECTOR>
+  std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  default_linear_solver(const model &md) {
+    std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
+    
+#if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
+#else
+    size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
+# ifdef GMM_USES_MUMPS
+    max3d = 100000;
+# endif
+    if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
+# ifdef GMM_USES_MUMPS
+      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+# else
+      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
+# endif
+    }
+    else {
+      if (md.is_coercive()) 
+	p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
+      else {
+	if (dim <= 2)
+	  p.reset(new
+		  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
+	else
+	  p.reset(new
+		  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
+      }
+    }
+#endif
+    return p;
+  }
+
+  template <typename MATRIX, typename VECTOR>
+  std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> >
+  select_linear_solver(const model &md, const std::string &name) {
+    std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
+    if (bgeot::casecmp(name, "superlu") == 0)
+      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
+    else if (bgeot::casecmp(name, "mumps") == 0) {
+#ifdef GMM_USES_MUMPS
+# if GETFEM_PARA_LEVEL <= 1
+      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+# else
+      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
+# endif
+#else
+      GMM_ASSERT1(false, "Mumps is not interfaced");
+#endif
+    }
+    else if (bgeot::casecmp(name, "cg/ildlt") == 0)
+      p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
+    else if (bgeot::casecmp(name, "gmres/ilu") == 0)
+      p.reset(new linear_solver_gmres_preconditioned_ilu<MATRIX, VECTOR>);
+    else if (bgeot::casecmp(name, "gmres/ilut") == 0)
+      p.reset(new linear_solver_gmres_preconditioned_ilut<MATRIX, VECTOR>);
+    else if (bgeot::casecmp(name, "gmres/ilutp") == 0)
+      p.reset(new linear_solver_gmres_preconditioned_ilutp<MATRIX, VECTOR>);
+    else if (bgeot::casecmp(name, "auto") == 0)
+      p = default_linear_solver<MATRIX, VECTOR>(md);
+    else
+      GMM_ASSERT1(false, "Unknown linear solver");
+    return p;
+  }
+
+  inline rmodel_plsolver_type rselect_linear_solver(const model &md,
+					     const std::string &name) {
+    return select_linear_solver<model_real_sparse_matrix,
+                                model_real_plain_vector>(md, name);
+  }
+
+  inline cmodel_plsolver_type cselect_linear_solver(const model &md,
+					     const std::string &name) {
+    return select_linear_solver<model_complex_sparse_matrix,
+                                model_complex_plain_vector>(md, name);
+  } 
+
+  //---------------------------------------------------------------------
+  // Standard solve.      
+  //---------------------------------------------------------------------
 
 
   /** A default solver for the model brick system.  
@@ -261,13 +348,19 @@ namespace getfem {
   void standard_solve(model &md, gmm::iteration &iter);
 
 
-  //---------------------------------------------------------------------
-  //           
-  // Solvers for the old brick system. Kept for compatibility reasons.
-  //           
-  //---------------------------------------------------------------------
-
 }
+
+
+
+
+
+
+//---------------------------------------------------------------------
+//           
+// Solvers for the old brick system. Kept for compatibility reasons.
+//           
+//---------------------------------------------------------------------
+
 
 #include "getfem_modeling.h"
 

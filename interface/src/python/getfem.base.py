@@ -431,6 +431,7 @@ model states.
     #@GET    MODEL:GET('listbricks')
     #@GET    MODEL:GET('variable')
     #@GET    MODEL:GET('mult varname Dirichlet')
+    #@GET    MODEL:GET('solve')
 
 
     #@SET    MODEL:SET('variable')
@@ -445,6 +446,7 @@ model states.
     #@SET    MODEL:SET('add Laplacian brick')
     #@SET    MODEL:SET('add generic elliptic brick')
     #@SET    MODEL:SET('add source term brick')
+    #@SET    MODEL:SET('add normal source term brick')
     #@SET    MODEL:SET('add Dirichlet condition with multiplier')
     #@SET    MODEL:SET('add Dirichlet condition with penalization')
     #@SET    MODEL:SET('change penalization coeff Dirichlet')

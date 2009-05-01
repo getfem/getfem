@@ -25,48 +25,6 @@
 namespace getfem {
 
 
-  //---------------------------------------------------------------------
-  // Default linear solver.   
-  //---------------------------------------------------------------------
-
-  template<typename MATRIX, typename VECTOR>
-  std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> >
-  default_linear_solver(const model &md) {
-    std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
-    
-#if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
-#elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-      p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
-#else
-    size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
-# ifdef GMM_USES_MUMPS
-    max3d = 100000;
-# endif
-    if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
-# ifdef GMM_USES_MUMPS
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
-# else
-      p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
-# endif
-    }
-    else {
-      if (md.is_coercive()) 
-	p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
-      else {
-	if (dim <= 2)
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
-	else
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
-      }
-    }
-#endif
-    return p;
-  }
-
-
   static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
     return default_linear_solver<model_real_sparse_matrix,
                                  model_real_plain_vector>(md);

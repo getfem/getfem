@@ -49,6 +49,7 @@ using namespace getfemint;
   @SET MODEL:SET('add Laplacian brick')
   @SET MODEL:SET('add generic elliptic brick')
   @SET MODEL:SET('add source term brick')
+  @SET MODEL:SET('add normal source term brick')
   @SET MODEL:SET('add Dirichlet condition with multiplier')
   @SET MODEL:SET('add Dirichlet condition with penalization')
   @SET MODEL:SET('change penalization coeff Dirichlet')
@@ -246,6 +247,26 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type ind
       = getfem::add_source_term_brick(md->model(), mim, varname,
 				      dataname, region, directdataname)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add normal source term brick", in, out, 4, 4, 0, 1)) {
+    /*@SET V = MODEL:SET('add normal source term brick', @tmim mim, @str varname, @str dataname[, @int region])
+    add a source term on the variable `varname` on a boundary `region`.
+    The source term is
+    represented by the data `dataname` which could be constant or described
+    on a fem. A scalar product with the outward normal unit vector to
+    the boundary is performed. The main aim of this brick is to represent
+    a Neumann condition with a vector data without performing the
+    scalar product with the normal as a pre-processing. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    size_type region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_source_term_brick(md->model(), mim, varname,
+				      dataname, region)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Dirichlet condition with multiplier", in, out, 4, 5, 0, 1)) {

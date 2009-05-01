@@ -25,6 +25,8 @@
 
 #include <getfemint.h>
 #include <getfemint_models.h>
+#include <getfem/getfem_model_solvers.h>
+#include <getfemint_mdbrick.h>
 
 using namespace getfemint;
 
@@ -62,6 +64,7 @@ using namespace getfemint;
   @GET MODEL:GET('listbricks')
   @GET MODEL:GET('variable')
   @GET MODEL:GET('mult varname Dirichlet')
+  @GET MODEL:GET('solve')
 
 MLABCOM*/
 
@@ -113,5 +116,56 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     size_type ind_brick = in.pop().to_integer();
     out.pop().from_string(getfem::mult_varname_Dirichlet(md->model(),
 							 ind_brick).c_str());
+  } else if (check_cmd(cmd, "solve", in, out, 0, -1, 0, 0)) {
+    /*@GET MODEL:GET('solve'[,...])
+    Run the standard getfem solver.
+
+    Note that you should be able to use your own solver if you want
+    (it is possible to obtain the tangent matrix and its right hand
+    side with the MODEL:GET('tangent matrix') etc.).<Par>
+
+    Various options can be specified:<Par>
+
+    - 'noisy' or 'very noisy'<par>
+       the solver will display some information showing the progress<par>
+       (residual values etc.).<par>
+    - 'max_iter', NIT<par>
+       set the maximum iterations numbers.<par>
+    - 'max_res', RES<par>
+       set the target residual value.<par>
+    - 'lsolver', SOLVERNAME<par>
+       select explicitely the solver used for the linear systems (the<par>
+       default value is 'auto', which lets getfem choose itself).<par>
+       Possible values are 'superlu', 'mumps' (if supported),<par>
+       'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.@*/
+
+    getfemint::interruptible_iteration iter;
+    std::string lsolver = "auto";
+    while (in.remaining() && in.front().is_string()) {
+      std::string opt = in.pop().to_string();
+      if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
+      else if (cmd_strmatch(opt, "very noisy")) iter.set_noisy(2);
+      else if (cmd_strmatch(opt, "max_iter")) {
+	if (in.remaining()) iter.set_maxiter(in.pop().to_integer());
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "max_res")) {
+	if (in.remaining()) iter.set_resmax(in.pop().to_scalar());
+	else THROW_BADARG("missing value for " << opt);
+      } else if (cmd_strmatch(opt, "lsolver")) {
+	if (in.remaining()) lsolver = in.pop().to_string();
+	else THROW_BADARG("missing solver name for " << opt);
+      } else THROW_BADARG("bad option: " << opt);
+    }
+    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
+				       1.0/1000.0, 3.0/5.0, 1.6);
+    if (!md->model().is_complex()) {
+      getfem::standard_solve(md->model(), iter,
+			     getfem::rselect_linear_solver(md->model(),
+							   lsolver), ls);
+    } else {
+      getfem::standard_solve(md->model(), iter,
+			     getfem::cselect_linear_solver(md->model(),
+							   lsolver), ls);
+    }
   } else bad_cmd(cmd);
 }

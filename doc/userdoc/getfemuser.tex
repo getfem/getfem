@@ -2384,7 +2384,7 @@ The penalization consists in computing the mass matrix of the variable and add i
   change_penalization_coeff_Dirichlet(md, ind_brick, penalisation_coeff);
 \end{cppcode}
 
-\subsection{Source term brick (and Neumann condition) }
+\subsection{Source term bricks (and Neumann condition) }
 \index{source term brick}
 
 This brick add a source term, i.e. a term which occurs only in the right hand side of the linear (tangent) system build by the model. If $f$ denotes the value of the source term, the weak form of such a term is
@@ -2404,8 +2404,14 @@ where \cpp{md} is the model object, \cpp{mim} is the integration method,
 \cpp{varname} is the variable of the model for which the source term is added,
 \cpp{dataname} is the name of the data in the model which represents the source term. It have to be scalar or vector valued depending on the fact that the variable is scalar or vector valued itself. \cpp{region} is a mesh region on which the term is added. If the region corresponds to a boundary, the source term will represent a Neumann condition. \cpp{directdataname} is an optional additional data which will directly be added to the right hand sie without assembly.
 
-
 The brick has a working complex version.
+
+A silghtly different brick, especially dedicated to deal with a Neumann condition, is added by the following function
+\begin{cppcode}
+add_normal_source_term_brick(md, mim, varname, dataname, region);
+\end{cppcode}
+The difference compared to the basic source term brick is that the data should be a vector field (a matrix field if the variable \cpp{varname} is itself vector valued) and a scalar product with the outward unit normal is performed on it.
+
 
 \subsection{Example of a complete Poisson problem}
 
