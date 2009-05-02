@@ -23,14 +23,27 @@ Uexact = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1)+x.^5' });
 % its second derivative
 F      = gf_mesh_fem_get(mf, 'eval', { '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)' });
 
-b0=gf_mdbrick('generic elliptic',mim,mf);
-b1=gf_mdbrick('dirichlet', b0, 1, mf,'penalized');
-gf_mdbrick_set(b1, 'param', 'R', mf, Uexact); 
-b2=gf_mdbrick('source term',b1);
-gf_mdbrick_set(b2, 'param', 'source_term', mf, F);
-mds=gf_mdstate(b1);
-gf_mdbrick_get(b2, 'solve', mds)
-U=gf_mdstate_get(mds, 'state');
+
+md=gf_model('real');
+gf_mdbrick_set(md, 'add fem variable', mf);
+gf_mdbrick_set(md, 'add Laplacian brick', mim, 'u');
+gf_mdbrick_set(md, 'add initialized fem data', 'VolumicData', mf, F);
+gf_mdbrick_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_mdbrick_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
+gf_mdbrick_set(md, 'add Dirichlet condition with multipliers', mim, "u", mfu, 1, "DirichletData");
+
+gf_mdbrick_get(md, 'solve');
+U =  gf_mdbrick_get(md, 'variable', 'u');
+
+
+% b0=gf_mdbrick('generic elliptic',mim,mf);
+% b1=gf_mdbrick('dirichlet', b0, 1, mf, 'penalized');
+% gf_mdbrick_set(b1, 'param', 'R', mf, Uexact); 
+% b2=gf_mdbrick('source term',b1);
+% gf_mdbrick_set(b2, 'param', 'source_term', mf, F);
+% mds=gf_mdstate(b1);
+% gf_mdbrick_get(b2, 'solve', mds)
+% U=gf_mdstate_get(mds, 'state');
 
 
 subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 

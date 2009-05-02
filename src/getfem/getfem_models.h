@@ -313,6 +313,7 @@ namespace getfem {
 
     template<typename VECTOR> void from_variables(VECTOR &V) const {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       from_variables(V, T());
     }
 
@@ -341,6 +342,7 @@ namespace getfem {
 
     template<typename VECTOR> void to_variables(VECTOR &V) {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       to_variables(V, T());
     }
 

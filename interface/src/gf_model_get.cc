@@ -64,6 +64,7 @@ using namespace getfemint;
   @GET MODEL:GET('listbricks')
   @GET MODEL:GET('variable')
   @GET MODEL:GET('mult varname Dirichlet')
+  @GET MODEL:GET('from variables')
   @GET MODEL:GET('solve')
 
 MLABCOM*/
@@ -108,14 +109,46 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     if (in.remaining())
       niter = in.pop().to_integer(0,10) - config::base_index();
     RETURN_VECTOR(real_variable(name, niter), complex_variable(name, niter));
-  } else if (check_cmd(cmd, "mult varname Dirichlet", in, out, 1, 2, 0, 0)) {
-    /*@GET V = MODEL:GET('mult varname Dirichlet', @int ind_brick])
+  } else if (check_cmd(cmd, "mult varname Dirichlet", in, out, 1, 1, 0, 1)) {
+    /*@GET name = MODEL:GET('mult varname Dirichlet', @int ind_brick)
     Gives the name of the multiplier variable for a Dirichlet brick.
     If the brick is not a Dirichlet condition with multiplier brick,
     this function has an undefined behavior@*/
     size_type ind_brick = in.pop().to_integer();
     out.pop().from_string(getfem::mult_varname_Dirichlet(md->model(),
 							 ind_brick).c_str());
+  } else if (check_cmd(cmd, "from variables", in, out, 0, 0, 0, 1)) {
+    /*@GET V = MODEL:GET('from variables')
+    Return the vector of all the degrees of freedom of the model consisting
+    of the concatenation of the variables of the model (usefull
+    to solve your problem with you own solver). @*/
+    if (!md->is_complex()) {
+      std::vector<double> V(md->model().nb_dof());
+      md->model().from_variables(V);
+      out.pop().from_dcvector(V);
+    } else {
+      std::vector<std::complex<double> > V(md->model().nb_dof());
+      md->model().from_variables(V);
+      out.pop().from_dcvector(V);
+    }
+  } else if (check_cmd(cmd, "assembly", in, out, 0, 1, 0, 0)) {
+    /*@GET MODEL:GET('assembly'[, @str option])
+    Assembly of the tangent system taking into account the terms
+    from all bricks. `option`, if specified, should be 'build all',
+    'build rhs' or 'build matrix'. The default is to build the whole
+    tangent linear system (matrix and rhs). This function is usefull to solve
+    your problem with you own solver. @*/
+    std::string option = "build all";
+    if (in.remaining()) option = in.pop().to_string();
+    getfem::model::assembly_version version = getfem::model::BUILD_ALL;
+    if (cmd_strmatch(option, "build all"))
+      version = getfem::model::BUILD_ALL;
+    else if (cmd_strmatch(option, "build rhs"))
+      version = getfem::model::BUILD_RHS;
+    else if (cmd_strmatch(option, "build matrix"))
+      version = getfem::model::BUILD_MATRIX;
+    else THROW_BADARG("bad option: " << option);
+    md->model().assembly(version); 
   } else if (check_cmd(cmd, "solve", in, out, 0, -1, 0, 0)) {
     /*@GET MODEL:GET('solve'[,...])
     Run the standard getfem solver.
@@ -158,6 +191,7 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     }
     gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
 				       1.0/1000.0, 3.0/5.0, 1.6);
+
     if (!md->model().is_complex()) {
       getfem::standard_solve(md->model(), iter,
 			     getfem::rselect_linear_solver(md->model(),

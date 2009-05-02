@@ -16,7 +16,7 @@ mfu3.set_fem(Fem('FEM_PK(2,1)'))
 mfth.set_fem(Fem('FEM_PK(2,2)'))
 mfd.set_fem(Fem('FEM_PK(2,2)'))
 
-mim = MeshIm(m, Integ('IM_TRIANGLE(13)'))
+mim = MeshIm(m, Integ('IM_TRIANGLE(5)'))
 
 
 #get the list of faces whose normal is [-1,0]

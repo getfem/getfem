@@ -46,6 +46,7 @@ using namespace getfemint;
   @SET MODEL:SET('add initialized fem data')
   @SET MODEL:SET('add data')
   @SET MODEL:SET('add initialized data')
+  @SET MODEL:SET('to variables')
   @SET MODEL:SET('add Laplacian brick')
   @SET MODEL:SET('add generic elliptic brick')
   @SET MODEL:SET('add source term brick')
@@ -128,11 +129,11 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
     workspace().set_dependance(md, gfi_mf);
     if (!md->is_complex()) {
-      darray st = in.pop().to_darray(-1);
+      darray st = in.pop().to_darray();
       std::vector<double> V(st.begin(), st.end());
       md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
     } else {
-      carray st = in.pop().to_carray(-1);
+      carray st = in.pop().to_carray();
       std::vector<std::complex<double> > V(st.begin(), st.end());
       md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
     }
@@ -147,39 +148,55 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fixed_size_data(name, s, niter);
   } else if (check_cmd(cmd, "add initialized data", in, out, 2, 2, 0, 0)) {
-    /*@SET MODEL:SET('add initialized data', @str name, @vec V)
+    /*@SET MODEL:SET('add initialized data', @str name, V)
     Add a fixed size data to the model linked to a @tmf.
     `name` is the data name, `V` is the value of the data.
     @*/
     std::string name = in.pop().to_string();
     if (!md->is_complex()) {
-      darray st = in.pop().to_darray(-1);
+      darray st = in.pop().to_darray();
       std::vector<double> V(st.begin(), st.end());
       md->model().add_initialized_fixed_size_data(name, V);
     } else {
-      carray st = in.pop().to_carray(-1);
+      carray st = in.pop().to_carray();
       std::vector<std::complex<double> > V(st.begin(), st.end());
       md->model().add_initialized_fixed_size_data(name, V);
     }
   } else if (check_cmd(cmd, "variable", in, out, 2, 3, 0, 0)) {
-    /*@SET V = MODEL:SET('variable', @str name, @vec U[, @int niter])
+    /*@SET V = MODEL:SET('variable', @str name, @vec V[, @int niter])
     Set the value of a variable or data.@*/
     std::string name = in.pop().to_string();
     if (!md->is_complex()) {
-      darray st = in.pop().to_darray(-1);
+      darray st = in.pop().to_darray();
       size_type niter = 0;
       if (in.remaining()) niter = in.pop().to_integer(0,10);
       GMM_ASSERT1(st.size() == md->model().real_variable(name, niter).size(),
 		  "Bad size in assigment");
       md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
     } else {
-      carray st = in.pop().to_carray(-1);
+      carray st = in.pop().to_carray();
       size_type niter = 0;
       if (in.remaining())
 	niter = in.pop().to_integer(0,10) - config::base_index();
       GMM_ASSERT1(st.size() == md->model().real_variable(name, niter).size(),
 		  "Bad size in assigment");
       md->model().set_complex_variable(name, niter).assign(st.begin(), st.end());
+    }
+  } else if (check_cmd(cmd, "to variables", in, out, 1, 1, 0, 0)) {
+    /*@SET MODEL:SET('to variables', @vec V)
+    Set the value of the variables of the model with the vector `V`.
+    Typically, the vector `V` results of the solve of the tangent linear
+    system (usefull to solve your problem with you own solver). @*/
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray(-1);
+      std::vector<double> V;
+      V.assign(st.begin(), st.end());
+      md->model().to_variables(V);
+    } else {
+      carray st = in.pop().to_carray(-1);
+      std::vector<std::complex<double> > V;
+      V.assign(st.begin(), st.end());
+      md->model().to_variables(V);
     }
   } else if (check_cmd(cmd, "add Laplacian brick", in, out, 2, 3, 0, 1)) {
     /*@SET V = MODEL:SET('add Laplacian brick', @tmim mim, @str varname[, @int region])
@@ -265,12 +282,12 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::string dataname = in.pop().to_string();
     size_type region = in.pop().to_integer();
     size_type ind
-      = getfem::add_source_term_brick(md->model(), mim, varname,
-				      dataname, region)
+      = getfem::add_normal_source_term_brick(md->model(), mim, varname,
+					     dataname, region)
       + config::base_index();
     out.pop().from_integer(int(ind));
-  } else if (check_cmd(cmd, "add Dirichlet condition with multiplier", in, out, 4, 5, 0, 1)) {
-    /*@SET V = MODEL:SET('add Dirichlet condition with multiplier', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
+  } else if (check_cmd(cmd, "add Dirichlet condition with multipliers", in, out, 4, 5, 0, 1)) {
+    /*@SET V = MODEL:SET('add Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
     Add a Dirichlet condition on the variable `varname` and the mesh
     region `region`. This region should be a boundary. The Dirichlet
     condition is prescribed with a multiplier variable described by
@@ -326,7 +343,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Dirichlet condition with penalization", in, out, 4, 5, 0, 1)) {
-    /*@SET V = MODEL:SET('add Dirichlet condition with penalization', @tmim mim, @str varname, @int region, @scalar coeff[, @str dataname])
+    /*@SET V = MODEL:SET('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname])
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with penalization. The penalization coefficient
@@ -341,8 +358,8 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     workspace().set_dependance(md, gfi_mim);
     getfem::mesh_im &mim = gfi_mim->mesh_im();
     std::string varname = in.pop().to_string();
-    size_type region = in.pop().to_integer();
     double coeff = in.pop().to_scalar();
+    size_type region = in.pop().to_integer();
     std::string dataname;
     if (in.remaining()) dataname = in.pop().to_string();
     size_type ind = config::base_index();

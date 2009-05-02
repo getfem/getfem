@@ -2776,17 +2776,20 @@ mds=gf_model('complex')@@
 Query information on a \tmodel \index{model} object @@md@@.
 \end{purpose}
 \begin{synopsis}
-@@\tint gf_model_get(md,'is_complex')
+@@b=gf_model_get(md,'is_complex')
 M=gf_model_get(md,'tangent_matrix')
 V=gf_model_get(md,'rhs')
 gf_model_get(md,'listvar')
 gf_model_get(md,'listbricks')
+size=gf_model_get(md,'memsize')
 V=gf_model_get(md,'variable', \tstr name[, \tint niter])
-\tscal gf_model_get(md,'memsize')
+name=gf_model_get(md,'mult varname Dirichlet', \tint ind_brick)
+V=gf_model_get(md,'from variables')
+gf_model_get(md,'assembly'[, \tstr option]})
 gf_model_get(md,'solve' [,...])@@
 \end{synopsis}
 \begin{cmddescription}
-\sep{@@\tint gf_model_get(md,'is_complex')@@} :
+\sep{@@b=gf_model_get(md,'is_complex')@@} :
 return 0 if the model  is real, 1 if it is complex.
 
 \sep{@@M=gf_model_get(md,'tangent_matrix')@@} :
@@ -2801,28 +2804,45 @@ print to the output the list of variables and data of the model.
 \sep{@@gf_model_get(md,'listbricks')@@} :
 print to the output the list of bricks of the model.
 
+\sep{@@size=gf_model_get(md,'memsize')@@} :
+return the amount of memory (in bytes) used by the model state.
+
 \sep{@@V=gf_model_get(md,'variable', \tstr name[, \tint niter])@@} :
 return the vector value of the variable `name`. 
 
-\sep{@@\tscal gf_model_get(md,'memsize')@@} :
-return the amount of memory (in bytes) used by the model state.
+\sep{@@name=gf_model_get(md,'mult varname Dirichlet', \tint ind_brick)@@} :
+Gives the name of the multiplier variable for a Dirichlet brick.
+If the brick is not a Dirichlet condition with multiplier brick,
+this function has an undefined behavior.
+
+\sep{@@V=gf_model_get(md,'from variables')@@} :
+Return the vector of all the degrees of freedom of the model consisting
+of the concatenation of the variables of the model (usefull
+solve your problem with you own solver).
+
+\sep{@@gf_model_get(md,'assembly'[, \tstr option]})@@} :
+Assembly of the tangent system taking into account the terms
+from all bricks. @@option@@, if specified, should be 'build all',
+'build rhs' or 'build matrix'. The default is to build the whole
+tangent linear system (matrix and rhs). This function is usefull to solve
+your problem with you own solver.
 
 \sep{@@gf_model_get(md,'solve' [,...])@@} :
-  run the standard getfem solver.  Note that you should be able to use your own
-  solver if you want (it is possible to obtain the tangent matrix and its right
-    hand side with the gf_model_get(md,'tangent_matrix') etc.).   Various
-    options can be specified:
-    \begin{itemize}
-    \item @@'noisy'@@ or @@'very noisy'@@ : the solver will display
-      some information showing the progress (residual values etc.). 
-    \item @@'max_iter', NIT@@ : set the maximum iterations numbers. 
-      \item @@'max_res', RES@@ :
-    set the target residual value.
-    \item @@'lsolver', SOLVERNAME@@  : select explicitely
-    the solver used for the linear systems (the default value is 'auto', which
-    lets getfem choose itself). Possible values are 'superlu', 'mumps' (if
-    supported), 'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
-    \end{itemize}
+run the standard getfem solver.  Note that you should be able to use your own
+solver if you want (it is possible to obtain the tangent matrix and its right
+hand side with the gf_model_get(md,'tangent_matrix') etc.).   Various
+options can be specified:
+\begin{itemize}
+\item @@'noisy'@@ or @@'very noisy'@@ : the solver will display
+  some information showing the progress (residual values etc.). 
+\item @@'max_iter', NIT@@ : set the maximum iterations numbers. 
+\item @@'max_res', RES@@ :
+  set the target residual value.
+\item @@'lsolver', SOLVERNAME@@  : select explicitely
+  the solver used for the linear systems (the default value is 'auto', which
+  lets getfem choose itself). Possible values are 'superlu', 'mumps' (if
+  supported), 'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
+\end{itemize}
 
 \end{cmddescription}
 \newpage
@@ -2844,12 +2864,13 @@ gf_model_set(md,'add initialized fem data', \tstr name, \tmf mf, \tvec V)
 gf_model_set(md,'add data', \tstr name, \tmf mf, \tvec V)
 gf_model_set(md,'add initialized data', \tstr name, \tvec V)
 gf_model_set(md,'add mult on region', \tstr name, \tmf mf, \tmim mim, \tstr primalname, \tint region[, \tint niter])
+gf_model_set(md,'to variables', \tvec V)
 ind_brick=gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tint region])
 ind_brick=gf_model_set(md,'add generic elliptic brick', \tmim mim, \tstr varname[, \tint region])
 ind_brick=gf_model_set(md,'add source term brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region[, \tstr directdataname ]])
 ind_brick=gf_model_set(md,'add normal source term brick', \tmim mim, \tstr varname, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr dataname, \tint region)
-ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tint region, \tscal coeff[, \tstr dataname ])
+ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region[, \tstr dataname ])
 gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscal coeff)@@
 \end{synopsis}
 \begin{cmddescription}
@@ -2892,6 +2913,11 @@ matrix (computed with the integration method @@mim@@) to retain only
 linearly independant constraints on the primal
 variable. niter is the number of version of the data stored, for time
 integration schemes.
+
+\sep{@@gf_model_set(md,'to variables', \tvec V))@@} :
+Set the value of the variables of the model with the vector @@V@@.
+Typically, the vector @@V@@ results of the solve of the tangent linear
+system (usefull to solve your problem with you own solver). @*/
 
 \sep{@@ind_brick=gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tint region])@@} :
 Add a Laplacian term to the model relatively to the variable @@varname@@.
@@ -2950,7 +2976,7 @@ described on a fem; scalar or vector valued, depending on the variable
 on which the Dirichlet condition is prescribed. Return the brick index
 in the model.
 
-\sep{@@ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tint region, \tscal coeff[, \tstr dataname ])@@} :
+\sep{@@ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region[, \tstr dataname ])@@} :
 Add a Dirichlet condition on the variable @@varname@@ and the mesh
 region @@region@@. This region should be a boundary. The Dirichlet
 condition is prescribed with penalization. The penalization coefficient

@@ -56,10 +56,22 @@ namespace getfem {
     return valid;
   }
 
+  std::string model::new_name(const std::string &name) {
+    std::string res_name = name;
+    bool valid = check_name_valitity(res_name, false);
+    VAR_SET::const_iterator it = variables.find(res_name);
+    GMM_ASSERT1(valid || it != variables.end(),
+		"Illegal variable name : " << name);
+    for (size_type i = 2; it != variables.end(); ++i) {
+      std::stringstream m;
+      m << name << '_' << i;
+      res_name = m.str();
+      it = variables.find(res_name);
+    }
+    return res_name;
+  }
+
   void model::actualize_sizes(void) const {
-
-    cout << "YOUYOU !!!!" << endl;
-
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
 
@@ -134,10 +146,10 @@ namespace getfem {
 	  gmm::copy(MM, gmm::sub_matrix
 		    (MGLOB,gmm::sub_interval(0, it2->second.mf->nb_dof()),
 		     gmm::sub_interval(s, it->second.mf->nb_dof())));
-	  s += it->second.mf->nb_dof();
 	  for (std::set<size_type>::iterator itt = columns.begin();
 	     itt != columns.end(); ++itt)
 	    glob_columns.insert(s + *itt);
+	  s += it->second.mf->nb_dof();
 	} else {
 	  dal::bit_vector kept;
 	  for (std::set<size_type>::iterator itt = columns.begin();
@@ -151,7 +163,7 @@ namespace getfem {
 
       if (mults.size() > 1) {
 	range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
-	
+
 	s = 0;
 	for (size_type k = 0; k < mults.size(); ++k) {
 	  VAR_SET::iterator it = variables.find(mults[k]);
@@ -173,12 +185,9 @@ namespace getfem {
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
 	 ++it)
       if (it->second.is_variable) {
-	cout << "variable " << it->first << endl;
 	it->second.I = gmm::sub_interval(tot_size, it->second.size());
 	tot_size += it->second.size();
       }
-
-    cout << "tot_size = " << tot_size << endl;
       
     if (complex_version) {
       gmm::resize(cTM, tot_size, tot_size);
@@ -189,7 +198,7 @@ namespace getfem {
       gmm::resize(rrhs, tot_size);
     }
 
-    act_size_to_be_done = false;	  
+    act_size_to_be_done = false;
   }
    
 
@@ -218,20 +227,6 @@ namespace getfem {
       }
     }
   }
-
-  std::string model::new_name(const std::string &name) {
-    std::string res_name = name;
-    check_name_valitity(res_name);
-    VAR_SET::const_iterator it = variables.find(res_name);
-    for (size_type i = 2; it != variables.end(); ++i) {
-      std::stringstream m;
-      m << name << '_' << i;
-      res_name = m.str();
-      it = variables.find(res_name);
-    }
-    return res_name;
-  }
-
 
   void model::add_fixed_size_variable(const std::string &name, size_type size,
 				      size_type niter) {
@@ -798,7 +793,10 @@ namespace getfem {
       size_type s = gmm::vect_size(A);
       if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
 
-      GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of source term data");
+      GMM_ASSERT1(mf_u.get_qdim() == s,
+		  dl[0] << ": bad format of source term data. "
+		  "Detected dimension is " << s << " should be "
+		  << size_type(mf_u.get_qdim()));
 
       if (mf_data)
 	asm_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
@@ -870,7 +868,7 @@ namespace getfem {
 
   // ----------------------------------------------------------------------
   //
-  // Noraml source term brick
+  // Normal source term brick
   //
   // ----------------------------------------------------------------------
 
@@ -901,7 +899,10 @@ namespace getfem {
       size_type s = gmm::vect_size(A), N = mf_u.linked_mesh().dim();
       if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
 
-      GMM_ASSERT1(s == mf_u.get_qdim()*N, "Bad format of source term data");
+      GMM_ASSERT1(mf_u.get_qdim()*N == s,
+		  dl[0] << ": bad format of normal source term data. "
+		  "Detected dimension is " << s << " should be "
+		  << size_type(mf_u.get_qdim()*N));
 
       if (mf_data)
 	asm_normal_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
@@ -1010,7 +1011,10 @@ namespace getfem {
 	mf_data = md.pmesh_fem_of_variable(dl[ind]);
 	s = gmm::vect_size(*A);
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of Dirichlet data");
+	GMM_ASSERT1(mf_u.get_qdim() == s,
+		    dl[ind] << ": bad format of Dirichlet data. "
+		    "Detected dimension is " << s << " should be "
+		    << size_type(mf_u.get_qdim()));
       }
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);

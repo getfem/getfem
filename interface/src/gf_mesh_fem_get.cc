@@ -128,7 +128,8 @@ test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
   }
   if (return_bool)
     out.pop().from_integer
-      (islst.card() == mf->linked_mesh().convex_index().card() ? 1 : 0);
+      ((!(mf->is_reduced()) &&
+	islst.card() == mf->linked_mesh().convex_index().card()) ? 1 : 0);
   else
     out.pop().from_bit_vector(islst);
 }

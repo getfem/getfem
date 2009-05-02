@@ -220,7 +220,7 @@ Examples:
 mf.eval('x[0]*x[1]') interpolates the function 'x*y'
 mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         """
-        P = self.dof_nodes()
+        P = self.basic_dof_nodes()
         nbd = P.shape[1]
 
         if not self.is_lagrangian:
@@ -431,6 +431,8 @@ model states.
     #@GET    MODEL:GET('listbricks')
     #@GET    MODEL:GET('variable')
     #@GET    MODEL:GET('mult varname Dirichlet')
+    #@GET    MODEL:GET('from variables')
+    #@GET    MODEL:GET('assembly')
     #@GET    MODEL:GET('solve')
 
 
@@ -443,11 +445,12 @@ model states.
     #@SET    MODEL:SET('add initialized fem data')
     #@SET    MODEL:SET('add data')
     #@SET    MODEL:SET('add initialized data')
+    #@SET    MODEL:SET('to variables')
     #@SET    MODEL:SET('add Laplacian brick')
     #@SET    MODEL:SET('add generic elliptic brick')
     #@SET    MODEL:SET('add source term brick')
     #@SET    MODEL:SET('add normal source term brick')
-    #@SET    MODEL:SET('add Dirichlet condition with multiplier')
+    #@SET    MODEL:SET('add Dirichlet condition with multipliers')
     #@SET    MODEL:SET('add Dirichlet condition with penalization')
     #@SET    MODEL:SET('change penalization coeff Dirichlet')
     
