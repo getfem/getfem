@@ -30,10 +30,10 @@ gf_mdbrick_set(md, 'add Laplacian brick', mim, 'u');
 gf_mdbrick_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_mdbrick_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_mdbrick_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
-gf_mdbrick_set(md, 'add Dirichlet condition with multipliers', mim, "u", mfu, 1, "DirichletData");
+gf_mdbrick_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1, 'DirichletData');
 
 gf_mdbrick_get(md, 'solve');
-U =  gf_mdbrick_get(md, 'variable', 'u');
+U = gf_mdbrick_get(md, 'variable', 'u');
 
 
 % b0=gf_mdbrick('generic elliptic',mim,mf);

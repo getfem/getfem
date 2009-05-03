@@ -16,7 +16,7 @@ function X=gf_mesh_fem_get_eval(mf, what, dof)
     error(['when qdim is different of 1, only dofs 1,qdim+1,',...
 	   '2*qdim+1,... are authorized']);
   end;
-  dxy = gf_mesh_fem_get(mf, 'dof nodes',dof);
+  dxy = gf_mesh_fem_get(mf, 'basic dof nodes',dof);
   
   if (size(what, 2) == nbdof & isnumeric(what)),
     X = what;
