@@ -25,17 +25,17 @@ F      = gf_mesh_fem_get(mf, 'eval', { '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)' });
 
 
 md=gf_model('real');
-gf_mdbrick_set(md, 'add fem variable', mf);
-gf_mdbrick_set(md, 'add Laplacian brick', mim, 'u');
-gf_mdbrick_set(md, 'add initialized fem data', 'VolumicData', mf, F);
-gf_mdbrick_set(md, 'add source term brick', mim, 'u', 'VolumicData');
-gf_mdbrick_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
-gf_mdbrick_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1, 'DirichletData');
+gf_model_set(md, 'add fem variable', 'u', mf);
+gf_model_set(md, 'add Laplacian brick', mim, 'u');
+gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
 
-gf_mdbrick_get(md, 'solve');
-U = gf_mdbrick_get(md, 'variable', 'u');
+gf_model_get(md, 'solve');
+U = gf_model_get(md, 'variable', 'u');
 
-
+% Version with old bricks
 % b0=gf_mdbrick('generic elliptic',mim,mf);
 % b1=gf_mdbrick('dirichlet', b0, 1, mf, 'penalized');
 % gf_mdbrick_set(b1, 'param', 'R', mf, Uexact); 
@@ -45,10 +45,10 @@ U = gf_mdbrick_get(md, 'variable', 'u');
 % gf_mdbrick_get(b2, 'solve', mds)
 % U=gf_mdstate_get(mds, 'state');
 
+disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 
 subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
-colorbar;title('computed solution');
+colorbar; title('computed solution');
 subplot(2,1,2); gf_plot(mf,U-Uexact,'mesh','on'); 
 colorbar;title('difference with exact solution');
 
-disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
