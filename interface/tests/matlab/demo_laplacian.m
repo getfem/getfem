@@ -1,4 +1,4 @@
-trace on;
+% trace on;
 gf_workspace('clear all');
 m = gf_mesh('cartesian',[0:.1:1],[0:.1:1]);
 %m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
@@ -49,6 +49,7 @@ disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 
 subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
 colorbar; title('computed solution');
+
 subplot(2,1,2); gf_plot(mf,U-Uexact,'mesh','on'); 
 colorbar;title('difference with exact solution');
 

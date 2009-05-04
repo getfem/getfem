@@ -1,4 +1,4 @@
-trace on;
+% trace on;
 clear pde; gf_workspace('clear all');
 NX=10
 m = gf_mesh('triangles grid',[0:1/NX:1],[0:1/NX:1]);

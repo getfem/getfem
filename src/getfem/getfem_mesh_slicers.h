@@ -200,15 +200,16 @@ namespace getfem {
   */
   template<typename VEC> class mesh_slice_cv_dof_data
     : public mesh_slice_cv_dof_data_base {
-    VEC u;
+    typedef typename gmm::linalg_traits<VEC>::value_type T;
+    std::vector<T> u;
   public:
-    mesh_slice_cv_dof_data(const mesh_fem &mf_, const VEC &u_) : u(u_) {
+    mesh_slice_cv_dof_data(const mesh_fem &mf_, const VEC &u_) {
       pmf=&mf_;
-      if (mf_.is_reduced()) {
-	gmm::resize(u, mf_.nb_basic_dof());
+      gmm::resize(u, mf_.nb_basic_dof());
+      if (mf_.is_reduced())
 	gmm::mult(mf_.extension_matrix(), u_, u);
-      }
-      else gmm::copy(u_, u);
+      else
+	gmm::copy(u_, u);
     }
     virtual void copy(size_type cv, base_vector& coeff) const {
       coeff.resize(pmf->nb_basic_dof_of_element(cv));
