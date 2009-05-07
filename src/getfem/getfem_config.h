@@ -221,14 +221,14 @@ namespace getfem {
   template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &V) {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V));
-    MPI_Allreduce(&(V[0]), &(W[0]), gmm::vect_size(V), gmm::mpi_type(T()),
+    MPI_Allreduce((void *)(&(V[0])), &(W[0]), gmm::vect_size(V), gmm::mpi_type(T()),
 		  MPI_SUM, MPI_COMM_WORLD);
     gmm::copy(W, gmm::linalg_const_cast(V));
   }
   template <typename VECT1, typename VECT2>
   inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &W) {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
-    MPI_Allreduce(&(V[0]), &(gmm::linalg_const_cast(W)[0]),
+    MPI_Allreduce((void *)(&(V[0])), &(gmm::linalg_const_cast(W)[0]),
 		  gmm::vect_size(V), gmm::mpi_type(T()),
 		  MPI_SUM, MPI_COMM_WORLD);
   }
