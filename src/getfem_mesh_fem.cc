@@ -162,8 +162,10 @@ namespace getfem {
     }
   }
 
-  void mesh_fem::set_classical_finite_element(dim_type fem_degree)
-  { set_classical_finite_element(linked_mesh().convex_index(), fem_degree); }
+  void mesh_fem::set_classical_finite_element(dim_type fem_degree) {
+    set_classical_finite_element(linked_mesh().convex_index(), fem_degree);
+    set_auto_add(fem_degree);
+  }
 
   void mesh_fem::set_classical_discontinuous_finite_element
   (const dal::bit_vector &cvs, dim_type fem_degree, scalar_type alpha) {
