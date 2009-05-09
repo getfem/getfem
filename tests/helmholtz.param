@@ -4,7 +4,7 @@
 
 %%%%% pde parameters :	        				      %%%%%
 WAVENUM_R = 5;   	% Real part of the wave number.
-WAVENUM_I = 0;         % Imaginary part of the wave number.
+WAVENUM_I = 0;          % Imaginary part of the wave number.
 R0 = 2.;
 R1 = 10.;
 

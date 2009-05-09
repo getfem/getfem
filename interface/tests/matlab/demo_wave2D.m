@@ -1,9 +1,10 @@
 gf_workspace('clear all');
 disp('2D scalar wave equation (helmholtz) demonstration');
-disp(' we present two approaches for the solution of the helmholtz problem')
-disp(' - the first one is to use the getfem "model bricks"')
-disp(' - the second is to use the "low level" approach, i.e. to assemble')
-disp(' and solve the linear systems.')
+disp(' we present three approaches for the solution of the helmholtz problem')
+disp(' - the first one is to use the new getfem "model bricks"')
+disp(' - the second one is to use the old getfem "model bricks"')
+disp(' - the third one is to use the "low level" approach, i.e. to assemble')
+disp('   and solve the linear systems.')
 
 disp('The result is the wave scattered by a disc, the incoming wave beeing a plane wave coming from the top');
 disp(' \delta u + k^2 = 0');
@@ -80,12 +81,30 @@ Uinc=get(mfd,'eval',{wave_expr});
 
 
 %
-% we present two approaches for the solution of the helmholtz problem
-% - the first one is to use the getfem "model bricks"
-% - the second is to use the "low level" approach, i.e. to assemble
-% and solve the linear systems.
+% we present three approaches for the solution of the Helmholtz problem
+% - the first one is to use the new getfem "model bricks"
+% - the second one is to use the old getfem "model bricks"
+% - the third one is to use the "low level" approach, i.e. to assemble
+%   and solve the linear systems.
 if 1,
-  % solution using model bricks
+  t0=cputime;
+  % solution using new model bricks
+  md=gf_model('complex');
+  gf_model_set(md, 'add fem variable', 'u', mfu);
+  gf_model_set(md, 'add initialized data', 'k', [k]);
+  gf_model_set(md, 'add Helmholtz brick', mim, 'u', 'k');
+  gf_model_set(md, 'add initialized data', 'Q', [1i*k]);
+  gf_model_set(md, 'add Fourier Robin brick', mim, 'u', 'Q', 2);
+  gf_model_set(md, 'add initialized fem data', 'DirichletData', mfd, Uinc);
+  gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfd, 1, 'DirichletData');
+  % gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', 1e12, 1, 'DirichletData');
+
+  gf_model_get(md, 'solve');
+  U = gf_model_get(md, 'variable', 'u');
+  disp(sprintf('solve done in %.2f sec', cputime-t0));
+elseif 0,
+  t0=cputime;
+  % solution using old model bricks
   b0=gfMdBrick('helmholtz',mim,mfu);
   set(b0,'param','wave_number', k);
   b1=gfMdBrick('dirichlet',b0, 1, mfd, 'augmented');
@@ -94,10 +113,9 @@ if 1,
   
   mds=gfMdState(b2);
   
-  t0=cputime; 
   get(b2, 'solve', mds, 'noisy');
-  disp(sprintf('solve done in %.2f sec', cputime-t0));
   U=get(mds, 'state'); U=U(1:mfu.nbdof);
+  disp(sprintf('solve done in %.2f sec', cputime-t0));
 else
   % solution using the "low level" approach
   [H,R] = gf_asm('dirichlet', 1, mim, mfu, mfd, gf_mesh_fem_get(mfd,'eval',1),Uinc);
@@ -157,4 +175,4 @@ disp(sprintf('rel error ||Uex-U||_H1=%g',...
              gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
 % adjust the 'refine' parameter to enhance the quality of the picture
-gf_plot(mfu,real(U(:)'),'mesh','on','refine',8); 
+gf_plot(mfu,real(U(:)'),'mesh','on','refine',8);

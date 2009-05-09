@@ -54,6 +54,8 @@ using namespace getfemint;
   @SET MODEL:SET('add Dirichlet condition with multiplier')
   @SET MODEL:SET('add Dirichlet condition with penalization')
   @SET MODEL:SET('change penalization coeff Dirichlet')
+  @SET MODEL:SET('add Helmholtz brick')
+  @SET MODEL:SET('add Fourier Robin brick')
 
 MLABCOM*/
 
@@ -375,5 +377,39 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type ind_brick = in.pop().to_integer();
     double coeff = in.pop().to_scalar();
     getfem::change_penalization_coeff_Dirichlet(md->model(), ind_brick, coeff);
+  } else if (check_cmd(cmd, "add Helmholtz brick", in, out, 3, 4, 0, 1)) {
+    /*@SET V = MODEL:SET('add Helmholtz brick', @tmim mim, @str varname, @str dataname[, @int region])
+    add a Helmholtz term to the model relatively to the variable `varname`.
+    `dataname` should contain the wave number.
+    `region` is an optional mesh region on which the term is added.
+    If it is not specified, it is added on the whole mesh. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_Helmholtz_brick(md->model(), mim, varname,dataname, region)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add Fourier Robin brick", in, out, 4, 4, 0, 1)) {
+    /*@SET V = MODEL:SET('add Fourier Robin brick', @tmim mim, @str varname, @str dataname, @int region)
+    add a Fourier-Robin term to the model relatively to the variable
+    `varname`. this corresponds to a weak term of the form $\int (qu).v$.
+    `dataname` should contain the parameter $q$ of the Fourier-Robin condition.
+    `region` is the mesh region on which the term is added. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_Fourier_Robin_brick(md->model(), mim, varname,dataname, region)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
   } else bad_cmd(cmd);
 }

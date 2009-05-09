@@ -707,8 +707,35 @@ namespace getfem {
   void change_penalization_coeff_Dirichlet(model &md, size_type ind_brick,
 					   scalar_type penalisation_coeff); 
 
+  /** Add a Helmoltz brick to the model. This corresponds to the scalar
+      equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
+      The weak formulation is (@f$\int k^2 u.v - \nabla u.\nabla v@f$)
 
-    }  /* end of namespace getfem.                                             */
+      `dataname` should contain the wave number $k$. It can be real or
+      complex, fem dependant or not.
+  */
+  size_type add_Helmholtz_brick(model &md, const mesh_im &mim,
+				const std::string &varname,
+				const std::string &dataname,
+				size_type region = size_type(-1));
+
+
+  /** Add a Fourier-Robin brick to the model. This correspond to the weak term
+      (@f$\int (qu).v @f$) on a boundary. It is used to represent a
+      Fourier-Robin boundary condition.
+
+      `dataname` should contain the parameter $q$ which should be a
+      (@f$N\times N@f$) matrix term, where $N$ is the dimension of the
+      variable `varname`. Note that an additional right hand
+      side can be added with a source term brick.
+  */
+  size_type add_Fourier_Robin_brick(model &md, const mesh_im &mim,
+				    const std::string &varname,
+				    const std::string &dataname,
+				    size_type region);
+
+
+}  /* end of namespace getfem.                                             */
 
 
 #endif /* GETFEM_MODELS_H__  */

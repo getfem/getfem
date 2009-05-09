@@ -569,7 +569,7 @@ namespace getfem {
 
   // ----------------------------------------------------------------------
   //
-  // Generic scalar elliptic brick
+  // Generic elliptic brick
   //
   // ----------------------------------------------------------------------
 
@@ -1171,6 +1171,234 @@ namespace getfem {
   }
 
 
+
+  // ----------------------------------------------------------------------
+  //
+  // Helmholtz brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct Helmholtz_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &,
+					size_type region,
+					nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Helmholtz brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Helmholtz brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 1,
+		  "Wrong number of variables for Helmholtz brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type Q = mf_u.get_qdim(), s = 1;
+      GMM_ASSERT1(Q == 1, "Helmholtz brick is only for scalar field, sorry.");
+      const mesh_im &mim = *mims[0];
+      const mesh_fem *mf_a = 0;
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      const model_real_plain_vector *A = &(md.real_variable(dl[0]));
+      mf_a = md.pmesh_fem_of_variable(dl[0]);
+      s = gmm::vect_size(*A);
+      if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+
+      if (s == 1) {
+	model_real_plain_vector A2(gmm::vect_size(*A));
+	for (size_type i=0; i < gmm::vect_size(*A); ++i) // Not valid for 
+	  A2[i] = gmm::sqr((*A)[i]); // non lagrangian fem ...
+	if (mf_a)
+	  asm_Helmholtz(matl[0], mim, mf_u, *mf_a, A2, rg);
+	else
+	  asm_homogeneous_Helmholtz(matl[0], mim, mf_u, A2, rg);
+      } else
+	GMM_ASSERT1(false, "Bad format Helmholtz brick coefficient");
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &,
+					   size_type region,
+					   nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Helmholtz brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Helmholtz brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 1,
+		  "Wrong number of variables for Helmholtz brick");
+      
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type Q = mf_u.get_qdim(), s = 1;
+      GMM_ASSERT1(Q == 1, "Helmholtz brick is only for scalar field, sorry.");
+      const mesh_im &mim = *mims[0];
+      const mesh_fem *mf_a = 0;
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      const model_complex_plain_vector *A = &(md.complex_variable(dl[0]));
+      mf_a = md.pmesh_fem_of_variable(dl[0]);
+      s = gmm::vect_size(*A);
+      if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+
+      if (s == 1) {
+	model_complex_plain_vector A2(gmm::vect_size(*A));
+	for (size_type i=0; i < gmm::vect_size(*A); ++i) // Not valid for 
+	  A2[i] = gmm::sqr((*A)[i]); // non lagrangian fem ...
+	if (mf_a)
+	  asm_Helmholtz(matl[0], mim, mf_u, *mf_a, A2, rg);
+	else
+	  asm_homogeneous_Helmholtz(matl[0], mim, mf_u, A2, rg);
+      } else
+	GMM_ASSERT1(false, "Bad format Helmholtz brick coefficient");
+    }
+
+    Helmholtz_brick(void) {
+      set_flags("Helmholtz", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+  };
+
+  size_type add_Helmholtz_brick(model &md, const mesh_im &mim,
+				const std::string &varname,
+				const std::string &dataname,
+				size_type region) {
+    pbrick pbr = new Helmholtz_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    return md.add_brick(pbr, model::varnamelist(1, varname),
+			model::varnamelist(1, dataname), tl,
+			model::mimlist(1, &mim), region);
+  }
+
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Fourier-Robin brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct Fourier_Robin_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &,
+					size_type region,
+					nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Fourier-Robin brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Fourier-Robin brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 1,
+		  "Wrong number of variables for Fourier-Robin brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type Q = mf_u.get_qdim(), s = 1;
+      const mesh_im &mim = *mims[0];
+      const mesh_fem *mf_a = 0;
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      const model_real_plain_vector *A = &(md.real_variable(dl[0]));
+      mf_a = md.pmesh_fem_of_variable(dl[0]);
+      s = gmm::vect_size(*A);
+      if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+      GMM_ASSERT1(s == Q*Q,
+		  "Bad format Fourier-Robin brick coefficient");
+
+      if (mf_a)
+	asm_qu_term(matl[0], mim, mf_u, *mf_a, *A, rg);
+      else
+	asm_homogeneous_qu_term(matl[0], mim, mf_u, *A, rg);
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &,
+					   size_type region,
+					   nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Fourier-Robin brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Fourier-Robin brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 1,
+		  "Wrong number of variables for Fourier-Robin brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type Q = mf_u.get_qdim(), s = 1;
+      const mesh_im &mim = *mims[0];
+      const mesh_fem *mf_a = 0;
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      const model_complex_plain_vector *A = &(md.complex_variable(dl[0]));
+      mf_a = md.pmesh_fem_of_variable(dl[0]);
+      s = gmm::vect_size(*A);
+      if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+      GMM_ASSERT1(s == Q*Q,
+		  "Bad format Fourier-Robin brick coefficient");
+
+      if (mf_a)
+	asm_qu_term(matl[0], mim, mf_u, *mf_a, *A, rg);
+      else
+	asm_homogeneous_qu_term(matl[0], mim, mf_u, *A, rg);
+    }
+
+    Fourier_Robin_brick(void) {
+      set_flags("Fourier Robin condition", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+  };
+
+  size_type add_Fourier_Robin_brick(model &md, const mesh_im &mim,
+				    const std::string &varname,
+				    const std::string &dataname,
+				    size_type region) {
+    pbrick pbr = new Fourier_Robin_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    return md.add_brick(pbr, model::varnamelist(1, varname),
+			model::varnamelist(1, dataname), tl,
+			model::mimlist(1, &mim), region);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // ----------------------------------------------------------------------
   //
   // Constraint brick
@@ -1267,6 +1495,9 @@ namespace getfem {
   // à interfacer, dont l'acces aux contraintes stockées dans la brique ...
   // et a ranger dans une serie de briques "accès direct" ou on peut modifier
   // les sys linéaire sans intégration de m.e.f.
+
+
+
 
 
 

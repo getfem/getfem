@@ -30,7 +30,7 @@ __version__ = "$Revision$"
 # $Source: getfem++/interface/src/python/getfem.base.py,v $
 
 import sys
-import numpy
+from numpy import *
 
 from _getfem import *
 obj_count = {}
@@ -226,12 +226,14 @@ mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         if not self.is_lagrangian:
             raise RuntimeError('cannot eval on a non-Lagragian MeshFem')
         if self.qdim() != 1:
-            Ind = numpy.arange(0,nbd,self.qdim()) # = sdof
+            Ind = arange(0,nbd,self.qdim()) # = sdof
             P   = P[:,Ind]
             nbd = P.shape[1] # = nb_sdof
         x = P[:,0]
-        r = numpy.array(eval(expression))
-        Z = numpy.zeros(r.shape + (nbd,),'d')
+        r = array(eval(expression))
+        e = eval(expression)
+        Z = zeros(r.shape + (nbd,), type(e))
+        # Z = zeros(r.shape + (nbd,), 'd');
         for i in range(0,nbd):
             x = P[:,i]
             Z[...,i] = eval(expression)
@@ -453,6 +455,8 @@ model states.
     #@SET    MODEL:SET('add Dirichlet condition with multipliers')
     #@SET    MODEL:SET('add Dirichlet condition with penalization')
     #@SET    MODEL:SET('change penalization coeff Dirichlet')
+    #@SET    MODEL:SET('add Helmholtz brick')
+    #@SET    MODEL:SET('add Fourier Robin brick')
     
 class GeoTrans:
     """General function for building descriptors to geometric transformations.
@@ -662,7 +666,7 @@ class Spmat:
         if (isinstance(other,(int,float,complex))):
             m = Spmat('copy',self)
             m.set('scale',other)
-        elif (isinstance(other,list) or isinstance(other, numpy.ndarray)):
+        elif (isinstance(other,list) or isinstance(other, ndarray)):
             m = self.mult(other)
         else:
             m = Spmat('mult',self,other)
@@ -671,7 +675,7 @@ class Spmat:
         if (isinstance(other,(int,float,complex))):
             m=Spmat('copy',self)
             m.set('scale',other)
-        elif (isinstance(other,list) or isinstance(other, numpy.ndarray)):
+        elif (isinstance(other,list) or isinstance(other, ndarray)):
             m=self.tmult(other)
         else:
             m=Spmat('mult',other,self)

@@ -1,8 +1,10 @@
 EXTRA_DIST=demo_tripod.py demo_tripod_alt.py demo_plate.py \
-	check_export.py getfem_tvtk.py demo_laplacian.py
+	check_export.py getfem_tvtk.py demo_laplacian.py demo_wave.py
 
 if BUILDPYTHON
-TESTS = \
+TESTS = 				\
+	$(srcdir)/check_export.py	\
+	$(srcdir)/demo_wave.py		\
 	$(srcdir)/demo_laplacian.py
 
 TESTS_ENVIRONMENT = \

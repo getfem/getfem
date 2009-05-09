@@ -2871,7 +2871,10 @@ ind_brick=gf_model_set(md,'add source term brick', \tmim mim, \tstr varname, \ts
 ind_brick=gf_model_set(md,'add normal source term brick', \tmim mim, \tstr varname, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region[, \tstr dataname ])
-gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscal coeff)@@
+gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscal coeff)
+ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])
+ind_brick=gf_model_set(md,'add Fourier Robin brick', \tmim mim, \tstr varname[, \tstr dataname, \tint region)
+@@
 \end{synopsis}
 \begin{cmddescription}
 \sep{@@gf_model_set(mds,'variable', \tvec U[, \tint niter])@@} :
@@ -2991,6 +2994,19 @@ in the model.
 Change the penalization coefficient of a Dirichlet condition with
 penalization brick. If the brick is not of this kind,
 this function has an undefined behavior.
+
+\sep{@@ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])@@} :
+Add a Helmholtz term to the model relatively to the variable `varname`.
+`dataname` should contain the wave number.
+`region` is an optional mesh region on which the term is added.
+If it is not specified, it is added on the whole mesh.
+
+\sep{@@ind_brick=gf_model_set(md,'add Fourier Robin brick', \tmim mim, \tstr varname[, \tstr dataname, \tint region)@@} :
+Add a Fourier-Robin term to the model relatively to the variable
+`varname`. this corresponds to a weak term of the form $\int (qu).v$.
+`dataname` should contain the parameter $q$ of the Fourier-Robin condition.
+`region` is the mesh region on which the term is added.
+
 \end{cmddescription}
 \newpage
 

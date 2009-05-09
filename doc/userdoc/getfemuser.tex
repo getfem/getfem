@@ -1974,7 +1974,7 @@ where \cpp{M} is a row matrix which will be filled with the linear map represent
 
 This part is a work in progress for future \gf 4.0. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined bricks which can be assembled to describe a complex situation. A brick can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a brick is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of bricks. An effort as been made in order to facilitate as much as possible the definition of a new brick. A brick is mainly defined by its contribution in the tangent linear system to be solved.
 
-This model description is an evolution of the model bricks of previous versions of \gf. Compared to the old system, it is more flexible, more general, allows the coupling of model (multiphysics) in a easier way and facilitate the writing of new components.
+This model description is an evolution of the model bricks of previous versions of \gf. Compared to the old system, it is more flexible, more general, allows the coupling of model (multiphysics) in a easier way and facilitate the writing of new components. It also facilitate the write of time integration schemes for evolving PDEs.
 
 The kernel of the model description is contained in the file \cpp{getfem_models.h}. The two main objects are the \cpp{model} and the \cpp{bricks}.
 
@@ -2491,6 +2491,48 @@ int main(void) \{
 Note that the brick can be added in an arbitrary order.
 
 \subsection{Constraint brick (and ``direct'' bricks)}
+
+\subsection{Helmholtz brick}
+This brick represent the complex or real Helmholtz problem
+
+$ \Delta u + k^2 u = ... $
+
+where $k$ the wave number is a real or complex value. For a complex version, a complex model has to be used (see \cpp{helmholtz.cc} in the tests directory)
+
+The function adding a Helmholtz brick to a model is
+\begin{cppcode}
+  getfem::add_Helmholtz_brick(md, mim, varname, dataname, region);
+\end{cppcode}
+where \cpp{varname} is the variable on which the Helmholtz term is added and \cpp{dataname} should contain the wave number.
+
+\subsection{Fourier-Robin brick}
+This brick can be used to add boundary conditions of Fourier-Robin type like\\
+
+$ \frac{\partial u}{\partial n} = Qu $
+
+for scalar problems, or
+
+$ \sigma n = Qu $
+
+for linearized elasticity problems. \cpp{Q} is a scalar field in the scalar case or a matrix field in the vectorial case. This brick works for both real or complex terms in scalar or vectorial problems.
+
+The function adding this brick to a model is:
+\begin{cppcode}
+  add_Fourier_Robin_brick(md, mim, varname, dataname, region);
+\end{cppcode}
+where \cpp{dataname} is the pdata of the model which represents the coefficient $Q$.
+
+Note that an additional right hand
+side can be added with a source term brick.
+
+
+
+
+
+
+
+
+
 
 
 

@@ -497,7 +497,7 @@ namespace getfem {
 		       const mesh_region &rg = mesh_region::all_convexes()) {
     const char *st;
     if (mf.get_qdim() == 1)
-      st = "F=data(1); V(#1)+=comp(Base(#1))*F(1);";
+      st = "F=data(1); V(#1)+=comp(Base(#1)).F(1);";
     else
       st = "F=data(qdim(#1));"
 	"V(#1)+=comp(vBase(#1))(:,i).F(i);";
@@ -586,8 +586,6 @@ namespace getfem {
     generic_assembly assem;
     GMM_ASSERT1(mf_d.get_qdim() == 1,
 		"invalid data mesh fem (Qdim=1 required)");
-    assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
-    assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
     const char *asm_str = "";
     if (mf_u.get_qdim() == 1)
       asm_str = "Q=data$1(#2);"
@@ -602,6 +600,27 @@ namespace getfem {
 		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))"
 		  "(:,i,:,j,k).Q(i,j,k);";
     asm_real_or_complex_1_param(M, mim, mf_u, mf_d, Q, rg, asm_str);
+  }
+
+  template<typename MAT, typename VECT>
+  void asm_homogeneous_qu_term(MAT &M, const mesh_im &mim,
+			       const mesh_fem &mf_u, const VECT &Q, 
+			       const mesh_region &rg) {
+    generic_assembly assem;
+    const char *asm_str = "";
+    if (mf_u.get_qdim() == 1)
+      asm_str = "Q=data$1(1);"
+	"M(#1,#1)+=comp(Base(#1).Base(#1))(:,:).Q(i);";
+    else
+      if (is_Q_symmetric(Q,mf_u.get_qdim(),1))
+	asm_str = "Q=data$1(qdim(#1),qdim(#1));"
+		  "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))"
+		  "(:,i,:,j).Q(i,j));";
+      else
+        asm_str = "Q=data$1(qdim(#1),qdim(#1));"
+		  "M(#1,#1)+=comp(vBase(#1).vBase(#1))"
+		  "(:,i,:,j).Q(i,j);";
+    asm_real_or_complex_1_param(M, mim, mf_u, mf_u, Q, rg, asm_str);
   }
 
   /** 
@@ -901,7 +920,7 @@ namespace getfem {
 
 
   /** 
-      assembly of the term @f$\int_\Omega Ku.v - \nabla u.\nabla v@f$, 
+      assembly of the term @f$\int_\Omega Kuv - \nabla u.\nabla v@f$, 
       for the helmholtz equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
 
       The argument K_squared may be a real or a complex-valued vector.
@@ -965,6 +984,80 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_data);
+    assem.push_data(K_squared);
+    assem.push_mat(const_cast<MAT&>(M));
+    assem.assembly(rg);
+  }
+
+
+  /** 
+      assembly of the term @f$\int_\Omega Kuv - \nabla u.\nabla v@f$, 
+      for the helmholtz equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
+
+      The argument K_squared may be a real or a complex-valued scalar.
+
+     @ingroup asm
+  */
+  template<typename MAT, typename VECT>
+  void asm_homogeneous_Helmholtz
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const VECT &K_squared, 
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    asm_homogeneous_Helmholtz(M, mim, mf_u, K_squared, rg,
+		  typename gmm::linalg_traits<VECT>::value_type());
+  }
+
+  template<typename MAT, typename VECT, typename T>
+  void asm_homogeneous_Helmholtz(MAT &M, const mesh_im &mim,
+				 const mesh_fem &mf_u,
+				 const VECT &K_squared,
+				 const mesh_region &rg, T) {
+    asm_homogeneous_Helmholtz_real(M, mim, mf_u, K_squared, rg);
+  }
+
+  template<typename MAT, typename VECT, typename T>
+  void asm_homogeneous_Helmholtz(MAT &M, const mesh_im &mim,
+				 const mesh_fem &mf_u,
+				 const VECT &K_squared,
+				 const mesh_region &rg, std::complex<T>) {
+    asm_homogeneous_Helmholtz_cplx(gmm::real_part(M),
+				   gmm::imag_part(M), mim, mf_u,
+				   gmm::real_part(K_squared),
+				   gmm::imag_part(K_squared), rg);
+  }
+
+
+  template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
+  void asm_homogeneous_Helmholtz_cplx(const MATr &Mr, const MATi &Mi,
+				      const mesh_im &mim,
+				      const mesh_fem &mf_u,
+				      const VECTr &K_squaredr,
+				      const VECTi &K_squaredi, 
+				      const mesh_region &rg) {
+    generic_assembly assem("Kr=data$1(1); Ki=data$2(1);"
+			   "m = comp(Base(#1).Base(#1)); "
+			   "M$1(#1,#1)+=sym(m(:,:).Kr(1) - "
+			   "comp(Grad(#1).Grad(#1))(:,i,:,i));"
+			   "M$2(#1,#1)+=sym(m(:,:).Ki(1));");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_data(K_squaredr);
+    assem.push_data(K_squaredi);
+    assem.push_mat(const_cast<MATr&>(Mr));
+    assem.push_mat(const_cast<MATi&>(Mi));
+    assem.assembly(rg);
+  }
+
+  template<typename MAT, typename VECT>  
+  void asm_homogeneous_Helmholtz_real(const MAT &M, const mesh_im &mim,
+				      const mesh_fem &mf_u,
+				      const VECT &K_squared, 
+				      const mesh_region &rg) {
+    generic_assembly assem("K=data(1);"
+			   "m = comp(Base(#1).Base(#1)); "
+			   "M$1(#1,#1)+=sym(m(:,:).K(1) - "
+			   "comp(Grad(#1).Grad(#1))(:,i,:,i));");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
     assem.push_data(K_squared);
     assem.push_mat(const_cast<MAT&>(M));
     assem.assembly(rg);

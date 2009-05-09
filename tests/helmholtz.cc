@@ -62,7 +62,7 @@ struct Helmholtz_problem {
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   complex_type wave_number;
 
-  scalar_type residual;        /* max residual for the iterative solvers         */
+  scalar_type residual;        /* max residual for the iterative solvers     */
   int with_mult;
 
   std::string datafilename;
@@ -74,8 +74,11 @@ struct Helmholtz_problem {
   Helmholtz_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh) {}
 };
 
-complex_type incoming_field(const base_node &P, scalar_type k) {
-  return complex_type(cos(k*P[1]+.2),sin(k*P[1]+.2));
+complex_type __wave_number;
+
+complex_type incoming_field(const base_node &P) {
+  return complex_type(cos(__wave_number.real()*P[1]+.2),
+		      sin(__wave_number.real()*P[1]+.2));
   /*scalar_type s = 0;
   for (size_type i=1; i < P.size(); ++i) s += P[i]*(1.-P[i]);
   s = rand()*3. / RAND_MAX;
@@ -123,7 +126,7 @@ void Helmholtz_problem::init(void) {
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
-  wave_number = complex_type
+  __wave_number = wave_number = complex_type
     (PARAM.real_value("WAVENUM_R", "Real part of the wave number"),
      PARAM.real_value("WAVENUM_I", "Imaginary part of the wave number"));
 
@@ -173,7 +176,43 @@ typedef getfem::standard_complex_model_state MODELSTATE;
 
 bool Helmholtz_problem::solve(plain_vector &U) {
 
-  // Helmholtz brick.
+#if 1 // New model bricks
+
+  // Complex model.
+  getfem::model Helmholtz_model(true);
+
+  // Main unknown of the problem
+  Helmholtz_model.add_fem_variable("u", mf_u);
+
+  // Helmholtz term on u.
+  plain_vector K(1); K[0] = wave_number;
+  Helmholtz_model.add_initialized_fixed_size_data("k", K);
+  add_Helmholtz_brick(Helmholtz_model, mim, "u", "k");
+
+  // Fourier-Robin condition.
+  plain_vector Q(1); Q[0] = wave_number * complex_type(0,1.);
+  Helmholtz_model.add_initialized_fixed_size_data("Q", Q);
+  add_Fourier_Robin_brick(Helmholtz_model, mim, "u", "Q", ROBIN_BOUNDARY_NUM);
+
+  // Dirichlet condition
+  plain_vector F(mf_rhs.nb_dof());
+  getfem::interpolation_function(mf_rhs, F, incoming_field);
+  Helmholtz_model.add_initialized_fem_data("DirichletData", mf_rhs, F);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (Helmholtz_model, mim, "u", mf_u,
+     DIRICHLET_BOUNDARY_NUM, "DirichletData");
+
+  // Helmholtz_model.listvar(cout);
+
+  gmm::iteration iter(residual, 1, 40000);
+  getfem::standard_solve(Helmholtz_model, iter);
+
+  gmm::resize(U, mf_u.nb_dof());
+  gmm::copy(Helmholtz_model.complex_variable("u"), U);
+
+#else // Old model bricks
+
+  // Helmholtz brick. 
   getfem::mdbrick_Helmholtz<MODELSTATE> WAVE(mim, mf_u, wave_number);
   
   // (homogeneous) Robin condition
@@ -186,7 +225,7 @@ bool Helmholtz_problem::solve(plain_vector &U) {
   GMM_ASSERT1(!mf_rhs.is_reduced(),
 	      "To be adapted, use interpolation_function");
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = incoming_field(mf_rhs.point_of_basic_dof(i), wave_number.real());
+    F[i] = incoming_field(mf_rhs.point_of_basic_dof(i));
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<MODELSTATE> 
@@ -204,6 +243,10 @@ bool Helmholtz_problem::solve(plain_vector &U) {
 
   // Solution extraction
   gmm::copy(WAVE.get_solution(MS), U);
+
+#endif
+
+  cout << "U = " << U << endl;
 
   return (iter.converged());
 }
@@ -233,7 +276,7 @@ int main(int argc, char *argv[]) {
       exp.write_point_data(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
       exp.write_point_data(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d helmholtz.vtk -f WarpScalar -m BandedSurfaceMap -m Outline"
+	"mayavi2 -d helmholtz.vtk -f WarpScalar -m Surface -m Outline"
 	"\n";
     }
   }
