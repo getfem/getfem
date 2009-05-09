@@ -232,6 +232,8 @@ mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         x = P[:,0]
         r = array(eval(expression))
         e = eval(expression)
+        if (type(e) == type([3,3])):
+            e=e.pop()
         Z = zeros(r.shape + (nbd,), type(e))
         # Z = zeros(r.shape + (nbd,), 'd');
         for i in range(0,nbd):
