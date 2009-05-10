@@ -28,6 +28,7 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_im.h>
+#include <getfemint_gsparse.h>
 
 using namespace getfemint;
 
@@ -51,11 +52,18 @@ using namespace getfemint;
   @SET MODEL:SET('add generic elliptic brick')
   @SET MODEL:SET('add source term brick')
   @SET MODEL:SET('add normal source term brick')
-  @SET MODEL:SET('add Dirichlet condition with multiplier')
+  @SET MODEL:SET('add Dirichlet condition with multipliers')
   @SET MODEL:SET('add Dirichlet condition with penalization')
-  @SET MODEL:SET('change penalization coeff Dirichlet')
+  @SET MODEL:SET('change penalization coeff')
   @SET MODEL:SET('add Helmholtz brick')
   @SET MODEL:SET('add Fourier Robin brick')
+  @SET MODEL:SET('add constraint with multipliers')
+  @SET MODEL:SET('add constraint with penalization')
+  @SET MODEL:SET('add explicit matrix')
+  @SET MODEL:SET('add explicit rhs')
+  @SET MODEL:SET('set private matrix')
+  @SET MODEL:SET('set private rhs')
+
 
 MLABCOM*/
 
@@ -165,7 +173,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       md->model().add_initialized_fixed_size_data(name, V);
     }
   } else if (check_cmd(cmd, "variable", in, out, 2, 3, 0, 0)) {
-    /*@SET V = MODEL:SET('variable', @str name, @vec V[, @int niter])
+    /*@SET MODEL:SET('variable', @str name, @vec V[, @int niter])
     Set the value of a variable or data.@*/
     std::string name = in.pop().to_string();
     if (!md->is_complex()) {
@@ -201,7 +209,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       md->model().to_variables(V);
     }
   } else if (check_cmd(cmd, "add Laplacian brick", in, out, 2, 3, 0, 1)) {
-    /*@SET V = MODEL:SET('add Laplacian brick', @tmim mim, @str varname[, @int region])
+    /*@SET ind = MODEL:SET('add Laplacian brick', @tmim mim, @str varname[, @int region])
     add a Laplacian term to the model relatively to the variable `varname`.
     If this is a vector valued variable, the Laplacian term is added
     componentwise. `region` is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh. @*/
@@ -216,7 +224,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add generic elliptic brick", in, out, 3, 4, 0, 1)) {
-    /*@SET V = MODEL:SET('add generic elliptic brick', @tmim mim, @str varname, @str dataname[, @int region])
+    /*@SET ind = MODEL:SET('add generic elliptic brick', @tmim mim, @str varname, @str dataname[, @int region])
     add a generic elliptic term to the model relatively to the variable `varname`.
     The shape of the elliptic
     term depends both on the variable and the data. This corresponds to a
@@ -247,7 +255,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add source term brick", in, out, 3, 5, 0, 1)) {
-    /*@SET V = MODEL:SET('add source term brick', @tmim mim, @str varname, @str dataname[, @int region])
+    /*@SET ind = MODEL:SET('add source term brick', @tmim mim, @str varname, @str dataname[, @int region])
     add a source term to the model relatively to the variable `varname`.
     The source term is represented by the data `dataname` which could be
     constant or described on a fem.  `region` is an optional mesh region
@@ -269,7 +277,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add normal source term brick", in, out, 4, 4, 0, 1)) {
-    /*@SET V = MODEL:SET('add normal source term brick', @tmim mim, @str varname, @str dataname[, @int region])
+    /*@SET ind = MODEL:SET('add normal source term brick', @tmim mim, @str varname, @str dataname[, @int region])
     add a source term on the variable `varname` on a boundary `region`.
     The source term is
     represented by the data `dataname` which could be constant or described
@@ -289,7 +297,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Dirichlet condition with multipliers", in, out, 4, 5, 0, 1)) {
-    /*@SET V = MODEL:SET('add Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
+    /*@SET ind = MODEL:SET('add Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
     Add a Dirichlet condition on the variable `varname` and the mesh
     region `region`. This region should be a boundary. The Dirichlet
     condition is prescribed with a multiplier variable described by
@@ -345,7 +353,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Dirichlet condition with penalization", in, out, 4, 5, 0, 1)) {
-    /*@SET V = MODEL:SET('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname])
+    /*@SET ind = MODEL:SET('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname])
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with penalization. The penalization coefficient
@@ -368,17 +376,17 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     ind += getfem::add_Dirichlet_condition_with_penalization
       (md->model(), mim, varname, coeff, region, dataname);
     out.pop().from_integer(int(ind));
-  } else if (check_cmd(cmd, "change penalization coeff Dirichlet", in, out, 2, 2, 0, 0)) {
-    /*@SET V = MODEL:SET('change penalization coeff Dirichlet', @int ind_brick, @scalar coeff)
+  } else if (check_cmd(cmd, "change penalization coeff", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('change penalization coeff', @int ind_brick, @scalar coeff)
       Change the penalization coefficient of a Dirichlet condition with
       penalization brick. If the brick is not of this kind,
       this function has an undefined behavior.
       @*/
     size_type ind_brick = in.pop().to_integer();
     double coeff = in.pop().to_scalar();
-    getfem::change_penalization_coeff_Dirichlet(md->model(), ind_brick, coeff);
+    getfem::change_penalization_coeff(md->model(), ind_brick, coeff);
   } else if (check_cmd(cmd, "add Helmholtz brick", in, out, 3, 4, 0, 1)) {
-    /*@SET V = MODEL:SET('add Helmholtz brick', @tmim mim, @str varname, @str dataname[, @int region])
+    /*@SET ind = MODEL:SET('add Helmholtz brick', @tmim mim, @str varname, @str dataname[, @int region])
     add a Helmholtz term to the model relatively to the variable `varname`.
     `dataname` should contain the wave number.
     `region` is an optional mesh region on which the term is added.
@@ -395,7 +403,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add Fourier Robin brick", in, out, 4, 4, 0, 1)) {
-    /*@SET V = MODEL:SET('add Fourier Robin brick', @tmim mim, @str varname, @str dataname, @int region)
+    /*@SET ind = MODEL:SET('add Fourier Robin brick', @tmim mim, @str varname, @str dataname, @int region)
     add a Fourier-Robin term to the model relatively to the variable
     `varname`. this corresponds to a weak term of the form $\int (qu).v$.
     `dataname` should contain the parameter $q$ of the Fourier-Robin condition.
@@ -411,5 +419,216 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       = getfem::add_Fourier_Robin_brick(md->model(), mim, varname,dataname, region)
       + config::base_index();
     out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add constraint with multipliers", in, out, 4, 4, 0, 1)) {
+    /*@SET ind = MODEL:SET('add constraint with multipliers', @str varname, @str multname, @mat B, @vec L)
+    Add an additional explicit constraint on the variable `varname` thank to
+    a multiplier `multname` peviously added to the model (should be a fixed
+    size variable).
+    The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
+    It is possible to change the constraint
+    at any time whith the methods MODEL:SET('set private matrix')
+    and MODEL:SET('set private rhs') @*/
+    std::string varname = in.pop().to_string();
+    std::string multname = in.pop().to_string();
+    size_type ind
+      = getfem::add_constraint_with_multipliers(md->model(),varname,multname);
+
+    dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+    
+    if (B->is_complex() && !md->is_complex())
+      THROW_BADARG("Complex constraint for a real model");
+    if (!B->is_complex() && md->is_complex())
+      THROW_BADARG("Real constraint for a complex model");
+
+    if (md->is_complex()) {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    } else {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    }
+    
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray();
+      std::vector<double> V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    } else {
+      carray st = in.pop().to_carray();
+      std::vector<std::complex<double> > V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    }
+
+    out.pop().from_integer(int(ind + config::base_index()));
+  } else if (check_cmd(cmd, "add constraint with penalization", in, out, 4, 4, 0, 1)) {
+    /*@SET ind = MODEL:SET('add constraint with penalization', @str varname, @scalar coeff, @mat B, @vec L)
+    Add an additional explicit penalized constraint on the variable `varname`.
+    The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
+    Be aware that `B` should not contain a palin row, otherwise the whole
+    tangent matrix will be plain. It is possible to change the constraint
+    at any time whith the methods MODEL:SET('set private matrix')
+    and MODEL:SET('set private rhs'). The method
+    MODEL:SET('change penalization coeff') can be used.@*/
+    std::string varname = in.pop().to_string();
+    double coeff = in.pop().to_scalar();
+    size_type ind
+      = getfem::add_constraint_with_penalization(md->model(), varname, coeff);
+
+    dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+    
+    if (B->is_complex() && !md->is_complex())
+      THROW_BADARG("Complex constraint for a real model");
+    if (!B->is_complex() && md->is_complex())
+      THROW_BADARG("Real constraint for a complex model");
+
+    if (md->is_complex()) {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    } else {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    }
+    
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray();
+      std::vector<double> V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    } else {
+      carray st = in.pop().to_carray();
+      std::vector<std::complex<double> > V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    }
+
+    out.pop().from_integer(int(ind + config::base_index()));
+  } else if (check_cmd(cmd, "add explicit matrix", in, out, 3, 5, 0, 1)) {
+    /*@SET ind = MODEL:SET('add explicit matrix', @str varname1, @str varname2, @mat B[, @int issymmetric[, @int iscoercive]])
+      Add a brick reprenting an explicit matrix to be added to the tangent
+      linear system relatively to the variables 'varname1' and 'varname2'.
+      The given matrix should have has many rows as the dimension of
+      'varname1' and as many columns as the dimension of 'varname2'.
+      If the two variables are different and if `issymmetric' is set to 1
+      then the transpose of the matrix is also added to the tangent system
+      (default is 0). set `iscoercive` to 1 if the term does not affect the
+      coercivity of the tangent system (default is 0).
+      The matrix can be changed by the command
+      MODEL:SET('set private matrix').@*/
+    std::string varname1 = in.pop().to_string();
+    std::string varname2 = in.pop().to_string();
+    dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+    bool issymmetric = false;
+    bool iscoercive = false;
+    if (in.remaining()) issymmetric = (in.pop().to_integer(0,1) != 1);
+    if (!issymmetric && in.remaining())
+      iscoercive = (in.pop().to_integer(0,1) != 1);
+
+    size_type ind
+      = getfem::add_explicit_matrix(md->model(), varname1, varname2,
+				    issymmetric, iscoercive);
+
+    if (B->is_complex() && !md->is_complex())
+      THROW_BADARG("Complex constraint for a real model");
+    if (!B->is_complex() && md->is_complex())
+      THROW_BADARG("Real constraint for a complex model");
+
+    if (md->is_complex()) {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    } else {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    }
+    
+    out.pop().from_integer(int(ind + config::base_index()));
+  } else if (check_cmd(cmd, "add explicit rhs", in, out, 2, 2, 0, 1)) {
+    /*@SET ind = MODEL:SET('add explicit rhs', @str varname, @vec L)
+      Add a brick reprenting an explicit right hand side to be added to
+      the right hand side of the tangent
+      linear system relatively to the variable 'varname'.
+      The given rhs should have the same size than the dimension of
+      'varname'. The rhs can be changed by the command
+      MODEL:SET('set private rhs'). @*/
+    std::string varname = in.pop().to_string();
+    size_type ind
+      = getfem::add_explicit_rhs(md->model(), varname);
+
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray();
+      std::vector<double> V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    } else {
+      carray st = in.pop().to_carray();
+      std::vector<std::complex<double> > V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    }
+    
+    out.pop().from_integer(int(ind + config::base_index()));
+  } else if (check_cmd(cmd, "set private matrix", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('set private matrix', @int indbrick, @mat B)
+    For some specific bricks having an internal sparse matrix
+    (explicit bricks: 'constraint brick' and 'explicit matrix brick'),
+    set this matrix. @*/
+    size_type ind = in.pop().to_integer();
+    dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+    
+    if (B->is_complex() && !md->is_complex())
+      THROW_BADARG("Complex constraint for a real model");
+    if (!B->is_complex() && md->is_complex())
+      THROW_BADARG("Real constraint for a complex model");
+
+    if (md->is_complex()) {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    } else {
+      if (B->storage()==gsparse::CSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+      else if (B->storage()==gsparse::WSCMAT)
+	getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+      else
+      THROW_BADARG("Constraint matrix should be a sparse matrix");
+    }
+  } else if (check_cmd(cmd, "set private rhs", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('set private rhs', @int indbrick, @vec B)
+    For some specific bricks having an internal right hand side vector
+    (explicit bricks: 'constraint brick' and 'explicit rhs brick'),
+    set this rhs. @*/
+    size_type ind = in.pop().to_integer();
+
+    if (!md->is_complex()) {
+      darray st = in.pop().to_darray();
+      std::vector<double> V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    } else {
+      carray st = in.pop().to_carray();
+      std::vector<std::complex<double> > V(st.begin(), st.end());
+      getfem::set_private_data_rhs(md->model(), ind, V);
+    }
+
   } else bad_cmd(cmd);
 }

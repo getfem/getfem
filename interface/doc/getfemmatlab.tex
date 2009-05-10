@@ -2785,7 +2785,7 @@ size=gf_model_get(md,'memsize')
 V=gf_model_get(md,'variable', \tstr name[, \tint niter])
 name=gf_model_get(md,'mult varname Dirichlet', \tint ind_brick)
 V=gf_model_get(md,'from variables')
-gf_model_get(md,'assembly'[, \tstr option]})
+gf_model_get(md,'assembly'[, \tstr option])
 gf_model_get(md,'solve' [,...])@@
 \end{synopsis}
 \begin{cmddescription}
@@ -2820,7 +2820,7 @@ Return the vector of all the degrees of freedom of the model consisting
 of the concatenation of the variables of the model (usefull
 solve your problem with you own solver).
 
-\sep{@@gf_model_get(md,'assembly'[, \tstr option]})@@} :
+\sep{@@gf_model_get(md,'assembly'[, \tstr option])@@} :
 Assembly of the tangent system taking into account the terms
 from all bricks. @@option@@, if specified, should be 'build all',
 'build rhs' or 'build matrix'. The default is to build the whole
@@ -2871,9 +2871,13 @@ ind_brick=gf_model_set(md,'add source term brick', \tmim mim, \tstr varname, \ts
 ind_brick=gf_model_set(md,'add normal source term brick', \tmim mim, \tstr varname, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region[, \tstr dataname ])
-gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscal coeff)
+gf_model_set(md,'change penalization coeff', \tint ind_brick, \tscal coeff)
 ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])
 ind_brick=gf_model_set(md,'add Fourier Robin brick', \tmim mim, \tstr varname[, \tstr dataname, \tint region)
+ind_brick=gf_model_set(md,'add constraint with penalization',  \tstr varname, \tscal coeff, \tmat B, \tvec L)
+ind_brick=gf_model_set(md,'add constraint with multipliers,  \tstr varname, \tstr multname, \tmat B, \tvec L)
+gf_model_set(md,'set private matrix',  \tint indbrick, \tmat B)
+gf_model_set(md,'set private rhs',  \tint indbrick, \tvec L)
 @@
 \end{synopsis}
 \begin{cmddescription}
@@ -2990,7 +2994,7 @@ described on a fem; scalar or vector valued, depending on the variable
 on which the Dirichlet condition is prescribed. Return the brick index
 in the model.
 
-\sep{@@gf_model_set(md,'change penalization coeff Dirichlet', \tint ind_brick, \tscal coeff)@@} :
+\sep{@@gf_model_set(md,'change penalization coeff', \tint ind_brick, \tscal coeff)@@} :
 Change the penalization coefficient of a Dirichlet condition with
 penalization brick. If the brick is not of this kind,
 this function has an undefined behavior.
@@ -3006,6 +3010,50 @@ Add a Fourier-Robin term to the model relatively to the variable
 `varname`. this corresponds to a weak term of the form $\int (qu).v$.
 `dataname` should contain the parameter $q$ of the Fourier-Robin condition.
 `region` is the mesh region on which the term is added.
+
+\sep{@@ind_brick=gf_model_set(md,'add constraint with multipliers,  \tstr varname, \tscal coeff, \tmat B, \tvec L)@@} :
+Add an additional explicit constraint on the variable `varname` thank to
+a multiplier `multname` peviously added to the model (should be a fixed
+size variable).
+The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
+It is possible to change the constraint
+at any time whith the methods 'set private matrix'
+and 'set private rhs'
+
+\sep{@@ind_brick=gf_model_set(md,'add constraint with penalization',  \tstr varname, \tscal coeff, \tmat B, \tvec L)@@} :
+Add an additional explicit penalized constraint on the variable `varname`.
+The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
+Be aware that `B` should not contain a plain row, otherwise the whole
+tangent matrix will be plain. It is possible to change the constraint
+at any time whith the methods 'set private matrix'
+and 'set private rhs'. The method 'change penalization coeff' can be used.
+
+\sep{@@ind_brick=gf_model_set(md,'add explicit matrix', \tstr varname1, \tstr varname2, \tmat B[, \tint issymmetric[, \tint iscoercive]])@@} :
+Add a brick reprenting an explicit matrix to be added to the tangent
+linear system relatively to the variables 'varname1' and 'varname2'.
+The given matrix should have has many rows as the dimension of
+'varname1' and as many columns as the dimension of 'varname2'.
+If the two variables are different and if `issymmetric' is set to 1
+then the transpose of the matrix is also added to the tangent system
+(default is 0). set `iscoercive` to 1 if the term does not affect the
+coercivity of the tangent system (default is 0).
+The matrix can be changed by the command 'set private matrix'.
+
+\sep{@@ind_brick=gf_model_set(md,'add explicit rhs', \tstr varname, \tvec L)@@} :
+Add a brick reprenting an explicit right hand side to be added to
+the right hand side of the tangent
+linear system relatively to the variable 'varname'.
+The given vector should have the same size than the dimension of
+'varname'. Its value can be changed after the creation of the brick by
+the command 'set private rhs'. 
+
+\sep{@@gf_model_set(md,'set private matrix',  \tint indbrick, \tmat B)@@} :
+For some specific bricks having an internal sparse matrix
+(constraint brick), set this matrix. 
+
+\sep{@@gf_model_set(md,'set private rhs',  \tint indbrick, \tvec L)@@} :
+For some specific bricks having an internal right hand side vector
+(constraint brick), set this rhs.
 
 \end{cmddescription}
 \newpage

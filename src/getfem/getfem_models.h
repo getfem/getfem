@@ -119,14 +119,12 @@ namespace getfem {
 
     struct var_description {
      
-      // + format (scalaire, vectoriel, tensoriel ordre 2 ou 4)
-      // + mim associée (avec possibilité de mim par défaut par fem ...).
       bool is_variable;  // This is a variable or a parameter.
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
       size_type n_iter; //  number of version of the variable stored (for time
-      // integration schemes.
+                        // integration schemes.
 
       // fem description of the variable
       const mesh_fem *mf;           // Principal fem of the variable.
@@ -471,6 +469,17 @@ namespace getfem {
     /** List the model bricks. */
     void listbricks(std::ostream &ost) const;
 
+    /** Force the re-computation of a brick for the next assembly. */ 
+    void touch_brick(size_type ind_brick) {
+      GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+      bricks[ind_brick].terms_to_be_computed = true;
+    }
+
+    pbrick brick_pointer(size_type ind_brick) {
+      GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+      return bricks[ind_brick].pbr;
+    }
+
     /** Add a brick to the model. varname is the list of variable used
         and datanames the data used. If a variable is used as a data, it
         should be declared in the datanames (it will depend on the value of
@@ -704,8 +713,8 @@ namespace getfem {
       penalization brick. If the brick is not of this kind,
       this function has an undefined behavior.
   */
-  void change_penalization_coeff_Dirichlet(model &md, size_type ind_brick,
-					   scalar_type penalisation_coeff); 
+  void change_penalization_coeff(model &md, size_type ind_brick,
+				 scalar_type penalisation_coeff); 
 
   /** Add a Helmoltz brick to the model. This corresponds to the scalar
       equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
@@ -733,6 +742,152 @@ namespace getfem {
 				    const std::string &varname,
 				    const std::string &dataname,
 				    size_type region);
+
+  // Constraint brick.
+  model_real_sparse_matrix &set_private_data_brick_real_matrix
+  (model &md, size_type indbrick);
+  model_real_plain_vector &set_private_data_brick_real_rhs
+  (model &md, size_type indbrick);
+  model_complex_sparse_matrix &set_private_data_brick_complex_matrix
+  (model &md, size_type indbrick);
+  model_complex_plain_vector &set_private_data_brick_complex_rhs
+  (model &md, size_type indbrick);
+  size_type add_constraint_with_penalization
+  (model &md, const std::string &varname, scalar_type penalisation_coeff);
+  size_type add_constraint_with_multipliers
+  (model &md, const std::string &varname, const std::string &multname);
+
+  template <typename VECT, typename T>
+  void set_private_data_rhs(model &md, size_type ind,
+				const VECT &L, T) {
+    model_real_plain_vector &LL = set_private_data_brick_real_rhs(md, ind);
+    gmm::resize(LL, gmm::vect_size(L));
+    gmm::copy(L, LL);
+  }
+
+  template <typename VECT, typename T>
+  void set_private_data_rhs(model &md, size_type ind, const VECT &L,
+			   std::complex<T>) {
+    model_complex_plain_vector &LL = set_private_data_brick_complex_rhs(md, ind);
+    gmm::resize(LL, gmm::vect_size(L));
+    gmm::copy(L, LL);
+  }
+
+  /** For some specific bricks having an internal right hand side vector
+      (explicit bricks: 'constraint brick' and 'explicit rhs brick'),
+      set this rhs. 
+  */
+  template <typename VECT>
+  void set_private_data_rhs(model &md, size_type indbrick, const VECT &L) {
+    typedef typename gmm::linalg_traits<VECT>::value_type T;
+    set_private_data_rhs(md, indbrick, L, T());
+  }
+
+  template <typename MAT, typename T>
+  void set_private_data_matrix(model &md, size_type ind,
+				   const MAT &B, T) {
+    model_real_sparse_matrix &BB = set_private_data_brick_real_matrix(md, ind);
+    gmm::resize(BB, gmm::mat_nrows(B), gmm::mat_ncols(B));
+    gmm::copy(B, BB);
+  }
+
+  template <typename MAT, typename T>
+  void set_private_data_matrix(model &md, size_type ind, const MAT &B,
+			      std::complex<T>) {
+    model_complex_sparse_matrix &BB
+      = set_private_data_brick_complex_matrix(md, ind);
+    gmm::resize(BB, gmm::mat_nrows(B), gmm::mat_ncols(B));
+    gmm::copy(B, BB);
+  }
+
+  /** For some specific bricks having an internal sparse matrix
+      (explicit bricks: 'constraint brick' and 'explicit matrix brick'),
+      set this matrix. @*/
+  template <typename MAT>
+  void set_private_data_matrix(model &md, size_type indbrick,
+				   const MAT &B) {
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    set_private_data_matrix(md, indbrick, B, T());
+  }
+
+  /** Add an additional explicit penalized constraint on the variable
+      `varname`. The constraint is $BU=L$ with `B` being a rectangular
+      sparse matrix.
+      Be aware that `B` should not contain a palin row, otherwise the whole
+      tangent matrix will be plain. It is possible to change the constraint
+      at any time whith the methods set_private_matrix and set_private_rhs.
+      The method change_penalization_coeff can also be used.
+  */
+  template <typename MAT, typename VECT>
+  size_type add_constraint_with_penalization
+  (model &md, const std::string &varname, scalar_type penalisation_coeff,
+   const MAT &B, const VECT &L) {
+    size_type ind
+      = add_constraint_with_penalization(md, varname, penalisation_coeff);
+    size_type n = gmm::mat_nrows(B), m = gmm::mat_ncols(B);
+    set_private_data_rhs(md, ind, L);
+    set_private_data_matrix(md, ind, B);
+    return ind;
+  }
+
+  /** Add an additional explicit constraint on the variable `varname` thank to
+    a multiplier `multname` peviously added to the model (should be a fixed
+    size variable).
+    The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
+    It is possible to change the constraint
+    at any time whith the methods set_private_matrix
+    and set_private_rhs.
+  */
+  template <typename MAT, typename VECT>
+  size_type add_constraint_with_multipliers
+  (model &md, const std::string &varname, const std::string &multname,
+   const MAT &B, const VECT &L) {
+    size_type ind = add_constraint_with_multipliers(md, varname, multname);
+    set_private_data_rhs(md, ind, L);
+    set_private_data_matrix(md, ind, B);
+    return ind;
+  }
+
+  size_type add_explicit_matrix(model &md, const std::string &varname1,
+				const std::string &varname2,
+				bool issymmetric, bool iscoercive); 
+  size_type add_explicit_rhs(model &md, const std::string &varname);
+  
+  /** Add a brick reprenting an explicit matrix to be added to the tangent
+      linear system relatively to the variables 'varname1' and 'varname2'.
+      The given matrix should have has many rows as the dimension of
+      'varname1' and as many columns as the dimension of 'varname2'.
+      If the two variables are different and if `issymmetric' is set to true
+      then the transpose of the matrix is also added to the tangent system
+      (default is false). set `iscoercive` to true if the term does not
+      affect the coercivity of the tangent system (default is false).
+      The matrix can be changed by the command set_private_matrix.
+  */
+  template <typename MAT>
+  size_type add_explicit_matrix(model &md, const std::string &varname1,
+				const std::string &varname2, const MAT &B,
+				bool issymmetric = false,
+				bool iscoercive = false) {
+    size_type ind = add_explicit_matrix(md, varname1, varname2,
+					issymmetric, iscoercive);
+    set_private_data_matrix(md, ind, B);
+    return ind;
+  }
+
+  /**  Add a brick reprenting an explicit right hand side to be added to
+       the right hand side of the tangent
+       linear system relatively to the variable 'varname'.
+       The given rhs should have the same size than the dimension of
+       'varname'. The rhs can be changed by the command set_private_rhs.
+  */  
+  template <typename VECT>
+  size_type add_explicit_rhs(model &md, const std::string &varname,
+			     const VECT &L) {
+    size_type ind = add_explicit_rhs(md, varname);
+    set_private_data_rhs(md, ind, L);
+    return ind;
+  }
+  
 
 
 }  /* end of namespace getfem.                                             */

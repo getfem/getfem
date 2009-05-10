@@ -1151,8 +1151,8 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
-  void change_penalization_coeff_Dirichlet(model &md, size_type ind_brick,
-					   scalar_type penalisation_coeff) {
+  void change_penalization_coeff(model &md, size_type ind_brick,
+				 scalar_type penalisation_coeff) {
     const std::string &coeffname = md.dataname_of_brick(ind_brick, 0);
     if (!md.is_complex()) {
       model_real_plain_vector &d = md.set_real_variable(coeffname);
@@ -1380,37 +1380,22 @@ namespace getfem {
 			model::mimlist(1, &mim), region);
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   // ----------------------------------------------------------------------
   //
   // Constraint brick
   //
   // ----------------------------------------------------------------------
 
-  struct constraint_brick : public virtual_brick {
-
+  struct have_private_data_brick : public virtual_brick {
+    
     model_real_sparse_matrix rB;
     model_complex_sparse_matrix cB;
     model_real_plain_vector rL;
     model_complex_plain_vector cL;
+
+  };
+
+  struct constraint_brick : public have_private_data_brick {
     
     virtual void asm_real_tangent_terms(const model &md,
 					const model::varnamelist &vl,
@@ -1483,7 +1468,7 @@ namespace getfem {
 
     constraint_brick(bool penalized) {
       set_flags(penalized ? "Constraint with penalization brick"
-		          : "Constraint with multiplier brick",
+		          : "Constraint with multipliers brick",
 		true /* is linear*/,
 		true /* is symmetric */, penalized /* is coercive */,
 		true /* is real */, true /* is complex */);
@@ -1492,10 +1477,192 @@ namespace getfem {
 
   };
 
-  // à interfacer, dont l'acces aux contraintes stockées dans la brique ...
-  // et a ranger dans une serie de briques "accès direct" ou on peut modifier
-  // les sys linéaire sans intégration de m.e.f.
+  model_real_sparse_matrix &set_private_data_brick_real_matrix
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->rB;
+  }
 
+  model_real_plain_vector &set_private_data_brick_real_rhs
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->rL;
+  }
+
+  model_complex_sparse_matrix &set_private_data_brick_complex_matrix
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->cB;
+  }
+
+  model_complex_plain_vector &set_private_data_brick_complex_rhs
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    have_private_data_brick *p = dynamic_cast<have_private_data_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->cL;
+  }
+
+  size_type add_constraint_with_penalization
+  (model &md, const std::string &varname, scalar_type penalisation_coeff) {
+    std::string coeffname = md.new_name("penalization_on_" + varname);
+    md.add_fixed_size_data(coeffname, 1);
+    if (md.is_complex())
+      md.set_complex_variable(coeffname)[0] = penalisation_coeff;
+    else
+      md.set_real_variable(coeffname)[0] = penalisation_coeff;
+    pbrick pbr = new constraint_brick(true);
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl(1, coeffname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+  
+  size_type add_constraint_with_multipliers
+  (model &md, const std::string &varname, const std::string &multname) {
+    pbrick pbr = new constraint_brick(false);
+    model::termlist tl;
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl;
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Explicit matrix brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct explicit_matrix_brick : public have_private_data_brick {
+    
+    virtual void asm_real_tangent_terms(const model &,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					size_type, nonlinear_version) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Explicit matrix has one and only one term");
+      GMM_ASSERT1(mims.size() == 0, "Explicit matrix need no mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() == 0,
+		  "Wrong number of variables for explicit matrix brick");
+      gmm::copy(rB, matl[0]);
+    }
+
+    virtual void asm_complex_tangent_terms(const model &,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vecl,
+					   size_type,
+					   nonlinear_version) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Explicit matrix has one and only one term");
+      GMM_ASSERT1(mims.size() == 0, "Explicit matrix need no mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() == 0,
+		  "Wrong number of variables for explicit matrix brick");
+      gmm::copy(cB, matl[0]);
+    }
+
+    explicit_matrix_brick(bool symmetric_, bool coercive_) {
+      set_flags("Explicit matrix brick",
+		true /* is linear*/,
+		symmetric_ /* is symmetric */, coercive_ /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+  };
+
+  size_type add_explicit_matrix
+  (model &md, const std::string &varname1, const std::string &varname2,
+   bool issymmetric, bool iscoercive) {
+    pbrick pbr = new explicit_matrix_brick(issymmetric, iscoercive);
+    model::termlist tl;
+    tl.push_back(model::term_description(varname1, varname2, issymmetric));
+    model::varnamelist vl(1, varname1);
+    vl.push_back(varname2);
+    model::varnamelist dl;
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+
+  // ----------------------------------------------------------------------
+  //
+  // Explicit rhs brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct explicit_rhs_brick : public have_private_data_brick {
+    
+    virtual void asm_real_tangent_terms(const model &,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					size_type, nonlinear_version) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Explicit rhs has one and only one term");
+      GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 0,
+		  "Wrong number of variables for explicit rhs brick");
+      gmm::copy(rL, vecl[0]);
+    }
+
+    virtual void asm_complex_tangent_terms(const model &,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vecl,
+					   size_type,
+					   nonlinear_version) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+		  "Explicit rhs has one and only one term");
+      GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 0,
+		  "Wrong number of variables for explicit rhs brick");
+      gmm::copy(cL, vecl[0]);
+      
+    }
+
+    explicit_rhs_brick(void) {
+      set_flags("Explicit rhs brick",
+		true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+
+  };
+
+  size_type add_explicit_rhs
+  (model &md, const std::string &varname) {
+    pbrick pbr = new explicit_rhs_brick();
+    model::termlist tl;
+    tl.push_back(model::term_description(varname));
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl;
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
 
 
 

@@ -1,4 +1,4 @@
-## 2D scalar wave equation (helmholtz) demonstration. 
+## 2D scalar wave equation (Helmholtz) demonstration. 
 from numpy import *
 from getfem import *
 import os
@@ -62,5 +62,5 @@ if (not(make_check)):
     sl.export_to_vtk('wave.vtk', mfu, real(U)*1, 'rWave',
                      mfu, imag(U)*1, 'iWave')
 
-    print 'You can view the solution with (for example):'
+    print 'You can view the solution with (for instance):'
     print 'mayavi2 -d wave.vtk -f WarpScalar -m Surface'

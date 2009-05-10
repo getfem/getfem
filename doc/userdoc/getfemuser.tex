@@ -2381,7 +2381,7 @@ The second version of the Dirichlet condition brick is the one with penalization
 \end{cppcode}
 The penalization consists in computing the mass matrix of the variable and add it multiplied by the penalization coefficient to the stiffness matrix. The penalization coefficient is added as a data of the model and can be changed thanks to the function
 \begin{cppcode}
-  change_penalization_coeff_Dirichlet(md, ind_brick, penalisation_coeff);
+  change_penalization_coeff(md, ind_brick, penalisation_coeff);
 \end{cppcode}
 
 \subsection{Source term bricks (and Neumann condition) }
@@ -2490,8 +2490,55 @@ int main(void) \{
 
 Note that the brick can be added in an arbitrary order.
 
-\subsection{Constraint brick (and ``direct'' bricks)}
+\subsection{Constraint brick} 
 
+The constraint brick allows to add an explicit constraint on a variable. Explicit means that no integration is done. if $U$ is a variable then an constraint of the type
+
+$ BU = L, $
+
+can be added with the two following functions:
+\begin{cppcode}
+  indbrick = getfem::add_constraint_with_penalization(md, varname, penalisation_coeff, B, L);
+  indbrick = getfem::add_constraint_with_multipliers(md, varname, multname, B, L);
+\end{cppcode}
+
+In the second case, a (fixed size) variable which will serve as a multiplier should be first added to the model.
+
+For the penalized version `B` should not contain a plain row, otherwise the whole tangent matrix will be plain. The penalization parameter can be changed thanks to the function
+\begin{cppcode}
+  change_penalization_coeff(md, ind_brick, penalisation_coeff);
+\end{cppcode}
+
+It is possible to change the constraints at any time thanks to the two following functions :
+\begin{cppcode}
+getfem::set_private_data_matrix(md, indbrick, B)
+getfem::set_private_data_rhs(md, indbrick, L)
+\end{cppcode}
+where \cpp{indbrick} is the index of the brick in the model.
+
+\subsection{Other ``explicit'' bricks}
+
+Two (very simple) bricks allow to add some explicit terms to the tangent system.
+
+The function
+\begin{cppcode}
+indbrick = getfem::add_explicit_matrix(md, varname1, varname2, B, issymmetric = false,
+	            			             iscoercive = false)
+\end{cppcode}
+add a brick which just add the matrix \cpp{B} to the tangent system relatively to the variables \cpp{varname1} and \cpp{varname2}. The given matrix should have has many rows as the dimension of \cpp{varname1} and as many columns as the dimension of \cpp{varname2}. If the two variables are different and if \cpp{issymmetric} is set to true then the transpose of the matrix is also added to the tangent system (default is false). set \cpp{iscoercive} to true if the term does not affect the coercivity of the tangent system (default is false). The matrix can be changed by the command
+\begin{cppcode}                       
+getfem::set_private_data_matrix(md, indbrick, B)
+\end{cppcode}
+
+The function
+\begin{cppcode}
+getfem::add_explicit_rhs(md, varname, L);
+\end{cppcode}
+add a brick which just add the vector \cpp{L} to the right hand side of the tangent system relatively to the variable \cpp{varname}. The given vector should have the same size as the variable \cpp{varname}. The value of the vector can by changed by the command
+\begin{cppcode}                       
+getfem::set_private_data_rhs(md, indbrick, L)
+\end{cppcode}
+                           
 \subsection{Helmholtz brick}
 This brick represent the complex or real Helmholtz problem
 

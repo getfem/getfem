@@ -456,10 +456,16 @@ model states.
     #@SET    MODEL:SET('add normal source term brick')
     #@SET    MODEL:SET('add Dirichlet condition with multipliers')
     #@SET    MODEL:SET('add Dirichlet condition with penalization')
-    #@SET    MODEL:SET('change penalization coeff Dirichlet')
+    #@SET    MODEL:SET('change penalization coeff')
     #@SET    MODEL:SET('add Helmholtz brick')
     #@SET    MODEL:SET('add Fourier Robin brick')
-    
+    #@SET    MODEL:SET('add constraint with multipliers')
+    #@SET    MODEL:SET('add constraint with penalization')
+    #@SET    MODEL:SET('add explicit matrix')
+    #@SET    MODEL:SET('add explicit rhs')
+    #@SET    MODEL:SET('set private matrix')
+    #@SET    MODEL:SET('set private rhs')
+
 class GeoTrans:
     """General function for building descriptors to geometric transformations.
 
