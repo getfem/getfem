@@ -2,7 +2,7 @@ function varargout=get(obj,varargin)
 % gfModel/get.m
 % see gf_model_get for more help.
 if (nargout),
- [varargout{1:nargout}]=gf_mdodel_get(obj, varargin{:});
+ [varargout{1:nargout}]=gf_model_get(obj, varargin{:});
 else
  gf_model_get(obj,varargin{:});
  if (exist('ans','var') == 1), varargout{1}=ans;
