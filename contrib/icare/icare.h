@@ -317,7 +317,7 @@ namespace getfem {
 				   const getfem::mesh_fem &mf_u, 
 				   const VEC2 &Un0, 
 				   const getfem::mesh_fem &mf_mult,
-				   scalar_type dt, scalar_type nu,
+				   scalar_type dt,
 				   const getfem::mesh_region &rg) {
     getfem::generic_assembly assem;
     std::stringstream ss;
@@ -325,11 +325,7 @@ namespace getfem {
       "V(#2)+="
        << -dt << "*"
       " comp(vBase(#1).Normal().vGrad(#1).Normal().vBase(#2))(l,i,i,m,k,j,j,:,k).u(l).u(m)+"     //"(l,i,i,m,j,k,j,:,k).u(l).u(m)+"
-      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)"                                                  //"comp(vBase(#1).vBase(#2).u(j))(j,i,:,i)";
-       <<-nu<<"*" << dt << "*"
-      "comp(vGrad(#1).vGrad(#2))(l,i,j,:,i,j).u(l)"
-       <<-nu<<"*" << dt << "*"
-      "comp(vGrad(#1).Normal().vGrad(#2).Normal())(l,i,j,j,:,i,k,k).u(l)";
+      "comp(vBase(#1).vBase(#2))(j,i,:,i).u(j)";                                         //"comp(vBase(#1).vBase(#2).u(j))(j,i,:,i)";
     assem.set(ss.str());
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -338,7 +334,6 @@ namespace getfem {
     assem.push_vec(VV);
     assem.assembly(rg);
   }
-
 
   template<typename VECT1> class improved_non_reflective_bc_nonlinear_term 
     : public getfem::nonlinear_elem_term {
@@ -370,11 +365,11 @@ namespace getfem {
 
       if (N==2){
 	t[0] = (valU[0] +  nu *dt* hessU(0,3) ) / (1 + gradU(0,0)*dt);
-	t[1] = valU[1] +   nu *dt* hessU(1,3) - dt * t[0] * gradU(1,0);
+	t[1] =  valU[1] +   nu *dt* hessU(1,3) - dt * t[0] * gradU(1,0);
       }
       if (N==3) {
 	t[0] = (valU[0] + nu *dt* hessU(0,4) ) / (1 + gradU(0,0)*dt);
-	t[1] =  valU[1] + nu *dt* hessU(1,4) - dt * t[0] * gradU(1,0);
+	t[1] =  valU[1] + nu *dt* hessU(1,4)  - dt * t[0] * gradU(1,0);
 	t[2] =  valU[2] + nu *dt* hessU(2,4)  - dt * t[0] * gradU(2,0);
       }
     }
