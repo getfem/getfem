@@ -63,6 +63,8 @@ using namespace getfemint;
   @SET MODEL:SET('add explicit rhs')
   @SET MODEL:SET('set private matrix')
   @SET MODEL:SET('set private rhs')
+  @SET MODEL:SET('add isotropic linearized elasticity brick')
+  @SET MODEL:SET('add linear incompressibility brick')
 
 
 MLABCOM*/
@@ -630,5 +632,50 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       getfem::set_private_data_rhs(md->model(), ind, V);
     }
 
+  } else if (check_cmd(cmd, "add isotropic linearized elasticity brick", in, out, 4, 5, 0, 1)) {
+    /*@SET ind = MODEL:SET('add isotropic linearized elasticity brick', @tmim mim, @str varname, @str dataname_lambda, @str dataname_mu[, @int region])
+    add an isotropic linearized elasticity term to the model relatively to the
+    variable `varname`.
+    `dataname_lambda` and `dataname_mu` should contain the Lam\'e coefficients.
+    `region` is an optional mesh region on which the term is added.
+    If it is not specified, it is added on the whole mesh. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname_lambda = in.pop().to_string();
+    std::string dataname_mu = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_isotropic_linearized_elasticity_brick
+      (md->model(), mim, varname, dataname_lambda, dataname_mu, region)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add linear incompressibility brick", in, out, 3, 5, 0, 1)) {
+    /*@SET ind = MODEL:SET('add linear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region[, @str dataname_coeff]])
+      add an linear incompressibility condition on `variable`.
+      `multname_pressure` is a variable which represent the pressure.
+      Be aware that an inf-sup condition between the finite element method
+      describing the rpressure and the primal variable has to be satisfied.
+      `region` is an optional mesh region on which the term is added.
+      If it is not specified, it is added on the whole mesh.
+      `dataname_coeff` is an optional penalization coefficient for nearly
+      incompressible elasticity for instance. In this case, it is the inverse
+      of the Lam\'e coefficient $\lambda$. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string multname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    std::string dataname;
+    if (in.remaining()) dataname = in.pop().to_string();
+    size_type ind
+      = getfem::add_linear_incompressibility
+      (md->model(), mim, varname, multname, region, dataname)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
   } else bad_cmd(cmd);
 }

@@ -357,7 +357,8 @@ namespace getfem {
 
     /** Add a fixed size data to the model initialized with V. */
     template <typename VECT>
-    void add_initialized_fixed_size_data(const std::string &name, VECT &v) {
+    void add_initialized_fixed_size_data(const std::string &name,
+					 const VECT &v) {
       this->add_fixed_size_data(name, gmm::vect_size(v), 1);
       if (this->is_complex()) // to be templated .. see later
 	gmm::copy(v, this->set_complex_variable(name));
@@ -380,7 +381,7 @@ namespace getfem {
 	of the data stored, for time integration schemes. */
     template <typename VECT>
     void add_initialized_fem_data(const std::string &name, const mesh_fem &mf,
-				  VECT &v) {
+				  const VECT &v) {
       this->add_fem_data(name, mf,
 			 dim_type(gmm::vect_size(v) / mf.nb_dof()), 1);
       if (this->is_complex()) // to be templated .. see later
@@ -887,6 +888,63 @@ namespace getfem {
     set_private_data_rhs(md, ind, L);
     return ind;
   }
+  
+
+  /** Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
+      for isotropic material. Parametrized by the lamé coefficients
+      lambda and mu.
+  */
+  size_type add_isotropic_linearized_elasticity_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname_lambda, const std::string &dataname_mu,
+   size_type region = size_type(-1));
+
+
+  void compute_isotropic_linearized_Von_Mises_or_Tresca
+  (model &md, const std::string &varname, const std::string &dataname_lambda,
+   const std::string &dataname_mu, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM, bool tresca);
+    
+  /**
+     Compute the Von-Mises stress or the Tresca stress of a field
+     (only valid for isotropic linearized elasticity in 3D)
+  */
+  template <class VECTVM>
+  void compute_isotropic_linearized_Von_Mises_or_Tresca
+  (model &md, const std::string &varname, const std::string &dataname_lambda,
+   const std::string &dataname_mu, const mesh_fem &mf_vm,
+   VECTVM &VM, bool tresca) {
+    model_real_plain_vector VMM(mf_vm.nb_dof());
+    compute_isotropic_linearized_Von_Mises_or_Tresca
+      (md, varname, dataname_lambda, dataname_mu, mf_vm, VMM, tresca);
+    gmm::copy(VMM, VM);
+  }
+
+  /**
+     Mixed linear incompressibility condition brick.
+
+     Update the tangent matrix with a pressure term:
+     @f[
+     T \longrightarrow 
+     \begin{array}{ll} T & B \\ B^t & M \end{array}
+     @f]
+     with @f$ B = - \int p.div u @f$ and
+     @f$ M = \int \epsilon p.q @f$ ( @f$ \epsilon @f$ is an optional
+     penalization coefficient).
+
+     Be aware that an inf-sup condition between the finite element method
+     describing the rpressure and the primal variable has to be satisfied.
+
+     For nearly incompressible elasticity, 
+     @f[ p = -\lambda \textrm{div}~u @f]
+     @f[ \sigma = 2 \mu \varepsilon(u) -p I @f]
+     @see asm_stokes_B
+  */
+  size_type add_linear_incompressibility
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname_pressure, size_type region = size_type(-1),
+   const std::string &dataname_penal_coeff = std::string());
+
   
 
 

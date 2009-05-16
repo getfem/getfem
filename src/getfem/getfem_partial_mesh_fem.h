@@ -73,6 +73,18 @@ namespace getfem {
     pfem fem_of_element(size_type cv) const
     { return  mf.fem_of_element(cv); }
 
+    virtual dim_type get_qdim() const { return  mf.get_qdim(); }
+
+    virtual void set_qdim(dim_type) {
+      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same than "
+		  "the original fem"); 
+    }
+
+    virtual void set_qdim_mn(dim_type, dim_type) {
+      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same than "
+		  "the original fem"); 
+    }
+
     ind_dof_ct ind_basic_dof_of_element(size_type cv) const
     { return  mf.ind_basic_dof_of_element(cv); }
 

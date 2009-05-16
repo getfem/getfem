@@ -27,6 +27,7 @@
 #include <getfemint_models.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfemint_mdbrick.h>
+#include <getfemint_mesh_fem.h>
 
 using namespace getfemint;
 
@@ -66,6 +67,7 @@ using namespace getfemint;
   @GET MODEL:GET('mult varname Dirichlet')
   @GET MODEL:GET('from variables')
   @GET MODEL:GET('solve')
+  @GET MODEL:GET('compute isotropic linearized Von Mises or Tresca')
 
 MLABCOM*/
 
@@ -201,5 +203,29 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 			     getfem::cselect_linear_solver(md->model(),
 							   lsolver), ls);
     }
+  } else if (check_cmd(cmd, "compute isotropic linearized Von Mises or Tresca", in, out, 4, 5, 0, 1)) {
+    /*@GET V = MODEL:GET('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])
+      Compute the Von-Mises stress or the Tresca stress of a field
+      (only valid for isotropic linearized elasticity in 3D).
+      `version` should be  'Von Mises' or 'Tresca'
+      ('Von Mises' is the default). @*/
+    std::string varname = in.pop().to_string();
+    std::string dataname_lambda = in.pop().to_string();
+    std::string dataname_mu = in.pop().to_string();
+    getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+    getfem::mesh_fem &mf_vm = gfi_mf->mesh_fem();
+    std::string stresca = "Von Mises";
+    if (in.remaining()) stresca = in.pop().to_string();
+    bool tresca = false;
+    if (cmd_strmatch(stresca, "Von Mises"))
+      tresca = false;
+    else if (cmd_strmatch(stresca, "Tresca"))
+      tresca = true;
+    else THROW_BADARG("bad option: " << stresca);
+
+    getfem::model_real_plain_vector VMM(mf_vm.nb_dof());
+    getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
+      (md->model(), varname, dataname_lambda, dataname_mu, mf_vm, VMM, tresca);
+    out.pop().from_dcvector(VMM);
   } else bad_cmd(cmd);
 }

@@ -165,38 +165,41 @@ base_small_vector sol_f(const base_small_vector &P) {
 
 
 bool stokes_problem::solve(plain_vector &U) {
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
+  getfem::model model;
+
+  // Main unknown of the problem.
+  model.add_fem_variable("u", mf_u);
+
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, 0.0, nu);
+  model.add_initialized_fixed_size_data
+    ("lambda", plain_vector(1, 0.0));
+  model.add_initialized_fixed_size_data("nu", plain_vector(1, nu));
+  getfem::add_isotropic_linearized_elasticity_brick
+    (model, mim, "u", "lambda", "nu");
 
-  // Pressure term
-  getfem::mdbrick_linear_incomp<> INCOMP(ELAS, mf_p);
-  
-  // Defining the volumic source term.
-  plain_vector F(nb_dof_rhs * N);
+  // Linearized incompressibility condition brick.
+  model.add_fem_variable("p", mf_p); // Adding the pressure as a variable
+  add_linear_incompressibility(model, mim, "u", "p");
+
+  // Volumic source term.
+  std::vector<scalar_type> F(mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_f);
-  
-  // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(INCOMP, mf_rhs, F);
-  
-  // Defining the Dirichlet condition value.
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
+
+  // Dirichlet condition.
   gmm::clear(F);
+  model.add_initialized_fem_data("DirichletData", mf_rhs, F);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
 
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
-  final_model.rhs().set(mf_rhs,F);
-
-  // Generic solve.
-  cout << "Number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(MS, final_model, iter);
+  getfem::standard_solve(model, iter);
 
   // Solution extraction
-  gmm::copy(ELAS.get_solution(MS), U);
+  gmm::copy(model.real_variable("u"), U);
   
   return (iter.converged());
 }

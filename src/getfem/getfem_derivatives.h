@@ -38,6 +38,7 @@
 #define GETFEM_DERIVATIVES_H__
 
 #include "getfem_mesh_fem.h"
+#include "getfem_interpolation.h"
 #include "gmm/gmm_dense_qr.h"
 
 namespace getfem

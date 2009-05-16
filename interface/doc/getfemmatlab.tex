@@ -2786,7 +2786,8 @@ V=gf_model_get(md,'variable', \tstr name[, \tint niter])
 name=gf_model_get(md,'mult varname Dirichlet', \tint ind_brick)
 V=gf_model_get(md,'from variables')
 gf_model_get(md,'assembly'[, \tstr option])
-gf_model_get(md,'solve' [,...])@@
+gf_model_get(md,'solve' [,...])
+V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', \tstr varname, \tstr dataname_lambda, \tstr dataname_mu, \tmf mf_vm[, \tstr version])@@
 \end{synopsis}
 \begin{cmddescription}
 \sep{@@b=gf_model_get(md,'is_complex')@@} :
@@ -2844,6 +2845,12 @@ options can be specified:
   supported), 'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
 \end{itemize}
 
+\sep{@@V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', \tstr varname, \tstr dataname_lambda, \tstr dataname_mu, \tmf mf_vm[, \tstr version])@@} :
+Compute the Von-Mises stress or the Tresca stress of a field
+(only valid for isotropic linearized elasticity in 3D).
+`version` should be  'Von Mises' or 'Tresca' ('Von Mises' is the default).
+
+
 \end{cmddescription}
 \newpage
 
@@ -2872,7 +2879,7 @@ ind_brick=gf_model_set(md,'add normal source term brick', \tmim mim, \tstr varna
 ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region[, \tstr dataname ])
 gf_model_set(md,'change penalization coeff', \tint ind_brick, \tscal coeff)
-ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])
+ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region])
 ind_brick=gf_model_set(md,'add Fourier Robin brick', \tmim mim, \tstr varname[, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add constraint with penalization',  \tstr varname, \tscal coeff, \tmat B, \tvec L)
 ind_brick=gf_model_set(md,'add constraint with multipliers,  \tstr varname, \tstr multname, \tmat B, \tvec L)
@@ -2999,7 +3006,7 @@ Change the penalization coefficient of a Dirichlet condition with
 penalization brick. If the brick is not of this kind,
 this function has an undefined behavior.
 
-\sep{@@ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname[, \tstr dataname[, \tint region])@@} :
+\sep{@@ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region])@@} :
 Add a Helmholtz term to the model relatively to the variable `varname`.
 `dataname` should contain the wave number.
 `region` is an optional mesh region on which the term is added.
@@ -3054,6 +3061,24 @@ For some specific bricks having an internal sparse matrix
 \sep{@@gf_model_set(md,'set private rhs',  \tint indbrick, \tvec L)@@} :
 For some specific bricks having an internal right hand side vector
 (constraint brick), set this rhs.
+
+\sep{@@ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', \tmim mim, \tstr varname, \tstr dataname_lambda, \tstr dataname_mu[, \tint region])@@} :
+Add an isotropic linearized elasticity term to the model relatively to the
+variable `varname`.
+`dataname_lambda` and `dataname_mu` should contain the Lam\'e coefficients.
+`region` is an optional mesh region on which the term is added.
+If it is not specified, it is added on the whole mesh.
+
+\sep{@@ind_brick=gf_model_set(md,'add linear incompressibility brick', \tmim mim, \tstr varname, \tstr multname_pressure[, \tint region[, \tstr dataname_coeff]])@@} :
+Add an linear incompressibility condition on `variable`.
+`multname_pressure` is a variable which represent the pressure.
+Be aware that an inf-sup condition between the finite element method
+describing the rpressure and the primal variable has to be satisfied.
+`region` is an optional mesh region on which the term is added.
+If it is not specified, it is added on the whole mesh.
+`dataname_coeff` is an optional penalization coefficient for nearly
+incompressible elasticity for instance. In this case, it is the inverse
+of the Lam\'e coefficient $\lambda$.
 
 \end{cmddescription}
 \newpage

@@ -32,11 +32,11 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 
   /* check or build the convex list */
   dal::bit_vector bv;
-  if (in.remaining() == 1) {
+  bool all_cv = false;
+  if (in.remaining() == 1)
     bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -1);
-  } else {
-    bv = mf->linked_mesh().convex_index();
-  }
+  else
+    all_cv = true;
 
   /* check for the validity of the operation */
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
@@ -50,7 +50,10 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
   }
 
   /* all the work done here */
-  mf->set_finite_element(bv, fem);
+  if (!all_cv)
+    mf->set_finite_element(bv, fem);
+  else
+    mf->set_finite_element(fem);
 }
 
 /* set the classical fem of order on the mesh_fem, with a classical integration

@@ -57,7 +57,7 @@ function check_oo(iverbose,idebug)
   asserterr('get(m1,''normal of face'', 10,1)');  
   set(mf1.mesh,'add convex',gfGeoTrans('GT_QK(1,1)'), p10);
   assert('mf1.mesh.nbcvs==40');
-  assert('mf1.nbdof==160');
+  assert('mf1.nbdof==162');
   s=char(mf1);
   assert('numel(s)>2000');
   gt=mf1.mesh.geotrans(3);

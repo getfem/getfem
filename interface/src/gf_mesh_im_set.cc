@@ -30,13 +30,13 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
   getfem::pintegration_method pim = 0;
   pim = in.pop().to_integration_method();
 
+  bool all_cv = false;
   /* check or build the convex list */
   dal::bit_vector bv;
-  if (in.remaining() == 1) {
+  if (in.remaining() == 1)
     bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -1);
-  } else {
-    bv = mim->linked_mesh().convex_index();
-  }
+  else
+    all_cv = true;
 
   /* check for the validity of the operation */
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
@@ -48,7 +48,10 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
   }
 
   /* all the work done here */
-  mim->set_integration_method(bv, pim);
+  if (!all_cv)
+    mim->set_integration_method(bv, pim);
+  else
+    mim->set_integration_method(pim);
 }
 
 /* set the classical integ of order IM_DEGREE on the mesh_im, with a classical integration

@@ -660,6 +660,32 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+
+  /** 
+      Stiffness matrix for linear elasticity, with constant Lamé coefficients
+      @ingroup asm
+  */
+  template<class MAT, class VECT>
+  void asm_stiffness_matrix_for_homogeneous_linear_elasticity
+  (const MAT &RM_, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &LAMBDA, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    MAT &RM = const_cast<MAT &>(RM_);
+    GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+    generic_assembly assem("lambda=data$1(1); mu=data$2(1);"
+			   "t=comp(vGrad(#1).vGrad(#1));"
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j).mu(1)"
+			   "+ t(:,j,i,:,i,j).mu(1)"
+			   "+ t(:,i,i,:,j,j).lambda(1))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_mat(RM);
+    assem.assembly(rg);
+  }
+
   /** 
       Stiffness matrix for linear elasticity, with a general Hooke
       tensor. This is more a demonstration of generic assembly than

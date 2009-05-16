@@ -1,7 +1,7 @@
 from getfem import *
 from numpy import *
 
-print '3D stokes demonstration on a quadratic mesh -- 512MB of memory needed for the solve!!'
+print '3D stokes demonstration on a quadratic mesh -- 512MB needed for the solve.'
 
 viscosity = 10
 
@@ -41,46 +41,45 @@ m.region_substract(4, 1)
 m.region_substract(4, 2)
 m.region_substract(4, 3)
 
-b0 = MdBrick('isotropic_linearized_elasticity',mim,mfu)
-b0.set_param('lambda', 0);
-b0.set_param('mu', viscosity);
-b1 = MdBrick('linear incompressibility term', b0, mfp)
-b2 = MdBrick('source term', b1, 1)
-b2.set_param('source_term', [0,-10,0])
-
-DIRICHLET_TYPE = 'penalized'
-bconst = MdBrick('constraint', b2, 'augmented', 1)
-bconst.set_constraints(ones((1,mfp.get('nbdof'))), [0]);
-bdir1 = MdBrick('dirichlet', bconst, 1, mfu, DIRICHLET_TYPE);
-bdir2 = MdBrick('dirichlet', bdir1, 2, mfu, DIRICHLET_TYPE);
-bdir3 = MdBrick('dirichlet on normal component',
-                  bdir2, 3, mfd, DIRICHLET_TYPE);
-bdir4 = MdBrick('dirichlet', bdir3, 4, mfu, DIRICHLET_TYPE);
 
 
-D = mfd.dof_nodes();
+md=Model('real');
+md.add_fem_variable('u', mfu);
+md.add_initialized_data('lambda', [0]);
+md.add_initialized_data('mu', [viscosity]);
+md.add_isotropic_linearized_elasticity_brick(mim, 'u', 'lambda', 'mu');
+md.add_fem_variable('p', mfp);
+md.add_linear_incompressibility_brick(mim, 'u', 'p');
+md.add_variable('mult_spec', 1);
+M = Spmat('empty', 1, mfp.nbdof());
+M.add(range(1), range(mfp.nbdof()), ones((1, mfp.nbdof())));
+md.add_constraint_with_multipliers('p', 'mult_spec', M, [0]);
+md.add_initialized_data('NeumannData', [0, -10, 0]);
+md.add_source_term_brick(mim, 'u', 'NeumannData', 1);
+
+D = mfd.basic_dof_nodes();
 x = D[0,:]
 y = D[1,:]
 z = D[2,:]
+md.add_initialized_fem_data('Dir1data', mfd, [9-(y*y+(z-6)*(z-6)),0*x,0*x]);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 1, 'Dir1data');
+md.add_initialized_fem_data('Dir2data',  mfd, [9-(y*y+(z-6)*(z-6)),0*x,0*x]);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 2, 'Dir2data');
+md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 3);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 4);
 
-bdir1.set_param('R', mfd, [9-(y*y+(z-6)*(z-6)),0*x,0*x])
-bdir2.set_param('R', mfd, [9-(y*y+(z-6)*(z-6)),0*x,0*x])
-bdir3.set_param('R', mfd, [0])
-bdir4.set_param('R', mfd, [0,0,0])
-
-mds=MdState(bdir4)
 print 'running solve...'
-bdir4.solve(mds, 'noisy', 'lsolver','superlu')
+md.solve('noisy', 'lsolver','superlu')
 print 'solve done!'
 
 
-VM=b0.von_mises(mds, mfe)
-S=mds.state()
-U=S[0:mfu.nbdof()] # extract the velocity
-P=S[mfu.nbdof():(mfu.nbdof()+mfp.nbdof())] # and the pressure
+U = md.variable('u');
+P = md.variable('p');
+VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'lambda',
+                                                         'mu', mfe);
 
-mfu.save('tank_3D.mfu','with_mesh')
-mfp.save('tank_3D.mfp','with_mesh')
+mfu.save('tank_3D.mfu', 'with_mesh')
+mfp.save('tank_3D.mfp', 'with_mesh')
 U.tofile('tank_3D.U')
 P.tofile('tank_3D.P')
 

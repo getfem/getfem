@@ -50,11 +50,19 @@ namespace getfem {
     dal::bit_vector im_convexes;
     mesh *linked_mesh_;
     mutable gmm::uint64_type v_num_update, v_num;
+    pintegration_method auto_add_elt_pim; /* im for automatic addition     */
+                          /* of element option. (0 = no automatic addition)*/
 
   public :
     void update_from_context(void) const;
     gmm::uint64_type version_number(void) const
     { context_check(); return v_num; }
+
+    /** Set the im for automatic addition
+     *  of element option. pim=0 disables the automatic addition.
+     */
+    void set_auto_add(pintegration_method pim)
+    { auto_add_elt_pim = pim; }
 
     /** Get the set of convexes where an integration method has been assigned.
      */
@@ -79,7 +87,8 @@ namespace getfem {
 				pintegration_method pim);
     /** shortcut for
 	@code 
-	set_integration_method(linked_mesh().convex_index(),ppi); 
+	set_integration_method(linked_mesh().convex_index(),pim);
+	and set_auto_add(pim)
 	@endcode
     */
     void set_integration_method(pintegration_method ppi);

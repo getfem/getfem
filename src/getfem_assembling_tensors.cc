@@ -1844,6 +1844,7 @@ namespace getfem {
     consistency_check();
     get_convex_order(imtab.at(0)->convex_index(), imtab, mftab, r.index(), cv);
     parse();
+
     for (size_type i=0; i < cv.size(); ++i) {
       mesh_region::face_bitset nf = r[cv[i]];
       dim_type f = dim_type(-1);

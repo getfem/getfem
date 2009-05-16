@@ -23,6 +23,7 @@
 #include "gmm/gmm_range_basis.h"
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_assembling.h"
+#include "getfem/getfem_derivatives.h"
 
 
 namespace getfem {
@@ -1665,8 +1666,209 @@ namespace getfem {
   }
 
 
+  // ----------------------------------------------------------------------
+  //
+  // Isotropic linearized elasticity brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct iso_lin_elasticity_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &,
+					size_type region,
+					nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "isotropic linearized elasticity brick has one and only "
+		  "one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "isotropic linearized elasticity brick need one and only "
+		  "one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() == 2,
+		  "Wrong number of variables for isotropic linearized "
+		  "elasticity brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      size_type N = m.dim(), Q = mf_u.get_qdim();
+      GMM_ASSERT1(Q == N, "isotropic linearized elasticity brick is only "
+		  "for vector field of the same dimension as the mesh");
+      const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dl[0]);
+      const model_real_plain_vector *lambda = &(md.real_variable(dl[0]));
+      const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
+      const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
+     
+      size_type sl = gmm::vect_size(*lambda);
+      if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
+      size_type sm = gmm::vect_size(*mu);
+      if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
+
+      GMM_ASSERT1(sl == 1 && sm == 1, "Bad format of isotropic linearized "
+		  "elasticity brick coefficients");
+      GMM_ASSERT1(mf_lambda == mf_mu,
+		  "The two coefficients should be described on the same "
+		  "finite element method.");
+      
+      if (mf_lambda)
+	asm_stiffness_matrix_for_linear_elasticity
+	  (matl[0], mim, mf_u, *mf_lambda, *lambda, *mu, rg);
+      else
+	asm_stiffness_matrix_for_homogeneous_linear_elasticity
+	  (matl[0], mim, mf_u, *lambda, *mu, rg);
+    }
+
+    iso_lin_elasticity_brick(void) {
+      set_flags("isotropic linearized elasticity", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, false /* is complex */);
+    }
+
+  };
+
+  size_type add_isotropic_linearized_elasticity_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname1, const std::string &dataname2,
+   size_type region) {
+    pbrick pbr = new iso_lin_elasticity_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist dl(1, dataname1);
+    dl.push_back(dataname2);
+    return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
+			model::mimlist(1, &mim), region);
+  }
+
+  void compute_isotropic_linearized_Von_Mises_or_Tresca
+  (model &md, const std::string &varname, const std::string &dataname_lambda,
+   const std::string &dataname_mu, const mesh_fem &mf_vm, 
+   model_real_plain_vector &VM, bool tresca) {
+
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dataname_lambda);
+    const model_real_plain_vector *lambda=&(md.real_variable(dataname_lambda));
+    const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dataname_mu);
+    const model_real_plain_vector *mu = &(md.real_variable(dataname_mu));
+   
+    size_type sl = gmm::vect_size(*lambda);
+    if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
+    size_type sm = gmm::vect_size(*mu);
+    if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
+    
+    GMM_ASSERT1(sl == 1 && sm == 1, "Bad format for Lamé coefficients");
+    GMM_ASSERT1(mf_lambda == mf_mu,
+		"The two Lamé coefficients should be described on the same "
+		"finite element method.");
+
+    if (mf_lambda) {
+      getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
+						md.real_variable(varname), VM,
+						*mf_lambda, *lambda,
+						*mf_lambda, *mu,
+						tresca);
+    } else {
+      mf_lambda = &(classical_mesh_fem(mf_u.linked_mesh(), 0));
+      model_real_plain_vector LAMBDA(mf_lambda->nb_dof(), (*lambda)[0]);
+      model_real_plain_vector MU(mf_lambda->nb_dof(), (*mu)[0]);
+      getfem::interpolation_von_mises_or_tresca(mf_u, mf_vm,
+						md.real_variable(varname), VM,
+						*mf_lambda, LAMBDA,
+						*mf_lambda, MU,
+						tresca);
+    }
+  }
+
+  // ----------------------------------------------------------------------
+  //
+  // linearized incompressibility brick  (div u = 0)
+  //
+  // ----------------------------------------------------------------------
+
+  struct linear_incompressibility_brick : public virtual_brick {
+    
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &,
+					size_type region,
+					nonlinear_version) const {
+      
+      GMM_ASSERT1((matl.size() == 1 && dl.size() == 0)
+		  || (matl.size() == 2 && dl.size() == 1),
+		  "Wrong term and/or data number for Linear incompressibility "
+		  "brick.");
+      GMM_ASSERT1(mims.size() == 1, "Linear incompressibility brick need one "
+		  "and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 2, "Wrong number of variables for linear "
+		  "incompressibility brick");
+
+      bool penalized = (dl.size() == 1);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
+      const mesh_im &mim = *mims[0];
+      const model_real_plain_vector *A = 0, *COEFF = 0;
+      const mesh_fem *mf_data = 0;
+
+      if (penalized) {
+	COEFF = &(md.real_variable(dl[0]));
+	mf_data = md.pmesh_fem_of_variable(dl[0]);
+	size_type s = gmm::vect_size(*A);
+	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
+	GMM_ASSERT1(s == 1, "Bad format for the penalization parameter");
+      }
+
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
+
+      if (penalized) {
+	if (mf_data) {
+	  asm_mass_matrix_param(matl[1], mim, mf_p, *mf_data, *A, rg);
+	  gmm::scale(matl[1], scalar_type(-1));
+	}
+	else {
+	  asm_mass_matrix(matl[1], mim, mf_p, rg);
+	  gmm::scale(matl[1], -(*A)[0]);
+	}
+      }
+
+    }
+
+    linear_incompressibility_brick(void) {
+      set_flags("Linear incompressibility brick",
+		true /* is linear*/,
+		true /* is symmetric */, false /* is coercive */,
+		true /* is real */, false /* is complex */);
+    }
 
 
+  };
+
+  size_type add_linear_incompressibility
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname) {
+    pbrick pbr = new linear_incompressibility_brick();
+    model::termlist tl;
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl;
+    if (dataname.size()) {
+      dl.push_back(dataname);
+      tl.push_back(model::term_description(multname, multname, true));
+    }
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
 
 
 }  /* end of namespace getfem.                                             */

@@ -29,9 +29,18 @@ namespace getfem {
       if (linked_mesh_->convex_index().is_in(i)) {
 	if (v_num_update < linked_mesh_->convex_version_number(i))
 	  const_cast<mesh_im *>(this)
-	    ->set_integration_method(i, 0);
+	    ->set_integration_method(i, auto_add_elt_pim);
       }
       else const_cast<mesh_im *>(this)->set_integration_method(i, 0);
+    }
+    for (dal::bv_visitor i(linked_mesh_->convex_index());
+	 !i.finished(); ++i) {
+      if (!im_convexes.is_in(i)
+	  && v_num_update < linked_mesh_->convex_version_number(i)) {
+	if (auto_add_elt_pim != 0)
+	  const_cast<mesh_im *>(this)
+	    ->set_integration_method(i, auto_add_elt_pim);
+      }
     }
     v_num_update = v_num = act_counter();
   }
@@ -64,6 +73,7 @@ namespace getfem {
 
   void mesh_im::set_integration_method(pintegration_method pim) { 
     set_integration_method(linked_mesh().convex_index(), pim);
+    set_auto_add(pim);
   }
   
   void mesh_im::set_integration_method(const dal::bit_vector &cvs, 
@@ -84,6 +94,7 @@ namespace getfem {
   mesh_im::mesh_im(mesh &me) {
     linked_mesh_ = &me;
     this->add_dependency(me);
+    auto_add_elt_pim = 0;
     v_num_update = v_num = act_counter();
   }
 

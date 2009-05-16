@@ -177,48 +177,48 @@ void laplacian_problem::init(void) {
 
 bool laplacian_problem::solve(void) {
 
-  getfem::model laplacian_model;
+  getfem::model model;
 
-  /* Main unknown of the problem */
-  laplacian_model.add_fem_variable("u", mf_u);
+  // Main unknown of the problem
+  model.add_fem_variable("u", mf_u);
 
-  /* Laplacian term on u. */
-  getfem::add_Laplacian_brick(laplacian_model, mim, "u");
+  // Laplacian term on u.
+  getfem::add_Laplacian_brick(model, mim, "u");
 
-  /* Volumic source term. */
+  // Volumic source term.
   std::vector<scalar_type> F(mf_rhs.nb_dof());
   getfem::interpolation_function(mf_rhs, F, sol_f);
-  laplacian_model.add_initialized_fem_data("VolumicData", mf_rhs, F);
-  getfem::add_source_term_brick(laplacian_model, mim, "u", "VolumicData");
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
 
-  /* Neumann condition.   */
+  // Neumann condition.
   gmm::resize(F, mf_rhs.nb_dof()*N);
-  getfem::interpolation_function(mf_rhs, F, sol_grad);
-  laplacian_model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+  getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
+  model.add_initialized_fem_data("NeumannData", mf_rhs, F);
   getfem::add_normal_source_term_brick
-    (laplacian_model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
 
-  /* Dirichlet condition. */
+  // Dirichlet condition.
   gmm::resize(F, mf_rhs.nb_dof());
   getfem::interpolation_function(mf_rhs, F, sol_u);
-  laplacian_model.add_initialized_fem_data("DirichletData", mf_rhs, F);
+  model.add_initialized_fem_data("DirichletData", mf_rhs, F);
 
   if (dirichlet_version == DIRICHLET_WITH_MULTIPLIERS)
     getfem::add_Dirichlet_condition_with_multipliers
-      (laplacian_model, mim, "u", mf_u,
+      (model, mim, "u", mf_u,
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
   else
     getfem::add_Dirichlet_condition_with_penalization
-      (laplacian_model, mim, "u", dirichlet_coefficient,
+      (model, mim, "u", dirichlet_coefficient,
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
   
-  laplacian_model.listvar(cout);
+  model.listvar(cout);
  
   gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(laplacian_model, iter);
+  getfem::standard_solve(model, iter);
 
   gmm::resize(U, mf_u.nb_dof());
-  gmm::copy(laplacian_model.real_variable("u"), U);
+  gmm::copy(model.real_variable("u"), U);
 
   return (iter.converged());
 }

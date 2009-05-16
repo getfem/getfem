@@ -57,23 +57,31 @@ M =   gf_asm('boundary', MORTAR_BOUNDARY_IN , expr, mim, mfm, mfu);
 M = M-gf_asm('boundary', MORTAR_BOUNDARY_OUT, expr, mim, mfm, mfu);
 M=M(indm, :);
 
-b0=gfMdBrick('isotropic_linearized_elasticity',mim, mfu);
 
-%b0=gfMdBrick('generic elliptic',mim, mfu);
-b1=gfMdBrick('dirichlet',b0, 1, mfu,'augmented');
-b2=gfMdBrick('source term',b1, 2);
-F=get(mfd, 'eval', {0; 'y+5'});
-set(b2, 'param','source_term', mfd, F);
 
-b3=gfMdBrick('constraint', b2, 'augmented');
-set(b3, 'constraints', M, zeros(numel(indm),1));
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
+gf_model_set(md, 'add initialized data', 'lambda', [1]);
+gf_model_set(md, 'add initialized data', 'mu', [1]);
+gf_model_set(md, 'add isotropic linearized elasticity brick', ...
+	     mim, 'u', 'lambda', 'mu');
+gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+	     mim, 'u', mfu, 1);
+F=get(mfd, 'eval', {0; 'y+2'});
+gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, F);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_model_set(md, 'add variable', 'mult_spec', numel(indm));
+gf_model_set(md, 'add constraint with multipliers', 'u', 'mult_spec', ...
+             M, zeros(numel(indm),1));
 
-bn = b3;
+gf_model_get(md, 'solve');
+U = gf_model_get(md, 'variable', 'u');
 
-mds=gfMdState(bn);
-get(bn, 'solve', mds, 'very noisy');
-U=get(mds, 'state');U=U(1:get(mfu, 'nbdof'));
-VM = get(b0, 'von mises', mds, mfdu);
+
+VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
+
+% VM = get(b0, 'von mises', mds, mfdu);
+
 gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,...
-	'deformation_mf',mfu,'refine', 4, 'deformation_scale',1); 
-caxis([0 500]);
+	'deformation_mf',mfu,'refine', 4, 'deformation_scale',0.1); 
+% caxis([0 500]);

@@ -15,9 +15,9 @@ FT = 3.0;               % parameter for the exact solution.
 SOL_SING = 0;           % 0 : Regular exact solution.
                         % 1 : Singular exact solution in r^{1/2}.
 			% 2 : Singular exact soluiton in r^{1/4}
-REFINE = 0;		% Mesh refinement option
+REFINE = 1;		% Mesh refinement option
 MIXED_PRESSURE=0;       % Mixed version or not.
-DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
+DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization
 
 if (N == 1)
   MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0';

@@ -390,63 +390,77 @@ bool elastostatic_problem::solve(plain_vector &U) {
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
+  getfem::model model;
+
+  // Main unknown of the problem.
+  model.add_fem_variable("u", mf_u);
+
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mixed_pressure ? 0.0 : lambda, mu);
+  model.add_initialized_fixed_size_data
+    ("lambda", plain_vector(1, mixed_pressure ? 0.0 : lambda));
+  model.add_initialized_fixed_size_data("mu", plain_vector(1, mu));
+  getfem::add_isotropic_linearized_elasticity_brick
+    (model, mim, "u", "lambda", "mu");
 
-  std::auto_ptr<getfem::mdbrick_abstract<> > INCOMP;  
+  // Linearized incompressibility condition brick.
   if (mixed_pressure) {
-    getfem::mdbrick_linear_incomp<> *incomp =
-      new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
-    incomp->penalization_coeff().set(1.0/lambda);
-    INCOMP.reset(incomp);
+    model.add_initialized_fixed_size_data
+      ("incomp_coeff", plain_vector(1, 1.0/lambda));
+    model.add_fem_variable("p", mf_p); // Adding the pressure as a variable
+    add_linear_incompressibility
+      (model, mim, "u", "p", size_type(-1), "incomp_coeff");
   }
-  getfem::mdbrick_abstract<> *pINCOMP;
-  if (mixed_pressure) pINCOMP = INCOMP.get(); else pINCOMP = &ELAS;
-  
-  // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(*pINCOMP);
-  
-  // Neumann condition brick.
-  getfem::mdbrick_normal_source_term<>
-    NEUMANN(VOL_F, NEUMANN_BOUNDARY_NUM);
 
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM,
-					  mf_mult);
-  final_model.set_constraints_type(dirichlet_version);
- 
+  // Volumic source term.
+  std::vector<scalar_type> F(mf_rhs.nb_dof()*N);
+  getfem::interpolation_function(mf_rhs, F, sol_f);
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
+    
+  // Neumann condition.
+  gmm::resize(F, mf_rhs.nb_dof()*N*N);
+  getfem::interpolation_function(mf_rhs, F, sol_sigma, NEUMANN_BOUNDARY_NUM);
+  model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+  getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
 
-  cout << "Total number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS(final_model);
+  // Dirichlet condition.
+  gmm::resize(F, mf_rhs.nb_dof()*N);
+  getfem::interpolation_function(mf_rhs, F, sol_u);
+  model.add_initialized_fem_data("DirichletData", mf_rhs, F);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+
   gmm::iteration iter(residual, 1, 40000);
 #if GETFEM_PARA_LEVEL > 1
   double t_init=MPI_Wtime();
 #endif
   dal::bit_vector cvref;
-
+  
   do { // solve with optional refinement
- 
+    
+    cout << "Total number of variables : " << model.nb_dof() << endl;
+
     // Defining the volumic source term.
     size_type nb_dof_rhs = mf_rhs.nb_dof();
-    plain_vector F(nb_dof_rhs * N);
+    gmm::resize(F, nb_dof_rhs * N);
     getfem::interpolation_function(mf_rhs, F, sol_f);
-    VOL_F.source_term().set(mf_rhs, F);
+    gmm::copy(F, model.set_real_variable("VolumicData"));
 
     // Defining the Neumann source term.
     gmm::resize(F, nb_dof_rhs * N * N);
     getfem::interpolation_function(mf_rhs, F, sol_sigma, NEUMANN_BOUNDARY_NUM);
-    NEUMANN.normal_source_term().set(mf_rhs, F);
+    gmm::copy(F, model.set_real_variable("NeumannData"));
 
     // Defining the Dirichlet condition value.
     gmm::resize(F, nb_dof_rhs * N);
     getfem::interpolation_function(mf_rhs, F, sol_u, DIRICHLET_BOUNDARY_NUM);
-    final_model.rhs().set(mf_rhs, F);
-
+    gmm::copy(F, model.set_real_variable("DirichletData"));
+    
     iter.init();
-    getfem::standard_solve(MS, final_model, iter);
+    getfem::standard_solve(model, iter);
     gmm::resize(U, mf_u.nb_dof());
-    gmm::copy(ELAS.get_solution(MS), U);
+    gmm::copy(model.real_variable("u"), U);
 
     if (refine) {
       plain_vector ERR(mesh.convex_index().last_true()+1);
@@ -530,8 +544,8 @@ int main(int argc, char *argv[]) {
       exp.exporting(p.mf_u); 
       exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
+	"mayavi2 -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	"WarpVector -m Surface -m Outline\n";
     }
 
   }

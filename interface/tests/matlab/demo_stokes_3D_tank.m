@@ -1,4 +1,4 @@
-disp('3D stokes demonstration on a quadratic mesh -- 512MB of memory needed for the solve!!');
+disp('3D stokes demonstration on a quadratic mesh');
 compute=input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
 gf_workspace('clear all');
 global verbosity; verbosity=1;
@@ -36,46 +36,48 @@ set(m, 'region', 3, TOPfaces);
 set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','rows'),TOPfaces','rows'),'rows')');
 
 disp(sprintf('nbdof: mfu=%d, mfp=%d',get(mfu,'nbdof'),get(mfp,'nbdof')));
+
 if (compute),
-  % unfortunately, the basic stokes solver is very slow...
-  % on this problem, the fastest way is to reduce to a (full) linear system on the pression...
-  % drawback: matlab will be killed if you don't have 512MB of
-  % memory
 
-  if (1),
-    b0 = gfMdBrick('isotropic_linearized_elasticity',mim,mfu)
-    set(b0, 'param','lambda', 0);
-    set(b0, 'param','mu', viscosity);
-    b1 = gfMdBrick('linear incompressibility term', b0, mfp);
-  else
-    % does not work..
-    b1 = gfMdBrick('navier stokes', mim, mfu, mfp, viscosity);
-  end;
-  b2 = gfMdBrick('source term', b1, 1);
-  set(b2, 'param', 'source_term', mfd, get(mfd, 'eval', {0;-10;0}));
-  DIRICHLET_TYPE = 'penalized';
-  bconst = gfMdBrick('constraint', b2, 'augmented', 1);
-  set(bconst, 'constraints', [ones(1, get(mfp, 'nbdof'))], 0);
-  bdir1 = gfMdBrick('dirichlet', bconst   , 1, mfu, DIRICHLET_TYPE);
-  bdir2 = gfMdBrick('dirichlet', bdir1, 2, mfu, DIRICHLET_TYPE);
-  bdir3 = gfMdBrick('dirichlet on normal component', bdir2, 3, mfd, DIRICHLET_TYPE);
-  bdir4 = gfMdBrick('dirichlet', bdir3, 4, mfu, DIRICHLET_TYPE);
-  set(bdir1, 'param', 'R', mfd, get(mfd, 'eval', R1));
-  set(bdir2, 'param', 'R', mfd, get(mfd, 'eval', R2));
-  set(bdir3, 'param', 'R', 0);
-  set(bdir4, 'param', 'R', mfd, get(mfd, 'eval', R4));
+  md=gf_model('real');
+  gf_model_set(md, 'add fem variable', 'u', mfu);
+  gf_model_set(md, 'add initialized data', 'lambda', [0]);
+  gf_model_set(md, 'add initialized data', 'mu', [viscosity]);
+  gf_model_set(md, 'add isotropic linearized elasticity brick', ...
+               mim, 'u', 'lambda', 'mu');
+  gf_model_set(md, 'add fem variable', 'p', mfp);
+  gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');
+  gf_model_set(md, 'add variable', 'mult_spec', 1);
+  
+  gf_model_set(md, 'add constraint with multipliers', 'p', 'mult_spec', ...
+               sparse([ones(1, get(mfp, 'nbdof'))]), [0]);
+  gf_model_set(md, 'add initialized data', 'NeumannData', [0 -10 0]);
+  gf_model_set(md, 'add source term brick', mim, 'u', 'NeumannData', 1);
+  gf_model_set(md, 'add initialized fem data', 'Dir1data', mfd, ...
+               get(mfd, 'eval', R1));
+  gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+               mim, 'u', mfu, 1, 'Dir1data');
+  gf_model_set(md, 'add initialized fem data', 'Dir2data',  mfd, ...
+               get(mfd, 'eval', R2));
+  gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+               mim, 'u', mfu, 2, 'Dir2data');
+  gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+               mim, 'u', mfu, 3);
+  gf_model_set(md, 'add initialized fem data', 'Dir3data',  mfd, ...
+               get(mfd, 'eval', R4));
+  gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+               mim, 'u', mfu, 4, 'Dir3data');
 
-  mds=gfMdState(bdir4)
 
-  disp('running solve... can take some minutes and needs ~500MB of memory');
+  disp('running solve... can take some minutes and needs ~600MB of memory');
   
   t0=cputime; 
-  get(bdir4, 'solve', mds, 'noisy');
+
+  gf_model_get(md, 'solve', 'lsolver', 'superlu', 'noisy');
   disp(sprintf('solve done in %.2f sec', cputime-t0));
 
-  S=get(mds, 'state');
-  U=S(1:get(mfu,'nbdof'));
-  P=S(numel(U) + (1:get(mfp,'nbdof')));
+  U = gf_model_get(md, 'variable', 'u');
+  P = gf_model_get(md, 'variable', 'p');
   
   save demo_stokes_3D_tank_UP U P;
   disp('[the solution has been saved in "demo_stokes_3D_tank_UP.mat"]');

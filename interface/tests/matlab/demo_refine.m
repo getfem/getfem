@@ -31,25 +31,57 @@ fright=gf_mesh_get(m,'faces from pid',find(abs(P(1,:) - L)<1e-6));
 gf_mesh_set(m,'boundary',1,fleft);
 gf_mesh_set(m,'boundary',2,fright);
 
-F=zeros(N,1); F(2) = -200; % the external force
+F=zeros(N,1); F(2) = -20; % the external force
 
-b0=gfMdBrick('isotropic_linearized_elasticity',mim, mfu);
-b1=gfMdBrick('dirichlet',b0,1,mfu,'penalized');
-b2=gfMdBrick('source term',b1,2);
 
-set(b0, 'param', 'lambda', lambda);
-set(b0, 'param', 'mu', mu);
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
+gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
+gf_model_set(md, 'add initialized data', 'mu', [mu]);
+gf_model_set(md, 'add isotropic linearized elasticity brick', ...
+	     mim, 'u', 'lambda', 'mu');
+gf_model_set(md, 'add initialized data', 'VolumicData', F);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+	     mim, 'u', mfu, 1);
 
-mds=gfMdState(b2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+% b0=gfMdBrick('isotropic_linearized_elasticity',mim, mfu);
+% b1=gfMdBrick('dirichlet',b0,1,mfu,'penalized');
+% b2=gfMdBrick('source term',b1,2);
+
+% set(b0, 'param', 'lambda', lambda);
+% set(b0, 'param', 'mu', mu);
+
+% mds=gfMdState(b2)
 
 for step=1:8,
   dd=get(mf0, 'basic dof from cvid');
   
-  set(b2, 'param','source_term', mfd, F);
-  get(b2, 'solve', mds, 'very noisy'); %, 'lsolver', 'superlu');
+  % set(b2, 'param','source_term', mfd, F);
+
+  gf_model_get(md, 'solve');
+  U = gf_model_get(md, 'variable', 'u');
+
+  % get(b2, 'solve', mds, 'very noisy'); %, 'lsolver', 'superlu');
   
-  U=get(mds, 'state'); U=U(1:get(mfu, 'nbdof'));
-  VM = get(b0, 'von mises', mds, mfdu);
+  % U=get(mds, 'state'); U=U(1:get(mfu, 'nbdof'));
+  
+  VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
+
+  % VM = get(b0, 'von mises', mds, mfdu);
 
   subplot(2,1,1);
   if (N==3) opt = {'cvlst', get(m,'outer_faces')}; 
@@ -66,5 +98,6 @@ for step=1:8,
   gf_plot(mf0, E, 'mesh','on', 'refine', 1, opt{:}); colorbar;
   title('Error estimate')
   disp('press a key..'); pause;
-  set(m, 'refine', find(ERR > 1e-3)); set(m, 'optimize structure');
+  set(m, 'refine', find(ERR > 1e-3));
+  set(m, 'optimize structure');
 end;

@@ -42,7 +42,12 @@ namespace getfem {
 			       const dal::bit_vector &rejected_elt) {
     mf.context_check();
 
-    set_qdim_mn(mf.get_qdim_m(), mf.get_qdim_n());
+    if (mf.get_qdim_m() != QdimM || mf.get_qdim_n() != QdimN) {
+      QdimM = mf.get_qdim_m(); QdimN = mf.get_qdim_n();
+      Qdim = dim_type(QdimM*QdimN);
+      dof_enumeration_made = false; touch(); v_num = act_counter();
+    }
+
     fe_convex = mf.convex_index();
     fe_convex.setminus(rejected_elt);
 

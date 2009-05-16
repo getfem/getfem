@@ -285,9 +285,9 @@ namespace getfem {
 	Q=1, for vector fields, Q is typically equal to
 	linked_mesh().dim().
      */
-    dim_type get_qdim() const { return Qdim; }
+    virtual dim_type get_qdim() const { return Qdim; }
     /** Change the Q dimension */
-    void set_qdim(dim_type q) {
+    virtual void set_qdim(dim_type q) {
       if (q != Qdim || q != QdimM) {
 	QdimM = Qdim = q; QdimN = 1;
 	dof_enumeration_made = false; touch(); v_num = act_counter();
@@ -296,7 +296,7 @@ namespace getfem {
 
     /** Set the dimension for a matrix field. The Q dimension will
 	always be the product of get_qdim_m and get_qdim_n */
-    void set_qdim_mn(dim_type M, dim_type N) {
+    virtual void set_qdim_mn(dim_type M, dim_type N) {
       if (M != QdimM || N != QdimN) {
 	QdimM = M; QdimN = N; Qdim = dim_type(N*M);
 	dof_enumeration_made = false; touch(); v_num = act_counter();

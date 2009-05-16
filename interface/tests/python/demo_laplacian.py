@@ -94,7 +94,3 @@ if (H1error > 0.01):
     print 'Error in H1 norm : ', H1error
     print 'Error too large !'
     exit(1);
-
-
-sl=Slice(('none',), mfu, 4)
-sl.export_to_vtk('wave.vtk', mfu, U)

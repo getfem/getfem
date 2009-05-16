@@ -2572,15 +2572,90 @@ where \cpp{dataname} is the pdata of the model which represents the coefficient 
 Note that an additional right hand
 side can be added with a source term brick.
 
+\subsection{Isotropic linearized elasticity brick}
+This brick represents a term
 
+$ -div(\sigma) = ...; $
 
+with
 
+$ \ \ \ \sigma = \lambda\mbox{tr}(\varepsilon(u))I + 2\mu\varepsilon(u); \ \ \ \varepsilon(u) = (\nabla u + \nabla u^T)/2. $
 
+$\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lamé coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
 
+The function which adds this brick to a model is
+\begin{cppcode}
+  ind_brick = getfem::add_isotropic_linearized_elasticity_brick
+              (md, mim, varname, dataname_lambda, dataname_mu,
+               region = size_type(-1));
+\end{cppcode}
+where \cpp{dataname_lambda} and \cpp{dataname_mu} are the data of the model representing the lamé coefficients (constant or describe on a finite element method).
+ 
+The function
+\begin{cppcode}
+getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
+  (md, varname, dataname_lambda, dataname_mu, mf_vm, VM, tresca_flag = false);
+\end{cppcode}
+compute the Von Mises criterion (or Tresca if \cpp{tresca_flag} is
+set to true) on the displacement field stored in \cpp{varname}.
+The stress is evaluated on the mesh_fem \cpp{mf_vm} and stored in the
+vector \cpp{VM}.\\ \hline
 
+The program \cpp{elastostatic.cc} in the tests directory of Getfem++ distribution can be taken as a model of use of this brick.
 
+\subsection{linear incompressibility (or nearly incompressibility) brick}
+This brick adds a linear incompressibility condition (or a nearly incompressible condition) in a problem of type\\
+$$ \mbox{div}(u) = 0,\ \ (or \mbox{div}(u) = \varepsilon p)$$
 
+This constraint is enforced with Lagrange multipliers representing the pressure, introduced in a mixed formulation.
 
+The function adding this incompressibility condition is:
+\begin{cppcode}
+  ind_brick = getfem::add_linear_incompressibility
+              (md, mim, varname, multname_pressure, region = size_type(-1),
+               dataname_penal_coeff = std::string());
+\end{cppcode}
+where \cpp{varname} is the variable on which the incompressibility condition is
+prescribed, \cpp{multname_pressure} is a variable which should be described on a scalar fem representing the multiplier (the pressure) and \cpp{dataname_penal_coeff} is an optional penalization coefficient (constant or described on a finite element method) for the nearly incompressible condition.
+
+In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient and $\varepsilon$ the penalization coefficient.\\
+
+For instance, the following program defines a Stokes problem with a source term and an homogeneous Dirichlet condition on boundary 0. \cpp{mf_u}, \cpp{mf_data} and \cpp{mf_p} have to be valid finite element description on the same mesh. \cpp{mim} should be a valid integration method on the same mesh.
+
+\begin{cppcode}
+  typedef std::vector<getfem::scalar_type> plain_vector;
+  size_type N = mf_u.linked_mesh().dim();
+
+  getfem::model Stokes_model;
+
+  laplacian_model.add_fem_variable("u", mf_u);
+
+  getfem::scalar_type mu = 1.0;
+  Stokes_model.add_initialized_data("lambda", plain_vector(1, 0.0));
+  Stokes_model.add_initialized_data("mu", plain_vector(1, mu));
+  getfem::add_isotropic_linearized_elasticity_brick(Stokes_model, mim,
+                                                    "u", "lambda", "mu");
+
+  laplacian_model.add_fem_variable("p", mf_p);
+  getfem::add_linear_incompressibility(Stokes_model, mim, "u", "p");
+
+  plain_vector F(mf_data.nb_dof()*N);
+  for (int i = 0; i < mf_data.nb_dof()*N; ++i) F(i) = ...;
+  Stokes_model.add_initialized_fem_data("VolumicData", mf_data, F);
+  getfem::add_source_term_brick(Stokes_model, mim, "u", "VolumicData");
+
+  getfem::add_Dirichlet_condition_with_multipliers(Stokes_model, mim,
+                                                   "u", mf_u, 1);
+
+  gmm::iteration iter(residual, 1, 40000);
+  getfem::standard_solve(Stokes_model, iter);
+  
+  plain_vector U(mf_u.nb_dof());
+  gmm::copy(Stokes_model.real_variable("u"), U);
+
+\end{cppcode}
+
+A example for a nearly incompressibility condition can be found in the program \cpp{tests/elastostatic.cc}.
 
 
 \section{The model bricks (old system)}

@@ -12,14 +12,16 @@ gf_mesh_set(m, 'region', 42, border); % create the region (:#(B42
 % the boundary edges appears in red
 gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 
 
-b0=gf_mdbrick('generic elliptic',mim,mf)
-gf_mdbrick_get(b0, 'param list')
-b1=gf_mdbrick('dirichlet',b0,42,mf,'penalized')
+
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mf);
+gf_model_set(md, 'add Laplacian brick', mim, 'u');
 R=gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
-gf_mdbrick_set(b1, 'param', 'R', mf, R); 
+gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, R);
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
-mds=gf_mdstate(b1)
-gf_mdbrick_get(b1, 'solve', mds)
+gf_model_get(md, 'listvar');
 
-U=gf_mdstate_get(mds, 'state');
+gf_model_get(md, 'solve');
+U = gf_model_get(md, 'variable', 'u');
 gf_plot(mf, U, 'mesh','on');

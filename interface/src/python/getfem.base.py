@@ -438,6 +438,7 @@ model states.
     #@GET    MODEL:GET('from variables')
     #@GET    MODEL:GET('assembly')
     #@GET    MODEL:GET('solve')
+    #@GET    MODEL:GET('compute isotropic linearized Von Mises or Tresca')
 
 
     #@SET    MODEL:SET('variable')
@@ -465,6 +466,8 @@ model states.
     #@SET    MODEL:SET('add explicit rhs')
     #@SET    MODEL:SET('set private matrix')
     #@SET    MODEL:SET('set private rhs')
+    #@SET    MODEL:SET('add isotropic linearized elasticity brick')
+    #@SET    MODEL:SET('add linear incompressibility brick')
 
 class GeoTrans:
     """General function for building descriptors to geometric transformations.
