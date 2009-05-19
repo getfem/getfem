@@ -124,7 +124,7 @@ struct navier_stokes_problem {
   void solve_PREDICTION_CORRECTION2();
   void init(void);
   navier_stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
-				mf_rhs(mesh), mf_mult(mesh) {}
+				mf_rhs(mesh), mf_mult(mesh)  {}
 };
 
 struct problem_definition {
@@ -334,10 +334,14 @@ struct problem_rotating_cylinder : public problem_definition {
    	//cout << "x=" << G[0] << "     y="<< G[1] << "\n";
 	bool on_cyl = true;
 
-	if  (is_on_west_face(p.BBmin,G) )
+       	if  (is_on_west_face(p.BBmin,G) )
 	  {on_cyl = false;
 	    p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());};
-
+	
+	//if  (is_on_west_face(p.BBmin,G)||is_on_nord_face(p.BBmax,G) || is_on_sud_face(p.BBmin,G) )
+	//  {on_cyl = false;
+	//    p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());};
+	
     	if (is_on_est_face(p.BBmax,G))
 	  {on_cyl = false;
 	    p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());};
@@ -360,9 +364,13 @@ struct problem_rotating_cylinder : public problem_definition {
    	//cout << "x=" << G[0] << "     y="<< G[1]<< "     z="<< G[2] << "\n";
 	bool on_cyl = true;
 
-	if  (is_on_west_face(p.BBmin,G) )
+	if  (is_on_west_face(p.BBmin,G) ) 
 	  {on_cyl = false;
 	    p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());};
+	
+	//if  (is_on_west_face(p.BBmin,G) ||  is_on_nord_face(p.BBmax,G) || is_on_sud_face(p.BBmin,G) ) 
+	//  {on_cyl = false;
+	//    p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());};
 	
 	if (is_on_est_face(p.BBmax,G))
 	  { on_cyl = false;
@@ -372,15 +380,16 @@ struct problem_rotating_cylinder : public problem_definition {
 	  { on_cyl = false;
 	    p.mesh.region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());};
 	
-	if  (is_on_down_face(p.BBmin,G) || is_on_up_face(p.BBmax,G) )
-	  {on_cyl = false;
+	if  (is_on_down_face(p.BBmin,G) || is_on_up_face(p.BBmax,G))
+	  { on_cyl = false;
 	    p.mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(),i.f());};
 	
-	// scalar_type h = p.mesh.convex_radius_estimate(i.cv());
-	//if (gmm::abs(sqrt(G[0]*G[0] + G[1]*G[1]) - p.R) < h)
-	//  {p.mesh.region(ON_CYLINDER_BOUNDARY_NUM).add(i.cv(),i.f());};
-	if (on_cyl)
+	//scalar_type h = p.mesh.convex_radius_estimate(i.cv());
+	if (gmm::abs(sqrt(G[0]*G[0] + G[1]*G[1])) < 0.5) 
 	  {p.mesh.region(ON_CYLINDER_BOUNDARY_NUM).add(i.cv(),i.f());};
+	
+	//if (on_cyl)
+	//  {p.mesh.region(ON_CYLINDER_BOUNDARY_NUM).add(i.cv(),i.f());};
       }
     }
   }
@@ -551,13 +560,14 @@ void navier_stokes_problem::init(void) {
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
+  getfem::pfem pf_p = getfem::fem_descriptor(FEM_TYPE_P);
+
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION); 
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
-  mf_p.set_finite_element(mesh.convex_index(),
-			  getfem::fem_descriptor(FEM_TYPE_P));
+  mf_p.set_finite_element(mesh.convex_index(), pf_p);
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -931,21 +941,21 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 //////////////////////////////////////////////////////////////////////////
   mf_mult.set_qdim(N);
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
-
-  dal::bit_vector dofon_Dirichlet_On_Cylinder 
-    = mf_mult.basic_dof_on_region(ON_CYLINDER_BOUNDARY_NUM);
+  
   dal::bit_vector dofon_nonref
     = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
+  
   dal::bit_vector dofon_Dirichlet_Out_Cylinder 
     = mf_mult.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
-
+  
   //(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
   //(NEUMANN_BOUNDARY_NUM);
   //dofon_NDirichlet.setminus(dofon_nonref);
   //dofon_NDirichlet.setminus(dofon_Dirichlet_Out_Cylinder);
-  //dofon_Neumann.setminus(dofon_Dirichlet_On_Cylinder);
+  //dofon_Neumann.setminus(dofon_Dirichlet_On_cylinder);
   //dofon_Neumann.setminus(dofon_nonref);
   //dofon_Neumann.setminus(dofon_Dirichlet_Out_Cylinder);
+
 
   // Normal part Dirichlet condition -- sur v en 2D  -- sur v et w en 3D
   
@@ -1017,13 +1027,19 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   //M      if (DM(i,j)!=0.0) cout << i<<" , "<<j<<" = "<<DM(i,j)<< endl;
   //M   }
   //M  }
- 
+  
+
   // Dirichlet condition except on cylinder
   mf_mult.set_qdim(N);
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
+  
+  //dal::bit_vector dofon_Dirichlet_Out_Cylinder 
+  //  = mf_mult.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
+  
   std::vector<size_type> ind_ct_dir_out_cyl;
   for (dal::bv_visitor i(dofon_Dirichlet_Out_Cylinder); !i.finished(); ++i) {
-    //  if (dofon_NDirichlet.is_in(i)) 
-    //     dofon_Dirichlet_Out_Cylinder.sup(i);  
+    //if (dofon_nonref.is_in(i)) 
+    //  dofon_Dirichlet_Out_Cylinder.sup(i);  
     //else  
       ind_ct_dir_out_cyl.push_back(i);
   }
@@ -1048,6 +1064,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
  // Dirichlet condition on cylinder
   mf_mult.set_qdim(N);
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
+
+ dal::bit_vector dofon_Dirichlet_On_Cylinder 
+    = mf_mult.basic_dof_on_region(ON_CYLINDER_BOUNDARY_NUM);
 
   std::vector<size_type> ind_ct_dir_on_cylinder;
   for (dal::bv_visitor i(dofon_Dirichlet_On_Cylinder); !i.finished(); ++i) 
@@ -1074,6 +1094,11 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
 
   // Non reflective condition
+  mf_mult.set_qdim(N);
+  GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
+  //   dal::bit_vector dofon_nonref
+  //  = mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
+
   std::vector<size_type> ind_ct_nonref;
   for (dal::bv_visitor i(dofon_nonref); !i.finished(); ++i) {
     //if (dofon_NDirichlet.is_in(i)) 
@@ -1090,7 +1115,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
   {
     sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
     getfem::generic_assembly assem;
-    assem.set("M(#2,#1)+=comp(vBase(#1).vBase(#1))(:,i,:,i);");
+    assem.set("M(#2,#1)+=comp(vBase(#2).vBase(#1))(:,i,:,i);");
     assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
     assem.push_mat(A); assem.assembly(mpinonrefrg);
     gmm::copy(gmm::sub_matrix(A, SUB_CT_NONREF, I1), HNR);
@@ -1098,7 +1123,55 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
   cout << "Nb on Non reflective condition: " << nbdof_nonref << endl;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // In 3D - NEUMANN_BOUNDARY_NUM
+  sparse_matrix HN;
+  size_type nbdof_neumann;
+  gmm::sub_interval I5;
+  
+  dofon_nonref= mf_mult.basic_dof_on_region(NONREFLECTIVE_BOUNDARY_NUM);
+  dofon_Dirichlet_Out_Cylinder = mf_mult.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
+  dofon_NDirichlet = mf_mult.basic_dof_on_region(NORMAL_PART_DIRICHLET_BOUNDARY_NUM);
+  dofon_Dirichlet_On_Cylinder = mf_mult.basic_dof_on_region(ON_CYLINDER_BOUNDARY_NUM);
+
+  if (N==3){
+    mf_mult.set_qdim(1);
+
+    dal::bit_vector dofon_neumann = mf_mult.basic_dof_on_region(NEUMANN_BOUNDARY_NUM);
+
+    std::vector<size_type> ind_ct_neumann;
+    for (dal::bv_visitor i(dofon_neumann); !i.finished(); ++i) {
+      if (dofon_Dirichlet_Out_Cylinder.is_in(i*N) || dofon_nonref.is_in(i*N) ||
+	  dofon_NDirichlet.is_in(i*N) || dofon_Dirichlet_On_Cylinder.is_in(i*N) )   
+	dofon_neumann.sup(i); 
+      else                     
+	ind_ct_neumann.push_back(i);
+    } 
+    //cout << mf_mult.point_of_basic_dof(i)<< endl;
+    
+    nbdof_neumann = dofon_neumann.card();
+    gmm::sub_index SUB_CT_NEUMANN(ind_ct_neumann);
+    
+    I5 = gmm::sub_interval(nbdof_u+nbdof_NDir+nbdof_Dir_Out_Cylinder+nbdof_Dir_On_Cylinder+nbdof_nonref, nbdof_neumann);
+    getfem::mesh_region mpineumannrg = mf_u.linked_mesh().get_mpi_sub_region(NEUMANN_BOUNDARY_NUM);
+        
+    gmm::resize(HN,nbdof_neumann, nbdof_u);
+    {
+      sparse_matrix A(mf_mult.nb_dof(), nbdof_u); 
+      getfem::generic_assembly assem;
+      assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1))(:,:,3);"); // 3ieme composante V = (u,v,w) : w = 0
+      assem.push_mi(mim); assem.push_mf(mf_u); assem.push_mf(mf_mult);
+      assem.push_mat(A); assem.assembly(mpineumannrg);
+      gmm::copy(gmm::sub_matrix(A, SUB_CT_NEUMANN, I1), HN);
+    }
+    cout << "Nb of Neumann part in 3D  (qdim=1): " << nbdof_neumann << endl;
+    
+    mf_mult.set_qdim(N);
+
+
+  }
+  
+  /////////////////////////////////////////////////////////////////////////////////////////////////
 // Operators to solve NSE
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1235,9 +1308,14 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     cout << "Reference Point for Cd and Cl  : (" <<  ptRef[0]<<","<< ptRef[1]<<","<< ptRef[2]<<")"<<endl;
     
 
-  size_type sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir_Out_Cylinder + nbdof_Dir_On_Cylinder+ nbdof_nonref;
+  size_type sizelsystem;
   size_type sizelsystemP = nbdof_p+1;
-  
+
+  if (N==2) 
+    sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir_Out_Cylinder + nbdof_Dir_On_Cylinder+ nbdof_nonref;
+  if (N==3)
+    sizelsystem = nbdof_u + nbdof_NDir + nbdof_Dir_Out_Cylinder + nbdof_Dir_On_Cylinder+ nbdof_nonref + nbdof_neumann;
+
   sparse_matrix A1(sizelsystem, sizelsystem);
   sparse_matrix A2(sizelsystem, sizelsystem); 
   plain_vector    Y(sizelsystem), YY(nbdof_u);
@@ -1300,7 +1378,7 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
         
     gmm::copy(HND, gmm::sub_matrix(A2, I2, I1));
     gmm::copy(gmm::transposed(HND), gmm::sub_matrix(A2, I1, I2));
-
+   
     // Dirichlet condition except on cylinder
     gmm::copy(HD, gmm::sub_matrix(A1, I3, I1));
     gmm::copy(gmm::transposed(HD), gmm::sub_matrix(A1, I1, I3));
@@ -1322,6 +1400,15 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     gmm::copy(HNR, gmm::sub_matrix(A2, I4, I1));
     gmm::copy(gmm::transposed(HNR), gmm::sub_matrix(A2, I1, I4));
 
+    if (N==3){
+    // Neumann condition in 3D
+      gmm::copy(HN, gmm::sub_matrix(A1, I5, I1));
+      gmm::copy(gmm::transposed(HN), gmm::sub_matrix(A1, I1, I5));
+      
+      gmm::copy(HN, gmm::sub_matrix(A2, I5, I1));
+      gmm::copy(gmm::transposed(HN), gmm::sub_matrix(A2, I1, I5));
+    }
+    
     // Right hand side with Dirichlet boundary conditions
 
     gmm::resize(F, N * nbdof_rhs);
@@ -1427,11 +1514,12 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
 
     
     
-       plain_vector toto(nbdof_p);
-       for (unsigned i=0; i <= nbdof_p; ++i) {
-       toto[i]=1.0;}
-       cout << "Mean value of phi " << (gmm::vect_sp(Phi,toto))/nbdof_p<< endl;
-    
+    /*
+      plain_vector toto(nbdof_p);
+      for (unsigned i=0; i <= nbdof_p; ++i) {
+      toto[i]=1.0;}
+      cout << "Mean value of phi " << (gmm::vect_sp(Phi,toto))/nbdof_p<< endl;
+    */
 
     gmm::mult(M, USTAR, USTARbis);
     gmm::mult(gmm::transposed(B), gmm::scaled(Phi, -1.), USTARbis, USTARbis); // -B^t*Phi + USTARbis -> USTARbis
@@ -1535,13 +1623,13 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     for(unsigned i=0;i<mf_u.nb_dof();++i){
       base_node G = mf_u.point_of_basic_dof(i);
       if (N==2){
-	Uformat << G[0] << "  " << G[1] << "  " << Un0[i] << endl;
+	Uformat << G[0] << "  " << G[1] << endl;
       }
     }
     if (N==3){
       for(unsigned i=0;i<mf_u.nb_dof();++i){
 	base_node G = mf_u.point_of_basic_dof(i);
-	Uformat << G[0] << "  " << G[1] << "  " << G[2] << "  " << Un0[i] << endl;
+	Uformat << G[0] << "  " << G[1] << "  " << G[2] << endl;
       }
     }
     Uformat.close();
@@ -1551,14 +1639,14 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION2() {
     for(unsigned i=0;i<mf_p.nb_dof();++i){
       base_node G = mf_p.point_of_basic_dof(i);
       if (N==2){
-	Uformat << G[0] << "  " << G[1] << "  " << Pn0[i] << endl;
+	Pformat << G[0] << "  " << G[1]  << endl;
       }
     }
     
     if (N==3){
-      for(unsigned i=0;i<mf_u.nb_dof();++i){
-	base_node G = mf_u.point_of_basic_dof(i);
-	Uformat << G[0] << "  " << G[1] << "  " << G[2] << "  " << Pn0[i] << endl;
+      for(unsigned i=0;i<mf_p.nb_dof();++i){
+	base_node G = mf_p.point_of_basic_dof(i);
+	Pformat << G[0] << "  " << G[1] << "  " << G[2]  << endl;
       }
     }
     Pformat.close();
