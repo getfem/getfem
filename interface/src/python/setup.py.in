@@ -6,6 +6,12 @@
 from distutils.core import setup, Extension
 import os
 
+try:
+    import numpy
+except ImportError:
+    raise Exception("PYTHON interface requires numpy")
+npy_include_dir = numpy.get_include()
+
 cclibopts = "../../../src/.libs/libgetfem.a".split()
 cclibopts += '@LIBS@'.split()
 
@@ -32,7 +38,7 @@ libdirs = [l for l in libdirs if len(l.strip())]
 #print "libnames = ", libnames
 #print "libdirs = ", libdirs
 getfemmod = Extension('_getfem',
-                      include_dirs = ['@srcdir@/..','@srcdir@'],
+                      include_dirs = ['@srcdir@/..','@srcdir@',npy_include_dir],
                       libraries = libnames, #['getfemint','getfem','stdc++','m'],
                       library_dirs = libdirs, #['../src/.libs',
 #                                      '@GETFEM_STATICLIBS@'],
