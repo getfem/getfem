@@ -342,8 +342,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
         case NPY_ULONGLONG:
           t->storage.type = GFI_INT32;
 
-          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
-               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+          if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
+                 NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+          else
+            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
+                 NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
           if(!po) { PyErr_NoMemory(); return NULL;}
 
           gc_ref(gc,po);
@@ -355,8 +359,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           t->storage.type = GFI_DOUBLE;
           t->storage.gfi_storage_u.data_double.is_complex = 0;
 
-          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
-               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+          if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
+                 NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+          else
+            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
+                 NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
           if(!po) { PyErr_NoMemory(); return NULL;}
 
           gc_ref(gc,po);
@@ -368,8 +376,12 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           t->storage.type = GFI_DOUBLE;
           t->storage.gfi_storage_u.data_double.is_complex = 1;
 
-          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
-               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+          if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
+                 NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+          else
+            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
+                 NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
           if(!po) { PyErr_NoMemory(); return NULL;}
 
           gc_ref(gc,po);

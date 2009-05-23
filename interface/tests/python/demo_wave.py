@@ -59,8 +59,8 @@ U = md.variable('u');
 if (not(make_check)):
 
     sl=Slice(('none',), mfu, 8)
-    sl.export_to_vtk('wave.vtk', mfu, real(U)*1, 'rWave',
-                     mfu, imag(U)*1, 'iWave')
+    sl.export_to_vtk('wave.vtk', mfu, real(U), 'rWave',
+                     mfu, imag(U), 'iWave')
 
     print 'You can view the solution with (for instance):'
     print 'mayavi2 -d wave.vtk -f WarpScalar -m Surface'
