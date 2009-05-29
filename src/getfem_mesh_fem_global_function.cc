@@ -159,12 +159,19 @@ namespace getfem {
       case 0 : return sqrt(r)*sin2;
       case 1 : return sqrt(r)*cos2; 
       case 2 : return sin2*y/sqrt(r); 
-      case 3 : return cos2*y/sqrt(r); 
+      case 3 : return cos2*y/sqrt(r);
+
+    /* Ces deux fonctions représentes l'enrichissement du champs de pression en     * élasticité incompressible en formulation mixte ...
+     */
+	
+      case 4 : return -sin2/sqrt(r);
+      case 5 : return cos2/sqrt(r); 
+
     default: GMM_ASSERT2(false, "arg");
     }
     return 0;
   }
-
+  
   base_small_vector 
   crack_singular_xy_function::grad(scalar_type x, scalar_type y) const {
     base_small_vector res(2);
@@ -197,6 +204,17 @@ namespace getfem {
     case 3 :
       res[0] = -cos2*cos2*sin2*(4*cos2*cos2 - 3)/sqrt(r);
       res[1] = cos2*(4*cos2*cos2*cos2*cos2 + 2 - 5*cos2*cos2)/sqrt(r);
+      break;
+
+    /* Ces deux fonctions représentes l'enrichissement du champs de pression en     * élasticité incompressible en formulation mixte ...
+     */
+    case 4 :
+      res[0] =sin2/(2*sqrt(r)*r); 
+      res[1] =-cos2/(2*sqrt(r)*r);
+      break;
+    case 5 :
+      res[0] =-cos2/(2*sqrt(r)*r); 
+      res[1] =-sin2/(2*sqrt(r)*r); 
       break;
     default: GMM_ASSERT2(false, "oups");
     }

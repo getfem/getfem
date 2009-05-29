@@ -157,7 +157,7 @@ namespace getfem {
 
   
   struct crack_singular_xy_function : public abstract_xy_function {
-    unsigned l; /* 0 <= l <= 3 */
+    unsigned l; /* 0 <= l <= 6 */
     virtual scalar_type val(scalar_type x, scalar_type y) const;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
     virtual base_matrix hess(scalar_type, scalar_type) const;
