@@ -1,4 +1,4 @@
-% -*- mat-lab -*- (enables emacs matlab mode)
+%-*- mat-lab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program crack                                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -15,8 +15,8 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 
-REFINEMENT_RADIUS = 0.0;  % REF: 0.4;  % 0 for no refinement
-REFINEMENT_PROCESS = 2;  % nb of desired refinement steps
+REFINEMENT_RADIUS = 0;  % REF: 0.4;  % 0 for no refinement
+REFINEMENT_PROCESS = 0;  % nb of desired refinement steps
 
 REFERENCE_TEST = 0;   % 1 to compute a reference solution exported into files
 ERROR_TO_REF_SOL = 1; % 1 to compute errors wrt the reference solution
@@ -24,13 +24,13 @@ INF_SUP_COMP = 1; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =   10;	        % space step.
+NX =  80;	        % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-  FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
+  FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
   % FEM_TYPE = 'FEM_PK(2, 2)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
@@ -66,7 +66,7 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 % GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 0 ;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 3 ; % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
