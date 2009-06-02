@@ -40,6 +40,7 @@ EXTRA_DIST= \
 	demo_tripod.m \
 	demo_tripod_alt.m \
 	demo_tripod_slice_anim.m \
+	demo_fictitious_domains.m \
 	demo_wave2D.m \
 	demo_wave2D_alt.m \
 	test_argyris.m \
