@@ -123,19 +123,17 @@ namespace getfem {
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
-      size_type n_iter; //  number of version of the variable stored (for time
+      size_type n_iter; //  Number of version of the variable stored (for time
                         // integration schemes.
 
       // fem description of the variable
       const mesh_fem *mf;           // Principal fem of the variable.
-      const mesh_im *mim;           // Optional mesh_im for filter.
+      size_type m_region;           // Optional region for the filter
       ppartial_mesh_fem partial_mf; // Filter with respect to mf.
-      size_type m_region;           // Optional mesh_region for the filter.
       std::string filter_var;       // Optional variable name for the filter
-      // with the mass matrix of the corresponding fem.
 
-      dim_type qdim;  // une donnée peut avoir un qdim != du fem.
-      // dim per dof for dof data.
+      dim_type qdim;  // A data could have a qdim != of the fem.
+                      // dim per dof for dof data.
       gmm::uint64_type v_num, v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system
@@ -146,12 +144,11 @@ namespace getfem {
       var_description(bool is_var = false, bool is_com = false,
 		      bool is_fem = false, size_type n_it = 1,
 		      var_description_filter fil = VDESCRFILTER_NO,
-		      const mesh_fem *mmf = 0, const mesh_im *im = 0,
+		      const mesh_fem *mmf = 0,
 		      size_type m_reg = size_type(-1), dim_type Q = 1,
 		      const std::string &filter_v = std::string(""))
 	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
-	  filter(fil), n_iter(n_it), mf(mmf), mim(im),
-	  m_region(m_reg),
+	  filter(fil), n_iter(n_it), mf(mmf), m_region(m_reg),
 	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()) {
 	if (filter != VDESCRFILTER_NO && mf != 0)
 	  partial_mf = new partial_mesh_fem(*mf);
@@ -199,27 +196,29 @@ namespace getfem {
 
     typedef std::vector<term_description> termlist;
 
+    enum assembly_version { BUILD_RHS = 1, BUILD_MATRIX = 2, BUILD_ALL = 3 };
+
   private :
 
 
     // rmatlist and cmatlist could be csc_matrix vectors to reduced the
     // amount of memory (but this should add a supplementary copy).
     struct brick_description {
-      bool terms_to_be_computed;
-      gmm::uint64_type v_num;
+      mutable bool terms_to_be_computed;
+      mutable gmm::uint64_type v_num;
       pbrick pbr;               // brick pointer
       varnamelist vlist;        // List of variables used by the brick.
       varnamelist dlist;        // List of data used by the brick.
       termlist tlist;           // List of terms build by the brick
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
-      real_matlist rmatlist;    // List of matrices the brick have to fill in
+      mutable real_matlist rmatlist; // Matrices the brick have to fill in
       // (real version).
-      real_veclist rveclist;    // List of rhs the brick have to fill in
+      mutable real_veclist rveclist; // Rhs the brick have to fill in
       // (real version).
-      complex_matlist cmatlist; // List of matrices the brick have to fill in
+      mutable complex_matlist cmatlist; // Matrices the brick have to fill in
       // (complex version).
-      complex_veclist cveclist; // List of rhs the brick have to fill in
+      mutable complex_veclist cveclist; // Rhs the brick have to fill in
       // (complex version).
       
       brick_description(pbrick p, const varnamelist &vl,
@@ -236,6 +235,7 @@ namespace getfem {
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
 			     bool assert = true) const;
+    void update_brick(size_type i, assembly_version version) const;
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
@@ -391,14 +391,14 @@ namespace getfem {
     }
     
     /** Add a particular variable linked to a fem being a multiplier with
-	respect to a primal variable. The dof will be filtered with a mass
-	matrix to retain only linearly independant constraints on the primal
-	variable. niter is the number of version of the data stored, for time
-	integration schemes. */
-    void add_mult_on_region(const std::string &name, const mesh_fem &mf,
-			    const mesh_im &mim,
-			    const std::string &primal_name, size_type region,
-			    size_type niter = 1);
+	respect to a primal variable. The dof will be filtered with the
+	gmm::range_basis function applied on the terms of the model which
+	link the multiplier and the primal variable. Optimized for boundary
+	multipliers. niter is the number of version of the data stored,
+	for time integration schemes. */
+    void add_multiplier(const std::string &name, const mesh_fem &mf,
+		       const std::string &primal_name,
+		       size_type niter = 1);
     
     /** Gives the access to the mesh_fem of a variable if any. Throw an
 	exception otherwise. */
@@ -499,8 +499,6 @@ namespace getfem {
 	of index `ind_brick`. */
     const std::string &dataname_of_brick(size_type ind_brick,
 					 size_type ind_data);
-
-    enum assembly_version { BUILD_RHS = 1, BUILD_MATRIX = 2, BUILD_ALL = 3 };
 
     /** Assembly of the tangent system taking into account the terms
 	from all bricks. */

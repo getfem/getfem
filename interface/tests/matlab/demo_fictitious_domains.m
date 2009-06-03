@@ -98,8 +98,7 @@ gf_model_set(md, 'add isotropic linearized elasticity brick', ...
 	     mim, 'u', 'lambda', 'mu');
 gf_model_set(md, 'add initialized data', 'VolumicData', [0; 10]);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
-gf_model_set(md, 'add mult on region', 'mult_dir', mf_mult, ...
-	     mim_bound, 'u', -1);
+gf_model_set(md, 'add multiplier', 'mult_dir', mf_mult, 'u');
 gf_model_set(md, 'add Dirichlet condition with multipliers', ...
 	     mim_bound, 'u', 'mult_dir', -1);
 

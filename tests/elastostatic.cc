@@ -390,7 +390,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
-  getfem::model model;
+     getfem::model model;
 
   // Main unknown of the problem.
   model.add_fem_variable("u", mf_u);
@@ -501,7 +501,7 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {
+  //  try {
 
 
 
@@ -548,8 +548,7 @@ int main(int argc, char *argv[]) {
 	"WarpVector -m Surface -m Outline\n";
     }
 
-  }
-  GMM_STANDARD_CATCH_ERROR;
+    //  } GMM_STANDARD_CATCH_ERROR;
 
   GETFEM_MPI_FINALIZE;
 

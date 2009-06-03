@@ -73,6 +73,7 @@ namespace getfem {
   }
 
   void model::actualize_sizes(void) const {
+    act_size_to_be_done = false;
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
 
@@ -136,11 +137,69 @@ namespace getfem {
       std::set<size_type> glob_columns;
       for (size_type k = 0; k < mults.size(); ++k) {
 	VAR_SET::iterator it = variables.find(mults[k]);
-	
+
+	// This step forces the recomputation of corresponding bricks.
+	// A test to check if a modification is really necessary could
+	// be done first ... (difficult to coordinate with other multipliers)
+	dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
+	it->second.partial_mf->adapt(alldof);
+	it->second.set_size(it->second.partial_mf->nb_dof());
+
+	// Obtening the coupling matrix between the multipier and
+	// the primal variable. A search is done on all the terms of the
+	// model. The corresponding terms are added. If no term is available
+	// a warning is printed and the variable is cancelled.
+
 	gmm::col_matrix< gmm::rsvector<scalar_type> >
 	  MM(it2->second.mf->nb_dof(), it->second.mf->nb_dof());
-	asm_mass_matrix(MM, *(it->second.mim), *(it2->second.mf),
-			*(it->second.mf), it->second.m_region);
+	bool termadded = false;
+
+	for (size_type ib = 0; ib < bricks.size(); ++ib) {
+	  const brick_description &brick = bricks[ib];
+	  bool bupd = false;
+	  bool cplx = is_complex() && brick.pbr->is_complex();
+
+	  for (size_type j = 0; j < brick.tlist.size(); ++j) {
+
+	    const term_description &term = brick.tlist[j];
+	    
+	    if (term.is_matrix_term && !mults[k].compare(term.var1) &&
+		!it2->first.compare(term.var2)) {
+	      if (!bupd) {
+		brick.terms_to_be_computed = true;
+		update_brick(ib, BUILD_MATRIX);
+		bupd = true;
+	      }
+	      if (cplx)
+		gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
+			 MM);
+	      else
+		gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
+	      termadded = true;
+
+	    } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
+			!it2->first.compare(term.var1)) {
+	      if (!bupd) {
+		brick.terms_to_be_computed = true;
+		update_brick(ib, BUILD_MATRIX);
+		bupd = true;
+	      }
+	      if (cplx)
+		gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
+	      else
+		gmm::add(brick.rmatlist[j], MM);
+	      termadded = true;
+	    }
+	  }
+	}
+	
+	if (!termadded)
+	  GMM_WARNING1("No term present to filter the multiplier " << mults[k]
+		       << ". The multiplier is cancelled.");
+
+	//
+	// filtering
+	//
 	std::set<size_type> columns;
 	gmm::range_basis(MM, columns);
 	if (mults.size() > 1) {
@@ -198,8 +257,6 @@ namespace getfem {
       gmm::resize(rTM, tot_size, tot_size);
       gmm::resize(rrhs, tot_size);
     }
-
-    act_size_to_be_done = false;
   }
    
 
@@ -259,23 +316,21 @@ namespace getfem {
 			       dim_type qdim, size_type niter) {
     check_name_valitity(name);
     variables[name] = var_description(false, is_complex(), true, niter,
-				      VDESCRFILTER_NO, &mf, 0, 0, qdim);
+				      VDESCRFILTER_NO, &mf, 0, qdim);
     variables[name].set_size(mf.nb_dof()*qdim);
     add_dependency(mf); 
   }
 
-  void model::add_mult_on_region(const std::string &name, const mesh_fem &mf,
-				 const mesh_im &mim,
-				 const std::string &primal_name,
-				 size_type region,
-				 size_type niter) {
+  void model::add_multiplier(const std::string &name, const mesh_fem &mf,
+			     const std::string &primal_name,
+			     size_type niter) {
     check_name_valitity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
-				      VDESCRFILTER_INFSUP, &mf, &mim, region,
+				      VDESCRFILTER_INFSUP, &mf, 0,
 				      1, primal_name);
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;
-    add_dependency(mf); add_dependency(mim);
+    add_dependency(mf);
   }
 
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
@@ -347,9 +402,71 @@ namespace getfem {
     }
   }
 
-  void model::assembly(assembly_version version) {
+  // Call the brick to compute the terms
+  void model::update_brick(size_type ib, assembly_version version) const {
+    const brick_description &brick = bricks[ib];
+    bool cplx = is_complex() && brick.pbr->is_complex();
+    bool tobecomputed = brick.terms_to_be_computed
+      || !(brick.pbr->is_linear());
+    
+    // check variable list to test if a mesh_fem as changed. 
+    for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
+      var_description &vd = variables[brick.vlist[i]];
+      if (vd.v_num > brick.v_num)
+	tobecomputed = true;
+    }
+    
+    // check data list to test if a vector value of a data has changed. 
+    for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
+      var_description &vd = variables[brick.dlist[i]];
+      if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num)
+	tobecomputed = true;
+    }
 
-    // il faut tenir compte de version dans l'assemblage ... !
+    if (tobecomputed) {
+      // Initialization of vector and matrices.
+      for (size_type j = 0; j < brick.tlist.size(); ++j) {
+	const term_description &term = brick.tlist[j];
+	size_type nbd1 = variables[term.var1].size();
+	size_type nbd2 = term.is_matrix_term ?
+	  variables[term.var2].size() : 0;
+	if (term.is_matrix_term &&
+	    (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
+	  if (cplx)
+	    brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
+	  else
+	    brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
+	}
+	if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
+	  if (cplx) {
+	    gmm::clear(brick.cveclist[j]);
+	    gmm::resize(brick.cveclist[j], nbd1);
+	  } else {
+	    gmm::clear(brick.rveclist[j]);
+	    gmm::resize(brick.rveclist[j], nbd1);
+	  }
+	}
+	brick.v_num = act_counter();
+      }
+      
+      // Brick call for all terms.
+      if (cplx)
+	brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
+					     brick.mims,
+					     brick.cmatlist, brick.cveclist,
+					     brick.region, version);
+      else
+	brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
+					  brick.mims,
+					  brick.rmatlist, brick.rveclist,
+					  brick.region, version);
+    }
+
+    if (brick.pbr->is_linear()) brick.terms_to_be_computed = false;
+  }
+
+
+  void model::assembly(assembly_version version) {
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
     if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
@@ -358,64 +475,10 @@ namespace getfem {
     for (size_type ib = 0; ib < bricks.size(); ++ib) {
       brick_description &brick = bricks[ib];
 
+      update_brick(ib, version);
+
       bool cplx = is_complex() && brick.pbr->is_complex();
       
-      bool tobecomputed = brick.terms_to_be_computed
-	|| !(brick.pbr->is_linear());
-      
-      // check variable list to test if a mesh_fem as changed. 
-      for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
-	var_description &vd = variables[brick.vlist[i]];
-	if (vd.v_num > brick.v_num)
-	  tobecomputed = true;
-      }
-      
-      // check data list to test if a vector value of a data has changed. 
-      for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
-	var_description &vd = variables[brick.dlist[i]];
-	if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num)
-	  tobecomputed = true;
-      }
-      
-      if (tobecomputed) {
-	// Initialization of vector and matrices.
-	for (size_type j = 0; j < brick.tlist.size(); ++j) {
-	  term_description &term = brick.tlist[j];
-	  size_type nbd1 = variables[term.var1].size();
-	  size_type nbd2 = term.is_matrix_term ?
-	    variables[term.var2].size() : 0;
-	  if (term.is_matrix_term &&
-	      (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
-	    if (cplx)
-	      brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
-	    else
-	      brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
-	  }
-	  if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
-	    if (cplx) {
-	      gmm::clear(brick.cveclist[j]);
-	      gmm::resize(brick.cveclist[j], nbd1);
-	    } else {
-	      gmm::clear(brick.rveclist[j]);
-	      gmm::resize(brick.rveclist[j], nbd1);
-	    }
-	  }
-	  brick.v_num = act_counter();
-	}
-	 
-	// Brick call for all terms.
-	if (cplx)
-	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
-					       brick.mims,
-					       brick.cmatlist, brick.cveclist,
-					       brick.region, version);
-	else
-	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
-					    brick.mims,
-					    brick.rmatlist, brick.rveclist,
-					    brick.region, version);
-      }
-
       // Assembly of terms
       for (size_type j = 0; j < brick.tlist.size(); ++j) {
 	term_description &term = brick.tlist[j];
@@ -1113,7 +1176,7 @@ namespace getfem {
    const mesh_fem &mf_mult, size_type region,
    const std::string &dataname) {
     std::string multname = md.new_name("mult_on_" + varname);
-    md.add_mult_on_region(multname, mf_mult, mim, varname, region);
+    md.add_multiplier(multname, mf_mult, varname);
     return add_Dirichlet_condition_with_multipliers
       (md, mim, varname, multname, region, dataname);
   }

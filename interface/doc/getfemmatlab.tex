@@ -2870,7 +2870,7 @@ gf_model_set(md,'add fem data', \tstr name, \tmf mf[, \tint niter])
 gf_model_set(md,'add initialized fem data', \tstr name, \tmf mf, \tvec V)
 gf_model_set(md,'add data', \tstr name, \tmf mf, \tvec V)
 gf_model_set(md,'add initialized data', \tstr name, \tvec V)
-gf_model_set(md,'add mult on region', \tstr name, \tmf mf, \tmim mim, \tstr primalname, \tint region[, \tint niter])
+gf_model_set(md,'add multiplier', \tstr name, \tmf mf, \tmim mim, \tstr primalname, \tint region[, \tint niter])
 gf_model_set(md,'to variables', \tvec V)
 ind_brick=gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tint region])
 ind_brick=gf_model_set(md,'add generic elliptic brick', \tmim mim, \tstr varname[, \tint region])
@@ -2920,13 +2920,14 @@ integration schemes.
 Add a fixed size data to the model linked to a @tmf.
 @@name@@ is the data name, @@V@@ is the value of the data.
 
-\sep{@@gf_model_set(md,'add mult on region', \tstr name, \tmf mf, \tmim mim, \tstr primalname, \tint region[, \tint niter])@@} :
-Add a particular variable linked to a fem beeing a multiplier with
-respect to a primal variable. The dof will be filtered with a mass
-matrix (computed with the integration method @@mim@@) to retain only
-linearly independant constraints on the primal
-variable. niter is the number of version of the data stored, for time
-integration schemes.
+\sep{@@gf_model_set(md,'add multiplier', \tstr name, \tmf mf, \tstr primalname[, \tint niter])@@} :
+Add a particular variable linked to a fem being a multiplier with
+respect to a primal variable. The dof will be filtered with the
+gmm::range_basis function applied on the terms of the model which
+link the multiplier and the primal variable. This in order to
+retain only linearly independant constraints on the primal variable.
+Optimized for boundary multipliers. niter is the number of version
+of the data stored, for time integration schemes.
 
 \sep{@@gf_model_set(md,'to variables', \tvec V))@@} :
 Set the value of the variables of the model with the vector @@V@@.

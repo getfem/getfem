@@ -42,7 +42,7 @@ using namespace getfemint;
   @SET MODEL:SET('clear')
   @SET MODEL:SET('add fem variable')
   @SET MODEL:SET('add variable')
-  @SET MODEL:SET('add mult on region')
+  @SET MODEL:SET('add multiplier')
   @SET MODEL:SET('add fem data')
   @SET MODEL:SET('add initialized fem data')
   @SET MODEL:SET('add data')
@@ -100,24 +100,22 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fixed_size_variable(name, s, niter);
-  } else if (check_cmd(cmd, "add mult on region", in, out, 5, 6, 0, 0)) {
-    /*@SET MODEL:SET('add mult on region', @str name, @tmf mf, @tmim mim, @str primalname,@int region[, @int niter])
-    Add a particular variable linked to a fem beeing a multiplier with
-    respect to a primal variable. The dof will be filtered with a mass
-    matrix (computed with the integration method `mim`) to retain only
-    linearly independant constraints on the primal
-    variable. niter is the number of version of the data stored, for time
-    integration schemes. @*/
+  } else if (check_cmd(cmd, "add multiplier", in, out, 3, 4, 0, 0)) {
+    /*@SET MODEL:SET('add multiplier', @str name, @tmf mf, @str primalname[, @int niter])
+    Add a particular variable linked to a fem being a multiplier with
+    respect to a primal variable. The dof will be filtered with the
+    gmm::range_basis function applied on the terms of the model which
+    link the multiplier and the primal variable. This in order to
+    retain only linearly independant constraints on the primal variable.
+    Optimized for boundary multipliers. niter is the number of version
+    of the data stored, for time integration schemes. @*/
     std::string name = in.pop().to_string();
     getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
-    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
     std::string primalname = in.pop().to_string();
-    size_type region = in.pop().to_integer();
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
-    md->model().add_mult_on_region(name, gfi_mf->mesh_fem(),
-				   gfi_mim->mesh_im(), primalname,
-				   region, niter);
+    md->model().add_multiplier(name, gfi_mf->mesh_fem(),
+			       primalname, niter);
   } else if (check_cmd(cmd, "add fem data", in, out, 2, 4, 0, 0)) {
     /*@SET MODEL:SET('add fem data', @str name, @tmf mf[, @int qdim, @int niter])
     Add a data to the model linked to a @tmf. `name` is the data name,

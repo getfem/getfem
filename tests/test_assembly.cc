@@ -244,9 +244,10 @@ namespace getfem {
   }
 
   template<class MATRM, class MESH_FEM>
-  void old_asm_mass_matrix_on_boundary(MATRM &M, const mesh_im &mim, const MESH_FEM &mf1,
-				       const MESH_FEM &mf2, size_type boundary, dim_type N)
-  {
+  void old_asm_mass_matrix_on_boundary(MATRM &M,
+				       const mesh_im &mim, const MESH_FEM &mf1,
+				       const MESH_FEM &mf2,
+				       size_type boundary, dim_type N) {
     size_type cv, nbd1, nbd2, f;
     dal::bit_vector nn = mf1.convex_index();
     getfem::mesh_region::face_bitset nf;
@@ -255,14 +256,12 @@ namespace getfem {
     pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
-    // M(0,0) = 1.0;  ??
 
     if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
       GMM_ASSERT1(false,
 		  "This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-      {
+    for (cv << nn; cv != ST_NIL; cv << nn) {
 	nf = mf1.linked_mesh().region(boundary).faces_of_convex(cv);
 	if (nf.count() > 0) {
 	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
@@ -300,8 +299,8 @@ namespace getfem {
   }
 
   template<class MATRM, class MESH_FEM>
-  void old_asm_mass_matrix(MATRM &M, const mesh_im &mim, const MESH_FEM &mf1, const MESH_FEM &mf2, dim_type N)
-  {
+  void old_asm_mass_matrix(MATRM &M, const mesh_im &mim, const MESH_FEM &mf1,
+			   const MESH_FEM &mf2, dim_type N) {
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf1.convex_index();
     base_tensor t;
@@ -309,14 +308,12 @@ namespace getfem {
     pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
-    // M(0,0) = 1.0;  ??
 
     if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
       GMM_ASSERT1(false,
 		  "This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-      {
+    for (cv << nn; cv != ST_NIL; cv << nn) {
 	pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf1.linked_mesh().trans_of_convex(cv);
@@ -332,12 +329,10 @@ namespace getfem {
 	// cout << "t = " << t << endl;
       
 	base_tensor::iterator p = t.begin();
-	for (size_type i = 0; i < nbd2; i++)
-	  {
+	for (size_type i = 0; i < nbd2; i++) {
 	    size_type dof2 = mf2.ind_basic_dof_of_element(cv)[i];
 	    // cout << "cv = " << cv << " dof2 = " << dof2 << endl;
-	    for (size_type j = 0; j < nbd1; j++, ++p)
-	      {
+	    for (size_type j = 0; j < nbd1; j++, ++p) {
 		size_type dof1 = mf1.ind_basic_dof_of_element(cv)[j];
 		// cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
 		for (size_type k = 0; k < N; k++)
@@ -439,11 +434,9 @@ namespace getfem {
   }
 
   template<class MAT, class VECT>
-  void old_asm_stiffness_matrix_for_linear_elasticity(MAT &RM,
-						      const mesh_im &mim, 
-						     const mesh_fem &mf, 
-						     const mesh_fem &mfdata, 
-						     const VECT &LAMBDA, const VECT &MU)
+  void old_asm_stiffness_matrix_for_linear_elasticity
+  (MAT &RM, const mesh_im &mim, const mesh_fem &mf, 
+   const mesh_fem &mfdata, const VECT &LAMBDA, const VECT &MU)
   { // à verifier
 
     size_type cv, nbd2, N = mf.linked_mesh().dim();
@@ -458,64 +451,55 @@ namespace getfem {
       GMM_ASSERT1(false,
 		  "This assembling procedure only works on a single mesh");
   
-    for (cv << nn; cv != ST_NIL; cv << nn)
-      {
-	pf1 =     mf.fem_of_element(cv); 
-	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
-	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mim.int_method_of_element(cv);
-	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
-	  {
-	    pme = mat_elem_product(mat_elem_product(mat_elem_grad(pf1),
-						    mat_elem_grad(pf1)), 
-				   mat_elem_base(pf2));
-	    pmec = mat_elem(pme, pim, pgt);
-	    pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
-	  }
-	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
-	base_tensor::iterator p = t.begin();
+    for (cv << nn; cv != ST_NIL; cv << nn) {
+      pf1 =     mf.fem_of_element(cv); 
+      pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
+      pgt = mf.linked_mesh().trans_of_convex(cv);
+      pim = mim.int_method_of_element(cv);
+      if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
+	{
+	  pme = mat_elem_product(mat_elem_product(mat_elem_grad(pf1),
+						  mat_elem_grad(pf1)), 
+				 mat_elem_base(pf2));
+	  pmec = mat_elem(pme, pim, pgt);
+	  pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
+	}
+      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
+      base_tensor::iterator p = t.begin();
       
-	size_type nbd = mf.nb_basic_dof_of_element(cv);
-
-	for (size_type r = 0; r < nbd2; r++)
-	  {
-	    size_type dof3 = mfdata.ind_basic_dof_of_element(cv)[r];
-	    for (dim_type l = 0; l < N; l++)
-	      for (size_type j = 0; j < nbd; j++)
-		{
-		  size_type dof2 = mf.ind_basic_dof_of_element(cv)[j];
+      size_type nbd = mf.nb_basic_dof_of_element(cv);
+      
+      for (size_type r = 0; r < nbd2; r++) {
+	size_type dof3 = mfdata.ind_basic_dof_of_element(cv)[r];
+	for (dim_type l = 0; l < N; l++)
+	  for (size_type j = 0; j < nbd; j++) {
+	    size_type dof2 = mf.ind_basic_dof_of_element(cv)[j];
 	    
-		  for (dim_type k = 0; k < N; k++)
-		    for (size_type i = 0; i < nbd; i++, ++p)
-		      {
-			size_type dof1 = mf.ind_basic_dof_of_element(cv)[i];
+	    for (dim_type k = 0; k < N; k++)
+	      for (size_type i = 0; i < nbd; i++, ++p) {
+		size_type dof1 = mf.ind_basic_dof_of_element(cv)[i];
 		
-			if (dof1*N + k >= dof2*N + l)
-			  {
-			    RM(dof1*N + k, dof2*N + l) += LAMBDA[dof3] * (*p);
-			    RM(dof2*N + l, dof1*N + k) = RM(dof1*N + k, dof2*N + l);
-			  }
-		
-			if (dof1*N + l >= dof2*N + k)
-			  {
-			    RM(dof1*N + l, dof2*N + k) += MU[dof3] * (*p);
-			    RM(dof2*N + k, dof1*N + l) = RM(dof1*N + l, dof2*N + k);
-			  }
-
-			// cout << "matr elem : " << int(l) << " " << int(j) << " " << int(k) << " " << int(i) << " : " << *p << endl; getchar();
-	      
-			if (l == k && dof1 >= dof2)
-			  for (size_type n = 0; n < N; ++n)
-			    {
-			      RM(dof1*N + n, dof2*N + n) += MU[dof3] * (*p);
-			      RM(dof2*N + n, dof1*N + n) = RM(dof1*N + n, dof2*N + n);
-			    }
-		
-		      }
+		if (dof1*N + k >= dof2*N + l) {
+		  RM(dof1*N + k, dof2*N + l) += LAMBDA[dof3] * (*p);
+		  RM(dof2*N + l, dof1*N + k) = RM(dof1*N + k, dof2*N + l);
 		}
+		
+		if (dof1*N + l >= dof2*N + k) {
+		  RM(dof1*N + l, dof2*N + k) += MU[dof3] * (*p);
+		  RM(dof2*N + k, dof1*N + l) = RM(dof1*N + l, dof2*N + k);
+		}
+		
+		if (l == k && dof1 >= dof2)
+		  for (size_type n = 0; n < N; ++n) {
+		    RM(dof1*N + n, dof2*N + n) += MU[dof3] * (*p);
+		    RM(dof2*N + n, dof1*N + n) = RM(dof1*N + n, dof2*N + n);
+		  }
+		
+	      }
 	  }
-	if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
       }
+      if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
+    }
   }
 
   template<class MAT, class VECT>

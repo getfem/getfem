@@ -2031,7 +2031,7 @@ The main usefull methods on a \cpp{model} object are
 \cpp{add\_fixed\_size\_data(name, size, niter=1)} & Add a data of fixed size. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
 \cpp{add\_fem\_variable(name, mf, niter=1)} & Add a variable being the dofs of a finite element method \cpp{mf}. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
 \cpp{add\_fem\_data(name, mf, niter=1)} & Add a data being the dofs of a finite element method \cpp{mf}. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
-\cpp{add\_mult\_on\_region(name, mf, mim, primal\_name, region, niter=1)} & Add a special variable linked to the finite element method \cpp{mf} and being a multiplier for certain contraints (Dirichlet condition for instance) on a primal variable \cpp{primal\_name}. \cpp{mim} is a an obeject of type \cpp{getfem::mesh\_im} which will used to compute a mass matrix in order to select some independent dof of \cpp{mf}. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
+\cpp{add\_multiplier(name, mf, primal\_name, niter=1)} & Add a special variable linked to the finite element method \cpp{mf} and being a multiplier for certain contraints (Dirichlet condition for instance) on a primal variable \cpp{primal\_name}. The most important is that the degrees of freedom will be filtered thanks to a \cpp{partial_mesh_fem} object in order to retain only a set of linearly independent constraints. To ensure this, a call to the bricks having a term linking the multiplier and the primal variable is done and a special algorithm is called to extract independent constraints. This algorithm is optimized for boundary multipliers (see gmm::range_basis). Use it with care for volumic multipliers. \cpp{niter} is the number of copy of the variable (used for time integration schemes). Note that for complex terms, only the real part is considered to filter the multiplier. \\ \hline
 \cpp{real_variable(name, niter=1)} & Gives the access to the vector value of a variable or data. Real version. \\ \hline
 \cpp{complex_variable(name, niter=1)} & Gives the access to the vector value of a variable or data. Complex version. \\ \hline
 \cpp{mesh_fem_of_variable(name)} & Gives a reference on the mesh_fem on which the variable is defined. Throw an exception if this is not a fem variable. \\ \hline
@@ -2189,7 +2189,7 @@ The brick can be defined as follows:
   \};
 \end{cppcode}
 
-This brick has again only one term but define both the matrix and the right hand side parts. Two variables are concerned, the primal variable on which the Dirichlet condition is prescribed, and the multiplier variable which should be defined on a mesh region corresponding to a boundary (it should be added to the model with the method \cpp{add_mult_on_region}). The term of the brick will be declared symmetric (see the next section).
+This brick has again only one term but define both the matrix and the right hand side parts. Two variables are concerned, the primal variable on which the Dirichlet condition is prescribed, and the multiplier variable which should be defined on a mesh region corresponding to a boundary (it should be added to the model with the method \cpp{add_multiplier}). The term of the brick will be declared symmetric (see the next section).
 
 The lines 
 \begin{cppcode}
@@ -2352,7 +2352,7 @@ where $u$ is the variable, $M$ is the space of multipliers,$u$ is the variable a
           multname, region, dataname = std::string());
 \end{cppcode}
 and add a Dirichlet condition on \cpp{varname} thanks to a multiplier variable
-\cpp{multname} on the mesh region \cpp{region} (which should be a boundary). The value of the variable on that boundary is described by the data \cpp{dataname} which should be previously defined in the model. If the data is ommitted, the Dirichlet condition is assumed to be an homogeneous one (vanishing variable on the boundary). The data can be constant or described on a fem. It can also be scalar or vector valued, depending on the variable. The variable \cpp{multname} should be added to the model by the method \cpp{add_mult_on_region}. The function return the brick index in the model. The second function is
+\cpp{multname} on the mesh region \cpp{region} (which should be a boundary). The value of the variable on that boundary is described by the data \cpp{dataname} which should be previously defined in the model. If the data is ommitted, the Dirichlet condition is assumed to be an homogeneous one (vanishing variable on the boundary). The data can be constant or described on a fem. It can also be scalar or vector valued, depending on the variable. The variable \cpp{multname} should be added to the model by the method \cpp{add_multiplier}. The function return the brick index in the model. The second function is
 \begin{cppcode}
   add_Dirichlet_condition_with_multipliers(md, mim, varname,
           mf_mult, region, dataname = std::string());
@@ -2364,7 +2364,7 @@ The only difference is that \cpp{multname} is replaced by \cpp{mf_mult} which me
 \end{cppcode}
 The  parameter \cpp{mf_mult} is replaced by a integer \cpp{degree} indicating thzt the multiplier will be build on a classical finite element method of that degree.
 
-Note, that in all the cases, when a variable is add by the method \cpp{add_mult_on_region} of the model object, the mesh_fem will be filtered (thank to a \cpp{partial_mesh_fem_object} in order to retain only the degrees of freedom having a non vanishing contribution on the considered boundary.
+Note, that in all the cases, when a variable is add by the method \cpp{add_multiplier} of the model object, the mesh_fem will be filtered (thank to a \cpp{partial_mesh_fem_object} in order to retain only the degrees of freedom having a non vanishing contribution on the considered boundary.
 
 Finally, the variable name of the multiplier can be obtained thank to the function
 \begin{cppcode}
