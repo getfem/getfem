@@ -123,8 +123,10 @@ namespace getfem {
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
-      size_type n_iter; //  Number of version of the variable stored (for time
+      size_type n_iter; //  Number of version of the variable stored for time
                         // integration schemes.
+      size_type n_temp_iter; // Number of additional temporary versions
+      size_type default_iter; // default iteration number.
 
       // fem description of the variable
       const mesh_fem *mf;           // Principal fem of the variable.
@@ -140,6 +142,7 @@ namespace getfem {
   
       std::vector<model_real_plain_vector> real_value;
       std::vector<model_complex_plain_vector> complex_value;
+      std::vector<gmm::uint64_type> v_num_var_iter;
 
       var_description(bool is_var = false, bool is_com = false,
 		      bool is_fem = false, size_type n_it = 1,
@@ -148,12 +151,20 @@ namespace getfem {
 		      size_type m_reg = size_type(-1), dim_type Q = 1,
 		      const std::string &filter_v = std::string(""))
 	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
-	  filter(fil), n_iter(n_it), mf(mmf), m_region(m_reg),
-	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()) {
+	  filter(fil), n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
+	  default_iter(0), mf(mmf), m_region(m_reg), filter_var(filter_v),
+	  qdim(Q), v_num(0), v_num_data(act_counter()) {
 	if (filter != VDESCRFILTER_NO && mf != 0)
 	  partial_mf = new partial_mesh_fem(*mf);
 	v_num_data = v_num;
       }
+
+      // add a temporary version for time integration schemes. Automatically
+      // set the default iter to it. id_num is an identifier. Do not add
+      // the version if a temporary already exist with this identifier.
+      size_type add_temporary(gmm::uint64_type id_num);
+
+      void clear_temporaries(void);
 
       const mesh_fem &associated_mf(void) const {
 	GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
@@ -274,22 +285,26 @@ namespace getfem {
     /** Gives the access to the vector value of a variable. For the real
 	version. */
     const model_real_plain_vector &
-    real_variable(const std::string &name, size_type niter = 0) const;
+    real_variable(const std::string &name,
+		  size_type niter = size_type(-1)) const;
 
     /** Gives the access to the vector value of a variable. For the complex
 	version. */
     const model_complex_plain_vector &
-    complex_variable(const std::string &name, size_type niter = 0) const;
+    complex_variable(const std::string &name,
+		     size_type niter = size_type(-1)) const;
 
     /** Gives the write access to the vector value of a variable. Make a
 	change flag of the variable set. For the real version. */
     model_real_plain_vector &
-    set_real_variable(const std::string &name, size_type niter = 0);
+    set_real_variable(const std::string &name,
+		      size_type niter = size_type(-1));
 
     /** Gives the write access to the vector value of a variable. Make a
 	change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
-    set_complex_variable(const std::string &name, size_type niter = 0);
+    set_complex_variable(const std::string &name,
+			 size_type niter = size_type(-1));
 
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, T) const {
@@ -943,7 +958,14 @@ namespace getfem {
    const std::string &multname_pressure, size_type region = size_type(-1),
    const std::string &dataname_penal_coeff = std::string());
 
-  
+  /** Mass brick ( @f$ \int \rho u.v @f$ ).
+      Add a mass matix on a variable (eventually with a specified region).
+      If the parameter $\rho$ is omitted it is assumed to be equal to 1.
+  */
+  size_type add_mass_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname_rho = std::string(),
+   size_type region = size_type(-1));
 
 
 }  /* end of namespace getfem.                                             */

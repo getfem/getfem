@@ -65,6 +65,7 @@ using namespace getfemint;
   @SET MODEL:SET('set private rhs')
   @SET MODEL:SET('add isotropic linearized elasticity brick')
   @SET MODEL:SET('add linear incompressibility brick')
+  @SET MODEL:SET('add mass brick')
 
 
 MLABCOM*/
@@ -673,6 +674,25 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type ind
       = getfem::add_linear_incompressibility
       (md->model(), mim, varname, multname, region, dataname)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add mass brick", in, out, 2, 4, 0, 1)) {
+    /*@SET ind = MODEL:SET('add mass brick', @tmim mim, @str varname[, @str dataname_rho[, @int region]])
+    add mass term to the model relatively to the variable `varname`.
+    If specified, the data `dataname_rho` should contain the density (1 if omitted).
+    `region` is an optional mesh region on which the term is added.
+    If it is not specified, it is added on the whole mesh. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string dataname_rho;
+    if (in.remaining()) dataname_rho = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_mass_brick
+      (md->model(), mim, varname, dataname_rho, region)
       + config::base_index();
     out.pop().from_integer(int(ind));
   } else bad_cmd(cmd);

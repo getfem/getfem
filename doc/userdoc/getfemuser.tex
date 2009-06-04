@@ -2657,6 +2657,38 @@ For instance, the following program defines a Stokes problem with a source term 
 
 A example for a nearly incompressibility condition can be found in the program \cpp{tests/elastostatic.cc}.
 
+\subsection{Mass brick}
+
+This brick represents a weak term of the form
+
+$ \int_{\Omega} \rho  u.v dx + ...; $
+
+It mainly represents a mass term for transient problems but can also be used for other applications (it can be used on a boundary). Basically, this brick add a mass matrix on the tangent linear system with respect to a certain variable.
+
+The function which adds this brick to a model is
+\begin{cppcode}
+  ind_brick = getfem::add_mass_brick
+              (md, mim, varname, dataname_rho="", region = size_type(-1));
+\end{cppcode}
+where \cpp{dataname_rhos} is an optional data of the model representing the density $\rho$. If it is omitted, the density is assumed to be equal to one.
+
+See the section on time integration scheme to see how to use this brick to build an approximation of a transient problem.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{The model bricks (old system)}
 \index{model bricks}

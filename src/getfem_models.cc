@@ -29,15 +29,47 @@
 namespace getfem {
 
   void model::var_description::set_size(size_type s) {
+    n_temp_iter = 0;
+    default_iter = 0;
     if (is_complex)
       complex_value.resize(n_iter);
     else
       real_value.resize(n_iter);
+    v_num_var_iter.resize(n_iter);
     for (size_type i = 0; i < n_iter; ++i)
       if (is_complex)
 	complex_value[i].resize(s);
       else
 	real_value[i].resize(s);
+  }
+
+  size_type model::var_description::add_temporary(gmm::uint64_type id_num) {
+    size_type nit = n_iter;
+    for (; nit < n_iter + n_temp_iter ; ++nit)
+      if (v_num_var_iter[nit] == id_num) break;
+    if (nit >=  n_iter + n_temp_iter) {
+      ++n_temp_iter;
+      if (is_complex) {
+	size_type s = complex_value[0].size();
+	complex_value.resize(n_iter + n_temp_iter);
+	complex_value[nit].resize(s);
+      } else {
+	size_type s = real_value[0].size();
+	real_value.resize(n_iter + n_temp_iter);
+	real_value[nit].resize(s);
+      }
+    }
+    default_iter = nit;
+    return nit;
+  }
+
+  void model::var_description::clear_temporaries(void) {
+    n_temp_iter = 0;
+    default_iter = 0;
+    if (is_complex)
+      complex_value.resize(n_iter);
+    else
+      real_value.resize(n_iter);
   }
 
   bool model::check_name_valitity(const std::string &name, bool assert) const {
@@ -472,6 +504,10 @@ namespace getfem {
     if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
     else { gmm::clear(rTM); gmm::clear(rrhs); }
 
+    // à mettre aussi à la fin avec la suppression des variables temporaires ?
+    for (VAR_SET::iterator it=variables.begin(); it != variables.end(); ++it)
+      it->second.clear_temporaries();
+
     for (size_type ib = 0; ib < bricks.size(); ++ib) {
       brick_description &brick = bricks[ib];
 
@@ -594,7 +630,9 @@ namespace getfem {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    if (niter == size_type(-1)) niter = it->second.default_iter;
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+		<< niter);
     return it->second.real_value[niter];
   }
   
@@ -604,7 +642,9 @@ namespace getfem {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
+    if (niter == size_type(-1)) niter = it->second.default_iter;
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+		<< niter);
     return it->second.complex_value[niter];    
   }
 
@@ -614,8 +654,10 @@ namespace getfem {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
     it->second.v_num_data = act_counter();
+    if (niter == size_type(-1)) niter = it->second.default_iter;
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+		<< niter);
     return it->second.real_value[niter];
   }
   
@@ -625,8 +667,10 @@ namespace getfem {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number");
     it->second.v_num_data = act_counter();    
+    if (niter == size_type(-1)) niter = it->second.default_iter;
+    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+		<< niter);
     return it->second.complex_value[niter];    
   }
 
@@ -1931,6 +1975,117 @@ namespace getfem {
       tl.push_back(model::term_description(multname, multname, true));
     }
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Mass brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct mass_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &,
+					size_type region,
+					nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Mass brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Mass brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+		  "Wrong number of variables for mass brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      
+      const mesh_fem *mf_rho = 0;
+      const model_real_plain_vector *rho = 0;
+
+      if (dl.size()) {
+	mf_rho = md.pmesh_fem_of_variable(dl[0]);
+	rho = &(md.real_variable(dl[0]));
+	size_type sl = gmm::vect_size(*rho);
+	if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+	GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
+      }
+      
+      if (dl.size() && mf_rho) {
+	asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
+      } else {
+	asm_mass_matrix(matl[0], mim, mf_u, rg);
+	if (dl.size()) gmm::scale(matl[0], (*rho)[0]);
+      }
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &,
+					   size_type region,
+					   nonlinear_version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Mass brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Mass brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+		  "Wrong number of variables for mass brick");
+      
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh &m = mf_u.linked_mesh();
+      const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      m.intersect_with_mpi_region(rg);
+      
+      const mesh_fem *mf_rho = 0;
+      const model_complex_plain_vector *rho = 0;
+      
+      if (dl.size()) {
+	mf_rho = md.pmesh_fem_of_variable(dl[0]);
+	rho = &(md.complex_variable(dl[0]));
+	size_type sl = gmm::vect_size(*rho);
+	if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+	GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
+      }
+      
+      if (dl.size() && mf_rho) {
+	asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
+      } else {
+	asm_mass_matrix(matl[0], mim, mf_u, rg);
+	if (dl.size()) gmm::scale(matl[0], (*rho)[0]);
+      }
+    }
+
+    mass_brick(void) {
+      set_flags("isotropic linearized elasticity", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+  };
+
+  size_type add_mass_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname_rho,  size_type region) {
+    pbrick pbr = new mass_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist dl;
+    if (dataname_rho.size())
+      dl.push_back(dataname_rho);
+    return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
+			model::mimlist(1, &mim), region);
   }
 
 

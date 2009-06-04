@@ -468,6 +468,7 @@ model states.
     #@SET    MODEL:SET('set private rhs')
     #@SET    MODEL:SET('add isotropic linearized elasticity brick')
     #@SET    MODEL:SET('add linear incompressibility brick')
+    #@SET    MODEL:SET('add mass brick')
 
 class GeoTrans:
     """General function for building descriptors to geometric transformations.
