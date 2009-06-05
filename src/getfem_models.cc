@@ -440,19 +440,20 @@ namespace getfem {
     bool cplx = is_complex() && brick.pbr->is_complex();
     bool tobecomputed = brick.terms_to_be_computed
       || !(brick.pbr->is_linear());
+    bool dispatchcall = tobecomputed;
     
     // check variable list to test if a mesh_fem as changed. 
     for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.vlist[i]];
-      if (vd.v_num > brick.v_num)
-	tobecomputed = true;
+      if (vd.v_num > brick.v_num) dispatchcall = tobecomputed = true;
+      if (vd.v_num_data > brick.v_num) dispatchcall = true;
     }
     
     // check data list to test if a vector value of a data has changed. 
     for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.dlist[i]];
       if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num)
-	tobecomputed = true;
+	dispatchcall = tobecomputed = true;
     }
 
     if (tobecomputed) {
@@ -478,20 +479,42 @@ namespace getfem {
 	    gmm::resize(brick.rveclist[j], nbd1);
 	  }
 	}
-	brick.v_num = act_counter();
       }
       
       // Brick call for all terms.
-      if (cplx)
-	brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
-					     brick.mims,
-					     brick.cmatlist, brick.cveclist,
-					     brick.region, version);
+      if (brick.pbr->is_linear() || !(brick.pdispatch)) {
+	if (cplx)
+	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
+					       brick.mims,
+					       brick.cmatlist, brick.cveclist,
+					       brick.region, version);
+	else
+	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
+					    brick.mims,
+					    brick.rmatlist, brick.rveclist,
+					    brick.region, version);
+      }
+      brick.v_num = act_counter();
+    }
+      
+    if (dispatchcall && brick.pdispatch) {
+      
+      if (cplx) 
+	brick.pdispatch->asm_complex_tangent_terms(*this, brick.pbr,
+						   brick.vlist, brick.dlist,
+						   brick.mims,
+						   brick.cmatlist,
+						   brick.cveclist,
+						   brick.region, version);
+      
       else
-	brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
-					  brick.mims,
-					  brick.rmatlist, brick.rveclist,
-					  brick.region, version);
+	brick.pdispatch->asm_real_tangent_terms(*this, brick.pbr,
+						brick.vlist, brick.dlist,
+						brick.mims,
+						brick.rmatlist,
+						  brick.rveclist,
+						brick.region, version);
+      brick.v_num = act_counter();
     }
 
     if (brick.pbr->is_linear()) brick.terms_to_be_computed = false;
@@ -673,6 +696,15 @@ namespace getfem {
 		<< niter);
     return it->second.complex_value[niter];    
   }
+
+
+  // ----------------------------------------------------------------------
+  //
+  //
+  // Standard bricks
+  //
+  //
+  // ----------------------------------------------------------------------
 
 
   // ----------------------------------------------------------------------
@@ -2068,7 +2100,7 @@ namespace getfem {
     }
 
     mass_brick(void) {
-      set_flags("isotropic linearized elasticity", true /* is linear*/,
+      set_flags("Mass brick", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
 		true /* is real */, true /* is complex */);
     }
@@ -2087,6 +2119,97 @@ namespace getfem {
     return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
 			model::mimlist(1, &mim), region);
   }
+
+
+  // ----------------------------------------------------------------------
+  //
+  //
+  // Standard time dispatchers
+  //
+  //
+  // ----------------------------------------------------------------------
+
+
+  // ----------------------------------------------------------------------
+  //
+  // theta-method dispatcher
+  //
+  // ----------------------------------------------------------------------
+
+  class theta_method_dispatcher : public virtual_dispatcher {
+
+  public :
+
+    typedef model::assembly_version nonlinear_version;
+
+    virtual void asm_real_tangent_terms(const model &md, pbrick pbr,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vectl,
+					size_type region,
+					nonlinear_version version) const {
+      scalar_type theta = real_params[0];
+
+
+      // Cas linéaire
+
+      // La brique a été appelée si nécessaire par udpdate_brick.
+      // rendre les coefficients et calculer le second membre supplémentaire
+
+
+
+      // Cas non-linéaire (ne pas oublier de gérer `version`
+      // Création éventuelle variables temporaire
+      // Appel brique pour le second membre
+      // Création du second membre supplémentaire
+      // Appel brique pour le membre courant
+      pbr->asm_real_tangent_terms(md, vl, dl, mims, matl, vectl,
+				  region, version);
+
+      // rendre les coefficients (seulement deux coefficients).
+
+
+
+
+      // il faut lister les termes ... ca serait plutôt le boulot de la brique ...  la brique stocke le résultat de l'appel pour une brique linéaire et demande un paramêtre multiplicatif pour la suite ainsi que la formule de modification du résidu.
+
+      // pour une brique non linéaire ... ca se corse dans certain cas, mais rien à stocker ...
+      for (size_type i = 0; i < matl.size(); ++i) {
+
+	
+
+      }
+      
+
+
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md, pbrick pbr,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vectl,
+					   size_type region,
+					   nonlinear_version version) const {
+      pbr->asm_complex_tangent_terms(md, vl, dl, mims, matl, vectl,
+				  region, version);
+    }
+    
+  };
+  
+ 
+
+
+  // ----------------------------------------------------------------------
+  //
+  // midpoint dispatcher ... to be done
+  //
+  // ----------------------------------------------------------------------
+
+
 
 
 }  /* end of namespace getfem.                                             */

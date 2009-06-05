@@ -46,6 +46,9 @@ namespace getfem {
   /** type of pointer on a brick */ 
   typedef boost::intrusive_ptr<const getfem::virtual_brick> pbrick;
 
+  class virtual_dispatcher;
+  typedef boost::intrusive_ptr<const getfem::virtual_dispatcher> pdispatcher;
+  
   // Event management : The model has to react when something has changed in
   //    the context and ask for corresponding (linear) bricks to recompute
   //    some terms.
@@ -218,6 +221,7 @@ namespace getfem {
       mutable bool terms_to_be_computed;
       mutable gmm::uint64_type v_num;
       pbrick pbr;               // brick pointer
+      pdispatcher pdispatch;    // Optional dispatcher
       varnamelist vlist;        // List of variables used by the brick.
       varnamelist dlist;        // List of data used by the brick.
       termlist tlist;           // List of terms build by the brick
@@ -235,8 +239,8 @@ namespace getfem {
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
 			const mimlist &mms, size_type reg)
-	: terms_to_be_computed(true), v_num(0), pbr(p), vlist(vl), dlist(dl),
-	  tlist(tl), mims(mms), region(reg) { }
+	: terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), 
+	  vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg) { }
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
@@ -436,20 +440,6 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return cTM;
     }
-
-//     template<typename MATRIX, typename T>
-//     const MATRIX &tangent_matrix(T) const { return real_rhs(); }
-
-//     template<typename MATRIX, typename T>
-//     const MATRIX &tangent_matrix(std::complex<T>) const
-//     { return complex_rhs(); }
-    
-
-//     template<typename MATRIX> const MATRIX &tangent_matrix(void) const {
-//       typedef typename gmm::linalg_traits<MATRIX>::value_type T;
-//       return tangent_matrix<MATRIX>(T());
-//     }
-
     
     /** Gives the access to the right hand side of the tangent linear system.
 	For the real version. */
@@ -466,18 +456,6 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return crhs;
     }
-
-//     template<typename VECTOR, typename T>
-//     const VECTOR &rhs(T) const { return real_rhs(); }
-
-//     template<typename VECTOR, typename T>
-//     const VECTOR &rhs(std::complex<T>) const { return complex_rhs(); }
-    
-
-//     template<typename VECTOR> const VECTOR &rhs(void) const {
-//       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
-//       return rhs<VECTOR>(T());
-//     }
 
     /** List the model variables and constant. */
     void listvar(std::ostream &ost) const;
@@ -537,15 +515,48 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Brick object.
+  //  Time dispatcher object.
   //
   //=========================================================================
 
-  // Si la brique a besoin d'un stockage "interne" elle doit le faire dans
-  // le modèle en reservant une variable ? Si le besoin est une matrice
-  //  creuse ? Prévoir qlq chose de spécifique dans le modèle ? (exemple de la
-  // brique contraite ...)
-  // A voir selon les besoins futurs.
+  /** The time dispatcher object modify the result of a brick in order to
+      apply a time integration scheme.
+  **/
+  class virtual_dispatcher : virtual public dal::static_stored_object {
+    
+  protected :
+    
+    std::vector<scalar_type> real_params;
+
+  public :
+
+    typedef model::assembly_version nonlinear_version;
+
+    virtual void asm_real_tangent_terms(const model &, pbrick,
+					const model::varnamelist &,
+					const model::varnamelist &,
+					const model::mimlist &,
+					model::real_matlist &,
+					model::real_veclist &,
+					size_type, nonlinear_version) const
+    { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
+
+    virtual void asm_complex_tangent_terms(const model &, pbrick,
+					   const model::varnamelist &,
+					   const model::varnamelist &,
+					   const model::mimlist &,
+					   model::complex_matlist &,
+					   model::complex_veclist &,
+					   size_type, nonlinear_version) const
+    { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
+    
+  };
+
+  //=========================================================================
+  //
+  //  Brick object.
+  //
+  //=========================================================================
 
   /** The virtual brick has to be derived to describe real model bricks.
       The set_flags method has to be called by the derived class.
