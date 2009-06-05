@@ -2157,6 +2157,24 @@ namespace getfem {
 
       // La brique a été appelée si nécessaire par udpdate_brick.
       // rendre les coefficients et calculer le second membre supplémentaire
+      // ou bien versionné aussi les second membres ... pour éviter de
+      // les recalculer ... ce qui implique de faire un calcul des residu
+      // au premier pas de temps sur les différentes itérations initiales ...
+      // C'est surement ce qu'il faut faire, mais définir un cadre
+      // pour le gérer
+      // Le time dispatcher doit déclarer sur combien de pas de temps il 
+      // travaill, si il faut évaluer sur des pas de temps (et donc
+      // l'évaluation peut être faite automatiquement) ou si il faut faire
+      // des combinaisons linéaires de variables
+      // (pour les briques non-linéaires) (pour les briques linéaires on peut
+      // aussi toujours passer par la première méthode).
+      // est-ce que le time dispatcher rend juste la combinaison linéaire ou
+      // est-ce qu'on le laisse faire sa sauce ?
+
+      // matrix_coeff = rhs_coeff = theta;
+      // 
+      // Si une donnée versionne existe, il faut faire calculer
+      // la brique dessus ...
 
 
 
