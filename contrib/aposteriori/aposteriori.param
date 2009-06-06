@@ -7,35 +7,37 @@
 MU = 150.0;	        % Lame coefficient.
 LAMBDA = 200.0;   	% Lame coefficient.
 
-ADAPTED_REFINE = 1;      % 0 to disable adapted refinement 
+ADAPTED_REFINE =0;      % 0 to disable adapted refinement 
                          % 1 to enable it
-REFINE_THRESHOLD = 0.001;
-% REFINE_THRESHOLD = 1E-8;
+% REFINE_THRESHOLD =5;
+ REFINE_THRESHOLD =1;
 
 MIN_RADIUS_ELT = 1E-7;  % Min radius for an element in the refinement process.
 
-CONV_MAX = 12000;        % maximal number of elements
+CONV_MAX = 20000;        % maximal number of elements
 
 CUTOFF_FUNC = 2; % 0 for the exponential cutoff. 
                  % 1 for a 3rd degree polynomial cutoff.
                  % 2 for a 5th degree polynomial cutoff. 
 CUTOFF = 0.4;
-CUTOFF1 = 0.2;
-CUTOFF0 = 0.3;
+CUTOFF1 = 0.01;
+CUTOFF0 = 0.49;
 
 ENRICHED = 1;    % Enrichment or not with singular functions
 
-OPTION = 1; % 0 = opening mode
+OPTION=0; % 0 = opening mode
             % 1 = L shaped domain.
 
+MODE=1;
+
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+MESH_TYPE= 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2)';   % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 
 LX = 1;			  % mesh size x'ox
 LY = 1;	                  % mesh size y'oy
-NX = 8;            	  % space step.
+NX = 32;        NX1=59;    	  % space step.
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
@@ -53,13 +55,13 @@ DIRICHLET_VERSION = 0;
 % DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
-SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),10)';
+SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
 
 % integration meth. for quasi-polar integration of sub-simplexes adjascent to the level-set
 % (comment it to disable quasipolar integration). Should be a
 % method defined on a square for 2D, or defined on a prism for 3D.
 % SINGULAR_INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 10)';
+SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 2)';
 
 INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 2)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 2), 5)';

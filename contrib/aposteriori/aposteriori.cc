@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Vanessa Lleras, Yves Renard.
+// Copyright (C) 2002-2009 Vanessa Lleras, Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -73,6 +73,10 @@ base_small_vector sol_F(const base_node &x) {
   return res;
 }
 
+// scalar_type young_modulus(scalar_type lambda, scalar_type mu) {
+//  return 4*mu*(lambda + mu)/(lambda+2*mu);
+// }
+
 struct exact_solution {
   getfem::mesh_fem_global_function mf;
   getfem::base_vector U;
@@ -83,7 +87,7 @@ struct exact_solution {
 	    getfem::level_set &ls) {
     std::vector<getfem::pglobal_function> cfun(4);
     for (unsigned j=0; j < 4; ++j) {
-      getfem::crack_singular_xy_function *s = 
+      getfem::abstract_xy_function *s = 
 	new getfem::crack_singular_xy_function(j);
       cfun[j] = getfem::global_function_on_level_set(ls, *s);
     }
@@ -102,8 +106,8 @@ struct exact_solution {
 	*it++ = 0;       *it++ = A-B; /* sin(theta/2) */
 	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
 	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
-	*it++ = 0;       *it++ = B;   /* cos(theta/2)*cos(theta) */
-	coeff = 1/sqrt(2*M_PI);
+	*it++ = 0;       *it++ = B;   /* cos(theta/2)*sin(theta) */
+	coeff = 1/(sqrt(2*M_PI)); // *young_modulus(lambda,mu));
       } break;
       case 2: {
 	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
@@ -111,7 +115,7 @@ struct exact_solution {
 	*it++ = 0;      *it++ = -(C1-2+1);
 	*it++ = 0;      *it++ = 1;
 	*it++ = 1;      *it++ = 0;
-	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
+	coeff = 2*(mu+lambda)/(lambda+2*mu)/(sqrt(2*M_PI)); // *young_modulus(lambda,mu));
       } break;
       default:
 	assert(0);
@@ -204,7 +208,7 @@ void crack_problem::init(void) {
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
-  size_type NX = PARAM.int_value("NX", "Nomber of space steps ");
+  size_type NX = PARAM.int_value("NX", "Number of space steps ");
   if (option == 1) NX *= 2;
   std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
@@ -238,7 +242,8 @@ void crack_problem::init(void) {
  
   mu = PARAM.real_value("MU", "Lame coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
-  
+  //unsigned mode =unsigned( PARAM.int_value("MODE", "mode"));
+
   mf_u().set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
@@ -305,6 +310,9 @@ void crack_problem::init(void) {
       break;
     }
   }
+
+  
+  exact_sol.init(1,lambda,mu,ls);
 }
 
 
@@ -374,7 +382,7 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
       ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res);
     }
 
-    scalar_type ee = ERR[cv];
+//    scalar_type ee = ERR[cv];
     if (ERR[cv] > 100)
       cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;
 
@@ -418,25 +426,23 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	
 	  ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
 
-// 	  if (gmm::vect_norm2_sqr(jump) > 100) {
+// 	  if (gmm::vect_norm2(jump) > 100000) {
 // 	    cout.precision(14);
-// 	    cout << "\ngmm::vect_norm2_sqr(jump) = "
-// 		 << gmm::vect_norm2_sqr(jump) << " on cv " << cv
-// 		 << " pt " << ctx1.xreal() << endl;
-//  	    cout << "S1 = " << S1 << "up = " << up << endl;
-//  	    cout << "jump = " << jump << " coefficient = "
-// 		 << coefficient << endl;
-// 	  }
+// 	    cout << "gmm::vect_norm2_sqr(jump) = "
+//	         << gmm::vect_norm2_sqr(jump) << " on cv " << cv
+//               << " pt " << ctx1.xreal() << endl; getchar();
+// 	    cout << "S1 = " << S1 << "up = " << up << endl;
+// 	    cout << "jump = " << jump << endl;
+// 	    cout << "point = " << ctx1.xreal() << endl;
+//	  }
 	}
       }
     }
 
-    if (ERR[cv]-ee > 100) {
-      cout << "Erreur en contrainte sur la level set sur element " << cv
-	   << " : " << ERR[cv]-ee << "  radius = " << radius << endl;
-      // getchar();
-    }
-    ee = ERR[cv];
+    // if (ERR[cv]-ee > 100){
+    //   cout << "Erreur en contrainte sur la level set sur element " << cv << " : " << ERR[cv]-ee << "  radius = " << radius << endl;
+    // }
+    //  ee = ERR[cv];
  
     // jump of the stress between the element ant its neighbours.
     for (short_type f1=0; f1 < mesh.structure_of_convex(cv)->nb_faces(); ++f1) {
@@ -486,25 +492,29 @@ void crack_problem::error_estimate(const plain_vector &U, plain_vector &ERR) {
 	gmm::mult(S1, up, jump);
 	gmm::mult_add(S2, gmm::scaled(up, -1.0), jump);
 
-	ERR[cv] += radius * coefficient * gmm::vect_norm2_sqr(jump);
+	ERR[cv] +=radius * coefficient * gmm::vect_norm2_sqr(jump);
 
       }
       
     }
 
-    if (ERR[cv]-ee > 100)
-      cout << "Erreur en contrainte inter element sur element " << cv << " : " << ERR[cv]-ee << endl;
-    ee = ERR[cv];
+    //   if (ERR[cv]-ee > 100)
+    //   cout << "Erreur en contrainte inter element sur element " << cv << " : " << ERR[cv]-ee << endl;
+      //ERR[cv] = sqrt(ERR[cv]);
 
   }
   
 }
 
 
+      
+     
+
+
 
 
 bool crack_problem::solve(plain_vector &U) {
-  
+
   size_type N = mesh.dim();
   dal::bit_vector conv_to_refine;
   bool iteration;
@@ -515,7 +525,7 @@ bool crack_problem::solve(plain_vector &U) {
     ls.reinit();
     for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
       base_small_vector
-	v = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), option);
+	v =  ls_function(ls.get_mesh_fem().point_of_basic_dof(d), option);
       ls.values(0)[d] = v[0];
       ls.values(1)[d] = v[1];
     }
@@ -524,8 +534,8 @@ bool crack_problem::solve(plain_vector &U) {
     mim.adapt();
     mfls_u.adapt();
     mimbound.adapt();
-    exact_sol.init(1, lambda, mu, ls);
- 
+    //exact_sol.init(1,lambda, mu,ls);
+   
     cout << "Setting up the singular functions for the enrichment\n";
     std::vector<getfem::pglobal_function> vfunc(4);
     for (unsigned i = 0; i < vfunc.size(); ++i) {
@@ -533,7 +543,7 @@ bool crack_problem::solve(plain_vector &U) {
       getfem::abstract_xy_function *s = 
 	new getfem::crack_singular_xy_function(i);
       getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(int(cutoff.fun_num),
+	new getfem::cutoff_xy_function(cutoff.fun_num,
 				       cutoff.radius, 
 				       cutoff.radius1, cutoff.radius0);
       s = new getfem::product_of_xy_functions(*s, *c);
@@ -550,6 +560,8 @@ bool crack_problem::solve(plain_vector &U) {
       cout << "nonenriched version\n";
       mf_u_sum.set_mesh_fems(mfls_u);
     }
+    
+    U.resize(mf_u().nb_dof());
 
     getfem::mdbrick_isotropic_linearized_elasticity<>
       ELAS(mim, mf_u(), lambda, mu);
@@ -569,7 +581,7 @@ bool crack_problem::solve(plain_vector &U) {
 
     if (option == 0)
       DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-  
+     
     getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
 
     // Generic solve.
@@ -579,17 +591,30 @@ bool crack_problem::solve(plain_vector &U) {
   
     getfem::standard_solve(MS, *final_model, iter);
   
+  
     // Solution extraction
-    gmm::resize(U, mf_u().nb_dof());
+    //gmm::resize(U, mf_u().nb_dof());
     gmm::copy(ELAS.get_solution(MS), U);
     iteration = iter.converged();  
 
     conv_to_refine.clear();
     // Adapted Refinement (suivant une erreur a posteriori)
+    // j=0;
+    if (adapted_refine==0) {
+      plain_vector ERR(mesh.convex_index().last_true()+1);
+      error_estimate(U, ERR);
+      cout<<"u="<<gmm::sub_vector(U,gmm::sub_interval(0,8))<<endl;
+       cout<<"exact="<<exact_sol.U<<endl;
+      cout << "erreur=" <<gmm::vect_norm2(ERR)<< endl;}
+
     if (adapted_refine && mesh.convex_index().card() < conv_max) {
       plain_vector ERR(mesh.convex_index().last_true()+1);
       error_estimate(U, ERR);
-      // getfem::error_estimate(mim, mf_u(), U, ERR);
+      
+  cout << "erreur=" <<gmm::vect_norm2(ERR)<< endl;
+  
+
+  // getfem::error_estimate(mim, mf_u(), U, ERR);(
 
       // cout << "ERR = " << ERR << endl; 
     
@@ -601,7 +626,7 @@ bool crack_problem::solve(plain_vector &U) {
       scalar_type min_ = 1e18;
       conv_to_refine.clear();
       for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	if (ERR[i] > threshold) {
+     	if (ERR[i] > threshold) {
 	  if (mesh.convex_radius_estimate(i) > min_radius_elt)
 	    conv_to_refine.add(i);
 	  else cout << "Tried to refine elt " << i
@@ -629,14 +654,19 @@ bool crack_problem::solve(plain_vector &U) {
   mf_printed_vm.set_finite_element(mesh.convex_index(),
 				   getfem::fem_descriptor(FEM_DISC));
   plain_vector W(mf_printed.nb_dof());
+
   getfem::interpolation(mf_u(), mf_printed, U, W);
+
+
+     
   mf_printed.write_to_file(datafilename + ".meshfem", true);
   mf_printed_vm.write_to_file(datafilename + ".meshfem_vm", true);
   gmm::vecsave(datafilename + ".U", W);
-
+ 
   plain_vector VM(mf_printed_vm.nb_dof());
   getfem::interpolation_von_mises(mf_printed, mf_printed_vm, W, VM);
   gmm::vecsave(datafilename + ".VM", VM);
+
 
   return (iteration);
 }
@@ -652,12 +682,12 @@ int main(int argc, char *argv[]) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   //getfem::getfem_mesh_level_set_noisy();
-
+try{
   crack_problem p;
   p.PARAM.read_command_line(argc, argv);
   p.init();
   p.mesh.write_to_file(p.datafilename + ".mesh");
-  plain_vector U;
+  plain_vector U(p.mf_u().nb_dof());
   if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
   
   {
@@ -671,16 +701,17 @@ int main(int argc, char *argv[]) {
     plain_vector V(mf.nb_dof());
     
     getfem::interpolation(p.mf_u(), mf, U, V);
+
     
     getfem::stored_mesh_slice sl;
     getfem::mesh mcut_refined;
+
     
 //     unsigned NX = p.PARAM.int_value("NX"), nn;
 //     if (NX < 6) nn = 24;
 //     else if (NX < 12) nn = 8;
 //     else if (NX < 30) nn = 3;
 //     else nn = 1;
-    unsigned nn = 1;
     
     // choose an adequate slice refinement based on the distance to
     // the crack tip
@@ -694,12 +725,12 @@ int main(int argc, char *argv[]) {
 	if (d < dmin || i == 0) { dmin = d; Pmin = P; }
       }
       
-      if (dmin < 1e-5)
-	nrefine[cv] = short_type(nn*8);
-      else if (dmin < .1) 
-	nrefine[cv] = short_type(nn*2);
-      else nrefine[cv] = short_type(nn);
-      // nrefine[cv] = 1;
+      //if (dmin < 1e-5)
+      //	nrefine[cv] = short_type(nn*8);
+      //  else if (dmin < .1) 
+      //	nrefine[cv] = short_type(nn*2);
+      // else nrefine[cv] = short_type(nn);
+       nrefine[cv] = 1;
       // if (dmin < .01)
       //  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin 
       //       << " " << nrefine[cv] << "\n";
@@ -719,11 +750,24 @@ int main(int argc, char *argv[]) {
     mim_refined.set_integration_method(getfem::int_method_descriptor
 				       ("IM_TRIANGLE(6)"));
     
-    getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
+    getfem::mesh_fem mf_refined(mcut_refined,dim_type(Q));
     mf_refined.set_classical_discontinuous_finite_element(2, 0.0001);
     plain_vector W(mf_refined.nb_dof());
     
     getfem::interpolation(p.mf_u(), mf_refined, U, W);
+
+ 
+
+    p.exact_sol.mf.set_qdim(dim_type(Q));
+    assert(p.exact_sol.mf.nb_dof()==p.exact_sol.U.size());
+
+     plain_vector exac(mf_refined.nb_dof());
+     getfem::interpolation(p.exact_sol.mf, mf_refined, p.exact_sol.U,exac);
+     plain_vector diff(exac);
+     gmm::add(gmm::scaled(W,-1),diff);
+    //cout<<"exact="<<p.exact_sol.U<<endl;
+   // cout<<"U="<<gmm::sub_vector(U,gmm::sub_interval(0,8))<<endl;
+
     
     if (p.PARAM.int_value("VTK_EXPORT")) {
       getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
@@ -752,12 +796,21 @@ int main(int argc, char *argv[]) {
       //exp.write_point_data(mf_refined_vm, DN, "error");
       exp.write_point_data(mf_refined_vm, VM, "von mises stress");
       exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+      exp.write_point_data(mf_refined,exac,"reference solution");
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d " << p.datafilename << ".vtk -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
+
+
+ cout<<"L2="<<getfem::asm_L2_dist(p.mim, p.mf_u(),U,p.exact_sol.mf,p.exact_sol.U)<< endl;
+cout<<"H1="<<getfem::asm_H1_dist(p.mim, p.mf_u(),U,p.exact_sol.mf,p.exact_sol.U)<< endl;
+
+cout<<"h1="<<getfem::asm_H1_norm(mim_refined,mf_refined,diff)<< endl;
   }
-  
+  }
+GMM_STANDARD_CATCH_ERROR;
+
   return 0; 
 }
 
