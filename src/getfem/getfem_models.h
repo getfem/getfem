@@ -202,7 +202,7 @@ namespace getfem {
       bool is_symmetric;   // Term have to be symmetrized.
       std::string var1, var2;
       term_description(const std::string &v)
-	: is_matrix_term(false), var1(v) {}
+	: is_matrix_term(false), is_symmetric(false), var1(v) {}
       term_description(const std::string &v1, const std::string &v2,
 		       bool issym)
 	: is_matrix_term(true), is_symmetric(issym), var1(v1), var2(v2) {}
@@ -222,25 +222,29 @@ namespace getfem {
       mutable gmm::uint64_type v_num;
       pbrick pbr;               // brick pointer
       pdispatcher pdispatch;    // Optional dispatcher
+      size_type nbrhs;          // Additional rhs for dispatcher.
       varnamelist vlist;        // List of variables used by the brick.
       varnamelist dlist;        // List of data used by the brick.
       termlist tlist;           // List of terms build by the brick
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
       mutable real_matlist rmatlist; // Matrices the brick have to fill in
-      // (real version).
-      mutable real_veclist rveclist; // Rhs the brick have to fill in
-      // (real version).
+                                     // (real version).
+      mutable std::vector<real_veclist> rveclist; // Rhs the brick have to 
+                                                  // fill in (real version).
+      mutable std::vector<real_veclist> rveclist_sym; // additional rhs for symmetric terms (real version).
       mutable complex_matlist cmatlist; // Matrices the brick have to fill in
       // (complex version).
-      mutable complex_veclist cveclist; // Rhs the brick have to fill in
-      // (complex version).
+      mutable std::vector<complex_veclist> cveclist; // Rhs the brick have to
+                                              // fill in (complex version).
+      mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs for symmetric terms (real version).
       
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
 			const mimlist &mms, size_type reg)
-	: terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), 
-	  vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg) { }
+	: terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
+	  vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
+	  rveclist(1), rveclist_sym(1), cveclist(1), cveclist_sym(1)  { }
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
@@ -250,14 +254,17 @@ namespace getfem {
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
 			     bool assert = true) const;
-    void update_brick(size_type i, assembly_version version) const;
+    void brick_call(size_type ib, assembly_version version,
+		      size_type rhs_ind = 0) const;
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
   public :
 
-    // gerer aussi l'actualisation des mult qui n'est pas fait au début 
-    // état du modèle -> actualize à faire ...
+    // call the brick if necessary 
+    void update_brick(size_type ib, assembly_version version) const;
+    void linear_brick_add_to_rhs(size_type ib, size_type ind_data) const;
+
     void update_from_context(void) const {  act_size_to_be_done = true; }
     
     /** Boolean which says if the model deals with real or complex unknowns
@@ -283,7 +290,7 @@ namespace getfem {
     /** Leading dimension of the meshes used in the model. */
     dim_type leading_dimension(void) const { return leading_dim; }
 
-    /** Gives a non already existing variable name bigining by `name`. */
+    /** Gives a non already existing variable name begining by `name`. */
     std::string new_name(const std::string &name);
 
     /** Gives the access to the vector value of a variable. For the real
@@ -523,31 +530,33 @@ namespace getfem {
       apply a time integration scheme.
   **/
   class virtual_dispatcher : virtual public dal::static_stored_object {
-    
+
   protected :
-    
-    std::vector<scalar_type> real_params;
+
+    void transfert(model::real_veclist &v1, model::real_veclist &v2) const {
+      for (size_type i = 0; i < v1.size(); ++i)
+	gmm::copy(v1[i], v2[i]);
+    }
+
 
   public :
 
     typedef model::assembly_version nonlinear_version;
 
-    virtual void asm_real_tangent_terms(const model &, pbrick,
-					const model::varnamelist &,
-					const model::varnamelist &,
-					const model::mimlist &,
-					model::real_matlist &,
-					model::real_veclist &,
-					size_type, nonlinear_version) const
+    virtual void asm_real_tangent_terms
+    (const model &, size_type, const model::varnamelist &,
+     const model::varnamelist &,
+     model::real_matlist &, std::vector<model::real_veclist> &,
+     std::vector<model::real_veclist> &,
+     nonlinear_version) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
 
-    virtual void asm_complex_tangent_terms(const model &, pbrick,
-					   const model::varnamelist &,
-					   const model::varnamelist &,
-					   const model::mimlist &,
-					   model::complex_matlist &,
-					   model::complex_veclist &,
-					   size_type, nonlinear_version) const
+    virtual void asm_complex_tangent_terms
+    (const model &, size_type, const model::varnamelist &,
+     const model::varnamelist &,
+     model::complex_matlist &, std::vector<model::complex_veclist> &,
+     std::vector<model::complex_veclist> &,
+     nonlinear_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
     
   };
@@ -602,6 +611,7 @@ namespace getfem {
 					const model::mimlist &,
 					model::real_matlist &,
 					model::real_veclist &,
+					model::real_veclist &,
 					size_type, nonlinear_version) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
 
@@ -610,6 +620,7 @@ namespace getfem {
 					   const model::varnamelist &,
 					   const model::mimlist &,
 					   model::complex_matlist &,
+					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type, nonlinear_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }

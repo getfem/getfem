@@ -378,10 +378,12 @@ namespace getfem {
 		"Impossible to add a complex brick to a real model");
     if (is_complex() && pbr->is_complex()) {
       bricks.back().cmatlist.resize(terms.size());
-      bricks.back().cveclist.resize(terms.size());
+      bricks.back().cveclist[0].resize(terms.size());
+      bricks.back().cveclist_sym[0].resize(terms.size());
     } else {
       bricks.back().rmatlist.resize(terms.size());
-      bricks.back().rveclist.resize(terms.size());
+      bricks.back().rveclist[0].resize(terms.size());
+      bricks.back().rveclist_sym[0].resize(terms.size());
     }
     is_linear_ = is_linear_ && pbr->is_linear();
     is_symmetric_ = is_symmetric_ && pbr->is_symmetric();
@@ -434,6 +436,28 @@ namespace getfem {
     }
   }
 
+  void model::brick_call(size_type ib, assembly_version version,
+			 size_type rhs_ind) const {
+    const brick_description &brick = bricks[ib];
+    bool cplx = is_complex() && brick.pbr->is_complex();
+    
+    if (cplx)
+      brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
+					   brick.mims,
+					   brick.cmatlist,
+					   brick.cveclist[rhs_ind],
+					   brick.cveclist_sym[rhs_ind],
+					   brick.region, version);
+    else
+      brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
+					brick.mims,
+					brick.rmatlist,
+					brick.rveclist[rhs_ind],
+					brick.rveclist_sym[rhs_ind],
+					brick.region, version);
+  }
+  
+
   // Call the brick to compute the terms
   void model::update_brick(size_type ib, assembly_version version) const {
     const brick_description &brick = bricks[ib];
@@ -472,52 +496,82 @@ namespace getfem {
 	}
 	if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
 	  if (cplx) {
-	    gmm::clear(brick.cveclist[j]);
-	    gmm::resize(brick.cveclist[j], nbd1);
+	    gmm::clear(brick.cveclist[0][j]);
+	    gmm::resize(brick.cveclist[0][j], nbd1);
+	    if (term.is_symmetric && term.var1.compare(term.var2)) {
+	      gmm::clear(brick.cveclist_sym[0][j]);
+	      gmm::resize(brick.cveclist_sym[0][j], nbd2);
+	    }
 	  } else {
-	    gmm::clear(brick.rveclist[j]);
-	    gmm::resize(brick.rveclist[j], nbd1);
+	    gmm::clear(brick.rveclist[0][j]);
+	    gmm::resize(brick.rveclist[0][j], nbd1);
+	    if (term.is_symmetric && term.var1.compare(term.var2)) {
+	      gmm::clear(brick.rveclist_sym[0][j]);
+	      gmm::resize(brick.rveclist_sym[0][j], nbd2);
+	    }
 	  }
 	}
       }
       
-      // Brick call for all terms.
-      if (brick.pbr->is_linear() || !(brick.pdispatch)) {
-	if (cplx)
-	  brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
-					       brick.mims,
-					       brick.cmatlist, brick.cveclist,
-					       brick.region, version);
-	else
-	  brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
-					    brick.mims,
-					    brick.rmatlist, brick.rveclist,
-					    brick.region, version);
-      }
-      brick.v_num = act_counter();
+      if (brick.pbr->is_linear() || !(brick.pdispatch))
+	brick_call(ib, version);
     }
       
     if (dispatchcall && brick.pdispatch) {
       
       if (cplx) 
-	brick.pdispatch->asm_complex_tangent_terms(*this, brick.pbr,
-						   brick.vlist, brick.dlist,
-						   brick.mims,
-						   brick.cmatlist,
-						   brick.cveclist,
-						   brick.region, version);
-      
+	brick.pdispatch->asm_complex_tangent_terms
+	  (*this, ib, brick.vlist, brick.dlist, brick.cmatlist,
+	   brick.cveclist, brick.cveclist_sym, version);
       else
-	brick.pdispatch->asm_real_tangent_terms(*this, brick.pbr,
-						brick.vlist, brick.dlist,
-						brick.mims,
-						brick.rmatlist,
-						  brick.rveclist,
-						brick.region, version);
+	brick.pdispatch->asm_real_tangent_terms
+	  (*this, ib, brick.vlist, brick.dlist, brick.rmatlist,
+	   brick.rveclist, brick.rveclist_sym, version);
       brick.v_num = act_counter();
     }
 
     if (brick.pbr->is_linear()) brick.terms_to_be_computed = false;
+  }
+
+
+  void model::linear_brick_add_to_rhs(size_type ib, size_type ind_data) const {
+    const brick_description &brick = bricks[ib];
+    if (brick.pbr->is_linear()) {
+
+      bool cplx = is_complex() && brick.pbr->is_complex();
+      
+      for (size_type j = 0; j < brick.tlist.size(); ++j) {
+	const term_description &term = brick.tlist[j];
+	
+	if (term.is_matrix_term) {
+
+	  if (cplx) 
+	    gmm::mult_add(brick.cmatlist[j],
+			  gmm::scaled(variables[term.var1].complex_value[0],
+				      std::complex<scalar_type>(-1)),
+			  brick.cveclist[ind_data][j]);
+	  else
+	    gmm::mult_add(brick.rmatlist[j],
+			  gmm::scaled(variables[term.var1].real_value[0],
+				      scalar_type(-1)),
+			  brick.rveclist[ind_data][j]);
+	  
+	  
+	  if (term.is_symmetric && term.var1.compare(term.var2)) {
+	    if (cplx) 
+	      gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
+			gmm::scaled(variables[term.var2].complex_value[0],
+				    std::complex<scalar_type>(-1)),
+			brick.cveclist_sym[ind_data][j]);
+	    else
+	      gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+			gmm::scaled(variables[term.var2].real_value[0],
+				    scalar_type(-1)),
+			brick.rveclist_sym[ind_data][j]);
+	  }
+	}
+      }
+    }
   }
 
 
@@ -548,75 +602,84 @@ namespace getfem {
 	if (cplx) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
 	    gmm::add(brick.cmatlist[j], gmm::sub_matrix(cTM, I1, I2));
-	    if (brick.pbr->is_linear() && !is_linear()
-		&& (version | BUILD_RHS)) {
-	      gmm::mult(brick.cmatlist[j],
-			gmm::scaled(variables[term.var1].complex_value[0],
-				    std::complex<scalar_type>(-1)),
-			gmm::sub_vector(crhs, I1));
-	    }
 	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.cmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
-	      if (brick.pbr->is_linear() && !is_linear()
-		  && (version | BUILD_RHS)) {
-		gmm::mult(gmm::conjugated(brick.cmatlist[j]),
-			  gmm::scaled(variables[term.var2].complex_value[0],
-				      std::complex<scalar_type>(-1)),
-			  gmm::sub_vector(crhs, I2));
-	      }
 	    }
 	  }
-	  if (version | BUILD_RHS)
-	    gmm::add(brick.cveclist[j], gmm::sub_vector(crhs, I1));
+	  if (version | BUILD_RHS) {
+	    gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
+	    if (term.is_matrix_term && brick.pbr->is_linear()
+		&& !is_linear()) {
+	      gmm::mult_add(brick.cmatlist[j],
+			    gmm::scaled(variables[term.var1].complex_value[0],
+					std::complex<scalar_type>(-1)),
+			    gmm::sub_vector(crhs, I1));
+	    }
+	    if (term.is_symmetric && I1.first() != I2.first()) {
+	      gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
+	       if (brick.pbr->is_linear() && !is_linear()) {
+		 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
+			    gmm::scaled(variables[term.var2].complex_value[0],
+					std::complex<scalar_type>(-1)),
+			       gmm::sub_vector(crhs, I2));
+	       }
+	    }
+	  }
 	} else if (is_complex()) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
-	    if (brick.pbr->is_linear() && !is_linear()
-		&& (version | BUILD_RHS)) {
-	      gmm::mult(brick.rmatlist[j],
-			gmm::scaled(variables[term.var1].real_value[0],
-				    scalar_type(-1)),
-			gmm::sub_vector(crhs, I1));
-	    }
 	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(cTM, I2, I1));
-	      if (brick.pbr->is_linear() && !is_linear()
-		  && (version | BUILD_RHS)) {
-		gmm::mult(gmm::transposed(brick.rmatlist[j]),
-			  gmm::scaled(variables[term.var2].real_value[0],
-				      scalar_type(-1)),
-			  gmm::sub_vector(crhs, I2));
-	      }
 	    }
 	  }
-	  if (version | BUILD_RHS)
-	    gmm::add(brick.rveclist[j], gmm::sub_vector(crhs, I1));
+	  if (version | BUILD_RHS) {
+	    gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
+	    if (term.is_matrix_term && brick.pbr->is_linear()
+		&& !is_linear()) {
+	      gmm::mult_add(brick.rmatlist[j],
+			    gmm::scaled(variables[term.var1].complex_value[0],
+					std::complex<scalar_type>(-1)),
+			    gmm::sub_vector(crhs, I1));
+	    }
+	    if (term.is_symmetric && I1.first() != I2.first()) {
+	      gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
+	       if (brick.pbr->is_linear() && !is_linear()) {
+		 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+			    gmm::scaled(variables[term.var2].complex_value[0],
+					std::complex<scalar_type>(-1)),
+			       gmm::sub_vector(crhs, I2));
+	       }
+	    }
+	  }
 	} else {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
 	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
-	    if (brick.pbr->is_linear() && !is_linear()
-		&& (version | BUILD_RHS)) {
-	      gmm::mult(brick.rmatlist[j],
-			gmm::scaled(variables[term.var1].real_value[0],
-				    scalar_type(-1)),
-			gmm::sub_vector(rrhs, I1));
-	    }
 	    if (term.is_symmetric && I1.first() != I2.first()) {
 	      gmm::add(gmm::transposed(brick.rmatlist[j]),
 		       gmm::sub_matrix(rTM, I2, I1));
-	      if (brick.pbr->is_linear() && !is_linear()
-		  && (version | BUILD_RHS)) {
-		gmm::mult(gmm::transposed(brick.rmatlist[j]),
-			  gmm::scaled(variables[term.var2].real_value[0],
-				      scalar_type(-1)),
-			  gmm::sub_vector(rrhs, I2));
-	      }
 	    }
 	  }
-	  if (version | BUILD_RHS)
-	    gmm::add(brick.rveclist[j], gmm::sub_vector(rrhs, I1));
+	  if (version | BUILD_RHS) {
+	    gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
+	    if (term.is_matrix_term && brick.pbr->is_linear()
+		&& !is_linear()) {
+	      gmm::mult_add(brick.rmatlist[j],
+			    gmm::scaled(variables[term.var1].real_value[0],
+					scalar_type(-1)),
+			    gmm::sub_vector(rrhs, I1));
+	    }
+	    if (term.is_symmetric && I1.first() != I2.first()) {
+	      gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
+	       if (brick.pbr->is_linear() && !is_linear()) {
+		 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+			    gmm::scaled(variables[term.var2].real_value[0],
+					scalar_type(-1)),
+			       gmm::sub_vector(rrhs, I2));
+	       }
+	    }
+	  }
 	}
       }
 
@@ -626,10 +689,10 @@ namespace getfem {
       else 
 	if (cplx) {
 	  brick.cmatlist = complex_matlist(brick.tlist.size());
-	  brick.cveclist = complex_veclist(brick.tlist.size());
+	  brick.cveclist[0] = complex_veclist(brick.tlist.size());
 	} else {
 	  brick.rmatlist = real_matlist(brick.tlist.size());
-	  brick.rveclist = real_veclist(brick.tlist.size());	    
+	  brick.rveclist[0] = real_veclist(brick.tlist.size());	    
 	}
 
     }
@@ -721,6 +784,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(matl.size() == 1,
@@ -796,6 +860,7 @@ namespace getfem {
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
+					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
@@ -914,6 +979,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &,
 					model::real_veclist &vecl,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1,
@@ -953,6 +1019,7 @@ namespace getfem {
 					   const model::mimlist &mims,
 					   model::complex_matlist &,
 					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1,
@@ -1020,6 +1087,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &,
 					model::real_veclist &vecl,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1,
@@ -1057,6 +1125,7 @@ namespace getfem {
 					   const model::mimlist &mims,
 					   model::complex_matlist &,
 					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1,
@@ -1123,6 +1192,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -1177,6 +1247,7 @@ namespace getfem {
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
 					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -1326,6 +1397,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(matl.size() == 1,
@@ -1365,6 +1437,7 @@ namespace getfem {
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
+					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
@@ -1436,6 +1509,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(matl.size() == 1,
@@ -1470,6 +1544,7 @@ namespace getfem {
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
+					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
@@ -1543,6 +1618,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
+					model::real_veclist &,
 					size_type, nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Constraint brick has one and only one term");
@@ -1577,6 +1653,7 @@ namespace getfem {
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
 					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
 					   size_type,
 					   nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -1699,6 +1776,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
+					model::real_veclist &,
 					size_type, nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Explicit matrix has one and only one term");
@@ -1714,6 +1792,7 @@ namespace getfem {
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
 					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
 					   size_type,
 					   nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -1758,6 +1837,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
+					model::real_veclist &,
 					size_type, nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Explicit rhs has one and only one term");
@@ -1773,6 +1853,7 @@ namespace getfem {
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
 					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
 					   size_type,
 					   nonlinear_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
@@ -1818,6 +1899,7 @@ namespace getfem {
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
 					model::real_matlist &matl,
+					model::real_veclist &,
 					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
@@ -1937,6 +2019,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       
@@ -2025,6 +2108,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &,
+					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
       GMM_ASSERT1(matl.size() == 1,
@@ -2064,6 +2148,7 @@ namespace getfem {
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
 					   model::complex_matlist &matl,
+					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
 					   nonlinear_version) const {
@@ -2142,15 +2227,32 @@ namespace getfem {
 
     typedef model::assembly_version nonlinear_version;
 
-    virtual void asm_real_tangent_terms(const model &md, pbrick pbr,
-					const model::varnamelist &vl,
-					const model::varnamelist &dl,
-					const model::mimlist &mims,
-					model::real_matlist &matl,
-					model::real_veclist &vectl,
-					size_type region,
-					nonlinear_version version) const {
-      scalar_type theta = real_params[0];
+
+    void next_iteration
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl,
+     model::real_matlist &matl, std::vector<model::real_veclist> &vectl,
+     std::vector<model::real_veclist> &vectl_sym,
+     bool first_iter) const {
+
+      if (first_iter) md.update_brick(ib, model::BUILD_RHS);
+      transfert(vectl[0], vectl[1]);
+      md.linear_brick_add_to_rhs(ib, 1);
+    }
+
+
+
+    void asm_real_tangent_terms
+    (const model &md, pbrick pbr, const model::varnamelist &vl,
+     const model::varnamelist &dl, model::real_matlist &matl,
+     std::vector<model::real_veclist> &vectl,
+     std::vector<model::real_veclist> &vectl_sym,
+     nonlinear_version version) const {
+      
+      // 1- call the brick
+      // 2- fill coeffs
+
+
 
 
       // Cas linéaire
@@ -2163,7 +2265,7 @@ namespace getfem {
       // C'est surement ce qu'il faut faire, mais définir un cadre
       // pour le gérer
       // Le time dispatcher doit déclarer sur combien de pas de temps il 
-      // travaill, si il faut évaluer sur des pas de temps (et donc
+      // travaille, si il faut évaluer sur des pas de temps (et donc
       // l'évaluation peut être faite automatiquement) ou si il faut faire
       // des combinaisons linéaires de variables
       // (pour les briques non-linéaires) (pour les briques linéaires on peut
@@ -2171,10 +2273,12 @@ namespace getfem {
       // est-ce que le time dispatcher rend juste la combinaison linéaire ou
       // est-ce qu'on le laisse faire sa sauce ?
 
-      // matrix_coeff = rhs_coeff = theta;
-      // 
       // Si une donnée versionne existe, il faut faire calculer
       // la brique dessus ...
+
+      // ATTENTION : il faut gerer `version` et faire attention que la
+      // mise à jour dans update brick du seul second membre / matrice
+      // le non appel sur l'autre version au prochain appel.
 
 
 
@@ -2183,42 +2287,35 @@ namespace getfem {
       // Appel brique pour le second membre
       // Création du second membre supplémentaire
       // Appel brique pour le membre courant
-      pbr->asm_real_tangent_terms(md, vl, dl, mims, matl, vectl,
-				  region, version);
+      
+      // pbr->asm_real_tangent_terms(md, vl, dl, mims, matl, vectl[0],
+      //				  region, version);
 
       // rendre les coefficients (seulement deux coefficients).
 
 
-
-
-      // il faut lister les termes ... ca serait plutôt le boulot de la brique ...  la brique stocke le résultat de l'appel pour une brique linéaire et demande un paramêtre multiplicatif pour la suite ainsi que la formule de modification du résidu.
-
-      // pour une brique non linéaire ... ca se corse dans certain cas, mais rien à stocker ...
-      for (size_type i = 0; i < matl.size(); ++i) {
-
-	
-
-      }
-      
+      // valeur des multiplicateurs initiaux pour la condition de Dirichlet ?
+      //   bien documenter : en général, on ne dispatche pas la condition de 
+      //   Dirichlet, l'incompressibilité ...
 
 
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, pbrick pbr,
-					   const model::varnamelist &vl,
-					   const model::varnamelist &dl,
-					   const model::mimlist &mims,
-					   model::complex_matlist &matl,
-					   model::complex_veclist &vectl,
-					   size_type region,
-					   nonlinear_version version) const {
-      pbr->asm_complex_tangent_terms(md, vl, dl, mims, matl, vectl,
-				  region, version);
+    virtual void asm_complex_tangent_terms
+    (const model &md, pbrick pbr, const model::varnamelist &vl,
+     const model::varnamelist &dl, model::complex_matlist &matl,
+     std::vector<model::complex_veclist> &vectl,
+     std::vector<model::complex_veclist> &vectl_sym,
+     nonlinear_version version) const {
+      // pbr->asm_complex_tangent_terms(md, vl, dl, mims, matl, vectl[0],
+      //				  region, version);
     }
     
   };
   
  
+  // + la fonction qui ajoute le dispatcher ...
+
 
 
   // ----------------------------------------------------------------------
