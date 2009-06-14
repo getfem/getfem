@@ -73,9 +73,9 @@ base_small_vector sol_F(const base_node &x) {
   return res;
 }
 
-// scalar_type young_modulus(scalar_type lambda, scalar_type mu) {
-//  return 4*mu*(lambda + mu)/(lambda+2*mu);
-// }
+scalar_type young_modulus(scalar_type lambda, scalar_type mu) {
+ return 4*mu*(lambda + mu)/(lambda+2*mu);
+}
 
 struct exact_solution {
   getfem::mesh_fem_global_function mf;
@@ -107,7 +107,7 @@ struct exact_solution {
 	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
 	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
 	*it++ = 0;       *it++ = B;   /* cos(theta/2)*sin(theta) */
-	coeff = 1/(sqrt(2*M_PI)); // *young_modulus(lambda,mu));
+	coeff = 1./(sqrt(2*M_PI)); // * young_modulus(lambda,mu));
       } break;
       case 2: {
 	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
@@ -115,7 +115,7 @@ struct exact_solution {
 	*it++ = 0;      *it++ = -(C1-2+1);
 	*it++ = 0;      *it++ = 1;
 	*it++ = 1;      *it++ = 0;
-	coeff = 2*(mu+lambda)/(lambda+2*mu)/(sqrt(2*M_PI)); // *young_modulus(lambda,mu));
+	coeff = 2.*(mu+lambda)/(lambda+2*mu)/(sqrt(2*M_PI)); // * young_modulus(lambda,mu));
       } break;
       default:
 	assert(0);
@@ -312,7 +312,7 @@ void crack_problem::init(void) {
   }
 
   
-  exact_sol.init(1,lambda,mu,ls);
+  //  exact_sol.init(1,lambda,mu,ls);
 }
 
 
@@ -534,7 +534,7 @@ bool crack_problem::solve(plain_vector &U) {
     mim.adapt();
     mfls_u.adapt();
     mimbound.adapt();
-    //exact_sol.init(1,lambda, mu,ls);
+    exact_sol.init(1,lambda, mu,ls);
    
     cout << "Setting up the singular functions for the enrichment\n";
     std::vector<getfem::pglobal_function> vfunc(4);
@@ -543,7 +543,7 @@ bool crack_problem::solve(plain_vector &U) {
       getfem::abstract_xy_function *s = 
 	new getfem::crack_singular_xy_function(i);
       getfem::abstract_xy_function *c = 
-	new getfem::cutoff_xy_function(cutoff.fun_num,
+	new getfem::cutoff_xy_function(int(cutoff.fun_num),
 				       cutoff.radius, 
 				       cutoff.radius1, cutoff.radius0);
       s = new getfem::product_of_xy_functions(*s, *c);
@@ -707,11 +707,11 @@ try{
     getfem::mesh mcut_refined;
 
     
-//     unsigned NX = p.PARAM.int_value("NX"), nn;
-//     if (NX < 6) nn = 24;
-//     else if (NX < 12) nn = 8;
-//     else if (NX < 30) nn = 3;
-//     else nn = 1;
+    unsigned NX = p.PARAM.int_value("NX"), nn;
+    if (NX < 6) nn = 24;
+    else if (NX < 12) nn = 8;
+    else if (NX < 30) nn = 3;
+    else nn = 1;
     
     // choose an adequate slice refinement based on the distance to
     // the crack tip
@@ -725,12 +725,12 @@ try{
 	if (d < dmin || i == 0) { dmin = d; Pmin = P; }
       }
       
-      //if (dmin < 1e-5)
-      //	nrefine[cv] = short_type(nn*8);
-      //  else if (dmin < .1) 
-      //	nrefine[cv] = short_type(nn*2);
-      // else nrefine[cv] = short_type(nn);
-       nrefine[cv] = 1;
+      if (dmin < 1e-5)
+	nrefine[cv] = short_type(nn*8);
+      else if (dmin < .1) 
+      	nrefine[cv] = short_type(nn*2);
+      else nrefine[cv] = short_type(nn);
+      // nrefine[cv] = 1;
       // if (dmin < .01)
       //  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin 
       //       << " " << nrefine[cv] << "\n";
@@ -798,8 +798,8 @@ try{
       exp.write_point_data(mf_refined, W, "elastostatic_displacement");
       exp.write_point_data(mf_refined,exac,"reference solution");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d " << p.datafilename << ".vtk -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
+	"mayavi2 -d " << p.datafilename << ".vtk -f "
+	"WarpVector -m Surface -m Outline\n";
     }
 
 

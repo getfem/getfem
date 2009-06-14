@@ -3,6 +3,12 @@
 % parameters for program crack                                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% X = [1/128           1/64            1/32     1/16       1/8       ]
+%% Y1= [0.03078         0.0593094       0.11063  0.195435   0.296496  ]
+%% Y2= [0.000144043     0.000518152     0.00171  0.00510509 0.0113319 ]
+
+
+
 %%%%% pde parameters :	        				      %%%%%
 MU = 150.0;	        % Lame coefficient.
 LAMBDA = 200.0;   	% Lame coefficient.
@@ -20,8 +26,8 @@ CUTOFF_FUNC = 2; % 0 for the exponential cutoff.
                  % 1 for a 3rd degree polynomial cutoff.
                  % 2 for a 5th degree polynomial cutoff. 
 CUTOFF = 0.4;
-CUTOFF1 = 0.01;
-CUTOFF0 = 0.49;
+CUTOFF1 = 0.02;
+CUTOFF0 = 0.45;
 
 ENRICHED = 1;    % Enrichment or not with singular functions
 
@@ -37,12 +43,12 @@ MESH_TYPE= 'GT_PK(2,1)';         % linear triangles
 
 LX = 1;			  % mesh size x'ox
 LY = 1;	                  % mesh size y'oy
-NX = 32;        NX1=59;    	  % space step.
+NX = 16;        NX1=59;    	  % space step.
 
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
-FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,2, 0.0001)';
+FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,2, 0.000001)';
 
 MIXED_PRESSURE=0;       % Mixed version or not.
 % FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
