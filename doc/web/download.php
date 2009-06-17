@@ -50,7 +50,19 @@
     <li> T(2006/04/18) binary for the matlab-interface for matlab-R14 on windows:
       <a href="http://download.gna.org/getfem/misc/getfem-matlab-2.0_R14_win32.zip">getfem-matlab-2.0_R14_win32.zip</a> (and some <a href="http://download.gna.org/getfem/misc/getfem-matlab-2.0_R14_win32.README.txt">notes</a>).</li>
   </ul>
-  
+
     </p>
+
+
+    <p>
+      Some help on how to build the Matlab interface on Windows XP can be found on the page of Mirko Windhoff (thank you to him) :
+      <a href="http://windhoff.net/wiki/getfem"> http://windhoff.net/wiki/getfem</a>
+
+
+      
+    </p>
+
+
+
   </div>
 <?php include("footer.inc") ?>
