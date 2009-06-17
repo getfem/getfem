@@ -604,6 +604,20 @@ namespace getfem {
 
   public :
 
+    SUBVECTOR get_pressure(MODEL_STATE &MS) {
+      gmm::sub_interval SUBU(this->first_index() + sub_problem.nb_dof(),
+			     mf_p.nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
+    }
+    
+    void get_B(MODEL_STATE &MS, MATRIX B) {
+      const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      gmm::sub_interval SUBI(this->first_index()+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
+      gmm::sub_interval SUBJ(this->first_index()+this->mesh_fem_positions[num_fem], mf_u.nb_dof());           /* U */
+      gmm::copy(gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI), B);
+    }
+
+
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
