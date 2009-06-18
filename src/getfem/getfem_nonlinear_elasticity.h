@@ -588,7 +588,7 @@ namespace getfem {
   /** Incompressible non-linear elasticity brick.
       @ingroup bricks
    */
-  template<typename MODEL_STATE = standard_model_state>
+  template<typename MODEL_STATE = standard_model_state, typename MATRIX = base_matrix>
   class mdbrick_nonlinear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     
     TYPEDEF_MODEL_STATE_TYPES;
