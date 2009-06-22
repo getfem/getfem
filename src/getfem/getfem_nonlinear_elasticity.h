@@ -588,7 +588,7 @@ namespace getfem {
   /** Incompressible non-linear elasticity brick.
       @ingroup bricks
    */
-  template<typename MODEL_STATE = standard_model_state, typename MATRIX = base_matrix>
+  template<typename MODEL_STATE = standard_model_state>
   class mdbrick_nonlinear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     
     TYPEDEF_MODEL_STATE_TYPES;
@@ -610,7 +610,7 @@ namespace getfem {
       return gmm::sub_vector(MS.state(), SUBU);
     }
     
-    void get_B(MODEL_STATE &MS, MATRIX B) {
+    template<typename MATRIX> void get_B(MODEL_STATE &MS, MATRIX B) {
       const mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       gmm::sub_interval SUBI(this->first_index()+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
       gmm::sub_interval SUBJ(this->first_index()+this->mesh_fem_positions[num_fem], mf_u.nb_dof());           /* U */
