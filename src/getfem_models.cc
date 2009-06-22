@@ -399,6 +399,37 @@ namespace getfem {
     return size_type(bricks.size() - 1);
   }
 
+
+  void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
+    
+    pbrick pbr = bricks[ibrick].pbr;
+
+    bricks[ibrick].pdispatch = pdispatch;
+
+    size_type nbrhs = bricks[ibrick].nbrhs
+      = std::min(size_type(1), pdispatch->nbrhs());
+
+    
+    if (is_complex() && pbr->is_complex()) {
+      bricks[ibrick].cveclist.resize(nbrhs);
+      bricks[ibrick].cveclist_sym.resize(nbrhs);
+      for (size_type k = 1; k < nbrhs; ++k) {
+	bricks[ibrick].cveclist[k] = bricks[ibrick].cveclist[0];
+	bricks[ibrick].cveclist_sym[k] = bricks[ibrick].cveclist_sym[0];
+      }
+    } else {
+      bricks[ibrick].rveclist.resize(nbrhs);
+      bricks[ibrick].rveclist_sym.resize(nbrhs);
+      for (size_type k = 1; k < nbrhs; ++k) {
+	bricks[ibrick].rveclist[k] = bricks[ibrick].rveclist[0];
+	bricks[ibrick].rveclist_sym[k] = bricks[ibrick].rveclist_sym[0];
+      }
+    }
+
+
+
+  }
+
   const std::string &model::varname_of_brick(size_type ind_brick,
 				      size_type ind_var) {
     GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
@@ -464,20 +495,20 @@ namespace getfem {
     bool cplx = is_complex() && brick.pbr->is_complex();
     bool tobecomputed = brick.terms_to_be_computed
       || !(brick.pbr->is_linear());
-    bool dispatchcall = tobecomputed;
+    // bool dispatchcall = tobecomputed;
     
     // check variable list to test if a mesh_fem as changed. 
     for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.vlist[i]];
-      if (vd.v_num > brick.v_num) dispatchcall = tobecomputed = true;
-      if (vd.v_num_data > brick.v_num) dispatchcall = true;
+      if (vd.v_num > brick.v_num) /* dispatchcall = */ tobecomputed = true;
+      // if (vd.v_num_data > brick.v_num) dispatchcall = true;
     }
     
     // check data list to test if a vector value of a data has changed. 
     for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.dlist[i]];
       if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num)
-	dispatchcall = tobecomputed = true;
+	/* dispatchcall = */ tobecomputed = true;
     }
 
     if (tobecomputed) {
@@ -495,44 +526,46 @@ namespace getfem {
 	    brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
 	}
 	if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
-	  if (cplx) {
-	    gmm::clear(brick.cveclist[0][j]);
-	    gmm::resize(brick.cveclist[0][j], nbd1);
-	    if (term.is_symmetric && term.var1.compare(term.var2)) {
-	      gmm::clear(brick.cveclist_sym[0][j]);
-	      gmm::resize(brick.cveclist_sym[0][j], nbd2);
-	    }
-	  } else {
-	    gmm::clear(brick.rveclist[0][j]);
-	    gmm::resize(brick.rveclist[0][j], nbd1);
-	    if (term.is_symmetric && term.var1.compare(term.var2)) {
-	      gmm::clear(brick.rveclist_sym[0][j]);
-	      gmm::resize(brick.rveclist_sym[0][j], nbd2);
+	  for (size_type k = 0; k < brick.nbrhs; ++k) {
+	    if (cplx) {
+	      gmm::clear(brick.cveclist[k][j]);
+	      gmm::resize(brick.cveclist[k][j], nbd1);
+	      if (term.is_symmetric && term.var1.compare(term.var2)) {
+		gmm::clear(brick.cveclist_sym[k][j]);
+		gmm::resize(brick.cveclist_sym[k][j], nbd2);
+	      }
+	    } else {
+	      gmm::clear(brick.rveclist[k][j]);
+	      gmm::resize(brick.rveclist[k][j], nbd1);
+	      if (term.is_symmetric && term.var1.compare(term.var2)) {
+		gmm::clear(brick.rveclist_sym[k][j]);
+		gmm::resize(brick.rveclist_sym[k][j], nbd2);
+	      }
 	    }
 	  }
 	}
       }
       
-      if (brick.pbr->is_linear() || !(brick.pdispatch))
-	brick_call(ib, version);
-    }
-      
-    if (dispatchcall && brick.pdispatch) {
-      
-      if (cplx) 
-	brick.pdispatch->asm_complex_tangent_terms
-	  (*this, ib, brick.vlist, brick.dlist, brick.cmatlist,
-	   brick.cveclist, brick.cveclist_sym, version);
-      else
-	brick.pdispatch->asm_real_tangent_terms
-	  (*this, ib, brick.vlist, brick.dlist, brick.rmatlist,
-	   brick.rveclist, brick.rveclist_sym, version);
+      if (!(brick.pdispatch)) brick_call(ib, version);
+      else {
+	if (cplx) 
+	  brick.pdispatch->asm_complex_tangent_terms
+	    (*this, brick.pbr, brick.vlist, brick.dlist, brick.mims, 
+	     brick.cmatlist, brick.cveclist, brick.cveclist_sym,
+	     brick.region, version);
+	else
+	  brick.pdispatch->asm_real_tangent_terms
+	    (*this, brick.pbr, brick.vlist, brick.dlist, brick.mims,
+	     brick.rmatlist, brick.rveclist, brick.rveclist_sym,
+	     brick.region, version);
+      }
       brick.v_num = act_counter();
     }
-
+    
     if (brick.pbr->is_linear()) brick.terms_to_be_computed = false;
   }
-
+  
+    
 
   void model::linear_brick_add_to_rhs(size_type ib, size_type ind_data) const {
     const brick_description &brick = bricks[ib];
@@ -599,90 +632,137 @@ namespace getfem {
 	gmm::sub_interval I2(0,0);
 	if (term.is_matrix_term) I2 = variables[term.var2].I;
 
+	scalar_type coeff0 = scalar_type(1);
+	if (brick.pdispatch) coeff0 = brick.pdispatch->coefficients()[0];
+
 	if (cplx) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
-	    gmm::add(brick.cmatlist[j], gmm::sub_matrix(cTM, I1, I2));
+	    gmm::add(gmm::scaled(brick.cmatlist[j], coeff0),
+		     gmm::sub_matrix(cTM, I1, I2));
 	    if (term.is_symmetric && I1.first() != I2.first()) {
-	      gmm::add(gmm::transposed(brick.cmatlist[j]),
+	      gmm::add(gmm::scaled(gmm::transposed(brick.cmatlist[j]), coeff0),
 		       gmm::sub_matrix(cTM, I2, I1));
 	    }
 	  }
 	  if (version | BUILD_RHS) {
-	    gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
+	    if (brick.pdispatch) {
+	      for (size_type k = 0; k < brick.nbrhs; ++k)
+		gmm::add(gmm::scaled(brick.cveclist[k][j],
+				     brick.pdispatch->coefficients()[k]),
+			 gmm::sub_vector(crhs, I1));
+	    }
+	    else
+	      gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
 		&& !is_linear()) {
 	      gmm::mult_add(brick.cmatlist[j],
 			    gmm::scaled(variables[term.var1].complex_value[0],
-					std::complex<scalar_type>(-1)),
+					std::complex<scalar_type>(-coeff0)),
 			    gmm::sub_vector(crhs, I1));
 	    }
 	    if (term.is_symmetric && I1.first() != I2.first()) {
-	      gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
+	      if (brick.pdispatch) {
+		for (size_type k = 0; k < brick.nbrhs; ++k)
+		  gmm::add(gmm::scaled(brick.cveclist_sym[k][j],
+				       brick.pdispatch->coefficients()[k]),
+			   gmm::sub_vector(crhs, I2));
+	      }
+	      else
+		gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
 	       if (brick.pbr->is_linear() && !is_linear()) {
 		 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
 			    gmm::scaled(variables[term.var2].complex_value[0],
-					std::complex<scalar_type>(-1)),
+					std::complex<scalar_type>(-coeff0)),
 			       gmm::sub_vector(crhs, I2));
 	       }
 	    }
 	  }
 	} else if (is_complex()) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
-	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(cTM, I1, I2));
+	    gmm::add(gmm::scaled(brick.rmatlist[j], coeff0),
+		     gmm::sub_matrix(cTM, I1, I2));
 	    if (term.is_symmetric && I1.first() != I2.first()) {
-	      gmm::add(gmm::transposed(brick.rmatlist[j]),
+	      gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), coeff0),
 		       gmm::sub_matrix(cTM, I2, I1));
 	    }
 	  }
 	  if (version | BUILD_RHS) {
-	    gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
+	    if (brick.pdispatch) {
+	      for (size_type k = 0; k < brick.nbrhs; ++k)
+		gmm::add(gmm::scaled(brick.rveclist[k][j],
+				     brick.pdispatch->coefficients()[k]),
+			 gmm::sub_vector(crhs, I1));
+	    }
+	    else
+	      gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
 		&& !is_linear()) {
 	      gmm::mult_add(brick.rmatlist[j],
 			    gmm::scaled(variables[term.var1].complex_value[0],
-					std::complex<scalar_type>(-1)),
+					std::complex<scalar_type>(-coeff0)),
 			    gmm::sub_vector(crhs, I1));
 	    }
 	    if (term.is_symmetric && I1.first() != I2.first()) {
-	      gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
-	       if (brick.pbr->is_linear() && !is_linear()) {
-		 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			    gmm::scaled(variables[term.var2].complex_value[0],
-					std::complex<scalar_type>(-1)),
-			       gmm::sub_vector(crhs, I2));
-	       }
+	      if (brick.pdispatch) {
+		for (size_type k = 0; k < brick.nbrhs; ++k)
+		  gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
+				       brick.pdispatch->coefficients()[k]),
+			   gmm::sub_vector(crhs, I2));
+	      }
+	      else 
+		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
+	      if (brick.pbr->is_linear() && !is_linear()) {
+		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+			     gmm::scaled(variables[term.var2].complex_value[0],
+					  std::complex<scalar_type>(-coeff0)),
+			      gmm::sub_vector(crhs, I2));
+	      }
 	    }
 	  }
 	} else {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
-	    gmm::add(brick.rmatlist[j], gmm::sub_matrix(rTM, I1, I2));
+	    gmm::add(gmm::scaled(brick.rmatlist[j], coeff0),
+		     gmm::sub_matrix(rTM, I1, I2));
 	    if (term.is_symmetric && I1.first() != I2.first()) {
-	      gmm::add(gmm::transposed(brick.rmatlist[j]),
+	      gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), coeff0),
 		       gmm::sub_matrix(rTM, I2, I1));
 	    }
 	  }
 	  if (version | BUILD_RHS) {
-	    gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
+	    if (brick.pdispatch) {
+	      for (size_type k = 0; k < brick.nbrhs; ++k)
+		gmm::add(gmm::scaled(brick.rveclist[k][j],
+				     brick.pdispatch->coefficients()[k]),
+			 gmm::sub_vector(rrhs, I1));
+	    }
+	    else
+	      gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
 		&& !is_linear()) {
 	      gmm::mult_add(brick.rmatlist[j],
 			    gmm::scaled(variables[term.var1].real_value[0],
-					scalar_type(-1)),
+					-coeff0),
 			    gmm::sub_vector(rrhs, I1));
 	    }
 	    if (term.is_symmetric && I1.first() != I2.first()) {
-	      gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
-	       if (brick.pbr->is_linear() && !is_linear()) {
-		 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			    gmm::scaled(variables[term.var2].real_value[0],
-					scalar_type(-1)),
-			       gmm::sub_vector(rrhs, I2));
-	       }
+	      if (brick.pdispatch) {
+		for (size_type k = 0; k < brick.nbrhs; ++k)
+		  gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
+				       brick.pdispatch->coefficients()[k]),
+			   gmm::sub_vector(rrhs, I2));
+	      }
+	      else
+		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
+	      if (brick.pbr->is_linear() && !is_linear()) {
+		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+			      gmm::scaled(variables[term.var2].real_value[0],
+					  -coeff0),
+			      gmm::sub_vector(rrhs, I2));
+	      }
 	    }
 	  }
 	}
       }
-
 
       if (brick.pbr->is_linear())
 	brick.terms_to_be_computed = false;
@@ -2229,14 +2309,16 @@ namespace getfem {
 
 
     void next_iteration
-    (const model &md, size_type ib, const model::varnamelist &vl,
-     const model::varnamelist &dl,
-     model::real_matlist &matl, std::vector<model::real_veclist> &vectl,
+    (const model &md, size_type ib, const model::varnamelist &/* vl */,
+     const model::varnamelist &/* dl */,
+     model::real_matlist &/* matl */,
+     std::vector<model::real_veclist> &vectl,
      std::vector<model::real_veclist> &vectl_sym,
      bool first_iter) const {
 
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
       transfert(vectl[0], vectl[1]);
+      transfert(vectl_sym[0], vectl_sym[1]);
       md.linear_brick_add_to_rhs(ib, 1);
     }
 
@@ -2244,11 +2326,17 @@ namespace getfem {
 
     void asm_real_tangent_terms
     (const model &md, pbrick pbr, const model::varnamelist &vl,
-     const model::varnamelist &dl, model::real_matlist &matl,
+     const model::varnamelist &dl, const model::mimlist &mims,
+     model::real_matlist &matl,
      std::vector<model::real_veclist> &vectl,
-     std::vector<model::real_veclist> &vectl_sym,
+     std::vector<model::real_veclist> &vectl_sym, size_type region,
      nonlinear_version version) const {
       
+
+      pbr->asm_real_tangent_terms(md, vl, dl, mims, matl, vectl[0],
+				  vectl_sym[0], region, version);
+
+
       // 1- call the brick
       // 2- fill coeffs
 
@@ -2303,19 +2391,28 @@ namespace getfem {
 
     virtual void asm_complex_tangent_terms
     (const model &md, pbrick pbr, const model::varnamelist &vl,
-     const model::varnamelist &dl, model::complex_matlist &matl,
+     const model::varnamelist &dl, const model::mimlist &mims,
+     model::complex_matlist &matl,
      std::vector<model::complex_veclist> &vectl,
-     std::vector<model::complex_veclist> &vectl_sym,
+     std::vector<model::complex_veclist> &vectl_sym, size_type region,
      nonlinear_version version) const {
-      // pbr->asm_complex_tangent_terms(md, vl, dl, mims, matl, vectl[0],
-      //				  region, version);
+      pbr->asm_complex_tangent_terms(md, vl, dl, mims, matl, vectl[0],
+				     vectl_sym[0], region, version);
+    }
+
+    theta_method_dispatcher(scalar_type theta) : virtual_dispatcher(2) {
+      coeffs[0] = theta; coeffs[1] = scalar_type(1) - theta;
     }
     
   };
-  
- 
-  // + la fonction qui ajoute le dispatcher ...
 
+  void add_theta_method_dispatcher
+  (model &md, dal::bit_vector ibricks, scalar_type theta) {
+    pdispatcher pdispatch = new theta_method_dispatcher(theta);
+    
+    for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
+      md.add_time_dispatcher(i, pdispatch);
+  }
 
 
   // ----------------------------------------------------------------------
@@ -2323,6 +2420,15 @@ namespace getfem {
   // midpoint dispatcher ... to be done
   //
   // ----------------------------------------------------------------------
+
+
+  // ----------------------------------------------------------------------
+  //
+  // divided  differences ... to be done
+  //
+  // ----------------------------------------------------------------------
+
+
 
 
 

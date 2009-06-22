@@ -490,6 +490,9 @@ namespace getfem {
 			const termlist &terms, const mimlist &mims, 
 			size_type region);
 
+    /** Add a time dispacther to a brick. */
+    void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
+
     /** Gives the name of the variable of index `ind_var` of the brick
 	of index `ind_brick`. */
     const std::string &varname_of_brick(size_type ind_brick,
@@ -538,28 +541,55 @@ namespace getfem {
 	gmm::copy(v1[i], v2[i]);
     }
 
+    size_type nbrhs_;
+    base_vector coeffs;
+
 
   public :
+
+    size_type nbrhs(void) const { return nbrhs_; }
+    const base_vector &coefficients(void) const { return coeffs; }
 
     typedef model::assembly_version nonlinear_version;
 
     virtual void asm_real_tangent_terms
-    (const model &, size_type, const model::varnamelist &,
-     const model::varnamelist &,
+    (const model &, pbrick, const model::varnamelist &,
+     const model::varnamelist &, const model::mimlist &,
      model::real_matlist &, std::vector<model::real_veclist> &,
-     std::vector<model::real_veclist> &,
-     nonlinear_version) const
-    { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
+     std::vector<model::real_veclist> &, size_type,
+     nonlinear_version) const {
+      GMM_ASSERT1(false, "Time dispatcher with not defined real tangent "
+		  "terms !"); }
 
     virtual void asm_complex_tangent_terms
-    (const model &, size_type, const model::varnamelist &,
-     const model::varnamelist &,
+    (const model &, pbrick, const model::varnamelist &,
+     const model::varnamelist &, const model::mimlist &,
      model::complex_matlist &, std::vector<model::complex_veclist> &,
-     std::vector<model::complex_veclist> &,
-     nonlinear_version) const
-    { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
+     std::vector<model::complex_veclist> &, size_type,
+     nonlinear_version) const {
+      GMM_ASSERT1(false, "Time dispatcher with not defined complex tangent "
+		  "terms !");
+    }
+
+    virtual_dispatcher(size_type _nbrhs) : nbrhs_(_nbrhs), coeffs(_nbrhs) {
+      GMM_ASSERT1(_nbrhs > 0, "Time dispatcher with no rhs");
+    }
     
   };
+
+  //=========================================================================
+  //
+  //  Functions adding standard time dispatchers.
+  //
+  //=========================================================================
+
+  /** Add a theta-method time dispatcher to a list of bricks. For instance,
+      a matrix term $K$ will be replaced by
+      $\theta K U^{n+1} + (1-\theta) K U^{n}$.
+  */
+  void add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
+				   scalar_type theta);
+  
 
   //=========================================================================
   //
@@ -910,7 +940,7 @@ namespace getfem {
     return ind;
   }
 
-  /**  Add a brick reprenting an explicit right hand side to be added to
+  /**  Add a brick representing an explicit right hand side to be added to
        the right hand side of the tangent
        linear system relatively to the variable 'varname'.
        The given rhs should have the same size than the dimension of
