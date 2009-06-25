@@ -1,10 +1,11 @@
 # SUBDIRS = 
 
-check_PROGRAMS =  contact  
+check_PROGRAMS =  contact  contact_continuation
 
 CLEANFILES = 
 
 contact_SOURCES = contact.cc
+contact_continuation_SOURCES = contact_continuation.cc
 SUPLDFLAGS = @SUPLDFLAGS@
 MUMPS_LIBS = @MUMPS_LIBS@
 MUMPS_CFLAGS = @MUMPS_CFLAGS@
@@ -15,6 +16,8 @@ TESTS = $(top_srcdir)/contrib/contact_grd_trans/contact.pl
 EXTRA_DIST = \
 	contact.pl                  \
 	contact.param 
+	contact_continuation.param 
+
 
 
 TESTS_ENVIRONMENT = perl

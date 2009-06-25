@@ -1,0 +1,71 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program nonlinear elastostatic problem                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% pde parameters :	        				      %%%%%
+LX = 0.01;		% size in X.
+LY = 0.02;	        % size in Y.
+LZ = 0.01;		% size in Z.
+P1 = 2000E6;	        % First elastic coefficient.
+P2 = 200E6;   	        % Second elastic coefficient.
+P3 = 200E6;   	        % Third elastic coefficient.
+MU = 5;
+LAMBDA = 11500;   	% Lamé coefficient.
+
+LAW = 3;     % 0 : SaintVenant-Kirchhoff
+             % 1 : SaintVenant-Kirchhoff+incompressibility
+             % 2 : Ciarlet-Geymonat
+             % 3 : Mooney-Rivlin (+incompressibility)
+
+FORCEX = 0          % Amplitude of the external force
+FORCEY = 0;
+FORCEZ = -0.00;
+
+DIRICHLET_Z = -0.001;
+DIRICHLET_Y_SPEED = 13.8;
+
+
+R = 1; % Augmentation parameter for the friction condition
+FRICTION_COEFF = 1.0; 
+%FRICTION_COEFF = 0.0; 
+
+%%%%%   discretisation parameters  :                     	      %%%%%
+MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
+%MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
+%MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
+NX = 2;            	          % space step.
+NZ = 2;
+
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
+
+FEM_TYPE = 'FEM_PK(3,2)';  % P1 for triangles
+% FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 1)';
+% FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
+%FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
+%FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
+
+FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
+%FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
+
+% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
+%DATA_FEM_TYPE = 'FEM_PK(2,1)';
+DATA_FEM_TYPE = 'FEM_PK(3,2)'
+
+
+INTEGRATION = 'IM_TETRAHEDRON(6)'
+%INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
+                               % to degree 6 on triangles
+
+
+RESIDUAL = 1E-9;     	% residu for iterative solvers.
+MAXITER = 500;
+DIRICHLET_VERSION=2;
+NBSTEP = 10;             % nombre de pas de temps
+DELTAT = 0.00001;           % time step
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
+VTK_EXPORT = 1 % export solution to a .vtk file ?
+NOISY=2
