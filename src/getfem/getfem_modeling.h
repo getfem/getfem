@@ -1579,6 +1579,11 @@ namespace getfem {
 
   public :
 
+    // For Tomas Ligursky !!
+    const VECTOR &get_CRHS(void) const { return CRHS; }
+    size_type first_ind(void)
+    { return this->first_index()+sub_problem.nb_dof(); }
+
     /* provide access to the value of the multipliers only for multiplier
      * option (could be extended ?).
      */
