@@ -443,8 +443,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 // 	cout << "LN2 = " << LN1 << endl;
 	
 //    cout << "CN = " << FRICTION.get_LN(MS) << endl;
-   plain_vector UN(gmm::mat_nrows(BN));
-   gmm::mult(BN, U, UN);
+    plain_vector UN(gmm::mat_nrows(BN));
+    gmm::mult(BN, U, UN);
 //    cout << "UN = " << UN << endl;
 
     char s[100]; sprintf(s, "step%d", step+1);

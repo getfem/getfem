@@ -228,6 +228,7 @@ namespace getfem {
       termlist tlist;           // List of terms build by the brick
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
+      bool ismassterm;
       mutable real_matlist rmatlist; // Matrices the brick have to fill in
                                      // (real version).
       mutable std::vector<real_veclist> rveclist; // Rhs the brick have to 
@@ -241,10 +242,11 @@ namespace getfem {
       
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
-			const mimlist &mms, size_type reg)
+			const mimlist &mms, size_type reg, bool ismassterm_)
 	: terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
 	  vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
-	  rveclist(1), rveclist_sym(1), cveclist(1), cveclist_sym(1)  { }
+	  ismassterm(ismassterm_), rveclist(1), rveclist_sym(1), cveclist(1),
+	  cveclist_sym(1)  { }
     };
     
     typedef std::map<std::string, var_description> VAR_SET;
@@ -254,7 +256,7 @@ namespace getfem {
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
 			     bool assert = true) const;
-    void brick_call(size_type ib, assembly_version version,
+    void brick_init(size_type ib, assembly_version version,
 		      size_type rhs_ind = 0) const;
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
@@ -264,6 +266,9 @@ namespace getfem {
     // call the brick if necessary 
     void update_brick(size_type ib, assembly_version version) const;
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data) const;
+    bool is_brick_massterm(size_type ib) const {return bricks[ib].ismassterm; }
+    void brick_call(size_type ib, assembly_version version,
+		    size_type rhs_ind = 0) const;
 
     void update_from_context(void) const {  act_size_to_be_done = true; }
     
@@ -488,10 +493,18 @@ namespace getfem {
     size_type add_brick(pbrick pbr, const varnamelist &varnames,
 			const varnamelist &datanames,
 			const termlist &terms, const mimlist &mims, 
-			size_type region);
+			size_type region, bool ismassterm = false);
 
     /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
+
+    /** For transient problems. Initialisation of iterations. */
+    void first_iter(void);
+
+    /** For transient problems. Prepare the next iterations. In particular
+	shift the version of the variables. 
+    */
+    void next_iter(void);
 
     /** Gives the name of the variable of index `ind_var` of the brick
 	of index `ind_brick`. */
@@ -541,8 +554,14 @@ namespace getfem {
 	gmm::copy(v1[i], v2[i]);
     }
 
+    void transfert(model::complex_veclist &v1,
+		   model::complex_veclist &v2) const {
+      for (size_type i = 0; i < v1.size(); ++i)
+	gmm::copy(v1[i], v2[i]);
+    }
+
     size_type nbrhs_;
-    base_vector coeffs;
+    mutable base_vector coeffs;
 
 
   public :
@@ -552,20 +571,39 @@ namespace getfem {
 
     typedef model::assembly_version nonlinear_version;
 
+    virtual void next_real_iter
+    (const model &, size_type, const model::varnamelist &,
+     const model::varnamelist &,
+     model::real_matlist &,
+     std::vector<model::real_veclist> &,
+     std::vector<model::real_veclist> &,
+     bool) const {
+      GMM_ASSERT1(false, "Time dispatcher with not defined first real iter !");
+    }
+
+    virtual void next_complex_iter
+    (const model &, size_type, const model::varnamelist &,
+     const model::varnamelist &,
+     model::complex_matlist &,
+     std::vector<model::complex_veclist> &,
+     std::vector<model::complex_veclist> &,
+     bool) const{
+      GMM_ASSERT1(false,"Time dispatcher with not defined first comples iter");
+    }
+
     virtual void asm_real_tangent_terms
-    (const model &, pbrick, const model::varnamelist &,
-     const model::varnamelist &, const model::mimlist &,
+    (const model &, size_type,
      model::real_matlist &, std::vector<model::real_veclist> &,
-     std::vector<model::real_veclist> &, size_type,
+     std::vector<model::real_veclist> &,
      nonlinear_version) const {
       GMM_ASSERT1(false, "Time dispatcher with not defined real tangent "
-		  "terms !"); }
+		  "terms !");
+    }
 
     virtual void asm_complex_tangent_terms
-    (const model &, pbrick, const model::varnamelist &,
-     const model::varnamelist &, const model::mimlist &,
+    (const model &, size_type,
      model::complex_matlist &, std::vector<model::complex_veclist> &,
-     std::vector<model::complex_veclist> &, size_type,
+     std::vector<model::complex_veclist> &,
      nonlinear_version) const {
       GMM_ASSERT1(false, "Time dispatcher with not defined complex tangent "
 		  "terms !");
@@ -588,7 +626,7 @@ namespace getfem {
       $\theta K U^{n+1} + (1-\theta) K U^{n}$.
   */
   void add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
-				   scalar_type theta);
+				   scalar_type dt, scalar_type theta);
   
 
   //=========================================================================

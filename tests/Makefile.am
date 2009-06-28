@@ -40,7 +40,8 @@ check_PROGRAMS =                 \
 	$(optprogs)              \
 	plasticity               \
 	dynamic_friction         \
-	bilaplacian
+	bilaplacian		 \
+	heat_equation
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -88,6 +89,7 @@ crack_SOURCES = crack.cc
 endif
 dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
+heat_equation_SOURCES = heat_equation.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
 MUMPS_LIBS = @MUMPS_LIBS@
@@ -130,6 +132,7 @@ TESTS = \
 	$(top_srcdir)/tests/helmholtz.pl               \
 	$(top_srcdir)/tests/schwarz_additive.pl        \
 	$(top_srcdir)/tests/bilaplacian.pl    	       \
+	$(top_srcdir)/tests/heat_equation.pl   	       \
 	$(top_srcdir)/tests/make_gmm_test.pl     
 
 EXTRA_DIST = \
@@ -180,6 +183,8 @@ EXTRA_DIST = \
 	nonlinear_elastostatic.param      \
 	test_interpolated_fem.param       \
 	geo_trans_inv.param               \
+	heat_equation.pl                  \
+	heat_equation.param               \
 	make_gmm_test.pl                  \
 	gmm_torture01_lusolve.cc          \
 	gmm_torture05_mult.cc             \

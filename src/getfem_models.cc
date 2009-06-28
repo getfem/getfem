@@ -368,9 +368,10 @@ namespace getfem {
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
 			     const varnamelist &datanames,
 			     const termlist &terms,
-			     const mimlist &mims, size_type region) {
+			     const mimlist &mims, size_type region,
+			     bool ismassterm) {
     bricks.push_back(brick_description(pbr, varnames, datanames, terms,
-				       mims, region));
+				       mims, region, ismassterm));
     for  (size_type i = 0; i < bricks.back().mims.size(); ++i)
       add_dependency(*(bricks.back().mims[i]));
 
@@ -407,7 +408,7 @@ namespace getfem {
     bricks[ibrick].pdispatch = pdispatch;
 
     size_type nbrhs = bricks[ibrick].nbrhs
-      = std::min(size_type(1), pdispatch->nbrhs());
+      = std::max(size_type(1), pdispatch->nbrhs());
 
     
     if (is_complex() && pbr->is_complex()) {
@@ -425,10 +426,9 @@ namespace getfem {
 	bricks[ibrick].rveclist_sym[k] = bricks[ibrick].rveclist_sym[0];
       }
     }
-
-
-
   }
+
+
 
   const std::string &model::varname_of_brick(size_type ind_brick,
 				      size_type ind_var) {
@@ -467,11 +467,56 @@ namespace getfem {
     }
   }
 
+  // before call to asm_real_tangent_terms or asm_complex_tangent_terms
+  // from the assembly procedure or a time dispatcher
+  void model::brick_init(size_type ib, assembly_version version,
+			 size_type rhs_ind) const {
+    const brick_description &brick = bricks[ib];
+    bool cplx = is_complex() && brick.pbr->is_complex();
+    
+    // Initialization of vector and matrices.
+    for (size_type j = 0; j < brick.tlist.size(); ++j) {
+      const term_description &term = brick.tlist[j];
+      size_type nbd1 = variables[term.var1].size();
+      size_type nbd2 = term.is_matrix_term ?
+	variables[term.var2].size() : 0;
+      if (term.is_matrix_term &&
+	  (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
+	if (cplx)
+	  brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
+	else
+	  brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
+      }
+      if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
+	for (size_type k = 0; k < brick.nbrhs; ++k) {
+	  if (cplx) {
+	    if (k == rhs_ind) gmm::clear(brick.cveclist[k][j]);
+	    gmm::resize(brick.cveclist[k][j], nbd1);
+	    if (term.is_symmetric && term.var1.compare(term.var2)) {
+	      if (k == rhs_ind) gmm::clear(brick.cveclist_sym[k][j]);
+	      gmm::resize(brick.cveclist_sym[k][j], nbd2);
+	    }
+	  } else {
+	    if (k == rhs_ind) gmm::clear(brick.rveclist[k][j]);
+	    gmm::resize(brick.rveclist[k][j], nbd1);
+	    if (term.is_symmetric && term.var1.compare(term.var2)) {
+	      if (k == rhs_ind) gmm::clear(brick.rveclist_sym[k][j]);
+	      gmm::resize(brick.rveclist_sym[k][j], nbd2);
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+
   void model::brick_call(size_type ib, assembly_version version,
 			 size_type rhs_ind) const {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
     
+    brick_init(ib, version, rhs_ind);
+
     if (cplx)
       brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
 					   brick.mims,
@@ -487,7 +532,54 @@ namespace getfem {
 					brick.rveclist_sym[rhs_ind],
 					brick.region, version);
   }
+
+
+  void model::first_iter(void) {
+    for (size_type ib = 0; ib < bricks.size(); ++ib) {
+      brick_description &brick = bricks[ib];
+      bool cplx = is_complex() && brick.pbr->is_complex();
+      if (brick.pdispatch) {
+	if (cplx)
+	  brick.pdispatch->next_complex_iter(*this, ib, brick.vlist,
+					     brick.dlist,
+					     brick.cmatlist, brick.cveclist,
+					     brick.cveclist_sym, true);
+	else
+	  brick.pdispatch->next_real_iter(*this, ib, brick.vlist, brick.dlist,
+					     brick.rmatlist, brick.rveclist,
+					     brick.rveclist_sym, true);
+      }
+    }
+  }
   
+  void model::next_iter(void) {
+    for (size_type ib = 0; ib < bricks.size(); ++ib) {
+      brick_description &brick = bricks[ib];
+      bool cplx = is_complex() && brick.pbr->is_complex();
+      if (brick.pdispatch) {
+	if (cplx)
+	  brick.pdispatch->next_complex_iter(*this, ib, brick.vlist,
+					     brick.dlist,
+					     brick.cmatlist, brick.cveclist,
+					     brick.cveclist_sym, false);
+	else
+	  brick.pdispatch->next_real_iter(*this, ib, brick.vlist, brick.dlist,
+					  brick.rmatlist, brick.rveclist,
+					  brick.rveclist_sym, false);
+      }
+    }
+    
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
+	 ++it) {
+      for (size_type i = 1; i < it->second.n_iter; ++i)
+	if (is_complex())
+	  gmm::copy(it->second.complex_value[i],
+		    it->second.complex_value[i-1]);
+	else
+	  gmm::copy(it->second.real_value[i],
+		    it->second.real_value[i-1]);
+    }
+  }
 
   // Call the brick to compute the terms
   void model::update_brick(size_type ib, assembly_version version) const {
@@ -512,52 +604,18 @@ namespace getfem {
     }
 
     if (tobecomputed) {
-      // Initialization of vector and matrices.
-      for (size_type j = 0; j < brick.tlist.size(); ++j) {
-	const term_description &term = brick.tlist[j];
-	size_type nbd1 = variables[term.var1].size();
-	size_type nbd2 = term.is_matrix_term ?
-	  variables[term.var2].size() : 0;
-	if (term.is_matrix_term &&
-	    (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
-	  if (cplx)
-	    brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
-	  else
-	    brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
-	}
-	if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
-	  for (size_type k = 0; k < brick.nbrhs; ++k) {
-	    if (cplx) {
-	      gmm::clear(brick.cveclist[k][j]);
-	      gmm::resize(brick.cveclist[k][j], nbd1);
-	      if (term.is_symmetric && term.var1.compare(term.var2)) {
-		gmm::clear(brick.cveclist_sym[k][j]);
-		gmm::resize(brick.cveclist_sym[k][j], nbd2);
-	      }
-	    } else {
-	      gmm::clear(brick.rveclist[k][j]);
-	      gmm::resize(brick.rveclist[k][j], nbd1);
-	      if (term.is_symmetric && term.var1.compare(term.var2)) {
-		gmm::clear(brick.rveclist_sym[k][j]);
-		gmm::resize(brick.rveclist_sym[k][j], nbd2);
-	      }
-	    }
-	  }
-	}
-      }
       
-      if (!(brick.pdispatch)) brick_call(ib, version);
+      if (!(brick.pdispatch))
+	{ brick_call(ib, version, 0); }
       else {
 	if (cplx) 
 	  brick.pdispatch->asm_complex_tangent_terms
-	    (*this, brick.pbr, brick.vlist, brick.dlist, brick.mims, 
-	     brick.cmatlist, brick.cveclist, brick.cveclist_sym,
-	     brick.region, version);
+	    (*this, ib, brick.cmatlist, brick.cveclist, brick.cveclist_sym,
+	     version);
 	else
 	  brick.pdispatch->asm_real_tangent_terms
-	    (*this, brick.pbr, brick.vlist, brick.dlist, brick.mims,
-	     brick.rmatlist, brick.rveclist, brick.rveclist_sym,
-	     brick.region, version);
+	    (*this, ib, brick.rmatlist, brick.rveclist, brick.rveclist_sym,
+	     version);
       }
       brick.v_num = act_counter();
     }
@@ -2282,7 +2340,7 @@ namespace getfem {
     if (dataname_rho.size())
       dl.push_back(dataname_rho);
     return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
-			model::mimlist(1, &mim), region);
+			model::mimlist(1, &mim), region, true);
   }
 
 
@@ -2294,7 +2352,6 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-
   // ----------------------------------------------------------------------
   //
   // theta-method dispatcher
@@ -2303,18 +2360,49 @@ namespace getfem {
 
   class theta_method_dispatcher : public virtual_dispatcher {
 
+    scalar_type dt, theta;
+
   public :
 
     typedef model::assembly_version nonlinear_version;
 
-
-    void next_iteration
+    void next_real_iter
     (const model &md, size_type ib, const model::varnamelist &/* vl */,
      const model::varnamelist &/* dl */,
      model::real_matlist &/* matl */,
      std::vector<model::real_veclist> &vectl,
      std::vector<model::real_veclist> &vectl_sym,
      bool first_iter) const {
+
+      if (md.is_brick_massterm(ib)) {
+	coeffs[0] = scalar_type(1);
+	coeffs[1] = scalar_type(-1);
+      } else {
+	coeffs[0] = dt*theta;
+	coeffs[1] = dt*(scalar_type(1) - theta); 
+      }
+
+      if (first_iter) md.update_brick(ib, model::BUILD_RHS);
+      transfert(vectl[0], vectl[1]);
+      transfert(vectl_sym[0], vectl_sym[1]);
+      md.linear_brick_add_to_rhs(ib, 1);
+    }
+
+    void next_complex_iter
+    (const model &md, size_type ib, const model::varnamelist &/* vl */,
+     const model::varnamelist &/* dl */,
+     model::complex_matlist &/* matl */,
+     std::vector<model::complex_veclist> &vectl,
+     std::vector<model::complex_veclist> &vectl_sym,
+     bool first_iter) const {
+
+      if (md.is_brick_massterm(ib)) {
+	coeffs[0] = scalar_type(1);
+	coeffs[1] = scalar_type(-1);
+      } else {
+	coeffs[0] = dt*theta;
+	coeffs[1] = dt*(scalar_type(1) - theta); 
+      }
 
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
       transfert(vectl[0], vectl[1]);
@@ -2325,20 +2413,12 @@ namespace getfem {
 
 
     void asm_real_tangent_terms
-    (const model &md, pbrick pbr, const model::varnamelist &vl,
-     const model::varnamelist &dl, const model::mimlist &mims,
-     model::real_matlist &matl,
+    (const model &md, size_type ib, model::real_matlist &matl,
      std::vector<model::real_veclist> &vectl,
-     std::vector<model::real_veclist> &vectl_sym, size_type region,
+     std::vector<model::real_veclist> &vectl_sym,
      nonlinear_version version) const {
       
-
-      pbr->asm_real_tangent_terms(md, vl, dl, mims, matl, vectl[0],
-				  vectl_sym[0], region, version);
-
-
-      // 1- call the brick
-      // 2- fill coeffs
+      md.brick_call(ib, version, 0);
 
 
 
@@ -2368,16 +2448,7 @@ namespace getfem {
       // mise à jour dans update brick du seul second membre / matrice
       // le non appel sur l'autre version au prochain appel.
 
-
-
-      // Cas non-linéaire (ne pas oublier de gérer `version`
-      // Création éventuelle variables temporaire
-      // Appel brique pour le second membre
-      // Création du second membre supplémentaire
-      // Appel brique pour le membre courant
-      
-      // pbr->asm_real_tangent_terms(md, vl, dl, mims, matl, vectl[0],
-      //				  region, version);
+      // verifier que tout fonctionne pour les briques linéaires.
 
       // rendre les coefficients (seulement deux coefficients).
 
@@ -2390,25 +2461,22 @@ namespace getfem {
     }
 
     virtual void asm_complex_tangent_terms
-    (const model &md, pbrick pbr, const model::varnamelist &vl,
-     const model::varnamelist &dl, const model::mimlist &mims,
-     model::complex_matlist &matl,
+    (const model &md, size_type ib, model::complex_matlist &matl,
      std::vector<model::complex_veclist> &vectl,
-     std::vector<model::complex_veclist> &vectl_sym, size_type region,
+     std::vector<model::complex_veclist> &vectl_sym,
      nonlinear_version version) const {
-      pbr->asm_complex_tangent_terms(md, vl, dl, mims, matl, vectl[0],
-				     vectl_sym[0], region, version);
+
+      md.brick_call(ib, version, 0);
     }
 
-    theta_method_dispatcher(scalar_type theta) : virtual_dispatcher(2) {
-      coeffs[0] = theta; coeffs[1] = scalar_type(1) - theta;
-    }
+    theta_method_dispatcher(scalar_type dt_, scalar_type theta_)
+      : virtual_dispatcher(2), dt(dt_), theta(theta_) { }
     
   };
 
   void add_theta_method_dispatcher
-  (model &md, dal::bit_vector ibricks, scalar_type theta) {
-    pdispatcher pdispatch = new theta_method_dispatcher(theta);
+  (model &md, dal::bit_vector ibricks, scalar_type dt, scalar_type theta) {
+    pdispatcher pdispatch = new theta_method_dispatcher(dt, theta);
     
     for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
       md.add_time_dispatcher(i, pdispatch);
