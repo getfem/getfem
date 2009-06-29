@@ -550,8 +550,10 @@ namespace getfem {
   protected :
 
     void transfert(model::real_veclist &v1, model::real_veclist &v2) const {
-      for (size_type i = 0; i < v1.size(); ++i)
+      for (size_type i = 0; i < v1.size(); ++i) {
+	cout << "v1 = " << v1[i] << endl << "v2 = " << v2[i] << endl;
 	gmm::copy(v1[i], v2[i]);
+      }
     }
 
     void transfert(model::complex_veclist &v1,

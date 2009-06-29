@@ -196,15 +196,14 @@ bool heat_equation_problem::solve(void) {
   std::vector<scalar_type> F(mf_rhs.nb_dof());
   getfem::interpolation_function(mf_rhs, F, sol_f);
   model.add_initialized_fem_data("VolumicData", mf_rhs, F);
-  transient_bricks.add(getfem::add_source_term_brick(model, mim, "u",
-						     "VolumicData"));
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
 
   // Neumann condition.
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
-  transient_bricks.add(getfem::add_normal_source_term_brick
-		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
+  getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
 
   // Dirichlet condition.
   gmm::resize(F, mf_rhs.nb_dof());
@@ -228,19 +227,20 @@ bool heat_equation_problem::solve(void) {
 
 
   model.first_iter();
-  // + condition initiale ...;
+
+  // Null initial value for the temperature. Can be modified.
+  gmm::resize(U, mf_u.nb_dof());
+  gmm::clear(U);
+  gmm::copy(U, model.set_real_variable("u"));
 
   for (scalar_type t = 0; t < T; t += dt) {
     
-
     iter.init();
     getfem::standard_solve(model, iter);
-    gmm::resize(U, mf_u.nb_dof());
     gmm::copy(model.real_variable("u"), U);
     char s[100]; sprintf(s, "step%d", int(t/dt)+1);
-    gmm::vecsave(datafilename + s + ".U", U);
-    
-    
+    gmm::vecsave(datafilename + s + ".U", U); // le faire uniquement en option
+
     model.next_iter();
   }
 

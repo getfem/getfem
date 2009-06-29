@@ -2374,15 +2374,20 @@ namespace getfem {
      std::vector<model::real_veclist> &vectl_sym,
      bool first_iter) const {
 
-      if (md.is_brick_massterm(ib)) {
-	coeffs[0] = scalar_type(1);
-	coeffs[1] = scalar_type(-1);
+      if (md.is_brick_massterm(ib)) { // arg !!! les coeffs ne dépendent pas de la brique !!
+	coeffs[0] = scalar_type(1)/dt;
+	coeffs[1] = scalar_type(-1)/dt;
       } else {
-	coeffs[0] = dt*theta;
-	coeffs[1] = dt*(scalar_type(1) - theta); 
+	coeffs[0] = theta;
+	coeffs[1] = (scalar_type(1) - theta); 
       }
 
+      cout << "brique " << ib << endl;
+      cout << "coeffs = " << coeffs << endl;
+
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
+
+
       transfert(vectl[0], vectl[1]);
       transfert(vectl_sym[0], vectl_sym[1]);
       md.linear_brick_add_to_rhs(ib, 1);
@@ -2397,11 +2402,11 @@ namespace getfem {
      bool first_iter) const {
 
       if (md.is_brick_massterm(ib)) {
-	coeffs[0] = scalar_type(1);
-	coeffs[1] = scalar_type(-1);
+	coeffs[0] = scalar_type(1)/dt;
+	coeffs[1] = scalar_type(-1)/dt;
       } else {
-	coeffs[0] = dt*theta;
-	coeffs[1] = dt*(scalar_type(1) - theta); 
+	coeffs[0] = theta;
+	coeffs[1] = scalar_type(1) - theta; 
       }
 
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);

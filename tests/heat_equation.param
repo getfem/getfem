@@ -10,13 +10,13 @@ N = 2;                      	     % domain in dimension N
 QUAD = 0;                   	     % use quadrilaterons or not
 NX = 100;                   	     % space step.
 MESH_NOISED = 0;            	     % "shake" the mesh or not
-DIRICHLET_VERSION = 1;      	     % 0 = With Lagrange multipliers
+DIRICHLET_VERSION = 0;      	     % 0 = With Lagrange multipliers
 			    	     % 1 = penalization.
 DIRICHLET_COEFFICIENT = 1E10;	     % Penalization coefficient.
 
-T = 1;                              % Final time
-DT = 0.1;                            % Time step
-THETA = 0.5;                         % Theta method parameter
+T = 4;                               % Final time
+DT = 0.05;                            % Time step
+THETA = 1.0;                         % Theta method parameter
 
 if (N == 1)
   FT = 5.0;
