@@ -25,6 +25,8 @@ DIRICHLET_COEFFICIENT = 1E10;	  % Penalization coefficient.
 T = 2.0;
 DT = 0.1;
 THETA = 0.5;
+C = 1.5;
+EXPORT_SOLUTION = 0;
 
 ;
 close(TMPF);
@@ -44,8 +46,8 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
   #    print $_;
       ($a, $b) = split('=', $_);
       # print "La norme en question :", $b;
-      if ($b > 0.012) { 
-	print "\nError too large: $b\n"; 
+      if ($b > 0.0004) {
+	print "\nError too large: $b\n";
 	print "./heat_equation $tmp $def 2>&1 failed\n";
 	$er = 1; 
       }

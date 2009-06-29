@@ -410,6 +410,7 @@ namespace getfem {
     size_type nbrhs = bricks[ibrick].nbrhs
       = std::max(size_type(1), pdispatch->nbrhs());
 
+    gmm::resize(bricks[ibrick].coeffs, nbrhs);
     
     if (is_complex() && pbr->is_complex()) {
       bricks[ibrick].cveclist.resize(nbrhs);
@@ -691,7 +692,7 @@ namespace getfem {
 	if (term.is_matrix_term) I2 = variables[term.var2].I;
 
 	scalar_type coeff0 = scalar_type(1);
-	if (brick.pdispatch) coeff0 = brick.pdispatch->coefficients()[0];
+	if (brick.pdispatch) coeff0 = brick.coeffs[0];
 
 	if (cplx) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
@@ -706,7 +707,7 @@ namespace getfem {
 	    if (brick.pdispatch) {
 	      for (size_type k = 0; k < brick.nbrhs; ++k)
 		gmm::add(gmm::scaled(brick.cveclist[k][j],
-				     brick.pdispatch->coefficients()[k]),
+				     brick.coeffs[k]),
 			 gmm::sub_vector(crhs, I1));
 	    }
 	    else
@@ -722,7 +723,7 @@ namespace getfem {
 	      if (brick.pdispatch) {
 		for (size_type k = 0; k < brick.nbrhs; ++k)
 		  gmm::add(gmm::scaled(brick.cveclist_sym[k][j],
-				       brick.pdispatch->coefficients()[k]),
+				       brick.coeffs[k]),
 			   gmm::sub_vector(crhs, I2));
 	      }
 	      else
@@ -748,7 +749,7 @@ namespace getfem {
 	    if (brick.pdispatch) {
 	      for (size_type k = 0; k < brick.nbrhs; ++k)
 		gmm::add(gmm::scaled(brick.rveclist[k][j],
-				     brick.pdispatch->coefficients()[k]),
+				     brick.coeffs[k]),
 			 gmm::sub_vector(crhs, I1));
 	    }
 	    else
@@ -764,7 +765,7 @@ namespace getfem {
 	      if (brick.pdispatch) {
 		for (size_type k = 0; k < brick.nbrhs; ++k)
 		  gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
-				       brick.pdispatch->coefficients()[k]),
+				       brick.coeffs[k]),
 			   gmm::sub_vector(crhs, I2));
 	      }
 	      else 
@@ -790,7 +791,7 @@ namespace getfem {
 	    if (brick.pdispatch) {
 	      for (size_type k = 0; k < brick.nbrhs; ++k)
 		gmm::add(gmm::scaled(brick.rveclist[k][j],
-				     brick.pdispatch->coefficients()[k]),
+				     brick.coeffs[k]),
 			 gmm::sub_vector(rrhs, I1));
 	    }
 	    else
@@ -806,7 +807,7 @@ namespace getfem {
 	      if (brick.pdispatch) {
 		for (size_type k = 0; k < brick.nbrhs; ++k)
 		  gmm::add(gmm::scaled(brick.rveclist_sym[k][j],
-				       brick.pdispatch->coefficients()[k]),
+				       brick.coeffs[k]),
 			   gmm::sub_vector(rrhs, I2));
 	      }
 	      else
@@ -2374,16 +2375,16 @@ namespace getfem {
      std::vector<model::real_veclist> &vectl_sym,
      bool first_iter) const {
 
-      if (md.is_brick_massterm(ib)) { // arg !!! les coeffs ne dépendent pas de la brique !!
-	coeffs[0] = scalar_type(1)/dt;
-	coeffs[1] = scalar_type(-1)/dt;
+      if (md.is_brick_massterm(ib)) {
+	md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1)/dt;
+	md.rhs_coeffs_of_brick(ib)[1] = scalar_type(-1)/dt;
       } else {
-	coeffs[0] = theta;
-	coeffs[1] = (scalar_type(1) - theta); 
+	md.rhs_coeffs_of_brick(ib)[0] = theta;
+	md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta); 
       }
 
-      cout << "brique " << ib << endl;
-      cout << "coeffs = " << coeffs << endl;
+//       cout << "brique " << ib << endl;
+//       cout << "coeffs = " << md.rhs_coeffs_of_brick(ib) << endl;
 
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
 
@@ -2402,11 +2403,11 @@ namespace getfem {
      bool first_iter) const {
 
       if (md.is_brick_massterm(ib)) {
-	coeffs[0] = scalar_type(1)/dt;
-	coeffs[1] = scalar_type(-1)/dt;
+	md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1)/dt;
+	md.rhs_coeffs_of_brick(ib)[1] = scalar_type(-1)/dt;
       } else {
-	coeffs[0] = theta;
-	coeffs[1] = scalar_type(1) - theta; 
+	md.rhs_coeffs_of_brick(ib)[0] = theta;
+	md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta); 
       }
 
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
@@ -2418,9 +2419,9 @@ namespace getfem {
 
 
     void asm_real_tangent_terms
-    (const model &md, size_type ib, model::real_matlist &matl,
-     std::vector<model::real_veclist> &vectl,
-     std::vector<model::real_veclist> &vectl_sym,
+    (const model &md, size_type ib, model::real_matlist &/* matl */,
+     std::vector<model::real_veclist> &/* vectl */,
+     std::vector<model::real_veclist> &/* vectl_sym */,
      nonlinear_version version) const {
       
       md.brick_call(ib, version, 0);
@@ -2466,9 +2467,9 @@ namespace getfem {
     }
 
     virtual void asm_complex_tangent_terms
-    (const model &md, size_type ib, model::complex_matlist &matl,
-     std::vector<model::complex_veclist> &vectl,
-     std::vector<model::complex_veclist> &vectl_sym,
+    (const model &md, size_type ib, model::complex_matlist &/* matl */,
+     std::vector<model::complex_veclist> &/* vectl */,
+     std::vector<model::complex_veclist> &/* vectl_sym */,
      nonlinear_version version) const {
 
       md.brick_call(ib, version, 0);

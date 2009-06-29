@@ -229,6 +229,7 @@ namespace getfem {
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
       bool ismassterm;
+      mutable model_real_plain_vector coeffs;
       mutable real_matlist rmatlist; // Matrices the brick have to fill in
                                      // (real version).
       mutable std::vector<real_veclist> rveclist; // Rhs the brick have to 
@@ -269,6 +270,8 @@ namespace getfem {
     bool is_brick_massterm(size_type ib) const {return bricks[ib].ismassterm; }
     void brick_call(size_type ib, assembly_version version,
 		    size_type rhs_ind = 0) const;
+    model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
+    { return bricks[ib].coeffs; }
 
     void update_from_context(void) const {  act_size_to_be_done = true; }
     
@@ -550,10 +553,8 @@ namespace getfem {
   protected :
 
     void transfert(model::real_veclist &v1, model::real_veclist &v2) const {
-      for (size_type i = 0; i < v1.size(); ++i) {
-	cout << "v1 = " << v1[i] << endl << "v2 = " << v2[i] << endl;
+      for (size_type i = 0; i < v1.size(); ++i)
 	gmm::copy(v1[i], v2[i]);
-      }
     }
 
     void transfert(model::complex_veclist &v1,
@@ -563,13 +564,10 @@ namespace getfem {
     }
 
     size_type nbrhs_;
-    mutable base_vector coeffs;
-
 
   public :
 
     size_type nbrhs(void) const { return nbrhs_; }
-    const base_vector &coefficients(void) const { return coeffs; }
 
     typedef model::assembly_version nonlinear_version;
 
@@ -611,7 +609,7 @@ namespace getfem {
 		  "terms !");
     }
 
-    virtual_dispatcher(size_type _nbrhs) : nbrhs_(_nbrhs), coeffs(_nbrhs) {
+    virtual_dispatcher(size_type _nbrhs) : nbrhs_(_nbrhs) {
       GMM_ASSERT1(_nbrhs > 0, "Time dispatcher with no rhs");
     }
     

@@ -55,14 +55,15 @@ typedef std::vector<scalar_type> plain_vector;
  */
 
 base_small_vector sol_K; /* a coefficient */
+scalar_type sol_c;
 /* exact solution */
 scalar_type sol_u(const base_node &x) { return sin(gmm::vect_sp(sol_K, x)); }
 /* righ hand side */
 scalar_type sol_f(const base_node &x)
-{ return gmm::vect_sp(sol_K, sol_K) * sin(gmm::vect_sp(sol_K, x)); }
+{ return sol_c * gmm::vect_sp(sol_K, sol_K) * sin(gmm::vect_sp(sol_K, x)); }
 /* gradient of the exact solution */
 base_small_vector sol_grad(const base_node &x)
-{ return sol_K * cos(gmm::vect_sp(sol_K, x)); }
+{ return sol_c * sol_K * cos(gmm::vect_sp(sol_K, x)); }
 
 /*
   structure for the Heat_Equation problem
@@ -131,6 +132,7 @@ void heat_equation_problem::init(void) {
   dt = PARAM.real_value("DT", "Time step");
   T = PARAM.real_value("T", "final time");
   theta = PARAM.real_value("THETA", "Theta method parameter");
+  sol_c = PARAM.real_value("C", "Diffusion coefficient");
   residual = PARAM.real_value("RESIDUAL");
   dirichlet_version = PARAM.int_value("DIRICHLET_VERSION",
 				      "Type of Dirichlet contion");
@@ -190,7 +192,9 @@ bool heat_equation_problem::solve(void) {
   model.add_fem_variable("u", mf_u);
 
   // Laplacian term on u.
-  transient_bricks.add(getfem::add_Laplacian_brick(model, mim, "u"));
+  model.add_initialized_fixed_size_data("c", plain_vector(1, sol_c));
+  transient_bricks.add(getfem::add_generic_elliptic_brick(model, mim,
+							  "u", "c"));
 
   // Volumic source term.
   std::vector<scalar_type> F(mf_rhs.nb_dof());
@@ -223,7 +227,7 @@ bool heat_equation_problem::solve(void) {
   transient_bricks.add(getfem::add_mass_brick(model, mim, "u"));
   getfem::add_theta_method_dispatcher(model, transient_bricks, dt, theta);
  
-  gmm::iteration iter(residual, 1, 40000);
+  gmm::iteration iter(residual, 0, 40000);
 
 
   model.first_iter();
@@ -236,10 +240,13 @@ bool heat_equation_problem::solve(void) {
   for (scalar_type t = 0; t < T; t += dt) {
     
     iter.init();
+    cout << "solving for t = " << t << endl;
     getfem::standard_solve(model, iter);
     gmm::copy(model.real_variable("u"), U);
-    char s[100]; sprintf(s, "step%d", int(t/dt)+1);
-    gmm::vecsave(datafilename + s + ".U", U); // le faire uniquement en option
+    if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
+      char s[100]; sprintf(s, "step%d", int(t/dt)+1);
+      gmm::vecsave(datafilename + s + ".U", U);
+    }
 
     model.next_iter();
   }
@@ -273,7 +280,8 @@ int main(int argc, char *argv[]) {
   p.PARAM.read_command_line(argc, argv);
   p.init();
   if (!p.solve()) GMM_ASSERT1(false, "Solve procedure has failed");
-  p.mf_u.write_to_file(p.datafilename + ".mf", true);
+  if (p.PARAM.int_value("EXPORT_SOLUTION") != 0)
+    p.mf_u.write_to_file(p.datafilename + ".mf", true);
   p.compute_error();
 
   return 0; 

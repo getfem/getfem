@@ -8,15 +8,18 @@ INCLINE = 0;                	     % Incline of the mesh.
 FT = 0.1;                   	     % parameter for the exact solution.
 N = 2;                      	     % domain in dimension N
 QUAD = 0;                   	     % use quadrilaterons or not
-NX = 100;                   	     % space step.
+NX = 30;                   	     % space step.
 MESH_NOISED = 0;            	     % "shake" the mesh or not
 DIRICHLET_VERSION = 0;      	     % 0 = With Lagrange multipliers
 			    	     % 1 = penalization.
 DIRICHLET_COEFFICIENT = 1E10;	     % Penalization coefficient.
 
-T = 4;                               % Final time
-DT = 0.05;                            % Time step
-THETA = 1.0;                         % Theta method parameter
+T = 1;                               % Final time
+DT = 0.01;                           % Time step
+THETA = 0.5;                         % Theta method parameter
+
+C = 0.1;			     % Diffusion coefficient
+
 
 if (N == 1)
   FT = 5.0;
@@ -50,6 +53,7 @@ if (N == 2 && QUAD)
 end
 
 if (N == 3 && ~QUAD)
+  FT = 1.0;
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
   FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(2)'; % quadrature rule for polynomials up
@@ -57,6 +61,7 @@ if (N == 3 && ~QUAD)
 end
 
 if (N == 3 && QUAD)
+  FT = 1.0;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(3,1)';        % hexahedrons
   else
@@ -72,5 +77,6 @@ if (N > 3)
 end
 
 RESIDUAL = 1E-9;     	             % residual for conjugate gradient.
-ROOTFILENAME = 'heat'           % Root of data files.
+ROOTFILENAME = 'heat'                % Root of data files.
+EXPORT_SOLUTION = 1;
 
