@@ -37,6 +37,7 @@
 #include "getfem/getfem_Coulomb_friction.h"
 #include "getfem/getfem_superlu.h"
 #include "gmm/gmm.h"
+#include "getfem/getfem_import.h"  //ajout des fonctionnalités d'importation de maillage (pfe)
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -72,6 +73,7 @@ struct elastostatic_problem {
   scalar_type residual;        /* max residual for the iterative solvers         */
   std::string datafilename;
   bgeot::md_param PARAM;
+  
 
   bool solve(plain_vector &U);
   void init(void);
@@ -91,36 +93,88 @@ void elastostatic_problem::init(void) {
   std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
+  std::string mesh_filename = PARAM.string_value("MESH_FILE_NAME");
+  size_type MESH_CATEGORY = PARAM.int_value("MESH_CATEGORY");
+  size_type REFINE_MESH = PARAM.int_value("REFINE_MESH");
+  size_type N = 0;
+
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
-    bgeot::geometric_trans_descriptor(MESH_TYPE);
-  size_type N = pgt->dim();
-  std::vector<size_type> nsubdiv(N);
-  std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps "));
-  nsubdiv[1] = PARAM.int_value("NY") ? PARAM.int_value("NY") : nsubdiv[0];
-  if (N>2) nsubdiv[2] = PARAM.int_value("NZ") ? PARAM.int_value("NZ") : nsubdiv[0];
-  getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			    PARAM.int_value("MESH_NOISED") != 0);
-  
-  LX = PARAM.real_value("LX", "Length along X axis");
-  LY = PARAM.real_value("LY", "Length along Y axis");
-  LZ = PARAM.real_value("LZ", "Length along Z axis");
-  mu = PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");			    
-  bgeot::base_matrix M(N,N);
-  for (size_type i=0; i < N; ++i) {
-    static const char *t[] = {"LX","LY","LZ"};
-    M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-  }
-  if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
 
-  /* scale the unit mesh to [LX,LY,..] and incline it */
-  mesh.transformation(M);
+    bgeot::pgeometric_trans pgt = 
+    bgeot::geometric_trans_descriptor(MESH_TYPE);
+
+  // According to the value of MESH_CATEGORY (user parameter), getfem builds the mesh or imports the mesh defined in the file MESH_FILE_NAME
+
+  if (MESH_CATEGORY == 0) {
+
+    N = pgt->dim();
+    std::vector<size_type> nsubdiv(N);
+    std::fill(nsubdiv.begin(),nsubdiv.end(),
+  	    PARAM.int_value("NX", "Nomber of space steps "));
+    nsubdiv[1] = PARAM.int_value("NY") ? PARAM.int_value("NY") : nsubdiv[0];
+    if (N>2) nsubdiv[2] = PARAM.int_value("NZ") ? PARAM.int_value("NZ") : nsubdiv[0];
+    getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
+  			    PARAM.int_value("MESH_NOISED") != 0);
+  
+    LX = PARAM.real_value("LX", "Length along X axis");
+    LY = PARAM.real_value("LY", "Length along Y axis");
+    LZ = PARAM.real_value("LZ", "Length along Z axis");
+    mu = PARAM.real_value("MU", "Lamé coefficient mu");
+    lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");			    
+    bgeot::base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) {
+      static const char *t[] = {"LX","LY","LZ"};
+      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
+    }
+    if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
+
+    /* scale the unit mesh to [LX,LY,..] and incline it */
+    mesh.transformation(M);
+    
+    }
+
+  else if (MESH_CATEGORY == 1) {
+    
+   // CHARGEMENT DU MAILLAGE ISSU DE MATLAB PDE TOOL
+
+   getfem::import_mesh(mesh_filename,mesh);
+   N = mesh.dim();
+
+   LX = PARAM.real_value("LX", "Length along X axis");
+   LY = PARAM.real_value("LY", "Length along Y axis");
+   LZ = PARAM.real_value("LZ", "Length along Z axis");
+   mu = PARAM.real_value("MU", "Lamé coefficient mu");
+   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");	
+
+   }
+
+
+     
+  // Refine the mesh "REFINE_MESH" times  only if REFINE_MESH (user parameter) > 0
+  
+  if (REFINE_MESH > 0 ) {
+   
+    scalar_type e = 0.26; // parameter defining the refining area
+    for (size_type nb_refine = 0; nb_refine < REFINE_MESH; ++nb_refine) {
+
+       dal::bit_vector bv;
+        for (dal::bv_visitor iter1(mesh.convex_index()); !iter1.finished(); ++iter1)  
+        { if (mesh.points_of_convex(iter1)[0][N-2]>(LX - LX*e) && mesh.points_of_convex(iter1)[0][N-1]<LY*e)
+	    { bv.add(iter1);}
+        }
+
+       cout << "nb elt refined : " << bv.card() << endl;
+
+       mesh.Bank_refine(bv);
+
+      e = e / 2.;
+     }  
+  }
+
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
@@ -175,6 +229,8 @@ void elastostatic_problem::init(void) {
     if (gmm::abs(un[N-1] - 1.0) < 1.0E-7) { 
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f());
     } else if (gmm::abs(un[N-1] + 1.0) < 1.0E-7) {
+      mesh.region(FRICTION_BOUNDARY_NUM).add(it.cv(),it.f());
+    } else if (mesh.points_of_convex(it.cv())[0][N-1]<0.003 && mesh.points_of_convex(it.cv())[1][N-1]<0.003 && mesh.points_of_convex(it.cv())[2][N-1]<0.003) {
       mesh.region(FRICTION_BOUNDARY_NUM).add(it.cv(),it.f());
     }
   }
@@ -251,29 +307,47 @@ bool elastostatic_problem::solve(plain_vector &U) {
   p.resize(pl->nb_params());
   getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u, p);
 
-  getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
+  getfem::mdbrick_dynamic<> MASS_MATRIX(ELAS, 0.0);
+
+  getfem::mdbrick_abstract<> *pINCOMP = &MASS_MATRIX;
   switch (law_num) {
     case 1: 
     case 3: pINCOMP = new getfem::mdbrick_nonlinear_incomp<>(ELAS, mf_p);
   }
 
-  int nb_step = int(PARAM.int_value("NBSTEP"));
+  size_type nb_step = size_type(PARAM.int_value("NBSTEP"));
   scalar_type deltat = PARAM.real_value("DELTAT", "Time step");
  
   // contact condition for Lagrange elements
-  GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
   dal::bit_vector cn = mf_u.basic_dof_on_region(FRICTION_BOUNDARY_NUM);
 //   cout << "cn = " << cn << endl;
 //   cout << "cn.card()/N = " << cn.card()/N << endl;
+  std::vector<size_type> mouchard(cn.card()/N);
+  plain_vector coord_contacts(cn.card());
+  int compteur=0;
+//  for (int ii=0  ; ii < cn.card(); ++ii) {
+//  mouchard[ii]=cn[ii];
+//  } 
+//  gmm::vecsave(datafilename + ".friction_index",mouchard);
+
   sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
   sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());
   plain_vector gap(cn.card()/N);
   size_type jj = 0;
+  
+
+  
+
   for (dal::bv_visitor i(cn); !i.finished(); ++i)
+    
     if (i % N == 0) {
-//       cout << "point de contact " << mf_u.point_of_dof(i) << endl;
+      cout << "point de contact " << mf_u.point_of_basic_dof(i) << endl;
+      coord_contacts[compteur]= mf_u.point_of_basic_dof(i)[0];
+      coord_contacts[compteur+1]= mf_u.point_of_basic_dof(i)[1];
+      compteur=compteur+2;
       BN(jj, i+N-1) = -1.;
-      gap[jj] = 0.0; // mf_u.point_of_dof(i)[N-1];
+      gap[jj] = mf_u.point_of_basic_dof(i)[N-1];
+      mouchard[jj]=i; 
       for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
       ++jj;
     }
@@ -344,20 +418,39 @@ bool elastostatic_problem::solve(plain_vector &U) {
 //  double Fmax =0;
  
 
- for (int step = 0; step < nb_step; ++step) {
+ gmm::vecsave(datafilename + ".contact_index",mouchard);
+ gmm::vecsave(datafilename + ".contact_coord",coord_contacts);
+
+
+ for (size_type step = 0; step < nb_step; ++step) {
 	cout << "beginning of step " << step+1 << ", number of variables : " << final_model.nb_dof() << endl ;
 
     for (size_type i = 0; i < nb_dof_rhs; ++i) {
-      // F2[i*N+N-1] = dz;
-      F2[i*N+N-1] = (step < 10) ? (dz * step/10.0) : dz;
+      F2[i*N+N-1] = dz;
+     // F2[i*N+N-1] = (step < 10) ? (dz * step/10.0) : dz;
      // F2[i*N+N-1] = dz+dz*3*step/nb_step;
-      F2[i*N+N-2] = (step < 10) ? 0.0 : (step-10)*deltat*dyv;
+      F2[i*N+N-2] = (step < 10) ? 0.0 : scalar_type(step-10)*deltat*dyv;
     }
     final_model.rhs().set(F2);
 
     // cout << "F2 = " << F2 << endl;
 
     FRICTION.set_WT(gmm::scaled(U0, -1.0));
+    
+    //Introduction of a mass matrix for one or several steps starting at step DYNAMIC_STEP_NUMBER    
+    size_type DYNAMIC_STEP_NUMBER = PARAM.int_value("DYNAMIC_STEP_NUMBER") ;
+
+    if (DYNAMIC_STEP_NUMBER > 0  &&  step >= DYNAMIC_STEP_NUMBER) {
+      double rho = step > DYNAMIC_STEP_NUMBER ? 0 : 1.0;
+      MASS_MATRIX.rho().set(rho/deltat);
+    }
+
+    plain_vector MU0(mf_u.nb_dof());
+    gmm::mult(MASS_MATRIX.get_M(), U0, MU0);
+    VOL_F.set_auxF(MU0);
+
+
+
 
 
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")),
@@ -368,8 +461,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
     
     /* let the default non-linear solve (Newton) do its job */
 
-    gmm::default_newton_line_search ls(size_type(-1), 5.0/3.0,
-				       1.0/10.0, 5.0/10.0, 3.0);
+    
+    //gmm::default_newton_line_search ls(size_type(-1), 5.0/3.0,
+	//			       1.0/10.0, 5.0/10.0, 3.0);
+    gmm::default_newton_line_search ls(size_type(-1),
+				       (step == 0) ? 5.0/3.0 : 5.0/3.0,
+				       (step == 0) ? 1.0/10.0 : 1.0/10.0,
+				       (step == 0) ? 9.0/10.0 : 5.0/10.0,
+				       (step == 0) ? 50.0 : 3.0);
     getfem::standard_solve(MS, final_model, iter,
 			   getfem::default_linear_solver(final_model), ls);
 
@@ -387,11 +486,18 @@ bool elastostatic_problem::solve(plain_vector &U) {
     gmm::copy(FRICTION.get_LN(MS), LN1);
 
     double force_totale = 0.;
-    for (int i = 0; i < nbc; ++i) 
-      force_totale += LN1[i];
-    cout << "Force totale = " << force_totale << endl;
+    int k=0;
+
+    for (k = 0; k < nbc; ++k) {
+      force_totale += LN1[k];
+	}
+      cout << "Force totale = " << force_totale << endl;
 
     gmm::copy(FRICTION.get_LT(MS), LT1);
+
+    
+    plain_vector LLN_save(nbc), LLT_save(nbc*(N-1));
+
     
     {
       gmm::iteration itercg(1e-12, 1);
@@ -399,7 +505,13 @@ bool elastostatic_problem::solve(plain_vector &U) {
       gmm::cg(MMBN, LLN, LN1, gmm::identity_matrix(), itercg);
       itercg.init();
       gmm::cg(MMBT, LLT, LT1, gmm::identity_matrix(), itercg);
+
+      LLN_save = LLN;
+      LLT_save = LLT;
     }
+
+    cout << "Pression de contact : " << LN1 << endl;
+
 /*    	cout << "LT1 = " << LT1 << endl;
 	cout << "LN1 = " << LN1 << endl;
 	*/
@@ -429,7 +541,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
 // 	SumN[step]+= -LN1[y]; 
 // 	Pressure[step]+= SumN[step]/(LX*LY);
 //     }
-//     cout << "Tu vas marcher BORDEL 3 \n";
 // // 	max[step]=sqrt(maxN[step]*maxN[step]+maxT[step]*maxT[step]);
 //    
 //     
@@ -443,11 +554,11 @@ bool elastostatic_problem::solve(plain_vector &U) {
 // 	cout << "LN2 = " << LN1 << endl;
 	
 //    cout << "CN = " << FRICTION.get_LN(MS) << endl;
-    plain_vector UN(gmm::mat_nrows(BN));
-    gmm::mult(BN, U, UN);
+   plain_vector UN(gmm::mat_nrows(BN));
+   gmm::mult(BN, U, UN);
 //    cout << "UN = " << UN << endl;
 
-    char s[100]; sprintf(s, "step%d", step+1);
+    char s[100]; sprintf(s, "step%ld", step+1);
     gmm::vecsave(datafilename + s + ".U",U);
 
 
@@ -455,8 +566,13 @@ bool elastostatic_problem::solve(plain_vector &U) {
    ELAS.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
    gmm::vecsave(datafilename + s + ".VM",VM);
    
-   gmm::copy(U, U0);   
-   cout << "end of Step n° " << step+1 << " / " << nb_step << endl;
+
+   //Sauvegarde des efforts de contact normaux et tangentiels : variables LLN et LLT
+   gmm::vecsave(datafilename + s + ".LN",LLN_save);
+   gmm::vecsave(datafilename + s + ".LT",LLT_save);
+   
+     gmm::copy(U, U0);   
+        cout << "end of Step n° " << step+1 << " / " << nb_step << endl;
 	
 	
 // 	if (max[step]> Fmax)

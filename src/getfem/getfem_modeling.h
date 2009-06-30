@@ -2402,6 +2402,9 @@ namespace getfem {
 
   public :
 
+    mdbrick_parameter<VECTOR> &rho() { return RHO_; M_uptodate = true; }
+    const mdbrick_parameter<VECTOR> &rho() const { return RHO_; }
+
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       gmm::sub_interval
