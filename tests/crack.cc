@@ -53,9 +53,8 @@ using bgeot::base_matrix; /* small dense matrix. */
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
  */
-typedef getfem::modeling_standard_sparse_vector sparse_vector;
-typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
-typedef getfem::modeling_standard_plain_vector  plain_vector;
+typedef getfem::model_real_plain_vector  plain_vector;
+typedef getfem::model_real_sparse_matrix  sparse_matrix;
 typedef gmm::dense_matrix<scalar_type>  dense_matrix;
 
 /**************************************************************************/
@@ -1005,7 +1004,8 @@ int main(int argc, char *argv[]) {
 	  nrefine[cv] = short_type(nn*2);
 	else nrefine[cv] = short_type(nn);
 	if (dmin < .01)
-	  cout << "cv: "<< cv << ", dmin = " << dmin << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
+	  cout << "cv: "<< cv << ", dmin = " << dmin
+	       << "Pmin=" << Pmin << " " << nrefine[cv] << "\n";
       }
 
       {

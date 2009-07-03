@@ -58,6 +58,9 @@ namespace getfem {
     std::vector<scalar_type> primary_, secondary_;
     bool with_secondary;
 
+    void copy_from(const level_set &ls); // WARNING :  to be updated if
+                                         //    some components are added 
+
   public :
 
     void simplify(scalar_type eps = 0.01);
@@ -76,6 +79,9 @@ namespace getfem {
     dim_type degree() const { return degree_; }
     level_set(mesh &msh, dim_type deg = dim_type(1),
 	      bool with_secondary_ = false);
+    level_set(const level_set &ls);
+    level_set &operator =(const level_set &ls);
+
     ~level_set();
     size_type memsize() const;
   };

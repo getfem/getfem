@@ -1000,7 +1000,8 @@ namespace getfem {
   size_type add_isotropic_linearized_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_lambda, const std::string &dataname_mu,
-   size_type region = size_type(-1));
+   size_type region = size_type(-1),
+   const std::string &dataname_preconstraint = std::string());
 
 
   void compute_isotropic_linearized_Von_Mises_or_Tresca

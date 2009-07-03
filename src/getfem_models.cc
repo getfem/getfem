@@ -2038,7 +2038,7 @@ namespace getfem {
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
 					model::real_matlist &matl,
-					model::real_veclist &,
+					model::real_veclist &vecl,
 					model::real_veclist &,
 					size_type region,
 					nonlinear_version) const {
@@ -2048,7 +2048,7 @@ namespace getfem {
       GMM_ASSERT1(mims.size() == 1,
 		  "isotropic linearized elasticity brick need one and only "
 		  "one mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() == 2,
+      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 2 && dl.size() <= 3,
 		  "Wrong number of variables for isotropic linearized "
 		  "elasticity brick");
 
@@ -2082,6 +2082,16 @@ namespace getfem {
       else
 	asm_stiffness_matrix_for_homogeneous_linear_elasticity
 	  (matl[0], mim, mf_u, *lambda, *mu, rg);
+
+      if  (dl.size() == 3) { // Pre-constraints given by an "initial"
+	// displacement u0. Means that the computed displacement will be u - u0
+	// The displacement u0 should be discribed on the same fem as the
+	// variable.
+	gmm::mult(matl[0],
+		  gmm::scaled(md.real_variable(dl[2]), scalar_type(-1)),
+		  vecl[0]);
+
+      }
     }
 
     iso_lin_elasticity_brick(void) {
@@ -2095,12 +2105,13 @@ namespace getfem {
   size_type add_isotropic_linearized_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
-   size_type region) {
+   size_type region, const std::string &dataname3) {
     pbrick pbr = new iso_lin_elasticity_brick;
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist dl(1, dataname1);
     dl.push_back(dataname2);
+    if (dataname3.size()) dl.push_back(dataname3);
     return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
 			model::mimlist(1, &mim), region);
   }

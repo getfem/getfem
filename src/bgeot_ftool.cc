@@ -282,8 +282,8 @@ namespace bgeot {
       case '>' : prior = 3; op =  8; return; // >= 
       case '=' : prior = 3; op =  9; return; // == 
       case '~' : prior = 3; op = 10; return; // != 
-      case '&' : prior = 3; op = 11; return; // && 
-      case '|' : prior = 3; op = 12; return; // ||
+      case '&' : prior = 4; op = 11; return; // && 
+      case '|' : prior = 4; op = 12; return; // ||
       }
     prior = op = 0;
   }
@@ -308,8 +308,8 @@ namespace bgeot {
     case 8  : p1.real() = (p1.real() >= p2.real()); break;
     case 9  : p1.real() = (p1.real() == p2.real()); break;
     case 10 : p1.real() = (p1.real() != p2.real()); break;
-    case 11 : p1.real() = (p1.real() && p2.real()); break;
-    case 12 : p1.real() = (p1.real() || p2.real()); break;
+    case 11 : p1.real() = ((p1.real() != 0.0) && (p2.real() != 0.0)); break;
+    case 12 : p1.real() = ((p1.real() != 0.0) || (p2.real() != 0.0)); break;
     }
     value_list.pop_back(); op_list.pop_back(); prior_list.pop_back();
   }

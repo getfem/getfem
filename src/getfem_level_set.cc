@@ -29,8 +29,29 @@ namespace getfem {
     : pmesh(&msh), degree_(deg), mf(&classical_mesh_fem(msh, deg)),
       with_secondary(with_secondary_) {
     primary_.resize(mf->nb_dof());
-    secondary_.resize(mf->nb_dof());
+    if (has_secondary()) secondary_.resize(mf->nb_dof());
     this->add_dependency(*mf);
+  }
+
+  void level_set::copy_from(const level_set &ls) {
+    pmesh = ls.pmesh;
+    degree_ = ls.degree_;
+    mf = ls.mf;
+    primary_ = ls.primary_;
+    secondary_ = ls.secondary_;
+    with_secondary = ls.with_secondary;
+    this->add_dependency(*mf);
+  }
+
+
+  level_set::level_set(const level_set &ls) {
+    copy_from(ls);
+  }
+
+  level_set &level_set::operator =(const level_set &ls) {
+    this->sup_dependency(*mf);
+    copy_from(ls);
+    return *this;
   }
 
   level_set::~level_set() { }
