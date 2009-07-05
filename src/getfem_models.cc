@@ -368,10 +368,9 @@ namespace getfem {
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
 			     const varnamelist &datanames,
 			     const termlist &terms,
-			     const mimlist &mims, size_type region,
-			     bool ismassterm) {
+			     const mimlist &mims, size_type region) {
     bricks.push_back(brick_description(pbr, varnames, datanames, terms,
-				       mims, region, ismassterm));
+				       mims, region));
     for  (size_type i = 0; i < bricks.back().mims.size(); ++i)
       add_dependency(*(bricks.back().mims[i]));
 
@@ -470,7 +469,7 @@ namespace getfem {
 
   // before call to asm_real_tangent_terms or asm_complex_tangent_terms
   // from the assembly procedure or a time dispatcher
-  void model::brick_init(size_type ib, assembly_version version,
+  void model::brick_init(size_type ib, build_version version,
 			 size_type rhs_ind) const {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
@@ -483,10 +482,17 @@ namespace getfem {
 	variables[term.var2].size() : 0;
       if (term.is_matrix_term &&
 	  (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
-	if (cplx)
-	  brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
-	else
-	  brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
+	if (version | BUILD_ON_DATA_CHANGE) {
+	  if (cplx)
+	    gmm::resize(brick.cmatlist[j], nbd1, nbd2);
+	  else
+	    gmm::resize(brick.rmatlist[j], nbd1, nbd2);
+	} else {
+	  if (cplx)
+	    brick.cmatlist[j] = model_complex_sparse_matrix(nbd1, nbd2);
+	  else
+	    brick.rmatlist[j] = model_real_sparse_matrix(nbd1, nbd2);
+	}
       }
       if (brick.pbr->is_linear() || (version | BUILD_RHS)) {
 	for (size_type k = 0; k < brick.nbrhs; ++k) {
@@ -511,7 +517,7 @@ namespace getfem {
   }
 
 
-  void model::brick_call(size_type ib, assembly_version version,
+  void model::brick_call(size_type ib, build_version version,
 			 size_type rhs_ind) const {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
@@ -519,14 +525,14 @@ namespace getfem {
     brick_init(ib, version, rhs_ind);
 
     if (cplx)
-      brick.pbr->asm_complex_tangent_terms(*this, brick.vlist, brick.dlist,
+      brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist, brick.dlist,
 					   brick.mims,
 					   brick.cmatlist,
 					   brick.cveclist[rhs_ind],
 					   brick.cveclist_sym[rhs_ind],
 					   brick.region, version);
     else
-      brick.pbr->asm_real_tangent_terms(*this, brick.vlist, brick.dlist,
+      brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
 					brick.mims,
 					brick.rmatlist,
 					brick.rveclist[rhs_ind],
@@ -572,36 +578,45 @@ namespace getfem {
     
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
 	 ++it) {
-      for (size_type i = 1; i < it->second.n_iter; ++i)
+      for (size_type i = 1; i < it->second.n_iter; ++i) {
 	if (is_complex())
-	  gmm::copy(it->second.complex_value[i],
-		    it->second.complex_value[i-1]);
+	  gmm::copy(it->second.complex_value[i-1],
+		    it->second.complex_value[i]);
 	else
-	  gmm::copy(it->second.real_value[i],
-		    it->second.real_value[i-1]);
+	  gmm::copy(it->second.real_value[i-1],
+		    it->second.real_value[i]);
+      }
+      if (it->second.n_iter > 1) it->second.v_num_data = act_counter();	
     }
   }
 
+  bool model::is_var_newer_than_brick(const std::string &varname,
+				      size_type ib) const {
+    const brick_description &brick = bricks[ib];
+    var_description &vd = variables[varname];
+    return (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num);
+  }
+
   // Call the brick to compute the terms
-  void model::update_brick(size_type ib, assembly_version version) const {
+  void model::update_brick(size_type ib, build_version version) const {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
     bool tobecomputed = brick.terms_to_be_computed
       || !(brick.pbr->is_linear());
-    // bool dispatchcall = tobecomputed;
     
     // check variable list to test if a mesh_fem as changed. 
     for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.vlist[i]];
-      if (vd.v_num > brick.v_num) /* dispatchcall = */ tobecomputed = true;
-      // if (vd.v_num_data > brick.v_num) dispatchcall = true;
+      if (vd.v_num > brick.v_num) tobecomputed = true;
     }
     
     // check data list to test if a vector value of a data has changed. 
     for (size_type i = 0; i < brick.dlist.size() && !tobecomputed; ++i) {
       var_description &vd = variables[brick.dlist[i]];
-      if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num)
-	/* dispatchcall = */ tobecomputed = true;
+      if (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num) {
+	tobecomputed = true;
+	version = build_version(version | BUILD_ON_DATA_CHANGE);
+      }
     }
 
     if (tobecomputed) {
@@ -626,7 +641,8 @@ namespace getfem {
   
     
 
-  void model::linear_brick_add_to_rhs(size_type ib, size_type ind_data) const {
+  void model::linear_brick_add_to_rhs(size_type ib, size_type ind_data,
+				      size_type n_iter) const {
     const brick_description &brick = bricks[ib];
     if (brick.pbr->is_linear()) {
 
@@ -639,12 +655,12 @@ namespace getfem {
 
 	  if (cplx) 
 	    gmm::mult_add(brick.cmatlist[j],
-			  gmm::scaled(variables[term.var1].complex_value[0],
-				      std::complex<scalar_type>(-1)),
+			gmm::scaled(variables[term.var1].complex_value[n_iter],
+				    std::complex<scalar_type>(-1)),
 			  brick.cveclist[ind_data][j]);
 	  else
 	    gmm::mult_add(brick.rmatlist[j],
-			  gmm::scaled(variables[term.var1].real_value[0],
+			  gmm::scaled(variables[term.var1].real_value[n_iter],
 				      scalar_type(-1)),
 			  brick.rveclist[ind_data][j]);
 	  
@@ -652,12 +668,12 @@ namespace getfem {
 	  if (term.is_symmetric && term.var1.compare(term.var2)) {
 	    if (cplx) 
 	      gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-			gmm::scaled(variables[term.var2].complex_value[0],
+			gmm::scaled(variables[term.var2].complex_value[n_iter],
 				    std::complex<scalar_type>(-1)),
 			brick.cveclist_sym[ind_data][j]);
 	    else
 	      gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			gmm::scaled(variables[term.var2].real_value[0],
+			gmm::scaled(variables[term.var2].real_value[n_iter],
 				    scalar_type(-1)),
 			brick.rveclist_sym[ind_data][j]);
 	  }
@@ -667,7 +683,7 @@ namespace getfem {
   }
 
 
-  void model::assembly(assembly_version version) {
+  void model::assembly(build_version version) {
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
     if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
@@ -917,7 +933,7 @@ namespace getfem {
 
   struct generic_elliptic_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -925,7 +941,7 @@ namespace getfem {
 					model::real_veclist &,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Generic elliptic brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -948,6 +964,7 @@ namespace getfem {
 	if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
       }
 
+      gmm::clear(matl[0]);
       if (s == 1) {
 	if (mf_a) {
 	  if (Q > 1)
@@ -994,7 +1011,7 @@ namespace getfem {
 		    "Bad format generic elliptic brick coefficient");
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1002,7 +1019,7 @@ namespace getfem {
 					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Generic elliptic brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1027,6 +1044,7 @@ namespace getfem {
 	if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
       }
 
+      gmm::clear(matl[0]);
       if (s == 1) {
 	if (mf_a) {
 	  if (Q > 1)
@@ -1112,7 +1130,7 @@ namespace getfem {
 
   struct source_term_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -1120,7 +1138,7 @@ namespace getfem {
 					model::real_veclist &vecl,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       GMM_ASSERT1(vecl.size() == 1,
 		  "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1152,7 +1170,7 @@ namespace getfem {
 
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1160,7 +1178,7 @@ namespace getfem {
 					   model::complex_veclist &vecl,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(vecl.size() == 1,
 		  "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1220,7 +1238,7 @@ namespace getfem {
 
   struct normal_source_term_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -1228,7 +1246,7 @@ namespace getfem {
 					model::real_veclist &vecl,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       GMM_ASSERT1(vecl.size() == 1,
 		  "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1258,7 +1276,7 @@ namespace getfem {
 
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1266,7 +1284,7 @@ namespace getfem {
 					   model::complex_veclist &vecl,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(vecl.size() == 1,
 		  "Source term brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1325,7 +1343,7 @@ namespace getfem {
 
   struct Dirichlet_condition_brick : public virtual_brick {
     
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -1333,7 +1351,7 @@ namespace getfem {
 					model::real_veclist &vecl,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Dirichlet condition brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1347,6 +1365,8 @@ namespace getfem {
       const mesh_im &mim = *mims[0];
       const model_real_plain_vector *A = 0, *COEFF = 0;
       const mesh_fem *mf_data = 0;
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| (penalized && md.is_var_newer_than_brick(dl[0], ib));
 
       if (penalized) {
 	COEFF = &(md.real_variable(dl[0]));
@@ -1376,11 +1396,14 @@ namespace getfem {
 	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
       }
 
-      asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
-      if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+      if (recompute_matrix) {
+	gmm::clear(matl[0]);
+	asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+      }
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1388,7 +1411,7 @@ namespace getfem {
 					   model::complex_veclist &vecl,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Dirichlet condition brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1402,6 +1425,8 @@ namespace getfem {
       const mesh_im &mim = *mims[0];
       const model_complex_plain_vector *A = 0, *COEFF = 0;
       const mesh_fem *mf_data = 0;
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| (penalized && md.is_var_newer_than_brick(dl[0], ib));
 
       if (penalized) {
 	COEFF = &(md.complex_variable(dl[0]));
@@ -1428,8 +1453,11 @@ namespace getfem {
 	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
       }
 
-      asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
-      if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+      if (recompute_matrix) {
+	gmm::clear(matl[0]);
+	asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+      }
     }
 
     Dirichlet_condition_brick(bool penalized) {
@@ -1439,8 +1467,6 @@ namespace getfem {
 		true /* is symmetric */, penalized /* is coercive */,
 		true /* is real */, true /* is complex */);
     }
-
-
   };
 
   size_type add_Dirichlet_condition_with_multipliers
@@ -1530,7 +1556,7 @@ namespace getfem {
 
   struct Helmholtz_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -1538,7 +1564,7 @@ namespace getfem {
 					model::real_veclist &,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Helmholtz brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1560,6 +1586,7 @@ namespace getfem {
       if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
 
       if (s == 1) {
+	gmm::clear(matl[0]);
 	model_real_plain_vector A2(gmm::vect_size(*A));
 	for (size_type i=0; i < gmm::vect_size(*A); ++i) // Not valid for 
 	  A2[i] = gmm::sqr((*A)[i]); // non lagrangian fem ...
@@ -1571,7 +1598,7 @@ namespace getfem {
 	GMM_ASSERT1(false, "Bad format Helmholtz brick coefficient");
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1579,7 +1606,7 @@ namespace getfem {
 					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Helmholtz brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1601,6 +1628,7 @@ namespace getfem {
       if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
 
       if (s == 1) {
+	gmm::clear(matl[0]);
 	model_complex_plain_vector A2(gmm::vect_size(*A));
 	for (size_type i=0; i < gmm::vect_size(*A); ++i) // Not valid for 
 	  A2[i] = gmm::sqr((*A)[i]); // non lagrangian fem ...
@@ -1642,7 +1670,7 @@ namespace getfem {
 
   struct Fourier_Robin_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -1650,7 +1678,7 @@ namespace getfem {
 					model::real_veclist &,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Fourier-Robin brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1672,13 +1700,14 @@ namespace getfem {
       GMM_ASSERT1(s == Q*Q,
 		  "Bad format Fourier-Robin brick coefficient");
 
+      gmm::clear(matl[0]);
       if (mf_a)
 	asm_qu_term(matl[0], mim, mf_u, *mf_a, *A, rg);
       else
 	asm_homogeneous_qu_term(matl[0], mim, mf_u, *A, rg);
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1686,7 +1715,7 @@ namespace getfem {
 					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Fourier-Robin brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -1708,6 +1737,7 @@ namespace getfem {
       GMM_ASSERT1(s == Q*Q,
 		  "Bad format Fourier-Robin brick coefficient");
 
+      gmm::clear(matl[0]);
       if (mf_a)
 	asm_qu_term(matl[0], mim, mf_u, *mf_a, *A, rg);
       else
@@ -1751,14 +1781,14 @@ namespace getfem {
 
   struct constraint_brick : public have_private_data_brick {
     
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
 					model::real_veclist &,
-					size_type, nonlinear_version) const {
+					size_type, build_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Constraint brick has one and only one term");
       GMM_ASSERT1(mims.size() == 0,
@@ -1786,7 +1816,7 @@ namespace getfem {
       }
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1794,7 +1824,7 @@ namespace getfem {
 					   model::complex_veclist &vecl,
 					   model::complex_veclist &,
 					   size_type,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Constraint brick has one and only one term");
       GMM_ASSERT1(mims.size() == 0,
@@ -1909,14 +1939,14 @@ namespace getfem {
 
   struct explicit_matrix_brick : public have_private_data_brick {
     
-    virtual void asm_real_tangent_terms(const model &,
+    virtual void asm_real_tangent_terms(const model &, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
 					model::real_veclist &,
-					size_type, nonlinear_version) const {
+					size_type, build_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Explicit matrix has one and only one term");
       GMM_ASSERT1(mims.size() == 0, "Explicit matrix need no mesh_im");
@@ -1925,7 +1955,7 @@ namespace getfem {
       gmm::copy(rB, matl[0]);
     }
 
-    virtual void asm_complex_tangent_terms(const model &,
+    virtual void asm_complex_tangent_terms(const model &, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1933,7 +1963,7 @@ namespace getfem {
 					   model::complex_veclist &vecl,
 					   model::complex_veclist &,
 					   size_type,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Explicit matrix has one and only one term");
       GMM_ASSERT1(mims.size() == 0, "Explicit matrix need no mesh_im");
@@ -1970,14 +2000,14 @@ namespace getfem {
 
   struct explicit_rhs_brick : public have_private_data_brick {
     
-    virtual void asm_real_tangent_terms(const model &,
+    virtual void asm_real_tangent_terms(const model &, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
 					model::real_veclist &,
-					size_type, nonlinear_version) const {
+					size_type, build_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Explicit rhs has one and only one term");
       GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
@@ -1986,7 +2016,7 @@ namespace getfem {
       gmm::copy(rL, vecl[0]);
     }
 
-    virtual void asm_complex_tangent_terms(const model &,
+    virtual void asm_complex_tangent_terms(const model &, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -1994,7 +2024,7 @@ namespace getfem {
 					   model::complex_veclist &vecl,
 					   model::complex_veclist &,
 					   size_type,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
 		  "Explicit rhs has one and only one term");
       GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
@@ -2033,7 +2063,7 @@ namespace getfem {
 
   struct iso_lin_elasticity_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -2041,7 +2071,7 @@ namespace getfem {
 					model::real_veclist &vecl,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "isotropic linearized elasticity brick has one and only "
 		  "one term");
@@ -2052,36 +2082,44 @@ namespace getfem {
 		  "Wrong number of variables for isotropic linearized "
 		  "elasticity brick");
 
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-      const mesh &m = mf_u.linked_mesh();
-      size_type N = m.dim(), Q = mf_u.get_qdim();
-      GMM_ASSERT1(Q == N, "isotropic linearized elasticity brick is only "
-		  "for vector field of the same dimension as the mesh");
-      const mesh_im &mim = *mims[0];
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
-      const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dl[0]);
-      const model_real_plain_vector *lambda = &(md.real_variable(dl[0]));
-      const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
-      const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
-     
-      size_type sl = gmm::vect_size(*lambda);
-      if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
-      size_type sm = gmm::vect_size(*mu);
-      if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| md.is_var_newer_than_brick(dl[0], ib)
+	|| md.is_var_newer_than_brick(dl[1], ib);
 
-      GMM_ASSERT1(sl == 1 && sm == 1, "Bad format of isotropic linearized "
-		  "elasticity brick coefficients");
-      GMM_ASSERT1(mf_lambda == mf_mu,
-		  "The two coefficients should be described on the same "
-		  "finite element method.");
-      
-      if (mf_lambda)
-	asm_stiffness_matrix_for_linear_elasticity
-	  (matl[0], mim, mf_u, *mf_lambda, *lambda, *mu, rg);
-      else
-	asm_stiffness_matrix_for_homogeneous_linear_elasticity
-	  (matl[0], mim, mf_u, *lambda, *mu, rg);
+      if (recompute_matrix) {
+
+	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+	const mesh &m = mf_u.linked_mesh();
+	size_type N = m.dim(), Q = mf_u.get_qdim();
+	GMM_ASSERT1(Q == N, "isotropic linearized elasticity brick is only "
+		    "for vector field of the same dimension as the mesh");
+	const mesh_im &mim = *mims[0];
+	mesh_region rg(region);
+	m.intersect_with_mpi_region(rg);
+	const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dl[0]);
+	const model_real_plain_vector *lambda = &(md.real_variable(dl[0]));
+	const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
+	const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
+	
+	size_type sl = gmm::vect_size(*lambda);
+	if (mf_lambda) sl = sl * mf_lambda->get_qdim() / mf_lambda->nb_dof();
+	size_type sm = gmm::vect_size(*mu);
+	if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
+	
+	GMM_ASSERT1(sl == 1 && sm == 1, "Bad format of isotropic linearized "
+		    "elasticity brick coefficients");
+	GMM_ASSERT1(mf_lambda == mf_mu,
+		    "The two coefficients should be described on the same "
+		    "finite element method.");
+	
+	gmm::clear(matl[0]);
+	if (mf_lambda)
+	  asm_stiffness_matrix_for_linear_elasticity
+	    (matl[0], mim, mf_u, *mf_lambda, *lambda, *mu, rg);
+	else
+	  asm_stiffness_matrix_for_homogeneous_linear_elasticity
+	    (matl[0], mim, mf_u, *lambda, *mu, rg);
+      }
 
       if  (dl.size() == 3) { // Pre-constraints given by an "initial"
 	// displacement u0. Means that the computed displacement will be u - u0
@@ -2163,7 +2201,7 @@ namespace getfem {
 
   struct linear_incompressibility_brick : public virtual_brick {
     
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -2171,7 +2209,7 @@ namespace getfem {
 					model::real_veclist &,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       
       GMM_ASSERT1((matl.size() == 1 && dl.size() == 0)
 		  || (matl.size() == 2 && dl.size() == 1),
@@ -2200,9 +2238,11 @@ namespace getfem {
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
+      gmm::clear(matl[0]);
       asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
 
       if (penalized) {
+	gmm::clear(matl[1]);
 	if (mf_data) {
 	  asm_mass_matrix_param(matl[1], mim, mf_p, *mf_data, *A, rg);
 	  gmm::scale(matl[1], scalar_type(-1));
@@ -2252,7 +2292,7 @@ namespace getfem {
 
   struct mass_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md,
+    virtual void asm_real_tangent_terms(const model &md, size_type,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -2260,7 +2300,7 @@ namespace getfem {
 					model::real_veclist &,
 					model::real_veclist &,
 					size_type region,
-					nonlinear_version) const {
+					build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Mass brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -2285,6 +2325,7 @@ namespace getfem {
 	GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
       }
       
+      gmm::clear(matl[0]);
       if (dl.size() && mf_rho) {
 	asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
       } else {
@@ -2293,7 +2334,7 @@ namespace getfem {
       }
     }
 
-    virtual void asm_complex_tangent_terms(const model &md,
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -2301,7 +2342,7 @@ namespace getfem {
 					   model::complex_veclist &,
 					   model::complex_veclist &,
 					   size_type region,
-					   nonlinear_version) const {
+					   build_version) const {
       GMM_ASSERT1(matl.size() == 1,
 		  "Mass brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -2326,6 +2367,7 @@ namespace getfem {
 	GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
       }
       
+      gmm::clear(matl[0]);
       if (dl.size() && mf_rho) {
 	asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
       } else {
@@ -2352,8 +2394,145 @@ namespace getfem {
     if (dataname_rho.size())
       dl.push_back(dataname_rho);
     return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
-			model::mimlist(1, &mim), region, true);
+			model::mimlist(1, &mim), region);
   }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Generic first order time derivative brick.
+  // Represents M(U^{n+1} - U^n) / dt
+  //
+  // ----------------------------------------------------------------------
+
+  struct basic_d_on_dt_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md, size_type,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					model::real_veclist &,
+					size_type region,
+					build_version version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Basic d/dt brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Basic d/dt brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 1 && dl.size() <= 2,
+		  "Wrong number of variables for basic d/dt brick");
+      
+      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+	const mesh &m = mf_u.linked_mesh();
+	const mesh_im &mim = *mims[0];
+	mesh_region rg(region);
+	m.intersect_with_mpi_region(rg);
+      
+	const model_real_plain_vector &dt = md.real_variable(dl[1]);
+	GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+	
+	const mesh_fem *mf_rho = 0;
+	const model_real_plain_vector *rho = 0;
+	
+	if (dl.size() > 2) {
+	  mf_rho = md.pmesh_fem_of_variable(dl[2]);
+	  rho = &(md.real_variable(dl[2]));
+	  size_type sl = gmm::vect_size(*rho);
+	  if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+	  GMM_ASSERT1(sl == 1, "Bad format for density");
+	}
+	
+	if (dl.size() > 2 && mf_rho) {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
+	  gmm::scale(matl[0], scalar_type(1) / dt[0]);
+	} else {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix(matl[0], mim, mf_u, rg);
+	  if (dl.size() > 2) gmm::scale(matl[0], (*rho)[0] / dt[0]);
+	  else gmm::scale(matl[0], scalar_type(1) / dt[0]);
+	}
+      }
+      gmm::mult(matl[0], md.real_variable(dl[0], 1), vecl[0]);
+    }
+    
+    virtual void asm_complex_tangent_terms(const model &md, size_type,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
+					   size_type region,
+					   build_version version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Basic d/dt brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Basic d/dt brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 2 && dl.size() <= 3,
+		  "Wrong number of variables for basic d/dt brick");
+      
+      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+	const mesh &m = mf_u.linked_mesh();
+	const mesh_im &mim = *mims[0];
+
+	mesh_region rg(region);
+	m.intersect_with_mpi_region(rg);
+	
+	const model_complex_plain_vector &dt = md.complex_variable(dl[1]);
+	GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+	
+	const mesh_fem *mf_rho = 0;
+	const model_complex_plain_vector *rho = 0;
+	
+	if (dl.size() > 2) {
+	  mf_rho = md.pmesh_fem_of_variable(dl[2]);
+	  rho = &(md.complex_variable(dl[2]));
+	  size_type sl = gmm::vect_size(*rho);
+	  if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+	  GMM_ASSERT1(sl == 1, "Bad format for density");
+	}
+	
+	if (dl.size() > 2 && mf_rho) {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
+	  gmm::scale(matl[0], scalar_type(1) / dt[0]);
+	} else {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix(matl[0], mim, mf_u, rg);
+	  if (dl.size() > 2) gmm::scale(matl[0], (*rho)[0] / dt[0]);
+	  else gmm::scale(matl[0], scalar_type(1) / dt[0]);
+	}
+      }
+      gmm::mult(matl[0], md.complex_variable(dl[0], 1), vecl[0]);
+    }
+
+    basic_d_on_dt_brick(void) {
+      set_flags("Basic d/dt brick", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+  };
+
+  size_type add_basic_d_on_dt_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname_dt, const std::string &dataname_rho,
+   size_type region) {
+    pbrick pbr = new basic_d_on_dt_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist dl(1, varname);
+    dl.push_back(dataname_dt);
+    if (dataname_rho.size())
+      dl.push_back(dataname_rho);
+    return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
+			model::mimlist(1, &mim), region);
+  }
+
 
 
   // ----------------------------------------------------------------------
@@ -2372,133 +2551,84 @@ namespace getfem {
 
   class theta_method_dispatcher : public virtual_dispatcher {
 
-    scalar_type dt, theta;
+    mutable scalar_type theta;
 
   public :
 
-    typedef model::assembly_version nonlinear_version;
+    typedef model::build_version build_version;
 
-    void next_real_iter
-    (const model &md, size_type ib, const model::varnamelist &/* vl */,
-     const model::varnamelist &/* dl */,
-     model::real_matlist &/* matl */,
-     std::vector<model::real_veclist> &vectl,
-     std::vector<model::real_veclist> &vectl_sym,
-     bool first_iter) const {
 
-      if (md.is_brick_massterm(ib)) {
-	md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1)/dt;
-	md.rhs_coeffs_of_brick(ib)[1] = scalar_type(-1)/dt;
-      } else {
-	md.rhs_coeffs_of_brick(ib)[0] = theta;
-	md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta); 
-      }
+    template <typename MATLIST, typename VECTLIST>
+    inline void next_iter(const model &md, size_type ib,
+			  const model::varnamelist &/* vl */,
+			  const model::varnamelist &/* dl */,
+			  MATLIST &/* matl */,
+			  VECTLIST &vectl, VECTLIST &vectl_sym,
+			  bool first_iter) const {
 
-//       cout << "brique " << ib << endl;
-//       cout << "coeffs = " << md.rhs_coeffs_of_brick(ib) << endl;
-
+      md.rhs_coeffs_of_brick(ib)[0] = theta;
+      md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta);
+      
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
-
-
+      
       transfert(vectl[0], vectl[1]);
       transfert(vectl_sym[0], vectl_sym[1]);
-      md.linear_brick_add_to_rhs(ib, 1);
+      md.linear_brick_add_to_rhs(ib, 1, 0);
+    }
+
+    void next_real_iter
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl, model::real_matlist &matl,
+     std::vector<model::real_veclist> &vectl,
+     std::vector<model::real_veclist> &vectl_sym, bool first_iter) const {
+      theta = md.real_variable(param_names[0])[0];
+      next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
     }
 
     void next_complex_iter
-    (const model &md, size_type ib, const model::varnamelist &/* vl */,
-     const model::varnamelist &/* dl */,
-     model::complex_matlist &/* matl */,
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl,
+     model::complex_matlist &matl,
      std::vector<model::complex_veclist> &vectl,
      std::vector<model::complex_veclist> &vectl_sym,
      bool first_iter) const {
-
-      if (md.is_brick_massterm(ib)) {
-	md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1)/dt;
-	md.rhs_coeffs_of_brick(ib)[1] = scalar_type(-1)/dt;
-      } else {
-	md.rhs_coeffs_of_brick(ib)[0] = theta;
-	md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta); 
-      }
-
-      if (first_iter) md.update_brick(ib, model::BUILD_RHS);
-      transfert(vectl[0], vectl[1]);
-      transfert(vectl_sym[0], vectl_sym[1]);
-      md.linear_brick_add_to_rhs(ib, 1);
+      theta = std::real(md.complex_variable(param_names[0])[0]);
+      next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
     }
-
-
 
     void asm_real_tangent_terms
     (const model &md, size_type ib, model::real_matlist &/* matl */,
      std::vector<model::real_veclist> &/* vectl */,
      std::vector<model::real_veclist> &/* vectl_sym */,
-     nonlinear_version version) const {
-      
-      md.brick_call(ib, version, 0);
-
-
-
-
-      // Cas linéaire
-
-      // La brique a été appelée si nécessaire par udpdate_brick.
-      // rendre les coefficients et calculer le second membre supplémentaire
-      // ou bien versionné aussi les second membres ... pour éviter de
-      // les recalculer ... ce qui implique de faire un calcul des residu
-      // au premier pas de temps sur les différentes itérations initiales ...
-      // C'est surement ce qu'il faut faire, mais définir un cadre
-      // pour le gérer
-      // Le time dispatcher doit déclarer sur combien de pas de temps il 
-      // travaille, si il faut évaluer sur des pas de temps (et donc
-      // l'évaluation peut être faite automatiquement) ou si il faut faire
-      // des combinaisons linéaires de variables
-      // (pour les briques non-linéaires) (pour les briques linéaires on peut
-      // aussi toujours passer par la première méthode).
-      // est-ce que le time dispatcher rend juste la combinaison linéaire ou
-      // est-ce qu'on le laisse faire sa sauce ?
-
-      // Si une donnée versionne existe, il faut faire calculer
-      // la brique dessus ...
-
-      // ATTENTION : il faut gerer `version` et faire attention que la
-      // mise à jour dans update brick du seul second membre / matrice
-      // le non appel sur l'autre version au prochain appel.
-
-      // verifier que tout fonctionne pour les briques linéaires.
-
-      // rendre les coefficients (seulement deux coefficients).
-
-
-      // valeur des multiplicateurs initiaux pour la condition de Dirichlet ?
-      //   bien documenter : en général, on ne dispatche pas la condition de 
-      //   Dirichlet, l'incompressibilité ...
-
-
-    }
+     build_version version) const
+    { md.brick_call(ib, version, 0); }
 
     virtual void asm_complex_tangent_terms
     (const model &md, size_type ib, model::complex_matlist &/* matl */,
      std::vector<model::complex_veclist> &/* vectl */,
      std::vector<model::complex_veclist> &/* vectl_sym */,
-     nonlinear_version version) const {
+     build_version version) const
+    { md.brick_call(ib, version, 0); }
 
-      md.brick_call(ib, version, 0);
+    theta_method_dispatcher(const std::string &THETA)
+      : virtual_dispatcher(2) {
+      param_names.push_back(THETA);
     }
-
-    theta_method_dispatcher(scalar_type dt_, scalar_type theta_)
-      : virtual_dispatcher(2), dt(dt_), theta(theta_) { }
     
   };
 
   void add_theta_method_dispatcher
-  (model &md, dal::bit_vector ibricks, scalar_type dt, scalar_type theta) {
-    pdispatcher pdispatch = new theta_method_dispatcher(dt, theta);
-    
+  (model &md, dal::bit_vector ibricks, const std::string &THETA) {
+    pdispatcher pdispatch = new theta_method_dispatcher(THETA);
     for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
       md.add_time_dispatcher(i, pdispatch);
   }
 
+  // ----------------------------------------------------------------------
+  //
+  // Newmark dispatcher ... to be done
+  //
+  // ----------------------------------------------------------------------
 
   // ----------------------------------------------------------------------
   //
@@ -2506,12 +2636,6 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-
-  // ----------------------------------------------------------------------
-  //
-  // divided  differences ... to be done
-  //
-  // ----------------------------------------------------------------------
 
 
 

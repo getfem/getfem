@@ -210,7 +210,10 @@ namespace getfem {
 
     typedef std::vector<term_description> termlist;
 
-    enum assembly_version { BUILD_RHS = 1, BUILD_MATRIX = 2, BUILD_ALL = 3 };
+    enum build_version { BUILD_RHS = 1,
+			 BUILD_MATRIX = 2,
+			 BUILD_ALL = 3,
+			 BUILD_ON_DATA_CHANGE = 4 };
 
   private :
 
@@ -228,7 +231,6 @@ namespace getfem {
       termlist tlist;           // List of terms build by the brick
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
-      bool ismassterm;
       mutable model_real_plain_vector coeffs;
       mutable real_matlist rmatlist; // Matrices the brick have to fill in
                                      // (real version).
@@ -243,10 +245,10 @@ namespace getfem {
       
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
-			const mimlist &mms, size_type reg, bool ismassterm_)
+			const mimlist &mms, size_type reg)
 	: terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
 	  vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
-	  ismassterm(ismassterm_), rveclist(1), rveclist_sym(1), cveclist(1),
+	  rveclist(1), rveclist_sym(1), cveclist(1),
 	  cveclist_sym(1)  { }
     };
     
@@ -257,7 +259,7 @@ namespace getfem {
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
 			     bool assert = true) const;
-    void brick_init(size_type ib, assembly_version version,
+    void brick_init(size_type ib, build_version version,
 		      size_type rhs_ind = 0) const;
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
@@ -265,13 +267,15 @@ namespace getfem {
   public :
 
     // call the brick if necessary 
-    void update_brick(size_type ib, assembly_version version) const;
-    void linear_brick_add_to_rhs(size_type ib, size_type ind_data) const;
-    bool is_brick_massterm(size_type ib) const {return bricks[ib].ismassterm; }
-    void brick_call(size_type ib, assembly_version version,
+    void update_brick(size_type ib, build_version version) const;
+    void linear_brick_add_to_rhs(size_type ib, size_type ind_data,
+				 size_type n_iter) const;
+    void brick_call(size_type ib, build_version version,
 		    size_type rhs_ind = 0) const;
     model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
     { return bricks[ib].coeffs; }
+    bool is_var_newer_than_brick(const std::string &varname,
+				 size_type ib) const;
 
     void update_from_context(void) const {  act_size_to_be_done = true; }
     
@@ -400,6 +404,17 @@ namespace getfem {
 	gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
 
+    /** Add a scalar data (i.e. of size 1) to the model initialized with e. */
+    template <typename T>
+    void add_initialized_scalar_data(const std::string &name, T e) {
+      this->add_fixed_size_data(name, 1, 1);
+      if (this->is_complex()) // to be templated .. see later
+	this->set_complex_variable(name)[0] = e;
+      else
+	this->set_real_variable(name)[0] = gmm::real(e);
+    }
+
+
     /** Add a variable being the dofs of a finite element method to the model.
 	niter is the number of version of the variable stored, for time
 	integration schemes. */
@@ -496,7 +511,7 @@ namespace getfem {
     size_type add_brick(pbrick pbr, const varnamelist &varnames,
 			const varnamelist &datanames,
 			const termlist &terms, const mimlist &mims, 
-			size_type region, bool ismassterm = false);
+			size_type region);
 
     /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
@@ -521,7 +536,7 @@ namespace getfem {
 
     /** Assembly of the tangent system taking into account the terms
 	from all bricks. */
-    void assembly(assembly_version version);
+    void assembly(build_version version);
 
     void clear(void) {
       variables.clear();
@@ -552,7 +567,14 @@ namespace getfem {
 
   protected :
 
-    void transfert(model::real_veclist &v1, model::real_veclist &v2) const {
+    void clear(model::real_veclist &v) const
+    { for (size_type i = 0; i < v.size(); ++i) gmm::clear(v[i]); }
+
+    void clear(model::complex_veclist &v) const
+    { for (size_type i = 0; i < v.size(); ++i) gmm::clear(v[i]); }
+
+    void transfert(model::real_veclist &v1,
+		   model::real_veclist &v2) const {
       for (size_type i = 0; i < v1.size(); ++i)
 	gmm::copy(v1[i], v2[i]);
     }
@@ -564,12 +586,13 @@ namespace getfem {
     }
 
     size_type nbrhs_;
+    std::vector<std::string> param_names;
 
   public :
 
     size_type nbrhs(void) const { return nbrhs_; }
 
-    typedef model::assembly_version nonlinear_version;
+    typedef model::build_version build_version;
 
     virtual void next_real_iter
     (const model &, size_type, const model::varnamelist &,
@@ -595,7 +618,7 @@ namespace getfem {
     (const model &, size_type,
      model::real_matlist &, std::vector<model::real_veclist> &,
      std::vector<model::real_veclist> &,
-     nonlinear_version) const {
+     build_version) const {
       GMM_ASSERT1(false, "Time dispatcher with not defined real tangent "
 		  "terms !");
     }
@@ -604,7 +627,7 @@ namespace getfem {
     (const model &, size_type,
      model::complex_matlist &, std::vector<model::complex_veclist> &,
      std::vector<model::complex_veclist> &,
-     nonlinear_version) const {
+     build_version) const {
       GMM_ASSERT1(false, "Time dispatcher with not defined complex tangent "
 		  "terms !");
     }
@@ -626,7 +649,7 @@ namespace getfem {
       $\theta K U^{n+1} + (1-\theta) K U^{n}$.
   */
   void add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
-				   scalar_type dt, scalar_type theta);
+				   const std::string &THETA);
   
 
   //=========================================================================
@@ -655,7 +678,7 @@ namespace getfem {
    
   public :
 
-    typedef model::assembly_version nonlinear_version;
+    typedef model::build_version build_version;
     
     virtual_brick(void) { isinit = false; }
     void set_flags(const std::string &bname, bool islin, bool issym,
@@ -673,24 +696,24 @@ namespace getfem {
     bool is_complex(void)   const { BRICK_NOT_INIT; return iscomplex;   }
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
 
-    virtual void asm_real_tangent_terms(const model &,
+    virtual void asm_real_tangent_terms(const model &, size_type,
 					const model::varnamelist &,
 					const model::varnamelist &,
 					const model::mimlist &,
 					model::real_matlist &,
 					model::real_veclist &,
 					model::real_veclist &,
-					size_type, nonlinear_version) const
+					size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
 
-    virtual void asm_complex_tangent_terms(const model &,
+    virtual void asm_complex_tangent_terms(const model &, size_type,
 					   const model::varnamelist &,
 					   const model::varnamelist &,
 					   const model::mimlist &,
 					   model::complex_matlist &,
 					   model::complex_veclist &,
 					   model::complex_veclist &,
-					   size_type, nonlinear_version) const
+					   size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
     
   };
@@ -1057,6 +1080,18 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_rho = std::string(),
    size_type region = size_type(-1));
+
+  /** Basic d/dt brick ( @f$ \int \rho ((u^{n+1}-u^n)/dt).v @f$ ).
+      Add the standard discretization of a first order time derivative. The
+      parameter $rho$ is the density which could be omitted (the defaul value
+      is 1). This brick should be used in addition to a time dispatcher for the
+      other terms. 
+  */
+  size_type add_basic_d_on_dt_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname_dt,
+   const std::string &dataname_rho = std::string(),
+   size_type region = size_type(-1)); 
 
 
 }  /* end of namespace getfem.                                             */

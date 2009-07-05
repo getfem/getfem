@@ -8,7 +8,7 @@ INCLINE = 0;                	     % Incline of the mesh.
 FT = 0.1;                   	     % parameter for the exact solution.
 N = 2;                      	     % domain in dimension N
 QUAD = 0;                   	     % use quadrilaterons or not
-NX = 30;                   	     % space step.
+NX = 60;                   	     % space step.
 MESH_NOISED = 0;            	     % "shake" the mesh or not
 DIRICHLET_VERSION = 0;      	     % 0 = With Lagrange multipliers
 			    	     % 1 = penalization.

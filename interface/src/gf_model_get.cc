@@ -142,7 +142,7 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     your problem with you own solver. @*/
     std::string option = "build all";
     if (in.remaining()) option = in.pop().to_string();
-    getfem::model::assembly_version version = getfem::model::BUILD_ALL;
+    getfem::model::build_version version = getfem::model::BUILD_ALL;
     if (cmd_strmatch(option, "build all"))
       version = getfem::model::BUILD_ALL;
     else if (cmd_strmatch(option, "build rhs"))

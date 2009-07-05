@@ -227,8 +227,8 @@ int main(int argc, char *argv[]) {
       exp.exporting(p.mf_u); 
       exp.write_point_data(p.mf_u, U, "stokes_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
+	"mayavi2 -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	"WarpVector -m Surface -m Outline\n";
     }
   }
   GMM_STANDARD_CATCH_ERROR;

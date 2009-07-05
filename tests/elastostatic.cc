@@ -396,16 +396,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
   model.add_fem_variable("u", mf_u);
 
   // Linearized elasticity brick.
-  model.add_initialized_fixed_size_data
-    ("lambda", plain_vector(1, mixed_pressure ? 0.0 : lambda));
-  model.add_initialized_fixed_size_data("mu", plain_vector(1, mu));
+  model.add_initialized_scalar_data("lambda", mixed_pressure ? 0.0 : lambda);
+  model.add_initialized_scalar_data("mu", mu);
   getfem::add_isotropic_linearized_elasticity_brick
     (model, mim, "u", "lambda", "mu");
 
   // Linearized incompressibility condition brick.
   if (mixed_pressure) {
-    model.add_initialized_fixed_size_data
-      ("incomp_coeff", plain_vector(1, 1.0/lambda));
+    model.add_initialized_scalar_data("incomp_coeff", 1.0/lambda);
     model.add_fem_variable("p", mf_p); // Adding the pressure as a variable
     add_linear_incompressibility
       (model, mim, "u", "p", size_type(-1), "incomp_coeff");

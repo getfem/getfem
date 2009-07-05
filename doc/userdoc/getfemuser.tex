@@ -2029,7 +2029,12 @@ The main usefull methods on a \cpp{model} object are
 \cpp{m.is\_complex()} & A boolean which says if the model deals with real or complex unknowns and data. \\ \hline
 \cpp{add\_fixed\_size\_variable(name, size, niter=1)} & Add a variable of fixed size. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
 \cpp{add\_fixed\_size\_data(name, size, niter=1)} & Add a data of fixed size. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
-\cpp{add\_initialized\_fixed\_size\_data(name, V, niter=1)} & Add a data of fixed size initialized with the given vector \cpp{V}. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
+\cpp{add\_initialized\_fixed\_size\_data(name, V)} & Add a data of fixed size initialized with the given vector \cpp{V}. \cpp{name} is a string which designate the data. \\ \hline
+\cpp{add\_initialized\_scalar\_data(name, e)} & Add a data of size 1 initialized with the given scalar value \cpp{e}. \cpp{name} is a string which designate the data. \\ \hline
+
+
+add_initialized_fixed_size_data(const std::string &name, T e)
+
 \cpp{add\_fem\_variable(name, mf, niter=1)} & Add a variable being the dofs of a finite element method \cpp{mf}. \cpp{name} is a string which designate the variable. \cpp{niter} is the number of copy of the variable (used for time integration schemes). \\ \hline
 \cpp{add\_fem\_data(name, mf, niter=1)} & Add a data being the dofs of a finite element method \cpp{mf}. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
 \cpp{add\_initialized\_fem\_data(name, mf, V, niter=1)} & Add a data being the dofs of a finite element method \cpp{mf} initialized with the given vector \cpp{V}. \cpp{name} is a string which designate the data. \cpp{niter} is the number of copy of the data (used for time integration schemes). \\ \hline
@@ -2065,14 +2070,14 @@ An example of a brick corresponding to the laplacian term is the following (othe
 \begin{cppcode}
   struct my_Laplacian_brick : public getfem::virtual_brick \{
 
-    void asm_real_tangent_terms(const getfem::model &md,
+    void asm_real_tangent_terms(const getfem::model &md, size_type ib,
                                 const getfem::model::varnamelist &varl,
                                 const getfem::model::varnamelist &datal,
                                 const getfem::model::mimlist &mims,
                                 getfem::model::real_matlist &matl,
                                 getfem::model::real_veclist &vecl,
                                 getfem::model::real_veclist &vecl_sym,
-                                size_type region, nonlinear_version nl) const \{
+                                size_type region, build_version nl) const \{
       GMM_ASSERT1(matl.size() == 1,
 		  "My Laplacian brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -2105,7 +2110,7 @@ The constructor of a brick should call the method \cpp{set_flags}. The first par
 \item if the terms have a complex version or not. If yes, the method \cpp{asm_complex_tangent_terms} should be redefined.
 \end{itemize}
 
-The method \cpp{asm_real_tangent_terms} will be called by the model object for the assembly of the tangent system. The model object gives the whole framework to the brick to build its terms. The parameter \cpp{md} of the \cpp{asm_real_tangent_terms} method is the model that called the brick. The parameter \cpp{varl} is an array of variable/data names defined in this model and needed in the brick. \cpp{mims} is an array of \cpp{mesh_im} pointers. It corresponds to the integration methods needed to assemble the terms. \cpp{matl} is an array of matrices to be computed. \cpp{vectl} is an array of vectors to be computed (rhs or residual vectors).  \cpp{vectl_sym} is an array of vectors to be computed only for symmetric terms and corresponding to the rhs of the second variable. A brick can have an arbitrary number of terms. For each term, at least the corresponding matrix or the corresponding vector as to be filled (or both the two%, but only in the nonlinear case, see the description of the terms below, next section
+The method \cpp{asm_real_tangent_terms} will be called by the model object for the assembly of the tangent system. The model object gives the whole framework to the brick to build its terms. The parameter \cpp{md} of the \cpp{asm_real_tangent_terms} method is the model that called the brick, \cpp{ib} being the brick number in the model. The parameter \cpp{varl} is an array of variable/data names defined in this model and needed in the brick. \cpp{mims} is an array of \cpp{mesh_im} pointers. It corresponds to the integration methods needed to assemble the terms. \cpp{matl} is an array of matrices to be computed. \cpp{vectl} is an array of vectors to be computed (rhs or residual vectors).  \cpp{vectl_sym} is an array of vectors to be computed only for symmetric terms and corresponding to the rhs of the second variable. A brick can have an arbitrary number of terms. For each term, at least the corresponding matrix or the corresponding vector as to be filled (or both the two%, but only in the nonlinear case, see the description of the terms below, next section
 ). \cpp{region} is a mesh region number indicated that the terms have to be assembled on a certain region. \cpp{nl} is for nonlinear bricks only. It says if the tangent matrix or the residual or both the two are to be computed (for linear bricks, all is to be computed at each call).
 
 For the very simple Laplacian brick defined above, only one variable is used and no data and there is only one term. The lines
@@ -2155,14 +2160,14 @@ The brick can be defined as follows:
 \begin{cppcode}
   struct my_Dirichlet_brick : public getfem::virtual_brick \{
   
-    void asm_real_tangent_terms(const getfem::model &md,
+    void asm_real_tangent_terms(const getfem::model &md, size_type ib,
                                 const getfem::model::varnamelist &varl,
                                 const getfem::model::varnamelist &datal,
                                 const getfem::model::mimlist &mims,
                                 getfem::model::real_matlist &matl,
                                 getfem::model::real_veclist &vecl,
                                 getfem::model::real_veclist &vecl_sym,
-                                size_type region, nonlinear_version nl) const \{
+                                size_type region, build_version nl) const \{
       GMM_ASSERT1(matl.size() == 1,
 		  "My Dirichlet brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
@@ -2676,7 +2681,7 @@ The function which adds this brick to a model is
 \end{cppcode}
 where \cpp{dataname_rhos} is an optional data of the model representing the density $\rho$. If it is omitted, the density is assumed to be equal to one.
 
-See the section on time integration scheme to see how to use this brick to build an approximation of a transient problem.
+Note that for time integrations scheme, there exist specific bricks for the discretisation of time derivatives.
 
 
 

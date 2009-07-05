@@ -189,10 +189,10 @@ bool heat_equation_problem::solve(void) {
   getfem::model model;
 
   // Main unknown of the problem
-  model.add_fem_variable("u", mf_u);
+  model.add_fem_variable("u", mf_u, 2);
 
   // Laplacian term on u.
-  model.add_initialized_fixed_size_data("c", plain_vector(1, sol_c));
+  model.add_initialized_scalar_data("c", sol_c);
   transient_bricks.add(getfem::add_generic_elliptic_brick(model, mim,
 							  "u", "c"));
 
@@ -222,32 +222,32 @@ bool heat_equation_problem::solve(void) {
     getfem::add_Dirichlet_condition_with_penalization
       (model, mim, "u", dirichlet_coefficient,
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
-  
+
   // transient part.
-  transient_bricks.add(getfem::add_mass_brick(model, mim, "u"));
-  getfem::add_theta_method_dispatcher(model, transient_bricks, dt, theta);
+  model.add_initialized_scalar_data("dt", dt);
+  getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
+  model.add_initialized_scalar_data("theta", theta);
+  getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
  
   gmm::iteration iter(residual, 0, 40000);
-
 
   model.first_iter();
 
   // Null initial value for the temperature. Can be modified.
   gmm::resize(U, mf_u.nb_dof());
   gmm::clear(U);
-  gmm::copy(U, model.set_real_variable("u"));
+  gmm::copy(U, model.set_real_variable("u", 1));
 
   for (scalar_type t = 0; t < T; t += dt) {
     
-    iter.init();
     cout << "solving for t = " << t << endl;
+    iter.init();
     getfem::standard_solve(model, iter);
     gmm::copy(model.real_variable("u"), U);
     if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
       char s[100]; sprintf(s, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
     }
-
     model.next_iter();
   }
 
