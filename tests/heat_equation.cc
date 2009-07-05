@@ -55,15 +55,22 @@ typedef std::vector<scalar_type> plain_vector;
  */
 
 base_small_vector sol_K; /* a coefficient */
-scalar_type sol_c;
+scalar_type sol_c, sol_t;
 /* exact solution */
-scalar_type sol_u(const base_node &x) { return sin(gmm::vect_sp(sol_K, x)); }
+scalar_type sol_u(const base_node &x) {
+  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
+  return (1. - exp(-sol_c*sol_t*k2))*sin(gmm::vect_sp(sol_K, x));
+}
 /* righ hand side */
-scalar_type sol_f(const base_node &x)
-{ return sol_c * gmm::vect_sp(sol_K, sol_K) * sin(gmm::vect_sp(sol_K, x)); }
+scalar_type sol_f(const base_node &x) {
+  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
+  return sol_c * k2 * sin(gmm::vect_sp(sol_K, x));
+}
 /* gradient of the exact solution */
-base_small_vector sol_grad(const base_node &x)
-{ return sol_c * sol_K * cos(gmm::vect_sp(sol_K, x)); }
+base_small_vector sol_grad(const base_node &x) {
+  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
+  return (1. - exp(-sol_c*sol_t*k2))*sol_c*sol_K*cos(gmm::vect_sp(sol_K, x));
+}
 
 /*
   structure for the Heat_Equation problem
@@ -144,6 +151,7 @@ void heat_equation_problem::init(void) {
   sol_K.resize(N);
   for (size_type j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
+  sol_t = 0.;
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -239,8 +247,17 @@ bool heat_equation_problem::solve(void) {
   gmm::copy(U, model.set_real_variable("u", 1));
 
   for (scalar_type t = 0; t < T; t += dt) {
+    sol_t = t+dt;
     
-    cout << "solving for t = " << t << endl;
+    gmm::resize(F, mf_rhs.nb_dof()*N);
+    getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
+    gmm::copy(F, model.set_real_variable("NeumannData"));
+
+    gmm::resize(F, mf_rhs.nb_dof());
+    getfem::interpolation_function(mf_rhs, F, sol_u);
+    gmm::copy(F, model.set_real_variable("DirichletData"));
+
+    cout << "solving for t = " << sol_t << endl;
     iter.init();
     getfem::standard_solve(model, iter);
     gmm::copy(model.real_variable("u"), U);
@@ -250,8 +267,6 @@ bool heat_equation_problem::solve(void) {
     }
     model.next_iter();
   }
-
-
 
   return (iter.converged());
 }

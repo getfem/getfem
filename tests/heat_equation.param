@@ -5,7 +5,6 @@
 
 LX = 1.0; LY = LX; LZ = LX; 	     % sizes of the domain.
 INCLINE = 0;                	     % Incline of the mesh.
-FT = 0.1;                   	     % parameter for the exact solution.
 N = 2;                      	     % domain in dimension N
 QUAD = 0;                   	     % use quadrilaterons or not
 NX = 60;                   	     % space step.
@@ -14,15 +13,15 @@ DIRICHLET_VERSION = 0;      	     % 0 = With Lagrange multipliers
 			    	     % 1 = penalization.
 DIRICHLET_COEFFICIENT = 1E10;	     % Penalization coefficient.
 
-T = 1;                               % Final time
-DT = 0.01;                           % Time step
-THETA = 0.5;                         % Theta method parameter
-
+FT = 10.0;                   	     % parameter for the exact solution.
 C = 0.1;			     % Diffusion coefficient
+T = 1/(C*FT*FT*N*2);                 % Final time
+
+DT = T/50;                           % Time step
+THETA = 0.5;                         % Theta method parameter
 
 
 if (N == 1)
-  FT = 5.0;
   MESH_TYPE = 'GT_PK(1,1)';          % segments
   FEM_TYPE = 'FEM_PK(1,2)';          % P1 for segments
 %  FEM_TYPE = 'FEM_HERMITE(1)'; DATA_FEM_TYPE = 'FEM_PK(1,3)';
@@ -30,7 +29,6 @@ if (N == 1)
 end
 
 if (N == 2 && ~QUAD)
-  FT = 10.0;
   MESH_TYPE = 'GT_PK(2,1)';          % triangles
   FEM_TYPE = 'FEM_PK(2,1)';          % P1 for triangles
   %FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE'; DATA_FEM_TYPE = 'FEM_PK(2,3)';
@@ -42,7 +40,6 @@ if (N == 2 && ~QUAD)
 end
 
 if (N == 2 && QUAD)
-  FT = 1.0;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(2,1)';        % quadrilaterons
   else
@@ -53,7 +50,6 @@ if (N == 2 && QUAD)
 end
 
 if (N == 3 && ~QUAD)
-  FT = 1.0;
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
   FEM_TYPE = 'FEM_PK(3,2)';          % P1 for tetrahedrons
   INTEGRATION = 'IM_TETRAHEDRON(2)'; % quadrature rule for polynomials up
@@ -61,7 +57,6 @@ if (N == 3 && ~QUAD)
 end
 
 if (N == 3 && QUAD)
-  FT = 1.0;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(3,1)';        % hexahedrons
   else

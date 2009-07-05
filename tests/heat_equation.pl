@@ -10,9 +10,7 @@ LX = 1.0;		          % size in X.
 LY = 1.0;	                  % size in Y.
 LZ = 1.0;	                  % size in Z.
 INCLINE = 0;                      % Incline of the mesh.
-FT = 0.1;                         % parameter for the exact solution.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-NX = 50;            	          % space step.
 MESH_NOISED = 1;                  % Set to one if you want to "shake" the mesh
 FEM_TYPE = 'FEM_PK(2,1)';         % P1 for triangles
 INTEGRATION = 'IM_TRIANGLE(6)';   % quadrature rule for polynomials up
@@ -22,11 +20,13 @@ ROOTFILENAME = 'laplacian';       % Root of data files.
 DIRICHLET_VERSION = 1;      	  % 0 = With Lagrange multipliers
 			    	  % 1 = penalization.
 DIRICHLET_COEFFICIENT = 1E10;	  % Penalization coefficient.
-T = 2.0;
-DT = 0.1;
-THETA = 0.5;
+FT = 2;                           % parameter for the exact solution.
 C = 1.5;
 EXPORT_SOLUTION = 0;
+T = 1/(C*FT*FT*2*2);              % Final time
+DT = T/20;
+THETA = 0.5;
+NX = 20;            	          % space step.
 
 ;
 close(TMPF);
@@ -46,7 +46,7 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
   #    print $_;
       ($a, $b) = split('=', $_);
       # print "La norme en question :", $b;
-      if ($b > 0.0004) {
+      if ($b > 0.0006) {
 	print "\nError too large: $b\n";
 	print "./heat_equation $tmp $def 2>&1 failed\n";
 	$er = 1; 
