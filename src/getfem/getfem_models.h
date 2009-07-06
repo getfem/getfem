@@ -650,7 +650,16 @@ namespace getfem {
   */
   void add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
 				   const std::string &THETA);
-  
+
+  /** Function which udpate the velocity $v^{n+1}$ after the computation
+      of the displacement $u^{n+1}$ and before the next iteration. Specific
+      for theta-method and when the velocity is included in the variables
+      of the model.
+  */
+  void velocity_update_for_order_two_theta_method
+  (model &md, const std::string &U, const std::string &V,
+   const std::string &pdt, const std::string &ptheta);
+
 
   //=========================================================================
   //
@@ -1091,7 +1100,22 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_dt,
    const std::string &dataname_rho = std::string(),
-   size_type region = size_type(-1)); 
+   size_type region = size_type(-1));
+
+  /** Basic d2/dt2 brick ( @f$ \int \rho ((u^{n+1}-u^n)/(\alpha dt^2) - v^n/(\alpha dt) ).w @f$ ).
+      Add the standard discretization of a second order time derivative. The
+      parameter $rho$ is the density which could be omitted (the defaul value
+      is 1). This brick should be used in addition to a time dispatcher for the
+      other terms. The time derivative $v$ of the variable $u$ is preferably
+      computed as a post-traitement which depends on each scheme.
+  */
+  size_type add_basic_d2_on_dt2_brick
+  (model &md, const mesh_im &mim, const std::string &varnameU,
+   const std::string &datanameV,
+   const std::string &dataname_dt,
+   const std::string &dataname_alpha,
+   const std::string &dataname_rho = std::string(),
+   size_type region = size_type(-1));
 
 
 }  /* end of namespace getfem.                                             */

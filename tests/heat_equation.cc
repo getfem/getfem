@@ -214,8 +214,8 @@ bool heat_equation_problem::solve(void) {
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
-  getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
+  transient_bricks.add(getfem::add_normal_source_term_brick
+		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
 
   // Dirichlet condition.
   gmm::resize(F, mf_rhs.nb_dof());

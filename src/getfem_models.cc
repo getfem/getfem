@@ -873,7 +873,7 @@ namespace getfem {
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
-		<< niter);
+		<< niter << " for " << name);
     return it->second.real_value[niter];
   }
   
@@ -885,7 +885,7 @@ namespace getfem {
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
-		<< niter);
+		<< niter << " for " << name);
     return it->second.complex_value[niter];    
   }
 
@@ -898,7 +898,7 @@ namespace getfem {
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
-		<< niter);
+		<< niter << " for " << name);
     return it->second.real_value[niter];
   }
   
@@ -911,7 +911,7 @@ namespace getfem {
     it->second.v_num_data = act_counter();    
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
-		<< niter);
+		<< niter << " for " << name);
     return it->second.complex_value[niter];    
   }
 
@@ -2407,7 +2407,7 @@ namespace getfem {
 
   struct basic_d_on_dt_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -2422,8 +2422,17 @@ namespace getfem {
 		  "Basic d/dt brick need one and only one mesh_im");
       GMM_ASSERT1(vl.size() == 1 && dl.size() >= 1 && dl.size() <= 2,
 		  "Wrong number of variables for basic d/dt brick");
+
+      // It should me more convenient not to recompute the matrix if only
+      // dt is modified
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| (md.is_var_newer_than_brick(dl[1], ib));
+      if (dl.size() > 2)
+	recompute_matrix = recompute_matrix ||
+	  md.is_var_newer_than_brick(dl[2], ib);
+
       
-      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+      if (recompute_matrix) {
 	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 	const mesh &m = mf_u.linked_mesh();
 	const mesh_im &mim = *mims[0];
@@ -2458,7 +2467,7 @@ namespace getfem {
       gmm::mult(matl[0], md.real_variable(dl[0], 1), vecl[0]);
     }
     
-    virtual void asm_complex_tangent_terms(const model &md, size_type,
+    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
 					   const model::mimlist &mims,
@@ -2473,8 +2482,16 @@ namespace getfem {
 		  "Basic d/dt brick need one and only one mesh_im");
       GMM_ASSERT1(vl.size() == 1 && dl.size() >= 2 && dl.size() <= 3,
 		  "Wrong number of variables for basic d/dt brick");
+
+      // It should me more convenient not to recompute the matrix if only
+      // dt is modified
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| (md.is_var_newer_than_brick(dl[1], ib));
+      if (dl.size() > 2)
+	recompute_matrix = recompute_matrix ||
+	  md.is_var_newer_than_brick(dl[2], ib);
       
-      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+      if (recompute_matrix) {
 	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 	const mesh &m = mf_u.linked_mesh();
 	const mesh_im &mim = *mims[0];
@@ -2530,6 +2547,176 @@ namespace getfem {
     if (dataname_rho.size())
       dl.push_back(dataname_rho);
     return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
+			model::mimlist(1, &mim), region);
+  }
+
+  // ----------------------------------------------------------------------
+  //
+  // Generic second order time derivative brick. The velocity is considered
+  // as a separate data.
+  // Represents M(U^{n+1} - U^n) / (\alpha dt^2) - M V^n / (\alpha dt)
+  //
+  // ----------------------------------------------------------------------
+
+  struct basic_d2_on_dt2_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					model::real_veclist &,
+					size_type region,
+					build_version version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Basic d2/dt2 brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Basic d2/dt2 brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 4 && dl.size() <= 5,
+		  "Wrong number of variables for basic d2/dt2 brick");
+
+      // It should me more convenient not to recompute the matrix if only
+      // dt or alpha is modified
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| md.is_var_newer_than_brick(dl[2], ib)
+	|| md.is_var_newer_than_brick(dl[3], ib);
+      if (dl.size() > 4)
+	recompute_matrix = recompute_matrix ||
+	  md.is_var_newer_than_brick(dl[4], ib);
+
+      const model_real_plain_vector &dt = md.real_variable(dl[2]);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+
+      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+	const mesh &m = mf_u.linked_mesh();
+	const mesh_im &mim = *mims[0];
+	mesh_region rg(region);
+	m.intersect_with_mpi_region(rg);
+      
+	const model_real_plain_vector &alpha = md.real_variable(dl[3]);
+	GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter alpha");
+	scalar_type alphadt2 = gmm::sqr(dt[0]) * alpha[0];
+
+	const mesh_fem *mf_rho = 0;
+	const model_real_plain_vector *rho = 0;
+	
+	if (dl.size() > 4) {
+	  mf_rho = md.pmesh_fem_of_variable(dl[4]);
+	  rho = &(md.real_variable(dl[4]));
+	  size_type sl = gmm::vect_size(*rho);
+	  if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+	  GMM_ASSERT1(sl == 1, "Bad format for density");
+	}
+	
+	if (dl.size() > 4 && mf_rho) {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
+	  gmm::scale(matl[0], scalar_type(1) / alphadt2);
+	} else {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix(matl[0], mim, mf_u, rg);
+	  if (dl.size() > 4) gmm::scale(matl[0], (*rho)[0] / alphadt2);
+	  else gmm::scale(matl[0], scalar_type(1) / alphadt2);
+	}
+      }
+      gmm::mult(matl[0], md.real_variable(dl[0], 1), vecl[0]);
+      gmm::mult_add(matl[0], gmm::scaled(md.real_variable(dl[1], 1), dt[0]),
+		    vecl[0]);
+    }
+    
+    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
+					   const model::varnamelist &vl,
+					   const model::varnamelist &dl,
+					   const model::mimlist &mims,
+					   model::complex_matlist &matl,
+					   model::complex_veclist &vecl,
+					   model::complex_veclist &,
+					   size_type region,
+					   build_version version) const {
+      GMM_ASSERT1(matl.size() == 1,
+		  "Basic d2/dt2 brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+		  "Basic d2/dt2 brick need one and only one mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 4 && dl.size() <= 5,
+		  "Wrong number of variables for basic d2/dt2 brick");
+      
+      // It should me more convenient not to recompute the matrix if only
+      // dt or alpha is modified
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+	|| md.is_var_newer_than_brick(dl[2], ib)
+	|| md.is_var_newer_than_brick(dl[3], ib);
+      if (dl.size() > 4)
+	recompute_matrix = recompute_matrix ||
+	  md.is_var_newer_than_brick(dl[4], ib);
+
+      const model_complex_plain_vector &dt = md.complex_variable(dl[2]);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+
+      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+	const mesh &m = mf_u.linked_mesh();
+	const mesh_im &mim = *mims[0];
+	mesh_region rg(region);
+	m.intersect_with_mpi_region(rg);
+      
+	const model_complex_plain_vector &alpha = md.complex_variable(dl[3]);
+	GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter alpha");
+	scalar_type alphadt2 = gmm::real(gmm::sqr(dt[0]) * alpha[0]);
+
+	const mesh_fem *mf_rho = 0;
+	const model_complex_plain_vector *rho = 0;
+	
+	if (dl.size() > 4) {
+	  mf_rho = md.pmesh_fem_of_variable(dl[4]);
+	  rho = &(md.complex_variable(dl[4]));
+	  size_type sl = gmm::vect_size(*rho);
+	  if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
+	  GMM_ASSERT1(sl == 1, "Bad format for density");
+	}
+	
+	if (dl.size() > 4 && mf_rho) {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
+	  gmm::scale(matl[0], scalar_type(1) / alphadt2);
+	} else {
+	  gmm::clear(matl[0]);
+	  asm_mass_matrix(matl[0], mim, mf_u, rg);
+	  if (dl.size() > 4) gmm::scale(matl[0], (*rho)[0] / alphadt2);
+	  else gmm::scale(matl[0], scalar_type(1) / alphadt2);
+	}
+      }
+      gmm::mult(matl[0], md.complex_variable(dl[0], 1), vecl[0]);
+      gmm::mult_add(matl[0], gmm::scaled(md.complex_variable(dl[1], 1), dt[0]),
+		    vecl[0]);
+    }
+
+    basic_d2_on_dt2_brick(void) {
+      set_flags("Basic d2/dt2 brick", true /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, true /* is complex */);
+    }
+
+  };
+
+  size_type add_basic_d2_on_dt2_brick
+  (model &md, const mesh_im &mim, const std::string &varnameU,
+   const std::string &datanameV,
+   const std::string &dataname_dt,
+   const std::string &dataname_alpha,
+   const std::string &dataname_rho,
+   size_type region) {
+    pbrick pbr = new basic_d2_on_dt2_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varnameU, varnameU, true));
+    model::varnamelist dl(1, varnameU);
+    dl.push_back(datanameV);
+    dl.push_back(dataname_dt);
+    dl.push_back(dataname_alpha);
+    if (dataname_rho.size())
+      dl.push_back(dataname_rho);
+    return md.add_brick(pbr, model::varnamelist(1, varnameU), dl, tl,
 			model::mimlist(1, &mim), region);
   }
 
@@ -2622,6 +2809,43 @@ namespace getfem {
     pdispatcher pdispatch = new theta_method_dispatcher(THETA);
     for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
       md.add_time_dispatcher(i, pdispatch);
+  }
+
+  void velocity_update_for_order_two_theta_method
+  (model &md, const std::string &U, const std::string &V,
+   const std::string &pdt, const std::string &ptheta) {
+    
+    if (md.is_complex()) {
+      const model_complex_plain_vector &dt = md.complex_variable(pdt);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+      const model_complex_plain_vector &theta = md.complex_variable(ptheta);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter theta");
+      
+      gmm::copy(gmm::scaled(md.complex_variable(V, 1),
+			    scalar_type(1) - scalar_type(1) / theta[0]),
+		md.set_complex_variable(V, 0));
+      gmm::add(gmm::scaled(md.complex_variable(U, 0),
+			   scalar_type(1) / (theta[0]*dt[0])),
+	       md.set_complex_variable(V, 0));
+      gmm::add(gmm::scaled(md.complex_variable(U, 1),
+			   -scalar_type(1) / (theta[0]*dt[0])),
+	       md.set_complex_variable(V, 0));
+    } else {
+      const model_real_plain_vector &dt = md.real_variable(pdt);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+      const model_real_plain_vector &theta = md.real_variable(ptheta);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter theta");
+      
+      gmm::copy(gmm::scaled(md.real_variable(V, 1),
+			    scalar_type(1) - scalar_type(1) / theta[0]),
+		md.set_real_variable(V, 0));
+      gmm::add(gmm::scaled(md.real_variable(U, 0),
+			   scalar_type(1) / (theta[0]*dt[0])),
+	       md.set_real_variable(V, 0));
+      gmm::add(gmm::scaled(md.real_variable(U, 1),
+			   -scalar_type(1) / (theta[0]*dt[0])),
+	       md.set_real_variable(V, 0));
+    }
   }
 
   // ----------------------------------------------------------------------

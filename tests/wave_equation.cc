@@ -58,34 +58,34 @@ base_small_vector sol_K; /* a coefficient */
 scalar_type sol_c, sol_t;
 /* exact solution */
 scalar_type sol_u(const base_node &x) {
-  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
-  return (1. - exp(-sol_c*sol_t*k2))*sin(gmm::vect_sp(sol_K, x));
-
-//   scalar_type u = sin(sqrt(k2)*M_PI*sol_t);
-//   for (size_type i = 0; i < x.size(); ++i)
-//     u *= sin(sol_K[i]*M_PI*x[i]);
-//   return u;
+  scalar_type k = gmm::vect_norm2(sol_K);
+  scalar_type u = sin(k*M_PI*sol_c*sol_t);
+  for (size_type i = 0; i < x.size(); ++i)
+    u *= sin(sol_K[i]*M_PI*x[i]);
+  return u;
+}
+scalar_type sol_dtu(const base_node &x) {
+  scalar_type k = gmm::vect_norm2(sol_K);
+  scalar_type u = k*M_PI*sol_c*cos(k*M_PI*sol_c*sol_t);
+  for (size_type i = 0; i < x.size(); ++i)
+    u *= sin(sol_K[i]*M_PI*x[i]);
+  return u;
 }
 /* righ hand side */
-scalar_type sol_f(const base_node &x) {
-  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
-  return sol_c * k2 * sin(gmm::vect_sp(sol_K, x));
-
-//  return 0.;
+scalar_type sol_f(const base_node &/* x */) {
+  return 0.;
 }
 /* gradient of the exact solution */
 base_small_vector sol_grad(const base_node &x) {
-  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
-  return (1. - exp(-sol_c*sol_t*k2))*sol_c*sol_K*cos(gmm::vect_sp(sol_K, x));
-
-//   base_small_vector grad;
-//   for (size_type i = 0; i < x.size(); ++i) {
-//     grad[i] = sin(sqrt(k2)*M_PI*sol_t);
-//     for (size_type j = 0; j < x.size(); ++j)
-//       if (i != j) grad[j] *= sin(sol_K[j]*M_PI*x[j]);
-//     grad[i] *= cos(sol_K[i]*M_PI*x[i]);
-//   }
-//   return grad;
+  scalar_type k = gmm::vect_norm2(sol_K);
+  base_small_vector grad(x.size());
+  for (size_type i = 0; i < x.size(); ++i) {
+    grad[i] = sin(k*M_PI*sol_c*sol_t) *
+      sol_K[i]*M_PI*cos(sol_K[i]*M_PI*x[i]);
+    for (size_type j = 0; j < x.size(); ++j)
+      if (j != i) grad[i] *= sin(sol_K[j]*M_PI*x[j]);
+  }
+  return grad;
 }
 
 /*
@@ -216,9 +216,9 @@ bool wave_equation_problem::solve(void) {
   model.add_fem_variable("u", mf_u, 2);
 
   // Laplacian term on u.
-  model.add_initialized_scalar_data("c", sol_c);
+  model.add_initialized_scalar_data("c2", gmm::sqr(sol_c));
   transient_bricks.add(getfem::add_generic_elliptic_brick(model, mim,
-							  "u", "c"));
+							  "u", "c2"));
 
   // Volumic source term.
   std::vector<scalar_type> F(mf_rhs.nb_dof());
@@ -229,9 +229,10 @@ bool wave_equation_problem::solve(void) {
   // Neumann condition.
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
+  gmm::scale(F, gmm::sqr(sol_c));
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
-  getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
+  transient_bricks.add(getfem::add_normal_source_term_brick
+		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
 
   // Dirichlet condition.
   gmm::resize(F, mf_rhs.nb_dof());
@@ -248,30 +249,30 @@ bool wave_equation_problem::solve(void) {
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
 
   // transient part.
+  model.add_fem_data("v", mf_u, 1, 2);
   model.add_initialized_scalar_data("dt", dt);
-  getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
   model.add_initialized_scalar_data("theta", theta);
+  getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v", "dt", "theta");
   getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
  
   gmm::iteration iter(residual, 0, 40000);
 
   model.first_iter();
 
-  // Null initial value for the temperature. Can be modified.
+  // Initial conditions.
   gmm::resize(U, mf_u.nb_dof());
   gmm::clear(U);
   gmm::copy(U, model.set_real_variable("u", 1));
+  getfem::interpolation_function(mf_rhs, U, sol_dtu);
+  gmm::copy(U, model.set_real_variable("v", 1));
 
   for (scalar_type t = 0; t < T; t += dt) {
     sol_t = t+dt;
     
     gmm::resize(F, mf_rhs.nb_dof()*N);
     getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
+    gmm::scale(F, gmm::sqr(sol_c));
     gmm::copy(F, model.set_real_variable("NeumannData"));
-
-    gmm::resize(F, mf_rhs.nb_dof());
-    getfem::interpolation_function(mf_rhs, F, sol_u);
-    gmm::copy(F, model.set_real_variable("DirichletData"));
 
     cout << "solving for t = " << sol_t << endl;
     iter.init();
@@ -281,6 +282,8 @@ bool wave_equation_problem::solve(void) {
       char s[100]; sprintf(s, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
     }
+    getfem::velocity_update_for_order_two_theta_method
+      (model, "u", "v", "dt", "theta");
     model.next_iter();
   }
 
