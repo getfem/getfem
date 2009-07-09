@@ -141,13 +141,22 @@ namespace getfem {
       GMM_ASSERT1(false, "You cannot call this function for uncut convexes");
     }
     
+    void init_with_mesh(mesh &me);
     mesh_level_set(mesh &me);
+    mesh_level_set(void);
     virtual ~mesh_level_set();
-    
+    mesh_level_set(const mesh_level_set &mls) {
+      GMM_ASSERT1(linked_mesh_ == 0 && mls.linked_mesh_ == 0,
+		  "Copy constructor is not allowed for mesh_level_set");
+    }
+    mesh_level_set & operator=(const mesh_level_set &mls) {
+      GMM_ASSERT1(linked_mesh_ == 0 && mls.linked_mesh_ == 0,
+		  "Copy operator is not allowed for mesh_level_set");
+      return *this;
+    }
+
 
   private:
-    mesh_level_set(const mesh_level_set &);
-    mesh_level_set & operator=(const mesh_level_set &);
     void cut_element(size_type cv, const dal::bit_vector &primary,
 		     const dal::bit_vector &secondary, scalar_type radius);
     int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum,

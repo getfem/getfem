@@ -56,7 +56,7 @@ namespace getfem {
   protected :
     pintegration_method regular_simplex_pim;
     pintegration_method base_singular_pim;
-    mesh_level_set &mls;
+    mesh_level_set *mls;
 
     mesh_im cut_im; /* stores an im only for convexes who are crossed
 		       by a levelset */
@@ -115,6 +115,11 @@ namespace getfem {
       return mesh_im::memsize(); // + ... ;
     }
 
+    void init_with_mls(mesh_level_set &me, 
+		       int integrate_where_ = INTEGRATE_ALL,
+		       pintegration_method reg = 0,
+		       pintegration_method sing = 0);
+
     /** 
 	@param me the level-set.
 	
@@ -133,10 +138,12 @@ namespace getfem {
 		      int integrate_where_ = INTEGRATE_ALL,
 		      pintegration_method reg = 0,
 		      pintegration_method sing = 0);
+    mesh_im_level_set(void);
 
     virtual pintegration_method int_method_of_element(size_type cv) 
       const;
     ~mesh_im_level_set() { clear_build_methods(); }
+
 
     /**
        Set the boolean operation which define the integration domain
@@ -151,7 +158,8 @@ namespace getfem {
 
        "a+b+c" is the union of their domains.
 
-       "c-(a+b)" is the domain of the third levelset minus the union of the domains of the two others.
+       "c-(a+b)" is the domain of the third levelset minus the union of
+       the domains of the two others.
        
        "!a" is the complementary of the domain of a (i.e. it is the
        domain where a(x)>0)
@@ -162,9 +170,6 @@ namespace getfem {
     void set_level_set_boolean_operations(const std::string description) {
       ls_csg_description = description;
     }
-  private:
-    mesh_im_level_set(const mesh_im_level_set &);
-    mesh_im_level_set & operator=(const mesh_im_level_set &);
   };
 
   

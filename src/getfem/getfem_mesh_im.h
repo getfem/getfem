@@ -112,8 +112,20 @@ namespace getfem {
 	ims.memsize() + im_convexes.memsize();
     }
     
+    void init_with_mesh(mesh &me);
     mesh_im(mesh &me);
+    mesh_im(void);
     virtual ~mesh_im();
+    mesh_im(const mesh_im &mim) {
+      GMM_ASSERT1(linked_mesh_ == 0 && mim.linked_mesh_ == 0,
+		  "Copy constructor is not allowed for mesh_im");
+    }
+    mesh_im & operator=(const mesh_im &mim) {
+      GMM_ASSERT1(linked_mesh_ == 0 && mim.linked_mesh_ == 0,
+		  "Copy operator is not allowed for mesh_im");
+      return *this;
+    }
+
     /** Read the mesh_im from a stream.
         @param ist the stream. */
     void read_from_file(std::istream &ist);
@@ -130,9 +142,6 @@ namespace getfem {
 	saved to the file.
     */
     void write_to_file(const std::string &name, bool with_mesh=false) const;
-  private:
-    mesh_im(const mesh_im &);
-    mesh_im & operator=(const mesh_im &);
   };
   
 }  /* end of namespace getfem.                                             */

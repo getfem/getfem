@@ -84,11 +84,19 @@ struct Chrono {
     return crack_tip_convexes_;
   }
 
-
-  mesh_level_set::mesh_level_set(mesh &me) {
-    linked_mesh_ = &me; is_adapted_ = false; 
+  void mesh_level_set::init_with_mesh(mesh &me) {
+    GMM_ASSERT1(linked_mesh_ == 0, "mesh_level_set already initialized");
+    linked_mesh_ = &me;
     this->add_dependency(me);
+    is_adapted_ = false;
   }
+
+  mesh_level_set::mesh_level_set(mesh &me)
+  { linked_mesh_ = 0; init_with_mesh(me); }
+
+  mesh_level_set::mesh_level_set(void)
+  { linked_mesh_ = 0; is_adapted_ = false; }
+
 
   mesh_level_set::~mesh_level_set() {}
 
@@ -802,6 +810,7 @@ struct Chrono {
     // compute the elements touched by each level set
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_level_set");
     cut_cv.clear();
     allsubzones.clear();
     zones_of_convexes.clear();

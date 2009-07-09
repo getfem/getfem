@@ -41,16 +41,30 @@ namespace getfem {
     is_adapted = false;
   }  
 
+  void mesh_im_level_set::init_with_mls(mesh_level_set &me, 
+					int integrate_where_,
+					pintegration_method reg,
+					pintegration_method sing) {
+    init_with_mesh(me.linked_mesh());
+    cut_im.init_with_mesh(me.linked_mesh());
+    mls = &me;
+    integrate_where = integrate_where_;
+    set_simplex_im(reg, sing);
+    this->add_dependency(*mls);
+    is_adapted = false;
+  }
+
   mesh_im_level_set::mesh_im_level_set(mesh_level_set &me,
 				       int integrate_where_, 
 				       pintegration_method reg,
-				       pintegration_method sing) 
-    : mesh_im(me.linked_mesh()), mls(me), cut_im(me.linked_mesh()),
-      integrate_where(integrate_where_) {
-    set_simplex_im(reg, sing);
-    this->add_dependency(mls);
-    is_adapted = false;
+				       pintegration_method sing) {
+    mls = 0;
+    init_with_mls(me, integrate_where_, reg, sing);
   }
+
+  mesh_im_level_set::mesh_im_level_set(void)
+  { mls = 0; is_adapted = false; }
+
 
   pintegration_method 
   mesh_im_level_set::int_method_of_element(size_type cv) const {
@@ -74,11 +88,11 @@ namespace getfem {
 				  const base_node& P) {
     bool isin = true;
     int isbin = 0;
-    for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
+    for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
       isin = isin && ((mesherls0[i])(P) < 0);
       if (gmm::abs((mesherls0[i])(P)) < 1e-7)
 	isbin = i+1;
-      if (mls.get_level_set(i)->has_secondary())
+      if (mls->get_level_set(i)->has_secondary())
 	isin = isin && ((mesherls1[i])(P) < 0);
     }
     bool2 b; 
@@ -168,8 +182,8 @@ namespace getfem {
 	    const std::vector<mesher_level_set> &mesherls1,
 	    const base_node& P) {
     is_in_eval ev;
-    for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
-      bool sec = mls.get_level_set(i)->has_secondary();
+    for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
+      bool sec = mls->get_level_set(i)->has_secondary();
       scalar_type d1 = (mesherls0[i])(P);
       scalar_type d2 = (sec ? (mesherls1[i])(P) : -1);
       if (d1 < 0 && d2 < 0) ev.in.add(i);
@@ -179,7 +193,7 @@ namespace getfem {
       if (gmm::abs(d1) < 1e-7 && d2 < 1e-7) 
 	ev.bin.add(i);
       /*if (integrate_where == INTEGRATE_BOUNDARY)
-	cerr << "is_point_in_selected_area: i=" << i << ", in = " << ev.in.is_in(i) << ", bin=" << ev.bin.is_in(i) << " d1 = " << d1 << ", d2=" << d2 << " where=" << integrate_where << " csg=" << ls_csg_description << " ls=" << (void*)mls.get_level_set(i) << ", sec=" << sec << "\n";*/
+	cerr << "is_point_in_selected_area: i=" << i << ", in = " << ev.in.is_in(i) << ", bin=" << ev.bin.is_in(i) << " d1 = " << d1 << ", d2=" << d2 << " where=" << integrate_where << " csg=" << ls_csg_description << " ls=" << (void*)mls->get_level_set(i) << ", sec=" << sec << "\n";*/
     }
     
 
@@ -187,8 +201,8 @@ namespace getfem {
     if (ls_csg_description.size()) 
       r = ev.is_in(ls_csg_description.c_str());
     else {
-      r.in  = (ev.in.card() == mls.nb_level_sets());
-      r.bin = (ev.bin.card() >= 1 && ev.in.card() >= mls.nb_level_sets()-1);
+      r.in  = (ev.in.card() == mls->nb_level_sets());
+      r.bin = (ev.bin.card() >= 1 && ev.in.card() >= mls->nb_level_sets()-1);
     }
     /*bool2 r2 = is_point_in_selected_area2(mesherls0,mesherls1,P);
     if (r2.in != r.in || r2.bin != r.bin) {
@@ -202,20 +216,20 @@ namespace getfem {
   }
   
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
-    const mesh &msh(mls.mesh_of_convex(cv));
+    const mesh &msh(mls->mesh_of_convex(cv));
     GMM_ASSERT3(msh.convex_index().card() != 0, "");
     base_matrix G;
     base_node B;
 
-    std::vector<mesher_level_set> mesherls0(mls.nb_level_sets());
-    std::vector<mesher_level_set> mesherls1(mls.nb_level_sets());
+    std::vector<mesher_level_set> mesherls0(mls->nb_level_sets());
+    std::vector<mesher_level_set> mesherls1(mls->nb_level_sets());
     dal::bit_vector convexes_arein;
 
     //std::fstream totof("totof", std::ios::out | std::ios::app);
-    for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
-      mesherls0[i] =  mls.get_level_set(i)->mls_of_convex(cv, 0, false);
-      if (mls.get_level_set(i)->has_secondary())
-	mesherls1[i] =  mls.get_level_set(i)->mls_of_convex(cv, 1, false);
+    for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
+      mesherls0[i] =  mls->get_level_set(i)->mls_of_convex(cv, 0, false);
+      if (mls->get_level_set(i)->has_secondary())
+	mesherls1[i] =  mls->get_level_set(i)->mls_of_convex(cv, 1, false);
     }
 
     if (integrate_where != (INTEGRATE_ALL)) {
@@ -252,12 +266,12 @@ namespace getfem {
       if ((integrate_where != INTEGRATE_ALL) &&
 	  !convexes_arein[i]) continue;
       
-      if (base_singular_pim && mls.crack_tip_convexes().is_in(cv)) {
+      if (base_singular_pim && mls->crack_tip_convexes().is_in(cv)) {
 	ptsing.resize(0);
 	unsigned sing_ls = unsigned(-1);
 
-	for (unsigned ils = 0; ils < mls.nb_level_sets(); ++ils)
-	  if (mls.get_level_set(ils)->has_secondary()) {
+	for (unsigned ils = 0; ils < mls->nb_level_sets(); ++ils)
+	  if (mls->get_level_set(ils)->has_secondary()) {
 	    for (unsigned ipt = 0; ipt <= n; ++ipt) {
 	      if (gmm::abs((mesherls0[ils])(msh.points_of_convex(i)[ipt]))
 		  < 1E-10
@@ -391,29 +405,30 @@ namespace getfem {
   }
 
   void mesh_im_level_set::adapt(void) {
+    GMM_ASSERT1(linked_mesh_ != 0, "mesh level set uninitialized");
     context_check();
     clear_build_methods();
     ignored_im.clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
-      if (mls.is_convex_cut(cv)) {
+      if (mls->is_convex_cut(cv)) {
 	build_method_of_convex(cv);
       }
 
       if (!cut_im.convex_index().is_in(cv)) {
-	/* not exclusive with mls.is_convex_cut ... sometimes, cut cv
+	/* not exclusive with mls->is_convex_cut ... sometimes, cut cv
 	   contains no integration points.. */
 
 	if (integrate_where == INTEGRATE_BOUNDARY) {
 	  ignored_im.add(cv);
 	} else if (integrate_where != (INTEGRATE_OUTSIDE|INTEGRATE_INSIDE)) {
 	  /* remove convexes that are not in the integration area */
-	  std::vector<mesher_level_set> mesherls0(mls.nb_level_sets());
-	  std::vector<mesher_level_set> mesherls1(mls.nb_level_sets());
-	  for (unsigned i = 0; i < mls.nb_level_sets(); ++i) {
-	    mesherls0[i] = mls.get_level_set(i)->mls_of_convex(cv, 0, false);
-	    if (mls.get_level_set(i)->has_secondary())
-	      mesherls1[i] = mls.get_level_set(i)->mls_of_convex(cv, 1, false);
+	  std::vector<mesher_level_set> mesherls0(mls->nb_level_sets());
+	  std::vector<mesher_level_set> mesherls1(mls->nb_level_sets());
+	  for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
+	    mesherls0[i] = mls->get_level_set(i)->mls_of_convex(cv, 0, false);
+	    if (mls->get_level_set(i)->has_secondary())
+	      mesherls1[i] = mls->get_level_set(i)->mls_of_convex(cv, 1, false);
 	  }
 
 	  base_node B(gmm::mean_value(linked_mesh().trans_of_convex(cv)

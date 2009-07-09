@@ -12,7 +12,7 @@ LZ = 1.0;	                  % size in Z.
 INCLINE = 0;                      % Incline of the mesh.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 MESH_NOISED = 1;                  % Set to one if you want to "shake" the mesh
-FEM_TYPE = 'FEM_PK(2,2)';         % P1 for triangles
+FEM_TYPE = 'FEM_PK(2,1)';         % P1 for triangles
 INTEGRATION = 'IM_TRIANGLE(6)';   % quadrature rule for polynomials up
                                   % to degree 6 on triangles
 RESIDUAL = 1E-9;     	          % residu for conjugate gradient.

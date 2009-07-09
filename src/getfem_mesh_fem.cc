@@ -111,6 +111,7 @@ namespace getfem {
 
    
   void mesh_fem::set_finite_element(size_type cv, pfem pf) {
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     context_check();
     if (pf == 0) {
       if (fe_convex.is_in(cv)) {
@@ -250,6 +251,7 @@ namespace getfem {
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     context_check();
     if (fe_convex.card() == 0) {
       dof_enumeration_made = true;
@@ -354,18 +356,30 @@ namespace getfem {
     E_ = EXTENSION_MATRIX();
   }
 
-  mesh_fem::mesh_fem(const mesh &me, dim_type Q)
-    : dof_enumeration_made(false), auto_add_elt_pf(0),
-      auto_add_elt_K(dim_type(-1)), Qdim(Q), QdimM(1), QdimN(1) {
+  void mesh_fem::init_with_mesh(const mesh &me, dim_type Q) {
+    GMM_ASSERT1(linked_mesh_ == 0, "Mesh level set already initialized");
+    dof_enumeration_made = false;
+    auto_add_elt_pf = 0;
+    auto_add_elt_K = dim_type(-1);
+    Qdim = Q;
+    QdimM = 1;
+    QdimN = 1;
     linked_mesh_ = &me;
     use_reduction = false;
     this->add_dependency(me);
     v_num = v_num_update = act_counter();
   }
 
+  mesh_fem::mesh_fem(const mesh &me, dim_type Q)
+  { linked_mesh_ = 0; init_with_mesh(me, Q); }
+
+  mesh_fem::mesh_fem(void) 
+  { linked_mesh_ = 0; dof_enumeration_made = false; }
+
   mesh_fem::~mesh_fem() { }
 
   void mesh_fem::read_from_file(std::istream &ist) {
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
     gmm::stream_standard_locale sl(ist);
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;

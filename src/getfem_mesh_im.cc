@@ -47,6 +47,7 @@ namespace getfem {
 
 
   void mesh_im::set_integration_method(size_type cv, pintegration_method pim) {
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_im");
     context_check();
     if (pim == NULL)
       { if (im_convexes.is_in(cv))
@@ -91,17 +92,28 @@ namespace getfem {
     touch(); v_num = act_counter();
   }
 
-  mesh_im::mesh_im(mesh &me) {
+
+  void mesh_im::init_with_mesh(mesh &me) {
+    GMM_ASSERT1(linked_mesh_ == 0, "Mesh level set already initialized");
     linked_mesh_ = &me;
     this->add_dependency(me);
     auto_add_elt_pim = 0;
     v_num_update = v_num = act_counter();
   }
+  
+  mesh_im::mesh_im(void) {
+    linked_mesh_ = 0; auto_add_elt_pim = 0;
+    v_num_update = v_num = act_counter();
+  }
+
+  mesh_im::mesh_im(mesh &me)
+  { linked_mesh_ = 0; init_with_mesh(me); }
 
   mesh_im::~mesh_im() {}
 
 
   void mesh_im::read_from_file(std::istream &ist) {
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_im");
     gmm::stream_standard_locale sl(ist);
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;

@@ -505,11 +505,13 @@ namespace getfem {
 	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
 	f_elems.memsize() + fe_convex.memsize();
     }
+    void init_with_mesh(const mesh &me, dim_type Q = 1);
     /** Build a new mesh_fem. A mesh object must be supplied. 
 	@param me the linked mesh.
 	@param Q the Q dimension (see mesh_fem::get_qdim).
     */
     explicit mesh_fem(const mesh &me, dim_type Q = 1);
+    mesh_fem(void);
     virtual ~mesh_fem();
     virtual void clear(void);
     /** Read the mesh_fem from a stream. 
