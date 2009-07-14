@@ -57,12 +57,15 @@ namespace getfem {
     const mesh_fem *mf;
     std::vector<scalar_type> primary_, secondary_;
     bool with_secondary;
+    scalar_type shift_ls;     // for the computation of a gap on a level_set.
+    // shift the level set on the ref element for mesher_level_set call
 
     void copy_from(const level_set &ls); // WARNING :  to be updated if
                                          //    some components are added 
 
   public :
 
+    void set_shift(scalar_type shift_ls_) { shift_ls = shift_ls_; }
     void simplify(scalar_type eps = 0.01);
     void update_from_context(void) const { }
     void reinit(void);

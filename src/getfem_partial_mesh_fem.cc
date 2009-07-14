@@ -78,15 +78,12 @@ namespace getfem {
     is_adapted = true; touch();
   }
 
-  void partial_mesh_fem::write_to_file(std::ostream &ost) const {
-    context_check(); mf.context_check();
-    gmm::stream_standard_locale sl(ost);
-    ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
-    mf.write_basic_to_file(ost);
-      write_reduction_matrices_to_file(ost);
-      ost << "END MESH_FEM" << '\n';
-  }
+  void partial_mesh_fem::write_to_file(std::ostream &ost) const
+  { context_check(); mf.write_to_file(ost); }
 
+  void partial_mesh_fem::write_to_file(const std::string &name,
+				       bool with_mesh) const
+  { context_check(); mf.write_to_file(name, with_mesh); }
 
   dal::bit_vector select_dofs_from_im(const mesh_fem &mf, const mesh_im &mim,
 				      unsigned P) {

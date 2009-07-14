@@ -127,7 +127,7 @@ namespace getfem {
     void read_from_file(std::istream &)
     { GMM_ASSERT1(false, "You cannot directely read this kind of mesh_fem"); }
     void write_to_file(std::ostream &ost) const;
-
+    void write_to_file(const std::string &name, bool with_mesh=false) const;
 
     partial_mesh_fem(const mesh_fem &mef);
     partial_mesh_fem(const mesh_fem *mef);

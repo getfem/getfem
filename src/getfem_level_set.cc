@@ -28,6 +28,7 @@ namespace getfem {
 		       bool with_secondary_)
     : pmesh(&msh), degree_(deg), mf(&classical_mesh_fem(msh, deg)),
       with_secondary(with_secondary_) {
+    shift_ls = scalar_type(0);
     primary_.resize(mf->nb_dof());
     if (has_secondary()) secondary_.resize(mf->nb_dof());
     this->add_dependency(*mf);
@@ -40,6 +41,7 @@ namespace getfem {
     primary_ = ls.primary_;
     secondary_ = ls.secondary_;
     with_secondary = ls.with_secondary;
+    shift_ls = ls.shift_ls;
     this->add_dependency(*mf);
   }
 
@@ -78,7 +80,7 @@ namespace getfem {
       coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 
 	values(lsnum)[mf->ind_basic_dof_of_element(cv)[i]];
     //cout << "mls_of_convex[lsnum=" << lsnum << "] : coeff = " << coeff << "\n";
-    return mesher_level_set(mf->fem_of_element(cv), coeff);
+    return mesher_level_set(mf->fem_of_element(cv), coeff, shift_ls);
   }
  
   size_type level_set::memsize() const {

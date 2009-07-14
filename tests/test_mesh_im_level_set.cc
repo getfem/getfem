@@ -93,7 +93,8 @@ void test_2d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << M_PI*R1*R1 << endl;
   if (gmm::abs(area - M_PI*R1*R1) > 1E-3)
-    GMM_ASSERT1(false, "Cutting integration method has failed");
+    GMM_ASSERT1(false, "Cutting integration method has failed : " << area
+		<< " instead of " << M_PI*R1*R1 << ".");
 }
 
 

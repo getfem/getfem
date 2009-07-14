@@ -85,7 +85,8 @@ namespace getfem {
       for (size_type i = 1; i < name.size(); ++i)
 	if (!(isalnum(name[i]) || name[i] == '_')) valid = false;
     }
-    GMM_ASSERT1(!assert || valid, "Illegal variable name : " << name);
+    GMM_ASSERT1(!assert || valid,
+		"Illegal variable name : \"" << name << "\"");
     return valid;
   }
 
@@ -655,25 +656,24 @@ namespace getfem {
 
 	  if (cplx) 
 	    gmm::mult_add(brick.cmatlist[j],
-			gmm::scaled(variables[term.var1].complex_value[n_iter],
+			gmm::scaled(variables[term.var2].complex_value[n_iter],
 				    std::complex<scalar_type>(-1)),
 			  brick.cveclist[ind_data][j]);
 	  else
 	    gmm::mult_add(brick.rmatlist[j],
-			  gmm::scaled(variables[term.var1].real_value[n_iter],
+			  gmm::scaled(variables[term.var2].real_value[n_iter],
 				      scalar_type(-1)),
 			  brick.rveclist[ind_data][j]);
-	  
 	  
 	  if (term.is_symmetric && term.var1.compare(term.var2)) {
 	    if (cplx) 
 	      gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-			gmm::scaled(variables[term.var2].complex_value[n_iter],
+			gmm::scaled(variables[term.var1].complex_value[n_iter],
 				    std::complex<scalar_type>(-1)),
 			brick.cveclist_sym[ind_data][j]);
 	    else
 	      gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			gmm::scaled(variables[term.var2].real_value[n_iter],
+			gmm::scaled(variables[term.var1].real_value[n_iter],
 				    scalar_type(-1)),
 			brick.rveclist_sym[ind_data][j]);
 	  }
@@ -731,7 +731,7 @@ namespace getfem {
 	    if (term.is_matrix_term && brick.pbr->is_linear()
 		&& !is_linear()) {
 	      gmm::mult_add(brick.cmatlist[j],
-			    gmm::scaled(variables[term.var1].complex_value[0],
+			    gmm::scaled(variables[term.var2].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
 			    gmm::sub_vector(crhs, I1));
 	    }
@@ -746,7 +746,7 @@ namespace getfem {
 		gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
 	       if (brick.pbr->is_linear() && !is_linear()) {
 		 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-			    gmm::scaled(variables[term.var2].complex_value[0],
+			    gmm::scaled(variables[term.var1].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
 			       gmm::sub_vector(crhs, I2));
 	       }
@@ -773,7 +773,7 @@ namespace getfem {
 	    if (term.is_matrix_term && brick.pbr->is_linear()
 		&& !is_linear()) {
 	      gmm::mult_add(brick.rmatlist[j],
-			    gmm::scaled(variables[term.var1].complex_value[0],
+			    gmm::scaled(variables[term.var2].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
 			    gmm::sub_vector(crhs, I1));
 	    }
@@ -788,7 +788,7 @@ namespace getfem {
 		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
 	      if (brick.pbr->is_linear() && !is_linear()) {
 		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			     gmm::scaled(variables[term.var2].complex_value[0],
+			     gmm::scaled(variables[term.var1].complex_value[0],
 					  std::complex<scalar_type>(-coeff0)),
 			      gmm::sub_vector(crhs, I2));
 	      }
@@ -815,7 +815,7 @@ namespace getfem {
 	    if (term.is_matrix_term && brick.pbr->is_linear()
 		&& !is_linear()) {
 	      gmm::mult_add(brick.rmatlist[j],
-			    gmm::scaled(variables[term.var1].real_value[0],
+			    gmm::scaled(variables[term.var2].real_value[0],
 					-coeff0),
 			    gmm::sub_vector(rrhs, I1));
 	    }
@@ -830,7 +830,7 @@ namespace getfem {
 		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
 	      if (brick.pbr->is_linear() && !is_linear()) {
 		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			      gmm::scaled(variables[term.var2].real_value[0],
+			      gmm::scaled(variables[term.var1].real_value[0],
 					  -coeff0),
 			      gmm::sub_vector(rrhs, I2));
 	      }
@@ -2420,7 +2420,7 @@ namespace getfem {
 		  "Basic d/dt brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
 		  "Basic d/dt brick need one and only one mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 1 && dl.size() <= 2,
+      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 2 && dl.size() <= 3,
 		  "Wrong number of variables for basic d/dt brick");
 
       // It should me more convenient not to recompute the matrix if only

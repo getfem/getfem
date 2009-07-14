@@ -2250,7 +2250,7 @@ For instance, for the simple Laplacian brick described above, this function can 
 size_t add_my_Laplacian_brick(getfem::model &md, const getfem::mesh_im &mim,
                               const std::string &varname,
                               size_t region = size_t(-1)) \{
-    pbrick pbr = new my_Laplacian_brick;
+    getfem::pbrick pbr = new my_Laplacian_brick;
     getfem::model::termlist tl;
     tl.push_back(getfem::model::term_description(varname, varname, true));
     return md.add_brick(pbr, getfem::model::varnamelist(1, varname),

@@ -116,15 +116,8 @@ namespace getfem {
     mesh_im(mesh &me);
     mesh_im(void);
     virtual ~mesh_im();
-    mesh_im(const mesh_im &mim) {
-      GMM_ASSERT1(linked_mesh_ == 0 && mim.linked_mesh_ == 0,
-		  "Copy constructor is not allowed for mesh_im");
-    }
-    mesh_im & operator=(const mesh_im &mim) {
-      GMM_ASSERT1(linked_mesh_ == 0 && mim.linked_mesh_ == 0,
-		  "Copy operator is not allowed for mesh_im");
-      return *this;
-    }
+    mesh_im(const mesh_im &mim);
+    mesh_im & operator=(const mesh_im &mim);
 
     /** Read the mesh_im from a stream.
         @param ist the stream. */

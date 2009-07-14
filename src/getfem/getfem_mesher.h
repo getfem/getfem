@@ -119,10 +119,19 @@ namespace getfem {
     mutable std::vector<base_poly> hessian;
     const fem<base_poly> *pf;
     mutable int initialized;
+    scalar_type shift_ls;     // for the computation of a gap on a level_set.
   public:
     mesher_level_set() : initialized(0) {}
     template <typename VECT>
-    mesher_level_set(pfem pf_, const VECT &coeff_) { init_base(pf_, coeff_); }
+    mesher_level_set(pfem pf_, const VECT &coeff_,
+		     scalar_type shift_ls_ = scalar_type(0)) {
+      shift_ls = shift_ls_; init_base(pf_, coeff_);
+      if (shift_ls != scalar_type(0)) {
+	base_node P(pf->dim()); base_small_vector G(pf->dim());
+	grad(P, G);
+	shift_ls *= gmm::vect_norm2(G);
+      }
+    }
     template <typename VECT> void init_base(pfem pf_, const VECT &coeff_);
     void init_grad(void) const;
     void init_hess(void) const;
@@ -130,7 +139,7 @@ namespace getfem {
     bool bounding_box(base_node &, base_node &) const
     { return false; }
     virtual scalar_type operator()(const base_node &P) const
-    {  return base.eval(P.begin()); }
+    {  return base.eval(P.begin()) + shift_ls; }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const
     { scalar_type d = (*this)(P); bv[id] = (gmm::abs(d) < SEPS); return d; }

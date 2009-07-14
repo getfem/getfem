@@ -62,7 +62,7 @@ namespace getfem {
       pf()->real_base_value(*this, t);
     else {
       base_tensor u;
-      if (have_pfp()) {
+      if (have_pfp() && ii() != size_type(-1)) {
 	switch(pf()->vectorial_type()) {
 	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
 	  t.mat_transp_reduction(pfp_->val(ii()), K(), 1); break;
@@ -91,7 +91,7 @@ namespace getfem {
       pf()->real_grad_base_value(*this, t);
     else {
       base_tensor u;
-      if (have_pfp()) {
+      if (have_pfp() && ii() != size_type(-1)) {
 	switch(pf()->vectorial_type()) {
 	case virtual_fem::VECTORIAL_PRIMAL_TYPE:
 	  u.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
@@ -126,7 +126,8 @@ namespace getfem {
       pf()->real_hess_base_value(*this, t);
     else {
       base_tensor tt;
-      if (have_pfp()) tt = pfp()->hess(ii()); else pf()->hess_base_value(xref(), tt);
+      if (have_pfp() && ii() != size_type(-1))
+	tt = pfp()->hess(ii()); else pf()->hess_base_value(xref(), tt);
 
       switch(pf()->vectorial_type()) {
       case virtual_fem::VECTORIAL_PRIMAL_TYPE:
