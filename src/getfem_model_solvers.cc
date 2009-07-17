@@ -53,11 +53,13 @@ namespace getfem {
     const VECTOR &rhs;
     const MATRIX &K;
 
-    void compute_tangent_matrix(void) { md.assembly(model::BUILD_MATRIX); }
+    void compute_tangent_matrix(void)
+    { md.to_variables(state); md.assembly(model::BUILD_MATRIX); }
 
     const MATRIX &tangent_matrix(void) { return K; }
     
-    void compute_residual(void) { md.assembly(model::BUILD_RHS); }
+    void compute_residual(void)
+    { md.to_variables(state); md.assembly(model::BUILD_RHS); }
 
     const VECTOR &residual(void) { return rhs; }
 

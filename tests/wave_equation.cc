@@ -200,6 +200,7 @@ void wave_equation_problem::init(void) {
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
       mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
+      // mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     } else {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     }
@@ -217,8 +218,8 @@ bool wave_equation_problem::solve(void) {
 
   // Laplacian term on u.
   model.add_initialized_scalar_data("c2", gmm::sqr(sol_c));
-  transient_bricks.add(getfem::add_generic_elliptic_brick(model, mim,
-							  "u", "c2"));
+  size_type iblap = getfem::add_generic_elliptic_brick(model, mim, "u", "c2");
+  transient_bricks.add(iblap);
 
   // Volumic source term.
   std::vector<scalar_type> F(mf_rhs.nb_dof());
@@ -230,9 +231,12 @@ bool wave_equation_problem::solve(void) {
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
   gmm::scale(F, gmm::sqr(sol_c));
-  model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+  // The two version of the data make only a difference for midpoint scheme
+  model.add_fem_data("NeumannData", mf_rhs, bgeot::dim_type(N), 2);
+  gmm::copy(F, model.set_real_variable("NeumannData", 0));
+  gmm::copy(F, model.set_real_variable("NeumannData", 1));
   transient_bricks.add(getfem::add_normal_source_term_brick
-		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
+  		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
 
   // Dirichlet condition.
   gmm::resize(F, mf_rhs.nb_dof());
@@ -251,10 +255,21 @@ bool wave_equation_problem::solve(void) {
   // transient part.
   model.add_fem_data("v", mf_u, 1, 2);
   model.add_initialized_scalar_data("dt", dt);
+#if 1
   model.add_initialized_scalar_data("theta", theta);
-  getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v", "dt", "theta");
+  size_type ibddt
+    = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v", "dt", "theta");
   getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
- 
+#else
+  // You can also test the midpoint scheme (but not really different from
+  // crank-Nicholson scheme for linear problems).
+  theta = 0.5;
+  model.add_initialized_scalar_data("theta", theta);
+  size_type ibddt
+    = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v", "dt", "theta");  
+  getfem::add_midpoint_dispatcher(model, transient_bricks);
+#endif 
+
   gmm::iteration iter(residual, 0, 40000);
 
   model.first_iter();
@@ -284,6 +299,18 @@ bool wave_equation_problem::solve(void) {
     }
     getfem::velocity_update_for_order_two_theta_method
       (model, "u", "v", "dt", "theta");
+
+    { // Computation of total energy :  V^TMV/2 +  U^TKU/2
+      // plain_vector V(mf_u.nb_dof()), W(mf_u.nb_dof());
+      plain_vector V(mf_u.nb_dof());
+      gmm::copy(model.real_variable("v"), V);
+      scalar_type J
+	= gmm::vect_sp(model.linear_real_matrix_term(iblap, 0), U, U) * 0.5
+	+ gmm::vect_sp(model.linear_real_matrix_term(ibddt, 0), V, V)
+	* 0.5 * dt*dt*theta;
+      cout << "Energy : " << J << endl;
+    }
+
     model.next_iter();
   }
 

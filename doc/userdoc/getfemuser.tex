@@ -1972,7 +1972,7 @@ where \cpp{M} is a row matrix which will be filled with the linear map represent
 \label{sec:model}
 \index{model description}
 
-This part is a work in progress for future \gf 4.0. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE models. The principle is to propose predefined bricks which can be assembled to describe a complex situation. A brick can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a brick is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of bricks. An effort as been made in order to facilitate as much as possible the definition of a new brick. A brick is mainly defined by its contribution in the tangent linear system to be solved.
+This part is a work in progress for future \gf 4.0. The model description of \gf allows to quickly build some fem applications on complex linear or nonlinear PDE coupled models. The principle is to propose predefined bricks which can be assembled to describe a complex situation. A brick can describe either an equation (Poisson equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...) or any relation between two variables. Once a brick is written, it is possible to use it in very different situations. This allows a reusability of the produced code and the possibility of a growing library of bricks. An effort as been made in order to facilitate as much as possible the definition of a new brick. A brick is mainly defined by its contribution in the tangent linear system to be solved.
 
 This model description is an evolution of the model bricks of previous versions of \gf. Compared to the old system, it is more flexible, more general, allows the coupling of model (multiphysics) in a easier way and facilitate the writing of new components. It also facilitate the write of time integration schemes for evolving PDEs.
 
@@ -2688,19 +2688,155 @@ Note that for time integrations scheme, there exist specific bricks for the disc
 
 
 
+\subsection{The time dispatchers: integration of transient problems}
+
+The role of time dispatchers is to allow the integration of transient problems with some pre-defined time integration schemes. The principle of the time dispatchers is to dispatch the terms of a brick on the different time steps of the considered time integration scheme. When time derivative terms are present in the model (this is generally the case except for quasistatic models), the time dispatcher will be associated to a specific brick representing this time derivative term ($\partial u / \partial t$ or $\partial^2 u / \partial t^2$ for instance). For this, a number of tools are available in \gf to help the construction of a time dispatcher. Mainly they are the two following:
+
+\begin{itemize}
+\item The variables can be duplicated to take into account the differents version corresponding to each time iteration. For instance, for simplest time integration scheme, two versions $U^n$ and $U^{n+1}$ of a variable $U$ are stored. The addition of a variable $u$ with two versions can be done with the method of the model object
+\begin{cppcode}
+model.add_fem_variable("u", mf_u, 2);
+\end{cppcode}
+where $2$ is here the number of versions. The variable which is actually computed have always the index 0 and will be accessed with \cpp{model.real_variable("u", 0)} or simply with \cpp{model.real_variable("u")}. It will generally represent the version $U^{n+1}$. The version $U^{n}$ (corresponding to the previous time step) will be accessed with  \cpp{model.real_variable("u", 1)}. Generally, it will be necessary to set this version with \cpp{model.set_real_variable("u", 1)} to define the initial condition of the model. At the end of each iteration, the different versions of a variable are automatically shifted (version 0 -> version 1 ...).
+
+\item The right hand side of a brick is dispatched into several right hand sides for each time iteration which are stored. To avoid unnecessary computation, the time dispatcher can shift these extra right hand sides at the end of each time iteration.
+\end{itemize}
+
+\subsection{Theta-method dispatcher}
+
+This is the simplest time dispatcher. The use of this dispatcher will be described in details. Since the use of the other dispatchers is similar, only their specificities will be described later on.
+
+The principle of the $\theta$-method is to dispatch the a term $F$ into
+
+$(\theta) F^{n+1} + (1-\theta) F^{n},$
+
+For specific values of $\theta$ one obtains some classical schemes : backward Euler for $\theta = 1$, forward Euler for $\theta = 0$ and Crank-Nicholson scheme for $\theta = 1/2$ (which is an order two scheme).
+
+For instance, if the dispatcher is applied to a brick representing a linear elliptic term $KU$ where $K$ is the stiffness matrix and $U$ the unknown, it will be transformed into
+
+$ (\theta) KU^{n+1} + (1-\theta) KU^{n}.$
+
+Since $U^{n+1}$ is the real unknown, the effect will be to multiply by $\theta$ the stiffness matrix and to add to the right hand side the term $(1-\theta) KU^{n}$. This means also that $U^{n}$ have to be initialized (with something like \cpp{gmm::copy(U0, model.real_variable("u", 1))}). It represents an initial data for the problem. Remember this principle : each time you apply a time dispatcher to a brick, the corresponding variables have to have the right number of versions (see above) and should be initialized before the first time iteration.\\
+
+
+You can apply the dispatcher to a brick having only a right hand side (a source term for instance). It is not necessary if the term is constant in time.\\
+
+
+When a brick represents a constraint (Dirichlet condition, incompressibility ...) this is not mandatory to apply the dispatcher. Of course, the result will not be exactly the same if you apply or not the dispatcher. If you do not apply it, the constraint will be applied to the current variable ($U^{n+1}$ for the $\theta$-method). If you apply it, the constraint will be in a sense applied to $(\theta) U^{n+1} + (1-\theta) U^{n}$. If the constraint is applied thanks to a multiplier, this multiplier will need to have different versions and will need to have an initial value.
+
+
+In order to apply the $\theta$-method dispatcher to a set of brick you must execute
+
+\begin{cppcode}
+  model.add_initialized_scalar_data("theta", theta);
+  getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
+\end{cppcode}
+
+where \cpp{transient_bricks} is a \cpp{dal::bit_vector} containing the indices of the corresponding bricks. The value of $\theta$ can be modified from an iteration to another.
+
+The global structure of the loop solving the different time steps should be the following
+
+\begin{cppcode}
+gmm::iteration solver_iter(residual, 0, 40000);
+
+// Set here the initial values.
+
+model.first_iter(); // initialize the iterations.
+
+for (scalar_type t = 0; t < T; t += dt) {
+
+  solver_iter.init();
+  getfem::standard_solve(model, solver_iter); // solve an iteration.
+
+  model.next_iter(); // shift the variables and additional right hand sides.
+}
+\end{cppcode}
+
+where \cpp{model.first_iter()} should be called before the first iteration to initialize the right hand side of the time dispatchers. The initial data should be set before the call to  \cpp{model.first_iter()}. The method \cpp{model.next_iter()} is to be called at the end of each iteration. It calls the dispatcher to shift there additional right hand side and it shifts the version of the variables.
+
+\subsubsection{Basic first order time derivative brick}
+
+A term like $\rho \partial u / \partial t$ will be represented in the model by
+
+$ (MU^{n+1} - MU^{n}) / dt, $
+
+where $M$ is the mass matrix and $dt$ is the time step. The $\theta$-method is compatible with this. A brick is dedicated to represent this term. It can be added to the model by the function
+
+\begin{cppcode}
+getfem::add_basic_d_on_dt_brick(model, mim, varname, dataname_dt, dataname_rho = std::string(), region = size_type(-1));
+\end{cppcode}
+
+where \cpp{varname} is the name of the variable on which the time derivative is applied (should have at least two versions), \cpp{dataname_dt} is the name of the data corresponding to the time step (added by \cpp{model.add_initialized_scalar_data("dt", dt)} for instance) which could be modified from an iteration to another and \cpp{dataname_rho} is an optional parameter (whose default value is 1) corresponding to the term $\rho$ in $\rho \partial u / \partial t$.
+
+NOTE that the time dispatcher should not be applied to this brick !
+
+
+A good model of the use of this brick and the $\theta$-method time dispatcher can be found in the test program \cpp{tests/heat_equation.cc}.
+
+\subsubsection{Basic second order time derivative brick}
+
+This brick represent a second order time derivative like $\rho \partial^2 u / \partial t^2$. The problem with such a term is that the $\theta$-method should be applied both on $u$ and $\partial u / \partial t$ which means that $\partial u / \partial t$ is a natural unknown of the problem. The easiest way is then to add the time derivative of the $u$ into the variables of the problem. The drawback is that one have twice as much unknown in the system. This Basic second order time derivative brick does not apply this strategy. The time derivative $\partial u / \partial t$ is considered as a data which is updated as a post-traitment (in some cases, this strategy cannot be applied is the time derivative appears to be a required unknown of the model).
+
+The term $\rho \partial^2 u / \partial t^2$ will be represented by
+
+$ (MU^{n+1} - MU^{n}) / (\alpha dt^2) - M V^n / (\alpha dt), ~~~~~~~~(*)$
+
+where $M$ is the mass matrix, $dt$ is the time step, $\alpha$ is a parameter which is equal to $\theta$ for the $\theta$-method and $V^n$ the time derivative at the previous time step. This means in particular that $V$ should be added as a data on the model with (at least) two versions.
+
+The function adding the brick is
+
+\begin{cppcode}
+  getfem::add_basic_d2_on_dt2_brick(model, mim, varname, dataname_V, dataname_dt, dataname_alpha, dataname_rho = std::string(), region = size_type(-1));
+\end{cppcode}
+
+where  \cpp{varname} is the name of the variable on which the second order time derivative is applied, \cpp{dataname_V} is the data representing the time derivative, \cpp{dataname_dt} is the name of the data corresponding to the time step (added by \cpp{model.add_initialized_scalar_data("dt", dt)} for instance) which could be modified from an iteration to another, \cpp{dataname_alpha} is the name of the data containing the parameter $\alpha$ in  (*) and \cpp{dataname_rho} is an optional parameter (whose default value is 1) corresponding to the term $\rho$ in $\rho \partial^2 u / \partial t^2$.
+
+At the end of each iteration, the data \cpp{dataname_V} should be updated (before the call to \cpp{model.next_iter()} by the call to
+
+\begin{cppcode}
+  getfem::velocity_update_for_order_two_theta_method
+      (model, varname, dataname_V, dataname_dt, dataname_alpha);
+\end{cppcode}
+
+A good model of the use of this brick and the $\theta$-method time dispatcher can be found in the test program \cpp{tests/wave_equation.cc}.
 
 
 
+\subsection{Midpoint dispatcher}
+
+The principle of the midpoint scheme is to dispacth a term $F(U)$ into
+
+$F((U^{n+1}-U^{n})/2),$
+
+It is different from the Crank-Nicholson scheme ($\theta$-method for $\theta=1/2$) only for nonlinear terms.
+
+The real unknown remains $U^{n+1}$. the effect will be to multiply by $1/2$ the stiffness (or tangent) matrix and to add to a right hand side the term $(KU^{n}/2$ for a linear matrix term $K$. As for the $\theta$-method, the variables have to have two version and the second version have to be initialized. \\
+
+You can apply the dispatcher to a brick having only a right hand side (a source term for instance). It is not necessary if the term is constant in time.\\
+
+NOTE that if the brick depend on a data which is not constant in time, the data either have to have to versions (and the mean of the two versions are taken into account) or evaluated at the middle of the time step.\\
 
 
+When a brick represents a constraint (Dirichlet condition, incompressibility ...) this is not mandatory to apply the dispatcher. Of course, the result will not be exactly the same if you apply or not the dispatcher. If you do not apply it, the constraint will be applied to the current variable $U^{n+1}$. If you apply it, the constraint will be applied to $(U^{n+1} + U^{n})/2$. If the constraint is applied thanks to a multiplier, this multiplier will need to have different versions and will need to have an initial value.
 
 
+In order to apply the midpoint dispatcher to a set of brick you must execute
+
+\begin{cppcode}
+  getfem::add_midpoint_dispatcher(model, transient_bricks);
+\end{cppcode}
+
+where \cpp{transient_bricks} is a \cpp{dal::bit_vector} containing the indices of the corresponding bricks.
 
 
+\subsubsection{Basic first order time derivative brick}
+
+The same brick as for the $\theta$-method can be used to represent a first order time derivative.
 
 
+\subsubsection{Basic second order time derivative brick}
 
-
+The same brick as for the $\theta$-method can be used to represent a second order time derivative. The value of $\alpha$ should be $1/2$.
 
 \section{The model bricks (old system)}
 \index{model bricks}

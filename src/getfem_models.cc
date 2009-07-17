@@ -36,6 +36,7 @@ namespace getfem {
     else
       real_value.resize(n_iter);
     v_num_var_iter.resize(n_iter);
+    v_num_iter.resize(n_iter);
     for (size_type i = 0; i < n_iter; ++i)
       if (is_complex)
 	complex_value[i].resize(s);
@@ -49,6 +50,10 @@ namespace getfem {
       if (v_num_var_iter[nit] == id_num) break;
     if (nit >=  n_iter + n_temp_iter) {
       ++n_temp_iter;
+      v_num_var_iter.resize(nit+1);
+      v_num_var_iter[nit] = id_num;
+      v_num_iter.resize(nit+1);
+      v_num_iter[nit] = 0;
       if (is_complex) {
 	size_type s = complex_value[0].size();
 	complex_value.resize(n_iter + n_temp_iter);
@@ -59,7 +64,6 @@ namespace getfem {
 	real_value[nit].resize(s);
       }
     }
-    default_iter = nit;
     return nit;
   }
 
@@ -543,6 +547,10 @@ namespace getfem {
 
 
   void model::first_iter(void) {
+    
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
+      it->second.clear_temporaries();
+
     for (size_type ib = 0; ib < bricks.size(); ++ib) {
       brick_description &brick = bricks[ib];
       bool cplx = is_complex() && brick.pbr->is_complex();
@@ -598,6 +606,66 @@ namespace getfem {
     return (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num);
   }
 
+  void model::add_temporaries(const varnamelist &vl,
+			      gmm::uint64_type id_num) const {
+    for (size_type i = 0; i < vl.size(); ++i) {
+      var_description &vd = variables[vl[i]];
+      if (vd.n_iter > 1) { 
+	vd.add_temporary(id_num);
+      }
+    }
+  }
+
+  bool model::temporary_uptodate(const std::string &varname,
+				 gmm::uint64_type  id_num,
+				 size_type &ind) const {
+    var_description &vd = variables[varname];
+    ind = vd.n_iter;
+    for (; ind < vd.n_iter + vd.n_temp_iter ; ++ind) {
+      if (vd.v_num_var_iter[ind] == id_num) break;
+    }
+    if (ind <  vd.n_iter + vd.n_temp_iter) {
+      if (vd.v_num_iter[ind] <= vd.v_num_data) {
+	vd.v_num_iter[ind] = act_counter();
+	return false;
+      }
+      return true;
+    }
+    ind = size_type(-1);
+    return true;
+  }
+
+  void model::set_default_iter_of_variable(const std::string &varname,
+				    size_type ind) const {
+    if (ind != size_type(-1)) {
+      var_description &vd = variables[varname];
+      GMM_ASSERT1(ind < vd.n_iter + vd.n_temp_iter,
+		  "Unexistent iteration " << ind);
+      vd.default_iter = ind;
+    }
+  }
+
+  void model::reset_default_iter_of_variables(const varnamelist &vl) const {
+    for (size_type i = 0; i < vl.size(); ++i)
+      variables[vl[i]].default_iter = 0;
+  }
+
+  const model_real_sparse_matrix &model::linear_real_matrix_term
+  (size_type ib, size_type iterm) {
+    GMM_ASSERT1(bricks[ib].tlist[iterm].is_matrix_term,
+		"Not a matrix term !");
+    GMM_ASSERT1(bricks[ib].pbr->is_linear(), "Nonlinear term !");
+    return bricks[ib].rmatlist[iterm];
+  }
+
+  const model_complex_sparse_matrix &model::linear_complex_matrix_term
+  (size_type ib, size_type iterm) {
+    GMM_ASSERT1(bricks[ib].tlist[iterm].is_matrix_term,
+		"Not a matrix term !");
+    GMM_ASSERT1(bricks[ib].pbr->is_linear(), "Nonlinear term !");
+    return bricks[ib].cmatlist[iterm];
+  }
+
   // Call the brick to compute the terms
   void model::update_brick(size_type ib, build_version version) const {
     const brick_description &brick = bricks[ib];
@@ -651,31 +719,40 @@ namespace getfem {
       
       for (size_type j = 0; j < brick.tlist.size(); ++j) {
 	const term_description &term = brick.tlist[j];
+
+	size_type n_iter_1 = n_iter, n_iter_2 = n_iter;
+	if (n_iter == size_type(-1)) {
+	  n_iter_1 = variables[term.var1].default_iter;
+	  if (term.is_matrix_term)
+	    n_iter_2 = variables[term.var2].default_iter;
+	}
 	
 	if (term.is_matrix_term) {
-
 	  if (cplx) 
-	    gmm::mult_add(brick.cmatlist[j],
-			gmm::scaled(variables[term.var2].complex_value[n_iter],
-				    std::complex<scalar_type>(-1)),
-			  brick.cveclist[ind_data][j]);
+	    gmm::mult_add
+	      (brick.cmatlist[j], 
+	       gmm::scaled(variables[term.var2].complex_value[n_iter_2],
+			   std::complex<scalar_type>(-1)),
+	       brick.cveclist[ind_data][j]);
 	  else
-	    gmm::mult_add(brick.rmatlist[j],
-			  gmm::scaled(variables[term.var2].real_value[n_iter],
-				      scalar_type(-1)),
-			  brick.rveclist[ind_data][j]);
+	    gmm::mult_add
+	      (brick.rmatlist[j],
+	       gmm::scaled(variables[term.var2].real_value[n_iter_2],
+			   scalar_type(-1)), brick.rveclist[ind_data][j]);
 	  
 	  if (term.is_symmetric && term.var1.compare(term.var2)) {
 	    if (cplx) 
-	      gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-			gmm::scaled(variables[term.var1].complex_value[n_iter],
-				    std::complex<scalar_type>(-1)),
-			brick.cveclist_sym[ind_data][j]);
+	      gmm::mult_add
+		(gmm::conjugated(brick.cmatlist[j]),
+		 gmm::scaled(variables[term.var1].complex_value[n_iter_1],
+			     std::complex<scalar_type>(-1)),
+		 brick.cveclist_sym[ind_data][j]);
 	    else
-	      gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-			gmm::scaled(variables[term.var1].real_value[n_iter],
-				    scalar_type(-1)),
-			brick.rveclist_sym[ind_data][j]);
+	      gmm::mult_add
+		(gmm::transposed(brick.rmatlist[j]),
+		 gmm::scaled(variables[term.var1].real_value[n_iter_1],
+			     scalar_type(-1)),
+		 brick.rveclist_sym[ind_data][j]);
 	  }
 	}
       }
@@ -688,10 +765,6 @@ namespace getfem {
     context_check(); if (act_size_to_be_done) actualize_sizes();
     if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
     else { gmm::clear(rTM); gmm::clear(rrhs); }
-
-    // à mettre aussi à la fin avec la suppression des variables temporaires ?
-    for (VAR_SET::iterator it=variables.begin(); it != variables.end(); ++it)
-      it->second.clear_temporaries();
 
     for (size_type ib = 0; ib < bricks.size(); ++ib) {
       brick_description &brick = bricks[ib];
@@ -708,7 +781,7 @@ namespace getfem {
 	if (term.is_matrix_term) I2 = variables[term.var2].I;
 
 	scalar_type coeff0 = scalar_type(1);
-	if (brick.pdispatch) coeff0 = brick.coeffs[0];
+	if (brick.pdispatch) coeff0 = brick.matrix_coeff;
 
 	if (cplx) {
 	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
@@ -872,7 +945,8 @@ namespace getfem {
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+    GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
+		"Unvalid iteration number "
 		<< niter << " for " << name);
     return it->second.real_value[niter];
   }
@@ -884,33 +958,36 @@ namespace getfem {
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+    GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
+		"Unvalid iteration number "
 		<< niter << " for " << name);
     return it->second.complex_value[niter];    
   }
 
   model_real_plain_vector &
-  model::set_real_variable(const std::string &name, size_type niter) {
+  model::set_real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+    GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
+		"Unvalid iteration number "
 		<< niter << " for " << name);
     return it->second.real_value[niter];
   }
   
   model_complex_plain_vector &
-  model::set_complex_variable(const std::string &name, size_type niter) {
+  model::set_complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
     context_check(); if (act_size_to_be_done) actualize_sizes();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     it->second.v_num_data = act_counter();    
     if (niter == size_type(-1)) niter = it->second.default_iter;
-    GMM_ASSERT1(it->second.n_iter > niter, "Unvalid iteration number "
+    GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
+		"Unvalid iteration number "
 		<< niter << " for " << name);
     return it->second.complex_value[niter];    
   }
@@ -2752,14 +2829,21 @@ namespace getfem {
 			  MATLIST &/* matl */,
 			  VECTLIST &vectl, VECTLIST &vectl_sym,
 			  bool first_iter) const {
-
+      // coefficient for the matrix term
+      md.matrix_coeff_of_brick(ib) = theta;
+      // coefficient for the standard rhs
       md.rhs_coeffs_of_brick(ib)[0] = theta;
+      // coefficient for the additional rhs
       md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta);
       
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
       
+      // shift the rhs
       transfert(vectl[0], vectl[1]);
       transfert(vectl_sym[0], vectl_sym[1]);
+
+      // add the component represented by the matrix term to the supplementary
+      // rhs
       md.linear_brick_add_to_rhs(ib, 1, 0);
     }
 
@@ -2815,6 +2899,8 @@ namespace getfem {
   (model &md, const std::string &U, const std::string &V,
    const std::string &pdt, const std::string &ptheta) {
     
+    // V^{n+1} = (1-1/theta)*V^n + (1/theta)*(U^{n+1} - U^n)/dt
+
     if (md.is_complex()) {
       const model_complex_plain_vector &dt = md.complex_variable(pdt);
       GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
@@ -2856,13 +2942,175 @@ namespace getfem {
 
   // ----------------------------------------------------------------------
   //
-  // midpoint dispatcher ... to be done
+  // midpoint dispatcher
   //
   // ----------------------------------------------------------------------
 
 
+  class midpoint_dispatcher : public virtual_dispatcher {
 
+    gmm::uint64_type id_num;
 
+  public :
+
+    typedef model::build_version build_version;
+
+    
+    template <typename MATLIST, typename VECTLIST>
+    inline void next_iter(const model &md, size_type ib,
+			  const model::varnamelist &vl,
+			  const model::varnamelist &dl,
+			  MATLIST &/* matl */,
+			  VECTLIST &vectl, VECTLIST &vectl_sym,
+			  bool first_iter) const {
+
+      pbrick pbr = md.get_brick(ib);
+
+      if (first_iter) { // For the moment, temporaries are deleted by 
+	// model::first_iter before the call to virtual_dispatcher::next_iter
+	if (!(pbr->is_linear()))
+	  md.add_temporaries(vl, id_num); // add temporaries for all variables
+	md.add_temporaries(dl, id_num); // add temporaries for versionned data
+	clear(vectl[1]); clear(vectl_sym[1]);
+      }
+
+      md.matrix_coeff_of_brick(ib) = scalar_type(1)/scalar_type(2);
+      md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1);
+      md.rhs_coeffs_of_brick(ib)[1] = scalar_type(1)/scalar_type(2);
+
+      if (pbr->is_linear()) { // If the problem is linear, add the term
+	// coming from the previous iteration as a second rhs.
+	// This rhs is only used for this.
+	if (first_iter) md.update_brick(ib, model::BUILD_RHS);
+	clear(vectl[1]); clear(vectl_sym[1]);
+	md.linear_brick_add_to_rhs(ib, 1, 0);
+      }
+    }
+
+    void next_real_iter
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl, model::real_matlist &matl,
+     std::vector<model::real_veclist> &vectl,
+     std::vector<model::real_veclist> &vectl_sym, bool first_iter) const {
+      next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
+    }
+
+    void next_complex_iter
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl,
+     model::complex_matlist &matl,
+     std::vector<model::complex_veclist> &vectl,
+     std::vector<model::complex_veclist> &vectl_sym,
+     bool first_iter) const {
+      next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
+    }
+
+    void asm_real_tangent_terms
+    (const model &md, size_type ib, model::real_matlist &/* matl */,
+     std::vector<model::real_veclist> &vectl,
+     std::vector<model::real_veclist> &vectl_sym,
+     build_version version) const {
+    
+      scalar_type half = scalar_type(1)/scalar_type(2);
+      pbrick pbr = md.get_brick(ib);
+      size_type ind;
+
+      const model::varnamelist &vl = md.varnamelist_of_brick(ib);
+      const model::varnamelist &dl = md.datanamelist_of_brick(ib);
+
+      if (!(pbr->is_linear())) { // compute the mean variables
+	for (size_type i = 0; i < vl.size(); ++i) {
+	  bool is_uptodate = md.temporary_uptodate(vl[i], id_num, ind);
+	  if (!is_uptodate && ind != size_type(-1))
+	    gmm::add(gmm::scaled(md.real_variable(vl[i], 0), half),
+		     gmm::scaled(md.real_variable(vl[i], 1), half),
+		     md.set_real_variable(vl[i], ind));
+	  md.set_default_iter_of_variable(vl[i], ind);
+	}
+      }
+
+      // compute the mean data
+      for (size_type i = 0; i < dl.size(); ++i) {
+	bool is_uptodate = md.temporary_uptodate(dl[i], id_num, ind);
+	if (!is_uptodate && ind != size_type(-1)) {
+	  gmm::add(gmm::scaled(md.real_variable(dl[i], 0), half),
+		   gmm::scaled(md.real_variable(dl[i], 1), half),
+		   md.set_real_variable(dl[i], ind));
+	}
+	md.set_default_iter_of_variable(dl[i], ind);
+      }
+      
+      // call the brick for the mid-time step.
+      md.brick_call(ib, version, 0);
+      if (pbr->is_linear()) { // update second rhs (is updated by next_iter
+	// but the call to the brick may have changed the matrices.
+	clear(vectl[1]); clear(vectl_sym[1]);
+	md.linear_brick_add_to_rhs(ib, 1, 1);
+      }
+      
+      md.reset_default_iter_of_variables(dl);
+      if (!(pbr->is_linear()))
+	md.reset_default_iter_of_variables(vl);
+    }
+
+    virtual void asm_complex_tangent_terms
+    (const model &md, size_type ib, model::complex_matlist &/* matl */,
+     std::vector<model::complex_veclist> &vectl,
+     std::vector<model::complex_veclist> &vectl_sym,
+     build_version version) const {
+    
+            scalar_type half = scalar_type(1)/scalar_type(2);
+      pbrick pbr = md.get_brick(ib);
+      size_type ind;
+
+      const model::varnamelist &vl = md.varnamelist_of_brick(ib);
+      const model::varnamelist &dl = md.datanamelist_of_brick(ib);
+
+      if (!(pbr->is_linear())) { // compute the mean variables
+	for (size_type i = 0; i < vl.size(); ++i) {
+	  bool is_uptodate = md.temporary_uptodate(vl[i], id_num, ind);
+	  if (!is_uptodate && ind != size_type(-1))
+	    gmm::add(gmm::scaled(md.complex_variable(vl[i], 0), half),
+		     gmm::scaled(md.complex_variable(vl[i], 1), half),
+		     md.set_complex_variable(vl[i], ind));
+	  md.set_default_iter_of_variable(vl[i], ind);
+	}
+      }
+
+      // compute the mean data
+      for (size_type i = 0; i < dl.size(); ++i) {
+	bool is_uptodate = md.temporary_uptodate(dl[i], id_num, ind);
+	if (!is_uptodate && ind != size_type(-1)) {
+	  gmm::add(gmm::scaled(md.complex_variable(dl[i], 0), half),
+		   gmm::scaled(md.complex_variable(dl[i], 1), half),
+		   md.set_complex_variable(dl[i], ind));
+	}
+	md.set_default_iter_of_variable(dl[i], ind);
+      }
+      
+      // call the brick for the mid-time step.
+      md.brick_call(ib, version, 0);
+      if (pbr->is_linear()) { // update second rhs (is updated by next_iter
+	// but the call to the brick may have changed the matrices.
+	clear(vectl[1]); clear(vectl_sym[1]);
+	md.linear_brick_add_to_rhs(ib, 1, 1);
+      }
+      
+      md.reset_default_iter_of_variables(dl);
+      if (!(pbr->is_linear()))
+	md.reset_default_iter_of_variables(vl);
+    }
+
+    midpoint_dispatcher(void) : virtual_dispatcher(2)
+    { id_num = act_counter(); }
+    
+  };
+
+  void add_midpoint_dispatcher(model &md, dal::bit_vector ibricks) {
+    pdispatcher pdispatch = new midpoint_dispatcher();
+    for (dal::bv_visitor i(ibricks); !i.finished(); ++i)
+      md.add_time_dispatcher(i, pdispatch);
+  }
 
 
 

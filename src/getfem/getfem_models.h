@@ -146,6 +146,7 @@ namespace getfem {
       std::vector<model_real_plain_vector> real_value;
       std::vector<model_complex_plain_vector> complex_value;
       std::vector<gmm::uint64_type> v_num_var_iter;
+      std::vector<gmm::uint64_type> v_num_iter;
 
       var_description(bool is_var = false, bool is_com = false,
 		      bool is_fem = false, size_type n_it = 1,
@@ -159,7 +160,7 @@ namespace getfem {
 	  qdim(Q), v_num(0), v_num_data(act_counter()) {
 	if (filter != VDESCRFILTER_NO && mf != 0)
 	  partial_mf = new partial_mesh_fem(*mf);
-	v_num_data = v_num;
+	// v_num_data = v_num;
       }
 
       // add a temporary version for time integration schemes. Automatically
@@ -232,6 +233,7 @@ namespace getfem {
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
       mutable model_real_plain_vector coeffs;
+      mutable scalar_type matrix_coeff;
       mutable real_matlist rmatlist; // Matrices the brick have to fill in
                                      // (real version).
       mutable std::vector<real_veclist> rveclist; // Rhs the brick have to 
@@ -274,10 +276,34 @@ namespace getfem {
 		    size_type rhs_ind = 0) const;
     model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
     { return bricks[ib].coeffs; }
+    scalar_type &matrix_coeff_of_brick(size_type ib) const
+    { return bricks[ib].matrix_coeff; }
     bool is_var_newer_than_brick(const std::string &varname,
 				 size_type ib) const;
+    pbrick get_brick(size_type ib) const { return bricks[ib].pbr; }
+    
+    void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
+
+    const varnamelist &varnamelist_of_brick(size_type ib) const
+    { return bricks[ib].vlist; }
+    
+    const varnamelist &datanamelist_of_brick(size_type ib) const
+    { return bricks[ib].dlist; }
+    
+    bool temporary_uptodate(const std::string &varname,
+			    gmm::uint64_type  id_num, size_type &ind) const;
+    void set_default_iter_of_variable(const std::string &varname,
+				      size_type ind) const;
+    void reset_default_iter_of_variables(const varnamelist &vl) const;
 
     void update_from_context(void) const {  act_size_to_be_done = true; }
+
+    const model_real_sparse_matrix &linear_real_matrix_term
+    (size_type ib, size_type iterm);
+
+    const model_complex_sparse_matrix &linear_complex_matrix_term
+    (size_type ib, size_type iterm);
+
     
     /** Boolean which says if the model deals with real or complex unknowns
 	and data. */
@@ -321,13 +347,13 @@ namespace getfem {
 	change flag of the variable set. For the real version. */
     model_real_plain_vector &
     set_real_variable(const std::string &name,
-		      size_type niter = size_type(-1));
+		      size_type niter = size_type(-1)) const;
 
     /** Gives the write access to the vector value of a variable. Make a
 	change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
     set_complex_variable(const std::string &name,
-			 size_type niter = size_type(-1));
+			 size_type niter = size_type(-1)) const;
 
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, T) const {
@@ -574,16 +600,12 @@ namespace getfem {
     { for (size_type i = 0; i < v.size(); ++i) gmm::clear(v[i]); }
 
     void transfert(model::real_veclist &v1,
-		   model::real_veclist &v2) const {
-      for (size_type i = 0; i < v1.size(); ++i)
-	gmm::copy(v1[i], v2[i]);
-    }
+		   model::real_veclist &v2) const
+    { for (size_type i = 0; i < v1.size(); ++i) gmm::copy(v1[i], v2[i]); }
 
     void transfert(model::complex_veclist &v1,
-		   model::complex_veclist &v2) const {
-      for (size_type i = 0; i < v1.size(); ++i)
-	gmm::copy(v1[i], v2[i]);
-    }
+		   model::complex_veclist &v2) const
+    { for (size_type i = 0; i < v1.size(); ++i) gmm::copy(v1[i], v2[i]); }
 
     size_type nbrhs_;
     std::vector<std::string> param_names;
@@ -659,6 +681,14 @@ namespace getfem {
   void velocity_update_for_order_two_theta_method
   (model &md, const std::string &U, const std::string &V,
    const std::string &pdt, const std::string &ptheta);
+
+
+  /** Add a midpoint time dispatcher to a list of bricks. For instance,
+      a nonlinear term $K(U)$ will be replaced by
+      $K((U^{n+1} +  U^{n})/2)$.
+  */
+  void add_midpoint_dispatcher(model &md, dal::bit_vector ibricks);
+
 
 
   //=========================================================================

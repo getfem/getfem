@@ -213,7 +213,10 @@ bool heat_equation_problem::solve(void) {
   // Neumann condition.
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
-  model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+  // The two version of the data make only a difference for midpoint scheme
+  model.add_fem_data("NeumannData", mf_rhs, N, 2);
+  gmm::copy(F, model.set_real_variable("NeumannData", 0));
+  gmm::copy(F, model.set_real_variable("NeumannData", 1));
   transient_bricks.add(getfem::add_normal_source_term_brick
 		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
 
@@ -234,9 +237,15 @@ bool heat_equation_problem::solve(void) {
   // transient part.
   model.add_initialized_scalar_data("dt", dt);
   getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
+#if 1
   model.add_initialized_scalar_data("theta", theta);
   getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
- 
+#else
+  // You can also test the midpoint scheme (but not really different from
+  // crank-Nicholson scheme for linear problems).
+  getfem::add_midpoint_dispatcher(model, transient_bricks);
+#endif
+
   gmm::iteration iter(residual, 0, 40000);
 
   model.first_iter();
