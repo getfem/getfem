@@ -88,7 +88,8 @@ struct crack_problem {
   getfem::mesh_fem_product mf_product_p;
   getfem::mesh_fem_sum mf_p_sum;
 
-  scalar_type pr1, pr2, pr3;      /* elastic coefficients.                  */
+  scalar_type pr1, pr2, pr3, AMP_LOAD,nb_step;   /* elastic coefficients,Amplitude of load, number of step loadings*/
+
   base_small_vector cracktip;
 
 
@@ -114,12 +115,12 @@ struct crack_problem {
   getfem::mesh_fem& mf_pe() { return mf_p_sum; }
   // getfem::mesh_fem& mf_u() { return mf_us; }
   
-  scalar_type mu;            /* Lame coefficients.                */
+  //scalar_type mu;            /* Lame coefficients.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   
   
   int bimaterial;           /* For bimaterial interface fracture */
-  double mu_up, mu_down;  /*Lame coeff for bimaterial case*/
+  //double mu_up, mu_down;  /*Lame coeff for bimaterial case*/
  
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure;
@@ -214,52 +215,15 @@ void crack_problem::init(void) {
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
-
-  scalar_type pr1 = PARAM.real_value("P1", "First Elastic coefficient");
-  scalar_type pr2 = PARAM.real_value("P2", "Second Elastic coefficient");
-  scalar_type pr3 = PARAM.real_value("P3", "Third Elastic coefficient");
-
-
-  bimaterial = int(PARAM.int_value("BIMATERIAL", "bimaterial interface crack"));
-  
-  mu = PARAM.real_value("MU", "Lame coefficient mu"); 
-  if (bimaterial == 1){
-    mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
-    mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
-  }
-  
-  
-  spider.radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
-  spider.Nr = unsigned(PARAM.int_value("SPIDER_NR","Spider_Nr "));
-  spider.Ntheta = unsigned(PARAM.int_value("SPIDER_NTHETA","Ntheta "));
-  spider.K = int(PARAM.int_value("SPIDER_K","K "));
-  spider.theta0 = 0;
-  spider.bimat_enrichment = int(PARAM.int_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment"));
-
-  /* The following constants are taken from the Chang and Xu paper of 2007 
-     titled The singular stress field and stress intensity factors of a crack 
-     terminating at a bimaterial interface published in IJMECSCI. epsilon 
-     being the constant present in the asymptotic displacement analytic solution: 
-     r^{1/2} * cos (\epsilon Ln(r)) * f(\theta) and  r^{1/2} * sin (\epsilon Ln(r)) * f(\theta).
-  */
-  
-  if (spider.bimat_enrichment == 1){
-    scalar_type nu1 = 10;
-    scalar_type nu2 = 3;
-    scalar_type kappa1 = 3. - 4. * nu1;
-    scalar_type kappa2 = 3. - 4. * nu2;
-        
-    scalar_type beta = (mu_up*(kappa2-1.) - mu_down*(kappa1-1.)) / (mu_up*(kappa2+1.) - mu_down*(kappa1+1.));
-      spider.epsilon = 1./(2.*M_PI) * log( (1.-beta) / (1.+beta) );
-  
-    
-    //spider.epsilon = PARAM.real_value("SPIDER_BIMAT_ENRICHMENT","spider_bimat_enrichment");
-  }
-  
-
+  pr1 = PARAM.real_value("P1", "First Elastic coefficient");
+  pr2 = PARAM.real_value("P2", "Second Elastic coefficient");
+  pr3 = PARAM.real_value("P3", "Third Elastic coefficient");
+  AMP_LOAD = PARAM.real_value("AMP_LOAD", "Amp load");
+  nb_step  = PARAM.real_value("nb_step", "nb_step");
+  reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test"));
+ 
   /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
-  bgeot::geometric_trans_descriptor(MESH_TYPE);
+  bgeot::pgeometric_trans pgt =  bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
@@ -311,7 +275,7 @@ void crack_problem::init(void) {
   GLOBAL_FUNCTION_U = PARAM.string_value("GLOBAL_FUNCTION_U");
   GLOBAL_FUNCTION_P = PARAM.string_value("GLOBAL_FUNCTION_P");
 
-  reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test")); 
+  
 
 
   cutoff_func = PARAM.int_value("CUTOFF_FUNC", "cutoff function");
@@ -342,19 +306,6 @@ void crack_problem::init(void) {
   mf_mult.set_finite_element(mesh.convex_index(), pf_u);
   mf_mult.set_qdim(dim_type(N));
   mf_partition_of_unity.set_classical_finite_element(1);
-  
-  
-//   if (enrichment_option == 3 || enrichment_option == 4) {
-//     spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-// 				    spider_Ntheta, spider_K, cracktip,
-// 				    theta0);
-//     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
-//     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
-//       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
-// 	mf_us.set_finite_element(i,0);
-//       }
-//     }
-//   }
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
@@ -460,7 +411,7 @@ void mult(const matrix_G &G, const vector1 &X, const vector2 &b, vector2 &Y)
 scalar_type smallest_eigen_value(const sparse_matrix &B,
 				 const sparse_matrix &M,
 				 const sparse_matrix &S) {
-
+  cout << "matrice B = "<< B;
   size_type n = gmm::mat_nrows(M);
   scalar_type lambda;
   plain_vector V(n), W(n), V2(n);
@@ -489,8 +440,10 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
   } while (gmm::vect_dist2(V2, gmm::scaled(V, lambda)) > 1E-3);
   
   return sqrt(1./lambda);
-
 }
+  
+
+
 /*****************************************************************/
 /*   Model.                                                      */
 /*****************************************************************/
@@ -499,7 +452,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();
-  size_type law_num = PARAM.int_value("LAW");  
+  size_type law_num = PARAM.int_value("LAW");
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
@@ -519,16 +472,15 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
 
   cout << "Setting up the singular functions for the enrichment\n";
 
-  std::vector<getfem::pglobal_function> vfunc(6);
-  //std::vector<getfem::pglobal_function> vfunc_u(6);
-  std::vector<getfem::pglobal_function> vfunc_p(2);
+  std::vector<getfem::pglobal_function> vfunc(2);
+  //std::vector<getfem::pglobal_function> vfunc_p(2);
   if (!load_global_fun) {
   std::cout << "Using default singular functions\n";
     for (unsigned i = 0; i < vfunc.size(); ++i){
       /* use the singularity */
       
       getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i);
+	new getfem::crack_singular_xy_function(i+6);
       
       if (enrichment_option != FIXED_ZONE && 
 	  enrichment_option != GLOBAL_WITH_MORTAR) {
@@ -544,25 +496,25 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
       vfunc[i]=getfem::global_function_on_level_set(ls, *s);           
     }
 
-    for (unsigned i = 0; i < vfunc_p.size() ;++i){
-      /* use the singularity */
+//     for (unsigned i = 0; i < vfunc_p.size() ;++i){
+//       /* use the singularity */
       
-      getfem::abstract_xy_function *sp = 
-	new getfem::crack_singular_xy_function(i+4);
+//       getfem::abstract_xy_function *sp = 
+// 	new getfem::crack_singular_xy_function(i+8);
       
-      if (enrichment_option != FIXED_ZONE && 
-	  enrichment_option != GLOBAL_WITH_MORTAR) {
-	/* use the product of the singularity function
-	   with a cutoff */
-	getfem::abstract_xy_function *cp = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
-					 cutoff_radius, 
-					 cutoff_radius1,cutoff_radius0);
-	sp  = new getfem::product_of_xy_functions(*sp, *cp);
+//       if (enrichment_option != FIXED_ZONE && 
+// 	  enrichment_option != GLOBAL_WITH_MORTAR) {
+// 	/* use the product of the singularity function
+// 	   with a cutoff */
+// 	getfem::abstract_xy_function *cp = 
+// 	  new getfem::cutoff_xy_function(int(cutoff_func),
+// 					 cutoff_radius, 
+// 					 cutoff_radius1,cutoff_radius0);
+// 	sp  = new getfem::product_of_xy_functions(*sp, *cp);
         
-      }
-      vfunc_p[i]=getfem::global_function_on_level_set(ls, *sp);           
-    }
+//       }
+//       vfunc_p[i]=getfem::global_function_on_level_set(ls, *sp);           
+//    }
   } else {
     cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U <<" and " << GLOBAL_FUNCTION_P << "\n";
     getfem::mesh *m = new getfem::mesh(); 
@@ -613,9 +565,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     }    
   }
   
-  vfunc.resize(4);
   mf_sing_u.set_functions(vfunc);
-  mf_sing_p.set_functions(vfunc_p);  
+//mf_sing_p.set_functions(vfunc_p);  
 
   if (enrichment_option == SPIDER_FEM_ALONE || 
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
@@ -724,6 +675,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   } break;
     
   case NO_ENRICHMENT: {
+    cout<<"No enrichment..."<<endl;
     mf_u_sum.set_mesh_fems(mfls_u);
     mf_p_sum.set_mesh_fems(mfls_p);
   } break;
@@ -803,69 +755,14 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
 
  getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
 
-
-// getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
-  
-//   pINCOMP = new getfem::mdbrick_nonlinear_incomp<>(ELAS, mf_pe());
-  
-  int nb_step = int(PARAM.int_value("NBSTEP"));
-
-  // Linearized elasticity brick.
-  
-  
-  // getfem::mdbrick_isotropic_linearized_elasticity<>
-  // ELAS(mim, mf_u(), mixed_pressure ? 0.0 : 0.0, mu);
-
-  /*Bimaterial section for linear elasticity*/
-  //  if(bimaterial == 1){
-  //  cout<<"______________________________________________________________________________"<<endl;
-  //  cout<<"CASE OF BIMATERIAL CRACK  with mu_up = "<<mu_up<<" and mu_down = "<<mu_down<<endl;
-  //  cout<<"______________________________________________________________________________"<<endl;
-  //  std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
-  //  std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
-    
-  //  cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-
-  //  GMM_ASSERT1(!(ELAS.lambda().mf().is_reduced()), "To be adapted for reduced fems");
-    
-  //  for (size_type ite = 0; ite < ELAS.lambda().mf().nb_basic_dof();ite++) {
-  //    if (ELAS.lambda().mf().point_of_basic_dof(ite)[1] > 0){
-  //      bi_lambda[ite] = 0;
-  //	bi_mu[ite] = mu_up;
-  //    }
-  //	else{
-  //	  bi_lambda[ite] = 0;
-  //	  bi_mu[ite] = mu_down;
-  //	}
-  //	}*/
-    
-  // cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
-  // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
-  //  ELAS.lambda().set(bi_lambda);
-  //  ELAS.mu().set(bi_mu);
-  //  }
-  
-
-  // getfem::mdbrick_abstract<> *pINCOMP;
-  // getfem::mdbrick_linear_incomp<> *incomp;
-  // if (mixed_pressure) {
-  // incomp = new getfem::mdbrick_linear_incomp<>(ELAS, mf_pe());
-      // incomp->penalization_coeff().set(1.0/lambda);
-  // pINCOMP = incomp;
-  // } else { pINCOMP = &ELAS; incomp = 0; }
-
-
-
-
   // Defining the Neumann condition right hand side.
   plain_vector F(nb_dof_rhs * N);
 
   // Neumann condition brick.
   
   //down side
-  for(size_type i = 1; i < F.size(); i=i+N) F[i] = 1;
-  for(size_type i = 0; i < F.size(); i=i+N) F[i] = 1;
+  for(size_type i = 1; i < F.size(); i=i+N) F[i] = AMP_LOAD;
+  for(size_type i = 0; i < F.size(); i=i+N) F[i] = AMP_LOAD;
   
   getfem::mdbrick_source_term<> NEUMANN1(INCOMP, mf_rhs, F,
 					 NEUMANN1_BOUNDARY_NUM);
@@ -888,89 +785,51 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> DIRICHLET(KILL_RIGID_MOTIONS, DIRICHLET_BOUNDARY_NUM, mf_mult);
+  getfem::mdbrick_Dirichlet<> DIRICHLET (KILL_RIGID_MOTIONS, DIRICHLET_BOUNDARY_NUM, mf_mult);
     
-  DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
+ DIRICHLET.set_constraints_type(getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
 
-  getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
+ getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
 
- if (enrichment_option == GLOBAL_WITH_MORTAR) {
-    /* add a constraint brick for the mortar junction between
-       the enriched area and the rest of the mesh */
-    /* we use mfls_u as the space of lagrange multipliers */
-    getfem::mesh_fem &mf_mortar = mfls_mortar; 
-    /* adjust its qdim.. this is just evil and dangerous
-       since mf_u() is built upon mfls_u.. it would be better
-       to use a copy. */
-    mf_mortar.set_qdim(2); // EVIL 
-    getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET,0));
+/*************************************/
+/*       Generic solve.              */
+/*************************************/
 
-    cout << "Handling mortar junction\n";
+  getfem::standard_model_state MS(*final_model);
+  size_type maxit = PARAM.int_value("MAXITER"); 
+  gmm::iteration iter;
 
-    /* list of dof of mf_mortar for the mortar condition */
-    std::vector<size_type> ind_mortar;
-    /* unfortunately , dof_on_region sometimes returns too much dof
-       when mf_mortar is an enriched one so we have to filter them */
-    sparse_matrix M(mf_mortar.nb_dof(), mf_mortar.nb_dof());
-    getfem::asm_mass_matrix(M, mim, mf_mortar, MORTAR_BOUNDARY_OUT);
-    for (dal::bv_visitor_c d(mf_mortar.dof_on_region(MORTAR_BOUNDARY_OUT)); 
-	 !d.finished(); ++d) {
-      if (M(d,d) > 1e-8) ind_mortar.push_back(d);
-      else cout << "  removing non mortar dof" << d << "\n";
-    }
-
-    cout << ind_mortar.size() << " dof for the lagrange multiplier)\n";
-
-    sparse_matrix H0(mf_mortar.nb_dof(), mf_u().nb_dof()), 
-      H(ind_mortar.size(), mf_u().nb_dof());
-
-
-    gmm::sub_index sub_i(ind_mortar);
-    gmm::sub_interval sub_j(0, mf_u().nb_dof());
+ /********************/
+ /* Step loading     */
+ /********************/
     
-    /* build the mortar constraint matrix -- note that the integration
-       method is conformal to the crack
-     */
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-			    MORTAR_BOUNDARY_OUT);
-    gmm::copy(gmm::sub_matrix(H0, sub_i, sub_j), H);
-
-    gmm::clear(H0);
-    getfem::asm_mass_matrix(H0, mim, mf_mortar, mf_u(), 
-			    MORTAR_BOUNDARY_IN);
-    gmm::add(gmm::scaled(gmm::sub_matrix(H0, sub_i, sub_j), -1), H);
-
-
-    /* because of the discontinuous partition of mf_u(), some levelset
-       enriched functions do not contribute any more to the
-       mass-matrix (the ones which are null on one side of the
-       levelset, when split in two by the mortar partition, may create
-       a "null" dof whose base function is all zero..
-    */
-    sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
-    getfem::asm_mass_matrix(M2, mim, mf_u(), mf_u());
-
-    for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
-      if (M2(d,d) < 1e-10) {
-	cout << "  removing null mf_u() dof " << d << "\n";
-	size_type n = gmm::mat_nrows(H);
-	gmm::resize(H, n+1, gmm::mat_ncols(H));
-	H(n, d) = 1;
-      }
-    }
-
+  
+ //for (int step = 0; step < nb_step; ++step) {
     
-    
-    getfem::base_vector R(gmm::mat_nrows(H));
-    mortar.set_constraints(H,R);
+    /* let the default non-linear solve (Newton) do its job */
 
-    final_model = &mortar;
-  }
+ // /*F.size()*/  for(size_type i = 1; i <  nb_dof_rhs; i=i+N) F[i] = F[i]+ (AMP_LOAD/nb_step);
+ // /*F.size()*/  for(size_type i = 0; i <  nb_dof_rhs; i=i+N) F[i]+=F[i]+ (AMP_LOAD/nb_step);
+ //               final_model.rhs().set(F);
+ //   cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
+    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
+			  maxit ? maxit : 40000);
+    gmm::default_newton_line_search lnrs(size_type(-1), 5.0/3.0, 1.0/10.0, 5.0/10.0, 3.0);
+    getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), lnrs);
 
+    pl->reset_unvalid_flag();
+    final_model->compute_residual(MS);
+    if (pl->get_unvalid_flag()) 
+      GMM_WARNING1("The solution is not completely valid, the determinant "
+		   "of the transformation is negative on "
+		   << pl->get_unvalid_flag() << " gauss points");
 
+    //}
 
-  // Computation of the inf-sup bound 
+ /*************************************/
+ /*  Computation of the inf-sup bound */ 
+ /*************************************/
+
   if (PARAM.int_value("INF_SUP_COMP") && mixed_pressure) {
     
     cout << "Sparse matrices computation for the test of inf-sup condition"
@@ -978,69 +837,28 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
 
     sparse_matrix Mis(mf_pe().nb_dof(), mf_pe().nb_dof());
     sparse_matrix Sis(mf_u().nb_dof(), mf_u().nb_dof());
-
+    sparse_matrix Bis(mf_pe().nb_dof(),mf_u().nb_dof());
     getfem::asm_mass_matrix(Mis, mim, mf_pe());
     getfem::asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
       (Sis, mim, mf_u());
-    getfem::asm_mass_matrix(Sis, mim, mf_u());
-    
+    getfem::asm_mass_matrix(Sis, mim, mf_u());    
     cout << "Inf-sup condition test" << endl;
-    scalar_type lambda = smallest_eigen_value(INCOMP.get_B(), Mis, Sis);
+    INCOMP.get_B(MS,Bis);
+    scalar_type lambda = smallest_eigen_value(Bis, Mis, Sis);
     cout << "The inf-sup test gives " << lambda << endl;
   }
 
-  // Generic solve.
-  /* 
-  cout << "Total number of variables : " << final_model->nb_dof() << endl;
-  getfem::standard_model_state MS(*final_model);
-  size_type maxit = PARAM.int_value("MAXITER"); 
-  gmm::iteration iter;
-  
-  //gmm::iteration iter(residual, 2, 40000);
-   cout << "Solving..." << endl;
-  //getfem::standard_solve(MS, *final_model, iter,getfem::select_linear_solver(*final_model,"superlu"));
-   cout << "Solving... done" << endl;
-   getfem::standard_solve(MS, final_model, iter);
-
-    pl->reset_unvalid_flag();
-    final_model.compute_residual(MS);
-    if (pl->get_unvalid_flag()) 
-      GMM_WARNING1("The solution is not completely valid, the determinant "
-		   "of the transformation is negative on "
-		   << pl->get_unvalid_flag() << " gauss points");
-  */
-
-    /********************/
-    /* Step loading     */
-    /********************/
-
-
-  getfem::standard_model_state MS(*final_model);
-  size_type maxit = PARAM.int_value("MAXITER"); 
-  gmm::iteration iter;
-
-
- for (int step = 0; step < nb_step; ++step) {
-    
-    /* let the default non-linear solve (Newton) do its job */
-    getfem::standard_solve(MS, final_model, iter);
-
-    pl->reset_unvalid_flag();
-    final_model.compute_residual(MS);
-    if (pl->get_unvalid_flag()) 
-      GMM_WARNING1("The solution is not completely valid, the determinant "
-		   "of the transformation is negative on "
-		   << pl->get_unvalid_flag() << " gauss points");
      // Solution extraction
+    
     gmm::copy(ELAS.get_solution(MS), U);
     gmm::copy(INCOMP.get_pressure(MS), P);
-    //char s[100]; sprintf(s, "step%d", step+1);
+    return (iter.converged());
 
-    /* append the new displacement to the exported opendx file */
-    exp.write_point_data(mf_u, U); //, s);
-    exp.serie_add_object("deformationsteps");
-    
-  if (reference_test) {
+      
+      
+      
+ if (reference_test == 1) {
+      
       cout << "Exporting reference solution...";
       dal::bit_vector blocked_dof = mf_u().basic_dof_on_region(5);
       getfem::mesh_fem mf_refined(mesh, dim_type(N));
@@ -1061,14 +879,9 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
       getfem::interpolation(mf_pe(), mf_refined, P, PP);
       mf_refined.write_to_file(datafilename + "_refined_test.p_meshfem_refined", true);
       gmm::vecsave(datafilename + "_refined_test.P_refined", PP);
-     
-      
       cout << "done" << endl;
-    }
-  
- }
-  return (iter.converged());
-}
+  }
+  }
 
 void export_interpolated_on_line(const getfem::mesh_fem &mf,
 				 const getfem::base_vector &U,
@@ -1082,7 +895,7 @@ void export_interpolated_on_line(const getfem::mesh_fem &mf,
     mti.add_point(x0 + 2*(i*h)*dir);
   }
 
-   getfem::base_vector V(mti.nb_points() * mf.get_qdim());
+  getfem::base_vector V(mti.nb_points() * mf.get_qdim());
   getfem::base_matrix M;
   getfem::interpolation(mf, mti, U, V, M, 0, false);
   
@@ -1102,7 +915,8 @@ void export_interpolated_on_line(const getfem::mesh_fem &mf,
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-  
+
+  GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   //getfem::getfem_mesh_level_set_noisy();
@@ -1227,10 +1041,10 @@ int main(int argc, char *argv[]) {
     
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
-    std::string REFERENCE_MF = "large_strain_refined_test.meshfem_refined";
-    std::string REFERENCE_U = "large_strain_refined_test.U_refined";
-    std::string REFERENCE_MFP = "large_strain_refined_test.p_meshfem_refined";
-    std::string REFERENCE_P = "large_strain_refined_test.P_refined";
+    std::string REFERENCE_MF = "xfem_large_strain_refined_test100.meshfem_refined";
+    std::string REFERENCE_U = "xfem_large_strain_refined_test100.U_refined";
+    std::string REFERENCE_MFP = "xfem_large_strain_refined_test100.p_meshfem_refined";
+    std::string REFERENCE_P = "xfem_large_strain_refined_test100.P_refined";
     
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
