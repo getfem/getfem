@@ -98,15 +98,16 @@ struct wave_equation_problem {
   enum { DIRICHLET_WITH_MULTIPLIERS = 0, DIRICHLET_WITH_PENALIZATION = 1};
   getfem::mesh mesh;        /* the mesh */
   getfem::mesh_im mim;      /* the integration methods. */
+
   getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Wave_Equation solution */
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
 
   scalar_type residual;        /* max residual for the iterative solvers     */
-  size_type N, dirichlet_version;
+  size_type N, dirichlet_version, scheme;
   scalar_type dirichlet_coefficient; /* Penalization parameter.              */
   plain_vector U;
 
-  scalar_type dt, T, theta;
+  scalar_type dt, T, theta, beta, gamma;
 
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -154,7 +155,10 @@ void wave_equation_problem::init(void) {
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   dt = PARAM.real_value("DT", "Time step");
   T = PARAM.real_value("T", "final time");
+  scheme = PARAM.int_value("SCHEME", "Time integration scheme");
   theta = PARAM.real_value("THETA", "Theta method parameter");
+  beta = PARAM.real_value("BETA", "Newmark scheme beta parameter");
+  gamma = PARAM.real_value("GAMMA", "Newmark scheme gamma parameter");
   sol_c = PARAM.real_value("C", "Diffusion coefficient");
   residual = PARAM.real_value("RESIDUAL");
   dirichlet_version = PARAM.int_value("DIRICHLET_VERSION",
@@ -255,20 +259,33 @@ bool wave_equation_problem::solve(void) {
   // transient part.
   model.add_fem_data("v", mf_u, 1, 2);
   model.add_initialized_scalar_data("dt", dt);
-#if 1
-  model.add_initialized_scalar_data("theta", theta);
-  size_type ibddt
-    = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v", "dt", "theta");
-  getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
-#else
-  // You can also test the midpoint scheme (but not really different from
-  // crank-Nicholson scheme for linear problems).
-  theta = 0.5;
-  model.add_initialized_scalar_data("theta", theta);
-  size_type ibddt
-    = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v", "dt", "theta");  
-  getfem::add_midpoint_dispatcher(model, transient_bricks);
-#endif 
+  size_type ibddt;
+  scalar_type alpha;
+  switch (scheme) {
+  case 1 : // Theta-method
+    model.add_initialized_scalar_data("theta", theta);
+    ibddt = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v",
+					      "dt", "theta");
+    getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
+    alpha = theta;
+    break;
+  case 2 : // Midpoint (not really different than Crank-Nicholson here).
+    model.add_initialized_scalar_data("alpha", 0.5);
+    alpha = 0.5;
+    ibddt = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v",
+					      "dt", "alpha");
+    getfem::add_midpoint_dispatcher(model, transient_bricks);
+    break;
+  case 3 : // Newmark
+    alpha = 2.*beta;    
+    model.add_initialized_scalar_data("twobeta", alpha);
+    model.add_initialized_scalar_data("gamma", gamma);
+    ibddt = getfem::add_basic_d2_on_dt2_brick(model, mim, "u", "v",
+					      "dt", "twobeta");
+    getfem::add_theta_method_dispatcher(model, transient_bricks, "twobeta");
+    break;
+  default : GMM_ASSERT1(false, "Unvalid time integration scheme");
+  }
 
   gmm::iteration iter(residual, 0, 40000);
 
@@ -292,13 +309,27 @@ bool wave_equation_problem::solve(void) {
     cout << "solving for t = " << sol_t << endl;
     iter.init();
     getfem::standard_solve(model, iter);
+
+    switch (scheme) {
+    case 1 : // Theta-method
+      getfem::velocity_update_for_order_two_theta_method
+	(model, "u", "v", "dt", "theta");
+      break;
+    case 2 : // Midpoint 
+      getfem::velocity_update_for_order_two_theta_method
+	(model, "u", "v", "dt", "alpha");
+      break;
+    case 3 : // Newmark
+      getfem::velocity_update_for_Newmark_scheme
+      	(model, ibddt, "u", "v", "dt", "twobeta", "gamma");
+    break;
+    }
+
     gmm::copy(model.real_variable("u"), U);
     if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
       char s[100]; sprintf(s, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
     }
-    getfem::velocity_update_for_order_two_theta_method
-      (model, "u", "v", "dt", "theta");
 
     { // Computation of total energy :  V^TMV/2 +  U^TKU/2
       // plain_vector V(mf_u.nb_dof()), W(mf_u.nb_dof());
@@ -307,7 +338,7 @@ bool wave_equation_problem::solve(void) {
       scalar_type J
 	= gmm::vect_sp(model.linear_real_matrix_term(iblap, 0), U, U) * 0.5
 	+ gmm::vect_sp(model.linear_real_matrix_term(ibddt, 0), V, V)
-	* 0.5 * dt*dt*theta;
+	* 0.5 * dt*dt*alpha;
       cout << "Energy : " << J << endl;
     }
 

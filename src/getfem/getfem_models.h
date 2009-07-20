@@ -214,7 +214,9 @@ namespace getfem {
     enum build_version { BUILD_RHS = 1,
 			 BUILD_MATRIX = 2,
 			 BUILD_ALL = 3,
-			 BUILD_ON_DATA_CHANGE = 4 };
+			 BUILD_ON_DATA_CHANGE = 4,
+                         BUILD_WITH_COMPLETE_RHS = 8,
+                         BUILD_COMPLETE_RHS = 9 };
 
   private :
 
@@ -257,6 +259,7 @@ namespace getfem {
     typedef std::map<std::string, var_description> VAR_SET;
     mutable VAR_SET variables;
     std::vector<brick_description> bricks;
+    dal::bit_vector active_bricks;
 
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
@@ -304,6 +307,17 @@ namespace getfem {
     const model_complex_sparse_matrix &linear_complex_matrix_term
     (size_type ib, size_type iterm);
 
+    /** Disable a brick.  */
+    void disable_brick(size_type ib) {
+      GMM_ASSERT1(ib < bricks.size(), "Unexistent brick");
+      active_bricks.sup(ib);
+    }
+
+    /** Disable a brick.  */
+    void unable_brick(size_type ib) {
+      GMM_ASSERT1(ib < bricks.size(), "Unexistent brick");
+      active_bricks.add(ib);
+    }
     
     /** Boolean which says if the model deals with real or complex unknowns
 	and data. */
@@ -330,6 +344,10 @@ namespace getfem {
 
     /** Gives a non already existing variable name begining by `name`. */
     std::string new_name(const std::string &name);
+
+    const gmm::sub_interval
+    &interval_of_variable(const std::string &name) const
+    { return variables[name].I; }
 
     /** Gives the access to the vector value of a variable. For the real
 	version. */
@@ -517,7 +535,7 @@ namespace getfem {
     void listvar(std::ostream &ost) const;
 
     /** List the model bricks. */
-    void listbricks(std::ostream &ost) const;
+    void listbricks(std::ostream &ost, size_type base_id = 0) const;
 
     /** Force the re-computation of a brick for the next assembly. */ 
     void touch_brick(size_type ind_brick) {
@@ -541,6 +559,8 @@ namespace getfem {
 
     /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
+
+    void set_dispatch_coeff(void);
 
     /** For transient problems. Initialisation of iterations. */
     void first_iter(void);
@@ -566,6 +586,7 @@ namespace getfem {
 
     void clear(void) {
       variables.clear();
+      active_bricks.clear();
       rTM = model_real_sparse_matrix();
       cTM = model_complex_sparse_matrix();
       rrhs = model_real_plain_vector();
@@ -615,6 +636,9 @@ namespace getfem {
     size_type nbrhs(void) const { return nbrhs_; }
 
     typedef model::build_version build_version;
+
+    virtual void set_dispatch_coeff(const model &, size_type) const
+    { GMM_ASSERT1(false, "Time dispatcher with not set_dispatch_coeff !"); }
 
     virtual void next_real_iter
     (const model &, size_type, const model::varnamelist &,
@@ -675,7 +699,7 @@ namespace getfem {
 
   /** Function which udpate the velocity $v^{n+1}$ after the computation
       of the displacement $u^{n+1}$ and before the next iteration. Specific
-      for theta-method and when the velocity is included in the variables
+      for theta-method and when the velocity is included in the data
       of the model.
   */
   void velocity_update_for_order_two_theta_method
@@ -689,7 +713,16 @@ namespace getfem {
   */
   void add_midpoint_dispatcher(model &md, dal::bit_vector ibricks);
 
-
+  /** Function which udpate the velocity $v^{n+1}$ after the computation
+      of the displacement $u^{n+1}$ and before the next iteration. Specific
+      for Newmark scheme and when the velocity is included in the data
+      of the model. This version inverts the mass matrix by a conjugate
+      gradient.
+  */
+  void velocity_update_for_Newmark_scheme
+  (model &md, size_type id2dt2b, const std::string &U, const std::string &V,
+   const std::string &pdt, const std::string &ptwobeta,
+   const std::string &pgamma);
 
   //=========================================================================
   //

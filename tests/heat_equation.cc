@@ -214,7 +214,7 @@ bool heat_equation_problem::solve(void) {
   gmm::resize(F, mf_rhs.nb_dof()*N);
   getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
   // The two version of the data make only a difference for midpoint scheme
-  model.add_fem_data("NeumannData", mf_rhs, N, 2);
+  model.add_fem_data("NeumannData", mf_rhs, bgeot::dim_type(N), 2);
   gmm::copy(F, model.set_real_variable("NeumannData", 0));
   gmm::copy(F, model.set_real_variable("NeumannData", 1));
   transient_bricks.add(getfem::add_normal_source_term_brick

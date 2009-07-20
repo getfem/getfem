@@ -29,6 +29,8 @@ T = 5/(2*SQRTN*FT*C);             % Final time (1.25 period)
 DT = T/50;                        % Time step 
 THETA = 0.5;
 NX = 20;            	          % space step.
+SCHEME = 1;                       % Time integration scheme
+BETA = 0.25;   GAMMA = 0.5;       % Newmark scheme parameters
 
 ;
 close(TMPF);

@@ -63,10 +63,19 @@ using namespace getfemint;
   @SET MODEL:SET('add explicit rhs')
   @SET MODEL:SET('set private matrix')
   @SET MODEL:SET('set private rhs')
+  @SET MODEL:SET('disable bricks')
+  @SET MODEL:SET('unable bricks')
   @SET MODEL:SET('add isotropic linearized elasticity brick')
   @SET MODEL:SET('add linear incompressibility brick')
   @SET MODEL:SET('add mass brick')
-
+  @SET MODEL:SET('add basic d on dt brick')
+  @SET MODEL:SET('add basic d2 on dt2 brick')
+  @SET MODEL:SET('add theta method dispatcher')
+  @SET MODEL:SET('velocity update for order two theta method')
+  @SET MODEL:SET('add midpoint dispatcher')
+  @SET MODEL:SET('velocity update for Newmark scheme')
+  @SET MODEL:SET('first iter')
+  @SET MODEL:SET('next iter')
 
 MLABCOM*/
 
@@ -180,7 +189,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (!md->is_complex()) {
       darray st = in.pop().to_darray();
       size_type niter = 0;
-      if (in.remaining()) niter = in.pop().to_integer(0,10);
+      if (in.remaining()) niter = in.pop().to_integer(0,10) - config::base_index();
       GMM_ASSERT1(st.size() == md->model().real_variable(name, niter).size(),
 		  "Bad size in assigment");
       md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
@@ -695,5 +704,124 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       (md->model(), mim, varname, dataname_rho, region)
       + config::base_index();
     out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add basic d on dt brick", in, out, 3, 5, 0, 1)) {
+    /*@SET ind = MODEL:SET('add basic d on dt brick', @tmim mim, @str varnameU, @str dataname_dt[, @str dataname_rho[, @int region]])
+    Add the standard discretization of a first order time derivative on
+    `varnameU`. The parameter $rho$ is the density which could be omitted
+    (the defaul value is 1). This brick should be used in addition to a
+    time dispatcher for the other terms. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varnameU = in.pop().to_string();
+    std::string varnamedt = in.pop().to_string();
+    std::string dataname_rho;
+    if (in.remaining()) dataname_rho = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_basic_d_on_dt_brick
+      (md->model(), mim, varnameU, varnamedt, dataname_rho, region)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add basic d2 on dt2 brick", in, out, 5, 7, 0,1)) {
+    /*@SET ind = MODEL:SET('add basic d2 on dt2 brick', @tmim mim, @str varnameU,  @str datanameV, @str dataname_dt, @str dataname_alpha,[, @str dataname_rho[, @int region]])
+    Add the standard discretization of a second order time derivative
+    on `varnameU`. `datanameV` is a data represented on the same finite
+    element method as U which represents the time derivative of U. The
+    parameter $rho$ is the density which could be omitted (the defaul value
+    is 1). This brick should be used in addition to a time dispatcher for the
+    other terms. The time derivative $v$ of the variable $u$ is preferably
+    computed as a post-traitement which depends on each scheme. The parameter
+    `dataname_alpha` depends on the time integration scheme. @*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    workspace().set_dependance(md, gfi_mim);
+    getfem::mesh_im &mim = gfi_mim->mesh_im();
+    std::string varnameU = in.pop().to_string();
+    std::string varnameV = in.pop().to_string();
+    std::string varnamedt = in.pop().to_string();
+    std::string varnamealpha = in.pop().to_string();
+    std::string dataname_rho;
+    if (in.remaining()) dataname_rho = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_basic_d2_on_dt2_brick
+      (md->model(), mim, varnameU,  varnameV, varnamedt, varnamealpha, dataname_rho, region)
+      + config::base_index();
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add theta method dispatcher", in, out, 2, 2, 0,0)) {
+    /*@SET MODEL:SET('add theta method dispatcher', @ivec bricks_indices, @str theta)
+      Add a theta-method time dispatcher to a list of bricks. For instance,
+      a matrix term $K$ will be replaced by
+      $\theta K U^{n+1} + (1-\theta) K U^{n}$.
+      @*/
+    dal::bit_vector bv;
+    bv = in.pop().to_bit_vector();
+    std::string datanametheta = in.pop().to_string();
+    getfem::add_theta_method_dispatcher(md->model(), bv, datanametheta);
+  } else if (check_cmd(cmd, "add midpoint dispatcher", in, out, 1, 1, 0,0)) {
+    /*@SET MODEL:SET('add midpoint dispatcher', @ivec bricks_indices)
+     Add a midpoint time dispatcher to a list of bricks. For instance,
+     a nonlinear term $K(U)$ will be replaced by
+     $K((U^{n+1} +  U^{n})/2)$.@*/
+    dal::bit_vector bv;
+    bv = in.pop().to_bit_vector();
+    getfem::add_midpoint_dispatcher(md->model(), bv);
+  } else if (check_cmd(cmd, "velocity update for order two theta method", in, out, 4, 4, 0,0)) {
+    /*@SET MODEL:SET('velocity update for order two theta method', @str varnameU,  @str datanameV, @str dataname_dt, @str dataname_theta)
+      Function which udpate the velocity $v^{n+1}$ after the computation
+      of the displacement $u^{n+1}$ and before the next iteration. Specific
+      for theta-method and when the velocity is included in the data
+      of the model. @*/
+    std::string varnameU = in.pop().to_string();
+    std::string varnameV = in.pop().to_string();
+    std::string varnamedt = in.pop().to_string();
+    std::string varnametheta = in.pop().to_string();
+    velocity_update_for_order_two_theta_method
+      (md->model(), varnameU, varnameV, varnamedt, varnametheta);
+  } else if (check_cmd(cmd, "velocity update for Newmark scheme", in, out, 6, 6, 0,0)) {
+    /*@SET MODEL:SET('velocity update for Newmark scheme', @int id2dt2_brick, @str varnameU,  @str datanameV, @str dataname_dt, @str dataname_twobeta, @str dataname_alpha)
+      Function which udpate the velocity $v^{n+1}$ after the computation
+      of the displacement $u^{n+1}$ and before the next iteration. Specific
+      for Newmark scheme and when the velocity is included in the data
+      of the model. This version inverts the mass matrix by a conjugate
+      gradient. @*/
+    size_type id2dt2 = in.pop().to_integer();
+    std::string varnameU = in.pop().to_string();
+    std::string varnameV = in.pop().to_string();
+    std::string varnamedt = in.pop().to_string();
+    std::string varnametwobeta = in.pop().to_string();
+    std::string varnamegamma = in.pop().to_string();
+    velocity_update_for_Newmark_scheme
+      (md->model(), id2dt2, varnameU, varnameV, varnamedt,
+       varnametwobeta, varnamegamma);
+  } else if (check_cmd(cmd, "disable bricks", in, out, 1, 1, 0,0)) {
+    /*@SET MODEL:SET('disable bricks', @ivec bricks_indices)
+      Disable a brick (the brick will no longer participate to the
+      building of the tangent linear system).
+      @*/
+    dal::bit_vector bv;
+    bv = in.pop().to_bit_vector();
+    for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
+      md->model().disable_brick(ii);
+  } else if (check_cmd(cmd, "unable bricks", in, out, 1, 1, 0,0)) {
+    /*@SET MODEL:SET('unable bricks', @ivec bricks_indices)
+      Unable a disabled brick.
+      @*/
+    dal::bit_vector bv;
+    bv = in.pop().to_bit_vector();
+    for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
+      md->model().unable_brick(ii);
+  } else if (check_cmd(cmd, "first iter", in, out, 0, 0, 0,0)) {
+    /*@SET ind = MODEL:SET('first iter')
+      To be executed before the first iteration of a time integration scheme.
+      @*/
+    md->model().first_iter();
+  } else if (check_cmd(cmd, "next iter", in, out, 0, 0, 0,0)) {
+    /*@SET ind = MODEL:SET('next iter')
+      To be executed at the end of each iteration of a time integration scheme.
+      @*/
+    md->model().next_iter();
   } else bad_cmd(cmd);
 }

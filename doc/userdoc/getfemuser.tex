@@ -2838,6 +2838,27 @@ The same brick as for the $\theta$-method can be used to represent a first order
 
 The same brick as for the $\theta$-method can be used to represent a second order time derivative. The value of $\alpha$ should be $1/2$.
 
+
+\subsection{Newmark scheme}
+
+For a system
+$$ M\ddot{U} + K(U) = F, $$
+the Newmark scheme of parameter $\beta$ and $\gamma$ is defined by
+$$ M(U^{n+1} - U^{n}) = dt M V^n + dt^2/2( 2\beta(F^{n+1}-K(U^{n+1})) + (1-2\beta)(F^{n}-K(U^{n}))), $$
+$$ M(V^{n+1} - V^{n}) = dt ( 2\gamma(F^{n+1}-K(U^{n+1})) + (1-2\gamma)(F^{n}-K(U^{n}))), $$
+where $V$ represents the time derivative of $U$.
+
+The implementation of the Newmark scheme proposed is not optimal and should be adapted. It can be optained using the basic second order time derivative brick (see $\theta$-method) and the $\theta$-method time dispatcher used with $\theta = 2\beta$. Additionaly, one has to use the following function which compute the time derivative of the variable as a post-computation:
+
+\begin{cppcode}
+  getfem::velocity_update_for_Newmark_scheme
+      (model, id2dt2, varname, dataname_V, dataname_dt, dataname_alpha);
+\end{cppcode}
+
+where \cpp{id2dt2} is the index of the  basic second order time derivative brick (see the section on the $\theta$-method for more details and the implementation in the test program \cpp{tests/wave_equation.cc}).
+
+This implementation of the Newmark-scheme is not optimal since the latter function inverts the mass matrix to compute the time derivative using a conjugate gradient. This linear system solve could be avoided by keeping the multiplication of the mass matrix with the time derivative as a data, with an addaptation of the time derivative brick.
+
 \section{The model bricks (old system)}
 \index{model bricks}
 The brick system of \gf 3.x described in this section will evoluate on \gf 4.x. The new system is describe in previous section \ref{sec:model}. The system of \gf 3.x is kept for compatibility reasons but is someow deprecated.

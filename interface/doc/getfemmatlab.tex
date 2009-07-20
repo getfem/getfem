@@ -2884,11 +2884,23 @@ ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname, \tstr
 ind_brick=gf_model_set(md,'add Fourier Robin brick', \tmim mim, \tstr varname[, \tstr dataname, \tint region)
 ind_brick=gf_model_set(md,'add constraint with penalization',  \tstr varname, \tscal coeff, \tmat B, \tvec L)
 ind_brick=gf_model_set(md,'add constraint with multipliers,  \tstr varname, \tstr multname, \tmat B, \tvec L)
+ind_brick=gf_model_set(md,'add explicit matrix', \tstr varname1, \tstr varname2, \tmat B[, \tint issymmetric[, \tint iscoercive]])
+ind_brick=gf_model_set(md,'add explicit rhs', \tstr varname, \tvec L)
 gf_model_set(md,'set private matrix',  \tint indbrick, \tmat B)
 gf_model_set(md,'set private rhs',  \tint indbrick, \tvec L)
+gf_model_set(md,'disable bricks',  \tivec indbricks)
+gf_model_set(md,'unable bricks',  \tivec indbricks)
 ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', \tmim mim, \tstr varname, \tstr dataname_lambda, \tstr dataname_mu[, \tint region])
 ind_brick=gf_model_set(md,'add linear incompressibility brick', \tmim mim, \tstr varname, \tstr multname_pressure[, \tint region[, \tstr dataname_coeff]])
 ind_brick=gf_model_set(md,'add mass brick', \tmim mim, \tstr varname[, \tstr dataname_rho[, \tint region]])
+ind_brick=gf_model_set(md,'add basic d on dt brick', \tmim mim, \tstr varnameU,  \tstr dataname_dt[, \tstr dataname_rho[, \tint region]])
+ind_brick=gf_model_set(md,'add basic d2 on dt2 brick', \tmim mim, \tstr varnameU,  \tstr varnameV, \tstr dataname_dt, \tstr dataname_alpha[, \tstr dataname_rho[, \tint region]])
+gf_model_set(md,'add theta method dispatcher', \tivec bricks_indices, \tstr theta)
+gf_model_set(md,'add midpoint dispatcher', \tivec bricks_indices)
+gf_model_set(md,'velocity update for order two theta method',  \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_theta)
+gf_model_set(md,'velocity update for Newmark scheme',  \tint id2dt2_brick, \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_twobeta,  \tstr dataname_gamma)
+gf_model_set(md,'first iter')
+gf_model_set(md,'next iter')
 @@
 \end{synopsis}
 \begin{cmddescription}
@@ -3067,6 +3079,13 @@ For some specific bricks having an internal sparse matrix
 For some specific bricks having an internal right hand side vector
 (constraint brick), set this rhs.
 
+\sep{@@gf_model_set(md,'disable bricks',  \tivec indbricks)@@} :
+Disable a brick (the brick will no longer participate to the
+building of the tangent linear system).
+
+\sep{@@gf_model_set(md,'unable bricks',  \tivec indbricks)@@} :
+Unable a disabled brick.
+
 \sep{@@ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', \tmim mim, \tstr varname, \tstr dataname_lambda, \tstr dataname_mu[, \tint region])@@} :
 Add an isotropic linearized elasticity term to the model relatively to the
 variable `varname`.
@@ -3090,6 +3109,52 @@ Add mass term to the model relatively to the variable `varname`.
 If specified, the data `dataname_rho` should contain the density (1 if omitted).
 `region` is an optional mesh region on which the term is added.
 If it is not specified, it is added on the whole mesh.
+
+\sep{@@ind_brick=gf_model_set(md,'add basic d on dt brick', \tmim mim, \tstr varnameU,  \tstr dataname_dt[, \tstr dataname_rho[, \tint region]])@@} :
+Add the standard discretization of a first order time derivative on
+`varnameU`. The parameter $rho$ is the density which could be omitted
+(the defaul value is 1). This brick should be used in addition to a
+time dispatcher for the other terms.
+
+\sep{@@ind_brick=gf_model_set(md,'add basic d2 on dt2 brick', \tmim mim, \tstr varnameU,  \tstr varnameV, \tstr dataname_dt, \tstr dataname_alpha[, \tstr dataname_rho[, \tint region]])@@} :
+Add the standard discretization of a second order time derivative
+on `varnameU`. `datanameV` is a data represented on the same finite
+element method as U which represents the time derivative of U. The
+parameter $rho$ is the density which could be omitted (the defaul value
+is 1). This brick should be used in addition to a time dispatcher for the
+other terms. The time derivative $v$ of the variable $u$ is preferably
+computed as a post-traitement which depends on each scheme. The parameter
+`dataname_alpha` depends on the time integration scheme.
+
+\sep{@@gf_model_set(md,'add theta method dispatcher', \tivec bricks_indices, \tstr theta)@@} :
+Add a theta-method time dispatcher to a list of bricks. For instance,
+a matrix term $K$ will be replaced by
+$\theta K U^{n+1} + (1-\theta) K U^{n}$.
+
+\sep{@@gf_model_set(md,'add midpoint dispatcher', \tivec bricks_indices)@@} :
+ind = MODEL:SET('add midpoint dispatcher', @ivec bricks_indices)
+Add a midpoint time dispatcher to a list of bricks. For instance,
+a nonlinear term $K(U)$ will be replaced by
+$K((U^{n+1} +  U^{n})/2)$.
+
+\sep{@@gf_model_set(md,'velocity update for order two theta method',  \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_theta)@@} :
+Function which udpate the velocity $v^{n+1}$ after the computation
+of the displacement $u^{n+1}$ and before the next iteration. Specific
+for theta-method and when the velocity is included in the data
+of the model.
+
+\sep{@@gf_model_set(md,'velocity update for Newmark scheme',  \tint id2dt2_brick, \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_twobeta,  \tstr dataname_gamma)@@} :
+Function which udpate the velocity $v^{n+1}$ after the computation
+of the displacement $u^{n+1}$ and before the next iteration. Specific
+for Newmark scheme and when the velocity is included in the data
+of the model. This version inverts the mass matrix by a conjugate
+gradient.
+
+\sep{@@gf_model_set(md,'first iter')@@} :
+To be executed before the first iteration of a time integration scheme.
+
+\sep{@@gf_model_set(md,'next iter')@@} :
+To be executed at the end of each iteration of a time integration scheme.
 
 \end{cmddescription}
 \newpage

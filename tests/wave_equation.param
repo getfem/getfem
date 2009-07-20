@@ -20,7 +20,13 @@ SQRTN = 1.4142135623730951;          % N = 2
 % SQRTN = 1.7320508075688772;        % N = 3
 T = 5/(2*SQRTN*FT*C);                % Final time (1.5 period)
 DT = T/125;                          % Time step 
+
+SCHEME = 3;                          % Time integration scheme
+				     % 1 = Theta-method
+				     % 2 = Midpoint
+				     % 3 = Newmark
 THETA = 0.5;                         % Theta method parameter
+BETA = 0.25;   GAMMA = 0.5;          % Newmark scheme parameters
 
 
 if (N == 1)

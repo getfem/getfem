@@ -466,9 +466,19 @@ model states.
     #@SET    MODEL:SET('add explicit rhs')
     #@SET    MODEL:SET('set private matrix')
     #@SET    MODEL:SET('set private rhs')
+    #@SET    MODEL:SET('disable bricks')
+    #@SET    MODEL:SET('unable bricks')
     #@SET    MODEL:SET('add isotropic linearized elasticity brick')
     #@SET    MODEL:SET('add linear incompressibility brick')
     #@SET    MODEL:SET('add mass brick')
+    #@SET    MODEL:SET('add basic d on dt brick')
+    #@SET    MODEL:SET('add basic d2 on dt2 brick')
+    #@SET    MODEL:SET('add theta method dispatcher')
+    #@SET    MODEL:SET('velocity update for order two theta method')
+    #@SET    MODEL:SET('add midpoint dispatcher')
+    #@SET    MODEL:SET('velocity update for Newmark scheme')
+    #@SET    MODEL:SET('first iter')
+    #@SET    MODEL:SET('next iter')
 
 class GeoTrans:
     """General function for building descriptors to geometric transformations.

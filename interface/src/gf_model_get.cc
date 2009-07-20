@@ -102,7 +102,7 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   } else if (check_cmd(cmd, "listbricks", in, out, 0, 0, 0, 0)) {
     /*@GET MODEL:GET('listbricks')
     print to the output the list of bricks of the model.@*/
-    md->model().listbricks(infomsg());
+    md->model().listbricks(infomsg(),  config::base_index());
   } else if (check_cmd(cmd, "variable", in, out, 1, 2, 0, 1)) {
     /*@GET V = MODEL:GET('variable', @str name[, @int niter])
     Gives the value of a variable or data.@*/

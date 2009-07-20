@@ -8,8 +8,8 @@ mf = gf_mesh_fem(m,1);
 % assign the Q2 fem to all convexes of the mesh_fem,
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
-% an exact integration will be used
-mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
+% Integration which will be used
+mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 %mim = gf_mesh_im(m, gf_integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,5),4)'));
 % detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');

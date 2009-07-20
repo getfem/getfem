@@ -21,6 +21,7 @@
 
 #include <iomanip>
 #include "gmm/gmm_range_basis.h"
+#include "gmm/gmm_solver_cg.h"
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_derivatives.h"
@@ -376,6 +377,8 @@ namespace getfem {
 			     const mimlist &mims, size_type region) {
     bricks.push_back(brick_description(pbr, varnames, datanames, terms,
 				       mims, region));
+    size_type ib = bricks.size() - 1;
+    active_bricks.add(ib);
     for  (size_type i = 0; i < bricks.back().mims.size(); ++i)
       add_dependency(*(bricks.back().mims[i]));
 
@@ -401,12 +404,14 @@ namespace getfem {
       GMM_ASSERT1(variables.find(datanames[i]) != variables.end(),
 		  "Undefined model data or variable " << datanames[i]);
     
-    return size_type(bricks.size() - 1);
+    return ib;
   }
 
 
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
-    
+        
+    GMM_ASSERT1(ibrick < bricks.size(), "Unexistent brick");
+
     pbrick pbr = bricks[ibrick].pbr;
 
     bricks[ibrick].pdispatch = pdispatch;
@@ -437,7 +442,7 @@ namespace getfem {
 
   const std::string &model::varname_of_brick(size_type ind_brick,
 				      size_type ind_var) {
-    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(ind_brick < bricks.size(), "Unexistent brick");
     GMM_ASSERT1(ind_var < bricks[ind_brick].vlist.size(),
 	       "Inexistent brick variable");
     return bricks[ind_brick].vlist[ind_var];
@@ -445,22 +450,24 @@ namespace getfem {
   
   const std::string &model::dataname_of_brick(size_type ind_brick,
 					      size_type ind_data) {
-    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(ind_brick < bricks.size(), "Unexistent brick");
     GMM_ASSERT1(ind_data < bricks[ind_brick].dlist.size(),
 		"Inexistent brick data");
     return bricks[ind_brick].dlist[ind_data];
   }
 
-  void model::listbricks(std::ostream &ost) const {
+  void model::listbricks(std::ostream &ost, size_type base_id) const {
     if (bricks.size() == 0)
       ost << "Model with no bricks" << endl;
     else {
       ost << "List of model bricks:" << endl;
       for (size_type i = 0; i < bricks.size(); ++i) {
-	ost << "Brick " << std::setw(3) << std::right << i
+	ost << "Brick " << std::setw(3) << std::right << i + base_id
 	    << " " << std::setw(20) << std::right
-	    << bricks[i].pbr->brick_name() << endl;
-	ost << "  concerned variables: " << bricks[i].vlist[0];
+	    << bricks[i].pbr->brick_name();
+	if (!(active_bricks[i])) ost << " (desactivated)";
+	if (bricks[i].pdispatch) ost << " (dispatched)";	
+	ost << endl << "  concerned variables: " << bricks[i].vlist[0];
 	for (size_type j = 1; j < bricks[i].vlist.size(); ++j)
 	  ost << ", " << bricks[i].vlist[j];
 	ost << "." << endl;
@@ -545,13 +552,23 @@ namespace getfem {
 					brick.region, version);
   }
 
+  void model::set_dispatch_coeff(void) {
+    for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
+      brick_description &brick = bricks[ib];
+      if (brick.pdispatch) 
+	brick.pdispatch->set_dispatch_coeff(*this, ib);
+
+    }
+  }
 
   void model::first_iter(void) {
     
     for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
       it->second.clear_temporaries();
 
-    for (size_type ib = 0; ib < bricks.size(); ++ib) {
+    set_dispatch_coeff();
+
+    for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
       bool cplx = is_complex() && brick.pbr->is_complex();
       if (brick.pdispatch) {
@@ -569,7 +586,9 @@ namespace getfem {
   }
   
   void model::next_iter(void) {
-    for (size_type ib = 0; ib < bricks.size(); ++ib) {
+    set_dispatch_coeff();
+
+    for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
       bool cplx = is_complex() && brick.pbr->is_complex();
       if (brick.pdispatch) {
@@ -766,7 +785,7 @@ namespace getfem {
     if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
     else { gmm::clear(rTM); gmm::clear(rrhs); }
 
-    for (size_type ib = 0; ib < bricks.size(); ++ib) {
+    for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
 
       update_brick(ib, version);
@@ -802,7 +821,7 @@ namespace getfem {
 	    else
 	      gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
-		&& !is_linear()) {
+		&& (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
 	      gmm::mult_add(brick.cmatlist[j],
 			    gmm::scaled(variables[term.var2].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
@@ -817,7 +836,8 @@ namespace getfem {
 	      }
 	      else
 		gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
-	       if (brick.pbr->is_linear() && !is_linear()) {
+	       if (brick.pbr->is_linear()
+		   && (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
 		 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
 			    gmm::scaled(variables[term.var1].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
@@ -844,7 +864,7 @@ namespace getfem {
 	    else
 	      gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
-		&& !is_linear()) {
+		&& (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
 	      gmm::mult_add(brick.rmatlist[j],
 			    gmm::scaled(variables[term.var2].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
@@ -859,7 +879,8 @@ namespace getfem {
 	      }
 	      else 
 		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
-	      if (brick.pbr->is_linear() && !is_linear()) {
+	      if (brick.pbr->is_linear()
+		  && (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
 		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
 			     gmm::scaled(variables[term.var1].complex_value[0],
 					  std::complex<scalar_type>(-coeff0)),
@@ -886,7 +907,7 @@ namespace getfem {
 	    else
 	      gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
-		&& !is_linear()) {
+		&& (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
 	      gmm::mult_add(brick.rmatlist[j],
 			    gmm::scaled(variables[term.var2].real_value[0],
 					-coeff0),
@@ -901,7 +922,8 @@ namespace getfem {
 	      }
 	      else
 		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
-	      if (brick.pbr->is_linear() && !is_linear()) {
+	      if (brick.pbr->is_linear()
+		  && (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
 		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
 			      gmm::scaled(variables[term.var1].real_value[0],
 					  -coeff0),
@@ -1042,6 +1064,7 @@ namespace getfem {
       }
 
       gmm::clear(matl[0]);
+      GMM_TRACE2("Generic elliptic term assembly");
       if (s == 1) {
 	if (mf_a) {
 	  if (Q > 1)
@@ -1122,6 +1145,7 @@ namespace getfem {
       }
 
       gmm::clear(matl[0]);
+      GMM_TRACE2("Generic elliptic term assembly");
       if (s == 1) {
 	if (mf_a) {
 	  if (Q > 1)
@@ -1238,6 +1262,7 @@ namespace getfem {
 		  "Detected dimension is " << s << " should be "
 		  << size_type(mf_u.get_qdim()));
 
+      GMM_TRACE2("Source term assembly");
       if (mf_data)
 	asm_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
@@ -1275,6 +1300,7 @@ namespace getfem {
 
       GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of source term data");
 
+      GMM_TRACE2("Source term assembly");
       if (mf_data)
 	asm_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
@@ -1346,6 +1372,7 @@ namespace getfem {
 		  "Detected dimension is " << s << " should be "
 		  << size_type(mf_u.get_qdim()*N));
 
+      GMM_TRACE2("source term assembly");
       if (mf_data)
 	asm_normal_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
@@ -1381,6 +1408,7 @@ namespace getfem {
 
       GMM_ASSERT1(s == mf_u.get_qdim()*N, "Bad format of source term data");
 
+      GMM_TRACE2("source term assembly");
       if (mf_data)
 	asm_normal_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
@@ -1466,6 +1494,7 @@ namespace getfem {
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
       if (dl.size()) {
+	GMM_TRACE2("Source term assembly for Dirichlet condition");	  
 	if (mf_data)
 	  asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
 	else
@@ -1474,6 +1503,7 @@ namespace getfem {
       }
 
       if (recompute_matrix) {
+	GMM_TRACE2("Mass term assembly for Dirichlet condition");
 	gmm::clear(matl[0]);
 	asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
 	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
@@ -1523,6 +1553,7 @@ namespace getfem {
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
       if (dl.size() > ind) {
+	GMM_TRACE2("Source term assembly for Dirichlet condition");
 	if (mf_data)
 	  asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
 	else
@@ -1531,6 +1562,7 @@ namespace getfem {
       }
 
       if (recompute_matrix) {
+	GMM_TRACE2("Mass term assembly for Dirichlet condition");
 	gmm::clear(matl[0]);
 	asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
 	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
@@ -1663,6 +1695,7 @@ namespace getfem {
       if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
 
       if (s == 1) {
+	GMM_TRACE2("Stiffness matrix assembly for Helmholtz problem");
 	gmm::clear(matl[0]);
 	model_real_plain_vector A2(gmm::vect_size(*A));
 	for (size_type i=0; i < gmm::vect_size(*A); ++i) // Not valid for 
@@ -1705,6 +1738,7 @@ namespace getfem {
       if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
 
       if (s == 1) {
+	GMM_TRACE2("Stiffness matrix assembly for Helmholtz problem");
 	gmm::clear(matl[0]);
 	model_complex_plain_vector A2(gmm::vect_size(*A));
 	for (size_type i=0; i < gmm::vect_size(*A); ++i) // Not valid for 
@@ -1777,6 +1811,7 @@ namespace getfem {
       GMM_ASSERT1(s == Q*Q,
 		  "Bad format Fourier-Robin brick coefficient");
 
+      GMM_TRACE2("Fourier-Robin term assembly");
       gmm::clear(matl[0]);
       if (mf_a)
 	asm_qu_term(matl[0], mim, mf_u, *mf_a, *A, rg);
@@ -1813,7 +1848,8 @@ namespace getfem {
       if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
       GMM_ASSERT1(s == Q*Q,
 		  "Bad format Fourier-Robin brick coefficient");
-
+      
+      GMM_TRACE2("Fourier-Robin term assembly");
       gmm::clear(matl[0]);
       if (mf_a)
 	asm_qu_term(matl[0], mim, mf_u, *mf_a, *A, rg);
@@ -2189,6 +2225,8 @@ namespace getfem {
 		    "The two coefficients should be described on the same "
 		    "finite element method.");
 	
+	GMM_TRACE2("Stiffness matrix assembly for isotropic linearized "
+		   "elasticity");
 	gmm::clear(matl[0]);
 	if (mf_lambda)
 	  asm_stiffness_matrix_for_linear_elasticity
@@ -2315,6 +2353,7 @@ namespace getfem {
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
+      GMM_TRACE2("Stokes term assembly");
       gmm::clear(matl[0]);
       asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
 
@@ -2401,7 +2440,8 @@ namespace getfem {
 	if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
 	GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
       }
-      
+
+      GMM_TRACE2("Mass matrix assembly");
       gmm::clear(matl[0]);
       if (dl.size() && mf_rho) {
 	asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
@@ -2444,6 +2484,7 @@ namespace getfem {
 	GMM_ASSERT1(sl == 1, "Bad format of mass brick coefficient");
       }
       
+      GMM_TRACE2("Mass matrix assembly");
       gmm::clear(matl[0]);
       if (dl.size() && mf_rho) {
 	asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
@@ -2529,7 +2570,8 @@ namespace getfem {
 	  if (mf_rho) sl = sl * mf_rho->get_qdim() / mf_rho->nb_dof();
 	  GMM_ASSERT1(sl == 1, "Bad format for density");
 	}
-	
+
+	GMM_TRACE2("Mass matrix assembly for d_on_dt brick");
 	if (dl.size() > 2 && mf_rho) {
 	  gmm::clear(matl[0]);
 	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
@@ -2590,6 +2632,7 @@ namespace getfem {
 	  GMM_ASSERT1(sl == 1, "Bad format for density");
 	}
 	
+	GMM_TRACE2("Mass matrix assembly for d_on_dt brick");
 	if (dl.size() > 2 && mf_rho) {
 	  gmm::clear(matl[0]);
 	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
@@ -2637,6 +2680,8 @@ namespace getfem {
 
   struct basic_d2_on_dt2_brick : public virtual_brick {
 
+    mutable scalar_type old_alphadt2;
+
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
@@ -2653,29 +2698,29 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == 1 && dl.size() >= 4 && dl.size() <= 5,
 		  "Wrong number of variables for basic d2/dt2 brick");
 
-      // It should me more convenient not to recompute the matrix if only
-      // dt or alpha is modified
-      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
-	|| md.is_var_newer_than_brick(dl[2], ib)
-	|| md.is_var_newer_than_brick(dl[3], ib);
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0);
+
       if (dl.size() > 4)
 	recompute_matrix = recompute_matrix ||
 	  md.is_var_newer_than_brick(dl[4], ib);
 
       const model_real_plain_vector &dt = md.real_variable(dl[2]);
       GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+      const model_real_plain_vector &alpha = md.real_variable(dl[3]);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter alpha");
+      scalar_type alphadt2 = gmm::sqr(dt[0]) * alpha[0];
 
-      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+      if (!recompute_matrix && alphadt2 != old_alphadt2)
+	gmm::scale(matl[0], old_alphadt2/alphadt2);
+      old_alphadt2 = alphadt2;
+
+      if (recompute_matrix) {
 	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 	const mesh &m = mf_u.linked_mesh();
 	const mesh_im &mim = *mims[0];
 	mesh_region rg(region);
 	m.intersect_with_mpi_region(rg);
       
-	const model_real_plain_vector &alpha = md.real_variable(dl[3]);
-	GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter alpha");
-	scalar_type alphadt2 = gmm::sqr(dt[0]) * alpha[0];
-
 	const mesh_fem *mf_rho = 0;
 	const model_real_plain_vector *rho = 0;
 	
@@ -2687,6 +2732,7 @@ namespace getfem {
 	  GMM_ASSERT1(sl == 1, "Bad format for density");
 	}
 	
+	GMM_TRACE2("Mass matrix assembly for d2_on_dt2 brick");
 	if (dl.size() > 4 && mf_rho) {
 	  gmm::clear(matl[0]);
 	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
@@ -2719,28 +2765,27 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == 1 && dl.size() >= 4 && dl.size() <= 5,
 		  "Wrong number of variables for basic d2/dt2 brick");
       
-      // It should me more convenient not to recompute the matrix if only
-      // dt or alpha is modified
-      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
-	|| md.is_var_newer_than_brick(dl[2], ib)
-	|| md.is_var_newer_than_brick(dl[3], ib);
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0);
       if (dl.size() > 4)
 	recompute_matrix = recompute_matrix ||
 	  md.is_var_newer_than_brick(dl[4], ib);
 
       const model_complex_plain_vector &dt = md.complex_variable(dl[2]);
       GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
+      const model_complex_plain_vector &alpha = md.complex_variable(dl[3]);
+      GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter alpha");
+      scalar_type alphadt2 = gmm::real(gmm::sqr(dt[0]) * alpha[0]);
 
-      if (!(version & model::BUILD_ON_DATA_CHANGE)) {
+      if (!recompute_matrix && alphadt2 != old_alphadt2)
+	gmm::scale(matl[0], old_alphadt2/alphadt2);
+      old_alphadt2 = alphadt2;
+
+      if (recompute_matrix) {
 	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 	const mesh &m = mf_u.linked_mesh();
 	const mesh_im &mim = *mims[0];
 	mesh_region rg(region);
 	m.intersect_with_mpi_region(rg);
-      
-	const model_complex_plain_vector &alpha = md.complex_variable(dl[3]);
-	GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for parameter alpha");
-	scalar_type alphadt2 = gmm::real(gmm::sqr(dt[0]) * alpha[0]);
 
 	const mesh_fem *mf_rho = 0;
 	const model_complex_plain_vector *rho = 0;
@@ -2753,6 +2798,7 @@ namespace getfem {
 	  GMM_ASSERT1(sl == 1, "Bad format for density");
 	}
 	
+	GMM_TRACE2("Mass matrix assembly for d2_on_dt2 brick");
 	if (dl.size() > 4 && mf_rho) {
 	  gmm::clear(matl[0]);
 	  asm_mass_matrix_param(matl[0], mim, mf_u, *mf_rho, *rho, rg);
@@ -2815,11 +2861,23 @@ namespace getfem {
 
   class theta_method_dispatcher : public virtual_dispatcher {
 
-    mutable scalar_type theta;
-
   public :
 
     typedef model::build_version build_version;
+
+    void set_dispatch_coeff(const model &md, size_type ib) const {
+      scalar_type theta;
+      if (md.is_complex())
+	theta = gmm::real(md.complex_variable(param_names[0])[0]);
+      else
+	theta = md.real_variable(param_names[0])[0];
+      // coefficient for the matrix term
+      md.matrix_coeff_of_brick(ib) = theta;
+      // coefficient for the standard rhs
+      md.rhs_coeffs_of_brick(ib)[0] = theta;
+      // coefficient for the additional rhs
+      md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta);
+    }
 
 
     template <typename MATLIST, typename VECTLIST>
@@ -2829,21 +2887,14 @@ namespace getfem {
 			  MATLIST &/* matl */,
 			  VECTLIST &vectl, VECTLIST &vectl_sym,
 			  bool first_iter) const {
-      // coefficient for the matrix term
-      md.matrix_coeff_of_brick(ib) = theta;
-      // coefficient for the standard rhs
-      md.rhs_coeffs_of_brick(ib)[0] = theta;
-      // coefficient for the additional rhs
-      md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta);
-      
       if (first_iter) md.update_brick(ib, model::BUILD_RHS);
       
       // shift the rhs
       transfert(vectl[0], vectl[1]);
       transfert(vectl_sym[0], vectl_sym[1]);
 
-      // add the component represented by the matrix term to the supplementary
-      // rhs
+      // add the component represented by the linear matrix terms to the
+      // supplementary rhs
       md.linear_brick_add_to_rhs(ib, 1, 0);
     }
 
@@ -2852,7 +2903,6 @@ namespace getfem {
      const model::varnamelist &dl, model::real_matlist &matl,
      std::vector<model::real_veclist> &vectl,
      std::vector<model::real_veclist> &vectl_sym, bool first_iter) const {
-      theta = md.real_variable(param_names[0])[0];
       next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
     }
 
@@ -2863,7 +2913,6 @@ namespace getfem {
      std::vector<model::complex_veclist> &vectl,
      std::vector<model::complex_veclist> &vectl_sym,
      bool first_iter) const {
-      theta = std::real(md.complex_variable(param_names[0])[0]);
       next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
     }
 
@@ -2936,9 +2985,95 @@ namespace getfem {
 
   // ----------------------------------------------------------------------
   //
-  // Newmark dispatcher ... to be done
+  // Newmark scheme dispatcher
   //
   // ----------------------------------------------------------------------
+
+  void velocity_update_for_Newmark_scheme
+  (model &md, size_type id2dt2b, const std::string &U, const std::string &V,
+   const std::string &pdt, const std::string &ptwobeta,
+   const std::string &pgamma) {
+
+    md.disable_brick(id2dt2b);
+    
+    if (md.is_complex()) {
+      typedef std::complex<scalar_type> complex_type;
+      
+      complex_type twobeta = md.complex_variable(ptwobeta)[0];
+      complex_type gamma = md.complex_variable(pgamma)[0];
+      complex_type dt = md.complex_variable(pdt)[0];
+
+      // Modification of the parameter for the theta-method.
+      if (twobeta != gamma) {
+	md.set_complex_variable(ptwobeta)[0] = gamma;
+	md.set_dispatch_coeff();  // valid the change of coefficients.
+      }
+      
+      // Computation of the residual (including the linear parts).
+      md.assembly(model::BUILD_COMPLETE_RHS);
+
+      size_type nbdof = gmm::vect_size(md.complex_variable(U));
+      model_complex_plain_vector W(nbdof), RHS(nbdof);
+      gmm::copy(gmm::sub_vector(md.complex_rhs(), md.interval_of_variable(U)),
+		RHS);
+
+      // Compute the velocity. Inversion with CG.
+      gmm::iteration iter(1e-12, 0, 100000);
+      gmm::cg(md.linear_complex_matrix_term(id2dt2b, 0),
+	      W, RHS, gmm::identity_matrix(), iter);
+      GMM_ASSERT1(iter.converged(), "Velocity not well computed");
+      gmm::add(md.complex_variable(V, 1),
+	       gmm::scaled(W, complex_type(1)/(twobeta*dt)),
+	       md.set_complex_variable(V, 0));
+      
+      // Cancel the modification of the parameter for the theta-method.
+      if (twobeta != gamma) {
+	md.set_complex_variable(ptwobeta)[0] = twobeta;
+	md.set_dispatch_coeff();  // valid the change of coefficients.
+      }
+
+
+      GMM_ASSERT1(false, "to be done");
+    } else {
+      scalar_type twobeta = md.real_variable(ptwobeta)[0];
+      scalar_type gamma = md.real_variable(pgamma)[0];
+      scalar_type dt = md.real_variable(pdt)[0];
+      
+      
+
+      // Modification of the parameter for the theta-method.
+      if (twobeta != gamma) {
+	md.set_real_variable(ptwobeta)[0] = gamma;
+	md.set_dispatch_coeff();  // valid the change of coefficients.
+      }
+      
+      // Computation of the residual (including the linear parts).
+      md.assembly(model::BUILD_COMPLETE_RHS);
+
+      size_type nbdof = gmm::vect_size(md.real_variable(U));
+      model_real_plain_vector W(nbdof), RHS(nbdof);
+      gmm::copy(gmm::sub_vector(md.real_rhs(), md.interval_of_variable(U)),
+		RHS);
+
+      // Compute the velocity. Inversion with CG.
+      gmm::iteration iter(1e-12, 0, 100000);
+      gmm::cg(md.linear_real_matrix_term(id2dt2b, 0),
+	      W, RHS, gmm::identity_matrix(), iter);
+      GMM_ASSERT1(iter.converged(), "Velocity not well computed");
+      gmm::add(md.real_variable(V, 1),
+	       gmm::scaled(W, scalar_type(1)/(twobeta*dt)),
+	       md.set_real_variable(V, 0));
+      
+      // Cancel the modification of the parameter for the theta-method.
+      if (twobeta != gamma) {
+	md.set_real_variable(ptwobeta)[0] = twobeta;
+	md.set_dispatch_coeff();  // valid the change of coefficients.
+      }
+
+    }
+    md.unable_brick(id2dt2b);
+  }
+
 
   // ----------------------------------------------------------------------
   //
@@ -2955,6 +3090,11 @@ namespace getfem {
 
     typedef model::build_version build_version;
 
+    void set_dispatch_coeff(const model &md, size_type ib) const {
+      md.matrix_coeff_of_brick(ib) = scalar_type(1)/scalar_type(2);
+      md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1);
+      md.rhs_coeffs_of_brick(ib)[1] = scalar_type(1)/scalar_type(2);
+    }
     
     template <typename MATLIST, typename VECTLIST>
     inline void next_iter(const model &md, size_type ib,
@@ -2973,10 +3113,6 @@ namespace getfem {
 	md.add_temporaries(dl, id_num); // add temporaries for versionned data
 	clear(vectl[1]); clear(vectl_sym[1]);
       }
-
-      md.matrix_coeff_of_brick(ib) = scalar_type(1)/scalar_type(2);
-      md.rhs_coeffs_of_brick(ib)[0] = scalar_type(1);
-      md.rhs_coeffs_of_brick(ib)[1] = scalar_type(1)/scalar_type(2);
 
       if (pbr->is_linear()) { // If the problem is linear, add the term
 	// coming from the previous iteration as a second rhs.
@@ -3059,7 +3195,7 @@ namespace getfem {
      std::vector<model::complex_veclist> &vectl_sym,
      build_version version) const {
     
-            scalar_type half = scalar_type(1)/scalar_type(2);
+      scalar_type half = scalar_type(1)/scalar_type(2);
       pbrick pbr = md.get_brick(ib);
       size_type ind;
 
