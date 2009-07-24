@@ -160,12 +160,25 @@ namespace getfem {
       case 1 : return sqrt(r)*cos2; 
       case 2 : return sin2*y/sqrt(r); 
       case 3 : return cos2*y/sqrt(r);
-
-    /* Ces deux fonctions représentes l'enrichissement du champs de pression en     * élasticité incompressible en formulation mixte ...
+  /*Enrichissemnt secent order en u */
+      case 4 : return sqrt(r)*r*sin2;
+      case 5 : return sqrt(r)*r*cos2; 
+      //case 6 : return sqrt(r)*y*sin2; 
+      //case 7 : return sqrt(r)*y*cos2; 
+     // case 6 : return 2*sin2*x*y/sqrt(r);
+      //case 7 : return 2*cos2*x*y/sqrt(r);
+      case 6 : return sin2*cos2*cos2*r*sqrt(r);
+      case 7 : return cos2*cos2*cos2*r*sqrt(r); 
+    /* Ces deux fonctions reprÃ©sentes l'enrichissement du champs de pression en Ã©lasticitÃ© incompressible en formulation mixte ...
      */
 	
-      case 4 : return -sin2/sqrt(r);
-      case 5 : return cos2/sqrt(r); 
+      case 8 : return -sin2/sqrt(r);
+      case 9 : return cos2/sqrt(r); 
+
+  /*Enrichissemnt secent order en p */
+
+      case 10 : return sin2*sqrt(r); //*cos2*cos2
+      case 11 : return cos2*sqrt(r); 
 
     default: GMM_ASSERT2(false, "arg");
     }
@@ -189,7 +202,7 @@ namespace getfem {
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
 
     switch(l){
-    case 0 :
+     case 0 :
       res[0] = -sin2/(2*sqrt(r));
       res[1] = cos2/(2*sqrt(r));
       break;
@@ -198,23 +211,65 @@ namespace getfem {
       res[1] = sin2/(2*sqrt(r));
       break;
     case 2 :
-      res[0] = cos2*(-5*cos2*cos2 + 1. + 4*(cos2*cos2*cos2*cos2))/sqrt(r);
-      res[1] = sin2*(-3*cos2*cos2 + 1. + 4*(cos2*cos2*cos2*cos2))/sqrt(r);
+      res[0] = cos2*((-5*cos2*cos2) + 1. + 4*(cos2*cos2*cos2*cos2))/sqrt(r);
+      res[1] = sin2*((-3*cos2*cos2) + 1. + 4*(cos2*cos2*cos2*cos2))/sqrt(r);
       break;
     case 3 :
-      res[0] = -cos2*cos2*sin2*(4*cos2*cos2 - 3)/sqrt(r);
-      res[1] = cos2*(4*cos2*cos2*cos2*cos2 + 2 - 5*cos2*cos2)/sqrt(r);
+      res[0] = -cos2*cos2*sin2*((4*cos2*cos2) - 3.)/sqrt(r);
+      res[1] = cos2*((4*cos2*cos2*cos2*cos2) + 2. - (5*cos2*cos2))/sqrt(r);
       break;
 
-    /* Ces deux fonctions représentes l'enrichissement du champs de pression en     * élasticité incompressible en formulation mixte ...
-     */
+
+
     case 4 :
-      res[0] =sin2/(2*sqrt(r)*r); 
-      res[1] =-cos2/(2*sqrt(r)*r);
+      res[0] = sin2 *((4*cos2*cos2)-3.)*sqrt(r)/2.;
+      res[1] = cos2*(5. - (4*cos2*cos2))*sqrt(r)/2. ;
       break;
     case 5 :
-      res[0] =-cos2/(2*sqrt(r)*r); 
-      res[1] =-sin2/(2*sqrt(r)*r); 
+      res[0] = cos2*((4*cos2*cos2)-1.)*sqrt(r)/2.;
+      res[1] = sin2*((4*cos2*cos2)+1.)*sqrt(r)/2. ;
+      break;
+   /* case 6 :
+      res[0] = -cos2*(1- cos2*cos2)*sqrt(r);
+      res[1] = sin2*(1 + cos2*cos2)*sqrt(r) ;
+      break;*/
+   /* case 7 :
+      res[0] = sin2*cos2*cos2*sqrt(r);
+      res[1] = cos2 *(2 - cos2*cos2)*sqrt(r) ;
+      break; */
+   /* case 6 :
+      res[0] = 2*cos2*(1- cos2*cos2)*((6*cos2*cos2)-(8* cos2*cos2*cos2*cos2)+1)*sqrt(r);
+      res[1] = 2*(2*cos2*cos2-1)*sin2*(1-(3*cos2*cos2)+(4*cos2*cos2*cos2*cos2))*sqrt(r);
+      break; */
+   /* case 7 :
+      res[0] = 2*sin2*cos2*cos2*((10*cos2*cos2)-(8*cos2*cos2*cos2*cos2)-1)*sqrt(r);
+      res[1] = 2*cos2*(2*cos2*cos2-1)*((4*cos2*cos2*cos2*cos2)-(5*cos2*cos2)+2)*sqrt(r);
+      break;*/
+    case 6 :
+      res[0] = sin2*cos2*cos2*sqrt(r)/2.;
+      res[1] = cos2*(2. - (cos2*cos2))*sqrt(r)/2.;
+      break;
+    case 7 :
+      res[0] = 3*cos2*cos2*cos2*sqrt(r)/2.;
+      res[1] = 3*sin2*cos2*cos2*sqrt(r)/2.;
+      break;
+    /* Ces deux fonctions reprï¿½sentes l'enrichissement du champs de pression en     * ï¿½lasticitï¿½ incompressible en formulation mixte ...
+     */
+    case 8 :
+      res[0] =sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r); 
+      res[1] =-cos2*((4*cos2*cos2)-3.)/(2*sqrt(r)*r);
+      break;
+    case 9 :
+      res[0] =-cos2*((2*cos2*cos2) - 3.)/(2*sqrt(r)*r); 
+      res[1] =-sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r); 
+      break;
+   case 10 :
+      res[0] = -sin2/(2*sqrt(r));
+      res[1] =  cos2/(2*sqrt(r));
+      break;
+   case 11 :
+      res[0] = cos2/(2*sqrt(r));  
+      res[1] = sin2/(2*sqrt(r));
       break;
     default: GMM_ASSERT2(false, "oups");
     }
