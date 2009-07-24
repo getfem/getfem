@@ -4,29 +4,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-MU = 10.0;	        % Lam� coefficient.
+MU = 10.0;	        % Lam%G�%@ coefficient.
+dgr = 2;                % Degr� d'enrichissement en u.
+dgrp = 2;                % Degr� d'enrichissement en p.
+
 QUAD = 0;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%Nonlinear elasticity                               %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Elastic coefficients                      %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-P1 = 2000E6;	        % First elastic coefficient.
-P2 = 200E6;   	        % Second elastic coefficient.
-P3 = 200E6;   	        % Third elastic coefficient.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Hyperelastic law                          %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-LAW = 0;     % 0 : Mooney-Rivlin (+incompressibility)
-             % 1 : SaintVenant-Kirchhoff
-             % 2 : SaintVenant-Kirchhoff+incompressibility
-             % 3 : Ciarlet-Geymonat
-
 
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case
 
@@ -35,24 +17,25 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 
-REFINEMENT_RADIUS = 0;  % REF: 0.4;  % 0 for no refinement
+REFINEMENT_RADIUS = 0.;  % REF: 0.4;  % 0 for no refinement
 REFINEMENT_PROCESS = 0;  % nb of desired refinement steps
 
-REFERENCE_TEST = 0;   % 1 to compute a reference solution exported into files
-ERROR_TO_REF_SOL = 1; % 1 to compute errors wrt the reference solution
-INF_SUP_COMP = 0; % Compute or not the inf_sup condition
+REFERENCE_TEST =0 ;   % 1 to compute a reference solution exported into files
+ERROR_TO_REF_SOL =1; % 1 to compute errors wrt the reference solution
+INF_SUP_COMP = 0;   % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =  80;	        % space step.
+NX =10;	        % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
 if (~QUAD)
-  MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+   MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
   FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-  % FEM_TYPE = 'FEM_PK(2, 2)';  % PK element %REF: P3
-  DATA_FEM_TYPE = 'FEM_PK(2,1)';
+  %FEM_TYPE = 'FEM_PK(2,2);
+  %FEM_TYPE = 'FEM_PK(2,1)';  % PK element %REF: P3
+  DATA_FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   FEM_TYPE_P = 'FEM_PK(2,1)'; 
   MORTAR_FEM_TYPE = FEM_TYPE;
@@ -66,7 +49,7 @@ else
   MORTAR_FEM_TYPE = FEM_TYPE;
 end;
 
-FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)'; % Discontinuous P1 for triangles
+FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,4,0.0001)'; % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=1;       % Mixed version or not.
 DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
@@ -109,10 +92,11 @@ SPIDER_NTHETA = 10;           % size of the cartesian mesh in theta for spider f
 SPIDER_K=1;                   % order of the  spider fem 
 SPIDER_BIMAT_ENRICHMENT = 0;  % 0 for a sqrt spider enrichment
                               % 1 for sqrt(r)cos(ln(r)) and sqrt(r)sin(ln(r)) spider enrichment
+                              
 
 RESIDUAL = 1E-9;     	% residual for iterative methods if any.
-MAXITER = 500;
+
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'xfem_large_strain';     % Root of data files.
+ROOTFILENAME = 'linear_incomp_xfem';     % Root of data files.
 VTK_EXPORT = 0 % 2 export solution to a .vtk file ?
 
