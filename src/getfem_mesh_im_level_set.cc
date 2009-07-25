@@ -192,8 +192,6 @@ namespace getfem {
 
       if (gmm::abs(d1) < 1e-7 && d2 < 1e-7) 
 	ev.bin.add(i);
-      /*if (integrate_where == INTEGRATE_BOUNDARY)
-	cerr << "is_point_in_selected_area: i=" << i << ", in = " << ev.in.is_in(i) << ", bin=" << ev.bin.is_in(i) << " d1 = " << d1 << ", d2=" << d2 << " where=" << integrate_where << " csg=" << ls_csg_description << " ls=" << (void*)mls->get_level_set(i) << ", sec=" << sec << "\n";*/
     }
     
 
@@ -217,7 +215,7 @@ namespace getfem {
   
   void mesh_im_level_set::build_method_of_convex(size_type cv) {
     const mesh &msh(mls->mesh_of_convex(cv));
-    GMM_ASSERT3(msh.convex_index().card() != 0, "");
+    GMM_ASSERT3(msh.convex_index().card() != 0, "Internal error");
     base_matrix G;
     base_node B;
 
@@ -279,7 +277,8 @@ namespace getfem {
 		  < 1E-10) {
 		if (sing_ls == unsigned(-1)) sing_ls = ils;
 		GMM_ASSERT1(sing_ls == ils, "Two singular point in one "
-			    "sub element. To be done.");
+			    "sub element : " << sing_ls << ", " << ils <<
+			    ". To be done.");
 		ptsing.push_back(ipt);
 	      }
 	    }
@@ -292,7 +291,6 @@ namespace getfem {
 	      << ", " << ptsing[0];
 	  if (ptsing.size() > 1) sts << ", " <<  ptsing[1];
 	  sts << ")";
-	  //cout << "Singular int method : " << sts.str() << endl;
 	  pai = int_method_descriptor(sts.str())->approx_method();
 	}
       }
@@ -333,13 +331,11 @@ namespace getfem {
 	  bool lisin = true;
 	  for (unsigned ipt = 0; ipt < 
 		 pgt2->structure()->nb_points_of_face(f); ++ipt) {
-	    const base_node P = msh.points_of_face_of_convex(i, f)[ipt];
+	    const base_node &P = msh.points_of_face_of_convex(i, f)[ipt];
 	    isin = is_point_in_selected_area(mesherls0, mesherls1, P).bin;
 	    //cerr << P << ":" << isin << " ";
 	    if (!isin) { lisin = false; break; }
 	  }
-	  /*cerr << "testing face " << f << " sub " << i << " of cv " << cv << " "
-	    << " -> lisin=" << lisin << "\n";*/
 	  if (!lisin) continue;
 	  else isin--;
 	} else {
@@ -372,19 +368,6 @@ namespace getfem {
 	  }
 	  new_approx->add_point(c.xreal(), pai->coeff_on_face(f, j)
 				* gmm::abs(c.J()) * nup * nnup, ff);
-
-	  /*if (integrate_where == INTEGRATE_BOUNDARY) {
-	    static double ssum = 0.0;
-	    ssum += pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup;
-	    cout << "add crack point " << c.xreal() << " : "
-		 << pai->coeff_on_face(f, j) * gmm::abs(c.J()) * nup * nnup
-		 << " sum = " << ssum << endl;
-	  }*/
-	  /*if (integrate_where == INTEGRATE_BOUNDARY) {
-	    cc.set_xref(c.xreal());
-	    totof << cc.xreal()[0] << "\t" << cc.xreal()[1] << "\n";
-	  }
-	  */
 	} 
       }
     }
@@ -399,9 +382,8 @@ namespace getfem {
       build_methods.push_back(pim);
       cut_im.set_integration_method(cv, pim);
     }
-    else {
+    else
       delete new_approx;
-    }
   }
 
   void mesh_im_level_set::adapt(void) {
@@ -411,9 +393,7 @@ namespace getfem {
     ignored_im.clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
-      if (mls->is_convex_cut(cv)) {
-	build_method_of_convex(cv);
-      }
+      if (mls->is_convex_cut(cv)) build_method_of_convex(cv);
 
       if (!cut_im.convex_index().is_in(cv)) {
 	/* not exclusive with mls->is_convex_cut ... sometimes, cut cv
@@ -428,7 +408,7 @@ namespace getfem {
 	  for (unsigned i = 0; i < mls->nb_level_sets(); ++i) {
 	    mesherls0[i] = mls->get_level_set(i)->mls_of_convex(cv, 0, false);
 	    if (mls->get_level_set(i)->has_secondary())
-	      mesherls1[i] = mls->get_level_set(i)->mls_of_convex(cv, 1, false);
+	      mesherls1[i] = mls->get_level_set(i)->mls_of_convex(cv,1, false);
 	  }
 
 	  base_node B(gmm::mean_value(linked_mesh().trans_of_convex(cv)
@@ -438,8 +418,326 @@ namespace getfem {
 	}
       }
     }
-    // cerr << "mesh_im_level_set: integrate = " << integrate_where
-    //      << ", ignored = " << ignored_im << "\n";
+    is_adapted = true; touch();
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  void mesh_im_cross_level_set::update_from_context(void) const
+  { is_adapted = false; }
+
+  void mesh_im_cross_level_set::clear_build_methods() {
+    for (size_type i = 0; i < build_methods.size(); ++i)
+      del_stored_object(build_methods[i]);
+    build_methods.clear();
+    cut_im.clear();
+  }
+
+  void mesh_im_cross_level_set::clear(void)
+  { mesh_im::clear(); clear_build_methods(); is_adapted = false; }   
+
+  void mesh_im_cross_level_set::init_with_mls(mesh_level_set &me, 
+					size_type ind_ls1_, size_type ind_ls2_,
+					pintegration_method pim) {
+    init_with_mesh(me.linked_mesh());
+    cut_im.init_with_mesh(me.linked_mesh());
+    mls = &me;
+    ind_ls1 = ind_ls1_;   ind_ls2 = ind_ls2_;
+    set_segment_im(pim);
+    this->add_dependency(*mls);
+    is_adapted = false;
+  }
+
+  mesh_im_cross_level_set::mesh_im_cross_level_set(mesh_level_set &me,
+				       size_type ind_ls1_, size_type ind_ls2_,
+				       pintegration_method pim)
+  { mls = 0; init_with_mls(me, ind_ls1_, ind_ls2_, pim); }
+
+  mesh_im_cross_level_set::mesh_im_cross_level_set(void)
+  { mls = 0; is_adapted = false; }
+
+
+  pintegration_method 
+  mesh_im_cross_level_set::int_method_of_element(size_type cv) const {
+    if (!is_adapted) const_cast<mesh_im_cross_level_set *>(this)->adapt();
+    if (cut_im.convex_index().is_in(cv)) 
+      return cut_im.int_method_of_element(cv); 
+    else {
+      if (ignored_im.is_in(cv)) return getfem::im_none();
+
+      return mesh_im::int_method_of_element(cv);
+    }
+  }
+  
+  static bool is_point_in_intersection
+  (const std::vector<mesher_level_set> &mesherls0,
+   const std::vector<mesher_level_set> &mesherls1,
+   const base_node& P) {
+    
+    bool r = true;
+    for (unsigned i = 0; i < mesherls0.size(); ++i) {
+      bool sec = mesherls1[i].is_initialized();
+      scalar_type d1 = (mesherls0[i])(P);
+      scalar_type d2 = (sec ? (mesherls1[i])(P) : -1);
+      if (!(gmm::abs(d1) < 1e-7 && d2 < 1e-7)) r = false;
+    }
+    return r;
+  }
+
+  static bool is_edges_intersect(const base_node &PP1, const base_node &PP2,
+				 const base_node &PR1, const base_node &PR2) {
+    size_type n = gmm::vect_size(PP1), k1 = 0;
+    scalar_type c1 = scalar_type(0);
+    base_node V = PR2 - PR1;
+    for (size_type k = 0; k < n; ++k)
+      if (gmm::abs(V[k]) > gmm::abs(c1)) { c1 = V[k]; k1 = k; }
+    
+    scalar_type alpha1 = (PP1[k1] - PR1[k1]) / c1;
+    scalar_type alpha2 = (PP2[k1] - PR1[k1]) / c1;
+    base_node W1 = PP1 - PR1 - alpha1 * V;
+    base_node W2 = PP2 - PR1 - alpha2 * V;
+    if (gmm::vect_norm2(W1) > 1e-7*gmm::vect_norm2(V)) return false;
+    if (gmm::vect_norm2(W2) > 1e-7*gmm::vect_norm2(V)) return false;
+    if (alpha1 > 1.-1e-7 && alpha2 > 1.-1e-7) return false;
+    if (alpha1 < 1e-7 && alpha2 < 1e-7) return false;
+    return true;
+  }
+
+  
+  void mesh_im_cross_level_set::build_method_of_convex
+  (size_type cv, mesh &global_intersection, bgeot::rtree &rtree_seg) {
+    const mesh &msh(mls->mesh_of_convex(cv));
+    GMM_ASSERT3(msh.convex_index().card() != 0, "Internal error");
+    base_matrix G;
+    base_node B;
+
+    std::vector<mesher_level_set> mesherls0(2);
+    std::vector<mesher_level_set> mesherls1(2);
+    dal::bit_vector convexes_arein;
+
+    mesherls0[0] = mls->get_level_set(ind_ls1)->mls_of_convex(cv, 0, false);
+    mesherls0[1] = mls->get_level_set(ind_ls2)->mls_of_convex(cv, 0, false);
+    if (mls->get_level_set(ind_ls1)->has_secondary())
+      mesherls1[0] = mls->get_level_set(ind_ls1)->mls_of_convex(cv, 1, false);
+    if (mls->get_level_set(ind_ls2)->has_secondary())
+      mesherls1[1] = mls->get_level_set(ind_ls2)->mls_of_convex(cv, 1, false);
+    
+    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+    bgeot::pgeometric_trans pgt2
+      = msh.trans_of_convex(msh.convex_index().first_true());
+    dim_type n = pgt->dim();
+
+    approx_integration *new_approx = new approx_integration(pgt->convex_ref());
+    base_matrix KK(n,n), CS(n,n);
+    base_matrix pc(pgt2->nb_points(), n);
+    std::vector<size_type> ptsing;
+
+    for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
+      papprox_integration pai = segment_pim->approx_method();
+      GMM_ASSERT1(gmm::vect_size(pai->point(0)) == 1,
+		  "A segment integration method is needed");
+
+      base_matrix G2;
+      vectors_to_base_matrix(G2, linked_mesh().points_of_convex(cv));
+      bgeot::geotrans_interpolation_context
+	cc(linked_mesh().trans_of_convex(cv), base_node(n), G2);
+      
+      dal::bit_vector ptinter;
+      for (short_type k = 0; k < n; ++k) {
+	size_type ipt = msh.structure_of_convex(i)->ind_dir_points()[k];
+	const base_node &P = msh.points_of_convex(i)[ipt];
+	if (is_point_in_intersection(mesherls0, mesherls1, P))
+	  ptinter.add(ipt);
+      }
+
+      switch (n) {
+      case 2:
+	{
+	  for (short_type k = 0; k < n; ++k) {
+	    size_type ipt = msh.structure_of_convex(i)->ind_dir_points()[k];
+	    if (ptinter.is_in(ipt)) {
+	      
+	      const base_node &P = msh.points_of_convex(i)[ipt];
+	      cc.set_xref(P);
+
+	      if (global_intersection.search_point(cc.xreal())
+		  == size_type(-1)) {
+		global_intersection.add_point(cc.xreal());
+		new_approx->add_point(msh.points_of_convex(i)[ipt],
+				      scalar_type(1)); 
+	      }
+
+	    }
+	  }
+	}
+      case 3:
+	{
+	  for (short_type k1 = 1; k1 < n; ++k1) {
+	    size_type ipt1 = msh.structure_of_convex(i)->ind_dir_points()[k1];
+	    for (short_type k2 = 0; k2 < k1; ++k2) {
+	      size_type ipt2=msh.structure_of_convex(i)->ind_dir_points()[k2];
+	      if (ptinter.is_in(ipt1) && ptinter.is_in(ipt2)) {
+		
+		const base_node &P1 = msh.points_of_convex(i)[ipt1];
+		const base_node &P2 = msh.points_of_convex(i)[ipt2];
+		cc.set_xref(P1);
+		base_node PR1 = cc.xreal();
+		cc.set_xref(P2);
+		base_node PR2 = cc.xreal();
+
+		size_type i1 = global_intersection.search_point(PR1);
+		size_type i2 = global_intersection.search_point(PR2);
+
+		if (i1 == size_type(-1) || i2 == size_type(-1) ||
+		    !global_intersection.nb_convex_with_edge(i1, i2)) {
+
+		  base_node min(n), max(n);
+		  for (size_type k = 0; k < n; ++k) {
+		    min[k] = std::min(PR1[k], PR2[k]);
+		    max[k] = std::max(PR1[k], PR2[k]);
+		  }
+		  bgeot::rtree::pbox_set boxlst;
+		  rtree_seg.find_intersecting_boxes(min, max, boxlst);
+		  
+		  bool found_intersect = false;
+
+		  for (bgeot::rtree::pbox_set::const_iterator
+			 it=boxlst.begin(); it != boxlst.end(); ++it) {
+		    const base_node &PP1
+		      = global_intersection.points_of_convex((*it)->id)[0];
+		    const base_node &PP2
+		      = global_intersection.points_of_convex((*it)->id)[1];
+		    if (is_edges_intersect(PP1, PP2, PR1, PR2))
+		      { found_intersect = true; break; }
+		  }
+		  
+		  if (!found_intersect) {
+		    
+		    i1 = global_intersection.add_point(PR1);
+		    i2 = global_intersection.add_point(PR2);
+		    
+		    size_type is = global_intersection.add_segment(i1, i2);
+
+		    rtree_seg.add_box(min, max, is);
+
+		    
+		    const base_node &PE1
+		      = msh.trans_of_convex(i)->convex_ref()->points()[ipt1];
+		    const base_node &PE2
+		      = msh.trans_of_convex(i)->convex_ref()->points()[ipt1];
+		    base_node V = PE2 - PE1, W1(n), W2(n);
+		    
+		    base_matrix G3;
+		    vectors_to_base_matrix(G3, msh.points_of_convex(i));
+		    bgeot::geotrans_interpolation_context
+		      ccc(msh.trans_of_convex(i), base_node(n), G3);
+		    
+		    for (size_type j=0; j < pai->nb_points_on_convex(); ++j) {
+		      base_node PE = pai->point(j)[0] * PE2
+			+ (scalar_type(1) - pai->point(j)[0]) * PE1;
+		      ccc.set_xref(PE);
+		      cc.set_xref(ccc.xreal());
+		      gmm::mult(ccc.K(), V, W1);
+		      gmm::mult(cc.K(), W1, W2);
+		      new_approx->add_point(ccc.xreal(),
+				      pai->coeff(j) * gmm::vect_norm2(W2));
+		    } 
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+	break;
+      default: GMM_ASSERT1(false, "internal error");
+	
+      }
+    }
+
+    new_approx->valid_method();
+
+    if (new_approx->nb_points()) {
+      pintegration_method pim = new integration_method(new_approx);
+      dal::add_stored_object(new special_imls_key(new_approx), pim,
+			     new_approx->ref_convex(),
+			     &(new_approx->integration_points()));
+      build_methods.push_back(pim);
+      cut_im.set_integration_method(cv, pim);
+    }
+    else
+      delete new_approx;
+  }
+
+  void mesh_im_cross_level_set::adapt(void) {
+    GMM_ASSERT1(linked_mesh_ != 0, "mesh level set uninitialized");
+    GMM_ASSERT1(linked_mesh_->dim() > 1 && linked_mesh_->dim() <= 3,
+		"Sorry, works only in dimension 2 or 3");
+    
+    context_check();
+    clear_build_methods();
+    ignored_im.clear();
+    mesh global_intersection;
+    bgeot::rtree rtree_seg;
+
+    std::vector<size_type> icv;
+    std::vector<dal::bit_vector> ils;
+    mls->find_level_set_potential_intersections(icv, ils);
+
+    for (size_type i = 0; i < icv.size(); ++i) {
+      if (ils[i].is_in(ind_ls1) && ils[i].is_in(ind_ls2)) {
+	build_method_of_convex(icv[i], global_intersection, rtree_seg);
+      }
+    }
+
+    for (dal::bv_visitor cv(linked_mesh().convex_index()); 
+	 !cv.finished(); ++cv) 
+      if (!cut_im.convex_index().is_in(cv)) ignored_im.add(cv);
+
     is_adapted = true; touch();
   }
 

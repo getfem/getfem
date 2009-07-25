@@ -381,7 +381,7 @@ struct Chrono {
     GMM_ASSERT1(nbtotls <= 16,
 		"An element is cut by more than 16 level_set, aborting");
 
-		/* 
+    /* 
      * Step 1 : build the signed distances, estimate the curvature radius
      *          and the degree K.
      */
@@ -419,6 +419,7 @@ struct Chrono {
     bool h0_is_ok = true;
 
     do {
+
       h0_is_ok = true;
       mesh_points.clear();
       scalar_type geps = .001*h0; 
@@ -440,6 +441,7 @@ struct Chrono {
 	if ((*ref_element)(P) < geps) {
 	  bool kept = false;
 	  for (size_type k=list_constraints.size()-1; k!=size_type(-1); --k) {
+	    // for (size_type k=0; k < list_constraints.size(); ++k) {
 	    // Rerversed to project on level set before on convex boundaries
 	    gmm::copy(P, Q);
 	    scalar_type d = list_constraints[k]->grad(P, V);
@@ -472,9 +474,9 @@ struct Chrono {
 	      if (noisy) cout << "trying set of constraints" << nn << endl;
 	      gmm::copy(P, Q);
 	      bool ok=pure_multi_constraint_projection(list_constraints,Q,nn);
-	      if (ok && (*ref_element)(Q) < 1E-8) {
+	      if (ok && (*ref_element)(Q) < 1E-9) {
 		if (noisy) cout << "Intersection point found " << Q << " with "
-		     << nn << endl;
+				<< nn << endl;
 		mesh_points.add(Q);
 	      }
 	    }
@@ -491,91 +493,113 @@ struct Chrono {
       dmin = 2.*h0;
       if (noisy) cout << "dmin = " << dmin << " h0 = " << h0 << endl;
       if (noisy) cout << "cetait le convexe " << cv << endl;
-      if (noisy) getchar(); 
       
       dal::bit_vector retained_points
 	= mesh_points.decimate(*ref_element, dmin);
       
-    delaunay_again :
+      bool delaunay_again = true;
+      
       std::vector<base_node> fixed_points;
       std::vector<dal::bit_vector> fixed_points_constraints;
-      fixed_points.reserve(retained_points.card());
-      fixed_points_constraints.reserve(retained_points.card());
-      for (dal::bv_visitor i(retained_points); !i.finished(); ++i) {
-	fixed_points.push_back(mesh_points[i]);
-	fixed_points_constraints.push_back(mesh_points.constraints(i));
-      }
-
-      gmm::dense_matrix<size_type> simplexes;
-      run_delaunay(fixed_points, simplexes, fixed_points_constraints);
-
       mesh &msh(*(cut_cv[cv].pmsh));
-
+	
       mesh_region &ls_border_faces(cut_cv[cv].ls_border_faces);
-
-      msh.clear(); 
-
-      for (size_type i = 0; i <  fixed_points.size(); ++i) {
-	size_type j = msh.add_point(fixed_points[i]); // remettre le add_norepeat ?
-	assert(j == i);
-      }
-
       std::vector<base_node> cvpts;
-      for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
-	size_type j = msh.add_convex(bgeot::simplex_geotrans(n,1),
-				      gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
-	/* remove flat convexes => beware the final mesh may not be conformal ! */
- 	if (msh.convex_quality_estimate(j) < 1E-12) msh.sup_convex(j);
- 	else {
-	  std::vector<scalar_type> signs(list_constraints.size());
-	  std::vector<size_type> prev_point(list_constraints.size());
-	  for (size_type ii = 0; ii <= n; ++ii) {
-	    for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
-	      scalar_type dd =
-		(*(list_constraints[jj]))(msh.points_of_convex(j)[ii]);
-	      if (gmm::abs(dd) > radius_cv * 1E-7) {
-		if (dd * signs[jj] < 0.0) {
-		  if (noisy) cout << "Intersection trouvee ... \n";
-		  // calcul d'intersection
-		  base_node X = msh.points_of_convex(j)[ii], G;
-		  base_node VV = msh.points_of_convex(j)[prev_point[jj]] - X;
-		  if (dd > 0.) gmm::scale(VV, -1.);
-		  dd = (*(list_constraints[jj])).grad(X, G);
-		  size_type nbit = 0;
-		  while (gmm::abs(dd) > 1e-15*radius_cv && (++nbit < 20)) { // Newton
-		    scalar_type nG = gmm::vect_sp(G, VV);
-		    if (gmm::abs(nG) < 1E-8) nG = 1E-8;
-		    if (nG < 0) nG = 1.0;
-		    gmm::add(gmm::scaled(VV, -dd / nG), X);
+
+      size_type nb_delaunay = 0;
+
+      while (delaunay_again) {
+	if (++nb_delaunay > 15)
+	  { h0_is_ok = false; h0 /= 2.0; dmin = 2.*h0; break; }
+	
+	fixed_points.resize(0);
+	fixed_points_constraints.resize(0);
+	// std::vector<base_node> fixed_points;
+	// std::vector<dal::bit_vector> fixed_points_constraints;
+	fixed_points.reserve(retained_points.card());
+	fixed_points_constraints.reserve(retained_points.card());
+	for (dal::bv_visitor i(retained_points); !i.finished(); ++i) {
+	  fixed_points.push_back(mesh_points[i]);
+	  fixed_points_constraints.push_back(mesh_points.constraints(i));
+	}
+
+	gmm::dense_matrix<size_type> simplexes;
+	run_delaunay(fixed_points, simplexes, fixed_points_constraints);
+	delaunay_again = false;
+	
+	msh.clear(); 
+	
+	for (size_type i = 0; i <  fixed_points.size(); ++i) {
+	  size_type j = msh.add_point(fixed_points[i]); // remettre le add_norepeat ?
+	  assert(j == i);
+	}
+	
+	cvpts.resize(0);
+	for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
+	  size_type j = msh.add_convex(bgeot::simplex_geotrans(n,1),
+				       gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
+	  /* remove flat convexes => beware the final mesh may not be conformal ! */
+	  if (msh.convex_quality_estimate(j) < 1E-12) msh.sup_convex(j);
+	  else {
+	    std::vector<scalar_type> signs(list_constraints.size());
+	    std::vector<size_type> prev_point(list_constraints.size());
+	    for (size_type ii = 0; ii <= n; ++ii) {
+	      for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
+		scalar_type dd =
+		  (*(list_constraints[jj]))(msh.points_of_convex(j)[ii]);
+		if (gmm::abs(dd) > radius_cv * 1E-7) {
+		  if (dd * signs[jj] < 0.0) {
+		    if (noisy) cout << "Intersection trouvee ... " << jj
+				    << " dd = " << dd << " convex quality = "
+				    << msh.convex_quality_estimate(j) << "\n";
+		    // calcul d'intersection
+		    base_node X = msh.points_of_convex(j)[ii], G;
+		    base_node VV = msh.points_of_convex(j)[prev_point[jj]] - X;
+		    if (dd > 0.) gmm::scale(VV, -1.);
 		    dd = (*(list_constraints[jj])).grad(X, G);
-		  }
-		  if (gmm::abs(dd) > 1e-15*radius_cv) { // brute force dychotomie
-		    base_node X1 = msh.points_of_convex(j)[ii];
-		    base_node X2 = msh.points_of_convex(j)[prev_point[jj]], X3;
-		    scalar_type dd1 = (*(list_constraints[jj]))(X1);
-		    scalar_type dd2 = (*(list_constraints[jj]))(X2);
-		    if (dd1 > dd2) { std::swap(dd1, dd2); std::swap(X1, X2); }
-		    while (gmm::abs(dd1) > 1e-15*radius_cv) {
-		      X3 = (X1 + X2) / 2.0;
-		      scalar_type dd3 = (*(list_constraints[jj]))(X3);
-		      if (dd3 > 0) { dd2 = dd3; X2 = X3; }
-		      else { dd1 = dd3; X1 = X3; }
+		    size_type nbit = 0;
+		    while (gmm::abs(dd) > 1e-16*radius_cv && (++nbit < 20)) { // Newton
+		      scalar_type nG = gmm::vect_sp(G, VV);
+		      if (gmm::abs(nG) < 1E-8) nG = 1E-8;
+		      if (nG < 0) nG = 1.0;
+		      gmm::add(gmm::scaled(VV, -dd / nG), X);
+		      dd = (*(list_constraints[jj])).grad(X, G);
 		    }
-		    X = X1;
+		    if (gmm::abs(dd) > 1e-16*radius_cv) { // brute force dychotomy
+		      base_node X1 = msh.points_of_convex(j)[ii];
+		      base_node X2 = msh.points_of_convex(j)[prev_point[jj]], X3;
+		      scalar_type dd1 = (*(list_constraints[jj]))(X1);
+		      scalar_type dd2 = (*(list_constraints[jj]))(X2);
+		      if (dd1 > dd2) { std::swap(dd1, dd2); std::swap(X1, X2); }
+		      while (gmm::abs(dd1) > 1e-15*radius_cv) {
+			X3 = (X1 + X2) / 2.0;
+			scalar_type dd3 = (*(list_constraints[jj]))(X3);
+			if (dd3 == dd1 || dd3 == dd2) break;
+			if (dd3 > 0) { dd2 = dd3; X2 = X3; }
+			else { dd1 = dd3; X1 = X3; }
+		      }
+		      X = X1;
+		    }
+		    
+		    size_type kk = mesh_points.add(X);
+		    if (!(retained_points[kk])) {
+		      retained_points.add(kk);
+		      delaunay_again = true;
+		      break;
+		      // goto delaunay_fin;
+		    }
 		  }
-		  
-		  size_type kk = mesh_points.add(X);
-		  if (!(retained_points[kk])) {
-		    retained_points.add(kk);
-		    goto delaunay_again;
-		  }
+		  if (signs[jj] == 0.0) { signs[jj] = dd; prev_point[jj] = ii; }
 		}
-		if (signs[jj] == 0.0) { signs[jj] = dd; prev_point[jj] = ii; }
 	      }
 	    }
 	  }
 	}
+	
+	// delaunay_fin :;
+	
       }
+      if (!h0_is_ok) continue;
 
       if (K>1) {
 	for (dal::bv_visitor_c j(msh.convex_index()); !j.finished(); ++j) {
@@ -816,6 +840,8 @@ struct Chrono {
     zones_of_convexes.clear();
     allzones.clear();
 
+    // noisy = true;
+
     std::string z;
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
@@ -841,6 +867,26 @@ struct Chrono {
 
     update_crack_tip_convexes();
     is_adapted_ = true;
+  }
+
+  // detect the intersection of two or more level sets and the convexes
+  // where the intersection occurs. To be  alled after adapt.
+  void mesh_level_set::find_level_set_potential_intersections
+  (std::vector<size_type> &icv, std::vector<dal::bit_vector> &ils) {
+
+    GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_level_set");
+    std::string z;
+    for (dal::bv_visitor cv(linked_mesh().convex_index()); 
+	 !cv.finished(); ++cv)
+      if (is_convex_cut(cv)) {
+	scalar_type radius = linked_mesh().convex_radius_estimate(cv);
+	dal::bit_vector prim, sec;
+	find_crossing_level_set(cv, prim, sec, z, radius);
+	if (prim.card() > 1) {
+	  icv.push_back(cv);
+	  ils.push_back(prim);
+	}
+    }
   }
   
   // return +1 if the sub-element is on the one side of the level-set

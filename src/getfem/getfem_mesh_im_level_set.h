@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Yves Renard
+// Copyright (C) 2005-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -171,6 +171,72 @@ namespace getfem {
       ls_csg_description = description;
     }
   };
+
+
+
+  /** 
+     Describe an adaptable integration method linked to a mesh cut by at
+     least two level sets on the intersection of two leve sets.
+  */
+  class mesh_im_cross_level_set : public mesh_im {
+  protected :
+    pintegration_method segment_pim;
+    mesh_level_set *mls;
+
+    mesh_im cut_im; /* stores an im only for convexes who are crossed
+		       by a levelset */
+
+    dal::bit_vector ignored_im; /* convex list whose integration method is
+				   ignored (for instance because
+				   INTEGRATE_INSIDE and the convex
+				   is outside etc.) */
+    std::vector<pintegration_method> build_methods;
+
+    mutable bool is_adapted;
+    size_type ind_ls1, ind_ls2;
+
+    void clear_build_methods();
+    void build_method_of_convex(size_type cv, mesh &global_intersection,
+				bgeot::rtree &rtree_seg);
+
+  public:
+ 
+    enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1,
+           INTEGRATE_BOUNDARY = 4};
+    void update_from_context(void) const;
+    
+    /** Apply the adequate integration methods. */
+    void adapt(void);
+    void clear(void); // to be modified
+
+    /** Set the specific integration methods. see the constructor
+	documentation for more details. */
+    void set_segment_im(pintegration_method pim)
+    { segment_pim = pim; }
+    
+    size_type memsize() const {
+      return mesh_im::memsize(); // + ... ;
+    }
+
+    void init_with_mls(mesh_level_set &me, 
+		       size_type ind_ls1_, size_type ind_ls2_,
+		       pintegration_method pim = 0);
+
+    mesh_im_cross_level_set(mesh_level_set &me, 
+			    size_type ind_ls1_, size_type ind_ls2_,
+			    pintegration_method pim = 0);
+    mesh_im_cross_level_set(void);
+
+    virtual pintegration_method int_method_of_element(size_type cv) 
+      const;
+    ~mesh_im_cross_level_set() { clear_build_methods(); }
+
+  };
+
+
+
+
+
 
   
 }  /* end of namespace getfem.                                             */

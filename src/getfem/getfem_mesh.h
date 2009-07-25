@@ -41,7 +41,6 @@
 #include "dal_shared_ptr.h"
 #include "bgeot_ftool.h"
 #include "bgeot_mesh.h"
-#include "bgeot_convex_ref.h"
 #include "bgeot_geotrans_inv.h"
 #include "getfem_context.h"
 #include "getfem_mesh_region.h"

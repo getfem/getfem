@@ -121,6 +121,7 @@ namespace getfem {
     mutable int initialized;
     scalar_type shift_ls;     // for the computation of a gap on a level_set.
   public:
+    bool is_initialized(void) const { return initialized; }
     mesher_level_set() : initialized(0) {}
     template <typename VECT>
     mesher_level_set(pfem pf_, const VECT &coeff_,
