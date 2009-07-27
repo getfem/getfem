@@ -218,7 +218,6 @@ namespace getfem {
   };
 
 
-
   /*
    * some usefull global functions
    */
@@ -227,6 +226,10 @@ namespace getfem {
   pglobal_function 
   global_function_on_level_set(const level_set &ls,
 			       const abstract_xy_function &fn);
+
+  pglobal_function 
+  global_function_on_level_sets(const std::vector<level_set> &lsets,
+				const abstract_xy_function &fn);
 
   
 }  /* end of namespace getfem.                                            */

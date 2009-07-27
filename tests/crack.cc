@@ -297,7 +297,8 @@ base_small_vector sol_f(const base_node &x) {
 
 struct crack_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43 };
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1,
+	 MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43 };
   getfem::mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
