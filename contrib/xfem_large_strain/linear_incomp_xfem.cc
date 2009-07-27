@@ -117,7 +117,7 @@ struct crack_problem {
 
   typedef enum { NO_ENRICHMENT=0, 
 		 FIXED_ZONE=1, 
-		 GLOBAL_WITH_CUTOFF=3 } enrichment_option_enum;
+		 GLOBAL_WITH_CUTOFF=2 } enrichment_option_enum;
   enrichment_option_enum enrichment_option;
 
   std::string datafilename;
@@ -885,7 +885,9 @@ if (p.mixed_pressure) {
   getfem::mesh_im mim_refined(mcut); 
   mim_refined.set_integration_method(getfem::int_method_descriptor
 				     ("IM_TRIANGLE(6)"));
-  
+
+  mcut.write_to_file(p.datafilename + ".meshvm");
+
   getfem::mesh_fem mf_refined(mcut,dim_type(Q));
   mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
   plain_vector W(mf_refined.nb_dof());
