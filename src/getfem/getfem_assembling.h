@@ -1427,38 +1427,36 @@ namespace getfem {
    const VECT2 &F) {
     // Marche uniquement pour des ddl de lagrange.
     size_type Q=mf.get_qdim();
+    GMM_ASSERT1(!(mf.is_reduced()), "This function is not adapted to "
+		"reduced finite element methods"); 
     dal::bit_vector nndof = mf.basic_dof_on_region(boundary);
     pfem pf1;
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
       pdof_description ldof = lagrange_dof(pf1->dim());
       size_type nbd = pf1->nb_dof(cv);
-      for (size_type i = 0; i < nbd; i++)
-	{
-	  size_type dof1 = mf.ind_basic_dof_of_element(cv)[i*Q];
-	  if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof)
-	    {
-	      // cout << "dof : " << i << endl;
-	      for (size_type j = 0; j < nbd; j++)
-		{
-		  size_type dof2 = mf.ind_basic_dof_of_element(cv)[j*Q];
-		  for (size_type k = 0; k < Q; ++k)
-		    for (size_type l = 0; l < Q; ++l)
-		      {
-			if (!(nndof.is_in(dof2)) &&
-			    dof_compatibility(pf1->dof_types()[j],
-					      lagrange_dof(pf1->dim())))
-			  B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
-			RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
-		      }
-		}
-	      for (size_type k = 0; k < Q; ++k)
-		{ RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
-	    }
+      for (size_type i = 0; i < nbd; i++) {
+	size_type dof1 = mf.ind_basic_dof_of_element(cv)[i*Q];
+	if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof) {
+	  // cout << "dof : " << i << endl;
+	  for (size_type j = 0; j < nbd; j++) {
+	    size_type dof2 = mf.ind_basic_dof_of_element(cv)[j*Q];
+	    for (size_type k = 0; k < Q; ++k)
+	      for (size_type l = 0; l < Q; ++l) {
+		if (!(nndof.is_in(dof2)) &&
+		    dof_compatibility(pf1->dof_types()[j],
+				      lagrange_dof(pf1->dim())))
+		  B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
+		RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
+	      }
+	  }
+	  for (size_type k = 0; k < Q; ++k)
+	    { RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
 	}
+      }
     }
   }
-
+  
   /* add a dirichlet condition on a single dof, modifiying the matrix
      RM and the rhs B.  (keeping the symmetry properties) */
   template<typename MATRM, typename VECT1>
