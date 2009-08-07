@@ -234,7 +234,7 @@ void crack_problem::init(void) {
   mesh.translation(tt); 
   
   cracktip.resize(2); // Coordonn�e du fond de fissure
-  cracktip[0] = 0.3;
+  cracktip[0] = 0.5;
   cracktip[1] = 0.;
 
   scalar_type refinement_radius;
@@ -839,8 +839,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     sparse_matrix Sis(mf_u().nb_dof(), mf_u().nb_dof());
     sparse_matrix Bis(mf_pe().nb_dof(),mf_u().nb_dof());
     getfem::asm_mass_matrix(Mis, mim, mf_pe());
-    getfem::asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
-      (Sis, mim, mf_u());
+    getfem::asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(Sis, mim, mf_u());
     getfem::asm_mass_matrix(Sis, mim, mf_u());    
     cout << "Inf-sup condition test" << endl;
     INCOMP.get_B(MS,Bis);
@@ -1041,10 +1040,10 @@ int main(int argc, char *argv[]) {
     
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
-    std::string REFERENCE_MF = "xfem_large_strain_refined_test100.meshfem_refined";
-    std::string REFERENCE_U = "xfem_large_strain_refined_test100.U_refined";
-    std::string REFERENCE_MFP = "xfem_large_strain_refined_test100.p_meshfem_refined";
-    std::string REFERENCE_P = "xfem_large_strain_refined_test100.P_refined";
+    std::string REFERENCE_MF = "xfem_large_strain_refined_test160we.meshfem_refined";
+    std::string REFERENCE_U = "xfem_large_strain_refined_test160we.U_refined";
+    std::string REFERENCE_MFP = "xfem_large_strain_refined_test160we.p_meshfem_refined";
+    std::string REFERENCE_P = "xfem_large_strain_refined_test160we.P_refined";
     
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
