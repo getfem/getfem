@@ -80,7 +80,7 @@ _getfem.so: getfem_python.c ../libgetfemint.la $(GETFEM_LIB_LA)
 
 getfem_python_reference.html: getfem.py _getfem.so
 	cp getfem.py getfem_python_reference.py
-	pydoc -w getfem_python_reference && cp getfem_python_reference.html $(top_srcdir)/interface/doc/getfem_python_reference.html
+	(export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):../../../src/.libs && pydoc -w getfem_python_reference) &&  if test -d $(top_srcdir)/interface/doc; then cp getfem_python_reference.html $(top_srcdir)/interface/doc/getfem_python_reference.html; fi;
 	rm -f getfem_python_reference.py
 
 all: _getfem.so getfem.py getfem_python_reference.html
