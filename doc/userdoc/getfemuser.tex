@@ -21,6 +21,7 @@
 \texonly{\newcommand{\tilda}{{$_{\widetilde{\ }}$}}}
 %\texonly{\newcommand{\tilda}{{\~{}}}}
 \htmlonly{\newcommand{\tilda}{\verb+~+}}
+\htmlonly{\newcommand{\ddot}[1]{{d^2#1/dt^2}}}
 
 \texonly{\usepackage{graphicx}
 \usepackage{makeidx}
@@ -278,7 +279,7 @@ As a preliminary, you may want to read this short introduction to the getfem++ `
 
 
 \index{mesh}
-\gf  has it own structure to store meshes defined in the files \bgeotmeshstructureh and \getfemmeshh. The main structure is defined in \getfemmeshh by the object
+\gf  has its own structure to store meshes defined in the files \bgeotmeshstructureh and \getfemmeshh. The main structure is defined in \getfemmeshh by the object
 \getfemmesh.\\[0.5cm]
 
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
@@ -1054,7 +1055,7 @@ Then, for each element the mean value is computed with respect to its faces and 
 
 
 \section{Linear algebra procedures} \label{sec:linalgproc}
-The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}{GMM++ user documentation}.\\
+The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://home.gna.org/getfem/gmm_intro.htm}{GMM++ user documentation}.\\
 
 Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 ( \WEBB{http://crd.lbl.gov/\tilda xiaoye/SuperLU/} ), hence a direct sparse solver is available out of the box.\\
 
