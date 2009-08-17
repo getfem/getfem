@@ -8,7 +8,6 @@ endif
 
 
 EXTRA_DIST= \
-	check_all.sh \
 	axrot_matrix.m \
 	check_all.m \
 	check_all.sh \
