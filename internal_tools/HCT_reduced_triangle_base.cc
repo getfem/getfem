@@ -18,6 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
+
 // Little program which computes the base functions of the Argyris element
 // on the reference element.
 
@@ -138,22 +139,29 @@ int main(void) {
 	if (j == 1)
 	  M( 8, i+10*j) = q.eval(bgeot::base_node(0.0, 1.0).begin());
 
+	//
+	// relations internes
+	//
+
+	// derivées normales en P1
 	q = p; q.derivative(1); q2 = p; q2.derivative(0); q += q2;
 	q /= sqrt(2);
 	if (j == 0)
-	  M( 9, i+10*j) = q.eval(bgeot::base_node(0.5, 0.5).begin());
+	  M( 9, i+10*j) = q.eval(bgeot::base_node(0.5, 0.5).begin())
+	    - (q.eval(bgeot::base_node(0.0, 1.0).begin())
+	       + q.eval(bgeot::base_node(1.0, 0.0).begin())) / 2.0;
 	
 	q = p; q.derivative(0);
 	if (j == 1)
-	  M(10, i+10*j) = -q.eval(bgeot::base_node(0.0, 0.5).begin());
+	  M(10, i+10*j) = q.eval(bgeot::base_node(0.0, 0.5).begin())
+	    - (q.eval(bgeot::base_node(0.0, 0.0).begin())
+	       + q.eval(bgeot::base_node(0.0, 1.0).begin())) / 2.0;
 	
 	q = p; q.derivative(1);
 	if (j == 2)
-	  M(11, i+10*j) = -q.eval(bgeot::base_node(0.5, 0.0).begin());
-	
-	//
-	// raccord internes
-	//
+	  M(11, i+10*j) = q.eval(bgeot::base_node(0.5, 0.0).begin())
+	    - (q.eval(bgeot::base_node(0.0, 0.0).begin())
+	       + q.eval(bgeot::base_node(1.0, 0.0).begin())) / 2.0;
 
 	// raccord en (0.0, 0.0)
 	if (j == 1)
@@ -270,7 +278,7 @@ int main(void) {
     
     bool latex = false;
     
-    for (int i = 0; i < 12; ++i)
+    for (int i = 0; i < 9; ++i)
       for (int j = 0; j < 3; ++j) {
 	bgeot::base_poly p(2,3);
 	for (int k = 0; k < 10; ++k)

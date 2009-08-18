@@ -4,8 +4,7 @@
 #
 # Python GetFEM++ interface
 #
-# Date : March, 2004.
-# Author : Julien Pommier, pommier@gmm.insa-tlse.fr
+# Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
 #                                                       
 # This file is a part of GETFEM++                                         
 #                                                                         

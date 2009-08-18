@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002-2005 Yves Renard, Julien Pommier.                    */
+/* Copyright (C) 2002-2009 Yves Renard, Julien Pommier.                    */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
