@@ -57,7 +57,7 @@ Files = ['gfm_common.c','gfm_scilab.c'];
 
 Libraries = [];
 
-cflags = '-g -I' + getfem_path + ' -I' + getfem_path + '../../../';
+cflags = '-g -I' + getfem_path + ' -I' + getfem_path + '../../../' + ' -D_SCILAB_';
 ldflags = getfem_path + '/../../../.libs/libgetfemint.a ' + getfem_path + '/../../../../../src/.libs/libgetfem.a';
 
 tbx_build_gateway('scigetfem_c', Table, Files, getfem_path, Libraries, ldflags, cflags);
