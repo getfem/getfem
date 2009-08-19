@@ -211,7 +211,7 @@ const char *
 gfi_type_id_name(gfi_type_id id, gfi_complex_flag is_complex);
 void gfi_array_print(gfi_array *t);
 
-typedef enum { MATLAB_INTERFACE, PYTHON_INTERFACE } gfi_interface_type;
+typedef enum { MATLAB_INTERFACE, PYTHON_INTERFACE, SCILAB_INTERFACE} gfi_interface_type;
 
   int is_cancel_flag_set(void);
   void set_cancel_flag(int v);
