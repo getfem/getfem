@@ -94,6 +94,13 @@ namespace getfemint {
       can_return_integer_ = true;
       has_1D_arrays_ = true;
       break;
+    case SCILAB_INTERFACE:
+      base_index_ = 1;
+      has_native_sparse_ = true;
+      prefer_native_sparse_ = true;
+      can_return_integer_ = false;
+      has_1D_arrays_ = false;
+      break;
     default:
       THROW_INTERNAL_ERROR;
     }
@@ -114,7 +121,7 @@ char* getfem_interface_main(int config_id, const char *function,
   //cout << "getfem_matlab_main(" << function << ", inarg=" << nb_in_args << ", outarg=" << *nb_out_args << ")\n";
   //for (int i=0; i < nb_in_args; ++i) { cout << "  inarg[" << i << "]=";gfi_array_print((gfi_array*)in_args[i]); cout << "\n"; }
   try {
-    static getfemint::config *conf[2];  
+    static getfemint::config *conf[3];  
     if (!conf[config_id]) conf[config_id] = new getfemint::config((gfi_interface_type)config_id);
     conf[config_id]->current_function_ = function;
     config::set_current_config(conf[config_id]);
