@@ -1,0 +1,186 @@
+body {
+  background: white; 
+  color: black; 
+  font: 14px Verdana, sans-serif;
+  margin: 0; padding: 0.5em; border-width: 0;
+  min-width: 55em !important; position: relative;}
+
+a:link, #textbar a:link {color: #00C;}
+a:visited, #textbar a:visited {color: #909;}
+
+.cppcode {
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	width: auto;
+	margin-left: 5%;
+	color:#000;
+	background-color:#ccc;
+	}
+
+.inlinecppcode {
+	color:#600;
+	}
+
+.mlabcode {
+  border-style: dotted;
+  border-width:1px;
+  border-color:#AAA;
+  margin:4px;
+  margin-left: 2%;
+  padding:0;
+  color:#000;
+  background-color:#DDD;
+}
+.mlabcode pre {
+  margin:0;padding:2px;
+  /*overflow : auto;*/
+}
+
+.inlinemlabcode {
+	color:#600;
+	}
+
+.hilighted { 
+  background-color:#ffc;
+}
+
+table 	{
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	background:#eee;	
+	}
+
+a.matlab { 
+  color:#004;
+  font-weight:normal;
+  text-decoration:none;
+}
+
+a.matlab:hover { 
+  color:#00B;
+  text-decoration:underline;
+}
+
+a.mltype { 
+  color:#880;
+  font-weight:normal;
+  text-decoration:none;
+}
+
+a.mltype:hover { 
+  color:#B00;
+  text-decoration:underline;
+}
+
+div#menu { 
+  position:absolute;
+  top:0;left:0;
+  background-color:#DFD;
+  width:20%;
+  border-width:0 1px 1px 0;
+  border-style:dotted;
+  border-color:#888;
+  padding:5px;
+}
+#menu h1 { 
+  font-size:small;
+  color:#080;
+}
+
+#menu ul { 
+  font-family:Verdana,sans-serif;
+  font-size:.8em;
+  margin:0;
+  padding-left:1em;
+}
+#menu li {
+/*display:inline;*/
+list-style:none;
+}
+
+div#content { 
+  position:absolute;
+  top:0;left:22%;
+  padding:10px;
+  margin:1em;
+  max-width:50em;
+}
+
+#content h2, #content h1 { 
+  color:#000;
+  text-align:center;
+  margin:0;
+  padding-left:2em;
+  padding-right:2em;
+  padding-bottom:.5em;
+  font-size:200%;font-family:monospace;
+}
+
+#content pre { 
+  white-space:pre-wrap;
+  white-space:-moz-pre-wrap;/*css2.1*/
+}
+
+/* used by hyperlatex for equation blocks */
+#content blockquote { 
+  font-size:120%;
+  font-family:monospace;
+  text-align:center;
+}
+
+/* try to get real subscripts and superscripts */
+#content sup { 
+  color:#800;vertical-align: 70%;
+}
+#content sub { 
+  color:#080;vertical-align: -30%;
+}
+
+img { 
+  border:none;
+}
+
+div.mlpurp, div.mlsynopsis, div.mldesc, div.mlexamples, div.mlseealso {
+  padding:0;
+  border-width: 0px 1px 1px 3px;
+  border-style:solid;
+  border-color:#88A;
+}
+
+div.mlpurp { 
+  border-width: 1px 1px 1px 3px;
+}
+
+div.mlbox { 
+  margin:1em;
+}
+
+.mlpurp h3, .mlsynopsis h3, .mldesc h3, .mlexamples h3, .mlseealso h3 { 
+  padding:0 0 0 1em; margin:0;
+  background-color:#DDF;
+  font-size:1em;text-transform:uppercase;
+}
+
+
+.mlpurp h3:first-letter, .mlsynopsis h3:first-letter, .mldesc h3:first-letter, .mlexamples h3:first-letter, .mlseealso h3:first-letter {
+  color:#690;
+  background-color:transparent;
+  font-size:1.2em;
+}
+
+#navbar { 
+  position:fixed;
+  left:0;bottom:0;
+  background-color:transparent;/*#ccc;*/
+  border-width: 1px 1px 0 0;
+  border-style: solid;
+  border-color: #888;
+}
+
+#navbar a { 
+  text-decoration: none;
+  font-weight: bold;
+  font-size:150%;
+}
