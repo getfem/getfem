@@ -274,9 +274,12 @@ elseif (ison(opt_faces)) then
   T = gf_mesh_get(M, 'triangulated surface', opt_refine, cvflst);
   if (mdim == 2) then
     // YC: trouver un equivalent à patch
-    hfill=patch(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), opt_faces_color, 'Erasemode','normal','Edgecolor','none');
+    //hfill=plot2d([T(1:mdim:(mdim*3),:) T(1,:)],[T(2:mdim:(mdim*3),:) T(2,:)], opt_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
+    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), zeros(T(2:mdim:(mdim*3),:)), opt_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
+    hfill= gca();
+    hfill.view="2d";
   else
-    hfill=patch(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), T(3:mdim:(mdim*3),:), opt_faces_color, 'Erasemode','normal','Edgecolor','none');
+    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), T(3:mdim:(mdim*3),:), opt_faces_color, flag = [-1 0 4]); //'Erasemode','normal','Edgecolor','none');
   end
 end
 

@@ -39,19 +39,19 @@ if nargin<1 then
 end
 
 //mf=struct(mf);
-hfaces=[];
-hquiver=[];
-hmesh=[];
-htube=[];
+hfaces  = [];
+hquiver = [];
+hmesh   = [];
+htube   = [];
 mdim = gf_slice_get(sl, 'dim');
 
-if (gf_slice_get(sl, 'nbsplxs', 3)),
+if (gf_slice_get(sl, 'nbsplxs', 3)) then
   warning('won''t plot 3D slices, extract the slice boundary first');
-end;
+end
 
-if (mdim ~= 2 & mdim ~= 3),
+if (mdim ~= 2 & mdim ~= 3) then
   error('only 2D and 3D mesh are handled by this function');
-end;
+end
 
 [opt_data,err]                   = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
 [opt_convex_data,err]            = get_param(opt,'convex_data',[]); // data to be plotted (given on the mesh convexes)
@@ -81,21 +81,21 @@ if (ison(opt_showoptions)) then disp(opt); end;
 if (~isempty(opt_convex_data)) then 
   if (~isempty(opt_data)) then
     error('''data'' and ''convex_data'' are mutually exclusive');
-  end;
+  end
   opt_data = gf_slice_get(sl, 'interpolate_convex_data', opt_convex_data);
-end;
+end
 
 if (isauto(opt_mesh)) then
   if (isempty(opt_data)) then opt_mesh = 'on'; 
   else opt_mesh = 'off'; end; 
-end;
+end
 
 Pm = gf_slice_get(sl,'pts'); 
 if (length(Pm) == 0) then return; end;
 if (~isempty(opt_data) & size(opt_data,2) ~= size(Pm,2)) then
   error(sprintf('wrong dimensions for the data (has %d columns, should have %d columns)',...
 	  size(opt_data,2),size(Pm,2)));
-end;
+end
 
 P = list();
 T = list();
@@ -103,39 +103,23 @@ for i=1:mdim,
   P(i) = Pm(i,:);
   T(i) = gf_slice_get(sl,'splxs', i);
   box(i,:) = [min(P(i)) max(P(i))];
-end;
+end
 
 if (typeof(opt_tube_radius)=='string' & length(opt_tube_radius) & part(opt_tube_radius,length(opt_tube_radius))=='%') then
   opt_tube_radius = max(abs(box(:,2)-box(:,1))) * 0.01 * eval(part(opt_tube_radius,1:length(opt_tube_radius)));
-end;
-
-// save graphical context
-cax = newplot;
-cfig = get(cax,'Parent');
-hold_state = ishold;
-ax_nextplot = lower(get(cax,'NextPlot'));
-fig_nextplot = lower(get(cfig,'NextPlot'));
+end
 
 // handle simplexes of dimension 1
 
-if (~isempty(T(1))),
+if (~isempty(T(1))) then
   [htube,hmesh]=do_plot_1D(P,T(1),opt);
-end;
+end
 
-[hfaces,h,hquiver]=do_plot_2D(sl,P,T(2),opt); hmesh=[hmesh(:)' h(:)'];
+[hfaces,h,hquiver] = do_plot_2D(sl,P,T(2),opt); hmesh=[hmesh(:)' h(:)'];
 
-if (mdim == 3) then view(3); else view(2); end;
-  
-if (~hold_state) then
-  set(cax,'DataAspectRatio', [1 1 1]);
-  set(cax,'XLimMode','auto');
-  set(cax,'YLimMode','auto');
-  set(cax,'ZLimMode','auto');
-end;
+h_current = gca();
 
-// restore graphical context
-set(cax,'NextPlot',ax_nextplot);
-set(cfig,'NextPlot',fig_nextplot);
+if (mdim == 3) then h_current.view = "3d"; else h_current.view = "2d"; end;
 endfunction
 
 function [htube,hmesh]=do_plot_1D(P,T,opt)
@@ -170,28 +154,39 @@ if (~ison(opt_tube)) then
     C(j)=[P(j)(T(1,:));P(j)(T(2,:))];
   end;
   if (length(P)==1) C(2)=zeros(size(C(1))); end;
-  hmesh=line(C(:),'Color',opt_mesh_edges_color,'LineWidth',opt_mesh_edges_width);
+  // hmesh = line(C(:),'Color',opt_mesh_edges_color);
+  if length(C)==2 then
+    plot2d(C(:));
+    hmesh = gce();
+    hmesh.children.thickness = opt_mesh_edges_width;
+    hmesh.children.foreground = opt_mesh_edges_color;
+  else
+    plot3d(C(:));
+    hmesh = gce();
+    hmesh.thickness = opt_mesh_edges_width;
+    hmesh.foreground = opt_mesh_edges_color;
+  end
 else
   if (~isempty(opt_data) & ison(opt_pcolor)) then
     qdim = size(opt_data,1);
     if (qdim == 1) then
       if (typeof(opt_data)=='list')
-        htube=plot_tube(P,T,opt_data(1),opt_tube_radius,opt_tube_color);
+        plot_tube(P,T,opt_data(1),opt_tube_radius,opt_tube_color);
       else
-        htube=plot_tube(P,T,opt_data,opt_tube_radius,opt_tube_color);
-      end;
+        plot_tube(P,T,opt_data,opt_tube_radius,opt_tube_color);
+      end
     else
       warning('1D slices not supported for vector data..');
-    end;
+    end
   else 
-    htube=plot_tube(P,T,[],opt_tube_radius,opt_tube_color);
-  end;
-end;
+    plot_tube(P,T,[],opt_tube_radius,opt_tube_color);
+  end
+end
 endfunction
 
 // cell2mat not available in matlab R12
 function M=mycell2mat(C)
-// M=cat(1,C{:}); //YC: a verifier
+// M=cat(1,C{:});
 M = lstcat(C(:));
 endfunction
 
@@ -201,8 +196,8 @@ endfunction
 function h=plot_tube(P, T, D, radius, tubecolor)
 h = [];
 P = mycell2mat(P);
-if (isempty(T)) return; end;
-T=double(T); // matlab 6.5 is not able to handle operator '+' on
+if (isempty(T)) then return; end;
+T = double(T); // matlab 6.5 is not able to handle operator '+' on
              // int32 ...
 it0 = T(1,1); nT = size(T,2); nP = size(P,2); mdim=size(P,1);
 
@@ -210,7 +205,7 @@ if (mdim == 2) then P = [P; zeros(1,nP)]; mdim = 3; end; // handle 2D slices
 // convert radius to node data
 if (length(radius)==1) then
   radius = radius*ones(1,nP); //radius(1)=0.5; radius($)=0.5;
-elseif (length(radius)==nT),
+elseif (length(radius)==nT) then
   radius = ([radius(1) radius(:)']+[radius(:)' radius($)])/2;
 end
 
@@ -221,10 +216,16 @@ else
   point_data=0; 
 end
 
-nsubdiv = 20; ct = cos((0:nsubdiv)*2*pi/nsubdiv); ct($)=ct(1); st = sin((0:nsubdiv)*2*pi/nsubdiv); st($)=st(1);
-cnt=0;
+nsubdiv = 20; 
+ct   = cos((0:nsubdiv)*2*%pi/nsubdiv); 
+ct($)= ct(1); 
+st   = sin((0:nsubdiv)*2*%pi/nsubdiv);
+st($)= st(1);
+cnt  = 0;
 
-while (1),
+h = [];
+
+while (1)
   // search for consecutive edge points
   it1 = it0;
   while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
@@ -234,22 +235,23 @@ while (1),
   p = P(:,ip);     
   if (length(D)) then
     if (point_data) d = D(ip); else d = D(it0:it1); end;
-  end;
+  end
   nseg = it1-it0+1;
   // compute the normals of edges
-  normals = zeros(3, 2, nseg);
-  tang = p(:,2:$) - p(:,1:$-1); tang = tang ./ repmat(sqrt(sum(tang.^2,1)),size(tang,1),1); // YC:
+  normals = zeros(3, 2, nseg); // produce a hypermat
+  tang = p(:,2:$) - p(:,1:$-1); 
+  tang = tang ./ repmat(sqrt(sum(tang.^2,1)),size(tang,1),1); 
   for i=1:nseg
     normals(:,:,i) = null_space(tang(:,i)'); // won't be ok if normals have an
                                              // important rotation from a segment
                                              // to another - VERY PROBABLE BUG!!!      
-  end;    
-  X=zeros(mdim,nsubdiv+1,length(ip));
+  end
+  X = zeros(mdim,nsubdiv+1,length(ip));
   for i=1:length(ip),
     if (i == 1) then
-      n=normals(:,:,i); 
+      n = normals(:,:,i); 
     elseif (i == length(ip)) then
-      n=normals(:,:,$);
+      n= n ormals(:,:,$);
     else
       n = (normals(:,:,i-1)+normals(:,:,i))/2;
     end
@@ -258,23 +260,23 @@ while (1),
     end;
   end;
   if (length(D)) then
-    C=repmat(d,nsubdiv+1,1);
-    h = [h; surface(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),C,...
-	      'linestyle','none','FaceColor','interp')];
+    C = repmat(d,nsubdiv+1,1);
+    h($+1) = surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),C); // 'linestyle','none','FaceColor','interp')];
   else
-    h = [h; surface(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),...
-	      'linestyle','none','facecolor',tubecolor)];
-  end;
-  cnt=cnt+1;
+    h($+1) = surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:))); // 'linestyle','none','facecolor',tubecolor)];
+  end
+  cnt = cnt+1;
   it0 = it1+1;
-  if (it0 > nT) return; end;
-end;
+  if (it0 > nT) then return; end;
+end
 endfunction
 
 // draw faces
-function [hfaces,hmesh,hquiver]=do_plot_2D(sl,P,T,opt)
-hfaces=[]; hmesh=[]; hquiver=[];
-mdim=length(P);
+function [hfaces,hmesh,hquiver] = do_plot_2D(sl,P,T,opt)
+hfaces  = []; 
+hmesh   = []; 
+hquiver = [];
+mdim    = length(P);
 
 // YC: variable ID too long
 [opt_data,err]                   = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
@@ -298,35 +300,58 @@ mdim=length(P);
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
 if (length(T)) then
-  d=list();  
+  d = list();  
   if (ison(opt_pcolor) & size(opt_data,1)==1 & ~isempty(opt_data)) then
-    d=list('FaceVertexCData',opt_data(:),'FaceColor','interp');
+    d = list('FaceVertexCData',opt_data(:),'FaceColor','interp');
   elseif (isempty(opt_data) & ison(opt_mesh_faces)) then
-    d=list('FaceVertexCData',opt_mesh_faces_color, 'FaceColor','flat');
-  end;    
+    d = list('FaceVertexCData',opt_mesh_faces_color, 'FaceColor','flat');
+  end  
   if (~isempty(d)) then
-    hfaces=patch('Vertices',mycell2mat(P)','Faces',T',d(:), ...
-	   'EdgeColor','none');
-  end;
-  if (ison(opt.quiver)) then
-    if (size(opt_data,1)>1),
-      hquiver=do_quiver_plot(P,opt_data,opt);
-    end;
-  end;  
-end;
+    //hfaces = patch('Vertices',mycell2mat(P)','Faces',T',d(:), 'EdgeColor','none'); // YC:
+    p_tmp = mycell2mat(P)';
+    T = T';
+    xtmp = matrix(p_tmp(t1,1),size(T,1),length(p_tmp(T,1))/size(T,1))';
+    ytmp = matrix(p_tmp(t1,2),size(T,1),length(p_tmp(T,1))/size(T,1))';
+    ztmp = matrix(p_tmp(t1,3),size(T,1),length(p_tmp(T,1))/size(T,1))';
+    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color);
+    hfaces = gce();
+    T = T';
+  end
+  if (ison(opt_quiver)) then
+    if (size(opt_data,1)>1) then
+      hquiver = do_quiver_plot(P,opt_data,opt);
+    end
+  end 
+end
 if (ison(opt_mesh) & (ison(opt_mesh_edges) | ison(opt_mesh_slice_edges))) then
   [p,t1,t2] = gf_slice_get(sl,'edges');
   if (ison(opt_mesh_edges)) then
-    hmesh=patch('Vertices',p','Faces',t1','EdgeColor',opt_mesh_edges_color,'LineWidth',opt_mesh_edges_width);
-  end;
+    p = p'; t1 = t1';
+    xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
+    ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
+    ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))';
+    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color);
+    hmesh = gce();
+    hmesh.line_width = opt_mesh_edges_width;
+    p = p'; t1 = t1';
+  end
   if (ison(opt_mesh_slice_edges)) then
-    hmesh=[hmesh patch('Vertices',p','Faces',t2','EdgeColor',opt_mesh_slice_edges_color,'LineWidth',opt_mesh_slice_edges_width)];
-  end;
-end;  
+    //hmesh = [hmesh patch('Vertices',p','Faces',t2','EdgeColor',opt_mesh_slice_edges_color,'LineWidth',opt_mesh_slice_edges_width)]; // YC
+    p = p'; t2 = t2';
+    xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
+    ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
+    ztmp = matrix(p(té,3),size(t2,1),length(p(t2,1))/size(t2,1))';
+    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color);
+    hmesh_tmp = gce();
+    hmesh_tmp.line_width = opt_mesh_edges_width;
+    p = p'; t2 = t2';
+    hmesh = [hmesh hmesh_tmp];
+  end
+end 
 endfunction
   
 // arrow plot
-function hquiver=do_quiver_plot(P,U,opt)
+function hquiver = do_quiver_plot(P,U,opt)
 
 [opt_data,err]                   = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
 [opt_convex_data,err]            = get_param(opt,'convex_data',[]); // data to be plotted (given on the mesh convexes)
@@ -348,37 +373,42 @@ function hquiver=do_quiver_plot(P,U,opt)
 [opt_tube_radius,err]            = get_param(opt,'tube_radius','0.5%'); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
-hquiver=[];
-P=mycell2mat(P); mdim=size(P,1);qdim=size(U,1);
-nP = size(P,2);
-ptlst=1:nP;
-bmin = min(P); bmax = max(P);
-xyscale = max(bmax-bmin);
+hquiver  = [];
+P        = mycell2mat(P); 
+mdim     = size(P,1);
+qdim     = size(U,1);
+nP       = size(P,2);
+ptlst    = 1:nP;
+bmin     = min(P);
+bmax     = max(P);
+xyscale  = max(bmax-bmin);
 qradius2 = (xyscale/opt_quiver_density)^2;
-vscale  = max(max(abs(U)));
-qlst = [];
-rm=[];
+vscale   = max(max(abs(U)));
+qlst     = [];
+rm       = [];
 while (length(ptlst)>0)
-  ii = ptlst(1); 
+  ii   = ptlst(1); 
   qlst = [qlst ii];
-  x = P(1,ii); y = P(2, ii); 
+  x    = P(1,ii);
+  y    = P(2, ii); 
   if (mdim == 2) then
     rm = (find((P(1,:)-x).^2 + (P(2,:)-y).^2 < qradius2));
   elseif (mdim == 3) then
     z = P(3,ii);
     rm = (find((P(1,:)-x).^2 + (P(2,:)-y).^2 + (P(3,:)-z).^2 < qradius2));
-  end;
+  end
   if (length(rm)==0) then error('internal error in gf_plot'); end;
   ptlst = setdiff(ptlst, rm);
-end;
+end
 if (qdim == 2) then
-  hquiver=quiver(P(1,qlst),P(2,qlst),U(1,qlst),U(2,qlst),opt_quiver_scale);
-  set(hquiver,'Color', [0 .4 0]);
+  champ(P(1,qlst),P(2,qlst),U(1,qlst),U(2,qlst)); 
+  hquiver = gce();
+  hquiver.arrow_size = opt_quiver_scale;
 else
-  hquiver=quiver3(P(1,qlst),P(2,qlst),P(3,qlst),U(1,qlst),U(2,qlst),U(3,qlst),...
-                  opt_quiver_scale);
-  set(hquiver,'Color', [0 .4 0]);
-end;
+  champ3(P(1,qlst),P(2,qlst),P(3,qlst),U(1,qlst),U(2,qlst),U(3,qlst)); // green
+  hquiver = gce();
+  hquiver.arrow_size = opt_quiver_scale;
+end
 endfunction
 
 function r=ison(v)
