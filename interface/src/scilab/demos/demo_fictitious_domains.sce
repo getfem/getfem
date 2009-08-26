@@ -1,30 +1,29 @@
-// YC: Object Oriented.
-
 disp('This demo use levelset to impose (weakly) a Dirichlet condition on an');
 disp('implicit boundary defined by the zero of the levelset');
 
 //clear all;
+
 gf_workspace('clear all');
 
 NX = 40;
 ls_degree = 2;
 
-m=gfMesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
-//m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
-_ls = gfLevelSet(m, ls_degree);
-ls2 = gfLevelSet(m, ls_degree, 'with_secondary');
+m = gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
+//m = gf_mesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
+_ls = gf_level_set(m, ls_degree);
+ls2 = gf_level_set(m, ls_degree, 'with_secondary');
 
-mf_ls  = gfObject(get(_ls, 'mf'));
-mf_ls2 = gfObject(get(ls2, 'mf'));
+mf_ls  = gf_level_set_get(_ls, 'mf');
+mf_ls2 = gf_level_set_get(ls2, 'mf');
 
-P = get(mf_ls, 'basic dof nodes');
+P = gf_level_set_get(mf_ls, 'basic dof nodes');
 x = P(1,:);
 y = P(2,:);
 //ULS = ((x + 0.25).^2 + (y - 0.4).^2) - 0.05^2;
 //ULS = min(ULS, ((x - 0.25).^2 + (y - 0.4).^2) - 0.05^2);
 
 ULS = 1000*ones(1,length(x));
-rand('state',1);
+rand('state',1); // YC
 
 if 0 then
   for ix=1:5
@@ -32,9 +31,9 @@ if 0 then
       xc = ((ix-1)/4) * 0.8 - 0.4;
       yc = ((iy-1)/4) * 0.8 - 0.4;
       if (modulo(iy,2)==0) then
-	    xc = xc + 0.05;
+	xc = xc + 0.05;
       else
-	    xc = xc - 0.05;
+	xc = xc - 0.05;
       end;
       R = 0.03 + 0.005*(iy-1);
       ULS = min(ULS, ((x - xc).^2 + (y - yc).^2) - R^2);
@@ -46,13 +45,14 @@ else
     yc  = rand() - 0.5;
     R   = rand() * 0.09 + 0.02;
     ULS = min(ULS, ((x - xc).^2 + (y - yc).^2) - R^2);
-  end;
-end;
+  end
+end
 
-set(ls, 'values', ULS);
+gf_level_set_set(_ls, 'values', ULS);
 
-ULS2  = 1000*ones(1,numel(x));
-ULS2s = 1000*ones(1,numel(x));
+ULS2  = 1000*ones(1,length(x));
+ULS2s = 1000*ones(1,length(x));
+
 for i=1:1
   xc = 0; //rand() - 0.5;
   yc = 0.0; //rand() - 0.5;
@@ -65,32 +65,33 @@ for i=1:1
   ULS2s = min(ULS2s, (abs(y - yc)+abs(x-xc) - R));
 end
 
-set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, '(y-.2)^2 - 0.04');
+gf_level_set_set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, '(y-.2)^2 - 0.04');
 
-mls = gfMeshLevelSet(m);
-set(mls, 'add', _ls);
-set(mls, 'add', ls2);
-set(mls, 'adapt');
+mls = gf_mesh_level_set(m);
+gf_mesh_level_set_set(mls, 'add', _ls);
+gf_mesh_level_set_set(mls, 'add', ls2);
+gf_mesh_level_set_set(mls, 'adapt');
 
-mim_bound = gfMeshIm('levelset',mls,'boundary(a+b)', gf_integ('IM_TRIANGLE(6)')); //, gf_integ('IM_QUAD(5)'));
-mim = gfMeshIm('levelset',mls,'all(a+b)', gf_integ('IM_TRIANGLE(6)'));
-set(mim, 'integ', 4);
+mim_bound = gf_mesh_im('levelset',mls,'boundary(a+b)', gf_integ('IM_TRIANGLE(6)')); //, gf_integ('IM_QUAD(5)'));
+mim       = gf_mesh_im('levelset',mls,'all(a+b)', gf_integ('IM_TRIANGLE(6)'));
+gf_mesh_im_set(mim, 'integ', 4);
 
-mfu0 = gfMeshFem(m,2); set(mfu0, 'fem', gf_fem('FEM_QK(2,3)'));
-mfdu = gfMeshFem(m,1); set(mfdu, 'fem', gf_fem('FEM_QK_DISCONTINUOUS(2,2)'));
-mf_mult = gfMeshFem(m,2); set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'));
+mfu0 = gf_mesh_fem(m,2); gf_mesh_fem_set(mfu0, 'fem', gf_fem('FEM_QK(2,3)'));
+mfdu = gf_mesh_fem(m,1); gf_mesh_fem_set(mfdu, 'fem', gf_fem('FEM_QK_DISCONTINUOUS(2,2)'));
+mf_mult = gf_mesh_fem(m,2); gf_mesh_fem_set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'));
 
 A = gf_asm('volumic','V()+=comp()',mim_bound)
 
-//clf; gf_plot_mesh(get(mls,'cut mesh'));
+//clf; 
+//gf_plot_mesh(get(mls,'cut mesh'));
 //gf_plot_mesh(get(mls, 'cut_mesh'), 'curved', 'on');
-//hold on; gf_plot(mf_ls, ULS);
+//gf_plot(mf_ls, ULS);
 
-dof_out = get(mfu0, 'dof from im', mim);
-cv_out  = get(mim, 'convex_index');
-cv_in   = setdiff(get(m, 'cvid'), cv_out);
+dof_out = gf_mesh_fem_get(mfu0, 'dof from im', mim);
+cv_out  = gf_mesh_im_get(mim, 'convex_index');
+cv_in   = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
 
-// mfu = gfMeshFem('partial', mfu0, dof_out, cv_in);
+// mfu = gf_mesh_fem('partial', mfu0, dof_out, cv_in);
 
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu0);
@@ -111,19 +112,16 @@ gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mfu
 //gf_plot(mfu0, U, 'norm', 'on', 'deformed_mesh', 'on', 'deformation', U,...
 // 	'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
 
-// set(mfu0,'qdim',1); Unorm=sqrt(U(1:2:end).^2 + U(2:2:end).^2);
-// [h1,h2]=gf_plot(mfu0, Unorm,'contour',0.00001,'pcolor','off');
-// set(h2{1},'LineWidth',2);
-// set(h2{1},'Color','white');
+// gf_mesh_fem_set(mfu0,'qdim',1); Unorm=sqrt(U(1:2:$).^2 + U(2:2:$).^2);
+// [h1,h2] = gf_plot(mfu0, Unorm,'contour',0.00001,'pcolor','off');
+// set(h2(1),'LineWidth',2);
+// set(h2(1),'Color','white');
 
 [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off');
 set(h2(1),'LineWidth',1);
 set(h2(1),'Color','blue');
-//[h1,h2]=gf_plot(mf_ls2, get(ls2,'values'), 'contour',
-//0,'pcolor','off');
+//[h1,h2]=gf_plot(mf_ls2, get(ls2,'values'), 'contour',0,'pcolor','off');
 
-h2=line([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)]);
-set(h2,'LineWidth',1);
-set(h2,'Color','blue');
+plot([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)],'b-');
 
 gf_colormap('chouette');

@@ -21,11 +21,12 @@ gf_mesh_fem_set(pde.mf_u,'fem',gf_fem('FEM_QK(2,2)'));
 gf_mesh_fem_set(pde.mf_d,'fem',gf_fem('FEM_QK(2,1)'));
 gf_mesh_fem_set(pde.mf_p,'fem',gf_fem('FEM_QK(2,1)'));
 
-s = gf_mesh_fem_get(pde.mf_u,'char');pde.mf_u=gf_mesh_fem('from string',s,m);
+s = gf_mesh_fem_get(pde.mf_u,'char');
+pde.mf_u  = gf_mesh_fem('from string',s,m);
 all_faces = gf_mesh_get(m, 'outer faces', gf_mesh_get(m, 'cvid'));
 gf_mesh_set(m, 'boundary', 1, all_faces);
 
-[U,P,pde]=gf_solve(pde);
+[U,P,pde] = gf_solve(pde);
 
 pde
 

@@ -1,24 +1,21 @@
-// YC: object oriented example
-
 disp('This demo is an adaption of the original tripod demo')
 disp('which uses the new ''brick'' framework of getfem')
 disp('The code is shorter, faster and much more powerful')
 disp('You can easily switch between linear/non linear')
 disp('compressible/incompressible elasticity!')
 
-linear = 1
-incompressible = 0
-
+linear = 1;
+incompressible = 0;
 
 gf_workspace('clear all');
 
 // import the mesh
-m   = gfMesh('import','gid','../meshes/tripod.GiD.msh');
-mfu = gfMeshFem(m,3);     // mesh-fem supporting a 3D-vector field
-mfd = gfMeshFem(m,1);     // scalar mesh_fem, for data fields.
+m   = gf_mesh('import','gid','../meshes/tripod.GiD.msh');
+mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
+mfd = gf_mesh_fem(m,1);     // scalar mesh_fem, for data fields.
 
 // the mesh_im stores the integration methods for each tetrahedron
-mim = gfMeshIm(m,gf_integ('IM_TETRAHEDRON(5)'));
+mim = gf_mesh_im(m,gf_integ('IM_TETRAHEDRON(5)'));
 
 // we choose a P2 fem for the main unknown
 gf_mesh_fem_set(mfu,'fem',gf_fem('FEM_PK(3,2)'));
@@ -48,49 +45,49 @@ lambda = E*Nu/((1+Nu)*(1-2*Nu));
 mu     = E/(2*(1+Nu));
 
 // create a meshfem for the pressure field (used if incompressible ~= 0)
-mfp = gfMeshFem(m); 
-set(mfp, 'fem',gfFem('FEM_PK_DISCONTINUOUS(3,0)'));
+mfp = gf_mesh_fem(m); 
+set(mfp, 'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,0)'));
 
 if (linear) then
   // the linearized elasticity , for small displacements
-  b0 = gfMdBrick('isotropic_linearized_elasticity',mim,mfu)
-  set(b0, 'param','lambda', lambda);
-  set(b0, 'param','mu', mu);
+  b0 = gf_md_brick('isotropic_linearized_elasticity',mim,mfu)
+  gf_md_brick_set(b0, 'param','lambda', lambda);
+  gf_md_brick_set(b0, 'param','mu', mu);
   if (incompressible) then
-    b1 = gfMdBrick('linear incompressibility term', b0, mfp);
+    b1 = gf_md_brick('linear incompressibility term', b0, mfp);
   else
     b1 = b0;
   end
 else
   // See also demo_nonlinear_elasticity for a better example
   if (incompressible) then
-    b0 = gfMdBrick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
-    b1 = gfMdBrick('nonlinear elasticity incompressibility term',b0,mfp);
-    set(b0, 'param','params',[lambda;mu]);
+    b0 = gf_md_brick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
+    b1 = gf_md_brick('nonlinear elasticity incompressibility term',b0,mfp);
+    gf_md_brick_set(b0, 'param','params',[lambda;mu]);
   else
     // large deformation with a linearized material law.. not
     // a very good choice!
-    b0 = gfMdBrick('nonlinear elasticity',mim, mfu, 'SaintVenant Kirchhoff');
-    set(b0, 'param','params',[lambda;mu]);
-    //b0 = gfMdBrick('nonlinear elasticity',mim, mfu, 'Ciarlet Geymonat');
+    b0 = gf_md_brick('nonlinear elasticity',mim, mfu, 'SaintVenant Kirchhoff');
+    gf_md_brick_set(b0, 'param','params',[lambda;mu]);
+    //b0 = gf_md_brick('nonlinear elasticity',mim, mfu, 'Ciarlet Geymonat');
     b1 = b0;
   end
 en
 
 // set a vertical force on the top of the tripod
-b2 = gfMdBrick('source term', b1, 1);
-set(b2, 'param', 'source_term', mfd, get(mfd, 'eval', list(0;-10;0))); // YC: attention, ne fonctionne pas: list([0;-10;0]) ?
+b2 = gf_md_brick('source term', b1, 1);
+gf_md_brick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(0;-10;0))); // YC: attention, ne fonctionne pas: list([0;-10;0]) ?
 
 // attach the tripod to the ground
-b3 = gfMdBrick('dirichlet', b2, 2, mfu, 'penalized');
+b3 = gf_md_brick('dirichlet', b2, 2, mfu, 'penalized');
 
-mds = gfMdState(b3)
+mds = gf_md_state(b3)
 
 disp('running solve...')
 
 t0 = cputime; 
 
-get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
+gf_md_brick_get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
 disp(sprintf('solve done in %.2f sec', cputime-t0));
 
 mfdu = gf_mesh_fem(m,1);
@@ -99,16 +96,17 @@ mfdu = gf_mesh_fem(m,1);
 gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
 VM = get(b0, 'von mises',mds,mfdu);
 
-U = get(mds, 'state'); U=U(1:get(mfu, 'nbdof'));
+U = gf_md_state_get(mds, 'state'); 
+U = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
 disp('plotting ... can also take some minutes!');
 
 // we plot the von mises on the deformed object, in superposition
 // with the initial mesh.
 if (linear) then
-  gf_plot(mfdu,VM,'mesh','on', 'cvlst', get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
+  gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
 else
-  gf_plot(mfdu,VM,'mesh','on', 'cvlst', get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale',1);
+  gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale',1);
 end
 
 //caxis([0 100]);

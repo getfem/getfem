@@ -1,12 +1,10 @@
-// YC: Object oriented example
-
 disp('3D stokes demonstration on a quadratic mesh');
 
-compute=input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
+compute = input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
 
 gf_workspace('clear all');
 
-global verbosity; verbosity=1;
+global verbosity; verbosity = 1;
 
 viscosity = 10;
 
@@ -14,36 +12,36 @@ R1  = list('9-(y.^2+(z-6.0).^2)';0;0);
 R2  = list('9-(y.^2+(z-6.0).^2)';0;0);
 R4  = list(0;0;0);
 
-m=gfMesh('import','GiD','../meshes/tank_quadratic_2500.GiD.msh');
-mfu = gfMeshFem(m,3);
-mfp = gfMeshFem(m,1);
-mfd = gfMeshFem(m,1);
-mim = gfMeshIm(m, gfInteg('IM_TETRAHEDRON(5)'));
+m = gf_mesh('import','GiD','../meshes/tank_quadratic_2500.GiD.msh');
+mfu = gf_mesh_fem(m,3);
+mfp = gf_mesh_fem(m,1);
+mfd = gf_mesh_fem(m,1);
+mim = gf_mesh_im(m, gf_integ('IM_TETRAHEDRON(5)'));
 
-set(mfu,'fem',gfFem('FEM_PK(3,2)'));
-set(mfd,'fem',gfFem('FEM_PK(3,2)'));
-set(mfp,'fem',gfFem('FEM_PK(3,1)'));
+gf_mesh_fem_set(mfu,'fem',gf_fem('FEM_PK(3,2)'));
+gf_mesh_fem_set(mfd,'fem',gf_fem('FEM_PK(3,2)'));
+gf_mesh_fem_set(mfp,'fem',gf_fem('FEM_PK(3,1)'));
 
-all_faces = get(m, 'outer faces', get(m, 'cvid'));
+all_faces = gf_mesh_get(m, 'outer faces', gf_mesh_get(m, 'cvid'));
 
-P=get(m,'pts');
+P = gf_mesh_get(m,'pts');
 INpid    = find(abs(P(1,:)+25) < 1e-4);
 OUTpid   = find(abs(P(1,:)-25) < 1e-4);
 TOPpid   = find(abs(P(3,:)-20) < 1e-4);
-INfaces  = get(m, 'faces from pid', INpid);
-OUTfaces = get(m, 'faces from pid', OUTpid);
-TOPfaces = get(m, 'faces from pid', TOPpid);
+INfaces  = gf_mesh_get(m, 'faces from pid', INpid);
+OUTfaces = gf_mesh_get(m, 'faces from pid', OUTpid);
+TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 
-set(m, 'region', 1, INfaces);
-set(m, 'region', 2, OUTfaces);
-set(m, 'region', 3, TOPfaces);
-//set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
-set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
+gf_mesh_set(m, 'region', 1, INfaces);
+gf_mesh_set(m, 'region', 2, OUTfaces);
+gf_mesh_set(m, 'region', 3, TOPfaces);
+//gf_mesh_set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
+gf_mesh_set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
 
-disp(sprintf('nbdof: mfu=%d, mfp=%d',get(mfu,'nbdof'),get(mfp,'nbdof')));
+disp(sprintf('nbdof: mfu=%d, mfp=%d',gf_mesh_fem_get(mfu,'nbdof'),gf_mesh_fem_get(mfp,'nbdof')));
 
 if (compute) then
-  md=gf_model('real');
+  md = gf_model('real');
   gf_model_set(md, 'add fem variable', 'u', mfu);
   gf_model_set(md, 'add initialized data', 'lambda', [0]);
   gf_model_set(md, 'add initialized data', 'mu', [viscosity]);

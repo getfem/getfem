@@ -64,11 +64,11 @@ else
     fem_u = gf_fem(sprintf('FEM_PK(2,%d)',PK));
   end
   fem_d = gf_fem(sprintf('FEM_PK(2,%d)',PK));
-  mfu = gf_mesh_fem(m,1);
-  mfd = gf_mesh_fem(m,1);  
+  mfu   = gf_mesh_fem(m,1);
+  mfd   = gf_mesh_fem(m,1);  
   gf_mesh_fem_set(mfu,'fem',fem_u);
   gf_mesh_fem_set(mfd,'fem',fem_d);
-  mim = gf_mesh_im(m,gf_integ('IM_TRIANGLE(13)'));
+  mim   = gf_mesh_im(m,gf_integ('IM_TRIANGLE(13)'));
 end
 
 nbdu = gf_mesh_fem_get(mfu,'nbdof');
@@ -120,7 +120,7 @@ Udi = gf_compute(mfu,imag(U(:)'),'interpolate on',mfd); Ud=Udr+1*%i*Udi;
 // by \Sum_n c_n H^(1)_n(kr)exp(i n \theta)
 N     = 1000;
 theta = 2*%pi*(0:N-1)/N;
-y  =sin(theta); 
+y  = sin(theta); 
 w  = eval(wave_expr);
 fw = fft(w); C=fw/N;
 S  = zeros(size(w)); S(:) = C(1); Nc=20;
@@ -140,7 +140,7 @@ for i=2:Nc
 end
 
 disp('the error won''t be less than ~1e-2 as long as a first order absorbing boundary condition will be used');
-Uex=conj(Uex);
+Uex = conj(Uex);
 disp(sprintf('rel error ||Uex-U||_inf=%g',max(abs(Ud-Uex))/max(abs(Uex))));
 disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/gf_compute(mfd,Uex,'L2 norm',mim)));
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));

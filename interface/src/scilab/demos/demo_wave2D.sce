@@ -1,5 +1,3 @@
-// YC: Object oriented example
-
 gf_workspace('clear all');
 
 disp('2D scalar wave equation (helmholtz) demonstration');
@@ -37,62 +35,62 @@ if load_the_mesh == 0 then
   // number of cells for the regular mesh
   Nt = 10; 
   Nr = 8;
-  m  = gfMesh('empty',2);
+  m  = gf_mesh('empty',2);
   dtheta  = 2*%pi*1/Nt; R=1+9*(0:Nr-1)/(Nr-1);
-  gt      = gfGeoTrans(sprintf('GT_PRODUCT(GT_PK(1,%d),GT_PK(1,1))',gt_order));
+  gt      = gf_geo_trans(sprintf('GT_PRODUCT(GT_PK(1,%d),GT_PK(1,1))',gt_order));
   ddtheta = dtheta/gt_order;
   for i=1:Nt
     for j=1:Nr-1
       ti=(i-1)*dtheta:ddtheta:i*dtheta;
       X = [R(j)*cos(ti) R(j+1)*cos(ti)];
       Y = [R(j)*sin(ti) R(j+1)*sin(ti)];
-      m.set('add convex',gt,[X;Y]);
+      gf_mesh_set(m,'add convex',gt,[X;Y]);
     end
   end
-  fem_u = gfFem(sprintf('FEM_QK(2,%d)',PK));
-  fem_d = gfFem(sprintf('FEM_QK(2,%d)',PK));
-  mfu = gfMeshFem(m,1);
-  mfd = gfMeshFem(m,1);  
-  mfu.set('fem',fem_u);
-  mfd.set('fem',fem_d);
+  fem_u = gf_fem(sprintf('FEM_QK(2,%d)',PK));
+  fem_d = gf_fem(sprintf('FEM_QK(2,%d)',PK));
+  mfu = gf_mesh_fem(m,1);
+  mfd = gf_mesh_fem(m,1);  
+  gf_mesh_fem_set(mfu'fem',fem_u);
+  gf_mesh_fem_set(mfd'fem',fem_d);
   sIM = sprintf('IM_GAUSS_PARALLELEPIPED(2,%d)',gt_order+2*PK);
-  mim = gfMeshIm(m, gfInteg(sIM));
+  mim = gf_mesh_im(m, g_integ(sIM));
 else
   // the mesh is loaded
-  m = gfMesh('import','gid','../meshes/holed_disc_with_quadratic_2D_triangles.msh');
+  m = gf_mesh('import','gid','../meshes/holed_disc_with_quadratic_2D_triangles.msh');
   if (use_hierarchical) then
     // hierarchical basis improve the condition number
     // of the final linear system
-    fem_u = gfFem(sprintf('FEM_PK_HIERARCHICAL(2,%d)',PK));
-    //fem_u=gfFem('FEM_HCT_TRIANGLE');
-    //fem_u=gfFem('FEM_HERMITE(2)');
+    fem_u = gf_fem(sprintf('FEM_PK_HIERARCHICAL(2,%d)',PK));
+    //fem_u=gf_fem('FEM_HCT_TRIANGLE');
+    //fem_u=gf_fem('FEM_HERMITE(2)');
   else
-    fem_u = gfFem(sprintf('FEM_PK(2,%d)',PK));
+    fem_u = gf_fem(sprintf('FEM_PK(2,%d)',PK));
   end
-  fem_d = gfFem(sprintf('FEM_PK(2,%d)',PK));
-  mfu   = gfMeshFem(m,1);
-  mfd   = gfMeshFem(m,1);  
-  set(mfu,'fem',fem_u);
-  set(mfd,'fem',fem_d);
-  mim = gfMeshIm(m,gfInteg('IM_TRIANGLE(13)'));
+  fem_d = gf_fem(sprintf('FEM_PK(2,%d)',PK));
+  mfu   = gf_mesh_fem(m,1);
+  mfd   = gf_mesh_fem(m,1);  
+  gf_mesh_fem_set(mfu,'fem',fem_u);
+  gf_mesh_fem_set(mfd,'fem',fem_d);
+  mim = gf_mesh_im(m,gf_integ('IM_TRIANGLE(13)'));
 end
-nbdu = mfu.nbdof;
-nbdd = mfd.nbdof;
+nbdu = gf_mesh_fem_get(mfu,'nbdof');
+nbdd = gf_mesh_fem_get(mfd,'nbdof');
 
 // identify the inner and outer boundaries
-P = m.pts; // get list of mesh points coordinates
+P = gf_mesh_get(m,'pts'); // get list of mesh points coordinates
 pidobj = find(sum(P.^2) < 1*1+1e-6);
 pidout = find(sum(P.^2) > 10*10-1e-2);
 
 // build the list of faces from the list of points
-fobj = get(m,'faces from pid',pidobj); 
-fout = get(m,'faces from pid',pidout);
-set(m,'boundary',1,fobj);
-set(m,'boundary',2,fout);
+fobj = gf_mesh_get(m,'faces from pid',pidobj); 
+fout = gf_mesh_get(m,'faces from pid',pidout);
+gf_mesh_set(m,'boundary',1,fobj);
+gf_mesh_set(m,'boundary',2,fout);
 
 // expression of the incoming wave
 wave_expr = sprintf('cos(%f*y+.2)+1*%i*sin(%f*y+.2)',k,k);
-Uinc      = get(mfd,'eval',{wave_expr});
+Uinc      = gf_mesh_fem_get(mfd,'eval',list(wave_expr));
 
 //
 // we present three approaches for the solution of the Helmholtz problem
@@ -119,16 +117,18 @@ if 1 then
 elseif 0 then
   t0 = cputime;
   // solution using old model bricks
-  b0 = gfMdBrick('helmholtz',mim,mfu);
-  set(b0,'param','wave_number', k);
-  b1 = gfMdBrick('dirichlet',b0, 1, mfd, 'augmented');
-  set(b1,'param','R',mfd,Uinc);
-  b2 = gfMdBrick('qu term',b1, 2); set(b2, 'param','Q',1i*k);
+  b0 = gf_md_brick('helmholtz',mim,mfu);
+  gf_md_brick_set(b0,'param','wave_number', k);
+  b1 = gf_md_brick('dirichlet',b0, 1, mfd, 'augmented');
+  gf_md_brick_set(b1,'param','R',mfd,Uinc);
+  b2 = gf_md_brick('qu term',b1, 2); 
+  gf_md_brick_set(b2, 'param','Q',1i*k);
   
-  mds = gfMdState(b2);
+  mds = gf_md_state(b2);
   
-  get(b2, 'solve', mds, 'noisy');
-  U = get(mds, 'state'); U=U(1:mfu.nbdof);
+  gf_md_brick_get(b2, 'solve', mds, 'noisy'); // BUG ? set or get ?
+  U = gf_md_state_get(mds, 'state'); 
+  U = U(1:gf_mesh_fem_get(mfu,'nbdof'));
   disp(sprintf('solve done in %.2f sec', cputime-t0));
 else
   // solution using the "low level" approach
@@ -146,13 +146,13 @@ else
 
 
   // eliminate dirichlet conditions and solve the system
-  RF=_null'*(-A*ud(:));
-  RK=_null'*A*_null;
-  U=_null*(RK\RF)+ud(:);
-  U=U(:).';
+  RF = _null'*(-A*ud(:));
+  RK = _null'*A*_null;
+  U  = _null*(RK\RF)+ud(:);
+  U  = U(:).';
 end
 
-Ud=gf_compute(mfu,U,'interpolate on',mfd);
+Ud = gf_compute(mfu,U,'interpolate on',mfd);
 
 //figure(1); gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); colorbar;
 //figure(2); gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); colorbar;
@@ -164,8 +164,9 @@ N = 1000;
 theta = 2*%pi*(0:N-1)/N;
 y  = sin(theta); 
 w  = eval(wave_expr);
-fw = fft(w); C=fw/N;
-S = zeros(size(w)); S(:) = C(1); Nc=20;
+fw = fft(w); 
+C  = fw/N;
+S  = zeros(size(w)); S(:) = C(1); Nc=20;
 for i=2:Nc
   n=i-1;  
   S = S + C(i)*exp(1*%i*n*theta) + C(N-(n-1))*exp(-1*%i*n*theta);

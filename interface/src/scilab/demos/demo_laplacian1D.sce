@@ -1,6 +1,5 @@
-// YC: Object Oriented demo
-
 // clears every getfem object 
+
 gf_workspace('clear all');
 clear pde;
 
@@ -18,13 +17,13 @@ gf_plot_mesh(m, 'vertices','convexes');
 //disp('press enter to continue..'); pause
 
 
-mfu = gfMeshFem(m,1);// set(mfu, 'classical fem', 0);
-mfd = gfMeshFem(m,1);// set(mfd, 'classical fem', 0);
-mim = gfMeshIm(m);
+mfu = gf_mesh_fem(m,1);// gf_mesh_fem_set(mfu, 'classical fem', 0);
+mfd = gf_mesh_fem(m,1);// gf_mesh_fem_set(mfd, 'classical fem', 0);
+mim = gf_mesh_im(m);
 expr_u = 'sin(x/2)+x/100'; //sin(x).*cos(y)';
 expr_f = 'sin(x/2)/4'; //'-2*sin(x).*sin(y)';
 
-mferr = gfMeshFem(m,1); 
+mferr = gf_mesh_fem(m,1); 
 gf_mesh_fem_set(mferr,'fem',gf_fem('FEM_PK(1,4)'));
 x  = gf_mesh_fem_get(mferr, 'basic dof nodes');
 eU = eval(expr_u);
@@ -32,9 +31,9 @@ eU = eval(expr_u);
 bord = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'boundary', 1, bord);
     
-b0 = gfMdBrick('generic elliptic',mim,mfu);
-b1 = gfMdBrick('dirichlet', b0, 1, mfu,'augmented');
-b2 = gfMdBrick('source term',b1);
+b0 = gf_md_brick('generic elliptic',mim,mfu);
+b1 = gf_md_brick('dirichlet', b0, 1, mfu,'augmented');
+b2 = gf_md_brick('source term',b1);
 
 gf_util('trace level', 0); // do not clutter the output with boring messages
 gf_util('warning level', 0);
@@ -74,20 +73,20 @@ for j=1:3
     gf_mesh_fem_set(mfd,'fem',fem_d);
     gf_mesh_im_set(mim, 'integ', im);
  
-    set(b1, 'param', 'R', mfd, get(mfd, 'eval', list(expr_u)));
-    set(b2, 'param', 'source_term', mfd, get(mfd, 'eval', list(expr_f)));
+    gf_md_brick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_u)));
+    gf_md_brick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_f)));
     
-    mds = gfMdState(b2);
+    mds = gf_md_state(b2);
     
     gf_mdbrick_get(b2, 'solve', mds);
-    Uu=gf_mdstate_get(mds, 'state'); Uu=Uu(1:get(mfu, 'nbdof'));
+    Uu = gf_mdstate_get(mds, 'state'); Uu=Uu(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
     //gf_plot(pde.mf_u, U,'mesh','regions'); colorbar;
     U = gf_compute(mfu, Uu, 'interpolate on', mferr);
     plot(x,U,'r+-',x,eU,'bx:'); 
     legend('approx','exact');
-    [mx,pos]=max(abs(eU-U));
-    disp(sprintf('K=%d .. max_rel(err)=%1.5g at x=%3.2f [condition number=%e]',K,mx/max(abs(eU)), x(pos),cond(get(mds, 'reduced_tangent_matrix'))));
+    [mx,pos] = max(abs(eU-U));
+    disp(sprintf('K=%d .. max_rel(err)=%1.5g at x=%3.2f [condition number=%e]',K,mx/max(abs(eU)), x(pos),cond(gf_md_state_get(mds, 'reduced_tangent_matrix'))));
   end
 end
 

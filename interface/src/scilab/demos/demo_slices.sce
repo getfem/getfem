@@ -1,7 +1,7 @@
 // not working, not part of the getfem-interface distrib
 
-[mf] = gfMeshFem('load','signorini_cou.mesh_fem'); 
-m=mf.linked_mesh; // YC
+mf = gf_mesh_fem('load','signorini_cou.mesh_fem'); 
+m  = gf_mesh_fem_get(mf,'linked_mesh'); 
 load('signorini_cou.data');
 U = signorini_cou';
 
@@ -33,7 +33,7 @@ x = [1;0;0];
 y = [0;1;0];
 z = [0;0;1];
 sl2 = gf_slice(list('boundary',list('union',list('planar',+1,c,x),list('planar',+1,c,y),list('planar',+1,c,z))),m,nrefine);
-//sl2=gf_slice(list('boundary',list('union',list('planar',+1,c,x),list('planar',+1,c,y))),m,nrefine);
+//sl2 = gf_slice(list('boundary',list('union',list('planar',+1,c,x),list('planar',+1,c,y))),m,nrefine);
 
 P  = gf_slice_get(sl2,'pts'); 
 dP = gf_compute(mf,U,'interpolate on',sl2); 
@@ -48,5 +48,5 @@ h = gf_plot_slice(sl2,'mesh','on','data',VMsl);
 scf(100002); 
 h = gf_plot_slice(sl1,'mesh_faces','on','mesh','on'); 
 // view(-85,-15); axis off; camlight;
-set(h,'facecolor',[.8 0 0]);
+//set(h,'facecolor',[.8 0 0]);
 

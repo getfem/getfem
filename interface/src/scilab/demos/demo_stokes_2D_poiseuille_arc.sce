@@ -1,5 +1,4 @@
-// this example uses the "old" gf_solve instead of the bricks
-// framework..
+// this example uses the "old" gf_solve instead of the bricks framework..
 
 gf_workspace('clear all');
 
@@ -18,7 +17,7 @@ pde.bound(3).R  = list(0,0);
 pde.bound(1).type = 'Dirichlet';
 pde.bound(2).type = 'Dirichlet';
 pde.bound(3).type = 'Dirichlet';
-//m=gf_mesh('import','GiD','tube_2D_spline.GiD.msh');
+//m = gf_mesh('import','GiD','tube_2D_spline.GiD.msh');
 
 Ku=3; Kp=1;
 Nt=8; Nr=4;
@@ -91,13 +90,13 @@ gf_plot(pde.mf_p,P(:)','deformation',U,'deformation_mf',pde.mf_u,'deformation_sc
 title('Pression on the deformed mesh');
 
 subplot(2,2,3); 
-gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4); //,'meshopts',{'regions',1,'curved','on'});
+gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4); //,'meshopts',ilist('regions',1,'curved','on'));
 gf_plot(pde.mf_p,P(:)');
 //colorbar;
 title('Quiver plot of U, with color plot of the pression');
 
 subplot(2,2,4); 
-gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4);//...'meshopts',{'regions',1,'curved','on'});
+gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4);//...'meshopts',list('regions',1,'curved','on'));
 gf_plot(pde.mf_p,P(:)');
 // axis([6 8 6 8]);
 title('Quiver plot zoomed');

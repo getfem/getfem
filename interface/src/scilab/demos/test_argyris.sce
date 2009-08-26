@@ -1,18 +1,16 @@
-// trace on;
-
 clear pde;
 gf_workspace('clear all');
 
 NX = 10
 m  = gf_mesh('triangles grid',[0:1/NX:1],[0:1/NX:1]);
 //gf_mesh_set(m,'transform', [.3 .8; .8 -.2]);
-//m=gfMesh('pt2d', [0 0; 1 0; 0 1]', [1 2 3]');
+//m = gf_mesh('pt2d', [0 0; 1 0; 0 1]', [1 2 3]');
 
 // create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
-mf   = gfMeshFem(m,1);
-mfl  = gfMeshFem(m,1);
-mflg = gfMeshFem(m,1);
-mflh = gfMeshFem(m,1);
+mf   = gf_mesh_fem(m,1);
+mfl  = gf_mesh_fem(m,1);
+mflg = gf_mesh_fem(m,1);
+mflh = gf_mesh_fem(m,1);
 
 // assign the Q2 fem to all convexes of the mesh_fem,
 //gf_mesh_fem_set(mf,'fem',gf_fem('FEM_PK(2,3)'));
@@ -37,17 +35,17 @@ pause(1);
                                                   // exact solution
 if 0 then
   // setup a pde structure for gf_solve
-  pde.type = 'laplacian'; // YC:
+  pde.type   = 'laplacian'; // YC:
   pde.lambda = list(1);  // note the use of braces
-  pde.mim = mim;
-  pde.mf_u = mf;       // this does not copy whole objects, just their handles
-  pde.mf_d = mfl;
-  expr_u = 'y.*(y-1).*x.*(x-1)+x.^5/10';
-  expr_f = '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3/10)';
-  pde.F = list( expr_f );         // the volumic source
+  pde.mim    = mim;
+  pde.mf_u   = mf;       // this does not copy whole objects, just their handles
+  pde.mf_d   = mfl;
+  expr_u     = 'y.*(y-1).*x.*(x-1)+x.^5/10';
+  expr_f     = '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3/10)';
+  pde.F      = list( expr_f );         // the volumic source
   pde.bound(1).type = 'Dirichlet';
-  pde.bound(1).R = list( expr_u );  // we force the value of the solution on the boundary
-  [U] = gf_solve(pde);
+  pde.bound(1).R    = list( expr_u );  // we force the value of the solution on the boundary
+  U      = gf_solve(pde);
   Uexact = gf_mesh_fem_get(mfl,'eval', list( expr_u )); // interpolate the
 else
   expr_u = 'y.^5';

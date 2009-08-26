@@ -1,11 +1,8 @@
-// YC: Object oriented example
-
 disp('this file should be launched after demo_tripod.m as it assumes the tripod mesh and solutions are in memory')
 
-gfObject(m)
-//m=gf_mesh('from string',sm);
-//mfu=gf_mesh_fem('from string',smfu,m);
-//mfdu=gf_mesh_fem('from string',smfdu,m);
+//m    = gf_mesh('from string',sm);
+//mfu  = gf_mesh_fem('from string',smfu,m);
+//mfdu = gf_mesh_fem('from string',smfdu,m);
 
 disp('plotting ... can also take some minutes!');
 
@@ -26,7 +23,6 @@ for r=-10.3:+.1:12 //46.1:-.1:4,
   //camlight;
   xs2png(sprintf('tripod_slice_p%03d',cnt));
   cnt = cnt+1;
-  gfObject(sl)
   pause(1)
   gf_delete(sl);
 end

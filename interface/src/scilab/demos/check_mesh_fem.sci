@@ -1,5 +1,3 @@
-// YC: object oriented
-
 function check_mesh_fem(iverbose,idebug)
 global gverbose;
 global gdebug;  
@@ -77,38 +75,38 @@ s=['BEGIN POINTS LIST' 10,...
    ' CONVEX 5 FEM_PRODUCT(FEM_PK(1,2),FEM_PK(1,3))' 10,...
    ' CONVEX 8 FEM_PRODUCT(FEM_PK(1,2),FEM_QK(2,3))' 10,...
    'END MESH_FEM\n'];
-m = gf_mesh('from string',s);
-mf = gf_mesh_fem('from string',s,m);
-s2 = gf_mesh_fem_get(mf,'char');
+m   = gf_mesh('from string',s);
+mf  = gf_mesh_fem('from string',s,m);
+s2  = gf_mesh_fem_get(mf,'char');
 mf2 = gf_mesh_fem('from string',s2,m);
 gf_mesh_fem_get(mf,'nbdof');
 gf_mesh_fem_get(mf2,'nbdof');
 
-N=gf_mesh_get(m,'dim');
-npt=gf_mesh_get(m,'nbpts');
+N   = gf_mesh_get(m,'dim');
+npt = gf_mesh_get(m,'nbpts');
 assert('N==3 & npt==40');
 
-ncv=gf_mesh_get(m,'nbcvs');
+ncv = gf_mesh_get(m,'nbcvs');
 assert('ncv==7');
 
-lastcv=gf_mesh_get(m, 'max cvid');
+lastcv = gf_mesh_get(m, 'max cvid');
 assert('lastcv==9');
 
-lastpid=gf_mesh_get(m, 'max pid');
+lastpid = gf_mesh_get(m, 'max pid');
 assert('lastpid==50');
 
-[d,c]=gf_mesh_get(mf, 'pid from cvid',[2 6]);
+[d,c] = gf_mesh_get(mf, 'pid from cvid',[2 6]);
 assert('c==[1 5 13]');
 assert('d==[3 18 4 8 3 4 29 30 31 32 33 34]');
 
-[d,c]=gf_mesh_get(mf, 'pid from cvid',1:gf_mesh_get(m,'max cvid'));
-[d,c]=gf_mesh_get(mf, 'pid from cvid');
+[d,c] = gf_mesh_get(mf, 'pid from cvid',1:gf_mesh_get(m,'max cvid'));
+[d,c] = gf_mesh_get(mf, 'pid from cvid');
 for i=[-1 0 -10]
   asserterr('gf_mesh_get(m, ''pid from cvid'',i)');
 end
-P=gf_mesh_get(m,'pts');
-V=gf_mesh_get(m, 'pid from coords', P);
-pid=gf_mesh_get(m,'pid');
+P = gf_mesh_get(m,'pts');
+V = gf_mesh_get(m, 'pid from coords', P);
+pid = gf_mesh_get(m,'pid');
 find(V~=-1)
 pid
 P
@@ -122,7 +120,7 @@ assert('a(:)==b(:)');
 
 for i=[-1 0 48 49]
   asserterr('gf_mesh_get(m, ''faces from pid'', i)');
-end;
+end
 
 a=gf_mesh_get(m, 'outer faces');
 b=[1 0 2 0 3 0 4 0 5 2 5 3 5 4 5 5 6 0 9 1 9 2 9 3 9 4 9 5];
@@ -142,81 +140,82 @@ asserterr('gf_mesh_get(m, ''curved edges'',-1)');
 assert('abs(sum(sum(sum(E)))-1.872e3) < 2');
 asserterr('gf_mesh_get(m, ''triangulated surface'', 3)');
 
-Z=gf_mesh_get(m, 'triangulated surface', 4,gf_mesh_get(m, 'outer faces',[4 5]));
+Z = gf_mesh_get(m, 'triangulated surface', 4,gf_mesh_get(m, 'outer faces',[4 5]));
 assert('size(Z)==[9 160]');
 
-Z=gf_mesh_get(m, 'curved edges', 4, gf_mesh_get(m, 'outer faces',[4 5]));
-ZZ=gf_mesh_get(m, 'curved edges', 4, [4 5]);
+Z  = gf_mesh_get(m, 'curved edges', 4, gf_mesh_get(m, 'outer faces',[4 5]));
+ZZ = gf_mesh_get(m, 'curved edges', 4, [4 5]);
 for i=0:7
   if (i > 0 & i < 7) then
-    n=gf_mesh_get(m, 'normal of face', 5, 3, i);
+    n = gf_mesh_get(m, 'normal of face', 5, 3, i);
     assert('norm(n-[0    0.7071    0.7071]) < 1e-3');
-    nn(i,:)=gf_mesh_get(m, 'normal of face', 5, 1, i);
+    nn(i,:) = gf_mesh_get(m, 'normal of face', 5, 1, i);
   else
     asserterr('gf_mesh_get(m, ''normal of face'', 5, 3, i)');
   end
 end
-zz=[0 0 0 0 0 0 -0.894427 -1 -0.894427 -0.894427 -1 -0.894427 0.447214 0 -0.447214 0.447214 0 -0.447214];  
+
+zz = [0 0 0 0 0 0 -0.894427 -1 -0.894427 -0.894427 -1 -0.894427 0.447214 0 -0.447214 0.447214 0 -0.447214];  
 assert('norm(nn(:)''-zz)<1e-5'); //8.9465e-07
 asserterr('gf_mesh_get(m, ''normal of faces'', [1 -1])');
 
-N=gf_mesh_get(m, 'normal of faces', gf_mesh_get(m, 'outer faces',[5 9]));
-s2=gf_mesh_get(m,'char');
+N  = gf_mesh_get(m, 'normal of faces', gf_mesh_get(m, 'outer faces',[5 9]));
+s2 = gf_mesh_get(m,'char');
 assert('length(s2)>500');
 
-m2=gf_mesh('from string',s);
+m2 = gf_mesh('from string',s);
 
 gf_mesh_fem_get(mf,'nbdof');
-d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5]);
+d = gf_mesh_fem_get(mf,'basic dof from cv',[1 5]);
 assert(['d==[1 2 3 4 5 6 37 40 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57]']);
 
-d=gf_mesh_fem_get(mf,'basic dof from cv',[1 5;1 2]);
+d = gf_mesh_fem_get(mf,'basic dof from cv',[1 5;1 2]);
 assert('d==[3 5 6 37 40 42 45 47 50 52 55 57]');
 
-d=gf_mesh_fem_get(mf,'basic dof from cvid',5);
+d = gf_mesh_fem_get(mf,'basic dof from cvid',5);
 assert('d==[37 43 44 45 46 47 40 48 49 50 51 52 42 53 54 55 56 57]');
 
-s2=gf_mesh_get(mf,'char');
+s2 = gf_mesh_get(mf,'char');
 assert('length(s2)>500');
 
-m2=gf_mesh('from string',s);
-mf2=gf_mesh_fem('from string',s);
-mf3=gf_mesh_fem('from string',s,m2);
+m2  = gf_mesh('from string',s);
+mf2 = gf_mesh_fem('from string',s);
+mf3 = gf_mesh_fem('from string',s,m2);
 gf_mesh_fem_set(mf2,'qdim',2);
-s2=gf_mesh_fem_get(mf2,'char');
-s3=gf_mesh_get(mf2,'char');
+s2  = gf_mesh_fem_get(mf2,'char');
+s3  = gf_mesh_get(mf2,'char');
 // ~bug here: doesn't work if s2 and s3 are reversed
-mf2=gf_mesh_fem('from string',[s3 s2]); 
+mf2 = gf_mesh_fem('from string',[s3 s2]); 
 
 
-d=gf_mesh_fem_get(mf2,'basic dof from cv',[1 5]);
+d = gf_mesh_fem_get(mf2,'basic dof from cv',[1 5]);
 //  dd=[1 2 3 4 5 6 7 8 9 10 11 12 73 74 79 80 83 84 85 86 87 88 89 90 91 92 ...
 //      93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 ...
 //      112 113 114];
 //  assert('d==dd');
 
-d=gf_mesh_fem_get(mf2,'basic dof from cv',[1 5;1 2]);
+d = gf_mesh_fem_get(mf2,'basic dof from cv',[1 5;1 2]);
 //  dd=[5 6 9 10 11 12 73 74 79 80 83 84 89 90 93 94 99 100 103 104 109 110 113 ...
 //      114];  
 //  assert('d==dd');
-d=gf_mesh_fem_get(mf2,'basic dof from cvid',5);
+d = gf_mesh_fem_get(mf2,'basic dof from cvid',5);
 //  dd=[73 74 85 86 87 88 89 90 91 92 93 94 79 80 95 96 97 98 99 100 101 102 ...
 //      103 104 83 84 105 106 107 108 109 110 111 112 113 114];  
 //  assert('d==dd');
 
-[f,c]=gf_mesh_get(mf2, 'geotrans');
+[f,c] = gf_mesh_get(mf2, 'geotrans');
 assert('c(2)==c(4)');
 
-fs1=gf_geotrans_get(f(c(6)),'char');
+fs1 = gf_geotrans_get(f(c(6)),'char');
 assert('fs1==''GT_PRODUCT(GT_PK(1,1),GT_PK(1,3))''');
 
-[f,c]=gf_mesh_get(mf2, 'cvstruct');
+[f,c] = gf_mesh_get(mf2, 'cvstruct');
 assert('c(2)==c(4)');
 
-[f,c]=gf_mesh_fem_get(mf2, 'fem');
+[f,c] = gf_mesh_fem_get(mf2, 'fem');
 assert('c(2)==c(4)');
 
-fs1=gf_fem_get(f(c(5)),'char');
+fs1 = gf_fem_get(f(c(5)),'char');
 assert('fs1==''FEM_PRODUCT(FEM_PK(2,2),FEM_PK(1,2))''');
 //  [f,c]=gf_mesh_fem_get(mf2, 'integ');
 //  assert('c(2)==c(3)');
@@ -232,15 +231,15 @@ gf_mesh_fem_set(mf_u,'fem',gf_fem('FEM_PK(2,3)'),8);
 gf_mesh_fem_set(mf_d,'fem',gf_fem('FEM_PK(2,1)'));
 gf_mesh_set(m, 'boundary', 3, [1 1 1; 1 2 3]);
 gf_mesh_set(m, 'boundary', 7, [3 4; 3 2]);
-cl=[1:5 7 8];
+cl = [1:5 7 8];
 asserterr('gf_mesh_fem_get(mf_u, ''non conformal basic dof'')');
 
-d=gf_mesh_fem_get(mf_u, 'non conformal basic dof',cl);
+d = gf_mesh_fem_get(mf_u, 'non conformal basic dof',cl);
 //gf_plot_mesh(mf_u, 'dof', 'on');
 assert('d==[11 12 13 14 15 16 21 22]');
 
-f=gf_mesh_fem_get(mf2, 'fem');
-f5=gf_mesh_fem_get(mf2, 'fem',5);
+f  = gf_mesh_fem_get(mf2, 'fem');
+f5 = gf_mesh_fem_get(mf2, 'fem',5);
 asserterr('gf_mesh_fem_get(mf_u, ''fem of cvs'')');
 asserterr('gf_mesh_fem_get(mf_u, ''fem of cvs'',7)');
 asserterr('gf_mesh_fem_get(mf_u, ''fem of cvs'',6)');
@@ -249,36 +248,36 @@ gf_mesh_fem_get(mf_u, 'is_lagrangian',cl);
 gf_mesh_fem_get(mf_u, 'is equivalent',cl);
 gf_mesh_fem_get(mf_u, 'is_polynomial',cl);
 
-me=gf_eltm('base', f5);
+me = gf_eltm('base', f5);
 //  ME=gf_mesh_fem_get(mf2,'eltm',me,5);
 //  MME=[-0.0444444 1.15556 0.0222222 1.15556 1.24444 0.0222222 -0.177778 4.62222,...
 //       0.0888889 4.62222 4.97778 0.0888889 -0.0444444 1.15556 0.0222222 1.15556,...
 //       1.24444 0.0222222]';
 //  assert('norm(ME-MME)<1e-4');
-m=gf_mesh_fem_get(mf2,'linked_mesh');
+m = gf_mesh_fem_get(mf2,'linked_mesh');
 
-oo=gf_mesh_get(mf2,'outer faces');
-oo=oo(:,find(oo(2,:)~=0));
+oo = gf_mesh_get(mf2,'outer faces');
+oo = oo(:,find(oo(2,:)~=0));
 gf_mesh_set(m,'boundary',51,oo);
 
-o=gf_mesh_get(m,'boundary',51);
+o = gf_mesh_get(m,'boundary',51);
 assert('size(o)==size(oo) & sum(sum(o))==sum(sum(oo))');
 
-o=gf_mesh_get(mf2,'boundary',1);
+o = gf_mesh_get(mf2,'boundary',1);
 assert('isempty(o)');
 gf_mesh_set(gf_mesh_fem_get(mf2,'linked mesh'),'boundary',1,oo(:,1));
-o=gf_mesh_get(mf2,'boundary',1);
+o = gf_mesh_get(mf2,'boundary',1);
 assert('o==oo(:,1)');
 
-o=gf_mesh_get(mf2,'boundaries');
+o = gf_mesh_get(mf2,'boundaries');
 assert('o==[1 51]');
 
 gf_mesh_set(gf_mesh_fem_get(mf2,'linked mesh'),'delete boundary',1);
 
-o=gf_mesh_get(mf2,'boundary',1);
+o = gf_mesh_get(mf2,'boundary',1);
 assert('isempty(o)');
 
-o=gf_mesh_get(mf2,'boundaries');
+o = gf_mesh_get(mf2,'boundaries');
 assert('o==51');
 
 // test region intersect/merge/setdiff
@@ -289,48 +288,48 @@ R2 = [5 6 3 4 6; 1 3 1 2 1];
 gf_mesh_set(m,'region', 11, R2);
 r2 = gf_mesh_get(m, 'region', 11);
 gf_mesh_set(m,'region merge', 11, 10);
-rr=gf_mesh_get(m,'region',11);
-RR=union(R1',R2','r')';
+rr = gf_mesh_get(m,'region',11);
+RR = union(R1',R2','r')';
 assert('rr==RR');
 
 gf_mesh_set(m,'region', 11, R2);
 gf_mesh_set(m,'region substract', 11, 10);
-rr=gf_mesh_get(m,'region',11);
+rr = gf_mesh_get(m,'region',11);
 //RR=setdiff(R2',R1','rows')'; // YC:
-RR=setdiff(R2',R1','rows')';
+RR = setdiff(R2',R1','rows')';
 assert('rr==RR');
 
 gf_mesh_set(m,'region', 11, R2);
 gf_mesh_set(m,'region intersect', 11, 10);
-rr=gf_mesh_get(m,'region',11);
-RR=intersect(R2',R1','r')';
+rr = gf_mesh_get(m,'region',11);
+RR = intersect(R2',R1','r')';
 assert('rr==RR');
 
 asserterr('gf_mesh_set(m, ''del point'', [3])');
-o=gf_mesh_get(m,'pid from cvid', 3);
+o = gf_mesh_get(m,'pid from cvid', 3);
 assert('o==[8 9 11 15 47 16 18 10 12]');
 
 gf_mesh_set(m,'del convex',3);
 gf_mesh_set(m,'del convex',2);
-c=[2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 19 20 21 22 23 24 25,...
-   26 27 28 29 30 31 32 33 34 35 36 37 38 39 47 50];
-d=gf_mesh_get(m,'pid');
+c = [2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 18 19 20 21 22 23 24 25,...
+     26 27 28 29 30 31 32 33 34 35 36 37 38 39 47 50];
+d = gf_mesh_get(m,'pid');
 assert('d(:)==c(:)');
 
-d=gf_mesh_fem_get(mf2,'basic dof on region', 0:100);
+d = gf_mesh_fem_get(mf2,'basic dof on region', 0:100);
 
 // test for optimize_structure
-maxpid=gf_mesh_get(m,'max pid');
-maxcvid=gf_mesh_get(m,'max cvid');
-np=gf_mesh_get(m,'nbpts');
-ncv=gf_mesh_get(m,'nbcvs');
+maxpid  = gf_mesh_get(m,'max pid');
+maxcvid = gf_mesh_get(m,'max cvid');
+np      = gf_mesh_get(m,'nbpts');
+ncv     = gf_mesh_get(m,'nbcvs');
 assert('np < maxpid');
 assert('ncv < maxcvid');
 
 gf_mesh_set(m,'optimize structure');
 
-maxpid=gf_mesh_get(m,'max pid');
-maxcvid=gf_mesh_get(m,'max cvid');
+maxpid  = gf_mesh_get(m,'max pid');
+maxcvid = gf_mesh_get(m,'max cvid');
 assert('np == maxpid');
 assert('ncv == maxcvid');
 
@@ -340,19 +339,19 @@ disp('-----------------------------PLOP---------------------------------');
 disp('-----------------------------PLOP---------------------------------');
 
 // test gradient/hessian
-m=gfMesh('empty',2); 
+m = gf_mesh('empty',2); 
 //gf_mesh_set(m,'add convex',gfGeoTrans('GT_PK(2,2)'),...
 //[0 0; .6 0; 1.2 0; 0 .4; .6 .4; 0 0.8]');
 gf_mesh_set(m,'add convex',gfGeoTrans('GT_PK(2,1)'),[1 1; 1.1 0;0.9 1.3]');
-mf=gfMeshFem(m);
-gf_mesh_fem_set(mf, 'classical fem', 4); //'gfFem('FEM_PK(2,3)'));
-U=rand(3, mf.nbdof());
+mf = gf_mesh_fem(m);
+gf_mesh_fem_set(mf, 'classical fem', 4); //'gf_fem('FEM_PK(2,3)'));
+U = rand(3, gf_mesh_fem_get(mf,'nbdof');
 //U(1) = 1;
 
-DU=gf_compute(mf, U, 'gradient', mf)
-D2U=gf_compute(mf, DU, 'gradient', mf);
+DU  = gf_compute(mf, U, 'gradient', mf)
+D2U = gf_compute(mf, DU, 'gradient', mf);
 
-D2U2=gf_compute(mf, U, 'hessian', mf);
+D2U2= g f_compute(mf, U, 'hessian', mf);
 assert('max(max(abs(D2U(:)-D2U2(:)))) < 1e-9');
 endfunction
 

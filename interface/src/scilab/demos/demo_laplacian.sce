@@ -21,12 +21,12 @@ gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
 pause(1);
 
 // interpolate the exact solution
-Uexact = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1)+x.^5' });
+Uexact = gf_mesh_fem_get(mf, 'eval', list('y.*(y-1).*x.*(x-1)+x.^5'));
 // its second derivative
-F      = gf_mesh_fem_get(mf, 'eval', { '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)' });
+F      = gf_mesh_fem_get(mf, 'eval', list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
 
 
-md=gf_model('real');
+md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
@@ -38,14 +38,14 @@ gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
 // Version with old bricks
-// b0=gf_mdbrick('generic elliptic',mim,mf);
-// b1=gf_mdbrick('dirichlet', b0, 1, mf, 'penalized');
+// b0 = gf_mdbrick('generic elliptic',mim,mf);
+// b1 = gf_mdbrick('dirichlet', b0, 1, mf, 'penalized');
 // gf_mdbrick_set(b1, 'param', 'R', mf, Uexact); 
-// b2=gf_mdbrick('source term',b1);
+// b2 = gf_mdbrick('source term',b1);
 // gf_mdbrick_set(b2, 'param', 'source_term', mf, F);
-// mds=gf_mdstate(b1);
+// mds = gf_mdstate(b1);
 // gf_mdbrick_get(b2, 'solve', mds)
-// U=gf_mdstate_get(mds, 'state');
+// U = gf_mdstate_get(mds, 'state');
 
 disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 

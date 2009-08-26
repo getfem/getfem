@@ -102,9 +102,9 @@ v=gf_spmat_get(cK, 'csc_val');
 
 // CLEAR
 gf_spmat_set(K, 'to_wsc'); gf_spmat_set(cK, 'to_wsc');  
-KK=gf_spmat('copy',K); gf_spmat_set(KK,'clear');
+KK = gf_spmat('copy',K); gf_spmat_set(KK,'clear');
 assert('gf_spmat_get(KK,''nnz'')==0');
-KK=gf_spmat('copy',cK); gf_spmat_set(KK,'clear');
+KK = gf_spmat('copy',cK); gf_spmat_set(KK,'clear');
 assert('gf_spmat_get(KK,''nnz'')==0');
 
 for i=1:20, 
@@ -113,19 +113,19 @@ for i=1:20,
   else 
     gf_spmat_set(K, 'to_csc'); 
   end
-  KK=gf_spmat('copy',cK); gf_spmat_set(KK,'scale',int32(-1));
-  C = gf_spmat('add',cK,KK);
+  KK = gf_spmat('copy',cK); gf_spmat_set(KK,'scale',int32(-1));
+  C  = gf_spmat('add',cK,KK);
   assert('gf_spmat_get(C,''nnz'')==0');
-  C=gf_spmat('copy',cK); gf_spmat_set(C,'transpose');
+  C = gf_spmat('copy',cK); gf_spmat_set(C,'transpose');
   assert('all(gf_spmat_get(C,''full'')==fcK.'')');
-  C=gf_spmat('copy',cK); gf_spmat_set(C,'transconj');
+  C = gf_spmat('copy',cK); gf_spmat_set(C,'transconj');
   assert('all(gf_spmat_get(C,''full'')==fcK'')');
-  C=gf_spmat('copy',cK); gf_spmat_set(C,'conjugate');
+  C = gf_spmat('copy',cK); gf_spmat_set(C,'conjugate');
   assert('all(gf_spmat_get(C,''full'')==conj(fcK))');
 end
 
 gf_spmat_set(cK,'to_complex');
-C=gf_spmat('copy',K); gf_spmat_set(C,'to_complex');
+C = gf_spmat('copy',K); gf_spmat_set(C,'to_complex');
 assert('gf_spmat_get(C,''is_complex'')');
 gf_spmat_set(C,'clear');
 
@@ -154,6 +154,7 @@ B = full(K(2,2:4)); B(1)=1+2*%i; B=B+2*%i;
 assert('max(abs(A-B))<1e-13');
 
 gf_workspace('clear all')
+
 m   = gf_mesh('cartesian',[1:30],[1:30]);
 mf  = gf_mesh_fem(m,1);
 gf_mesh_fem_set(mf,'classical fem', 1);
@@ -169,4 +170,3 @@ gf_workspace('stats')
 X2 = gf_linsolve('cg',A,B,gf_precond('spmat',speye(size(A))));
 assert('norm(X1-X2)<1e-13');
 endfunction
-

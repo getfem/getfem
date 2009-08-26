@@ -24,12 +24,12 @@ tic;
 
 gf_workspace('clear all');
 
-m1=gf_mesh('empty',1);
+m1 = gf_mesh('empty',1);
 pde('type')   = 'stokes';
 pde('viscos') = 1.0;
 pde('bound')(1)('type') = 'Dirichlet';
 pde('bound')(1)('R')  = list('-y.*(y-1)',0);
-m=gf_mesh('cartesian',[0:.3:4.8],[0:.2:1]);
+m = gf_mesh('cartesian',[0:.3:4.8],[0:.2:1]);
 pde('mf_u') = gf_mesh_fem(m,2);
 pde('mf_p') = gf_mesh_fem(m,1);
 pde('mf_d') = gf_mesh_fem(m,1);
@@ -42,13 +42,15 @@ gf_mesh_fem_set(mf_comp ,'fem',gf_fem('FEM_QK(2,2)'));
 gf_mesh_fem_set(pde('mf_d'),'fem',gf_fem('FEM_QK(2,1)'));
 gf_mesh_fem_set(pde('mf_p'),'fem',gf_fem('FEM_QK(2,1)'));
 all_faces = gf_mesh_get(m, 'outer faces', gf_mesh_get(m, 'cvid'));
-for mf=[pde('mf_u') pde('mf_p') pde('mf_d')]
+for mf = [pde('mf_u') pde('mf_p') pde('mf_d')]
   gf_mesh_set(m, 'boundary', 1, all_faces);
 end
-[U,P]=gf_solve(pde);  
+[U,P] = gf_solve(pde);  
 Uco = gf_compute(pde('mf_u'), U, 'interpolate on', mf_comp); // tests interpolation on same mesh
-dof = gf_mesh_fem_get(mf_comp, 'basic dof nodes'); Xc=dof(1,1:2:$); Yc=dof(2,1:2:$);
-Uex=[-Yc.*(Yc-1); zeros(1,length(Xc))]; Uex=Uex(:)';
+dof = gf_mesh_fem_get(mf_comp, 'basic dof nodes'); 
+Xc  = dof(1,1:2:$); Yc=dof(2,1:2:$);
+Uex = [-Yc.*(Yc-1); zeros(1,length(Xc))];
+Uex = Uex(:)';
 
 // norm tests
 l2m = gf_compute(mf_comp,Uex,'L2 norm',pde('mim'));
@@ -63,9 +65,9 @@ disp(sprintf('done in %.2f sec.',toc));
 assert('abs(l2err)<0.016'); // 0.015926
 assert('abs(h1err)<0.0665'); // 0.066215
 
-[Uq,Iq,mfq]=gf_compute(pde('mf_u'), U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
-[XX,YY]=meshgrid(0:.05:4.8,0.:0.05:1);  XX=XX'; YY=YY';
-UU=-YY.*(YY-1);
+[Uq,Iq,mfq] = gf_compute(pde('mf_u'), U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
+[XX,YY] = meshgrid(0:.05:4.8,0.:0.05:1);  XX=XX'; YY=YY';
+UU = -YY.*(YY-1);
 assert('max(max(abs(UU-squeeze(Uq(1,:,:))))) < 0.01001');
 assert('max(max(abs(Uq(2,:,:)))) < 0.0030');
 
@@ -79,7 +81,8 @@ asserterr('gf_compute(pde.mf_u, U, ''gradient'', mf_DU)'); // cause different me
 UU   = gf_compute(pde('mf_u'), U, 'interpolate on', mf_DU); // tests interpolation on other mesh
 DU   = gf_compute(mf_DU, UU, 'gradient', mf_DU);
 dof  = gf_mesh_fem_get(mf_DU, 'basic dof nodes'); Xc=dof(1,1:2:$); Yc=dof(2,1:2:$);
-DUex = [1-2*Yc; zeros(1,length(Xc))]; DUex=DUex(:)';
+DUex = [1-2*Yc; zeros(1,length(Xc))]; 
+DUex = DUex(:)';
 diff = norm(DUex-DU(2,:));
 assert('diff>4.62 & diff<4.64');
 
@@ -100,4 +103,3 @@ DU2(1:10)
 
 assert('max(abs(DU2(:)-d(:))) < 2e-15');
 endfunction
-

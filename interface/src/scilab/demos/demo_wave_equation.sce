@@ -4,7 +4,7 @@
 gf_workspace('clear all');
 
 m = gf_mesh('cartesian',[0:.2:1],[0:.2:1]);
-// m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
+// m = gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
 
 // create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);

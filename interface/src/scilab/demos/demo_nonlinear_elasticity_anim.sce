@@ -1,20 +1,18 @@
-// YC: Object Oriented example
-
 // replay all the computations of demo_nonlinear_elasticity.m
 
 load demo_nonlinear_elasticity_U.mat
 
 nbstep = size(UU,1);
-m    = gfMesh('from string', m_char);
-mfu  = gfMeshFem('from string',mfu_char,m);
-mfdu = gfMeshFem('from string',mfdu_char,m);
+m    = gf_mesh('from string', m_char);
+mfu  = gf_mesh_fem('from string',mfu_char,m);
+mfdu = gf_mesh_fem('from string',mfdu_char,m);
 
-sl = gfSlice(list('boundary'), m, 16, gf_mesh_get(m,'outer faces'));
+sl = gf_slice(list('boundary'), m, 16, gf_mesh_get(m,'outer faces'));
 P0 = gf_slice_get(sl,'pts');
 
 for step=1:1:nbstep
-  U=UU(step,:);
-  VM=VVM(step,:);
+  U  = UU(step,:);
+  VM = VVM(step,:);
   
   slU  = gf_compute(mfu,U,'interpolate on',sl);
   slVM = gf_compute(mfdu,VM,'interpolate on',sl);

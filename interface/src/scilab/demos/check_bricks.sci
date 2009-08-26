@@ -16,10 +16,10 @@ else
   gverbose = 0;
 end;
 
-m = gf_mesh('cartesian', 0:.1:1, 0:.1:1);
-mf = gf_mesh_fem(m); gf_mesh_fem_set(mf, 'classical fem', 2);
+m   = gf_mesh('cartesian', 0:.1:1, 0:.1:1);
+mf  = gf_mesh_fem(m);   gf_mesh_fem_set(mf, 'classical fem', 2);
 mfq = gf_mesh_fem(m,2); gf_mesh_fem_set(mfq, 'classical fem', 2);
-mim = gf_mesh_im(m); gf_mesh_im_set(mim, 'integ', 6);
+mim = gf_mesh_im(m);    gf_mesh_im_set(mim, 'integ', 6);
 
 P = gf_mesh_get(m,'pts'); // get list of mesh points coordinates
 pidtop = find(abs(P(2,:)-1)<1e-6); // find those on top of the object
@@ -45,10 +45,10 @@ foo=gf_mdstate_get(cms,'is_complex');
 assert('foo==1');
 
 gf_mdbrick_set(helm, 'param', 'wave_number', 2);
-wv=gf_mdbrick_get(helm, 'param', 'wave_number');
+wv = gf_mdbrick_get(helm, 'param', 'wave_number');
 
 gf_mdbrick_set(mass, 'param', 'rho', mf, 0.1*ones(gf_mesh_fem_get(mf, 'nbdof'),1));
-l=gf_mdbrick_get(elas, 'param', 'lambda');
+l = gf_mdbrick_get(elas, 'param', 'lambda');
 gf_mdbrick_set(elas, 'param', 'lambda', l*3);
 
 for b=[lapl, elas, helm, mass, elasnl]
@@ -73,7 +73,7 @@ end
 disp(sprintf(' paramlist     %s', s)); 
 
 _dir = gf_mdbrick('generalized dirichlet', b, 2);
-R=gf_mdbrick_get(_dir, 'param', 'R'); R = 0*R+1; 
+R = gf_mdbrick_get(_dir, 'param', 'R'); R = 0*R+1; 
 gf_mdbrick_set(_dir, 'param', 'R', R);
 
 disp('gogogogo')
@@ -83,7 +83,7 @@ res = gf_mdstate_get(state, 'residual');
 U=gf_mdstate_get(state, 'state');
 disp(sprintf('solve done: |residual|=%g, |U|=%g',norm(res),norm(U)));
 
-T=gf_mdstate_get(state, 'tangent matrix');
+T = gf_mdstate_get(state, 'tangent matrix');
 nnz(T)
 
 gf_workspace('stats');

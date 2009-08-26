@@ -46,10 +46,10 @@ gf_mesh_set(m, 'boundary', 2, OUTfaces);
 gf_mesh_set(m, 'boundary', 3, setdiff(all_faces',union(INfaces',OUTfaces','r'))'); // YC:
 
 tic;
-[U,P]=gf_solve(pde);
+[U,P] = gf_solve(pde);
 disp(sprintf('solve done in %.2f sec', toc));
 
-Ul=gf_compute(pde.mf_u,U,'interpolate on',mfulag);
+Ul = gf_compute(pde.mf_u,U,'interpolate on',mfulag);
 
 subplot(2,2,1); 
 gf_plot(mfulag,Ul,'norm','on','deformation',Ul,'deformation_scale','10%',	'deformed_mesh','on');

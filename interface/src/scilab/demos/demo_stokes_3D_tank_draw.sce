@@ -16,7 +16,7 @@ Usl = gf_compute(mfu,U,'interpolate on', sl);
 Psl = gf_compute(mfp,P,'interpolate on', sl);
 gf_plot_slice(sl,'mesh_faces','on','mesh','on','data',sqrt(sum(Usl.^2,1)),'mesh_slice_edges','off');
   
-//sl2=gf_slice(list('boundary',list('planar',+1,[0;0;0],[0;1;0])),m,6,setdiff(all_faces',TOPfaces','rows')'); // YC:
+//sl2 = gf_slice(list('boundary',list('planar',+1,[0;0;0],[0;1;0])),m,6,setdiff(all_faces',TOPfaces','rows')'); // YC:
 sl2 = gf_slice(list('boundary',list('planar',+1,[0;0;0],[0;1;0])),m,6,setdiff(all_faces',TOPfaces')');
 gf_plot_slice(sl2,'mesh_faces','off','mesh','on','pcolor','off');
 
