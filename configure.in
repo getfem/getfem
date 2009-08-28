@@ -361,7 +361,9 @@ else
                [AC_MSG_ERROR([SuperLU library not found])])
 
   AC_CHECK_HEADERS(
-  [superlu/colamd.h superlu/slu_Cnames.h superlu/slu_*defs.h superlu/slu_*complex.h],
+  [superlu/colamd.h superlu/slu_Cnames.h \
+   superlu/slu_cdefs.h superlu/slu_ddefs.h superlu/slu_sdefs.h superlu/slu_zdefs.h \
+   superlu/slu_dcomplex.h superlu/slu_scomplex.h],
   [usesuperlu="yes"],
   [
     if test "x$usesuperlu" = "xyes"; then
@@ -752,7 +754,7 @@ AC_CONFIG_FILES(\
 	Makefile \
 	m4/Makefile \
 	cubature/Makefile \
-	superlu/Makefile \
+	$SUPERLU_MAKEFILE \
 	src/Makefile \
 	tests/Makefile \
 	tests/meshes/Makefile \

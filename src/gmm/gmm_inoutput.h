@@ -381,6 +381,7 @@ namespace gmm {
     int Valperline, Valwidth, Valprec;
     int Valflag;           /* Indicates 'E','D', or 'F' float format */
     char pformat[16],iformat[16],vformat[19],rformat[19];
+    char *pValflag, *pRhsflag;
     gmm::standard_locale sl;
     
     if ( Type[0] == 'C' )
@@ -408,7 +409,10 @@ namespace gmm {
     if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
       if ( Valfmt == NULL ) Valfmt = "(4E21.13)";
       ParseRfmt(Valfmt, &Valperline, &Valwidth, &Valprec, &Valflag);
-      if (Valflag == 'D') *strchr(Valfmt,'D') = 'E';
+      if (Valflag == 'D') {
+        pValflag = (char *) strchr(Valfmt,'D');
+        *pValflag = 'E';
+      }
       if (Valflag == 'F')
 	SECURE_SPRINTF2(vformat, sizeof(vformat), "%% %d.%df", Valwidth,
 			Valprec);
@@ -426,7 +430,10 @@ namespace gmm {
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%df",Rhswidth,Rhsprec);
       else
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%dE",Rhswidth,Rhsprec);
-      if (Rhsflag == 'D') *strchr(Rhsfmt,'D') = 'E';
+      if (Valflag == 'D') {
+        pRhsflag = (char *) strchr(Rhsfmt,'D');
+        *pRhsflag = 'E';
+      }
       rhscrd = nrhsentries/Rhsperline; 
       if ( nrhsentries%Rhsperline != 0) rhscrd++;
       if ( Rhstype[1] == 'G' ) rhscrd+=rhscrd;
