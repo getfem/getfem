@@ -467,7 +467,7 @@ namespace getfem {
 		     const VECTU &U, VECTV &V, bool extrapolation = false) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0 &&
-		gmm::vect_size(V)!=0, "Dimensions mismatch");
+		gmm::vect_size(V)!=0, "Dimension of vector mismatch");
     interpolation(mf_source, mti, U, V, M, 0, extrapolation);
   }
 
