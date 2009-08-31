@@ -2,7 +2,7 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 // function h=gf_plot(mf,U,varargin)
 // this function plots a 2D or 3D finite elements field.
 //
-// The options are specified as pairs of "option name"/"option value"
+// The options are specified as pairs of 'option name'/'option value'
 //  
 //  'zplot',{'off'|'on'}       : only for qdim=1, mdim=2
 //  'norm', {'off'|'on'}       : if qdim >= 2, color-plot the norm of the field
@@ -40,7 +40,7 @@ try
   gf_workspace('push');
   [hsurf, hcontour, hquiver, hmesh, hdefmesh] = gf_plot_aux(mf,U,opts);
 catch
-  disp(['error in gf_plot : ' lasterr]);
+  disp('error in gf_plot : ' + lasterr);
 end
 gf_workspace('pop');
 endfunction
@@ -63,7 +63,7 @@ try
   qdim = gf_mesh_fem_get(mf, 'qdim');
   mdim = gf_mesh_get(mf, 'dim'); mdim3=mdim*3;
 catch
-  error(['invalid mesh_fem ? -- ' lasterror]);
+  error('invalid mesh_fem ? -- ' + lasterror);
 end
 
 if (mdim == 1) then
@@ -96,7 +96,6 @@ end
 [opt_contour,err]           = get_param(opts,'contour',           []);
 [opt_mesh_level_set,err]    = get_param(opts,'mesh_level_set',    []);     // list of contour values
 
-disp(opt);
 if (ison(opt_zplot)) then
   if (mdim ~= 2) then
     error('zplot allowed only on 2D scalar mesh_fems');
@@ -144,7 +143,7 @@ nbdof = gf_mesh_fem_get(mf,'nbdof');
 if (nbdof <= 0) then error('invalid finite element mf argument'); end
 
 if (length(U) ~= nbdof) then
-  error(['wrong dimensions for U, should have ' string(nbdof) 'columns']); 
+  error('wrong dimensions for U, should have ' + string(nbdof) + ' columns'); 
 end
 
 // save graphical context
@@ -168,13 +167,13 @@ try
     sl = gf_slice(list('none'),gf_mesh_fem_get(mf,'linked mesh'),opt_refine,opt_cvlst);
   end
 catch
-  error(['can''t build slice : ' lasterror]);
+  error('can''t build slice : ' + lasterror);
 end
 
 try
   Usl = gf_compute(mf,U,'interpolate on',sl);
 catch
-  error(['can''t interpolate on slice : ' lasterror]);
+  error('can''t interpolate on slice : ' + lasterror);
 end
 Psl = gf_slice_get(sl,'pts');
 

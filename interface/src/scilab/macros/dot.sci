@@ -39,12 +39,12 @@ if (nargin < 3) then
     y = y(:);
   end
   if (~and(size(x)==size(y))) then
-    error ("dot: sizes of arguments must match")
+    error('dot: sizes of arguments must match')
   end
   z = sum(x .* y);
 else
   if (~and(size(x)==size(y))) then
-    error ("dot: sizes of arguments must match")
+    error('dot: sizes of arguments must match')
   end
   z = sum(x .* y, dim);
 end

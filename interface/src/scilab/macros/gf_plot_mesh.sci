@@ -56,35 +56,37 @@ for i=1:int(length(varargin)/2)
   [opts,err] = add_param(opts,varargin(2*(i-1)+1),varargin(2*(i-1)+2));
 end
 
-[opt_vertices,err]    = add_param(opts,'vertices','off');
-[opt_convexes,err]    = add_param(opts,'convexes','off');
-[opt_dof,err]         = add_param(opts,'dof','off');
-[opt_regions,err]     = add_param(opts,'regions',[]);
-[opt_boundaries,err]  = add_param(opts,'boundaries',[]);
-[opt_cvlst,err]       = add_param(opts,'cvlst',[]);
-[opt_edges,err]       = add_param(opts,'edges','on');
-[opt_faces,err]       = add_param(opts,'faces','off');
-[opt_explode,err]     = add_param(opts,'explode',0);
-[opt_quality,err]     = add_param(opts,'quality','off');
-[opt_curved,err]      = add_param(opts,'curved','off');
-[opt_refine,err]      = add_param(opts,'refine',defaultref);
-[opt_deformation,err] = add_param(opts,'deformation',[]);
-[opt_edges_color,err] = add_param(opts,'edges_color',[.6 .6 1]);
-[opt_edges_width,err] = add_param(opts,'edges_width',.7);
-[opt_faces_color,err] = add_param(opts,'faces_color',[.75 .75 .75]);
+[opt_vertices,err]    = get_param(opts,'vertices','off');
+[opt_convexes,err]    = get_param(opts,'convexes','off');
+[opt_dof,err]         = get_param(opts,'dof','off');
+[opt_regions,err]     = get_param(opts,'regions','');
+[opt_boundaries,err]  = get_param(opts,'boundaries','');
+[opt_cvlst,err]       = get_param(opts,'cvlst',[]);
+[opt_edges,err]       = get_param(opts,'edges','on');
+[opt_faces,err]       = get_param(opts,'faces','off');
+[opt_explode,err]     = get_param(opts,'explode',0);
+[opt_quality,err]     = get_param(opts,'quality','off');
+[opt_curved,err]      = get_param(opts,'curved','off');
+[opt_refine,err]      = get_param(opts,'refine',defaultref);
+[opt_deformation,err] = get_param(opts,'deformation',[]);
+[opt_edges_color,err] = get_param(opts,'edges_color',[.6 .6 1]);
+[opt_edges_width,err] = get_param(opts,'edges_width',.7);
+[opt_faces_color,err] = get_param(opts,'faces_color',[.75 .75 .75]);
 
 if (length(opt_boundaries) == 0) then
   opt_boundaries = opt_regions;
 end
 
-if (convstr(opt_boundaries,'l')=='all') then
-  opt_boundaries = gf_mesh_get(M, 'boundaries');
+if (typeof(opt_boundaries)=='string') then
+  if (convstr(opt_boundaries,'l')=='all') then
+    opt_boundaries = gf_mesh_get(M, 'boundaries');
+  end
 end
 
 // init cvlst and cvflst
 if (isempty(opt_cvlst)) then
   cvlst  = gf_mesh_get(M,'cvid'); 
-  cvflst = [cvlst; zeros(1,length(cvlst))];
+  cvflst = [cvlst; int32(zeros(1,length(cvlst)))]; // int32 is the type of cvlst
 else 
   cvlst  = opt_cvlst;
   cvflst = cvlst;  
@@ -154,13 +156,14 @@ if (ison(opt_dof)) then
   if (mdim == 1) then dofpos = [dofpos; zeros(size(dofpos))]; end;
 end;
 
-for bnum=1:length(opt.boundaries)
+for bnum=1:length(opt_boundaries)
   cvf = gf_mesh_get(M, 'boundary', opt_boundaries(bnum));
   
   bid = gf_mesh_get(M, 'edges', cvf, 'merge convex');
   if (bnum == 8) then disp(bid); end;
   
   bedge(bnum) = zeros(2, size(bid,2), mdim);
+  
   for i=1:max(mdim,2)
     bedge(bnum)(:,:,i) = [PXY(i,bid(1,:)); PXY(i,bid(2,:))];
   end
@@ -184,7 +187,7 @@ if (mdim <= 2) then
     hbound(bnum).children.line_style = 5; // Red
   end
   if (ison(opt_vertices)) then
-    xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(double(PID')))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
+    xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(double(PID'))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
     hvert = gce();
     hvert.alignment = 'center';
   end
@@ -277,7 +280,7 @@ elseif (ison(opt_faces)) then
     //hfill=plot2d([T(1:mdim:(mdim*3),:) T(1,:)],[T(2:mdim:(mdim*3),:) T(2,:)], opt_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
     plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), zeros(T(2:mdim:(mdim*3),:)), opt_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
     hfill= gca();
-    hfill.view="2d";
+    hfill.view='2d';
   else
     plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), T(3:mdim:(mdim*3),:), opt_faces_color, flag = [-1 0 4]); //'Erasemode','normal','Edgecolor','none');
   end

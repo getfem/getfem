@@ -33,12 +33,12 @@ function x = repmat (a, m, n)
 [nargout, nargin] = argn();
 
 if (nargin < 2 | nargin > 3) then
-  error("repmat (a, m, n)");
+  error('repmat (a, m, n)');
 end
 
 if (nargin == 3) then
   if (~(isscalar (m) & isscalar (n))) then
-    error ("repmat: with 3 arguments m and n must be scalar");
+    error('repmat: with 3 arguments m and n must be scalar');
   end
   idx = [m, n];
 else 
@@ -49,11 +49,11 @@ else
     // Ensure that we have a row vector
     idx = m(:).';
   else
-    error ("repmat: invalid dimensional argument");
+    error('repmat: invalid dimensional argument');
   end
 end
 
-if (numel (a) == 1) then
+if (length(a) == 1) then
   if (type(a)==10) then
     x = char (ascii(a) * ones (idx));
   else

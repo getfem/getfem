@@ -2,7 +2,7 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
 // function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
 // this function is used to plot a slice of mesh/mesh_fem (see gf_slice)
 //
-// The options are specified as pairs of "option name"/"option value"
+// The options are specified as pairs of 'option name'/'option value'
 //
 //           OPTION NAME       DEFAULT VALUE         ACTION
 //                    data    []                  data to be plotted (one value per slice node)
@@ -73,7 +73,7 @@ end
 [opt_tube_radius,err]            = get_param(opt,'tube_radius','0.5%'); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
-//qdim = numel(U) / gf_slice_get(sl, 'nbpts');
+//qdim = length(U) / gf_slice_get(sl, 'nbpts');
 //if (fix(qdim) ~= qdim), error('wrong number of elements for U'); end;
 
 if (ison(opt_showoptions)) then disp(opt); end;
@@ -119,7 +119,7 @@ end
 
 h_current = gca();
 
-if (mdim == 3) then h_current.view = "3d"; else h_current.view = "2d"; end;
+if (mdim == 3) then h_current.view = '3d'; else h_current.view = '2d'; end;
 endfunction
 
 function [htube,hmesh]=do_plot_1D(P,T,opt)
@@ -190,7 +190,7 @@ function M=mycell2mat(C)
 M = lstcat(C(:));
 endfunction
 
-// plots a "tube" along edges, with color given by D, and a possibly varying radius
+// plots a 'tube' along edges, with color given by D, and a possibly varying radius
 // radius: constant or equal to nb points
 // D(ata): empty or equal to nb points or nb segments
 function h=plot_tube(P, T, D, radius, tubecolor)
@@ -251,7 +251,7 @@ while (1)
     if (i == 1) then
       n = normals(:,:,i); 
     elseif (i == length(ip)) then
-      n= n ormals(:,:,$);
+      n= normals(:,:,$);
     else
       n = (normals(:,:,i-1)+normals(:,:,i))/2;
     end
@@ -313,7 +313,7 @@ if (length(T)) then
     xtmp = matrix(p_tmp(t1,1),size(T,1),length(p_tmp(T,1))/size(T,1))';
     ytmp = matrix(p_tmp(t1,2),size(T,1),length(p_tmp(T,1))/size(T,1))';
     ztmp = matrix(p_tmp(t1,3),size(T,1),length(p_tmp(T,1))/size(T,1))';
-    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color);
+    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
     hfaces = gce();
     T = T';
   end
@@ -330,7 +330,7 @@ if (ison(opt_mesh) & (ison(opt_mesh_edges) | ison(opt_mesh_slice_edges))) then
     xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
     ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
     ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))';
-    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color);
+    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
     hmesh = gce();
     hmesh.line_width = opt_mesh_edges_width;
     p = p'; t1 = t1';
@@ -340,8 +340,8 @@ if (ison(opt_mesh) & (ison(opt_mesh_edges) | ison(opt_mesh_slice_edges))) then
     p = p'; t2 = t2';
     xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
     ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
-    ztmp = matrix(p(té,3),size(t2,1),length(p(t2,1))/size(t2,1))';
-    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color);
+    ztmp = matrix(p(t2,3),size(t2,1),length(p(t2,1))/size(t2,1))';
+    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
     hmesh_tmp = gce();
     hmesh_tmp.line_width = opt_mesh_edges_width;
     p = p'; t2 = t2';

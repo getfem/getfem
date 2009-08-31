@@ -150,7 +150,7 @@ end;
 endfunction
 
 function V=eval_expr(xypos, expr)
-//disp(['expr=' expr]);
+//disp('expr=' + expr);
 V=zeros(1,size(xypos,2));
 x=xypos(1,:); 
 

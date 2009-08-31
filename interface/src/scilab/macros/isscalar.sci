@@ -32,6 +32,6 @@ function retval = isscalar(x)
 if (nargin == 1) then
   retval = prod (size (x)) == 1;
 else
-  error("isscalar (x)");
+  error('isscalar (x)');
 end
 endfunction

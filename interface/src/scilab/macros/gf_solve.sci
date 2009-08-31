@@ -17,7 +17,7 @@ if isempty(pde('verbosity')) then
   pde('verbosity') = 0;
 end
 if isempty(pde('mim')) then
-  error(['since v2.0, the pde structure for gf_solve should contain a mesh_im object in its ''mim'' field']);
+  error('since v2.0, the pde structure for gf_solve should contain a mesh_im object in its ''mim'' field');
 end;
 if isempty(pde('type')) then
   error('the pde mlist should have a ''type'' field');
@@ -39,14 +39,14 @@ select pde('type')
   case 'stokes' then
     // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_stokes(pde);
   else
-    error(['unhandled PDE(''type'') : ' + pde('type')]);
+    error('unhandled PDE(''type'') : ' + pde('type'));
 end
 endfunction
 
 function assert_field(pde,varargin)
 for i=1:length(varargin),
   if (~or(getfield(1,pde)==varargin(i))) then
-    error(['no member ' + varargin(i) + ' in mlist pde!']); 
+    error('no member ' + varargin(i) + ' in mlist pde!'); 
   end
 end
 endfunction
@@ -72,8 +72,8 @@ if (~or(getfield(1,pde('asm'))==dname)) then
   if (or(getfield(1,pde)==dname)) then
     z = pde(dname);      
   else
-    warning(['you did not define the '' dname '' data for the ' + pde('type') + ' pde struct']);
-    disp(['setting '' dname '' to its default value of ']);
+    warning('you did not define the '' dname '' data for the ' + pde('type') + ' pde struct');
+    disp('setting '' dname '' to its default value of ');
     disp(default_value);
     z = default_value;
   end;
@@ -112,7 +112,7 @@ if (~has_field(pde('asm'),'lambda','mu')) then
     //   lambda = 2*lambda.*mu./(lambda+2*mu);
     // end;      
   else
-    error(['no description of either (young modulus E and poisson ratio nu) or (mu and lambda) in pde structure']);
+    error('no description of either (young modulus E and poisson ratio nu) or (mu and lambda) in pde structure');
   end
 end
 if (isempty(pde('asm')('K'))) then
@@ -128,7 +128,7 @@ endfunction
 function [U,P,pde]=do_stokes(in_pde)
 pde = in_pde; U=[]; P=[];
 assert_field(pde, 'mf_u','mf_d');
-pde=eval_asm_data(pde,'viscos', {1});
+pde=eval_asm_data(pde,'viscos', list(1));
 if (isempty(pde('asm')('K'))) then
   [pde('asm')('K'),pde('asm')('B')] = gf_asm('stokes',pde('mim'),pde('mf_u'), pde('mf_p'), pde('mf_d'), pde('asm')('viscos'));
   if (nnz(pde('asm')('K')-pde('asm')('K'))) then
@@ -204,7 +204,7 @@ else
      case 'Mixed' then
         is_dirichlet=1; is_neumann=1;
      else
-        disp(['bc type ' + pde('bound')(bnum)('type') + 'unhandled']);
+        disp('bc type ' + pde('bound')(bnum)('type') + 'unhandled');
     end;
   
     if (is_dirichlet) then
@@ -453,7 +453,7 @@ endfunction
 function verbos_disp_start(what)
 global verbosity
 if (verbosity > 0) then
-  disp([what '...']); tic;
+  disp(what + '...'); tic;
 end;
 endfunction
 

@@ -48,10 +48,10 @@ if (ndims (x) < 3 & ndims (y) < 3 & nargin < 3) then
   // Swap x and y in the assignments below to get the matlab behaviour.
   // Better yet, fix the calling code so that it uses conformant vectors.
   if (size(x,2) == 1 & size(y,1) == 1) then
-    warning ("cross: taking cross product of column by row");
+    warning('cross: taking cross product of column by row');
     y = y.';
   elseif (size(x,1) == 1 & size(y,2) == 1) then
-    warning ("cross: taking cross product of row by column");
+    warning('cross: taking cross product of row by column');
     x = x.';
   end
 end
@@ -59,11 +59,11 @@ end
 if (nargin == 2) then
    dim = find (size (x) == 3, 1);
    if (isempty (dim)) then 
-     error ("cross: must have at least one dimension with 3 elements");
+     error('cross: must have at least one dimension with 3 elements');
    end
  else
    if (size (x) ~= 3) then
-     error ("cross: dimension dim must have 3 elements");
+     error('cross: dimension dim must have 3 elements');
    end
 end
 
@@ -85,6 +85,6 @@ if (and(size(x)==size(y))) then
           (x(idx3(:)) .* y(idx1(:)) - x(idx1(:)) .* y(idx3(:))), ...
           (x(idx1(:)) .* y(idx2(:)) - x(idx2(:)) .* y(idx1(:))));
 else
-  error ("cross: x and y must have the same dimensions");
+  error('cross: x and y must have the same dimensions');
 end
 endfunction

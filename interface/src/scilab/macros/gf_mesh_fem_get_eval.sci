@@ -4,8 +4,10 @@ function X=gf_mesh_fem_get_eval(mf, _what, dof)
 [nargout,nargin] = argn();
 
 if (nargin < 2) then error('not enough input arguments'); end;
-qdim=gf_mesh_fem_get(mf, 'qdim');
-nbdof=gf_mesh_fem_get(mf,'nbdof');
+  
+qdim  = gf_mesh_fem_get(mf,'qdim');
+nbdof = gf_mesh_fem_get(mf,'nbdof'); 
+
 if (nargin==2) then dof=1:qdim:nbdof; end;
 // --- TODO --- only test the dof, not whole mesh
 if (~gf_mesh_fem_get(mf, 'is lagrangian')) then
@@ -14,9 +16,8 @@ end
 //  if (qdim ~= 1),
 //    dof = dof(1:qdim:nbdof);
 //  end;
-if (find(mod(dof-1,qdim))) then
-  error(['when qdim is different of 1, only dofs 1,qdim+1,',...
-   '2*qdim+1,... are authorized']);
+if (find(modulo(dof-1,qdim))) then
+  error('when qdim is different of 1, only dofs 1,qdim+1, 2*qdim+1,... are authorized');
 end
 dxy = gf_mesh_fem_get(mf, 'basic dof nodes',dof);
 
@@ -24,11 +25,9 @@ if (size(_what, 2) == nbdof & isnumeric(_what)) then
   X = _what;
   return;
 elseif (typeof(_what)=='string') then
-  error(['string expressions must be enclosed in a cell array: try with ( ',...
-         'your_expression )']);
+  error('string expressions must be enclosed in a list: try with list(your_expression)');
 elseif (size(_what,2) ~= qdim)
-  error(sprintf(['wrong dimensions for the expression: should have ',...
-	   '%d (=Qdim) columns instead of %d'],qdim,size(_what,2)));
+  error(sprintf('wrong dimensions for the expression: should have %d (=Qdim) columns instead of %d',qdim,size(_what,2)));
 end;
 
 X=zeros(size(_what,1),nbdof);
@@ -56,15 +55,15 @@ elseif typeof(_what)=='list' then
       elseif (type(_what(i,j))==11 | type(_what(i,j))==13) then
         X(i,dof+j-1)=feval(_what(i,j), xpos, ypos, zpos);
       else
-        error(['sorry, don''t know how to eval a ' typeof(_what(i,j)),...
-      ' expression, only function handles, numeric constants and ',...
-      'string expressions are handled']);
-      end;
-    end;
-  end;
+        error('sorry, don''t know how to eval a ' + typeof(_what(i,j)) + ...
+              ' expression, only function handles, numeric constants and ' + ...
+              'string expressions are handled');
+      end
+    end
+  end
 else
-  error(['can''t evaluate on mesh fem: argument is neither a numeric ',...
-   'constant nor a cell array of (strings|constants|function handles)']);
+  error('can''t evaluate on mesh fem: argument is neither a numeric ' + ...
+        'constant nor a cell array of (strings|constants|function handles)');
 end;
 endfunction
 

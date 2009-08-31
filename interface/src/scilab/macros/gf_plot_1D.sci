@@ -2,7 +2,7 @@ function [hline, hdof] = gf_plot_1D(mf,U, varargin)
 // function h=gf_plot_1D(mf,U,...)
 // this function plots a 1D finite elements field.
 //
-// The options are specified as pairs of "option name"/"option value"
+// The options are specified as pairs of 'option name'/'option value'
 //  'style', 'bo-'       : the line style and dof marker style (same
 //                         syntax as in the matlab command 'plot').
 //  'color', []          : override the line color.
@@ -19,7 +19,7 @@ try
   gf_workspace('push', 'gf_plot_1D');
   [hline, hdof] = gf_plot_1D_aux(mf,U, opts);
 catch
-  disp(['error in gf_plot_1D : ' lasterror]);
+  disp('error in gf_plot_1D : ' + lasterror);
 end;
 gf_workspace('pop');
 endfunction
