@@ -114,7 +114,7 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
     case sci_mlist: 
       {
 #ifdef DEBUG
-	sciprint("sci_array_to_gfi_array: dealing with hypermat\n");
+	sciprint("sci_array_to_gfi_array: dealing with mlist\n");
 #endif
 	int pirow, picol, *pilen;
 	char ** pstStrings;
@@ -162,6 +162,9 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	      {
 		t->storage.gfi_storage_u.objid.objid_val[i].id  = pdblDataID[i];
 		t->storage.gfi_storage_u.objid.objid_val[i].cid = pdblDataCID[i];
+#ifdef DEBUG
+		sciprint("sci_array_to_gfi_array: objid[%d]: id = %d cid = %d\n", i, pdblDataID[i], pdblDataCID[i]);
+#endif
 	      }
 
 	    t->dim.dim_len = 1;
@@ -259,7 +262,7 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 
 	    n = picol*pirow;
 	    t->storage.gfi_storage_u.data_int32.data_int32_len = n;
-	    t->storage.gfi_storage_u.data_int32.data_int32_val = (int *)MALLOC(n*sizeof(in));
+	    t->storage.gfi_storage_u.data_int32.data_int32_val = (int *)MALLOC(n*sizeof(int));
 	    for(i=0;i<n;++i)
 	      {
 		t->storage.gfi_storage_u.data_int32.data_int32_val[i] = piData32[i];
@@ -464,7 +467,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
   // - exportString pour les variables simples
   // - addCellToCell, addStringToCell, etc.. pour gérer les listes imbriquées
 
-  int *m;
+  int *m_var;
 
   assert(t);
 
@@ -483,8 +486,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	sciprint("gfi_array_to_sci_array: create from a GFI_UINT32\n");
 	sciprint("ndim = %d ivar = %d\n", ndim,ivar);
 #endif
-	createMatrixOfUnsignedInteger32(ivar,ndim,dim[0],t->storage.gfi_storage_u.data_uint32.data_uint32_val);
-	getVarAddressFromPosition(ivar, &m);
+	createMatrixOfUnsignedInteger32(ivar,dim[0],dim[1],t->storage.gfi_storage_u.data_uint32.data_uint32_val);
+	getVarAddressFromPosition(ivar, &m_var);
       } 
       break;
     case GFI_INT32: 
@@ -493,41 +496,65 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	sciprint("gfi_array_to_sci_array: create from a GFI_INT32\n");
 	sciprint("ndim = %d ivar = %d\n", ndim,ivar);
 #endif
-	createMatrixOfInteger32(ivar,ndim,dim[0],t->storage.gfi_storage_u.data_int32.data_int32_val);
-	getVarAddressFromPosition(ivar, &m);
+	createMatrixOfInteger32(ivar,dim[0],dim[1],t->storage.gfi_storage_u.data_int32.data_int32_val);
+	getVarAddressFromPosition(ivar, &m_var);
       } 
       break;
     case GFI_DOUBLE: 
       {
 #ifdef DEBUG
 	sciprint("gfi_array_to_sci_array: create from a GFI_DOUBLE\n");
-	sciprint("ndim = %d ivar = %d\n", ndim,ivar);
+	sciprint("ndim = %d ivar = %d\n", ndim, ivar);
+	sciprint("dim[0] = %d\n", dim[0]);
 #endif
-	int i;
+	int i, nrow, ncol;
 	double *pr, *pi;
+
+	if (ndim==1)
+	  {
+	    nrow = dim[0];
+	    ncol = 1;
+	  }
+	else if (ndim==2)
+	  {
+	    nrow = dim[0];
+	    ncol = dim[1];
+	  }
+	else
+	  {
+	    nrow = dim[0];
+	    ncol = dim[1];
+	  }
+
 	if (!gfi_array_is_complex(t)) 
 	  {
-	    allocMatrixOfDouble(ivar, dim[0], dim[1], &t->storage.gfi_storage_u.data_double.data_double_val);
+#ifdef DEBUG
+	    sciprint("DEBUG: array is not complex\n");
+#endif
+	    createMatrixOfDouble(ivar, nrow, ncol, &t->storage.gfi_storage_u.data_double.data_double_val);
 	  } 
 	else 
 	  {
+#ifdef DEBUG
+	    sciprint("DEBUG: array is complex\n");
+#endif
 	    double *pr, *pi; int i;
 
-	    pr = (double *)MALLOC(dim[0]*dim[1]*sizeof(double));
-	    pi = (double *)MALLOC(dim[0]*dim[1]*sizeof(double));
+	    pr = (double *)MALLOC(nrow*ncol*sizeof(double));
+	    pi = (double *)MALLOC(nrow*ncol*sizeof(double));
 
-	    for(i=0;i<dim[0]*dim[1];i++)
+	    for(i=0;i<nrow*ncol;i++)
 	      {
 		pr[i] = t->storage.gfi_storage_u.data_double.data_double_val[2*i];
 		pi[i] = t->storage.gfi_storage_u.data_double.data_double_val[2*i+1];
 	      }
 
-	    createComplexMatrixOfDouble(ivar, dim[0], dim[1], pr, pi);
+	    createComplexMatrixOfDouble(ivar, nrow, ncol, pr, pi);
 
 	    FREE(pr);
 	    FREE(pi);
 	  }
-	getVarAddressFromPosition(ivar, &m);
+	getVarAddressFromPosition(ivar, &m_var);
       } 
 
       break;
@@ -535,15 +562,15 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
       {
 #ifdef DEBUG
 	sciprint("gfi_array_to_sci_array: create from a GFI_CHAR\n");
-	sciprint("ndim = %d ivar = %d\n", ndim,ivar);
+	sciprint("ndim = %d ivar = %d\n", dim[0],ivar);
 #endif
 	char * tmp_string = (char *)MALLOC((t->storage.gfi_storage_u.data_char.data_char_len+1)*sizeof(char));
 	memcpy(tmp_string,t->storage.gfi_storage_u.data_char.data_char_val,t->storage.gfi_storage_u.data_char.data_char_len*sizeof(char));
 	tmp_string[t->storage.gfi_storage_u.data_char.data_char_len] = '\0';
 	createMatrixOfString(ivar, 1, 1, &tmp_string);
-	getVarAddressFromPosition(ivar, &m);
+	getVarAddressFromPosition(ivar, &m_var);
 #ifdef DEBUG
-	sciprint("string = |%s| len = %d\n",tmp_string,t->storage.gfi_storage_u.data_char.data_char_len);
+	sciprint("ivar = %d string = |%s| len = %d\n",ivar, tmp_string,t->storage.gfi_storage_u.data_char.data_char_len);
 #endif
 	if (tmp_string) FREE(tmp_string);
       } 
@@ -551,33 +578,31 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
     case GFI_CELL: 
       {
 	unsigned int i, nb_item;
-	int * m_list;
+	int * m_content;
 #ifdef DEBUG
 	sciprint("gfi_array_to_sci_array: create from a GFI_CELL\n");
-	sciprint("ndim = %d ivar = %d\n", ndim,ivar);
+	sciprint("ndim = %d ivar = %d\n", dim[0],ivar);
 
 	for(i=0;i<ndim;i++)
 	  sciprint("dim[%d] = %d\n",i,dim[i]);
+
+	sciprint("now create list at pos %d, dimension %d\n", ivar, dim[0]);
 #endif
-	createList(ivar,ndim,&m);
+	createList(ivar,dim[0],&m_var);
 
 	for(i=0; i<t->storage.gfi_storage_u.data_cell.data_cell_len; ++i)
 	  {
-	    // YC: il vaudrait mieux ne pas appeler de façon récursive gfi_array_to_sci_array
-	    // on ne peut pas créer 2 variables au même endroit sur la stack avec des adresses differentes.
-	    // Peut-on avoir des GFI_CELL dans des GFI_CELL ??? oui ...
+	    m_content = gfi_array_to_sci_array(t->storage.gfi_storage_u.data_cell.data_cell_val[i],ivar+i+1);
 
-	    m_list = gfi_array_to_sci_array(t->storage.gfi_storage_u.data_cell.data_cell_val[i],ivar);
-
-	    switch(getVarType(m_list))
+	    switch(getVarType(m_content))
 	      {
 	      case sci_list:
 		{
 #ifdef DEBUG
 	sciprint("gfi_array_to_sci_array: create from a GFI_CELL - sci_list\n");
 #endif
-		  getListItemNumber(m,&nb_item);
-		  createListInList(ivar, m, i, nb_item, &m);
+		  getListItemNumber(m_content,&nb_item);
+		  createListInList(ivar, m_content, i, nb_item, &m_var);
 		}
 		break;
 	      case sci_strings:
@@ -590,17 +615,20 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		  char ** pstStrings;
 		  
 		  // Get the matrix of strings from the gfi_array
-		  getMatrixOfString(m_list, &pirow, &picol, NULL, NULL);
+		  getMatrixOfString(m_content, &pirow, &picol, NULL, NULL);
 		  pilen = (int *)MALLOC(pirow*picol*sizeof(int));
 		  pstStrings = (char **)MALLOC(pirow*picol*sizeof(char *));
-		  getMatrixOfString(m_list, &pirow, &picol, pilen, NULL);
+		  getMatrixOfString(m_content, &pirow, &picol, pilen, NULL);
 		  for(j=0;j<pirow*picol;j++)
 		    {
 		      pstStrings[j] = (char *)MALLOC((pilen[j]+1)*sizeof(char));
 		    }
-		  getMatrixOfString(m_list, &pirow, &picol, pilen, pstStrings);
+		  getMatrixOfString(m_content, &pirow, &picol, pilen, pstStrings);
+#ifdef DEBUG
+		  sciprint("pirow = %d picol = %d, pilen[0] = %d\n", pirow, picol, pilen[0]);
+#endif
 		  // And now add it to the list
-		  createMatrixOfStringInList(ivar, m, i, pirow, picol, pstStrings);
+		  createMatrixOfStringInList(ivar, m_var, i+1, pirow, picol, pstStrings);
 		  
 		  // Desallocate
 		  if (pilen) FREE(pilen);
@@ -621,21 +649,20 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		  int * piData32;
 		  unsigned int * puiData32;
 		  
-		  getMatrixOfIntegerPrecision(m,&pi_precision);
+		  getMatrixOfIntegerPrecision(m_content,&pi_precision);
 		  if ((pi_precision!=SCI_INT32)&&(pi_precision!=SCI_UINT32))
 		    {
 		      Scierror(999,"Can deal only with int32 or uint32\n");
-		      return 1;
-	  }
+		    }
 		  switch(pi_precision)
 		    {
 		    case SCI_INT32:
-		      getMatrixOfInteger32(m_list, &pirow, &picol, &piData32);
-		      createMatrixOfInteger32InList(ivar, m, i, pirow, picol, piData32);
+		      getMatrixOfInteger32(m_content, &pirow, &picol, &piData32);
+		      createMatrixOfInteger32InList(ivar, m_var, i+1, pirow, picol, piData32);
 		      break;
 		    case SCI_UINT32:
-		      getMatrixOfUnsignedInteger32(m_list, &pirow, &picol, &puiData32);
-		      createMatrixOfUnsignedInteger32InList(ivar, m, i, pirow, picol, puiData32);
+		      getMatrixOfUnsignedInteger32(m_content, &pirow, &picol, &puiData32);
+		      createMatrixOfUnsignedInteger32InList(ivar, m_var, i+1, pirow, picol, puiData32);
 		      break;
 		    default:
 		      Scierror(999,"Can deal only with int32 or uint32\n");
@@ -649,9 +676,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 #endif
 		  int pirow, picol;
 		  int * piBool;
-		  getMatrixOfBoolean(m_list, &pirow, &picol, &piBool);
+		  getMatrixOfBoolean(m_content, &pirow, &picol, &piBool);
 		  
-		  createMatrixOfBooleanInList(ivar, m, i, pirow, picol, piBool);
+		  createMatrixOfBooleanInList(ivar, m_var, i+1, pirow, picol, piBool);
 		}
 		break;
 	      case sci_matrix:
@@ -662,35 +689,36 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		  int pirow, picol;
 		  double * pdblReal, * pdblImag;
 		  
-		  if (isVarComplex(m_list))
+		  if (isVarComplex(m_content))
 		    {
-		      getComplexMatrixOfDouble(m_list, &pirow, &picol, &pdblReal, &pdblImag);
-		      createComplexMatrixOfDoubleInList(ivar, m, i, pirow, picol, pdblReal, pdblImag);
+		      getComplexMatrixOfDouble(m_content, &pirow, &picol, &pdblReal, &pdblImag);
+		      createComplexMatrixOfDoubleInList(ivar, m_var, i+1, pirow, picol, pdblReal, pdblImag);
 		    }
 		  else
 		    {
-		      getMatrixOfDouble(m_list, &pirow, &picol, &pdblReal);
-		      createMatrixOfDoubleInList(ivar, m, i, pirow, picol, pdblReal);
+		      getMatrixOfDouble(m_content, &pirow, &picol, &pdblReal);
+		      createMatrixOfDoubleInList(ivar, m_var, i+1, pirow, picol, pdblReal);
 		    }
 		}
 		break;
 	      case sci_sparse:
 		{
+		  // YC: a revoir: je mets ou le i+1 ????
 #ifdef DEBUG
 		  sciprint("gfi_array_to_sci_array: create from a GFI_CELL - sci_sparse\n");
 #endif
 		  int pirow, picol, nbitem, * nb_item_row, * pi_col_pos;
 		  double * pdblReal, * pdblImag;
 		  
-		  if (isVarComplex(m_list))
+		  if (isVarComplex(m_content))
 		    {
-		      getComplexSparseMatrix(m_list, &pirow, &picol, &nbitem, &nb_item_row, &pi_col_pos, &pdblReal, &pdblImag);
-		      createComplexSparseMatrix(ivar, pirow, picol, nbitem, nb_item_row, pi_col_pos, pdblReal, pdblImag);
+		      getComplexSparseMatrix(m_content, &pirow, &picol, &nbitem, &nb_item_row, &pi_col_pos, &pdblReal, &pdblImag);
+		      createComplexSparseMatrixInList(ivar, m_var, i+1, pirow, picol, nbitem, nb_item_row, pi_col_pos, pdblReal, pdblImag);
 		    }
 		  else
 		    {
-		      getSparseMatrix(m_list, &pirow, &picol, &nbitem, &nb_item_row, &pi_col_pos, &pdblReal);
-		      createSparseMatrixInList(ivar, m, 1, pirow, picol, nbitem, nb_item_row, pi_col_pos, pdblReal);
+		      getSparseMatrix(m_content, &pirow, &picol, &nbitem, &nb_item_row, &pi_col_pos, &pdblReal);
+		      createSparseMatrixInList(ivar, m_var, i+1, pirow, picol, nbitem, nb_item_row, pi_col_pos, pdblReal);
 		    }
 		}
 		break;
@@ -704,9 +732,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	double * pdblDataID, * pdblDataCID;
 	static const char *fields[] = {"objid","id","cid"};
 
-	createMList(ivar,3,&m);
+	createMList(ivar,3,&m_var);
 
-	createMatrixOfStringInList(ivar, m, 1, 1, 3, fields);
+	createMatrixOfStringInList(ivar, m_var, 1, 1, 3, fields);
 
 	size_objid  = t->storage.gfi_storage_u.objid.objid_len;
 	pdblDataID  = (double *)MALLOC(size_objid*sizeof(double));
@@ -718,10 +746,10 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    pdblDataCID[i] = t->storage.gfi_storage_u.objid.objid_val[i].cid;
 	  }
 	// Add a vector to the 'id' field
-	createMatrixOfDoubleInList(ivar, m, 2, 1, size_objid, pdblDataID);
+	createMatrixOfDoubleInList(ivar, m_var, 2, 1, size_objid, pdblDataID);
 
 	// Add a vector to the 'cid' field
-	createMatrixOfDoubleInList(ivar, m, 3, 1, size_objid, pdblDataCID);
+	createMatrixOfDoubleInList(ivar, m_var, 3, 1, size_objid, pdblDataCID);
 
 	if (pdblDataID)  FREE(pdblDataID);
 	if (pdblDataCID) FREE(pdblDataCID);
@@ -816,7 +844,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
       } break;
     }
 
-  return m;
+  return m_var;
 }
 
 /*******************************************************/
