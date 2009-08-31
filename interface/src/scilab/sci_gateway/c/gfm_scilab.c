@@ -157,10 +157,10 @@ int sci_gf_scilab(char * fname)
   install_custom_sigint(sigint_callback);
 
 #ifdef DEBUG
-  sciprint("sci_gf_scilab: fname = %s - calling call_getfem_interface with %s\n",fname, fname);
+  sciprint("sci_gf_scilab: fname = %s - calling call_getfem_interface with %s\n",fname, &fname[3]);
 #endif
 
-  out = call_getfem_interface(fname, *in, Lhs); // Sans parametre de sorti ou avec un parametre de sortie, Lhs = 1 !!!
+  out = call_getfem_interface(&fname[3], *in, Lhs); // Sans parametre de sorti ou avec un parametre de sortie, Lhs = 1 !!!
 
 #ifdef DEBUG
   sciprint("sci_gf_scilab: end of call_getfem_interface\n");
@@ -188,6 +188,7 @@ int sci_gf_scilab(char * fname)
 #ifdef DEBUG
 	      sciprint("sci_gf_scilab: processing output argument %d / %d\n", i, outl->arg.arg_len);
 	      sciprint("storage type = %d\n", outl->arg.arg_val[i].storage.type);
+	      sciprint("output position: LhsVar(%d) = %d\n", i+1, Rhs+1+i);
 #endif
 	      sci_x = gfi_array_to_sci_array(&outl->arg.arg_val[i],Rhs+1+i);
 	      LhsVar(i+1) = Rhs+1+i;
