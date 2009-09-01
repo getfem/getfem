@@ -1,19 +1,16 @@
-Toolbox: toolbox_skeleton
+Toolbox: scigetfem
 
-Title: Toolbox Skeleton
+Title: SciGetFEM
 
-Summary: Skeleton of a valid atoms package
+Summary: Scilab interface to the GetFEM finite element library
 
-Version: 1.3
+Version: 1.0
 
-Author: Allan CORNET <allan.cornet@scilab.org>
+Author: Yann COLLETTE <yann.collette@scilab.org>
 
-Maintainer: Allan CORNET <allan.cornet@scilab.org>
- Pierre MARECHAL <pierre.marechal@scilab.org>
+Maintainer: Yann COLLETTE <yann.collette@scilab.org>
 
-Category: biology - Robotic_2
- CatB - SScat2
- biology - modelisation_III
+Category: 
 
 Entity: Digiteo
 
@@ -25,14 +22,10 @@ ScilabVersion: >= 5.2
 
 Depends: 
 
-Date: 2009-03-26
+Date: 2009-08-31
 
-Description: files to the new Docbook based format.
+Description: 
  
- install xmltodocbook
- - linux : unzip xmltodocbook.zip and exec builder.sce
- - windows : click on xmltodocbook-1.0.exe
- load toolbox in scilab
- exec loader.sce
- 
- help xmltodocbook 
+ To load the toolbox, go into the installation directory and do a:
+ exec loader.sce;
+
