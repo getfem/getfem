@@ -24,21 +24,32 @@
 <li> <p> IceTools: an open source model for glaciers </p> 
 <a href="http://icetools.sourceforge.net"> 
 			   http://icetools.sourceforge.net</a>
-    </li>
-    <li> <p> EChem++: A Problem Solving Environment for Electochemistry </p> 
-    <a href="http://www.echem.uni-tuebingen.de/~bs/echem/software/EChem++/echem++.shtml"> 
+</li>
+<li> <p> EChem++: A Problem Solving Environment for Electochemistry </p> 
+<a href="http://www.echem.uni-tuebingen.de/~bs/echem/software/EChem++/echem++.shtml"> 
 			   http://www.echem.uni-tuebingen.de/~bs/echem/software/EChem++/echem++.shtml</a>.
     </li>
     </ul>
-    <h1>An evaluation of Gmm++ performance</h1>
-    <ul>
-    <li>
-    <p> Benchmark of C++ Libraries for Sparse Matrix Computation </p> 
+
+<h1>Some publications based on Getfem++ and/or Gmm++</h1>
+<ul>
+    <li> <p> A. Andreykiv, D. J. Rixen, Numerical modelling of electromechanical coupling using fictitious
+domain and level set methods. Int. J. Numer. Meth. Engng 2009. </p> <a href="http://www3.interscience.wiley.com/journal/122440964/abstract"> http://www3.interscience.wiley.com/journal/122440964/abstract</a>
+
+<li> <p> Our publications </p>
+    <a href="http://math.univ-lyon1.fr/~renard/publis.html">  http://math.univ-lyon1.fr/~renard/publis.html</a>
+</ul>
+
+
+<h1>An evaluation of Gmm++ performance</h1>
+<ul>
+<li>
+<p> Benchmark of C++ Libraries for Sparse Matrix Computation </p> 
     <a href="http://grh.mur.at/misc/sparselib_benchmark/"> 
 			   http://grh.mur.at/misc/sparselib_benchmark/</a>.
-    </li>
-    </ul>
-    </div>
-    <?php include("footer.inc") ?>
+</li>
+</ul>
+</div>
+<?php include("footer.inc") ?>
     
     
