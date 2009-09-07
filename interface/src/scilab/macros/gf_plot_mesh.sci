@@ -131,8 +131,8 @@ PID = union(E(1,:),E(2,:));
 if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
 nbpts = size(PXY,2);
 
-Bmax  = max(PXY(:,PID)')';
-Bmin  = min(PXY(:,PID)')';
+Bmax  = max(PXY(:,PID)','r')';
+Bmin  = min(PXY(:,PID)','r')';
 Bdiff = Bmax - Bmin;
 Bdiff = Bdiff + (Bdiff == 0); // remplace 0.0 par 1.0
 ecart = Bdiff/150;
@@ -154,8 +154,9 @@ if (ison(opt_dof)) then
   dofmult  = [keep(2:$)-keep(1:$-1) size(dofpos,2)+1-keep($)];
   dofpos   = dofpos(:, keep); dofid = dofid(keep);
   if (mdim == 1) then dofpos = [dofpos; zeros(size(dofpos))]; end;
-end;
+end
 
+bedge = list();
 for bnum=1:length(opt_boundaries)
   cvf = gf_mesh_get(M, 'boundary', opt_boundaries(bnum));
   
@@ -181,12 +182,13 @@ if (mdim <= 2) then
     hmesh.children.line_style = opt_edges_color;
   end
   for bnum=1:length(opt_boundaries),
-    hbound(bnum) = plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
+    plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
     hbound(bnum) = gce();
     hbound(bnum).children.thickness  = 2;
     hbound(bnum).children.line_style = 5; // Red
   end
   if (ison(opt_vertices)) then
+    // YC: PXY(1,PID) can be a vector -> add a loop
     xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(double(PID'))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
     hvert = gce();
     hvert.alignment = 'center';
@@ -205,7 +207,7 @@ if (mdim <= 2) then
       else 
         s=sprintf('%d*%d',dofid(i),dofmult(i)); 
       end
-      hdof(i) = xstring(dofpos(1,i)-ecart(1), dofpos(2,i)-ecart(2), s); /// 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [0 .4 0]);
+      xstring(dofpos(1,i)-ecart(1), dofpos(2,i)-ecart(2), s); /// 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [0 .4 0]);
       hdof(i) = gce();
       hdof(i).alignment = 'center';
       hdof(i).font_foreground = 2; // Blue
@@ -264,7 +266,7 @@ if (opt_explode ~= 0) then
   if (ison(opt_quality)) then
     sQ = gf_compute(qmf,Q,'interpolate on',sl);
     data = list('data',sQ);
-  end;
+  end
   gf_plot_slice(sl, data(:),'mesh_faces',opt_faces,...
 		'mesh_edges_color', opt_edges_color, ...
 		'mesh_edges_width',opt_edges_width, ...

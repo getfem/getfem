@@ -29,6 +29,13 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 //  'contour',[]               : list of contour values
 ////////////////////////
 
+hsurf    = [];
+hcontour = list();
+hquiver  = [];
+hmesh    = [];
+hdefmesh = [];
+
+printf('DEBUG: in gf_plot\n');
 // YC: ajouter une function qui transform varargin en structure plist
 // Store all the options of gf_plot_1D in a parameter list
 opts = init_param();
@@ -40,12 +47,15 @@ try
   gf_workspace('push');
   [hsurf, hcontour, hquiver, hmesh, hdefmesh] = gf_plot_aux(mf,U,opts);
 catch
-  disp('error in gf_plot : ' + lasterr);
+  disp('error in gf_plot : ' + lasterror());
 end
 gf_workspace('pop');
 endfunction
 
 function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,opts)
+
+printf('DEBUG: in gf_plot_aux\n');
+
 [nargout,nargin] = argn();
 
 if nargin<2 then
@@ -63,7 +73,7 @@ try
   qdim = gf_mesh_fem_get(mf, 'qdim');
   mdim = gf_mesh_get(mf, 'dim'); mdim3=mdim*3;
 catch
-  error('invalid mesh_fem ? -- ' + lasterror);
+  error('invalid mesh_fem ? -- ' + lasterror());
 end
 
 if (mdim == 1) then
@@ -167,13 +177,13 @@ try
     sl = gf_slice(list('none'),gf_mesh_fem_get(mf,'linked mesh'),opt_refine,opt_cvlst);
   end
 catch
-  error('can''t build slice : ' + lasterror);
+  error('can''t build slice : ' + lasterror());
 end
 
 try
   Usl = gf_compute(mf,U,'interpolate on',sl);
 catch
-  error('can''t interpolate on slice : ' + lasterror);
+  error('can''t interpolate on slice : ' + lasterror());
 end
 Psl = gf_slice_get(sl,'pts');
 

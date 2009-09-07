@@ -19,7 +19,7 @@ try
   gf_workspace('push', 'gf_plot_1D');
   [hline, hdof] = gf_plot_1D_aux(mf,U, opts);
 catch
-  disp('error in gf_plot_1D : ' + lasterror);
+  disp('error in gf_plot_1D : ' + lasterror());
 end;
 gf_workspace('pop');
 endfunction
