@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_mdbrick" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,59 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_mdbrick</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
-</refentry>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION M = gf_mdbrick(brick_name, [, args])
+  </para>
+  <para>
+    General constructor for mdbrick object. Returns a getfem handle to the newly
+  </para>
+  <para>
+    created object.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    Many of the bricks take a "numfem" optional parameter, which
+  </para>
+  <para>
+    is the meshfem number in the stack of parent bricks (by default
+  </para>
+  <para>
+    numfem=0, i.e. it refers to the first meshfem in the stack of
+  </para>
+  <para>
+    bricks).
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * B = gf_mdbrick('constraint', MdBrick pb, string CTYPE[, int nfem])    Build a    generic constraint brick.     It may be useful in some situations, such as the Stokes problem where the    pressure is defined modulo a constant. In such a situation, this brick can be    used to add an additional constraint on the pressure value.     `CTYPE` has to be chosen among 'augmented', 'penalized', and 'eliminated'.    The constraint can be specified with gf_mdbrick_set(b,('constraints'). Note    that Dirichlet bricks (except the 'generalized Dirichlet' one) are also    specializations of the 'constraint' brick.
+  </para>
+  <para>
+  * B = gf_mdbrick('dirichlet', MdBrick pb, int bnum, MeshFem mf_m, string CTYPE[,    int nfem])    Build a Dirichlet condition brick which impose the value of a    field along a mesh boundary.     The `bnum` parameter selects on which mesh region the Dirichlet condition is    imposed. `CTYPE` has to be chosen among 'augmented', 'penalized', and    'eliminated'. The `mf_m` may generally be taken as the MeshFem of the unknown,    but for 'augmented' Dirichlet conditions, you may have to respect the Inf-Sup    condition and choose an adequate MeshFem.
+  </para>

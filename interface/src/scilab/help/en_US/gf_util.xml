@@ -7,49 +7,92 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_util</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION gf_util(operation, [,args])
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    Performs various operations which do not fit elsewhere..
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    * gf_util('save matrix', string FMT, string FILENAME, spmat A);
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    Exports a sparse matrix into the file named FILENAME, using
+  </para>
+  <para>
+    Harwell-Boeing (FMT='hb') or Matrix-Market (FMT='mm') formatting.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    * A = gf_util('load matrix', string FMT, string FILENAME);
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    Imports a sparse matrix from a file.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * gf_util('trace_level',int level)    Set the verbosity of some getfem++    routines.     Typically the messages printed by the model bricks, 0 means no trace message    (default is 3).
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * gf_util('warning_level',int level)    Filter the less important warnings    displayed by getfem.     0 means no warnings, default level is 3.
+  </para>
+</refsection>
+<refsection>
+  <title>Examples</title>
+  <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+</refsection>
+<refsection>
+  <title>See Also</title>
+  <simplelist type="inline">
+    <member><link linkend="???">???</link></member>
+  </simplelist>
+</refsection>
+<refsection>
+  <title>Authors</title>
+  <para>Y. Collette</para>
+</refsection>
 </refentry>

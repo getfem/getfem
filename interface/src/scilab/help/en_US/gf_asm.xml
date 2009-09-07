@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_asm" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,153 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_asm</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+    M = gf_asm('mass_matrix',MeshIm mim, MeshFem mf1[, MeshFem mf2])
+    L = gf_asm('laplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec a)
+    Le = gf_asm('linear_elasticity',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
+vec lambda_d, vec mu_d)
+    TRHS = gf_asm('nonlinear_elasticity',MeshIm mim, MeshFem mf_u, vec U,
+string law, MeshFem mf_d, mat params, list('tangent matrix'|'rhs'|'incompressible
+tangent matrix', MeshFem mf_p, vec P|'incompressible rhs', MeshFem mf_p, vec
+P))
+    [K, B] = gf_asm('stokes',MeshIm mim, MeshFem mf_u, MeshFem mf_p,
+MeshFem mf_d, vec nu)
+    A = gf_asm('helmholtz',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec k)
+    A = gf_asm('bilaplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec a)
+    V = gf_asm('volumic_source',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec
+fd)
+    B = gf_asm('boundary_source',int bnum, MeshIm mim, MeshFem mf_u,
+MeshFem mf_d, vec G)
+    [HH, RR] = gf_asm('dirichlet',int bnum, MeshIm mim, MeshFem mf_u,
+MeshFem mf_d, mat H, vec R [, threshold])
+    Q = gf_asm('boundary_qu_term',int boundary_num, MeshIm mim, MeshFem
+mf_u, MeshFem mf_d, mat q)
+    [...] = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems,
+data...])
+    [...] = gf_asm('boundary',int bnum, string expr [, MeshIm mim, MeshFem
+mf, data...])
+    Mi = gf_asm('interpolation_matrix',MeshFem mf, MeshFem mfi)
+    Me = gf_asm('extrapolation_matrix',MeshFem mf, MeshFem mfe)
+    [Q, G, H, R, F] = gf_asm('pdetool_boundary_conditions',mf_u, mf_d, b,
+e[, f_expr])
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION gf_asm(operation[, arg])
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    General assembly function.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    Many of the functions below use more than one mesh_fem: the main
+  </para>
+  <para>
+    mesh_fem (mf_u) used for the main unknow, and data mesh_fem (mf_d)
+  </para>
+  <para>
+    used for the data. It is always assumed that the Qdim of mf_d is
+  </para>
+  <para>
+    equal to 1: if mf_d is used to describe vector or tensor data, you
+  </para>
+  <para>
+    just have to "stack" (in fortran ordering) as many scalar fields as
+  </para>
+  <para>
+    necessary.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * V = gf_asm('volumic_source',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec fd)    Assembly of a volumic source term.     Output a vector `V`, assembled on the MeshFem `mf_u`, using the data vector    `fd` defined on the data MeshFem `mf_d`. `fd` may be real or complex-valued.          Return a vec object.
+  </para>
+  <para>
+  * B = gf_asm('boundary_source',int bnum, MeshIm mim, MeshFem mf_u, MeshFem mf_d,    vec G)    Assembly of a boundary source term.     `G` should be a [Qdim x N] matrix, where N is the number of dof of `mf_d`,    and Qdim is the dimension of the unkown u (that is set when creating the    MeshFem).          Return a vec object.
+  </para>
+  <para>
+  * M = gf_asm('mass_matrix',MeshIm mim, MeshFem mf1[, MeshFem mf2])    Assembly    of a mass matrix.     Return a Spmat object.
+  </para>
+  <para>
+  * L = gf_asm('laplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec a)    Assembly of the matrix for the Laplacian problem.     :math:`\\nabla\\cdot(a(x)\\nabla u)` with `a` scalar.          Return a Spmat object.
+  </para>
+  <para>
+  * Le = gf_asm('linear_elasticity',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec    lambda_d, vec mu_d)    Assembles of the matrix for the linear (isotropic)    elasticity problem.     :math:`\\nabla\\cdot(C(x):\\nabla u)` with :math:`C` defined via `lambda_d`    and `mu_d`.          Return a Spmat object.
+  </para>
+  <para>
+  * TRHS = gf_asm('nonlinear_elasticity',MeshIm mim, MeshFem mf_u, vec U, string    law, MeshFem mf_d, mat params, {'tangent matrix'|'rhs'|'incompressible tangent    matrix', MeshFem mf_p, vec P|'incompressible rhs', MeshFem mf_p, vec P})    Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.     The solution `U` is required at the current time-step. The `law` may be    choosen among:         - 'SaintVenant Kirchhoff':        Linearized law, should be avoided). This law has the two usual        Lame coefficients as parameters, called lambda and mu.     - 'Mooney Rivlin':        Only for incompressibility. This law has two parameters,        called C1 and C2.     - 'Ciarlet Geymonat':        This law has 3 parameters, called lambda, mu and gamma, with        gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.          The parameters of the material law are described on the MeshFem `mf_d`. The    matrix `params` should have `nbdof(mf_d)` columns, each row correspounds to a    parameter.          The last argument selects what is to be built: either the tangent matrix, or    the right hand side. If the incompressibility is considered, it should be    followed by a MeshFem `mf_p`, for the pression.          Return a Spmat object (tangent matrix), vec object (right hand side), tuple    of Spmat objects (incompressible tangent matrix), or tuple of vec objects    (incompressible right hand side).
+  </para>
+  <para>
+  * {K, B} = gf_asm('stokes',MeshIm mim, MeshFem mf_u, MeshFem mf_p, MeshFem mf_d,    vec nu)    Assembly of matrices for the Stokes problem.     :math:`-\\nu(x)\\Delta u + \\nabla p = 0`         :math:`\\nabla\cdot u  = 0`         with :math:`\\nu` (`nu`), the fluid's dynamic viscosity.          On output, `K` is the usual linear elasticity stiffness matrix with    :math:`\\lambda = 0` and :math:`2\\mu = \\nu`. `B` is a matrix corresponding    to :math:`\\int p\\nabla\cdot\\phi`.          `K` and `B` are Spmat object's.
+  </para>
+  <para>
+  * A = gf_asm('helmholtz',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec k)    Assembly of the matrix for the Helmholtz problem.     :math:`\\Delta u + k^2 u` = 0 with `k` complex scalar.          Return a Spmat object.
+  </para>
+  <para>
+  * A = gf_asm('bilaplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec a)    Assembly of the matrix for the Bilaplacian problem.     :math:`\\Delta(a(x)\\Delta u) = 0` with `a` scalar.          Return a Spmat object.
+  </para>
+  <para>
+  * {HH, RR} = gf_asm('dirichlet',int bnum, MeshIm mim, MeshFem mf_u, MeshFem    mf_d, mat H, vec R [, threshold])    Assembly of Dirichlet conditions of type    `h.u = r`.     Handle `h.u = r` where h is a square matrix (of any rank) whose size is equal    to the dimension of the unkown u. This matrix is stored in `H`, one column per    dof in `mf_d`, each column containing the values of the matrix h stored in    fortran order:          `H(:,j) = [h11(x_j) h21(x_j) h12(x_j) h22(x_j)]`          if u is a 2D vector field.          Of course, if the unknown is a scalar field, you just have to set `H =    ones(1, N)`, where N is the number of dof of `mf_d`.          This is basically the same than calling gf_asm('boundary_qu_term') for `H`    and calling gf_asm('neumann') for `R`, except that this function tries to    produce a 'better' (more diagonal) constraints matrix (when possible).          See also gf_spmat_get(M,('Dirichlet_nullspace').
+  </para>
+  <para>
+  * Q = gf_asm('boundary_qu_term',int boundary_num, MeshIm mim, MeshFem mf_u,    MeshFem mf_d, mat q)    Assembly of a boundary qu term.     `q` should be be a [Qdim x Qdim x N] array, where N is the number of dof of    `mf_d`, and Qdim is the dimension of the unkown u (that is set when creating    the MeshFem).          Return a Spmat object.
+  </para>
+  <para>
+  * {Q, G, H, R, F} = gf_asm('pdetool_boundary_conditions',mf_u, mf_d, b, e[,    f_expr])    Assembly of pdetool boundary conditions.     `B` is the boundary matrix exported by pdetool, and `E` is the edges array.    `f_expr` is an optionnal expression (or vector) for the volumic term. On    return `Q, G, H, R, F` contain the assembled boundary conditions (`Q` and `H`    are matrices), similar to the ones returned by the function ASSEMB from    PDETOOL.
+  </para>
+  <para>
+  * {...} = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])    Generic assembly procedure for volumic assembly.     The expression `expr` is evaluated over the MeshFem's listed in the arguments    (with optional data) and assigned to the output arguments. For details about    the syntax of assembly expressions, please refer to the getfem user manual (or    look at the file getfem_assembling.h in the getfem++ sources).          For example, the L2 norm of a field can be computed with          gf_compute(MF, U,('L2 norm') or with:          gf_asm('volumic','u=data(#1);    V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)          The Laplacian stiffness matrix can be evaluated with          gf_asm('laplacian',mim, mf, A) or equivalently with:          gf_asm('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(    :,i,:,i,j).a(j))', mim,mf, A);
+  </para>
+  <para>
+  * {...} = gf_asm('boundary',int bnum, string expr [, MeshIm mim, MeshFem mf,    data...])    Generic boundary assembly.     See the help for gf_asm('volumic').
+  </para>
+  <para>
+  * Mi = gf_asm('interpolation_matrix',MeshFem mf, MeshFem mfi)    Build the    interpolation matrix from a MeshFem onto another MeshFem.     Return a matrix `Mi`, such that `V = Mi.U` is equal to gf_compute(MF,    U,('interpolate_on',mfi). Useful for repeated interpolations. Note that this    is just interpolation, no elementary integrations are involved here, and `mfi`    has to be lagrangian. In the more general case, you would have to do a L2    projection via the mass matrix.          `Mi` is a Spmat object.
+  </para>
+  <para>
+  * Me = gf_asm('extrapolation_matrix',MeshFem mf, MeshFem mfe)    Build the    extrapolation matrix from a MeshFem onto another MeshFem.     Return a matrix `Me`, such that `V = Me.U` is equal to gf_compute(MF,    U,('extrapolate_on',mfe). Useful for repeated extrapolations.  `Me` is a Spmat    object.
+  </para>
+</refsection>
+<refsection>
+  <title>Examples</title>
+  <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+</refsection>
+<refsection>
+  <title>See Also</title>
+  <simplelist type="inline">
+    <member><link linkend="???">???</link></member>
+  </simplelist>
+</refsection>
+<refsection>
+  <title>Authors</title>
+  <para>Y. Collette</para>
+</refsection>
 </refentry>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_eltm" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,72 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_eltm</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION ELTM = gf_eltm(elt_matrix_type, args..)
+  </para>
+  <para>
+  * gf_eltm('base', Fem FEM)
+    return a descriptor for the integration of shape functions on
+    elements, using the Fem `FEM`.
+ * gf_eltm('grad', Fem FEM)
+    return a descriptor for the integration of the gradient of shape
+    functions on elements, using the Fem `FEM`.
+ * gf_eltm('hessian', Fem FEM)
+    return a descriptor for the integration of the hessian of shape
+    functions on elements, using the Fem `FEM`.
+ * gf_eltm('normal')
+    return a descriptor for the unit normal of convex faces.
+ * gf_eltm('grad_geotrans')
+    return a descriptor to the gradient matrix of the geometric
+    transformation.
+ * gf_eltm('grad_geotrans_inv')
+    return a descriptor to the inverse of the gradient matrix of the
+    geometric transformation (this is rarely used).
+ * gf_eltm('product', Eltm A, Eltm B)
+    return a descriptor for the integration of the tensorial product
+    of elementary matrices `A` and `B`.
 
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
+  In order to obtain a numerical value of theses matrices, see
+gf_mesh_im_get(MIM,('eltm').
+  </para>
+</refsection>
+<refsection>
+  <title>Examples</title>
+  <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+</refsection>
+<refsection>
+  <title>See Also</title>
+  <simplelist type="inline">
+    <member><link linkend="???">???</link></member>
+  </simplelist>
+</refsection>
+<refsection>
+  <title>Authors</title>
+  <para>Y. Collette</para>
+</refsection>
 </refentry>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_fem_set" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,50 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_mesh_fem_set</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
-</refentry>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION [x] = gf_mesh_fem_set(meshfem MF, operation [, args])
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    General function for modifying mesh_fem objects.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * gf_mesh_fem_set(MF,'('fem',Fem f[, ivec CVids])    Set the Finite Element    Method.     Assign a FEM `f` to all convexes whose #ids are listed in `CVids`. If `CVids`    is not given, the integration is assigned to all convexes.  See the help of    gf_fem to obtain a list of available FEM methods.
+  </para>
+  <para>
+  * gf_mesh_fem_set(MF,'('classical_fem',int k[, ivec CVids])    Assign a    classical (Lagrange polynomial) fem of order `k` to the MeshFem.     Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.
+  </para>
+  <para>
+  * gf_mesh_fem_set(MF,'('classical_discontinuous_fem',int K, [int IM_DEGREE    [,ivec CVIDX]])    Assigns a classical (Lagrange polynomial) discontinuous fem    or order K.     Similar to gf_mesh_fem_set(MF,'('classical_fem') except that    FEM_PK_DISCONTINUOUS is used.
+  </para>
+  <para>
+  * gf_mesh_fem_set(MF,'('qdim',int Q)    Change the `Q` dimension of the field    that is interpolated by the MeshFem.     `Q = 1` means that the MeshFem describes a scalar field, `Q = N` means that    the MeshFem describes a vector field of dimension N.
+  </para>

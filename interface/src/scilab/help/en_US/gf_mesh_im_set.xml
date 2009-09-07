@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_im_set" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,65 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_mesh_im_set</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION [x] = gf_mesh_im_set(meshim MIM, operation [, args])
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    General function for modifying mesh_im objects
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * gf_mesh_im_set(MIM,'('integ',{Integ im|int im_degree}[, ivec CVids])    Set    the integration method.     Assign an integration method to all convexes whose #ids are listed in    `CVids`. If `CVids` is not given, the integration is assigned to all convexes.    It is possible to assign a specific integration method with an integration    method handle `im` obtained via gf_integ('IM_SOMETHING'), or to let getfem    choose a suitable integration method with `im_degree` (choosen such that    polynomials of `degree <= im_degree` are exactly integrated. If    `im_degree=-1`, then the dummy integration method IM_NONE will be used.)
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    $Id: gf_mesh_im_set.cc 3008 2009-05-16 14:08:01Z renard $
+  </para>
+</refsection>
+<refsection>
+  <title>Examples</title>
+  <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+</refsection>
+<refsection>
+  <title>See Also</title>
+  <simplelist type="inline">
+    <member><link linkend="???">???</link></member>
+  </simplelist>
+</refsection>
+<refsection>
+  <title>Authors</title>
+  <para>Y. Collette</para>
+</refsection>
 </refentry>

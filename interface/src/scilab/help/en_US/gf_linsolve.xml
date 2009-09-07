@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_linsolve" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,49 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_linsolve</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+    X = gf_linsolve('gmres',Spmat M, vec b[, int restart][, Precond
+P][,'noisy'][,'res', r][,'maxiter', n])
+    X = gf_linsolve('cg',Spmat M, vec b [, Precond P][,'noisy'][,'res',
+r][,'maxiter', n])
+    X = gf_linsolve('bicgstab',Spmat M, vec b [, Precond
+P][,'noisy'][,'res', r][,'maxiter', n])
+    [U, cond] = gf_linsolve('lu',Spmat M, vec b)
+    [U, cond] = gf_linsolve('superlu',Spmat M, vec b)
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
-
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
-</refentry>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION F=gf_linsolve(args)
+  </para>
+  <para>
+  
+  </para>
+  <para>
+  * X = gf_linsolve('gmres',Spmat M, vec b[, int restart][, Precond    P][,'noisy'][,'res', r][,'maxiter', n])    Solve `M.X = b` with the    generalized minimum residuals method.     Optionally using `P` as preconditioner. The default value of the restart    parameter is 50.
+  </para>
+  <para>
+  * X = gf_linsolve('cg',Spmat M, vec b [, Precond P][,'noisy'][,'res',    r][,'maxiter', n])    Solve `M.X = b` with the conjugated gradient method.     Optionally using `P` as preconditioner.
+  </para>
+  <para>
+  * X = gf_linsolve('bicgstab',Spmat M, vec b [, Precond P][,'noisy'][,'res',    r][,'maxiter', n])    Solve `M.X = b` with the bi-conjugated gradient    stabilized method.     Optionally using `P` as a preconditioner.
+  </para>

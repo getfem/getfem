@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_workspace" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,16 +7,17 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+  <refnamediv>
+    <refname>gf_workspace</refname>
 
-    <refpurpose></refpurpose>
+    <refpurpose>Getfem workspace management function.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>gf_workspace(operation)
+  </synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -24,10 +25,55 @@
 
     <variablelist>
       <varlistentry>
-        <term></term>
+        <term>operation</term>
 
         <listitem>
-          <para></para>
+          <para>the command to be passed to gf_workspace. Can be:</para>
+
+          <itemizedlist>
+            <listitem>
+              <para>gf_workspace('push'): Create a new temporary workspace on
+              the workspace stack.</para>
+            </listitem>
+
+            <listitem>
+              <para>gf_workspace('pop' [,i,j,..]): Leave the current
+              workspace, destroying all getfem objects belonging to it, except
+              the one listed after 'pop', and the ones moved to parent
+              workspace by gf_workspace('keep').</para>
+            </listitem>
+
+            <listitem>
+              <para>gf_workspace('stat'): Print informations about variables
+              in current workspace.</para>
+            </listitem>
+
+            <listitem>
+              <para>gf_workspace('stats'): Print informations about all getfem
+              variables.</para>
+            </listitem>
+
+            <listitem>
+              <para>gf_workspace('keep', i[,j,k..]): prevent the listed
+              variables i from being deleted when gf_workspace("pop") will be
+              called by moving this variable in the parent workspace.</para>
+            </listitem>
+
+            <listitem>
+              <para>gf_workspace('clear'): Clear the current workspace.</para>
+            </listitem>
+
+            <listitem>
+              <para>gf_workspace('clear all'): Clear every workspace, and
+              returns to the main workspace (you should not need this
+              command).</para>
+            </listitem>
+
+            <listitem>
+              <para>S=gf_workspace('class name', i): Return the class name of
+              object i (if I is a mesh handle, it return gfMesh etc..)</para>
+            </listitem>
+          </itemizedlist>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -36,20 +82,35 @@
   <refsection>
     <title>Description</title>
 
-    <para></para>
+    <para>Getfem uses its own workspaces in Scilab, independently of the
+    scilab workspaces (this is due to some limitations in the memory
+    management of scilab objects). By default, all getfem variables belong to
+    the root getfem workspace. A function can create its own workspace by
+    invoking gf_workspace('push') at its beginning. When exiting, this
+    function MUST invoke gf_workspace('pop') (you can use scilab exceptions
+    handling to do this cleanly when the function exits on an error).</para>
   </refsection>
 
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"></programlisting>
+    <programlisting role="example"> 
+m  = gf_mesh('cartesian',[0:.1:1],[0:.1:1]); 
+gf_workspace('stats');
+ </programlisting>
   </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???"></link></member>
+      <member><link linkend="???">???</link></member>
     </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
   </refsection>
 </refentry>

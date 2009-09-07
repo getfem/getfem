@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_precond" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,49 +7,81 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-  <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+<refnamediv>
+  <refname>gf_precond</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
 
-    <refpurpose></refpurpose>
-  </refnamediv>
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION F=gf_precond(name_of_preconditioner, args)
+  </para>
+  <para>
+  getfem sparse matrices and Matlab sparse matrices.
 
-  <refsynopsisdiv>
-    <title>Calling Sequence</title>
-
-    <synopsis></synopsis>
-  </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="???"></link></member>
-    </simplelist>
-  </refsection>
+  * gf_precond('identity')
+    Create a REAL identity precondioner.
+ * gf_precond('cidentity')
+    Create a COMPLEX identity precondioner.
+ * gf_precond('diagonal', vec D)
+    Create a diagonal precondioner.
+ * gf_precond('ildlt', Spmat m)
+    Create an ILDLT (Cholesky) preconditioner for the (symmetric)
+    sparse matrix `m`. This preconditioner has the same sparsity
+    pattern than `m` (no fill-in).
+ * gf_precond('ilu', Spmat m)
+    Create an ILU (Incomplete LU) preconditioner for the sparse
+    matrix `m`. This preconditioner has the same sparsity pattern
+    than `m` (no fill-in).
+ * gf_precond('ildltt', Spmat m[, int fillin[, scalar threshold]])
+    Create an ILDLT (Cholesky with filling) preconditioner for the
+    (symmetric) sparse matrix `m`. The preconditioner may add at most
+    `fillin` additional non-zero entries on each line. The default
+    value for `fillin` is 10, and the default threshold is1e-7.
+ * gf_precond('ilut', Spmat m[, int fillin[, scalar threshold]])
+    Create an ILUT (Incomplete LU with filling) preconditioner for the
+    sparse matrix `m`. The preconditioner may add at most `fillin`
+    additional non-zero entries on each line. The default value for
+    `fillin` is 10, and the default threshold is 1e-7.
+ * gf_precond('superlu', Spmat m)
+    Uses SuperLU to build an exact factorization of the sparse matrix
+    `m`. This preconditioner is only available if the getfem-interface
+    was built with SuperLU support. Note that LU factorization is likely
+    to eat all your memory for 3D problems. * gf_precond('spmat', Spmat M)
+    ???
+  </para>
+</refsection>
+<refsection>
+  <title>Examples</title>
+  <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+</refsection>
+<refsection>
+  <title>See Also</title>
+  <simplelist type="inline">
+    <member><link linkend="???">???</link></member>
+  </simplelist>
+</refsection>
+<refsection>
+  <title>Authors</title>
+  <para>Y. Collette</para>
+</refsection>
 </refentry>
