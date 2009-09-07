@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_model" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+<refnamediv>
+  <refname>gf_model</refname>
+  <refpurpose></refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+  <title>Calling Sequence</title>
+  <synopsis>
+  </synopsis>
+</refsynopsisdiv>
+<refsection>
+  <title>Parameters</title>
+
+  <variablelist>
+    <varlistentry>
+      <term></term>
+      <listitem>
+        <para></para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+<refsection>
+  <title>Description</title>
+  <para>
+  FUNCTION M = gf_model('complex' | 'real')
+  </para>
+  <para>
+    General constructor for model objects. Return a getfem handle to the newly
+  </para>
+  <para>
+    created object.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    ``Model'' variables store the variables and the state data and the
+  </para>
+  <para>
+    description of a model. This includes the global tangent matrix, the
+  </para>
+  <para>
+    right hand side and the constraints. There are two kinds of models, the
+  </para>
+  <para>
+    ``real'' and the ``complex'' models.
+  </para>
+  <para>
+  
+  </para>
+  <para>
+    ``Model'' object is the evolution for Getfem++ 4.0 of the "MdState"
+  </para>
+  <para>
+    object.
+  </para>
+  <para>
+  
+  </para>
