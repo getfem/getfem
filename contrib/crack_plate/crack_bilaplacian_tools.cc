@@ -368,8 +368,8 @@ void bilaplacian_crack_problem::init_mixed_elements(void) {
     enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
                                      "radius of the enrichment area");
 
-sol_ref = PARAM.int_value("SOL_REF") ;
-  
+  sol_ref = PARAM.int_value("SOL_REF") ;
+  scalar_type angle_rot = PARAM.real_value("ANGLE_ROT") ;
   bgeot::pgeometric_trans pgt_tri = 
       bgeot::geometric_trans_descriptor(TRI_MESH_TYPE);
   bgeot::pgeometric_trans pgt_quad = 
@@ -413,18 +413,8 @@ sol_ref = PARAM.int_value("SOL_REF") ;
        getfem::regular_unit_mesh(mesh, nsubdiv, pgt_tri, PARAM.int_value("MESH_NOISED") != 0);
     else
        getfem::regular_unit_mesh(mesh, nsubdiv, pgt_quad, PARAM.int_value("MESH_NOISED") != 0);
-    bgeot::base_matrix M(N,N);
-    for (size_type i=0; i < N; ++i) {
-      static const char *t[] = {"LX","LY","LZ"};
-      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-    }
-    if (sol_ref == 2){
-      M(0, 0) = 1.5 ;
-      M(1, 1) = 1.0 ;
-    }
-    /* scale the unit mesh to [LX,LY,..] and incline it */
-    mesh.transformation(M);
-    base_small_vector tt(N); 
+ 
+      base_small_vector tt(N); 
     switch (sol_ref) {
     case 0 : {
        tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ;
@@ -445,8 +435,23 @@ sol_ref = PARAM.int_value("SOL_REF") ;
     if (sol_ref == 1){
        tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH") ;
     }
-    mesh.translation(tt); 
-    
+    mesh.translation(tt);
+
+    bgeot::base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) {
+      static const char *t[] = {"LX","LY","LZ"};
+      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
+    }
+    if (sol_ref == 2){
+      M(0, 0) = 1.5 ;
+      M(1, 1) = 1.0 ;
+    }
+    if (sol_ref == 0 || sol_ref == 3){
+      M(0, 0) = cos(angle_rot) ; M(1, 1) = M(0, 0) ; 
+      M(1, 0) = sin(angle_rot) ; M(0, 1) = - M(1, 0) ;
+    }
+    mesh.transformation(M);
+
     /* MODIFICATION RELATIVE TO THE USUAL WAY OF PROGRAMMING :
         In the other xfem programs, the level-set is initialized 
         after the mesh_fems. However, to define the mesh_fem, here, 

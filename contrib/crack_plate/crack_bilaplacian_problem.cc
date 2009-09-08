@@ -251,6 +251,7 @@ void bilaplacian_crack_problem::init(void) {
 				     "radius of the enrichment area");
 
   sol_ref = PARAM.int_value("SOL_REF") ;
+  scalar_type angle_rot = PARAM.real_value("ANGLE_ROT") ;
   size_type N = 2 ;
   /* First step : build the mesh */
   if (!MESH_FILE.empty()) {
@@ -260,7 +261,7 @@ void bilaplacian_crack_problem::init(void) {
      base_small_vector tt(N);
      tt[0] = PARAM.real_value("TRANSLAT_X") ;
      tt[1] = PARAM.real_value("TRANSLAT_Y") ;
-     if (sol_ref > 0){
+     if (sol_ref == 1 || sol_ref == 2){
         tt[0] -= PARAM.real_value("CRACK_SEMI_LENGTH") ;
      }
      cout << "TRANSLAT_X = " << tt[0] << " ; TRANSLAT_Y = " << tt[1] << "\n" ;
@@ -287,17 +288,7 @@ void bilaplacian_crack_problem::init(void) {
      }
      getfem::regular_unit_mesh(mesh, nsubdiv, pgt, PARAM.int_value("MESH_NOISED") != 0);
 
-    bgeot::base_matrix M(N,N);
-    for (size_type i=0; i < N; ++i) {
-      static const char *t[] = {"LX","LY","LZ"};
-      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-    }
-    if (sol_ref == 2){
-      M(0, 0) = 1.5 ;
-      M(1, 1) = 1.0 ;
-    }
     /* scale the unit mesh to [LX,LY,..] and incline it */
-    mesh.transformation(M);
     base_small_vector tt(N);
     switch (sol_ref) {
     case 0 : {
@@ -312,12 +303,30 @@ void bilaplacian_crack_problem::init(void) {
        tt[0] = - PARAM.real_value("CRACK_SEMI_LENGTH");
        tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
     } break ;
+    case 3 : {
+       tt[0] = - 0.5 + PARAM.real_value("TRANSLAT_X") ;
+       tt[1] = - 0.5 + PARAM.real_value("TRANSLAT_Y") ;
+    } break ;
     default : 
        GMM_ASSERT1(false, "SOL_REF parameter is undefined");
       break ;  
     }
-    mesh.translation(tt);	     
-  } 
+    mesh.translation(tt);
+    bgeot::base_matrix M(N,N);
+    for (size_type i=0; i < N; ++i) {
+      static const char *t[] = {"LX","LY","LZ"};
+      M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
+    }
+    if (sol_ref == 2){
+      M(0, 0) = 1.5 ;
+      M(1, 1) = 1.0 ;
+    }
+    if (sol_ref == 0 || sol_ref == 3){
+      M(0, 0) = cos(angle_rot) ; M(1, 1) = M(0, 0) ; 
+      M(1, 0) = sin(angle_rot) ; M(0, 1) = - M(1, 0) ;
+    }
+    mesh.transformation(M);
+  }
  
   scalar_type quality = 1.0, avg_area = 0. , min_area = 1. , max_area = 0., area ;
   scalar_type radius, avg_radius = 0., min_radius = 1., max_radius = 0. ;
@@ -424,7 +433,7 @@ void bilaplacian_crack_problem::init(void) {
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  if (sol_ref == 0){
+  if (sol_ref == 0 && angle_rot == 0.){
      for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
         base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
         un /= gmm::vect_norm2(un);
@@ -482,6 +491,14 @@ void bilaplacian_crack_problem::init(void) {
      }
     }
   
+    if (sol_ref == 0 && angle_rot != 0. ){ 
+    // does not support the case of a conformal mesh around the crack 
+    // (all the boundary, including the crack faces, will be clamped).
+     for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+	   mesh.region(CLAMPED_BOUNDARY_NUM).add(i.cv(), i.f());
+	   mesh.region(SIMPLE_SUPPORT_BOUNDARY_NUM).add(i.cv(), i.f());
+	}
+     }
 
   exact_sol.init(ls);
   

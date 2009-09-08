@@ -16,11 +16,17 @@ end;
 SOL_REF = 0 ;  % 0 = the exact solution is taken equal to the singularities 
                % 1 = plate subject to bending moments (only the SIF is known)
                % 2 = panel test case (no exact solution)
+               % 3 = rotated domain with singularities
+
+PI = 3.14159265 ;
+
+ANGLE_ROT = 0. ;  % must not be used with conformal meshes (for FEM comparison)
+                      % because of incorrect selection of boundary conditions (the crack could be clamped)
 
 %%%%%  domain parameters                   %%%%%
 N = 2;
-CRACK_SEMI_LENGTH = 0.03 ; %% only usefull if SOL_REF = 1 or 2
-if SOL_REF == 0
+CRACK_SEMI_LENGTH = 0.11 ; %% only usefull if SOL_REF = 1 or 2
+if ( (SOL_REF == 0) || (SOL_REF == 3) )
    LX = 1. ; LY = LX; LZ = LX;	% sizes of the domain.
    EPSILON=0.045 ; % thickness 
    D = 1 ;         % "flexion modulus"
@@ -39,11 +45,12 @@ end;
 %%%%%   mesh parameters -----------------------------------------------
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED_ELEMENTS = 0 ;    % Set to one if you want to insert triangles in quadrangles meshes
-NX = 11 ;                 % space step
+NX = 21 ;                 % space step
 
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_50.mesh'
 %MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONF_STRUCT/tri_10.mesh
 %MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/CONFORMES/tri_conf_39.mesh'
-%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/PLAQUE_CARREE/tri_10.mesh'
+%MESH_FILE='../../../../RESULTATS_XFEM/KL/MAILLAGES_MATLAB/DEMI_PLAQUE/demi_plaque_80.mesh'
 %MESH_FILE='./demi_plaque_raffinee.mesh'
 %MESH_FILE='./demi_plaque_21.mesh'
 
@@ -60,7 +67,7 @@ SHOW_NAME_OF_DOF = 0 ;
 
 % Parameters for the finite element method -------------------------------
 
-QUAD = 1;
+QUAD = 0;
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';        % triangles
@@ -136,10 +143,13 @@ ENRICHMENT_OPTION = 3;  %-1 = classical FEM (needs conformal mesh)
 			% 3 = Integral matching (mortar)
 			% 4 = global enrichment times cut-off function
 
-RADIUS_ENR_AREA = 0.15;
-COMPUTE_ERROR = 0;
-RING_RADIUS = 0.20 ;
-
+RADIUS_ENR_AREA = 0.15 ;
+COMPUTE_ERROR = 1;
+RING_RADIUS = 0.2 ;
+FIC_SERIE = 0 ;
+MIN_RJ = 0.268 ;
+DELTA_RJ = 0.001 ;
+NB_RJ = 1 ;
 SING_BASE_TYPE = 1 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
 SHOW_DX = 0 ;
@@ -172,12 +182,12 @@ EPS_DIRICHLET_PENAL = 1E-12 ;  % parameter for treating the
 FIC_ORTHO = 0 ;
 
 %%%%%  error computation parameters
-NORM_EXACT = 0 ; % set to 0 if you don't want to calculate the norm of the exact solution
+NORM_EXACT = 1 ; % set to 0 if you don't want to calculate the norm of the exact solution
 RADIUS_SPLIT_DOMAIN = 0.0
 
 %%%%%   saving parameters                             %%%%%
 ROOTFILENAME = 'crack_bilaplacian';     % Root of data files.
-VTK_EXPORT = 4; % export solution to a .vtk file ?
+VTK_EXPORT = 1; % export solution to a .vtk file ?
 MATLAB_EXPORT = 0;
 DX_EXPORT = 0 ; % set to 31 to export solution, set to 32 to export exact solution
 

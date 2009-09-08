@@ -14,10 +14,13 @@ end;
 SOL_REF = 0 ;  % 0 = the exact solution is taken equal to the singularities 
                % 1 = plate subject to bending moments (only the SIF is known)
                % 2 = panel test case (no exact solution)
+PI = 3.14159265 ;
+%ANGLE_ROT = 9. * PI / 10.  ;
+ANGLE_ROT = PI / 6 ;
 
 %%%%%  domain parameters                   %%%%%
 N = 2;
-CRACK_SEMI_LENGTH = 0.03 ; %% only usefull if SOL_REF = 1 or 2
+CRACK_SEMI_LENGTH = 0.11 ; %% only usefull if SOL_REF = 1 or 2
 if SOL_REF == 0
    LX = 1. ; LY = LX; LZ = LX;	% sizes of the domain.
    EPSILON=0.045 ; % thickness 
@@ -46,13 +49,8 @@ NX = 15;                 % space step
 
 TRANSLAT_X = 0.0 ;
 TRANSLAT_Y = 0.0 ;
- 
-%%%%% Choice of the solution of reference ----------------------------
-SOL_REF = 0 ;  % 0 = the exact solution is taken equal to the singularities 
-               % 1 = plate subject to bending moments  
-	       %     (only the SIF is known, and it's "work in progress")
 
-CRACK_SEMI_LENGTH = 0.5 ; 
+
 closing_version = 0 ;
 EPS_CLOSING_PENAL = 1e-12 ;
 	
@@ -135,8 +133,12 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
                         % 1 = Pointwise matching
                         % 2 = standard XFEM on a fixed zone
 			% 3 = Integral matching (mortar)			
-RADIUS_ENR_AREA = 0.15;
-RING_RADIUS = 0.20 ;
+RADIUS_ENR_AREA = 0.15 ;
+RING_RADIUS = 0.12 ;
+FIC_SERIE = 0 ;
+MIN_RJ = 0.158 ;
+DELTA_RJ = 0.001 ;
+NB_RJ = 5 ;
 SING_BASE_TYPE = 0 ;    % 0 = singularities developped on 4 dofs
                         % 1 = singularities developped on 2 dofs
 SHOW_DX = 0 ;
