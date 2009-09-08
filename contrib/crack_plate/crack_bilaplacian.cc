@@ -65,25 +65,46 @@ int main(int argc, char *argv[]) {
     plain_vector U;
     p.mesh.write_to_file("mesh.m") ;
     scalar_type ring_radius = p.PARAM.real_value("RING_RADIUS");
-    cout.precision(16);
-    if (p.PARAM.int_value("SOL_REF") == 0) {
+   //cout.precision(16);
+    size_type SOL_REF = p.PARAM.int_value("SOL_REF") ;
+    if (SOL_REF == 0 || SOL_REF == 3) {
        if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
-       p.compute_sif(U, ring_radius);
-       if (p.PARAM.int_value("FIC_SERIE") ){
-           scalar_type R ;
-           for (unsigned i = 0 ; i < 26 ; i++){
-              R = 0.05 + i * 0.01 ;
-              cout << "R = " << R << "\n" ;
+
+       if (p.PARAM.int_value("FIC_SERIE") == 0 ){
+          p.compute_sif(U, ring_radius);
+       }
+       else{
+           scalar_type R = 0., min_RJ = p.PARAM.real_value("MIN_RJ") ;
+           scalar_type delta_RJ = p.PARAM.real_value("DELTA_RJ") ;
+           size_type nb_RJ = p.PARAM.int_value("NB_RJ") ;
+           for (unsigned i = 0 ; i < nb_RJ ; i++){
+              R = min_RJ + i * delta_RJ ;
+              cout << "R:" << R << "\n" ;
               p.compute_sif(U, R);
-           }    
+           }
        }
        if (p.PARAM.int_value("COMPUTE_ERROR") == 1)  
           p.compute_error(U) ;
     }
-    if (p.PARAM.int_value("SOL_REF") == 1) {
+    if (SOL_REF == 1) {
        if (!p.solve_moment(U)) GMM_ASSERT1(false, "Solve has failed");
-        p.compute_sif(U, ring_radius);
+
+       if (p.PARAM.int_value("FIC_SERIE")==0 ){
+          p.compute_sif(U, ring_radius);
+       }
+       else{
+           scalar_type R ;
+           scalar_type min_RJ = p.PARAM.real_value("MIN_RJ") ;
+           scalar_type delta_RJ = p.PARAM.real_value("DELTA_RJ") ;
+           size_type nb_RJ = p.PARAM.int_value("NB_RJ") ;
+           for (unsigned i = 0 ; i < nb_RJ ; i++){
+              R = min_RJ + i * delta_RJ ;
+              cout << "R:" << R << "\n" ;
+              p.compute_sif(U, R);
+           }
+       }
     }
+
     if (p.PARAM.int_value("SOL_REF") == 2) {
        if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
        if (p.PARAM.int_value("MIXED_ELEMENTS") == 0)
