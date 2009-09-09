@@ -8,10 +8,10 @@ if (~and(x(:))) then
     dbstack;      
   end
   if (gdebug) then
-    disp('Assertion failed:' + sx);
+    disp('Assertion failed: ' + sx);
     pause;
   else
-    error('AssertionFailed' + sx);
+    error('AssertionFailed: ' + sx);
   end
 end
 endfunction

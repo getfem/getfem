@@ -8,7 +8,7 @@ ierr = execstr(sx, 'errcatch');
 [LASTMSG, LASTID] = lasterror();
 if (~ierr) then
   if (gdebug)      
-    disp('Error triggering test failed:' + sx);
+    disp('Error triggering test failed: ' + sx);
     pause;
   else
     error(sprintf('Error triggering test failed: %s', sx));
