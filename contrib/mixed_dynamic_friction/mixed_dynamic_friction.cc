@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard.
+// Copyright (C) 2002-2009 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -20,15 +20,12 @@
 //===========================================================================
 
 /**
- * Dynamic friction in linear elasticity.
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+   Dynamic friction in linear elasticity with a mixed formulation in
+   displacement/velocity.
  */
 
-
-#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
-#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_Coulomb_friction.h"
@@ -505,10 +502,7 @@ void friction_problem::solve(void) {
     exp->serie_add_object("vonmisessteps");
   }
   
-  std::ofstream fileout1((datafilename + ".t").c_str(), std::ios::out);   
-  std::ofstream fileout2((datafilename + ".e").c_str(), std::ios::out);
-  std::ofstream fileout3((datafilename + ".s").c_str(), std::ios::out);
-  std::ofstream fileout4((datafilename + ".u").c_str(), std::ios::out);
+  std::ofstream fileout((datafilename + ".data").c_str(), std::ios::out);
  
   scalar_type Einit = (0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
 		       + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)
@@ -568,15 +562,14 @@ void friction_problem::solve(void) {
     
     cout << "t = " << t << " J1 = " << J1 << " Jdemi = " << Jdemi;
     cout << " (st " << nbst << ", sl " << nbsl << ")" << endl;
+
+    fileout << t << "  \t" << J1   << "  \t" << LN1[lower_dof_s] << "  \t"
+	    << Udemi[lower_dof_u] << "\n";
     
     gmm::copy(U1, U0); gmm::copy(V1, V0);  J0 = J1;
     gmm::copy(LN1, LN0); gmm::copy(LT1, LT0);
     if (dxexport && t >= t_export-dt/20.0) {
       
-      fileout1 << t << "\n";
-      fileout2 << J1   << "\n";
-      fileout3 << LN0[lower_dof_s] << "\n";
-      fileout4 << U0[lower_dof_u] << "\n";
       
       exp->write_point_data(mf_u, U0);
       exp->serie_add_object("deformationsteps");

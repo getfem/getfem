@@ -3,41 +3,34 @@
 % parameters for program dynamic Coulomb friction problem                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% unities : mm, N/mm^2, s
+
 N = 2;
-%%%%% pde parameters :	        				      %%%%%
-%MU = 7700;	        % Lamé coefficient.
-%LAMBDA = 11500;   	% Lamé coefficient.
-MU = 5
-LAMBDA = 10
-FRICTION_COEF = 0.0;    % Friction coefficient.
-PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
-%PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
-RHO = 6e-6;     	% "realistic" density for steel
+%%%%% physical parameters :	       				      %%%%%
+MU = 150                  % means 150 MPa
+LAMBDA = 300              % means 300 Mpa
+FRICTION_COEF = 0.0;      % Friction coefficient.
+PG = 9810; 		  % Gravitational acceleration (on earth) (mm/s^2).
+RHO = 1e-6;               % Density
 
 
-T = 0.15;
-DT = 1E-3;              % Time step
+T = 0.02;
+DT = 1E-5;                % Time step
 
- 
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-% MESH_TYPE = 'GT_QK(3,1)'; % 	
-%MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
-MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDU = 1E-9;     	% residu for Newton.
-CONTACT_TYPE = 1; % 0 = on finite element nodes
-		  % 1 = on mesh nodes
+RESIDU = 1E-9;     	  % Residual for Newton.
+CONTACT_TYPE = 0;         % 0 = on finite element nodes
+		          % 1 = on mesh nodes
 NOISY = 0;
 	    
-R = 100.0;              % Augmentation parameter
+R = 100.0;                % Augmentation parameter
 
 DIRICHLET = 0;
-DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet
-INIT_VERT_SPEED = -100;    % Initial vertical velocity
-INIT_VERT_POS = 10;        % Initial vertical position
-FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of the rigid foundation
+DIRICHLET_RATIO = -0.2	  % parametre pour la condition de Dirichlet
+INIT_VERT_SPEED = -1000;  % Initial vertical velocity
+INIT_VERT_POS = 10;       % Initial vertical position
+FOUNDATION_HSPEED = 0.0;  % Horizontal velocity of the rigid foundation
 
 if (N == 2)
   % MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[30,30];NSUBDIV=[10,10]';
@@ -50,7 +43,7 @@ if (N == 2)
   % MESHNAME='../../tests/meshes/disc_P2_h0.15.mesh';
   FEM_TYPE_U = 'FEM_PK(2, 2)';    % FEM for the displacement U
   % FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-  FEM_TYPE_V = 'FEM_PK(2, 1)';    % FEM for the velocity V
+  FEM_TYPE_V = 'FEM_PK(2, 2)';    % FEM for the velocity V
   DATA_FEM_TYPE = 'FEM_PK(2,2)';  % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 end;
