@@ -345,13 +345,13 @@ m = gf_mesh('empty',2);
 gf_mesh_set(m,'add convex',gfGeoTrans('GT_PK(2,1)'),[1 1; 1.1 0;0.9 1.3]');
 mf = gf_mesh_fem(m);
 gf_mesh_fem_set(mf, 'classical fem', 4); //'gf_fem('FEM_PK(2,3)'));
-U = rand(3, gf_mesh_fem_get(mf,'nbdof');
+U = rand(3, gf_mesh_fem_get(mf,'nbdof'));
 //U(1) = 1;
 
 DU  = gf_compute(mf, U, 'gradient', mf)
 D2U = gf_compute(mf, DU, 'gradient', mf);
 
-D2U2= g f_compute(mf, U, 'hessian', mf);
+D2U2= gf_compute(mf, U, 'hessian', mf);
 assert('max(max(abs(D2U(:)-D2U2(:)))) < 1e-9');
 endfunction
 

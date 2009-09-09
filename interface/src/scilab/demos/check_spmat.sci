@@ -30,7 +30,7 @@ C  = gf_spmat('copy', A);
 C  = sprand(50,50,.1); C(2,2)=1+2*%i; I = 1:40; J = [6 7 8 3 10];
 D  = gf_spmat('copy', C, I, J);
 DD = gf_spmat_get(D,'full');
-assert('all(DD==C(I,J))');
+assert('and(DD==C(I,J))');
 asserterr('gf_spmat(D,''full'',100)');
 asserterr('gf_spmat(D,''full'',10,-1)');
 
@@ -51,8 +51,8 @@ asserterr('gf_spmat(''mult'',M2,M1);');
 //TEST ADD
 d  = rand(1,size(P,1));
 D  = gf_spmat('diag', d');
-M1 = sprand(50,50,.1); C(2,2)=1+2i;
-M2 = sprand(50,50,.1); C(2,2)=1+2i;  
+M1 = sprand(50,50,.1); C(2,2)=1+2*%i;
+M2 = sprand(50,50,.1); C(2,2)=1+2*%i;  
 C  = gf_spmat('add',M1, M2);
 C  = gf_spmat_get(C, 'full');
 assert('max(max(abs(C-full(M1+M2))))<1e-13');
@@ -67,7 +67,7 @@ K = gf_spmat('diag', [1 1; 2 3; 4 5; 6 7],[0 -2],6,9);
 gf_spmat_get(K,'full');
 //  assert('gf_spmat_get(K,''nnz'')==8');
 
-cK=gf_spmat('diag', [1 1i; 2 3i; 4 5; 6i 7; 5 5; 6 -2],[0 -1],6,9);
+cK=gf_spmat('diag', [1 1*%i; 2 3*%i; 4 5; 6*%i 7; 5 5; 6 -2],[0 -1],6,9);
 assert('gf_spmat_get(cK,''nnz'')==11');  
 C = gf_spmat('add',K,cK);
 assert('gf_spmat_get(C,''is_complex'')');
@@ -117,11 +117,11 @@ for i=1:20,
   C  = gf_spmat('add',cK,KK);
   assert('gf_spmat_get(C,''nnz'')==0');
   C = gf_spmat('copy',cK); gf_spmat_set(C,'transpose');
-  assert('all(gf_spmat_get(C,''full'')==fcK.'')');
+  assert('and(gf_spmat_get(C,''full'')==fcK.'')');
   C = gf_spmat('copy',cK); gf_spmat_set(C,'transconj');
-  assert('all(gf_spmat_get(C,''full'')==fcK'')');
+  assert('and(gf_spmat_get(C,''full'')==fcK'')');
   C = gf_spmat('copy',cK); gf_spmat_set(C,'conjugate');
-  assert('all(gf_spmat_get(C,''full'')==conj(fcK))');
+  assert('and(gf_spmat_get(C,''full'')==conj(fcK))');
 end
 
 gf_spmat_set(cK,'to_complex');
@@ -136,7 +136,7 @@ gf_spmat_set(C,'diag', B(:,1));
 gf_spmat_set(C,'diag', B(:,2:3), [-2 +2]);
 CC = full(spdiags(B, [0 -2 2], 6, 9));
 P  = gf_spmat_get(C,'full');
-assert('all(CC==P)');
+assert('and(CC==P)');
 L1 = gf_spmat_get(C,'diag', [0 -2 2]);
 L2 = spdiags(sparse(CC),[0 -2 2]);
 assert('L1==L2');
