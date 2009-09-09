@@ -177,7 +177,7 @@ int sci_gf_scilab(char * fname)
     {
       if (out->infomsg) 
 	{
-	  sciprint("%s: message from [gf_%s]:\n%s\n",fname,fname,out->infomsg);
+	  sciprint("%s: message:\n%s\n",fname,out->infomsg);
 	}
       
       if (out->status == GFI_STATUS_OK) 
