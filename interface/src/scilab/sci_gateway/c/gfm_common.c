@@ -75,7 +75,7 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 #ifdef DEBUG
   int _picol, _pirow;
   getVarDimension(sci_x,&_pirow,&_picol);
-  sciprint("sci_array_to_gfi_array: dimension of current variable %d %d\n",_pirow,_picol);
+  sciprint("sci_array_to_gfi_array: dimension of current variable %d %d - type = %d\n",_pirow,_picol,getVarType(sci_x));
 #endif
 
   assert(t);
@@ -130,10 +130,6 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	    pstStrings[i] = (char *)MALLOC((pilen[i]+1)*sizeof(char));
 	  }
 	getMatrixOfStringInList(ivar,sci_x,1,&pirow,&picol,pilen,pstStrings);
-
-	// On doit traiter les hypermatrice
-	// Et les GFI_OBJID
-	// On récupère les labels
 
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: pstStrings[0] = %s\n",pstStrings[0]);
@@ -281,7 +277,6 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	memcpy(t->storage.gfi_storage_u.data_char.data_char_val,pstData[0],(pilen[0] + 1)*sizeof(char));
 #ifdef DEBUG
 	sciprint("pirow = %d picol = %d pilen = %d\n", pirow, picol, pilen[0]);
-	sciprint("storing |%s|\n",pstData[0]);
 	sciprint("storing |%s|\n",t->storage.gfi_storage_u.data_char.data_char_val);
 #endif
 	t->dim.dim_len = 1;
@@ -447,67 +442,121 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	int is_complex = isVarComplex(sci_x);
 	int pirow, picol, nbitem;
 	double * pdblDataReal, * pdblDataImag;
-	int * nbitemrow, * picolpos;
-	int j, Index;
+	int * nbitemrow, * picolpos, * offset;
+	int j, k, Index;
 
         t->storage.type = GFI_SPARSE;
         t->storage.gfi_storage_u.sp.is_complex = is_complex;
 
 	if (!is_complex) 
 	  {
+#ifdef DEBUG
+	    sciprint("sci_array_to_gfi_array: not complex\n");
+#endif
 	    getSparseMatrix(sci_x,&pirow,&picol,&nbitem,&nbitemrow,&picolpos,&pdblDataReal);
 	    
 	    t->storage.gfi_storage_u.sp.ir.ir_len = nbitem;
-	    t->storage.gfi_storage_u.sp.jc.jc_len = nbitem;
+	    t->storage.gfi_storage_u.sp.jc.jc_len = pirow+1;
 	    t->storage.gfi_storage_u.sp.pr.pr_len = nbitem;
 
 	    t->storage.gfi_storage_u.sp.ir.ir_val = (int *)MALLOC(nbitem*sizeof(int));
-	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC(nbitem*sizeof(int));
+	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC((pirow+1)*sizeof(int));
 	    t->storage.gfi_storage_u.sp.pr.pr_val = (double *)MALLOC(nbitem*sizeof(double));
 
+	    offset = (int *)MALLOC(picol*sizeof(int));
+
+	    // We compute position offset
+	    offset[0] = 0;
+	    for(i=1;i<picol;i++)
+	      offset[i] = offset[i-1] + nbitemrow[i-1];
+
 	    Index = 0;
-	    for(i=0;i<pirow;++i)
+	    for(i=0;i<pirow;i++)
 	      {
-		for(j=0;j<nbitemrow[i];++j)
+		t->storage.gfi_storage_u.sp.jc.jc_val[i] = Index;
+		for(j=0;j<picol;j++)
 		  {
-		    t->storage.gfi_storage_u.sp.ir.ir_val[Index] = i;
-		    t->storage.gfi_storage_u.sp.jc.jc_val[Index] = picolpos[Index]-1;
-		    t->storage.gfi_storage_u.sp.pr.pr_val[Index] = pdblDataReal[Index];
+		    for(k=0;k<nbitemrow[j];k++)
+		      {
+			if (j==picolpos[offset[j]+k]-1)
+			  {
+			    t->storage.gfi_storage_u.sp.ir.ir_val[Index] = j;
+			    t->storage.gfi_storage_u.sp.pr.pr_val[Index] = pdblDataReal[offset[j]+k];
+			    Index++;
+			  }
+		      }
 		  }
 	      }
+	    t->storage.gfi_storage_u.sp.jc.jc_val[pirow] = nbitem;
 	  }
 	else
 	  {
+#ifdef DEBUG
+	    sciprint("sci_array_to_gfi_array: complex\n");
+#endif
 	    getComplexSparseMatrix(sci_x,&pirow,&picol,&nbitem,&nbitemrow,&picolpos,&pdblDataReal,&pdblDataImag);
 	    
+	    // We store the transposed matrix in t
 	    t->storage.gfi_storage_u.sp.ir.ir_len = nbitem;
-	    t->storage.gfi_storage_u.sp.jc.jc_len = nbitem;
+	    t->storage.gfi_storage_u.sp.jc.jc_len = pirow+1;
 	    t->storage.gfi_storage_u.sp.pr.pr_len = 2*nbitem;
 
 	    t->storage.gfi_storage_u.sp.ir.ir_val = (int *)MALLOC(nbitem*sizeof(int));
-	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC(nbitem*sizeof(int));
+	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC((pirow+1)*sizeof(int));
 	    t->storage.gfi_storage_u.sp.pr.pr_val = (double *)MALLOC(2*nbitem*sizeof(double));
 
+	    offset = (int *)MALLOC(picol*sizeof(int));
+
+	    // We compute position offset
+	    offset[0] = 0;
+	    for(i=1;i<picol;i++)
+	      offset[i] = offset[i-1] + nbitemrow[i-1];
+
 	    Index = 0;
-	    for(i=0;i<pirow;++i)
+	    for(i=0;i<pirow;i++)
 	      {
-		for(j=0;j<nbitemrow[i];++j)
+		t->storage.gfi_storage_u.sp.jc.jc_val[i] = Index;
+		for(j=0;j<picol;j++)
 		  {
-		    t->storage.gfi_storage_u.sp.ir.ir_val[Index] = i;
-		    t->storage.gfi_storage_u.sp.jc.jc_val[Index] = picolpos[Index]-1;
-		    t->storage.gfi_storage_u.sp.pr.pr_val[2*Index]   = pdblDataReal[Index];
-		    t->storage.gfi_storage_u.sp.pr.pr_val[2*Index+1] = pdblDataImag[Index];
+		    for(k=0;k<nbitemrow[j];k++)
+		      {
+			if (i==picolpos[offset[j]+k]-1)
+			  {
+			    t->storage.gfi_storage_u.sp.ir.ir_val[Index]     = j;
+			    t->storage.gfi_storage_u.sp.pr.pr_val[2*Index+0] = pdblDataReal[offset[j]+k];
+			    t->storage.gfi_storage_u.sp.pr.pr_val[2*Index+1] = pdblDataImag[offset[j]+k];
+			    Index++;
+			  }
+		      }
 		  }
 	      }
+	    t->storage.gfi_storage_u.sp.jc.jc_val[pirow] = nbitem;
 	  }
 
-	t->dim.dim_len = 2;
-	t->dim.dim_val = (u_int*)MALLOC(2*sizeof(u_int));
-	t->dim.dim_val[0]= pirow;
-	t->dim.dim_val[1]= picol;
 #ifdef DEBUG
+// 	for(i=0;i<t->storage.gfi_storage_u.sp.jc.jc_len;i++)
+// 	  {
+// 	    sciprint("The line %d starts at index %d. length = %d\n",i, t->storage.gfi_storage_u.sp.jc.jc_val[i], t->storage.gfi_storage_u.sp.jc.jc_len);
+// 	    for(j=0;j<(t->storage.gfi_storage_u.sp.jc.jc_val[i+1]-t->storage.gfi_storage_u.sp.jc.jc_val[i]);j++)
+// 	      {
+// 		Index = t->storage.gfi_storage_u.sp.jc.jc_val[i];
+// 		sciprint("[%f,%f] ",t->storage.gfi_storage_u.sp.pr.pr_val[2*(Index+j)+0],t->storage.gfi_storage_u.sp.pr.pr_val[2*(Index+j)+1]);
+// 	      }
+// 	    sciprint("\n");
+// 	  }
+
+	sciprint("sci_array_to_gfi_array: pirow = %d picol = %d\n",pirow, picol);
 	sciprint("sci_array_to_gfi_array: end\n");
 #endif
+	t->dim.dim_len = 2;
+	t->dim.dim_val = (u_int*)MALLOC(2*sizeof(u_int));
+	t->dim.dim_val[0]= picol;
+	t->dim.dim_val[1]= pirow;
+#ifdef DEBUG
+	sciprint("sci_array_to_gfi_array: pirow = %d picol = %d\n",pirow, picol);
+	sciprint("sci_array_to_gfi_array: end\n");
+#endif
+	FREE(offset);
       }
       break;
     default: 
@@ -590,7 +639,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	      }
 
 	    entries = (unsigned int *)MALLOC(nb_elem*sizeof(unsigned int));
-	    for(i=0;i<nb_elem;i++) entries[i] = t->dim.dim_val[i];
+	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_uint32.data_uint32_val[i];
 	    
 	    // Add a vector to the 'dims' field
 	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
@@ -650,7 +699,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	      }
 
 	    entries = (int *)MALLOC(nb_elem*sizeof(int));
-	    for(i=0;i<nb_elem;i++) entries[i] = t->dim.dim_val[i];
+	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_int32.data_int32_val[i];
 	    
 	    // Add a vector to the 'dims' field
 	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
@@ -687,7 +736,10 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    is_hypermat = 1;
 	  }
 
-	if (~is_hypermat)
+#ifdef DEBUG
+	sciprint("DEBUG: hypermat = %d\n",is_hypermat);
+#endif
+	if (!is_hypermat)
 	  {
 	    if (!gfi_array_is_complex(t)) 
 	      {
@@ -720,6 +772,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	  }
 	else
 	  {
+#ifdef DEBUG
+	    sciprint("DEBUG: array is hypermat\n");
+#endif
 	    char *fields[] = {"hm","dims","entries"};
 	    double * dims;
 	    int nb_elem = 1;
@@ -740,7 +795,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		double * entries;
 
 		entries = (double *)MALLOC(nb_elem*sizeof(double));
-		for(i=0;i<nb_elem;i++) entries[i] = t->dim.dim_val[i];
+		for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_double.data_double_val[i];
 		
 		// Add a vector to the 'dims' field
 		createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
@@ -748,6 +803,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		createMatrixOfDoubleInList(ivar, m_var, 3, 1, nb_elem, entries);
 		
 		FREE(entries);
+#ifdef DEBUG
+		sciprint("DEBUG: end array is hypermat\n");
+#endif
 	      }
 	    else
 	      {
@@ -757,8 +815,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		entries_pi = (double *)MALLOC(nb_elem*sizeof(double));
 		for(i=0;i<nb_elem;i++) 
 		  {
-		    entries_pr[i] = t->dim.dim_val[2*i+0];
-		    entries_pi[i] = t->dim.dim_val[2*i+1];
+		    entries_pr[i] = t->storage.gfi_storage_u.data_double.data_double_val[2*i+0];
+		    entries_pi[i] = t->storage.gfi_storage_u.data_double.data_double_val[2*i+1];
 		  }
 		
 		// Add a vector to the 'dims' field
@@ -988,59 +1046,33 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	double * pdblDataReal, * pdblDataImag;
 	int iscomplex = gfi_array_is_complex(t);
 
-	int *sp_icol, *sp_jrow;
-	double * sp_real, *sp_imag;
-
 	nbitem = t->storage.gfi_storage_u.sp.pr.pr_len;
-	pirow  = t->dim.dim_val[0];
-	picol  = t->dim.dim_val[1];
+	picol  = t->dim.dim_val[0];
+	pirow  = t->dim.dim_val[1];
 
-	sp_icol = (int *)MALLOC(nbitem*sizeof(int));
-	sp_jrow = (int *)MALLOC(nbitem*sizeof(int));
-	sp_real = (double *)MALLOC(nbitem*sizeof(double));
-	if (iscomplex)
-	  sp_imag = (double *)MALLOC(nbitem*sizeof(double));
-
-	// Copy the sparse matrix content
-	for (i=0; i<nnz; i++) 
-	  {
-	    sp_icol[i] = t->storage.gfi_storage_u.sp.ir.ir_val[i];
-	    sp_jrow[i] = t->storage.gfi_storage_u.sp.jc.jc_val[i];
-	    if (iscomplex)
-	      {
-		sp_real[i] = t->storage.gfi_storage_u.sp.pr.pr_val[2*i];
-		sp_imag[i] = t->storage.gfi_storage_u.sp.pr.pr_val[2*i+1];
-	      }
-	    else
-	      {
-		sp_real[i] = t->storage.gfi_storage_u.sp.pr.pr_val[i];
-	      }
-	  }
-
-	// Convert to Scilab format
-	nb_item_row = (int *)MALLOC(pirow*sizeof(int));
-	pi_col_pos  = (int *)MALLOC(nbitem*sizeof(int));
+	// Convert from Matlab to Scilab format
+	nb_item_row  = (int *)MALLOC(pirow*sizeof(int));
+	pi_col_pos   = (int *)MALLOC(nbitem*sizeof(int));
 	pdblDataReal = (double *)MALLOC(nbitem*sizeof(double));
-	if (iscomplex)
-	  pdblDataImag = (double *)MALLOC(nbitem*sizeof(double));
+	pdblDataImag = (double *)MALLOC(nbitem*sizeof(double));
 
 	Index = 0;
-	for(i=0; i<pirow; ++i)
+	for(i=0;i<pirow;i++)
 	  {
-	    for(j=0; j<nbitem; ++j)
+	    nb_item_row[i] = 0;
+	    for(j=0;j<nbitem;j++)
 	      {
-		if (sp_jrow[j]==i) 
+		if (t->storage.gfi_storage_u.sp.ir.ir_val[j]==i)
 		  {
+		    pi_col_pos[Index]   = t->storage.gfi_storage_u.sp.ir.ir_val[j];
+		    pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+0];
+		    pdblDataImag[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+1];
 		    nb_item_row[i]++;
-		    pi_col_pos[Index] = sp_icol[j];
-		    pdblDataReal[Index] = sp_real[j];
-		    if (iscomplex)
-		      pdblDataImag[Index] = sp_imag[j];
 		    Index++;
 		  }
 	      }
 	  }
-
+	
 	if (iscomplex)
 	  {
 	    createComplexSparseMatrix(ivar, pirow, picol, nbitem, nb_item_row, pi_col_pos, pdblDataReal, pdblDataImag);
@@ -1051,12 +1083,6 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	  }
 
 	// Free allocated memory
-	if (sp_icol) FREE(sp_icol);
-	if (sp_jrow) FREE(sp_jrow);
-	if (sp_real) FREE(sp_real);
-	if (iscomplex)
-	  if (sp_imag) FREE(sp_imag);
-
 	if (nb_item_row) FREE(nb_item_row);
 	if (pi_col_pos)  FREE(pi_col_pos);
 	if (pdblDataReal) FREE(pdblDataReal);
