@@ -38,6 +38,8 @@ if nargin<1 then
   error('Too few input arguments')
 end
 
+opts = build_options_list(varargin);
+
 //mf=struct(mf);
 hfaces  = [];
 hquiver = [];
@@ -53,30 +55,30 @@ if (mdim ~= 2 & mdim ~= 3) then
   error('only 2D and 3D mesh are handled by this function');
 end
 
-[opt_data,err]                   = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
-[opt_convex_data,err]            = get_param(opt,'convex_data',[]); // data to be plotted (given on the mesh convexes)
-[opt_mesh,err]                   = get_param(opt,'mesh','auto'); // show the mesh ?
-[opt_mesh_edges,err]             = get_param(opt,'mesh_edges','on'); // show mesh edges ?
-[opt_mesh_edges_color,err]       = get_param(opt,'mesh_edges_color',[.6 .6 1]);
-[opt_mesh_edges_width,err]       = get_param(opt,'mesh_edges_width',.7);
-[opt_mesh_slice_edges,err]       = get_param(opt,'mesh_slice_edges','on');
-[opt_mesh_slice_edges_color,err] = get_param(opt,'mesh_slice_edges_color',[.7 0 0]);
-[opt_mesh_slice_edges_width,err] = get_param(opt,'mesh_slice_edges_width',.5);
-[opt_mesh_faces,err]             = get_param(opt,'mesh_faces','off'); // fill mesh faces (otherwise they are transparent)
-[opt_mesh_faces_color,err]       = get_param(opt,'mesh_faces_color',[.75 .75 .75]);
-[opt_pcolor,err]                 = get_param(opt,'pcolor','on'); // if the field is scalar, a color plot of its values is plotted
-[opt_quiver,err]                 = get_param(opt,'quiver','on'); // if the field is vector, represent arrows 	 
-[opt_quiver_density,err]         = get_param(opt,'quiver_density',50); // density of arrows in quiver plot
-[opt_quiver_scale,err]           = get_param(opt,'quiver_scale',1); // scaling of arrows (0=>no scaling)
-[opt_tube,err]                   = get_param(opt,'tube','on'); // use tube plot for linear parts of the slice
-[opt_tube_color,err]             = get_param(opt,'tube_color','red'); // color of tubes (ignored if 'data' is not empty)
-[opt_tube_radius,err]            = get_param(opt,'tube_radius','0.5%'); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
-[opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
+[opt_data,err]                   = get_param(opts,'data',[]); // data to be plotted on the slice (on slice nodes)
+[opt_convex_data,err]            = get_param(opts,'convex_data',[]); // data to be plotted (given on the mesh convexes)
+[opt_mesh,err]                   = get_param(opts,'mesh','auto'); // show the mesh ?
+[opt_mesh_edges,err]             = get_param(opts,'mesh_edges','on'); // show mesh edges ?
+[opt_mesh_edges_color,err]       = get_param(opts,'mesh_edges_color',[.6 .6 1]);
+[opt_mesh_edges_width,err]       = get_param(opts,'mesh_edges_width',.7);
+[opt_mesh_slice_edges,err]       = get_param(opts,'mesh_slice_edges','on');
+[opt_mesh_slice_edges_color,err] = get_param(opts,'mesh_slice_edges_color',[.7 0 0]);
+[opt_mesh_slice_edges_width,err] = get_param(opts,'mesh_slice_edges_width',.5);
+[opt_mesh_faces,err]             = get_param(opts,'mesh_faces','off'); // fill mesh faces (otherwise they are transparent)
+[opt_mesh_faces_color,err]       = get_param(opts,'mesh_faces_color',[.75 .75 .75]);
+[opt_pcolor,err]                 = get_param(opts,'pcolor','on'); // if the field is scalar, a color plot of its values is plotted
+[opt_quiver,err]                 = get_param(opts,'quiver','on'); // if the field is vector, represent arrows 	 
+[opt_quiver_density,err]         = get_param(opts,'quiver_density',50); // density of arrows in quiver plot
+[opt_quiver_scale,err]           = get_param(opts,'quiver_scale',1); // scaling of arrows (0=>no scaling)
+[opt_tube,err]                   = get_param(opts,'tube','on'); // use tube plot for linear parts of the slice
+[opt_tube_color,err]             = get_param(opts,'tube_color','red'); // color of tubes (ignored if 'data' is not empty)
+[opt_tube_radius,err]            = get_param(opts,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
+[opt_showoptions,err]            = get_param(opts,'showoptions','off'); // list options used
 
 //qdim = length(U) / gf_slice_get(sl, 'nbpts');
 //if (fix(qdim) ~= qdim), error('wrong number of elements for U'); end;
 
-if (ison(opt_showoptions)) then disp(opt); end;
+if (ison(opt_showoptions)) then disp(opts); end;
 
 if (~isempty(opt_convex_data)) then 
   if (~isempty(opt_data)) then
@@ -105,17 +107,13 @@ for i=1:mdim,
   box(i,:) = [min(P(i)) max(P(i))];
 end
 
-if (typeof(opt_tube_radius)=='string' & length(opt_tube_radius) & part(opt_tube_radius,length(opt_tube_radius))=='%') then
-  opt_tube_radius = max(abs(box(:,2)-box(:,1))) * 0.01 * eval(part(opt_tube_radius,1:length(opt_tube_radius)));
-end
-
 // handle simplexes of dimension 1
 
 if (~isempty(T(1))) then
-  [htube,hmesh]=do_plot_1D(P,T(1),opt);
+  [htube,hmesh]=do_plot_1D(P,T(1),opts);
 end
 
-[hfaces,h,hquiver] = do_plot_2D(sl,P,T(2),opt); hmesh=[hmesh(:)' h(:)'];
+[hfaces,h,hquiver] = do_plot_2D(sl,P,T(2),opts); hmesh=[hmesh(:)' h(:)'];
 
 h_current = gca();
 
@@ -409,13 +407,5 @@ else
   hquiver = gce();
   hquiver.arrow_size = opt_quiver_scale;
 end
-endfunction
-
-function r=ison(v)
-r = (convstr(v,'l')=='on');
-endfunction
-
-function r=isauto(v)
-r = (convstr(v,'l')=='auto');
 endfunction
 

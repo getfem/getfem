@@ -21,9 +21,8 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 //                                  for the deformed mesh 
 //  'deformation',[]	      : plots on the deformed object (only when qdim == mdim)
 //  'deformation_mf',[]        : plots on the deformed object (only when qdim == mdim)
-//  'deformation_scale','10//'  : indicate the amplitude of the deformation. Can be 
-//                               a percentage of the mesh width if given as a string, 
-//                               or an absolute value if given as a number
+//  'deformation_scale',0.1'  : indicate the amplitude of the deformation. Can be 
+//                               an absolute value if given as a number
 //  'cvlst',[]		      : list of convexes to plot (empty=>all convexes)
 //  'title',[]                 : set the title
 //  'contour',[]               : list of contour values
@@ -35,13 +34,7 @@ hquiver  = [];
 hmesh    = [];
 hdefmesh = [];
 
-printf('DEBUG: in gf_plot\n');
-// YC: ajouter une function qui transform varargin en structure plist
-// Store all the options of gf_plot_1D in a parameter list
-opts = init_param();
-for i=1:int(length(varargin)/2)
-  [opts,err] = add_param(opts,varargin(2*(i-1)+1),varargin(2*(i-1)+2));
-end
+opts = build_options_list(varargin);
 
 try 
   gf_workspace('push');
@@ -53,8 +46,6 @@ gf_workspace('pop');
 endfunction
 
 function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,opts)
-
-printf('DEBUG: in gf_plot_aux\n');
 
 [nargout,nargin] = argn();
 
@@ -79,7 +70,7 @@ end
 if (mdim == 1) then
   hsurf = gf_plot_1D(mf,U,opts);
   return;
-end;
+end
 
 if (mdim ~= 2 & mdim ~= 3) then
   error('only 2D and 3D mesh are handled by this function');
@@ -100,7 +91,7 @@ end
 [opt_deformed_meshopts,err] = get_param(opts,'deformed_meshopts', list()); // cell array of options passed to gf_plot_slice for the deformed mesh 
 [opt_deformation,err]       = get_param(opts,'deformation',       []);     // plots on the deformed object (only when qdim == mdim)
 [opt_deformation_mf,err]    = get_param(opts,'deformation_mf',    []);     // plots on the deformed object (only when qdim == mdim)
-[opt_deformation_scale,err] = get_param(opts,'deformation_scale', '10%');  // indicate the amplitude of the deformation. Can be a percentage of the mesh width if given as a string, or an absolute value if given as a number
+[opt_deformation_scale,err] = get_param(opts,'deformation_scale', 0.1);    // indicate the amplitude of the deformation. Can be a percentage of the mesh width if given as a string, or an absolute value if given as a number
 [opt_cvlst,err]             = get_param(opts,'cvlst',             []);     // list of convexes to plot
 [opt_title,err]             = get_param(opts,'title',             []);
 [opt_contour,err]           = get_param(opts,'contour',           []);
@@ -208,16 +199,8 @@ if (~isempty(opt_deformation) | mfdef('id') ~= mf('id')) then
   
   if (isnumeric(opt_deformation_scale)) then 
     dscale = opt_deformation_scale;
-  elseif (typeof(opt_deformation_scale)=='string' & ...
-    length(opt_deformation_scale) & part(opt_deformation_scale,length(opt_deformation_scale))=='%') then
-    dscale = eval(part(opt_deformation_scale,1:length(opt_deformation_scale)-1));
-    mwidth = max([max(Psl,[],2) - min(Psl,[],2)]);
-    defmax = max(abs(Pdef(:)));
-    if (defmax) then
-      dscale = dscale * 0.01 * mwidth / defmax;
-    end
   else 
-    error('wrong value for deformation_scale: should be a number or a percentage in a string');
+    error('wrong value for deformation_scale: should be a number');
   end
   Psl = Psl + Pdef*dscale;
   gf_slice_set(sl,'pts', Psl);    
@@ -249,12 +232,12 @@ if (is_scalarplot) then
   end
   
   // basic contour plot (should work also on 3D surfaces)
-  contour_colors = [ .9 0   0; 
-                    0    .8 0;
-                     .0 0    .6;
-                     .6  .6 0;
-                     .7 0    .7;
-                    0    .7  .9]; 
+  contour_colors = [0.9 0.0 0.0; 
+                    0.0 0.8 0.0;
+                    0.0 0.0 0.6;
+                    0.6 0.6 0.0;
+                    0.7 0.0 0.7;
+                    0.0 0.7 0.9]; 
                     
   contour_linestyle = get(cax,'LineStyleOrder'); // YC: voir dans la doc matlab - on recupere la liste des couleurs des courbes
   hcontour = list();

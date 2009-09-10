@@ -9,11 +9,7 @@ function [hline, hdof] = gf_plot_1D(mf,U, varargin)
 //  'dof_color', [1,0,0] : color of the markers for the degrees of freedom.
 //  'width', 2           : line width.
 
-// Store all the options of gf_plot_1D in a parameter list
-opts = init_param();
-for i=1:int(length(varargin)/2)
-  [opts,err] = add_param(opts,varargin(2*(i-1)+1),varargin(2*(i-1)+2));
-end
+opts = build_options_list(varargin);
 
 try 
   gf_workspace('push', 'gf_plot_1D');

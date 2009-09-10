@@ -464,7 +464,3 @@ if (verbosity > 0) then
 end;
 endfunction
 
-function r=ison(v)
-  r = ((v=='on') | (v=='ON'));
-endfunction
-

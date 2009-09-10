@@ -36,6 +36,8 @@ if nargin<1 then
   error('Too few input arguments')
 end
 
+opts = build_options_list(varargin);
+
 hmesh  = [];
 hbound = [];
 hfill  = [];
@@ -48,12 +50,6 @@ if (mdim <= 2) then
   defaultref = 8;
 else 
   defaultref = 4;
-end
-
-// Store all the options of gf_plot_1D in a parameter list
-opts = init_param();
-for i=1:int(length(varargin)/2)
-  [opts,err] = add_param(opts,varargin(2*(i-1)+1),varargin(2*(i-1)+2));
 end
 
 [opt_vertices,err]    = get_param(opts,'vertices','off');
@@ -103,7 +99,8 @@ if (~ison(opt_curved) & isempty(opt_deformation)) then
   X = [PXY(1,E(1,:)); PXY(1,E(2,:))];
   if (mdim == 1) then
     Y = zeros(size(X));
-    PXY = [PXY; zeros(size(PXY))];
+//YC:     PXY = [PXY; zeros(size(PXY))];
+    PXY = [PXY; zeros(PXY)];
   elseif (mdim >= 2) then
     Y = [PXY(2,E(1,:)); PXY(2,E(2,:))];
     if (mdim == 3) then
