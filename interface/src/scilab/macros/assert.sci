@@ -1,8 +1,8 @@
 function assert(sx)
 global gverbose;
 global gdebug;
-//x = evalin('caller',sx);
-x = eval(sx);
+
+execstr('x = ' + sx);
 if (~and(x(:))) then
   if (gverbose) then
     dbstack;      
@@ -11,7 +11,7 @@ if (~and(x(:))) then
     disp('Assertion failed: ' + sx);
     pause;
   else
-    error('AssertionFailed: ' + sx);
+    error('Assertion failed: ' + sx);
   end
 end
 endfunction
