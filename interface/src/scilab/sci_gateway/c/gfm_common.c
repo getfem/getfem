@@ -455,39 +455,52 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 #endif
 	    getSparseMatrix(sci_x,&pirow,&picol,&nbitem,&nbitemrow,&picolpos,&pdblDataReal);
 	    
+#ifdef DEBUG
+	    for(i=0;i<pirow;i++) sciprint("nbitemrow[%d] = %d\n", i, nbitemrow[i]);
+	    for(i=0;i<nbitem;i++) sciprint("picolpos[%d] = %d, pdblDataReal[%d] = %f\n",i,picolpos[i],i,pdblDataReal[i]);
+#endif
+
 	    t->storage.gfi_storage_u.sp.ir.ir_len = nbitem;
-	    t->storage.gfi_storage_u.sp.jc.jc_len = pirow+1;
+	    t->storage.gfi_storage_u.sp.jc.jc_len = picol+1;
 	    t->storage.gfi_storage_u.sp.pr.pr_len = nbitem;
 
 	    t->storage.gfi_storage_u.sp.ir.ir_val = (int *)MALLOC(nbitem*sizeof(int));
-	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC((pirow+1)*sizeof(int));
+	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC((picol+1)*sizeof(int));
 	    t->storage.gfi_storage_u.sp.pr.pr_val = (double *)MALLOC(nbitem*sizeof(double));
 
-	    offset = (int *)MALLOC(picol*sizeof(int));
+	    offset = (int *)MALLOC(pirow*sizeof(int));
 
 	    // We compute position offset
 	    offset[0] = 0;
-	    for(i=1;i<picol;i++)
-	      offset[i] = offset[i-1] + nbitemrow[i-1];
+	    for(i=1;i<pirow;i++)
+	      {
+		offset[i] = offset[i-1] + nbitemrow[i-1];
+#ifdef DEBUG
+		sciprint("offset[%d] = %d\n", i, offset[i]);
+#endif
+	      }
 
 	    Index = 0;
-	    for(i=0;i<pirow;i++)
+	    for(i=0;i<picol;i++)
 	      {
 		t->storage.gfi_storage_u.sp.jc.jc_val[i] = Index;
-		for(j=0;j<picol;j++)
+		for(j=0;j<pirow;j++)
 		  {
 		    for(k=0;k<nbitemrow[j];k++)
 		      {
-			if (j==picolpos[offset[j]+k]-1)
+			if (i==picolpos[offset[j]+k]-1)
 			  {
 			    t->storage.gfi_storage_u.sp.ir.ir_val[Index] = j;
 			    t->storage.gfi_storage_u.sp.pr.pr_val[Index] = pdblDataReal[offset[j]+k];
+#ifdef DEBUG
+			    sciprint("Index = %d offset[%d] = %d, k = %d, pdblDataReal[%d] = %f\n", Index, j, offset[j], k, offset[j]+k, pdblDataReal[offset[j]+k]);
+#endif
 			    Index++;
 			  }
 		      }
 		  }
 	      }
-	    t->storage.gfi_storage_u.sp.jc.jc_val[pirow] = nbitem;
+	    t->storage.gfi_storage_u.sp.jc.jc_val[picol] = nbitem;
 	  }
 	else
 	  {
@@ -498,25 +511,25 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	    
 	    // We store the transposed matrix in t
 	    t->storage.gfi_storage_u.sp.ir.ir_len = nbitem;
-	    t->storage.gfi_storage_u.sp.jc.jc_len = pirow+1;
+	    t->storage.gfi_storage_u.sp.jc.jc_len = picol+1;
 	    t->storage.gfi_storage_u.sp.pr.pr_len = 2*nbitem;
 
 	    t->storage.gfi_storage_u.sp.ir.ir_val = (int *)MALLOC(nbitem*sizeof(int));
-	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC((pirow+1)*sizeof(int));
+	    t->storage.gfi_storage_u.sp.jc.jc_val = (int *)MALLOC((picol+1)*sizeof(int));
 	    t->storage.gfi_storage_u.sp.pr.pr_val = (double *)MALLOC(2*nbitem*sizeof(double));
 
-	    offset = (int *)MALLOC(picol*sizeof(int));
+	    offset = (int *)MALLOC(pirow*sizeof(int));
 
 	    // We compute position offset
 	    offset[0] = 0;
-	    for(i=1;i<picol;i++)
+	    for(i=1;i<pirow;i++)
 	      offset[i] = offset[i-1] + nbitemrow[i-1];
 
 	    Index = 0;
-	    for(i=0;i<pirow;i++)
+	    for(i=0;i<picol;i++)
 	      {
 		t->storage.gfi_storage_u.sp.jc.jc_val[i] = Index;
-		for(j=0;j<picol;j++)
+		for(j=0;j<pirow;j++)
 		  {
 		    for(k=0;k<nbitemrow[j];k++)
 		      {
@@ -530,7 +543,7 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 		      }
 		  }
 	      }
-	    t->storage.gfi_storage_u.sp.jc.jc_val[pirow] = nbitem;
+	    t->storage.gfi_storage_u.sp.jc.jc_val[picol] = nbitem;
 	  }
 
 #ifdef DEBUG
@@ -550,8 +563,8 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 #endif
 	t->dim.dim_len = 2;
 	t->dim.dim_val = (u_int*)MALLOC(2*sizeof(u_int));
-	t->dim.dim_val[0]= picol;
-	t->dim.dim_val[1]= pirow;
+	t->dim.dim_val[0]= pirow;
+	t->dim.dim_val[1]= picol;
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: pirow = %d picol = %d\n",pirow, picol);
 	sciprint("sci_array_to_gfi_array: end\n");
@@ -1042,19 +1055,31 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
     case GFI_SPARSE: 
       {
 	int picol, pirow, nbitem, * pi_col_pos, * nb_item_row;
-	int i, j, nnz, Index;
+	int i, j, k, nnz, Index;
 	double * pdblDataReal, * pdblDataImag;
 	int iscomplex = gfi_array_is_complex(t);
 
-	nbitem = t->storage.gfi_storage_u.sp.pr.pr_len;
-	picol  = t->dim.dim_val[0];
-	pirow  = t->dim.dim_val[1];
+	nbitem = t->storage.gfi_storage_u.sp.ir.ir_len;
+	pirow  = t->dim.dim_val[0];
+	picol  = t->dim.dim_val[1];
 
 	// Convert from Matlab to Scilab format
 	nb_item_row  = (int *)MALLOC(pirow*sizeof(int));
 	pi_col_pos   = (int *)MALLOC(nbitem*sizeof(int));
 	pdblDataReal = (double *)MALLOC(nbitem*sizeof(double));
-	pdblDataImag = (double *)MALLOC(nbitem*sizeof(double));
+	if (iscomplex)
+	  pdblDataImag = (double *)MALLOC(nbitem*sizeof(double));
+
+#ifdef DEBUG
+	sciprint("picol = %d pirow = %d nbitem = %d\n", picol, pirow, nbitem);
+
+	for(i=0;i<picol+1;i++)
+	  sciprint("jc_val[%d] = %d\n",i,t->storage.gfi_storage_u.sp.jc.jc_val[i]);
+	for(i=0;i<nbitem;i++)
+	  {
+	    sciprint("ir_val[%d] = %d pr_val[%d] = %f\n",i,t->storage.gfi_storage_u.sp.ir.ir_val[i],i,t->storage.gfi_storage_u.sp.pr.pr_val[i]);
+	  }
+#endif
 
 	Index = 0;
 	for(i=0;i<pirow;i++)
@@ -1064,15 +1089,42 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	      {
 		if (t->storage.gfi_storage_u.sp.ir.ir_val[j]==i)
 		  {
-		    pi_col_pos[Index]   = t->storage.gfi_storage_u.sp.ir.ir_val[j];
-		    pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+0];
-		    pdblDataImag[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+1];
+		    // We found the row number, we need now to find the corresponding
+		    // col number.
+		    for(k=0;k<pirow;k++)
+		      {
+			if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
+			  {
+			    pi_col_pos[Index] = k;
+			    break;
+			  }
+		      }
+
+		    if (iscomplex)
+		      {
+			pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+0];
+			pdblDataImag[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+1];
+		      }
+		    else
+		      {
+			pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[j];
+		      }
 		    nb_item_row[i]++;
 		    Index++;
 		  }
 	      }
 	  }
-	
+#ifdef DEBUG
+	for(i=0;i<pirow;i++)
+	  {
+	    sciprint("nb_item_row[%d] = %d\n", i, nb_item_row[i]);
+	  }
+	for(i=0;i<nbitem;i++)
+	  {
+	    sciprint("pi_col_pos[%d] = %d val = %f\n", i, pi_col_pos[i],pdblDataReal[i]);
+	  }
+#endif
+
 	if (iscomplex)
 	  {
 	    createComplexSparseMatrix(ivar, pirow, picol, nbitem, nb_item_row, pi_col_pos, pdblDataReal, pdblDataImag);
