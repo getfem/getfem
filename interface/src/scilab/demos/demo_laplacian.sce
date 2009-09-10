@@ -17,13 +17,16 @@ mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 border = gf_mesh_get(m,'outer faces');
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
+
+scf();
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
-pause(1);
 
 // interpolate the exact solution
-Uexact = gf_mesh_fem_get(mf, 'eval', list('y.*(y-1).*x.*(x-1)+x.^5'));
+//YC: Uexact = gf_mesh_fem_get(mf, 'eval', list('y.*(y-1).*x.*(x-1)+x.^5'));
+Uexact = gf_mesh_fem_get_eval(mf, list('y.*(y-1).*x.*(x-1)+x.^5'));
 // its second derivative
-F      = gf_mesh_fem_get(mf, 'eval', list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
+//YC: F      = gf_mesh_fem_get(mf, 'eval', list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
+F      = gf_mesh_fem_get_eval(mf, list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
 
 
 md = gf_model('real');
@@ -49,6 +52,7 @@ U = gf_model_get(md, 'variable', 'u');
 
 disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 
+scf();
 subplot(2,1,1); 
 gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
 //colorbar; 

@@ -168,7 +168,7 @@ for step=1:nbstep
 //  camup
 //  camlight; 
 //  axis off;
-  pause(1); 
+  sleep(1000); 
   // save a picture..
   //print(gcf, '-dpng', '-r150', sprintf('torsion%03d',step));
 end

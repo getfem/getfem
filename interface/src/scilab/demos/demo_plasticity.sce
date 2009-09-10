@@ -60,6 +60,6 @@ for step=1:nbstep
   subplot(2,1,2);
   gf_plot(mf0, E, 'mesh','on', 'refine', 1); 
   //colorbar;
-  pause;
+  sleep(1000);
 end
 

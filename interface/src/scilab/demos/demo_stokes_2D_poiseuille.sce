@@ -31,7 +31,7 @@ gf_mesh_set(m, 'boundary', 1, all_faces);
 pde
 
 subplot(3,1,1); 
-gf_plot(pde.mf_u,U(:)','dir','x','deformation',U,'deformation_scale','10%','deformed_mesh','on'); 
+gf_plot(pde.mf_u,U(:)','dir','x','deformation',U,'deformation_scale',0.1,'deformed_mesh','on'); 
 //colorbar;
 
 subplot(3,1,2); 

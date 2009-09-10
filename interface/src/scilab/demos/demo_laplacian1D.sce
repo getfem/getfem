@@ -13,9 +13,8 @@ m = gf_mesh('cartesian',[0:1:100]);
 
 // visualisation of the mesh, with the numbering
 // of vertices and convexes.
+scf();
 gf_plot_mesh(m, 'vertices','convexes');
-//disp('press enter to continue..'); pause
-
 
 mfu = gf_mesh_fem(m,1);// gf_mesh_fem_set(mfu, 'classical fem', 0);
 mfd = gf_mesh_fem(m,1);// gf_mesh_fem_set(mfd, 'classical fem', 0);
@@ -31,12 +30,14 @@ eU = eval(expr_u);
 bord = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'boundary', 1, bord);
     
-b0 = gf_md_brick('generic elliptic',mim,mfu);
-b1 = gf_md_brick('dirichlet', b0, 1, mfu,'augmented');
-b2 = gf_md_brick('source term',b1);
+b0 = gf_mdbrick('generic elliptic',mim,mfu);
+b1 = gf_mdbrick('dirichlet', b0, 1, mfu,'augmented');
+b2 = gf_mdbrick('source term',b1);
 
 gf_util('trace level', 0); // do not clutter the output with boring messages
 gf_util('warning level', 0);
+
+scf();
 
 for j=1:3
   if (j==1) then
@@ -55,7 +56,7 @@ for j=1:3
   end
 
   for iK=1:6
-    if (j==3), then
+    if (j==3) then
       K = 2*iK; // avoid prime numbers: on primes numbers, the hierarchical basic is the PK basis
     else
       K=iK; 
@@ -73,20 +74,24 @@ for j=1:3
     gf_mesh_fem_set(mfd,'fem',fem_d);
     gf_mesh_im_set(mim, 'integ', im);
  
-    gf_md_brick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_u)));
-    gf_md_brick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_f)));
+//YC:    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_u)));
+//YC:    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_f)));
     
-    mds = gf_md_state(b2);
+    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get_eval(mfd, list(expr_u)));
+    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(expr_f)));
+
+    mds = gf_mdstate(b2);
     
     gf_mdbrick_get(b2, 'solve', mds);
     Uu = gf_mdstate_get(mds, 'state'); Uu=Uu(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
     //gf_plot(pde.mf_u, U,'mesh','regions'); colorbar;
     U = gf_compute(mfu, Uu, 'interpolate on', mferr);
+    clf();
     plot(x,U,'r+-',x,eU,'bx:'); 
     legend('approx','exact');
     [mx,pos] = max(abs(eU-U));
-    disp(sprintf('K=%d .. max_rel(err)=%1.5g at x=%3.2f [condition number=%e]',K,mx/max(abs(eU)), x(pos),cond(gf_md_state_get(mds, 'reduced_tangent_matrix'))));
+    disp(sprintf('K=%d .. max_rel(err)=%1.5g at x=%3.2f',K,mx/max(abs(eU)), x(pos)));
   end
 end
 

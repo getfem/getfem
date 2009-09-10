@@ -59,7 +59,7 @@ for t=0:dt:T
   gf_plot(mf, V, 'mesh', 'on', 'contour', .01:.01:.1); 
   //colorbar; 
   title(sprintf('computed solution du/dt for t=%g', t));
-  pause(0.1);
+  sleep(100);
 
   gf_model_set(md, 'next iter');
 end

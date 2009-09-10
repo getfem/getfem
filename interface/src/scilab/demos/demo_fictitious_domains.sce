@@ -10,13 +10,13 @@ ls_degree = 2;
 
 m = gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
 //m = gf_mesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
-_ls = gf_level_set(m, ls_degree);
-ls2 = gf_level_set(m, ls_degree, 'with_secondary');
+_ls = gf_levelset(m, ls_degree);
+ls2 = gf_levelset(m, ls_degree, 'with_secondary');
 
-mf_ls  = gf_level_set_get(_ls, 'mf');
-mf_ls2 = gf_level_set_get(ls2, 'mf');
+mf_ls  = gf_levelset_get(_ls, 'mf');
+mf_ls2 = gf_levelset_get(ls2, 'mf');
 
-P = gf_level_set_get(mf_ls, 'basic dof nodes');
+P = gf_levelset_get(mf_ls, 'basic dof nodes');
 x = P(1,:);
 y = P(2,:);
 //ULS = ((x + 0.25).^2 + (y - 0.4).^2) - 0.05^2;
@@ -48,7 +48,7 @@ else
   end
 end
 
-gf_level_set_set(_ls, 'values', ULS);
+gf_levelset_set(_ls, 'values', ULS);
 
 ULS2  = 1000*ones(1,length(x));
 ULS2s = 1000*ones(1,length(x));
@@ -65,12 +65,12 @@ for i=1:1
   ULS2s = min(ULS2s, (abs(y - yc)+abs(x-xc) - R));
 end
 
-gf_level_set_set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, '(y-.2)^2 - 0.04');
+gf_levelset_set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, '(y-.2)^2 - 0.04');
 
 mls = gf_mesh_level_set(m);
-gf_mesh_level_set_set(mls, 'add', _ls);
-gf_mesh_level_set_set(mls, 'add', ls2);
-gf_mesh_level_set_set(mls, 'adapt');
+gf_mesh_levelset_set(mls, 'add', _ls);
+gf_mesh_levelset_set(mls, 'add', ls2);
+gf_mesh_levelset_set(mls, 'adapt');
 
 mim_bound = gf_mesh_im('levelset',mls,'boundary(a+b)', gf_integ('IM_TRIANGLE(6)')); //, gf_integ('IM_QUAD(5)'));
 mim       = gf_mesh_im('levelset',mls,'all(a+b)', gf_integ('IM_TRIANGLE(6)'));

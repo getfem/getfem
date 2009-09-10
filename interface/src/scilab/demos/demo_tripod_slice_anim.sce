@@ -23,7 +23,7 @@ for r=-10.3:+.1:12 //46.1:-.1:4,
   //camlight;
   xs2png(sprintf('tripod_slice_p%03d',cnt));
   cnt = cnt+1;
-  pause(1)
+  sleep(1000)
   gf_delete(sl);
 end
 

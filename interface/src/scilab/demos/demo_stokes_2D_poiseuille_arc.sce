@@ -80,12 +80,12 @@ disp(sprintf('solve done in %.2f sec', toc));
 Ul=gf_compute(pde.mf_u,U,'interpolate on',mfulag);
 
 subplot(2,2,1); 
-gf_plot(mfulag,Ul,'norm','on','deformation',Ul,'deformation_scale','5%', 'deformed_mesh','on');
+gf_plot(mfulag,Ul,'norm','on','deformation',Ul,'deformation_scale', 0.05, 'deformed_mesh','on');
 colorbar;
 //title('|U| plotted on the deformed mesh');
 
 subplot(2,2,2); 
-gf_plot(pde.mf_p,P(:)','deformation',U,'deformation_mf',pde.mf_u,'deformation_scale','5%'); 
+gf_plot(pde.mf_p,P(:)','deformation',U,'deformation_mf',pde.mf_u,'deformation_scale',0.05); 
 //colorbar;
 title('Pression on the deformed mesh');
 
