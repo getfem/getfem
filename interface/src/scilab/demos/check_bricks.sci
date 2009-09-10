@@ -51,9 +51,11 @@ gf_mdbrick_set(mass, 'param', 'rho', mf, 0.1*ones(gf_mesh_fem_get(mf, 'nbdof'),1
 l = gf_mdbrick_get(elas, 'param', 'lambda');
 gf_mdbrick_set(elas, 'param', 'lambda', l*3);
 
-for b=[lapl, elas, helm, mass, elasnl]
-  disp_info(b);
-end
+disp_info(lapl);
+disp_info(elas);
+disp_info(helm);
+disp_info(mass);
+disp_info(elasnl);
 endfunction  
   
 function disp_info(b)
@@ -68,7 +70,7 @@ disp(sprintf(' is_complex     %d', gf_mdbrick_get(b, 'is_complex')));
 l = gf_mdbrick_get(b, 'param_list');
 s = ''; 
 for il=1:length(l)
-  s = [s  ' '  l(il)]; 
+  s = s + ' ' + l(il); 
 end
 disp(sprintf(' paramlist     %s', s)); 
 

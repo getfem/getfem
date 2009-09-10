@@ -30,7 +30,8 @@ C  = gf_spmat('copy', A);
 C  = sprand(50,50,.1); C(2,2)=1+2*%i; I = 1:40; J = [6 7 8 3 10];
 D  = gf_spmat('copy', C, I, J);
 DD = gf_spmat_get(D,'full');
-assert('and(DD==C(I,J))');
+// assert('and(DD==C(I,J))'); // Bug scilab 4783
+assert('and(full(DD)==full(C(I,J)))');
 asserterr('gf_spmat(D,''full'',100)');
 asserterr('gf_spmat(D,''full'',10,-1)');
 
@@ -129,17 +130,20 @@ C = gf_spmat('copy',K); gf_spmat_set(C,'to_complex');
 assert('gf_spmat_get(C,''is_complex'')');
 gf_spmat_set(C,'clear');
 
-B = [1 1 1 1 1 2; ...
-     6 5 4 3 2 1; ...
-     7 8 5 3 2 1]';
-gf_spmat_set(C,'diag', B(:,1));
-gf_spmat_set(C,'diag', B(:,2:3), [-2 +2]);
-CC = full(spdiags(B, [0 -2 2], 6, 9));
-P  = gf_spmat_get(C,'full');
-assert('and(CC==P)');
-L1 = gf_spmat_get(C,'diag', [0 -2 2]);
-L2 = spdiags(sparse(CC),[0 -2 2]);
-assert('L1==L2');
+// The spdiags function is not yet defined under scilab
+if 0 then
+  B = [1 1 1 1 1 2; ...
+       6 5 4 3 2 1; ...
+       7 8 5 3 2 1]';
+  gf_spmat_set(C,'diag', B(:,1));
+  gf_spmat_set(C,'diag', B(:,2:3), [-2 +2]);
+  CC = full(spdiags(B, [0 -2 2], 6, 9));
+  P  = gf_spmat_get(C,'full');
+  assert('and(CC==P)');
+  L1 = gf_spmat_get(C,'diag', [0 -2 2]);
+  L2 = spdiags(sparse(CC),[0 -2 2]);
+  assert('L1==L2');
+end
 
 K  = sprand(50,50,.1) + 20*speye(50,50); K(2,3)=.4;
 gK = gf_spmat('copy',K);
@@ -155,18 +159,21 @@ assert('max(abs(A-B))<1e-13');
 
 gf_workspace('clear all')
 
-m   = gf_mesh('cartesian',[1:30],[1:30]);
-mf  = gf_mesh_fem(m,1);
-gf_mesh_fem_set(mf,'classical fem', 1);
-mim = gf_mesh_im(m, 0); // integration of degree 0
-A   = gf_asm('laplacian',mim,mf,mf,ones(1,gf_mesh_fem_get(mf,'nbdof')));
-A   = A+.1*speye(size(A,1));
-B   = rand(gf_mesh_fem_get(mf,'nbdof'),1);
-[L,U] = luinc(A,'0'); // YC:
-X1 = gf_linsolve('cg',A,B);
-mm = gf_spmat('copy',inv(L));
-p  = gf_precond('spmat',mm);
-gf_workspace('stats')
-X2 = gf_linsolve('cg',A,B,gf_precond('spmat',speye(size(A))));
-assert('norm(X1-X2)<1e-13');
+// luinc not yet defined under Scilab
+if 0 then
+  m   = gf_mesh('cartesian',[1:30],[1:30]);
+  mf  = gf_mesh_fem(m,1);
+  gf_mesh_fem_set(mf,'classical fem', 1);
+  mim = gf_mesh_im(m, 0); // integration of degree 0
+  A   = gf_asm('laplacian',mim,mf,mf,ones(1,gf_mesh_fem_get(mf,'nbdof')));
+  A   = A+.1*speye(size(A,1));
+  B   = rand(gf_mesh_fem_get(mf,'nbdof'),1);
+  [L,U] = luinc(A,'0');
+  X1 = gf_linsolve('cg',A,B);
+  mm = gf_spmat('copy',inv(L));
+  p  = gf_precond('spmat',mm);
+  gf_workspace('stats')
+  X2 = gf_linsolve('cg',A,B,gf_precond('spmat',speye(size(A))));
+  assert('norm(X1-X2)<1e-13');
+end
 endfunction

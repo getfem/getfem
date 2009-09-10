@@ -78,6 +78,8 @@ H = [0.1 0.1 0 0;
 R = [4 0 1];
 
 [HH,RR]=gf_spmat_get(sparse(H),'dirichlet nullspace',R);
+disp(full(HH))
+disp(full(RR))
 assert('max(max(abs(full(HH)-[0 -sqrt(2)/2; 0 sqrt(2)/2; 1 0; 0 0]))) < 1e-15');
 assert('max(abs(RR-[20 20 0 1]))<1e-14');
 endfunction

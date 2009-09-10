@@ -13,7 +13,7 @@ m2 = gf_mesh('regular_simplices', 0:.3:3, -.2:.4:1.2, 'degree', 1,'noised');
 //m2 = gf_mesh('regular_simplices', [0 3], [0 1], 'degree', 1, 'noised');
 //gf_plot_mesh(m2, 'refine' ,5, 'curved','on');
 mf2  = gf_mesh_fem(m2); 
-mim2 = gf_mesh_im(m2,gfInteg('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),4)'));
+mim2 = gf_mesh_im(m2,gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),4)'));
 //mim2 = gf_meshI_im(m2, gf_integ('IM_TRIANGLE(6)'));
 gf_mesh_fem_set(mf2, 'fem', gf_fem('FEM_PK(2, 1)'));
 
