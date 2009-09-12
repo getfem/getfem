@@ -108,7 +108,7 @@ void friction_problem::init(void) {
   compare = (PARAM.int_value("COMPARE") != 0);
   contact_type = PARAM.int_value("CONTACT_TYPE");
   cout << "contact_type = " << contact_type << endl;
-  residual = PARAM.real_value("RESIDUAL");
+  residual = PARAM.real_value("RESIDUAL", "residual for iterative methods");
   if (residual == 0.) residual = 1e-10;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
@@ -563,8 +563,8 @@ void friction_problem::solve(void) {
     cout << "t = " << t << " J1 = " << J1 << " Jdemi = " << Jdemi;
     cout << " (st " << nbst << ", sl " << nbsl << ")" << endl;
 
-    fileout << t << "  \t" << J1   << "  \t" << LN1[lower_dof_s] << "  \t"
-	    << Udemi[lower_dof_u] << "\n";
+    fileout << t-dt/2 << "    \t" << Jdemi  << "    \t" << LN1[lower_dof_s]
+	    << "    \t" << Udemi[lower_dof_u] << "\n";
     
     gmm::copy(U1, U0); gmm::copy(V1, V0);  J0 = J1;
     gmm::copy(LN1, LN0); gmm::copy(LT1, LT0);
@@ -607,6 +607,10 @@ void friction_problem::solve(void) {
     
     cout << "To ref H1 ERROR:"
 	 << getfem::asm_H1_dist(mim_ref, mf_ref, U, mf_ref, Uref) << endl;
+
+    cout << "H1 Norm:"
+	 << getfem::asm_H1_norm(mim_ref, mf_ref, Uref) << endl;
+    
 	
   }
 

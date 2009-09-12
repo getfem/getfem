@@ -33,9 +33,9 @@ else
 % P1plusP0
 %
 
-A1 = load('msh_dt0.01.data');
-A2 = load('msh_dt0.001.data');
-A3 = load('msh_dt0.0001.data');
+A1 = load('mdf_P2P1_1E-3.data');
+A2 = load('mdf_P2P1_1E-4.data');
+A3 = load('mdf_P2P1_1E-5.data');
 
 % energy curves
 
@@ -44,45 +44,49 @@ hold on;
 plot(A2(:, 1), A2(:, 2), '--k', 'linewidth', 2, 'MarkerSize', 15);
 plot(A3(:, 1), A3(:, 2), '-.k', 'linewidth', 2, 'MarkerSize', 15);
 hold off;
-% axis([0 0.7 0 0.1]);
-axis([0 0.7 0 0.02]);
+axis([0 0.02 690 850]);
+% axis([0 0.7 0 0.02]);
 xlabel('t');
 ylabel('total energy');
-legend('dt = 0.01', 'dt = 0.001', 'dt = 0.0001', 'Location', 'SouthWest');
+legend('dt = 10^{-3}', 'dt = 10^{-4}', 'dt = 10^{-5}', 'Location', 'SouthWest');
 axesobj = findobj('type', 'axes'); set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points'); set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold'); set(axesobj, 'linewidth', 2);
 pause;
 print(gcf,'-deps','-r450', 'energy.eps');
+print(gcf,'-dpng','-r450', 'energy.png');
 
-% displacement curves
+% contact stress curves
 
 plot(A1(:, 1), A1(:, 3), '-k', 'linewidth', 2, 'MarkerSize', 15);
 hold on;
-plot(A2(:, 1), A2(:, 3), '--k', 'linewidth', 2, 'MarkerSize', 15);
-plot(A3(:, 1), A3(:, 3), '-.k', 'linewidth', 2, 'MarkerSize', 15);
+plot(A2(:, 1), A2(:, 3) -50, '--k', 'linewidth', 2, 'MarkerSize', 15);
+plot(A3(:, 1), A3(:, 3) -100, '-.k', 'linewidth', 2, 'MarkerSize', 15);
 hold off;
+axis([0 0.02 -400 0.01]);
 % axis([0 0.7 -0.01 0.06]);
-axis([0 0.7 -0.01 0.06]);
 xlabel('t');
-ylabel('center point displacement');
-legend('dt = 0.01', 'dt = 0.001', 'dt = 0.0001', 'Location', 'SouthWest');
+ylabel('point A contact stress');
+legend('dt = 10^{-3}', 'dt = 10^{-4}', 'dt = 10^{-5}', 'Location', 'SouthWest');
 axesobj = findobj('type', 'axes'); set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points'); set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold'); set(axesobj, 'linewidth', 2);
 pause;
-print(gcf,'-deps','-r450', 'displacement.eps');
+print(gcf,'-deps','-r450', 'stress.eps');
+print(gcf,'-dpng','-r450', 'stress.png');
 
-% contact stress curves
+% displacement curves
 
 plot(A1(:, 1), A1(:, 4), '-k', 'linewidth', 2, 'MarkerSize', 15);
 hold on;
 plot(A2(:, 1), A2(:, 4), '--k', 'linewidth', 2, 'MarkerSize', 15);
 plot(A3(:, 1), A3(:, 4), '-.k', 'linewidth', 2, 'MarkerSize', 15);
 hold off;
-axis([0 0.7 -0.6 0.02]);
+axis([0 0.02 -0.1 10]);
 xlabel('t');
-ylabel('center point contact stress');
-legend('dt = 0.01', 'dt = 0.001', 'dt = 0.0001', 'Location', 'SouthWest');
+ylabel('point A normal displacement');
+legend('dt = 10^{-3}', 'dt = 10^{-4}', 'dt = 10^{-5}', 'Location', 'SouthWest');
 axesobj = findobj('type', 'axes'); set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points'); set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold'); set(axesobj, 'linewidth', 2);
 pause;
-print(gcf,'-deps','-r450', 'stress');
+print(gcf,'-deps','-r450', 'displacement.eps');
+print(gcf,'-dpng','-r450', 'displacement.png');
+
 
 
 end;
