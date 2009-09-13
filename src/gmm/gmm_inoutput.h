@@ -409,10 +409,10 @@ namespace gmm {
     if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
       if ( Valfmt == NULL ) Valfmt = "(4E21.13)";
       ParseRfmt(Valfmt, &Valperline, &Valwidth, &Valprec, &Valflag);
-      if (Valflag == 'D') {
-        pValflag = (char *) strchr(Valfmt,'D');
-        *pValflag = 'E';
-      }
+//       if (Valflag == 'D') {
+//         pValflag = (char *) strchr(Valfmt,'D');
+//         *pValflag = 'E';
+//       }
       if (Valflag == 'F')
 	SECURE_SPRINTF2(vformat, sizeof(vformat), "%% %d.%df", Valwidth,
 			Valprec);
@@ -430,10 +430,10 @@ namespace gmm {
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%df",Rhswidth,Rhsprec);
       else
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%dE",Rhswidth,Rhsprec);
-      if (Valflag == 'D') {
-        pRhsflag = (char *) strchr(Rhsfmt,'D');
-        *pRhsflag = 'E';
-      }
+//       if (Valflag == 'D') {
+//         pRhsflag = (char *) strchr(Rhsfmt,'D');
+//         *pRhsflag = 'E';
+//       }
       rhscrd = nrhsentries/Rhsperline; 
       if ( nrhsentries%Rhsperline != 0) rhscrd++;
       if ( Rhstype[1] == 'G' ) rhscrd+=rhscrd;
