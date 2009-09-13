@@ -381,7 +381,7 @@ namespace gmm {
     int Valperline, Valwidth, Valprec;
     int Valflag;           /* Indicates 'E','D', or 'F' float format */
     char pformat[16],iformat[16],vformat[19],rformat[19];
-    char *pValflag, *pRhsflag;
+    //    char *pValflag, *pRhsflag;
     gmm::standard_locale sl;
     
     if ( Type[0] == 'C' )
