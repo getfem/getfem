@@ -1,3 +1,31 @@
+
+
+if (1) % draw the shape functions
+
+gf_workspace('clear all');
+m = gf_mesh('triangles grid',[0:0.5:1],[0:0.5:1]);
+mf  = gfMeshFem(m,1);
+gf_mesh_fem_set(mf,'fem',gf_fem('FEM_REDUCED_HCT_TRIANGLE'));
+nbdof=gf_mesh_fem_get(mf, 'nbdof');
+U = zeros(1, nbdof);
+
+for i=13:nbdof
+  U(i) = 0.5;
+gf_plot(mf,U,'mesh','on','refine',10, 'zplot', 'on'); colorbar;
+  title('shape function');
+  pause;
+gf_plot(mf,U,'mesh','on','refine',10); colorbar;
+  title('shape function');
+  
+  U(i) = 0.0;
+end;
+
+return;
+
+end;
+
+
+
 % trace on;
 clear pde; gf_workspace('clear all');
 NX=10

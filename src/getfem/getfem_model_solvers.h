@@ -190,7 +190,7 @@ namespace getfem {
     typedef typename gmm::number_traits<T>::magnitude_type R;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.reduce_noisy();
-    iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
+    iter_linsolv0.set_resmax(iter.get_resmax()/20.0);
     iter_linsolv0.set_maxiter(10000); // arbitrary
 
     pb.compute_residual();
@@ -518,7 +518,7 @@ namespace getfem {
 # ifdef GMM_USES_MUMPS
     max3d = 100000;
 # endif
-    if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
+    if ((ndof<200000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
 # ifdef GMM_USES_MUMPS
       p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
 # else
@@ -531,7 +531,7 @@ namespace getfem {
       else if (problem.mixed_variables().card() == 0) {
 	if (dim <= 2)
 	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilut<T_MATRIX,VECTOR>);
+		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
 	else
 	  p.reset(new
 		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
@@ -539,7 +539,7 @@ namespace getfem {
       else {
 	if (dim <= 2)
 	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilut<T_MATRIX,VECTOR>);
+		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
 	else
 	  p.reset(new
 		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
