@@ -7,32 +7,87 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_precond_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_precond_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>get informations related to the preconditioner</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>F=gf_precond_get(...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_precond_get(P,'mult',vec V) Apply the preconditioner to the
+        supplied vector.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION F=gf_precond_get(...)
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>gf_precond_get(P,'tmult',vec V) Apply the transposed
+        preconditioner to the supplied vector.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_precond_get(P,'type') Return a string describing the type of
+        the preconditioner ('ilu', 'ildlt',..).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_precond_get(P,'size') Return the dimensions of the
+        preconditioner.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_precond_get(P,'is_complex') Return 1 if the preconditioner
+        stores complex values.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_precond_get(P,'info') Return a short informative string about
+        the preconditioner.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_precond">gf_precond</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

@@ -7,35 +7,107 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_integ_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_integ_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General function for querying information about FEM
+    integration method objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_integ_get(F, ...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>b = INTEG:GET('is_exact') Return 0 if the integration is an
+        approximate one.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_integ_get(F, ...)
-  </para>
-  <para>
-      General function for querying information about FEM integration method objects.
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>d = INTEG:GET('dim') Return the dimension of the reference
+        convex of the method.</para>
+      </listitem>
+
+      <listitem>
+        <para>n = INTEG:GET('nbpts') Return the total number of integration
+        points. Count the points for the volume integration, and points for
+        surface integration on each face of the reference convex.</para>
+
+        <para>Only for approximate methods, this has no meaning for exact
+        integration methods!</para>
+      </listitem>
+
+      <listitem>
+        <para>Pf = INTEG:GET('face_pts',F) Return the list of integration
+        points for a face. </para>
+
+        <para>Only for approximate methods, this has no meaning for exact
+        integration methods!</para>
+      </listitem>
+
+      <listitem>
+        <para>Cp = INTEG:GET('coeffs') Returns the coefficients associated to
+        each integration point. </para>
+
+        <para>Only for approximate methods, this has no meaning for exact
+        integration methods!</para>
+      </listitem>
+
+      <listitem>
+        <para>Cf = INTEG:GET('face_coeffs',F) Returns the coefficients
+        associated to each integration of a face. </para>
+
+        <para>Only for approximate methods, this has no meaning for exact
+        integration methods!</para>
+      </listitem>
+
+      <listitem>
+        <para>s = INTEG:GET('char') Ouput a (unique) string representation of
+        the integration method. This can be used to comparisons between two
+        different Integ objects.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???">???</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

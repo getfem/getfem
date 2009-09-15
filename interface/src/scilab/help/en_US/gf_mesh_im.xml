@@ -7,65 +7,109 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mesh_im</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mesh_im</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General constructor for MeshIm object (integration methods on
+    a mesh).</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>MIM = gf_mesh_im(...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>General constructor for MeshIm object (integration methods on a
+    mesh). </para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_mesh_im(mesh m[list(integ im|int im_degree)])</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION MIM = gf_mesh_im(...)
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    General constructor for @tmim object (integration methods on a mesh).
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    * gf_mesh_im(mesh m[{integ im|int im_degree}])
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    Return a getfem handle to the newly created @tmim object. For
-  </para>
-  <para>
-    convenience, optional arguments ('im' or 'im_degree') can be provided,
-  </para>
-  <para>
-    in that case a call to gf_mesh_im_set(mim, 'integ', ..) is issued with
-  </para>
-  <para>
-    these arguments.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * gf_mesh_im('load', string fname[, Mesh m])      Load a MeshIm from a file.     If the mesh `m` is not supplied (this kind of file does not store the mesh),    then it is read from the file and its descriptor is returned as the second    output argument.
-  </para>
-  <para>
-  * gf_mesh_im('from_string', string s[, mesh M])      Create a MeshIm object from    its string description.     See also gf_mesh_im_get(MIM,('char')
-  </para>
+    </itemizedlist>
+
+    <para>Return a getfem handle to the newly created MeshIm object. For
+    convenience, optional arguments ('im' or 'im_degree') can be provided, in
+    that case a call to gf_mesh_im_set(mim, 'integ', ..) is issued with these
+    arguments.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>gf_mesh_im('load', string fname[, Mesh m]) Load a MeshIm from a
+        file. If the mesh <literal>m</literal> is not supplied (this kind of
+        file does not store the mesh), then it is read from the file and its
+        descriptor is returned as the second output argument.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_im('from string', string s[, mesh M]) Create a MeshIm
+        object from its string description. See also
+        gf_mesh_im_get(mim,'char')</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_im('clone', MeshIm mim2) Create a copy of a
+        MeshIm.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_im('levelset', LevelSet ls, string where, Integ im[,
+        Integ im_tip]) Build an integration method conformal to a partition
+        defined implicitely by a levelset. The <literal>where</literal>
+        argument define the domain of integration with respect to the
+        levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and
+        'BOUNDARY'.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_im('.mesh',Mesh m, [list(Integ im|int im_degree)]) Build
+        a new MeshIm object. For convenience, optional arguments
+        (<literal>im</literal> or <literal>im_degree</literal>) can be
+        provided, in that case a call to MeshIm.integ() is issued with these
+        arguments.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_im_set">gf_mesh_im_set</link></member>
+
+      <member><link linkend="gf_mesh_im_get">gf_mesh_im_get</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

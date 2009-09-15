@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_colormap" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -8,15 +8,15 @@
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+    <refname>gf_colormap</refname>
 
-    <refpurpose></refpurpose>
+    <refpurpose>Return a colormap, or change the current colormap</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>c=gf_colormap(name)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -36,7 +36,31 @@
   <refsection>
     <title>Description</title>
 
-    <para></para>
+    <para>Return a colormap, or change the current colormap. </para>
+
+    <para><literal>name</literal> can be:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>'tripod'</para>
+      </listitem>
+
+      <listitem>
+        <para>'chouette'</para>
+      </listitem>
+
+      <listitem>
+        <para>'froid'</para>
+      </listitem>
+
+      <listitem>
+        <para>'tank'</para>
+      </listitem>
+
+      <listitem>
+        <para>'earth'</para>
+      </listitem>
+    </itemizedlist>
   </refsection>
 
   <refsection>
@@ -49,7 +73,7 @@
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???"></link></member>
+      <member><link linkend="gf_plot">gf_plot</link></member>
     </simplelist>
   </refsection>
 </refentry>

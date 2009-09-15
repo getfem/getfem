@@ -7,49 +7,91 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_linsolve</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-    X = gf_linsolve('gmres',Spmat M, vec b[, int restart][, Precond
-P][,'noisy'][,'res', r][,'maxiter', n])
-    X = gf_linsolve('cg',Spmat M, vec b [, Precond P][,'noisy'][,'res',
-r][,'maxiter', n])
-    X = gf_linsolve('bicgstab',Spmat M, vec b [, Precond
-P][,'noisy'][,'res', r][,'maxiter', n])
-    [U, cond] = gf_linsolve('lu',Spmat M, vec b)
-    [U, cond] = gf_linsolve('superlu',Spmat M, vec b)
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_linsolve</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>The linear solver</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis> F=gf_linsolve(args)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>X = gf_linsolve('gmres',Spmat M, vec b[, int restart][, Precond
+        P][,'noisy'][,'res', r][,'maxiter', n]) Solve <emphasis>M.X =
+        b</emphasis> with the generalized minimum residuals method. Optionally
+        using <literal>P</literal> as preconditioner. The default value of the
+        restart parameter is 50.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION F=gf_linsolve(args)
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * X = gf_linsolve('gmres',Spmat M, vec b[, int restart][, Precond    P][,'noisy'][,'res', r][,'maxiter', n])    Solve `M.X = b` with the    generalized minimum residuals method.     Optionally using `P` as preconditioner. The default value of the restart    parameter is 50.
-  </para>
-  <para>
-  * X = gf_linsolve('cg',Spmat M, vec b [, Precond P][,'noisy'][,'res',    r][,'maxiter', n])    Solve `M.X = b` with the conjugated gradient method.     Optionally using `P` as preconditioner.
-  </para>
-  <para>
-  * X = gf_linsolve('bicgstab',Spmat M, vec b [, Precond P][,'noisy'][,'res',    r][,'maxiter', n])    Solve `M.X = b` with the bi-conjugated gradient    stabilized method.     Optionally using `P` as a preconditioner.
-  </para>
+
+      <listitem>
+        <para>X = gf_linsolve('cg',Spmat M, vec b [, Precond
+        P][,'noisy'][,'res', r][,'maxiter', n]) Solve <emphasis>M.X =
+        b</emphasis> with the conjugated gradient method. Optionally using
+        <literal>P</literal> as preconditioner.</para>
+      </listitem>
+
+      <listitem>
+        <para>X = gf_linsolve('bicgstab',Spmat M, vec b [, Precond
+        P][,'noisy'][,'res', r][,'maxiter', n]) Solve <emphasis>M.X =
+        b</emphasis> with the bi-conjugated gradient stabilized method.
+        Optionally using <literal>P</literal> as a preconditioner.</para>
+      </listitem>
+
+      <listitem>
+        <para>list(U, cond) = gf_linsolve('lu',Spmat M, vec b) Alias for
+        gf_linsolve('superlu',...)</para>
+      </listitem>
+
+      <listitem>
+        <para>list(U, cond) = gf_linsolve('superlu',Spmat M, vec b) Solve
+        <emphasis>M.U = b</emphasis> apply the SuperLU solver (sparse LU
+        factorization). The condition number estimate <literal>cond</literal>
+        is returned with the solution <literal>U</literal>.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_slice_get">gf_slice_get</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

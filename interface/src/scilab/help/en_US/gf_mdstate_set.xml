@@ -7,35 +7,88 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mdstate_set</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mdstate_set</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>Modify a model state object.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>M = gf_mdstate_set(cmd, [, args])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_mdstate_set(mds,'compute_reduced_system') Compute the reduced
+        system from the tangent matrix and constraints.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION M = gf_mdstate_set(cmd, [, args])
-  </para>
-  <para>
-    Modify a model state object.
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>gf_mdstate_set(mds,'compute_reduced_residual') Compute the
+        reduced residual from the residual and constraints.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdstate_set(mds,'compute_residual',MdBrick B) Compute the
+        residual for the brick <literal>B</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdstate_set(mds,'compute_tangent_matrix',MdBrick B) Update
+        the tangent matrix from the brick <literal>B</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdstate_set(mds,'state',vec U) Update the internal state with
+        the vector <literal>U</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdstate_set(mds,'clear') Clear the model state.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mdstate_get">gf_mdstate_get</link></member>
+
+      <member><link linkend="gf_mdstate">gf_mdstate</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

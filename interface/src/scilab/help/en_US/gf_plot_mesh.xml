@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_plot_mesh" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -8,15 +8,15 @@
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+    <refname>gf_plot_mesh</refname>
 
-    <refpurpose></refpurpose>
+    <refpurpose>General mesh plotting function.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>[hmesh,hbound,hfill,hvert,hconv,hdof]=gf_plot_mesh(M, [,properties] [,'cvlst',CVLST] ['boundaries'[BLST]])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -36,7 +36,74 @@
   <refsection>
     <title>Description</title>
 
-    <para></para>
+    <para>H=gf_plot_mesh(M) displays a mesh.</para>
+
+    <para>Properties are:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>'vertices', {'off'|'on'} displays also vertices numbers.</para>
+      </listitem>
+
+      <listitem>
+        <para>'convexes', {'off'|'on'} displays also convexes numbers.</para>
+      </listitem>
+
+      <listitem>
+        <para>'dof',{'off'|'on'} displays also finite element nodes.</para>
+      </listitem>
+
+      <listitem>
+        <para>'regions',BLST displays the boundaries listed in BLST.</para>
+      </listitem>
+
+      <listitem>
+        <para>'cvlst',CVLST display only the listed convexes. If CVLST has two
+        rows, display only the faces listed in the second row.</para>
+      </listitem>
+
+      <listitem>
+        <para>'edges', {'on' | 'off'} display edges ?</para>
+      </listitem>
+
+      <listitem>
+        <para>'faces', {'off'|'on'} fills each 2D-face of the mesh</para>
+      </listitem>
+
+      <listitem>
+        <para>'curved', {'off'|'on'} displays curved edges</para>
+      </listitem>
+
+      <listitem>
+        <para>'refine',N refine curved edges and filled faces N times</para>
+      </listitem>
+
+      <listitem>
+        <para>'deformation', Udef optionnal deformation applied to the mesh (M
+        must be a mesh_fem object)</para>
+      </listitem>
+
+      <listitem>
+        <para>'edges_color',[.6 .6 1] RGB values for the color of edges</para>
+      </listitem>
+
+      <listitem>
+        <para>'edges_width',1</para>
+      </listitem>
+
+      <listitem>
+        <para>'faces_color',[.75 .75 .75]) RGB values for the color of
+        faces</para>
+      </listitem>
+
+      <listitem>
+        <para>'quality',{ 'off' | 'on' } Display the quality of the mesh.
+        </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>CAUTION: For 'dof', M should be a mesh_fem identifier, not a simple
+    mesh object.</para>
   </refsection>
 
   <refsection>

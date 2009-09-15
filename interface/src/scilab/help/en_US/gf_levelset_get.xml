@@ -7,50 +7,87 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_levelset_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_levelset_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General function for querying information about LEVELSET
+    objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_levelset_get(LS, ...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>General function for querying information about LEVELSET
+    objects.</para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>V = gf_levelset_get(LS,'values',int nls) Return the vector of
+        dof for <literal>nls</literal> funtion. If <literal>nls</literal> is
+        0, the method return the vector of dof for the primary level-set
+        funtion. If <literal>nls</literal> is 1, the method return the vector
+        of dof for the secondary level-set function (if any).</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_levelset_get(LS, ...)
-  </para>
-  <para>
-      General function for querying information about LEVELSET objects.
-  </para>
-</refsection>
-<refsection>
-  <title>Examples</title>
-  <programlisting role="example"> 
+
+      <listitem>
+        <para>V = gf_levelset_get(LS,'values',int nls) Return the vector of
+        dof for <literal>nls</literal> funtion. If <literal>nls</literal> is
+        0, the method return the vector of dof for the primary level-set
+        funtion. If <literal>nls</literal> is 1, the method return the vector
+        of dof for the secondary level-set function (if any).</para>
+      </listitem>
+
+      <listitem>
+        <para>mf = gf_levelset_get(LS,'mf') Return a reference on the MeshFem
+        object.</para>
+      </listitem>
+
+      <listitem>
+        <para>z = gf_levelset_get(LS,'memsize') Return the amount of memory
+        (in bytes) used by the level-set.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
   Add an example here
  </programlisting>
-</refsection>
-<refsection>
-  <title>See Also</title>
-  <simplelist type="inline">
-    <member><link linkend="???">???</link></member>
-  </simplelist>
-</refsection>
-<refsection>
-  <title>Authors</title>
-  <para>Y. Collette</para>
-</refsection>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???">???</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
 </refentry>

@@ -7,50 +7,69 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_levelset_set</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_levelset_set</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
-      <listitem>
-        <para></para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_levelset_set(LS, ...)
-  </para>
-  <para>
-      General function for modification of LEVELSET objects.
-  </para>
-</refsection>
-<refsection>
-  <title>Examples</title>
-  <programlisting role="example"> 
+    <refpurpose>General function for modification of LEVELSET
+    objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_levelset_set(LS, ...)  </synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>General function for modification of LEVELSET objects.</para>
+
+    <para>gf_levelset_set(LS,'values',list(mat v1|string poly1)[, list(mat
+    v2|string poly2)]) Set values of the vector of dof for the level-set
+    functions. Set the primary function with the vector of dof
+    <literal>v1</literal> (or the polynomial expression
+    <literal>poly1</literal>) and the secondary function (if any) with the
+    vector of dof <literal>v2</literal> (or the polynomial expression
+    poly2).</para>
+
+    <para>gf_levelset_set(LS,'simplify'[scalar eps=0.01]) Simplify dof of
+    level-set optionally with the parameter <literal>eps</literal>.</para>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
   Add an example here
  </programlisting>
-</refsection>
-<refsection>
-  <title>See Also</title>
-  <simplelist type="inline">
-    <member><link linkend="???">???</link></member>
-  </simplelist>
-</refsection>
-<refsection>
-  <title>Authors</title>
-  <para>Y. Collette</para>
-</refsection>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???">???</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
 </refentry>

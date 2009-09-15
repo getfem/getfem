@@ -7,26 +7,90 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_levelset</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_levelset</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose></refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>LevelSet = gf_levelset(...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>The level-set object is represented by a primary level-set and
+    optionally a secondary level-set used to represent fractures (if p(x) is
+    the primary level-set function and s(x) is the secondary level-set, the
+    crack is defined by p(x)=0 and s(x)&lt;=0: the role of the secondary is
+    stop the crack).</para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_levelset(Mesh m, int d) Create a LevelSet object on a Mesh m
+        represented by a primary function defined on a lagrange Fem of degree
+        d.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
+
+      <listitem>
+        <para>gf_levelset(Mesh m, int d, string poly1) Create a LevelSet
+        object on a Mesh m represented by a primary function defined by the
+        polynomial expression poly1 on a lagrange Fem of degree d.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_levelset(Mesh m, int d, 'with_secondary' [, string poly2])
+        Create a LevelSet object on a Mesh m represented by a primary function
+        defined by the polynomial expression poly1 and a secondary function,
+        both on a lagrange Fem of degree d.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_levelset(Mesh m, int d, string poly1, string poly2) Create a
+        LevelSet object on a Mesh m represented by a primary function defined
+        by the polynomial expression poly1 and a secondary function defined by
+        the polynomial expression poly2, both on a lagrange Fem of degree
+        d.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???">???</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

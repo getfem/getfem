@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_mesh_fem_set" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_fem" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,50 +7,108 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mesh_fem_set</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mesh_fem_set</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General function for modifying mesh_fem objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>[x] = gf_mesh_fem_set(meshfem MF, operation [, args])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_mesh_fem_set(MF,'fem',Fem f[, vec CVids]) Set the Finite
+        Element Method. Assign a FEM <literal>f</literal> to all convexes
+        whose #ids are listed in <literal>CVids</literal>. If
+        <literal>CVids</literal> is not given, the integration is assigned to
+        all convexes. See the help of gf_fem to obtain a list of available FEM
+        methods.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION [x] = gf_mesh_fem_set(meshfem MF, operation [, args])
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    General function for modifying mesh_fem objects.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * gf_mesh_fem_set(MF,'('fem',Fem f[, ivec CVids])    Set the Finite Element    Method.     Assign a FEM `f` to all convexes whose #ids are listed in `CVids`. If `CVids`    is not given, the integration is assigned to all convexes.  See the help of    gf_fem to obtain a list of available FEM methods.
-  </para>
-  <para>
-  * gf_mesh_fem_set(MF,'('classical_fem',int k[, ivec CVids])    Assign a    classical (Lagrange polynomial) fem of order `k` to the MeshFem.     Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.
-  </para>
-  <para>
-  * gf_mesh_fem_set(MF,'('classical_discontinuous_fem',int K, [int IM_DEGREE    [,ivec CVIDX]])    Assigns a classical (Lagrange polynomial) discontinuous fem    or order K.     Similar to gf_mesh_fem_set(MF,'('classical_fem') except that    FEM_PK_DISCONTINUOUS is used.
-  </para>
-  <para>
-  * gf_mesh_fem_set(MF,'('qdim',int Q)    Change the `Q` dimension of the field    that is interpolated by the MeshFem.     `Q = 1` means that the MeshFem describes a scalar field, `Q = N` means that    the MeshFem describes a vector field of dimension N.
-  </para>
+
+      <listitem>
+        <para>gf_mesh_fem_set(MF,'classical fem',int k[, vec CVids]) Assign a
+        classical (Lagrange polynomial) fem of order <literal>k</literal> to
+        the MeshFem. Uses FEM_PK for simplexes, FEM_QK for parallelepipeds
+        etc.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem_set(MF,'classical discontinuous fem',int K, [int
+        IM_DEGREE [,vec CVIDX]]) Assigns a classical (Lagrange polynomial)
+        discontinuous fem or order K. Similar to gf_mesh_fem_set(MF,'classical
+        fem') except that FEM_PK_DISCONTINUOUS is used.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem_set(MF,'qdim',int Q) Change the <literal>Q</literal>
+        dimension of the field that is interpolated by the MeshFem.
+        <emphasis>Q = 1</emphasis> means that the MeshFem describes a scalar
+        field, <emphasis>Q = N</emphasis> means that the MeshFem describes a
+        vector field of dimension N.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem_set(MF,'reduction matrices',mat R,mat E) Set the
+        reduction and extension matrices and valid their use.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem_set(MF,'reduction',int s) Set or unset the use of
+        the reduction/extension matrices.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem_set(MF,'dof partition',vec DOFP) Change the
+        'dof_partition' array. <literal>DOFP</literal> is a vector holding a
+        integer value for each convex of the MeshFem. See
+        gf_mesh_fem_get(MF,'dof partition') for a description of "dof
+        partition".</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get</link></member>
+
+      <member><link linkend="gf_mesh_fem">gf_mesh_fem</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

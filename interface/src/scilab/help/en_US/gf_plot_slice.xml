@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_plot_slice" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -8,15 +8,16 @@
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+    <refname>gf_plot_slice</refname>
 
-    <refpurpose></refpurpose>
+    <refpurpose>this function is used to plot a slice of
+    mesh/mesh_fem</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -36,7 +37,107 @@
   <refsection>
     <title>Description</title>
 
-    <para></para>
+    <para>This function is used to plot a slice of mesh/mesh_fem (see
+    gf_slice).</para>
+
+    <para>The options are specified as pairs of 'option name'/'option
+    value':</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>data [] data to be plotted (one value per slice node)</para>
+      </listitem>
+
+      <listitem>
+        <para>convex_data [] data to be plotted (one value per mesh
+        convex)</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh 'auto' :</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>'on' -&gt; show the mesh (faces of edges)</para>
+          </listitem>
+
+          <listitem>
+            <para>'off' -&gt; ignore mesh</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>mesh_edges 'on' show mesh edges ?</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_edges_color [0.60 0.60 1] color of mesh edges</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_edges_width 0.70 width of mesh edges</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_slice_edges 'on' show edges of the slice ?</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_slice_edges_color [0.70 0 0]</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_slice_edges_width 0.50</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_faces 'off' 'on' -&gt; fill mesh faces (otherwise they are
+        transparent)</para>
+      </listitem>
+
+      <listitem>
+        <para>mesh_faces_color [0.75 0.75 0.75]</para>
+      </listitem>
+
+      <listitem>
+        <para>pcolor 'on' if the field is scalar, a color plot of its values
+        is plotted</para>
+      </listitem>
+
+      <listitem>
+        <para>quiver 'on' if the field is vector, represent arrows</para>
+      </listitem>
+
+      <listitem>
+        <para>quiver_density 50 density of arrows in quiver plot</para>
+      </listitem>
+
+      <listitem>
+        <para>quiver_scale 1 density of arrows in quiver plot</para>
+      </listitem>
+
+      <listitem>
+        <para>tube 'on' use tube plot for 'filar' (1D) parts of the
+        slice</para>
+      </listitem>
+
+      <listitem>
+        <para>tube_color 'red' color of tubes (ignored if 'data' is not empty
+        and 'pcolor' is on)</para>
+      </listitem>
+
+      <listitem>
+        <para>tube_radius '0.05 tube radius; you can use a constant, or a
+        vector of nodal values</para>
+      </listitem>
+
+      <listitem>
+        <para>showoptions 'on' display the list of options </para>
+      </listitem>
+    </itemizedlist>
+
+    <para>The 'data' and 'convex_data' are mutually exclusive.</para>
   </refsection>
 
   <refsection>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_plot" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -8,15 +8,16 @@
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+    <refname>gf_plot</refname>
 
-    <refpurpose></refpurpose>
+    <refpurpose>This function plots a 2D or 3D finite elements
+    field.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>h=gf_plot(mf,U,varargin)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -36,7 +37,101 @@
   <refsection>
     <title>Description</title>
 
-    <para></para>
+    <para>This function plots a 2D or 3D finite elements field. </para>
+
+    <para>The options are specified as pairs of 'option name'/'option
+    value':</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>'zplot',{'off'|'on'} : only for qdim=1, mdim=2 </para>
+      </listitem>
+
+      <listitem>
+        <para>'norm', {'off'|'on'} : if qdim &gt;= 2, color-plot the norm of
+        the field </para>
+      </listitem>
+
+      <listitem>
+        <para>'dir',[] : or the scalar product of the field with 'dir' (can be
+        a vector, or 'x', 'y' etc..)</para>
+      </listitem>
+
+      <listitem>
+        <para>'refine',8 : nb of refinments for curved edges and surface
+        plots</para>
+      </listitem>
+
+      <listitem>
+        <para>'interpolated',{'off'|'on'} : if triangular patch are
+        interpolated</para>
+      </listitem>
+
+      <listitem>
+        <para>'pcolor',{'on'|'off'} : if the field is scalar, a color plot of
+        its values is plotted</para>
+      </listitem>
+
+      <listitem>
+        <para>'quiver',{'on'|'off'} : if the field is vector, represent
+        arrows</para>
+      </listitem>
+
+      <listitem>
+        <para>'quiver_density',50 : density of arrows in quiver plot </para>
+      </listitem>
+
+      <listitem>
+        <para>'quiver_scale',1 : scaling of arrows (0=&gt;no scaling)</para>
+      </listitem>
+
+      <listitem>
+        <para>'mesh',{'off'|'on'} : show the mesh ?</para>
+      </listitem>
+
+      <listitem>
+        <para>'meshopts',{listl(0)} : list of options passed to gf_plot_slice
+        for the mesh </para>
+      </listitem>
+
+      <listitem>
+        <para>'deformed_mesh', {'off'|'on'} : shows the deformed mesh (only
+        when qdim == mdim)</para>
+      </listitem>
+
+      <listitem>
+        <para>'deformed_meshopts', {list(0)} : cell array of options passed to
+        gf_plot_slice for the deformed mesh</para>
+      </listitem>
+
+      <listitem>
+        <para>'deformation',[] : plots on the deformed object (only when qdim
+        == mdim)</para>
+      </listitem>
+
+      <listitem>
+        <para>'deformation_mf',[] : plots on the deformed object (only when
+        qdim == mdim)</para>
+      </listitem>
+
+      <listitem>
+        <para>'deformation_scale',0.1' : indicate the amplitude of the
+        deformation. Can be an absolute value if given as a number</para>
+      </listitem>
+
+      <listitem>
+        <para>'cvlst',[] : list of convexes to plot (empty=&gt;all
+        convexes)</para>
+      </listitem>
+
+      <listitem>
+        <para>'title',[] : set the title</para>
+      </listitem>
+
+      <listitem>
+        <para>'contour',[] : list of contour values</para>
+      </listitem>
+    </itemizedlist>
   </refsection>
 
   <refsection>

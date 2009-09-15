@@ -7,35 +7,157 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_model_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_model_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>Get information from a model object.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>M = gf_model_get(cmd, [, args])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>b = gf_model_get(mds,'is_complex') Return 0 is the model is
+        real, 1 if it is complex.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION M = gf_model_get(cmd, [, args])
-  </para>
-  <para>
-    Get information from a model object.
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>T = gf_model_get(mds,'tangent_matrix') Return the tangent matrix
+        stored in the model .</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_model_get(mds,'rhs') Return the right hand side of the
+        tangent problem.</para>
+      </listitem>
+
+      <listitem>
+        <para>z = gf_model_get(mds,'memsize') Return a rough approximation of
+        the amount of memory (in bytes) used by the model.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_model_get(mds,'listvar') print to the output the list of
+        variables and constants of the model.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_model_get(mds,'listbricks') print to the output the list of
+        bricks of the model.</para>
+      </listitem>
+
+      <listitem>
+        <para>V = gf_model_get(mds,'variable', string name[, int niter]) Gives
+        the value of a variable or data.</para>
+      </listitem>
+
+      <listitem>
+        <para>name = gf_model_get(mds,'mult varname Dirichlet', int ind_brick)
+        Gives the name of the multiplier variable for a Dirichlet brick. If
+        the brick is not a Dirichlet condition with multiplier brick, this
+        function has an undefined behavior</para>
+      </listitem>
+
+      <listitem>
+        <para>V = gf_model_get(mds,'from variables') Return the vector of all
+        the degrees of freedom of the model consisting of the concatenation of
+        the variables of the model (usefull to solve your problem with you own
+        solver).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_model_get(mds,'assembly'[, string option]) Assembly of the
+        tangent system taking into account the terms from all bricks.
+        <literal>option</literal>, if specified, should be 'build all', 'build
+        rhs' or 'build matrix'. The default is to build the whole tangent
+        linear system (matrix and rhs). This function is usefull to solve your
+        problem with you own solver.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_model_get(mds,'solve'[,...]) Run the standard getfem solver.
+        Note that you should be able to use your own solver if you want (it is
+        possible to obtain the tangent matrix and its right hand side with the
+        gf_model_get(mds,'tangent matrix') etc.).</para>
+
+        <para>Various options can be specified: </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>'noisy' or 'very noisy' the solver will display some
+            information showing the progress (residual values etc.).</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_iter', NIT set the maximum iterations numbers.</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_res', RES set the target residual value.</para>
+          </listitem>
+
+          <listitem>
+            <para>- 'lsolver', SOLVERNAME select explicitely the solver used
+            for the linear systems (the default value is 'auto', which lets
+            getfem choose itself). Possible values are 'superlu', 'mumps' (if
+            supported), 'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>V = gf_model_get(mds,'compute isotropic linearized Von Mises or
+        Tresca', string varname, string dataname_lambda, string dataname_mu,
+        MeshFem mf_vm[, string version]) Compute the Von-Mises stress or the
+        Tresca stress of a field (only valid for isotropic linearized
+        elasticity in 3D). `version` should be 'Von Mises' or 'Tresca' ('Von
+        Mises' is the default).</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_model">gf_model</link></member>
+
+      <member><link linkend="gf_model_set">gf_model_set</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

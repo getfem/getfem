@@ -7,65 +7,73 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mesh_im_set</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mesh_im_set</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General function for modifying mesh_im objects</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>[x] = gf_mesh_im_set(meshim MIM, operation [, args])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_mesh_im_set(mim,'integ',list(Integ im|int im_degree)[, vec
+        CVids]) Set the integration method. Assign an integration method to
+        all convexes whose #ids are listed in <literal>CVids</literal>. If
+        <literal>CVids</literal> is not given, the integration is assigned to
+        all convexes. It is possible to assign a specific integration method
+        with an integration method handle <literal>im</literal> obtained via
+        gf_integ('IM_SOMETHING'), or to let getfem choose a suitable
+        integration method with <literal>im_degree</literal> (choosen such
+        that polynomials of <emphasis>degree &lt;= im_degree</emphasis> are
+        exactly integrated. If <emphasis>im_degree=-1</emphasis>, then the
+        dummy integration method IM_NONE will be used.)</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION [x] = gf_mesh_im_set(meshim MIM, operation [, args])
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    General function for modifying mesh_im objects
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * gf_mesh_im_set(MIM,'('integ',{Integ im|int im_degree}[, ivec CVids])    Set    the integration method.     Assign an integration method to all convexes whose #ids are listed in    `CVids`. If `CVids` is not given, the integration is assigned to all convexes.    It is possible to assign a specific integration method with an integration    method handle `im` obtained via gf_integ('IM_SOMETHING'), or to let getfem    choose a suitable integration method with `im_degree` (choosen such that    polynomials of `degree <= im_degree` are exactly integrated. If    `im_degree=-1`, then the dummy integration method IM_NONE will be used.)
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    $Id: gf_mesh_im_set.cc 3008 2009-05-16 14:08:01Z renard $
-  </para>
-</refsection>
-<refsection>
-  <title>Examples</title>
-  <programlisting role="example"> 
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
   Add an example here
  </programlisting>
-</refsection>
-<refsection>
-  <title>See Also</title>
-  <simplelist type="inline">
-    <member><link linkend="???">???</link></member>
-  </simplelist>
-</refsection>
-<refsection>
-  <title>Authors</title>
-  <para>Y. Collette</para>
-</refsection>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_im_get">gf_mesh_im_get</link></member>
+
+      <member><link linkend="gf_mesh_im">gf_mesh_im</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
 </refentry>

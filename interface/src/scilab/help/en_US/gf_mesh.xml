@@ -7,50 +7,166 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mesh</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mesh</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General constructor for mesh object.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>M = gf_mesh([operation [, args]])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>General constructor for mesh object. Returns a getfem handle to the
+    newly created mesh object. Note that for recent (&gt; 6.0) versions of
+    matlab, you should replace the calls to 'gf_mesh' with 'gfMesh' (this will
+    instruct Matlab to consider the getfem mesh as a regular matlab object
+    that can be manipulated with get() and set() methods).</para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>M = gf_mesh('empty', int dim) Create a new empty mesh.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION M = gf_mesh([operation [, args]])
-  </para>
-  <para>
-    General constructor for mesh object. Returns a getfem handle to the
-  </para>
-  <para>
-    newly created mesh object. Note that for recent (> 6.0) versions of
-  </para>
-  <para>
-    matlab, you should replace the calls to 'gf_mesh' with 'gfMesh'
-  </para>
-  <para>
-    (this will instruct Matlab to consider the getfem mesh as a regular
-  </para>
-  <para>
-    matlab object that can be manipulated with get() and set() methods).
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>M = gf_mesh('cartesian', vec X[, vec Y[, vec Z,..]]) Build
+        quickly a regular mesh of quadrangles, cubes, etc.</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('triangles grid', vec X, vec Y) Build quickly a
+        regular mesh of triangles. This is a very limited and somehow
+        deprecated function (See also "gf_mesh('ptND')", "gf_mesh('regular
+        simplices')" and "gf_mesh('cartesian')").</para>
+      </listitem>
+
+      <listitem>
+        <para> M = gf_mesh('regular simplices', vec X[, vec Y[, vec
+        Z,...]]['degree', int k]['noised']) Mesh a n-dimensionnal
+        parallelepipeded with simplices (triangles, tetrahedrons etc) . The
+        optional degree may be used to build meshes with non linear geometric
+        transformations.</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('curved', Mesh m0, vec F) Build a curved
+        (n+1)-dimensions mesh from a n-dimensions mesh <literal>m0</literal>.
+        The points of the new mesh have one additional coordinate, given by
+        the vector <literal>F</literal>. This can be used to obtain meshes for
+        shells. <literal>m0</literal> may be a MeshFem object, in that case
+        its linked mesh will be used.</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('prismatic', Mesh m0, int NLAY) Extrude a prismatic
+        Mesh <literal>M</literal> from a Mesh <literal>m0</literal>. In the
+        additional dimension there are <literal>NLAY</literal> layers of
+        elements built from "0" to "1".</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('pt2D', mat P, vec T[, int n]) Build a mesh from a
+        2D triangulation. Each column of <literal>P</literal> contains a point
+        coordinate, and each column of <literal>T</literal> contains the point
+        indices of a triangle. <literal>n</literal> is optional and is a zone
+        number. If <literal>n</literal> is specified then only the zone number
+        <literal>n</literal> is converted (in that case, <literal>T</literal>
+        is expected to have 4 rows, the fourth containing these zone numbers).
+        Scilab Can be used to Convert a "pdetool" triangulation exported in
+        variables P and T into a GETFEM mesh.</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('ptND', mat P, mat T) Build a mesh from a
+        N-dimensional "triangulation". Similar function to 'pt2D', for
+        building simplexes meshes from a triangulation given in
+        <literal>T</literal>, and a list of points given in
+        <literal>P</literal>. The dimension of the mesh will be the number of
+        rows of <literal>P</literal>, and the dimension of the simplexes will
+        be the number of rows of <literal>T</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('load', string filename) Load a mesh from a GETFEM++
+        ascii mesh file. See also gf_mesh_get(M,'save',filename).</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('from string', string s) Load a mesh from a string
+        description.</para>
+
+        <para>For example, a string returned by
+        "gf_mesh_get(M,'char')".</para>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('import', string format, string filename) Import a
+        mesh. <literal>format</literal> may be: </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>'gmsh' for a mesh created with gmsh
+            &lt;http://www.geuz.org/gmsh&gt;</para>
+          </listitem>
+
+          <listitem>
+            <para>'gid' for a mesh created with GiD
+            &lt;http://gid.cimne.upc.es&gt;</para>
+          </listitem>
+
+          <listitem>
+            <para>'am_fmt' for a mesh created with emc2
+            &lt;http://pauillac.inria.fr/cdrom/www/emc2/fra.htm&gt;</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>M = gf_mesh('clone', Mesh m2) Create a copy of a mesh.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
+
+      <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

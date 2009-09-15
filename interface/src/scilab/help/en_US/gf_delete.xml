@@ -7,95 +7,78 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_delete</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_delete</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
-      <listitem>
-        <para></para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION gf_delete(I,[J,K,...])
-  </para>
-  <para>
-   
-  </para>
-  <para>
-      Delete an existing getfem object from memory (mesh, mesh_fem,
-  </para>
-  <para>
-      etc.). I should be a descriptor given by gf_mesh(),
-  </para>
-  <para>
-      gf_mesh_im(), gf_slice() etc.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-      Note that if another object uses I, then object I will be deleted only
-  </para>
-  <para>
-      when both have been asked for deletion.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-      Only objects listed in the output of gf_workspace('stats') can be
-  </para>
-  <para>
-      deleted (for example gf_fem objects cannot be destroyed).
-  </para>
-  <para>
-  
-  </para>
-  <para>
-      You may also use gf_workspace('clear all') to erase everything at
-  </para>
-  <para>
-      once.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-   SEE ALSO:
-  </para>
-  <para>
-      gf_workspace,gf_mesh, gf_mesh_fem.
-  </para>
-</refsection>
-<refsection>
-  <title>Examples</title>
-  <programlisting role="example"> 
+    <refpurpose>Delete an existing getfem object from memory</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>gf_delete(I,[J,K,...])  </synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>Delete an existing getfem object from memory (mesh, mesh_fem, etc.).
+    I should be a descriptor given by gf_mesh(), gf_mesh_im(), gf_slice()
+    etc.</para>
+
+    <para>Note that if another object uses I, then object I will be deleted
+    only when both have been asked for deletion.</para>
+
+    <para>Only objects listed in the output of gf_workspace('stats') can be
+    deleted (for example gf_fem objects cannot be destroyed).</para>
+
+    <para>You may also use gf_workspace('clear all') to erase everything at
+    once.</para>
+
+    <para></para>
+
+    <para>SEE ALSO:</para>
+
+    <para>gf_workspace,gf_mesh, gf_mesh_fem.</para>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
   Add an example here
  </programlisting>
-</refsection>
-<refsection>
-  <title>See Also</title>
-  <simplelist type="inline">
-    <member><link linkend="???">???</link></member>
-  </simplelist>
-</refsection>
-<refsection>
-  <title>Authors</title>
-  <para>Y. Collette</para>
-</refsection>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_workspace">gf_workspace</link></member>
+
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
+
+      <member><link linkend="gf_mesh_fem">gf_mesh_fem</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
 </refentry>

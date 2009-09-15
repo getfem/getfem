@@ -7,59 +7,105 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mesh_fem</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mesh_fem</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General constructor for mesh_fem objects (Finite Element basis
+    functions on a mesh).</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>MF = gf_mesh_fem(...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>gf_mesh_fem('load', string fname[, Mesh m]) Load a MeshFem from
+        a file. If the mesh <literal>m</literal> is not supplied (this kind of
+        file does not store the mesh), then it is read from the file
+        <literal>fname</literal> and its descriptor is returned as the second
+        output argument.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION MF = gf_mesh_fem(...)
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    General constructor for mesh_fem objects (Finite Element basis
-  </para>
-  <para>
-    functions on a mesh).
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    * gf_mesh_fem(mesh M [, int Qdim=1])
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    Return a getfem handle to the newly created mesh_fem object.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * gf_mesh_fem('load', string fname[, Mesh m])      Load a MeshFem from a file.     If the mesh `m` is not supplied (this kind of file does not store the mesh),    then it is read from the file `fname` and its descriptor is returned as the    second output argument.
-  </para>
-  <para>
-  * gf_mesh_fem('from_string', string [, mesh M])      Create a MeshFem object    from its string description.     See also gf_mesh_fem_get(MF,'('char')
-  </para>
+
+      <listitem>
+        <para>gf_mesh_fem('from string', string [, mesh M]) Create a MeshFem
+        object from its string description. See also
+        gf_mesh_fem_get(mf,'char')</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem('clone', MeshFem mf2) Create a copy of a
+        MeshFem.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem('sum', MeshFem mf1, MeshFem mf2[, MeshFem mf3[,
+        ...]]) Create a MeshFem that combines two (or more) MeshFem's. All
+        MeshFem must share the same mesh (see gf_fem('interpolated_fem') to
+        map a MeshFem onto another). After that, you should not modify the FEM
+        of <literal>mf1</literal>, <literal>mf2</literal> etc.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem('levelset', MeshFem mf, LevelSet ls) Create a
+        MeshFem that is conformal to implicit surfaces defined by
+        LevelSet's.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem('partial', MeshFem mf, vec DOFs[,vec RCVs]) Build a
+        restricted MeshFem by keeping only a subset of the degrees of freedom
+        of <literal>mf</literal>. If <literal>RCVs</literal> is given, no FEM
+        will be put on the convexes listed in <literal>RCVs</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_fem('.mesh', Mesh m[, int Qdim=1]) Build a new MeshFem
+        object. The <literal>Qdim</literal> parameter is optional.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_fem_set">gf_mesh_fem_set</link></member>
+
+      <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

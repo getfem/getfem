@@ -7,35 +7,61 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_cvstruct_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv xml:id="???">
+    <refname>gf_cvstruct_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
-      <listitem>
-        <para></para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_cvstruct_get(cs, ...)
-  </para>
-  <para>
-      General function for querying information about convex_structure objects.
-  </para>
-  <para>
-  
-  </para>
+    <refpurpose>General function for querying information about
+    convex_structure objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_cvstruct_get(cs, ...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>n = gf_cvstruct_get(cs,'nbpts') Get the number of points of the
+    convex structure.</para>
+
+    <para>d = gf_cvstruct_get(cs,'dim') Get the dimension of the convex
+    structure</para>
+
+    <para>cs = gf_cvstruct_get(cs,'basic structure') Get the simplest convex
+    structure. For example, the 'basic structure' of the 6-node triangle, is
+    the canonical 3-noded triangle.</para>
+
+    <para>I = gf_cvstruct_get(cs,'facepts',int F) Return the list of point
+    indices for the face `F`.</para>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"></programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???"></link></member>
+    </simplelist>
+  </refsection>
+</refentry>

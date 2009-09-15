@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_util" xml:lang="en"
-          xmlns="http://docbook.org/ns/docbook"
+<refentry version="5.0-subset Scilab" xml:id="gf_plot_mesh_quality"
+          xml:lang="en" xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
           xmlns:svg="http://www.w3.org/2000/svg"
@@ -8,7 +8,7 @@
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv xml:id="???">
-    <refname>gf_util</refname>
+    <refname>gf_plot_meshquality</refname>
 
     <refpurpose></refpurpose>
   </refnamediv>

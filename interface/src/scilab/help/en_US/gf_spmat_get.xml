@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_spmat_get" xml:lang="en"
+<refentry version="5.0-subset Scilab" xml:id="gf_spmat_set" xml:lang="en"
           xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
@@ -7,41 +7,146 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_spmat_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_spmat_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General getfem sparse matrix inquiry function.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>[...]=gf_spmat_get(M, args)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para> General getfem sparse matrix inquiry function. M might also be a
+    native matlab sparse matrix.</para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>n = gf_spmat_get(M,'nnz') Return the number of non-null values
+        stored in the sparse matrix</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION [...]=gf_spmat_get(M, args)
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    General getfem sparse matrix inquiry function. M might also be a
-  </para>
-  <para>
-    native matlab sparse matrix.
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>Sm = gf_spmat_get(M,'full'[, list I[, list J]]) Return a full
+        (sub-)matrix. The optional arguments <literal>I</literal> and
+        <literal>J</literal>, are the sub-intervals for the rows and columns
+        that are to be extracted.</para>
+      </listitem>
+
+      <listitem>
+        <para>MV = gf_spmat_get(M,'mult',vec V) Product of the sparse matrix
+        <literal>M</literal> with a vector <literal>V</literal>. For
+        matrix-matrix multiplications, see gf_spmat('mult').</para>
+      </listitem>
+
+      <listitem>
+        <para>MtV = gf_spmat_get(M,'tmult',vec V) Product of
+        <literal>M</literal> transposed (conjugated if M is complex) with the
+        vector V.</para>
+      </listitem>
+
+      <listitem>
+        <para>D = gf_spmat_get(M,'diag'[, list E]) Return the diagonal of
+        <literal>M</literal> as a vector. If <literal>E</literal> is used,
+        return the sub-diagonals whose ranks are given in
+        <literal>E</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>s = gf_spmat_get(M,'storage') Return the storage type currently
+        used for the matrix. The storage is returned as a string, either 'CSC'
+        or 'WSC'.</para>
+      </listitem>
+
+      <listitem>
+        <para>list(ni,nj) = gf_spmat_get(M,'size') Return a vector where
+        <literal>ni</literal> and <literal>nj</literal> are the dimensions of
+        the matrix.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = gf_spmat_get(M,'is_complex') Return 1 if the matrix contains
+        complex values.</para>
+      </listitem>
+
+      <listitem>
+        <para>list(JC, IR) = gf_spmat_get(M,'csc_ind') Return the two usual
+        index arrays of CSC storage. If <literal>M</literal> is not stored as
+        a CSC matrix, it is converted into CSC.</para>
+      </listitem>
+
+      <listitem>
+        <para>V = gf_spmat_get(M,'csc_val') Return the array of values of all
+        non-zero entries of <literal>M</literal>. If <literal>M</literal> is
+        not stored as a CSC matrix, it is converted into CSC.</para>
+      </listitem>
+
+      <listitem>
+        <para>list(N, U0) = gf_spmat_get(M,'dirichlet nullspace',vec R) Solve
+        the dirichlet conditions <emphasis>M.U=R</emphasis>. A solution
+        <literal>U0</literal> which has a minimum L2-norm is returned, with a
+        sparse matrix <literal>N</literal> containing an orthogonal basis of
+        the kernel of the (assembled) constraints matrix <literal>M</literal>
+        (hence, the PDE linear system should be solved on this subspace):
+        </para>
+
+        <para>the initial problem <emphasis>K.U = B</emphasis> with
+        constraints <emphasis>M.U = R</emphasis> is replaced by
+        <emphasis>(N'.K.N).UU = N'.B</emphasis> with <emphasis>U = N.UU +
+        U0</emphasis></para>
+      </listitem>
+
+      <listitem>
+        <para>s = gf_spmat_get(M,'info') Return a string contains a short
+        summary on the sparse matrix (dimensions, filling, ...).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_spmat_get(M,'save',string format, string filename) Export the
+        sparse matrix. the format of the file may be 'hb' for Harwell-Boeing,
+        or 'mm' for Matrix-Market.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_spmat">gf_spmat</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

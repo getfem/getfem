@@ -7,38 +7,181 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mdbrick_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mdbrick_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>Get information from a brick, or launch the
+    solver.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>M = gf_mdbrick_get(cmd, [, args])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>n = gf_mdbrick_get(b,'nbdof') Get the total number of dof of the
+        current problem. This is the sum of the brick specific dof plus the
+        dof of the parent bricks.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION M = gf_mdbrick_get(cmd, [, args])
-  </para>
-  <para>
-    Get information from a brick, or launch the solver.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * n = gf_mdbrick_get(b,('nbdof')    Get the total number of dof of the current    problem.     This is the sum of the brick specific dof plus the dof of the parent bricks.
-  </para>
+
+      <listitem>
+        <para>d = gf_mdbrick_get(b,'dim') Get the dimension of the main mesh
+        (2 for a 2D mesh, etc).</para>
+      </listitem>
+
+      <listitem>
+        <para>n = gf_mdbrick_get(b,'nb_constraints') Get the total number of
+        dof constraints of the current problem. This is the sum of the brick
+        specific dof constraints plus the dof constraints of the parent
+        bricks.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = gf_mdbrick_get(b,'is_linear') Return true if the problem is
+        linear.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = gf_mdbrick_get(b,'is_symmetric') Return true if the problem
+        is symmetric.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = gf_mdbrick_get(b,'is_coercive') Return true if the problem
+        is coercive.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = gf_mdbrick_get(b,'is_complex') Return true if the problem
+        uses complex numbers.</para>
+      </listitem>
+
+      <listitem>
+        <para>I = gf_mdbrick_get(b,'mixed_variables') Identify the indices of
+        mixed variables (typically the pressure, etc.) in the tangent
+        matrix.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdbrick_get(b,'subclass') Get the typename of the
+        brick.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdbrick_get(b,'param_list') Get the list of parameters names.
+        Each brick embeds a number of parameters (the Lame coefficients for
+        the linearized elasticity brick, the wave number for the Helmholtz
+        brick,...), described as a (scalar, or vector, tensor etc) field on a
+        mesh_fem. You can read/change the parameter values with
+        gf_mdbrick_get(b,'param') and gf_mdbrick_set(b,'param').</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdbrick_get(b,'param',string parameter_name) Get the
+        parameter value. When the parameter has been assigned a specific
+        MeshFem, it is returned as a large array (the last dimension being the
+        MeshFem dof). When no MeshFem has been assigned, the parameter is
+        considered to be constant over the mesh.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mdbrick_get(b,'solve',MdState mds[,...]) Run the standard
+        getfem solver. Note that you should be able to use your own solver if
+        you want (it is possible to obtain the tangent matrix and its right
+        hand side with the gf_mdstate_get(mds,'tangent matrix') etc.).</para>
+
+        <para>Various options can be specified:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>'noisy' or 'very noisy' the solver will display some
+            information showing the progress (residual values etc.).</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_iter', <literal>NIT</literal> set the maximum
+            iterations numbers.</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_res', <literal>RES</literal> set the target residual
+            value.</para>
+          </listitem>
+
+          <listitem>
+            <para>'lsolver', <literal>SOLVERNAME</literal> select explicitely
+            the solver used for the linear systems (the default value is
+            'auto', which lets getfem choose itself). Possible values are
+            'superlu', 'mumps' (if supported), 'cg/ildlt', 'gmres/ilu' and
+            'gmres/ilut'.</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>VM = gf_mdbrick_get(b,'von mises',MdState mds, MeshFem mfvm)
+        Compute the Von Mises stress on the MeshFem <literal>mfvm</literal>.
+        Only available on bricks where it has a meaning: linearized
+        elasticity, plasticity, nonlinear elasticity. Note that in 2D it is
+        not the "real" Von Mises (which should take into account the 'plane
+        stress' or 'plane strain' aspect), but a pure 2D Von Mises. </para>
+      </listitem>
+
+      <listitem>
+        <para>T = gf_mdbrick_get(b,'tresca',MdState mds, MeshFem mft) Compute
+        the Tresca stress criterion on the MeshFem <literal>mft</literal>.
+        Only available on bricks where it has a meaning: linearized
+        elasticity, plasticity, nonlinear elasticity.</para>
+      </listitem>
+
+      <listitem>
+        <para>z = gf_mdbrick_get(b,'memsize') Return the amount of memory (in
+        bytes) used by the model brick.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_slice_get">gf_mdbrick_set</link></member>
+
+      <member><link linkend="gf_mdbrick">gf_mdbrick</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

@@ -7,62 +7,80 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_model</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_model</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General constructor for model objects. Return a getfem handle
+    to the newly created object.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>M = gf_model('complex' | 'real')</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>General constructor for model objects. Return a getfem handle to the
+    newly created object.</para>
+
+    <para>"Model" variables store the variables and the state data and the
+    description of a model. This includes the global tangent matrix, the right
+    hand side and the constraints. </para>
+
+    <para>There are two kinds of models, the "real" and the "complex" models.
+    "Model" object is the evolution for Getfem++ 4.0 of the "MdState" object.
+    </para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>MDS = gf_model('real') Build a model for real unknowns.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION M = gf_model('complex' | 'real')
-  </para>
-  <para>
-    General constructor for model objects. Return a getfem handle to the newly
-  </para>
-  <para>
-    created object.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    ``Model'' variables store the variables and the state data and the
-  </para>
-  <para>
-    description of a model. This includes the global tangent matrix, the
-  </para>
-  <para>
-    right hand side and the constraints. There are two kinds of models, the
-  </para>
-  <para>
-    ``real'' and the ``complex'' models.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-    ``Model'' object is the evolution for Getfem++ 4.0 of the "MdState"
-  </para>
-  <para>
-    object.
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>MDS = gf_model('complex') Build a model for complex
+        unknowns.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_model_set">gf_model_set</link></member>
+
+      <member><link linkend="gf_model_get">gf_model_get</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

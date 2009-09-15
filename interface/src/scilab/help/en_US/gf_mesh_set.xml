@@ -7,38 +7,178 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_mesh_set</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_mesh_set</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General function for modification of a mesh
+    object.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>[x] = gf_mesh_set(mesh M, operation [, args])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>PIDs = gf_mesh_set(M,'pts',mat PTS) Replace the coordinates of
+        the mesh points with those given in <literal>PTS</literal>.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION [x] = gf_mesh_set(mesh M, operation [, args])
-  </para>
-  <para>
-  
-  </para>
-  <para>
-      General function for modification of a mesh object.
-  </para>
-  <para>
-  
-  </para>
+
+      <listitem>
+        <para>PIDs = gf_mesh_set(M,'add point',mat PTS) Insert new points in
+        the mesh and return their #ids. <literal>PTS</literal> should be an n
+        x m matrix , where <literal>n</literal> is the mesh dimension, and
+        <literal>m</literal> is the number of points that will be added to the
+        mesh. On output, <literal>PIDs</literal> contains the point #ids of
+        these new points.</para>
+
+        <para>Remark: if some points are already part of the mesh (with a
+        small tolerance of approximately 1e-8), they won't be inserted again,
+        and <literal>PIDs</literal> will contain the previously assigned #ids
+        of these points.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'del point',vec PIDs) Removes one or more points
+        from the mesh. <literal>PIDs</literal> should contain the point #ids,
+        such as the one returned by the 'add point' command.</para>
+      </listitem>
+
+      <listitem>
+        <para>CVIDs = gf_mesh_set(M,'add convex',GeoTrans GT, mat PTS) Add a
+        new convex into the mesh. The convex structure (triangle, prism,...)
+        is given by <phrase>GT</phrase> (obtained with gf_geotrans('...')),
+        and its points are given by the columns of <literal>PTS</literal>. On
+        return, <literal>CVIDs</literal> contains the convex #ids.
+        <literal>PTS</literal> might be a 3-dimensional array in order to
+        insert more than one convex (or a two dimensional array correctly
+        shaped according to Fortran ordering).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'del convex',mat CVIDs) Remove one or more
+        convexes from the mesh. <literal>CVIDs</literal> should contain the
+        convexes #ids, such as the ones returned by the 'add convex'
+        command.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'del convex of dim',vec DIMs) Remove all convexes
+        of dimension listed in <literal>DIMs</literal>. </para>
+
+        <para>For example; gf_mesh_set(M,'del convex of dim', [1,2]) remove
+        all line segments, triangles and quadrangles.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'translate',vec V) Translates each point of the
+        mesh from <literal>V</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'transform',mat T) Applies the matrix
+        <literal>T</literal> to each point of the mesh. Note that
+        <literal>T</literal> is not required to be a N x N matrix (with
+        <emphasis>N = gf_mesh_get(M,'dim')</emphasis>). Hence it is possible
+        to transform a 2D mesh into a 3D one (and reciprocally).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'region',int rnum, mat CVFIDs) Assigns the region
+        number <literal>rnum</literal> to the convex faces stored in each
+        column of the matrix <literal>CVFIDs</literal>. The first row of
+        <literal>CVFIDs</literal> contains a convex #ids, and the second row
+        contains a face number in the convex (or 0 for the whole convex
+        (regions are usually used to store a list of convex faces, but you may
+        also use them to store a list of convexes).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'region intersect',int r1, int r2) Replace the
+        region number <literal>r1</literal> with its intersection with region
+        number <literal>r2</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'region merge',int r1, int r2) Merge region number
+        <literal>r2</literal> into region number <literal>r1</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'region substract',int r1, int r2) Replace the
+        region number <literal>r1</literal> with its difference with region
+        number <literal>r2</literal>.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'delete region',vec RIDs) Remove the regions whose
+        #ids are listed in <literal>RIDs</literal></para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'merge',Mesh m2) Merge with the Mesh
+        <literal>m2</literal>. Overlapping points won't be duplicated. If
+        <literal>m2</literal> is a MeshFem object, its linked mesh will be
+        used.</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'optimize structure') Reset point and convex
+        numbering. After optimisation, the points (resp. convexes) will be
+        consecutively numbered from 1 to gf_mesh_get(M,'max pid') (resp.
+        gf_mesh_get(M,'max cvid')).</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_set(M,'refine'[, vec CVIDs]) Use a Bank strategy for
+        mesh refinement. If <literal>CVIDs</literal> is not given, the whole
+        mesh is refined. Note that the regions, and the finite element methods
+        and integration methods of the MeshFem and MeshIm objects linked to
+        this mesh will be automagically refined.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
+
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

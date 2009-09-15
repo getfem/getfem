@@ -7,41 +7,106 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_geotrans_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_geotrans_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>General function for querying information about geometric
+    transformations objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_geotrans_get(GT, ...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>d = gf_geotrans_get(GT,'dim') Get the dimension of the GeoTrans.
+        This is the dimension of the source space, i.e. the dimension of the
+        reference convex.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_geotrans_get(GT, ...)
-  </para>
-  <para>
-      General function for querying information about geometric transformations
-  </para>
-  <para>
-      objects.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * d = gf_geotrans_get(CVS,('dim')    Get the dimension of the GeoTrans.     This is the dimension of the source space, i.e. the dimension of the    reference convex.
-  </para>
+
+      <listitem>
+        <para>b = gf_geotrans_get(GT,'is_linear') Return 0 if the GeoTrans is
+        not linear.</para>
+      </listitem>
+
+      <listitem>
+        <para>n = gf_geotrans_get(GT,'nbpts') Return the number of points of
+        the GeoTrans.</para>
+      </listitem>
+
+      <listitem>
+        <para>P = gf_geotrans_get(GT,'pts') Return the reference convex points
+        of the GeoTrans. The points are stored in the columns of the output
+        matrix.</para>
+      </listitem>
+
+      <listitem>
+        <para>N = gf_geotrans_get(GT,'normals') Get the normals for each face
+        of the reference convex of the GeoTrans. The normals are stored in the
+        columns of the output matrix.</para>
+      </listitem>
+
+      <listitem>
+        <para>Po = gf_geotrans_get(GT,'poly_str') Return the GeoTrans
+        expressed as polynomials The result is expressed as a list of
+        strings.</para>
+      </listitem>
+
+      <listitem>
+        <para>Pt = gf_geotrans_get(GT,'transform',mat G, mat Pr) Apply the
+        GeoTrans to a set of points. <literal>G</literal> is the set of
+        vertices of the real convex, <literal>Pr</literal> is the set of
+        points (in the reference convex) that are to be transformed. The
+        corresponding set of points in the real convex is returned.</para>
+      </listitem>
+
+      <listitem>
+        <para>s = gf_geotrans_get(GT,'char') Output a (unique) string
+        representation of the GeoTrans. This can be used to perform
+        comparisons between two different GeoTrans objects.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???">???</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

@@ -7,62 +7,85 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_geotrans</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_geotrans</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose>perform a geometric transformation</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_geotrans(name)  </synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>The name argument contains the specification of the geometric
+    transformation as a string, which may be: </para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>GT_PK(n,k) Transformation on simplexes, dim
+        <literal>n</literal>, degree <literal>k</literal>. </para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_geotrans(name)
-  </para>
-  <para>
-  The name argument contains the specification of the geometric
- transformation as a string, which may be:
 
-  * GT_PK(n,k)
-    Transformation on simplexes, dim `n`, degree `k`.
- * GT_QK(n,k)
-    Transformation on parallelepipeds, dim `n`, degree `k`.
- * GT_PRISM(n,k)
-    Transformation on prisms, dim `n`, degree `k`.
- * GT_PRODUCT(A,B)
-    Tensorial product of two transformations.
- * GT_LINEAR_PRODUCT(A,B)
-    Linear tensorial product of two transformations
-  </para>
-</refsection>
-<refsection>
-  <title>Examples</title>
-  <programlisting role="example"> 
+      <listitem>
+        <para>GT_QK(n,k) Transformation on parallelepipeds, dim
+        <literal>n</literal>, degree <literal>k</literal>. </para>
+      </listitem>
+
+      <listitem>
+        <para>GT_PRISM(n,k) Transformation on prisms, dim
+        <literal>n</literal>, degree <literal>k</literal>. </para>
+      </listitem>
+
+      <listitem>
+        <para>GT_PRODUCT(A,B) Tensorial product of two transformations.
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>GT_LINEAR_PRODUCT(A,B) Linear tensorial product of two
+        transformations</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
   Add an example here
  </programlisting>
-</refsection>
-<refsection>
-  <title>See Also</title>
-  <simplelist type="inline">
-    <member><link linkend="???">???</link></member>
-  </simplelist>
-</refsection>
-<refsection>
-  <title>Authors</title>
-  <para>Y. Collette</para>
-</refsection>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="???">???</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
 </refentry>
