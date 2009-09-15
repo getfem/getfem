@@ -197,10 +197,10 @@ static void sol_ref_infinite_plane(scalar_type lambda, scalar_type mu,
 				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
     }
   } else assert(0);
-  if (isnan(U[0]))
+  if (std::isnan(U[0]))
     cerr << "raaah not a number ...\n";
-  assert(!isnan(U[0]));
-  assert(!isnan(U[1]));
+  assert(!std::isnan(U[0]));
+  assert(!std::isnan(U[1]));
 }
 
 
