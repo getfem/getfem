@@ -5,13 +5,19 @@ global gdebug;
 // ONLY FOR EXPRESSIONS
 //x = evalin('caller',sx, '[''catched'']');
 ierr = execstr(sx, 'errcatch');
+[str,n,line,func]=lasterror();
 [LASTMSG, LASTID] = lasterror();
 if (~ierr) then
   if (gdebug)      
     disp('Error triggering test failed: ' + sx);
+    disp('error: ' + str);
+    disp(sprintf('error %d in %s at line %d\n', n, func, line));
     pause;
   else
-    error(sprintf('Error triggering test failed: %s', sx));
+    disp('Error triggering test failed: ' + sx);
+    disp('error: ' + str);
+    disp(sprintf('error %d in %s at line %d\n', n, func, line));
+    error('');
   end
 end
 endfunction
