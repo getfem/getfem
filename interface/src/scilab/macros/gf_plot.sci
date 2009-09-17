@@ -4,29 +4,30 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 //
 // The options are specified as pairs of 'option name'/'option value'
 //  
-//  'zplot',{'off'|'on'}       : only for qdim=1, mdim=2
-//  'norm', {'off'|'on'}       : if qdim >= 2, color-plot the norm of the field
-//  'dir',[]	              : or the scalar product of the field with 'dir' 
-//                               (can be a vector, or 'x', 'y' etc..)
+//  'zplot',{'off'|'on'}           : only for qdim=1, mdim=2
+//  'norm', {'off'|'on'}           : if qdim >= 2, color-plot the norm of the field
+//  'dir',[]	                      : or the scalar product of the field with 'dir' 
+//                                   (can be a vector, or 'x', 'y' etc..)
 //  'refine',8		      : nb of refinments for curved edges and surface plots
-//  'interpolated',{'off'|'on'}: if triangular patch are interpolated
-//  'pcolor',{'on'|'off'}      : if the field is scalar, a color plot of its values is plotted
-//  'quiver',{'on'|'off'}      : if the field is vector, represent arrows 	       
-//  'quiver_density',50        : density of arrows in quiver plot
-//  'quiver_scale',1           : scaling of arrows (0=>no scaling)
-//  'mesh',{'off'|'on'}	      : show the mesh ?
-//  'meshopts',{cell(0)}	         : cell array of options passed to gf_plot_slice for the mesh 
-//  'deformed_mesh', {'off'|'on'} : shows the deformed mesh (only when qdim == mdim)
-//  'deformed_meshopts', {cell(0)}: cell array of options passed to gf_plot_slice 
-//                                  for the deformed mesh 
-//  'deformation',[]	      : plots on the deformed object (only when qdim == mdim)
-//  'deformation_mf',[]        : plots on the deformed object (only when qdim == mdim)
-//  'deformation_scale',0.1'  : indicate the amplitude of the deformation. Can be 
-//                               an absolute value if given as a number
-//  'cvlst',[]		      : list of convexes to plot (empty=>all convexes)
-//  'title',[]                 : set the title
-//  'contour',[]               : list of contour values
-////////////////////////
+//  'interpolated',{'off'|'on'}    : if triangular patch are interpolated
+//  'pcolor',{'on'|'off'}          : if the field is scalar, a color plot of its values is plotted
+//  'quiver',{'on'|'off'}          : if the field is vector, represent arrows 	       
+//  'quiver_density',50            : density of arrows in quiver plot
+//  'quiver_scale',1               : scaling of arrows (0=>no scaling)
+//  'mesh',{'off'|'on'}	           : show the mesh ?
+//  'meshopts',{cell(0)}	          : cell array of options passed to gf_plot_slice for the mesh 
+//  'deformed_mesh', {'off'|'on'}  : shows the deformed mesh (only when qdim == mdim)
+//  'deformed_meshopts', {cell(0)} : cell array of options passed to gf_plot_slice 
+//                                   for the deformed mesh 
+//  'deformation',[]	              : plots on the deformed object (only when qdim == mdim)
+//  'deformation_mf',[]            : plots on the deformed object (only when qdim == mdim)
+//  'deformation_scale',0.1'       : indicate the amplitude of the deformation. Can be 
+//                                   an absolute value if given as a number
+//  'cvlst',[]		                   : list of convexes to plot (empty=>all convexes)
+//  'title',[]                     : set the title
+//  'contour',[]                   : list of contour values
+
+printf('DEBUG: in gf_plot\n');
 
 hsurf    = [];
 hcontour = list();
@@ -34,18 +35,23 @@ hquiver  = [];
 hmesh    = [];
 hdefmesh = [];
 
-opts = build_options_list(varargin);
+opts = build_options_list(varargin(:));
 
 try 
   gf_workspace('push');
   [hsurf, hcontour, hquiver, hmesh, hdefmesh] = gf_plot_aux(mf,U,opts);
 catch
-  disp('error in gf_plot : ' + lasterror());
+  [str,n,line,func]=lasterror();
+  disp('error in gf_plot: ' + str);
+  disp(sprintf('error %d in %s at line %d\n', n, func, line));
+  error('');
 end
 gf_workspace('pop');
 endfunction
 
 function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,opts)
+
+printf('DEBUG: in gf_plot_aux\n');
 
 [nargout,nargin] = argn();
 
@@ -60,11 +66,15 @@ hmesh    = [];
 hdefmesh = [];
   
 try
-  mf   = list(mf);
+//YC: Do we need to convert a getfem object into a list ?
+//mf   = list(mf);
   qdim = gf_mesh_fem_get(mf, 'qdim');
   mdim = gf_mesh_get(mf, 'dim'); mdim3=mdim*3;
 catch
-  error('invalid mesh_fem ? -- ' + lasterror());
+  [str,n,line,func]=lasterror();
+  disp('invalid mesh_fem: ' + str);
+  disp(sprintf('error %d in %s at line %d\n', n, func, line));
+  error('');
 end
 
 if (mdim == 1) then
@@ -168,19 +178,25 @@ try
     sl = gf_slice(list('none'),gf_mesh_fem_get(mf,'linked mesh'),opt_refine,opt_cvlst);
   end
 catch
-  error('can''t build slice : ' + lasterror());
+  [str,n,line,func]=lasterror();
+  disp('can''t build slice: ' + str);
+  disp(sprintf('error %d in %s at line %d\n', n, func, line));
+  error('');
 end
 
 try
   Usl = gf_compute(mf,U,'interpolate on',sl);
 catch
-  error('can''t interpolate on slice : ' + lasterror());
+  [str,n,line,func]=lasterror();
+  disp('can''t interpolate on slice: ' + str);
+  disp(sprintf('error %d in %s at line %d\n', n, func, line));
+  error('');
 end
 Psl = gf_slice_get(sl,'pts');
 
 // plot the original mesh
 if (ison(opt_mesh)) then
-  hmesh = list(gf_plot_slice(sl,'mesh','on',opt_meshopts(:)));
+  hmesh = list(gf_plot_slice(sl,'mesh','on',opt_meshopts(:))); // YC: ??
 end
 
 // apply the optional deformation
@@ -222,7 +238,7 @@ end
 
 // plot the deformed mesh
 if (ison(opt_deformed_mesh)) then
-  hdefmesh = list(gf_plot_slice(sl,'mesh','on', opt_deformed_meshopts(:)));
+  hdefmesh = list(gf_plot_slice(sl,'mesh','on', opt_deformed_meshopts(:))); // YC: ??
 end
 
 if (is_scalarplot) then

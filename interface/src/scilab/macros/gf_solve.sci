@@ -6,12 +6,7 @@ function [varargout]=gf_solve(varargin)
 
 if (nargin==0) then error('not enough input arguments'); end;
 
-// YC ajouter une fonction qui transforme varargin en plist
-// Store all the options of gf_plot_1D in a parameter list
-pde = init_param();
-for i=2:floor((length(varargin(1:$))-1)/2)
-  [pde,err] = add_param(pde,varargin(2*(i-1)+1),varargin(2*(i-1)+2));
-end
+pdf = build_options_list(varargin(:));
 
 if isempty(pde('verbosity')) then
   pde('verbosity') = 0;

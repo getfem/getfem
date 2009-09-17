@@ -30,13 +30,15 @@ function [hmesh,hbound,hfill,hvert,hconv,hdof]=gf_plot_mesh(M, varargin)
 
 //   A. Huard, Y. Renard, J. Pommier 
 
+printf('DEBUG: in gf_plot_mesh\n');
+
 [nargout,nargin] = argn();
 
 if nargin<1 then
   error('Too few input arguments')
 end
 
-opts = build_options_list(varargin);
+opts = build_options_list(varargin(:));
 
 hmesh  = [];
 hbound = [];
@@ -171,31 +173,38 @@ end
 cax = gcf();
 
 disp('plotting mesh...');
+
 if (mdim <= 2) then
   if (ison(opt_edges)) then
     plot(X, Y);
     hmesh = gce();
-    hmesh.children.thickness = opt_edges_width;
-    hmesh.children.line_style = opt_edges_color;
+    hmesh.children(:).thickness = opt_edges_width;
+    hmesh.children(:).line_style = 0; // Continous lines
+    hmesh.children(:).foreground = opt_edges_color;
   end
   for bnum=1:length(opt_boundaries),
     plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
     hbound(bnum) = gce();
-    hbound(bnum).children.thickness  = 2;
-    hbound(bnum).children.line_style = 5; // Red
+    hbound(bnum).children(:).thickness  = 2;
+    hbound(bnum).children(:).line_style = 0; // Continous lines
+    hbound(bnum).children(:).foreground = 5; // red
   end
   if (ison(opt_vertices)) then
-    // YC: PXY(1,PID) can be a vector -> add a loop
-    xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(double(PID'))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
-    hvert = gce();
-    hvert.alignment = 'center';
+    for i=1:length(PID)
+      printf("print %s at %d %d\n",string(double(PID(i))),PXY(1,PID(i))+ecart(1),PXY(1,PID(i))+ecart(1));
+      xstring(PXY(1,PID(i))+ecart(1), PXY(2,PID(i))+ecart(2), string(double(PID(i)))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
+      hvert = gce();
+      hvert.alignment = 'center';
+    end
   end
   if (ison(opt_convexes)) then
-    xstring(cv_center(1,:), cv_center(2,:), string(double(cvlst'))); // 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [.7 0 0]
-    hconv = gce();
-    hconv.alignment = 'center';
-    hconv.font_foreground = 5; // Red
-  end;
+    for i=1:size(cv_center,2)
+      xstring(cv_center(1,i), cv_center(2,i), string(double(cvlst(i)))); // 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [.7 0 0]
+      hconv = gce();
+      hconv.alignment = 'center';
+      hconv.font_foreground = 5; // Red
+    end
+  end
   if (ison(opt_dof)) then
     hdof = zeros(length(dofid),1);
     for i=1:length(dofid),
@@ -214,36 +223,44 @@ else
   if (ison(opt_edges)) then
     plot3d(X, Y, Z); // 'Color',opt_edges_color,'LineWidth',opt_edges_width
     hmesh = gce();
-    hmesh.children.thickness  = opt_edges_width;
-    hmesh.children.line_style = opt_edges_color; 
+    hmesh.children(:).thickness  = opt_edges_width;
+    hmesh.children(:).line_style = 0; // Continuous line
+    hmesh.children(:).foreground = opt_edges_color; 
   end
   for bnum=1:length(opt_boundaries),
     plot3d(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2), bedge(bnum)(:,:,3)); // 'Color','red','LineWidth',2);
     hbound(bnum) = gce();
-    hbound(bnum).children.thickness  = 2;
-    hbound(bnum).children.line_style = 5; // Red
+    hbound(bnum).children(:).thickness  = 2;
+    hbound(bnum).children(:).line_style = 0; // Continuous line
+    hbound(bnum).children(:).foreground = 5; // Red
   end
   if (ison(opt_vertices)) then
-    xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(PID')); // 'HorizontalAlignment','center','VerticalAlignment','middle','Color', [.0 0 0]
-    hvert = gce();
-    hvert.data = [hvert.data PXY(3,PID)+ecart(3)]; // We add the 3rd component
-    hvert.alignment = 'center';
-    hvert.font_foreground = 1; // Black
-  end;
+    for i=1:length(PID)
+      xstring(PXY(1,PID(i))+ecart(1), PXY(2,PID(i))+ecart(2), string(PID(i))); // 'HorizontalAlignment','center','VerticalAlignment','middle','Color', [.0 0 0]
+      hvert = gce();
+      hvert.data = [hvert.data PXY(3,PID(i))+ecart(3)]; // We add the 3rd component
+      hvert.alignment = 'center';
+      hvert.font_foreground = 1; // Black
+    end
+  end
   if (ison(opt_convexes)) then
-    xstring(cv_center(1,:), cv_center(2,:), string(cvlst')); 'HorizontalAlignment','center','VerticalAlignment','middle','Color', [.7 0 0]
-    hconv = gce();
-    hconv.data = [hconv.data cv_center(3,:)]; // We add the 3rd component
-    hconv.alignment = 'center';
-    hconv.font_foreground = 5; // Red
-  end;
+    for i=1:size(cv_center,2)
+      xstring(cv_center(1,i), cv_center(2,i), string(cvlst(i))); // 'HorizontalAlignment','center','VerticalAlignment','middle','Color', [.7 0 0]
+      hconv = gce();
+      hconv.data = [hconv.data cv_center(3,i)]; // We add the 3rd component
+      hconv.alignment = 'center';
+      hconv.font_foreground = 5; // Red
+    end
+  end
   if (ison(opt_dof)) then
-    xstring(dofpos(1,:)-ecart(1), dofpos(2,:)-ecart(2), string(dofid')); // 'HorizontalAlignment','center','VerticalAlignment','middle' 'Color', [0 .4 0]);
-    hdof = gce();
-    hdof.data = [hdof.data dofpos(3,:)-ecart(3)]; // We add the 3rd component
-    hdof.alignment = 'center';
-    hdof.font_foreground = 3; // Green
-  end;
+    for i=1:size(dofpos,2)
+      xstring(dofpos(1,i)-ecart(1), dofpos(2,i)-ecart(2), string(dofid(i))); // 'HorizontalAlignment','center','VerticalAlignment','middle' 'Color', [0 .4 0]);
+      hdof = gce();
+      hdof.data = [hdof.data dofpos(3,i)-ecart(3)]; // We add the 3rd component
+      hdof.alignment = 'center';
+      hdof.font_foreground = 3; // Green
+    end
+  end
 end
 
 if (ison(opt_quality)) then

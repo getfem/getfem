@@ -23,8 +23,7 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
 //            quiver_scale    1                   density of arrows in quiver plot 
 //                    tube    'on'                use tube plot for 'filar' (1D) parts of the slice
 //              tube_color    'red'               color of tubes (ignored if 'data' is not empty and 'pcolor' is on)
-//             tube_radius    '0.5//'              tube radius; you can use a constant, or a percentage 
-//                                                (of the mesh size) or a vector of nodal values
+//             tube_radius    0.05                tube radius; you can use a constant or a vector of nodal values
 //             showoptions    'on'                display the list of options
 //  
 // the 'data' and 'convex_data' are mutually exclusive.
@@ -32,13 +31,15 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
 // RETURNS: handles to the various graphical objects created.  
 ////////////////////////
 
+printf('DEBUG: in gf_plot_slice\n');
+
 [nargout,nargin] = argn();
 
 if nargin<1 then
   error('Too few input arguments')
 end
 
-opts = build_options_list(varargin);
+opts = build_options_list(varargin(:));
 
 //mf=struct(mf);
 hfaces  = [];
@@ -75,8 +76,14 @@ end
 [opt_tube_radius,err]            = get_param(opts,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opts,'showoptions','off'); // list options used
 
-//qdim = length(U) / gf_slice_get(sl, 'nbpts');
-//if (fix(qdim) ~= qdim), error('wrong number of elements for U'); end;
+
+qdim = length(U) / gf_slice_get(sl, 'nbpts');
+nbpts = gf_slice_get(sl,'nbpts');
+printf('nbpts = '); disp(nbpts);
+printf('qdim = '); disp(qdim)
+printf('U = '); disp(length(U))
+
+if (fix(qdim) ~= qdim), error('wrong number of elements for U'); end;
 
 if (ison(opt_showoptions)) then disp(opts); end;
 
@@ -117,10 +124,17 @@ end
 
 h_current = gca();
 
-if (mdim == 3) then h_current.view = '3d'; else h_current.view = '2d'; end;
+if (mdim == 3) then 
+  h_current.view = '3d'; 
+else 
+  h_current.view = '2d'; 
+end
 endfunction
 
 function [htube,hmesh]=do_plot_1D(P,T,opt)
+
+printf('DEBUG: in do_plot_1D\n');
+
 htube=[]; hmesh=[];
 if (isempty(T)) then
   return; 
@@ -143,7 +157,7 @@ end
 [opt_quiver_scale,err]           = get_param(opt,'quiver_scale',1); // scaling of arrows (0=>no scaling)
 [opt_tube,err]                   = get_param(opt,'tube','on'); // use tube plot for linear parts of the slice
 [opt_tube_color,err]             = get_param(opt,'tube_color','red'); // color of tubes (ignored if 'data' is not empty)
-[opt_tube_radius,err]            = get_param(opt,'tube_radius','0.5%'); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
+[opt_tube_radius,err]            = get_param(opt,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
 if (~ison(opt_tube)) then
@@ -192,11 +206,11 @@ endfunction
 // radius: constant or equal to nb points
 // D(ata): empty or equal to nb points or nb segments
 function h=plot_tube(P, T, D, radius, tubecolor)
+printf('DEBUG: in plot_tube\n');
 h = [];
 P = mycell2mat(P);
 if (isempty(T)) then return; end;
-T = double(T); // matlab 6.5 is not able to handle operator '+' on
-             // int32 ...
+T = double(T); // matlab 6.5 is not able to handle operator '+' on int32 ...
 it0 = T(1,1); nT = size(T,2); nP = size(P,2); mdim=size(P,1);
 
 if (mdim == 2) then P = [P; zeros(1,nP)]; mdim = 3; end; // handle 2D slices
@@ -259,9 +273,15 @@ while (1)
   end;
   if (length(D)) then
     C = repmat(d,nsubdiv+1,1);
-    h($+1) = surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),C); // 'linestyle','none','FaceColor','interp')];
+    surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),C); // 'linestyle','none','FaceColor','interp')];
+    h($+1) = gce();
+    h($).thickness = 0; // corresponds to linestyle none
   else
-    h($+1) = surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:))); // 'linestyle','none','facecolor',tubecolor)];
+    surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:))); // 'linestyle','none','facecolor',tubecolor)];
+    h($+1) = gce();
+    h($).thickness = 0; // corresponds to linestyle none
+    h($).color_mode = tubecolor;
+    h($).color_flag = 0;
   end
   cnt = cnt+1;
   it0 = it1+1;
@@ -271,6 +291,7 @@ endfunction
 
 // draw faces
 function [hfaces,hmesh,hquiver] = do_plot_2D(sl,P,T,opt)
+printf('DEBUG: in do_plot_2D\n');
 hfaces  = []; 
 hmesh   = []; 
 hquiver = [];
@@ -294,7 +315,7 @@ mdim    = length(P);
 [opt_quiver_scale,err]           = get_param(opt,'quiver_scale',1); // scaling of arrows (0=>no scaling)
 [opt_tube,err]                   = get_param(opt,'tube','on'); // use tube plot for linear parts of the slice
 [opt_tube_color,err]             = get_param(opt,'tube_color','red'); // color of tubes (ignored if 'data' is not empty)
-[opt_tube_radius,err]            = get_param(opt,'tube_radius','0.5%'); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
+[opt_tube_radius,err]            = get_param(opt,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
 if (length(T)) then
@@ -325,9 +346,12 @@ if (ison(opt_mesh) & (ison(opt_mesh_edges) | ison(opt_mesh_slice_edges))) then
   [p,t1,t2] = gf_slice_get(sl,'edges');
   if (ison(opt_mesh_edges)) then
     p = p'; t1 = t1';
+    disp(size(p))
+    disp(size(t1))
+    disp(size(t2))
     xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
     ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
-    ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))';
+    ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))'; // YC: a revoir: p est de dim 2. t1 est de dim 2 aussi
     plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
     hmesh = gce();
     hmesh.line_width = opt_mesh_edges_width;
@@ -351,6 +375,8 @@ endfunction
 // arrow plot
 function hquiver = do_quiver_plot(P,U,opt)
 
+printf('DEBUG: in do_quiver_plot\n');
+
 [opt_data,err]                   = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
 [opt_convex_data,err]            = get_param(opt,'convex_data',[]); // data to be plotted (given on the mesh convexes)
 [opt_mesh,err]                   = get_param(opt,'mesh','auto'); // show the mesh ?
@@ -368,7 +394,7 @@ function hquiver = do_quiver_plot(P,U,opt)
 [opt_quiver_scale,err]           = get_param(opt,'quiver_scale',1); // scaling of arrows (0=>no scaling)
 [opt_tube,err]                   = get_param(opt,'tube','on'); // use tube plot for linear parts of the slice
 [opt_tube_color,err]             = get_param(opt,'tube_color','red'); // color of tubes (ignored if 'data' is not empty)
-[opt_tube_radius,err]            = get_param(opt,'tube_radius','0.5%'); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
+[opt_tube_radius,err]            = get_param(opt,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
 hquiver  = [];

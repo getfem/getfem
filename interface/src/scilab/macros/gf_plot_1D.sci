@@ -9,19 +9,25 @@ function [hline, hdof] = gf_plot_1D(mf,U, varargin)
 //  'dof_color', [1,0,0] : color of the markers for the degrees of freedom.
 //  'width', 2           : line width.
 
-opts = build_options_list(varargin);
+opts = build_options_list(varargin(:));
 
 try 
   gf_workspace('push', 'gf_plot_1D');
   [hline, hdof] = gf_plot_1D_aux(mf,U, opts);
 catch
-  disp('error in gf_plot_1D : ' + lasterror());
-end;
+  [str,n,line,func]=lasterror();
+  disp('error in gf_plot_1D: ' + str);
+  disp(sprintf('error %d in %s at line %d\n', n, func, line));
+  error('');
+end
 gf_workspace('pop');
 endfunction
 
   
 function [hline, hdof] = gf_plot_1D_aux(mf, U, opts)
+
+printf('DEBUG: in gf_plot1D_aux\n');
+
 [opt_style,err]      = get_param(opts,'style','bo-');
 [opt_dof_marker,err] = get_param(opts,'dof_marker','');
 [opt_width,err]      = get_param(opts,'width',2);
