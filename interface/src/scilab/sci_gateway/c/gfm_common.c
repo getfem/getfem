@@ -68,7 +68,7 @@ const char * sci_ClassID2string(sci_types id)
   }
 }
 
-int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
+int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 {
   int i, n = 0;
 
@@ -99,8 +99,11 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	  {
 	    t->storage.gfi_storage_u.data_cell.data_cell_val[i] = MALLOC(1*sizeof(gfi_array));
 	    int * item_address = NULL;
-	    getListItemAddress(sci_x,i, &item_address);
-	    if (sci_array_to_gfi_array(item_address, ivar, t->storage.gfi_storage_u.data_cell.data_cell_val[i]) != 0) return 1;
+	    getListItemAddress(sci_x,i+1,&item_address);
+#ifdef DEBUG
+	    sciprint("type of item %d: %d\n", i+1, getVarType(item_address));
+#endif
+	    if (sci_array_to_gfi_array(item_address, t->storage.gfi_storage_u.data_cell.data_cell_val[i]) != 0) return 1;
 	  }
 
 	t->dim.dim_len = 1;
@@ -121,15 +124,15 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	double * pdblDataID, * pdblDataCID;
 
 	getListItemNumber(sci_x,&n);
-	getMatrixOfStringInList(ivar,sci_x,1,&pirow,&picol,NULL,NULL);
+	getMatrixOfStringInList(sci_x,1,&pirow,&picol,NULL,NULL);
 	pilen = (int *)MALLOC(pirow*picol*sizeof(int));
-	getMatrixOfStringInList(ivar,sci_x,1,&pirow,&picol,pilen,NULL);
+	getMatrixOfStringInList(sci_x,1,&pirow,&picol,pilen,NULL);
 	pstStrings = (char **)MALLOC(pirow*picol*sizeof(char *));
 	for(i=0;i<pirow*picol;i++)
 	  {
 	    pstStrings[i] = (char *)MALLOC((pilen[i]+1)*sizeof(char));
 	  }
-	getMatrixOfStringInList(ivar,sci_x,1,&pirow,&picol,pilen,pstStrings);
+	getMatrixOfStringInList(sci_x,1,&pirow,&picol,pilen,pstStrings);
 
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: pstStrings[0] = %s\n",pstStrings[0]);
@@ -142,8 +145,8 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 #endif
 	    t->storage.type = GFI_OBJID;
 
-	    getMatrixOfDoubleInList(ivar, sci_x, 2, &pirow, &picol, &pdblDataID);
-	    getMatrixOfDoubleInList(ivar, sci_x, 3, &pirow, &picol, &pdblDataCID);
+	    getMatrixOfDoubleInList(sci_x, 2, &pirow, &picol, &pdblDataID);
+	    getMatrixOfDoubleInList(sci_x, 3, &pirow, &picol, &pdblDataCID);
 
 #ifdef DEBUG
 	    sciprint("sci_array_to_gfi_array: pirow = %d picol = %d\n", pirow, picol);
@@ -156,10 +159,10 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 
 	    for(i=0;i<n;i++)
 	      {
-		t->storage.gfi_storage_u.objid.objid_val[i].id  = pdblDataID[i];
-		t->storage.gfi_storage_u.objid.objid_val[i].cid = pdblDataCID[i];
+		t->storage.gfi_storage_u.objid.objid_val[i].id  = (int)pdblDataID[i];
+		t->storage.gfi_storage_u.objid.objid_val[i].cid = (int)pdblDataCID[i];
 #ifdef DEBUG
-		sciprint("sci_array_to_gfi_array: objid[%d]: id = %d cid = %d\n", i, pdblDataID[i], pdblDataCID[i]);
+		sciprint("sci_array_to_gfi_array: objid[%d]: id = %d cid = %d\n", i, (int)pdblDataID[i], (int)pdblDataCID[i]);
 #endif
 	      }
 
@@ -176,7 +179,7 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 #endif
 
 	    // Get the dimensions
-	    getMatrixOfDoubleInList(ivar, sci_x, 2, &pirow, &picol, &pdblDataID);
+	    getMatrixOfDoubleInList(sci_x, 2, &pirow, &picol, &pdblDataID);
 	    t->dim.dim_len = pirow*picol;
 	    t->dim.dim_val = (u_int*)MALLOC(pirow*picol*sizeof(u_int));
 	    for(i=0;i<pirow*picol;i++) t->dim.dim_val[i] = (u_int)pdblDataID[i];
@@ -189,7 +192,7 @@ int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t)
 	    if (getVarType(pilistaddress)==sci_matrix)
 	      {
 		t->storage.type = GFI_DOUBLE;
-		getMatrixOfDoubleInList(ivar, sci_x, 3, &pirow, &picol, &pdblDataID);
+		getMatrixOfDoubleInList(sci_x, 3, &pirow, &picol, &pdblDataID);
 		
 		t->storage.gfi_storage_u.data_double.data_double_len = pirow*picol;
 		t->storage.gfi_storage_u.data_double.data_double_val = (double *)MALLOC(pirow*picol*sizeof(double));
@@ -891,7 +894,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	sciprint("gfi_array_to_sci_array: create from a GFI_CELL - sci_list\n");
 #endif
 		  getListItemNumber(m_content,&nb_item);
-		  createListInList(ivar, m_content, i, nb_item, &m_var);
+		  createListInList(ivar, m_content, i+1, nb_item, &m_var);
 		}
 		break;
 	      case sci_mlist:
@@ -900,7 +903,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	sciprint("gfi_array_to_sci_array: create from a GFI_CELL - sci_mlist\n");
 #endif
 		  getListItemNumber(m_content,&nb_item);
-		  createMListInList(ivar, m_content, i, nb_item, &m_var);
+		  createMListInList(ivar, m_content, i+1, nb_item, &m_var);
 		}
 		break;
 	      case sci_strings:
@@ -1167,7 +1170,7 @@ gfi_array_list * build_gfi_array_list(int nrhs, int  ** prhs)
 #ifdef DEBUG
       sciprint("build_gfi_array_list: processing parameter %d\n", i);
 #endif
-      if (sci_array_to_gfi_array(prhs[i], i, &l->arg.arg_val[i-1]) != 0) return NULL;
+      if (sci_array_to_gfi_array(prhs[i], &l->arg.arg_val[i-1]) != 0) return NULL;
     }
   
 #ifdef DEBUG

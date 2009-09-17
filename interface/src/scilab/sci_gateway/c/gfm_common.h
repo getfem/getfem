@@ -37,7 +37,7 @@
 #include "gfi_array.h"
 
 const char* sci_ClassID2string(sci_types id);
-int sci_array_to_gfi_array(int * sci_x, int ivar, gfi_array *t);
+int sci_array_to_gfi_array(int * sci_x, gfi_array *t);
 int * gfi_array_to_sci_array(gfi_array *t, int i);
 gfi_array_list *build_gfi_array_list(int nrhs, int ** prhs);
 
