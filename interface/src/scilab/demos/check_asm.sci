@@ -48,12 +48,11 @@ assert('max(abs((X-X'')))<1e-15');
 X=gf_asm('volumic','V(#1,#1,#1,#1)+=comp(Base(#1).Base(#1).Base(#1).Base(#1))',mim,mf);
 assert('size(X)==[4 4 4 4]');
 
-// YC: bug here
-//X=gf_asm('volumic','M(#1,#2)+=comp(Grad(#1).vBase(#2))(:,z,:,i)',mim,mf,mf3);
-//
-//assert('size(X)==[4 27]');
-//assert('abs(sum(sum(abs(X)))-10.5) < 8e-15');
-//asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf3)');
+X=gf_asm('volumic','M(#1,#2)+=comp(Grad(#1).vBase(#2))(:,z,:,i)',mim,mf,mf3);
+
+assert('size(X)==[4 27]');
+assert('abs(sum(sum(abs(X)))-10.5) < 8e-15');
+// asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf3)'); // YC: bug here
 
 X=gf_asm('volumic','V(qdim(#1),#1)+=comp(vBase(#1)){2,1}',mim,mf3);
 assert('nnz(X)==27');

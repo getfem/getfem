@@ -66,7 +66,7 @@ assert('max(max(abs(C-full(M1+real(M2)))))<1e-13');
 K = gf_spmat('diag', [1 1; 2 3; 4 5; 6 7],[0 -2],6,9);
 // NNZ
 gf_spmat_get(K,'full');
-//  assert('gf_spmat_get(K,''nnz'')==8');
+//assert('gf_spmat_get(K,''nnz'')==8'); // YC: 6 - a voir
 
 cK=gf_spmat('diag', [1 1*%i; 2 3*%i; 4 5; 6*%i 7; 5 5; 6 -2],[0 -1],6,9);
 assert('gf_spmat_get(cK,''nnz'')==11');  
@@ -148,7 +148,7 @@ end
 K  = sprand(50,50,.1) + 20*speye(50,50); K(2,3)=.4;
 gK = gf_spmat('copy',K);
 gf_spmat_set(gK, 'to_csc');
-//asserterr('gf_spmat_set(gK, ''assign'', 1, 1, 1)');
+asserterr('gf_spmat_set(gK, ''assign'', 1, 1, 1)');
 gf_spmat_set(gK, 'to_wsc');
 gf_spmat_set(gK, 'assign', 2, 2, 1+2*%i);
 

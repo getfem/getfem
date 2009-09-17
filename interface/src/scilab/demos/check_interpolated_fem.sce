@@ -4,7 +4,9 @@ clf;
 
 m1 = gf_mesh('regular_simplices', 0:.5:2, 0:.4:1, 'degree', 2, 'noised');
 //m1 = gf_mesh('regular_simplices', 0:1:2, 0:.5:1, 'degree', 2, 'noised');
+drawlater;
 gf_plot_mesh(m1, 'refine' ,5, 'curved','on');
+drawnow;
 mf1  = gf_mesh_fem(m1); 
 mim1 = gf_mesh_im(m1, gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),4)'));
 gf_mesh_fem_set(mf1, 'fem', gf_fem('FEM_PK(2, 1)'));
@@ -31,7 +33,9 @@ gf_mesh_set(m2, 'del convex', 4);
 
 mf  = mf4; 
 nbd = gf_mesh_fem_get(mf, 'nbdof');
+drawlater;
 gf_plot(mf, rand(1, nbd), 'refine', 16);
+drawnow;
 //for i=1:nbd, 
 //  U=zeros(1,nbd); U(i)=1;
 //  disp(sprintf('dof %d/%d', i, nbd));
@@ -40,6 +44,6 @@ gf_plot(mf, rand(1, nbd), 'refine', 16);
 //end;
 
 gf_workspace('stats');
-gf_delete(f);
+gf_delete(f); // YC: Pb with "no output" functions
 
 gf_fem_get(f, 'char')

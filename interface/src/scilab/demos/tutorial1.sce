@@ -7,7 +7,7 @@ disp(gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str'));
 mim = gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
 
 border = gf_mesh_get(m,'outer faces');
-gf_mesh_set(m, 'region', 42, border); // create the region (:#(B42
+gf_mesh_set(m, 'region', 42, border); // create the region
 
 // the boundary edges appears in red
 gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 
@@ -16,7 +16,7 @@ md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 
-R = gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
+R = gf_mesh_fem_get_eval(mf, list('(x-.5).^2 + (y-.5).^2 + x/5 - y/3'));
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, R);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 gf_model_get(md, 'listvar');

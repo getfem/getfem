@@ -1,5 +1,5 @@
-// YC: object oriented
-// must replace all the gfObject functions. gfObject has been removed
+// Need to compile getfem with qhull first.
+
 gf_workspace('clear all');
 
 clf;

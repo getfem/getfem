@@ -14,7 +14,9 @@ printf('SCIGETFEM: border'); disp(border);
 gf_mesh_set(m, 'region', 42, border); // create the region
 
 // the boundary edges appears in red
-// gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 
+drawlater;
+gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 
+drawnow;
 
 md = gf_model('real');
 printf('SCIGETFEM: md'); disp(md);
@@ -31,4 +33,6 @@ gf_model_get(md, 'solve');
 
 U = gf_model_get(md, 'variable', 'u');
 printf('SCIGETFEM: U'); disp(U);
+drawlater;
 gf_plot(mf, U, 'mesh','on');
+drawnow;
