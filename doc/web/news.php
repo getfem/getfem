@@ -3,6 +3,38 @@
   <h1>What's new ?</h1>
 
   <div class="gfnews">
+    <h2>2009/09/19 Getfem++-4.0.0. released</h2>
+     <p>
+      This is a major update to Getfem++. The main changes is the
+      introduction of a new model 
+      bricks system. The old system is kept and compatibility with 3.x
+      releases is globally ensured. However some functionalities are
+      deprecated.
+
+      The main changes are:
+      </p>
+      <ul>
+        <li>
+	The mesh_fem object has undergone significant changes. Now it is possible to perform linear combination of degrees of freedom in order to describe some special finite element spaces. The main application is to obtain a finite element space reduced on a boundary or a curve. But it can be used also to prescibe directly some matching condition. The main change in the use of the mesh_fem object is the introduction of "basic" and "reduced" dofs. See the documentation.
+      </li>
+      <li>
+        A new algorithm gmm_range_basis allows to select a basis between the columns of a matrix. It has been specially designed to select a basis of the trace on a boundary of a finite element space. 
+      </li>
+      <li>
+	The partial_mesh_fem object has been completely changed. It is now a lighter object which is intensively used in the new model bricks to obtain finite element spaces on a boundary. 
+      </li>
+      <li>
+	Introduction of the new model brick system. The bricks are more simple to build and it is now really designed to the representation of coupled/multiphysics models. A generic manner to deals with time dependent models from static models is also introduced.
+      </li>
+      <li>
+        Python interface uses Numpy instead of Numarray.
+      </li>
+    </ul>
+
+All the old bricks have not been rewritten into new bricks. This will be done
+gradually in the near future. A Scilab interface is close to be finished and should be included in the future release. 
+
+    </p>
     <h2>2008/09/09 Getfem++-3.1. minor version</h2>
      <p>
       A certain number of small bug fixed in Getfem++ and Gmm++.
@@ -17,12 +49,12 @@
       <p>Getfem++ 3.0 is now available !</p>
       <p>Not so many changes, but some of them are incompatible with getfem 2.0:</p>
       <ul>
-         <li>The getfem and gmm header files have been moved into their respective subdirectories. So, as a consequence, the include directives have to be updated:
+         <li>The Getfem and Gmm header files have been moved into their respective subdirectories. So, as a consequence, the include directives have to be updated:
 
 <p><tt>#include "gmm_xxx.h"</tt> should be replaced with <tt>#include "gmm/gmm_xxx.h"</tt></p>
 <p><tt>#include "getfem_xxx.h"</tt> should be replaced with <tt>#include "getfem/getfem_xxx.h"</tt></p>
 
-         <li>The getfem interface (python and matlab) is now included in the getfem tar.gz file, in the '<tt>interface</tt>' subdirectory. They can be enabled with the '<tt>--enable-python</tt>' or '<tt>--enable-matlab</tt>' switch of the <tt>configure</tt> script</li>
+         <li>The Getfem interface (python and matlab) is now included in the Getfem tar.gz file, in the '<tt>interface</tt>' subdirectory. They can be enabled with the '<tt>--enable-python</tt>' or '<tt>--enable-matlab</tt>' switch of the <tt>configure</tt> script</li>
          <li>Some C1 composite elements have been added (triangles and quadrilaterals)</li>
          <li>Levelset support has been improved</li>
       </ul>
@@ -37,7 +69,7 @@
     </p>
     <h2>2006/03/20 Getfem++-2.0, Gmm++-2.0 and Getfem-Interface 2.0 released</h2>
     <p>
-      This is a major update to getfem++, which make some backward-incompatible changes:
+      This is a major update to Getfem++, which make some backward-incompatible changes:
     </p>
     <ul>
       <li>
@@ -84,21 +116,21 @@
 
     <p>
       Major changes for the matlab and python interface: they follow
-      the changes that occured in getfem. An interface to the getfem++
+      the changes that occured in Getfem. An interface to the Getfem++
       model bricks has been added.
     </p>
 
     <p>
-      Next releases of getfem++ will try to maintain backward compatability with this release.
+      Next releases of Getfem++ will try to maintain backward compatability with this release.
     </p>
 
     <h2>2005/01/05 Getfem++ 1.7, Gmm++ 1.7 and Getfem-Interface 1.7 released</h2>  
     <p>
-      An important number of improvements have been done on Getfem++ 1.7. Note that the next release will be getfem 2.0, some of its changes won't maintain backward compatibility with getfem++-1.7. 
+      An important number of improvements have been done on Getfem++ 1.7. Note that the next release will be Getfem 2.0, some of its changes won't maintain backward compatibility with getfem++-1.7. 
     </p>
     <ul>
       <li>
-	Introduction of the "model brick" system, which provides a general framework for the solution of common PDEs. Each brick is dedicated to a specific task (i.e. "handle Dirichlet conditions", "assembly of the Stokes Problem", "solve a linear system", etc.). These bricks are then connected to each other. Examples of use can be found in the "tests/" directory of getfem++.
+	Introduction of the "model brick" system, which provides a general framework for the solution of common PDEs. Each brick is dedicated to a specific task (i.e. "handle Dirichlet conditions", "assembly of the Stokes Problem", "solve a linear system", etc.). These bricks are then connected to each other. Examples of use can be found in the "tests/" directory of Getfem++.
       </li>
       <li>
 	New models : Small strain plasticity, <a href="torsion034.png">large strain elasticity</a>,
@@ -173,7 +205,7 @@
     It is now possible to use high precision computations of elementary integrals with the (optional) QD library.
     Quadrature data has been moved into data files in the <tt>cubature/</tt> directory.
     Initial support for XFem. 
-    Mesh slices in getfem++ and getfem-matlab. The Matlab interface was merged into a single giant mex-file.
+    Mesh slices in Getfem++ and getfem-matlab. The Matlab interface was merged into a single giant mex-file.
   </div>
   
   <div class="gfnews">

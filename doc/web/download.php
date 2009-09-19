@@ -10,12 +10,13 @@
     <p>
       The latest <span class="embg">stable</span> release of getfem++:
       <ul>
-<li>getfem++ library <a href="http://download.gna.org/getfem/stable/getfem++-3.1.tar.gz">getfem++-3.1.tar.gz</a> (includes gmm++, and the Matlab and Python interfaces)</li>
-	<li> gmm++ standalone: <a href="http://download.gna.org/getfem/stable/gmm-3.1.tar.gz">gmm-3.1.tar.gz</a></li>
+<li>getfem++ library <a href="http://download.gna.org/getfem/stable/getfem-4.0.0.tar.gz">getfem-4.0.0.tar.gz</a> (includes gmm++, and the Matlab and Python interfaces)</li>
+	<li> gmm++ standalone: <a href="http://download.gna.org/getfem/stable/gmm-4.0.0.tar.gz">gmm-4.0.0.tar.gz</a></li>
       </ul>
     </p>
     <p>
-    The latest <span class="embg">unstable</span> releases (cvs snapshot) can be found <a href="http://download.gna.org/getfem/unstable/">here</a>.
+    <!-- The latest <span class="embg">unstable</span> releases (cvs snapshot) can be found <a href="http://download.gna.org/getfem/unstable/">here</a>.
+    -->
     </p>
     <p>
     For older releases, look <a href="http://download.gna.org/getfem/stable/">here</a>.

@@ -4,7 +4,7 @@
 % current
 %
 
-if (1)
+if (0)
 
 A = load('mixed_dynamic_friction.data');
 
@@ -33,9 +33,9 @@ else
 % P1plusP0
 %
 
-A1 = load('mdf_P2P1_1E-3.data');
-A2 = load('mdf_P2P1_1E-4.data');
-A3 = load('mdf_P2P1_1E-5.data');
+A1 = load('mdfconv_P2P1_0.5.data');
+A2 = load('mdfconv_P2P1_0.25.data');
+A3 = load('mdfconv_P2P1_0.075.data');
 
 % energy curves
 
@@ -44,32 +44,32 @@ hold on;
 plot(A2(:, 1), A2(:, 2), '--k', 'linewidth', 2, 'MarkerSize', 15);
 plot(A3(:, 1), A3(:, 2), '-.k', 'linewidth', 2, 'MarkerSize', 15);
 hold off;
-axis([0 0.02 690 850]);
+axis([0 0.02 730 770]);
 % axis([0 0.7 0 0.02]);
 xlabel('t');
 ylabel('total energy');
-legend('dt = 10^{-3}', 'dt = 10^{-4}', 'dt = 10^{-5}', 'Location', 'SouthWest');
+legend('dt = 2\times10^{-4}', 'dt = 10^{-4}', 'dt = 2.5\times10^{-5}', 'Location', 'SouthWest');
 axesobj = findobj('type', 'axes'); set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points'); set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold'); set(axesobj, 'linewidth', 2);
 pause;
 print(gcf,'-deps','-r450', 'energy.eps');
-print(gcf,'-dpng','-r450', 'energy.png');
+% print(gcf,'-dpng','-r450', 'energy.png');
 
 % contact stress curves
 
-plot(A1(:, 1), A1(:, 3), '-k', 'linewidth', 2, 'MarkerSize', 15);
+plot(A1(:, 1), A1(:, 3)*2./0.5, '-k', 'linewidth', 2, 'MarkerSize', 15);
 hold on;
-plot(A2(:, 1), A2(:, 3) -50, '--k', 'linewidth', 2, 'MarkerSize', 15);
-plot(A3(:, 1), A3(:, 3) -100, '-.k', 'linewidth', 2, 'MarkerSize', 15);
+plot(A2(:, 1), A2(:, 3)*2./0.25 -50, '--k', 'linewidth', 2, 'MarkerSize', 15);
+plot(A3(:, 1), A3(:, 3)*2./0.075 -100, '-.k', 'linewidth', 2, 'MarkerSize', 15);
 hold off;
 axis([0 0.02 -400 0.01]);
 % axis([0 0.7 -0.01 0.06]);
 xlabel('t');
 ylabel('point A contact stress');
-legend('dt = 10^{-3}', 'dt = 10^{-4}', 'dt = 10^{-5}', 'Location', 'SouthWest');
+legend('dt = 2\times10^{-4}', 'dt = 10^{-4}', 'dt = 2.5\times10^{-5}', 'Location', 'SouthWest');
 axesobj = findobj('type', 'axes'); set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points'); set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold'); set(axesobj, 'linewidth', 2);
 pause;
 print(gcf,'-deps','-r450', 'stress.eps');
-print(gcf,'-dpng','-r450', 'stress.png');
+% print(gcf,'-dpng','-r450', 'stress.png');
 
 % displacement curves
 
@@ -85,14 +85,34 @@ legend('dt = 10^{-3}', 'dt = 10^{-4}', 'dt = 10^{-5}', 'Location', 'SouthWest');
 axesobj = findobj('type', 'axes'); set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points'); set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold'); set(axesobj, 'linewidth', 2);
 pause;
 print(gcf,'-deps','-r450', 'displacement.eps');
-print(gcf,'-dpng','-r450', 'displacement.png');
+% print(gcf,'-dpng','-r450', 'displacement.png');
 
 
 
 end;
 
 
-  
+if (1)
+
+H = [5e-5, 1e-4, 2e-4, 4e-4, 8e-4];
+H1 = [0.43, 1.42, 2.57, 4.41, 5.86];
+loglog(H(2:5), H1(2:5), 'o-k', 'linewidth', 2, 'MarkerSize', 15);
+P1 = polyfit(log(H(2:5)), log(H1(2:5)), 1);
+legend(strcat('P2/P1  (slope=',num2str(P1(1)), ')'))
+grid on;
+axesobj = findobj('type', 'axes');
+set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points');
+set(axesobj, 'fontsize', 24); set(axesobj, 'fontweight', 'bold');
+set(axesobj, 'linewidth', 2);
+xlabel('dt');
+ylabel('H^1(\Omega) relative error');
+%set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
+set(gca,'YTickLabel',{'1%', '10%'}) 
+axis([1e-4 1e-3 0.5 10]);
+pause;
+
+end;
+
 
 %  loglog(H(1:7), L2_1(1:7), 'o-k', 'linewidth', 2, 'MarkerSize', 15);
 %  hold on;

@@ -8,7 +8,7 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem++, 4.0.0)
+AC_INIT(getfem, 4.0.0)
 MAJOR_VERSION="4"
 MINOR_VERSION="0"
 PATCH_VERSION="0"
@@ -20,7 +20,7 @@ AX_PREFIX_CONFIG_H(src/getfem/getfem_arch_config.h,GETFEM)
 AC_PREREQ(2.61)
 AC_ARG_PROGRAM
 
-dnl PACKAGE="getfem++"
+dnl PACKAGE="getfem"
 dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
 dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION
 dnl dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION
@@ -858,7 +858,7 @@ for i in `ls $srcdir/tests/meshes/*.mesh`; do
 done
 
 echo "---------------------------------------"
-echo "Ready to build getfem++"
+echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
 echo "  building PYTHON interface: $usepython (requires numpy)"
 echo "---------------------------------------"
