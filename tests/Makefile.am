@@ -53,7 +53,9 @@ CLEANFILES = \
 	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk \
 	plasticity.meshfem plasticity.coef elasto_static_err.vtk \
 	ii_files/* auto_gmm* dyn*.txt *.sl time FN0 \
-	nonlinear_elastostatic.U crack.mesh cut.mesh
+	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
+	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
+	nonlinear_membrane.vtk 
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 

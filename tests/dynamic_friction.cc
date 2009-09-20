@@ -831,11 +831,11 @@ void friction_problem::solve(void) {
 
 int main(int argc, char *argv[]) {
 
-  /* In order to test locale. */
-  setlocale(LC_NUMERIC,"");
-  std::locale lc("");
-  cin.imbue(lc);
-  cout.imbue(lc);
+//   /* In order to test locale. */
+//   setlocale(LC_NUMERIC,"");
+//   std::locale lc("");
+//   cin.imbue(lc);
+//   cout.imbue(lc);
 
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
