@@ -45,7 +45,7 @@
 
       <listitem>
         <para>n = gf_mesh_fem_get(MF,'nb basic dof') Return the number of
-        basic degrees of freedom (dof) of the @tmf.</para>
+        basic degrees of freedom (dof) of the MeshFem.</para>
       </listitem>
 
       <listitem>
