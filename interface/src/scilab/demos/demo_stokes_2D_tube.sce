@@ -42,8 +42,8 @@ INfaces   = gf_mesh_get(m, 'faces from pid', INpid);
 OUTfaces  = gf_mesh_get(m, 'faces from pid', OUTpid);
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
-//gf_mesh_set(m, 'boundary', 3, setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
-gf_mesh_set(m, 'boundary', 3, setdiff(all_faces',union(INfaces',OUTfaces','r'))'); // YC:
+//gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
+gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'))'); // YC:
 
 tic;
 [U,P] = gf_solve(pde);
@@ -51,25 +51,27 @@ disp(sprintf('solve done in %.2f sec', toc));
 
 Ul = gf_compute(pde.mf_u,U,'interpolate on',mfulag);
 
+drawlater;
 subplot(2,2,1); 
 gf_plot(mfulag,Ul,'norm','on','deformation',Ul,'deformation_scale',0.1,	'deformed_mesh','on');
-//colorbar;
+colorbar(min(Ul),max(Ul));
 title('|U| plotted on the deformed mesh');
 
 subplot(2,2,2); 
 gf_plot(pde.mf_p,P(:)','deformation',U,'deformation_mf',pde.mf_u); 
-//colorbar; 
+colorbar(min(P),max(P)); //YC: P or U ?
 title('Pression on the deformed mesh');
 
 subplot(2,2,3); 
 gf_plot(mfulag,Ul(:)','mesh','on','meshopts',list());
 gf_plot(pde.mf_p,P(:)','refine',1);
-//colorbar; 
+colorbar(min(Ul),max(Ul)); 
 title('Quiver plot of U, with color plot of the pression');
 
 subplot(2,2,4); 
 gf_plot(mfulag,Ul(:)','mesh','on','meshopts',list(), 'quiver_density',100,'quiver_scale',0.4); 
 gf_plot(pde.mf_p,P(:)'); 
 // axis([27 33 3 9]);
+colorbar(min(Ul),max(Ul));
 title('Quiver plot zoomed');
-
+drawnow;

@@ -53,8 +53,8 @@ TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
 gf_mesh_set(m, 'boundary', 3, TOPfaces);
-//gf_mesh_set(m, 'boundary', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','rows'),TOPfaces','rows'),'rows')'); // YC
-gf_mesh_set(m, 'boundary', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
+//gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','rows'),TOPfaces','rows'),'rows')'); // YC
+gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
 
 disp(sprintf('nbdof: mf_u=%d, mf_p=%d',gf_mesh_fem_get(pde.mf_u,'nbdof'),gf_mesh_fem_get(pde.mf_p,'nbdof')));
 if (compute) then

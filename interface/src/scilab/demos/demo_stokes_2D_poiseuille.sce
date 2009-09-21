@@ -30,18 +30,20 @@ gf_mesh_set(m, 'boundary', 1, all_faces);
 
 pde
 
+drawlater;
 subplot(3,1,1); 
 gf_plot(pde.mf_u,U(:)','dir','x','deformation',U,'deformation_scale',0.1,'deformed_mesh','on'); 
-//colorbar;
+colorbar(min(U),max(U));
 
 subplot(3,1,2); 
 gf_plot(pde.mf_p,P(:)','deformation',U,'deformation_mf',pde.mf_u); 
-//colorbar;
+colorbar(min(P),max(P));
 
 subplot(3,1,3); 
 gf_plot(pde.mf_u,U(:)','mesh','on'); 
 gf_plot(pde.mf_p,P(:)','refine',1); 
-//colorbar; 
+colorbar(min(P),max(P)); //YC: U or P ?
+drawnow;
 
 disp('Note that the dirichlet condition was described on a P1 fem');
 disp('(visible on the deformed mesh: on boundaries, the deformation');

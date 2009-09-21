@@ -99,7 +99,7 @@ Uinc      = gf_mesh_fem_get(mfd,'eval',list(wave_expr));
 // - the third one is to use the "low level" approach, i.e. to assemble
 //   and solve the linear systems.
 if 1 then
-  t0 = cputime;
+  t0 = timer();
   // solution using new model bricks
   md = gf_model('complex');
   gf_model_set(md, 'add fem variable', 'u', mfu);
@@ -113,9 +113,9 @@ if 1 then
 
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
-  disp(sprintf('solve done in %.2f sec', cputime-t0));
+  disp(sprintf('solve done in %.2f sec', timer()-t0));
 elseif 0 then
-  t0 = cputime;
+  t0 = timer();
   // solution using old model bricks
   b0 = gf_md_brick('helmholtz',mim,mfu);
   gf_md_brick_set(b0,'param','wave_number', k);
@@ -129,7 +129,7 @@ elseif 0 then
   gf_md_brick_get(b2, 'solve', mds, 'noisy'); // BUG ? set or get ?
   U = gf_md_state_get(mds, 'state'); 
   U = U(1:gf_mesh_fem_get(mfu,'nbdof'));
-  disp(sprintf('solve done in %.2f sec', cputime-t0));
+  disp(sprintf('solve done in %.2f sec', timer()-t0));
 else
   // solution using the "low level" approach
   [H,R] = gf_asm('dirichlet', 1, mim, mfu, mfd, gf_mesh_fem_get(mfd,'eval',1),Uinc);
@@ -154,8 +154,12 @@ end
 
 Ud = gf_compute(mfu,U,'interpolate on',mfd);
 
-//figure(1); gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); colorbar;
-//figure(2); gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); colorbar;
+//scf(1); 
+//gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
+//colorbar(min(imag(U)),max(imag(U)));
+//scf(2); 
+//gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
+//colorbar(min(abs(Ud)),max(abs(Ud)));
 
 // compute the "exact" solution from its developpement 
 // of bessel functions:
@@ -188,5 +192,6 @@ disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/g
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
 // adjust the 'refine' parameter to enhance the quality of the picture
+drawlater;
 gf_plot(mfu,real(U(:)'),'mesh','on','refine',8);
-
+drawnow;

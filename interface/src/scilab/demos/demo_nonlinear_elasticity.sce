@@ -159,8 +159,10 @@ for step=1:nbstep
   end
   disp(sprintf('step %d/%d : |U| = %g',step,nbstep,norm(U)));
 
+  drawlater;
   gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8);
-//  colorbar;
+  drawnow;
+//  colorbar(min(U),max(U));
 //  axis([-3     6     0    20    -2     2]); caxis([0 .3]);
 //  view(30+20*w, 23+30*w);  
 //  campos([50 -30 80]);

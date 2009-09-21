@@ -49,7 +49,7 @@ FF = N'*F;
 
 // solve ...
 disp('solving...'); 
-t0      = cputime;
+t0      = timer();
 lsolver = 1; // change this to compare the different solvers
 
 if (lsolver == 1) then   // conjugate gradient
@@ -60,7 +60,7 @@ elseif (lsolver == 2) then // superlu
 else                   // the matlab "slash" operator 
   UU = KK\FF;
 end
-disp(sprintf('linear system solved in %.2f sec', cputime-t0));
+disp(sprintf('linear system solved in %.2f sec', timer()-t0));
 U = (N*UU).'+U0;
 
 // now that we have the solution, we want to compute the von mises stress
@@ -86,9 +86,11 @@ VM = 4*mu^2*VM;
 disp('plotting ... can also take some minutes!');
 
 // we plot the von mises on the deformed object, in superposition with the initial mesh.
+drawlater;
 gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
+drawnow;
 //caxis([0 100]); 
-//colorbar;
+colorbar(min(U),max(U));
 //view(180,-50); camlight;
 
 r = [0.7 .7 .7]; l = r($,:); s=63; s1=20; s2=25; s3=48;s4=55; 
@@ -99,5 +101,4 @@ for i=1:s
 end
 f = gcf();
 f.color_map = r;
-//colorbar;
 

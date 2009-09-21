@@ -14,7 +14,9 @@ m = gf_mesh('cartesian',[0:1:100]);
 // visualisation of the mesh, with the numbering
 // of vertices and convexes.
 scf();
+drawlater;
 gf_plot_mesh(m, 'vertices','convexes');
+drawnow;
 
 mfu = gf_mesh_fem(m,1);// gf_mesh_fem_set(mfu, 'classical fem', 0);
 mfd = gf_mesh_fem(m,1);// gf_mesh_fem_set(mfd, 'classical fem', 0);
@@ -85,11 +87,16 @@ for j=1:3
     gf_mdbrick_get(b2, 'solve', mds);
     Uu = gf_mdstate_get(mds, 'state'); Uu=Uu(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
-    //gf_plot(pde.mf_u, U,'mesh','regions'); colorbar;
+    //drawlater;
+    //gf_plot(pde.mf_u, U,'mesh','regions'); 
+    //colorbar(min(U),max(U));
+    //drawnow;
     U = gf_compute(mfu, Uu, 'interpolate on', mferr);
     clf();
+    drawlater;
     plot(x,U,'r+-',x,eU,'bx:'); 
     legend('approx','exact');
+    drawnow;
     [mx,pos] = max(abs(eU-U));
     disp(sprintf('K=%d .. max_rel(err)=%1.5g at x=%3.2f',K,mx/max(abs(eU)), x(pos)));
   end

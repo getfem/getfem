@@ -30,7 +30,9 @@ border = gf_mesh_get(m,'outer faces');
 
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
+drawlater;
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
+drawnow;
 pause(1);
                                                   // exact solution
 if 0 then
@@ -61,25 +63,27 @@ D2Ul  = gf_compute(mflg, DUl, 'gradient',mflh);
 D2Ul2 = gf_compute(mfl,Ul, 'hessian',mflh);
 nref  = 4
 
+drawlater;
 subplot(2,2,1); 
 gf_plot(mfl,Ul,'mesh','on','refine',nref,'contour',.01:.01:.1); 
-//colorbar;
+colorbar(min(Ul),max(Ul));
 title('computed solution');
 
 subplot(2,2,2); 
 gf_plot(mfl,Ul-Uexact,'mesh','on','refine',nref); 
-//colorbar;
+colorbar(min(Ul-Uexact),max(Ul-Uexact));
 title('difference with exact solution');
 
 subplot(2,2,3); 
 gf_plot(mflg,DUl(1,:),'mesh','on', 'refine', nref); 
-//colorbar;
+colorbar(min(DUl(1,:)),max(DUl(1,:)));
 title('gradx');
 
 subplot(2,2,4); 
 gf_plot(mflg,DUl(2,:),'mesh','on', 'refine', nref); 
-//colorbar;
+colorbar(min(DUl(2,:)),max(DUl(2,:)));
 title('grady');
+drawnow;
 
 disp(sprintf('H1 norm of error: %g', gf_compute(mfl,Ul-Uexact,'H1 norm',mim)));
 

@@ -38,15 +38,19 @@ nbd = gf_mesh_fem_get(mfls,'nbdof')
 if 1 then
   sl = gf_slice(list('none'), mls, 2);
   U  = rand(1,nbd);
+  drawlater;
   gf_plot(mfls,U,'refine',4,'zplot','on');
   gf_plot_mesh(m, 'curved', 'on','refine',8, 'edges_color', [0 0 0]);
-  // colorbar; // YC: we must get the min / max value of something ... colorbar(minval, maxval)
+  drawnow;
+  colorbar(min(U),max(U));
 else
   for i=1:nbd
     U = zeros(1,nbd); U(i)=1;
+    drawlater;
     gf_plot(mfls,U,'refine',16);
     gf_plot_mesh(cm, 'curved', 'on','refine',8);
     gf_plot_mesh(m, 'curved', 'on','refine',8, 'edges_color', [0 0 0]);
+    drawnow;
     pause
   end
 end

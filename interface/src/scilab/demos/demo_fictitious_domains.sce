@@ -83,13 +83,15 @@ mf_mult = gf_mesh_fem(m,2); gf_mesh_fem_set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'
 A = gf_asm('volumic','V()+=comp()',mim_bound)
 
 //clf; 
+//drawlater;
 //gf_plot_mesh(get(mls,'cut mesh'));
 //gf_plot_mesh(get(mls, 'cut_mesh'), 'curved', 'on');
 //gf_plot(mf_ls, ULS);
+//drawnow;
 
 dof_out = gf_mesh_fem_get(mfu0, 'dof from im', mim);
 cv_out  = gf_mesh_im_get(mim, 'convex_index');
-cv_in   = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
+cv_in   = _setdiff(gf_mesh_get(m, 'cvid'), cv_out);
 
 // mfu = gf_mesh_fem('partial', mfu0, dof_out, cv_in);
 
@@ -108,19 +110,29 @@ U = gf_model_get(md, 'variable', 'u');
 
 VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
 
+drawlater;
 gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
+drawnow,
+//drawlater;
 //gf_plot(mfu0, U, 'norm', 'on', 'deformed_mesh', 'on', 'deformation', U,...
 // 	'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
+//drawnow;
 
 // gf_mesh_fem_set(mfu0,'qdim',1); Unorm=sqrt(U(1:2:$).^2 + U(2:2:$).^2);
+// drawlater;
 // [h1,h2] = gf_plot(mfu0, Unorm,'contour',0.00001,'pcolor','off');
+// drawnow;
 // set(h2(1),'LineWidth',2);
 // set(h2(1),'Color','white');
 
+drawlater;
 [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off');
+drawnow;
 set(h2(1),'LineWidth',1);
 set(h2(1),'Color','blue');
+//drawlater;
 //[h1,h2]=gf_plot(mf_ls2, get(ls2,'values'), 'contour',0,'pcolor','off');
+//drawnow;
 
 plot([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)],'b-');
 

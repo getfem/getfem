@@ -10,7 +10,7 @@ incompressible = 0;
 gf_workspace('clear all');
 
 // import the mesh
-m   = gf_mesh('import','gid','../meshes/tripod.GiD.msh');
+m   = gf_mesh('import','gid','../../../tests/meshes/tripod.GiD.msh');
 mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
 mfd = gf_mesh_fem(m,1);     // scalar mesh_fem, for data fields.
 
@@ -46,57 +46,57 @@ mu     = E/(2*(1+Nu));
 
 // create a meshfem for the pressure field (used if incompressible ~= 0)
 mfp = gf_mesh_fem(m); 
-set(mfp, 'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,0)'));
+gf_mesh_fem_set(mfp,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,0)'));
 
 if (linear) then
   // the linearized elasticity , for small displacements
-  b0 = gf_md_brick('isotropic_linearized_elasticity',mim,mfu)
-  gf_md_brick_set(b0, 'param','lambda', lambda);
-  gf_md_brick_set(b0, 'param','mu', mu);
+  b0 = gf_mdbrick('isotropic_linearized_elasticity',mim,mfu)
+  gf_mdbrick_set(b0, 'param','lambda', lambda);
+  gf_mdbrick_set(b0, 'param','mu', mu);
   if (incompressible) then
-    b1 = gf_md_brick('linear incompressibility term', b0, mfp);
+    b1 = gf_mdbrick('linear incompressibility term', b0, mfp);
   else
     b1 = b0;
   end
 else
   // See also demo_nonlinear_elasticity for a better example
   if (incompressible) then
-    b0 = gf_md_brick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
-    b1 = gf_md_brick('nonlinear elasticity incompressibility term',b0,mfp);
+    b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
+    b1 = gf_mdbrick('nonlinear elasticity incompressibility term',b0,mfp);
     gf_md_brick_set(b0, 'param','params',[lambda;mu]);
   else
     // large deformation with a linearized material law.. not
     // a very good choice!
-    b0 = gf_md_brick('nonlinear elasticity',mim, mfu, 'SaintVenant Kirchhoff');
-    gf_md_brick_set(b0, 'param','params',[lambda;mu]);
-    //b0 = gf_md_brick('nonlinear elasticity',mim, mfu, 'Ciarlet Geymonat');
+    b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'SaintVenant Kirchhoff');
+    gf_mdbrick_set(b0, 'param','params',[lambda;mu]);
+    //b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'Ciarlet Geymonat');
     b1 = b0;
   end
-en
+end
 
 // set a vertical force on the top of the tripod
-b2 = gf_md_brick('source term', b1, 1);
-gf_md_brick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(0;-10;0))); // YC: attention, ne fonctionne pas: list([0;-10;0]) ?
+b2 = gf_mdbrick('source term', b1, 1);
+gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(0;-10;0))); // YC: attention, ne fonctionne pas: list([0;-10;0]) ?
 
 // attach the tripod to the ground
-b3 = gf_md_brick('dirichlet', b2, 2, mfu, 'penalized');
+b3 = gf_mdbrick('dirichlet', b2, 2, mfu, 'penalized');
 
-mds = gf_md_state(b3)
+mds = gf_mdstate(b3)
 
 disp('running solve...')
 
-t0 = cputime; 
+t0 = timer(); 
 
-gf_md_brick_get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
-disp(sprintf('solve done in %.2f sec', cputime-t0));
+gf_mdbrick_get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
+disp(sprintf('solve done in %.2f sec', timer() - t0));
 
 mfdu = gf_mesh_fem(m,1);
 // the P2 fem is not derivable across elements, hence we use a discontinuous
 // fem for the derivative of U.
 gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
-VM = get(b0, 'von mises',mds,mfdu);
+VM = gf_mdbrick_get(b0, 'von mises',mds,mfdu);
 
-U = gf_md_state_get(mds, 'state'); 
+U = gf_mdstate_get(mds, 'state'); 
 U = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
 disp('plotting ... can also take some minutes!');
@@ -104,13 +104,17 @@ disp('plotting ... can also take some minutes!');
 // we plot the von mises on the deformed object, in superposition
 // with the initial mesh.
 if (linear) then
+  drawlater;
   gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
+  drawnow;
 else
+  drawlater;
   gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale',1);
+  drawnow;
 end
 
 //caxis([0 100]);
-//colorbar; 
+colorbar(min(U),max(U)); 
 //view(180,-50); camlight;
 gf_colormap('tripod');
 

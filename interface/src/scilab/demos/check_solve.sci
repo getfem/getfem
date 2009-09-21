@@ -61,7 +61,10 @@ disp(sprintf('L2 err %f', l2err));
 h1err = gf_compute(mf_comp,Uex-Uco,'H1 norm',pde('mim'));
 disp(sprintf('H1 err %f', h1err));
 disp(sprintf('done in %.2f sec.',toc));
-//gf_plot(mf_comp,Uex-Uco,'norm'); colorbar;
+//drawlater;
+//gf_plot(mf_comp,Uex-Uco,'norm'); 
+//colorbar(min(Uex-Uco),max(Uex-Uco));
+//drawnow;
 assert('abs(l2err)<0.016'); // 0.015926
 assert('abs(h1err)<0.0665'); // 0.066215
 
@@ -89,9 +92,17 @@ assert('diff>4.62 & diff<4.64');
 // yes the error on the derivative is quite big. This is because we interpolated
 // U on mf_DU which is piecewise linear
 // the 3 plots below illustrate this
-//subplot(3,1,1); gf_plot(mf_DU, DU(2,:),'mesh','x'); colorbar; //dUx/dy
-//subplot(3,1,2); gf_plot(mf_DU, DUex,'mesh','x'); colorbar;
-//subplot(3,1,3); gf_plot(mf_DU, DUex-DU(2,:),'mesh','x'); colorbar;    
+//drawlater;
+//subplot(3,1,1); 
+//gf_plot(mf_DU, DU(2,:),'mesh','x'); 
+//colorbar(min(DU(2,:)),max(DU(2,:))); //dUx/dy
+//subplot(3,1,2); 
+//gf_plot(mf_DU, DUex,'mesh','x'); 
+//colorbar(min(DUex),max(DUex));
+//subplot(3,1,3); 
+//gf_plot(mf_DU, DUex-DU(2,:),'mesh','x'); 
+//colorbar(min(DUex-DU(2,:)),max(DUex-DU(2,:)));    
+//drawnow;
 d2 = gf_compute(mf_DU,DUex-DU(2,:),'L2 norm',mim2);
 assert('d2>0.28 & d2 < 0.29'); // 0.2866
 

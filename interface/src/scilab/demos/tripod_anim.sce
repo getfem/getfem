@@ -3,7 +3,9 @@
 //mfu  = gf_mesh_fem('from string', smfu, m);
 //mfdu = gf_mesh_fem('from string', smfdu, m);
 
+//drawlater;
 //gf_plot_mesh(m,'cvlst',gf_mesh_get(m,'outer faces'),'curved','on','edges_color',[1 0 0]);
+//drawnow;
 pr   = 1;
 haut = 0;
 for r=[6 14 26]
@@ -23,7 +25,9 @@ for r=[6 14 26]
   P(2,:) = P(2,:)-haut;
   sl
   D    = gf_compute(mfdu,VM,'interpolate on',sl);
+  drawlater;
   gf_plot_slice(sl, 'mesh','on','data',D,'pcolor','on','mesh_edges_color',[1 1 .7]);
+  drawnow;
   pr   = r;
   haut = haut+24;
 end

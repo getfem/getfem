@@ -78,11 +78,12 @@ for step=1:8
   else 
     opt = list(); 
   end
+  drawlater;
   subplot(2,1,1);
   gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U, 'deformation_mf',mfu,'refine', 4, 'deformation_scale',1, opt(:)); 
   gf_colormap('chouette');
   //caxis([0 1e7]);
-  //colorbar; 
+  colorbar(min(U),max(U)); 
   title('Von Mises stress');
   
   ERR   = gf_compute(mfu,U,'error estimate', mim);
@@ -90,9 +91,10 @@ for step=1:8
   E(dd) = ERR;
   subplot(2,1,2);
   gf_plot(mf0, E, 'mesh','on', 'refine', 1, opt(:)); 
-  //colorbar;
+  colorbar(min(E),max(E));
   title('Error estimate')
-  
+  drawnow;
+
   disp('press a key..'); pause;
   
   gf_mesh_set(m, 'refine', find(ERR > 1e-3));

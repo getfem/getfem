@@ -50,15 +50,17 @@ for t=0:dt:T
   U = gf_model_get(md, 'variable', 'u');
   V = gf_model_get(md, 'variable', 'v');
 
+  drawlater;
   subplot(2,1,1); 
   gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1); 
-  //colorbar; 
+  colorbar(min(U),max(U)); 
   title(sprintf('computed solution u for t=%g', t));
 
   subplot(2,1,2); 
   gf_plot(mf, V, 'mesh', 'on', 'contour', .01:.01:.1); 
-  //colorbar; 
+  colorbar(min(V),max(V)); 
   title(sprintf('computed solution du/dt for t=%g', t));
+  drawnow;
   sleep(100);
 
   gf_model_set(md, 'next iter');

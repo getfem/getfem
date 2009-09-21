@@ -112,8 +112,12 @@ RK  = _null'*A*_null;
 U   = _null*(RK\RF)+ud(:);
 Udr = gf_compute(mfu,real(U(:)'),'interpolate on',mfd); 
 Udi = gf_compute(mfu,imag(U(:)'),'interpolate on',mfd); Ud=Udr+1*%i*Udi;
-//figure(1); gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); colorbar;
-//figure(2); gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); colorbar;
+//scf(1); 
+//gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
+//colorbar(min(imag(U)),max(imag(U)));
+//scf(2); 
+//gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
+//colorbar(min(abs(Ud)),max(abs(Ud)));
 
 // compute the "exact" solution from its developpement 
 // of bessel functions:
@@ -146,5 +150,7 @@ disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/g
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
 // adjust the 'refine' parameter to enhance the quality of the picture
+drawlater;
 gf_plot(mfu,real(U(:)'),'mesh','on','refine',8); 
+drawnow;
 

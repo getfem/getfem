@@ -10,7 +10,9 @@ border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'region', 42, border); // create the region
 
 // the boundary edges appears in red
+drawlater;
 gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 
+drawnow;
 
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
@@ -24,4 +26,6 @@ gf_model_get(md, 'solve');
 
 U = gf_model_get(md, 'variable', 'u');
 
+drawlater;
 gf_plot(mf, U, 'mesh','on');
+drawnow;

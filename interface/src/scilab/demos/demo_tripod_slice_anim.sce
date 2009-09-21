@@ -16,7 +16,9 @@ for r=-10.3:+.1:12 //46.1:-.1:4,
   sl  = gf_slice(list('boundary',list('planar',-1,[0;r;0],[0;1;0])),mfu,U*10,5);
   Usl = gf_compute(mfdu,VM,'interpolate on',sl);
   P   = gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
+  drawlater;
   gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
+  drawnow;
   //view(0,30);
   //caxis([0 7]);
   //axis([-48 48 -5 15 -48 48]); axis off; camzoom(1.4*1.3); campan(+.8,-.2);

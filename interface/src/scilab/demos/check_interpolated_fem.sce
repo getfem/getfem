@@ -13,7 +13,9 @@ gf_mesh_fem_set(mf1, 'fem', gf_fem('FEM_PK(2, 1)'));
 
 m2 = gf_mesh('regular_simplices', 0:.3:3, -.2:.4:1.2, 'degree', 1,'noised');
 //m2 = gf_mesh('regular_simplices', [0 3], [0 1], 'degree', 1, 'noised');
+//drawlater;
 //gf_plot_mesh(m2, 'refine' ,5, 'curved','on');
+//drawnow;
 mf2  = gf_mesh_fem(m2); 
 mim2 = gf_mesh_im(m2,gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),4)'));
 //mim2 = gf_meshI_im(m2, gf_integ('IM_TRIANGLE(6)'));
@@ -39,7 +41,9 @@ drawnow;
 //for i=1:nbd, 
 //  U=zeros(1,nbd); U(i)=1;
 //  disp(sprintf('dof %d/%d', i, nbd));
+//  drawlater;
 //  gf_plot(mf,U,'refine',16, 'mesh','on');
+//  drawnow;
 //  pause
 //end;
 

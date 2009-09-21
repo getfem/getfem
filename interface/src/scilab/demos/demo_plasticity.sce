@@ -49,9 +49,10 @@ for step=1:nbstep
   VM = gf_md_brick_get(b0, 'von mises', mds, mfdu);
   max(abs(VM))
   
+  drawlater;
   subplot(2,1,1);
   gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mfu,'refine', 4, 'deformation_scale',1); 
-  //colorbar;
+  colorbar(min(U),max(U));
   //caxis([0 10000]);
   
   ERR   = gf_compute(mfu,U,'error estimate', mim);
@@ -59,7 +60,8 @@ for step=1:nbstep
   E(dd) = ERR;
   subplot(2,1,2);
   gf_plot(mf0, E, 'mesh','on', 'refine', 1); 
-  //colorbar;
+  drawnow;
+  colorbar(min(E),max(E));
   sleep(1000);
 end
 

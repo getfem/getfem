@@ -3,6 +3,11 @@ printf('SCIGETFEM: m'); disp(m);
 mf = gf_mesh_fem(m,1); // create a meshfem of for a field of dimension 1 (i.e. a scalar field)
 printf('SCIGETFEM: mf'); disp(mf);
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
+sl = gf_slice(list('planar',0,[.5;0],[1;0]),m,3);
+[P,T1,T2] = gf_slice_get(sl,'edges');
+printf('SCIGETFEM: sl - P'); disp(P)
+printf('SCIGETFEM: sl - T1'); disp(T1)
+printf('SCIGETFEM: sl - T2'); disp(T2)
 
 pstr = gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str');
 printf('SCIGETFEM: pstr'); disp(pstr);

@@ -19,7 +19,9 @@ border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'boundary', 1, border);
 
 scf();
+drawlater;
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
+drawnow;
 
 // interpolate the exact solution
 //YC: Uexact = gf_mesh_fem_get(mf, 'eval', list('y.*(y-1).*x.*(x-1)+x.^5'));
@@ -53,13 +55,14 @@ U = gf_model_get(md, 'variable', 'u');
 disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 
 scf();
+drawlater;
 subplot(2,1,1); 
 gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
-//colorbar; 
+colorbar(min(U),max(U)); 
 title('computed solution');
 
 subplot(2,1,2); 
 gf_plot(mf,U-Uexact,'mesh','on'); 
-//colorbar;
+colorbar(min(U-Uexact),max(U-Uexact));
 title('difference with exact solution');
-
+drawnow;

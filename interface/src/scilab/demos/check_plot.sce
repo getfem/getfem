@@ -29,22 +29,30 @@ U2v = gf_mesh_fem_get_eval(mf2v,list('x.*y','1-x+y.*y'));
 gf_workspace('push');
 sl2 = gf_slice(list('none'),m2,2);
 sl3 = gf_slice(list('none'),m3,2,gf_mesh_get(m3,'outer faces'));
+drawlater;
 gf_plot_slice(sl2);
 gf_plot_slice(sl3);
+drawnow;
 gf_workspace('pop');
 
 gf_workspace('push');
 sl2 = gf_slice(list('boundary'),m2,3);
 sl3 = gf_slice(list('boundary',list('none')),m3,3);
+drawlater;
 gf_plot_slice(sl2);
 gf_plot_slice(sl2, 'mesh','on','mesh_edges_color', [0 0 1], 'mesh_edges_width', 2, 'mesh_faces','on', 'mesh_faces_color', [1 0 0]);
 gf_plot_slice(sl3, 'tube','on','mesh_edges_color', [0 0 1], 'mesh_edges_width', 2, 'mesh_faces','on', 'mesh_faces_color', [1 0 0]);
+drawnow;
 
 sl4 = gf_slice(list('planar',0,[.5;.5;.5],[0;0;1]),sl3);
 P   = gf_slice_get(sl4,'pts');
+drawlater;
 gf_plot_slice(sl4,'tube','on','tube_radius',0.05*abs(sin(P(2,:)*10))+0.01);
+drawnow;
 
 P=gf_slice_get(sl3,'pts');
+drawlater;
 gf_plot_slice(sl3, 'data',0.05*abs(sin(P(2,:)*10))+0.01);
+drawnow;
 
 //gf_workspace('pop');

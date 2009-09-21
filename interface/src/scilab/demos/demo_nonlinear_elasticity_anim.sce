@@ -19,9 +19,13 @@ for step=1:1:nbstep
   
   gf_slice_set(sl,'pts', P0+slU);
   
+  drawlater;
   gf_plot_slice(sl, 'data', slVM, 'mesh_edges','on', 'mesh','on'); 
-  
+  drawnow;
+
+  //drawlater;
   //gf_plot(mfdu,VM,'mesh','on', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 16); 
+  //drawnow;
 //  axis([-3     6     0    20    -2     2]);
 //  caxis([0 .15]);
 //  view(30+20*w, 23+30*w);  

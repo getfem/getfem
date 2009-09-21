@@ -35,7 +35,10 @@ assert('abs(pp2(1,:)-.5)<1e-15');
 
 //  n=8;sl = gf_slice(m,list('isovalues',-1,mf,U,0.25),n);
 sl = gf_slice(list('isovalues',-1,mf,U,16.0),m,4);
-//  gf_plot_slice(sl,'mesh','on','data',gf_compute(mf,U,'interpolate on',sl)); colorbar; // YC
+//  drawnlater
+//  gf_plot_slice(sl,'mesh','on','data',gf_compute(mf,U,'interpolate on',sl)); 
+//  colorbar(min(U),max(U));
+//  drawnow;
 pp = gf_slice_get(sl,'pts');
 assert('max(sqrt(sum(pp.^2,1)))<4.0000001');
 
@@ -46,7 +49,10 @@ assert('max(abs(3-sqrt(sum(pp.^2,1))))<0.0015');
 N=1;
 m  = gf_mesh('triangles grid',[-N:(2*N/3):N],[-N:(N/5):N]);
 m2 = gf_mesh('cartesian',[-N:(N/5):N]+.1,[-N:(N/7):N]+.1);
-sl = gf_slice(list('mesh',m2),m,3); //gf_plot_slice(sl,'mesh_faces','on');
+sl = gf_slice(list('mesh',m2),m,3); 
+//drawlater;
+//gf_plot_slice(sl,'mesh_faces','on');
+//drawnow;
 a  = gf_slice_get(sl,'area') - 1.9*1.9;
 assert('a < 1e-10');
 endfunction

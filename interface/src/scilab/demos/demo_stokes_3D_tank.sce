@@ -35,8 +35,8 @@ TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 gf_mesh_set(m, 'region', 1, INfaces);
 gf_mesh_set(m, 'region', 2, OUTfaces);
 gf_mesh_set(m, 'region', 3, TOPfaces);
-//gf_mesh_set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
-gf_mesh_set(m, 'region', 4, setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
+//gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
+gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
 
 disp(sprintf('nbdof: mfu=%d, mfp=%d',gf_mesh_fem_get(mfu,'nbdof'),gf_mesh_fem_get(mfp,'nbdof')));
 
@@ -63,10 +63,10 @@ if (compute) then
 
   disp('running solve... can take some minutes and needs ~600MB of memory');
   
-  t0=cputime; 
+  t0=timer(); 
 
   gf_model_get(md, 'solve', 'lsolver', 'superlu', 'noisy');
-  disp(sprintf('solve done in %.2f sec', cputime-t0));
+  disp(sprintf('solve done in %.2f sec', timer()-t0));
 
   U = gf_model_get(md, 'variable', 'u');
   P = gf_model_get(md, 'variable', 'p');

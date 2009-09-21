@@ -35,7 +35,7 @@ gf_mesh_fem_set(mfu, 'dof_partition', areap);
 b_in     = gf_mesh_get(m, 'outer faces', find(areap==1));
 b_out    = gf_mesh_get(m, 'outer faces', find(areap==0));
 b_border = gf_mesh_get(m, 'outer faces');
-b_out    = setdiff(b_out', b_border', 'rows')';
+b_out    = _setdiff(b_out', b_border', 'rows')';
 
 fleft  = gf_mesh_get(m,'faces from pid',find(abs(P(1,:))<1e-6));
 fright = gf_mesh_get(m,'faces from pid',find(abs(P(1,:) - 1)<1e-6));
@@ -49,7 +49,9 @@ MORTAR_BOUNDARY_OUT = 41;
 gf_mesh_set(m, 'region', MORTAR_BOUNDARY_IN, b_in);
 gf_mesh_set(m, 'region', MORTAR_BOUNDARY_OUT, b_out);
 
+drawlater;
 gf_plot_mesh(m,'boundaries',40);
+drawnow;
 disp('This is the mortar interface (press a key to continue)'); pause;
 
 indm = gf_mesh_fem_get(mfm, 'basic dof on region', MORTAR_BOUNDARY_OUT);
@@ -75,6 +77,9 @@ U = gf_model_get(md, 'variable', 'u');
 
 VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
 
+drawlater;
 gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,	'deformation_mf',mfu,'refine', 4, 'deformation_scale',0.1); 
+drawnow;
+
 // caxis([0 500]);
 

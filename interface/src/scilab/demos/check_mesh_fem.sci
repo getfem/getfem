@@ -300,11 +300,11 @@ RR = union(R1',R2','r')';
 assert('rr==RR');
 
 // The setdiff function is not yet in scilab
-if 0 then
+if 1 then
   gf_mesh_set(m,'region', 11, R2);
   gf_mesh_set(m,'region substract', 11, 10);
   rr = gf_mesh_get(m,'region',11);
-  RR = setdiff(R2',R1','rows')';
+  RR = _setdiff(R2',R1','rows')';
   assert('rr==RR');
 end
 

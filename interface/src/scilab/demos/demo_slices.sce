@@ -1,6 +1,6 @@
 // not working, not part of the getfem-interface distrib
 
-mf = gf_mesh_fem('load','signorini_cou.mesh_fem'); 
+mf = gf_mesh_fem('load','../../../../tests/meshes/donut_regulier_72_elements.meshsignorini_cou.mesh_fem'); 
 m  = gf_mesh_fem_get(mf,'linked_mesh'); 
 load('signorini_cou.data');
 U = signorini_cou';
@@ -41,12 +41,14 @@ gf_slice_set(sl2, 'pts', P+dP);
 
 VMsl = gf_compute(mfdu,VM,'interpolate on',sl2);
 
-scf(100001); 
+scf(100001);
+drawlater; 
 h = gf_plot_slice(sl2,'mesh','on','data',VMsl); 
 // view(-80,-15); axis off; camlight;
 
 scf(100002); 
 h = gf_plot_slice(sl1,'mesh_faces','on','mesh','on'); 
+drawnow;
 // view(-85,-15); axis off; camlight;
 //set(h,'facecolor',[.8 0 0]);
 

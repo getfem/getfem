@@ -82,13 +82,15 @@ b5 = gf_mdbrick('dirichlet', b4, SIMPLE_SUPPORT_BOUNDARY_NUM, mfd, 'penalized');
 
 mds = gf_mdstate(b5)
 disp('running solve... ');
-t0  = cputime; 
+t0  = timer(); 
 
 gf_mdbrick_get(b5, 'solve', mds, 'noisy');
-disp(sprintf('solve done in %.2f sec', cputime-t0));
+disp(sprintf('solve done in %.2f sec', timer()-t0));
 
 U = gf_mdstate_get(mds, 'state');
+drawlater;
 gf_plot(mfu,U,'mesh','on');
+drawnow;
 
 disp(sprintf('H2 norm of the solution: %g', gf_compute(mfu,U,'H2 norm', mim)));
 
