@@ -9,6 +9,8 @@ function [hline, hdof] = gf_plot_1D(mf,U, varargin)
 //  'dof_color', [1,0,0] : color of the markers for the degrees of freedom.
 //  'width', 2           : line width.
 
+printf('DEBUG: in gf_plot_1D\n');
+
 opts = build_options_list(varargin(:));
 
 try 

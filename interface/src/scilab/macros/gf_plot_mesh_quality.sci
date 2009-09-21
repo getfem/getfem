@@ -1,5 +1,7 @@
 function gf_plot_mesh_quality(m)
+
 printf('DEBUG: in gf_plot_mesh_quality\n');
+
 try 
   gf_workspace('push');
   gf_plot_mesh_quality_aux(m);

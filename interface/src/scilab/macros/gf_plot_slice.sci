@@ -41,7 +41,6 @@ end
 
 opts = build_options_list(varargin(:));
 
-//mf=struct(mf);
 hfaces  = [];
 hquiver = [];
 hmesh   = [];
@@ -76,15 +75,6 @@ end
 [opt_tube_radius,err]            = get_param(opts,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opts,'showoptions','off'); // list options used
 
-
-qdim = length(U) / gf_slice_get(sl, 'nbpts');
-nbpts = gf_slice_get(sl,'nbpts');
-printf('nbpts = '); disp(nbpts);
-printf('qdim = '); disp(qdim)
-printf('U = '); disp(length(U))
-
-if (fix(qdim) ~= qdim), error('wrong number of elements for U'); end;
-
 if (ison(opt_showoptions)) then disp(opts); end;
 
 if (~isempty(opt_convex_data)) then 
@@ -108,10 +98,10 @@ end
 
 P = list();
 T = list();
-for i=1:mdim,
+for i=1:mdim
   P(i) = Pm(i,:);
   T(i) = gf_slice_get(sl,'splxs', i);
-  box(i,:) = [min(P(i)) max(P(i))];
+  box(i,:) = [min(P(i),'r') max(P(i),'r')];
 end
 
 // handle simplexes of dimension 1
@@ -164,7 +154,7 @@ if (~ison(opt_tube)) then
   C = list();
   for j=1:length(P)
     C(j)=[P(j)(T(1,:));P(j)(T(2,:))];
-  end;
+  end
   if (length(P)==1) C(2)=zeros(size(C(1))); end;
   // hmesh = line(C(:),'Color',opt_mesh_edges_color);
   if length(C)==2 then
@@ -199,21 +189,32 @@ endfunction
 // cell2mat not available in matlab R12
 function M=mycell2mat(C)
 // M=cat(1,C{:});
-M = lstcat(C(:));
+M = [];
+for i=1:length(C)
+  M = [M C(i)'];
+end
 endfunction
 
 // plots a 'tube' along edges, with color given by D, and a possibly varying radius
 // radius: constant or equal to nb points
 // D(ata): empty or equal to nb points or nb segments
 function h=plot_tube(P, T, D, radius, tubecolor)
+
 printf('DEBUG: in plot_tube\n');
 h = [];
 P = mycell2mat(P);
 if (isempty(T)) then return; end;
 T = double(T); // matlab 6.5 is not able to handle operator '+' on int32 ...
-it0 = T(1,1); nT = size(T,2); nP = size(P,2); mdim=size(P,1);
+it0  = T(1,1); 
+nT   = size(T,2);
+nP   = size(P,2);
+mdim = size(P,1);
 
-if (mdim == 2) then P = [P; zeros(1,nP)]; mdim = 3; end; // handle 2D slices
+if (mdim == 2) then 
+  P = [P; zeros(1,nP)]; 
+  mdim = 3; 
+end // handle 2D slices
+
 // convert radius to node data
 if (length(radius)==1) then
   radius = radius*ones(1,nP); //radius(1)=0.5; radius($)=0.5;
@@ -250,9 +251,11 @@ while (1)
   end
   nseg = it1-it0+1;
   // compute the normals of edges
-  normals = zeros(3, 2, nseg); // produce a hypermat
+  //YC: normals = zeros(3, 2, nseg); // produce a hypermat
   tang = p(:,2:$) - p(:,1:$-1); 
-  tang = tang ./ repmat(sqrt(sum(tang.^2,1)),size(tang,1),1); 
+  for i=1:size(tang,2)
+    tang(:,i) = tang(:,i) / sqrt(sum(tang(:,i).^2)); 
+  end
   for i=1:nseg
     normals(:,:,i) = null_space(tang(:,i)'); // won't be ok if normals have an
                                              // important rotation from a segment
@@ -275,12 +278,26 @@ while (1)
     C = repmat(d,nsubdiv+1,1);
     surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),C); // 'linestyle','none','FaceColor','interp')];
     h($+1) = gce();
-    h($).thickness = 0; // corresponds to linestyle none
+    h($).thickness  = 0; // corresponds to linestyle none
+    h($).color_flag = 3; // 2 -> flat shadding 3 -> interpolated shadding
   else
-    surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:))); // 'linestyle','none','facecolor',tubecolor)];
+    //surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:))); // 'linestyle','none','facecolor',tubecolor)];
+    // Workaround for bug 4042
+    MyX1 = squeeze(X(1,:,:));
+    MyX1 = matrix(MyX1.entries,double(MyX1.dims));
+    MyX2 = squeeze(X(2,:,:));
+    MyX2 = matrix(MyX2.entries,double(MyX2.dims));
+    MyX3 = squeeze(X(3,:,:));
+    MyX3 = matrix(MyX3.entries,double(MyX3.dims));
+
+    disp(typeof(tubecolor))
+    disp(tubecolor)
+    
+    //surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),'edgeco','cya'); // 'linestyle','none','facecolor',tubecolor)];
+    surf(MyX1, MyX2, MyX3,'edgeco','cya'); // 'linestyle','none','facecolor',tubecolor)];
     h($+1) = gce();
     h($).thickness = 0; // corresponds to linestyle none
-    h($).color_mode = tubecolor;
+    h($).color_mode = color(tubecolor);
     h($).color_flag = 0;
   end
   cnt = cnt+1;
@@ -291,7 +308,9 @@ endfunction
 
 // draw faces
 function [hfaces,hmesh,hquiver] = do_plot_2D(sl,P,T,opt)
+
 printf('DEBUG: in do_plot_2D\n');
+
 hfaces  = []; 
 hmesh   = []; 
 hquiver = [];
@@ -318,22 +337,35 @@ mdim    = length(P);
 [opt_tube_radius,err]            = get_param(opt,'tube_radius',0.05); // tube radius; you can use a constant, or a percentage (of the mesh size) or a vector of nodal values
 [opt_showoptions,err]            = get_param(opt,'showoptions','off'); // list options used
 
+d = mlist(['dlist','FaceVertexCData','FaceColor'],[],[]);  
+d_is_set = %F;
+
 if (length(T)) then
-  d = list();  
   if (ison(opt_pcolor) & size(opt_data,1)==1 & ~isempty(opt_data)) then
-    d = list('FaceVertexCData',opt_data(:),'FaceColor','interp');
+    d('FaceVertexCData') = opt_data(:);
+    d('FaceColor') = 'interp';
+    d_is_set = %T;
   elseif (isempty(opt_data) & ison(opt_mesh_faces)) then
-    d = list('FaceVertexCData',opt_mesh_faces_color, 'FaceColor','flat');
+    d('FaceVertexCData') = opt_mesh_faces_color;
+    d('FaceColor') = 'flat';
+    d_is_set = %T;
   end  
-  if (~isempty(d)) then
+  if (d_is_set) then
     //hfaces = patch('Vertices',mycell2mat(P)','Faces',T',d(:), 'EdgeColor','none'); // YC:
-    p_tmp = mycell2mat(P)';
+    p_tmp = mycell2mat(P);
     T = T';
-    xtmp = matrix(p_tmp(t1,1),size(T,1),length(p_tmp(T,1))/size(T,1))';
-    ytmp = matrix(p_tmp(t1,2),size(T,1),length(p_tmp(T,1))/size(T,1))';
-    ztmp = matrix(p_tmp(t1,3),size(T,1),length(p_tmp(T,1))/size(T,1))';
-    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
+    xtmp = matrix(p_tmp(T,1),size(T,1),length(p_tmp(T,1))/size(T,1))';
+    ytmp = matrix(p_tmp(T,2),size(T,1),length(p_tmp(T,1))/size(T,1))';
+//    ztmp = matrix(p_tmp(T,3),size(T,1),length(p_tmp(T,1))/size(T,1))';
+//    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
+    ztmp = matrix(ones(p_tmp(T,2)),size(T,1),length(p_tmp(T,1))/size(T,1))';
+    plot3d(xtmp, ytmp, ztmp);
     hfaces = gce();
+    hfaces.thickness  = opt_mesh_edges_width;
+    hfaces.line_style = 0;
+    hfaces.foreground = color(round(255*opt_mesh_edges_color(1)), ...
+                              round(255*opt_mesh_edges_color(2)), ...
+                              round(255*opt_mesh_edges_color(3)));
     T = T';
   end
   if (ison(opt_quiver)) then
@@ -344,29 +376,60 @@ if (length(T)) then
 end
 if (ison(opt_mesh) & (ison(opt_mesh_edges) | ison(opt_mesh_slice_edges))) then
   [p,t1,t2] = gf_slice_get(sl,'edges');
+  disp(size(p))
+  disp(size(t1))
+  disp(size(t2))
   if (ison(opt_mesh_edges)) then
-    p = p'; t1 = t1';
-    disp(size(p))
-    disp(size(t1))
-    disp(size(t2))
-    xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
-    ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
-    ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))'; // YC: a revoir: p est de dim 2. t1 est de dim 2 aussi
-    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
+    printf('DEBUG: opt_mesh_edges is on\n');
+    // p: 2 x 1661
+    // t1: 2 x 1760
+    // t2: 0
+    p = p'; //t1 = t1';
+    if (size(p,2)==2) & size(t1,1)~=0 then // 2D plot
+      printf('DEBUG: here 1\n');
+      xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
+      ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
+      ztmp = matrix(ones(p(t1,2)),size(t1,1),length(p(t1,1))/size(t1,1))';
+      plot3d(xtmp, ytmp, ztmp);
+    elseif size(t1,1)~=0 then
+      printf('DEBUG: here 2\n');
+      xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
+      ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
+      ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))';
+      //plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
+      plot3d(xtmp, ytmp, ztmp);
+    end
     hmesh = gce();
-    hmesh.line_width = opt_mesh_edges_width;
-    p = p'; t1 = t1';
+    hmesh.thickness = opt_mesh_edges_width;
+    hmesh.line_style = 0;
+    hmesh.foreground = color(round(255*opt_mesh_edges_color(1)), ...
+                             round(255*opt_mesh_edges_color(2)), ...
+                             round(255*opt_mesh_edges_color(3)));
+    p = p'; //t1 = t1';
   end
   if (ison(opt_mesh_slice_edges)) then
+    printf('DEBUG: opt_mesh_slice_edges is on\n');
     //hmesh = [hmesh patch('Vertices',p','Faces',t2','EdgeColor',opt_mesh_slice_edges_color,'LineWidth',opt_mesh_slice_edges_width)]; // YC
-    p = p'; t2 = t2';
-    xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
-    ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
-    ztmp = matrix(p(t2,3),size(t2,1),length(p(t2,1))/size(t2,1))';
-    plot3d(xtmp, ytmp, list(ztmp,opt_mesh_edges_color));
+    p = p'; //t2 = t2';
+    if (size(p,2)==2) & size(t2,1)~=0 then
+      xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
+      ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
+      ztmp = matrix(ones(p(t2,2)),size(t2,1),length(p(t2,1))/size(t2,1))';
+      plot3d(xtmp, ytmp, ztmp);
+    elseif size(t2,1)~=0 then
+      xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
+      ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
+      ztmp = matrix(p(t2,3),size(t2,1),length(p(t2,1))/size(t2,1))';
+      plot3d(xtmp, ytmp, ztmp);
+    end
+    
     hmesh_tmp = gce();
-    hmesh_tmp.line_width = opt_mesh_edges_width;
-    p = p'; t2 = t2';
+    hmesh_tmp.thickness = opt_mesh_slice_edges_width;
+    hmesh_tmp.line_style = 0;
+    hmesh_tmp.foreground = color(round(255*opt_mesh_slice_edges_color(1)), ...
+                                 round(255*opt_mesh_slice_edges_color(2)), ...
+                                 round(255*opt_mesh_slice_edges_color(3)));
+    p = p'; //t2 = t2';
     hmesh = [hmesh hmesh_tmp];
   end
 end 
@@ -422,7 +485,7 @@ while (length(ptlst)>0)
     rm = (find((P(1,:)-x).^2 + (P(2,:)-y).^2 + (P(3,:)-z).^2 < qradius2));
   end
   if (length(rm)==0) then error('internal error in gf_plot'); end;
-  ptlst = setdiff(ptlst, rm);
+  ptlst = _setdiff(ptlst, rm);
 end
 if (qdim == 2) then
   champ(P(1,qlst),P(2,qlst),U(1,qlst),U(2,qlst)); 

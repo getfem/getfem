@@ -196,7 +196,7 @@ Psl = gf_slice_get(sl,'pts');
 
 // plot the original mesh
 if (ison(opt_mesh)) then
-  hmesh = list(gf_plot_slice(sl,'mesh','on',opt_meshopts(:))); // YC: ??
+  hmesh = list(gf_plot_slice(sl,'mesh','on',opt_meshopts(:)));
 end
 
 // apply the optional deformation
@@ -255,17 +255,23 @@ if (is_scalarplot) then
                     0.7 0.0 0.7;
                     0.0 0.7 0.9]; 
                     
-  contour_linestyle = get(cax,'LineStyleOrder'); // YC: voir dans la doc matlab - on recupere la liste des couleurs des courbes
+  //contour_linestyle = get(cax,'LineStyleOrder'); // YC: voir dans la doc matlab - on recupere la liste des couleurs des courbes
   hcontour = list();
+  disp(length(opt_contour))
   for cnum=1:length(opt_contour)
     c=opt_contour(cnum);
     slC = gf_slice(list('isovalues',0,mf,U,c),sl);
     [a,b,c,hcontour(cnum)] = gf_plot_slice(slC,'tube','off','mesh','off');
     if (~isempty(hcontour(cnum))) then
-      set(hcontour(cnum),...
-          'Color',contour_colors(modulo(cnum,size(contour_colors,1))+1,:),...
-          'LineStyle',contour_linestyle(modulo(cnum,length(contour_linestyle))+1),...
-          'LineWidth',1);
+      hcontour(cnum).color_mode = color(round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,1)), ...
+                                        round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,2)), ...
+                                        round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,3)));
+      hcontour(cnum).color_flag = 0;
+      hcontour(cnum).thickness = 1;
+//      set(hcontour(cnum),...
+//          'Color',contour_colors(modulo(cnum,size(contour_colors,1))+1,:),...
+//          'LineStyle',contour_linestyle(modulo(cnum,length(contour_linestyle))+1),...
+//          'LineWidth',1);
     end
     gf_delete(slC);
   end
