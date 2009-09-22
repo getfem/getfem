@@ -72,7 +72,7 @@ else
     if (typeof([c(:); b(:)])=='string') then
       [dummy, idx] = -sort(-[ascii(c(:)); ascii(b(:))]);
     else
-      [dummy, idx] = -sort(-[c(:); b(:)]);
+      [dummy, idx] = -sort(-double([c(:); b(:)]));
     end
     
     // Eliminate those elements of a that are the same as in b.
