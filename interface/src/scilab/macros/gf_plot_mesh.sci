@@ -54,39 +54,39 @@ else
   defaultref = 4;
 end
 
-[opt_vertices,err]    = get_param(opts,'vertices','off');
-[opt_convexes,err]    = get_param(opts,'convexes','off');
-[opt_dof,err]         = get_param(opts,'dof','off');
-[opt_regions,err]     = get_param(opts,'regions','');
-[opt_boundaries,err]  = get_param(opts,'boundaries','');
-[opt_cvlst,err]       = get_param(opts,'cvlst',[]);
-[opt_edges,err]       = get_param(opts,'edges','on');
-[opt_faces,err]       = get_param(opts,'faces','off');
-[opt_explode,err]     = get_param(opts,'explode',0);
-[opt_quality,err]     = get_param(opts,'quality','off');
-[opt_curved,err]      = get_param(opts,'curved','off');
-[opt_refine,err]      = get_param(opts,'refine',defaultref);
-[opt_deformation,err] = get_param(opts,'deformation',[]);
-[opt_edges_color,err] = get_param(opts,'edges_color',[.6 .6 1]);
-[opt_edges_width,err] = get_param(opts,'edges_width',.7);
-[opt_faces_color,err] = get_param(opts,'faces_color',[.75 .75 .75]);
+[o_vertices,err]    = get_param(opts,'vertices','off');
+[o_convexes,err]    = get_param(opts,'convexes','off');
+[o_dof,err]         = get_param(opts,'dof','off');
+[o_regions,err]     = get_param(opts,'regions','');
+[o_boundaries,err]  = get_param(opts,'boundaries','');
+[o_cvlst,err]       = get_param(opts,'cvlst',[]);
+[o_edges,err]       = get_param(opts,'edges','on');
+[o_faces,err]       = get_param(opts,'faces','off');
+[o_explode,err]     = get_param(opts,'explode',0);
+[o_quality,err]     = get_param(opts,'quality','off');
+[o_curved,err]      = get_param(opts,'curved','off');
+[o_refine,err]      = get_param(opts,'refine',defaultref);
+[o_deformation,err] = get_param(opts,'deformation',[]);
+[o_edges_color,err] = get_param(opts,'edges_color',[.6 .6 1]);
+[o_edges_width,err] = get_param(opts,'edges_width',.7);
+[o_faces_color,err] = get_param(opts,'faces_color',[.75 .75 .75]);
 
-if (length(opt_boundaries) == 0) then
-  opt_boundaries = opt_regions;
+if (length(o_boundaries) == 0) then
+  o_boundaries = o_regions;
 end
 
-if (typeof(opt_boundaries)=='string') then
-  if (convstr(opt_boundaries,'l')=='all') then
-    opt_boundaries = gf_mesh_get(M, 'boundaries');
+if (typeof(o_boundaries)=='string') then
+  if (convstr(o_boundaries,'l')=='all') then
+    o_boundaries = gf_mesh_get(M, 'boundaries');
   end
 end
 
 // init cvlst and cvflst
-if (isempty(opt_cvlst)) then
+if (isempty(o_cvlst)) then
   cvlst  = gf_mesh_get(M,'cvid'); 
   cvflst = [cvlst; int32(zeros(1,length(cvlst)))]; // int32 is the type of cvlst
 else 
-  cvlst  = opt_cvlst;
+  cvlst  = o_cvlst;
   cvflst = cvlst;  
   if (size(cvflst,1)==2) then
     cvlst = unique(cvlst(1,:));
@@ -97,11 +97,10 @@ PXY = gf_mesh_get(M, 'pts');
 
 E = gf_mesh_get(M, 'edges', cvflst);
 
-if (~ison(opt_curved) & isempty(opt_deformation)) then
+if (~ison(o_curved) & isempty(o_deformation)) then
   X = [PXY(1,E(1,:)); PXY(1,E(2,:))];
   if (mdim == 1) then
     Y = zeros(size(X));
-//YC:     PXY = [PXY; zeros(size(PXY))];
     PXY = [PXY; zeros(PXY)];
   elseif (mdim >= 2) then
     Y = [PXY(2,E(1,:)); PXY(2,E(2,:))];
@@ -111,10 +110,10 @@ if (~ison(opt_curved) & isempty(opt_deformation)) then
   end
 else
   // here, mdim is always >= 2
-  if (~isempty(opt_deformation)) then
-    vE = gf_compute(M,opt_deformation,'mesh edges deformation',opt_refine,cvflst);
+  if (~isempty(o_deformation)) then
+    vE = gf_compute(M,o_deformation,'mesh edges deformation',o_refine,cvflst);
   else
-    vE = gf_mesh_get(M, 'curved edges', opt_refine, cvflst);
+    vE = gf_mesh_get(M, 'curved edges', o_refine, cvflst);
   end
   ni = size(vE,2);
   ne = size(vE,3);
@@ -136,7 +135,7 @@ Bdiff = Bmax - Bmin;
 Bdiff = Bdiff + (Bdiff == 0); // remplace 0.0 par 1.0
 ecart = Bdiff/150;
 
-if (ison(opt_convexes)) then
+if (ison(o_convexes)) then
   cv_center = zeros(max(mdim,2),length(cvlst));
   // find convexes centers
   [cv_pid, cv_idx] = gf_mesh_get(M, 'pid from cvid',cvlst);
@@ -145,7 +144,7 @@ if (ison(opt_convexes)) then
   end
 end
 
-if (ison(opt_dof)) then
+if (ison(o_dof)) then
   Q = gf_mesh_fem_get(M, 'qdim');
   dofid    = gf_mesh_fem_get(M, 'dof from cv', cvlst);
   [dofpos] = gf_mesh_fem_get(M, 'dof nodes', dofid);
@@ -156,8 +155,8 @@ if (ison(opt_dof)) then
 end
 
 bedge = list();
-for bnum=1:length(opt_boundaries)
-  cvf = gf_mesh_get(M, 'boundary', opt_boundaries(bnum));
+for bnum=1:length(o_boundaries)
+  cvf = gf_mesh_get(M, 'boundary', o_boundaries(bnum));
   
   bid = gf_mesh_get(M, 'edges', cvf, 'merge convex');
   if (bnum == 8) then disp(bid); end;
@@ -175,29 +174,28 @@ cax = gcf();
 disp('plotting mesh...');
 
 if (mdim <= 2) then
-  if (ison(opt_edges)) then
+  if (ison(o_edges)) then
     plot(X, Y);
     hmesh = gce();
-    hmesh.children(:).thickness = opt_edges_width;
+    hmesh.children(:).thickness = o_edges_width;
     hmesh.children(:).line_style = 0; // Continous lines
-    hmesh.children(:).foreground = opt_edges_color;
+    hmesh.children(:).foreground = o_edges_color;
   end
-  for bnum=1:length(opt_boundaries),
+  for bnum=1:length(o_boundaries),
     plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
     hbound(bnum) = gce();
     hbound(bnum).children(:).thickness  = 2;
     hbound(bnum).children(:).line_style = 0; // Continous lines
     hbound(bnum).children(:).foreground = 5; // red
   end
-  if (ison(opt_vertices)) then
+  if (ison(o_vertices)) then
     for i=1:length(PID)
-      printf("print %s at %d %d\n",string(double(PID(i))),PXY(1,PID(i))+ecart(1),PXY(1,PID(i))+ecart(1));
       xstring(PXY(1,PID(i))+ecart(1), PXY(2,PID(i))+ecart(2), string(double(PID(i)))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
       hvert = gce();
       hvert.alignment = 'center';
     end
   end
-  if (ison(opt_convexes)) then
+  if (ison(o_convexes)) then
     for i=1:size(cv_center,2)
       xstring(cv_center(1,i), cv_center(2,i), string(double(cvlst(i)))); // 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [.7 0 0]
       hconv = gce();
@@ -205,7 +203,7 @@ if (mdim <= 2) then
       hconv.font_foreground = 5; // Red
     end
   end
-  if (ison(opt_dof)) then
+  if (ison(o_dof)) then
     hdof = zeros(length(dofid),1);
     for i=1:length(dofid),
       if (dofmult(i)==1) then 
@@ -220,21 +218,21 @@ if (mdim <= 2) then
     end
   end
 else
-  if (ison(opt_edges)) then
-    plot3d(X, Y, Z); // 'Color',opt_edges_color,'LineWidth',opt_edges_width
+  if (ison(o_edges)) then
+    plot3d(X, Y, Z); // 'Color',o_edges_color,'LineWidth',o_edges_width
     hmesh = gce();
-    hmesh.children(:).thickness  = opt_edges_width;
+    hmesh.children(:).thickness  = o_edges_width;
     hmesh.children(:).line_style = 0; // Continuous line
-    hmesh.children(:).foreground = opt_edges_color; 
+    hmesh.children(:).foreground = o_edges_color; 
   end
-  for bnum=1:length(opt_boundaries),
+  for bnum=1:length(o_boundaries),
     plot3d(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2), bedge(bnum)(:,:,3)); // 'Color','red','LineWidth',2);
     hbound(bnum) = gce();
     hbound(bnum).children(:).thickness  = 2;
     hbound(bnum).children(:).line_style = 0; // Continuous line
     hbound(bnum).children(:).foreground = 5; // Red
   end
-  if (ison(opt_vertices)) then
+  if (ison(o_vertices)) then
     for i=1:length(PID)
       xstring(PXY(1,PID(i))+ecart(1), PXY(2,PID(i))+ecart(2), string(PID(i))); // 'HorizontalAlignment','center','VerticalAlignment','middle','Color', [.0 0 0]
       hvert = gce();
@@ -243,7 +241,7 @@ else
       hvert.font_foreground = 1; // Black
     end
   end
-  if (ison(opt_convexes)) then
+  if (ison(o_convexes)) then
     for i=1:size(cv_center,2)
       xstring(cv_center(1,i), cv_center(2,i), string(cvlst(i))); // 'HorizontalAlignment','center','VerticalAlignment','middle','Color', [.7 0 0]
       hconv = gce();
@@ -252,7 +250,7 @@ else
       hconv.font_foreground = 5; // Red
     end
   end
-  if (ison(opt_dof)) then
+  if (ison(o_dof)) then
     for i=1:size(dofpos,2)
       xstring(dofpos(1,i)-ecart(1), dofpos(2,i)-ecart(2), string(dofid(i))); // 'HorizontalAlignment','center','VerticalAlignment','middle' 'Color', [0 .4 0]);
       hdof = gce();
@@ -263,7 +261,7 @@ else
   end
 end
 
-if (ison(opt_quality)) then
+if (ison(o_quality)) then
   q = gf_mesh_get(M,'quality', cvflst(1,:));
   qmf = gf_mesh_fem(M);
   gf_mesh_fem_set(qmf, 'classical fem', 0);
@@ -274,35 +272,35 @@ if (ison(opt_quality)) then
   end
 end
 
-if (opt_explode ~= 0) then
-  sl = gf_slice(list('explode',opt_explode),M,opt_refine,cvflst);
+if (o_explode ~= 0) then
+  sl = gf_slice(list('explode',o_explode),M,o_refine,cvflst);
   data = list();
-  if (ison(opt_quality)) then
+  if (ison(o_quality)) then
     sQ = gf_compute(qmf,Q,'interpolate on',sl);
     data = list('data',sQ);
   end
-  gf_plot_slice(sl, data(:),'mesh_faces',opt_faces,...
-		'mesh_edges_color', opt_edges_color, ...
-		'mesh_edges_width',opt_edges_width, ...
-		'mesh_faces_color',opt_faces_color);
+  gf_plot_slice(sl, data(:),'mesh_faces',       o_faces, ...
+                            'mesh_edges_color', o_edges_color, ...
+                            'mesh_edges_width', o_edges_width, ...
+                            'mesh_faces_color', o_faces_color);
   gf_delete(sl); // light;
-elseif (ison(opt_quality)) then
+elseif (ison(o_quality)) then
   gf_plot(qmf, Q, 'cvlst', cvflst); 
-elseif (ison(opt_faces)) then
+elseif (ison(o_faces)) then
   // should be replaced by a gf_plot_slice ..
-  T = gf_mesh_get(M, 'triangulated surface', opt_refine, cvflst);
+  T = gf_mesh_get(M, 'triangulated surface', o_refine, cvflst);
   if (mdim == 2) then
     // YC: trouver un equivalent à patch
-    //hfill=plot2d([T(1:mdim:(mdim*3),:) T(1,:)],[T(2:mdim:(mdim*3),:) T(2,:)], opt_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
-    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), zeros(T(2:mdim:(mdim*3),:)), opt_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
+    //hfill=plot2d([T(1:mdim:(mdim*3),:) T(1,:)],[T(2:mdim:(mdim*3),:) T(2,:)], o_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
+    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), zeros(T(2:mdim:(mdim*3),:)), o_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
     hfill= gca();
     hfill.view='2d';
   else
-    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), T(3:mdim:(mdim*3),:), opt_faces_color, flag = [-1 0 4]); //'Erasemode','normal','Edgecolor','none');
+    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), T(3:mdim:(mdim*3),:), o_faces_color, flag = [-1 0 4]); //'Erasemode','normal','Edgecolor','none');
   end
 end
 
-if (ison(opt_quality)) then
+if (ison(o_quality)) then
   gf_delete(qmf);
 end
 endfunction

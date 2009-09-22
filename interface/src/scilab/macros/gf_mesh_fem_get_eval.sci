@@ -35,7 +35,7 @@ end;
 
 //X=zeros(size(_what,1),nbdof);
 X = zeros(length(_what),nbdof);
-if (isnumeric(_what)),
+if (isnumeric(_what)) then
   X(dof) = repmat(_what, 1, nbdof/qdim);
   return;
 elseif typeof(_what)=='hypermat' then
@@ -66,7 +66,7 @@ elseif typeof(_what)=='hypermat' then
     end
   end
 elseif typeof(_what)=='list' then
-  m=length(_what);
+  m = length(_what);
   xpos = dxy(1,:);
   if (size(dxy,1)>=2),
     ypos = dxy(2,:);

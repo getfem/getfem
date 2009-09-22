@@ -66,8 +66,6 @@ hmesh    = [];
 hdefmesh = [];
   
 try
-//YC: Do we need to convert a getfem object into a list ?
-//mf   = list(mf);
   qdim = gf_mesh_fem_get(mf, 'qdim');
   mdim = gf_mesh_get(mf, 'dim'); mdim3=mdim*3;
 catch
@@ -134,13 +132,16 @@ if (typeof(opt_dir)=='string') then
 end
 
 scalarplot_dir=opt_dir(:);
-if (qdim == 1) then is_scalarplot = 1; scalarplot_dir=1; end;
+if (qdim == 1) then 
+  is_scalarplot  = 1; 
+  scalarplot_dir = 1;
+end
 if (~isempty(opt_contour) & ~is_scalarplot) then
   error('contour plot has no meaning for a vector field');
 end
 
 mfdef = mf;
-if (~isempty(opt_deformation_mf)) then mfdef = list(opt_deformation_mf); end;
+if (~isempty(opt_deformation_mf)) then mfdef = opt_deformation_mf; end;
 dqdim = gf_mesh_fem_get(mfdef,'qdim');
 if (~isempty(opt_deformation') | ison(opt_deformed_mesh)) then
   if (mdim ~= dqdim & ~ison(opt_zplot)) then
@@ -156,9 +157,6 @@ if (nbdof <= 0) then error('invalid finite element mf argument'); end
 if (length(U) ~= nbdof) then
   error('wrong dimensions for U, should have ' + string(nbdof) + ' columns'); 
 end
-
-// save graphical context
-cax = scf();
 
 if (ison(opt_zplot) | mdim == 3) then
   h = gca();
@@ -244,6 +242,7 @@ end
 if (is_scalarplot) then
   // plot the 'surfacic' part
   if (ison(opt_pcolor)) then
+    printf('DEBUG: is_scalarplot\n');
     gf_plot_slice(sl,'mesh','off','data',sV);
   end
   
@@ -255,25 +254,28 @@ if (is_scalarplot) then
                     0.7 0.0 0.7;
                     0.0 0.7 0.9]; 
                     
-  //contour_linestyle = get(cax,'LineStyleOrder'); // YC: voir dans la doc matlab - on recupere la liste des couleurs des courbes
   hcontour = list();
-  disp(length(opt_contour))
   for cnum=1:length(opt_contour)
     c=opt_contour(cnum);
     slC = gf_slice(list('isovalues',0,mf,U,c),sl);
     [a,b,c,hcontour(cnum)] = gf_plot_slice(slC,'tube','off','mesh','off');
+    
+    printf('DEBUG: isovalue %d\n',cnum);
+    
     if (~isempty(hcontour(cnum))) then
-      hcontour(cnum).color_mode = color(round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,1)), ...
-                                        round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,2)), ...
-                                        round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,3)));
-      hcontour(cnum).color_flag = 0;
-      hcontour(cnum).thickness = 1;
+      //printf('here isovalue');
+      //disp(hcontour(cnum).parent)
+      //hcontour(cnum).children.color_mode = color(round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,1)), ...
+      //                                           round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,2)), ...
+      //                                           round(255*contour_colors(modulo(cnum,size(contour_colors,1))+1,3)));
+      //hcontour(cnum).children.color_flag = 0;
+      hcontour(cnum).children.thickness = 1;
 //      set(hcontour(cnum),...
 //          'Color',contour_colors(modulo(cnum,size(contour_colors,1))+1,:),...
 //          'LineStyle',contour_linestyle(modulo(cnum,length(contour_linestyle))+1),...
 //          'LineWidth',1);
     end
-    gf_delete(slC);
+    //YC: gf_delete(slC);
   end
 else
   [a,b,hquiver,c] = gf_plot_slice(sl,'data',Usl,'quiver','on','quiver_density',opt_quiver_density,'quiver_scale',opt_quiver_scale);

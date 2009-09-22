@@ -15,7 +15,6 @@ gf_workspace('pop');
 endfunction
 
 function gf_plot_mesh_quality_aux(m)
-clf
 q     = gf_mesh_get(m,'quality');
 cvlst = find(q < .1);
 sl0   = gf_slice(list('boundary'),m,2); // gf_plot_slice(sl0,'mesh_edges_color',[.5 1 .5]);
