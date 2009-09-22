@@ -36,9 +36,8 @@
 #include "gfm_common.h"
 #include "getfem_interface.h"
 
-#define DEBUG
-
-#define FREE(p) { /*printf("%s@%d", __FILE__, __LINE__); */gfi_free(p); }
+//#define DEBUG
+#define DEBUG2
 
 gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
 {
@@ -48,7 +47,7 @@ gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
   char *errmsg=0, *infomsg=0;
   unsigned int i;
 
-#ifdef DEBUG
+#ifdef DEBUG2
   sciprint("call_getfem_interface: len = %d \n",in.arg.arg_len);
   for(i=0;i<in.arg.arg_len;i++)
     {
@@ -105,7 +104,7 @@ void sigint_callback(int sig)
   fprintf(stderr, "*** CTRL-C hit during execution of the getfem_scilab function: gf_%s...\n" \
 	  "You will gain control as soon as the current operation is finished ***\n" \
 	  "If you want to abort immediatly the current operation, hit CTRL-C again\n" \
-	  "In that case, you will have to restart getfem_matlab, using 'clear functions' for example:\n", s);
+	  "In that case, you will have to restart getfem_scilab:\n", s);
   set_cancel_flag(1);
   assert(handle_getfem_callback() == 1);
 }

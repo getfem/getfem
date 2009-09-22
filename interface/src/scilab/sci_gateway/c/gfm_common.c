@@ -40,7 +40,7 @@
 
 #include "gfm_common.h"
 
-#define DEBUG
+//#define DEBUG
 
 const char * sci_ClassID2string(sci_types id) 
 {
@@ -122,6 +122,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	int pirow, picol, *pilen, *pilistaddress;
 	char ** pstStrings;
 	double * pdblDataID, * pdblDataCID;
+	int * pintDims;
 
 	getListItemNumber(sci_x,&n);
 	getMatrixOfStringInList(sci_x,1,&pirow,&picol,NULL,NULL);
@@ -178,11 +179,15 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	    sciprint("sci_array_to_gfi_array: dealing with hypermat\n");
 #endif
 
-	    // Get the dimensions
-	    getMatrixOfDoubleInList(sci_x, 2, &pirow, &picol, &pdblDataID);
+	    // Get the dimensions (they are of int32 kind)
+	    getMatrixOfInteger32InList(sci_x, 2, &pirow, &picol, &pintDims);
 	    t->dim.dim_len = pirow*picol;
 	    t->dim.dim_val = (u_int*)MALLOC(pirow*picol*sizeof(u_int));
-	    for(i=0;i<pirow*picol;i++) t->dim.dim_val[i] = (u_int)pdblDataID[i];
+	    for(i=0;i<pirow*picol;i++) 
+	      {
+		t->dim.dim_val[i] = (u_int)pintDims[i];
+		sciprint("DEBUG: dim[%d] = %d n = %d\n", i, (int)pintDims[i], n);
+	      }
 
 	    // Get the matrixes (stored as a column vector of size prod(size(...)))
 	    // We must detect if we have a INT UINT or DOUBLE
@@ -191,12 +196,34 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 
 	    if (getVarType(pilistaddress)==sci_matrix)
 	      {
-		t->storage.type = GFI_DOUBLE;
-		getMatrixOfDoubleInList(sci_x, 3, &pirow, &picol, &pdblDataID);
-		
-		t->storage.gfi_storage_u.data_double.data_double_len = pirow*picol;
-		t->storage.gfi_storage_u.data_double.data_double_val = (double *)MALLOC(pirow*picol*sizeof(double));
-		for(i=0;i<pirow*picol;++i) t->storage.gfi_storage_u.data_double.data_double_val[i] = pdblDataID[i];
+		if (isVarComplex(pilistaddress))
+		  {
+		    t->storage.type = GFI_DOUBLE;
+		    getComplexMatrixOfDoubleInList(sci_x, 3, &pirow, &picol, &pdblDataID, &pdblDataCID);
+
+		    t->storage.gfi_storage_u.data_double.is_complex = GFI_COMPLEX;
+		    
+		    t->storage.gfi_storage_u.data_double.data_double_len = 2*pirow*picol;
+		    t->storage.gfi_storage_u.data_double.data_double_val = (double *)MALLOC(2*pirow*picol*sizeof(double));
+		    for(i=0;i<pirow*picol;++i) 
+		      {
+			t->storage.gfi_storage_u.data_double.data_double_val[2*i+0] = pdblDataID[i];
+			t->storage.gfi_storage_u.data_double.data_double_val[2*i+1] = pdblDataCID[i];
+		      }
+		  }
+		else
+		  {
+		    t->storage.type = GFI_DOUBLE;
+		    getMatrixOfDoubleInList(sci_x, 3, &pirow, &picol, &pdblDataID);
+		    
+		    sciprint("DEBUG: pirow = %d picol = %d\n", pirow, picol);
+
+		    t->storage.gfi_storage_u.data_double.is_complex = GFI_REAL;
+
+		    t->storage.gfi_storage_u.data_double.data_double_len = pirow*picol;
+		    t->storage.gfi_storage_u.data_double.data_double_val = (double *)MALLOC(pirow*picol*sizeof(double));
+		    for(i=0;i<pirow*picol;++i) t->storage.gfi_storage_u.data_double.data_double_val[i] = pdblDataID[i];
+		  }
 	      }
 	    else if (getVarType(pilistaddress)==sci_ints)
 	      {
@@ -269,9 +296,9 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	// Second call to get pilen
 	getMatrixOfString(sci_x, &pirow, &picol, pilen, NULL);
 	pstData = (char **)MALLOC(pirow*picol*sizeof(char*));
-	for(i=0; i<pirow*picol ; i++) pstData[i] = (char *)MALLOC((pilen[i] + 1)*sizeof(char));//+ 1 for null termination
+	for(i=0; i<pirow*picol ; i++) pstData[i] = (char *)MALLOC((pilen[i] + 1)*sizeof(char));
 
-	n = pilen[0] + 1; // YC:
+	n = pilen[0] + 1;
 	t->storage.gfi_storage_u.data_char.data_char_len = n;
 	t->storage.gfi_storage_u.data_char.data_char_val = MALLOC((n)*sizeof(char));
 
@@ -318,7 +345,9 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	    int pirow, picol;
 	    int * piData32;
 	    getMatrixOfInteger32(sci_x,&pirow,&picol,&piData32);
-
+#ifdef DEBUG
+	    sciprint("DEBUG: %d dimensions - dim[0] = %d, dim[1] = %d\n", n, pirow, picol);
+#endif
 	    n = picol*pirow;
 	    t->storage.gfi_storage_u.data_int32.data_int32_len = n;
 	    t->storage.gfi_storage_u.data_int32.data_int32_val = (int *)MALLOC(n*sizeof(int));
@@ -405,6 +434,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	    
 	    n = pirow*picol;
 
+	    t->storage.gfi_storage_u.data_double.is_complex = GFI_REAL;
 	    t->storage.gfi_storage_u.data_double.data_double_len = n;
 	    t->storage.gfi_storage_u.data_double.data_double_val = (double *)MALLOC(n*sizeof(double));
 	    for(i=0;i<n;++i)
@@ -418,6 +448,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 
 	    n = pirow*picol;
 
+	    t->storage.gfi_storage_u.data_double.is_complex = GFI_COMPLEX;
 	    t->storage.gfi_storage_u.data_double.data_double_len = 2*n;
 	    t->storage.gfi_storage_u.data_double.data_double_val = (double *)MALLOC(2*n*sizeof(double));
 
@@ -462,6 +493,8 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	    for(i=0;i<pirow;i++) sciprint("nbitemrow[%d] = %d\n", i, nbitemrow[i]);
 	    for(i=0;i<nbitem;i++) sciprint("picolpos[%d] = %d, pdblDataReal[%d] = %f\n",i,picolpos[i],i,pdblDataReal[i]);
 #endif
+
+	    t->storage.gfi_storage_u.sp.is_complex = GFI_REAL;
 
 	    t->storage.gfi_storage_u.sp.ir.ir_len = nbitem;
 	    t->storage.gfi_storage_u.sp.jc.jc_len = picol+1;
@@ -513,6 +546,8 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	    getComplexSparseMatrix(sci_x,&pirow,&picol,&nbitem,&nbitemrow,&picolpos,&pdblDataReal,&pdblDataImag);
 	    
 	    // We store the transposed matrix in t
+	    t->storage.gfi_storage_u.sp.is_complex = GFI_COMPLEX;
+
 	    t->storage.gfi_storage_u.sp.ir.ir_len = nbitem;
 	    t->storage.gfi_storage_u.sp.jc.jc_len = picol+1;
 	    t->storage.gfi_storage_u.sp.pr.pr_len = 2*nbitem;
@@ -657,6 +692,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    entries = (unsigned int *)MALLOC(nb_elem*sizeof(unsigned int));
 	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_uint32.data_uint32_val[i];
 	    
+	    // YC: et les complexes ?
 	    // Add a vector to the 'dims' field
 	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 	    // Add a vector to the 'entries' field
@@ -674,13 +710,13 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 
 	if (ndim==1)
 	  {
-	    nrow = dim[0];
+	    nrow = (int)dim[0];
 	    ncol = 1;
 	  }
 	else if (ndim==2)
 	  {
-	    nrow = dim[0];
-	    ncol = dim[1];
+	    nrow = (int)dim[0];
+	    ncol = (int)dim[1];
 	  }
 	else
 	  {
@@ -689,7 +725,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 
 #ifdef DEBUG
 	sciprint("gfi_array_to_sci_array: create from a GFI_INT32\n");
-	sciprint("ndim = %d ivar = %d\n", ndim,ivar);
+	sciprint("ndim = %d ivar = %d dim[0] = %d dim[1] = %d\n", ndim,ivar, (int)dim[0],(int)dim[1]);
 #endif
 	if (~is_hypermat)
 	  {
@@ -717,6 +753,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    entries = (int *)MALLOC(nb_elem*sizeof(int));
 	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_int32.data_int32_val[i];
 	    
+	    // YC: et les complexes
 	    // Add a vector to the 'dims' field
 	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 	    // Add a vector to the 'entries' field
