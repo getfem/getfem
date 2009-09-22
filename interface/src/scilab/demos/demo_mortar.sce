@@ -66,7 +66,7 @@ gf_model_set(md, 'add initialized data', 'lambda', [1]);
 gf_model_set(md, 'add initialized data', 'mu', [1]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1);
-F = gf_mesh_fem_get(mfd, 'eval', {0; 'y+2'});
+F = gf_mesh_fem_get_eval(mfd, list(0, 'y+2'));
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add variable', 'mult_spec', length(indm));

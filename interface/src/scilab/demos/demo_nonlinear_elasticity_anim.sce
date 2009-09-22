@@ -1,4 +1,4 @@
-// replay all the computations of demo_nonlinear_elasticity.m
+// replay all the computations of demo_nonlinear_elasticity.sci
 
 load demo_nonlinear_elasticity_U.mat
 

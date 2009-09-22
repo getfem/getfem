@@ -24,13 +24,13 @@ fright = gf_mesh_get(m,'faces from pid',pidright);
 gf_mesh_set(m,'boundary',1,fleft);
 gf_mesh_set(m,'boundary',2,fright);
 
-b0 = gf_md_brick('small deformations plasticity',mim,mfu, von_mises_threshold);
-gf_md_brick_set(b0, 'param','lambda',lambda);
-gf_md_brick_set(b0, 'param','mu',mu);
-b1 = gf_md_brick('generalized dirichlet',b0,1);
-b2 = gf_md_brick('source term',b1,2);
+b0 = gf_mdbrick('small deformations plasticity',mim,mfu, von_mises_threshold);
+gf_mdbrick_set(b0, 'param','lambda',lambda);
+gf_mdbrick_set(b0, 'param','mu',mu);
+b1 = gf_mdbrick('generalized dirichlet',b0,1);
+b2 = gf_mdbrick('source term',b1,2);
 
-mds = gf_md_state(b2)
+mds = gf_mdstate(b2)
 
 VM = zeros(1,gf_mesh_fem_get(mfdu, 'nbdof'));
 
@@ -40,13 +40,13 @@ nbstep = size(F,2);
 dd = gf_mesh_fem_get(mf0, 'basic dof from cvid');
 
 for step=1:nbstep
-  //gf_md_brick_set('param','source_term', mfd, gf_mesh_fem_get(mfd, 'eval',list(0;-400*sin(step*%pi/2))));
-  gf_md_brick_set(b2, 'param','source_term', mfd, gf_mesh_fem_get(mfd, 'eval',list(F(1,step);F(2,step))));
-  gf_md_brick_get(b2, 'solve', mds, 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
+  //gf_mdbrick_set('param','source_term', mfd, gf_mesh_fem_get(mfd, 'eval',list(0;-400*sin(step*%pi/2))));
+  gf_mdbrick_set(b2, 'param','source_term', mfd, gf_mesh_fem_get_eval(mfd,list(F(1,step),F(2,step))));
+  gf_mdbrick_get(b2, 'solve', mds, 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
     
-  U  = gf_md_state_get(mds, 'state'); 
+  U  = gf_mdstate_get(mds, 'state'); 
   U  = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-  VM = gf_md_brick_get(b0, 'von mises', mds, mfdu);
+  VM = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
   max(abs(VM))
   
   drawlater;

@@ -33,7 +33,7 @@ gf_mesh_set(m, 'boundary', 1, border);
 drawlater;
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
 drawnow;
-pause(1);
+pause;
                                                   // exact solution
 if 0 then
   // setup a pde structure for gf_solve
@@ -48,10 +48,10 @@ if 0 then
   pde.bound(1).type = 'Dirichlet';
   pde.bound(1).R    = list( expr_u );  // we force the value of the solution on the boundary
   U      = gf_solve(pde);
-  Uexact = gf_mesh_fem_get(mfl,'eval', list( expr_u )); // interpolate the
+  Uexact = gf_mesh_fem_get_eval(mfl, list( expr_u )); // interpolate the
 else
   expr_u = 'y.^5';
-  Uexact = gf_mesh_fem_get(mfl,'eval', list( expr_u )); // interpolate the
+  Uexact = gf_mesh_fem_get_eval(mfl, list( expr_u )); // interpolate the
   M = gf_asm('mass matrix', mim, mf, mf);
   F = gf_asm('volumic source', mim, mf, mfl, Uexact);
   U = (M\F)';

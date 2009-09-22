@@ -16,14 +16,14 @@ ls2 = gf_levelset(m, ls_degree, 'with_secondary');
 mf_ls  = gf_levelset_get(_ls, 'mf');
 mf_ls2 = gf_levelset_get(ls2, 'mf');
 
-P = gf_levelset_get(mf_ls, 'basic dof nodes');
+P = gf_mesh_fem_get(mf_ls, 'basic dof nodes');
 x = P(1,:);
 y = P(2,:);
 //ULS = ((x + 0.25).^2 + (y - 0.4).^2) - 0.05^2;
 //ULS = min(ULS, ((x - 0.25).^2 + (y - 0.4).^2) - 0.05^2);
 
 ULS = 1000*ones(1,length(x));
-rand('state',1); // YC
+rand('seed',1); // YC
 
 if 0 then
   for ix=1:5
@@ -67,7 +67,7 @@ end
 
 gf_levelset_set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, '(y-.2)^2 - 0.04');
 
-mls = gf_mesh_level_set(m);
+mls = gf_mesh_levelset(m);
 gf_mesh_levelset_set(mls, 'add', _ls);
 gf_mesh_levelset_set(mls, 'add', ls2);
 gf_mesh_levelset_set(mls, 'adapt');

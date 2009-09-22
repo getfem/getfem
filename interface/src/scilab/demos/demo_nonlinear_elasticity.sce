@@ -17,8 +17,8 @@ incompressible = 1
 if 0 then
   h = 20
   // import the mesh
-  //m=gfMesh('load', 'ladder.mesh');
-  //m=gfMesh('load', 'ladder_1500.mesh');
+  //m=gf_mesh('load', 'ladder.mesh');
+  //m=gf_mesh('load', 'ladder_1500.mesh');
   m = gf_mesh('load', 'holed_bar.mesh');
   gf_mesh_set(m, 'transform', [1 0 0; 0 0 1; 0 1 0]);
   mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
@@ -80,17 +80,17 @@ if ~incompressible then
   b1 = b0;
   gf_md_brick_set(b1, 'param', 'params', [1;1;-1.4]);
 else
-  b0  = gf_md_brick('nonlinear_elasticity', mim, mfu, 'Mooney Rivlin');
+  b0  = gf_mdbrick('nonlinear_elasticity', mim, mfu, 'Mooney Rivlin');
   mfp = gf_mesh_fem(m,1); 
   gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
-  b1  = gf_md_brick('nonlinear_elasticity_incompressibility_term',b0,mfp);
+  b1  = gf_mdbrick('nonlinear_elasticity_incompressibility_term',b0,mfp);
 end
-//b2 = gf_md_brick('dirichlet', b1, 2);
-b3 = gf_md_brick('dirichlet', b1, 3, mfu, 'penalized');
+//b2 = gf_mdbrick('dirichlet', b1, 2);
+b3 = gf_mdbrick('dirichlet', b1, 3, mfu, 'penalized');
 
-mds = gf_md_state(b3)
+mds = gf_mdstate(b3)
 
-VM=zeros(1,gf_mesh_fem_get(mfdu,'nbdof'));
+VM = zeros(1,gf_mesh_fem_get(mfdu,'nbdof'));
 
 reload = 0;
 
@@ -111,7 +111,7 @@ for step=1:nbstep
   //set(b2, 'param', 'R', [0;0;0]);
 
   if (~reload) then
-    R = zeros(3, get(mfd, 'nbdof'));
+    R = zeros(3, gf_mesh_fem_get(mfd, 'nbdof'));
     dtheta  = %pi;
     dtheta2 = %pi/2;
     
@@ -145,24 +145,25 @@ for step=1:nbstep
       R(:, i) = ro(1:3) - P(:,i);
     end
 
-    gf_md_brick_set(b3, 'param', 'R', mfd, R);
-    gf_md_brick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
-    U   = gf_md_state_get(mds, 'state'); 
+    gf_mdbrick_set(b3, 'param', 'R', mfd, R);
+    gf_mdbrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+    U   = gf_mdstate_get(mds, 'state'); 
     U   = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-    VM  = gf_md_brick_get(b0, 'von mises', mds, mfdu);
+    VM  = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
     UU  = [UU;U]; 
     VVM = [VVM;VM];
-    save('demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char,);
+    save('demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char);
   else
     U  = UU(step,:);
     VM = VVM(step,:);
   end
   disp(sprintf('step %d/%d : |U| = %g',step,nbstep,norm(U)));
 
+  clf;
   drawlater;
   gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8);
+  colorbar(min(U),max(U));
   drawnow;
-//  colorbar(min(U),max(U));
 //  axis([-3     6     0    20    -2     2]); caxis([0 .3]);
 //  view(30+20*w, 23+30*w);  
 //  campos([50 -30 80]);
@@ -172,9 +173,11 @@ for step=1:nbstep
 //  axis off;
   sleep(1000); 
   // save a picture..
-  //print(gcf, '-dpng', '-r150', sprintf('torsion%03d',step));
+  wid = gcf();
+  xs2png(wid.figure_id,sprintf('torsion%03d.png',step));
+  clear wid;
 end
   
 disp('end of computations, you can now replay the animation with')
-disp('demo_nonlinear_elasticity_anim')
+disp('exec demo_nonlinear_elasticity_anim.sce;')
 

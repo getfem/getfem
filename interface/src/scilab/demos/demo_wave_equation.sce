@@ -20,7 +20,7 @@ border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'boundary', 1, border);
 
 // interpolate the initial data
-U0 = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1).*x.*x' });
+U0 = gf_mesh_fem_get_eval(mf, list('y.*(y-1).*x.*(x-1).*x.*x'));
 
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf, 2);

@@ -76,7 +76,7 @@ end
 
 // set a vertical force on the top of the tripod
 b2 = gf_mdbrick('source term', b1, 1);
-gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(0;-10;0))); // YC: attention, ne fonctionne pas: list([0;-10;0]) ?
+gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list([0;-10;0])));
 
 // attach the tripod to the ground
 b3 = gf_mdbrick('dirichlet', b2, 2, mfu, 'penalized');
