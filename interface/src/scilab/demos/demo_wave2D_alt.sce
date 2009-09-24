@@ -76,8 +76,8 @@ nbdd = gf_mesh_fem_get(mfd,'nbdof');
 
 // identify the inner and outer boundaries
 P = gf_mesh_get(m,'pts'); // get list of mesh points coordinates
-pidobj = find(sum(P.^2) < 1*1+1e-6);
-pidout = find(sum(P.^2) > 10*10-1e-2);
+pidobj = find(sum(P.^2,'r') < 1*1+1e-6);
+pidout = find(sum(P.^2,'r') > 10*10-1e-2);
 
 // build the list of faces from the list of points
 fobj = gf_mesh_get(m,'faces from pid',pidobj); 
@@ -87,12 +87,13 @@ gf_mesh_set(m,'boundary',2,fout);
 
 // expression of the incoming wave
 wave_expr = sprintf('cos(%f*y+.2)+1*%%i*sin(%f*y+.2)',k,k);
-Uinc = gf_mesh_fem_get(mfd,'eval',list(wave_expr));
+Uinc = gf_mesh_fem_get_eval(mfd,list(wave_expr));
 
 // currently the toolbox does not handle complex valued arrays,
 // hence we have to treat both real and imaginary part
-[Hr,Rr] = gf_asm('dirichlet', 1, mim, mfu, mfd, gf_mesh_fem_get(mfd,'eval',1), real(Uinc));
-[Hi,Ri] = gf_asm('dirichlet', 1, mim, mfu, mfd, gf_mesh_fem_get(mfd,'eval',1), imag(Uinc));
+tmp = gf_mesh_fem_get_eval(mfd,list(1)); // YC: add in the doc: second argument of gf_mesh_fem_get_eval must be a list
+[Hr,Rr] = gf_asm('dirichlet', 1, mim, mfu, mfd, tmp, real(Uinc));
+[Hi,Ri] = gf_asm('dirichlet', 1, mim, mfu, mfd, tmp, imag(Uinc));
 [_null,udr] = gf_spmat_get(Hr,'dirichlet nullspace', Rr);
 [_null,udi] = gf_spmat_get(Hi, 'dirichlet nullspace', Ri);
 ud = udr + 1*%i*udi;
@@ -112,22 +113,31 @@ RK  = _null'*A*_null;
 U   = _null*(RK\RF)+ud(:);
 Udr = gf_compute(mfu,real(U(:)'),'interpolate on',mfd); 
 Udi = gf_compute(mfu,imag(U(:)'),'interpolate on',mfd); Ud=Udr+1*%i*Udi;
-//scf(1); 
-//gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
-//colorbar(min(imag(U)),max(imag(U)));
-//scf(2); 
-//gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
-//colorbar(min(abs(Ud)),max(abs(Ud)));
+
+scf(1); 
+drawlater;
+gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
+colorbar(min(imag(U)),max(imag(U)));
+drawnow;
+
+scf(2); 
+drawlater;
+gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
+colorbar(min(abs(Ud)),max(abs(Ud)));
+drawnow;
 
 // compute the "exact" solution from its developpement 
 // of bessel functions:
 // by \Sum_n c_n H^(1)_n(kr)exp(i n \theta)
 N     = 1000;
 theta = 2*%pi*(0:N-1)/N;
-y  = sin(theta); 
-w  = eval(wave_expr);
-fw = fft(w); C=fw/N;
-S  = zeros(size(w)); S(:) = C(1); Nc=20;
+y     = sin(theta); 
+w     = eval(wave_expr);
+fw    = fft(w);
+C     = fw/N;
+S     = zeros(w);
+S(:)  = C(1);
+Nc    = 20;
 for i=2:Nc
   n = i-1;  
   S = S + C(i)*exp(1*%i*n*theta) + C(N-(n-1))*exp(-1*%i*n*theta);
@@ -137,11 +147,14 @@ P     = gf_mesh_fem_get(mfd,'basic dof nodes');
 Uex   = zeros(size(R));
 nbes  = 1;
 Uex   = besselh(0,nbes,k*R) * C(1)/besselh(0,nbes,k);
+old_ieee = ieee();
+ieee(2);
 for i=2:Nc
   n=i-1;  
   Uex = Uex + besselh(n,nbes,k*R) * C(i)/besselh(n,nbes,k) .* exp(1*%i*n*T);
   Uex = Uex + besselh(-n,nbes,k*R) * C(N-(n-1))/besselh(-n,nbes,k) .* exp(-1*%i*n*T);
 end
+ieee(old_ieee);
 
 disp('the error won''t be less than ~1e-2 as long as a first order absorbing boundary condition will be used');
 Uex = conj(Uex);
@@ -150,7 +163,9 @@ disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/g
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
 // adjust the 'refine' parameter to enhance the quality of the picture
+scf(3);
 drawlater;
 gf_plot(mfu,real(U(:)'),'mesh','on','refine',8); 
+colorbar(min(real(Ud)),max(real(Ud)));
 drawnow;
 

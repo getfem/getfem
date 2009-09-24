@@ -81,7 +81,7 @@ for step=1:8
   drawlater;
   subplot(2,1,1);
   gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U, 'deformation_mf',mfu,'refine', 4, 'deformation_scale',1, opt(:)); 
-  gf_colormap('chouette');
+  //gf_colormap('chouette');
   //caxis([0 1e7]);
   colorbar(min(U),max(U)); 
   title('Von Mises stress');
@@ -97,7 +97,8 @@ for step=1:8
 
   disp('press a key..'); pause;
   
-  gf_mesh_set(m, 'refine', find(ERR > 1e-3));
+  Index = find(ERR > 1e-3);
+  gf_mesh_set(m, 'refine', Index);
   gf_mesh_set(m, 'optimize structure');
 end
 

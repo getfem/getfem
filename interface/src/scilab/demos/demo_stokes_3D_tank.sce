@@ -8,11 +8,11 @@ global verbosity; verbosity = 1;
 
 viscosity = 10;
 
-R1  = list('9-(y.^2+(z-6.0).^2)';0;0);
-R2  = list('9-(y.^2+(z-6.0).^2)';0;0);
-R4  = list(0;0;0);
+R1  = list('9-(y.^2+(z-6.0).^2)',0,0);
+R2  = list('9-(y.^2+(z-6.0).^2)',0,0);
+R4  = list(0,0,0);
 
-m = gf_mesh('import','GiD','../meshes/tank_quadratic_2500.GiD.msh');
+m = gf_mesh('import','GiD','../../../tests/meshes/tank_quadratic_2500.GiD.msh');
 mfu = gf_mesh_fem(m,3);
 mfp = gf_mesh_fem(m,1);
 mfd = gf_mesh_fem(m,1);
@@ -35,8 +35,8 @@ TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 gf_mesh_set(m, 'region', 1, INfaces);
 gf_mesh_set(m, 'region', 2, OUTfaces);
 gf_mesh_set(m, 'region', 3, TOPfaces);
-//gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
-gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
+gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
+//gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
 
 disp(sprintf('nbdof: mfu=%d, mfp=%d',gf_mesh_fem_get(mfu,'nbdof'),gf_mesh_fem_get(mfp,'nbdof')));
 
@@ -50,15 +50,15 @@ if (compute) then
   gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');
   gf_model_set(md, 'add variable', 'mult_spec', 1);
   
-  gf_model_set(md, 'add constraint with multipliers', 'p', 'mult_spec', sparse([ones(1, get(mfp, 'nbdof'))]), [0]);
+  gf_model_set(md, 'add constraint with multipliers', 'p', 'mult_spec', sparse(ones(1, gf_mesh_fem_get(mfp, 'nbdof'))), [0]);
   gf_model_set(md, 'add initialized data', 'NeumannData', [0 -10 0]);
   gf_model_set(md, 'add source term brick', mim, 'u', 'NeumannData', 1);
-  gf_model_set(md, 'add initialized fem data', 'Dir1data', mfd, get(mfd, 'eval', R1));
+  gf_model_set(md, 'add initialized fem data', 'Dir1data', mfd, gf_mesh_fem_get_eval(mfd, R1));
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1, 'Dir1data');
-  gf_model_set(md, 'add initialized fem data', 'Dir2data',  mfd, get(mfd, 'eval', R2));
+  gf_model_set(md, 'add initialized fem data', 'Dir2data',  mfd, gf_mesh_fem_get_eval(mfd, R2));
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 2, 'Dir2data');
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 3);
-  gf_model_set(md, 'add initialized fem data', 'Dir3data', mfd, get(mfd, 'eval', R4));
+  gf_model_set(md, 'add initialized fem data', 'Dir3data', mfd, gf_mesh_fem_get_eval(mfd, R4));
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 4, 'Dir3data');
 
   disp('running solve... can take some minutes and needs ~600MB of memory');

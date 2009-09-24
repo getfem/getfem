@@ -1,5 +1,7 @@
-// this example uses the "old" gf_solve instead of the bricks
-// framework..
+// this example uses the "old" gf_solve instead of the bricks framework..
+
+lines(0);
+stacksize('max');
 
 gf_workspace('clear all');
 
@@ -10,13 +12,21 @@ clear pde; clear bc;
 pde.type = 'stokes'; // YC:
 pde.viscos=1.0;
 pde.bound(1).type = 'Dirichlet';
-pde.bound(1).R  = list('y.*(y-1)',0); pde.bound(1).H=list(1 0; 0 1);
+pde.bound(1).R = list('y.*(y-1)',0);
+pde.bound(1).H = list([1 0; 0 1]);
 
 m = gf_mesh('cartesian',[0:.3:5],[0:.2:1]);
+
+pde.mf_u = [];
+pde.mf_p = [];
+pde.mf_d = [];
+pde.mim  = [];
+
 pde.mf_u = gf_mesh_fem(m,2); // U mesh_fem (vector field -> qdim=2)
 pde.mf_p = gf_mesh_fem(m,1); // Pression mesh_fem
 pde.mf_d = gf_mesh_fem(m,1); // Data mesh_fem (boundary conditions, source terms etc)
 pde.mim  = gf_mesh_im(m,  gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
+
 gf_mesh_fem_set(pde.mf_u,'fem',gf_fem('FEM_QK(2,2)'));
 gf_mesh_fem_set(pde.mf_d,'fem',gf_fem('FEM_QK(2,1)'));
 gf_mesh_fem_set(pde.mf_p,'fem',gf_fem('FEM_QK(2,1)'));

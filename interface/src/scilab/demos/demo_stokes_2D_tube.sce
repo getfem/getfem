@@ -17,9 +17,16 @@ pde.bound(1).type = 'Dirichlet';
 pde.bound(2).type = 'Dirichlet';
 pde.bound(3).type = 'Dirichlet';
 
-m = gf_mesh('import','GiD','../meshes/tube_2D_spline.GiD.msh');
-pde.mf_u = gf_mesh_fem(m,2);
+m = gf_mesh('import','GiD','../../../tests/meshes/tube_2D_spline.GiD.msh');
+
 mfulag   = gf_mesh_fem(m,2);
+
+pde.mf_u = [];
+pde.mf_p = [];
+pde.mf_d = [];
+pde.mim  = [];
+
+pde.mf_u = gf_mesh_fem(m,2);
 pde.mf_p = gf_mesh_fem(m,1);
 pde.mf_d = gf_mesh_fem(m,1);
 pde.mim  = gf_mesh_im(m,gf_integ('IM_TRIANGLE(5)'));
@@ -42,8 +49,7 @@ INfaces   = gf_mesh_get(m, 'faces from pid', INpid);
 OUTfaces  = gf_mesh_get(m, 'faces from pid', OUTpid);
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
-//gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
-gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'))'); // YC:
+gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
 
 tic;
 [U,P] = gf_solve(pde);

@@ -4,10 +4,13 @@ disp('The code is shorter, faster and much more powerful')
 disp('You can easily switch between linear/non linear')
 disp('compressible/incompressible elasticity!')
 
+lines(0);
+stacksize('max');
+
 linear = 1;
 incompressible = 0;
 
-gf_workspace('clear all');
+//gf_workspace('clear all');
 
 // import the mesh
 m   = gf_mesh('import','gid','../../../tests/meshes/tripod.GiD.msh');
@@ -50,7 +53,7 @@ gf_mesh_fem_set(mfp,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,0)'));
 
 if (linear) then
   // the linearized elasticity , for small displacements
-  b0 = gf_mdbrick('isotropic_linearized_elasticity',mim,mfu)
+  b0 = gf_mdbrick('isotropic linearized elasticity',mim,mfu)
   gf_mdbrick_set(b0, 'param','lambda', lambda);
   gf_mdbrick_set(b0, 'param','mu', mu);
   if (incompressible) then
@@ -63,7 +66,7 @@ else
   if (incompressible) then
     b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
     b1 = gf_mdbrick('nonlinear elasticity incompressibility term',b0,mfp);
-    gf_md_brick_set(b0, 'param','params',[lambda;mu]);
+    gf_mdbrick_set(b0, 'param','params',[lambda;mu]);
   else
     // large deformation with a linearized material law.. not
     // a very good choice!
@@ -76,7 +79,7 @@ end
 
 // set a vertical force on the top of the tripod
 b2 = gf_mdbrick('source term', b1, 1);
-gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list([0;-10;0])));
+gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(0,-10,0)));
 
 // attach the tripod to the ground
 b3 = gf_mdbrick('dirichlet', b2, 2, mfu, 'penalized');
@@ -101,6 +104,9 @@ U = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
 disp('plotting ... can also take some minutes!');
 
+h = gcf();
+h.color_map = gf_colormap('tripod');
+
 // we plot the von mises on the deformed object, in superposition
 // with the initial mesh.
 if (linear) then
@@ -109,14 +115,12 @@ if (linear) then
   drawnow;
 else
   drawlater;
-  gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale',1);
+  gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale',10);
   drawnow;
 end
 
-//caxis([0 100]);
+h.children.rotation_angles = [135 75];
 colorbar(min(U),max(U)); 
-//view(180,-50); camlight;
-gf_colormap('tripod');
 
 // the von mises stress is exported into a VTK file
 // (which can be viewed with 'mayavi -d tripod.vtk -m BandedSurfaceMap')

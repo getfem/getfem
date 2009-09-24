@@ -44,6 +44,8 @@ gf_model_set(md, 'first iter');
 gf_model_get(md, 'listbricks');
 
 // Iterations
+scf();
+Index = 0;
 for t=0:dt:T
   gf_model_get(md, 'solve');
   gf_model_set(md, 'velocity update for order two theta method', 'u', 'v', 'dt', 'theta');
@@ -51,6 +53,7 @@ for t=0:dt:T
   V = gf_model_get(md, 'variable', 'v');
 
   drawlater;
+  clf();
   subplot(2,1,1); 
   gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1); 
   colorbar(min(U),max(U)); 
@@ -63,6 +66,10 @@ for t=0:dt:T
   drawnow;
   sleep(100);
 
+  h = gcf();
+
+  xs2png(h.figure_id,sprintf('waveeq%03d.png',Index));
+  Index = Index + 1;
   gf_model_set(md, 'next iter');
 end
 

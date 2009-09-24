@@ -1,12 +1,15 @@
-disp('This is the "legacy" getfem-matlab demonstration')
+disp('This is the ''legacy'' getfem-scilab demonstration')
 disp('This demo does not use the model bricks introduced with getfem 2.0')
 disp('instead it show how the linear system is built with direct calls')
 disp('to the assembly routines.')
 
+stacksize('max');
+lines(0);
+
 gf_workspace('clear all');
 
 // import the mesh
-m   = gf_mesh('import','gid','../meshes/tripod.GiD.msh');
+m   = gf_mesh('import','gid','../../../tests/meshes/tripod.GiD.msh');
 mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
 mfd = gf_mesh_fem(m,1);     // scalar mesh_fem
 
@@ -42,10 +45,21 @@ F = gf_asm('boundary_source', 1, mim, mfu, mfd, repmat([0;-10;0],1,nbd));
 K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd));
 
 // handle Dirichlet condition
-[H,R]  = gf_asm('dirichlet', 2, mim, mfu, mfd, repmat(eye(3,3),[1,1,nbd]), zeros(3, nbd));
+
+[H,R]  = gf_asm('dirichlet', 2, mim, mfu, mfd, ones(1,1,nbd) .*. eye(3,3), zeros(3, nbd));
+
 [N,U0] = gf_spmat_get(H, 'dirichlet_nullspace', R);
-KK = N'*K*N;
-FF = N'*F;
+
+// N:        nnz(N) = 16341   size(N) = 16764 x 16341
+// K:        nnz(K) = 1147742 size(K) = 16764 x 16764
+// A = K*N:  nnz(A) = 1123597 size(A) = 16764 x 16341
+// B = N'*A: nnz(B) = 1110396 size(B) = 16341 x 16341
+
+// KK = N'*K*N; // This computation doesn't fit in the scilab stack. I must split it into parts
+KK = N'*K; clear K;
+KK = KK*N;
+
+FF = N'*F; clear F;
 
 // solve ...
 disp('solving...'); 
@@ -57,7 +71,7 @@ if (lsolver == 1) then   // conjugate gradient
   UU = gf_linsolve('cg',KK,FF,P,'noisy','res',1e-9);
 elseif (lsolver == 2) then // superlu
   UU = gf_linsolve('superlu',KK,FF);
-else                   // the matlab "slash" operator 
+else                   // the scilab "slash" operator 
   UU = KK\FF;
 end
 disp(sprintf('linear system solved in %.2f sec', timer()-t0));
@@ -85,13 +99,7 @@ VM = 4*mu^2*VM;
 
 disp('plotting ... can also take some minutes!');
 
-// we plot the von mises on the deformed object, in superposition with the initial mesh.
-drawlater;
-gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
-drawnow;
-//caxis([0 100]); 
-colorbar(min(U),max(U));
-//view(180,-50); camlight;
+h = scf();
 
 r = [0.7 .7 .7]; l = r($,:); s=63; s1=20; s2=25; s3=48;s4=55; 
 for i=1:s
@@ -99,6 +107,11 @@ for i=1:s
   c2 = max(min((i-s3)/(s4-s3),1),0); 
   r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
 end
-f = gcf();
-f.color_map = r;
+h.color_map = r;
+
+// we plot the von mises on the deformed object, in superposition with the initial mesh.
+drawlater;
+gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
+drawnow;
+colorbar(min(U),max(U));
 

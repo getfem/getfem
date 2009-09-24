@@ -15,17 +15,25 @@ pde.viscos=1.0;
 pde.F = list(0,0,0);
 pde.bound(1).R  = list('9-(y.^2+(z-6.0).^2)',0,0);
 pde.bound(2).R  = list('9-(y.^2+(z-6.0).^2)',0,0);
-pde.bound(3).R  = list(0,0,0);pde.bound{3}.H = list(0,0,0;0,0,0;0,0,1);pde.bound{3}.G  = list(0,0,0);
+pde.bound(3).R  = list(0,0,0);
+pde.bound(3).H  = list([0,0,0],[0,0,0],[0,0,1]);
+pde.bound(3).G  = list(0,0,0);
 pde.bound(4).R  = list(0,0,0);
 pde.bound(1).type = 'Dirichlet';
 pde.bound(2).type = 'Dirichlet';
-//pde.bound{3}.type = 'Mixed'; 
+//pde.bound(3).type = 'Mixed'; 
 pde.bound(3).type = 'Dirichlet';
 pde.bound(4).type = 'Dirichlet';
 
-m = gf_mesh('import','GiD','../meshes/tank_quadratic_2500.GiD.msh');
-pde.mf_u = gf_mesh_fem(m,3);
+m = gf_mesh('import','GiD','../../../tests/meshes/tank_quadratic_2500.GiD.msh');
 mfulag   = gf_mesh_fem(m,3);
+
+pde.mf_u = [];
+pde.mf_p = [];
+pde.mf_d = [];
+pde.mim  = [];
+
+pde.mf_u = gf_mesh_fem(m,3);
 pde.mf_p = gf_mesh_fem(m,1);
 pde.mf_d = gf_mesh_fem(m,1);
 pde.mim  = gf_mesh_im(m, gf_integ('IM_TETRAHEDRON(5)'));
@@ -44,17 +52,16 @@ gf_mesh_fem_set(mfulag,'fem',gf_fem('FEM_PK(3,1)'));
 all_faces = gf_mesh_get(m, 'outer faces', gf_mesh_get(m, 'cvid'));
 
 P = gf_mesh_get(m,'pts');
-INpid  = find(abs(P(1,:)+25) < 1e-4);
-OUTpid = find(abs(P(1,:)-25) < 1e-4);
-TOPpid = find(abs(P(3,:)-20) < 1e-4);
+INpid    = find(abs(P(1,:)+25) < 1e-4);
+OUTpid   = find(abs(P(1,:)-25) < 1e-4);
+TOPpid   = find(abs(P(3,:)-20) < 1e-4);
 INfaces  = gf_mesh_get(m, 'faces from pid', INpid);
 OUTfaces = gf_mesh_get(m, 'faces from pid', OUTpid);
 TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
 gf_mesh_set(m, 'boundary', 3, TOPfaces);
-//gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','rows'),TOPfaces','rows'),'rows')'); // YC
-gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
+gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','rows'),TOPfaces','rows'),'rows')'); // YC
 
 disp(sprintf('nbdof: mf_u=%d, mf_p=%d',gf_mesh_fem_get(pde.mf_u,'nbdof'),gf_mesh_fem_get(pde.mf_p,'nbdof')));
 if (compute) then

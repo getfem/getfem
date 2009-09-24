@@ -1,5 +1,8 @@
 gf_workspace('clear all');
 
+lines(0);
+stacksize('max');
+
 disp('2D scalar wave equation (helmholtz) demonstration');
 disp(' we present three approaches for the solution of the helmholtz problem')
 disp(' - the first one is to use the new getfem ''model bricks''')
@@ -79,8 +82,8 @@ nbdd = gf_mesh_fem_get(mfd,'nbdof');
 
 // identify the inner and outer boundaries
 P = gf_mesh_get(m,'pts'); // get list of mesh points coordinates
-pidobj = find(sum(P.^2) < 1*1+1e-6);
-pidout = find(sum(P.^2) > 10*10-1e-2);
+pidobj = find(sum(P.^2,'r') < 1*1+1e-6);
+pidout = find(sum(P.^2,'r') > 10*10-1e-2);
 
 // build the list of faces from the list of points
 fobj = gf_mesh_get(m,'faces from pid',pidobj); 
@@ -89,8 +92,9 @@ gf_mesh_set(m,'boundary',1,fobj);
 gf_mesh_set(m,'boundary',2,fout);
 
 // expression of the incoming wave
-wave_expr = sprintf('cos(%f*y+.2)+1*%i*sin(%f*y+.2)',k,k);
-Uinc      = gf_mesh_fem_get(mfd,'eval',list(wave_expr));
+disp(k)
+wave_expr = sprintf('cos(%f*y+.2)+1*%%i*sin(%f*y+.2)',k,k);
+Uinc      = gf_mesh_fem_get_eval(mfd,list(wave_expr));
 
 //
 // we present three approaches for the solution of the Helmholtz problem
@@ -117,17 +121,17 @@ if 1 then
 elseif 0 then
   t0 = timer();
   // solution using old model bricks
-  b0 = gf_md_brick('helmholtz',mim,mfu);
-  gf_md_brick_set(b0,'param','wave_number', k);
-  b1 = gf_md_brick('dirichlet',b0, 1, mfd, 'augmented');
-  gf_md_brick_set(b1,'param','R',mfd,Uinc);
-  b2 = gf_md_brick('qu term',b1, 2); 
-  gf_md_brick_set(b2, 'param','Q',1i*k);
+  b0 = gf_mdbrick('helmholtz',mim,mfu);
+  gf_mdbrick_set(b0,'param','wave_number', k);
+  b1 = gf_mdbrick('dirichlet',b0, 1, mfd, 'augmented');
+  gf_mdbrick_set(b1,'param','R',mfd,Uinc);
+  b2 = gfmd_brick('qu term',b1, 2); 
+  gf_mdbrick_set(b2, 'param','Q',1i*k);
   
-  mds = gf_md_state(b2);
+  mds = gf_mdstate(b2);
   
-  gf_md_brick_get(b2, 'solve', mds, 'noisy'); // BUG ? set or get ?
-  U = gf_md_state_get(mds, 'state'); 
+  gf_mdbrick_get(b2, 'solve', mds, 'noisy'); // BUG ? set or get ?
+  U = gf_mdstate_get(mds, 'state'); 
   U = U(1:gf_mesh_fem_get(mfu,'nbdof'));
   disp(sprintf('solve done in %.2f sec', timer()-t0));
 else
@@ -154,23 +158,29 @@ end
 
 Ud = gf_compute(mfu,U,'interpolate on',mfd);
 
-//scf(1); 
-//gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
-//colorbar(min(imag(U)),max(imag(U)));
-//scf(2); 
-//gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
-//colorbar(min(abs(Ud)),max(abs(Ud)));
+scf(1); 
+drawlater;
+gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
+colorbar(min(imag(U)),max(imag(U)));
+drawnow;
+scf(2); 
+drawlater;
+gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
+colorbar(min(abs(Ud)),max(abs(Ud)));
+drawnow;
 
 // compute the "exact" solution from its developpement 
 // of bessel functions:
 // by \Sum_n c_n H^(1)_n(kr)exp(i n \theta)
-N = 1000;
+N     = 1000;
 theta = 2*%pi*(0:N-1)/N;
-y  = sin(theta); 
-w  = eval(wave_expr);
-fw = fft(w); 
-C  = fw/N;
-S  = zeros(size(w)); S(:) = C(1); Nc=20;
+y     = sin(theta); 
+w     = eval(wave_expr);
+fw    = fft(w); 
+C     = fw/N;
+S     = zeros(w);
+S(:)  = C(1);
+Nc    = 20;
 for i=2:Nc
   n=i-1;  
   S = S + C(i)*exp(1*%i*n*theta) + C(N-(n-1))*exp(-1*%i*n*theta);
@@ -180,17 +190,21 @@ P = gf_mesh_fem_get(mfd,'basic dof nodes');
 Uex   = zeros(size(R));
 nbes  = 1;
 Uex   = besselh(0,nbes,k*R) * C(1)/besselh(0,nbes,k);
+old_ieee = ieee();
+ieee(2);
 for i=2:Nc
   n   = i-1;  
   Uex = Uex + besselh(n,nbes,k*R) * C(i)/besselh(n,nbes,k) .* exp(1*%i*n*T);
   Uex = Uex + besselh(-n,nbes,k*R) * C(N-(n-1))/besselh(-n,nbes,k) .* exp(-1*%i*n*T);
 end
+ieee(old_ieee);
 
 disp('the error won''t be less than ~1e-2 as long as a first order absorbing boundary condition will be used');
 disp(sprintf('rel error ||Uex-U||_inf=%g',max(abs(Ud-Uex))/max(abs(Uex))));
 disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/gf_compute(mfd,Uex,'L2 norm',mim)));
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
+scf(3);
 // adjust the 'refine' parameter to enhance the quality of the picture
 drawlater;
 gf_plot(mfu,real(U(:)'),'mesh','on','refine',8);

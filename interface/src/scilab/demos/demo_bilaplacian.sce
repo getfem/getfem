@@ -1,4 +1,8 @@
-gf_workspace('clear all'); clear all;
+lines(0);
+stacksize('max');
+
+gf_workspace('clear all');
+
 N  = 2;
 NX = 5;
 NY = 5;
@@ -52,13 +56,11 @@ else
 end
 
 FT=10.;
-//YC: sol_u      = gf_mesh_fem_get(mfd, 'eval',list(sprintf('sin(%g*(x+y))',FT)));
 sol_u      = gf_mesh_fem_get_eval(mfd,list(sprintf('sin(%g*(x+y))',FT)));
 sol_f      = sol_u*FT*FT*FT*FT*N*N;
 sol_lapl_u = -FT*FT*sol_u*N;
 
 b1 = gf_mdbrick('source term', b0);
-//gf_mdbrick_set(b1, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list('1-(x-y).^2')));
 gf_mdbrick_set(b1, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list('1-(x-y).^2')));
 
 b2 = gf_mdbrick('normal derivative source term',b1,MOMENTUM_BOUNDARY_NUM);

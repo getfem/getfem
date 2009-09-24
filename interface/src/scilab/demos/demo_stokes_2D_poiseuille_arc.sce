@@ -41,11 +41,18 @@ fem_u = gf_fem(sprintf('FEM_QK(2,%d)',Ku));
 fem_p = gf_fem(sprintf('FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1,%d),FEM_PK_DISCONTINUOUS(1,%d))',Kp,Kp));
 fem_d = gf_fem(sprintf('FEM_QK(2,2)'));
 
-pde.mf_u = gf_mesh_fem(m,2);
 mfulag   = gf_mesh_fem(m,2);
+
+pde.mf_u = [];
+pde.mf_p = [];
+pde.mf_d = [];
+pde.mim  = [];
+
+pde.mf_u = gf_mesh_fem(m,2);
 pde.mf_p = gf_mesh_fem(m,1);
 pde.mf_d = gf_mesh_fem(m,1);
 pde.mim  = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
+
 // this is a good example of the usefullness of the cubic bubble
 // -> if not used, the pression has strange values
 gf_mesh_fem_set(pde.mf_u,'fem',fem_u);
@@ -70,8 +77,7 @@ OUTfaces  = gf_mesh_get(m, 'faces from pid', OUTpid);
 
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
-//gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
-gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'))'); // YC:
+gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
 
 tic; 
 [U,P,pde2] = gf_solve(pde); 

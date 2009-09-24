@@ -14,7 +14,7 @@ if (nargin >= 1) then
   end
 else 
   gverbose = 0;
-end;
+end
 
 m   = gf_mesh('cartesian', 0:.1:1, 0:.1:1);
 mf  = gf_mesh_fem(m);   gf_mesh_fem_set(mf, 'classical fem', 2);

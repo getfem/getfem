@@ -13,10 +13,12 @@ mflg = gf_mesh_fem(m,1);
 mflh = gf_mesh_fem(m,1);
 
 // assign the Q2 fem to all convexes of the mesh_fem,
+
 //gf_mesh_fem_set(mf,'fem',gf_fem('FEM_PK(2,3)'));
 //gf_mesh_fem_set(mf,'fem',gf_fem('FEM_ARGYRIS'));
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_HCT_TRIANGLE'));
 //gf_mesh_fem_set(mf,'fem',gf_fem('FEM_HERMITE(2)'));
+
 gf_mesh_fem_set(mfl,'fem',gf_fem('FEM_PK(2,5)'));
 gf_mesh_fem_set(mflg,'fem',gf_fem('FEM_PK_DISCONTINUOUS(2,4)'));
 gf_mesh_fem_set(mflh,'fem',gf_fem('FEM_PK_DISCONTINUOUS(2,3)'));
@@ -30,9 +32,12 @@ border = gf_mesh_get(m,'outer faces');
 
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
+
+scf();
 drawlater;
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
 drawnow;
+
 pause;
                                                   // exact solution
 if 0 then
@@ -63,6 +68,7 @@ D2Ul  = gf_compute(mflg, DUl, 'gradient',mflh);
 D2Ul2 = gf_compute(mfl,Ul, 'hessian',mflh);
 nref  = 4
 
+scf();
 drawlater;
 subplot(2,2,1); 
 gf_plot(mfl,Ul,'mesh','on','refine',nref,'contour',.01:.01:.1); 
