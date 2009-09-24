@@ -79,12 +79,13 @@ elseif typeof(_what)=='list' then
     for j=1:qdim
       if (isnumeric(_what(i))) then
         if (length(_what(i)) ~= 1) then error('numeric values should be scalar'); end;
-        X(i,dof+j-1)=_what(i);
+        X(i,dof+j-1) = _what(i);
       elseif (typeof(_what(i))=='string') then
         x=xpos; y=ypos; z=zpos;
-        X(i,dof+j-1)=eval(_what(i));
+        X(i,dof+j-1) = evstr(_what(i));
       elseif (type(_what(i))==11 | type(_what(i))==13) then
-        X(i,dof+j-1)=feval(_what(i), xpos, ypos, zpos);
+        tmp = evstr(_what(i));
+        X(i,dof+j-1) = feval(tmp, xpos, ypos, zpos);
       else
         error('sorry, don''t know how to eval a ' + typeof(_what(i)) + ...
               ' expression, only function handles, numeric constants and ' + ...

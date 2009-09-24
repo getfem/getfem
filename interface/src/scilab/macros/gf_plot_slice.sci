@@ -92,8 +92,7 @@ end
 Pm = gf_slice_get(sl,'pts'); 
 if (length(Pm) == 0) then return; end;
 if (~isempty(o_data) & size(o_data,2) ~= size(Pm,2)) then
-  error(sprintf('wrong dimensions for the data (has %d columns, should have %d columns)',...
-	  size(o_data,2),size(Pm,2)));
+  error(sprintf('wrong dimensions for the data (has %d columns, should have %d columns)', size(o_data,2),size(Pm,2)));
 end
 
 P = list();
@@ -120,6 +119,10 @@ else
   h_current.view = '2d'; 
 end
 endfunction
+
+////////////////
+// do_plot_1D //
+////////////////
 
 function [htube,hmesh]=do_plot_1D(P,T,opt)
 
@@ -186,7 +189,10 @@ else
 end
 endfunction
 
-// cell2mat not available in matlab R12
+////////////////
+// mycell2mat //
+////////////////
+
 function M=mycell2mat(C)
 // M=cat(1,C{:});
 M = [];
@@ -195,23 +201,30 @@ for i=1:length(C)
 end
 endfunction
 
+///////////////
+// plot_tube //
+///////////////
+
 // plots a 'tube' along edges, with color given by D, and a possibly varying radius
 // radius: constant or equal to nb points
 // D(ata): empty or equal to nb points or nb segments
 function h=plot_tube(P, T, D, radius, tubecolor)
 
 printf('DEBUG: in plot_tube\n');
+
 h = [];
 P = mycell2mat(P);
+
+disp(size(T))
+disp(size(P))
+disp(size(D))
+
 if (isempty(T)) then return; end;
 T = double(T); // matlab 6.5 is not able to handle operator '+' on int32 ...
-it0  = T(1,1); 
-nT   = size(T,2);
-nP   = size(P,2);
-mdim = size(P,1);
+it0  = T(1,1);  nT = size(T,2); nP = size(P,1); mdim=size(P,2);
 
 if (mdim == 2) then 
-  P = [P; zeros(1,nP)]; 
+  P = [P'; zeros(1,nP)]'; 
   mdim = 3; 
 end // handle 2D slices
 
@@ -238,40 +251,51 @@ cnt  = 0;
 
 h = [];
 
+// Size P:  158.    2.  
+// Size T:   2.    120. 
 while (1)
+  printf('DEBUG\n');
   // search for consecutive edge points
   it1 = it0;
+  //while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
   while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
   //disp(sprintf('sequence: %d - %d -- [%d-%d] - [%d-%d]',it0,it1,T(1,it0),T(2,it0),T(1,it1),T(2,it1)))
   // extract the sequence of points
   ip = [T(1,it0) T(2,it0:it1)];
-  p = P(:,ip);     
+  p = P(ip,:);      // P(:,ip)
   if (length(D)) then
-    if (point_data) d = D(ip); else d = D(it0:it1); end;
+    if (point_data) then 
+      d = D(ip); 
+    else 
+      d = D(it0:it1); 
+    end
   end
   nseg = it1-it0+1;
   // compute the normals of edges
-  //YC: normals = zeros(3, 2, nseg); // produce a hypermat
-  tang = p(:,2:$) - p(:,1:$-1); 
-  for i=1:size(tang,2)
-    tang(:,i) = tang(:,i) / sqrt(sum(tang(:,i).^2)); 
+  // normals = zeros(3, 2, nseg); // produce a hypermat
+  normals = [];
+  tang = p(2:$,:) - p(1:$-1,:); 
+  for i=1:size(tang,1)
+    tang(i,:) = tang(i,:) / max(%eps,sqrt(sum(tang(i,:).^2))); 
   end
   for i=1:nseg
-    normals(:,:,i) = null_space(tang(:,i)'); // won't be ok if normals have an
-                                             // important rotation from a segment
-                                             // to another - VERY PROBABLE BUG!!!      
+    normals(:,:,i) = null_space(tang(i,:)); // won't be ok if normals have an
+                                            // important rotation from a segment
+                                            // to another - VERY PROBABLE BUG!!!      
   end
   X = zeros(mdim,nsubdiv+1,length(ip));
   for i=1:length(ip),
     if (i == 1) then
-      n = normals(:,:,i); 
+      n = normals(:,:,i)'; 
     elseif (i == length(ip)) then
-      n= normals(:,:,$);
+      n = normals(:,:,$)';
     else
-      n = (normals(:,:,i-1)+normals(:,:,i))/2;
+      n = ((normals(:,:,i-1)+normals(:,:,i))/2)';
     end
-    for k=1:nsubdiv+1,
-      X(:,k,i) = p(:,i) + radius(ip(i))*(n(:,1)*ct(k) + n(:,2)*st(k));
+    disp(size(p))
+    disp(size(n))
+    for k=1:nsubdiv+1
+      X(:,k,i) = (p(i,:) + radius(ip(i))*(n(1,:)*ct(k) + n(2,:)*st(k)))';
     end;
   end;
   if (length(D)) then
@@ -293,8 +317,7 @@ while (1)
     //surf(squeeze(X(1,:,:)), squeeze(X(2,:,:)), squeeze(X(3,:,:)),'edgeco','cya'); // 'linestyle','none','facecolor',tubecolor)];
     surf(MyX1, MyX2, MyX3,'edgeco','cya'); // 'linestyle','none','facecolor',tubecolor)];
     h($+1) = gce();
-    disp(h($))
-    h($).thickness = 0; // corresponds to linestyle none
+    h($).thickness  = 0; // corresponds to linestyle none
     h($).color_mode = color(tubecolor);
     h($).color_flag = 0;
   end
@@ -303,6 +326,10 @@ while (1)
   if (it0 > nT) then return; end;
 end
 endfunction
+
+////////////////
+// do_plot_2D //
+////////////////
 
 // draw faces
 function [hfaces,hmesh,hquiver] = do_plot_2D(sl,P,T,opt)
@@ -314,7 +341,6 @@ hmesh   = [];
 hquiver = [];
 mdim    = length(P);
 
-// YC: variable ID too long
 [o_data,err]                  = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
 [o_convex_data,err]           = get_param(opt,'convex_data',[]); // data to be plotted (given on the mesh convexes)
 [o_msh,err]                   = get_param(opt,'mesh','auto'); // show the mesh ?
@@ -353,20 +379,30 @@ if (length(T)) then
     //hfaces = patch('Vertices',mycell2mat(P)','Faces',T',d(:), 'EdgeColor','none'); // YC:
     p_tmp = mycell2mat(P);
 
-    ctmp = d('FaceVertexCData');
     h = gcf();
-    ctmp = ceil((ctmp - min(ctmp)) / (max(ctmp) - min(ctmp)) * size(h.color_map,1));
-    ctmp = matrix(ctmp(T,1),size(T,1),length(p_tmp(T,2))/size(T,1))';
-
+    ctmp = d('FaceVertexCData');
+    if (size(ctmp,1)==1) then // just one color
+      ctmp = ones(size(T,2),1) * color(round(255*ctmp(1)), ...
+                                       round(255*ctmp(2)), ...
+                                       round(255*ctmp(3)));
+    else
+      ctmp = ceil((ctmp - min(ctmp)) / (max(ctmp) - min(ctmp)) * size(h.color_map,1));
+      ctmp = matrix(ctmp(T,1),size(T,1),length(p_tmp(T,2))/size(T,1))';
+    end
+  
     if (size(p_tmp,2)==2) then
       xtmp = matrix(p_tmp(T,1),size(T,1),length(p_tmp(T,2))/size(T,1))';
       ytmp = matrix(p_tmp(T,2),size(T,1),length(p_tmp(T,2))/size(T,1))';
       ztmp = matrix(ones(p_tmp(T,2)),size(T,1),length(p_tmp(T,2))/size(T,1))';
+      disp(size(ctmp))
+      disp(size(ztmp))
       plot3d(xtmp', ytmp', list(ztmp',ctmp'));
     else
       xtmp = matrix(p_tmp(T,1),size(T,1),length(p_tmp(T,1))/size(T,1))';
       ytmp = matrix(p_tmp(T,2),size(T,1),length(p_tmp(T,1))/size(T,1))';
       ztmp = matrix(p_tmp(T,3),size(T,1),length(p_tmp(T,1))/size(T,1))';
+      disp(size(ctmp))
+      disp(size(ztmp))
       plot3d(xtmp', ytmp', list(ztmp',ctmp'));
     end
     hfaces = gce();
@@ -407,7 +443,11 @@ if (ison(o_msh) & (ison(o_msh_edges) | ison(o_msh_slice_edges))) then
       xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
       ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
       ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))';
-      plot3d(xtmp', ytmp', list(ztmp',o_msh_edges_color));
+      disp(size(xtmp))
+      disp(size(ytmp))
+      disp(size(ztmp))
+      disp(size(o_msh_edges_color))
+      plot3d(xtmp', ytmp', ztmp');
     end
     hmesh = gce();
     hmesh.thickness = o_msh_edges_width;
@@ -448,7 +488,11 @@ if (ison(o_msh) & (ison(o_msh_edges) | ison(o_msh_slice_edges))) then
   end
 end 
 endfunction
-  
+
+////////////////////
+// do_quiver_plot //
+////////////////////
+
 // arrow plot
 function hquiver = do_quiver_plot(P,U,opt)
 

@@ -53,6 +53,8 @@ else
   end
 end
 
+x = [];
+
 if (length(a) == 1) then
   if (type(a)==10) then
     x = char (ascii(a) * ones (idx));
@@ -75,11 +77,11 @@ elseif (ndims (a) == 2 & length (idx) < 3) then
     elseif (length(aidx) < length(idx)) then
       aidx = [aidx, ones(1,length(idx)-length(aidx))];
     end
-    cidx = cell (1, length (aidx));
+    cidx = list();
     for i=1:length(aidx)
       cidx(i) = kron (ones (1, idx(i)), 1:aidx(i));
     end
-    x = a (cidx(:));
+    x = a(cidx(:));
   end
 end
 endfunction

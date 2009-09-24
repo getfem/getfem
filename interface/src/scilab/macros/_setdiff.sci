@@ -70,13 +70,13 @@ else
     b = unique(b);
     // Doesn't work with string
     if (typeof([c(:); b(:)])=='string') then
-      [dummy, idx] = -sort(-[ascii(c(:)); ascii(b(:))]);
+      [dummy, idx] = gsort(-[ascii(c(:)); ascii(b(:))]);
     else
-      [dummy, idx] = -sort(-double([c(:); b(:)]));
+      [dummy, idx] = gsort(-double([c(:); b(:)]));
     end
     
     // Eliminate those elements of a that are the same as in b.
-    dups = find (dummy(1:$-1)==dummy(2:$));
+    dups = find (dummy(1:$-1)==dummy(2:$)); 
     c(idx(dups)) = [];
     // Reshape if necessary.
     if (size (c, 1) ~= 1 & size (b, 1) == 1) then
