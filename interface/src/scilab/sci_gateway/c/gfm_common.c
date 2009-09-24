@@ -173,20 +173,24 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	  }
 	else if (strcmp(pstStrings[0],"hm")==0)
 	  {
-	    int piPrecision;
+	    int piPrecision, ret;
+	    double * pdblDims;
 
 #ifdef DEBUG
 	    sciprint("sci_array_to_gfi_array: dealing with hypermat\n");
 #endif
 
-	    // Get the dimensions (they are of int32 kind)
-	    getMatrixOfInteger32InList(sci_x, 2, &pirow, &picol, &pintDims);
+	    // Get the dimensions
+	    // YC: voir ou sont créées les hypermat
+	    //     au moment de la création, il faut mettre des int32 et pas des doubles
+	    //     pour les dimensions de l'hypermat
+	    ret = getMatrixOfDoubleInList(sci_x, 2, &pirow, &picol, &pdblDims);
 	    t->dim.dim_len = pirow*picol;
 	    t->dim.dim_val = (u_int*)MALLOC(pirow*picol*sizeof(u_int));
 	    for(i=0;i<pirow*picol;i++) 
 	      {
-		t->dim.dim_val[i] = (u_int)pintDims[i];
-		sciprint("DEBUG: dim[%d] = %d n = %d\n", i, (int)pintDims[i], n);
+		t->dim.dim_val[i] = (u_int)pdblDims[i];
+		sciprint("DEBUG: dim[%d] = %d n = %d\n", i, (int)pdblDims[i], n);
 	      }
 
 	    // Get the matrixes (stored as a column vector of size prod(size(...)))
@@ -692,6 +696,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    entries = (unsigned int *)MALLOC(nb_elem*sizeof(unsigned int));
 	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_uint32.data_uint32_val[i];
 	    
+	    // YC: le champ dims doit être de type int32 et le champ entries dépend de GFI_
 	    // YC: et les complexes ?
 	    // Add a vector to the 'dims' field
 	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
@@ -735,8 +740,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	else
 	  {
 	    char *fields[] = {"hm","dims","entries"};
-	    double * dims;
-	    int * entries;
+	    double * dims, * entries;
 	    int nb_elem = 1;
 
 	    createMList(ivar,3,&m_var);
@@ -750,14 +754,15 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		nb_elem *= (int)t->dim.dim_val[i];
 	      }
 
-	    entries = (int *)MALLOC(nb_elem*sizeof(int));
-	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_int32.data_int32_val[i];
+	    entries = (double *)MALLOC(nb_elem*sizeof(double));
+	    for(i=0;i<nb_elem;i++) entries[i] = (double)t->storage.gfi_storage_u.data_int32.data_int32_val[i];
 	    
 	    // YC: et les complexes
+	    // YC: le champ dims doit être de type int32 et le champ entries dépend de GFI_
 	    // Add a vector to the 'dims' field
 	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 	    // Add a vector to the 'entries' field
-	    createMatrixOfInteger32InList(ivar, m_var, 3, 1, nb_elem, entries);
+	    createMatrixOfDoubleInList(ivar, m_var, 3, 1, nb_elem, entries);
 		
 	    FREE(entries);
 	  }
@@ -851,6 +856,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_double.data_double_val[i];
 		
 		// Add a vector to the 'dims' field
+		// YC: le champ dims doit être de type int32 et le champ entries dépend de GFI_
 		createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 		// Add a vector to the 'entries' field
 		createMatrixOfDoubleInList(ivar, m_var, 3, 1, nb_elem, entries);
@@ -1121,6 +1127,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	  }
 #endif
 
+	//YC: must find a better algorithm to convert a sparse Matlab matrix to a sparse Scilab matrix
+	//    This one is very time consuming
 	Index = 0;
 	for(i=0;i<pirow;i++)
 	  {
@@ -1135,7 +1143,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		      {
 			if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
 			  {
-			    pi_col_pos[Index] = k;
+			    // YC: +1 et l'assert de check_asm plante
+			    //     +0 et demo_tripod_alt plante .
+			    pi_col_pos[Index] = k; // YC:
 			    break;
 			  }
 		      }
