@@ -123,6 +123,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	char ** pstStrings;
 	double * pdblDataID, * pdblDataCID;
 	int * pintDims;
+	double * pdblDims;
 
 	getListItemNumber(sci_x,&n);
 	getMatrixOfStringInList(sci_x,1,&pirow,&picol,NULL,NULL);
@@ -173,26 +174,31 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	  }
 	else if (strcmp(pstStrings[0],"hm")==0)
 	  {
-	    int piPrecision, ret;
-	    double * pdblDims;
-
+	    int piPrecision, ret, * p_item_address;
 #ifdef DEBUG
 	    sciprint("sci_array_to_gfi_array: dealing with hypermat\n");
 #endif
 
 	    // Get the dimensions
-	    // YC: voir ou sont créées les hypermat
-	    //     au moment de la création, il faut mettre des int32 et pas des doubles
-	    //     pour les dimensions de l'hypermat
-	    ret = getMatrixOfDoubleInList(sci_x, 2, &pirow, &picol, &pdblDims);
-	    t->dim.dim_len = pirow*picol;
-	    t->dim.dim_val = (u_int*)MALLOC(pirow*picol*sizeof(u_int));
-	    for(i=0;i<pirow*picol;i++) 
+	    getListItemAddress(sci_x,2,&p_item_address);
+	    switch(getVarType(p_item_address))
 	      {
-		t->dim.dim_val[i] = (u_int)pdblDims[i];
-		sciprint("DEBUG: dim[%d] = %d n = %d\n", i, (int)pdblDims[i], n);
+	      case sci_matrix:
+		ret = getMatrixOfDoubleInList(sci_x, 2, &pirow, &picol, &pdblDims);
+		t->dim.dim_len = pirow*picol;
+		t->dim.dim_val = (u_int*)MALLOC(pirow*picol*sizeof(u_int));
+		for(i=0;i<pirow*picol;i++) t->dim.dim_val[i] = (u_int)pdblDims[i];
+		break;
+	      case sci_ints:
+		ret = getMatrixOfInteger32InList(sci_x, 2, &pirow, &picol, &pintDims);
+		t->dim.dim_len = pirow*picol;
+		t->dim.dim_val = (u_int*)MALLOC(pirow*picol*sizeof(u_int));
+		for(i=0;i<pirow*picol;i++) t->dim.dim_val[i] = (u_int)pintDims[i];
+		break;
+	      default:
+		Scierror(999,"wrong type for hypermatrix dimensions type: %d\n", getVarType(p_item_address));
+		return 1;
 	      }
-
 	    // Get the matrixes (stored as a column vector of size prod(size(...)))
 	    // We must detect if we have a INT UINT or DOUBLE
 	    
@@ -220,8 +226,6 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 		    t->storage.type = GFI_DOUBLE;
 		    getMatrixOfDoubleInList(sci_x, 3, &pirow, &picol, &pdblDataID);
 		    
-		    sciprint("DEBUG: pirow = %d picol = %d\n", pirow, picol);
-
 		    t->storage.gfi_storage_u.data_double.is_complex = GFI_REAL;
 
 		    t->storage.gfi_storage_u.data_double.data_double_len = pirow*picol;
@@ -678,7 +682,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	else
 	  {
 	    char *fields[] = {"hm","dims","entries"};
-	    double * dims;
+	    int * dims;
 	    unsigned int * entries;
 	    int nb_elem = 1;
 
@@ -686,23 +690,22 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    
 	    createMatrixOfStringInList(ivar, m_var, 1, 1, 3, fields);
 	    
-	    dims = (double *)MALLOC(t->dim.dim_len*sizeof(double));
+	    dims = (int *)MALLOC(t->dim.dim_len*sizeof(int));
 	    for(i=0;i<t->dim.dim_len;i++) 
 	      {
-		dims[i] = (double)t->dim.dim_val[i];
+		dims[i] = (int)t->dim.dim_val[i];
 		nb_elem *= (int)t->dim.dim_val[i];
 	      }
 
 	    entries = (unsigned int *)MALLOC(nb_elem*sizeof(unsigned int));
 	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_uint32.data_uint32_val[i];
 	    
-	    // YC: le champ dims doit être de type int32 et le champ entries dépend de GFI_
-	    // YC: et les complexes ?
 	    // Add a vector to the 'dims' field
-	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
+	    createMatrixOfInteger32InList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 	    // Add a vector to the 'entries' field
 	    createMatrixOfUnsignedInteger32InList(ivar, m_var, 3, 1, nb_elem, entries);
 		
+	    FREE(dims);
 	    FREE(entries);
 	  }
       } 
@@ -740,31 +743,31 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	else
 	  {
 	    char *fields[] = {"hm","dims","entries"};
-	    double * dims, * entries;
+	    int * dims;
+	    double * entries;
 	    int nb_elem = 1;
 
 	    createMList(ivar,3,&m_var);
 	    
 	    createMatrixOfStringInList(ivar, m_var, 1, 1, 3, fields);
 	    
-	    dims = (double *)MALLOC(t->dim.dim_len*sizeof(double));
+	    dims = (int *)MALLOC(t->dim.dim_len*sizeof(int));
 	    for(i=0;i<t->dim.dim_len;i++) 
 	      {
-		dims[i] = (double)t->dim.dim_val[i];
+		dims[i] = (int)t->dim.dim_val[i];
 		nb_elem *= (int)t->dim.dim_val[i];
 	      }
 
 	    entries = (double *)MALLOC(nb_elem*sizeof(double));
 	    for(i=0;i<nb_elem;i++) entries[i] = (double)t->storage.gfi_storage_u.data_int32.data_int32_val[i];
 	    
-	    // YC: et les complexes
-	    // YC: le champ dims doit être de type int32 et le champ entries dépend de GFI_
 	    // Add a vector to the 'dims' field
-	    createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
+	    createMatrixOfInteger32InList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 	    // Add a vector to the 'entries' field
 	    createMatrixOfDoubleInList(ivar, m_var, 3, 1, nb_elem, entries);
 		
 	    FREE(entries);
+	    FREE(dims);
 	  }
       } 
       break;
@@ -834,17 +837,17 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    sciprint("DEBUG: array is hypermat\n");
 #endif
 	    char *fields[] = {"hm","dims","entries"};
-	    double * dims;
+	    int * dims;
 	    int nb_elem = 1;
 
 	    createMList(ivar,3,&m_var);
 	    
 	    createMatrixOfStringInList(ivar, m_var, 1, 1, 3, fields);
 	    
-	    dims = (double *)MALLOC(t->dim.dim_len*sizeof(double));
+	    dims = (int *)MALLOC(t->dim.dim_len*sizeof(int));
 	    for(i=0;i<t->dim.dim_len;i++) 
 	      {
-		dims[i] = (double)t->dim.dim_val[i];
+		dims[i] = (int)t->dim.dim_val[i];
 		nb_elem *= (int)t->dim.dim_val[i];
 	      }
 
@@ -856,8 +859,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_double.data_double_val[i];
 		
 		// Add a vector to the 'dims' field
-		// YC: le champ dims doit être de type int32 et le champ entries dépend de GFI_
-		createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
+		createMatrixOfInteger32InList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 		// Add a vector to the 'entries' field
 		createMatrixOfDoubleInList(ivar, m_var, 3, 1, nb_elem, entries);
 		
@@ -879,7 +881,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		  }
 		
 		// Add a vector to the 'dims' field
-		createMatrixOfDoubleInList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
+		createMatrixOfInteger32InList(ivar, m_var, 2, 1, t->dim.dim_len, dims);
 		// Add a vector to the 'entries' field
 		createComplexMatrixOfDoubleInList(ivar, m_var, 3, 1, nb_elem, entries_pr, entries_pi);
 		
@@ -1127,43 +1129,61 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	  }
 #endif
 
-	//YC: must find a better algorithm to convert a sparse Matlab matrix to a sparse Scilab matrix
-	//    This one is very time consuming
 	Index = 0;
-	for(i=0;i<pirow;i++)
+	if (iscomplex)
 	  {
-	    nb_item_row[i] = 0;
-	    for(j=0;j<nbitem;j++)
+	    for(i=0;i<pirow;i++)
 	      {
-		if (t->storage.gfi_storage_u.sp.ir.ir_val[j]==i)
+		nb_item_row[i] = 0;
+		for(j=0;j<nbitem;j++)
 		  {
-		    // We found the row number, we need now to find the corresponding
-		    // col number.
-		    for(k=0;k<pirow;k++)
+		    if (t->storage.gfi_storage_u.sp.ir.ir_val[j]==i)
 		      {
-			if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
+			// We found the row number, we need now to find the corresponding col number.
+			for(k=0;k<pirow;k++)
 			  {
-			    // YC: +1 et l'assert de check_asm plante
-			    //     +0 et demo_tripod_alt plante .
-			    pi_col_pos[Index] = k; // YC:
-			    break;
+			    if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
+			      {
+				pi_col_pos[Index] = k;
+				break;
+			      }
 			  }
-		      }
-
-		    if (iscomplex)
-		      {
+			
 			pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+0];
 			pdblDataImag[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[2*j+1];
+			nb_item_row[i]++;
+			Index++;
 		      }
-		    else
-		      {
-			pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[j];
-		      }
-		    nb_item_row[i]++;
-		    Index++;
 		  }
 	      }
 	  }
+	else
+	  {
+	    for(i=0;i<pirow;i++)
+	      {
+		nb_item_row[i] = 0;
+		for(j=0;j<nbitem;j++)
+		  {
+		    if (t->storage.gfi_storage_u.sp.ir.ir_val[j]==i)
+		      {
+			// We found the row number, we need now to find the corresponding col number.
+			for(k=0;k<pirow;k++)
+			  {
+			    if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
+			      {
+				pi_col_pos[Index] = k;
+				break;
+			      }
+			  }
+			
+			pdblDataReal[Index] = t->storage.gfi_storage_u.sp.pr.pr_val[j];
+			nb_item_row[i]++;
+			Index++;
+		      }
+		  }
+	      }
+	  }
+
 #ifdef DEBUG
 	for(i=0;i<pirow;i++)
 	  {
