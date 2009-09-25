@@ -37,7 +37,7 @@
 #include "getfem_interface.h"
 
 //#define DEBUG
-#define DEBUG2
+//#define DEBUG2
 
 gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
 {
