@@ -47,7 +47,7 @@ C  = gf_spmat('mult',M1,M2);
 C  = gf_spmat_get(C, 'full');
 P  = full(M1*M2);
 assert('max(max(abs(C-P)))<1e-13');
-asserterr('gf_spmat(''mult'',M2,M1);');
+asserterr('gf_spmat(''mult'',M1,M2);'); 
 
 //TEST ADD
 d  = rand(1,size(P,1));
@@ -68,6 +68,16 @@ K = gf_spmat('diag', [1 1; 2 3; 4 5; 6 7],[0 -2],6,9);
 gf_spmat_get(K,'full');
 //assert('gf_spmat_get(K,''nnz'')==8'); // YC: 6 - a voir
 
+//-->gf_spmat_get(K,'full')
+// ans  =
+// 
+//    1.    0.    0.    0.    0.    0.    0.    0.    0.  
+//    0.    2.    0.    0.    0.    0.    0.    0.    0.  
+//    5.    0.    4.    0.    0.    0.    0.    0.    0.  
+//    0.    7.    0.    6.    0.    0.    0.    0.    0.  
+//    0.    0.    0.    0.    0.    0.    0.    0.    0.  
+//    0.    0.    0.    0.    0.    0.    0.    0.    0.  
+    
 cK=gf_spmat('diag', [1 1*%i; 2 3*%i; 4 5; 6*%i 7; 5 5; 6 -2],[0 -1],6,9);
 assert('gf_spmat_get(cK,''nnz'')==11');  
 C = gf_spmat('add',K,cK);
@@ -161,14 +171,15 @@ gf_workspace('clear all')
 
 // luinc not yet defined under Scilab
 if 0 then
-  m   = gf_mesh('cartesian',[1:30],[1:30]);
+  m   = gf_mesh('cartesian',[1:10],[1:10]);
   mf  = gf_mesh_fem(m,1);
   gf_mesh_fem_set(mf,'classical fem', 1);
   mim = gf_mesh_im(m, 0); // integration of degree 0
   A   = gf_asm('laplacian',mim,mf,mf,ones(1,gf_mesh_fem_get(mf,'nbdof')));
-  A   = A+.1*speye(size(A,1));
+  A   = A +.1*speye(size(A,1),size(A,1));
   B   = rand(gf_mesh_fem_get(mf,'nbdof'),1);
-  [L,U] = luinc(A,'0');
+  //[L,U] = luinc(A,'0');
+  [L,U] = lu(full(A));
   X1 = gf_linsolve('cg',A,B);
   mm = gf_spmat('copy',inv(L));
   p  = gf_precond('spmat',mm);

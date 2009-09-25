@@ -45,9 +45,7 @@ F = gf_asm('boundary_source', 1, mim, mfu, mfd, repmat([0;-10;0],1,nbd));
 K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd));
 
 // handle Dirichlet condition
-
 [H,R]  = gf_asm('dirichlet', 2, mim, mfu, mfd, ones(1,1,nbd) .*. eye(3,3), zeros(3, nbd));
-
 [N,U0] = gf_spmat_get(H, 'dirichlet_nullspace', R);
 
 // N:        nnz(N) = 16341   size(N) = 16764 x 16341
@@ -56,23 +54,24 @@ K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd)
 // B = N'*A: nnz(B) = 1110396 size(B) = 16341 x 16341
 
 // KK = N'*K*N; // This computation doesn't fit in the scilab stack. I must split it into parts
-KK = N'*K; clear K;
-KK = KK*N;
+K = K*N;
+K = N'*K;
 
-FF = N'*F; clear F;
+F = N'*F;
 
 // solve ...
-disp('solving...'); 
+//sleep(100); // bug with timer
 t0      = timer();
+disp('solving...'); 
 lsolver = 1; // change this to compare the different solvers
 
 if (lsolver == 1) then   // conjugate gradient
-  P  = gf_precond('ildlt',KK);
-  UU = gf_linsolve('cg',KK,FF,P,'noisy','res',1e-9);
+  P  = gf_precond('ildlt',K);
+  UU = gf_linsolve('cg',K,F,P,'noisy','res',1e-3); // 1e-9 before
 elseif (lsolver == 2) then // superlu
-  UU = gf_linsolve('superlu',KK,FF);
+  UU = gf_linsolve('superlu',K,F);
 else                   // the scilab "slash" operator 
-  UU = KK\FF;
+  UU = K\F;
 end
 disp(sprintf('linear system solved in %.2f sec', timer()-t0));
 U = (N*UU).'+U0;
@@ -114,4 +113,5 @@ drawlater;
 gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
 drawnow;
 colorbar(min(U),max(U));
+h.color_map = r;
 

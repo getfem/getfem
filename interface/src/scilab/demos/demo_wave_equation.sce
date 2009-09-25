@@ -44,8 +44,11 @@ gf_model_set(md, 'first iter');
 gf_model_get(md, 'listbricks');
 
 // Iterations
-scf();
+h = scf();
+h.color_map = jetcolormap(255);
+
 Index = 0;
+
 for t=0:dt:T
   gf_model_get(md, 'solve');
   gf_model_set(md, 'velocity update for order two theta method', 'u', 'v', 'dt', 'theta');
@@ -63,10 +66,9 @@ for t=0:dt:T
   gf_plot(mf, V, 'mesh', 'on', 'contour', .01:.01:.1); 
   colorbar(min(V),max(V)); 
   title(sprintf('computed solution du/dt for t=%g', t));
+  h.color_map = jetcolormap(255);
   drawnow;
   sleep(100);
-
-  h = gcf();
 
   xs2png(h.figure_id,sprintf('waveeq%03d.png',Index));
   Index = Index + 1;

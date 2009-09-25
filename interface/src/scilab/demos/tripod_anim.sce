@@ -8,7 +8,14 @@
 //drawnow;
 pr   = 1;
 haut = 0;
-for r=[6 14 26]
+
+h = scf();
+h.color_map = jetcolormap(255);
+
+Index = 0;
+
+//for r=[6 14 26]
+for r=6:4:60
   disp('slicing...'); tic;
   //sl = gf_slice(list('cylinder', 0, [0;0;0], [0;1;0], r), m, 4);
   //sl = gf_slice(m,list('boundary',list('cylinder', [0;0;0], [0;1;0], 15)),4);
@@ -19,19 +26,39 @@ for r=[6 14 26]
   //sl = gf_slice(m,list('boundary', list('none')),4);
   //sl = gf_slice(m,list('ballb', [0;0;0], 10),2);
   //sl = gf_slice(m,list('planarb',[0;0;0],[0;0;1]),1);
-  disp(sprintf('..........done in %3.2f sec',toc));
+  printf('..........done in %3.2f sec',toc());
 
   P      = gf_slice_get(sl,'pts'); 
-  P(2,:) = P(2,:)-haut;
+  P(2,:) = P(2,:) - haut;
   sl
-  D    = gf_compute(mfdu,VM,'interpolate on',sl);
+  D = gf_compute(mfdu,VM,'interpolate on',sl);
+  
   drawlater;
   gf_plot_slice(sl, 'mesh','on','data',D,'pcolor','on','mesh_edges_color',[1 1 .7]);
+  h.color_map = jetcolormap(255);
+
+  a = gca();
+  a.view = '3d';
+  a.data_bounds = [-30 -15 -50;
+                    50  15  50];
+
+  xlabel('');
+  ylabel('');
+  zlabel('');
+
+  a.axes_visible = ['off','off','off'];
+  a.box = 'off';
   drawnow;
+
+  // use:
+  // convert -delay 50 -loop 0 wave*.png animatewave.gif
+  // To produce the animated gif image.
+  // Convert is an ImageMagick tool.
+  xs2png(h.figure_id,sprintf('tripod%02d.png',Index));
+  
+  Index = Index + 1;
   pr   = r;
-  haut = haut+24;
+  haut = haut + 24;
 end
 
-gf_workspace('stats');
-gf_colormap('earth');
 

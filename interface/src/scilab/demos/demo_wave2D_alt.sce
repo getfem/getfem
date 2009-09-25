@@ -114,16 +114,20 @@ U   = _null*(RK\RF)+ud(:);
 Udr = gf_compute(mfu,real(U(:)'),'interpolate on',mfd); 
 Udi = gf_compute(mfu,imag(U(:)'),'interpolate on',mfd); Ud=Udr+1*%i*Udi;
 
-scf(1); 
+h = scf(); 
+h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
 colorbar(min(imag(U)),max(imag(U)));
+h.color_map = jetcolormap(255);
 drawnow;
 
-scf(2); 
+h = scf(); 
+h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
 colorbar(min(abs(Ud)),max(abs(Ud)));
+h.color_map = jetcolormap(255);
 drawnow;
 
 // compute the "exact" solution from its developpement 
@@ -163,9 +167,11 @@ disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/g
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
 // adjust the 'refine' parameter to enhance the quality of the picture
-scf(3);
+h = scf();
+h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfu,real(U(:)'),'mesh','on','refine',8); 
 colorbar(min(real(Ud)),max(real(Ud)));
+h.color_map = jetcolormap(255);
 drawnow;
 

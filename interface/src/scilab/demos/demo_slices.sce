@@ -41,14 +41,13 @@ gf_slice_set(sl2, 'pts', P+dP);
 
 VMsl = gf_compute(mfdu,VM,'interpolate on',sl2);
 
-scf(100001);
+h = scf();
+h.color_map = jetcolormap(255);
 drawlater; 
-h = gf_plot_slice(sl2,'mesh','on','data',VMsl); 
-// view(-80,-15); axis off; camlight;
-
-scf(100002); 
-h = gf_plot_slice(sl1,'mesh_faces','on','mesh','on'); 
+subplot(2,1,1);
+gf_plot_slice(sl2,'mesh','on','data',VMsl); 
+subplot(2,1,2);
+gf_plot_slice(sl1,'mesh_faces','on','mesh','on'); 
+h.color_map = jetcolormap(255);
 drawnow;
-// view(-85,-15); axis off; camlight;
-//set(h,'facecolor',[.8 0 0]);
 

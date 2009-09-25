@@ -10,8 +10,6 @@ for i=1:s
   r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
 end
 
-// YC: colormap(r);
-
 incompressible = 1
 
 if 0 then
@@ -159,10 +157,13 @@ for step=1:nbstep
   end
   disp(sprintf('step %d/%d : |U| = %g',step,nbstep,norm(U)));
 
-  clf;
+  clf();
+  h_graph = gcf();
   drawlater;
+  h_graph.color_map = jetcolormap(255);
   gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8);
   colorbar(min(U),max(U));
+  h_graph.color_map = jetcolormap(255);
   drawnow;
 //  axis([-3     6     0    20    -2     2]); caxis([0 .3]);
 //  view(30+20*w, 23+30*w);  
@@ -173,9 +174,7 @@ for step=1:nbstep
 //  axis off;
   sleep(1000); 
   // save a picture..
-  wid = gcf();
-  xs2png(wid.figure_id,sprintf('torsion%03d.png',step));
-  clear wid;
+  xs2png(h_graph.figure_id,sprintf('torsion%03d.png',step));
 end
   
 disp('end of computations, you can now replay the animation with')

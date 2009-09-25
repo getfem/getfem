@@ -111,7 +111,7 @@ h.color_map = gf_colormap('tripod');
 // with the initial mesh.
 if (linear) then
   drawlater;
-  gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
+  gf_plot(mfdu,VM,'mesh','on', 'mesh_edges_color',name2rgb('red'), 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
   drawnow;
 else
   drawlater;

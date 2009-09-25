@@ -35,8 +35,7 @@ TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 gf_mesh_set(m, 'region', 1, INfaces);
 gf_mesh_set(m, 'region', 2, OUTfaces);
 gf_mesh_set(m, 'region', 3, TOPfaces);
-gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC:
-//gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'))');
+gf_mesh_set(m, 'region', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')');
 
 disp(sprintf('nbdof: mfu=%d, mfp=%d',gf_mesh_fem_get(mfu,'nbdof'),gf_mesh_fem_get(mfp,'nbdof')));
 
@@ -62,8 +61,8 @@ if (compute) then
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 4, 'Dir3data');
 
   disp('running solve... can take some minutes and needs ~600MB of memory');
-  
-  t0=timer(); 
+  sleep(100); // A bug with timer ....
+  t0 = timer(); 
 
   gf_model_get(md, 'solve', 'lsolver', 'superlu', 'noisy');
   disp(sprintf('solve done in %.2f sec', timer()-t0));
@@ -75,7 +74,7 @@ if (compute) then
   disp('[the solution has been saved in ''demo_stokes_3D_tank_UP.mat'']');
 else
   load('demo_stokes_3D_tank_UP.mat');
-end;
+end
 
 disp('Got a solution, now you can call demo_stokes_3D_tank_draw to generate graphics');
 

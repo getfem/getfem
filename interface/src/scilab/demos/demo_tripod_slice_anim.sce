@@ -29,6 +29,7 @@ for r=-10.3:+.1:12 //46.1:-.1:4,
   
   drawlater;
   gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
+  h.color_map = c;
   drawnow;
 
   xs2png(sprintf('tripod_slice_p%03d',cnt));

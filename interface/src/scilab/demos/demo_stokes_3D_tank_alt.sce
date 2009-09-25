@@ -3,7 +3,7 @@
 
 disp('3D stokes demonstration on a quadratic mesh -- 512MB of memory needed for the solve!!');
 
-compute=input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
+compute = input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
 
 gf_workspace('clear all');
 
@@ -61,7 +61,7 @@ TOPfaces = gf_mesh_get(m, 'faces from pid', TOPpid);
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
 gf_mesh_set(m, 'boundary', 3, TOPfaces);
-gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','rows'),TOPfaces','rows'),'rows')'); // YC
+gf_mesh_set(m, 'boundary', 4, _setdiff(all_faces',union(union(INfaces',OUTfaces','r'),TOPfaces','r'),'rows')'); // YC
 
 disp(sprintf('nbdof: mf_u=%d, mf_p=%d',gf_mesh_fem_get(pde.mf_u,'nbdof'),gf_mesh_fem_get(pde.mf_p,'nbdof')));
 if (compute) then
@@ -70,7 +70,7 @@ if (compute) then
   // drawback: matlab will be killed if you don't have 512MB of memory
   pde.solver = 'brute_stokes'; 
   tic; 
-  [U,P]=gf_solve(pde); 
+  [U,P] = gf_solve(pde); 
   
   disp(sprintf('solve done in %.2f sec', toc));
   
@@ -79,7 +79,7 @@ if (compute) then
   disp('[the solution has been saved in ''demo_stokes_3D_tank_UP.mat'']');
 else
   load('demo_stokes_3D_tank_UP.mat');
-end;
+end
 
 mfu = pde.mf_u;
 mfp = pde.mf_p;

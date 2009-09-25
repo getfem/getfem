@@ -7,7 +7,7 @@ disp('2D stokes demonstration on a quadratic mesh');
 
 clear pde; 
 
-pde.type = 'stokes'; // YC:
+pde.type = 'stokes';
 pde.viscos = 1.0;
 pde.F = list(0,0);
 pde.bound(1).R  = list('-y.*(y-5)',0);
@@ -47,6 +47,7 @@ INpid     = find(abs(P(1,:)) < 1e-4);
 OUTpid    = find(abs(P(2,:)+20) < 1e-4);
 INfaces   = gf_mesh_get(m, 'faces from pid', INpid);
 OUTfaces  = gf_mesh_get(m, 'faces from pid', OUTpid);
+
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
 gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
@@ -56,6 +57,9 @@ tic;
 disp(sprintf('solve done in %.2f sec', toc));
 
 Ul = gf_compute(pde.mf_u,U,'interpolate on',mfulag);
+
+h = scf();
+h.color_map = jetcolormap(255);
 
 drawlater;
 subplot(2,2,1); 
@@ -77,7 +81,7 @@ title('Quiver plot of U, with color plot of the pression');
 subplot(2,2,4); 
 gf_plot(mfulag,Ul(:)','mesh','on','meshopts',list(), 'quiver_density',100,'quiver_scale',0.4); 
 gf_plot(pde.mf_p,P(:)'); 
-// axis([27 33 3 9]);
 colorbar(min(Ul),max(Ul));
 title('Quiver plot zoomed');
+h.color_map = jetcolormap(255);
 drawnow;

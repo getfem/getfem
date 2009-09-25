@@ -10,6 +10,7 @@ border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'region', 42, border); // create the region
 
 // the boundary edges appears in red
+h = scf();
 drawlater;
 gf_plot_mesh(m, 'regions', [42], 'vertices','on','convexes','on'); 
 drawnow;
@@ -26,6 +27,9 @@ gf_model_get(md, 'solve');
 
 U = gf_model_get(md, 'variable', 'u');
 
+h = scf();
+h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mf, U, 'mesh','on');
+h.color_map = jetcolormap(255);
 drawnow;

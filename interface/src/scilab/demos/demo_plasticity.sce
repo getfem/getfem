@@ -39,6 +39,9 @@ nbstep = size(F,2);
 
 dd = gf_mesh_fem_get(mf0, 'basic dof from cvid');
 
+h = scf();
+h.color_map = jetcolormap(255);
+
 for step=1:nbstep
   //gf_mdbrick_set('param','source_term', mfd, gf_mesh_fem_get(mfd, 'eval',list(0;-400*sin(step*%pi/2))));
   gf_mdbrick_set(b2, 'param','source_term', mfd, gf_mesh_fem_get_eval(mfd,list(F(1,step),F(2,step))));
@@ -48,20 +51,21 @@ for step=1:nbstep
   U  = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
   VM = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
   max(abs(VM))
-  
+
+  clf();
   drawlater;
   subplot(2,1,1);
   gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mfu,'refine', 4, 'deformation_scale',1); 
   colorbar(min(U),max(U));
-  //caxis([0 10000]);
   
   ERR   = gf_compute(mfu,U,'error estimate', mim);
   E     = ERR;
   E(dd) = ERR;
   subplot(2,1,2);
   gf_plot(mf0, E, 'mesh','on', 'refine', 1); 
-  drawnow;
   colorbar(min(E),max(E));
+  h.color_map = jetcolormap(255);
+  drawnow;
   sleep(1000);
 end
 

@@ -1,6 +1,9 @@
 disp('This demo use levelset to impose (weakly) a Dirichlet condition on an');
 disp('implicit boundary defined by the zero of the levelset');
 
+lines(0);
+stacksize('max');
+
 //clear all;
 
 gf_workspace('clear all');
@@ -23,7 +26,7 @@ y = P(2,:);
 //ULS = min(ULS, ((x - 0.25).^2 + (y - 0.4).^2) - 0.05^2);
 
 ULS = 1000*ones(1,length(x));
-rand('seed',1); // YC
+rand('seed',1);
 
 if 0 then
   for ix=1:5
@@ -82,11 +85,14 @@ mf_mult = gf_mesh_fem(m,2); gf_mesh_fem_set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'
 
 A = gf_asm('volumic','V()+=comp()',mim_bound)
 
-//clf; 
+//printf('generating first plot\n');
+//h = scf(); 
+//h.color_map = jetcolormap(255);
 //drawlater;
-//gf_plot_mesh(get(mls,'cut mesh'));
-//gf_plot_mesh(get(mls, 'cut_mesh'), 'curved', 'on');
+//gf_plot_mesh(gf_mesh_levelset_get(mls, 'cut mesh'));
+//gf_plot_mesh(gf_mesh_levelset_get(mls, 'cut_mesh'), 'curved', 'on');
 //gf_plot(mf_ls, ULS);
+//h.color_map = jetcolormap(255);
 //drawnow;
 
 dof_out = gf_mesh_fem_get(mfu0, 'dof from im', mim);
@@ -110,30 +116,20 @@ U = gf_model_get(md, 'variable', 'u');
 
 VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
 
+printf('generating second plot\n');
+  
+h = scf();
+//h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
-drawnow,
-//drawlater;
-//gf_plot(mfu0, U, 'norm', 'on', 'deformed_mesh', 'on', 'deformation', U,...
-// 	'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
-//drawnow;
-
-// gf_mesh_fem_set(mfu0,'qdim',1); Unorm=sqrt(U(1:2:$).^2 + U(2:2:$).^2);
+//gf_plot(mfu0, U, 'norm', 'on', 'deformed_mesh', 'on', 'deformation', U,	'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
+//// gf_mesh_fem_set(mfu0,'qdim',1); Unorm=sqrt(U(1:2:$).^2 + U(2:2:$).^2);
 // drawlater;
 // [h1,h2] = gf_plot(mfu0, Unorm,'contour',0.00001,'pcolor','off');
-// drawnow;
-// set(h2(1),'LineWidth',2);
-// set(h2(1),'Color','white');
-
-drawlater;
-[h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off');
-drawnow;
-set(h2(1),'LineWidth',1);
-set(h2(1),'Color','blue');
-//drawlater;
+[h1,h2]=gf_plot(mf_ls, gf_levelset_get(_ls,'values'), 'contour', 0,'pcolor','off');
+//h.color_map = jetcolormap(255);
 //[h1,h2]=gf_plot(mf_ls2, get(ls2,'values'), 'contour',0,'pcolor','off');
-//drawnow;
-
 plot([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)],'b-');
+colorbar(min(U),max(U));
+drawnow;
 
-gf_colormap('chouette');

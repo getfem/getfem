@@ -40,6 +40,8 @@ gf_mesh_set(m, 'boundary', 1, all_faces);
 
 pde
 
+h = scf();
+h.color_map = jetcolormap(255);
 drawlater;
 subplot(3,1,1); 
 gf_plot(pde.mf_u,U(:)','dir','x','deformation',U,'deformation_scale',0.1,'deformed_mesh','on'); 
@@ -53,6 +55,7 @@ subplot(3,1,3);
 gf_plot(pde.mf_u,U(:)','mesh','on'); 
 gf_plot(pde.mf_p,P(:)','refine',1); 
 colorbar(min(P),max(P)); //YC: U or P ?
+h.color_map = jetcolormap(255);
 drawnow;
 
 disp('Note that the dirichlet condition was described on a P1 fem');

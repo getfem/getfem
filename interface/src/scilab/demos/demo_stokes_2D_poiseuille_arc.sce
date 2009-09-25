@@ -68,6 +68,7 @@ mfulag = pde.mf_u;
 //  /    \
 //  |   OUT
 //  \__IN
+
 all_faces = gf_mesh_get(m, 'outer faces', gf_mesh_get(m, 'cvid'));
 P         = gf_mesh_get(m,'pts');
 INpid     = find(abs(P(1,:)) < 1e-4 & P(2,:)<0);
@@ -77,14 +78,16 @@ OUTfaces  = gf_mesh_get(m, 'faces from pid', OUTpid);
 
 gf_mesh_set(m, 'boundary', 1, INfaces);
 gf_mesh_set(m, 'boundary', 2, OUTfaces);
-gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')'); // YC:
+gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),'rows')');
 
 tic; 
 [U,P,pde2] = gf_solve(pde); 
 disp(sprintf('solve done in %.2f sec', toc));
 
-Ul=gf_compute(pde.mf_u,U,'interpolate on',mfulag);
+Ul = gf_compute(pde.mf_u,U,'interpolate on',mfulag);
 
+h = scf();
+h.color_map =  jetcolormap(255);
 drawlater;
 subplot(2,2,1); 
 gf_plot(mfulag,Ul,'norm','on','deformation',Ul,'deformation_scale', 0.05, 'deformed_mesh','on');
@@ -105,6 +108,6 @@ title('Quiver plot of U, with color plot of the pression');
 subplot(2,2,4); 
 gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4);//...'meshopts',list('regions',1,'curved','on'));
 gf_plot(pde.mf_p,P(:)');
-// axis([6 8 6 8]);
 title('Quiver plot zoomed');
+h.color_map = jetcolormap(255);
 drawnow;

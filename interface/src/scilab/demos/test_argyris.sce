@@ -33,9 +33,11 @@ border = gf_mesh_get(m,'outer faces');
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
 
-scf();
+h = scf();
+h.color_map = jetcolormap(255);
 drawlater;
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
+h.color_map = jetcolormap(255);
 drawnow;
 
 pause;
@@ -68,7 +70,8 @@ D2Ul  = gf_compute(mflg, DUl, 'gradient',mflh);
 D2Ul2 = gf_compute(mfl,Ul, 'hessian',mflh);
 nref  = 4
 
-scf();
+h = scf();
+h.color_map = jetcolormap(255);
 drawlater;
 subplot(2,2,1); 
 gf_plot(mfl,Ul,'mesh','on','refine',nref,'contour',.01:.01:.1); 

@@ -18,16 +18,14 @@ border = gf_mesh_get(m,'outer faces');
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
 
-scf();
+h = scf();
 drawlater;
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
 drawnow;
 
 // interpolate the exact solution
-//YC: Uexact = gf_mesh_fem_get(mf, 'eval', list('y.*(y-1).*x.*(x-1)+x.^5'));
 Uexact = gf_mesh_fem_get_eval(mf, list('y.*(y-1).*x.*(x-1)+x.^5'));
 // its second derivative
-//YC: F      = gf_mesh_fem_get(mf, 'eval', list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
 F      = gf_mesh_fem_get_eval(mf, list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
 
 
@@ -54,8 +52,9 @@ U = gf_model_get(md, 'variable', 'u');
 
 disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 
-scf();
+h = scf();
 drawlater;
+h.color_map = jetcolormap(255);
 subplot(2,1,1); 
 gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
 colorbar(min(U),max(U)); 
@@ -65,4 +64,5 @@ subplot(2,1,2);
 gf_plot(mf,U-Uexact,'mesh','on'); 
 colorbar(min(U-Uexact),max(U-Uexact));
 title('difference with exact solution');
+h.color_map = jetcolormap(255);
 drawnow;
