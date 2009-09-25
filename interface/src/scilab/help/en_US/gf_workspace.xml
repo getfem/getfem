@@ -104,7 +104,7 @@ gf_workspace('stats');
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???">???</link></member>
+      <member><link linkend="gf_delete">gf_delete</link></member>
     </simplelist>
   </refsection>
 

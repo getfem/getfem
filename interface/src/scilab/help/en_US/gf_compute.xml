@@ -117,20 +117,20 @@ E = gf_compute(MF, U,('error_estimate',MeshIm mim)
 
       <listitem>
         <para>Ui = gf_compute(MF, U,('interpolate_on',list(MeshFem mfi | Slice
-        sli)) Interpolate a field on another MeshFem or a Slice. </para>
+        sli)) Interpolate a field on another MeshFem or a Slice.</para>
 
         <itemizedlist>
           <listitem>
             <para>Interpolation on another MeshFem <literal>mfi</literal>:
             <literal>mfi</literal> has to be Lagrangian. If
             <literal>mf</literal> and <literal>mfi</literal> share the same
-            mesh object, the interpolation will be much faster. </para>
+            mesh object, the interpolation will be much faster.</para>
           </listitem>
 
           <listitem>
             <para>Interpolation on a Slice <phrase>sli</phrase>: this is
             similar to interpolation on a refined P1-discontinuous mesh, but
-            it is much faster. </para>
+            it is much faster.</para>
           </listitem>
         </itemizedlist>
 
@@ -156,7 +156,7 @@ E = gf_compute(MF, U,('error_estimate',MeshIm mim)
       <listitem>
         <para>E = gf_compute(MF, U,('error_estimate',MeshIm mim) Compute an a
         posteriori error estimation. Currently there is only one which is
-        available: </para>
+        available:</para>
 
         <para>for each convex, the jump of the normal derivative is integrated
         on its faces.</para>
@@ -201,7 +201,7 @@ pcolor(squeeze(Uq(1,:,:)));
         <para>Utility function designed for 2D triangular meshes: returns a
         list of triangles coordinates with interpolated <literal>U</literal>
         values. This can be used for the accurate visualization of data
-        defined on a discontinous high order element. </para>
+        defined on a discontinous high order element.</para>
 
         <para>On output, the six first rows of <literal>UP</literal> contains
         the triangle coordinates, and the others rows contain the interpolated
@@ -225,7 +225,7 @@ pcolor(squeeze(Uq(1,:,:)));
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???">???</link></member>
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
     </simplelist>
   </refsection>
 

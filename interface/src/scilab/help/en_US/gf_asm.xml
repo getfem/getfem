@@ -65,7 +65,7 @@
         <para>V = gf_asm('volumic_source',MeshIm mim, MeshFem mf_u, MeshFem
         mf_d, vec fd) Assembly of a volumic source term. Output a vector `V`,
         assembled on the MeshFem `mf_u`, using the data vector `fd` defined on
-        the data MeshFem `mf_d`. `fd` may be real or complex-valued. </para>
+        the data MeshFem `mf_d`. `fd` may be real or complex-valued.</para>
 
         <para>Return a vec object.</para>
       </listitem>
@@ -75,14 +75,14 @@
         MeshFem mf_d, vec G) Assembly of a boundary source term. `G` should be
         a [Qdim x N] matrix, where N is the number of dof of `mf_d`, and Qdim
         is the dimension of the unkown u (that is set when creating the
-        MeshFem). </para>
+        MeshFem).</para>
 
         <para>Return a vec object.</para>
       </listitem>
 
       <listitem>
         <para>M = gf_asm('mass_matrix',MeshIm mim, MeshFem mf1[, MeshFem mf2])
-        Assembly of a mass matrix. </para>
+        Assembly of a mass matrix.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -100,7 +100,7 @@
         linear (isotropic) elasticity problem.
         <emphasis>\nabla\cdot(C(x):\nabla u)</emphasis> with
         <literal>C</literal> defined via <literal>lambda_d</literal> and
-        <literal>mu_d</literal>. </para>
+        <literal>mu_d</literal>.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -139,7 +139,7 @@
         a parameter. The last argument selects what is to be built: either the
         tangent matrix, or the right hand side. If the incompressibility is
         considered, it should be followed by a MeshFem
-        <literal>mf_p</literal>, for the pression. </para>
+        <literal>mf_p</literal>, for the pression.</para>
 
         <para>Return a Spmat object (tangent matrix), vec object (right hand
         side), tuple of Spmat objects (incompressible tangent matrix), or
@@ -163,7 +163,7 @@
         <para>A = gf_asm('helmholtz',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
         vec k) Assembly of the matrix for the Helmholtz problem.
         <emphasis>\Delta u + k^2 u = 0</emphasis> with <literal>k</literal>
-        complex scalar. </para>
+        complex scalar.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -172,7 +172,7 @@
         <para>A = gf_asm('bilaplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
         vec a) Assembly of the matrix for the Bilaplacian problem.
         <emphasis>\Delta(a(x)\Delta u) = 0</emphasis> with
-        <literal>a</literal> scalar. </para>
+        <literal>a</literal> scalar.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -206,7 +206,7 @@
         N]</emphasis> array, where <literal>N</literal> is the number of dof
         of <literal>mf_d</literal>, and <literal>Qdim</literal> is the
         dimension of the unkown <literal>u</literal> (that is set when
-        creating the MeshFem). </para>
+        creating the MeshFem).</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -238,7 +238,7 @@
 
         <para>The Laplacian stiffness matrix can be evaluated with
         <emphasis>gf_asm('laplacian',mim, mf, A)</emphasis> or equivalently
-        with: </para>
+        with:</para>
 
         <para><emphasis>gf_asm('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(
         :,i,:,i,j).a(j))', mim,mf, A);</emphasis></para>
@@ -252,8 +252,8 @@
 
       <listitem>
         <para>Mi = gf_asm('interpolation_matrix',MeshFem mf, MeshFem mfi)
-        Build the interpolation matrix from a MeshFem onto another MeshFem.
-        </para>
+        Build the interpolation matrix from a MeshFem onto another
+        MeshFem.</para>
 
         <para>Return a matrix <literal>Mi</literal>, such that <emphasis>V =
         Mi.U</emphasis> is equal to <emphasis>gf_compute(MF,
@@ -267,8 +267,8 @@
 
       <listitem>
         <para>Me = gf_asm('extrapolation_matrix',MeshFem mf, MeshFem mfe)
-        Build the extrapolation matrix from a MeshFem onto another MeshFem.
-        </para>
+        Build the extrapolation matrix from a MeshFem onto another
+        MeshFem.</para>
 
         <para>Return a matrix <literal>Me</literal>, such that <emphasis>V =
         Me.U</emphasis> is equal to <emphasis>gf_compute(MF,
@@ -290,7 +290,7 @@
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???">???</link></member>
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
     </simplelist>
   </refsection>
 

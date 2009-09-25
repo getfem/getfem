@@ -37,27 +37,26 @@
     <title>Description</title>
 
     <para>The name argument contains the specification of the geometric
-    transformation as a string, which may be: </para>
+    transformation as a string, which may be:</para>
 
     <itemizedlist>
       <listitem>
         <para>GT_PK(n,k) Transformation on simplexes, dim
-        <literal>n</literal>, degree <literal>k</literal>. </para>
+        <literal>n</literal>, degree <literal>k</literal>.</para>
       </listitem>
 
       <listitem>
         <para>GT_QK(n,k) Transformation on parallelepipeds, dim
-        <literal>n</literal>, degree <literal>k</literal>. </para>
+        <literal>n</literal>, degree <literal>k</literal>.</para>
       </listitem>
 
       <listitem>
         <para>GT_PRISM(n,k) Transformation on prisms, dim
-        <literal>n</literal>, degree <literal>k</literal>. </para>
+        <literal>n</literal>, degree <literal>k</literal>.</para>
       </listitem>
 
       <listitem>
-        <para>GT_PRODUCT(A,B) Tensorial product of two transformations.
-        </para>
+        <para>GT_PRODUCT(A,B) Tensorial product of two transformations.</para>
       </listitem>
 
       <listitem>
@@ -79,7 +78,7 @@
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???">???</link></member>
+      <member><link linkend="gf_geotrans_get">gf_geotrans_get</link></member>
     </simplelist>
   </refsection>
 

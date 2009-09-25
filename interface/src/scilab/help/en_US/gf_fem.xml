@@ -42,134 +42,134 @@
     <para>The `fem_name` should contain a description of the finite element
     method. Please refer to the getfem++ manual (especially the description of
     finite element and integration methods) for a complete reference. Here is
-    a list of some of them: </para>
+    a list of some of them:</para>
 
     <itemizedlist>
       <listitem>
         <para>FEM_PK(n,k) classical Lagrange element Pk on a simplex of
-        dimension <literal>n</literal>. </para>
+        dimension <literal>n</literal>.</para>
       </listitem>
 
       <listitem>
         <para>FEM_PK_DISCONTINUOUS(N,K[,alpha]) discontinuous Lagrange element
-        Pk on a simplex of dimension <literal>n</literal>. </para>
+        Pk on a simplex of dimension <literal>n</literal>.</para>
       </listitem>
 
       <listitem>
         <para>FEM_QK(n,k) classical Lagrange element Qk on quadrangles,
-        hexahedrons etc. </para>
+        hexahedrons etc.</para>
       </listitem>
 
       <listitem>
         <para>FEM_QK_DISCONTINUOUS(n,k[,alpha]) discontinuous Lagrange element
-        Qk on quadrangles, hexahedrons etc. </para>
+        Qk on quadrangles, hexahedrons etc.</para>
       </listitem>
 
       <listitem>
         <para>FEM_Q2_INCOMPLETE incomplete 2D Q2 element with 8 dof
-        (serendipity Quad 8 element). </para>
+        (serendipity Quad 8 element).</para>
       </listitem>
 
       <listitem>
-        <para>FEM_PK_PRISM(n,k) classical Lagrange element Pk on a prism.
-        </para>
+        <para>FEM_PK_PRISM(n,k) classical Lagrange element Pk on a
+        prism.</para>
       </listitem>
 
       <listitem>
         <para>FEM_PK_PRISM_DISCONTINUOUS(n,k[,alpha]) classical discontinuous
-        Lagrange element Pk on a prism. </para>
+        Lagrange element Pk on a prism.</para>
       </listitem>
 
       <listitem>
         <para>FEM_PK_WITH_CUBIC_BUBBLE(n,k) classical Lagrange element Pk on a
-        simplex with an additional volumic bubble function. </para>
+        simplex with an additional volumic bubble function.</para>
       </listitem>
 
       <listitem>
-        <para>FEM_P1_NONCONFORMING non-conforming P1 method on a triangle.
-        </para>
+        <para>FEM_P1_NONCONFORMING non-conforming P1 method on a
+        triangle.</para>
       </listitem>
 
       <listitem>
         <para>FEM_P1_BUBBLE_FACE(n) P1 method on a simplex with an additional
-        bubble function on face 0. </para>
+        bubble function on face 0.</para>
       </listitem>
 
       <listitem>
         <para>FEM_P1_BUBBLE_FACE_LAG P1 method on a simplex with an additional
-        lagrange dof on face 0. </para>
+        lagrange dof on face 0.</para>
       </listitem>
 
       <listitem>
-        <para>FEM_PK_HIERARCHICAL(n,k) PK element with a hierarchical basis.
-        </para>
+        <para>FEM_PK_HIERARCHICAL(n,k) PK element with a hierarchical
+        basis.</para>
       </listitem>
 
       <listitem>
-        <para>FEM_QK_HIERARCHICAL(n,k) QK element with a hierarchical basis
-        </para>
+        <para>FEM_QK_HIERARCHICAL(n,k) QK element with a hierarchical
+        basis</para>
       </listitem>
 
       <listitem>
         <para>FEM_PK_PRISM_HIERARCHICAL(n,k) PK element on a prism with a
-        hierarchical basis. </para>
+        hierarchical basis.</para>
       </listitem>
 
       <listitem>
         <para>FEM_STRUCTURED_COMPOSITE(FEM,k) Composite fem on a grid with
-        <literal>k</literal> divisions. </para>
+        <literal>k</literal> divisions.</para>
       </listitem>
 
       <listitem>
         <para>FEM_PK_HIERARCHICAL_COMPOSITE(n,k,s) Pk composite element on a
         grid with <literal>s</literal> subdivisions and with a hierarchical
-        basis. </para>
+        basis.</para>
       </listitem>
 
       <listitem>
         <para>FEM_PK_FULL_HIERARCHICAL_COMPOSITE(n,k,s) Pk composite element
         with <literal>s</literal> subdivisions and a hierarchical basis on
-        both degree and subdivision. </para>
+        both degree and subdivision.</para>
       </listitem>
 
       <listitem>
         <para>FEM_PRODUCT(FEM1,FEM2) tensorial product of two polynomial
-        elements. </para>
+        elements.</para>
       </listitem>
 
       <listitem>
         <para>FEM_HERMITE(n) Hermite element P3 on a simplex of dimension `n =
-        1, 2, 3`. </para>
+        1, 2, 3`.</para>
       </listitem>
 
       <listitem>
-        <para>FEM_ARGYRIS Argyris element P5 on the triangle. </para>
+        <para>FEM_ARGYRIS Argyris element P5 on the triangle.</para>
       </listitem>
 
       <listitem>
         <para>FEM_HCT_TRIANGLE Hsieh-Clough-Tocher element on the triangle
         (composite P3 element which is C^1), should be used with
-        IM_HCT_COMPOSITE() integration method. </para>
+        IM_HCT_COMPOSITE() integration method.</para>
       </listitem>
 
       <listitem>
         <para>FEM_QUADC1_COMPOSITE Quadrilateral element, composite P3 element
-        and C^1 (16 dof). </para>
+        and C^1 (16 dof).</para>
       </listitem>
 
       <listitem>
         <para>FEM_REDUCED_QUADC1_COMPOSITE Quadrilateral element, composite P3
-        element and C^1 (12 dof). </para>
+        element and C^1 (12 dof).</para>
       </listitem>
 
       <listitem>
         <para>FEM_RT0(n) Raviart-Thomas element of order 0 on a simplex of
-        dimension <literal>n</literal>. </para>
+        dimension <literal>n</literal>.</para>
       </listitem>
 
       <listitem>
         <para>FEM_NEDELEC(n) Nedelec edge element of order 0 on a simplex of
-        dimension <literal>n</literal>. </para>
+        dimension <literal>n</literal>.</para>
       </listitem>
     </itemizedlist>
 
@@ -202,7 +202,7 @@
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???">???</link></member>
+      <member><link linkend="gf_fem_get">gf_fem_get</link></member>
     </simplelist>
   </refsection>
 

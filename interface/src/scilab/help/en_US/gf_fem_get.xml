@@ -7,38 +7,136 @@
           xmlns:mml="http://www.w3.org/1998/Math/MathML"
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
-<refnamediv>
-  <refname>gf_fem_get</refname>
-  <refpurpose></refpurpose>
-</refnamediv>
-<refsynopsisdiv>
-  <title>Calling Sequence</title>
-  <synopsis>
-  </synopsis>
-</refsynopsisdiv>
-<refsection>
-  <title>Parameters</title>
+  <refnamediv>
+    <refname>gf_fem_get</refname>
 
-  <variablelist>
-    <varlistentry>
-      <term></term>
+    <refpurpose> General function for querying information about FEM
+    objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>I = gf_fem_get(F, ...)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term></term>
+
+        <listitem>
+          <para></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para></para>
+
+    <itemizedlist>
       <listitem>
-        <para></para>
+        <para>n = FEM:GET('nbdof'[, int cv]) Return the number of dof for the
+        Fem. Some specific Fem (for example 'interpolated_fem') may require a
+        convex number <literal>cv</literal> to give their result. In most of
+        the case, you can omit this convex number.</para>
       </listitem>
-    </varlistentry>
-  </variablelist>
-</refsection>
-<refsection>
-  <title>Description</title>
-  <para>
-  FUNCTION I = gf_fem_get(F, ...)
-  </para>
-  <para>
-      General function for querying information about FEM objects.
-  </para>
-  <para>
-  
-  </para>
-  <para>
-  * n = gf_fem_get(fe,('nbdof'[, int cv])    Return the number of dof for the Fem.     Some specific Fem (for example 'interpolated_fem') may require a convex    number `cv` to give their result. In most of the case, you can omit this    convex number.
-  </para>
+
+      <listitem>
+        <para>d = FEM:GET('dim') Return the dimension (dimension of the
+        reference convex) of the Fem.</para>
+      </listitem>
+
+      <listitem>
+        <para>td = FEM:GET('target_dim') Return the dimension of the target
+        space. The target space dimension is usually 1, except for vector Fem
+        (none of them has been implemented in getfem++ for now).</para>
+      </listitem>
+
+      <listitem>
+        <para>P = FEM:GET('pts'[, int cv]) Get the location of the dof on the
+        reference element. Some specific Fem may require a convex number
+        <literal>cv</literal> to give their result (for example
+        'interpolated_fem'). In most of the case, you can omit this convex
+        number.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = FEM:GET('is_equivalent') Return 0 if the Fem is not
+        equivalent. Equivalent Fem are evaluated on the reference convex. This
+        is the case of most classical Fem's.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = FEM:GET('is_lagrange') Return 0 if the Fem is not of
+        Lagrange type.</para>
+      </listitem>
+
+      <listitem>
+        <para>b = FEM:GET('is_polynomial') Return 0 if the basis functions are
+        not polynomials.</para>
+      </listitem>
+
+      <listitem>
+        <para>d = FEM:GET('estimated_degree') Return an estimation of the
+        polynomial degree of the Fem. This is an estimation for fem which are
+        not polynomials.</para>
+      </listitem>
+
+      <listitem>
+        <para>E = FEM:GET('base_value',mat p) Evaluate all basis functions of
+        the FEM at point <literal>p</literal>. <literal>p</literal> is
+        supposed to be in the reference convex!</para>
+      </listitem>
+
+      <listitem>
+        <para>EH = FEM:GET('hess_base_value',mat p) Evaluate the Hessian of
+        all base functions of the Fem at point <literal>p</literal>.
+        <literal>p</literal> is supposed to be in the reference
+        convex!.</para>
+      </listitem>
+
+      <listitem>
+        <para>FEM:GET('poly_str') Return the polynomial expressions of its
+        basis functions in the reference convex. The result is expressed as a
+        list of strings. Of course this will fail on non-polynomial
+        Fem's.</para>
+      </listitem>
+
+      <listitem>
+        <para>str = FEM:GET('char') Ouput a (unique) string representation of
+        the Fem. This can be used to perform comparisons between two different
+        Fem objects.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para></para>
+  </refsection>
+
+  <refsection>
+    <title>Examples</title>
+
+    <programlisting role="example"> 
+  Add an example here
+ </programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_fem_get">gf_fem</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

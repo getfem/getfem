@@ -38,75 +38,75 @@
 
     <para>Here is a list of some integration methods defined in getfem++ (see
     the description of finite element and integration methods for a complete
-    reference): </para>
+    reference):</para>
 
     <itemizedlist>
       <listitem>
         <para>IM_EXACT_SIMPLEX(n) Exact integration on simplices (works only
-        with linear geometric transformations and PK Fem's). </para>
+        with linear geometric transformations and PK Fem's).</para>
       </listitem>
 
       <listitem>
-        <para>IM_PRODUCT(A,B) Product of two integration methods. </para>
+        <para>IM_PRODUCT(A,B) Product of two integration methods.</para>
       </listitem>
 
       <listitem>
-        <para>IM_EXACT_PARALLELEPIPED(n) Exact integration on parallelepipeds.
-        </para>
+        <para>IM_EXACT_PARALLELEPIPED(n) Exact integration on
+        parallelepipeds.</para>
       </listitem>
 
       <listitem>
-        <para>IM_EXACT_PRISM(n) Exact integration on prisms. </para>
+        <para>IM_EXACT_PRISM(n) Exact integration on prisms.</para>
       </listitem>
 
       <listitem>
-        <para>IM_GAUSS1D(k) Gauss method on the segment, order `k=1,3,...99`.
-        </para>
+        <para>IM_GAUSS1D(k) Gauss method on the segment, order
+        `k=1,3,...99`.</para>
       </listitem>
 
       <listitem>
         <para>IM_NC(n,k) Newton-Cotes approximative integration on simplexes,
-        order `k`. </para>
+        order `k`.</para>
       </listitem>
 
       <listitem>
         <para>IM_NC_PARALLELEPIPED(n,k) Product of Newton-Cotes integration on
-        parallelepipeds. </para>
+        parallelepipeds.</para>
       </listitem>
 
       <listitem>
-        <para>IM_NC_PRISM(n,k) Product of Newton-Cotes integration on prisms.
-        </para>
+        <para>IM_NC_PRISM(n,k) Product of Newton-Cotes integration on
+        prisms.</para>
       </listitem>
 
       <listitem>
         <para>IM_GAUSS_PARALLELEPIPED(n,k) Product of Gauss1D integration on
-        parallelepipeds. </para>
+        parallelepipeds.</para>
       </listitem>
 
       <listitem>
         <para>IM_TRIANGLE(k) Gauss methods on triangles
-        `k=1,3,5,6,7,8,9,10,13,17,19`. </para>
+        `k=1,3,5,6,7,8,9,10,13,17,19`.</para>
       </listitem>
 
       <listitem>
         <para>IM_QUAD(k) Gauss methods on quadrilaterons `k=2, 3, 5, .. 17`.
-        Note that IM_GAUSS_PARALLELEPIPED should be prefered for QK Fem's.
-        </para>
+        Note that IM_GAUSS_PARALLELEPIPED should be prefered for QK
+        Fem's.</para>
       </listitem>
 
       <listitem>
         <para>IM_TETRAHEDRON(k) Gauss methods on tetrahedrons `k=1, 2, 3, 5, 6
-        or 8`. </para>
+        or 8`.</para>
       </listitem>
 
       <listitem>
-        <para>IM_SIMPLEX4D(3) Gauss method on a 4-dimensional simplex. </para>
+        <para>IM_SIMPLEX4D(3) Gauss method on a 4-dimensional simplex.</para>
       </listitem>
 
       <listitem>
         <para>IM_STRUCTURED_COMPOSITE(im,k) Composite method on a grid with
-        `k` divisions. </para>
+        `k` divisions.</para>
       </listitem>
 
       <listitem>
@@ -115,16 +115,16 @@
       </listitem>
     </itemizedlist>
 
-    <para>Example: </para>
+    <para>Example:</para>
 
     <itemizedlist>
       <listitem>
         <para>gf_integ('IM_PRODUCT(IM_GAUSS1D(5),IM_GAUSS1D(5))') is the same
-        as: </para>
+        as:</para>
       </listitem>
 
       <listitem>
-        <para>gf_integ('IM_GAUSS_PARALLELEPIPED(2,5)') </para>
+        <para>gf_integ('IM_GAUSS_PARALLELEPIPED(2,5)')</para>
       </listitem>
     </itemizedlist>
 
@@ -145,7 +145,7 @@
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="???">???</link></member>
+      <member><link linkend="gf_integ_get">gf_integ_get</link></member>
     </simplelist>
   </refsection>
 
