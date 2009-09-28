@@ -140,20 +140,17 @@ C = gf_spmat('copy',K); gf_spmat_set(C,'to_complex');
 assert('gf_spmat_get(C,''is_complex'')');
 gf_spmat_set(C,'clear');
 
-// The spdiags function is not yet defined under scilab
-if 0 then
-  B = [1 1 1 1 1 2; ...
-       6 5 4 3 2 1; ...
-       7 8 5 3 2 1]';
-  gf_spmat_set(C,'diag', B(:,1));
-  gf_spmat_set(C,'diag', B(:,2:3), [-2 +2]);
-  CC = full(spdiags(B, [0 -2 2], 6, 9));
-  P  = gf_spmat_get(C,'full');
-  assert('and(CC==P)');
-  L1 = gf_spmat_get(C,'diag', [0 -2 2]);
-  L2 = spdiags(sparse(CC),[0 -2 2]);
-  assert('L1==L2');
-end
+B = [1 1 1 1 1 2; ...
+     6 5 4 3 2 1; ...
+     7 8 5 3 2 1]';
+gf_spmat_set(C,'diag', B(:,1));
+gf_spmat_set(C,'diag', B(:,2:3), [-2 +2]);
+CC = full(spdiags(B, [0 -2 2], 6, 9));
+P  = gf_spmat_get(C,'full');
+assert('and(CC==P)');
+//L1 = gf_spmat_get(C,'diag', [0 -2 2]);
+//L2 = spdiags(sparse(CC),[0 -2 2]);
+//assert('L1==L2');
 
 K  = sprand(50,50,.1) + 20*speye(50,50); K(2,3)=.4;
 gK = gf_spmat('copy',K);
