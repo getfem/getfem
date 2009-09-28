@@ -1,5 +1,8 @@
 clear pde;
 
+// Load the axrot_matrix macro
+exec axrot_matrix.sci;
+
 gf_workspace('clear all');
 
 // set a custom colormap
