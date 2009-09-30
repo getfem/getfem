@@ -24,9 +24,12 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh.h>
 #include <getfem/getfem_mesh_fem_sum.h>
+#include <getfemint_levelset.h>
 #include <getfemint_mesh_levelset.h>
 #include <getfem/getfem_mesh_fem_level_set.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_partial_mesh_fem.h>
+#include <getfem/getfem_crack_sif.h>
 
 using namespace getfemint;
 
@@ -68,23 +71,23 @@ void gf_mesh_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::string fname = in.pop().to_string();
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
-	getfem::mesh *m = new getfem::mesh();
-	m->read_from_file(fname);
-	mm = getfemint_mesh::get_from(m);
+        getfem::mesh *m = new getfem::mesh();
+        m->read_from_file(fname);
+        mm = getfemint_mesh::get_from(m);
       }
       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
       mmf->mesh_fem().read_from_file(fname);
     } else if (check_cmd(cmd, "from string", in, out, 1, 2, 0, 1)) {
-      /*@INIT MESHFEM:INIT('from string', @str [, mesh M])
+      /*@INIT MESHFEM:INIT('from string', @str [, @tmesh m])
       Create a @tmf object from its string description.
 
       See also MESHFEM:GET('char')@*/
       std::stringstream ss(in.pop().to_string());
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
-	getfem::mesh *m = new getfem::mesh();
-	m->read_from_file(ss);
-	mm = getfemint_mesh::get_from(m);
+        getfem::mesh *m = new getfem::mesh();
+        m->read_from_file(ss);
+        mm = getfemint_mesh::get_from(m);
       }
       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
       mmf->mesh_fem().read_from_file(ss);
@@ -108,30 +111,54 @@ void gf_mesh_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::vector<const getfem::mesh_fem*> mftab;
       getfem::mesh_fem_sum *msum = 0;
       while (in.remaining()) {
-	getfemint_mesh_fem *gfimf = in.pop().to_getfemint_mesh_fem();
-	if (msum == 0) {
-	  mm = object_to_mesh(workspace().object(gfimf->linked_mesh_id()));
-	  msum = new getfem::mesh_fem_sum(gfimf->linked_mesh());
+        getfemint_mesh_fem *gfimf = in.pop().to_getfemint_mesh_fem();
+        if (msum == 0) {
+          mm = object_to_mesh(workspace().object(gfimf->linked_mesh_id()));
+          msum = new getfem::mesh_fem_sum(gfimf->linked_mesh());
 
-	  mmf = getfemint_mesh_fem::get_from(msum);
-	}
-	workspace().set_dependance(mmf, gfimf);
-	mftab.push_back(&gfimf->mesh_fem());
+          mmf = getfemint_mesh_fem::get_from(msum);
+        }
+        workspace().set_dependance(mmf, gfimf);
+        mftab.push_back(&gfimf->mesh_fem());
       }
       msum->set_mesh_fems(mftab);
       msum->adapt();
     } else if (check_cmd(cmd, "levelset", in, out, 2, 2, 0, 1)) {
-      /*@INIT MESHFEM:INIT('levelset', @tmf mf, @tls ls)
-      Create a @tmf that is conformal to implicit surfaces defined by @tls's.@*/
-      getfemint_mesh_fem *gmf = in.pop().to_getfemint_mesh_fem();
+      /*@INIT MESHFEM:INIT('levelset', @tmls mls, @tmf mf)
+      Create a @tmf that is conformal to implicit surfaces defined in @tmls.@*/
       getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
+      getfemint_mesh_fem *gmf = in.pop().to_getfemint_mesh_fem();
       getfem::mesh_fem_level_set *mfls =
-	new getfem::mesh_fem_level_set(gmls->mesh_levelset(),
-				       gmf->mesh_fem());
+        new getfem::mesh_fem_level_set(gmls->mesh_levelset(),
+                                       gmf->mesh_fem());
       mmf = getfemint_mesh_fem::get_from(mfls);
       workspace().set_dependance(mmf, gmf);
       workspace().set_dependance(mmf, gmls);
       mfls->adapt();
+    } else if (check_cmd(cmd, "global function", in, out, 2, 4, 0, 1)) {
+      /*@INIT MESHFEM:INIT('global function', @tmesh m, @tls ls[, @int Qdim_m | 'with_cutoff'])
+      Create a @tmf whose base functions are global function given by the user.@*/
+      mm = in.pop().to_getfemint_mesh();
+      getfemint_levelset *gls = in.pop().to_getfemint_levelset();
+      if (in.remaining() && in.front().is_integer()) q_dim = in.pop().to_integer(1,256);
+      std::string wc="";
+      if (in.remaining()) wc = in.pop().to_string();
+
+      std::vector<getfem::pglobal_function> vfunc(4);
+      for (size_type i = 0; i < vfunc.size(); ++i) {
+        /* use the singularity */
+        getfem::abstract_xy_function *s = new getfem::crack_singular_xy_function(i);
+        if (cmd_strmatch(wc, "with_cutoff") || cmd_strmatch(wc, "wc")) {
+          getfem::abstract_xy_function *c = new getfem::cutoff_xy_function(2,0.4,0.01,0.4);
+          s = new getfem::product_of_xy_functions(*s, *c);
+        }
+        vfunc[i] = getfem::global_function_on_level_set(gls->levelset(), *s);
+      }
+      getfem::mesh_fem_global_function *mfgf = new getfem::mesh_fem_global_function(mm->mesh());
+      mfgf->set_qdim(dim_type(q_dim));
+      mfgf->set_functions(vfunc);
+
+      mmf = getfemint_mesh_fem::get_from(mfgf);
     } else if (check_cmd(cmd, "partial", in, out, 2, 3, 0, 1)) {
       /*@INIT MESHFEM:INIT('partial', @tmf mf, @ivec DOFs[,@ivec RCVs])
       Build a restricted @tmf by keeping only a subset of the degrees of freedom of `mf`.
@@ -144,27 +171,24 @@ void gf_mesh_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (in.remaining()) rcvlst = in.pop().to_bit_vector();
 
       getfem::partial_mesh_fem *ppmf =
-	new getfem::partial_mesh_fem(gmf->mesh_fem());
+        new getfem::partial_mesh_fem(gmf->mesh_fem());
       ppmf->adapt(doflst, rcvlst);
 
       mmf = getfemint_mesh_fem::get_from(ppmf);
       workspace().set_dependance(mmf, gmf);
     } else bad_cmd(cmd);
-    //out.pop().from_object_id(workspace().push_object(mmf), MESHFEM_CLASS_ID);
-  } else {
-    /*@INIT MESHFEM:INIT('.mesh', @tmesh m[, @int Qdim=1])
-    Build a new @tmf object. The `Qdim` parameter is optional.@*/
-    if (in.narg()  >  3) THROW_BADARG("Wrong number of input arguments");
-    if (!out.narg_in_range(1, 1)) THROW_BADARG("Wrong number of output arguments");
+  } else if (check_cmd("MeshFem", "MeshFem", in, out, 1, 3, 0, 1)) {
+    /*@INIT MESHFEM:INIT('.mesh', @tmesh m[, @int Qdim_m=1[, @int Qdim_n=1]])
+    Build a new @tmf object. `Qdim_m` and `Qdim_n` parameters are optionals.@*/
     mm = in.pop().to_getfemint_mesh();
-    if (in.remaining()) q_dim = in.pop().to_integer(0,256);
+    if (in.remaining()) q_dim = in.pop().to_integer(1,256);
     if (in.remaining()) {
-      unsigned q_dim2 = in.pop().to_integer(0,256);
+      unsigned q_dim2 = in.pop().to_integer(1,256);
       mmf = getfemint_mesh_fem::new_from(mm,q_dim * q_dim2);
       mmf->mesh_fem().set_qdim_mn(dim_type(q_dim), dim_type(q_dim2));
     } else
       mmf = getfemint_mesh_fem::new_from(mm,q_dim);
-    //out.pop().from_object_id(workspace().push_object(mmf), MESHFEM_CLASS_ID);
+    workspace().set_dependance(mmf, mm);
   }
   out.pop().from_object_id(mmf->get_id(), MESHFEM_CLASS_ID);
 }

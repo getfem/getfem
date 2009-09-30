@@ -27,18 +27,6 @@
 
   ChangeLog:
   $Log: gf_mesh_im_get.cc,v $
-  Revision 1.4  2006/03/28 10:06:35  pommier
-  *** empty log message ***
-
-  Revision 1.3  2006/02/14 17:57:17  pommier
-  *** empty log message ***
-
-  Revision 1.2  2006/01/18 11:21:52  pommier
-  *** empty log message ***
-
-  Revision 1.1  2005/03/08 16:50:12  pommier
-  added meshim, many doc updates
-
  */
 
 
@@ -73,7 +61,9 @@ get_integ_of_convexes(const getfem::mesh_im& mim, mexargs_in& in, mexargs_out& o
        disp(sprintf('the integration of convex %d is %s',...
             cvid(i),sf{i}));
      end;
+  @GET    MESHIM:GET('convex_index')
   @GET    MESHIM:GET('eltm')
+  @GET    MESHIM:GET('im_nodes')
   @GET    MESHIM:GET('save')
   @GET    MESHIM:GET('char')
   @GET    MESHIM:GET('linked mesh')
@@ -111,14 +101,15 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     dal::bit_vector bv = mim->convex_index();
     for (dal::bv_visitor ic(mim->convex_index()); !ic.finished(); ++ic) {
       if (mim->int_method_of_element(ic)->type() == getfem::IM_NONE)
-	bv.sup(ic);
+        bv.sup(ic);
     }
     out.pop().from_bit_vector(bv);
   } else if (check_cmd(cmd, "eltm", in, out, 2, 3, 0, 1)) {
     /*@GET M = MESHIM:GET('eltm',@teltm em, @int cv [@int f])
     Return the elementary matrix (or tensor) integrated on the convex `cv`.
 
-    **WARNING**
+    **WARNING**<Par>
+
     Be sure that the fem used for the construction of `em` is compatible
     with the fem assigned to element `cv` ! This is not checked by the
     function ! If the argument `f` is given, then the elementary tensor
@@ -134,13 +125,13 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     check_cv_im(*mim, cv);
     getfem::pmat_elem_computation pmec =
       getfem::mat_elem(pmet,
-		       mim->int_method_of_element(cv) ,
-		       mim->linked_mesh().trans_of_convex(cv));
+                       mim->int_method_of_element(cv) ,
+                       mim->linked_mesh().trans_of_convex(cv));
     if (!in.remaining()) {
       pmec->gen_compute(t, mim->linked_mesh().points_of_convex(cv), cv);
     } else {
       unsigned nbf =
-	mim->linked_mesh().structure_of_convex(cv)->nb_faces();
+        mim->linked_mesh().structure_of_convex(cv)->nb_faces();
       size_type f = in.pop().to_face_number(nbf);
       pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), short_type(f), cv);
     }
@@ -150,7 +141,14 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     Return the coordinates of the integration points, with their weights.
 
     `CVids` may be a list of convexes, or a list of convex faces, such
-    as returned by MESH:GET('region')@*/
+    as returned by MESH:GET('region')<Par>
+
+    **WARNING**<Par>
+
+    Convexes which are not part of the mesh, or convexes which
+    do not have an approximate integration method don't have
+    their correspounding entry (this has no meaning for exact
+    integration methods!).@*/
     getfem::base_vector tmp;
     unsigned N = mim->linked_mesh().dim();
     getfem::mesh_region mr;
@@ -164,24 +162,24 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       getfem::papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim->linked_mesh().trans_of_convex(cv);
       size_type nbpt =
-	(ir.is_face() ? pai->nb_points_on_face(ir.f()) : pai->nb_points_on_convex());
+        (ir.is_face() ? pai->nb_points_on_face(ir.f()) : pai->nb_points_on_convex());
       for (unsigned ii=0; ii < nbpt; ++ii) {
-	getfem::base_node Pref;
-	scalar_type w;
-	if (ir.is_face()) {
-	  Pref = pai->point_on_face(ir.f(), ii);
-	  w = pai->coeff_on_face(ir.f(), ii);
-	} else {
-	  Pref = pai->point(ii);
-	  w = pai->coeff(ii);
-	}
-	getfem::base_node P = pgt->transform(Pref, mim->linked_mesh().points_of_convex(cv));
-	for (unsigned j=0; j < N; ++j) tmp.push_back(P[j]);
-	tmp.push_back(w);
+        getfem::base_node Pref;
+        scalar_type w;
+        if (ir.is_face()) {
+          Pref = pai->point_on_face(ir.f(), ii);
+          w = pai->coeff_on_face(ir.f(), ii);
+        } else {
+          Pref = pai->point(ii);
+          w = pai->coeff(ii);
+        }
+        getfem::base_node P = pgt->transform(Pref, mim->linked_mesh().points_of_convex(cv));
+        for (unsigned j=0; j < N; ++j) tmp.push_back(P[j]);
+        tmp.push_back(w);
       }
     }
     darray ww = out.pop().create_darray(N+1, unsigned(tmp.size() / (N+1)));
-    std::copy(tmp.begin(), tmp.end(), &ww[0]);
+    if (tmp.size()) std::copy(tmp.begin(), tmp.end(), &ww[0]);
   } else if (check_cmd(cmd, "save", in, out, 1, 2, 0, 0)) {
     /*@GET MESHIM:GET('save',@str filename[, 'with mesh'])
     Saves a @tmim in a text file (and optionaly its linked mesh object).@*/
@@ -189,7 +187,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     bool with_mesh = false;
     if (in.remaining()) {
       if (cmd_strmatch(in.pop().to_string(), "with mesh")) {
-	with_mesh = true;
+        with_mesh = true;
       } else THROW_BADARG("expecting string 'with mesh'");
     }
     std::ofstream o(s.c_str());

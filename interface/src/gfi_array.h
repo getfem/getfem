@@ -41,15 +41,24 @@
 #endif
 
 /* remember to update also the list in getfem.base.py !! */
-typedef enum { MESH_CLASS_ID, MESHFEM_CLASS_ID, MESHIM_CLASS_ID, 
-	       MDBRICK_CLASS_ID, MDSTATE_CLASS_ID, MODEL_CLASS_ID, 
-	       GEOTRANS_CLASS_ID, 
-	       FEM_CLASS_ID, INTEG_CLASS_ID, 
-	       ELTM_CLASS_ID, CVSTRUCT_CLASS_ID,
-	       POLY_CLASS_ID, SLICE_CLASS_ID, 
-	       GSPARSE_CLASS_ID, PRECOND_CLASS_ID, 
-               LEVELSET_CLASS_ID, MESH_LEVELSET_CLASS_ID, 
-	       GETFEMINT_NB_CLASS } getfemint_class_id;
+typedef enum { MESH_CLASS_ID,
+               MESHFEM_CLASS_ID,
+               MESHIM_CLASS_ID,
+               MDBRICK_CLASS_ID,
+               MDSTATE_CLASS_ID,
+               MODEL_CLASS_ID,
+               GEOTRANS_CLASS_ID,
+               FEM_CLASS_ID,
+               INTEG_CLASS_ID,
+               ELTM_CLASS_ID,
+               CVSTRUCT_CLASS_ID,
+               POLY_CLASS_ID,
+               SLICE_CLASS_ID,
+               GSPARSE_CLASS_ID,
+               PRECOND_CLASS_ID,
+               LEVELSET_CLASS_ID,
+               MESH_LEVELSET_CLASS_ID,
+               GETFEMINT_NB_CLASS } getfemint_class_id;
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,35 +66,35 @@ extern "C" {
 
   /* extrait du gfm_rpc.h genere par rpcgen */
 enum gfi_type_id {
-	GFI_INT32 = 0,
-	GFI_UINT32 = 1,
-	GFI_DOUBLE = 2,
-	GFI_CHAR = 4,
-	GFI_CELL = 5,
-	GFI_OBJID = 6,
-	GFI_SPARSE = 7
+        GFI_INT32 = 0,
+        GFI_UINT32 = 1,
+        GFI_DOUBLE = 2,
+        GFI_CHAR = 4,
+        GFI_CELL = 5,
+        GFI_OBJID = 6,
+        GFI_SPARSE = 7
 };
 typedef enum gfi_type_id gfi_type_id;
 
 struct gfi_object_id {
-	int id;
-	int cid;
+        int id;
+        int cid;
 };
 typedef struct gfi_object_id gfi_object_id;
 
 struct gfi_sparse {
-	struct {
-		u_int ir_len;
-		int *ir_val;
-	} ir;
-	struct {
-		u_int jc_len;
-		int *jc_val;
-	} jc;
-	struct {
-		u_int pr_len; /* == nnz*2 when is_complex == 1 */
-		double *pr_val;
-	} pr;
+        struct {
+                u_int ir_len;
+                int *ir_val;
+        } ir;
+        struct {
+                u_int jc_len;
+                int *jc_val;
+        } jc;
+        struct {
+                u_int pr_len; /* == nnz*2 when is_complex == 1 */
+                double *pr_val;
+        } pr;
         int is_complex;
 };
 typedef struct gfi_sparse gfi_sparse;
@@ -93,67 +102,67 @@ typedef struct gfi_sparse gfi_sparse;
 typedef struct gfi_array *pgfi_array;
 
 struct gfi_storage {
-	gfi_type_id type;
-	union {
-		struct {
-			u_int data_int32_len;
-			int *data_int32_val;
-		} data_int32;
-		struct {
-			u_int data_uint32_len;
-			u_int *data_uint32_val;
-		} data_uint32;
-		struct {
-			u_int data_double_len; /* twice the real size of the array when is_complex == 1 */
-			double *data_double_val;
+        gfi_type_id type;
+        union {
+                struct {
+                        u_int data_int32_len;
+                        int *data_int32_val;
+                } data_int32;
+                struct {
+                        u_int data_uint32_len;
+                        u_int *data_uint32_val;
+                } data_uint32;
+                struct {
+                        u_int data_double_len; /* twice the real size of the array when is_complex == 1 */
+                        double *data_double_val;
                         int is_complex;
-		} data_double;
-		struct {
-			u_int data_char_len;
-			char *data_char_val;
-		} data_char;
-		struct {
-			u_int data_cell_len;
-			pgfi_array *data_cell_val;
-		} data_cell;
-		struct {
-			u_int objid_len;
-			struct gfi_object_id *objid_val;
-		} objid;
-		struct gfi_sparse sp;
-	} gfi_storage_u;
+                } data_double;
+                struct {
+                        u_int data_char_len;
+                        char *data_char_val;
+                } data_char;
+                struct {
+                        u_int data_cell_len;
+                        pgfi_array *data_cell_val;
+                } data_cell;
+                struct {
+                        u_int objid_len;
+                        struct gfi_object_id *objid_val;
+                } objid;
+                struct gfi_sparse sp;
+        } gfi_storage_u;
 };
 typedef struct gfi_storage gfi_storage;
 
 struct gfi_array {
-	struct {
-		u_int dim_len;
-		u_int *dim_val;
-	} dim;
-	gfi_storage storage;
+        struct {
+                u_int dim_len;
+                u_int *dim_val;
+        } dim;
+        gfi_storage storage;
 };
 typedef struct gfi_array gfi_array;
 
 struct gfi_array_list {
-	struct {
-		u_int arg_len;
-		gfi_array *arg_val;
-	} arg;
+        struct {
+                u_int arg_len;
+                gfi_array *arg_val;
+        } arg;
 };
 typedef struct gfi_array_list gfi_array_list;
 
 enum gfi_status {
-	GFI_STATUS_OK = 0,
-	GFI_STATUS_ERROR = 1
+        GFI_STATUS_OK = 0,
+        GFI_STATUS_ERROR = 1
 };
 typedef enum gfi_status gfi_status;
 
 struct gfi_output {
-	gfi_status status;
-	union {
-		gfi_array_list output;
-		char *errmsg;
-	} gfi_output_u;
+        gfi_status status;
+        union {
+                gfi_array_list output;
+                char *errmsg;
+        } gfi_output_u;
   char *infomsg;
 };
 typedef struct gfi_output gfi_output;
@@ -175,13 +184,13 @@ gfi_array*
 gfi_create_sparse(int m, int n, int nzmax, gfi_complex_flag);
   /*gfi_array*
     gfi_create_objid(int nid, unsigned *ids, unsigned cid);*/
-void 
+void
 gfi_array_destroy(gfi_array *t);
 int
 gfi_array_get_ndim(const gfi_array*t);
 const int*
 gfi_array_get_dim(const gfi_array*t);
-unsigned 
+unsigned
 gfi_array_nb_of_elements(const gfi_array *t);
 unsigned int*
 gfi_sparse_get_ir(const gfi_array *t);

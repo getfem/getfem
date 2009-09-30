@@ -40,18 +40,18 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::level_set &ls = gls->levelset();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 1, 2, 0, 0)) {
-    /*@SET LEVELSET:SET('values',{@mat v1|@str poly1}[, {@mat v2|@str poly2}])
+    /*@SET LEVELSET:SET('values',{@mat v1|@str poly1}[, @mat v2|@str poly2])
     Set values of the vector of dof for the level-set functions.
 
     Set the primary function with the vector of dof `v1` (or the polynomial
     expression `poly1`) and the secondary function (if any) with  the vector
     of dof `v2` (or the polynomial expression `poly2`)@*/
-    std::string s, s2;
-    darray v, v2;
+    std::string s1, s2;
+    darray v1, v2;
     if (in.front().is_string()) {
-      s = in.pop().to_string();
+      s1 = in.pop().to_string();
     } else {
-      v = in.pop().to_darray(int(ls.get_mesh_fem().nb_dof()));
+      v1 = in.pop().to_darray(int(ls.get_mesh_fem().nb_dof()));
     }
     if (in.remaining()) {
       if (!ls.has_secondary())
@@ -63,10 +63,10 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     }
     ls.values(0).resize(ls.get_mesh_fem().nb_dof());
-    if (s.size()) {
-      gls->values_from_poly(0, s);
+    if (s1.size()) {
+      gls->values_from_poly(0, s1);
     } else {
-      ls.values(0).assign(v.begin(), v.end());
+      ls.values(0).assign(v1.begin(), v1.end());
     }
     if (ls.has_secondary()) {
       ls.values(1).resize(ls.get_mesh_fem().nb_dof());

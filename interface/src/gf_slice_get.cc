@@ -49,27 +49,27 @@ export_slice_to_povray(std::ofstream &f, const getfem::stored_mesh_slice& sl) {
   const getfem::mesh &m = sl.linked_mesh();
   for (size_type ic=0; ic < sl.nb_convex(); ++ic) {
     for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=sl.simplexes(ic).begin();
-	 it != sl.simplexes(ic).end(); ++it) {
+         it != sl.simplexes(ic).end(); ++it) {
       if (it->dim() == 2) {
-	const getfem::slice_node &A = sl.nodes(ic)[it->inodes[0]];
-	const getfem::slice_node &B = sl.nodes(ic)[it->inodes[1]];
-	const getfem::slice_node &C = sl.nodes(ic)[it->inodes[2]];
-	getfem::slice_node::faces_ct common_faces = (A.faces & B.faces & C.faces);
-	short_type fnum = 0;
-	for (; common_faces.any(); ++fnum) if (common_faces[fnum]) break;
-	if (fnum < m.structure_of_convex(sl.convex_num(ic))->nb_faces()) {
-	  f << "smooth_triangle {";
-	  fmt_pt_povray(f,A.pt,m.normal_of_face_of_convex(sl.convex_num(ic),fnum,A.pt_ref));
-	  fmt_pt_povray(f,B.pt,m.normal_of_face_of_convex(sl.convex_num(ic),fnum,B.pt_ref));
-	  fmt_pt_povray(f,C.pt,m.normal_of_face_of_convex(sl.convex_num(ic),fnum,C.pt_ref));
-	  f << "}\n";
-	} else {
-	  f << "triangle {";
-	  fmt_pt_povray(f,A.pt);
-	  fmt_pt_povray(f,B.pt);
-	  fmt_pt_povray(f,C.pt);
-	  f << "}\n";
-	}
+        const getfem::slice_node &A = sl.nodes(ic)[it->inodes[0]];
+        const getfem::slice_node &B = sl.nodes(ic)[it->inodes[1]];
+        const getfem::slice_node &C = sl.nodes(ic)[it->inodes[2]];
+        getfem::slice_node::faces_ct common_faces = (A.faces & B.faces & C.faces);
+        short_type fnum = 0;
+        for (; common_faces.any(); ++fnum) if (common_faces[fnum]) break;
+        if (fnum < m.structure_of_convex(sl.convex_num(ic))->nb_faces()) {
+          f << "smooth_triangle {";
+          fmt_pt_povray(f,A.pt,m.normal_of_face_of_convex(sl.convex_num(ic),fnum,A.pt_ref));
+          fmt_pt_povray(f,B.pt,m.normal_of_face_of_convex(sl.convex_num(ic),fnum,B.pt_ref));
+          fmt_pt_povray(f,C.pt,m.normal_of_face_of_convex(sl.convex_num(ic),fnum,C.pt_ref));
+          f << "}\n";
+        } else {
+          f << "triangle {";
+          fmt_pt_povray(f,A.pt);
+          fmt_pt_povray(f,B.pt);
+          fmt_pt_povray(f,C.pt);
+          f << "}\n";
+        }
       } else ++igncnt;
     }
   }
@@ -102,7 +102,7 @@ static std::string get_dx_dataset_name(getfemint::mexargs_in &in) {
 
 template <typename T> static void
 interpolate_convex_data(const getfem::stored_mesh_slice *sl,
-			const garray<T> &u, getfemint::mexargs_out& out) {
+                        const garray<T> &u, getfemint::mexargs_out& out) {
   assert(u.dim(u.ndim()-1) == sl->linked_mesh().convex_index().last_true()+1);
   array_dimensions ad;
   for (unsigned i=0; i < u.ndim()-1; ++i) ad.push_back(u.dim(i));
@@ -114,7 +114,7 @@ interpolate_convex_data(const getfem::stored_mesh_slice *sl,
     for (unsigned j=0; j < q; ++j) {
       T v = u[(sl->convex_num(i))*q + j];
       for (unsigned k=0; k < sl->nodes(i).size(); ++k) {
-	w[pos++] = v;
+        w[pos++] = v;
       }
     }
   }
@@ -138,6 +138,7 @@ interpolate_convex_data(const getfem::stored_mesh_slice *sl,
   @GET SLICE:GET('export to vtk')
   @GET SLICE:GET('export to pov')
   @GET SLICE:GET('export to dx')
+  @GET SLICE:GET('export to pos')
   @GET SLICE:GET('memsize')
 
   $Id$
@@ -151,7 +152,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
   getfemint_mesh_slice *mi_sl = in.pop().to_getfemint_mesh_slice();
   const getfem::stored_mesh_slice *sl = &mi_sl->mesh_slice();
-  std::string cmd                  = in.pop().to_string();
+  std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
     /*@RDATTR d = SLICE:GET('dim')
     Return the dimension of the slice (2 for a 2D mesh, etc..).@*/
@@ -194,7 +195,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       for (getfem::mesh_slicer::cs_nodes_ct::const_iterator it=sl->nodes(ic).begin();
            it != sl->nodes(ic).end(); ++it) {
         for (size_type k=0; k < sl->dim(); ++k)
-          w[cnt++] = (*it).pt[k];
+          w[cnt++] = it->pt[k];
       }
     }
   } else if (check_cmd(cmd, "splxs", in, out, 1, 1, 0, 2)) {
@@ -218,18 +219,16 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       size_type scnt = 0;
       for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=sl->simplexes(ic).begin();
            it != sl->simplexes(ic).end(); ++it) {
-        if ((*it).dim() == sdim) {
+        if (it->dim() == sdim) {
           for (size_type k=0; k < sdim+1; ++k)
-            w[cnt++] = int((*it).inodes[k] + pcnt + config::base_index());
-	  scnt++;
-	}
+            w[cnt++] = int(it->inodes[k] + pcnt + config::base_index());
+          scnt++;
+        }
       }
       pcnt += sl->nodes(ic).size();
-      if (Scnt) {
-	cv2splx[ic] = int(Scnt); Scnt+=scnt;
-      }
+      cv2splx[ic] = int(Scnt); Scnt+=scnt;
     }
-    if (Scnt) cv2splx[sl->nb_convex()] = int(Scnt);
+    cv2splx[sl->nb_convex()] = int(Scnt);
   } else if (check_cmd(cmd, "edges", in, out, 0, 0, 0, 3)) {
     /*@GET @CELL{P, E1, E2} = SLICE:GET('edges')
     Return the edges of the linked mesh contained in the slice.
@@ -252,21 +251,21 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     iarray T2 = out.pop().create_iarray(2, unsigned(slice_edges.card()));
     for (size_type j = 0; j < bv.last_true()+1; j++) {
       for (size_type i = 0; i < m.dim(); i++) {
-	P(i,j) = (bv.is_in(j)) ? (m.points()[j])[i] : nan;
+        P(i,j) = (bv.is_in(j)) ? (m.points()[j])[i] : nan;
       }
     }
     iarray::iterator itt1=T1.begin(), itt2=T2.begin();
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       if (!slice_edges[cv]) {
-	itt1[0] = int(m.ind_points_of_convex(cv)[0]);
-	itt1[1] = int(m.ind_points_of_convex(cv)[1]);
-	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1);
-	itt1[0] += config::base_index(); itt1[1] += config::base_index(); itt1 += 2;
+        itt1[0] = int(m.ind_points_of_convex(cv)[0]);
+        itt1[1] = int(m.ind_points_of_convex(cv)[1]);
+        // gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt1);
+        itt1[0] += config::base_index(); itt1[1] += config::base_index(); itt1 += 2;
       } else {
-	itt2[0] = int(m.ind_points_of_convex(cv)[0]);
-	itt2[1] = int(m.ind_points_of_convex(cv)[1]);
-	// gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2);
-	itt2[0] += config::base_index(); itt2[1] += config::base_index(); itt2 += 2;
+        itt2[0] = int(m.ind_points_of_convex(cv)[0]);
+        itt2[1] = int(m.ind_points_of_convex(cv)[1]);
+        // gmm::copy_n(m.ind_points_of_convex(cv).begin(), 2, itt2);
+        itt2[0] += config::base_index(); itt2[1] += config::base_index(); itt2 += 2;
       }
     }
   } else if (check_cmd(cmd, "interpolate_convex_data", in, out, 1, 1, 0, 1)) {
@@ -342,12 +341,16 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) {
       do {
         if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-          const getfem::mesh_fem &mf =
-	    *in.pop().to_const_mesh_fem();
-          darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+          const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
+
+          darray U = in.pop().to_darray();
+          in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+
           exp.write_point_data(mf,U,get_vtk_dataset_name(in, count));
         } else if (in.remaining()) {
-          darray slU = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(vtk_slice->nb_points()));
+          darray slU = in.pop().to_darray();
+          in.last_popped().check_trailing_dimension(int(vtk_slice->nb_points()));
+
           exp.write_sliced_point_data(slU,get_vtk_dataset_name(in, count));
         } else THROW_BADARG("don't know what to do with this argument")
             count+=1;
@@ -363,7 +366,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@GET SLICE:GET('export to dx',@str filename, ...)
     Export a slice to OpenDX.
 
-    Following the file name, you may use any of the following
+    Following the `filename`, you may use any of the following
     options:<Par>
 
     - if 'ascii' is not used, the file will contain binary data<par>
@@ -393,9 +396,9 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       else if (cmd_strmatch(cmd2, "append"))
         append = true;
       else if (cmd_strmatch(cmd2, "as") && in.remaining())
-	mesh_name = in.pop().to_string();
+        mesh_name = in.pop().to_string();
       else if (cmd_strmatch(cmd2, "serie") && in.remaining())
-	serie_name = in.pop().to_string();
+        serie_name = in.pop().to_string();
       else THROW_BADARG("expecting 'ascii' or 'edges' or 'append' or 'as', got " << cmd2);
     }
     getfem::dx_export exp(fname, ascii, append);
@@ -406,16 +409,56 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (in.remaining()) {
       do {
         if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
-          const getfem::mesh_fem &mf =
-	    *in.pop().to_const_mesh_fem();
-          darray U = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+          const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
+
+          darray U = in.pop().to_darray();
+          in.last_popped().check_trailing_dimension(int(mf.nb_dof()));
+
           exp.write_point_data(mf,U,get_dx_dataset_name(in));
         } else if (in.remaining()) {
-          darray slU = in.pop().to_darray(); in.last_popped().check_trailing_dimension(int(sl->nb_points()));
+          darray slU = in.pop().to_darray();
+          in.last_popped().check_trailing_dimension(int(sl->nb_points()));
+
           exp.write_sliced_point_data(slU,get_dx_dataset_name(in));
         } else THROW_BADARG("don't know what to do with this argument");
         if (serie_name.size()) exp.serie_add_object(serie_name);
       } while (in.remaining());
+    }
+  } else if (check_cmd(cmd, "export to pos",in, out, 1, -1, 0, 0)) {
+    /*@GET SLICE:GET('export to pos',@str filename[, @mat U1, @str nameU1[, @mat U2, @str nameU2,...])
+    Export a slice to Gmsh.
+
+    More than one dataset may be written, just list them.<par>
+    Each dataset consists of either:<Par>
+
+    - a field interpolated on the slice (scalar, vector or tensor).<par>
+    - a mesh_fem and a field.@*/
+    std::string fname = in.pop().to_string();
+    getfem::pos_export exp(fname);
+
+    exp.write(*sl);
+    while (in.remaining()) {
+      if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
+        const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
+
+        darray U = in.pop().to_darray();
+        in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
+
+        if (in.remaining() >= 1 && in.front().is_string())
+          fname = in.pop().to_string();
+        else THROW_BADARG("expecting string darray_name")
+
+        exp.write(*mf, U, fname);
+      } else if (in.remaining() >=2) {
+        darray slU = in.pop().to_darray();
+        in.last_popped().check_trailing_dimension(int(sl->nb_points()));
+
+        if (in.remaining() >= 1 && in.front().is_string())
+          fname = in.pop().to_string();
+        else THROW_BADARG("expecting string darray_name")
+
+        exp.write(*sl,slU,fname);
+      }
     }
   } else bad_cmd(cmd);
 }

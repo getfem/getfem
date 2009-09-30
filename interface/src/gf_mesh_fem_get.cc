@@ -107,7 +107,7 @@ using namespace getfemint;
 typedef enum {IS_LAGRANGE, IS_EQUIVALENT, IS_POLYNOMIAL} test_what;
 static void
 test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
-	  mexargs_out& out) {
+          mexargs_out& out) {
   dal::bit_vector cvlst;
   bool return_bool = false;
   dal::bit_vector islst;
@@ -129,13 +129,13 @@ test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
   if (return_bool)
     out.pop().from_integer
       ((!(mf->is_reduced()) &&
-	islst.card() == mf->linked_mesh().convex_index().card()) ? 1 : 0);
+          islst.card() == mf->linked_mesh().convex_index().card()) ? 1 : 0);
   else
     out.pop().from_bit_vector(islst);
 }
 
 static void get_basic_fem_of_convexes(const getfem::mesh_fem& mf,
-				      mexargs_in& in, mexargs_out& out) {
+                                      mexargs_in& in, mexargs_out& out) {
   dal::bit_vector cvlst;
   if (in.remaining())
     cvlst = in.pop().to_bit_vector(&mf.linked_mesh().convex_index());
@@ -144,7 +144,7 @@ static void get_basic_fem_of_convexes(const getfem::mesh_fem& mf,
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     if (mf.convex_index().is_in(cv)) {
       getfemint_pfem *gfi_pf =
-	getfemint_pfem::get_from(mf.fem_of_element(cv));
+        getfemint_pfem::get_from(mf.fem_of_element(cv));
       ids.push_back(gfi_pf->get_id());
     } else
       ids.push_back(id_type(-1));
@@ -167,14 +167,14 @@ get_cv_dof_list(getfem::mesh_fem *mf, mexargs_in& in) {
       THROW_ERROR( "convex " << cv+1 << " has no FEM!");
     if (f != dim_type(-1)) {
       getfem::mesh_fem::ind_dof_face_ct
-	c = mf->ind_basic_dof_of_face_of_element(cv,short_type(f));
-    //std::for_each(c.begin(), c.end(), std::bind1st(std::mem_fun(&dal::bit_vector::add),&dof)); // not SGI STL compliant !?
+        c = mf->ind_basic_dof_of_face_of_element(cv,short_type(f));
+      //std::for_each(c.begin(), c.end(), std::bind1st(std::mem_fun(&dal::bit_vector::add),&dof)); // not SGI STL compliant !?
       for (unsigned i=0; i < c.size(); ++i)
-	dof.add(c[i]);
+        dof.add(c[i]);
     } else {
       getfem::mesh_fem::ind_dof_ct cvdof = mf->ind_basic_dof_of_element(cv);
       for (unsigned i=0; i < cvdof.size(); ++i)
-	dof.add(cvdof[i]);
+        dof.add(cvdof[i]);
     }
   }
   return dof;
@@ -184,36 +184,37 @@ static void
 non_conformal_dof(getfem::mesh_fem &mf, mexargs_in &in, mexargs_out &out) {
   dal::bit_vector cvlst;
   const getfem::mesh &m = mf.linked_mesh();
-  
+
   std::vector<bgeot::short_type> dcnt(mf.nb_basic_dof());
-  
+
   if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
   else cvlst = m.convex_index();
-  
+
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
     check_cv_fem(mf, ic);
     for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
       bgeot::short_type q;
       if (!m.is_convex_having_neighbour(ic, f)) {
-	q = 2;
+        q = 2;
       } else {
-	q = 1;
+        q = 1;
       }
       for (short_type i = 0; i < mf.ind_basic_dof_of_face_of_element(ic,f).size();
-	   ++i) {
-	size_type ind = mf.ind_basic_dof_of_face_of_element(ic,f)[i];
-	dcnt[ind]= short_type(dcnt[ind] + q);
+           ++i) {
+        size_type ind = mf.ind_basic_dof_of_face_of_element(ic,f)[i];
+        dcnt[ind]= short_type(dcnt[ind] + q);
       }
     }
   }
-  iarray w = out.pop().create_iarray_h
-    (unsigned(std::count_if(dcnt.begin(), dcnt.end(),
-		   std::bind2nd(std::equal_to<bgeot::short_type>(),1))));
+  iarray w = out.pop().create_iarray_h(
+    unsigned(std::count_if(dcnt.begin(),
+                           dcnt.end(),
+                           std::bind2nd(std::equal_to<bgeot::short_type>(),1))));
   size_type i,j=0;
   /*
   std::copy_if(dcnt.begin(), dcnt.end(),
-	       std::bind2nd(std::less_equal<bgeot::short_type>(),1)));
-  */
+               std::bind2nd(std::less_equal<bgeot::short_type>(),1)));
+   */
   for (i=0; i < dcnt.size(); ++i) {
     if (dcnt[i] == 1) w[j++] = int(i+config::base_index());
   }
@@ -244,7 +245,7 @@ static std::string get_dx_dataset_name(getfemint::mexargs_in &in) {
 
 template <typename T> static void
 interpolate_convex_data(const getfem::mesh_fem *pmf,
-			const garray<T> &u, getfemint::mexargs_out& out) {
+                        const garray<T> &u, getfemint::mexargs_out& out) {
   assert(u.dim(u.ndim()-1) == pmf->linked_mesh().convex_index().last_true()+1);
   array_dimensions ad;
   for (unsigned i=0; i < u.ndim()-1; ++i) ad.push_back(u.dim(i));
@@ -264,7 +265,7 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
     for (unsigned k=0; k < pmf->nb_basic_dof_of_element(cv); ++k) {
       size_type d = pmf->ind_basic_dof_of_element(cv)[k];
       for (unsigned j=0; j < q; ++j)
-	w[d*q+j] += u[cv*q+j] / T(dofcnt[d]);
+        w[d*q+j] += u[cv*q+j] / T(dofcnt[d]);
     }
   }
 }
@@ -305,6 +306,7 @@ interpolate_convex_data(const getfem::mesh_fem *pmf,
   @GET    MESHFEM:GET('char')
   @GET    MESHFEM:GET('export to vtk')
   @GET    MESHFEM:GET('export to dx')
+  @GET    MESHFEM:GET('export to pos')
   @GET    MESHFEM:GET('linked mesh')
   @GET    MESHFEM:GET('memsize')
 
@@ -345,9 +347,9 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     /*@GET DOF = MESHFEM:GET('dof from cv',@mat CVids)
     Deprecated function. Use MESHFEM:GET('basic dof from cv') instead. @*/
     infomsg() << "WARNING : gf_mesh_fem_get('dof from cv', ...) is a "
-	      << "deprecated command.\n"
-	      << "          Use gf_mesh_fem_get('basic dof from cv', "
-	      << "...) instead." << endl;
+              << "deprecated command.\n"
+              << "          Use gf_mesh_fem_get('basic dof from cv', "
+              << "...) instead." << endl;
     dal::bit_vector dof = get_cv_dof_list(mf, in);
     out.pop().from_bit_vector(dof);
   } else if (check_cmd(cmd, "basic dof from cv", in, out, 1, 1, 0, 1)) {
@@ -365,14 +367,14 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     dal::bit_vector dof = get_cv_dof_list(mf, in);
     out.pop().from_bit_vector(dof);
   } else if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2) ||
-	     check_cmd(cmd, "basic dof from cvid", in, out, 0, 1, 0, 2)) {
+             check_cmd(cmd, "basic dof from cvid", in, out, 0, 1, 0, 2)) {
     if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2)) {
       /*@GET DOF = MESHFEM:GET('dof from cvid'[, @mat CVids])
-	Deprecated function. Use MESHFEM:GET('basic dof from cvid') instead.
-	@*/
+        Deprecated function. Use MESHFEM:GET('basic dof from cvid') instead.
+        @*/
       infomsg() << "WARNING : gf_mesh_fem_get('dof from cvid', ...) is a "
-		<< "deprecated command.\n          Use gf_mesh_fem_get('basic "
-		<< "dof from cvid', ...) instead." << endl;
+                << "deprecated command.\n          Use gf_mesh_fem_get('basic "
+                << "dof from cvid', ...) instead." << endl;
     }
 
     /*@GET @CELL{DOFs, IDx} = MESHFEM:GET('basic dof from cvid'[, @mat CVids])
@@ -398,7 +400,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     /* phase one: count the total number of dof */
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
       if (mf->convex_index().is_in(cv)) {
-	pcnt += mf->nb_basic_dof_of_element(cv);
+        pcnt += mf->nb_basic_dof_of_element(cv);
       }
     }
     /* phase two: allocation */
@@ -413,11 +415,11 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
       if (fill_idx) idx[cvcnt] = int(pcnt + config::base_index());
       if (mf->convex_index().is_in(cv)) {
-	for (getfem::mesh_fem::ind_dof_ct::const_iterator pit =
-	       mf->ind_basic_dof_of_element(cv).begin();
-	     pit != mf->ind_basic_dof_of_element(cv).end(); ++pit) {
-	  pid[pcnt++] = int((*pit) + config::base_index());
-	}
+        for (getfem::mesh_fem::ind_dof_ct::const_iterator pit =
+               mf->ind_basic_dof_of_element(cv).begin();
+             pit != mf->ind_basic_dof_of_element(cv).end(); ++pit) {
+          pid[pcnt++] = int((*pit) + config::base_index());
+        }
       }
       cvcnt++;
     }
@@ -428,8 +430,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       Deprecated function. Use MESHFEM:GET('non conformal basic dof') instead.
       @*/
       infomsg() << "WARNING : gf_mesh_fem_get('non conformal dof', ...) is a "
-		<< "deprecated command.\n          Use gf_mesh_fem_get('non "
-		<< "conformal basic dof', ...) instead." << endl;
+                << "deprecated command.\n          Use gf_mesh_fem_get('non "
+                << "conformal basic dof', ...) instead." << endl;
     non_conformal_dof(*mf, in, out);
   } else if (check_cmd(cmd, "non conformal basic dof", in, out, 0, 1, 0, 1)) {
     /*@GET MESHFEM:GET('non conformal basic dof'[, @mat CVids])
@@ -498,7 +500,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     Return the optional reduction matrix.@*/
     getfemint::gf_real_sparse_by_col
       M(gmm::mat_nrows(mf->reduction_matrix()),
-	gmm::mat_ncols(mf->reduction_matrix()));
+        gmm::mat_ncols(mf->reduction_matrix()));
     gmm::copy(mf->reduction_matrix(), M);
     out.pop().from_sparse(M);
   } else if (check_cmd(cmd, "extension matrix", in, out, 0, 0, 0, 1)) {
@@ -506,7 +508,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     Return the optional extension matrix.@*/
     getfemint::gf_real_sparse_by_col
       M(gmm::mat_nrows(mf->extension_matrix()),
-	gmm::mat_ncols(mf->extension_matrix()));
+        gmm::mat_ncols(mf->extension_matrix()));
     gmm::copy(mf->extension_matrix(), M);
     out.pop().from_sparse(M);
   } else if (check_cmd(cmd, "basic dof on region", in, out, 1, 1, 0, 1)) {
@@ -535,8 +537,8 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     that for boundary regions, some dof nodes may not lie exactly
     on the boundary, for example the dof of Pk(n,0) lies on the center
     of the convex, but the base function in not null on the convex
-    border). 
-    
+    border).
+
     For a reduced mesh_fem
     a dof is lying on a region if its potential corresponding shape
     function is nonzero on this region. The extension matrix is used
@@ -550,20 +552,20 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     /*@GET DOFpts = MESHFEM:GET('dof nodes'[, @mat DOFids])
     Deprecated function. Use MESHFEM:GET('basic dof nodes') instead. @*/
     infomsg() << "WARNING : gf_mesh_fem_get('dof nodes', ...) is a deprecated "
-	 << "command.\n          Use gf_mesh_fem_get('basic dof nodes', "
-	 << "...) instead." << endl;
- 
+              << "command.\n          Use gf_mesh_fem_get('basic dof nodes', "
+              << "...) instead." << endl;
+
     dal::bit_vector dof_lst; dof_lst.add(0, mf->nb_basic_dof());
     if (in.remaining())
       dof_lst = in.pop().to_bit_vector(&dof_lst);
     darray w = out.pop().create_darray(mf->linked_mesh().dim(),
-				       unsigned(dof_lst.card()));
+                                       unsigned(dof_lst.card()));
     size_type j = 0;
     for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
       if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
-	THROW_INTERNAL_ERROR;
+        THROW_INTERNAL_ERROR;
       for (size_type i=0; i < w.getm(); i++)
-	w(i,j)= mf->point_of_basic_dof(dof)[i];
+        w(i,j)= mf->point_of_basic_dof(dof)[i];
     }
   } else if (check_cmd(cmd, "basic dof nodes", in, out, 0, 1, 0, 2)) {
     /*@GET DOFpts = MESHFEM:GET('basic dof nodes'[, @mat DOFids])
@@ -576,15 +578,15 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     if (in.remaining())
       dof_lst = in.pop().to_bit_vector(&dof_lst);
     darray w = out.pop().create_darray(mf->linked_mesh().dim(),
-				       unsigned(dof_lst.card()));
+                                       unsigned(dof_lst.card()));
     size_type j = 0;
     for (dal::bv_visitor dof(dof_lst); !dof.finished(); ++dof, ++j) {
       if (mf->point_of_basic_dof(dof).size() != w.getm() || j >= w.getn())
-	THROW_INTERNAL_ERROR;
+        THROW_INTERNAL_ERROR;
       for (size_type i=0; i < w.getm(); i++)
-	w(i,j)= mf->point_of_basic_dof(dof)[i];
-      // std::copy(mf->point_of_dof(dof).begin(),mf->point_of_dof(dof).end(),
-      //           &w(0,j));
+        w(i,j)= mf->point_of_basic_dof(dof)[i];
+        // std::copy(mf->point_of_dof(dof).begin(),mf->point_of_dof(dof).end(),
+        //           &w(0,j));
     }
   } else if (check_cmd(cmd, "dof partition", in, out, 0, 0, 0, 1)) {
     /*@GET DOFP = MESHFEM:GET('dof partition')
@@ -607,7 +609,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     bool with_mesh = false;
     if (in.remaining()) {
       if (cmd_strmatch(in.pop().to_string(), "with mesh")) {
-	with_mesh = true;
+        with_mesh = true;
       } else THROW_BADARG("expecting string 'with mesh'");
     }
     std::ofstream o(s.c_str());
@@ -684,11 +686,11 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       else if (cmd_strmatch(cmd2, "edges"))
         edges = true;
       else if (cmd_strmatch(cmd2, "as") && in.remaining())
-	mesh_name = in.pop().to_string();
+        mesh_name = in.pop().to_string();
       else if (cmd_strmatch(cmd2, "append"))
         append = true;
       else if (cmd_strmatch(cmd2, "serie") && in.remaining())
-	serie_name = in.pop().to_string();
+        serie_name = in.pop().to_string();
       else THROW_BADARG("expecting 'ascii', got " << cmd2);
     }
     getfem::dx_export exp(fname, ascii, append);
@@ -720,8 +722,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
         mf2 = in.pop().to_const_mesh_fem();
       }
       darray U = in.pop().to_darray();
-      size_type nb_sdof = mf2->nb_dof()/mf2->get_qdim();
-      in.last_popped().check_trailing_dimension(int(nb_sdof));
+      in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
 
       if (in.remaining() >= 1 && in.front().is_string()) {
         fname = in.pop().to_string();
@@ -782,12 +783,12 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       dynamic_cast<getfem::mesh_fem_level_set*>(mf);
     if (mfls) {
       getfem::mesh_level_set *mls =
-	const_cast<getfem::mesh_level_set*>(&mfls->linked_mesh_level_set());
+        const_cast<getfem::mesh_level_set*>(&mfls->linked_mesh_level_set());
       getfemint_mesh_levelset *gfi_mls =
-	getfemint_mesh_levelset::get_from(mls);
+        getfemint_mesh_levelset::get_from(mls);
       assert(gfi_mls);
       out.pop().from_object_id(gfi_mls->get_id(),
-			       MESH_LEVELSET_CLASS_ID);
+                               MESH_LEVELSET_CLASS_ID);
     } else THROW_BADARG("not a mesh_fem using a mesh_levelset");
   } else bad_cmd(cmd);
 }

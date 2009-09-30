@@ -28,13 +28,13 @@ using namespace getfemint;
 
 static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 {
-  getfem::pfem               fem = in.pop().to_fem();
+  getfem::pfem fem = in.pop().to_fem();
 
   /* check or build the convex list */
   dal::bit_vector bv;
   bool all_cv = false;
   if (in.remaining() == 1)
-    bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -1);
+    bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -config::base_index());
   else
     all_cv = true;
 
@@ -42,11 +42,11 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
     if (!mf->linked_mesh().convex_index().is_in(cv))
       THROW_ERROR("Convex " << cv+config::base_index()
-		  << " was not found in mesh");
+                  << " was not found in mesh");
     if (fem->basic_structure(cv) != mf->linked_mesh().structure_of_convex(cv)->basic_structure())
       infomsg() << "Warning: structure of the FEM seems to be incompatible "
-	"with the structure of the convex (if you are using high degree "
-	"geom. transf. ignore this)\n";
+        "with the structure of the convex (if you are using high degree "
+        "geom. transf. ignore this)\n";
   }
 
   /* all the work done here */
@@ -59,17 +59,22 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 /* set the classical fem of order on the mesh_fem, with a classical integration
    method */
 static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in, bool discontinuous) {
-  dim_type K = dim_type(in.pop().to_integer(0,255)); //, IM_DEGREE = dim_type(-1);
+  dim_type K = dim_type(in.pop().to_integer(0,255));
+
+  scalar_type alpha = 0.0;
+  if (in.remaining()) alpha = in.pop().to_scalar();
+
   dal::bit_vector bv;
-  if (in.remaining() == 1) {
-    bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -1);
+  if (in.remaining()) {
+    bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -config::base_index());
   } else {
     bv = mf->linked_mesh().convex_index();
   }
+
   if (!discontinuous) {
     mf->set_classical_finite_element(bv,K);
   } else {
-    mf->set_classical_discontinuous_finite_element(bv,K);
+    mf->set_classical_discontinuous_finite_element(bv,K,alpha);
   }
 }
 
@@ -113,12 +118,15 @@ void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.@*/
     set_classical_fem(mf, in, false);
   } else if (check_cmd(cmd, "classical discontinuous fem", in, out,
-		       1, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('classical discontinuous fem',@int K, [@int IM_DEGREE [,@ivec CVIDX]])
+                       1, 3, 0, 0)) {
+    /*@SET MESHFEM:SET('classical discontinuous fem',@int K[, @tscalar alpha[, @ivec CVIDX]])
     Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
 
     Similar to MESHFEM:SET('classical fem') except that
-    FEM_PK_DISCONTINUOUS is used.@*/
+    FEM_PK_DISCONTINUOUS is used. Param `alpha` the node inset,
+    0 <= alpha < 1, where 0 implies usual dof nodes, greater values
+    move the nodes toward the center of gravity, and 1 means that all
+    degrees of freedom collapse on the center of gravity.@*/
     set_classical_fem(mf, in, true);
   } else if (check_cmd(cmd, "qdim", in, out, 1, 1, 0, 0)) {
     /*@SET MESHFEM:SET('qdim',@int Q)
@@ -145,7 +153,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       mf->set_reduction_matrices(R->real_wsc(), E->real_wsc());
     else
       THROW_BADARG("Reduction and extension matrices should be "
-		   "sparse matrices");
+                   "sparse matrices");
   } else if (check_cmd(cmd, "reduction", in, out, 1, 1, 0, 0)) {
     /*@SET MESHFEM:SET('reduction',@int s)
     Set or unset the use of the reduction/extension matrices.@*/

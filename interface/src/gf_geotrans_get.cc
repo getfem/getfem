@@ -98,7 +98,7 @@ void gf_geotrans_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     darray w = out.pop().create_darray(unsigned(G.nrows()), pts.getn());
     for (unsigned i=0; i < pts.getn(); ++i) {
       getfem::base_node P = pgt->transform(pts.col_to_bn(i), G);
-      for (size_type k=0; i < P.size(); ++k) w(k,i) = P[k];
+      for (size_type k=0; k < P.size(); ++k) w(k,i) = P[k];
     }
   } else if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {
     /*@GET s = GEOTRANS:GET('char')

@@ -26,62 +26,55 @@
 using namespace getfemint;
 
 /*@TEXT LEVELSET:INIT('LEVELSET_init')
-@tls = LEVELSET:INIT(...)<Par>
-
 The level-set object is represented by a primary level-set and optionally<par>
 a secondary level-set used to represent fractures (if p(x) is the primary<par>
 level-set function and s(x) is the secondary level-set, the crack is defined<par>
 by p(x)=0 and s(x)<=0: the role of the secondary is stop the crack).<Par>
 
-* LEVELSET:INIT(@tmesh m, @int d)<par>
-   Create a @tls object on a @tmesh m represented by a primary function<par>
-   defined on a lagrange @tfem of degree d.<par>
-* LEVELSET:INIT(@tmesh m, @int d, @str poly1)<par>
-   Create a @tls object on a @tmesh m represented by a primary function<par>
-   defined by the polynomial expression poly1 on a lagrange @tfem of<par>
-   degree d.<par>
-* LEVELSET:INIT(@tmesh m, @int d, 'with_secondary' [, @str poly2])<par>
-   Create a @tls object on a @tmesh m represented by a primary function<par>
-   defined by the polynomial expression poly1 and a secondary function,<par>
-   both on a lagrange @tfem of degree d.<par>
-* LEVELSET:INIT(@tmesh m, @int d, @str poly1, @str poly2)<par>
-   Create a @tls object on a @tmesh m represented by a primary function<par>
-   defined by the polynomial expression poly1 and a secondary function<par>
-   defined by the polynomial expression poly2, both on a lagrange @tfem<par>
-   of degree d.<par>
-  @*/
+**IMPORTANT:**<Par>
+
+All tools listed below needs the package qhull installed on your<par>
+system. This package is widely available. It computes convex hull<par>
+and delaunay triangulations in arbitrary dimension. Everything<par>
+here is considered *work in progress*, it is still subject to<par>
+major changes if needed.@*/
+
 void gf_levelset(
 getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
-  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
-  if (!out.narg_in_range(1,1))
-    THROW_BADARG("Wrong number of output arguments");
-  getfemint_mesh *mm = in.pop().to_getfemint_mesh();
+  getfemint_levelset *gls = NULL;
+  if (check_cmd("LevelSet", "LevelSet", in, out, 2, 4, 0, 1)) {
+    /*@INIT LEVELSET:INIT('.mesh', @tmesh m, @int d[, 'ws'| @str poly1[, @str poly2| 'ws']])
+    Create a @tls object on a @tmesh represented by a primary function
+    (and optional secondary function, both) defined on a lagrange @tmf
+    of degree `d`.<Par>
 
-  size_type degree = in.pop().to_integer(1, 20);
-  bool with_secondary = false;
-  std::string s1, s2;
-  if (in.remaining() && in.front().is_string()) {
-    s1 = in.pop().to_string();
-    if (cmd_strmatch(s1, "with_secondary")) {
+    If `ws` (with secondary) is set; this levelset is represented by a
+    primary function and a secondary function. If `poly1` is set; the
+    primary function is defined by that polynomial expression. If
+    `poly2` is set; this levelset is represented by a primary function
+    and a secondary function defined by these polynomials expressions.@*/
+    getfemint_mesh *mm = in.pop().to_getfemint_mesh();
+    size_type degree = in.pop().to_integer(1, 20);
+
+    bool with_secondary = false;
+    std::string s1="",s2="";
+    if (in.remaining() && in.front().is_string()) s1 = in.pop().to_string();
+    if (cmd_strmatch(s1, "ws") || cmd_strmatch(s1, "with_secondary")) {
       with_secondary = true; s1 = "";
-      if (in.remaining() && in.front().is_string())
-	s1 = in.pop().to_string();
+    }else if (in.remaining() && in.front().is_string()) {
+        s2 = in.pop().to_string();
+        with_secondary = true;
+        if (cmd_strmatch(s1, "ws") || cmd_strmatch(s2,"with_secondary")) s2 = "";
     }
-    if (in.remaining() && in.front().is_string()) {
-      s2 = in.pop().to_string();
-      with_secondary = true;
-    }
+
+    getfem::level_set *ls =
+      new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
+    gls = getfemint_levelset::get_from(ls);
+
+    if (s1.size()) gls->values_from_poly(0, s1);
+    if (s2.size()) gls->values_from_poly(1, s2);
+    workspace().set_dependance(gls, mm);
   }
-
-  if (in.remaining())
-    THROW_BADARG("too many arguments");
-
-  getfem::level_set *ls =
-    new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
-  getfemint_levelset *gls = getfemint_levelset::get_from(ls);
-  if (s1.size()) gls->values_from_poly(0, s1);
-  if (s2.size()) gls->values_from_poly(1, s2);
-
   out.pop().from_object_id(gls->get_id(), LEVELSET_CLASS_ID);
 }

@@ -28,11 +28,11 @@ using namespace getfemint;
 /*MLABCOM
   FUNCTION I = gf_mesh_levelset_get(MLS, ...)
     General function for querying information about MESHLEVELSET objects.
-    
+
 MLABCOM*/
 
-void gf_mesh_levelset_get(getfemint::mexargs_in& in, 
-			  getfemint::mexargs_out& out)
+void gf_mesh_levelset_get(getfemint::mexargs_in& in,
+                          getfemint::mexargs_out& out)
 {
   if (in.narg() < 2) {
     THROW_BADARG( "Wrong number of input arguments");
@@ -41,23 +41,33 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& in,
   getfem::mesh_level_set &mls = gmls->mesh_levelset();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "cut_mesh", in, out, 0, 0, 0, 1)) {
+    /*@GET M = MESHLEVELSET:GET('cut_mesh')
+    Return M?@*/
     getfemint_mesh *mm = getfemint_mesh::get_from(new getfem::mesh);
     mls.global_cut_mesh(mm->mesh());
     out.pop().from_object_id(mm->get_id(), MESH_CLASS_ID);
   } else if (check_cmd(cmd, "linked_mesh", in, out, 0, 0, 0, 1)) {
+    /*@GET LM = MESHLEVELSET:GET('linked_mesh')
+    Return LM?@*/
     getfemint_mesh *mm = getfemint_mesh::get_from(&mls.linked_mesh());
     out.pop().from_object_id(mm->get_id(), MESH_CLASS_ID);
   } else if (check_cmd(cmd, "levelsets", in, out, 0, 0, 0, 1)) {
+    /*@GET LS = MESHLEVELSET:GET('levelsets')
+    Return LS?@*/
     std::vector<id_type> ids;
     for (unsigned i=0; i < mls.nb_level_sets(); ++i) {
-      getfemint_levelset *gls = 
-	getfemint_levelset::get_from(&(*(mls.get_level_set(i))));
+      getfemint_levelset *gls =
+        getfemint_levelset::get_from(&(*(mls.get_level_set(i))));
       ids.push_back(gls->get_id());
     }
     out.pop().from_object_id(ids, LEVELSET_CLASS_ID);
   } else if (check_cmd(cmd, "crack_tip_convexes", in, out, 0, 0, 0, 1)) {
+    /*@GET CC = MESHLEVELSET:GET('crack_tip_convexes')
+    Return CC?@*/
     out.pop().from_bit_vector(mls.crack_tip_convexes());
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
+    /*@GET CC = MESHLEVELSET:GET('memsize')
+    Return the amount of memory (in bytes) used by the mesh-level-set.@*/
     out.pop().from_integer(int(mls.memsize()));
   } else bad_cmd(cmd);
 }

@@ -67,9 +67,9 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::string fname = in.pop().to_string();
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
-	getfem::mesh *m = new getfem::mesh();
-	m->read_from_file(fname);
-	mm = getfemint_mesh::get_from(m);
+        getfem::mesh *m = new getfem::mesh();
+        m->read_from_file(fname);
+        mm = getfemint_mesh::get_from(m);
       }
       mim = getfemint_mesh_im::new_from(mm);
       mim->mesh_im().read_from_file(fname);
@@ -81,9 +81,9 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::stringstream ss(in.pop().to_string());
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
-	getfem::mesh *m = new getfem::mesh();
-	m->read_from_file(ss);
-	mm = getfemint_mesh::get_from(m);
+        getfem::mesh *m = new getfem::mesh();
+        m->read_from_file(ss);
+        mm = getfemint_mesh::get_from(m);
       }
       mim = getfemint_mesh_im::new_from(mm);
       mim->mesh_im().read_from_file(ss);
@@ -96,8 +96,8 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::stringstream ss; /* not very elegant ! */
       mim2->mesh_im().write_to_file(ss);
       mim->mesh_im().read_from_file(ss);
-    } else if (check_cmd(cmd, "levelset", in, out, 2, 4, 0, 1)) {
-      /*@INIT MESHIM:INIT('levelset', @tls ls, @str where, @tinteg im[, @tinteg im_tip])
+    } else if (check_cmd(cmd, "levelset", in, out, 3, 5, 0, 1)) {
+      /*@INIT MESHIM:INIT('levelset', @tmls mls, @str where, @tinteg im[, @tinteg im_tip[, @tinteg im_set]])
       Build an integration method conformal to a partition defined
       implicitely by a levelset.
 
@@ -108,39 +108,45 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::string swhere = in.pop().to_string();
       getfem::pintegration_method pim  = in.pop().to_integration_method();
       getfem::pintegration_method pim2 = 0;
+      getfem::pintegration_method pim3 = 0;
       if (in.remaining()) pim2 = in.pop().to_integration_method();
+      if (in.remaining()) pim3 = in.pop().to_integration_method();
       int where = 0;
       std::string csg_description;
       if (cmd_strmatch(swhere, "all"))
-	where = getfem::mesh_im_level_set::INTEGRATE_ALL;
+        where = getfem::mesh_im_level_set::INTEGRATE_ALL;
       else {
-	const char *slst[] = {"inside", "outside", "boundary", "all"};
-	for (unsigned i=0; i < 4; ++i) {
-	  if (cmd_strmatchn(swhere, slst[i], unsigned(strlen(slst[i])))) {
-	    csg_description.assign(swhere.begin() + strlen(slst[i]), swhere.end());
-	    if (i == 0)      where = getfem::mesh_im_level_set::INTEGRATE_INSIDE;
-	    else if (i == 1) where = getfem::mesh_im_level_set::INTEGRATE_OUTSIDE;
-	    else if (i == 2) where = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
-	    else if (i == 3) where = getfem::mesh_im_level_set::INTEGRATE_ALL;
-	  }
-	}
+        const char *slst[] = {"inside", "outside", "boundary", "all"};
+        for (unsigned i=0; i < 4; ++i) {
+          if (cmd_strmatchn(swhere, slst[i], unsigned(strlen(slst[i])))) {
+            csg_description.assign(swhere.begin() + strlen(slst[i]), swhere.end());
+            if (i == 0)      where = getfem::mesh_im_level_set::INTEGRATE_INSIDE;
+            else if (i == 1) where = getfem::mesh_im_level_set::INTEGRATE_OUTSIDE;
+            else if (i == 2) where = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
+            else if (i == 3) where = getfem::mesh_im_level_set::INTEGRATE_ALL;
+          }
+        }
       }
       if (where == 0) {
-	THROW_BADARG("expecting 'inside', 'outside', 'boundary' or 'all'");
+        THROW_BADARG("expecting 'inside', 'outside', 'boundary' or 'all'");
+      }
+      if (pim->type() != getfem::IM_APPROX) {
+        THROW_BADARG("expecting an approximate integration method");
       }
 
       cerr << "csg_description: " << csg_description << "\n";
 
       getfem::mesh_im_level_set *mimls =
-	new getfem::mesh_im_level_set(gmls->mesh_levelset(),
-				      where, pim, pim2);
-      mimls->set_integration_method(mimls->linked_mesh().convex_index(), 1);
+        new getfem::mesh_im_level_set(gmls->mesh_levelset(),
+                                      where, pim, pim2);
+      if (pim3) mimls->set_integration_method(mimls->linked_mesh().convex_index(), pim3);
+      else mimls->set_integration_method(mimls->linked_mesh().convex_index(), 1);
       if (csg_description.size()) {
-	mimls->set_level_set_boolean_operations(csg_description);
+        mimls->set_level_set_boolean_operations(csg_description);
       }
       mim = getfemint_mesh_im::get_from(mimls);
-      workspace().set_dependance(mim, gmls);
       mimls->adapt();
+      workspace().set_dependance(mim, gmls);
     } else bad_cmd(cmd);
   } else {
     /*@INIT MESHIM:INIT('.mesh',@tmesh m, [{@tinteg im|int im_degree}])

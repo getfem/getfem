@@ -25,15 +25,21 @@
 
 using namespace getfemint;
 
+/*@TEXT MESHLEVELSET:INIT('MESHLEVELSET_init')
+@tmls = MESHLEVELSET:INIT(...)<Par>
+
+@*/
 
 void gf_mesh_levelset(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
-  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
-  if (!out.narg_in_range(1,1)) 
-    THROW_BADARG("Wrong number of output arguments");
-  getfemint_mesh *mm = in.pop().to_getfemint_mesh();
-  getfem::mesh_level_set *mls = new getfem::mesh_level_set(mm->mesh());
-  getfemint_mesh_levelset *gmls = getfemint_mesh_levelset::get_from(mls);
+  getfemint_mesh_levelset *gmls = NULL;
+  if (check_cmd("MeshLevelSet", "MeshLevelSet", in, out, 1, 1, 0, 1)) {
+    /*@INIT MESHLEVELSET:INIT('.mesh', @tmesh m)
+    Build a new @tmls object from a @tmesh object.@*/
+    getfemint_mesh *mm = in.pop().to_getfemint_mesh();
+    getfem::mesh_level_set *mls = new getfem::mesh_level_set(mm->mesh());
+    gmls = getfemint_mesh_levelset::get_from(mls);
+    workspace().set_dependance(gmls, mm);
+  }
   out.pop().from_object_id(gmls->get_id(), MESH_LEVELSET_CLASS_ID);
 }
-

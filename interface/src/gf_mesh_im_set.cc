@@ -34,14 +34,14 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
   /* check or build the convex list */
   dal::bit_vector bv;
   if (in.remaining() == 1)
-    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -1);
+    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -config::base_index());
   else
     all_cv = true;
 
   /* check for the validity of the operation */
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
-    if (!mim->linked_mesh().convex_index().is_in(cv))
-      THROW_ERROR("Convex " << cv+config::base_index() << " was not found in mesh");
+    //if (!mim->linked_mesh().convex_index().is_in(cv))
+    //  THROW_ERROR("Convex " << cv+config::base_index() << " was not found in mesh");
     if (pim->structure() !=
 	mim->linked_mesh().structure_of_convex(cv)->basic_structure())
       infomsg() << "Warning: structure of the Integration Method seems to be incompatible with the structure of the convex\n";
@@ -61,7 +61,7 @@ static void gf_mesh_im_set_classical_integ(getfem::mesh_im *mim, getfemint::mexa
   if (in.remaining()) IM_DEGREE = dim_type(in.pop().to_integer(-1,255));
   dal::bit_vector bv;
   if (in.remaining() == 1) {
-    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -1);
+    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -config::base_index());
   } else {
     bv = mim->linked_mesh().convex_index();
   }
@@ -93,7 +93,7 @@ void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
 
   getfem::mesh_im *mim = in.pop().to_mesh_im();
-  std::string cmd        = in.pop().to_string();
+  std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "integ", in, out, 1, 2, 0, 0)) {
     /*@SET MESHIM:SET('integ',{@tinteg im|@int im_degree}[, @ivec CVids])
     Set the integration method.

@@ -3,9 +3,9 @@
 //
 // Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
 //
-// This file is a part of GETFEM++
+// This file is a part of GetFEM++
 //
-// Getfem++ is free software; you can redistribute it and/or modify
+// GetFEM++ is free software; you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as
 // published by the Free Software Foundation; version 2.1 of the License,
 // or (at your option) any later version.
@@ -23,11 +23,14 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include "structmember.h"
+#include <string.h>
 
 #include "gfi_array.h"
 #include "getfem_interface.h"
+#include "getfem_arch_config.h"
 
 static PyObject *call_getfem(PyObject *self, PyObject *args);
+static PyObject *getfem_var(PyObject *self, PyObject *args);
 static PyObject *call_getfem_from_constructor(PyObject *self, PyObject *args);
 //static PyObject *register_types(PyObject *self, PyObject *args);
 static PyObject *register_python_factory(PyObject *dummy, PyObject *args);
@@ -46,7 +49,7 @@ static PyObject *
 GetfemObject_name(PyGetfemObject *self)
 {
   return PyString_FromFormat("getfem.GetfemObject(classid=%d,objid=%d)",
-			     self->classid, self->objid);
+                             self->classid, self->objid);
 }
 
 static int
@@ -62,10 +65,9 @@ GetfemObject_compare(PyGetfemObject *self, PyGetfemObject *other) {
 }
 
 static PyMethodDef module_methods[] = {
-    {"getfem",  call_getfem, METH_VARARGS,
-     "Execute a getfem command."},
-    {"getfem_from_constructor",  call_getfem_from_constructor, METH_VARARGS,
-     "internal -- Execute a getfem command for building a new object."},
+    {"getfem", call_getfem, METH_VARARGS, "Execute a getfem command."},
+    {"getfem_var", getfem_var, METH_VARARGS, "Builder variables for documentation"},
+    {"getfem_from_constructor",  call_getfem_from_constructor, METH_VARARGS, "internal -- Execute a getfem command for building a new object."},
     //{"register_types", register_types, METH_VARARGS, "register the derived types (internal function)"},
     {"register_python_factory", register_python_factory, METH_VARARGS, "register (on initialization) the python function which is used to build objects from a GetfemObject type (internal function)"},
     {NULL}        /* Sentinel */
@@ -82,61 +84,61 @@ static PyMemberDef GetfemObject_members[] = {
     {"classid", T_INT, offsetof(PyGetfemObject, classid), 0,
      "Class ID"},
     {"objid", T_INT, offsetof(PyGetfemObject, objid), 0,
-     "Object ID in the Getfem++ workspace"},
+     "Object ID in the GetFEM workspace"},
     {NULL}  /* Sentinel */
 };
 
 static PyTypeObject PyGetfemObject_Type = {
     PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size (deprecated) */
-    "_getfem.GetfemObject",     /*tp_name*/
-    sizeof(PyGetfemObject),    /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    0,                         /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    (cmpfunc)GetfemObject_compare, /*tp_compare -- necessary for dictionary */
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    (hashfunc)GetfemObject_hash,                         /*tp_hash */
-    0,                         /*tp_call*/
-    0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,        /*tp_flags*/
-    "Generic Getfem++ objects",           /* tp_doc */
-    0,		               /* tp_traverse */
-    0,		               /* tp_clear */
-    0,		               /* tp_richcompare */
-    0,		               /* tp_weaklistoffset */
-    0,		               /* tp_iter */
-    0,		               /* tp_iternext */
-    GetfemObject_methods,             /* tp_methods */
-    GetfemObject_members,             /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    0,/*(initproc)GetfemObject_init,*/      /* tp_init */
-    0,                       /* tp_alloc */
-    0/*GetfemObject_new*/,                 /* tp_new */
-    0, /* tp_free */
-    0, /* tp_is_gc */
-    0, /* tp_bases */
-    0, /* tp_mro */
-    0, /* tp_cache */
-    0, /* tp_subclasses */
-    0, /* tp_weaklist */
-    0/*(destructor)GetfemObject_del*/, /* tp_del */
+    0,                                 /* ob_size (deprecated) */
+    "_getfem.GetfemObject",            /* tp_name */
+    sizeof(PyGetfemObject),            /* tp_basicsize */
+    0,                                 /* tp_itemsize */
+    0,                                 /* tp_dealloc */
+    0,                                 /* tp_print */
+    0,                                 /* tp_getattr */
+    0,                                 /* tp_setattr */
+    (cmpfunc)GetfemObject_compare,     /* tp_compare -- necessary for dictionary */
+    0,                                 /* tp_repr */
+    0,                                 /* tp_as_number */
+    0,                                 /* tp_as_sequence */
+    0,                                 /* tp_as_mapping */
+    (hashfunc)GetfemObject_hash,       /* tp_hash */
+    0,                                 /* tp_call */
+    0,                                 /* tp_str */
+    0,                                 /* tp_getattro */
+    0,                                 /* tp_setattro */
+    0,                                 /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,/* tp_flags */
+    "Generic GetFEM objects",          /* tp_doc */
+    0,                                 /* tp_traverse */
+    0,                                 /* tp_clear */
+    0,                                 /* tp_richcompare */
+    0,                                 /* tp_weaklistoffset */
+    0,                                 /* tp_iter */
+    0,                                 /* tp_iternext */
+    GetfemObject_methods,              /* tp_methods */
+    GetfemObject_members,              /* tp_members */
+    0,                                 /* tp_getset */
+    0,                                 /* tp_base */
+    0,                                 /* tp_dict */
+    0,                                 /* tp_descr_get */
+    0,                                 /* tp_descr_set */
+    0,                                 /* tp_dictoffset */
+    0,/*(initproc)GetfemObject_init*/  /* tp_init */
+    0,                                 /* tp_alloc */
+    0,/*GetfemObject_new*/             /* tp_new */
+    0,                                 /* tp_free */
+    0,                                 /* tp_is_gc */
+    0,                                 /* tp_bases */
+    0,                                 /* tp_mro */
+    0,                                 /* tp_cache */
+    0,                                 /* tp_subclasses */
+    0,                                 /* tp_weaklist */
+    0,/*(destructor)GetfemObject_del*/ /* tp_del */
 };
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+#ifndef PyMODINIT_FUNC        /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
 PyMODINIT_FUNC
@@ -146,9 +148,8 @@ init_getfem(void)
   PyGetfemObject_Type.tp_new = PyType_GenericNew;
   if (PyType_Ready(&PyGetfemObject_Type) < 0)
     return;
-  m = Py_InitModule3("_getfem", module_methods, "The Getfem-python interface module.");
-  import_array(); /* init Numeric */
-  //import_libnumarray(); /* init Numarray */
+  m = Py_InitModule3("_getfem", module_methods, "python-getfem interface module.");
+  import_array(); /* init Numpy */
   Py_INCREF(&PyGetfemObject_Type);
   PyModule_AddObject(m, "GetfemObject", (PyObject *)&PyGetfemObject_Type);
 }
@@ -208,7 +209,7 @@ gc_release(gcollect *gc) {
   if (!PyErr_Occurred())
     for (p = gc->pyobjects; p; p = np) {
       /*for (i=0; i < p->n; ++i)
-	Py_DECREF((PyObject*)p->p[i]);*/
+        Py_DECREF((PyObject*)p->p[i]);*/
       np = p->next; free(p);
     }
   gc->pyobjects = NULL;
@@ -319,7 +320,7 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
     t->storage.gfi_storage_u.objid.objid_len = 1;
     if (!(t->storage.gfi_storage_u.objid.objid_val =
-	  gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;
+          gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;
     t->storage.gfi_storage_u.objid.objid_val[0] = id;
   } else {
     //} else if (PyList_Check(o) || PyArray_Check(o)) {
@@ -468,7 +469,7 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
     else {
       npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
       int i;
-      for(i=0; i< t->dim.dim_len; i++)
+      for(i=0; i < t->dim.dim_len; i++)
         dim[i] = (npy_intp)t->dim.dim_val[i];
       if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, NPY_INT, 1))) return NULL;
       PyDimMem_FREE(dim);
@@ -521,30 +522,36 @@ gfi_array_to_PyObject(gfi_array *t, int in__init__) {
   } break;
   case GFI_OBJID: {
     //printf("GFI_OBJID\n");
-    if (t->storage.gfi_storage_u.objid.objid_len != 1) {
+    int nb = t->storage.gfi_storage_u.objid.objid_len;
+    if (nb != 1) {
 #if 0
       /* PyArray_OBJECT is not supported in numarray ... */
+      npy_intp *dim = PyDimMem_NEW(t->dim.dim_len);
       int i;
-      if (!(o = PyArray_FromDims(t->dim.dim_len, (int*)t->dim.dim_val, PyArray_OBJECT))) return NULL;
+      for(i=0; i< t->dim.dim_len; i++)
+        dim[i] = (npy_intp)t->dim.dim_val[i];
+      if (!(o = PyArray_EMPTY(t->dim.dim_len, dim, PyArray_OBJECT,1))) return NULL;
+
       if (!PyArray_ISFARRAY((PyArrayObject*)o)) { // I'm just too lazy to transpose matrices
-	PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
-		     t->dim.dim_len, t->storage.gfi_storage_u.objid.objid_len);
-	return NULL;
+        PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
+                     t->dim.dim_len, nb);
+        return NULL;
       }
-      for (i = 0; i < t->storage.gfi_storage_u.objid.objid_len; ++i) {
-	((PyObject**)(((PyArrayObject*)o)->data))[i] =
-	  PyGetfemObject_FromObjId(t->storage.gfi_storage_u.objid.objid_val[i], in__init__);
+      for (i = 0; i<nb; ++i) {
+        ((PyObject**)(((PyArrayObject*)o)->data))[i] =
+          PyGetfemObject_FromObjId(t->storage.gfi_storage_u.objid.objid_val[i], in__init__);
       }
 #else
       /* return a python list to be on the safe side */
-      int nb = t->storage.gfi_storage_u.objid.objid_len, i;
       if (t->dim.dim_len != 1) {
-	PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
-		     t->dim.dim_len, nb);
+        PyErr_Format(PyExc_RuntimeError, "cannot return %d-D array of %d getfem objects",
+                     t->dim.dim_len, nb);
       }
       if (!(o = PyList_New(nb))) return NULL;
-      for (i=0; i < nb; ++i) {
-	PyList_SetItem(o, i, PyGetfemObject_FromObjId(t->storage.gfi_storage_u.objid.objid_val[i], in__init__));
+
+      int i;
+      for (i=0; i<nb; ++i) {
+        PyList_SetItem(o, i, PyGetfemObject_FromObjId(t->storage.gfi_storage_u.objid.objid_val[i], in__init__));
       }
 #endif
     } else {
@@ -591,22 +598,22 @@ call_getfem_(PyObject *self, PyObject *args, int in__init__)
     } else {
       //fprintf(stderr, "%s : success, nb_out = %d\n", function_name, out_cnt);
       if (out_cnt == 0) {
-	result = Py_None; Py_INCREF(Py_None);
+        result = Py_None; Py_INCREF(Py_None);
       } else if (out) {
-	int i, err = 0;
-	PyObject *d[out_cnt];
-	for (i = 0; i < out_cnt; ++i) {
-	  if (!err && !(d[i] = gfi_array_to_PyObject(out[i], in__init__))) err = 1;
-	  gfi_array_destroy(out[i]);
-	}
+        int i, err = 0;
+        PyObject *d[out_cnt];
+        for (i = 0; i < out_cnt; ++i) {
+          if (!err && !(d[i] = gfi_array_to_PyObject(out[i], in__init__))) err = 1;
+          gfi_array_destroy(out[i]);
+        }
 
-	free(out);
-	if (!err) {
-	  if (out_cnt > 1) {
-	    result = PyTuple_New(out_cnt);
-	    for (i = 0; i < out_cnt; ++i) PyTuple_SET_ITEM(result,i,d[i]);
-	  } else result = d[0];
-	}
+        free(out);
+        if (!err) {
+          if (out_cnt > 1) {
+            result = PyTuple_New(out_cnt);
+            for (i = 0; i < out_cnt; ++i) PyTuple_SET_ITEM(result,i,d[i]);
+          } else result = d[0];
+        }
       }
     }
   }
@@ -624,15 +631,15 @@ register_types(PyObject *self, PyObject *args)
 {
   printf("registering types..\n");
   if (PyArg_ParseTuple(args,"OOOOOOOO",
-		       &PyDerivedTypes[MESH_CLASS_ID],
-		       &PyDerivedTypes[MESHFEM_CLASS_ID],
-		       &PyDerivedTypes[GEOTRANS_CLASS_ID],
-		       &PyDerivedTypes[FEM_CLASS_ID],
-		       &PyDerivedTypes[INTEG_CLASS_ID],
-		       &PyDerivedTypes[ELTM_CLASS_ID],
-		       &PyDerivedTypes[CVSTRUCT_CLASS_ID],
-		       &PyDerivedTypes[POLY_CLASS_ID],
-		       &PyDerivedTypes[SLICE_CLASS_ID])) return NULL;
+                       &PyDerivedTypes[MESH_CLASS_ID],
+                       &PyDerivedTypes[MESHFEM_CLASS_ID],
+                       &PyDerivedTypes[GEOTRANS_CLASS_ID],
+                       &PyDerivedTypes[FEM_CLASS_ID],
+                       &PyDerivedTypes[INTEG_CLASS_ID],
+                       &PyDerivedTypes[ELTM_CLASS_ID],
+                       &PyDerivedTypes[CVSTRUCT_CLASS_ID],
+                       &PyDerivedTypes[POLY_CLASS_ID],
+                       &PyDerivedTypes[SLICE_CLASS_ID])) return NULL;
   //Py_INCREF(PyDerivedTypes[MESH_CLASS_ID]);
   PyObject_Print(PyDerivedTypes[MESH_CLASS_ID],stderr,0);
   if (!PyClass_Check(PyDerivedTypes[MESH_CLASS_ID])) {
@@ -641,6 +648,50 @@ register_types(PyObject *self, PyObject *args)
   }
   return Py_None;
   }*/
+
+static PyObject *
+getfem_var(PyObject *self, PyObject *args)
+{
+  char* word_in;
+
+  size_t size = PyTuple_GET_SIZE(args);
+  if (size!=1){
+    PyErr_Format(PyExc_TypeError,"getfem_var() takes exactly 1 argument (%d given)",size);
+    return NULL;
+  }else if (!PyArg_ParseTuple(args,"s",&word_in)){
+    return NULL;
+  }
+
+  PyObject* word_out;
+
+  if (strcmp(word_in,"project") == 0){
+    word_out = PyString_FromString("GetFEM++");
+  }else if (strcmp(word_in,"author") == 0 || strcmp(word_in,"copyright") == 0){
+    word_out = PyString_FromString
+    ("2004-2009 Yves Renard, Julien Pommier");
+  }else if (strcmp(word_in,"url") == 0){
+    word_out = PyString_FromString("http://home.gna.org/getfem/");
+  }else if (strcmp(word_in,"license") == 0){
+    word_out = PyString_FromString("GNU LGPL v2.1");
+  }else if (strcmp(word_in,"package") == 0){
+    word_out = PyString_FromString(GETFEM_PACKAGE);
+  }else if (strcmp(word_in,"package_name") == 0){
+    word_out = PyString_FromString(GETFEM_PACKAGE_NAME);
+  }else if (strcmp(word_in,"package_string") == 0){
+    word_out = PyString_FromString(GETFEM_PACKAGE_STRING);
+  }else if(strcmp(word_in,"package_tarname") == 0){
+    word_out = PyString_FromString(GETFEM_PACKAGE_TARNAME);
+  }else if(strcmp(word_in,"package_version") == 0){
+    word_out = PyString_FromString(GETFEM_PACKAGE_VERSION);
+  }else if(strcmp(word_in,"version") == 0){
+    word_out = PyString_FromString(GETFEM_VERSION);
+  }else{
+    word_out = PyString_FromString("");
+  }
+
+  Py_INCREF(word_out);
+  return word_out;
+}
 
 /* copied verbatim from the "Extending and Embedding the Python Interpreter" tutorial */
 static PyObject *

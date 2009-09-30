@@ -29,11 +29,11 @@ using namespace getfemint;
 /*MLABCOM
   FUNCTION I = gf_mesh_levelset_get(MLS, ...)
     General function for modification of MESHLEVELSET objects.
-    
+
 MLABCOM*/
 
-void gf_mesh_levelset_set(getfemint::mexargs_in& in, 
-			  getfemint::mexargs_out& out)
+void gf_mesh_levelset_set(getfemint::mexargs_in& in,
+                          getfemint::mexargs_out& out)
 {
   if (in.narg() < 2) {
     THROW_BADARG( "Wrong number of input arguments");
@@ -42,17 +42,24 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& in,
   getfem::mesh_level_set &mls = gmls->mesh_levelset();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "add", in, out, 1, 1, 0, 0)) {
+    /*@SET MESHLEVELSET:SET('add',arg1)
+    add ???.@*/
     getfemint_levelset *gls = in.pop().to_getfemint_levelset();
     if (&mls.linked_mesh() != &gls->levelset().get_mesh_fem().linked_mesh())
       THROW_BADARG("The meshes of the levelset and the mesh_levelset "
-		   "are not the same!");
+                   "are not the same!");
     mls.add_level_set(gls->levelset());
     workspace().set_dependance(gmls, gls);
-  } else if (check_cmd(cmd, "del", in, out, 1, 1, 0, 0)) {
+  } else if (check_cmd(cmd, "del", in, out, 1, 1, 0, 0) ||
+             check_cmd(cmd, "delete", in, out, 1, 1, 0, 0)) {
+    /*@SET MESHLEVELSET:SET('delete',arg1)
+    del ???.@*/
     getfemint_levelset *gls = in.pop().to_getfemint_levelset();
     mls.add_level_set(gls->levelset());
-    workspace().sup_dependance(gmls, gls);    
+    workspace().sup_dependance(gmls, gls);
   } else if (check_cmd(cmd, "adapt", in, out, 0, 0, 0, 0)) {
+    /*@SET MESHLEVELSET:SET('adapt')
+    ???.@*/
     mls.adapt();
   } else bad_cmd(cmd);
 }
