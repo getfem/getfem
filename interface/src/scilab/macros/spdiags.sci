@@ -19,6 +19,32 @@ A_out = sparse([]);
 d_out = [];
 diagonal_extract = %F;
 
+// Diagonal extraction
+if (nargin==1) then
+  n_row = size(B_in,1);
+  n_col = size(B_in,2);
+  n_min = min(n_row,n_col);
+  d_in  = -(n_min-1):(n_min-1); 
+  A_out = spzeros(n_min,length(d_in));
+  diagonal_extract = %T;
+end
+
+if (nargin==2) then
+  n_row = size(B_in,1);
+  n_col = size(B_in,2);
+  n_min = min(n_row,n_col);
+  A_out = spzeros(n_min,length(d_in));
+  diagonal_extract = %T;
+end
+
+// Diagonal matrix creation
+if (nargin==3) then
+  A_out = sparse(n_row);
+  n_row = size(A_out,1);
+  n_col = size(A_out,2);
+  diagonal_extract = %F;
+end
+
 if (nargin==4) then
   A_out = spzeros(n_row,n_col);
   diagonal_extract = %F;
@@ -28,14 +54,36 @@ if (nargin>4) | (nargin<1) then
   error('1 to 4 argument required');
 end
 
-//if (max(d_in)>=n_col) | (min(d_in)<=-n_row) then
-//  error('diagonal index not in range');
-//end
+if (max(d_in)>=n_col) | (min(d_in)<=-n_row) then
+  error('diagonal index not in range');
+end
 
-horiz_matr = (size(B_in,1)<size(B_in,2));
 n_min = min(n_row,n_col);
 
 if (diagonal_extract) then
+  for i=1:length(d_in)
+    printf('d(%d) = %d\n', i, d_in(i));
+    disp(size(A_out))
+    if (d_in(i)>0) then
+      A_out(1:n_min-d_in(i),i) = B_in(sub2ind(size(B_in),1:n_min-d_in(i),1+d_in(i):n_min));
+    elseif (d_in(i)<0) then
+      A_out(1-d_in(i):n_min,i) = B_in(sub2ind(size(B_in),1-d_in(i):n_min,1:n_min+d_in(i)));
+    else
+      A_out(1:n_min,i) = B_in(sub2ind(size(B_in),1:n_min,1:n_min));
+    end
+  end
+  if (nargout==2) then
+    d_out = [];
+    for i=size(A_out,2):-1:1
+      if and(A_out(:,i)==0) then
+        A_out(:,i) = [];
+      else
+        d_out = [i d_out];
+      end
+    end
+    d_out = d_out - n_min;
+  end
+  
 else
   for i=1:length(d_in)
     if (d_in(i)>0) then
