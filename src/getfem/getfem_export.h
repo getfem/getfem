@@ -76,7 +76,7 @@ namespace getfem {
     dim_type dim_;
     bool reverse_endian;
     enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA,
-	   IN_POINT_DATA } state;
+           IN_POINT_DATA } state;
   public:
     typedef enum { VTK_VERTEX = 1, VTK_LINE = 3, VTK_QUADRATIC_EDGE = 21,
                    VTK_TRIANGLE = 5, VTK_QUADRATIC_TRIANGLE = 22,
@@ -84,7 +84,7 @@ namespace getfem {
                    VTK_TETRA = 10, VTK_QUADRATIC_TETRA = 24,
                    VTK_WEDGE = 13, /*VTK_QUADRATIC_WEDGE = 26,*/
                    VTK_VOXEL = 11, VTK_HEXAHEDRON = 12,
-		   VTK_QUADRATIC_HEXAHEDRON = 25 } vtk_cell_type;
+                   VTK_QUADRATIC_HEXAHEDRON = 25 } vtk_cell_type;
     vtk_export(const std::string& fname, bool ascii_ = false);
     vtk_export(std::ostream &os_, bool ascii_ = false);
 
@@ -98,29 +98,31 @@ namespace getfem {
        or write_mesh */
     void set_header(const std::string& s);
     void write_mesh();
+
     /** append a new scalar or vector field defined on mf to the .vtk file.  If
         you are exporting a slice, or if mf != get_exported_mesh_fem(), U will
         be interpolated on the slice, or on get_exported_mesh_fem().
 
         Note that vectors should be written AFTER scalars, and tensors
-	after vectors
+        after vectors
 
         NO SPACE ALLOWED in 'name' */
     template<class VECT> void write_point_data(const getfem::mesh_fem &mf,
-					       const VECT& U0,
-					       const std::string& name);
+                                               const VECT& U0,
+                                               const std::string& name);
+
     /** append a new scalar or vector field to .vtk file. The Uslice vector is
         the field interpolated on the exported mesh_slice This function should
         not be used if you are not exporting a slice!  NO SPACE ALLOWED in
         'name' */
     template<class VECT> void write_sliced_point_data(const VECT& Uslice,
-						      const std::string& name);
+                                                      const std::string& name);
     /** export data which is constant over each element. You should not use
         this function if you are exporting a slice.  U should have
         convex_index().card() elements.  */
 
     template<class VECT> void write_cell_data(const VECT& U,
-					      const std::string& name);
+                                              const std::string& name);
     /** export a data_set correspounding to measures of quality for each convex
         of the supplied mesh (which should have the same number of convex than
         the one used in the vtk_export)
@@ -145,8 +147,8 @@ namespace getfem {
     template<class IT> void write_3x3tensor(IT p);
     void write_separ();
     template<class VECT> void write_dataset_(const VECT& U,
-					     const std::string& name,
-					     bool cell_data=false);
+                                             const std::string& name,
+                                             bool cell_data=false);
   };
 
   template<class T> void vtk_export::write_val(T v) {
@@ -154,8 +156,8 @@ namespace getfem {
     else {
       char *p = (char*)&v;
       if (reverse_endian)
-	for (size_type i=0; i < sizeof(v)/2; ++i)
-	  std::swap(p[i], p[sizeof(v)-i-1]);
+        for (size_type i=0; i < sizeof(v)/2; ++i)
+          std::swap(p[i], p[sizeof(v)-i-1]);
       os.write(p, sizeof(T));
     }
   }
@@ -186,7 +188,7 @@ namespace getfem {
 
   template<class VECT>
   void vtk_export::write_point_data(const getfem::mesh_fem &mf, const VECT& U,
-				    const std::string& name) {
+                                    const std::string& name) {
     size_type Q = (gmm::vect_size(U) / mf.nb_dof()) * mf.get_qdim();
     if (psl) {
       std::vector<scalar_type> Uslice(Q*psl->nb_points());
@@ -216,38 +218,38 @@ namespace getfem {
 
   template<class VECT>
   void vtk_export::write_sliced_point_data(const VECT& U,
-					   const std::string& name) {
+                                           const std::string& name) {
     write_dataset_(U, name, false);
   }
 
   template<class VECT>
   void vtk_export::write_dataset_(const VECT& U, const std::string& name,
-				  bool cell_data) {
+                                  bool cell_data) {
     write_mesh();
     size_type nb_val = 0;
     if (cell_data) {
       switch_to_cell_data();
       nb_val = psl ? psl->linked_mesh().convex_index().card()
-        : pmf->linked_mesh().convex_index().card();
+                   : pmf->linked_mesh().convex_index().card();
     } else {
       switch_to_point_data();
       nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
     }
     size_type Q = gmm::vect_size(U) / nb_val;
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
-		"inconsistency in the size of the dataset: "
+                "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     write_separ();
     if (Q == 1) {
       os << "SCALARS " << remove_spaces(name) << " float 1\n";
       os << "LOOKUP_TABLE default\n";
       for (size_type i=0; i < nb_val; ++i) {
-	write_val(float(U[i]));
+        write_val(float(U[i]));
       }
     } else if (Q <= 3) {
       os << "VECTORS " << remove_spaces(name) << " float\n";
       for (size_type i=0; i < nb_val; ++i) {
-	write_vec(U.begin() + i*Q);
+        write_vec(U.begin() + i*Q);
       }
     } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order
@@ -282,7 +284,7 @@ namespace getfem {
     bool ascii;
     const stored_mesh_slice *psl;
     bool psl_use_merged; /* flag enabled if we merge the points of
-			    psl before export */
+                            psl before export */
     std::auto_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
     std::vector<unsigned> pmf_cell_type;
@@ -308,16 +310,16 @@ namespace getfem {
     bool header_written;
   public:
     dx_export(const std::string& fname, bool ascii_ = false,
-	      bool append_ = false);
+              bool append_ = false);
     dx_export(std::ostream &os_, bool ascii_ = false);
     ~dx_export(); /* the file is not complete until the destructor
-		     has been executed */
+                     has been executed */
     void exporting(const mesh& m, std::string name = std::string());
     void exporting(const mesh_fem& mf, std::string name = std::string());
     void exporting(const stored_mesh_slice& sl, bool merge_points = true,
-		   std::string name = std::string());
+                   std::string name = std::string());
     /** append edges information (if you want to draw the mesh and are
-	using a refined slice. Should be called just after exporting(..)  */
+        using a refined slice. Should be called just after exporting(..)  */
     void exporting_mesh_edges(bool with_slice_edge = true);
 
     /** the header is the second line of text in the exported file,
@@ -334,20 +336,20 @@ namespace getfem {
        will be filled, which will allow you to view the mesh edges.
     */
     void serie_add_object(const std::string& serie_name,
-			  const std::string& object_name);
+                          const std::string& object_name);
     void serie_add_object(const std::string& serie_name)
     { serie_add_object(serie_name, current_data_name()); }
     /** return the name of current mesh (use exporting(...) to change
-	the current mesh) */
+        the current mesh) */
     std::string current_mesh_name() { return current_mesh().name; }
     /** return the name of last written data_set */
     std::string current_data_name() { return current_data().name; }
     template<class VECT> void
     write_point_data(const getfem::mesh_fem &mf,
-		     const VECT& U0, std::string name = std::string());
+                     const VECT& U0, std::string name = std::string());
     template<class VECT> void
     write_sliced_point_data(const VECT& Uslice,
-			    std::string name = std::string());
+                            std::string name = std::string());
     /* TOBEDONE !!!!!!!!!!!
        template<class VECT> void
     write_cell_data(const VECT& U, std::string name = std::string());
@@ -362,12 +364,12 @@ namespace getfem {
     void update_metadata(std::ios::pos_type);
     void write_series();
     void serie_add_object_(const std::string &serie_name,
-			   const std::string &object_name);
+                           const std::string &object_name);
     void write_separ();
     std::string default_name(std::string s, int count,
-			     const char *default_prefix) {
+                             const char *default_prefix) {
       if (s.size() == 0) {
-	std::stringstream ss; ss << default_prefix << count; return ss.str();
+        std::stringstream ss; ss << default_prefix << count; return ss.str();
       } else return s;
     }
     template<class T> void write_val(T v) {
@@ -383,9 +385,9 @@ namespace getfem {
     }
     bool new_mesh(std::string &name);
     std::list<dxMesh>::iterator get_mesh(const std::string& name,
-					 bool raise_error = true);
+                                         bool raise_error = true);
     std::list<dxObject>::iterator get_object(const std::string& name,
-					     bool raise_error = true);
+                                             bool raise_error = true);
     dxMesh &current_mesh() {
       if (meshes.size()) return meshes.back();
       else GMM_ASSERT1(false, "no mesh!");
@@ -472,14 +474,14 @@ namespace getfem {
     size_type nb_val = 0;
     if (cell_data) {
       nb_val = psl ? psl->linked_mesh().convex_index().card()
-        : pmf->linked_mesh().convex_index().card();
+                   : pmf->linked_mesh().convex_index().card();
     } else {
-      nb_val = psl ? (psl_use_merged ? psl->nb_merged_nodes()
-		      : psl->nb_points()) : pmf_dof_used.card();
+      nb_val = psl ? (psl_use_merged ? psl->nb_merged_nodes() : psl->nb_points())
+                   : pmf_dof_used.card();
     }
     size_type Q = gmm::vect_size(U) / nb_val;
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
-		"inconsistency in the size of the dataset: "
+                "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
 
     os << "\nobject \"" << name << "_data\" class array type float rank ";
@@ -503,12 +505,12 @@ namespace getfem {
 
     if (current_mesh().flags & dxMesh::WITH_EDGES) {
       os << "\nobject \"" << name << "_edges\" class field\n"
-	 << "  component \"positions\" value \""
-	 << name_of_pts_array(current_mesh_name()) << "\"\n"
-	 << "  component \"connections\" value \""
-	 << name_of_conn_array(name_of_edges_array(current_mesh_name()))
-	 << "\"\n"
-	 << "  component \"data\" value \"" << name << "_data\"\n";
+         << "  component \"positions\" value \""
+         << name_of_pts_array(current_mesh_name()) << "\"\n"
+         << "  component \"connections\" value \""
+         << name_of_conn_array(name_of_edges_array(current_mesh_name()))
+         << "\"\n"
+         << "  component \"data\" value \"" << name << "_data\"\n";
     }
 
     /* write footer */
@@ -534,12 +536,17 @@ namespace getfem {
   protected:
     std::ostream& os;
     char header[256];
+
+    std::vector<std::vector<float> > pos_pts;
+    std::vector<unsigned> pos_cell_type;
+    std::vector<std::vector<unsigned> > pos_cell_dof;
+
     std::auto_ptr<mesh_fem> pmf;
-    std::vector<unsigned> pmf_cell_type;
-    std::vector< std::vector<unsigned> > pmf_cell_dof;
+    const stored_mesh_slice *psl;
+
     size_type view;
     dim_type dim;
-    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN } state;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA} state;
     std::ofstream real_os;
 
   public:
@@ -551,7 +558,7 @@ namespace getfem {
                    POS_SI = 4, //tetrahedra
                    POS_HE = 5, //hexahedra
                    POS_PR = 6  //prisms
-    } pos_cell_type;
+    } pos_cell_types;
 
     pos_export(const std::string& fname);
     pos_export(std::ostream& osname);
@@ -559,63 +566,173 @@ namespace getfem {
     void set_header(const std::string& s);
     void write(const mesh& m);
     void write(const mesh_fem& mf);
+    void write(const stored_mesh_slice& sl);
+
     template <class VECT>
     void write(const mesh_fem& mf,const VECT& U, const std::string& name);
+    template <class VECT>
+    void write(const stored_mesh_slice& sl,const VECT& U, const std::string& name);
 
   private:
     void init();
     void check_header();
+
+    void exporting(const mesh& m);
     void exporting(const mesh_fem& mf);
+    void exporting(const stored_mesh_slice& sl);
+
     template <class VECT>
-    void write(const VECT& V, const std::string& name);
+    void write_pmf(const VECT& V);
+    template <class VECT>
+    void write_psl(const VECT& V);
+
+    template <class VECT>
     void write_cell(const int& t, const std::vector<unsigned>& dof,
-                                  const std::vector<double>& val);
+                                  const VECT& val);
   };
 
   template <class VECT>
   void pos_export::write(const mesh_fem& mf,const VECT& U,
-			 const std::string& name){
+                         const std::string& name){
     check_header();
     exporting(mf);
 
-    size_type nb_sdof = mf.nb_dof()/mf.get_qdim();
-    size_type qdim_u = gmm::vect_size(U)/nb_sdof;
-    std::vector<scalar_type> V(pmf->nb_dof()*qdim_u);
-    if (&mf != &(*pmf)) {
-      interpolation(mf, *pmf, U, V);
-    } else gmm::copy(U,V);
-
-    write(V, name);
-  }
-
-  template <class VECT>
-  void pos_export::write(const VECT& V, const std::string& name){
-    GMM_ASSERT1(state >= STRUCTURE_WRITTEN, "Falta la malla!!!");
     os << "View \"" << name.c_str() <<"\" {\n";
 
-    size_type nb_sdof = pmf->nb_dof()/pmf->get_qdim();
-    size_type qdim_v = gmm::vect_size(V)/nb_sdof;
-
-    int t;
-    std::vector<unsigned> cell_dof;
-    std::vector<double> cell_dof_val;
-    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      t = pmf_cell_type[cv];
-      cell_dof = pmf_cell_dof[cv];
-      cell_dof_val.resize(cell_dof.size()*qdim_v, double(0));
-      for (size_type i=0; i< cell_dof.size(); ++i){
-        for (size_type j=0; j< qdim_v; ++j){
-          cell_dof_val[i*qdim_v+j] = V[pmf_cell_dof[cv][i]*qdim_v+j];
-        }
+    size_type nb_sdof = mf.nb_dof()/mf.get_qdim();
+    size_type qdim_u = gmm::vect_size(U)/nb_sdof;
+    if (psl){
+      std::vector<scalar_type> Uslice(psl->nb_points()*qdim_u);
+      psl->interpolate(mf, U, Uslice);
+      write_psl(Uslice);
+    }else {
+      std::vector<scalar_type> V(pmf->nb_dof()*qdim_u);
+      if (&mf != &(*pmf)) {
+        interpolation(mf, *pmf, U, V);
+      } else gmm::copy(U,V);
+      /*for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d, ++cnt) {
+        if (cnt != d)
+          for (size_type q=0; q < Q; ++q) {
+            V[cnt*Q + q] = V[d*Q + q];
+          }
       }
-      write_cell(t,cell_dof,cell_dof_val);
+      V.resize(Q*pmf_dof_used.card());*/
+      write_pmf(V);
     }
+
     os << "};\n";
     os << "View[" << view << "].ShowScale = 1;\n";
     os << "View[" << view << "].ShowElement = 0;\n";
     os << "View[" << view << "].DrawScalars = 1;\n";
     os << "View[" << view << "].DrawVectors = 1;\n";
     os << "View[" << view++ << "].DrawTensors = 1;\n";
+  }
+
+  template <class VECT>
+  void pos_export::write(const stored_mesh_slice& sl,const VECT& V,
+                         const std::string& name){
+    check_header();
+    exporting(sl);
+
+    os << "View \"" << name.c_str() <<"\" {\n";
+
+    write_psl(V);
+
+    os << "};\n";
+    os << "View[" << view << "].ShowScale = 1;\n";
+    os << "View[" << view << "].ShowElement = 0;\n";
+    os << "View[" << view << "].DrawScalars = 1;\n";
+    os << "View[" << view << "].DrawVectors = 1;\n";
+    os << "View[" << view++ << "].DrawTensors = 1;\n";
+  }
+
+  template <class VECT>
+  void pos_export::write_pmf(const VECT& V){
+
+    size_type nb_sdof = pmf->nb_dof()/pmf->get_qdim();
+    size_type qdim_v = gmm::vect_size(V)/nb_sdof;
+
+    int t;
+    std::vector<unsigned> cell_dof;
+    std::vector<scalar_type> cell_dof_val;
+    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
+      t = pos_cell_type[cv];
+      cell_dof = pos_cell_dof[cv];
+      cell_dof_val.resize(cell_dof.size()*qdim_v, scalar_type(0));
+      for (size_type i=0; i< cell_dof.size(); ++i)
+        for (size_type j=0; j< qdim_v; ++j)
+          cell_dof_val[i*qdim_v+j] = scalar_type(V[pos_cell_dof[cv][i]*qdim_v+j]);
+      write_cell(t,cell_dof,cell_dof_val);
+    }
+  }
+
+  template <class VECT>
+  void pos_export::write_psl(const VECT& V){
+
+    size_type qdim_v = gmm::vect_size(V)/psl->nb_points();
+
+    int t;
+    std::vector<unsigned> cell_dof;
+    std::vector<scalar_type> cell_dof_val;
+    for (size_type ic=0, scnt = 0; ic < psl->nb_convex(); ++ic) {
+      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
+           it != psl->simplexes(ic).end(); ++it) {
+        t = pos_cell_type[scnt];
+        cell_dof = pos_cell_dof[scnt++];
+        cell_dof_val.resize(cell_dof.size()*qdim_v, scalar_type(0));
+        for (size_type i=0; i< cell_dof.size(); ++i)
+          for (size_type j=0; j< qdim_v; ++j)
+            cell_dof_val[i*qdim_v+j] = scalar_type(V[cell_dof[i]*qdim_v+j]);
+        write_cell(t,cell_dof,cell_dof_val);
+      }
+    }
+  }
+
+  template <class VECT>
+  void pos_export::write_cell(const int& t, const std::vector<unsigned>& dof,
+                                            const VECT& val){
+    size_type qdim_cell = val.size()/dof.size();
+    size_type dim3D = size_type(-1);
+    if (1==qdim_cell){
+      dim3D = size_type(1);
+      os << "S";
+    } else if (2==qdim_cell || 3==qdim_cell){
+      dim3D = size_type(3);
+      os << "V";
+    } else if (4<=qdim_cell && qdim_cell<=9){
+      dim3D = size_type(9);
+      os << "T";
+    }
+    switch (t){
+      case POS_PT: os << "P("; break; // point
+      case POS_LN: os << "L("; break; // line
+      case POS_TR: os << "T("; break; // triangle
+      case POS_QU: os << "Q("; break; // quadrangle
+      case POS_SI: os << "S("; break; // tetrahedra (simplex)
+      case POS_HE: os << "H("; break; // hexahedra
+      case POS_PR: os << "I("; break; // prism
+    }
+    for (size_type i=0; i<dof.size(); ++i){
+      for(size_type j=0; j<dim; ++j){
+        if(0!=i || 0!=j) os << ",";
+        os << pos_pts[dof[i]][j];
+      }
+      for (size_type j=dim; j<3; ++j){
+        os << ",0.00";
+      }
+    }
+
+    os << "){";
+    for (size_type i=0; i<dof.size(); ++i){
+      for(size_type j=0; j<qdim_cell; ++j){
+        if(0!=i || 0!=j) os << ",";
+        os << val[i*qdim_cell+j];
+      }
+      for (size_type j=qdim_cell; j< dim3D; ++j){
+        os << ",0.00";
+      }
+    }
+    os << "};\n";
   }
 }  /* end of namespace getfem. */
 

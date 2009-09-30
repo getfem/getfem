@@ -80,7 +80,7 @@ namespace getfem
       write_separ();
       if (psl) {
         os << "CELL_DATA " << psl->nb_simplexes(0) + psl->nb_simplexes(1)
-	  + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
+         + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
       } else {
         os << "CELL_DATA " << pmf->convex_index().card() << "\n";
       }
@@ -125,13 +125,13 @@ namespace getfem
   void vtk_export::exporting(const stored_mesh_slice& sl) {
     psl = &sl; dim_ = dim_type(sl.dim());
     GMM_ASSERT1(psl->dim() <= 3, "attempt to export a " << int(dim_)
-		<< "D slice (not supported)");
+              << "D slice (not supported)");
   }
 
   void vtk_export::exporting(const mesh& m) {
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
-		<< "D slice (not supported)");
+              << "D slice (not supported)");
     pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     exporting(*pmf);
@@ -140,9 +140,9 @@ namespace getfem
   void vtk_export::exporting(const mesh_fem& mf) {
     dim_ = mf.linked_mesh().dim();
     GMM_ASSERT1(dim_ <= 3, "attempt to export a " << int(dim_)
-		<< "D slice (not supported)");
-    if (&mf != pmf.get())
-      pmf.reset(new mesh_fem(mf.linked_mesh(),1));
+              << "D slice (not supported)");
+    if (&mf != pmf.get()) pmf.reset(new mesh_fem(mf.linked_mesh(),1));
+
     /* initialize pmf with finite elements suitable for VTK (which only knows
        isoparametric FEMs of order 1 and 2 (with inner points missing)) */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
@@ -155,11 +155,11 @@ namespace getfem
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
       pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1)
-	                                 : classical_fem(pgt, 1);
+                                        : classical_fem(pgt, 1);
       short_type degree = short_type(((pf != classical_pf1 &&
-				       pf->estimated_degree() > 1) ||
-				      pgt->structure() !=
-				      pgt->basic_structure()) ? 2 : 1);
+                                   pf->estimated_degree() > 1) ||
+                                  pgt->structure() !=
+                                  pgt->basic_structure()) ? 2 : 1);
       pmf->set_finite_element(cv, discontinuous ?
                               classical_discontinuous_fem(pgt, degree) :
                               classical_fem(pgt, degree));
@@ -191,12 +191,13 @@ namespace getfem
       }
       GMM_ASSERT1(t != -1, "semi internal error.. could not map " <<
                   name_of_fem(pmf->fem_of_element(cv))
-		  << " to a VTK cell type");
+                << " to a VTK cell type");
       pmf_cell_type[cv] = t;
+
       const std::vector<unsigned> &dmap = getfem_to_vtk_dof_mapping(t);
       //cout << "nbd = " << nbd << ", t = " << t << ", dmap = "<<dmap << "\n";
       GMM_ASSERT1(dmap.size() <= pmf->nb_basic_dof_of_element(cv),
-		  "inconsistency in vtk_dof_mapping");
+                "inconsistency in vtk_dof_mapping");
       for (unsigned i=0; i < dmap.size(); ++i)
         pmf_dof_used.add(pmf->ind_basic_dof_of_element(cv)[dmap[i]]);
     }
@@ -216,7 +217,10 @@ namespace getfem
   }
 
   void vtk_export::set_header(const std::string& s)
-  { strncpy(header, s.c_str(), 256); header[255] = 0; }
+  {
+    strncpy(header, s.c_str(), 256);
+    header[255] = 0;
+  }
 
   void vtk_export::check_header() {
     if (state >= HEADER_WRITTEN) return;
@@ -250,7 +254,7 @@ namespace getfem
     */
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       for (size_type i=0; i < psl->nodes(ic).size(); ++i)
-	write_vec(psl->nodes(ic)[i].pt.begin());
+       write_vec(psl->nodes(ic)[i].pt.begin());
       write_separ();
     }
     /* count total number of simplexes, and total number of entries
@@ -258,7 +262,7 @@ namespace getfem
     size_type cells_cnt = 0, splx_cnt = 0;
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       for (size_type i=0; i < psl->simplexes(ic).size(); ++i)
-	cells_cnt += psl->simplexes(ic)[i].dim() + 2;
+       cells_cnt += psl->simplexes(ic)[i].dim() + 2;
       splx_cnt += psl->simplexes(ic).size();
     }
     size_type nodes_cnt = 0;
@@ -266,10 +270,10 @@ namespace getfem
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
       for (size_type i=0; i < s.size(); ++i) {
-	write_val(int(s[i].dim()+1));
-	for (size_type j=0; j < s[i].dim()+1; ++j)
-	  write_val(int(s[i].inodes[j] + nodes_cnt));
-	write_separ();
+       write_val(int(s[i].dim()+1));
+       for (size_type j=0; j < s[i].dim()+1; ++j)
+         write_val(int(s[i].inodes[j] + nodes_cnt));
+       write_separ();
       }
       nodes_cnt += psl->nodes(ic).size();
     }
@@ -278,7 +282,7 @@ namespace getfem
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
       for (size_type i=0; i < s.size(); ++i) {
-	write_val(int(vtk_simplex_code[s[i].dim()]));
+       write_val(int(vtk_simplex_code[s[i].dim()]));
       }
       write_separ();
       splx_cnt -= s.size();
@@ -356,10 +360,10 @@ namespace getfem
     : os(real_os), ascii(ascii_) {
     real_os.open(fname.c_str(),
                  std::ios_base::openmode(std::ios_base::in |
-					 std::ios_base::out |
+                                    std::ios_base::out |
                   (append_ ? std::ios_base::ate : std::ios_base::trunc)));
     GMM_ASSERT1(real_os.good(), "impossible to write to dx file '"
-		<< fname << "'");
+              << fname << "'");
     init();
     if (append_) { reread_metadata(); header_written = true; }
   }
@@ -383,9 +387,9 @@ namespace getfem
 
   template<typename T> static typename std::list<T>::iterator
   get_from_name(std::list<T> &c,
-		const std::string& name, bool raise_error) {
+              const std::string& name, bool raise_error) {
     for (typename std::list<T>::iterator it = c.begin();
-	 it != c.end(); ++it) {
+        it != c.end(); ++it) {
       if (it->name == name) return it;
     }
     GMM_ASSERT1(!raise_error, "object not found in dx file: " << name);
@@ -407,7 +411,7 @@ namespace getfem
     std::list<dxMesh>::iterator it = get_mesh(name, false);
     if (it != meshes.end()) {
       if (&(*it) != &current_mesh())
-	std::swap(current_mesh(),*it);
+       std::swap(current_mesh(),*it);
       return false;
     } else {
       meshes.push_back(dxMesh()); meshes.back().name = name;
@@ -416,7 +420,7 @@ namespace getfem
   }
 
   void dx_export::exporting(const stored_mesh_slice& sl, bool merge_points,
-			    std::string name) {
+                         std::string name) {
     if (!new_mesh(name)) return;
     psl_use_merged = merge_points;
     if (merge_points) sl.merge_nodes();
@@ -426,7 +430,7 @@ namespace getfem
       if (psl->nb_simplexes(d)) {
         if (connections_dim == dim_type(-1)) connections_dim = d;
         else GMM_ASSERT1(false, "Cannot export a slice containing "
-			 "simplexes of different dimensions");
+                      "simplexes of different dimensions");
       }
     }
     GMM_ASSERT1(connections_dim != dim_type(-1), "empty slice!");
@@ -438,7 +442,7 @@ namespace getfem
     if (!new_mesh(name)) return;
     const mesh &m = mf.linked_mesh();
     GMM_ASSERT1(mf.linked_mesh().convex_index().card() != 0,
-		"won't export an empty mesh");
+              "won't export an empty mesh");
 
     dim_ = m.dim();
     GMM_ASSERT1(dim_ <= 3, "4D meshes and more are not supported");
@@ -446,16 +450,16 @@ namespace getfem
       pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     bgeot::pgeometric_trans pgt = m.trans_of_convex(m.convex_index().first_true());
     GMM_ASSERT1(dxname_of_convex_structure
-		(pgt->structure()->basic_structure()) != 0,
-		"DX Cannot handle " <<
-		bgeot::name_of_geometric_trans(pgt) << ", use slices");
+              (pgt->structure()->basic_structure()) != 0,
+              "DX Cannot handle " <<
+              bgeot::name_of_geometric_trans(pgt) << ", use slices");
     /* initialize pmf with finite elements suitable for OpenDX */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt2 = mf.linked_mesh().trans_of_convex(cv);
       GMM_ASSERT1(pgt->structure()->basic_structure() ==
-		  pgt2->structure()->basic_structure(),
-		  "Cannot export this mesh to opendx, it contains "
-		  "different convex types. Slice it first.");
+                pgt2->structure()->basic_structure(),
+                "Cannot export this mesh to opendx, it contains "
+                "different convex types. Slice it first.");
       pfem pf = mf.fem_of_element(cv);
       bool discontinuous = false;
       for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
@@ -479,19 +483,19 @@ namespace getfem
 
   void dx_export::write_series() {
     for (std::list<dxSeries>::const_iterator it = series.begin();
-	 it != series.end(); ++it) {
+        it != series.end(); ++it) {
       if (it->members.size() == 0) continue;
       size_type count = 0;
       os << "\nobject  \"" << it->name << "\" class series\n";
       for (std::list<std::string>::const_iterator ito = it->members.begin();
-	   ito != it->members.end(); ++ito, ++count) {
-	os << "  member  " << count << " \"" << (*ito) << "\"\n";
+          ito != it->members.end(); ++ito, ++count) {
+       os << "  member  " << count << " \"" << (*ito) << "\"\n";
       }
     }
   }
 
   void dx_export::serie_add_object_(const std::string &serie_name,
-				   const std::string &object_name) {
+                               const std::string &object_name) {
     std::list<dxSeries>::iterator it = series.begin();
     while (it != series.end() && it->name != serie_name) ++it;
     if (it == series.end()) {
@@ -502,15 +506,15 @@ namespace getfem
   }
 
   void dx_export::serie_add_object(const std::string &serie_name,
-				   const std::string &object_name) {
+                               const std::string &object_name) {
     /* create a series for edge data if possible (the cost is null
      and it may be useful) */
     std::list<dxObject>::iterator ito = get_object(object_name, false);
     if (ito != objects.end()) {
       std::list<dxMesh>::iterator itm = get_mesh(ito->mesh);
       if (itm != meshes.end() && (itm->flags & dxMesh::WITH_EDGES)) {
-	serie_add_object_(serie_name + "_edges",
-			 object_name + "_edges");
+       serie_add_object_(serie_name + "_edges",
+                      object_name + "_edges");
       }
     }
     /* fill the real serie */
@@ -532,18 +536,18 @@ namespace getfem
     os << "# This file contains the following objects\n";
     std::ios::pos_type pos_end = os.tellp();
     for (std::list<dxSeries>::const_iterator it = series.begin();
-	 it != series.end(); ++it) {
+        it != series.end(); ++it) {
       os << "#S \"" << it->name << "\" which contains:\n";
       for (std::list<std::string>::const_iterator its = it->members.begin();
            its != it->members.end(); ++its)
         os << "#+   \"" << *its << "\"\n";
     }
     for (std::list<dxObject>::const_iterator it = objects.begin();
-	 it != objects.end(); ++it) {
+        it != objects.end(); ++it) {
       os << "#O \"" << it->name << "\" \"" << it->mesh << "\"\n";
     }
     for (std::list<dxMesh>::const_iterator it = meshes.begin();
-	 it != meshes.end(); ++it) {
+        it != meshes.end(); ++it) {
       os << "#M \"" << it->name << "\" " << it->flags << "\n";
     }
     os << "#E \"THE_END\" " << std::setw(20) << pos_series << std::setw(20) << pos_end << "\n";
@@ -561,7 +565,7 @@ namespace getfem
     real_os.getline(line, sizeof line);
     if (sscanf(line, "#E \"THE_END\" %lu %lu", &lu_series, &lu_end) != 2)
       GMM_ASSERT1(false, "this file was not generated by getfem, "
-		  "cannot append data to it!\n");
+                "cannot append data to it!\n");
     real_os.seekg(lu_end, std::ios::beg);
     do {
       char name[512]; unsigned n;
@@ -600,17 +604,17 @@ namespace getfem
       /* TODO: do something for point data */
       case 1: s_elem_type = "lines"; break;
       case 2:
-	if (cvs->nb_points() == 3)
-	  s_elem_type = "triangles";
-	else if (cvs->nb_points() == 4)
-	  s_elem_type = "quads";
-	break;
+       if (cvs->nb_points() == 3)
+         s_elem_type = "triangles";
+       else if (cvs->nb_points() == 4)
+         s_elem_type = "quads";
+       break;
       case 3:
-	if (cvs->nb_points() == 4)
-	  s_elem_type = "tetrahedra";
-	else if (cvs->nb_points() == 8)
-	  s_elem_type = "cubes";
-	break;
+       if (cvs->nb_points() == 4)
+         s_elem_type = "tetrahedra";
+       else if (cvs->nb_points() == 8)
+         s_elem_type = "cubes";
+       break;
     }
     return s_elem_type;
   }
@@ -639,16 +643,16 @@ namespace getfem
     os << " data follows\n";
     if (psl_use_merged) {
       for (size_type i=0; i < psl->nb_merged_nodes(); ++i) {
-	for (size_type k=0; k < psl->dim(); ++k)
-	  write_val(float(psl->merged_point(i)[k]));
-	write_separ();
+       for (size_type k=0; k < psl->dim(); ++k)
+         write_val(float(psl->merged_point(i)[k]));
+       write_separ();
       }
     } else {
       for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-	for (size_type i=0; i < psl->nodes(ic).size(); ++i)
-	  for (size_type k=0; k < psl->dim(); ++k)
-	    write_val(float(psl->nodes(ic)[i].pt[k]));
-	write_separ();
+       for (size_type i=0; i < psl->nodes(ic).size(); ++i)
+         for (size_type k=0; k < psl->dim(); ++k)
+           write_val(float(psl->nodes(ic)[i].pt[k]));
+       write_separ();
       }
     }
 
@@ -665,12 +669,12 @@ namespace getfem
       for (size_type i=0; i < s.size(); ++i) {
         if (s[i].dim() == connections_dim) {
           for (size_type j=0; j < s[i].dim()+1; ++j) {
-	    size_type k;
-	    if (psl_use_merged)
-	      k = psl->merged_index(ic, s[i].inodes[j]);
-	    else k = psl->global_index(ic, s[i].inodes[j]);
+           size_type k;
+           if (psl_use_merged)
+             k = psl->merged_index(ic, s[i].inodes[j]);
+           else k = psl->global_index(ic, s[i].inodes[j]);
             write_val(int(k));
-	  }
+         }
           write_separ();
         }
       }
@@ -680,8 +684,6 @@ namespace getfem
     write_convex_attributes(bgeot::simplex_structure(connections_dim));
     assert(nodes_cnt == psl->nb_points()); // sanity check
   }
-
-
 
   void dx_export::write_mesh_structure_from_mesh_fem() {
     os << "\nobject \"" << name_of_pts_array(current_mesh_name())
@@ -695,7 +697,7 @@ namespace getfem
     for (size_type d = 0; d < pmf->nb_basic_dof(); ++d) {
       const base_node P = pmf->point_of_basic_dof(d);
       for (size_type k=0; k < dim_; ++k)
-	write_val(float(P[k]));
+       write_val(float(P[k]));
       write_separ();
     }
 
@@ -742,8 +744,8 @@ namespace getfem
     os << " data follows\n";
     for (size_type i=0; i < edges.size()/2; ++i) {
       if (!slice_edges.is_in(i)) {
-	write_val(int(edges[2*i]));
-	write_val(int(edges[2*i+1]));
+       write_val(int(edges[2*i]));
+       write_val(int(edges[2*i+1]));
       }
       if ((i+1)%10 == 0) write_separ();
     }
@@ -770,7 +772,7 @@ namespace getfem
 
 
   /* -------------------------------------------------------------
-   * POS export
+   * POS export (Gmsh post-processing format)
    * ------------------------------------------------------------- */
   struct gf2pos_dof_mapping : public std::vector<std::vector<unsigned> > {};
 
@@ -778,13 +780,13 @@ namespace getfem
     gf2pos_dof_mapping &dm = dal::singleton<gf2pos_dof_mapping>::instance();
     if (dm.size() == 0) {
       dm.resize(7);
-      bgeot::sc(dm[pos_export::POS_PT]) = 0;//???
-      bgeot::sc(dm[pos_export::POS_LN]) = 0, 1;//???
-      bgeot::sc(dm[pos_export::POS_TR]) = 0, 1, 2;//???
-      bgeot::sc(dm[pos_export::POS_QU]) = 0, 1, 3, 2;//ok
-      bgeot::sc(dm[pos_export::POS_SI]) = 0, 1, 2, 3;//???
-      bgeot::sc(dm[pos_export::POS_HE]) = 0, 1, 3, 2, 4, 5, 7, 6;//ok
-      bgeot::sc(dm[pos_export::POS_PR]) = 0, 1, 2, 3, 4, 5;//???
+      bgeot::sc(dm[pos_export::POS_PT]) = 0;
+      bgeot::sc(dm[pos_export::POS_LN]) = 0, 1;
+      bgeot::sc(dm[pos_export::POS_TR]) = 0, 1, 2;
+      bgeot::sc(dm[pos_export::POS_QU]) = 0, 1, 3, 2;
+      bgeot::sc(dm[pos_export::POS_SI]) = 0, 1, 2, 3;
+      bgeot::sc(dm[pos_export::POS_HE]) = 0, 1, 3, 2, 4, 5, 7, 6;
+      bgeot::sc(dm[pos_export::POS_PR]) = 0, 1, 2, 3, 4, 5;
     }
     return dm[t];
   }
@@ -795,13 +797,12 @@ namespace getfem
 
   pos_export::pos_export(const std::string& fname)
     : os(real_os), real_os(fname.c_str()) {
-    GMM_ASSERT1(real_os, "impossible to write to pos file '"
-                         << fname << "'");
+    GMM_ASSERT1(real_os, "impossible to write to pos file '" << fname << "'");
     init();
   }
 
   void pos_export::init() {
-    strcpy(header, "Exported by getfem++");
+    strcpy(header, "Exported by GetFEM++");
     state = EMPTY;
     view  = 0;
   }
@@ -809,24 +810,35 @@ namespace getfem
   void pos_export::set_header(const std::string& s){
     strncpy(header, s.c_str(), 256);
     header[255] = 0;
-    state = EMPTY;
   }
 
   void pos_export::check_header() {
     if (state >= HEADER_WRITTEN) return;
-    os << "/*" << header << "*/\n";
+    os << "/* " << header << " */\n";
     os << "General.FastRedraw = 0;\n";
     os << "General.ColorScheme = 1;\n";
     state = HEADER_WRITTEN;
   }
 
-  void pos_export::exporting(const mesh_fem& mf) {
-    dim = dim_type(mf.linked_mesh().dim());
+  void pos_export::exporting(const mesh& m) {
+    if (state >= STRUCTURE_WRITTEN) return;
+    dim = dim_type(m.dim());
     GMM_ASSERT1(int(dim) <= 3, "attempt to export a "
                 << int(dim) << "D mesh (not supported)");
+    pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
+    pmf->set_classical_finite_element(1);
+    exporting(*pmf);
+    state = STRUCTURE_WRITTEN;
+  }
+
+  void pos_export::exporting(const mesh_fem& mf) {
+    if (state >= STRUCTURE_WRITTEN) return;
+    dim = dim_type(mf.linked_mesh().dim());
+    GMM_ASSERT1(int(dim) <= 3, "attempt to export a "
+                << int(dim) << "D mesh_fem (not supported)");
     if (&mf != pmf.get()) pmf.reset(new mesh_fem(mf.linked_mesh(),1));
 
-    /* initialize pmf with finite elements suitable for GMSH */
+    /* initialize pmf with finite elements suitable for Gmsh */
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       pfem pf = mf.fem_of_element(cv);
@@ -839,9 +851,9 @@ namespace getfem
       pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
+    psl = NULL;
 
-    pmf_cell_type.resize(pmf->convex_index().last_true() + 1, unsigned(-1));
-
+    /* find out which dof will be exported to Gmsh */
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       int t = -1;
       switch (pmf->fem_of_element(cv)->nb_dof(cv)){
@@ -854,10 +866,10 @@ namespace getfem
         case 6: t = POS_PR; break;
         case 8: t = POS_HE; break;
       }
-      GMM_ASSERT1(t != -1, "semi internal error.. could not map " <<
-                  name_of_fem(pmf->fem_of_element(cv))
-                  << " to a POS primitive type");
-      pmf_cell_type[cv] = t;
+      GMM_ASSERT1(t != -1, "semi internal error.. could not map "
+                           << name_of_fem(pmf->fem_of_element(cv))
+                           << " to a POS primitive type");
+      pos_cell_type.push_back(unsigned(t));
 
       const std::vector<unsigned>& dmap = getfem_to_pos_dof_mapping(t);
       GMM_ASSERT1(dmap.size() <= pmf->nb_basic_dof_of_element(cv),
@@ -866,77 +878,83 @@ namespace getfem
       cell_dof.resize(dmap.size(),unsigned(-1));
       for (size_type i=0; i < dmap.size(); ++i)
         cell_dof[i] = unsigned(pmf->ind_basic_dof_of_element(cv)[dmap[i]]);
-      pmf_cell_dof.push_back(cell_dof);
+      pos_cell_dof.push_back(cell_dof);
+    }
+    for (size_type i=0; i< pmf->nb_basic_dof(); ++i){
+      std::vector<float> pt;
+      pt.resize(dim,float(0));
+      for (size_type j=0; j<dim; ++j)
+        pt[j] = float(pmf->point_of_basic_dof(i)[j]);
+      pos_pts.push_back(pt);
     }
     state = STRUCTURE_WRITTEN;
   }
 
-  void pos_export::write_cell(const int& t, const std::vector<unsigned>& dof,
-                                            const std::vector<double>& val){
+  void pos_export::exporting(const stored_mesh_slice& sl) {
+    if (state >= STRUCTURE_WRITTEN) return;
+    psl = &sl;
+    dim = dim_type(sl.dim());
+    GMM_ASSERT1(int(dim) <= 3, "attempt to export a "
+                << int(dim) << "D slice (not supported)");
 
-    size_type qdim_cell = val.size()/dof.size();
-    size_type dim3D = size_type(-1);
-    if (1== qdim_cell){
-      dim3D = size_type(1);
-      os << "S";
-    } else if (1< qdim_cell && qdim_cell <=3){
-      dim3D = size_type(3);
-      os << "V";
-    } else if (3< qdim_cell && qdim_cell <=9){
-      dim3D = size_type(9);
-      os << "T";
-    }
-    switch (t){
-      case POS_PT: os << "P("; break; // point
-      case POS_LN: os << "L("; break; // line
-      case POS_TR: os << "T("; break; // triangle
-      case POS_QU: os << "Q("; break; // quadrangle
-      case POS_SI: os << "S("; break; // tetrahedra (simplex)
-      case POS_HE: os << "H("; break; // hexahedra
-      case POS_PR: os << "I("; break; // prism
-    }
-    for (size_type i=0; i< dof.size(); ++i){
-      for(size_type j=0; j< dim; ++j){
-        if(0!=i || 0!=j) os << ",";
-        os << pmf->point_of_basic_dof(dof[i])[j];
+    for (size_type ic=0, pcnt=0; ic < psl->nb_convex(); ++ic) {
+      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
+           it != psl->simplexes(ic).end(); ++it) {
+        int t = -1;
+        switch ((*it).dim()){
+          case 0: t = POS_PT; break;
+          case 1: t = POS_LN; break;
+          case 2: t = POS_TR; break;
+          case 3: t = POS_SI; break;
+        }
+        GMM_ASSERT1(t != -1, "semi internal error.. could not map to a POS primitive type");
+        pos_cell_type.push_back(unsigned(t));
+
+        const std::vector<unsigned>& dmap = getfem_to_pos_dof_mapping(t);
+        GMM_ASSERT1(dmap.size() <= size_type(t+1), "inconsistency in pos_dof_mapping");
+
+        std::vector<unsigned> cell_dof;
+        cell_dof.resize(dmap.size(),unsigned(-1));
+        for (size_type i=0; i < dmap.size(); ++i)
+          cell_dof[i] = unsigned(it->inodes[dmap[i]] + pcnt);
+        pos_cell_dof.push_back(cell_dof);
       }
-      for (size_type j=dim; j< 3; ++j){
-        os << ",0.00";
+      for(getfem::mesh_slicer::cs_nodes_ct::const_iterator it=psl->nodes(ic).begin();
+          it != psl->nodes(ic).end(); ++it) {
+        std::vector<float> pt;
+        pt.resize(dim,float(0));
+        for (size_type i=0; i<dim; ++i)
+          pt[i] = float(it->pt[i]);
+        pos_pts.push_back(pt);
       }
+      pcnt += psl->nodes(ic).size();
     }
-    os << "){";
-    for (size_type i=0; i< dof.size(); ++i){
-      for(size_type j=0; j< qdim_cell; ++j){
-        if(0!=i || 0!=j) os << ",";
-        os << val[i*qdim_cell+j];
-      }
-      for (size_type j=qdim_cell; j< dim3D; ++j){
-        os << ",0.00";
-      }
-    }
-    os << "};\n";
+    state = STRUCTURE_WRITTEN;
   }
 
   void pos_export::write(const mesh& m){
+    if (state >= IN_CELL_DATA) return;
     GMM_ASSERT1(int(m.dim()) <= 3, "attempt to export a "
                 << int(m.dim()) << "D mesh (not supported)");
     pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
     write(*pmf);
+    state = IN_CELL_DATA;
   }
 
   void pos_export::write(const mesh_fem& mf){
-    exporting(mf);
+    if (state >= IN_CELL_DATA) return;
     check_header();
-    os << "View \"mesh" << view <<"\" {\n";
+    exporting(mf);
+    os << "View \"mesh " << view <<"\" {\n";
 
     int t;
     std::vector<unsigned> cell_dof;
-    std::vector<double> cell_dof_val;
+    std::vector<float> cell_dof_val;
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      t = pmf_cell_type[cv];
-      cell_dof = pmf_cell_dof[cv];
-      cell_dof_val.resize(cell_dof.size(),double(0));
+      t = pos_cell_type[cv];
+      cell_dof = pos_cell_dof[cv];
+      cell_dof_val.resize(cell_dof.size(),float(0));
       write_cell(t,cell_dof,cell_dof_val);
     }
 
@@ -946,6 +964,34 @@ namespace getfem
     os << "View[" << view << "].DrawScalars = 0;\n";
     os << "View[" << view << "].DrawVectors = 0;\n";
     os << "View[" << view++ << "].DrawTensors = 0;\n";
+    state = IN_CELL_DATA;
   }
 
+  void pos_export::write(const stored_mesh_slice& sl){
+    if (state >= IN_CELL_DATA) return;
+    check_header();
+    exporting(sl);
+    os << "View \"mesh " << view <<"\" {\n";
+
+    int t;
+    std::vector<unsigned> cell_dof;
+    std::vector<float> cell_dof_val;
+    for (size_type ic=0, scnt = 0; ic < psl->nb_convex(); ++ic) {
+      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
+           it != psl->simplexes(ic).end(); ++it) {
+        t = pos_cell_type[scnt];
+        cell_dof = pos_cell_dof[scnt++];
+        cell_dof_val.resize(cell_dof.size(),float(0));
+        write_cell(t,cell_dof,cell_dof_val);
+      }
+    }
+
+    os << "};\n";
+    os << "View[" << view << "].ShowScale = 0;\n";
+    os << "View[" << view << "].ShowElement = 1;\n";
+    os << "View[" << view << "].DrawScalars = 0;\n";
+    os << "View[" << view << "].DrawVectors = 0;\n";
+    os << "View[" << view++ << "].DrawTensors = 0;\n";
+    state = IN_CELL_DATA;
+  }
 }  /* end of namespace getfem. */
