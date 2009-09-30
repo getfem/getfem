@@ -27,9 +27,9 @@ import sys
 
 class ParseError(Exception):
     def __init__(self, value):
-        self.value = value
+      self.value = value
     def __str__(self):
-        return repr(self.value)
+      return repr(self.value)
 
 def ExceptionsRewrite(d):
     """renames some ambiguous commands for python.
@@ -60,52 +60,52 @@ def RemoveSpacesInFNames(d):
     """Replace MESH:GET('max pid') with MESH:GET('max_pid')."""
     n=1
     while n:
-        (d,n)=re.subn(r"(:[A-Z]+ *\('[a-z_]+) ([a-z_ ]+')", r"\1_\2",d)
+      (d,n)=re.subn(r"(:[A-Z]+ *\('[\w]+) ([\w\s]+')", r"\1_\2",d)
     return d
 
 def find_closing_brace(s):
     lev = 0
     cnt = 0
     for c in s:
-        if (c == '{'):
-            lev+=1
-        if (c == '}'):
-            lev-=1
-            if (lev == -1):
-                return cnt
-        cnt += 1
+      if (c == '{'):
+        lev+=1
+      if (c == '}'):
+        lev-=1
+        if (lev == -1):
+          return cnt
+      cnt += 1
     raise ParseError, s
 
 def CellToTuples(d):
     while 1:
-        s = ''
-        p = d.find('@CELL{')
-        #sys.stderr.write('p=%d\n' % (p,))
-        if (p == -1):
-            s += d
-            break
-        s += d[:p]+'('
-        d = d[p+6:]
-        p2 = find_closing_brace(d)
-        #sys.stderr.write(d[:p2]+'| p2=%d\n' % (p2,))
-        s += d[:p2]+')'+d[p2+1:]
-        d = s
+      s = ''
+      p = d.find('@CELL{')
+      #sys.stderr.write('p=%d\n' % (p,))
+      if (p == -1):
+        s += d
+        break
+      s += d[:p]+'('
+      d = d[p+6:]
+      p2 = find_closing_brace(d)
+      #sys.stderr.write(d[:p2]+'| p2=%d\n' % (p2,))
+      s += d[:p2]+')'+d[p2+1:]
+      d = s
     return d
 
 def FilterMatlabOrPythonSections(d, what):
     if (what == 'MATLAB'):
-        w = 1
+      w = 1
     else: w = 0
     markup = ['@MATLAB{', '@PYTHON{']
     ll = d.split(markup[w])
     d = ll[0]
     for l in ll[1:]:
-        d += l[(find_closing_brace(l)+1):]
+      d += l[(find_closing_brace(l)+1):]
     ll = d.split(markup[1-w])
     d = ll[0]
     for l in ll[1:]:
-        p = find_closing_brace(l)
-        d += l[:p] + l[p+1:]
+      p = find_closing_brace(l)
+      d += l[:p] + l[p+1:]
     return d
 
 def SubstituteTypes(d):
@@ -133,23 +133,24 @@ def SubstituteTypes(d):
                    '@tfem':'Fem',
                    '@tgt':'GeoTrans',
                    '@tinteg':'Integ',
+                   '@tmls':'MeshLevelSet',
                    '@tls':'LevelSet',
                    '@tsl':'Slice',
                    '@tsp':'Spmat',
                    '@tpre':'Precond',
                    }
     for (k,v) in transtypes.items():
-        d = string.replace(d, k, v)
+      d = string.replace(d, k, v)
     return d
 
 
 def flush_par(par, state,indent):
     if (state == 1):
-        return indent+'* '+par+'\n'
+      return indent+'* '+par+'\n'
     elif (state == 2):
-        return indent+par+'\n'
+      return indent+par+'\n'
     elif (state == 3):
-        return '<P>'+par+'</P>\n'
+      return '<P>'+par+'</P>\n'
     return ''
 
 def WrapParagraphs(d, indent):
@@ -187,27 +188,27 @@ def WrapParagraphs(d, indent):
 #    doc+=flush_par(par,state,indent)
 
     for l in re.split(r'(<[Pp]ar>)', d):
-        if l.startswith('<Par>'):
-            doc += textwrap.fill(l[5:],78)
-            doc += '\n\n'
-        elif l.startswith('<par>'):
-            doc += textwrap.fill(l[5:],78)
-            doc += '\n'
-        else: doc += textwrap.fill(l,78)
+      if l.startswith('<Par>'):
+        doc += textwrap.fill(l[5:],78)
+        doc += '\n\n'
+      elif l.startswith('<par>'):
+        doc += textwrap.fill(l[5:],78)
+        doc += '\n'
+      else: doc += textwrap.fill(l,78)
     doc = doc.strip('\n')
     return doc
 
 def PythonWrapParagraphs(d,indent,subindent,endline):
     doc = ''
     for l in re.split(r'(<[Pp]ar>[..\n]*)', d):
-        if l.startswith('<Par>'):
-            doc += '\n\n'
-        elif l.startswith('<par>'):
-            doc += '\n'
-        elif len(l)>0:
-            text = textwrap.fill(l,78,initial_indent=indent,
-                   subsequent_indent=subindent).replace('\n',endline+'\n')
-            doc += text
+      if l.startswith('<Par>'):
+        doc += '\n\n'
+      elif l.startswith('<par>'):
+        doc += '\n'
+      elif len(l)>0:
+        text = textwrap.fill(l,78,initial_indent=indent,
+               subsequent_indent=subindent).replace('\n',endline+'\n')
+        doc += text
     doc = doc.strip('\n')
     return doc
     
@@ -238,6 +239,8 @@ def PythonRewriteDoc(d,indent,subindent,endline):
              'SPMAT:GET': r"Spmat.\1(\3)", \
              'SPMAT:SET': r"Spmat.\1(\3)", \
              'PRECOND:GET': r"Precond.\1(\3)", \
+             'MESHLEVELSET:GET': r"MeshLevelSet.\1(\3)", \
+             'MESHLEVELSET:SET': r"MeshLevelSet.\1(\3)", \
              'LEVELSET:GET': r"LevelSet.\1(\3)", \
              'LEVELSET:SET': r"LevelSet.\1(\3)", \
              '::COMPUTE':r'compute_\1(mf, U, \3)', \
@@ -245,8 +248,8 @@ def PythonRewriteDoc(d,indent,subindent,endline):
              '::LINSOLVE':r'linsolve_\1(\3)', \
              }
     for retry in [1,2,3]: #pour les appels imbriques
-        for (k,v) in trans.items():
-            d = re.sub(k+r"\( *'([^)']*)' *(,?)([^\)]*)\)",v, d)
+      for (k,v) in trans.items():
+        d = re.sub(k+r"\( *'([^)']*)' *(,?)([^\)]*)\)",v, d)
     d = string.replace(d,'SLICE:INIT','Slice')
     d = string.replace(d,'MDBRICK:INIT','MdBrick')
     d = string.replace(d,'MDSTATE:INIT','MdState')
@@ -259,8 +262,8 @@ def PythonRewriteDoc(d,indent,subindent,endline):
     d = string.replace(d,'ELTM:INIT','Eltm')
     d = string.replace(d,'SPMAT:INIT','Spmat')
     d = string.replace(d,'PRECOND:INIT','Precond')
-    d = string.replace(d,'LEVELSET:INIT','LevelSet')
     d = string.replace(d,'MESHLEVELSET:INIT','MeshLevelSet')
+    d = string.replace(d,'LEVELSET:INIT','LevelSet')
     d = string.replace(d,'::UTIL','util_')
 
     d = SubstituteTypes(d)
@@ -293,12 +296,14 @@ def MatlabRewriteDoc(d):
              'SPMAT:GET': r"gf_spmat_get(M,'\1'\2", \
              'SPMAT:SET': r"gf_spmat_set(M,'\1'\2", \
              'PRECOND:GET': r"gf_precond_get(P,'\1'\2", \
+             'MESHLEVELSET:GET': r"gf_mesh_levelset_get(ls,'\1'\2", \
+             'MESHLEVELSET:SET': r"gf_mesh_levelset_set(ls,'\1'\2", \
              'LEVELSET:GET': r"gf_levelset_get(ls,'\1'\2", \
              'LEVELSET:SET': r"gf_levelset_set(ls,'\1'\2", \
              '::COMPUTE' : r"gf_compute(MF, U,'\1'\2", \
              '::ASM' : r"gf_asm('\1'\2"}
     for (k,v) in trans.items():
-        d = re.sub(k+r"\( *'([^)']*)' *(,?)",v, d)
+      d = re.sub(k+r"\( *'([^)']*)' *(,?)",v, d)
     d = string.replace(d,'SLICE:INIT','gf_slice')
     d = string.replace(d,'MDBRICK:INIT','gf_mdbrick')
     d = string.replace(d,'MDSTATE:INIT','gf_mdstate')
@@ -311,8 +316,8 @@ def MatlabRewriteDoc(d):
     d = string.replace(d,'ELTM:INIT','gf_eltm')
     d = string.replace(d,'SPMAT:INIT','gf_spmat')
     d = string.replace(d,'PRECOND:INIT','gf_precond')
-    d = string.replace(d,'LEVELSET:INIT','gf_levelset')
     d = string.replace(d,'MESHLEVELSET:INIT','gf_mesh_levelset')
+    d = string.replace(d,'LEVELSET:INIT','gf_levelset')
     d = string.replace(d,'::LINSOLVE','gf_linsolve')
     d = string.replace(d,'::UTIL','gf_util')
 
@@ -325,66 +330,66 @@ def SynopsisToArgs(s0):
     s = s0
     need_star_args = 0
     if (s.find('(') != -1):
-        s = s.split('(',1)[1].split(')',1)[0]
+      s = s.split('(',1)[1].split(')',1)[0]
     if (s.find('{') != -1):
-        s = s[:s.find('{')]
-        need_star_args = 1
+      s = s[:s.find('{')]
+      need_star_args = 1
     if (s.find('...') != -1):
-        s = s[:s.find('...')]
-        need_star_args = 1
+      s = s[:s.find('...')]
+      need_star_args = 1
     if (s.find('[',1+s.find('[')) != -1):
-        s = s[:s.find('[',1+s.find('['))]
-        need_star_args = 1
+      s = s[:s.find('[',1+s.find('['))]
+      need_star_args = 1
     if (s.find(']') != -1):
-        s = s[:s.find(']')]
+      s = s[:s.find(']')]
 
     ll = [re.sub('@[a-z]*','',l).strip() for l in s.split(',')]
     args = []
     in_opt_arg = 0
     for l0 in ll:
-        c = 0
-        for l in l0.split('['):
-            in_opt_arg += c
-            l = l.strip()
-            if (len(l)):
-                if (l[0] != "'"):
-                    if not in_opt_arg:
-                        args += [l]
-                    elif (l.find('=')==-1):
-                        args += [l+'=None']
-                    else:
-                        args += [l]
-                elif (in_opt_arg):
-                    need_star_args = 0
-            c = 1
+      c = 0
+      for l in l0.split('['):
+        in_opt_arg += c
+        l = l.strip()
+        if (len(l)):
+          if (l[0] != "'"):
+            if not in_opt_arg:
+              args += [l]
+            elif (l.find('=')==-1):
+              args += [l+'=None']
+            else:
+              args += [l]
+          elif (in_opt_arg):
+            need_star_args = 0
+        c = 1
     if (need_star_args == 1):
-        args += ['*args']
+      args += ['*args']
     #sys.stderr.write('to_args(%s)\n %d -> %s\n' % (s0, need_star_args, str(args)))
     return args
 
 class ExtractDoc:
     def __init__(self, s):
-        (self.type, self.synopsis) = s.split('\n',1)[0].split(' ',1)
-        m = re.search(r"([A-Z:]+) *\( *'([a-z0-9A-Z _.]*)'(.*)\)",self.synopsis)
-        if (not m):
-            raise ParseError, s
-        self.categ = m.group(1) # 'MESH:GET' etc
-        self.name = m.group(2)  # 'pts', 'optimize_structure',...
-        self.args = m.group(3)  # ', int dim, ...'
+      (self.type, self.synopsis) = s.split('\n',1)[0].split(' ',1)
+      m = re.search(r"([A-Z:]+) *\( *'([a-z0-9A-Z _.]*)'(.*)\)",self.synopsis)
+      if (not m):
+        raise ParseError, s
+      self.categ = m.group(1) # 'MESH:GET' etc
+      self.name = m.group(2)  # 'pts', 'optimize_structure',...
+      self.args = m.group(3)  # ', int dim, ...'
 
-        if (self.name[0]=='.'):# that is the case of name hidden in synopsis
-          syn = self.synopsis
-          syn = syn[:syn.find("'")]+syn[syn.find(",",syn.find("'")+1)+1:]
-          self.synopsis = syn
+      if (self.name[0]=='.'):# that is the case of name hidden in synopsis
+        syn = self.synopsis
+        syn = syn[:syn.find("'")]+syn[syn.find(",",syn.find("'")+1)+1:]
+        self.synopsis = syn
 
-        l = s.split('\n',1)
-        if (len(l)==2):
-            self.rawdoc = textwrap.dedent(l[1])
-        else:
-            self.doc = "Undocumented."
+      l = s.split('\n',1)
+      if (len(l)==2):
+        self.rawdoc = textwrap.dedent(l[1])
+      else:
+        self.doc = "Undocumented."
     def __repr__(self):
-        return "cat='%s' type='%s', name='%s', args='%s'" % \
-               (self.categ,self.type,self.name,self.args)
+      return "cat='%s' type='%s', name='%s', args='%s'" % \
+             (self.categ,self.type,self.name,self.args)
 
 def ExtractDocFromCppFile(fname):
     docs = {}
@@ -393,17 +398,17 @@ def ExtractDocFromCppFile(fname):
     sys.stderr.write('reading %s:' % (fname))
     f = open(fname)
     for l in f:
-        if (l.strip().startswith('/*@')):
-            in_doc = 1
-            docline = l.strip()[3:].strip()+'\n'
-        elif (l.find('@*/') != -1):
-            in_doc = 0
-            docline += l[:l.find('@*/')]
-            ed = ExtractDoc(docline)
-            docs[ed.name] = ed
-            sys.stderr.write(' '+ed.name)
-        elif (in_doc):
-            docline += l
+      if (l.strip().startswith('/*@')):
+        in_doc = 1
+        docline = l.strip()[3:].strip()+'\n'
+      elif (l.find('@*/') != -1):
+        in_doc = 0
+        docline += l[:l.find('@*/')]
+        ed = ExtractDoc(docline)
+        docs[ed.name] = ed
+        sys.stderr.write(' '+ed.name)
+      elif (in_doc):
+        docline += l
     f.close()
     sys.stderr.write('\n')
     return docs
@@ -419,78 +424,78 @@ def WritePythonFunction(ed):
     arg_first_dic = { '::COMPUTE':'mf, U', '::ASM':'', '::LINSOLVE':'', '::UTIL':'' }
     arg_list = ", ".join(SynopsisToArgs(ed.synopsis))
     if (not ed.type == 'FUNC'):
-        print '    def %s(self%s%s):' % (string.replace(name,' ','_'), CommaIf(len(arg_list)), arg_list)
-        print '       ',
+      print '    def %s(self%s%s):' % (string.replace(name,' ','_'), CommaIf(len(arg_list)), arg_list)
+      print '       ',
     else:
-        arg_first = arg_first_dic[ed.categ]
-        print 'def %s(%s%s%s):' % (string.replace(ed.categ,'::','').lower() + '_' + string.replace(name,' ','_'),
-                                   arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list)
-        print '   ',
+      arg_first = arg_first_dic[ed.categ]
+      print 'def %s(%s%s%s):' % (string.replace(ed.categ,'::','').lower() + '_' + string.replace(name,' ','_'),
+                                 arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list)
+      print '   ',
 
     arg_list = re.sub("=[ .\d\w\"\']*","",arg_list)
     d = ed.rawdoc.split('\n')
     while (len(d) and (len(d[0].strip()) == 0)):
-        d = d[1:]
+      d = d[1:]
     if (len(d)>2 and (len(d[1].strip()) == 0)):
-        doc = d[0]+'<Par>Synopsis: %s<Par>' % (RemoveSpacesInFNames(ed.synopsis),)
-        doc += '\n'.join(d[2:])
+      doc = d[0]+'<Par>Synopsis: %s<Par>' % (RemoveSpacesInFNames(ed.synopsis),)
+      doc += '\n'.join(d[2:])
     else:
-        doc = '\n'.join(d)
+      doc = '\n'.join(d)
     print '"""%s"""' % (PythonRewriteDoc(doc,"","",""),)
     if (ed.type == 'FUNC'):
-        if (len(arg_first)):
-            print "    return getfem('%s',%s,'%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),
-                                                           arg_first,name,CommaIf(len(arg_list)), arg_list)
-        else:
-            print "    return getfem('%s','%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),name,CommaIf(len(arg_list)), arg_list)
+      if (len(arg_first)):
+        print "    return getfem('%s',%s,'%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),
+                                                       arg_first,name,CommaIf(len(arg_list)), arg_list)
+      else:
+        print "    return getfem('%s','%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),name,CommaIf(len(arg_list)), arg_list)
     elif (ed.categ.endswith('GET')):
-        print '        return self.get("%s"%s%s)\n' % (name, CommaIf(len(arg_list)), arg_list)
+      print '        return self.get("%s"%s%s)\n' % (name, CommaIf(len(arg_list)), arg_list)
     else:
-        print '        return self.set("%s"%s%s)\n' % (ed.name, CommaIf(len(arg_list)), arg_list)
+      print '        return self.set("%s"%s%s)\n' % (ed.name, CommaIf(len(arg_list)), arg_list)
 
 def WritePythonSubConstructor(ed):
     if (ed.type != 'TEXT'):
-        print PythonRewriteDoc('* '+ed.synopsis,"",""," \\")
-        print PythonRewriteDoc(ed.rawdoc,"   ","   ","")
+      print PythonRewriteDoc('* '+ed.synopsis,"",""," \\")
+      print PythonRewriteDoc(ed.rawdoc,"   ","   ","")
     else:
-        print PythonRewriteDoc(ed.rawdoc,"","   ","")
+      print PythonRewriteDoc(ed.rawdoc,"","   ","")
 
 def WriteMatlabSubFunctionDoc(ed):
     if (ed.type != 'TEXT'):
-        d = '* '+MatlabRewriteDoc(ed.synopsis+r'<par>'+ed.rawdoc)
-        print '\n'.join(['  '+s for s in d.split('\n')]) + '\n'
+      d = '* '+MatlabRewriteDoc(ed.synopsis+r'<par>'+ed.rawdoc)
+      print '\n'.join(['  '+s for s in d.split('\n')]) + '\n'
     else:
-        print MatlabRewriteDoc(ed.rawdoc)
+      print MatlabRewriteDoc(ed.rawdoc)
 
 def LookupDoc(what):
     """return the ExtractDoc for what = @RDATTR MESH:GET('nbpts') etc"""
     what = what.strip()
     ed = ExtractDoc(what)
     if (not docs.has_key(ed.categ)):
-        sys.stderr.write('Undocumented category : %s\n' % ed.categ)
-        raise ParseError, what
+      sys.stderr.write('Undocumented category : %s\n' % ed.categ)
+      raise ParseError, what
     d = docs[ed.categ]
     if (not d.has_key(ed.name)):
-        raise ParseError, 'CANNOT FIND KEY for for %s:%s\n' % (ed.categ,ed.name)
+      raise ParseError, 'CANNOT FIND KEY for for %s:%s\n' % (ed.categ,ed.name)
     if (d[ed.name].type != ed.type):
-        raise ParseError, 'WRONG TYPE : for %s:%s\n  Found %s, expected %s' % (ed.categ,ed.name,ed.type,d[ed.name].type)
+      raise ParseError, 'WRONG TYPE : for %s:%s\n  Found %s, expected %s' % (ed.categ,ed.name,ed.type,d[ed.name].type)
     return d[ed.name]
 
 def UpdatePythonDoc():
     currentclass = None;
     f = open(os.path.join(src_dir,'python/getfem.base.py'))
     for l in f:
-        if (l.strip().startswith("class ")):
-            print l,
-            currentclass = l.strip()[6:].split(':')[0].strip()
-            sys.stderr.write("currentclass='%s'\n" % currentclass)
-        elif (l.strip().startswith('#@')):
-            print '\n'+l,
-            WritePythonFunction(LookupDoc(l.strip()[2:]))
-        elif l.strip().startswith('@'):
-            WritePythonSubConstructor(LookupDoc(l.strip()[1:]))
-        else:
-            print l,
+      if (l.strip().startswith("class ")):
+        print l,
+        currentclass = l.strip()[6:].split(':')[0].strip()
+        sys.stderr.write("currentclass='%s'\n" % currentclass)
+      elif (l.strip().startswith('#@')):
+        print '\n'+l,
+        WritePythonFunction(LookupDoc(l.strip()[2:]))
+      elif l.strip().startswith('@'):
+        WritePythonSubConstructor(LookupDoc(l.strip()[1:]))
+      else:
+        print l,
     f.close()
 
 def UpdateMatlabDoc(fname):
@@ -498,11 +503,11 @@ def UpdateMatlabDoc(fname):
     Cfname = string.replace(fname,'.m','.cc')
     all = open(os.path.join(src_dir,Cfname)).read().split('/*MLABCOM',1)[1].split('MLABCOM*/')[0].strip()
     for l in all.split('\n'):
-        if (l.strip().startswith('@')):
-            ed = LookupDoc(l.strip()[1:])
-            WriteMatlabSubFunctionDoc(ed)
-        else:
-            print l
+      if (l.strip().startswith('@')):
+        ed = LookupDoc(l.strip()[1:])
+        WriteMatlabSubFunctionDoc(ed)
+      else:
+        print l
 
 if (len(sys.argv) < 2):
     raise SystemExit, "give the filename to update, or just 'python'"
@@ -546,12 +551,12 @@ fmap = {'gf_mesh.cc':'MESH:INIT',
         'gf_spmat_set.cc':'SPMAT:SET',
         'gf_precond.cc':'PRECOND:INIT',
         'gf_precond_get.cc':'PRECOND:GET',
-        'gf_levelset.cc':'LEVELSET:INIT',
-        'gf_levelset_get.cc':'LEVELSET:GET',
-        'gf_levelset_set.cc':'LEVELSET:SET',
         'gf_mesh_levelset.cc':'MESHLEVELSET:INIT',
         'gf_mesh_levelset_get.cc':'MESHLEVELSET:GET',
         'gf_mesh_levelset_set.cc':'MESHLEVELSET:SET',
+        'gf_levelset.cc':'LEVELSET:INIT',
+        'gf_levelset_get.cc':'LEVELSET:GET',
+        'gf_levelset_set.cc':'LEVELSET:SET',
         'gf_asm.cc':'::ASM',
         'gf_linsolve.cc':'::LINSOLVE',
         'gf_util.cc':'::UTIL',
