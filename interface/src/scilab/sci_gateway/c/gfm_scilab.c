@@ -159,7 +159,15 @@ int sci_gf_scilab(char * fname)
   sciprint("sci_gf_scilab: fname = %s - calling call_getfem_interface with %s\n",fname, &fname[3]);
 #endif
 
-  out = call_getfem_interface(&fname[3], *in, Lhs); // Sans parametre de sorti ou avec un parametre de sortie, Lhs = 1 !!!
+  // Without output parameter in Scilab, Lhs == 1 because we always return something in "ans"
+  if (strcmp(fname,"gf_delete")==0)
+    {
+      out = call_getfem_interface(&fname[3], *in, 0);
+    }
+  else
+    {
+      out = call_getfem_interface(&fname[3], *in, Lhs);
+    }
 
 #ifdef DEBUG
   sciprint("sci_gf_scilab: end of call_getfem_interface\n");
