@@ -67,8 +67,8 @@ end
 [o_curved,err]      = get_param(opts,'curved','off');
 [o_refine,err]      = get_param(opts,'refine',defaultref);
 [o_deformation,err] = get_param(opts,'deformation',[]);
-[o_edges_color,err] = get_param(opts,'edges_color',[.6 .6 1]);
-[o_edges_width,err] = get_param(opts,'edges_width',.7);
+[o_edges_color,err] = get_param(opts,'',[.6 .6 1]);
+[o_edges_width,err] = get_param(opts,'edges_width',1);
 [o_faces_color,err] = get_param(opts,'faces_color',[.75 .75 .75]);
 
 if (length(o_boundaries) == 0) then
@@ -177,9 +177,9 @@ if (mdim <= 2) then
   if (ison(o_edges)) then
     plot(X, Y);
     hmesh = gce();
-    hmesh.children(:).thickness = o_edges_width;
+    hmesh.children(:).thickness  = o_edges_width;
     hmesh.children(:).line_style = 0; // Continous lines
-    hmesh.children(:).foreground = o_edges_color;
+    hmesh.children(:).foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3))); 
   end
   for bnum=1:length(o_boundaries),
     plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
@@ -221,9 +221,9 @@ else
   if (ison(o_edges)) then
     plot3d(X, Y, Z); // 'Color',o_edges_color,'LineWidth',o_edges_width
     hmesh = gce();
-    hmesh.children(:).thickness  = o_edges_width;
-    hmesh.children(:).line_style = 0; // Continuous line
-    hmesh.children(:).foreground = o_edges_color; 
+    hmesh.thickness  = o_edges_width;
+    //hmesh.children(:).line_style = 0; // Continuous line
+    hmesh.foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3))); 
   end
   for bnum=1:length(o_boundaries),
     plot3d(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2), bedge(bnum)(:,:,3)); // 'Color','red','LineWidth',2);
@@ -290,13 +290,17 @@ elseif (ison(o_faces)) then
   // should be replaced by a gf_plot_slice ..
   T = gf_mesh_get(M, 'triangulated surface', o_refine, cvflst);
   if (mdim == 2) then
-    // YC: trouver un equivalent à patch
-    //hfill=plot2d([T(1:mdim:(mdim*3),:) T(1,:)],[T(2:mdim:(mdim*3),:) T(2,:)], o_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
-    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), zeros(T(2:mdim:(mdim*3),:)), o_faces_color, flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
+    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), list(zeros(T(2:mdim:(mdim*3),:)), ones(size(T(2:mdim:(mdim*3),:),2),1)*color(round(255*o_faces_color(1)),round(255*o_faces_color(2)),round(255*o_faces_color(3)))), flag = [-1 0 4]); //, 'Erasemode','normal','Edgecolor','none');
     hfill= gca();
     hfill.view='2d';
+    htmp = gce();
+    htmp.hiddencolor = -1;
   else
-    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), T(3:mdim:(mdim*3),:), o_faces_color, flag = [-1 0 4]); //'Erasemode','normal','Edgecolor','none');
+    plot3d(T(1:mdim:(mdim*3),:),T(2:mdim:(mdim*3),:), list(T(3:mdim:(mdim*3),:),ones(size(T(3:mdim:(mdim*3),:),2),1)*color(round(255*o_faces_color(1)),round(255*o_faces_color(2)),round(255*o_faces_color(3)))), flag = [-1 0 4]); //'Erasemode','normal','Edgecolor','none');
+    hfill= gca();
+    hfill.view='3d';
+    htmp = gce();
+    htmp.hiddencolor = -1;
   end
 end
 
