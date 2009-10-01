@@ -438,11 +438,11 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type pcnt = 0;
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
       if (pmesh->convex_index().is_in(cv)) {
-        idx.add(size_type(pcnt + config::base_index()));
+        idx.add(size_type(pcnt /* + config::base_index()*/));
         for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
           pids.push_back(size_type(pmesh->ind_points_of_convex(cv)[i] + config::base_index()));
       }
-    idx.add(size_type(pcnt + config::base_index()));
+    idx.add(size_type(pcnt/* + config::base_index() */));
 
     iarray w = out.pop().create_iarray_h(pids.size());
     if (pids.size()) std::copy(pids.begin(), pids.end(), &w[0]);
@@ -473,12 +473,12 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type pcnt = 0;
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
       if (pmesh->convex_index().is_in(cv)) {
-        idx.add(pcnt + config::base_index());
+        idx.add(pcnt /* + config::base_index() */);
         for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
           for (size_type k=0; k< pmesh->dim(); ++k)
              pts.push_back(pmesh->points_of_convex(cv)[i][k]);
       }
-    idx.add(pcnt + config::base_index());
+    idx.add(pcnt /* + config::base_index()*/);
 
     darray w = out.pop().create_darray(pmesh->dim(),size_type(pts.size()/pmesh->dim()));
     if (pts.size()) std::copy(pts.begin(), pts.end(), &w[0]);
