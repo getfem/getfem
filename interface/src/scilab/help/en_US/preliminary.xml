@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="preliminary" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>preliminary</refname>
+
+    <refpurpose>This is just a short summary of the terms employed in this
+    manual.</refpurpose>
+  </refnamediv>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>If you are not familiar with finite elements, this should be useful
+    (but in any case, you should definitively read the getfem++ project
+    documentation).</para>
+
+    <para>The mesh is composed of convexes. What we call convexes can be
+    simple line segments, prisms, tetrahedrons, curved triangles, of even
+    something which is not convex (in the geometrical sense). They all have an
+    associated reference convex: for segments, this will be the [0,1] segment,
+    for triangles this will be the canonical triangle (0,0)-(0,1)-(1,0)
+    etc...All convexes of the mesh are constructed from the reference convex
+    through a geometric transformation. In simple cases (when the convexes are
+    simplices for example), this transformation will be linear (hence it is
+    easily inverted, which can be a great advantage). In order to define the
+    geometric transformation, one defines geometrical nodes on the reference
+    convex. The geometrical transformation maps these nodes to the mesh
+    nodes.</para>
+
+    <para>On the mesh, one defines a set a basis functions: the FEM. A FEM is
+    associated at each convex. The basis functions are also attached to some
+    geometrical points (which can be arbitrarily chosen). These points are
+    similar to the mesh nodes, but they don't have to be the same (this only
+    happens on very simple cases, such as a classical P1 fem on a triangular
+    mesh). The set of all basis functions on the mesh forms the basis of a
+    vector space, on which the PDE will be solved. These basis functions (and
+    their associated geometrical point) are the degrees of freedom (dof). The
+    FEM is said to be Lagrangian when each of its basis functions is equal to
+    one at its attached geometrical point, and is null at the geometrical
+    points of others basis functions. This is an important property as it is
+    very easy to interpolate an arbitrary function on the finite elements
+    space.</para>
+
+    <para>The finite elements method involves evaluation of integrals of these
+    basis functions (or product of basis functions etc...) on convexes (and
+    faces of convexes). In simple cases (polynomial basis functions and linear
+    geometrical transformation), one can evaluate analytically these
+    integrals. In other cases, one has to approximate it, using quadrature
+    formulas. Hence, at each convex is attached an integration method along
+    with the FEM. If you have to use an approximate integration method, always
+    choose carefully its order(i.e. highest degree of the polynomials who are
+    exactly integrated with the method) : the degree of the FEM, of the
+    polynomial degree of the geometrical transformation, and the nature of the
+    elementary matrix have to be taken into account. If you are unsure about
+    the appropriate degree, always prefer a high order integration method
+    (which will slow down the assembly) to a low order one which will produce
+    a useless linear-system.</para>
+
+    <para>The process of construction of a global linear system from integrals
+    of basis functions on each convex is the assembly.</para>
+
+    <para>A mesh, with a set of FEM attached to its convexes is called a
+    mesh_fem object in Getfem++.</para>
+
+    <para>A mesh, with a set of integration methods attached to its convexes
+    is called a mesh_im object in Getfem++ (New in getfem 2.0).</para>
+
+    <para>A mesh_fem can be used to approximate scalar fields (heat, pression,
+    ..), or vector fields (displacement, electric field, ..). A mesh_im will
+    be used to perform numerical integrations on these fields. Most of the
+    finite elements implemented in Getfem++ are scalar (however, TR0 and edges
+    elements are also available). Of course, these scalar FEMs can be used to
+    approximate each component of a vector field. This is done by setting the
+    Qdim of the mesh_fem to the dimension of the vector field (i.e. Qdim=1
+    =&gt; scalar field, Qdim=2 =&gt; 2D vector field etc...).</para>
+
+    <para>When solving a PDE, one often has to use more than one FEM. The most
+    important one will be of course the one on which is defined the solution
+    of the PDE. But most PDEs involve various coefficients, for
+    example:</para>
+
+    <para><inlineequation>
+        <inlinemediaobject>
+          <imageobject>
+            <imagedata fileref="../mml/preliminary_eq1.mml" />
+          </imageobject>
+        </inlinemediaobject>
+      </inlineequation></para>
+
+    <para>Hence one has to define a FEM for the main unknown u, but also for
+    the data λ(x) and f(x) if they are not constant. In order to interpolate
+    easily these coefficients in their finite element space, one often choose
+    a Lagrangian FEM.</para>
+
+    <para>The convexes, mesh nodes, and dof are all numbered. We sometimes
+    refer to the number associated to a convex as its convex id (contracted to
+    cvid). Mesh node numbers are also called point id (contracted to pid).
+    Faces of convexes do not have a global numbering, but only a local number
+    in each convex. Hence functions which need or return a list of faces will
+    always use a two-rows matrix, the first one containing convex IDs, and the
+    second one containing local face number.</para>
+
+    <para>While the dof are always numbered consecutively, this is not always
+    the case for point ids and convex ids, especially if you have removed
+    points or convexes from the mesh. To ensure that they form a continuous
+    sequence (starting from 1), you have to call gf_mesh_set(m,'optimize
+    structure').</para>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_workspace">gf_workspace</link></member>
+
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
+
+      <member><link linkend="gf_fem">gf_fem</link></member>
+
+      <member><link linkend="gf_plot">gf_plot</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

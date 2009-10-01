@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="another_laplacian" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>Another Laplacian with exact solution</refname>
+
+    <refpurpose>This is the scilab/demos/demo_laplacian.sce example.</refpurpose>
+  </refnamediv>
+
+  <refsection>
+    <title>Description</title>
+    <programlisting role="example"><![CDATA[ 
+gf_workspace('clear all');
+m = gf_mesh('cartesian',[0:.1:1],[0:.1:1]);
+
+// create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
+mf = gf_mesh_fem(m,1);
+// assign the Q2 fem to all convexes of the mesh_fem,
+gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
+
+// an exact integration will be used
+mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
+// detect the border of the mesh
+border = gf_mesh_get(m,'outer faces');
+// mark it as boundary #1
+gf_mesh_set(m, 'boundary', 1, border);
+gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
+
+// interpolate the exact solution
+Uexact = gf_mesh_fem_get_eval(mf, list('y.*(y-1).*x.*(x-1)+x.^5'));
+// its second derivative
+F      = gf_mesh_fem_get_eval(mf, list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
+
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mf);
+gf_model_set(md, 'add Laplacian brick', mim, 'u');
+gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
+
+gf_model_get(md, 'solve');
+U = gf_model_get(md, 'variable', 'u');
+
+printf('H1 norm of error: %g\n', gf_compute(mf,U-Uexact,'H1 norm',mim));
+
+subplot(2,1,1); 
+gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
+colorbar(min(U),max(U)); 
+title('computed solution');
+
+subplot(2,1,2); 
+gf_plot(mf,U-Uexact,'mesh','on'); 
+colorbar(min(U-Uexact),max(U-Uexact));
+title('difference with exact solution');
+ ]]></programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_workspace">gf_workspace</link></member>
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
+      <member><link linkend="gf_fem">gf_fem</link></member>
+      <member><link linkend="gf_plot">gf_plot</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="avoiding_bricks" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>Avoiding the bricks framework</refname>
+
+    <refpurpose>This is a description on how to avoid the bricks
+    framework.</refpurpose>
+  </refnamediv>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>The model bricks are very convenient, as they hide most of the
+    details of the assembly of the final linear systems. However it is also
+    possible to stay at a lower level, and handle the assembly of linear
+    systems, and their resolution, directly in scilab. For example, the
+    demonstration demo_tripod_alt.m is very similar to the demo_tripod.sce
+    except that the assembly is explicit:</para>
+
+    <programlisting role="example"> 
+nbd = gf_mesh_fem_get(mfd, 'nbdof');
+F = gf_asm('boundary_source', 1, mim, mfu, mfd, repmat([0;-10;0],1,nbd));
+K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd));
+
+// handle Dirichlet condition
+[H,R]  = gf_asm('dirichlet', 2, mim, mfu, mfd, repmat(eye(3,3),[1,1,nbd]), zeros(3, nbd));
+[N,U0] = gf_spmat_get(H, 'dirichlet_nullspace', R);
+KK = N'*K*N;
+FF = N'*F;
+// solve ...
+
+disp('solving...'); 
+
+t0 = timer();
+lsolver = 1 // change this to compare the different solvers
+
+if (lsolver == 1) then // conjugate gradient
+  P  = gf_precond('ildlt',KK);
+  UU = gf_linsolve('cg',KK,FF,P,'noisy','res',1e-9);
+elseif (lsolver == 2) then // superlu
+  UU = gf_linsolve('superlu',KK,FF);
+else // the scilab "slash" operator 
+  UU = KK \ FF;
+end
+
+disp(sprintf('linear system solved in %.2f sec', timer()-t0));
+
+U = (N*UU).' + U0;
+ </programlisting>
+
+    <para>In getfem-interface, the assembly of vectors, and matrices is done
+    via the gf_asm function. The Dirichlet condition u(x) = r(x) is handled in
+    the weak form</para>
+
+    <para><inlineequation>
+        <inlinemediaobject>
+          <imageobject>
+            <imagedata align="center" fileref="../../mml/avoiding_eq1.mml" />
+          </imageobject>
+        </inlinemediaobject>
+      </inlineequation></para>
+
+    <para>(where h(x) is a 3×3 matrix field - here it is constant and equal to
+    the identity). The reduced system KK * UU = FF is then built via the
+    elimination of Dirichlet constraints from the original system. Note that
+    it might be more efficient (and simpler) to deal with Dirichlet condition
+    via a penalization technique.</para>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_workspace">gf_workspace</link></member>
+
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
+
+      <member><link linkend="gf_fem">gf_fem</link></member>
+
+      <member><link linkend="gf_plot">gf_plot</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>
