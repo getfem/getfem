@@ -209,7 +209,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     gives the list of simplexes for the fourth convex.@*/
     size_type sdim = in.pop().to_integer(0,int(sl->dim()));
     iarray w = out.pop().create_iarray(unsigned(sdim+1), unsigned(sl->nb_simplexes(sdim)));
-    size_type Scnt = 0;
+    size_type Scnt = size_type(-1);
     iarray cv2splx;
     if (out.remaining()) {
       cv2splx = out.pop().create_iarray_h(unsigned(sl->nb_convex()+1));
@@ -226,9 +226,9 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         }
       }
       pcnt += sl->nodes(ic).size();
-      cv2splx[ic] = int(Scnt); Scnt+=scnt;
+      if (Scnt != size_type(-1)) { cv2splx[ic] = int(Scnt); Scnt+=scnt; }
     }
-    cv2splx[sl->nb_convex()] = int(Scnt);
+    if (Scnt != size_type(-1)) cv2splx[sl->nb_convex()] = int(Scnt);
   } else if (check_cmd(cmd, "edges", in, out, 0, 0, 0, 3)) {
     /*@GET @CELL{P, E1, E2} = SLICE:GET('edges')
     Return the edges of the linked mesh contained in the slice.
