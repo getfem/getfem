@@ -658,9 +658,14 @@ namespace getfem {
   public :
 
     const mesh_fem &operator()(const mesh &msh, dim_type o, dim_type qdim) {
-      for (mesh_fem_tab::iterator itt = mfs.begin(); itt != mfs.end(); ++itt)
-	if (!(itt->first.is_context_valid())) 
+      mesh_fem_tab::iterator itt = mfs.begin(), itn = mfs.begin();
+      if (itn != mfs.end()) itn++;
+      while (itt != mfs.end()) {
+	if (!(itt->first.is_context_valid()))
 	  { delete itt->second; mfs.erase(itt); }
+	itt=itn;
+	if (itn != mfs.end()) itn++;
+      }
 
       mf__key_ key(msh, o, qdim);
       mesh_fem_tab::iterator it = mfs.find(key);
