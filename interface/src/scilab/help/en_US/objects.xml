@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="objects" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>Objects</refname>
+
+    <refpurpose>This is a description of the objects found in GetFEM.</refpurpose>
+  </refnamediv>
+
+  <refsection>
+    <title>Description</title>
+
+    <mediaobject>
+      <imageobject>
+        <imagedata align="center" fileref="../fig/hierarchy.png" />
+      </imageobject>
+    </mediaobject>
+
+    <para>Getfem-interface objects hierarchy</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>GEOTRANS : geometric transformations (defines the shape/position of the convexes), created with gf_geotrans</para>
+      </listitem>
+      <listitem>
+	<para>MESH: mesh structure (nodes, convexes, geometric transformations for each convex), created with gf_mesh</para>
+      </listitem>
+      <listitem>
+	<para>INTEG: integration method (exact, quadrature formula...). Although not linked directly to GEOTRANS, an integration 
+	  method is usually specific to a given convex structure. Created with gf_integ</para>
+      </listitem>
+      <listitem>
+	<para>FEM: the finite element method (one per convex, can be PK, QK, HERMITE, etc...). Created with gf_fem</para>
+      </listitem>
+      <listitem>
+	<para>CVSTRUCT: stores formal information convex structures (nb. of points, nb. of faces which are themselves convex structures).</para>
+      </listitem>
+      <listitem>
+	<para>MESHFEM: object linked to a mesh, where each convex has been assigned a FEM. Created with gf_mesh_fem.</para>
+      </listitem>
+      <listitem>
+	<para>MESHIM: object linked to a mesh, where each convex has been assigned an integration method. Created with gf_mesh_im.</para>
+      </listitem>
+      <listitem>
+	<para>MESHSLICE: object linked to a mesh, very similar to a P1-discontinuous mesh fem. Used for fast interpolation and plotting.</para>
+      </listitem>
+      <listitem>
+	<para>MDBRICK: "model brick" , an abstraction of a part of solver (for example, the part which build the tangent matrix, the part 
+	  which handles the dirichlet conditions, etc.). These objects are stacked to build a complete solver for a wide variety of problems. 
+	  They typically use a number of mesh fem, mesh im etc.</para>
+      </listitem>
+      <listitem>
+	<para>MDSTATE: "model state", holds the global data for a stack of mdbricks (global tangent matrix, right hand side etc.). </para>
+      </listitem>
+      <listitem>
+	<para>MODEL: "model", holds the global data, variables and description of a model. 
+	  Evolution of "model state" object for 4.0 version of getfem++.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Various "objects" can be manipulated by the getfem-matlab toolbox, see fig. *. 
+      The MESH and MESHFEM objects are the two most important objects.</para>
+
+    <para>The getfem-matlab toolbox uses its own memory management. Hence getfem++ objects are not cleared when a </para>
+    <programlisting role="example"><![CDATA[ 
+--> clear all
+ ]]></programlisting>
+
+    <para>is issued at the matlab prompt, but instead the function </para>
+
+    <programlisting role="example"><![CDATA[ 
+--> gf_workspace('clear all')
+ ]]></programlisting>
+
+    <para>should be used. The various getfem-matlab object can be accessed via handles (or descriptors), which are just matlab 
+      structures containing 32-bits integer identifiers to the real objects. Hence the matlab command </para>
+
+    <programlisting role="example"><![CDATA[ 
+--> whos
+ ]]></programlisting>
+
+    <para>does not report the memory consumption of getfem++ objects (except the marginal space used by the handle). Instead, you should use </para>
+
+    <programlisting role="example"><![CDATA[ 
+--> gf_workspace('stats')
+ ]]></programlisting>
+
+    <para>There are two kinds of getfem-matlab objects:</para>
+    <itemizedlist>
+      <listitem>
+	<para> static ones, which can not be deleted: ELTM, FEM, INTEG, GEOTRANS and CVSTRUCT. Hopefully their memory consumption is very low.</para>
+      </listitem>
+      <listitem>
+	<para> dynamic ones, which can be destroyed, and are handled by the gf_workspace function: MESH, MESHFEM, MESHIM, SLICE, SPMAT, PRECOND. </para>
+      </listitem>
+    </itemizedlist>
+    <para>The objects MESH and MESHFEM are not independent: a MESHFEM object is always linked to a MESH object, and a MESH object can be 
+      used by several MESHFEM objects. Hence when you request the destruction of a MESH object, its destruction might be delayed until 
+      it is not used anymore by any MESHFEM (these objects waiting for deletion are listed in the anonymous workspace section 
+      of gf_workspace('stats')). </para>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_workspace">gf_workspace</link></member>
+      <member><link linkend="gf_mesh">gf_mesh</link></member>
+      <member><link linkend="gf_fem">gf_fem</link></member>
+      <member><link linkend="gf_plot">gf_plot</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>
