@@ -24,18 +24,26 @@ if isempty(pde('solver')) then
   pde('solver') = 'default';
 end
 
-nout=max(nargout,1);
+nout = max(nargout,1);
+str_eval = '[varargout(1)';
+for i=2:nout
+  str_eval = str_eval + ',varargout(i)';
+end
+str_eval = str_eval + '] = ';
 
 select pde('type')
   case 'laplacian' then
     // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_laplacian(pde);
-    [varargout] = do_laplacian(pde);
+    str_eval = str_eval + 'do_laplacian(pde))';
+    execstr(str_eval);
   case 'linear elasticity' then
     // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_linear_elasticity(pde);
-    [varargout] = do_linear_elasticity(pde);
+    str_eval = str_eval + 'do_linear_elasticity(pde))';
+    execstr(str_eval);
   case 'stokes' then
     // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_stokes(pde);
-    [varargout] = do_stokes(pde);
+    str_eval = str_eval + 'do_stockes(pde))';
+    execstr(str_eval);
   else
     error('unhandled PDE(''type'') : ' + pde('type'));
 end
