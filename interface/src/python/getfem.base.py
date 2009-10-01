@@ -29,6 +29,7 @@ __version__ = "$Revision$"
 
 import sys
 import numpy
+from numpy import *
 
 from _getfem import *
 obj_count = {}
