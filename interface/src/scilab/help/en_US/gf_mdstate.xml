@@ -21,20 +21,6 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para> "Model State" variables store the state data for a set of model
@@ -62,19 +48,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_mdstate_get">gf_mdstate_get</link></member>
-
       <member><link linkend="gf_mdstate_set">gf_mdstate_set</link></member>
     </simplelist>
   </refsection>

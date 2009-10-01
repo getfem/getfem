@@ -16,22 +16,14 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>F=gf_precond_get(...)</synopsis>
+    <synopsis>
+vec PV=gf_precond_get(P,'mult', vec V)
+vec tPV=gf_precond_get(P,'tmult', vec V)
+string S=gf_precond_get(P,'type')
+ivec gf_precond_get('size')
+int gf_precond_get(P,'is_complex')string S=gf_precond_get(P,'info')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -82,6 +74,7 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_precond">gf_precond</link></member>
+      <member><link linkend="gf_linsolve">gf_linsolve</link></member>
     </simplelist>
   </refsection>
 

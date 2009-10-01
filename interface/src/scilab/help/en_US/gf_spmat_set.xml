@@ -17,22 +17,19 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[...] = gf_spmat_set(M, args)  </synopsis>
+    <synopsis>
+gf_spmat_set(M,'clear'[, I[, J]])
+gf_spmat_set(M,'scale', V)
+gf_spmat_set(M,'transpose')
+gf_spmat_set(M,'conjugate')
+gf_spmat_set(M,'transconj')
+gf_spmat_set(M,'to_csc')
+gf_spmat_set(M,'to_wsc')
+gf_spmat_set(M,'to_complex')
+gf_spmat_set(M,'diag', mat D [, ivec E])
+gf_spmat_set(M,'assign', ivec I, ivec J, V)gf_spmat_set(M,'add', I, J, V)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -99,14 +96,6 @@
         might be a sparse matrix or a full matrix.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>

@@ -17,25 +17,29 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>MF = gf_mesh_fem(...)</synopsis>
+    <synopsis>
+mesh_fem MF = gf_mesh_fem(mesh M [, int Qdim=1])
+mesh_fem MF[,M] = gf_mesh_fem('load', string filename[,mesh M])
+mesh_fem MF[,M] = gf_mesh_fem('from string', string S [,mesh M])
+mesh_fem MF = gf_mesh_fem('clone', mesh_fem MF0)
+    </synopsis>
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
+
+    <para>This function creates a mesh_fem object. These objects hold the finite element basis functions on a mesh : 
+      a finite element is assigned to each convex of the mesh, and the mesh_fem takes care of connecting them across the convexes 
+      and enumerating the degrees of freedom.</para>
+    <para>gf_mesh_fem(M,Qdim) creates a new mesh_fem object linked to the mesh M. mesh_fem objects can be used everywhere a const_mesh object 
+      is required (its linked mesh is automatically used). The argument Qdim specifies the dimension of the unknown on this mesh. 
+      If the unknown is a scalar field, then Qdim=1, if it is a 2D vector field then Qdim=2 etc...: 
+      this is independent of the mesh dimension.</para>
+    <para>The load command can restore a previously saved mesh_fem object. If you don't specify the mesh argument, it is assumed that the mesh 
+      was saved in the same file that the mesh_fem (with gf_mesh_fem_get(mf, 'save with mesh')). The 'from string' command is very similar, 
+      but loads the object from a string instead of a file.</para>
+    <para>And finally, it is possible to build a copy of a mesh_fem object with the gf_mesh_fem('clone', MF0) command 
+      (see also the gf_mesh('clone') command).</para>
 
     <itemizedlist>
       <listitem>
@@ -86,19 +90,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_fem_set">gf_mesh_fem_set</link></member>
-
       <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get</link></member>
     </simplelist>
   </refsection>

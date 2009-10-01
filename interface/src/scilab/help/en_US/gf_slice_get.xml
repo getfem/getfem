@@ -16,22 +16,24 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[...] = gf_slice_get(slice SL, [operation [, args]])</synopsis>
+    <synopsis>
+int I = gf_slice_get(sl, 'dim')
+scalar I = gf_slice_get(sl, 'area')
+ivec cvlst = gf_slice_get(sl, 'cvs')
+int n = gf_slice_get(sl, 'nbpts')
+mat P = gf_slice_get(sl, 'pts')
+ivec NS = gf_slice_get(sl, 'nbsplxs')
+int NS = gf_slice_get(sl, 'nbsplxs',int dim)
+[imat S, ivec CV2SPLX] = gf_slice_get(sl, 'splxs', int dim)
+mat E = gf_slice_get(sl, 'edges')
+[mat P, ivec E1, ivec E2] = gf_slice_get(sl, 'edges')
+vec Usl=gf_slice_get(sl, 'interpolate_convex_data', Ucv)
+mesh m = gf_slice_get(sl, 'linked mesh')
+gf_slice_get(sl,'export_to_vtk', filename ... [, 'ascii'][, 'edges'],...)
+gf_slice_get(sl,'export_to_pov', filename, ...)
+gf_slice_get(sl,'export_to_dx', filename, ...[, 'ascii'][, 'edges'][, 'append'])int ms=gf_slice_get(sl, 'memsize')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -100,9 +102,9 @@
 
         <para>Example of use:</para>
 
-        <programlisting> 
+        <programlisting role="example"><![CDATA[  
 gf_slice_get(sl,'interpolate_convex_data', gf_mesh_get(m,'quality'))
- </programlisting>
+ ]]></programlisting>
       </listitem>
 
       <listitem>
@@ -149,23 +151,11 @@ gf_slice_get(sl,'interpolate_convex_data', gf_mesh_get(m,'quality'))
 
         <para>Examples:</para>
 
-        <itemizedlist>
-          <listitem>
-            <para>gf_slice_get(sl,'export to
-            vtk','test.vtk',Usl,'first_dataset', mf, U2,
-            'second_dataset')</para>
-          </listitem>
-
-          <listitem>
-            <para>gf_slice_get(sl,'export to
-            vtk','test.vtk','ascii',mf,U2)</para>
-          </listitem>
-
-          <listitem>
-            <para>gf_slice_get(sl,'export to
-            vtk','test.vtk','edges','ascii',Uslice)</para>
-          </listitem>
-        </itemizedlist>
+	<programlisting role="example"><![CDATA[ 
+gf_slice_get(sl,'export to vtk','test.vtk',Usl,'first_dataset', mf, U2, 'second_dataset')
+gf_slice_get(sl,'export to vtk','test.vtk','ascii',mf,U2)
+gf_slice_get(sl,'export to vtk','test.vtk','edges','ascii',Uslice)
+ ]]></programlisting>
       </listitem>
 
       <listitem>
@@ -214,18 +204,12 @@ gf_slice_get(sl,'interpolate_convex_data', gf_mesh_get(m,'quality'))
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_slice_get">gf_slice_get</link></member>
+      <member><link linkend="gf_slice">gf_slice</link></member>
+      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
     </simplelist>
   </refsection>
 

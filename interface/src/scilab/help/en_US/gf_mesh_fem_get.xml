@@ -17,22 +17,34 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[x] = gf_mesh_fem_get(meshfem MF, operation [, args])</synopsis>
+    <synopsis>
+int N = gf_mesh_fem_get(MF, 'nbdof')
+int N = gf_mesh_fem_get(MF, 'nb basic dof')
+ivec DOF = gf_mesh_fem_get(MF, 'basic dof from cv', ivec CVLST)
+ivec [DOF,CV2DOF] = gf_mesh_fem_get(MF, 'basic dof from cvid', [ivec CVLST])
+ivec DOF = gf_mesh_fem_get(MF, 'non conformal basic dof' [, ivec CVLST])
+fem FEMLST[, ivec CV2F] = gf_mesh_fem_get(MF, 'fem' [, ivec CVLST])
+ivec CVLST = gf_mesh_fem_get(MF, 'convex_index')
+int N = gf_mesh_fem_get(MF, 'qdim')
+ivec I = gf_mesh_fem_get(MF, {'is_lagrangian' | 'is_equivalent' | 'is_polynomial'} 
+      [, ivec CVLST])
+int N = gf_mesh_fem_get(MF, 'is_reduced')
+spmat R = gf_mesh_fem_get(MF, 'reduction_matrix')
+spmat R = gf_mesh_fem_get(MF, 'extension_matrix')
+ivec DOFLST = gf_mesh_fem_get(MF, 'basic dof on region', ivec rlist)
+ivec DOFLST = gf_mesh_fem_get(MF, 'dof on region', ivec rlist)
+mat DOF_XY = gf_mesh_fem_get(MF, 'basic dof nodes'[, ivec DOFLST])
+ivec DOFP = gf_mesh_fem_get(MF, 'dof partition')
+vec U = gf_mesh_fem_get(MF, 'interpolate convex data', vec Ucv)
+gf_mesh_fem_get(MF, 'save', string filename, ['with mesh'])
+gf_mesh_fem_get(MF,'export_to_vtk', filename, ... ['ascii'], U, 'name'...)
+gf_mesh_fem_get(MF,'export_to_dx', filename, ... ['as', mesh_name][,'edges']['serie',serie_name][,'ascii'][,'append'], U, 'name'...)
+string S=gf_mesh_fem_get(M, 'char' [,'with mesh'])
+mesh M=gf_mesh_fem_get(MF, 'linked mesh')
+vec U=gf_mesh_fem_get(MF, 'eval', expr [,ivec DOFLST])
+M=gf_mesh_fem_get(MF, 'memsize')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -234,7 +246,7 @@
 
       <listitem>
         <para>m = gf_mesh_fem_get(MF,'linked mesh') Return a reference to the
-        @tmesh object linked to `mf`.</para>
+        Mesh object linked to `mf`.</para>
       </listitem>
 
       <listitem>
@@ -320,10 +332,10 @@ for i=1:size(c2f),
   disp(sprintf('the fem of convex %d is %s', cvid(i),sf(i)));
 end
 
-U1=gf_mesh_fem_get(mf,'eval',1)
-U2=gf_mesh_fem_get(mf,'eval',[1;0]) // output has two rows
-U3=gf_mesh_fem_get(mf,'eval',[1 0]) // output has one row, only valid if qdim(mf)==2
-U4=gf_mesh_fem_get(mf,'eval',list('x';'y.*z';4;myfunctionofxyz))
+U1=gf_mesh_fem_get_eval(mf,1)
+U2=gf_mesh_fem_get_eval(mf,[1;0]) // output has two rows
+U3=gf_mesh_fem_get_eval(mf,[1 0]) // output has one row, only valid if qdim(mf)==2
+U4=gf_mesh_fem_get_eval(mf,list('x';'y.*z';4;myfunctionofxyz))
  </programlisting>
   </refsection>
 
@@ -331,9 +343,8 @@ U4=gf_mesh_fem_get(mf,'eval',list('x';'y.*z';4;myfunctionofxyz))
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_fem">gf_mesh_fem</link></member>
-
-      <member><link linkend="gf_mesh_fem_set">gf_mesh_fem_set</link></member>
+      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
+      <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
     </simplelist>
   </refsection>
 

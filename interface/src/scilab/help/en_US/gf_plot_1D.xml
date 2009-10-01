@@ -20,20 +20,6 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para>This function plots a 1D finite elements field.</para>
@@ -63,16 +49,11 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_plot">gf_plot</link></member>
+      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
     </simplelist>
   </refsection>
 </refentry>

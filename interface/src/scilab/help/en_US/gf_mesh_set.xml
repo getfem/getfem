@@ -17,22 +17,24 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[x] = gf_mesh_set(mesh M, operation [, args])</synopsis>
+    <synopsis>
+ivec IDX = gf_mesh_set(M, 'add point', mat  PT)
+gf_mesh_set(M, 'del point', ivec  IDX)
+vec IDX = gf_mesh_set(M, 'add convex', geotrans  GT,mat  CVPTS)
+gf_mesh_set(M, 'del convex', ivec  IDX)
+gf_mesh_set(M, 'del convex of dim', ivec  DIM)
+gf_mesh_set(M, 'region', int bnum, imat CVFLST)
+gf_mesh_set(M, 'region intersect', int R1, int R2)
+gf_mesh_set(M, 'region merge', int R1, int R2)
+gf_mesh_set(M, 'region substract', int R1, int R2)
+gf_mesh_set(M, 'delete region', ivec blst)
+gf_mesh_set(M, 'translate', vec  V)
+gf_mesh_set(M, 'transform', mat  T)
+gf_mesh_set(M, 'merge', const_mesh  M2)
+gf_mesh_set(M, 'optimize structure')
+gf_mesh_set(M  'refine' [, mat CVLST])
+</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -159,19 +161,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
-
       <member><link linkend="gf_mesh">gf_mesh</link></member>
     </simplelist>
   </refsection>

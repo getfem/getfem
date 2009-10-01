@@ -17,22 +17,13 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>MIM = gf_mesh_im(...)</synopsis>
+    <synopsis>
+mesh_im MIM = gf_mesh_im(mesh M [, { integ | int }])
+mesh_im MIM[,M] = gf_mesh_im('load', string filename[,mesh M])
+mesh_im MIM[,M] = gf_mesh_im('from string', string S [,mesh M])
+mesh_im MIM = gf_mesh_im('clone', mesh_im MIM0)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -42,45 +33,37 @@
 
     <itemizedlist>
       <listitem>
-        <para>gf_mesh_im(mesh m[list(integ im|int im_degree)])</para>
+        <para>gf_mesh_im(mesh m[list(integ im|int im_degree)]) : Return a getfem handle to the newly created MeshIm object. For
+	  convenience, optional arguments ('im' or 'im_degree') can be provided, in that case a call to gf_mesh_im_set(mim, 'integ', ..) 
+	  is issued with these arguments.</para>
       </listitem>
-    </itemizedlist>
 
-    <para>Return a getfem handle to the newly created MeshIm object. For
-    convenience, optional arguments ('im' or 'im_degree') can be provided, in
-    that case a call to gf_mesh_im_set(mim, 'integ', ..) is issued with these
-    arguments.</para>
-
-    <itemizedlist>
       <listitem>
-        <para>gf_mesh_im('load', string fname[, Mesh m]) Load a MeshIm from a
+        <para>gf_mesh_im('load', string fname[, Mesh m]) : Load a MeshIm from a
         file. If the mesh <literal>m</literal> is not supplied (this kind of
         file does not store the mesh), then it is read from the file and its
         descriptor is returned as the second output argument.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mesh_im('from string', string s[, mesh M]) Create a MeshIm
+        <para>gf_mesh_im('from string', string s[, mesh M]) : Create a MeshIm
         object from its string description. See also
         gf_mesh_im_get(mim,'char')</para>
       </listitem>
 
       <listitem>
-        <para>gf_mesh_im('clone', MeshIm mim2) Create a copy of a
+        <para>gf_mesh_im('clone', MeshIm mim2) : Create a copy of a
         MeshIm.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mesh_im('levelset', LevelSet ls, string where, Integ im[,
-        Integ im_tip]) Build an integration method conformal to a partition
-        defined implicitely by a levelset. The <literal>where</literal>
-        argument define the domain of integration with respect to the
-        levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and
-        'BOUNDARY'.</para>
+        <para>gf_mesh_im('levelset', LevelSet ls, string where, Integ im[, Integ im_tip]) : Build an integration method conformal to a partition
+        defined implicitely by a levelset. The <literal>where</literal> argument define the domain of integration with respect to the
+        levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and 'BOUNDARY'.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mesh_im('.mesh',Mesh m, [list(Integ im|int im_degree)]) Build
+        <para>gf_mesh_im('.mesh',Mesh m, [list(Integ im|int im_degree)]) : Build
         a new MeshIm object. For convenience, optional arguments
         (<literal>im</literal> or <literal>im_degree</literal>) can be
         provided, in that case a call to MeshIm.integ() is issued with these
@@ -90,19 +73,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_im_set">gf_mesh_im_set</link></member>
-
       <member><link linkend="gf_mesh_im_get">gf_mesh_im_get</link></member>
     </simplelist>
   </refsection>

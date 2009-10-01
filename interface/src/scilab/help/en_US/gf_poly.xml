@@ -20,20 +20,6 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para>Performs various operations on the polynom
@@ -44,14 +30,6 @@
         <para>gf_poly('print', p) Prints the content of P.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>

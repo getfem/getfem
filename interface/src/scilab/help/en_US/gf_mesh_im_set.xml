@@ -16,39 +16,23 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[x] = gf_mesh_im_set(meshim MIM, operation [, args])</synopsis>
+    <synopsis>
+gf_mesh_im_set(MIM, 'integ', { integ im | int IMDEGREE }, [, ivec CVIDX])
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>gf_mesh_im_set(mim,'integ',list(Integ im|int im_degree)[, vec
-        CVids]) Set the integration method. Assign an integration method to
-        all convexes whose #ids are listed in <literal>CVids</literal>. If
-        <literal>CVids</literal> is not given, the integration is assigned to
-        all convexes. It is possible to assign a specific integration method
-        with an integration method handle <literal>im</literal> obtained via
-        gf_integ('IM_SOMETHING'), or to let getfem choose a suitable
-        integration method with <literal>im_degree</literal> (choosen such
-        that polynomials of <emphasis>degree &lt;= im_degree</emphasis> are
-        exactly integrated. If <emphasis>im_degree=-1</emphasis>, then the
-        dummy integration method IM_NONE will be used.)</para>
+	<para>gf_mesh_im_set(MIM, 'integ', im [, CVIDX]) : set im as the integration method for all the convexes listed in CVIDX in the 
+	  mesh linked to MF. If CVIDX is not used, the im is assigned to all convexes.</para>
+      </listitem>
+
+      <listitem>
+	<para>gf_mesh_im_set(MIM, 'integ', IM_DEGREE [, CVIDX]) : assign a classical approximate integration method of order at least IM_DEGREE 
+	on the listed convexes. If IM_DEGREE=-1, then the dummy integration method 'IM_NONE' is used. </para>
       </listitem>
     </itemizedlist>
   </refsection>
@@ -56,9 +40,13 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <programlisting role="example"><![CDATA[ 
+mim = gf_mesh_im(m);
+// set an integration method of order 5 on all convexes
+gf_mesh_im_set(mim,'integ',5); 
+// change the integration for convexes 5 6 9
+gf_mesh_im_set(mim,'integ',gf_integ('IM_TRIANGLE(13)'),[6 5 9]);
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -66,7 +54,6 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_im_get">gf_mesh_im_get</link></member>
-
       <member><link linkend="gf_mesh_im">gf_mesh_im</link></member>
     </simplelist>
   </refsection>

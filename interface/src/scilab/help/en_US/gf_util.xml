@@ -10,30 +10,19 @@
   <refnamediv>
     <refname>gf_util</refname>
 
-    <refpurpose>Performs various operations which do not fit
-    elsewhere.</refpurpose>
+    <refpurpose>Performs various operations which do not fit elsewhere.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>gf_util(operation, [,args])
+    <synopsis>
+gf_util('save matrix',string fmt, string filename, spmat A)
+A = gf_util('load matrix',string fmt, string filename)
+gf_util('trace level', int level)
+gf_util('warning level', int level)
 </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -42,45 +31,29 @@
 
     <itemizedlist>
       <listitem>
-        <para>gf_util('save matrix', string FMT, string FILENAME, spmat A);
+        <para>gf_util('save matrix', string FMT, string FILENAME, spmat A):
         Exports a sparse matrix into the file named FILENAME, using
         Harwell-Boeing (FMT='hb') or Matrix-Market (FMT='mm')
         formatting.</para>
       </listitem>
 
       <listitem>
-        <para>A = gf_util('load matrix', string FMT, string FILENAME); Imports
+        <para>A = gf_util('load matrix', string FMT, string FILENAME): Imports
         a sparse matrix from a file.</para>
       </listitem>
 
       <listitem>
-        <para>gf_util('trace_level',int level) Set the verbosity of some
+        <para>gf_util('trace_level',int level): Set the verbosity of some
         getfem++ routines. Typically the messages printed by the model bricks,
         0 means no trace message (default is 3).</para>
       </listitem>
 
       <listitem>
-        <para>gf_util('warning_level',int level) Filter the less important
+        <para>gf_util('warning_level',int level): Filter the less important
         warnings displayed by getfem. 0 means no warnings, default level is
         3.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-      <member><link linkend="gf_spmat">gf_spmat</link></member>
-    </simplelist>
   </refsection>
 
   <refsection>

@@ -17,22 +17,16 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[x] = gf_mesh_im_get(meshim MIM, operation [, args])</synopsis>
+    <synopsis>
+string IMLST[, ivec CV2IM] = gf_mesh_im_get(MIM, 'integ' [, ivec CVLST])
+ivec CVLST = gf_mesh_im_get(MIM, 'convex_index')
+mat M = gf_mesh_fem_get(MIM, 'eltm', eltm MET, int CV [, int FACE])
+gf_mesh_im_get(MIM, 'save', string filename, ['with mesh'])
+string S=gf_mesh_im_get(M, 'char' [,'with mesh'])
+mesh M=gf_mesh_im_get(MIM, 'linked mesh')
+M=gf_mesh_im_get(MIM, 'memsize')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -103,15 +97,15 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-cvid=gf_mesh_get(mim,'cvid');
-[f,c2f]=gf_mesh_im_get(mim, 'integ');
+    <programlisting role="example"><![CDATA[ 
+cvid = gf_mesh_get(mim,'cvid');
+[f,c2f] = gf_mesh_im_get(mim, 'integ');
 sf = list();
 for i=1:size(f), sf(i)=gf_integ_get('char',f(i)); end;
 for i=1:size(c2f)
   disp(sprintf('the integration of convex %d is %s', cvid(i),sf(i)));
 end
- </programlisting>
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -119,7 +113,6 @@ end
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_im_set">gf_mesh_im_set</link></member>
-
       <member><link linkend="gf_mesh_im">gf_mesh_im</link></member>
     </simplelist>
   </refsection>

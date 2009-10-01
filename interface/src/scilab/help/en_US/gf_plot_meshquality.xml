@@ -8,7 +8,7 @@
           xmlns:html="http://www.w3.org/1999/xhtml"
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
-    <refname>gf_plot_meshquality</refname>
+    <refname>gf_plot_mesh_quality</refname>
 
     <refpurpose></refpurpose>
   </refnamediv>
@@ -16,34 +16,8 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>gf_plot_mesh_quality(m)</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
 
   <refsection>
     <title>See Also</title>

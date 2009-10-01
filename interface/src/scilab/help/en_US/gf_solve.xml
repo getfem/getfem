@@ -20,42 +20,12 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <itemizedlist>
-      <listitem>
-        <para></para>
-      </listitem>
-    </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_compute">gf_compute</link></member>
+      <member><link linkend="gf_linsolve">gf_linsolve</link></member>
+      <member><link linkend="gf_mdbrick">gf_mdbrick</link></member>
     </simplelist>
   </refsection>
 

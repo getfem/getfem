@@ -17,63 +17,57 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_geotrans_get(GT, ...)</synopsis>
+    <synopsis>
+int I = gf_geotrans_get(geotrans GT, 'dim')
+int I = gf_geotrans_get(geotrans GT, 'is_linear')
+int n = gf_geotrans_get(geotrans GT, 'nbpts')
+mat P = gf_geotrans_get(geotrans GT, 'pts')
+mat N = gf_geotrans_get(geotrans GT, 'normals')
+mat Pts2 = gf_geotrans_get(geotrans GT, 'transform', G, Pts)
+string s = gf_geotrans_get(geotrans GT, 'char')
+</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>d = gf_geotrans_get(GT,'dim') Get the dimension of the GeoTrans.
+        <para>d = gf_geotrans_get(GT,'dim'): Get the dimension of the GeoTrans.
         This is the dimension of the source space, i.e. the dimension of the
         reference convex.</para>
       </listitem>
 
       <listitem>
-        <para>b = gf_geotrans_get(GT,'is_linear') Return 0 if the GeoTrans is
+        <para>b = gf_geotrans_get(GT,'is_linear'): Return 0 if the GeoTrans is
         not linear.</para>
       </listitem>
 
       <listitem>
-        <para>n = gf_geotrans_get(GT,'nbpts') Return the number of points of
+        <para>n = gf_geotrans_get(GT,'nbpts'): Return the number of points of
         the GeoTrans.</para>
       </listitem>
 
       <listitem>
-        <para>P = gf_geotrans_get(GT,'pts') Return the reference convex points
+        <para>P = gf_geotrans_get(GT,'pts'): Return the reference convex points
         of the GeoTrans. The points are stored in the columns of the output
         matrix.</para>
       </listitem>
 
       <listitem>
-        <para>N = gf_geotrans_get(GT,'normals') Get the normals for each face
+        <para>N = gf_geotrans_get(GT,'normals'): Get the normals for each face
         of the reference convex of the GeoTrans. The normals are stored in the
         columns of the output matrix.</para>
       </listitem>
 
       <listitem>
-        <para>Po = gf_geotrans_get(GT,'poly_str') Return the GeoTrans
+        <para>Po = gf_geotrans_get(GT,'poly_str'): Return the GeoTrans
         expressed as polynomials The result is expressed as a list of
         strings.</para>
       </listitem>
 
       <listitem>
-        <para>Pt = gf_geotrans_get(GT,'transform',mat G, mat Pr) Apply the
+        <para>Pt = gf_geotrans_get(GT,'transform',mat G, mat Pr): Apply the
         GeoTrans to a set of points. <literal>G</literal> is the set of
         vertices of the real convex, <literal>Pr</literal> is the set of
         points (in the reference convex) that are to be transformed. The
@@ -81,7 +75,7 @@
       </listitem>
 
       <listitem>
-        <para>s = gf_geotrans_get(GT,'char') Output a (unique) string
+        <para>s = gf_geotrans_get(GT,'char'): Output a (unique) string
         representation of the GeoTrans. This can be used to perform
         comparisons between two different GeoTrans objects.</para>
       </listitem>
@@ -91,9 +85,19 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <programlisting role="example"><![CDATA[ 
+--> gt=gf_geotrans('GT_PK(2,1)'); gf_geotrans_get(gt,'pts')
+ans =
+     0     1     0
+     0     0     1
+--> gt=gf_geotrans('GT_QK(2,2)'); gf_geotrans_get(gt,'pts')
+ans =
+     0     0.5   1     0     0.5   1     0     0.5   1
+     0     0     0     0.5   0.5   0.5   1     1     1
+--> gf_geotrans_get(gt,'char')
+ans =
+GT_QK(2,2)
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -101,6 +105,8 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_geotrans">gf_geotrans</link></member>
+      <member><link linkend="gf_mesh_set">gf_mesh_set(M,'add convex')</link></member>
+      <member><link linkend="gf_mesh_get">gf_mesh_get(M,'geotrans')</link></member>
     </simplelist>
   </refsection>
 

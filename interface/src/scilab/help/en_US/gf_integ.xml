@@ -10,7 +10,8 @@
   <refnamediv>
     <refname>gf_integ</refname>
 
-    <refpurpose>defines an integration method</refpurpose>
+    <refpurpose>General function for obtaining handles to various integrations methods on convexes 
+      (used when the elementary matrices are built).</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
@@ -20,26 +21,12 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para>Here is a list of some integration methods defined in getfem++ (see
-    the description of finite element and integration methods for a complete
-    reference):</para>
-
+      the <link linkend = "http://www-gmm.insa-toulouse.fr/getfem/doc">description of finite element and integration methods</link> for a complete
+      reference):</para>
+    
     <itemizedlist>
       <listitem>
         <para>IM_EXACT_SIMPLEX(n) Exact integration on simplices (works only
@@ -134,18 +121,12 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_integ_get">gf_integ_get</link></member>
+      <member><link linkend="gf_fem">gf_fem</link></member>
+      <member><link linkend="gf_mesh_im">gf_mesh_im</link></member>
     </simplelist>
   </refsection>
 

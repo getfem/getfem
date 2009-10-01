@@ -17,51 +17,46 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_cvstruct_get(cs, ...)</synopsis>
+    <synopsis>
+int I=gf_cvstruct_get(cvstruct cs, 'nbpts')
+int I=gf_cvstruct_get(cvstruct cs, 'dim')
+cvstruct cs=gf_cvstruct_get(cvstruct cs, 'basic structure') 
+cvstruct cs=gf_cvstruct_get(cvstruct cs, 'face', int F)
+ivec I=gf_cvstruct_get(cvstruct cs, 'facepts', int F)
+</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
-    <para>n = gf_cvstruct_get(cs,'nbpts') Get the number of points of the
+    <para>The convex structures are internal structures of getfem++. They do not contain points positions. These structures are recursive, 
+      since the faces of a convex structures are convex structures. The dimension is returned by gf_cvstruct_get(cs, 'dim'), 
+      and the number of points is given by gf_cvstruct_get(cs, 'nbpts'). </para>
+    <para>Note that a triangle structure may have 6 points, if it is a structure associated to a 'GT_PK(2,2)' geometric transformation. 
+      But the canonical 3-noded triangle structure would be returned by gf_cvstruct_get(cs, 'basic structure'). 
+      The structure of the ith face can be obtained with gf_cvstruct_get(cs, 'face', i), and the indices of its points 
+      are returned by gf_cvstruct_get(cs, 'facepts', i).</para>
+
+    <para>n = gf_cvstruct_get(cs,'nbpts'): Get the number of points of the
     convex structure.</para>
 
-    <para>d = gf_cvstruct_get(cs,'dim') Get the dimension of the convex
+    <para>d = gf_cvstruct_get(cs,'dim'): Get the dimension of the convex
     structure</para>
 
-    <para>cs = gf_cvstruct_get(cs,'basic structure') Get the simplest convex
+    <para>cs = gf_cvstruct_get(cs,'basic structure'): Get the simplest convex
     structure. For example, the 'basic structure' of the 6-node triangle, is
     the canonical 3-noded triangle.</para>
 
-    <para>I = gf_cvstruct_get(cs,'facepts',int F) Return the list of point
+    <para>I = gf_cvstruct_get(cs,'facepts',int F): Return the list of point
     indices for the face `F`.</para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
   </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh">gf_mesh</link></member>
+      <member><link linkend="gf_geotrans">gf_geotrans</link></member>
+      <member><link linkend="gf_mesh_get">gf_mesh_get(M,'cvstruct')</link></member>
     </simplelist>
   </refsection>
 </refentry>

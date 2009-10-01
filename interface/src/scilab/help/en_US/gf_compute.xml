@@ -17,37 +17,27 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>n = gf_compute(MF, U,('L2 norm',MeshIm mim[, mat CVids])
-n = gf_compute(MF, U,('H1 semi norm',MeshIm mim[, mat CVids])
-n = gf_compute(MF, U,('H1 norm',MeshIm mim[, mat CVids])
-n = gf_compute(MF, U,('H2 semi norm',MeshIm mim[, mat CVids])
-n = gf_compute(MF, U,('H2 norm',MeshIm mim[, mat CVids])
-DU = gf_compute(MF, U,('gradient',MeshFem mf_du)
-HU = gf_compute(MF, U,('hessian',MeshFem mf_h)
-Ui = gf_compute(MF, U,('interpolate_on',list(MeshFem mfi | Slice sli))
-Ue = gf_compute(MF, U,('extrapolate_on',MeshFem mfe)
-E = gf_compute(MF, U,('error_estimate',MeshIm mim)
+    <synopsis>
+N = gf_compute(mf, U, 'L2 norm', mesh_im MIM [,ivec CVLST])
+N = gf_compute(mf, U, 'H1 semi norm', mesh_im MIM [,CVLST])
+N = gf_compute(mf, U, 'H1 norm', mesh_im MIM [,ivec CVLST])
+N = gf_compute(mf, U, 'H2 semi norm', mesh_im MIM [,CVLST])
+N = gf_compute(mf, U, 'H2 norm', mesh_im MIM [,ivec CVLST])
+DU = gf_compute(mf, U, 'gradient', mesh_fem mfgrad)
+D2U = gf_compute(mf, U, 'hessian', mesh_fem mfhess)
+U2 = gf_compute(mf, U, 'interpolate on', mesh_fem mf2)
+U2 = gf_compute(mf, U, 'interpolate on', mesh_slice sl)
+[U2[,mf2,[,X[,Y[,Z]]]]] = gf_compute(mf,U,'interpolate on Q1 grid', 
+      {'regular h', hxyz | 'regular N',Nxyz | X[,Y[,Z]]})
+U2 = gf_compute(mf, U, 'extrapolate on', mesh_fem mf2)
+E = gf_compute(mf, U, 'error estimate',  mesh_im MIM) 
   </synopsis>
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
-    <para>[x] = gf_compute(meshfem MF, vec U, operation [, args])</para>
+    <para>The first two arguments of this function are always mf and U, where U is a field defined on the mesh_fem mf.</para>
 
     <itemizedlist>
       <listitem>
@@ -171,10 +161,10 @@ E = gf_compute(MF, U,('error_estimate',MeshIm mim)
         <literal>MF</literal> (i.e. 1 if U is a scalar field). Example
         (<literal>mf_u</literal> is a 2D mesh_fem):</para>
 
-        <programlisting> 
-Uq=gf_compute(mf_u, U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
+        <programlisting role="example"><![CDATA[  
+Uq = gf_compute(mf_u, U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
 pcolor(squeeze(Uq(1,:,:)));
- </programlisting>
+ ]]></programlisting>
       </listitem>
 
       <listitem>
@@ -216,9 +206,11 @@ pcolor(squeeze(Uq(1,:,:)));
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <para>Using the error estimate to refine the worst convexes: </para>
+    <programlisting role="example"><![CDATA[  
+E = gf_compute(mf, U, 'error_estimate', mim);
+gf_mesh_set(m, 'refine', find(E < 1e-3));  
+ ]]></programlisting>
   </refsection>
 
   <refsection>

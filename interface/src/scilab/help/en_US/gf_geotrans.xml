@@ -10,7 +10,7 @@
   <refnamediv>
     <refname>gf_geotrans</refname>
 
-    <refpurpose>perform a geometric transformation</refpurpose>
+    <refpurpose>Return the handle of a geometric transformation object</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
@@ -20,24 +20,11 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
-    <para>The name argument contains the specification of the geometric
-    transformation as a string, which may be:</para>
+    <para>The geometric transformation must be used when you are building a custom mesh convex by convex 
+      (see the 'add convex' sub-command of gf_mesh_set): it also defines the kind of convex (triangle, hexahedron, prism, etc..).</para>
+    <para>The name argument contains the specification of the geometric transformation as a string, which may be:</para>
 
     <itemizedlist>
       <listitem>
@@ -64,21 +51,45 @@
         transformations</para>
       </listitem>
     </itemizedlist>
+
+    <para>Geometric transformations of an existing mesh can be obtained with gf_mesh_get(M,'geotrans').</para>
   </refsection>
 
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <para>In order to get the geometric transformation for a prism of dimension 3, you could use</para>
+
+    <programlisting role="example"><![CDATA[ 
+gt = gf_geotrans('GT_PRISM(3,1)')
+or
+gt = gf_geotrans('GT_PRODUCT(GT_PK(2,1),GT_PK(1,1))')
+ ]]></programlisting>
+
+    <para>If you want the geometric transformation for a curved triangle, you might choose </para>
+
+    <programlisting role="example"><![CDATA[ 
+gt = gf_geotrans('GT_PK(2,2)') // 6-noded triangle
+ ]]></programlisting>
+
+    <para>If you want to use a cartesian mesh, then it is preferable to use</para>
+
+    <programlisting role="example"><![CDATA[ 
+gt = gf_geotrans('GT_LINEAR_PRODUCT(GT_PK(1,1), GT_PK(1,1))')
+instead of gf_geotrans('GT_QK(2,1)') 
+or gf_geotrans('GT_PRODUCT(GT_PK(1,1), GT_PK(1,1))'),
+ ]]></programlisting>
+
+    <para>since the geometric transformation for parallelepipeds is linear, and getfem++ can take advantage of it 
+      (exact integration method, direct inversion of the geometrical transformation,...).</para>
   </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_geotrans_get">gf_geotrans_get</link></member>
+      <member><link linkend="gf_mesh_set">gf_mesh_set(M,'add convex')</link></member>
+      <member><link linkend="gf_mesh_get">gf_mesh_get(M,'geotrans')</link></member>
     </simplelist>
   </refsection>
 

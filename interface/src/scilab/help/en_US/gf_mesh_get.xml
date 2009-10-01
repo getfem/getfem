@@ -10,28 +10,46 @@
   <refnamediv>
     <refname>gf_mesh_get</refname>
 
-    <refpurpose>General mesh inquiry function.</refpurpose>
+    <refpurpose>General mesh inquiry function. As this function does not modify the mesh object, a mesh_fem object handle can be used instead of a mesh handle.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[...] = gf_mesh_get(mesh M, [operation [, args]])</synopsis>
+    <synopsis>
+int I = gf_mesh_get(M, 'dim')
+int N = gf_mesh_get(M, 'nbpts')
+int N = gf_mesh_get(M, 'nbcvs')
+mat PT = gf_mesh_get(M, 'pts'[, ivec PIDLST])
+ivec PTID = gf_mesh_get(M, 'pid')
+ivec CVID = gf_mesh_get(M, 'cvid')
+int I = gf_mesh_get(M, 'max pid')
+int I = gf_mesh_get(M, 'max cvid')
+[ivec PID,ivec IDX] = gf_mesh_get(M, 'pid from cvid'[,ivec CVLST])
+ivec V = gf_mesh_get(M, 'pid from coords', mat PT)
+ivec V = gf_mesh_get(M, 'cvid from pid', ivec PTID)
+ivec V = gf_mesh_get(M, 'orphaned pid')
+ivec V = gf_mesh_get(M, 'faces from pid', ivec PTID)
+imat CVFACELST = gf_mesh_get(M, 'faces from cvid', ivec CVLST[, 'merge'])
+imat CVFACELST = gf_mesh_get(M, 'outer faces' [, ivec CVLST])
+ivec BLST = gf_mesh_get(M, 'regions')
+imat CVFLST = gf_mesh_get(M, 'region', int rnum)
+mat E[,vec C] = gf_mesh_get(M, 'edges' [, ivec CVLST][,'merge'])
+mat E[,vec C] = gf_mesh_get(M, 'curved edges', int N, [, ivec CVLST])
+mat T = gf_mesh_get(M, 'triangulated surface', int N, [, ivec CVLST])
+mat N = gf_mesh_get(M, 'normal of face', int CV, int F[, int FPTNUM])
+mat N = gf_mesh_get(M, 'normal of faces', imat CVFLST)
+vec Q = gf_mesh_get(M, 'quality',[CVLST])
+vec A = gf_mesh_get(M, 'convex area',[CVLST])
+cvstruct CVS[, CV2STRUC] = gf_mesh_get(M, 'cvstruct',[CVLST])
+geotrans GT[, GT2STRUC] = gf_mesh_get(M, 'geotrans',[CVLST])
+gf_mesh_get(M, 'save', string FILENAME)
+string s = gf_mesh_get(M, 'char')
+gf_mesh_get(M,'export_to_vtk', filename, ... [,'ascii'][,'quality'])
+gf_mesh_get(M,'export_to_dx', filename, ...[,'ascii'][,'append'][,'as', name,[,'serie', serie_name]][,'edges'])
+int m = gf_mesh_get(M, 'memsize')
+</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -40,284 +58,157 @@
     mesh_fem argument instead of a mesh M (in that case, the mesh_fem linked
     mesh will be used). </para>
 
+
     <itemizedlist>
       <listitem>
-        <para>d = gf_mesh_get(M,'dim') Get the dimension of the mesh (2 for a
-        2D mesh, etc).</para>
+	<para>gf_mesh_get(M, 'dim') : return the dimension of the mesh (2 for a planar mesh, etc...).</para>
       </listitem>
 
       <listitem>
-        <para>np = gf_mesh_get(M,'nbpts') Get the number of points of the
-        mesh.</para>
+	<para>gf_mesh_get(M, 'nbpts') : return the number of points of the mesh. Please note that these points might not be numbered from 1 to N.</para>
       </listitem>
 
       <listitem>
-        <para>nc = gf_mesh_get(M,'nbcvs') Get the number of convexes of the
-        mesh.</para>
+	<para>gf_mesh_get(M, 'nbcvs') : return the number of convexes of the mesh. Please note that these convexes might not be numbered from 1 to N.</para>
       </listitem>
 
       <listitem>
-        <para>P = gf_mesh_get(M,'pts'[, vec PIDs]) Return the list of point
-        coordinates of the mesh. Each column of the returned matrix contains
-        the coordinates of one point. If the optional argument
-        <literal>PIDs</literal> was given, only the points whose #id is listed
-        in this vector are returned. Otherwise, the returned matrix will have
-        gf_mesh_get(M,'max_pid') columns, which might be greater than
-        gf_mesh_get(M,'nbpts') (if some points of the mesh have been destroyed
-        and no call to gf_mesh_set(M,'optimize structure') have been issued).
-        The columns corresponding to deleted points will be filled with NaN.
-        You can use gf_mesh_get(M,'pid') to filter such invalid points.</para>
+	<para>PT = gf_mesh_get(M, 'pts' [, PIDLST]) : return the list of point coordinates of the mesh M, each point being stored in a column of PT. 
+	  If PIDLST is specified, only those points are listed. Otherwise, PT will have gf_mesh_get(M, 'max pid') rows, which might be greater 
+	  than gf_mesh_get(M, 'nbpts') (if you destroyed some convexes or points in the mesh for example). 
+	  The columns corresponding to inexistent points will be filled with NaN. You can use gf_mesh_get(M, 'pid') to filter such invalid points.</para>
       </listitem>
 
       <listitem>
-        <para>Pid = gf_mesh_get(M,'pid') Return the list of points #id of the
-        mesh. Note that their numbering is not supposed to be contiguous from
-        1 to gf_mesh_get(M,'nbpts'), especially if some points have been
-        removed from the mesh. You can use gf_mesh_set(M,'optimize_structure')
-        to enforce a contiguous numbering. Pid is a row vector.</para>
+	<para>gf_mesh_get(M, 'pid') : return the list of point numbers stored in M (their numbering is not supposed to be contiguous 
+	  from 1 to gf_mesh_get(M,'nbpts'), especially if you destroyed some convexes) in a row vector.</para>
       </listitem>
 
       <listitem>
-        <para>PIDs = gf_mesh_get(M,'pid in faces',mat CVFIDs) Search point #id
-        listed in <literal>CVFIDs</literal>. <literal>CVFIDs</literal> is a
-        two-rows matrix, the first row lists convex #ids, and the second lists
-        face numbers. On return, <literal>PIDs</literal> is a row vector
-        containing points #id.</para>
+	<para>gf_mesh_get(M, 'cvid') : return the list of convex numbers composing M (their numbering is not supposed to be contiguous 
+	  from 1 to gf_mesh_get('nbcvs'), especially if you destroyed some convexes) in a row vector.</para>
       </listitem>
 
       <listitem>
-        <para>PIDs = gf_mesh_get(M,'pid in cvids',mat CVIDs) Search point #id
-        listed in <literal>CVIDs</literal>. <literal>PIDs</literal> is a row
-        vector containing points #id.</para>
+	<para>gf_mesh_get(M, 'max pid') : return the highest point ID in the mesh (this is the same value as MAX(gf_mesh_get(M, 'pts id')), 
+	  but it won't be equal to gf_mesh_get(M, 'nbpts') if some points have been destroyed and the mesh was not "repacked" 
+	  with gf_mesh_set(M, 'optimize structure')).</para>
       </listitem>
 
       <listitem>
-        <para>PIDs = gf_mesh_get(M,'pid in regions',mat RIDs) Search point #id
-        listed in <literal>RIDs</literal>. <literal>PIDs</literal> is a row
-        vector containing points #id.</para>
+	<para>gf_mesh_get(M, 'max cvid') : return the maximum ID of all convexes in the mesh (see 'max pid').</para>
       </listitem>
 
       <listitem>
-        <para>PIDs = gf_mesh_get(M,'pid from coords',mat PTS[, scalar
-        radius=0]) Search point #id whose coordinates are listed in
-        <literal>PTS</literal>. <literal>PTS</literal> is an array containing
-        a list of point coordinates. On return, <literal>PIDs</literal> is a
-        row vector containing points #id for each point found in
-        <literal>eps</literal> range, and -1 for those which where not found
-        in the mesh.</para>
+	<para>[PID,IDX]=gf_mesh_get(M, 'pid from cvid'[, CVLST]) : can be used in order to find the points of the convexes listed in CVLST 
+	  (if not used, then the points of all convexes will be returned, which is equivalent to CVLST=1:gf_mesh_get(M,'max cvid')). 
+	  Since the convexes might have different number of points, the result is stored as an indirect sparse array: IDX is a row vector, 
+	  which length is equal to length(CVLST)+1, and PID is a row vector containing the concatenated list of points of each convex in cvlst. 
+	  Each entry of IDX is the position of the corresponding convex point list in PID. 
+	  For example, the list of points of the second convex is PID(IDX(2):IDX(3)-1).</para>
+	<para>If you specified convex numbers which do not exist in CVLST, their point list will be empty.</para>
       </listitem>
 
       <listitem>
-        <para>list(Pid, IDx) = gf_mesh_get(M,'pid from cvid'[,mat CVIDs])
-        Return the points attached to each convex of the mesh. If
-        <literal>CVIDs</literal> is omitted, all the convexes will be
-        considered (equivalent to <emphasis>CVIDs = gf_mesh_get(M,'max
-        cvid')</emphasis>). <literal>IDx</literal> is a row vector,
-        <emphasis>length(IDx) = length(CVIDs)+1</emphasis>.
-        <literal>Pid</literal> is a row vector containing the concatenated
-        list of #id of points of each convex in <literal>CVIDs</literal>. Each
-        entry of <literal>IDx</literal> is the position of the corresponding
-        convex point list in <literal>Pid</literal>. Hence, for example, the
-        list of #id of points of the second convex is
-        <emphasis>Pid(IDx(2):IDx(3)-1)</emphasis>.</para>
-
-        <para>If <literal>CVIDs</literal> contains convex #id which do not
-        exist in the mesh, their point list will be empty.</para>
+	<para>V=gf_mesh_get(M, 'pid from coords', PT) : can be used to retrieve the point indices from their coordinates. 
+	  PT is an array containing a list of these point coordinates. On return, V is a row vector containing the id of the points which 
+	  are part of the mesh, and -1 for those which where not found in the mesh (a small error of about 1e-6 is allowed 
+	  in the coordinates - this might be important if your mesh is very small!).</para>
       </listitem>
 
       <listitem>
-        <para>CVid = gf_mesh_get(M,'cvid') Return the list of all convex #id.
-        Note that their numbering is not supposed to be contiguous from 1 to
-        gf_mesh_get(M,'nbcvs'), especially if some points have been removed
-        from the mesh. You can use gf_mesh_set(M,'optimize_structure') to
-        enforce a contiguous numbering. CVid is a row vector.</para>
+	<para>gf_mesh_get(M, 'cvid from pid', PTID) : return the list of convexes that share the points numbers given in PTID in a row vector 
+	  (possibly empty).</para>
       </listitem>
 
       <listitem>
-        <para>m = gf_mesh_get(M,'max pid') Return the maximum #id of all
-        points in the mesh (see 'max cvid').</para>
+	<para>gf_mesh_get(M, 'faces from pid', PTID) : return the list of convexes faces of which every vertex is in PTID. 
+	  On return, the first row of V contains the convex number, and the second row contains the face number.</para>
       </listitem>
 
       <listitem>
-        <para>m = gf_mesh_get(M,'max cvid') Return the maximum #id of all
-        convexes in the mesh (see 'max pid').</para>
+	<para>gf_mesh_get(M, 'faces from cvid', CVLST,[ 'merge']) : return the list of convex faces from a list of convex numbers, 
+	  and optionally merges the common faces of two convexes from CVLST.</para>
       </listitem>
 
       <listitem>
-        <para>[E,C] = gf_mesh_get(M,'edges' [, CVLST][,'merge']) </para>
-
-        <para>[OBSOLETE FUNCTION! will be removed in a future release]</para>
-
-        <para>Return the list of edges of mesh M for the convexes listed in
-        the row vector CVLST. E is a 2 x nb_edges matrix containing point
-        indices. If CVLST is omitted, then the edges of all convexes are
-        returned. If CVLST has two rows then the first row is supposed to
-        contain convex numbers, and the second face numbers, of which the
-        edges will be returned. If 'merge' is indicated, all common edges of
-        convexes are merged in a single edge. If the optional output argument
-        C is specified, it will contain the convex number associated with each
-        edge.</para>
+	<para>gf_mesh_get(M, 'outer faces' [, CVLST]) : return the list of faces which are not shared by two convexes 
+	  (i.e. the faces on the boundary of the mesh). The search can be restricted to the optional argument CVLST.</para>
       </listitem>
 
       <listitem>
-        <para>[E,C] = gf_mesh_get(M,'curved edges',@int N [, CVLST]) </para>
-
-        <para>[OBSOLETE FUNCTION! will be removed in a future release]</para>
-
-        <para> More sophisticated version of gf_mesh_get(M,'edges') designed
-        for curved elements. This one will return N (N&gt;=2) points of the
-        (curved) edges. With N==2, this is equivalent to
-        gf_mesh_get(M,'edges'). Since the points are no more always part of
-        the mesh, their coordinates are returned instead of points number, in
-        the array E which is a [ mesh_dim x 2 x nb_edges ] array. If the
-        optional output argument C is specified, it will contain the convex
-        number associated with each edge.</para>
+	<para>gf_mesh_get(M, 'regions') : return the list of valid regions (created with gf_mesh_set(M,'region')). 
+	  Regions are sets of convexes and/or convexes faces, stored in the mesh, and refered by a simple region number. 
+	  They are typically used for the application of boundary conditions.</para>
       </listitem>
 
       <listitem>
-        <para>PIDs = gf_mesh_get(M,'orphaned pid') Search point #id which are
-        not linked to a convex.</para>
+	<para>CVFLST=gf_mesh_get(M, 'region', rnum) : return the list of faces on the boundary rnum. On output, the first row of CVFLST 
+	  contains the convex numbers, and the second row contains the face numbers (0 when the whole convex is is the region). 
+	  See also gf_mesh_fem_get(MF, 'basic dof on region').</para>
       </listitem>
 
       <listitem>
-        <para>CVIDs = gf_mesh_get(M,'cvid from pid',vec PIDs[, bool
-        share=False]) Search convex #ids related with the point #ids given in
-        <literal>PIDs</literal>. If <emphasis>share=False</emphasis>, search
-        convex whose vertex #ids are in <literal>PIDs</literal>. If
-        <emphasis>share=True</emphasis>, search convex #ids that share the
-        point #ids given in <literal>PIDs</literal>. <literal>CVIDs</literal>
-        is a row vector (possibly empty).</para>
+	<para>E=gf_mesh_get(M, 'edges' [, CVLST][, 'merge']) : warning This function has been obsoleted by mesh slice objects </para>
       </listitem>
 
       <listitem>
-        <para>CVFIDs = gf_mesh_get(M,'faces from pid',vec PIDs) Return the
-        convex faces whose vertex #ids are in PIDs. For a convex face to be
-        returned, EACH of its points have to be listed in PIDs. On output, the
-        first row of CVf contains the convex number, and the second row
-        contains the face number (local number in the convex).</para>
+	<para>E=gf_mesh_get(M, 'curved edges', N, [, CVLST]) : warning This function has been obsoleted by mesh slice objects</para>
       </listitem>
 
       <listitem>
-        <para>CVFIDs = gf_mesh_get(M,'outer faces'[, CVIDs]) Return the faces
-        which are not shared by two convexes. If <literal>CVIDs</literal> is
-        not given, it basically returns the mesh boundary. If
-        <literal>CVIDs</literal> is given, it returns the boundary of the
-        convex set whose #ids are listed in <literal>CVIDs</literal>.</para>
+	<para>T=gf_mesh_get(M, 'triangulated surface', N, [, CVLST]) : warning This function has been obsoleted by mesh slice objects</para>
       </listitem>
 
       <listitem>
-        <para>CVFIDs = gf_mesh_get(M,'faces from cvid'[, vec CVIDs][,
-        'merge']) Return a list of convexes faces from a list of convex #id.
-        <literal>CVFIDs</literal> is a two-rows matrix, the first row lists
-        convex #ids, and the second lists face numbers. If
-        <literal>CVIDs</literal> is not given, all convexes are considered.
-        The optional argument 'merge' merges faces shared by the convex of
-        <literal>CVIDs</literal>.</para>
+	<para>gf_mesh_get(M, 'normal of face', CV, F[, FPTNUM]) and</para>
+	<para>gf_mesh_get(M, 'normal of faces', CVFLST) : evaluates the normal of convex faces. The first form returns the normal of convex 
+	  CV for its face F, evaluated at the FPTNUMth point of the face. If FPTNUM is not specified, then the normal is evaluated at each 
+	  geometrical node of the face. The second form returns the normal for a set of faces of convex, each normal being computed at the 
+	  center of the face (CVFLST is supposed to contain convex numbers at its first row and convex face number in its second row).</para>
+      </listitem>
+      
+      <listitem>
+	<para>gf_mesh_get(M, 'quality',[CVLST]) : return an estimate of the convex quality (in a finite element sense).</para>
       </listitem>
 
       <listitem>
-        <para>[mat T] = gf_mesh_get(M,'triangulated surface',int Nrefine
-        [,CVLIST]) </para>
-
-        <para>[OBSOLETE FUNCTION! will be removed in a future release]</para>
-
-        <para>Similar function to gf_mesh_get(M,'curved edges') : split (if
-        necessary, i.e. if the geometric transformation if non-linear) each
-        face into sub-triangles and return their coordinates in T (see also
-        gf_compute(MF,'eval on P1 tri mesh'))</para>
+	<para>gf_mesh_get(M, 'convex area',[CVLST]) : return an estimate the convex areas.</para>
       </listitem>
 
       <listitem>
-        <para>N = gf_mesh_get(M,'normal of face',int cv, int f[, int nfpt])
-        Evaluates the normal of convex <literal>cv</literal>, face
-        <literal>f</literal> at the <literal>nfpt</literal> point of the face.
-        If <literal>nfpt</literal> is not specified, then the normal is
-        evaluated at each geometrical node of the face.</para>
+	<para>[CVS,CV2STRUC]=gf_mesh_get(M, 'cvstruct',[CVLST]) : return an array of all the convex structure used in the mesh 
+	  (optionally restricted to the convexes of CVLST), and a second optional output vector CV2STRUCT which maps the convexes indices 
+	  in CVLST to the indice of its structure in CVS.</para>
       </listitem>
 
       <listitem>
-        <para>N = gf_mesh_get(M,'normal of faces',mat CVFIDs) Evaluates (at
-        face centers) the normals of convexes. <literal>CVFIDs</literal> is
-        supposed to contain convex numbers in its first row and convex face
-        number in its second row.</para>
+	<para>[GT,GT2STRUCT]=gf_mesh_get(M, 'geotrans',[CVLST]) : return an array of the geometric transformations 
+	  (similar to gf_mesh_get(M, 'cvstruct').</para>
       </listitem>
 
       <listitem>
-        <para>Q = gf_mesh_get(M,'quality'[,vec CVIDs]) Return an estimation of
-        the quality of each convex (0 &lt;= Q &lt;= 1).</para>
+	<para>gf_mesh_get(M, 'save', filename) : save the mesh object to an ASCII file. This mesh can be restored later with 
+	  gf_mesh('load', filename). You may also use gf_mesh_get(M, 'char') to obtain a string description of the mesh M, that 
+	  can be saved to files, or restored with gf_mesh('from string').</para>
+      </listitem>
+      
+      <listitem>
+	<para>gf_mesh_get(M,'export_to_vtk', filename, ... [,'ascii'][,'quality']) : export a mesh to a VTK file. 
+	  If 'quality' is specified, an estimation of the quality of each convex will be written to the file 
+	  (see gf_slice_get('export_to_vtk') for more details).</para>
       </listitem>
 
       <listitem>
-        <para>A = gf_mesh_get(M,'convex area'[, vec CVIDs]) Return an
-        estimation of the area of each convex.</para>
+	<para>gf_mesh_get(M,'export_to_dx', filename, ...[,'ascii'] [,'append'] [,'as', name,[,'serie', serie_name]][,'edges']) : export a mesh 
+	  to an OpenDX file (see gf_slice_get('export_to_dx') for more details).</para>
       </listitem>
 
       <listitem>
-        <para>list(S, CV2S) = gf_mesh_get(M,'cvstruct'[, vec CVIDs]) Return an
-        array of the convex structures. If <literal>CVIDs</literal> is not
-        given, all convexes are considered. Each convex structure is listed
-        once in <literal>S</literal>, and <literal>CV2S</literal> maps the
-        convexes indice in <literal>CVIDs</literal> to the indice of its
-        structure in <literal>S</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>list(GT, CV2GT) = gf_mesh_get(M,'geotrans'[, vec CVIDs]) Returns
-        an array of the geometric transformations. See also
-        gf_mesh_get(M,'cvstruct').</para>
-      </listitem>
-
-      <listitem>
-        <para>RIDs = gf_mesh_get(M,'regions') Return the list of valid regions
-        stored in the mesh.</para>
-      </listitem>
-
-      <listitem>
-        <para>CVFIDs = gf_mesh_get(M,'region',vec RIDs) Return the list of
-        convexes/faces on the regions <literal>RIDs</literal>. On output, the
-        first row of <literal>CVFIDs</literal> contains the convex numbers,
-        and the second row contains the face numbers (and 0 when the whole
-        convex is in the regions).</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_get(M,'save',string filename) Save the mesh object to an
-        ascii file. This mesh can be restored with gf_mesh('load',
-        filename).</para>
-      </listitem>
-
-      <listitem>
-        <para>s = gf_mesh_get(M,'char') Output a string description of the
-        mesh.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_get(M,'export to vtk',string filename, ...
-        [,'ascii'][,'quality']) Exports a mesh to a VTK file . If 'quality' is
-        specified, an estimation of the quality of each convex will be written
-        to the file. See also gf_mesh_fem_get(MF,'export to vtk'),
-        gf_slice_get(SL, 'export to vtk').</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_get(M,'export to dx',string filename, ...
-        [,'ascii'][,'append'][,'as',string name,[,'serie',string
-        serie_name]][,'edges']) Exports a mesh to an OpenDX file. See also
-        gf_mesh_fem_get(MD,'export to dx'), gf_slice_get(SL,'export to
-        dx').</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_get(M,'export to pos',string filename) Exports a mesh to
-        a POS file . See also gf_mesh_fem_get(MF,'export to pos'),
-        gf_slice_get(SL,'export to pos').</para>
-      </listitem>
-
-      <listitem>
-        <para>z = gf_mesh_get(M,'memsize') Return the amount of memory (in
-        bytes) used by the mesh.</para>
+	<para>gf_mesh_get(M, 'memsize') : return the amount of memory (in bytes) used by the mesh object.</para>
       </listitem>
     </itemizedlist>
+
   </refsection>
 
   <refsection>
@@ -333,8 +224,8 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
-
       <member><link linkend="gf_mesh">gf_mesh</link></member>
+      <member><link linkend="gf_plot_mesh">gf_plot_mesh</link></member>
     </simplelist>
   </refsection>
 

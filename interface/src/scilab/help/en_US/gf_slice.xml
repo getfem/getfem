@@ -16,26 +16,14 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>sl = gf_slice(sliceop, mesh M, int REFINE [, CVFLST])
+    <synopsis>
+sl = gf_slice(sliceop, mesh M, int REFINE [, CVFLST])
 sl = gf_slice(sliceop, mesh_fem MF, vec U, int REFINE [, CVFLST])
 sl = gf_slice(sliceop, slice SL)
 sl = gf_slice('streamlines', mesh_fem MF, vec U, mat SEEDS)
-sl = gf_slice('points', mesh M, mat PTS)  </synopsis>
+sl = gf_slice('points', mesh M, mat PTS)  
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -45,9 +33,9 @@ sl = gf_slice('points', mesh M, mat PTS)  </synopsis>
     is built from a mesh object, and a description of the slicing operation,
     for example,</para>
 
-    <programlisting> 
+    <programlisting role="example"><![CDATA[ 
 sl = gf_slice(list('planar',+1,[0;0],[1;0]), m, 5);
- </programlisting>
+ ]]></programlisting>
 
     <para>cuts the original mesh with the half space [y&gt;0]. Each convex of
     the original mesh m is simplexified (for example a quadrangle is splitted
@@ -162,17 +150,6 @@ sl = gf_slice(list('planar',+1,[0;0],[1;0]), m, 5);
       </listitem>
     </itemizedlist>
 
-    <para>EXAMPLE:</para>
-
-    <programlisting> 
-sl = gf_slice({intersection',{'planar',+1,[0;0;0],[0;0;1]},{'isovalues',-1,mf2,U2,0}},mf,U,5);
- </programlisting>
-
-    <para>view the convex quality of a 2D or 3D mesh m:</para>
-
-    <programlisting> 
-gf_plot_slice(gfSlice({'explode', 0.7}, m, 2), 'convex_data', gf_mesh_get(m,'quality'));
- </programlisting>
 
     <para>SPECIAL SLICES:</para>
 
@@ -203,16 +180,28 @@ gf_plot_slice(gfSlice({'explode', 0.7}, m, 2), 'convex_data', gf_mesh_get(m,'qua
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <para>Apply the deformation given by mf,U on the mesh, then slice it with the z+ half-space, and keep only the part where U2(x) > 0. </para>
+
+    <programlisting role="example"><![CDATA[ 
+sl = gf_slice(list(intersection',list('planar',+1,[0;0;0],[0;0;1]),list('isovalues',-1,mf2,U2,0)),mf,U,5);
+ ]]></programlisting>
+
+    <para>view the convex quality of a 2D or 3D mesh m:</para>
+    
+    <programlisting role="example"><![CDATA[ 
+gf_plot_slice(gf_slice(list('explode', 0.7), m, 2), 'convex_data', gf_mesh_get(m,'quality'));
+ ]]></programlisting>
+
+    <para>See the gf_plot_slice usage example for more slices. </para>
   </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_compute">gf_compute</link></member>
+      <member><link linkend="gf_slice_get">gf_slice_get</link></member>
+      <member><link linkend="gf_slice_set">gf_slice_set</link></member>
+      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
     </simplelist>
   </refsection>
 

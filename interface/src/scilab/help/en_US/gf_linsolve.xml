@@ -16,22 +16,12 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis> F=gf_linsolve(args)</synopsis>
+    <synopsis>
+gf_linsolve('gmres', spmat M, vec b [, int restart=50][, precond P][, 'noisy'][,'res', r][,'maxiter', n])
+gf_linsolve('cg', spmat M, vec b [, precond P][, 'noisy'][,'res', r][,'maxiter', n])
+gf_linsolve('bicgstab', spmat M, vec b [, precond P][, 'noisy'][,'res', r][,'maxiter', n])[U,cond] = gf_linsolve('lu'|'superlu', spmat M, vec b [, precond P])
+</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -66,26 +56,18 @@
 
       <listitem>
         <para>list(U, cond) = gf_linsolve('superlu',Spmat M, vec b) Solve
-        <emphasis>M.U = b</emphasis> apply the SuperLU solver (sparse LU
-        factorization). The condition number estimate <literal>cond</literal>
-        is returned with the solution <literal>U</literal>.</para>
+        <emphasis>M.U = b</emphasis> apply the <link linkend="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</link> solver (sparse LU
+        factorization). The condition number estimate <literal>cond</literal> is returned with the solution <literal>U</literal>.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_slice_get">gf_slice_get</link></member>
+      <member><link linkend="gf_precond_get">gf_precond_get</link></member>
+      <member><link linkend="gf_precond">gf_precond</link></member>
     </simplelist>
   </refsection>
 

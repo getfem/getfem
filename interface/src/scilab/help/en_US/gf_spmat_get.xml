@@ -16,22 +16,21 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[...]=gf_spmat_get(M, args)</synopsis>
+    <synopsis>
+ivec gf_spmat_get(M,'size')
+int gf_spmat_get(M,'nnz')
+int gf_spmat_get(M,'is_complex')
+string S=gf_spmat_get(M,'storage')
+mat fM=gf_spmat_get(M,'full'[,I [,J]])
+vec tMV=gf_spmat_get(M,'mult', V)
+vec MV=gf_spmat_get(M,'tmult', V)
+vec D=gf_spmat_get(M,'diag'[, E])
+[ivec JC,ivec IR]=gf_spmat_get(M,'csc_ind')
+[vec V]=gf_spmat_get(M,'csc_val')
+[spmat N, vec U0]=gf_spmat_get(H,'dirichlet_nullspace', @vec R)
+string S=gf_spmat_get(sl,'info')gf_spmat_get(sl,'save', string format, string filename)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -126,14 +125,6 @@
         or 'mm' for Matrix-Market.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>

@@ -16,29 +16,17 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[...] = gf_slice_set(sl, operation)  </synopsis>
+    <synopsis>
+gf_slice_set(mesh_slice sl, 'pts', mat P)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>gf_slice_set(SL,('pts',mat P) Replace the points of the slice.
+        <para>gf_slice_set(SL,('pts',mat P) : Replace the points of the slice.
         The new points <literal>P</literal> are stored in the columns the
         matrix. Note that you can use the function to apply a deformation to a
         slice, or to change the dimension of the slice (the number of rows of
@@ -49,18 +37,12 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_slice_get">gf_slice_get</link></member>
+      <member><link linkend="gf_slice">gf_slice</link></member>
+      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
     </simplelist>
   </refsection>
 

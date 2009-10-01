@@ -16,29 +16,20 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_mdbrick_set(cmd, [, args])</synopsis>
+    <synopsis>
+gf_mdbrick_set(b,'param', string name, mesh_fem MF,V | V)
+gf_mdbrick_set(b,'constraints', spmat H, vec R)
+gf_mdbrick_set(b,'constraints_rhs', spmat H, vec R)
+gf_mdbrick_set(b,'penalization_coef', scalar eps)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>gf_mdbrick_set(b,'param',string name,list(MeshFem mf,V | V))
+        <para>gf_mdbrick_set(b,'param',string name,list(MeshFem mf,V | V)) :
         Change the value of a brick parameter. <literal>name</literal> is the
         name of the parameter. <literal>V</literal> should contain the new
         parameter value (vector or float). If a MeshFem is given,
@@ -48,7 +39,7 @@
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_set(b,'penalization_epsilon',scalar eps) Change the
+        <para>gf_mdbrick_set(b,'penalization_epsilon',scalar eps) : Change the
         penalization coefficient of a constraint brick. This is only
         applicable to the bricks which inherit from the constraint brick, such
         as the Dirichlet ones. And of course it is not effective when the
@@ -58,14 +49,14 @@
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_set(b,'constraints',mat H, vec R) Set the constraints
+        <para>gf_mdbrick_set(b,'constraints',mat H, vec R) : Set the constraints
         imposed by a constraint brick. This is only applicable to the bricks
         which inherit from the constraint brick, such as the Dirichlet ones.
         Imposes <emphasis>H.U=R</emphasis>.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_set(b,'constraints_rhs',mat H, vec R) Set the right
+        <para>gf_mdbrick_set(b,'constraints_rhs',mat H, vec R) : Set the right
         hand side of the constraints imposed by a constraint brick. This is
         only applicable to the bricks which inherit from the constraint brick,
         such as the Dirichlet ones.</para>
@@ -74,19 +65,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_slice_get">gf_mdbrick_get</link></member>
-
+      <member><link linkend="gf_mdbrick_get">gf_mdbrick_get</link></member>
       <member><link linkend="gf_mdbrick">gf_mdbrick</link></member>
     </simplelist>
   </refsection>

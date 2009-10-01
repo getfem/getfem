@@ -21,28 +21,13 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
-    <para>Example of FEM names are:</para>
+    <para>The fem_name should contain a description of the finite element method. Please refer to the getfem++ manual 
+      (especially <link linkend="http://www-gmm.insa-toulouse.fr/getfem/doc">the description of finite element and integration methods</link>) 
+      for a complete reference. </para>
 
-    <para>The `fem_name` should contain a description of the finite element
-    method. Please refer to the getfem++ manual (especially the description of
-    finite element and integration methods) for a complete reference. Here is
-    a list of some of them:</para>
+    <para>Here is a list of some of them:</para>
 
     <itemizedlist>
       <listitem>
@@ -193,9 +178,19 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <para>To get a fem of degree 2 on a quadrangle: </para>
+
+    <programlisting role="example"><![CDATA[ 
+fem = gf_fem('FEM_QK(2,2)');
+or
+fem = gf_fem('FEM_PRODUCT(FEM_PK(1,1),FEM_PK(1,1))');  
+ ]]></programlisting>
+
+    <para>The scilab function sprintf might be useful if you need to build the PK fem with k and n as arguments: </para>
+    
+    <programlisting role="example"><![CDATA[ 
+fem = gf_fem(sprintf('FEM_PK(%d,%d)', k, n));  
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -203,6 +198,9 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_fem_get">gf_fem_get</link></member>
+      <member><link linkend="gf_integ">gf_integ</link></member>
+      <member><link linkend="gf_mesh_fem_set">gf_mesh_fem_set(mesh_fem, 'fem', fem)</link></member>
+      <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get('fem')</link></member>
     </simplelist>
   </refsection>
 

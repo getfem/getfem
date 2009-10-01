@@ -17,22 +17,10 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>h=gf_plot(mf,U,varargin)</synopsis>
+    <synopsis>
+[hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U[, options...])
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -137,7 +125,13 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"></programlisting>
+    <para>For example, plotting a scalar field on the border of a 3D mesh can be done with </para>
+    <programlisting role="example"><![CDATA[ 
+// load the 'strange.mesh_fem' (found in the getfem_scilab/demos directory)
+mf = gf_mesh_fem('load', '../../../contrib/aposteriori/aposteriori.meshfem') 
+U = rand(1, gf_mesh_fem_get(mf, 'nbdof')); // random field that will be drawn
+gf_plot(mf, U, 'refine', 25, 'cvlst', gf_mesh_get(mf,'outer faces'), 'mesh','on');  
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -145,6 +139,7 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_plot_mesh">gf_plot_mesh</link></member>
+      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
     </simplelist>
   </refsection>
 </refentry>

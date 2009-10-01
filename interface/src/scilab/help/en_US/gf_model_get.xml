@@ -16,22 +16,21 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_model_get(cmd, [, args])</synopsis>
+    <synopsis>
+b=gf_model_get(md,'is_complex')
+M=gf_model_get(md,'tangent_matrix')
+V=gf_model_get(md,'rhs')
+gf_model_get(md,'listvar')
+gf_model_get(md,'listbricks')
+size=gf_model_get(md,'memsize')
+V=gf_model_get(md,'variable', string name[, int niter])
+name=gf_model_get(md,'mult varname Dirichlet', int ind_brick)
+V=gf_model_get(md,'from variables')
+gf_model_get(md,'assembly'[, string option])
+gf_model_get(md,'solve' [,...])
+V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -138,19 +137,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_model">gf_model</link></member>
-
       <member><link linkend="gf_model_set">gf_model_set</link></member>
     </simplelist>
   </refsection>

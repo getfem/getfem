@@ -16,22 +16,16 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>[x] = gf_mesh_fem_set(meshfem MF, operation [, args])</synopsis>
+    <synopsis>
+gf_mesh_fem_set(MF, 'fem', fem fem [, ivec CVIDX])
+gf_mesh_fem_set(MF, 'classical fem', fem fem, int K [, ivec CVIDX])
+gf_mesh_fem_set(MF, 'classical discontinuous fem', fem fem, int K [, ivec CVIDX])
+gf_mesh_fem_set(MF, 'qdim', int Qdim)
+gf_mesh_fem_set(MF, 'reduction', int s)
+gf_mesh_fem_set(MF, 'reduction matrices', spmat R, spmat E)
+gf_mesh_fem_set(MF, 'dof partition', ivec DOFP)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -91,9 +85,13 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <para>Building a discontinuous mesh_fem mfdu to compute the gradient DU of a field U defined on a mesh_fem mf: </para>
+    <programlisting role="example"><![CDATA[ 
+mfdu = gf_mesh_fem(m);
+// use polynomials of degree 2, and no integration method
+gf_mesh_fem_set(mfdu,'classical discontinuous fem',2); 
+DU = gf_compute(mf,U,'gradient',mfdu);
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -101,8 +99,8 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get</link></member>
-
       <member><link linkend="gf_mesh_fem">gf_mesh_fem</link></member>
+      <member><link linkend="gf_fem">gf_fem</link></member>
     </simplelist>
   </refsection>
 

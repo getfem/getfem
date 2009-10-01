@@ -16,22 +16,15 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_mdstate_set(cmd, [, args])</synopsis>
+    <synopsis>
+gf_mdstate_set(mds,'compute_reduced_system')
+gf_mdstate_set(mds,'compute_reduced_residual')
+gf_mdstate_set(mds,'compute_residual', mdbrick B)
+gf_mdstate_set(mds,'compute_tangent_matrix', mdbrick B)
+gf_mdstate_set(mds,'state', vec U)
+gf_mdstate_set(mds,'clear')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -69,19 +62,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_mdstate_get">gf_mdstate_get</link></member>
-
       <member><link linkend="gf_mdstate">gf_mdstate</link></member>
     </simplelist>
   </refsection>

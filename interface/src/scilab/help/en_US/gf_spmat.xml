@@ -16,30 +16,18 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>F=gf_spmat(command, args)  </synopsis>
+    <synopsis>
+M=gf_spmat('empty', int m [, int n])
+M=gf_spmat('identity', int n)
+M=gf_spmat('copy', spmat K [,ivec I [, ivec J]])
+M=gf_spmat('mult',  spmat A,  spmat B)
+M=gf_spmat('add', spmat A, spmat B)
+M=gf_spmat('harwell-boeing', string filename)M=gf_spmat('matrix-market', string filename)
+    </synopsis>
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
-
-    <para>FUNCTION </para>
-
-    <para>i.e. sparse matrices which are stored in the getfem workspace,not
-    the matlab sparse matrices.</para>
 
     <para>These sparse matrix can be stored as CSC (compressed column sparse),
     which is the format used by Matlab, or they can be stored as WSC (internal
@@ -116,9 +104,27 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
+    <programlisting role="example"><![CDATA[ 
+// TEST EMPTY COPY FULL
+A  = gf_spmat('empty', 5,6);
+B  = gf_spmat('empty', 11111);
+C  = gf_spmat('copy', A);
+C  = sprand(50,50,.1); C(2,2)=1+2*%i; I = 1:40; J = [6 7 8 3 10];
+D  = gf_spmat('copy', C, I, J);
+DD = gf_spmat_get(D,'full');
+
+// TEST MULT
+A  = gf_spmat('identity', 11111);
+C  = gf_spmat('mult',A,B);
+n  = gf_spmat_get(C,'nnz'); assert('n==0');
+C  = gf_spmat('mult',A,A);
+n  = gf_spmat_get(C,'nnz'); assert('n==11111');
+M1 = sprand(50,43,.1);
+M2 = sprand(43,14,.3);
+C  = gf_spmat('mult',M1,M2);
+C  = gf_spmat_get(C, 'full');
+P  = full(M1*M2);
+ ]]></programlisting>
   </refsection>
 
   <refsection>
@@ -127,6 +133,7 @@
     <simplelist type="inline">
       <member><link linkend="gf_spmat_get">gf_spmat_get</link></member>
       <member><link linkend="gf_spmat_set">gf_spmat_set</link></member>
+      <member><link linkend="gf_util">gf_util</link></member>
     </simplelist>
   </refsection>
 

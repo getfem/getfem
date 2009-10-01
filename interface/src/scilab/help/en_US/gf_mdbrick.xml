@@ -17,22 +17,34 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_mdbrick(brick_name, [, args])</synopsis>
+    <synopsis>
+gf_mdbrick('constraint', mdbrick parent, string CTYPE [, int numfem])
+gf_mdbrick('dirichlet', mdbrick parent, int BNUM, mesh_fem MFMULT, string CTYPE [, int numfem])
+gf_mdbrick('dirichlet on normal component', mdbrick parent, int BNUM, mesh_fem MFMULT, string CTYPE [, int numfem])
+gf_mdbrick('dirichlet on normal derivative', mdbrick parent, int BNUM, mesh_fem MFMULT, string CTYPE [, int numfem])
+gf_mdbrick('generalized dirichlet', mdbrick parent, int BNUM [, int numfem])
+gf_mdbrick('source term', mdbrick parent, [, int BNUM=-1[, int numfem]])
+gf_mdbrick('normal source term', mdbrick parent, int BNUM [, int numfem])
+gf_mdbrick('normal derivative source term', mdbrick parent, int BNUM [, int numfem])
+gf_mdbrick('neumann KirchhoffLove source term', mdbrick parent, int BNUM [, int numfem])
+gf_mdbrick('qu term', mdbrick parent, [, int BNUM [, int numfem]])
+gf_mdbrick('mass matrix', mesh_im mim, mesh_fem mf_u [,'real'|'complex'])
+gf_mdbrick('generic elliptic', mesh_im MIM, mesh_fem mfu [,'scalar'|'matrix'|'tensor'][,'real'|'complex'])
+gf_mdbrick('helmholtz', mesh_im MIM, mesh_fem mfu [,'real'|'complex'])
+gf_mdbrick('isotropic linearized elasticity', mesh_im MIM, mesh_fem mfu)
+gf_mdbrick('linear incompressibility term', mdbrick parent, mesh_fem mf_p [, int numfem])
+gf_mdbrick('nonlinear elasticity', mesh_im MIM, mesh_fem mfu, string lawname)
+gf_mdbrick('nonlinear elasticity incompressibility term', mdbrick parent, mesh_fem mf_p [, int numfem])
+gf_mdbrick('small deformations plasticity', mesh_im MIM, mesh_fem mfu, scalar THRESHOLD)
+gf_mdbrick('bilaplacian', mesh_im MIM, mesh_fem mfu, ['Kirchhoff-Love'])
+gf_mdbrick('isotropic_linearized_plate', mesh_im MIM, mesh_im MIMSUB, mesh_fem MF_UT, mesh_fem MF_U3, mesh_fem MF_THETA, scalar EPSILON)
+gf_mdbrick('mixed_isotropic_linearized_plate', mesh_im MIM, mesh_fem MF_UT, mesh_fem MF_U3, mesh_fem MF_THETA, scalar EPSILON)
+gf_mdbrick('plate_source_term', mdbrick parent, [, int BNUM=-1[, int numfem]])
+gf_mdbrick('plate_simple_support', mdbrick parent, int BNUM, string CTYPE [, int numfem])
+gf_mdbrick('plate_clamped_support', mdbrick parent, int BNUM, string CTYPE[, int numfem])
+gf_mdbrick('plate_closing', mdbrick parent [, int numfem])
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -292,19 +304,10 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
       <member><link linkend="gf_mdbrick_set">gf_mdbrick_set</link></member>
-
       <member><link linkend="gf_mdbrick_get">gf_mdbrick_get</link></member>
     </simplelist>
   </refsection>

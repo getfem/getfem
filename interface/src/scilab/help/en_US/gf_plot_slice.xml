@@ -21,20 +21,6 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para>This function is used to plot a slice of mesh/mesh_fem (see
@@ -143,14 +129,50 @@
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"></programlisting>
-  </refsection>
+    <para>Consider that you have a 3D mesh fem mf and a vector field U defined on this mesh fem, solution of the Stokes problem in a tank (see the demo demo_stokes_3D_tank_draw.m in the tests directory).</para>
+
+    <programlisting role="example"><![CDATA[ 
+scf();
+// use a nice colormap
+c = [0 0 1; 0 .5 1; 0 1 .5; 0 1 0; .5 1 0; 1 .5 0; 1 .4 0; 1 0 0; 1 .2 0; 1 .4 0; 1 .6 0; 1 .8 0];
+h = gcf();
+h.color_map = colormap(c);
+// slice the mesh with two half spaces, and take the boundary of the resulting quarter-cylinder
+sl = gf_slice(list('boundary',list('intersection',list('planar',+1,[0;0;0],[0;1;0]},...
+                              list('planar',+1,[0;0;0],[1;0;0]))),m,6);
+Usl = gf_compute(pde('mf_u'),U,'interpolate on', sl); // interpolate the solution on the slice
+// show the norm of the displacement on this slice
+gf_plot_slice(sl,'mesh','on','data',sqrt(sum(Usl.^2,1)),'mesh_slice_edges','off');
+  
+// another slice: now we take the lower part of the mesh
+sl = gf_slice(list('boundary',list('intersection',list('planar',+1,[0;0;6],[0;0;-1]},...
+                              list('planar',+1,[0;0;0],[0;1;0]))),m,6);
+Usl = gf_compute(pde('mf_u'),U,'interpolate on', sl);
+gf_plot_slice(sl,'mesh','on','data',sqrt(sum(Usl.^2,1)),'mesh_slice_edges','off');
+  
+// this slice contains the transparent mesh faces displayed on the picture
+sl2 = gf_slice(list('boundary',list('planar',+1,[0;0;0],[0;1;0])),...
+               m,6,_setdiff(all_faces',TOPfaces','rows')');
+gf_plot_slice(sl2,'mesh_faces','off','mesh','on','pcolor','off'); 
+
+// last step is to plot the streamlines
+hh = [1 5 9 12.5 16 19.5]; // vertical position of the different starting points of the streamlines
+H  = [zeros(2,length(hh));hh];
+
+// compute the streamlines
+tsl  = gf_slice('streamlines',pde('mf_u'),U,H);
+Utsl = gf_compute(pde('mf_u'),U,'interpolate on', tsl);
+
+// render them with "tube plot"
+[a,h] = gf_plot_slice(tsl,'mesh','off','tube_radius',.2,'tube_color','white'); 
+ ]]></programlisting>
+</refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_plot">gf_plot</link></member>
+      <member><link linkend="gf_slice">gf_slice</link></member>
     </simplelist>
   </refsection>
 </refentry>

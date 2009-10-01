@@ -20,20 +20,6 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para>H=gf_plot_mesh(M) displays a mesh.</para>
@@ -97,19 +83,45 @@
       </listitem>
 
       <listitem>
-        <para>'quality',{ 'off' | 'on' } Display the quality of the mesh.
-        </para>
+        <para>'quality',{ 'off' | 'on' } Display the quality of the
+        mesh.</para>
       </listitem>
     </itemizedlist>
 
     <para>CAUTION: For 'dof', M should be a mesh_fem identifier, not a simple
     mesh object.</para>
+
+    <para>This function can be used with any mesh in any dimension (except if
+    the 'faces' options is turned on).</para>
+
+    <para>On output, this function returns the handles to the various
+    graphical objects created: hmesh is the handles to the mesh lines, hbound
+    is the handles to the edges of the boundaries, hfill is the handle of the
+    patch objects of faces, hvert (resp hconv,hdof) is the handles of the
+    vertices (resp. convexes, dof) labels.</para>
   </refsection>
 
   <refsection>
     <title>Examples</title>
 
-    <programlisting role="example"></programlisting>
+    <para>Displaying a donut (meshed with quadratic tetrahedrons) created with
+    <link linkend="http://gid.cimne.upc.es/">GiD</link>:</para>
+
+    <programlisting role="example"> 
+// the mesh is in the demos directory of the distribution
+m = gf_mesh('import','gid','donut_with_quadratic_tetra_1100_elements.msh');
+gf_plot_mesh(m,'refine',15,'cvlst',gf_mesh_get(m,'outer faces'),'faces','on',...
+'faces_color',[1. .9 .2],'curved','on','edges_width',2); 
+ </programlisting>
+
+    <mediaobject>
+      <imageobject>
+        <imagedata align="center" fileref="../fig/gf_plot_mesh_fig_1.png" />
+      </imageobject>
+    </mediaobject>
+
+    <para>You can notice that the mesh has a small default on some
+    elements.</para>
   </refsection>
 
   <refsection>

@@ -16,33 +16,58 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_model_set(cmd, [, args])</synopsis>
+    <synopsis>
+gf_model_set(md,'variable', vec U[, int niter])
+gf_model_set(md,'clear')
+gf_model_set(md,'add fem variable', string name, mesh_fem mf[, int niter])
+gf_model_set(md,'add variable' string name, int size[, int niter])
+gf_model_set(md,'add fem data', string name, mesh_fem mf[, int niter])
+gf_model_set(md,'add initialized fem data', string name, mesh_fem mf, vec V)
+gf_model_set(md,'add data', string name, mesh_fem mf, vec V)
+gf_model_set(md,'add initialized data', string name, vec V)
+gf_model_set(md,'add multiplier', string name, mesh_fem mf, mesh_im mim, string primalname, int region[, int niter])
+gf_model_set(md,'to variables', vec V)
+ind_brick=gf_model_set(md,'add Laplacian brick', mesh_im mim, string varname[, int region])
+ind_brick=gf_model_set(md,'add generic elliptic brick', mesh_im mim, string varname[, int region])
+ind_brick=gf_model_set(md,'add source term brick', mesh_im mim, string varname, string dataname[, int region[, string directdataname ]])
+ind_brick=gf_model_set(md,'add normal source term brick', mesh_im mim, string varname, string dataname, int region)
+ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', mesh_im mim, string varname, string dataname, int region)
+ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', mesh_im mim, string varname, scalar coeff, int region[, string dataname ])
+gf_model_set(md,'change penalization coeff', int ind_brick, scalar coeff)
+ind_brick=gf_model_set(md,'add Helmholtz brick', mesh_im mim, string varname, string dataname[, int region])
+ind_brick=gf_model_set(md,'add Fourier Robin brick', mesh_im mim, string varname[, string dataname, int region)
+ind_brick=gf_model_set(md,'add constraint with penalization',  string varname, scalar coeff, mat B, vec L)
+ind_brick=gf_model_set(md,'add constraint with multipliers,  string varname, string multname, mat B, vec L)
+ind_brick=gf_model_set(md,'add explicit matrix', string varname1, string varname2, mat B[, int issymmetric[, int iscoercive]])
+ind_brick=gf_model_set(md,'add explicit rhs', string varname, vec L)
+gf_model_set(md,'set private matrix',  int indbrick, mat B)
+gf_model_set(md,'set private rhs',  int indbrick, vec L)
+gf_model_set(md,'disable bricks',  ivec indbricks)
+gf_model_set(md,'unable bricks',  ivec indbricks)
+ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', mesh_im mim, string varname, string dataname_lambda, string dataname_mu[, int region])
+ind_brick=gf_model_set(md,'add linear incompressibility brick', mesh_im mim, string varname, string multname_pressure[, int region[, string dataname_coeff]])
+ind_brick=gf_model_set(md,'add mass brick', mesh_im mim, string varname[, string dataname_rho[, int region]])
+ind_brick=gf_model_set(md,'add basic d on dt brick', mesh_im mim, string varnameU,  string dataname_dt[, string dataname_rho[, int region]])
+ind_brick=gf_model_set(md,'add basic d2 on dt2 brick', mesh_im mim, string varnameU,  string varnameV, string dataname_dt, string dataname_alpha[, string dataname_rho[, int region]])
+gf_model_set(md,'add theta method dispatcher', ivec bricks_indices, string theta)
+gf_model_set(md,'add midpoint dispatcher', ivec bricks_indices)
+gf_model_set(md,'velocity update for order two theta method',  string varnameU,  string datanameV, string dataname_dt, string dataname_theta)
+gf_model_set(md,'velocity update for Newmark scheme',  int id2dt2_brick, string varnameU,  string datanameV, string dataname_dt, string dataname_twobeta,  string dataname_gamma)
+gf_model_set(md,'first iter')
+gf_model_set(md,'next iter')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>MODEL:SET('clear') Clear the model.</para>
+        <para>gf_model_set(mds,'clear') Clear the model.</para>
       </listitem>
 
       <listitem>
-        <para> gf_model_set(mds,'add fem variable', string name, MeshFem mf[,
+        <para>gf_model_set(mds,'add fem variable', string name, MeshFem mf[,
         int niter]) Add a variable to the model linked to a MeshFem.
         <literal>name</literal> is the variable name and
         <literal>niter</literal> is the optional number of copy of the
@@ -127,7 +152,13 @@
         term to the model relatively to the variable
         <literal>varname</literal>. The shape of the elliptic term depends
         both on the variable and the data. This corresponds to a term
-        $-\text{div}(a\nabla u)$ where <literal>a</literal> is the data and
+        <inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_model_set_eq1.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation> where <literal>a</literal> is the data and
         <literal>u</literal> the variable. The data can be a scalar, a matrix
         or an order four tensor. The variable can be vector valued or not. If
         the data is a scalar or a matrix and the variable is vector valued
@@ -210,7 +241,7 @@
       </listitem>
 
       <listitem>
-        <para> gf_model_set(mds,'change penalization coeff', int ind_brick,
+        <para>gf_model_set(mds,'change penalization coeff', int ind_brick,
         scalar coeff) Change the penalization coefficient of a Dirichlet
         condition with penalization brick. If the brick is not of this kind,
         this function has an undefined behavior.</para>
@@ -230,10 +261,16 @@
         <para>ind = gf_model_set(mds,'add Fourier Robin brick', MeshIm mim,
         string varname, string dataname, int region) add a Fourier-Robin term
         to the model relatively to the variable <literal>varname</literal>.
-        this corresponds to a weak term of the form $\int (qu).v$.
-        <phrase>dataname</phrase> should contain the parameter $q$ of the
-        Fourier-Robin condition. <literal>region</literal> is the mesh region
-        on which the term is added.</para>
+        this corresponds to a weak term of the form <inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_model_set_eq2.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation>. <phrase>dataname</phrase> should contain the
+        parameter <literal>q</literal> of the Fourier-Robin condition.
+        <literal>region</literal> is the mesh region on which the term is
+        added.</para>
       </listitem>
 
       <listitem>
@@ -241,18 +278,18 @@
         varname, string multname, mat B, vec L) Add an additional explicit
         constraint on the variable <literal>varname</literal> thank to a
         multiplier <literal>multname</literal> peviously added to the model
-        (should be a fixed size variable). The constraint is $BU=L$ with
-        <literal>B</literal> being a rectangular sparse matrix. It is possible
-        to change the constraint at any time whith the methods
-        gf_model_set(mds,'set private matrix') and gf_model_set(mds,'set
-        private rhs')</para>
+        (should be a fixed size variable). The constraint is
+        <emphasis>BU=L</emphasis> with <literal>B</literal> being a
+        rectangular sparse matrix. It is possible to change the constraint at
+        any time whith the methods gf_model_set(mds,'set private matrix') and
+        gf_model_set(mds,'set private rhs')</para>
       </listitem>
 
       <listitem>
         <para>ind = gf_model_set(mds,'add constraint with penalization',
         string varname, scalar coeff, mat B, vec L) Add an additional explicit
         penalized constraint on the variable <literal>varname</literal>. The
-        constraint is $BU=L$ with <literal>B</literal> being a rectangular
+        constraint is BU=L with <literal>B</literal> being a rectangular
         sparse matrix. Be aware that <literal>B</literal> should not contain a
         palin row, otherwise the whole tangent matrix will be plain. It is
         possible to change the constraint at any time whith the methods
@@ -322,7 +359,7 @@
         specified, it is added on the whole mesh.
         <literal>dataname_coeff</literal> is an optional penalization
         coefficient for nearly incompressible elasticity for instance. In this
-        case, it is the inverse of the Lamé coefficient $\lambda$.</para>
+        case, it is the inverse of the Lamé coefficient lambda.</para>
       </listitem>
 
       <listitem>
@@ -339,7 +376,7 @@
         <para>ind = gf_model_set(mds,'add basic d on dt brick', MeshIm mim,
         string varnameU, string dataname_dt[, string dataname_rho[, int
         region]]) Add the standard discretization of a first order time
-        derivative on <literal>varnameU</literal>. The parameter $rho$ is the
+        derivative on <literal>varnameU</literal>. The parameter rho is the
         density which could be omitted (the defaul value is 1). This brick
         should be used in addition to a time dispatcher for the other
         terms.</para>
@@ -366,21 +403,33 @@
         <para>gf_model_set(mds,'add theta method dispatcher', vec
         bricks_indices, string theta) Add a theta-method time dispatcher to a
         list of bricks. For instance, a matrix term <literal>K</literal> will
-        be replaced by $\theta K U^{n+1} + (1-\theta) K U^{n}$.</para>
+        be replaced by <inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_model_set_eq3.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation>.</para>
       </listitem>
 
       <listitem>
         <para>gf_model_set(mds,'add midpoint dispatcher', vec bricks_indices)
         Add a midpoint time dispatcher to a list of bricks. For instance, a
-        nonlinear term $K(U)$ will be replaced by $K((U^{n+1} +
-        U^{n})/2)$.</para>
+        nonlinear term K(U) will be replaced by <inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_model_set_eq4.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation>.</para>
       </listitem>
 
       <listitem>
         <para>gf_model_set(mds,'velocity update for order two theta method',
         string varnameU, string datanameV, string dataname_dt, string
-        dataname_theta) Function which udpate the velocity $v^{n+1}$ after the
-        computation of the displacement $u^{n+1}$ and before the next
+        dataname_theta) Function which udpate the velocity
+        v<superscript>n+1</superscript> after the computation of the
+        displacement u<superscript>n+1</superscript> and before the next
         iteration. Specific for theta-method and when the velocity is included
         in the data of the model.</para>
       </listitem>
@@ -389,10 +438,11 @@
         <para>gf_model_set(mds,'velocity update for Newmark scheme', int
         id2dt2_brick, string varnameU, string datanameV, string dataname_dt,
         string dataname_twobeta, string dataname_alpha) Function which udpate
-        the velocity $v^{n+1}$ after the computation of the displacement
-        $u^{n+1}$ and before the next iteration. Specific for Newmark scheme
-        and when the velocity is included in the data of the model. This
-        version inverts the mass matrix by a conjugate gradient.</para>
+        the velocity v<superscript>n+1</superscript> after the computation of
+        the displacement u<superscript>n+1</superscript> and before the next
+        iteration. Specific for Newmark scheme and when the velocity is
+        included in the data of the model. This version inverts the mass
+        matrix by a conjugate gradient.</para>
       </listitem>
 
       <listitem>
@@ -416,14 +466,6 @@
         each iteration of a time integration scheme.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>

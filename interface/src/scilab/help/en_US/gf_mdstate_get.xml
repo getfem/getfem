@@ -16,85 +16,74 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_mdstate_get(cmd, [, args])</synopsis>
+    <synopsis>
+gf_mdstate_get(mds,'is_complex')
+gf_mdstate_get(mds,'tangent_matrix')
+gf_mdstate_get(mds,'constraints_matrix')
+gf_mdstate_get(mds,'reduced_tangent_matrix')
+gf_mdstate_get(mds,'constraints_nullspace')
+gf_mdstate_get(mds,'state')
+gf_mdstate_get(mds,'residual')
+gf_mdstate_get(mds,'reduced_residual')
+gf_mdstate_get(mds,'unreduce', vec U)
+gf_mdstate_get(mds,'memsize')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>b = gf_mdstate_get(mds,'is_complex') Return 0 is the model state
+        <para>b = gf_mdstate_get(mds,'is_complex') : Return 0 is the model state
         is real, 1 if it is complex.</para>
       </listitem>
 
       <listitem>
-        <para>T = gf_mdstate_get(mds,tangent_matrix') Return the tangent
+        <para>T = gf_mdstate_get(mds,tangent_matrix') : Return the tangent
         matrix stored in the model state.</para>
       </listitem>
 
       <listitem>
-        <para>C = gf_mdstate_get(mds,'constraints_matrix') Return the
+        <para>C = gf_mdstate_get(mds,'constraints_matrix') : Return the
         constraints matrix stored in the model state.</para>
       </listitem>
 
       <listitem>
-        <para>A = gf_mdstate_get(mds,'reduced_tangent_matrix') Return the
+        <para>A = gf_mdstate_get(mds,'reduced_tangent_matrix') : Return the
         reduced tangent matrix (i.e. the tangent matrix after elimination of
         the constraints).</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdstate_get(mds,'constraints_nullspace') Return the nullspace
+        <para>gf_mdstate_get(mds,'constraints_nullspace') : Return the nullspace
         of the constraints matrix.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdstate_get(mds,'state') Return the vector of unknowns, which
+        <para>gf_mdstate_get(mds,'state') : Return the vector of unknowns, which
         contains the solution after gf_mdbrick_get(mdb,'solve').</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdstate_get(mds,'residual') Return the residual.</para>
+        <para>gf_mdstate_get(mds,'residual') : Return the residual.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdstate_get(mds,'reduced_residual') Return the residual on
+        <para>gf_mdstate_get(mds,'reduced_residual') : Return the residual on
         the reduced system.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdstate_get(mds,'unreduce',vec U) Reinsert the constraint
+        <para>gf_mdstate_get(mds,'unreduce',vec U) : Reinsert the constraint
         eliminated from the system.</para>
       </listitem>
 
       <listitem>
-        <para>z = gf_mdstate_get(mds,'memsize') Return the amount of memory
+        <para>z = gf_mdstate_get(mds,'memsize') : Return the amount of memory
         (in bytes) used by the model state.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>
@@ -102,7 +91,6 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_mdstate_set">gf_mdstate_set</link></member>
-
       <member><link linkend="gf_mdstate">gf_mdstate</link></member>
     </simplelist>
   </refsection>

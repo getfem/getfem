@@ -16,34 +16,10 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>
+U2,Iq,MF2]=gf_compute_Q1grid_interp(MF1,U1,varargin)
+</synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
-    <title>Description</title>
-
-    <para></para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"></programlisting>
-  </refsection>
 
   <refsection>
     <title>See Also</title>

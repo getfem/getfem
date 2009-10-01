@@ -10,46 +10,40 @@
   <refnamediv>
     <refname>gf_integ_get</refname>
 
-    <refpurpose>General function for querying information about FEM
-    integration method objects.</refpurpose>
+    <refpurpose>Gives access to various internal informations of an Integration Method handle IM.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_integ_get(F, ...)</synopsis>
+    <synopsis>
+int I = gf_integ_get(IM,'is_exact')
+int I = gf_integ_get(IM,'dim')
+int I = gf_integ_get(IM,'nbpts')
+mat gf_integ_get(IM,'pts')
+vec gf_integ_get(IM,'coeffs')
+mat gf_integ_get(IM,'face_pts', int F)
+vec gf_integ_get(IM,'face_coeffs',int F)
+string S=gf_integ_get(IM,'char')
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>b = INTEG:GET('is_exact') Return 0 if the integration is an
+        <para>b = gf_integ_get(im,'is_exact') Return 0 if the integration is an
         approximate one.</para>
       </listitem>
 
       <listitem>
-        <para>d = INTEG:GET('dim') Return the dimension of the reference
+        <para>d = gf_integ_get(im,'dim') Return the dimension of the reference
         convex of the method.</para>
       </listitem>
 
       <listitem>
-        <para>n = INTEG:GET('nbpts') Return the total number of integration
+        <para>n = gf_integ_get(im,'nbpts') Return the total number of integration
         points. Count the points for the volume integration, and points for
         surface integration on each face of the reference convex.</para>
 
@@ -58,7 +52,7 @@
       </listitem>
 
       <listitem>
-        <para>Pf = INTEG:GET('face_pts',F) Return the list of integration
+        <para>Pf = gf_integ_get(im,'face_pts',F) Return the list of integration
         points for a face.</para>
 
         <para>Only for approximate methods, this has no meaning for exact
@@ -66,7 +60,7 @@
       </listitem>
 
       <listitem>
-        <para>Cp = INTEG:GET('coeffs') Returns the coefficients associated to
+        <para>Cp = gf_integ_get(im,'coeffs') Returns the coefficients associated to
         each integration point.</para>
 
         <para>Only for approximate methods, this has no meaning for exact
@@ -74,7 +68,7 @@
       </listitem>
 
       <listitem>
-        <para>Cf = INTEG:GET('face_coeffs',F) Returns the coefficients
+        <para>Cf = gf_integ_get(im,'face_coeffs',F) Returns the coefficients
         associated to each integration of a face.</para>
 
         <para>Only for approximate methods, this has no meaning for exact
@@ -82,19 +76,11 @@
       </listitem>
 
       <listitem>
-        <para>s = INTEG:GET('char') Ouput a (unique) string representation of
+        <para>s = gf_integ_get(im,'char') Ouput a (unique) string representation of
         the integration method. This can be used to comparisons between two
         different Integ objects.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>

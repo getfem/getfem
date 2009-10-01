@@ -16,22 +16,16 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>F=gf_precond(name_of_preconditioner, args)</synopsis>
+    <synopsis>
+gf_precond('identity')
+gf_precond('cidentity')
+gf_precond('diagonal', vec D)
+gf_precond('ildlt', spmat M)
+gf_precond('ilu', spmat M)
+gf_precond('ildltt', spmat M [, int fillin [, scalar threshold]])
+gf_precond('ilut', spmat M [, int fillin [, scalar threshold]])gf_precond('superlu', spmat M)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -85,27 +79,13 @@
       </listitem>
 
       <listitem>
-        <para>gf_precond('superlu', Spmat m) Uses SuperLU to build an exact
-        factorization of the sparse matrix `m`. This preconditioner is only
-        available if the getfem-interface was built with SuperLU
-        support</para>
+        <para>gf_precond('superlu', Spmat m) Uses <link linkend="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</link> to build an exact
+          factorization of the sparse matrix `m`. This preconditioner is only available if the getfem-interface was built with 
+	  <link linkend="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</link> support</para>
 
-        <para>Note that LU factorization is likely to eat all your memory for
-        3D problems.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_precond('spmat', Spmat M) ???</para>
+        <para>Note that LU factorization is likely to eat all your memory for 3D problems.</para>
       </listitem>
     </itemizedlist>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>
@@ -113,6 +93,7 @@
 
     <simplelist type="inline">
       <member><link linkend="gf_precond_get">gf_precond_get</link></member>
+      <member><link linkend="gf_linsolve">gf_linsolve</link></member>
     </simplelist>
   </refsection>
 

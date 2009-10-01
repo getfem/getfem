@@ -17,39 +17,23 @@
     <title>Calling Sequence</title>
 
     <synopsis>
-    M = gf_asm('mass_matrix',MeshIm mim, MeshFem mf1[, MeshFem mf2])
-    L = gf_asm('laplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec a)
-    Le = gf_asm('linear_elasticity',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec lambda_d, vec mu_d)
-    TRHS = gf_asm('nonlinear_elasticity',MeshIm mim, MeshFem mf_u, vec U,string law, MeshFem mf_d, mat params, 
-                  list('tangent matrix'|'rhs'|'incompressible tangent matrix', MeshFem mf_p, vec P|'incompressible rhs', MeshFem mf_p, vec P))
-    [K, B] = gf_asm('stokes',MeshIm mim, MeshFem mf_u, MeshFem mf_p, MeshFem mf_d, vec nu)
-    A = gf_asm('helmholtz',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec k)
-    A = gf_asm('bilaplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec a)
-    V = gf_asm('volumic_source',MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec fd)
-    B = gf_asm('boundary_source',int bnum, MeshIm mim, MeshFem mf_u, MeshFem mf_d, vec G)
-    [HH, RR] = gf_asm('dirichlet',int bnum, MeshIm mim, MeshFem mf_u, MeshFem mf_d, mat H, vec R [, threshold])
-    Q = gf_asm('boundary_qu_term',int boundary_num, MeshIm mim, MeshFem mf_u, MeshFem mf_d, mat q)
-    [...] = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])
-    [...] = gf_asm('boundary',int bnum, string expr [, MeshIm mim, MeshFem mf, data...])
-    Mi = gf_asm('interpolation_matrix',MeshFem mf, MeshFem mfi)
-    Me = gf_asm('extrapolation_matrix',MeshFem mf, MeshFem mfe)
-    [Q, G, H, R, F] = gf_asm('pdetool_boundary_conditions',mf_u, mf_d, b, e[, f_expr])
-  </synopsis>
+vec F = gf_asm('volumic source', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec F)
+vec F = gf_asm('boundary source',int boundary_num, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d,vec G)
+spmat M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2])
+spmat M = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec A)
+spmat K = gf_asm('linear elasticity', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec lambda_d, vec mu_d)
+[spmat K,B] = gf_asm('stokes', mesh_im mim, mesh_fem mf_u, mesh_fem mf_p, mesh_fem mf_d, vec visc)
+[spmat H,vec R] = gf_asm('dirichlet', int boundary_num, mesh_im mim, mesh_fem mf_u, 
+mesh_fem mf_d, mat Hd, vec Rd)
+M = gf_asm('boundary qu term', int boundary_num, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat Q)
+[spmat Q, vec G,spmat H,vec R,vec F]=gf_asm('pdetool boundary conditions',
+mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat b, mat e[, string f_expr])
+[...] = gf_asm('volumic'[, CVLST], string expr, mesh_im mim.., [mesh_fem mf1[, mf2,..]][,mat data...])
+[...] = gf_asm('boundary', int bnum, string expr, mesh_im mim.., [mesh_fem mf1[, mf2,..]][,mat data...])
+M = gf_asm('interpolation matrix', mesh_fem mf1, mesh_fem mf2)
+M = gf_asm('extrapolation matrix', mesh_fem mf1, mesh_fem mf2)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
@@ -90,17 +74,27 @@
       <listitem>
         <para>L = gf_asm('laplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
         vec a) Assembly of the matrix for the Laplacian problem.
-        <emphasis>\nabla\cdot(a(x)\nabla u)</emphasis> with
-        <literal>a</literal> scalar. Return a Spmat object.</para>
+        <inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_asm_eq1.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation> with <literal>a</literal> scalar. Return a Spmat
+        object.</para>
       </listitem>
 
       <listitem>
         <para>Le = gf_asm('linear_elasticity',MeshIm mim, MeshFem mf_u,
         MeshFem mf_d, vec lambda_d, vec mu_d) Assembles of the matrix for the
-        linear (isotropic) elasticity problem.
-        <emphasis>\nabla\cdot(C(x):\nabla u)</emphasis> with
-        <literal>C</literal> defined via <literal>lambda_d</literal> and
-        <literal>mu_d</literal>.</para>
+        linear (isotropic) elasticity problem. <inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_asm_eq2.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation> with <literal>C</literal> defined via
+        <literal>lambda_d</literal> and <literal>mu_d</literal>.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -149,30 +143,59 @@
       <listitem>
         <para>list(K, B) = gf_asm('stokes',MeshIm mim, MeshFem mf_u, MeshFem
         mf_p, MeshFem mf_d, vec nu) Assembly of matrices for the Stokes
-        problem. <emphasis>-\nu(x)\Delta u + \nabla p = 0</emphasis>
-        <emphasis>\nabla\cdot u = 0</emphasis> with <emphasis>\nu</emphasis>
-        (<literal>nu</literal>), the fluid's dynamic viscosity. On output,
-        <literal>K</literal> is the usual linear elasticity stiffness matrix
-        with <emphasis>\lambda = 0</emphasis> and <literal>2\mu =
-        \nu</literal>. <literal>B</literal> is a matrix corresponding to
-        <emphasis>\int p\nabla\cdot\phi</emphasis>. <literal>K</literal> and
-        <literal>B</literal> are Spmat object's.</para>
+        problem.</para>
+
+        <para><inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_asm_eq3.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation></para>
+
+        <para><inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_asm_eq4.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation> with <emphasis>nu</emphasis>, the fluid's dynamic
+        viscosity. </para>
+
+        <para>On output, <literal>K</literal> is the usual linear elasticity
+        stiffness matrix with <emphasis>lambda = 0</emphasis> and
+        <literal>2.mu = nu</literal>. <literal>B</literal> is a matrix
+        corresponding to <emphasis>\int p\nabla\cdot\phi</emphasis>.
+        <literal>K</literal> and <literal>B</literal> are Spmat
+        object's.</para>
       </listitem>
 
       <listitem>
         <para>A = gf_asm('helmholtz',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
-        vec k) Assembly of the matrix for the Helmholtz problem.
-        <emphasis>\Delta u + k^2 u = 0</emphasis> with <literal>k</literal>
-        complex scalar.</para>
+        vec k) Assembly of the matrix for the Helmholtz problem. </para>
+
+        <para><inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_asm_eq5.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation> with <literal>k</literal> complex scalar.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
 
       <listitem>
         <para>A = gf_asm('bilaplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
-        vec a) Assembly of the matrix for the Bilaplacian problem.
-        <emphasis>\Delta(a(x)\Delta u) = 0</emphasis> with
-        <literal>a</literal> scalar.</para>
+        vec a) Assembly of the matrix for the Bilaplacian problem.</para>
+
+        <para><inlineequation>
+            <inlinemediaobject>
+              <imageobject>
+                <imagedata fileref="../mml/gf_asm_eq6.mml" />
+              </imageobject>
+            </inlinemediaobject>
+          </inlineequation> with <literal>a</literal> scalar.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -279,18 +302,13 @@
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh">gf_mesh</link></member>
+      <member><link linkend="gf_solve">gf_solve</link></member>
+
+      <member><link linkend="gf_compute">gf_compute('interpolate
+      on')</link></member>
     </simplelist>
   </refsection>
 

@@ -21,20 +21,6 @@
   </refsynopsisdiv>
 
   <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
-
-  <refsection>
     <title>Description</title>
 
     <para>General function for modification of LEVELSET objects.</para>
@@ -49,14 +35,6 @@
 
     <para>gf_levelset_set(LS,'simplify'[scalar eps=0.01]) Simplify dof of
     level-set optionally with the parameter <literal>eps</literal>.</para>
-  </refsection>
-
-  <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
   </refsection>
 
   <refsection>

@@ -17,78 +17,78 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_mdbrick_get(cmd, [, args])</synopsis>
+    <synopsis>
+int n = gf_mdbrick_get(b,'nbdof')
+int n = gf_mdbrick_get(b, 'dim')
+int gf_mdbrick_get(b, 'is_linear')
+int gf_mdbrick_get(b, 'is_symmetric')
+int gf_mdbrick_get(b, 'is_coercive')
+int gf_mdbrick_get(b, 'is_complex')
+ivec I=gf_mdbrick_get(b, 'mixed_variables')
+string gf_mdbrick_get(b, 'subclass')
+LST=gf_mdbrick_get(b, 'param_list')
+vec gf_mdbrick_get(b,'param', string parameter_name)
+gf_mdbrick_get(b,'solve', mdstate mds [,...])
+vec VM=gf_mdbrick_get(b, 'von_mises', mdstate mds, mesh_fem MFVM)
+vec VM=gf_mdbrick_get(b, 'tresca', mdstate mds, mesh_fem MFVM)
+    </synopsis>
   </refsynopsisdiv>
-
-  <refsection>
-    <title>Parameters</title>
-
-    <variablelist>
-      <varlistentry>
-        <term></term>
-
-        <listitem>
-          <para></para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsection>
 
   <refsection>
     <title>Description</title>
 
     <itemizedlist>
       <listitem>
-        <para>n = gf_mdbrick_get(b,'nbdof') Get the total number of dof of the
+        <para>n = gf_mdbrick_get(b,'nbdof') : Get the total number of dof of the
         current problem. This is the sum of the brick specific dof plus the
         dof of the parent bricks.</para>
       </listitem>
 
       <listitem>
-        <para>d = gf_mdbrick_get(b,'dim') Get the dimension of the main mesh
+        <para>d = gf_mdbrick_get(b,'dim') : Get the dimension of the main mesh
         (2 for a 2D mesh, etc).</para>
       </listitem>
 
       <listitem>
-        <para>n = gf_mdbrick_get(b,'nb_constraints') Get the total number of
+        <para>n = gf_mdbrick_get(b,'nb_constraints') : Get the total number of
         dof constraints of the current problem. This is the sum of the brick
         specific dof constraints plus the dof constraints of the parent
         bricks.</para>
       </listitem>
 
       <listitem>
-        <para>b = gf_mdbrick_get(b,'is_linear') Return true if the problem is
+        <para>b = gf_mdbrick_get(b,'is_linear') : Return true if the problem is
         linear.</para>
       </listitem>
 
       <listitem>
-        <para>b = gf_mdbrick_get(b,'is_symmetric') Return true if the problem
+        <para>b = gf_mdbrick_get(b,'is_symmetric') : Return true if the problem
         is symmetric.</para>
       </listitem>
 
       <listitem>
-        <para>b = gf_mdbrick_get(b,'is_coercive') Return true if the problem
+        <para>b = gf_mdbrick_get(b,'is_coercive') : Return true if the problem
         is coercive.</para>
       </listitem>
 
       <listitem>
-        <para>b = gf_mdbrick_get(b,'is_complex') Return true if the problem
+        <para>b = gf_mdbrick_get(b,'is_complex') : Return true if the problem
         uses complex numbers.</para>
       </listitem>
 
       <listitem>
-        <para>I = gf_mdbrick_get(b,'mixed_variables') Identify the indices of
+        <para>I = gf_mdbrick_get(b,'mixed_variables') : Identify the indices of
         mixed variables (typically the pressure, etc.) in the tangent
         matrix.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_get(b,'subclass') Get the typename of the
+        <para>gf_mdbrick_get(b,'subclass') : Get the typename of the
         brick.</para>
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_get(b,'param_list') Get the list of parameters names.
+        <para>gf_mdbrick_get(b,'param_list') : Get the list of parameters names.
         Each brick embeds a number of parameters (the Lame coefficients for
         the linearized elasticity brick, the wave number for the Helmholtz
         brick,...), described as a (scalar, or vector, tensor etc) field on a
@@ -97,7 +97,7 @@
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_get(b,'param',string parameter_name) Get the
+        <para>gf_mdbrick_get(b,'param',string parameter_name) : Get the
         parameter value. When the parameter has been assigned a specific
         MeshFem, it is returned as a large array (the last dimension being the
         MeshFem dof). When no MeshFem has been assigned, the parameter is
@@ -105,7 +105,7 @@
       </listitem>
 
       <listitem>
-        <para>gf_mdbrick_get(b,'solve',MdState mds[,...]) Run the standard
+        <para>gf_mdbrick_get(b,'solve',MdState mds[,...]) : Run the standard
         getfem solver. Note that you should be able to use your own solver if
         you want (it is possible to obtain the tangent matrix and its right
         hand side with the gf_mdstate_get(mds,'tangent matrix') etc.).</para>
@@ -139,7 +139,7 @@
       </listitem>
 
       <listitem>
-        <para>VM = gf_mdbrick_get(b,'von mises',MdState mds, MeshFem mfvm)
+        <para>VM = gf_mdbrick_get(b,'von mises',MdState mds, MeshFem mfvm) :
         Compute the Von Mises stress on the MeshFem <literal>mfvm</literal>.
         Only available on bricks where it has a meaning: linearized
         elasticity, plasticity, nonlinear elasticity. Note that in 2D it is
@@ -148,33 +148,24 @@
       </listitem>
 
       <listitem>
-        <para>T = gf_mdbrick_get(b,'tresca',MdState mds, MeshFem mft) Compute
+        <para>T = gf_mdbrick_get(b,'tresca',MdState mds, MeshFem mft) : Compute
         the Tresca stress criterion on the MeshFem <literal>mft</literal>.
         Only available on bricks where it has a meaning: linearized
         elasticity, plasticity, nonlinear elasticity.</para>
       </listitem>
 
       <listitem>
-        <para>z = gf_mdbrick_get(b,'memsize') Return the amount of memory (in
+        <para>z = gf_mdbrick_get(b,'memsize') : Return the amount of memory (in
         bytes) used by the model brick.</para>
       </listitem>
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_slice_get">gf_mdbrick_set</link></member>
-
+      <member><link linkend="gf_mdbrick_get">gf_mdbrick_set</link></member>
       <member><link linkend="gf_mdbrick">gf_mdbrick</link></member>
     </simplelist>
   </refsection>
