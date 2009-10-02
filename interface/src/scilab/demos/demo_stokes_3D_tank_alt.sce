@@ -67,7 +67,7 @@ disp(sprintf('nbdof: mf_u=%d, mf_p=%d',gf_mesh_fem_get(pde.mf_u,'nbdof'),gf_mesh
 if (compute) then
   // unfortunately, the basic stokes solver is very slow...
   // on this problem, the fastest way is to reduce to a (full) linear system on the pression...
-  // drawback: matlab will be killed if you don't have 512MB of memory
+  // drawback: scilab will be killed if you don't have 512MB of memory
   pde.solver = 'brute_stokes'; 
   tic; 
   [U,P] = gf_solve(pde); 

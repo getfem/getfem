@@ -3,7 +3,7 @@
 gf_workspace('clear all');
 clear pde;
 
-disp('getfem_matlab basic example -- 1D laplacian with high order FEM');
+disp('getfem scilab basic example -- 1D laplacian with high order FEM');
 disp(['this demo illustrates some current drawbacks of this getfem ' ...
       'release. Hopefully, these numerical problems with high order elements ' ...
       'will be solved soon!']);
