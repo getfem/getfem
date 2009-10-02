@@ -31,8 +31,6 @@ function [hfaces, htube, hquiver, hmesh]=gf_plot_slice(sl,varargin)
 // RETURNS: handles to the various graphical objects created.  
 ////////////////////////
 
-printf('DEBUG: in gf_plot_slice\n');
-
 [nargout,nargin] = argn();
 
 if nargin<1 then
@@ -126,8 +124,6 @@ endfunction
 
 function [htube,hmesh]=do_plot_1D(P,T,opt)
 
-printf('DEBUG: in do_plot_1D\n');
-
 htube=[]; hmesh=[];
 if (isempty(T)) then
   return; 
@@ -210,14 +206,8 @@ endfunction
 // D(ata): empty or equal to nb points or nb segments
 function h=plot_tube(P, T, D, radius, tubecolor)
 
-printf('DEBUG: in plot_tube\n');
-
 h = [];
 P = mycell2mat(P);
-
-disp(size(T))
-disp(size(P))
-disp(size(D))
 
 if (isempty(T)) then return; end;
 it0  = T(1,1);  nT = size(T,2); nP = size(P,1); mdim=size(P,2);
@@ -253,7 +243,6 @@ h = [];
 // Size P:  158.    2.  
 // Size T:   2.    120. 
 while (1)
-  printf('DEBUG\n');
   // search for consecutive edge points
   it1 = it0;
   //while (it1 < nT & T(1,it1+1) == T(2,it1)) it1 = it1+1; end;
@@ -291,8 +280,6 @@ while (1)
     else
       n = ((normals(:,:,i-1)+normals(:,:,i))/2)';
     end
-    disp(size(p))
-    disp(size(n))
     for k=1:nsubdiv+1
       X(:,k,i) = (p(i,:) + radius(ip(i))*(n(1,:)*ct(k) + n(2,:)*st(k)))';
     end;
@@ -333,8 +320,6 @@ endfunction
 // draw faces
 function [hfaces,hmesh,hquiver] = do_plot_2D(sl,P,T,opt)
 
-printf('DEBUG: in do_plot_2D\n');
-
 hfaces  = []; 
 hmesh   = []; 
 hquiver = [];
@@ -374,7 +359,6 @@ if (length(T)) then
     d_is_set = %T;
   end  
   if (d_is_set) then
-    printf('DEBUG: here 3\n');
     //hfaces = patch('Vertices',mycell2mat(P)','Faces',T',d(:), 'EdgeColor','none'); // YC:
     p_tmp = mycell2mat(P);
 
@@ -393,15 +377,11 @@ if (length(T)) then
       xtmp = matrix(p_tmp(T,1),size(T,1),length(p_tmp(T,2))/size(T,1))';
       ytmp = matrix(p_tmp(T,2),size(T,1),length(p_tmp(T,2))/size(T,1))';
       ztmp = matrix(ones(p_tmp(T,2)),size(T,1),length(p_tmp(T,2))/size(T,1))';
-      disp(size(ctmp))
-      disp(size(ztmp))
       plot3d(xtmp', ytmp', list(ztmp',ctmp'));
     else
       xtmp = matrix(p_tmp(T,1),size(T,1),length(p_tmp(T,1))/size(T,1))';
       ytmp = matrix(p_tmp(T,2),size(T,1),length(p_tmp(T,1))/size(T,1))';
       ztmp = matrix(p_tmp(T,3),size(T,1),length(p_tmp(T,1))/size(T,1))';
-      disp(size(ctmp))
-      disp(size(ztmp))
       plot3d(xtmp', ytmp', list(ztmp',ctmp'));
     end
     hfaces = gce();
@@ -425,27 +405,20 @@ end
 if (ison(o_msh) & (ison(o_msh_edges) | ison(o_msh_slice_edges))) then
   [p,t1,t2] = gf_slice_get(sl,'edges');
   if (ison(o_msh_edges)) then
-    printf('DEBUG: o_msh_edges is on\n');
     // p: 2 x 1661
     // t1: 2 x 1760
     // t2: 0
 
     p = p';
     if (size(p,2)==2) & size(t1,1)~=0 then // 2D plot
-      printf('DEBUG: here 1\n');
       xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
       ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
       ztmp = matrix(ones(p(t1,2)),size(t1,1),length(p(t1,1))/size(t1,1))';
       plot3d(xtmp', ytmp', ztmp');
     elseif size(t1,1)~=0 then
-      printf('DEBUG: here 2\n');
       xtmp = matrix(p(t1,1),size(t1,1),length(p(t1,1))/size(t1,1))';
       ytmp = matrix(p(t1,2),size(t1,1),length(p(t1,1))/size(t1,1))';
       ztmp = matrix(p(t1,3),size(t1,1),length(p(t1,1))/size(t1,1))';
-      disp(size(xtmp))
-      disp(size(ytmp))
-      disp(size(ztmp))
-      disp(size(o_msh_edges_color))
       plot3d(xtmp', ytmp', ztmp');
     end
     hmesh = gce();
@@ -458,17 +431,14 @@ if (ison(o_msh) & (ison(o_msh_edges) | ison(o_msh_slice_edges))) then
     p = p'; //t1 = t1';
   end
   if (ison(o_msh_slice_edges)) then
-    printf('DEBUG: o_msh_slice_edges is on\n');
     //hmesh = [hmesh patch('Vertices',p','Faces',t2','EdgeColor',o_msh_slice_edges_color,'LineWidth',o_msh_slice_edges_width)]; // YC
     p = p'; //t2 = t2';
     if (size(p,2)==2) & size(t2,1)~=0 then
-      printf('DEBUG: here 1\n');
       xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
       ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
       ztmp = matrix(ones(p(t2,2)),size(t2,1),length(p(t2,1))/size(t2,1))';
       plot3d(xtmp', ytmp', ztmp');
     elseif size(t2,1)~=0 then
-      printf('DEBUG: here 2\n');
       xtmp = matrix(p(t2,1),size(t2,1),length(p(t2,1))/size(t2,1))';
       ytmp = matrix(p(t2,2),size(t2,1),length(p(t2,1))/size(t2,1))';
       ztmp = matrix(p(t2,3),size(t2,1),length(p(t2,1))/size(t2,1))';
@@ -494,8 +464,6 @@ endfunction
 
 // arrow plot
 function hquiver = do_quiver_plot(P,U,opt)
-
-printf('DEBUG: in do_quiver_plot\n');
 
 [o_data,err]                  = get_param(opt,'data',[]); // data to be plotted on the slice (on slice nodes)
 [o_convex_data,err]           = get_param(opt,'convex_data',[]); // data to be plotted (given on the mesh convexes)
