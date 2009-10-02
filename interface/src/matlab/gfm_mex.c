@@ -35,7 +35,7 @@ char* getfem_interface_main(int config_id, const char *function,
 			    int nb_in_args,
 			    const gfi_array *in_args[], 
 			    int *nb_out_args,
-			    gfi_array ***pout_args, char **pinfomsg);
+			    gfi_array ***pout_args, char **pinfomsg, bool scilab_flag);
 */
 
 #define FREE(p) { /*printf("%s@%d", __FILE__, __LINE__); */gfi_free(p); }
@@ -58,7 +58,7 @@ call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
   for (i=0; i < in.arg.arg_len; ++i) {
     pin[i] = &in.arg.arg_val[i];
   }
-  errmsg = getfem_interface_main(MATLAB_INTERFACE, funname, in.arg.arg_len, (const gfi_array **)pin, &nlhs, &pout, &infomsg);
+  errmsg = getfem_interface_main(MATLAB_INTERFACE, funname, in.arg.arg_len, (const gfi_array **)pin, &nlhs, &pout, &infomsg,0);
   result.infomsg = infomsg;
   if (errmsg) {
     result.status = GFI_STATUS_ERROR;
