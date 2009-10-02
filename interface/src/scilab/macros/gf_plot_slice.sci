@@ -220,7 +220,6 @@ disp(size(P))
 disp(size(D))
 
 if (isempty(T)) then return; end;
-T = double(T); // matlab 6.5 is not able to handle operator '+' on int32 ...
 it0  = T(1,1);  nT = size(T,2); nP = size(P,1); mdim=size(P,2);
 
 if (mdim == 2) then 
