@@ -113,7 +113,7 @@ char* getfem_interface_main(int config_id, const char *function,
 			    int nb_in_args,
 			    const gfi_array *in_args[], 
 			    int *nb_out_args,
-			    gfi_array ***pout_args, char **pinfomsg)
+			    gfi_array ***pout_args, char **pinfomsg, int scilab_flag)
 {
   std::stringstream info;
   getfemint::global_pinfomsg = &info;
@@ -127,6 +127,7 @@ char* getfem_interface_main(int config_id, const char *function,
     config::set_current_config(conf[config_id]);
     mexargs_in in(nb_in_args, in_args, false);
     mexargs_out out(*nb_out_args);    
+    out.set_scilab(bool(scilab_flag));
     if (strcmp(function, "workspace")==0) gf_workspace(in,out);
     else if (strcmp(function, "delete")==0) gf_delete(in,out);
     else if (strcmp(function, "eltm")==0) gf_eltm(in,out);

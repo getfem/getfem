@@ -646,6 +646,7 @@ private:
     int idx;
     int okay; /* if 0, the destructor will destroy the allacted arrays in 'out' 
 		 and will call workspace().destroy_newly_created_objects */
+    bool scilab_flag;
     /* copy forbidden */
     mexargs_out(const mexargs_out& );
     mexargs_out& operator=(const mexargs_out& );
@@ -655,7 +656,8 @@ private:
     void check() const;
     mexarg_out pop();
     mexarg_out front() const { check(); return mexarg_out(out[idx], idx+1); }
-    bool narg_in_range(int min, int max) const { 
+    bool narg_in_range(int min, int max) const {
+      if ((scilab_flag) && (max==0)) max = 1;
       return (nb_arg == -1 || (nb_arg >= min && (nb_arg <= max || max == -1))); 
     }
     bool narg_known() const { return nb_arg != -1; }
@@ -663,6 +665,8 @@ private:
     void return_packed_obj_ids(const std::vector<id_type>& ids, id_type class_id);
     std::deque<gfi_array *>& args() { return out; }
     void set_okay(bool ok) { okay = ok; }
+    void set_scilab(bool _scilab_flag) {scilab_flag = _scilab_flag;}
+    bool get_scilab() const {return scilab_flag;}
   };
 
 

@@ -1335,14 +1335,15 @@ namespace getfemint {
 		 const mexargs_out& out,
 		 int min_argout, int max_argout) {
     if (cmd_strmatch(cmdname,s)) {
-#ifdef _SCILAB_
-      // For Scilab. Without any parameters, myinterface(x) is equivalent to
-      // ans = myinterface(x). So, we have a minima one parameter.
-      if (min_argout==0 && max_argout==0)
+      if (out.get_scilab())
 	{
-	  max_argout=1;
+	  // For Scilab. Without any parameters, myinterface(x) is equivalent to
+	  // ans = myinterface(x). So, we have a minima one parameter.
+	  if (min_argout==0 && max_argout==0)
+	    {
+	      max_argout=1;
+	    }
 	}
-#endif
       if (min_argout > 0 && out.narg_known() &&
           out.narg_in_range(0, min_argout-1)) {
 	THROW_BADARG("Not enough output arguments for command '"<<
@@ -1389,6 +1390,7 @@ namespace getfemint {
     idx = 0;
     okay = 0;
     nb_arg = n;
+    scilab_flag = false;
   }
 
   mexargs_out::~mexargs_out() {

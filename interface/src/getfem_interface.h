@@ -41,7 +41,7 @@ char* getfem_interface_main(int config_id, const char *function,
 			    int nb_in_args,
 			    const gfi_array *in_args[], 
 			    int *nb_out_args,
-			    gfi_array ***pout_args, char **pinfomsg);
+			    gfi_array ***pout_args, char **pinfomsg, int scilab_flag);
 
 #ifdef __cplusplus
 }
