@@ -1,3 +1,46 @@
+///////////////////////////////
+// Helper function disp_info //
+///////////////////////////////
+
+function disp_info(b)
+disp(sprintf('subclass %s', gf_mdbrick_get(b, 'subclass')));
+disp(sprintf(' dim            %d', gf_mdbrick_get(b, 'dim')));
+disp(sprintf(' nbdof          %d', gf_mdbrick_get(b, 'nbdof')));
+disp(sprintf(' nb_constraints %d', gf_mdbrick_get(b, 'nb_constraints')));
+disp(sprintf(' is_linear      %d', gf_mdbrick_get(b, 'is_linear')));
+disp(sprintf(' is_symmetric   %d', gf_mdbrick_get(b, 'is_symmetric')));
+disp(sprintf(' is_coercive    %d', gf_mdbrick_get(b, 'is_coercive')));
+disp(sprintf(' is_complex     %d', gf_mdbrick_get(b, 'is_complex')));
+l = gf_mdbrick_get(b, 'param_list');
+s = ''; 
+for il=1:length(l)
+  s = s + ' ' + l(il); 
+end
+disp(sprintf(' paramlist     %s', s)); 
+
+_dir = gf_mdbrick('generalized dirichlet', b, 2);
+R = gf_mdbrick_get(_dir, 'param', 'R'); R = 0*R+1; 
+gf_mdbrick_set(_dir, 'param', 'R', R);
+
+disp('gogogogo')
+state = gf_mdstate(_dir);
+gf_mdbrick_get(_dir, 'solve', state, 'noisy');
+res = gf_mdstate_get(state, 'residual');
+U=gf_mdstate_get(state, 'state');
+disp(sprintf('solve done: |residual|=%g, |U|=%g',norm(res),norm(U)));
+
+T = gf_mdstate_get(state, 'tangent matrix');
+nnz(T)
+
+gf_workspace('stats');
+
+gf_delete(_dir);
+endfunction
+
+//////////////////////
+// Main test script //
+//////////////////////
+
 m   = gf_mesh('cartesian', 0:.1:1, 0:.1:1);
 mf  = gf_mesh_fem(m);   gf_mesh_fem_set(mf, 'classical fem', 2);
 mfq = gf_mesh_fem(m,2); gf_mesh_fem_set(mfq, 'classical fem', 2);
@@ -38,39 +81,4 @@ disp_info(elas);
 disp_info(helm);
 disp_info(mass);
 disp_info(elasnl);
-endfunction  
-  
-function disp_info(b)
-disp(sprintf('subclass %s', gf_mdbrick_get(b, 'subclass')));
-disp(sprintf(' dim            %d', gf_mdbrick_get(b, 'dim')));
-disp(sprintf(' nbdof          %d', gf_mdbrick_get(b, 'nbdof')));
-disp(sprintf(' nb_constraints %d', gf_mdbrick_get(b, 'nb_constraints')));
-disp(sprintf(' is_linear      %d', gf_mdbrick_get(b, 'is_linear')));
-disp(sprintf(' is_symmetric   %d', gf_mdbrick_get(b, 'is_symmetric')));
-disp(sprintf(' is_coercive    %d', gf_mdbrick_get(b, 'is_coercive')));
-disp(sprintf(' is_complex     %d', gf_mdbrick_get(b, 'is_complex')));
-l = gf_mdbrick_get(b, 'param_list');
-s = ''; 
-for il=1:length(l)
-  s = s + ' ' + l(il); 
-end
-disp(sprintf(' paramlist     %s', s)); 
-
-_dir = gf_mdbrick('generalized dirichlet', b, 2);
-R = gf_mdbrick_get(_dir, 'param', 'R'); R = 0*R+1; 
-gf_mdbrick_set(_dir, 'param', 'R', R);
-
-disp('gogogogo')
-state = gf_mdstate(_dir);
-gf_mdbrick_get(_dir, 'solve', state, 'noisy');
-res = gf_mdstate_get(state, 'residual');
-U=gf_mdstate_get(state, 'state');
-disp(sprintf('solve done: |residual|=%g, |U|=%g',norm(res),norm(U)));
-
-T = gf_mdstate_get(state, 'tangent matrix');
-nnz(T)
-
-gf_workspace('stats');
-
-gf_delete(_dir);
 
