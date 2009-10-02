@@ -29,7 +29,7 @@ pidtop = find(abs(P(2,:)-13)<1e-6); // find those on top of the object
 pidbot = find(abs(P(2,:)+10)<1e-6); // find those on the bottom
 
 // build the list of faces from the list of points
-ftop = gf_mesh_get(m,'faces from pid',pidtop); 
+ftop = gf_mesh_get(m,'faces from pid',pidtop);
 fbot = gf_mesh_get(m,'faces from pid',pidbot);
 
 // assign boundary numbers
@@ -42,7 +42,7 @@ lambda = E*nu/((1+nu)*(1-2*nu));
 mu     = E/(2*(1+nu));
 nbd    = gf_mesh_fem_get(mfd, 'nbdof');
 F = gf_asm('boundary_source', 1, mim, mfu, mfd, repmat([0;-10;0],1,nbd));
-K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd));
+K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd)); // Long ici. Transfert matlab sparse vers scilab sparse ?
 
 // handle Dirichlet condition
 [H,R]  = gf_asm('dirichlet', 2, mim, mfu, mfd, ones(1,1,nbd) .*. eye(3,3), zeros(3, nbd));
@@ -54,8 +54,9 @@ K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd)
 // B = N'*A: nnz(B) = 1110396 size(B) = 16341 x 16341
 
 // KK = N'*K*N; // This computation doesn't fit in the scilab stack. I must split it into parts
-K = K*N;
-K = N'*K;
+//K = K*N;
+//K = N'*K;
+K = N'*K*N;
 
 F = N'*F;
 
@@ -63,11 +64,11 @@ F = N'*F;
 //sleep(100); // bug with timer
 t0      = timer();
 disp('solving...'); 
-lsolver = 1; // change this to compare the different solvers
+lsolver = 2; // change this to compare the different solvers
 
 if (lsolver == 1) then   // conjugate gradient
   P  = gf_precond('ildlt',K);
-  UU = gf_linsolve('cg',K,F,P,'noisy','res',1e-3); // 1e-9 before
+  UU = gf_linsolve('cg',K,F,P,'noisy','res',1e-9);
 elseif (lsolver == 2) then // superlu
   UU = gf_linsolve('superlu',K,F);
 else                   // the scilab "slash" operator 
@@ -92,7 +93,7 @@ N  = gf_mesh_get(m,'dim');
 for i=1:size(DU,3)
   t     = DU(:,:,i);
   E     = (t+t')/2;
-  VM(i) = sum(E(:).^2) - (1./N)*sum(diag(E))^2;
+  VM(i) = sum(E(:).^2) - ((1)./N)*sum(diag(E))^2;
 end
 VM = 4*mu^2*VM;
 
@@ -111,7 +112,12 @@ h.color_map = r;
 // we plot the von mises on the deformed object, in superposition with the initial mesh.
 drawlater;
 gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
-drawnow;
-colorbar(min(U),max(U));
+
 h.color_map = r;
+h.children.rotation_angles = [135 75];
+a = gca();
+a.box = 'off';
+a.axes_visible = 'off';
+colorbar(min(VM),max(VM));
+drawnow;
 
