@@ -66,7 +66,7 @@ gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
   sciprint("call_getfem_interface: funname = %s len = %d\n",funname, in.arg.arg_len);
 #endif
 
-  errmsg = getfem_interface_main(SCILAB_INTERFACE, funname, in.arg.arg_len, (const gfi_array **)pin, &nlhs, &pout, &infomsg);
+  errmsg = getfem_interface_main(SCILAB_INTERFACE, funname, in.arg.arg_len, (const gfi_array **)pin, &nlhs, &pout, &infomsg, 1);
 
 #ifdef DEBUG
   sciprint("call_getfem_interface: end of getfem_interface_main, nlhs = %d infomsg = %s\n",nlhs,infomsg);
@@ -159,15 +159,16 @@ int sci_gf_scilab(char * fname)
   sciprint("sci_gf_scilab: fname = %s - calling call_getfem_interface with %s\n",fname, &fname[3]);
 #endif
 
-  // Without output parameter in Scilab, Lhs == 1 because we always return something in "ans"
-  if (strcmp(fname,"gf_delete")==0)
-    {
-      out = call_getfem_interface(&fname[3], *in, 0);
-    }
-  else
-    {
-      out = call_getfem_interface(&fname[3], *in, Lhs);
-    }
+//   // Without output parameter in Scilab, Lhs == 1 because we always return something in "ans"
+//   if (Lhs==1)
+//     {
+//       out = call_getfem_interface(&fname[3], *in, 0);
+//     }
+//   else
+//     {
+//       out = call_getfem_interface(&fname[3], *in, Lhs);
+//     }
+  out = call_getfem_interface(&fname[3], *in, Lhs);
 
 #ifdef DEBUG
   sciprint("sci_gf_scilab: end of call_getfem_interface\n");
