@@ -302,7 +302,6 @@ if sym then
 end
 pde('asm')('RK') = RK;
 RB = _null;
-//  gf_matlab('util','save matrix','hb','solve.hb',RK);
 U = RB*(RK\RF)+ud(:);
 U = U(:)'; // row vector
 endfunction
