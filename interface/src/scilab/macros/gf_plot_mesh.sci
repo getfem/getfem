@@ -30,8 +30,6 @@ function [hmesh,hbound,hfill,hvert,hconv,hdof]=gf_plot_mesh(M, varargin)
 
 //   A. Huard, Y. Renard, J. Pommier 
 
-printf('DEBUG: in gf_plot_mesh\n');
-
 [nargout,nargin] = argn();
 
 if nargin<1 then
@@ -186,7 +184,7 @@ if (mdim <= 2) then
     hbound(bnum) = gce();
     hbound(bnum).children(:).thickness  = 2;
     hbound(bnum).children(:).line_style = 0; // Continous lines
-    hbound(bnum).children(:).foreground = 5; // red
+    hbound(bnum).children(1).foreground = 5; // red
   end
   if (ison(o_vertices)) then
     for i=1:length(PID)

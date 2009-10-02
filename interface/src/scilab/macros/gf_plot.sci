@@ -27,8 +27,6 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 //  'title',[]                     : set the title
 //  'contour',[]                   : list of contour values
 
-printf('DEBUG: in gf_plot\n');
-
 hsurf    = [];
 hcontour = list();
 hquiver  = [];
@@ -50,8 +48,6 @@ gf_workspace('pop');
 endfunction
 
 function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,opts)
-
-printf('DEBUG: in gf_plot_aux\n');
 
 [nargout,nargin] = argn();
 
@@ -248,7 +244,6 @@ end
 if (is_scalarplot) then
   // plot the 'surfacic' part
   if (ison(o_pcolor)) then
-    printf('DEBUG: is_scalarplot\n');
     gf_plot_slice(sl,'mesh','off','data',sV);
   end
   
@@ -262,11 +257,9 @@ if (is_scalarplot) then
                     
   hcontour = list();
   for cnum=1:length(o_contour)
-    c=o_contour(cnum);
+    c = o_contour(cnum);
     slC = gf_slice(list('isovalues',0,mf,U,c),sl);
     [a,b,c,hcontour(cnum)] = gf_plot_slice(slC,'tube','off','mesh','off');
-    
-    printf('DEBUG: isovalue %d\n',cnum);
     
     if (~isempty(hcontour(cnum))) then
       //printf('here isovalue');
@@ -281,7 +274,7 @@ if (is_scalarplot) then
 //          'LineStyle',contour_linestyle(modulo(cnum,length(contour_linestyle))+1),...
 //          'LineWidth',1);
     end
-    //YC: gf_delete(slC);
+    gf_delete(slC);
   end
 else
   [a,b,hquiver,c] = gf_plot_slice(sl,'data',Usl,'quiver','on','quiver_density',o_quiver_density,'quiver_scale',o_quiver_scale);
