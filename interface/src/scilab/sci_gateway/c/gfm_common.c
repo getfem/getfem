@@ -1142,9 +1142,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 			// We found the row number, we need now to find the corresponding col number.
 			for(k=0;k<pirow;k++)
 			  {
-			    if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
+			    if ((j>=t->storage.gfi_storage_u.sp.jc.jc_val[k])&&(j<=t->storage.gfi_storage_u.sp.jc.jc_val[k+1]-1))
 			      {
-				pi_col_pos[Index] = k;
+				pi_col_pos[Index] = k+1;
 				break;
 			      }
 			  }
@@ -1169,9 +1169,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 			// We found the row number, we need now to find the corresponding col number.
 			for(k=0;k<pirow;k++)
 			  {
-			    if (t->storage.gfi_storage_u.sp.jc.jc_val[k]>j)
+			    if ((j>=t->storage.gfi_storage_u.sp.jc.jc_val[k])&&(j<=t->storage.gfi_storage_u.sp.jc.jc_val[k+1]-1))
 			      {
-				pi_col_pos[Index] = k;
+				pi_col_pos[Index] = k+1;
 				break;
 			      }
 			  }
