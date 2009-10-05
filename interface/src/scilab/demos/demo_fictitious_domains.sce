@@ -119,7 +119,7 @@ VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', '
 printf('generating second plot\n');
   
 h = scf();
-//h.color_map = jetcolormap(255);
+h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
 //gf_plot(mfu0, U, 'norm', 'on', 'deformed_mesh', 'on', 'deformation', U,	'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
