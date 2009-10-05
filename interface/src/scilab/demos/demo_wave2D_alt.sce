@@ -1,5 +1,8 @@
 gf_workspace('clear all');
 
+lines(0);
+stacksize('max');
+
 disp('2D scalar wave equation (helmholtz) demonstration');
 disp('Helmholtz is not handled (for the moment) by gf_solve');
 disp('hence this file contains explicit call to the various');
