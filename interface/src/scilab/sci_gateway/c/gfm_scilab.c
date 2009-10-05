@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <time.h>
 
 #include <stack-c.h>
 #include <sciprint.h>
@@ -36,6 +37,7 @@
 #include "gfm_common.h"
 #include "getfem_interface.h"
 
+#define DEBUG_TIMER
 //#define DEBUG
 //#define DEBUG2
 
@@ -116,8 +118,10 @@ int sci_gf_scilab(char * fname)
   gfi_array_list * outl = NULL;
   int ** ptr_param = NULL;
   int *  sci_x     = NULL;
-  int picol, pirow;
+  int picol, pirow, var_type;
   unsigned int i;
+  StrErr _StrErr;
+  clock_t time_start, time_end;
 
   set_cancel_flag(0);
   set_superlu_callback(is_cancel_flag_set);
@@ -132,10 +136,11 @@ int sci_gf_scilab(char * fname)
 #ifdef DEBUG
       sciprint("sci_gf_scilab: i = %d Rhs = %d\n", i, Rhs);
 #endif
-      getVarAddressFromPosition(i,ptr_param+i);
+      _StrErr = getVarAddressFromPosition(i,ptr_param+i);
 #ifdef DEBUG
-      getVarDimension(ptr_param[i],&pirow,&picol);
-      sciprint("sci_gf_scilab: position %d - address %d - type %d - dimension %d %d\n", i, ptr_param[i],getVarType(ptr_param[i]),pirow,picol);
+      _StrErr = getVarDimension(ptr_param[i],&pirow,&picol);
+      _StrErr = getVarType(ptr_param[i],&var_type);
+      sciprint("sci_gf_scilab: position %d - address %d - type %d - dimension %d %d\n", i, ptr_param[i],var_type,pirow,picol);
 #endif
     }
 
@@ -143,7 +148,19 @@ int sci_gf_scilab(char * fname)
       sciprint("sci_gf_scilab: list of parameters built\n", i, Rhs);
 #endif
 
+#ifdef DEBUG_TIMER
+  sciprint("DEBUG_TIMER: before build_gfi_array_list\n");
+  time_start = clock()/CLOCKS_PER_SEC;
+#endif
+    
   in = build_gfi_array_list(Rhs, ptr_param);
+
+#ifdef DEBUG_TIMER
+  time_end = clock()/CLOCKS_PER_SEC;
+  sciprint("DEBUG_TIMER: after build_gfi_array_list: %f\n", (double)(time_end - time_start));
+  time_start = time_end;
+#endif
+
   if (!in) 
     {
       Scierror(999,"%s: a problem occured while reading arguments.\n",fname);
@@ -169,6 +186,12 @@ int sci_gf_scilab(char * fname)
 //       out = call_getfem_interface(&fname[3], *in, Lhs);
 //     }
   out = call_getfem_interface(&fname[3], *in, Lhs);
+
+#ifdef DEBUG_TIMER
+  time_end = clock()/CLOCKS_PER_SEC;
+  sciprint("DEBUG_TIMER: after call_getfem_interface: %f\n",(double)(time_end - time_start));
+  time_start = time_end;
+#endif
 
 #ifdef DEBUG
   sciprint("sci_gf_scilab: end of call_getfem_interface\n");
@@ -211,6 +234,11 @@ int sci_gf_scilab(char * fname)
 	  LhsVar(1) = 0;
 	}
     }
+
+#ifdef DEBUG_TIMER
+  time_end = clock()/CLOCKS_PER_SEC;
+  sciprint("DEBUG_TIMER: after gfi_array_to_sci_array: %f\n", (double)(time_end - time_start));
+#endif
 
   FREE(ptr_param);
 
