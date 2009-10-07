@@ -1,0 +1,4932 @@
+# to unbundle, sh this file (in an empty directory)
+echo lufactor.c 1>&2
+sed >lufactor.c <<'//GO.SYSIN DD lufactor.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	Matrix factorisation routines to work with the other matrix files.
+-*/
+-
+-/* LUfactor.c 1.5 11/25/87 */
+-static	char	rcsid[] = "$Id: lufactor.c,v 1.7 1994/03/13 23:08:25 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-
+-/* Most matrix factorisation routines are in-situ unless otherwise specified */
+-
+-/* LUfactor -- gaussian elimination with scaled partial pivoting
+-		-- Note: returns LU matrix which is A */
+-MAT	*LUfactor(A,pivot)
+-MAT	*A;
+-PERM	*pivot;
+-{
+-	u_int	i, j, k, k_max, m, n;
+-	int	i_max;
+-	Real	**A_v, *A_piv, *A_row;
+-	Real	max1, temp, tiny;
+-	static	VEC	*scale = VNULL;
+-
+-	if ( A==(MAT *)NULL || pivot==(PERM *)NULL )
+-		error(E_NULL,"LUfactor");
+-	if ( pivot->size != A->m )
+-		error(E_SIZES,"LUfactor");
+-	m = A->m;	n = A->n;
+-	scale = v_resize(scale,A->m);
+-	MEM_STAT_REG(scale,TYPE_VEC);
+-	A_v = A->me;
+-
+-	tiny = 10.0/HUGE_VAL;
+-
+-	/* initialise pivot with identity permutation */
+-	for ( i=0; i<m; i++ )
+-		pivot->pe[i] = i;
+-
+-	/* set scale parameters */
+-	for ( i=0; i<m; i++ )
+-	{
+-		max1 = 0.0;
+-		for ( j=0; j<n; j++ )
+-		{
+-			temp = fabs(A_v[i][j]);
+-			max1 = max(max1,temp);
+-		}
+-		scale->ve[i] = max1;
+-	}
+-
+-	/* main loop */
+-	k_max = min(m,n)-1;
+-	for ( k=0; k<k_max; k++ )
+-	{
+-	    /* find best pivot row */
+-	    max1 = 0.0;	i_max = -1;
+-	    for ( i=k; i<m; i++ )
+-		if ( fabs(scale->ve[i]) >= tiny*fabs(A_v[i][k]) )
+-		{
+-		    temp = fabs(A_v[i][k])/scale->ve[i];
+-		    if ( temp > max1 )
+-		    { max1 = temp;	i_max = i;	}
+-		}
+-	    
+-	    /* if no pivot then ignore column k... */
+-	    if ( i_max == -1 )
+-	    {
+-		/* set pivot entry A[k][k] exactly to zero,
+-		   rather than just "small" */
+-		A_v[k][k] = 0.0;
+-		continue;
+-	    }
+-	    
+-	    /* do we pivot ? */
+-	    if ( i_max != k )	/* yes we do... */
+-	    {
+-		px_transp(pivot,i_max,k);
+-		for ( j=0; j<n; j++ )
+-		{
+-		    temp = A_v[i_max][j];
+-		    A_v[i_max][j] = A_v[k][j];
+-		    A_v[k][j] = temp;
+-		}
+-	    }
+-	    
+-	    /* row operations */
+-	    for ( i=k+1; i<m; i++ )	/* for each row do... */
+-	    {	/* Note: divide by zero should never happen */
+-		temp = A_v[i][k] = A_v[i][k]/A_v[k][k];
+-		A_piv = &(A_v[k][k+1]);
+-		A_row = &(A_v[i][k+1]);
+-		if ( k+1 < n )
+-		    __mltadd__(A_row,A_piv,-temp,(int)(n-(k+1)));
+-		/*********************************************
+-		  for ( j=k+1; j<n; j++ )
+-		  A_v[i][j] -= temp*A_v[k][j];
+-		  (*A_row++) -= temp*(*A_piv++);
+-		  *********************************************/
+-	    }
+-	    
+-	}
+-
+-	return A;
+-}
+-
+-
+-/* LUsolve -- given an LU factorisation in A, solve Ax=b */
+-VEC	*LUsolve(A,pivot,b,x)
+-MAT	*A;
+-PERM	*pivot;
+-VEC	*b,*x;
+-{
+-	if ( A==(MAT *)NULL || b==(VEC *)NULL || pivot==(PERM *)NULL )
+-		error(E_NULL,"LUsolve");
+-	if ( A->m != A->n || A->n != b->dim )
+-		error(E_SIZES,"LUsolve");
+-
+-	x = v_resize(x,b->dim);
+-	px_vec(pivot,b,x);	/* x := P.b */
+-	Lsolve(A,x,x,1.0);	/* implicit diagonal = 1 */
+-	Usolve(A,x,x,0.0);	/* explicit diagonal */
+-
+-	return (x);
+-}
+-
+-/* LUTsolve -- given an LU factorisation in A, solve A^T.x=b */
+-VEC	*LUTsolve(LU,pivot,b,x)
+-MAT	*LU;
+-PERM	*pivot;
+-VEC	*b,*x;
+-{
+-	if ( ! LU || ! b || ! pivot )
+-		error(E_NULL,"LUTsolve");
+-	if ( LU->m != LU->n || LU->n != b->dim )
+-		error(E_SIZES,"LUTsolve");
+-
+-	x = v_copy(b,x);
+-	UTsolve(LU,x,x,0.0);	/* explicit diagonal */
+-	LTsolve(LU,x,x,1.0);	/* implicit diagonal = 1 */
+-	pxinv_vec(pivot,x,x);	/* x := P^T.tmp */
+-
+-	return (x);
+-}
+-
+-/* m_inverse -- returns inverse of A, provided A is not too rank deficient
+-	-- uses LU factorisation */
+-MAT	*m_inverse(A,out)
+-MAT	*A, *out;
+-{
+-	int	i;
+-	static VEC	*tmp = VNULL, *tmp2 = VNULL;
+-	static MAT	*A_cp = MNULL;
+-	static PERM	*pivot = PNULL;
+-
+-	if ( ! A )
+-	    error(E_NULL,"m_inverse");
+-	if ( A->m != A->n )
+-	    error(E_SQUARE,"m_inverse");
+-	if ( ! out || out->m < A->m || out->n < A->n )
+-	    out = m_resize(out,A->m,A->n);
+-
+-	A_cp = m_copy(A,MNULL);
+-	tmp = v_resize(tmp,A->m);
+-	tmp2 = v_resize(tmp2,A->m);
+-	pivot = px_resize(pivot,A->m);
+-	MEM_STAT_REG(A_cp,TYPE_MAT);
+-	MEM_STAT_REG(tmp, TYPE_VEC);
+-	MEM_STAT_REG(tmp2,TYPE_VEC);
+-	MEM_STAT_REG(pivot,TYPE_PERM);
+-	tracecatch(LUfactor(A_cp,pivot),"m_inverse");
+-	for ( i = 0; i < A->n; i++ )
+-	{
+-	    v_zero(tmp);
+-	    tmp->ve[i] = 1.0;
+-	    tracecatch(LUsolve(A_cp,pivot,tmp,tmp2),"m_inverse");
+-	    set_col(out,i,tmp2);
+-	}
+-
+-	return out;
+-}
+-
+-/* LUcondest -- returns an estimate of the condition number of LU given the
+-	LU factorisation in compact form */
+-double	LUcondest(LU,pivot)
+-MAT	*LU;
+-PERM	*pivot;
+-{
+-    static	VEC	*y = VNULL, *z = VNULL;
+-    Real	cond_est, L_norm, U_norm, sum, tiny;
+-    int		i, j, n;
+-
+-    if ( ! LU || ! pivot )
+-	error(E_NULL,"LUcondest");
+-    if ( LU->m != LU->n )
+-	error(E_SQUARE,"LUcondest");
+-    if ( LU->n != pivot->size )
+-	error(E_SIZES,"LUcondest");
+-
+-    tiny = 10.0/HUGE_VAL;
+-
+-    n = LU->n;
+-    y = v_resize(y,n);
+-    z = v_resize(z,n);
+-    MEM_STAT_REG(y,TYPE_VEC);
+-    MEM_STAT_REG(z,TYPE_VEC);
+-
+-    for ( i = 0; i < n; i++ )
+-    {
+-	sum = 0.0;
+-	for ( j = 0; j < i; j++ )
+-	    sum -= LU->me[j][i]*y->ve[j];
+-	sum -= (sum < 0.0) ? 1.0 : -1.0;
+-	if ( fabs(LU->me[i][i]) <= tiny*fabs(sum) )
+-	    return HUGE_VAL;
+-	y->ve[i] = sum / LU->me[i][i];
+-    }
+-
+-    catch(E_SING,
+-	  LTsolve(LU,y,y,1.0);
+-	  LUsolve(LU,pivot,y,z);
+-	  ,
+-	  return HUGE_VAL);
+-
+-    /* now estimate norm of A (even though it is not directly available) */
+-    /* actually computes ||L||_inf.||U||_inf */
+-    U_norm = 0.0;
+-    for ( i = 0; i < n; i++ )
+-    {
+-	sum = 0.0;
+-	for ( j = i; j < n; j++ )
+-	    sum += fabs(LU->me[i][j]);
+-	if ( sum > U_norm )
+-	    U_norm = sum;
+-    }
+-    L_norm = 0.0;
+-    for ( i = 0; i < n; i++ )
+-    {
+-	sum = 1.0;
+-	for ( j = 0; j < i; j++ )
+-	    sum += fabs(LU->me[i][j]);
+-	if ( sum > L_norm )
+-	    L_norm = sum;
+-    }
+-
+-    tracecatch(cond_est = U_norm*L_norm*v_norm_inf(z)/v_norm_inf(y),
+-	       "LUcondest");
+-
+-    return cond_est;
+-}
+//GO.SYSIN DD lufactor.c
+echo bkpfacto.c 1>&2
+sed >bkpfacto.c <<'//GO.SYSIN DD bkpfacto.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	Matrix factorisation routines to work with the other matrix files.
+-*/
+-
+-static	char	rcsid[] = "$Id: bkpfacto.c,v 1.7 1994/01/13 05:45:50 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-#define	btos(x)	((x) ? "TRUE" : "FALSE")
+-
+-/* Most matrix factorisation routines are in-situ unless otherwise specified */
+-
+-#define alpha	0.6403882032022076 /* = (1+sqrt(17))/8 */
+-
+-/* sqr -- returns square of x -- utility function */
+-double	sqr(x)
+-double	x;
+-{	return x*x;	}
+-
+-/* interchange -- a row/column swap routine */
+-static void interchange(A,i,j)
+-MAT	*A;	/* assumed != NULL & also SQUARE */
+-int	i, j;	/* assumed in range */
+-{
+-	Real	**A_me, tmp;
+-	int	k, n;
+-
+-	A_me = A->me;	n = A->n;
+-	if ( i == j )
+-		return;
+-	if ( i > j )
+-	{	k = i;	i = j;	j = k;	}
+-	for ( k = 0; k < i; k++ )
+-	{
+-		/* tmp = A_me[k][i]; */
+-		tmp = m_entry(A,k,i);
+-		/* A_me[k][i] = A_me[k][j]; */
+-		m_set_val(A,k,i,m_entry(A,k,j));
+-		/* A_me[k][j] = tmp; */
+-		m_set_val(A,k,j,tmp);
+-	}
+-	for ( k = j+1; k < n; k++ )
+-	{
+-		/* tmp = A_me[j][k]; */
+-		tmp = m_entry(A,j,k);
+-		/* A_me[j][k] = A_me[i][k]; */
+-		m_set_val(A,j,k,m_entry(A,i,k));
+-		/* A_me[i][k] = tmp; */
+-		m_set_val(A,i,k,tmp);
+-	}
+-	for ( k = i+1; k < j; k++ )
+-	{
+-		/* tmp = A_me[k][j]; */
+-		tmp = m_entry(A,k,j);
+-		/* A_me[k][j] = A_me[i][k]; */
+-		m_set_val(A,k,j,m_entry(A,i,k));
+-		/* A_me[i][k] = tmp; */
+-		m_set_val(A,i,k,tmp);
+-	}
+-	/* tmp = A_me[i][i]; */
+-	tmp = m_entry(A,i,i);
+-	/* A_me[i][i] = A_me[j][j]; */
+-	m_set_val(A,i,i,m_entry(A,j,j));
+-	/* A_me[j][j] = tmp; */
+-	m_set_val(A,j,j,tmp);
+-}
+-
+-/* BKPfactor -- Bunch-Kaufman-Parlett factorisation of A in-situ
+-	-- A is factored into the form P'AP = MDM' where 
+-	P is a permutation matrix, M lower triangular and D is block
+-	diagonal with blocks of size 1 or 2
+-	-- P is stored in pivot; blocks[i]==i iff D[i][i] is a block */
+-MAT	*BKPfactor(A,pivot,blocks)
+-MAT	*A;
+-PERM	*pivot, *blocks;
+-{
+-	int	i, j, k, n, onebyone, r;
+-	Real	**A_me, aii, aip1, aip1i, lambda, sigma, tmp;
+-	Real	det, s, t;
+-
+-	if ( ! A || ! pivot || ! blocks )
+-		error(E_NULL,"BKPfactor");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"BKPfactor");
+-	if ( A->m != pivot->size || pivot->size != blocks->size )
+-		error(E_SIZES,"BKPfactor");
+-
+-	n = A->n;
+-	A_me = A->me;
+-	px_ident(pivot);	px_ident(blocks);
+-
+-	for ( i = 0; i < n; i = onebyone ? i+1 : i+2 )
+-	{
+-		/* printf("# Stage: %d\n",i); */
+-		aii = fabs(m_entry(A,i,i));
+-		lambda = 0.0;	r = (i+1 < n) ? i+1 : i;
+-		for ( k = i+1; k < n; k++ )
+-		{
+-		    tmp = fabs(m_entry(A,i,k));
+-		    if ( tmp >= lambda )
+-		    {
+-			lambda = tmp;
+-			r = k;
+-		    }
+-		}
+-		/* printf("# lambda = %g, r = %d\n", lambda, r); */
+-		/* printf("# |A[%d][%d]| = %g\n",r,r,fabs(m_entry(A,r,r))); */
+-
+-		/* determine if 1x1 or 2x2 block, and do pivoting if needed */
+-		if ( aii >= alpha*lambda )
+-		{
+-		    onebyone = TRUE;
+-		    goto dopivot;
+-		}
+-		/* compute sigma */
+-		sigma = 0.0;
+-		for ( k = i; k < n; k++ )
+-		{
+-		    if ( k == r )
+-			continue;
+-		    tmp = ( k > r ) ? fabs(m_entry(A,r,k)) :
+-			fabs(m_entry(A,k,r));
+-		    if ( tmp > sigma )
+-			sigma = tmp;
+-		}
+-		if ( aii*sigma >= alpha*sqr(lambda) )
+-		    onebyone = TRUE;
+-		else if ( fabs(m_entry(A,r,r)) >= alpha*sigma )
+-		{
+-		    /* printf("# Swapping rows/cols %d and %d\n",i,r); */
+-		    interchange(A,i,r);
+-		    px_transp(pivot,i,r);
+-		    onebyone = TRUE;
+-		}
+-		else
+-		{
+-		    /* printf("# Swapping rows/cols %d and %d\n",i+1,r); */
+-		    interchange(A,i+1,r);
+-		    px_transp(pivot,i+1,r);
+-		    px_transp(blocks,i,i+1);
+-		    onebyone = FALSE;
+-		}
+-		/* printf("onebyone = %s\n",btos(onebyone)); */
+-		/* printf("# Matrix so far (@checkpoint A) =\n"); */
+-		/* m_output(A); */
+-		/* printf("# pivot =\n");	px_output(pivot); */
+-		/* printf("# blocks =\n");	px_output(blocks); */
+-
+-dopivot:
+-		if ( onebyone )
+-		{   /* do one by one block */
+-		    if ( m_entry(A,i,i) != 0.0 )
+-		    {
+-			aii = m_entry(A,i,i);
+-			for ( j = i+1; j < n; j++ )
+-			{
+-			    tmp = m_entry(A,i,j)/aii;
+-			    for ( k = j; k < n; k++ )
+-				m_sub_val(A,j,k,tmp*m_entry(A,i,k));
+-			    m_set_val(A,i,j,tmp);
+-			}
+-		    }
+-		}
+-		else /* onebyone == FALSE */
+-		{   /* do two by two block */
+-		    det = m_entry(A,i,i)*m_entry(A,i+1,i+1)-sqr(m_entry(A,i,i+1));
+-		    /* Must have det < 0 */
+-		    /* printf("# det = %g\n",det); */
+-		    aip1i = m_entry(A,i,i+1)/det;
+-		    aii = m_entry(A,i,i)/det;
+-		    aip1 = m_entry(A,i+1,i+1)/det;
+-		    for ( j = i+2; j < n; j++ )
+-		    {
+-			s = - aip1i*m_entry(A,i+1,j) + aip1*m_entry(A,i,j);
+-			t = - aip1i*m_entry(A,i,j) + aii*m_entry(A,i+1,j);
+-			for ( k = j; k < n; k++ )
+-			    m_sub_val(A,j,k,m_entry(A,i,k)*s + m_entry(A,i+1,k)*t);
+-			m_set_val(A,i,j,s);
+-			m_set_val(A,i+1,j,t);
+-		    }
+-		}
+-		/* printf("# Matrix so far (@checkpoint B) =\n"); */
+-		/* m_output(A); */
+-		/* printf("# pivot =\n");	px_output(pivot); */
+-		/* printf("# blocks =\n");	px_output(blocks); */
+-	}
+-
+-	/* set lower triangular half */
+-	for ( i = 0; i < A->m; i++ )
+-	    for ( j = 0; j < i; j++ )
+-		m_set_val(A,i,j,m_entry(A,j,i));
+-
+-	return A;
+-}
+-
+-/* BKPsolve -- solves A.x = b where A has been factored a la BKPfactor()
+-	-- returns x, which is created if NULL */
+-VEC	*BKPsolve(A,pivot,block,b,x)
+-MAT	*A;
+-PERM	*pivot, *block;
+-VEC	*b, *x;
+-{
+-	static VEC	*tmp=VNULL;	/* dummy storage needed */
+-	int	i, j, n, onebyone;
+-	Real	**A_me, a11, a12, a22, b1, b2, det, sum, *tmp_ve, tmp_diag;
+-
+-	if ( ! A || ! pivot || ! block || ! b )
+-		error(E_NULL,"BKPsolve");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"BKPsolve");
+-	n = A->n;
+-	if ( b->dim != n || pivot->size != n || block->size != n )
+-		error(E_SIZES,"BKPsolve");
+-	x = v_resize(x,n);
+-	tmp = v_resize(tmp,n);
+-	MEM_STAT_REG(tmp,TYPE_VEC);
+-
+-	A_me = A->me;	tmp_ve = tmp->ve;
+-
+-	px_vec(pivot,b,tmp);
+-	/* solve for lower triangular part */
+-	for ( i = 0; i < n; i++ )
+-	{
+-		sum = v_entry(tmp,i);
+-		if ( block->pe[i] < i )
+-		    for ( j = 0; j < i-1; j++ )
+-			sum -= m_entry(A,i,j)*v_entry(tmp,j);
+-		else
+-		    for ( j = 0; j < i; j++ )
+-			sum -= m_entry(A,i,j)*v_entry(tmp,j);
+-		v_set_val(tmp,i,sum);
+-	}
+-	/* printf("# BKPsolve: solving L part: tmp =\n");	v_output(tmp); */
+-	/* solve for diagonal part */
+-	for ( i = 0; i < n; i = onebyone ? i+1 : i+2 )
+-	{
+-		onebyone = ( block->pe[i] == i );
+-		if ( onebyone )
+-		{
+-		    tmp_diag = m_entry(A,i,i);
+-		    if ( tmp_diag == 0.0 )
+-			error(E_SING,"BKPsolve");
+-		    /* tmp_ve[i] /= tmp_diag; */
+-		    v_set_val(tmp,i,v_entry(tmp,i) / tmp_diag);
+-		}
+-		else
+-		{
+-		    a11 = m_entry(A,i,i);
+-		    a22 = m_entry(A,i+1,i+1);
+-		    a12 = m_entry(A,i+1,i);
+-		    b1 = v_entry(tmp,i);	b2 = v_entry(tmp,i+1);
+-		    det = a11*a22-a12*a12;	/* < 0 : see BKPfactor() */
+-		    if ( det == 0.0 )
+-			error(E_SING,"BKPsolve");
+-		    det = 1/det;
+-		    v_set_val(tmp,i,det*(a22*b1-a12*b2));
+-		    v_set_val(tmp,i+1,det*(a11*b2-a12*b1));
+-		}
+-	}
+-	/* printf("# BKPsolve: solving D part: tmp =\n");	v_output(tmp); */
+-	/* solve for transpose of lower traingular part */
+-	for ( i = n-1; i >= 0; i-- )
+-	{	/* use symmetry of factored form to get stride 1 */
+-		sum = v_entry(tmp,i);
+-		if ( block->pe[i] > i )
+-		    for ( j = i+2; j < n; j++ )
+-			sum -= m_entry(A,i,j)*v_entry(tmp,j);
+-		else
+-		    for ( j = i+1; j < n; j++ )
+-			sum -= m_entry(A,i,j)*v_entry(tmp,j);
+-		v_set_val(tmp,i,sum);
+-	}
+-
+-	/* printf("# BKPsolve: solving L^T part: tmp =\n");v_output(tmp); */
+-	/* and do final permutation */
+-	x = pxinv_vec(pivot,tmp,x);
+-
+-	return x;
+-}
+-
+-		
+-
+//GO.SYSIN DD bkpfacto.c
+echo chfactor.c 1>&2
+sed >chfactor.c <<'//GO.SYSIN DD chfactor.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	Matrix factorisation routines to work with the other matrix files.
+-*/
+-
+-/* CHfactor.c 1.2 11/25/87 */
+-static	char	rcsid[] = "$Id: chfactor.c,v 1.2 1994/01/13 05:36:36 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-/* Most matrix factorisation routines are in-situ unless otherwise specified */
+-
+-/* CHfactor -- Cholesky L.L' factorisation of A in-situ */
+-MAT	*CHfactor(A)
+-MAT	*A;
+-{
+-	u_int	i, j, k, n;
+-	Real	**A_ent, *A_piv, *A_row, sum, tmp;
+-
+-	if ( A==(MAT *)NULL )
+-		error(E_NULL,"CHfactor");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"CHfactor");
+-	n = A->n;	A_ent = A->me;
+-
+-	for ( k=0; k<n; k++ )
+-	{	
+-		/* do diagonal element */
+-		sum = A_ent[k][k];
+-		A_piv = A_ent[k];
+-		for ( j=0; j<k; j++ )
+-		{
+-			/* tmp = A_ent[k][j]; */
+-			tmp = *A_piv++;
+-			sum -= tmp*tmp;
+-		}
+-		if ( sum <= 0.0 )
+-			error(E_POSDEF,"CHfactor");
+-		A_ent[k][k] = sqrt(sum);
+-
+-		/* set values of column k */
+-		for ( i=k+1; i<n; i++ )
+-		{
+-			sum = A_ent[i][k];
+-			A_piv = A_ent[k];
+-			A_row = A_ent[i];
+-			sum -= __ip__(A_row,A_piv,(int)k);
+-			/************************************************
+-			for ( j=0; j<k; j++ )
+-				sum -= A_ent[i][j]*A_ent[k][j];
+-				sum -= (*A_row++)*(*A_piv++);
+-			************************************************/
+-			A_ent[j][i] = A_ent[i][j] = sum/A_ent[k][k];
+-		}
+-	}
+-
+-	return (A);
+-}
+-
+-
+-/* CHsolve -- given a CHolesky factorisation in A, solve A.x=b */
+-VEC	*CHsolve(A,b,x)
+-MAT	*A;
+-VEC	*b,*x;
+-{
+-	if ( A==(MAT *)NULL || b==(VEC *)NULL )
+-		error(E_NULL,"CHsolve");
+-	if ( A->m != A->n || A->n != b->dim )
+-		error(E_SIZES,"CHsolve");
+-	x = v_resize(x,b->dim);
+-	Lsolve(A,b,x,0.0);
+-	Usolve(A,x,x,0.0);
+-
+-	return (x);
+-}
+-
+-/* LDLfactor -- L.D.L' factorisation of A in-situ */
+-MAT	*LDLfactor(A)
+-MAT	*A;
+-{
+-	u_int	i, k, n, p;
+-	Real	**A_ent;
+-	Real d, sum;
+-	static VEC	*r = VNULL;
+-
+-	if ( ! A )
+-		error(E_NULL,"LDLfactor");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"LDLfactor");
+-	n = A->n;	A_ent = A->me;
+-	r = v_resize(r,n);
+-	MEM_STAT_REG(r,TYPE_VEC);
+-
+-	for ( k = 0; k < n; k++ )
+-	{
+-		sum = 0.0;
+-		for ( p = 0; p < k; p++ )
+-		{
+-		    r->ve[p] = A_ent[p][p]*A_ent[k][p];
+-		    sum += r->ve[p]*A_ent[k][p];
+-		}
+-		d = A_ent[k][k] -= sum;
+-
+-		if ( d == 0.0 )
+-		    error(E_SING,"LDLfactor");
+-		for ( i = k+1; i < n; i++ )
+-		{
+-		    sum = __ip__(A_ent[i],r->ve,(int)k);
+-		    /****************************************
+-		    sum = 0.0;
+-		    for ( p = 0; p < k; p++ )
+-			sum += A_ent[i][p]*r->ve[p];
+-		    ****************************************/
+-		    A_ent[i][k] = (A_ent[i][k] - sum)/d;
+-		}
+-	}
+-
+-	return A;
+-}
+-
+-VEC	*LDLsolve(LDL,b,x)
+-MAT	*LDL;
+-VEC	*b, *x;
+-{
+-	if ( ! LDL || ! b )
+-		error(E_NULL,"LDLsolve");
+-	if ( LDL->m != LDL->n )
+-		error(E_SQUARE,"LDLsolve");
+-	if ( LDL->m != b->dim )
+-		error(E_SIZES,"LDLsolve");
+-	x = v_resize(x,b->dim);
+-
+-	Lsolve(LDL,b,x,1.0);
+-	Dsolve(LDL,x,x);
+-	LTsolve(LDL,x,x,1.0);
+-
+-	return x;
+-}
+-
+-/* MCHfactor -- Modified Cholesky L.L' factorisation of A in-situ */
+-MAT	*MCHfactor(A,tol)
+-MAT	*A;
+-double  tol;
+-{
+-	u_int	i, j, k, n;
+-	Real	**A_ent, *A_piv, *A_row, sum, tmp;
+-
+-	if ( A==(MAT *)NULL )
+-		error(E_NULL,"MCHfactor");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"MCHfactor");
+-	if ( tol <= 0.0 )
+-	        error(E_RANGE,"MCHfactor");
+-	n = A->n;	A_ent = A->me;
+-
+-	for ( k=0; k<n; k++ )
+-	{	
+-		/* do diagonal element */
+-		sum = A_ent[k][k];
+-		A_piv = A_ent[k];
+-		for ( j=0; j<k; j++ )
+-		{
+-			/* tmp = A_ent[k][j]; */
+-			tmp = *A_piv++;
+-			sum -= tmp*tmp;
+-		}
+-		if ( sum <= tol )
+-			sum = tol;
+-		A_ent[k][k] = sqrt(sum);
+-
+-		/* set values of column k */
+-		for ( i=k+1; i<n; i++ )
+-		{
+-			sum = A_ent[i][k];
+-			A_piv = A_ent[k];
+-			A_row = A_ent[i];
+-			sum -= __ip__(A_row,A_piv,(int)k);
+-			/************************************************
+-			for ( j=0; j<k; j++ )
+-				sum -= A_ent[i][j]*A_ent[k][j];
+-				sum -= (*A_row++)*(*A_piv++);
+-			************************************************/
+-			A_ent[j][i] = A_ent[i][j] = sum/A_ent[k][k];
+-		}
+-	}
+-
+-	return (A);
+-}
+//GO.SYSIN DD chfactor.c
+echo qrfactor.c 1>&2
+sed >qrfactor.c <<'//GO.SYSIN DD qrfactor.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-  This file contains the routines needed to perform QR factorisation
+-  of matrices, as well as Householder transformations.
+-  The internal "factored form" of a matrix A is not quite standard.
+-  The diagonal of A is replaced by the diagonal of R -- not by the 1st non-zero
+-  entries of the Householder vectors. The 1st non-zero entries are held in
+-  the diag parameter of QRfactor(). The reason for this non-standard
+-  representation is that it enables direct use of the Usolve() function
+-  rather than requiring that  a seperate function be written just for this case.
+-  See, e.g., QRsolve() below for more details.
+-  
+-*/
+-
+-
+-static	char	rcsid[] = "$Id: qrfactor.c,v 1.5 1994/01/13 05:35:07 des Exp $";
+-
+-#include	<stdio.h>
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-
+-
+-
+-#define		sign(x)	((x) > 0.0 ? 1 : ((x) < 0.0 ? -1 : 0 ))
+-
+-extern	VEC	*Usolve();	/* See matrix2.h */
+-
+-/* Note: The usual representation of a Householder transformation is taken
+-   to be:
+-   P = I - beta.u.uT
+-   where beta = 2/(uT.u) and u is called the Householder vector
+-   */
+-
+-/* QRfactor -- forms the QR factorisation of A -- factorisation stored in
+-   compact form as described above ( not quite standard format ) */
+-/* MAT	*QRfactor(A,diag,beta) */
+-MAT	*QRfactor(A,diag)
+-MAT	*A;
+-VEC	*diag /* ,*beta */;
+-{
+-    u_int	k,limit;
+-    Real	beta;
+-    static	VEC	*tmp1=VNULL;
+-    
+-    if ( ! A || ! diag )
+-	error(E_NULL,"QRfactor");
+-    limit = min(A->m,A->n);
+-    if ( diag->dim < limit )
+-	error(E_SIZES,"QRfactor");
+-    
+-    tmp1 = v_resize(tmp1,A->m);
+-    MEM_STAT_REG(tmp1,TYPE_VEC);
+-    
+-    for ( k=0; k<limit; k++ )
+-    {
+-	/* get H/holder vector for the k-th column */
+-	get_col(A,k,tmp1);
+-	/* hhvec(tmp1,k,&beta->ve[k],tmp1,&A->me[k][k]); */
+-	hhvec(tmp1,k,&beta,tmp1,&A->me[k][k]);
+-	diag->ve[k] = tmp1->ve[k];
+-	
+-	/* apply H/holder vector to remaining columns */
+-	/* hhtrcols(A,k,k+1,tmp1,beta->ve[k]); */
+-	hhtrcols(A,k,k+1,tmp1,beta);
+-    }
+-
+-    return (A);
+-}
+-
+-/* QRCPfactor -- forms the QR factorisation of A with column pivoting
+-   -- factorisation stored in compact form as described above
+-   ( not quite standard format )				*/
+-/* MAT	*QRCPfactor(A,diag,beta,px) */
+-MAT	*QRCPfactor(A,diag,px)
+-MAT	*A;
+-VEC	*diag /* , *beta */;
+-PERM	*px;
+-{
+-    u_int	i, i_max, j, k, limit;
+-    static	VEC	*gamma=VNULL, *tmp1=VNULL, *tmp2=VNULL;
+-    Real	beta, maxgamma, sum, tmp;
+-    
+-    if ( ! A || ! diag || ! px )
+-	error(E_NULL,"QRCPfactor");
+-    limit = min(A->m,A->n);
+-    if ( diag->dim < limit || px->size != A->n )
+-	error(E_SIZES,"QRCPfactor");
+-    
+-    tmp1 = v_resize(tmp1,A->m);
+-    tmp2 = v_resize(tmp2,A->m);
+-    gamma = v_resize(gamma,A->n);
+-    MEM_STAT_REG(tmp1,TYPE_VEC);
+-    MEM_STAT_REG(tmp2,TYPE_VEC);
+-    MEM_STAT_REG(gamma,TYPE_VEC);
+-    
+-    /* initialise gamma and px */
+-    for ( j=0; j<A->n; j++ )
+-    {
+-	px->pe[j] = j;
+-	sum = 0.0;
+-	for ( i=0; i<A->m; i++ )
+-	    sum += square(A->me[i][j]);
+-	gamma->ve[j] = sum;
+-    }
+-    
+-    for ( k=0; k<limit; k++ )
+-    {
+-	/* find "best" column to use */
+-	i_max = k;	maxgamma = gamma->ve[k];
+-	for ( i=k+1; i<A->n; i++ )
+-	    /* Loop invariant:maxgamma=gamma[i_max]
+-	       >=gamma[l];l=k,...,i-1 */
+-	    if ( gamma->ve[i] > maxgamma )
+-	    {	maxgamma = gamma->ve[i]; i_max = i;	}
+-	
+-	/* swap columns if necessary */
+-	if ( i_max != k )
+-	{
+-	    /* swap gamma values */
+-	    tmp = gamma->ve[k];
+-	    gamma->ve[k] = gamma->ve[i_max];
+-	    gamma->ve[i_max] = tmp;
+-	    
+-	    /* update column permutation */
+-	    px_transp(px,k,i_max);
+-	    
+-	    /* swap columns of A */
+-	    for ( i=0; i<A->m; i++ )
+-	    {
+-		tmp = A->me[i][k];
+-		A->me[i][k] = A->me[i][i_max];
+-		A->me[i][i_max] = tmp;
+-	    }
+-	}
+-	
+-	/* get H/holder vector for the k-th column */
+-	get_col(A,k,tmp1);
+-	/* hhvec(tmp1,k,&beta->ve[k],tmp1,&A->me[k][k]); */
+-	hhvec(tmp1,k,&beta,tmp1,&A->me[k][k]);
+-	diag->ve[k] = tmp1->ve[k];
+-	
+-	/* apply H/holder vector to remaining columns */
+-	/* hhtrcols(A,k,k+1,tmp1,beta->ve[k]); */
+-	hhtrcols(A,k,k+1,tmp1,beta);
+-	
+-	/* update gamma values */
+-	for ( j=k+1; j<A->n; j++ )
+-	    gamma->ve[j] -= square(A->me[k][j]);
+-    }
+-
+-    return (A);
+-}
+-
+-/* Qsolve -- solves Qx = b, Q is an orthogonal matrix stored in compact
+-   form a la QRfactor() -- may be in-situ */
+-/* VEC	*_Qsolve(QR,diag,beta,b,x,tmp) */
+-VEC	*_Qsolve(QR,diag,b,x,tmp)
+-MAT	*QR;
+-VEC	*diag /* ,*beta */ , *b, *x, *tmp;
+-{
+-    u_int	dynamic;
+-    int		k, limit;
+-    Real	beta, r_ii, tmp_val;
+-    
+-    limit = min(QR->m,QR->n);
+-    dynamic = FALSE;
+-    if ( ! QR || ! diag || ! b )
+-	error(E_NULL,"_Qsolve");
+-    if ( diag->dim < limit || b->dim != QR->m )
+-	error(E_SIZES,"_Qsolve");
+-    x = v_resize(x,QR->m);
+-    if ( tmp == VNULL )
+-	dynamic = TRUE;
+-    tmp = v_resize(tmp,QR->m);
+-    
+-    /* apply H/holder transforms in normal order */
+-    x = v_copy(b,x);
+-    for ( k = 0 ; k < limit ; k++ )
+-    {
+-	get_col(QR,k,tmp);
+-	r_ii = fabs(tmp->ve[k]);
+-	tmp->ve[k] = diag->ve[k];
+-	tmp_val = (r_ii*fabs(diag->ve[k]));
+-	beta = ( tmp_val == 0.0 ) ? 0.0 : 1.0/tmp_val;
+-	/* hhtrvec(tmp,beta->ve[k],k,x,x); */
+-	hhtrvec(tmp,beta,k,x,x);
+-    }
+-    
+-    if ( dynamic )
+-	V_FREE(tmp);
+-    
+-    return (x);
+-}
+-
+-/* makeQ -- constructs orthogonal matrix from Householder vectors stored in
+-   compact QR form */
+-/* MAT	*makeQ(QR,diag,beta,Qout) */
+-MAT	*makeQ(QR,diag,Qout)
+-MAT	*QR,*Qout;
+-VEC	*diag /* , *beta */;
+-{
+-    static	VEC	*tmp1=VNULL,*tmp2=VNULL;
+-    u_int	i, limit;
+-    Real	beta, r_ii, tmp_val;
+-    int	j;
+-    
+-    limit = min(QR->m,QR->n);
+-    if ( ! QR || ! diag )
+-	error(E_NULL,"makeQ");
+-    if ( diag->dim < limit )
+-	error(E_SIZES,"makeQ");
+-    if ( Qout==(MAT *)NULL || Qout->m < QR->m || Qout->n < QR->m )
+-	Qout = m_get(QR->m,QR->m);
+-    
+-    tmp1 = v_resize(tmp1,QR->m);	/* contains basis vec & columns of Q */
+-    tmp2 = v_resize(tmp2,QR->m);	/* contains H/holder vectors */
+-    MEM_STAT_REG(tmp1,TYPE_VEC);
+-    MEM_STAT_REG(tmp2,TYPE_VEC);
+-    
+-    for ( i=0; i<QR->m ; i++ )
+-    {	/* get i-th column of Q */
+-	/* set up tmp1 as i-th basis vector */
+-	for ( j=0; j<QR->m ; j++ )
+-	    tmp1->ve[j] = 0.0;
+-	tmp1->ve[i] = 1.0;
+-	
+-	/* apply H/h transforms in reverse order */
+-	for ( j=limit-1; j>=0; j-- )
+-	{
+-	    get_col(QR,j,tmp2);
+-	    r_ii = fabs(tmp2->ve[j]);
+-	    tmp2->ve[j] = diag->ve[j];
+-	    tmp_val = (r_ii*fabs(diag->ve[j]));
+-	    beta = ( tmp_val == 0.0 ) ? 0.0 : 1.0/tmp_val;
+-	    /* hhtrvec(tmp2,beta->ve[j],j,tmp1,tmp1); */
+-	    hhtrvec(tmp2,beta,j,tmp1,tmp1);
+-	}
+-	
+-	/* insert into Q */
+-	set_col(Qout,i,tmp1);
+-    }
+-
+-    return (Qout);
+-}
+-
+-/* makeR -- constructs upper triangular matrix from QR (compact form)
+-   -- may be in-situ (all it does is zero the lower 1/2) */
+-MAT	*makeR(QR,Rout)
+-MAT	*QR,*Rout;
+-{
+-    u_int	i,j;
+-    
+-    if ( QR==(MAT *)NULL )
+-	error(E_NULL,"makeR");
+-    Rout = m_copy(QR,Rout);
+-    
+-    for ( i=1; i<QR->m; i++ )
+-	for ( j=0; j<QR->n && j<i; j++ )
+-	    Rout->me[i][j] = 0.0;
+-    
+-    return (Rout);
+-}
+-
+-/* QRsolve -- solves the system Q.R.x=b where Q & R are stored in compact form
+-   -- returns x, which is created if necessary */
+-/* VEC	*QRsolve(QR,diag,beta,b,x) */
+-VEC	*QRsolve(QR,diag,b,x)
+-MAT	*QR;
+-VEC	*diag /* , *beta */ , *b, *x;
+-{
+-    int	limit;
+-    static	VEC	*tmp = VNULL;
+-    
+-    if ( ! QR || ! diag || ! b )
+-	error(E_NULL,"QRsolve");
+-    limit = min(QR->m,QR->n);
+-    if ( diag->dim < limit || b->dim != QR->m )
+-	error(E_SIZES,"QRsolve");
+-    tmp = v_resize(tmp,limit);
+-    MEM_STAT_REG(tmp,TYPE_VEC);
+-
+-    x = v_resize(x,QR->n);
+-    _Qsolve(QR,diag,b,x,tmp);
+-    x = Usolve(QR,x,x,0.0);
+-    v_resize(x,QR->n);
+-
+-    return x;
+-}
+-
+-/* QRCPsolve -- solves A.x = b where A is factored by QRCPfactor()
+-   -- assumes that A is in the compact factored form */
+-/* VEC	*QRCPsolve(QR,diag,beta,pivot,b,x) */
+-VEC	*QRCPsolve(QR,diag,pivot,b,x)
+-MAT	*QR;
+-VEC	*diag /* , *beta */;
+-PERM	*pivot;
+-VEC	*b, *x;
+-{
+-    static	VEC	*tmp=VNULL;
+-    
+-    if ( ! QR || ! diag || ! pivot || ! b )
+-	error(E_NULL,"QRCPsolve");
+-    if ( (QR->m > diag->dim &&QR->n > diag->dim) || QR->n != pivot->size )
+-	error(E_SIZES,"QRCPsolve");
+-    
+-    tmp = QRsolve(QR,diag /* , beta */ ,b,tmp);
+-    MEM_STAT_REG(tmp,TYPE_VEC);
+-    x = pxinv_vec(pivot,tmp,x);
+-
+-    return x;
+-}
+-
+-/* Umlt -- compute out = upper_triang(U).x
+-	-- may be in situ */
+-static	VEC	*Umlt(U,x,out)
+-MAT	*U;
+-VEC	*x, *out;
+-{
+-    int		i, limit;
+-
+-    if ( U == MNULL || x == VNULL )
+-	error(E_NULL,"Umlt");
+-    limit = min(U->m,U->n);
+-    if ( limit != x->dim )
+-	error(E_SIZES,"Umlt");
+-    if ( out == VNULL || out->dim < limit )
+-	out = v_resize(out,limit);
+-
+-    for ( i = 0; i < limit; i++ )
+-	out->ve[i] = __ip__(&(x->ve[i]),&(U->me[i][i]),limit - i);
+-    return out;
+-}
+-
+-/* UTmlt -- returns out = upper_triang(U)^T.x */
+-static	VEC	*UTmlt(U,x,out)
+-MAT	*U;
+-VEC	*x, *out;
+-{
+-    Real	sum;
+-    int		i, j, limit;
+-
+-    if ( U == MNULL || x == VNULL )
+-	error(E_NULL,"UTmlt");
+-    limit = min(U->m,U->n);
+-    if ( out == VNULL || out->dim < limit )
+-	out = v_resize(out,limit);
+-
+-    for ( i = limit-1; i >= 0; i-- )
+-    {
+-	sum = 0.0;
+-	for ( j = 0; j <= i; j++ )
+-	    sum += U->me[j][i]*x->ve[j];
+-	out->ve[i] = sum;
+-    }
+-    return out;
+-}
+-
+-/* QRTsolve -- solve A^T.sc = c where the QR factors of A are stored in
+-	compact form
+-	-- returns sc
+-	-- original due to Mike Osborne modified Wed 09th Dec 1992 */
+-VEC *QRTsolve(A,diag,c,sc)
+-MAT *A;
+-VEC *diag, *c, *sc;
+-{
+-    int		i, j, k, n, p;
+-    Real	beta, r_ii, s, tmp_val;
+-
+-    if ( ! A || ! diag || ! c )
+-	error(E_NULL,"QRTsolve");
+-    if ( diag->dim < min(A->m,A->n) )
+-	error(E_SIZES,"QRTsolve");
+-    sc = v_resize(sc,A->m);
+-    n = sc->dim;
+-    p = c->dim;
+-    if ( n == p )
+-	k = p-2;
+-    else
+-	k = p-1;
+-    v_zero(sc);
+-    sc->ve[0] = c->ve[0]/A->me[0][0];
+-    if ( n ==  1)
+-	return sc;
+-    if ( p > 1)
+-    {
+-	for ( i = 1; i < p; i++ )
+-	{
+-	    s = 0.0;
+-	    for ( j = 0; j < i; j++ )
+-		s += A->me[j][i]*sc->ve[j];
+-	    if ( A->me[i][i] == 0.0 )
+-		error(E_SING,"QRTsolve");
+-	    sc->ve[i]=(c->ve[i]-s)/A->me[i][i];
+-	}
+-    }
+-    for (i = k; i >= 0; i--)
+-    {
+-	s = diag->ve[i]*sc->ve[i];
+-	for ( j = i+1; j < n; j++ )
+-	    s += A->me[j][i]*sc->ve[j];
+-	r_ii = fabs(A->me[i][i]);
+-	tmp_val = (r_ii*fabs(diag->ve[i]));
+-	beta = ( tmp_val == 0.0 ) ? 0.0 : 1.0/tmp_val;
+-	tmp_val = beta*s;
+-	sc->ve[i] -= tmp_val*diag->ve[i];
+-	for ( j = i+1; j < n; j++ )
+-	    sc->ve[j] -= tmp_val*A->me[j][i];
+-    }
+-
+-    return sc;
+-}
+-
+-/* QRcondest -- returns an estimate of the 2-norm condition number of the
+-		matrix factorised by QRfactor() or QRCPfactor()
+-	-- note that as Q does not affect the 2-norm condition number,
+-		it is not necessary to pass the diag, beta (or pivot) vectors
+-	-- generates a lower bound on the true condition number
+-	-- if the matrix is exactly singular, HUGE is returned
+-	-- note that QRcondest() is likely to be more reliable for
+-		matrices factored using QRCPfactor() */
+-double	QRcondest(QR)
+-MAT	*QR;
+-{
+-    static	VEC	*y=VNULL;
+-    Real	norm1, norm2, sum, tmp1, tmp2;
+-    int		i, j, limit;
+-
+-    if ( QR == MNULL )
+-	error(E_NULL,"QRcondest");
+-
+-    limit = min(QR->m,QR->n);
+-    for ( i = 0; i < limit; i++ )
+-	if ( QR->me[i][i] == 0.0 )
+-	    return HUGE;
+-
+-    y = v_resize(y,limit);
+-    MEM_STAT_REG(y,TYPE_VEC);
+-    /* use the trick for getting a unit vector y with ||R.y||_inf small
+-       from the LU condition estimator */
+-    for ( i = 0; i < limit; i++ )
+-    {
+-	sum = 0.0;
+-	for ( j = 0; j < i; j++ )
+-	    sum -= QR->me[j][i]*y->ve[j];
+-	sum -= (sum < 0.0) ? 1.0 : -1.0;
+-	y->ve[i] = sum / QR->me[i][i];
+-    }
+-    UTmlt(QR,y,y);
+-
+-    /* now apply inverse power method to R^T.R */
+-    for ( i = 0; i < 3; i++ )
+-    {
+-	tmp1 = v_norm2(y);
+-	sv_mlt(1/tmp1,y,y);
+-	UTsolve(QR,y,y,0.0);
+-	tmp2 = v_norm2(y);
+-	sv_mlt(1/v_norm2(y),y,y);
+-	Usolve(QR,y,y,0.0);
+-    }
+-    /* now compute approximation for ||R^{-1}||_2 */
+-    norm1 = sqrt(tmp1)*sqrt(tmp2);
+-
+-    /* now use complementary approach to compute approximation to ||R||_2 */
+-    for ( i = limit-1; i >= 0; i-- )
+-    {
+-	sum = 0.0;
+-	for ( j = i+1; j < limit; j++ )
+-	    sum += QR->me[i][j]*y->ve[j];
+-	y->ve[i] = (sum >= 0.0) ? 1.0 : -1.0;
+-	y->ve[i] = (QR->me[i][i] >= 0.0) ? y->ve[i] : - y->ve[i];
+-    }
+-
+-    /* now apply power method to R^T.R */
+-    for ( i = 0; i < 3; i++ )
+-    {
+-	tmp1 = v_norm2(y);
+-	sv_mlt(1/tmp1,y,y);
+-	Umlt(QR,y,y);
+-	tmp2 = v_norm2(y);
+-	sv_mlt(1/tmp2,y,y);
+-	UTmlt(QR,y,y);
+-    }
+-    norm2 = sqrt(tmp1)*sqrt(tmp2);
+-
+-    /* printf("QRcondest: norm1 = %g, norm2 = %g\n",norm1,norm2); */
+-
+-    return norm1*norm2;
+-}
+//GO.SYSIN DD qrfactor.c
+echo solve.c 1>&2
+sed >solve.c <<'//GO.SYSIN DD solve.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	Matrix factorisation routines to work with the other matrix files.
+-*/
+-
+-/* solve.c 1.2 11/25/87 */
+-static	char	rcsid[] = "$Id: solve.c,v 1.3 1994/01/13 05:29:57 des Exp $";
+-
+-#include	<stdio.h>
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-
+-
+-
+-/* Most matrix factorisation routines are in-situ unless otherwise specified */
+-
+-/* Usolve -- back substitution with optional over-riding diagonal
+-		-- can be in-situ but doesn't need to be */
+-VEC	*Usolve(matrix,b,out,diag)
+-MAT	*matrix;
+-VEC	*b, *out;
+-double	diag;
+-{
+-	u_int	dim /* , j */;
+-	int	i, i_lim;
+-	Real	**mat_ent, *mat_row, *b_ent, *out_ent, *out_col, sum, tiny;
+-
+-	if ( matrix==(MAT *)NULL || b==(VEC *)NULL )
+-		error(E_NULL,"Usolve");
+-	dim = min(matrix->m,matrix->n);
+-	if ( b->dim < dim )
+-		error(E_SIZES,"Usolve");
+-	if ( out==(VEC *)NULL || out->dim < dim )
+-		out = v_resize(out,matrix->n);
+-	mat_ent = matrix->me;	b_ent = b->ve;	out_ent = out->ve;
+-
+-	tiny = 10.0/HUGE_VAL;
+-
+-	for ( i=dim-1; i>=0; i-- )
+-		if ( b_ent[i] != 0.0 )
+-		    break;
+-		else
+-		    out_ent[i] = 0.0;
+-	i_lim = i;
+-
+-	for (    ; i>=0; i-- )
+-	{
+-		sum = b_ent[i];
+-		mat_row = &(mat_ent[i][i+1]);
+-		out_col = &(out_ent[i+1]);
+-		sum -= __ip__(mat_row,out_col,i_lim-i);
+-		/******************************************************
+-		for ( j=i+1; j<=i_lim; j++ )
+-			sum -= mat_ent[i][j]*out_ent[j];
+-			sum -= (*mat_row++)*(*out_col++);
+-		******************************************************/
+-		if ( diag==0.0 )
+-		{
+-			if ( fabs(mat_ent[i][i]) <= tiny*fabs(sum) )
+-				error(E_SING,"Usolve");
+-			else
+-				out_ent[i] = sum/mat_ent[i][i];
+-		}
+-		else
+-			out_ent[i] = sum/diag;
+-	}
+-
+-	return (out);
+-}
+-
+-/* Lsolve -- forward elimination with (optional) default diagonal value */
+-VEC	*Lsolve(matrix,b,out,diag)
+-MAT	*matrix;
+-VEC	*b,*out;
+-double	diag;
+-{
+-	u_int	dim, i, i_lim /* , j */;
+-	Real	**mat_ent, *mat_row, *b_ent, *out_ent, *out_col, sum, tiny;
+-
+-	if ( matrix==(MAT *)NULL || b==(VEC *)NULL )
+-		error(E_NULL,"Lsolve");
+-	dim = min(matrix->m,matrix->n);
+-	if ( b->dim < dim )
+-		error(E_SIZES,"Lsolve");
+-	if ( out==(VEC *)NULL || out->dim < dim )
+-		out = v_resize(out,matrix->n);
+-	mat_ent = matrix->me;	b_ent = b->ve;	out_ent = out->ve;
+-
+-	for ( i=0; i<dim; i++ )
+-		if ( b_ent[i] != 0.0 )
+-		    break;
+-		else
+-		    out_ent[i] = 0.0;
+-	i_lim = i;
+-
+-	tiny = 10.0/HUGE_VAL;
+-
+-	for (    ; i<dim; i++ )
+-	{
+-		sum = b_ent[i];
+-		mat_row = &(mat_ent[i][i_lim]);
+-		out_col = &(out_ent[i_lim]);
+-		sum -= __ip__(mat_row,out_col,(int)(i-i_lim));
+-		/*****************************************************
+-		for ( j=i_lim; j<i; j++ )
+-			sum -= mat_ent[i][j]*out_ent[j];
+-			sum -= (*mat_row++)*(*out_col++);
+-		******************************************************/
+-		if ( diag==0.0 )
+-		{
+-			if ( fabs(mat_ent[i][i]) <= tiny*fabs(sum) )
+-				error(E_SING,"Lsolve");
+-			else
+-				out_ent[i] = sum/mat_ent[i][i];
+-		}
+-		else
+-			out_ent[i] = sum/diag;
+-	}
+-
+-	return (out);
+-}
+-
+-
+-/* UTsolve -- forward elimination with (optional) default diagonal value
+-		using UPPER triangular part of matrix */
+-VEC	*UTsolve(U,b,out,diag)
+-MAT	*U;
+-VEC	*b,*out;
+-double	diag;
+-{
+-    u_int	dim, i, i_lim;
+-    Real	**U_me, *b_ve, *out_ve, tmp, invdiag, tiny;
+-    
+-    if ( ! U || ! b )
+-	error(E_NULL,"UTsolve");
+-    dim = min(U->m,U->n);
+-    if ( b->dim < dim )
+-	error(E_SIZES,"UTsolve");
+-    out = v_resize(out,U->n);
+-    U_me = U->me;	b_ve = b->ve;	out_ve = out->ve;
+-
+-    tiny = 10.0/HUGE_VAL;
+-
+-    for ( i=0; i<dim; i++ )
+-	if ( b_ve[i] != 0.0 )
+-	    break;
+-	else
+-	    out_ve[i] = 0.0;
+-    i_lim = i;
+-    if ( b != out )
+-    {
+-	__zero__(out_ve,out->dim);
+-	MEM_COPY(&(b_ve[i_lim]),&(out_ve[i_lim]),(dim-i_lim)*sizeof(Real));
+-    }
+-
+-    if ( diag == 0.0 )
+-    {
+-	for (    ; i<dim; i++ )
+-	{
+-	    tmp = U_me[i][i];
+-	    if ( fabs(tmp) <= tiny*fabs(out_ve[i]) )
+-		error(E_SING,"UTsolve");
+-	    out_ve[i] /= tmp;
+-	    __mltadd__(&(out_ve[i+1]),&(U_me[i][i+1]),-out_ve[i],dim-i-1);
+-	}
+-    }
+-    else
+-    {
+-	invdiag = 1.0/diag;
+-	for (    ; i<dim; i++ )
+-	{
+-	    out_ve[i] *= invdiag;
+-	    __mltadd__(&(out_ve[i+1]),&(U_me[i][i+1]),-out_ve[i],dim-i-1);
+-	}
+-    }
+-    return (out);
+-}
+-
+-/* Dsolve -- solves Dx=b where D is the diagonal of A -- may be in-situ */
+-VEC	*Dsolve(A,b,x)
+-MAT	*A;
+-VEC	*b,*x;
+-{
+-    u_int	dim, i;
+-    Real	tiny;
+-    
+-    if ( ! A || ! b )
+-	error(E_NULL,"Dsolve");
+-    dim = min(A->m,A->n);
+-    if ( b->dim < dim )
+-	error(E_SIZES,"Dsolve");
+-    x = v_resize(x,A->n);
+-
+-    tiny = 10.0/HUGE_VAL;
+-
+-    dim = b->dim;
+-    for ( i=0; i<dim; i++ )
+-	if ( fabs(A->me[i][i]) <= tiny*fabs(b->ve[i]) )
+-	    error(E_SING,"Dsolve");
+-	else
+-	    x->ve[i] = b->ve[i]/A->me[i][i];
+-    
+-    return (x);
+-}
+-
+-/* LTsolve -- back substitution with optional over-riding diagonal
+-		using the LOWER triangular part of matrix
+-		-- can be in-situ but doesn't need to be */
+-VEC	*LTsolve(L,b,out,diag)
+-MAT	*L;
+-VEC	*b, *out;
+-double	diag;
+-{
+-    u_int	dim;
+-    int		i, i_lim;
+-    Real	**L_me, *b_ve, *out_ve, tmp, invdiag, tiny;
+-    
+-    if ( ! L || ! b )
+-	error(E_NULL,"LTsolve");
+-    dim = min(L->m,L->n);
+-    if ( b->dim < dim )
+-	error(E_SIZES,"LTsolve");
+-    out = v_resize(out,L->n);
+-    L_me = L->me;	b_ve = b->ve;	out_ve = out->ve;
+-
+-    tiny = 10.0/HUGE_VAL;
+-    
+-    for ( i=dim-1; i>=0; i-- )
+-	if ( b_ve[i] != 0.0 )
+-	    break;
+-    i_lim = i;
+-
+-    if ( b != out )
+-    {
+-	__zero__(out_ve,out->dim);
+-	MEM_COPY(b_ve,out_ve,(i_lim+1)*sizeof(Real));
+-    }
+-
+-    if ( diag == 0.0 )
+-    {
+-	for (        ; i>=0; i-- )
+-	{
+-	    tmp = L_me[i][i];
+-	    if ( fabs(tmp) <= tiny*fabs(out_ve[i]) )
+-		error(E_SING,"LTsolve");
+-	    out_ve[i] /= tmp;
+-	    __mltadd__(out_ve,L_me[i],-out_ve[i],i);
+-	}
+-    }
+-    else
+-    {
+-	invdiag = 1.0/diag;
+-	for (        ; i>=0; i-- )
+-	{
+-	    out_ve[i] *= invdiag;
+-	    __mltadd__(out_ve,L_me[i],-out_ve[i],i);
+-	}
+-    }
+-    
+-    return (out);
+-}
+//GO.SYSIN DD solve.c
+echo hsehldr.c 1>&2
+sed >hsehldr.c <<'//GO.SYSIN DD hsehldr.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-		Files for matrix computations
+-
+-	Householder transformation file. Contains routines for calculating
+-	householder transformations, applying them to vectors and matrices
+-	by both row & column.
+-*/
+-
+-/* hsehldr.c 1.3 10/8/87 */
+-static	char	rcsid[] = "$Id: hsehldr.c,v 1.2 1994/01/13 05:36:29 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-/* hhvec -- calulates Householder vector to eliminate all entries after the
+-	i0 entry of the vector vec. It is returned as out. May be in-situ */
+-VEC	*hhvec(vec,i0,beta,out,newval)
+-VEC	*vec,*out;
+-u_int	i0;
+-Real	*beta,*newval;
+-{
+-	Real	norm;
+-
+-	out = _v_copy(vec,out,i0);
+-	norm = sqrt(_in_prod(out,out,i0));
+-	if ( norm <= 0.0 )
+-	{
+-		*beta = 0.0;
+-		return (out);
+-	}
+-	*beta = 1.0/(norm * (norm+fabs(out->ve[i0])));
+-	if ( out->ve[i0] > 0.0 )
+-		*newval = -norm;
+-	else
+-		*newval = norm;
+-	out->ve[i0] -= *newval;
+-
+-	return (out);
+-}
+-
+-/* hhtrvec -- apply Householder transformation to vector -- may be in-situ */
+-VEC	*hhtrvec(hh,beta,i0,in,out)
+-VEC	*hh,*in,*out;	/* hh = Householder vector */
+-u_int	i0;
+-double	beta;
+-{
+-	Real	scale;
+-	/* u_int	i; */
+-
+-	if ( hh==(VEC *)NULL || in==(VEC *)NULL )
+-		error(E_NULL,"hhtrvec");
+-	if ( in->dim != hh->dim )
+-		error(E_SIZES,"hhtrvec");
+-	if ( i0 > in->dim )
+-		error(E_BOUNDS,"hhtrvec");
+-
+-	scale = beta*_in_prod(hh,in,i0);
+-	out = v_copy(in,out);
+-	__mltadd__(&(out->ve[i0]),&(hh->ve[i0]),-scale,(int)(in->dim-i0));
+-	/************************************************************
+-	for ( i=i0; i<in->dim; i++ )
+-		out->ve[i] = in->ve[i] - scale*hh->ve[i];
+-	************************************************************/
+-
+-	return (out);
+-}
+-
+-/* hhtrrows -- transform a matrix by a Householder vector by rows
+-	starting at row i0 from column j0 -- in-situ */
+-MAT	*hhtrrows(M,i0,j0,hh,beta)
+-MAT	*M;
+-u_int	i0, j0;
+-VEC	*hh;
+-double	beta;
+-{
+-	Real	ip, scale;
+-	int	i /*, j */;
+-
+-	if ( M==(MAT *)NULL || hh==(VEC *)NULL )
+-		error(E_NULL,"hhtrrows");
+-	if ( M->n != hh->dim )
+-		error(E_RANGE,"hhtrrows");
+-	if ( i0 > M->m || j0 > M->n )
+-		error(E_BOUNDS,"hhtrrows");
+-
+-	if ( beta == 0.0 )	return (M);
+-
+-	/* for each row ... */
+-	for ( i = i0; i < M->m; i++ )
+-	{	/* compute inner product */
+-		ip = __ip__(&(M->me[i][j0]),&(hh->ve[j0]),(int)(M->n-j0));
+-		/**************************************************
+-		ip = 0.0;
+-		for ( j = j0; j < M->n; j++ )
+-			ip += M->me[i][j]*hh->ve[j];
+-		**************************************************/
+-		scale = beta*ip;
+-		if ( scale == 0.0 )
+-		    continue;
+-
+-		/* do operation */
+-		__mltadd__(&(M->me[i][j0]),&(hh->ve[j0]),-scale,
+-							(int)(M->n-j0));
+-		/**************************************************
+-		for ( j = j0; j < M->n; j++ )
+-			M->me[i][j] -= scale*hh->ve[j];
+-		**************************************************/
+-	}
+-
+-	return (M);
+-}
+-
+-
+-/* hhtrcols -- transform a matrix by a Householder vector by columns
+-	starting at row i0 from column j0 -- in-situ */
+-MAT	*hhtrcols(M,i0,j0,hh,beta)
+-MAT	*M;
+-u_int	i0, j0;
+-VEC	*hh;
+-double	beta;
+-{
+-	/* Real	ip, scale; */
+-	int	i /*, k */;
+-	static	VEC	*w = VNULL;
+-
+-	if ( M==(MAT *)NULL || hh==(VEC *)NULL )
+-		error(E_NULL,"hhtrcols");
+-	if ( M->m != hh->dim )
+-		error(E_SIZES,"hhtrcols");
+-	if ( i0 > M->m || j0 > M->n )
+-		error(E_BOUNDS,"hhtrcols");
+-
+-	if ( beta == 0.0 )	return (M);
+-
+-	w = v_resize(w,M->n);
+-	MEM_STAT_REG(w,TYPE_VEC);
+-	v_zero(w);
+-
+-	for ( i = i0; i < M->m; i++ )
+-	    if ( hh->ve[i] != 0.0 )
+-		__mltadd__(&(w->ve[j0]),&(M->me[i][j0]),hh->ve[i],
+-							(int)(M->n-j0));
+-	for ( i = i0; i < M->m; i++ )
+-	    if ( hh->ve[i] != 0.0 )
+-		__mltadd__(&(M->me[i][j0]),&(w->ve[j0]),-beta*hh->ve[i],
+-							(int)(M->n-j0));
+-	return (M);
+-}
+-
+//GO.SYSIN DD hsehldr.c
+echo givens.c 1>&2
+sed >givens.c <<'//GO.SYSIN DD givens.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-
+-/*
+-		Files for matrix computations
+-
+-	Givens operations file. Contains routines for calculating and
+-	applying givens rotations for/to vectors and also to matrices by
+-	row and by column.
+-*/
+-
+-/* givens.c 1.2 11/25/87 */
+-static	char	rcsid[] = "$Id: givens.c,v 1.2 1994/01/13 05:39:42 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-/* givens -- returns c,s parameters for Givens rotation to
+-		eliminate y in the vector [ x y ]' */
+-void	givens(x,y,c,s)
+-double  x,y;
+-Real	*c,*s;
+-{
+-	Real	norm;
+-
+-	norm = sqrt(x*x+y*y);
+-	if ( norm == 0.0 )
+-	{	*c = 1.0;	*s = 0.0;	}	/* identity */
+-	else
+-	{	*c = x/norm;	*s = y/norm;	}
+-}
+-
+-/* rot_vec -- apply Givens rotation to x's i & k components */
+-VEC	*rot_vec(x,i,k,c,s,out)
+-VEC	*x,*out;
+-u_int	i,k;
+-double	c,s;
+-{
+-	Real	temp;
+-
+-	if ( x==VNULL )
+-		error(E_NULL,"rot_vec");
+-	if ( i >= x->dim || k >= x->dim )
+-		error(E_RANGE,"rot_vec");
+-	out = v_copy(x,out);
+-
+-	/* temp = c*out->ve[i] + s*out->ve[k]; */
+-	temp = c*v_entry(out,i) + s*v_entry(out,k);
+-	/* out->ve[k] = -s*out->ve[i] + c*out->ve[k]; */
+-	v_set_val(out,k,-s*v_entry(out,i)+c*v_entry(out,k));
+-	/* out->ve[i] = temp; */
+-	v_set_val(out,i,temp);
+-
+-	return (out);
+-}
+-
+-/* rot_rows -- premultiply mat by givens rotation described by c,s */
+-MAT	*rot_rows(mat,i,k,c,s,out)
+-MAT	*mat,*out;
+-u_int	i,k;
+-double	c,s;
+-{
+-	u_int	j;
+-	Real	temp;
+-
+-	if ( mat==(MAT *)NULL )
+-		error(E_NULL,"rot_rows");
+-	if ( i >= mat->m || k >= mat->m )
+-		error(E_RANGE,"rot_rows");
+-	out = m_copy(mat,out);
+-
+-	for ( j=0; j<mat->n; j++ )
+-	{
+-		/* temp = c*out->me[i][j] + s*out->me[k][j]; */
+-		temp = c*m_entry(out,i,j) + s*m_entry(out,k,j);
+-		/* out->me[k][j] = -s*out->me[i][j] + c*out->me[k][j]; */
+-		m_set_val(out,k,j, -s*m_entry(out,i,j) + c*m_entry(out,k,j));
+-		/* out->me[i][j] = temp; */
+-		m_set_val(out,i,j, temp);
+-	}
+-
+-	return (out);
+-}
+-
+-/* rot_cols -- postmultiply mat by givens rotation described by c,s */
+-MAT	*rot_cols(mat,i,k,c,s,out)
+-MAT	*mat,*out;
+-u_int	i,k;
+-double	c,s;
+-{
+-	u_int	j;
+-	Real	temp;
+-
+-	if ( mat==(MAT *)NULL )
+-		error(E_NULL,"rot_cols");
+-	if ( i >= mat->n || k >= mat->n )
+-		error(E_RANGE,"rot_cols");
+-	out = m_copy(mat,out);
+-
+-	for ( j=0; j<mat->m; j++ )
+-	{
+-		/* temp = c*out->me[j][i] + s*out->me[j][k]; */
+-		temp = c*m_entry(out,j,i) + s*m_entry(out,j,k);
+-		/* out->me[j][k] = -s*out->me[j][i] + c*out->me[j][k]; */
+-		m_set_val(out,j,k, -s*m_entry(out,j,i) + c*m_entry(out,j,k));
+-		/* out->me[j][i] = temp; */
+-		m_set_val(out,j,i,temp);
+-	}
+-
+-	return (out);
+-}
+-
+//GO.SYSIN DD givens.c
+echo update.c 1>&2
+sed >update.c <<'//GO.SYSIN DD update.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	Matrix factorisation routines to work with the other matrix files.
+-*/
+-
+-/* update.c 1.3 11/25/87 */
+-static	char	rcsid[] = "$Id: update.c,v 1.2 1994/01/13 05:26:06 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-
+-
+-/* Most matrix factorisation routines are in-situ unless otherwise specified */
+-
+-/* LDLupdate -- updates a CHolesky factorisation, replacing LDL' by
+-	MD~M' = LDL' + alpha.w.w' Note: w is overwritten
+-	Ref: Gill et al Math Comp 28, p516 Algorithm C1 */
+-MAT	*LDLupdate(CHmat,w,alpha)
+-MAT	*CHmat;
+-VEC	*w;
+-double	alpha;
+-{
+-	u_int	i,j;
+-	Real	diag,new_diag,beta,p;
+-
+-	if ( CHmat==(MAT *)NULL || w==(VEC *)NULL )
+-		error(E_NULL,"LDLupdate");
+-	if ( CHmat->m != CHmat->n || w->dim != CHmat->m )
+-		error(E_SIZES,"LDLupdate");
+-
+-	for ( j=0; j < w->dim; j++ )
+-	{
+-		p = w->ve[j];
+-		diag = CHmat->me[j][j];
+-		new_diag = CHmat->me[j][j] = diag + alpha*p*p;
+-		if ( new_diag <= 0.0 )
+-			error(E_POSDEF,"LDLupdate");
+-		beta = p*alpha/new_diag;
+-		alpha *= diag/new_diag;
+-
+-		for ( i=j+1; i < w->dim; i++ )
+-		{
+-			w->ve[i] -= p*CHmat->me[i][j];
+-			CHmat->me[i][j] += beta*w->ve[i];
+-			CHmat->me[j][i] = CHmat->me[i][j];
+-		}
+-	}
+-
+-	return (CHmat);
+-}
+-
+-
+-/* QRupdate -- updates QR factorisation in expanded form (seperate matrices)
+-	Finds Q+, R+ s.t. Q+.R+ = Q.(R+u.v') and Q+ orthogonal, R+ upper triang
+-	Ref: Golub & van Loan Matrix Computations pp437-443
+-	-- does not update Q if it is NULL */
+-MAT	*QRupdate(Q,R,u,v)
+-MAT	*Q,*R;
+-VEC	*u,*v;
+-{
+-	int	i,j,k;
+-	Real	c,s,temp;
+-
+-	if ( ! R || ! u || ! v )
+-		error(E_NULL,"QRupdate");
+-	if ( ( Q && ( Q->m != Q->n || R->m != Q->n ) ) ||
+-					u->dim != R->m || v->dim != R->n )
+-		error(E_SIZES,"QRupdate");
+-
+-	/* find largest k s.t. u[k] != 0 */
+-	for ( k=R->m-1; k>=0; k-- )
+-		if ( u->ve[k] != 0.0 )
+-			break;
+-
+-	/* transform R+u.v' to Hessenberg form */
+-	for ( i=k-1; i>=0; i-- )
+-	{
+-		/* get Givens rotation */
+-		givens(u->ve[i],u->ve[i+1],&c,&s);
+-		rot_rows(R,i,i+1,c,s,R);
+-		if ( Q )
+-			rot_cols(Q,i,i+1,c,s,Q);
+-		rot_vec(u,i,i+1,c,s,u);
+-	}
+-
+-	/* add into R */
+-	temp = u->ve[0];
+-	for ( j=0; j<R->n; j++ )
+-		R->me[0][j] += temp*v->ve[j];
+-
+-	/* transform Hessenberg to upper triangular */
+-	for ( i=0; i<k; i++ )
+-	{
+-		givens(R->me[i][i],R->me[i+1][i],&c,&s);
+-		rot_rows(R,i,i+1,c,s,R);
+-		if ( Q )
+-			rot_cols(Q,i,i+1,c,s,Q);
+-	}
+-
+-	return R;
+-}
+-
+//GO.SYSIN DD update.c
+echo norm.c 1>&2
+sed >norm.c <<'//GO.SYSIN DD norm.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	A collection of functions for computing norms: scaled and unscaled
+-*/
+-static	char	rcsid[] = "$Id: norm.c,v 1.6 1994/01/13 05:34:35 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include	<math.h>
+-
+-
+-/* _v_norm1 -- computes (scaled) 1-norms of vectors */
+-double	_v_norm1(x,scale)
+-VEC	*x, *scale;
+-{
+-	int	i, dim;
+-	Real	s, sum;
+-
+-	if ( x == (VEC *)NULL )
+-		error(E_NULL,"_v_norm1");
+-	dim = x->dim;
+-
+-	sum = 0.0;
+-	if ( scale == (VEC *)NULL )
+-		for ( i = 0; i < dim; i++ )
+-			sum += fabs(x->ve[i]);
+-	else if ( scale->dim < dim )
+-		error(E_SIZES,"_v_norm1");
+-	else
+-		for ( i = 0; i < dim; i++ )
+-		{	s = scale->ve[i];
+-			sum += ( s== 0.0 ) ? fabs(x->ve[i]) : fabs(x->ve[i]/s);
+-		}
+-
+-	return sum;
+-}
+-
+-/* square -- returns x^2 */
+-double	square(x)
+-double	x;
+-{	return x*x;	}
+-
+-/* cube -- returns x^3 */
+-double cube(x)
+-double x;
+-{  return x*x*x;   }
+-
+-/* _v_norm2 -- computes (scaled) 2-norm (Euclidean norm) of vectors */
+-double	_v_norm2(x,scale)
+-VEC	*x, *scale;
+-{
+-	int	i, dim;
+-	Real	s, sum;
+-
+-	if ( x == (VEC *)NULL )
+-		error(E_NULL,"_v_norm2");
+-	dim = x->dim;
+-
+-	sum = 0.0;
+-	if ( scale == (VEC *)NULL )
+-		for ( i = 0; i < dim; i++ )
+-			sum += square(x->ve[i]);
+-	else if ( scale->dim < dim )
+-		error(E_SIZES,"_v_norm2");
+-	else
+-		for ( i = 0; i < dim; i++ )
+-		{	s = scale->ve[i];
+-			sum += ( s== 0.0 ) ? square(x->ve[i]) :
+-							square(x->ve[i]/s);
+-		}
+-
+-	return sqrt(sum);
+-}
+-
+-#define	max(a,b)	((a) > (b) ? (a) : (b))
+-
+-/* _v_norm_inf -- computes (scaled) infinity-norm (supremum norm) of vectors */
+-double	_v_norm_inf(x,scale)
+-VEC	*x, *scale;
+-{
+-	int	i, dim;
+-	Real	s, maxval, tmp;
+-
+-	if ( x == (VEC *)NULL )
+-		error(E_NULL,"_v_norm_inf");
+-	dim = x->dim;
+-
+-	maxval = 0.0;
+-	if ( scale == (VEC *)NULL )
+-		for ( i = 0; i < dim; i++ )
+-		{	tmp = fabs(x->ve[i]);
+-			maxval = max(maxval,tmp);
+-		}
+-	else if ( scale->dim < dim )
+-		error(E_SIZES,"_v_norm_inf");
+-	else
+-		for ( i = 0; i < dim; i++ )
+-		{	s = scale->ve[i];
+-			tmp = ( s== 0.0 ) ? fabs(x->ve[i]) : fabs(x->ve[i]/s);
+-			maxval = max(maxval,tmp);
+-		}
+-
+-	return maxval;
+-}
+-
+-/* m_norm1 -- compute matrix 1-norm -- unscaled */
+-double	m_norm1(A)
+-MAT	*A;
+-{
+-	int	i, j, m, n;
+-	Real	maxval, sum;
+-
+-	if ( A == (MAT *)NULL )
+-		error(E_NULL,"m_norm1");
+-
+-	m = A->m;	n = A->n;
+-	maxval = 0.0;
+-
+-	for ( j = 0; j < n; j++ )
+-	{
+-		sum = 0.0;
+-		for ( i = 0; i < m; i ++ )
+-			sum += fabs(A->me[i][j]);
+-		maxval = max(maxval,sum);
+-	}
+-
+-	return maxval;
+-}
+-
+-/* m_norm_inf -- compute matrix infinity-norm -- unscaled */
+-double	m_norm_inf(A)
+-MAT	*A;
+-{
+-	int	i, j, m, n;
+-	Real	maxval, sum;
+-
+-	if ( A == (MAT *)NULL )
+-		error(E_NULL,"m_norm_inf");
+-
+-	m = A->m;	n = A->n;
+-	maxval = 0.0;
+-
+-	for ( i = 0; i < m; i++ )
+-	{
+-		sum = 0.0;
+-		for ( j = 0; j < n; j ++ )
+-			sum += fabs(A->me[i][j]);
+-		maxval = max(maxval,sum);
+-	}
+-
+-	return maxval;
+-}
+-
+-/* m_norm_frob -- compute matrix frobenius-norm -- unscaled */
+-double	m_norm_frob(A)
+-MAT	*A;
+-{
+-	int	i, j, m, n;
+-	Real	sum;
+-
+-	if ( A == (MAT *)NULL )
+-		error(E_NULL,"m_norm_frob");
+-
+-	m = A->m;	n = A->n;
+-	sum = 0.0;
+-
+-	for ( i = 0; i < m; i++ )
+-		for ( j = 0; j < n; j ++ )
+-			sum += square(A->me[i][j]);
+-
+-	return sqrt(sum);
+-}
+-
+//GO.SYSIN DD norm.c
+echo hessen.c 1>&2
+sed >hessen.c <<'//GO.SYSIN DD hessen.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-
+-/*
+-		File containing routines for determining Hessenberg
+-	factorisations.
+-*/
+-
+-static	char	rcsid[] = "$Id: hessen.c,v 1.2 1994/01/13 05:36:24 des Exp $";
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-
+-
+-
+-/* Hfactor -- compute Hessenberg factorisation in compact form.
+-	-- factorisation performed in situ
+-	-- for details of the compact form see QRfactor.c and matrix2.doc */
+-MAT	*Hfactor(A, diag, beta)
+-MAT	*A;
+-VEC	*diag, *beta;
+-{
+-	static	VEC	*tmp1 = VNULL;
+-	int	k, limit;
+-
+-	if ( ! A || ! diag || ! beta )
+-		error(E_NULL,"Hfactor");
+-	if ( diag->dim < A->m - 1 || beta->dim < A->m - 1 )
+-		error(E_SIZES,"Hfactor");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"Hfactor");
+-	limit = A->m - 1;
+-
+-	tmp1 = v_resize(tmp1,A->m);
+-	MEM_STAT_REG(tmp1,TYPE_VEC);
+-
+-	for ( k = 0; k < limit; k++ )
+-	{
+-		get_col(A,(u_int)k,tmp1);
+-		/* printf("the %d'th column = ");	v_output(tmp1); */
+-		hhvec(tmp1,k+1,&beta->ve[k],tmp1,&A->me[k+1][k]);
+-		/* diag->ve[k] = tmp1->ve[k+1]; */
+-		v_set_val(diag,k,v_entry(tmp1,k+1));
+-		/* printf("H/h vector = ");	v_output(tmp1); */
+-		/* printf("from the %d'th entry\n",k+1); */
+-		/* printf("beta = %g\n",beta->ve[k]); */
+-
+-		/* hhtrcols(A,k+1,k+1,tmp1,beta->ve[k]); */
+-		/* hhtrrows(A,0  ,k+1,tmp1,beta->ve[k]); */
+-		hhtrcols(A,k+1,k+1,tmp1,v_entry(beta,k));
+-		hhtrrows(A,0  ,k+1,tmp1,v_entry(beta,k));
+-		/* printf("A = ");		m_output(A); */
+-	}
+-
+-	return (A);
+-}
+-
+-/* makeHQ -- construct the Hessenberg orthogonalising matrix Q;
+-	-- i.e. Hess M = Q.M.Q'	*/
+-MAT	*makeHQ(H, diag, beta, Qout)
+-MAT	*H, *Qout;
+-VEC	*diag, *beta;
+-{
+-	int	i, j, limit;
+-	static	VEC	*tmp1 = VNULL, *tmp2 = VNULL;
+-
+-	if ( H==(MAT *)NULL || diag==(VEC *)NULL || beta==(VEC *)NULL )
+-		error(E_NULL,"makeHQ");
+-	limit = H->m - 1;
+-	if ( diag->dim < limit || beta->dim < limit )
+-		error(E_SIZES,"makeHQ");
+-	if ( H->m != H->n )
+-		error(E_SQUARE,"makeHQ");
+-	Qout = m_resize(Qout,H->m,H->m);
+-
+-	tmp1 = v_resize(tmp1,H->m);
+-	tmp2 = v_resize(tmp2,H->m);
+-	MEM_STAT_REG(tmp1,TYPE_VEC);
+-	MEM_STAT_REG(tmp2,TYPE_VEC);
+-
+-	for ( i = 0; i < H->m; i++ )
+-	{
+-		/* tmp1 = i'th basis vector */
+-		for ( j = 0; j < H->m; j++ )
+-			/* tmp1->ve[j] = 0.0; */
+-		    v_set_val(tmp1,j,0.0);
+-		/* tmp1->ve[i] = 1.0; */
+-		v_set_val(tmp1,i,1.0);
+-
+-		/* apply H/h transforms in reverse order */
+-		for ( j = limit-1; j >= 0; j-- )
+-		{
+-			get_col(H,(u_int)j,tmp2);
+-			/* tmp2->ve[j+1] = diag->ve[j]; */
+-			v_set_val(tmp2,j+1,v_entry(diag,j));
+-			hhtrvec(tmp2,beta->ve[j],j+1,tmp1,tmp1);
+-		}
+-
+-		/* insert into Qout */
+-		set_col(Qout,(u_int)i,tmp1);
+-	}
+-
+-	return (Qout);
+-}
+-
+-/* makeH -- construct actual Hessenberg matrix */
+-MAT	*makeH(H,Hout)
+-MAT	*H, *Hout;
+-{
+-	int	i, j, limit;
+-
+-	if ( H==(MAT *)NULL )
+-		error(E_NULL,"makeH");
+-	if ( H->m != H->n )
+-		error(E_SQUARE,"makeH");
+-	Hout = m_resize(Hout,H->m,H->m);
+-	Hout = m_copy(H,Hout);
+-
+-	limit = H->m;
+-	for ( i = 1; i < limit; i++ )
+-		for ( j = 0; j < i-1; j++ )
+-			/* Hout->me[i][j] = 0.0;*/
+-		    m_set_val(Hout,i,j,0.0);
+-
+-	return (Hout);
+-}
+-
+//GO.SYSIN DD hessen.c
+echo symmeig.c 1>&2
+sed >symmeig.c <<'//GO.SYSIN DD symmeig.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	File containing routines for symmetric eigenvalue problems
+-*/
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-static char rcsid[] = "$Id: symmeig.c,v 1.5 1994/02/16 03:23:39 des Exp $";
+-
+-
+-
+-#define	SQRT2	1.4142135623730949
+-#define	sgn(x)	( (x) >= 0 ? 1 : -1 )
+-
+-/* trieig -- finds eigenvalues of symmetric tridiagonal matrices
+-	-- matrix represented by a pair of vectors a (diag entries)
+-		and b (sub- & super-diag entries)
+-	-- eigenvalues in a on return */
+-VEC	*trieig(a,b,Q)
+-VEC	*a, *b;
+-MAT	*Q;
+-{
+-	int	i, i_min, i_max, n, split;
+-	Real	*a_ve, *b_ve;
+-	Real	b_sqr, bk, ak1, bk1, ak2, bk2, z;
+-	Real	c, c2, cs, s, s2, d, mu;
+-
+-	if ( ! a || ! b )
+-		error(E_NULL,"trieig");
+-	if ( a->dim != b->dim + 1 || ( Q && Q->m != a->dim ) )
+-		error(E_SIZES,"trieig");
+-	if ( Q && Q->m != Q->n )
+-		error(E_SQUARE,"trieig");
+-
+-	n = a->dim;
+-	a_ve = a->ve;		b_ve = b->ve;
+-
+-	i_min = 0;
+-	while ( i_min < n )		/* outer while loop */
+-	{
+-		/* find i_max to suit;
+-			submatrix i_min..i_max should be irreducible */
+-		i_max = n-1;
+-		for ( i = i_min; i < n-1; i++ )
+-		    if ( b_ve[i] == 0.0 )
+-		    {	i_max = i;	break;	}
+-		if ( i_max <= i_min )
+-		{
+-		    /* printf("# i_min = %d, i_max = %d\n",i_min,i_max); */
+-		    i_min = i_max + 1;
+-		    continue;	/* outer while loop */
+-		}
+-
+-		/* printf("# i_min = %d, i_max = %d\n",i_min,i_max); */
+-
+-		/* repeatedly perform QR method until matrix splits */
+-		split = FALSE;
+-		while ( ! split )		/* inner while loop */
+-		{
+-
+-		    /* find Wilkinson shift */
+-		    d = (a_ve[i_max-1] - a_ve[i_max])/2;
+-		    b_sqr = b_ve[i_max-1]*b_ve[i_max-1];
+-		    mu = a_ve[i_max] - b_sqr/(d + sgn(d)*sqrt(d*d+b_sqr));
+-		    /* printf("# Wilkinson shift = %g\n",mu); */
+-
+-		    /* initial Givens' rotation */
+-		    givens(a_ve[i_min]-mu,b_ve[i_min],&c,&s);
+-		    s = -s;
+-		    /* printf("# c = %g, s = %g\n",c,s); */
+-		    if ( fabs(c) < SQRT2 )
+-		    {	c2 = c*c;	s2 = 1-c2;	}
+-		    else
+-		    {	s2 = s*s;	c2 = 1-s2;	}
+-		    cs = c*s;
+-		    ak1 = c2*a_ve[i_min]+s2*a_ve[i_min+1]-2*cs*b_ve[i_min];
+-		    bk1 = cs*(a_ve[i_min]-a_ve[i_min+1]) +
+-						(c2-s2)*b_ve[i_min];
+-		    ak2 = s2*a_ve[i_min]+c2*a_ve[i_min+1]+2*cs*b_ve[i_min];
+-		    bk2 = ( i_min < i_max-1 ) ? c*b_ve[i_min+1] : 0.0;
+-		    z  = ( i_min < i_max-1 ) ? -s*b_ve[i_min+1] : 0.0;
+-		    a_ve[i_min] = ak1;
+-		    a_ve[i_min+1] = ak2;
+-		    b_ve[i_min] = bk1;
+-		    if ( i_min < i_max-1 )
+-			b_ve[i_min+1] = bk2;
+-		    if ( Q )
+-			rot_cols(Q,i_min,i_min+1,c,-s,Q);
+-		    /* printf("# z = %g\n",z); */
+-		    /* printf("# a [temp1] =\n");	v_output(a); */
+-		    /* printf("# b [temp1] =\n");	v_output(b); */
+-
+-		    for ( i = i_min+1; i < i_max; i++ )
+-		    {
+-			/* get Givens' rotation for sub-block -- k == i-1 */
+-			givens(b_ve[i-1],z,&c,&s);
+-			s = -s;
+-			/* printf("# c = %g, s = %g\n",c,s); */
+-
+-			/* perform Givens' rotation on sub-block */
+-		        if ( fabs(c) < SQRT2 )
+-		        {	c2 = c*c;	s2 = 1-c2;	}
+-		        else
+-		        {	s2 = s*s;	c2 = 1-s2;	}
+-		        cs = c*s;
+-			bk  = c*b_ve[i-1] - s*z;
+-			ak1 = c2*a_ve[i]+s2*a_ve[i+1]-2*cs*b_ve[i];
+-			bk1 = cs*(a_ve[i]-a_ve[i+1]) +
+-						(c2-s2)*b_ve[i];
+-			ak2 = s2*a_ve[i]+c2*a_ve[i+1]+2*cs*b_ve[i];
+-			bk2 = ( i+1 < i_max ) ? c*b_ve[i+1] : 0.0;
+-			z  = ( i+1 < i_max ) ? -s*b_ve[i+1] : 0.0;
+-			a_ve[i] = ak1;	a_ve[i+1] = ak2;
+-			b_ve[i] = bk1;
+-			if ( i < i_max-1 )
+-			    b_ve[i+1] = bk2;
+-			if ( i > i_min )
+-			    b_ve[i-1] = bk;
+-			if ( Q )
+-			    rot_cols(Q,i,i+1,c,-s,Q);
+-		        /* printf("# a [temp2] =\n");	v_output(a); */
+-		        /* printf("# b [temp2] =\n");	v_output(b); */
+-		    }
+-
+-		    /* test to see if matrix should be split */
+-		    for ( i = i_min; i < i_max; i++ )
+-			if ( fabs(b_ve[i]) < MACHEPS*
+-					(fabs(a_ve[i])+fabs(a_ve[i+1])) )
+-			{   b_ve[i] = 0.0;	split = TRUE;	}
+-
+-		    /* printf("# a =\n");	v_output(a); */
+-		    /* printf("# b =\n");	v_output(b); */
+-		}
+-	}
+-
+-	return a;
+-}
+-
+-/* symmeig -- computes eigenvalues of a dense symmetric matrix
+-	-- A **must** be symmetric on entry
+-	-- eigenvalues stored in out
+-	-- Q contains orthogonal matrix of eigenvectors
+-	-- returns vector of eigenvalues */
+-VEC	*symmeig(A,Q,out)
+-MAT	*A, *Q;
+-VEC	*out;
+-{
+-	int	i;
+-	static MAT	*tmp = MNULL;
+-	static VEC	*b   = VNULL, *diag = VNULL, *beta = VNULL;
+-
+-	if ( ! A )
+-		error(E_NULL,"symmeig");
+-	if ( A->m != A->n )
+-		error(E_SQUARE,"symmeig");
+-	if ( ! out || out->dim != A->m )
+-		out = v_resize(out,A->m);
+-
+-	tmp  = m_copy(A,tmp);
+-	b    = v_resize(b,A->m - 1);
+-	diag = v_resize(diag,(u_int)A->m);
+-	beta = v_resize(beta,(u_int)A->m);
+-	MEM_STAT_REG(tmp,TYPE_MAT);
+-	MEM_STAT_REG(b,TYPE_VEC);
+-	MEM_STAT_REG(diag,TYPE_VEC);
+-	MEM_STAT_REG(beta,TYPE_VEC);
+-
+-	Hfactor(tmp,diag,beta);
+-	if ( Q )
+-		makeHQ(tmp,diag,beta,Q);
+-
+-	for ( i = 0; i < A->m - 1; i++ )
+-	{
+-		out->ve[i] = tmp->me[i][i];
+-		b->ve[i] = tmp->me[i][i+1];
+-	}
+-	out->ve[i] = tmp->me[i][i];
+-	trieig(out,b,Q);
+-
+-	return out;
+-}
+-
+//GO.SYSIN DD symmeig.c
+echo schur.c 1>&2
+sed >schur.c <<'//GO.SYSIN DD schur.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Stewart & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*	
+-	File containing routines for computing the Schur decomposition
+-	of a real non-symmetric matrix
+-	See also: hessen.c
+-*/
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-static char rcsid[] = "$Id: schur.c,v 1.7 1994/03/17 05:36:53 des Exp $";
+-
+-
+-
+-#ifndef ANSI_C
+-static	void	hhldr3(x,y,z,nu1,beta,newval)
+-double	x, y, z;
+-Real	*nu1, *beta, *newval;
+-#else
+-static	void	hhldr3(double x, double y, double z,
+-		       Real *nu1, Real *beta, Real *newval)
+-#endif
+-{
+-	Real	alpha;
+-
+-	if ( x >= 0.0 )
+-		alpha = sqrt(x*x+y*y+z*z);
+-	else
+-		alpha = -sqrt(x*x+y*y+z*z);
+-	*nu1 = x + alpha;
+-	*beta = 1.0/(alpha*(*nu1));
+-	*newval = alpha;
+-}
+-
+-#ifndef ANSI_C
+-static	void	hhldr3cols(A,k,j0,beta,nu1,nu2,nu3)
+-MAT	*A;
+-int	k, j0;
+-double	beta, nu1, nu2, nu3;
+-#else
+-static	void	hhldr3cols(MAT *A, int k, int j0, double beta,
+-			   double nu1, double nu2, double nu3)
+-#endif
+-{
+-	Real	**A_me, ip, prod;
+-	int	j, n;
+-
+-	if ( k < 0 || k+3 > A->m || j0 < 0 )
+-		error(E_BOUNDS,"hhldr3cols");
+-	A_me = A->me;		n = A->n;
+-
+-	/* printf("hhldr3cols:(l.%d) j0 = %d, k = %d, A at 0x%lx, m = %d, n = %d\n",
+-	       __LINE__, j0, k, (long)A, A->m, A->n); */
+-	/* printf("hhldr3cols: A (dumped) =\n");	m_dump(stdout,A); */
+-
+-	for ( j = j0; j < n; j++ )
+-	{
+-	    /*****	    
+-	    ip = nu1*A_me[k][j] + nu2*A_me[k+1][j] + nu3*A_me[k+2][j];
+-	    prod = ip*beta;
+-	    A_me[k][j]   -= prod*nu1;
+-	    A_me[k+1][j] -= prod*nu2;
+-	    A_me[k+2][j] -= prod*nu3;
+-	    *****/
+-	    /* printf("hhldr3cols: j = %d\n", j); */
+-
+-	    ip = nu1*m_entry(A,k,j)+nu2*m_entry(A,k+1,j)+nu3*m_entry(A,k+2,j);
+-	    prod = ip*beta;
+-	    /*****
+-	    m_set_val(A,k  ,j,m_entry(A,k  ,j) - prod*nu1);
+-	    m_set_val(A,k+1,j,m_entry(A,k+1,j) - prod*nu2);
+-	    m_set_val(A,k+2,j,m_entry(A,k+2,j) - prod*nu3);
+-	    *****/
+-	    m_add_val(A,k  ,j,-prod*nu1);
+-	    m_add_val(A,k+1,j,-prod*nu2);
+-	    m_add_val(A,k+2,j,-prod*nu3);
+-
+-	}
+-	/* printf("hhldr3cols:(l.%d) j0 = %d, k = %d, m = %d, n = %d\n",
+-	       __LINE__, j0, k, A->m, A->n); */
+-	/* putc('\n',stdout); */
+-}
+-
+-#ifndef ANSI_C
+-static	void	hhldr3rows(A,k,i0,beta,nu1,nu2,nu3)
+-MAT	*A;
+-int	k, i0;
+-double	beta, nu1, nu2, nu3;
+-#else
+-static	void	hhldr3rows(MAT *A, int k, int i0, double beta,
+-			   double nu1, double nu2, double nu3)
+-#endif
+-{
+-	Real	**A_me, ip, prod;
+-	int	i, m;
+-
+-	/* printf("hhldr3rows:(l.%d) A at 0x%lx\n", __LINE__, (long)A); */
+-	/* printf("hhldr3rows: k = %d\n", k); */
+-	if ( k < 0 || k+3 > A->n )
+-		error(E_BOUNDS,"hhldr3rows");
+-	A_me = A->me;		m = A->m;
+-	i0 = min(i0,m-1);
+-
+-	for ( i = 0; i <= i0; i++ )
+-	{
+-	    /****
+-	    ip = nu1*A_me[i][k] + nu2*A_me[i][k+1] + nu3*A_me[i][k+2];
+-	    prod = ip*beta;
+-	    A_me[i][k]   -= prod*nu1;
+-	    A_me[i][k+1] -= prod*nu2;
+-	    A_me[i][k+2] -= prod*nu3;
+-	    ****/
+-
+-	    ip = nu1*m_entry(A,i,k)+nu2*m_entry(A,i,k+1)+nu3*m_entry(A,i,k+2);
+-	    prod = ip*beta;
+-	    m_add_val(A,i,k  , - prod*nu1);
+-	    m_add_val(A,i,k+1, - prod*nu2);
+-	    m_add_val(A,i,k+2, - prod*nu3);
+-
+-	}
+-}
+-
+-/* schur -- computes the Schur decomposition of the matrix A in situ
+-	-- optionally, gives Q matrix such that Q^T.A.Q is upper triangular
+-	-- returns upper triangular Schur matrix */
+-MAT	*schur(A,Q)
+-MAT	*A, *Q;
+-{
+-    int		i, j, iter, k, k_min, k_max, k_tmp, n, split;
+-    Real	beta2, c, discrim, dummy, nu1, s, t, tmp, x, y, z;
+-    Real	**A_me;
+-    Real	sqrt_macheps;
+-    static	VEC	*diag=VNULL, *beta=VNULL;
+-    
+-    if ( ! A )
+-	error(E_NULL,"schur");
+-    if ( A->m != A->n || ( Q && Q->m != Q->n ) )
+-	error(E_SQUARE,"schur");
+-    if ( Q != MNULL && Q->m != A->m )
+-	error(E_SIZES,"schur");
+-    n = A->n;
+-    diag = v_resize(diag,A->n);
+-    beta = v_resize(beta,A->n);
+-    MEM_STAT_REG(diag,TYPE_VEC);
+-    MEM_STAT_REG(beta,TYPE_VEC);
+-    /* compute Hessenberg form */
+-    Hfactor(A,diag,beta);
+-    
+-    /* save Q if necessary */
+-    if ( Q )
+-	Q = makeHQ(A,diag,beta,Q);
+-    makeH(A,A);
+-
+-    sqrt_macheps = sqrt(MACHEPS);
+-
+-    k_min = 0;	A_me = A->me;
+-
+-    while ( k_min < n )
+-    {
+-	Real	a00, a01, a10, a11;
+-	double	scale, t, numer, denom;
+-
+-	/* find k_max to suit:
+-	   submatrix k_min..k_max should be irreducible */
+-	k_max = n-1;
+-	for ( k = k_min; k < k_max; k++ )
+-	    /* if ( A_me[k+1][k] == 0.0 ) */
+-	    if ( m_entry(A,k+1,k) == 0.0 )
+-	    {	k_max = k;	break;	}
+-
+-	if ( k_max <= k_min )
+-	{
+-	    k_min = k_max + 1;
+-	    continue;		/* outer loop */
+-	}
+-
+-	/* check to see if we have a 2 x 2 block
+-	   with complex eigenvalues */
+-	if ( k_max == k_min + 1 )
+-	{
+-	    /* tmp = A_me[k_min][k_min] - A_me[k_max][k_max]; */
+-	    a00 = m_entry(A,k_min,k_min);
+-	    a01 = m_entry(A,k_min,k_max);
+-	    a10 = m_entry(A,k_max,k_min);
+-	    a11 = m_entry(A,k_max,k_max);
+-	    tmp = a00 - a11;
+-	    /* discrim = tmp*tmp +
+-		4*A_me[k_min][k_max]*A_me[k_max][k_min]; */
+-	    discrim = tmp*tmp +
+-		4*a01*a10;
+-	    if ( discrim < 0.0 )
+-	    {	/* yes -- e-vals are complex
+-		   -- put 2 x 2 block in form [a b; c a];
+-		   then eigenvalues have real part a & imag part sqrt(|bc|) */
+-		numer = - tmp;
+-		denom = ( a01+a10 >= 0.0 ) ?
+-		    (a01+a10) + sqrt((a01+a10)*(a01+a10)+tmp*tmp) :
+-		    (a01+a10) - sqrt((a01+a10)*(a01+a10)+tmp*tmp);
+-		if ( denom != 0.0 )
+-		{   /* t = s/c = numer/denom */
+-		    t = numer/denom;
+-		    scale = c = 1.0/sqrt(1+t*t);
+-		    s = c*t;
+-		}
+-		else
+-		{
+-		    c = 1.0;
+-		    s = 0.0;
+-		}
+-		rot_cols(A,k_min,k_max,c,s,A);
+-		rot_rows(A,k_min,k_max,c,s,A);
+-		if ( Q != MNULL )
+-		    rot_cols(Q,k_min,k_max,c,s,Q);
+-		k_min = k_max + 1;
+-		continue;
+-	    }
+-	    else /* discrim >= 0; i.e. block has two real eigenvalues */
+-	    {	/* no -- e-vals are not complex;
+-		   split 2 x 2 block and continue */
+-		/* s/c = numer/denom */
+-		numer = ( tmp >= 0.0 ) ?
+-		    - tmp - sqrt(discrim) : - tmp + sqrt(discrim);
+-		denom = 2*a01;
+-		if ( fabs(numer) < fabs(denom) )
+-		{   /* t = s/c = numer/denom */
+-		    t = numer/denom;
+-		    scale = c = 1.0/sqrt(1+t*t);
+-		    s = c*t;
+-		}
+-		else if ( numer != 0.0 )
+-		{   /* t = c/s = denom/numer */
+-		    t = denom/numer;
+-		    scale = 1.0/sqrt(1+t*t);
+-		    c = fabs(t)*scale;
+-		    s = ( t >= 0.0 ) ? scale : -scale;
+-		}
+-		else /* numer == denom == 0 */
+-		{
+-		    c = 0.0;
+-		    s = 1.0;
+-		}
+-		rot_cols(A,k_min,k_max,c,s,A);
+-		rot_rows(A,k_min,k_max,c,s,A);
+-		/* A->me[k_max][k_min] = 0.0; */
+-		if ( Q != MNULL )
+-		    rot_cols(Q,k_min,k_max,c,s,Q);
+-		k_min = k_max + 1;	/* go to next block */
+-		continue;
+-	    }
+-	}
+-
+-	/* now have r x r block with r >= 2:
+-	   apply Francis QR step until block splits */
+-	split = FALSE;		iter = 0;
+-	while ( ! split )
+-	{
+-	    iter++;
+-	    
+-	    /* set up Wilkinson/Francis complex shift */
+-	    k_tmp = k_max - 1;
+-
+-	    a00 = m_entry(A,k_tmp,k_tmp);
+-	    a01 = m_entry(A,k_tmp,k_max);
+-	    a10 = m_entry(A,k_max,k_tmp);
+-	    a11 = m_entry(A,k_max,k_max);
+-
+-	    /* treat degenerate cases differently
+-	       -- if there are still no splits after five iterations
+-	          and the bottom 2 x 2 looks degenerate, force it to
+-		  split */
+-	    if ( iter >= 5 &&
+-		 fabs(a00-a11) < sqrt_macheps*(fabs(a00)+fabs(a11)) &&
+-		 (fabs(a01) < sqrt_macheps*(fabs(a00)+fabs(a11)) ||
+-		  fabs(a10) < sqrt_macheps*(fabs(a00)+fabs(a11))) )
+-	    {
+-	      if ( fabs(a01) < sqrt_macheps*(fabs(a00)+fabs(a11)) )
+-		m_set_val(A,k_tmp,k_max,0.0);
+-	      if ( fabs(a10) < sqrt_macheps*(fabs(a00)+fabs(a11)) )
+-		{
+-		  m_set_val(A,k_max,k_tmp,0.0);
+-		  split = TRUE;
+-		  continue;
+-		}
+-	    }
+-
+-	    s = a00 + a11;
+-	    t = a00*a11 - a01*a10;
+-
+-	    /* break loop if a 2 x 2 complex block */
+-	    if ( k_max == k_min + 1 && s*s < 4.0*t )
+-	    {
+-		split = TRUE;
+-		continue;
+-	    }
+-
+-	    /* perturb shift if convergence is slow */
+-	    if ( (iter % 10) == 0 )
+-	    {	s += iter*0.02;		t += iter*0.02;
+-	    }
+-
+-	    /* set up Householder transformations */
+-	    k_tmp = k_min + 1;
+-	    /********************
+-	    x = A_me[k_min][k_min]*A_me[k_min][k_min] +
+-		A_me[k_min][k_tmp]*A_me[k_tmp][k_min] -
+-		    s*A_me[k_min][k_min] + t;
+-	    y = A_me[k_tmp][k_min]*
+-		(A_me[k_min][k_min]+A_me[k_tmp][k_tmp]-s);
+-	    if ( k_min + 2 <= k_max )
+-		z = A_me[k_tmp][k_min]*A_me[k_min+2][k_tmp];
+-	    else
+-		z = 0.0;
+-	    ********************/
+-
+-	    a00 = m_entry(A,k_min,k_min);
+-	    a01 = m_entry(A,k_min,k_tmp);
+-	    a10 = m_entry(A,k_tmp,k_min);
+-	    a11 = m_entry(A,k_tmp,k_tmp);
+-
+-	    /********************
+-	    a00 = A->me[k_min][k_min];
+-	    a01 = A->me[k_min][k_tmp];
+-	    a10 = A->me[k_tmp][k_min];
+-	    a11 = A->me[k_tmp][k_tmp];
+-	    ********************/
+-	    x = a00*a00 + a01*a10 - s*a00 + t;
+-	    y = a10*(a00+a11-s);
+-	    if ( k_min + 2 <= k_max )
+-		z = a10* /* m_entry(A,k_min+2,k_tmp) */ A->me[k_min+2][k_tmp];
+-	    else
+-		z = 0.0;
+-
+-	    for ( k = k_min; k <= k_max-1; k++ )
+-	    {
+-		if ( k < k_max - 1 )
+-		{
+-		    hhldr3(x,y,z,&nu1,&beta2,&dummy);
+-		    tracecatch(hhldr3cols(A,k,max(k-1,0),  beta2,nu1,y,z),"schur");
+-		    tracecatch(hhldr3rows(A,k,min(n-1,k+3),beta2,nu1,y,z),"schur");
+-		    if ( Q != MNULL )
+-			hhldr3rows(Q,k,n-1,beta2,nu1,y,z);
+-		}
+-		else
+-		{
+-		    givens(x,y,&c,&s);
+-		    rot_cols(A,k,k+1,c,s,A);
+-		    rot_rows(A,k,k+1,c,s,A);
+-		    if ( Q )
+-			rot_cols(Q,k,k+1,c,s,Q);
+-		}
+-		/* if ( k >= 2 )
+-		    m_set_val(A,k,k-2,0.0); */
+-		/* x = A_me[k+1][k]; */
+-		x = m_entry(A,k+1,k);
+-		if ( k <= k_max - 2 )
+-		    /* y = A_me[k+2][k];*/
+-		    y = m_entry(A,k+2,k);
+-		else
+-		    y = 0.0;
+-		if ( k <= k_max - 3 )
+-		    /* z = A_me[k+3][k]; */
+-		    z = m_entry(A,k+3,k);
+-		else
+-		    z = 0.0;
+-	    }
+-	    /* if ( k_min > 0 )
+-		m_set_val(A,k_min,k_min-1,0.0);
+-	    if ( k_max < n - 1 )
+-		m_set_val(A,k_max+1,k_max,0.0); */
+-	    for ( k = k_min; k <= k_max-2; k++ )
+-	    {
+-		/* zero appropriate sub-diagonals */
+-		m_set_val(A,k+2,k,0.0);
+-		if ( k < k_max-2 )
+-		    m_set_val(A,k+3,k,0.0);
+-	    }
+-
+-	    /* test to see if matrix should split */
+-	    for ( k = k_min; k < k_max; k++ )
+-		if ( fabs(A_me[k+1][k]) < MACHEPS*
+-		    (fabs(A_me[k][k])+fabs(A_me[k+1][k+1])) )
+-		{	A_me[k+1][k] = 0.0;	split = TRUE;	}
+-	}
+-    }
+-    
+-    /* polish up A by zeroing strictly lower triangular elements
+-       and small sub-diagonal elements */
+-    for ( i = 0; i < A->m; i++ )
+-	for ( j = 0; j < i-1; j++ )
+-	    A_me[i][j] = 0.0;
+-    for ( i = 0; i < A->m - 1; i++ )
+-	if ( fabs(A_me[i+1][i]) < MACHEPS*
+-	    (fabs(A_me[i][i])+fabs(A_me[i+1][i+1])) )
+-	    A_me[i+1][i] = 0.0;
+-
+-    return A;
+-}
+-
+-/* schur_vals -- compute real & imaginary parts of eigenvalues
+-	-- assumes T contains a block upper triangular matrix
+-		as produced by schur()
+-	-- real parts stored in real_pt, imaginary parts in imag_pt */
+-void	schur_evals(T,real_pt,imag_pt)
+-MAT	*T;
+-VEC	*real_pt, *imag_pt;
+-{
+-	int	i, n;
+-	Real	discrim, **T_me;
+-	Real	diff, sum, tmp;
+-
+-	if ( ! T || ! real_pt || ! imag_pt )
+-		error(E_NULL,"schur_evals");
+-	if ( T->m != T->n )
+-		error(E_SQUARE,"schur_evals");
+-	n = T->n;	T_me = T->me;
+-	real_pt = v_resize(real_pt,(u_int)n);
+-	imag_pt = v_resize(imag_pt,(u_int)n);
+-
+-	i = 0;
+-	while ( i < n )
+-	{
+-		if ( i < n-1 && T_me[i+1][i] != 0.0 )
+-		{   /* should be a complex eigenvalue */
+-		    sum  = 0.5*(T_me[i][i]+T_me[i+1][i+1]);
+-		    diff = 0.5*(T_me[i][i]-T_me[i+1][i+1]);
+-		    discrim = diff*diff + T_me[i][i+1]*T_me[i+1][i];
+-		    if ( discrim < 0.0 )
+-		    {	/* yes -- complex e-vals */
+-			real_pt->ve[i] = real_pt->ve[i+1] = sum;
+-			imag_pt->ve[i] = sqrt(-discrim);
+-			imag_pt->ve[i+1] = - imag_pt->ve[i];
+-		    }
+-		    else
+-		    {	/* no -- actually both real */
+-			tmp = sqrt(discrim);
+-			real_pt->ve[i]   = sum + tmp;
+-			real_pt->ve[i+1] = sum - tmp;
+-			imag_pt->ve[i]   = imag_pt->ve[i+1] = 0.0;
+-		    }
+-		    i += 2;
+-		}
+-		else
+-		{   /* real eigenvalue */
+-		    real_pt->ve[i] = T_me[i][i];
+-		    imag_pt->ve[i] = 0.0;
+-		    i++;
+-		}
+-	}
+-}
+-
+-/* schur_vecs -- returns eigenvectors computed from the real Schur
+-		decomposition of a matrix
+-	-- T is the block upper triangular Schur matrix
+-	-- Q is the orthognal matrix where A = Q.T.Q^T
+-	-- if Q is null, the eigenvectors of T are returned
+-	-- X_re is the real part of the matrix of eigenvectors,
+-		and X_im is the imaginary part of the matrix.
+-	-- X_re is returned */
+-MAT	*schur_vecs(T,Q,X_re,X_im)
+-MAT	*T, *Q, *X_re, *X_im;
+-{
+-	int	i, j, limit;
+-	Real	t11_re, t11_im, t12, t21, t22_re, t22_im;
+-	Real	l_re, l_im, det_re, det_im, invdet_re, invdet_im,
+-		val1_re, val1_im, val2_re, val2_im,
+-		tmp_val1_re, tmp_val1_im, tmp_val2_re, tmp_val2_im, **T_me;
+-	Real	sum, diff, discrim, magdet, norm, scale;
+-	static VEC	*tmp1_re=VNULL, *tmp1_im=VNULL,
+-			*tmp2_re=VNULL, *tmp2_im=VNULL;
+-
+-	if ( ! T || ! X_re )
+-	    error(E_NULL,"schur_vecs");
+-	if ( T->m != T->n || X_re->m != X_re->n ||
+-		( Q != MNULL && Q->m != Q->n ) ||
+-		( X_im != MNULL && X_im->m != X_im->n ) )
+-	    error(E_SQUARE,"schur_vecs");
+-	if ( T->m != X_re->m ||
+-		( Q != MNULL && T->m != Q->m ) ||
+-		( X_im != MNULL && T->m != X_im->m ) )
+-	    error(E_SIZES,"schur_vecs");
+-
+-	tmp1_re = v_resize(tmp1_re,T->m);
+-	tmp1_im = v_resize(tmp1_im,T->m);
+-	tmp2_re = v_resize(tmp2_re,T->m);
+-	tmp2_im = v_resize(tmp2_im,T->m);
+-	MEM_STAT_REG(tmp1_re,TYPE_VEC);
+-	MEM_STAT_REG(tmp1_im,TYPE_VEC);
+-	MEM_STAT_REG(tmp2_re,TYPE_VEC);
+-	MEM_STAT_REG(tmp2_im,TYPE_VEC);
+-
+-	T_me = T->me;
+-	i = 0;
+-	while ( i < T->m )
+-	{
+-	    if ( i+1 < T->m && T->me[i+1][i] != 0.0 )
+-	    {	/* complex eigenvalue */
+-		sum  = 0.5*(T_me[i][i]+T_me[i+1][i+1]);
+-		diff = 0.5*(T_me[i][i]-T_me[i+1][i+1]);
+-		discrim = diff*diff + T_me[i][i+1]*T_me[i+1][i];
+-		l_re = l_im = 0.0;
+-		if ( discrim < 0.0 )
+-		{	/* yes -- complex e-vals */
+-		    l_re = sum;
+-		    l_im = sqrt(-discrim);
+-		}
+-		else /* not correct Real Schur form */
+-		    error(E_RANGE,"schur_vecs");
+-	    }
+-	    else
+-	    {
+-		l_re = T_me[i][i];
+-		l_im = 0.0;
+-	    }
+-
+-	    v_zero(tmp1_im);
+-	    v_rand(tmp1_re);
+-	    sv_mlt(MACHEPS,tmp1_re,tmp1_re);
+-
+-	    /* solve (T-l.I)x = tmp1 */
+-	    limit = ( l_im != 0.0 ) ? i+1 : i;
+-	    /* printf("limit = %d\n",limit); */
+-	    for ( j = limit+1; j < T->m; j++ )
+-		tmp1_re->ve[j] = 0.0;
+-	    j = limit;
+-	    while ( j >= 0 )
+-	    {
+-		if ( j > 0 && T->me[j][j-1] != 0.0 )
+-		{   /* 2 x 2 diagonal block */
+-		    /* printf("checkpoint A\n"); */
+-		    val1_re = tmp1_re->ve[j-1] -
+-		      __ip__(&(tmp1_re->ve[j+1]),&(T->me[j-1][j+1]),limit-j);
+-		    /* printf("checkpoint B\n"); */
+-		    val1_im = tmp1_im->ve[j-1] -
+-		      __ip__(&(tmp1_im->ve[j+1]),&(T->me[j-1][j+1]),limit-j);
+-		    /* printf("checkpoint C\n"); */
+-		    val2_re = tmp1_re->ve[j] -
+-		      __ip__(&(tmp1_re->ve[j+1]),&(T->me[j][j+1]),limit-j);
+-		    /* printf("checkpoint D\n"); */
+-		    val2_im = tmp1_im->ve[j] -
+-		      __ip__(&(tmp1_im->ve[j+1]),&(T->me[j][j+1]),limit-j);
+-		    /* printf("checkpoint E\n"); */
+-		    
+-		    t11_re = T_me[j-1][j-1] - l_re;
+-		    t11_im = - l_im;
+-		    t22_re = T_me[j][j] - l_re;
+-		    t22_im = - l_im;
+-		    t12 = T_me[j-1][j];
+-		    t21 = T_me[j][j-1];
+-
+-		    scale =  fabs(T_me[j-1][j-1]) + fabs(T_me[j][j]) +
+-			fabs(t12) + fabs(t21) + fabs(l_re) + fabs(l_im);
+-
+-		    det_re = t11_re*t22_re - t11_im*t22_im - t12*t21;
+-		    det_im = t11_re*t22_im + t11_im*t22_re;
+-		    magdet = det_re*det_re+det_im*det_im;
+-		    if ( sqrt(magdet) < MACHEPS*scale )
+-		    {
+-		        det_re = MACHEPS*scale;
+-			magdet = det_re*det_re+det_im*det_im;
+-		    }
+-		    invdet_re =   det_re/magdet;
+-		    invdet_im = - det_im/magdet;
+-		    tmp_val1_re = t22_re*val1_re-t22_im*val1_im-t12*val2_re;
+-		    tmp_val1_im = t22_im*val1_re+t22_re*val1_im-t12*val2_im;
+-		    tmp_val2_re = t11_re*val2_re-t11_im*val2_im-t21*val1_re;
+-		    tmp_val2_im = t11_im*val2_re+t11_re*val2_im-t21*val1_im;
+-		    tmp1_re->ve[j-1] = invdet_re*tmp_val1_re -
+-		    		invdet_im*tmp_val1_im;
+-		    tmp1_im->ve[j-1] = invdet_im*tmp_val1_re +
+-		    		invdet_re*tmp_val1_im;
+-		    tmp1_re->ve[j]   = invdet_re*tmp_val2_re -
+-		    		invdet_im*tmp_val2_im;
+-		    tmp1_im->ve[j]   = invdet_im*tmp_val2_re +
+-		    		invdet_re*tmp_val2_im;
+-		    j -= 2;
+-	        }
+-	        else
+-		{
+-		    t11_re = T_me[j][j] - l_re;
+-		    t11_im = - l_im;
+-		    magdet = t11_re*t11_re + t11_im*t11_im;
+-		    scale = fabs(T_me[j][j]) + fabs(l_re);
+-		    if ( sqrt(magdet) < MACHEPS*scale )
+-		    {
+-		        t11_re = MACHEPS*scale;
+-			magdet = t11_re*t11_re + t11_im*t11_im;
+-		    }
+-		    invdet_re =   t11_re/magdet;
+-		    invdet_im = - t11_im/magdet;
+-		    /* printf("checkpoint F\n"); */
+-		    val1_re = tmp1_re->ve[j] -
+-		      __ip__(&(tmp1_re->ve[j+1]),&(T->me[j][j+1]),limit-j);
+-		    /* printf("checkpoint G\n"); */
+-		    val1_im = tmp1_im->ve[j] -
+-		      __ip__(&(tmp1_im->ve[j+1]),&(T->me[j][j+1]),limit-j);
+-		    /* printf("checkpoint H\n"); */
+-		    tmp1_re->ve[j] = invdet_re*val1_re - invdet_im*val1_im;
+-		    tmp1_im->ve[j] = invdet_im*val1_re + invdet_re*val1_im;
+-		    j -= 1;
+-		}
+-	    }
+-
+-	    norm = v_norm_inf(tmp1_re) + v_norm_inf(tmp1_im);
+-	    sv_mlt(1/norm,tmp1_re,tmp1_re);
+-	    if ( l_im != 0.0 )
+-		sv_mlt(1/norm,tmp1_im,tmp1_im);
+-	    mv_mlt(Q,tmp1_re,tmp2_re);
+-	    if ( l_im != 0.0 )
+-		mv_mlt(Q,tmp1_im,tmp2_im);
+-	    if ( l_im != 0.0 )
+-		norm = sqrt(in_prod(tmp2_re,tmp2_re)+in_prod(tmp2_im,tmp2_im));
+-	    else
+-		norm = v_norm2(tmp2_re);
+-	    sv_mlt(1/norm,tmp2_re,tmp2_re);
+-	    if ( l_im != 0.0 )
+-		sv_mlt(1/norm,tmp2_im,tmp2_im);
+-
+-	    if ( l_im != 0.0 )
+-	    {
+-		if ( ! X_im )
+-		error(E_NULL,"schur_vecs");
+-		set_col(X_re,i,tmp2_re);
+-		set_col(X_im,i,tmp2_im);
+-		sv_mlt(-1.0,tmp2_im,tmp2_im);
+-		set_col(X_re,i+1,tmp2_re);
+-		set_col(X_im,i+1,tmp2_im);
+-		i += 2;
+-	    }
+-	    else
+-	    {
+-		set_col(X_re,i,tmp2_re);
+-		if ( X_im != MNULL )
+-		    set_col(X_im,i,tmp1_im);	/* zero vector */
+-		i += 1;
+-	    }
+-	}
+-
+-	return X_re;
+-}
+-
+//GO.SYSIN DD schur.c
+echo svd.c 1>&2
+sed >svd.c <<'//GO.SYSIN DD svd.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	File containing routines for computing the SVD of matrices
+-*/
+-
+-#include	<stdio.h>
+-#include	"matrix.h"
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-static char rcsid[] = "$Id: svd.c,v 1.6 1994/01/13 05:44:16 des Exp $";
+-
+-
+-
+-#define	sgn(x)	((x) >= 0 ? 1 : -1)
+-#define	MAX_STACK	100
+-
+-/* fixsvd -- fix minor details about SVD
+-	-- make singular values non-negative
+-	-- sort singular values in decreasing order
+-	-- variables as for bisvd()
+-	-- no argument checking */
+-static void	fixsvd(d,U,V)
+-VEC	*d;
+-MAT	*U, *V;
+-{
+-    int		i, j, k, l, r, stack[MAX_STACK], sp;
+-    Real	tmp, v;
+-
+-    /* make singular values non-negative */
+-    for ( i = 0; i < d->dim; i++ )
+-	if ( d->ve[i] < 0.0 )
+-	{
+-	    d->ve[i] = - d->ve[i];
+-	    if ( U != MNULL )
+-		for ( j = 0; j < U->m; j++ )
+-		    U->me[i][j] = - U->me[i][j];
+-	}
+-
+-    /* sort singular values */
+-    /* nonrecursive implementation of quicksort due to R.Sedgewick,
+-       "Algorithms in C", p. 122 (1990) */
+-    sp = -1;
+-    l = 0;	r = d->dim - 1;
+-    for ( ; ; )
+-    {
+-	while ( r > l )
+-	{
+-	    /* i = partition(d->ve,l,r) */
+-	    v = d->ve[r];
+-
+-	    i = l - 1;	    j = r;
+-	    for ( ; ; )
+-	    {	/* inequalities are "backwards" for **decreasing** order */
+-		while ( d->ve[++i] > v )
+-		    ;
+-		while ( d->ve[--j] < v )
+-		    ;
+-		if ( i >= j )
+-		    break;
+-		/* swap entries in d->ve */
+-		tmp = d->ve[i];	  d->ve[i] = d->ve[j];	d->ve[j] = tmp;
+-		/* swap rows of U & V as well */
+-		if ( U != MNULL )
+-		    for ( k = 0; k < U->n; k++ )
+-		    {
+-			tmp = U->me[i][k];
+-			U->me[i][k] = U->me[j][k];
+-			U->me[j][k] = tmp;
+-		    }
+-		if ( V != MNULL )
+-		    for ( k = 0; k < V->n; k++ )
+-		    {
+-			tmp = V->me[i][k];
+-			V->me[i][k] = V->me[j][k];
+-			V->me[j][k] = tmp;
+-		    }
+-	    }
+-	    tmp = d->ve[i];    d->ve[i] = d->ve[r];    d->ve[r] = tmp;
+-	    if ( U != MNULL )
+-		for ( k = 0; k < U->n; k++ )
+-		{
+-		    tmp = U->me[i][k];
+-		    U->me[i][k] = U->me[r][k];
+-		    U->me[r][k] = tmp;
+-		}
+-	    if ( V != MNULL )
+-		for ( k = 0; k < V->n; k++ )
+-		{
+-		    tmp = V->me[i][k];
+-		    V->me[i][k] = V->me[r][k];
+-		    V->me[r][k] = tmp;
+-		}
+-	    /* end i = partition(...) */
+-	    if ( i - l > r - i )
+-	    {	stack[++sp] = l;    stack[++sp] = i-1;	l = i+1;    }
+-	    else
+-	    {	stack[++sp] = i+1;  stack[++sp] = r;	r = i-1;    }
+-	}
+-	if ( sp < 0 )
+-	    break;
+-	r = stack[sp--];	l = stack[sp--];
+-    }
+-}
+-
+-
+-/* bisvd -- svd of a bidiagonal m x n matrix represented by d (diagonal) and
+-			f (super-diagonals)
+-	-- returns with d set to the singular values, f zeroed
+-	-- if U, V non-NULL, the orthogonal operations are accumulated
+-		in U, V; if U, V == I on entry, then SVD == U^T.A.V
+-		where A is initial matrix
+-	-- returns d on exit */
+-VEC	*bisvd(d,f,U,V)
+-VEC	*d, *f;
+-MAT	*U, *V;
+-{
+-	int	i, j, n;
+-	int	i_min, i_max, split;
+-	Real	c, s, shift, size, z;
+-	Real	d_tmp, diff, t11, t12, t22, *d_ve, *f_ve;
+-
+-	if ( ! d || ! f )
+-		error(E_NULL,"bisvd");
+-	if ( d->dim != f->dim + 1 )
+-		error(E_SIZES,"bisvd");
+-	n = d->dim;
+-	if ( ( U && U->n < n ) || ( V && V->m < n ) )
+-		error(E_SIZES,"bisvd");
+-	if ( ( U && U->m != U->n ) || ( V && V->m != V->n ) )
+-		error(E_SQUARE,"bisvd");
+-
+-
+-	if ( n == 1 )
+-		return d;
+-	d_ve = d->ve;	f_ve = f->ve;
+-
+-	size = v_norm_inf(d) + v_norm_inf(f);
+-
+-	i_min = 0;
+-	while ( i_min < n )	/* outer while loop */
+-	{
+-	    /* find i_max to suit;
+-		submatrix i_min..i_max should be irreducible */
+-	    i_max = n - 1;
+-	    for ( i = i_min; i < n - 1; i++ )
+-		if ( d_ve[i] == 0.0 || f_ve[i] == 0.0 )
+-		{   i_max = i;
+-		    if ( f_ve[i] != 0.0 )
+-		    {
+-			/* have to ``chase'' f[i] element out of matrix */
+-			z = f_ve[i];	f_ve[i] = 0.0;
+-			for ( j = i; j < n-1 && z != 0.0; j++ )
+-			{
+-			    givens(d_ve[j+1],z, &c, &s);
+-			    s = -s;
+-			    d_ve[j+1] =  c*d_ve[j+1] - s*z;
+-			    if ( j+1 < n-1 )
+-			    {
+-				z         = s*f_ve[j+1];
+-				f_ve[j+1] = c*f_ve[j+1];
+-			    }
+-			    if ( U )
+-				rot_rows(U,i,j+1,c,s,U);
+-			}
+-		    }
+-		    break;
+-		}
+-	    if ( i_max <= i_min )
+-	    {
+-		i_min = i_max + 1;
+-		continue;
+-	    }
+-	    /* printf("bisvd: i_min = %d, i_max = %d\n",i_min,i_max); */
+-
+-	    split = FALSE;
+-	    while ( ! split )
+-	    {
+-		/* compute shift */
+-		t11 = d_ve[i_max-1]*d_ve[i_max-1] +
+-			(i_max > i_min+1 ? f_ve[i_max-2]*f_ve[i_max-2] : 0.0);
+-		t12 = d_ve[i_max-1]*f_ve[i_max-1];
+-		t22 = d_ve[i_max]*d_ve[i_max] + f_ve[i_max-1]*f_ve[i_max-1];
+-		/* use e-val of [[t11,t12],[t12,t22]] matrix
+-				closest to t22 */
+-		diff = (t11-t22)/2;
+-		shift = t22 - t12*t12/(diff +
+-			sgn(diff)*sqrt(diff*diff+t12*t12));
+-
+-		/* initial Givens' rotation */
+-		givens(d_ve[i_min]*d_ve[i_min]-shift,
+-			d_ve[i_min]*f_ve[i_min], &c, &s);
+-
+-		/* do initial Givens' rotations */
+-		d_tmp         = c*d_ve[i_min] + s*f_ve[i_min];
+-		f_ve[i_min]   = c*f_ve[i_min] - s*d_ve[i_min];
+-		d_ve[i_min]   = d_tmp;
+-		z             = s*d_ve[i_min+1];
+-		d_ve[i_min+1] = c*d_ve[i_min+1];
+-		if ( V )
+-		    rot_rows(V,i_min,i_min+1,c,s,V);
+-		/* 2nd Givens' rotation */
+-		givens(d_ve[i_min],z, &c, &s);
+-		d_ve[i_min]   = c*d_ve[i_min] + s*z;
+-		d_tmp         = c*d_ve[i_min+1] - s*f_ve[i_min];
+-		f_ve[i_min]   = s*d_ve[i_min+1] + c*f_ve[i_min];
+-		d_ve[i_min+1] = d_tmp;
+-		if ( i_min+1 < i_max )
+-		{
+-		    z             = s*f_ve[i_min+1];
+-		    f_ve[i_min+1] = c*f_ve[i_min+1];
+-		}
+-		if ( U )
+-		    rot_rows(U,i_min,i_min+1,c,s,U);
+-
+-		for ( i = i_min+1; i < i_max; i++ )
+-		{
+-		    /* get Givens' rotation for zeroing z */
+-		    givens(f_ve[i-1],z, &c, &s);
+-		    f_ve[i-1] = c*f_ve[i-1] + s*z;
+-		    d_tmp     = c*d_ve[i] + s*f_ve[i];
+-		    f_ve[i]   = c*f_ve[i] - s*d_ve[i];
+-		    d_ve[i]   = d_tmp;
+-		    z         = s*d_ve[i+1];
+-		    d_ve[i+1] = c*d_ve[i+1];
+-		    if ( V )
+-			rot_rows(V,i,i+1,c,s,V);
+-		    /* get 2nd Givens' rotation */
+-		    givens(d_ve[i],z, &c, &s);
+-		    d_ve[i]   = c*d_ve[i] + s*z;
+-		    d_tmp     = c*d_ve[i+1] - s*f_ve[i];
+-		    f_ve[i]   = c*f_ve[i] + s*d_ve[i+1];
+-		    d_ve[i+1] = d_tmp;
+-		    if ( i+1 < i_max )
+-		    {
+-			z         = s*f_ve[i+1];
+-			f_ve[i+1] = c*f_ve[i+1];
+-		    }
+-		    if ( U )
+-			rot_rows(U,i,i+1,c,s,U);
+-		}
+-		/* should matrix be split? */
+-		for ( i = i_min; i < i_max; i++ )
+-		    if ( fabs(f_ve[i]) <
+-				MACHEPS*(fabs(d_ve[i])+fabs(d_ve[i+1])) )
+-		    {
+-			split = TRUE;
+-			f_ve[i] = 0.0;
+-		    }
+-		    else if ( fabs(d_ve[i]) < MACHEPS*size )
+-		    {
+-			split = TRUE;
+-			d_ve[i] = 0.0;
+-		    }
+-		    /* printf("bisvd: d =\n");	v_output(d); */
+-		    /* printf("bisvd: f = \n");	v_output(f); */
+-		}
+-	}
+-	fixsvd(d,U,V);
+-
+-	return d;
+-}
+-
+-/* bifactor -- perform preliminary factorisation for bisvd
+-	-- updates U and/or V, which ever is not NULL */
+-MAT	*bifactor(A,U,V)
+-MAT	*A, *U, *V;
+-{
+-	int	k;
+-	static VEC	*tmp1=VNULL, *tmp2=VNULL;
+-	Real	beta;
+-
+-	if ( ! A )
+-		error(E_NULL,"bifactor");
+-	if ( ( U && ( U->m != U->n ) ) || ( V && ( V->m != V->n ) ) )
+-		error(E_SQUARE,"bifactor");
+-	if ( ( U && U->m != A->m ) || ( V && V->m != A->n ) )
+-		error(E_SIZES,"bifactor");
+-	tmp1 = v_resize(tmp1,A->m);
+-	tmp2 = v_resize(tmp2,A->n);
+-	MEM_STAT_REG(tmp1,TYPE_VEC);
+-	MEM_STAT_REG(tmp2,TYPE_VEC);
+-
+-	if ( A->m >= A->n )
+-	    for ( k = 0; k < A->n; k++ )
+-	    {
+-		get_col(A,k,tmp1);
+-		hhvec(tmp1,k,&beta,tmp1,&(A->me[k][k]));
+-		hhtrcols(A,k,k+1,tmp1,beta);
+-		if ( U )
+-		    hhtrcols(U,k,0,tmp1,beta);
+-		if ( k+1 >= A->n )
+-		    continue;
+-		get_row(A,k,tmp2);
+-		hhvec(tmp2,k+1,&beta,tmp2,&(A->me[k][k+1]));
+-		hhtrrows(A,k+1,k+1,tmp2,beta);
+-		if ( V )
+-		    hhtrcols(V,k+1,0,tmp2,beta);
+-	    }
+-	else
+-	    for ( k = 0; k < A->m; k++ )
+-	    {
+-		get_row(A,k,tmp2);
+-		hhvec(tmp2,k,&beta,tmp2,&(A->me[k][k]));
+-		hhtrrows(A,k+1,k,tmp2,beta);
+-		if ( V )
+-		    hhtrcols(V,k,0,tmp2,beta);
+-		if ( k+1 >= A->m )
+-		    continue;
+-		get_col(A,k,tmp1);
+-		hhvec(tmp1,k+1,&beta,tmp1,&(A->me[k+1][k]));
+-		hhtrcols(A,k+1,k+1,tmp1,beta);
+-		if ( U )
+-		    hhtrcols(U,k+1,0,tmp1,beta);
+-	    }
+-
+-	return A;
+-}
+-
+-/* svd -- returns vector of singular values in d
+-	-- also updates U and/or V, if one or the other is non-NULL
+-	-- destroys A */
+-VEC	*svd(A,U,V,d)
+-MAT	*A, *U, *V;
+-VEC	*d;
+-{
+-	static VEC	*f=VNULL;
+-	int	i, limit;
+-	MAT	*A_tmp;
+-
+-	if ( ! A )
+-		error(E_NULL,"svd");
+-	if ( ( U && ( U->m != U->n ) ) || ( V && ( V->m != V->n ) ) )
+-		error(E_SQUARE,"svd");
+-	if ( ( U && U->m != A->m ) || ( V && V->m != A->n ) )
+-		error(E_SIZES,"svd");
+-
+-	A_tmp = m_copy(A,MNULL);
+-	if ( U != MNULL )
+-	    m_ident(U);
+-	if ( V != MNULL )
+-	    m_ident(V);
+-	limit = min(A_tmp->m,A_tmp->n);
+-	d = v_resize(d,limit);
+-	f = v_resize(f,limit-1);
+-	MEM_STAT_REG(f,TYPE_VEC);
+-
+-	bifactor(A_tmp,U,V);
+-	if ( A_tmp->m >= A_tmp->n )
+-	    for ( i = 0; i < limit; i++ )
+-	    {
+-		d->ve[i] = A_tmp->me[i][i];
+-		if ( i+1 < limit )
+-		    f->ve[i] = A_tmp->me[i][i+1];
+-	    }
+-	else
+-	    for ( i = 0; i < limit; i++ )
+-	    {
+-		d->ve[i] = A_tmp->me[i][i];
+-		if ( i+1 < limit )
+-		    f->ve[i] = A_tmp->me[i+1][i];
+-	    }
+-
+-
+-	if ( A_tmp->m >= A_tmp->n )
+-	    bisvd(d,f,U,V);
+-	else
+-	    bisvd(d,f,V,U);
+-
+-	M_FREE(A_tmp);
+-
+-	return d;
+-}
+-
+//GO.SYSIN DD svd.c
+echo fft.c 1>&2
+sed >fft.c <<'//GO.SYSIN DD fft.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-	Fast Fourier Transform routine
+-	Loosely based on the Fortran routine in Rabiner & Gold's
+-	"Digital Signal Processing"
+-*/
+-
+-static char rcsid[] = "$Id: fft.c,v 1.3 1994/01/13 05:45:33 des Exp $";
+-
+-#include        <stdio.h>
+-#include        "matrix.h"
+-#include        "matrix2.h"
+-#include        <math.h>
+-
+-
+-/* fft -- d.i.t. fast Fourier transform 
+-        -- radix-2 FFT only
+-        -- vector extended to a power of 2 */
+-void    fft(x_re,x_im)
+-VEC     *x_re, *x_im;
+-{
+-    int         i, ip, j, k, li, n, length;
+-    Real      *xr, *xi;
+-    Real	theta, pi = 3.1415926535897932384;
+-    Real      w_re, w_im, u_re, u_im, t_re, t_im;
+-    Real      tmp, tmpr, tmpi;
+-
+-    if ( ! x_re || ! x_im )
+-        error(E_NULL,"fft");
+-    if ( x_re->dim != x_im->dim )
+-        error(E_SIZES,"fft");
+-
+-    n = 1;
+-    while ( x_re->dim > n )
+-        n *= 2;
+-    x_re = v_resize(x_re,n);
+-    x_im = v_resize(x_im,n);
+-    printf("# fft: x_re =\n");  v_output(x_re);
+-    printf("# fft: x_im =\n");  v_output(x_im);
+-    xr   = x_re->ve;
+-    xi   = x_im->ve;
+-
+-    /* Decimation in time (DIT) algorithm */
+-    j = 0;
+-    for ( i = 0; i < n-1; i++ )
+-    {
+-        if ( i < j )
+-        {
+-            tmp = xr[i];
+-            xr[i] = xr[j];
+-            xr[j] = tmp;
+-            tmp = xi[i];
+-            xi[i] = xi[j];
+-            xi[j] = tmp;
+-        }
+-        k = n / 2;
+-        while ( k <= j )
+-        {
+-            j -= k;
+-            k /= 2;
+-        }
+-        j += k;
+-    }
+-
+-    /* Actual FFT */
+-    for ( li = 1; li < n; li *= 2 )
+-    {
+-        length = 2*li;
+-        theta  = pi/li;
+-        u_re   = 1.0;
+-        u_im   = 0.0;
+-        if ( li == 1 )
+-        {
+-            w_re = -1.0;
+-            w_im =  0.0;
+-        }
+-        else if ( li == 2 )
+-        {
+-            w_re =  0.0;
+-            w_im =  1.0;
+-        }
+-        else
+-        {
+-            w_re = cos(theta);
+-            w_im = sin(theta);
+-        }
+-        for ( j = 0; j < li; j++ )
+-        {
+-            for ( i =  j; i < n; i += length )
+-            {
+-                ip = i + li;
+-                /* step 1 */
+-                t_re = xr[ip]*u_re - xi[ip]*u_im;
+-                t_im = xr[ip]*u_im + xi[ip]*u_re;
+-                /* step 2 */
+-                xr[ip] = xr[i]  - t_re;
+-                xi[ip] = xi[i]  - t_im;
+-                /* step 3 */
+-                xr[i] += t_re;
+-                xi[i] += t_im;
+-            }
+-            tmpr = u_re*w_re - u_im*w_im;
+-            tmpi = u_im*w_re + u_re*w_im;
+-            u_re = tmpr;
+-            u_im = tmpi;
+-        }
+-    }
+-}
+-
+-/* ifft -- inverse FFT using the same interface as fft() */
+-void	ifft(x_re,x_im)
+-VEC	*x_re, *x_im;
+-{
+-    /* we just use complex conjugates */
+-
+-    sv_mlt(-1.0,x_im,x_im);
+-    fft(x_re,x_im);
+-    sv_mlt(-1.0/((double)(x_re->dim)),x_im,x_im);
+-}
+//GO.SYSIN DD fft.c
+echo mfunc.c 1>&2
+sed >mfunc.c <<'//GO.SYSIN DD mfunc.c' 's/^-//'
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-  This file contains routines for computing functions of matrices
+-  especially polynomials and exponential functions
+-  Copyright (C) Teresa Leyk and David Stewart, 1993
+-  */
+-
+-#include <stdio.h>
+-#include "matrix.h"
+-#include "matrix2.h"
+-#include <math.h>
+-
+-static char	rcsid[] = "$Id: mfunc.c,v 1.2 1994/11/01 05:57:56 des Exp $";
+-
+-
+-
+-/* _m_pow -- computes integer powers of a square matrix A, A^p
+-   -- uses tmp as temporary workspace */
+-MAT	*_m_pow(A, p, tmp, out)
+-MAT	*A, *tmp, *out;
+-int	p;
+-{
+-   int		it_cnt, k, max_bit;
+-   
+-   /*
+-     File containing routines for evaluating matrix functions
+-     esp. the exponential function
+-     */
+-
+-#define	Z(k)	(((k) & 1) ? tmp : out)
+-   
+-   if ( ! A )
+-     error(E_NULL,"_m_pow");
+-   if ( A->m != A->n )
+-     error(E_SQUARE,"_m_pow");
+-   if ( p < 0 )
+-     error(E_NEG,"_m_pow");
+-   out = m_resize(out,A->m,A->n);
+-   tmp = m_resize(tmp,A->m,A->n);
+-   
+-   if ( p == 0 )
+-     m_ident(out);
+-   else if ( p > 0 )
+-   {
+-      it_cnt = 1;
+-      for ( max_bit = 0; ; max_bit++ )
+-	if ( (p >> (max_bit+1)) == 0 )
+-	  break;
+-      tmp = m_copy(A,tmp);
+-      
+-      for ( k = 0; k < max_bit; k++ )
+-      {
+-	 m_mlt(Z(it_cnt),Z(it_cnt),Z(it_cnt+1));
+-	 it_cnt++;
+-	 if ( p & (1 << (max_bit-1)) )
+-	 {
+-	    m_mlt(A,Z(it_cnt),Z(it_cnt+1));
+-	    /* m_copy(Z(it_cnt),out); */
+-	    it_cnt++;
+-	 }
+-	 p <<= 1;
+-      }
+-      if (it_cnt & 1)
+-	out = m_copy(Z(it_cnt),out);
+-   }
+-
+-   return out;
+-
+-#undef Z   
+-}
+-
+-/* m_pow -- computes integer powers of a square matrix A, A^p */
+-MAT	*m_pow(A, p, out)
+-MAT	*A, *out;
+-int	p;
+-{
+-   static MAT	*wkspace, *tmp;
+-   
+-   if ( ! A )
+-     error(E_NULL,"m_pow");
+-   if ( A->m != A->n )
+-     error(E_SQUARE,"m_pow");
+-   
+-   wkspace = m_resize(wkspace,A->m,A->n);
+-   MEM_STAT_REG(wkspace,TYPE_MAT);
+-   if ( p < 0 )
+-   {
+-       tmp = m_resize(tmp,A->m,A->n);
+-       MEM_STAT_REG(tmp,TYPE_MAT);
+-       tracecatch(m_inverse(A,tmp),"m_pow");
+-       return _m_pow(tmp, -p, wkspace, out);
+-   }
+-   else
+-       return _m_pow(A, p, wkspace, out);
+-   
+-}
+-
+-/**************************************************/
+-
+-/* _m_exp -- compute matrix exponential of A and save it in out
+-   -- uses Pade approximation followed by repeated squaring
+-   -- eps is the tolerance used for the Pade approximation 
+-   -- A is not changed
+-   -- q_out - degree of the Pade approximation (q_out,q_out)
+-   -- j_out - the power of 2 for scaling the matrix A
+-              such that ||A/2^j_out|| <= 0.5
+-*/
+-MAT *_m_exp(A,eps,out,q_out,j_out)
+-MAT *A,*out;
+-double eps;
+-int *q_out, *j_out;
+-{
+-   static MAT *D = MNULL, *Apow = MNULL, *N = MNULL, *Y = MNULL;
+-   static VEC *c1 = VNULL, *tmp = VNULL;
+-   VEC y0, y1;  /* additional structures */
+-   static PERM *pivot = PNULL;
+-   int j, k, l, q, r, s, j2max, t;
+-   double inf_norm, eqq, power2, c, sign;
+-   
+-   if ( ! A )
+-     error(E_SIZES,"_m_exp");
+-   if ( A->m != A->n )
+-     error(E_SIZES,"_m_exp");
+-   if ( A == out )
+-     error(E_INSITU,"_m_exp");
+-   if ( eps < 0.0 )
+-     error(E_RANGE,"_m_exp");
+-   else if (eps == 0.0)
+-     eps = MACHEPS;
+-      
+-   N = m_resize(N,A->m,A->n);
+-   D = m_resize(D,A->m,A->n);
+-   Apow = m_resize(Apow,A->m,A->n);
+-   out = m_resize(out,A->m,A->n);
+-
+-   MEM_STAT_REG(N,TYPE_MAT);
+-   MEM_STAT_REG(D,TYPE_MAT);
+-   MEM_STAT_REG(Apow,TYPE_MAT);
+-   
+-   /* normalise A to have ||A||_inf <= 1 */
+-   inf_norm = m_norm_inf(A);
+-   if (inf_norm <= 0.0) {
+-      m_ident(out);
+-      *q_out = -1;
+-      *j_out = 0;
+-      return out;
+-   }
+-   else {
+-      j2max = floor(1+log(inf_norm)/log(2.0));
+-      j2max = max(0, j2max);
+-   }
+-   
+-   power2 = 1.0;
+-   for ( k = 1; k <= j2max; k++ )
+-     power2 *= 2;
+-   power2 = 1.0/power2;
+-   if ( j2max > 0 )
+-     sm_mlt(power2,A,A);
+-   
+-   /* compute order for polynomial approximation */
+-   eqq = 1.0/6.0;
+-   for ( q = 1; eqq > eps; q++ )
+-     eqq /= 16.0*(2.0*q+1.0)*(2.0*q+3.0);
+-   
+-   /* construct vector of coefficients */
+-   c1 = v_resize(c1,q+1);
+-   MEM_STAT_REG(c1,TYPE_VEC);
+-   c1->ve[0] = 1.0;
+-   for ( k = 1; k <= q; k++ ) 
+-     c1->ve[k] = c1->ve[k-1]*(q-k+1)/((2*q-k+1)*(double)k);
+-   
+-   tmp = v_resize(tmp,A->n);
+-   MEM_STAT_REG(tmp,TYPE_VEC);
+-   
+-   s = (int)floor(sqrt((double)q/2.0));
+-   if ( s <= 0 )  s = 1;
+-   _m_pow(A,s,out,Apow);
+-   r = q/s;
+-   
+-   Y = m_resize(Y,s,A->n);
+-   MEM_STAT_REG(Y,TYPE_MAT);
+-   /* y0 and y1 are pointers to rows of Y, N and D */
+-   y0.dim = y0.max_dim = A->n;   
+-   y1.dim = y1.max_dim = A->n;
+-   
+-   m_zero(Y);
+-   m_zero(N);
+-   m_zero(D);
+-   
+-   for( j = 0; j < A->n; j++ )
+-   {
+-      if (j > 0)
+-	Y->me[0][j-1] = 0.0;
+-      y0.ve = Y->me[0];
+-      y0.ve[j] = 1.0;
+-      for ( k = 0; k < s-1; k++ )
+-      {
+-	 y1.ve = Y->me[k+1];
+-	 mv_mlt(A,&y0,&y1);
+-	 y0.ve = y1.ve;
+-      }
+-
+-      y0.ve = N->me[j];
+-      y1.ve = D->me[j];
+-      t = s*r;
+-      for ( l = 0; l <= q-t; l++ )
+-      {
+-	 c = c1->ve[t+l];
+-	 sign = ((t+l) & 1) ? -1.0 : 1.0;
+-	 __mltadd__(y0.ve,Y->me[l],c,     Y->n);
+-	 __mltadd__(y1.ve,Y->me[l],c*sign,Y->n);
+-      }
+-      
+-      for (k=1; k <= r; k++)
+-      {
+-	 v_copy(mv_mlt(Apow,&y0,tmp),&y0);
+-	 v_copy(mv_mlt(Apow,&y1,tmp),&y1);
+-	 t = s*(r-k);
+-	 for (l=0; l < s; l++)
+-	 {
+-	    c = c1->ve[t+l];
+-	    sign = ((t+l) & 1) ? -1.0 : 1.0;
+-	    __mltadd__(y0.ve,Y->me[l],c,     Y->n);
+-	    __mltadd__(y1.ve,Y->me[l],c*sign,Y->n);
+-	 }
+-      }
+-   }
+-
+-   pivot = px_resize(pivot,A->m);
+-   MEM_STAT_REG(pivot,TYPE_PERM);
+-   
+-   /* note that N and D are transposed,
+-      therefore we use LUTsolve;
+-      out is saved row-wise, and must be transposed 
+-      after this */
+-
+-   LUfactor(D,pivot);
+-   for (k=0; k < A->n; k++)
+-   {
+-      y0.ve = N->me[k];
+-      y1.ve = out->me[k];
+-      LUTsolve(D,pivot,&y0,&y1);
+-   }
+-   m_transp(out,out); 
+-
+-
+-   /* Use recursive squaring to turn the normalised exponential to the
+-      true exponential */
+-
+-#define Z(k)    ((k) & 1 ? Apow : out)
+-
+-   for( k = 1; k <= j2max; k++)
+-      m_mlt(Z(k-1),Z(k-1),Z(k));
+-
+-   if (Z(k) == out)
+-     m_copy(Apow,out);
+-   
+-   /* output parameters */
+-   *j_out = j2max;
+-   *q_out = q;
+-
+-   /* restore the matrix A */
+-   sm_mlt(1.0/power2,A,A);
+-   return out;
+-
+-#undef Z
+-}
+-
+-
+-/* simple interface for _m_exp */
+-MAT *m_exp(A,eps,out)
+-MAT *A,*out;
+-double eps;
+-{
+-   int q_out, j_out;
+-
+-   return _m_exp(A,eps,out,&q_out,&j_out);
+-}
+-
+-
+-/*--------------------------------*/
+-
+-/* m_poly -- computes sum_i a[i].A^i, where i=0,1,...dim(a);
+-   -- uses C. Van Loan's fast and memory efficient method  */
+-MAT *m_poly(A,a,out)
+-MAT *A,*out;
+-VEC *a;
+-{
+-   static MAT	*Apow = MNULL, *Y = MNULL;
+-   static VEC   *tmp;
+-   VEC y0, y1;  /* additional vectors */
+-   int j, k, l, q, r, s, t;
+-   
+-   if ( ! A || ! a )
+-     error(E_NULL,"m_poly");
+-   if ( A->m != A->n )
+-     error(E_SIZES,"m_poly");
+-   if ( A == out )
+-     error(E_INSITU,"m_poly");
+-   
+-   out = m_resize(out,A->m,A->n);
+-   Apow = m_resize(Apow,A->m,A->n);
+-   MEM_STAT_REG(Apow,TYPE_MAT);
+-   tmp = v_resize(tmp,A->n);
+-   MEM_STAT_REG(tmp,TYPE_VEC);
+-
+-   q = a->dim - 1;
+-   if ( q == 0 ) {
+-      m_zero(out);
+-      for (j=0; j < out->n; j++)
+-	out->me[j][j] = a->ve[0];
+-      return out;
+-   }
+-   else if ( q == 1) {
+-      sm_mlt(a->ve[1],A,out);
+-      for (j=0; j < out->n; j++)
+-	out->me[j][j] += a->ve[0];
+-      return out;
+-   }
+-   
+-   s = (int)floor(sqrt((double)q/2.0));
+-   if ( s <= 0 ) s = 1;
+-   _m_pow(A,s,out,Apow);
+-   r = q/s;
+-   
+-   Y = m_resize(Y,s,A->n);
+-   MEM_STAT_REG(Y,TYPE_MAT);
+-   /* pointers to rows of Y */
+-   y0.dim = y0.max_dim = A->n;
+-   y1.dim = y1.max_dim = A->n;
+-
+-   m_zero(Y);
+-   m_zero(out);
+-   
+-#define Z(k)     ((k) & 1 ? tmp : &y0)
+-#define ZZ(k)    ((k) & 1 ? tmp->ve : y0.ve)
+-
+-   for( j = 0; j < A->n; j++)
+-   {
+-      if( j > 0 )
+-	Y->me[0][j-1] = 0.0;
+-      Y->me[0][j] = 1.0;
+-
+-      y0.ve = Y->me[0];
+-      for (k = 0; k < s-1; k++)
+-      {
+-	 y1.ve = Y->me[k+1];
+-	 mv_mlt(A,&y0,&y1);
+-	 y0.ve = y1.ve;
+-      }
+-      
+-      y0.ve = out->me[j];
+-
+-      t = s*r;
+-      for ( l = 0; l <= q-t; l++ )
+-	__mltadd__(y0.ve,Y->me[l],a->ve[t+l],Y->n);
+-      
+-      for (k=1; k <= r; k++)
+-      {
+-	 mv_mlt(Apow,Z(k-1),Z(k)); 
+-	 t = s*(r-k);
+-	 for (l=0; l < s; l++)
+-	   __mltadd__(ZZ(k),Y->me[l],a->ve[t+l],Y->n);
+-      }
+-      if (Z(k) == &y0) v_copy(tmp,&y0);
+-   }
+-
+-   m_transp(out,out);
+-   
+-   return out;
+-}
+-
+-
+//GO.SYSIN DD mfunc.c
+echo bdfactor.c 1>&2
+sed >bdfactor.c <<'//GO.SYSIN DD bdfactor.c' 's/^-//'
+-
+-
+-/**************************************************************************
+-**
+-** Copyright (C) 1993 David E. Steward & Zbigniew Leyk, all rights reserved.
+-**
+-**			     Meschach Library
+-** 
+-** This Meschach Library is provided "as is" without any express 
+-** or implied warranty of any kind with respect to this software. 
+-** In particular the authors shall not be liable for any direct, 
+-** indirect, special, incidental or consequential damages arising 
+-** in any way from use of the software.
+-** 
+-** Everyone is granted permission to copy, modify and redistribute this
+-** Meschach Library, provided:
+-**  1.  All copies contain this copyright notice.
+-**  2.  All modified copies shall carry a notice stating who
+-**      made the last modification and the date of such modification.
+-**  3.  No charge is made for this software or works derived from it.  
+-**      This clause shall not be construed as constraining other software
+-**      distributed on the same medium as this software, nor is a
+-**      distribution fee considered a charge.
+-**
+-***************************************************************************/
+-
+-
+-/*
+-  Band matrix factorisation routines
+-  */
+-
+-/* bdfactor.c  18/11/93 */
+-static	char	rcsid[] = "$Id: ";
+-
+-#include	<stdio.h>
+-#include        "matrix2.h"
+-#include	<math.h>
+-
+-
+-/* generate band matrix 
+-   for a matrix  with n columns,
+-   lb subdiagonals and ub superdiagonals;
+-
+-   Way of saving a band of a matrix:
+-   first we save subdiagonals (from 0 to lb-1);
+-   then main diagonal (in the lb row)
+-   and then superdiagonals (from lb+1 to lb+ub)
+-   in such a way that the elements which were previously
+-   in one column are now also in one column
+-*/
+-
+-BAND *bd_get(lb,ub,n)
+-int lb, ub, n;
+-{
+-   BAND *A;
+-
+-   if (lb < 0 || ub < 0 || n <= 0)
+-     error(E_NEG,"bd_get");
+-
+-   if ((A = NEW(BAND)) == (BAND *)NULL)
+-     error(E_MEM,"bd_get");
+-   else if (mem_info_is_on()) {
+-      mem_bytes(TYPE_BAND,0,sizeof(BAND));
+-      mem_numvar(TYPE_BAND,1);
+-   }
+-
+-   lb = A->lb = min(n-1,lb);
+-   ub = A->ub = min(n-1,ub);
+-   A->mat = m_get(lb+ub+1,n);
+-   return A;
+-}
+-
+-int bd_free(A)
+-BAND *A;
+-{
+-   if ( A == (BAND *)NULL || A->lb < 0 || A->ub < 0 )
+-     /* don't trust it */
+-     return (-1);
+-
+-   if (A->mat) m_free(A->mat);
+-
+-   if (mem_info_is_on()) {
+-      mem_bytes(TYPE_BAND,sizeof(BAND),0);
+-      mem_numvar(TYPE_BAND,-1);
+-   }
+-
+-   free((char *)A);
+-   return 0;
+-}
+-
+-
+-/* resize band matrix */
+-
+-BAND *bd_resize(A,new_lb,new_ub,new_n)
+-BAND *A;
+-int new_lb,new_ub,new_n;
+-{
+-   int lb,ub,i,j,l,shift,umin;
+-   Real **Av;
+-
+-   if (new_lb < 0 || new_ub < 0 || new_n <= 0)
+-     error(E_NEG,"bd_resize");
+-   if ( ! A )
+-     return bd_get(new_lb,new_ub,new_n);
+-    if ( A->lb+A->ub+1 > A->mat->m )
+-	error(E_INTERN,"bd_resize");
+-
+-   if ( A->lb == new_lb && A->ub == new_ub && A->mat->n == new_n )
+-	return A;
+-
+-   lb = A->lb;
+-   ub = A->ub;
+-   Av = A->mat->me;
+-   umin = min(ub,new_ub);
+-
+-    /* ensure that unused triangles at edges are zero'd */
+-
+-   for ( i = 0; i < lb; i++ )
+-      for ( j = A->mat->n - lb + i; j < A->mat->n; j++ )
+-	Av[i][j] = 0.0;  
+-    for ( i = lb+1,l=1; l <= umin; i++,l++ )
+-      for ( j = 0; j < l; j++ )
+-	Av[i][j] = 0.0; 
+-
+-   new_lb = A->lb = min(new_lb,new_n-1);
+-   new_ub = A->ub = min(new_ub,new_n-1);
+-   A->mat = m_resize(A->mat,new_lb+new_ub+1,new_n);
+-   Av = A->mat->me;
+-
+-   /* if new_lb != lb then move the rows to get the main diag 
+-      in the new_lb row */
+-
+-   if (new_lb > lb) {
+-      shift = new_lb-lb;
+-
+-      for (i=lb+umin, l=i+shift; i >= 0; i--,l--)
+-	MEM_COPY(Av[i],Av[l],new_n*sizeof(Real));
+-      for (l=shift-1; l >= 0; l--)
+-	__zero__(Av[l],new_n);
+-   }
+-   else if (new_lb < lb) { 
+-      shift = lb - new_lb;
+-
+-      for (i=shift, l=0; i <= lb+umin; i++,l++)
+-	MEM_COPY(Av[i],Av[l],new_n*sizeof(Real));
+-      for (i=lb+umin+1; i <= new_lb+new_ub; i++)
+-	__zero__(Av[i],new_n);
+-   }
+-
+-   return A;
+-}
+-
+-
+-
+-BAND *bd_copy(A,B)
+-BAND *A,*B;
+-{
+-   int lb,ub,i,j,n;
+-   
+-   if ( !A )
+-     error(E_NULL,"bd_copy");
+-
+-   if (A == B) return B;
+-   
+-   n = A->mat->n;
+-   if ( !B )
+-     B = bd_get(A->lb,A->ub,n);
+-   else if (B->lb != A->lb || B->ub != A->ub || B->mat->n != n )
+-     B = bd_resize(B,A->lb,A->ub,n);
+-   
+-   if (A->mat == B->mat) return B;
+-   ub = B->ub = A->ub;
+-   lb = B->lb = A->lb;
+-
+-   for ( i=0, j=n-lb; i <= lb; i++, j++ )
+-     MEM_COPY(A->mat->me[i],B->mat->me[i],j*sizeof(Real));   
+-
+-   for ( i=lb+1, j=1; i <= lb+ub; i++, j++ )
+-     MEM_COPY(A->mat->me[i]+j,B->mat->me[i]+j,(n - j)*sizeof(Real));     
+-
+-   return B;
+-}
+-
+-
+-/* copy band matrix to a square matrix */
+-MAT *band2mat(bA,A)
+-BAND *bA;
+-MAT *A;
+-{
+-   int i,j,l,n,n1;
+-   int lb, ub;
+-   Real **bmat;
+-
+-   if ( !bA || !A)
+-     error(E_NULL,"band2mat");
+-   if ( bA->mat == A )
+-     error(E_INSITU,"band2mat");
+-
+-   ub = bA->ub;
+-   lb = bA->lb;
+-   n = bA->mat->n;
+-   n1 = n-1;
+-   bmat = bA->mat->me;
+-
+-   A = m_resize(A,n,n);
+-   m_zero(A);
+-
+-   for (j=0; j < n; j++)
+-     for (i=min(n1,j+lb),l=lb+j-i; i >= max(0,j-ub); i--,l++)
+-       A->me[i][j] = bmat[l][j];
+-
+-   return A;
+-}
+-
+-/* copy a square matrix to a band matrix with 
+-   lb subdiagonals and ub superdiagonals */
+-BAND *mat2band(A,lb,ub,bA)
+-BAND *bA;
+-MAT *A;
+-int lb, ub;
+-{
+-   int i, j, l, n1;
+-   Real **bmat;
+-   
+-   if (! A || ! bA)
+-     error(E_NULL,"mat2band");
+-   if (ub < 0 || lb < 0)
+-     error(E_SIZES,"mat2band");
+-   if (bA->mat == A)
+-     error(E_INSITU,"mat2band");
+-
+-   n1 = A->n-1;
+-   lb = min(n1,lb);
+-   ub = min(n1,ub);
+-   bA = bd_resize(bA,lb,ub,n1+1);
+-   bmat = bA->mat->me;
+-
+-   for (j=0; j <= n1; j++)
+-     for (i=min(n1,j+lb),l=lb+j-i; i >= max(0,j-ub); i--,l++)
+-       bmat[l][j] = A->me[i][j];
+-
+-   return bA;
+-}
+-
+-
+-
+-/* transposition of matrix in;
+-   out - matrix after transposition;
+-   can be done in situ
+-*/
+-
+-BAND *bd_transp(in,out)
+-BAND *in, *out;
+-{
+-   int i, j, jj, l, k, lb, ub, lub, n, n1;
+-   int in_situ;
+-   Real  **in_v, **out_v;
+-   
+-   if ( in == (BAND *)NULL || in->mat == (MAT *)NULL )
+-     error(E_NULL,"bd_transp");
+-
+-   lb = in->lb;
+-   ub = in->ub;
+-   lub = lb+ub;
+-   n = in->mat->n;
+-   n1 = n-1;
+-
+-   in_situ = ( in == out );
+-   if ( ! in_situ )
+-       out = bd_resize(out,ub,lb,n);
+-   else
+-   {   /* only need to swap lb and ub fields */
+-       out->lb = ub;
+-       out->ub = lb;
+-   }
+-
+-   in_v = in->mat->me;
+-   
+-   if (! in_situ) {
+-      int sh_in,sh_out; 
+-
+-      out_v = out->mat->me;
+-      for (i=0, l=lub, k=lb-i; i <= lub; i++,l--,k--) {
+-	 sh_in = max(-k,0);
+-	 sh_out = max(k,0);
+-	 MEM_COPY(&(in_v[i][sh_in]),&(out_v[l][sh_out]),
+-		  (n-sh_in-sh_out)*sizeof(Real));
+-	 /**********************************
+-	 for (j=n1-sh_out, jj=n1-sh_in; j >= sh_in; j--,jj--) {
+-	    out_v[l][jj] = in_v[i][j];
+-	 }
+-	 **********************************/
+-      }
+-   }
+-   else if (ub == lb) {
+-      Real tmp;
+-
+-      for (i=0, l=lub, k=lb-i; i < lb; i++,l--,k--) {
+-	 for (j=n1-k, jj=n1; j >= 0; j--,jj--) {
+-	    tmp = in_v[l][jj];
+-	    in_v[l][jj] = in_v[i][j];
+-	    in_v[i][j] = tmp;
+-	 }
+-      }
+-   }
+-   else if (ub > lb) {  /* hence i-ub <= 0 & l-lb >= 0 */
+-      int p,pp,lbi;
+-      
+-      for (i=0, l=lub; i < (lub+1)/2; i++,l--) {
+-	 lbi = lb-i;
+-	 for (j=l-lb, jj=0, p=max(-lbi,0), pp = max(l-ub,0); j <= n1; 
+-	      j++,jj++,p++,pp++) {
+-	    in_v[l][pp] = in_v[i][p];
+-	    in_v[i][jj] = in_v[l][j];
+-	 }
+-	 for (  ; p <= n1-max(lbi,0); p++,pp++)
+-	   in_v[l][pp] = in_v[i][p];
+-      }
+-      
+-      if (lub%2 == 0) { /* shift only */
+-	 i = lub/2;
+-	 for (j=max(i-lb,0), jj=0; jj <= n1-ub+i; j++,jj++) 
+-	   in_v[i][jj] = in_v[i][j];
+-      }
+-   }
+-   else {      /* ub < lb, hence ub-l <= 0 & lb-i >= 0 */
+-      int p,pp,ubi;
+-
+-      for (i=0, l=lub; i < (lub+1)/2; i++,l--) {
+-	 ubi = i-ub;
+-	 for (j=n1-max(lb-l,0), jj=n1-max(-ubi,0), p=n1-lb+i, pp=n1;
+-	      p >= 0; j--, jj--, pp--, p--) {
+-	    in_v[i][jj] = in_v[l][j];
+-	    in_v[l][pp] = in_v[i][p];
+-	 }
+-	 for (  ; jj >= max(ubi,0); j--, jj--)
+-	   in_v[i][jj] = in_v[l][j];
+-      }
+-
+-      if (lub%2 == 0) {  /* shift only */
+-	 i = lub/2;
+-	 for (j=n1-lb+i, jj=n1-max(ub-i,0); j >= 0; j--, jj--) 
+-	    in_v[i][jj] = in_v[i][j];
+-      }
+-   }
+-
+-   return out;
+-}
+-
+-
+-
+-/* bdLUfactor -- gaussian elimination with partial pivoting
+-   -- on entry, the matrix A in band storage with elements 
+-      in rows 0 to lb+ub; 
+-      The jth column of A is stored in the jth column of 
+-      band A (bA) as follows:
+-      bA->mat->me[lb+j-i][j] = A->me[i][j] for 
+-      max(0,j-lb) <= i <= min(A->n-1,j+ub);
+-   -- on exit: U is stored as an upper triangular matrix
+-      with lb+ub superdiagonals in rows lb to 2*lb+ub, 
+-      and the matrix L is stored in rows 0 to lb-1.
+-      Matrix U is permuted, whereas L is not permuted !!!
+-      Therefore we save some memory.
+-   */
+-BAND	*bdLUfactor(bA,pivot)
+-BAND	*bA;
+-PERM	*pivot;
+-{
+-   int	i, j, k, l, n, n1, lb, ub, lub, k_end, k_lub;
+-   int	i_max, shift;
+-   Real	**bA_v;
+-   Real max1, temp;
+-   
+-   if ( bA==(BAND *)NULL || pivot==(PERM *)NULL )
+-     error(E_NULL,"bdLUfactor");
+-
+-   lb = bA->lb;
+-   ub = bA->ub;
+-   lub = lb+ub;
+-   n = bA->mat->n;
+-   n1 = n-1;
+-   lub = lb+ub;
+-
+-   if ( pivot->size != n )
+-     error(E_SIZES,"bdLUfactor");
+-
+-   
+-   /* initialise pivot with identity permutation */
+-   for ( i=0; i < n; i++ )
+-     pivot->pe[i] = i;
+-
+-   /* extend band matrix */
+-   /* extended part is filled with zeros */
+-   bA = bd_resize(bA,lb,min(n1,lub),n);
+-   bA_v = bA->mat->me;
+-
+-
+-   /* main loop */
+-
+-   for ( k=0; k < n1; k++ )
+-   {
+-      k_end = max(0,lb+k-n1);
+-      k_lub = min(k+lub,n1);
+-
+-      /* find the best pivot row */
+-      
+-      max1 = 0.0;	
+-      i_max = -1;
+-      for ( i=lb; i >= k_end; i-- ) {
+-	 temp = fabs(bA_v[i][k]);
+-	 if ( temp > max1 )
+-	 { max1 = temp;	i_max = i; }
+-      }
+-      
+-      /* if no pivot then ignore column k... */
+-      if ( i_max == -1 )
+-	continue;
+-      
+-      /* do we pivot ? */
+-      if ( i_max != lb )	/* yes we do... */
+-      {
+-	 /* save transposition using non-shifted indices */
+-	 shift = lb-i_max;
+-	 px_transp(pivot,k+shift,k);
+-	 for ( i=lb, j=k; j <= k_lub; i++,j++ )
+-	 {
+-	    temp = bA_v[i][j];
+-	    bA_v[i][j] = bA_v[i-shift][j];
+-	    bA_v[i-shift][j] = temp;
+-	 }
+-      }
+-      
+-      /* row operations */
+-      for ( i=lb-1; i >= k_end; i-- ) {
+-	 temp = bA_v[i][k] /= bA_v[lb][k];
+-	 shift = lb-i;
+-	 for ( j=k+1,l=i+1; j <= k_lub; l++,j++ )
+-	   bA_v[l][j] -= temp*bA_v[l+shift][j];
+-      }
+-   }
+-   
+-   return bA;
+-}
+-
+-
+-/* bdLUsolve -- given an LU factorisation in bA, solve bA*x=b */
+-/* pivot is changed upon return  */
+-VEC	*bdLUsolve(bA,pivot,b,x)
+-BAND	*bA;
+-PERM	*pivot;
+-VEC	*b,*x;
+-{
+-   int i,j,l,n,n1,pi,lb,ub,jmin, maxj;
+-   Real c;
+-   Real **bA_v;
+-
+-   if ( bA==(BAND *)NULL || b==(VEC *)NULL || pivot==(PERM *)NULL )
+-     error(E_NULL,"bdLUsolve");
+-   if ( bA->mat->n != b->dim || bA->mat->n != pivot->size)
+-     error(E_SIZES,"bdLUsolve");
+- 
+-   lb = bA->lb;
+-   ub = bA->ub;
+-   n = b->dim;
+-   n1 = n-1;
+-   bA_v = bA->mat->me;
+-
+-   x = v_resize(x,b->dim);
+-   px_vec(pivot,b,x);
+-
+-   /* solve Lx = b; implicit diagonal = 1 
+-      L is not permuted, therefore it must be permuted now
+-    */
+-   
+-   px_inv(pivot,pivot);
+-   for (j=0; j < n; j++) {
+-      jmin = j+1;
+-      c = x->ve[j];
+-      maxj = max(0,j+lb-n1);
+-      for (i=jmin,l=lb-1; l >= maxj; i++,l--) {
+-	 if ( (pi = pivot->pe[i]) < jmin) 
+-	   pi = pivot->pe[i] = pivot->pe[pi];
+-	 x->ve[pi] -= bA_v[l][j]*c;
+-      }
+-   }
+-
+-   /* solve Ux = b; explicit diagonal */
+-
+-   x->ve[n1] /= bA_v[lb][n1];
+-   for (i=n-2; i >= 0; i--) {
+-      c = x->ve[i];
+-      for (j=min(n1,i+ub), l=lb+j-i; j > i; j--,l--)
+-	c -= bA_v[l][j]*x->ve[j];
+-      x->ve[i] = c/bA_v[lb][i];
+-   }
+-   
+-   return (x);
+-}
+-
+-/* LDLfactor -- L.D.L' factorisation of A in-situ;
+-   A is a band matrix
+-   it works using only lower bandwidth & main diagonal
+-   so it is possible to set A->ub = 0
+- */
+-
+-BAND *bdLDLfactor(A)
+-BAND *A;
+-{
+-   int i,j,k,n,n1,lb,ki,jk,ji,lbkm,lbkp;
+-   Real **Av;
+-   Real c, cc;
+-
+-   if ( ! A )
+-     error(E_NULL,"bdLDLfactor");
+-
+-   if (A->lb == 0) return A;
+-
+-   lb = A->lb;
+-   n = A->mat->n;
+-   n1 = n-1;
+-   Av = A->mat->me;
+-   
+-   for (k=0; k < n; k++) {    
+-      lbkm = lb-k;
+-      lbkp = lb+k;
+-
+-      /* matrix D */
+-      c = Av[lb][k];
+-      for (j=max(0,-lbkm), jk=lbkm+j; j < k; j++, jk++) {
+-	 cc = Av[jk][j];
+-	 c -= Av[lb][j]*cc*cc;
+-      }
+-      if (c == 0.0)
+-	error(E_SING,"bdLDLfactor");
+-      Av[lb][k] = c;
+-
+-      /* matrix L */
+-      
+-      for (i=min(n1,lbkp), ki=lbkp-i; i > k; i--,ki++) {
+-	 c = Av[ki][k];
+-	 for (j=max(0,i-lb), ji=lb+j-i, jk=lbkm+j; j < k;
+-	      j++, ji++, jk++)
+-	   c -= Av[lb][j]*Av[ji][j]*Av[jk][j];
+-	 Av[ki][k] = c/Av[lb][k];
+-      }
+-   }
+-   
+-   return A;
+-}
+-
+-/* solve A*x = b, where A is factorized by 
+-   Choleski LDL^T factorization */
+-VEC    *bdLDLsolve(A,b,x)
+-BAND   *A;
+-VEC    *b, *x;
+-{
+-   int i,j,l,n,n1,lb,ilb;
+-   Real **Av, *Avlb;
+-   Real c;
+-
+-   if ( ! A || ! b )
+-     error(E_NULL,"bdLDLsolve");
+-   if ( A->mat->n != b->dim )
+-     error(E_SIZES,"bdLDLsolve");
+-
+-   n = A->mat->n;
+-   n1 = n-1;
+-   x = v_resize(x,n);
+-   lb = A->lb;
+-   Av = A->mat->me;  
+-   Avlb = Av[lb];
+-   
+-   /* solve L*y = b */
+-   x->ve[0] = b->ve[0];
+-   for (i=1; i < n; i++) {
+-      ilb = i-lb;
+-      c = b->ve[i];
+-      for (j=max(0,ilb), l=j-ilb; j < i; j++,l++)
+-	c -= Av[l][j]*x->ve[j];
+-      x->ve[i] = c;
+-   }
+-
+-   /* solve D*z = y */
+-   for (i=0; i < n; i++) 
+-     x->ve[i] /= Avlb[i];
+-
+-   /* solve L^T*x = z */
+-   for (i=n-2; i >= 0; i--) {
+-      ilb = i+lb;
+-      c = x->ve[i];
+-      for (j=min(n1,ilb), l=ilb-j; j > i; j--,l++)
+-	c -= Av[l][i]*x->ve[j];
+-      x->ve[i] = c;
+-   }
+-
+-   return x;
+-}
+-
+-
+-/* ******************************************************
+-  This function is a contribution from Ruediger Franke.
+-   His e-mail addres is: Ruediger.Franke@rz.tu-ilmenau.de
+-   
+-   ******************************************************
+-*/
+-
+-/* bd_mv_mlt --
+- *   computes out = A * x
+- *   may not work in situ (x != out)
+- */
+-
+-VEC *bd_mv_mlt(A, x, out)
+-BAND *A;
+-VEC *x, *out;
+-{
+-  int i, j, j_end, k;
+-  int start_idx, end_idx;
+-  int n, m, lb, ub;
+-  Real **A_me;
+-  Real *x_ve;
+-  Real sum;
+-
+-  if (!A || !x)
+-    error(E_NULL,"bd_mv_mlt");
+-  if (x->dim != A->mat->n)
+-    error(E_SIZES,"bd_mv_mlt");
+-  if (!out || out->dim != A->mat->n)
+-    out = v_resize(out, A->mat->n);
+-  if (out == x)
+-    error(E_INSITU,"bd_mv_mlt");
+-
+-  n = A->mat->n;
+-  m = A->mat->m;
+-  lb = A->lb;
+-  ub = A->ub;
+-  A_me = A->mat->me;
+-  start_idx = lb;
+-  end_idx = m + n-1 - ub;
+-  for (i=0; i<n; i++, start_idx--, end_idx--) {
+-    j = max(0, start_idx);
+-    k = max(0, -start_idx);
+-    j_end = min(m, end_idx);
+-    x_ve = x->ve + k;
+-    sum = 0.0;	     
+-    for (; j < j_end; j++, k++)
+-      sum += A_me[j][k] * *x_ve++;
+-    out->ve[i] = sum;
+-  }
+-
+-  return out;
+-}
+-
+-
+-
+//GO.SYSIN DD bdfactor.c
