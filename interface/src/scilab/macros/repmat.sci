@@ -59,11 +59,7 @@ if (length(a) == 1) then
   if (type(a)==10) then
     x = char (ascii(a) * ones (idx));
   else
-	  cidx = cell (1, length (idx));
-	  for i=1:length(idx)
-	    cidx(i) = ones (1,idx(i));
-	  end
-	  x = a(cidx);
+    x = a*ones(idx(1),idx(2));
   end
 elseif (ndims (a) == 2 & length (idx) < 3) then
   if (type(a)==10)
