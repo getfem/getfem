@@ -76,10 +76,14 @@ elseif typeof(_what)=='list' then
   xpos = dxy(1,:);
   if (size(dxy,1)>=2),
     ypos = dxy(2,:);
-  else ypos = zeros(xpos); end;
+  else 
+    ypos = zeros(xpos); 
+  end
   if (size(dxy,1)>=3),
     zpos = dxy(3,:);
-  else zpos = zeros(xpos); end;
+  else 
+    zpos = zeros(xpos); 
+  end
     
   for i=1:m,
     for j=1:qdim
