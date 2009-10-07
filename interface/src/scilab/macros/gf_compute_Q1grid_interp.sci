@@ -11,7 +11,8 @@ end;
 gf_workspace('push', 'gf_compute_Q1grid_interp');
 
 meshpts = gf_mesh_get(MF1, 'pts');
-zmin = min(meshpts,[],2); zmax = max(meshpts,[],2);
+zmin = min(meshpts,'c');
+zmax = max(meshpts,'c');
 ndim = length(zmin);
 if (ndim > 3) then
   error('this number of dim is not supported (patch me)'); 
@@ -48,10 +49,10 @@ try
   gf_mesh_fem_set(MF2, 'classical fem', 1); // Q1 fem
   mfU2 = gf_compute(MF1,U1, 'interpolate on', MF2);
 
-  PTS = gf_mesh_fem_get(MF2, 'dof nodes');
+  PTS = gf_mesh_fem_get(MF2, 'basic dof nodes');
 
   PTS = PTS($:-1:1,1:Q:$);   // (x,y,z)->(z,y,x) and remove duplicate dof
-  [PTS,I] = sortrows(PTS'); // sort points, by z then by y then by x etc..
+  [PTS,I] = gsort(PTS','lr','i'); // sort points, by z then by y then by x etc..
   I = Q*(I-1) + 1;
   sz = Q;
   for i=1:length(X) sz = [sz length(X(i))]; end;
@@ -66,7 +67,7 @@ try
   end;
 catch,
   gf_workspace('pop');
-  error(lasterr);
+  error(lasterror());
 end
 gf_workspace('pop');
 endfunction
