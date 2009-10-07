@@ -62,19 +62,28 @@ F = N'*F;
 
 // solve ...
 //sleep(100); // bug with timer
-t0      = timer();
+t_start = timer();
+
 disp('solving...'); 
-lsolver = 2; // change this to compare the different solvers
+lsolver = 3; // change this to compare the different solvers
 
 if (lsolver == 1) then   // conjugate gradient
   P  = gf_precond('ildlt',K);
   UU = gf_linsolve('cg',K,F,P,'noisy','res',1e-9);
 elseif (lsolver == 2) then // superlu
   UU = gf_linsolve('superlu',K,F);
+elseif (lsolver == 3) then
+  UU = umfpack(K, "\", F);
+elseif (lsolver == 4) then
+  UU = linsolve(K, F);
+else                   // the scilab "slash" operator 
 else                   // the scilab "slash" operator 
   UU = K\F;
 end
-disp(sprintf('linear system solved in %.2f sec', timer()-t0));
+t_end = timer();
+
+disp(sprintf('linear system solved in %f sec', t_end-t_start));
+
 U = (N*UU).'+U0;
 
 // now that we have the solution, we want to compute the von mises stress
@@ -93,7 +102,7 @@ N  = gf_mesh_get(m,'dim');
 for i=1:size(DU,3)
   t     = DU(:,:,i);
   E     = (t+t')/2;
-  VM(i) = sum(E(:).^2) - ((1)./N)*sum(diag(E))^2;
+  VM(i) = sum(E(:).^2) - ((1) ./ N)*sum(diag(E),'r')^2;
 end
 VM = 4*mu^2*VM;
 
@@ -101,23 +110,26 @@ disp('plotting ... can also take some minutes!');
 
 h = scf();
 
-r = [0.7 .7 .7]; l = r($,:); s=63; s1=20; s2=25; s3=48;s4=55; 
-for i=1:s
-  c1 = max(min((i-s1)/(s2-s1),1),0);
-  c2 = max(min((i-s3)/(s4-s3),1),0); 
-  r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
-end
-h.color_map = r;
+//r = [0.7 .7 .7]; l = r($,:); s=63; s1=20; s2=25; s3=48;s4=55; 
+//for i=1:s
+//  c1 = max(min((i-s1)/(s2-s1),1),0);
+//  c2 = max(min((i-s3)/(s4-s3),1),0); 
+//  r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
+//end
+//h.color_map = r;
+h.color_map = jetcolormap(255);
 
 // we plot the von mises on the deformed object, in superposition with the initial mesh.
 drawlater;
 gf_plot(mfdu,VM,'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'deformation',U,'deformation_mf',mfu);
 
-h.color_map = r;
 h.children.rotation_angles = [135 75];
 a = gca();
 a.box = 'off';
 a.axes_visible = 'off';
+a.x_label.visible = 'off';
+a.y_label.visible = 'off';
+a.z_label.visible = 'off';
 colorbar(min(VM),max(VM));
 drawnow;
 
