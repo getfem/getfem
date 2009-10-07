@@ -10,14 +10,16 @@ gf_workspace('clear all');
 pde = init_pde();
 
 m1 = gf_mesh('empty',1);
+
 pde('type')   = 'stokes';
-pde('asm')('viscos') = 1.0*ones(102,1); // YC: ???
-pde('bound') = list();
-pde('bound')(1) = mlist(['bound','type','R','H']);
-pde('bound')(1)('type') = 'Dirichlet';
-pde('bound')(1)('R')    = list('-y.*(y-1)',0);
-pde('bound')(1)('H')    = [];
+pde('viscos') = 1.0;
+pde = add_empty_bound(pde);
+pde('bound')($)('type') = 'Dirichlet';
+pde('bound')($)('R')    = list('-y.*(y-1)',0);
+pde('bound')($)('H')    = [];
+
 m = gf_mesh('cartesian',[0:.3:4.8],[0:.2:1]);
+
 pde('mf_u') = gf_mesh_fem(m,2);
 pde('mf_p') = gf_mesh_fem(m,1);
 pde('mf_d') = gf_mesh_fem(m,1);
