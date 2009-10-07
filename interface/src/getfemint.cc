@@ -1334,6 +1334,7 @@ namespace getfemint {
   bool check_cmd(const std::string& cmdname, const char *s,
 		 const mexargs_out& out,
 		 int min_argout, int max_argout) {
+    int Index = 0;
     if (cmd_strmatch(cmdname,s)) {
       if (out.get_scilab())
 	{
@@ -1341,11 +1342,14 @@ namespace getfemint {
 	  // ans = myinterface(x). So, we have a minima one parameter.
 	  if (min_argout==0 && max_argout==0)
 	    {
-	      max_argout=1;
+	      max_argout = -1;
+	      min_argout = -1;
 	    }
+	  Index = 1;
 	}
+
       if (min_argout > 0 && out.narg_known() &&
-          out.narg_in_range(0, min_argout-1)) {
+	  out.narg_in_range(Index, min_argout-1)) {
 	THROW_BADARG("Not enough output arguments for command '"<<
 		     cmdname << "' (expected at least " << min_argout << ")");
       }

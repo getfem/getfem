@@ -657,7 +657,7 @@ private:
     mexarg_out pop();
     mexarg_out front() const { check(); return mexarg_out(out[idx], idx+1); }
     bool narg_in_range(int min, int max) const {
-      if ((scilab_flag) && (max==0)) max = 1;
+      if ((scilab_flag) && (max==0) && (min==0)) return true;
       return (nb_arg == -1 || (nb_arg >= min && (nb_arg <= max || max == -1))); 
     }
     bool narg_known() const { return nb_arg != -1; }
