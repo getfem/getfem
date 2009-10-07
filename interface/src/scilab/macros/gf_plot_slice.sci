@@ -486,7 +486,7 @@ function hquiver = do_quiver_plot(P,U,opt)
 [o_showoptions,err]           = get_param(opt,'showoptions','off'); // list options used
 
 hquiver  = [];
-P        = mycell2mat(P); 
+P        = mycell2mat(P)'; 
 mdim     = size(P,1);
 qdim     = size(U,1);
 nP       = size(P,2);
@@ -498,6 +498,7 @@ qradius2 = (xyscale/o_quiver_density)^2;
 vscale   = max(max(abs(U)));
 qlst     = [];
 rm       = [];
+
 while (length(ptlst)>0)
   ii   = ptlst(1); 
   qlst = [qlst ii];
@@ -513,7 +514,17 @@ while (length(ptlst)>0)
   ptlst = _setdiff(ptlst, rm);
 end
 if (qdim == 2) then
-  champ(P(1,qlst),P(2,qlst),U(1,qlst),U(2,qlst)); 
+  nx = ones(1,2*length(P(1,qlst)));
+  ny = ones(1,2*length(P(1,qlst)));
+  deltaUmax = max(U(:,qlst),'c') - min(U(:,qlst),'c');
+  deltaP    = max(P(:,qlst),'c') - min(P(:,qlst),'c');
+  nx(1:2:$) = P(1,qlst);
+  nx(2:2:$) = P(1,qlst) + 0.025 * deltaP(1) .* U(1,qlst) / norm(deltaUmax);
+  ny(1:2:$) = P(2,qlst);
+  ny(2:2:$) = P(2,qlst) + 0.025 * deltaP(2) .* U(2,qlst) / norm(deltaUmax);
+  xarrows(nx,ny);
+  a = gca();
+  a.data_bounds = [min(P,'c')';max(P,'c')'];
   hquiver = gce();
   hquiver.arrow_size = o_quiver_scale;
 else
