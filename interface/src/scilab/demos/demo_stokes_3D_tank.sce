@@ -4,8 +4,6 @@ compute = input('  1:compute the solution\n  0:load a previously computed soluti
 
 gf_workspace('clear all');
 
-global verbosity; verbosity = 1;
-
 viscosity = 10;
 
 R1  = list('9-(y.^2+(z-6.0).^2)',0,0);
@@ -61,7 +59,6 @@ if (compute) then
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 4, 'Dir3data');
 
   disp('running solve... can take some minutes and needs ~600MB of memory');
-  sleep(100); // A bug with timer ....
   t0 = timer(); 
 
   gf_model_get(md, 'solve', 'lsolver', 'superlu', 'noisy');

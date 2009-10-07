@@ -7,18 +7,18 @@ gf_workspace('clear all');
 
 disp('validation for 2D stokes with rectangular elements : Poiseuille flow with cartesian mesh');
 
-clear pde; clear bc;
+clear bc;
 
 pde = init_pde();
 
 pde('type') = 'stokes'; // YC:
-pde('asm')('viscos') = 1.0;
 pde('viscos') = 1.0;
-pde('bound') = list();
-pde('bound')(1) = mlist(['bound','type','R','H']);
-pde('bound')(1)('type') = 'Dirichlet';
-pde('bound')(1)('R')    = list('y.*(y-1)',0);
-pde('bound')(1)('H') = list([1 0; 0 1]);
+pde           = add_empty_bound(pde);
+pde('bound')($)('type') = 'Dirichlet';
+pde('bound')($)('R')    = list('y.*(y-1)',0);
+pde('bound')($)('H')    = list(1,0,0,1);
+//pde('bound')($)('H')    = list([1,0],[0,1]);
+//pde('bound')($)('H')    = list([1 0;0 1]);
 
 m = gf_mesh('cartesian',[0:.3:5],[0:.2:1]);
 
@@ -43,7 +43,7 @@ gf_mesh_set(m, 'boundary', 1, all_faces);
 
 [U,P,pde] = gf_solve(pde);
 
-pde
+//pde
 
 h = scf();
 h.color_map = jetcolormap(255);
@@ -66,3 +66,4 @@ drawnow;
 disp('Note that the dirichlet condition was described on a P1 fem');
 disp('(visible on the deformed mesh: on boundaries, the deformation');
 disp('is linear, hence there is a small error on the computed solution.');
+

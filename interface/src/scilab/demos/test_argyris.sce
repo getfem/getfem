@@ -41,24 +41,31 @@ h.color_map = jetcolormap(255);
 drawnow;
 
 pause;
-                                                  // exact solution
+
+// exact solution
+
 if 0 then
   // setup a pde structure for gf_solve
-  pde.type   = 'laplacian'; // YC:
-  pde.lambda = list(1);  // note the use of braces
-  pde.mim    = mim;
-  pde.mf_u   = mf;       // this does not copy whole objects, just their handles
-  pde.mf_d   = mfl;
-  expr_u     = 'y.*(y-1).*x.*(x-1)+x.^5/10';
-  expr_f     = '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3/10)';
-  pde.F      = list( expr_f );         // the volumic source
-  pde.bound(1).type = 'Dirichlet';
-  pde.bound(1).R    = list( expr_u );  // we force the value of the solution on the boundary
+  pde = init_pde();
+
+  pde('type')   = 'laplacian'; 
+  pde('lambda') = list(1);
+  pde('mim')    = mim;
+  pde('mf_u')   = mf;       // this does not copy whole objects, just their handles
+  pde('mf_d')   = mfl;
+  expr_u        = 'y.*(y-1).*x.*(x-1)+x.^5/10';
+  expr_f        = '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3/10)';
+  pde('F')      = list(expr_f);
+  
+  pde = add_empty_bound(pde);
+  pde('bound')($)('type') = 'Dirichlet';
+  pde('bound')($)('R')    = list(expr_u);
+
   U      = gf_solve(pde);
-  Uexact = gf_mesh_fem_get_eval(mfl, list( expr_u )); // interpolate the
+  Uexact = gf_mesh_fem_get_eval(mfl, list(expr_u));
 else
   expr_u = 'y.^5';
-  Uexact = gf_mesh_fem_get_eval(mfl, list( expr_u )); // interpolate the
+  Uexact = gf_mesh_fem_get_eval(mfl, list(expr_u));
   M = gf_asm('mass matrix', mim, mf, mf);
   F = gf_asm('volumic source', mim, mf, mfl, Uexact);
   U = (M\F)';

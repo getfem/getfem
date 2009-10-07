@@ -4,19 +4,28 @@ gf_workspace('clear all');
 
 disp('2D stokes demonstration on a quadratic mesh');
 
-clear pde; 
 
-pde.type = 'stokes'; // YC:
-pde.viscos=1.0;
-pde.F = list(0,0);
+pde = init_pde();
+
+pde('type')   = 'stokes';
+pde('asm')('viscos') = 1.0;
+pde('F') = list(0,0);
+
 R0 = 9; R1 = 10;
 
-pde.bound(1).R  = list(sprintf('(y-%d).*(y-%d)',-R0,-R1),0);
-pde.bound(2).R  = list(0,sprintf('(x-%d).*(x-%d)',R0,R1));
-pde.bound(3).R  = list(0,0);
-pde.bound(1).type = 'Dirichlet';
-pde.bound(2).type = 'Dirichlet';
-pde.bound(3).type = 'Dirichlet';
+pde = add_empty_bound(pde);
+pde('bound')($)('type') = 'Dirichlet';
+pde('bound')($)('R')    = list(sprintf('(y-%d).*(y-%d)',-R0,-R1),0);
+pde('bound')($)('H')    = [];
+pde = add_empty_bound(pde);
+pde('bound')($)('type') = 'Dirichlet';
+pde('bound')($)('R')    = list(0,sprintf('(x-%d).*(x-%d)',R0,R1));
+pde('bound')($)('H')    = [];
+pde = add_empty_bound(pde);
+pde('bound')($)('type') = 'Dirichlet';
+pde('bound')($)('R')    = list(0,0);
+pde('bound')($)('H')    = [];
+
 //m = gf_mesh('import','GiD','tube_2D_spline.GiD.msh');
 
 Ku=3; Kp=1;
@@ -43,23 +52,23 @@ fem_d = gf_fem(sprintf('FEM_QK(2,2)'));
 
 mfulag   = gf_mesh_fem(m,2);
 
-pde.mf_u = [];
-pde.mf_p = [];
-pde.mf_d = [];
-pde.mim  = [];
+pde('mf_u') = [];
+pde('mf_p') = [];
+pde('mf_d') = [];
+pde('mim')  = [];
 
-pde.mf_u = gf_mesh_fem(m,2);
-pde.mf_p = gf_mesh_fem(m,1);
-pde.mf_d = gf_mesh_fem(m,1);
-pde.mim  = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
+pde('mf_u') = gf_mesh_fem(m,2);
+pde('mf_p') = gf_mesh_fem(m,1);
+pde('mf_d') = gf_mesh_fem(m,1);
+pde('mim')  = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
 
 // this is a good example of the usefullness of the cubic bubble
 // -> if not used, the pression has strange values
-gf_mesh_fem_set(pde.mf_u,'fem',fem_u);
-gf_mesh_fem_set(pde.mf_p,'fem',fem_u);
-gf_mesh_fem_set(pde.mf_d,'fem',fem_u);
+gf_mesh_fem_set(pde('mf_u'),'fem',fem_u);
+gf_mesh_fem_set(pde('mf_p'),'fem',fem_u);
+gf_mesh_fem_set(pde('mf_d'),'fem',fem_u);
 
-mfulag = pde.mf_u;
+mfulag = pde('mf_u');
 
 // we use a P3 mesh fem for interpolation of the U field, since
 // because of its cubic bubble function, the pde.mf_u is not lagrangian 
@@ -82,9 +91,9 @@ gf_mesh_set(m, 'boundary', 3, _setdiff(all_faces',union(INfaces',OUTfaces','r'),
 
 tic; 
 [U,P,pde2] = gf_solve(pde); 
-disp(sprintf('solve done in %.2f sec', toc));
+disp(sprintf('solve done in %.2f sec', toc()));
 
-Ul = gf_compute(pde.mf_u,U,'interpolate on',mfulag);
+Ul = gf_compute(pde('mf_u'),U,'interpolate on',mfulag);
 
 h = scf();
 h.color_map =  jetcolormap(255);
@@ -95,19 +104,19 @@ colorbar(min(Ul),max(Ul));
 title('|U| plotted on the deformed mesh');
 
 subplot(2,2,2); 
-gf_plot(pde.mf_p,P(:)','deformation',U,'deformation_mf',pde.mf_u,'deformation_scale',0.05); 
+gf_plot(pde('mf_p'),P(:)','deformation',U,'deformation_mf',pde('mf_u'),'deformation_scale',0.05); 
 colorbar(min(U),max(U));
 title('Pression on the deformed mesh');
 
 subplot(2,2,3); 
 gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4); //,'meshopts',ilist('regions',1,'curved','on'));
-gf_plot(pde.mf_p,P(:)');
+gf_plot(pde('mf_p'),P(:)');
 colorbar(min(Ul),max(Ul));
 title('Quiver plot of U, with color plot of the pression');
 
 subplot(2,2,4); 
 gf_plot(mfulag,Ul(:)','mesh','on','quiver_density',300,'quiver_scale',0.4);//...'meshopts',list('regions',1,'curved','on'));
-gf_plot(pde.mf_p,P(:)');
+gf_plot(pde('mf_p'),P(:)');
 title('Quiver plot zoomed');
 h.color_map = jetcolormap(255);
 drawnow;
