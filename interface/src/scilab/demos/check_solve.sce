@@ -7,11 +7,16 @@ tic;
 
 gf_workspace('clear all');
 
+pde = init_pde();
+
 m1 = gf_mesh('empty',1);
 pde('type')   = 'stokes';
-pde('viscos') = 1.0;
+pde('asm')('viscos') = 1.0*ones(102,1); // YC: ???
+pde('bound') = list();
+pde('bound')(1) = mlist(['bound','type','R','H']);
 pde('bound')(1)('type') = 'Dirichlet';
-pde('bound')(1)('R')  = list('-y.*(y-1)',0);
+pde('bound')(1)('R')    = list('-y.*(y-1)',0);
+pde('bound')(1)('H')    = [];
 m = gf_mesh('cartesian',[0:.3:4.8],[0:.2:1]);
 pde('mf_u') = gf_mesh_fem(m,2);
 pde('mf_p') = gf_mesh_fem(m,1);
@@ -20,18 +25,22 @@ pde('mim')  = gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
 mf_comp = gf_mesh_fem(m,2);
 gf_mesh_fem_set(pde('mf_u'),'fem',gf_fem('FEM_QK(2,2)'));
 gf_mesh_fem_set(mf_comp ,'fem',gf_fem('FEM_QK(2,2)'));
+
 // the piecewise linear mf_d will induce a small error on the solution
 // since the dirichlet condition is parabolic
 gf_mesh_fem_set(pde('mf_d'),'fem',gf_fem('FEM_QK(2,1)'));
 gf_mesh_fem_set(pde('mf_p'),'fem',gf_fem('FEM_QK(2,1)'));
 all_faces = gf_mesh_get(m, 'outer faces', gf_mesh_get(m, 'cvid'));
-for mf = [pde('mf_u') pde('mf_p') pde('mf_d')]
-  gf_mesh_set(m, 'boundary', 1, all_faces);
+for mf = list(pde('mf_u'), pde('mf_p'), pde('mf_d'))
+  gf_mesh_set(m, 'boundary', 1, all_faces); // YC: ???
 end
+
 [U,P] = gf_solve(pde);  
+
 Uco = gf_compute(pde('mf_u'), U, 'interpolate on', mf_comp); // tests interpolation on same mesh
 dof = gf_mesh_fem_get(mf_comp, 'basic dof nodes'); 
-Xc  = dof(1,1:2:$); Yc=dof(2,1:2:$);
+Xc  = dof(1,1:2:$); 
+Yc  = dof(2,1:2:$);
 Uex = [-Yc.*(Yc-1); zeros(1,length(Xc))];
 Uex = Uex(:)';
 
@@ -43,15 +52,19 @@ l2err = gf_compute(mf_comp,Uex-Uco,'L2 norm',pde('mim'));
 disp(sprintf('L2 err %f', l2err));
 h1err = gf_compute(mf_comp,Uex-Uco,'H1 norm',pde('mim'));
 disp(sprintf('H1 err %f', h1err));
-disp(sprintf('done in %.2f sec.',toc));
-//drawlater;
-//gf_plot(mf_comp,Uex-Uco,'norm'); 
-//colorbar(min(Uex-Uco),max(Uex-Uco));
-//drawnow; 
+disp(sprintf('done in %.2f sec.',toc()));
+
+drawlater;
+gf_plot(mf_comp,Uex-Uco,'quiver','on','quiver_scale',0.5); 
+//gf_plot(mf_comp,Uex-Uco,'norm','on','quiver','on','quiver_scale',0.1); 
+colorbar(min(Uex-Uco),max(Uex-Uco));
+drawnow; 
+
 assert('abs(l2err)<0.016'); // 0.015926
 assert('abs(h1err)<0.0665'); // 0.066215
 
-[Uq,Iq,mfq] = gf_compute(pde('mf_u'), U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
+//[Uq,Iq,mfq] = gf_compute(pde('mf_u'), U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
+[Uq,Iq,mfq] = gf_compute_Q1grid_interp(pde('mf_u'), U, 'regular h', [.05, .05]);
 [XX,YY] = meshgrid(0:.05:4.8,0.:0.05:1);  XX=XX'; YY=YY';
 UU = -YY.*(YY-1);
 assert('max(max(abs(UU-squeeze(Uq(1,:,:))))) < 0.01001');
@@ -69,31 +82,33 @@ DU   = gf_compute(mf_DU, UU, 'gradient', mf_DU);
 dof  = gf_mesh_fem_get(mf_DU, 'basic dof nodes'); Xc=dof(1,1:2:$); Yc=dof(2,1:2:$);
 DUex = [1-2*Yc; zeros(1,length(Xc))]; 
 DUex = DUex(:)';
-diff = norm(DUex-DU(2,:));
-assert('diff>4.62 & diff<4.64');
+_diff = norm(DUex-DU(2,:));
+assert('_diff>4.62 & _diff<4.64');
 
 // yes the error on the derivative is quite big. This is because we interpolated
-// U on mf_DU which is piecewise linear
-// the 3 plots below illustrate this
-//drawlater;
-//subplot(3,1,1); 
-//gf_plot(mf_DU, DU(2,:),'mesh','x'); 
-//colorbar(min(DU(2,:)),max(DU(2,:))); //dUx/dy
-//subplot(3,1,2); 
-//gf_plot(mf_DU, DUex,'mesh','x'); 
-//colorbar(min(DUex),max(DUex));
-//subplot(3,1,3); 
-//gf_plot(mf_DU, DUex-DU(2,:),'mesh','x'); 
-//colorbar(min(DUex-DU(2,:)),max(DUex-DU(2,:)));    
-//drawnow;
+// U on mf_DU which is piecewise linear the 3 plots below illustrate this
+
+scf();
+drawlater;
+subplot(3,1,1); 
+gf_plot(mf_DU, DU(2,:),'mesh','x'); 
+colorbar(min(DU(2,:)),max(DU(2,:))); //dUx/dy
+subplot(3,1,2); 
+gf_plot(mf_DU, DUex,'mesh','x'); 
+colorbar(min(DUex),max(DUex));
+subplot(3,1,3); 
+gf_plot(mf_DU, DUex-DU(2,:),'mesh','x'); 
+colorbar(min(DUex-DU(2,:)),max(DUex-DU(2,:)));    
+drawnow;
+
 d2 = gf_compute(mf_DU,DUex-DU(2,:),'L2 norm',mim2);
 assert('d2>0.28 & d2 < 0.29'); // 0.2866
 
 //gradient of vector fields
 DU2 = gf_compute(mf_DU, [UU;2*UU;3*UU], 'gradient', mf_DU);
 d   = permute(cat(3,DU,2*DU,3*DU),[1,3,2]);
-d(1:10)
-DU2(1:10)
+//d(1:10)
+//DU2(1:10)
 
 assert('max(abs(DU2(:)-d(:))) < 2e-15');
 
