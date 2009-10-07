@@ -1,54 +1,3 @@
-function [varargout]=gf_solve(varargin)
-// function varargout=gf_solve(what, varargin)
-// General solver for getfem PDE
-
-[nargout,nargin] = argn();
-
-if (nargin==0) then error('not enough input arguments'); end;
-
-pde = build_options_list(varargin(:));
-
-if isempty(pde('verbosity')) then
-  pde('verbosity') = 0;
-end
-if isempty(pde('mim')) then
-  error('since v2.0, the pde structure for gf_solve should contain a mesh_im object in its ''mim'' field');
-end;
-if isempty(pde('type')) then
-  error('the pde mlist should have a ''type'' field');
-end;
-if isempty(pde('asm')) then
-  pde('asm') = list(); 
-end;  
-if isempty(pde('solver')) then
-  pde('solver') = 'default';
-end
-
-nout = max(nargout,1);
-str_eval = '[varargout(1)';
-for i=2:nout
-  str_eval = str_eval + ',varargout(i)';
-end
-str_eval = str_eval + '] = ';
-
-select pde('type')
-  case 'laplacian' then
-    // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_laplacian(pde);
-    str_eval = str_eval + 'do_laplacian(pde))';
-    execstr(str_eval);
-  case 'linear elasticity' then
-    // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_linear_elasticity(pde);
-    str_eval = str_eval + 'do_linear_elasticity(pde))';
-    execstr(str_eval);
-  case 'stokes' then
-    // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_stokes(pde);
-    str_eval = str_eval + 'do_stockes(pde))';
-    execstr(str_eval);
-  else
-    error('unhandled PDE(''type'') : ' + pde('type'));
-end
-endfunction
-
 //////////////////
 // assert_field //
 //////////////////
@@ -65,7 +14,7 @@ endfunction
 // has_field //
 ///////////////
 
-function ok=has_field(pde,varargin)
+function ok = has_field(pde,varargin)
 ok = 0;
 for i=1:length(varargin),
   if (~or(getfield(1,pde)==varargin(i))) then
@@ -79,55 +28,62 @@ endfunction
 // eval_asm_data //
 ///////////////////
 
-function pde=eval_asm_data(in_pde,dname,default_value,mf)
+function pde = eval_asm_data(in_pde,dname,default_value,mf)
 [nargout,nargin] = argn();
 
 pde = in_pde;
 if (nargin == 3) then
   mf = pde('mf_d');
 end
-if (~or(getfield(1,pde('asm'))==dname)) then
-  if (or(getfield(1,pde)==dname)) then
-    z = pde(dname);      
-  else
-    warning('you did not define the '' dname '' data for the ' + pde('type') + ' pde struct');
-    disp('setting '' dname '' to its default value of ');
-    disp(default_value);
-    z = default_value;
-  end;
-  if (typeof(z)=='list') then z = matrix(z,length(z),1); end;
-  pde('asm')(dname) = gf_mesh_fem_get_eval(mf, z);
+if (or(getfield(1,pde)==dname)) & ~isempty(pde(dname)) then
+  z = pde(dname);      
+else
+  warning('you did not define the ''' + dname + ''' data for the ' + pde('type') + ' pde struct');
+  disp('setting ''' + dname + ''' to its default value of ');
+  disp(default_value);
+  z = default_value;
 end
+
+  disp(default_value);
+  disp(z)
+if (typeof(z)=='list') then 
+  //z = matrix(z(:),length(z),1); 
+  for i=1:length(z)
+    tmp(i,:) = z(i)(:);
+  end
+  z = tmp';
+end
+pde('asm')(dname) = gf_mesh_fem_get_eval(mf, z); // YC: pb ici quand z est numeric ...
 endfunction
 
 /////////////////////////////////
 // solves the scalar laplacian //
 /////////////////////////////////
 
-function [U,pde]=do_laplacian(in_pde)
+function [U,pde] = do_laplacian(in_pde)
 pde = in_pde; U=[];
 assert_field(pde, 'mf_u','mf_d');
-pde=eval_asm_data(pde,'lambda', list(1));
+pde = eval_asm_data(pde,'lambda', list(1));
 if isempty(pde('asm')('K')) then
   pde('asm')('K') = gf_asm('laplacian',pde('mim'), pde('mf_u'), pde('mf_d'), pde('asm')('lambda'));
 end
 pde = do_classical_bc(pde);
-[U,pde] = do_classical_solve(pde);//.solver,pde.asm.K, pde.asm.Q, pde.asm.G(:), pde.asm.H, pde.asm.R(:), pde.asm.F(:));
+[U,pde] = do_classical_solve(pde);
 endfunction
 
 //////////////////////////////
 // solves linear elasticity //
 //////////////////////////////
 
-function [U,pde]=do_linear_elasticity(in_pde)
+function [U,pde] = do_linear_elasticity(in_pde)
 pde = in_pde; U=[];
 assert_field(pde, 'mf_u','mf_d');
 if (~has_field(pde('asm'),'lambda','mu')) then
   if (has_field(pde,'lambda', 'mu')),
-    pde=eval_asm_data(pde,'lambda', list(1));
-    pde=eval_asm_data(pde,'mu', list(1));
+    pde = eval_asm_data(pde,'lambda', list(1));
+    pde = eval_asm_data(pde,'mu', list(1));
   elseif (~isempty(pde('E')) & ~isempty(pde('PR'))) then // young modulus and poisson ratio
-    tmpE = gf_mesh_fem_get_eval(pde('mf_d'), pde('E'));
+    tmpE  = gf_mesh_fem_get_eval(pde('mf_d'), pde('E'));
     tmpnu = gf_mesh_fem_get_eval(pde('mf_d'), pde('PR'));
     pde('asm')('lambda') = tmpE .* tmpnu ./ ((1+tmpnu) .* (1-2*tmpnu)); 
     pde('asm')('mu')     = tmpE ./ (2*(1+tmpnu)); // shear modulus
@@ -148,49 +104,51 @@ pde = do_classical_bc(pde);
 endfunction
 
 ////////////////
-// do_stockes //
+// do_stokes //
 ////////////////
 
-function [U,P,pde]=do_stokes(in_pde)
+function [U,P,pde] = do_stokes(in_pde)
 pde = in_pde; U=[]; P=[];
 assert_field(pde, 'mf_u','mf_d');
-pde=eval_asm_data(pde,'viscos', list(1));
+pde = eval_asm_data(pde, 'viscos', list(1));
 if (isempty(pde('asm')('K'))) then
   [pde('asm')('K'),pde('asm')('B')] = gf_asm('stokes',pde('mim'),pde('mf_u'), pde('mf_p'), pde('mf_d'), pde('asm')('viscos'));
-  if (nnz(pde('asm')('K')-pde('asm')('K'))) then
+  if (nnz(pde('asm')('K')-pde('asm')('K')')) then
     error('K not symetric, you found a bug!');
   end
 end
 pde = do_classical_bc(pde);
 [U,P,pde] = do_stokes_solve(pde);
-// END OF do_stokes
 endfunction
 
-//////////////////////
-// do_stockes_solve //
-//////////////////////
+/////////////////////
+// do_stokes_solve //
+/////////////////////
 
-function [U,P,pde]=do_stokes_solve(in_pde)
-pde = in_pde; U=[]; P=[];
-assert_field(pde.asm, 'H','R','K','Q','F','G');  
-[_null,ud]=gf_spmat_get(pde('asm')('H'),'dirichlet nullspace', pde('asm')('R'));
-K=pde('asm')('K')+pde('asm')('Q');
+function [U,P,pde] = do_stokes_solve(in_pde)
+pde = in_pde; 
+U   = [];
+P   = [];
+assert_field(pde('asm'), 'H','R','K','Q','F','G');  
+[_null,ud] = gf_spmat_get(pde('asm')('H'),'dirichlet nullspace', pde('asm')('R'));
+K = pde('asm')('K') + pde('asm')('Q');
 if nnz(K-K') then
   sym=0; disp('non symmetric matrix, aborting; pause mode'); pause;
 else
   sym=1;
 end    
-Fu=_null'*((pde('asm')('F')(:)+pde('asm')('G')(:))-K*ud(:));
-Fp=-pde('asm')('B')'*ud(:);
-K=_null'*K*_null;
-B=_null'*pde('asm')('B');
-K=(K+K')/2; // make sure that the matrix is absolutely symetric
-            //  pde('solver')('type') = 'cg';
-            //  pde('solver')         = set_default_values(pde('solver'),'type','cg','maxiter',1000,'residu',1e-6);
+Fu = _null'*((pde('asm')('F')(:)+pde('asm')('G')(:))-K*ud(:));
+Fp = -pde('asm')('B')'*ud(:);
+K  = _null'*K*_null;
+B  = _null'*pde('asm')('B');
+K  = (K+K')/2; // make sure that the matrix is absolutely symetric
+               //  pde('solver')('type') = 'cg';
+               //  pde('solver')         = set_default_values(pde('solver'),'type','cg','maxiter',1000,'residu',1e-6);
 if (pde('solver')=='brute_stokes') then
-  [U,P]=do_solve_stokes_cg2(K,B,Fu(:),Fp(:));
+  [U,P] = do_solve_stokes_cg2(K,B,Fu(:),Fp(:));
 else
-  [U,P]=do_solve_stokes_cg(K,B,Fu(:),Fp(:));
+  //[U,P] = do_solve_stokes_cg(K,B,Fu(:),Fp(:));
+  [U,P] = do_solve_stokes_cg2(K,B,Fu(:),Fp(:)); // YC: gmres not defined as in Matlab
 end
 U = _null*U+ud(:);
 U = U(:)';
@@ -201,18 +159,20 @@ endfunction
 // do_classical_bc //
 /////////////////////
 
-function pde=do_classical_bc(pde)
+function pde = do_classical_bc(pde)
 q_dim = gf_mesh_fem_get(pde('mf_u'), 'qdim');
-do_F = ~isempty(pde('asm')('F'));
-do_H = ~isempty(pde('asm')('H'));
-do_R = ~isempty(pde('asm')('R'));
-do_Q = ~isempty(pde('asm')('Q'));
-do_G = ~isempty(pde('asm')('G'));
+do_F = isempty(pde('asm')('F'));
+do_H = isempty(pde('asm')('H'));
+do_R = isempty(pde('asm')('R'));
+do_Q = isempty(pde('asm')('Q'));
+do_G = isempty(pde('asm')('G'));
+disp(pde('mim'))
 if (do_F) then
-  pde=eval_asm_data(pde,'F', num2cell(zeros(q_dim,1)));
+  //pde = eval_asm_data(pde,'F', num2cell(zeros(q_dim,1)));
+  pde = eval_asm_data(pde,'F', list(zeros(q_dim,1))); // YC: pb ici ??
   pde('asm')('F') = gf_asm('volumic source', pde('mim'), pde('mf_u'), pde('mf_d'), pde('asm')('F'));
 end
-if (~isempty(pde('pdetool'))) then
+if (~isempty(pde('pdetool')('e')) & ~isempty(pde('pdetool')('b'))) then
   [pde('asm')('Q'),pde('asm')('G'),pde('asm')('H'),pde('asm')('R')] = gf_asm('pdetool boundary conditions',...
                                              pde('mim'),pde('mf_u'),pde('mf_d'),pde('pdetool')('b'),pde('pdetool')('e'));
 else
@@ -228,33 +188,55 @@ else
     assert_field(pde('bound')(bnum),'type');
     is_dirichlet = 0; is_neumann = 0;
     select (pde('bound')(bnum)('type'))
-     case 'None' then
-     case 'Dirichlet' then
+      case 'None' then
+      case 'Dirichlet' then
         is_dirichlet=1;
-     case 'Neumann' then
+      case 'Neumann' then
         is_neumann=1;
-     case 'Mixed' then
+      case 'Mixed' then
         is_dirichlet=1; is_neumann=1;
-     else
+      else
         disp('bc type ' + pde('bound')(bnum)('type') + 'unhandled');
     end
   
     if (is_dirichlet) then
       assert_field(pde('bound')(bnum),'R');
       if (do_R | do_H) then
+        printf('here 1\n');
+        disp(list(pde('bound')(bnum)('R')(:)))
         vR = gf_mesh_fem_get_eval(pde('mf_d'), list(pde('bound')(bnum)('R')(:)));
+        disp(size(vR))
         if (~isempty(pde('bound')(bnum)('H'))) then
+          printf('here 2\n');
+          disp(list(pde('bound')(bnum)('H')(:)))
           vH = gf_mesh_fem_get_eval(pde('mf_d'), list(pde('bound')(bnum)('H')(:)));
+          disp(size(vH))
         else 
           //h = num2cell(eye(q_dim,q_dim));  // YC: numtocell a changer
-          h = list(eye(q_dim,q_dim));
-          vH = gf_mesh_fem_get_eval(pde('mf_d'), list(h(:))); 
-        end;
+//          h = list();
+//          tmp = eye(q_dim,q_dim);
+//          for i=1:q_dim
+//            h(i) = list();
+//            for j=1:q_dim
+//              h(i)(j) = tmp(i,j);
+//            end
+//          end
+//          clear tmp;
+          printf('here 3\n');
+          h = eye(q_dim, q_dim);
+          vH = gf_mesh_fem_get_eval(pde('mf_d'), h(:)); 
+          disp(size(vH))
+        end
+        //           Matlab  Scilab
+        // vR:      2 * 102  2 * 102
+        // vH:      4 * 102  2 * 102
+        // q_dim:   2        2
+        // d_nbdof: 102      102
         [bH,bR] = gf_asm('dirichlet', bnum, pde('mim'),pde('mf_u'), pde('mf_d'), matrix(vH,q_dim*q_dim,d_nbdof), vR);
-      end;
+      end
       if (do_R) then pde('asm')('R') = pde('asm')('R') + bR; end;
       if (do_H) then pde('asm')('H') = pde('asm')('H') + bH; end;
-    end;
+    end
   
     if (is_neumann) then
       assert_field(pde('bound')(bnum),'G');
@@ -285,7 +267,7 @@ endfunction
   
 // solves (K+Q)U=F+G
 // under constraint HU=R
-function [U,pde]=do_classical_solve(in_pde)
+function [U,pde] = do_classical_solve(in_pde)
 pde = in_pde;
 assert_field(pde('asm'),'K','Q','G','H','R','F');
 [_null,ud] = gf_spmat_get(pde('asm')('H'),'dirichlet nullspace', pde('asm')('R'));
@@ -306,16 +288,16 @@ U = RB*(RK\RF)+ud(:);
 U = U(:)'; // row vector
 endfunction
 
-/////////////////////////
-// do_solve_stockes_cg //
-/////////////////////////
+////////////////////////
+// do_solve_stokes_cg //
+////////////////////////
 
 // solves [K  B][U] = [Fu]
 //        [B' 0][P]   [Fp]
 // with K *positive* definite
-function [U,P]=do_solve_stokes_cg(K,B,Fu,Fp)
+function [U,P] = do_solve_stokes_cg(K,B,Fu,Fp)
 verbos_disp_start(sprintf('factorizing K (n=%d,nnz=%d)',size(K,1),nnz(K)));
-R = chol(K); // YC: spchol ??
+R = sp_chol(K);
 verbos_disp_end;
 verbos_disp(sprintf('K factored, nnz(R)=%d',nnz(R)));
 // we have to avoid transpositions on sparse matrix since this
@@ -329,10 +311,12 @@ verbos_disp_start('running Conjugate gradientG');
 //  P = cg(F,R,B,10000,1e-6);
 //[P,flag,relres,iter,resvec] = pcg(@multA, F, tol, 500, @multM, @multM, [], R, B);
 
-[P,flag,relres,iter,resvec] = gmres(multA, F, 100, tol, 50, multM, multM, [], R, B);
+x = ones(F);
+[P,flag,relres,iter,resvec] = gmres(eval(multA,x,R,B), F, 100, tol, 50, eval(multM,x,R,B)*eval(multM,x,R,B));
+
+//[P,flag,relres,iter,resvec] = gmres(multA, F, 100, tol, 50, multM, multM, [], R, B);
 //  figure(5); plot(resvec);
-//  disp(sprintf('    .. flag = %d, relres=%g, iter=%d',flag, relres, ...
-//	       iter));
+//  disp(sprintf('    .. flag = %d, relres=%g, iter=%d',flag, relres, iter));
 
 verbos_disp_end;
 if (flag) then
@@ -345,19 +329,20 @@ verbos_disp('do_solve_stokes_cg all done');
 endfunction
 
 
-//////////////////////////
-// do_solve_stockes_cg3 //
-//////////////////////////
+/////////////////////////
+// do_solve_stokes_cg3 //
+/////////////////////////
 
 // solves [K  B][U] = [Fu]
 //        [B' 0][P]   [Fp]
 // with K *positive* definite
-function [U,P]=do_solve_stokes_cg3(K,B,Fu,Fp)
+function [U,P] = do_solve_stokes_cg3(K,B,Fu,Fp)
 nu = size(K,2);
 np = size(B,2);
 
 disp('solve stokes usawa cholinc');
-[pcB] = cholinc(K,'0'); // YC: spcholinc
+//[pcB] = sp_cholinc(K,'0'); YC: '0' option ??
+[pcB] = sp_cholinc(K);
 pcBt = pcB';
 disp('solve stokes usawa first pcg');
 P = zeros(np,1);
@@ -375,20 +360,23 @@ for k=1:10000,
 end
 endfunction
 
-//////////////////////////
-// do_solve_stockes_cg2 //
-//////////////////////////
+/////////////////////////
+// do_solve_stokes_cg2 //
+/////////////////////////
 
 // try to apply gmres to the global system
-function [U,P]=do_solve_stokes_cg2(K,B,Fu,Fp)
+function [U,P] = do_solve_stokes_cg2(K,B,Fu,Fp)
 tic;
 nu = size(K,2); np = size(B,2);
 Z  = [K B; B' spzeros(np,np)];
 Z2 = Z + [spzeros(nu,nu) spzeros(nu,np); spzeros(np,nu) sparse(diag(0.001*ones(np,1)))];
 disp(sprintf('begin luinc [nu=%d,np=%d, nnz=%d]', nu, np, nnz(Z2)));
-[L,U] = luinc(Z2,'0');
+//[L,U] = sp_luinc(Z2,'0'); // YC: '0' option ??
+//[L,U] = sp_luinc(Z2);
 disp('begin gmres');
-[UP,FLAG,RELRES,ITER,RESVEC]=gmres(Z,[Fu;Fp],50,1e-9,1000,L,U);
+// [x, flag, resNorm, iter, resVec] = gmres( A, b, x, M, restrt, max_it, tol )
+
+[UP,FLAG,RELRES,ITER,RESVEC] = gmres(Z,[Fu;Fp],50,1e-9,1000,Z2); // Z2 = L*U;
 U = UP(1:nu);
 P = UP((nu+1):(nu+np));
 disp(sprintf('do_solve_stokes_cg2 done in %g sec (%d iter, flag=%d)',toc(),ITER,FLAG));
@@ -397,21 +385,22 @@ resP = norm(B'*U-Fp,2);
 disp(sprintf('resU=%g, resP=%g',resU,resP));  
 endfunction
 
-///////////////////////////////
-// do_solve_stockes_cg2_test //
-///////////////////////////////
+//////////////////////////////
+// do_solve_stokes_cg2_test //
+//////////////////////////////
 
 // try to apply gmres to the global system
-function [U,P]=do_solve_stokes_cg2_test(K,B,Fu,Fp)
+function [U,P] = do_solve_stokes_cg2_test(K,B,Fu,Fp)
 tic;
 nu = size(K,2); np = size(B,2);
-Z = [K B; B' spzeros(np,np)];
-Z2=Z + [spzeros(nu,nu) spzeros(nu,np); spzeros(np,nu) sparse(diag(0.001*ones(np,1)))];
+Z  = [K B; B' spzeros(np,np)];
+Z2 = Z + [spzeros(nu,nu) spzeros(nu,np); spzeros(np,nu) sparse(diag(0.001*ones(np,1)))];
 disp(sprintf('begin luinc [nu=%d,np=%d, nnz=%d]', nu, np, nnz(Z2)));
 
 pause;
 
-[L,U] = luinc(Z2,'0'); // YC: spluinc 
+//[L,U] = sp_luinc(Z2,'0'); // YC: '0' option ??
+[L,U] = sp_luinc(Z2);
 disp('begin gmres');
 [UP,FLAG,RELRES,ITER,RESVEC] = gmres(Z,[Fu;Fp],50,1e-9,1000,L,U);
 U = UP(1:nu); 
@@ -422,15 +411,15 @@ resP = norm(B'*U-Fp,2);
 disp(sprintf('resU=%g, resP=%g',resU,resP));  
 endfunction
 
-//////////////////////////////
-// do_solve_stockes_cg2_old //
-//////////////////////////////
+/////////////////////////////
+// do_solve_stokes_cg2_old //
+/////////////////////////////
 
-function [U,P]=do_solve_stokes_cg2_old(K,B,Fu,Fp)
+function [U,P] = do_solve_stokes_cg2_old(K,B,Fu,Fp)
 alpha=1e-6;
 tic;
 if (0) then
-  R  = chol(K); // YC: spchol
+  R  = sp_chol(K);
   RB = full(R'\B);
   T  = (alpha*speye(size(B,2),size(B,2))-RB'*RB); 
   P  = T\(Fp-B'*(K\Fu));
@@ -440,7 +429,7 @@ else
   // on small 3D problems, the fastest way is to reduce to a (full) linear system on the pression...
   // drawback: it eats a lot of memory..
   disp('using the ''brute force'' solver for stokes..');
-  R  = chol(K); // YC: spchol
+  R  = sp_chol(K);
   RB = full(R'\B);
   T  = (-RB'*RB);
   F  = (Fp-B'*(K\Fu));
@@ -458,7 +447,7 @@ endfunction
 // multlup //
 /////////////
 
-function Y=multlup(X,L,U,P)
+function Y = multlup(X,L,U,P)
 Y = U\(L\(P*X));
 endfunction
 
@@ -467,7 +456,7 @@ endfunction
 ////////
 
 // DO NOT USE THIS ONE... BROKEN
-function X=cg(F,R,B,maxit,tol)
+function X = cg(F,R,B,maxit,tol)
 X = rand(F);
 r = F-multA(X,R,B);
 nr0 = norm(r,2);
@@ -492,7 +481,7 @@ endfunction
 // multA //
 ///////////
 
-function AX=multA(X,R,B)
+function AX = multA(X,R,B)
 tic;
 //  AX=B'*(R\(R'\(B*X)));
 BX   = (B*X)';
@@ -508,7 +497,7 @@ endfunction
 // multM //
 ///////////
 
-function MX=multM(X,R,B)
+function MX = multM(X,R,B)
 MX = X;
 endfunction 
 
@@ -544,4 +533,66 @@ if (verbosity > 0) then
   disp(sprintf('done (%2.3f sec)', toc()));
 end
 endfunction
+
+//////////////
+// gf_solve //
+//////////////
+
+function [varargout] = gf_solve(varargin)
+// function varargout=gf_solve(what, varargin)
+// General solver for getfem PDE
+
+[nargout,nargin] = argn();
+
+if (nargin==0) then error('not enough input arguments'); end;
+
+//pde = build_options_list(varargin(:));
+pde = varargin(1);
+
+if isempty(pde('verbosity')) then
+  pde('verbosity') = 0;
+end
+if isempty(pde('mim')) then
+  error('since v2.0, the pde structure for gf_solve should contain a mesh_im object in its ''mim'' field');
+end
+if isempty(pde('type')) then
+  error('the pde mlist should have a ''type'' field');
+end
+if isempty(pde('asm')) then
+  pde('asm') = list(); 
+end; 
+if isempty(pde('solver')) then
+  pde('solver') = 'default';
+end
+
+nout = max(nargout,1);
+list_out = list();
+str_eval = '[list_out(1)';
+for i=2:nout
+  str_eval = str_eval + ',list_out(' + string(i) + ')';
+end
+str_eval = str_eval + '] = ';
+
+select pde('type')
+  case 'laplacian' then
+    // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_laplacian(pde);
+    str_eval = str_eval + 'do_laplacian(pde)';
+    execstr(str_eval);
+  case 'linear elasticity' then
+    // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_linear_elasticity(pde);
+    str_eval = str_eval + 'do_linear_elasticity(pde)';
+    execstr(str_eval);
+  case 'stokes' then
+    // YC: varargout ne peut pas etre utilisé de cette façon [varargout(1:nout)]=do_stokes(pde);
+    str_eval = str_eval + 'do_stokes(pde)';
+    execstr(str_eval);
+  else
+    error('unhandled PDE(''type'') : ' + pde('type'));
+end
+varargout = list();
+for i=1:nargout
+  varargout(i) = list_out(i);
+end
+endfunction
+
 
