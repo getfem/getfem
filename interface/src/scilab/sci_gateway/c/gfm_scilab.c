@@ -37,7 +37,7 @@
 #include "gfm_common.h"
 #include "getfem_interface.h"
 
-#define DEBUG_TIMER
+//#define DEBUG_TIMER
 //#define DEBUG
 //#define DEBUG2
 
@@ -121,6 +121,7 @@ int sci_gf_scilab(char * fname)
   int picol, pirow, var_type;
   unsigned int i;
   StrErr _StrErr;
+  StrCtx _StrCtx;
   clock_t time_start, time_end;
 
   set_cancel_flag(0);
@@ -136,10 +137,10 @@ int sci_gf_scilab(char * fname)
 #ifdef DEBUG
       sciprint("sci_gf_scilab: i = %d Rhs = %d\n", i, Rhs);
 #endif
-      _StrErr = getVarAddressFromPosition(i,ptr_param+i);
+      _StrErr = getVarAddressFromPosition(&_StrCtx,i,ptr_param+i);
 #ifdef DEBUG
-      _StrErr = getVarDimension(ptr_param[i],&pirow,&picol);
-      _StrErr = getVarType(ptr_param[i],&var_type);
+      _StrErr = getVarDimension(&_StrCtx,ptr_param[i],&pirow,&picol);
+      _StrErr = getVarType(&_StrCtx,ptr_param[i],&var_type);
       sciprint("sci_gf_scilab: position %d - address %d - type %d - dimension %d %d\n", i, ptr_param[i],var_type,pirow,picol);
 #endif
     }
