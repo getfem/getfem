@@ -36,28 +36,34 @@ end;
 //X=zeros(size(_what,1),nbdof);
 X = zeros(length(_what),nbdof);
 if (isnumeric(_what)) then
-  X(dof) = repmat(_what, 1, nbdof/qdim);
+  X(:,dof) = repmat(_what, 1, nbdof/qdim);
   return;
 elseif typeof(_what)=='hypermat' then
-  m=length(_what);
+  m = length(_what);
   xpos = dxy(1,:);
   if (size(dxy,1)>=2),
     ypos = dxy(2,:);
-  else ypos = zeros(size(xpos)); end;
+  else 
+    ypos = zeros(xpos); 
+  end
   if (size(dxy,1)>=3),
     zpos = dxy(3,:);
-  else zpos = zeros(size(xpos)); end;
+  else 
+    zpos = zeros(xpos); 
+  end
     
   for i=1:m,
     for j=1:qdim
       if (isnumeric(_what(i,j))) then
         if (length(_what(i,j)) ~= 1) then error('numeric values should be scalar'); end;
-        X(i,dof+j-1)=_what(i,j);
+        X(i,dof+j-1) = _what(i,j);
       elseif (typeof(_what(i,j))=='string') then
-        x=xpos; y=ypos; z=zpos;
+        x = xpos;
+        y = ypos;
+        z = zpos;
         X(i,dof+j-1)=eval(_what(i,j));
       elseif (type(_what(i,j))==11 | type(_what(i,j))==13) then
-        X(i,dof+j-1)=feval(_what(i,j), xpos, ypos, zpos);
+        X(i,dof+j-1) = feval(_what(i,j), xpos, ypos, zpos);
       else
         error('sorry, don''t know how to eval a ' + typeof(_what(i,j)) + ...
               ' expression, only function handles, numeric constants and ' + ...
@@ -70,10 +76,10 @@ elseif typeof(_what)=='list' then
   xpos = dxy(1,:);
   if (size(dxy,1)>=2),
     ypos = dxy(2,:);
-  else ypos = zeros(size(xpos)); end;
+  else ypos = zeros(xpos); end;
   if (size(dxy,1)>=3),
     zpos = dxy(3,:);
-  else zpos = zeros(size(xpos)); end;
+  else zpos = zeros(xpos); end;
     
   for i=1:m,
     for j=1:qdim
@@ -81,9 +87,11 @@ elseif typeof(_what)=='list' then
         if (length(_what(i)) ~= 1) then error('numeric values should be scalar'); end;
         X(i,dof+j-1) = _what(i);
       elseif (typeof(_what(i))=='string') then
-        x=xpos; y=ypos; z=zpos;
+        x = xpos;
+        y = ypos;
+        z = zpos;
         X(i,dof+j-1) = evstr(_what(i));
-      elseif (type(_what(i))==11 | type(_what(i))==13) then
+      elseif (typeof(_what(i))=='fptr' | typeof(_what(i))=='function') then
         tmp = evstr(_what(i));
         X(i,dof+j-1) = feval(tmp, xpos, ypos, zpos);
       else
@@ -96,6 +104,6 @@ elseif typeof(_what)=='list' then
 else
   error('can''t evaluate on mesh fem: argument is neither a numeric ' + ...
         'constant nor a cell array of (strings|constants|function handles)');
-end;
+end
 endfunction
 
