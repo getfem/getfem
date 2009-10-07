@@ -118,6 +118,9 @@ end
 
 h.children.rotation_angles = [135 75];
 colorbar(min(VM),max(VM)); 
+xlabel('');
+ylabel('');
+zlabel('');
 a = gca();
 a.box = 'off';
 a.axes_visible = 'off';
