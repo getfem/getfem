@@ -300,21 +300,105 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
     if (!(TGFISTORE(double,val)=gc_alloc(gc,sizeof(double)*2))) return NULL;
     TGFISTORE(double,val)[0] = real;
     TGFISTORE(double,val)[1] = imag;
-  } else if (PyTuple_Check(o)) {
-    //printf("Tuple\n");
-    /* python tuples are stored in 'cell arrays' (i.e. matlab's lists of inhomogeneous elements) */
+  } else if (PyTypeNum_ISNUMBER(PyArray_ObjectType(o,0))) {
+    //printf("Numerical Array");
+    /* python numeric sequences are stored in numerical array */
+    int dtype = PyArray_ObjectType(o,0);
+
+    PyObject *po = NULL;
+    switch (dtype) {
+      case NPY_BOOL:
+      case NPY_BYTE:
+      case NPY_UBYTE:
+      case NPY_SHORT:
+      case NPY_USHORT:
+      case NPY_INT:
+      case NPY_UINT:
+      case NPY_LONG:
+      case NPY_ULONG:
+      case NPY_LONGLONG:
+      case NPY_ULONGLONG:
+        t->storage.type = GFI_INT32;
+
+        if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
+               NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+        else
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
+               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+        if(!po) { PyErr_NoMemory(); return NULL;}
+
+        gc_ref(gc,po);
+        TGFISTORE(int32,val) = (int *)((PyArrayObject *)po)->data; // no new copy
+        break;
+      case NPY_FLOAT:
+      case NPY_DOUBLE:
+      case NPY_LONGDOUBLE:
+        t->storage.type = GFI_DOUBLE;
+        t->storage.gfi_storage_u.data_double.is_complex = 0;
+
+        if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
+               NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+        else
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
+               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+        if(!po) { PyErr_NoMemory(); return NULL;}
+
+        gc_ref(gc,po);
+        TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
+        break;
+      case NPY_CFLOAT:
+      case NPY_CDOUBLE:
+      case NPY_CLONGDOUBLE:
+        t->storage.type = GFI_DOUBLE;
+        t->storage.gfi_storage_u.data_double.is_complex = 1;
+
+        if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
+               NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
+        else
+          po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
+               NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
+        if(!po) { PyErr_NoMemory(); return NULL;}
+
+        gc_ref(gc,po);
+        TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
+        break;
+      default: {
+        PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
+        PyErr_Format(PyExc_RuntimeError, "invalid numeric dtype: %s",
+          PyString_AsString(sdtype));
+        Py_DECREF(sdtype);
+        return NULL;
+      }
+    }
+    t->dim.dim_len = ((PyArrayObject *)po)->nd;
+    t->dim.dim_val = (u_int *)gc_alloc(gc, t->dim.dim_len * sizeof(u_int));
+
+    int i;
+    for (i=0; i < t->dim.dim_len; ++i)
+      t->dim.dim_val[i] = (u_int)((PyArrayObject *)po)->dimensions[i];
+  } else if (PyTuple_Check(o) || PyList_Check(o)) {
+    //printf("Tuple or List\n");
+    /* python tuples and lists are stored in 'cell arrays' (i.e. matlab's lists of inhomogeneous elements) */
     int i;
     t->storage.type = GFI_CELL;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
-    TGFISTORE(cell,len) = PyTuple_GET_SIZE(o);
+
+    if (PyTuple_Check(o)) TGFISTORE(cell,len) = PyTuple_GET_SIZE(o);
+    else TGFISTORE(cell,len) = PyList_GET_SIZE(o);
+
     if (!(TGFISTORE(cell,val) = gc_alloc(gc,sizeof(gfi_array*)*TGFISTORE(cell,len)))) return NULL;
     gfi_array **p = TGFISTORE(cell,val);
-    for (i=0; i < PyTuple_GET_SIZE(o); ++i) {
-      p[i] = PyObject_to_gfi_array(gc, PyTuple_GET_ITEM(o,i));
+
+    for (i=0; i < TGFISTORE(cell,len); ++i) {
+      if (PyTuple_Check(o)) p[i] = PyObject_to_gfi_array(gc, PyTuple_GET_ITEM(o,i));
+      else p[i] = PyObject_to_gfi_array(gc, PyList_GET_ITEM(o,i));
       if (!p[i]) return NULL;
     }
   } else if (PyObject_is_GetfemObject(o, &id)) {
-    //printf("Getfem\n");
+    //printf("Object\n");
     /* getfem objects are refered to with a couple (classid, objectid) */
     t->storage.type = GFI_OBJID;
     t->dim.dim_len = 1; t->dim.dim_val = &TGFISTORE(cell,len);
@@ -323,94 +407,14 @@ PyObject_to_gfi_array(gcollect *gc, PyObject *o)
           gc_alloc(gc,sizeof(gfi_object_id)))) return NULL;
     t->storage.gfi_storage_u.objid.objid_val[0] = id;
   } else {
-    //} else if (PyList_Check(o) || PyArray_Check(o)) {
-    //  printf("List or Array\n");
     int dtype = PyArray_ObjectType(o,0);
-
-    PyObject *po = NULL;
-    if (PyTypeNum_ISNUMBER(dtype)) {
-      switch (dtype) {
-        case NPY_BOOL:
-        case NPY_BYTE:
-        case NPY_UBYTE:
-        case NPY_SHORT:
-        case NPY_USHORT:
-        case NPY_INT:
-        case NPY_UINT:
-        case NPY_LONG:
-        case NPY_ULONG:
-        case NPY_LONGLONG:
-        case NPY_ULONGLONG:
-          t->storage.type = GFI_INT32;
-
-          if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
-            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
-                 NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
-          else
-            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_INT),0,0,
-                 NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
-          if(!po) { PyErr_NoMemory(); return NULL;}
-
-          gc_ref(gc,po);
-          TGFISTORE(int32,val) = (int *)((PyArrayObject *)po)->data; // no new copy
-          break;
-        case NPY_FLOAT:
-        case NPY_DOUBLE:
-        case NPY_LONGDOUBLE:
-          t->storage.type = GFI_DOUBLE;
-          t->storage.gfi_storage_u.data_double.is_complex = 0;
-
-          if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
-            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
-                 NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
-          else
-            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_DOUBLE),0,0,
-                 NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
-          if(!po) { PyErr_NoMemory(); return NULL;}
-
-          gc_ref(gc,po);
-          TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
-          break;
-        case NPY_CFLOAT:
-        case NPY_CDOUBLE:
-        case NPY_CLONGDOUBLE:
-          t->storage.type = GFI_DOUBLE;
-          t->storage.gfi_storage_u.data_double.is_complex = 1;
-
-          if (1==((PyArrayObject *)o)->nd)// there is a bug in PyArray_CheckFromAny ?
-            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
-                 NPY_FORCECAST|NPY_OUT_ARRAY|NPY_ELEMENTSTRIDES,NULL);
-          else
-            po = PyArray_CheckFromAny(o,PyArray_DescrFromType(NPY_CDOUBLE),0,0,
-                 NPY_FORCECAST|NPY_OUT_FARRAY|NPY_ELEMENTSTRIDES,NULL);
-          if(!po) { PyErr_NoMemory(); return NULL;}
-
-          gc_ref(gc,po);
-          TGFISTORE(double,val) = (double *)((PyArrayObject *)po)->data; // no new copy
-          break;
-        default: {
-          PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
-          PyErr_Format(PyExc_RuntimeError, "invalid numeric dtype: %s",
-            PyString_AsString(sdtype));
-          Py_DECREF(sdtype);
-          return NULL;
-        }
-      }
-    } else {
-      PyObject *stype = PyObject_Str((PyObject*)o->ob_type);
-      PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
-      PyErr_Format(PyExc_RuntimeError, "unhandled argument (type, dtype): (%s, %s)",
-        PyString_AsString(stype), PyString_AsString(sdtype));
-      Py_DECREF(stype);
-      Py_DECREF(sdtype);
-      return NULL;
-    }
-    t->dim.dim_len = ((PyArrayObject *)po)->nd;
-    t->dim.dim_val = (u_int *)gc_alloc(gc, t->dim.dim_len * sizeof(u_int));
-
-    int i;
-    for (i=0; i < t->dim.dim_len; ++i)
-      t->dim.dim_val[i] = (u_int)((PyArrayObject *)po)->dimensions[i];
+    PyObject *stype = PyObject_Str((PyObject*)o->ob_type);
+    PyObject *sdtype = PyObject_Str((PyObject*)PyArray_DescrFromType(dtype));
+    PyErr_Format(PyExc_RuntimeError, "unhandled argument (type, dtype): (%s, %s)",
+      PyString_AsString(stype), PyString_AsString(sdtype));
+    Py_DECREF(stype);
+    Py_DECREF(sdtype);
+    return NULL;
   }
   return t;
 }
@@ -685,6 +689,10 @@ getfem_var(PyObject *self, PyObject *args)
     word_out = PyString_FromString(GETFEM_PACKAGE_VERSION);
   }else if(strcmp(word_in,"version") == 0){
     word_out = PyString_FromString(GETFEM_VERSION);
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+  }else if(strcmp(word_in,"muParser") == 0){
+    word_out = PyString_FromString("1");
+#endif
   }else{
     word_out = PyString_FromString("");
   }

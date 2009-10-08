@@ -159,6 +159,10 @@ class MeshFem:
       @INIT MESHFEM:INIT('partial')
       @INIT MESHFEM:INIT('.mesh')
       """
+      if type(args[0]) is str:
+        if args[0]=='global function' and not(getfem_var('muParser')=="1"):
+          print "Option \'global function\' need the package muParser installed"
+          print "on your system. This package is widely available."
       generic_constructor(self,'mesh_fem',*args)
     def __del__(self):
       generic_destructor(self,destructible=True)
@@ -572,6 +576,29 @@ methods on convexes (used when the elementary matrices are built).
     #@GET    INTEG:GET('face_coeffs')
     #@GET    INTEG:GET('char')
 
+
+class GlobalFunction:
+    """Getfem Global Function Object.
+
+    @TEXT GLOBALFUNCTION:INIT('GLOBALFUNCTION_init')
+    """
+    def __init__(self, *args):
+      """General constructor for GlobalFunction object:
+
+      @INIT GLOBALFUNCTION:INIT('cutoff')
+      @INIT GLOBALFUNCTION:INIT('crack')
+      @INIT GLOBALFUNCTION:INIT('parser')
+      @INIT GLOBALFUNCTION:INIT('product')
+      """
+      generic_constructor(self,'global_function',*args)
+    def __del__(self):
+      generic_destructor(self,destructible=False)
+    def get(self, *args):
+      return getfem('global_function_get',self.id, *args)
+    def set(self, *args):
+      return getfem('global_function_set',self.id, *args)
+
+
 class Eltm:
     """Descriptor for an elementary matrix type.
 
@@ -862,9 +889,6 @@ def asm(what, *args):
 def util(what, *args):
     return getfem('util', what, *args)
 
-###
-#register_types(Mesh,MeshFem,GeoTrans,Fem,Integ,Eltm,CvStruct,Poly,Slice)
-
 def factory(id):
     # must be in the same order than enum getfemint_class_id in gfi_array.h
     t = ( Mesh,
@@ -883,7 +907,8 @@ def factory(id):
           Spmat,
           Precond,
           LevelSet,
-          MeshLevelSet)[id.classid]
+          MeshLevelSet,
+          GlobalFunction)[id.classid]
     return t(id)
 
 register_python_factory(factory)

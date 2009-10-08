@@ -23,7 +23,6 @@ import string
 import os
 import textwrap
 import sys
-#from docutils import core
 
 class ParseError(Exception):
     def __init__(self, value):
@@ -133,6 +132,7 @@ def SubstituteTypes(d):
                    '@tfem':'Fem',
                    '@tgt':'GeoTrans',
                    '@tinteg':'Integ',
+                   '@tgf':'GlobalFunction',
                    '@tmls':'MeshLevelSet',
                    '@tls':'LevelSet',
                    '@tsl':'Slice',
@@ -155,38 +155,6 @@ def flush_par(par, state,indent):
 
 def WrapParagraphs(d, indent):
     doc = ''
-#    ll = [l.rstrip() for l in d.split('\n')]
-#    #print ll
-#    par = ''
-#    in_list = 1
-#    in_par = 2
-#    in_pre = 3
-#    state = 0
-#    for l in ll:
-#        #sys.stderr.write(('%d: '+l+'\n') % (state));
-#        if l.startswith('**'):
-#            doc+=flush_par(par,state, indent)
-#            doc+=flush_par('** ' + l[2:].strip(),2,indent)
-#            state = in_list; par = ''
-#        elif l.startswith('*'):
-#            doc+=flush_par(par, state,indent)
-#            par = l[1:].strip() + ' '
-#            state = in_list
-#        elif l.startswith(' '):
-#            doc+=flush_par(par, state,indent)
-#            par = l
-#            state = in_pre
-#        else:
-#            if (len(l.strip()) == 0):
-#                doc+=flush_par(par, state,indent)
-#                par = ''
-#                state = in_par
-#            else:
-#                if (state == 0): state = in_par
-#                par +=l.strip()+' '
-
-#    doc+=flush_par(par,state,indent)
-
     for l in re.split(r'(<[Pp]ar>)', d):
       if l.startswith('<Par>'):
         doc += textwrap.fill(l[5:],78)
@@ -235,6 +203,8 @@ def PythonRewriteDoc(d,indent,subindent,endline):
              'CVSTRUCT:GET': r"CvStruct.\1(\3)", \
              'GEOTRANS:GET': r"GeoTrans.\1(\3)", \
              'INTEG:GET': r"Integ.\1(\3)", \
+             'GLOBALFUNCTION:GET': r"GlobalFunction.\1(\3)", \
+             'GLOBALFUNCTION:SET': r"GlobalFunction.\1(\3)", \
              'FEM:GET': r"Fem.\1(\3)", \
              'SPMAT:GET': r"Spmat.\1(\3)", \
              'SPMAT:SET': r"Spmat.\1(\3)", \
@@ -258,6 +228,7 @@ def PythonRewriteDoc(d,indent,subindent,endline):
     d = string.replace(d,'MESHIM:INIT','MeshIm')
     d = string.replace(d,'GEOTRANS:INIT','GeoTrans')
     d = string.replace(d,'INTEG:INIT','Integ')
+    d = string.replace(d,'GLOBALFUNCTION:INIT','Integ')
     d = string.replace(d,'FEM:INIT','Fem')
     d = string.replace(d,'ELTM:INIT','Eltm')
     d = string.replace(d,'SPMAT:INIT','Spmat')
@@ -292,6 +263,7 @@ def MatlabRewriteDoc(d):
              'CVSTRUCT:GET': r"gf_cvstruct_get(CVS,'\1'\2", \
              'GEOTRANS:GET': r"gf_geotrans_get(CVS,'\1'\2", \
              'INTEG:GET': r"gf_integ_get(IM,'\1'\2", \
+             'INTEG:GET': r"gf_global_function_get(GF,'\1'\2", \
              'FEM:GET': r"gf_fem_get(fe,'\1'\2", \
              'SPMAT:GET': r"gf_spmat_get(M,'\1'\2", \
              'SPMAT:SET': r"gf_spmat_set(M,'\1'\2", \
@@ -312,6 +284,7 @@ def MatlabRewriteDoc(d):
     d = string.replace(d,'MESHIM:INIT','gf_mesh_im')
     d = string.replace(d,'GEOTRANS:INIT','gf_geotrans')
     d = string.replace(d,'INTEG:INIT','gf_integ')
+    d = string.replace(d,'GLOBALFUNTION:INIT','gf_global_function')
     d = string.replace(d,'FEM:INIT','gf_fem')
     d = string.replace(d,'ELTM:INIT','gf_eltm')
     d = string.replace(d,'SPMAT:INIT','gf_spmat')
@@ -537,6 +510,7 @@ fmap = {'gf_mesh.cc':'MESH:INIT',
         'gf_geotrans_get.cc':'GEOTRANS:GET',
         'gf_integ.cc':'INTEG:INIT',
         'gf_integ_get.cc':'INTEG:GET',
+        'gf_global_function.cc':'GLOBALFUNCTION:INIT',
         'gf_mdbrick.cc':'MDBRICK:INIT',
         'gf_mdbrick_get.cc':'MDBRICK:GET',
         'gf_mdbrick_set.cc':'MDBRICK:SET',
