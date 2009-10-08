@@ -564,6 +564,11 @@ namespace getfem {
     pos_export(std::ostream& osname);
 
     void set_header(const std::string& s);
+
+    void exporting(const mesh& m);
+    void exporting(const mesh_fem& mf);
+    void exporting(const stored_mesh_slice& sl);
+
     void write(const mesh& m);
     void write(const mesh_fem& mf);
     void write(const stored_mesh_slice& sl);
@@ -576,10 +581,6 @@ namespace getfem {
   private:
     void init();
     void check_header();
-
-    void exporting(const mesh& m);
-    void exporting(const mesh_fem& mf);
-    void exporting(const stored_mesh_slice& sl);
 
     template <class VECT>
     void write_pmf(const VECT& V);
