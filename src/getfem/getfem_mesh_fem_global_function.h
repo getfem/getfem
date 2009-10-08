@@ -39,7 +39,7 @@
 #include "getfem_fem.h"
 #include "getfem_mesh_fem.h"
 #include "bgeot_rtree.h"
-#include "getfem_arch_config.h"
+#include "getfem/getfem_arch_config.h"
 
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
 #include <muParser/muParser.h>

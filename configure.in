@@ -470,16 +470,17 @@ if test "x$usemuparser" = "xno"; then
   echo "Building with muParser explicitly disabled (use --enable-muparser=yes to enable it)";
 else
   echo "Building with muParser (use --enable-muparser=no to disable it)"
+  AC_CHECK_LIB(muparser, qh_new_muparser)
   AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
   [ 
    if test "x$usemuparser" = "xyes"; then
      AC_MSG_ERROR([header file muParser/muParser.h not found. Use --enable-muparser=no flag]);
    fi;
   ])
-  MUPARSER_LIBS="-lmuparser"
-  LIBS="$LIBS $MUPARSER_LIBS"
+  # MUPARSER_LIBS="-lmuparser"
+  # LIBS="$LIBS $MUPARSER_LIBS"
 fi;
-AM_CONDITIONAL(MUPARSER, test x$useQHULL = xyes)
+AM_CONDITIONAL(MUPARSER, test x$usemuparser = xyes)
 
 AC_SUBST([MUPARSER_LIBS])
 echo "Configuration of muParser done"
