@@ -58,6 +58,7 @@ typedef enum { MESH_CLASS_ID,
                PRECOND_CLASS_ID,
                LEVELSET_CLASS_ID,
                MESH_LEVELSET_CLASS_ID,
+               GLOBAL_FUNCTION_CLASS_ID,
                GETFEMINT_NB_CLASS } getfemint_class_id;
 
 #ifdef __cplusplus

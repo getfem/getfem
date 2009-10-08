@@ -107,7 +107,7 @@ void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   }
 
   getfem::mesh *pmesh = in.pop().to_mesh();
-  std::string cmd            = in.pop().to_string();
+  std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "pts", in, out, 1, 1, 0, 1)) {
     /*@SET PIDs = MESH:SET('pts',@mat PTS)
     Replace the coordinates of the mesh points with those given in `PTS`.@*/

@@ -22,6 +22,7 @@
 #include <getfemint.h>
 #include <getfemint_levelset.h>
 #include <getfemint_workspace.h>
+#include <getfem/getfem_arch_config.h>
 
 using namespace getfemint;
 
@@ -44,16 +45,16 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   getfemint_levelset *gls = NULL;
   if (check_cmd("LevelSet", "LevelSet", in, out, 2, 4, 0, 1)) {
-    /*@INIT LEVELSET:INIT('.mesh', @tmesh m, @int d[, 'ws'| @str poly1[, @str poly2| 'ws']])
+    /*@INIT LS = LEVELSET:INIT('.mesh', @tmesh m, @int d[, 'ws'| @str func_1[, @str func_2| 'ws']])
     Create a @tls object on a @tmesh represented by a primary function
     (and optional secondary function, both) defined on a lagrange @tmf
     of degree `d`.<Par>
 
     If `ws` (with secondary) is set; this levelset is represented by a
-    primary function and a secondary function. If `poly1` is set; the
-    primary function is defined by that polynomial expression. If
-    `poly2` is set; this levelset is represented by a primary function
-    and a secondary function defined by these polynomials expressions.@*/
+    primary function and a secondary function. If `func_1` is set; the
+    primary function is defined by that expression. If `func_2` is set;
+    this levelset is represented by a primary function and a secondary
+    function defined by these expressions.@*/
     getfemint_mesh *mm = in.pop().to_getfemint_mesh();
     size_type degree = in.pop().to_integer(1, 20);
 
@@ -72,8 +73,13 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
     gls = getfemint_levelset::get_from(ls);
 
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+    if (s1.size()) gls->values_from_func(0, s1);
+    if (s2.size()) gls->values_from_func(1, s2);
+#else
     if (s1.size()) gls->values_from_poly(0, s1);
     if (s2.size()) gls->values_from_poly(1, s2);
+#endif
     workspace().set_dependance(gls, mm);
   }
   out.pop().from_object_id(gls->get_id(), LEVELSET_CLASS_ID);

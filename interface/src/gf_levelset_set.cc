@@ -40,12 +40,12 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::level_set &ls = gls->levelset();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 1, 2, 0, 0)) {
-    /*@SET LEVELSET:SET('values',{@mat v1|@str poly1}[, @mat v2|@str poly2])
+    /*@SET LEVELSET:SET('values',{@mat v1|@str func_1}[, @mat v2|@str func_2])
     Set values of the vector of dof for the level-set functions.
 
-    Set the primary function with the vector of dof `v1` (or the polynomial
-    expression `poly1`) and the secondary function (if any) with  the vector
-    of dof `v2` (or the polynomial expression `poly2`)@*/
+    Set the primary function with the vector of dof `v1` (or the expression
+    `func_1`) and the secondary function (if any) with  the vector of dof
+    `v2` (or the expression `func_2`)@*/
     std::string s1, s2;
     darray v1, v2;
     if (in.front().is_string()) {
@@ -64,20 +64,28 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     ls.values(0).resize(ls.get_mesh_fem().nb_dof());
     if (s1.size()) {
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+      gls->values_from_func(0, s1);
+#else
       gls->values_from_poly(0, s1);
+#endif
     } else {
       ls.values(0).assign(v1.begin(), v1.end());
     }
     if (ls.has_secondary()) {
       ls.values(1).resize(ls.get_mesh_fem().nb_dof());
       if (s2.size()) {
-	gls->values_from_poly(1, s2);
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+        gls->values_from_func(1, s2);
+#else
+        gls->values_from_poly(1, s2);
+#endif
       } else {
 	ls.values(1).assign(v2.begin(), v2.end());
       }
     }
   } else if (check_cmd(cmd, "simplify", in, out, 0, 1, 0, 0)) {
-    /*@SET LEVELSET:SET('simplify'[@scaler eps=0.01])
+    /*@SET LEVELSET:SET('simplify'[@scalar eps=0.01])
     Simplify dof of level-set optionally with the parameter `eps`.@*/
     if (in.remaining()==0) ls.simplify();
     else{

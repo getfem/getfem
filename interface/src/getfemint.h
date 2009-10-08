@@ -49,6 +49,7 @@
 #include <gfi_array.h>
 #include <getfem/dal_shared_ptr.h>
 #include <getfem/getfem_mat_elem_type.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
 
 namespace getfem {
   class stored_mesh_slice;
@@ -70,7 +71,7 @@ namespace getfemint
   gfi_array* checked_gfi_create_sparse(int m, int n, int nzmax, gfi_complex_flag is_complex);
 
   typedef bgeot::dim_type dim_type;
-  typedef bgeot::scalar_type scalar_type; 
+  typedef bgeot::scalar_type scalar_type;
   typedef std::complex<double> complex_type;
 
   inline int *gfi_get_data(gfi_array *g, int) { return gfi_int32_get_data(g); }
@@ -82,11 +83,11 @@ namespace getfemint
 
   typedef gmm::row_matrix<gmm::wsvector<scalar_type> >  gf_real_sparse_by_row;
   typedef gmm::col_matrix<gmm::wsvector<scalar_type> >  gf_real_sparse_by_col;
-  typedef gmm::csc_matrix_ref<const double *, const unsigned int *, const unsigned int *> 
+  typedef gmm::csc_matrix_ref<const double *, const unsigned int *, const unsigned int *>
   gf_real_sparse_csc_const_ref;
   typedef gmm::row_matrix<gmm::wsvector<complex_type> >  gf_cplx_sparse_by_row;
   typedef gmm::col_matrix<gmm::wsvector<complex_type> >  gf_cplx_sparse_by_col;
-  typedef gmm::csc_matrix_ref<const complex_type *, const unsigned int *, const unsigned int *> 
+  typedef gmm::csc_matrix_ref<const complex_type *, const unsigned int *, const unsigned int *>
   gf_cplx_sparse_csc_const_ref;
 
   class getfem_object;
@@ -102,12 +103,13 @@ namespace getfemint
   class getfemint_pfem;
   class getfemint_levelset;
   class getfemint_mesh_levelset;
+  class getfemint_global_function;
   class gsparse;
 
   class sub_index : public gmm::unsorted_sub_index{
   public:
     sub_index() {}
-    template <class IT> sub_index(IT b, IT e) : gmm::unsorted_sub_index(b,e) {}    
+    template <class IT> sub_index(IT b, IT e) : gmm::unsorted_sub_index(b,e) {}
     template <class CONT> sub_index(CONT c) : gmm::unsorted_sub_index(c.begin(),c.end()) {}
     const sub_index &check_range(size_type n) const;
   };
@@ -122,15 +124,15 @@ namespace getfemint
     array_dimensions(): sz(0), ndim_(0) {}
     void push_back(unsigned d) {
       GMM_ASSERT1(ndim_ != ARRAY_DIMENSIONS_MAXDIM-1,
-		  " max. nb of dimensions for an output argument exceeded!");
+                  " max. nb of dimensions for an output argument exceeded!");
       if (ndim_ == 0) sz = 1;
       sizes_[ndim_++] = d; sz *= d;
     }
-    size_type push_back(const array_dimensions& other, 
-			unsigned d0, unsigned n,
-			bool matlab_row_matrix_is_a_vector);
+    size_type push_back(const array_dimensions& other,
+                        unsigned d0, unsigned n,
+                        bool matlab_row_matrix_is_a_vector);
     void assign_dimensions(const gfi_array *mx);
-    array_dimensions(const gfi_array *mx) { 
+    array_dimensions(const gfi_array *mx) {
       assign_dimensions(mx);
     }
     explicit array_dimensions(unsigned sz_) { sz = sz_; ndim_=1; sizes_[0]=sz_; }
@@ -149,8 +151,8 @@ namespace getfemint
     const unsigned *sizes() const { return sizes_; }
     void reshape(unsigned n_, unsigned m_, unsigned p_=1);
     void opt_transform_col_vect_into_row_vect();
-    friend std::ostream& operator << (std::ostream &os, 
-				      const array_dimensions &d) {
+    friend std::ostream& operator << (std::ostream &os,
+                                      const array_dimensions &d) {
       os << d.dim(0);
       for (unsigned i=1; i < d.ndim(); ++i) os << "x" << d.dim(i);
       return os;
@@ -171,13 +173,13 @@ namespace getfemint
     { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
     const value_type& operator[](size_type i)
       const { if (i >= size()) THROW_INTERNAL_ERROR; return data[unsigned(i)]; }
-    value_type& operator()(size_type i, size_type j, size_type k=0) { 
-      if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR; 
-      return data[unsigned(i+j*getm()+k*getm()*getn())]; 
-    }
-    const value_type& operator()(size_type i, size_type j, size_type k=0) const { 
+    value_type& operator()(size_type i, size_type j, size_type k=0) {
       if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR;
-      return data[unsigned(i+j*getm()+k*getm()*getn())]; 
+      return data[unsigned(i+j*getm()+k*getm()*getn())];
+    }
+    const value_type& operator()(size_type i, size_type j, size_type k=0) const {
+      if (i+j*getm()+k*getm()*getn() >= size()) THROW_INTERNAL_ERROR;
+      return data[unsigned(i+j*getm()+k*getm()*getn())];
     }
     iterator begin() { return data.get(); }
     iterator end() { return data.get()+size(); }
@@ -190,35 +192,35 @@ namespace getfemint
     /* copies the array vector into a new VECT object */
     template<class VECT> VECT to_vector() const {
       VECT v(begin(), end()); /*v(size());
-				std::copy(begin(), end(), v.begin());*/
+                                std::copy(begin(), end(), v.begin());*/
       return v;
     }
     garray() {}
     garray(const gfi_array *mx) : array_dimensions(mx) {}
     bool in_range(value_type vmin, value_type vmax) {
-      for (size_type i = 0; i < size(); i++) 
-	if (data[i] < vmin || data[i] > vmax) return false;
+      for (size_type i = 0; i < size(); i++)
+        if (data[i] < vmin || data[i] > vmax) return false;
       return true;
     }
   };
 
-  class darray : public garray<double> {    
+  class darray : public garray<double> {
   public:
     darray() {}
     /* set data point to the given gfi_array. Freeing data is still the responsability of the gfi_array owner */
     void assign(const gfi_array *mx) {
       if (gfi_array_get_class(mx) == GFI_DOUBLE) {
-	/* creation from an array of doubles : just store a ref to the array */
-	assign_dimensions(mx);
-	data.reset(gfi_double_get_data(mx), false); 
+        /* creation from an array of doubles : just store a ref to the array */
+        assign_dimensions(mx);
+        data.reset(gfi_double_get_data(mx), false);
       } else if (gfi_array_get_class(mx) == GFI_UINT32 || gfi_array_get_class(mx) == GFI_INT32) {
-	/* creation from an array of int : allocation of new storage, and copy of the content */
-	assign_dimensions(mx);
-	data.reset(new double[size()], true);
-	if (gfi_array_get_class(mx) == GFI_INT32)
-	  std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(), data.get());
-	else
-	  std::copy(gfi_uint32_get_data(mx), gfi_uint32_get_data(mx)+size(), data.get());
+        /* creation from an array of int : allocation of new storage, and copy of the content */
+        assign_dimensions(mx);
+        data.reset(new double[size()], true);
+        if (gfi_array_get_class(mx) == GFI_INT32)
+          std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(), data.get());
+        else
+          std::copy(gfi_uint32_get_data(mx), gfi_uint32_get_data(mx)+size(), data.get());
       } else THROW_INTERNAL_ERROR;
     }
     darray(const gfi_array *mx) { assign(mx); }
@@ -232,8 +234,8 @@ namespace getfemint
     }
     getfem::base_matrix row_col_to_bm(unsigned k=0) const {
       getfem::base_matrix M(getm(),getn());
-      for (unsigned i=0; i < getm(); i++) 
-	for (unsigned j=0; j < getn(); j++) M(i,j) = operator()(i,j,k);
+      for (unsigned i=0; i < getm(); i++)
+        for (unsigned j=0; j < getn(); j++) M(i,j) = operator()(i,j,k);
       return M;
     }
   };
@@ -245,18 +247,18 @@ namespace getfemint
     void assign(const gfi_array *mx) {
       if (gfi_array_get_class(mx) == GFI_DOUBLE && gfi_array_is_complex(mx)) {
         /* creation from an array of complexes : just store a ref to the array */
-	assign_dimensions(mx);
-	data.reset(reinterpret_cast<complex_type*>(gfi_double_get_data(mx)), false);
+        assign_dimensions(mx);
+        data.reset(reinterpret_cast<complex_type*>(gfi_double_get_data(mx)), false);
       } else if (gfi_array_get_class(mx) == GFI_DOUBLE || gfi_array_get_class(mx) == GFI_UINT32 || gfi_array_get_class(mx) == GFI_INT32) {
-	/* creation from an array of int or doubles : allocation of new storage, and copy of the content */
-	assign_dimensions(mx);
-	data.reset(new complex_type[size()], true);
-	if (gfi_array_get_class(mx) == GFI_DOUBLE)
-	  std::copy(gfi_double_get_data(mx), gfi_double_get_data(mx)+size(), data.get());
-	else if (gfi_array_get_class(mx) == GFI_INT32)
-	  std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(), data.get());
-	else if (gfi_array_get_class(mx) == GFI_UINT32)
-	  std::copy(gfi_uint32_get_data(mx), gfi_uint32_get_data(mx)+size(), data.get());
+        /* creation from an array of int or doubles : allocation of new storage, and copy of the content */
+        assign_dimensions(mx);
+        data.reset(new complex_type[size()], true);
+        if (gfi_array_get_class(mx) == GFI_DOUBLE)
+          std::copy(gfi_double_get_data(mx), gfi_double_get_data(mx)+size(), data.get());
+        else if (gfi_array_get_class(mx) == GFI_INT32)
+          std::copy(gfi_int32_get_data(mx), gfi_int32_get_data(mx)+size(), data.get());
+        else if (gfi_array_get_class(mx) == GFI_UINT32)
+          std::copy(gfi_uint32_get_data(mx), gfi_uint32_get_data(mx)+size(), data.get());
       } else THROW_INTERNAL_ERROR;
     }
     carray(const gfi_array *mx) { assign(mx); }
@@ -270,27 +272,27 @@ namespace getfemint
     typedef enum { REAL, COMPLEX } value_type;
     darray &real() { if (v != REAL) THROW_INTERNAL_ERROR; return *d; }
     carray &cplx() { if (v != COMPLEX) THROW_INTERNAL_ERROR; return *c; }
-    
+
     rcarray() : mx(0), d(0), c(0), v(REAL) {}
     rcarray(const gfi_array *mx_, int v_ = -1) : d(0), c(0) { assign(mx_,v_); }
-    ~rcarray() { clear(); }    
+    ~rcarray() { clear(); }
     void assign(const gfi_array *mx_, int v_ = -1) {
       mx = mx_;
       v = v_; if (v == -1) v = gfi_array_is_complex(mx) ? COMPLEX : REAL;
       clear();
-      if (v == REAL) 
-	d.reset(new darray(mx)); 
+      if (v == REAL)
+        d.reset(new darray(mx));
       else c.reset(new carray(mx));
     }
     bool is_complex() const { return v == COMPLEX; }
     carray &to_complex() {
-      if (v == REAL) 
-	{ c.reset(new carray(mx)); d.reset(0); v = COMPLEX; }
+      if (v == REAL)
+        { c.reset(new carray(mx)); d.reset(0); v = COMPLEX; }
       return cplx();
     }
     darray &to_real() {
-      if (v == COMPLEX) 
-	THROW_BADARG("expected a real (not a complex) array in this context");
+      if (v == COMPLEX)
+        THROW_BADARG("expected a real (not a complex) array in this context");
       return real();
     }
     void clear() { d.reset(0); c.reset(0); }
@@ -302,7 +304,7 @@ namespace getfemint
     dal::shared_ptr<carray> c;
     int v;
   };
-    
+
 
   /* fake full vector/matrix class for matlab/python/etc arrays (necessary for template functions) */
   class iarray : public garray<int> {
@@ -310,9 +312,9 @@ namespace getfemint
     iarray() {}
     void assign(const gfi_array *mx) {
       if (gfi_array_get_class(mx) == GFI_INT32)
-	data.reset(gfi_int32_get_data(mx), false); 
-      else if (gfi_array_get_class(mx) == GFI_UINT32) 
-	data.reset((int*)gfi_uint32_get_data(mx), false);
+        data.reset(gfi_int32_get_data(mx), false);
+      else if (gfi_array_get_class(mx) == GFI_UINT32)
+        data.reset((int*)gfi_uint32_get_data(mx), false);
       else THROW_INTERNAL_ERROR;
       assign_dimensions(mx);
     }
@@ -346,16 +348,16 @@ namespace gmm {
     { std::fill(it, ite, value_type(0)); }
     static void do_clear(this_type &v) { std::fill(v.begin(), v.end(), 0.); }
     static value_type access(const origin_type *, const const_iterator &it,
-			     const const_iterator &, size_type i)
+                             const const_iterator &, size_type i)
     { return it[i]; }
     static reference access(origin_type *, const iterator &it,
-			    const iterator &, size_type i)
-    { return it[i]; }  
+                            const iterator &, size_type i)
+    { return it[i]; }
   };
 
-  template<> struct linalg_traits<getfemint::darray> : 
+  template<> struct linalg_traits<getfemint::darray> :
     public linalg_traits<getfemint::garray<double> > {};
-  template<> struct linalg_traits<getfemint::carray> : 
+  template<> struct linalg_traits<getfemint::carray> :
     public linalg_traits<getfemint::garray<getfemint::complex_type> > {};
 
   template <typename T> struct temporary_dense_vector<getfemint::garray<T> > {
@@ -389,104 +391,108 @@ namespace getfemint {
     int argnum;
 
     mexarg_in(const gfi_array *arg_, int num_) { arg = arg_; argnum = num_; }
-    bool                        is_string() { return (gfi_array_get_class(arg) == GFI_CHAR); }
-    bool                        is_cell() { return (gfi_array_get_class(arg) == GFI_CELL); }
-    bool                        is_object_id(id_type *pid=0, id_type *pcid=0);
-    bool                        is_mesh();
-    bool                        is_mesh_fem();
-    bool                        is_mesh_im();
-    bool                        is_mdbrick();
-    bool                        is_mdstate();
-    bool                        is_model();
-    bool                        is_mesh_slice();
-    bool                        is_levelset();
-    bool                        is_mesh_levelset();
-    bool                        is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
-    bool                        is_gsparse();
-    bool                        is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
-    bool                        is_integer();
-    bool                        is_bool();
-    bool                        to_bool();
-    int                         to_integer(int min_val=INT_MIN, int max_val=INT_MAX);
-    size_type                   to_convex_number(const getfem::mesh &m);
-    size_type                   to_face_number(size_type nbf);
-    double                      to_scalar(double min_val=-1e300, double max_val=1e300);
-    complex_type                to_scalar(complex_type);
-    std::string                 to_string();
-    id_type                     to_object_id(id_type *pid=0, id_type *pcid=0);
-    bgeot::base_poly *          to_poly();
-    const getfem::mesh_fem *    to_const_mesh_fem();
-    getfem::mesh_fem *          to_mesh_fem();
-    const getfem::mesh_im *     to_const_mesh_im();
-    getfem::mesh_im *           to_mesh_im();
-    const getfem::mesh * to_const_mesh();
-    const getfem::mesh * to_const_mesh(id_type& id);
-    getfemint_mesh *            to_getfemint_mesh(bool writeable=false);
-    getfemint_mesh_fem *        to_getfemint_mesh_fem(bool writeable=false);
-    getfemint_mesh_im *         to_getfemint_mesh_im(bool writeable=false);
-    getfemint_mdbrick *         to_getfemint_mdbrick(bool writeable=false);
-    getfemint_mdstate *         to_getfemint_mdstate(bool writeable=false);
-    getfemint_model *           to_getfemint_model(bool writeable=false);
-    getfem::mesh *       to_mesh();
-    getfemint_mesh_slice *      to_getfemint_mesh_slice(bool writeable=false);
-    getfemint_levelset *        to_getfemint_levelset(bool writeable=false);
-    //getfem::level_set *         to_levelset();
-    getfemint_mesh_levelset *   to_getfemint_mesh_levelset(bool writeable=false);
-  //getfem::mesh_level_set *    to_mesh_levelset();
-    getfem::pintegration_method to_integration_method();
-    getfemint_pfem*             to_getfemint_pfem();
-    getfem::pfem                to_fem();
-    getfem::pmat_elem_type      to_mat_elem_type();
-    bgeot::pgeometric_trans     to_pgt();
-    bgeot::pconvex_structure    to_convex_structure();
-    getfemint_precond *         to_precond();
-    getfem::mesh_region         to_mesh_region();
+    bool                                 is_string() { return (gfi_array_get_class(arg) == GFI_CHAR); }
+    bool                                 is_cell() { return (gfi_array_get_class(arg) == GFI_CELL); }
+    bool                                 is_object_id(id_type *pid=0, id_type *pcid=0);
+    bool                                 is_mesh();
+    bool                                 is_mesh_fem();
+    bool                                 is_mesh_im();
+    bool                                 is_mdbrick();
+    bool                                 is_mdstate();
+    bool                                 is_model();
+    bool                                 is_mesh_slice();
+    bool                                 is_levelset();
+    bool                                 is_mesh_levelset();
+    bool                                 is_global_function();
+    bool                                 is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
+    bool                                 is_gsparse();
+    bool                                 is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
+    bool                                 is_integer();
+    bool                                 is_bool();
+    bool                                 to_bool();
+    int                                  to_integer(int min_val=INT_MIN, int max_val=INT_MAX);
+    size_type                            to_convex_number(const getfem::mesh &m);
+    size_type                            to_face_number(size_type nbf);
+    double                               to_scalar(double min_val=-1e300, double max_val=1e300);
+    complex_type                         to_scalar(complex_type);
+    std::string                          to_string();
+    id_type                              to_object_id(id_type *pid=0, id_type *pcid=0);
+    bgeot::base_poly *                   to_poly();
+    const getfem::mesh_fem *             to_const_mesh_fem();
+    getfem::mesh_fem *                   to_mesh_fem();
+    const getfem::mesh_im *              to_const_mesh_im();
+    getfem::mesh_im *                    to_mesh_im();
+    const getfem::mesh *                 to_const_mesh();
+    const getfem::mesh *                 to_const_mesh(id_type& id);
+    getfemint_mesh *                     to_getfemint_mesh(bool writeable=false);
+    getfemint_mesh_fem *                 to_getfemint_mesh_fem(bool writeable=false);
+    getfemint_mesh_im *                  to_getfemint_mesh_im(bool writeable=false);
+    getfemint_mdbrick *                  to_getfemint_mdbrick(bool writeable=false);
+    getfemint_mdstate *                  to_getfemint_mdstate(bool writeable=false);
+    getfemint_model *                    to_getfemint_model(bool writeable=false);
+    getfem::mesh *                       to_mesh();
+    getfemint_mesh_slice *               to_getfemint_mesh_slice(bool writeable=false);
+    getfemint_levelset *                 to_getfemint_levelset(bool writeable=false);
+    //getfem::level_set *                  to_levelset();
+    getfemint_mesh_levelset *            to_getfemint_mesh_levelset(bool writeable=false);
+    //getfem::mesh_level_set *             to_mesh_levelset();
+    const getfem::abstract_xy_function * to_const_global_function();
+    getfem::abstract_xy_function *       to_global_function();
+    getfemint_global_function *          to_getfemint_global_function(bool writeable=false);
+    getfem::pintegration_method          to_integration_method();
+    getfemint_pfem*                      to_getfemint_pfem();
+    getfem::pfem                         to_fem();
+    getfem::pmat_elem_type               to_mat_elem_type();
+    bgeot::pgeometric_trans              to_pgt();
+    bgeot::pconvex_structure             to_convex_structure();
+    getfemint_precond *                  to_precond();
+    getfem::mesh_region                  to_mesh_region();
 
-    carray                      to_carray();
-    carray                      to_carray(int expected_dim);
-    carray                      to_carray(int expected_n, int expected_m, 
-					  int expected_k=1, int expected_q=1);
+    carray to_carray();
+    carray to_carray(int expected_dim);
+    carray to_carray(int expected_n, int expected_m,
+                     int expected_k=1, int expected_q=1);
 
     /* do not perform any check on the number of dimensions of the array */
-    darray                      to_darray();
+    darray to_darray();
 
     /* expect the argument to be a row or column vector of given dimension */
-    darray                      to_darray(int expected_dim);
+    darray to_darray(int expected_dim);
 
     /* expect the argument to be a matrix (or possibly a 3D array)
        if any of the arguments has a value of -1, the corresponding dimension
        is not checked
      */
-    darray                      to_darray(int expected_m, int expected_n, 
-					  int expected_k=1, int expected_q=1);
+    darray to_darray(int expected_m, int expected_n,
+                                          int expected_k=1, int expected_q=1);
 
     /* convertion to a real or complex array */
-    rcarray                     to_rcarray();
-    rcarray                     to_rcarray(int expected_dim);
-    rcarray                     to_rcarray(int expected_m, int expected_n, 
-					   int expected_k=1, int expected_q=1);    
+    rcarray to_rcarray();
+    rcarray to_rcarray(int expected_dim);
+    rcarray to_rcarray(int expected_m, int expected_n,
+                                           int expected_k=1, int expected_q=1);
 
-    iarray                      to_iarray();
-    iarray                      to_iarray(int expected_dim);
-    iarray                      to_iarray(int expected_m, int expected_n, 
-					  int expected_k=1, int expected_q=1);
+    iarray to_iarray();
+    iarray to_iarray(int expected_dim);
+    iarray to_iarray(int expected_m, int expected_n,
+                                          int expected_k=1, int expected_q=1);
 
     /* template friendly version */
-    garray<double>              to_garray(double) { return to_darray(); }
-    garray<double>              to_garray(int expected_dim, double) { return to_darray(expected_dim); }
-    garray<double>              to_garray(int expected_m, int expected_n, double) { return to_darray(expected_m, expected_n); }
-    garray<complex_type>        to_garray(complex_type) { return to_carray(); }
-    garray<complex_type>        to_garray(int expected_dim, complex_type) { return to_carray(expected_dim); }
-    garray<complex_type>        to_garray(int expected_m, int expected_n, complex_type) { return to_carray(expected_m, expected_n); }
+    garray<double>            to_garray(double) { return to_darray(); }
+    garray<double>            to_garray(int expected_dim, double) { return to_darray(expected_dim); }
+    garray<double>            to_garray(int expected_m, int expected_n, double) { return to_darray(expected_m, expected_n); }
+    garray<complex_type>      to_garray(complex_type) { return to_carray(); }
+    garray<complex_type>      to_garray(int expected_dim, complex_type) { return to_carray(expected_dim); }
+    garray<complex_type>      to_garray(int expected_m, int expected_n, complex_type) { return to_carray(expected_m, expected_n); }
 
-    dal::bit_vector             to_bit_vector(const dal::bit_vector *subsetof = NULL, int shiftvals=-config::base_index());
-    sub_index                   to_sub_index();
-    getfem::base_node           to_base_node() { return to_base_node(-1); }
-    getfem::base_node           to_base_node(int expected_dim);
-    void                        to_sparse(gf_real_sparse_csc_const_ref& M);
-    void                        to_sparse(gf_cplx_sparse_csc_const_ref& M);
-    dal::shared_ptr<gsparse>    to_sparse();
-    getfemint_gsparse *         to_getfemint_gsparse();
+    dal::bit_vector           to_bit_vector(const dal::bit_vector *subsetof = NULL, int shiftvals=-config::base_index());
+    sub_index                 to_sub_index();
+    getfem::base_node         to_base_node() { return to_base_node(-1); }
+    getfem::base_node         to_base_node(int expected_dim);
+    void                      to_sparse(gf_real_sparse_csc_const_ref& M);
+    void                      to_sparse(gf_cplx_sparse_csc_const_ref& M);
+    dal::shared_ptr<gsparse>  to_sparse();
+    getfemint_gsparse *       to_getfemint_gsparse();
 
     mexarg_in &check_trailing_dimension(int expected_dim);
     void check_dimensions(array_dimensions &v, int expected_m, int expected_n, int expected_p=-1, int expected_q=-1);
@@ -526,16 +532,16 @@ private:
     void from_tensor(const getfem::base_tensor& t);
     carray create_carray_v(unsigned dim);
     carray create_carray_h(unsigned dim);
-    carray create_carray(unsigned n, unsigned m); 
-    carray create_carray(unsigned n, unsigned m, unsigned p); 
+    carray create_carray(unsigned n, unsigned m);
+    carray create_carray(unsigned n, unsigned m, unsigned p);
     darray create_darray_v(unsigned dim);
     darray create_darray_h(unsigned dim);
-    darray create_darray(unsigned n, unsigned m); 
-    darray create_darray(unsigned n, unsigned m, unsigned p); 
+    darray create_darray(unsigned n, unsigned m);
+    darray create_darray(unsigned n, unsigned m, unsigned p);
     iarray create_iarray_v(unsigned dim);
     iarray create_iarray_h(unsigned dim);
-    iarray create_iarray(unsigned n, unsigned m); 
-    iarray create_iarray(unsigned n, unsigned m, unsigned p); 
+    iarray create_iarray(unsigned n, unsigned m);
+    iarray create_iarray(unsigned n, unsigned m, unsigned p);
     /* overloaded functions, useful for templates */
     darray create_array_v(unsigned n, double) { return create_darray_v(n); }
     darray create_array_h(unsigned n, double) { return create_darray_h(n); }
@@ -562,7 +568,7 @@ private:
     template<class VEC_CONT> void from_vector_container(const VEC_CONT& vv);
   };
 
-  template<class STR_CONT> void 
+  template<class STR_CONT> void
   mexarg_out::from_string_container(const STR_CONT& s)
   {
     arg = checked_gfi_array_create_2(int(s.size()), 1, GFI_CELL);
@@ -570,12 +576,12 @@ private:
     typename STR_CONT::const_iterator it;
     size_type cnt = 0;
     for (it = s.begin(); it != s.end(); ++it, ++cnt) {
-      c[cnt] = checked_gfi_array_from_string((*it).c_str());
+      c[cnt] = checked_gfi_array_from_string(it->c_str());
     }
   }
 
   /* output a matrix from a container of vectors (of same dimensions) */
-  template<class VEC_CONT> void 
+  template<class VEC_CONT> void
   mexarg_out::from_vector_container(const VEC_CONT& vv)
   {
     size_type n = vv.size();
@@ -605,18 +611,18 @@ private:
     ~mexargs_in();
     void check() const { if (idx.card() == 0) THROW_INTERNAL_ERROR; }
     const gfi_array *pop_gfi_array(size_type decal=0, int *out_idx = NULL) {
-      size_type i = idx.first_true(); 
+      size_type i = idx.first_true();
       check();
       if (decal >= idx.card()) THROW_INTERNAL_ERROR;
       while (decal>0) { i++; check(); if (idx.is_in(i)) decal--; }
-      idx.sup(i); 
+      idx.sup(i);
       if (out_idx) *out_idx = int(i);
       return in[i];
     }
-    mexarg_in &pop(size_type decal=0) { 
+    mexarg_in &pop(size_type decal=0) {
       int i;
       const gfi_array *m = pop_gfi_array(decal, &i);
-      last = mexarg_in(m,i+1); 
+      last = mexarg_in(m,i+1);
       return last;
     }
     mexarg_in &last_popped() { return last; }
@@ -624,16 +630,16 @@ private:
     mexarg_in front() const {
       check();
       return mexarg_in(in[idx.first_true()],
-		       int(idx.first_true()));
+                       int(idx.first_true()));
     }
     int narg() const { return nb_arg; }
     int remaining() const { return int(idx.card()); }
     void get_array(const gfi_array **& m) {
       if (remaining()) {
-	m = new const gfi_array *[remaining()];
-	for (size_type i=0; remaining(); i++) {
-	  m[i] = pop_gfi_array();
-	}
+        m = new const gfi_array *[remaining()];
+        for (size_type i=0; remaining(); i++) {
+          m[i] = pop_gfi_array();
+        }
       } else m = NULL;
     }
     void pop_all() { idx.clear(); }
@@ -644,8 +650,8 @@ private:
     mutable std::deque<gfi_array *> out; /* deque because mexarg_out hold a reference to this array content */
     int nb_arg; /* if equal to -1, the number of output arguments is unknown */
     int idx;
-    int okay; /* if 0, the destructor will destroy the allacted arrays in 'out' 
-		 and will call workspace().destroy_newly_created_objects */
+    int okay; /* if 0, the destructor will destroy the allacted arrays in 'out'
+                 and will call workspace().destroy_newly_created_objects */
     bool scilab_flag;
     /* copy forbidden */
     mexargs_out(const mexargs_out& );
@@ -658,7 +664,7 @@ private:
     mexarg_out front() const { check(); return mexarg_out(out[idx], idx+1); }
     bool narg_in_range(int min, int max) const {
       if ((scilab_flag) && (max==0) && (min==0)) return true;
-      return (nb_arg == -1 || (nb_arg >= min && (nb_arg <= max || max == -1))); 
+      return (nb_arg == -1 || (nb_arg >= min && (nb_arg <= max || max == -1)));
     }
     bool narg_known() const { return nb_arg != -1; }
     bool remaining() const { return !narg_known() || (std::max(nb_arg,1) - idx); }
@@ -672,23 +678,23 @@ private:
 
   bool cmd_strmatch(const std::string& a, const char *s);
   bool cmd_strmatchn(const std::string& a, const char *s, unsigned n);
-  bool check_cmd(const std::string& cmdname, const char *s, 
-		 const mexargs_in& in, 
-		 int min_argin=0, int max_argin=-1);
-  bool check_cmd(const std::string& cmdname, const char *s, 
-		 const mexargs_out& out,
-		 int min_argout=0, int max_argout=-1);
-  bool check_cmd(const std::string& cmdname, const char *s, 
-		 const mexargs_in& in, const mexargs_out& out,
-		 int min_argin=0, int max_argin=-1,
-		 int min_argout=0, int max_argout=-1);
-  
-  inline void bad_cmd(std::string& cmd) { 
+  bool check_cmd(const std::string& cmdname, const char *s,
+                 const mexargs_in& in,
+                 int min_argin=0, int max_argin=-1);
+  bool check_cmd(const std::string& cmdname, const char *s,
+                 const mexargs_out& out,
+                 int min_argout=0, int max_argout=-1);
+  bool check_cmd(const std::string& cmdname, const char *s,
+                 const mexargs_in& in, const mexargs_out& out,
+                 int min_argin=0, int max_argin=-1,
+                 int min_argout=0, int max_argout=-1);
+
+  inline void bad_cmd(std::string& cmd) {
     THROW_BADARG("Bad command name: " << cmd); }
 
   void check_cv_fem(const getfem::mesh_fem& mf, size_type cv);
   void check_cv_im(const getfem::mesh_im& mim, size_type cv);
-  
+
   const double& get_NaN();
   bool is_NaN(const double&);
 }  /* end of namespace getfemint.                                          */

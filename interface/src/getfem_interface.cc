@@ -19,8 +19,8 @@
 //
 //===========================================================================
 
-#include "getfem_interface.h"
-#include "getfemint.h"
+#include <getfem_interface.h>
+#include <getfemint.h>
 
 using namespace getfemint;
 
@@ -31,6 +31,7 @@ void gf_geotrans(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_geotrans_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_global_function(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_cvstruct_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
@@ -110,10 +111,10 @@ namespace getfemint {
 
 extern "C" 
 char* getfem_interface_main(int config_id, const char *function, 
-			    int nb_in_args,
-			    const gfi_array *in_args[], 
-			    int *nb_out_args,
-			    gfi_array ***pout_args, char **pinfomsg, int scilab_flag)
+                            int nb_in_args,
+                            const gfi_array *in_args[], 
+                            int *nb_out_args,
+                            gfi_array ***pout_args, char **pinfomsg, int scilab_flag)
 {
   std::stringstream info;
   getfemint::global_pinfomsg = &info;
@@ -135,6 +136,7 @@ char* getfem_interface_main(int config_id, const char *function,
     else if (strcmp(function, "geotrans_get")==0) gf_geotrans_get(in,out);
     else if (strcmp(function, "integ")==0) gf_integ(in,out);
     else if (strcmp(function, "integ_get")==0) gf_integ_get(in,out);
+    else if (strcmp(function, "global_function")==0) gf_global_function(in,out);
     else if (strcmp(function, "fem")==0) gf_fem(in,out);
     else if (strcmp(function, "fem_get")==0) gf_fem_get(in,out);
     else if (strcmp(function, "cvstruct_get")==0) gf_cvstruct_get(in,out);

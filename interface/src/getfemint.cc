@@ -41,6 +41,7 @@
 #include <getfemint_gsparse.h>
 #include <getfemint_levelset.h>
 #include <getfemint_mesh_levelset.h>
+#include <getfemint_global_function.h>
 
 #include <getfemint_misc.h>
 //#ifdef MAINTAINER_MODE
@@ -58,10 +59,24 @@ namespace getfemint {
      given by matlab to the structure (hum..) */
   const char *name_of_getfemint_class_id(unsigned cid) {
     static const char *cname[GETFEMINT_NB_CLASS] = {
-      "gfMesh", "gfMeshFem", "gfMeshIm", "gfMdBrick", "gfMdState",
-      "gfModel", "gfGeoTrans",
-      "gfFem", "gfInteg","gfEltm","gfCvStruct","gfPoly", "gfSlice",
-      "gfSpmat", "gfPrecond", "gfLevelSet", "gfMeshLevelSet"
+      "gfMesh",
+      "gfMeshFem",
+      "gfMeshIm",
+      "gfMdBrick",
+      "gfMdState",
+      "gfModel",
+      "gfGeoTrans",
+      "gfFem",
+      "gfInteg",
+      "gfEltm",
+      "gfCvStruct",
+      "gfPoly",
+      "gfSlice",
+      "gfSpmat",
+      "gfPrecond",
+      "gfLevelSet",
+      "gfMeshLevelSet",
+      "gfGlobalFunction"
     };
 
     if (cid >= GETFEMINT_NB_CLASS) return "not_a_getfem_class";
@@ -80,13 +95,13 @@ namespace getfemint {
   /* append the dimensions [d0,d0+n[ of other, but ignore the first dimension
      if the array is a row matrix in matlab */
   size_type array_dimensions::push_back(const array_dimensions& other,
-					unsigned d0, unsigned n,
-					bool matlab_row_matrix_is_a_vector) {
+                                        unsigned d0, unsigned n,
+                                        bool matlab_row_matrix_is_a_vector) {
     size_type qqdim = 1;
     for (unsigned i=d0; i < d0+n; ++i) {
       if (i || !matlab_row_matrix_is_a_vector ||
-	  !(!config::has_1D_arrays() && other.ndim() == 2 && other.dim(0) == 1))
-	push_back(other.dim(i));
+          !(!config::has_1D_arrays() && other.ndim() == 2 && other.dim(0) == 1))
+        push_back(other.dim(i));
       qqdim *= other.dim(i);
     }
     return qqdim;
@@ -131,25 +146,24 @@ namespace getfemint {
   const sub_index &sub_index::check_range(size_type n) const {
     /*for (gmm::unsorted_sub_index::const_iterator it = begin(); it != end(); ++it) {
       if (*it >= n) {
-	THROW_BADARG("wrong matrix sub index: " << *it + config::base_index() << " not in range [" <<
-		     config::base_index() << ".." << n-1 + config::base_index() << "]");
+        THROW_BADARG("wrong matrix sub index: " << *it + config::base_index() << " not in range [" <<
+                     config::base_index() << ".." << n-1 + config::base_index() << "]");
       }
       }*/
     if (last() >= n)
       THROW_BADARG("wrong matrix sub index: " << last() + config::base_index() << " not in range [" <<
-		   config::base_index() << ".." << n-1 + config::base_index() << "]");
+                   config::base_index() << ".." << n-1 + config::base_index() << "]");
     return *this;
   }
 
   double
-  mexarg_in::to_scalar_(bool isint)
-  {
+  mexarg_in::to_scalar_(bool isint) {
     double dv;
     if (gfi_array_nb_of_elements(arg) != 1) {
       THROW_BADARG("Argument " << argnum <<
-		   " has dimensions " << dim_of_gfi_array(arg) <<
-		   " but a [1x1] " << std::string(isint ? "integer" : "scalar") <<
-		   " was expected");
+                   " has dimensions " << dim_of_gfi_array(arg) <<
+                   " but a [1x1] " << std::string(isint ? "integer" : "scalar") <<
+                   " was expected");
     }
     switch (gfi_array_get_class(arg)) {
     case GFI_DOUBLE: {
@@ -173,13 +187,12 @@ namespace getfemint {
   }
 
   double
-  mexarg_in::to_scalar(double minval, double maxval)
-  {
+  mexarg_in::to_scalar(double minval, double maxval) {
     double dv = to_scalar_(false);
     if (dv < minval || dv > maxval) {
       THROW_BADARG("Argument " << argnum <<
-		" is out of bounds : " << dv << " not in [" <<
-		minval << "..." << maxval << "]");
+                   " is out of bounds : " << dv << " not in " <<
+                   "[" << minval << "..." << maxval << "]");
     }
     return dv;
   }
@@ -188,8 +201,8 @@ namespace getfemint {
   mexarg_in::to_scalar(complex_type) {
     if (gfi_array_nb_of_elements(arg) != 1) {
       THROW_BADARG("Argument " << argnum <<
-		   " has dimensions " << dim_of_gfi_array(arg) <<
-		   " but a [1x1] complex number was expected");
+                   " has dimensions " << dim_of_gfi_array(arg) <<
+                   " but a [1x1] complex number was expected");
     }
     garray<complex_type> g = to_garray(complex_type());
     return g[0];
@@ -200,9 +213,9 @@ namespace getfemint {
     if (is_complex()) return false;
     switch (gfi_array_get_class(arg)) {
       case GFI_DOUBLE: {
-	double dv = *gfi_double_get_data(arg);
-	if (dv != int(dv)) return false;
-	return true;
+        double dv = *gfi_double_get_data(arg);
+        if (dv != int(dv)) return false;
+        return true;
       } break;
       case GFI_INT32:
       case GFI_UINT32: return true; break;
@@ -217,19 +230,19 @@ namespace getfemint {
 
     switch (gfi_array_get_class(arg)) {
       case GFI_UINT32: {
-	unsigned uv = *gfi_uint32_get_data(arg);
-	if (uv > 1.0) return false;
-	return true;
+        unsigned uv = *gfi_uint32_get_data(arg);
+        if (uv > 1.0) return false;
+        return true;
       } break;
       case GFI_INT32: {
-	int iv = *gfi_int32_get_data(arg);
-	if (iv < 0.0 || iv > 1.0) return false;
-	return true;
+        int iv = *gfi_int32_get_data(arg);
+        if (iv < 0.0 || iv > 1.0) return false;
+        return true;
       } break;
       case GFI_DOUBLE: {
-	double dv = *gfi_double_get_data(arg);
-	if (dv != int(dv) || dv < 0.0 || dv > 1.0) return false;
-	return true;
+        double dv = *gfi_double_get_data(arg);
+        if (dv != int(dv) || dv < 0.0 || dv > 1.0) return false;
+        return true;
       } break;
       default: return false;
     }
@@ -237,35 +250,32 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::to_bool()
-  {
+  mexarg_in::to_bool() {
     double dv = to_scalar_(true);
     if (dv != floor(dv) || dv < 0.0 || dv > 1.0) {
       THROW_BADARG("Argument " << argnum <<
-		" is not an bool value");
+                   " is not an bool value");
     }
     return (bool)dv;
   }
 
   int
-  mexarg_in::to_integer(int minval, int maxval)
-  {
+  mexarg_in::to_integer(int minval, int maxval) {
     double dv = to_scalar_(true);
     if (dv != floor(dv)) {
       THROW_BADARG("Argument " << argnum <<
-		" is not an integer value");
+                   " is not an integer value");
     }
     if (dv < minval || dv > maxval) {
       THROW_BADARG("Argument " << argnum <<
-		" is out of bounds : " << dv << " not in [" <<
-		minval << "..." << maxval << "]");
+                   " is out of bounds : " << dv << " not in " <<
+                   "[" << minval << "..." << maxval << "]");
     }
     return (int)dv;
   }
 
   size_type
-  mexarg_in::to_convex_number(const getfem::mesh &m)
-  {
+  mexarg_in::to_convex_number(const getfem::mesh &m) {
     int cv = to_integer(config::base_index(), INT_MAX) - config::base_index();
     if (!m.convex_index().is_in(cv))
       THROW_BADARG( "Convex " << cv << " is not part of the mesh");
@@ -273,8 +283,7 @@ namespace getfemint {
   }
 
   size_type
-  mexarg_in::to_face_number(size_type nbf)
-  {
+  mexarg_in::to_face_number(size_type nbf) {
     size_type f = to_integer(config::base_index(),
                              int(config::base_index()+nbf-1));
     f -= config::base_index();
@@ -282,8 +291,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_object_id(id_type *pid, id_type *pcid)
-  {
+  mexarg_in::is_object_id(id_type *pid, id_type *pcid) {
     if (gfi_array_get_class(arg) == GFI_OBJID &&
         gfi_array_nb_of_elements(arg) == 1) {
       if (pid)  *pid  = gfi_objid_get_data(arg)->id;
@@ -294,8 +302,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh()
-  {
+  mexarg_in::is_mesh() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESH_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -304,8 +311,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh_fem()
-  {
+  mexarg_in::is_mesh_fem() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESHFEM_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -314,8 +320,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh_im()
-  {
+  mexarg_in::is_mesh_im() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESHIM_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -324,8 +329,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mdbrick()
-  {
+  mexarg_in::is_mdbrick() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MDBRICK_CLASS_ID) {
       getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
@@ -334,8 +338,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mdstate()
-  {
+  mexarg_in::is_mdstate() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MDSTATE_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -344,8 +347,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_model()
-  {
+  mexarg_in::is_model() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MODEL_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -354,8 +356,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh_slice()
-  {
+  mexarg_in::is_mesh_slice() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == SLICE_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -364,8 +365,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_levelset()
-  {
+  mexarg_in::is_levelset() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == LEVELSET_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -374,8 +374,7 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_mesh_levelset()
-  {
+  mexarg_in::is_mesh_levelset() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MESH_LEVELSET_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -384,8 +383,16 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_gsparse()
-  {
+  mexarg_in::is_global_function() {
+    id_type id, cid;
+    if (is_object_id(&id, &cid) && cid == GLOBAL_FUNCTION_CLASS_ID) {
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
+      return (object_is_global_function(o));
+    } else return false;
+  }
+
+  bool
+  mexarg_in::is_gsparse() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == GSPARSE_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
@@ -394,15 +401,13 @@ namespace getfemint {
   }
 
   bool
-  mexarg_in::is_complex()
-  {
+  mexarg_in::is_complex() {
     if (!is_gsparse()) return gfi_array_is_complex(arg);
     else return to_sparse()->is_complex();
   }
 
   std::string
-  mexarg_in::to_string()
-  {
+  mexarg_in::to_string() {
     /* string => row vector. */
     if (!is_string())
       THROW_BADARG("Argument " << argnum << " must be a string.");
@@ -410,12 +415,11 @@ namespace getfemint {
   }
 
   id_type
-  mexarg_in::to_object_id(id_type *pid, id_type *pcid)
-  {
+  mexarg_in::to_object_id(id_type *pid, id_type *pcid) {
     id_type id,cid;
     if (!is_object_id(&id, &cid)) {
       THROW_BADARG("wrong type for argument " << argnum <<
-		   ": expecting a getfem object, got a " << gfi_array_get_class_name(arg));
+                   ": expecting a getfem object, got a " << gfi_array_get_class_name(arg));
     }
     if (pid) *pid = id;
     if (pcid) *pcid = cid;
@@ -428,8 +432,7 @@ namespace getfemint {
     and returns it
   */
   /*
-  dal::bit_vector * mexarg_in::to_intset()
-  {
+  dal::bit_vector * mexarg_in::to_intset() {
     getfem_object *o = workspace().object(to_object_id());
     if (!object_is_intset(o)) {
       THROW_BADARG("Argument " << argnum << " should be an intset descriptor");    }
@@ -443,8 +446,7 @@ namespace getfemint {
     and returns it
   */
   bgeot::base_poly *
-  mexarg_in::to_poly()
-  {
+  mexarg_in::to_poly() {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != POLY_CLASS_ID) {
@@ -457,9 +459,9 @@ namespace getfemint {
   void mexarg_in::error_if_nonwritable(getfem_object *o, bool want_writeable) {
     if (want_writeable && o->is_const())
       THROW_BADARG("argument " << argnum <<
-		   " should be a modifiable " <<
-		   name_of_getfemint_class_id(o->class_id()) <<
-		   ", this one is marked as read-only");
+                   " should be a modifiable " <<
+                   name_of_getfemint_class_id(o->class_id()) <<
+                   ", this one is marked as read-only");
   }
 
   /*
@@ -467,8 +469,7 @@ namespace getfemint {
     and returns it
   */
   getfemint_mesh_fem *
-  mexarg_in::to_getfemint_mesh_fem(bool writeable)
-  {
+  mexarg_in::to_getfemint_mesh_fem(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MESHFEM_CLASS_ID) {
@@ -488,19 +489,17 @@ namespace getfemint {
     return &to_getfemint_mesh_fem(false)->mesh_fem();
   }
 
-
   /*
     check if the argument is a valid handle to a mesh_im,
     and returns it
   */
   getfemint_mesh_im *
-  mexarg_in::to_getfemint_mesh_im(bool writeable)
-  {
+  mexarg_in::to_getfemint_mesh_im(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MESHIM_CLASS_ID) {
       THROW_BADARG("argument " << argnum << " should be a mesh_im descriptor, "
-		   "its class is " << name_of_getfemint_class_id(cid));
+                   "its class is " << name_of_getfemint_class_id(cid));
     }
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
     error_if_nonwritable(o,writeable);
@@ -526,13 +525,12 @@ namespace getfemint {
   mexarg_in::to_const_mesh() { id_type mid; return to_const_mesh(mid); }
 
   const getfem::mesh *
-  mexarg_in::to_const_mesh(id_type& mid)
-  {
+  mexarg_in::to_const_mesh(id_type& mid) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MESHFEM_CLASS_ID && cid != MESH_CLASS_ID && cid != MESHIM_CLASS_ID) {
       THROW_BADARG("argument " << argnum << " should be a mesh or mesh_fem "
-		   "or mesh_im descriptor, its class is " << name_of_getfemint_class_id(cid));
+                   "or mesh_im descriptor, its class is " << name_of_getfemint_class_id(cid));
     }
     const getfem::mesh *mesh = NULL;
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
@@ -549,14 +547,12 @@ namespace getfemint {
     return mesh;
   }
 
-
   /*
     check if the argument is a valid mesh handle
     (the returned arg is not const, so we can't use the mesh from mesh_fem objects)
   */
   getfemint_mesh *
-  mexarg_in::to_getfemint_mesh(bool writeable)
-  {
+  mexarg_in::to_getfemint_mesh(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MESH_CLASS_ID) {
@@ -573,8 +569,7 @@ namespace getfemint {
   }
 
   getfemint_mdbrick *
-  mexarg_in::to_getfemint_mdbrick(bool writeable)
-  {
+  mexarg_in::to_getfemint_mdbrick(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MDBRICK_CLASS_ID) {
@@ -586,8 +581,7 @@ namespace getfemint {
   }
 
   getfemint_mdstate *
-  mexarg_in::to_getfemint_mdstate(bool writeable)
-  {
+  mexarg_in::to_getfemint_mdstate(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MDSTATE_CLASS_ID) {
@@ -599,13 +593,12 @@ namespace getfemint {
   }
 
   getfemint_model *
-  mexarg_in::to_getfemint_model(bool writeable)
-  {
+  mexarg_in::to_getfemint_model(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MODEL_CLASS_ID) {
       THROW_BADARG("argument " << argnum << " should be a model descriptor, "
-		   "its class is " << name_of_getfemint_class_id(cid));
+                   "its class is " << name_of_getfemint_class_id(cid));
     }
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
     error_if_nonwritable(o,writeable);
@@ -613,8 +606,7 @@ namespace getfemint {
   }
 
   getfemint_mesh_slice *
-  mexarg_in::to_getfemint_mesh_slice(bool writeable)
-  {
+  mexarg_in::to_getfemint_mesh_slice(bool writeable) {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != SLICE_CLASS_ID) {
@@ -661,9 +653,34 @@ namespace getfemint {
   }
   */
 
+  /*
+    check if the argument is a valid handle to a global_function,
+    and returns it
+  */
+  getfemint_global_function *
+  mexarg_in::to_getfemint_global_function(bool writeable) {
+    id_type id, cid;
+    to_object_id(&id,&cid);
+    if (cid != GLOBAL_FUNCTION_CLASS_ID) {
+      THROW_BADARG("argument " << argnum << " should be a global_function " <<
+                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
+    }
+    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
+    error_if_nonwritable(o, writeable);
+    return object_to_global_function(o);
+  }
+  getfem::abstract_xy_function *
+  mexarg_in::to_global_function() {
+    return &to_getfemint_global_function(true)->global_function();
+  }
+
+  const getfem::abstract_xy_function *
+  mexarg_in::to_const_global_function() {
+    return &to_getfemint_global_function(false)->global_function();
+  }
+
   getfemint_precond *
-  mexarg_in::to_precond()
-  {
+  mexarg_in::to_precond() {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != PRECOND_CLASS_ID) {
@@ -676,8 +693,8 @@ namespace getfemint {
   getfem::mesh_region
   mexarg_in::to_mesh_region() {
     if (gfi_array_get_class(arg) != GFI_INT32 &&
-	gfi_array_get_class(arg) != GFI_UINT32 &&
-	gfi_array_get_class(arg) != GFI_DOUBLE) {
+        gfi_array_get_class(arg) != GFI_UINT32 &&
+        gfi_array_get_class(arg) != GFI_DOUBLE) {
       THROW_BADARG("expected a mesh region!");
     }
     iarray v = to_iarray();
@@ -685,49 +702,45 @@ namespace getfemint {
   }
 
   getfem::pintegration_method
-  mexarg_in::to_integration_method()
-  {
+  mexarg_in::to_integration_method() {
     id_type id,cid;
     to_object_id(&id,&cid);
     if (cid != INTEG_CLASS_ID)
       THROW_BADARG("Argument " << argnum <<
-		   " should be an integration method descriptor");
+                   " should be an integration method descriptor");
     if (!exists_integ(id)) {
       THROW_BADARG("Argument " << argnum <<
-		   " is not a valid integration method handle");
+                   " is not a valid integration method handle");
     }
     return addr_integ(id);
   }
 
   getfem::pmat_elem_type
-  mexarg_in::to_mat_elem_type()
-  {
+  mexarg_in::to_mat_elem_type() {
     id_type id,cid;
     to_object_id(&id,&cid);
     if (cid != ELTM_CLASS_ID)
       THROW_BADARG("Argument " << argnum <<
-		   " should be a elementary matrix descriptor.");
+                   " should be a elementary matrix descriptor.");
     if (!exists_matelemtype(id))
       THROW_BADARG("Argument " << argnum <<
-		   " is not a valid elementary matrix handle");
+                   " is not a valid elementary matrix handle");
     return addr_matelemtype(id);
   }
 
   getfemint_pfem*
-  mexarg_in::to_getfemint_pfem()
-  {
+  mexarg_in::to_getfemint_pfem() {
     id_type id,cid;
     to_object_id(&id,&cid);
     if (cid != FEM_CLASS_ID)
       THROW_BADARG("Argument " << argnum <<
-		   " should be a fem descriptor");
+                   " should be a fem descriptor");
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
     return object_to_pfem(o);
   }
 
   getfem::pfem
-  mexarg_in::to_fem()
-  {
+  mexarg_in::to_fem() {
     getfemint_pfem *p = to_getfemint_pfem();
     return p->pfem();
   }
@@ -739,10 +752,10 @@ namespace getfemint {
     to_object_id(&id,&cid);
     if (cid != GEOTRANS_CLASS_ID)
       THROW_BADARG("Argument " << argnum <<
-		   " is not a geometric transformation handle");
+                   " is not a geometric transformation handle");
     if (!getfemint::exists_pgt(id))
       THROW_BADARG("Argument " << argnum <<
-		   " refers to a geometric transformation that does not exists");
+                   " refers to a geometric transformation that does not exists");
     return getfemint::addr_pgt(id);
   }
 
@@ -752,22 +765,22 @@ namespace getfemint {
     to_object_id(&id,&cid);
     if (cid != CVSTRUCT_CLASS_ID)
       THROW_BADARG("Argument " << argnum <<
-		   " is not a convex structure handle");
+                   " is not a convex structure handle");
     if (!getfemint::exists_convex_structure(id))
       THROW_BADARG("Argument " << argnum <<
-		   " refers to a convex structure that does not exists");
+                   " refers to a convex structure that does not exists");
     return getfemint::addr_convex_structure(id);
   }
 
   void mexarg_in::check_dimensions(const array_dimensions &v, int expected_dim) {
     if (v.getn() != 1 && v.getm() != 1 && v.size() != 0) {
       THROW_BADARG("Argument " << argnum <<
-		   " should be a vector, not a matrix");
+                   " should be a vector, not a matrix");
     }
     if (expected_dim != -1 && (int)v.size() != expected_dim) {
       THROW_BADARG("Argument " << argnum <<
-		   " has wrong dimensions: expected " << expected_dim <<
-		   ", found " << v.size());
+                   " has wrong dimensions: expected " << expected_dim <<
+                   ", found " << v.size());
     }
   }
 
@@ -778,22 +791,22 @@ namespace getfemint {
     }
     if (expected_m >= 0 && (int)v.getm() != expected_m)
       THROW_BADARG("Argument " << argnum <<
-		   " has a wrong number of rows (" << v.getm() <<
-		   ") , " << expected_m << " rows were expected");
+                   " has a wrong number of rows (" << v.getm() <<
+                   ") , " << expected_m << " rows were expected");
     if (expected_n >= 0 && (int)v.getn() != expected_n)
       THROW_BADARG("Argument " << argnum <<
-		   " has a wrong number of columns (" << v.getn() <<
-		   ") , " << expected_n << " columns were expected");
+                   " has a wrong number of columns (" << v.getn() <<
+                   ") , " << expected_n << " columns were expected");
     if (expected_p >= 0 && (int)v.getp() != expected_p)
       THROW_BADARG("Argument " << argnum <<
-		   " was expected to be a three-dimensional array, with " <<
-		   expected_p << " elements in its third dimension (got " <<
-		   v.getp() << ")");
+                   " was expected to be a three-dimensional array, with " <<
+                   expected_p << " elements in its third dimension (got " <<
+                   v.getp() << ")");
     if (expected_q >= 0 && (int)v.getq() != expected_q)
       THROW_BADARG("Argument " << argnum <<
-		   " was expected to be a four-dimensional array, with " <<
-		   expected_q << " elements in its fourth dimension (got " <<
-		   v.getq() << ")");
+                   " was expected to be a four-dimensional array, with " <<
+                   expected_q << " elements in its fourth dimension (got " <<
+                   v.getq() << ")");
   }
 
   mexarg_in &mexarg_in::check_trailing_dimension(int expected_dim) {
@@ -804,11 +817,11 @@ namespace getfemint {
       array_dimensions ad(arg);
       std::string tip_of_the_day;
       if (nd == 2 && int(ad.dim(0)) == expected_dim)
-	tip_of_the_day = "\n You should probably transpose your array..";
+        tip_of_the_day = "\n You should probably transpose your array..";
       THROW_BADARG("The trailing dimension of argument " << argnum
-		   << " (an array of size " << ad << ")" <<
-		   " has " << d << " elements, " << expected_dim << " were expected"
-		   << tip_of_the_day);
+                   << " (an array of size " << ad << ")" <<
+                   " has " << d << " elements, " << expected_dim << " were expected"
+                   << tip_of_the_day);
     }
     return *this;
   }
@@ -820,7 +833,7 @@ namespace getfemint {
         gfi_array_get_class(arg) != GFI_INT32 &&
         gfi_array_get_class(arg) != GFI_UINT32)) {
       THROW_BADARG("Argument " << argnum <<
-		   " should be a DOUBLE REAL data array");
+                   " should be a DOUBLE REAL data array");
     }
     return darray(arg);
   }
@@ -838,7 +851,7 @@ namespace getfemint {
      and/or a good number of columns (and or a good number of third dimension) */
   darray
   mexarg_in::to_darray(int expected_m, int expected_n,
-		       int expected_p, int expected_q) {
+                       int expected_p, int expected_q) {
     darray v = to_darray();
     check_dimensions(v, expected_m, expected_n, expected_p, expected_q);
     return v;
@@ -850,7 +863,7 @@ namespace getfemint {
         gfi_array_get_class(arg) != GFI_INT32 &&
         gfi_array_get_class(arg) != GFI_UINT32)) {
       THROW_BADARG("Argument " << argnum <<
-		   " should be a DOUBLE REAL or COMPLEX data array");
+                   " should be a DOUBLE REAL or COMPLEX data array");
     }
     return rcarray(arg);
   }
@@ -868,10 +881,10 @@ namespace getfemint {
      and/or a good number of columns (and or a good number of third dimension) */
   rcarray
   mexarg_in::to_rcarray(int expected_m, int expected_n,
-			int expected_p, int expected_q) {
+                        int expected_p, int expected_q) {
     rcarray v = to_rcarray();
     check_dimensions(v.sizes(), expected_m, expected_n,
-		     expected_p, expected_q);
+                     expected_p, expected_q);
     return v;
   }
 
@@ -881,7 +894,7 @@ namespace getfemint {
        gfi_array_get_class(arg) != GFI_INT32 &&
        gfi_array_get_class(arg) != GFI_UINT32) {
       THROW_BADARG("Argument " << argnum <<
-		   " should be a DOUBLE COMPLEX data array");
+                   " should be a DOUBLE COMPLEX data array");
     }
     return carray(arg);
   }
@@ -899,7 +912,7 @@ namespace getfemint {
      and/or a good number of columns (and or a good number of third dimension) */
   carray
   mexarg_in::to_carray(int expected_m, int expected_n,
-		       int expected_p, int expected_q) {
+                       int expected_p, int expected_q) {
     carray v = to_carray();
     check_dimensions(v, expected_m, expected_n, expected_p, expected_q);
     return v;
@@ -909,25 +922,25 @@ namespace getfemint {
   mexarg_in::to_iarray() {
     //check_int_values(INT_MIN,INT_MAX);
     if (gfi_array_get_class(arg) == GFI_INT32 ||
-	gfi_array_get_class(arg) == GFI_UINT32) {
+        gfi_array_get_class(arg) == GFI_UINT32) {
       return iarray(arg);
     } else if (gfi_array_get_class(arg) == GFI_DOUBLE) {
       darray v(arg);
       //cout << "conversion DOUBLE -> INT for array of size " << v.getm() << "x" << v.getn() << "x" << v.getp() << "\n";
       iarray ia(new int[v.size()], v.size());  ia.assign_dimensions(arg);
       for (unsigned i=0; i < v.size(); i++) {
-	ia[i] = int(v[i]);
-	if (ia[i] != v[i]) {
-	  THROW_BADARG("Argument " << argnum <<
-		       " should be a DOUBLE REAL data array containing only "
-		       "INTEGER values --- at index " << i+config::base_index() <<
-		       " the scalar value " << v[i] << " was found");
-	}
+        ia[i] = int(v[i]);
+        if (ia[i] != v[i]) {
+          THROW_BADARG("Argument " << argnum <<
+                       " should be a DOUBLE REAL data array containing only "
+                       "INTEGER values --- at index " << i+config::base_index() <<
+                       " the scalar value " << v[i] << " was found");
+        }
       }
       return ia;
     } else
       THROW_BADARG("Argument " << argnum <<
-		   " should be an INTEGER data array");
+                   " should be an INTEGER data array");
 
   }
 
@@ -941,11 +954,11 @@ namespace getfemint {
 
   iarray
   mexarg_in::to_iarray(int expected_m, int expected_n,
-		       int expected_p, int expected_q) {
+                       int expected_p, int expected_q) {
     //check_int_values();
     iarray v = to_iarray(); //(arg);
     check_dimensions(v, expected_m, expected_n,
-		     expected_p, expected_q);
+                     expected_p, expected_q);
     return v;
   }
 
@@ -967,7 +980,7 @@ namespace getfemint {
     }
     assert(gfi_array_get_ndim(arg)==2);
     M = gf_real_sparse_csc_const_ref(gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
-				     gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
+                                     gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
   }
 
   void
@@ -980,7 +993,7 @@ namespace getfemint {
     }
     assert(gfi_array_get_ndim(arg)==2);
     M = gf_cplx_sparse_csc_const_ref((complex_type*)gfi_sparse_get_pr(arg), gfi_sparse_get_ir(arg), gfi_sparse_get_jc(arg),
-				     gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
+                                     gfi_array_get_dim(arg)[0],gfi_array_get_dim(arg)[1]);
   }
 
   /* get a (native or getfem) sparse matrix */
@@ -993,7 +1006,7 @@ namespace getfemint {
       id_type id,cid;
       to_object_id(&id,&cid);
       if (cid != GSPARSE_CLASS_ID)
-	THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
+        THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
       getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
       //cout << "id = " << id << ", cid= "<< cid << " " << name_of_getfemint_class_id(cid) << ", ->o = " << o << "\n";
       return object_to_gsparse(o)->ref();
@@ -1008,7 +1021,7 @@ namespace getfemint {
       id_type id,cid;
       to_object_id(&id,&cid);
       if (cid != GSPARSE_CLASS_ID)
-	THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
+        THROW_BADARG("Argument " << argnum << " was expected to be a sparse matrix");
       return object_to_gsparse(workspace().object(id,name_of_getfemint_class_id(cid)));
     }
   }
@@ -1023,12 +1036,12 @@ namespace getfemint {
     for (unsigned i = 0; i < v.size(); i++) {
       int idx = int(v[i]) + shift;
       if (idx < 0 || idx > 1000000000) {
-	THROW_BADARG("Argument " << argnum <<
-		     " should only contain values greater or equal to "
-		     << -shift << " ([found " << v[i] << ")");
+        THROW_BADARG("Argument " << argnum <<
+                     " should only contain values greater or equal to "
+                     << -shift << " ([found " << v[i] << ")");
       } else if (subsetof && !subsetof->is_in(idx)) {
-	THROW_BADARG("Argument " << argnum <<
-		     " is not a valid set (contains values not allowed, such as " << (int)v[i] << ")");
+        THROW_BADARG("Argument " << argnum <<
+                     " is not a valid set (contains values not allowed, such as " << (int)v[i] << ")");
       }
       bv.add(idx);
     }
@@ -1072,8 +1085,7 @@ namespace getfemint {
   { arg = create_object_id(int(ids.size()), &ids[0], cid); }
 
   void
-  mexarg_out::from_integer(int i)
-  {
+  mexarg_out::from_integer(int i) {
     if (config::can_return_integer()) {
       arg = checked_gfi_array_create_0(GFI_INT32);
       *gfi_int32_get_data(arg) = i;
@@ -1081,8 +1093,7 @@ namespace getfemint {
   }
 
   void
-  mexarg_out::from_scalar(double v)
-  {
+  mexarg_out::from_scalar(double v) {
     arg = checked_gfi_array_create_0(GFI_DOUBLE);
     *gfi_double_get_data(arg) = v;
   }
@@ -1138,7 +1149,7 @@ namespace getfemint {
       size_type nnz = M.nnz();
       size_type ni = M.nrows(), nj = M.ncols();
       arg = checked_gfi_create_sparse(int(ni), int(nj), int(nnz),
-				     M.is_complex() ? GFI_COMPLEX : GFI_REAL);
+                                      M.is_complex() ? GFI_COMPLEX : GFI_REAL);
       assert(arg != NULL);
       double *pr;
       unsigned *ir, *jc;
@@ -1146,13 +1157,13 @@ namespace getfemint {
       ir = gfi_sparse_get_ir(arg); assert(ir != NULL);
       jc = gfi_sparse_get_jc(arg); assert(jc != NULL); /* dim == nj+1 */
       if (!M.is_complex()) {
-	memcpy(pr, M.real_csc().pr, sizeof(double)*nnz);
-	memcpy(ir, M.real_csc().ir, sizeof(int)*nnz);
-	memcpy(jc, M.real_csc().jc, sizeof(int)*(nj+1));
+        memcpy(pr, M.real_csc().pr, sizeof(double)*nnz);
+        memcpy(ir, M.real_csc().ir, sizeof(int)*nnz);
+        memcpy(jc, M.real_csc().jc, sizeof(int)*(nj+1));
       } else {
-	memcpy(pr, M.cplx_csc().pr, sizeof(complex_type)*nnz);
-	memcpy(ir, M.cplx_csc().ir, sizeof(int)*nnz);
-	memcpy(jc, M.cplx_csc().jc, sizeof(int)*(nj+1));	
+        memcpy(pr, M.cplx_csc().pr, sizeof(complex_type)*nnz);
+        memcpy(ir, M.cplx_csc().ir, sizeof(int)*nnz);
+        memcpy(jc, M.cplx_csc().jc, sizeof(int)*(nj+1));
       }
       M.deallocate(); // avoid nasty leak
     }
@@ -1169,14 +1180,13 @@ namespace getfemint {
   mexarg_out::from_tensor(const getfem::base_tensor& t) {
     std::vector<int> tab(t.sizes().begin(), t.sizes().end());
     arg = checked_gfi_array_create(int(t.order()), &(tab.begin()[0]),
-				   GFI_DOUBLE);
+                                   GFI_DOUBLE);
     double *q = (double *)(gfi_double_get_data(arg));
     std::copy(t.begin(), t.end(), q);
   }
 
   carray
-  mexarg_out::create_carray_h(unsigned dim)
-  {
+  mexarg_out::create_carray_h(unsigned dim) {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_DOUBLE, GFI_COMPLEX);
     else arg = checked_gfi_array_create_2(1,dim, GFI_DOUBLE, GFI_COMPLEX);
@@ -1184,8 +1194,7 @@ namespace getfemint {
   }
 
   carray
-  mexarg_out::create_carray_v(unsigned dim)
-  {
+  mexarg_out::create_carray_v(unsigned dim) {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_DOUBLE, GFI_COMPLEX);
     else arg = checked_gfi_array_create_2(dim, 1, GFI_DOUBLE, GFI_COMPLEX);
@@ -1193,8 +1202,7 @@ namespace getfemint {
   }
 
   carray
-  mexarg_out::create_carray(unsigned n,unsigned m,unsigned p)
-  {
+  mexarg_out::create_carray(unsigned n,unsigned m,unsigned p) {
     int sz[3];
     sz[0] = n; sz[1] = m; sz[2] = p;
     arg = checked_gfi_array_create(3,sz,GFI_DOUBLE, GFI_COMPLEX);
@@ -1202,15 +1210,13 @@ namespace getfemint {
   }
 
   carray
-  mexarg_out::create_carray(unsigned dim, unsigned nbdof)
-  {
+  mexarg_out::create_carray(unsigned dim, unsigned nbdof) {
     arg = checked_gfi_array_create_2(dim, nbdof, GFI_DOUBLE, GFI_COMPLEX);
     return carray(arg);
   }
 
   darray
-  mexarg_out::create_darray_h(unsigned dim)
-  {
+  mexarg_out::create_darray_h(unsigned dim) {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_DOUBLE);
     else
@@ -1219,8 +1225,7 @@ namespace getfemint {
   }
 
   darray
-  mexarg_out::create_darray_v(unsigned dim)
-  {
+  mexarg_out::create_darray_v(unsigned dim) {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_DOUBLE);
     else
@@ -1229,8 +1234,7 @@ namespace getfemint {
   }
 
   darray
-  mexarg_out::create_darray(unsigned n,unsigned m,unsigned p)
-  {
+  mexarg_out::create_darray(unsigned n,unsigned m,unsigned p) {
     int sz[3];
     sz[0] = n; sz[1] = m; sz[2] = p;
     arg = checked_gfi_array_create(3,sz,GFI_DOUBLE);
@@ -1240,15 +1244,13 @@ namespace getfemint {
   /* creates a 'matrix' (from the matlab point of view.. for getfem
      it is still a vector, stored in fortran style) */
   darray
-  mexarg_out::create_darray(unsigned dim, unsigned nbdof)
-  {
+  mexarg_out::create_darray(unsigned dim, unsigned nbdof) {
     arg = checked_gfi_array_create_2(dim, nbdof, GFI_DOUBLE);
     return darray(arg);
   }
 
   iarray
-  mexarg_out::create_iarray_h(unsigned dim)
-  {
+  mexarg_out::create_iarray_h(unsigned dim) {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_INT32);
     else arg = checked_gfi_array_create_2(1,dim, GFI_INT32);
@@ -1256,8 +1258,7 @@ namespace getfemint {
   }
 
   iarray
-  mexarg_out::create_iarray_v(unsigned dim)
-  {
+  mexarg_out::create_iarray_v(unsigned dim) {
     if (config::has_1D_arrays())
       arg = checked_gfi_array_create_1(dim, GFI_INT32);
     else arg = checked_gfi_array_create_2(dim, 1, GFI_INT32);
@@ -1265,8 +1266,7 @@ namespace getfemint {
   }
 
   iarray
-  mexarg_out::create_iarray(unsigned n,unsigned m,unsigned p)
-  {
+  mexarg_out::create_iarray(unsigned n,unsigned m,unsigned p) {
     int sz[3];
     sz[0] = n; sz[1] = m; sz[2] = p;
     arg = checked_gfi_array_create(3,sz,GFI_INT32);
@@ -1276,20 +1276,17 @@ namespace getfemint {
   /* creates a 'matrix' (from the matlab point of view.. for getfem
      it is still a vector, stored in fortran style) */
   iarray
-  mexarg_out::create_iarray(unsigned dim, unsigned nbdof)
-  {
+  mexarg_out::create_iarray(unsigned dim, unsigned nbdof) {
     arg = checked_gfi_array_create_2(dim, nbdof, GFI_INT32);
     return iarray(arg);
   }
 
-  darray mexarg_out::create_array(const array_dimensions &dims, double)
-  {
+  darray mexarg_out::create_array(const array_dimensions &dims, double) {
     arg = checked_gfi_array_create(dims.ndim(),(const int*)dims.sizes(),GFI_DOUBLE);
     return darray(arg);
   }
 
-  carray mexarg_out::create_array(const array_dimensions &dims, complex_type)
-  {
+  carray mexarg_out::create_array(const array_dimensions &dims, complex_type) {
     arg = checked_gfi_array_create(dims.ndim(),(const int*)dims.sizes(),GFI_DOUBLE, GFI_COMPLEX);
     return carray(arg);
   }
@@ -1313,18 +1310,18 @@ namespace getfemint {
   }
 
   bool check_cmd(const std::string& cmdname, const char *s,
-		 const mexargs_in& in,
-		 int min_argin, int max_argin) {
+                 const mexargs_in& in,
+                 int min_argin, int max_argin) {
     if (cmd_strmatch(cmdname,s)) {
       if ((int)in.remaining() < min_argin) {
-	THROW_BADARG("Not enough input arguments for command '"<<
-		     cmdname << "' (got " << in.narg() <<
-		     ", expected at least " << min_argin + in.narg()- in.remaining() << ")");
+        THROW_BADARG("Not enough input arguments for command '"<<
+                     cmdname << "' (got " << in.narg() <<
+                     ", expected at least " << min_argin + in.narg()- in.remaining() << ")");
       }
       if ((int)in.remaining() > max_argin && max_argin != -1) {
-	THROW_BADARG("Too much input arguments for command '"<<
-		     cmdname << "' (got " << in.narg() <<
-		     ", expected at most " << max_argin + in.narg()- in.remaining()<< ")");
+        THROW_BADARG("Too much input arguments for command '"<<
+                     cmdname << "' (got " << in.narg() <<
+                     ", expected at most " << max_argin + in.narg()- in.remaining()<< ")");
       }
       return true;
     }
@@ -1332,31 +1329,29 @@ namespace getfemint {
   }
 
   bool check_cmd(const std::string& cmdname, const char *s,
-		 const mexargs_out& out,
-		 int min_argout, int max_argout) {
+                 const mexargs_out& out,
+                 int min_argout, int max_argout) {
     int Index = 0;
     if (cmd_strmatch(cmdname,s)) {
-      if (out.get_scilab())
-	{
-	  // For Scilab. Without any parameters, myinterface(x) is equivalent to
-	  // ans = myinterface(x). So, we have a minima one parameter.
-	  if (min_argout==0 && max_argout==0)
-	    {
-	      max_argout = -1;
-	      min_argout = -1;
-	    }
-	  Index = 1;
-	}
+      if (out.get_scilab()) {
+          // For Scilab. Without any parameters, myinterface(x) is equivalent to
+          // ans = myinterface(x). So, we have a minima one parameter.
+          if (min_argout==0 && max_argout==0) {
+              min_argout = -1;
+              max_argout = -1;
+          }
+          Index = 1;
+      }
 
       if (min_argout > 0 && out.narg_known() &&
-	  out.narg_in_range(Index, min_argout-1)) {
-	THROW_BADARG("Not enough output arguments for command '"<<
-		     cmdname << "' (expected at least " << min_argout << ")");
+          out.narg_in_range(Index, min_argout-1)) {
+        THROW_BADARG("Not enough output arguments for command '"<<
+                     cmdname << "' (expected at least " << min_argout << ")");
       }
       if (out.narg_known() && out.narg_known() &&
           out.narg_in_range(max_argout+1,-1) && max_argout != -1) {
-	THROW_BADARG("Too much output arguments for command '"<<
-		     cmdname << "' (expected at most " << max_argout << ")");
+        THROW_BADARG("Too much output arguments for command '"<<
+                     cmdname << "' (expected at most " << max_argout << ")");
       }
       return true;
     }
@@ -1364,9 +1359,9 @@ namespace getfemint {
   }
 
   bool check_cmd(const std::string& cmdname, const char *s,
-		 const mexargs_in& in, const mexargs_out& out,
-		 int min_argin, int max_argin,
-		 int min_argout, int max_argout) {
+                 const mexargs_in& in, const mexargs_out& out,
+                 int min_argin, int max_argin,
+                 int min_argout, int max_argout) {
     return
       check_cmd(cmdname, s,  in, min_argin, max_argin) &&
       check_cmd(cmdname, s, out, min_argout, max_argout);
@@ -1400,7 +1395,7 @@ namespace getfemint {
   mexargs_out::~mexargs_out() {
     if (!okay) {
       for (size_type i=0; i < out.size(); ++i) {
-	if (out[i]) { gfi_array_destroy(out[i]); free(out[i]); }	
+        if (out[i]) { gfi_array_destroy(out[i]); free(out[i]); }
       }
       out.clear();
       workspace().destroy_newly_created_objects();
@@ -1435,10 +1430,10 @@ namespace getfemint {
     if (remaining()) {
       std::map<id_type,id_type> m;
       for (size_type i=0; i < uid.size(); ++i)
-	m[uid[i]]= unsigned(i + config::base_index());
+        m[uid[i]]= unsigned(i + config::base_index());
       iarray v = pop().create_iarray_h(unsigned(id.size()));
       for (size_type i=0; i < id.size(); ++i)
-	v[unsigned(i)] = (id[i] != id_type(-1)) ? m[id[i]] : id_type(-1);
+        v[unsigned(i)] = (id[i] != id_type(-1)) ? m[id[i]] : id_type(-1);
     }
   }
 

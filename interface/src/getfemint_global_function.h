@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Yves Renard, Julien Pommier. Julien Pommier.
+// Copyright (C) 2009 Luis Saavedra.
 //
 // This file is a part of GETFEM++
 //
@@ -28,54 +28,41 @@
 //
 //===========================================================================
 
-/**\file getfemint_mesh_fem.h
-   \brief getfem::mesh_fem wrapper class
+/**\file getfemint_global_function.h
+   \brief getfem::abstract_xy_function wrapper class.
 */
 
-#ifndef GETFEMINT_MESH_FEM_H__
-#define GETFEMINT_MESH_FEM_H__
+#ifndef GETFEMINT_GLOBAL_FUNCTION_H__
+#define GETFEMINT_GLOBAL_FUNCTION_H__
 
-#include <getfemint.h>
+#include <getfemint_std.h>
 #include <getfemint_object.h>
-#include <getfemint_mesh.h>
-#include <getfem/getfem_mesh_fem.h>
+#include <getfem/getfem_mesh_fem_global_function.h>
 
 namespace getfemint
 {
-
-  class getfemint_mesh_fem : public getfemint::getfem_object {
+  class getfemint_global_function : public getfem_object {
   private:
-    getfem::mesh_fem *mf;
-    id_type linked_mesh_id_;
-    getfemint_mesh_fem(getfem::mesh_fem *mf_, id_type idmesh);
+    getfem::abstract_xy_function *pgf;
   public:
-    ~getfemint_mesh_fem();
-    id_type class_id() const { return MESHFEM_CLASS_ID; }
-    size_type memsize() const { return mf->memsize(); }
+    ~getfemint_global_function();
+    id_type class_id() const { return GLOBAL_FUNCTION_CLASS_ID; }
+    getfem::abstract_xy_function& global_function() { return *pgf; }
+    const getfem::abstract_xy_function& global_function() const { return *pgf; }
 
-    void clear_before_deletion() {
-      if (!is_static()) mf->clear();
-    }
+    static getfemint_global_function* get_from(getfem::abstract_xy_function *pabs,
+                                               int flags = 0);
 
-    getfem::mesh_fem& mesh_fem() { return *mf; }
-    const getfem::mesh_fem& mesh_fem() const { return *mf; }
-    const getfem::mesh& linked_mesh() const { return mf->linked_mesh(); }
-    id_type linked_mesh_id() const { return linked_mesh_id_;}
-
-    static getfemint_mesh_fem* get_from(getfem::mesh_fem *mf,
-					int flags=0);
-    static getfemint_mesh_fem* new_from(getfemint_mesh *mm,
-					size_type qdim);
+    getfemint_global_function(getfem::abstract_xy_function *pabs);
   };
 
-  inline bool object_is_mesh_fem(getfem_object *o) {
-    return (o->class_id() == MESHFEM_CLASS_ID);
+  inline bool object_is_global_function(getfem_object *o) {
+    return (o->class_id() == GLOBAL_FUNCTION_CLASS_ID);
   }
 
-  inline getfemint_mesh_fem* object_to_mesh_fem(getfem_object *o) {
-    if (object_is_mesh_fem(o)) return ((getfemint_mesh_fem*)o);
+  inline getfemint_global_function* object_to_global_function(getfem_object *o) {
+    if (object_is_global_function(o)) return ((getfemint_global_function*)o);
     else THROW_INTERNAL_ERROR;
   }
 }  /* end of namespace getfemint.                                          */
-
-#endif /* GETFEMINT_MESH_FEM_H__                                           */
+#endif /* GETFEMINT_GLOBAL_FUNCTION_H__                                    */

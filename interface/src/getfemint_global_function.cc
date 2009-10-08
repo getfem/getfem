@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2007-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2009 Luis Saavedra.
 //
 // This file is a part of GETFEM++
 //
@@ -18,33 +18,32 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-#include <getfemint_mesh.h>
+#include <getfemint_global_function.h>
 #include <getfemint_workspace.h>
 
 namespace getfemint {
-  getfemint_mesh::getfemint_mesh(getfem::mesh *m_) {
+  getfemint_global_function::getfemint_global_function(getfem::abstract_xy_function *pabs) {
     assert(workspace == 0);
-    m = m_;
-    ikey = getfem_object::internal_key_type(m);
+    pgf  = pabs;
+    ikey = getfem_object::internal_key_type(pgf);
   }
 
-  getfemint_mesh::~getfemint_mesh() {
-    if (!is_static()) {
-      m->clear();
-      delete m;
-    }
+  getfemint_global_function::~getfemint_global_function() {
+    if (!is_static()) delete pgf;
+    pgf = NULL;
   }
 
-  getfemint_mesh *getfemint_mesh::get_from(getfem::mesh *m, int f) {
+  getfemint_global_function*
+  getfemint_global_function::get_from(getfem::abstract_xy_function *pabs, int flags) {
     getfem_object *o =
-      getfemint::workspace().object(getfem_object::internal_key_type(m));
-    getfemint_mesh *gm = 0;
+      getfemint::workspace().object(getfem_object::internal_key_type(pabs));
+    getfemint_global_function *gpgf = NULL;
     if (!o) {
-      gm = new getfemint_mesh(m);
-      gm->set_flags(f);
-      getfemint::workspace().push_object(gm);
-    } else gm = dynamic_cast<getfemint_mesh*>(o);
-    assert(gm);
-    return gm;
+      gpgf = new getfemint_global_function(pabs);
+      gpgf->set_flags(flags);
+      getfemint::workspace().push_object(gpgf);
+    } else gpgf = dynamic_cast<getfemint_global_function*>(o);
+    assert(gpgf);
+    return gpgf;
   }
 }

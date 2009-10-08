@@ -39,6 +39,7 @@
 #include <getfemint_object.h>
 #include <getfemint_mesh.h>
 #include <getfem/getfem_level_set.h>
+#include <getfem/getfem_arch_config.h>
 
 namespace getfemint
 {
@@ -47,8 +48,8 @@ namespace getfemint
     getfem::level_set *ls;
     getfemint_levelset() {}
   public:
-    /*getfemint_levelset(getfemint_mesh *m, dim_type degree, 
-		       bool with_secondary) { 
+    /*getfemint_levelset(getfemint_mesh *m, dim_type degree,
+                       bool with_secondary) {
       assert(workspace == 0);
       linked_mesh_id_ = m->get_id();
       ls = new getfem::level_set(m->mesh(), degree, with_secondary);
@@ -59,13 +60,16 @@ namespace getfemint
     }
     id_type class_id() const { return LEVELSET_CLASS_ID; }
     size_type memsize() const { return ls->memsize(); }
-    
+
     getfem::level_set& levelset() { return *ls; }
     const getfem::mesh_fem& mesh_fem() const { return ls->get_mesh_fem(); }
     //id_type linked_mesh_id() const { return linked_mesh_id_;}
 
     static getfemint_levelset* get_from(getfem::level_set *ls, int flags=0);
     void values_from_poly(unsigned idx, const std::string &s);
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+    void values_from_func(unsigned idx, const std::string &s);
+#endif
   };
 
   inline bool object_is_levelset(getfem_object *o) {
