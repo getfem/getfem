@@ -314,15 +314,14 @@ LIBS="$LIBS $BLAS_LIBS"
 CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
 
 
-
 dnl ------------------------------SuperLU config-------------------------
 AC_ARG_ENABLE(superlu,
-[  --enable-superlu    Turn on/off SuperLU support],
-[case "${enableval}" in
-  yes) usesuperlu=YES ;;
-  no)  usesuperlu=NO ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-superlu]) ;;
-esac],[usesuperlu=YES])
+ [AS_HELP_STRING([--enable-superlu],[turn on/off SuperLU support])],
+ [case "${enableval}" in
+   yes) usesuperlu=YES ;;
+   no)  usesuperlu=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-superlu]) ;;
+ esac],[usesuperlu=YES])
 
 SUPERLU_CPPFLAGS=""
 SUPERLU_SRC=""
@@ -367,9 +366,9 @@ else
   [superlu/colamd.h superlu/slu_Cnames.h \
    superlu/slu_cdefs.h superlu/slu_ddefs.h superlu/slu_sdefs.h superlu/slu_zdefs.h \
    superlu/slu_dcomplex.h superlu/slu_scomplex.h],
-  [usesuperlu="yes"],
+  [usesuperlu="YES"],
   [
-    if test "x$usesuperlu" = "xyes"; then
+    if test "x$usesuperlu" = "xYES"; then
       AC_MSG_ERROR([header files of superlu not found. Use --enable-superlu=yes flag]);
     fi;
   ])
@@ -392,15 +391,17 @@ if test "$MUMPS_CFLAGS" -o "$MUMPS_LIBS"; then
 fi
 
 dnl -----------------------------QD TESTS--------------------------------
-AC_ARG_WITH(qd-lib-dir, [  --with-qd-lib-dir       directory in which the libqd.a can be found],
+AC_ARG_WITH(qd-lib-dir,
+        [AS_HELP_STRING([--with-qd-lib-dir],[directory in which the libqd.a can be found])],
 	QDLIB="$withval/libqd.a",QDLIB="$GFPREFIX/lib/libqd.a")
-AC_ARG_WITH(qd-include-dir, [  --with-qd-include-dir      directory in which the qd.h header can be found],
+AC_ARG_WITH(qd-include-dir,
+        [AS_HELP_STRING([--with-qd-include-dir],[directory in which the qd.h header can be found])],
 	QDINC="-I$withval",QDINC="-I$GFPREFIX/include")
 AC_ARG_ENABLE(dd,
- [  --enable-dd             enable the use of the qd library (some computation will be done with double-double precision, usefull for high order FEMs)],
+ [AS_HELP_STRING([--enable-dd],[enable the use of the qd library (some computation will be done with double-double precision, usefull for high order FEMs)])],
  [ if   test "x$enableval" = "xyes" ; then useQDlib="yes"; QD_PREC="double"; fi], [useQDlib="no"])
 AC_ARG_ENABLE(qd,
- [  --enable-qd             enable the use of the qd library (some computation will be done with quad-double precision, usefull for high order FEMs)],
+ [AS_HELP_STRING([--enable-qd],[enable the use of the qd library (some computation will be done with quad-double precision, usefull for high order FEMs)])],
  [ if   test "x$enableval" = "xyes" ; then useQDlib="yes"; QD_PREC="quad"; fi], [if test "x$useQDlib" = "xyes"; then useQDlib="yes"; else useQDlib="no"; fi])
 if test "x$useQDlib" = "xyes" ; then  
   LIBS="$LIBS $QDLIB -lm"
@@ -439,10 +440,10 @@ int main() {
 fi;
 dnl -----------------------------END QD TESTS--------------------------------
 
-dnl ------------------------------QHULL TEST--------------------------------
+dnl ------------------------------QHULL TEST---------------------------------
 useQHULL="no"
 AC_ARG_ENABLE(qhull,
- [  --enable-qhull             enable the use of the qhull library (required for generation of non regular meshes)],
+ [AS_HELP_STRING([--enable-qhull],[enable the use of the qhull library (required for generation of non regular meshes)])],
  [ if   test "x$enableval" = "xyes" ; then useQHULL="yes"; fi], [useQHULL="test"])
 if test "x$useQHULL" = "xno"; then
   echo "libqhull explicitly disabled";
@@ -456,7 +457,33 @@ else
 ])
 fi;
 AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
-dnl -----------------------------END OF QHULL TEST--------------------------
+dnl -----------------------------END OF QHULL TEST---------------------------
+
+dnl ------------------------------MUPARSER TEST------------------------------
+usemuparser="no"
+AC_ARG_ENABLE(muparser,
+ [AS_HELP_STRING([--enable-muparser],[enable the use of the muParser library (required for parsing mathematical expressions)])],
+ [ if test "x$enableval" = "xyes" ; then usemuparser="yes"; fi], [usemuparser="test"])
+MUPARSE_LIBS=""
+
+if test "x$usemuparser" = "xno"; then
+  echo "Building with muParser explicitly disabled (use --enable-muparser=yes to enable it)";
+else
+  echo "Building with muParser (use --enable-muparser=no to disable it)"
+  AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
+  [ 
+   if test "x$usemuparser" = "xyes"; then
+     AC_MSG_ERROR([header file muParser/muParser.h not found. Use --enable-muparser=no flag]);
+   fi;
+  ])
+  MUPARSER_LIBS="-lmuparser"
+  LIBS="$LIBS $MUPARSER_LIBS"
+fi;
+AM_CONDITIONAL(MUPARSER, test x$useQHULL = xyes)
+
+AC_SUBST([MUPARSER_LIBS])
+echo "Configuration of muParser done"
+dnl ---------------------------END OF MUPARSER TEST--------------------------
 
 dnl ------------------------------LAPACK TEST--------------------------------
 
@@ -558,12 +585,13 @@ dnl -----------------------------------------------
 dnl switch for using the getfem_boost supplied files, or the real boost
 dnl -----------------------------------------------
 
-AC_ARG_ENABLE(boost, [  --enable-boost    Assume that boost is installed and use it],
-[case "${enableval}" in
+AC_ARG_ENABLE(boost,
+ [AS_HELP_STRING([--enable-boost],[assume that boost is installed and use it])],
+ [case "${enableval}" in
   yes) useboost=YES ;;
   no)  useboost=NO ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-boost]) ;;
-esac],[useboost=NO])
+ esac],[useboost=NO])
 
 if test "x$useboost" = "xYES"; then
         AC_DEFINE_UNQUOTED(HAVE_BOOST,1,[Tell getfem to use the real boost library])
@@ -576,24 +604,25 @@ dnl -----------------------------------------------
 
 
 AC_ARG_ENABLE(matlab,
-[  --enable-matlab    Turn on/off matlab support],
-[case "${enableval}" in
-  yes) usematlab=YES ;;
-  no)  usematlab=NO ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-matlab]) ;;
-esac],[usematlab=NO])
+ [AS_HELP_STRING([--enable-matlab],[turn on/off matlab support])],
+ [case "${enableval}" in
+   yes) usematlab=YES ;;
+   no)  usematlab=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-matlab]) ;;
+ esac],[usematlab=NO])
 
-AC_ARG_WITH(matlab-toolbox-dir, [  --with-matlab-toolbox-dir : directory in which the matlab interface will be installed],
+AC_ARG_WITH(matlab-toolbox-dir,
+            [AS_HELP_STRING([--with-matlab-toolbox-dir],[directory in which the matlab interface will be installed])],
             TOOLBOXDIR="$withval",TOOLBOXDIR="$GFPREFIX/getfem_toolbox")
 AC_SUBST(TOOLBOXDIR)
 
 AC_ARG_ENABLE(python,
-[  --enable-python    Turn on/off python support],
-[case "${enableval}" in
-  yes) usepython=YES ;;
-  no)  usepython=NO ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
-esac],[usepython=NO])
+ [AS_HELP_STRING([--enable-python],[turn on/off python support])],
+ [case "${enableval}" in
+   yes) usepython=YES ;;
+   no)  usepython=NO ;;
+   *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
+ esac],[usepython=NO])
 
 if test "$usematlab" != NO; then
   AC_CHECK_PROGS(MEX, mex)
@@ -659,14 +688,15 @@ dnl useful for debugging..
 GETFEM_SERVER="";
 use_rpc="no";
 AC_ARG_ENABLE(matlab-rpc,
- [  --enable-matlab-rpc        enable use of RPCs for matlab interface],
+ [AS_HELP_STRING([--enable-matlab-rpc],[enable use of RPCs for matlab interface])],
  [ matlab_rpc="yes"; use_rpc="yes";
    echo "Matlab mex-file will use sun RPCs in order to communicate with the getfem server"],
  [matlab_rpc="no"])
 
 if test x$use_rpc = xyes; then
   GETFEM_SERVER="getfem_server";
-  AC_ARG_WITH(rpc-include, [  --with-rpc-include : directory in which the rpc/rpc.h header can be found],
+  AC_ARG_WITH(rpc-include,
+              [AS_HELP_STRING([--with-rpc-include],[directory in which the rpc/rpc.h header can be found])],
               RPC_INC_DIR="-I$withval",RPC_INC_DIR="")
   case $host in
         *alpha*)
@@ -679,7 +709,8 @@ if test x$use_rpc = xyes; then
                 RPC_LIB="-lnsl";
                 ;;
   esac
-  AC_ARG_WITH(rpc-lib, [  --with-rpc-lib : linker flags for the RPC library],
+  AC_ARG_WITH(rpc-lib,
+              [AS_HELP_STRING([--with-rpc-lib],[linker flags for the RPC library])],
               RPC_LIB="$withval")
   AC_SUBST(RPC_INC_DIR)
   AC_SUBST(RPC_LIB)
@@ -758,6 +789,7 @@ AC_CONFIG_FILES(\
 	m4/Makefile \
 	cubature/Makefile \
 	$SUPERLU_MAKEFILE \
+	doc/sphinx/Makefile \
 	src/Makefile \
 	tests/Makefile \
 	tests/meshes/Makefile \
@@ -778,8 +810,8 @@ AC_CONFIG_FILES(\
 	contrib/inter_element_test/Makefile \
 	contrib/aposteriori/Makefile \
 	bin/Makefile \
-        interface/Makefile \
-        interface/bin/Makefile \
+	interface/Makefile \
+	interface/bin/Makefile \
 	interface/src/Makefile \
 	interface/src/matlab/Makefile \
 	interface/src/matlab/@gfCvStruct/Makefile \
@@ -802,11 +834,13 @@ AC_CONFIG_FILES(\
 	interface/src/python/Makefile \
 	interface/src/python/setup.py \
 	interface/tests/Makefile \
-        interface/tests/meshes/Makefile \
+	interface/tests/meshes/Makefile \
 	interface/tests/matlab/Makefile \
-        interface/tests/matlab/private/Makefile \
-        interface/tests/python/Makefile \
-getfem-config getfem-config-notinstalled gmm-config)
+	interface/tests/matlab/private/Makefile \
+	interface/tests/python/Makefile \
+	getfem-config \
+	getfem-config-notinstalled \
+	gmm-config)
 AC_OUTPUT
 chmod a+x getfem-config-notinstalled
 chmod a+x getfem-config
@@ -815,15 +849,24 @@ echo ""
 echo "------------------------------------------------------------------------------"
 echo "If you want to build the shared library of getfem++, use --enable-shared"
 echo "(by default, only the static one will be built)"
+
 if test "x$useQDlib" = "xyes" ; then  
   echo "Using the QD library:"
   echo "   high precision (${QD_PREC}-double precision) polynomials and integration methods are enabled";
 fi;
+
 if test "x$useQHULL" = "xyes"; then
   echo "Using the qhull library for delaunay triangulations."
 else
   echo "Not using the qhull library. Mesh generation will be disabled."
 fi;
+
+if test "x$usemuparser" = "xyes"; then
+  echo "Using the muParser library for parsing mathematical expressions."
+else
+  echo "Not using the muParser library. Parsing mathematical expressions will be disabled."
+fi;
+
 echo
 if test "x$HAVE_VENDOR_BLAS" = "x0"; then
   echo "*** No usable blas library was found ***"
