@@ -470,7 +470,7 @@ if test "x$usemuparser" = "xno"; then
   echo "Building with muParser explicitly disabled (use --enable-muparser=yes to enable it)";
 else
   echo "Building with muParser (use --enable-muparser=no to disable it)"
-  AC_CHECK_LIB(muparser, qh_new_muparser)
+  AC_CHECK_LIB(muparser, _init)
   AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
   [ 
    if test "x$usemuparser" = "xyes"; then
