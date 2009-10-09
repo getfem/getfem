@@ -35,6 +35,7 @@
 #include <MALLOC.h>
 
 #include "gfm_common.h"
+#include "gfi_array.h"
 #include "getfem_interface.h"
 
 //#define DEBUG_TIMER
