@@ -44,15 +44,16 @@ else
   z = default_value;
 end
 
-  disp(default_value);
-  disp(z)
 if (typeof(z)=='list') then 
   //z = matrix(z(:),length(z),1); 
   for i=1:length(z)
     tmp(i,:) = z(i)(:);
   end
-  z = tmp';
+  z = tmp(:);
 end
+printf('here\n');
+disp(z)
+printf('here\n');
 pde('asm')(dname) = gf_mesh_fem_get_eval(mf, z); // YC: pb ici quand z est numeric ...
 endfunction
 
