@@ -33,17 +33,17 @@ namespace getfemint
 
   void workspace_stack::set_dependance(getfem_object *user, getfem_object *used)
   {
-    if (!used->is_static()) {
+    // if (!used->is_static()) {
       std::vector<id_type> &u = used->used_by;
       if (std::find(u.begin(), u.end(), user->get_id()) == u.end())
 	u.push_back(user->get_id());
-    }
+    // }
   }
 
 
   void workspace_stack::sup_dependance(getfem_object *user, getfem_object *used)
   {
-    if (!used->is_static()) {
+    // if (!used->is_static()) {
       std::vector<id_type> &u = used->used_by;
       unsigned i = 0, j = 0;
       for ( ; i < u.size(); ++i) {
@@ -51,7 +51,7 @@ namespace getfemint
 	if (u[i] != user->get_id()) ++j;
       }
       u.resize(j);
-    }
+    // }
   }
 
 
@@ -79,7 +79,10 @@ namespace getfemint
 
       if (!obj[id]) THROW_INTERNAL_ERROR;
 
-      if (obj[id]->is_static()) return;
+      // The next line has been commented because it make the mesh of a level
+      // set non deletable (because the mesh_fem of the level_set is static,
+      //  never deleted and it depends on the mesh).
+      // if (obj[id]->is_static()) return;
 
       /* mark the object as an anonymous one */
       obj[id]->set_workspace(anonymous_workspace);
@@ -105,7 +108,8 @@ namespace getfemint
 	  obj.sup(ii);
 	}
 	
-	/* remove the deleted objects from the "used_by" arrays */	for (dal::bv_visitor ii(obj.index()); !ii.finished(); ++ii) {
+	/* remove the deleted objects from the "used_by" arrays */
+	for (dal::bv_visitor ii(obj.index()); !ii.finished(); ++ii) {
 	  getfem_object *o = obj[ii];
 	  int j = 0;
 	  for (unsigned i=0; i < o->used_by.size(); ++i) {
