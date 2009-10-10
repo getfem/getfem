@@ -790,6 +790,7 @@ AC_CONFIG_FILES(\
 	m4/Makefile \
 	cubature/Makefile \
 	$SUPERLU_MAKEFILE \
+	doc/Makefile \
 	doc/sphinx/Makefile \
 	src/Makefile \
 	tests/Makefile \
