@@ -99,7 +99,7 @@ htmlupload: html
 #         cp html_getfemuser.tar.gz ../../../getfem_html; \
 #fi
 
-all: htmlupload pdfupload
+all: pdfupload htmlupload
 
 clean:
 	-rm -f *.dvi *.log *.toc *.bbl *.aux *.tmp *.ps.gz getfemuser.ps getfemuser.pdf getfemuser.blg getfemuser.out
