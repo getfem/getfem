@@ -1,0 +1,93 @@
+// Python GetFEM++ interface
+//
+// Copyright (C) 2009 Luis Saavedra, Yves Renard.
+//
+// This file is a part of GetFEM++
+//
+// GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+// Linear Elastostatic problem with a crack.
+// A good example of use of GetFEM++.
+// Parameters:
+nx         = 20;
+DIRICHLET  = 101;
+Lambda     = 1.25e10; // Lamé coefficient
+Mu         = 1.875e10;    // Lamé coefficient
+// Global Functions:
+ck0 = gf_global_function('crack',0);
+ck1 = gf_global_function('crack',1);
+ck2 = gf_global_function('crack',2);
+ck3 = gf_global_function('crack',3);
+coff = gf_global_function('cutoff',2,0.4,0.01,0.4);
+ckoff0 = gf_global_function('product', ck0, coff);
+ckoff1 = gf_global_function('product', ck1, coff);
+ckoff2 = gf_global_function('product', ck2, coff);
+ckoff3 = gf_global_function('product', ck3, coff);
+// Mesh in action:
+m = gf_mesh('regular_simplices', -0.5:1.0/nx:0.5+1.0/nx, -0.5:1.0/nx:0.5+1.0/nx);
+//m = gf_mesh('import','gmsh','quad.msh')
+// boundary set:
+gf_mesh_set(m,'region',DIRICHLET, gf_mesh_get(m,'outer_faces'));
+// MeshFem in action:
+mf_pre_u = gf_mesh_fem(m);
+gf_mesh_fem_set(mf_pre_u,'fem',gf_fem('FEM_PK(2,1)'));
+// Levelset in action:
+ls  = gf_levelset(m,1,'y','x');
+mls = gf_mesh_levelset(m);
+gf_mesh_levelset_set(mls,'add',ls);
+gf_mesh_levelset_set(mls,'adapt');
+mfls_u    = gf_mesh_fem('levelset',mls,mf_pre_u);
+mf_sing_u = gf_mesh_fem('global function',m,ls,list(ckoff0,ckoff1,ckoff2,ckoff3),1);
+mf_u      = gf_mesh_fem('sum',mf_sing_u,mfls_u);
+gf_mesh_fem_set(mf_u,'qdim',2);
+// exact solution:
+mf_ue = gf_mesh_fem('global function',m,ls,list(ck0,ck1,ck2,ck3));
+A = 2+2*Mu/(Lambda+2*Mu);
+B=-2*(Lambda+Mu)/(Lambda+2*Mu)
+Ue = zeros(2,4);
+Ue(1,1) =   0; Ue(2,1) = A-B; // sin(theta/2)
+Ue(1,2) = A+B; Ue(2,2) = 0;   // cos(theta/2)
+Ue(1,3) =  -B; Ue(2,3) = 0;   // sin(theta/2)*sin(theta)
+Ue(1,4) =   0; Ue(2,4) = B;   // cos(theta/2)*cos(theta)
+Ue = Ue / 2*%pi;
+Ue = matrix(Ue,1,8); //Ue.T.reshape(1,8)
+// MeshIm in action:
+mim = gf_mesh_im('levelset', mls, 'all', ...
+		gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'), ...
+		gf_integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,6),9)'), ...
+		gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),5)'));
+// Model in action:
+md = gf_model('real');
+gf_model_set(md,'add_fem_variable', 'u', mf_u);
+// data
+gf_model_set(md,'add_initialized_data','lambda', [Lambda]);
+gf_model_set(md,'add_initialized_data','mu', [Mu]);
+gf_model_set(md,'add_isotropic_linearized_elasticity_brick',mim,'u','lambda','mu');
+// il fault!!!
+//gf_model_set(md,'add_variable','mult_spec',6);
+//BB = gf_spmat('empty',6,gf_mesh_fem_get(mf_u,'nbdof'));
+//gf_model_set(md,'add_constraint_with_multipliers','u','mult_spec',BB,zeros(6,1));
+gf_model_set(md,'add_initialized_fem_data','DirichletData', mf_ue, Ue);
+gf_model_set(md,'add_Dirichlet_condition_with_penalization',mim,'u', 1e12, DIRICHLET, 'DirichletData');
+// assembly of the linear system and solve:
+gf_model_get(md,'solve');
+U = gf_model_get(md,'variable','u');
+// export to pos
+mfv = gf_mesh_fem(gf_mesh_levelset_get(mls,'cut_mesh'),2);
+gf_mesh_fem_set(mfv,'classical_discontinuous_fem',2,0.001);
+gf_mesh_fem_set(mf_ue,'qdim',2);
+V  = gf_compute(mf_u,U,'interpolate_on',mfv);
+Ve = gf_compute(mf_ue,Ue,'interpolate_on',mfv);
+VM = gf_model_get(md,'compute_isotropic_linearized_Von_Mises_or_Tresca','u','lambda','mu',mf_pre_u);
+gf_mesh_fem_get(mfv,'export_to_pos','crack.pos',V,'V',Ve,'Ve',mf_pre_u,VM,'Von Mises');
+printf('You can view the solution with (for example): gmsh crack.pos\n');
