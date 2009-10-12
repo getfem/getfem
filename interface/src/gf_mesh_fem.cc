@@ -47,6 +47,7 @@ using namespace getfemint;
   @INIT MESHFEM:INIT('clone')
   @INIT MESHFEM:INIT('sum')
   @INIT MESHFEM:INIT('levelset')
+  @INIT MESHFEM:INIT('global function')
   @INIT MESHFEM:INIT('partial')
 
   $Id$

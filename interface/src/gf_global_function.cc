@@ -40,7 +40,7 @@ function. The global function Hessian is an optional parameter<par>
 
 /*MLABCOM
 
-  FUNCTION GF = gf_global_function(...)
+  FUNCTION GF = gf_global_function(string)
 
   General constructor for global function object. Returns a getfem
   handle to the newly created global function object. Note that for
@@ -71,14 +71,14 @@ void gf_global_function(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     scalar_type r1 = in.pop().to_scalar();
     scalar_type r0 = in.pop().to_scalar();
 
-    getfem::abstract_xy_function *cutoff = new getfem::cutoff_xy_function(fn,r,r1,r0);
+    getfem::abstract_xy_function *cutoff = new getfem::cutoff_xy_function(int(fn),r,r1,r0);
     ggf = getfemint_global_function::get_from(cutoff);
   } else if (check_cmd(cmd, "crack", in, out, 1, 1, 0, 1)) {
     /*@INIT GF = GLOBALFUNCTION:INIT('crack', @int fn)
     Create a near-tip asymptotic global function for modelling cracks.@*/
     size_type fn = in.pop().to_integer(0,11);
 
-    getfem::abstract_xy_function *crack = new getfem::crack_singular_xy_function(fn);
+    getfem::abstract_xy_function *crack = new getfem::crack_singular_xy_function(unsigned(fn));
     ggf = getfemint_global_function::get_from(crack);
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
   } else if (check_cmd(cmd, "parser", in, out, 1, 3, 0, 1)) {

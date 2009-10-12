@@ -1374,7 +1374,10 @@ namespace getfemint {
     } else {
       assert(n == 1);
       assert(p[0]!=0);
-      assert(gfi_array_get_class(p[0])==GFI_CELL);
+      if (gfi_array_get_class(p[0])!=GFI_CELL)
+	THROW_BADARG("Need a argument of type list");
+
+      // assert(gfi_array_get_class(p[0])==GFI_CELL);
       nb_arg = gfi_array_nb_of_elements(p[0]);
       in = new const gfi_array*[nb_arg];
       for (int i = 0; i < nb_arg; i++) { in[i] = gfi_cell_get_data(p[0])[i]; idx.add(i); }

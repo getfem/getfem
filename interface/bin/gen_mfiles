@@ -39,7 +39,8 @@ rlist=['gfCvStruct',
        'gfSlice',
        'gfSpmat',
        'gfLevelSet',
-       'gfMeshLevelSet'];
+       'gfMeshLevelSet',
+       'gfGlobalFunction'];
 
 for i in rlist:
     mname = ''
@@ -61,6 +62,8 @@ for i in rlist:
         mname = 'gf_levelset'
     elif (i == 'gfMeshLevelSet'):
         mname = 'gf_mesh_levelset'
+    elif (i == 'gfGlobalFunction'):
+        mname = 'gf_global_function'
     rdir = 'matlab/@' + i;
 
     has_get = 0

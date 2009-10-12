@@ -1,4 +1,4 @@
-SUBDIRS = @gfCvStruct @gfEltm @gfFem @gfGeoTrans @gfInteg @gfMesh @gfMeshFem @gfMeshIm @gfSpmat @gfPrecond @gfSlice @gfMdBrick @gfMdState @gfModel @gfLevelSet @gfMeshLevelSet private
+SUBDIRS = @gfCvStruct @gfEltm @gfFem @gfGeoTrans @gfInteg @gfMesh @gfMeshFem @gfMeshIm @gfSpmat @gfPrecond @gfSlice @gfMdBrick @gfMdState @gfModel @gfLevelSet @gfMeshLevelSet @gfGlobalFunction private
 
 RPC_INC_DIR=@RPC_INC_DIR@
 
@@ -48,6 +48,7 @@ PSEUDO_MFUNCTIONS = \
 	gf_integ.cc \
 	gf_integ_get.cc \
 	gf_workspace.cc \
+	gf_global_function.cc \
 	gf_delete.cc
 
 AUTO_M_FILES = $(PSEUDO_MFUNCTIONS:.cc=.m)

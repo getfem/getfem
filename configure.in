@@ -832,6 +832,7 @@ AC_CONFIG_FILES(\
 	interface/src/matlab/@gfModel/Makefile \
 	interface/src/matlab/@gfLevelSet/Makefile \
 	interface/src/matlab/@gfMeshLevelSet/Makefile \
+	interface/src/matlab/@gfGlobalFunction/Makefile \
 	interface/src/matlab/private/Makefile \
 	interface/src/python/Makefile \
 	interface/src/python/setup.py \
