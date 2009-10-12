@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_global_function"
+          xml:lang="en" xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_global_function</refname>
+
+    <refpurpose>General constructor for global function object.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>
+GF = gf_global_function(...)
+    </synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>Global function object is represented by three functions:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>The global function <emphasis>val</emphasis>.</para>
+      </listitem>
+
+      <listitem>
+        <para>The global function gradient <emphasis>grad</emphasis>.</para>
+      </listitem>
+
+      <listitem>
+        <para>The global function Hessian <emphasis>hess</emphasis>.</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>this type of function is used as local and global enrichment
+    function. The global function Hessian is an optional parameter (only for
+    fourth order derivative problems).</para>
+
+    <para>General constructor for global function object. Returns a getfem
+    handle to the newly created global function object.</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>GF = gf_global_function('cutoff', int fn, scalar r, scalar r1,
+        scalar r0) Create a cutoff global function.</para>
+      </listitem>
+
+      <listitem>
+        <para>GF = gf_global_function('crack', int fn) Create a near-tip
+        asymptotic global function for modelling cracks.</para>
+      </listitem>
+
+      <listitem>
+        <para>GF = gf_global_function('parser', string val[, string grad[,
+        string hess]]) Create a global function from strings
+        <emphasis>val</emphasis>, <emphasis>grad</emphasis> and
+        <emphasis>hess</emphasis>.</para>
+      </listitem>
+
+      <listitem>
+        <para>GF = gf_global_function('product', globalfunction F,
+        globalfunction G) Create a product of two global functions.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
+
+      <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>
