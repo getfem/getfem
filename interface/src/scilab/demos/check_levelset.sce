@@ -12,7 +12,7 @@ ls3 = gf_levelset(m, 4, 'x^2 + (y+.08)^2 - 0.05^2');
 mls = gf_mesh_levelset(m);
 gf_mesh_levelset_set(mls, 'add', ls1);
 if 1 then
-  gf_mesh_levelset_set(mls, 'del', ls1);
+  gf_mesh_levelset_set(mls, 'sup', ls1);
   gf_mesh_levelset_set(mls, 'add', ls1);
   gf_mesh_levelset_set(mls, 'add', ls2);
   gf_mesh_levelset_set(mls, 'add', ls2);

@@ -11,7 +11,7 @@ ls3=gf_levelset(m, 4, 'x^2 + (y+.08)^2 - 0.05^2');
 mls=gfMeshLevelset(m)
 set(mls, 'add', ls);
 if 1,
-  set(mls, 'del', ls);
+  set(mls, 'sup', ls);
   set(mls, 'add', ls);
   set(mls, 'add', ls2);
   set(mls, 'add', ls2);
@@ -30,7 +30,7 @@ ctip = get(mls, 'crack_tip_convexes')
 
 
 mf=gfMeshFem(m); set(mf, 'classical_fem', 1);
-mfls=gfMeshFem('levelset',mf,mls);
+mfls=gfMeshFem('levelset',mls,mf);
 
 %gf_workspace('stats');
 
