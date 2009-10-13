@@ -17,15 +17,36 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_mesh_levelset_get(MLS, ...)</synopsis>
+    <synopsis>gf_mesh_levelset_set(MLS, ...)</synopsis>
   </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
+      <listitem>
+        <para>gf_mesh_levelset_set(MLS,'add',arg1)</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_levelset_set(MLS,'delete',arg1)</para>
+      </listitem>
+
+      <listitem>
+        <para>gf_mesh_levelset_set(MLS,'adapt')</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_levelset_get">gf_mesh_levelset_get</link></member>
-      <member><link linkend="gf_mesh_levelset">gf_mesh_levelset</link></member>
+      <member><link
+      linkend="gf_mesh_levelset_get">gf_mesh_levelset_get</link></member>
+
+      <member><link
+      linkend="gf_mesh_levelset">gf_mesh_levelset</link></member>
     </simplelist>
   </refsection>
 

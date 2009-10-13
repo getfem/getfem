@@ -16,15 +16,29 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis></synopsis>
+    <synopsis>gf_mesh_levelset('.mesh', Mesh m)</synopsis>
   </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
+      <listitem>
+        <para> gf_mesh_levelset('.mesh', Mesh m) Build a new MeshLevelSet
+        object from a Mesh object.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
 
   <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_levelset_get">gf_mesh_levelset_get</link></member>
-      <member><link linkend="gf_mesh_levelset_set">gf_mesh_levelset_set</link></member>
+      <member><link
+      linkend="gf_mesh_levelset_get">gf_mesh_levelset_get</link></member>
+
+      <member><link
+      linkend="gf_mesh_levelset_set">gf_mesh_levelset_set</link></member>
     </simplelist>
   </refsection>
 

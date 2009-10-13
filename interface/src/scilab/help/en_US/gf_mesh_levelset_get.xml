@@ -21,11 +21,41 @@
   </refsynopsisdiv>
 
   <refsection>
+    <title>Description</title>
+
+    <itemizedlist>
+      <listitem>
+        <para>M = gf_mesh_levelset_get(MLS,'cut_mesh')</para>
+      </listitem>
+
+      <listitem>
+        <para>LM = gf_mesh_levelset_get(MLS,'linked_mesh')</para>
+      </listitem>
+
+      <listitem>
+        <para>LS = gf_mesh_levelset_get(MLS,'levelsets')</para>
+      </listitem>
+
+      <listitem>
+        <para>CC = gf_mesh_levelset_get(MLS,'crack_tip_convexes')</para>
+      </listitem>
+
+      <listitem>
+        <para>CC = gf_mesh_levelset_get(MLS,'memsize') Return the amount of
+        memory (in bytes) used by the mesh-level-set.</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_levelset">gf_mesh_levelset</link></member>
-      <member><link linkend="gf_mesh_levelset_set">gf_mesh_levelset_set</link></member>
+      <member><link
+      linkend="gf_mesh_levelset">gf_mesh_levelset</link></member>
+
+      <member><link
+      linkend="gf_mesh_levelset_set">gf_mesh_levelset_set</link></member>
     </simplelist>
   </refsection>
 
