@@ -21,14 +21,18 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 """Getfem-interface classes.
-Provides access to the pseudo-objects exported by the python-getfem interface.
+  Provides access to the pseudo-objects exported by the python-getfem interface.
+
+  $Id$
 """
 
-__version__ = "$Revision$"
+#__version__ = "$Revision$"
 # $Source: getfem++/interface/src/python/getfem.base.py,v $
 
 import sys
 import numpy
+import numbers
+
 from numpy import *
 
 from _getfem import *
@@ -37,9 +41,25 @@ getfem('workspace','clear all')
 
 def generic_constructor(self,clname,*args):
     """Internal function -- acts as a constructor for all getfem objects."""
-#    print 'generic_constructor.'+clname+'('+str(args)+')'
+    #print 'generic_constructor.'+clname+'('+str(args)+')'
     if (len(args)==1 and type(args[0]) is GetfemObject):
-      self.id = args[0]
+      if hasattr(self,'id'):
+        print "warning: hasattr(self,'id')!"
+        print "self.id: ",self.id
+        print "args[0]: ",args[0]
+      else:
+        self.id = args[0]
+        if obj_count.get(self.id,0)==0:
+          #print "Reviviendo objeto..."
+          #print "self: ",self
+          #print "self.id: ",self.id
+          #if hasattr(self.id,'classid'):
+          #  print "self.id.classid: ",self.id.classid
+          #else:
+          #  print "self.id.classid not found!"
+          getfem("undelete",self.id)
+          #print "self.id: ",self.id
+          #pass
     else:
       self.id = getfem_from_constructor(clname,*args)
     obj_count[self.id] = obj_count.get(self.id,0)+1
@@ -48,12 +68,12 @@ def generic_destructor(self,destructible=True):
     """Internal function -- acts as a destructor for all getfem objects."""
     if (not hasattr(self,'id')):
       return
-#    print "Mesh.__del__       ",self.id,'count=',obj_count[self.id]
+    #print "Mesh.__del__       ",self.id,'count=',obj_count[self.id]
     if (obj_count.has_key(self.id)):
       obj_count[self.id] = obj_count[self.id]-1
       if (destructible and obj_count[self.id] == 0):
         getfem('delete',self.id)
-#        print "effective deletion"
+        #print "effective deletion"
 
 # stub classes for getfem-interface objects
 
@@ -159,10 +179,6 @@ class MeshFem:
       @INIT MESHFEM:INIT('partial')
       @INIT MESHFEM:INIT('.mesh')
       """
-      if type(args[0]) is str:
-        if args[0]=='global function' and not(getfem_var('muParser')=="1"):
-          print "Option \'global function\' need the package muParser installed"
-          print "on your system. This package is widely available."
       generic_constructor(self,'mesh_fem',*args)
     def __del__(self):
       generic_destructor(self,destructible=True)
@@ -217,13 +233,16 @@ class MeshFem:
     #@SET    MESHFEM:SET('reduction')
     #@SET    MESHFEM:SET('reduction matrices')
     #@SET    MESHFEM:SET('dof partition')
-    def eval(self, expression):
+    def eval(self, expression, gl={}, lo={}):
       """interpolate an expression on the (lagrangian) MeshFem.
 
 Examples:
 
-mf.eval('x[0]*x[1]') interpolates the function 'x*y'
-mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
+>>> mf.eval('x[0]*x[1]') # interpolates the function 'x*y'
+>>> mf.eval('[x[0],x[1]]') # interpolates the vector field '[x,y]'
+
+>>> import numpy as np
+>>> mf.eval('np.sin(x[0])',globals(),locals()) # interpolates the function sin(x)
       """
       P = self.basic_dof_nodes()
       nbd = P.shape[1]
@@ -235,11 +254,14 @@ mf.eval('[x[0],x[1]]') interpolates the vector field '[x,y]'
         P   = P[:,Ind]
         nbd = P.shape[1] # = nb_sdof
       x = P[:,0]
-      r = numpy.array(eval(expression))
+      gl['x'] = P[:,0]
+      lo['x'] = P[:,0]
+      r = numpy.array(eval(expression,gl,lo))
       Z = numpy.zeros(r.shape + (nbd,), r.dtype)
       for i in xrange(0,nbd):
-        x = P[:,i]
-        Z[...,i] = eval(expression)
+        gl['x'] = P[:,i]
+        lo['x'] = P[:,i]
+        Z[...,i] = eval(expression,gl,lo)
       return Z
 
 
@@ -588,8 +610,10 @@ class GlobalFunction:
       @INIT GLOBALFUNCTION:INIT('cutoff')
       @INIT GLOBALFUNCTION:INIT('crack')
       @INIT GLOBALFUNCTION:INIT('parser')
-      @INIT GLOBALFUNCTION:INIT('product')
       """
+      if isinstance(args[0],str):
+        if args[0]=='parser' and not(getfem_var('muParser')=="1"):
+          raise RuntimeError("Option \'parser\' need the package muParser.")
       generic_constructor(self,'global_function',*args)
     def __del__(self):
       generic_destructor(self,destructible=False)
@@ -597,6 +621,19 @@ class GlobalFunction:
       return getfem('global_function_get',self.id, *args)
     def set(self, *args):
       return getfem('global_function_set',self.id, *args)
+    def __mul__(self,other):
+      if isinstance(other,numbers.Number):
+        return GlobalFunction('product',self,GlobalFunction('parser',"%e"%(other)))
+      return GlobalFunction('product',self,other)
+    def __add__(self,other):
+      if isinstance(other,numbers.Number):
+        return GlobalFunction('add',self,GlobalFunction('parser',"%e"%(other)))
+      return GlobalFunction('add',self,other)
+    def __call__(self,Pts):
+      return getfem('global_function_get',self.id, 'val', Pts)
+    #@GET    GLOBALFUNCTION:GET('val')
+    #@GET    GLOBALFUNCTION:GET('grad')
+    #@GET    GLOBALFUNCTION:GET('hess')
 
 
 class Eltm:
@@ -712,7 +749,7 @@ class Spmat:
 
       The result is another Spmat object.
       """
-      if (isinstance(other,(int,float,complex))):
+      if isinstance(other,numbers.Number):
         m = Spmat('copy',self)
         m.set('scale',other)
       elif (isinstance(other,list) or isinstance(other, numpy.ndarray)):
@@ -721,7 +758,7 @@ class Spmat:
         m = Spmat('mult',self,other)
       return m
     def __rmul__(self, other):
-      if (isinstance(other,(int,float,complex))):
+      if isinstance(other,numbers.Number):
         m=Spmat('copy',self)
         m.set('scale',other)
       elif (isinstance(other,list) or isinstance(other, numpy.ndarray)):
@@ -826,13 +863,14 @@ class MeshLevelSet:
 
     #@GET    MESHLEVELSET:GET('cut_mesh')
     #@GET    MESHLEVELSET:GET('linked_mesh')
+    #@GET    MESHLEVELSET:GET('nb_ls')
     #@GET    MESHLEVELSET:GET('levelsets')
     #@GET    MESHLEVELSET:GET('crack_tip_convexes')
     #@GET    MESHLEVELSET:GET('memsize')
 
     #@SET    MESHLEVELSET:SET('add')
+    #@SET    MESHLEVELSET:SET('sup')
     #@SET    MESHLEVELSET:SET('adapt')
-    #@SET    MESHLEVELSET:SET('delete')
 
 
 #@FUNC ::LINSOLVE('gmres')

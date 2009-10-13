@@ -27,7 +27,7 @@
 // might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
-
+// $Id$
 #ifndef GETFEMINT_WORKSPACE_H__
 #define GETFEMINT_WORKSPACE_H__
 
@@ -84,6 +84,7 @@ namespace getfemint
     void set_dependance(getfem_object *user, getfem_object *used_by);
     void sup_dependance(getfem_object *user, getfem_object *used_by);
 
+    void undelete_object(id_type id);
     /* at least mark the objet for future deletion (object becomes anonymous)
        and if possible, destroy the object (and all the objects which use this one
        if they are all anonymous) */

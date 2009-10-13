@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_global_function.h>
@@ -36,7 +36,10 @@ Global function object is represented by three functions:<Par>
 
 this type of function is used as local and global enrichment<par>
 function. The global function Hessian is an optional parameter<par>
-(only for fourth order derivative problems).@*/
+(only for fourth order derivative problems).<Par>
+
+$Id$
+@*/
 
 /*MLABCOM
 
@@ -54,7 +57,7 @@ function. The global function Hessian is an optional parameter<par>
   @INIT GLOBALFUNCTION:INIT('parser')
   @INIT GLOBALFUNCTION:INIT('product')
 
-  $Id: gf_global_function.cc 2963 2009-03-30 19:36:09Z lsaavedr $
+  $Id$
 MLABCOM*/
 
 void gf_global_function(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -101,6 +104,14 @@ void gf_global_function(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     getfem::abstract_xy_function *product = new getfem::product_of_xy_functions(*af1,*af2);
     ggf = getfemint_global_function::get_from(product);
+  } else if (check_cmd(cmd, "add", in, out, 2, 2, 0, 1)) {
+    /*@INIT GF = GLOBALFUNCTION:INIT('add', @tgf F, @tgf G)
+    Create a add of two global functions.@*/
+    getfem::abstract_xy_function *af1 = in.pop().to_global_function();
+    getfem::abstract_xy_function *af2 = in.pop().to_global_function();
+
+    getfem::abstract_xy_function *add = new getfem::add_of_xy_functions(*af1,*af2);
+    ggf = getfemint_global_function::get_from(add);
   } else bad_cmd(cmd);
   out.pop().from_object_id(ggf->get_id(), GLOBAL_FUNCTION_CLASS_ID);
 }

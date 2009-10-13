@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <map>
 #include <getfemint_misc.h>
 #include <getfemint_mesh.h>
@@ -434,19 +434,22 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     else cvlst.add(0, pmesh->convex_index().last_true()+1);
 
     std::vector<size_type> pids;
-    dal::bit_vector idx;
+    std::vector<size_type> idx;
     size_type pcnt = 0;
-    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
-      if (pmesh->convex_index().is_in(cv)) {
-        idx.add(size_type(pcnt /* + config::base_index()*/));
+    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
+      idx.push_back(size_type(pcnt + config::base_index()));
+      if (pmesh->convex_index().is_in(cv))
         for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
           pids.push_back(size_type(pmesh->ind_points_of_convex(cv)[i] + config::base_index()));
-      }
-    idx.add(size_type(pcnt/* + config::base_index() */));
+    }
+    idx.push_back(size_type(pcnt + config::base_index()));
 
-    iarray w = out.pop().create_iarray_h(pids.size());
-    if (pids.size()) std::copy(pids.begin(), pids.end(), &w[0]);
-    if (out.remaining()) out.pop().from_bit_vector(idx);
+    iarray opids = out.pop().create_iarray_h(pids.size());
+    if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
+    if (out.remaining() && idx.size()) {
+      iarray oidx = out.pop().create_iarray_h(idx.size());
+      std::copy(idx.begin(), idx.end(), &oidx[0]);
+    }
   } else if (check_cmd(cmd, "pts from cvid", in, out, 0, 1, 0, 2)) {
     /*@GET @CELL{Pts, IDx} = MESH:GET('pts from cvid'[,@imat CVIDs])
     Search point listed in `CVID`.
@@ -456,9 +459,9 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     @MATLAB{row }vector, length(IDx) = length(CVIDs)+1. `Pts` is a
     @MATLAB{row }vector containing the concatenated list of points
     of each convex in `CVIDs`. Each entry of `IDx` is the position
-    of the corresponding convex point list in `Pid`. Hence, for
+    of the corresponding convex point list in `Pts`. Hence, for
     example, the list of points of the second convex is
-    @MATLAB{Pts(:,IDx(2):IDx(3)-1)}@PYTHON{Pid[:,IDx[2]:IDx[3]]}.<Par>
+    @MATLAB{Pts(:,IDx(2):IDx(3)-1)}@PYTHON{Pts[:,IDx[2]:IDx[3]]}.<Par>
 
     If `CVIDs` contains convex #id which do not exist in the mesh,
     their point list will be empty.@*/
@@ -469,20 +472,23 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     else cvlst.add(0, pmesh->convex_index().last_true()+1);
 
     getfem::base_vector pts;
-    dal::bit_vector idx;
+    std::vector<size_type> idx;
     size_type pcnt = 0;
-    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
-      if (pmesh->convex_index().is_in(cv)) {
-        idx.add(pcnt /* + config::base_index() */);
+    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
+      idx.push_back(pcnt + config::base_index());
+      if (pmesh->convex_index().is_in(cv))
         for (size_type i=0; i < pmesh->nb_points_of_convex(cv); ++i,++pcnt)
           for (size_type k=0; k< pmesh->dim(); ++k)
              pts.push_back(pmesh->points_of_convex(cv)[i][k]);
-      }
-    idx.add(pcnt /* + config::base_index()*/);
+    }
+    idx.push_back(pcnt + config::base_index());
 
-    darray w = out.pop().create_darray(pmesh->dim(),size_type(pts.size()/pmesh->dim()));
-    if (pts.size()) std::copy(pts.begin(), pts.end(), &w[0]);
-    if (out.remaining()) out.pop().from_bit_vector(idx);
+    darray opts = out.pop().create_darray(pmesh->dim(),size_type(pts.size()/pmesh->dim()));
+    if (pts.size()) std::copy(pts.begin(), pts.end(), &opts[0]);
+    if (out.remaining() && idx.size()) {
+      iarray oidx = out.pop().create_iarray_h(idx.size());
+      std::copy(idx.begin(), idx.end(), &oidx[0]);
+    }
   } else if (check_cmd(cmd, "cvid", in, out, 0, 0, 0, 1)) {
     /*@GET CVid = MESH:GET('cvid')
     Return the list of all convex #id.
@@ -848,14 +854,17 @@ void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     exp.write_mesh();
     if (edges) exp.exporting_mesh_edges();
     if (serie_name.size()) exp.serie_add_object(serie_name,mesh_name);
-  } else if (check_cmd(cmd, "export to pos", in, out, 1, 1, 0, 0)) {
-    /*@GET MESH:GET('export to pos',@str filename)
+  } else if (check_cmd(cmd, "export to pos", in, out, 1, 2, 0, 0)) {
+    /*@GET MESH:GET('export to pos',@str filename[,@str name])
     Exports a mesh to a POS file .
 
     See also MESHFEM:GET('export to pos'), SLICE:GET('export to pos').@*/
     std::string fname = in.pop().to_string();
+    std::string name = "";
+    if (in.remaining()) name = in.pop().to_string();
+
     getfem::pos_export exp(fname);
-    exp.write(*pmesh);
+    exp.write(*pmesh,name);
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
     /*@GET z = MESH:GET('memsize')
     Return the amount of memory (in bytes) used by the mesh.@*/

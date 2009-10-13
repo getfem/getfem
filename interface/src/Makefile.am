@@ -56,8 +56,10 @@ PSEUDO_MFUNCTIONS = \
 	gf_integ.cc \
 	gf_integ_get.cc \
 	gf_global_function.cc \
+	gf_global_function_get.cc \
 	gf_workspace.cc \
-	gf_delete.cc
+	gf_delete.cc \
+	gf_undelete.cc
 
 EXTRA_DIST = gfi_rpc_clnt.c gfi_rpc_xdr.c gfi_array.c
 
@@ -77,7 +79,9 @@ libgetfemint_la_SOURCES = \
 	getfemint_matelem.cc \
 	getfemint_matelemtype.cc \
 	getfemint_pfem.cc \
+	getfemint_integ.h \
 	getfemint_integ.cc \
+	getfemint_global_function.h \
 	getfemint_global_function.cc \
 	getfemint_pgt.cc \
 	getfemint_convex_structure.cc \
@@ -85,8 +89,6 @@ libgetfemint_la_SOURCES = \
 	getfemint_convex_structure.h \
 	getfemint_mesh.h \
 	getfemint_misc.h \
-	getfemint_integ.h \
-	getfemint_global_function.h \
 	getfemint_std.h \
 	gfi_rpc.h \
 	getfemint_matelem.h \

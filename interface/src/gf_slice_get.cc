@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <map>
 #include <getfemint_misc.h>
 #include <getfemint_mesh.h>
@@ -425,7 +425,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       } while (in.remaining());
     }
   } else if (check_cmd(cmd, "export to pos",in, out, 1, -1, 0, 0)) {
-    /*@GET SLICE:GET('export to pos',@str filename[, @mat U1, @str nameU1[, @mat U2, @str nameU2,...])
+    /*@GET SLICE:GET('export to pos',@str filename[, @str name][[,@tmf mf1], @mat U1, @str nameU1[[,@tmf mf1], @mat U2, @str nameU2,...])
     Export a slice to Gmsh.
 
     More than one dataset may be written, just list them.<par>
@@ -436,28 +436,31 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::string fname = in.pop().to_string();
     getfem::pos_export exp(fname);
 
-    exp.write(*sl);
+    std::string name = "";
+    if (in.remaining() && in.front().is_string())
+      name = in.pop().to_string();
+    exp.write(*sl,name);
     while (in.remaining()) {
-      if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
+      if (in.remaining() >= 3 && in.front().is_mesh_fem()) {
         const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
 
         darray U = in.pop().to_darray();
         in.last_popped().check_trailing_dimension(int(mf->nb_dof()));
 
         if (in.remaining() >= 1 && in.front().is_string())
-          fname = in.pop().to_string();
+          name = in.pop().to_string();
         else THROW_BADARG("expecting string darray_name")
 
-        exp.write(*mf, U, fname);
+        exp.write(*mf, U, name);
       } else if (in.remaining() >=2) {
         darray slU = in.pop().to_darray();
         in.last_popped().check_trailing_dimension(int(sl->nb_points()));
 
         if (in.remaining() >= 1 && in.front().is_string())
-          fname = in.pop().to_string();
+          name = in.pop().to_string();
         else THROW_BADARG("expecting string darray_name")
 
-        exp.write(*sl,slU,fname);
+        exp.write(*sl, slU, name);
       }
     }
   } else bad_cmd(cmd);

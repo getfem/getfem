@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <getfemint_misc.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_integ.h>
@@ -29,78 +29,6 @@
 #include <getfem/getfem_mesh_im.h>
 #include <getfem/getfem_partial_mesh_fem.h>
 #include <getfemint_gsparse.h>
-
-/*
-  $Id$
-
-  ChangeLog:
-  $Log: gf_mesh_fem_get.cc,v $
-  Revision 1.7  2006/03/28 10:06:35  pommier
-  *** empty log message ***
-
-  Revision 1.6  2006/02/14 17:57:17  pommier
-  *** empty log message ***
-
-  Revision 1.5  2006/02/10 17:04:03  pommier
-  *** empty log message ***
-
-  Revision 1.4  2006/02/06 14:35:39  pommier
-  *** empty log message ***
-
-  Revision 1.3  2006/01/18 11:21:52  pommier
-  *** empty log message ***
-
-  Revision 1.2  2005/03/08 16:50:12  pommier
-  added meshim, many doc updates
-
-  Revision 1.1  2005/01/21 15:31:37  renard
-  *** empty log message ***
-
-  Revision 1.9  2005/01/05 16:33:32  pommier
-  *** empty log message ***
-
-  Revision 1.8  2004/08/18 10:16:12  pommier
-  many updates
-
-  Revision 1.7  2004/06/21 09:03:46  pommier
-  more work on gf_spmat and python interface
-
-  Revision 1.6  2004/06/11 10:10:28  pommier
-  commit recent work: handling of integer and complex arrays, interface
-  to gmm preconditioners and sparse matrices
-
-  Revision 1.5  2004/03/03 16:04:05  pommier
-  renamed matlabint_* to getfemint_*
-
-  Revision 1.4  2003/10/05 16:03:40  pommier
-  change all bit_vector loops to bv_visitor
-
-  Revision 1.3  2003/07/31 13:23:48  renard
-  ajout du numero de convexe dans les paramtres de gen_compute
-
-  Revision 1.2  2003/07/25 09:04:30  pommier
-  *** empty log message ***
-
-  Revision 1.1  2003/05/22 13:18:03  pommier
-  regroupement de tous les fichiers dans ./src , et mise en place des RPC
-
-  Revision 1.28  2003/05/05 17:08:51  pommier
-  changement de dal::bit_vector::add(i,j) en dal::bit_vector::add(i,nb)
-
-  Revision 1.27  2003/03/14 15:14:46  pommier
-  ajout acx_getfem
-
-  Revision 1.26  2003/03/11 15:00:30  pommier
-  creation du changelog
-
-  Revision 1.25  2003/02/27 16:34:17  pommier
-  improve friendlyness with gcc2.95
-
-  Revision 1.24  2003/02/18 09:36:28  pommier
-  update doc
-
- */
-
 
 using namespace getfemint;
 
@@ -369,14 +297,13 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   } else if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2) ||
              check_cmd(cmd, "basic dof from cvid", in, out, 0, 1, 0, 2)) {
     if (check_cmd(cmd, "dof from cvid", in, out, 0, 1, 0, 2)) {
-      /*@GET DOF = MESHFEM:GET('dof from cvid'[, @mat CVids])
+      /*@GET @CELL{DOFs, IDx} = MESHFEM:GET('dof from cvid'[, @mat CVids])
         Deprecated function. Use MESHFEM:GET('basic dof from cvid') instead.
         @*/
       infomsg() << "WARNING : gf_mesh_fem_get('dof from cvid', ...) is a "
                 << "deprecated command.\n          Use gf_mesh_fem_get('basic "
                 << "dof from cvid', ...) instead." << endl;
     }
-
     /*@GET @CELL{DOFs, IDx} = MESHFEM:GET('basic dof from cvid'[, @mat CVids])
     Return the degrees of freedom attached to each convex of the mesh.
 
@@ -396,35 +323,23 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     if (in.remaining()) cvlst = in.pop().to_bit_vector();
     else cvlst.add(0, mf->linked_mesh().convex_index().last_true() + 1);
 
+    std::vector<size_type> pids;
+    std::vector<size_type> idx;
     size_type pcnt = 0;
-    /* phase one: count the total number of dof */
     for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-      if (mf->convex_index().is_in(cv)) {
-        pcnt += mf->nb_basic_dof_of_element(cv);
-      }
+      idx.push_back(size_type(pcnt + config::base_index()));
+      if (mf->convex_index().is_in(cv))
+        for (size_type i = 0; i< mf->nb_basic_dof_of_element(cv); ++i, ++pcnt)
+          pids.push_back(size_type(mf->ind_basic_dof_of_element(cv)[i] + config::base_index()));
     }
-    /* phase two: allocation */
-    iarray pid = out.pop().create_iarray_h(unsigned(pcnt));
-    bool fill_idx = out.remaining();
-    iarray idx;
-    if (fill_idx) idx = out.pop().create_iarray_h(unsigned(cvlst.card() + 1));
+    idx.push_back(size_type(pcnt + config::base_index()));
 
-    pcnt = 0;
-    size_type cvcnt = 0;
-    /* phase three: build the list */
-    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
-      if (fill_idx) idx[cvcnt] = int(pcnt + config::base_index());
-      if (mf->convex_index().is_in(cv)) {
-        for (getfem::mesh_fem::ind_dof_ct::const_iterator pit =
-               mf->ind_basic_dof_of_element(cv).begin();
-             pit != mf->ind_basic_dof_of_element(cv).end(); ++pit) {
-          pid[pcnt++] = int((*pit) + config::base_index());
-        }
-      }
-      cvcnt++;
+    iarray opids = out.pop().create_iarray_h(pids.size());
+    if (pids.size()) std::copy(pids.begin(), pids.end(), &opids[0]);
+    if (out.remaining() && idx.size()) {
+      iarray oidx = out.pop().create_iarray_h(idx.size());
+      std::copy(idx.begin(), idx.end(), &oidx[0]);
     }
-    if (fill_idx)  /* for the last convex */
-      idx[idx.size()-1] = int(pcnt+config::base_index());
   } else if (check_cmd(cmd, "non conformal dof", in, out, 0, 1, 0, 1)) {
     /*@GET MESHFEM:GET('non conformal dof'[, @mat CVids])
       Deprecated function. Use MESHFEM:GET('non conformal basic dof') instead.
@@ -707,15 +622,19 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       if (serie_name.size()) exp.serie_add_object(serie_name);
     }
   } else if (check_cmd(cmd, "export to pos", in, out, 1, -1, 0, 0)) {
-    /*@GET MESHFEM:GET('export to pos',@str filename[, @mat U1, @str nameU1[, @mat U2, @str nameU2,...])
+    /*@GET MESHFEM:GET('export to pos',@str filename[, @str name][[,@tmf mf1], @mat U1, @str nameU1[[,@tmf mf2], @mat U2, @str nameU2,...])
     Export a @tmf and some fields to a pos file.
 
     The FEM and geometric transformations will be mapped to order 1
     isoparametric Pk (or Qk) FEMs (as GMSH does not handle higher
     order elements).@*/
     std::string fname = in.pop().to_string();
+    std::string name = "";
+    if (in.remaining() && in.front().is_string())
+      name = in.pop().to_string();
+
     getfem::pos_export exp(fname);
-    exp.write(*mf);
+    exp.write(*mf,name);
     while (in.remaining()) {
       const getfem::mesh_fem *mf2 = mf;
       if (in.remaining() >= 2 && in.front().is_mesh_fem()) {
@@ -725,10 +644,10 @@ void gf_mesh_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       in.last_popped().check_trailing_dimension(int(mf2->nb_dof()));
 
       if (in.remaining() >= 1 && in.front().is_string()) {
-        fname = in.pop().to_string();
+        name = in.pop().to_string();
       } else THROW_BADARG("expecting string darray_name")
 
-      exp.write(*mf2, U, fname);
+      exp.write(*mf2, U, name);
     }
   } else if (check_cmd(cmd, "dof_from_im", in, out, 1, 2, 0, 1)) {
     /*@GET MESHFEM:GET('dof_from_im',@tmim mim[, @int p])

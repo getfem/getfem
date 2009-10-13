@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <getfemint.h>
 #include <getfemint_mesh_levelset.h>
 #include <getfemint_levelset.h>
@@ -29,6 +29,7 @@ using namespace getfemint;
   FUNCTION I = gf_mesh_levelset_get(MLS, ...)
     General function for querying information about MESHLEVELSET objects.
 
+    $Id$
 MLABCOM*/
 
 void gf_mesh_levelset_get(getfemint::mexargs_in& in,
@@ -42,18 +43,22 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& in,
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "cut_mesh", in, out, 0, 0, 0, 1)) {
     /*@GET M = MESHLEVELSET:GET('cut_mesh')
-    Return M?@*/
+    Return a @tmesh cut by the linked @tls's.@*/
     getfemint_mesh *mm = getfemint_mesh::get_from(new getfem::mesh);
     mls.global_cut_mesh(mm->mesh());
     out.pop().from_object_id(mm->get_id(), MESH_CLASS_ID);
   } else if (check_cmd(cmd, "linked_mesh", in, out, 0, 0, 0, 1)) {
     /*@GET LM = MESHLEVELSET:GET('linked_mesh')
-    Return LM?@*/
+    Return a reference to the linked @tmesh.@*/
     getfemint_mesh *mm = getfemint_mesh::get_from(&mls.linked_mesh());
     out.pop().from_object_id(mm->get_id(), MESH_CLASS_ID);
+  } else if (check_cmd(cmd, "nb_ls", in, out, 0, 0, 0, 1)) {
+    /*@GET nbls = MESHLEVELSET:GET('nb_ls')
+    Return the number of linked @tls's.@*/
+    out.pop().from_integer(int(mls.nb_level_sets()));
   } else if (check_cmd(cmd, "levelsets", in, out, 0, 0, 0, 1)) {
     /*@GET LS = MESHLEVELSET:GET('levelsets')
-    Return LS?@*/
+    Return a list of references to the linked @tls's.@*/
     std::vector<id_type> ids;
     for (unsigned i=0; i < mls.nb_level_sets(); ++i) {
       getfemint_levelset *gls =
@@ -62,12 +67,13 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& in,
     }
     out.pop().from_object_id(ids, LEVELSET_CLASS_ID);
   } else if (check_cmd(cmd, "crack_tip_convexes", in, out, 0, 0, 0, 1)) {
-    /*@GET CC = MESHLEVELSET:GET('crack_tip_convexes')
-    Return CC?@*/
+    /*@GET CVIDs = MESHLEVELSET:GET('crack_tip_convexes')
+    Return the list of convex #id's of the linked @tmesh on
+    which have a tip of any linked @tls's.@*/
     out.pop().from_bit_vector(mls.crack_tip_convexes());
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    /*@GET CC = MESHLEVELSET:GET('memsize')
-    Return the amount of memory (in bytes) used by the mesh-level-set.@*/
+    /*@GET SIZE = MESHLEVELSET:GET('memsize')
+    Return the amount of memory (in bytes) used by the @tmls.@*/
     out.pop().from_integer(int(mls.memsize()));
   } else bad_cmd(cmd);
 }

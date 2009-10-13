@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <getfem_interface.h>
 #include <getfemint.h>
 
@@ -26,12 +26,14 @@ using namespace getfemint;
 
 void gf_workspace(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_delete(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_undelete(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_geotrans(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_geotrans_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_integ(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_integ_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_global_function(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_global_function_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_cvstruct_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
@@ -77,7 +79,7 @@ namespace getfemint {
   std::ostream& infomsg() {
     return *global_pinfomsg;
   }
-  
+
   config *config::cfg = 0;
   config::config(gfi_interface_type t) : current_function_(0) {
     switch (t) {
@@ -109,10 +111,10 @@ namespace getfemint {
 }
 
 
-extern "C" 
-char* getfem_interface_main(int config_id, const char *function, 
+extern "C"
+char* getfem_interface_main(int config_id, const char *function,
                             int nb_in_args,
-                            const gfi_array *in_args[], 
+                            const gfi_array *in_args[],
                             int *nb_out_args,
                             gfi_array ***pout_args, char **pinfomsg, int scilab_flag)
 {
@@ -122,21 +124,23 @@ char* getfem_interface_main(int config_id, const char *function,
   //cout << "getfem_matlab_main(" << function << ", inarg=" << nb_in_args << ", outarg=" << *nb_out_args << ")\n";
   //for (int i=0; i < nb_in_args; ++i) { cout << "  inarg[" << i << "]=";gfi_array_print((gfi_array*)in_args[i]); cout << "\n"; }
   try {
-    static getfemint::config *conf[3];  
+    static getfemint::config *conf[3];
     if (!conf[config_id]) conf[config_id] = new getfemint::config((gfi_interface_type)config_id);
     conf[config_id]->current_function_ = function;
     config::set_current_config(conf[config_id]);
     mexargs_in in(nb_in_args, in_args, false);
-    mexargs_out out(*nb_out_args);    
+    mexargs_out out(*nb_out_args);
     out.set_scilab(bool(scilab_flag));
     if (strcmp(function, "workspace")==0) gf_workspace(in,out);
     else if (strcmp(function, "delete")==0) gf_delete(in,out);
+    else if (strcmp(function, "undelete")==0) gf_undelete(in,out);
     else if (strcmp(function, "eltm")==0) gf_eltm(in,out);
     else if (strcmp(function, "geotrans")==0) gf_geotrans(in,out);
     else if (strcmp(function, "geotrans_get")==0) gf_geotrans_get(in,out);
     else if (strcmp(function, "integ")==0) gf_integ(in,out);
     else if (strcmp(function, "integ_get")==0) gf_integ_get(in,out);
     else if (strcmp(function, "global_function")==0) gf_global_function(in,out);
+    else if (strcmp(function, "global_function_get")==0) gf_global_function_get(in,out);
     else if (strcmp(function, "fem")==0) gf_fem(in,out);
     else if (strcmp(function, "fem_get")==0) gf_fem_get(in,out);
     else if (strcmp(function, "cvstruct_get")==0) gf_cvstruct_get(in,out);
@@ -180,7 +184,7 @@ char* getfem_interface_main(int config_id, const char *function,
     else {
       GMM_THROW(getfemint_bad_arg, "unknown function: " << function);
     }
-    
+
     *pout_args = (gfi_array**)gfi_calloc(out.args().size(), sizeof(gfi_array*));
     if (!*pout_args) GMM_THROW(getfemint_error, "memory exhausted..");
     out.set_okay(1);

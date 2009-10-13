@@ -27,7 +27,7 @@
 // might be covered by the GNU Lesser General Public License.
 //
 //===========================================================================
-
+// $Id$
 /**\file getfemint_global_function.h
    \brief getfem::abstract_xy_function wrapper class.
 */

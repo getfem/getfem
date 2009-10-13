@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #define GETFEMINT_WORKSPACE_C
 
 #include <getfem/dal_singleton.h>
@@ -27,7 +27,7 @@
 
 namespace getfemint
 {
-  workspace_stack& workspace() { 
+  workspace_stack& workspace() {
     return dal::singleton<workspace_stack>::instance();
   }
 
@@ -36,7 +36,7 @@ namespace getfemint
     // if (!used->is_static()) {
       std::vector<id_type> &u = used->used_by;
       if (std::find(u.begin(), u.end(), user->get_id()) == u.end())
-	u.push_back(user->get_id());
+        u.push_back(user->get_id());
     // }
   }
 
@@ -47,8 +47,8 @@ namespace getfemint
       std::vector<id_type> &u = used->used_by;
       unsigned i = 0, j = 0;
       for ( ; i < u.size(); ++i) {
-	u[j] = u[i];
-	if (u[i] != user->get_id()) ++j;
+        u[j] = u[i];
+        if (u[i] != user->get_id()) ++j;
       }
       u.resize(j);
     // }
@@ -58,7 +58,7 @@ namespace getfemint
   /* throw recursively anonymous objects in the zombie workspace */
   void workspace_stack::mark_deletable_objects(id_type id, dal::bit_vector &lst) const {
     if (!obj.index().is_in(id)) THROW_INTERNAL_ERROR;
-    getfem_object *o = obj[id]; 
+    getfem_object *o = obj[id];
     if (!o) THROW_INTERNAL_ERROR;
     if (lst.is_in(id)) return; // already inspected
     if (!o->is_anonymous()) return;
@@ -68,6 +68,25 @@ namespace getfemint
       if (!lst.is_in(o->used_by[i])) it_is_possible = false;
     }
     if (it_is_possible) lst.add(id);
+  }
+
+  /* this is an experimental function... (there are a petite bug in python interface gc).
+
+     unmark the object for future deletion (object becomes from anonymous to current),
+     and what else is needed?
+   */
+  void workspace_stack::undelete_object(id_type id) {
+    getfem_object *o = obj[id];
+    if (!o) { THROW_ERROR("this object does not exist\n"); }
+    if (o->is_static() && o->ikey == 0) { THROW_ERROR("o->is_static() && o->ikey == 0"); }
+    if (o->is_anonymous()) {
+      o->set_workspace(current_workspace);
+      //if (o->ikey) kmap[o->ikey] = o;// would it be necessary??
+      //std::cout << "o->ikey       : " << o->ikey << std::endl;
+      //std::cout << "o             : " << o << std::endl;
+      //std::cout << "kmap[o->ikey] : " << kmap[o->ikey] << std::endl;
+      //newly_created_objects.push_back(id); // would it be necessary??
+    } // what do you do if o is not anonymous?
   }
 
   /* at least mark the objet for future deletion (object becomes anonymous)
@@ -86,39 +105,39 @@ namespace getfemint
 
       /* mark the object as an anonymous one */
       obj[id]->set_workspace(anonymous_workspace);
-   
+
       /* list of objects to delete */
       dal::bit_vector dellst;
       for (dal::bv_visitor ii(obj.index()); !ii.finished(); ++ii)
-	mark_deletable_objects(id_type(ii), dellst);
-      
+        mark_deletable_objects(id_type(ii), dellst);
+
       if (dellst.card()) {
         /* clear each deletable objects. After the clear there should
            not__ be anymore dependance between them (i.e. we can
            delete them in any order)
         */
-	for (dal::bv_visitor ii(dellst); !ii.finished(); ++ii) 
-	  obj[ii]->clear_before_deletion();
+        for (dal::bv_visitor ii(dellst); !ii.finished(); ++ii)
+          obj[ii]->clear_before_deletion();
 
-	/* suppress the objects in any order */
-	for (dal::bv_visitor ii(dellst); !ii.finished(); ++ii) {
-	  if (obj[ii]->ikey) kmap.erase(obj[ii]->ikey);
-	  delete obj[ii]; 
-	  obj[ii] = 0; 
-	  obj.sup(ii);
-	}
-	
-	/* remove the deleted objects from the "used_by" arrays */
-	for (dal::bv_visitor ii(obj.index()); !ii.finished(); ++ii) {
-	  getfem_object *o = obj[ii];
-	  int j = 0;
-	  for (unsigned i=0; i < o->used_by.size(); ++i) {
-	    if (!dellst.is_in(o->used_by[i])) {
-	      o->used_by[j++] = o->used_by[i];
-	    }
-	  }
-	  o->used_by.resize(j);
-	}
+        /* suppress the objects in any order */
+        for (dal::bv_visitor ii(dellst); !ii.finished(); ++ii) {
+          if (obj[ii]->ikey) kmap.erase(obj[ii]->ikey);
+          delete obj[ii];
+          obj[ii] = 0;
+          obj.sup(ii);
+        }
+
+        /* remove the deleted objects from the "used_by" arrays */
+        for (dal::bv_visitor ii(obj.index()); !ii.finished(); ++ii) {
+          getfem_object *o = obj[ii];
+          int j = 0;
+          for (unsigned i=0; i < o->used_by.size(); ++i) {
+            if (!dellst.is_in(o->used_by[i])) {
+              o->used_by[j++] = o->used_by[i];
+            }
+          }
+          o->used_by.resize(j);
+        }
       }
     } else {
       std::stringstream s;
@@ -132,7 +151,7 @@ namespace getfemint
     id_type obj_id = id_type(obj.add(o));
     //if (!o->is_static())
     o->set_workspace(current_workspace);
-    if (o->is_static() && o->ikey == 0) 
+    if (o->is_static() && o->ikey == 0)
       THROW_INTERNAL_ERROR;
     o->set_id(obj_id);
     if (o->ikey) kmap[o->ikey] = o;
@@ -142,7 +161,7 @@ namespace getfemint
   }
 
   /* create a new workspace on top of the stack */
-  void workspace_stack::push_workspace(std::string n) { 
+  void workspace_stack::push_workspace(std::string n) {
     id_type new_workspace
       = id_type(wrk.add(workspace_data(n, current_workspace)));
     current_workspace = new_workspace;
@@ -160,10 +179,10 @@ namespace getfemint
   }
 
   void workspace_stack::send_all_objects_to_parent_workspace() {
-    for (obj_ct::tas_iterator it = obj.tas_begin(); 
-	 it != obj.tas_end(); ++it) {
+    for (obj_ct::tas_iterator it = obj.tas_begin();
+         it != obj.tas_end(); ++it) {
       if ((*it)->get_workspace() == current_workspace) {
-	(*it)->set_workspace(wrk[current_workspace].parent_workspace);
+        (*it)->set_workspace(wrk[current_workspace].parent_workspace);
       }
     }
   }
@@ -174,9 +193,9 @@ namespace getfemint
       if (!obj.index().is_in(oid)) continue;
       id_type owid = obj[oid]->get_workspace();
       if (owid != anonymous_workspace && !wrk.index_valid(owid))
-	THROW_INTERNAL_ERROR;
+        THROW_INTERNAL_ERROR;
       if (owid == wid) {
-	delete_object(id_type(oid));
+        delete_object(id_type(oid));
       }
     }
   }
@@ -185,7 +204,7 @@ namespace getfemint
   void workspace_stack::pop_workspace(bool keep_all) {
     if (!wrk.index()[current_workspace]) THROW_INTERNAL_ERROR;
     if (current_workspace == base_workspace) THROW_INTERNAL_ERROR;
-    
+
     if (keep_all) send_all_objects_to_parent_workspace();
     else clear_workspace();
     id_type tmp = current_workspace;
@@ -197,8 +216,8 @@ namespace getfemint
     getfem_object *o = NULL;
     //cout << "obj.index() == " << obj.index() << ", id= " << id << "\n";
     if (obj.index()[id] &&
-	std::find(newly_created_objects.begin(), newly_created_objects.end(),id) == newly_created_objects.end()) {
-      o = obj[id]; 
+        std::find(newly_created_objects.begin(), newly_created_objects.end(),id) == newly_created_objects.end()) {
+      o = obj[id];
       if (!o) THROW_INTERNAL_ERROR;
     } else {
       THROW_ERROR("object " << expected_type  << " [id=" << id << "] not found");
@@ -212,15 +231,15 @@ namespace getfemint
     else return 0;
   }
 
-  void workspace_stack::commit_newly_created_objects() { 
-    newly_created_objects.resize(0); 
+  void workspace_stack::commit_newly_created_objects() {
+    newly_created_objects.resize(0);
   }
 
-  void workspace_stack::destroy_newly_created_objects() { 
+  void workspace_stack::destroy_newly_created_objects() {
     while (newly_created_objects.size()) {
-      delete_object(newly_created_objects.back()); 
+      delete_object(newly_created_objects.back());
       newly_created_objects.pop_back();
-    }      
+    }
   }
 
 }
