@@ -8,7 +8,7 @@ m = gf_mesh('pt2D',p,t);
 
 mf  = gf_mesh_fem(m,1);
 mim = gf_mesh_im(m,gf_integ('IM_EXACT_SIMPLEX(2)'));
-asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf)');
+asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf)'); // YC logic error here ?!? It works when tested alone
 
 mf3 = gf_mesh_fem(m,3);
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_PK(2,1)'));
