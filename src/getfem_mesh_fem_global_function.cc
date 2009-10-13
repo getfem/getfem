@@ -21,8 +21,8 @@
 
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_level_set.h>
-#include <getfem/getfem_arch_config.h>
 
+#include <getfem/getfem_arch_config.h>
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
 #include <muParser/muParser.h>
 #endif
@@ -143,16 +143,18 @@ namespace getfem {
     touch();
   }
 
+
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
   scalar_type
-  parser_xy_function::val(scalar_type x_, scalar_type y_) const {
-    var[0] = double(x_);                      // x
-    var[1] = double(y_);                      // y
-    var[2] = double(sqrt(fabs(x_*x_+y_*y_))); // r
-    var[3] = double(atan2(y_,x_));            // theta
+  parser_xy_function::val(scalar_type x, scalar_type y) const {
+    var[0] = double(x);                   // x
+    var[1] = double(y);                   // y
+    var[2] = double(sqrt(fabs(x*x+y*y))); // r
+    var[3] = double(atan2(y,x));          // theta
 
+    scalar_type res = 0;
     try {
-      return scalar_type(pval.Eval());
+      res = scalar_type(pval.Eval());
     } catch (mu::Parser::exception_type &e) {
       std::cerr << "Message  : " << e.GetMsg() << std::endl;
       std::cerr << "Formula  : " << e.GetExpr() << std::endl;
@@ -161,14 +163,15 @@ namespace getfem {
       std::cerr << "Errc     : " << e.GetCode() << std::endl;
       GMM_ASSERT1(false, "Error in \"val\" expression.")
     }
+    return res;
   }
 
   base_small_vector
-  parser_xy_function::grad(scalar_type x_, scalar_type y_) const {
-    var[0] = double(x_);                      // x
-    var[1] = double(y_);                      // y
-    var[2] = double(sqrt(fabs(x_*x_+y_*y_))); // r
-    var[3] = double(atan2(y_,x_));            // theta
+  parser_xy_function::grad(scalar_type x, scalar_type y) const {
+    var[0] = double(x);                   // x
+    var[1] = double(y);                   // y
+    var[2] = double(sqrt(fabs(x*x+y*y))); // r
+    var[3] = double(atan2(y,x));          // theta
 
     base_small_vector res(2);
     try {
@@ -186,11 +189,11 @@ namespace getfem {
   }
 
   base_matrix
-  parser_xy_function::hess(scalar_type x_, scalar_type y_) const {
-    var[0] = double(x_);                      // x
-    var[1] = double(y_);                      // y
-    var[2] = double(sqrt(fabs(x_*x_+y_*y_))); // r
-    var[3] = double(atan2(y_,x_));            // theta
+  parser_xy_function::hess(scalar_type x, scalar_type y) const {
+    var[0] = double(x);                   // x
+    var[1] = double(y);                   // y
+    var[2] = double(sqrt(fabs(x*x+y*y))); // r
+    var[3] = double(atan2(y,x));          // theta
 
     base_matrix res(2,2);
     try {
@@ -224,39 +227,39 @@ namespace getfem {
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
 
+    scalar_type res = 0;
     switch(l){
-      case 0 : return sqrt(r)*sin2;
-      case 1 : return sqrt(r)*cos2;
-      case 2 : return sin2*y/sqrt(r);
-      case 3 : return cos2*y/sqrt(r);
+      case 0 : res = sqrt(r)*sin2; break;
+      case 1 : res = sqrt(r)*cos2; break;
+      case 2 : res = sin2*y/sqrt(r); break;
+      case 3 : res = cos2*y/sqrt(r); break;
   /*Enrichissemnt secent order en u */
-      case 4 : return sqrt(r)*r*sin2;
-      case 5 : return sqrt(r)*r*cos2;
-      //case 6 : return sqrt(r)*y*sin2;
-      //case 7 : return sqrt(r)*y*cos2;
-     // case 6 : return 2*sin2*x*y/sqrt(r);
-      //case 7 : return 2*cos2*x*y/sqrt(r);
-      case 6 : return sin2*cos2*cos2*r*sqrt(r);
-      case 7 : return cos2*cos2*cos2*r*sqrt(r);
+      case 4 : res = sqrt(r)*r*sin2; break;
+      case 5 : res = sqrt(r)*r*cos2; break;
+      //case 6 : res = sqrt(r)*y*sin2; break;
+      //case 7 : res = sqrt(r)*y*cos2; break;
+     // case 6 : res = 2*sin2*x*y/sqrt(r); break;
+      //case 7 : res = 2*cos2*x*y/sqrt(r); break;
+      case 6 : res = sin2*cos2*cos2*r*sqrt(r); break;
+      case 7 : res = cos2*cos2*cos2*r*sqrt(r); break;
     /* Ces deux fonctions représentes l'enrichissement du champs de pression en élasticité incompressible en formulation mixte ...
      */
 
-      case 8 : return -sin2/sqrt(r);
-      case 9 : return cos2/sqrt(r);
+      case 8 : res = -sin2/sqrt(r); break;
+      case 9 : res = cos2/sqrt(r); break;
 
   /*Enrichissemnt secent order en p */
 
-      case 10 : return sin2*sqrt(r); // cos2*cos2
-      case 11 : return cos2*sqrt(r);
+      case 10 : res = sin2*sqrt(r); break; // cos2*cos2
+      case 11 : res = cos2*sqrt(r); break;
 
     default: GMM_ASSERT2(false, "arg");
     }
-    return 0;
+    return res;
   }
 
   base_small_vector
   crack_singular_xy_function::grad(scalar_type x, scalar_type y) const {
-    base_small_vector res(2);
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
 
@@ -270,6 +273,7 @@ namespace getfem {
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
 
+    base_small_vector res(2);
     switch(l){
      case 0 :
       res[0] = -sin2/(2*sqrt(r));
@@ -329,11 +333,11 @@ namespace getfem {
       res[0] =-cos2*((2*cos2*cos2) - 3.)/(2*sqrt(r)*r);
       res[1] =-sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r);
       break;
-   case 10 :
+    case 10 :
       res[0] = -sin2/(2*sqrt(r));
       res[1] =  cos2/(2*sqrt(r));
       break;
-   case 11 :
+    case 11 :
       res[0] = cos2/(2*sqrt(r));
       res[1] = sin2/(2*sqrt(r));
       break;
@@ -343,7 +347,6 @@ namespace getfem {
   }
 
   base_matrix crack_singular_xy_function::hess(scalar_type x, scalar_type y) const {
-    base_matrix res(2,2);
     scalar_type sgny = (y < 0 ? -1.0 : 1.0);
     scalar_type r = sqrt(x*x + y*y);
 
@@ -357,6 +360,7 @@ namespace getfem {
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
 
+    base_matrix res(2,2);
     switch(l){
     case 0 :
       res(0,0) = (-sin2*x*x + 2.0*cos2*x*y + sin2*y*y) / (4*pow(r, 3.5));
@@ -393,29 +397,33 @@ namespace getfem {
 
   scalar_type
   cutoff_xy_function::val(scalar_type x, scalar_type y) const {
+    scalar_type res = 1;
     switch (fun) {
-      case EXPONENTIAL_CUTOFF:
-        return (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
+      case EXPONENTIAL_CUTOFF: {
+        res = (a4>0) ? exp(-a4 * gmm::sqr(x*x+y*y)) : 1;
+        break;
+      }
       case POLYNOMIAL_CUTOFF: {
         assert(r0 > r1);
         scalar_type r = gmm::sqrt(x*x+y*y);
 
-        if (r <= r1) return 1;
-        else if (r >= r0) return 0;
+        if (r <= r1) res = 1;
+        else if (r >= r0) res = 0;
         else {
           // scalar_type c = 6./(r0*r0*r0 - r1*r1*r1 + 3*r1*r0*(r1-r0));
           // scalar_type k = -(c/6.)*(-pow(r0,3.) + 3*r1*pow(r0,2.));
-          // return (c/3.)*pow(r,3.) - (c*(r0 + r1)/2.)*pow(r,2.) +
+          // res = (c/3.)*pow(r,3.) - (c*(r0 + r1)/2.)*pow(r,2.) +
           //        c*r0*r1*r + k;
           scalar_type c = 1./pow(r0-r1,3.0);
-          return c*(r*(r*(2.0*r-3.0*(r0+r1))+6.0*r1*r0) + r0*r0*(r0-3.0*r1));
+          res = c*(r*(r*(2.0*r-3.0*(r0+r1))+6.0*r1*r0) + r0*r0*(r0-3.0*r1));
         }
+        break;
       }
       case POLYNOMIAL2_CUTOFF: {
         assert(r0 > r1);
         scalar_type r = gmm::sqrt(x*x+y*y);
-        if (r <= r1) return scalar_type(1);
-        else if (r >= r0) return scalar_type(0);
+        if (r <= r1) res = scalar_type(1);
+        else if (r >= r0) res = scalar_type(0);
         else {
 //           scalar_type c = 1./((-1./30.)*(pow(r1,5) - pow(r0,5))
 //                               + (1./6.)*(pow(r1,4)*r0 - r1*pow(r0,4))
@@ -424,26 +432,31 @@ namespace getfem {
 //           scalar_type k = 1. - c*((-1./30.)*pow(r1,5) +
 //                                   (1./6.)*pow(r1,4)*r0 -
 //                                   (1./3.)*pow(r1,3)*pow(r0,2));
-//           return c*( (-1./5.)*pow(r,5) + (1./2.)* (r1+r0)*pow(r,4) -
+//           res = c*( (-1./5.)*pow(r,5) + (1./2.)* (r1+r0)*pow(r,4) -
 //                      (1./3.)*(pow(r1,2)+pow(r0,2) + 4.*r0*r1)*pow(r,3) +
 //                      r0*r1*(r0+r1)*pow(r,2) - pow(r0,2)*pow(r1,2)*r) + k;
-          return (r*(r*(r*(r*(-6.0*r + 15.0*(r0+r1))
+          res = (r*(r*(r*(r*(-6.0*r + 15.0*(r0+r1))
                            - 10.0*(r0*r0 + 4.0*r1*r0 + r1*r1))
                         + 30.0 * r0*r1*(r0+r1)) - 30.0*r1*r1*r0*r0)
                   + r0*r0*r0*(r0*r0-5.0*r1*r0+10*r1*r1)) / pow(r0-r1, 5.0);
         }
+        break;
       }
-      default : return scalar_type(1);
+      default : res = 1;
     }
+    return res;
   }
 
   base_small_vector
   cutoff_xy_function::grad(scalar_type x, scalar_type y) const {
+    base_small_vector res(2);
     switch (fun) {
     case EXPONENTIAL_CUTOFF: {
       scalar_type r2 = x*x+y*y, ratio = -4.*exp(-a4*r2*r2)*a4*r2;
-      return base_small_vector(ratio*x, ratio*y);
-    } break;
+      res[0] = ratio*x;
+      res[1] = ratio*y;
+      break;
+    }
     case POLYNOMIAL_CUTOFF: {
       scalar_type r = gmm::sqrt(x*x+y*y);
       scalar_type ratio = 0;
@@ -453,8 +466,10 @@ namespace getfem {
         // ratio = c*(r - r0)*(r - r1);
         ratio = 6.*(r - r0)*(r - r1)/pow(r0-r1, 3.);
       }
-      return base_small_vector(ratio*x/r,ratio*y/r);
-    } break;
+      res[0] = ratio*x/r;
+      res[1] = ratio*y/r;
+      break;
+    }
     case POLYNOMIAL2_CUTOFF: {
       scalar_type r = gmm::sqrt(x*x+y*y);
       scalar_type ratio = 0;
@@ -466,10 +481,15 @@ namespace getfem {
 //        ratio = - c*gmm::sqr(r-r0)*gmm::sqr(r-r1);
         ratio = -30.0*gmm::sqr(r-r0)*gmm::sqr(r-r1) / pow(r0-r1, 5.0);
       }
-      return base_small_vector(ratio*x/r,ratio*y/r);
-    } break;
-    default : return base_small_vector(2);
+      res[0] = ratio*x/r;
+      res[1] = ratio*y/r;
+      break;
     }
+    default :
+      res[0] = 0;
+      res[1] = 0;
+    }
+    return res;
   }
 
   base_matrix
@@ -482,7 +502,8 @@ namespace getfem {
       res(1,0) = 8.0*a4*x*y*(-1.0 + 2.0*a4*r4)*exp(-a4*r4);
       res(0,1) = res(1,0);
       res(1,1) = 4.0*a4*(-3.0*y*y - x*x + 4.0*a4*y*y*r4)*exp(-a4*r4);
-    } break;
+      break;
+    }
     case POLYNOMIAL_CUTOFF: {
       scalar_type r2 = x*x+y*y, r = gmm::sqrt(r2), c=6./(pow(r0-r1,3.)*r*r2);
       if ( r > r1 && r < r0 ) {
@@ -491,7 +512,8 @@ namespace getfem {
         res(0,1) = res(1,0);
         res(1,1) = c*(y*y*r2 + r1*r0*x*x - r*r2*(r0+r1) + r2*r2);
       }
-    } break;
+      break;
+    }
     case POLYNOMIAL2_CUTOFF: {
       scalar_type r2 = x*x+y*y, r = gmm::sqrt(r2), r3 = r*r2;
       if (r > r1 && r < r0) {
@@ -503,7 +525,8 @@ namespace getfem {
         res(0,1) = res(1,0);
         res(1,1) = ddp*ry*ry + dp*ryy;
       }
-    } break;
+      break;
+    }
     }
     return res;
   }
@@ -536,7 +559,8 @@ namespace getfem {
 
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num());
-      scalar_type x = mls_x(c.xref()), y = mls_y(c.xref());
+      scalar_type x = mls_x(c.xref());
+      scalar_type y = mls_y(c.xref());
       return fn.val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
@@ -560,7 +584,7 @@ namespace getfem {
       scalar_type y = mls_y.grad(c.xref(), dy);
 
       base_small_vector gfn = fn.grad(x,y);
-      base_matrix hfn = fn.hess(x, y);
+      base_matrix hfn = fn.hess(x,y);
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
       mls_x.hess(c.xref(), hx);
@@ -596,13 +620,11 @@ namespace getfem {
 
   };
 
-
   pglobal_function
   global_function_on_level_set(const level_set &ls,
                                const abstract_xy_function &fn) {
     return new global_function_on_levelset_(ls, fn);
   }
-
 
 
   struct global_function_on_levelsets_ :
@@ -634,7 +656,8 @@ namespace getfem {
 
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num(), c.xref().size());
-      scalar_type x = mls_x(c.xref()), y = mls_y(c.xref());
+      scalar_type x = mls_x(c.xref());
+      scalar_type y = mls_y(c.xref());
       return fn.val(x,y);
     }
     virtual void grad(const fem_interpolation_context& c,
@@ -646,6 +669,7 @@ namespace getfem {
       scalar_type y = mls_y.grad(c.xref(), dy);
 
       base_small_vector gfn = fn.grad(x,y);
+
       gmm::mult(c.B(), gfn[0]*dx + gfn[1]*dy, g);
     }
     virtual void hess(const fem_interpolation_context&c,
@@ -658,7 +682,7 @@ namespace getfem {
       scalar_type y = mls_y.grad(c.xref(), dy);
 
       base_small_vector gfn = fn.grad(x,y);
-      base_matrix hfn = fn.hess(x, y);
+      base_matrix hfn = fn.hess(x,y);
 
       base_matrix hx, hy, hx_real(N*N, 1), hy_real(N*N, 1);
       mls_x.hess(c.xref(), hx);
@@ -694,7 +718,6 @@ namespace getfem {
     }
 
   };
-
 
   pglobal_function
   global_function_on_level_sets(const std::vector<level_set> &lsets,

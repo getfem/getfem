@@ -932,28 +932,30 @@ namespace getfem
     state = STRUCTURE_WRITTEN;
   }
 
-  void pos_export::write(const mesh& m){
+  void pos_export::write(const mesh& m, const std::string &name){
     if (state >= IN_CELL_DATA) return;
     GMM_ASSERT1(int(m.dim()) <= 3, "attempt to export a "
                 << int(m.dim()) << "D mesh (not supported)");
     pmf.reset(new mesh_fem(const_cast<mesh&>(m),1));
     pmf->set_classical_finite_element(1);
-    write(*pmf);
+    write(*pmf,name);
     state = IN_CELL_DATA;
   }
 
-  void pos_export::write(const mesh_fem& mf){
+  void pos_export::write(const mesh_fem& mf, const std::string &name){
     if (state >= IN_CELL_DATA) return;
     check_header();
     exporting(mf);
-    os << "View \"mesh " << view <<"\" {\n";
+
+    if (""==name) os << "View \"mesh " << view <<"\" {\n";
+    else os << "View \"" << name <<"\" {\n";
 
     int t;
     std::vector<unsigned> cell_dof;
     std::vector<float> cell_dof_val;
-    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      t = pos_cell_type[cv];
-      cell_dof = pos_cell_dof[cv];
+    for (size_type cell = 0; cell < pos_cell_type.size(); ++cell) {
+      t = pos_cell_type[cell];
+      cell_dof = pos_cell_dof[cell];
       cell_dof_val.resize(cell_dof.size(),float(0));
       write_cell(t,cell_dof,cell_dof_val);
     }
@@ -967,23 +969,22 @@ namespace getfem
     state = IN_CELL_DATA;
   }
 
-  void pos_export::write(const stored_mesh_slice& sl){
+  void pos_export::write(const stored_mesh_slice& sl, const std::string &name){
     if (state >= IN_CELL_DATA) return;
     check_header();
     exporting(sl);
-    os << "View \"mesh " << view <<"\" {\n";
+
+    if (""==name) os << "View \"mesh " << view <<"\" {\n";
+    else os << "View \"" << name <<"\" {\n";
 
     int t;
     std::vector<unsigned> cell_dof;
     std::vector<float> cell_dof_val;
-    for (size_type ic=0, scnt = 0; ic < psl->nb_convex(); ++ic) {
-      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
-           it != psl->simplexes(ic).end(); ++it) {
-        t = pos_cell_type[scnt];
-        cell_dof = pos_cell_dof[scnt++];
-        cell_dof_val.resize(cell_dof.size(),float(0));
-        write_cell(t,cell_dof,cell_dof_val);
-      }
+    for (size_type cell = 0; cell < pos_cell_type.size(); ++cell) {
+      t = pos_cell_type[cell];
+      cell_dof = pos_cell_dof[cell];
+      cell_dof_val.resize(cell_dof.size(),float(0));
+      write_cell(t,cell_dof,cell_dof_val);
     }
 
     os << "};\n";

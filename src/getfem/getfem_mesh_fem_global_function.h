@@ -39,8 +39,8 @@
 #include "getfem_fem.h"
 #include "getfem_mesh_fem.h"
 #include "bgeot_rtree.h"
-#include "getfem/getfem_arch_config.h"
 
+#include "getfem/getfem_arch_config.h"
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
 #include <muParser/muParser.h>
 #endif
@@ -50,9 +50,9 @@ namespace getfem {
   struct global_function : virtual public dal::static_stored_object {
     virtual scalar_type val(const fem_interpolation_context&) const
     { GMM_ASSERT1(false, "this global_function has no value"); }
-    virtual void grad(const fem_interpolation_context&, base_small_vector &) const
+    virtual void grad(const fem_interpolation_context&, base_small_vector&) const
     { GMM_ASSERT1(false, "this global_function has no gradient"); }
-    virtual void hess(const fem_interpolation_context&, base_matrix &) const
+    virtual void hess(const fem_interpolation_context&, base_matrix&) const
     { GMM_ASSERT1(false, "this global_function has no hessian"); }
     virtual ~global_function() {}
   };
@@ -65,7 +65,6 @@ namespace getfem {
     mutable bgeot::multi_index mib,mig,mih;
     void init();
   public :
-
     virtual size_type nb_dof(size_type cv) const;
     virtual size_type index_of_global_dof(size_type cv, size_type i) const;
     void base_value(const base_node &, base_tensor &) const;
@@ -167,8 +166,8 @@ namespace getfem {
     mu::Parser pXXhess,pXYhess,pYXhess,pYYhess;
     double* var;// x,y,r,theta
 
-    virtual scalar_type val(scalar_type x_, scalar_type y_) const;
-    virtual base_small_vector grad(scalar_type x_, scalar_type y_) const;
+    virtual scalar_type val(scalar_type x, scalar_type y) const;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const;
     virtual base_matrix hess(scalar_type x, scalar_type y) const;
 
     parser_xy_function(const std::string &sval,
@@ -274,7 +273,7 @@ namespace getfem {
     scalar_type a4, r1, r0;
     virtual scalar_type val(scalar_type x, scalar_type y) const;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
-    virtual base_matrix hess(scalar_type, scalar_type) const;
+    virtual base_matrix hess(scalar_type x, scalar_type y) const;
     cutoff_xy_function(int fun_num, scalar_type r,
                        scalar_type r1, scalar_type r0);
   };
@@ -308,7 +307,7 @@ namespace getfem {
       return fn1.grad(x,y)*fn2.val(x,y) + fn1.val(x,y)*fn2.grad(x,y);
     }
     virtual base_matrix hess(scalar_type x, scalar_type y) const {
-      base_matrix h = fn1.hess(x, y);
+      base_matrix h = fn1.hess(x,y);
       gmm::scale(h, fn2.val(x,y));
       gmm::add(gmm::scaled(fn2.hess(x,y), fn1.val(x,y)), h);
       gmm::rank_two_update(h, fn1.grad(x,y), fn2.grad(x,y));
@@ -319,6 +318,24 @@ namespace getfem {
       : fn1(fn1_), fn2(fn2_) {}
   };
 
+  struct add_of_xy_functions :
+    public abstract_xy_function {
+    abstract_xy_function &fn1, &fn2;
+    scalar_type val(scalar_type x, scalar_type y) const {
+      return fn1.val(x,y) + fn2.val(x,y);
+    }
+    base_small_vector grad(scalar_type x, scalar_type y) const {
+      return fn1.grad(x,y) + fn2.grad(x,y);
+    }
+    virtual base_matrix hess(scalar_type x, scalar_type y) const {
+      base_matrix h = fn1.hess(x,y);
+      gmm::add(fn2.hess(x,y), h);
+      return h;
+    }
+    add_of_xy_functions(abstract_xy_function &fn1_,
+                        abstract_xy_function &fn2_)
+      : fn1(fn1_), fn2(fn2_) {}
+  };
 
   /*
    * some usefull global functions
@@ -337,4 +354,3 @@ namespace getfem {
 }  /* end of namespace getfem.                                            */
 
 #endif
-

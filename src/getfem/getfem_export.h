@@ -569,9 +569,9 @@ namespace getfem {
     void exporting(const mesh_fem& mf);
     void exporting(const stored_mesh_slice& sl);
 
-    void write(const mesh& m);
-    void write(const mesh_fem& mf);
-    void write(const stored_mesh_slice& sl);
+    void write(const mesh& m, const std::string& name="");
+    void write(const mesh_fem& mf, const std::string& name="");
+    void write(const stored_mesh_slice& sl, const std::string& name="");
 
     template <class VECT>
     void write(const mesh_fem& mf,const VECT& U, const std::string& name);
@@ -583,9 +583,7 @@ namespace getfem {
     void check_header();
 
     template <class VECT>
-    void write_pmf(const VECT& V);
-    template <class VECT>
-    void write_psl(const VECT& V);
+    void write(const VECT& V, const size_type qdim_v);
 
     template <class VECT>
     void write_cell(const int& t, const std::vector<unsigned>& dof,
@@ -600,12 +598,13 @@ namespace getfem {
 
     os << "View \"" << name.c_str() <<"\" {\n";
 
-    size_type nb_sdof = mf.nb_dof()/mf.get_qdim();
-    size_type qdim_u = gmm::vect_size(U)/nb_sdof;
+    size_type nb_points = mf.nb_dof()/mf.get_qdim();
+    size_type qdim_u = gmm::vect_size(U)/nb_points;
     if (psl){
       std::vector<scalar_type> Uslice(psl->nb_points()*qdim_u);
       psl->interpolate(mf, U, Uslice);
-      write_psl(Uslice);
+      qdim_u = gmm::vect_size(Uslice)/psl->nb_points();
+      write(Uslice, qdim_u);
     }else {
       std::vector<scalar_type> V(pmf->nb_dof()*qdim_u);
       if (&mf != &(*pmf)) {
@@ -618,7 +617,9 @@ namespace getfem {
           }
       }
       V.resize(Q*pmf_dof_used.card());*/
-      write_pmf(V);
+      nb_points = pmf->nb_dof()/pmf->get_qdim();
+      qdim_u = gmm::vect_size(V)/nb_points;
+      write(V, qdim_u);
     }
 
     os << "};\n";
@@ -637,7 +638,8 @@ namespace getfem {
 
     os << "View \"" << name.c_str() <<"\" {\n";
 
-    write_psl(V);
+    size_type qdim_v = gmm::vect_size(V)/psl->nb_points();
+    write(V, qdim_v);
 
     os << "};\n";
     os << "View[" << view << "].ShowScale = 1;\n";
@@ -648,44 +650,18 @@ namespace getfem {
   }
 
   template <class VECT>
-  void pos_export::write_pmf(const VECT& V){
-
-    size_type nb_sdof = pmf->nb_dof()/pmf->get_qdim();
-    size_type qdim_v = gmm::vect_size(V)/nb_sdof;
-
+  void pos_export::write(const VECT& V, const size_type qdim_v){
     int t;
     std::vector<unsigned> cell_dof;
     std::vector<scalar_type> cell_dof_val;
-    for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      t = pos_cell_type[cv];
-      cell_dof = pos_cell_dof[cv];
+    for (size_type cell = 0; cell < pos_cell_type.size(); ++cell) {
+      t = pos_cell_type[cell];
+      cell_dof = pos_cell_dof[cell];
       cell_dof_val.resize(cell_dof.size()*qdim_v, scalar_type(0));
       for (size_type i=0; i< cell_dof.size(); ++i)
         for (size_type j=0; j< qdim_v; ++j)
-          cell_dof_val[i*qdim_v+j] = scalar_type(V[pos_cell_dof[cv][i]*qdim_v+j]);
+          cell_dof_val[i*qdim_v+j] = scalar_type(V[cell_dof[i]*qdim_v+j]);
       write_cell(t,cell_dof,cell_dof_val);
-    }
-  }
-
-  template <class VECT>
-  void pos_export::write_psl(const VECT& V){
-
-    size_type qdim_v = gmm::vect_size(V)/psl->nb_points();
-
-    int t;
-    std::vector<unsigned> cell_dof;
-    std::vector<scalar_type> cell_dof_val;
-    for (size_type ic=0, scnt = 0; ic < psl->nb_convex(); ++ic) {
-      for (getfem::mesh_slicer::cs_simplexes_ct::const_iterator it=psl->simplexes(ic).begin();
-           it != psl->simplexes(ic).end(); ++it) {
-        t = pos_cell_type[scnt];
-        cell_dof = pos_cell_dof[scnt++];
-        cell_dof_val.resize(cell_dof.size()*qdim_v, scalar_type(0));
-        for (size_type i=0; i< cell_dof.size(); ++i)
-          for (size_type j=0; j< qdim_v; ++j)
-            cell_dof_val[i*qdim_v+j] = scalar_type(V[cell_dof[i]*qdim_v+j]);
-        write_cell(t,cell_dof,cell_dof_val);
-      }
     }
   }
 
