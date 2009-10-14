@@ -6,7 +6,11 @@ if BUILDPYTHON
 subdirPYTHON=python
 endif
 
-SUBDIRS = . $(subdirMATLAB) $(subdirPYTHON)
+if BUILDSCILAB
+subdirSCILAB=scilab
+endif
+
+SUBDIRS = . $(subdirMATLAB) $(subdirPYTHON) $(subdirSCILAB)
 
 RPC_INC_DIR=@RPC_INC_DIR@
 
