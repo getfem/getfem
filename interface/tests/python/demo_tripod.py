@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,12 +18,17 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+"""  This is the "modern" tripod demo, which uses the getfem model bricks
+  importing the mesh..
 
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM++.
+
+  $Id$
+"""
 from getfem import *
 from numpy import *
-
-print 'This is the "modern" tripod demo, which uses the getfem model bricks'
-print 'importing the mesh..',
 
 with_graphics=True
 try:
@@ -38,7 +45,7 @@ print 'done!'
 mfu=MeshFem(m,3) # displacement
 mfp=MeshFem(m,1) # pressure
 mfd=MeshFem(m,1) # data
-mfe=MeshFem(m,1) 
+mfe=MeshFem(m,1)
 mim=MeshIm(m, Integ('IM_TETRAHEDRON(5)'))
 degree = 2
 linear = False
@@ -115,10 +122,15 @@ print 'Von Mises range: ', VM.min(), VM.max()
 
 # export results to VTK (you can use http://mayavi.sourceforge.net/ to view these results )
 # i.e. with  "mayavi -d tripod.vtk -m BandedSurfaceMap -f WarpVector"
-sl.export_to_vtk('tripod.vtk', 'ascii',mfe,  VM,'Von Mises Stress', mfu, U, 'Displacement')
+sl.export_to_vtk('tripod.vtk', 'ascii', mfe,  VM, 'Von Mises Stress', mfu, U, 'Displacement')
+sl.export_to_pos('tripod.pos', mfe, VM, 'Von Mises Stress', mfu, U, 'Displacement')
 
 print 'You can view the tripod with (for example) mayavi:'
 print 'mayavi -d ./tripod.vtk -f WarpVector -m BandedSurfaceMap'
+print 'or'
+print 'mayavi2 -d tripod.vtk -f WarpScalar -m Surface'
+print 'or'
+print 'gmsh tripod.pos'
 
 mfu.save('tripod.mf','with_mesh')
 U.tofile('tripod.U')

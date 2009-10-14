@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,16 +18,17 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+""" This is a rough module for graphical vizualisation using
+  the getfem python interface. It may change in the future,
+  examples of use can be found in the tests/python directory
+  see for example demo_plasticity, demo_stokes_3D_tank_draw.py
 
-# this is a rough module for graphical vizualisation using
-# the getfem python interface
-# It may change in the future
-# examples of use can be found in the tests/python directory
-# see for example demo_plasticity, demo_stokes_3D_tank_draw.py
+  It requires installation of the TVTK module from enthought
+  https://svn.enthought.com/enthought/wiki/TVTK
 
-# It requires installation of the TVTK module from enthought
-# https://svn.enthought.com/enthought/wiki/TVTK
-
+  $Id$
+"""
 try:
     from enthought.tvtk.api import tvtk
 except:
@@ -138,8 +141,8 @@ class FigureItem:
             self.scalar_data_range = (args[0], args[1])
         if self.mapper is not None:
             self.mapper.scalar_range = self.scalar_data_range;
-    
-    def build_from_mesh(self,m, **args):        
+
+    def build_from_mesh(self,m, **args):
         dim = m.dim();
         if (dim == 2):
             self.sl=getfem.Slice(('none',),m,self.nrefine)
@@ -148,7 +151,7 @@ class FigureItem:
         else:
             raise Exception('%d-D Meshes are not supported'%(dim,))
         self.build_from_slice(self.sl, **args)
-        
+
     def build_from_slice(self, sl, **args):
         self.sl = sl
         self.show_faces = args.get('faces', True)
@@ -200,7 +203,7 @@ class FigureItem:
         self.vector_data = d
         if self.glyph_name is None:
             self.glyph_name = 'default'
-        
+
     def deformation_from_mf(self, mf, U, scale):
         P=self.sl.pts()
         deform = getfem.compute(mf, U, 'interpolate on', self.sl)
@@ -255,7 +258,7 @@ class FigureItem:
                         self.glyph_name = 'arrow'
                     else:
                         self.glyph_name = 'ball'
-                
+
                 glyph = tvtk.Glyph3D()
                 glyph.scale_mode = 'scale_by_vector'
                 glyph.color_mode = 'color_by_scalar'
@@ -277,7 +280,7 @@ class FigureItem:
                 #glyph.scaling = 1
                 #glyph.scale_factor = self.glyph_scale_factor
                 data = glyph.output
-                
+
             if self.show_faces:
 ##                if self.deform is not None:
 ##                    data.point_data.vectors = array(numarray.transpose(self.deform))
@@ -289,9 +292,9 @@ class FigureItem:
 ##                lut.number_of_table_values=c.shape[0]
 ##                for i in range(0,c.shape[0]):
 ##                    lut.set_table_value(i,c[i,0],c[i,1],c[i,2],1)
-                
 
-                   
+
+
                 self.mapper = tvtk.PolyDataMapper(input=data);
                 self.mapper.scalar_range = self.scalar_data_range;
                 self.mapper.scalar_visibility = True
@@ -328,9 +331,9 @@ class FigureItem:
                 actor_tubes.property.color = self.tube_color
                 #actor_tubes.property.line_width = 8
                 #actor_tubes.property.ambient = 0.5
-                    
+
                 self.actors += [actor_tubes]
-    
+
             if self.use_scalar_bar:
                 self.scalar_bar = tvtk.ScalarBarActor(title=self.scalar_data_name,
                                                  orientation='horizontal',
@@ -338,14 +341,14 @@ class FigureItem:
                 self.scalar_bar.position_coordinate.coordinate_system = 'normalized_viewport'
                 self.scalar_bar.position_coordinate.value = 0.1, 0.01, 0.0
                 self.actors += [self.scalar_bar]
-                
+
             if (self.lookup_table is not None):
                 self.set_colormap(self.lookup_table)
 
         return self.actors
 
-            
-    
+
+
 
 class Figure:
     def __init__(self, gui='tvtk'):
@@ -402,7 +405,7 @@ class Figure:
 
         if args.has_key('vdata'):
             it.set_vector_data(args.get('vdata'))
-            
+
         self.actors += it.vtk_actors()
         self.items.append(it)
 
@@ -411,7 +414,7 @@ class Figure:
     def show_slice(self, sl, **args):
         it = FigureItem(self)
         it.build_from_slice(sl, **args)
-        
+
         if args.has_key('data'):
             it.set_scalar_data(args.get('data'),
                                args.get('scalar_label', 'data'));
@@ -420,7 +423,7 @@ class Figure:
 
         if args.has_key('vdata'):
             it.set_vector_data(args.get('vdata'))
-                               
+
         self.actors += it.vtk_actors()
         self.items.append(it)
 
@@ -486,16 +489,16 @@ class Figure:
 ###plot_mesh(m);
 ###def plot_mesh(m):
 ##if m:
-##    p = tvtk.Property(representation='wireframe') 
-##    p.representation = 's' 
-##    p.representation 
-##    # -> 'surface' 
+##    p = tvtk.Property(representation='wireframe')
+##    p.representation = 's'
+##    p.representation
+##    # -> 'surface'
 ##    #p.configure_traits()
 
 ##    sl=getfem.Slice(('boundary',),m,2);
 ##    (Pe, E1, E2)=sl.edges();
-    
-    
+
+
 ##    points=sl.pts(); points.transpose();
 ##    points=array(points);
 ##    (triangles,cv2tr)=sl.splxs(2);
@@ -543,25 +546,25 @@ class Figure:
 
 ##        # Open the window.
 ##        window.open()
-        
+
 ##        viewer = window
 ##        renderer = viewer.scene
 
- 
+
 ##    # Set the mapper to scale temperature range
 ##    # across the entire range of colors
 ##    mapper = tvtk.PolyDataMapper(input=mesh);
 ##    mapper_edges = tvtk.PolyDataMapper(input=edges);
 ##    print mapper
- 
+
 ##    #mapper = tvtk.PolyDataMapper(input=mesh)
 ##    #mapper.scalar_range = min(temperature), max(temperature)
-    
+
 ##    # Create mesh actor for display
 ##    actor = tvtk.Actor(mapper=mapper)
 ##    actor_edges = tvtk.Actor(mapper=mapper_edges)
 ##    actor_edges.property.representation = 'wireframe'
-    
+
 ##    # Create a scalar bar
 ##    scalar_bar = tvtk.ScalarBarActor(title="Temperature",
 ##                                     orientation='horizontal',
@@ -569,11 +572,11 @@ class Figure:
 ##                                     lookup_table = mapper.lookup_table)
 ##    scalar_bar.position_coordinate.coordinate_system = 'normalized_viewport'
 ##    scalar_bar.position_coordinate.value = 0.1, 0.01, 0.0
-    
+
 ##    # Use the ScalarBarWidget so we can drag the scalar bar around.
 ##    #sc_bar_widget = tvtk.ScalarBarWidget(interactor=interactor,
 ##    #                                     scalar_bar_actor=scalar_bar)
-    
+
 ##    # Now add the actors to the renderer and start the interaction.
 ##    renderer.add_actor(actor)
 ##    renderer.add_actor(actor_edges)
@@ -589,7 +592,4 @@ class Figure:
 
 
 ##    #f=mlab.figure()
-##    #f.add(mlab.TriMesh(points,triangles));
-    
-
-
+##    #f.add(mlab.TriMesh(points,triangles))

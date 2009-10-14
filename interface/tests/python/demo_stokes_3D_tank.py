@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,7 +18,7 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-
+############################################################################
 from getfem import *
 from numpy import *
 
@@ -31,7 +33,7 @@ mfu=MeshFem(m,3) # velocity
 mfulag=MeshFem(m,3)
 mfp=MeshFem(m,1) # pressure
 mfd=MeshFem(m,1) # data
-mfe=MeshFem(m,1) 
+mfe=MeshFem(m,1)
 mim=MeshIm(m, Integ('IM_TETRAHEDRON(5)'))
 
 mfu.set_fem(Fem('FEM_PK(3,2)'))

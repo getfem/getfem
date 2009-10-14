@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,8 +18,14 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+"""  2D scalar wave equation (Helmholtz) demonstration.
 
-## 2D scalar wave equation (Helmholtz) demonstration. 
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM++.
+
+  $Id$
+"""
 from numpy import *
 from getfem import *
 import os
@@ -55,7 +63,7 @@ m.set_region(ROBIN_BOUNDARY,fout)
 
 ## Interpolate the exact solution on mfd (assuming it is a Lagrange fem)
 wave_expr = ('cos(%f*x[1]+.2)+complex(0.,1.)*sin(%f*x[1]+.2)' % (k,k));
-Uinc=mfd.eval(wave_expr);
+Uinc=mfd.eval(wave_expr,globals(),locals());
 
 ## Model Bricks
 md = Model('complex')

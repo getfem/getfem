@@ -18,11 +18,13 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
 """  Linear Elastostatic problem with a crack.
 
   This program is used to check that python-getfem is working. This is
   also a good example of use of GetFEM++.
 
+  $Id$
 """
 
 import numpy as np
@@ -46,10 +48,10 @@ ck3 = gf.GlobalFunction('crack',3)                #
                                                   #
 coff = gf.GlobalFunction('cutoff',2,0.4,0.01,0.4) #
                                                   #
-ckoff0 = gf.GlobalFunction('product', ck0, coff)  #
-ckoff1 = gf.GlobalFunction('product', ck1, coff)  #
-ckoff2 = gf.GlobalFunction('product', ck2, coff)  #
-ckoff3 = gf.GlobalFunction('product', ck3, coff)  #
+ckoff0 = ck0*coff                                 #
+ckoff1 = ck1*coff                                 #
+ckoff2 = ck2*coff                                 #
+ckoff3 = ck3*coff                                 #
 ###################################################
 
 # Mesh in action:
@@ -70,9 +72,19 @@ mls = gf.MeshLevelSet(m)
 mls.add(ls)
 mls.adapt()
 
+# MeshFemLevelSet:
 mfls_u = gf.MeshFem('levelset',mls,mf_pre_u)
-mf_sing_u = gf.MeshFem('global function',m,ls,[ckoff0,ckoff1,ckoff2,ckoff3],1)
 
+# MeshFemGlobalFunction:
+mf_sing_u = gf.MeshFem('global function',m,ls,[ckoff0,ckoff1,ckoff2,ckoff3])
+
+# MeshImLevelSet:
+mim = gf.MeshIm('levelset', mls, 'all',
+        gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'),
+        gf.Integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,6),9)'),
+        gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),5)'))
+
+# MeshFemDirectSum:
 mf_u = gf.MeshFem('sum',mf_sing_u,mfls_u)
 mf_u.set_qdim(2)
 
@@ -87,12 +99,6 @@ Ue[0,2] =  -B; Ue[1,2] = 0   # sin(theta/2)*sin(theta)
 Ue[0,3] =   0; Ue[1,3] = B   # cos(theta/2)*cos(theta)
 Ue /= 2*np.pi
 Ue = Ue.T.reshape(1,8)
-
-# MeshIm in action:
-mim = gf.MeshIm('levelset', mls, 'all',
-        gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)'),
-        gf.Integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,6),9)'),
-        gf.Integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),5)'))
 
 # Model in action:
 md = gf.Model('real')

@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,7 +18,14 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+"""  Plate problem test.
 
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM++.
+
+  $Id$
+"""
 from getfem import *
 from numpy import *
 
@@ -84,9 +93,14 @@ ut=U[0:nut]
 u3=U[nut:(nut+nu3)]
 th=U[(nut+nu3):(nut+nu3+nth)]
 
-                 
+
 sl=Slice(('none',), mfu3, 4)
 sl.export_to_vtk('plate.vtk', mfu3, u3, 'Displacement')
+sl.export_to_pos('plate.pos', mfu3, u3,'Displacement')
 
 print 'You can view the solution with (for example):'
 print 'mayavi -d ./plate.vtk -f WarpScalar -m BandedSurfaceMap'
+print 'or'
+print 'mayavi2 -d plate.vtk -f WarpScalar -m Surface'
+print 'or'
+print 'gmsh plate.pos'

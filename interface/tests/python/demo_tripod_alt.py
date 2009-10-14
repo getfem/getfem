@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,10 +18,16 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+"""  This is the "old" tripod demo, which uses the low level approach:
+  building the linear system by hand, handling Dirichlet, calling the
+  solver etc...
 
-print 'This is the "old" tripod demo, which uses the low level approach:'
-print 'building the linear system by hand, handling Dirichlet, calling the solver etc...'
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM++.
 
+  $Id$
+"""
 from getfem import *
 from numpy import *
 
@@ -62,7 +70,7 @@ F = asm_boundary_source(NEUMANN_BOUNDARY, mim, mfu,mfd,repeat([[0],[-100],[0]], 
 K = asm_linear_elasticity(mim, mfu, mfd, repeat([Lambda], mfd.nbdof()), repeat([Mu], mfd.nbdof()));
 
 # handle Dirichlet condition
-(H,R)=asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('numpy.identity(3)'), mfd.eval('[0,0,0]'));
+(H,R)=asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd, mfd.eval('identity(3)',globals(),locals()), mfd.eval('[0,0,0]'));
 (N,U0)=H.dirichlet_nullspace(R)
 Nt=Spmat('copy',N); Nt.transpose()
 KK=Nt*K*N
@@ -105,5 +113,12 @@ sl.export_to_dx('tripod.dx', 'ascii', mfe, VM,'Von Mises Stress')
 SigmaSL = compute_interpolate_on(mfe,Sigma,sl);
 sl.export_to_vtk('tripod_ev.vtk', mfu, U, 'Displacement', SigmaSL, 'stress')
 
+# export to Gmsh POS
+sl.export_to_pos('tripod.pos', mfe, VM, 'Von Mises Stress', mfu, U, 'Displacement')
+
 print 'You can view the tripod with (for example) mayavi:'
-print 'mayavi -d ./tripod.vtk -f WarpVector -m BandedSurfaceMap'
+print 'mayavi -d tripod.vtk -f WarpVector -m BandedSurfaceMap'
+print 'or'
+print 'mayavi2 -d tripod.vtk -f WarpScalar -m Surface'
+print 'or'
+print 'gmsh tripod.pos'

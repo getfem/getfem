@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
 # Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
-#                                                       
-# This file is a part of GETFEM++                                         
-#                                                                         
+#
+# This file is a part of GetFEM++
+#
 # GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
 # by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,10 +18,15 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+"""  Demonstration for small deformations plasticty, with optional graphical
+  vizualisation (requires tvtk).
 
-# demonstration for small deformations plasticty
-# with optional graphical vizualisation (requires tvtk)
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM++.
 
+  $Id$
+"""
 from getfem import *
 from numpy import *
 
@@ -84,12 +91,12 @@ for step in range(0, nbstep):
 
     U=mds.state()[0:mfu.nbdof()]
     VM = b0.von_mises(mds, mfdu)
-  
+
     #subplot(2,1,1);
-    #gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mfu,'refine', 4, 'deformation_scale',1); 
+    #gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mfu,'refine', 4, 'deformation_scale',1);
     #colorbar;
     #caxis([0 10000]);
-    
+
     ERR=compute_error_estimate(mfu,U,mim)
     #E=ERR; E(dd)=ERR;
     #subplot(2,1,2);
