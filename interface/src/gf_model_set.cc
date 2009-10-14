@@ -199,7 +199,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       size_type niter = 0;
       if (in.remaining())
         niter = in.pop().to_integer(0,10) - config::base_index();
-      GMM_ASSERT1(st.size() == md->model().real_variable(name, niter).size(),
+      GMM_ASSERT1(st.size() == md->model().complex_variable(name, niter).size(),
                   "Bad size in assigment");
       md->model().set_complex_variable(name, niter).assign(st.begin(), st.end());
     }
