@@ -31,7 +31,12 @@
 
 import sys
 import numpy
-import numbers
+
+try:
+  import numbers
+except ImportError:
+  numbers = numpy
+  numbers.Number = (int,float,complex)
 
 from numpy import *
 
