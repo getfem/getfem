@@ -3,6 +3,14 @@ AC_DEFUN([AC_CHECK_SCILAB],
   AH_TEMPLATE(HAVE_SCILAB,
    [Defined to 1 if Scilab is present on the system])
 
+  AC_ARG_ENABLE(scilab,
+  [AS_HELP_STRING([--enable-scilab],[turn on/off scilab support])],
+  [case "${enableval}" in
+  	 yes) usescilab=YES ;;
+   	 no)  usescilab=NO ;;
+   	 *) AC_MSG_ERROR([bad value ${enableval} for --enable-scilab]) ;;
+   esac],[usescilab=NO])
+
   AC_ARG_WITH(scilab_prefix,
 		AC_HELP_STRING([--with-scilab-prefix=DIR],[Set the path to Scilab]),
 		[with_scilab_prefix=$withval],
@@ -15,10 +23,10 @@ AC_DEFUN([AC_CHECK_SCILAB],
 		[with_scilab_version='yes']
 		)
 
-  AC_ARG_WITH(toolbox_install_prefix,
-		AC_HELP_STRING([--with-toolbox-install-prefix=DIR],[Set the path to the toolbox installation directory]),
-		[with_toolbox_install_prefix=$withval],
-		[with_toolbox_install_prefix='yes']
+  AC_ARG_WITH(scilab_toolbox_dir,
+		AC_HELP_STRING([--with-scilab-toolbox-dir=DIR],[Set the path to the toolbox installation directory]),
+		[with_scilab_toolbox_dir=$withval],
+		[with_scilab_toolbox_dir='yes']
 		)
 
   if test "x$with_scilab_version" != "xyes"
@@ -42,14 +50,14 @@ AC_DEFUN([AC_CHECK_SCILAB],
     else
       AC_MSG_ERROR([Scilab binary program was not found in $with_scilab_prefix/bin])
     fi
-    SCIEXE="$with_scilab_prefix/bin/scilab"
+    SCILAB_EXE="$with_scilab_prefix/bin/scilab"
     AC_DEFINE(HAVE_SCILAB)
   else
     AC_CHECK_PROG([has_scilab],[scilab],[yes],[no], , )
     if test x$has_scilab = xno; then
       AC_MSG_ERROR([[Scilab binary program was found in your PATH], your PATH is $PATH])
     fi
-    SCIEXE="scilab"
+    SCILAB_EXE="scilab"
     AC_DEFINE(HAVE_SCILAB)
   fi
 
@@ -60,11 +68,11 @@ AC_DEFUN([AC_CHECK_SCILAB],
          mfprintf(F,SCI);
          mclose(F);exit;'
     echo "$cmd" > getpath.sci
-    $SCIEXE -nw -f getpath.sci >/dev/null
-    SCIDIR=`cat getpath.incl`
+    $SCILAB_EXE -nw -f getpath.sci >/dev/null
+    SCILAB_DIR=`cat getpath.incl`
     rm -f getpath.sci getpath.incl 
   else
-    SCIDIR="$SCI"
+    SCILAB_DIR="$SCI"
   fi
 
   dnl get scilab version
@@ -73,11 +81,11 @@ AC_DEFUN([AC_CHECK_SCILAB],
        mfprintf(F,ver);
        mclose(F);exit;'
   echo "$cmd" > version.sci
-  $SCIEXE -nwni -f version.sci >/dev/null
-  SCIVERSION=`cat version.incl`
+  $SCILAB_EXE -nwni -f version.sci >/dev/null
+  SCILAB_VERSION=`cat version.incl`
   rm -f version.sci version.incl 
 
-  scilab_tmp_version=`expr match $SCIVERSION '.*\(branch\).*'`
+  scilab_tmp_version=`expr match $SCILAB_VERSION '.*\(branch\).*'`
 
   if test "x$scilab_tmp_version" = "xbranch"
   then
@@ -85,9 +93,9 @@ AC_DEFUN([AC_CHECK_SCILAB],
     SCILAB_VERSION_MINOR=-1
     SCILAB_VERSION_MICRO=-1
   else
-    SCILAB_VERSION_MAJOR=`expr match "$SCIVERSION" " *\([0-9]*\)"`
-    SCILAB_VERSION_MINOR=`expr match "$SCIVERSION" " *[0-9]*.\([0-9]*\)"`
-    SCILAB_VERSION_MICRO=`expr match "$SCIVERSION" " *[0-9]*.[0-9]*.\([0-9]*\)"`
+    SCILAB_VERSION_MAJOR=`expr match "$SCILAB_VERSION" " *\([0-9]*\)"`
+    SCILAB_VERSION_MINOR=`expr match "$SCILAB_VERSION" " *[0-9]*.\([0-9]*\)"`
+    SCILAB_VERSION_MICRO=`expr match "$SCILAB_VERSION" " *[0-9]*.[0-9]*.\([0-9]*\)"`
 
     if test $SCILAB_VERSION_MAJOR -lt $REQUIRED_SCILAB_MAJOR
     then
@@ -105,18 +113,19 @@ AC_DEFUN([AC_CHECK_SCILAB],
     fi
   fi
 
-  if test "xwith_toolbox_install_prefix" != "xyes"
+  if test "xwith_scilab_toolbox_dir" != "xyes"
   then
-    TOOLBOX_INSTALL_DIR="$with_toolbox_install_prefix"
+    SCILAB_TOOLBOX_DIR="$with_scilab_toolbox_dir"
   else
-    TOOLBOX_INSTALL_DIR="$SCIDIR/contrib/$PACKAGE_NAME-$PACKAGE_VERSION"
+    SCILAB_TOOLBOX_DIR="$SCILAB_DIR/contrib/$PACKAGE_NAME-$PACKAGE_VERSION"
   fi
 
   AC_SUBST(HAVE_SCILAB)
-  AC_SUBST(SCIEXE)
-  AC_SUBST(SCIDIR)
-  AC_SUBST(TOOLBOX_INSTALL_DIR)
+  AC_SUBST(SCILAB_EXE)
+  AC_SUBST(SCILAB_DIR)
+  AC_SUBST(SCILAB_TOOLBOX_DIR)
   AC_SUBST(SCILAB_VERSION_MAJOR)
   AC_SUBST(SCILAB_VERSION_MINOR)
   AC_SUBST(SCILAB_VERSION_MICRO)
+  AC_SUBST(SCILAB_VERSION)
 ])
