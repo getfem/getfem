@@ -124,16 +124,20 @@ md.solve()
 U = md.variable('u')
 
 # export to pos
-mfv = gf.MeshFem(mls.cut_mesh(),2)
+cut_mesh = mls.cut_mesh();
+mfv = gf.MeshFem(cut_mesh,2)
 mfv.set_classical_discontinuous_fem(2,0.001)
 mf_ue.set_qdim(2)
 
 V  = gf.compute_interpolate_on(mf_u,U,mfv)
 Ve = gf.compute_interpolate_on(mf_ue,Ue,mfv)
 
-VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u','lambda','mu',mf_pre_u)
+mfvm = gf.MeshFem(cut_mesh);
+mfvm.set_classical_discontinuous_fem(2,0.001);
+md.add_initialized_fem_data('u_cut', mfv, V);
+VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u_cut', 'lambda', 'mu', mfvm);
 
-mfv.export_to_pos('crack.pos',V,'V',Ve,'Ve',mf_pre_u,VM,'Von Mises')
+mfv.export_to_pos('crack.pos',V,'V',Ve,'Ve',mfvm,VM,'Von Mises')
 
 print 'You can view the solution with (for example):'
 print 'gmsh crack.pos'
