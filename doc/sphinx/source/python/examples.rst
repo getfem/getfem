@@ -15,22 +15,16 @@ The first step is to `create a Mesh object`. Since |gf| does not come with
 its own mesher, one has to rely on an external mesher (see
 ``getfem.Mesh('import', string FORMAT, string FILENAME)``), or use very simple
 meshes. For this example, we just consider a regular mesh whose nodes are
-:math:`\{x_{i=0\ldots10,j=0..10}=(i/10,j/10)\}`::
+:math:`\{x_{i=0\ldots10,j=0..10}=(i/10,j/10)\}`
 
-  # import basic modules
-  import getfem
-  from numpy import *
-  
-  # creation of a simple cartesian mesh
-  m = getfem.Mesh('cartesian', arange(0,1.1,0.1), arange(0,1.1,0.1))
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 4-9
 
 The next step is to `create a MeshFem object`. This one links a mesh with a set
-of FEM::
+of FEM
 
-  # create a MeshFem of for a field of dimension 1 (i.e. a scalar field)
-  mf = getfem.MeshFem(m, 1)
-  # assign the Q2 fem to all convexes of the MeshFem
-  mf.set_fem(getfem.Fem('FEM_QK(2,2)'))
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 11-14
 
 The first instruction builds a new |py_mf| object, the second argument
 specifies that this object will be used to interpolate scalar fields (since the
@@ -39,16 +33,16 @@ unknown :math:`u` is a scalar field). The second instruction assigns the
 4, remember that :math:`P^k\Rightarrow` polynomials of degree :math:`k`, while
 :math:`Q^k\Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
 polynomial FEM, you can view the expression of its basis functions on the
-reference convex::
+reference convex
 
-  # view the expression of its basis functions on the reference convex
-  print getfem.Fem('FEM_QK(2,2)').poly_str()
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 16-17
 
 Now, in order to perform numerical integrations on |py_mf|, we need to `build a
-MeshIm object`::
+MeshIm object`
 
-  # an exact integration will be used
-  mim = getfem.MeshIm(m, getfem.Integ('IM_EXACT_PARALLELEPIPED(2)'))
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 19-20
 
 The integration method will be used to compute the various integrals on each
 element: here we choose to perform exact computations (no quadrature formula),
@@ -64,15 +58,13 @@ methods (see `the description of finite element and integration methods
 Note however that in the general case, approximate integration methods are a
 better choice than exact integration methods.
 
-Now we have to `find the "boundary" of the domain`, in order to set a
+Now we have to `find the <boundary> of the domain`, in order to set a
 Dirichlet condition. A mesh object has the ability to store some sets of
-convexes and convex faces. These sets (called "regions") are accessed via an
-integer *id*::
+convexes and convex faces. These sets (called <regions>) are accessed via an
+integer *id*
 
-  # detect the border of the mesh
-  border = m.outer_faces()
-  # create the region #42
-  m.set_region(42, border)
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 22-25
 
 Here we find the faces of the convexes which are on the boundary of the mesh
 (i.e. the faces which are not shared by two convexes). The array ``border`` has
@@ -97,39 +89,37 @@ solution since we use a :math:`Q^2` method).
 We start with a `generic elliptic` brick, which handles
 :math:`-\nabla\cdot(A:\nabla u) = \ldots` problems, where :math:`A` can be a
 scalar field, a matrix field, or an order 4 tensor field. By default,
-:math:`A = 1`::
+:math:`A = 1`
 
-  # generic elliptic brick
-  b0 = getfem.MdBrick('generic elliptic', mim, mf)
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 27-28
 
 Each brick embeds a number of parameter fields. In the case of the generic
 elliptic brick, there is only one parameter field, the :math:`A(x)` coefficient
 in :math:`-\nabla\cdot(A:\nabla u) = \ldots` It is possible to view the list
-of parameters of the brick with::
+of parameters of the brick with
 
-  # list of parameters of the brick
-  print b0.param_list()
-  ('A',)
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 30-31
 
-Next we add a Dirichlet condition on the domain boundary::
+Next we add a Dirichlet condition on the domain boundary
 
-  # add a Dirichlet condition on the domain boundary
-  b1 = getfem.MdBrick('dirichlet', b0, 42, mf, 'penalized')
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 33-34
 
 Here the number ``42`` is the region number to which the dirichlet condition is
 applied. The ``'penalized'`` says that the Dirichlet condition should be
-imposed via a penalization technique. Other ways are possible (`augmented
-system` and `direct elimination`). A |py_mf| argument is also required, as the
+imposed via a penalization technique. Other ways are possible (``'augmented'``
+and ``'eliminated'`` systems). A |py_mf| argument is also required, as the
 Dirichlet condition :math:`u = r` is imposed in a weak form
-:math:`\int_\Omega u(x)v(x) = \int_\Omega r(x)v(x) \forall v` where :math:`v`
+:math:`\int_\Omega u(x)v(x) = \int_\Omega r(x)v(x)\ \forall v`, where :math:`v`
 is taken in the space of multipliers given here by |py_mf|.
 
 By default, the Dirichlet brick imposes :math:`u = 0` on the specified
-boundary. We change this to :math:`u = x(x-1)-y(y-1)` ::
+boundary. We change this to :math:`u = x(x-1)-y(y-1)`
 
-  # change Dirichlet condition
-  R = mf.eval('x[0]*(x[0]-1) - x[1]*(x[1]-1)')
-  b1.set_param('R', mf, R)
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 36-38
 
 .. note::
   the polynomial expression was interpolated on |py_mf|. It is possible only if
@@ -138,28 +128,29 @@ boundary. We change this to :math:`u = x(x-1)-y(y-1)` ::
   ``mf`` won't be Lagrangian and another (Lagrangian) |py_mf| will be used for
   the description of Dirichlet conditions, source terms etc.
 
-A `model state` variable is created, and the solver is launched::
+A `model state` variable is created, and the solver is launched
 
-  # created model state
-  mds = getfem.MdState('real')
-  b1.solve(mds)
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 40-42
 
 The model state now contains the solution (as well as other things, such as the
-linear system which was solved). It is extracted::
+linear system which was solved). It is extracted
 
-  # extracted solution
-  sol = mds.get('state')
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 44-45
 
-Then export solution::
+Then export solution
 
-  # export computed solution
-  mf.export_to_pos('sol.pos', sol, "Computed solution")
+.. literalinclude:: code_samples/demo_step_by_step.py
+   :lines: 47-48
 
 and view with ``gmsh sol.pos``
 
 .. figure:: images/step_by_step.png
-   :width: 300pt
+   :width: 250pt
    :align: center
+
+   Computed solution
 
 
 Another Laplacian with exact solution (source term)
@@ -167,63 +158,31 @@ Another Laplacian with exact solution (source term)
 
 This example shows the basic usage of getfem, on the canonical problem: solving
 the Laplacian, :math:`-\Delta u = f` on a square, with the Dirichlet condition
-:math:`u = g(x)` on the domain boundary.
+:math:`u = g(x)` on the domain boundary :math:`\Gamma_D` and the Neumann condition
+:math:`\frac{\partial u}{\partial\eta} = h(x)` on the domain boundary
+:math:`\Gamma_N`.
 
 We create Mesh, MeshFem, MeshIm object and find the boundary of the domain in
-the same way as the previous example::
+the same way as the previous example
 
-  # import basic modules
-  import getfem
-  from numpy import *
-  
-  # creation of a simple cartesian mesh
-  m = getfem.Mesh('cartesian', arange(0,1.1,0.1), arange(0,1.1,0.1))
-  
-  #  create a MeshFem for a field of dimension 1 (i.e. a scalar field)
-  mf = getfem.MeshFem(m, 1)
-  # assign the Q2 fem to all convexes of the MeshFem
-  mf.set_fem(getfem.Fem('FEM_QK(2,2)'))
-  
-  # an exact integration will be used
-  mim = getfem.MeshIm(m, getfem.Integ('IM_EXACT_PARALLELEPIPED(2)'))
-  
-  # detect the border of the mesh
-  border = m.outer_faces()
-  # mark it as boundary #42
-  m.set_region(42, border)
+.. literalinclude:: code_samples/demo_laplacian.py
+   :lines: 24-68
 
-then, we interpolate the exact solution and the source term::
+then, we interpolate the exact solution and source terms
 
-  # interpolate the exact solution
-  R = mf.eval('x[0]*(x[0]-1)*x[1]*(x[1]-1)/2.0')
-  # interpolate the source term
-  F = mf.eval('-( x[0]*(x[0]-1) + x[1]*(x[1]-1) )')
+.. literalinclude:: code_samples/demo_laplacian.py
+   :lines: 70-75
 
-and we bricked the problem as in the previous example::
+and we bricked the problem as in the previous example
 
-  # generic elliptic brick
-  b0 = getfem.MdBrick('generic elliptic', mim, mf)
-  # add a Dirichlet condition on the domain boundary
-  b1 = getfem.MdBrick('dirichlet', b0, 42, mf, 'penalized')
-  b1.set_param('R', mf, R)
-  # add a source term
-  b2 = getfem.MdBrick('source term', b1)
-  b2.set_param('source_term', mf, F)
+.. literalinclude:: code_samples/demo_laplacian.py
+   :lines: 77-101
 
 the only change is the add of `source term` brick. Finally the solution of the
-problem is extracted and exported::
+problem is extracted and exported
 
-  # model state
-  mds = getfem.MdState(b2)
-  b2.solve(mds)
-  
-  # extracted solution
-  sol = mds.get('state')
-  
-  # export data
-  mf.export_to_pos('sol.pos', R, 'Exact solution',
-                              sol, 'Computed solution',
-                              abs(sol-R), 'abs differences')
+.. literalinclude:: code_samples/demo_laplacian.py
+   :lines: 38-48
 
 view differences with ``gmsh sol.pos``:
 
@@ -231,9 +190,11 @@ view differences with ``gmsh sol.pos``:
    :width: 250pt
    :align: center
 
+   Differences
 
-BatiLaplacian (Neumann boundary condition)
-------------------------------------------
+
+Final Laplacian with exact solution (Neumann boundary condition)
+----------------------------------------------------------------
 
 This example uses a mesh that was generated with `Gmsh`_, as in the
 :ref:`howtos`. This example shows the basic usage of getfem, on the final
@@ -243,10 +204,10 @@ with the Dirichlet condition :math:`u = g(x)` on the domain boundary
 :math:`\frac{\partial u}{\partial\eta} = h(x)` on the domain boundary
 :math:`\Gamma_N`.
 
-.. literalinclude:: code_samples/demo_batilaplacian.py
+.. literalinclude:: code_samples/demo_finallaplacian.py
    :linenos:
 
-and view differences with ``gmsh dS.pos``:
+and view differences with ``gmsh sol.pos``:
 
 .. figure:: images/difference_in_final.png
    :width: 250pt
@@ -290,29 +251,10 @@ The model bricks are very convenient, as they hide most of the details of the
 assembly of the final linear systems. However it is also possible to stay at a
 lower level, and handle the assembly of linear systems, and their resolution,
 directly in |py|. For example, the demonstration **demo_tripod_alt.py** is very
-similar to the **demo_tripod.py** except that the assembly is explicit::
+similar to the **demo_tripod.py** except that the assembly is explicit
 
-  # assembly
-  nbd = mfd.nbdof()
-  F = asm_boundary_source(NEUMANN_BOUNDARY, mim, mfu, mfd,
-                          repeat([[0],[-100],[0]],nbd,1))
-  K = asm_linear_elasticity(mim, mfu, mfd,
-                            repeat([Lambda],nbd), repeat([Mu],nbd))
-
-  # handle Dirichlet condition
-  (H,R) = asm_dirichlet(DIRICHLET_BOUNDARY, mim, mfu, mfd,
-                        mfd.eval('numpy.identity(3)'),
-                        mfd.eval('[0,0,0]'))
-  (N,U0) = H.dirichlet_nullspace(R)
-  Nt = Spmat('copy',N)
-  Nt.transpose()
-  KK = Nt*K*N
-  FF = Nt*F # FF = Nt*(F-K*U0)
-
-  # solve ...
-  P = Precond('ildlt',KK)
-  UU = linsolve_cg(KK,FF,P)
-  U = N*UU+U0
+.. literalinclude:: code_samples/demo_tripod_alt.py
+   :lines: 21,23,25,27,49-51,53,58,62-64,70,73-81,83,85-99,113,118-
 
 The Dirichlet condition :math:`h(x)u(x) = r(x)` is handled in the weak form
 :math:`\int (h(x)u(x)).v(x) = \int r(x).v(x)\quad\forall v` (where :math:`h(x)`

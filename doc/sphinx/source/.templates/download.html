@@ -1,9 +1,55 @@
 {% extends "layout.html" %}
 {% set title = 'Download' %}
-{% set dlbase = 'dist/' + release %}
+{% set dlbase = 'dist' %}
 {% block body %}
 
-<h1>Download GetFEM++ {{ release }} Documentation</h1>
+<h1>Download {{ project }} {{ release }}</h1>
+
+{% if 'a' in release or 'b' in release or 'c' in release %}
+<p>We don't package the {{ project }} for development releases for download.
+  Downloads will be available for the final release or svn.</p>
+
+{% else %}
+{% if last_updated %}<p><b>Last updated on: {{ last_updated }}.</b></p>{% endif %}
+
+<p>{{ project }} is freely distributed under the terms of the
+<a href="http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html">Gnu Lesser General
+Public License, either version 2.1 of the license or any later version</a>.</p>
+
+<table class="docutils">
+  <tr><th>Format</th><th>Packed as .tar.gz</th></tr>
+  <tr>
+    <td>The latest stable release of {{ project }} </td>
+    <td><a href="http://download.gna.org/getfem/stable/getfem-4.0.0.tar.gz">getfem-4.0.0.tar.gz</a> (ca. 6,7M)</td>
+  </tr>
+  <tr>
+    <td>gmm++ standalone</td>
+    <td><a href="http://download.gna.org/getfem/stable/gmm-4.0.0.tar.gz">gmm-4.0.0.tar.gz</a> (ca. 460K)</td>
+  </tr>
+</table>
+
+<p>For older releases, look <a href="http://download.gna.org/getfem/stable">here</a>.</p>
+
+<p>Building a portable c++ library is not an easy task. We try to build it with many
+combinations of OS and compilers. The last stable version has been tested on the following
+configurations:<p>
+
+<ul>
+  <li>Linux/x86 with g++ 3.x, g++ 4.x</li>
+  <li>Intel C++ Compiler 8.0</li>
+  <li>Linux/Itanium with g++</li>
+  <li>MacOS X Tiger (with the python and matlab interface)</li>
+  <li>Windows with <a href="http://www.mingw.org">MinGW</a> and
+  <a href="http://www.mingw.org/wiki/msys">MSys</a>
+  (getfem++ only -- see specific notes for the matlab interface)</li>
+</ul>
+
+<p>Some help on how to build the Matlab interface on Windows XP can be found on the
+<a href="http://windhoff.net/wiki/getfem">page</a> of Mirko Windhoff (thank you to him) :</p>
+
+{% endif %}
+
+<h1>Download {{ project }} {{ release }} Documentation</h1>
 
 {% if 'a' in release or 'b' in release or 'c' in release %}
 <p>We don't package the documentation for development releases for download.
@@ -13,22 +59,22 @@
 {% if last_updated %}<p><b>Last updated on: {{ last_updated }}.</b></p>{% endif %}
 
 <p>To download an archive containing all the documents for this version of
-GetFEM++ in one of various formats, follow one of links in this table. The numbers
+{{ project }} in one of various formats, follow one of links in this table. The numbers
 in the table are the size of the download files in megabytes.</p>
 
 <table class="docutils">
   <tr><th>Format</th><th>Packed as .zip</th><th>Packed as .tar.bz2</th></tr>
   <tr><td>PDF (US-Letter paper size)</td>
-    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-letter.zip">Download</a> (ca. 2.5 MB)</td>
-    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-letter.tar.bz2">Download</a> (ca. 2.5 MB)</td>
+    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-letter.zip">Download</a> (ca. 2.4 MB)</td>
+    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-letter.tar.bz2">Download</a> (ca. 2.2M MB)</td>
   </tr>
   <tr><td>PDF (A4 paper size)</td>
-    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-a4.zip">Download</a> (ca. 2.5 MB)</td>
-    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-a4.tar.bz2">Download</a> (ca. 2.5 MB)</td>
+    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-a4.zip">Download</a> (ca. 2.4 MB)</td>
+    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-pdf-a4.tar.bz2">Download</a> (ca. 2.2 MB)</td>
   </tr>
   <tr><td>HTML</td>
-    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-html.zip">Download</a> (ca. 1.5 MB)</td>
-    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-html.tar.bz2">Download</a> (ca. 1.5 MB)</td>
+    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-html.zip">Download</a> (ca. 1.8M)</td>
+    <td><a href="{{ dlbase }}/getfem-{{ release }}-docs-html.tar.bz2">Download</a> (ca. 1.6M)</td>
   </tr>
 </table>
 

@@ -1,5 +1,5 @@
             <h3>Download</h3>
-            <p><a href="{{ pathto('download') }}">Download these documents</a></p>
+            <p><a href="{{ pathto('download') }}">Download {{ project }} </a></p>
 	    <h3>Docs for other versions</h3>
 	    <ul>
               {# XXX: many of these should probably be merged in the main docs #}
@@ -18,4 +18,7 @@
               <li><a href="http://home.gna.org/getfem/getfempython.html">Python Interface notes</a></li>
               <li><a href="http://download.gna.org/getfem/doc/getfem_python_reference.html">Python Interface reference</a></li>
               <li><a href="http://home.gna.org/getfem/getfem_faq.html">FAQs</a></li>
+              <li><a href="https://gna.org">
+                  <img src="{{ pathto('_static/hostedbygna.png', 1) }}" alt="" style="vertical-align: middle; margin-top: -1px"/>
+              </a></li>
             </ul>

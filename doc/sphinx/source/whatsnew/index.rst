@@ -11,6 +11,7 @@ for anyone wishing to stay up-to-date after a new release.
 .. toctree::
    :maxdepth: 2
 
+   4.0.0.rst
    3.1.rst
    3.0.1.rst
    3.0.rst

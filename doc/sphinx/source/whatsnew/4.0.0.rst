@@ -1,0 +1,40 @@
+.. include:: ../replaces.txt
+
+****************************
+  What's New in |gf| 4.0.0
+****************************
+
+This is a major update to |gf|. The main changes is the introduction
+of a new model bricks system. The old system is kept and compatibility
+with 3.x releases is globally ensured. However some functionalities are
+deprecated. The main changes are:
+
+   Released version, 2009/09/19:
+
+   * The mesh_fem object has undergone significant changes. Now it is
+     possible to perform linear combination of degrees of freedom in
+     order to describe some special finite element spaces. The main
+     application is to obtain a finite element space reduced on a
+     boundary or a curve. But it can be used also to prescibe directly
+     some matching condition. The main change in the use of the mesh_fem
+     object is the introduction of "basic" and "reduced" dofs. See the
+     documentation.
+
+   * A new algorithm gmm_range_basis allows to select a basis between the
+     columns of a matrix. It has been specially designed to select a basis
+     of the trace on a boundary of a finite element space.
+
+   * The partial_mesh_fem object has been completely changed. It is now a
+     lighter object which is intensively used in the new model bricks to
+     obtain finite element spaces on a boundary.
+
+   * Introduction of the new model brick system. The bricks are more simple
+     to build and it is now really designed to the representation of
+     coupled/multiphysics models. A generic manner to deals with time
+     dependent models from static models is also introduced.
+
+   * Python interface uses Numpy instead of Numarray.
+
+All the old bricks have not been rewritten into new bricks. This will be
+done gradually in the near future. A Scilab interface is close to be
+finished and should be included in the future release.

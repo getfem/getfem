@@ -1,3 +1,5 @@
+.. $Id$
+
 .. include:: ../replaces.txt
 
 .. _api:
@@ -105,6 +107,11 @@ Integ
 .. autoclass:: getfem.Integ
    :members:
 
+GlobalFunction
+--------------
+.. autoclass:: getfem.GlobalFunction
+   :members:
+
 LevelSet
 --------
 .. autoclass:: getfem.LevelSet
@@ -133,6 +140,16 @@ MeshFem
 MeshIm
 ------
 .. autoclass:: getfem.MeshIm
+   :members:
+
+MeshLevelSet
+------------
+.. autoclass:: getfem.MeshLevelSet
+   :members:
+
+Model
+-----
+.. autoclass:: getfem.Model
    :members:
 
 Precond

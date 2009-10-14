@@ -44,7 +44,7 @@ with the function ``getfem.memstats()``.
 Documentation
 -------------
 
-The getfem.py module is largely documented. This documentation has been
+The `getfem` module is largely documented. This documentation has been
 extracted into the :ref:`api`. The getfem-matlab user guide may also be used,
 as 95% of its content translates quite directly into python (with the exception
 of the plotting functions, which are specific to matlab).

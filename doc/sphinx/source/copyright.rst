@@ -4,7 +4,7 @@
 Copyright
 *********
 
-Python and this documentation is:
+|gf| and this documentation is:
 
 Copyright © 2000-2009 |authors|.
 

@@ -57,20 +57,20 @@ Download sources
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
-The latest stable release of |gf| is `getfem++-3.1.tar.gz
-<http://download.gna.org/getfem/stable/getfem++-3.1.tar.gz>`_.
+The latest stable release of |gf| is `getfem-4.0.0.tar.gz
+<http://download.gna.org/getfem/stable/getfem-4.0.0.tar.gz>`_.
 
  * download package::
 
-     wget http://download.gna.org/getfem/stable/getfem++-3.1.tar.gz
+     wget http://download.gna.org/getfem/stable/getfem-4.0.0.tar.gz
 
  * unpack::
 
-     tar xzf getfem++-3.1.tar.gz
+     tar xzf getfem-4.0.0.tar.gz
 
  * and go to the root directory of getfem::
      
-     cd getfem++-3.1
+     cd getfem-4.0.0/
 
 The latest unstable releases is:
 
@@ -103,7 +103,9 @@ necessary link flags and libs to the configure script, for example with::
   ./configure --enable-python=yes BLAS_LIBS="-L/usr/lib/sse2/atlas -lblas"
 
 More specific instruccions can be found in the README\* files of the
-distribution.
+distribution, for example::
+
+  ./configure --enable-python=yes --enable-superlu=no --enable-qhull=yes BLAS_LIBS="-L/usr/lib/sse2/atlas -lblas"
 
 .. warning::
 

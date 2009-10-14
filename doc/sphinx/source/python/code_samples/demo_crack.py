@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
-#
-# Linear Elastostatic problem with a crack. 
-# 
-# This program is used to check that getfem++ is working. This is also 
-# a good example of use of Getfem++.
-#
+"""  Linear Elastostatic problem with a crack.
 
+  This program is used to check that python-getfem is working. This is
+  also a good example of use of GetFEM.
+
+"""
 
 ##########################################################################
 #  Exact solution.                                                       #
