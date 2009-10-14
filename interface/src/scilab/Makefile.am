@@ -104,7 +104,7 @@ scilabbasedir=builder.sce DESCRIPTION-FUNCTIONS loader.sce readme.txt changelog.
 toolboxdir=@SCILAB_TOOLBOX_DIR@
 
 all:
-	@SCILAB_EXE@ -nw -f makefile_builder.sce
+	@SCILAB_EXE@ -nw -f @srcdir@/makefile_builder.sce
 
 install-toolbox:
 	$(mkinstalldirs) $(toolboxdir)/demos
