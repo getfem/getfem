@@ -29,7 +29,7 @@ AC_DEFUN([AC_CHECK_SCILAB],
 		[with_scilab_toolbox_dir='yes']
 		)
 
-  if test "x$enable-scilab" == "xyes"
+  if test "x$usescilab" == "xYES"
   then
     if test "x$with_scilab_version" != "xyes"
     then
