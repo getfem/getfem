@@ -37,8 +37,8 @@ Index       = 1;
 
 // Finite element and integration methods definition
 m = gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
-//m=gf_mesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
-mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
+// m=gf_mesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
+// mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 mf_basic = gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_QK(2,2)'));
 mls = gf_mesh_levelset(m);

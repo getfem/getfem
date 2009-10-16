@@ -195,8 +195,8 @@ namespace gmm {
     StatInit(&stat);
 
     SuperMatrix SA, SL, SU, SB, SX; // SuperLU format.
-    Create_CompCol_Matrix(&SA, m, n, nz, csc_A.pr,
-			  (int *)(csc_A.ir), (int *)(csc_A.jc));
+    Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
+			  (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, nrhs, &sol[0], m);
     memset(&SL,0,sizeof SL);

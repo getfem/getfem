@@ -37,8 +37,8 @@ rayon_trous = 0.2;
 
 % Finite element and integration methods definition
 m=gfMesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
-%m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
-mim=gfMeshIm(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
+% m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
+% mim=gfMeshIm(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 
 mf_basic=gfMeshFem(m, 1);
 gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_QK(2,2)'));
