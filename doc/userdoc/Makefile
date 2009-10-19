@@ -1,6 +1,6 @@
 all : getfemuser.pdf
 
-FIGS=getfemuserelemf.fig getfemuserelem.fig 				    \
+FIGS=getfemuserelemf.fig getfemuserelem.fig getfemuserrefine.fig            \
      getfemlistsymbols.fig getfemlistsegmentPk.fig getfemlisttriangleP1.fig \
      getfemlisttriangleP2.fig getfemlisttriangleP3.fig                      \
      getfemlisttriangleP6.fig getfemlisttetrahedronP1.fig                   \
@@ -102,6 +102,6 @@ htmlupload: html
 all: pdfupload htmlupload
 
 clean:
-	-rm -f *.dvi *.log *.toc *.bbl *.aux *.tmp *.ps.gz getfemuser.ps getfemuser.pdf getfemuser.blg getfemuser.out
+	-rm -f *.dvi *.log *.toc *.bbl *.aux *.tmp *.ps.gz *.pdf getfemuser.ps getfemuser.blg getfemuser.out getfemuser.idx getfemuser.brf
 	-find . -name '*~' -exec rm \{\} \;
 	-find . -name '*.bak' -exec rm \{\} \;
