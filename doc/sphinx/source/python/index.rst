@@ -1,3 +1,4 @@
+.. $Id$
 .. include:: ../replaces.txt
 
 .. _contents:

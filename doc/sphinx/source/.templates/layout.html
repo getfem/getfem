@@ -6,10 +6,12 @@
                  style="vertical-align: middle; margin-top: -1px"/></li>
         <li><a href="{{ pathto('index') }}">{{ shorttitle }}</a>{{ reldelim1 }}</li>
 {% endblock %}
+
 {% block extrahead %}
     <link rel="shortcut icon" type="image/png" href="{{ pathto('_static/icon.png', 1) }}" />
 {{ super() }}
 {% endblock %}
+
 {% block footer %}
     <div class="footer">
     &copy; <a href="{{ pathto('copyright') }}">Copyright</a> {{ copyright|e }}.
@@ -18,3 +20,11 @@
     Created using: <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version|e }}.
     </div>
 {% endblock %}
+
+{%- block sidebarlogo %}
+{%- if logo %}
+  <p class="logo"><a href="{{ pathto('index') }}">
+    <img class="logo" src="{{ pathto('_static/' + logo, 1) }}" alt="Logo"/>
+  </a></p>
+{%- endif %}
+{%- endblock %}

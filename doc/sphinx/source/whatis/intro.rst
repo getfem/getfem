@@ -42,8 +42,8 @@ as extraction of slices from a mesh...
 
 |gf| has no meshing capabilities (apart regular meshes, and a not
 exploitable attempt), hence, in many situations, it is necessary to import
-meshes. Imports formats currently known by getfem are `GiD` , `Gmsh` and
-`emc2` mesh files. However, given a mesh, it is possible to refine it
+meshes. Imports formats currently known by getfem are `Gid`_ , `Gmsh`_ and
+`EMC2`_ mesh files. However, given a mesh, it is possible to refine it
 automatically.
 
 The aim of the |gf| project is not to provide a ready to use finite

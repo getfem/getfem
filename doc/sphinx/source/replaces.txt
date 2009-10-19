@@ -1,27 +1,68 @@
 .. |authors| replace:: Yves Renard, Julien Pommier
 .. |copy| unicode:: 0xA9 .. copyright sign
-.. |gnu| replace:: GNU
-.. |c++| replace:: C++
-.. |gmsh| replace:: Gmsh
-.. |gid| replace:: GID
-.. |emc2| replace:: emc2
-.. |py| replace:: Python
-.. |gf| replace:: GetFEM++
-.. |sphinx| replace:: Sphinx
-.. |gfi| replace:: getfem-interface
-.. |mf| replace:: mesh_fem
-.. |mim| replace:: mesh_im
+.. |gnu| replace:: *GNU*
+.. |c++| replace:: *C++*
+.. |vtk| replace:: *VTK*
+.. |opendx| replace:: *OpenDX*
+.. |gmsh| replace:: *Gmsh*
+.. |emc2| replace:: *emc2*
+.. |np| replace:: *numpy*
+.. |gid| replace:: *GID*
+.. |py| replace:: *Python*
+.. |gf| replace:: *GetFEM++*
+.. |gmm| replace:: *GMM++*
+.. |sLU| replace:: *SuperLU*
+.. |mumps| replace:: *MUMPS*
+.. |sphinx| replace:: *Sphinx*
+.. |gfi| replace:: *getfem-interface*
+.. |m| replace:: `mesh`
+.. |mf| replace:: `mesh_fem`
+.. |mim| replace:: `mesh_im`
+.. |bv| replace:: `bit_vector`
+.. |smsl| replace:: `stored_mesh_slice`
+.. |mo| replace:: `model`
+.. |br| replace:: `brick`
+.. |gf_m| replace:: ``getfem::mesh``
+.. |gf_mr| replace:: ``getfem::mesh_region``
+.. |gf_mrv| replace:: ``getfem::mr_visitor``
+.. |gf_mf| replace:: ``getfem::mesh_fem``
+.. |gf_ls| replace:: ``getfem::level_set``
+.. |gf_mls| replace:: ``getfem::mesh_level_set``
+.. |gf_mimls| replace:: ``getfem::mesh_im_level_set``
+.. |gf_mfls| replace:: ``getfem::mesh_fem_level_set``
+.. |gf_pfem| replace:: ``getfem::pfem``
+.. |gf_vfem| replace:: ``getfem::virtual_fem``
+.. |gf_mim| replace:: ``getfem::mesh_im``
+.. |gf_smsl| replace:: ``getfem::stored_mesh_slice``
+.. |gf_msl| replace:: ``getfem::mesh_slicer``
+.. |gf_sl_a| replace:: ``getfem::slicer_action``
+.. |gf_sl_ddb| replace:: ``getfem::mesh_slice_cv_dof_data_base``
+.. |gf_vtk_export| replace:: ``getfem::vtk_export``
+.. |gf_dx_export| replace:: ``getfem::dx_export``
+.. |gf_pos_export| replace:: ``getfem::pos_export``
+.. |gf_gasm| replace:: ``getfem::generic_assembly``
+.. |bg_bn| replace:: ``bgeot::base_node``
+.. |bg_gt| replace:: ``bgeot::geometric_trans``
+.. |bg_pgt| replace:: ``bgeot::pgeometric_trans``
+.. |bg_cs| replace:: ``bgeot::convex_structure``
+.. |bg_pcs| replace:: ``bgeot::pconvex_structure``
+.. |dal_bv| replace:: ``dal::bit_vector``
+.. |dal_bv_v| replace:: ``dal::bv_visitor``
+.. |py_m| replace:: Mesh
+.. |py_mf| replace:: MeshFem
+.. |py_mim| replace:: MeshIm
 .. |py_cs| replace:: CvStruct
 .. |py_gt| replace:: GeoTrans
 .. |py_fem| replace:: Fem
 .. |py_int| replace:: Integ
-.. |py_mf| replace:: MeshFem
-.. |py_mim| replace:: MeshIm
 .. |py_mbr| replace:: MdBrick
 .. |py_ms| replace:: MdState
 .. _specific guides: http://home.gna.org/getfem/doc.html
+.. _vocabulary: http://download.gna.org/getfem/doc/getfem_reference/index.html
 .. _VTK: http://www.vtk.org
 .. _MayaVi: http://mayavi.sourceforge.net
 .. _OpenDX: http://www.opendx.org
 .. _Gmsh: http://www.geuz.org/gmsh
+.. _Gid: http://gid.cimne.upc.es
+.. _EMC2: http://www-rocq1.inria.fr/gamma/cdrom/www/emc2/eng.htm
 .. _Python: http://www.python.org

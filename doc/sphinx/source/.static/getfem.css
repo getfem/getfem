@@ -36,7 +36,8 @@ div.body {
 
 div.body cite{
     font-weight: bold;
-    color: #890;
+    font-family: sans-serif;
+    color: #08f;
 }
 
 div.sphinxsidebarwrapper {
@@ -861,6 +862,7 @@ form.comment textarea {
 
 img.math {
     vertical-align: middle;
+    border: 0;
 }
 
 div.math p {
@@ -869,6 +871,15 @@ div.math p {
 
 span.eqno {
     float: right;
+}
+
+span.o {
+    color: #008d8d;
+}
+
+span.pre {
+    font-size: 110%;
+    background-color: #efc;
 }
 
 img.logo {

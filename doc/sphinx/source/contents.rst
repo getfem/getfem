@@ -9,6 +9,7 @@
    python/index.rst
    install/index.rst
    documenting/index.rst
+   userdoc/index.rst
    glossary.rst
 
    about.rst
