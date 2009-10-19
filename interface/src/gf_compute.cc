@@ -43,13 +43,15 @@ error_for_non_lagrange_elements(const getfem::mesh_fem &mf, bool warning_only = 
       GFI_WARNING(cnt << " elements on " << total << " are NOT lagrange elements");
     }
   }
-  if (cnt_no_fem) {
-    if (!warning_only) {
-      THROW_ERROR("Error: " << cnt_no_fem << " elements on " << total << " have NO FEM!");
-    } else {
-      GFI_WARNING(cnt_no_fem << " elements on " << total << " have NO FEM");
-    }
-  }
+  // Test suppressed. If ones want to interpolate on a specific region
+  // for instance.
+  // if (cnt_no_fem) {
+  //     if (!warning_only) {
+  //       THROW_ERROR("Error: " << cnt_no_fem << " elements on " << total << " have NO FEM!");
+  //     } else {
+  //       GFI_WARNING(cnt_no_fem << " elements on " << total << " have NO FEM");
+  //     }
+  //   }
 }
 
 
@@ -376,7 +378,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     is inserted if `Qdim_mf != Qdim_mf_du`, where Qdim_mf is the Qdim of
     `mf` and Qdim_mf_du is the Qdim of `mf_du`.@*/
     const getfem::mesh_fem *mf_grad = in.pop().to_const_mesh_fem();
-    error_for_non_lagrange_elements(*mf_grad);
+    error_for_non_lagrange_elements(*mf_grad, true);
     size_type qm = (mf_grad->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
     if (!U.is_complex()) gf_compute_gradient<scalar_type>(out, *mf, *mf_grad, U.real(), qm);
     else                 gf_compute_gradient<complex_type>(out, *mf, *mf_grad, U.cplx(), qm);
@@ -386,7 +388,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     See also ::COMPUTE('gradient', @tmf mf_du).@*/
     const getfem::mesh_fem *mf_hess = in.pop().to_const_mesh_fem();
-    error_for_non_lagrange_elements(*mf_hess);
+    error_for_non_lagrange_elements(*mf_hess, true);
     size_type qm = (mf_hess->get_qdim() == mf->get_qdim()) ? 1 : mf->get_qdim();
     if (!U.is_complex()) gf_compute_hessian<scalar_type>(out, *mf, *mf_hess, U.real(), qm);
     else                 gf_compute_hessian<complex_type>(out, *mf, *mf_hess, U.cplx(), qm);
