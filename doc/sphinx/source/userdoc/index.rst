@@ -5,7 +5,7 @@
 .. _ud:
 
 Short User Documentation
-========================
+########################
 
 .. toctree::
    :maxdepth: 2
@@ -36,4 +36,4 @@ Short User Documentation
    appendixA
    appendixB
 
-   biblio
+   ../biblio.rst

@@ -50,34 +50,34 @@ The parameter of the constructor is a boolean which sets if the model deals with
 complex number or real numbers. The default is false for a model dealing with real
 numbers.
 
-.. _fig-syslin:
+.. _ud-fig-syslin:
 .. figure:: images/getfemuserlinearsys.png
    :align: center
    :width: 300pt
 
    The (tangent) linear system
 
-There are different kinds of variables/data in the model. The variables are the
-unknown of the model. They will be (generally) computed by solving the (tangent)
-linear system build by the model. Generally, the model will have several
-variables. Each variable as a certain size (number of degrees of freedom) and the
-different variables are sorted in alphanumeric order to form the global unknown
-(:math:`U` in Fig. :ref:`fig-syslin`). Each variable will be associated to an
-interval :math:`I = [n_1, n_2]` which will represent the degrees of freedom
-indices correspondig to this variable in the global system. The model stores also
-some data (in the same format than the variables). The difference between data and
-variables is that a data is not an unknown of the model. The value of the data
-should be provided. In some cases (nonlinear models) some variables can be
-considered as some data for certain terms. Variables and data are of two kind.
-They can have a fixed size, or they can depend on a finite element method (be the
+There are different kinds of variables/data in the model. The variables are the 
+unknown of the model. They will be (generally) computed by solving the (tangent) 
+linear system build by the model. Generally, the model will have several 
+variables. Each variable as a certain size (number of degrees of freedom) and the 
+different variables are sorted in alphanumeric order to form the global unknown 
+(:math:`U` in Fig. :ref:`ud-fig-syslin`). Each variable will be associated to an 
+interval :math:`I = [n_1, n_2]` which will represent the degrees of freedom 
+indices correspondig to this variable in the global system. The model stores also 
+some data (in the same format than the variables). The difference between data 
+and variables is that a data is not an unknown of the model. The value of the 
+data should be provided. In some cases (nonlinear models) some variables can be 
+considered as some data for certain terms. Variables and data are of two kind. 
+They can have a fixed size, or they can depend on a finite element method (be the 
 d.o.f. of a finite element method).
 
-For instance, in the situation described in Fig. :ref:`fig-syslin`, there is four
-variables in the model, namely :math:`X, Y, V` and :math:`W`. The role of the
-model object will be to assemble the linear system, i.e. to fill the sub matrices
-corresponding to each variable (:math:`R_{X,X}, R_{Y,Y}, R_{V,V}`, and
-:math:`R_{W,W}`) and the coupling terms between two variables (:math:`R_{X,Y},
-R_{X,V}, R_{W,V}, \cdots`). This different contributions will be given by the
+For instance, in the situation described in Fig. :ref:`ud-fig-syslin`, there is 
+four variables in the model, namely :math:`X, Y, V` and :math:`W`. The role of 
+the model object will be to assemble the linear system, i.e. to fill the sub 
+matrices corresponding to each variable (:math:`R_{X,X}, R_{Y,Y}, R_{V,V}`, and 
+:math:`R_{W,W}`) and the coupling terms between two variables (:math:`R_{X,Y}, 
+R_{X,V}, R_{W,V}, \cdots`). This different contributions will be given by the 
 different bricks added to the model.
 
 The main usefull methods on a |mo| object are
@@ -339,13 +339,13 @@ to this condition prescribed with a Lagrange multiplier are
 
    \int_{\Gamma} u \mu\ d\Gamma = \int_{\Gamma} u_D \mu\ d\Gamma, \forall \mu \in M,
 
-where :math:`M` is a appropriate multiplier space. The contributions to the global
-linear system can be viewed in Fig. :ref:`fig-syslinDir`. The matrix :math:`B` is
-the "mass matrix" between the finite element space of the variable :math:`u` and
-the finite element space of the multiplier :math:`\mu`. :math:`L_{u}` is the right
-end side corresponding to the data :math:`u_D`.
+where :math:`M` is a appropriate multiplier space. The contributions to the 
+global linear system can be viewed in Fig. :ref:`ud-fig-syslinDir`. The matrix 
+:math:`B` is the "mass matrix" between the finite element space of the variable 
+:math:`u` and the finite element space of the multiplier :math:`\mu`. 
+:math:`L_{u}` is the right end side corresponding to the data :math:`u_D`.
 
-.. _fig-syslinDir:
+.. _ud-fig-syslinDir:
 .. figure:: images/getfemuserlinsysDir.png
    :align: center
    :width: 300pt

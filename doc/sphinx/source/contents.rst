@@ -4,12 +4,14 @@
 
 .. toctree::
 
-   whatsnew/index.rst
-   whatis/index.rst
-   python/index.rst
-   install/index.rst
-   documenting/index.rst
+   project/index.rst
    userdoc/index.rst
+
+   python/index.rst
+   scilab/index.rst
+
+   whatsnew/index.rst
+   documenting/index.rst
    glossary.rst
 
    about.rst

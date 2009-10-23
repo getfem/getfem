@@ -53,6 +53,7 @@ checkout:
 	fi
 
 update: checkout
+	svn update tools
 	svn update tools/sphinx
 	svn update tools/docutils
 	svn update tools/jinja2
@@ -92,7 +93,6 @@ htmlview: html
 clean:
 	-rm -rf build/
 	-rm -rf html/
-	-rm -rf tools/
 
 dist: DIST = build/dist
 dist: DESTINATION = build/html/dist/
@@ -105,21 +105,17 @@ dist:
 	make html # archive the HTML
 	cp -pPR build/html $(DIST)/getfem-$(DISTVERSION)-docs-html
 	tar -C $(DIST) -cf $(DIST)/getfem-$(DISTVERSION)-docs-html.tar getfem-$(DISTVERSION)-docs-html
-	bzip2 -9 -k $(DIST)/getfem-$(DISTVERSION)-docs-html.tar
-	(cd $(DIST); zip -q -r -9 getfem-$(DISTVERSION)-docs-html.zip getfem-$(DISTVERSION)-docs-html)
+	gzip -9 $(DIST)/getfem-$(DISTVERSION)-docs-html.tar
 	rm -rf $(DIST)/getfem-$(DISTVERSION)-docs-html
-	rm $(DIST)/getfem-$(DISTVERSION)-docs-html.tar
-
-	-rm -rf build/latex # archive the A4 latex
-	make latex PAPER=a4
-	(cd build/latex; make clean && make all-pdf && make FMT=pdf zip bz2)
-	cp build/latex/docs-pdf.zip $(DIST)/getfem-$(DISTVERSION)-docs-pdf-a4.zip
-	cp build/latex/docs-pdf.tar.bz2 $(DIST)/getfem-$(DISTVERSION)-docs-pdf-a4.tar.bz2
 
 	rm -rf build/latex # archive the letter latex
 	make latex PAPER=letter
-	(cd build/latex; make clean && make all-pdf && make FMT=pdf zip bz2)
-	cp build/latex/docs-pdf.zip $(DIST)/getfem-$(DISTVERSION)-docs-pdf-letter.zip
-	cp build/latex/docs-pdf.tar.bz2 $(DIST)/getfem-$(DISTVERSION)-docs-pdf-letter.tar.bz2
+	(cd build/latex; make clean && make all-pdf && make FMT=pdf tar)
+	gzip -9 build/latex/docs-pdf.tar
+	cp build/latex/docs-pdf.tar.gz $(DIST)/getfem-$(DISTVERSION)-docs-pdf-letter.tar.gz
 
 	mv $(DIST)/* $(DESTINATION) # move to destination
+
+htmlupload: html
+	-mv build/html sphinxdoc
+	../../bin/upload_documentation sphinxdoc

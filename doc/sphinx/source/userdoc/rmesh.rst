@@ -9,18 +9,19 @@
 Mesh refinement
 ===============
 
-Mesh refinement with the Bank et all method (see [Bank]_) is available in
-dimension 1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons). For
-a given object ``mymesh`` of type |gf_m|, the method::
+Mesh refinement with the Bank et all method (see [bank1983]_) is available in 
+dimension 1, 2 or 3 for simplex meshes (segments, triangles and tetrahedrons). 
+For a given object ``mymesh`` of type |gf_m|, the method::
 
   mymesh.Bank_refine(bv);
 
-refines the elements whose indices are stored in ``bv`` (a |dal_bv| object). The
-conformity of the mesh is kept thanks to additional refinement (the so called
-green triangles). Information about green triangles is stored on the mesh object
-to gather them for further refinements (see [Bank]_).
+refines the elements whose indices are stored in ``bv`` (a |dal_bv| object). The 
+conformity of the mesh is kept thanks to additional refinement (the so called 
+green triangles). Information about green triangles (in Figure 
+:ref:`ud-fig-refine`) is stored on the mesh object to gather them for further 
+refinements (see [bank1983]_).
 
-.. _fig-refine:
+.. _ud-fig-refine:
 .. figure:: images/getfemuserrefine.png
    :align: center
    :width: 300pt

@@ -129,7 +129,7 @@ function is modified, one has to call the method ``mfls.adapt()``.
 
 To represent discontinuous fields, the finite element method is enriched with
 discontinuous functions which are the product of a Heaviside function by the base
-functions of the finite element method represented by ``mf`` (see [Mos]_ for
+functions of the finite element method represented by ``mf`` (see [Xfem]_ for
 more details).
 
 

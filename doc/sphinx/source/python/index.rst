@@ -3,8 +3,8 @@
 
 .. _contents:
 
-|py| |gf| documentation contents
-================================
+|py| Interface
+==============
 
 .. toctree::
    :maxdepth: 2

@@ -7,8 +7,9 @@
 .. |gmsh| replace:: *Gmsh*
 .. |emc2| replace:: *emc2*
 .. |np| replace:: *numpy*
-.. |gid| replace:: *GID*
+.. |gid| replace:: *GiD*
 .. |py| replace:: *Python*
+.. |sci| replace:: *SciLab*
 .. |gf| replace:: *GetFEM++*
 .. |gmm| replace:: *GMM++*
 .. |sLU| replace:: *SuperLU*
@@ -16,10 +17,14 @@
 .. |sphinx| replace:: *Sphinx*
 .. |gfi| replace:: *getfem-interface*
 .. |m| replace:: `mesh`
+.. |mls| replace:: `mesh_level_set`
+.. |mfls| replace:: `mesh_fem_level_set`
 .. |mf| replace:: `mesh_fem`
+.. |pmf| replace:: `partial_mesh_fem`
 .. |mim| replace:: `mesh_im`
 .. |bv| replace:: `bit_vector`
 .. |smsl| replace:: `stored_mesh_slice`
+.. |sl| replace:: `slice`
 .. |mo| replace:: `model`
 .. |br| replace:: `brick`
 .. |gf_m| replace:: ``getfem::mesh``
@@ -46,6 +51,8 @@
 .. |bg_pgt| replace:: ``bgeot::pgeometric_trans``
 .. |bg_cs| replace:: ``bgeot::convex_structure``
 .. |bg_pcs| replace:: ``bgeot::pconvex_structure``
+.. |bg_cr| replace:: ``bgeot::convex_of_reference``
+.. |bg_pcr| replace:: ``bgeot::pconvex_ref``
 .. |dal_bv| replace:: ``dal::bit_vector``
 .. |dal_bv_v| replace:: ``dal::bv_visitor``
 .. |py_m| replace:: Mesh
@@ -63,6 +70,6 @@
 .. _MayaVi: http://mayavi.sourceforge.net
 .. _OpenDX: http://www.opendx.org
 .. _Gmsh: http://www.geuz.org/gmsh
-.. _Gid: http://gid.cimne.upc.es
+.. _GiD: http://gid.cimne.upc.es
 .. _EMC2: http://www-rocq1.inria.fr/gamma/cdrom/www/emc2/eng.htm
 .. _Python: http://www.python.org

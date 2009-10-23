@@ -53,9 +53,9 @@ The most basic function to add a new element to a mesh is::
 
   j = mymesh.add_convex(pgt, it);
 
-This is a template function, with ``pgt`` of type |bg_pgt| (basically a pointer
-to an instance of type |bg_gt|) and ``it`` is an iterator on a list of indexes of
-already existing points. For instance, if one needs to add a new triangle in a 3D
+This is a template function, with ``pgt`` of type |bg_pgt| (basically a pointer 
+to an instance of type |bg_gt|) and ``it`` is an iterator on a list of indexes of 
+already existing points. For instance, if one needs to add a new triangle in a 3D 
 mesh, one needs to define first an array with the indexes of the three points::
 
   std::vector<bgeot::size_type> ind(3);
@@ -109,12 +109,11 @@ Specialized functions exist also::
   mymesh.add_prism(N, it);
   mymesh.add_prism_by_points(N, itp);
 
-The order of the points in the array of points is not important for
-simplices (except if you care about the orientation of your simplices). For
-other elements, it is important to respect the order shown in
-:ref:`fig-elem`.
+The order of the points in the array of points is not important for simplices 
+(except if you care about the orientation of your simplices). For other elements, 
+it is important to respect the order shown in :ref:`ud-fig-elem`.
 
-.. _fig-elem:
+.. _ud-fig-elem:
 .. figure:: images/getfemuserelem.png
    :align: center
    :width: 300pt
@@ -304,7 +303,7 @@ The list is not exhaustive.
 .. cfunction:: mymesh.trans_of_convex(i)
 
    return the geometric transformation of the element of index ``i`` (in
-   a |bg_pgt|). See [Renard1]_ for more details about geometric transformations.
+   a |bg_pgt|). See :ref:`dp` for more details about geometric transformations.
 
 .. cfunction:: mymesh.normal_of_face_of_convex(ic, f, pt)
 
@@ -409,9 +408,9 @@ print it to the standard output::
 Face numbering
 --------------
 
-The numeration of faces on usual elements is given in figure :ref:`fig-elemf`.
+The numeration of faces on usual elements is given in figure :ref:`ud-fig-elemf`.
 
-.. _fig-elemf:
+.. _ud-fig-elemf:
 .. figure:: images/getfemuserelemf.png
    :align: center
    :width: 300pt

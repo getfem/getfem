@@ -49,4 +49,4 @@ correspond to ``GEOTRANS``). Then follows an already existing
 integration method for each face (each on a line). This is necessary
 to make integrations on boundaries.
 
-The file format is inspired from [Cools]_.
+The file format is inspired from [EncyclopCubature]_.

@@ -1,8 +1,8 @@
 .. _documenting-index:
 
-########################
-  Documenting GetFEM++
-########################
+###############
+  Documenting
+###############
 
 
 The GetFEM++ library has a substantial body of documentation, much of it
