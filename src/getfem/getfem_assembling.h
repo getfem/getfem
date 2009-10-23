@@ -473,15 +473,19 @@ namespace getfem {
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mf_data, const VECT2 &F,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
-    GMM_ASSERT1(mf_data.get_qdim() == 1,
-		"invalid data mesh fem (Qdim=1 required)");
+    GMM_ASSERT1(mf_data.get_qdim() == 1 ||
+		mf_data.get_qdim() == mf.get_qdim(),
+		"invalid data mesh fem (same Qdim or Qdim=1 required)");
 
     const char *st;
     if (mf.get_qdim() == 1)
       st = "F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);";
-    else
+    else if (mf_data.get_qdim() == 1)
       st = "F=data(qdim(#1),#2);"
 	"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);";
+    else
+      st = "F=data(#2);"
+	"V(#1)+=comp(vBase(#1).vBase(#2))(:,i,j,i).F(j);";
     
     asm_real_or_complex_1_param(const_cast<VECT1 &>(B),mim,mf,mf_data,F,rg,st);
   }
@@ -511,18 +515,24 @@ namespace getfem {
       @ingroup asm
    */
   template<typename VECT1, typename VECT2>
-  void asm_normal_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+  void asm_normal_source_term(VECT1 &B, const mesh_im &mim,
+			      const mesh_fem &mf,
 			      const mesh_fem &mf_data, const VECT2 &F,
 			      const mesh_region &rg) {
-    GMM_ASSERT1(mf_data.get_qdim() == 1, "invalid data mesh_fem");
+    GMM_ASSERT1(mf_data.get_qdim() == 1 ||
+		mf_data.get_qdim() == mf.get_qdim(),
+		"invalid data mesh_fem (same Qdim or Qdim=1 required)");
 
     const char *st;
     if (mf.get_qdim() == 1)
       st = "F=data(mdim(#1),#2);"
 	"V(#1)+=comp(Base(#1).Base(#2).Normal())(:,j,k).F(k,j);";
-    else
+    else if (mf_data.get_qdim() == 1)
       st = "F=data(qdim(#1),mdim(#1),#2);"
 	"V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,j,k).F(i,k,j);";
+    else
+      st = "F=data(mdim(#1),#2);"
+	"V(#1)+=comp(vBase(#1).vBase(#2).Normal())(:,i,j,i,k).F(k,j);";
 
     asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, st);
   }
