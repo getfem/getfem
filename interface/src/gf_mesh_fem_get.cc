@@ -41,13 +41,12 @@ test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
   dal::bit_vector islst;
   if (in.remaining())
     cvlst = in.pop().to_bit_vector(&mf->linked_mesh().convex_index());
-  else { cvlst = mf->linked_mesh().convex_index(); return_bool = true; }
+  else { cvlst = mf->convex_index(); return_bool = true; }
   for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
     bool it_is = false;
     if (!mf->linked_mesh().convex_index()[cv])
       THROW_ERROR( "convex " << cv+1 << " does not exist");
-    check_cv_fem(*mf, cv);
-    switch (what) { /* hope the compiler will optimize that */
+    switch (what) {
     case IS_LAGRANGE:   it_is = mf->fem_of_element(cv)->is_lagrange(); break;
     case IS_EQUIVALENT: it_is = mf->fem_of_element(cv)->is_equivalent(); break;
     case IS_POLYNOMIAL: it_is = mf->fem_of_element(cv)->is_polynomial(); break;
@@ -57,7 +56,7 @@ test_fems(test_what what, const getfem::mesh_fem *mf, mexargs_in& in,
   if (return_bool)
     out.pop().from_integer
       ((!(mf->is_reduced()) &&
-          islst.card() == mf->linked_mesh().convex_index().card()) ? 1 : 0);
+          islst.card() == mf->convex_index().card()) ? 1 : 0);
   else
     out.pop().from_bit_vector(islst);
 }

@@ -88,6 +88,8 @@ namespace getfem
     for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
+      if (!pf) continue;
+      
       GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
 		  "finite element target not convenient");
       
