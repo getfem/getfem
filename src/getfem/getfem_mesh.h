@@ -110,7 +110,8 @@ namespace getfem {
      * When a new field is added, do NOT forget to add it in copy_from method!
      */
 
-    dal::dynamic_array<mesh_region> cvf_sets;
+    mutable std::map<size_type, mesh_region> cvf_sets;
+    // dal::dynamic_array<mesh_region> cvf_sets;
     dal::bit_vector valid_cvf_sets;
     void handle_region_refinement(size_type, const std::vector<size_type> &,
 				  bool);
@@ -123,7 +124,8 @@ namespace getfem {
 #if GETFEM_PARA_LEVEL > 1
     mutable bool modified;
     mutable mesh_region mpi_region;
-    mutable dal::dynamic_array<mesh_region> mpi_sub_region;
+    mutable std::map<size_type, mesh_region> mpi_sub_region;
+    // mutable dal::dynamic_array<mesh_region> mpi_sub_region;
     mutable dal::bit_vector valid_sub_regions;
 
     void touch(void) {

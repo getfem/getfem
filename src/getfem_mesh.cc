@@ -583,7 +583,7 @@ namespace getfem {
     return bgeot::mesh_structure::memsize() - sizeof(bgeot::mesh_structure)
       + pts.memsize() + (pts.index().last_true()+1)*dim()*sizeof(scalar_type)
       + sizeof(mesh) + trans_exists.memsize() + gtab.memsize()
-      + cvf_sets.memsize() + valid_cvf_sets.memsize();
+      + valid_cvf_sets.card()*sizeof(mesh_region) + valid_cvf_sets.memsize();
   }
 
   struct equilateral_to_GT_PK_grad_aux : public std::vector<base_matrix> {};
