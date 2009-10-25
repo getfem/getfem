@@ -23,10 +23,7 @@
 %  also a good example of use of GetFEM++.
 %
 
-
-clear all;
 gf_workspace('clear all');
-
 
 % parameters
 NX=30;

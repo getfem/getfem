@@ -1,18 +1,15 @@
 
-
-clear all;
 gf_workspace('clear all');
-
 
 % parameters
 
 ls_degree = 1;
 lambda = 1;
 mu = 1;
-rayon_trous = 0.05;
-threshold = 0.2;
-
-NX = 10;
+% rayon_trous = 0.05;
+% threshold = 0.25; % NX = 10
+threshold = 0.4;
+NX = 20;
 DX = 1./NX;
 if (0.2 * NX ~= round(0.2 * NX))
   disp('Bad value for NX');
@@ -65,8 +62,8 @@ gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_QK(2,2)'), cvid);
 P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 10' });
-% ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*5*x) .* sin(pi*5*y)' });
-ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*2.5*x) .* sin(pi*2.5*y)' });
+ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*5*x) .* sin(pi*5*y)' });
+% ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*2.5*x) .* sin(pi*2.5*y)' });
 
 F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-2*(abs(y) < 0.025)'});
 
@@ -179,7 +176,7 @@ while(1)
   
   
   % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
-  alpha = 0.001; dt = 0.01; ddt = 0.0001;
+  alpha = 0.001; dt = 0.01; NT = 100; ddt = dt / NT;
   M = gf_asm('mass matrix', mimls, mf_ls);
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
   B = gf_asm('volumic', ...
@@ -195,10 +192,13 @@ while(1)
   % Renormalisation de la level-set
   % disp 'norm dls avant : ';
   % sqrt(sum(DLS.^2, 1))
-  for i = 1:0
+  alpha = 0.005; dt = 0.001; NT = 100; ddt = dt / NT;
+  K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
+
+  for t = 0:ddt:dt
   
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_v);
-    NORMDLS = sqrt(sum(DLS.^2, 1)) + 1e-10;
+    NORMDLS = sqrt(sum(DLS.^2, 1)) + 1e-12;
     SIGNLS = sign(gf_compute(mf_ls, ULS, 'interpolate on', mf_v));
     SISN = SIGNLS ./ NORMDLS;
   
@@ -215,11 +215,23 @@ while(1)
     L = gf_asm('volumic', 'v=data(#2);V(#1)+=comp(Base(#1).Base(#2))(:,i).v(i)', ...
                mimls, mf_ls, mf_v, SIGNLS);
 
-    A = M/dt + B + K*0.1;
+    A = M/dt + B + K;
     ULS = (A \ ((M * ULS') / dt + L))';
   end;
   % disp 'norm dls apres : ';
   % sqrt(sum(DLS.^2, 1))
+  
+  % gf_workspace('list static objects')
+  % pause;
+  
+  nb = gf_workspace('nb static objects');
+  disp('nb static stored object before pop:');
+  disp(nb);
+  
+  gf_workspace('pop');
+  
+  disp('nb static stored object after pop:');
+  disp(nb);
   
 end;
   

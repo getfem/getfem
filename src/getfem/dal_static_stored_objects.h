@@ -262,6 +262,11 @@ typedef const static_stored_object_key *pstatic_stored_object_key;
   /** Gives a pointer to a key of an object from its pointer. */
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o);
 
+  /** Show a list of stored objects (for debugging purpose). */
+  void list_stored_objects(std::ostream &ost);
+
+  /** Return the number of stored objects (for debugging purpose). */
+  size_t nb_stored_objects(void);
 }
 
 #endif /* DAL_STATIC_STORED_OBJECTS_H__ */

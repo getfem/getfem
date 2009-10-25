@@ -181,5 +181,9 @@ void gf_workspace(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     out.pop().from_string(name_of_getfemint_class_id(cid));
   } else if (check_cmd(cmd, "connect", in, out, 0, -1, 0, -1)) {
     GMM_THROW(getfemint_error, "cannot connect: the toolbox was built without rpc support");
+  } else if (check_cmd(cmd, "list static objects", in, out, 0, -1, 0, -1)) {
+    dal::list_stored_objects(cout);
+  } else if (check_cmd(cmd, "nb static objects", in, out, 0, -1, 0, 1)) {
+    out.pop().from_integer(dal::nb_stored_objects());
   } else bad_cmd(cmd);
 }

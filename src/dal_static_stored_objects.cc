@@ -261,5 +261,24 @@ namespace dal {
     del_stored_objects(to_delete, false);
   }
 
+  // List the stored objects for debugging purpose
+  void list_stored_objects(std::ostream &ost) {
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
+    if (stored_keys.begin() == stored_keys.end())
+      ost << "No static stored objects" << endl;
+    else
+      ost << "Static stored objects" << endl;
+    for (stored_key_tab::iterator it = stored_keys.begin();
+	 it != stored_keys.end(); ++it) {
+      ost << "Object: " << it->first << " typename: "
+	  << typeid(*it->first).name() << endl;
+    }
+  }
+
+  // Number of stored objects
+  size_t nb_stored_objects(void) {
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
+    return stored_keys.size();
+  }
 
 }
