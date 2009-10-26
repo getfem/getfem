@@ -10,7 +10,7 @@ mu = 1;
 % rayon_trous = 0.05;
 % threshold = 0.25; % NX = 10
 threshold = 0.8;
-NX = 30;
+NX = 20;
 DX = 1./NX;
 if (0.2 * NX ~= round(0.2 * NX))
   disp('Bad value for NX');
@@ -64,7 +64,7 @@ gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_PK(2,1)'), cvid);
 P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 10' });
-ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*5*x) .* sin(pi*5*y)' });
+ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.8-sin(pi*5*x) .* sin(pi*5*y)' });
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*2.5*x) .* sin(pi*2.5*y)' });
 
 F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-2*(abs(y) < 0.025)'});
@@ -187,23 +187,23 @@ while(1)
   
   
   % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
-  alpha = 0.001; dt = 0.015; NT = 100; ddt = dt / NT;
+  alpha = 0.001; dt = 0.003; NT = 10; ddt = dt / NT;
   M = gf_asm('mass matrix', mimls, mf_ls);
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
   B = gf_asm('volumic', ...
              'v=data(mdim(#2),#2);M(#1,#1)+=comp(Base(#1).Grad(#1).Base(#2))(:,:,i,j).v(i,j)', ...
              mimls, mf_ls, mf_v, V);
   
-  A = M/ddt + B + K;
+  A = M + (B + K)*ddt;
   for t = 0:ddt:dt
-    ULS = (A \ ((M * ULS') / ddt))';
+    ULS = (A \ (M * ULS'))';
   end;
   
   
   % Renormalisation de la level-set
   % disp 'norm dls avant : ';
   % sqrt(sum(DLS.^2, 1))
-  alpha = 0.005; dt = 0.0005; NT = 100; ddt = dt / NT;
+  alpha = 0.001; dt = 0.001; NT = 100; ddt = dt / NT;
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
 
   for t = 0:ddt:dt
@@ -226,8 +226,8 @@ while(1)
     L = gf_asm('volumic', 'v=data(#2);V(#1)+=comp(Base(#1).Base(#2))(:,i).v(i)', ...
                mimls, mf_ls, mf_v, SIGNLS);
 
-    A = M/dt + B + K;
-    ULS = (A \ ((M * ULS') / dt + L))';
+    A = M + (B + K)*ddt;
+    ULS = (A \ (M * ULS' + L*ddt))';
   end;
   % disp 'norm dls apres : ';
   % sqrt(sum(DLS.^2, 1))
