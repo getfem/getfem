@@ -1,4 +1,5 @@
 
+clear all;
 gf_workspace('clear all');
 
 % parameters
@@ -8,8 +9,8 @@ lambda = 1;
 mu = 1;
 % rayon_trous = 0.05;
 % threshold = 0.25; % NX = 10
-threshold = 0.4;
-NX = 20;
+threshold = 0.8;
+NX = 30;
 DX = 1./NX;
 if (0.2 * NX ~= round(0.2 * NX))
   disp('Bad value for NX');
@@ -17,29 +18,29 @@ if (0.2 * NX ~= round(0.2 * NX))
 end;
 
 % Mesh definition
-m=gfMesh('cartesian', -.7:DX:.7, -.7:DX:.7);
-% m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
+% m=gfMesh('cartesian', -1.2:DX:1.2, -.7:DX:.7);
+m=gfMesh('triangles grid', -1.2:(1/NX):1.2, -.7:(1/NX):.7);
 
 N = gf_mesh_get(m, 'dim');
 
 
 % Find the region corresponding to Omega
 pts =  gf_mesh_get(m, 'pts');
-pid = find((abs(pts(1, :)) < 0.50000001) .* (abs(pts(2, :)) < 0.50000001));
+pid = find((abs(pts(1, :)) < 1.0000001) .* (abs(pts(2, :)) < 0.50000001));
 
 OMEGA = 1;
 cvid = gf_mesh_get(m, 'cvid from pid', pid);
 gf_mesh_set(m, 'region', OMEGA, [cvid ; zeros(1, size(cvid, 2))]);
 
 % Find the boundary GammaD and GammaN (to Omega)
-pidleft = find((abs(pts(1, :)+0.5) < 1E-7) .* (abs(pts(2, :)) < 0.50000001));
+pidleft = find((abs(pts(1, :)+1.0) < 1E-7) .* (abs(pts(2, :)) < 0.50000001));
 fidleft = gf_mesh_get(m, 'faces from pid', pidleft);
 normals = gf_mesh_get(m, 'normal of faces', fidleft);
 fidleft=fidleft(:,find(abs(normals(1, :)+1) < 1E-3));
 GAMMAD = 2;
 gf_mesh_set(m, 'region', GAMMAD, fidleft);
 
-pidright = find((abs(pts(1, :)-0.5) < 1E-7) .* (abs(pts(2, :)) < 0.50000001));
+pidright = find((abs(pts(1, :)-1.0) < 1E-7) .* (abs(pts(2, :)) < 0.50000001));
 fidright = gf_mesh_get(m, 'faces from pid', pidright);
 normals = gf_mesh_get(m, 'normal of faces', fidright);
 fidright=fidright(:,find(abs(normals(1, :)-1) < 1E-3));
@@ -52,11 +53,12 @@ ls=gfLevelSet(m, ls_degree);
 mls=gfMeshLevelSet(m);
 set(mls, 'add', ls);
 mf_ls=gfObject(get(ls, 'mf'));
-mimls=gfMeshIm(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
+% mimls=gfMeshIm(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
+mimls=gfMeshIm(m, gf_integ('IM_TRIANGLE(4)'));
 
 mf_basic=gfMeshFem(m, 2);
-gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_QK(2,2)'), cvid);
-
+% gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_QK(2,2)'), cvid);
+gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_PK(2,1)'), cvid);
 
 % Definition of the initial level-set
 P=get(mf_ls, 'basic dof nodes');
@@ -100,27 +102,34 @@ while(1)
   % Solving the direct problem
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
-
+  nbd = gf_mesh_fem_get(mf_ls, 'nbdof');
+  K = gf_asm('linear elasticity', mim, mf, mf_ls, lambda*ones(1, nbd), mu*ones(1, nbd));
+  disp('Elastic energy');
+  disp(U*K*U');
 %   subplot(1,2,1);
 %   gf_plot(mf, U);
-%   hold on;
-%   [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0, 'pcolor', 'off');
-%   set(h2{1},'LineWidth',2);
-%   set(h2{1},'Color','green');
-%   hold off;
-%   colorbar;
+%  hold on;
+%    [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0, 'pcolor', 'off');
+%    set(h2{1},'LineWidth',2);
+%    set(h2{1},'Color','green');
+%    hold off;
+%    colorbar;
   
   % Computation of shape derivative
   mf_g=gfMeshFem(m, 1);
   % gf_mesh_fem_set(mf_g,'fem', ...
   %     gf_fem('FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1,2),FEM_PK_DISCONTINUOUS(1,2))'), cvid);
-  gf_mesh_fem_set(mf_g,'fem', ...
-     gf_fem('FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1,1),FEM_PK_DISCONTINUOUS(1,1))'), cvid);
+  % gf_mesh_fem_set(mf_g,'fem', ...
+  %   gf_fem('FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1,1),FEM_PK_DISCONTINUOUS(1,1))'), cvid);
+  gf_mesh_fem_set(mf_g,'fem', gf_fem('FEM_PK(2,0)'), cvid);
   DU = gf_compute(mf, U, 'gradient', mf_g);
   
   EPSU = DU + permute(DU, [2 1 3]);
   if (N == 2)
     GF = (DU(1,1,:) + DU(2,2,:)).^2*lambda + 2*mu*(sum(sum(EPSU.^2, 1), 2)) - threshold;
+    
+    % GF = 4*sum(sum(EPSU.^2, 1), 2);
+    
     GF = reshape(GF, 1, size(GF, 3));
   else
     disp('Should be adapted ...');
@@ -130,7 +139,7 @@ while(1)
   % filtering the gradient
   M = gf_asm('mass matrix', mim, mf_g);
   D = abs(full(diag(M)));
-  ind = find(D < DX^N/13);
+  ind = find(D < DX^N/5);
   GF(ind) = GF(ind) * 0;
 
   
@@ -138,8 +147,9 @@ while(1)
   gf_plot(mf_g, GF);
   hold on;
   [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off');
-  set(h2{1},'LineWidth',2);
+  set(h2{1},'LineWidth',1);
   set(h2{1},'Color','green');
+  % gf_plot(mf, U);
   hold off;
   colorbar;
   
@@ -149,8 +159,9 @@ while(1)
   % Evolution of the level-set. Computation of v
   
   mf_v=gfMeshFem(m, 1);
-  gf_mesh_fem_set(mf_v,'fem', ...
-      gf_fem('FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1,2),FEM_PK_DISCONTINUOUS(1,2))'));
+  % gf_mesh_fem_set(mf_v,'fem', ...
+  %     gf_fem('FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1,2),FEM_PK_DISCONTINUOUS(1,2))'));
+  gf_mesh_fem_set(mf_v,'fem', gf_fem('FEM_PK(2,0)'));
   DLS = gf_compute(mf_ls, ULS, 'gradient', mf_v);
   NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
   GFF = gf_compute(mf_g, GF, 'interpolate on', mf_v) ./ NORMDLS;
@@ -166,17 +177,17 @@ while(1)
   % Normalisation de V (il ne sert a rien d'aller trop vite ou trop
   % lentement
   
-  maxV = sqrt(max(sum(V.^2,1)));
-  for i = 1:size(V,2)
-      normv = sqrt(sum(V(:,i).^2));
-      if (normv > maxV / 100)
-        V(:,i) = V(:, i) / normv;
-      end;
-  end;
+%   maxV = sqrt(max(sum(V.^2,1)));
+%   for i = 1:size(V,2)
+%       normv = sqrt(sum(V(:,i).^2));
+%       if (normv > maxV / 100)
+%         V(:,i) = V(:, i) / normv;
+%       end;
+%   end;
   
   
   % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
-  alpha = 0.001; dt = 0.01; NT = 100; ddt = dt / NT;
+  alpha = 0.001; dt = 0.015; NT = 100; ddt = dt / NT;
   M = gf_asm('mass matrix', mimls, mf_ls);
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
   B = gf_asm('volumic', ...
@@ -192,7 +203,7 @@ while(1)
   % Renormalisation de la level-set
   % disp 'norm dls avant : ';
   % sqrt(sum(DLS.^2, 1))
-  alpha = 0.005; dt = 0.001; NT = 100; ddt = dt / NT;
+  alpha = 0.005; dt = 0.0005; NT = 100; ddt = dt / NT;
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
 
   for t = 0:ddt:dt
@@ -221,17 +232,9 @@ while(1)
   % disp 'norm dls apres : ';
   % sqrt(sum(DLS.^2, 1))
   
-  % gf_workspace('list static objects')
-  % pause;
-  
-  nb = gf_workspace('nb static objects');
-  disp('nb static stored object before pop:');
-  disp(nb);
   
   gf_workspace('pop');
   
-  disp('nb static stored object after pop:');
-  disp(nb);
   
 end;
   
