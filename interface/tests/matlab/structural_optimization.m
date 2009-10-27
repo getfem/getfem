@@ -9,8 +9,8 @@ lambda = 1;
 mu = 1;
 % rayon_trous = 0.05;
 % threshold = 0.25; % NX = 10
-threshold = 0.8;
-NX = 20;
+threshold = 1.5;
+NX = 40;
 DX = 1./NX;
 if (0.2 * NX ~= round(0.2 * NX))
   disp('Bad value for NX');
@@ -19,7 +19,7 @@ end;
 
 % Mesh definition
 % m=gfMesh('cartesian', -1.2:DX:1.2, -.7:DX:.7);
-m=gfMesh('triangles grid', -1.2:(1/NX):1.2, -.7:(1/NX):.7);
+m=gfMesh('regular simplices', -1.2:(1/NX):1.2, -.7:(1/NX):.7);
 
 N = gf_mesh_get(m, 'dim');
 
@@ -64,8 +64,8 @@ gf_mesh_fem_set(mf_basic,'fem',gf_fem('FEM_PK(2,1)'), cvid);
 P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 10' });
-ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.8-sin(pi*5*x) .* sin(pi*5*y)' });
-% ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*2.5*x) .* sin(pi*2.5*y)' });
+% ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.8-sin(pi*5*x) .* sin(pi*5*y)' });
+ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*4*x) .* cos(pi*4*y)' });
 
 F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-2*(abs(y) < 0.025)'});
 
@@ -83,7 +83,7 @@ while(1)
 
   M = gf_asm('mass matrix', mim, mf_basic);
   D = abs(full(diag(M)));
-  ind = find(D > DX^N/10000);
+  ind = find(D > DX^N/10000000);
   mf = gf_mesh_fem('partial', mf_basic, ind);
 
   % Problem definition
@@ -93,6 +93,8 @@ while(1)
   gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
   gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
                'lambda', 'mu', OMEGA);
+  gf_model_set(md, 'add initialized data', 'penalty_param', [1E-10]);          
+  gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
   gf_model_set(md, 'add Dirichlet condition with multipliers', ...
                mim, 'u', 1, GAMMAD);
   gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
@@ -139,8 +141,8 @@ while(1)
   % filtering the gradient
   M = gf_asm('mass matrix', mim, mf_g);
   D = abs(full(diag(M)));
-  ind = find(D < DX^N/5);
-  GF(ind) = GF(ind) * 0;
+  ind = find(D < DX^N/10);
+  GF(ind) = GF(ind) * 0 - 0.01;
 
   
   % subplot(1,2,2);
@@ -187,23 +189,29 @@ while(1)
   
   
   % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
-  alpha = 0.001; dt = 0.003; NT = 10; ddt = dt / NT;
+  alpha = 0.01; dt = 0.0075; NT = 40; ddt = dt / NT;
   M = gf_asm('mass matrix', mimls, mf_ls);
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
   B = gf_asm('volumic', ...
              'v=data(mdim(#2),#2);M(#1,#1)+=comp(Base(#1).Grad(#1).Base(#2))(:,:,i,j).v(i,j)', ...
              mimls, mf_ls, mf_v, V);
-  
   A = M + (B + K)*ddt;
   for t = 0:ddt:dt
     ULS = (A \ (M * ULS'))';
   end;
   
+%   [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor','off');
+%   set(h2{1},'LineWidth',1);
+%   set(h2{1},'Color','green');
+%   pause(0.1);
+   
+  % Re-initialisation de la level-set
+%   disp 'norm dls avant : ';
+%   AA = sqrt(sum(DLS.^2, 1));
+%   AA(1:100)
   
-  % Renormalisation de la level-set
-  % disp 'norm dls avant : ';
-  % sqrt(sum(DLS.^2, 1))
-  alpha = 0.001; dt = 0.001; NT = 100; ddt = dt / NT;
+  
+  alpha = 0.01; dt = 0.02; NT = 20; ddt = dt / NT;
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
 
   for t = 0:ddt:dt
@@ -229,8 +237,16 @@ while(1)
     A = M + (B + K)*ddt;
     ULS = (A \ (M * ULS' + L*ddt))';
   end;
-  % disp 'norm dls apres : ';
-  % sqrt(sum(DLS.^2, 1))
+  
+%   disp 'norm dls apres : ';
+%   AA = sqrt(sum(DLS.^2, 1));
+%   AA(1:100)
+%   
+%   [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor','off');
+%   set(h2{1},'LineWidth',1);
+%   set(h2{1},'Color','green');
+%   pause(1);
+  
   
   
   gf_workspace('pop');

@@ -29,6 +29,9 @@ EXTRA_DIST= \
 	demo_nonlinear_elasticity.m \
 	demo_nonlinear_elasticity_anim.m \
 	demo_plasticity.m \
+	demo_crack.m \
+	demo_mortar.m \
+	demo_topological_optimization.m \
 	demo_refine.m \
 	demo_stokes_2D_poiseuille.m \
 	demo_stokes_2D_poiseuille_arc.m \
@@ -42,6 +45,7 @@ EXTRA_DIST= \
 	demo_fictitious_domains.m \
 	demo_wave2D.m \
 	demo_wave2D_alt.m \
+	demo_wave_equation.m \
 	test_argyris.m \
 	tripod_anim.m \
 	tutorial1.m \
