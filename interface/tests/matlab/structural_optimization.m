@@ -9,7 +9,7 @@ lambda = 1;
 mu = 1;
 % rayon_trous = 0.05;
 % threshold = 0.25; % NX = 10
-threshold = 1.5;
+threshold = 2.1;
 NX = 40;
 DX = 1./NX;
 if (0.2 * NX ~= round(0.2 * NX))
@@ -65,7 +65,7 @@ P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 10' });
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.8-sin(pi*5*x) .* sin(pi*5*y)' });
-ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.2-sin(pi*4*x) .* cos(pi*4*y)' });
+ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.7-sin(pi*4*x) .* cos(pi*4*y)' });
 
 F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-2*(abs(y) < 0.025)'});
 
@@ -141,8 +141,8 @@ while(1)
   % filtering the gradient
   M = gf_asm('mass matrix', mim, mf_g);
   D = abs(full(diag(M)));
-  ind = find(D < DX^N/10);
-  GF(ind) = GF(ind) * 0 - 0.01;
+  ind = find(D < DX^N/7);
+  GF(ind) = GF(ind) * 0;
 
   
   % subplot(1,2,2);
@@ -189,7 +189,7 @@ while(1)
   
   
   % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
-  alpha = 0.01; dt = 0.0075; NT = 40; ddt = dt / NT;
+  alpha = 0.015; dt = 0.01; NT = 10; ddt = dt / NT;
   M = gf_asm('mass matrix', mimls, mf_ls);
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
   B = gf_asm('volumic', ...
@@ -211,7 +211,7 @@ while(1)
 %   AA(1:100)
   
   
-  alpha = 0.01; dt = 0.02; NT = 20; ddt = dt / NT;
+  alpha = 0.01; dt = 0.02; NT = 10; ddt = dt / NT;
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
 
   for t = 0:ddt:dt
