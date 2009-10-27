@@ -21,7 +21,7 @@
 //
 //========================================================================
 #include <Python.h>
-#include "/usr/lib/python2.5/site-packages/numpy/core/include/numpy/arrayobject.h"
+#include "numpy/arrayobject.h"
 #include "structmember.h"
 #include <string.h>
 
