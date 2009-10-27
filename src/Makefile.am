@@ -137,7 +137,8 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_Navier_Stokes.h             	\
 	getfem/getfem_superlu.h		   		\
 	getfem/getfem_plasticity.h                	\
-	getfem/getfem_mesher.h                    	
+	getfem/getfem_mesher.h                          \
+	getfem/getfem_convect.h                    	
 
 SRC =                                      		\
 	dal_backtrace.cc                   		\
