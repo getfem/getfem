@@ -29,19 +29,22 @@
 using namespace getfemint;
 
 static void
-error_for_non_lagrange_elements(const getfem::mesh_fem &mf, bool warning_only = false)
-{
+error_for_non_lagrange_elements(const getfem::mesh_fem &mf,
+				bool warning_only = false) {
   size_type cnt=0, total=0, cnt_no_fem=0;
-  for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished(); ++cv) {
+  for (dal::bv_visitor cv(mf.linked_mesh().convex_index());
+       !cv.finished(); ++cv) {
     if (!mf.convex_index()[cv]) cnt_no_fem++;
     else if (!mf.fem_of_element(cv)->is_lagrange()) cnt++;
     total++;
   }
   if (cnt) {
     if (!warning_only) {
-      THROW_ERROR("Error: " << cnt << " elements on " << total << " are NOT lagrange elements -- Unable to compute a derivative");
+      THROW_ERROR("Error: " << cnt << " elements on " << total << " are NOT "
+		  "lagrange elements -- Unable to compute a derivative");
     } else {
-      GFI_WARNING(cnt << " elements on " << total << " are NOT lagrange elements");
+      GFI_WARNING(cnt << " elements on " << total
+		  << " are NOT lagrange elements");
     }
   }
   // Test suppressed. If ones want to interpolate on a specific region
@@ -59,8 +62,7 @@ error_for_non_lagrange_elements(const getfem::mesh_fem &mf, bool warning_only = 
 
 static void
 mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
-                      mexargs_in &in, mexargs_out &out)
-{
+                      mexargs_in &in, mexargs_out &out) {
   unsigned mdim = mf->linked_mesh().dim();
   if (mf->get_qdim() != mdim) {
     THROW_BADARG( "Error, the mesh is of dimension " << mdim <<
@@ -119,7 +121,8 @@ mesh_edges_deformation(const getfem::mesh_fem *mf, darray &U, unsigned N,
     for (ecnt = 0; it != nit; it++, ecnt++, nbe++) {
       for (size_type i = 0; i < N; i++) {
 	size_type ii = ecnt*N+i;
-	getfem::base_node def_pt = pgt->transform(pt[ii], m.points_of_convex(cv));
+	getfem::base_node def_pt = pgt->transform(pt[ii],
+						  m.points_of_convex(cv));
 	for (size_type k = 0; k < mdim; k++) {
 	  def_pt[k] += pt_val(k,ii);
 	}
@@ -290,8 +293,8 @@ MLABCOM*/
   end;
   MLABEXT*/
 
-void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
+void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+
   if (in.narg() < 3)  THROW_BADARG( "Wrong number of input arguments");
 
   const getfem::mesh_fem *mf   = in.pop().to_const_mesh_fem();
@@ -428,7 +431,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     function does stricly the same job as ::COMPUTE('interpolate_on').
     However, if the mesh of `mfe` is not exactly included in `mf`
     (imagine interpolation between a curved refined mesh and a coarse
-    mesh), then values which are slightly outside `mf` will be
+    mesh), then values which are outside `mf` will be
     extrapolated.<Par>
 
     See also ::ASM('extrapolation matrix')@*/
@@ -436,10 +439,10 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     error_for_non_lagrange_elements(*mf_dest, true);
     if (!U.is_complex()) {
       darray V = out.pop().create_darray(1, unsigned(mf_dest->nb_dof()));
-      getfem::interpolation(*mf, *mf_dest, U.real(), V, true);
+      getfem::interpolation(*mf, *mf_dest, U.real(), V, 2);
     } else {
       carray V = out.pop().create_carray(1, unsigned(mf_dest->nb_dof()));
-      getfem::interpolation(*mf, *mf_dest, U.cplx(), V, true);
+      getfem::interpolation(*mf, *mf_dest, U.cplx(), V, 2);
     }
   } else if (check_cmd(cmd, "mesh edges deformation", in, out, 1, 2, 0, 1)) {
     /* a virer qd gf_plot_mesh aura ete refait a neuf */

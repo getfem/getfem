@@ -42,71 +42,6 @@
 
 namespace getfem {
 
-  // Specific interpolation
-  template<typename VECTU, typename VECTV>
-  void interpolation_convect(const mesh_fem &mf_source,
-			     mesh_trans_inv &mti, const VECTU &UU, VECTV &V) {
-
-    typedef typename gmm::linalg_traits<VECTU>::value_type T;
-    const mesh &msh(mf_source.linked_mesh());
-    dim_type qdim_s = mf_source.get_qdim();
-    dim_type qqdim = dim_type(gmm::vect_size(UU)/mf_source.nb_dof());
-
-    std::vector<T> U(mf_source.nb_basic_dof()*qqdim);
-    mf_source.extend_vector(UU, U);
-
-    mti.distribute(2);
-    std::vector<size_type> itab;    
-    base_matrix G;
-
-    /* interpolation */
-    dal::bit_vector dof_done; dof_done.add(0, mti.nb_points());
-    std::vector<T> val(qdim_s);
-    std::vector<std::vector<T> > coeff;
-    base_tensor Z;
-    std::vector<size_type> dof_source;
-
-    for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt = msh.trans_of_convex(cv);
-      mti.points_on_convex(cv, itab);
-      if (itab.size() == 0) continue;
-
-      pfem pf_s = mf_source.fem_of_element(cv);
-      if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
-
-      fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv,
-				    size_type(-1));
-      coeff.resize(qqdim);
-      for (size_type qq=0; qq < qqdim; ++qq) {
-	coeff[qq].resize(mf_source.nb_basic_dof_of_element(cv));
-	gmm::sub_index SUBI(mf_source.ind_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(U, SUBI), coeff[qq]);
-      }
-      for (size_type i = 0; i < itab.size(); ++i) {
-	size_type dof_t = itab[i];
-	if (dof_done.is_in(dof_t)) {
-	  dof_done.sup(dof_t);
-	  ctx.set_xref(mti.reference_coords()[dof_t]);
-	  size_type pos = dof_t * qdim_s;
-	  for (size_type qq=0; qq < qqdim; ++qq) {           
-	    pf_s->interpolation(ctx, coeff[qq], val, qdim_s);
-	    for (size_type k=0; k < qdim_s; ++k)
-	      V[(pos + k)*qqdim+qq] = val[k];
-	  }
-	}
-      }
-    }
-    if (dof_done.card() != 0)
-      GMM_WARNING2("WARNING : in interpolation (different meshes),"
-		   << dof_done.card() << " dof of target mesh_fem have "
-		   << " been missed\nmissing dofs : " << dof_done);
-    
-  }
-
-
-
-
   /** Compute the convection of a quantity on a getfem::mesh_fem with respect
       to a velocity field
       @param mf the source mesh_fem. Should be of Lagrange type.
@@ -159,7 +94,7 @@ namespace getfem {
     for (size_type i = 0; i < nt; ++i) {
       mti.clear();
       mti.add_points(nodes);
-      interpolation_convect(mf_v, mti, V, VI);
+      interpolation(mf_v, mti, V, VI, 2);
 
       for (size_type j = 0; j < nbpts; ++j) {
 	gmm::add(gmm::scaled(gmm::sub_vector(VI, gmm::sub_interval(N*j, N)),
@@ -171,7 +106,7 @@ namespace getfem {
     std::vector<T> UI(nbpts*qdim);
     mti.clear();
     mti.add_points(nodes);
-    interpolation_convect(mf, mti, U, UI);
+    interpolation(mf, mti, U, UI, 2);
     gmm::copy(UI, U);
   }
 

@@ -1959,9 +1959,9 @@ The file \getfeminterpolationh ~defines the function \cpp{getfem:ïnterpolation(\
 \index{GETFEM!getfem::interpolation}
 
 \begin{cppcode}
-  getfem::interpolation(mf1, mf2, U, V);
+  getfem::interpolation(mf1, mf2, U, V, extrapolation = 0);
 \end{cppcode}
-where \cpp{mf1}  is a variable of type \getfemmeshfem ~and describes the finite element method on which the source field \cpp{U} is defined, \cpp{mf2} is the finite element method on which \cpp{U} will be interpolated.
+where \cpp{mf1}  is a variable of type \getfemmeshfem ~and describes the finite element method on which the source field \cpp{U} is defined, \cpp{mf2} is the finite element method on which \cpp{U} will be interpolated. \cpp{extrapolation} is a optional parameter. The values are \cpp{0} not to allow the extrapolation, \cpp{1} for an extrapolation of the exterior points near the boundary and \cpp{1} for the extrapolation of all exterior points (could be expensive). 
 
 The dimension of \cpp{U} should be a multiple of \cpp{mf1.nb_dof()}, and the interpolated data \cpp{V} should be correctly sized (multiple of \cpp{mf2.nb_dof()}).
 
@@ -1969,7 +1969,7 @@ IMPORTANT: \cpp{mf2} should be of Lagrange type for the interpolation to make se
 
 If you need to perform more than one interpolation between the same finite element methods, it might be more efficient to use the function
 \begin{cppcode}
-  getfem::interpolation(mf1, mf2, M);
+  getfem::interpolation(mf1, mf2, M, extrapolation = 0);
 \end{cppcode}
 where \cpp{M} is a row matrix which will be filled with the linear map representing the interpolation (i.e. such that \cpp{V = MU}). The matrix should have the correct dimensions (i.e. \cpp{mf2.nb\_dof()} x \cpp{mf1.nb\_dof()}). Once this matrix is built, the interpolation is done with a simple matrix multiplication: \cpp{gmm::mult(M, U, V); }
 

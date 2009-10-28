@@ -68,10 +68,12 @@ namespace getfem {
     void points_on_convex(size_type i, std::vector<size_type> &itab) const;
     const std::vector<base_node> &reference_coords(void) { return ref_coords; }
 
-    /* extrapolation = false : Only the points inside the mesh are distributed.
-     * extrapolation = true  : Try to project the exterior points.
-     * TODO : for extrapolation, verify that all the points have been taken
-     *        into account, else test them on the frontiere convexes.
+    /* extrapolation = 1 : Only the points inside the mesh are distributed.
+     * extrapolation = 2 : Try to extrapolate the exterior points near the
+     *                     boundary.
+     * extrapolation = 3 : Extrapolate all the exterior points. Could be
+     *                     expensive.
+     * 
      */
     void distribute(int extrapolation = 0);
     mesh_trans_inv(const mesh &m, double EPS_ = 1E-12)
@@ -216,7 +218,7 @@ namespace getfem {
   */
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, bool extrapolation = false,
+		     const VECTU &U, VECTV &V, int extrapolation = 0,
 		     double EPS = 1E-10);
 
   /**
@@ -228,7 +230,7 @@ namespace getfem {
    */
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, bool extrapolation = false, double EPS = 1E-10);
+		     MAT &M, int extrapolation = 0, double EPS = 1E-10);
 
 
   /* --------------------------- Implementation ---------------------------*/
@@ -364,7 +366,7 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source,
 		     mesh_trans_inv &mti,
 		     const VECTU &UU, VECTV &V, MAT &MM,
-		     int version, bool extrapolation = false) {
+		     int version, int extrapolation = 0) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     const mesh &msh(mf_source.linked_mesh());
@@ -464,7 +466,7 @@ namespace getfem {
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
-		     const VECTU &U, VECTV &V, bool extrapolation = false) {
+		     const VECTU &U, VECTV &V, int extrapolation = 0) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0 &&
 		gmm::vect_size(V)!=0, "Dimension of vector mismatch");
@@ -481,7 +483,7 @@ namespace getfem {
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		       const VECTU &U, VECTV &VV, MAT &MM,
-		       int version, bool extrapolation = false,
+		       int version, int extrapolation = 0,
 		       double EPS = 1E-10) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
@@ -523,7 +525,7 @@ namespace getfem {
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, bool extrapolation,
+		     const VECTU &U, VECTV &V, int extrapolation,
 		     double EPS = 1E-10) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
@@ -538,14 +540,13 @@ namespace getfem {
 
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, bool extrapolation, double EPS = 1E-10) {
+		     MAT &M, int extrapolation, double EPS = 1E-10) {
     GMM_ASSERT1(mf_source.nb_dof() == gmm::mat_ncols(M)
 		&& (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
 		&& gmm::mat_nrows(M) != 0, "Dimensions mismatch");
     std::vector<scalar_type> U, V;
-    if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
+    if (&mf_source.linked_mesh() == &mf_target.linked_mesh())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);
-    }
     else 
       interpolation(mf_source, mf_target, U, V, M, 1, extrapolation, EPS);
   }

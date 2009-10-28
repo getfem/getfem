@@ -84,11 +84,14 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin)
 	       'cvlst',[],... % list of convexes to plot
 	       'title',[],...
 	       'contour',[],...
-               'mesh_level_set',[]); % list of contour values
+               'mesh_level_set',[], ... % list of contour values
+	       'disp_options', 'on');
 
   opt = getopt(opt,varargin);
 
-  disp(opt);
+  if (ison(opt.disp_options))
+    disp(opt);
+  end;
   if (ison(opt.zplot))
     if (mdim ~= 2),
       error('zplot allowed only on 2D scalar mesh_fems');

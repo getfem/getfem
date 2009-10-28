@@ -7,7 +7,7 @@ gf_workspace('clear all');
 ls_degree = 1;
 lambda = 1;
 mu = 1;
-rayon_trous = 0.05;
+rayon_trous = 0.025;
 % threshold = 0.25; % NX = 10
 threshold = 1.25;
 NX = 40;
@@ -58,7 +58,7 @@ ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 10' });
 % ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.8-sin(pi*5*x) .* sin(pi*5*y)' });
 %ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.9-sin(pi*4*x) .* cos(pi*4*y)' });
 
-F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-2*(abs(y) < 0.025)'});
+F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-4*(abs(y) < 0.0125)'});
 
 while(1) 
 
@@ -91,15 +91,19 @@ while(1)
   gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
   gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
 
-
+  subplot(2,1,1);
+  [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off', 'disp_options', 'off');
+  set(h2{1},'LineWidth',1);
+  set(h2{1},'Color','green');
+  
   % Solving the direct problem
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
   nbd = gf_mesh_fem_get(mf_ls, 'nbdof');
   
-  K = gf_asm('linear elasticity', mim, mf, mf_ls, lambda*ones(1, nbd), mu*ones(1, nbd));
-  disp('Elastic energy');
-  disp(U*K*U');
+%   K = gf_asm('linear elasticity', mim, mf, mf_ls, lambda*ones(1, nbd), mu*ones(1, nbd));
+%   disp('Elastic energy');
+%   disp(U*K*U');
 
   %   subplot(1,2,1);
 %   gf_plot(mf, U);
@@ -138,11 +142,21 @@ while(1)
     return;
   end;
   
-  LS = gf_compute(mf_ls, ULS, 'interpolate on', mf_g);
-  GT = GT .* (1.-sign(LS))/2;
+  % filtering the gradients
+  M = gf_asm('mass matrix', mim, mf_g);
+  D = abs(full(diag(M)));
+  ind = find(D < DX^N/7);
+  GF(ind) = GF(ind) * 0;
+  ind = find(D < DX^N/5);
+  GT(ind) = GT(ind) * 0 - 20;
+
+  
+  
+  % LS = gf_compute(mf_ls, ULS, 'interpolate on', mf_g);
+  % GT = GT .* (1.-sign(LS))/2;
   [val, i] = max(GT);
 
-  if (val >= -threshold)
+  if (val >= -3*threshold)
     point = gf_mesh_fem_get(mf_g, 'basic dof nodes', [i]);
     xc = point(1);
     yc = point(2);
@@ -151,27 +165,22 @@ while(1)
   end;    
   
 
-  % filtering the gradient
-  M = gf_asm('mass matrix', mim, mf_g);
-  D = abs(full(diag(M)));
-  ind = find(D < DX^N/7);
-  GF(ind) = GF(ind) * 0;
 
   
   subplot(2,1,1);
-  gf_plot(mf_g, GF);
+  gf_plot(mf_g, GF, 'disp_options', 'off');
   hold on;
-  [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off');
+  [h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off', 'disp_options', 'off');
   set(h2{1},'LineWidth',1);
   set(h2{1},'Color','green');
   % gf_plot(mf, U);
   hold off;
   colorbar;
   subplot(2,1,2);
-  gf_plot(mf_g, GT);
+  gf_plot(mf_g, GT, 'disp_options', 'off', 'disp_options', 'off');
   colorbar;
   
-  pause(1);
+  pause(0.1);
   disp('drawing done');
   
   % Evolution of the level-set. Computation of v
@@ -193,28 +202,13 @@ while(1)
   Mcont = gf_asm('mass matrix', mimls, mf_vcont); % Could be computed only once.
   Fdisc = gf_asm('volumic source', mimls, mf_vcont, mf_g, V);
   Vcont = Mcont \ Fdisc;
-
-  ULS(1:10)
-  
-  gf_compute(mf_ls, ULS, 'convect', mf_vcont, Vcont, 0.005, 4);
-  
-  ULS(1:10)
-  
+  gf_compute(mf_ls, ULS, 'convect', mf_vcont, Vcont, 0.02, 8);
   disp('convect fin');
-  
-%   [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor','off');
-%   set(h2{1},'LineWidth',1);
-%   set(h2{1},'Color','green');
-%   pause(0.1);
    
-  % Re-initialisation de la level-set
-%   disp 'norm dls avant : ';
-%   AA = sqrt(sum(DLS.^2, 1));
-%   AA(1:100)
-  
-  dt = 0.1; NT = 4; ddt = dt / NT;
+  % Re-initialization of the level-set
+  dt = 0.1; NT = 15; ddt = dt / NT;
  
-  for t = 0:ddt:-dt
+  for t = 0:ddt:dt
   
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
     Fdisc = gf_asm('volumic source', mimls, mf_vcont, mf_g, DLS);
@@ -228,29 +222,12 @@ while(1)
       disp('Should be adapted ...');
       return;
     end;
-    
-    disp('qlq infos');
-    NORMDLS(1:10);
-    ULS(1:10)
-    SLS = sign(ULS); SLS(1:10)
-    W(1:10)
-    SULS(1:10)
-    
+   
     gf_compute(mf_ls, ULS, 'convect', mf_vcont, W, ddt, 1);
     ULS = ULS + ddt * sign(ULS);
   end;
 
-
-  disp 'norm dls apres : ';
-  AA = sqrt(sum(DLS.^2, 1));
-  AA(1:100)
-%   
-%   [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor','off');
-%   set(h2{1},'LineWidth',1);
-%   set(h2{1},'Color','green');
-%   pause(1);
-  
-  
+  disp 'norm dls apres : '; AA = sqrt(sum(DLS.^2, 1)); AA(1:4)  
   
   gf_workspace('pop');
   

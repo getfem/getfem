@@ -169,7 +169,7 @@ gf_dirichlet(getfemint::mexargs_out& out,
   out_H.from_sparse(H/*,threshold*/);
 }
 
-void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, bool extrapolate) {
+void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolate) {
   const getfem::mesh_fem *mf1 = in.pop().to_const_mesh_fem();
   const getfem::mesh_fem *mf2 = in.pop().to_const_mesh_fem();
   gf_real_sparse_by_col M(mf2->nb_dof(), mf1->nb_dof());
@@ -551,7 +551,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     `Mi` is a @tsp object.
     @*/
-    interpolate_or_extrapolate(in, out, false);
+    interpolate_or_extrapolate(in, out, 0);
   } else if (check_cmd(cmd, "extrapolation matrix", in, out, 2, 2, 0, 1)) {
     /*@FUNC Me = ::ASM('extrapolation matrix',@tmf mf, @tmf mfe)
     Build the extrapolation matrix from a @tmf onto another @tmf.
@@ -562,7 +562,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     `Me` is a @tsp object.
     @*/
-    interpolate_or_extrapolate(in, out, true);
+    interpolate_or_extrapolate(in, out, 2);
   } else bad_cmd(cmd);
 }
 
