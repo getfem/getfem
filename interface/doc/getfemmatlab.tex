@@ -4032,7 +4032,8 @@ U2 = gf\_compute(mf, U, 'interpolate on', \tslc sl)
 [U2[,mf2,[,X[,Y[,Z]]]]] = gf\_compute(mf,U,'interpolate on Q1 grid', 
         \{'regular h', hxyz | 'regular N',Nxyz | X[,Y[,Z]]\})
 U2 = gf\_compute(mf, U, 'extrapolate on', \tmf mf2)
-E = gf\_compute(mf, U, 'error estimate',  \tmim MIM) 
+E = gf\_compute(mf, U, 'error estimate',  \tmim MIM)
+gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt) 
 @@\end{synopsis}
 \begin{cmddescription}
   The first two arguments of this function are always @@mf@@ and
@@ -4108,6 +4109,14 @@ E = gf\_compute(mf, U, 'error estimate',  \tmim MIM)
     gf_mesh_set(m, 'refine', find(E < 1e-3));
   \end{mcode}
 \end{cmdexamples}
+
+  \sep{@@gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt)@@} Compute a convection of `U` with regards to a steady state velocity
+  field `V` with a Characteristic-Galerkin method. This
+  method is restricted to pure Lagrange fems for U. `mf_v` should represent
+  a continuous finite element method. `dt` is the integration time and `nt`
+  is the number of integration
+  step on the caracteristics. This method is rather dissipative, but stable.
+
 \newpage
 
 

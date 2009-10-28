@@ -894,6 +894,7 @@ class MeshLevelSet:
 #@FUNC ::COMPUTE('interpolate on')
 #@FUNC ::COMPUTE('extrapolate on')
 #@FUNC ::COMPUTE('error estimate')
+#@FUNC ::COMPUTE('convect')
 
 #@FUNC ::ASM('mass matrix')
 #@FUNC ::ASM('laplacian')

@@ -25,6 +25,7 @@
 #include <getfem/getfem_assembling.h>
 #include <getfemint_mesh_slice.h>
 #include <getfem/getfem_error_estimate.h>
+#include <getfem/getfem_convect.h>
 using namespace getfemint;
 
 static void
@@ -242,6 +243,7 @@ bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
   @FUNC ::COMPUTE('interpolate on')
   @FUNC ::COMPUTE('extrapolate on')
   @FUNC ::COMPUTE('error estimate')
+  @FUNC ::COMPUTE('convect')
 
   * [U2[,MF2,[,X[,Y[,Z]]]]] = gf_compute(MF,U,'interpolate on Q1 grid',
                                {'regular h', hxyz | 'regular N',Nxyz |
@@ -290,9 +292,7 @@ MLABCOM*/
 
 void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
-  if (in.narg() < 3) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+  if (in.narg() < 3)  THROW_BADARG( "Wrong number of input arguments");
 
   const getfem::mesh_fem *mf   = in.pop().to_const_mesh_fem();
   rcarray U              = in.pop().to_rcarray();
@@ -447,7 +447,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     mesh_edges_deformation(mf, U.real(), N, in, out);
   } else if (check_cmd(cmd, "error_estimate", in, out, 1, 1, 0, 1)) {
     /*@FUNC E = ::COMPUTE('error estimate',@tmim mim)
-    Compute an a posteriori error estimation.
+    Compute an a posteriori error estimate.
 
     Currently there is only one which is available: for each convex,
     the jump of the normal derivative is integrated on its faces.@*/
@@ -458,5 +458,22 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
     else
       getfem::error_estimate(mim, *mf, U.cplx(), err, mim.convex_index());
+  } else if (check_cmd(cmd, "convect", in, out, 4, 4, 0, 0)) {
+    /*@FUNC E = ::COMPUTE('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt)
+    Compute a convection of `U` with regards to a steady state velocity
+    field `V` with a Characteristic-Galerkin method. This
+    method is restricted to pure Lagrange fems for U. `mf_v` should represent
+    a continuous finite element method. `dt` is the integration time and `nt`
+    is the number of integration
+    step on the caracteristics. This method is rather dissipative, but stable.
+    @*/
+
+    const getfem::mesh_fem *mf_v = in.pop().to_const_mesh_fem();
+    rcarray V              = in.pop().to_rcarray();
+    scalar_type dt = in.pop().to_scalar(0);
+    size_type nt = in.pop().to_integer(0,100000);
+    if (U.is_complex() || V.is_complex())
+      THROW_BADARG("Sorry, complex version of convect to be interfaced");
+    getfem::convect(*mf, U.real(), *mf_v, V.real(), dt, nt);
   } else  bad_cmd(cmd);
 }

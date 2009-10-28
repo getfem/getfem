@@ -168,7 +168,6 @@ while(1)
   NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
   GFF = gf_compute(mf_g, GF, 'interpolate on', mf_v) ./ NORMDLS;
   
-
   if (N == 2)
     V = DLS.*[GFF; GFF];
   else
@@ -176,29 +175,27 @@ while(1)
     return;
   end;
   
-  % Normalisation de V (il ne sert a rien d'aller trop vite ou trop
-  % lentement
+  disp('convect début');
+  mf_vcont=gfMeshFem(m, N);
+  gf_mesh_fem_set(mf_vcont,'fem', gf_fem('FEM_PK(2,1)'));
+  Mcont = gf_asm('mass matrix', mimls, mf_vcont); % Could be computed only once.
+  Fdisc = gf_asm('volumic source', mimls, mf_vcont, mf_v, V);
+  Vcont = Mcont \ Fdisc;
+   
+  gf_compute(mf_ls, ULS, 'convect', mf_vcont, Vcont, 0.01, 4);
+  disp('convect fin');
   
-%   maxV = sqrt(max(sum(V.^2,1)));
-%   for i = 1:size(V,2)
-%       normv = sqrt(sum(V(:,i).^2));
-%       if (normv > maxV / 100)
-%         V(:,i) = V(:, i) / normv;
-%       end;
+%   % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
+%   alpha = 0.015; dt = 0.01; NT = 20; ddt = dt / NT;
+%   M = gf_asm('mass matrix', mimls, mf_ls);
+%   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
+%   B = gf_asm('volumic', ...
+%              'v=data(mdim(#2),#2);M(#1,#1)+=comp(Base(#1).Grad(#1).Base(#2))(:,:,i,j).v(i,j)', ...
+%              mimls, mf_ls, mf_v, V);
+%   A = M + (B + K)*ddt;
+%   for t = 0:ddt:dt
+%     ULS = (A \ (M * ULS'))';
 %   end;
-  
-  
-  % Evolution of the level-set. (perturbated) Hamilton-Jacobi equation.
-  alpha = 0.015; dt = 0.01; NT = 10; ddt = dt / NT;
-  M = gf_asm('mass matrix', mimls, mf_ls);
-  K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
-  B = gf_asm('volumic', ...
-             'v=data(mdim(#2),#2);M(#1,#1)+=comp(Base(#1).Grad(#1).Base(#2))(:,:,i,j).v(i,j)', ...
-             mimls, mf_ls, mf_v, V);
-  A = M + (B + K)*ddt;
-  for t = 0:ddt:dt
-    ULS = (A \ (M * ULS'))';
-  end;
   
 %   [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor','off');
 %   set(h2{1},'LineWidth',1);
@@ -211,8 +208,9 @@ while(1)
 %   AA(1:100)
   
   
-  alpha = 0.01; dt = 0.02; NT = 10; ddt = dt / NT;
+  alpha = 0.01; dt = 0.01; NT = 20; ddt = dt / NT;
   K = gf_asm('laplacian', mimls, mf_ls, mf_ls, alpha*ones(gf_mesh_fem_get(mf_ls, 'nbdof'),1));
+  M = gf_asm('mass matrix', mimls, mf_ls);   
 
   for t = 0:ddt:dt
   

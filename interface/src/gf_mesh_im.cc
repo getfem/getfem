@@ -134,8 +134,6 @@ void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
         THROW_BADARG("expecting an approximate integration method");
       }
 
-      cerr << "csg_description: " << csg_description << "\n";
-
       getfem::mesh_im_level_set *mimls =
         new getfem::mesh_im_level_set(gmls->mesh_levelset(),
                                       where, pim, pim2);

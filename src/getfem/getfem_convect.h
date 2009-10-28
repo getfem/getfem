@@ -43,7 +43,7 @@
 namespace getfem
 {
   /** Compute the convection of a quantity on a getfem::mesh_fem with respect
-      to a vector field
+      to a velocity field
       @param mf the source mesh_fem. Should be of Lagrange type.
       @param U the source field.
       @param mf_v the mesh_fem on which the vector field is described
@@ -51,9 +51,19 @@ namespace getfem
       @param nt number of time integration step.
   */
   template<class VECT1, class VECT2>
-  void convect(const mesh_fem &mf, const mesh_fem &mf_v,
-	       VECT1 &U, const VECT2 &V, size_type nt) {
+  void convect(const mesh_fem &mf, VECT1 &U, const mesh_fem &mf_v,
+	       const VECT2 &V, scalar_type dt, size_type nt) {
+    // Should be robustified on the boundaries -> control of the nodes going
+    //   out the mesh.
+    // Should control that the point do not move to fast ( < h/2 for instance).
+    // Could be extended to non-lagragian fem with a projection (moving the 
+    //   gauss points).
+    // Can take into account a source term by integration on the
+    //   caracteristics.
+
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
+    
+    if (nt == 0) return;
 
     GMM_ASSERT1(!(mf.is_reduced()),
 		"This convection algorithm work only on pure Lagrange fems");
@@ -65,27 +75,41 @@ namespace getfem
     }
 
     // Get the nodes of mf
-    getfem::mesh_trans_inv mti(msh, EPS);
+    const mesh &msh(mf.linked_mesh());
+    size_type N = msh.dim();
+    getfem::mesh_trans_inv mti(msh, 1E-10);
     size_type qdim = mf.get_qdim();
     size_type nbpts = mf.nb_basic_dof() / qdim;
+    std::vector<base_node> nodes(nbpts);
     for (size_type i = 0; i < nbpts; ++i)
-      mti.add_point(mf.point_of_basic_dof(i * qdim));
+      nodes[i] = mf.point_of_basic_dof(i * qdim);
 
     // Convect the nodes with respect to v
     size_type qqdimt = (gmm::vect_size(V) / mf_v.nb_dof()) * mf_v.get_qdim();
-    std::vector<T> VI(nbpts*qqdimt);
+    GMM_ASSERT1(qqdimt == N, "The velocity field should be a vector field "
+	       "of the smae dimension as the mesh");
+    std::vector<T> VI(nbpts*N);
 
+    scalar_type ddt = dt / scalar_type(nt);
     for (size_type i = 0; i < nt; ++i) {
-      interpolation(mf_v, mti, V, VI, base_matrix(), 0, true /* extrapolation */);
-      // + bouger les points du mti
+      mti.clear();
+      mti.add_points(nodes);
+      interpolation(mf_v, mti, V, VI, true /* extrapolation */);
+
+      for (size_type j = 0; j < nbpts; ++j) {
+	gmm::add(gmm::scaled(gmm::sub_vector(VI, gmm::sub_interval(N*j, N)),
+			     -ddt), nodes[j]);
+      }
     }
 
     // 3 interpolation finale
-    std::vector<T> U(nbpts*qdim);
-    interpolation(mf, mti, U, UI, base_matrix(), 0, true /* extrapolation */);
+    std::vector<T> UI(nbpts*qdim);
+    interpolation(mf, mti, U, UI, true /* extrapolation */);
     gmm::copy(UI, U);
   }
 
+
+}
 
 
 #endif
