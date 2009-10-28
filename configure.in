@@ -445,18 +445,23 @@ useQHULL="no"
 AC_ARG_ENABLE(qhull,
  [AS_HELP_STRING([--enable-qhull],[enable the use of the qhull library (required for generation of non regular meshes)])],
  [ if   test "x$enableval" = "xyes" ; then useQHULL="yes"; fi], [useQHULL="test"])
+QHULL_LIBS=""
 if test "x$useQHULL" = "xno"; then
   echo "libqhull explicitly disabled";
 else
   AC_CHECK_LIB(qhull, qh_new_qhull)
   AC_CHECK_HEADERS(qhull/qhull.h,[useQHULL="yes"],
-[
-  if test "x$useQHULL" = "xyes"; then
-    AC_MSG_ERROR([header files qhull/qhull.h not found. Use --disable-qhull flag]);
-  fi;
-])
+  [
+    if test "x$useQHULL" = "xyes"; then
+      AC_MSG_ERROR([header files qhull/qhull.h not found. Use --disable-qhull flag]);
+    fi;
+  ])
+  QHULL_LIBS="-lqhull"
 fi;
 AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
+
+AC_SUBST([QHULL_LIBS])
+echo "Configuration of qhull done"
 dnl -----------------------------END OF QHULL TEST---------------------------
 
 dnl ------------------------------MUPARSER TEST------------------------------
@@ -477,7 +482,7 @@ else
      AC_MSG_ERROR([header file muParser/muParser.h not found. Use --enable-muparser=no flag]);
    fi;
   ])
-  # MUPARSER_LIBS="-lmuparser"
+  MUPARSER_LIBS="-lmuparser"
   # LIBS="$LIBS $MUPARSER_LIBS"
 fi;
 AM_CONDITIONAL(MUPARSER, test x$usemuparser = xyes)
@@ -844,6 +849,7 @@ AC_CONFIG_FILES(\
 	interface/src/python/Makefile \
 	interface/src/python/setup.py \
 	interface/src/scilab/Makefile \
+        interface/src/scilab/sci_gateway/c/builder_gateway_c.sce \
 	interface/tests/Makefile \
 	interface/tests/meshes/Makefile \
 	interface/tests/matlab/Makefile \
