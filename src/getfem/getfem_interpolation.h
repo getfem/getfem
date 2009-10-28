@@ -73,7 +73,7 @@ namespace getfem {
      * TODO : for extrapolation, verify that all the points have been taken
      *        into account, else test them on the frontiere convexes.
      */
-    void distribute(bool extrapolation = false);
+    void distribute(int extrapolation = 0);
     mesh_trans_inv(const mesh &m, double EPS_ = 1E-12)
       : bgeot::geotrans_inv(EPS_), msh(m) {}
   private :

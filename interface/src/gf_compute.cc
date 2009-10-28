@@ -470,7 +470,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     const getfem::mesh_fem *mf_v = in.pop().to_const_mesh_fem();
     rcarray V              = in.pop().to_rcarray();
-    scalar_type dt = in.pop().to_scalar(0);
+    scalar_type dt = in.pop().to_scalar();
     size_type nt = in.pop().to_integer(0,100000);
     if (U.is_complex() || V.is_complex())
       THROW_BADARG("Sorry, complex version of convect to be interfaced");

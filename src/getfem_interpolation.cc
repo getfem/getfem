@@ -31,7 +31,7 @@ namespace getfem {
       itab[j++] = it->first;
   }
   
-  void mesh_trans_inv::distribute(bool extrapolation) {
+  void mesh_trans_inv::distribute(int extrapolation) {
     size_type nbpts = nb_points();
     dal::bit_vector npt;
     size_type nbcvx = msh.convex_index().last_true() + 1;
@@ -45,6 +45,12 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = msh.trans_of_convex(j);
       bounding_box(min, max, msh.points_of_convex(j), pgt);
       for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
+      if (extrapolation == 2) {
+	scalar_type h = scalar_type(0);
+	for (size_type k=0; k < min.size(); ++k)
+	  h = std::max(h, max[k] - min[k]);
+	for (size_type k=0; k < min.size(); ++k) { min[k]-=h; max[k]+=h; }
+      }
       gic.init(msh.points_of_convex(j), pgt);
       points_in_box(boxpts, min, max);
 
