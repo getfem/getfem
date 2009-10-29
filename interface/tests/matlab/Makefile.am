@@ -32,6 +32,7 @@ EXTRA_DIST= \
 	demo_crack.m \
 	demo_mortar.m \
 	demo_topological_optimization.m \
+	demo_structural_optimization.m \
 	demo_refine.m \
 	demo_stokes_2D_poiseuille.m \
 	demo_stokes_2D_poiseuille_arc.m \

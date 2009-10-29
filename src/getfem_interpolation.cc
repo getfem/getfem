@@ -77,6 +77,10 @@ namespace getfem {
 	      else toadd = false;
 	    }
 	    if (toadd) {
+// 	      if (mult > 1.5) {
+// 		cout << "adding " << ind << "ref_coord = " << pt_ref
+// 		     << " cv = " << j << " mult = " << mult << endl;
+// 	      }
 	      ref_coords[ind] = pt_ref;
 	      dist[ind] = isin; cvx_pts[ind] = j;
 	      pts_cvx[j][ind] = void_type();
