@@ -708,6 +708,7 @@ table.docutils td, table.docutils th {
 }
 
 table.figure {
+    caption-side: bottom;
     width: 100%;
     border: 0;
     background-color: #FFF;

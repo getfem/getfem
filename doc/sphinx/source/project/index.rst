@@ -16,5 +16,4 @@ Description of the Project
    global
 
    appendixA
-
    ../biblio

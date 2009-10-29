@@ -36,4 +36,4 @@ Short User Documentation
    appendixA
    appendixB
 
-   ../biblio.rst
+   ../biblio

@@ -327,7 +327,7 @@ conditions.
 
 The declaration of a ``getfem::partial_mesh_fem`` object is the following::
 
-  getfem::partial_mesh_fem(mf) partial_mf;
+  getfem::partial_mesh_fem partial_mf(mf);
 
 Then, one has to call the adapt method as follows::
 
