@@ -16,8 +16,8 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
-%  Shape optimization od a structure with both topological and shape gradient
-%   (with a fictitious domain approach).
+%  Shape optimization of a structure with a coupling between topological and
+%  shape gradient (with a fictitious domain approach).
 %
 %  This program is used to check that matlab-getfem is working. This is
 %  also a good example of use of GetFEM++.
@@ -31,9 +31,10 @@ ls_degree = 1;  % Degree of the level-set. Should be one for the moment.
 k = 1;          % Degree of the finite element method for u
 lambda = 1;     % Lame coefficient
 mu = 1;         % Lame coefficient
-hole_radius = 0.03;
+hole_radius = 0.03;   % Hole radius for topological optimization
+initial_holes = 1;    % Pre-existing holes or not.
 threshold_shape = 1.;
-threshold_topo = 0.5;
+threshold_topo = 0.6;
 NX = 40;
 DX = 1./NX;
 DEBUG = 0;
@@ -75,9 +76,11 @@ mf_basic=gfMeshFem(m, N);
 gf_mesh_fem_set(mf_basic,'fem',gf_fem(sprintf('FEM_PK(2,%d)', k)));
 
 % Definition of the initial level-set
-% ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 2' });
-% ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.8-sin(pi*5*x) .* sin(pi*5*y)' });
-ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.6-sin(pi*4*x) .* cos(pi*4*y)' });
+if (initial_holes)
+  ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.6-sin(pi*4*x).*cos(pi*4*y)' });
+else
+  ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 2' });
+end;
 
 % Level-set nodes
 P=get(mf_ls, 'basic dof nodes');
@@ -170,8 +173,11 @@ while(1) % Optimization loop
   M = gf_asm('mass matrix', mim, mf_g);
   D = abs(full(diag(M)));
   maxD = max(D);
-  ind = find(D < maxD/3);
-  GF(ind) = GF(ind) * 0;
+  ind = find(D < maxD/10);
+  % Extension of the gradient into the hole. Too rough ?
+  GF(ind) = GF(ind) * 0 - threshold_shape/4;
+  % Threshold on the gradient
+  GF = min(GF, 4*threshold_shape);
   ind = find(D < maxD/1.3);
   GT(ind) = GT(ind) * 0 - 20;
 
@@ -201,7 +207,7 @@ while(1) % Optimization loop
     point = gf_mesh_fem_get(mf_g, 'basic dof nodes', [i]);
     xc = point(1);
     yc = point(2);
-    disp(sprintf('Making a new hole of coordinates (%g, %g)', xc, yc));
+    disp(sprintf('Making a new hole whose center is (%g, %g)', xc, yc));
     R = hole_radius;
     ULS = max(ULS, (R^2 - (x - xc).^2 - (y - yc).^2)/(2*R));
   end;    
@@ -227,10 +233,6 @@ while(1) % Optimization loop
   Vcont = Mcont \ Fdisc;
 
   % Level set convection
-%  gf_compute(mf_ls, ULS, 'convect', mf_basic, Vcont, 0.0025, 5);
-%  gf_compute(mf_ls, ULS, 'convect', mf_basic, Vcont, 0.0025, 5);
-%  gf_compute(mf_ls, ULS, 'convect', mf_basic, Vcont, 0.0025, 5);
-%  gf_compute(mf_ls, ULS, 'convect', mf_basic, Vcont, 0.0025, 5);
   gf_compute(mf_ls, ULS, 'convect', mf_basic, Vcont, 0.01, 20);
 
   if (DEBUG)
@@ -248,7 +250,7 @@ while(1) % Optimization loop
   end;
    
   % Re-initialization of the level-set
-  dt = 0.05; NT = 10; ddt = dt / NT;
+  dt = 0.075; NT = 20; ddt = dt / NT;
  
   for t = 0:ddt:dt
   
@@ -284,6 +286,7 @@ while(1) % Optimization loop
     set(h2{1},'LineWidth',1);
     set(h2{1},'Color','green');
     hold off;
+    pause(0.01);
   end;
 
   gf_workspace('pop');
