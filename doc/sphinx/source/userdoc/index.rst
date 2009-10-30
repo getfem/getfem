@@ -30,6 +30,7 @@ Short User Documentation
    computeD
    export
    interMM
+   convect
    model
    examples
 

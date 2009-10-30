@@ -10,7 +10,7 @@ Interpolation on different meshes
 =================================
 
 The file :file:`getfem/getfem_interpolation.h` defines the function 
-``getfem:interpolation(...)`` to interpolate a solution from a given mesh/finite 
+``getfem::interpolation(...)`` to interpolate a solution from a given mesh/finite 
 element method on another mesh and/or another Lagrange finite element method::
 
   getfem::interpolation(mf1, mf2, U, V, extrapolation = 0);
