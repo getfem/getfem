@@ -19,7 +19,7 @@
 //  Shape optimization with topological gradient
 //   (with a fictitious domain approach).
 //
-//  This program is used to check that python-getfem is working. This is
+//  This program is used to check that scilab-getfem is working. This is
 //  also a good example of use of GetFEM++.
 //
 
