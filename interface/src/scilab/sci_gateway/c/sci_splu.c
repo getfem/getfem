@@ -29,16 +29,16 @@ int sci_splu(char * fname)
   double * p_out_spmat_val      = NULL;
   double   value, alpha = 1.0;
   int      nnz = 0, var_type;
-  StrErr _StrErr;
+  SciErr _SciErr;
   StrCtx _StrCtx;
 
   CheckRhs(1,2);
   CheckLhs(1,3);
 
   // First, access to the input variable (a matrix of strings)
-  _StrErr = getVarAddressFromPosition(&_StrCtx,1,&p_in_spmat_address);
+  _SciErr = getVarAddressFromPosition(&_StrCtx,1,&p_in_spmat_address);
 
-  _StrErr = getVarType(&_StrCtx,p_in_spmat_address,&var_type);
+  _SciErr = getVarType(&_StrCtx,p_in_spmat_address,&var_type);
   if (var_type!=sci_sparse)
     {
       Scierror(999,"%s: wrong parameter, a sparse matrix is needed\n",fname);
@@ -51,16 +51,16 @@ int sci_splu(char * fname)
       return 0;
     }
 
-  _StrErr = getSparseMatrix(&_StrCtx,p_in_spmat_address, &p_in_spmat_nb_rows, &p_in_spmat_nb_cols, 
+  _SciErr = getSparseMatrix(&_StrCtx,p_in_spmat_address, &p_in_spmat_nb_rows, &p_in_spmat_nb_cols, 
 			    &p_in_spmat_nb_items, &p_in_spmat_items_row, &p_in_spmat_col_pos, &p_in_spmat_val);
 
   if (Rhs==2)
     {
       // Second, get the alpha parameter
       // First, access to the input variable (a matrix of doubles)
-      _StrErr = getVarAddressFromPosition(&_StrCtx,2,&p_in_dbl_address);
+      _SciErr = getVarAddressFromPosition(&_StrCtx,2,&p_in_dbl_address);
       
-      _StrErr = getMatrixOfDouble(&_StrCtx,p_in_dbl_address, &p_in_dbl_nb_rows, &p_in_dbl_nb_cols, &p_in_dbl_matrix);
+      _SciErr = getMatrixOfDouble(&_StrCtx,p_in_dbl_address, &p_in_dbl_nb_rows, &p_in_dbl_nb_cols, &p_in_dbl_matrix);
       alpha = *p_in_dbl_matrix;
     }
 
@@ -113,7 +113,7 @@ int sci_splu(char * fname)
 	    }
 	}
       
-      _StrErr = createSparseMatrix(&_StrCtx,Rhs+1, p_in_spmat_nb_rows, p_in_spmat_nb_cols, Index, 
+      _SciErr = createSparseMatrix(&_StrCtx,Rhs+1, p_in_spmat_nb_rows, p_in_spmat_nb_cols, Index, 
 				   p_out_spmat_item_row, p_out_spmat_col_pos, p_out_spmat_val);
 
       LhsVar(1) = Rhs+1;
@@ -138,7 +138,7 @@ int sci_splu(char * fname)
 	    }
 	}
       
-      _StrErr = createSparseMatrix(&_StrCtx,Rhs+2, p_in_spmat_nb_rows, p_in_spmat_nb_cols, Index, 
+      _SciErr = createSparseMatrix(&_StrCtx,Rhs+2, p_in_spmat_nb_rows, p_in_spmat_nb_cols, Index, 
 				   p_out_spmat_item_row, p_out_spmat_col_pos, p_out_spmat_val);
 
       LhsVar(2) = Rhs+2;
@@ -155,7 +155,7 @@ int sci_splu(char * fname)
 	  p_out_spmat_val[i]      = 1.0;
 	}
 
-      _StrErr = createSparseMatrix(&_StrCtx,Rhs+3, p_in_spmat_nb_rows, p_in_spmat_nb_cols, p_in_spmat_nb_rows, 
+      _SciErr = createSparseMatrix(&_StrCtx,Rhs+3, p_in_spmat_nb_rows, p_in_spmat_nb_cols, p_in_spmat_nb_rows, 
 				   p_out_spmat_item_row, p_out_spmat_col_pos, p_out_spmat_val);
 
       LhsVar(3) = Rhs+3;

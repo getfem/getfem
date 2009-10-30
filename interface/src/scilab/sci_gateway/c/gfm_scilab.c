@@ -121,7 +121,7 @@ int sci_gf_scilab(char * fname)
   int *  sci_x     = NULL;
   int picol, pirow, var_type;
   unsigned int i;
-  StrErr _StrErr;
+  SciErr _SciErr;
   StrCtx _StrCtx;
   clock_t time_start, time_end;
 
@@ -138,10 +138,10 @@ int sci_gf_scilab(char * fname)
 #ifdef DEBUG
       sciprint("sci_gf_scilab: i = %d Rhs = %d\n", i, Rhs);
 #endif
-      _StrErr = getVarAddressFromPosition(&_StrCtx,i,ptr_param+i);
+      _SciErr = getVarAddressFromPosition(&_StrCtx,i,ptr_param+i);
 #ifdef DEBUG
-      _StrErr = getVarDimension(&_StrCtx,ptr_param[i],&pirow,&picol);
-      _StrErr = getVarType(&_StrCtx,ptr_param[i],&var_type);
+      _SciErr = getVarDimension(&_StrCtx,ptr_param[i],&pirow,&picol);
+      _SciErr = getVarType(&_StrCtx,ptr_param[i],&var_type);
       sciprint("sci_gf_scilab: position %d - address %d - type %d - dimension %d %d\n", i, ptr_param[i],var_type,pirow,picol);
 #endif
     }
