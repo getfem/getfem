@@ -17,7 +17,14 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+############################################################################
+"""  Autofunc and autodoc for python interface.
 
+  This program is used to extract the function prototypes and documentation
+  from C++ interface to python interface.
+
+  $Id$
+"""
 import re
 import string
 import os
@@ -59,7 +66,7 @@ def RemoveSpacesInFNames(d):
     """Replace MESH:GET('max pid') with MESH:GET('max_pid')."""
     n=1
     while n:
-      (d,n)=re.subn(r"(:[A-Z]+ *\('[\w]+) ([\w\s]+')", r"\1_\2",d)
+      (d,n)=re.subn(r"(:[\w]+ *\('[\w]+) ([\w\s]+')", r"\1_\2",d)
     return d
 
 def find_closing_brace(s):
@@ -168,14 +175,17 @@ def WrapParagraphs(d, indent):
 
 def PythonWrapParagraphs(d,indent,subindent,endline):
     doc = ''
-    for l in re.split(r'(<[Pp]ar>[..\n]*)', d):
+    dd = re.sub("(<[Pp]ar>)[\n]*","\\1",d)
+    dd = string.replace(dd,'\n',' ')
+    for l in re.split(r'(<[Pp]ar>)', dd):
       if l.startswith('<Par>'):
         doc += '\n\n'
       elif l.startswith('<par>'):
         doc += '\n'
       elif len(l)>0:
-        text = textwrap.fill(l,78,initial_indent=indent,
-               subsequent_indent=subindent).replace('\n',endline+'\n')
+        indent_ini = re.sub("([ ]*)(.*)","\\1",l)
+        text = textwrap.fill(l.strip(),78,initial_indent=indent_ini+indent,
+                                  subsequent_indent=subindent+indent_ini).replace('\n',endline+'\n')
         doc += text
     doc = doc.strip('\n')
     return doc
@@ -185,8 +195,7 @@ def PythonRewriteDoc(d,indent,subindent,endline):
     d = CellToTuples(d)
     d = RemoveSpacesInFNames(FilterMatlabOrPythonSections(d,'PYTHON'))
     d = ExceptionsRewrite(d)
-    trans = {'MESH:INIT':r"Mesh('\1'\2\3)", \
-             'MESH:GET':r'Mesh.\1(\3)', \
+    trans = {'MESH:GET':r'Mesh.\1(\3)', \
              'MESH:SET':r'Mesh.\1(\3)', \
              'MESHFEM:GET':r'MeshFem.\1(\3)', \
              'MESHFEM:SET':r'MeshFem.\1(\3)', \
@@ -219,6 +228,7 @@ def PythonRewriteDoc(d,indent,subindent,endline):
     for retry in [1,2,3]: #pour les appels imbriques
       for (k,v) in trans.items():
         d = re.sub(k+r"\( *'([^)']*)' *(,?)([^\)]*)\)",v, d)
+    d = string.replace(d,'MESH:INIT','Mesh')
     d = string.replace(d,'SLICE:INIT','Slice')
     d = string.replace(d,'MDBRICK:INIT','MdBrick')
     d = string.replace(d,'MDSTATE:INIT','MdState')
@@ -238,7 +248,8 @@ def PythonRewriteDoc(d,indent,subindent,endline):
 
     d = SubstituteTypes(d)
     d = PythonWrapParagraphs(d,indent,subindent,endline)
-    d = re.sub("(.)[ ]{2,}","\\1 ",d)
+    d = re.sub("([\w.,:;])[ ]{2,}","\\1 ",d)
+    d = re.sub("(\w)[ ]{1,}([.,:;])","\\1\\2",d)
     return d
 
 def MatlabRewriteDoc(d):
@@ -342,7 +353,7 @@ def SynopsisToArgs(s0):
 class ExtractDoc:
     def __init__(self, s):
       (self.type, self.synopsis) = s.split('\n',1)[0].split(' ',1)
-      m = re.search(r"([A-Z:]+) *\( *'([a-z0-9A-Z _.]*)'(.*)\)",self.synopsis)
+      m = re.search(r"([\w:]+) *\( *'([\w _.]*)'(.*)\)",self.synopsis)
       if (not m):
         raise ParseError, s
       self.categ = m.group(1) # 'MESH:GET' etc
@@ -358,7 +369,7 @@ class ExtractDoc:
       if (len(l)==2):
         self.rawdoc = textwrap.dedent(l[1])
       else:
-        self.doc = "Undocumented."
+        self.rawdoc = "Undocumented."
     def __repr__(self):
       return "cat='%s' type='%s', name='%s', args='%s'" % \
              (self.categ,self.type,self.name,self.args)
@@ -396,13 +407,13 @@ def WritePythonFunction(ed):
     arg_first_dic = { '::COMPUTE':'mf, U', '::ASM':'', '::LINSOLVE':'', '::UTIL':'' }
     arg_list = ", ".join(SynopsisToArgs(ed.synopsis))
     if (not ed.type == 'FUNC'):
-      print '    def %s(self%s%s):' % (string.replace(name,' ','_'), CommaIf(len(arg_list)), arg_list)
-      print '       ',
+      sys.stdout.write('    def %s(self%s%s):\n' % (string.replace(name,' ','_'), CommaIf(len(arg_list)), arg_list))
+      sys.stdout.write('        ')
     else:
       arg_first = arg_first_dic[ed.categ]
-      print 'def %s(%s%s%s):' % (string.replace(ed.categ,'::','').lower() + '_' + string.replace(name,' ','_'),
-                                 arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list)
-      print '   ',
+      sys.stdout.write('def %s(%s%s%s):\n' % (string.replace(ed.categ,'::','').lower() + '_' + string.replace(name,' ','_'),
+                                        arg_first, CommaIf(len(arg_first) and len(arg_list)), arg_list))
+      sys.stdout.write('    ')
 
     arg_list = re.sub("=[ .\d\w\"\']*","",arg_list)
     d = ed.rawdoc.split('\n')
@@ -413,31 +424,33 @@ def WritePythonFunction(ed):
       doc += '\n'.join(d[2:])
     else:
       doc = '\n'.join(d)
-    print '"""%s"""' % (PythonRewriteDoc(doc,"","",""),)
     if (ed.type == 'FUNC'):
+      sys.stdout.write('"""%s"""\n' % (PythonRewriteDoc(doc,"    ","    ","").strip(),))
       if (len(arg_first)):
-        print "    return getfem('%s',%s,'%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),
-                                                       arg_first,name,CommaIf(len(arg_list)), arg_list)
+        sys.stdout.write("    return getfem('%s',%s,'%s'%s%s)\n" % (string.replace(ed.categ.lower(),'::',''),
+                                                            arg_first,name,CommaIf(len(arg_list)), arg_list))
       else:
-        print "    return getfem('%s','%s'%s%s)" % (string.replace(ed.categ.lower(),'::',''),name,CommaIf(len(arg_list)), arg_list)
+        sys.stdout.write("    return getfem('%s','%s'%s%s)\n" % (string.replace(ed.categ.lower(),'::',''),name,CommaIf(len(arg_list)), arg_list))
     elif (ed.categ.endswith('GET')):
-      print '        return self.get("%s"%s%s)\n' % (name, CommaIf(len(arg_list)), arg_list)
+      sys.stdout.write('"""%s"""\n' % (PythonRewriteDoc(doc,"        ","        ","").strip(),))
+      sys.stdout.write('        return self.get("%s"%s%s)\n\n' % (name, CommaIf(len(arg_list)), arg_list))
     else:
-      print '        return self.set("%s"%s%s)\n' % (ed.name, CommaIf(len(arg_list)), arg_list)
+      sys.stdout.write('"""%s"""\n' % (PythonRewriteDoc(doc,"        ","        ","").strip(),))
+      sys.stdout.write('        return self.set("%s"%s%s)\n\n' % (ed.name, CommaIf(len(arg_list)), arg_list))
 
 def WritePythonSubConstructor(ed):
     if (ed.type != 'TEXT'):
-      print PythonRewriteDoc('* '+ed.synopsis,"",""," \\")
-      print PythonRewriteDoc(ed.rawdoc,"   ","   ","")
+      sys.stdout.write(PythonRewriteDoc('* '+ed.synopsis,"      ","        "," \\")+'\n')
+      sys.stdout.write(PythonRewriteDoc(ed.rawdoc,"          ","          ","")+'\n')
     else:
-      print PythonRewriteDoc(ed.rawdoc,"","   ","")
+      sys.stdout.write(PythonRewriteDoc(ed.rawdoc,"    ","    ",""))
 
 def WriteMatlabSubFunctionDoc(ed):
     if (ed.type != 'TEXT'):
       d = '* '+MatlabRewriteDoc(ed.synopsis+r'<par>'+ed.rawdoc)
-      print '\n'.join(['  '+s for s in d.split('\n')]) + '\n'
+      sys.stdout.write('\n'.join(['  '+s for s in d.split('\n')]) + '\n\n')
     else:
-      print MatlabRewriteDoc(ed.rawdoc)
+      sys.stdout.write(MatlabRewriteDoc(ed.rawdoc)+'\n')
 
 def LookupDoc(what):
     """return the ExtractDoc for what = @RDATTR MESH:GET('nbpts') etc"""
@@ -458,16 +471,16 @@ def UpdatePythonDoc():
     f = open(os.path.join(src_dir,'python/getfem.base.py'))
     for l in f:
       if (l.strip().startswith("class ")):
-        print l,
+        sys.stdout.write(l)
         currentclass = l.strip()[6:].split(':')[0].strip()
         sys.stderr.write("currentclass='%s'\n" % currentclass)
       elif (l.strip().startswith('#@')):
-        print '\n'+l,
+        sys.stdout.write('\n'+l)
         WritePythonFunction(LookupDoc(l.strip()[2:]))
       elif l.strip().startswith('@'):
         WritePythonSubConstructor(LookupDoc(l.strip()[1:]))
       else:
-        print l,
+        sys.stdout.write(l)
     f.close()
 
 def UpdateMatlabDoc(fname):
@@ -479,7 +492,7 @@ def UpdateMatlabDoc(fname):
         ed = LookupDoc(l.strip()[1:])
         WriteMatlabSubFunctionDoc(ed)
       else:
-        print l
+        sys.stdout.write(l+'\n')
 
 if (len(sys.argv) < 2):
     raise SystemExit, "give the filename to update, or just 'python'"
