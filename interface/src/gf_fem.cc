@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <getfemint_misc.h>
 #include <getfemint_pfem.h>
 #include <getfemint_mesh_fem.h>
@@ -33,15 +33,13 @@ using namespace getfemint;
     in Getfem.
 
     example of FEM names are:
-    @TEXT FEM:INIT('FEM_list')
+    @INIT FEM:INIT('.list')
 
 
     @INIT FEM:INIT('interpolated_fem')
 MLABCOM*/
 
-/*@TEXT FEM:INIT('FEM_list')
-@tfem = FEM:INIT(@str fem_name)<Par>
-
+/*@INIT FEM:INIT('.list',@str fem_name)
 The `fem_name` should contain a description of the finite element method.<par>
 Please refer to the getfem++ manual (especially the description of finite<par>
 element and integration methods) for a complete reference. Here is a list<par>

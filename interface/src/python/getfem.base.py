@@ -20,7 +20,7 @@
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-"""Getfem-interface classes.
+"""GetFEM-interface classes.
   Provides access to the pseudo-objects exported by the python-getfem interface.
 
   $Id$
@@ -83,7 +83,7 @@ def generic_destructor(self,destructible=True):
 # stub classes for getfem-interface objects
 
 class Mesh:
-    """Getfem Mesh Object.
+    """GetFEM Mesh Object.
 
 Thos object is able to store any element in any dimension even
 if you mix elements with different dimensions.
@@ -306,7 +306,7 @@ class MeshIm:
 
 
 class MdBrick:
-    """Getfem MdBrick Object.
+    """GetFEM MdBrick Object.
 
 A model brick is basically an object which modifies a global tangent
 matrix and its associated right hand side. Typical modifications are
@@ -381,7 +381,7 @@ object.
     #@SET    MDBRICK:SET('constraints_rhs');
 
 class MdState:
-    """Getfem MdState Object.
+    """GetFEM MdState Object.
 
 A model state is an object which store the state data for a chain of
 model bricks. This includes the global tangent matrix, the right hand
@@ -428,7 +428,7 @@ model states.
 
 
 class Model:
-    """Getfem Model Object.
+    """GetFEM Model Object.
 
 A model is an object which store all the state variable and the data of a
 model and a list of bricks. A brick is a component of the model, i.e. a
@@ -540,17 +540,14 @@ hexahedron, prism, etc..)
 
 
 class Fem:
-    """FEM (Finite Element Method) objects."""
-    def __init__(self, fem_name):
-      """Build a FEM object from a string description.
-
-      @TEXT FEM:INIT('FEM_list')
-
-**SPECIAL FEM:**
+    """GetFEM Fem object."""
+    def __init__(self, *args):
+      """Build a Fem object.
 
       @INIT FEM:INIT('interpolated_fem')
+      @INIT FEM:INIT('.list')
       """
-      generic_constructor(self,'fem',fem_name)
+      generic_constructor(self,'fem',*args)
     def __del__(self):
       generic_destructor(self,destructible=False)
     def get(self, *args):
@@ -605,7 +602,7 @@ methods on convexes (used when the elementary matrices are built).
 
 
 class GlobalFunction:
-    """Getfem Global Function Object.
+    """GetFEM Global Function Object.
 
     @TEXT GLOBALFUNCTION:INIT('GLOBALFUNCTION_init')
     """
@@ -684,17 +681,17 @@ class Poly:
     pass
 
 class Slice:
-    """Mesh slices.
+    """GetFEM Slice Object.
 
-The slices may be considered as a (non-conformal) mesh of simplexes
-which provides fast interpolation on a P1-discontinuous MeshFem.
-
-It is used mainly for post-processing purposes.
+    @TEXT SLICE:INIT('SLICE_init')
     """
     def __init__(self, *args):
       """General constructor for Slice objects.
 
-      @TEXT SLICE:INIT('constructor description')
+      @INIT SLICE:INIT('.op')
+      @INIT SLICE:INIT('streamlines')
+      @INIT SLICE:INIT('points')
+      @INIT SLICE:INIT('load')
       """
       generic_constructor(self,'slice',*args)
     def __del__(self):
@@ -724,7 +721,7 @@ It is used mainly for post-processing purposes.
     #@SET    SLICE:SET('pts')
 
 class Spmat:
-    """Getfem sparse matrix."""
+    """GetFEM sparse matrix."""
     def __init__(self, *args):
       """General constructor for getfem sparse matrices.
 
@@ -803,7 +800,7 @@ class Spmat:
 
 
 class Precond:
-    """Getfem preconditioner."""
+    """GetFEM preconditioner."""
     def __init__(self, *args):
       """General constructor for getfem preconditioners.
 
@@ -825,7 +822,7 @@ class Precond:
 
 
 class LevelSet:
-    """Getfem Level-Set Object.
+    """GetFEM Level-Set Object.
 
     @TEXT LEVELSET:INIT('LEVELSET_init')
     """
@@ -851,7 +848,7 @@ class LevelSet:
     #@SET    LEVELSET:SET('simplify')
 
 class MeshLevelSet:
-    """Getfem Mesh-Level-Set Object.
+    """GetFEM Mesh-Level-Set Object.
     """
     def __init__(self, *args):
       """General constructor for MeshLevelSet objects.

@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-
+// $Id$
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh.h>
@@ -399,7 +399,7 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     pmesh->read_from_file(fname);
   } else if (check_cmd(cmd, "from string", in, out, 1, 1, 0, 1)) {
     /*@INIT M = MESH:INIT('from string', @str s)
-    Load a mesh from a string description.<Par>
+    Load a mesh from a string description.
 
     For example, a string returned by ``MESH:GET('char')``.@*/
     std::stringstream ss(in.pop().to_string());
@@ -408,14 +408,11 @@ void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@INIT M = MESH:INIT('import', @str format, @str filename)
     Import a mesh.
 
-    `format` may be:
+    `format` may be:<Par>
 
-    - 'gmsh' for a mesh created with `gmsh
-      <http://www.geuz.org/gmsh>`_<par>
-    - 'gid' for a mesh created with `GiD
-      <http://gid.cimne.upc.es>`_<par>
-    - 'am_fmt' for a mesh created with `emc2
-      <http://pauillac.inria.fr/cdrom/www/emc2/fra.htm>`_@*/
+    - 'gmsh' for a mesh created with `Gmsh`_<par>
+    - 'gid' for a mesh created with `GiD`_<par>
+    - 'am_fmt' for a mesh created with `EMC2`_@*/
     std::string fmt = in.pop().to_string();
     std::string fname = in.pop().to_string();
     getfem::import_mesh(fname, fmt, *pmesh);

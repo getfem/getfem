@@ -30,7 +30,7 @@
 #include "getfem_arch_config.h"
 
 static PyObject *call_getfem(PyObject *self, PyObject *args);
-static PyObject *getfem_var(PyObject *self, PyObject *args);
+static PyObject *getfem_env(PyObject *self, PyObject *args);
 static PyObject *call_getfem_from_constructor(PyObject *self, PyObject *args);
 //static PyObject *register_types(PyObject *self, PyObject *args);
 static PyObject *register_python_factory(PyObject *dummy, PyObject *args);
@@ -66,7 +66,7 @@ GetfemObject_compare(PyGetfemObject *self, PyGetfemObject *other) {
 
 static PyMethodDef module_methods[] = {
     {"getfem", call_getfem, METH_VARARGS, "Execute a getfem command."},
-    {"getfem_var", getfem_var, METH_VARARGS, "Builder variables for documentation"},
+    {"getfem_env", getfem_env, METH_VARARGS, "Builder variables for documentation"},
     {"getfem_from_constructor",  call_getfem_from_constructor, METH_VARARGS, "internal -- Execute a getfem command for building a new object."},
     //{"register_types", register_types, METH_VARARGS, "register the derived types (internal function)"},
     {"register_python_factory", register_python_factory, METH_VARARGS, "register (on initialization) the python function which is used to build objects from a GetfemObject type (internal function)"},
@@ -654,13 +654,13 @@ register_types(PyObject *self, PyObject *args)
   }*/
 
 static PyObject *
-getfem_var(PyObject *self, PyObject *args)
+getfem_env(PyObject *self, PyObject *args)
 {
   char* word_in;
 
   size_t size = PyTuple_GET_SIZE(args);
   if (size!=1){
-    PyErr_Format(PyExc_TypeError,"getfem_var() takes exactly 1 argument (%d given)",size);
+    PyErr_Format(PyExc_TypeError,"getfem_env() takes exactly 1 argument (%d given)",size);
     return NULL;
   }else if (!PyArg_ParseTuple(args,"s",&word_in)){
     return NULL;
@@ -670,9 +670,12 @@ getfem_var(PyObject *self, PyObject *args)
 
   if (strcmp(word_in,"project") == 0){
     word_out = PyString_FromString("GetFEM++");
-  }else if (strcmp(word_in,"author") == 0 || strcmp(word_in,"copyright") == 0){
+  }else if (strcmp(word_in,"copyright") == 0){
     word_out = PyString_FromString
     ("2004-2009 Yves Renard, Julien Pommier");
+  }else if (strcmp(word_in,"authors") == 0){
+    word_out = PyString_FromString
+    ("Yves Renard, Julien Pommier");
   }else if (strcmp(word_in,"url") == 0){
     word_out = PyString_FromString("http://home.gna.org/getfem/");
   }else if (strcmp(word_in,"license") == 0){
@@ -685,7 +688,7 @@ getfem_var(PyObject *self, PyObject *args)
     word_out = PyString_FromString(GETFEM_PACKAGE_STRING);
   }else if(strcmp(word_in,"package_tarname") == 0){
     word_out = PyString_FromString(GETFEM_PACKAGE_TARNAME);
-  }else if(strcmp(word_in,"package_version") == 0){
+  }else if(strcmp(word_in,"package_version") == 0 || strcmp(word_in,"release") == 0){
     word_out = PyString_FromString(GETFEM_PACKAGE_VERSION);
   }else if(strcmp(word_in,"version") == 0){
     word_out = PyString_FromString(GETFEM_VERSION);

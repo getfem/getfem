@@ -178,7 +178,7 @@ void gf_slice_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
     Since the slice may contain points (simplexes of dim 0), segments
     (simplexes of dimension 1), triangles etc., the result is a vector
-    of size SLICE:GET('dim')+1 , except if the optional argument `dim`
+    of size SLICE:GET('dim')+1, except if the optional argument `dim`
     is used.@*/
     std::vector<size_type> v; sl->nb_simplexes(v);
     if (in.remaining()) {

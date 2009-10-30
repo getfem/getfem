@@ -51,7 +51,7 @@ void gf_global_function_get(getfemint::mexargs_in& in, getfemint::mexargs_out& o
     /*@GET GRADs = GLOBALFUNCTION:GET('grad',@mat PTs)
     Return `grad` function evaluation in `PTs` (column points).
 
-    On return, each column of `HESSs` is of the
+    On return, each column of `GRADs` is of the
     form [Gx,Gy].@*/
 
     darray P = in.pop().to_darray(2,-1);// warning: 2 = paf->nd;
