@@ -29,47 +29,47 @@ fi
 echo processing ${gg}.fig
 # echo "xfig figure + latex formula --> eps. "
 
-rm -f ${ff}.ps_0954236 ${ff}.tex_0954236 ${ff}_0954236.tex ${ff}_0954236.log
-rm -f ${ff}_0954236.input ${ff}_0954236.aux  ${ff}_0954236.dvi missfont.log
+rm -f ${gg}.ps_0954236 ${gg}.tex_0954236 ${gg}_0954236.tex ${gg}_0954236.log
+rm -f ${gg}_0954236.input ${gg}_0954236.aux  ${gg}_0954236.dvi missfont.log
 
 # anciennement les rapports etaient -m0.9976 et -m1.04794
-fig2dev -L pstex -m1.0 ${ff}.fig > ${ff}.ps_0954236
-fig2dev -L pstex_t -m1.0 -p ${ff}.ps_0954236 ${ff}.fig > ${ff}.tex_0954236
+fig2dev -L pstex -m1.0 ${ff}.fig > ${gg}.ps_0954236
+fig2dev -L pstex_t -m1.0 -p ${gg}.ps_0954236 ${ff}.fig > ${gg}.tex_0954236
 
-echo "\\documentclass[a4paper,12pt,twoside]{article}" > ${ff}_0954236.tex
-echo "\\usepackage{amsmath,amssymb}" >> ${ff}_0954236.tex
-echo "\\usepackage[dvips]{color}" >> ${ff}_0954236.tex
-echo "\\usepackage{amsfonts}" >> ${ff}_0954236.tex
-echo "\\usepackage[dvips]{graphicx}" >> ${ff}_0954236.tex
-echo "\\newfont{\\emtwelv}{cmr10 scaled 4}" >> ${ff}_0954236.tex
-echo "\\pagestyle{empty}"  >> ${ff}_0954236.tex
-echo "\\oddsidemargin -2.6cm"  >> ${ff}_0954236.tex
-echo "\\evensidemargin -2.6cm"  >> ${ff}_0954236.tex
-echo "\\topmargin -1cm"  >> ${ff}_0954236.tex
-echo "\\textheight 29.7cm"  >> ${ff}_0954236.tex
-echo "\\textwidth 21cm"  >> ${ff}_0954236.tex
-echo "\\headheight 0cm"  >> ${ff}_0954236.tex
-echo "\\newfont{\\msbmtwelve} {msbm10 scaled \\magstep1}" >> ${ff}_0954236.tex
-echo "\\begin{document} \\noindent" >> ${ff}_0954236.tex
-echo "{\\emtwelv \\textcolor{white}{.}}\\\\" >> ${ff}_0954236.tex
-echo "\\mbox{\\input{"${ff}".tex_0954236}}" >> ${ff}_0954236.tex
-echo "{\\emtwelv \\textcolor{white}{.}}" >> ${ff}_0954236.tex
-echo "\\end{document}" >> ${ff}_0954236.tex
-echo R > ${ff}_0954236.input
+echo "\\documentclass[a4paper,12pt,twoside]{article}" > ${gg}_0954236.tex
+echo "\\usepackage{amsmath,amssymb}" >> ${gg}_0954236.tex
+echo "\\usepackage[dvips]{color}" >> ${gg}_0954236.tex
+echo "\\usepackage{amsfonts}" >> ${gg}_0954236.tex
+echo "\\usepackage[dvips]{graphicx}" >> ${gg}_0954236.tex
+echo "\\newfont{\\emtwelv}{cmr10 scaled 4}" >> ${gg}_0954236.tex
+echo "\\pagestyle{empty}"  >> ${gg}_0954236.tex
+echo "\\oddsidemargin -2.6cm"  >> ${gg}_0954236.tex
+echo "\\evensidemargin -2.6cm"  >> ${gg}_0954236.tex
+echo "\\topmargin -1cm"  >> ${gg}_0954236.tex
+echo "\\textheight 29.7cm"  >> ${gg}_0954236.tex
+echo "\\textwidth 21cm"  >> ${gg}_0954236.tex
+echo "\\headheight 0cm"  >> ${gg}_0954236.tex
+echo "\\newfont{\\msbmtwelve} {msbm10 scaled \\magstep1}" >> ${gg}_0954236.tex
+echo "\\begin{document} \\noindent" >> ${gg}_0954236.tex
+echo "{\\emtwelv \\textcolor{white}{.}}\\\\" >> ${gg}_0954236.tex
+echo "\\mbox{\\input{"${gg}".tex_0954236}}" >> ${gg}_0954236.tex
+echo "{\\emtwelv \\textcolor{white}{.}}" >> ${gg}_0954236.tex
+echo "\\end{document}" >> ${gg}_0954236.tex
+echo R > ${gg}_0954236.input
 
-# rm -f ${ff}.log
-latex ${ff}_0954236.tex < ${ff}_0954236.input > /dev/null
-dvips -E ${ff}_0954236 -o ${ff}_0954236.ps >& /dev/null
+# rm -f ${gg}.log
+latex ${gg}_0954236.tex < ${gg}_0954236.input > /dev/null
+dvips -E ${gg}_0954236 -o ${gg}_0954236.ps >& /dev/null
 
-mv -f ${ff}_0954236.ps ${ff}.eps
+mv -f ${gg}_0954236.ps ${gg}.eps
 
 # la suite est pour quand l'inclusion de fichier compactes marchera en Latex ..
-# rm -f ${ff}.eps.bb ${ff}.eps.gz
-# grep %%BoundingBox ${ff}.eps > ${ff}.eps.bb
-# gzip ${ff}.eps
+# rm -f ${gg}.eps.bb ${gg}.eps.gz
+# grep %%BoundingBox ${gg}.eps > ${gg}.eps.bb
+# gzip ${gg}.eps
 
-rm -f ${ff}.ps_0954236 ${ff}.tex_0954236 ${ff}_0954236.tex ${ff}_0954236.log
-rm -f ${ff}_0954236.input ${ff}_0954236.aux  ${ff}_0954236.dvi missfont.log
+rm -f ${gg}.ps_0954236 ${gg}.tex_0954236 ${gg}_0954236.tex ${gg}_0954236.log
+rm -f ${gg}_0954236.input ${gg}_0954236.aux  ${gg}_0954236.dvi missfont.log
 
 
  shift 1

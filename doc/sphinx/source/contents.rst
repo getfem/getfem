@@ -7,6 +7,7 @@
    project/index.rst
    userdoc/index.rst
 
+   matlab/index.rst
    python/index.rst
    scilab/index.rst
 

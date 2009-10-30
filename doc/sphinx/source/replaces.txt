@@ -10,6 +10,7 @@
 .. |gid| replace:: *GiD*
 .. |py| replace:: *Python*
 .. |sci| replace:: *SciLab*
+.. |mlab| replace:: *MatLab*
 .. |gf| replace:: *GetFEM++*
 .. |gmm| replace:: *GMM++*
 .. |sLU| replace:: *SuperLU*
