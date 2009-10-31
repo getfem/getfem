@@ -60,7 +60,12 @@ update: checkout
 	svn update tools/jinja2
 	svn update tools/pygments
 
-build: checkout
+images:
+	-cd source/userdoc/images/; make png
+	-cd source/project/images/; make png
+
+
+build: checkout images
 	mkdir -p build/$(BUILDER) build/doctrees
 	$(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo

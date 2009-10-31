@@ -47,7 +47,7 @@ node is the so-called Lagrange grid. Figures :ref:`ud-fig-segmentpk`,
    :widths: 2, 2
    :delim: &
 
-   .. image:: images/getfemlisttriangleP1.png; & .. image:: images/getfemlisttriangleP2.png
+   .. image:: images/getfemlisttriangleP1.png & .. image:: images/getfemlisttriangleP2.png
    :math:`P_1`, 3 d.o.f., :math:`C^0` & :math:`P_2` element, 6 d.o.f., :math:`C^0`
    .. image:: images/getfemlisttriangleP3.png & .. image:: images/getfemlisttriangleP6.png
    :math:`P_3`, 10 d.o.f., :math:`C^0` & :math:`P_6` element, 28 d.o.f., :math:`C^0`
