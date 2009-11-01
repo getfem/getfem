@@ -16,7 +16,7 @@ A method to compute a pure convection is defined in the file
 
 where ``mf`` is a variable of type |gf_mf|, ``U`` is a vector which represent the 
 field to be convected, ``mf_v`` is a |gf_mf| for the velocity field, ``V`` is the 
-dof vector for the velocity field, ``dt`` is the pseudo times of convection and 
+dof vector for the velocity field, ``dt`` is the pseudo time of convection and 
 ``nt`` the number of iterations for the computation of characteristics.
 
 The method integrate the partial differential equation
@@ -29,15 +29,22 @@ on the time intervall :math:`[0, dt]`.
 
 The method used is of Galerkin-Characteristic kind. It is a very simple version 
 which is inconditionnally stable but rather dissipative. See the book of 
-Zienkiewicz and Taylor <<The finite element method>> 5th edition volume 3 : 
+Zienkiewicz and Taylor "The finite element method" 5th edition volume 3 : 
 Fluids Dynamics, section 2.6 and also the Freefem++ documentation on convect 
 command.
 
 The defined method works only if ``mf`` is a pure Lagrange finite element method 
-for the moment. The principle is to convect backward the finite element nodes. 
-This convection is made with ``nt`` steps. Then the solution is interploated on 
+for the moment. The principle is to convect backward the finite element nodes by solving the ordinary differential equation:
+
+.. math::
+
+   \frac{d X}{d t} = -V(X),
+
+with an initial condition corresponding to each node. This convection is made with ``nt`` steps. Then the solution is interploated on 
 the convected nodes. On the boundary where there is an input convection a simple 
 extrapolation of the field is done on the nearest element.
 
-In order to make the extrapolation not too expensive, the product :math:`dt\ V` 
+In order to make the extrapolation not too expensive, the product :math:`dt\times V` 
 should not be too large.
+
+Note that this method can be used to solve convection dominant problems coupling it with a splitting scheme.
