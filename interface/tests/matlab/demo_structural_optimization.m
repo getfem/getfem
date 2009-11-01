@@ -28,13 +28,13 @@ gf_workspace('clear all');
 
 % parameters
 ls_degree = 1;  % Degree of the level-set. Should be one for the moment.
-k = 2;          % Degree of the finite element method for u
+k = 1;          % Degree of the finite element method for u
 lambda = 1;     % Lame coefficient
 mu = 1;         % Lame coefficient
 hole_radius = 0.03;   % Hole radius for topological optimization
 initial_holes = 1;    % Pre-existing holes or not.
 threshold_shape = 1.1;
-threshold_topo = 1.5;
+threshold_topo = 1.1;
 NY = 40;        % Number of elements in y direction
 N = 2;          % Dimension of the mesh (2 or 3).
 DEBUG = 0;
@@ -192,7 +192,7 @@ while(1) % Optimization loop
   maxD = max(D);
   ind = find(D < maxD/6.);
   % Extension of the gradient into the hole. Too rough ?
-  GF(ind) = GF(ind) * 0 - threshold_shape/4;
+  GF(ind) = GF(ind) * 0 - threshold_shape/8;
   % Threshold on the gradient
   GF = min(GF, 4*threshold_shape);
   ind = find(D < maxD/1.3);

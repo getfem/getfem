@@ -123,11 +123,21 @@
   <p>
     In this example, a bar is twisted. Each step is solved with a Newton method. The material law is a "Ciarlet Geymonat" one. A P2 FEM is used. The source code for this example can be found in the <tt>tests/nonlinear_elastostatic.C</tt> file of getfem++ package. This picture was made with OpenDX.
   <p align="center">
-    <img src="images/torsion034.png" title="Torsion of a rubber bar" alt="Tresca criterion on a cracked beam">
+    <img src="images/torsion034.png" title="Torsion of a rubber bar" alt="">
   </p>
   <p>
     A short animation is also available: (mpeg-4 movie, 3MB) <a href="http://download.gna.org/getfem/misc/torsion.avi">torsion.avi</a>.
   </p>
+
+ <a name="shapeoptimization"></a>
+  <h3 class="sshot">Shape and topological optimization</h3>
+  <p>
+    This images was obtained with the script interface/tests/matlab/demo_structural_optimization.m (Alassane SY and Yves Renard). It represents a shape optimization of a structure submitted to a vertical load at the right and clambed at the left. A (Xfem like) fictitious domain approach is used together with both a shape gradient and a topological gradient.
+  <p align="center">
+    <img src="images/shape1.png" title="Shape optimization, remaining surface 1.039 / 2" alt="">
+    <img src="images/shape2.png" title="Shape optimization, remaining surface 0.954 / 2" alt="">
+  </p>
+  The first image correspond with an initial structure with pre-existing holes. For the second one the holes are initiated by the topological optimization.
   </div>
 <?php include("footer.inc") ?>
 
