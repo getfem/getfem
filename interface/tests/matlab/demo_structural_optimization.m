@@ -216,11 +216,11 @@ while(1) % Optimization loop
     title('Level set function');
     colorbar;  
     pause(0.1);
-  else % To be adapted for 3D ...
-    [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
-                    'off', 'disp_options', 'off', 'refine', 3);
-    set(h2{1},'LineWidth',1);
-    set(h2{1},'Color','green');
+  else
+    sl=gf_slice({'isovalues', 0, mf_ls, ULS, 0.0}, m, 5);
+    Usl=gf_compute(mf_ls, ULS,'interpolate on',sl);
+    % P=gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
+    gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
     pause(0.1);
   end
 
