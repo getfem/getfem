@@ -8,7 +8,10 @@ if (nargin < 2) then error('not enough input arguments'); end;
 qdim  = gf_mesh_fem_get(mf,'qdim');
 nbdof = gf_mesh_fem_get(mf,'nbdof'); 
 
-if (nargin==2) then dof=1:qdim:nbdof; end;
+if (nargin==2) then 
+  dof=1:qdim:nbdof; 
+end
+
 // --- TODO --- only test the dof, not whole mesh
 if (~gf_mesh_fem_get(mf, 'is lagrangian')) then
   error('interpolating on a non-lagrangian mesh fem');
@@ -52,7 +55,7 @@ elseif typeof(_what)=='hypermat' then
     zpos = zeros(xpos); 
   end
     
-  for i=1:m,
+  for i=1:m
     for j=1:qdim
       if (isnumeric(_what(i,j))) then
         if (length(_what(i,j)) ~= 1) then error('numeric values should be scalar'); end;
@@ -84,8 +87,8 @@ elseif typeof(_what)=='list' then
   else 
     zpos = zeros(xpos); 
   end
-    
-  for i=1:m,
+  
+  for i=1:m
     for j=1:qdim
       if (isnumeric(_what(i))) then
         if (length(_what(i)) ~= 1) then error('numeric values should be scalar'); end;
