@@ -10,7 +10,7 @@ R1  = list('9-(y.^2+(z-6.0).^2)',0,0);
 R2  = list('9-(y.^2+(z-6.0).^2)',0,0);
 R4  = list(0,0,0);
 
-m = gf_mesh('import','GiD','../../../tests/meshes/tank_quadratic_2500.GiD.msh');
+m = gf_mesh('import','GiD','data/tank_quadratic_2500.GiD.msh');
 mfu = gf_mesh_fem(m,3);
 mfp = gf_mesh_fem(m,1);
 mfd = gf_mesh_fem(m,1);

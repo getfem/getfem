@@ -34,7 +34,7 @@ pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
 pde('bound')($)('R')    = list(0,0,0);
 
-m = gf_mesh('import','GiD','../../../tests/meshes/tank_quadratic_2500.GiD.msh');
+m = gf_mesh('import','GiD','data/tank_quadratic_2500.GiD.msh');
 mfulag   = gf_mesh_fem(m,3);
 
 pde('mf_u') = [];

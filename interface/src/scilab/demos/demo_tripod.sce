@@ -13,7 +13,7 @@ incompressible = 0;
 //gf_workspace('clear all');
 
 // import the mesh
-m   = gf_mesh('import','gid','../../../tests/meshes/tripod.GiD.msh');
+m   = gf_mesh('import','gid','data/tripod.GiD.msh');
 mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
 mfd = gf_mesh_fem(m,1);     // scalar mesh_fem, for data fields.
 

@@ -1,5 +1,5 @@
 // You should run demo_tripod first ...
-//m    = gf_mesh('import','gid','../meshes/tripod.GiD.msh');
+//m    = gf_mesh('import','gid','data/tripod.GiD.msh');
 //mfu  = gf_mesh_fem('from string', smfu, m);
 //mfdu = gf_mesh_fem('from string', smfdu, m);
 

@@ -60,7 +60,7 @@ if load_the_mesh == 0 then
   mim = gf_mesh_im(m, g_integ(sIM));
 else
   // the mesh is loaded
-  m = gf_mesh('import','gid','../../../tests/meshes/holed_disc_with_quadratic_2D_triangles.msh');
+  m = gf_mesh('import','gid','data/holed_disc_with_quadratic_2D_triangles.msh');
   if (use_hierarchical) then
     // hierarchical basis improve the condition number
     // of the final linear system

@@ -26,7 +26,7 @@ pde('bound')($)('type') = 'Dirichlet';
 pde('bound')($)('R')    = list(0,0);
 pde('bound')($)('H')    = [];
 
-m = gf_mesh('import','GiD','../../../tests/meshes/tube_2D_spline.GiD.msh');
+m = gf_mesh('import','GiD','data/tube_2D_spline.GiD.msh');
 
 mfulag = gf_mesh_fem(m,2);
 
