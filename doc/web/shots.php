@@ -132,12 +132,12 @@
  <a name="shapeoptimization"></a>
   <h3 class="sshot">Shape and topological optimization</h3>
   <p>
-    This images was obtained with the script interface/tests/matlab/demo_structural_optimization.m (Alassane SY and Yves Renard). It represents a shape optimization of a structure submitted to a vertical load at the right and clambed at the left. A (Xfem like) fictitious domain approach is used together with both a shape gradient and a topological gradient.
+    This images were obtained with the script interface/tests/matlab/demo_structural_optimization.m (Alassane SY and Yves Renard). It represents a shape optimization of a structure submitted to a vertical load at the right and clambed at the left. A (Xfem like) fictitious domain approach is used together with both a shape gradient and a topological gradient.
   <p align="center">
     <img src="images/shape1.png" title="Shape optimization, remaining surface 1.039 / 2" alt="">
     <img src="images/shape2.png" title="Shape optimization, remaining surface 0.954 / 2" alt="">
   </p>
-  The first image correspond with an initial structure with pre-existing holes. For the second one the holes are initiated by the topological optimization.
+  The first image corresponds to an initial structure with pre-existing holes. For the second one the holes are initiated by the topological optimization.
   </div>
 <?php include("footer.inc") ?>
 
