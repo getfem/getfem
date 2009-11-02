@@ -2877,8 +2877,10 @@ ind_brick=gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tin
 ind_brick=gf_model_set(md,'add generic elliptic brick', \tmim mim, \tstr varname[, \tint region])
 ind_brick=gf_model_set(md,'add source term brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region[, \tstr directdataname ]])
 ind_brick=gf_model_set(md,'add normal source term brick', \tmim mim, \tstr varname, \tstr dataname, \tint region)
-ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr dataname, \tint region)
+ind_brick=gf_model_set(md,'add Dirichlet condition with multiplier', \tmim mim, \tstr varname, mult_description, \tint region[, \tstr dataname ])
 ind_brick=gf_model_set(md,'add Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region[, \tstr dataname ])
+ind_brick=gf_model_set(md,'add generalized Dirichlet condition with multiplier', \tmim mim, \tstr varname, mult_description, \tint region, \tstr dataname, \tstr Hname)
+ind_brick=gf_model_set(md,'add generalized Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region, \tstr dataname, \tstr Hname)
 gf_model_set(md,'change penalization coeff', \tint ind_brick, \tscal coeff)
 ind_brick=gf_model_set(md,'add Helmholtz brick', \tmim mim, \tstr varname, \tstr dataname[, \tint region])
 ind_brick=gf_model_set(md,'add Fourier Robin brick', \tmim mim, \tstr varname[, \tstr dataname, \tint region)
@@ -3016,6 +3018,41 @@ the model. @@dataname@@ is the optional
 right hand side of  the Dirichlet condition. It could be constant or
 described on a fem; scalar or vector valued, depending on the variable
 on which the Dirichlet condition is prescribed. Return the brick index
+in the model.
+
+\sep{@@ind_brick=gf_model_set(md,'add generalized Dirichlet condition with multiplier', \tmim mim, \tstr varname, \tstr multname | \tmf mf_mult | \tint degree, \tint region, \tstr dataname, \tstr Hname)@@} :
+Add a Dirichlet condition on the variable @@varname@@ and the mesh
+region @@region@@. This version is for vector field.
+It prescribes a condition $Hu = r$
+where $H$ is a matrix field. The region should be a boundary. The Dirichlet
+condition is prescribed with a multiplier variable which can be either
+directly given by @@multname@@ (should be first declared as a multiplier 
+variable on the mesh region in the model) or added by the function and
+buld on the given finite element method @@mf_mult@@ (it will be restricted to
+the mesh region @@region@@ and eventually some conflicting dofs with some
+other multiplier variables will be suppressed) or added by the function and
+build on a standard finite element method of degree @@degree@@.
+@@dataname@@ is the optional
+right hand side of  the Dirichlet condition. It could be constant or
+described on a fem; scalar or vector valued, depending on the variable
+on which the Dirichlet condition is prescribed. @@Hname@@ is the data
+    corresponding to the matrix field $H$. It has to be a constant matrix
+      or described on a scalar fem. Return the brick index
+in the model.
+
+\sep{@@ind_brick=gf_model_set(md,'add  generalized Dirichlet condition with penalization', \tmim mim, \tstr varname, \tscal coeff, \tint region, \tstr dataname, \tstr Hname)@@} :
+Add a Dirichlet condition on the variable @@varname@@ and the mesh
+region @@region@@. This version is for vector field.
+It prescribes a condition $Hu = r$
+where $H$ is a matrix field. The region should be a boundary. The Dirichlet
+condition is prescribed with penalization. The penalization coefficient
+is intially @@coeff@@ and will be added to the data of
+the model. @@dataname@@ is the optional
+right hand side of  the Dirichlet condition. It could be constant or
+described on a fem; scalar or vector valued, depending on the variable
+on which the Dirichlet condition is prescribed. @@Hname@@ is the data
+    corresponding to the matrix field $H$. It has to be a constant matrix
+      or described on a scalar fem. Return the brick index
 in the model.
 
 \sep{@@gf_model_set(md,'change penalization coeff', \tint ind_brick, \tscal coeff)@@} :

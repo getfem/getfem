@@ -915,6 +915,66 @@ namespace getfem {
   void change_penalization_coeff(model &md, size_type ind_brick,
 				 scalar_type penalisation_coeff); 
 
+  /** Add a generalized Dirichlet condition on the variable `varname` and
+      the mesh region `region`. This version is for vector field.
+      It prescribes a condition @f$ Hu = r @f$ where `H` is a matrix field.
+      This region should be a boundary. The Dirichlet
+      condition is prescribed with a multiplier variable `multname` which
+      should be first declared as a multiplier 
+      variable on the mesh region in the model. `dataname` is the
+      right hand side of  the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. `Hname' is the data
+      corresponding to the matrix field `H`. It has to be a constant matrix
+      or described on a scalar fem. Return the brick index in the model.
+  */
+  size_type add_generalized_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname, const std::string &Hname);
+
+  /** Same function as the preceeding one but the multipliers variable will
+      be declared to the brick by the function. `mf_mult` is the finite element
+      method on which the multiplier will be build (it will be restricted to
+      the mesh region `region` and eventually some conflicting dofs with some
+      other multiplier variables will be suppressed).
+  */
+  size_type add_generalized_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname, const std::string &Hname);
+
+  /** Same function as the preceeding one but the `mf_mult` parameter is
+      replaced by `degree`. The multiplier will be described on a standard
+      finite element method of the corresponding degree.
+   */
+  size_type add_generalized_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname, const std::string &Hname);
+
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This version is for vector field.
+      It prescribes a condition @f$ Hu = r @f$ where `H` is a matrix field.
+      This region should be a boundary. This region should be a boundary.
+      The Dirichlet
+      condition is prescribed with penalization. The penalization coefficient
+      is intially `penalization_coeff` and will be added to the data of
+      the model. `dataname` is the
+      right hand side of  the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. `Hname' is the data
+      corresponding to the matrix field `H`. It has to be a constant matrix
+      or described on a scalar fem. Return the brick index
+      in the model.
+  */
+  size_type add_generalized_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   scalar_type penalization_coeff, size_type region,
+   const std::string &dataname, const std::string &Hname);
+
+
+
   /** Add a Helmoltz brick to the model. This corresponds to the scalar
       equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
       The weak formulation is (@f$\int k^2 u.v - \nabla u.\nabla v@f$)

@@ -33,10 +33,10 @@ lambda = 1;     % Lame coefficient
 mu = 1;         % Lame coefficient
 hole_radius = 0.03;   % Hole radius for topological optimization
 initial_holes = 1;    % Pre-existing holes or not.
-threshold_shape = 1.1;
-threshold_topo = 1.1;
-NY = 40;        % Number of elements in y direction
-N = 2;          % Dimension of the mesh (2 or 3).
+threshold_shape = 0.9;
+threshold_topo = 0.9;
+NY = 15;        % Number of elements in y direction
+N = 3;          % Dimension of the mesh (2 or 3).
 DEBUG = 0;
 if (DEBUG)
   NG = 4;
@@ -145,7 +145,8 @@ while(1) % Optimization loop
   gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
   
   % Solving the direct problem
-  gf_model_get(md, 'solve');
+  disp('solving the direct problem');
+gf_model_get(md, 'solve', 'noisy');
   U = gf_model_get(md, 'variable', 'u');
   nbd = gf_mesh_fem_get(mf_ls, 'nbdof');
   

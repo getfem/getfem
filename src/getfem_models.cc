@@ -1447,6 +1447,8 @@ namespace getfem {
   // One variable : penalization
 
   struct Dirichlet_condition_brick : public virtual_brick {
+
+    bool H_version; // The version hu = r for vector fields.
     
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
@@ -1461,15 +1463,15 @@ namespace getfem {
 		  "Dirichlet condition brick has one and only one term");
       GMM_ASSERT1(mims.size() == 1,
 		  "Dirichlet condition brick need one and only one mesh_im");
-      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 2,
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 3,
 		  "Wrong number of variables for Dirichlet condition brick");
 
       bool penalized = (vl.size() == 1);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const mesh_fem &mf_mult = md.mesh_fem_of_variable(vl[vl.size()-1]);
       const mesh_im &mim = *mims[0];
-      const model_real_plain_vector *A = 0, *COEFF = 0;
-      const mesh_fem *mf_data = 0;
+      const model_real_plain_vector *A = 0, *COEFF = 0, *H = 0;
+      const mesh_fem *mf_data = 0, *mf_H = 0;
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
 	|| (penalized && md.is_var_newer_than_brick(dl[0], ib));
 
@@ -1490,6 +1492,22 @@ namespace getfem {
 		    "Detected dimension is " << s << " should be "
 		    << size_type(mf_u.get_qdim()));
       }
+
+      if (dl.size() > ind + 1) {
+	GMM_ASSERT1(H_version,
+		    "Wrong number of data for Dirichlet condition brick");
+	H = &(md.real_variable(dl[ind+1]));
+	mf_H = md.pmesh_fem_of_variable(dl[ind+1]);
+	s = gmm::vect_size(*A);
+	if (mf_H) s = s * mf_H->get_qdim() / mf_H->nb_dof();
+	GMM_ASSERT1(s = gmm::sqr(mf_u.get_qdim()),
+		    dl[ind] << ": bad format of Dirichlet data. "
+		    "Detected dimension is " << s << " should be "
+		    << size_type(gmm::sqr(mf_u.get_qdim())));
+	GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
+		    "a scalar finite element method");
+      }
+
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
@@ -1505,7 +1523,24 @@ namespace getfem {
       if (recompute_matrix) {
 	GMM_TRACE2("Mass term assembly for Dirichlet condition");
 	gmm::clear(matl[0]);
-	asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+	if (H_version) {
+	  if (mf_H)
+	    asm_real_or_complex_1_param
+	      (matl[0], mim, mf_u, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
+	       "F=data(#2);"
+	       "M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))"
+	       : "F=data(qdim(#1),qdim(#1),#2);"
+	       "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).F(i,j,k));");
+	  else
+	     asm_real_or_complex_1_param
+	      (matl[0], mim, mf_u, mf_u, *H, rg, (mf_u.get_qdim() == 1) ? 
+	       "F=data(1);"
+	       "M(#1,#1)+=sym(comp(Base(#1).Base(#1)).F(1))"
+	       : "F=data(qdim(#1),qdim(#1));"
+	       "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,j).F(i,j));");
+	}
+	else
+	  asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
 	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
       }
     }
@@ -1530,8 +1565,8 @@ namespace getfem {
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const mesh_fem &mf_mult = md.mesh_fem_of_variable(vl[vl.size()-1]);
       const mesh_im &mim = *mims[0];
-      const model_complex_plain_vector *A = 0, *COEFF = 0;
-      const mesh_fem *mf_data = 0;
+      const model_complex_plain_vector *A = 0, *COEFF = 0, *H = 0;
+      const mesh_fem *mf_data = 0, *mf_H = 0;
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
 	|| (penalized && md.is_var_newer_than_brick(dl[0], ib));
 
@@ -1549,6 +1584,22 @@ namespace getfem {
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
 	GMM_ASSERT1(mf_u.get_qdim() == s, "Bad format of Dirichlet data");
       }
+
+      if (dl.size() > ind + 1) {
+	GMM_ASSERT1(H_version,
+		    "Wrong number of data for Dirichlet condition brick");
+	H = &(md.complex_variable(dl[ind+1]));
+	mf_H = md.pmesh_fem_of_variable(dl[ind+1]);
+	s = gmm::vect_size(*A);
+	if (mf_H) s = s * mf_H->get_qdim() / mf_H->nb_dof();
+	GMM_ASSERT1(s = gmm::sqr(mf_u.get_qdim()),
+		    dl[ind] << ": bad format of Dirichlet data. "
+		    "Detected dimension is " << s << " should be "
+		    << size_type(gmm::sqr(mf_u.get_qdim())));
+	GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
+		    "a scalar finite element method");
+      }
+
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
@@ -1564,12 +1615,30 @@ namespace getfem {
       if (recompute_matrix) {
 	GMM_TRACE2("Mass term assembly for Dirichlet condition");
 	gmm::clear(matl[0]);
-	asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+	if (H_version) {
+	  if (mf_H)
+	    asm_real_or_complex_1_param
+	      (matl[0], mim, mf_u, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
+	       "F=data(#2);"
+	       "M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))"
+	       : "F=data(qdim(#1),qdim(#1),#2);"
+	       "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).F(i,j,k));");
+	  else
+	     asm_real_or_complex_1_param
+	      (matl[0], mim, mf_u, mf_u, *H, rg, (mf_u.get_qdim() == 1) ? 
+	       "F=data(1);"
+	       "M(#1,#1)+=sym(comp(Base(#1).Base(#1)).F(1))"
+	       : "F=data(qdim(#1),qdim(#1));"
+	       "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,j).F(i,j));");
+	}
+	else
+	  asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
 	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
       }
     }
 
-    Dirichlet_condition_brick(bool penalized) {
+    Dirichlet_condition_brick(bool penalized, bool H_version_) {
+      H_version = H_version_;
       set_flags(penalized ? "Dirichlet with penalization brick"
 		          : "Dirichlet with multipliers brick",
 		true /* is linear*/,
@@ -1582,7 +1651,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname) {
-    pbrick pbr = new Dirichlet_condition_brick(false);
+    pbrick pbr = new Dirichlet_condition_brick(false, false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -1627,12 +1696,68 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr = new Dirichlet_condition_brick(true);
+    pbrick pbr = new Dirichlet_condition_brick(true, false);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
     model::varnamelist dl(1, coeffname);
     if (dataname.size()) dl.push_back(dataname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+  size_type add_generalized_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname, const std::string &Hname) {
+    pbrick pbr = new Dirichlet_condition_brick(false, true);
+    model::termlist tl;
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl;
+    dl.push_back(dataname);
+    dl.push_back(Hname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+  size_type add_generalized_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname, const std::string &Hname) {
+    std::string multname = md.new_name("mult_on_" + varname);
+    md.add_multiplier(multname, mf_mult, varname);
+    return add_generalized_Dirichlet_condition_with_multipliers
+      (md, mim, varname, multname, region, dataname, Hname);
+  }
+
+  size_type add_generalized_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname, const std::string &Hname) {
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    const mesh_fem &mf_mult = classical_mesh_fem(mf_u.linked_mesh(),
+						 degree, mf_u.get_qdim());
+    return add_generalized_Dirichlet_condition_with_multipliers
+      (md, mim, varname, mf_mult, region, dataname, Hname);
+  }
+
+  size_type add_generalized_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   scalar_type penalisation_coeff, size_type region, 
+   const std::string &dataname, const std::string &Hname) {
+    std::string coeffname = md.new_name("penalization_on_" + varname);
+    md.add_fixed_size_data(coeffname, 1);
+    if (md.is_complex())
+      md.set_complex_variable(coeffname)[0] = penalisation_coeff;
+    else
+      md.set_real_variable(coeffname)[0] = penalisation_coeff;
+    pbrick pbr = new Dirichlet_condition_brick(true, true);
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl(1, coeffname);
+    dl.push_back(dataname);
+    dl.push_back(Hname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 

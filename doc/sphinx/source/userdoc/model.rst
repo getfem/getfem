@@ -657,6 +657,37 @@ to the function::
   change_penalization_coeff(md, ind_brick, penalisation_coeff);
 
 
+Generalized Dirichlet condition brick
+-------------------------------------
+
+The generalized Dirichlet condition is a boundary condition of a vector field u of the type 
+
+.. math::
+
+   H u  = r
+
+where :math:`H` is a matrix field. The functions adding the corresponding bricks are similar to the ones of the standard Dirichlet condition except that they need the supplementary parameter `Hname` which gives the name of the data corresponding to :math:`H`. This data can be a matrix field described on a scalar fem or a constant matrix.
+
+
+  add_Dirichlet_condition_with_multipliers(md, mim, varname,
+                                           multname, region,
+                                           dataname, Hname);
+
+
+  add_Dirichlet_condition_with_multipliers(md, mim, varname,
+                                           mf_mult, region,
+                                           dataname, Hname);
+
+  add_Dirichlet_condition_with_multipliers(md, mim, varname,
+                                           degree, region,
+                                           dataname, Hname);
+
+
+  add_Dirichlet_condition_with_penalization(md, mim, varname,
+                                            penalization_coeff, region,
+                                            dataname, Hname);
+
+
 Source term bricks (and Neumann condition)
 ------------------------------------------
 
