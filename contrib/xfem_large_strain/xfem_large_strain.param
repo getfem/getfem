@@ -13,10 +13,21 @@ QUAD = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Elastic coefficients                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-P1 = 2000E6;	        % First elastic coefficient.
-P2 = 200E6;   	        % Second elastic coefficient.
-P3 = 200E6;   	        % Third elastic coefficient.
+%Just for indication 			   %
+%Ogden mu=4.225E05			   
+%Mooney-Rivlin c1=0.4375*mu c2=0.0625*mu
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Mooney-Rivlin.
+%
+%W(F)=C_10(I_1-3)+C_01(I_2-3)
+%For rubbers the Numerical Value are
+%C_10=0.183 MPa.
+%C_01=0.0034 MPa.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+P1 =0.183  ;	        % First elastic coefficient.%
+P2 = 0.0034;   	        % Second elastic coefficient.%
+P3 = 0;   	        % Third elastic coefficient.%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Hyperelastic law                          %
@@ -44,17 +55,19 @@ INF_SUP_COMP = 0; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX =  80;	        % space step.
+NX = 100;	        % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-
+AMP_LOAD = 1;
+nb_step  = 5;
+NOISY = 0;
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-  FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-  % FEM_TYPE = 'FEM_PK(2, 2)';  % PK element %REF: P3
+ % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+  FEM_TYPE = 'FEM_PK(2, 2)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
-  FEM_TYPE_P = 'FEM_PK(2,1)'; 
+  FEM_TYPE_P = 'FEM_PK(2,0)'; 
   MORTAR_FEM_TYPE = FEM_TYPE;
 else
   % MESH_TYPE = 'GT_LINEAR_QK(2)';
@@ -86,7 +99,7 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 % GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 3 ; % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 0 ; % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
