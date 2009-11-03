@@ -29,13 +29,13 @@ gf_workspace('clear all');
 
 // parameters
 ls_degree       = 1;    // Degree of the level-set. Should be one for the moment.
-k               = 1;    // Degree of the finite element method for u
+k               = 2;    // Degree of the finite element method for u
 lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
 hole_radius     = 0.03; // Hole radius for topological optimization
 initial_holes   = 1;    // Pre-existing holes or not.
 threshold_shape = 1.1;
-threshold_topo  = 1.1;
+threshold_topo  = 1.5;
 NY    = 40; // Number of elements in y direction
 N     = 2;  // Dimension of the mesh (2 or 3).
 DEBUG = 0;
@@ -151,7 +151,7 @@ while(1) // Optimization loop
   K = gf_asm('linear elasticity', mim, mf, mf_ls, lambda*ones(1, nbd), mu*ones(1, nbd));
   disp(sprintf('Elastic energy: %g', U*K*U'));
   S = gf_asm('volumic','V()+=comp()',mim);
-  disp(sprintf('Remaining surface of matieral: %g', S));
+  disp(sprintf('Remaining surface of material: %g', S));
 
 //   subplot(1,2,1);
 //   gf_plot(mf, U);
@@ -162,8 +162,7 @@ while(1) // Optimization loop
 //    hold off;
 //    colorbar;
   DU   = gf_compute(mf, U, 'gradient', mf_g);
-  save('DU_BUG_2.dat',DU);
-  pause;
+
   DU_permut  = permute(DU, [2 1 3]);
   DU_permut.entries = DU_permut.entries'; // YC: bug in the permute function
   
@@ -193,7 +192,7 @@ while(1) // Optimization loop
   maxD = max(D);
   ind  = find(D < maxD/6.);
   // Extension of the gradient into the hole. Too rough ?
-  GF(ind) = GF(ind) * 0 - threshold_shape/8;
+  GF(ind) = GF(ind) * 0 - threshold_shape/4;
   // Threshold on the gradient
   GF  = min(GF, 4*threshold_shape);
   ind = find(D < maxD/1.3);
@@ -217,11 +216,11 @@ while(1) // Optimization loop
     drawnow
     sleep(100);
   else
-    sl  = gf_slice(list('isovalues', 0, mf_ls, ULS, 0.0), m, 5);
-    Usl = gf_compute(mf_ls, ULS,'interpolate on',sl);
-    // P=gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
-    drawlater
-    gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
+    // To be adapted for 3D ...
+    drawlater;
+    [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', 'off', 'disp_options', 'off', 'refine', 3);
+    //set(h2(1),'LineWidth',1);
+    //set(h2(1),'Color','green');
     drawnow;
     sleep(100);
   end
