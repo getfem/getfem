@@ -480,6 +480,17 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     size_type nt = in.pop().to_integer(0,100000);
     std::string option;
     if (in.remaining()) option = in.pop().to_string();
+    getfem::convect_boundary_option opt;
+    if (option.size() == 0)
+      opt = getfem::CONVECT_EXTRAPOLATION;
+    else if cmd_strmatch(option, "extrapolation")
+      opt = getfem::CONVECT_EXTRAPOLATION;
+    else if cmd_strmatch(option, "unchanged")
+      opt = getfem::CONVECT_UNCHANGED;
+    else 
+      THROW_BADARG("Bad option " << option<< " for convect command. "
+		   "should be 'extrapolation' or 'unchanged'");
+
     getfem::convect_boundary_option opt
       = (cmd_strmatch(option, "extrapolation") || option.size() == 0) ?
       getfem::CONVECT_EXTRAPOLATION : getfem::CONVECT_UNCHANGED;
