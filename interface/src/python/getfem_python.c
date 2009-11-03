@@ -654,15 +654,16 @@ register_types(PyObject *self, PyObject *args)
   }*/
 
 static PyObject *
-getfem_env(PyObject *self, PyObject *args)
-{
+getfem_env(PyObject *self, PyObject *args) {
   char* word_in;
 
   size_t size = PyTuple_GET_SIZE(args);
-  if (size!=1){
-    PyErr_Format(PyExc_TypeError,"getfem_env() takes exactly 1 argument (%d given)",size);
+  if (size != 1) {
+    PyErr_Format(PyExc_TypeError,
+		 "getfem_env() takes exactly 1 argument (%d given)",
+		 (int)size);
     return NULL;
-  }else if (!PyArg_ParseTuple(args,"s",&word_in)){
+  } else if (!PyArg_ParseTuple(args,"s",&word_in)) {
     return NULL;
   }
 

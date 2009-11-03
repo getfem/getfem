@@ -30,6 +30,10 @@ using namespace getfemint;
   FUNCTION I = gf_mesh_levelset_get(MLS, ...)
     General function for modification of MESHLEVELSET objects.
 
+  @SET MESHLEVELSET:SET('add')
+  @SET MESHLEVELSET:SET('sup')
+  @SET MESHLEVELSET:SET('adapt')
+
   $Id$
 MLABCOM*/
 

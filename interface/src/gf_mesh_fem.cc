@@ -38,10 +38,7 @@ using namespace getfemint;
   General constructor for mesh_fem objects (Finite Element basis
   functions on a mesh).
 
-  * gf_mesh_fem(mesh M [, int Qdim=1])
-
-  Return a getfem handle to the newly created mesh_fem object.
-
+  @INIT MESHFEM:INIT('.mesh')
   @INIT MESHFEM:INIT('load')
   @INIT MESHFEM:INIT('from string')
   @INIT MESHFEM:INIT('clone')
@@ -174,7 +171,9 @@ void gf_mesh_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     } else bad_cmd(cmd);
   } else if (check_cmd("MeshFem", "MeshFem", in, out, 1, 3, 0, 1)) {
     /*@INIT MF = MESHFEM:INIT('.mesh', @tmesh m[, @int Qdim_m=1[, @int Qdim_n=1]])
-    Build a new @tmf object. `Qdim_m` and `Qdim_n` parameters are optionals.@*/
+    Build a new @tmf object. `Qdim_m` and `Qdim_n` parameters are optionals.
+    Returns the handle of the created object.
+    @*/
     mm = in.pop().to_getfemint_mesh();
     if (in.remaining()) q_dim = in.pop().to_integer(1,256);
     if (in.remaining()) {

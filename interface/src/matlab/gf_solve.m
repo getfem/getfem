@@ -1,6 +1,7 @@
 function [varargout]=gf_solve(varargin)
 % function varargout=gf_solve(what, varargin)
-% General solver for getfem PDE
+% OBSOLETE FUNCTION used in some old scripts. Kept for compatibility reason.
+% It solve a few set of pde. DO NOT USE ANYMORE.
   
   if (nargin==0), error('not enough input arguments'); end;
   pde = varargin{1};

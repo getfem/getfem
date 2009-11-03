@@ -461,7 +461,7 @@ def LookupDoc(what):
       raise ParseError, what
     d = docs[ed.categ]
     if (not d.has_key(ed.name)):
-      raise ParseError, 'CANNOT FIND KEY for for %s:%s\n' % (ed.categ,ed.name)
+      raise ParseError, 'CANNOT FIND KEY for %s:%s  %s\n' % (ed.categ,ed.name,what)
     if (d[ed.name].type != ed.type):
       raise ParseError, 'WRONG TYPE : for %s:%s\n  Found %s, expected %s' % (ed.categ,ed.name,ed.type,d[ed.name].type)
     return d[ed.name]

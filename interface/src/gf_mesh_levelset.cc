@@ -25,18 +25,24 @@
 
 using namespace getfemint;
 
-/*@TEXT MESHLEVELSET:INIT('MESHLEVELSET_init')
-@tmls = MESHLEVELSET:INIT(...)<Par>
+/*MLABCOM
+  FUNCTION MLS = gf_mesh_levelset(...)
 
-$Id$
-@*/
+  General constructor for mesh_levelset objects. The role of this object
+  is to provide a mesh cut by a certain number of level_set. This object
+  is used to build conformal integration method (object mim and enriched
+  finite element methods (Xfem).
 
-void gf_mesh_levelset(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
+  @INIT MESHLEVELSET:INIT('.mesh')
+
+  $Id$
+MLABCOM*/
+
+void gf_mesh_levelset(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   getfemint_mesh_levelset *gmls = NULL;
   if (check_cmd("MeshLevelSet", "MeshLevelSet", in, out, 1, 1, 0, 1)) {
-    /*@INIT MESHLEVELSET:INIT('.mesh', @tmesh m)
-    Build a new @tmls object from a @tmesh.@*/
+    /*@INIT MLS = MESHLEVELSET:INIT('.mesh',@tmesh m)
+    Build a new @tmls object from a @tmesh and returns its handle. @*/
     getfemint_mesh *mm = in.pop().to_getfemint_mesh();
     getfem::mesh_level_set *mls = new getfem::mesh_level_set(mm->mesh());
     gmls = getfemint_mesh_levelset::get_from(mls);

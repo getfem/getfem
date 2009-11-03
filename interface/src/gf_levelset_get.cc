@@ -28,6 +28,13 @@ using namespace getfemint;
 /*MLABCOM
   FUNCTION I = gf_levelset_get(LS, ...)
     General function for querying information about LEVELSET objects.
+ 
+  @GET V = LEVELSET:GET('values')
+  @RDATTR d = LEVELSET:GET('degree')
+  @GET mf = LEVELSET:GET('mf')
+  @RDATTR z = LEVELSET:GET('memsize')
+
+  $Id$
 
 MLABCOM*/
 

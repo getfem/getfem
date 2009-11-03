@@ -29,6 +29,11 @@ using namespace getfemint;
   FUNCTION I = gf_levelset_set(LS, ...)
     General function for modification of LEVELSET objects.
 
+  @SET LEVELSET:SET('values')
+  @SET LEVELSET:SET('simplify')
+
+  $Id$
+
 MLABCOM*/
 
 void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)

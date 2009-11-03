@@ -825,8 +825,6 @@ class Precond:
 
 class LevelSet:
     """GetFEM Level-Set Object.
-
-    @TEXT LEVELSET:INIT('LEVELSET_init')
     """
     def __init__(self, *args):
       """General constructor for LevelSet objects.

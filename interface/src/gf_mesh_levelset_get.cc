@@ -29,7 +29,14 @@ using namespace getfemint;
   FUNCTION I = gf_mesh_levelset_get(MLS, ...)
     General function for querying information about MESHLEVELSET objects.
 
-    $Id$
+  @GET M = MESHLEVELSET:GET('cut_mesh')
+  @GET LM = MESHLEVELSET:GET('linked_mesh')
+  @GET nbls = MESHLEVELSET:GET('nb_ls')
+  @GET LS = MESHLEVELSET:GET('levelsets')
+  @GET CVIDs = MESHLEVELSET:GET('crack_tip_convexes')
+  @GET SIZE = MESHLEVELSET:GET('memsize')
+
+  $Id$
 MLABCOM*/
 
 void gf_mesh_levelset_get(getfemint::mexargs_in& in,
