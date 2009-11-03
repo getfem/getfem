@@ -794,9 +794,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_uint32.data_uint32_val[i];
 	    
 	    // Add a vector to the 'dims' field
-	    _SciErr = createMatrixOfInteger32InList(&_StrCtx,ivar, m_var, 2, 1, t->dim.dim_len, dims);
+	    _SciErr = createMatrixOfInteger32InList(&_StrCtx,ivar, m_var, 2, t->dim.dim_len, 1, dims);
 	    // Add a vector to the 'entries' field
-	    _SciErr = createMatrixOfUnsignedInteger32InList(&_StrCtx,ivar, m_var, 3, 1, nb_elem, entries);
+	    _SciErr = createMatrixOfUnsignedInteger32InList(&_StrCtx,ivar, m_var, 3, nb_elem, 1, entries);
 		
 	    FREE(dims);
 	    FREE(entries);
@@ -854,9 +854,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    for(i=0;i<nb_elem;i++) entries[i] = (double)t->storage.gfi_storage_u.data_int32.data_int32_val[i];
 	    
 	    // Add a vector to the 'dims' field
-	    _SciErr = createMatrixOfInteger32InList(&_StrCtx,ivar, m_var, 2, 1, t->dim.dim_len, dims);
+	    _SciErr = createMatrixOfInteger32InList(&_StrCtx,ivar, m_var, 2, t->dim.dim_len, 1, dims);
 	    // Add a vector to the 'entries' field
-	    _SciErr = createMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, 1, nb_elem, entries);
+	    _SciErr = createMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, nb_elem, 1, entries);
 		
 	    FREE(entries);
 	    FREE(dims);
@@ -950,9 +950,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		for(i=0;i<nb_elem;i++) entries[i] = t->storage.gfi_storage_u.data_double.data_double_val[i];
 		
 		// Add a vector to the 'dims' field
-		_SciErr = createMatrixOfInteger32InList(&_StrCtx,ivar, m_var, 2, 1, t->dim.dim_len, dims);
+		_SciErr = createMatrixOfInteger32InList(&_StrCtx,ivar, m_var, 2, t->dim.dim_len, 1, dims);
 		// Add a vector to the 'entries' field
-		_SciErr = createMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, 1, nb_elem, entries);
+		_SciErr = createMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, nb_elem, 1, entries);
 		
 		FREE(entries);
 #ifdef DEBUG
