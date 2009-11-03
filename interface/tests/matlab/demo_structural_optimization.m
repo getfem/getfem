@@ -33,10 +33,10 @@ lambda = 1;     % Lame coefficient
 mu = 1;         % Lame coefficient
 hole_radius = 0.03;   % Hole radius for topological optimization
 initial_holes = 1;    % Pre-existing holes or not.
-threshold_shape = 0.9;
-threshold_topo = 0.9;
-NY = 15;        % Number of elements in y direction
-N = 3;          % Dimension of the mesh (2 or 3).
+threshold_shape = 0.7;
+threshold_topo = 0.5;
+NY = 40;        % Number of elements in y direction
+N = 2;          % Dimension of the mesh (2 or 3).
 DEBUG = 0;
 if (DEBUG)
   NG = 4;
@@ -191,7 +191,7 @@ gf_model_get(md, 'solve', 'noisy');
   M = gf_asm('mass matrix', mim, mf_g);
   D = abs(full(diag(M)));
   maxD = max(D);
-  ind = find(D < maxD/6.);
+  ind = find(D < maxD/4);
   % Extension of the gradient into the hole. Too rough ?
   GF(ind) = GF(ind) * 0 - threshold_shape/8;
   % Threshold on the gradient
@@ -258,7 +258,7 @@ gf_model_get(md, 'solve', 'noisy');
   Vcont = Mcont \ Fdisc;
 
   % Level set convection
-  gf_compute(mf_ls, ULS, 'convect', mf_cont, Vcont, 0.01, 20);
+  gf_compute(mf_ls, ULS, 'convect', mf_cont, Vcont, 0.01, 20, 'extrapolation');
 
   if (DEBUG)
     disp('Drawing the level set function after convection');
@@ -291,7 +291,7 @@ gf_model_get(md, 'solve', 'noisy');
       W = DLScont.*reshape([SULS; SULS; SULS], N*size(SULS, 2), 1);
     end;
    
-    gf_compute(mf_ls, ULS, 'convect', mf_cont, W, ddt, 1);
+    gf_compute(mf_ls, ULS, 'convect', mf_cont, W, ddt, 1, 'unchanged');
     ULS = ULS + ddt * sign(ULS);
   end;
 

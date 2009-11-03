@@ -42,6 +42,8 @@
 
 namespace getfem {
 
+  enum convect_boundary_option { CONVECT_EXTRAPOLATION, CONVECT_UNCHANGED };
+
   /** Compute the convection of a quantity on a getfem::mesh_fem with respect
       to a velocity field
       @param mf the source mesh_fem. Should be of Lagrange type.
@@ -52,7 +54,8 @@ namespace getfem {
   */
   template<class VECT1, class VECT2>
   void convect(const mesh_fem &mf, VECT1 &U, const mesh_fem &mf_v,
-	       const VECT2 &V, scalar_type dt, size_type nt) {
+	       const VECT2 &V, scalar_type dt, size_type nt,
+	       convect_boundary_option option = CONVECT_EXTRAPOLATION) {
     // Should be robustified on the boundaries -> control of the nodes going
     //   out the mesh.
     // Should control that the point do not move to fast ( < h/2 for instance).
@@ -62,7 +65,8 @@ namespace getfem {
     //   caracteristics.
 
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
-    
+    int extra = (option == CONVECT_EXTRAPOLATION) ? 2 : 0;
+
     if (nt == 0) return;
 
     GMM_ASSERT1(!(mf.is_reduced()),
@@ -84,29 +88,36 @@ namespace getfem {
     for (size_type i = 0; i < nbpts; ++i)
       nodes[i] = mf.point_of_basic_dof(i * qdim);
 
-    // Convect the nodes with respect to v
+    // Obtain the first interpolation of v (same mesh)
     size_type qqdimt = (gmm::vect_size(V) / mf_v.nb_dof()) * mf_v.get_qdim();
     GMM_ASSERT1(qqdimt == N, "The velocity field should be a vector field "
-	       "of the smae dimension as the mesh");
+	       "of the same dimension as the mesh");
     std::vector<T> VI(nbpts*N);
+    getfem::interpolation(mf_v, mf, V, VI);
 
+    // Convect the nodes with respect to v
     scalar_type ddt = dt / scalar_type(nt);
     for (size_type i = 0; i < nt; ++i) {
-      mti.clear();
-      mti.add_points(nodes);
-      interpolation(mf_v, mti, V, VI, 2);
+      if (i > 0) {
+	mti.clear();
+	mti.add_points(nodes);
+	gmm::clear(VI);
+	interpolation(mf_v, mti, V, VI, extra);
+      }
 
-      for (size_type j = 0; j < nbpts; ++j) {
+      for (size_type j = 0; j < nbpts; ++j)
 	gmm::add(gmm::scaled(gmm::sub_vector(VI, gmm::sub_interval(N*j, N)),
 			     -ddt), nodes[j]);
-      }
     }
 
     // 3 interpolation finale
     std::vector<T> UI(nbpts*qdim);
     mti.clear();
     mti.add_points(nodes);
-    interpolation(mf, mti, U, UI, 2);
+    dal::bit_vector dof_untouched; 
+    interpolation(mf, mti, U, UI, extra, &dof_untouched);
+    for (dal::bv_visitor i(dof_untouched); !i.finished();++i)
+      UI[i] = U[i];    
     gmm::copy(UI, U);
   }
 

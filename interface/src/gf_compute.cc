@@ -449,7 +449,7 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     unsigned N = in.pop().to_integer(2,10000);
     mesh_edges_deformation(mf, U.real(), N, in, out);
   } else if (check_cmd(cmd, "error_estimate", in, out, 1, 1, 0, 1)) {
-    /*@FUNC E = ::COMPUTE('error estimate',@tmim mim)
+    /*@FUNC E = ::COMPUTE('error estimate', @tmim mim)
     Compute an a posteriori error estimate.
 
     Currently there is only one which is available: for each convex,
@@ -461,22 +461,31 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       getfem::error_estimate(mim, *mf, U.real(), err, mim.convex_index());
     else
       getfem::error_estimate(mim, *mf, U.cplx(), err, mim.convex_index());
-  } else if (check_cmd(cmd, "convect", in, out, 4, 4, 0, 0)) {
-    /*@FUNC E = ::COMPUTE('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt)
+  } else if (check_cmd(cmd, "convect", in, out, 4, 5, 0, 0)) {
+    /*@FUNC E = ::COMPUTE('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option])
     Compute a convection of `U` with regards to a steady state velocity
     field `V` with a Characteristic-Galerkin method. This
     method is restricted to pure Lagrange fems for U. `mf_v` should represent
     a continuous finite element method. `dt` is the integration time and `nt`
-    is the number of integration
-    step on the caracteristics. This method is rather dissipative, but stable.
+    is the number of integration step on the caracteristics. `option` is an
+    option for the part of the boundary where there is a re-entrant convection.
+    `option = 'extrapolation'` for an extrapolation on the nearest element
+    or `option = 'unchanged'` for a constant value on that boundary.
+    This method is rather dissipative, but stable.
     @*/
 
     const getfem::mesh_fem *mf_v = in.pop().to_const_mesh_fem();
     rcarray V              = in.pop().to_rcarray();
     scalar_type dt = in.pop().to_scalar();
     size_type nt = in.pop().to_integer(0,100000);
+    std::string option;
+    if (in.remaining()) option = in.pop().to_string();
+    getfem::convect_boundary_option opt
+      = (cmd_strmatch(option, "extrapolation") || option.size() == 0) ?
+      getfem::CONVECT_EXTRAPOLATION : getfem::CONVECT_UNCHANGED;
+
     if (U.is_complex() || V.is_complex())
       THROW_BADARG("Sorry, complex version of convect to be interfaced");
-    getfem::convect(*mf, U.real(), *mf_v, V.real(), dt, nt);
+    getfem::convect(*mf, U.real(), *mf_v, V.real(), dt, nt, opt);
   } else  bad_cmd(cmd);
 }

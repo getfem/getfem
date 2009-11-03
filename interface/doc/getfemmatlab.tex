@@ -4070,7 +4070,7 @@ U2 = gf\_compute(mf, U, 'interpolate on', \tslc sl)
         \{'regular h', hxyz | 'regular N',Nxyz | X[,Y[,Z]]\})
 U2 = gf\_compute(mf, U, 'extrapolate on', \tmf mf2)
 E = gf\_compute(mf, U, 'error estimate',  \tmim MIM)
-gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt) 
+gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt[, \tstr option]) 
 @@\end{synopsis}
 \begin{cmddescription}
   The first two arguments of this function are always @@mf@@ and
@@ -4147,12 +4147,16 @@ gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt)
   \end{mcode}
 \end{cmdexamples}
 
-  \sep{@@gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt)@@} Compute a convection of `U` with regards to a steady state velocity
+  \sep{@@gf\_compute(mf, U, 'convect', \tmf mf_v, \tvec V, \tscal dt, \tint nt, \tstr option])@@} Compute a convection of `U` with regards to a steady state velocity
   field `V` with a Characteristic-Galerkin method. This
   method is restricted to pure Lagrange fems for U. `mf_v` should represent
   a continuous finite element method. `dt` is the integration time and `nt`
   is the number of integration
-  step on the caracteristics. This method is rather dissipative, but stable.
+  step on the caracteristics.  `option` is an
+  option for the part of the boundary where there is a re-entrant convection.
+  `option = 'extrapolation'` for an extrapolation on the nearest element
+  or `option = 'unchanged'` for a constant value on that boundary.
+  This method is rather dissipative, but stable.
 
 \newpage
 

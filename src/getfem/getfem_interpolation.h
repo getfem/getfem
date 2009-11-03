@@ -366,7 +366,8 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source,
 		     mesh_trans_inv &mti,
 		     const VECTU &UU, VECTV &V, MAT &MM,
-		     int version, int extrapolation = 0) {
+		     int version, int extrapolation = 0,
+		     dal::bit_vector *dof_untouched = 0) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     const mesh &msh(mf_source.linked_mesh());
@@ -450,10 +451,14 @@ namespace getfem {
 	}
       }
     }
-    if (dof_done.card() != 0)
-      GMM_WARNING2("WARNING : in interpolation (different meshes),"
-		   << dof_done.card() << " dof of target mesh_fem have "
-		   << " been missed\nmissing dofs : " << dof_done);
+    if (dof_done.card() != 0) {
+      if (dof_untouched)
+	*dof_untouched = dof_done;
+      else
+	GMM_WARNING2("WARNING : in interpolation (different meshes),"
+		     << dof_done.card() << " dof of target mesh_fem have "
+		     << " been missed\nmissing dofs : " << dof_done);
+    }
 
     if (version != 0) {
       if (mf_source.is_reduced())
@@ -466,11 +471,12 @@ namespace getfem {
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
-		     const VECTU &U, VECTV &V, int extrapolation = 0) {
+		     const VECTU &U, VECTV &V, int extrapolation = 0,
+		     dal::bit_vector *dof_untouched = 0) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0 &&
 		gmm::vect_size(V)!=0, "Dimension of vector mismatch");
-    interpolation(mf_source, mti, U, V, M, 0, extrapolation);
+    interpolation(mf_source, mti, U, V, M, 0, extrapolation, dof_untouched);
   }
 
 
