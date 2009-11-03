@@ -483,17 +483,13 @@ void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     getfem::convect_boundary_option opt;
     if (option.size() == 0)
       opt = getfem::CONVECT_EXTRAPOLATION;
-    else if cmd_strmatch(option, "extrapolation")
+    else if (cmd_strmatch(option, "extrapolation"))
       opt = getfem::CONVECT_EXTRAPOLATION;
-    else if cmd_strmatch(option, "unchanged")
+    else if (cmd_strmatch(option, "unchanged"))
       opt = getfem::CONVECT_UNCHANGED;
     else 
       THROW_BADARG("Bad option " << option<< " for convect command. "
 		   "should be 'extrapolation' or 'unchanged'");
-
-    getfem::convect_boundary_option opt
-      = (cmd_strmatch(option, "extrapolation") || option.size() == 0) ?
-      getfem::CONVECT_EXTRAPOLATION : getfem::CONVECT_UNCHANGED;
 
     if (U.is_complex() || V.is_complex())
       THROW_BADARG("Sorry, complex version of convect to be interfaced");
