@@ -795,11 +795,22 @@ m4_include([m4/scilab.m4])
 
 AC_CHECK_SCILAB
 
+GETFEM_INTERFACE_PATH=`pwd`
+AC_SUBST(GETFEM_INTERFACE_PATH)
 
+dnl if the scilab directory doesn't exists, we copy the 
+dnl scilab sources into the build directory
 
-
-
-
+if test "x$usescilab" == "xYES"
+then
+  currentdir=`pwd`
+  if test ! -f $currentdir/interface/src/scilab/builder.sce
+  then
+    echo "Copying Scilab toolbox src in the build directory"
+    mkdir -p $currentdir/interface/src/scilab/
+    cp -r $srcdir/interface/src/scilab/* $currentdir/interface/src/scilab
+  fi
+fi
 
 dnl -----------------------------------------------
 dnl Symbolic links for the meshes in tests/meshes
@@ -878,20 +889,6 @@ AC_OUTPUT
 chmod a+x getfem-config-notinstalled
 chmod a+x getfem-config
 chmod a+x gmm-config
-
-dnl if the scilab directory doesn't exists, we copy the 
-dnl scilab sources into the build directory
-
-if test "x$usescilab" == "xYES"
-then
-  currentdir=`pwd`
-  if test ! -f $currentdir/interface/src/scilab/builder.sce
-  then
-    echo "Copying Scilab toolbox src in the build directory"
-    mkdir -p $currentdir/interface/src/scilab/
-    cp -r $srcdir/interface/src/scilab/* $currentdir/interface/src/scilab/
-  fi
-fi
 
 dnl configuration sum-up
 
