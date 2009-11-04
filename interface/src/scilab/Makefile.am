@@ -16,40 +16,38 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
 
-scilabbuilddir=$(top_srcdir)/interface/src/scilab_build
+scilabbuilddir=$(top_srcdir)/interface/src/scilab
 
-scilabbasedir=$(srcdir)/builder.sce \
-	$(srcdir)/DESCRIPTION-FUNCTIONS \
-	$(srcdir)/loader.sce \
-	$(srcdir)/readme.txt \
-	$(srcdir)/changelog.txt \
-	$(srcdir)/cleaner.sce \
-	$(srcdir)/Makefile.am \
-	$(srcdir)/sci_getfem.iss \
-	$(srcdir)/DESCRIPTION \
-	$(srcdir)/license.txt \
-	$(srcdir)/makefile_builder.sce
+scilabbasedir=$(top_srcdir)/builder.sce \
+	$(top_srcdir)/DESCRIPTION-FUNCTIONS \
+	$(top_srcdir)/loader.sce \
+	$(top_srcdir)/readme.txt \
+	$(top_srcdir)/changelog.txt \
+	$(top_srcdir)/cleaner.sce \
+	$(top_srcdir)/Makefile.am \
+	$(top_srcdir)/sci_getfem.iss \
+	$(top_srcdir)/DESCRIPTION \
+	$(top_srcdir)/license.txt \
+	$(top_srcdir)/makefile_builder.sce
 
-scilabsrccdir=$(srcdir)/src/c/copyright \
-	$(srcdir)/src/c/makefile \
-	$(srcdir)/src/c/loader.sce \
-	$(srcdir)/src/c/makefile.in \
-	$(srcdir)/src/c/builder_c.sce \
-	$(srcdir)/src/c/ls.dat \
-	$(srcdir)/src/c/README \
-	$(srcdir)/src/c/rk4.dat \
-	$(srcdir)/src/c/cleaner.sce \
-	$(srcdir)/src/c/configure \
-	$(srcdir)/src/c/configure.in \
-	$(srcdir)/src/c/FILELIST \
-	$(srcdir)/src/c/machine.h.in  
+scilabsrccdir=$(top_srcdir)/src/c/copyright \
+	$(top_srcdir)/src/c/makefile \
+	$(top_srcdir)/src/c/loader.sce \
+	$(top_srcdir)/src/c/makefile.in \
+	$(top_srcdir)/src/c/builder_c.sce \
+	$(top_srcdir)/src/c/ls.dat \
+	$(top_srcdir)/src/c/README \
+	$(top_srcdir)/src/c/rk4.dat \
+	$(top_srcdir)/src/c/cleaner.sce \
+	$(top_srcdir)/src/c/configure \
+	$(top_srcdir)/src/c/configure.in \
+	$(top_srcdir)/src/c/FILELIST \
+	$(top_srcdir)/src/c/machine.h.in  
 
 toolboxdir=@SCILAB_TOOLBOX_DIR@
 
 all:
-	$(mkinstalldirs) $(top_srcdir)/interface/src/scilab_build
-	@cp -r $(srcdir) $(top_srcdir)/interface/src/scilab_build
-	@SCILAB_EXE@ -nw -f $(top_srcdir)/interface/src/scilab_build/makefile_builder.sce
+	@SCILAB_EXE@ -nw -f $(top_srcdir)/interface/src/scilab/makefile_builder.sce
 
 install-toolbox:
 	$(mkinstalldirs) $(toolboxdir)/demos
