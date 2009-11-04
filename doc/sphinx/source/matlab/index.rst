@@ -11,3 +11,9 @@ MatLab Interface
    :maxdepth: 2
 
    intro
+   install
+   pre
+   mlabgf
+   examples
+   cmdref
+   oocmd
