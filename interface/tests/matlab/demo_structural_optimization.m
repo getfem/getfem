@@ -203,7 +203,7 @@ gf_model_get(md, 'solve', 'noisy');
   if (N == 2)
     subplot(NG,1,1);
     gf_plot(mf_g, GF, 'disp_options', 'off', 'refine', 1);
-    title('Shape derivative');
+    title('Shape gradient');
     hold on;
     [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
                     'off', 'disp_options', 'off', 'refine', 3);
@@ -213,6 +213,7 @@ gf_model_get(md, 'solve', 'noisy');
     colorbar;
     subplot(NG,1,2);
     % gf_plot(mf_g, GT, 'disp_options', 'off', 'disp_options', 'off', 'refine', 8);
+    % title('Topological gradient');
     gf_plot(mf_ls, ULS, 'disp_options', 'off', 'refine', 1);
     title('Level set function');
     colorbar;  
