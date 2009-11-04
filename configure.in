@@ -446,17 +446,19 @@ AC_ARG_ENABLE(qhull,
  [AS_HELP_STRING([--enable-qhull],[enable the use of the qhull library (required for generation of non regular meshes)])],
  [ if   test "x$enableval" = "xyes" ; then useQHULL="yes"; fi], [useQHULL="test"])
 QHULL_LIBS=""
+
 if test "x$useQHULL" = "xno"; then
-  echo "libqhull explicitly disabled";
+  echo "Building with libqhull explicitly disabled";
 else
   AC_CHECK_LIB(qhull, qh_new_qhull)
   AC_CHECK_HEADERS(qhull/qhull.h,[useQHULL="yes"],
   [
     if test "x$useQHULL" = "xyes"; then
-      AC_MSG_ERROR([header files qhull/qhull.h not found. Use --disable-qhull flag]);
+      AC_MSG_ERROR([header files qhull/qhull.h not found. Use --enable-qhull=no flag]);
     fi;
   ])
   QHULL_LIBS="-lqhull"
+  echo "Building with libqhull (use --enable-qhull=no to disable it)"
 fi;
 AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
 
@@ -472,9 +474,8 @@ AC_ARG_ENABLE(muparser,
 MUPARSE_LIBS=""
 
 if test "x$usemuparser" = "xno"; then
-  echo "Building with muParser explicitly disabled (use --enable-muparser=yes to enable it)";
+  echo "Building with muParser explicitly disabled";
 else
-  echo "Building with muParser (use --enable-muparser=no to disable it)"
   AC_CHECK_LIB(muparser, _init)
   AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
   [ 
@@ -483,7 +484,7 @@ else
    fi;
   ])
   MUPARSER_LIBS="-lmuparser"
-  # LIBS="$LIBS $MUPARSER_LIBS"
+  echo "Building with muParser (use --enable-muparser=no to disable it)"
 fi;
 AM_CONDITIONAL(MUPARSER, test x$usemuparser = xyes)
 
@@ -864,7 +865,7 @@ AC_CONFIG_FILES(\
 	interface/src/python/Makefile \
 	interface/src/python/setup.py \
 	interface/src/scilab/Makefile \
-        interface/src/scilab/sci_gateway/c/builder_gateway_c.sce \
+	interface/src/scilab/sci_gateway/c/builder_gateway_c.sce \
 	interface/tests/Makefile \
 	interface/tests/meshes/Makefile \
 	interface/tests/matlab/Makefile \
@@ -926,7 +927,7 @@ else
 fi;
 echo "You can give the location of your prefered blas library with either"
 echo "the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
-echo 'for example: ./configure BLAS_LIBS="-L/usr/lib/atlas/sse2 -lblas"'
+echo 'for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'
 echo
 
 if test x"$acx_lapack_ok" = xyes; then
