@@ -47,7 +47,7 @@ scilabsrccdir=$(top_srcdir)/src/c/copyright \
 toolboxdir=@SCILAB_TOOLBOX_DIR@
 
 all:
-	@SCILAB_EXE@ -nw -f $(top_srcdir)/interface/src/scilab/makefile_builder.sce
+	@SCILAB_EXE@ -nw -nb -f $(top_srcdir)/interface/src/scilab/makefile_builder.sce
 
 install-toolbox:
 	$(mkinstalldirs) $(toolboxdir)/demos
