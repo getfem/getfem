@@ -794,6 +794,21 @@ m4_include([m4/scilab.m4])
 
 AC_CHECK_SCILAB
 
+
+
+
+
+
+
+dnl -----------------------------------------------
+dnl Symbolic links for the meshes in tests/meshes
+dnl -----------------------------------------------
+
+for i in `ls $srcdir/tests/meshes/*.mesh`; do
+	j="tests/meshes/"`basename $i`
+	AC_CONFIG_LINKS([$j:$j])
+done
+
 dnl -----------------------------------------------
 dnl sorties
 dnl -----------------------------------------------
@@ -919,20 +934,6 @@ if test x"$acx_lapack_ok" = xyes; then
 else
   echo "No lapack library found : generic (less effective) algorithms will be used"
 fi
-
-if test -z ""`echo $srcdir | grep "^/"`; then
-  addpathm="../../"
-else
-  addpathm=""
-fi
-
-dnl utiliser AC_CONFIG_LINKS a la place ?
-for i in `ls $srcdir/tests/meshes/*.mesh`; do
-	j="tests/meshes/"`basename $i`
-	if test ! -L $j && test ! -f $j; then
-		ln -s $addpathm$i $j
-	fi
-done
 
 echo "---------------------------------------"
 echo "Ready to build getfem"
