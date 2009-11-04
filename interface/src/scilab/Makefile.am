@@ -16,6 +16,8 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
 
+scilabbuilddir=$(top_srcdir)/interface/src/scilab_build
+
 scilabbasedir=$(srcdir)/builder.sce \
 	$(srcdir)/DESCRIPTION-FUNCTIONS \
 	$(srcdir)/loader.sce \
@@ -45,7 +47,9 @@ scilabsrccdir=$(srcdir)/src/c/copyright \
 toolboxdir=@SCILAB_TOOLBOX_DIR@
 
 all:
-	@SCILAB_EXE@ -nw -f $(srcdir)/makefile_builder.sce
+	$(mkinstalldirs) $(top_srcdir)/interface/src/scilab_build
+	@cp -r $(srcdir) $(top_srcdir)/interface/src/scilab_build
+	@SCILAB_EXE@ -nw -f $(top_srcdir)/interface/src/scilab_build/makefile_builder.sce
 
 install-toolbox:
 	$(mkinstalldirs) $(toolboxdir)/demos
@@ -70,32 +74,32 @@ install-toolbox:
 	$(mkinstalldirs) $(toolboxdir)/src/c/MACHINES/SGI
 	$(mkinstalldirs) $(toolboxdir)/src/c/MACHINES/SPARC
 	$(mkinstalldirs) $(toolboxdir)/src/c/DOC
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/demos $(srcdir)/demos/*.sc[ie]
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/etc $(srcdir)/etc/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help $(srcdir)/*.sce
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US $(srcdir)/help/en_US/*.sce
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US $(srcdir)/help/en_US/*.xml
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US/examples $(srcdir)/help/en_US/examples/CHAPTER
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US/examples $(srcdir)/help/en_US/examples/*.xml
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/fig $(srcdir)/help/fig/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/mml $(srcdir)/help/mml/*.mml
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/jar $(srcdir)/jar/*.jar
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(srcdir)/macros/*.bin
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(srcdir)/macros/*.sc[ie]
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(srcdir)/macros/names
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(srcdir)/macros/lib
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/sci_gateway $(srcdir)/sci_gateway/*.sce
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/sci_gateway/c $(srcdir)/sci_gateway/c/*.[ch]
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/sci_gateway/c $(srcdir)/sci_gateway/c/*.sce
-	@INSTALL@ -D -m 744 -t $(toolboxdir)/sci_gateway/c $(srcdir)/sci_gateway/c/*.so
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src $(srcdir)/src/*.sce
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c $(srcdir)/src/c/*.[ch]
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/demos $(scilabbuilddir)/demos/*.sc[ie]
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/etc $(scilabbuilddir)/etc/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help $(scilabbuilddir)/*.sce
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US $(scilabbuilddir)/help/en_US/*.sce
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US $(scilabbuilddir)/help/en_US/*.xml
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US/examples $(scilabbuilddir)/help/en_US/examples/CHAPTER
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/en_US/examples $(scilabbuilddir)/help/en_US/examples/*.xml
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/fig $(scilabbuilddir)/help/fig/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/help/mml $(scilabbuilddir)/help/mml/*.mml
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/jar $(scilabbuilddir)/jar/*.jar
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(scilabbuilddir)/macros/*.bin
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(scilabbuilddir)/macros/*.sc[ie]
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(scilabbuilddir)/macros/names
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/macros $(scilabbuilddir)/macros/lib
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/sci_gateway $(scilabbuilddir)/sci_gateway/*.sce
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/sci_gateway/c $(scilabbuilddir)/sci_gateway/c/*.[ch]
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/sci_gateway/c $(scilabbuilddir)/sci_gateway/c/*.sce
+	@INSTALL@ -D -m 744 -t $(toolboxdir)/sci_gateway/c $(scilabbuilddir)/sci_gateway/c/*.so
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src $(scilabbuilddir)/src/*.sce
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c $(scilabbuilddir)/src/c/*.[ch]
 	@INSTALL@ -D -m 744 -t $(toolboxdir)/src/c $(scilabsrccdir)
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/Cray $(srcdir)/src/c/MACHINES/Cray/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/GCC $(srcdir)/src/c/MACHINES/GCC/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/Linux $(srcdir)/src/c/MACHINES/Linux/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/RS6000 $(srcdir)/src/c/MACHINES/RS6000/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/SGI $(srcdir)/src/c/MACHINES/SGI/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/SPARC $(srcdir)/src/c/MACHINES/SPARC/*
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/DOC $(srcdir)/src/c/DOC/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/Cray $(scilabbuilddir)/src/c/MACHINES/Cray/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/GCC $(scilabbuilddir)/src/c/MACHINES/GCC/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/Linux $(scilabbuilddir)/src/c/MACHINES/Linux/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/RS6000 $(scilabbuilddir)/src/c/MACHINES/RS6000/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/SGI $(scilabbuilddir)/src/c/MACHINES/SGI/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/SPARC $(scilabbuilddir)/src/c/MACHINES/SPARC/*
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/DOC $(scilabbuilddir)/src/c/DOC/*
 	@INSTALL@ -D -m 644 -t $(toolboxdir)/ $(scilabbasedir)
