@@ -65,7 +65,8 @@ Files = ['gfm_common.c','gfm_scilab.c','sci_spluinc.c','sci_spcholinc.c','sci_sp
 
 Libraries = ['../../src/c/libsp_get'];
 
-cflags = '-g -I' + sci_getfem_path + ' -I' + getfem_path + '/interface/src/' + ' -I' + sci_getfem_path + '../../src/c';
+cflags = ' -g -I' + sci_getfem_path + ' -I' + sci_getfem_path + ' -I' + sci_getfem_path + '/../../src/c';
+cflags = cflags + ' -I' + getfem_path + '/interface/src/' + ' -I' + getfem_path + '/src/getfem';
 cflags = cflags + ' -I' + SCI + '/../../include/scilab'; // For the binary distribution
 
 ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a';
@@ -77,6 +78,6 @@ if ~isempty('@MUPARSER_LIBS@') then
   ldflags = ldflags + ' -L/usr/lib @MUPARSER_LIBS@';
 end
 
-tbx_build_gateway('scigetfem_c', Table, Files, getfem_path, Libraries, ldflags, cflags);
+tbx_build_gateway('scigetfem_c', Table, Files, sci_getfem_path, Libraries, ldflags, cflags);
 
 clear tbx_build_gateway;
