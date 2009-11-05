@@ -814,14 +814,7 @@ then
   fi
 fi
 
-dnl -----------------------------------------------
-dnl Symbolic links for the meshes in tests/meshes
-dnl -----------------------------------------------
 
-for i in `ls $srcdir/tests/meshes/*.mesh`; do
-	j="tests/meshes/"`basename $i`
-	AC_CONFIG_LINKS([$j:$j])
-done
 
 dnl -----------------------------------------------
 dnl sorties
@@ -835,7 +828,6 @@ AC_CONFIG_FILES(\
 	doc/sphinx/Makefile \
 	src/Makefile \
 	tests/Makefile \
-	tests/meshes/Makefile \
 	tests-2.0/Makefile \
 	contrib/Makefile \
 	contrib/icare/Makefile \
@@ -891,6 +883,21 @@ AC_OUTPUT
 chmod a+x getfem-config-notinstalled
 chmod a+x getfem-config
 chmod a+x gmm-config
+
+dnl -----------------------------------------------
+dnl Symbolic links for the meshes in tests/meshes
+dnl -----------------------------------------------
+
+if test -z ""`echo $srcdir | grep "^/"`; then
+  addpathm="../"
+else
+  addpathm=""
+fi
+
+if test ! -d tests/meshes; then
+  ln -s $addpathm$srcdir/tests/meshes tests/meshes
+fi;
+
 
 dnl configuration sum-up
 

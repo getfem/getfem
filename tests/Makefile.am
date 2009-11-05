@@ -1,5 +1,3 @@
-SUBDIRS = meshes
-
 if QHULL
 optprogs = test_mesh_generation test_mesh_im_level_set crack
 optpl = $(top_srcdir)/tests/test_mesh_im_level_set.pl \
@@ -124,7 +122,7 @@ TESTS = \
 	$(top_srcdir)/tests/test_interpolated_fem.pl   \
 	$(top_srcdir)/tests/test_range_basis.pl        \
 	$(top_srcdir)/tests/laplacian.pl               \
-	$(top_srcdir)/tests/laplacian_with_bricks.pl               \
+	$(top_srcdir)/tests/laplacian_with_bricks.pl   \
 	$(top_srcdir)/tests/elastostatic.pl            \
 	$(top_srcdir)/tests/stokes.pl                  \
 	$(top_srcdir)/tests/plate.pl                   \
@@ -140,64 +138,83 @@ TESTS = \
 	$(top_srcdir)/tests/wave_equation.pl   	       \
 	$(top_srcdir)/tests/make_gmm_test.pl     
 
-EXTRA_DIST = \
-	dynamic_array.pl                  \
-	dynamic_tas.pl                    \
-	test_small_vector.pl		  \
-	test_kdtree.pl                    \
-	test_rtree.pl                     \
-	test_interpolation.pl             \
-	test_assembly.pl                  \
-	laplacian.pl                      \
-	laplacian_with_bricks.pl 	  \
-	elastostatic.pl                   \
-	stokes.pl                         \
-	helmholtz.pl                      \
-	integration.pl                    \
-	poly.pl                           \
-	test_mesh.pl                      \
-	geo_trans_inv.pl                  \
-	test_int_set.pl                   \
-	test_interpolated_fem.pl          \
-	test_slice.pl			  \
-	test_norm.pl			  \
-	test_mesh_im_level_set.pl         \
-	test_tree_sorted.pl               \
-	test_mat_elem.pl                  \
-	crack.pl                          \
-	crack.param                       \
-	laplacian.param                   \
-	laplacian_with_bricks.param       \
-	test_range_basis.param            \
-	test_range_basis.pl               \
-	bilaplacian.param                 \
-	bilaplacian.pl                    \
-	plate.param                       \
-	plate.pl                          \
-	schwarz_additive.pl               \
-	schwarz_additive.param            \
-	elastostatic.param                \
-	stokes.param                      \
-	nonlinear_elastostatic.pl         \
-	nonlinear_membrane.pl             \
-	nonlinear_membrane.param          \
-	dynamic_friction.pl               \
-	dynamic_friction.param            \
-	dynamic_friction.net              \
-	plasticity.pl                     \
-	nonlinear_elastostatic.param      \
-	test_interpolated_fem.param       \
-	geo_trans_inv.param               \
-	heat_equation.pl                  \
-	heat_equation.param               \
-	wave_equation.pl                  \
-	wave_equation.param               \
-	make_gmm_test.pl                  \
-	gmm_torture01_lusolve.cc          \
-	gmm_torture05_mult.cc             \
-	gmm_torture06_mat_mult.cc         \
-	gmm_torture10_qr.cc               \
-	gmm_torture15_sub.cc              \
-	gmm_torture20_iterative_solvers.cc
+EXTRA_DIST =                               			\
+	dynamic_array.pl                   			\
+	dynamic_tas.pl                     			\
+	test_small_vector.pl		   			\
+	test_kdtree.pl                     			\
+	test_rtree.pl                      			\
+	test_interpolation.pl              			\
+	test_assembly.pl                   			\
+	laplacian.pl                       			\
+	laplacian_with_bricks.pl 	   			\
+	elastostatic.pl                    			\
+	stokes.pl                          			\
+	helmholtz.pl                       			\
+	integration.pl                     			\
+	poly.pl                            			\
+	test_mesh.pl                       			\
+	geo_trans_inv.pl                   			\
+	test_int_set.pl                    			\
+	test_interpolated_fem.pl           			\
+	test_slice.pl			   			\
+	test_norm.pl			   			\
+	test_mesh_im_level_set.pl          			\
+	test_tree_sorted.pl                			\
+	test_mat_elem.pl                   			\
+	crack.pl                           			\
+	crack.param                        			\
+	laplacian.param                    			\
+	laplacian_with_bricks.param        			\
+	test_range_basis.param             			\
+	test_range_basis.pl                			\
+	bilaplacian.param                  			\
+	bilaplacian.pl                     			\
+	plate.param                        			\
+	plate.pl                           			\
+	schwarz_additive.pl                			\
+	schwarz_additive.param             			\
+	elastostatic.param                 			\
+	stokes.param                       			\
+	nonlinear_elastostatic.pl          			\
+	nonlinear_membrane.pl              			\
+	nonlinear_membrane.param           			\
+	dynamic_friction.pl                			\
+	dynamic_friction.param             			\
+	dynamic_friction.net               			\
+	plasticity.pl                      			\
+	nonlinear_elastostatic.param       			\
+	test_interpolated_fem.param        			\
+	geo_trans_inv.param                			\
+	heat_equation.pl                   			\
+	heat_equation.param                			\
+	wave_equation.pl                   			\
+	wave_equation.param                			\
+	make_gmm_test.pl                   			\
+	gmm_torture01_lusolve.cc           			\
+	gmm_torture05_mult.cc              			\
+	gmm_torture06_mat_mult.cc          			\
+	gmm_torture10_qr.cc                			\
+	gmm_torture15_sub.cc               			\
+	gmm_torture20_iterative_solvers.cc 			\
+        meshes/disc_2D_degree3.mesh        			\
+	meshes/donut_regulier_72_elements.mesh    		\
+	meshes/disc_P2_h0.15.mesh                 		\
+        meshes/donut_regulier_8_elements_288ddl.mesh		\
+	meshes/disc_P2_h0.25.mesh				\
+	meshes/disc_P2_h0.5.mesh				\
+	meshes/disc_P2_h1.mesh					\
+	meshes/disc_P2_h2.mesh					\
+	meshes/sphere_with_quadratic_tetra_16000_elts.mesh	\
+	meshes/disc_P2_h3.mesh					\
+	meshes/sphere_with_quadratic_tetra_2000_elts.mesh	\
+	meshes/disc_P2_h4.mesh					\
+	meshes/sphere_with_quadratic_tetra_400_elts.mesh	\
+	meshes/disc_P2_h5.5.mesh				\
+	meshes/sphere_with_quadratic_tetra_80_elts.mesh		\
+	meshes/donut_regulier_32_elements.mesh			\
+	meshes/sphere_with_quadratic_tetra_8_elts.mesh		\
+	meshes/donut_regulier_512_elements.mesh
+
 
 TESTS_ENVIRONMENT = perl
