@@ -795,8 +795,10 @@ m4_include([m4/scilab.m4])
 
 AC_CHECK_SCILAB
 
-GETFEM_INTERFACE_PATH=`pwd`
+GETFEM_INTERFACE_PATH="`readlink -f $srcdir`"
+GETFEM_BUILD_INTERFACE_PATH="`readlink -f $PWD`"
 AC_SUBST(GETFEM_INTERFACE_PATH)
+AC_SUBST(GETFEM_BUILD_INTERFACE_PATH)
 
 dnl if the scilab directory doesn't exists, we copy the 
 dnl scilab sources into the build directory
