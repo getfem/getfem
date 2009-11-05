@@ -1,2 +1,12 @@
-SUBDIRS = meshes python matlab
+
+if BUILDMEX
+subdirMATLAB=matlab
+endif
+
+if BUILDPYTHON
+subdirPYTHON=python
+endif
+
+SUBDIRS = meshes $(subdirMATLAB) $(subdirPYTHON)
+
 
