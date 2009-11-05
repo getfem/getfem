@@ -36,7 +36,7 @@ hole_radius     = 0.03; // Hole radius for topological optimization
 initial_holes   = 1;    // Pre-existing holes or not.
 threshold_shape = 1.1;
 threshold_topo  = 1.5;
-NY    = 40; // Number of elements in y direction
+NY    = 10; // Number of elements in y direction
 N     = 2;  // Dimension of the mesh (2 or 3).
 DEBUG = 0;
 
@@ -110,6 +110,10 @@ else
   F = gf_mesh_fem_get_eval(mf_basic, list('0', '0', '-4*(abs(y) < 0.0125).*(abs(z) < 0.0125)'));
 end
 
+h = scf();
+h.color_map = jetcolormap(255);
+title('structural optimization');
+
 while(1) // Optimization loop
   gf_workspace('push');
 
@@ -163,10 +167,7 @@ while(1) // Optimization loop
 //    colorbar;
   DU   = gf_compute(mf, U, 'gradient', mf_g);
 
-  DU_permut  = permute(DU, [2 1 3]);
-  DU_permut.entries = DU_permut.entries'; // YC: bug in the permute function
-  
-  EPSU = DU + DU_permut;
+  EPSU = DU + permute(DU, [2 1 3]); // YC: the permute function is really slow
 
   // Computation of the shape derivative
   if (N == 2) then
@@ -200,6 +201,7 @@ while(1) // Optimization loop
 
   // Drawing the gradients
   if (N == 2) then
+    clf();
     subplot(NG,1,1);
     drawlater;
     gf_plot(mf_g, GF, 'disp_options', 'off', 'refine', 1);
@@ -217,6 +219,7 @@ while(1) // Optimization loop
     sleep(100);
   else
     // To be adapted for 3D ...
+    clf();
     drawlater;
     [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', 'off', 'disp_options', 'off', 'refine', 3);
     //set(h2(1),'LineWidth',1);
