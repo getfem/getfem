@@ -36,8 +36,10 @@ hdefmesh = [];
 
 opts = build_options_list(varargin(:));
 
-if ison(opts('disp_options')) then
-  disp(opts);
+if has_field(opts,'disp_options') then
+  if ison(opts('disp_options')) then
+    disp(opts);
+  end
 end
 
 try 
