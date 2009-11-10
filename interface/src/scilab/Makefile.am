@@ -104,3 +104,6 @@ install:
 	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/MACHINES/SPARC src/c/MACHINES/SPARC/*
 	@INSTALL@ -D -m 644 -t $(toolboxdir)/src/c/DOC src/c/DOC/*
 	@INSTALL@ -D -m 644 -t $(toolboxdir)/ $(scilabbasedir)
+
+clean:
+	@SCILAB_EXE@ -nw -nb -f $(scilabbuilddir)/makefile_cleaner.sce
