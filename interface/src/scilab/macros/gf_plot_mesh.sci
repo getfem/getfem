@@ -160,22 +160,18 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
       hbound(bnum) = gce();
       hbound(bnum).children(:).thickness  = 2;
       hbound(bnum).children(:).line_style = 0; // Continous lines
-      hbound(bnum).children(1).foreground = 5; // red // YC: why 1 ?
+      hbound(bnum).children(:).foreground = 5;
     end
     if (ison(o_vertices)) then
-      for i=1:length(PID)
-        xstring(PXY(1,PID(i))+ecart(1), PXY(2,PID(i))+ecart(2), string(double(PID(i)))); // 'HorizontalAlignment','center','VerticalAlignment','middle'
-        hvert = gce();
-        hvert.alignment = 'center';
-      end
+      xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(double(PID)));
+      hvert = gce();
+      hvert.parent.children(:).alignment = 'center';
     end
     if (ison(o_convexes)) then
-      for i=1:size(cv_center,2)
-        xstring(cv_center(1,i), cv_center(2,i), string(double(cvlst(i)))); // 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [.7 0 0]
-        hconv = gce();
-        hconv.alignment = 'center';
-        hconv.font_foreground = 5; // Red
-      end
+      xstring(cv_center(1,:), cv_center(2,:), string(double(cvlst))); 
+      hconv = gce();
+      hconv.parent.children(:).alignment = 'center';
+      hconv.parent.children(:).font_foreground = 5; // Red
     end
     if (ison(o_dof)) then
       hdof = zeros(length(dofid),1);
@@ -185,11 +181,11 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
         else 
           s=sprintf('%d*%d',dofid(i),dofmult(i)); 
         end
-        xstring(dofpos(1,i)-ecart(1), dofpos(2,i)-ecart(2), s); /// 'HorizontalAlignment','center','VerticalAlignment','middle', 'Color', [0 .4 0]);
-        hdof(i) = gce();
-        hdof(i).alignment = 'center';
-        hdof(i).font_foreground = 2; // Blue
       end
+      xstring(dofpos(1,:)-ecart(1), dofpos(2,:)-ecart(2), s);
+      hdof = gce();
+      hdof.parent.children(:).alignment = 'center';
+      hdof.parent.children(:).font_foreground = 2; 
     end
   else
     if (ison(o_edges)) then
