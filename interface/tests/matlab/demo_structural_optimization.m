@@ -277,14 +277,14 @@ gf_model_get(md, 'solve', 'noisy');
    
   % Re-initialization of the level-set
   dt = 0.05; NT = 20; ddt = dt / NT;
- 
+  ULS0 = ULS;
   for t = 0:ddt:dt
   
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
     Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, DLS);
     DLScont = Mcont \ Fdisc;
     NORMDLS = sqrt(sum(reshape(DLScont, N, size(DLScont, 1)/N).^2, 1)) + 1e-12;
-    SULS = sign(ULS) ./ NORMDLS;
+    SULS = sign(ULS0) ./ NORMDLS;
         
     if (N == 2)
       W = DLScont.*reshape([SULS; SULS], N*size(SULS, 2), 1);
@@ -293,7 +293,7 @@ gf_model_get(md, 'solve', 'noisy');
     end;
    
     gf_compute(mf_ls, ULS, 'convect', mf_cont, W, ddt, 1, 'unchanged');
-    ULS = ULS + ddt * sign(ULS);
+    ULS = ULS + ddt * sign(ULS0);
   end;
 
   if (DEBUG)
