@@ -27,7 +27,8 @@ gf_mesh_fem_set(mfu,'fem',gf_fem('FEM_PK(3,2)'));
 gf_mesh_fem_set(mfd,'fem',gf_fem('FEM_PK(3,0)'));
 
 // display some informations about the mesh
-disp(sprintf('nbcvs=%d, nbpts=%d, nbdof=%d',gf_mesh_get(m,'nbcvs'), gf_mesh_get(m,'nbpts'),gf_mesh_fem_get(mfu,'nbdof')));
+printf('\0nbcvs=%d, nbpts=%d, nbdof=%d\n',gf_mesh_get(m,'nbcvs'), gf_mesh_get(m,'nbpts'),gf_mesh_fem_get(mfu,'nbdof'));
+
 P = gf_mesh_get(m,'pts'); // get list of mesh points coordinates
 pidtop = find(abs(P(2,:)-13)<1e-6); // find those on top of the object
 pidbot = find(abs(P(2,:)+10)<1e-6); // find those on the bottom
@@ -91,11 +92,13 @@ disp('running solve...')
 t0 = timer(); 
 
 gf_mdbrick_get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
+
 disp(sprintf('solve done in %.2f sec', timer() - t0));
 
 mfdu = gf_mesh_fem(m,1);
 // the P2 fem is not derivable across elements, hence we use a discontinuous
 // fem for the derivative of U.
+
 gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
 VM = gf_mdbrick_get(b0, 'von mises',mds,mfdu);
 
