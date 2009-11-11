@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -75,7 +75,9 @@ namespace gmm {
     void do_ilutp(const Matrix&, col_major);
 
   public:
-    void build_with(const Matrix& A) {
+    void build_with(const Matrix& A, int k_ = -1, double eps_ = double(-1)) {
+      if (k_ >= 0) K = k_;
+      if (eps_ >= double(0)) eps = eps_;
       invert = false;
       gmm::resize(L, mat_nrows(A), mat_ncols(A));
       gmm::resize(U, mat_nrows(A), mat_ncols(A));
