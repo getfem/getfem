@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Yves Renard
+// Copyright (C) 2001-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -79,8 +79,8 @@ namespace bgeot {
       = dal::search_stored_object(stored_point_tab_key(&spt));
     if (o) return dal::stored_cast<stored_point_tab>(o);
     pstored_point_tab p = new stored_point_tab(spt);
-    dal::add_stored_object(new stored_point_tab_key(p.get()), p,
-			   dal::AUTODELETE_STATIC_OBJECT);
+    stored_point_tab_key *psp = new stored_point_tab_key(p.get());
+    dal::add_stored_object(psp, p, dal::AUTODELETE_STATIC_OBJECT);
     return p;
   }
 

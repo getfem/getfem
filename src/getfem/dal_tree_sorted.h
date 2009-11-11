@@ -82,7 +82,7 @@ namespace dal {
     inline size_type father(void) const
     { return (depth<=1) ? ST_NIL : path[depth-2];}
     inline size_type index_(void) const
-    { return path[depth-1]; }
+    { return path[size_t(depth-1)]; }
     inline short_type direction(void) const
     { return (depth==0) ? 0 : dir[depth-1];}
     inline void up(void) { if (depth > 0) depth--; }

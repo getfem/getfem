@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Yves Renard
+// Copyright (C) 2005-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -376,7 +376,8 @@ namespace getfem {
 
     if (new_approx->nb_points()) {
       pintegration_method pim = new integration_method(new_approx);
-      dal::add_stored_object(new special_imls_key(new_approx), pim,
+      special_imls_key *p = new special_imls_key(new_approx);
+      dal::add_stored_object(p, pim,
 			     new_approx->ref_convex(),
 			     &(new_approx->integration_points()));
       build_methods.push_back(pim);
@@ -703,7 +704,8 @@ namespace getfem {
 
     if (new_approx->nb_points()) {
       pintegration_method pim = new integration_method(new_approx);
-      dal::add_stored_object(new special_imls_key(new_approx), pim,
+      special_imls_key *p = new special_imls_key(new_approx);
+      dal::add_stored_object(p, pim,
 			     new_approx->ref_convex(),
 			     &(new_approx->integration_points()));
       build_methods.push_back(pim);

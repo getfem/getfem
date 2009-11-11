@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 1999-2008 Yves Renard
+// Copyright (C) 1999-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -195,12 +195,19 @@ namespace bgeot {
     if (cv1.nb_points() == 0 || cv2.nb_points() == 0)
       throw std::invalid_argument(
 		     "convex_direct_product : null convex product");
-    if (!dal::exists_stored_object(cv1.structure()))
-      dal::add_stored_object(new special_convex_structure_key_(cv1.structure()),
-			     cv1.structure(), dal::AUTODELETE_STATIC_OBJECT);
-    if (!dal::exists_stored_object(cv2.structure()))
-      dal::add_stored_object(new special_convex_structure_key_(cv2.structure()),
-			     cv2.structure(), dal::AUTODELETE_STATIC_OBJECT);
+    
+    if (!dal::exists_stored_object(cv1.structure())) {
+      special_convex_structure_key_ *pcs
+	= new special_convex_structure_key_(cv1.structure());
+      dal::add_stored_object(pcs, cv1.structure(),
+			     dal::AUTODELETE_STATIC_OBJECT);
+    }
+    if (!dal::exists_stored_object(cv2.structure())) {
+      special_convex_structure_key_ *pcs
+	= new special_convex_structure_key_(cv2.structure());
+      dal::add_stored_object(pcs, cv2.structure(),
+			     dal::AUTODELETE_STATIC_OBJECT);
+    }
     convex<PT> r(convex_product_structure(cv1.structure(), cv2.structure()));
     r.points().resize(r.nb_points());
     std::fill(r.points().begin(), r.points().end(), PT(r.structure()->dim()));

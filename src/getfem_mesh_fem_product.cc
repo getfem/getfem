@@ -190,9 +190,8 @@ namespace getfem {
 	pfem pf = new fem_product(mf1.fem_of_element(cv),
 				  mf2.fem_of_element(cv), cv,
 				  xfem_index, local_enriched_dof);
-	dal::add_stored_object(new special_mflproduct_key(pf), pf,
-			       pf->ref_convex(0),
-			       pf->node_tab(0));
+	special_mflproduct_key *psm = new special_mflproduct_key(pf);
+	dal::add_stored_object(psm, pf, pf->ref_convex(0), pf->node_tab(0));
 	build_methods.push_back(pf);
 	set_finite_element(cv, pf);
       }

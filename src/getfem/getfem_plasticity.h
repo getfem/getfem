@@ -451,7 +451,8 @@ namespace getfem {
   /* not good, shoud be accessible via fem_descriptor in getfem_fem */
   inline pfem gauss_points_pseudo_fem(pintegration_method pim) {
     pfem pf = new pseudo_fem_on_gauss_point(pim);
-    dal::add_stored_object(new special_int_gauss_pt_fem_key(pf), pf);
+    special_int_gauss_pt_fem_key *psi = new special_int_gauss_pt_fem_key(pf);
+    dal::add_stored_object(psi, pf);
     return pf;
   }
 

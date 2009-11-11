@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2009 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -81,9 +81,8 @@ namespace getfem {
 		      std::vector<bool> &ids) const;
   public:
     template <typename IT_LS_ENRICH>
-    fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_,
-		  size_type xfi) : 
-      bfem(pf), mls(mls_), xfem_index(xfi) {
+    fem_level_set(IT_LS_ENRICH it, pfem pf, const mesh_level_set &mls_,
+		  size_type xfi) : bfem(pf), mls(mls_), xfem_index(xfi) {
       dofzones.assign(it, it + bfem->nb_dof(0));
       init();
     }

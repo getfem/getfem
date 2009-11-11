@@ -52,9 +52,8 @@ namespace getfem {
 				(dof_enrichments.begin(),
 				 mf.ind_basic_dof_of_element(cv).begin()) ,
 				mf.fem_of_element(cv), mls, xfem_index);
-    dal::add_stored_object(new special_mfls_key(pf), pf,
-			   pf->ref_convex(0),
-			   pf->node_tab(0));
+    special_mfls_key *psm = new special_mfls_key(pf);
+    dal::add_stored_object(psm, pf, pf->ref_convex(0), pf->node_tab(0));
     build_methods.push_back(pf);
     set_finite_element(cv, pf);
   }
