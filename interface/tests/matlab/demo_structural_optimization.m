@@ -27,19 +27,22 @@ clear all;
 gf_workspace('clear all');
 
 % parameters
-ls_degree = 1;  % Degree of the level-set. Should be one for the moment.
-k = 1;          % Degree of the finite element method for u
-lambda = 1;     % Lame coefficient
-mu = 1;         % Lame coefficient
-hole_radius = 0.03;   % Hole radius for topological optimization
-initial_holes = 0;    % Pre-existing holes or not.
-threshold_shape = 0.6;
-threshold_topo = 0.6;
-NY = 40;        % Number of elements in y direction
-N = 2;          % Dimension of the mesh (2 or 3).
+initial_holes = 1;     % Pre-existing holes or not.
+NY = 40;               % Number of elements in y direction
+
+k = 1;                 % Degree of the finite element method for u
+N = 2;                 % Dimension of the mesh (2 or 3).
+lambda = 1;            % Lame coefficient
+mu = 1;                % Lame coefficient
+hole_radius = 0.03;    % Hole radius for topological optimization
+CF = k*NY/40.;         % Correction factor. Usefull ?
+threshold_shape = CF * 0.9;
+threshold_topo  = CF * 0.2;
+NBDRAW = 5;            % Draw solution each NBDRAW iterations
+ls_degree = 1;         % Degree of the level-set. Should be one for the moment.
 DEBUG = 0;
 if (DEBUG)
-  NG = 4;
+  NG = 3;
 else
   NG = 2;
 end;
@@ -90,9 +93,11 @@ gf_mesh_fem_set(mf_cont,'fem', gf_fem(sprintf('FEM_PK(%d,%d)', N, ls_degree)));
 % Definition of the initial level-set
 if (initial_holes)
   if (N == 2)
-    ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.6-sin(pi*4*x).*cos(pi*4*y)' });
+    ULS=gf_mesh_fem_get(mf_ls, 'eval', ...
+        { '(-0.6-sin(pi*4*x).*cos(pi*4*y))/(4*pi)' });
   else
-    ULS=gf_mesh_fem_get(mf_ls, 'eval', { '-0.6-sin(pi*4*x).*cos(pi*4*y).*cos(pi*4*z)' });
+    ULS=gf_mesh_fem_get(mf_ls, 'eval', ...
+        { '(-0.6-sin(pi*4*x).*cos(pi*4*y).*cos(pi*4*z))/(4*pi)' });
   end
 else
   ULS=gf_mesh_fem_get(mf_ls, 'eval', { 'x - 2' });
@@ -109,7 +114,7 @@ else
 end;
 
 
-while(1) % Optimization loop
+for niter = 1:100000 % Optimization loop
 
   gf_workspace('push');
 
@@ -153,18 +158,9 @@ gf_model_get(md, 'solve', 'noisy');
   % Computation of indicators (computation of K could be avoided)
   K = gf_asm('linear elasticity', mim, mf, mf_ls, lambda*ones(1, nbd), ...
              mu*ones(1, nbd));
-  disp(sprintf('Elastic energy: %g', U*K*U'));
+  disp(sprintf('Elastic energy at iteration %d: %g', niter, U*K*U'));
   S = gf_asm('volumic','V()+=comp()',mim);
   disp(sprintf('Remaining surface of matieral: %g', S));
-
-%   subplot(1,2,1);
-%   gf_plot(mf, U);
-%  hold on;
-%    [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0, 'pcolor', 'off');
-%    set(h2{1},'LineWidth',2);
-%    set(h2{1},'Color','green');
-%    hold off;
-%    colorbar;
   
   DU = gf_compute(mf, U, 'gradient', mf_g);
   EPSU = DU + permute(DU, [2 1 3]);
@@ -191,39 +187,49 @@ gf_model_get(md, 'solve', 'noisy');
   M = gf_asm('mass matrix', mim, mf_g);
   D = abs(full(diag(M)));
   maxD = max(D);
-  ind = find(D < maxD/4);
+  ind = find(D < maxD/40);
   % Extension of the gradient into the hole. Too rough ?
-  GF(ind) = GF(ind) * 0 - threshold_shape/8;
+  GF(ind) = GF(ind) * 0;
   % Threshold on the gradient
-  GF = min(GF, 4*threshold_shape);
-  ind = find(D < maxD/1.3);
+  GF = min(GF, 1.1*threshold_shape);
+  ind = find(D < maxD/1.2);
   GT(ind) = GT(ind) * 0 - 20;
 
   % Drawing the gradients
-  if (N == 2)
-    subplot(NG,1,1);
-    gf_plot(mf_g, GF, 'disp_options', 'off', 'refine', 1);
-    title('Shape gradient');
-    hold on;
-    [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
+  if (mod(niter, NBDRAW) == 0 || niter == 1)
+    if (N == 2)
+      subplot(NG,1,1);
+      gf_plot(mf_g, GF, 'disp_options', 'off', 'refine', 1);
+      title('Shape gradient');
+      hold on;
+      [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
+                      'off', 'disp_options', 'off', 'refine', 3);
+      set(h2{1},'LineWidth',1);
+      set(h2{1},'Color','black');
+      hold off;
+      colorbar;
+      if (DEBUG == 0)
+        subplot(NG,1,2);
+        % gf_plot(mf_g, GT, 'disp_options', 'off', 'disp_options');
+        % title('Topological gradient');
+        gf_plot(mf_ls, ULS, 'disp_options', 'off', 'refine', 3);
+        hold on;
+        [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
                     'off', 'disp_options', 'off', 'refine', 3);
-    set(h2{1},'LineWidth',1);
-    set(h2{1},'Color','green');
-    hold off;
-    colorbar;
-    subplot(NG,1,2);
-    % gf_plot(mf_g, GT, 'disp_options', 'off', 'disp_options', 'off', 'refine', 8);
-    % title('Topological gradient');
-    gf_plot(mf_ls, ULS, 'disp_options', 'off', 'refine', 1);
-    title('Level set function');
-    colorbar;  
-    pause(0.1);
-  else
-    sl=gf_slice({'isovalues', 0, mf_ls, ULS, 0.0}, m, 5);
-    Usl=gf_compute(mf_ls, ULS,'interpolate on',sl);
-    % P=gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
-    gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
-    pause(0.1);
+        set(h2{1},'LineWidth',1);
+        set(h2{1},'Color','black');
+        hold off;
+        title('Level set function');
+        colorbar; 
+      end; 
+      pause(0.3);
+    else
+      sl=gf_slice({'isovalues', 0, mf_ls, ULS, 0.0}, m, 5);
+      Usl=gf_compute(mf_ls, ULS,'interpolate on',sl);
+      % P=gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
+      gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
+      pause(0.3);
+    end
   end
 
   [val, i] = max(GT);
@@ -243,80 +249,94 @@ gf_model_get(md, 'solve', 'noisy');
     end;
   end;    
   
-  % Evolution of the level-set thank to shape derivative. Computation of v
-  DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
-  NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
-  GFF = GF ./ NORMDLS;
-  
-  if (N == 2)
-    V = DLS.*[GFF; GFF];
-  else
-    V = DLS.*[GFF; GFF; GFF];
-  end;
-  
+
+  % Evolution of the level-set thank to shape derivative. Simple version.
+  Mcontls = gf_asm('mass matrix', mimls, mf_ls); % Could be computed only once.
+                                                 % and factorized once !
+  Fdisc = gf_asm('volumic source', mimls, mf_ls, mf_g, GF);
+  Vcont = Mcontls \ Fdisc;
+  ULS = ULS - Vcont' * 0.005;
+
+
+
+  % Evolution of the level-set thank to shape derivative.
+  % Hamilton-Jacobi equation. Less stable.
   Mcont = gf_asm('mass matrix', mimls, mf_cont); % Could be computed only once.
-  Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, V);
-  Vcont = Mcont \ Fdisc;
+                                                 % and factorized once !
 
-  % Level set convection
-  gf_compute(mf_ls, ULS, 'convect', mf_cont, Vcont, 0.01, 20, 'extrapolation');
+  if (0)
+  dt = 0.006; NT = 10; ddt = dt / NT;
+  for t = 0:ddt:dt
+    DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
+    NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
+    GFF = GF ./ NORMDLS;
+  
+    if (N == 2)
+      V = DLS.*[GFF; GFF];
+    else
+      V = DLS.*[GFF; GFF; GFF];
+    end;
+  
+    Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, V);
+    Vcont = Mcont \ Fdisc;
 
-  if (DEBUG)
-    disp('Drawing the level set function after convection');
-    subplot(NG,1,3);
-    gf_plot(mf_ls, ULS, 'disp_options', 'off');
+    gf_compute(mf_ls, ULS, 'convect', mf_cont, Vcont, ddt, 2, 'extrapolation');
+  end;
+  end;
+
+  if (DEBUG && mod(niter, NBDRAW) == 0)
+    subplot(NG,1,2);
+    gf_plot(mf_ls, ULS, 'disp_options', 'off', 'refine', 3);
     colorbar;
     hold on;
     [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
                   'off', 'disp_options', 'off', 'refine', 3);
     set(h2{1},'LineWidth',1);
-    set(h2{1},'Color','green');
+    set(h2{1},'Color','black');
     hold off;
-    pause(0.01);
+    disp('Level set function after convection drawn');
+    pause(0.3);
   end;
    
   % Re-initialization of the level-set
-  dt = 0.05; NT = 20; ddt = dt / NT;
+  dt = 0.01; NT = 4; ddt = dt / NT;
   ULS0 = ULS;
   for t = 0:ddt:dt
-  
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
     Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, DLS);
     DLScont = Mcont \ Fdisc;
-    NORMDLS = sqrt(sum(reshape(DLScont, N, size(DLScont, 1)/N).^2, 1)) + 1e-12;
+    NORMDLS = sqrt(sum(reshape(DLScont, N, size(DLScont, 1)/N).^2,1))+1e-12;
     SULS = sign(ULS0) ./ NORMDLS;
-        
+      
     if (N == 2)
       W = DLScont.*reshape([SULS; SULS], N*size(SULS, 2), 1);
     else
       W = DLScont.*reshape([SULS; SULS; SULS], N*size(SULS, 2), 1);
     end;
-   
+  
     gf_compute(mf_ls, ULS, 'convect', mf_cont, W, ddt, 1, 'unchanged');
     ULS = ULS + ddt * sign(ULS0);
   end;
 
-  if (DEBUG)
+  if (DEBUG && mod(niter, 3) == 0)
     AA = sqrt(sum(DLS.^2, 1));
     disp(sprintf('Norm dls after: %g %g %g %g', AA(1), AA(2), AA(3), AA(4)));
     disp(sprintf('Norm dls after: max = %g, min = %g', max(AA), min(AA)));
 
-    disp('Drawing the level set function after re-initialization');
-    subplot(NG,1,4);
+    subplot(NG,1,3);
     gf_plot(mf_ls, ULS, 'disp_options', 'off');
     colorbar;
     hold on;
     [h1,h2]=gf_plot(mf_ls, ULS, 'contour', 0,'pcolor', ...
-                  'off', 'disp_options', 'off', 'refine', 3);
+                  'off', 'disp_options', 'off');
     set(h2{1},'LineWidth',1);
-    set(h2{1},'Color','green');
+    set(h2{1},'Color','black');
     hold off;
-    pause(0.01);
+    disp('Level set function after re-initialization drawn');
+    pause(0.3);
   end;
 
   gf_workspace('pop');
-  
-  
 end;
   
   

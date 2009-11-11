@@ -102,7 +102,8 @@ namespace getfem {
 	mti.clear();
 	mti.add_points(nodes);
 	gmm::clear(VI);
-	interpolation(mf_v, mti, V, VI, extra);
+	dal::bit_vector dof_untouched; 
+	interpolation(mf_v, mti, V, VI, extra, &dof_untouched);
       }
 
       for (size_type j = 0; j < nbpts; ++j)
