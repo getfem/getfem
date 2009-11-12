@@ -36,13 +36,14 @@ elseif (typeof(_what)=='string') then
   error('string expressions must be enclosed in a list: try with list(your_expression)');
 end;
 
-//X=zeros(size(_what,1),nbdof);
-X = zeros(length(_what),nbdof);
+X = [];
 if (isnumeric(_what)) then
+  X = zeros(length(_what),nbdof);
   X(:,dof) = repmat(_what, 1, nbdof/qdim);
   return;
 elseif typeof(_what)=='hypermat' then
-  m = length(_what);
+  m = prod(size((_what)));
+  X = zeros(m,nbdof);
   xpos = dxy(1,:);
   if (size(dxy,1)>=2),
     ypos = dxy(2,:);
@@ -75,7 +76,6 @@ elseif typeof(_what)=='hypermat' then
     end
   end
 elseif typeof(_what)=='list' then
-  m = length(_what);
   xpos = dxy(1,:);
   if (size(dxy,1)>=2),
     ypos = dxy(2,:);
@@ -88,23 +88,24 @@ elseif typeof(_what)=='list' then
     zpos = zeros(xpos); 
   end
   
+  m = length(_what);
+  n = length(_what(1));
+  X = zeros(m,nbdof);
   for i=1:m
     for j=1:qdim
-      if (isnumeric(_what(i))) then
-        if (length(_what(i)) ~= 1) then error('numeric values should be scalar'); end;
-        X(i,dof+j-1) = _what(i);
-      elseif (typeof(_what(i))=='string') then
-        x = xpos;
-        y = ypos;
-        z = zpos;
-        X(i,dof+j-1) = evstr(_what(i));
-      elseif (typeof(_what(i))=='fptr' | typeof(_what(i))=='function') then
-        tmp = evstr(_what(i));
-        X(i,dof+j-1) = feval(tmp, xpos, ypos, zpos);
-      else
-        error('sorry, don''t know how to eval a ' + typeof(_what(i)) + ...
-              ' expression, only function handles, numeric constants and ' + ...
-              'string expressions are handled');
+      for k=1:n
+        if (isnumeric(_what(i)(k))) then
+          if (length(_what(i)(k)) ~= 1) then error('numeric values should be scalar'); end;
+          X(i,dof+j-1) = _what(i)(k);
+        elseif (typeof(_what(i)(k))=='string') then
+          x = xpos;
+          y = ypos;
+          z = zpos;
+          X(i,dof+j-1) = evstr(_what(i)(k));
+        elseif (typeof(_what(i)(k))=='fptr' | typeof(_what(i)(k))=='function') then
+          tmp = evstr(_what(i)(k));
+          X(i,dof+j-1) = feval(tmp, xpos, ypos, zpos);
+        end
       end
     end
   end
