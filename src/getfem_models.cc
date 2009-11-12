@@ -1511,7 +1511,7 @@ namespace getfem {
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
-      if (dl.size()) {
+      if (dl.size() > ind) {
 	GMM_TRACE2("Source term assembly for Dirichlet condition");	  
 	if (mf_data)
 	  asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
