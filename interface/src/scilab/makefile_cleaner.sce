@@ -1,0 +1,2 @@
+exec cleaner.sce;
+quit;
