@@ -33,7 +33,7 @@ b1 = gf_mdbrick('dirichlet', b0, 42, mf, 'penalized');
 
 // change Dirichlet condition
 
-R = gf_mesh_fem_get_eval(mf,list('x(1)*(x(1)-1) - x(2)*(x(2)-1)'));
+R = gf_mesh_fem_get_eval(mf,list(list('x(1)*(x(1)-1) - x(2)*(x(2)-1)')));
 gf_mdbrick_set(b1,'param','R', mf, R);
 
 // created model state

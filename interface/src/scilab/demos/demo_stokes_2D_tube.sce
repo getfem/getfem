@@ -9,21 +9,21 @@ pde = init_pde();
 
 pde('type')   = 'stokes';
 pde('viscos') = 1.0;
-pde('bound') = list();
+pde('bound')  = list();
 
 pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list('-y.*(y-5)',0);
+pde('bound')($)('R')    = list(list('-y.*(y-5)',0));
 pde('bound')($)('H')    = [];
 
 pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list(0,'+(x-20).*(x-25)');
+pde('bound')($)('R')    = list(list(0,'+(x-20).*(x-25)'));
 pde('bound')($)('H')    = [];
 
 pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list(0,0);
+pde('bound')($)('R')    = list(list(0,0));
 pde('bound')($)('H')    = [];
 
 m = gf_mesh('import','GiD','data/tube_2D_spline.GiD.msh');

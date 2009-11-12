@@ -87,7 +87,7 @@ while(1)
                mim_bound, 'u', 'mult_dir', -1);
   // Solving the direct problem.
   U0 = gf_mesh_fem_get_eval(mf_basic, ...
-                            list('0.4*(3.*sin(%pi*(x+y)) + ((x-0.5).^10 + (y-0.5).^10 + (x+0.5).^10 + (y+0.5).^10))'));
+                            list(list('0.4*(3.*sin(%pi*(x+y)) + ((x-0.5).^10 + (y-0.5).^10 + (x+0.5).^10 + (y+0.5).^10))')));
   gf_model_set(md, 'variable', 'VolumicData', U0);
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');

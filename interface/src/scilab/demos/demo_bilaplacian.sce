@@ -58,12 +58,12 @@ else
 end
 
 FT=10.;
-sol_u      = gf_mesh_fem_get_eval(mfd,list(sprintf('sin(%g*(x+y))',FT)));
+sol_u      = gf_mesh_fem_get_eval(mfd,list(list(sprintf('sin(%g*(x+y))',FT))));
 sol_f      = sol_u*FT*FT*FT*FT*N*N;
 sol_lapl_u = -FT*FT*sol_u*N;
 
 b1 = gf_mdbrick('source term', b0);
-gf_mdbrick_set(b1, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list('1-(x-y).^2')));
+gf_mdbrick_set(b1, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(list('1-(x-y).^2'))));
 
 b2 = gf_mdbrick('normal derivative source term',b1,MOMENTUM_BOUNDARY);
 gf_mdbrick_set(b2, 'param', 'source_term', mfd,M);

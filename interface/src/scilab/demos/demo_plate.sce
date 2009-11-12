@@ -41,7 +41,7 @@ else
 end
 
 b1 = gf_mdbrick('plate_source_term', b0);
-gf_mdbrick_set(b1,'param', 'M', mfd, [ones(1,441); gf_mesh_fem_get_eval(mfd,list('x(2)*x(2)/1000'))]); // YC: pb here
+gf_mdbrick_set(b1,'param', 'M', mfd, [ones(1,441); gf_mesh_fem_get_eval(mfd,list(list('x(2)*x(2)/1000')))]); // YC: pb here
 b2 = gf_mdbrick('plate clamped support', b1, CLAMPED_BOUNDARY, 'augmented');
 b3 = gf_mdbrick('plate simple support', b2, SIMPLE_SUPPORT_BOUNDARY, 'augmented');
 b4 = b3;

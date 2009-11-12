@@ -24,9 +24,9 @@ gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
 drawnow;
 
 // interpolate the exact solution
-Uexact = gf_mesh_fem_get_eval(mf, list('y.*(y-1).*x.*(x-1)+x.^5'));
+Uexact = gf_mesh_fem_get_eval(mf, list(list('y.*(y-1).*x.*(x-1)+x.^5')));
 // its second derivative
-F      = gf_mesh_fem_get_eval(mf, list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)'));
+F      = gf_mesh_fem_get_eval(mf, list(list('-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)')));
 
 
 md = gf_model('real');

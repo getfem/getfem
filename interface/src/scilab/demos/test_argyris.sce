@@ -62,10 +62,10 @@ if 0 then
   pde('bound')($)('R')    = list(expr_u);
 
   U      = gf_solve(pde);
-  Uexact = gf_mesh_fem_get_eval(mfl, list(expr_u));
+  Uexact = gf_mesh_fem_get_eval(mfl, list(list(expr_u)));
 else
   expr_u = 'y.^5';
-  Uexact = gf_mesh_fem_get_eval(mfl, list(expr_u));
+  Uexact = gf_mesh_fem_get_eval(mfl, list(list(expr_u)));
   M = gf_asm('mass matrix', mim, mf, mf);
   F = gf_asm('volumic source', mim, mf, mfl, Uexact);
   U = (M\F)';

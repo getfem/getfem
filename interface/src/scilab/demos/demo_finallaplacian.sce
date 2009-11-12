@@ -4,7 +4,7 @@ down  = 102; // m.region(102)
 left  = 103; // m.region(103)
 right = 104; // m.region(104)
 // importing the mesh and boundary
-m = gf_mesh('import','gmsh','quad.msh');
+m = gf_mesh('import','gmsh','data/quad.msh');
 // create a MeshFem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
 // assign the P1 fem to all convexes of the MeshFem
@@ -12,11 +12,11 @@ gf_mesh_fem_set(mf,'fem',gf_fem('FEM_PK(2,1)'));
 // an exact integration will be used
 mim = gf_mesh_im(m,gf_integ('IM_EXACT_SIMPLEX(2)'));
 // interpolate the exact solution
-U = gf_mesh_fem_get_eval(mf, list('x(1)*(x(1)-1)*x(2)*(x(2)-1)'));
+U = gf_mesh_fem_get_eval(mf, list(list('x(1)*(x(1)-1)*x(2)*(x(2)-1)')));
 // its Normal derivative on the domain boundary right (left is -DU)
-DU = gf_mesh_fem_get_eval(mf, list('(2*x(1)-1)*x(2)*(x(2)-1)'));
+DU = gf_mesh_fem_get_eval(mf, list(list('(2*x(1)-1)*x(2)*(x(2)-1)')));
 // its laplacian
-F = gf_mesh_fem_get_eval(mf, list('-(2*(x(1)**2+x(2)**2)-2*(x(1)+x(2)))'));
+F = gf_mesh_fem_get_eval(mf, list(list('-(2*(x(1)**2+x(2)**2)-2*(x(1)+x(2)))')));
 // generic elliptic brick
 b0 = gf_mdbrick('generic_elliptic',mim,mf);
 // add a Dirichlet condition on the domain boundary up

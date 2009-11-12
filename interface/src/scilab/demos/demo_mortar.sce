@@ -54,7 +54,7 @@ drawlater;
 gf_plot_mesh(m,'boundaries',40);
 drawnow;
 
-disp('This is the mortar interface (press a key to continue)'); pause;
+disp('This is the mortar interface (enter ''resume'' to continue)'); pause;
 
 indm = gf_mesh_fem_get(mfm, 'basic dof on region', MORTAR_BOUNDARY_OUT);
 expr = 'M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i)';
@@ -68,7 +68,7 @@ gf_model_set(md, 'add initialized data', 'lambda', [1]);
 gf_model_set(md, 'add initialized data', 'mu', [1]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1);
-F = gf_mesh_fem_get_eval(mfd, list(0, 'y+2'));
+F = gf_mesh_fem_get_eval(mfd, list(list(0), list('y+2')));
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add variable', 'mult_spec', length(indm));

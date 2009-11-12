@@ -13,26 +13,26 @@ pde = init_pde();
 
 pde('type') = 'stokes'; // YC:
 pde('viscos') = 1.0;
-pde('F')      = list(0,0,0);
+pde('F')      = list(list(0,0,0));
 
 pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list('9-(y.^2+(z-6.0).^2)',0,0);
+pde('bound')($)('R')    = list(list('9-(y.^2+(z-6.0).^2)',0,0));
 
 pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list('9-(y.^2+(z-6.0).^2)',0,0);
+pde('bound')($)('R')    = list(list('9-(y.^2+(z-6.0).^2)',0,0));
 
 pde = add_empty_bound(pde);
 //pde('bound')($)('type') = 'Mixed'; 
 pde('bound')($)('type') = 'Dirichlet';
 pde('bound')($)('R')    = list(0,0,0);
-pde('bound')($)('H')    = list([0,0,0],[0,0,0],[0,0,1]);
-pde('bound')($)('G')    = list(0,0,0);
+pde('bound')($)('H')    = list(list(0,0,0),list(0,0,0),list(0,0,1));
+pde('bound')($)('G')    = list(list(0,0,0));
 
 pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list(0,0,0);
+pde('bound')($)('R')    = list(list(0,0,0));
 
 m = gf_mesh('import','GiD','data/tank_quadratic_2500.GiD.msh');
 mfulag   = gf_mesh_fem(m,3);

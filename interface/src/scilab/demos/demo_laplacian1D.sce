@@ -79,8 +79,8 @@ for j=1:3
 //YC:    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_u)));
 //YC:    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_f)));
     
-    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get_eval(mfd, list(expr_u)));
-    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(expr_f)));
+    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get_eval(mfd, list(list(expr_u))));
+    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(list(expr_f))));
 
     mds = gf_mdstate(b2);
     

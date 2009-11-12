@@ -100,7 +100,7 @@ for step=1:8
   h.color_map = jetcolormap(255);
   drawnow;
 
-  disp('press a key..'); pause;
+  disp('enter ''resume'' to continue'); pause;
   
   Index = find(ERR > 1e-3);
   gf_mesh_set(m, 'refine', Index);

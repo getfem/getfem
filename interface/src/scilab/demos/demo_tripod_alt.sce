@@ -77,7 +77,6 @@ elseif (lsolver == 3) then
 elseif (lsolver == 4) then
   UU = linsolve(K, F);
 else                   // the scilab "slash" operator 
-else                   // the scilab "slash" operator 
   UU = K\F;
 end
 t_end = timer();

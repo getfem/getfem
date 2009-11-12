@@ -15,10 +15,8 @@ pde('type') = 'stokes'; // YC:
 pde('viscos') = 1.0;
 pde           = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
-pde('bound')($)('R')    = list('y.*(y-1)',0);
-pde('bound')($)('H')    = list(1,0,0,1);
-//pde('bound')($)('H')    = list([1,0],[0,1]);
-//pde('bound')($)('H')    = list([1 0;0 1]);
+pde('bound')($)('R')    = list(list('y.*(y-1)',0));
+pde('bound')($)('H')    = list(list(1,0),list(0,1));
 
 m = gf_mesh('cartesian',[0:.3:5],[0:.2:1]);
 

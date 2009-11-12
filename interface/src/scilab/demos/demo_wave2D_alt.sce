@@ -90,11 +90,11 @@ gf_mesh_set(m,'boundary',2,fout);
 
 // expression of the incoming wave
 wave_expr = sprintf('cos(%f*y+.2)+1*%%i*sin(%f*y+.2)',k,k);
-Uinc = gf_mesh_fem_get_eval(mfd,list(wave_expr));
+Uinc = gf_mesh_fem_get_eval(mfd,list(list(wave_expr)));
 
 // currently the toolbox does not handle complex valued arrays,
 // hence we have to treat both real and imaginary part
-tmp = gf_mesh_fem_get_eval(mfd,list(1)); // YC: add in the doc: second argument of gf_mesh_fem_get_eval must be a list
+tmp = gf_mesh_fem_get_eval(mfd,list(list(1))); // YC: add in the doc: second argument of gf_mesh_fem_get_eval must be a list
 [Hr,Rr] = gf_asm('dirichlet', 1, mim, mfu, mfd, tmp, real(Uinc));
 [Hi,Ri] = gf_asm('dirichlet', 1, mim, mfu, mfd, tmp, imag(Uinc));
 [_null,udr] = gf_spmat_get(Hr,'dirichlet nullspace', Rr);

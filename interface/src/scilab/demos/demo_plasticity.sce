@@ -43,8 +43,8 @@ h = scf();
 h.color_map = jetcolormap(255);
 
 for step=1:nbstep
-  //gf_mdbrick_set('param','source_term', mfd, gf_mesh_fem_get(mfd, 'eval',list(0;-400*sin(step*%pi/2))));
-  gf_mdbrick_set(b2, 'param','source_term', mfd, gf_mesh_fem_get_eval(mfd,list(F(1,step),F(2,step))));
+  //gf_mdbrick_set('param','source_term', mfd, gf_mesh_fem_get(mfd, 'eval',list(list(0),list(-400*sin(step*%pi/2)))));
+  gf_mdbrick_set(b2, 'param','source_term', mfd, gf_mesh_fem_get_eval(mfd,list(list(F(1,step)),list(F(2,step)))));
   gf_mdbrick_get(b2, 'solve', mds, 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
     
   U  = gf_mdstate_get(mds, 'state'); 

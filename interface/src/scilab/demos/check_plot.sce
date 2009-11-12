@@ -14,10 +14,10 @@ gf_mesh_fem_set(mf22,'fem',gf_fem('FEM_QK(2,2)'));//,gf_integ('IM_EXACT_PARALLEL
 gf_mesh_fem_set(mf2v,'fem',gf_fem('FEM_PK(2,1)'));//,gf_integ('IM_TRIANGLE(5)'));
 gf_mesh_fem_set(mf3 ,'fem',gf_fem('FEM_QK(3,1)'));//,gf_integ('IM_EXACT_PARALLELEPIPED(3)'));
 gf_mesh_fem_set(mf3v,'fem',gf_fem('FEM_QK(3,1)'));//,gf_integ('IM_NC_PARALLELEPIPED(3,2)'));
-U2  = gf_mesh_fem_get_eval(mf2,list('x.*y'));
-U2v = gf_mesh_fem_get_eval(mf2v,list('x.*y','1-x+y.*y'));
-U3  = gf_mesh_fem_get_eval(mf3,list('z'));
-U3v = gf_mesh_fem_get_eval(mf3v,list('z',0,'x+y'));
+U2  = gf_mesh_fem_get_eval(mf2,list(list('x.*y')));
+U2v = gf_mesh_fem_get_eval(mf2v,list(list('x.*y','1-x+y.*y')));
+U3  = gf_mesh_fem_get_eval(mf3,list(list('z')));
+U3v = gf_mesh_fem_get_eval(mf3v,list(list('z',0,'x+y')));
 gf_workspace('push');
 sl2 = gf_slice(list('none'),m2,2);
 sl3 = gf_slice(list('none'),m3,2,gf_mesh_get(m3,'outer faces'));

@@ -94,7 +94,7 @@ gf_mesh_set(m,'boundary',2,fout);
 // expression of the incoming wave
 disp(k)
 wave_expr = sprintf('cos(%f*y+.2)+1*%%i*sin(%f*y+.2)',k,k);
-Uinc      = gf_mesh_fem_get_eval(mfd,list(wave_expr));
+Uinc      = gf_mesh_fem_get_eval(mfd,list(list(wave_expr)));
 
 //
 // we present three approaches for the solution of the Helmholtz problem

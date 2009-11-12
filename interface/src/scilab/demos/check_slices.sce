@@ -7,7 +7,7 @@ gf_mesh_set(m,'del convex',[1]);
 mf = gf_mesh_fem(m,1);
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_PK(2,2)'))
 //U  = gf_mesh_fem_get(mf,'eval', list('x.*x + y.*y'));
-U  = gf_mesh_fem_get_eval(mf, list('x.*x + y.*y'));
+U  = gf_mesh_fem_get_eval(mf, list(list('x.*x + y.*y')));
 sl = gf_slice(list('planar',0,[.5;0],[1;0]),m,3);
 pp = gf_slice_get(sl,'pts');
 assert('abs(pp(1,:)-.5)<1e-15');
