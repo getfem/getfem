@@ -471,7 +471,7 @@ usemuparser="no"
 AC_ARG_ENABLE(muparser,
  [AS_HELP_STRING([--enable-muparser],[enable the use of the muParser library (required for parsing mathematical expressions)])],
  [ if test "x$enableval" = "xyes" ; then usemuparser="yes"; fi], [usemuparser="test"])
-MUPARSE_LIBS=""
+MUPARSER_LIBS=""
 
 if test "x$usemuparser" = "xno"; then
   echo "Building with muParser explicitly disabled";
