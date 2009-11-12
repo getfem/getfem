@@ -45,9 +45,9 @@
 gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
 {
   static gfi_output result;
-  gfi_array **pin = NULL;
+  gfi_array **pin  = NULL;
   gfi_array **pout = NULL;
-  char *errmsg=0, *infomsg=0;
+  char *errmsg = 0, *infomsg = 0;
   unsigned int i;
 
 #ifdef DEBUG2
@@ -178,16 +178,17 @@ int sci_gf_scilab(char * fname)
   sciprint("sci_gf_scilab: fname = %s - calling call_getfem_interface with %s\n",fname, &fname[3]);
 #endif
 
-//   // Without output parameter in Scilab, Lhs == 1 because we always return something in "ans"
-//   if (Lhs==1)
-//     {
-//       out = call_getfem_interface(&fname[3], *in, 0);
-//     }
-//   else
-//     {
-//       out = call_getfem_interface(&fname[3], *in, Lhs);
-//     }
   out = call_getfem_interface(&fname[3], *in, Lhs);
+
+  // We now remove all the allocated memory for the input parameters
+  // This memory is allocated in gfm_common.c
+  if (in) 
+    {
+      for(i=0;i<in->arg.arg_len;i++)
+	gfi_array_destroy(&in->arg.arg_val[i]);
+      gfi_free(in->arg.arg_val);
+      gfi_free(in); 
+    }
 
 #ifdef DEBUG_TIMER
   time_end = clock()/CLOCKS_PER_SEC;
@@ -242,7 +243,7 @@ int sci_gf_scilab(char * fname)
   sciprint("DEBUG_TIMER: after gfi_array_to_sci_array: %f\n", (double)(time_end - time_start));
 #endif
 
-  FREE(ptr_param);
+  if (ptr_param) FREE(ptr_param);
 
   return 0;
 }

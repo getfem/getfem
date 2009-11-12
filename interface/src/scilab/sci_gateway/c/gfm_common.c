@@ -131,7 +131,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: dealing with mlist\n");
 #endif
-	int pirow, picol, *pilen, *pilistaddress;
+	int pirow, picol, *pilen, *pilistaddress, size_pistring = 0;
 	char ** pstStrings;
 	double * pdblDataID, * pdblDataCID;
 	int * pintDims;
@@ -147,6 +147,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	    pstStrings[i] = (char *)MALLOC((pilen[i]+1)*sizeof(char));
 	  }
 	_SciErr = getMatrixOfStringInList(&_StrCtx,sci_x,1,&pirow,&picol,pilen,pstStrings);
+	size_pistring = pirow*picol;
 
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: pstStrings[0] = %s\n",pstStrings[0]);
@@ -294,6 +295,13 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: end\n");
 #endif
+	// Free the allocated memory
+	for(i=0;i<size_pistring;i++)
+	  {
+	    if (pstStrings[i]) FREE(pstStrings[i]);
+	  }
+	if (pstStrings) FREE(pstStrings);
+	if (pilen)      FREE(pilen);
       } 
       break;
     case sci_strings: 
@@ -336,9 +344,10 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 	t->dim.dim_val = (u_int*)MALLOC(1*sizeof(u_int));
 	t->dim.dim_val[0] = pilen[0];
 
-	FREE(pilen);
-	for(i=0; i<pirow*picol ; i++) FREE(pstData[i]);
-	FREE(pstData);
+	for(i=0; i<pirow*picol ; i++) 
+	  if (pstData[i]) FREE(pstData[i]);
+	if (pstData) FREE(pstData);
+	if (pilen)   FREE(pilen);
 
 #ifdef DEBUG
 	sciprint("sci_array_to_gfi_array: end\n");
@@ -565,7 +574,7 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 		t->storage.gfi_storage_u.sp.ir.ir_val[i]--;
 	      }
 
-	    FREE(ptr);
+	    if (ptr) FREE(ptr);
 #else
 	    offset = (int *)MALLOC(pirow*sizeof(int));
 
@@ -600,7 +609,8 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 		  }
 	      }
 	    t->storage.gfi_storage_u.sp.jc.jc_val[picol] = nbitem;
-	    FREE(offset);
+
+	    if (offset) FREE(offset);
 #endif
 	  }
 	else
@@ -661,9 +671,9 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 		t->storage.gfi_storage_u.sp.pr.pr_val[2*i+1] = tmp_dblDataImag[i];
 	      }
 
-	    FREE(tmp_dblDataReal);
-	    FREE(tmp_dblDataImag);
-	    FREE(ptr);
+	    if (tmp_dblDataReal) FREE(tmp_dblDataReal);
+	    if (tmp_dblDataImag) FREE(tmp_dblDataImag);
+	    if (ptr)             FREE(ptr);
 #else
 	    offset = (int *)MALLOC(pirow*sizeof(int));
 
@@ -691,7 +701,8 @@ int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 		  }
 	      }
 	    t->storage.gfi_storage_u.sp.jc.jc_val[picol] = nbitem;
-	    FREE(offset);
+
+	    if (offset) FREE(offset);
 #endif
 	  }
 
@@ -798,8 +809,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    // Add a vector to the 'entries' field -> a column vector
 	    _SciErr = createMatrixOfUnsignedInteger32InList(&_StrCtx,ivar, m_var, 3, nb_elem, 1, entries);
 		
-	    FREE(dims);
-	    FREE(entries);
+	    if (dims)    FREE(dims);
+	    if (entries) FREE(entries);
 	  }
       } 
       break;
@@ -858,8 +869,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 	    // Add a vector to the 'entries' field -> a column vector
 	    _SciErr = createMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, nb_elem, 1, entries);
 		
-	    FREE(entries);
-	    FREE(dims);
+	    if (entries) FREE(entries);
+	    if (dims)    FREE(dims);
 	  }
       } 
       break;
@@ -919,8 +930,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		
 		_SciErr = createComplexMatrixOfDouble(&_StrCtx,ivar, nrow, ncol, pr, pi);
 		
-		FREE(pr);
-		FREE(pi);
+		if (pr) FREE(pr);
+		if (pi) FREE(pi);
 	      }
 	  }
 	else
@@ -954,7 +965,7 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		// Add a vector to the 'entries' field -> a column vector
 		_SciErr = createMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, nb_elem, 1, entries);
 		
-		FREE(entries);
+		if (entries) FREE(entries);
 #ifdef DEBUG
 		sciprint("DEBUG: end array is hypermat\n");
 #endif
@@ -976,10 +987,10 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		// Add a vector to the 'entries' field
 		_SciErr = createComplexMatrixOfDoubleInList(&_StrCtx,ivar, m_var, 3, 1, nb_elem, entries_pr, entries_pi);
 		
-		FREE(entries_pr);
-		FREE(entries_pi);
+		if (entries_pr) FREE(entries_pr);
+		if (entries_pi) FREE(entries_pi);
 	      }
-	    FREE(dims);
+	    if (dims) FREE(dims);
 	  }
 
 	_SciErr = getVarAddressFromPosition(&_StrCtx,ivar, &m_var);
@@ -1252,8 +1263,8 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		     nb_item_row, 
 		     pi_col_pos);
 	    
-	    FREE(pdblDataImag_tmp);
-	    FREE(pdblDataReal_tmp);
+	    if (pdblDataImag_tmp) FREE(pdblDataImag_tmp);
+	    if (pdblDataReal_tmp) FREE(pdblDataReal_tmp);
 	  }
 	else
 	  {
@@ -1282,9 +1293,9 @@ int * gfi_array_to_sci_array(gfi_array *t, int ivar)
 		     pi_col_pos);
 	  }
 
-	FREE(ptr);
-	FREE(nb_item_row_tmp);
-	FREE(pi_col_pos_tmp);
+	if (ptr)             FREE(ptr);
+	if (nb_item_row_tmp) FREE(nb_item_row_tmp);
+	if (pi_col_pos_tmp)  FREE(pi_col_pos_tmp);
 #else
 #ifdef DEBUG
 	sciprint("picol = %d pirow = %d nbitem = %d\n", picol, pirow, nbitem);
@@ -1423,7 +1434,8 @@ struct sigaction old_sigint;
 static int sigint_hit = 0;
 static getfem_sigint_handler_t sigint_callback;
 
-static void sigint(int sig) {
+static void sigint(int sig) 
+{
   sigint_callback(sig);
   remove_custom_sigint(0);
   sigint_hit++;
@@ -1443,17 +1455,20 @@ void install_custom_sigint(getfem_sigint_handler_t h) {
 #endif
 }
 
-void remove_custom_sigint(int allow_rethrow) {
+void remove_custom_sigint(int allow_rethrow) 
+{
 #ifndef WIN32
   struct sigaction act;
   sigaction (SIGINT, NULL, &act);
-  if (act.sa_handler == sigint) {
-    sigaction(SIGINT, &old_sigint, NULL);
-  }
-  if (allow_rethrow && sigint_hit) {
-    fprintf(stderr, "ready, raising SIGINT now\n");
-    raise(SIGINT); 
-  }
+  if (act.sa_handler == sigint) 
+    {
+      sigaction(SIGINT, &old_sigint, NULL);
+    }
+  if (allow_rethrow && sigint_hit) 
+    {
+      fprintf(stderr, "ready, raising SIGINT now\n");
+      raise(SIGINT); 
+    }
   sigint_hit = 0; 
 #endif
 }
