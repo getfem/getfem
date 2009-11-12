@@ -369,7 +369,7 @@ if (length(T)) then
                                        round(255*ctmp(2)), ...
                                        round(255*ctmp(3)));
     else
-      ctmp = ceil((ctmp - min(ctmp)) / (max(ctmp) - min(ctmp)) * size(h.color_map,1));
+      ctmp = ceil((ctmp - min(ctmp)) / max(%eps,(max(ctmp) - min(ctmp))) * size(h.color_map,1));
       ctmp = matrix(ctmp(T,1),size(T,1),length(p_tmp(T,2))/size(T,1))';
     end
   
