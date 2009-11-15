@@ -28,10 +28,10 @@ gf_workspace('clear all');
 
 % parameters
 initial_holes = 1;     % Pre-existing holes or not.
-NY = 20;               % Number of elements in y direction
+NY = 40;               % Number of elements in y direction
 
 k = 1;                 % Degree of the finite element method for u
-N = 3;                 % Dimension of the mesh (2 or 3).
+N = 2;                 % Dimension of the mesh (2 or 3).
 lambda = 1;            % Lame coefficient
 mu = 1;                % Lame coefficient
 hole_radius = max(0.03, 2./NY);  % Hole radius for topological optimization
@@ -295,26 +295,24 @@ for niter = 1:100000
 
   % Evolution of the level-set thank to shape derivative.
   % Hamilton-Jacobi equation. Less stable.
-  if (0)
-    dt = 0.006; NT = 10; ddt = dt / NT;
-    for t = 0:ddt:dt
-      DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
-      NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
-      GFF = GF ./ NORMDLS;
-  
-      if (N == 2)
-        V = DLS.*[GFF; GFF];
-      else
-        V = DLS.*[GFF; GFF; GFF];
-      end;
-  
-      Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, V);
-      % Vcont = Mcont \ Fdisc;
-      Vcont = cgs(Mcont, Fdisc, 1e-8, 100000, RMcont);
-
-      gf_compute(mf_ls, ULS, 'convect', mf_cont,Vcont,ddt,2, 'extrapolation');
-    end;
-  end;
+  %  dt = 0.006; NT = 10; ddt = dt / NT;
+  %  for t = 0:ddt:dt
+  %    DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
+  %    NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
+  %    GFF = GF ./ NORMDLS;
+  % 
+  %    if (N == 2)
+  %      V = DLS.*[GFF; GFF];
+  %    else
+  %      V = DLS.*[GFF; GFF; GFF];
+  %    end;
+  %
+  %    Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, V);
+  %    % Vcont = Mcont \ Fdisc;
+  %    Vcont = cgs(Mcont, Fdisc, 1e-8, 100000, RMcont);
+  %
+  %    gf_compute(mf_ls, ULS, 'convect', mf_cont,Vcont,ddt,2, 'extrapolation');
+  %  end;
 
   if (DEBUG && mod(niter, NBDRAW) == 0)
     subplot(NG,1,2);
