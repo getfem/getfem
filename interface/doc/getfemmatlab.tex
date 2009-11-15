@@ -144,6 +144,8 @@ colorlinks=true,pdfauthor={Julien Pommier},urlcolor=blue]{hyperref}
 \newcommand{\integ}{integ\xspace}
 \newcommand{\cvstruct}{cvstruct\xspace}
 \newcommand{\tint}{\vartype{int}\xspace}
+\newcommand{\tgl}{\vartype{global\_function}\xspace}
+\newcommand{\tls}{\vartype{level\_set}\xspace}
 \newcommand{\tuint}{\vartype{uint32}\xspace}
 \newcommand{\thobj}{\vartype{hobj}\xspace}
 \newcommand{\tscal}{\vartype{scalar}\xspace}
@@ -898,7 +900,9 @@ Here is a list of these types:
   \tgeotrans & geometric transformation descriptor (or ##gfGeoTrans object)\\
   \tfem  & fem descriptor (or ##gfFem object)\\
   \teltm & elementary matrix descriptor (or ##gfEltm object)\\
-  \tinteg & integration method descriptor (or ##gfInteg object)
+  \tinteg & integration method descriptor (or ##gfInteg object)\\
+  \tls    & Level-set object\\
+  \tgl    & Global function
 \end{tabular}
 
 Arguments listed between square brackets are optional.  Lists
@@ -1872,6 +1876,75 @@ gf_fem_get(f, 'poly_str')
 \end{gfseealso}
 \newpage
 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%% GF_GLOBAL_FUNCTION
+\subsection{gf\_global_function}
+\begin{purpose}
+\hypertarget{gfglobfunc}
+  General constructor for global function object. Returns a getfem
+  handle to the newly created global function object. Note that for
+  recent $(> 6.0)$ versions of matlab, you should replace the calls to
+  'gf_global_function' with 'gfGlobalFunction' (this will instruct
+  Matlab to consider the getfem global function as a regular matlab
+  object that can be manipulated with get() and set() methods).
+\end{purpose}
+\begin{synopsis}
+@@\tgl gf = gf_global_function('cut_off', \tint fn, \tscal r, \tscal r1, \tscal r0)
+  \tgl gf = gf_global_function('crack', \tint fn)
+  \tgl gf = gf_global_function('parser', \tstr val[, \tstr grad[, \tstr hess]])
+  \tgl gf = gf_global_function('product', \tgl f1, \tgl f2)
+  \tgl gf = gf_global_function('add', \tgl f1, \tgl f2)
+@@\end{synopsis}
+
+
+\begin{cmddescription}
+  \sep{@@\tgl gf = gf_global_function('cut_off', \tint fn, \tscal r, \tscal r1, \tscal r0)@@}
+  Create a cutoff global function.
+
+  \sep{@@\tgl gf = gf_global_function('crack', \tint fn)@@}
+  Create a near-tip asymptotic global function for modelling cracks.  
+
+  \sep{@@\tgl gf = gf_global_function('parser', \tstr val[, \tstr grad[, \tstr hess]])@@}
+  Create a global function from strings `val`, `grad` and `hess`.
+
+  \sep{@@\tgl gf = gf_global_function('product', \tgl f1, \tgl f2)@@}
+  Create a product of two global functions.
+
+  \sep{@@\tgl gf = gf_global_function('add', \tgl f1, \tgl f2)@@}
+  Create a add of two global functions.
+
+\end{cmddescription}
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%% GF_GLOBAL_FUNCTION_GET
+\subsection{gf\_global_function_get}
+\begin{purpose}
+\hypertarget{gfglobfuncget}
+  General function for querying information about global_function objects.
+\end{purpose}
+\begin{synopsis}
+@@\tmat VALs = gf_global_function('val', \tmat PTs)
+  \tmat GRADs = gf_global_function('grad', \tmat PTs)
+  \tmat HESSs = gf_global_function('hess', \tmat PTs)
+@@\end{synopsis}
+\begin{cmddescription}
+  \sep{@@\tmat VALs = gf_global_function('val', \tmat PTs)@@}
+  Return `val` function evaluation in `PTs` (column points).
+
+  \sep{@@\tmat GRADs = gf_global_function('grad', \tmat PTs)@@}
+  Return `val` function evaluation in `PTs` (column points).
+
+  \sep{@@\tmat HESSs = gf_global_function('hess', \tmat PTs)@@}
+  Return `val` function evaluation in `PTs` (column points).
+  
+\end{cmddescription}
+\newpage
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%% GF_MESH_FEM
 \subsection{gf\_mesh\_fem}
 \begin{purpose}
@@ -1884,6 +1957,8 @@ General constructor for \tmf object. Returns a \gf handle
 \tmf MF[,M] = gf\_mesh\_fem('load', \tstr filename[,\tmesh M])
 \tmf MF[,M] = gf\_mesh\_fem('from string', \tstr S [,\tmesh M])
 \tmf MF = gf\_mesh\_fem('clone', \tmf MF0)
+\tmf MF = gf\_mesh\_fem('partial', \tmf mf, \tivec DOFs[, \tivec RCVs])
+\tmf MF = gf\_mesh\_fem('global function', \tmesh m, \tls ls, \{\tgl F1,...\}[, \tint Qdim_m])
 @@\end{synopsis}
 \begin{cmddescription}
   This function creates a \tmf object. These objects hold the finite
@@ -1909,6 +1984,14 @@ General constructor for \tmf object. Returns a \gf handle
   And finally, it is possible to build a copy of a \tmf object with
   the \hil{@@gf\_mesh\_fem('clone', MF0)@@} command (see also the
   @@gf_mesh('clone')@@ command).
+
+  \sep{@@gf\_mesh\_fem('partial', \tmf mf, \tivec DOFs[, \tivec
+    RCVs])@@} creates a special restricted \tmf by keeping only a
+    subset of the degrees of freedom of a pre-existing \tmf `mf`.
+    If `RCVs` is given, no FEM will be put on the convexes listed in `RCVs`.
+
+  \sep{@@gf\_mesh\_fem('global function', \tmesh m, \tls ls, \{\tgl F1,...\}[,    \tint Qdim_m])@@}  Create a \tmf whose base functions are global
+    function given by the user.
 \end{cmddescription}
 \begin{gfseealso}
   @@gf\_mesh\_fem\_get, gf\_mesh\_fem\_set, gfMeshFem@@
@@ -2126,6 +2209,7 @@ gf\_mesh\_fem\_set(MF, 'qdim', \tint Qdim)
 gf\_mesh\_fem\_set(MF, 'reduction', \tint s)
 gf\_mesh\_fem\_set(MF, 'reduction matrices', \tspmat R, \tspmat E)
 gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)
+gf\_mesh\_fem\_set(MF, 'set partial', \tivec DOFs[, \tivec RCVs])
 @@\end{synopsis}
 \begin{cmddescription}
   \sep{@@gf\_mesh\_fem\_set(MF, 'fem', fem [, CVIDX])@@} \index{FEM}
@@ -2159,6 +2243,11 @@ gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)
   \sep{@@gf\_mesh\_fem\_set(MF, 'dof partition', \tivec DOFP)@@} : 
   change the array which associates an integer (the partition number) to each convex of
   the \tmf (see @@gf\_mesh\_fem\_get(MF, 'dof partition')@@).
+
+  \sep{@@gf\_mesh\_fem\_set(MF, 'set partial', \tivec DOFs[, \tivec RCVs])@@} :
+  Can only be applied to a partial @tmf. Change the subset of the
+  degrees of freedom of `mf`.
+  If `RCVs` is given, no FEM will be put on the convexes listed in `RCVs`.
 \end{cmddescription}
 \begin{cmdexamples}
   Building a discontinuous \tmf @@mfdu@@ to compute the gradient @@DU@@ of a field @@U@@ defined on a \tmf @@mf@@:
@@ -2277,7 +2366,9 @@ M=gf_mesh_im_get(MIM, 'memsize')
   General function for editing \tmim\ objects\index{mesh_im}.
 \end{purpose}
 \begin{synopsis}
-@@gf\_mesh\_im\_set(MIM, 'integ', \{ \tinteg im | \tint IMDEGREE \}, [, \tivec CVIDX])@@\end{synopsis}
+@@gf\_mesh\_im\_set(MIM, 'integ', \{ \tinteg im | \tint IMDEGREE \}, [, \tivec CVIDX])
+gf\_mesh\_im\_set(MIM, 'adapt')
+@@\end{synopsis}
 \begin{cmddescription}
   \sep{@@gf\_mesh\_im\_set(MIM, 'integ', im [, CVIDX])@@} : \index{IM}
   set @@im@@ as the integration method for all
@@ -2288,6 +2379,10 @@ M=gf_mesh_im_get(MIM, 'memsize')
   assign a classical approximate integration method of order at least @@IM_DEGREE@@ on the
   listed convexes. If @@IM_DEGREE@@=-1, then the dummy integration method
   @@'IM_NONE'@@ is used.
+
+  \sep{@@gf\_mesh\_im\_set(MIM, 'adapt')@@}
+  For a \tmim levelset object only. Adapt the integration methods to a
+    change of the levelset function.
 \end{cmddescription}
 \begin{cmdexamples}
 \begin{mcode}

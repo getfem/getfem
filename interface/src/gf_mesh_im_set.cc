@@ -21,12 +21,13 @@
 
 #include <getfemint_misc.h>
 #include <getfemint_mesh_im.h>
+#include <getfem/getfem_mesh_im_level_set.h>
 
 using namespace getfemint;
 
 
-static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& in)
-{
+static void gf_mesh_im_set_integ_(getfem::mesh_im *mim,
+				  getfemint::mexargs_in& in) {
   getfem::pintegration_method pim = 0;
   pim = in.pop().to_integration_method();
 
@@ -34,17 +35,20 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
   /* check or build the convex list */
   dal::bit_vector bv;
   if (in.remaining() == 1)
-    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -config::base_index());
+    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(),
+				-config::base_index());
   else
     all_cv = true;
 
   /* check for the validity of the operation */
   for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
     //if (!mim->linked_mesh().convex_index().is_in(cv))
-    //  THROW_ERROR("Convex " << cv+config::base_index() << " was not found in mesh");
+    //  THROW_ERROR("Convex " << cv+config::base_index()
+    //                        << " was not found in mesh");
     if (pim->structure() !=
 	mim->linked_mesh().structure_of_convex(cv)->basic_structure())
-      infomsg() << "Warning: structure of the Integration Method seems to be incompatible with the structure of the convex\n";
+      infomsg() << "Warning: structure of the Integration Method seems "
+	"to be incompatible with the structure of the convex\n";
   }
 
   /* all the work done here */
@@ -56,12 +60,14 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim, getfemint::mexargs_in& i
 
 /* set the classical integ of order IM_DEGREE on the mesh_im, with a classical integration
    method */
-static void gf_mesh_im_set_classical_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in) {
+static void gf_mesh_im_set_classical_integ(getfem::mesh_im *mim,
+					   getfemint::mexargs_in& in) {
   dim_type IM_DEGREE = dim_type(-1);
   if (in.remaining()) IM_DEGREE = dim_type(in.pop().to_integer(-1,255));
   dal::bit_vector bv;
   if (in.remaining() == 1) {
-    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(), -config::base_index());
+    bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(),
+				-config::base_index());
   } else {
     bv = mim->linked_mesh().convex_index();
   }
@@ -82,6 +88,7 @@ void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in) {
   General function for modifying mesh_im objects
 
   @SET MESHIM:SET('integ')
+  @SET MESHIM:SET('adapt')
 
   $Id$
 MLABCOM*/
@@ -107,5 +114,14 @@ void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     of `degree <= im_degree` are exactly integrated. If `im_degree=-1`,
     then the dummy integration method IM_NONE will be used.)@*/
     gf_mesh_im_set_integ(mim, in);
+  } else if (check_cmd(cmd, "adapt", in, out, 0, 0, 0, 0)) {
+    /*@SET MESHIM:SET('adapt')
+    For a @tmim levelset object only. Adapt the integration methods to a
+    change of the levelset function.@*/
+    getfem::mesh_im_level_set *mimls
+      = dynamic_cast<getfem::mesh_im_level_set *>(mim);
+    if (!mimls) THROW_BADARG("The command 'adapt' can only be "
+			     "applied to a mesh_im_level_set object");
+    mimls->adapt();
   } else bad_cmd(cmd);
 }

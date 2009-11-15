@@ -238,6 +238,7 @@ class MeshFem:
     #@SET    MESHFEM:SET('reduction')
     #@SET    MESHFEM:SET('reduction matrices')
     #@SET    MESHFEM:SET('dof partition')
+    #@SET    MESHFEM:SET('set partial') 
     def eval(self, expression, gl={}, lo={}):
       """interpolate an expression on the (lagrangian) MeshFem.
 
@@ -303,6 +304,8 @@ class MeshIm:
     #@GET MESHIM:GET('memsize')
 
     #@SET MESHIM:SET('integ')
+    #@SET MESHIM:SET('adapt')
+    
 
 
 class MdBrick:

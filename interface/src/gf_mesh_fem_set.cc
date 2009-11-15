@@ -22,6 +22,7 @@
 #include <getfemint_misc.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_gsparse.h>
+#include <getfem/getfem_partial_mesh_fem.h>
 
 using namespace getfemint;
 
@@ -90,6 +91,7 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in, b
   @SET MESHFEM:SET('reduction')
   @SET MESHFEM:SET('reduction matrices')
   @SET MESHFEM:SET('dof partition')
+  @SET MESHFEM:SET('set partial')
 
   $Id$
 MLABCOM*/
@@ -169,5 +171,22 @@ void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       in.pop().to_iarray(int(mf->linked_mesh().convex_index().last_true()+1));
     for (unsigned i=0; i < v.size(); ++i)
       mf->set_dof_partition(i, v[i]);
+  } else if (check_cmd(cmd, "set partial", in, out, 1, 2, 0, 0)) {
+      /*@SET MESHFEM:SET('set partial', @ivec DOFs[,@ivec RCVs])
+      Can only be applied to a partial @tmf. Change the subset of the
+      degrees of freedom of `mf`.
+
+      If `RCVs` is given, no FEM will be put on the convexes listed
+      in `RCVs`.@*/
+      dal::bit_vector doflst = in.pop().to_bit_vector();
+      dal::bit_vector rcvlst;
+      if (in.remaining()) rcvlst = in.pop().to_bit_vector();
+
+      getfem::partial_mesh_fem *ppmf
+	= dynamic_cast<getfem::partial_mesh_fem *>(mf);
+      if (!ppmf) THROW_BADARG("The command 'set partial' can only be "
+			      "applied to a partial mesh_fem object");
+      ppmf->adapt(doflst, rcvlst);
+
   } else bad_cmd(cmd);
 }

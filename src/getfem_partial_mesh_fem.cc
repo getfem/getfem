@@ -75,7 +75,7 @@ namespace getfem {
     }
     use_reduction = true;
 
-    is_adapted = true; touch();
+    is_adapted = true; touch(); v_num = act_counter();
   }
 
   void partial_mesh_fem::write_to_file(std::ostream &ost) const
