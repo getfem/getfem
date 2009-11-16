@@ -28,13 +28,17 @@ gf_workspace('clear all');
 
 // parameters
 initial_holes   = 1;    // Pre-existing holes or not.
-NY              = 40;   // Number of elements in y direction
+NY              = 15; //40;   // Number of elements in y direction
 k               = 1;    // Degree of the finite element method for u
-N               = 2;    // Dimension of the mesh (2 or 3).
+N               = 3;    // Dimension of the mesh (2 or 3).
 lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
-hole_radius     = 0.03; // Hole radius for topological optimization
-CF              = k*NY/40.; // Correction factor. Usefull ?
+hole_radius     = max(0.03,2/NY); // Hole radius for topological optimization
+if (N == 2) then
+  CF = k*NY/40.; // Correction factor. Usefull ?
+else
+  CF = k*NY/8;
+end
 threshold_shape = CF * 0.9;
 threshold_topo  = CF * 0.2;
 NBDRAW          = 5;    // Draw solution each NBDRAW iterations
@@ -104,9 +108,9 @@ P = gf_mesh_fem_get(mf_ls, 'basic dof nodes');
 
 // Force on the right part (Neumann condition)
 if (N == 2) then
-  F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '-4*(abs(y) < 0.0125)')));
+  F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '-1.0*(abs(y) < 0.05)')));
 else
-  F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '0', '-4*(abs(y) < 0.0125).*(abs(z) < 0.0125)')));
+  F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '0', '-6*(abs(y) < 0.05).*(abs(z) < 0.05)')));
 end
 
 h = scf();
@@ -140,13 +144,14 @@ for niter=1:100000 // Optimization loop
   gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
   gf_model_set(md, 'add initialized data', 'penalty_param', [1E-7]);          
   gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
-  gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 1, GAMMAD);
+  // gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 1, GAMMAD);
+  gf_model_set(md,'add Dirichlet condition with penalization', mim, 'u', 1E5, GAMMAD);
   gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
   gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
   
   // Solving the direct problem
   disp('solving the direct problem');
-  gf_model_get(md, 'solve', 'noisy');
+  gf_model_get(md, 'solve', 'max_res',1e-7,'noisy');
   U = gf_model_get(md, 'variable', 'u');
   nbd = gf_mesh_fem_get(mf_ls, 'nbdof');
   
@@ -154,7 +159,11 @@ for niter=1:100000 // Optimization loop
   K = gf_asm('linear elasticity', mim, mf, mf_ls, lambda*ones(1, nbd), mu*ones(1, nbd));
   disp(sprintf('Elastic energy at iteration %d: %g', niter, U*K*U'));
   S = gf_asm('volumic','V()+=comp()',mim);
-  disp(sprintf('Remaining surface of material: %g', S));
+  if (N == 2) then
+    disp(sprintf('Remaining surface of material: %g', S));
+  else
+    disp(sprintf('Remaining volume of material: %g', S));
+  end
   
   DU = gf_compute(mf, U, 'gradient', mf_g);
   EPSU = DU + permute(DU, [2 1 3]);
@@ -216,10 +225,14 @@ for niter=1:100000 // Optimization loop
         colorbar(min(ULS),max(ULS));  
       end
     else
-      sl = gf_slice(list('isovalues', 0, mf_ls, ULS, 0.0), m, 5);
-      Usl = gf_compute(mf_ls, ULS,'interpolate on',sl);
-      // P = gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
-      gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color',[.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
+      sl=gf_slice(list('boundary', list('isovalues', -1, mf_ls, ULS, 0.0)), m, 5);
+      // sl=gf_slice(list('isovalues', 0, mf_ls, ULS, 0.0), m, 5);
+      Usl=gf_compute(mf_g, GF,'interpolate on',sl);
+      // P=gf_slice_get(sl,'pts'); P=P([1 3 2],:); gf_slice_set(sl,'pts',P);
+      gf_plot_slice(sl,'data',Usl,'mesh','on','mesh_slice_edges_color', ...
+                    [.7 .7 .7],'mesh_edges_color',[.5 .5 1]);
+      colorbar;
+      title('Shape gradient on the remaining volume');
     end
     sleep(100);
     drawnow;
