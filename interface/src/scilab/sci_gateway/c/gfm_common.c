@@ -41,6 +41,10 @@
 #include "gfm_common.h"
 
 //#define DEBUG
+
+// The spt function is a fortran Scilab function which transpose a sparse matrix
+// This function is used to convert a matlab sparse format into a scilab sparse format
+
 #define USE_SPT
 
 // a function to transpose a sparse matrix. From modules/sparse/src/fortran
