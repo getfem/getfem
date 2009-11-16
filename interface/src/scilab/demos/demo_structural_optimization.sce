@@ -28,9 +28,9 @@ gf_workspace('clear all');
 
 // parameters
 initial_holes   = 1;    // Pre-existing holes or not.
-NY              = 15; //40;   // Number of elements in y direction
+NY              = 40;   // Number of elements in y direction
 k               = 1;    // Degree of the finite element method for u
-N               = 3;    // Dimension of the mesh (2 or 3).
+N               = 2;    // Dimension of the mesh (2 or 3).
 lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
 hole_radius     = max(0.03,2/NY); // Hole radius for topological optimization
@@ -92,6 +92,18 @@ gf_mesh_fem_set(mf_g,'fem', gf_fem(sprintf('FEM_PK_DISCONTINUOUS(%d,%d)', N, k-1
 mf_cont = gf_mesh_fem(m, N);
 gf_mesh_fem_set(mf_cont,'fem', gf_fem(sprintf('FEM_PK(%d,%d)', N, ls_degree)));
 
+disp(sprintf('There is %d elasticity dofs', gf_mesh_fem_get(mf_basic, 'nbdof')));
+
+disp('Computation of mass matrices and preconditioners');
+ti = timer();
+Mcont = gf_asm('mass matrix', mimls, mf_cont);
+//RMcont = sp_cholinc(Mcont, '0');
+RMcont = sp_cholinc(Mcont);
+Mcontls = gf_asm('mass matrix', mimls, mf_ls);
+//RMcontls = sp_cholinc(Mcontls, '0');
+RMcontls = sp_cholinc(Mcontls);
+disp(sprintf('Computation done in %g seconds', timer()-ti));
+
 // Definition of the initial level-set
 if (initial_holes) then
   if (N == 2) then
@@ -116,42 +128,59 @@ end
 h = scf();
 h.color_map = jetcolormap(255);
 
-for niter=1:100000 // Optimization loop
+// Model definition
+
+gf_levelset_set(ls, 'values', ULS);
+disp('Adapting the mesh');
+gf_mesh_levelset_set(mls, 'adapt');
+  
+if (N == 2) then
+  mim = gf_mesh_im('levelset',mls,'inside', gf_integ('IM_TRIANGLE(6)'));
+else
+  mim = gf_mesh_im('levelset',mls,'inside', gf_integ('IM_TETRAHEDRON(6)'));
+end
+
+disp('Mesh adapted');
+gf_mesh_im_set(mim, 'integ', 4);
+
+disp('Integration methods adapted');
+mf = gf_mesh_fem('partial', mf_basic, 1:gf_mesh_fem_get(mf_basic, 'nbdof'));
+
+md = gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mf);
+gf_model_set(md, 'add initialized data', 'mu', [mu]);
+gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
+gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
+gf_model_set(md, 'add initialized data', 'penalty_param', [1E-7]);          
+gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
+// gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 1, GAMMAD);
+gf_model_set(md,'add Dirichlet condition with penalization', mim, 'u', 1E5, GAMMAD);
+gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
+gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
+
+// Optimization loop
+for niter = 1:100000
+  ti = timer();
   gf_workspace('push');
 
-  gf_levelset_set(ls, 'values', ULS);
-  disp('Adapting the mesh');
-  gf_mesh_levelset_set(mls, 'adapt');
-  disp('Mesh adapted');
-  
-  if (N == 2) then
-    mim = gf_mesh_im('levelset',mls,'inside', gf_integ('IM_TRIANGLE(6)'));
-  else
-    mim = gf_mesh_im('levelset',mls,'inside', gf_integ('IM_TETRAHEDRON(6)'));
+  if (niter > 1) then
+    gf_levelset_set(ls, 'values', ULS);
+    disp('Adapting the mesh');
+    gf_mesh_levelset_set(mls, 'adapt');
+    disp('Mesh adapted');
+    gf_mesh_im_set(mim, 'adapt');
+    disp('Integration methods adapted');
   end
-  gf_mesh_im_set(mim, 'integ', 4);
 
-  M   = gf_asm('mass matrix', mim, mf_basic);
-  D   = abs(full(diag(M)));
+  M = gf_asm('mass matrix', mim, mf_basic);
+  D = abs(full(diag(M)));
   ind = find(D > (1/NY)^N/10000000);
-  mf  = gf_mesh_fem('partial', mf_basic, ind);
+  gf_mesh_fem_set(mf, 'set partial', ind); 
+  // mf = gf_mesh_fem('partial', mf_basic, ind);
 
-  // Problem definition
-  md = gf_model('real');
-  gf_model_set(md, 'add fem variable', 'u', mf);
-  gf_model_set(md, 'add initialized data', 'mu', [mu]);
-  gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
-  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
-  gf_model_set(md, 'add initialized data', 'penalty_param', [1E-7]);          
-  gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
-  // gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 1, GAMMAD);
-  gf_model_set(md,'add Dirichlet condition with penalization', mim, 'u', 1E5, GAMMAD);
-  gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
-  gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
-  
   // Solving the direct problem
   disp('solving the direct problem');
-  gf_model_get(md, 'solve', 'max_res',1e-7,'noisy');
+  gf_model_get(md, 'solve', 'max_res',1e-7); //'noisy');
   U = gf_model_get(md, 'variable', 'u');
   nbd = gf_mesh_fem_get(mf_ls, 'nbdof');
   
@@ -259,13 +288,33 @@ for niter=1:100000 // Optimization loop
   Mcontls = gf_asm('mass matrix', mimls, mf_ls); // Could be computed only once.
                                                  // and factorized once !
   Fdisc = gf_asm('volumic source', mimls, mf_ls, mf_g, GF);
-  Vcont = Mcontls \ Fdisc;
+  //Vcont = Mcontls \ Fdisc;
+  //Vcont = sp_cgs(Mcontls, Fdisc, 1e-8, 100000, RMcontls);
+  Vcont = sp_cgs(Mcontls, Fdisc, 1e-6, 1000,RMcontls);
   ULS = ULS - Vcont' * 0.005;
-
-
 
   // Evolution of the level-set thank to shape derivative.
   // Hamilton-Jacobi equation. Less stable.
+
+  //  dt = 0.006; NT = 10; ddt = dt / NT;
+  //  for t = 0:ddt:dt
+  //    DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
+  //    NORMDLS = sqrt(sum(DLS.^2, 1)) + 0.000001;
+  //    GFF = GF ./ NORMDLS;
+  // 
+  //    if (N == 2) then
+  //      V = DLS.*[GFF; GFF];
+  //    else
+  //      V = DLS.*[GFF; GFF; GFF];
+  //    end
+  //
+  //    Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, V);
+  //    // Vcont = Mcont \ Fdisc;
+  //    Vcont = sp_cgs(Mcont, Fdisc, 1e-8, 100000, RMcont);
+  //
+  //    gf_compute(mf_ls, ULS, 'convect', mf_cont,Vcont,ddt,2, 'extrapolation');
+  //  end
+
   Mcont = gf_asm('mass matrix', mimls, mf_cont); // Could be computed only once.
                                                  // and factorized once !
 
@@ -306,11 +355,12 @@ for niter=1:100000 // Optimization loop
    
   // Re-initialization of the level-set
   dt = 0.01; NT = 4; ddt = dt / NT;
- 
-  for t = 0:ddt:dt
+  ULS0 = ULS; 
+  for t = ddt:ddt:dt
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
     Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, DLS);
-    DLScont = Mcont \ Fdisc;
+    //DLScont = Mcont \ Fdisc;
+    DLScont = sp_cgs(Mcont, Fdisc, 1e-8, 100000, RMcont);
     NORMDLS = sqrt(sum(matrix(DLScont, N, size(DLScont, 1)/N).^2, 1)) + 1e-12;
     SULS = sign(ULS) ./ NORMDLS;
         
@@ -343,4 +393,5 @@ for niter=1:100000 // Optimization loop
   end
 
   gf_workspace('pop');
+  disp(sprintf('this iteration took %g minutes', (timer()-ti)/60));
 end
