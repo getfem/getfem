@@ -37,6 +37,15 @@ dnl ------------------------------------------------------------------------
 dnl AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AM_INIT_AUTOMAKE(1.10.1) 
 
+dnl --------------------------
+dnl set the optimization level
+dnl --------------------------
+
+AC_ARG_WITH(optimization,
+	    AC_HELP_STRING([--with-optimization=FLAG],[Set the optimization level (-O3 by default)]),
+	    [with_optimization=$withval],
+	    [with_optimization='-O3']
+	    )
 
 dnl -----------------------------------------------
 dnl test du c++
@@ -93,7 +102,7 @@ case $CXX in
  	cd $srcdir
 dnl     il faut utiliser -tweak au lieu des repositories ...
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
-dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
+dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi $with_optimization"
 	CFLAGS="$CFLAGS -fast -Wl,-S"
  	cd $here
 	;;
@@ -102,14 +111,14 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	*irix*)
 		echo "Using MIPSPRO CC on IRIX  (LD is set to CC)"
 		LD=CC   dnl sinon getfem_matlab a des problèmes (unresolved symbol __record_needed_destruction)
-dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
- 		CXXFLAGS="$CXXFLAGS -LANG:std  -O3 "
-dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
+dnl 		CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
+ 		CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization "
+dnl             CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -ansiW "
 		SUPLDFLAGS="-lCio"
 		;;
 	*sun*)
 		echo "Using SUN C++ WorkShop Compiler"
-		CXXFLAGS="$CXXFLAGS +w2 -O3 -library=stlport4"
+		CXXFLAGS="$CXXFLAGS +w2 $with_optimization -library=stlport4"
 		;;
 	esac
 	;;
@@ -121,7 +130,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
  *g++* | c++)
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
-	AC_CHECK_CXX_FLAG([-O3],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([$with_optimization],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-40],CXXFLAGS)
@@ -138,21 +147,21 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 	dnl -rdynamic used for backtraces
 	AC_CHECK_CXX_FLAG([-rdynamic],SUPLDFLAGS)
 
-dnl 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls -Wno-long-double"
+dnl 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic $with_optimization -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls -Wno-long-double"
 dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
-        CFLAGS="-O3"
+        CFLAGS="$CFLAGS $with_optimization"
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
 dnl -tpp6 is for pentiumII and more
 dnl -Xc is for ansi conformance
-	CXXFLAGS="$CXXFLAGS -O3 -Xc -ansi"
-        CFLAGS="$CFLAGS -O3 -Xc -ansi"
+	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
+        CFLAGS="$CFLAGS $with_optimization -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
- 	CXXFLAGS="$CXXFLAGS -O3"
-        CFLAGS="$CFLAGS -O3"
+ 	CXXFLAGS="$CXXFLAGS $with_optimization"
+        CFLAGS="$CFLAGS $with_optimization"
 	;;
 esac
 
