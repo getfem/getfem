@@ -137,7 +137,11 @@
     <img src="images/shape1.png" title="Shape optimization, remaining surface 1.039 / 2" alt="">
     <img src="images/shape2.png" title="Shape optimization, remaining surface 0.954 / 2" alt="">
   </p>
-  The first image corresponds to an initial structure with pre-existing holes. For the second one the holes are initiated by the topological optimization.
+  The first image corresponds to an initial structure with pre-existing holes. For the second one the holes are initiated by the topological optimization. The two following images correspond to a 3D case.
+    <p align="center">
+    <img src="images/shape3.png" title="3D shape optimization" alt="" height="100%">
+    <img src="images/shape4.png" title="3D shape optimization" alt="" height="100%">
+  </p>
   </div>
 <?php include("footer.inc") ?>
 
