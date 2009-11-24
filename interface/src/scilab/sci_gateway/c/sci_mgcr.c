@@ -179,6 +179,7 @@ int sci_spmgcr(char * fname)
   xsol_pi_nb_rows = b_pi_nb_rows;
   xsol_pi_nb_cols = 1;
   _SciErr = createMatrixOfDouble(&_StrCtx, Rhs+1, xsol_pi_nb_rows, xsol_pi_nb_cols, xsol_pdbl_real);
+  if (xsol_pdbl_real) FREE(xsol_pdbl_real);
 
   LhsVar(1) = Rhs+1;
 
@@ -189,6 +190,7 @@ int sci_spmgcr(char * fname)
       iter_pi_nb_rows = 1;
       iter_pi_nb_cols = 1;
       _SciErr = createMatrixOfDouble(&_StrCtx, Rhs+2, iter_pi_nb_rows, iter_pi_nb_cols, iter_pdbl_real);
+      if (iter_pdbl_real) FREE(iter_pdbl_real);
 
       LhsVar(2) = Rhs+2;
     }
@@ -197,10 +199,7 @@ int sci_spmgcr(char * fname)
   if (B)    sp_free(B);
   if (b)    v_free(b);
   if (x0)   v_free(x0);
-  if (xsol) v_free(xsol);
-
-  if (xsol_pdbl_real)   FREE(xsol_pdbl_real);
-  if (iter_pdbl_real)   FREE(iter_pdbl_real);
+  //if (xsol) v_free(xsol);
 
   return 0;
 }

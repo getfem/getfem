@@ -70,9 +70,6 @@ int sci_spcgs(char * fname)
   CheckLhs(1,5);
 
   // Get A
-#ifdef DEBUG
-  sciprint("get A\n");
-#endif
   _SciErr = getVarAddressFromPosition(&_StrCtx,1,&A_pi_address);
 
   _SciErr = getVarType(&_StrCtx,A_pi_address,&var_type);
@@ -104,9 +101,6 @@ int sci_spcgs(char * fname)
     }
 
   // Get b
-#ifdef DEBUG
-  sciprint("get b\n");
-#endif
   _SciErr = getVarAddressFromPosition(&_StrCtx,2,&b_pi_address);
   _SciErr = getMatrixOfDouble(&_StrCtx,b_pi_address, &b_pi_nb_rows, &b_pi_nb_cols, &b_pdbl_real);
 
@@ -120,18 +114,12 @@ int sci_spcgs(char * fname)
     }
 
   // Get tol
-#ifdef DEBUG
-  sciprint("get tol\n");
-#endif
   _SciErr = getVarAddressFromPosition(&_StrCtx,3,&tol_pi_address);
   _SciErr = getMatrixOfDouble(&_StrCtx,tol_pi_address, &tol_pi_nb_rows, &tol_pi_nb_cols, &tol_pdbl_real);
 
   // Get optional maxit
   if (Rhs>=4)
     {
-#ifdef DEBUG
-      sciprint("get maxit\n");
-#endif
       _SciErr = getVarAddressFromPosition(&_StrCtx,4,&maxit_pi_address);
       _SciErr = getMatrixOfDouble(&_StrCtx,maxit_pi_address, &maxit_pi_nb_rows, &maxit_pi_nb_cols, &maxit_pdbl_real);
     }
@@ -139,9 +127,6 @@ int sci_spcgs(char * fname)
   // Get optional M
   if (Rhs>=5)
     {
-#ifdef DEBUG
-      sciprint("get M\n");
-#endif
       _SciErr = getVarAddressFromPosition(&_StrCtx,5,&M_pi_address);
       _SciErr = getVarType(&_StrCtx,M_pi_address,&var_type);
       if (var_type!=sci_sparse)
@@ -173,9 +158,6 @@ int sci_spcgs(char * fname)
     }
 
   // Get optional x0
-#ifdef DEBUG
-  sciprint("get x0\n");
-#endif
   if (Rhs>=6)
     {
       _SciErr = getVarAddressFromPosition(&_StrCtx,6,&x0_pi_address);
@@ -196,25 +178,10 @@ int sci_spcgs(char * fname)
 	  v_set_val(x0,i,0.0);
 	}
     }
-  
-#ifdef DEBUG
-  sciprint("starting cgs done\n");
-  sciprint("A = %d - row = %d, col = %d\n", A, A_pi_nb_rows, A_pi_nb_cols);
-  sciprint("M = %d - row = %d, col = %d\n", M, M_pi_nb_rows, M_pi_nb_cols);
-  sciprint("b = %d - len = %d\n", b,b_pi_nb_cols*b_pi_nb_rows);
-  sciprint("r0 = %d\n", r0);
-  sciprint("x0 = %d\n", x0);
-  sciprint("tol = %f - len = %d\n",*tol_pdbl_real,tol_pi_nb_cols*tol_pi_nb_rows);
-  sciprint("maxit = %d - len = %d\n", (int)*maxit_pdbl_real,maxit_pi_nb_cols*maxit_pi_nb_rows);
-#endif
 
   // call iter_spcgs method.
   catchall(xsol = iter_spcgs(A, M, b, r0, *tol_pdbl_real, x0, (int)*maxit_pdbl_real, &steps),
   	   Scierror(999,"%s: an error (%d) occured.\n",fname,_err_num); return 0);
-
-#ifdef DEBUG
-  sciprint("cgs done - xsol = %d\n",xsol->dim);
-#endif
 
   // Transfert xsol to Scilab
   xsol_pdbl_real = (double *)MALLOC(b_pi_nb_rows*sizeof(double));
@@ -249,10 +216,6 @@ int sci_spcgs(char * fname)
 
       LhsVar(3) = Rhs+3;
     }
-
-#ifdef DEBUG
-  sciprint("free memory\n");
-#endif
 
   if (A)    sp_free(A);
   if (b)    v_free(b);
