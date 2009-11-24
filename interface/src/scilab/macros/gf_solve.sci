@@ -180,12 +180,12 @@ else
       if (do_R | do_H) then
         printf('here 1\n');
         disp(list(pde('bound')(bnum)('R')(:)))
-        vR = gf_mesh_fem_get_eval(pde('mf_d'), list(pde('bound')(bnum)('R')(:)));
+        vR = gf_mesh_fem_get_eval(pde('mf_d'), list(list(pde('bound')(bnum)('R')(:))));
         disp(size(vR))
         if (~isempty(pde('bound')(bnum)('H'))) then
           printf('here 2\n');
           disp(list(pde('bound')(bnum)('H')(:)))
-          vH = gf_mesh_fem_get_eval(pde('mf_d'), list(pde('bound')(bnum)('H')(:)));
+          vH = gf_mesh_fem_get_eval(pde('mf_d'), list(list(pde('bound')(bnum)('H')(:))));
           disp(size(vH))
         else 
           //h = num2cell(eye(q_dim,q_dim));  // YC: numtocell a changer
@@ -217,17 +217,17 @@ else
     if (is_neumann) then
       assert_field(pde('bound')(bnum),'G');
       if (do_G) then
-        vG = gf_mesh_fem_get_eval(pde('mf_d'), list(pde('bound')(bnum)('G')(:)));
+        vG = gf_mesh_fem_get_eval(pde('mf_d'), list(list(pde('bound')(bnum)('G')(:))));
         vG = gf_asm('boundary source', bnum, pde('mim'),pde('mf_u'), pde('mf_d'), vG);	
         pde('asm')('G') = pde('asm')('G') + vG; 
       end;
       if (do_Q) then
         if (~isempty(pde('bound')(bnum)('Q'))) then
-          vQ = gf_mesh_fem_get_eval(pde('mf_d'), list(pde('bound')(num)('Q')(:)));
+          vQ = gf_mesh_fem_get_eval(pde('mf_d'), list(list(pde('bound')(num)('Q')(:))));
         else 
           //q = num2cell(eye(q_dim,q_dim));  // YC: num2cell a changer
           q  = list(eye(q_dim,q_dim));
-          vQ = gf_mesh_fem_get_eval(pde('mf_d'), list(q(:))); 	  
+          vQ = gf_mesh_fem_get_eval(pde('mf_d'), list(list(q(:))));
         end
         bQ = gf_asm('boundary qu term',bnum,pde('mim'),pde('mf_u'),pde('mf_d'), matrix(vQ,q_dim*q_dim,d_nbdof));
         pde('asm')('Q') = pde('asm')('Q') + bQ;
