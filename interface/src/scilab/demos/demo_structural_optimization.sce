@@ -28,12 +28,14 @@ gf_workspace('clear all');
 
 // parameters
 initial_holes   = 1;    // Pre-existing holes or not.
-NY              = 40;   // Number of elements in y direction
+NY              = 50;   // Number of elements in y direction
 k               = 1;    // Degree of the finite element method for u
 N               = 2;    // Dimension of the mesh (2 or 3).
 lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
 hole_radius     = max(0.03,2/NY); // Hole radius for topological optimization
+cg_eps          = 1e-8;
+cg_iter         = 100000;
 if (N == 2) then
   CF = k*NY/40.; // Correction factor. Usefull ?
 else
@@ -76,10 +78,10 @@ GAMMAN   = 3;
 gf_mesh_set(m, 'region', GAMMAN, fidright);
 
 // Definition of the finite element methods
-ls  = gf_levelset(m, ls_degree);
+_ls  = gf_levelset(m, ls_degree);
 mls = gf_mesh_levelset(m);
-gf_mesh_levelset_set(mls, 'add', ls);
-mf_ls = gf_levelset_get(ls, 'mf');
+gf_mesh_levelset_set(mls, 'add', _ls);
+mf_ls = gf_levelset_get(_ls, 'mf');
 if (N == 2) then
   mimls=gf_mesh_im(m, gf_integ('IM_TRIANGLE(4)'));
 else
@@ -109,7 +111,7 @@ if (initial_holes) then
   if (N == 2) then
     ULS = gf_mesh_fem_get_eval(mf_ls, list(list('(-0.6-sin(%pi*4*x).*cos(%pi*4*y))/(4*%pi)')));
   else
-    ULS = gf_mesh_fem_get_eval(mf_ls, list(list('(-0.6-sin(%pi*4*x).*cos(%pi*4*y).*cos(%pi*4*z))/(4*%pi)')));
+    ULS = gf_mesh_fem_get_eval(mf_ls, list(list('-(0.6-sin(%pi*4*x).*cos(%pi*4*y).*cos(%pi*4*z))/(4*%pi)')));
   end
 else
   ULS = gf_mesh_fem_get_eval(mf_ls, list(list('x - 2')));
@@ -130,7 +132,7 @@ h.color_map = jetcolormap(255);
 
 // Model definition
 
-gf_levelset_set(ls, 'values', ULS);
+gf_levelset_set(_ls, 'values', ULS);
 disp('Adapting the mesh');
 gf_mesh_levelset_set(mls, 'adapt');
   
@@ -164,7 +166,7 @@ for niter = 1:100000
   gf_workspace('push');
 
   if (niter > 1) then
-    gf_levelset_set(ls, 'values', ULS);
+    gf_levelset_set(_ls, 'values', ULS);
     disp('Adapting the mesh');
     gf_mesh_levelset_set(mls, 'adapt');
     disp('Mesh adapted');
@@ -289,8 +291,8 @@ for niter = 1:100000
                                                  // and factorized once !
   Fdisc = gf_asm('volumic source', mimls, mf_ls, mf_g, GF);
   //Vcont = Mcontls \ Fdisc;
-  //Vcont = sp_cgs(Mcontls, Fdisc, 1e-8, 100000, RMcontls);
-  Vcont = sp_cgs(Mcontls, Fdisc, 1e-6, 1000,RMcontls);
+  Vcont = sp_cgs(Mcontls, Fdisc, cg_eps, cg_iter, RMcontls);
+  //Vcont = sp_cgne(Mcontls, Fdisc, cg_eps, cg_iter,RMcontls);
   ULS = ULS - Vcont' * 0.005;
 
   // Evolution of the level-set thank to shape derivative.
@@ -310,7 +312,7 @@ for niter = 1:100000
   //
   //    Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, V);
   //    // Vcont = Mcont \ Fdisc;
-  //    Vcont = sp_cgs(Mcont, Fdisc, 1e-8, 100000, RMcont);
+  //    Vcont = sp_cgs(Mcont, Fdisc, cg_eps, cg_iter, RMcont);
   //
   //    gf_compute(mf_ls, ULS, 'convect', mf_cont,Vcont,ddt,2, 'extrapolation');
   //  end
@@ -360,7 +362,8 @@ for niter = 1:100000
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
     Fdisc = gf_asm('volumic source', mimls, mf_cont, mf_g, DLS);
     //DLScont = Mcont \ Fdisc;
-    DLScont = sp_cgs(Mcont, Fdisc, 1e-8, 100000, RMcont);
+    DLScont = sp_cgs(Mcont, Fdisc, cg_eps, cg_iter, RMcont);
+    //DLScont = sp_cgne(Mcont, Fdisc, cg_eps, cg_iter, RMcont);
     NORMDLS = sqrt(sum(matrix(DLScont, N, size(DLScont, 1)/N).^2, 1)) + 1e-12;
     SULS = sign(ULS) ./ NORMDLS;
         
