@@ -6,7 +6,7 @@
 LX = 1.0; LY = LX; LZ = LX; % sizes of the domain.
 INCLINE = 0;                % Incline of the mesh.
 FT = 0.1;                   % parameter for the exact solution.
-N = 3;                      % domain in dimension N
+N = 2;                      % domain in dimension N
 QUAD = 0;                   % use quadrilaterons or not
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh
 
@@ -48,7 +48,7 @@ if (N == 2 && QUAD)
 end
 
 if (N == 3 && ~QUAD)
-  NX = 15;
+  NX = 10;
   MESH_TYPE = 'GT_PK(3,1)';          % tetrahedrons
   FEM_TYPE = 'FEM_PK(3,3)';          % P1 for tetrahedrons
   MULT_FEM_TYPE = 'FEM_PK(3,4)';
@@ -57,7 +57,7 @@ if (N == 3 && ~QUAD)
 end
 
 if (N == 3 && QUAD)
-  NX = 15;
+  NX = 10;
   if (MESH_NOISED)
     MESH_TYPE = 'GT_QK(3,1)';       % hexahedrons
   else
