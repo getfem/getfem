@@ -257,7 +257,7 @@ namespace getfem {
       if (gpid.iflags & 1) {
 	cv = gpid.elt;
 	pfem pf = mf.fem_of_element(cv);
-	uint rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
+	unsigned rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
 	if (gpid.iflags & 4) { t = gpid.grad_val; return; }
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_grad_base_value(fictx, taux);
@@ -292,7 +292,7 @@ namespace getfem {
       
       if (find_a_point(c.xreal(), ptref, cv)) {
 	pfem pf = mf.fem_of_element(cv);
-	uint rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
+	unsigned rdim = target_dim() / pf->target_dim(), mdim = (rdim==1) ? 0 : 1;
 	actualize_fictx(pf, cv, ptref);
 	pf->real_grad_base_value(fictx, taux);
 	for (size_type i = 0; i < nbdof; ++i)
