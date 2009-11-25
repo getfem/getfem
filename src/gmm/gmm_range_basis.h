@@ -268,10 +268,12 @@ namespace gmm {
     
     while (rc.size()) {
       R nmax = R(0); size_type cmax = size_type(-1);
-      for (std::set<size_type>::iterator it=rc.begin(); it!=rc.end(); ++it) {
+      for (std::set<size_type>::iterator it=rc.begin(); it != rc.end();) {
+	TAB::iterator itnext = it; ++itnext;
 	R n = vect_norm2(mat_col(B, *it));
 	if (nmax < n) { nmax = n; cmax = *it; }
 	if (n < R(EPS)) { columns.erase(*it); rc.erase(*it); }
+	it = itnext;
       }
       
       if (nmax < R(EPS)) break;
@@ -327,10 +329,12 @@ namespace gmm {
 
       // Next pivot
       R nmax = R(0); size_type imax = size_type(-1);
-      for (TAB::iterator it = rc.begin(); it != rc.end(); ++it) {
+      for (TAB::iterator it = rc.begin(); it != rc.end();) {
+	TAB::iterator itnext = it; ++itnext;
 	R a = gmm::abs(M(*it, *it));
 	if (a > nmax) { nmax = a; imax = *it; }
-	if (a < R(EPS)) { rc.erase(*it); columns.erase(ind[*it]); }
+	if (a < R(EPS)) { columns.erase(ind[*it]); rc.erase(*it); }
+	it = itnext;
       }
 
       if (nmax < R(EPS)) break;
