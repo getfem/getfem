@@ -459,17 +459,17 @@ QHULL_LIBS=""
 if test "x$useQHULL" = "xno"; then
   echo "Building with libqhull explicitly disabled";
 else
-  AC_CHECK_LIB(qhull, qh_new_qhull,
-  [
-   QHULL_LIBS="-lqhull"
-   ])
+  AC_CHECK_LIB(qhull, qh_new_qhull)
   AC_CHECK_HEADERS(qhull/qhull.h,[useQHULL="yes"],
   [
     if test "x$useQHULL" = "xyes"; then
       AC_MSG_ERROR([header files qhull/qhull.h not found. Use --enable-qhull=no flag]);
-      QHULL_LIBS=""
+      useQHULL="no"
     fi;
   ])
+  if test "x$useQHULL" = "xyes"; then
+    QHULL_LIBS="-lqhull"
+  fi;
   echo "Building with libqhull (use --enable-qhull=no to disable it)"
 fi;
 AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
@@ -488,18 +488,17 @@ MUPARSER_LIBS=""
 if test "x$usemuparser" = "xno"; then
   echo "Building with muParser explicitly disabled";
 else
-  AC_CHECK_LIB(muparser, _init,
-  [
-   usemuparser="yes"
-   MUPARSER_LIBS="-lmuparser"
-   ])
+  AC_CHECK_LIB(muparser, _init)
   AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
   [ 
    if test "x$usemuparser" = "xyes"; then
      AC_MSG_ERROR([header file muParser/muParser.h not found. Use --enable-muparser=no flag]);
-     MUPARSER_LIBS=""
+     usemuparser="no"
    fi;
   ])
+  if test "x$usemuparser" = "xyes"; then
+    MUPARSER_LIBS="-lmuparser"
+  fi;
   echo "Building with muParser (use --enable-muparser=no to disable it)"
 fi;
 AM_CONDITIONAL(MUPARSER, test x$usemuparser = xyes)
