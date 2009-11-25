@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -38,9 +38,21 @@
 #define GETFEM_COULOMB_FRICTION_H__
 
 #include "getfem_modeling.h"
+#include "getfem_models.h"
 
 namespace getfem {
 
+
+
+
+
+
+
+//===========================================================================
+//
+//  Brick for the old brick system
+//
+//===========================================================================
 
 # define MDBRICK_COULOMB_FRICTION 434245
 

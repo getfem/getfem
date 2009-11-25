@@ -28,10 +28,10 @@ gf_workspace('clear all');
 
 % parameters
 initial_holes = 1;     % Pre-existing holes or not.
-NY = 40;               % Number of elements in y direction
+NY = 10;               % Number of elements in y direction
 
 k = 1;                 % Degree of the finite element method for u
-N = 2;                 % Dimension of the mesh (2 or 3).
+N = 3;                 % Dimension of the mesh (2 or 3).
 lambda = 1;            % Lame coefficient
 mu = 1;                % Lame coefficient
 hole_radius = max(0.03, 2./NY);  % Hole radius for topological optimization

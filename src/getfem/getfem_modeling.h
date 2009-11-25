@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -32,7 +32,7 @@
    @file getfem_modeling.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 15, 2004.
-   @brief Model Bricks
+   @brief Model Bricks (old system)
    @see model_state
    @see mdbrick_abstract
 */

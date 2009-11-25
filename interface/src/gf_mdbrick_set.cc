@@ -78,7 +78,8 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     last dimension should be MESHFEM:GET('nbdof') or 1 for
     constant field).@*/
     std::string pname = in.pop().to_string();
-    for (unsigned i=0; i < pname.size(); ++i) if (pname[i] == ' ') pname[i] = '_';
+    for (unsigned i=0; i < pname.size(); ++i)
+      if (pname[i] == ' ') pname[i] = '_';
 
     getfem::mdbrick_abstract_parameter *p = b->param(pname);
     if (!p) THROW_BADARG("wrong parameter name for this brick: " << pname);
@@ -204,7 +205,7 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     This is only applicable to the bricks which inherit from the
     constraint brick, such as the Dirichlet ones.@*/
     if (!is_constraints_brick(b))
-      THROW_BADARG("this is only applicable to constraint bricks, and it derivatives");
+      THROW_BADARG("this is only applicable to constraint bricks, and its derivatives");
     if (!b->is_complex())
       to_constraints_brick(b, scalar_type())->set_constraints_rhs(in.pop().to_darray());
     else
