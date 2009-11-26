@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="sp_cgne" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:ns3="http://www.w3.org/1999/xhtml"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <info>
+    <pubdate>$LastChangedDate: 2009-09-16 $</pubdate>
+  </info>
+
+  <refnamediv>
+    <refname>sp_cgs</refname>
+
+    <refpurpose>Use a conjugate gradient for a normal equation to solve the system A.x = b</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>[xsol[,iter]] = sp_cgne(A,b,tol[,maxit[,M[,x0]]])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Parameters</title>
+
+    <variablelist>
+      <varlistentry>
+        <term>A</term>
+
+        <listitem>
+          <para>the A real sparse matrix of the system to be solved.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>b</term>
+
+        <listitem>
+          <para>the b real vector of the system to be solved.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>tol</term>
+
+        <listitem>
+          <para>the tolerance for the resolution of the equation system.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>maxit</term>
+
+        <listitem>
+          <para>the maximum number of iteration of the solver.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>M</term>
+
+        <listitem>
+          <para>the preconditionning matrix (an identity matrix by
+          default). The preconditionning matrix must be symmetric.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>x0</term>
+
+        <listitem>
+          <para>an initial starting solution.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xsol</term>
+
+        <listitem>
+          <para>the solution vector of the system.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>iter</term>
+
+        <listitem>
+          <para>the number of iterations performed to solve the system.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection>
+    <title>Description</title>
+
+    <para>Use a conjugate gradient for a normal equation to solve the system A.x = b</para>
+  </refsection>
+
+  <refsection>
+    <title>Example</title>
+
+    <programlisting role="example"><![CDATA[ 
+ ]]></programlisting>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="sp_luinc">sp_luinc</link></member>
+      <member><link linkend="sp_chol">sp_chol</link></member>
+      <member><link linkend="sp_cholinc">sp_cholinc</link></member>
+      <member><link linkend="sp_lu">sp_lu</link></member>
+      <member><link linkend="sp_cgs">sp_cgs</link></member>
+      <member><link linkend="sp_gmres">sp_gmres</link></member>
+      <member><link linkend="sp_mgcr">sp_mgcr</link></member>
+      <member><link linkend="sp_chsolve">sp_chsolve</link></member>
+      <member><link linkend="sp_lusolve">sp_lusolve</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <simplelist type="vert">
+      <member>Yann COLLETTE</member>
+    </simplelist>
+  </refsection>
+</refentry>
