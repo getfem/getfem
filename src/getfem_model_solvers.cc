@@ -103,9 +103,6 @@ namespace getfem {
 		      gmm::abstract_newton_line_search &ls, const MATRIX &K,
 		      const VECTOR &rhs) {
 
-    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
-    typedef typename gmm::number_traits<T>::magnitude_type R;
-
     VECTOR state(md.nb_dof());
     
     md.from_variables(state); // copy the model variables in the state vector

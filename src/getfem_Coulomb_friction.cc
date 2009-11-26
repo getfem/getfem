@@ -67,13 +67,11 @@ namespace getfem {
   //=========================================================================
 
   // To be done:
-  // - Fabriquer brique "au plus près"
   // - Rédiger utilisation basique + interface matlab/python
   //      (+ acces à BN, BT pour pouvoir les changer ...)
   // - Fonctions virtuelles pour update en fonctions de bords donnés
   // - Ajout d'une pénalisation optionnelle ?
-  // - r doit être transformé en paramêtre du modèle.
-  // - Un moyen de récuperer BN, BT, gap, r ...
+  // - Un moyen de récuperer BN, BT, ...
 
 
   struct Coulomb_friction_brick : public virtual_brick {
@@ -84,6 +82,7 @@ namespace getfem {
     mutable model_real_plain_vector gap, threshold, friction_coeff, alpha;
     mutable model_real_plain_vector RLN, RLT; 
     mutable scalar_type r, gamma;
+    mutable bool is_init;
     bool Tresca_version, symmetrized, contact_only;
     bool really_stationary, friction_dynamic_term;
 
@@ -100,6 +99,7 @@ namespace getfem {
 	  for (size_type k = 0; k < d; ++k)
 	    gmm::scale(gmm::mat_row(BBT, d*i+k), alpha[i]);
       }
+      is_init = true;
     }
 
     void precomp(const model_real_plain_vector &u,
@@ -124,7 +124,7 @@ namespace getfem {
       }
     }
 
-    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
 					const model::varnamelist &dl,
 					const model::mimlist &mims,
@@ -161,7 +161,7 @@ namespace getfem {
 
       // Parameters
       // (order : r, gap, alpha, friction_coeff, gamma, wt, threshold)
-      size_type np = 0, np_wt = 0;
+      size_type np = 0, np_wt = 0, np_alpha = 0;
       const model_real_plain_vector &vr = md.real_variable(dl[np++]);
       GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
       r = vr[0];
@@ -173,7 +173,8 @@ namespace getfem {
 	gmm::fill(gap, vgap[0]);
       else
 	gmm::copy(vgap, gap);
-      const model_real_plain_vector &valpha = md.real_variable(dl[np++]);
+      np_alpha = np++;
+      const model_real_plain_vector &valpha = md.real_variable(dl[np_alpha]);
       GMM_ASSERT1(gmm::vect_size(valpha) == 1 || gmm::vect_size(valpha) == nbc,
 		  "Parameter alpha has a wrong size");
       gmm::resize(alpha, nbc);
@@ -212,7 +213,8 @@ namespace getfem {
 
       const scalar_type vt1(1);
       
-      init_BBN_BBT(); // Could be done only when alpha or BN or BT change.
+      if (md.is_var_newer_than_brick(dl[np_alpha], ib)) is_init = false;
+      if (!is_init) init_BBN_BBT();
       precomp(u, lambda_n, lambda_t, md.real_variable(dl[np_wt]));
       
       if (version & model::BUILD_MATRIX) {
@@ -309,6 +311,7 @@ namespace getfem {
     Coulomb_friction_brick(bool symmetrized_, bool contact_only_) {
       symmetrized = symmetrized_;
       contact_only = contact_only_;
+      is_init = false;
       Tresca_version = false;   // future version ...
       really_stationary = false;   // future version ...
       friction_dynamic_term = false;  // future version ...
@@ -322,12 +325,14 @@ namespace getfem {
     
     void set_BN(model_real_sparse_matrix &BN_) {
       gmm::resize(BN, gmm::mat_nrows(BN_), gmm::mat_ncols(BN_));
-	gmm::copy(BN_, BN);
+      gmm::copy(BN_, BN);
+      is_init = false;
     }
 
     void set_BT(model_real_sparse_matrix &BT_) {
       gmm::resize(BT, gmm::mat_nrows(BT_), gmm::mat_ncols(BT_));
       gmm::copy(BT_, BT);
+      is_init = false;
     }
 
 
