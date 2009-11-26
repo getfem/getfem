@@ -6,6 +6,7 @@
 
 .. _ud-model:
 
+=====================
 The model description
 =====================
 
@@ -1082,3 +1083,34 @@ where ``dataname_rho`` is an optional data of the model representing the density
 
 Note that for time integrations scheme, there exist specific bricks for the
 discretisation of time derivatives.
+
+
+Contact with Coulomb friction brick
+-----------------------------------
+
+The aim of this brick is to take into account a contact condition with or without friction of an elastic structure on a rigid foundation or between two elastic structures. This brick is restricted to small deformation approximation of contact.
+
+a) Approximation of contact:
+
+   Given a dof vector ``U`` of a displacement, for instance submitted
+   to a linearized elasticity equation, a contact condition will typically be
+   represented as a linear constraint
+
+   ``U``:math:`.N_i \le` ``gap``:math:`_i`
+
+   where :math:`N_i` represents the normal displacement and the contraint
+   correpsonds to a non-penetration condition with an obstacle whose normal
+   distance is ``gap``:math:`_i`. The normal :math:`N_i` can also represent
+   the difference between two components in ``U`` for a contact between two part of an elastic body.
+
+
+b) Nodal contact
+
+c) Contact on multiplier dof
+
+d) Augmentation strategy (projection formulation)
+
+e) Scaling on the augmentation parameter
+
+g) Dynamic/quasi-static approximation
+
