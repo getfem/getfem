@@ -44,8 +44,11 @@ namespace getfem {
 
 
 
-
-
+  size_type add_basic_contact_brick
+  (model &md, const std::string &varname_u, const std::string &multname_n,
+   const std::string &dataname_r, model_real_sparse_matrix &BN,
+   std::string dataname_gap = "", std::string dataname_alpha = "",
+   bool symmetrized = false);
 
 
 //===========================================================================
