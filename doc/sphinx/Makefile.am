@@ -61,8 +61,8 @@ update: checkout
 	svn update tools/pygments
 
 images:
-	-cd source/userdoc/images/; make png
-	-cd source/project/images/; make png
+	-cd $(srcdir)/source/userdoc/images/; make png
+	-cd $(srcdir)/source/project/images/; make png
 
 
 build: checkout images
