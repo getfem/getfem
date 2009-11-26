@@ -2464,13 +2464,13 @@ namespace getfem {
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
       const mesh_im &mim = *mims[0];
-      const model_real_plain_vector *A = 0, *COEFF = 0;
+      const model_real_plain_vector *COEFF = 0;
       const mesh_fem *mf_data = 0;
 
       if (penalized) {
 	COEFF = &(md.real_variable(dl[0]));
 	mf_data = md.pmesh_fem_of_variable(dl[0]);
-	size_type s = gmm::vect_size(*A);
+	size_type s = gmm::vect_size(*COEFF);
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
 	GMM_ASSERT1(s == 1, "Bad format for the penalization parameter");
       }
@@ -2485,12 +2485,12 @@ namespace getfem {
       if (penalized) {
 	gmm::clear(matl[1]);
 	if (mf_data) {
-	  asm_mass_matrix_param(matl[1], mim, mf_p, *mf_data, *A, rg);
+	  asm_mass_matrix_param(matl[1], mim, mf_p, *mf_data, *COEFF, rg);
 	  gmm::scale(matl[1], scalar_type(-1));
 	}
 	else {
 	  asm_mass_matrix(matl[1], mim, mf_p, rg);
-	  gmm::scale(matl[1], -(*A)[0]);
+	  gmm::scale(matl[1], -(*COEFF)[0]);
 	}
       }
 
