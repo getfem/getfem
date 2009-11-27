@@ -28,9 +28,7 @@ The method integrate the partial differential equation
 on the time intervall :math:`[0, dt]`.
 
 The method used is of Galerkin-Characteristic kind. It is a very simple version 
-which is inconditionnally stable but rather dissipative. See the book of 
-Zienkiewicz and Taylor "The finite element method" 5th edition volume 3 : 
-Fluids Dynamics, section 2.6 and also the Freefem++ documentation on convect 
+which is inconditionnally stable but rather dissipative. See [ZI-TA1989]_ and also the Freefem++ documentation on convect 
 command.
 
 The defined method works only if ``mf`` is a pure Lagrange finite element method 
@@ -47,3 +45,5 @@ In order to make the extrapolation not too expensive, the product :math:`dt\time
 should not be too large.
 
 Note that this method can be used to solve convection dominant problems coupling it with a splitting scheme.
+
+.. [ZT1989] Zienkiewicz and Taylor "The finite element method" 5th edition volume 3 : Fluids Dynamics, section 2.6 

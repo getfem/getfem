@@ -2,10 +2,12 @@
 #
 # GetFEM++ documentation build configuration file.
 #
-# This file is execfile()d with the current directory set to its containing dir.
+# This file is execfile()d with the current directory set to its containing
+# dir.
 #
 # The contents of this file are pickled, so don't put values in the namespace
-# that aren't pickleable (module imports are okay, they're removed automatically).
+# that aren't pickleable (module imports are okay, they're removed
+# automatically).
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
@@ -21,7 +23,10 @@ sys.path.append('../../../interface/src/python/')      # getfem
 ###########################################################################
 from getfem import getfem_env
 user_preamble = """\n% begin user_preamble:
+\\usepackage{mathrsfs}
 \\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
+\\newcommand{\\ds}{\\displaystyle}
+\\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
 % end user_preamble
 """
 
