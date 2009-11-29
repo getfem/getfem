@@ -110,10 +110,8 @@ namespace getfem {
       gmm::resize(RLT, gmm::mat_nrows(BT));
 
       gmm::copy(gmm::scaled(gap, r), RLN);
-      for (size_type i = 0; i < gmm::vect_size(lambda_n); ++i)
-	RLN[i] *= alpha[i];
+      for (size_type i = 0; i < gmm::mat_nrows(BN); ++i) RLN[i] *= alpha[i];
       gmm::add(lambda_n, RLN);
-      // if (gmm::vect_size(WN)>0) gmm::mult_add(BBN,gmm::scaled(WN,-r),RLN);
       gmm::mult_add(BBN, gmm::scaled(u, -r), RLN);
       if (!contact_only) {
 	gmm::copy(lambda_t, RLT);
@@ -133,11 +131,13 @@ namespace getfem {
 					model::real_veclist &,
 					size_type /* region */,
 					build_version version) const {
-      GMM_ASSERT1(matl.size() == 7, "Coulomb friction brick has six terms");
+      GMM_ASSERT1(matl.size() == 4 || matl.size() == 7,
+		  "Coulomb friction brick has four or seven terms");
       GMM_ASSERT1(mims.size() == 0, "Coulomb friction brick need no mesh_im");
       GMM_ASSERT1(vl.size() >= 2 && vl.size() <= 2
 		  /* a adapter */ && dl.size() >= 2 && dl.size() <= 3,
 		  "Wrong number of variables for Coulomb friction brick");
+      const scalar_type vt1(1);
       bool friction = (vl.size() > 2);
       size_type nbc = gmm::mat_nrows(BN);
       size_type d = gmm::mat_nrows(BT)/nbc;
@@ -175,7 +175,7 @@ namespace getfem {
 	gmm::copy(vgap, gap);
       np_alpha = np++;
       const model_real_plain_vector &valpha = md.real_variable(dl[np_alpha]);
-      GMM_ASSERT1(gmm::vect_size(valpha) == 1 || gmm::vect_size(valpha) == nbc,
+      GMM_ASSERT1(gmm::vect_size(valpha)== 1 || gmm::vect_size(valpha) == nbc,
 		  "Parameter alpha has a wrong size");
       gmm::resize(alpha, nbc);
       if (gmm::vect_size(valpha) == 1)
@@ -208,17 +208,14 @@ namespace getfem {
 	  else
 	    gmm::copy(vth, threshold);
 	}
-
       }
 
-      const scalar_type vt1(1);
-      
+      // pre-computations
       if (md.is_var_newer_than_brick(dl[np_alpha], ib)) is_init = false;
       if (!is_init) init_BBN_BBT();
       precomp(u, lambda_n, lambda_t, md.real_variable(dl[np_wt]));
       
       if (version & model::BUILD_MATRIX) {
-
 	// Unilateral contact
 	gmm::clear(T_n_n); gmm::clear(T_u_u);
 	gmm::copy(gmm::scaled(gmm::transposed(BBN), -vt1), T_u_n);
@@ -277,8 +274,7 @@ namespace getfem {
 	}
       }
       
-    if (version & model::BUILD_RHS) { // sign of the residual ?
-	
+    if (version & model::BUILD_RHS) {
 	for (size_type i=0; i < nbc; ++i) {
 	  RLN[i] = std::min(scalar_type(0), RLN[i]);
 	  if (!contact_only) {
@@ -290,20 +286,20 @@ namespace getfem {
 	}
 	
 	if (symmetrized) {
-	  gmm::mult_add(gmm::transposed(BN), gmm::scaled(RLN, vt1), ru);
+	  gmm::mult_add(gmm::transposed(BN), RLN, ru);
 	  if (!contact_only)
-	    gmm::mult_add(gmm::transposed(BT), gmm::scaled(RLT, vt1), ru);
+	    gmm::mult_add(gmm::transposed(BT), RLT, ru);
 	} else {
-	  gmm::mult_add(gmm::transposed(BN), gmm::scaled(lambda_n, vt1), ru);
+	  gmm::mult_add(gmm::transposed(BN), lambda_n, ru);
 	  if (!contact_only)
-	    gmm::mult_add(gmm::transposed(BT), gmm::scaled(lambda_t, vt1), ru);
+	    gmm::mult_add(gmm::transposed(BT), lambda_t, ru);
 	}
 	
-	gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN, vt1/r),
+	gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN, -vt1/r),
 		 rlambda_n);
-	
+
 	if (!contact_only)
-	  gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT, vt1/r),
+	  gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT, -vt1/r),
 		   rlambda_t);
       }
     }
@@ -343,7 +339,7 @@ namespace getfem {
    const std::string &dataname_r, model_real_sparse_matrix &BN,
    std::string dataname_gap, std::string dataname_alpha,
    bool symmetrized) {
-    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized, true);
+    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,true);
     pbr_->set_BN(BN);
     pbrick pbr = pbr_;
 
@@ -362,7 +358,7 @@ namespace getfem {
     dl.push_back(dataname_gap);
     
     if (dataname_alpha.size() == 0) {
-      dataname_alpha = md.new_name("contact_parameter_alpha_on_" + multname_n);
+      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
       md.add_initialized_fixed_size_data
 	(dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
     }

@@ -204,7 +204,7 @@ namespace getfem {
 	cout << "starting computing tangent matrix" << endl;
       pb.compute_tangent_matrix();
       gmm::clear(dr);
-      gmm::copy(gmm::scaled(pb.residual(), T(-1)), b);
+      gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
       if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
       linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
       if (iter.get_noisy() > 1) cout << "linear solver done" << endl;      
@@ -596,6 +596,8 @@ namespace getfem {
 
     TYPEDEF_MODEL_STATE_TYPES;
     typedef T_MATRIX MATRIX;
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+
 
     MODEL_STATE &MS;
     mdbrick_abstract<MODEL_STATE> &pb;
@@ -609,6 +611,8 @@ namespace getfem {
 	MS.compute_reduced_system();
       }
     }
+
+    inline T scale_residual(void) const { return T(-1); }
 
     const T_MATRIX &tangent_matrix(void)
     { return MS.reduced_tangent_matrix(); }

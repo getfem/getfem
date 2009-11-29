@@ -29,6 +29,7 @@
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_gsparse.h>
+#include <getfem/getfem_Coulomb_friction.h>
 
 using namespace getfemint;
 
@@ -78,6 +79,7 @@ using namespace getfemint;
   @SET MODEL:SET('velocity update for Newmark scheme')
   @SET MODEL:SET('first iter')
   @SET MODEL:SET('next iter')
+  @SET MODEL:SET('add basic contact brick')
 
 MLABCOM*/
 
@@ -892,5 +894,52 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@SET MODEL:SET('next iter')
     To be executed at the end of each iteration of a time integration scheme.@*/
     md->model().next_iter();
+  } else if (check_cmd(cmd, "add basic contact brick", in, out, 4, 7, 0, 1)) {
+    /*@SET ind = MODEL:SET('add basic contact brick', @str varname_u, @str multname_n, @str dataname_r, @spmat BN[, @str dataname_gap[, @str dataname_alpha[, @int symmetrized]])
+    
+    Add a contact without friction brick to the model. If U is the vector
+    of degrees of freedom on which the unilateral contraint is applied,
+    the matrix `BN` have to be such that this conctraint is defined by
+    $B_N U \le 0$. The constraint is prescribed thank to a multiplier
+    `multname_n` whose dimension should be equal to the number of lines of
+    `BN`. The augmentation parameter `r` should be chosen in a range of
+    acceptabe values (see Getfem user documentation). `dataname_gap` is an
+    optional parameter representing the initial gap. It can be a single value
+    or a vector of value. `dataname_alpha` is an optional homogenization
+    parameter for the augmentation parameter
+    (see Getfem user documentation). The parameter `symmetrized` indicates
+    that the tangent matrix will keep the symmetry or not. @*/
+    
+    std::string varname_u = in.pop().to_string();
+    std::string multname_n = in.pop().to_string();
+    std::string dataname_r = in.pop().to_string();
+    dal::shared_ptr<gsparse> BN = in.pop().to_sparse();
+    if (BN->is_complex()) THROW_BADARG("Complex matrix not allowed");
+    std::string dataname_gap;
+    if (in.remaining()) dataname_gap = in.pop().to_string();
+    std::string dataname_alpha;
+    if (in.remaining()) dataname_alpha = in.pop().to_string();
+    bool symmetrized = false;
+    if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+
+    getfem::model_real_sparse_matrix BBN;
+    if (BN->storage()==gsparse::CSCMAT) {
+      gmm::resize(BBN, gmm::mat_nrows(BN->real_csc()),
+		  gmm::mat_ncols(BN->real_csc()));
+      gmm::copy(BN->real_csc(), BBN);
+    }
+    else if (BN->storage()==gsparse::WSCMAT) {
+      gmm::resize(BBN, gmm::mat_nrows(BN->real_wsc()),
+		  gmm::mat_ncols(BN->real_wsc()));
+      gmm::copy(BN->real_wsc(), BBN);
+    }
+    else THROW_BADARG("Matrix BN should be a sparse matrix");
+
+    size_type ind
+      = getfem::add_basic_contact_brick(md->model(), varname_u, multname_n,
+					dataname_r, BBN, dataname_gap,
+					dataname_alpha, symmetrized);
+
+    out.pop().from_integer(int(ind + config::base_index()));
   } else bad_cmd(cmd);
 }

@@ -58,6 +58,8 @@ namespace getfem {
 
     const MATRIX &tangent_matrix(void) { return K; }
     
+    inline T scale_residual(void) const { return T(1); }
+
     void compute_residual(void)
     { md.to_variables(state); md.assembly(model::BUILD_RHS); }
 
@@ -74,6 +76,7 @@ namespace getfem {
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	if (alpha < 1E-10) break;
 	compute_residual();
 	res = residual_norm();
       } while (!ls.is_converged(res));

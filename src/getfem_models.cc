@@ -782,8 +782,14 @@ namespace getfem {
   void model::assembly(build_version version) {
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
-    if (is_complex()) { gmm::clear(cTM); gmm::clear(crhs); }
-    else { gmm::clear(rTM); gmm::clear(rrhs); }
+    if (is_complex()) {
+      if (version & BUILD_MATRIX) gmm::clear(cTM);
+      if (version & BUILD_RHS) gmm::clear(crhs);
+    }
+    else {
+      if (version & BUILD_MATRIX) gmm::clear(rTM);
+      if (version & BUILD_RHS) gmm::clear(rrhs);
+    }
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       brick_description &brick = bricks[ib];
@@ -803,7 +809,7 @@ namespace getfem {
 	if (brick.pdispatch) coeff0 = brick.matrix_coeff;
 
 	if (cplx) {
-	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
+	  if (term.is_matrix_term && (version & BUILD_MATRIX)) {
 	    gmm::add(gmm::scaled(brick.cmatlist[j], coeff0),
 		     gmm::sub_matrix(cTM, I1, I2));
 	    if (term.is_symmetric && I1.first() != I2.first()) {
@@ -811,7 +817,7 @@ namespace getfem {
 		       gmm::sub_matrix(cTM, I2, I1));
 	    }
 	  }
-	  if (version | BUILD_RHS) {
+	  if (version & BUILD_RHS) {
 	    if (brick.pdispatch) {
 	      for (size_type k = 0; k < brick.nbrhs; ++k)
 		gmm::add(gmm::scaled(brick.cveclist[k][j],
@@ -821,7 +827,7 @@ namespace getfem {
 	    else
 	      gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
-		&& (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
+		&& (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
 	      gmm::mult_add(brick.cmatlist[j],
 			    gmm::scaled(variables[term.var2].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
@@ -837,7 +843,7 @@ namespace getfem {
 	      else
 		gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
 	       if (brick.pbr->is_linear()
-		   && (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
+		   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
 		 gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
 			    gmm::scaled(variables[term.var1].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
@@ -846,7 +852,7 @@ namespace getfem {
 	    }
 	  }
 	} else if (is_complex()) {
-	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
+	  if (term.is_matrix_term && (version & BUILD_MATRIX)) {
 	    gmm::add(gmm::scaled(brick.rmatlist[j], coeff0),
 		     gmm::sub_matrix(cTM, I1, I2));
 	    if (term.is_symmetric && I1.first() != I2.first()) {
@@ -854,7 +860,7 @@ namespace getfem {
 		       gmm::sub_matrix(cTM, I2, I1));
 	    }
 	  }
-	  if (version | BUILD_RHS) {
+	  if (version & BUILD_RHS) {
 	    if (brick.pdispatch) {
 	      for (size_type k = 0; k < brick.nbrhs; ++k)
 		gmm::add(gmm::scaled(brick.rveclist[k][j],
@@ -864,7 +870,7 @@ namespace getfem {
 	    else
 	      gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
-		&& (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
+		&& (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
 	      gmm::mult_add(brick.rmatlist[j],
 			    gmm::scaled(variables[term.var2].complex_value[0],
 					std::complex<scalar_type>(-coeff0)),
@@ -880,7 +886,7 @@ namespace getfem {
 	      else 
 		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
 	      if (brick.pbr->is_linear()
-		  && (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
+		  && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
 		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
 			     gmm::scaled(variables[term.var1].complex_value[0],
 					  std::complex<scalar_type>(-coeff0)),
@@ -889,7 +895,7 @@ namespace getfem {
 	    }
 	  }
 	} else {
-	  if (term.is_matrix_term && (version | BUILD_MATRIX)) {
+	  if (term.is_matrix_term && (version & BUILD_MATRIX)) {
 	    gmm::add(gmm::scaled(brick.rmatlist[j], coeff0),
 		     gmm::sub_matrix(rTM, I1, I2));
 	    if (term.is_symmetric && I1.first() != I2.first()) {
@@ -897,7 +903,7 @@ namespace getfem {
 		       gmm::sub_matrix(rTM, I2, I1));
 	    }
 	  }
-	  if (version | BUILD_RHS) {
+	  if (version & BUILD_RHS) {
 	    if (brick.pdispatch) {
 	      for (size_type k = 0; k < brick.nbrhs; ++k)
 		gmm::add(gmm::scaled(brick.rveclist[k][j],
@@ -907,7 +913,7 @@ namespace getfem {
 	    else
 	      gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
 	    if (term.is_matrix_term && brick.pbr->is_linear()
-		&& (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
+		&& (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
 	      gmm::mult_add(brick.rmatlist[j],
 			    gmm::scaled(variables[term.var2].real_value[0],
 					-coeff0),
@@ -923,7 +929,7 @@ namespace getfem {
 	      else
 		gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
 	      if (brick.pbr->is_linear()
-		  && (!is_linear() || version & BUILD_WITH_COMPLETE_RHS)) {
+		  && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
 		gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
 			      gmm::scaled(variables[term.var1].real_value[0],
 					  -coeff0),
