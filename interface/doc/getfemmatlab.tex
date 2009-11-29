@@ -2998,7 +2998,9 @@ gf_model_set(md,'velocity update for order two theta method',  \tstr varnameU,  
 gf_model_set(md,'velocity update for Newmark scheme',  \tint id2dt2_brick, \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_twobeta,  \tstr dataname_gamma)
 gf_model_set(md,'first iter')
 gf_model_set(md,'next iter')
-ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha]])
+ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])
+gf_model_set(md,'contact brick set BN', \tint indbrick, \tmat BN)
+gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)
 @@
 \end{synopsis}
 \begin{cmddescription}
@@ -3289,7 +3291,7 @@ To be executed before the first iteration of a time integration scheme.
 \sep{@@gf_model_set(md,'next iter')@@} :
 To be executed at the end of each iteration of a time integration scheme.
 
-\sep{@@ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha]])@@} :
+\sep{@@ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])@@} :
 Add a contact without friction brick to the model. If U is the vector
 of degrees of freedom on which the unilateral contraint is applied,
 the matrix `BN` have to be such that this conctraint is defined by
@@ -3301,7 +3303,13 @@ optional parameter representing the initial gap. It can be a single value
 or a vector of value. `dataname_alpha` is an optional homogenization
 parameter for the augmentation parameter
 (see Getfem user documentation). The parameter `symmetrized` indicates
-that the tangent matrix will keep the symmetry or not.
+that the symmetry of the tangent matrix will be kept or not
+
+\sep{@@gf_model_set(md,'contact brick set BN', \tint indbrick, \tmat BN)@@} :
+Can be used to set the BN matrix of a basic contact/friction brick.
+
+\sep{@@gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)@@} :
+Can be used to set the BT matrix of a basic contact with friction brick.
 
 \end{cmddescription}
 \newpage

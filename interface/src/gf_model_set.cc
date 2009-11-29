@@ -80,7 +80,8 @@ using namespace getfemint;
   @SET MODEL:SET('first iter')
   @SET MODEL:SET('next iter')
   @SET MODEL:SET('add basic contact brick')
-
+  @SET MODEL:SET('contact brick set BN')
+  @SET MODEL:SET('contact brick set BT')
 MLABCOM*/
 
 void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -908,7 +909,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     or a vector of value. `dataname_alpha` is an optional homogenization
     parameter for the augmentation parameter
     (see Getfem user documentation). The parameter `symmetrized` indicates
-    that the tangent matrix will keep the symmetry or not. @*/
+    that the symmetry of the tangent matrix will be kept or not @*/
     
     std::string varname_u = in.pop().to_string();
     std::string multname_n = in.pop().to_string();
@@ -941,5 +942,35 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 					dataname_alpha, symmetrized);
 
     out.pop().from_integer(int(ind + config::base_index()));
+  } else if (check_cmd(cmd, "contact brick set BN", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('contact brick set BN', @int indbrick, @spmat BN)
+    Can be used to set the BN matrix of a basic contact/friction brick. @*/
+    size_type ind = in.pop().to_integer();
+    dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+
+    if (B->is_complex())
+      THROW_BADARG("BN should be a real matrix");
+
+    if (B->storage()==gsparse::CSCMAT)
+      gmm::copy(B->real_csc(), getfem::contact_brick_set_BN(md->model(), ind));
+    else if (B->storage()==gsparse::WSCMAT)
+      gmm::copy(B->real_wsc(), getfem::contact_brick_set_BN(md->model(), ind));
+    else
+      THROW_BADARG("BN should be a sparse matrix");
+  } else if (check_cmd(cmd, "contact brick set BT", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('contact brick set BT', @int indbrick, @spmat BT)
+    Can be used to set the BT matrix of a basic contact with friction brick. @*/
+    size_type ind = in.pop().to_integer();
+    dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+
+    if (B->is_complex())
+      THROW_BADARG("BT should be a real matrix");
+
+    if (B->storage()==gsparse::CSCMAT)
+      gmm::copy(B->real_csc(), getfem::contact_brick_set_BT(md->model(), ind));
+    else if (B->storage()==gsparse::WSCMAT)
+      gmm::copy(B->real_wsc(), getfem::contact_brick_set_BT(md->model(), ind));
+    else
+      THROW_BADARG("BT should be a sparse matrix");
   } else bad_cmd(cmd);
 }

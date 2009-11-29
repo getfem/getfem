@@ -512,6 +512,8 @@ model states.
     #@SET    MODEL:SET('first iter')
     #@SET    MODEL:SET('next iter')
     #@SET    MODEL:SET('add basic contact brick')
+    #@SET    MODEL:SET('contact brick set BN')
+    #@SET    MODEL:SET('contact brick set BT')
 
 
 class GeoTrans:

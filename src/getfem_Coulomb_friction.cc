@@ -67,18 +67,15 @@ namespace getfem {
   //=========================================================================
 
   // To be done:
-  // - Rédiger utilisation basique + interface matlab/python
-  //      (+ acces à BN, BT pour pouvoir les changer ...)
+  // - acces à BN, BT pour pouvoir les changer (interface Matlab)
   // - Fonctions virtuelles pour update en fonctions de bords donnés
   // - Ajout d'une pénalisation optionnelle ?
-  // - Un moyen de récuperer BN, BT, ...
 
 
   struct Coulomb_friction_brick : public virtual_brick {
 
-    typedef gmm::row_matrix<gmm::rsvector<scalar_type> > RT_MATRIX;
-    RT_MATRIX BN, BT;
-    mutable RT_MATRIX BBN, BBT;
+    CONTACT_B_MATRIX BN, BT;
+    mutable CONTACT_B_MATRIX BBN, BBT;
     mutable model_real_plain_vector gap, threshold, friction_coeff, alpha;
     mutable model_real_plain_vector RLN, RLT; 
     mutable scalar_type r, gamma;
@@ -331,8 +328,34 @@ namespace getfem {
       is_init = false;
     }
 
+    CONTACT_B_MATRIX &get_BN(void) { return BN; }
+    CONTACT_B_MATRIX &get_BT(void) { return BT; }
+    const CONTACT_B_MATRIX &get_BN(void) const { return BN; }
+    const CONTACT_B_MATRIX &get_BT(void) const { return BT; }
+
 
   };
+
+
+  CONTACT_B_MATRIX &contact_brick_set_BN
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    Coulomb_friction_brick *p = dynamic_cast<Coulomb_friction_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->get_BN();
+  }
+
+  CONTACT_B_MATRIX &contact_brick_set_BT
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    Coulomb_friction_brick *p = dynamic_cast<Coulomb_friction_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->get_BT();
+  }
   
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
