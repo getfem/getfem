@@ -188,8 +188,7 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS, plain_vecto
   std::vector<contact_node> cns;
   dal::bit_vector cn1, cn2;
   size_type cns_size=0;
-//  for (size_type swap = 0; swap <= 1; swap++) {
-  for (size_type swap = 0; swap <= 0; swap++) {
+  for (size_type swap = 0; swap <= 1; swap++) {
     size_type CONTACT_BOUNDARY = swap ? CONTACT_BOUNDARY_2 : CONTACT_BOUNDARY_1;
     for (getfem::mr_visitor face(mesh.region(CONTACT_BOUNDARY));
          !face.finished(); ++face) {
