@@ -105,9 +105,6 @@ void elastostatic_problem::init(void) {
       contact_boundary = mesh.region(CONTACT_BOUNDARY_2);
       dirichlet_boundary = mesh.region(DIRICHLET_BOUNDARY_2);
       getfem::import_mesh("gmsh:./gear2.msh",tmpmesh);
-//bgeot::base_small_vector T(N);
-//T[2] = 0.1;
-//tmpmesh.translation(T);
     }
     for (dal::bv_visitor cv(tmpmesh.convex_index()); !cv.finished(); ++cv) {
       size_type newcv =
@@ -169,7 +166,6 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
   md.add_fem_variable("u", mf_u);
 
   // Linearized elasticity brick.
-//  getfem::mdbrick_isotropic_linearized_elasticity<> ELAS(mim, mf_u, lambda,mu);
   md.add_initialized_scalar_data("lambda", lambda);
   md.add_initialized_scalar_data("mu", mu);
   getfem::add_isotropic_linearized_elasticity_brick(md, mim, "u", "lambda", "mu");
@@ -301,8 +297,6 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
       }
     }
   }
-//  getfem::mdbrick_Coulomb_friction<> FRICTION(ELAS, BN, gap);
-//  FRICTION.set_r(5e1);
   md.add_fixed_size_variable("contact_multiplier", no_cn);
   md.add_initialized_scalar_data("r", 1.);
   md.add_initialized_fixed_size_data("gap", gap);
@@ -320,22 +314,12 @@ cout << "no_cn: " << no_cn << endl;
     F[i*N] = -node[1] * rot_angle;
     F[i*N+1] = node[0] * rot_angle;
   }
-//  getfem::mdbrick_Dirichlet<> DIRICHLET(FRICTION, DIRICHLET_BOUNDARY_1);
-//  DIRICHLET.set_constraints_type(getfem::PENALIZED_CONSTRAINTS); //getfem::ELIMINATED_CONSTRAINTS); //
-//  DIRICHLET.rhs().set(mf_rhs, F);
   md.add_initialized_fem_data("DirichletData1", mf_rhs, F);
-//  getfem::add_Dirichlet_condition_with_penalization
-//    (md, mim, "u", 1e6, DIRICHLET_BOUNDARY_1, "DirichletData1");
   getfem::add_Dirichlet_condition_with_multipliers
     (md, mim, "u", mf_u, DIRICHLET_BOUNDARY_1, "DirichletData1");
 
   gmm::clear(F);
-//  getfem::mdbrick_Dirichlet<> FINAL_MODEL(DIRICHLET, DIRICHLET_BOUNDARY_2);
-//  FINAL_MODEL.set_constraints_type(getfem::PENALIZED_CONSTRAINTS); //getfem::ELIMINATED_CONSTRAINTS); //
-//  FINAL_MODEL.rhs().set(mf_rhs, F);
   md.add_initialized_fem_data("DirichletData2", mf_rhs, F);
-//  getfem::add_Dirichlet_condition_with_penalization
-//    (md, mim, "u", 1e6, DIRICHLET_BOUNDARY_2, "DirichletData2");
   getfem::add_Dirichlet_condition_with_multipliers
     (md, mim, "u", mf_u, DIRICHLET_BOUNDARY_2, "DirichletData2");
 
@@ -346,34 +330,22 @@ cout << "no_cn: " << no_cn << endl;
 //  }
 //  getfem::mdbrick_source_term<> NEUMANN(FRICTION, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
 
-//  getfem::standard_model_state MS(FINAL_MODEL);
   gmm::iteration iter(residual, 1, 40000);
 
-//  getfem::standard_solve(MS, FINAL_MODEL, iter);
-//  plinsolv.reset(new getfem::linear_solver_superlu<sparse_matrix,plain_vector>);
   gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
                                      1.0/1000.0, 3.0/5.0, 1.6);
-//  getfem::model_problem<MODEL_STATE> mdpb(MS, FINAL_MODEL, ls);
-//  MS.adapt_sizes(FINAL_MODEL); // to be sure it is ok, but should be done before
-//  getfem::classical_Newton(mdpb, iter, *plinsolv);
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"superlu"), ls);
                       
   gmm::resize(U, mf_u.nb_dof());
   gmm::resize(RHS, md.nb_dof());
   gmm::resize(CForces, mf_u.nb_dof());
 
-//  gmm::copy(ELAS.get_solution(MS), U);
   gmm::copy(md.real_variable("u"), U);
-//  gmm::copy(MS.residual(), RHS);
   gmm::copy(md.real_rhs(), RHS);
 
   gmm::copy(gmm::sub_vector(RHS, md.interval_of_variable("u")), Forces);
   gmm::scale(Forces, -1.0);
 
-//  gmm::mult(gmm::sub_matrix(MS.tangent_matrix(),
-//                            gmm::sub_interval(0, mf_u.nb_dof()),
-//                            gmm::sub_interval(mf_u.nb_dof(), no_cn) ),
-//            gmm::sub_vector(MS.state(), gmm::sub_interval(mf_u.nb_dof(), no_cn)),
   gmm::mult(gmm::sub_matrix(md.real_tangent_matrix(),
                             md.interval_of_variable("u"),
                             md.interval_of_variable("contact_multiplier") ),
