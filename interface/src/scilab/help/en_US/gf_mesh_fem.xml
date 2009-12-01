@@ -22,6 +22,8 @@ mesh_fem MF = gf_mesh_fem(mesh M [, int Qdim=1])
 mesh_fem MF[,M] = gf_mesh_fem('load', string filename[,mesh M])
 mesh_fem MF[,M] = gf_mesh_fem('from string', string S [,mesh M])
 mesh_fem MF = gf_mesh_fem('clone', mesh_fem MF0)
+mesh_fem MF = gf_mesh_fem('partial', mesh_fem mf, vec DOFs[, vec RCVs])
+mesh_fem MF = gf_mesh_fem('global function', mesh m, level_set ls, [gl F1,...][, int Qdim_m])
     </synopsis>
   </refsynopsisdiv>
 
@@ -86,9 +88,23 @@ mesh_fem MF = gf_mesh_fem('clone', mesh_fem MF0)
         <para>gf_mesh_fem('.mesh', Mesh m[, int Qdim=1]) Build a new MeshFem
         object. The <literal>Qdim</literal> parameter is optional.</para>
       </listitem>
+
+      <listitem>
+	<para>gf_mesh_fem('partial', mesh_fem mf, vec DOFs[, vec
+	RCVs]) creates a special restricted mesh_fem by keeping only a
+	subset of the degrees of freedom of a pre-existing mesh_fem
+	`mf`.</para>
+	<para>If `RCVs` is given, no FEM will be put on the convexes
+	listed in `RCVs`.</para>
+      </listitem>
+      <listitem>
+	<para>gf_mesh_fem('global function', mesh m, level_set ls, [gl
+	  F1,...][, int Qdim_m]) Create a mesh_fem whose base functions are
+	  global function given by the user.</para>
+      </listitem>
     </itemizedlist>
   </refsection>
-
+  
   <refsection>
     <title>See Also</title>
 

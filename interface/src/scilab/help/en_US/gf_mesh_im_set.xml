@@ -18,6 +18,7 @@
 
     <synopsis>
 gf_mesh_im_set(MIM, 'integ', { integ im | int IMDEGREE }, [, ivec CVIDX])
+gf_mesh_im_set(MIM, 'adapt')
     </synopsis>
   </refsynopsisdiv>
 
@@ -31,8 +32,15 @@ gf_mesh_im_set(MIM, 'integ', { integ im | int IMDEGREE }, [, ivec CVIDX])
       </listitem>
 
       <listitem>
-	<para>gf_mesh_im_set(MIM, 'integ', IM_DEGREE [, CVIDX]) : assign a classical approximate integration method of order at least IM_DEGREE 
-	on the listed convexes. If IM_DEGREE=-1, then the dummy integration method 'IM_NONE' is used. </para>
+	<para>gf_mesh_im_set(MIM, 'integ', IM_DEGREE [, CVIDX]) :
+	  assign a classical approximate integration method 
+	  of order at least IM_DEGREE on the listed convexes. 
+	  If IM_DEGREE=-1, then the dummy integration method 'IM_NONE' is used. </para>
+      </listitem>
+
+      <listitem>
+	<para>gf_mesh_im_set(MIM, 'adapt') For a mesh_im levelset object only. Adapt the integration methods to a
+	  change of the levelset function.</para>
       </listitem>
     </itemizedlist>
   </refsection>

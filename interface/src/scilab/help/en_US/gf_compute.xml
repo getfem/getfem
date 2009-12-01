@@ -31,6 +31,7 @@ U2 = gf_compute(mf, U, 'interpolate on', mesh_slice sl)
       {'regular h', hxyz | 'regular N',Nxyz | X[,Y[,Z]]})
 U2 = gf_compute(mf, U, 'extrapolate on', mesh_fem mf2)
 E = gf_compute(mf, U, 'error estimate',  mesh_im MIM) 
+gf_compute(mf, U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option]) 
   </synopsis>
   </refsynopsisdiv>
 
@@ -199,6 +200,20 @@ pcolor(squeeze(Uq(1,:,:)));
         <literal>CVLIST</literal> may indicate the list of convex number that
         should be consider, if not used then all the mesh convexes will be
         used. <literal>U</literal> should be a row vector.</para>
+      </listitem>
+
+      <listitem>
+	<para>gf_compute(mf, U, 'convect', mesh_fem mf_v, vec V,
+	  scalar dt, int nt, string option]) Compute a convection
+	  of <literal>U</literal> with regards to a steady state
+	  velocity field <literal>V</literal> with a Characteristic-Galerkin method. This
+	  method is restricted to pure Lagrange fems for U. <literal>mf_v</literal> should represent
+	  a continuous finite element method. <literal>dt</literal> is the integration time and <literal>nt</literal>
+	  is the number of integration step on the caracteristics. <literal>option</literal> is an
+	  option for the part of the boundary where there is a re-entrant convection.
+	  <literal>option = 'extrapolation'</literal> for an extrapolation on the nearest element
+	  or <literal>option = 'unchanged'</literal> for a constant value on that boundary.
+	  This method is rather dissipative, but stable.</para>
       </listitem>
     </itemizedlist>
   </refsection>

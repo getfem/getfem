@@ -24,6 +24,7 @@ gf_mesh_fem_set(MF, 'qdim', int Qdim)
 gf_mesh_fem_set(MF, 'reduction', int s)
 gf_mesh_fem_set(MF, 'reduction matrices', spmat R, spmat E)
 gf_mesh_fem_set(MF, 'dof partition', ivec DOFP)
+gf_mesh_fem_set(MF, 'set partial', ivec DOFs[, ivec RCVs])
     </synopsis>
   </refsynopsisdiv>
 
@@ -79,9 +80,17 @@ gf_mesh_fem_set(MF, 'dof partition', ivec DOFP)
         gf_mesh_fem_get(MF,'dof partition') for a description of "dof
         partition".</para>
       </listitem>
+      
+      <listitem>
+	<para>gf_mesh_fem_set(MF, 'set partial', ivec DOFs[, ivec
+	  RCVs]) Can only be applied to a partial mesh_fem. 
+	  Change the subset of the degrees of freedom of `mf`.</para>
+	<para>If `RCVs` is given, no FEM will be put on the convexes
+	  listed in `RCVs`.</para>
+      </listitem>
     </itemizedlist>
   </refsection>
-
+  
   <refsection>
     <title>Examples</title>
 

@@ -17,7 +17,11 @@
     <title>Calling Sequence</title>
 
     <synopsis>
-GF = gf_global_function(...)
+      gf = gf_global_function('cut_off', int fn, scal r, scal r1, scal r0)
+      gf = gf_global_function('crack', int fn)
+      gf = gf_global_function('parser', string val[, string grad[, string hess]])
+      gf = gf_global_function('product', gl f1, gl f2)
+      gf = gf_global_function('add', gl f1, gl f2)
     </synopsis>
   </refsynopsisdiv>
 
@@ -69,6 +73,11 @@ GF = gf_global_function(...)
         <para>GF = gf_global_function('product', globalfunction F,
         globalfunction G) Create a product of two global functions.</para>
       </listitem>
+
+      <listitem>
+	<para>GF = gf_global_function('add', gl f1, gl f2) Create a add of two global functions.</para>
+      </listitem>
+
     </itemizedlist>
   </refsection>
 
@@ -76,9 +85,7 @@ GF = gf_global_function(...)
     <title>See Also</title>
 
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
-
-      <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
+      <member><link linkend="gf_global_function_get">gf_global_function_get</link></member>
     </simplelist>
   </refsection>
 
