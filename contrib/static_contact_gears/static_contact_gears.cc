@@ -76,7 +76,7 @@ struct elastostatic_problem {
 
   size_type N;               /* dimension of the problem                     */
 
-  bool solve(plain_vector &, plain_vector &, plain_vector &);
+  bool solve(plain_vector &, plain_vector &, plain_vector &, plain_vector &);
   void init(void);
   elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh) {}
 
@@ -133,7 +133,7 @@ void elastostatic_problem::init(void) {
   N = mesh.dim();
 
   residual = 1e-6;
-  rot_angle = -5e-3;
+  rot_angle = -1.5e-2;
   threshold = 10.;
 
   lambda = 1.18e+5;
@@ -157,13 +157,13 @@ void elastostatic_problem::init(void) {
 
 /*  Construction and solution of the Model.
 */
-bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS, plain_vector &CForces) {
+bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
+                                 plain_vector &Forces, plain_vector &CForces) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   dim_type qdim = mf_u.get_qdim();
 
   cout << "mf_rhs.nb_dof() :" << mf_rhs.nb_dof() << endl;
   cout << "mf_u.nb_dof()   :" << mf_u.nb_dof() << endl;
-  cout << "mesh.dim()      :" << N << endl;
 
   getfem::model md;
   md.add_fem_variable("u", mf_u);
@@ -309,6 +309,8 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS, plain_vecto
   getfem::add_basic_contact_brick(md, "u", "contact_multiplier", "r",
                                   BN, "gap");
 
+cout << "no_cn: " << no_cn << endl;
+
   // Defining the DIRICHLET condition.
   plain_vector F(nb_dof_rhs * N);
   dal::bit_vector
@@ -322,16 +324,20 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS, plain_vecto
 //  DIRICHLET.set_constraints_type(getfem::PENALIZED_CONSTRAINTS); //getfem::ELIMINATED_CONSTRAINTS); //
 //  DIRICHLET.rhs().set(mf_rhs, F);
   md.add_initialized_fem_data("DirichletData1", mf_rhs, F);
-  getfem::add_Dirichlet_condition_with_penalization
-    (md, mim, "u", 1e9, DIRICHLET_BOUNDARY_1, "DirichletData1");
+//  getfem::add_Dirichlet_condition_with_penalization
+//    (md, mim, "u", 1e6, DIRICHLET_BOUNDARY_1, "DirichletData1");
+  getfem::add_Dirichlet_condition_with_multipliers
+    (md, mim, "u", mf_u, DIRICHLET_BOUNDARY_1, "DirichletData1");
 
   gmm::clear(F);
 //  getfem::mdbrick_Dirichlet<> FINAL_MODEL(DIRICHLET, DIRICHLET_BOUNDARY_2);
 //  FINAL_MODEL.set_constraints_type(getfem::PENALIZED_CONSTRAINTS); //getfem::ELIMINATED_CONSTRAINTS); //
 //  FINAL_MODEL.rhs().set(mf_rhs, F);
   md.add_initialized_fem_data("DirichletData2", mf_rhs, F);
-  getfem::add_Dirichlet_condition_with_penalization
-    (md, mim, "u", 1e9, DIRICHLET_BOUNDARY_2, "DirichletData2");
+//  getfem::add_Dirichlet_condition_with_penalization
+//    (md, mim, "u", 1e6, DIRICHLET_BOUNDARY_2, "DirichletData2");
+  getfem::add_Dirichlet_condition_with_multipliers
+    (md, mim, "u", mf_u, DIRICHLET_BOUNDARY_2, "DirichletData2");
 
   // Defining the surface pressure term for the NEUMANN boundary.
 //  base_vector f(N);
@@ -353,23 +359,28 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS, plain_vecto
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"superlu"), ls);
                       
   gmm::resize(U, mf_u.nb_dof());
-  gmm::resize(RHS, mf_u.nb_dof());
+  gmm::resize(RHS, md.nb_dof());
   gmm::resize(CForces, mf_u.nb_dof());
 
 //  gmm::copy(ELAS.get_solution(MS), U);
   gmm::copy(md.real_variable("u"), U);
 //  gmm::copy(MS.residual(), RHS);
   gmm::copy(md.real_rhs(), RHS);
-//  gmm::copy(NEUMANN.get_F(), RHS);
-  gmm::scale(RHS, -1.0);
+
+  gmm::copy(gmm::sub_vector(RHS, md.interval_of_variable("u")), Forces);
+  gmm::scale(Forces, -1.0);
 
 //  gmm::mult(gmm::sub_matrix(MS.tangent_matrix(),
 //                            gmm::sub_interval(0, mf_u.nb_dof()),
 //                            gmm::sub_interval(mf_u.nb_dof(), no_cn) ),
 //            gmm::sub_vector(MS.state(), gmm::sub_interval(mf_u.nb_dof(), no_cn)),
-//            CForces);
-//  gmm::scale(CForces, -1.0);
-  //md.real_tangent_matrix()
+  gmm::mult(gmm::sub_matrix(md.real_tangent_matrix(),
+                            md.interval_of_variable("u"),
+                            md.interval_of_variable("contact_multiplier") ),
+            md.real_variable("contact_multiplier"), 
+            CForces);
+  gmm::scale(CForces, -1.0);
+
   return (iter.converged());
 }
 
@@ -384,8 +395,9 @@ int main(int argc, char *argv[]) {
 
   plain_vector U(p.mf_u.nb_dof());
   plain_vector RHS(p.mf_u.nb_dof());
+  plain_vector Forces(p.mf_u.nb_dof());
   plain_vector CForces(p.mf_u.nb_dof());
-  if (!p.solve(U, RHS, CForces)) cout << "Solve has failed\n";
+  if (!p.solve(U, RHS, Forces, CForces)) cout << "Solve has failed\n";
 
   p.mesh.write_to_file("simple_gears.mesh");
   p.mf_u.write_to_file("simple_gears.mf", true);
@@ -395,9 +407,7 @@ int main(int argc, char *argv[]) {
   getfem::vtk_export exp("simple_gears.vtk", true);
   exp.exporting(p.mf_u);
   exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
-  exp.write_point_data(p.mf_u, 
-            gmm::sub_vector(RHS, gmm::sub_interval(0, p.mf_u.nb_dof())),
-            "forces");
+  exp.write_point_data(p.mf_u, Forces, "forces");
   exp.write_point_data(p.mf_u, CForces, "contact_forces");
 
   return 0; 
