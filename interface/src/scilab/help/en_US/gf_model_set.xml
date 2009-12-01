@@ -249,7 +249,7 @@ gf_model_set(md,'contact brick set BT', int indbrick, mat BT)
 	<para>ind_brick=gf_model_set(md,'add generalized Dirichlet
 	  condition with multiplier', mesh_im mim, string varname,
 	  string multname | mesh_fem mf_mult | int degree, int region,
-	  string dataname, string Hname) : Add a Dirichlet condition on the variable <listeral>varname</literal> and the mesh
+	  string dataname, string Hname) : Add a Dirichlet condition on the variable <literal>varname</literal> and the mesh
 	  region <literal>region</literal>. This version is for vector
 	  field. It prescribes a condition $Hu = r$
 	  where <literal>H</literal> is a matrix field. The region
