@@ -283,6 +283,8 @@ namespace getfem {
     { return bricks[ib].matrix_coeff; }
     bool is_var_newer_than_brick(const std::string &varname,
 				 size_type ib) const;
+    bool is_var_mf_newer_than_brick(const std::string &varname,
+				    size_type ib) const;
     pbrick get_brick(size_type ib) const { return bricks[ib].pbr; }
     
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;

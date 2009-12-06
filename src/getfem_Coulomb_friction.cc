@@ -22,6 +22,11 @@
 
 #include "getfem/getfem_Coulomb_friction.h"
 
+#include <getfem/getfem_arch_config.h>
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#include <muParser/muParser.h>
+#endif
+
 namespace getfem {
 
   //=========================================================================
@@ -66,16 +71,10 @@ namespace getfem {
   //
   //=========================================================================
 
-  // To be done:
-  // - acces à BN, BT pour pouvoir les changer (interface Matlab)
-  // - Fonctions virtuelles pour update en fonctions de bords donnés
-  // - Ajout d'une pénalisation optionnelle ?
-
-
   struct Coulomb_friction_brick : public virtual_brick {
 
-    CONTACT_B_MATRIX BN1, BT1;
-    CONTACT_B_MATRIX BN2, BT2;
+    mutable CONTACT_B_MATRIX BN1, BT1;
+    mutable CONTACT_B_MATRIX BN2, BT2;
     mutable CONTACT_B_MATRIX BBN1, BBT1;
     mutable CONTACT_B_MATRIX BBN2, BBT2;
     mutable model_real_plain_vector gap, threshold, friction_coeff, alpha;
@@ -144,25 +143,22 @@ namespace getfem {
 	}
       }
     }
-    
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
-					const model::varnamelist &vl,
-					const model::varnamelist &dl,
-					const model::mimlist &mims,
-					model::real_matlist &matl,
-					model::real_veclist &vecl,
-					model::real_veclist &,
-					size_type /* region */,
-					build_version version) const {
+    // Common part for all contact with friction bricks
+    void basic_asm_real_tangent_terms(const model_real_plain_vector &u1,
+				      const model_real_plain_vector &u2,
+				      const model_real_plain_vector &lambda_n,
+				      const model_real_plain_vector &lambda_t,
+				      const model_real_plain_vector &wt1,
+				      const model_real_plain_vector &wt2,
+				      model::real_matlist &matl,
+				      model::real_veclist &vecl,
+				      build_version version) const {
       size_type nbt = 4 + (contact_only ? 0 : 4) + (two_variables ? 3 : 0)
 	+ (two_variables && !contact_only ? 2 : 0);
       GMM_ASSERT1(matl.size() == nbt,
 		  "Wrong number of terms for the contact brick");
-      GMM_ASSERT1(mims.size() == 0, "Contact brick need no mesh_im");
-      size_type nbvar = 2 + (contact_only ? 0 : 1) + (two_variables ? 1 : 0); 
-      GMM_ASSERT1(vl.size() == nbvar && dl.size() >= 2 && dl.size() <= 3,
-		  "Wrong number of variables for contact brick");
+ 
       const scalar_type vt1(1);
       size_type nbc = gmm::mat_nrows(BN1);
       size_type d = gmm::mat_nrows(BT1)/nbc;
@@ -189,78 +185,10 @@ namespace getfem {
       model_real_plain_vector &ru2 = vecl[1];
       model_real_plain_vector &rlambda_n = vecl[nvec_lambda_n];
       model_real_plain_vector &rlambda_t = vecl[nvec_lambda_t];
-      
-      // Variables
-      // Without friction and one displacement  : u1, lambda_n
-      // Without friction and two displacements : u1, u2, lambda_n
-      // With friction and one displacement     : u1, lambda_n, lambda_t 
-      // With friction and two displacements    : u1, u2, lambda_n, lambda_t
-      size_type nv = 0;
-      const model_real_plain_vector &u1 = md.real_variable(vl[nv++]);
-      const model_real_plain_vector &u2 = md.real_variable(vl[nv++]);
-      if (!two_variables) nv--;
-      const model_real_plain_vector &lambda_n = md.real_variable(vl[nv++]);
-      if (contact_only) nv--;
-      const model_real_plain_vector &lambda_t = md.real_variable(vl[nv]);
-
-      // Parameters
-      // (order : r, gap, alpha, friction_coeff, gamma, wt, threshold)
-      size_type np = 0, np_wt1 = 0, np_wt2 = 0, np_alpha = 0;
-      const model_real_plain_vector &vr = md.real_variable(dl[np++]);
-      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
-      r = vr[0];
-      const model_real_plain_vector &vgap = md.real_variable(dl[np++]);
-      GMM_ASSERT1(gmm::vect_size(vgap) == 1 || gmm::vect_size(vgap) == nbc,
-		  "Parameter gap has a wrong size");
-      gmm::resize(gap, nbc);
-      if (gmm::vect_size(vgap) == 1)
-	gmm::fill(gap, vgap[0]);
-      else
-	gmm::copy(vgap, gap);
-      np_alpha = np++;
-      const model_real_plain_vector &valpha = md.real_variable(dl[np_alpha]);
-      GMM_ASSERT1(gmm::vect_size(valpha)== 1 || gmm::vect_size(valpha) == nbc,
-		  "Parameter alpha has a wrong size");
-      gmm::resize(alpha, nbc);
-      if (gmm::vect_size(valpha) == 1)
-	gmm::fill(alpha, valpha[0]);
-      else
-	gmm::copy(valpha, alpha);
-      if (!contact_only) {
-	const model_real_plain_vector &vfr = md.real_variable(dl[np++]);
-	GMM_ASSERT1(gmm::vect_size(vfr)==1 || gmm::vect_size(vfr) == nbc,
-		    "Parameter friction_coeff has a wrong size");
-	gmm::resize(friction_coeff, nbc);
-	if (gmm::vect_size(vfr) == 1)
-	  gmm::fill(friction_coeff, vfr[0]);
-	else
-	  gmm::copy(vfr, friction_coeff);
-	if (friction_dynamic_term) {
-	  const model_real_plain_vector &vg = md.real_variable(dl[np++]);
-	  GMM_ASSERT1(gmm::vect_size(vg) == 1,
-		      "Parameter gamma should be a scalar");
-	  gamma = vg[0];
-	  np_wt1 = np++;
-	  if (two_variables) np_wt2 = np++;
-	}
-	if (Tresca_version) {
-	  const model_real_plain_vector &vth = md.real_variable(dl[np++]);
-	  GMM_ASSERT1(gmm::vect_size(vth) == 1 || gmm::vect_size(vth) == nbc,
-		      "Parameter threshold has a wrong size");
-	  gmm::resize(threshold, nbc);
-	  if (gmm::vect_size(vth) == 1)
-	    gmm::fill(threshold, vth[0]);
-	  else
-	    gmm::copy(vth, threshold);
-	}
-      }
 
       // pre-computations
-      if (md.is_var_newer_than_brick(dl[np_alpha], ib)) is_init = false;
       if (!is_init) init_BBN_BBT();
-      precomp(u1, u2, lambda_n, lambda_t,
-	      md.real_variable(dl[np_wt1]),
-	      md.real_variable(dl[np_wt2]));
+      precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
       
       if (version & model::BUILD_MATRIX) {
 	// Unilateral contact
@@ -312,9 +240,6 @@ namespace getfem {
 	  gmm::copy(gmm::transposed(T_u1_t), T_t_u1);
 	  if (two_variables) gmm::copy(gmm::transposed(T_u2_t), T_t_u2);
 	}
-
-	// Fait jusqu'ici ...
-
 
 	if (symmetrized) {
 	  // gmm::copy(gmm::transposed(T_n_u1), T_u1_n);  // already done
@@ -391,6 +316,95 @@ namespace getfem {
       }
     }
 
+    // specific part for the basic bricks : BN, BT, gap, r, alpha are given.
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					model::real_veclist &,
+					size_type /* region */,
+					build_version version) const {
+      GMM_ASSERT1(mims.size() == 0, "Contact brick need no mesh_im");
+      size_type nbvar = 2 + (contact_only ? 0 : 1) + (two_variables ? 1 : 0); 
+      GMM_ASSERT1(vl.size() == nbvar && dl.size() >= 2 && dl.size() <= 3,
+		  "Wrong number of variables for contact brick");
+      size_type nbc = gmm::mat_nrows(BN1);
+
+      // Variables
+      // Without friction and one displacement  : u1, lambda_n
+      // Without friction and two displacements : u1, u2, lambda_n
+      // With friction and one displacement     : u1, lambda_n, lambda_t 
+      // With friction and two displacements    : u1, u2, lambda_n, lambda_t
+      size_type nv = 0;
+      const model_real_plain_vector &u1 = md.real_variable(vl[nv++]);
+      const model_real_plain_vector &u2 = md.real_variable(vl[nv++]);
+      if (!two_variables) nv--;
+      const model_real_plain_vector &lambda_n = md.real_variable(vl[nv++]);
+      if (contact_only) nv--;
+      const model_real_plain_vector &lambda_t = md.real_variable(vl[nv]);
+
+      // Parameters
+      // (order : r, gap, alpha, friction_coeff, gamma, wt, threshold)
+      size_type np = 0, np_wt1 = 0, np_wt2 = 0, np_alpha = 0;
+      const model_real_plain_vector &vr = md.real_variable(dl[np++]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+      r = vr[0];
+      const model_real_plain_vector &vgap = md.real_variable(dl[np++]);
+      GMM_ASSERT1(gmm::vect_size(vgap) == 1 || gmm::vect_size(vgap) == nbc,
+		  "Parameter gap has a wrong size");
+      gmm::resize(gap, nbc);
+      if (gmm::vect_size(vgap) == 1)
+	gmm::fill(gap, vgap[0]);
+      else
+	gmm::copy(vgap, gap);
+      np_alpha = np++;
+      const model_real_plain_vector &valpha = md.real_variable(dl[np_alpha]);
+      GMM_ASSERT1(gmm::vect_size(valpha)== 1 || gmm::vect_size(valpha) == nbc,
+		  "Parameter alpha has a wrong size");
+      gmm::resize(alpha, nbc);
+      if (gmm::vect_size(valpha) == 1)
+	gmm::fill(alpha, valpha[0]);
+      else
+	gmm::copy(valpha, alpha);
+      if (!contact_only) {
+	const model_real_plain_vector &vfr = md.real_variable(dl[np++]);
+	GMM_ASSERT1(gmm::vect_size(vfr)==1 || gmm::vect_size(vfr) == nbc,
+		    "Parameter friction_coeff has a wrong size");
+	gmm::resize(friction_coeff, nbc);
+	if (gmm::vect_size(vfr) == 1)
+	  gmm::fill(friction_coeff, vfr[0]);
+	else
+	  gmm::copy(vfr, friction_coeff);
+	if (friction_dynamic_term) {
+	  const model_real_plain_vector &vg = md.real_variable(dl[np++]);
+	  GMM_ASSERT1(gmm::vect_size(vg) == 1,
+		      "Parameter gamma should be a scalar");
+	  gamma = vg[0];
+	  np_wt1 = np++;
+	  if (two_variables) np_wt2 = np++;
+	}
+	if (Tresca_version) {
+	  const model_real_plain_vector &vth = md.real_variable(dl[np++]);
+	  GMM_ASSERT1(gmm::vect_size(vth) == 1 || gmm::vect_size(vth) == nbc,
+		      "Parameter threshold has a wrong size");
+	  gmm::resize(threshold, nbc);
+	  if (gmm::vect_size(vth) == 1)
+	    gmm::fill(threshold, vth[0]);
+	  else
+	    gmm::copy(vth, threshold);
+	}
+      }
+
+      if (md.is_var_newer_than_brick(dl[np_alpha], ib)) is_init = false;
+
+      basic_asm_real_tangent_terms
+	(u1, u2, lambda_n, lambda_t, md.real_variable(dl[np_wt1]),
+	 md.real_variable(dl[np_wt2]), matl, vecl, version); 
+
+    }
+
     Coulomb_friction_brick(bool symmetrized_, bool contact_only_) {
       symmetrized = symmetrized_;
       contact_only = contact_only_;
@@ -448,6 +462,10 @@ namespace getfem {
     return p->get_BT1();
   }
   
+  //=========================================================================
+  //  Add a frictionless contact condition with BN, r, alpha given.  
+  //=========================================================================
+
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, model_real_sparse_matrix &BN,
@@ -484,23 +502,187 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
   }
   
-//   size_type add_Coulomb_friction_brick
-//   (model &md, const mesh_im &mim, const std::string &varname,
-//    const std::string &dataname1, const std::string &dataname2,
-//    size_type region, const std::string &dataname3) {
-//     pbrick pbr = new Coulomb_friction_brick(true, true);
-//     model::termlist tl;
-//     tl.push_back(model::term_description(varname, varname, true));
-//     model::varnamelist dl(1, dataname1);
-//     dl.push_back(dataname2);
-//     if (dataname3.size()) dl.push_back(dataname3);
-//     return md.add_brick(pbr, model::varnamelist(1, varname), dl, tl,
-// 			model::mimlist(1, &mim), region);
-//   }
 
-  
+  //=========================================================================
+  //
+  //  Brick with a given rigid obstacle (one body, build BN, BT, Gap, alpha)
+  //
+  //=========================================================================
 
 
+  struct Coulomb_friction_brick_rigid_obstacle
+    : public Coulomb_friction_brick {
+
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+    mutable mu::Parser obstacle; // obstacle given with a signed distance
+#endif
+
+  public :
+    
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					model::real_veclist &,
+					size_type region,
+					build_version version) const {
+      GMM_ASSERT1(mims.size() == 1, "This contact brick need one mesh_im");
+      size_type nbvar = 2 + (contact_only ? 0 : 1);
+      // à adapter dl.size()
+      GMM_ASSERT1(vl.size() == nbvar && dl.size() >= 2 && dl.size() <= 3,
+		  "Wrong number of variables for contact brick");
+      GMM_ASSERT1(!two_variables, "internal error");
+      const mesh_im &mim = *mims[0];
+
+      // Variables
+      // Without friction and one displacement  : u1, lambda_n
+      // With friction and one displacement     : u1, lambda_n, lambda_t
+      size_type nv = 0;
+      const model_real_plain_vector &u1 = md.real_variable(vl[nv++]);
+      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const model_real_plain_vector &lambda_n = md.real_variable(vl[nv++]);
+      if (contact_only) nv--;
+      const model_real_plain_vector &lambda_t = md.real_variable(vl[nv]);
+
+
+      // Parameters (order : r, friction_coeff, gamma, wt, threshold)
+      size_type np = 0, np_wt1 = 0, nbc;
+      const model_real_plain_vector &vr = md.real_variable(dl[np++]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+      r = vr[0];
+
+      // Computation of BN, BT, gap and alpha
+      if (md.is_var_mf_newer_than_brick(vl[0], ib)) {
+
+	// Verification that mf_u1 is a pure Lagrange fem.
+	GMM_ASSERT1(!(mf_u1.is_reduced()),
+		    "This contact brick works only for pure Lagrange fems");
+	dal::bit_vector dofs = mf_u1.basic_dof_on_region(region);
+	for (dal::bv_visitor id(dofs); !id.finished(); ++id) {
+	  size_type cv = mf_u1.first_convex_of_basic_dof(id);
+	  GMM_ASSERT1(mf_u1.fem_of_element(cv)->is_lagrange(),
+		      "This contact brick works only for pure Lagrange fems");
+	}
+        nbc = dofs.card();
+	size_type d = mf_u1.get_qdim() - 1;
+
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+
+	// computation of gap
+	gmm::resize(gap, nbc);
+	size_type i = 0;
+	base_node pt(d+1);
+	obstacle.DefineVar("x", &pt[0]);
+	if (d > 0) obstacle.DefineVar("y", &pt[1]);
+	if (d > 1) obstacle.DefineVar("z", &pt[2]);
+	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i) {
+	  gmm::copy(mf_u1.point_of_basic_dof(id), pt);
+
+	  try {
+	    gap[i] = scalar_type(obstacle.Eval());
+	  } catch (mu::Parser::exception_type &e) {
+	    std::cerr << "Message  : " << e.GetMsg() << std::endl;
+	    std::cerr << "Formula  : " << e.GetExpr() << std::endl;
+	    std::cerr << "Token    : " << e.GetToken() << std::endl;
+	    std::cerr << "Position : " << e.GetPos() << std::endl;
+	    std::cerr << "Errc     : " << e.GetCode() << std::endl;
+	    GMM_ASSERT1(false, "Error in \"val\" expression.");
+	  }
+	  
+	}
+
+
+
+	// computation of BN
+	gmm::resize(BN1, nbc, mf_u1.nb_dof());
+	
+	// ... evaluation of the normal vector ...
+
+
+	// computation of BT
+	if (!contact_only) {
+	  gmm::resize(BT1, d*nbc, mf_u1.nb_dof());
+
+
+	}
+
+	// ...
+
+
+	// resize of lambda_n, lambda_t ...
+
+
+
+#else
+
+	GMM_ASSERT1(false, "Muparser is not installed, "
+		    "You cannot used this brick");
+	
+#endif
+
+
+	// computation of alpha vector.
+	base_node Pmin, Pmax;
+	mf_u1.linked_mesh().bounding_box(Pmin, Pmax);
+	scalar_type l = scalar_type(0);
+	for (i = 0; i < Pmin.size(); ++i)
+	  l = std::max(l, gmm::abs(Pmax[i] - Pmin[i]));
+
+	CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
+	asm_mass_matrix(MM, mim, mf_u1, region);
+	gmm::resize(alpha, nbc);
+	i = 0;
+	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i)
+	  alpha[i] = MM(id, id) / l;
+
+	is_init = false;
+      }
+      else 
+	nbc = gmm::mat_nrows(BN1);
+      
+
+
+      if (!contact_only) {
+	const model_real_plain_vector &vfr = md.real_variable(dl[np++]);
+	GMM_ASSERT1(gmm::vect_size(vfr)==1 || gmm::vect_size(vfr) == nbc,
+		    "Parameter friction_coeff has a wrong size");
+	gmm::resize(friction_coeff, nbc);
+	if (gmm::vect_size(vfr) == 1)
+	  gmm::fill(friction_coeff, vfr[0]);
+	else
+	  gmm::copy(vfr, friction_coeff);
+	if (friction_dynamic_term) {
+	  const model_real_plain_vector &vg = md.real_variable(dl[np++]);
+	  GMM_ASSERT1(gmm::vect_size(vg) == 1,
+		      "Parameter gamma should be a scalar");
+	  gamma = vg[0];
+	  np_wt1 = np++;
+	}
+	if (Tresca_version) {
+	  const model_real_plain_vector &vth = md.real_variable(dl[np++]);
+	  GMM_ASSERT1(gmm::vect_size(vth) == 1 || gmm::vect_size(vth) == nbc,
+		      "Parameter threshold has a wrong size");
+	  gmm::resize(threshold, nbc);
+	  if (gmm::vect_size(vth) == 1)
+	    gmm::fill(threshold, vth[0]);
+	  else
+	    gmm::copy(vth, threshold);
+	}
+      }
+
+      basic_asm_real_tangent_terms
+	(u1, u1, lambda_n, lambda_t, md.real_variable(dl[np_wt1]),
+	 md.real_variable(dl[np_wt1]), matl, vecl, version); 
+
+    }
+
+    Coulomb_friction_brick_rigid_obstacle(bool symmetrized_,
+					  bool contact_only_)
+      : Coulomb_friction_brick(symmetrized_, contact_only_) {}
+
+  };
 
 
 

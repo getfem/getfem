@@ -625,6 +625,13 @@ namespace getfem {
     return (vd.v_num > brick.v_num || vd.v_num_data > brick.v_num);
   }
 
+  bool model::is_var_mf_newer_than_brick(const std::string &varname,
+				      size_type ib) const {
+    const brick_description &brick = bricks[ib];
+    var_description &vd = variables[varname];
+    return (vd.v_num > brick.v_num);
+  }
+
   void model::add_temporaries(const varnamelist &vl,
 			      gmm::uint64_type id_num) const {
     for (size_type i = 0; i < vl.size(); ++i) {
