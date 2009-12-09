@@ -46,7 +46,7 @@ namespace bgeot {
   }
 
   void node_tab::add_sorter(void) const {
-    if (sorters.size() > 0) GMM_WARNING3("Multiple sort need for node tab");
+    if (sorters.size() > 0) GMM_WARNING3("Multiple sort needed for node tab");
     sorters.push_back(sorter(component_comp(*this, c, dim_)));
     for (dal::bv_visitor i(index()); !i.finished(); ++i)
       sorters.back().insert(size_type(i));

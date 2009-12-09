@@ -82,6 +82,7 @@ using namespace getfemint;
   @SET MODEL:SET('add basic contact brick')
   @SET MODEL:SET('contact brick set BN')
   @SET MODEL:SET('contact brick set BT')
+  @SET MODEL:SET('add contact with rigid obstacle brick')
 MLABCOM*/
 
 void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -972,5 +973,39 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       gmm::copy(B->real_wsc(), getfem::contact_brick_set_BT(md->model(), ind));
     else
       THROW_BADARG("BT should be a sparse matrix");
+
+  } else if (check_cmd(cmd, "add contact with rigid obstacle brick", in, out, 6, 7, 0, 1)) {
+    /*@SET ind = MODEL:SET('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_r, @int region, @str obstacle, [,  @int symmetrized])
+    
+    Add a contact without friction condition with a rigid obstacle
+    to the model. The condition is applied on the variable `varname_u`
+    on the boundary corresponding to `region`. The rigid obstacle should
+    be described with the string `obstacle` being a signed distance to
+    the obstacle. This sting should be an expression where the coordinates
+    are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
+    obstacle corrspond to $z \le 0$, the corresponding signed distance will
+    be simply "z". `multname` should be a fixed size variable whose size is
+    the number of degrees of freedom on boundary `region`.
+    The augmentation parameter `r` should be chosen in a
+    range of acceptabe values (see Getfem user documentation). The
+    parameter `symmetrized` indicates that the symmetry of the tangent
+    matrix will be kept or not. Basically, this brick compute the matrix BN
+    and the vectors gap and alpha and call the basic contact brick. @*/
+    
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    std::string varname_u = in.pop().to_string();
+    std::string multname_n = in.pop().to_string();
+    std::string dataname_r = in.pop().to_string();
+    size_type region = in.pop().to_integer();
+    std::string obstacle = in.pop().to_string();
+    bool symmetrized = false;
+    if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+
+    size_type ind
+      = getfem::add_contact_with_rigid_obstacle_brick
+      (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+       dataname_r, region, obstacle, symmetrized);
+
+    out.pop().from_integer(int(ind + config::base_index()));
   } else bad_cmd(cmd);
 }

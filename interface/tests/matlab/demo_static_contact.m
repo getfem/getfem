@@ -61,8 +61,6 @@ gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
 mim=gfMeshIm(m, 4);
 
 
-
-
 % Volumic density of force
 nbdofd = gf_mesh_fem_get(mfd, 'nbdof');
 nbdofu = gf_mesh_fem_get(mfu, 'nbdof');
@@ -96,11 +94,14 @@ for i = 1:nbc
   gap(i) = contact_nodes(d, i);
 end;
 
+disp(sprintf('nbc = %d', nbc));
+
 gf_model_set(md, 'add variable', 'lambda_n', nbc);
 gf_model_set(md, 'add initialized data', 'r', [1.0]);
 gf_model_set(md, 'add initialized data', 'gap', gap);
 gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
 gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
+% gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, 'y', 0);
 
 
 % Solve the problem

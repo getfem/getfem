@@ -331,6 +331,16 @@ namespace getfem {
     act_size_to_be_done = true;
     variables[name].set_size(size);
   }
+
+  void model::resize_fixed_size_variable(const std::string &name,
+					 size_type size) {
+    GMM_ASSERT1(!(variables[name].is_fem_dofs), "Cannot explicitely resize "
+		" a fem variable or data");
+    variables[name].set_size(size);
+  }
+ 
+    void resize_fixed_size_variable(const std::string &name, size_type size);
+
   
   void model::add_fixed_size_data(const std::string &name, size_type size,
 				      size_type niter) {

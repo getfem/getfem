@@ -1,4 +1,4 @@
-\documentclass[11pt,a4paper]{article}
+documentclass[11pt,a4paper]{article}
 % allow both latex and PDFlatex compatibility  (from pdfTeX FAQ)
 \usepackage{hyperlatex}
 \usepackage{pifont}
@@ -2998,9 +2998,10 @@ gf_model_set(md,'velocity update for order two theta method',  \tstr varnameU,  
 gf_model_set(md,'velocity update for Newmark scheme',  \tint id2dt2_brick, \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_twobeta,  \tstr dataname_gamma)
 gf_model_set(md,'first iter')
 gf_model_set(md,'next iter')
-ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])
+ind_brick=gf_model_set(md, 'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])
 gf_model_set(md,'contact brick set BN', \tint indbrick, \tmat BN)
 gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)
+ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tint region, \tstr obstacle, [,  \tint symmetrized])
 @@
 \end{synopsis}
 \begin{cmddescription}
@@ -3310,6 +3311,22 @@ Can be used to set the BN matrix of a basic contact/friction brick.
 
 \sep{@@gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)@@} :
 Can be used to set the BT matrix of a basic contact with friction brick.
+
+\sep{@@ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tint region, \tstr obstacle, [,  \tint symmetrized])} :
+Add a contact without friction condition with a rigid obstacle
+to the model. The condition is applied on the variable `varname_u`
+on the boundary corresponding to `region`. The rigid obstacle should
+be described with the string `obstacle` being a signed distance to
+the obstacle. This sting should be an expression where the coordinates
+are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
+obstacle corrspond to $z \le 0$, the corresponding signed distance will
+be simply "z". `multname` should be a fixed size variable whose size is
+the number of degrees of freedom on boundary `region`.
+The augmentation parameter `r` should be chosen in a
+range of acceptabe values (see Getfem user documentation). The
+parameter `symmetrized` indicates that the symmetry of the tangent
+matrix will be kept or not. Basically, this brick compute the matrix BN
+and the vectors gap and alpha and call the basic contact brick.
 
 \end{cmddescription}
 \newpage

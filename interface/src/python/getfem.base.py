@@ -514,7 +514,7 @@ model states.
     #@SET    MODEL:SET('add basic contact brick')
     #@SET    MODEL:SET('contact brick set BN')
     #@SET    MODEL:SET('contact brick set BT')
-
+    #@SET    MODEL:SET('add contact with rigid obstacle brick')
 
 class GeoTrans:
     """General function for building descriptors to geometric transformations.

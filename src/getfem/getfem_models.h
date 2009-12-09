@@ -181,8 +181,8 @@ namespace getfem {
 	else return partial_mf.get(); 
       }
 
-      size_type size(void) const // devrait contrôler que la variable
-      // a bien été initialisée avec la bonne taille par actualize_sizes.
+      size_type size(void) const // Should control that the variable is
+      // indeed intitialized by actualize_sizes ...
       { return is_complex ? complex_value[0].size() : real_value[0].size(); }
 
       void set_size(size_type s);
@@ -438,6 +438,9 @@ namespace getfem {
     void add_fixed_size_data(const std::string &name, size_type size,
 			     size_type niter = 1);
 
+    /** Resize a fixed size variable (or data) of the model. */
+    void resize_fixed_size_variable(const std::string &name, size_type size);
+
 
     /** Add a fixed size data to the model initialized with V. */
     template <typename VECT>
@@ -492,8 +495,8 @@ namespace getfem {
 	multipliers. niter is the number of version of the data stored,
 	for time integration schemes. */
     void add_multiplier(const std::string &name, const mesh_fem &mf,
-		       const std::string &primal_name,
-		       size_type niter = 1);
+			const std::string &primal_name,
+			size_type niter = 1);
     
     /** Gives the access to the mesh_fem of a variable if any. Throw an
 	exception otherwise. */

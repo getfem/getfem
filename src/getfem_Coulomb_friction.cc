@@ -505,17 +505,15 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Brick with a given rigid obstacle (one body, build BN, BT, Gap, alpha)
+  //  Brick with a given rigid obstacle (one body, build BN, BT, gap, alpha)
   //
   //=========================================================================
-
+  // TODO : add an option for a weak contact condition
 
   struct Coulomb_friction_brick_rigid_obstacle
     : public Coulomb_friction_brick {
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-    mutable mu::Parser obstacle; // obstacle given with a signed distance
-#endif
+    std::string obstacle; // obstacle given with a signed distance expression.
 
   public :
     
@@ -530,9 +528,14 @@ namespace getfem {
 					build_version version) const {
       GMM_ASSERT1(mims.size() == 1, "This contact brick need one mesh_im");
       size_type nbvar = 2 + (contact_only ? 0 : 1);
-      // à adapter dl.size()
-      GMM_ASSERT1(vl.size() == nbvar && dl.size() >= 2 && dl.size() <= 3,
-		  "Wrong number of variables for contact brick");
+      GMM_ASSERT1(vl.size() == nbvar,
+		  "Wrong number of variables for contact brick: "
+		  << vl.size() << " should be " << nbvar);
+      size_type nbdl = 1 + (Tresca_version ? 1 : 0)
+	+ (friction_dynamic_term ? 1 : 0);      
+      GMM_ASSERT1(dl.size() == nbdl,
+		  "Wrong number of data for contact brick: "
+		  << dl.size() << " should be " << nbdl);
       GMM_ASSERT1(!two_variables, "internal error");
       const mesh_im &mim = *mims[0];
 
@@ -565,63 +568,8 @@ namespace getfem {
 	  GMM_ASSERT1(mf_u1.fem_of_element(cv)->is_lagrange(),
 		      "This contact brick works only for pure Lagrange fems");
 	}
-        nbc = dofs.card();
-	size_type d = mf_u1.get_qdim() - 1;
-
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-
-	// computation of gap
-	gmm::resize(gap, nbc);
-	size_type i = 0;
-	base_node pt(d+1);
-	obstacle.DefineVar("x", &pt[0]);
-	if (d > 0) obstacle.DefineVar("y", &pt[1]);
-	if (d > 1) obstacle.DefineVar("z", &pt[2]);
-	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i) {
-	  gmm::copy(mf_u1.point_of_basic_dof(id), pt);
-
-	  try {
-	    gap[i] = scalar_type(obstacle.Eval());
-	  } catch (mu::Parser::exception_type &e) {
-	    std::cerr << "Message  : " << e.GetMsg() << std::endl;
-	    std::cerr << "Formula  : " << e.GetExpr() << std::endl;
-	    std::cerr << "Token    : " << e.GetToken() << std::endl;
-	    std::cerr << "Position : " << e.GetPos() << std::endl;
-	    std::cerr << "Errc     : " << e.GetCode() << std::endl;
-	    GMM_ASSERT1(false, "Error in \"val\" expression.");
-	  }
-	  
-	}
-
-
-
-	// computation of BN
-	gmm::resize(BN1, nbc, mf_u1.nb_dof());
-	
-	// ... evaluation of the normal vector ...
-
-
-	// computation of BT
-	if (!contact_only) {
-	  gmm::resize(BT1, d*nbc, mf_u1.nb_dof());
-
-
-	}
-
-	// ...
-
-
-	// resize of lambda_n, lambda_t ...
-
-
-
-#else
-
-	GMM_ASSERT1(false, "Muparser is not installed, "
-		    "You cannot used this brick");
-	
-#endif
-
+	size_type d = mf_u1.get_qdim() - 1, i = 0;
+        nbc = dofs.card() / (d+1);
 
 	// computation of alpha vector.
 	base_node Pmin, Pmax;
@@ -637,12 +585,110 @@ namespace getfem {
 	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i)
 	  alpha[i] = MM(id, id) / l;
 
+
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+
+
+	mu::Parser parser;
+	parser.SetExpr(obstacle);
+
+	gmm::resize(gap, nbc);
+	gmm::resize(BN1, nbc, mf_u1.nb_dof());
+	cerr << "mf_u1.nb_dof() = " << mf_u1.nb_dof() << endl;
+	cerr << "nbc = " << nbc << endl;
+	gmm::clear(BN1);
+	if (!contact_only) {
+	  gmm::resize(BT1, d*nbc, mf_u1.nb_dof());
+	  gmm::clear(BT1);
+	}
+	base_node pt(d+1), grad(d+1), ut[3];
+
+	static std::string varn[4] = { "x", "y", "z", "w"};
+	for (size_type k = 0; k <= d; ++k)
+	  parser.DefineVar(varn[k], &pt[k]);
+
+	parser.DefineVar("x", &pt[0]);
+	if (d > 0) parser.DefineVar("y", &pt[1]);
+	if (d > 1) parser.DefineVar("z", &pt[2]);
+	i = 0;
+	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i) {
+	  if ((i % (d+1)) == 0) {
+	    gmm::copy(mf_u1.point_of_basic_dof(id), pt);
+	    try {
+
+	      // Computation of gap
+	      gap[i] = scalar_type(parser.Eval());
+	      
+	      // computation of BN
+	      size_type cv = mf_u1.first_convex_of_basic_dof(id);
+	      scalar_type eps
+		= mf_u1.linked_mesh().convex_radius_estimate(cv) * 1E-3;
+	      for (size_type k = 0; k <= d; ++k) {
+		pt[k] += eps;
+		grad[k] = (scalar_type(parser.Eval()) - gap[i]) / eps;
+		pt[k] -= eps;
+	      }
+	      // unit normal vector
+	      base_node un = - grad / gmm::vect_norm2(grad);
+	      for (size_type k = 0; k <= d; ++k)
+		BN1(i, id + k) = un[k];
+	      
+	      // computation of BT
+	      if (!contact_only) {
+		
+		// Computation of an orthonormal basis to un.
+		size_type n = 0;
+		for (size_type k = 0; k <= d && n < d; ++k) {
+		  gmm::resize(ut[n], d+1);
+		  gmm::clear(ut[n]);
+		  ut[n][k] = scalar_type(1);
+		  
+		  ut[n] -= gmm::vect_sp(un, ut[n]) * un;
+		  for (size_type nn = 0; nn < n; ++nn)
+		    ut[n] -= gmm::vect_sp(ut[nn], ut[n]) * ut[nn];
+		  
+		  if (gmm::vect_norm2(ut[n]) < 1e-3) continue;
+		  ut[n] /= gmm::vect_norm2(ut[n]);
+		  ++n;
+		}
+		GMM_ASSERT1(n == d, "Gram-Schmidt algorithm to find an "
+		  "orthonormal basis for the tangential displacement failed");
+		
+		for (size_type k = 0; k <= d; ++k)
+		  for (size_type nn = 0; nn < d; ++nn)
+		    BT1(i*d+nn, id + k) = ut[nn][k];
+	      }
+	      
+	    } catch (mu::Parser::exception_type &e) {
+	      std::cerr << "Message  : " << e.GetMsg()   << std::endl;
+	      std::cerr << "Formula  : " << e.GetExpr()  << std::endl;
+	      std::cerr << "Token    : " << e.GetToken() << std::endl;
+	      std::cerr << "Position : " << e.GetPos()   << std::endl;
+	      std::cerr << "Errc     : " << e.GetCode()  << std::endl;
+	      GMM_ASSERT1(false, "Error in signed distance expression");
+	    }
+	  }
+	  
+	}
+
+	GMM_ASSERT1(gmm::vect_size(md.real_variable(vl[1])) == nbc, 
+		    "Wrong size of multiplier for the contact condition");
+
+	if (!contact_only)
+	  GMM_ASSERT1(gmm::vect_size(md.real_variable(vl[2])) == nbc*d, 
+		      "Wrong size of multiplier for the friction condition");
+
+#else
+
+	GMM_ASSERT1(false, "Muparser is not installed, "
+		    "You cannot used this contact brick");
+	
+#endif
+
 	is_init = false;
       }
       else 
 	nbc = gmm::mat_nrows(BN1);
-      
-
 
       if (!contact_only) {
 	const model_real_plain_vector &vfr = md.real_variable(dl[np++]);
@@ -674,15 +720,45 @@ namespace getfem {
 
       basic_asm_real_tangent_terms
 	(u1, u1, lambda_n, lambda_t, md.real_variable(dl[np_wt1]),
-	 md.real_variable(dl[np_wt1]), matl, vecl, version); 
+	 md.real_variable(dl[np_wt1]), matl, vecl, version);
 
     }
 
-    Coulomb_friction_brick_rigid_obstacle(bool symmetrized_,
-					  bool contact_only_)
-      : Coulomb_friction_brick(symmetrized_, contact_only_) {}
+    Coulomb_friction_brick_rigid_obstacle
+    (bool symmetrized_, bool contact_only_, const std::string &obs)
+      : Coulomb_friction_brick(symmetrized_, contact_only_), obstacle(obs) {}
 
   };
+
+
+  //=========================================================================
+  //  Add a frictionless contact condition with a rigid obstacle given
+  //  by a signed distance.  
+  //=========================================================================
+
+  size_type add_contact_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &multname_n, const std::string &dataname_r,
+   size_type region, const std::string &obstacle, bool symmetrized) {
+    pbrick pbr
+      = new Coulomb_friction_brick_rigid_obstacle(symmetrized, true, obstacle);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+    tl.push_back(model::term_description(varname_u, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u, false));
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+    model::varnamelist dl(1, dataname_r);
+
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(multname_n);
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+
+
 
 
 
