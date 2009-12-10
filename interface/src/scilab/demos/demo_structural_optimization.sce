@@ -26,9 +26,10 @@
 lines(0);
 gf_workspace('clear all');
 
+Do_Plot = %T;
 // parameters
 initial_holes   = 1;    // Pre-existing holes or not.
-NY              = 50;   // Number of elements in y direction
+NY              = 20;   // Number of elements in y direction
 k               = 1;    // Degree of the finite element method for u
 N               = 2;    // Dimension of the mesh (2 or 3).
 lambda          = 1;    // Lame coefficient
@@ -36,6 +37,8 @@ mu              = 1;    // Lame coefficient
 hole_radius     = max(0.03,2/NY); // Hole radius for topological optimization
 cg_eps          = 1e-8;
 cg_iter         = 100000;
+MaxIter         = 100000;
+
 if (N == 2) then
   CF = k*NY/40.; // Correction factor. Usefull ?
 else
@@ -127,8 +130,10 @@ else
   F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '0', '-6*(abs(y) < 0.05).*(abs(z) < 0.05)')));
 end
 
-h = scf();
-h.color_map = jetcolormap(255);
+if Do_Plot then
+  h = scf();
+  h.color_map = jetcolormap(255);
+end
 
 // Model definition
 
@@ -161,7 +166,7 @@ gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
 
 // Optimization loop
-for niter = 1:100000
+for niter = 1:MaxIter
   ti = timer();
   gf_workspace('push');
 
@@ -232,7 +237,7 @@ for niter = 1:100000
   GT(ind) = GT(ind) * 0 - 20;
 
   // Drawing the gradients
-  if (modulo(niter,NBDRAW)==0 | niter==1) then
+  if (modulo(niter,NBDRAW)==0 | niter==1) & Do_Plot then
     drawlater;
     clf(h);
     if (N == 2) then
@@ -341,7 +346,7 @@ for niter = 1:100000
   end
 
 
-  if (DEBUG & mod(niter, NBDRAW) == 0) then
+  if (DEBUG & mod(niter, NBDRAW) == 0) & Do_Plot then
     drawlater;
     subplot(NG,1,2);
     gf_plot(mf_ls, ULS, 'disp_options', 'off', 'refine', 3);
@@ -377,7 +382,7 @@ for niter = 1:100000
     ULS = ULS + ddt * sign(ULS);
   end
 
-  if (DEBUG & modulo(niter, 3) == 0) then
+  if (DEBUG & modulo(niter, 3) == 0) & Do_Plot then
     drawlater;
     AA = sqrt(sum(DLS.^2, 1));
     disp(sprintf('Norm dls after: %g %g %g %g', AA(1), AA(2), AA(3), AA(4)));
