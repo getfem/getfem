@@ -60,6 +60,9 @@ gf_model_set(md,'next iter')
 ind_brick=gf_model_set(md,'add basic contact brick', string varname_u, string multname_n, string dataname_r, mat BN[, string dataname_gap[, string dataname_alpha[, int symmetrized]]])
 gf_model_set(md,'contact brick set BN', int indbrick, mat BN)
 gf_model_set(md,'contact brick set BT', int indbrick, mat BT)
+gf_model_set(md,'add contact with rigid obstable brick',  mesh_im mim, string varname_u, string multname_n, string dataname_r, int region, string obstacle, [,  int symmetrized])
+
+)
     </synopsis>
   </refsynopsisdiv>
 
@@ -542,6 +545,28 @@ gf_model_set(md,'contact brick set BT', int indbrick, mat BT)
 	<para>gf_model_set(md,'contact brick set BT', int indbrick, mat BT) :
 	  Can be used to set the BT matrix of a basic contact with
 	  friction brick.</para>
+      </listitem>
+
+      <listitem>
+	<para>ind = gf_model_set(md,'add contact with rigid obstacle
+	brick',  mesh_im mim, string varname_u, string multname_n,
+	string dataname_r, int region, string obstacle, [, int
+	symmetrized]) :    
+	  Add a contact without friction condition with a rigid obstacle
+	  to the model. The condition is applied on the variable <literal>varname_u</literal>
+	  on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
+	  be described with the string <literal>obstacle</literal> being a signed distance to
+	  the obstacle. This sting should be an expression where the coordinates
+	  are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
+	  obstacle corrspond to <![CDATA[z <= 0]]>, the corresponding signed distance will
+	  be simply "z". <literal>multname</literal> should be a fixed size variable whose size is
+	  the number of degrees of freedom on boundary <literal>region</literal>.
+	  The augmentation parameter <literal>r</literal> should be chosen in a
+	  range of acceptabe values (see Getfem user documentation). The
+	  parameter <literal>symmetrized</literal> indicates that the symmetry of the tangent
+	  matrix will be kept or not. Basically, this brick compute the matrix BN
+	  and the vectors gap and alpha and call the basic contact brick.
+	</para>
       </listitem>
     </itemizedlist>
   </refsection>
