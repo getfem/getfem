@@ -25,8 +25,11 @@
 gf_workspace('clear all');
 
 // parameters of the model
-lambda = 1;  // Lame coefficient
-mu = 1;      // Lame coefficient
+lambda  = 1;  // Lame coefficient
+mu      = 1;  // Lame coefficient
+version = 1;  // 1 : frictionless contact using the basic contact brick
+              // 2 : frictionless contact using the contact with a
+              //     rigid obstacle brick (requires MuParser)
 
 // set a custom colormap
 h = scf();
@@ -93,22 +96,29 @@ gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 
 cdof = gf_mesh_fem_get(mfu, 'dof on region', GAMMAC);
 nbc = size(cdof, 2) / d;
-contact_dof = cdof(d:d:nbc*d);
-contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
-BN = spzeros(nbc, nbdofu);
-for i = 1:nbc
-  BN(i, contact_dof(i)) = -1.0;
-  gap(i) = contact_nodes(d, i);
+
+if (version == 1) then
+  contact_dof = cdof(d:d:nbc*d);
+  contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
+  BN = spzeros(nbc, nbdofu);
+  for i = 1:nbc
+    BN(i, contact_dof(i)) = -1.0;
+    gap(i) = contact_nodes(d, i);
+  end
+
+  gf_model_set(md, 'add variable', 'lambda_n', nbc);
+  gf_model_set(md, 'add initialized data', 'r', [1.0]);
+  gf_model_set(md, 'add initialized data', 'gap', gap);
+  gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
+  gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
+elseif (version == 2) then
+  gf_model_set(md, 'add variable', 'lambda_n', nbc);
+  gf_model_set(md, 'add initialized data', 'r', [1.0]);
+  gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, 'y', 0);
+
+else
+  error('Unexistent version');
 end
-
-printf('nbc = %d\n', nbc);
-
-gf_model_set(md, 'add variable', 'lambda_n', nbc);
-gf_model_set(md, 'add initialized data', 'r', [1.0]);
-gf_model_set(md, 'add initialized data', 'gap', gap);
-gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
-gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
-// gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, 'y', 0);
 
 // Solve the problem
 
