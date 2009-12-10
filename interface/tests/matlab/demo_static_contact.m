@@ -28,6 +28,9 @@ clear all;
 % parameters of the model
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
+version = 2; % 1 : frictionless contact using the basic contact brick
+             % 2 : frictionless contact using the contact with a
+             %     rigid obstacle brick
 
 % set a custom colormap
 % r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
@@ -86,23 +89,30 @@ gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 
 cdof = gf_mesh_fem_get(mfu, 'dof on region', GAMMAC);
 nbc = size(cdof, 2) / d;
-contact_dof = cdof(d:d:nbc*d);
-contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
-BN = sparse(nbc, nbdofu);
-for i = 1:nbc
-  BN(i, contact_dof(i)) = -1.0;
-  gap(i) = contact_nodes(d, i);
-end;
 
-disp(sprintf('nbc = %d', nbc));
+if (version == 1)
+  contact_dof = cdof(d:d:nbc*d);
+  contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
+  BN = sparse(nbc, nbdofu);
+  for i = 1:nbc
+    BN(i, contact_dof(i)) = -1.0;
+    gap(i) = contact_nodes(d, i);
+  end;
 
-gf_model_set(md, 'add variable', 'lambda_n', nbc);
-gf_model_set(md, 'add initialized data', 'r', [1.0]);
-gf_model_set(md, 'add initialized data', 'gap', gap);
-gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
-gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
-% gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, 'y', 0);
+  gf_model_set(md, 'add variable', 'lambda_n', nbc);
+  gf_model_set(md, 'add initialized data', 'r', [1.0]);
+  gf_model_set(md, 'add initialized data', 'gap', gap);
+  gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
+  gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
+elseif (version == 2)
 
+  gf_model_set(md, 'add variable', 'lambda_n', nbc);
+  gf_model_set(md, 'add initialized data', 'r', [1.0]);
+  gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, 'y', 0);
+
+else
+  error('Unexistent version');
+end
 
 % Solve the problem
 

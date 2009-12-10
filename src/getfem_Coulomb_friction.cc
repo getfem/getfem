@@ -409,10 +409,10 @@ namespace getfem {
       symmetrized = symmetrized_;
       contact_only = contact_only_;
       is_init = false;
-      Tresca_version = false;   // future version ...
-      really_stationary = false;   // future version ...
-      friction_dynamic_term = false;  // future version ...
-      two_variables = false;  // future version ...
+      Tresca_version = false;   // for future version ...
+      really_stationary = false;   // for future version ...
+      friction_dynamic_term = false;  // for future version ...
+      two_variables = false;  // for future version ...
       set_flags("Coulomb friction brick", false /* is linear*/,
 		/* is symmetric */
 		symmetrized && (contact_only || Tresca_version),
@@ -568,7 +568,7 @@ namespace getfem {
 	  GMM_ASSERT1(mf_u1.fem_of_element(cv)->is_lagrange(),
 		      "This contact brick works only for pure Lagrange fems");
 	}
-	size_type d = mf_u1.get_qdim() - 1, i = 0;
+	size_type d = mf_u1.get_qdim() - 1, i = 0, j = 0;
         nbc = dofs.card() / (d+1);
 
 	// computation of alpha vector.
@@ -581,9 +581,9 @@ namespace getfem {
 	CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
 	asm_mass_matrix(MM, mim, mf_u1, region);
 	gmm::resize(alpha, nbc);
-	i = 0;
+	i = 0; j = 0;
 	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i)
-	  alpha[i] = MM(id, id) / l;
+	  if ((i % (d+1)) == 0) alpha[j++] = MM(id, id) / l;
 
 
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
@@ -607,17 +607,14 @@ namespace getfem {
 	for (size_type k = 0; k <= d; ++k)
 	  parser.DefineVar(varn[k], &pt[k]);
 
-	parser.DefineVar("x", &pt[0]);
-	if (d > 0) parser.DefineVar("y", &pt[1]);
-	if (d > 1) parser.DefineVar("z", &pt[2]);
-	i = 0;
+	i = 0; j = 0;
 	for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i) {
 	  if ((i % (d+1)) == 0) {
 	    gmm::copy(mf_u1.point_of_basic_dof(id), pt);
 	    try {
 
 	      // Computation of gap
-	      gap[i] = scalar_type(parser.Eval());
+	      gap[j] = scalar_type(parser.Eval());
 	      
 	      // computation of BN
 	      size_type cv = mf_u1.first_convex_of_basic_dof(id);
@@ -625,13 +622,14 @@ namespace getfem {
 		= mf_u1.linked_mesh().convex_radius_estimate(cv) * 1E-3;
 	      for (size_type k = 0; k <= d; ++k) {
 		pt[k] += eps;
-		grad[k] = (scalar_type(parser.Eval()) - gap[i]) / eps;
+		grad[k] = (scalar_type(parser.Eval()) - gap[j]) / eps;
 		pt[k] -= eps;
 	      }
 	      // unit normal vector
 	      base_node un = - grad / gmm::vect_norm2(grad);
+
 	      for (size_type k = 0; k <= d; ++k)
-		BN1(i, id + k) = un[k];
+		BN1(j, id + k) = un[k];
 	      
 	      // computation of BT
 	      if (!contact_only) {
@@ -656,7 +654,7 @@ namespace getfem {
 		
 		for (size_type k = 0; k <= d; ++k)
 		  for (size_type nn = 0; nn < d; ++nn)
-		    BT1(i*d+nn, id + k) = ut[nn][k];
+		    BT1(j*d+nn, id + k) = ut[nn][k];
 	      }
 	      
 	    } catch (mu::Parser::exception_type &e) {
@@ -667,6 +665,7 @@ namespace getfem {
 	      std::cerr << "Errc     : " << e.GetCode()  << std::endl;
 	      GMM_ASSERT1(false, "Error in signed distance expression");
 	    }
+	    ++j;
 	  }
 	  
 	}
