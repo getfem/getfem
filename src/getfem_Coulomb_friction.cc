@@ -25,6 +25,8 @@
 #include <getfem/getfem_arch_config.h>
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
 #include <muParser/muParser.h>
+#elif GETFEM_HAVE_MUPARSER_H
+#include <muParser.h>
 #endif
 
 namespace getfem {
