@@ -2962,6 +2962,7 @@ gf_model_set(md,'variable', \tvec U[, \tint niter])
 gf_model_set(md,'clear')
 gf_model_set(md,'add fem variable', \tstr name, \tmf mf[, \tint niter])
 gf_model_set(md,'add variable' \tstr name, \tint size[, \tint niter])
+gf_model_set(md,'resize variable' \tstr name, \tint size)
 gf_model_set(md,'add fem data', \tstr name, \tmf mf[, \tint niter])
 gf_model_set(md,'add initialized fem data', \tstr name, \tmf mf, \tvec V)
 gf_model_set(md,'add data', \tstr name, \tmf mf, \tvec V)
@@ -3018,6 +3019,9 @@ Add a variable to the model linked to a \tmf. @@name@@ is the variable name
 
 \sep{@@gf_model_set(md,'add variable', \tstr name, \tint size[, \tint niter])@@} :
 Add a fixed size variable to the model. @@name@@ is the variable name, @@size@@ is the fixed size and @@niter@@ is the optional number of copy of the variable for time integration schemes.
+
+\sep{@@gf_model_set(md,'resize variable', \tstr name, \tint size)@@} :
+Resize a fixed size variable of the model. @@name@@ is the variable name, @@size@@ is the new fixed size.
 
 \sep{@@gf_model_set(md,'add fem data', \tstr name, \tmf mf[, \tint niter])@@} :
 Add a data to the model linked to a \tmf. @@name@@ is the data name
@@ -3317,13 +3321,14 @@ Add a contact without friction condition with a rigid obstacle
 to the model. The condition is applied on the variable `varname_u`
 on the boundary corresponding to `region`. The rigid obstacle should
 be described with the string `obstacle` being a signed distance to
-the obstacle. This sting should be an expression where the coordinates
+the obstacle. This string should be an expression where the coordinates
 are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
 obstacle corrspond to $z \le 0$, the corresponding signed distance will
 be simply "z". `multname` should be a fixed size variable whose size is
 the number of degrees of freedom on boundary `region`.
 The augmentation parameter `r` should be chosen in a
-range of acceptabe values (see Getfem user documentation). The
+range of acceptabe values (close to the Young modulus of the elastic
+body, see Getfem user documentation). The
 parameter `symmetrized` indicates that the symmetry of the tangent
 matrix will be kept or not. Basically, this brick compute the matrix BN
 and the vectors gap and alpha and call the basic contact brick.

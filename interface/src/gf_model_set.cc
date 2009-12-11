@@ -43,6 +43,7 @@ using namespace getfemint;
   @SET MODEL:SET('clear')
   @SET MODEL:SET('add fem variable')
   @SET MODEL:SET('add variable')
+  @SET MODEL:SET('resize variable')
   @SET MODEL:SET('add multiplier')
   @SET MODEL:SET('add fem data')
   @SET MODEL:SET('add initialized fem data')
@@ -116,6 +117,13 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     size_type niter = 1;
     if (in.remaining()) niter = in.pop().to_integer(1,10);
     md->model().add_fixed_size_variable(name, s, niter);
+  } else if (check_cmd(cmd, "resize variable", in, out, 2, 2, 0, 0)) {
+    /*@SET MODEL:SET('resize variable', @str name, @int size)
+    Resize a  constant size variable of the model. `name` is the variable
+    name. @*/
+    std::string name = in.pop().to_string();
+    size_type s = in.pop().to_integer();
+    md->model().resize_fixed_size_variable(name, s);
   } else if (check_cmd(cmd, "add multiplier", in, out, 3, 4, 0, 0)) {
     /*@SET MODEL:SET('add multiplier', @str name, @tmf mf, @str primalname[, @int niter])
     Add a particular variable linked to a fem being a multiplier with
@@ -981,13 +989,14 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     to the model. The condition is applied on the variable `varname_u`
     on the boundary corresponding to `region`. The rigid obstacle should
     be described with the string `obstacle` being a signed distance to
-    the obstacle. This sting should be an expression where the coordinates
+    the obstacle. This string should be an expression where the coordinates
     are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
     obstacle corrspond to $z \le 0$, the corresponding signed distance will
     be simply "z". `multname` should be a fixed size variable whose size is
     the number of degrees of freedom on boundary `region`.
     The augmentation parameter `r` should be chosen in a
-    range of acceptabe values (see Getfem user documentation). The
+    range of acceptabe values (close to the Young modulus of the elastic
+      body, see Getfem user documentation). The
     parameter `symmetrized` indicates that the symmetry of the tangent
     matrix will be kept or not. Basically, this brick compute the matrix BN
     and the vectors gap and alpha and call the basic contact brick. @*/

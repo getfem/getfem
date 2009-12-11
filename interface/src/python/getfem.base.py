@@ -474,6 +474,7 @@ model states.
     #@SET    MODEL:SET('clear')
     #@SET    MODEL:SET('add fem variable')
     #@SET    MODEL:SET('add variable')
+    #@SET    MODEL:SET('resize variable')
     #@SET    MODEL:SET('add multiplier')
     #@SET    MODEL:SET('add fem data')
     #@SET    MODEL:SET('add initialized fem data')

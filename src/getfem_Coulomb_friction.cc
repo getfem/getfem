@@ -596,8 +596,6 @@ namespace getfem {
 
 	gmm::resize(gap, nbc);
 	gmm::resize(BN1, nbc, mf_u1.nb_dof());
-	cerr << "mf_u1.nb_dof() = " << mf_u1.nb_dof() << endl;
-	cerr << "nbc = " << nbc << endl;
 	gmm::clear(BN1);
 	if (!contact_only) {
 	  gmm::resize(BT1, d*nbc, mf_u1.nb_dof());
@@ -605,7 +603,7 @@ namespace getfem {
 	}
 	base_node pt(d+1), grad(d+1), ut[3];
 
-	static std::string varn[4] = { "x", "y", "z", "w"};
+	static std::string varn[4] = {"x", "y", "z", "w"};
 	for (size_type k = 0; k <= d; ++k)
 	  parser.DefineVar(varn[k], &pt[k]);
 

@@ -76,13 +76,14 @@ namespace getfem {
       to the model. The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the string `obstacle` being a signed distance to
-      the obstacle. This sting should be an expression where the coordinates
+      the obstacle. This string should be an expression where the coordinates
       are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
       obstacle corrspond to $z \le 0$, the corresponding signed distance will
       be simply "z". `multname` should be a fixed size variable whose size is
       the number of degrees of freedom on boundary `region`.
       The augmentation parameter `r` should be chosen in a
-      range of acceptabe values (see Getfem user documentation). The
+      range of acceptabe values (close to the Young modulus of the elastic
+      body, see Getfem user documentation). The
       parameter `symmetrized` indicates that the symmetry of the tangent
       matrix will be kept or not. Basically, this brick compute the matrix BN
       and the vectors gap and alpha and call the basic contact brick.
