@@ -21,6 +21,7 @@ gf_model_set(md,'variable', vec U[, int niter])
 gf_model_set(md,'clear')
 gf_model_set(md,'add fem variable', string name, mesh_fem mf[, int niter])
 gf_model_set(md,'add variable' string name, int size[, int niter])
+gf_model_set(md,'resize variable' string name, int size)
 gf_model_set(md,'add fem data', string name, mesh_fem mf[, int niter])
 gf_model_set(md,'add initialized fem data', string name, mesh_fem mf, vec V)
 gf_model_set(md,'add data', string name, mesh_fem mf, vec V)
@@ -84,21 +85,29 @@ gf_model_set(md,'add contact with rigid obstable brick',  mesh_im mim, string va
 
       <listitem>
         <para>gf_model_set(mds,'add variable', string name, int size[, int
-        niter]) Add a variable to the model of constant size.
+          niter]) Add a variable to the model of constant size.
         <literal>name</literal> is the variable name and
         <literal>niter</literal> is the optional number of copy of the
         variable for time integration schemes.</para>
       </listitem>
 
       <listitem>
+	<para>gf_model_set(md,'resize variable', string name, int
+	  size) : Resize a fixed size variable of the model. <literal>name</literal>
+	  is the variable name, <literal>size</literal> is the new
+	  fixed size.
+	</para>
+      </listitem>
+
+      <listitem>
         <para>gf_model_set(mds,'add multiplier', string name, MeshFem mf,
-        string primalname[, int niter]) Add a particular variable linked to a
-        fem being a multiplier with respect to a primal variable. The dof will
-        be filtered with the gmm::range_basis function applied on the terms of
-        the model which link the multiplier and the primal variable. This in
-        order to retain only linearly independant constraints on the primal
-        variable. Optimized for boundary multipliers. niter is the number of
-        version of the data stored, for time integration schemes.</para>
+          string primalname[, int niter]) Add a particular variable linked to a
+          fem being a multiplier with respect to a primal variable. The dof will
+          be filtered with the gmm::range_basis function applied on the terms of
+          the model which link the multiplier and the primal variable. This in
+          order to retain only linearly independant constraints on the primal
+          variable. Optimized for boundary multipliers. niter is the number of
+          version of the data stored, for time integration schemes.</para>
       </listitem>
 
       <listitem>
@@ -529,7 +538,8 @@ gf_model_set(md,'add contact with rigid obstable brick',  mesh_im mim, string va
 	  acceptabe values (see Getfem user documentation). <literal>dataname_gap</literal> is an
 	  optional parameter representing the initial gap. It can be a single value
 	  or a vector of value. <literal>dataname_alpha</literal> is an optional homogenization
-	  parameter for the augmentation parameter (see Getfem user documentation). 
+	  parameter for the augmentation parameter (close to the Young modulus of the elastic
+	  body, see Getfem user documentation). 
 	  The parameter <literal>symmetrized</literal> indicates
 	  that the symmetry of the tangent matrix will be kept or
 	  not.</para>
@@ -556,7 +566,7 @@ gf_model_set(md,'add contact with rigid obstable brick',  mesh_im mim, string va
 	  to the model. The condition is applied on the variable <literal>varname_u</literal>
 	  on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
 	  be described with the string <literal>obstacle</literal> being a signed distance to
-	  the obstacle. This sting should be an expression where the coordinates
+	  the obstacle. This string should be an expression where the coordinates
 	  are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
 	  obstacle corrspond to <![CDATA[z <= 0]]>, the corresponding signed distance will
 	  be simply "z". <literal>multname</literal> should be a fixed size variable whose size is
