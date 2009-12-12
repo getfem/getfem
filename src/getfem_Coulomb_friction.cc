@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2010 Yves Renard
+// Copyright (C) 2004-2010 Yves Renard, Konstantinos Poulios.
 //
 // This file is a part of GETFEM++
 //
@@ -512,8 +512,13 @@ namespace getfem {
                                         build_version version) const {
       GMM_ASSERT1(mims.size() == 0, "Contact brick need no mesh_im");
       size_type nbvar = 2 + (contact_only ? 0 : 1) + (two_variables ? 1 : 0); 
-      GMM_ASSERT1(vl.size() == nbvar && dl.size() >= 2 && dl.size() <= 3,
+      GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick");
+      size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
+	+ (friction_dynamic_term ? 1 : 0);      
+      GMM_ASSERT1(dl.size() == nbdl, "Wrong number of data for contact brick, "
+		  << dl.size() << " should be " << nbdl);
+
       size_type nbc = gmm::mat_nrows(BN1);
 
       // Variables
@@ -686,6 +691,55 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
   }
   
+  //=========================================================================
+  //  Add a contact with friction condition with BN, r, alpha given.  
+  //=========================================================================
+
+  size_type add_basic_contact_with_friction_brick
+  (model &md, const std::string &varname_u, const std::string &multname_n,
+   const std::string &multname_t, const std::string &dataname_r,
+   CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
+   std::string dataname_friction_coeff, 
+   std::string dataname_gap, std::string dataname_alpha,
+   bool symmetrized) {
+    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,false);
+    pbr_->set_BN1(BN);
+    pbr_->set_BT1(BT);
+    pbrick pbr = pbr_;
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+    tl.push_back(model::term_description(varname_u, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u, false));
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+    tl.push_back(model::term_description(varname_u, multname_t, false));
+    tl.push_back(model::term_description(multname_t, varname_u, false));
+    tl.push_back(model::term_description(multname_t, multname_t, false));
+    tl.push_back(model::term_description(multname_t, multname_n, false));
+    model::varnamelist dl(1, dataname_r);
+    if (dataname_gap.size() == 0) {
+      dataname_gap = md.new_name("contact_gap_on_" + varname_u);
+      md.add_initialized_fixed_size_data
+	(dataname_gap, model_real_plain_vector(1, scalar_type(0)));
+    }
+    dl.push_back(dataname_gap);
+    
+    if (dataname_alpha.size() == 0) {
+      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
+      md.add_initialized_fixed_size_data
+	(dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
+    }
+    dl.push_back(dataname_alpha);
+    dl.push_back(dataname_friction_coeff);
+
+
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(multname_n);
+    vl.push_back(multname_t);
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+  
 
   //=========================================================================
   //
@@ -715,7 +769,7 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick: "
                   << vl.size() << " should be " << nbvar);
-      size_type nbdl = 1 + (Tresca_version ? 1 : 0)
+      size_type nbdl = 1 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
         + (friction_dynamic_term ? 1 : 0);      
       GMM_ASSERT1(dl.size() == nbdl,
                   "Wrong number of data for contact brick: "
@@ -770,7 +824,7 @@ namespace getfem {
           if ((i % (d+1)) == 0) alpha[j++] = MM(id, id) / l;
 
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
 
 
         mu::Parser parser;
@@ -933,6 +987,39 @@ namespace getfem {
 
     model::varnamelist vl(1, varname_u);
     vl.push_back(multname_n);
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+  //=========================================================================
+  //  Add a contact with friction condition with a rigid obstacle given
+  //  by a signed distance.  
+  //=========================================================================
+
+  size_type add_contact_with_friction_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &multname_n, const std::string &multname_t,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   size_type region, const std::string &obstacle, bool symmetrized) {
+    pbrick pbr
+      = new Coulomb_friction_brick_rigid_obstacle(symmetrized,false,obstacle);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+    tl.push_back(model::term_description(varname_u, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u, false));
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+    tl.push_back(model::term_description(varname_u, multname_t, false));
+    tl.push_back(model::term_description(multname_t, varname_u, false));
+    tl.push_back(model::term_description(multname_t, multname_t, false));
+    tl.push_back(model::term_description(multname_t, multname_n, false));
+    model::varnamelist dl(1, dataname_r);
+    dl.push_back(dataname_friction_coeff);
+
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(multname_n);
+    vl.push_back(multname_t);
     
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }

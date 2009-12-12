@@ -904,35 +904,67 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /*@SET MODEL:SET('next iter')
     To be executed at the end of each iteration of a time integration scheme.@*/
     md->model().next_iter();
-  } else if (check_cmd(cmd, "add basic contact brick", in, out, 4, 7, 0, 1)) {
-    /*@SET ind = MODEL:SET('add basic contact brick', @str varname_u, @str multname_n, @str dataname_r, @spmat BN[, @str dataname_gap[, @str dataname_alpha[, @int symmetrized]])
+  } else if (check_cmd(cmd, "add basic contact brick", in, out, 4, 10, 0, 1)) {
+    /*@SET ind = MODEL:SET('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @spmat BN[, @spmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int symmetrized]])
     
-    Add a contact without friction brick to the model. If U is the vector
-    of degrees of freedom on which the unilateral contraint is applied,
-    the matrix `BN` have to be such that this conctraint is defined by
-    $B_N U \le 0$. The constraint is prescribed thank to a multiplier
-    `multname_n` whose dimension should be equal to the number of lines of
-    `BN`. The augmentation parameter `r` should be chosen in a range of
+    Add a contact with  or without friction brick to the model.
+    If U is the vector
+    of degrees of freedom on which the unilateral constraint is applied,
+    the matrix `BN` have to be such that this constraint is defined by
+    $B_N U \le 0$. A friction condition can be considered by adding the three
+    parameters `multname_t`, `BT` and `dataname_friction_coeff`. In this case,
+    the tangential displacement is $B_T U$ and the matrix `BT` should have as
+    many rows as `BN` multiplied by $d-1$ where $d$ is the domain dimension.
+    In this case also, `dataname_friction_coeff` is a data which represents the
+    coefficient of friction. It can be a scalar or a vector representing a
+    value on each contact condition.  The unilateral constraint is prescribed
+    thank to a multiplier
+    `multname_n` whose dimension should be equal to the number of rows of
+    `BN`. If a friction condition is added, it is prescribed with a
+    multiplier `multname_t` whose dimension should be equal to the number
+    of rows of `BT`. The augmentation parameter `r` should be chosen in
+    a range of
     acceptabe values (see Getfem user documentation). `dataname_gap` is an
     optional parameter representing the initial gap. It can be a single value
     or a vector of value. `dataname_alpha` is an optional homogenization
     parameter for the augmentation parameter
     (see Getfem user documentation). The parameter `symmetrized` indicates
-    that the symmetry of the tangent matrix will be kept or not @*/
+    that the symmetry of the tangent matrix will be kept or not (except for
+    the part representing the coupling between contact and friction which
+    cannot be symmetrized). @*/
     
+    bool friction = false;
+
     std::string varname_u = in.pop().to_string();
     std::string multname_n = in.pop().to_string();
     std::string dataname_r = in.pop().to_string();
-    dal::shared_ptr<gsparse> BN = in.pop().to_sparse();
+    std::string multname_t, friction_coeff;
+
+    mexarg_in argin = in.pop();
+    if (argin.is_string()) {
+      friction = true;
+      multname_t = dataname_r;
+      dataname_r = argin.to_string();
+      argin = in.pop();
+    }
+
+    dal::shared_ptr<gsparse> BN = argin.to_sparse();
     if (BN->is_complex()) THROW_BADARG("Complex matrix not allowed");
+    dal::shared_ptr<gsparse> BT;
+    if (friction) {
+      BT = in.pop().to_sparse();
+      if (BT->is_complex()) THROW_BADARG("Complex matrix not allowed");
+      friction_coeff = in.pop().to_string();
+    }
+
     std::string dataname_gap;
-    if (in.remaining()) dataname_gap = in.pop().to_string();
+    dataname_gap = in.pop().to_string();
     std::string dataname_alpha;
     if (in.remaining()) dataname_alpha = in.pop().to_string();
     bool symmetrized = false;
     if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
 
-    getfem::CONTACT_B_MATRIX BBN;
+    getfem::CONTACT_B_MATRIX BBN, BBT;
     if (BN->storage()==gsparse::CSCMAT) {
       gmm::resize(BBN, gmm::mat_nrows(BN->real_csc()),
                   gmm::mat_ncols(BN->real_csc()));
@@ -945,10 +977,30 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     else THROW_BADARG("Matrix BN should be a sparse matrix");
 
-    size_type ind
-      = getfem::add_basic_contact_brick(md->model(), varname_u, multname_n,
-                                        dataname_r, BBN, dataname_gap,
-                                        dataname_alpha, symmetrized);
+    if (friction) {
+      if (BT->storage()==gsparse::CSCMAT) {
+	gmm::resize(BBT, gmm::mat_nrows(BT->real_csc()),
+		    gmm::mat_ncols(BT->real_csc()));
+	gmm::copy(BT->real_csc(), BBT);
+      }
+      else if (BT->storage()==gsparse::WSCMAT) {
+	gmm::resize(BBT, gmm::mat_nrows(BT->real_wsc()),
+		    gmm::mat_ncols(BT->real_wsc()));
+	gmm::copy(BT->real_wsc(), BBT);
+      }
+      else THROW_BADARG("Matrix BT should be a sparse matrix");
+    }
+
+    size_type ind;
+    if (friction) {
+      ind = getfem::add_basic_contact_with_friction_brick
+	(md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
+	 friction_coeff, dataname_gap, dataname_alpha, symmetrized);
+    } else {
+      ind = getfem::add_basic_contact_brick
+	(md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,
+	 dataname_alpha, symmetrized);
+    }
 
     out.pop().from_integer(int(ind + config::base_index()));
   } else if (check_cmd(cmd, "contact brick set BN", in, out, 2, 2, 0, 0)) {
@@ -982,38 +1034,65 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     else
       THROW_BADARG("BT should be a sparse matrix");
 
-  } else if (check_cmd(cmd, "add contact with rigid obstacle brick", in, out, 6, 7, 0, 1)) {
-    /*@SET ind = MODEL:SET('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_r, @int region, @str obstacle, [,  @int symmetrized])
+  } else if (check_cmd(cmd, "add contact with rigid obstacle brick", in, out, 6, 9, 0, 1)) {
+    /*@SET ind = MODEL:SET('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle, [,  @int symmetrized])
     
-    Add a contact without friction condition with a rigid obstacle
+    Add a contact with or without friction condition with a rigid obstacle
     to the model. The condition is applied on the variable `varname_u`
     on the boundary corresponding to `region`. The rigid obstacle should
     be described with the string `obstacle` being a signed distance to
     the obstacle. This string should be an expression where the coordinates
     are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
-    obstacle corrspond to $z \le 0$, the corresponding signed distance will
-    be simply "z". `multname` should be a fixed size variable whose size is
-    the number of degrees of freedom on boundary `region`.
+    obstacle correspond to $z \le 0$, the corresponding signed distance will
+    be simply "z". `multname_n` should be a fixed size variable whose size is
+    the number of degrees of freedom on boundary `region`. It represent the
+    contact equivalent nodal forces. In order to add a friction condition
+    one has to add the `multname_t` and `dataname_friction_coeff` parameters.
+    `multname_t` should be a fixed size variable whose size is
+    the number of degrees of freedom on boundary `region` multiplied by $d-1$
+    where $d$ is the domain dimension. It represent the friction equivalent
+    nodal forces.
     The augmentation parameter `r` should be chosen in a
     range of acceptabe values (close to the Young modulus of the elastic
-      body, see Getfem user documentation). The
+    body, see Getfem user documentation).  `dataname_friction_coeff` is
+    the friction coefficient. It could be a scalar or a vector of values
+    representing the friction coefficient on each contact node. The
     parameter `symmetrized` indicates that the symmetry of the tangent
     matrix will be kept or not. Basically, this brick compute the matrix BN
     and the vectors gap and alpha and call the basic contact brick. @*/
     
+    bool friction = false;
+
     getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
     std::string varname_u = in.pop().to_string();
     std::string multname_n = in.pop().to_string();
     std::string dataname_r = in.pop().to_string();
-    size_type region = in.pop().to_integer();
+    std::string multname_t, dataname_fr;
+
+    mexarg_in argin = in.pop();
+    if (argin.is_string()) {
+      friction = true;
+      multname_t = dataname_r;
+      dataname_r = argin.to_string();
+      dataname_fr = in.pop().to_string();
+      argin = in.pop();
+    }
+
+    size_type region = argin.to_integer();
     std::string obstacle = in.pop().to_string();
     bool symmetrized = false;
     if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
 
-    size_type ind
-      = getfem::add_contact_with_rigid_obstacle_brick
-      (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-       dataname_r, region, obstacle, symmetrized);
+    size_type ind;
+
+    if (friction)
+      ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
+	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n, multname_t,
+	 dataname_r, dataname_fr, region, obstacle, symmetrized);
+    else
+      ind = getfem::add_contact_with_rigid_obstacle_brick
+	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+	 dataname_r, region, obstacle, symmetrized);
 
     out.pop().from_integer(int(ind + config::base_index()));
   } else bad_cmd(cmd);

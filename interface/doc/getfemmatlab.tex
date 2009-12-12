@@ -2999,10 +2999,10 @@ gf_model_set(md,'velocity update for order two theta method',  \tstr varnameU,  
 gf_model_set(md,'velocity update for Newmark scheme',  \tint id2dt2_brick, \tstr varnameU,  \tstr datanameV, \tstr dataname_dt, \tstr dataname_twobeta,  \tstr dataname_gamma)
 gf_model_set(md,'first iter')
 gf_model_set(md,'next iter')
-ind_brick=gf_model_set(md, 'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])
+ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n[, \tstr multname_t], \tstr dataname_r, \tmat BN[, \tmat BT, \tstr dataname_friction_coeff][, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])
 gf_model_set(md,'contact brick set BN', \tint indbrick, \tmat BN)
 gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)
-ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tint region, \tstr obstacle, [,  \tint symmetrized])
+ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n[, \tstr multname_t], \tstr dataname_r[, \tstr dataname_friction_coeff], \tint region, \tstr obstacle, [,  \tint symmetrized])
 @@
 \end{synopsis}
 \begin{cmddescription}
@@ -3296,19 +3296,33 @@ To be executed before the first iteration of a time integration scheme.
 \sep{@@gf_model_set(md,'next iter')@@} :
 To be executed at the end of each iteration of a time integration scheme.
 
-\sep{@@ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tmat BN[, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])@@} :
-Add a contact without friction brick to the model. If U is the vector
-of degrees of freedom on which the unilateral contraint is applied,
-the matrix `BN` have to be such that this conctraint is defined by
-$B_N U \le 0$. The constraint is prescribed thank to a multiplier
-`multname_n` whose dimension should be equal to the number of lines of
-`BN`. The augmentation parameter `r` should be chosen in a range of
+\sep{@@ind_brick=gf_model_set(md,'add basic contact brick', \tstr varname_u, \tstr multname_n[, \tstr multname_t], \tstr dataname_r, \tmat BN[, \tmat BT, \tstr dataname_friction_coeff][, \tstr dataname_gap[, \tstr dataname_alpha[, \tint symmetrized]]])@@} :
+Add a contact with  or without friction brick to the model.
+If U is the vector
+of degrees of freedom on which the unilateral constraint is applied,
+the matrix `BN` have to be such that this constraint is defined by
+$B_N U \le 0$. A friction condition can be considered by adding the three
+parameters `multname_t`, `BT` and `dataname_friction_coeff`. In this case,
+the tangential displacement is $B_T U$ and the matrix `BT` should have as
+many rows as `BN` multiplied by $d-1$ where $d$ is the domain dimension.
+In this case also, `dataname_friction_coeff` is a data which represents the
+coefficient of friction. It can be a scalar or a vector representing a
+value on each contact condition.  The unilateral constraint is prescribed
+thank to a multiplier
+`multname_n` whose dimension should be equal to the number of rows of
+`BN`. If a friction condition is added, it is prescribed with a
+multiplier `multname_t` whose dimension should be equal to the number
+of rows of `BT`. The augmentation parameter `r` should be chosen in
+a range of
 acceptabe values (see Getfem user documentation). `dataname_gap` is an
 optional parameter representing the initial gap. It can be a single value
 or a vector of value. `dataname_alpha` is an optional homogenization
 parameter for the augmentation parameter
 (see Getfem user documentation). The parameter `symmetrized` indicates
-that the symmetry of the tangent matrix will be kept or not
+that the symmetry of the tangent matrix will be kept or not (except for
+the part representing the coupling between contact and friction which
+cannot be symmetrized).
+
 
 \sep{@@gf_model_set(md,'contact brick set BN', \tint indbrick, \tmat BN)@@} :
 Can be used to set the BN matrix of a basic contact/friction brick.
@@ -3316,19 +3330,27 @@ Can be used to set the BN matrix of a basic contact/friction brick.
 \sep{@@gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)@@} :
 Can be used to set the BT matrix of a basic contact with friction brick.
 
-\sep{@@ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tint region, \tstr obstacle, [,  \tint symmetrized])@@} :
-Add a contact without friction condition with a rigid obstacle
+\sep{@@ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n[, \tstr multname_t], \tstr dataname_r[, \tstr dataname_friction_coeff], \tint region, \tstr obstacle, [,  \tint symmetrized])@@} :
+Add a contact with or without friction condition with a rigid obstacle
 to the model. The condition is applied on the variable `varname_u`
 on the boundary corresponding to `region`. The rigid obstacle should
 be described with the string `obstacle` being a signed distance to
 the obstacle. This string should be an expression where the coordinates
 are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
-obstacle corrspond to $z \le 0$, the corresponding signed distance will
-be simply "z". `multname` should be a fixed size variable whose size is
-the number of degrees of freedom on boundary `region`.
+obstacle correspond to $z \le 0$, the corresponding signed distance will
+be simply "z". `multname_n` should be a fixed size variable whose size is
+the number of degrees of freedom on boundary `region`. It represent the
+contact equivalent nodal forces. In order to add a friction condition
+one has to add the `multname_t` and `dataname_friction_coeff` parameters.
+`multname_t` should be a fixed size variable whose size is
+the number of degrees of freedom on boundary `region` multiplied by $d-1$
+where $d$ is the domain dimension. It represent the friction equivalent
+nodal forces.
 The augmentation parameter `r` should be chosen in a
 range of acceptabe values (close to the Young modulus of the elastic
-body, see Getfem user documentation). The
+body, see Getfem user documentation).  `dataname_friction_coeff` is
+the friction coefficient. It could be a scalar or a vector of values
+representing the friction coefficient on each contact node. The
 parameter `symmetrized` indicates that the symmetry of the tangent
 matrix will be kept or not. Basically, this brick compute the matrix BN
 and the vectors gap and alpha and call the basic contact brick.
