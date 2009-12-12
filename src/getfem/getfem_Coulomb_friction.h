@@ -42,6 +42,8 @@
 
 namespace getfem {
 
+  typedef gmm::row_matrix<gmm::rsvector<scalar_type> > CONTACT_B_MATRIX;
+
   /** Add a contact without friction condition to the model. If U is the vector
       of degrees of freedom on which the unilateral contraint is applied,
       the matrix `BN` have to be such that this conctraint is defined by
@@ -57,11 +59,9 @@ namespace getfem {
   */
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
-   const std::string &dataname_r, model_real_sparse_matrix &BN,
+   const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap = "", std::string dataname_alpha = "",
    bool symmetrized = false);
-
-  typedef gmm::row_matrix<gmm::rsvector<scalar_type> > CONTACT_B_MATRIX;
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */

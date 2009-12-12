@@ -932,7 +932,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     bool symmetrized = false;
     if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
 
-    getfem::model_real_sparse_matrix BBN;
+    getfem::CONTACT_B_MATRIX BBN;
     if (BN->storage()==gsparse::CSCMAT) {
       gmm::resize(BBN, gmm::mat_nrows(BN->real_csc()),
                   gmm::mat_ncols(BN->real_csc()));

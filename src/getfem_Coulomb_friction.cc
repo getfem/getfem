@@ -423,13 +423,13 @@ namespace getfem {
     }
 
     
-    void set_BN1(model_real_sparse_matrix &BN1_) {
+    void set_BN1(CONTACT_B_MATRIX &BN1_) {
       gmm::resize(BN1, gmm::mat_nrows(BN1_), gmm::mat_ncols(BN1_));
       gmm::copy(BN1_, BN1);
       is_init = false;
     }
 
-    void set_BT1(model_real_sparse_matrix &BT1_) {
+    void set_BT1(CONTACT_B_MATRIX &BT1_) {
       gmm::resize(BT1, gmm::mat_nrows(BT1_), gmm::mat_ncols(BT1_));
       gmm::copy(BT1_, BT1);
       is_init = false;
@@ -470,7 +470,7 @@ namespace getfem {
 
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
-   const std::string &dataname_r, model_real_sparse_matrix &BN,
+   const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap, std::string dataname_alpha,
    bool symmetrized) {
     Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,true);
