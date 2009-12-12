@@ -67,6 +67,188 @@ namespace getfem {
     }
   }
 
+  // contact_node is an object which contains data about nodes expected to
+  // participate in a contact condition either. A contact node refers to a
+  // specific mesh.
+  struct contact_node {
+    const mesh *m;               // Pointer to the mesh the contact node is
+                                 // associated with
+    size_type pt;                // dof id of the node in the considered mesh_fem
+    std::vector<size_type> cvs;  // list of ids of neigbouring convexes
+    std::vector<short_type> fcs; // list of local ids of neigbouring faces
+
+    contact_node(const mesh *m_) {m = m_;}
+  };
+
+  // The object contact_node_list holds a list of all nodes which participate
+  // in the definition of a contact. Its append method permits the expansion
+  // of this list and returns a bit_vector corresponding to the group of the
+  // appended members.
+  struct contact_node_list : public std::vector<contact_node> {
+
+    contact_node_list() : std::vector<contact_node>() {}
+
+    void append(const mesh *mesh_, size_type contact_region,
+                dal::bit_vector &bv_cn) {
+
+      size_type cnl_size = this->size();
+      std::map<int,int> ptid_to_cnid;
+      for (mr_visitor face(mesh_->region(contact_region));
+           !face.finished(); ++face) {
+        assert(face.is_face());
+        //FIXME: What is the difference between ind_points_of_face_of_convex and
+        //       points_of_face_of_convex? Which one should be prefered?
+        mesh::ind_pt_face_ct
+           fpts = mesh_->ind_points_of_face_of_convex(face.cv(),face.f());
+        //
+        for (mesh::ind_pt_face_ct::iterator fpt = fpts.begin();
+             fpt < fpts.end(); fpt++) {
+          size_type cnid;
+          if (ptid_to_cnid.count(*fpt) > 0) {
+            cnid = ptid_to_cnid[*fpt];
+            (*this)[cnid].cvs.push_back(face.cv());
+            (*this)[cnid].fcs.push_back(face.f());
+          } else {
+            contact_node new_cn(mesh_);
+            new_cn.pt = *fpt;
+            new_cn.cvs.push_back(face.cv());
+            new_cn.fcs.push_back(face.f());
+            (*this).push_back(new_cn);
+            ptid_to_cnid[*fpt] = cnl_size;
+            cnid = cnl_size;
+            cnl_size++;
+          }
+          bv_cn.add(cnid);
+        } // for:fpt
+      } // for:face
+    } // append
+
+  }; // struct contact_node_list
+
+  // contact_node's pair
+  struct contact_node_pair {
+    contact_node *cn_s, *cn_m;  // Pointers to the slave and master contact_node's
+    scalar_type dist;           // Distance between slave and master nodes
+    contact_node_pair(scalar_type threshold=10.)
+      {cn_s = 0, cn_m = 0, dist = threshold;}
+  };
+
+  void eval_min_dist_cn_pairs(contact_node_list &cnl1,
+                              contact_node_list &cnl2,
+                              std::vector<contact_node_pair> &cnpl1,
+                              std::vector<contact_node_pair> &cnpl2) {
+    // Find minimum distance node pairs, FIXME: to be optimized
+    cnpl1.clear(); cnpl1.resize(cnl1.size());
+    cnpl2.clear(); cnpl2.resize(cnl2.size());
+    size_type i=0;
+    for (contact_node_list::iterator cn1 = cnl1.begin();
+         cn1 != cnl1.end(); cn1++, i++) {
+      base_node node1 = cn1->m->points()[cn1->pt];
+      size_type j=0;
+      for (contact_node_list::iterator cn2 = cnl2.begin();
+           cn2 != cnl2.end(); cn2++, j++) {
+        base_node node2 = cn2->m->points()[cn2->pt];
+        scalar_type dist = gmm::vect_norm2(node1-node2);
+        if (dist < cnpl1[i].dist) {
+          cnpl1[i].cn_s = &cn1[0];
+          cnpl1[i].cn_m = &cn2[0];
+          cnpl1[i].dist = dist;
+        }
+        if (dist < cnpl2[j].dist) {
+          cnpl2[j].cn_s = &cn2[0];
+          cnpl2[j].cn_m = &cn1[0];
+          cnpl2[j].dist = dist;
+        }
+      } // cn2
+    } // cn1
+  }
+
+  void calculate_contact_matrices(const mesh_fem &mf_disp,
+                                  std::vector<contact_node_pair> &cnpl,
+                                  model_real_plain_vector &gap,
+                                  CONTACT_B_MATRIX &BN) {
+
+    dim_type qdim = mf_disp.get_qdim(); //FIXME: Check for if qdim and N
+ // size_type N = mesh.dim();           //       are considered correctly
+    
+    size_type no_cn = 0;
+    for (std::vector<contact_node_pair>::iterator cnp = cnpl.begin();
+         cnp != cnpl.end(); cnp++) {
+      if (cnp->cn_s) {
+        contact_node *cn_s = cnp->cn_s;  //slave contact node
+        contact_node *cn_m = cnp->cn_m;  //master contact node
+        base_node slave_node = cn_s->m->points()[cn_s->pt];
+        base_node master_node = cn_m->m->points()[cn_m->pt];
+        base_node un_sel(3), proj_node_sel(3), proj_node_ref_sel(3);
+        scalar_type is_in_min = 1e5;  //FIXME
+        size_type cv_sel, fc_sel;
+        std::vector<size_type>::iterator cv;
+        std::vector<short_type>::iterator fc;
+        for (cv = cn_m->cvs.begin(), fc = cn_m->fcs.begin();
+             cv != cn_m->cvs.end() && fc != cn_m->fcs.end(); cv++, fc++) {
+          base_node un = cn_m->m->normal_of_face_of_convex(*cv,*fc); //FIXME: this normal is just an approximation
+          un /= gmm::vect_norm2(un);
+          base_node proj_node(3), proj_node_ref(3);
+          //FIXME: the following projection calculation is accurate only for linear triangle elements
+          //proj_node = slave_node - [(slave_node-master_node)*n] * n
+          gmm::add(master_node, gmm::scaled(slave_node, -1.), proj_node);
+          gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
+          gmm::add(slave_node, proj_node);
+
+          bgeot::pgeometric_trans pgt = cn_m->m->trans_of_convex(*cv);
+          bgeot::geotrans_inv_convex gic;
+          gic.init(cn_m->m->points_of_convex(*cv), pgt);
+          gic.invert(proj_node, proj_node_ref);
+          scalar_type is_in = pgt->convex_ref()->is_in(proj_node_ref);
+          if (is_in < is_in_min) {
+            is_in_min = is_in;
+            cv_sel = *cv;
+            fc_sel = *fc;
+            un_sel = un;
+            proj_node_sel = proj_node;
+            proj_node_ref_sel = proj_node_ref;
+          }
+        }
+        if (is_in_min < 0.05) {  //FIXME
+          gap.push_back(gmm::vect_sp(slave_node-proj_node_sel, un_sel));
+
+          no_cn++;
+          gmm::resize(BN, no_cn, mf_disp.nb_dof());
+
+          if (cn_s->m == &mf_disp.linked_mesh()) {
+            BN(no_cn-1, cn_s->pt*qdim)   += -un_sel[0];  //FIXME
+            BN(no_cn-1, cn_s->pt*qdim+1) += -un_sel[1];  //FIXME
+            BN(no_cn-1, cn_s->pt*qdim+2) += -un_sel[2];  //FIXME
+          }
+
+          if (cn_m->m == &mf_disp.linked_mesh()) {
+            base_matrix G;
+            base_matrix M(qdim, mf_disp.nb_basic_dof_of_element(cv_sel));
+            bgeot::vectors_to_base_matrix(G, cn_m->m->points_of_convex(cv_sel));
+            pfem pf = mf_disp.fem_of_element(cv_sel);
+            bgeot::pgeometric_trans pgt = cn_m->m->trans_of_convex(cv_sel);
+            fem_interpolation_context
+              ctx(pgt, pf, proj_node_ref_sel, G, cv_sel, fc_sel);
+            pf->interpolation (ctx, M, qdim);
+
+            model_real_plain_vector tmpvec(mf_disp.nb_basic_dof_of_element(cv_sel));
+            gmm::mult(gmm::transposed(M), un_sel, tmpvec);
+
+            mesh_fem::ind_dof_ct master_dof = mf_disp.ind_basic_dof_of_element(cv_sel);
+            size_type j = 0;
+            for (mesh_fem::ind_dof_ct::const_iterator it = master_dof.begin();
+                 it != master_dof.end(); it++, j++) {
+              BN(no_cn-1, *it) += tmpvec[j];
+            }
+          }
+        }
+      } // if:cnp->cn_s
+    } // cnp
+
+  } // calculate_contact_matrices
+
+
+
   //=========================================================================
   //
   //  Basic Brick (with given BN, BT, gap) and possibly two bodies
