@@ -38,7 +38,6 @@ using bgeot::base_matrix; /* small dense matrix. */
  * using the predefined types in Gmm++
  */
 typedef getfem::model_real_plain_vector  plain_vector;
-typedef getfem::model_real_sparse_matrix sparse_matrix;
 
 struct contact_node {
   size_type dof;              // dof id of the node in mf_rhs
@@ -177,7 +176,7 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
   
   // Defining the contact condition.
   size_type no_cn = 0;
-  sparse_matrix BN;
+  getfem::CONTACT_B_MATRIX BN;
   plain_vector gap;
 
   std::map<int,int> dof_to_cnid;
@@ -229,7 +228,7 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
       if (dist < cns[i2].dist) {
         cns[i2].dist = dist;
         cns[i2].master = i1;
-        cns[i2].is_active = true;
+        cns[i2].is_active = false; //true;
       }
     }
   }
@@ -299,9 +298,10 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
   }
   md.add_fixed_size_variable("contact_multiplier", no_cn);
   md.add_initialized_scalar_data("r", 1.);
-  md.add_initialized_fixed_size_data("gap", gap);
+std::string dataname_gap="gap";
+  md.add_initialized_fixed_size_data(dataname_gap, gap);
   getfem::add_basic_contact_brick(md, "u", "contact_multiplier", "r",
-                                  BN, "gap");
+                                  BN, dataname_gap);
 
 cout << "no_cn: " << no_cn << endl;
 
