@@ -1,4 +1,4 @@
-documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 % allow both latex and PDFlatex compatibility  (from pdfTeX FAQ)
 \usepackage{hyperlatex}
 \usepackage{pifont}
@@ -3316,7 +3316,7 @@ Can be used to set the BN matrix of a basic contact/friction brick.
 \sep{@@gf_model_set(md,'contact brick set BT', \tint indbrick, \tmat BT)@@} :
 Can be used to set the BT matrix of a basic contact with friction brick.
 
-\sep{@@ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tint region, \tstr obstacle, [,  \tint symmetrized])} :
+\sep{@@ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', \tmim mim, \tstr varname_u, \tstr multname_n, \tstr dataname_r, \tint region, \tstr obstacle, [,  \tint symmetrized])@@} :
 Add a contact without friction condition with a rigid obstacle
 to the model. The condition is applied on the variable `varname_u`
 on the boundary corresponding to `region`. The rigid obstacle should
