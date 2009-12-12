@@ -935,20 +935,20 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::model_real_sparse_matrix BBN;
     if (BN->storage()==gsparse::CSCMAT) {
       gmm::resize(BBN, gmm::mat_nrows(BN->real_csc()),
-		  gmm::mat_ncols(BN->real_csc()));
+                  gmm::mat_ncols(BN->real_csc()));
       gmm::copy(BN->real_csc(), BBN);
     }
     else if (BN->storage()==gsparse::WSCMAT) {
       gmm::resize(BBN, gmm::mat_nrows(BN->real_wsc()),
-		  gmm::mat_ncols(BN->real_wsc()));
+                  gmm::mat_ncols(BN->real_wsc()));
       gmm::copy(BN->real_wsc(), BBN);
     }
     else THROW_BADARG("Matrix BN should be a sparse matrix");
 
     size_type ind
       = getfem::add_basic_contact_brick(md->model(), varname_u, multname_n,
-					dataname_r, BBN, dataname_gap,
-					dataname_alpha, symmetrized);
+                                        dataname_r, BBN, dataname_gap,
+                                        dataname_alpha, symmetrized);
 
     out.pop().from_integer(int(ind + config::base_index()));
   } else if (check_cmd(cmd, "contact brick set BN", in, out, 2, 2, 0, 0)) {
