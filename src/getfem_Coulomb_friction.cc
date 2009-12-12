@@ -944,4 +944,158 @@ namespace getfem {
 
 
 
+  // Experimental brick including gap, BN, BT calculation
+  // To be done:
+  // - Calculation of BT
+  // - Optimization of minimum distance node pairs search
+  // - Check the compatibility of the provided mesh_fem's
+  // - Non-Linear projection
+  // - Support for two displacement variables
+  // - Large deformations: what happens when cnpl and nbc change during
+  //   the iterative solution?
+
+  //=========================================================================
+  //
+  //  Brick with elastic bodies (one or two bodies, build BN, BT, Gap, alpha)
+  //
+  //=========================================================================
+
+
+  struct Coulomb_friction_brick_elastic_bodies
+    : public Coulomb_friction_brick {
+
+    bool update_cnpl;
+    bool update_gap_BN_BT;  //FIXME: may to be splitted in gap_BN and BT
+    contact_node_list cnl1, cnl2;
+    std::vector<contact_node_pair> cnpl1, cnpl2;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+
+      // Variables (order: u, lambda_n)
+      const model_real_plain_vector &u1 = md.real_variable(vl[0]);
+//      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const model_real_plain_vector &lambda_n = md.real_variable(vl[1]);
+
+      size_type nbc = gmm::mat_nrows(BN1);
+
+      // Parameters (order: r, gap, alpha)
+      size_type np = 0;
+      const model_real_plain_vector &vr = md.real_variable(dl[np++]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+      r = vr[0];
+      const model_real_plain_vector &vgap = md.real_variable(dl[np++]);
+      GMM_ASSERT1(gmm::vect_size(vgap) == nbc,
+                  "Parameter gap has a wrong size");
+      gmm::resize(gap, nbc);
+      gmm::copy(vgap, gap);
+      const model_real_plain_vector &valpha = md.real_variable(dl[np++]);
+      GMM_ASSERT1(gmm::vect_size(valpha)== 1 || gmm::vect_size(valpha) == nbc,
+                  "Parameter alpha has a wrong size");
+      gmm::resize(alpha, nbc);
+      if (gmm::vect_size(valpha) == 1)
+        gmm::fill(alpha, valpha[0]);
+      else
+        gmm::copy(valpha, alpha);
+
+      // Computation of cnpl, Gap, BN, BT
+      if (update_cnpl) {
+      //Calculate cnpl
+      cout << "cnpl update not implemented yet" << endl;
+      }
+      if (update_gap_BN_BT) {
+      //Calculate gap
+      //Calculate BN
+      cout << "Gap and BN update not implemented yet" << endl;
+      }
+      
+      // Computation of alpha
+      // .........
+
+      const model_real_plain_vector dummy_lambda_t, dummy_wt;
+      basic_asm_real_tangent_terms(u1, u1, lambda_n,
+                                   dummy_lambda_t, dummy_wt, dummy_wt,
+                                   matl, vecl, version);
+    }
+
+    Coulomb_friction_brick_elastic_bodies(bool symmetrized_,
+                                          bool contact_only_)
+      : Coulomb_friction_brick(symmetrized_, contact_only_) {
+      update_cnpl = true;
+      update_gap_BN_BT = true;
+    }
+
+  };
+
+
+  //=========================================================================
+  //  Add a frictionless contact condition between two faces of an elastic
+  //  body.
+  //=========================================================================
+  size_type add_frictionless_contact_brick
+  (model &md, const std::string &varname_u, size_type rg_m, size_type rg_s,
+   const std::string &dataname_r, std::string &dataname_alpha,
+   bool symmetrized) {
+   
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname_u);
+    const mesh *mesh_ = &(mf_u.linked_mesh());
+
+    Coulomb_friction_brick_elastic_bodies 
+      *pbr_=new Coulomb_friction_brick_elastic_bodies(symmetrized,true);
+    pbrick pbr = pbr_;
+
+    //Fill up the cnl vectors of all contact_node's
+    dal::bit_vector tmp_bv;
+    pbr_->cnl1.append(mesh_, rg_m, tmp_bv);
+    pbr_->cnl2.append(mesh_, rg_s, tmp_bv);
+    eval_min_dist_cn_pairs(pbr_->cnl1, pbr_->cnl2, pbr_->cnpl1, pbr_->cnpl2);
+    pbr_->update_cnpl = false;  //Do not update the contact_node_pairs during
+                               //the iterative solution of the tangent system
+    
+    //Calculation of gap and BN
+    model_real_plain_vector gap;
+    CONTACT_B_MATRIX BN;
+    calculate_contact_matrices(mf_u, pbr_->cnpl1, gap, BN);
+    const std::string dataname_gap = md.new_name("contact_gap_on_" + varname_u);
+    md.add_initialized_fixed_size_data(dataname_gap, gap);
+    pbr_->set_BN1(BN);
+    pbr_->update_gap_BN_BT = false;  //Do not update the contact matrices during
+                                     //the iterative solution of the tangent system
+
+    size_type nbc = gmm::mat_nrows(BN);
+    const std::string multname_n = md.new_name("contact_multiplier");
+    md.add_fixed_size_variable(multname_n, nbc);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+    tl.push_back(model::term_description(varname_u, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u, false));
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+
+    // Variables (order: varname_u, multname_n)
+    model::varnamelist vl;
+    vl.push_back(varname_u);
+    vl.push_back(multname_n);
+
+    // Parameters (order: r, gap, alpha)
+    model::varnamelist dl;
+    dl.push_back(dataname_r);
+    dl.push_back(dataname_gap);
+    if (dataname_alpha.size() == 0) {
+      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
+      md.add_initialized_fixed_size_data
+        (dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
+    }
+    dl.push_back(dataname_alpha);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+
 }  /* end of namespace getfem.                                             */
