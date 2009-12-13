@@ -814,7 +814,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
  //   cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
 			  maxit ? maxit : 40000);
-    gmm::default_newton_line_search lnrs(size_type(-1), 5.0/3.0, 1.0/10.0, 5.0/10.0, 3.0);
+    gmm::default_newton_line_search lnrs;
     getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), lnrs);
 
     pl->reset_unvalid_flag();
