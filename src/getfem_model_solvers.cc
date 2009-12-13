@@ -72,7 +72,7 @@ namespace getfem {
       gmm::copy(state, stateinit);
       R alpha(1), res;
       
-      ls.init_search(gmm::vect_norm2(residual()), iter.get_iteration());
+      ls.init_search(residual_norm(), iter.get_iteration());
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
@@ -139,21 +139,18 @@ namespace getfem {
 
   void standard_solve(model &md, gmm::iteration &iter,
 			     rmodel_plsolver_type lsolver) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
+    gmm::default_newton_line_search ls;
     standard_solve(md, iter, lsolver, ls);
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
 			     cmodel_plsolver_type lsolver) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
+    gmm::default_newton_line_search ls;
     standard_solve(md, iter, lsolver, ls);
   }
 
   void standard_solve(model &md, gmm::iteration &iter) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
+    gmm::default_newton_line_search ls;
     if (md.is_complex())
       standard_solve(md, iter, cdefault_linear_solver(md), ls);
     else

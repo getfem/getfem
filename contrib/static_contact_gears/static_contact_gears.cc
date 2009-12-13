@@ -332,8 +332,7 @@ cout << "no_cn: " << no_cn << endl;
 
   gmm::iteration iter(residual, 1, 40000);
 
-  gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-                                     1.0/1000.0, 3.0/5.0, 1.6);
+  gmm::default_newton_line_search ls;
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"superlu"), ls);
                       
   gmm::resize(U, mf_u.nb_dof());

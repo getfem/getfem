@@ -194,8 +194,9 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
         else THROW_BADARG("missing solver name for " << opt);
       } else THROW_BADARG("bad option: " << opt);
     }
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-                                       1.0/1000.0, 3.0/5.0, 1.6);
+
+    gmm::default_newton_line_search ls;
+
     if (!md->model().is_complex()) {
       getfem::standard_solve(md->model(), iter,
                              getfem::rselect_linear_solver(md->model(),

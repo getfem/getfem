@@ -10,7 +10,7 @@ LZ = 2.0;		% size in Z.
 P1 = 1.;	        % First elastic coefficient.
 P2 = 1.;   	        % Second elastic coefficient.
 P3 = 1.4;   	        % Third elastic coefficient.
-LAW = 2;     % 0 : SaintVenant-Kirchhoff
+LAW = 3;     % 0 : SaintVenant-Kirchhoff
              % 1 : SaintVenant-Kirchhoff+incompressibility
              % 2 : Ciarlet-Geymonat
              % 3 : Mooney-Rivlin (+incompressibility)
@@ -21,24 +21,24 @@ FORCEZ = 0;
 TORSION = 2.65; %3.14;
 EXTENSION = 0.0;
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
+MESH_TYPE = 'GT_PK(3,1)';
 %MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 2;            	          % space step.
-NZ = 5;
+NZ = 8;
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
-FEM_TYPE = 'FEM_PK(3,2)';  % P1 for triangles
+FEM_TYPE = 'FEM_PK(3,2)';
 % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 1)';
 % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
-%FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
-%FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
-%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
-%FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
+%FEM_TYPE = 'FEM_QK(3,1)';
+%FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))';
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)';
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)';
 
-FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
-%FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
+FEM_TYPE_P = 'FEM_PK(3,1)';
+%FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
@@ -67,7 +67,7 @@ INTEGRATION = 'IM_TETRAHEDRON(6)'
 RESIDUAL = 1E-6;     	% residu for iterative solvers.
 MAXITER = 500;
 DIRICHLET_VERSION=0;
-NBSTEP = 5;
+NBSTEP = 10;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
 VTK_EXPORT = 1 % export solution to a .vtk file ?

@@ -633,7 +633,7 @@ namespace getfem {
       MS.unreduced_solution(dr, d);
       R alpha(1), res;
       
-      ls.init_search(gmm::vect_norm2(residual()), iter.get_iteration());
+      ls.init_search(MS.reduced_residual_norm(), iter.get_iteration());
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
@@ -709,8 +709,7 @@ namespace getfem {
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 		 gmm::iteration &iter,
 		 typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
+    gmm::default_newton_line_search ls;
     standard_solve(MS, problem, iter, lsolver, ls);
   }
 
@@ -718,8 +717,7 @@ namespace getfem {
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 		 gmm::iteration &iter) {
-    gmm::default_newton_line_search ls(size_t(-1), 5.0/3.0,
-				       1.0/1000.0, 3.0/5.0, 1.6);
+    gmm::default_newton_line_search ls;
     standard_solve(MS, problem, iter, default_linear_solver(problem), ls);
   }
 

@@ -47,12 +47,16 @@ namespace gmm {
   struct abstract_newton_line_search {
     double conv_alpha, conv_r;
     size_t it, itmax, glob_it;
+    //  size_t tot_it;
     virtual void init_search(double r, size_t git) = 0;
     virtual double next_try(void) = 0;
     virtual bool is_converged(double) = 0;
-    virtual double converged_value(void) { return conv_alpha; };
+    virtual double converged_value(void) {
+      // tot_it += it; cout << "tot_it = " << tot_it << endl; it = 0;
+      return conv_alpha;
+    };
     virtual double converged_residual(void) { return conv_r; };
-    virtual ~abstract_newton_line_search() {}
+    virtual ~abstract_newton_line_search() { }
   };
 
 
@@ -78,33 +82,60 @@ namespace gmm {
       { itmax = imax; }
   };
 
-  struct default_newton_line_search : public abstract_newton_line_search {
-    double alpha, alpha_mult, first_res, alpha_max_ratio;
-    double alpha_min, prev_res, alpha_max_augment;
+  struct default_newton_line_search : public gmm::abstract_newton_line_search {
+    double alpha, alpha_mult, first_res;
+    double alpha_min, prev_res;
+    bool first;
     virtual void init_search(double r, size_t git) {
+      alpha_min = pow(10.0, -1.5 -gmm::random() * 3.0);
       glob_it = git;
       conv_alpha = alpha = double(1);
-      prev_res = conv_r = first_res = r; it = 0;
+      prev_res = conv_r = first_res = r; it = 0; first = true;
     }
     virtual double next_try(void)
-    { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
+    { double a = alpha; alpha *= alpha_mult; ++it; return a; }
     virtual bool is_converged(double r) {
-      if (glob_it == 0 || (r < first_res / double(2))
-	  || (conv_alpha <= alpha_min && r < first_res * alpha_max_augment)
-	  || it >= itmax)
-	{ conv_r = r; return true; }
-      if (it > 1 && r > prev_res && prev_res < alpha_max_ratio * first_res)
-	return true;
-      prev_res = conv_r = r;
+      // cout << "alpha = " << alpha
+      //      << " first_res = " << first_res << " r = " << r << endl;
+      if (r < conv_r || first)
+	{ conv_r = r; conv_alpha = alpha / alpha_mult; first = false; }
+      if (r < first_res * 0.75) return true;
+      if ((alpha <= alpha_min*alpha_mult && r < first_res*2)
+	  || (gmm::abs(r - first_res) < 0.011 && alpha < 0.1)
+	  || it >= itmax) return true;
       return false;
     }
-    default_newton_line_search
-    (size_t imax = size_t(-1),
-     double a_max_ratio = 5.0/3.0,
-     double a_min = 1.0/1000.0, double a_mult = 3.0/5.0, double a_augm = 2.0)
-      : alpha_mult(a_mult), alpha_max_ratio(a_max_ratio),
-	alpha_min(a_min), alpha_max_augment(a_augm) { itmax = imax; }
+    default_newton_line_search(size_t imax = size_t(-1), double a_mult = 0.5)
+      : alpha_mult(a_mult), alpha_min(0.1)  { itmax = imax; }
   };
+
+//   struct default_newton_line_search : public abstract_newton_line_search {
+//     double alpha, alpha_mult, first_res, alpha_max_ratio;
+//     double alpha_min, prev_res, alpha_max_augment;
+//     virtual void init_search(double r, size_t git) {
+//       glob_it = git;
+//       conv_alpha = alpha = double(1);
+//       prev_res = conv_r = first_res = r; it = 0;
+//     }
+//     virtual double next_try(void)
+//     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
+//     virtual bool is_converged(double r) {
+//       if (glob_it == 0 || (r < first_res / double(2))
+// 	  || (conv_alpha <= alpha_min && r < first_res * alpha_max_augment)
+// 	  || it >= itmax)
+// 	{ conv_r = r; return true; }
+//       if (it > 1 && r > prev_res && prev_res < alpha_max_ratio * first_res)
+// 	return true;
+//       prev_res = conv_r = r;
+//       return false;
+//     }
+//     default_newton_line_search
+//     (size_t imax = size_t(-1),
+//      double a_max_ratio = 5.0/3.0,
+//      double a_min = 1.0/1000.0, double a_mult = 3.0/5.0, double a_augm = 2.0)
+//       : alpha_mult(a_mult), alpha_max_ratio(a_max_ratio),
+// 	alpha_min(a_min), alpha_max_augment(a_augm) { itmax = imax; }
+//   };
 
 
   struct systematic_newton_line_search : public abstract_newton_line_search {
