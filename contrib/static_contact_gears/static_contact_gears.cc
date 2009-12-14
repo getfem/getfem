@@ -39,21 +39,6 @@ using bgeot::base_matrix; /* small dense matrix. */
  */
 typedef getfem::model_real_plain_vector  plain_vector;
 
-struct contact_node {
-  size_type dof;              // dof id of the node in mf_rhs
-  size_type master;           // cn id of its master node
-  std::vector<size_type> cvs; // list of ids of neigbouring convexes
-  std::vector<size_type> fcs; // list of local ids of neigbouring faces
-  scalar_type dist;           // Distance from master point
-  bool is_active;             // 
-  
-  contact_node() {
-    is_active = false;
-    dist = 10.;               // This initial value represents a threshold
-  }
-};
-
-
 /*
   structure for the elastostatic problem
 */
@@ -156,7 +141,6 @@ void elastostatic_problem::init(void) {
 bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
                                  plain_vector &Forces, plain_vector &CForces) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
-  dim_type qdim = mf_u.get_qdim();
 
   cout << "mf_rhs.nb_dof() :" << mf_rhs.nb_dof() << endl;
   cout << "mf_u.nb_dof()   :" << mf_u.nb_dof() << endl;
@@ -175,135 +159,15 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
 //  getfem::mdbrick_nonlinear_elasticity<>  ELAS(pl, mim, mf_u, p);
   
   // Defining the contact condition.
-  size_type no_cn = 0;
-  getfem::CONTACT_B_MATRIX BN;
-  plain_vector gap;
+  std::string varname_u="u";
+  std::string dataname_r="r";
+  std::string dataname_alpha;
+  md.add_initialized_scalar_data(dataname_r, 1.);
+  getfem::add_frictionless_contact_brick
+    (md, varname_u, CONTACT_BOUNDARY_1, CONTACT_BOUNDARY_2,
+     dataname_r, dataname_alpha, false);
 
-  std::map<int,int> dof_to_cnid;
-  std::vector<contact_node> cns;
-  dal::bit_vector cn1, cn2;
-  size_type cns_size=0;
-  for (size_type swap = 0; swap <= 1; swap++) {
-    size_type CONTACT_BOUNDARY = swap ? CONTACT_BOUNDARY_2 : CONTACT_BOUNDARY_1;
-    for (getfem::mr_visitor face(mesh.region(CONTACT_BOUNDARY));
-         !face.finished(); ++face) {
-      assert(face.is_face());
-      getfem::mesh_fem::ind_dof_face_ct
-        face_dofs = mf_rhs.ind_basic_dof_of_face_of_element(face.cv(),face.f());
-      for (size_type it=0; it < face_dofs.size(); ++it) {
-        size_type cnid;
-        if (dof_to_cnid.count(face_dofs[it]) > 0) {
-          cnid = dof_to_cnid[face_dofs[it]];
-          cns[cnid].cvs.push_back(face.cv());
-          cns[cnid].fcs.push_back(face.f());
-        } else {
-          contact_node new_cn;
-          new_cn.dof = face_dofs[it];
-          new_cn.cvs.push_back(face.cv());
-          new_cn.fcs.push_back(face.f());
-          cns.push_back(new_cn);
-          dof_to_cnid[face_dofs[it]] = cns_size;
-          cnid = cns_size;
-          cns_size++;
-        }
-        if (CONTACT_BOUNDARY == CONTACT_BOUNDARY_1) {
-          cn1.add(cnid);
-        } else if (CONTACT_BOUNDARY == CONTACT_BOUNDARY_2) {
-          cn2.add(cnid);
-        }
-      }
-    }
-  }
-
-  for (dal::bv_visitor i1(cn1); !i1.finished(); ++i1) { //find minimum distance node pairs
-    base_node node1 = mf_rhs.point_of_basic_dof(cns[i1].dof);
-    for (dal::bv_visitor i2(cn2); !i2.finished(); ++i2) {
-      base_node node2 = mf_rhs.point_of_basic_dof(cns[i2].dof);
-      scalar_type dist = gmm::vect_norm2(node1-node2);
-      if (dist < cns[i1].dist) {
-        cns[i1].dist = dist;
-        cns[i1].master = i2;
-        cns[i1].is_active = true;
-      }
-      if (dist < cns[i2].dist) {
-        cns[i2].dist = dist;
-        cns[i2].master = i1;
-        cns[i2].is_active = false; //true;
-      }
-    }
-  }
-
-  for (std::vector<contact_node>::iterator cn = cns.begin(); cn < cns.end(); cn++) {
-    if (cn->is_active) {
-      contact_node cn_s = *cn;              //slave contact node
-      contact_node cn_m = cns[cn->master];  //master contact node
-      base_node slave_node = mf_rhs.point_of_basic_dof(cn_s.dof);
-      base_node master_node = mf_rhs.point_of_basic_dof(cn_m.dof);
-      base_node un_sel(3), proj_node_sel(3), proj_node_ref_sel(3);
-      scalar_type is_in_min = 1e5;
-      size_type cv_sel, fc_sel;
-      std::vector<size_type>::iterator cv,fc;
-      for (cv = cn_m.cvs.begin(), fc = cn_m.fcs.begin();
-           cv < cn_m.cvs.end() && fc < cn_m.fcs.end(); cv++, fc++) {
-        base_node un = mesh.normal_of_face_of_convex(*cv,*fc);
-        un /= gmm::vect_norm2(un);
-        base_node proj_node(3), proj_node_ref(3);
-        //proj_node = slave_node - [(slave_node-master_node)*n] * n
-        gmm::add(master_node, gmm::scaled(slave_node, -1.), proj_node);
-        gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
-        gmm::add(slave_node, proj_node);
-
-        bgeot::pgeometric_trans pgt = mesh.trans_of_convex(*cv);
-        bgeot::geotrans_inv_convex gic;
-        gic.init(mesh.points_of_convex(*cv), pgt);
-        gic.invert(proj_node, proj_node_ref);
-        scalar_type is_in = pgt->convex_ref()->is_in(proj_node_ref);
-        if (is_in < is_in_min) {
-          is_in_min = is_in;
-          cv_sel = *cv;
-          fc_sel = *fc;
-          un_sel = un;
-          proj_node_sel = proj_node;
-          proj_node_ref_sel = proj_node_ref;
-        }
-      }
-      if (is_in_min < 0.05) {
-        no_cn++;
-        gmm::resize(BN, no_cn, mf_u.nb_dof());
-        BN(no_cn-1, cn_s.dof*N)   += -un_sel[0];
-        BN(no_cn-1, cn_s.dof*N+1) += -un_sel[1];
-        BN(no_cn-1, cn_s.dof*N+2) += -un_sel[2];
-
-        base_matrix G;
-        base_matrix M(qdim, mf_u.nb_basic_dof_of_element(cv_sel));
-        bgeot::vectors_to_base_matrix(G, mesh.points_of_convex(cv_sel));
-        getfem::pfem pf = mf_u.fem_of_element(cv_sel);
-        bgeot::pgeometric_trans pgt = mesh.trans_of_convex(cv_sel);
-        getfem::fem_interpolation_context
-          ctx(pgt, pf, proj_node_ref_sel, G, cv_sel, fc_sel);
-        pf->interpolation (ctx, M, qdim);
-
-        plain_vector tmpvec(mf_u.nb_basic_dof_of_element(cv_sel));
-        gmm::mult(gmm::transposed(M), un_sel, tmpvec);
-        size_type j = 0;
-        getfem::mesh_fem::ind_dof_ct master_dof = mf_u.ind_basic_dof_of_element(cv_sel);
-        getfem::mesh_fem::ind_dof_ct::const_iterator it ;
-        for (it = master_dof.begin(); it != master_dof.end(); it++) {
-          BN(no_cn-1, *it) += tmpvec[j];
-          ++j;
-        }
-        gap.push_back(gmm::vect_sp(slave_node-proj_node_sel, un_sel));
-      }
-    }
-  }
-  md.add_fixed_size_variable("contact_multiplier", no_cn);
-  md.add_initialized_scalar_data("r", 1.);
-std::string dataname_gap="gap";
-  md.add_initialized_fixed_size_data(dataname_gap, gap);
-  getfem::add_basic_contact_brick(md, "u", "contact_multiplier", "r",
-                                  BN, dataname_gap);
-
-cout << "no_cn: " << no_cn << endl;
+//cout << "no_cn: " << no_cn << endl;
 
   // Defining the DIRICHLET condition.
   plain_vector F(nb_dof_rhs * N);
@@ -370,12 +234,12 @@ int main(int argc, char *argv[]) {
   plain_vector CForces(p.mf_u.nb_dof());
   if (!p.solve(U, RHS, Forces, CForces)) cout << "Solve has failed\n";
 
-  p.mesh.write_to_file("simple_gears.mesh");
-  p.mf_u.write_to_file("simple_gears.mf", true);
-  p.mf_rhs.write_to_file("simple_gears.mfd", true);
-  gmm::vecsave("simple_gears.U", U);
-  gmm::vecsave("simple_gears.RHS", RHS);
-  getfem::vtk_export exp("simple_gears.vtk", true);
+  p.mesh.write_to_file("static_contact_gears.mesh");
+  p.mf_u.write_to_file("static_contact_gears.mf", true);
+  p.mf_rhs.write_to_file("static_contact_gears.mfd", true);
+  gmm::vecsave("static_contact_gears.U", U);
+  gmm::vecsave("static_contact_gears.RHS", RHS);
+  getfem::vtk_export exp("static_contact_gears.vtk", true);
   exp.exporting(p.mf_u);
   exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
   exp.write_point_data(p.mf_u, Forces, "forces");
