@@ -69,15 +69,15 @@ namespace getfem {
 
   // contact_node is an object which contains data about nodes expected to
   // participate in a contact condition either. A contact node refers to a
-  // specific mesh.
+  // specific mesh_fem.
   struct contact_node {
-    const mesh *m;               // Pointer to the mesh the contact node is
+    const mesh_fem *mf;          // Pointer to the mesh_fem the contact node is
                                  // associated with
-    size_type pt;                // dof id of the node in the considered mesh_fem
+    size_type dof;               // first dof id of the node in the considered mesh_fem
     std::vector<size_type> cvs;  // list of ids of neigbouring convexes
     std::vector<short_type> fcs; // list of local ids of neigbouring faces
 
-    contact_node(const mesh *m_) {m = m_;}
+    contact_node(const mesh_fem &mf_) {mf = &mf_;}
   };
 
   // The object contact_node_list holds a list of all nodes which participate
@@ -88,33 +88,30 @@ namespace getfem {
 
     contact_node_list() : std::vector<contact_node>() {}
 
-    void append(const mesh *mesh_, size_type contact_region,
+    void append(const mesh_fem &mf, size_type contact_region,
                 dal::bit_vector &bv_cn) {
 
+      const mesh &m = mf.linked_mesh();
       size_type cnl_size = this->size();
       std::map<int,int> ptid_to_cnid;
-      for (mr_visitor face(mesh_->region(contact_region));
+      for (mr_visitor face(m.region(contact_region));
            !face.finished(); ++face) {
         assert(face.is_face());
-        //FIXME: What is the difference between ind_points_of_face_of_convex and
-        //       points_of_face_of_convex? Which one should be prefered?
-        mesh::ind_pt_face_ct
-           fpts = mesh_->ind_points_of_face_of_convex(face.cv(),face.f());
-        //
-        for (mesh::ind_pt_face_ct::iterator fpt = fpts.begin();
-             fpt < fpts.end(); fpt++) {
+        mesh_fem::ind_dof_face_ct
+          face_dofs = mf.ind_basic_dof_of_face_of_element(face.cv(),face.f());
+        for (size_type it=0; it < face_dofs.size(); it += mf.get_qdim() ) {
           size_type cnid;
-          if (ptid_to_cnid.count(*fpt) > 0) {
-            cnid = ptid_to_cnid[*fpt];
+          if (ptid_to_cnid.count(face_dofs[it]) > 0) {
+            cnid = ptid_to_cnid[face_dofs[it]];
             (*this)[cnid].cvs.push_back(face.cv());
             (*this)[cnid].fcs.push_back(face.f());
           } else {
-            contact_node new_cn(mesh_);
-            new_cn.pt = *fpt;
+            contact_node new_cn(mf);
+            new_cn.dof = face_dofs[it];
             new_cn.cvs.push_back(face.cv());
             new_cn.fcs.push_back(face.f());
             (*this).push_back(new_cn);
-            ptid_to_cnid[*fpt] = cnl_size;
+            ptid_to_cnid[face_dofs[it]] = cnl_size;
             cnid = cnl_size;
             cnl_size++;
           }
@@ -143,11 +140,11 @@ namespace getfem {
     size_type i=0;
     for (contact_node_list::iterator cn1 = cnl1.begin();
          cn1 != cnl1.end(); cn1++, i++) {
-      base_node node1 = cn1->m->points()[cn1->pt];
+      base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
       size_type j=0;
       for (contact_node_list::iterator cn2 = cnl2.begin();
            cn2 != cnl2.end(); cn2++, j++) {
-        base_node node2 = cn2->m->points()[cn2->pt];
+        base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
         scalar_type dist = gmm::vect_norm2(node1-node2);
         if (dist < cnpl1[i].dist) {
           cnpl1[i].cn_s = &cn1[0];
@@ -177,8 +174,9 @@ namespace getfem {
       if (cnp->cn_s) {
         contact_node *cn_s = cnp->cn_s;  //slave contact node
         contact_node *cn_m = cnp->cn_m;  //master contact node
-        base_node slave_node = cn_s->m->points()[cn_s->pt];
-        base_node master_node = cn_m->m->points()[cn_m->pt];
+        const mesh &mesh_m = cn_m->mf->linked_mesh();
+        base_node slave_node = cn_s->mf->point_of_basic_dof(cn_s->dof);
+        base_node master_node = cn_m->mf->point_of_basic_dof(cn_m->dof);
         base_node un_sel(3), proj_node_sel(3), proj_node_ref_sel(3);
         scalar_type is_in_min = 1e5;  //FIXME
         size_type cv_sel, fc_sel;
@@ -186,7 +184,7 @@ namespace getfem {
         std::vector<short_type>::iterator fc;
         for (cv = cn_m->cvs.begin(), fc = cn_m->fcs.begin();
              cv != cn_m->cvs.end() && fc != cn_m->fcs.end(); cv++, fc++) {
-          base_node un = cn_m->m->normal_of_face_of_convex(*cv,*fc); //FIXME: this normal is just an approximation
+          base_node un = mesh_m.normal_of_face_of_convex(*cv,*fc); //FIXME: this normal is just an approximation
           un /= gmm::vect_norm2(un);
           base_node proj_node(3), proj_node_ref(3);
           //FIXME: the following projection calculation is accurate only for linear triangle elements
@@ -195,9 +193,9 @@ namespace getfem {
           gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
           gmm::add(slave_node, proj_node);
 
-          bgeot::pgeometric_trans pgt = cn_m->m->trans_of_convex(*cv);
+          bgeot::pgeometric_trans pgt = mesh_m.trans_of_convex(*cv);
           bgeot::geotrans_inv_convex gic;
-          gic.init(cn_m->m->points_of_convex(*cv), pgt);
+          gic.init(mesh_m.points_of_convex(*cv), pgt);
           gic.invert(proj_node, proj_node_ref);
           scalar_type is_in = pgt->convex_ref()->is_in(proj_node_ref);
           if (is_in < is_in_min) {
@@ -215,18 +213,18 @@ namespace getfem {
           no_cn++;
           gmm::resize(BN, no_cn, mf_disp.nb_dof());
 
-          if (cn_s->m == &mf_disp.linked_mesh()) {
-            BN(no_cn-1, cn_s->pt*qdim)   += -un_sel[0];  //FIXME
-            BN(no_cn-1, cn_s->pt*qdim+1) += -un_sel[1];  //FIXME
-            BN(no_cn-1, cn_s->pt*qdim+2) += -un_sel[2];  //FIXME
+          if (cn_s->mf == &mf_disp) {
+            BN(no_cn-1, cn_s->dof)   += -un_sel[0];  //FIXME
+            BN(no_cn-1, cn_s->dof+1) += -un_sel[1];  //FIXME
+            BN(no_cn-1, cn_s->dof+2) += -un_sel[2];  //FIXME
           }
 
-          if (cn_m->m == &mf_disp.linked_mesh()) {
+          if (cn_m->mf == &mf_disp) {
             base_matrix G;
             base_matrix M(qdim, mf_disp.nb_basic_dof_of_element(cv_sel));
-            bgeot::vectors_to_base_matrix(G, cn_m->m->points_of_convex(cv_sel));
+            bgeot::vectors_to_base_matrix(G, mesh_m.points_of_convex(cv_sel));
             pfem pf = mf_disp.fem_of_element(cv_sel);
-            bgeot::pgeometric_trans pgt = cn_m->m->trans_of_convex(cv_sel);
+            bgeot::pgeometric_trans pgt = mesh_m.trans_of_convex(cv_sel);
             fem_interpolation_context
               ctx(pgt, pf, proj_node_ref_sel, G, cv_sel, fc_sel);
             pf->interpolation (ctx, M, qdim);
@@ -515,9 +513,9 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick");
       size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
-	+ (friction_dynamic_term ? 1 : 0);      
+        + (friction_dynamic_term ? 1 : 0);      
       GMM_ASSERT1(dl.size() == nbdl, "Wrong number of data for contact brick, "
-		  << dl.size() << " should be " << nbdl);
+                  << dl.size() << " should be " << nbdl);
 
       size_type nbc = gmm::mat_nrows(BN1);
 
@@ -720,14 +718,14 @@ namespace getfem {
     if (dataname_gap.size() == 0) {
       dataname_gap = md.new_name("contact_gap_on_" + varname_u);
       md.add_initialized_fixed_size_data
-	(dataname_gap, model_real_plain_vector(1, scalar_type(0)));
+        (dataname_gap, model_real_plain_vector(1, scalar_type(0)));
     }
     dl.push_back(dataname_gap);
     
     if (dataname_alpha.size() == 0) {
       dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
       md.add_initialized_fixed_size_data
-	(dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
+        (dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
     }
     dl.push_back(dataname_alpha);
     dl.push_back(dataname_friction_coeff);
@@ -1132,7 +1130,7 @@ namespace getfem {
    bool symmetrized) {
    
     const mesh_fem &mf_u = md.mesh_fem_of_variable(varname_u);
-    const mesh *mesh_ = &(mf_u.linked_mesh());
+//    const mesh *mesh_ = &(mf_u.linked_mesh());
 
     Coulomb_friction_brick_elastic_bodies 
       *pbr_=new Coulomb_friction_brick_elastic_bodies(symmetrized,true);
@@ -1140,8 +1138,8 @@ namespace getfem {
 
     //Fill up the cnl vectors of all contact_node's
     dal::bit_vector tmp_bv;
-    pbr_->cnl1.append(mesh_, rg_m, tmp_bv);
-    pbr_->cnl2.append(mesh_, rg_s, tmp_bv);
+    pbr_->cnl1.append(mf_u, rg_m, tmp_bv);
+    pbr_->cnl2.append(mf_u, rg_s, tmp_bv);
     eval_min_dist_cn_pairs(pbr_->cnl1, pbr_->cnl2, pbr_->cnpl1, pbr_->cnpl2);
     pbr_->update_cnpl = false;  //Do not update the contact_node_pairs during
                                //the iterative solution of the tangent system

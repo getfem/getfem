@@ -155,6 +155,14 @@ namespace getfem {
    size_type region, const std::string &obstacle, bool symmetrized); 
 
 
+  //  Add a frictionless contact condition between two faces of an elastic
+  //  body.
+  size_type add_frictionless_contact_brick
+  (model &md, const std::string &varname_u, size_type rg_m, size_type rg_s,
+   const std::string &dataname_r, std::string &dataname_alpha,
+   bool symmetrized);
+
+
 //===========================================================================
 //
 //  Brick for the old brick system
