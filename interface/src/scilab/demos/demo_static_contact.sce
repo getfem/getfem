@@ -23,13 +23,31 @@
 //
 
 gf_workspace('clear all');
+stacksize('max');
+
+// Import the mesh
+//m = gf_mesh('load', 'data/disc_P2_h1.mesh');
+//m = gf_mesh('load', 'data/disc_P2_h2.mesh');
+m = gf_mesh('load', 'data/disc_P2_h0.5.mesh');
+
+d = gf_mesh_get(m, 'dim');
 
 // parameters of the model
-lambda  = 1;  // Lame coefficient
-mu      = 1;  // Lame coefficient
-version = 1;  // 1 : frictionless contact using the basic contact brick
-              // 2 : frictionless contact using the contact with a
-              //     rigid obstacle brick (requires MuParser)
+lambda         = 1;   // Lame coefficient
+mu             = 1;   // Lame coefficient
+friction_coeff = 0.2; // coefficient of friction
+r              = 5;   // Augmentation parameter
+version        = 4;   // 1 : frictionless contact and the basic contact brick
+                      // 2 : contact with 'static' friction and the basic contact brick
+                      // 3 : frictionless contact and the contact with a
+                      //     rigid obstacle brick
+                      // 4 : contact with 'static' friction and the contact with a
+                      //     rigid obstacle brick
+if (d == 2) then
+  obstacle = 'y';  // Signed distance representing the obstacle
+else
+  obstacle = 'z';  // Signed distance representing the obstacle
+end
 
 // set a custom colormap
 h = scf();
@@ -43,9 +61,6 @@ h.color_map = jetcolormap(255);
 //  r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
 //end
 //h.color_map = r;
-
-// Import the mesh
-m = gf_mesh('load', 'data/disc_P2_h1.mesh');
 
 d = gf_mesh_get(m, 'dim');
 
@@ -76,7 +91,7 @@ mim = gf_mesh_im(m, 4);
 nbdofd = gf_mesh_fem_get(mfd, 'nbdof');
 nbdofu = gf_mesh_fem_get(mfu, 'nbdof');
 F = zeros(nbdofd*d, 1);
-F(d:d:nbdofd*d) = -0.01;
+F(d:d:nbdofd*d) = -0.02;
 
 // Elasticity model
 md = gf_model('real');
@@ -97,7 +112,7 @@ gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 cdof = gf_mesh_fem_get(mfu, 'dof on region', GAMMAC);
 nbc = size(cdof, 2) / d;
 
-if (version == 1) then
+if (version == 1 | version == 2) then // defining the matrices BN and BT by hand
   contact_dof = cdof(d:d:nbc*d);
   contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
   BN = spzeros(nbc, nbdofu);
@@ -105,24 +120,47 @@ if (version == 1) then
     BN(i, contact_dof(i)) = -1.0;
     gap(i) = contact_nodes(d, i);
   end
+  if (version == 2) then
+    BT = spzeros(nbc*(d-1), nbdofu);
+    for i = 1:nbc
+      BT(i*(d-1), contact_dof(i)-d+1) = 1.0;
+      if (d > 2) then
+        BT(i*(d-1)+1, contact_dof(i)-d+2) = 1.0;
+      end
+    end
+  end
 
   gf_model_set(md, 'add variable', 'lambda_n', nbc);
-  gf_model_set(md, 'add initialized data', 'r', [1.0]);
+  gf_model_set(md, 'add initialized data', 'r', [r]);
+  if (version == 2) then
+    gf_model_set(md, 'add variable', 'lambda_t', nbc * (d-1));
+    gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+  end
   gf_model_set(md, 'add initialized data', 'gap', gap);
   gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
-  gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
-elseif (version == 2) then
+  if (version == 1) then
+    gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, 'gap', 'alpha', 0);
+  else
+    gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'lambda_t', 'r', BN, BT, 'friction_coeff', 'gap', 'alpha', 0);
+  end
+elseif (version == 3 | version == 4) then // BN and BT defined by the contact brick
   gf_model_set(md, 'add variable', 'lambda_n', nbc);
-  gf_model_set(md, 'add initialized data', 'r', [1.0]);
-  gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, 'y', 0);
-
+  gf_model_set(md, 'add initialized data', 'r', [r]);
+  if (version == 3) then
+    gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', 'lambda_n', 'r', GAMMAC, obstacle, 0);
+  else
+    gf_model_set(md, 'add variable', 'lambda_t', nbc * (d-1));
+    gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+    gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', ...
+	         'lambda_n', 'lambda_t', 'r', 'friction_coeff', GAMMAC, obstacle, 0);
+  end
 else
   error('Unexistent version');
 end
 
 // Solve the problem
 
-gf_model_get(md, 'solve', 'max_res', 1E-7, 'very noisy', 'max_iter', 40);
+gf_model_get(md, 'solve', 'max_res', 1E-7, 'very noisy', 'max_iter', 100);
 
 U = gf_model_get(md, 'variable', 'u');
 lambda_n = gf_model_get(md, 'variable', 'lambda_n');
@@ -140,7 +178,7 @@ else
           'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
 end
 
-title('Deformed configuration');
+title('Deformed configuration (not really a small deformation of course ...)');
 colorbar(min(VM),max(VM));
 drawnow;
 sleep(100);
