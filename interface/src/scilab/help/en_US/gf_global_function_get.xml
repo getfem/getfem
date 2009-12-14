@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_global_function_get"
+          xml:lang="en" xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_global_function_get</refname>
+
+    <refpurpose> General function for querying information about global_function objects.</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>
+      mat VALs = gf_global_function('val', mat PTs)
+      mat GRADs = gf_global_function('grad', mat PTs)
+      mat HESSs = gf_global_function('hess', mat PTs)
+    </synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+
+
+    <itemizedlist>
+      <listitem>
+	<para>mat VALs = gf_global_function('val', mat PTs)  Return `val`
+	  function evaluation in `PTs` (column points).</para>
+      </listitem>
+      <listitem>
+	<para>mat GRADs = gf_global_function('grad', mat PTs)  Return
+	`val` function evaluation in `PTs` (column points).</para>
+      </listitem>
+      <listitem>
+	<para>mat HESSs = gf_global_function('hess', mat PTs) Return
+	`val` function evaluation in `PTs` (column points).</para>
+      </listitem>
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+
+    <simplelist type="inline">
+      <member><link linkend="gf_global_function">gf_global_function</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+
+    <para>Y. Collette</para>
+  </refsection>
+</refentry>
