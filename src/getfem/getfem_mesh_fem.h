@@ -162,6 +162,8 @@ namespace getfem {
                        /* of element option. (0 = no automatic addition)  */
     dim_type auto_add_elt_K; /* Degree of the fem for automatic addition  */
                        /* of element option. (-1 = no automatic addition) */
+    bool auto_add_elt_disc;
+    scalar_type auto_add_elt_alpha;
     dim_type Qdim; /* this is the "global" target_dim */
     dim_type QdimM, QdimN; /* for matrix field with QdimM lines and QdimN */
                            /* columnsQdimM * QdimN = Qdim.                */
@@ -273,7 +275,11 @@ namespace getfem {
     /** Set the degree of the fem for automatic addition
      *  of element option. K=-1 disables the automatic addition.
      */
-    void set_auto_add(dim_type K) { auto_add_elt_K = K; auto_add_elt_pf = 0; }
+    void set_auto_add(dim_type K, bool disc = false,
+		      scalar_type alpha = scalar_type(0)) {
+      auto_add_elt_K = K; auto_add_elt_disc = disc;
+      auto_add_elt_alpha = alpha; auto_add_elt_pf = 0;
+    }
 
     /** Set the fem for automatic addition
      *  of element option. pf=0 disables the automatic addition.
@@ -337,6 +343,19 @@ namespace getfem {
     */
     void set_classical_finite_element(const dal::bit_vector &cvs, 
 				      dim_type fem_degree);
+    /** Similar to set_classical_finite_element, but uses
+	discontinuous lagrange elements. 
+
+	@param cv the convex index.
+	@param fem_degree the polynomial degree of the finite element.
+	@param alpha the node inset, 0 <= alpha < 1, where 0 implies
+	usual dof nodes, greater values move the nodes toward the
+	center of gravity, and 1 means that all degrees of freedom
+	collapse on the center of gravity.
+     */
+    void set_classical_discontinuous_finite_element(size_type cv,
+						    dim_type fem_degree,
+						    scalar_type alpha=0);
     /** Similar to set_classical_finite_element, but uses
 	discontinuous lagrange elements. 
 

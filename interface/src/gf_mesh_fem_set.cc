@@ -59,7 +59,8 @@ static void set_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in)
 
 /* set the classical fem of order on the mesh_fem, with a classical integration
    method */
-static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in, bool discontinuous) {
+static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
+			      bool discontinuous) {
   dim_type K = dim_type(in.pop().to_integer(0,255));
 
   scalar_type alpha = 0.0;
@@ -67,15 +68,19 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in, b
 
   dal::bit_vector bv;
   if (in.remaining()) {
-    bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(), -config::base_index());
+    bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(),
+				-config::base_index());
+    if (!discontinuous) {
+      mf->set_classical_finite_element(bv,K);
+    } else {
+      mf->set_classical_discontinuous_finite_element(bv,K,alpha);
+    }
   } else {
-    bv = mf->linked_mesh().convex_index();
-  }
-
-  if (!discontinuous) {
-    mf->set_classical_finite_element(bv,K);
-  } else {
-    mf->set_classical_discontinuous_finite_element(bv,K,alpha);
+    if (!discontinuous) {
+      mf->set_classical_finite_element(K);
+    } else {
+      mf->set_classical_discontinuous_finite_element(K,alpha);
+    }
   }
 }
 

@@ -33,10 +33,15 @@ namespace getfem {
 	  if (auto_add_elt_pf != 0)
 	    const_cast<mesh_fem *>(this)
 	      ->set_finite_element(i, auto_add_elt_pf);
-	  else
-	  if (auto_add_elt_K != dim_type(-1))
-	    const_cast<mesh_fem *>(this)
-	      ->set_classical_finite_element(i, auto_add_elt_K);
+	  else if (auto_add_elt_K != dim_type(-1)) {
+	    if (auto_add_elt_disc)
+	      const_cast<mesh_fem *>(this)
+		->set_classical_discontinuous_finite_element(i,auto_add_elt_K,
+							 auto_add_elt_alpha);
+	    else
+	      const_cast<mesh_fem *>(this)
+		->set_classical_finite_element(i, auto_add_elt_K);
+	  }
 	  else
 	    const_cast<mesh_fem *>(this)
 	      ->set_finite_element(i, 0);
@@ -51,9 +56,15 @@ namespace getfem {
 	if (auto_add_elt_pf != 0)
 	  const_cast<mesh_fem *>(this)
 	    ->set_finite_element(i, auto_add_elt_pf);
-	else if (auto_add_elt_K != dim_type(-1))
-	  const_cast<mesh_fem *>(this)
-	    ->set_classical_finite_element(i, auto_add_elt_K);
+	else if (auto_add_elt_K != dim_type(-1)) {
+	  if (auto_add_elt_disc)
+	    const_cast<mesh_fem *>(this)
+	      ->set_classical_discontinuous_finite_element(i, auto_add_elt_K,
+							   auto_add_elt_alpha);
+	  else
+	    const_cast<mesh_fem *>(this)
+	      ->set_classical_finite_element(i, auto_add_elt_K);
+	}
       }
     }
     if (!dof_enumeration_made) enumerate_dof();
@@ -165,7 +176,14 @@ namespace getfem {
 
   void mesh_fem::set_classical_finite_element(dim_type fem_degree) {
     set_classical_finite_element(linked_mesh().convex_index(), fem_degree);
-    set_auto_add(fem_degree);
+    set_auto_add(fem_degree, false);
+  }
+
+  void mesh_fem::set_classical_discontinuous_finite_element
+  (size_type cv, dim_type fem_degree, scalar_type alpha) {
+    pfem pf = getfem::classical_discontinuous_fem
+      (linked_mesh().trans_of_convex(cv), fem_degree, alpha);
+    set_finite_element(cv, pf);
   }
 
   void mesh_fem::set_classical_discontinuous_finite_element
@@ -181,6 +199,7 @@ namespace getfem {
   (dim_type fem_degree, scalar_type alpha) { 
     set_classical_discontinuous_finite_element(linked_mesh().convex_index(),
 					       fem_degree,alpha);
+    set_auto_add(fem_degree, true, alpha);
   }
 
   base_node mesh_fem::point_of_basic_dof(size_type cv, size_type i) const {
@@ -674,7 +693,7 @@ namespace getfem {
       if (it == mfs.end()) {
 	mesh_fem *pmf = new mesh_fem(msh);
 	pmf->set_classical_finite_element(o);
-	pmf->set_auto_add(o);
+	pmf->set_auto_add(o, false);
 	pmf->set_qdim(qdim);
 	return *(mfs[key] = pmf);
       }
