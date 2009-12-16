@@ -161,11 +161,9 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
   // Defining the contact condition.
   std::string varname_u="u";
   std::string dataname_r="r";
-  std::string dataname_alpha;
   md.add_initialized_scalar_data(dataname_r, 1.);
   getfem::add_frictionless_contact_brick
-    (md, varname_u, CONTACT_BOUNDARY_1, CONTACT_BOUNDARY_2,
-     dataname_r, dataname_alpha, false);
+    (md, varname_u, CONTACT_BOUNDARY_1, CONTACT_BOUNDARY_2, dataname_r, false);
 
 //cout << "no_cn: " << no_cn << endl;
 

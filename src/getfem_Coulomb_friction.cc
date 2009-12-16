@@ -78,12 +78,11 @@ namespace getfem {
     std::vector<short_type> fcs; // list of local ids of neigbouring faces
 
     contact_node(const mesh_fem &mf_) {mf = &mf_;}
+    contact_node() : mf(0) {}
   };
 
   // The object contact_node_list holds a list of all nodes which participate
-  // in the definition of a contact. Its append method permits the expansion
-  // of this list and returns a bit_vector corresponding to the group of the
-  // appended members.
+  // in the definition of a contact.
   struct contact_node_list : public std::vector<contact_node> {
 
     contact_node_list() : std::vector<contact_node>() {}
@@ -92,31 +91,30 @@ namespace getfem {
                 dal::bit_vector &bv_cn) {
 
       const mesh &m = mf.linked_mesh();
-      size_type cnl_size = this->size();
-      std::map<int,int> ptid_to_cnid;
+      size_type qdim = mf.get_qdim();
+      std::map<size_type, size_type> dof_to_cnid;
+      size_type cnid = this->size();
+      dal::bit_vector dofs = mf.basic_dof_on_region(contact_region);
+      for (dal::bv_visitor dof(dofs); !dof.finished(); ++dof) {
+        if ( dof % qdim == 0) {
+          bv_cn.add(cnid);
+          dof_to_cnid[dof] = cnid++;
+          contact_node new_cn(mf);
+          new_cn.dof = dof;
+          this->push_back(new_cn);
+        }
+      }
       for (mr_visitor face(m.region(contact_region));
            !face.finished(); ++face) {
         assert(face.is_face());
         mesh_fem::ind_dof_face_ct
           face_dofs = mf.ind_basic_dof_of_face_of_element(face.cv(),face.f());
-        for (size_type it=0; it < face_dofs.size(); it += mf.get_qdim() ) {
-          size_type cnid;
-          if (ptid_to_cnid.count(face_dofs[it]) > 0) {
-            cnid = ptid_to_cnid[face_dofs[it]];
-            (*this)[cnid].cvs.push_back(face.cv());
-            (*this)[cnid].fcs.push_back(face.f());
-          } else {
-            contact_node new_cn(mf);
-            new_cn.dof = face_dofs[it];
-            new_cn.cvs.push_back(face.cv());
-            new_cn.fcs.push_back(face.f());
-            (*this).push_back(new_cn);
-            ptid_to_cnid[face_dofs[it]] = cnl_size;
-            cnid = cnl_size;
-            cnl_size++;
-          }
-          bv_cn.add(cnid);
-        } // for:fpt
+        for (size_type it=0; it < face_dofs.size(); it += qdim ) {
+          size_type dof = face_dofs[it];
+          cnid = dof_to_cnid[dof];
+          (*this)[cnid].cvs.push_back(face.cv());
+          (*this)[cnid].fcs.push_back(face.f());
+        } // for:it
       } // for:face
     } // append
 
@@ -130,47 +128,62 @@ namespace getfem {
       {cn_s = 0, cn_m = 0, dist = threshold;}
   };
 
-  void eval_min_dist_cn_pairs(contact_node_list &cnl1,
-                              contact_node_list &cnl2,
-                              std::vector<contact_node_pair> &cnpl1,
-                              std::vector<contact_node_pair> &cnpl2) {
-    // Find minimum distance node pairs, FIXME: to be optimized
-    cnpl1.clear(); cnpl1.resize(cnl1.size());
-    cnpl2.clear(); cnpl2.resize(cnl2.size());
-    size_type i=0;
-    for (contact_node_list::iterator cn1 = cnl1.begin();
-         cn1 != cnl1.end(); cn1++, i++) {
-      base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
-      size_type j=0;
-      for (contact_node_list::iterator cn2 = cnl2.begin();
-           cn2 != cnl2.end(); cn2++, j++) {
-        base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
-        scalar_type dist = gmm::vect_norm2(node1-node2);
-        if (dist < cnpl1[i].dist) {
-          cnpl1[i].cn_s = &cn1[0];
-          cnpl1[i].cn_m = &cn2[0];
-          cnpl1[i].dist = dist;
-        }
-        if (dist < cnpl2[j].dist) {
-          cnpl2[j].cn_s = &cn2[0];
-          cnpl2[j].cn_m = &cn1[0];
-          cnpl2[j].dist = dist;
-        }
-      } // cn2
-    } // cn1
-  }
+  // contact_node's pair
+  struct contact_node_pair_list : public std::vector<contact_node_pair> {
+    contact_node_list cnl;
+
+    void append_min_dist_cn_pairs(const mesh_fem &mf, 
+                                  size_type rg1, size_type rg2,
+                                  bool slave1=true, bool slave2=false) {
+
+      dal::bit_vector bv_cn1, bv_cn2;
+      cnl.append(mf, rg1, bv_cn1);
+      cnl.append(mf, rg2, bv_cn2);
+
+      // Find minimum distance node pairs, FIXME: to be optimized
+      size_type size0 = this->size();
+      size_type size1 = slave1 ? bv_cn1.card() : 0;
+      size_type size2 = slave2 ? bv_cn2.card() : 0;
+      this->resize( size0 + size1 + size2 );
+      size_type i=size0;
+      for (dal::bv_visitor i1(bv_cn1); !i1.finished(); ++i1, ++i) {
+        contact_node *cn1 = &cnl[i1];
+        base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
+        size_type j=size0+size1;
+        for (dal::bv_visitor i2(bv_cn2); !i2.finished(); ++i2, ++j) {
+          contact_node *cn2 = &cnl[i2];
+          base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
+          scalar_type dist = gmm::vect_norm2(node1-node2);
+          if (slave1 && dist < (*this)[i].dist) {
+            (*this)[i].cn_s = cn1;
+            (*this)[i].cn_m = cn2;
+            (*this)[i].dist = dist;
+          }
+          if (slave2 && dist < (*this)[j].dist) {
+            (*this)[j].cn_s = cn2;
+            (*this)[j].cn_m = cn1;
+            (*this)[j].dist = dist;
+          }
+        } // cn2
+      } // cn1
+    }
+  };
+
 
   void calculate_contact_matrices(const mesh_fem &mf_disp,
-                                  std::vector<contact_node_pair> &cnpl,
+                                  contact_node_pair_list &cnpl,
                                   model_real_plain_vector &gap,
                                   CONTACT_B_MATRIX &BN) {
 
-    dim_type qdim = mf_disp.get_qdim(); //FIXME: Check for if qdim and N
+    dim_type qdim = mf_disp.get_qdim(); //FIXME: Check if qdim and N
  // size_type N = mesh.dim();           //       are considered correctly
-    
-    size_type no_cn = 0;
-    for (std::vector<contact_node_pair>::iterator cnp = cnpl.begin();
-         cnp != cnpl.end(); cnp++) {
+
+    GMM_ASSERT1(gmm::mat_nrows(BN) == cnpl.size(),
+                "Wrong number of contact node pairs");
+    gmm::clear(BN);
+    gmm::fill(gap, scalar_type(10));  //FIXME: Needs a threshold value
+    for (size_type row = 0; row < cnpl.size(); ++row) {
+      contact_node_pair *cnp = &cnpl[row];
       if (cnp->cn_s) {
         contact_node *cn_s = cnp->cn_s;  //slave contact node
         contact_node *cn_m = cnp->cn_m;  //master contact node
@@ -208,15 +221,12 @@ namespace getfem {
           }
         }
         if (is_in_min < 0.05) {  //FIXME
-          gap.push_back(gmm::vect_sp(slave_node-proj_node_sel, un_sel));
-
-          no_cn++;
-          gmm::resize(BN, no_cn, mf_disp.nb_dof());
+          gap[row] = gmm::vect_sp(slave_node-proj_node_sel, un_sel);
 
           if (cn_s->mf == &mf_disp) {
-            BN(no_cn-1, cn_s->dof)   += -un_sel[0];  //FIXME
-            BN(no_cn-1, cn_s->dof+1) += -un_sel[1];  //FIXME
-            BN(no_cn-1, cn_s->dof+2) += -un_sel[2];  //FIXME
+            BN(row, cn_s->dof)   += -un_sel[0];
+            BN(row, cn_s->dof+1) += -un_sel[1];
+            BN(row, cn_s->dof+2) += -un_sel[2];
           }
 
           if (cn_m->mf == &mf_disp) {
@@ -236,7 +246,7 @@ namespace getfem {
             size_type j = 0;
             for (mesh_fem::ind_dof_ct::const_iterator it = master_dof.begin();
                  it != master_dof.end(); it++, j++) {
-              BN(no_cn-1, *it) += tmpvec[j];
+              BN(row, *it) += tmpvec[j];
             }
           }
         }
@@ -762,7 +772,7 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
-      GMM_ASSERT1(mims.size() == 1, "This contact brick need one mesh_im");
+      GMM_ASSERT1(mims.size() == 1, "This contact brick needs one mesh_im");
       size_type nbvar = 2 + (contact_only ? 0 : 1);
       GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick: "
@@ -1046,13 +1056,16 @@ namespace getfem {
   //=========================================================================
 
 
-  struct Coulomb_friction_brick_elastic_bodies
+  struct Coulomb_friction_brick_nonmatching_meshes
     : public Coulomb_friction_brick {
 
-    bool update_cnpl;
-    bool update_gap_BN_BT;  //FIXME: may to be splitted in gap_BN and BT
-    contact_node_list cnl1, cnl2;
-    std::vector<contact_node_pair> cnpl1, cnpl2;
+    std::vector<size_type> rg1, rg2; // ids of mesh regions expected to come in
+                                     // contact. For one displacement they refer
+                                     // both to u1. For two displacements they
+                                     // respectively refer to u1, u2.
+    bool slave1, slave2; // if true, then rg1 or respectively rg2 are treated
+                         // as slave surfaces (the contact multipliers are
+                         // defined on these surfaces)
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &vl,
@@ -1064,97 +1077,85 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const {
 
-      // Variables (order: u, lambda_n)
+      GMM_ASSERT1(mims.size() == 0, "This contact brick doesn't need any mesh_im");
+
+      // Variables
+      // Without friction and one displacement  : u1, lambda_n
+      // With friction and one displacement     : u1, lambda_n, lambda_t      //FIXME: to be done
+      // Without friction and two displacements : u1, u2, lambda_n            //FIXME: to be done
+      // With friction and two displacements    : u1, u2, lambda_n, lambda_t  //FIXME: to be done
       const model_real_plain_vector &u1 = md.real_variable(vl[0]);
-//      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
       const model_real_plain_vector &lambda_n = md.real_variable(vl[1]);
 
-      size_type nbc = gmm::mat_nrows(BN1);
+      size_type nbc = lambda_n.size();
 
-      // Parameters (order: r, gap, alpha)
+      // Parameters (order: r, ...)
       size_type np = 0;
       const model_real_plain_vector &vr = md.real_variable(dl[np++]);
       GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
       r = vr[0];
-      const model_real_plain_vector &vgap = md.real_variable(dl[np++]);
-      GMM_ASSERT1(gmm::vect_size(vgap) == nbc,
-                  "Parameter gap has a wrong size");
-      gmm::resize(gap, nbc);
-      gmm::copy(vgap, gap);
-      const model_real_plain_vector &valpha = md.real_variable(dl[np++]);
-      GMM_ASSERT1(gmm::vect_size(valpha)== 1 || gmm::vect_size(valpha) == nbc,
-                  "Parameter alpha has a wrong size");
-      gmm::resize(alpha, nbc);
-      if (gmm::vect_size(valpha) == 1)
-        gmm::fill(alpha, valpha[0]);
-      else
-        gmm::copy(valpha, alpha);
 
-      // Computation of cnpl, Gap, BN, BT
-      if (update_cnpl) {
-      //Calculate cnpl
-      cout << "cnpl update not implemented yet" << endl;
+      // Computation of BN, BT, gap and alpha
+      if (md.is_var_mf_newer_than_brick(vl[0], ib)) {
+
+        // Verification that mf_u1 is a pure Lagrange fem.
+        GMM_ASSERT1(!(mf_u1.is_reduced()),
+                    "This contact brick works only for pure Lagrange fems");
+        dal::bit_vector dofs = mf_u1.basic_dof_on_region(region);
+        for (dal::bv_visitor id(dofs); !id.finished(); ++id) {
+          size_type cv = mf_u1.first_convex_of_basic_dof(id);
+          GMM_ASSERT1(mf_u1.fem_of_element(cv)->is_lagrange(),
+                      "This contact brick works only for pure Lagrange fems");
+        }
+
+        contact_node_pair_list cnpl;
+        for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it)
+          cnpl.append_min_dist_cn_pairs(mf_u1, rg1[it], rg2[it], slave1, slave2);
+
+        // Computation of gap and BN
+        gmm::resize(gap, nbc);
+        gmm::resize(BN1, nbc, mf_u1.nb_dof());
+        calculate_contact_matrices(mf_u1, cnpl, gap, BN1);
+
+        // Computation of alpha //FIXME
+        gmm::resize(alpha, nbc);
+        gmm::fill(alpha, scalar_type(1));
       }
-      if (update_gap_BN_BT) {
-      //Calculate gap
-      //Calculate BN
-      cout << "Gap and BN update not implemented yet" << endl;
-      }
-      
-      // Computation of alpha
-      // .........
 
       const model_real_plain_vector dummy_lambda_t, dummy_wt;
-      basic_asm_real_tangent_terms(u1, u1, lambda_n,
-                                   dummy_lambda_t, dummy_wt, dummy_wt,
-                                   matl, vecl, version);
+      basic_asm_real_tangent_terms
+        (u1, u1, lambda_n,dummy_lambda_t, dummy_wt, dummy_wt,
+         matl, vecl, version);
     }
 
-    Coulomb_friction_brick_elastic_bodies(bool symmetrized_,
-                                          bool contact_only_)
-      : Coulomb_friction_brick(symmetrized_, contact_only_) {
-      update_cnpl = true;
-      update_gap_BN_BT = true;
-    }
+    Coulomb_friction_brick_nonmatching_meshes
+      (bool symmetrized_, bool contact_only_,
+       std::vector<size_type> rg1_, std::vector<size_type> rg2_,
+       bool slave1_=true, bool slave2_=false)
+      : Coulomb_friction_brick(symmetrized_, contact_only_),
+        rg1(rg1_), rg2(rg2_), slave1(slave1_), slave2(slave2_) {}
 
   };
 
 
   //=========================================================================
   //  Add a frictionless contact condition between two faces of an elastic
-  //  body.
+  //  body (one displacement field).
   //=========================================================================
   size_type add_frictionless_contact_brick
-  (model &md, const std::string &varname_u, size_type rg_m, size_type rg_s,
-   const std::string &dataname_r, std::string &dataname_alpha,
-   bool symmetrized) {
+  (model &md, const std::string &varname_u, size_type rg_s, size_type rg_m,
+   const std::string &dataname_r, bool symmetrized) {
    
+    std::vector<size_type> vec_rg_s(1,rg_s);
+    std::vector<size_type> vec_rg_m(1,rg_m);
+    pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
+                     (symmetrized, true, vec_rg_s, vec_rg_m, true, false);
+
     const mesh_fem &mf_u = md.mesh_fem_of_variable(varname_u);
-//    const mesh *mesh_ = &(mf_u.linked_mesh());
+    dal::bit_vector dofs_s = mf_u.basic_dof_on_region(rg_s);
+    size_type nbc = dofs_s.card() / mf_u.get_qdim();
 
-    Coulomb_friction_brick_elastic_bodies 
-      *pbr_=new Coulomb_friction_brick_elastic_bodies(symmetrized,true);
-    pbrick pbr = pbr_;
-
-    //Fill up the cnl vectors of all contact_node's
-    dal::bit_vector tmp_bv;
-    pbr_->cnl1.append(mf_u, rg_m, tmp_bv);
-    pbr_->cnl2.append(mf_u, rg_s, tmp_bv);
-    eval_min_dist_cn_pairs(pbr_->cnl1, pbr_->cnl2, pbr_->cnpl1, pbr_->cnpl2);
-    pbr_->update_cnpl = false;  //Do not update the contact_node_pairs during
-                               //the iterative solution of the tangent system
-    
-    //Calculation of gap and BN
-    model_real_plain_vector gap;
-    CONTACT_B_MATRIX BN;
-    calculate_contact_matrices(mf_u, pbr_->cnpl1, gap, BN);
-    const std::string dataname_gap = md.new_name("contact_gap_on_" + varname_u);
-    md.add_initialized_fixed_size_data(dataname_gap, gap);
-    pbr_->set_BN1(BN);
-    pbr_->update_gap_BN_BT = false;  //Do not update the contact matrices during
-                                     //the iterative solution of the tangent system
-
-    size_type nbc = gmm::mat_nrows(BN);
     const std::string multname_n = md.new_name("contact_multiplier");
     md.add_fixed_size_variable(multname_n, nbc);
 
@@ -1169,16 +1170,9 @@ namespace getfem {
     vl.push_back(varname_u);
     vl.push_back(multname_n);
 
-    // Parameters (order: r, gap, alpha)
+    // Parameters (order: r, ...)
     model::varnamelist dl;
     dl.push_back(dataname_r);
-    dl.push_back(dataname_gap);
-    if (dataname_alpha.size() == 0) {
-      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
-      md.add_initialized_fixed_size_data
-        (dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
-    }
-    dl.push_back(dataname_alpha);
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
   }
