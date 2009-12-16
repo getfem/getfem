@@ -778,7 +778,7 @@ namespace getfem {
                   "Wrong number of variables for contact brick: "
                   << vl.size() << " should be " << nbvar);
       size_type nbdl = 1 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
-        + (friction_dynamic_term ? 1 : 0);      
+        + (friction_dynamic_term ? 1 : 0);
       GMM_ASSERT1(dl.size() == nbdl,
                   "Wrong number of data for contact brick: "
                   << dl.size() << " should be " << nbdl);
@@ -1077,7 +1077,8 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const {
 
-      GMM_ASSERT1(mims.size() == 0, "This contact brick doesn't need any mesh_im");
+      GMM_ASSERT1(mims.size() == 1, "This contact brick needs one mesh_im");
+      const mesh_im &mim = *mims[0];
 
       // Variables
       // Without friction and one displacement  : u1, lambda_n
@@ -1118,9 +1119,28 @@ namespace getfem {
         gmm::resize(BN1, nbc, mf_u1.nb_dof());
         calculate_contact_matrices(mf_u1, cnpl, gap, BN1);
 
-        // Computation of alpha //FIXME
+        // computation of alpha vector.
+        base_node Pmin, Pmax;
+        mf_u1.linked_mesh().bounding_box(Pmin, Pmax);
+        scalar_type l = scalar_type(0);
+        for (size_type i = 0; i < Pmin.size(); ++i)
+          l = std::max(l, gmm::abs(Pmax[i] - Pmin[i]));
+
+        CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
         gmm::resize(alpha, nbc);
-        gmm::fill(alpha, scalar_type(1));
+        size_type mult_id = 0;
+        for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
+          for (size_type swap = 0; swap < 1; ++swap) {
+            if (swap ? slave2 : slave1) {
+              size_type rg = swap ? rg2[it] : rg1[it];
+              asm_mass_matrix(MM, mim, mf_u1, rg);
+              size_type qdim = mf_u1.get_qdim();
+              dal::bit_vector rg_dofs = mf_u1.basic_dof_on_region(rg);
+              for (dal::bv_visitor id(rg_dofs); !id.finished(); ++id)
+                if (id % qdim == 0) alpha[mult_id++] = MM(id, id) / l;
+            }
+          }
+        }
       }
 
       const model_real_plain_vector dummy_lambda_t, dummy_wt;
@@ -1144,9 +1164,10 @@ namespace getfem {
   //  body (one displacement field).
   //=========================================================================
   size_type add_frictionless_contact_brick
-  (model &md, const std::string &varname_u, size_type rg_s, size_type rg_m,
-   const std::string &dataname_r, bool symmetrized) {
-   
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   size_type rg_s, size_type rg_m, const std::string &dataname_r,
+   bool symmetrized) {
+
     std::vector<size_type> vec_rg_s(1,rg_s);
     std::vector<size_type> vec_rg_m(1,rg_m);
     pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
@@ -1174,7 +1195,7 @@ namespace getfem {
     model::varnamelist dl;
     dl.push_back(dataname_r);
 
-    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), size_type(-1));
   }
 
 }  /* end of namespace getfem.                                             */
