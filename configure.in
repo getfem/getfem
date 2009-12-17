@@ -812,6 +812,10 @@ dnl -----------------------------------------------
 
 m4_include([m4/scilab.m4])
 
+REQUIRED_SCILAB_MAJOR=5
+REQUIRED_SCILAB_MINOR=2
+REQUIRED_SCILAB_MICRO=0
+
 AC_CHECK_SCILAB
 
 GETFEM_INTERFACE_PATH="`readlink -f $srcdir`"
