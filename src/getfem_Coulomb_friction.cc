@@ -1151,7 +1151,7 @@ namespace getfem {
 
     Coulomb_friction_brick_nonmatching_meshes
       (bool symmetrized_, bool contact_only_,
-       std::vector<size_type> rg1_, std::vector<size_type> rg2_,
+       const std::vector<size_type> &rg1_, const std::vector<size_type> &rg2_,
        bool slave1_=true, bool slave2_=false)
       : Coulomb_friction_brick(symmetrized_, contact_only_),
         rg1(rg1_), rg2(rg2_), slave1(slave1_), slave2(slave2_) {}
@@ -1167,7 +1167,7 @@ namespace getfem {
   (model &md, const mesh_im &mim,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
-   std::vector<size_type> rg1, std::vector<size_type>  rg2,
+   const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1, bool slave2, bool symmetrized) {
 
     bool two_variables = (varname_u1.compare(varname_u2) != 0);

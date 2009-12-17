@@ -161,10 +161,10 @@ namespace getfem {
   (model &md, const mesh_im &mim,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
-   std::vector<size_type> rg1, std::vector<size_type> rg2,
+   const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, bool symmetrized=false);
 
-  size_type add_frictionless_contact_brick
+  inline size_type add_frictionless_contact_brick
   (model &md, const mesh_im &mim,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
@@ -178,10 +178,10 @@ namespace getfem {
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
-  size_type add_frictionless_contact_brick
+  inline size_type add_frictionless_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, const std::string &dataname_r,
-   std::vector<size_type> rg1, std::vector<size_type> rg2,
+   const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, bool symmetrized=false) {
 
     return add_frictionless_contact_brick
@@ -189,7 +189,7 @@ namespace getfem {
        rg1, rg2, slave1, slave2, symmetrized);
   }
 
-  size_type add_frictionless_contact_brick
+  inline size_type add_frictionless_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, const std::string &dataname_r,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
