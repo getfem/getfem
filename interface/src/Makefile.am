@@ -8,6 +8,7 @@ endif
 
 if BUILDSCILAB
 subdirSCILAB=scilab
+.NOTPARALLEL: scilab
 endif
 
 SUBDIRS = . $(subdirMATLAB) $(subdirPYTHON) $(subdirSCILAB)
