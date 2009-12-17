@@ -163,11 +163,10 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
   std::string dataname_r="r";
   md.add_initialized_scalar_data
     (dataname_r, mu * (3*lambda + 2*mu) / (lambda + mu) );  // r ~= Young modulus
+  std::string multname_n;
   getfem::add_frictionless_contact_brick
-    (md, mim, varname_u, CONTACT_BOUNDARY_1, CONTACT_BOUNDARY_2,
-     dataname_r, false);
-
-//cout << "no_cn: " << no_cn << endl;
+    (md, mim, varname_u, multname_n, dataname_r,
+     CONTACT_BOUNDARY_1, CONTACT_BOUNDARY_2);
 
   // Defining the DIRICHLET condition.
   plain_vector F(nb_dof_rhs * N);
@@ -211,8 +210,8 @@ bool elastostatic_problem::solve(plain_vector &U, plain_vector &RHS,
 
   gmm::mult(gmm::sub_matrix(md.real_tangent_matrix(),
                             md.interval_of_variable("u"),
-                            md.interval_of_variable("contact_multiplier") ),
-            md.real_variable("contact_multiplier"), 
+                            md.interval_of_variable(multname_n) ),
+            md.real_variable(multname_n), 
             CForces);
   gmm::scale(CForces, -1.0);
 
@@ -245,6 +244,6 @@ int main(int argc, char *argv[]) {
   exp.write_point_data(p.mf_u, Forces, "forces");
   exp.write_point_data(p.mf_u, CForces, "contact_forces");
 
-  return 0; 
+  return 0;
 }
 

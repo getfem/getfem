@@ -1164,31 +1164,49 @@ namespace getfem {
   //  body (one displacement field).
   //=========================================================================
   size_type add_frictionless_contact_brick
-  (model &md, const mesh_im &mim, const std::string &varname_u,
-   size_type rg_s, size_type rg_m, const std::string &dataname_r,
-   bool symmetrized) {
+  (model &md, const mesh_im &mim,
+   const std::string &varname_u1, const std::string &varname_u2,
+   std::string &multname_n, const std::string &dataname_r,
+   std::vector<size_type> rg1, std::vector<size_type>  rg2,
+   bool slave1, bool slave2, bool symmetrized) {
 
-    std::vector<size_type> vec_rg_s(1,rg_s);
-    std::vector<size_type> vec_rg_m(1,rg_m);
+    bool two_variables = (varname_u1.compare(varname_u2) != 0);
+    GMM_ASSERT1(!two_variables, "Two variables support not implemented yet");
+
     pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
-                     (symmetrized, true, vec_rg_s, vec_rg_m, true, false);
+                     (symmetrized, true, rg1, rg2, slave1, slave2);
 
-    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname_u);
-    dal::bit_vector dofs_s = mf_u.basic_dof_on_region(rg_s);
-    size_type nbc = dofs_s.card() / mf_u.get_qdim();
+    // Calculate multipliers size
+    const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);
+    const mesh_fem &mf_u2 = md.mesh_fem_of_variable(varname_u2);
+    size_type nbc = 0;
+    for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
+      for (size_type swap = 0; swap < 1; ++swap) {
+        if (swap ? slave2 : slave1) {
+          const mesh_fem &mf = swap ? mf_u2 : mf_u1;
+          size_type rg = swap ? rg2[it] : rg1[it];
+          dal::bit_vector rg_dofs = mf.basic_dof_on_region(rg);
+          nbc += rg_dofs.card() / mf.get_qdim();
+        }
+      }
+    }
 
-    const std::string multname_n = md.new_name("contact_multiplier");
+    if (multname_n.size() == 0) {
+      multname_n = md.new_name("contact_multiplier");
+    }
+    // FIXME: Assert multname_n is not defined already in md
     md.add_fixed_size_variable(multname_n, nbc);
 
     model::termlist tl;
-    tl.push_back(model::term_description(varname_u, varname_u, false));
-    tl.push_back(model::term_description(varname_u, multname_n, false));
-    tl.push_back(model::term_description(multname_n, varname_u, false));
+    tl.push_back(model::term_description(varname_u1, varname_u1, false)); // FIXME: second displacement variable
+    tl.push_back(model::term_description(varname_u1, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u1, false));
     tl.push_back(model::term_description(multname_n, multname_n, false));
 
     // Variables (order: varname_u, multname_n)
     model::varnamelist vl;
-    vl.push_back(varname_u);
+    vl.push_back(varname_u1);
+    if (two_variables) vl.push_back(varname_u2);
     vl.push_back(multname_n);
 
     // Parameters (order: r, ...)
