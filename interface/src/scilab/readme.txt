@@ -1,19 +1,31 @@
 readme.txt of the scilab getfem interface
 
-To compile this interface, you will need to work with the scilab-master (the version in the git repository) because this interface uses the new interface api.
+To compile this interface, you will need to work with the scilab-5.2.0
+version or the scilab-master version (the version in the git
+repository) because this interface uses the new interface api.
 
 So, to compile this interface:
+- compile getfem. I use the following configure script:
+/configure --prefix=/home/collette/repositories/install_dir/getfem-dev/ \
+           --with-pic \
+           --enable-superlu=yes \
+           --enable-muparser=yes \
+           --enable-qhull=yes \
+           --enable-scilab \
+           --with-scilab-toolbox-dir=<getfem_scilabinstalldir> \
+           --with-scilab-prefix=<scilabinstalldir> \
+           --with-optimization=-ggdb \
+           BLAS_LIBS="-L/usr/lib64/atlas/ -lblas"
+  don't forget to install the following package: qhull and muparser.
+  to get better performances, install atlas. If you don't install
+  the atlas package, remove the BLAS_LIBS line.
+Once getfem is compiled:
+- go to the scilab getfem++ interface install directory (getfem_scilabinstalldir here).
 - launch scilab
-- go to the getfem++/interface/src/scilab directory
-- exec builder.sce; // The documentation is not yet built
+Now load the getfem++ toolbox:
 - exec loader.sce;
 You can try to launch a demo (be careful, there is a lot of work needed before the interface can be really useable).
 - cd demos
-- exec testyc.sce;
+- exec demo_static_contact.sce;
 
-TODO:
-- verifications of the data send / get to / from the getfem interface. Specially the hybrid types (list of list of doubles + strings ...)
-- build an interface to meshash so as to access a sparse incomplete lu / cholesky factorisation (needed by gf_solve).
-- test the scripts (specially the graphic ones).
-- automatic generation of the documentation from the good interface functions ...
-
+Y. Collette (ycollet at freesurf dot fr)
