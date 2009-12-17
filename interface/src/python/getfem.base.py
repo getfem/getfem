@@ -466,10 +466,13 @@ model states.
     #@GET    MODEL:GET('listbricks')
     #@GET    MODEL:GET('variable')
     #@GET    MODEL:GET('mult varname Dirichlet')
+    #@GET    MODEL:GET('interval of variable')
     #@GET    MODEL:GET('from variables')
     #@GET    MODEL:GET('assembly')
     #@GET    MODEL:GET('solve')
     #@GET    MODEL:GET('compute isotropic linearized Von Mises or Tresca')
+    #@GET    MODEL:GET('matrix term')
+
 
     #@SET    MODEL:SET('clear')
     #@SET    MODEL:SET('add fem variable')

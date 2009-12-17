@@ -34,14 +34,14 @@ using namespace getfemint;
 
 #define RETURN_SPARSE(realmeth, cplxmeth)                              \
   if (!md->is_complex()) {                                             \
-    gf_real_sparse_by_col M(gmm::mat_nrows(md->model().realmeth()),    \
-                            gmm::mat_ncols(md->model().realmeth()));   \
-    gmm::copy(md->model().realmeth(), M);                              \
+    gf_real_sparse_by_col M(gmm::mat_nrows(md->model().realmeth),    \
+                            gmm::mat_ncols(md->model().realmeth));   \
+    gmm::copy(md->model().realmeth, M);                              \
     out.pop().from_sparse(M);                                          \
   } else {                                                             \
-    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->model().cplxmeth()),    \
-                            gmm::mat_ncols(md->model().cplxmeth()));   \
-    gmm::copy(md->model().cplxmeth(), M);                              \
+    gf_cplx_sparse_by_col M(gmm::mat_nrows(md->model().cplxmeth),    \
+                            gmm::mat_ncols(md->model().cplxmeth));   \
+    gmm::copy(md->model().cplxmeth, M);                              \
     out.pop().from_sparse(M);                                          \
   }
 
@@ -65,9 +65,11 @@ using namespace getfemint;
   @GET MODEL:GET('listbricks')
   @GET MODEL:GET('variable')
   @GET MODEL:GET('mult varname Dirichlet')
+  @GET MODEL:GET('interval of variable')
   @GET MODEL:GET('from variables')
   @GET MODEL:GET('solve')
   @GET MODEL:GET('compute isotropic linearized Von Mises or Tresca')
+  @GET MODEL:GET('matrix term')
 
 MLABCOM*/
 
@@ -85,7 +87,7 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   } else if (check_cmd(cmd, "tangent_matrix", in, out, 0, 0, 0, 1)) {
     /*@GET T = MODEL:GET('tangent_matrix')
     Return the tangent matrix stored in the model .@*/
-    RETURN_SPARSE(real_tangent_matrix, complex_tangent_matrix);
+    RETURN_SPARSE(real_tangent_matrix(), complex_tangent_matrix());
   } else if (check_cmd(cmd, "rhs", in, out, 0, 0, 0, 1)) {
     /*@GET MODEL:GET('rhs')
     Return the right hand side of the tangent problem.@*/
@@ -119,6 +121,15 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     size_type ind_brick = in.pop().to_integer();
     out.pop().from_string
       (getfem::mult_varname_Dirichlet(md->model(), ind_brick).c_str());
+  } else if (check_cmd(cmd, "interval of variable", in, out, 1, 1, 0, 1)) {
+    /*@GET I = MODEL:GET('interval of variable', @str varname)
+    Gives the interval of the variable `varname` in the linear system of
+    the model.@*/
+    std::string name = in.pop().to_string();
+    const gmm::sub_interval I = md->model().interval_of_variable(name);
+    iarray opids = out.pop().create_iarray_h(2);
+    opids[0] = int(I.first() + config::base_index());
+    opids[1] = int(I.size());
   } else if (check_cmd(cmd, "from variables", in, out, 0, 0, 0, 1)) {
     /*@GET V = MODEL:GET('from variables')
     Return the vector of all the degrees of freedom of the model consisting
@@ -229,5 +240,13 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
       (md->model(), varname, dataname_lambda, dataname_mu, gfi_mf->mesh_fem(), VMM, tresca);
     out.pop().from_dcvector(VMM);
+  } else if (check_cmd(cmd, "matrix term", in, out, 2, 2, 0, 1)) {
+    /*@GET M = MODEL:GET('matrix term', @int ind_brick, @int ind_term)
+      Gives the matrix term ind_term of the brick ind_brick if it exists
+      @*/
+    size_type ind_brick = in.pop().to_integer() - config::base_index();
+    size_type ind_term = in.pop().to_integer() - config::base_index();
+    RETURN_SPARSE(linear_real_matrix_term(ind_brick, ind_term),
+		  linear_complex_matrix_term(ind_brick, ind_term));
   } else bad_cmd(cmd);
 }

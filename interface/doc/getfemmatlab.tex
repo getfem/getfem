@@ -2883,7 +2883,10 @@ name=gf_model_get(md,'mult varname Dirichlet', \tint ind_brick)
 V=gf_model_get(md,'from variables')
 gf_model_get(md,'assembly'[, \tstr option])
 gf_model_get(md,'solve' [,...])
-V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', \tstr varname, \tstr dataname_lambda, \tstr dataname_mu, \tmf mf_vm[, \tstr version])@@
+V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', \tstr varname, \tstr dataname_lambda, \tstr dataname_mu, \tmf mf_vm[, \tstr version])
+M = gf_model_get(md,'matrix term', \tint ind_brick, \tint ind_term)
+I = gf_model_get(md,'interval of variable', \tstr varname)
+@@
 \end{synopsis}
 \begin{cmddescription}
 \sep{@@b=gf_model_get(md,'is_complex')@@} :
@@ -2946,6 +2949,12 @@ Compute the Von-Mises stress or the Tresca stress of a field
 (only valid for isotropic linearized elasticity in 3D).
 `version` should be  'Von Mises' or 'Tresca' ('Von Mises' is the default).
 
+\sep{@@M = gf_model_get(md,'matrix term', \tint ind_brick, \tint ind_term)@@} :
+Gives the matrix term ind_term of the brick ind_brick if it exists
+
+sep{@@I = gf_model_get(md,'interval of variable', \tstr varname)@@} :
+Gives the interval of the variable `varname` in the linear system of
+the model.
 
 \end{cmddescription}
 \newpage

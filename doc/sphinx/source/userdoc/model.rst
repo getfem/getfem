@@ -1156,7 +1156,7 @@ where :math:`d` is the dimension of the domain and :math:`k = 1..d-1`. The expre
 
   \frac{1}{r}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}\lambda_N^i)}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
 
-where :math:`alpha_i` is a parameter which can be added for the homogenization of the augmentation parameter, :math:`(B_T U)_i` denotes here the sub-vector of indices from :math:`(d-1)(i-1)+1` to :math:`(d-1)i` for the sake of simplicity and the sliding velocity :math:`B_T \dot{U}` have been discretized into :math:`\frac{(B_T U - B_T U^{0})}{\Delta t}` whith :math:`U^{0}` the displacement at the previous time step. Note that of course another discretization of the sliding velocity is possible and that the time step :math:`\Delta t` do not appear in the expression of the friction condition since it does not influence the direction of the sliding velocity.
+where :math:`\alpha_i` is a parameter which can be added for the homogenization of the augmentation parameter, :math:`(B_T U)_i` denotes here the sub-vector of indices from :math:`(d-1)(i-1)+1` to :math:`(d-1)i` for the sake of simplicity and the sliding velocity :math:`B_T \dot{U}` have been discretized into :math:`\frac{(B_T U - B_T U^{0})}{\Delta t}` whith :math:`U^{0}` the displacement at the previous time step. Note that of course another discretization of the sliding velocity is possible and that the time step :math:`\Delta t` do not appear in the expression of the friction condition since it does not influence the direction of the sliding velocity.
 
 
 In that case, the homogeneization coefficient :math:`\alpha_i` can be taken
@@ -1215,7 +1215,7 @@ except that now :math:`\lambda_N^i` and :math:`\lambda_T^i` are force densities,
 
   \alpha_i = \frac{1}{\ell \int_{\Gamma_c}\psi_i},
 
-where :math:`\psi_i` is the shape function of the multiplier for the node :math`a_i`. In that case, the augmentation parameter :math:`r` can still be chosen close to the Young modulus of the elastic body.
+where :math:`\psi_i` is the shape function of the multiplier for the node :math:`a_i`. In that case, the augmentation parameter :math:`r` can still be chosen close to the Young modulus of the elastic body.
 
 
 Note that without additional stabilization technique (see [HI-RE2010]_) an inf-sup condition have to be satisfied between the finite element of the displacement and the one for the multipliers. This means in particular that the finite element for the multiplier have to be "less rich" than the one for the displacement.
