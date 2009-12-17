@@ -31,15 +31,18 @@ AC_DEFUN([AC_CHECK_SCILAB],
 
   if test "x$usescilab" == "xYES"
   then
-    if test "x$with_scilab_version" != "xyes"
+    dnl if version is not set by the user, we get the current scilab version as required version
+    if test -z $REQUIRED_SCILAB_MAJOR
     then
-      REQUIRED_SCILAB_MAJOR=`expr match "$with_scilab_version" " *\([0-9]*\)"`
-      REQUIRED_SCILAB_MINOR=`expr match "$with_scilab_version" " *[0-9]*.\([0-9]*\)"
-      REQUIRED_SCILAB_MICRO=`expr match "$with_scilab_version" " *[0-9]*.[0-9]*.\([0-9]*\)"
-    else
-      REQUIRED_SCILAB_MAJOR=5
-      REQUIRED_SCILAB_MINOR=1
-      REQUIRED_SCILAB_MICRO=1
+      REQUIRED_SCILAB_MAJOR=`echo "$SCILAB_VERSION" | sed  "s/.*\([[0-9]]\+\)[[.]]\([[0-9]]\+\)[[.]]\([[0-9]]\+\)/\1/"`
+    fi
+    if test -z $REQUIRED_SCILAB_MINOR
+    then
+      REQUIRED_SCILAB_MINOR=`echo "$SCILAB_VERSION" | sed  "s/.*\([[0-9]]\+\)[[.]]\([[0-9]]\+\)[[.]]\([[0-9]]\+\)/\2/"`
+    fi
+    if test -z $REQUIRED_SCILAB_MICRO
+    then
+      REQUIRED_SCILAB_MICRO=`echo "$SCILAB_VERSION" | sed  "s/.*\([[0-9]]\+\)[[.]]\([[0-9]]\+\)[[.]]\([[0-9]]\+\)/\3/"`
     fi
 
     dnl check for Scilab
@@ -87,7 +90,7 @@ AC_DEFUN([AC_CHECK_SCILAB],
     SCILAB_VERSION=`cat version.incl`
     rm -f version.sci version.incl 
 
-    scilab_tmp_version=`expr match $SCILAB_VERSION '.*\(branch\).*'`
+    scilab_tmp_version=`echo $SCILAB_VERSION | sed -r "s/.*(branch).*/\1/"`
 
     if test "x$scilab_tmp_version" = "xbranch"
     then
@@ -95,9 +98,9 @@ AC_DEFUN([AC_CHECK_SCILAB],
       SCILAB_VERSION_MINOR=-1
       SCILAB_VERSION_MICRO=-1
     else
-      SCILAB_VERSION_MAJOR=`expr match "$SCILAB_VERSION" " *\([0-9]*\)"`
-      SCILAB_VERSION_MINOR=`expr match "$SCILAB_VERSION" " *[0-9]*.\([0-9]*\)"`
-      SCILAB_VERSION_MICRO=`expr match "$SCILAB_VERSION" " *[0-9]*.[0-9]*.\([0-9]*\)"`
+      SCILAB_VERSION_MAJOR=`echo "$SCILAB_VERSION" | sed -r "s/.*([[0-9]]+)[[.]]([[0-9]]+)[[.]]([[0-9]]+)/\1/"`
+      SCILAB_VERSION_MINOR=`echo "$SCILAB_VERSION" | sed -r "s/.*([[0-9]]+)[[.]]([[0-9]]+)[[.]]([[0-9]]+)/\2/"`
+      SCILAB_VERSION_MICRO=`echo "$SCILAB_VERSION" | sed -r "s/.*([[0-9]]+)[[.]]([[0-9]]+)[[.]]([[0-9]]+)/\3/"`
 
       if test $SCILAB_VERSION_MAJOR -lt $REQUIRED_SCILAB_MAJOR
       then
