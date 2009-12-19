@@ -1130,7 +1130,7 @@ namespace getfem {
         gmm::resize(alpha, nbc);
         size_type mult_id = 0;
         for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
-          for (size_type swap = 0; swap < 1; ++swap) {
+          for (size_type swap = 0; swap <= 1; ++swap) {
             if (swap ? slave2 : slave1) {
               size_type rg = swap ? rg2[it] : rg1[it];
               asm_mass_matrix(MM, mim, mf_u1, rg);
@@ -1181,7 +1181,7 @@ namespace getfem {
     const mesh_fem &mf_u2 = md.mesh_fem_of_variable(varname_u2);
     size_type nbc = 0;
     for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
-      for (size_type swap = 0; swap < 1; ++swap) {
+      for (size_type swap = 0; swap <= 1; ++swap) {
         if (swap ? slave2 : slave1) {
           const mesh_fem &mf = swap ? mf_u2 : mf_u1;
           size_type rg = swap ? rg2[it] : rg1[it];
