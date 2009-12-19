@@ -158,14 +158,14 @@ namespace getfem {
   //  Add a frictionless contact condition between two faces of an elastic
   //  body.
   size_type add_frictionless_contact_brick
-  (model &md, const mesh_im &mim,
+  (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, bool symmetrized=false);
 
   inline size_type add_frictionless_contact_brick
-  (model &md, const mesh_im &mim,
+  (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
@@ -174,7 +174,7 @@ namespace getfem {
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
     return add_frictionless_contact_brick
-      (md, mim, varname_u1, varname_u2, multname_n, dataname_r,
+      (md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
@@ -185,7 +185,7 @@ namespace getfem {
    bool slave1=true, bool slave2=false, bool symmetrized=false) {
 
     return add_frictionless_contact_brick
-      (md, mim, varname_u, varname_u, multname_n, dataname_r,
+      (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
        rg1, rg2, slave1, slave2, symmetrized);
   }
 
@@ -198,7 +198,7 @@ namespace getfem {
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
     return add_frictionless_contact_brick
-      (md, mim, varname_u, varname_u, multname_n, dataname_r,
+      (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
