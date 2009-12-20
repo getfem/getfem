@@ -184,10 +184,6 @@ namespace getfem {
     dim_type qdim = mf_disp1.get_qdim();
     GMM_ASSERT1(qdim == mf_disp2.get_qdim(),
                 "The given mesh_fem's should have the same qdim");
-cout << "gmm::vect_size(gap): " << gmm::vect_size(gap) << endl;
-cout << "gmm::mat_nrows(BN1): " << gmm::mat_nrows(BN1) << endl;
-cout << "gmm::mat_nrows(BN2): " << gmm::mat_nrows(BN1) << endl;
-cout << "cnpl.size(): " << cnpl.size() << endl;
     GMM_ASSERT1(   gmm::vect_size(gap) == cnpl.size()
                 && gmm::mat_nrows(BN1) == cnpl.size()
                 && gmm::mat_nrows(BN2) == cnpl.size(),
@@ -253,7 +249,7 @@ cout << "cnpl.size(): " << cnpl.size() << endl;
           if (cn_m->mf == &mf_disp1) {
             BN = &BN1;
             mf_disp = &mf_disp1;
-          } else if (cn_s->mf == &mf_disp2) {
+          } else if (cn_m->mf == &mf_disp2) {
             BN = &BN2;
             mf_disp = &mf_disp2;
           }
@@ -1179,7 +1175,7 @@ cout << "cnpl.size(): " << cnpl.size() << endl;
               size_type rg = swap ? rg2[it] : rg1[it];
               const mesh_fem &mf_u = swap ? mf_u2 : mf_u1;
               const mesh_im &mim = swap ? mim2 : mim1;
-              asm_mass_matrix(MM, mim, mf_u1, rg);
+              asm_mass_matrix(MM, mim, mf_u, rg);
               size_type qdim = mf_u.get_qdim();
               dal::bit_vector rg_dofs = mf_u.basic_dof_on_region(rg);
               for (dal::bv_visitor id(rg_dofs); !id.finished(); ++id)
