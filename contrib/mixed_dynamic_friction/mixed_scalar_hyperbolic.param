@@ -7,11 +7,11 @@
 %% mencoder "mf://dyn*.jpg" -mf fps=25 -o output.avi -ovc lavc -lavcopts vcodec=mpeg4
 
 N = 2;
-T = 0.7;
-DT = 0.002;             % Time step
+T = 0.8;
+DT = 0.0003125;            % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-NX = 10;            	          % space step.
+% NX = 100;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDU = 1E-9;     	% residu for Newton.
 NOISY = 0;
@@ -25,14 +25,14 @@ SCHEME = 1;             % 0 = Backward Euler
 			% 1 = Midpoint
 
 if (N == 2)
-  MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[1,1];NSUBDIV=[6,6]';
+  MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[1,1];NSUBDIV=[160,160]';
   %%%%% disque en P2 %%%%%
   % MESHNAME='../../tests/meshes/disc_P2_h11.mesh';
-  FEM_TYPE_U = 'FEM_PK(2, 2)';     % FEM for the displacement U
-  % FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)'; % FEM for the displacement U
-  FEM_TYPE_V = 'FEM_PK(2, 1)';    % FEM for the velocity V
-  MULT_FEM_TYPE = 'FEM_PK(2,2)'; % FEM for the Dirichlet condition
-  DATA_FEM_TYPE = 'FEM_PK(2,2)';  % must be defined for non-Lagrangian main FEM
+  % FEM_TYPE_U = 'FEM_PK(2, 2)';     % FEM for the displacement U
+  FEM_TYPE_U = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)'; % FEM for the displacement U
+  FEM_TYPE_V = 'FEM_PK(2, 0)';    % FEM for the velocity V
+  MULT_FEM_TYPE = 'FEM_PK(2,1)'; % FEM for the Dirichlet condition
+  DATA_FEM_TYPE = 'FEM_PK(2,1)';  % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 end;
 
@@ -53,5 +53,5 @@ ROOTFILENAME = 'mixed_scalar_hyperbolic';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
 DT_EXPORT = 0.01; % Time step for the export
 VTK_EXPORT = 0;
-COMPARE = 1;  % Convergence test to be done or not
+COMPARE = 0;  % Convergence test to be done or not
 REFROOTNAME = 'mixed_scalar_hyperbolic_ref';

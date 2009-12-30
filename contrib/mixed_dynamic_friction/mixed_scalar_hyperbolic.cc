@@ -444,7 +444,7 @@ void hyperbolic_problem::solve(void) {
   
 
   size_type nitexp = 0;
-  while (t <= T) {
+  while (t < T-1e-10) {
 
     switch(scheme) {
     case 0 : beta_ = 1./dt; alpha_ = 1.; break;
