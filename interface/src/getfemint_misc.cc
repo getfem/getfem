@@ -691,22 +691,27 @@ namespace getfemint {
   }
 
   
-  std::auto_ptr<getfem::abstract_hyperelastic_law>
+  const getfem::abstract_hyperelastic_law &
   abstract_hyperelastic_law_from_name(const std::string &lawname) {
-    std::auto_ptr<getfem::abstract_hyperelastic_law> l;
-    /* a refaire , pas bon, le terme incompressible se passe de loi */
+
+    static getfem::SaintVenant_Kirchhoff_hyperelastic_law SVK_AHL;
+    static getfem::Mooney_Rivlin_hyperelastic_law MR_AHL;
+    static getfem::Ciarlet_Geymonat_hyperelastic_law CG_AHL;
+
     if (cmd_strmatch(lawname, "SaintVenant Kirchhoff") ||
-	cmd_strmatch(lawname, "svk")) {
-      l.reset(new getfem::SaintVenant_Kirchhoff_hyperelastic_law());
-    } else if (cmd_strmatch(lawname, "Mooney Rivlin") ||
-	       cmd_strmatch(lawname, "mr")) {
-      l.reset(new getfem::Mooney_Rivlin_hyperelastic_law());
-    } else if (cmd_strmatch(lawname, "Ciarlet Geymonat") ||
-	       cmd_strmatch(lawname, "cg")) {
-      l.reset(new getfem::Ciarlet_Geymonat_hyperelastic_law());
-    } else THROW_BADARG(lawname <<
-			" is not the name of a known hyperelastic law");
-    return l;
+	cmd_strmatch(lawname, "svk")) return SVK_AHL;
+
+    if (cmd_strmatch(lawname, "Mooney Rivlin") ||
+	cmd_strmatch(lawname, "mr")) return MR_AHL;
+
+    if (cmd_strmatch(lawname, "Ciarlet Geymonat") ||
+	cmd_strmatch(lawname, "cg")) return CG_AHL;
+
+    THROW_BADARG(lawname <<
+		 " is not the name of a known hyperelastic law. \\"
+		 "Valid names are: SaintVenant Kirchhoff, Mooney Rivlin "
+		 "or Ciarlet Geymonat");
+    return SVK_AHL;
   }
 
 

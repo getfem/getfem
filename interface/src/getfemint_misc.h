@@ -67,7 +67,7 @@ namespace getfemint {
 			       mexargs_out& out,
 			       const getfem::mesh_fem *pmf, const darray& U);
   
-  std::auto_ptr<getfem::abstract_hyperelastic_law> abstract_hyperelastic_law_from_name(const std::string &lawname);
+  const getfem::abstract_hyperelastic_law &abstract_hyperelastic_law_from_name(const std::string &lawname);
 
   class interruptible_iteration : public gmm::iteration {
   public:

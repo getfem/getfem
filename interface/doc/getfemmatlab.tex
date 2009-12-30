@@ -2884,6 +2884,7 @@ V=gf_model_get(md,'from variables')
 gf_model_get(md,'assembly'[, \tstr option])
 gf_model_get(md,'solve' [,...])
 V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', \tstr varname, \tstr dataname_lambda, \tstr dataname_mu, \tmf mf_vm[, \tstr version])
+V = gf_model_get(md, 'compute Von Mises or Tresca', \tstr varname, \tstr lawname, \tstr dataname, \tmf mf_vm[, \tstr version])
 M = gf_model_get(md,'matrix term', \tint ind_brick, \tint ind_term)
 I = gf_model_get(md,'interval of variable', \tstr varname)
 @@
@@ -2949,6 +2950,15 @@ Compute the Von-Mises stress or the Tresca stress of a field
 (only valid for isotropic linearized elasticity in 3D).
 `version` should be  'Von Mises' or 'Tresca' ('Von Mises' is the default).
 
+\sep{@@V = gf_model_get(md, 'compute Von Mises or Tresca', \tstr varname, \tstr lawname, \tstr dataname, \tmf mf_vm[, \tstr version])@@} :
+Compute on `mf_vm` the Von-Mises stress or the Tresca stress of a field
+for nonlinear elasticity in 3D. `lawname` is the constitutive law which
+could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+`dataname` is a vector of parameters for the constitutive law. Its length
+depends on the law. It could be a short vector of constant values or a
+vector field described on a finite element method for variable coefficients.
+`version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
+
 \sep{@@M = gf_model_get(md,'matrix term', \tint ind_brick, \tint ind_term)@@} :
 Gives the matrix term ind_term of the brick ind_brick if it exists
 
@@ -2999,6 +3009,8 @@ gf_model_set(md,'disable bricks',  \tivec indbricks)
 gf_model_set(md,'unable bricks',  \tivec indbricks)
 ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', \tmim mim, \tstr varname, \tstr dataname_lambda, \tstr dataname_mu[, \tint region])
 ind_brick=gf_model_set(md,'add linear incompressibility brick', \tmim mim, \tstr varname, \tstr multname_pressure[, \tint region[, \tstr dataname_coeff]])
+ind = gf_model_set(md, 'add nonlinear elasticity brick',\@tmim mim, \tstr varname, \tstr constitutive_law, \tstr dataname[, \tint region])
+ind = gf_model_set(md, 'add linear incompressibility brick', \tmim mim, \tstr varname, \tstr multname_pressure[, \tint region])
 ind_brick=gf_model_set(md,'add mass brick', \tmim mim, \tstr varname[, \tstr dataname_rho[, \tint region]])
 ind_brick=gf_model_set(md,'add basic d on dt brick', \tmim mim, \tstr varnameU,  \tstr dataname_dt[, \tstr dataname_rho[, \tint region]])
 ind_brick=gf_model_set(md,'add basic d2 on dt2 brick', \tmim mim, \tstr varnameU,  \tstr varnameV, \tstr dataname_dt, \tstr dataname_alpha[, \tstr dataname_rho[, \tint region]])
@@ -3252,6 +3264,26 @@ If it is not specified, it is added on the whole mesh.
 `dataname_coeff` is an optional penalization coefficient for nearly
 incompressible elasticity for instance. In this case, it is the inverse
 of the Lam\'e coefficient $\lambda$.
+
+\sep{@@ind = gf_model_set(md, 'add nonlinear elasticity brick',\@tmim mim, \tstr varname, \tstr constitutive_law, \tstr dataname[, \tint region])@@} :
+Add a nonlinear elasticity term to the model relatively to the
+variable `varname`. `lawname` is the constitutive law which
+could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+`dataname` is a vector of parameters for the constitutive law. Its length
+depends on the law. It could be a short vector of constant values or a
+vector field described on a finite element method for variable
+coefficients. `region` is an optional mesh region on which the term
+is added. If it is not specified, it is added on the whole mesh. Return the
+brick index in the model.
+
+\sep{@@ind = gf_model_set(md, 'add linear incompressibility brick', \tmim mim, \tstr varname, \tstr multname_pressure[, \tint region])@@} :
+Add an nonlinear incompressibility condition on `variable` (for large
+strain elasticity). `multname_pressure`
+is a variable which represent the pressure. Be aware that an inf-sup
+condition between the finite element method describing the pressure and the
+primal variable has to be satisfied. `region` is an optional mesh region on
+which the term is added. If it is not specified, it is added on the
+whole mesh. Return the brick index in the model.
 
 \sep{@@ind_brick=gf_model_set(md,'add mass brick', \tmim mim, \tstr varname[, \tstr dataname_rho[, \tint region]])@@} :
 Add mass term to the model relatively to the variable `varname`.

@@ -451,8 +451,8 @@ namespace getfem {
 
 
   void compute_Von_Mises_or_Tresca
-  (model &md, const std::string &varname, const std::string &dataname,
-   const abstract_hyperelastic_law &AHL, const mesh_fem &mf_vm,
+  (model &md, const std::string &varname, const abstract_hyperelastic_law &AHL,
+   const std::string &dataname, const mesh_fem &mf_vm,
    model_real_plain_vector &VM, bool tresca);
 
   /**
@@ -460,12 +460,12 @@ namespace getfem {
      with respect to the constitutive elasticity law AHL (only valid in 3D).
   */
   template <class VECTVM> void compute_Von_Mises_or_Tresca
-  (model &md, const std::string &varname, const std::string &dataname,
-   const abstract_hyperelastic_law &AHL, const mesh_fem &mf_vm,
+  (model &md, const std::string &varname, const abstract_hyperelastic_law &AHL,
+   const std::string &dataname, const mesh_fem &mf_vm,
    VECTVM &VM, bool tresca) {
     model_real_plain_vector VMM(mf_vm.nb_dof());
     compute_Von_Mises_or_Tresca
-      (md, varname, dataname, AHL, mf_vm, VMM, tresca);
+      (md, varname, AHL, dataname, mf_vm, VMM, tresca);
     gmm::copy(VMM, VM);
   }
   

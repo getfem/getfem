@@ -428,16 +428,16 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::mesh_im &mim = pop_mesh_im(in, b);
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);
     std::string lawname = in.pop().to_string();
-    std::auto_ptr<getfem::abstract_hyperelastic_law> l =
+    const getfem::abstract_hyperelastic_law &law =
       abstract_hyperelastic_law_from_name(lawname);
 
-    real_model_state::vector_type P(l->nb_params());
+    real_model_state::vector_type P(law.nb_params());
     std::fill(P.begin(), P.end(), 1.);
-    if (dynamic_cast<getfem::Ciarlet_Geymonat_hyperelastic_law*>(l.get()))
+    if (dynamic_cast<const getfem::Ciarlet_Geymonat_hyperelastic_law*>(&law))
       P.back() = -1; // for ciarlet geymonat, a good parameter set is [1, 1, -1]
     SET_BRICK_R(mdbrick_nonlinear_elasticity,
-		"NonlinearElasticity", (*l,mim,mf_u,P));
-    b->hyperelastic_law = l; /* won't leak .. */
+		"NonlinearElasticity", (law, mim, mf_u, P));
+    // b->hyperelastic_law = l; /* won't leak .. */
   } else if (check_cmd(cmd, "nonlinear elasticity incompressibility term", in, out, 2, 3, 0, 1)) {
     /*@INIT B = MDBRICK:INIT('nonlinear elasticity incompressibility term', @tbrick pb, @tmf mfp[, @int nfem])
     Add an incompressibily constraint to a large strain elasticity problem.@*/

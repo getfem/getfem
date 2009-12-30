@@ -325,24 +325,29 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     darray U = in.pop().to_darray(int(mf_u->nb_dof()));
     std::string lawname = in.pop().to_string();
     /* a refaire , pas bon, le terme incompressible se passe de loi */
-    std::auto_ptr<getfem::abstract_hyperelastic_law> l = abstract_hyperelastic_law_from_name(lawname);
+    const getfem::abstract_hyperelastic_law &law
+      = abstract_hyperelastic_law_from_name(lawname);
     const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-    darray param = in.pop().to_darray(int(l->nb_params()), int(mf_d->nb_dof()));
+    darray param = in.pop().to_darray(int(law.nb_params()),
+				      int(mf_d->nb_dof()));
     while (in.remaining()) {
       std::string what = in.pop().to_string();
       if (cmd_strmatch(what, "tangent matrix")) {
 	gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
-	getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U, mf_d, param, *l);
+	getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U,
+							mf_d, param, law);
 	out.pop().from_sparse(K);
       } else if (cmd_strmatch(what, "rhs")) {
 	darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
-	getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d, param, *l);
+	getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
+					     param, law);
       } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
 	const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
 	darray P = in.pop().to_darray(int(mf_p->nb_dof()));
 	gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof()),
 	  B(mf_u->nb_dof(), mf_p->nb_dof());
-	getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u, *mf_p, U, P);
+	getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u,
+						    *mf_p, U, P);
 	out.pop().from_sparse(K);
 	out.pop().from_sparse(B);
       } else if (cmd_strmatch(what, "incompressible rhs")) {
@@ -353,7 +358,8 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	getfem::asm_nonlinear_incomp_rhs(RU, RB, *mim, *mf_u, *mf_p, U, P);
       } else {
 	THROW_BADARG("expecting 'tangent matrix' or 'rhs', or "
-		     "'incomp tangent matrix' or 'incomp rhs', got '" << what << "'");
+		     "'incomp tangent matrix' or 'incomp rhs', got '"
+		     << what << "'");
       }
     }
     if (in.remaining())

@@ -24,12 +24,14 @@
 */
 
 #include <getfemint.h>
+#include <getfemint_misc.h>
 #include <getfemint_models.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_Coulomb_friction.h>
+#include <getfem/getfem_nonlinear_elasticity.h>
 
 using namespace getfemint;
 
@@ -84,6 +86,8 @@ using namespace getfemint;
   @SET MODEL:SET('contact brick set BN')
   @SET MODEL:SET('contact brick set BT')
   @SET MODEL:SET('add contact with rigid obstacle brick')
+  @SET MODEL:SET('add nonlinear elasticity brick')
+  @SET MODEL:SET('add nonlinear incompressibility brick')
 MLABCOM*/
 
 void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -775,6 +779,51 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       + config::base_index();
     workspace().set_dependance(md, gfi_mim);
     out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add nonlinear elasticity brick", in, out, 4, 5, 0, 1)) {
+    /*@SET ind = MODEL:SET('add nonlinear elasticity brick', @tmim mim, @str varname, @str constitutive_law, @str dataname[, @int region])
+    Add a nonlinear elasticity term to the model relatively to the
+    variable `varname`. `lawname` is the constitutive law which
+    could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+    `dataname` is a vector of parameters for the constitutive law. Its length
+    depends on the law. It could be a short vector of constant values or a
+    vector field described on a finite element method for variable
+    coefficients. `region` is an optional mesh region on which the term
+    is added. If it is not specified, it is added on the whole mesh. Return the
+    brick index in the model.@*/
+    
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string lawname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind = config::base_index() +
+      add_nonlinear_elasticity_brick
+      (md->model(), gfi_mim->mesh_im(), varname,
+       abstract_hyperelastic_law_from_name(lawname), dataname, region);
+    
+    workspace().set_dependance(md, gfi_mim);
+    out.pop().from_integer(int(ind));
+  } else if (check_cmd(cmd, "add nonlinear incompressibility brick", in, out, 3, 4, 0, 1)) {
+    /*@SET ind = MODEL:SET('add nonlinear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region])
+    Add an nonlinear incompressibility condition on `variable` (for large
+    strain elasticity). `multname_pressure`
+    is a variable which represent the pressure. Be aware that an inf-sup
+    condition between the finite element method describing the pressure and the
+    primal variable has to be satisfied. `region` is an optional mesh region on
+    which the term is added. If it is not specified, it is added on the
+    whole mesh. Return the brick index in the model.@*/
+    getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+    std::string varname = in.pop().to_string();
+    std::string multname = in.pop().to_string();
+    size_type region = size_type(-1);
+    if (in.remaining()) region = in.pop().to_integer();
+    size_type ind
+      = getfem::add_nonlinear_incompressibility
+      (md->model(), gfi_mim->mesh_im(), varname, multname, region)
+      + config::base_index();
+    workspace().set_dependance(md, gfi_mim);
+    out.pop().from_integer(int(ind));
   } else if (check_cmd(cmd, "add mass brick", in, out, 2, 4, 0, 1)) {
     /*@SET ind = MODEL:SET('add mass brick', @tmim mim, @str varname[, @str dataname_rho[, @int region]])
     Add mass term to the model relatively to the variable `varname`. If specified,
@@ -1093,7 +1142,7 @@ void gf_model_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       ind = getfem::add_contact_with_rigid_obstacle_brick
 	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
 	 dataname_r, region, obstacle, symmetrized);
-
+    workspace().set_dependance(md, gfi_mim);
     out.pop().from_integer(int(ind + config::base_index()));
   } else bad_cmd(cmd);
 }

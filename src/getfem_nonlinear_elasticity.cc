@@ -364,8 +364,8 @@ namespace getfem {
 
   void compute_Von_Mises_or_Tresca(model &md,
 				   const std::string &varname, 
-				   const std::string &dataname,
 				   const abstract_hyperelastic_law &AHL,
+				   const std::string &dataname,
 				   const mesh_fem &mf_vm,
 				   model_real_plain_vector &VM,
 				   bool tresca) {

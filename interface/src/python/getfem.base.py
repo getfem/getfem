@@ -471,6 +471,7 @@ model states.
     #@GET    MODEL:GET('assembly')
     #@GET    MODEL:GET('solve')
     #@GET    MODEL:GET('compute isotropic linearized Von Mises or Tresca')
+    #@GET    MODEL:GET('compute Von Mises or Tresca')
     #@GET    MODEL:GET('matrix term')
 
 
@@ -519,6 +520,8 @@ model states.
     #@SET    MODEL:SET('contact brick set BN')
     #@SET    MODEL:SET('contact brick set BT')
     #@SET    MODEL:SET('add contact with rigid obstacle brick')
+    #@SET    MODEL:SET('add nonlinear elasticity brick')
+    #@SET    MODEL:SET('add nonlinear incompressibility brick')
 
 class GeoTrans:
     """General function for building descriptors to geometric transformations.

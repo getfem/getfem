@@ -24,6 +24,7 @@
 */
 
 #include <getfemint.h>
+#include <getfemint_misc.h>
 #include <getfemint_models.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfemint_mdbrick.h>
@@ -69,6 +70,7 @@ using namespace getfemint;
   @GET MODEL:GET('from variables')
   @GET MODEL:GET('solve')
   @GET MODEL:GET('compute isotropic linearized Von Mises or Tresca')
+  @GET MODEL:GET('compute Von Mises or Tresca')
   @GET MODEL:GET('matrix term')
 
 MLABCOM*/
@@ -239,6 +241,34 @@ void gf_model_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
     getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
       (md->model(), varname, dataname_lambda, dataname_mu, gfi_mf->mesh_fem(), VMM, tresca);
+    out.pop().from_dcvector(VMM);
+  } else if (check_cmd(cmd, "compute Von Mises or Tresca", in, out, 4, 5, 0, 1)) {
+    /*@GET V = MODEL:GET('compute Von Mises or Tresca', @str varname, @str lawname, @str dataname, @tmf mf_vm[, @str version])
+    Compute on `mf_vm` the Von-Mises stress or the Tresca stress of a field
+    for nonlinear elasticity in 3D. `lawname` is the constitutive law which
+    could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+    `dataname` is a vector of parameters for the constitutive law. Its length
+    depends on the law. It could be a short vector of constant values or a
+    vector field described on a finite element method for variable coefficients.
+    `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). @*/
+    std::string varname = in.pop().to_string();
+    std::string lawname = in.pop().to_string();
+    std::string dataname = in.pop().to_string();
+    getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+    std::string stresca = "Von Mises";
+    if (in.remaining()) stresca = in.pop().to_string();
+    bool tresca = false;
+    if (cmd_strmatch(stresca, "Von Mises") ||
+        cmd_strmatch(stresca, "Von_Mises"))
+      tresca = false;
+    else if (cmd_strmatch(stresca, "Tresca"))
+      tresca = true;
+    else THROW_BADARG("bad option \'version\': " << stresca);
+
+    getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+    getfem::compute_Von_Mises_or_Tresca
+      (md->model(), varname, abstract_hyperelastic_law_from_name(lawname),
+       dataname, gfi_mf->mesh_fem(), VMM, tresca);
     out.pop().from_dcvector(VMM);
   } else if (check_cmd(cmd, "matrix term", in, out, 2, 2, 0, 1)) {
     /*@GET M = MODEL:GET('matrix term', @int ind_brick, @int ind_term)
