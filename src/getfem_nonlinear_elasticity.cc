@@ -20,6 +20,7 @@
 //===========================================================================
 
 
+#include "getfem/getfem_models.h"
 #include "getfem/getfem_nonlinear_elasticity.h"
 
 namespace getfem {
@@ -265,6 +266,272 @@ namespace getfem {
        * (pow(double(jj-(ii%3))-double(0.5),2)-double(1.25)));
   }
 
+
+
+
+
+
+
+  //=========================================================================
+  //
+  //  Nonlinear elasticity Brick
+  //
+  //=========================================================================
+
+  struct nonlinear_elasticity_brick : public virtual_brick {
+
+    const abstract_hyperelastic_law &AHL;
+    
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      GMM_ASSERT1(mims.size() == 1,
+		  "Nonlinear elasticity brick need a single mesh_im");
+      GMM_ASSERT1(vl.size() == 1,
+		  "Nonlinear elasticity brick need a single variable");
+      GMM_ASSERT1(dl.size() == 1,
+		  "Wrong number of data for nonlinear elasticity brick, "
+                  << dl.size() << " should be 1 (vector).");
+      GMM_ASSERT1(matl.size() == 1,  "Wrong number of terms for nonlinear "
+		  "elasticity brick");
+
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+
+      const mesh_fem *mf_params = md.pmesh_fem_of_variable(dl[0]);
+      const model_real_plain_vector &params = md.real_variable(dl[0]);
+      const mesh_im &mim = *mims[0];
+
+      size_type sl = gmm::vect_size(params);
+      if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
+      GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for the "
+		  "nonlinear constitutive elastic law");
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (version & model::BUILD_MATRIX) {
+	gmm::clear(matl[0]);
+	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
+	asm_nonlinear_elasticity_tangent_matrix
+	  (matl[0], mim, mf_u, u, mf_params, params, AHL, rg);
+      }
+
+
+      if (version & model::BUILD_RHS) {
+	asm_nonlinear_elasticity_rhs(vecl[0], mim,
+				     mf_u, u, mf_params, params, AHL, rg);
+	gmm::scale(vecl[0], scalar_type(-1));
+      }
+
+    }
+
+    nonlinear_elasticity_brick(const abstract_hyperelastic_law &AHL_)
+      : AHL(AHL_) {
+      set_flags("Nonlinear elasticity brick", false /* is linear*/,
+                true /* is symmetric */, true /* is coercive */,
+		true /* is real */, false /* is complex */);
+    }
+
+  };
+  
+  //=========================================================================
+  //  Add a nonlinear elasticity brick.  
+  //=========================================================================
+
+  size_type add_nonlinear_elasticity_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const abstract_hyperelastic_law &AHL, const std::string &dataname,
+   size_type region) {
+    pbrick pbr = new nonlinear_elasticity_brick(AHL);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist dl(1, dataname);
+    model::varnamelist vl(1, varname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1,&mim), region);
+  }
+
+  //=========================================================================
+  //  Von Mises or Tresca stress computation.  
+  //=========================================================================
+
+  void compute_Von_Mises_or_Tresca(model &md,
+				   const std::string &varname, 
+				   const std::string &dataname,
+				   const abstract_hyperelastic_law &AHL,
+				   const mesh_fem &mf_vm,
+				   model_real_plain_vector &VM,
+				   bool tresca) {
+    GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
+		"The vector has not the good size");
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    const model_real_plain_vector &u = md.real_variable(varname);
+    const mesh_fem *mf_params = md.pmesh_fem_of_variable(dataname);
+    const model_real_plain_vector &params = md.real_variable(dataname);
+    
+    size_type sl = gmm::vect_size(params);
+    if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
+    GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for "
+		"the nonlinear constitutive elastic law");
+    
+    unsigned N = unsigned(mf_u.linked_mesh().dim());
+    unsigned NP = unsigned(AHL.nb_params()), NFem = mf_u.get_qdim();
+    model_real_plain_vector GRAD(mf_vm.nb_dof()*NFem*N);
+    model_real_plain_vector PARAMS(mf_vm.nb_dof()*NP);
+    if (mf_params) interpolation(*mf_params, mf_vm, params, PARAMS);
+    compute_gradient(mf_u, mf_vm, u, GRAD);
+    base_matrix E(N, N), gradphi(NFem,N),gradphit(N,NFem), Id(N, N),
+      sigmahathat(N,N),aux(NFem,N), sigma(NFem,NFem),
+      IdNFem(NFem, NFem);
+    base_vector p(NP);
+    if (!mf_params) gmm::copy(params, p);
+    base_vector eig(NFem);
+    base_vector ez(NFem);	// vector normal at deformed surface, (ex X ey)
+    double normEz(0);	//norm of ez
+    gmm::copy(gmm::identity_matrix(), Id);
+    gmm::copy(gmm::identity_matrix(), IdNFem);
+    for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
+      gmm::resize(gradphi,NFem,N);
+      std::copy(GRAD.begin()+i*NFem*N, GRAD.begin()+(i+1)*NFem*N,
+		gradphit.begin());
+      gmm::copy(gmm::transposed(gradphit),gradphi);
+      for (unsigned int alpha = 0; alpha <N; ++alpha)
+	gradphi(alpha, alpha)+=1;
+      gmm::mult(gmm::transposed(gradphi), gradphi, E);
+      gmm::add(gmm::scaled(Id, -scalar_type(1)), E);
+      gmm::scale(E, scalar_type(1)/scalar_type(2));
+      if (mf_params)
+	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
+      AHL.sigma(E, sigmahathat, p);
+      if (NFem == 3 && N == 2) {
+	//jyh : compute ez, normal on deformed surface
+	for (unsigned int l = 0; l <NFem; ++l)  {
+	  ez[l]=0;
+	  for (unsigned int m = 0; m <NFem; ++m) 
+	    for (unsigned int n = 0; n <NFem; ++n){
+	      ez[l]+=levi_civita(l,m,n)*gradphi(m,0)*gradphi(n,1);
+	    }
+	  normEz= gmm::vect_norm2(ez);
+	}
+	//jyh : end compute ez
+      }
+      gmm::mult(gradphi, sigmahathat, aux);
+      gmm::mult(aux, gmm::transposed(gradphi), sigma);
+      
+      /* jyh : complete gradphi for virtual 3rd dim (perpendicular to
+	 deformed surface, same thickness) */
+      if (NFem == 3 && N == 2) {
+	gmm::resize(gradphi,NFem,NFem);
+	for (unsigned int ll = 0; ll <NFem; ++ll) 
+	  for (unsigned int ii = 0; ii <NFem; ++ii) 
+	    for (unsigned int jj = 0; jj <NFem; ++jj) 
+	      gradphi(ll,2)+=(levi_civita(ll,ii,jj)*gradphi(ii,0)
+			      *gradphi(jj,1))/normEz;
+	//jyh : end complete graphi
+      }
+      
+      gmm::scale(sigma, scalar_type(1) / gmm::lu_det(gradphi));
+      
+      if (!tresca) {
+	/* von mises: norm(deviator(sigma)) */
+	gmm::add(gmm::scaled(IdNFem, -gmm::mat_trace(sigma) / NFem), sigma);
+	
+	//jyh : von mises stress=sqrt(3/2)* norm(sigma) ?
+	VM[i] = sqrt(3.0/2)*gmm::mat_euclidean_norm(sigma);
+      } else {
+	/* else compute the tresca criterion */
+	//jyh : to be adapted for membrane if necessary
+	gmm::symmetric_qr_algorithm(sigma, eig);
+	std::sort(eig.begin(), eig.end());
+	VM[i] = eig.back() - eig.front();
+      }
+    }
+  }
+  
+
+  // ----------------------------------------------------------------------
+  //
+  // Nonlinear incompressibility brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct nonlinear_incompressibility_brick : public virtual_brick {
+    
+    virtual void asm_real_tangent_terms(const model &md, size_type,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,
+					model::real_veclist &vecl,
+					model::real_veclist &,
+					size_type region,
+					build_version version) const {
+      
+      GMM_ASSERT1(matl.size() == 2,  "Wrong number of terms for nonlinear "
+		  "incompressibility brick");
+      GMM_ASSERT1(dl.size() == 0, "Nonlinear incompressibility brick need no "
+		  "data");
+      GMM_ASSERT1(mims.size() == 1, "Nonlinear incompressibility brick need a "
+		  "single mesh_im");
+      GMM_ASSERT1(vl.size() == 2, "Wrong number of variables for nonlinear "
+		  "incompressibility brick");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const model_real_plain_vector &p = md.real_variable(vl[1]);
+      const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      GMM_TRACE2("Stokes term assembly");
+      gmm::clear(matl[0]);
+      asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
+
+      if (version & model::BUILD_MATRIX) {
+	gmm::clear(matl[0]);
+	gmm::clear(matl[1]);
+	asm_nonlinear_incomp_tangent_matrix(matl[0], matl[1],
+					    mim, mf_u, mf_p, u, p, rg);
+      }
+
+      if (version & model::BUILD_RHS) {
+	asm_nonlinear_incomp_rhs(vecl[0], vecl[1], mim, mf_u, mf_p, u, p, rg);
+	gmm::scale(vecl[0], scalar_type(-1));
+	gmm::scale(vecl[1], scalar_type(-1));
+      }
+
+    }
+
+    nonlinear_incompressibility_brick(void) {
+      set_flags("Nonlinear incompressibility brick",
+		false /* is linear*/,
+		true /* is symmetric */, false /* is coercive */,
+		true /* is real */, false /* is complex */);
+    }
+
+
+  };
+
+  size_type add_nonlinear_incompressibility
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region) {
+    pbrick pbr = new nonlinear_incompressibility_brick();
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl;
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
 
 
 
