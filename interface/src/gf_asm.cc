@@ -332,11 +332,11 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::string what = in.pop().to_string();
       if (cmd_strmatch(what, "tangent matrix")) {
 	gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
-	getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U, *mf_d, param, *l);
+	getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U, mf_d, param, *l);
 	out.pop().from_sparse(K);
       } else if (cmd_strmatch(what, "rhs")) {
 	darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
-	getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, *mf_d, param, *l);
+	getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d, param, *l);
       } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
 	const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
 	darray P = in.pop().to_darray(int(mf_p->nb_dof()));
