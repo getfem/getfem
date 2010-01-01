@@ -31,6 +31,10 @@
 
 namespace getfem {
 
+  typedef bgeot::convex<base_node>::ref_convex_pt_ct ref_convex_pt_ct;
+  typedef bgeot::convex<base_node>::dref_convex_pt_ct dref_convex_pt_ct;
+  typedef bgeot::basic_mesh::ref_mesh_face_pt_ct ref_mesh_face_pt_ct;
+
   //=========================================================================
   //
   //  Projection on a ball and gradient of the projection.
@@ -177,21 +181,100 @@ namespace getfem {
 
   scalar_type projection_on_convex_face
     (const mesh &m, const size_type cv, const short_type fc,
-     const base_node &master_node, const base_node &slave_node,
+     base_node &slave_node,
      base_node &un, base_node &proj_node, base_node &proj_node_ref) {
 
-    un = m.normal_of_face_of_convex(cv,fc); //FIXME: this normal is just an approximation
-    un /= gmm::vect_norm2(un);
-    //FIXME: the following projection calculation is accurate only for linear triangle elements
-    //proj_node = slave_node - [(slave_node-master_node)*n] * n
-    gmm::add(master_node, gmm::scaled(slave_node, -1.), proj_node);
-    gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
-    gmm::add(slave_node, proj_node);
-
     bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-    bgeot::geotrans_inv_convex gic;
-    gic.init(m.points_of_convex(cv), pgt);
-    gic.invert(proj_node, proj_node_ref);
+    size_type N = m.dim();
+    size_type P = pgt->structure()->dim();
+    size_type nb_pts_cv = pgt->nb_points();
+    size_type nb_pts_fc = pgt->structure()->nb_points_of_face(fc);
+    bgeot::convex_ind_ct ind_pts_fc = pgt->structure()->ind_points_of_face(fc);
+    ref_mesh_face_pt_ct pts_fc = m.points_of_face_of_convex(cv, fc);
+    ref_convex_pt_ct ref_pts_fc = pgt->convex_ref()->points_of_face(fc);
+    dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
+    GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
+
+    // Local base on reference face
+    std::vector<base_node> base_vecs_fc(P-1);
+    for (size_type i = 0; i < P-1; ++i)
+       base_vecs_fc[i] = dref_pts_fc[i+1] - dref_pts_fc[0];
+
+    base_vector val(nb_pts_cv);
+    base_matrix pc_cv(nb_pts_cv, P);
+    base_matrix pc_fc(nb_pts_fc, P-1), G(N, nb_pts_fc);
+    base_matrix K(N,P-1), KK(N,P), B(N,P-1), BB(N,P), CS(P-1,P-1);
+    base_matrix base_mat_fc(P-1,N);
+    vectors_to_base_matrix(G, pts_fc);
+    vectors_to_base_matrix(K, base_vecs_fc);
+    gmm::copy(gmm::transposed(K),base_mat_fc);
+    gmm::clear(K);
+
+    GMM_ASSERT1( slave_node.size() == N, "Dimensions mismatch");
+    base_node &xx = slave_node;
+    base_node &xxp = proj_node;  xxp.resize(N);
+    base_node &xp = proj_node_ref;  xp.resize(P);
+    base_node vres(P);
+    scalar_type res= 1.;
+
+    xp = gmm::mean_value(ref_pts_fc);
+    gmm::clear(xxp);
+    pgt->poly_vector_val(xp, val);
+    for (size_type l = 0; l < nb_pts_fc; ++l)
+      gmm::add(gmm::scaled(pts_fc[l], val[ ind_pts_fc[l] ] ), xxp);
+
+    scalar_type EPS = 10E-12;
+    unsigned cnt = 50;
+    while (res > EPS && --cnt) {
+      // computation of the pseudo inverse matrix B at point xp
+      pgt->poly_vector_grad(xp, pc_cv);                // Non-optimized
+      for (size_type i = 0; i < nb_pts_fc; ++i)        // computation
+        for (size_type j = 0; j < P-1; ++j)            // of pc_fc
+          pc_fc(i,j) = gmm::vect_sp(gmm::mat_row(pc_cv, ind_pts_fc[i]),
+                                    base_vecs_fc[j]);
+      gmm::mult(G,pc_fc,K);
+      gmm::mult(gmm::transposed(K), K, CS);
+      gmm::lu_inverse(CS);
+      gmm::mult(K, CS, B);
+      gmm::mult(B, base_mat_fc, BB);
+
+      // Projection onto the face of convex
+      gmm::mult_add(gmm::transposed(BB), xx-xxp, xp);
+      gmm::clear(xxp);
+      pgt->poly_vector_val(xp, val);
+      for (size_type l = 0; l < nb_pts_fc; ++l)
+        gmm::add(gmm::scaled(pts_fc[l], val[ind_pts_fc[l]]), xxp);
+
+      gmm::mult(gmm::transposed(BB), xx - xxp, vres);
+      res = gmm::vect_norm2(vres);
+    }
+
+    // computation of normal vector
+    un.resize(N);
+//    un = xx - xxp;
+//    gmm::scale(un, 1/gmm::vect_norm2(un));
+
+    gmm::clear(un);
+    gmm::sub_index SUB_PTS_FC = gmm::sub_index(ind_pts_fc);
+    gmm::mult(G, gmm::sub_matrix(pc_cv, SUB_PTS_FC, gmm::sub_interval(0, P)), KK);
+    base_matrix bases_product(P-1, P);
+    gmm::mult(gmm::transposed(K), KK, bases_product);
+    for (size_type i = 0; i < P; ++i) {
+      std::vector<size_type> ind(0);
+      for (size_type j = 0; j < P; ++j)
+        if (j != i ) ind.push_back(j);
+      scalar_type
+        det = gmm::lu_det(gmm::sub_matrix(bases_product,
+                                          gmm::sub_interval(0, P-1),
+                                          gmm::sub_index(ind)       ) );
+      gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ), un);
+    }
+    gmm::scale(un, 1/gmm::vect_norm2(un));
+
+    if (gmm::vect_sp(un, gmm::mean_value(pts_fc) -
+                         gmm::mean_value(m.points_of_convex(cv))) < 0)
+      gmm::scale(un,scalar_type(-1));
+
     return pgt->convex_ref()->is_in(proj_node_ref);
   }
 
@@ -227,7 +310,7 @@ namespace getfem {
              cv != cn_m->cvs.end() && fc != cn_m->fcs.end(); cv++, fc++) {
           base_node un(3), proj_node(3), proj_node_ref(3);
           scalar_type is_in = projection_on_convex_face
-            (mesh_m, *cv, *fc, master_node, slave_node, un, proj_node, proj_node_ref);
+            (mesh_m, *cv, *fc, slave_node, un, proj_node, proj_node_ref);
           if (is_in < is_in_min) {
             is_in_min = is_in;
             cv_sel = *cv;
