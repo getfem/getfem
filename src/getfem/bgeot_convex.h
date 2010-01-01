@@ -73,8 +73,8 @@ namespace bgeot {
     
     /// Return "direct" points. These are the subset of points than can be used to build a direct vector basis. (rarely used)
     ref_convex_pt_ct dir_points(void) const { 
-      return ref_convex_pt_ct(pts.begin(), cvs->dir_points_.begin(),
-			      cvs->dir_points_.end() );
+      return ref_convex_pt_ct(pts.begin(), cvs->ind_dir_points().begin(),
+                              cvs->ind_dir_points().end() );
     }
     /** Direct points for a given face.
 	@param i the face number.
