@@ -175,6 +175,25 @@ namespace getfem {
     }
   };
 
+  scalar_type projection_on_convex_face
+    (const mesh &m, const size_type cv, const short_type fc,
+     const base_node &master_node, const base_node &slave_node,
+     base_node &un, base_node &proj_node, base_node &proj_node_ref) {
+
+    un = m.normal_of_face_of_convex(cv,fc); //FIXME: this normal is just an approximation
+    un /= gmm::vect_norm2(un);
+    //FIXME: the following projection calculation is accurate only for linear triangle elements
+    //proj_node = slave_node - [(slave_node-master_node)*n] * n
+    gmm::add(master_node, gmm::scaled(slave_node, -1.), proj_node);
+    gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
+    gmm::add(slave_node, proj_node);
+
+    bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+    bgeot::geotrans_inv_convex gic;
+    gic.init(m.points_of_convex(cv), pgt);
+    gic.invert(proj_node, proj_node_ref);
+    return pgt->convex_ref()->is_in(proj_node_ref);
+  }
 
   void calculate_contact_matrices
          (const mesh_fem &mf_disp1, const mesh_fem &mf_disp2,
@@ -206,20 +225,9 @@ namespace getfem {
         std::vector<short_type>::iterator fc;
         for (cv = cn_m->cvs.begin(), fc = cn_m->fcs.begin();
              cv != cn_m->cvs.end() && fc != cn_m->fcs.end(); cv++, fc++) {
-          base_node un = mesh_m.normal_of_face_of_convex(*cv,*fc); //FIXME: this normal is just an approximation
-          un /= gmm::vect_norm2(un);
-          base_node proj_node(3), proj_node_ref(3);
-          //FIXME: the following projection calculation is accurate only for linear triangle elements
-          //proj_node = slave_node - [(slave_node-master_node)*n] * n
-          gmm::add(master_node, gmm::scaled(slave_node, -1.), proj_node);
-          gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
-          gmm::add(slave_node, proj_node);
-
-          bgeot::pgeometric_trans pgt = mesh_m.trans_of_convex(*cv);
-          bgeot::geotrans_inv_convex gic;
-          gic.init(mesh_m.points_of_convex(*cv), pgt);
-          gic.invert(proj_node, proj_node_ref);
-          scalar_type is_in = pgt->convex_ref()->is_in(proj_node_ref);
+          base_node un(3), proj_node(3), proj_node_ref(3);
+          scalar_type is_in = projection_on_convex_face
+            (mesh_m, *cv, *fc, master_node, slave_node, un, proj_node, proj_node_ref);
           if (is_in < is_in_min) {
             is_in_min = is_in;
             cv_sel = *cv;
