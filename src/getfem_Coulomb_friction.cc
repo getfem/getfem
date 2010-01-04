@@ -81,33 +81,39 @@ namespace getfem {
     std::vector<size_type> cvs;  // list of ids of neigbouring convexes
     std::vector<short_type> fcs; // list of local ids of neigbouring faces
 
+    contact_node() : mf(0), cvs(0), fcs(0) {}
     contact_node(const mesh_fem &mf_) {mf = &mf_;}
-    contact_node() : mf(0) {}
   };
 
-  // The object contact_node_list holds a list of all nodes which participate
-  // in the definition of a contact.
-  struct contact_node_list : public std::vector<contact_node> {
+  // contact_node's pair
+  struct contact_node_pair {
+    contact_node cn_s, cn_m;  // Slave and master contact_node's
+    scalar_type dist;         // Distance between slave and master nodes
+    bool is_active;
+    contact_node_pair(scalar_type threshold=10.) : cn_s(), cn_m()
+      {dist = threshold; is_active = false;}
+  };
 
-    contact_node_list() : std::vector<contact_node>() {}
+  // contact_node's pair list
+  class contact_node_pair_list : public std::vector<contact_node_pair> {
 
-    void append(const mesh_fem &mf, size_type contact_region,
-                dal::bit_vector &bv_cn) {
+    void contact_node_list_from_region
+      (const mesh_fem &mf, size_type contact_region,
+       std::vector<contact_node> &cnl) {
 
+      cnl.clear();
       const mesh &m = mf.linked_mesh();
       size_type qdim = mf.get_qdim();
       std::map<size_type, size_type> dof_to_cnid;
-      size_type cnid = this->size();
+      size_type cnid = 0;
       dal::bit_vector dofs = mf.basic_dof_on_region(contact_region);
-      for (dal::bv_visitor dof(dofs); !dof.finished(); ++dof) {
+      for (dal::bv_visitor dof(dofs); !dof.finished(); ++dof)
         if ( dof % qdim == 0) {
-          bv_cn.add(cnid);
           dof_to_cnid[dof] = cnid++;
           contact_node new_cn(mf);
           new_cn.dof = dof;
-          this->push_back(new_cn);
+          cnl.push_back(new_cn);
         }
-      }
       for (mr_visitor face(m.region(contact_region));
            !face.finished(); ++face) {
         assert(face.is_face());
@@ -116,57 +122,48 @@ namespace getfem {
         for (size_type it=0; it < face_dofs.size(); it += qdim ) {
           size_type dof = face_dofs[it];
           cnid = dof_to_cnid[dof];
-          (*this)[cnid].cvs.push_back(face.cv());
-          (*this)[cnid].fcs.push_back(face.f());
+          cnl[cnid].cvs.push_back(face.cv());
+          cnl[cnid].fcs.push_back(face.f());
         } // for:it
       } // for:face
     } // append
 
-  }; // struct contact_node_list
-
-  // contact_node's pair
-  struct contact_node_pair {
-    contact_node *cn_s, *cn_m;  // Pointers to the slave and master contact_node's
-    scalar_type dist;           // Distance between slave and master nodes
-    contact_node_pair(scalar_type threshold=10.)
-      {cn_s = 0, cn_m = 0, dist = threshold;}
-  };
-
-  // contact_node's pair list
-  struct contact_node_pair_list : public std::vector<contact_node_pair> {
-    contact_node_list cnl;
+  public:
+    contact_node_pair_list() : std::vector<contact_node_pair>() {}
 
     void append_min_dist_cn_pairs(const mesh_fem &mf1, const mesh_fem &mf2,
                                   size_type rg1, size_type rg2,
                                   bool slave1=true, bool slave2=false) {
 
-      dal::bit_vector bv_cn1, bv_cn2;
-      cnl.append(mf1, rg1, bv_cn1);
-      cnl.append(mf2, rg2, bv_cn2);
+      std::vector<contact_node> cnl1(0), cnl2(0);
+      contact_node_list_from_region(mf1, rg1, cnl1);
+      contact_node_list_from_region(mf2, rg2, cnl2);
 
       // Find minimum distance node pairs, FIXME: to be optimized
       size_type size0 = this->size();
-      size_type size1 = slave1 ? bv_cn1.card() : 0;
-      size_type size2 = slave2 ? bv_cn2.card() : 0;
+      size_type size1 = slave1 ? cnl1.size() : 0;
+      size_type size2 = slave2 ? cnl2.size() : 0;
       this->resize( size0 + size1 + size2 );
       size_type i=size0;
-      for (dal::bv_visitor i1(bv_cn1); !i1.finished(); ++i1, ++i) {
-        contact_node *cn1 = &cnl[i1];
+      for (size_type i1 = 0; i1 < cnl1.size(); ++i1, ++i) {
+        contact_node *cn1 = &cnl1[i1];
         base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
         size_type j=size0+size1;
-        for (dal::bv_visitor i2(bv_cn2); !i2.finished(); ++i2, ++j) {
-          contact_node *cn2 = &cnl[i2];
+        for (size_type i2 = 0; i2 < cnl2.size(); ++i2, ++j) {
+          contact_node *cn2 = &cnl2[i2];
           base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
           scalar_type dist = gmm::vect_norm2(node1-node2);
           if (slave1 && dist < (*this)[i].dist) {
-            (*this)[i].cn_s = cn1;
-            (*this)[i].cn_m = cn2;
+            (*this)[i].cn_s = *cn1;
+            (*this)[i].cn_m = *cn2;
             (*this)[i].dist = dist;
+            (*this)[i].is_active = true;
           }
           if (slave2 && dist < (*this)[j].dist) {
-            (*this)[j].cn_s = cn2;
-            (*this)[j].cn_m = cn1;
+            (*this)[j].cn_s = *cn2;
+            (*this)[j].cn_m = *cn1;
             (*this)[j].dist = dist;
+            (*this)[j].is_active = true;
           }
         } // cn2
       } // cn1
@@ -295,9 +292,9 @@ namespace getfem {
     gmm::fill(gap, scalar_type(10));  //FIXME: Needs a threshold value
     for (size_type row = 0; row < cnpl.size(); ++row) {
       contact_node_pair *cnp = &cnpl[row];
-      if (cnp->cn_s) {
-        contact_node *cn_s = cnp->cn_s;  //slave contact node
-        contact_node *cn_m = cnp->cn_m;  //master contact node
+      if (cnp->is_active) {
+        contact_node *cn_s = &cnp->cn_s;  //slave contact node
+        contact_node *cn_m = &cnp->cn_m;  //master contact node
         const mesh &mesh_m = cn_m->mf->linked_mesh();
         base_node slave_node = cn_s->mf->point_of_basic_dof(cn_s->dof);
         base_node master_node = cn_m->mf->point_of_basic_dof(cn_m->dof);
