@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2009 Konstantinos Poulios.
+// Copyright (C) 2009-2010 Konstantinos Poulios.
 //
 // This file is a part of GETFEM++
 //
@@ -19,19 +19,17 @@
 //
 //===========================================================================
 
-#include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_import.h"   /* import functions (load a mesh from file)    */
 #include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
 #include "getfem/getfem_Coulomb_friction.h"
 #include "gmm/gmm.h"
-#include <map>
 
 /* some Getfem++ types that we will be using */
 using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::scalar_type; /* = double */
-using bgeot::base_node;   /* geometrical nodes(derived from base_small_vector)*/
+using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
@@ -42,11 +40,9 @@ typedef getfem::model_real_plain_vector  plain_vector;
 /*
   structure for the elastostatic problem
 */
-struct elastostatic_problem {
+struct elastostatic_contact_problem {
 
-  enum { DIRICHLET_BOUNDARY = 0,
-         DIRICHLET_BOUNDARY_1 = 1, DIRICHLET_BOUNDARY_2 = 2,
-         CONTACT_BOUNDARY_1 = 3, CONTACT_BOUNDARY_2 = 4};
+  enum { DIRICHLET_BOUNDARY_1 = 0, DIRICHLET_BOUNDARY_2 = 1};
   getfem::mesh mesh1, mesh2; /* the meshes */
   getfem::mesh_im mim1, mim2;/* the integration methods */
   getfem::mesh_fem mf_u1;    /* 1st mesh_fem, for the elastostatic solution  */
@@ -57,14 +53,20 @@ struct elastostatic_problem {
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   scalar_type rot_angle;     /* rotation angle of the pinion gear            */
-  scalar_type threshold;     /* threshold distance for contact finding       */
+//scalar_type threshold;     /* threshold distance for contact finding       */
 
   size_type N;               /* dimension of the problem                     */
 
-  bool solve(plain_vector &, plain_vector &, plain_vector &,
-             plain_vector &, plain_vector &, plain_vector &, plain_vector &);
+  // Vectors holding the ids of mesh region pairs expected to come in contact
+  // with each other
+  std::vector<size_type> cb_rgs1, cb_rgs2;
+
+  std::string datafilename;
+  bgeot::md_param PARAM;
+
+  bool solve(void);
   void init(void);
-  elastostatic_problem(void) : mim1(mesh1), mim2(mesh2),
+  elastostatic_contact_problem(void) : mim1(mesh1), mim2(mesh2),
     mf_u1(mesh1), mf_u2(mesh2), mf_rhs1(mesh1), mf_rhs2(mesh2) {}
 };
 
@@ -72,44 +74,65 @@ struct elastostatic_problem {
 /* Define the problem parameters, import the mesh, set finite element
    and integration methods and detect the boundaries.
 */
-void elastostatic_problem::init(void) {
+void elastostatic_contact_problem::init(void) {
 
-  std::string FEM_TYPE  = "FEM_QK(3,1)";
-  std::string INTEGRATION = "IM_HEXAHEDRON(5)";
-
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
+					       "Name of integration method");
   /* First step : import the mesh */
-  getfem::import_mesh("gmsh:./gear1.msh", mesh1);
-  getfem::import_mesh("gmsh:./gear2.msh", mesh2);
+  std::string meshname_1 = PARAM.string_value("MESHNAME_GEAR1",
+                                              "Mesh filename for the 1st gear");
+  std::string meshname_2 = PARAM.string_value("MESHNAME_GEAR2",
+                                              "Mesh filename for the 2nd gear");
+  getfem::import_mesh(meshname_1, mesh1);
+  getfem::import_mesh(meshname_2, mesh2);
 
-  for (size_type ii = 0; ii <= 1; ii++) {
-    getfem::mesh &m = ii ? mesh2 : mesh1;
-    getfem::mesh_region &cb = m.region(ii ? CONTACT_BOUNDARY_2 : CONTACT_BOUNDARY_1);
-    getfem::mesh_region &db = m.region(ii ? DIRICHLET_BOUNDARY_2 : DIRICHLET_BOUNDARY_1);
+  size_type nb_cf_pairs;
+  for (size_type swap = 0; swap <= 1; swap++) {
 
-    for (getfem::mr_visitor i(m.region(113)); !i.finished(); ++i)
-      if (i.is_face()) cb.add(i.cv(), i.f());
-    for (getfem::mr_visitor i(m.region(133)); !i.finished(); ++i)
-      if (i.is_face()) db.add(i.cv(), i.f());
-    for (getfem::mr_visitor i(m.region(142)); !i.finished(); ++i)
-      if (i.is_face()) db.add(i.cv(), i.f());
-    for (getfem::mr_visitor i(m.region(143)); !i.finished(); ++i)
-      if (i.is_face()) db.add(i.cv(), i.f());
-    for (getfem::mr_visitor i(m.region(173)); !i.finished(); ++i)
-      if (i.is_face()) db.add(i.cv(), i.f());
-    for (getfem::mr_visitor i(m.region(182)); !i.finished(); ++i)
-      if (i.is_face()) db.add(i.cv(), i.f());
-    for (getfem::mr_visitor i(m.region(183)); !i.finished(); ++i)
-      if (i.is_face()) db.add(i.cv(), i.f());
+    getfem::mesh &m = swap ? mesh2 : mesh1;
+    getfem::mesh_region &db =
+      m.region(swap ? DIRICHLET_BOUNDARY_2 : DIRICHLET_BOUNDARY_1);
+    std::vector<size_type> &cb_rgs = swap ? cb_rgs2 : cb_rgs1;
+
+    // Contact faces
+    const std::vector<bgeot::md_param::param_value> &cf_params
+      = PARAM.array_value( swap ? "CONTACT_FACES_2" : "CONTACT_FACES_1" );
+    if (swap == 0) nb_cf_pairs = cf_params.size();
+    else GMM_ASSERT1(nb_cf_pairs == cf_params.size(),
+                     "Vectors CONTACT_FACES_1 and CONTACT_FACES_2 " <<
+                     "should have the same size.");
+    cb_rgs.resize(nb_cf_pairs);
+    for (size_type i = 0; i < cf_params.size(); ++i) {
+      GMM_ASSERT1(cf_params[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+                  (swap ? "CONTACT_FACES_2" :  "CONTACT_FACES_1")
+                   << " should be an integer array.");
+      cb_rgs[i] = size_type(cf_params[i].real()+0.5);
+    }
+    // Dirichlet faces
+    const std::vector<bgeot::md_param::param_value> &df_params
+      = PARAM.array_value(swap ? "DIRICHLET_FACES_2" : "DIRICHLET_FACES_1");
+    for (size_type i = 0; i < df_params.size(); ++i) {
+      GMM_ASSERT1(df_params[i].type_of_param() == bgeot::md_param::REAL_VALUE,
+                  (swap ? "DIRICHLET_FACES_2" : "DIRICHLET_FACES_1")
+                   << " should be an integer array.");
+      size_type db_rg = size_type(df_params[i].real()+0.5);
+      for (getfem::mr_visitor i(m.region(db_rg)); !i.finished(); ++i)
+        if (i.is_face()) db.add(i.cv(), i.f());
+    }
+
   }
 
   N = mesh1.dim(); //=mesh2.dim()
 
-  residual = 1e-6;
-  rot_angle = -1.5e-2;
-  threshold = 10.;
+  residual = PARAM.real_value("RESIDUAL", "Residual for Newton solver");
+  if (residual == 0.) residual = 1e-10;
 
-  lambda = 1.18e+5;
-  mu = 0.83e+5;
+  rot_angle = PARAM.real_value("ROT_ANGLE", "Rotation angle of the first gear");
+//  threshold = 10.;
+
+  mu = PARAM.real_value("MU", "Lamé coefficient mu");
+  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
 
   mf_u1.set_qdim(dim_type(N));
   mf_u2.set_qdim(dim_type(N));
@@ -118,30 +141,30 @@ void elastostatic_problem::init(void) {
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
   mf_u1.set_finite_element(pf_u);
   mf_u2.set_finite_element(pf_u);
+  GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
+		                << "For this problem you need a lagrange FEM.");
 
   getfem::pintegration_method ppi = getfem::int_method_descriptor(INTEGRATION);
   mim1.set_integration_method(ppi);
   mim2.set_integration_method(ppi);
 
   /* set the finite element on mf_rhs */
-  std::string data_fem_name = "FEM_QK(3,1)";
   mf_rhs1.set_finite_element(mesh1.convex_index(),
-                             getfem::fem_descriptor(data_fem_name));
+                             getfem::fem_descriptor(FEM_TYPE));
   mf_rhs2.set_finite_element(mesh2.convex_index(),
-                             getfem::fem_descriptor(data_fem_name));
+                             getfem::fem_descriptor(FEM_TYPE));
+
+  datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
+
 }
 
 /*  Construction and solution of the Model.
 */
-bool elastostatic_problem::solve(plain_vector &U1, plain_vector &U2, plain_vector &RHS,
-                                 plain_vector &Forces1, plain_vector &Forces2,
-                                 plain_vector &CForces1, plain_vector &CForces2) {
+bool elastostatic_contact_problem::solve() {
   size_type nb_dof_rhs1 = mf_rhs1.nb_dof();
   size_type nb_dof_rhs2 = mf_rhs2.nb_dof();
 
-  cout << "mf_rhs1.nb_dof() :" << mf_rhs1.nb_dof() << endl;
   cout << "mf_u1.nb_dof()   :" << mf_u1.nb_dof() << endl;
-  cout << "mf_rhs2.nb_dof() :" << mf_rhs2.nb_dof() << endl;
   cout << "mf_u2.nb_dof()   :" << mf_u2.nb_dof() << endl;
 
   getfem::model md;
@@ -168,7 +191,7 @@ bool elastostatic_problem::solve(plain_vector &U1, plain_vector &U2, plain_vecto
   std::string multname_n;
   getfem::add_frictionless_contact_brick
     (md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
-     CONTACT_BOUNDARY_1, CONTACT_BOUNDARY_2);
+     cb_rgs1, cb_rgs2);
 
   // Defining the DIRICHLET condition.
   plain_vector F(nb_dof_rhs1 * N);
@@ -201,11 +224,13 @@ bool elastostatic_problem::solve(plain_vector &U1, plain_vector &U2, plain_vecto
   gmm::default_newton_line_search ls;
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"superlu"), ls);
 
-  gmm::resize(U1, mf_u1.nb_dof());
-  gmm::resize(U2, mf_u2.nb_dof());
-  gmm::resize(RHS, md.nb_dof());
-  gmm::resize(CForces1, mf_u1.nb_dof());
-  gmm::resize(CForces2, mf_u2.nb_dof());
+  if (!iter.converged()) return false; // Solution has not converged
+
+  // Prepare results
+  plain_vector U1(mf_u1.nb_dof()), U2(mf_u2.nb_dof());
+  plain_vector RHS(md.nb_dof());
+  plain_vector Forces1(mf_u1.nb_dof()), Forces2(mf_u2.nb_dof());
+  plain_vector CForces1(mf_u1.nb_dof()), CForces2(mf_u2.nb_dof());
 
   gmm::copy(md.real_variable("u1"), U1);
   gmm::copy(md.real_variable("u2"), U2);
@@ -229,7 +254,28 @@ bool elastostatic_problem::solve(plain_vector &U1, plain_vector &U2, plain_vecto
             CForces2);
   gmm::scale(CForces2, -1.0);
 
-  return (iter.converged());
+  // Export results
+  mesh1.write_to_file(datafilename + "1.mesh");
+  mesh2.write_to_file(datafilename + "2.mesh");
+  mf_u1.write_to_file(datafilename + "1.mf", true);
+  mf_u2.write_to_file(datafilename + "2.mf", true);
+  mf_rhs1.write_to_file(datafilename + "1.mfd", true);
+  mf_rhs2.write_to_file(datafilename + "2.mfd", true);
+  gmm::vecsave(datafilename + "1.U", U1);
+  gmm::vecsave(datafilename + "2.U", U2);
+  gmm::vecsave(datafilename + ".RHS", RHS);
+  getfem::vtk_export exp1(datafilename + "1.vtk", true);
+  exp1.exporting(mf_u1);
+  exp1.write_point_data(mf_u1, U1, "elastostatic_displacement_1");
+  exp1.write_point_data(mf_u1, Forces1, "forces_1");
+  exp1.write_point_data(mf_u1, CForces1, "contact_forces_1");
+  getfem::vtk_export exp2(datafilename + "2.vtk", true);
+  exp2.exporting(mf_u2);
+  exp2.write_point_data(mf_u2, U2, "elastostatic_displacement_2");
+  exp2.write_point_data(mf_u2, Forces2, "forces_2");
+  exp2.write_point_data(mf_u2, CForces2, "contact_forces_2");
+
+  return true; // Solution has converged
 }
 
 /**************************************************************************/
@@ -238,36 +284,10 @@ bool elastostatic_problem::solve(plain_vector &U1, plain_vector &U2, plain_vecto
 
 int main(int argc, char *argv[]) {
 
-  elastostatic_problem p;
+  elastostatic_contact_problem p;
+  p.PARAM.read_command_line(argc, argv);
   p.init();
-
-  plain_vector U1(p.mf_u1.nb_dof()), U2(p.mf_u2.nb_dof());
-  plain_vector RHS;
-  plain_vector Forces1(p.mf_u1.nb_dof()), Forces2(p.mf_u2.nb_dof());
-  plain_vector CForces1(p.mf_u1.nb_dof()), CForces2(p.mf_u2.nb_dof());
-  if (!p.solve(U1, U2, RHS, Forces1, Forces2, CForces1, CForces2))
-    cout << "Solve has failed\n";
-
-  p.mesh1.write_to_file("static_contact_gears1.mesh");
-  p.mesh2.write_to_file("static_contact_gears2.mesh");
-  p.mf_u1.write_to_file("static_contact_gears1.mf", true);
-  p.mf_u2.write_to_file("static_contact_gears2.mf", true);
-  p.mf_rhs1.write_to_file("static_contact_gears1.mfd", true);
-  p.mf_rhs2.write_to_file("static_contact_gears2.mfd", true);
-  gmm::vecsave("static_contact_gears1.U", U1);
-  gmm::vecsave("static_contact_gears2.U", U2);
-  gmm::vecsave("static_contact_gears.RHS", RHS);
-  getfem::vtk_export exp1("static_contact_gears1.vtk", true);
-  exp1.exporting(p.mf_u1);
-  exp1.write_point_data(p.mf_u1, U1, "elastostatic_displacement_1");
-  exp1.write_point_data(p.mf_u1, Forces1, "forces_1");
-  exp1.write_point_data(p.mf_u1, CForces1, "contact_forces_1");
-  getfem::vtk_export exp2("static_contact_gears2.vtk", true);
-  exp2.exporting(p.mf_u2);
-  exp2.write_point_data(p.mf_u2, U2, "elastostatic_displacement_2");
-  exp2.write_point_data(p.mf_u2, Forces2, "forces_2");
-  exp2.write_point_data(p.mf_u2, CForces2, "contact_forces_2");
+  if (!p.solve()) cout << "Solve has failed\n";
 
   return 0;
 }
-
