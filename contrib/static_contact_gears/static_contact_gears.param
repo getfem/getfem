@@ -1,0 +1,24 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program static Coulomb friction problem                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+MU = 0.83E+5;         % Lamé coefficients
+LAMBDA = 1.18E+5;     % (in N/mm^2)
+
+ROT_ANGLE = -1.5E-2;  % Rotation angle of the first gear (in radians)
+
+RESIDUAL = 1E-6;      % residual for Newton
+
+MESHNAME_GEAR1 = 'gmsh:./gear1.msh'; % Meshes for gears 1 and 2
+MESHNAME_GEAR2 = 'gmsh:./gear2.msh'; %
+CONTACT_FACES_1 = [113];
+CONTACT_FACES_2 = [113];
+DIRICHLET_FACES_1 = [133,142,143,173,182,183];
+DIRICHLET_FACES_2 = [133,142,143,173,182,183];
+
+FEM_TYPE = 'FEM_QK(3, 1)';        % Main FEM (has to be Lagrangian)
+INTEGRATION = 'IM_HEXAHEDRON(5)'; % Quadrature rule
+
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'static_contact_gears';     % Root of data files
