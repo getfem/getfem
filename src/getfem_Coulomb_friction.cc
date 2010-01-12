@@ -29,6 +29,12 @@
 #include <muParser.h>
 #endif
 
+#ifdef GETFEM_HAVE_QHULL_QHULL_H
+#include <getfem/getfem_mesher.h>
+#else
+#include <getfem/bgeot_kdtree.h>
+#endif
+
 namespace getfem {
 
   typedef bgeot::convex<base_node>::ref_convex_pt_ct ref_convex_pt_ct;
@@ -71,8 +77,8 @@ namespace getfem {
     }
   }
 
-  // contact_node is an object which contains data about nodes expected to
-  // participate in a contact condition either. A contact node refers to a
+  // "contact_node" is an object which contains data about nodes expected
+  // to participate in a contact condition. A contact node refers to a
   // specific mesh_fem.
   struct contact_node {
     const mesh_fem *mf;          // Pointer to the mesh_fem the contact node is
@@ -88,10 +94,10 @@ namespace getfem {
   // contact_node's pair
   struct contact_node_pair {
     contact_node cn_s, cn_m;  // Slave and master contact_node's
-    scalar_type dist;         // Distance between slave and master nodes
+    scalar_type dist2;        // Square of distance between slave and master nodes
     bool is_active;
     contact_node_pair(scalar_type threshold=10.) : cn_s(), cn_m()
-      {dist = threshold; is_active = false;}
+      {dist2 = threshold * threshold; is_active = false;}
   };
 
   // contact_node's pair list
@@ -139,34 +145,115 @@ namespace getfem {
       contact_node_list_from_region(mf1, rg1, cnl1);
       contact_node_list_from_region(mf2, rg2, cnl2);
 
-      // Find minimum distance node pairs, FIXME: to be optimized
+      // Find minimum distance node pairs
       size_type size0 = this->size();
       size_type size1 = slave1 ? cnl1.size() : 0;
       size_type size2 = slave2 ? cnl2.size() : 0;
       this->resize( size0 + size1 + size2 );
-      size_type i=size0;
-      for (size_type i1 = 0; i1 < cnl1.size(); ++i1, ++i) {
+# ifndef GETFEM_HAVE_QHULL_QHULL_H
+      bgeot::kdtree tree1, tree2;
+      for (size_type i1 = 0; i1 < cnl1.size(); ++i1) {
         contact_node *cn1 = &cnl1[i1];
-        base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
-        size_type j=size0+size1;
-        for (size_type i2 = 0; i2 < cnl2.size(); ++i2, ++j) {
+        tree1.add_point_with_id(cn1->mf->point_of_basic_dof(cn1->dof), i1);
+      }
+      for (size_type i2 = 0; i2 < cnl2.size(); ++i2) {
+        contact_node *cn2 = &cnl2[i2];
+        tree2.add_point_with_id(cn2->mf->point_of_basic_dof(cn2->dof), i2);
+      }
+      if (slave1) {
+        size_type ii1=size0;
+        for (size_type i1 = 0; i1 < cnl1.size(); ++i1, ++ii1) {
+          contact_node *cn1 = &cnl1[i1];
+          base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
+          bgeot::index_node_pair ipt;
+          scalar_type dist2 = tree2.nearest_neighbor(ipt, node1);
+          if (ipt.i > 0 && dist2 < (*this)[ii1].dist2) {
+            (*this)[ii1].cn_s = *cn1;
+            (*this)[ii1].cn_m = cnl2[ipt.i];
+            (*this)[ii1].dist2 = dist2;
+            (*this)[ii1].is_active = true;
+          }
+        }
+      }
+      if (slave2) {
+        size_type ii2=size0+size1;
+        for (size_type i2 = 0; i2 < cnl2.size(); ++i2, ++ii2) {
           contact_node *cn2 = &cnl2[i2];
           base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
-          scalar_type dist = gmm::vect_norm2(node1-node2);
-          if (slave1 && dist < (*this)[i].dist) {
-            (*this)[i].cn_s = *cn1;
-            (*this)[i].cn_m = *cn2;
-            (*this)[i].dist = dist;
-            (*this)[i].is_active = true;
+          bgeot::index_node_pair ipt;
+          scalar_type dist2 = tree1.nearest_neighbor(ipt, node2);
+          if (ipt.i > 0 && dist2 < (*this)[ii2].dist2) {
+            (*this)[ii2].cn_s = *cn2;
+            (*this)[ii2].cn_m = cnl1[ipt.i];
+            (*this)[ii2].dist2 = dist2;
+            (*this)[ii2].is_active = true;
           }
-          if (slave2 && dist < (*this)[j].dist) {
-            (*this)[j].cn_s = *cn2;
-            (*this)[j].cn_m = *cn1;
-            (*this)[j].dist = dist;
-            (*this)[j].is_active = true;
+        }
+      }
+# else
+      std::vector<base_node> pts;
+      for (size_type i1 = 0; i1 < cnl1.size(); ++i1) {
+        contact_node *cn1 = &cnl1[i1];
+        pts.push_back(cn1->mf->point_of_basic_dof(cn1->dof));
+      }
+      for (size_type i2 = 0; i2 < cnl2.size(); ++i2) {
+        contact_node *cn2 = &cnl2[i2];
+        pts.push_back(cn2->mf->point_of_basic_dof(cn2->dof));
+      }
+      gmm::dense_matrix<size_type> simplexes;
+
+      getfem::delaunay(pts, simplexes);
+
+      size_type nb_vertices = gmm::mat_nrows(simplexes);
+      std::vector<size_type> facet_vertices(nb_vertices);
+      std::vector< std::vector<size_type> > pt1_neighbours(size1);
+      for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
+        gmm::copy(gmm::mat_col(simplexes, i), facet_vertices);
+        for (size_type iv1 = 0; iv1 < nb_vertices-1; ++iv1) {
+          size_type v1 = facet_vertices[iv1];
+          bool v1_on_surface1 = (v1 < size1);
+          for (size_type iv2 = iv1 + 1; iv2 < nb_vertices; ++iv2) {
+            size_type v2 = facet_vertices[iv2];
+            bool v2_on_surface1 = (v2 < size1);
+            if (v1_on_surface1 xor v2_on_surface1) {
+              bool already_in = false;
+              size_type vv1 = (v1_on_surface1 ? v1 : v2);
+              size_type vv2 = (v2_on_surface1 ? v1 : v2);
+              for (size_type j = 0; j < pt1_neighbours[vv1].size(); ++j)
+                if (pt1_neighbours[vv1][j] == vv2) {
+                  already_in = true;
+                  break;
+                }
+              if (!already_in) pt1_neighbours[vv1].push_back(vv2);
+            }
           }
-        } // cn2
-      } // cn1
+        }
+      }
+
+      for (size_type i1 = 0; i1 < size1; ++i1)
+        for (size_type j = 0; j < pt1_neighbours[i1].size(); ++j) {
+          size_type i2 = pt1_neighbours[i1][j] - size1;
+          size_type ii1 = size0 + i1;
+          size_type ii2 = size0 + size1 + i2;
+          contact_node *cn1 = &cnl1[i1];
+          base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
+          contact_node *cn2 = &cnl2[i2];
+          base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
+          scalar_type dist2 = gmm::vect_norm2_sqr(node1-node2);
+          if (slave1 && dist2 < (*this)[ii1].dist2) {
+            (*this)[ii1].cn_s = *cn1;
+            (*this)[ii1].cn_m = *cn2;
+            (*this)[ii1].dist2 = dist2;
+            (*this)[ii1].is_active = true;
+          }
+          if (slave2 && dist2 < (*this)[ii2].dist2) {
+            (*this)[ii2].cn_s = *cn2;
+            (*this)[ii2].cn_m = *cn1;
+            (*this)[ii2].dist2 = dist2;
+            (*this)[ii2].is_active = true;
+          }
+        }
+#endif
     }
 
     void append_min_dist_cn_pairs(const mesh_fem &mf,
@@ -245,6 +332,8 @@ namespace getfem {
       gmm::mult(gmm::transposed(BB), xx - xxp, vres);
       res = gmm::vect_norm2(vres);
     }
+    GMM_ASSERT1( res <= EPS,
+                "Iterative pojection on convex face did not converge");
 
     // computation of normal vector
     un.resize(N);
@@ -1155,10 +1244,6 @@ namespace getfem {
   // Experimental brick including gap, BN, BT calculation
   // To be done:
   // - Calculation of BT
-  // - Optimization of minimum distance node pairs search
-  // - Check the compatibility of the provided mesh_fem's
-  // - Non-Linear projection
-  // - Support for two displacement variables
   // - Large deformations: what happens when cnpl and nbc change during
   //   the iterative solution?
 
