@@ -116,9 +116,13 @@ namespace bgeot {
     const kdtree_tab_type &points() const { return pts; }
     /* fills ipts with the indexes of points in the box 
        [min,max] */
-    void points_in_box(kdtree_tab_type &inpts,
+    void points_in_box(kdtree_tab_type &ipts,
 		       const base_node &min, 
 		       const base_node &max);
+    /* assigns at ipt the index of the the nearest neighbor at location
+       pos and returns the square of the distance to this point*/
+    scalar_type nearest_neighbor(index_node_pair &ipt,
+                                 const base_node &pos);
   private:
     typedef std::vector<size_type>::const_iterator ITER;  
     void clear_tree();

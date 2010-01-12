@@ -172,6 +172,86 @@ namespace bgeot {
     }
   }
 
+  /* avoid pushing too much arguments on the stack for nearest_neighbor_ */
+  struct nearest_neighbor_data_ {
+    base_node::const_iterator pos;
+    index_node_pair *ipt;
+    size_type N;
+    mutable scalar_type dist2;
+    base_node::iterator vec_to_tree_elm;
+  };
+
+  /* recursive lookup for the nearest neighbor point at a given position */
+  static void nearest_neighbor_assist(const nearest_neighbor_data_& p,
+			              const kdtree_elt_base *t, unsigned dir) {
+    scalar_type dist2(0);
+    for (size_type k=0; k < p.N; ++k)
+      dist2 += p.vec_to_tree_elm[k] * p.vec_to_tree_elm[k];
+    if (dist2 > p.dist2 && p.dist2 > scalar_type(0)) return;
+
+    if (!t->isleaf()) {
+      const kdtree_node *tn = static_cast<const kdtree_node*>(t);
+      scalar_type tmp = p.vec_to_tree_elm[dir];
+      scalar_type dist = p.pos[dir] - tn->split_v;
+      if (tn->left) {
+        if (dist > tmp) p.vec_to_tree_elm[dir] = dist;
+        nearest_neighbor_assist(p, tn->left, unsigned((dir+1)%p.N));
+        p.vec_to_tree_elm[dir] = tmp;
+      }
+      if (tn->right) {
+        if (-dist > tmp) p.vec_to_tree_elm[dir] = -dist;
+        nearest_neighbor_assist(p, tn->right, unsigned((dir+1)%p.N));
+        p.vec_to_tree_elm[dir] = tmp;
+      }
+    } else {
+      // find the nearest neighbor inside the leaf
+      const kdtree_leaf *tl = static_cast<const kdtree_leaf*>(t);
+      kdtree_tab_type::const_iterator itpt = tl->it;
+      for (size_type i=tl->n;i; --i, ++itpt) {
+        dist2 = scalar_type(0);
+        base_node::const_iterator it=itpt->n.const_begin();
+        for (size_type k=0; k < p.N; ++k) {
+          scalar_type dist = it[k] - p.pos[k];
+          dist2 += dist * dist;
+        }
+        if (dist2 < p.dist2 || p.dist2 < scalar_type(0)){
+          *(p.ipt) = *itpt;
+          p.dist2 = dist2;
+        }
+      }
+    }
+  }
+
+  static void nearest_neighbor_main(const nearest_neighbor_data_& p,
+			            const kdtree_elt_base *t, unsigned dir) {
+    if (!t->isleaf()) {
+      const kdtree_node *tn = static_cast<const kdtree_node*>(t);
+      scalar_type dist = p.pos[dir] - tn->split_v;
+      if (dist <= scalar_type(0) && tn->left) {
+        nearest_neighbor_main(p, tn->left, unsigned((dir+1)%p.N));
+      } else if (dist > scalar_type(0) && tn->right) {
+        nearest_neighbor_main(p, tn->right, unsigned((dir+1)%p.N));
+      } else {
+        assert(false);  // FIXME
+      }
+      // check the possibility of points at the opposite side of the current
+      // tree node which are closer to pos as the current minimum distance
+      if ( dist * dist <= p.dist2 ) {
+        for (size_type k=0; k < p.N; ++k) p.vec_to_tree_elm[k] = 0.;
+        if (dist <= scalar_type(0) && tn->right) {
+          p.vec_to_tree_elm[dir] = -dist;
+          nearest_neighbor_assist(p, tn->right, unsigned((dir+1)%p.N));
+        } else if (dist > scalar_type(0) && tn->left) {
+          p.vec_to_tree_elm[dir] = dist;
+          nearest_neighbor_assist(p, tn->left, unsigned((dir+1)%p.N));
+        }
+      }
+    } else {
+      // find the nearest neighbor inside the leaf which contains pos
+      nearest_neighbor_assist(p, t, dir);
+    }
+  }
+
   void kdtree::clear_tree() {
     destroy_tree_(tree); tree = 0;
   }
@@ -187,5 +267,24 @@ namespace bgeot {
     p.bmin = bmin.const_begin(); p.bmax = bmax.const_begin();
     p.ipts = &ipts; p.N = N; 
     points_in_box_(p, tree, 0);
+  }
+
+   scalar_type kdtree::nearest_neighbor(index_node_pair &ipt,
+                                        const base_node &pos) {
+
+    ipt.i = -1;
+    if (tree == 0) {
+      tree = build_tree_(pts.begin(), pts.end(), 0);
+      if (!tree) return scalar_type(-1);
+    }
+    nearest_neighbor_data_ p;
+    p.pos = pos.const_begin();
+    p.ipt = &ipt;
+    p.N = N;
+    p.dist2 = scalar_type(-1);
+    base_node tmp(N);
+    p.vec_to_tree_elm = tmp.begin();
+    nearest_neighbor_main(p, tree, 0);
+    return p.dist2;
   }
 }
