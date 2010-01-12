@@ -824,7 +824,7 @@ At this level are defined the basic degrees of freedom. Some methods of the \get
 
 \subsection{Third level: the optional linear transformation (or reduction)}
 
-As described above, it is possible to provide two matrices, a reduction matrix $R$ and an extension matrix $E$ which will describe a linear transformation of the degrees of freedom. If $V$ is the vector of basic degrees of freedom, then $U=RV$ will be the vector of reduced degrees of freedom. Contrarily, given a vector $U$ of reduced dof, $V=EU$ will correspond to a vector of basic dof. In simle cases, $E$ will be simply the transpose of $R$. NOTE that every line of the extension matrix should be sparse. Otherwise, each assembled matrix will be plain !
+As described above, it is possible to provide two matrices, a reduction matrix $R$ and an extension matrix $E$ which will describe a linear transformation of the degrees of freedom. If $V$ is the vector of basic degrees of freedom, then $U=RV$ will be the vector of reduced degrees of freedom. Contrarily, given a vector $U$ of reduced dof, $V=EU$ will correspond to a vector of basic dof. In simple cases, $E$ will be simply the transpose of $R$. NOTE that every line of the extension matrix should be sparse. Otherwise, each assembled matrix will be plain !
 
 A natural condition is that $RE = I$ where $I$ is the identity matrix.
 
