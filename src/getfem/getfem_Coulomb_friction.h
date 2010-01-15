@@ -116,8 +116,8 @@ namespace getfem {
       range of acceptabe values (close to the Young modulus of the elastic
       body, see Getfem user documentation). The
       parameter `symmetrized` indicates that the symmetry of the tangent
-      matrix will be kept or not. Basically, this brick compute the matrix BN
-      and the vectors gap and alpha and call the basic contact brick.
+      matrix will be kept or not. Basically, this brick computes the matrix BN
+      and the vectors gap and alpha and calls the basic contact brick.
   */
   size_type add_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -145,8 +145,8 @@ namespace getfem {
       the friction coefficient. It could be a scalar or a vector of values
       representing the friction coefficient on each contact node.
       The parameter `symmetrized` indicates that the symmetry of the tangent
-      matrix will be kept or not. Basically, this brick compute the matrix BN
-      and the vectors gap and alpha and call the basic contact brick.
+      matrix will be kept or not. Basically, this brick computes the matrix BN
+      and the vectors gap and alpha and calls the basic contact brick.
   */
   size_type add_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -155,8 +155,30 @@ namespace getfem {
    size_type region, const std::string &obstacle, bool symmetrized); 
 
 
-  //  Add a frictionless contact condition between two faces of an elastic
-  //  body.
+  /** Add a frictionless contact condition between two faces of one or two
+      elastic bodies. The condition is applied on the variable `varname_u` or
+      the variables `varname_u1` and `varname_u2` depending on if a single or
+      two distinct displacement fields are given. Vectors `rg1` and `rg2`
+      contain pairs of regions expected to come in contact with each other. In
+      case of a single region per side, `rg1` and `rg2` can be given as normal
+      integers. In the single displacement variable case the regions defined in
+      both `rg1` and `rg2` refer to the variable `varname_u`. In the case of
+      two displacement variables, `rg1` refers to `varname_u1` and `rg2` refers
+      to `varname_u2`. `multname_n` should be a fixed size variable whose size
+      is the number of degrees of freedom on those regions among the ones
+      defined in `rg1` and `rg2` which are characterized as "slaves". It
+      represents the contact equivalent nodal forces. The augmentation
+      parameter `r` should be chosen in a range of acceptabe values (close to
+      the Young modulus of the elastic body, see Getfem user documentation).
+      The optional parameters `slave1` and `slave2` declare if the regions
+      defined in `rg1` and `rg2` are correspondingly considered as "slaves".
+      By default `slave1` is true and `slave2` is false, i.e. `rg1` contains
+      the slave surfaces, while 'rg2' the master surfaces. Preferrably only
+      one of `slave1` and `slave2` is set to true. The parameter `symmetrized`
+      indicates that the symmetry of the tangent matrix will be kept or not.
+      Basically, this brick computes the matrix BN and the vectors gap and
+      alpha and calls the basic contact brick.
+  */
   size_type add_frictionless_contact_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
@@ -201,6 +223,44 @@ namespace getfem {
       (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
+
+
+  /** Add a contact with friction condition between two faces of one or two
+      elastic bodies. The condition is applied on the variable `varname_u` or
+      the variables `varname_u1` and `varname_u2` depending on if a single or
+      two distinct displacement fields are given. Vectors `rg1` and `rg2`
+      contain pairs of regions expected to come in contact with each other. In
+      case of a single region per side, `rg1` and `rg2` can be given as normal
+      integers. In the single displacement variable case the regions defined in
+      both `rg1` and `rg2` refer to the variable `varname_u`. In the case of
+      two displacement variables, `rg1` refers to `varname_u1` and `rg2` refers
+      to `varname_u2`. `multname_n` should be a fixed size variable whose size
+      is the number of degrees of freedom on those regions among the ones
+      defined in `rg1` and `rg2` which are characterized as "slaves". It
+      represents the contact equivalent nodal normal forces. `multname_t`
+      should be a fixed size variable whose size corresponds to the size of
+      `multname_n` multiplied by qdim - 1 . It represents the contact
+      equivalent nodal tangent (frictional) forces. The augmentation parameter
+      `r` should be chosen in a range of acceptabe values (close to the Young
+      modulus of the elastic body, see Getfem user documentation). The friction
+      coefficient stored in the parameter `friction_coeff` is either a single
+      value or a vector of the same size as `multname_n`. The optional
+      parameters `slave1` and `slave2` declare if the regions defined in `rg1`
+      and `rg2` are correspondingly considered as "slaves". By default `slave1`
+      is true and `slave2` is false, i.e. `rg1` contains the slave surfaces,
+      while 'rg2' the master surfaces. Preferrably only one of `slave1` and
+      `slave2` is set to true. The parameter `symmetrized` indicates that the
+      symmetry of the tangent matrix will be kept or not.
+      Basically, this brick computes the matrix BN and the vectors gap and
+      alpha and calls the basic contact brick.
+  */
+  size_type add_contact_with_friction_brick
+  (model &md, const mesh_im &mim1, const mesh_im &mim2,
+   const std::string &varname_u1, const std::string &varname_u2,
+   std::string &multname_n, std::string &multname_t,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
+   bool slave1=true, bool slave2=false, bool symmetrized=false);
 
 
 //===========================================================================

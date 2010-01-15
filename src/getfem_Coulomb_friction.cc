@@ -77,6 +77,27 @@ namespace getfem {
     }
   }
 
+  // Computation of an orthonormal basis to a unit vector.
+  static void orthonormal_basis_to_unit_vec(size_type d, const base_node &un,
+                                            base_node *ut) {
+    size_type n = 0;
+    for (size_type k = 0; k <= d && n < d; ++k) {
+      gmm::resize(ut[n], d+1);
+      gmm::clear(ut[n]);
+      ut[n][k] = scalar_type(1);
+
+      ut[n] -= gmm::vect_sp(un, ut[n]) * un;
+      for (size_type nn = 0; nn < n; ++nn)
+        ut[n] -= gmm::vect_sp(ut[nn], ut[n]) * ut[nn];
+
+      if (gmm::vect_norm2(ut[n]) < 1e-3) continue;
+      ut[n] /= gmm::vect_norm2(ut[n]);
+      ++n;
+    }
+    GMM_ASSERT1(n == d, "Gram-Schmidt algorithm to find an "
+      "orthonormal basis for the tangential displacement failed");
+  }
+
   // "contact_node" is an object which contains data about nodes expected
   // to participate in a contact condition. A contact node refers to a
   // specific mesh_fem.
@@ -265,119 +286,147 @@ namespace getfem {
 
   scalar_type projection_on_convex_face
     (const mesh &m, const size_type cv, const short_type fc,
-     base_node &slave_node,
+     const base_node &master_node, const base_node &slave_node,
      base_node &un, base_node &proj_node, base_node &proj_node_ref) {
 
     bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-    size_type N = m.dim();
-    size_type P = pgt->structure()->dim();
-    size_type nb_pts_cv = pgt->nb_points();
-    size_type nb_pts_fc = pgt->structure()->nb_points_of_face(fc);
-    bgeot::convex_ind_ct ind_pts_fc = pgt->structure()->ind_points_of_face(fc);
-    ref_mesh_face_pt_ct pts_fc = m.points_of_face_of_convex(cv, fc);
-    ref_convex_pt_ct ref_pts_fc = pgt->convex_ref()->points_of_face(fc);
-    dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
-    GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
 
-    // Local base on reference face
-    std::vector<base_node> base_vecs_fc(P-1);
-    for (size_type i = 0; i < P-1; ++i)
-       base_vecs_fc[i] = dref_pts_fc[i+1] - dref_pts_fc[0];
+    if (pgt->is_linear()) {  //this condition is practically too strict
 
-    base_vector val(nb_pts_cv);
-    base_matrix pc_cv(nb_pts_cv, P);
-    base_matrix pc_fc(nb_pts_fc, P-1), G(N, nb_pts_fc);
-    base_matrix K(N,P-1), KK(N,P), B(N,P-1), BB(N,P), CS(P-1,P-1);
-    base_matrix base_mat_fc(P-1,N);
-    vectors_to_base_matrix(G, pts_fc);
-    vectors_to_base_matrix(K, base_vecs_fc);
-    gmm::copy(gmm::transposed(K),base_mat_fc);
-    gmm::clear(K);
+      un = m.normal_of_face_of_convex(cv,fc);
+      un /= gmm::vect_norm2(un);
+      //proj_node = slave_node - [(slave_node-master_node)*n] * n
+      gmm::add(master_node, gmm::scaled(slave_node, -1.), proj_node);
+      gmm::copy(gmm::scaled(un, gmm::vect_sp(proj_node, un)), proj_node);
+      gmm::add(slave_node, proj_node);
 
-    GMM_ASSERT1( slave_node.size() == N, "Dimensions mismatch");
-    base_node &xx = slave_node;
-    base_node &xxp = proj_node;  xxp.resize(N);
-    base_node &xp = proj_node_ref;  xp.resize(P);
-    base_node vres(P);
-    scalar_type res= 1.;
+      bgeot::geotrans_inv_convex gic;
+      gic.init(m.points_of_convex(cv), pgt);
+      gic.invert(proj_node, proj_node_ref);
+      return pgt->convex_ref()->is_in(proj_node_ref);
 
-    xp = gmm::mean_value(ref_pts_fc);
-    gmm::clear(xxp);
-    pgt->poly_vector_val(xp, val);
-    for (size_type l = 0; l < nb_pts_fc; ++l)
-      gmm::add(gmm::scaled(pts_fc[l], val[ ind_pts_fc[l] ] ), xxp);
+    } else {
 
-    scalar_type EPS = 10E-12;
-    unsigned cnt = 50;
-    while (res > EPS && --cnt) {
-      // computation of the pseudo inverse matrix B at point xp
-      pgt->poly_vector_grad(xp, pc_cv);                // Non-optimized
-      for (size_type i = 0; i < nb_pts_fc; ++i)        // computation
-        for (size_type j = 0; j < P-1; ++j)            // of pc_fc
-          pc_fc(i,j) = gmm::vect_sp(gmm::mat_row(pc_cv, ind_pts_fc[i]),
-                                    base_vecs_fc[j]);
-      gmm::mult(G,pc_fc,K);
-      gmm::mult(gmm::transposed(K), K, CS);
-      gmm::lu_inverse(CS);
-      gmm::mult(K, CS, B);
-      gmm::mult(B, base_mat_fc, BB);
+      size_type N = m.dim();
+      size_type P = pgt->structure()->dim();
+      size_type nb_pts_cv = pgt->nb_points();
+      size_type nb_pts_fc = pgt->structure()->nb_points_of_face(fc);
+      bgeot::convex_ind_ct ind_pts_fc = pgt->structure()->ind_points_of_face(fc);
+      ref_mesh_face_pt_ct pts_fc = m.points_of_face_of_convex(cv, fc);
+      ref_convex_pt_ct ref_pts_fc = pgt->convex_ref()->points_of_face(fc);
+      dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
+      GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
 
-      // Projection onto the face of convex
-      gmm::mult_add(gmm::transposed(BB), xx-xxp, xp);
+      // Local base on reference face
+      std::vector<base_node> base_vecs_fc(P-1);
+      for (size_type i = 0; i < P-1; ++i)
+        base_vecs_fc[i] = dref_pts_fc[i+1] - dref_pts_fc[0];
+
+      base_vector val(nb_pts_cv);
+      base_matrix pc_cv(nb_pts_cv, P);
+      base_matrix pc_fc(nb_pts_fc, P-1), G(N, nb_pts_fc);
+      base_matrix K(N,P-1), KK(N,P), B(N,P-1), BB(N,P), CS(P-1,P-1);
+      base_matrix base_mat_fc(P-1,N);
+      vectors_to_base_matrix(G, pts_fc);
+      vectors_to_base_matrix(K, base_vecs_fc);
+      gmm::copy(gmm::transposed(K),base_mat_fc);
+      gmm::clear(K);
+
+      GMM_ASSERT1( slave_node.size() == N, "Dimensions mismatch");
+      const base_node &xx = slave_node;
+      base_node &xxp = proj_node;  xxp.resize(N);
+      base_node &xp = proj_node_ref;  xp.resize(P);
+      base_node vres(P);
+      scalar_type res= 1.;
+
+      xp = gmm::mean_value(ref_pts_fc);
       gmm::clear(xxp);
       pgt->poly_vector_val(xp, val);
       for (size_type l = 0; l < nb_pts_fc; ++l)
-        gmm::add(gmm::scaled(pts_fc[l], val[ind_pts_fc[l]]), xxp);
+        gmm::add(gmm::scaled(pts_fc[l], val[ ind_pts_fc[l] ] ), xxp);
 
-      gmm::mult(gmm::transposed(BB), xx - xxp, vres);
-      res = gmm::vect_norm2(vres);
-    }
-    GMM_ASSERT1( res <= EPS,
-                "Iterative pojection on convex face did not converge");
+      scalar_type EPS = 10E-12;
+      unsigned cnt = 50;
+      while (res > EPS && --cnt) {
+        // computation of the pseudo inverse matrix B at point xp
+        pgt->poly_vector_grad(xp, pc_cv);                // Non-optimized
+        for (size_type i = 0; i < nb_pts_fc; ++i)        // computation
+          for (size_type j = 0; j < P-1; ++j)            // of pc_fc
+            pc_fc(i,j) = gmm::vect_sp(gmm::mat_row(pc_cv, ind_pts_fc[i]),
+                                      base_vecs_fc[j]);
+        gmm::mult(G,pc_fc,K);
+        gmm::mult(gmm::transposed(K), K, CS);
+        gmm::lu_inverse(CS);
+        gmm::mult(K, CS, B);
+        gmm::mult(B, base_mat_fc, BB);
 
-    // computation of normal vector
-    un.resize(N);
+        // Projection onto the face of convex
+        gmm::mult_add(gmm::transposed(BB), xx-xxp, xp);
+        gmm::clear(xxp);
+        pgt->poly_vector_val(xp, val);
+        for (size_type l = 0; l < nb_pts_fc; ++l)
+          gmm::add(gmm::scaled(pts_fc[l], val[ind_pts_fc[l]]), xxp);
+
+        gmm::mult(gmm::transposed(BB), xx - xxp, vres);
+        res = gmm::vect_norm2(vres);
+      }
+      GMM_ASSERT1( res <= EPS,
+                  "Iterative pojection on convex face did not converge");
+
+      // computation of normal vector
+      un.resize(N);
 //    un = xx - xxp;
 //    gmm::scale(un, 1/gmm::vect_norm2(un));
 
-    gmm::clear(un);
-    gmm::sub_index SUB_PTS_FC = gmm::sub_index(ind_pts_fc);
-    gmm::mult(G, gmm::sub_matrix(pc_cv, SUB_PTS_FC, gmm::sub_interval(0, P)), KK);
-    base_matrix bases_product(P-1, P);
-    gmm::mult(gmm::transposed(K), KK, bases_product);
-    for (size_type i = 0; i < P; ++i) {
-      std::vector<size_type> ind(0);
-      for (size_type j = 0; j < P; ++j)
-        if (j != i ) ind.push_back(j);
-      scalar_type
-        det = gmm::lu_det(gmm::sub_matrix(bases_product,
-                                          gmm::sub_interval(0, P-1),
-                                          gmm::sub_index(ind)       ) );
-      gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ), un);
+      gmm::clear(un);
+      gmm::sub_index SUB_PTS_FC = gmm::sub_index(ind_pts_fc);
+      gmm::mult(G, gmm::sub_matrix(pc_cv, SUB_PTS_FC, gmm::sub_interval(0, P)), KK);
+      base_matrix bases_product(P-1, P);
+      gmm::mult(gmm::transposed(K), KK, bases_product);
+      for (size_type i = 0; i < P; ++i) {
+        std::vector<size_type> ind(0);
+        for (size_type j = 0; j < P; ++j)
+          if (j != i ) ind.push_back(j);
+        scalar_type
+          det = gmm::lu_det(gmm::sub_matrix(bases_product,
+                                            gmm::sub_interval(0, P-1),
+                                            gmm::sub_index(ind)       ) );
+        gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ), un);
+      }
+      gmm::scale(un, 1/gmm::vect_norm2(un));
+
+      if (gmm::vect_sp(un, gmm::mean_value(pts_fc) -
+                           gmm::mean_value(m.points_of_convex(cv))) < 0)
+        gmm::scale(un,scalar_type(-1));
+
+      return pgt->convex_ref()->is_in(proj_node_ref);
     }
-    gmm::scale(un, 1/gmm::vect_norm2(un));
-
-    if (gmm::vect_sp(un, gmm::mean_value(pts_fc) -
-                         gmm::mean_value(m.points_of_convex(cv))) < 0)
-      gmm::scale(un,scalar_type(-1));
-
-    return pgt->convex_ref()->is_in(proj_node_ref);
   }
 
-  void calculate_contact_matrices
+  void compute_contact_matrices
          (const mesh_fem &mf_disp1, const mesh_fem &mf_disp2,
           contact_node_pair_list &cnpl, model_real_plain_vector &gap,
-          CONTACT_B_MATRIX &BN1, CONTACT_B_MATRIX &BN2) {
+          CONTACT_B_MATRIX *BN1, CONTACT_B_MATRIX *BN2 = 0,
+          CONTACT_B_MATRIX *BT1 = 0, CONTACT_B_MATRIX *BT2 = 0) {
 
+    GMM_ASSERT1(gmm::vect_size(gap) == cnpl.size(),
+                "Wrong number of contact node pairs or wrong size of gap");
+    gmm::clear(*BN1);
+    GMM_ASSERT1( gmm::mat_nrows(*BN1) == cnpl.size(), "Wrong size of BN1");
+    if (BN2) {
+      gmm::clear(*BN2);
+      GMM_ASSERT1( gmm::mat_nrows(*BN2) == cnpl.size(), "Wrong size of BN2");
+    }
     dim_type qdim = mf_disp1.get_qdim();
-    GMM_ASSERT1(qdim == mf_disp2.get_qdim(),
-                "The given mesh_fem's should have the same qdim");
-    GMM_ASSERT1(   gmm::vect_size(gap) == cnpl.size()
-                && gmm::mat_nrows(BN1) == cnpl.size()
-                && gmm::mat_nrows(BN2) == cnpl.size(),
-                "Wrong number of contact node pairs or wrong size of gap, BN");
-    gmm::clear(BN1);
-    if (&BN1 != &BN2) gmm::clear(BN2);
+    size_type d = qdim - 1;
+    if (BT1) {
+      gmm::clear(*BT1);
+      GMM_ASSERT1( gmm::mat_nrows(*BT1) == cnpl.size() * d, "Wrong size of BT1");
+    }
+    if (BT2) {
+      gmm::clear(*BT2);
+      GMM_ASSERT1( gmm::mat_nrows(*BT2) == cnpl.size() * d, "Wrong size of BT2");
+    }
     gmm::fill(gap, scalar_type(10));  //FIXME: Needs a threshold value
     for (size_type row = 0; row < cnpl.size(); ++row) {
       contact_node_pair *cnp = &cnpl[row];
@@ -396,7 +445,7 @@ namespace getfem {
              cv != cn_m->cvs.end() && fc != cn_m->fcs.end(); cv++, fc++) {
           base_node un(3), proj_node(3), proj_node_ref(3);
           scalar_type is_in = projection_on_convex_face
-            (mesh_m, *cv, *fc, slave_node, un, proj_node, proj_node_ref);
+            (mesh_m, *cv, *fc, master_node, slave_node, un, proj_node, proj_node_ref);
           if (is_in < is_in_min) {
             is_in_min = is_in;
             cv_sel = *cv;
@@ -409,25 +458,35 @@ namespace getfem {
         if (is_in_min < 0.05) {  //FIXME
           gap[row] = gmm::vect_sp(slave_node-proj_node_sel, un_sel);
 
+          base_node ut[3];
+          if (BT1) orthonormal_basis_to_unit_vec(d, un_sel, ut);
+
           CONTACT_B_MATRIX *BN = 0;
+          CONTACT_B_MATRIX *BT = 0;
           if (cn_s->mf == &mf_disp1) {
-            BN = &BN1;
+            BN = BN1;
+            BT = BT1;
           } else if (cn_s->mf == &mf_disp2) {
-            BN = &BN2;
+            BN = BN2;
+            BT = BT2;
           }
-          if (BN) {
-            (*BN)(row, cn_s->dof)   += -un_sel[0];
-            (*BN)(row, cn_s->dof+1) += -un_sel[1];
-            (*BN)(row, cn_s->dof+2) += -un_sel[2];
-          }
+          if (BN)
+            for (size_type k = 0; k <= d; ++k)
+              (*BN)(row, cn_s->dof + k) -= un_sel[k];
+          if (BT)
+            for (size_type k = 0; k <= d; ++k)
+              for (size_type n = 0; n < d; ++n)
+                (*BT)(row * d + n, cn_s->dof + k) -= ut[n][k];
 
           BN = 0;
           const mesh_fem *mf_disp = 0;
           if (cn_m->mf == &mf_disp1) {
-            BN = &BN1;
+            BN = BN1;
+            BT = BT1;
             mf_disp = &mf_disp1;
           } else if (cn_m->mf == &mf_disp2) {
-            BN = &BN2;
+            BN = BN2;
+            BT = BT2;
             mf_disp = &mf_disp2;
           }
           if (BN) {
@@ -440,21 +499,28 @@ namespace getfem {
               ctx(pgt, pf, proj_node_ref_sel, G, cv_sel, fc_sel);
             pf->interpolation (ctx, M, qdim);
 
-            model_real_plain_vector tmpvec(mf_disp->nb_basic_dof_of_element(cv_sel));
-            gmm::mult(gmm::transposed(M), un_sel, tmpvec);
+            mesh_fem::ind_dof_ct
+              master_dofs = mf_disp->ind_basic_dof_of_element(cv_sel);
 
-            mesh_fem::ind_dof_ct master_dof = mf_disp->ind_basic_dof_of_element(cv_sel);
-            size_type j = 0;
-            for (mesh_fem::ind_dof_ct::const_iterator it = master_dof.begin();
-                 it != master_dof.end(); it++, j++) {
-              (*BN)(row, *it) += tmpvec[j];
+            model_real_plain_vector MT_u(mf_disp->nb_basic_dof_of_element(cv_sel));
+            gmm::mult(gmm::transposed(M), un_sel, MT_u);
+            for (size_type j = 0; j < master_dofs.size(); ++j)
+              (*BN)(row, master_dofs[j]) += MT_u[j];
+
+            if (BT) {
+              for (size_type n = 0; n < d; ++n) {
+                gmm::mult(gmm::transposed(M), ut[n], MT_u);
+                for (size_type j = 0; j < master_dofs.size(); ++j)
+                  (*BT)(row * d + n, master_dofs[j]) += MT_u[j];
+              }
             }
-          }
+          } // BN
+
         }
       } // if:cnp->cn_s
     } // cnp
 
-  } // calculate_contact_matrices
+  } // compute_contact_matrices
 
 
 
@@ -1079,24 +1145,8 @@ namespace getfem {
               
               // computation of BT
               if (!contact_only) {
-                
-                // Computation of an orthonormal basis to un.
-                size_type n = 0;
-                for (size_type k = 0; k <= d && n < d; ++k) {
-                  gmm::resize(ut[n], d+1);
-                  gmm::clear(ut[n]);
-                  ut[n][k] = scalar_type(1);
-                  
-                  ut[n] -= gmm::vect_sp(un, ut[n]) * un;
-                  for (size_type nn = 0; nn < n; ++nn)
-                    ut[n] -= gmm::vect_sp(ut[nn], ut[n]) * ut[nn];
-                  
-                  if (gmm::vect_norm2(ut[n]) < 1e-3) continue;
-                  ut[n] /= gmm::vect_norm2(ut[n]);
-                  ++n;
-                }
-                GMM_ASSERT1(n == d, "Gram-Schmidt algorithm to find an "
-                  "orthonormal basis for the tangential displacement failed");
+
+                orthonormal_basis_to_unit_vec(d, un, ut);
                 
                 for (size_type k = 0; k <= d; ++k)
                   for (size_type nn = 0; nn < d; ++nn)
@@ -1235,24 +1285,14 @@ namespace getfem {
   }
 
 
-
-
-
-
-
-
-  // Experimental brick including gap, BN, BT calculation
-  // To be done:
-  // - Calculation of BT
-  // - Large deformations: what happens when cnpl and nbc change during
-  //   the iterative solution?
-
   //=========================================================================
   //
   //  Brick with elastic bodies (one or two bodies, build BN, BT, Gap, alpha)
   //
   //=========================================================================
-
+  // To be done:
+  // - Large deformations: what happens when cnpl and nbc change during
+  //   the iterative solution?
 
   struct Coulomb_friction_brick_nonmatching_meshes
     : public Coulomb_friction_brick {
@@ -1281,25 +1321,37 @@ namespace getfem {
 
       // Variables
       // Without friction and one displacement  : u1, lambda_n
-      // With friction and one displacement     : u1, lambda_n, lambda_t      //FIXME: to be done
+      // With friction and one displacement     : u1, lambda_n, lambda_t
       // Without friction and two displacements : u1, u2, lambda_n
-      // With friction and two displacements    : u1, u2, lambda_n, lambda_t  //FIXME: to be done
+      // With friction and two displacements    : u1, u2, lambda_n, lambda_t
       size_type nv = 0;
-      std::string varname_u1 = vl[nv++];
+      std::string varname_u1 = vl[nv];
       const model_real_plain_vector &u1 = md.real_variable(varname_u1);
       const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);
-      if (!two_variables) nv--;
+      if (two_variables) nv++;
       std::string varname_u2 = vl[nv++];
       const model_real_plain_vector &u2 = md.real_variable(varname_u2);
       const mesh_fem &mf_u2 = md.mesh_fem_of_variable(varname_u2);
       const model_real_plain_vector &lambda_n = md.real_variable(vl[nv]);
+      if (!contact_only) nv++;
+      const model_real_plain_vector &lambda_t = md.real_variable(vl[nv]);
 
       size_type nbc = lambda_n.size();
 
-      // Parameters (order: r, ...)
+      // Parameters (order: r, friction_coeff)
       const model_real_plain_vector &vr = md.real_variable(dl[0]);
       GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
       r = vr[0];
+      if (!contact_only) {
+        const model_real_plain_vector &vfr = md.real_variable(dl[1]);
+        GMM_ASSERT1(gmm::vect_size(vfr)==1 || gmm::vect_size(vfr) == nbc,
+                    "Parameter friction_coeff has a wrong size");
+        gmm::resize(friction_coeff, nbc);
+        if (gmm::vect_size(vfr) == 1)
+          gmm::fill(friction_coeff, vfr[0]);
+        else
+          gmm::copy(vfr, friction_coeff);
+      }
 
       // Computation of BN, BT, gap and alpha
       if (  md.is_var_mf_newer_than_brick(varname_u1, ib)
@@ -1323,11 +1375,28 @@ namespace getfem {
           cnpl.append_min_dist_cn_pairs
                  (mf_u1, mf_u2, rg1[it], rg2[it], slave1, slave2);
 
-        // Computation of gap and BN
+        // Computation of gap, BN and BT
         gmm::resize(gap, nbc);
         gmm::resize(BN1, nbc, mf_u1.nb_dof());
-        if (&BN1 != &BN2)  gmm::resize(BN2, nbc, mf_u2.nb_dof());
-        calculate_contact_matrices(mf_u1, mf_u2, cnpl, gap, BN1, BN2);
+        if (contact_only) {
+          if (!two_variables) {
+            compute_contact_matrices(mf_u1, mf_u2, cnpl, gap, &BN1);
+          } else {
+            gmm::resize(BN2, nbc, mf_u2.nb_dof());
+            compute_contact_matrices(mf_u1, mf_u2, cnpl, gap, &BN1, &BN2);
+          }
+        } else {
+          size_type d = mf_u1.get_qdim() - 1;
+          gmm::resize(BT1, nbc * d, mf_u1.nb_dof());
+          if (!two_variables) {
+            compute_contact_matrices(mf_u1, mf_u2, cnpl, gap, &BN1,    0, &BT1);
+          } else {
+            // d == mf_u2.get_qdim() - 1;
+            gmm::resize(BN2, nbc, mf_u2.nb_dof());
+            gmm::resize(BT2, nbc * d, mf_u2.nb_dof());
+            compute_contact_matrices(mf_u1, mf_u2, cnpl, gap, &BN1, &BN2, &BT1, &BT2);
+          }
+        }
 
         // computation of alpha vector.
         scalar_type l = scalar_type(0);
@@ -1338,7 +1407,6 @@ namespace getfem {
           for (size_type j = 0; j < Pmin.size(); ++j)
             l = std::max(l, gmm::abs(Pmax[j] - Pmin[j]));
         }
-
         CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
         gmm::resize(alpha, nbc);
         size_type mult_id = 0;
@@ -1358,10 +1426,9 @@ namespace getfem {
         }
       }
 
-      const model_real_plain_vector dummy_lambda_t, dummy_wt;
+      const model_real_plain_vector dummy_wt;
       basic_asm_real_tangent_terms
-        (u1, u2, lambda_n, dummy_lambda_t, dummy_wt, dummy_wt,
-         matl, vecl, version);
+        (u1, u2, lambda_n, lambda_t, dummy_wt, dummy_wt, matl, vecl, version);
     }
 
     Coulomb_friction_brick_nonmatching_meshes
@@ -1375,9 +1442,10 @@ namespace getfem {
 
 
   //=========================================================================
-  //  Add a frictionless contact condition between two faces of an elastic
-  //  body (one displacement field).
+  //  Add a frictionless contact condition between two faces of one or two
+  //  elastic bodies.
   //=========================================================================
+
   size_type add_frictionless_contact_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
@@ -1405,9 +1473,8 @@ namespace getfem {
       }
     }
 
-    if (multname_n.size() == 0) {
+    if (multname_n.size() == 0)
       multname_n = md.new_name("contact_multiplier");
-    }
     // FIXME: Assert multname_n is not defined already in md
     md.add_fixed_size_variable(multname_n, nbc);
 
@@ -1433,6 +1500,91 @@ namespace getfem {
     // Parameters (order: r, ...)
     model::varnamelist dl;
     dl.push_back(dataname_r);
+
+    model::mimlist ml;
+    ml.push_back(&mim1);
+    ml.push_back(&mim2);
+
+    return md.add_brick(pbr, vl, dl, tl, ml, size_type(-1));
+  }
+
+
+  //=========================================================================
+  //  Add a contact with friction condition between two faces of one or two
+  //  elastic bodies.
+  //=========================================================================
+
+  size_type add_contact_with_friction_brick
+  (model &md, const mesh_im &mim1, const mesh_im &mim2,
+   const std::string &varname_u1, const std::string &varname_u2,
+   std::string &multname_n, std::string &multname_t,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
+   bool slave1, bool slave2, bool symmetrized) {
+
+    bool two_variables = (varname_u1.compare(varname_u2) != 0);
+
+    pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
+           (symmetrized, false, two_variables, rg1, rg2, slave1, slave2);
+
+    // Calculate multipliers size
+    const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);
+    const mesh_fem &mf_u2 = md.mesh_fem_of_variable(varname_u2);
+    size_type nbc = 0;
+    for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
+      for (size_type swap = 0; swap <= 1; ++swap) {
+        if (swap ? slave2 : slave1) {
+          const mesh_fem &mf = swap ? mf_u2 : mf_u1;
+          size_type rg = swap ? rg2[it] : rg1[it];
+          dal::bit_vector rg_dofs = mf.basic_dof_on_region(rg);
+          nbc += rg_dofs.card() / mf.get_qdim();
+        }
+      }
+    }
+
+    if (multname_n.size() == 0)
+      multname_n = md.new_name("contact_normal_multiplier");
+    // FIXME: Assert multname_n is not defined already in md
+    md.add_fixed_size_variable(multname_n, nbc);
+    if (multname_t.size() == 0)
+      multname_t = md.new_name("contact_tangent_multiplier");
+    // FIXME: Assert multname_t is not defined already in md
+    md.add_fixed_size_variable(multname_t, nbc * (mf_u1.get_qdim() - 1) ); // ??
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u1, varname_u1, false));
+    if (two_variables) {
+      tl.push_back(model::term_description(varname_u2, varname_u2, false));
+    }
+
+    tl.push_back(model::term_description(varname_u1, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u1, false));
+    if (two_variables) {
+      tl.push_back(model::term_description(varname_u2, multname_n, false));
+      tl.push_back(model::term_description(multname_n, varname_u2, false));
+    }
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+
+    tl.push_back(model::term_description(varname_u1, multname_t, false));
+    tl.push_back(model::term_description(multname_t, varname_u1, false));
+    if (two_variables) {
+      tl.push_back(model::term_description(varname_u2, multname_t, false));
+      tl.push_back(model::term_description(multname_t, varname_u2, false));
+    }
+    tl.push_back(model::term_description(multname_t, multname_t, false));
+    tl.push_back(model::term_description(multname_t, multname_n, false));
+
+    // Variables (order: varname_u, multname_n, multname_t)
+    model::varnamelist vl;
+    vl.push_back(varname_u1);
+    if (two_variables) vl.push_back(varname_u2);
+    vl.push_back(multname_n);
+    vl.push_back(multname_t);
+
+    // Parameters (order: r, friction_coeff)
+    model::varnamelist dl;
+    dl.push_back(dataname_r);
+    dl.push_back(dataname_friction_coeff);
 
     model::mimlist ml;
     ml.push_back(&mim1);
