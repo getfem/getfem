@@ -995,13 +995,25 @@ int main(int argc, char *argv[]) {
   getfem::mesh_im mim_refined(mcut_refined); 
   mim_refined.set_integration_method(getfem::int_method_descriptor
 				     ("IM_TRIANGLE(6)"));
+  mcut.write_to_file(p.datafilename + ".meshvm");
   
   getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
   mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
   plain_vector W(mf_refined.nb_dof());
-  
+
   getfem::interpolation(p.mf_u(), mf_refined, U, W);
+  mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
+  gmm::vecsave(p.datafilename + ".Uvm", W);
   
+  getfem::mesh_fem mf_vm(mcut,  1);
+  mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
+  plain_vector Vm(mf_vm.nb_dof());
+ 
+  cout << "compute Von_mises" << endl;
+  getfem::interpolation_von_mises(mf_refined, mf_vm, W, Vm);
+
+  gmm::vecsave(p.datafilename + ".VM",Vm);
+  mf_vm.write_to_file(p.datafilename + ".meshfemvm", true); 
   
   if (p.PARAM.int_value("VTK_EXPORT")) {
     getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
