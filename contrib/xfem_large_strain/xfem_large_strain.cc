@@ -1005,8 +1005,8 @@ int main(int argc, char *argv[]) {
   mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
   gmm::vecsave(p.datafilename + ".Uvm", W);
   
-  getfem::mesh_fem mf_vm(mcut,  1);
-  mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
+  getfem::mesh_fem mf_vm(mcut_refined,  1);
+  mf_vm.set_classical_discontinuous_finite_element(1, 0.001);
   plain_vector Vm(mf_vm.nb_dof());
  
   cout << "compute Von_mises" << endl;
