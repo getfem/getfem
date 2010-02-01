@@ -3,41 +3,36 @@
   <div id="content">
     <div style="text-align:center;"><img src="images/logo_getfem.png" alt="the Getfem++ logo"></div>
     <h1>What is Getfem++</h1>
-    <p>The Getfem++ project focuses on the development of a generic and
-      efficient C++ library for finite element methods. The
-      goal is to provide a library allowing the computation of any elementary
-      matrix (even for mixed finite element methods) on the largest class of
-      methods and elements, and for arbitrary dimension
-      (i.e. not only 2D and 3D problems). 
-    </p>
-    <p>
-      It offers a complete separation between integration methods
-      (exact or approximated), <span class="popup"
-      title="transformation from the reference element to the real element">geometric transformations</span> (linear or not) and
-      finite element methods of arbitrary degrees. It can really
-      relieve a more integrated finite element code of technical
-      difficulties of elementary computations.
-    </p>
-    <p>
-      Examples of available finite element method are : Pk on simplices in
-      arbitrary degrees and dimensions, Qk on parallelepipeds, P1, P2 with
-				       bubble functions, Hermite elements, Argyris element, elements with hierarchic basis
-				       (for multigrid methods for instance), discontinuous Pk or Qk, XFem, vectorial elements (RT0, Nedelec) ...
-    </p>
-    <p>
-      The addition of a new finite element method is
-      relatively easy. Its description on the 
-      reference element must be provided (in most of
-      the cases, this is the description of the basis functions, and
-      nothing more).  Extensions are provided for Hermite elements,
-      piecewise polynomial, non-polynomial, vectorial elements and XFem.
-    </p>
-    <p>
-      The library also includes the usual tools for finite
-      elements such as assembly procedures for classical PDEs,
-				       interpolation methods, computation of norms, mesh operations (including automatic refinement), boundary
-      conditions, post-processing tools such as extraction of slices from a mesh ... 
-    </p>
+
+    <p>The Getfem++ project focuses on the development of a generic C++
+       finite element library which aims to offer the widest range of
+       finite element methods and elementary matrix computations for
+       the approximation of linear or non-linear problems, possibly
+       in hybrid form and possibly coupled. The dimension of the problem
+       is arbitrary and may be a parameter of the problem. Getfem++ offers
+       a description of models in the form of bricks whose objective is to
+       enable reusability of the approximations made. The system of bricks,
+       now mature, is used to assemble components such as standard models
+       (elasticity in small and large deformations, Helmholtz problem,
+       scalar elliptic problem ...) to components representing the
+       boundary conditions (Neumann, Dirichlet, Fourier-Robin, contact,
+       friction...), also to components representing constraints
+       (incompressibility, removing rigid motions ...) and to coupling
+       components for coupled models.</p>
+
+
+    <p>Two strong points of Getfem++ are structural mechanics (in particular contact mechanics) and taking into account discontinuities by fictitious domain methods of XFEM type (eg cracking).</p>
+
+    <p>It is proposed three interfaces (with Scilab, Matlab and Python) that allow to use of the main features of the software without the need of C++ programming and allowing graphical post-processing.</p>
+
+    <p>Getfem++ offers a complete separation between the integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degree. The library can help to write more integrated finite element codes in relieving the basic technical calculations.</p>
+
+    <p>Examples of families of finite elements available are: Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, P1, P2 with bubble functions,
+ Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, XFEM methods, vector elements (RT0, Nédélec) ...</p>
+
+    <p>The addition of a new finite element method is relatively easy. A description on the reference element must be provided (in most cases it is the description of the basic functions and nothing more). Extensions are provided to describe Hermite elements, piecewise polynomial or non-polynomial elements, vector elements and XFEM.</p>
+
+    <p>The library also includes the usual tools for finite elements such as assembly procedures for classical PDEs, interpolation methods, the calculation of norms, mesh operations (including automatic refinement), management of boundary conditions, post-treatment with a tool to make arbitrary cuts ...</p>
 
     <p>
       Getfem++ can be used to build very general finite elements
@@ -47,6 +42,7 @@
       experimentations. Several examples are provided (see the <a
       href="shots.html">screenshot section</a>).
     </p>
+
 
     <p>
       Getfem++ has no meshing capabilities (apart regular meshes and a small attempt),
@@ -86,7 +82,13 @@
 
       A <a href="http://www.python.org">python</a> interface is also
       available, it is very similar to the Matlab one. Coming soon:
-      the graphical fpost_processing unctions with tvtk.
+      the graphical post_processing unctions with tvtk.
+
+    <h1>Scilab interface</h1>
+
+      A <a href="http://www.scilab.org">scilab</a> interface has also
+      more recently been developped. It is also very similar to the
+      Matlab one and in particular offers the same graphical capabilities.
 
     <h1>Awards</h1>
       
