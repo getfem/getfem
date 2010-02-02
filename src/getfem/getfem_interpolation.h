@@ -489,8 +489,8 @@ namespace getfem {
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		       const VECTU &U, VECTV &VV, MAT &MM,
-		       int version, int extrapolation = 0,
-		       double EPS = 1E-10) {
+		       int version, int extrapolation,
+		       double EPS) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
