@@ -8,7 +8,7 @@
 
 N = 2;
 T = 0.8;
-DT = 0.0003125;            % Time step
+DT = 0.001;            % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 % NX = 100;            	          % space step.
@@ -25,7 +25,7 @@ SCHEME = 1;             % 0 = Backward Euler
 			% 1 = Midpoint
 
 if (N == 2)
-  MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[1,1];NSUBDIV=[160,160]';
+  MESHNAME='structured:GT="GT_PK(2,1)";SIZES=[1,1];NSUBDIV=[80,80]';
   %%%%% disque en P2 %%%%%
   % MESHNAME='../../tests/meshes/disc_P2_h11.mesh';
   % FEM_TYPE_U = 'FEM_PK(2, 2)';     % FEM for the displacement U
