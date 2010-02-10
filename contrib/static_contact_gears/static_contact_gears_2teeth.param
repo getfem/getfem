@@ -10,6 +10,8 @@ ROT_ANGLE = -1.5E-2;  % Rotation angle of the first gear (in radians)
 
 RESIDUAL = 1E-6;      % residual for Newton
 
+FRICTION_COEFFICIENT = 0.0E+0;       % friction coefficient
+
 MESHNAME_GEAR1 = 'gmsh:./gear1_2teeth.msh'; % Meshes for gears 1 and 2
 MESHNAME_GEAR2 = 'gmsh:./gear2_2teeth.msh'; %
 CONTACT_FACES_1 = [113,213];

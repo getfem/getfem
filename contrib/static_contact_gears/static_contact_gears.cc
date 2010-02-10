@@ -51,9 +51,12 @@ struct elastostatic_contact_problem {
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   scalar_type rot_angle;     /* rotation angle of the pinion gear            */
+  scalar_type frict_coeff;   /* friction coefficient                         */
 //scalar_type threshold;     /* threshold distance for contact finding       */
 
   size_type N;               /* dimension of the problem                     */
+
+  bool frictionless;         /* flag for frictionless model                  */
 
   // Vectors holding the ids of mesh region pairs expected to come in contact
   // with each other
@@ -86,12 +89,7 @@ void elastostatic_contact_problem::init(void) {
                                               "Mesh filename for the 2nd gear");
   size_type nb_cf_pairs;
   for (size_type swap = 0; swap <= 1; swap++) {
-    getfem::mesh tmpmesh;
-    getfem::mesh_region contact_boundary, dirichlet_boundary;
-    dirichlet_boundary
-      = mesh.region(swap ? DIRICHLET_BOUNDARY_2 : DIRICHLET_BOUNDARY_1);
     std::vector<size_type> &cb_rgs = swap ? cb_rgs2 : cb_rgs1;
-    getfem::import_mesh(swap ? meshname_2 : meshname_1, tmpmesh);
     // Contact faces
     const std::vector<bgeot::md_param::param_value> &cf_params
       = PARAM.array_value( swap ? "CONTACT_FACES_2" : "CONTACT_FACES_1" );
@@ -117,11 +115,37 @@ void elastostatic_contact_problem::init(void) {
                    << " should be an integer array.");
       dfs[i] = size_type(df_params[i].real()+0.5);
     }
+
+    getfem::mesh tmpmesh;
+    getfem::import_mesh(swap ? meshname_2 : meshname_1, tmpmesh);
+
+    N = tmpmesh.dim();
+    base_node Pmin(N), Pmax(N);
+    tmpmesh.bounding_box(Pmin, Pmax);
+    bool reduce_dim = false;
+    if (gmm::abs(Pmax[N-1] - Pmin[N-1]) < 1.E-10) reduce_dim = true;
+
+    getfem::mesh_region dirichlet_boundary =
+      mesh.region(swap ? DIRICHLET_BOUNDARY_2 : DIRICHLET_BOUNDARY_1);
+
     // Add convexes to the main mesh
     for (dal::bv_visitor cv(tmpmesh.convex_index()); !cv.finished(); ++cv) {
-      size_type newcv =
-        mesh.add_convex_by_points(tmpmesh.trans_of_convex(cv),
-                                  tmpmesh.points_of_convex(cv).begin());
+      size_type newcv;
+      if (reduce_dim) {
+        std::vector<base_node> pt_tab;
+        for (size_type i=0; i < tmpmesh.nb_points_of_convex(cv); ++i) {
+          base_node PP = tmpmesh.points_of_convex(cv)[i];
+          base_node P(N-1);
+          for (size_type j=0; j < N-1; ++j) P[j] = PP[j];
+          pt_tab.push_back(P);
+        }
+        newcv =
+          mesh.add_convex_by_points(tmpmesh.trans_of_convex(cv), pt_tab.begin());
+      } else {
+        newcv =
+          mesh.add_convex_by_points(tmpmesh.trans_of_convex(cv),
+                                    tmpmesh.points_of_convex(cv).begin());
+      }
       for (size_type f = 0; f < tmpmesh.structure_of_convex(cv)->nb_faces(); f++) {
         for (size_type i = 0; i < dfs.size(); ++i)
           if (tmpmesh.region(dfs[i]).is_in(cv,f)) {
@@ -144,7 +168,10 @@ void elastostatic_contact_problem::init(void) {
   if (residual == 0.) residual = 1e-10;
 
   rot_angle = PARAM.real_value("ROT_ANGLE", "Rotation angle of the first gear");
-//  threshold = 10.;
+  frict_coeff = PARAM.real_value("FRICTION_COEFFICIENT", "Friction coefficient");
+  if (frict_coeff == 0.) frictionless = true;
+  else frictionless = false;
+//  threshold = 10.;  //FIXME
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -193,9 +220,17 @@ bool elastostatic_contact_problem::solve() {
   std::string dataname_r="r";
   md.add_initialized_scalar_data
     (dataname_r, mu * (3*lambda + 2*mu) / (lambda + mu) );  // r ~= Young modulus
-  std::string multname_n;
-  getfem::add_frictionless_contact_brick
-    (md, mim, varname_u, multname_n, dataname_r, cb_rgs1, cb_rgs2);
+  std::string multname_n, multname_t;
+  if (frictionless) {
+    getfem::add_frictionless_contact_brick
+      (md, mim, varname_u, multname_n, dataname_r, cb_rgs1, cb_rgs2);
+  } else {
+    std::string dataname_frict_coeff="friction_coefficient";
+    md.add_initialized_scalar_data(dataname_frict_coeff, frict_coeff);
+    getfem::add_contact_with_friction_brick
+      (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
+       dataname_r, dataname_frict_coeff, cb_rgs1, cb_rgs2);
+  }
 
   // Defining the DIRICHLET condition.
   plain_vector F(nb_dof_rhs * N);
@@ -215,12 +250,7 @@ bool elastostatic_contact_problem::solve() {
   getfem::add_Dirichlet_condition_with_multipliers
     (md, mim, "u", mf_u, DIRICHLET_BOUNDARY_2, "DirichletData2");
 
-  // Defining the surface pressure term for the NEUMANN boundary.
-//  base_vector f(N);
-//  for (size_type i = 0; i < nb_dof_rhs; ++i) {
-//    gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-//  }
-//  getfem::mdbrick_source_term<> NEUMANN(FRICTION, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
+  cout << "md.nb_dof()   :" << md.nb_dof() << endl;
 
   gmm::iteration iter(residual, 1, 40000);
 
@@ -229,11 +259,16 @@ bool elastostatic_contact_problem::solve() {
 
   if (!iter.converged()) return false; // Solution has not converged
 
+  plain_vector VM(mf_rhs.nb_dof());
+  getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
+      (md, "u", "lambda", "mu", mf_rhs, VM, false);
+
   // Prepare results
   plain_vector U(mf_u.nb_dof());
   plain_vector RHS(md.nb_dof());
   plain_vector Forces(mf_u.nb_dof());
-  plain_vector CForces(mf_u.nb_dof());
+  plain_vector NCForces(mf_u.nb_dof());
+  plain_vector TCForces(0);
 
   gmm::copy(md.real_variable("u"), U);
   gmm::copy(md.real_rhs(), RHS);
@@ -245,20 +280,34 @@ bool elastostatic_contact_problem::solve() {
                             md.interval_of_variable("u"),
                             md.interval_of_variable(multname_n) ),
             md.real_variable(multname_n),
-            CForces);
-  gmm::scale(CForces, -1.0);
+            NCForces);
+  gmm::scale(NCForces, -1.0);
+
+  if (!frictionless) {
+    gmm::resize(TCForces, mf_u.nb_dof());
+    gmm::mult(gmm::sub_matrix(md.real_tangent_matrix(),
+                              md.interval_of_variable("u"),
+                              md.interval_of_variable(multname_t) ),
+              md.real_variable(multname_t),
+              TCForces);
+    gmm::scale(TCForces, -1.0);
+  }
 
   // Export results
   mesh.write_to_file(datafilename + ".mesh");
   mf_u.write_to_file(datafilename + ".mf", true);
   mf_rhs.write_to_file(datafilename + ".mfd", true);
   gmm::vecsave(datafilename + ".U", U);
+  gmm::vecsave(datafilename + ".VM", VM);
   gmm::vecsave(datafilename + ".RHS", RHS);
   getfem::vtk_export exp(datafilename + ".vtk", true);
-  exp.exporting(mf_u);
+  exp.exporting(mesh);
   exp.write_point_data(mf_u, U, "elastostatic_displacement");
   exp.write_point_data(mf_u, Forces, "forces");
-  exp.write_point_data(mf_u, CForces, "contact_forces");
+  exp.write_point_data(mf_u, NCForces, "normal_contact_forces");
+  if (!frictionless)
+    exp.write_point_data(mf_u, TCForces, "tangential_contact_forces");
+  exp.write_point_data(mf_rhs, VM, "von_mises_stresses");
 
   return true; // Solution has converged
 }
