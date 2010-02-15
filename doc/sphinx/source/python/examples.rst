@@ -193,6 +193,7 @@ view differences with ``gmsh sol.pos``:
    Differences
 
 
+
 Final Laplacian with exact solution (Neumann boundary condition)
 ----------------------------------------------------------------
 

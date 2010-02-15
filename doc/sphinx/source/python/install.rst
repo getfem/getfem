@@ -1,7 +1,7 @@
 .. include:: ../replaces.txt
 
-Instalation
-===========
+Installation
+============
 
 In a debian/ubuntu system
 -------------------------

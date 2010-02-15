@@ -675,7 +675,7 @@ private:
     bool get_scilab() const {return scilab_flag;}
   };
 
-
+  std::string cmd_normalize(const std::string& a);
   bool cmd_strmatch(const std::string& a, const char *s);
   bool cmd_strmatchn(const std::string& a, const char *s, unsigned n);
   bool check_cmd(const std::string& cmdname, const char *s,

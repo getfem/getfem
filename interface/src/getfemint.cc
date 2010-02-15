@@ -1291,6 +1291,16 @@ namespace getfemint {
     return carray(arg);
   }
 
+
+  std::string cmd_normalize(const std::string& a) {
+    std::string b = a;
+    for (size_type i = 0; i < b.size(); ++i) {
+      b[i] = toupper(b[i]);
+      if (b[i] == '_' || b[i] == '-') b[i] = ' ';
+    }
+    return b;
+  }
+
   /* very tolerant case-insensitive string comparison:
      spaces are matched with underscores.*/
   bool cmd_strmatch(const std::string& a, const char *s) {
