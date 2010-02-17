@@ -1041,19 +1041,21 @@ int main(int argc, char *argv[]) {
   getfem::mesh_fem mf_refined_p(mcut_refined_p, dim_type(Q));
   mf_refined_p.set_classical_discontinuous_finite_element(2,0.001);
   plain_vector PPW(mf_refined_p.nb_dof());
+  getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
   
   getfem::interpolation(p.mf_u(), mf_refined, U, W);
- getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
   mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
   gmm::vecsave(p.datafilename + ".Uvm", W);
   
-  getfem::mesh_fem mf_vm(mcut_refined,  1);
+
+  
+ getfem::mesh_fem mf_vm(mcut_refined,  1);
   mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
   plain_vector Vm(mf_vm.nb_dof());
  
   cout << "compute Von_mises" << endl;
   getfem::interpolation_von_mises(mf_refined, mf_vm, W, Vm);
-
+  getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
   gmm::vecsave(p.datafilename + ".VM",Vm);
   mf_vm.write_to_file(p.datafilename + ".meshfemvm", true); 
   
@@ -1076,10 +1078,10 @@ int main(int argc, char *argv[]) {
     exp.exporting(mf_refined); 
     
     //exp.write_point_data(mf_refined_vm, DN, "error");
-    
+    getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
     exp.write_point_data(mf_refined_vm, VM, "von_mises_stress");
     exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-    exp.write_point_data(mf_refined_p, PPW, "Pressure");
+    exp.write_point_data(mf_refined_vm, PPW, "Pressure");
 
     base_node line_x0(0.70001,0);
     base_small_vector line_dir(0, 0.5001);
