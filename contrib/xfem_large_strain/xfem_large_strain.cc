@@ -760,7 +760,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
 
   // Neumann condition brick.
   
-  //down side
+  // down side
   for(size_type i = 1; i < F.size(); i=i+N) F[i] = AMP_LOAD;
   for(size_type i = 0; i < F.size(); i=i+N) F[i] = AMP_LOAD;
   
@@ -798,21 +798,56 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   getfem::standard_model_state MS(*final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 
   gmm::iteration iter;
-
- /********************/
+  
+  size_type stnst = PARAM.int_value("stnst");
+  
+if (stnst==1) {
+ 
+/********************/
  /* Step loading     */
  /********************/
-    
-  
- //for (int step = 0; step < nb_step; ++step) {
-    
-    /* let the default non-linear solve (Newton) do its job */
+    cout << "By step amigoo###################################<<<<<>>>>>>######" << endl;
+    cout << "Nb de Step " << nb_step <<endl;     
+for (int step = 0; step < nb_step; ++step) {
+   plain_vector DF(F);
 
- // /*F.size()*/  for(size_type i = 1; i <  nb_dof_rhs; i=i+N) F[i] = F[i]+ (AMP_LOAD/nb_step);
- // /*F.size()*/  for(size_type i = 0; i <  nb_dof_rhs; i=i+N) F[i]+=F[i]+ (AMP_LOAD/nb_step);
- //               final_model.rhs().set(F);
- //   cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
+    gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
+     NEUMANN4.source_term().set(DF);
+
+       /************************************/
+       /* increment  imposed displacement  */
+       /************************************/ 
+     
+     KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
+
+    /********************************************************/
+    /* let the default non-linear solve (Newton) do its job */
+    /********************************************************/ 
+
+    cout << "step " << step << ", number of variables : " << final_model->nb_dof() << endl;
+    cout << "DF " << DF <<  endl;
+
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
+                          maxit ? maxit : 40000);
+    gmm::default_newton_line_search lnrs;
+    getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), lnrs);
+
+    pl->reset_unvalid_flag();
+    final_model->compute_residual(MS);
+    if (pl->get_unvalid_flag())
+      GMM_WARNING1("The solution is not completely valid, the determinant "
+                   "of the transformation is negative on "
+                   << pl->get_unvalid_flag() << " gauss points");
+
+    }   
+
+  }
+  else{
+ cout << "Resolution direct =============D=I=R=E=C=T====================> " << endl;
+ /****************/
+ /*Sans iteration*/
+ /****************/
+iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
 			  maxit ? maxit : 40000);
     gmm::default_newton_line_search lnrs;
     getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), lnrs);
@@ -823,8 +858,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
       GMM_WARNING1("The solution is not completely valid, the determinant "
 		   "of the transformation is negative on "
 		   << pl->get_unvalid_flag() << " gauss points");
-
-    //}
+  }
+  
 
  /*************************************/
  /*  Computation of the inf-sup bound */ 
@@ -953,6 +988,7 @@ int main(int argc, char *argv[]) {
   cout << "Interpolating solution for the drawing" << endl;
   getfem::stored_mesh_slice sl;
   getfem::mesh mcut_refined;
+  getfem::mesh mcut_refined_p;
   
   unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
   if (NX < 6) nn = 24;
@@ -995,18 +1031,24 @@ int main(int argc, char *argv[]) {
   getfem::mesh_im mim_refined(mcut_refined); 
   mim_refined.set_integration_method(getfem::int_method_descriptor
 				     ("IM_TRIANGLE(6)"));
+  
   mcut.write_to_file(p.datafilename + ".meshvm");
   
   getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
-  mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
+  mf_refined.set_classical_discontinuous_finite_element(2,0.001);
   plain_vector W(mf_refined.nb_dof());
-
+  
+  getfem::mesh_fem mf_refined_p(mcut_refined_p, dim_type(Q));
+  mf_refined_p.set_classical_discontinuous_finite_element(2,0.001);
+  plain_vector PPW(mf_refined_p.nb_dof());
+  
   getfem::interpolation(p.mf_u(), mf_refined, U, W);
+ getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
   mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
   gmm::vecsave(p.datafilename + ".Uvm", W);
   
   getfem::mesh_fem mf_vm(mcut_refined,  1);
-  mf_vm.set_classical_discontinuous_finite_element(1, 0.001);
+  mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
   plain_vector Vm(mf_vm.nb_dof());
  
   cout << "compute Von_mises" << endl;
@@ -1017,7 +1059,7 @@ int main(int argc, char *argv[]) {
   
   if (p.PARAM.int_value("VTK_EXPORT")) {
     getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
-    mf_refined_vm.set_classical_discontinuous_finite_element(1, 0.001);
+    mf_refined_vm.set_classical_discontinuous_finite_element(2, 0.001);
     cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
     plain_vector VM(mf_refined_vm.nb_dof());
     
@@ -1032,11 +1074,13 @@ int main(int argc, char *argv[]) {
 			   p.PARAM.int_value("VTK_EXPORT")==1);
     
     exp.exporting(mf_refined); 
+    
     //exp.write_point_data(mf_refined_vm, DN, "error");
-    exp.write_point_data(mf_refined_vm, VM, "von mises stress");
     
+    exp.write_point_data(mf_refined_vm, VM, "von_mises_stress");
     exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-    
+    exp.write_point_data(mf_refined_p, PPW, "Pressure");
+
     base_node line_x0(0.70001,0);
     base_small_vector line_dir(0, 0.5001);
     unsigned line_nb_points = 1000;
