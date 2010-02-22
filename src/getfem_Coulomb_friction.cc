@@ -648,7 +648,7 @@ namespace getfem {
       // pre-computations
       if (!is_init) init_BBN_BBT();
       precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
-      
+
       if (version & model::BUILD_MATRIX) {
         // Unilateral contact
         gmm::clear(T_n_n); gmm::clear(T_u1_u1);
@@ -665,7 +665,7 @@ namespace getfem {
         }
         gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
         if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
-      
+
         // Friction
         if (!contact_only) {
           base_matrix pg(d, d);
@@ -678,16 +678,16 @@ namespace getfem {
             scalar_type th = Tresca_version ? threshold[i]
               : - lambda_n[i] * friction_coeff[i];
             ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
-            if (!really_stationary) {
-              for (size_type k = 0; k < d; ++k) {
-                gmm::copy(gmm::scaled(gmm::mat_row(BBT1, i*d+k), -pg[k]),
-                          gmm::mat_col(T_u1_t, i*d+k));
-                if (two_variables)
-                  gmm::copy(gmm::scaled(gmm::mat_row(BBT2, i*d+k), -pg[k]),
-                            gmm::mat_col(T_u2_t, i*d+k));
-              }
-            }
-            
+            if (!really_stationary)
+              for (size_type k1 = 0; k1 < d; ++k1)
+                for (size_type k2 = 0; k2 < d; ++k2) {
+                  gmm::add(gmm::scaled(gmm::mat_row(BBT1, i*d+k1), -pg(k2,k1)),
+                           gmm::mat_col(T_u1_t, i*d+k2));
+                  if (two_variables)
+                    gmm::add(gmm::scaled(gmm::mat_row(BBT2, i*d+k1), -pg(k2,k1)),
+                             gmm::mat_col(T_u2_t, i*d+k2));
+                }
+
             if (!Tresca_version) {
               ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
               for (size_type k = 0; k < d; ++k)
@@ -713,7 +713,7 @@ namespace getfem {
             gmm::mult(gmm::transposed(gmm::scaled(BBN2,-r)), T_n_u2, tmp2);
             gmm::add(tmp2, T_u2_u2);
           }
-          
+
           if (!contact_only) {
             // gmm::copy(gmm::transposed(T_t_u1), T_u1_t);  // already done
             // gmm::copy(gmm::transposed(T_t_u2), T_u2_t);  // already done
@@ -736,8 +736,8 @@ namespace getfem {
           }
         }
       }
-      
-    if (version & model::BUILD_RHS) {
+
+      if (version & model::BUILD_RHS) {
         for (size_type i=0; i < nbc; ++i) {
           RLN[i] = std::min(scalar_type(0), RLN[i]);
           if (!contact_only) {
@@ -747,7 +747,7 @@ namespace getfem {
               (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
           }
         }
-        
+
         if (symmetrized) {
           gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
           if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
@@ -765,7 +765,7 @@ namespace getfem {
               gmm::mult_add(gmm::transposed(BT2), lambda_t, ru2);
           }
         }
-        
+
         gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN, -vt1/r),
                  rlambda_n);
 
